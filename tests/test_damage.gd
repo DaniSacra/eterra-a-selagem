@@ -1,0 +1,48 @@
+extends GutTest
+
+
+func test_plain_hit_is_the_base_damage() -> void:
+	assert_eq(DamageCalc.hit(10.0, 0.0, 0, false, false, 0.0, false, 0.0), 10.0)
+
+
+func test_gift_bonus_adds_a_percentage() -> void:
+	assert_eq(DamageCalc.hit(20.0, 0.25, 0, false, false, 0.0, false, 0.0), 25.0)
+
+
+func test_combo_adds_one_percent_per_hit_up_to_the_cap() -> void:
+	assert_eq(DamageCalc.hit(100.0, 0.0, 10, false, false, 0.0, false, 0.0), 110.0)
+	assert_eq(DamageCalc.hit(100.0, 0.0, 500, false, false, 0.0, false, 0.0), 140.0)
+
+
+func test_launched_enemies_take_half_again() -> void:
+	assert_eq(DamageCalc.hit(10.0, 0.0, 0, true, false, 0.0, false, 0.0), 15.0)
+
+
+func test_frozen_enemies_shatter_for_extra() -> void:
+	assert_eq(DamageCalc.hit(20.0, 0.0, 0, false, true, 0.5, false, 0.0), 30.0)
+	assert_eq(DamageCalc.hit(20.0, 0.0, 0, false, false, 0.5, false, 0.0), 20.0, "not frozen, no shatter")
+
+
+func test_light_doubles_against_the_undead_only() -> void:
+	assert_eq(DamageCalc.hit(10.0, 0.0, 0, false, false, 0.0, true, 2.0), 20.0)
+	assert_eq(DamageCalc.hit(10.0, 0.0, 0, false, false, 0.0, false, 2.0), 10.0)
+	assert_eq(DamageCalc.hit(10.0, 0.0, 0, false, false, 0.0, true, 0.0), 10.0, "without the gift nothing changes")
+
+
+func test_everything_stacks_and_never_drops_below_one() -> void:
+	assert_eq(DamageCalc.hit(10.0, 0.5, 0, true, true, 1.0, true, 2.0), 90.0)
+	assert_eq(DamageCalc.hit(0.1, 0.0, 0, false, false, 0.0, false, 0.0), 1.0)
+
+
+func test_spatial_hash_buckets_by_cell_and_clears() -> void:
+	var h := SpatialHash.new(10.0)
+	h.insert(Vector2(5, 5), "a")
+	h.insert(Vector2(9, 1), "b")
+	h.insert(Vector2(15, 5), "c")
+	assert_eq(h.at_cell(0, 0).size(), 2)
+	assert_eq(h.at_cell(1, 0), ["c"])
+	assert_eq(h.at_cell(7, 7).size(), 0)
+	h.clear()
+	assert_eq(h.at_cell(0, 0).size(), 0)
+	h.insert(Vector2(-1, -1), "d")
+	assert_eq(h.at_cell(-1, -1), ["d"])

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"priest"
+name_key = &"enemy_priest"
+sprite = &"priest"
+behavior = 5
+hp = 700.0
+speed = 30.0
+damage = 10.0
+radius = 8.0
+xp = 40
+undead = false
+heavy = true
+elite = true
+attack_damage = 16.0
+attack_range = 120.0
+attack_cooldown = 4.5
+attack_windup = 1.0

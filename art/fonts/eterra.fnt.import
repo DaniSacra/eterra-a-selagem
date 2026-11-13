@@ -1,0 +1,17 @@
+[remap]
+
+importer="font_data_bmfont"
+type="FontFile"
+uid="uid://ch6g85k6tb3qd"
+path="res://.godot/imported/eterra.fnt-a88943073ddfc6db8dca70a7bab21355.fontdata"
+
+[deps]
+
+source_file="res://art/fonts/eterra.fnt"
+dest_files=["res://.godot/imported/eterra.fnt-a88943073ddfc6db8dca70a7bab21355.fontdata"]
+
+[params]
+
+fallbacks=[]
+compress=true
+scaling_mode=2

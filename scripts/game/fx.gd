@@ -16,7 +16,14 @@ const KINDS := {
 	&"guard": {"family": &"vida", "tones": [0, 1, 2], "amount": 10, "life": 0.4, "speed": 50.0, "spread": 180.0, "gravity": 0.0, "size": 1.0},
 }
 
+const FONT: Font = preload("res://art/fonts/eterra.fnt")
+const NUMBER_TIME := 0.55
+
 var stop_left := 0.0
+var enemies: EnemySystem
+var _numbers: Array[Dictionary] = []
+var _shapes: Array[Dictionary] = []
+var _clock := 0.0
 var _pools: Dictionary = {}
 var _next: Dictionary = {}
 var _trauma := 0.0
@@ -99,3 +106,104 @@ func tick(delta: float) -> Vector2:
 	if _trauma <= 0.0 or not Save.option("shake"):
 		return Vector2.ZERO
 	return Vector2(_rng.randf_range(-1, 1), _rng.randf_range(-1, 1)) * _trauma
+
+
+# ---------- drawn effects: slashes, rings, streaks, damage numbers, stun stars ----------
+
+## A damage number that hops up from a hit.
+func number(at: Vector2, amount: float, family: StringName = &"luz") -> void:
+	if _numbers.size() > 60:
+		_numbers.pop_front()
+	_numbers.append({"pos": at + Vector2(_rng.randf_range(-4, 4), 0), "text": str(int(amount)), "t": 0.0, "family": family, "big": amount >= 30.0})
+
+
+## A floating word (heals, "Escudo!").
+func word(at: Vector2, text: String, family: StringName) -> void:
+	_numbers.append({"pos": at, "text": text, "t": -0.3, "family": family, "big": false})
+
+
+## Crescent that sweeps through an arc: the trail of a sword cut.
+func slash(at: Vector2, dir: Vector2, reach: float, degrees: float, family: StringName, time: float = 0.16, reverse: bool = false) -> void:
+	_shapes.append({"kind": 0, "pos": at, "angle": dir.angle(), "reach": reach, "half": deg_to_rad(degrees) * 0.5, "family": family, "t": 0.0, "time": time, "rev": reverse})
+
+
+## Ring that opens from the centre: spins, bursts, ground impacts.
+func ring(at: Vector2, radius: float, family: StringName, time: float = 0.22) -> void:
+	_shapes.append({"kind": 1, "pos": at, "reach": radius, "family": family, "t": 0.0, "time": time})
+
+
+## Straight flash: thrusts and dashes.
+func streak(at: Vector2, dir: Vector2, length: float, width: float, family: StringName, time: float = 0.16) -> void:
+	_shapes.append({"kind": 2, "pos": at, "dir": dir, "reach": length, "width": width, "family": family, "t": 0.0, "time": time})
+
+
+## Called every frame with real time, so effects keep moving during hit stop.
+func animate(delta: float) -> void:
+	_clock += delta
+	for n in _numbers:
+		n.t += delta
+	for s in _shapes:
+		s.t += delta
+	_numbers = _numbers.filter(func(n: Dictionary) -> bool: return n.t < NUMBER_TIME)
+	_shapes = _shapes.filter(func(s: Dictionary) -> bool: return s.t < s.time)
+	queue_redraw()
+
+
+func _draw() -> void:
+	for s in _shapes:
+		var k: float = s.t / s.time
+		var c0 := Palette.c(s.family, 0)
+		var c1 := Palette.c(s.family, 1 if k < 0.6 else 2)
+		match s.kind:
+			0:
+				var a0: float = s.angle - s.half
+				var a1: float = s.angle + s.half
+				if s.rev:
+					var tmp := a0
+					a0 = a1
+					a1 = tmp
+				var head := lerpf(a0, a1, clampf(k * 2.2, 0.0, 1.0))
+				var tail := lerpf(a0, a1, clampf(k * 2.2 - 0.9, 0.0, 1.0))
+				_crescent(s.pos, s.reach, s.reach * 0.42, tail, head, c1)
+				_crescent(s.pos, s.reach, s.reach * 0.16, lerpf(tail, head, 0.3), head, c0)
+			1:
+				var r: float = s.reach * (0.45 + 0.55 * minf(k * 1.8, 1.0))
+				draw_arc(s.pos, r, 0.0, TAU, 28, c1, 4.0 if k < 0.5 else 2.0)
+				if k < 0.7:
+					draw_arc(s.pos, r + 1.0, 0.0, TAU, 28, c0, 1.0)
+			2:
+				var from: Vector2 = s.pos + s.dir * s.reach * clampf(k * 1.5 - 0.5, 0.0, 1.0)
+				var to: Vector2 = s.pos + s.dir * s.reach * clampf(k * 3.0, 0.0, 1.0)
+				draw_line(from, to, c1, maxf(1.0, s.width * 0.5 * (1.0 - k)))
+				draw_line(from.lerp(to, 0.3), to, c0, 1.0)
+	if enemies:
+		var star := Palette.c(&"luz", 1)
+		for e in enemies.list:
+			if e.stun_t > 0.0:
+				for i in 3:
+					var a := _clock * 6.0 + i * TAU / 3.0
+					var p := e.pos + Vector2(cos(a) * 5.0, -Art.origin(e.def.sprite).y * 0.72 + sin(a) * 2.0)
+					draw_rect(Rect2(p.x, p.y, 2, 2), star)
+	for n in _numbers:
+		if n.t < 0.0:
+			continue
+		var k: float = n.t / NUMBER_TIME
+		var p: Vector2 = n.pos + Vector2(0, -14.0 * sin(minf(k * 1.4, 1.0) * PI * 0.5))
+		var size := 22 if n.big else 11
+		var w := FONT.get_string_size(n.text, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+		p = (p - Vector2(w * 0.5, 0)).round()
+		draw_string(FONT, p + Vector2(1, 1), n.text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Palette.c(&"perigo", 4))
+		draw_string(FONT, p, n.text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, Palette.c(n.family, 0 if k < 0.6 else 1))
+
+
+func _crescent(center: Vector2, radius: float, thick: float, a0: float, a1: float, color: Color) -> void:
+	if absf(a1 - a0) < 0.12:
+		return
+	var steps := 10
+	var pts := PackedVector2Array()
+	for i in steps + 1:
+		pts.append(center + Vector2.from_angle(lerpf(a0, a1, float(i) / steps)) * radius)
+	for i in range(steps, -1, -1):
+		var f := float(i) / steps
+		pts.append(center + Vector2.from_angle(lerpf(a0, a1, f)) * (radius - thick * sin(f * PI) - 0.6))
+	draw_colored_polygon(pts, color)

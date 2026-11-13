@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"knight"
+name_key = &"enemy_knight"
+sprite = &"knight"
+behavior = 4
+hp = 900.0
+speed = 40.0
+damage = 14.0
+radius = 9.0
+xp = 40
+heavy = true
+elite = true
+attack_damage = 22.0
+attack_range = 130.0
+attack_cooldown = 3.5
+attack_windup = 0.8

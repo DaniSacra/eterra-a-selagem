@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"skeleton"
+name_key = &"enemy_skeleton"
+sprite = &"skeleton"
+behavior = 0
+hp = 22.0
+speed = 34.0
+damage = 8.0
+radius = 5.0
+xp = 1

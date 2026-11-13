@@ -6,7 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
 
-MODULES = ["paladin", "scenery", "enemies", "morvath", "items"]
+MODULES = ["paladin", "scenery", "enemies", "morvath", "items", "font"]
 
 if __name__ == "__main__":
     for name in MODULES:
