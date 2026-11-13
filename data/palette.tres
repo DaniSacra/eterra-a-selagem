@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Palette" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/palette.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+families = {
+"luz": PackedStringArray("#fff6c0", "#f0d860", "#e8b840", "#c89c38", "#8a5418"),
+"noite": PackedStringArray("#8ac0f0", "#3a78c8", "#2c3c80", "#1c2860", "#151e4e"),
+"vida": PackedStringArray("#90e0b0", "#4ad08a", "#3a9a6a", "#2a5440", "#14402a"),
+"misterio": PackedStringArray("#f0a8f8", "#a84ad8", "#72308e", "#40145a", "#3a1448"),
+"perigo": PackedStringArray("#e86a7a", "#a8323e", "#7a1a24", "#4a0c14", "#26202e"),
+"neve": PackedStringArray("#e8eff8", "#cbd8ec", "#a4b8da", "#7488b8", "#4a5a8c"),
+"materia": PackedStringArray("#f4cca0", "#d8a478", "#b07c58", "#9a6232", "#6a3a1a", "#a2a2ac", "#7a7a82", "#55555e"),
+"retratos": PackedStringArray("#ffffff", "#ffe080", "#f8a0a0", "#f0d070", "#f0c850", "#f0c090", "#f0b050", "#f0a080", "#e8f0e8", "#e8c0a0", "#e8c050", "#e8b888", "#e0a030", "#d09868", "#d08a30", "#c89878", "#c89464", "#c880e0", "#b0bcc4", "#a8704a", "#a87040", "#a07458", "#a07048", "#a0601c", "#a050c0", "#9a6a18", "#9a3a40", "#8a4a3a", "#8a3a2a", "#8a2a30", "#7ac09a", "#7a4a24", "#6a5034", "#6a3a22", "#6a3020", "#62202e", "#5c5a7e", "#5a2a24", "#5a2a08", "#541a28", "#4e2c14", "#4a8a6a", "#4a5a6a", "#4a2610", "#461622", "#432c78", "#40e0d8", "#3a2a1a", "#3a2010", "#3a1a40", "#38246a", "#38111c", "#2e1e5a", "#2a140c", "#2a1408", "#26262e", "#243270", "#24184a", "#24180c", "#205e54", "#1e140a", "#1a5048", "#1a2a5a", "#15433c", "#141018", "#140c06", "#120c14", "#103630", "#060408")
+}

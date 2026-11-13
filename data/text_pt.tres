@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TextTable" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/text_table.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+entries = {
+"PALADIN_1": "PALADIN_1",
+"PALADIN_2": "PALADIN_2",
+"PALADIN_3": "PALADIN_3",
+"PALADIN_4": "PALADIN_4",
+"title": "Crônicas de Eterra",
+"subtitle": "A Selagem",
+"mouse_1": "Mouse esq.",
+"mouse_2": "Mouse dir.",
+"mouse_3": "Mouse meio"
+}
