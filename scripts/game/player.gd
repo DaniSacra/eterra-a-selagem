@@ -14,7 +14,7 @@ const DODGE_RECHARGE := 1.5
 const BASE_DODGES := 2
 const MAX_HP := 100.0
 const HURT_TIME := 0.22
-const HURT_INVULN := 0.7
+const HURT_INVULN := 0.9
 const CHARGE_WALK := 0.35
 const COMBO_TREE := "res://data/combos/paladin.tres"
 

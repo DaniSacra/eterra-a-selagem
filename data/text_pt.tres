@@ -105,7 +105,7 @@ entries = {
 "on": "sim",
 "off": "não",
 "options_title": "Opções",
-"options_keys": "Teclas (escolha e aperte a nova)",
+"options_keys": "Teclas",
 "options_press": "aperte...",
 "options_reset": "Teclas padrão",
 "opt_master": "Volume geral",
@@ -127,6 +127,9 @@ entries = {
 "ending_1": "Morvath está selado. Quatro espadas se erguem sobre o túmulo.",
 "ending_2": "Na pedra, uma lápide:",
 "ending_3": "Aqui foi selado Morvath, o rei que traiu a luz. Que nenhuma mão abra o que a luz fechou.",
+"premise": "Morvath, o rei que traiu a luz, ergueu os mortos para tomar o reino. Quatro paladinos descem às catacumbas sob a igreja velha de Valmor para selar o rei.",
+"menu_play": "Descer às catacumbas",
+"menu_quit": "Sair",
 "mouse_1": "Mouse esq.",
 "mouse_2": "Mouse dir.",
 "mouse_3": "Mouse meio"

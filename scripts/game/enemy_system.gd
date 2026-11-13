@@ -148,7 +148,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 			if caster:
 				ground.add_warning(target, 20.0, 1.0, d.attack_damage * damage_scale)
 			else:
-				projectiles.fire(Projectiles.Kind.ARROW, e.pos + Vector2(0, -8), e.dir, 120.0, d.attack_damage * damage_scale)
+				projectiles.fire(Projectiles.Kind.ARROW, e.pos + Vector2(0, -8), e.dir, 100.0, d.attack_damage * damage_scale)
 			e.cooldown = d.attack_cooldown
 			_set_state(e, Enemy.State.WALK, &"walk")
 		return

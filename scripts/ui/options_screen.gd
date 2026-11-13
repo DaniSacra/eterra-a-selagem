@@ -20,25 +20,31 @@ func open() -> void:
 func _build() -> void:
 	for c in get_children():
 		c.queue_free()
-	_list = UiKit.column(self, 190.0)
-	var title := UiKit.label(T.t(&"options_title"), Palette.c(&"luz", 0), UiKit.BIG)
+	var page := UiKit.column(self, 290.0)
+	page.add_theme_constant_override(&"separation", 2)
+	var title := UiKit.label(T.t(&"options_title"), Palette.c(&"luz", 0))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_list.add_child(title)
+	page.add_child(title)
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override(&"separation", 10)
+	page.add_child(cols)
+	_list = VBoxContainer.new()
+	_list.custom_minimum_size.x = 160
+	cols.add_child(_list)
 	for key in VOLUMES:
 		_stepper("opt_" + key, "%d%%" % roundi(float(Save.option(key)) * 100.0), func(dir: int) -> void:
 			Save.set_option(key, clampf(snappedf(float(Save.option(key)) + dir * 0.1, 0.1), 0.0, 1.0))
 			App.apply_options())
-	_toggle("opt_fullscreen", "fullscreen")
 	_stepper("opt_scale", "%dx%d" % [320 * int(Save.option("scale")), 180 * int(Save.option("scale"))], func(dir: int) -> void:
 		Save.set_option("scale", clampi(int(Save.option("scale")) + dir, 2, 8))
 		App.apply_options())
+	_toggle("opt_fullscreen", "fullscreen")
 	_toggle("opt_shake", "shake")
-	_list.add_child(UiKit.label(T.t(&"options_keys"), Palette.c(&"luz", 1)))
-	var grid := GridContainer.new()
-	grid.columns = 2
-	grid.add_theme_constant_override(&"h_separation", 4)
-	grid.add_theme_constant_override(&"v_separation", 2)
-	_list.add_child(grid)
+	var keys := VBoxContainer.new()
+	keys.add_theme_constant_override(&"separation", 1)
+	cols.add_child(keys)
+	var hint := UiKit.label(T.t(&"options_keys"), Palette.c(&"luz", 1))
+	keys.add_child(hint)
 	for action in Controls.REMAPPABLE:
 		var waiting := _waiting == action
 		var b := UiKit.button("%s: %s" % [T.t("action_" + action), T.t(&"options_press") if waiting else Controls.label(action)], func() -> void:
@@ -46,12 +52,12 @@ func _build() -> void:
 			_focus_key = "key_" + action
 			_build())
 		b.name = "key_" + action
-		b.custom_minimum_size.x = 93
+		b.custom_minimum_size = Vector2(120, 14)
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		grid.add_child(b)
+		keys.add_child(b)
 	var bottom := HBoxContainer.new()
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
-	_list.add_child(bottom)
+	page.add_child(bottom)
 	bottom.add_child(UiKit.button(T.t(&"options_reset"), func() -> void:
 		Controls.reset_bindings()
 		_build()))

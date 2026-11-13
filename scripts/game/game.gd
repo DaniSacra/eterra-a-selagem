@@ -8,6 +8,8 @@ enum Mode { PLAY, CHOICE, PAUSE, OVER, ENDING }
 const VIEW := Vector2(320, 180)
 const WAVES := "res://data/waves/catacombs.tres"
 const FOUNTAIN_HEAL := 0.4
+## Each new level, the gift arrives with a little of the companions' strength.
+const LEVEL_HEAL := 0.15
 const SPAWN_MIN := 190.0
 const SPAWN_MAX := 240.0
 
@@ -33,6 +35,8 @@ var level := 1
 var xp := 0
 var kills := 0
 var fast := 1.0
+## Smoothed cost of one simulation step, in milliseconds (performance budget: 300 enemies on a mid phone).
+var step_ms := 0.0
 var _pending_levels := 0
 ## Where Morvath fell: the tomb of the final scene is sealed there.
 var boss_fell_at := Vector2.ZERO
@@ -142,6 +146,11 @@ func _ready() -> void:
 			var offers := boons.offers(_rng, 1)
 			if not offers.is_empty():
 				_take(offers[0])
+	if Dev.has("stress"):
+		player.max_hp = 99999.0
+		player.hp = 99999.0
+		for i in int(Dev.num("stress", 300)):
+			enemies.spawn(enemies.def([&"skeleton", &"skeleton", &"archer", &"wolf", &"hooded"][i % 5]), _spawn_point() * 0.5 + player.position * 0.5)
 	if Dev.has("shot"):
 		_shot.call_deferred()
 	if Dev.has("smoke"):
@@ -159,7 +168,9 @@ func _process(delta: float) -> void:
 		bot.step(delta, self)
 	if mode == Mode.PLAY or mode == Mode.OVER or mode == Mode.ENDING:
 		if fx.stop_left <= 0.0:
+			var t0 := Time.get_ticks_usec()
 			_step(minf(delta, 0.05))
+			step_ms = lerpf(step_ms, (Time.get_ticks_usec() - t0) / 1000.0, 0.05)
 	if mode == Mode.PLAY and Controls.pressed(&"pause"):
 		_open_pause()
 	_follow(delta, shake)
@@ -292,6 +303,7 @@ func _on_chosen(b: Boon) -> void:
 		return
 	_close_screen()
 	_pending_levels -= 1
+	player.heal(player.max_hp * LEVEL_HEAL)
 	if b == null:
 		player.heal(BoonChoice.REST_HEAL)
 	else:
@@ -475,7 +487,7 @@ func _shot() -> void:
 ## A line of numbers about the run, for smoke tests and tuning.
 func result() -> Dictionary:
 	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "kills": kills, "best_combo": combat.best_combo,
-		"enemies": enemies.count(), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0, "boons": boons.owned().size(), "damage": int(combat.damage_dealt), "moves": Save.data.moves.size(), "fps": Engine.get_frames_per_second()}
+		"enemies": enemies.count(), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0, "boons": boons.owned().size(), "damage": int(combat.damage_dealt), "moves": Save.data.moves.size(), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second()}
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

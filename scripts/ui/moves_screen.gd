@@ -9,7 +9,8 @@ func open() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var v := UiKit.column(self, 210.0)
-	var title := UiKit.label(T.t(&"moves_title"), Palette.c(&"luz", 0), UiKit.BIG)
+	v.add_theme_constant_override(&"separation", 1)
+	var title := UiKit.label(T.t(&"moves_title"), Palette.c(&"luz", 0))
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
 	var tree: ComboTree = load(Player.COMBO_TREE)

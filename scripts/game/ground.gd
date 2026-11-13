@@ -155,7 +155,7 @@ func _draw_warning(z: Zone) -> void:
 	var k := clampf(1.0 - z.life / z.total, 0.0, 1.0)
 	var rim := glow(Palette.c(&"perigo", 0), 0.9)
 	var fill := glow(Palette.c(&"perigo", 1), 0.3)
-	var core := glow(Palette.c(&"perigo", 0), 0.45)
+	var core := glow(Palette.c(&"perigo", 0), 0.34)
 	match z.shape:
 		Shape.CIRCLE:
 			draw_circle(z.pos, z.radius, fill)

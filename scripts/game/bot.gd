@@ -30,8 +30,9 @@ func step(dt: float, game: Game) -> void:
 	pad.aim = to
 	var reach := 22.0
 	pad.move = to.normalized() if to.length() > reach else Vector2.ZERO
-	if game.player.hp < game.player.max_hp * 0.4 and to.length() < 40.0:
-		pad.move = -to.normalized().rotated(0.6)
+	if _queue.is_empty() and _wait > 0.25:
+		# hit and run: after a combo, step out of the crowd
+		pad.move = -to.normalized().rotated(0.5)
 	var danger := _danger(game)
 	if danger != Vector2.ZERO:
 		# standing on a warning: get out, rolling if there is a charge

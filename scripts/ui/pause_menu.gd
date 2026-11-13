@@ -38,10 +38,7 @@ func _show(screen: Control) -> void:
 		_sub.queue_free()
 		_sub = null
 		_main.visible = true
-		(_main.find_child("*", true, false) as Control).grab_focus()
-		for b in _main.find_children("*", "Button", true, false):
-			(b as Button).grab_focus()
-			break)
+		(_main.find_children("*", "Button", true, false)[0] as Button).grab_focus())
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -25,8 +25,11 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   `--start=boss|elite1|elite2`, `--shot=arquivo.png`, `--shot-at=segundos`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
 - Depois de criar arquivos ou classes novas (`class_name`): `~/tools/godot/godot --headless --path . --import`.
 - Regerar a arte: `python3 tools/art/build.py` (escreve `art/grids/*.json`).
+- Partida sem tela com o robô (rápida, para ritmo e regressão): `tools/smoke.sh 1100` ou `tools/smoke.sh 300 --start=boss --boons=25`.
+  Outras opções: `--boons=N` (N dons sorteados), `--boss-hp=0.2`, `--stress=300`, `--title --screen=options|moves`, `--hold`.
 - Build: `~/tools/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/ASelagem.exe`
-  (e `"Linux"` em `build/linux/ASelagem.x86_64`).
+  (e `"Linux"` em `build/linux/ASelagem.x86_64`). Web para ver no navegador: `tools/web.sh` e abrir `http://localhost:8070`.
+  Android fica para depois (sem preset ainda).
 
 ## Direção de arte (bíblia de arte de Eterra, `../dungeon-rpg/docs/arte/estilo.md`)
 - "Aventura luminosa": Dragon Quest, Chrono Trigger, Sea of Stars. Cores vivas, perigo sem horror.
@@ -51,3 +54,21 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
 - Entrada só por ações (`Controls`): `light_attack`, `heavy_attack`, `dodge`, mira (`Controls.aim`). Nunca ler tecla direto.
   No celular, botões na tela alimentam as mesmas ações (`Controls.virtual`, o mesmo caminho do robô de teste).
 - Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`).
+- Fonte: `art/fonts/eterra.fnt`, bitmap 5x7 gerada por `tools/art/font.py` (tamanhos 11, 22, 33). Tiny5 e Press Start 2P
+  renderizaram como blocos no ambiente de teste (xvfb), por isso a fonte própria. Letra nova entra em `font.py`.
+- Som: `scripts/audio.gd` é o mapa único (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita.
+
+## Onde mexer
+- Combos: `data/combos/paladin.tres` (nós `ComboNode`; `tags` é o que os dons enxergam). Dons: `data/boons/*.tres`
+  (`BoonMod`: `stat`, `tag`, `values` por nível; as estatísticas que o jogo conhece estão em `scripts/game/combat.gd` e
+  `game.gd` `_take`). Inimigos: `data/enemies/*.tres`. Ondas, elites, fonte e chefe: `data/waves/catacombs.tres`.
+- Morvath: `scripts/game/boss.gd` (estados) e `scripts/core/boss_rules.gd` (fases e padrões, testados).
+- Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`).
+
+## Pendências conhecidas
+- Equilíbrio medido só com o robô (ele morre entre 2 e 3 minutos partindo do zero; vence Morvath em parte das vezes com
+  25 dons). Falta teste com gente. Os números estão todos em `data/`.
+- Arte gerada por código é provisória (o Daniel pode trocar por PNG em `art/png/`). Áudio sintetizado é provisório.
+- O spec fala em quatro paladinos; o cânone de 12/11 fala em um paladino do leão e quatro guardiões. Vale o que o Daniel decidir.
+- Toque (celular) ainda não tem botões na tela; `Controls.virtual` já é o ponto de entrada.
+- Desempenho: cerca de 2 ms por passo com 200 a 300 inimigos no PC; não medido em celular.
