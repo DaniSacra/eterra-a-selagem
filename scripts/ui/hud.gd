@@ -78,7 +78,7 @@ func _draw() -> void:
 	var x := 78.0
 	for b in game.boons.owned():
 		draw_rect(Rect2(x - 1, h - 17, 12, 12), dark)
-		draw_rect(Rect2(x, h - 16, 10, 10), Palette.c(b.color_family(), 3))
+		draw_rect(Rect2(x, h - 16, 10, 10), Palette.c(b.color_family(), 4))
 		_icon(b.icon, Vector2(x, h - 16))
 		for i in game.boons.level(b.id):
 			draw_rect(Rect2(x + 1 + i * 3, h - 5, 2, 2), Palette.c(b.color_family(), 0))

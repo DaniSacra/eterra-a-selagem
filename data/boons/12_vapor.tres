@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Boon" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("1")
+stat = &"steam_time"
+values = PackedFloat32Array(3.0)
+
+[resource]
+script = ExtResource("2")
+id = &"vapor"
+family = 4
+icon = 12
+max_level = 1
+requires = Array[StringName]([&"brasas", &"toque_geada"])
+mods = Array[ExtResource("1")]([SubResource("m0")])

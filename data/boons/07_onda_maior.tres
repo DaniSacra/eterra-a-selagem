@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Boon" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("1")
+stat = &"wave_size_pct"
+tag = &"wave"
+values = PackedFloat32Array(0.3, 0.6, 0.9)
+
+[sub_resource type="Resource" id="m1"]
+script = ExtResource("1")
+stat = &"damage_pct"
+tag = &"wave"
+values = PackedFloat32Array(0.2, 0.4, 0.6)
+
+[resource]
+script = ExtResource("2")
+id = &"onda_maior"
+family = 2
+icon = 7
+max_level = 3
+mods = Array[ExtResource("1")]([SubResource("m0"), SubResource("m1")])

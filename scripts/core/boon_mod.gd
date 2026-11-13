@@ -12,3 +12,14 @@ func value(level: int) -> float:
 	if level <= 0 or values.is_empty():
 		return 0.0
 	return values[mini(level, values.size()) - 1]
+
+
+## A value as the player reads it: percentages for *_pct and for the undead multiplier, decimal comma otherwise.
+static func format(stat_name: StringName, v: float) -> String:
+	if String(stat_name).ends_with("_pct"):
+		return "%d%%" % roundi(v * 100.0)
+	if stat_name == &"undead_mult":
+		return "%d%%" % roundi((v - 1.0) * 100.0)
+	if is_equal_approx(v, roundf(v)):
+		return str(roundi(v))
+	return ("%.1f" % v).replace(".", ",")

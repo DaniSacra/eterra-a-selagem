@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Boon" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2"]
+
+[sub_resource type="Resource" id="m0"]
+script = ExtResource("1")
+stat = &"damage_pct"
+tag = &"heavy"
+values = PackedFloat32Array(0.15, 0.3, 0.45)
+
+[sub_resource type="Resource" id="m1"]
+script = ExtResource("1")
+stat = &"reach_pct"
+tag = &"heavy"
+values = PackedFloat32Array(0.08, 0.16, 0.24)
+
+[resource]
+script = ExtResource("2")
+id = &"peso_inverno"
+family = 1
+icon = 5
+max_level = 3
+mods = Array[ExtResource("1")]([SubResource("m0"), SubResource("m1")])

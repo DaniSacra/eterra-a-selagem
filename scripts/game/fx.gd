@@ -18,6 +18,8 @@ const KINDS := {
 
 const FONT: Font = preload("res://art/fonts/eterra.fnt")
 const NUMBER_TIME := 0.55
+## Particle kind that matches each colour family.
+const FAMILY_BURST := {&"perigo": &"ember", &"noite": &"frost", &"luz": &"light", &"vida": &"guard", &"misterio": &"shadow"}
 
 var stop_left := 0.0
 var enemies: EnemySystem

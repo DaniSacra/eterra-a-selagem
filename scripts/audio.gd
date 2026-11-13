@@ -8,3 +8,7 @@ func play(_sound: StringName, _pitch: float = 1.0) -> void:
 
 func music(_track: StringName) -> void:
 	pass
+
+
+func apply_volumes() -> void:
+	pass
