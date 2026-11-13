@@ -32,6 +32,19 @@ func step(dt: float, game: Game) -> void:
 	pad.move = to.normalized() if to.length() > reach else Vector2.ZERO
 	if game.player.hp < game.player.max_hp * 0.4 and to.length() < 40.0:
 		pad.move = -to.normalized().rotated(0.6)
+	var danger := _danger(game)
+	if danger != Vector2.ZERO:
+		# standing on a warning: get out, rolling if there is a charge
+		pad.move = danger
+		if game.player.dodge_charges > 0 and game.player.state != Player.State.DODGE:
+			pad.press(&"dodge")
+		pad.release(&"heavy_attack")
+		_hold = 0.0
+		_queue = ""
+		return
+	var spring: Variant = game.fountain_target()
+	if spring != null and game.player.hp < game.player.max_hp * 0.6:
+		pad.move = ((spring as Vector2) - game.player.position).normalized()
 	if _hold > 0.0:
 		_hold -= dt
 		if _hold <= 0.0:
@@ -72,3 +85,32 @@ func _nearest(game: Game) -> Vector2:
 			best_d = d
 			best = e.pos
 	return best
+
+
+## Direction out of the enemy warning the paladin is standing on (zero when safe). Bullets nearby count too.
+func _danger(game: Game) -> Vector2:
+	var p := game.player.position
+	for z in game.ground.zones:
+		if z.kind != Ground.Kind.WARNING or z.life > 0.55:
+			continue
+		var grown := z.radius
+		z.radius += 6.0
+		var hit := Ground.inside(z, p)
+		z.radius = grown
+		if not hit:
+			continue
+		if z.shape == Ground.Shape.LINE:
+			var side := z.dir.orthogonal()
+			return side if (p - z.pos).dot(side) >= 0.0 else -side
+		var away := p - z.pos
+		return away.normalized() if away.length() > 0.5 else Vector2.RIGHT
+	for shot in game.projectiles.shots:
+		if shot.kind == Projectiles.Kind.WAVE:
+			continue
+		var to := p + Vector2(0, -7) - shot.pos
+		if to.length() < 22.0 and to.dot(shot.vel) > 0.0:
+			var side := shot.vel.normalized().orthogonal()
+			return side if to.dot(side) >= 0.0 else -side
+	if game.boss and game.boss.mist and p.distance_to(game.boss.center) > game.boss.mist.radius - 14.0:
+		return (game.boss.center - p).normalized()
+	return Vector2.ZERO

@@ -33,6 +33,8 @@ var hit_mark := 0
 var side := 1.0
 ## Free for the behaviour (attack counters, phase).
 var memo := 0
+## Takes no damage (the boss while it enters or changes phase).
+var invulnerable := false
 
 
 func helpless() -> bool:

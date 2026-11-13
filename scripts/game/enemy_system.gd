@@ -302,7 +302,7 @@ func _anim(sprite: StringName, anim: StringName) -> Dictionary:
 
 ## Damage to an enemy. Returns true when it died.
 func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, family: StringName = &"luz", show_number: bool = true) -> bool:
-	if not e.alive:
+	if not e.alive or e.invulnerable:
 		return false
 	e.hp -= amount
 	e.flash_t = FLASH_TIME

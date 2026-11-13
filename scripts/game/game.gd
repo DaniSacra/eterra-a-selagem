@@ -34,7 +34,13 @@ var xp := 0
 var kills := 0
 var fast := 1.0
 var _pending_levels := 0
+## Where Morvath fell: the tomb of the final scene is sealed there.
+var boss_fell_at := Vector2.ZERO
+## When set, the camera looks here instead of at the paladin (the final scene).
+var focus: Variant = null
 var _screen: Control
+var _boss_ref: Boss
+var boss_center := Vector2.ZERO
 var _fountain: AnimatedSprite2D
 var _fountain_used := false
 var _cam_pos := Vector2.ZERO
@@ -163,7 +169,10 @@ func _step(dt: float) -> void:
 	if mode == Mode.PLAY:
 		_step_waves(dt)
 	time = director.time
-	player.step(dt, Controls.aim(_screen_pos(player.position + Vector2(0, -8)), get_viewport().get_mouse_position()))
+	if mode == Mode.ENDING:
+		player.rest()
+	else:
+		player.step(dt, Controls.aim(_screen_pos(player.position + Vector2(0, -8)), get_viewport().get_mouse_position()))
 	enemies.target = player.position
 	enemies.target_alive = player.alive() and mode == Mode.PLAY
 	enemies.step(dt)
@@ -227,13 +236,17 @@ func _start_boss(id: StringName) -> void:
 	fx.shake(4.0)
 	boss = Boss.new()
 	boss.setup(self, enemies.def(id))
-	boss.defeated.connect(_on_boss_defeated)
+	boss.defeated.connect(func() -> void:
+		boss_center = _boss_ref.center
+		_on_boss_defeated())
+	_boss_ref = boss
 
 
 func _dev_start(what: String) -> void:
 	match what:
 		"boss":
 			director.time = director.table.boss_time() - 1.0
+			director.due_events()
 		"elite1":
 			_spawn_elite(&"knight")
 		"elite2":
@@ -242,6 +255,7 @@ func _dev_start(what: String) -> void:
 			_spawn_fountain()
 		_:
 			director.time = float(what)
+			director.due_events()
 
 
 # ---------- experience and gifts ----------
@@ -387,6 +401,7 @@ func _on_player_died() -> void:
 
 func _on_boss_defeated() -> void:
 	mode = Mode.ENDING
+	boss_fell_at = boss_center
 	Save.data.runs += 1
 	Save.data.wins += 1
 	var new_best := SaveData.add_best_time(Save.data, time)
@@ -425,8 +440,10 @@ func _close_screen() -> void:
 
 ## The elite or boss whose life bar is on screen, if any.
 func boss_enemy() -> Enemy:
+	if boss and boss.e and boss.e.alive:
+		return boss.e
 	for e in enemies.list:
-		if e.def.elite or e.def.behavior == EnemyDef.Behavior.BOSS:
+		if e.def.elite:
 			return e
 	return null
 
@@ -436,7 +453,8 @@ func _screen_pos(world_pos: Vector2) -> Vector2:
 
 
 func _follow(delta: float, shake: Vector2) -> void:
-	_cam_pos = _cam_pos.lerp(player.position + Vector2(0, -8), 1.0 - exp(-delta * 10.0))
+	var look: Vector2 = focus if focus != null else player.position + Vector2(0, -8)
+	_cam_pos = _cam_pos.lerp(look, 1.0 - exp(-delta * (3.0 if focus != null else 10.0)))
 	var b := arena.bounds()
 	var half := VIEW * 0.5
 	var target := Vector2(clampf(_cam_pos.x, b.position.x + half.x, b.end.x - half.x), clampf(_cam_pos.y, b.position.y + half.y, b.end.y - half.y))
@@ -457,7 +475,7 @@ func _shot() -> void:
 ## A line of numbers about the run, for smoke tests and tuning.
 func result() -> Dictionary:
 	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "kills": kills, "best_combo": combat.best_combo,
-		"enemies": enemies.count(), "mode": Mode.keys()[mode], "boons": boons.owned().size(), "damage": int(combat.damage_dealt), "moves": Save.data.moves.size(), "fps": Engine.get_frames_per_second()}
+		"enemies": enemies.count(), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0, "boons": boons.owned().size(), "damage": int(combat.damage_dealt), "moves": Save.data.moves.size(), "fps": Engine.get_frames_per_second()}
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

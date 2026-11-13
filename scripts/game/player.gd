@@ -244,6 +244,14 @@ func heal(amount: float) -> void:
 	hp = minf(max_hp, hp + amount)
 
 
+## Stands still, sword lowered (the final scene).
+func rest() -> void:
+	if state != State.DEAD:
+		_enter(State.MOVE)
+		_sprite.visible = true
+		_play(&"idle")
+
+
 func alive() -> bool:
 	return state != State.DEAD
 
