@@ -1,101 +1,94 @@
-[gd_resource type="Resource" script_class="WaveTable" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="WaveTable" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/wave_segment.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/core/wave_event.gd" id="2"]
-[ext_resource type="Script" path="res://scripts/core/wave_table.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/core/wave_event.gd" id="1_ucyw1"]
+[ext_resource type="Script" path="res://scripts/core/wave_table.gd" id="2_7f00i"]
+[ext_resource type="Script" path="res://scripts/core/wave_segment.gd" id="3_2xi8i"]
 
-[sub_resource type="Resource" id="s0"]
-script = ExtResource("1")
-from = 0.0
-until = 60.0
-enemies = Array[StringName]([&"skeleton"])
-weights = PackedFloat32Array(1.0)
-rate_start = 0.7
-rate_end = 1.5
-cap_start = 14
-cap_end = 36
-
-[sub_resource type="Resource" id="s1"]
-script = ExtResource("1")
-from = 60.0
-until = 180.0
-enemies = Array[StringName]([&"skeleton", &"archer"])
-weights = PackedFloat32Array(6.0, 1.0)
-rate_start = 1.5
-rate_end = 2.4
-cap_start = 36
-cap_end = 80
-
-[sub_resource type="Resource" id="s2"]
-script = ExtResource("1")
-from = 180.0
-until = 300.0
-enemies = Array[StringName]([&"skeleton", &"archer", &"wolf"])
-weights = PackedFloat32Array(5.0, 1.2, 1.6)
-rate_start = 2.4
-rate_end = 3.4
-cap_start = 80
-cap_end = 130
-
-[sub_resource type="Resource" id="s3"]
-script = ExtResource("1")
-from = 300.0
-until = 480.0
-enemies = Array[StringName]([&"skeleton", &"archer", &"wolf", &"hooded"])
-weights = PackedFloat32Array(5.0, 1.3, 1.6, 0.9)
-rate_start = 3.4
-rate_end = 4.6
-cap_start = 130
-cap_end = 190
-
-[sub_resource type="Resource" id="s4"]
-script = ExtResource("1")
-from = 480.0
-until = 600.0
-enemies = Array[StringName]([&"skeleton", &"archer", &"wolf", &"hooded"])
-weights = PackedFloat32Array(5.0, 1.4, 2.0, 1.1)
-rate_start = 4.6
-rate_end = 5.8
-cap_start = 190
-cap_end = 240
-
-[sub_resource type="Resource" id="s5"]
-script = ExtResource("1")
-from = 600.0
-until = 900.0
-enemies = Array[StringName]([&"skeleton", &"archer", &"wolf", &"hooded"])
-weights = PackedFloat32Array(5.0, 1.5, 2.2, 1.3)
-rate_start = 5.8
-rate_end = 7.5
-cap_start = 240
-cap_end = 300
-
-[sub_resource type="Resource" id="e0"]
-script = ExtResource("2")
-time = 300.0
-kind = 0
+[sub_resource type="Resource" id="Resource_j3rpj"]
+script = ExtResource("1_ucyw1")
 enemy = &"knight"
 
-[sub_resource type="Resource" id="e1"]
-script = ExtResource("2")
+[sub_resource type="Resource" id="Resource_cw08f"]
+script = ExtResource("1_ucyw1")
 time = 420.0
 kind = 1
 
-[sub_resource type="Resource" id="e2"]
-script = ExtResource("2")
+[sub_resource type="Resource" id="Resource_fjffi"]
+script = ExtResource("1_ucyw1")
 time = 600.0
-kind = 0
 enemy = &"priest"
 
-[sub_resource type="Resource" id="e3"]
-script = ExtResource("2")
+[sub_resource type="Resource" id="Resource_rws5c"]
+script = ExtResource("1_ucyw1")
 time = 900.0
 kind = 2
 enemy = &"morvath"
 
+[sub_resource type="Resource" id="Resource_yqx2x"]
+script = ExtResource("3_2xi8i")
+enemies = Array[StringName]([&"skeleton"])
+weights = PackedFloat32Array(1)
+rate_start = 1.4
+rate_end = 2.6
+cap_start = 25
+cap_end = 50
+
+[sub_resource type="Resource" id="Resource_e4b2g"]
+script = ExtResource("3_2xi8i")
+from = 60.0
+until = 180.0
+enemies = Array[StringName]([&"skeleton", &"archer", &"guard"])
+weights = PackedFloat32Array(8, 1, 0.6)
+rate_start = 2.6
+rate_end = 4.0
+cap_start = 50
+cap_end = 110
+
+[sub_resource type="Resource" id="Resource_vtcur"]
+script = ExtResource("3_2xi8i")
+from = 180.0
+until = 300.0
+enemies = Array[StringName]([&"skeleton", &"archer", &"guard", &"runner"])
+weights = PackedFloat32Array(7, 1.2, 0.8, 1.6)
+rate_start = 4.0
+rate_end = 5.5
+cap_start = 110
+cap_end = 170
+
+[sub_resource type="Resource" id="Resource_i6co3"]
+script = ExtResource("3_2xi8i")
+from = 300.0
+until = 480.0
+enemies = Array[StringName]([&"skeleton", &"archer", &"guard", &"runner", &"mage"])
+weights = PackedFloat32Array(7, 1.3, 1, 1.8, 0.9)
+rate_start = 5.5
+rate_end = 7.0
+cap_start = 170
+cap_end = 230
+
+[sub_resource type="Resource" id="Resource_mexgy"]
+script = ExtResource("3_2xi8i")
+from = 480.0
+until = 600.0
+enemies = Array[StringName]([&"skeleton", &"archer", &"guard", &"runner", &"mage"])
+weights = PackedFloat32Array(7, 1.4, 1.2, 2, 1.1)
+rate_start = 7.0
+rate_end = 8.5
+cap_start = 230
+cap_end = 270
+
+[sub_resource type="Resource" id="Resource_p01y1"]
+script = ExtResource("3_2xi8i")
+from = 600.0
+until = 900.0
+enemies = Array[StringName]([&"skeleton", &"archer", &"guard", &"runner", &"mage"])
+weights = PackedFloat32Array(7, 1.5, 1.4, 2.2, 1.3)
+rate_start = 8.5
+rate_end = 10.0
+cap_start = 270
+cap_end = 300
+
 [resource]
-script = ExtResource("3")
-segments = Array[ExtResource("1")]([SubResource("s0"), SubResource("s1"), SubResource("s2"), SubResource("s3"), SubResource("s4"), SubResource("s5")])
-events = Array[ExtResource("2")]([SubResource("e0"), SubResource("e1"), SubResource("e2"), SubResource("e3")])
-hp_per_minute = 0.18
-damage_per_minute = 0.03
+script = ExtResource("2_7f00i")
+segments = Array[ExtResource("3_2xi8i")]([SubResource("Resource_yqx2x"), SubResource("Resource_e4b2g"), SubResource("Resource_vtcur"), SubResource("Resource_i6co3"), SubResource("Resource_mexgy"), SubResource("Resource_p01y1")])
+events = Array[ExtResource("1_ucyw1")]([SubResource("Resource_j3rpj"), SubResource("Resource_cw08f"), SubResource("Resource_fjffi"), SubResource("Resource_rws5c")])

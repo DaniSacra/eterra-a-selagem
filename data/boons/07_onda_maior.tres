@@ -1,24 +1,20 @@
-[gd_resource type="Resource" script_class="Boon" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="Boon" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_qneyt"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_5n0nr"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_tkjt8"]
 
-[sub_resource type="Resource" id="m0"]
-script = ExtResource("1")
-stat = &"wave_size_pct"
-tag = &"wave"
-values = PackedFloat32Array(0.3, 0.6, 0.9)
-
-[sub_resource type="Resource" id="m1"]
-script = ExtResource("1")
-stat = &"damage_pct"
-tag = &"wave"
-values = PackedFloat32Array(0.2, 0.4, 0.6)
+[sub_resource type="Resource" id="Resource_vqehr"]
+script = ExtResource("3_tkjt8")
+kind = 3
+cooldown = PackedFloat32Array(5, 4.5, 4)
+damage = PackedFloat32Array(16, 22, 30)
+count = PackedFloat32Array(5, 8, 11)
+radius = PackedFloat32Array(12, 13, 14)
+status_power = PackedFloat32Array(0)
 
 [resource]
-script = ExtResource("2")
+script = ExtResource("2_5n0nr")
 id = &"onda_maior"
-family = 2
 icon = 7
-max_level = 3
-mods = Array[ExtResource("1")]([SubResource("m0"), SubResource("m1")])
+skill = SubResource("Resource_vqehr")

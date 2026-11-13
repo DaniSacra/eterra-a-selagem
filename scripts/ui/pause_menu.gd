@@ -4,23 +4,18 @@ extends Control
 
 signal resumed
 
-var _game: Game
 var _main: Control
 var _sub: Control
 
 
-func open(game: Game) -> void:
-	_game = game
+func open() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(UiKit.veil())
 	_main = Control.new()
 	_main.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_main)
-	var v := UiKit.column(_main, 110.0)
-	var title := UiKit.label(T.t(&"pause_title"), Palette.c(&"luz", 0), UiKit.BIG)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(title)
+	var v := UiKit.column(_main, 340.0, 0.65)
+	v.add_child(UiKit.title(T.t(&"pause_title"), 44))
 	var first := UiKit.button(T.t(&"pause_continue"), func() -> void: resumed.emit())
 	v.add_child(first)
 	v.add_child(UiKit.button(T.t(&"pause_moves"), func() -> void: _show(MovesScreen.new())))

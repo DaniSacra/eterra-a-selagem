@@ -11,19 +11,23 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export var input: In = In.LIGHT
 ## Text key of the move's name, shown when it lands and in the Golpes screen. Empty for a plain link of a chain.
 @export var title: StringName
+## Animation of the paladin's model, how fast it plays and where it starts (seconds into the clip).
 @export var anim: StringName
+@export var anim_speed := 1.0
+@export var anim_from := 0.0
 ## What gifts (dons) look at to modify this move: light, heavy, spin, wave, finisher...
 @export var tags: Array[StringName] = []
 
 @export_group("Hit")
 @export var damage := 10.0
 @export var shape: Shape = Shape.ARC
-## How far the hit reaches from the paladin, in pixels.
-@export var reach := 26.0
-## Arc: opening in degrees. Line: thickness in pixels. Circle: unused.
-@export var width := 100.0
-@export var knockback := 40.0
-## Pixels the paladin steps forward during the windup.
+## How far the hit reaches from the paladin, in meters.
+@export var reach := 3.0
+## Arc: opening in degrees. Line: thickness in meters. Circle: unused.
+@export var width := 140.0
+## Push given to what it hits, in meters per second.
+@export var knockback := 8.0
+## Meters the paladin steps forward during the windup.
 @export var lunge := 0.0
 
 @export_group("Timing")

@@ -13,20 +13,15 @@ config/custom_user_dir_name="EterraASelagem"
 
 Save="*res://scripts/save.gd"
 T="*res://scripts/text.gd"
-Art="*res://art/art_bank.gd"
 Controls="*res://scripts/controls.gd"
 Audio="*res://scripts/audio.gd"
 
 [display]
 
-window/size/viewport_width=320
-window/size/viewport_height=180
-window/size/window_width_override=1280
-window/size/window_height_override=720
-window/stretch/mode="viewport"
-window/stretch/aspect="keep"
-window/stretch/aspect.mobile="expand"
-window/stretch/scale_mode="integer"
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/stretch/mode="canvas_items"
+window/stretch/aspect="expand"
 window/handheld/orientation=0
 
 [editor_plugins]
@@ -35,16 +30,19 @@ enabled=PackedStringArray("res://addons/gut/plugin.cfg")
 
 [gui]
 
-theme/custom_font="res://art/fonts/eterra.fnt"
-theme/default_font_size=11
-theme/default_font_antialiasing=0
-theme/default_font_hinting=0
-theme/default_font_subpixel_positioning=0
+theme/custom_font="res://assets/fonts/AlegreyaSans-Regular.ttf"
+theme/default_font_size=20
 
 [rendering]
 
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-textures/canvas_textures/default_texture_filter=0
-2d/snap/snap_2d_transforms_to_pixel=true
+anti_aliasing/quality/msaa_3d=2
 environment/defaults/default_clear_color=Color(0.024, 0.016, 0.031, 1)
+
+[shader_globals]
+
+hero_pos={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}

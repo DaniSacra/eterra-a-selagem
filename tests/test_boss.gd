@@ -40,7 +40,7 @@ func test_morvath_is_an_undead_heavy_boss_with_art_for_every_attack() -> void:
 	assert_eq(def.behavior, EnemyDef.Behavior.BOSS)
 	assert_true(def.undead)
 	assert_true(def.heavy)
-	var anims: Dictionary = Art.def(&"morvath").anims
+	var anims: Dictionary = (load("res://assets/baked/morvath.res") as BakedModel).anims
 	for a in ["idle", "walk", "slash1", "slash2", "slash3", "dash_windup", "dash", "summon", "rain", "volley", "stunned", "roar", "death"]:
 		assert_true(anims.has(a), a)
 

@@ -18,6 +18,8 @@ var using_pad := false
 ## Set by the test bot (or, later, touch buttons): overrides the devices while not null.
 var virtual: VirtualPad = null
 var _last_aim := Vector2.RIGHT
+## Presses seen since the game last stepped (kept through hit stop frames, cleared by flush()).
+var _latched: Dictionary = {}
 
 
 class VirtualPad:
@@ -119,6 +121,17 @@ func _event_from(entry: Dictionary) -> InputEvent:
 	return ev
 
 
+func _process(_delta: float) -> void:
+	for action in ACTIONS:
+		if Input.is_action_just_pressed(action):
+			_latched[action] = true
+
+
+## The game stepped: presses so far have been seen.
+func flush() -> void:
+	_latched.clear()
+
+
 func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > STICK_DEADZONE):
 		using_pad = true
@@ -135,7 +148,7 @@ func move() -> Vector2:
 func pressed(action: StringName) -> bool:
 	if virtual:
 		return virtual.tapped.has(action)
-	return Input.is_action_just_pressed(action)
+	return _latched.has(action) or Input.is_action_just_pressed(action)
 
 
 func released(action: StringName) -> bool:
@@ -148,6 +161,11 @@ func held(action: StringName) -> bool:
 	if virtual:
 		return virtual.held.has(action)
 	return Input.is_action_pressed(action)
+
+
+## True when the aim comes from the mouse pointer (no soft lock then: the player points exactly).
+func aims_with_mouse() -> bool:
+	return virtual == null and not using_pad
 
 
 ## Aim direction for someone standing at a screen position: the mouse, or the right stick.

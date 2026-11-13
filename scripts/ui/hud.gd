@@ -1,138 +1,231 @@
 class_name Hud
 extends Control
-## In-run interface, drawn in palette colours at the 320x180 base: life and dodge charges at the bottom left,
-## experience along the top, clock, gifts, combo counter, the name of the move just landed and the boss bar.
-
-const FONT: Font = preload("res://art/fonts/eterra.fnt")
-const TITLE_TIME := 1.3
+## What stays on screen during the run: life and dodges (bottom left), experience and level (top), the clock and the
+## kills (top), the boss's life (top centre), the combo counter and the move name (right), the gifts (bottom centre).
 
 var game: Game
-var _title := ""
-var _title_t := 0.0
-var _title_family: StringName = &"luz"
+var _hp_fill: ColorRect
+var _hp_back: ColorRect
+var _hp_text: Label
+var _dodges: HBoxContainer
+var _xp_fill: ColorRect
+var _level: Label
+var _clock: Label
+var _kills: Label
+var _boss_box: VBoxContainer
+var _boss_name: Label
+var _boss_fill: ColorRect
+var _boss_back: ColorRect
+var _combo: Label
+var _combo_word: Label
+var _move: Label
+var _notice: Label
+var _icons: HBoxContainer
+var _arrow: Label
+var _hp_shown := 1.0
 var _combo_pop := 0.0
-var _notice := ""
+var _move_t := 0.0
 var _notice_t := 0.0
+var _icon_count := -1
 
 
 func _ready() -> void:
+	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# experience: a thin gold line across the top
+	var xp_back := _rect(Color(0.05, 0.03, 0.06, 0.85), Control.PRESET_TOP_WIDE)
+	xp_back.offset_bottom = 8
+	_xp_fill = _rect(Color(1.0, 0.8, 0.35), Control.PRESET_TOP_LEFT)
+	_xp_fill.size = Vector2(0, 8)
+	_level = _label("", UiKit.GOLD, 26, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(24, 16))
+	_clock = _label("0:00", UiKit.PALE, 38, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 12))
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_kills = _label("", UiKit.PALE, 24, UiKit.BOLD_FONT, Control.PRESET_TOP_RIGHT, Vector2(-24, 18))
+	_kills.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	# life, bottom left
+	_hp_back = _rect(Color(0.04, 0.02, 0.04, 0.9), Control.PRESET_BOTTOM_LEFT)
+	_place(_hp_back, Control.PRESET_BOTTOM_LEFT, Vector2(24, -46), Vector2(340, 26))
+	var hp_lag := ColorRect.new()
+	hp_lag.color = Color(1.0, 0.85, 0.7, 0.5)
+	hp_lag.name = "Lag"
+	_hp_back.add_child(hp_lag)
+	_hp_fill = ColorRect.new()
+	_hp_fill.color = Color(0.78, 0.14, 0.12)
+	_hp_back.add_child(_hp_fill)
+	var shine := ColorRect.new()
+	shine.color = Color(1, 1, 1, 0.12)
+	shine.size = Vector2(340, 8)
+	_hp_back.add_child(shine)
+	_hp_text = UiKit.label("", UiKit.PALE, 20, UiKit.BOLD_FONT)
+	_hp_text.size = Vector2(340, 26)
+	_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_hp_back.add_child(_hp_text)
+	_dodges = HBoxContainer.new()
+	add_child(_dodges)
+	_place(_dodges, Control.PRESET_BOTTOM_LEFT, Vector2(24, -24), Vector2(200, 8))
+	# boss
+	_boss_box = VBoxContainer.new()
+	_boss_box.custom_minimum_size = Vector2(640, 0)
+	_boss_box.visible = false
+	add_child(_boss_box)
+	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, 62), Vector2(640, 50))
+	_boss_name = UiKit.title("", 24, Color(0.9, 0.75, 1.0))
+	_boss_box.add_child(_boss_name)
+	_boss_back = ColorRect.new()
+	_boss_back.color = Color(0.04, 0.02, 0.06, 0.9)
+	_boss_back.custom_minimum_size = Vector2(640, 14)
+	_boss_box.add_child(_boss_back)
+	_boss_fill = ColorRect.new()
+	_boss_fill.color = Color(0.62, 0.22, 0.85)
+	_boss_back.add_child(_boss_fill)
+	# combo, right side
+	_combo = _label("", UiKit.GOLD, 64, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -120))
+	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_combo_word = _label(T.t(&"hud_combo"), UiKit.PALE, 22, UiKit.BOLD_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -44))
+	_combo_word.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_move = _label("", Color(1.0, 0.92, 0.7), 30, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -10))
+	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_combo.visible = false
+	_combo_word.visible = false
+	_notice = _label("", UiKit.PALE, 30, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 130))
+	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_icons = HBoxContainer.new()
+	_icons.add_theme_constant_override(&"separation", 8)
+	_icons.alignment = BoxContainer.ALIGNMENT_CENTER
+	add_child(_icons)
+	_place(_icons, Control.PRESET_CENTER_BOTTOM, Vector2(0, -16), Vector2(900, 64))
+	_arrow = _label("", Color(1.0, 0.9, 0.6), 22, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
 
 
-func show_move(node: ComboNode, family: StringName) -> void:
-	_title = T.t(node.title)
-	_title_t = TITLE_TIME
-	_title_family = family
+## Puts a control of a given size at a corner or edge of the screen, moved by offset from there.
+func _place(c: Control, preset: Control.LayoutPreset, offset: Vector2, size_px: Vector2) -> void:
+	c.size = size_px
+	c.set_anchors_and_offsets_preset(preset, Control.PRESET_MODE_KEEP_SIZE)
+	c.position += offset
 
 
-func show_notice(text: String, time: float = 3.0) -> void:
-	_notice = text
-	_notice_t = time
+func _rect(color: Color, preset: Control.LayoutPreset) -> ColorRect:
+	var r := ColorRect.new()
+	r.color = color
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(r)
+	r.set_anchors_and_offsets_preset(preset)
+	return r
 
 
-func on_combo(count: int) -> void:
-	if count > 0:
-		_combo_pop = 0.12
+func _label(text: String, color: Color, size: int, font: Font, preset: Control.LayoutPreset, offset: Vector2) -> Label:
+	var l := UiKit.label(text, color, size, font)
+	add_child(l)
+	l.set_anchors_and_offsets_preset(preset)
+	l.position += offset
+	if preset in [Control.PRESET_TOP_RIGHT, Control.PRESET_CENTER_RIGHT, Control.PRESET_BOTTOM_RIGHT]:
+		l.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	return l
 
 
 func _process(delta: float) -> void:
-	_title_t = maxf(0.0, _title_t - delta)
-	_combo_pop = maxf(0.0, _combo_pop - delta)
-	_notice_t = maxf(0.0, _notice_t - delta)
-	queue_redraw()
-
-
-func _draw() -> void:
-	var w := size.x
-	var h := size.y
-	var dark := Palette.c(&"perigo", 4)
-	var p := game.player
-	# experience along the top
-	draw_rect(Rect2(0, 0, w, 4), Palette.c(&"noite", 4))
-	draw_rect(Rect2(0, 0, w * game.xp_ratio(), 3), Palette.c(&"luz", 1))
-	draw_rect(Rect2(0, 0, w * game.xp_ratio(), 1), Palette.c(&"luz", 0))
-	_text(T.t(&"hud_level", {"n": game.level}), Vector2(w - 4, 13), Palette.c(&"luz", 0), HORIZONTAL_ALIGNMENT_RIGHT)
-	_text(SaveData.format_time(game.time), Vector2(w * 0.5, 13), Palette.c(&"neve", 0), HORIZONTAL_ALIGNMENT_CENTER)
-	# life
-	var bar := Rect2(6, h - 13, 64, 7)
-	draw_rect(bar.grow(1), dark)
-	draw_rect(bar, Palette.c(&"perigo", 3))
-	var ratio := p.hp / p.max_hp
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), Palette.c(&"perigo", 1))
-	draw_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, 2)), Palette.c(&"perigo", 0))
-	_text("%d" % ceili(p.hp), bar.position + Vector2(bar.size.x * 0.5, 7), Palette.c(&"neve", 0), HORIZONTAL_ALIGNMENT_CENTER)
-	# dodge charges, as small diamonds over the life bar
-	for i in p.dodge_max:
-		var c := Vector2(10 + i * 9, h - 20)
-		var full := i < p.dodge_charges
-		_diamond(c, 4.0, dark)
-		_diamond(c, 3.0, Palette.c(&"noite", 0 if full else 3))
-		if not full and i == p.dodge_charges:
-			draw_rect(Rect2(c.x - 1, c.y + 2 - 4.0 * p.recharge_ratio(), 2, 4.0 * p.recharge_ratio()), Palette.c(&"noite", 1))
-	if p.shield_cooldown > 0.0:
-		var c := Vector2(10 + p.dodge_max * 9 + 4, h - 20)
-		draw_circle(c, 4.0, dark)
-		draw_circle(c, 3.0, Palette.c(&"vida", 1 if p.shield_ready else 4))
-	# gifts
-	var x := 78.0
-	for b in game.boons.owned():
-		draw_rect(Rect2(x - 1, h - 17, 12, 12), dark)
-		draw_rect(Rect2(x, h - 16, 10, 10), Palette.c(b.color_family(), 4))
-		_icon(b.icon, Vector2(x, h - 16))
-		for i in game.boons.level(b.id):
-			draw_rect(Rect2(x + 1 + i * 3, h - 5, 2, 2), Palette.c(b.color_family(), 0))
-		x += 14.0
-	# combo counter
-	if game.combat.combo > 1:
-		var big := 33 if _combo_pop > 0.0 else 22
-		var col := Palette.c(&"luz", 0 if game.combat.combo < 20 else 1)
-		_text(str(game.combat.combo), Vector2(w - 8, 62), col, HORIZONTAL_ALIGNMENT_RIGHT, big)
-		_text(T.t(&"hud_combo"), Vector2(w - 8, 72), Palette.c(&"luz", 2), HORIZONTAL_ALIGNMENT_RIGHT)
-	if _title_t > 0.0:
-		var rise := 4.0 * (1.0 - _title_t / TITLE_TIME)
-		_text(_title, Vector2(w * 0.5, h - 36 - rise), Palette.c(_title_family, 0 if _title_t > 0.25 else 2), HORIZONTAL_ALIGNMENT_CENTER, 22)
-	if _notice_t > 0.0:
-		_text(_notice, Vector2(w * 0.5, 44), Palette.c(&"luz", 0), HORIZONTAL_ALIGNMENT_CENTER)
-	_draw_boss(w)
-
-
-func _draw_boss(w: float) -> void:
-	var boss: Enemy = game.boss_enemy()
-	if boss == null:
+	if game == null or game.player == null:
 		return
-	var dark := Palette.c(&"perigo", 4)
-	var bw := 180.0 if boss.def.behavior == EnemyDef.Behavior.BOSS else 110.0
-	var bar := Rect2((w - bw) * 0.5, 22, bw, 5)
-	_text(T.t(boss.def.name_key), Vector2(w * 0.5, 21), Palette.c(&"misterio", 0), HORIZONTAL_ALIGNMENT_CENTER)
-	draw_rect(bar.grow(1), dark)
-	draw_rect(bar, Palette.c(&"misterio", 4))
-	var ratio := clampf(boss.hp / boss.max_hp, 0.0, 1.0)
-	draw_rect(Rect2(bar.position, Vector2(bw * ratio, 5)), Palette.c(&"misterio", 1))
-	draw_rect(Rect2(bar.position, Vector2(bw * ratio, 1)), Palette.c(&"misterio", 0))
-	if boss.def.behavior == EnemyDef.Behavior.BOSS:
-		for mark: float in [0.6, 0.25]:
-			draw_rect(Rect2(bar.position.x + bw * mark, bar.position.y - 1, 1, 7), dark)
+	var p := game.player
+	var w := get_viewport_rect().size.x
+	_xp_fill.size.x = w * game.xp_ratio()
+	_level.text = T.t(&"hud_level", {"n": game.level})
+	_clock.text = SaveData.format_time(game.time)
+	_kills.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
+	var ratio := clampf(p.hp / p.max_hp, 0.0, 1.0)
+	_hp_shown = move_toward(_hp_shown, ratio, delta * 0.5) if _hp_shown > ratio else ratio
+	_hp_fill.size = Vector2(340 * ratio, 26)
+	(_hp_back.get_node("Lag") as ColorRect).size = Vector2(340 * _hp_shown, 26)
+	_hp_text.text = "%d / %d" % [ceili(p.hp), roundi(p.max_hp)]
+	_update_dodges(p)
+	var b := game.boss_enemy()
+	_boss_box.visible = b != null
+	if b:
+		_boss_name.text = T.t(b.def.name_key)
+		_boss_fill.size = Vector2(640 * clampf(b.hp / b.max_hp, 0.0, 1.0), 14)
+	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
+	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
+	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
+	_move_t -= delta
+	_move.modulate.a = clampf(_move_t / 0.4, 0.0, 1.0)
+	_notice_t -= delta
+	_notice.modulate.a = clampf(_notice_t / 0.6, 0.0, 1.0)
+	_update_icons()
+	_update_arrow()
 
 
-func _icon(frame: int, at: Vector2) -> void:
-	var tex := Art.tex(&"icons")
-	var s := Art.size(&"icons")
-	draw_texture_rect_region(tex, Rect2(at, s), Rect2(frame * s.x, 0, s.x, s.y))
+func _update_dodges(p: Player) -> void:
+	while _dodges.get_child_count() < p.dodge_max:
+		var pip := ColorRect.new()
+		pip.custom_minimum_size = Vector2(36, 8)
+		_dodges.add_child(pip)
+	while _dodges.get_child_count() > p.dodge_max:
+		_dodges.get_child(_dodges.get_child_count() - 1).free()
+	for i in _dodges.get_child_count():
+		(_dodges.get_child(i) as ColorRect).color = Color(0.5, 0.85, 1.0) if i < p.dodge_charges else Color(0.15, 0.2, 0.28, 0.8)
 
 
-func _diamond(c: Vector2, r: float, color: Color) -> void:
-	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)]), color)
+func _update_icons() -> void:
+	var owned := game.boons.owned()
+	if owned.size() != _icon_count:
+		_icon_count = owned.size()
+		for c in _icons.get_children():
+			c.queue_free()
+		for b in owned:
+			_icons.add_child(BoonIcon.new().setup(b, 52))
+	var i := 0
+	for c in _icons.get_children():
+		if c.is_queued_for_deletion():
+			continue
+		var icon := c as BoonIcon
+		icon.level = game.boons.level(icon.boon.id)
+		icon.max_level = icon.boon.max_level
+		if icon.boon.skill and icon.boon.skill.kind != SkillDef.Kind.ORBIT:
+			var t := game.skills.timer(icon.boon)
+			icon.cooldown = clampf(t.x / maxf(t.y, 0.01), 0.0, 1.0)
+		icon.queue_redraw()
+		i += 1
 
 
-## Text with a one-pixel dark drop, aligned around a point.
-func _text(text: String, at: Vector2, color: Color, align: HorizontalAlignment = HORIZONTAL_ALIGNMENT_LEFT, font_size: int = 11) -> void:
-	var tw := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var p := at
-	if align == HORIZONTAL_ALIGNMENT_CENTER:
-		p.x -= tw * 0.5
-	elif align == HORIZONTAL_ALIGNMENT_RIGHT:
-		p.x -= tw
-	p = p.round()
-	draw_string(FONT, p + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Palette.c(&"perigo", 4))
-	draw_string(FONT, p, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+## Where the light fountain is, when it is off screen.
+func _update_arrow() -> void:
+	var at: Variant = game.fountain_target()
+	if at == null:
+		_arrow.visible = false
+		return
+	var world := Vector3((at as Vector2).x, 1.0, (at as Vector2).y)
+	var sp := game.camera.unproject_position(world)
+	var rect := get_viewport_rect().grow(-60)
+	if rect.has_point(sp):
+		_arrow.visible = false
+		return
+	_arrow.visible = true
+	var c := rect.get_center()
+	var d := (sp - c)
+	var k := minf(absf(rect.size.x * 0.5 / d.x) if d.x != 0.0 else INF, absf(rect.size.y * 0.5 / d.y) if d.y != 0.0 else INF)
+	# the label sits on the edge of the screen in the fountain's direction
+	_arrow.text = "« %s »" % T.t(&"hud_fountain")
+	_arrow.position = c + d * k - _arrow.size * 0.5
+
+
+func on_combo(count: int) -> void:
+	_combo.visible = count >= 3
+	_combo_word.visible = count >= 3
+	_combo.text = str(count)
+	_combo_pop = 1.0
+
+
+func show_move(node: ComboNode, color: Color) -> void:
+	_move.text = T.t(node.title)
+	_move.add_theme_color_override(&"font_color", color.lightened(0.35))
+	_move_t = 1.4
+
+
+func show_notice(text: String, time: float = 2.5) -> void:
+	_notice.text = text
+	_notice.size = Vector2.ZERO
+	_notice.position.x = (get_viewport_rect().size.x - _notice.get_combined_minimum_size().x) * 0.5
+	_notice_t = time

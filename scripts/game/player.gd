@@ -1,272 +1,293 @@
 class_name Player
-extends Node2D
-## The paladin who leads the four. Simple state machine; movement is manual (no physics body).
-## Attacks come from the combo tree (data) through a ComboRunner.
+extends Node3D
+## The paladin. Moves on the floor plane (pos is (x, z) in meters), rolls out of danger, and fights with the combo
+## tree: the ComboRunner decides which move comes next, this node plays it (animation, lunge) and reports when it lands.
 
-enum State { MOVE, ATTACK, CHARGE, DODGE, HURT, DEAD }
-
-const SPEED := 74.0
-const RADIUS := 5.0
-const DODGE_SPEED := 235.0
-const DODGE_TIME := 0.2
-const DODGE_INVULN := 0.26
-const DODGE_RECHARGE := 1.5
-const BASE_DODGES := 2
-const MAX_HP := 100.0
-const HURT_TIME := 0.22
-const HURT_INVULN := 0.9
-const CHARGE_WALK := 0.35
-const COMBO_TREE := "res://data/combos/paladin.tres"
-
-signal dodged(dir: Vector2)
-signal died
 signal struck(node: ComboNode, origin: Vector2, dir: Vector2)
 signal move_shown(node: ComboNode)
+signal was_hurt(amount: float)
+signal died
+signal dodged(dir: Vector2)
 signal shield_broke
-signal was_hurt
+
+enum State { MOVE, DODGE, HURT, DEAD, REST }
+
+const MODEL := "res://assets/models/characters/Knight.glb"
+const HIDDEN_PARTS: Array[String] = ["1H_Sword_Offhand", "Rectangle_Shield", "Round_Shield", "Spike_Shield", "2H_Sword"]
+const COMBOS := "res://data/combos/paladin.tres"
+const RADIUS := 0.5
+const MAX_HP := 100.0
+const SPEED := 6.8
+const ATTACK_DRIFT := 0.22
+const DODGE_SPEED := 24.0
+const DODGE_TIME := 0.2
+const DODGE_IFRAMES := 0.3
+const BASE_DODGES := 2
+const DODGE_RECHARGE := 1.1
+const HURT_TIME := 0.18
+const HURT_INVULN := 0.8
+const TURN := 18.0
+## Soft lock: a swing without a clear aim turns to the closest enemy in front, within this distance.
+const ASSIST_RANGE := 6.0
+const LOOPS: Array[StringName] = [&"Idle", &"Running_A"]
+const FLASH := preload("res://assets/shaders/flash.gdshader")
 
 var arena: Arena
+var horde: Horde
 var fx: Fx
-var combo: ComboRunner
+var pos := Vector2.ZERO
+var facing := Vector2.DOWN
 var state := State.MOVE
 var hp := MAX_HP
 var max_hp := MAX_HP
-var aim := Vector2.RIGHT
 var dodge_max := BASE_DODGES
 var dodge_charges := BASE_DODGES
-var recharge_time := DODGE_RECHARGE
-var invuln := 0.0
-## Vigília gift: seconds the shield takes to come back (0 = no shield).
+var speed_bonus := 0.0
+var damage_reduction := 0.0
 var shield_cooldown := 0.0
 var shield_ready := false
-var _shield_t := 0.0
+var runner: ComboRunner
+var tree: ComboTree
+var invuln := 0.0
+var charging := false
+var charge_t := 0.0
 var _state_t := 0.0
-var _recharge_t := 0.0
-var _dodge_dir := Vector2.RIGHT
-var _attack_dir := Vector2.RIGHT
-var _lunge_speed := 0.0
-var _charged := false
-var _sprite: AnimatedSprite2D
-var _light: PointLight2D
+var _dodge_dir := Vector2.DOWN
+var _dodge_recharge := 0.0
+var _lunge := Vector2.ZERO
+var _push := Vector2.ZERO
+var _shield_t := 0.0
+var _flash := 0.0
+var _model: Node3D
+var _anim: AnimationPlayer
+var _overlay: ShaderMaterial
+var _current_anim := &""
+var _light: OmniLight3D
 
 
 func _ready() -> void:
-	_sprite = Art.animated(&"paladin")
-	add_child(_sprite)
-	_sprite.play(&"idle")
-	_light = Arena.make_light(Color(1.0, 0.93, 0.75), 84.0, 0.5)
-	_light.position = Vector2(0, -8)
+	tree = load(COMBOS)
+	runner = ComboRunner.new(tree)
+	runner.move_started.connect(_on_move_started)
+	runner.move_hit.connect(func(node: ComboNode) -> void: struck.emit(node, pos, facing))
+	_model = (load(MODEL) as PackedScene).instantiate()
+	add_child(_model)
+	_overlay = ShaderMaterial.new()
+	_overlay.shader = FLASH
+	_prepare(_model)
+	_anim = PoseBaker.find_player(_model)
+	_anim.playback_default_blend_time = 0.08
+	for a in LOOPS:
+		_anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
+	_play(&"Idle")
+	_light = OmniLight3D.new()
+	_light.position = Vector3(0, 3.2, 0.6)
+	_light.light_color = Color(1.0, 0.78, 0.5)
+	_light.light_energy = 2.4
+	_light.omni_range = 12.0
+	_light.omni_attenuation = 1.2
+	_light.light_cull_mask = ~Arena.CROWD_LAYER
 	add_child(_light)
-	combo = ComboRunner.new(load(COMBO_TREE))
-	combo.move_started.connect(_on_move_started)
-	combo.move_hit.connect(_on_move_hit)
-	combo.move_ended.connect(_on_move_ended)
 
 
-func step(dt: float, aim_dir: Vector2) -> void:
-	aim = aim_dir
-	invuln = maxf(0.0, invuln - dt)
-	_state_t += dt
-	_recharge(dt)
-	_step_shield(dt)
-	if state != State.DEAD:
-		_read_attacks()
-		combo.step(dt)
-	match state:
-		State.MOVE:
-			_step_move(dt)
-		State.ATTACK:
-			_step_attack(dt)
-		State.CHARGE:
-			_step_charge(dt)
-		State.DODGE:
-			_step_dodge(dt)
-		State.HURT:
-			if _state_t >= HURT_TIME:
-				_enter(State.MOVE)
-	_sprite.visible = invuln <= 0.0 or state == State.DODGE or fmod(invuln, 0.12) > 0.05
-	_light.energy = 0.5 + (0.25 if state == State.CHARGE and _charged else 0.0)
-
-
-func _read_attacks() -> void:
-	if state == State.HURT:
-		return
-	if Controls.pressed(&"light_attack"):
-		combo.press(ComboNode.In.LIGHT)
-	if Controls.pressed(&"heavy_attack"):
-		if state == State.MOVE and combo.charge_available():
-			_enter(State.CHARGE)
-			_charged = false
-		elif state != State.CHARGE:
-			combo.press(ComboNode.In.HEAVY)
-	if state == State.CHARGE and not Controls.held(&"heavy_attack"):
-		_enter(State.MOVE)
-		combo.press(ComboNode.In.CHARGE if _charged else ComboNode.In.HEAVY)
-		combo.step(0.0)
-
-
-func _step_move(dt: float) -> void:
-	var move := Controls.move()
-	if Controls.pressed(&"dodge") and try_dodge(move):
-		return
-	_walk(move, dt)
-	_face(aim.x)
-	_play(&"run" if move.length() > 0.1 else &"idle")
-
-
-func _step_attack(dt: float) -> void:
-	if Controls.pressed(&"dodge") and combo.can_cancel() and try_dodge(Controls.move()):
-		return
-	if combo.phase == ComboRunner.Phase.WINDUP:
-		position = arena.resolve(position + _attack_dir * _lunge_speed * dt, RADIUS)
-
-
-func _step_charge(dt: float) -> void:
-	var move := Controls.move()
-	if Controls.pressed(&"dodge") and try_dodge(move):
-		return
-	_walk(move, dt, CHARGE_WALK)
-	_face(aim.x)
-	_play(&"charge")
-	if not _charged and _state_t >= combo.tree.charge_time:
-		_charged = true
-		fx.burst(&"light", position + Vector2(0, -10))
-		fx.ring(position + Vector2(0, -4), 14.0, &"luz", 0.2)
-		Audio.play(&"charged")
-
-
-func _walk(move: Vector2, dt: float, factor: float = 1.0) -> void:
-	position = arena.resolve(position + move * SPEED * factor * dt, RADIUS)
-
-
-func try_dodge(move: Vector2) -> bool:
-	if dodge_charges <= 0:
-		return false
-	dodge_charges -= 1
-	_dodge_dir = move.normalized() if move.length() > 0.1 else aim
-	invuln = maxf(invuln, DODGE_INVULN)
-	combo.on_dodge()
-	_enter(State.DODGE)
-	_face(_dodge_dir.x)
-	_play(&"dodge")
-	fx.burst(&"dust", position, -_dodge_dir)
-	Audio.play(&"dodge")
-	dodged.emit(_dodge_dir)
-	return true
-
-
-func _step_dodge(dt: float) -> void:
-	position = arena.resolve(position + _dodge_dir * DODGE_SPEED * dt, RADIUS)
-	if _state_t >= DODGE_TIME:
-		fx.burst(&"dust", position, _dodge_dir)
-		combo.on_dodge_end()
-		_enter(State.MOVE)
-
-
-func _on_move_started(node: ComboNode) -> void:
-	_enter(State.ATTACK)
-	_attack_dir = aim
-	_lunge_speed = node.lunge / maxf(node.windup, 0.01)
-	_face(aim.x)
-	var a := Art.anim(&"paladin", node.anim)
-	_sprite.speed_scale = (a.frames.size() / float(a.fps)) / node.duration()
-	_sprite.play(node.anim)
-	_sprite.frame = 0
-	if node.title != &"":
-		move_shown.emit(node)
-
-
-func _on_move_hit(node: ComboNode) -> void:
-	struck.emit(node, position, _attack_dir)
-
-
-func _on_move_ended(_node: ComboNode) -> void:
-	if state == State.ATTACK:
-		_enter(State.MOVE)
-
-
-func _recharge(dt: float) -> void:
-	if dodge_charges >= dodge_max:
-		_recharge_t = 0.0
-		return
-	_recharge_t += dt
-	if _recharge_t >= recharge_time:
-		_recharge_t = 0.0
-		dodge_charges += 1
-
-
-func _step_shield(dt: float) -> void:
-	if shield_cooldown <= 0.0 or shield_ready:
-		return
-	_shield_t += dt
-	if _shield_t >= shield_cooldown:
-		shield_ready = true
-		fx.burst(&"guard", position + Vector2(0, -8))
-
-
-## Fraction of the next dodge charge already recovered (for the HUD).
-func recharge_ratio() -> float:
-	return _recharge_t / recharge_time
-
-
-## Damage from an enemy. Returns true when it landed (not dodged, not invulnerable, not shielded).
-func hurt(amount: float, from: Vector2) -> bool:
-	if invuln > 0.0 or state == State.DEAD:
-		return false
-	if shield_ready:
-		shield_ready = false
-		_shield_t = 0.0
-		invuln = 0.5
-		fx.burst(&"guard", position + Vector2(0, -8))
-		fx.ring(position + Vector2(0, -6), 16.0, &"vida", 0.25)
-		Audio.play(&"shield")
-		shield_broke.emit()
-		return false
-	hp = maxf(0.0, hp - amount)
-	invuln = HURT_INVULN
-	combo.reset()
-	fx.shake(3.0)
-	fx.hit_stop(60)
-	Audio.play(&"hurt")
-	was_hurt.emit()
-	if hp <= 0.0:
-		_enter(State.DEAD)
-		_play(&"death")
-		died.emit()
-		return true
-	position = arena.resolve(position + (position - from).normalized() * 4.0, RADIUS)
-	_enter(State.HURT)
-	_play(&"hurt")
-	return true
-
-
-func heal(amount: float) -> void:
-	hp = minf(max_hp, hp + amount)
-
-
-## Stands still, sword lowered (the final scene).
-func rest() -> void:
-	if state != State.DEAD:
-		_enter(State.MOVE)
-		_sprite.visible = true
-		_play(&"idle")
+func _prepare(n: Node) -> void:
+	for c in n.get_children():
+		if c is MeshInstance3D:
+			if HIDDEN_PARTS.has(String(c.name)):
+				(c as MeshInstance3D).visible = false
+			else:
+				(c as MeshInstance3D).material_overlay = _overlay
+		_prepare(c)
 
 
 func alive() -> bool:
 	return state != State.DEAD
 
 
-func _enter(next: State) -> void:
-	state = next
+func invulnerable() -> bool:
+	return invuln > 0.0 or state == State.DODGE or state == State.DEAD or state == State.REST
+
+
+## Every frame of play. move: stick or keys. aim: where the paladin wants to strike (unit vector, or zero).
+func step(dt: float, move: Vector2, aim: Vector2) -> void:
+	_state_t += dt
+	invuln = maxf(0.0, invuln - dt)
+	_flash = maxf(0.0, _flash - dt * 6.0)
+	if shield_cooldown > 0.0 and not shield_ready:
+		_shield_t += dt
+		if _shield_t >= shield_cooldown:
+			shield_ready = true
+			fx.burst(&"heal", Vector3(pos.x, 1.2, pos.y))
+	if dodge_charges < dodge_max:
+		_dodge_recharge += dt
+		if _dodge_recharge >= DODGE_RECHARGE:
+			_dodge_recharge = 0.0
+			dodge_charges += 1
+	match state:
+		State.DEAD, State.REST:
+			_show(dt)
+			return
+		State.HURT:
+			pos += _push * dt
+			_push *= maxf(0.0, 1.0 - 10.0 * dt)
+			if _state_t >= HURT_TIME:
+				state = State.MOVE
+		State.DODGE:
+			pos += _dodge_dir * DODGE_SPEED * dt * (1.0 - _state_t / DODGE_TIME * 0.5)
+			if _state_t >= DODGE_TIME:
+				state = State.MOVE
+				runner.on_dodge_end()
+				invuln = maxf(invuln, DODGE_IFRAMES - DODGE_TIME)
+		State.MOVE:
+			_read_buttons(dt, move, aim)
+			if state == State.MOVE:
+				var sp := SPEED * (1.0 + speed_bonus)
+				if runner.is_attacking():
+					pos += move * sp * ATTACK_DRIFT * dt + _lunge * dt
+				else:
+					pos += move * sp * dt
+					if move.length() > 0.1:
+						facing = facing.slerp(move.normalized(), minf(1.0, dt * TURN)).normalized()
+	runner.step(dt)
+	_lunge *= maxf(0.0, 1.0 - 9.0 * dt)
+	pos = arena.resolve(pos, RADIUS)
+	_show(dt, move)
+
+
+func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
+	_aim = aim
+	if Controls.pressed(&"dodge") and dodge_charges > 0 and runner.can_cancel():
+		_start_dodge(move)
+		return
+	if Controls.pressed(&"light_attack"):
+		runner.press(ComboNode.In.LIGHT)
+	if Controls.pressed(&"heavy_attack"):
+		if runner.charge_available():
+			charging = true
+			charge_t = 0.0
+		else:
+			runner.press(ComboNode.In.HEAVY)
+	if charging:
+		charge_t += dt
+		if charge_t >= tree.charge_time and charge_t - dt < tree.charge_time:
+			fx.burst(&"light", Vector3(pos.x, 1.4, pos.y))
+			Audio.play(&"charged")
+		if not Controls.held(&"heavy_attack"):
+			charging = false
+			runner.press(ComboNode.In.CHARGE if charge_t >= tree.charge_time else ComboNode.In.HEAVY)
+
+
+var _aim := Vector2.ZERO
+
+
+func _start_dodge(move: Vector2) -> void:
+	charging = false
+	state = State.DODGE
 	_state_t = 0.0
+	dodge_charges -= 1
+	_dodge_dir = move.normalized() if move.length() > 0.2 else facing
+	facing = _dodge_dir
+	runner.on_dodge()
+	_play(&"Dodge_Forward", 1.3)
+	fx.burst(&"dust", Vector3(pos.x, 0.2, pos.y), Vector3(-_dodge_dir.x, 0, -_dodge_dir.y))
+	Audio.play(&"dodge")
+	dodged.emit(_dodge_dir)
 
 
-func _face(x: float) -> void:
-	if absf(x) > 0.05:
-		_sprite.flip_h = x < 0.0
+func _on_move_started(node: ComboNode) -> void:
+	var dir := _aim if _aim.length() > 0.1 else facing
+	if not Controls.aims_with_mouse():
+		var target := horde.nearest(pos, ASSIST_RANGE) if horde else null
+		if target and absf(dir.angle_to(target.pos - pos)) < 1.2:
+			dir = (target.pos - pos).normalized()
+	facing = dir.normalized()
+	_lunge = facing * node.lunge / maxf(node.windup + 0.06, 0.05) * 1.6
+	_play(node.anim, node.anim_speed, node.anim_from)
+	if node.title != &"":
+		move_shown.emit(node)
 
 
-func _play(anim: StringName) -> void:
-	_sprite.speed_scale = 1.0
-	if _sprite.animation != anim:
-		_sprite.play(anim)
+func heal(amount: float) -> void:
+	if amount <= 0.0 or not alive():
+		return
+	hp = minf(max_hp, hp + amount)
+
+
+## A blow lands on the paladin. Rolls, the shield and the moments after a hit ignore it.
+func hurt(amount: float, from: Vector2) -> void:
+	if invulnerable() or amount <= 0.0:
+		return
+	if shield_ready:
+		shield_ready = false
+		_shield_t = 0.0
+		invuln = 0.5
+		fx.burst(&"heal", Vector3(pos.x, 1.2, pos.y))
+		Audio.play(&"shield")
+		shield_broke.emit()
+		return
+	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction)))
+	hp -= amount
+	invuln = HURT_INVULN
+	_flash = 1.0
+	charging = false
+	runner.reset()
+	var away := (pos - from).normalized() if pos.distance_to(from) > 0.01 else -facing
+	_push = away * 9.0
+	fx.number(Vector3(pos.x, 2.4, pos.y), amount, Color(1.0, 0.3, 0.25), true)
+	fx.burst(&"spark", Vector3(pos.x, 1.2, pos.y), Vector3(away.x, 0, away.y))
+	fx.shake(2.0)
+	fx.kick_split(1.0)
+	Audio.play(&"hurt")
+	was_hurt.emit(amount)
+	if hp <= 0.0:
+		hp = 0.0
+		state = State.DEAD
+		_play(&"Death_A", 1.0)
+		died.emit()
+		return
+	state = State.HURT
+	_state_t = 0.0
+	_play(&"Hit_A", 1.6)
+
+
+## The fight is over: stand still and look on (the final scene).
+func rest() -> void:
+	if state == State.DEAD:
+		return
+	state = State.REST
+	runner.reset()
+	_play(&"Idle")
+
+
+## Puts the paladin at a spot (the roar of Morvath throws him back).
+func place(at: Vector2) -> void:
+	pos = arena.resolve(at, RADIUS)
+
+
+func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
+	position = Vector3(pos.x, 0, pos.y)
+	var want := atan2(facing.x, facing.y)
+	_model.rotation.y = lerp_angle(_model.rotation.y, want, minf(1.0, dt * (30.0 if runner.is_attacking() else TURN)))
+	var glow := Color(1.0, 0.8, 0.35, clampf(charge_t / tree.charge_time, 0.0, 1.0) * (0.8 if charging else 0.0))
+	if shield_ready and not charging:
+		glow = Color(0.4, 1.0, 0.6, 0.35)
+	_overlay.set_shader_parameter(&"flash", maxf(_flash, 0.6 if invuln > 0.0 and state != State.DODGE and fmod(invuln, 0.16) < 0.08 else 0.0))
+	_overlay.set_shader_parameter(&"glow", glow)
+	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
+	if state != State.MOVE or runner.is_attacking():
+		return
+	if move.length() > 0.1:
+		_play(&"Running_A", 1.0 + speed_bonus)
+	elif _anim.is_playing() and not LOOPS.has(_current_anim):
+		return  # let the follow-through of a swing finish
+	else:
+		_play(&"Idle")
+
+
+func _play(anim: StringName, speed: float = 1.0, from: float = -1.0) -> void:
+	if from >= 0.0:
+		_anim.play(anim, 0.05, speed)
+		_anim.seek(from, true)
+	elif _current_anim != anim or not _anim.is_playing():
+		_anim.play(anim, -1, speed)
+	_current_anim = anim

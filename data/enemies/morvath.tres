@@ -1,20 +1,21 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_w4bhg"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_w4bhg")
 id = &"morvath"
 name_key = &"enemy_morvath"
-sprite = &"morvath"
+model = &"morvath"
+size = 2.5
+tint = Color(0.62, 0.52, 0.82, 1)
+rim_color = Color(0.7, 0.3, 1, 1)
+rim = 2.0
 behavior = 6
-hp = 5200.0
-speed = 38.0
-damage = 14.0
-radius = 11.0
+hp = 7000.0
+speed = 3.0
+damage = 16.0
+radius = 1.4
 xp = 0
 heavy = true
-attack_damage = 18.0
-attack_range = 46.0
-attack_cooldown = 1.6
-attack_windup = 0.55
+attack_damage = 20.0

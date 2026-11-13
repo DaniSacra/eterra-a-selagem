@@ -195,6 +195,8 @@ func test_reset_drops_the_chain_and_the_buffer() -> void:
 
 
 func test_tree_data_is_sane() -> void:
+	var knight: Node = (load(Player.MODEL) as PackedScene).instantiate()
+	var player: AnimationPlayer = PoseBaker.find_player(knight)
 	var ids := {}
 	for node in tree.all_nodes():
 		assert_false(ids.has(node.id), "duplicate id %s" % node.id)
@@ -202,7 +204,8 @@ func test_tree_data_is_sane() -> void:
 		assert_gt(node.damage, 0.0, String(node.id))
 		assert_gt(node.windup, 0.0, String(node.id))
 		assert_between(node.hit_stop_ms, 40.0, 80.0, String(node.id))
-		assert_true(Art.def(&"paladin").anims.has(String(node.anim)), "missing animation %s" % node.anim)
+		assert_true(player.has_animation(node.anim), "missing animation %s" % node.anim)
+		assert_gt(node.anim_speed, 0.0, String(node.id))
 		if node.title != &"":
 			assert_ne(T.t(node.title), String(node.title), "missing name for %s" % node.id)
 		var inputs := {}
@@ -210,7 +213,7 @@ func test_tree_data_is_sane() -> void:
 			assert_false(inputs.has(child.input), "%s has two moves on the same input" % node.id)
 			inputs[child.input] = true
 	assert_almost_eq(tree.buffer_time, 0.15, 0.001)
-
+	knight.free()
 
 func test_a_new_combo_needs_only_data() -> void:
 	var extra := ComboNode.new()

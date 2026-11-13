@@ -1,95 +1,190 @@
 class_name Projectiles
-extends Node2D
-## Arrows, shadow bolts and falling blades of the enemies, and the paladin's wave of light. Pooled records, one draw.
+extends Node3D
+## Everything that flies: enemy bolts and Morvath's dark orbs (hurt the paladin), the Onda de Luz and the blades of
+## the light gifts (hurt enemies, pass through them). Positions are (x, z) on the floor; they fly at a fixed height.
 
 signal hit_player(amount: float, from: Vector2)
-signal wave_hit(e: Enemy, shot: Shot)
+## A friendly shot touched an enemy: the game decides the damage and the gifts that apply.
+signal shot_hit(e: Enemy, shot: Shot)
 
-enum Kind { ARROW, BOLT, WAVE }
+enum Kind { BOLT, ORB, WAVE, BLADE }
 
+const HEIGHT := 1.1
+const LOOK := {
+	Kind.BOLT: [Color(3.0, 0.5, 0.3), 0.18, 0.6], Kind.ORB: [Color(1.6, 0.4, 2.8), 0.45, 0.45],
+	Kind.WAVE: [Color(3.0, 2.4, 1.2), 0.0, 0.0], Kind.BLADE: [Color(2.8, 2.4, 1.4), 0.0, 0.0],
+}
 
 class Shot:
-	var kind: Kind
-	var pos: Vector2
-	var vel: Vector2
+	var kind := Kind.BOLT
+	var pos := Vector2.ZERO
+	var vel := Vector2.ZERO
 	var damage := 0.0
+	var radius := 0.4
 	var life := 3.0
-	var radius := 3.0
-	var id := 0
-	var family: StringName = &"luz"
 	var knockback := 0.0
-
+	var color := Color.WHITE
+	var tags: Array[StringName] = []
+	var status: StringName = &""
+	var status_power := 0.0
+	## Enemies already hit (piercing shots hit each one once).
+	var seen: Dictionary = {}
+	var node: Node3D
 
 var shots: Array[Shot] = []
-var enemies: EnemySystem
+var horde: Horde
 var player: Player
+var fx: Fx
+var _pools: Dictionary = {}
 var _found: Array[Enemy] = []
-var _next_id := 1000000
 
 
-func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, life: float = 3.0) -> Shot:
+func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, radius: float = 0.4, life: float = 3.0) -> Shot:
 	var s := Shot.new()
 	s.kind = kind
 	s.pos = from
-	s.vel = dir * speed
+	s.vel = dir.normalized() * speed
 	s.damage = damage
+	s.radius = radius
 	s.life = life
-	s.radius = 2.0 if kind == Kind.ARROW else 3.0
+	s.node = _take(kind)
+	s.node.visible = true
+	_place(s)
 	shots.append(s)
 	return s
 
 
-## The paladin's wave: flies forward and passes through every enemy once.
-func fire_wave(from: Vector2, dir: Vector2, damage: float, distance: float, radius: float, family: StringName) -> Shot:
-	var s := fire(Kind.WAVE, from, dir, 190.0, damage, distance / 190.0)
-	s.radius = radius
-	s.family = family
-	s.knockback = 60.0
-	_next_id += 1
-	s.id = _next_id
+## A friendly crescent (the Onda de Luz, the light blades) that flies distance meters through the crowd.
+func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance: float, size: float, color: Color, tags: Array[StringName]) -> Shot:
+	var speed := 22.0 if kind == Kind.WAVE else 19.0
+	var s := fire(kind, from, dir, speed, damage, size * 0.5, distance / speed)
+	s.color = color
+	s.tags = tags
+	s.knockback = 7.0
+	s.node.scale = Vector3.ONE * size
+	var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
+	mat.set_shader_parameter(&"color", color)
 	return s
 
 
-func step(dt: float) -> void:
-	var target := player.position + Vector2(0, -7)
+func clear_hostile() -> void:
 	var i := shots.size() - 1
 	while i >= 0:
+		if _hostile(shots[i]):
+			_release(shots[i])
+			shots.remove_at(i)
+		i -= 1
+
+
+func step(dt: float) -> void:
+	var i := shots.size() - 1
+	while i >= 0:
+		# a hit can end the run and clear the shots
+		if i >= shots.size():
+			i = shots.size() - 1
+			continue
 		var s := shots[i]
 		s.pos += s.vel * dt
 		s.life -= dt
-		var done := s.life <= 0.0
-		if s.kind == Kind.WAVE:
-			enemies.in_circle(s.pos + Vector2(0, 8), s.radius, _found)
-			for e in _found:
-				if e.hit_mark != s.id:
-					e.hit_mark = s.id
-					wave_hit.emit(e, s)
-		elif s.pos.distance_squared_to(target) < (s.radius + 4.0) * (s.radius + 4.0):
-			hit_player.emit(s.damage, s.pos - s.vel.normalized() * 4.0)
-			done = true
-		if done:
-			shots[i] = shots[shots.size() - 1]
-			shots.pop_back()
+		var gone := s.life <= 0.0 or absf(s.pos.x) > Arena.HALF + 4.0 or absf(s.pos.y) > Arena.HALF + 4.0
+		if not gone:
+			if _hostile(s):
+				if player.alive() and s.pos.distance_to(player.pos) < s.radius + Player.RADIUS:
+					hit_player.emit(s.damage, s.pos - s.vel.normalized())
+					fx.burst(&"spark", Vector3(s.pos.x, HEIGHT, s.pos.y))
+					gone = true
+			else:
+				horde.in_circle(s.pos, s.radius, _found)
+				for e in _found:
+					if not s.seen.has(e):
+						s.seen[e] = true
+						shot_hit.emit(e, s)
+		if gone:
+			if shots.has(s):
+				_release(s)
+				shots.erase(s)
+		else:
+			_place(s)
 		i -= 1
-	queue_redraw()
 
 
-func clear_hostile() -> void:
-	shots = shots.filter(func(s: Shot) -> bool: return s.kind == Kind.WAVE)
+func _hostile(s: Shot) -> bool:
+	return s.kind == Kind.BOLT or s.kind == Kind.ORB
 
 
-func _draw() -> void:
-	for s in shots:
-		var d := s.vel.normalized()
-		match s.kind:
-			Kind.ARROW:
-				draw_line(s.pos - d * 5.0, s.pos, Palette.c(&"materia", 3), 1.0)
-				draw_rect(Rect2(s.pos.x - 1, s.pos.y - 1, 2, 2), Palette.c(&"neve", 0))
-			Kind.BOLT:
-				draw_circle(s.pos, 3.0, Palette.c(&"misterio", 3))
-				draw_circle(s.pos, 2.0, Palette.c(&"misterio", 1))
-				draw_rect(Rect2(s.pos.x - 1, s.pos.y - 1, 1, 1), Palette.c(&"misterio", 0))
-			Kind.WAVE:
-				var a := d.angle()
-				draw_arc(s.pos - d * s.radius * 0.6, s.radius, a - 0.9, a + 0.9, 10, Palette.c(s.family, 1), 3.0)
-				draw_arc(s.pos - d * s.radius * 0.6, s.radius + 1.0, a - 0.7, a + 0.7, 10, Palette.c(s.family, 0), 1.0)
+func _place(s: Shot) -> void:
+	s.node.position = Vector3(s.pos.x, HEIGHT, s.pos.y)
+	if s.vel.length_squared() > 0.0:
+		s.node.rotation.y = atan2(s.vel.x, s.vel.y)
+	if s.kind == Kind.WAVE or s.kind == Kind.BLADE:
+		var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
+		mat.set_shader_parameter(&"t", 0.45)
+
+
+func _take(kind: Kind) -> Node3D:
+	var pool: Array = _pools.get(kind, [])
+	if not pool.is_empty():
+		return pool.pop_back()
+	var mi := MeshInstance3D.new()
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var look: Array = LOOK[kind]
+	if kind == Kind.WAVE or kind == Kind.BLADE:
+		# a crescent: the slash arc frozen at its brightest
+		mi.mesh = _crescent()
+		var mat := ShaderMaterial.new()
+		mat.shader = Fx.SLASH
+		mat.set_shader_parameter(&"intensity", 3.0)
+		mi.material_override = mat
+	else:
+		var sphere := SphereMesh.new()
+		sphere.radius = look[1]
+		sphere.height = look[1] * 2.0
+		sphere.radial_segments = 10
+		sphere.rings = 6
+		mi.mesh = sphere
+		var m := StandardMaterial3D.new()
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.albedo_color = look[0]
+		mi.material_override = m
+		if kind == Kind.BOLT:
+			mi.scale = Vector3(0.6, 0.6, 2.4)
+		var glow := MeshInstance3D.new()
+		glow.mesh = Fx.quad(look[1] * 5.0, look[0])
+		glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		(glow.mesh as QuadMesh).material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+		mi.add_child(glow)
+	add_child(mi)
+	return mi
+
+
+func _release(s: Shot) -> void:
+	s.node.visible = false
+	s.node.scale = Vector3(0.6, 0.6, 2.4) if s.kind == Kind.BOLT else Vector3.ONE
+	if not _pools.has(s.kind):
+		_pools[s.kind] = []
+	(_pools[s.kind] as Array).append(s.node)
+
+
+var _crescent_mesh: ArrayMesh
+
+## A crescent 1 meter across, bulging forward (+Z), with the UVs of a slash.
+func _crescent() -> ArrayMesh:
+	if _crescent_mesh:
+		return _crescent_mesh
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var seg := 16
+	var half := deg_to_rad(70.0)
+	for i in seg:
+		var a0 := -half + 2.0 * half * i / seg
+		var a1 := -half + 2.0 * half * (i + 1) / seg
+		var p := [Vector3(sin(a0) * 0.25, 0, cos(a0) * 0.25 - 0.3), Vector3(sin(a0), 0, cos(a0) - 0.3),
+			Vector3(sin(a1) * 0.25, 0, cos(a1) * 0.25 - 0.3), Vector3(sin(a1), 0, cos(a1) - 0.3)]
+		var u0 := 1.0 - absf(float(i) / seg - 0.5) * 2.0
+		var u1 := 1.0 - absf(float(i + 1) / seg - 0.5) * 2.0
+		var uv := [Vector2(0.3 + 0.4 * u0, 0), Vector2(0.3 + 0.4 * u0, 1), Vector2(0.3 + 0.4 * u1, 0), Vector2(0.3 + 0.4 * u1, 1)]
+		for k: int in [0, 1, 2, 2, 1, 3]:
+			st.set_uv(uv[k])
+			st.add_vertex(p[k])
+	_crescent_mesh = st.commit()
+	return _crescent_mesh

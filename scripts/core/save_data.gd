@@ -9,7 +9,7 @@ const MAX_BEST_TIMES := 5
 static func defaults() -> Dictionary:
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": false, "scale": 4, "shake": true, "bindings": {}},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": false, "scale": 1, "shake": true, "bindings": {}},
 		"best_times": [],
 		"moves": [],
 		"wins": 0,

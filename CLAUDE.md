@@ -1,6 +1,6 @@
 # Crônicas de Eterra: A Selagem
 
-Roguelite de ação 2D em **Godot 4.7** (GDScript tipado, GL Compatibility). Spin-off e prelúdio do RPG
+Roguelite de ação em horda, 3D visto de cima (pegada de Hades 2 e Ember & Blade), em **Godot 4.7** (GDScript tipado, GL Compatibility). Spin-off e prelúdio do RPG
 "Crônicas de Eterra": quatro paladinos descem às catacumbas sob a igreja velha de Valmor para selar Morvath.
 Steam primeiro (Windows e Linux, mouse e teclado ou controle), Android depois.
 Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs/mundo/`), `../cronicas-godot`
@@ -22,41 +22,45 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
 - Testes: `tools/test.sh` (GUT sem tela). Um arquivo só: `tools/test.sh -gtest=res://tests/test_combo.gd`
 - Captura sem tela: `tools/shot.sh saida.png 3 --bot` (segundos antes da captura; o resto são opções do jogo).
 - Opções de teste (depois de `--`): `--bot` (joga sozinho), `--fast=N` (o relógio da partida corre N vezes mais rápido),
-  `--start=boss|elite1|elite2`, `--shot=arquivo.png`, `--shot-at=segundos`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
+  `--start=boss|elite1|elite2`, `--shot=arquivo.png`, `--shot-at=segundos`, `--frames=prefixo --count=N --every=s`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
 - Depois de criar arquivos ou classes novas (`class_name`): `~/tools/godot/godot --headless --path . --import`.
-- Regerar a arte: `python3 tools/art/build.py` (escreve `art/grids/*.json`).
+- Regerar os dados (combos, inimigos, dons, ondas): `~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves]`.
+  Editar os números em `tools/make_data.gd` (fonte da verdade) e regerar; não editar os `.tres` à mão.
+- Achar erros de script sem rodar: `~/tools/godot/godot --headless --path . -s tools/check.gd`.
 - Partida sem tela com o robô (rápida, para ritmo e regressão): `tools/smoke.sh 1100` ou `tools/smoke.sh 300 --start=boss --boons=25`.
   Outras opções: `--boons=N` (N dons sorteados), `--boss-hp=0.2`, `--stress=300`, `--title --screen=options|moves`, `--hold`.
 - Build: `~/tools/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/ASelagem.exe`
   (e `"Linux"` em `build/linux/ASelagem.x86_64`). Web para ver no navegador: `tools/web.sh` e abrir `http://localhost:8070`.
   Android fica para depois (sem preset ainda).
 
-## Direção de arte (bíblia de arte de Eterra, `../dungeon-rpg/docs/arte/estilo.md`)
-- "Aventura luminosa": Dragon Quest, Chrono Trigger, Sea of Stars. Cores vivas, perigo sem horror.
-- Base 320x180, escala inteira, filtro nearest, nada desfocado. Sprites no tamanho em que aparecem.
-- **Paleta fechada**: `data/palette.tres` (cópia de `src/palette.js` do RPG). Cor nova só entra primeiro na paleta.
-  Um teste reprova qualquer grade com cor de fora.
-- Contorno escuro da própria cor, nunca preto puro. Cenário sem contorno. Luz do alto à esquerda, 3 ou 4 tons, sem degradê.
-- **Formato de sprite**: grade de strings, uma letra por cor (`art/grids/*.json`), lida por `art/grid_sprite.gd`
-  (porte de `src/gridsprite.js`), que cria `ImageTexture` e `SpriteFrames`. Variantes por troca de paleta
-  (`GridSprite.recolor_hex`, `Art.add_variant`; `flash` e `frozen` já existem para todo sprite).
-- As grades são escritas pelas ferramentas em `tools/art/*.py` (um esqueleto por tipo de personagem, uma pose por quadro).
-- **Trocar por PNG desenhado à mão**: pôr `art/png/<nome>.png` (tira horizontal, mesmo tamanho de quadro e mesma ordem
-  da grade). `Art` usa o PNG se ele existir. `tools/export_png.gd` exporta as tiras atuais como molde.
-- Efeitos com `GPUParticles2D`, luz com `PointLight2D` e `CanvasModulate`, sempre com cores da paleta.
+## Direção de arte e modelos
+- Referência atual: Hades 2 e Ember & Blade (vídeos do Daniel). Mesmo gênero, mecânica e sensação; nada copiado
+  (personagens, nomes, UI e visual são de Eterra). A versão 2D em pixel art está na tag `v1-pixel-2d`.
+- Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens, masmorra, armas).
+  Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
+- Efeitos: `scripts/game/fx.gd` (partículas, cortes, anéis, feixes, números, hit stop, tremor) e shaders em `assets/shaders/`.
+  Brilho pelo glow do `WorldEnvironment` (cores acima de 1 brilham).
 
 ## Arquitetura
 - `scripts/core/`: lógica pura (sem nós), toda testada. `scripts/game/`: nós da partida. `scripts/ui/`: telas.
+  `scripts/render/`: modelos assados e a multidão.
+- A simulação é no plano do chão: posições `Vector2(x, z)` em metros; o desenho é 3D.
 - `scripts/game/game.gd` é dono do relógio: chama `step(dt)` de cada sistema. Hit stop, pausa e a escolha de dom são
-  só "não chamar step".
-- Inimigos sem nó de física: objetos leves em `EnemySystem`, com pool de `Sprite2D`, grade espacial para separação e
-  acerto. Meta: 60 fps com 300 inimigos em celular intermediário.
+  só "não chamar step". Cada sistema que emite sinal dentro do laço (golpe que mata o paladino limpa tudo) precisa
+  aguentar a lista mudar no meio (ver `Ground.step`, `Projectiles.step`).
+- **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer`, um MultiMesh por (inimigo, animação,
+  quadro). As poses vêm assadas: `tools/bake.gd` esqueleta os modelos KayKit em malhas estáticas (`assets/baked/*.res`,
+  `BakedModel`). Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
+  `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]`. A multidão fica fora da luz das tochas (camada 2)
+  e recebe a luz do paladino pelo global `hero_pos`.
+- O paladino é o Knight com `AnimationPlayer` de verdade (`scripts/game/player.gd`).
+- Dons agem sozinhos por `SkillDef` (`scripts/game/skills.gd`: STRIKES, NOVA, ORBIT, FAN, METEOR, CONSECRATE) e/ou
+  mudam golpes por `BoonMod`.
 - Entrada só por ações (`Controls`): `light_attack`, `heavy_attack`, `dodge`, mira (`Controls.aim`). Nunca ler tecla direto.
-  No celular, botões na tela alimentam as mesmas ações (`Controls.virtual`, o mesmo caminho do robô de teste).
+  Toque e robô usam `Controls.VirtualPad`. Toques durante o hit stop ficam guardados (`Controls.flush`).
 - Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`).
-- Fonte: `art/fonts/eterra.fnt`, bitmap 5x7 gerada por `tools/art/font.py` (tamanhos 11, 22, 33). Tiny5 e Press Start 2P
-  renderizaram como blocos no ambiente de teste (xvfb), por isso a fonte própria. Letra nova entra em `font.py`.
-- Som: `scripts/audio.gd` é o mapa único (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita.
+- Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita.
+  Música desligada por enquanto.
 
 ## Onde mexer
 - Combos: `data/combos/paladin.tres` (nós `ComboNode`; `tags` é o que os dons enxergam). Dons: `data/boons/*.tres`
@@ -66,9 +70,10 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`).
 
 ## Pendências conhecidas
-- Equilíbrio medido só com o robô (ele morre entre 2 e 3 minutos partindo do zero; vence Morvath em parte das vezes com
-  25 dons). Falta teste com gente. Os números estão todos em `data/`.
-- Arte gerada por código é provisória (o Daniel pode trocar por PNG em `art/png/`). Áudio sintetizado é provisório.
+- Equilíbrio medido só com o robô: partindo do zero ele chega vivo aos 9 minutos, no nível 35; com 20 dons ele vence
+  Morvath. Falta teste com gente. Os números estão em `tools/make_data.gd`.
+- Modelos KayKit, fontes e áudio sintetizado são provisórios. Assados somam cerca de 46 MB (o pacote web tem 61 MB).
+- O lobo de geada do spec virou o esqueleto corredor. Vigília aparece como voto do PALADIN_1 (provisório).
 - O spec fala em quatro paladinos; o cânone de 12/11 fala em um paladino do leão e quatro guardiões. Vale o que o Daniel decidir.
-- Toque (celular) ainda não tem botões na tela; `Controls.virtual` já é o ponto de entrada.
-- Desempenho: cerca de 2 ms por passo com 200 a 300 inimigos no PC; não medido em celular.
+- Toque (celular) ainda não tem botões na tela.
+- Desempenho: cerca de 1 ms por passo com 150 inimigos no PC; não medido em celular nem em placa de vídeo fraca.

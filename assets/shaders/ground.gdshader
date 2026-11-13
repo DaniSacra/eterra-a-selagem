@@ -1,0 +1,53 @@
+shader_type spatial;
+// Everything drawn flat on the floor: enemy warnings (a ring that fills before the hit), burning ground, holy ground,
+// marks and steam. shape: 0 circle, 1 line (UV.y along the length), 2 arc (angle opening in arc_half).
+render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled, depth_prepass_alpha;
+
+uniform vec4 color : source_color = vec4(1.0, 0.2, 0.1, 1.0);
+uniform float progress = 0.0;
+uniform int shape = 0;
+uniform float arc_half = 1.0;
+// 0 = warning (outline + filling), 1 = area (soft animated fill)
+uniform int style = 0;
+uniform float strength = 1.0;
+uniform float fade = 1.0;
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+float noise(vec2 p) {
+	vec2 i = floor(p); vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
+}
+
+void fragment() {
+	vec2 uv = UV * 2.0 - 1.0;
+	float a = 0.0;
+	if (shape == 1) {
+		float along = UV.y;
+		float side = abs(uv.x);
+		float edge = smoothstep(0.82, 0.95, side) * step(side, 1.0);
+		float ends = smoothstep(0.96, 0.995, abs(uv.y));
+		if (style == 0) {
+			a = max(edge, ends) * 0.9 + step(along, progress) * 0.35 + 0.08;
+		} else {
+			a = (1.0 - side * side) * (0.5 + 0.5 * noise(vec2(uv.x * 3.0, along * 8.0 - TIME * 2.0)));
+		}
+	} else {
+		float d = length(uv);
+		if (d > 1.0) discard;
+		if (shape == 2) {
+			float ang = abs(atan(uv.x, -uv.y));
+			if (ang > arc_half) discard;
+		}
+		if (style == 0) {
+			float ring = smoothstep(0.86, 0.96, d) * (1.0 - smoothstep(0.985, 1.0, d));
+			float fill = step(d, progress) * 0.38 + smoothstep(progress - 0.06, progress, d) * step(d, progress) * 0.6;
+			a = ring + fill + 0.06;
+		} else {
+			float n = noise(uv * 4.0 + vec2(TIME * 0.7, -TIME * 0.5)) * 0.6 + noise(uv * 9.0 - TIME) * 0.4;
+			float rim = smoothstep(0.75, 1.0, d);
+			a = (0.25 + 0.55 * n) * (1.0 - smoothstep(0.9, 1.0, d)) + rim * 0.35 * (1.0 - smoothstep(0.97, 1.0, d));
+		}
+	}
+	ALBEDO = color.rgb * a * strength * fade;
+}

@@ -1,59 +1,92 @@
 class_name Orbs
-extends Node2D
-## Orbs of light left by fallen enemies: experience. Records in an array, one draw call each, no nodes.
+extends Node3D
+## Motes of light left by the fallen: they float, are pulled in when the paladin comes near, and give experience.
+## All drawn with one MultiMesh.
 
-const MAGNET := 30.0
-const PICKUP := 7.0
-const FLY_SPEED := 190.0
-const MAX_ACTIVE := 260
+const MAGNET := 3.6
+const PICK := 0.7
+const PULL := 30.0
+const MAX := 400
 
-var pos: PackedVector2Array = PackedVector2Array()
-var value: PackedInt32Array = PackedInt32Array()
-var flying: PackedByteArray = PackedByteArray()
-var _t := 0.0
+class Orb:
+	var pos := Vector2.ZERO
+	var vel := Vector2.ZERO
+	var value := 1
+	var t := 0.0
+	var pulled := false
+
+var list: Array[Orb] = []
+var magnet_bonus := 0.0
+var _mm: MultiMesh
 var _rng := RandomNumberGenerator.new()
 
 
-func drop(at: Vector2, amount: int) -> void:
-	if pos.size() >= MAX_ACTIVE:
-		# the hall is full of light: an old orb takes the new one in
-		value[_rng.randi() % value.size()] += amount
+func _ready() -> void:
+	_rng.randomize()
+	var gem := SphereMesh.new()
+	gem.radius = 0.16
+	gem.height = 0.42
+	gem.radial_segments = 4
+	gem.rings = 2
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = Color(2.6, 2.2, 1.0)
+	gem.material = m
+	_mm = MultiMesh.new()
+	_mm.transform_format = MultiMesh.TRANSFORM_3D
+	_mm.mesh = gem
+	_mm.instance_count = MAX
+	_mm.visible_instance_count = 0
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = _mm
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mmi.custom_aabb = AABB(Vector3(-200, -10, -200), Vector3(400, 40, 400))
+	add_child(mmi)
+
+
+func drop(at: Vector2, value: int) -> void:
+	if list.size() >= MAX:
+		# too many on the floor: merge into the oldest
+		list[0].value += value
 		return
-	pos.append(at + Vector2(_rng.randf_range(-3, 3), _rng.randf_range(-3, 3)))
-	value.append(amount)
-	flying.append(0)
+	var o := Orb.new()
+	o.pos = at
+	o.value = value
+	o.vel = Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(1.0, 3.0)
+	o.t = _rng.randf() * 3.0
+	list.append(o)
 
 
-## Pulls nearby orbs to the paladin. Returns the experience collected this step.
-func step(dt: float, target: Vector2, pull_all: bool = false) -> int:
-	_t += dt
+## Moves the motes; returns the experience gathered this step.
+func step(dt: float, player_pos: Vector2) -> int:
 	var got := 0
-	var i := pos.size() - 1
+	var i := list.size() - 1
+	var magnet := MAGNET + magnet_bonus
 	while i >= 0:
-		var d := target - pos[i]
-		var dist_sq := d.length_squared()
-		if flying[i] == 0 and (pull_all or dist_sq < MAGNET * MAGNET):
-			flying[i] = 1
-		if flying[i] == 1:
-			pos[i] += d.normalized() * FLY_SPEED * dt
-			if dist_sq < PICKUP * PICKUP:
-				got += value[i]
-				var last := pos.size() - 1
-				pos[i] = pos[last]
-				value[i] = value[last]
-				flying[i] = flying[last]
-				pos.resize(last)
-				value.resize(last)
-				flying.resize(last)
+		var o := list[i]
+		o.t += dt
+		var to := player_pos - o.pos
+		var d := to.length()
+		if not o.pulled and d < magnet:
+			o.pulled = true
+		if o.pulled:
+			o.vel = o.vel.move_toward(to / maxf(d, 0.01) * (8.0 + o.t * 2.0 + PULL * 0.3), PULL * dt * 2.0)
+		else:
+			o.vel *= maxf(0.0, 1.0 - 4.0 * dt)
+		o.pos += o.vel * dt
+		if d < PICK:
+			got += o.value
+			list[i] = list[list.size() - 1]
+			list.pop_back()
 		i -= 1
-	queue_redraw()
 	return got
 
 
-func _draw() -> void:
-	var tex := Art.tex(&"orb")
-	var glow := Ground.glow(Color.WHITE)
-	var phase := int(_t * 5.0)
-	for i in pos.size():
-		var frame := (phase + i) % 2
-		draw_texture_rect_region(tex, Rect2(pos[i] - Vector2(3, 5), Vector2(7, 7)), Rect2(frame * 7, 0, 7, 7), glow)
+func render() -> void:
+	var n := mini(list.size(), MAX)
+	for k in n:
+		var o := list[k]
+		var s := 1.0 + minf(o.value - 1, 6) * 0.15
+		var xf := Transform3D(Basis(Vector3.UP, o.t * 2.5).scaled(Vector3.ONE * s), Vector3(o.pos.x, 0.45 + sin(o.t * 3.0) * 0.12, o.pos.y))
+		_mm.set_instance_transform(k, xf)
+	_mm.visible_instance_count = n

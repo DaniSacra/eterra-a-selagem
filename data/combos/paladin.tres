@@ -1,242 +1,250 @@
-[gd_resource type="Resource" script_class="ComboTree" load_steps=16 format=3]
+[gd_resource type="Resource" script_class="ComboTree" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/combo_node.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/core/combo_tree.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/core/combo_node.gd" id="1_0fmu3"]
+[ext_resource type="Script" path="res://scripts/core/combo_tree.gd" id="2_c33w2"]
 
-[sub_resource type="Resource" id="spin"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_drl36"]
+script = ExtResource("1_0fmu3")
+id = &"dash_cut"
+title = &"move_dash_cut"
+anim = &"1H_Melee_Attack_Stab"
+anim_speed = 2.1999999999999997
+anim_from = 0.18000000000000002
+tags = Array[StringName]([&"light", &"dash", &"finisher"])
+damage = 20.0
+shape = 2
+reach = 5.5
+width = 1.6
+knockback = 6.0
+lunge = 4.0
+windup = 0.1
+recovery = 0.16
+hit_stop_ms = 55.0
+
+[sub_resource type="Resource" id="Resource_ckn7t"]
+script = ExtResource("1_0fmu3")
+id = &"slam"
+input = 1
+title = &"move_slam"
+anim = &"Jump_Full_Short"
+anim_speed = 1.2222222222222223
+anim_from = 0.21
+tags = Array[StringName]([&"heavy", &"slam", &"finisher"])
+damage = 28.0
+shape = 1
+reach = 4.5
+knockback = 16.0
+lunge = 2.5
+windup = 0.18
+recovery = 0.26
+hit_stop_ms = 80.0
+shake = 2.5
+effect = 4
+effect_time = 0.6
+
+[sub_resource type="Resource" id="Resource_ku8mk"]
+script = ExtResource("1_0fmu3")
 id = &"spin"
-input = 0
 title = &"move_spin"
-anim = &"spin"
+anim = &"2H_Melee_Attack_Spinning"
+anim_speed = 1.8333333333333335
+anim_from = 0.05000000000000002
 tags = Array[StringName]([&"light", &"spin", &"finisher"])
 damage = 22.0
 shape = 1
-reach = 34.0
-knockback = 90.0
-windup = 0.1
+reach = 4.0
+knockback = 12.0
+windup = 0.12
 recovery = 0.26
 hit_stop_ms = 70.0
-shake = 2.0
+shake = 1.5
 
-[sub_resource type="Resource" id="thrust"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_ko4pd"]
+script = ExtResource("1_0fmu3")
 id = &"thrust"
 input = 1
 title = &"move_thrust"
-anim = &"thrust"
+anim = &"1H_Melee_Attack_Stab"
+anim_speed = 1.5714285714285714
+anim_from = 0.18000000000000002
 tags = Array[StringName]([&"heavy", &"thrust", &"finisher"])
 damage = 30.0
 shape = 2
-reach = 72.0
-width = 14.0
-knockback = 60.0
-lunge = 14.0
+reach = 7.0
+width = 1.6
+knockback = 9.0
+lunge = 1.5
 windup = 0.14
 recovery = 0.25
 hit_stop_ms = 70.0
-shake = 2.0
+shake = 1.5
 
-[sub_resource type="Resource" id="cut3"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_b3mom"]
+script = ExtResource("1_0fmu3")
 id = &"cut3"
-input = 0
-anim = &"cut3"
+anim = &"1H_Melee_Attack_Chop"
+anim_speed = 2.1999999999999997
+anim_from = 0.37
 tags = Array[StringName]([&"light"])
 damage = 13.0
-reach = 28.0
-width = 115.0
-knockback = 35.0
-lunge = 6.0
-windup = 0.07
-recovery = 0.17
+reach = 3.3
+width = 160.0
+lunge = 0.8
+windup = 0.1
+recovery = 0.18
 hit_stop_ms = 45.0
-shake = 0.8
-next = Array[ExtResource("1")]([SubResource("spin"), SubResource("thrust")])
+shake = 0.7
+next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_ku8mk"), SubResource("Resource_ko4pd")])
 
-[sub_resource type="Resource" id="cross"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_bh4sq"]
+script = ExtResource("1_0fmu3")
 id = &"cross"
 input = 1
 title = &"move_cross"
-anim = &"cross"
+anim = &"2H_Melee_Attack_Chop"
+anim_speed = 1.3749999999999998
+anim_from = 0.51
 tags = Array[StringName]([&"heavy", &"cross", &"finisher"])
 damage = 18.0
-reach = 30.0
-width = 130.0
-knockback = 45.0
-windup = 0.14
+reach = 3.4
+width = 170.0
+windup = 0.16
 recovery = 0.24
 hit_stop_ms = 60.0
-shake = 1.5
+shake = 1.3
 effect = 2
 effect_power = 9.0
 effect_time = 4.0
-effect_radius = 22.0
+effect_radius = 2.8
 
-[sub_resource type="Resource" id="cut2"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_2npvb"]
+script = ExtResource("1_0fmu3")
 id = &"cut2"
-input = 0
-anim = &"cut2"
+anim = &"1H_Melee_Attack_Slice_Horizontal"
+anim_speed = 2.75
+anim_from = 0.05000000000000002
 tags = Array[StringName]([&"light"])
-damage = 10.0
-reach = 26.0
-width = 110.0
-knockback = 45.0
-lunge = 4.0
-windup = 0.06
+width = 150.0
+knockback = 6.0
+lunge = 0.5
+windup = 0.08
 recovery = 0.16
-hit_stop_ms = 40.0
-shake = 0.6
-next = Array[ExtResource("1")]([SubResource("cut3"), SubResource("cross")])
+shake = 0.5
+next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_b3mom"), SubResource("Resource_bh4sq")])
 
-[sub_resource type="Resource" id="launch"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_vbk76"]
+script = ExtResource("1_0fmu3")
 id = &"launch"
 input = 1
 title = &"move_launch"
-anim = &"launch"
+anim = &"2H_Melee_Attack_Slice"
+anim_speed = 1.8333333333333335
+anim_from = 0.17
 tags = Array[StringName]([&"heavy", &"launch", &"finisher"])
 damage = 14.0
-reach = 27.0
-width = 120.0
-knockback = 8.0
+reach = 3.2
+width = 150.0
+knockback = 1.0
 windup = 0.12
 recovery = 0.2
 hit_stop_ms = 60.0
-shake = 1.5
+shake = 1.3
 effect = 1
-effect_time = 1.3
+effect_time = 1.0
 
-[sub_resource type="Resource" id="cut1"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_w3gka"]
+script = ExtResource("1_0fmu3")
 id = &"cut1"
-input = 0
-anim = &"cut1"
+anim = &"1H_Melee_Attack_Slice_Diagonal"
+anim_speed = 2.4444444444444446
+anim_from = 0.16
 tags = Array[StringName]([&"light"])
-damage = 10.0
-reach = 26.0
-width = 110.0
-knockback = 45.0
-lunge = 4.0
-windup = 0.06
+width = 150.0
+knockback = 6.0
+lunge = 0.5
+windup = 0.09
 recovery = 0.16
-hit_stop_ms = 40.0
-shake = 0.6
-next = Array[ExtResource("1")]([SubResource("cut2"), SubResource("launch")])
+shake = 0.5
+next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_2npvb"), SubResource("Resource_vbk76")])
 
-[sub_resource type="Resource" id="wave"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_xevaf"]
+script = ExtResource("1_0fmu3")
 id = &"wave"
-input = 0
 title = &"move_wave"
-anim = &"wave"
+anim = &"2H_Melee_Attack_Stab"
+anim_speed = 1.8333333333333335
+anim_from = 0.18000000000000002
 tags = Array[StringName]([&"light", &"wave", &"finisher"])
 damage = 14.0
-reach = 30.0
-width = 120.0
-knockback = 50.0
+reach = 3.4
 windup = 0.12
 recovery = 0.24
 hit_stop_ms = 55.0
-shake = 1.5
+shake = 1.3
 effect = 3
 effect_power = 24.0
-effect_radius = 96.0
+effect_radius = 12.0
 
-[sub_resource type="Resource" id="heavy2"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_h5wjy"]
+script = ExtResource("1_0fmu3")
 id = &"heavy2"
 input = 1
-anim = &"heavy2"
+anim = &"2H_Melee_Attack_Chop"
+anim_from = 0.51
 tags = Array[StringName]([&"heavy"])
 damage = 24.0
-reach = 32.0
-width = 150.0
-knockback = 130.0
-lunge = 5.0
+reach = 3.8
+width = 180.0
+knockback = 16.0
+lunge = 0.8
 windup = 0.22
 recovery = 0.24
 chain_window = 0.4
 hit_stop_ms = 65.0
-shake = 1.8
-next = Array[ExtResource("1")]([SubResource("wave")])
+shake = 1.4
+next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_xevaf")])
 
-[sub_resource type="Resource" id="heavy1"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_mjo4m"]
+script = ExtResource("1_0fmu3")
 id = &"heavy1"
 input = 1
-anim = &"heavy1"
+anim = &"2H_Melee_Attack_Slice"
+anim_speed = 1.0999999999999999
+anim_from = 0.17
 tags = Array[StringName]([&"heavy"])
 damage = 20.0
-reach = 30.0
-width = 120.0
-knockback = 110.0
-lunge = 5.0
+reach = 3.6
+width = 170.0
+knockback = 14.0
+lunge = 0.8
 windup = 0.2
 recovery = 0.22
 chain_window = 0.4
 hit_stop_ms = 60.0
-shake = 1.5
-next = Array[ExtResource("1")]([SubResource("heavy2")])
+shake = 1.2
+next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_h5wjy")])
 
-[sub_resource type="Resource" id="burst"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_xf51w"]
+script = ExtResource("1_0fmu3")
 id = &"burst"
 input = 2
 title = &"move_burst"
-anim = &"burst"
+anim = &"Spellcast_Raise"
+anim_speed = 2.75
+anim_from = 0.060000000000000026
 tags = Array[StringName]([&"heavy", &"charge", &"finisher"])
 damage = 34.0
 shape = 1
-reach = 44.0
-knockback = 80.0
+reach = 5.5
+knockback = 14.0
 windup = 0.08
 recovery = 0.3
 hit_stop_ms = 80.0
-shake = 3.0
+shake = 2.5
 effect = 4
 effect_time = 2.0
 
-[sub_resource type="Resource" id="dash_cut"]
-script = ExtResource("1")
-id = &"dash_cut"
-input = 0
-title = &"move_dash_cut"
-anim = &"dash_cut"
-tags = Array[StringName]([&"light", &"dash", &"finisher"])
-damage = 20.0
-shape = 2
-reach = 48.0
-width = 16.0
-knockback = 40.0
-lunge = 40.0
-windup = 0.1
-recovery = 0.16
-hit_stop_ms = 55.0
-shake = 1.2
-
-[sub_resource type="Resource" id="slam"]
-script = ExtResource("1")
-id = &"slam"
-input = 1
-title = &"move_slam"
-anim = &"slam"
-tags = Array[StringName]([&"heavy", &"slam", &"finisher"])
-damage = 28.0
-shape = 1
-reach = 36.0
-knockback = 120.0
-lunge = 18.0
-windup = 0.16
-recovery = 0.26
-hit_stop_ms = 80.0
-shake = 3.0
-effect = 4
-effect_time = 0.6
-
 [resource]
-script = ExtResource("2")
-neutral = Array[ExtResource("1")]([SubResource("cut1"), SubResource("heavy1"), SubResource("burst")])
-dodge = Array[ExtResource("1")]([SubResource("dash_cut"), SubResource("slam")])
+script = ExtResource("2_c33w2")
+neutral = Array[ExtResource("1_0fmu3")]([SubResource("Resource_w3gka"), SubResource("Resource_mjo4m"), SubResource("Resource_xf51w")])
+dodge = Array[ExtResource("1_0fmu3")]([SubResource("Resource_drl36"), SubResource("Resource_ckn7t")])

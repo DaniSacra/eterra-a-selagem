@@ -1,15 +1,10 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_k7ddm"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_k7ddm")
 id = &"skeleton"
 name_key = &"enemy_skeleton"
-sprite = &"skeleton"
-behavior = 0
 hp = 22.0
-speed = 30.0
-damage = 5.0
-radius = 5.0
-xp = 1
+speed = 2.3

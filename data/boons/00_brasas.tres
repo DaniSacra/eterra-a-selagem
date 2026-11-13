@@ -1,18 +1,20 @@
-[gd_resource type="Resource" script_class="Boon" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="Boon" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ver3g"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_odan1"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_wrj0s"]
 
-[sub_resource type="Resource" id="m0"]
-script = ExtResource("1")
-stat = &"ember_dps"
-tag = &"light"
-values = PackedFloat32Array(4.0, 6.0, 8.0)
+[sub_resource type="Resource" id="Resource_utjrv"]
+script = ExtResource("3_wrj0s")
+cooldown = PackedFloat32Array(3.5, 3, 2.5)
+damage = PackedFloat32Array(18, 26, 36)
+count = PackedFloat32Array(3, 4, 6)
+radius = PackedFloat32Array(2.2, 2.4, 2.6)
+status = &"burn"
+status_power = PackedFloat32Array(5, 7, 9)
 
 [resource]
-script = ExtResource("2")
+script = ExtResource("2_odan1")
 id = &"brasas"
 family = 0
-icon = 0
-max_level = 3
-mods = Array[ExtResource("1")]([SubResource("m0")])
+skill = SubResource("Resource_utjrv")

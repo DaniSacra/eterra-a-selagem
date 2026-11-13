@@ -1,18 +1,17 @@
-[gd_resource type="Resource" script_class="Boon" load_steps=4 format=3]
+[gd_resource type="Resource" script_class="Boon" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1"]
-[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_cu6uw"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_f1mm1"]
 
-[sub_resource type="Resource" id="m0"]
-script = ExtResource("1")
+[sub_resource type="Resource" id="Resource_i21av"]
+script = ExtResource("1_cu6uw")
 stat = &"shield_burst"
-values = PackedFloat32Array(40.0)
+values = PackedFloat32Array(40, 70, 100)
 
 [resource]
-script = ExtResource("2")
+script = ExtResource("2_f1mm1")
 id = &"bastiao"
 family = 4
 icon = 15
-max_level = 1
-requires = Array[StringName]([&"escudo", &"flagelo"])
-mods = Array[ExtResource("1")]([SubResource("m0")])
+requires = Array[StringName]([&"escudo", &"consolo"])
+mods = Array[ExtResource("1_cu6uw")]([SubResource("Resource_i21av")])

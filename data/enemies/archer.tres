@@ -1,19 +1,19 @@
-[gd_resource type="Resource" script_class="EnemyDef" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_jggar"]
 
 [resource]
-script = ExtResource("1")
+script = ExtResource("1_jggar")
 id = &"archer"
 name_key = &"enemy_archer"
-sprite = &"archer"
+model = &"rogue"
+tint = Color(0.85, 0.95, 0.85, 1)
 behavior = 1
 hp = 16.0
-speed = 30.0
-damage = 4.0
-radius = 5.0
+speed = 2.6
+damage = 5.0
 xp = 2
-attack_damage = 7.0
-attack_range = 105.0
-attack_cooldown = 2.8
+attack_damage = 8.0
+attack_range = 10.0
+attack_cooldown = 3.2
 attack_windup = 0.7

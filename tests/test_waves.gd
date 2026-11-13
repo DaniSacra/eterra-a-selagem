@@ -57,8 +57,8 @@ func test_spawns_follow_the_rate() -> void:
 	var total := 0
 	for i in 600:
 		total += d.step(0.1, 0).size()
-	# the first minute ramps 0.7 -> 1.5 a second: about 66 spawns
-	assert_between(total, 58, 74)
+	# the first minute ramps 1.4 -> 2.6 a second: about 120 spawns
+	assert_between(total, 110, 130)
 
 
 func test_spawns_never_pass_the_cap() -> void:
