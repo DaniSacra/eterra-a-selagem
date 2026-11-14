@@ -1,0 +1,26 @@
+{
+  "paladin_1": {
+    "prompt": "Full body slender young paladin, light worn steel breastplate and pauldrons over a dark slate-blue padded tunic, short deep red cloak on the shoulders, a small engraved lion on the chest plate, leather belt, bracers and tall boots, bare head with short dark hair, calm determined face, standing in A-pose facing forward. Stylized hand-painted game character, soft painterly textures, muted cool colors with one crimson accent, realistic adult proportions with long legs and a small head, no base, no ground, empty hands, no weapons.",
+    "polycount": 12000,
+    "previewId": "01a1da08-7f22-7263-ba7c-1b11e59b6608",
+    "attempt": 1,
+    "previewCredits": 5,
+    "refineId": "01a1da0a-e42d-71d8-bc30-f6f2a3054217",
+    "refineCredits": 10,
+    "bytes": 3649020,
+    "rigId": "01a1da0b-4fb9-7243-8275-f199ff43ad7e",
+    "rigCredits": 5
+  },
+  "hero_sombra": {
+    "prompt": "Full body tall lanky teenage boy about seventeen, thin and wiry, small head, long thin legs and arms, narrow shoulders. No armor, no cape, no cloak: fitted black cloth tunic to mid-thigh, black trousers, slim black boots, dark grey belt, a tiny grey lion pin, one long thin teal scarf around the neck with two narrow ends hanging down the back. Short messy copper-red hair, serious face. A-pose facing forward. Stylized hand-painted game character, soft painterly textures, near-monochrome black and dark grey clothes, realistic proportions eight heads tall, not chibi, not a child, no base, no ground, empty hands, no weapons.",
+    "polycount": 12000,
+    "previewId": "01a1db67-1b12-7345-b944-a3fcd20f96cd",
+    "attempt": 2,
+    "previewCredits": 5,
+    "refineId": "01a1db68-805e-75b1-9345-5d479de4672a",
+    "refineCredits": 10,
+    "bytes": 3576028,
+    "rigId": "01a1db69-efc0-77b1-83c6-6a77dc75da20",
+    "rigCredits": 5
+  }
+}

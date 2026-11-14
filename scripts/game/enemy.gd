@@ -12,12 +12,17 @@ var push := Vector2.ZERO
 var dir := Vector2.DOWN
 var hp := 1.0
 var max_hp := 1.0
+## Yellow bar over the life bar (EnemyDef.armor): blows wear it down first.
+var armor := 0.0
+var max_armor := 0.0
 var alive := true
 var state := State.WALK
 var state_t := 0.0
 var cooldown := 0.0
 var contact_cd := 0.0
 var flash_t := 0.0
+## How white the last blow flashed it (1: a strong blow, the body goes pure white for a frame or two).
+var flash_power := 1.0
 var frozen_t := 0.0
 var stun_t := 0.0
 var air_t := 0.0

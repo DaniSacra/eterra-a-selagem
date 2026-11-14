@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_nlwfi"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_twlni"]
+
+[sub_resource type="Resource" id="Resource_nb7x3"]
+script = ExtResource("1_nlwfi")
+stat = &"freeze_time"
+tag = &"dash"
+values = PackedFloat32Array(0.8, 1.2, 1.6)
+
+[resource]
+script = ExtResource("2_twlni")
+id = &"passo_geada"
+family = 1
+icon = 17
+slot = 4
+mods = Array[ExtResource("1_nlwfi")]([SubResource("Resource_nb7x3")])

@@ -6,6 +6,8 @@ extends Resource
 @export var stat: StringName
 @export var tag: StringName
 @export var values: PackedFloat32Array = PackedFloat32Array()
+## Rarer cards multiply this number (damage, burn...). Off for counts, cooldowns and other numbers that must not scale.
+@export var by_rarity := true
 
 
 func value(level: int) -> float:

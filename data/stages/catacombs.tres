@@ -1,0 +1,68 @@
+[gd_resource type="Resource" script_class="StageDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/room_layout.gd" id="1_21576"]
+[ext_resource type="Script" path="res://scripts/core/stage_def.gd" id="2_dhpac"]
+
+[sub_resource type="Resource" id="Resource_2oc7l"]
+script = ExtResource("1_21576")
+half = Vector2(18, 16)
+pillars = Array[Vector3]([Vector3(-11, -9, 1), Vector3(11, -9, 1), Vector3(-11, 9, 1), Vector3(11, 9, 1)])
+shafts = Array[Vector2]([Vector2(-6, 2), Vector2(7, -3), Vector2(0, 8)])
+
+[sub_resource type="Resource" id="Resource_2ory6"]
+script = ExtResource("1_21576")
+half = Vector2(14, 12)
+pillars = Array[Vector3]([Vector3(-7, -4, 1), Vector3(7, -4, 1), Vector3(-7, 5, 1), Vector3(7, 5, 1)])
+shafts = Array[Vector2]([Vector2(-4, 2), Vector2(6, -6)])
+
+[sub_resource type="Resource" id="Resource_brfyt"]
+script = ExtResource("1_21576")
+half = Vector2(16, 12)
+pillars = Array[Vector3]([Vector3(0, 0, 1.4)])
+shafts = Array[Vector2]([Vector2(-8, 4), Vector2(8, -4)])
+
+[sub_resource type="Resource" id="Resource_ke0cv"]
+script = ExtResource("1_21576")
+half = Vector2(14, 14)
+pillars = Array[Vector3]([Vector3(-5, -6, 1), Vector3(5, 6, 1)])
+shafts = Array[Vector2]([Vector2(0, 0)])
+
+[sub_resource type="Resource" id="Resource_cy7en"]
+script = ExtResource("1_21576")
+half = Vector2(18, 12)
+pillars = Array[Vector3]([Vector3(-10, 0, 1), Vector3(10, 0, 1), Vector3(0, 3, 1)])
+shafts = Array[Vector2]([Vector2(-5, 3), Vector2(6, 2)])
+
+[sub_resource type="Resource" id="Resource_wpebi"]
+script = ExtResource("1_21576")
+half = Vector2(14, 14)
+shafts = Array[Vector2]([Vector2(-5, -5), Vector2(5, 5)])
+
+[sub_resource type="Resource" id="Resource_63so8"]
+script = ExtResource("1_21576")
+half = Vector2(16, 14)
+pillars = Array[Vector3]([Vector3(-6, -3, 1), Vector3(6, -3, 1), Vector3(-8, 7, 1), Vector3(8, 7, 1), Vector3(0, 0, 1.2)])
+shafts = Array[Vector2]([Vector2(-3, -2), Vector2(9, 3)])
+
+[sub_resource type="Resource" id="Resource_kin83"]
+script = ExtResource("1_21576")
+half = Vector2(12, 10)
+shafts = Array[Vector2]([Vector2(0, 0)])
+
+[resource]
+script = ExtResource("2_dhpac")
+rooms = 4
+miniboss_depth_min = 3
+miniboss_depth_max = 3
+minibosses = Array[StringName]([&"knight", &"priest_elder"])
+fountain_depth_min = 2
+fountain_depth_max = 2
+layouts = Array[ExtResource("1_21576")]([SubResource("Resource_2ory6"), SubResource("Resource_brfyt"), SubResource("Resource_ke0cv"), SubResource("Resource_cy7en"), SubResource("Resource_wpebi"), SubResource("Resource_63so8")])
+boss_layout = SubResource("Resource_2oc7l")
+shop_layout = SubResource("Resource_kin83")
+enemies = Array[StringName]([&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite", &"guard", &"guard_elite", &"priest", &"priest_elite"])
+wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
+rewards = PackedInt32Array(1, 2, 3, 4, 5)
+reward_weights = PackedFloat32Array(6, 2.5, 1.5, 1, 1.5)
+shop_items = PackedInt32Array(1, 2, 3, 6)
+shop_prices = PackedInt32Array(150, 100, 125, 60)

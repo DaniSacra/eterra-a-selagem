@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_uvjr2"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_ooegu"]
+
+[sub_resource type="Resource" id="Resource_36aib"]
+script = ExtResource("1_uvjr2")
+stat = &"cast_dps"
+tag = &"cast"
+values = PackedFloat32Array(16, 24, 32)
+
+[sub_resource type="Resource" id="Resource_af53l"]
+script = ExtResource("1_uvjr2")
+stat = &"damage_pct"
+tag = &"cast"
+values = PackedFloat32Array(0.3, 0.45, 0.6)
+
+[resource]
+script = ExtResource("2_ooegu")
+id = &"circulo_radiante"
+icon = 6
+slot = 3
+mods = Array[ExtResource("1_uvjr2")]([SubResource("Resource_36aib"), SubResource("Resource_af53l")])

@@ -58,6 +58,11 @@ func step(dt: float) -> void:
 	_step_pending(dt)
 
 
+## A skill's damage at a level, times the rarity the gift was taken at.
+func _damage(b: Boon, lv: int) -> float:
+	return b.skill.get_damage(lv) * game.boons.rarity_mult(b.id)
+
+
 func _cast(b: Boon) -> bool:
 	var lv := game.boons.level(b.id)
 	var s := b.skill
@@ -71,7 +76,7 @@ func _cast(b: Boon) -> bool:
 				return false
 			for i in targets.size():
 				var at: Vector2 = targets[i]
-				_queue(at, STRIKE_DELAY + i * 0.07, s.get_radius(lv), s.get_damage(lv), tags, s.status, s.get_status_power(lv), color)
+				_queue(at, STRIKE_DELAY + i * 0.07, s.get_radius(lv), _damage(b, lv), tags, s.status, s.get_status_power(lv), color)
 				# what falls: a ball of fire or a pillar of light, seen coming down before it lands
 				game.fx.beam(at, color, 0.35, 10.0, STRIKE_DELAY + i * 0.07 + 0.12)
 			Audio.play(&"rain")
@@ -84,14 +89,14 @@ func _cast(b: Boon) -> bool:
 				game.fx.burst(&"frost" if b.family == Boon.Family.GEADA else &"light", Vector3(p.x + cos(a) * r * 0.7, 0.4, p.y + sin(a) * r * 0.7))
 			game.horde.in_circle(p, r, _found)
 			for e in _found.duplicate():
-				game.combat.skill_hit(e, s.get_damage(lv), tags, (e.pos - p).normalized(), 6.0, s.status, s.get_status_power(lv))
+				game.combat.skill_hit(e, _damage(b, lv), tags, (e.pos - p).normalized(), 6.0, s.status, s.get_status_power(lv))
 			game.fx.shake(1.2)
 			Audio.play(&"shield")
 		SkillDef.Kind.FAN:
 			var aim := game.player.facing
 			var n := s.get_count(lv)
 			for d in BossRules.fan(aim, n, deg_to_rad(18.0 * minf(n, 7)) if n > 1 else 0.0):
-				var shot := game.projectiles.fire_wave(Projectiles.Kind.BLADE, p + d * 0.6, d, s.get_damage(lv), s.get_radius(lv), 1.6, color, tags)
+				var shot := game.projectiles.fire_wave(Projectiles.Kind.BLADE, p + d * 0.6, d, _damage(b, lv), s.get_radius(lv), 1.6, color, tags)
 				shot.status = s.status
 				shot.status_power = s.get_status_power(lv)
 			Audio.play(&"swing")
@@ -100,12 +105,12 @@ func _cast(b: Boon) -> bool:
 			if found == null:
 				return false
 			var at: Vector2 = found
-			_queue(at, METEOR_DELAY, s.get_radius(lv), s.get_damage(lv), tags, s.status, s.get_status_power(lv), color, true)
+			_queue(at, METEOR_DELAY, s.get_radius(lv), _damage(b, lv), tags, s.status, s.get_status_power(lv), color, true)
 			game.fx.beam(at, color, 1.6, 16.0, METEOR_DELAY + 0.2)
 			game.fx.ring(at, s.get_radius(lv), color, METEOR_DELAY)
 			Audio.play(&"rain")
 		SkillDef.Kind.CONSECRATE:
-			game.ground.add_zone(Ground.Kind.HOLY, p, s.get_radius(lv), s.get_status_power(lv), s.get_damage(lv), tags)
+			game.ground.add_zone(Ground.Kind.HOLY, p, s.get_radius(lv), s.get_status_power(lv), _damage(b, lv), tags)
 			game.fx.ring(p, s.get_radius(lv), color, 0.5)
 			game.fx.burst(&"light", Vector3(p.x, 0.3, p.y))
 			Audio.play(&"heal")
@@ -206,7 +211,7 @@ func _step_orbit(b: Boon, dt: float) -> void:
 		var at := Vector2(orb.position.x, orb.position.z)
 		game.horde.in_circle(at, 0.8, _found)
 		for e in _found.duplicate():
-			game.combat.skill_hit(e, s.get_damage(lv), tags, (e.pos - p).normalized(), 4.0, s.status, s.get_status_power(lv))
+			game.combat.skill_hit(e, _damage(b, lv), tags, (e.pos - p).normalized(), 4.0, s.status, s.get_status_power(lv))
 
 
 ## Up to n enemies near a point, nearest first, each a different one.

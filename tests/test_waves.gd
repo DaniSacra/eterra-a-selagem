@@ -4,7 +4,9 @@ var table: WaveTable
 
 
 func before_each() -> void:
-	table = load("res://data/waves/catacombs.tres")
+	# the tests below check the designed 15-minute timeline; the shipped pace is checked on its own
+	table = (load("res://data/waves/catacombs.tres") as WaveTable).duplicate()
+	table.pace = 1.0
 
 
 func _director(seed_value: int = 1) -> WaveDirector:
@@ -21,10 +23,10 @@ func test_the_run_is_covered_until_the_boss_with_no_gaps() -> void:
 		t += 5.0
 
 
-func test_elites_come_at_five_and_ten_minutes() -> void:
+func test_elites_come_at_three_and_ten_minutes() -> void:
 	var elites := table.events.filter(func(e: WaveEvent) -> bool: return e.kind == WaveEvent.Kind.ELITE)
 	assert_eq(elites.size(), 2)
-	assert_eq(elites[0].time, 300.0)
+	assert_eq(elites[0].time, 180.0)
 	assert_eq(elites[0].enemy, &"knight")
 	assert_eq(elites[1].time, 600.0)
 	assert_eq(elites[1].enemy, &"priest")
@@ -57,8 +59,28 @@ func test_spawns_follow_the_rate() -> void:
 	var total := 0
 	for i in 600:
 		total += d.step(0.1, 0).size()
-	# the first minute ramps 1.4 -> 2.6 a second: about 120 spawns
-	assert_between(total, 110, 130)
+	# the first minute ramps 0.5 -> 0.75 a second: about 37 spawns
+	assert_between(total, 33, 42)
+
+
+func test_about_120_to_150_enemies_in_the_first_three_minutes() -> void:
+	var d := _director()
+	var total := 0
+	for i in 1800:
+		total += d.step(0.1, 0).size()
+	assert_between(total, 120, 150)
+
+
+## Ember and Blade pacing: the common crowd (not the heavy ones) falls in one or two light blows,
+## even at three minutes when it has toughened up, before any gift.
+## As in Hades II, the common foot soldier falls to one full chain of the attack (20 + 25 + 60), and the
+## smallest one to the first two swings.
+func test_common_enemies_fall_to_one_attack_chain() -> void:
+	var tree: ComboTree = load("res://data/combos/paladin.tres")
+	var cut1 := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
+	var chain := cut1.damage + cut1.next[0].damage + cut1.next[0].next[0].damage
+	assert_lte((load("res://data/enemies/skeleton.tres") as EnemyDef).hp, chain)
+	assert_lte((load("res://data/enemies/runner.tres") as EnemyDef).hp, cut1.damage + cut1.next[0].damage)
 
 
 func test_spawns_never_pass_the_cap() -> void:
@@ -83,7 +105,7 @@ func test_events_fire_once_and_in_order() -> void:
 		d.step(0.1, 0)
 		for e in d.due_events():
 			seen.append(e.time)
-	assert_eq(seen, [300.0, 420.0, 600.0, 900.0] as Array[float])
+	assert_eq(seen, [180.0, 420.0, 600.0, 900.0] as Array[float])
 
 
 func test_stopped_director_keeps_the_clock_but_spawns_nothing() -> void:
@@ -120,3 +142,29 @@ func test_experience_carries_over_and_can_give_two_levels() -> void:
 	assert_eq(r.level, 3)
 	assert_eq(r.xp, 1)
 	assert_eq(r.gained, 2)
+
+
+## The MVP plays the timeline five times as fast: Morvath at three minutes of play.
+func test_the_shipped_run_meets_morvath_at_three_minutes() -> void:
+	var shipped: WaveTable = load("res://data/waves/catacombs.tres")
+	assert_almost_eq(shipped.boss_play_time(), 180.0, 0.01)
+
+
+## A faster timeline brings each stage sooner but spawns at the same rate per second of play.
+func test_pace_moves_the_timeline_not_the_spawn_rate() -> void:
+	var slow := _director(3)
+	var quick_table := table.duplicate() as WaveTable
+	quick_table.pace = 5.0
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var quick := WaveDirector.new(quick_table, rng)
+	var slow_n := 0
+	var quick_n := 0
+	for i in 600:
+		slow_n += slow.step(0.05, 0).size()
+		quick_n += quick.step(0.05, 0).size()
+	assert_almost_eq(slow.time, 30.0, 0.01)
+	assert_almost_eq(quick.time, 150.0, 0.01)
+	# the quick one is already in denser stages, so it spawns at least as much, never five times as much
+	assert_gte(quick_n, slow_n)
+	assert_lt(quick_n, slow_n * 5)

@@ -4,3 +4,19 @@
 
 [resource]
 script = ExtResource("1_oingo")
+speed = 6.75
+dodge_speed = 37.5
+dodge_iframes = 0.26666666666666666
+dodge_charges = 1
+dodge_recharge = 0.74
+sprint_scale = 1.6481481481481481
+move_scale_light = 0.0
+move_scale_heavy = 0.0
+move_scale_finisher = 0.0
+cam_distance = 45.0
+cam_pitch = 30.0
+cam_fov = 20.0
+cam_lead = 1.2
+cam_smooth = 9.0
+hit_stop_scale = 1.0
+outline = 0.5

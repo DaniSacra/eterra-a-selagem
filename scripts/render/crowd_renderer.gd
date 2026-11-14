@@ -3,10 +3,30 @@ extends Node3D
 ## Draws hundreds of characters from baked poses: one MultiMesh per (kind of enemy, animation, frame), plus one
 ## MultiMesh of soft round shadows. Each frame: begin(), add() once per character, commit().
 
-## Multiplies the colour of the common crowd (elites and the boss keep theirs).
-const CROWD_SHADE := Color(0.55, 0.62, 0.55)
+## The common crowd is light ash grey on the dark floor, as in Ember & Blade: it reads at a glance and never fights
+## the effects (they are white and gold, it is grey). How much of the texture's colour goes (1 = all), what multiplies
+## it, and how much it glows by itself so it stays readable out of the paladin's light.
+const CROWD_GREY := 0.92
+const CROWD_SHADE := Color(0.74, 0.76, 0.78)
+const CROWD_FLAT := 0.45
+const CROWD_LIFT := 0.45
+## Elites glow a little by themselves too, so their colours show away from the light.
+const ELITE_FLAT := 0.2
+## Elites keep their colours and are a step brighter than the crowd.
+const ELITE_SHADE := Color(1.25, 1.2, 1.2)
+## Thick glowing outline of elites and the boss (crowd_outline.gdshader): meters in model space, brightness.
+const OUTLINE_WIDTH := 0.045
+const OUTLINE_INTENSITY := 2.4
+const OUTLINE := preload("res://assets/shaders/crowd_outline.gdshader")
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
+const BAR := preload("res://assets/shaders/life_bar.gdshader")
+## The thin life bar over enemies' heads (Hades II): meters wide per meter of the enemy's radius, meters tall,
+## and how far above the head.
+const BAR_WIDTH := 2.2
+const BAR_MIN_WIDTH := 1.1
+const BAR_HEIGHT := 0.13
+const BAR_ABOVE := 0.35
 
 class Batch:
 	var mmi: MultiMeshInstance3D
@@ -21,6 +41,7 @@ var _materials: Dictionary = {}  # enemy id -> ShaderMaterial
 var _batches: Dictionary = {}  # enemy id -> anim -> Array[Batch] (one per frame)
 var _used: Array[Batch] = []
 var _shadow: Batch
+var _bars: Batch
 
 
 func _ready() -> void:
@@ -34,6 +55,12 @@ func _ready() -> void:
 	m.disable_receive_shadows = true
 	plane.material = m
 	_shadow = _new_batch(plane, null, false)
+	var quad := QuadMesh.new()
+	quad.size = Vector2(1, 1)
+	var bar_mat := ShaderMaterial.new()
+	bar_mat.shader = BAR
+	bar_mat.render_priority = 10
+	_bars = _new_batch(quad, bar_mat, true)
 
 
 func model(id: StringName) -> BakedModel:
@@ -53,10 +80,21 @@ func register(d: EnemyDef) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
 	mat.set_shader_parameter(&"albedo", model(d.model).albedo)
-	# the common crowd a step darker and greener, so the hero, the elites and the effects stand out
-	mat.set_shader_parameter(&"tint", d.tint * (CROWD_SHADE if not d.elite and d.behavior != EnemyDef.Behavior.BOSS else Color.WHITE))
+	# the common crowd grey and dim; elites and the boss brighter, in colour, with a thick glowing outline
+	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
+	mat.set_shader_parameter(&"tint", d.tint * (CROWD_SHADE if common else ELITE_SHADE if d.elite else Color.WHITE))
+	mat.set_shader_parameter(&"desaturate", CROWD_GREY if common else 0.0)
+	mat.set_shader_parameter(&"flat_light", CROWD_FLAT if common else ELITE_FLAT if d.elite else 0.0)
+	mat.set_shader_parameter(&"lift", CROWD_LIFT if common else 0.0)
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
 	mat.set_shader_parameter(&"rim_power", d.rim)
+	if d.rim > 0.0:
+		var edge := ShaderMaterial.new()
+		edge.shader = OUTLINE
+		edge.set_shader_parameter(&"color", d.rim_color)
+		edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
+		edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
+		mat.next_pass = edge
 	_materials[d.id] = mat
 	_batches[d.id] = {}
 
@@ -67,6 +105,8 @@ func begin() -> void:
 	_used.clear()
 	_shadow.count = 0
 	_used.append(_shadow)
+	_bars.count = 0
+	_used.append(_bars)
 
 
 ## One character: kind, animation, seconds into it, where it stands, which way it faces (radians around Y),
@@ -87,6 +127,13 @@ func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, stat
 	if state.a < 0.5:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
 		_put(_shadow, Transform3D(Basis().scaled(Vector3(r, 1.0, r)), Vector3(pos.x, 0.03, pos.z)), Color())
+
+
+## A thin life bar over one enemy's head. top: the top of its head (world). life, armor: what is left (0..1).
+func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float) -> void:
+	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH)
+	_put(_bars, Transform3D(Basis().scaled(Vector3(w, BAR_HEIGHT, 1.0)), top + Vector3(0, BAR_ABOVE, 0)),
+		Color(clampf(life, 0.0, 1.0), clampf(armor, 0.0, 1.0), 0, 0))
 
 
 func commit() -> void:
@@ -152,7 +199,7 @@ func _new_batch(mesh: Mesh, mat: Material, custom: bool) -> Batch:
 
 
 func _all_batches() -> Array[Batch]:
-	var out: Array[Batch] = [_shadow]
+	var out: Array[Batch] = [_shadow, _bars]
 	for id: StringName in _batches:
 		for anim: StringName in _batches[id]:
 			for b: Batch in _batches[id][anim]:

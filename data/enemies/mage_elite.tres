@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_c3cuf"]
+
+[resource]
+script = ExtResource("1_c3cuf")
+id = &"mage_elite"
+name_key = &"enemy_mage"
+model = &"mage"
+size = 0.9
+rim_color = Color(1, 0.22, 0.3, 1)
+rim = 1.0
+behavior = 1
+hp = 80.0
+speed = 5.5
+damage = 4.0
+elite = true
+armor = 155.0
+attack_damage = 4.0
+attack_range = 9.0
+attack_cooldown = 1.9
+attack_windup = 0.8
+rating = 24.0

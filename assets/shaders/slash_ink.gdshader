@@ -3,10 +3,12 @@ shader_type spatial;
 // without blowing the screen out. Same UVs and timing; it lingers longer and dissolves into specks.
 render_mode unshaded, blend_mix, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled;
 
-uniform vec4 color : source_color = vec4(0.03, 0.02, 0.045, 1.0);
+uniform vec4 color : source_color = vec4(0.012, 0.01, 0.022, 1.0);
 uniform float t = 0.0;
 uniform float sweep = 0.25;
 uniform float opacity = 0.85;
+// Multiplies the brush stroke before the opacity: higher is a more solid body of ink.
+uniform float density = 1.8;
 uniform bool flip = false;
 
 float hash(vec2 p) {
@@ -42,5 +44,5 @@ void fragment() {
 	band *= 1.0 - smoothstep(0.1, 1.0, behind) * 0.55;
 	if (band <= 0.01) discard;
 	ALBEDO = color.rgb;
-	ALPHA = clamp(band, 0.0, 1.0) * opacity;
+	ALPHA = clamp(band * density, 0.0, 1.0) * opacity;
 }

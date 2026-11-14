@@ -16,12 +16,12 @@ func _take(id: StringName, times: int = 1) -> void:
 		state.take(state.find(id))
 
 
-func test_catalog_has_four_families_of_three_and_the_combinations() -> void:
+func test_catalog_has_four_families_and_the_combinations() -> void:
 	var per_family := {}
 	for b in state.catalog:
 		per_family[b.family] = per_family.get(b.family, 0) + 1
 	for family: int in [Boon.Family.CHAMA, Boon.Family.GEADA, Boon.Family.LUZ, Boon.Family.VIGILIA]:
-		assert_eq(per_family.get(family), 3)
+		assert_gte(per_family.get(family), 3)
 	assert_gte(per_family.get(Boon.Family.DUO), 4)
 
 
@@ -87,7 +87,7 @@ func test_gifts_change_moves_of_the_tree_not_new_attacks() -> void:
 		for tag in node.tags:
 			tags[tag] = true
 	# skills carry "skill" and their family's tag (Boon.FAMILY_TAG)
-	for extra: StringName in [&"mark", &"ember", &"skill"] + Boon.FAMILY_TAG:
+	for extra: StringName in [&"mark", &"ember", &"skill"] + Boon.FAMILY_TAG + Combat.CAST_TAGS:
 		tags[extra] = true
 	for b in state.catalog:
 		for m in b.mods:
@@ -144,9 +144,8 @@ func test_combination_shows_up_once_both_gifts_are_owned() -> void:
 
 
 func test_maxed_gifts_leave_the_draw_and_the_draw_can_run_dry() -> void:
-	for round in 3:
-		for b in state.catalog:
-			state.take(b)
+	for b in state.catalog:
+		state.levels[b.id] = b.max_level
 	assert_eq(state.offers(rng).size(), 0)
 
 
@@ -175,3 +174,94 @@ func test_skill_values_grow_with_level() -> void:
 		if b.max_level > 1:
 			assert_gte(s.get_damage(b.max_level), s.get_damage(1), String(b.id))
 			assert_lte(s.get_cooldown(b.max_level), s.get_cooldown(1), String(b.id))
+
+
+## Gifts riding on an action: one per action, the new one replaces the old.
+func _slot_gift(id: StringName, slot: Boon.Slot, stat_name: StringName = &"damage_pct", tag: StringName = &"light", by_rarity: bool = true) -> Boon:
+	var b := Boon.new()
+	b.id = id
+	b.slot = slot
+	var m := BoonMod.new()
+	m.stat = stat_name
+	m.tag = tag
+	m.values = PackedFloat32Array([0.2, 0.3, 0.4])
+	m.by_rarity = by_rarity
+	b.mods = [m]
+	state.catalog.append(b)
+	return b
+
+
+func test_a_gift_on_a_taken_action_replaces_the_old_one() -> void:
+	var a := _slot_gift(&"t_a", Boon.Slot.ATTACK)
+	var b := _slot_gift(&"t_b", Boon.Slot.ATTACK)
+	var c := _slot_gift(&"t_c", Boon.Slot.SPECIAL, &"damage_pct", &"heavy")
+	state.take(a)
+	state.take(c)
+	assert_eq(state.replaced_by(b), a)
+	assert_null(state.replaced_by(a), "levelling the same gift replaces nothing")
+	state.take(b)
+	assert_eq(state.level(&"t_a"), 0)
+	assert_eq(state.in_slot(Boon.Slot.ATTACK), b)
+	assert_eq(state.in_slot(Boon.Slot.SPECIAL), c, "other actions keep their gift")
+
+
+func test_free_gifts_never_replace() -> void:
+	_take(&"brasas")
+	_take(&"onda_maior")
+	assert_eq(state.owned().size(), 2)
+	assert_null(state.in_slot(Boon.Slot.NONE))
+
+
+func test_rarity_multiplies_marked_numbers_and_keeps_the_best() -> void:
+	var a := _slot_gift(&"t_a", Boon.Slot.ATTACK)
+	var n := _slot_gift(&"t_n", Boon.Slot.DASH, &"dodge_charges", &"", false)
+	state.take(a, Boon.Rarity.EPIC)
+	state.take(n, Boon.Rarity.HEROIC)
+	var light: Array[StringName] = [&"light"]
+	assert_almost_eq(state.stat(&"damage_pct", light), 0.2 * 2.0, 0.001)
+	assert_almost_eq(state.stat(&"dodge_charges"), 0.2, 0.001, "counts do not scale")
+	state.take(a, Boon.Rarity.COMMON)
+	assert_eq(state.rarity(&"t_a"), Boon.Rarity.EPIC, "a later common card keeps the epic rarity")
+	assert_almost_eq(state.stat(&"damage_pct", light), 0.3 * 2.0, 0.001)
+
+
+func test_rarity_draw_is_mostly_common_never_heroic() -> void:
+	var seen := [0, 0, 0, 0]
+	for i in 4000:
+		seen[BoonState.roll_rarity(rng)] += 1
+	assert_gt(seen[0], seen[1])
+	assert_gt(seen[1], seen[2])
+	assert_gt(seen[2], 0)
+	assert_eq(seen[3], 0, "a common card draw is never heroic (Hades II)")
+
+
+func test_a_guardian_gift_is_never_common() -> void:
+	var seen := [0, 0, 0, 0]
+	for i in 2000:
+		seen[BoonState.roll_rarity(rng, Boon.RARITY_WEIGHT_GUARDIAN)] += 1
+	assert_eq(seen[0], 0)
+	assert_gt(seen[1], seen[2])
+
+
+func test_grow_offers_only_owned_gifts_that_can_grow() -> void:
+	assert_false(state.can_grow(), "nothing owned yet")
+	var b := state.catalog[0]
+	state.take(b)
+	assert_true(state.can_grow())
+	var offers := state.grow_offers(rng)
+	assert_eq(offers.size(), 1)
+	assert_eq(offers[0], b)
+	state.levels[b.id] = b.max_level
+	assert_false(state.can_grow())
+
+
+## Every action has a gift from each of the four families.
+func test_each_action_has_a_gift_of_every_family() -> void:
+	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
+		var families := {}
+		for b in state.catalog:
+			if b.slot == slot:
+				families[b.family] = true
+				for m in b.mods:
+					assert_true(m.tag == Boon.SLOT_TAG[slot] or m.tag == &"", "%s rides on %s but changes '%s'" % [b.id, Boon.SLOT_KEY[slot], m.tag])
+		assert_eq(families.size(), 4, "slot %s" % Boon.SLOT_KEY[slot])

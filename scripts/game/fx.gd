@@ -9,9 +9,30 @@ const RING := preload("res://assets/shaders/ring.gdshader")
 const BEAM := preload("res://assets/shaders/beam.gdshader")
 const IMPACT := preload("res://assets/shaders/impact.gdshader")
 const IMPACT_POOL := 40
+const GLINT := preload("res://assets/shaders/glint.gdshader")
+const CRESCENT := preload("res://assets/shaders/crescent.gdshader")
+const GLINT_POOL := 4
+## Meters across the quad of a finisher's glint (its long streak reaches the edges).
+const GLINT_SIZE := 20.0
+## Seconds the glint takes to burst and fade after its hold.
+const GLINT_BURST := 0.16
+const CRESCENT_POOL := 6
+## A finisher's crescent flies out to this many times the reach of the blow while it fades.
+const CRESCENT_GROW := 5.0
+## Seconds it lasts (the white edge goes in the first half, the ink lingers).
+const CRESCENT_TIME := 0.55
+## Where its band starts, as a share of the reach (lower is a broader sweep).
+const CRESCENT_INNER := 0.55
+## Share of the ink opacity (Feel.ink_opacity) its dark body keeps: lighter than a blow, so the white edge leads.
+const CRESCENT_INK := 0.35
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
+## Where the ink of a sword arc starts, as a share of its reach (lower is a fatter crescent of ink).
+const INK_INNER := 0.3
+## Where the bright streaks start, as a share of the reach: a wide band from near the paladin out to the tip
+## (Ember & Blade's cuts are fat sheets of light, not thin lines).
+const SLASH_INNER := 0.28
 const RING_POOL := 16
 const BEAM_POOL := 24
 const NUMBER_POOL := 90
@@ -35,15 +56,31 @@ var overlay: Control
 var stop_left := 0.0
 ## Strength of the colour split on screen (0..1), read by the screen pass.
 var split := 0.0
+## Seconds left of the impact frame (the screen in flat black and white), read by the screen pass.
+var frame_left := 0.0
 var shake_scale := 1.0
 ## When >= 0, sword arcs hold at this point of their life (the --lab still).
 var freeze_t := -1.0
+## The moment of slow motion now playing (Hades II slows the whole world on the last kill of a fight and on the
+## biggest blows): how much the camera closes in (1 = not at all) and the radial blur and bloom of the screen pass (0..1).
+var zoom := 1.0
+var radial := 0.0
+var _slow_on := false
+var _slow_fraction := 1.0
+var _slow_in := 0.05
+var _slow_hold := 0.0
+var _slow_out := 0.3
+var _slow_zoom := 1.0
+var _slow_blur := 0.0
+var _slow_t := 0.0
 var _shake := 0.0
 var _pools: Dictionary = {}
 var _next: Dictionary = {}
 var _slashes: Array[Dictionary] = []
 var _inks: Array[Dictionary] = []
 var _impacts: Array[Dictionary] = []
+var _glints: Array[Dictionary] = []
+var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
@@ -139,6 +176,16 @@ func setup(cam: Camera3D, over: Control) -> void:
 		var e := _effect_node(IMPACT, q)
 		(e.node as MeshInstance3D).sorting_offset = 10.0
 		_impacts.append(e)
+	var gq := QuadMesh.new()
+	gq.size = Vector2.ONE
+	for i in GLINT_POOL:
+		var e := _effect_node(GLINT, gq)
+		(e.node as MeshInstance3D).sorting_offset = 12.0
+		_glints.append(e)
+	for i in CRESCENT_POOL:
+		var e := _effect_node(CRESCENT, null)
+		(e.mat as ShaderMaterial).render_priority = 2
+		_crescents.append(e)
 	for i in RING_POOL:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2(2, 2)
@@ -172,7 +219,7 @@ func _effect_node(shader: Shader, mesh: Mesh) -> Dictionary:
 	mi.visible = false
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
-	return {"node": mi, "mat": mat, "life": 1.0, "time": 1.0, "grow": 0.0, "size": 1.0}
+	return {"node": mi, "mat": mat, "life": 1.0, "time": 1.0, "grow": 0.0, "size": 1.0, "follow": null}
 
 
 # ---------- what the game calls ----------
@@ -190,12 +237,13 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 
 
 ## A sword arc on the floor plane at waist height: from origin towards dir, reach meters, width degrees.
-func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9) -> void:
+## ink: lay the dark half-moon under the cut.
+func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true) -> void:
 	var tilt := _rng.randf_range(-0.08, 0.08)
 	var s: Dictionary = _take(_slashes)
 	var ink: Dictionary = _take(_inks)
-	_place_arc(s, _arc(reach, width_deg, 0.5), origin, dir, height, tilt)
-	_place_arc(ink, _arc(reach, width_deg, 0.42), origin, dir, height - 0.05, tilt)
+	_place_arc(s, _arc(reach, width_deg, SLASH_INNER), origin, dir, height, tilt)
+	_place_arc(ink, _arc(reach, width_deg, INK_INNER), origin, dir, height - 0.05, tilt)
 	s.time = time
 	var feel := Feel.live()
 	ink.time = time * feel.ink_life
@@ -208,7 +256,7 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / feel.ink_life)
-	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity if ink_under else 0.0)
 
 
 func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height: float, tilt: float) -> void:
@@ -218,8 +266,8 @@ func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height
 	mi.rotation = Vector3(tilt, atan2(dir.x, dir.y), 0.0)
 
 
-## The star of a blow landing on someone.
-func impact(pos: Vector3, color: Color, size: float = 1.0) -> void:
+## The star of a blow landing on someone. time: seconds it lasts (by default, quicker for smaller stars).
+func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -> void:
 	var e: Dictionary = _take(_impacts)
 	(e.node as Node3D).position = pos
 	var mat: ShaderMaterial = e.mat
@@ -227,7 +275,41 @@ func impact(pos: Vector3, color: Color, size: float = 1.0) -> void:
 	mat.set_shader_parameter(&"seed", _rng.randf() * 100.0)
 	mat.set_shader_parameter(&"size", 2.3 * size)
 	mat.set_shader_parameter(&"life", 0.0)
-	e.time = 0.16 + 0.04 * size
+	e.time = time if time > 0.0 else 0.16 + 0.04 * size
+
+
+## A finisher gathering light on the blade: a thin cross, a long streak and a ring that grow for hold seconds,
+## then burst (the blow lands at that instant). follow: a node it stays on (the tip of the sword), else it stays at pos.
+func glint(pos: Vector3, color: Color, hold: float, follow: Node3D = null) -> void:
+	var e: Dictionary = _take(_glints)
+	e.follow = follow
+	(e.node as Node3D).position = follow.global_position if follow else pos
+	e.time = hold + GLINT_BURST
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"size", GLINT_SIZE)
+	mat.set_shader_parameter(&"hold", hold / e.time)
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"streak_angle", _rng.randf_range(0.25, 0.45) * (1.0 if _rng.randf() < 0.5 else -1.0))
+
+
+## The wave of a finisher: a thin crescent of ink with a white edge that flies far past the blow and fades.
+func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, height: float = 0.7) -> void:
+	var e: Dictionary = _take(_crescents)
+	_place_arc(e, _arc(reach, width_deg, CRESCENT_INNER), origin, dir, height, 0.0)
+	(e.node as Node3D).scale = Vector3.ONE
+	e.time = CRESCENT_TIME
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"t", 0.0)
+	mat.set_shader_parameter(&"ink_opacity", Feel.live().ink_opacity * CRESCENT_INK)
+
+
+## One or two frames of the whole screen in flat black and white: only for the biggest blows.
+## Off with the screen shake option (fx.shake_scale 0), so it can be turned off for comfort.
+func impact_frame() -> void:
+	if shake_scale > 0.0:
+		frame_left = maxf(frame_left, Feel.live().impact_frame)
 
 
 ## The camera jolts along a blow (dir on the floor plane).
@@ -280,13 +362,61 @@ func kick_split(amount: float) -> void:
 
 ## Runs every frame, even during hit stop. Returns the camera's shake offset.
 func tick(delta: float) -> Vector3:
+	_tick_slow(delta / maxf(Engine.time_scale, 0.001))
 	stop_left = maxf(0.0, stop_left - delta)
 	_shake = maxf(0.0, _shake - delta * (0.6 + _shake * 6.0))
 	split = maxf(0.0, split - delta * 3.0)
+	frame_left = maxf(0.0, frame_left - delta)
 	_kick *= maxf(0.0, 1.0 - delta * 14.0)
 	if _shake <= 0.0:
 		return _kick
 	return _kick + Vector3(_rng.randf_range(-1, 1), _rng.randf_range(-0.5, 0.5), _rng.randf_range(-1, 1)) * _shake
+
+
+## Slow motion: the world runs at fraction of its speed (eased in over ease_in seconds, held, eased back over
+## ease_out), the camera closes in by zoom and the screen blurs toward its middle. A weaker one never cuts a
+## stronger one short. Seconds here are real seconds.
+func slow_mo(fraction: float, hold: float, ease_out: float, zoom_to: float = 1.0, blur: float = 0.0, ease_in: float = 0.06) -> void:
+	if _slow_on and fraction > _slow_fraction:
+		return
+	_slow_on = true
+	_slow_fraction = fraction
+	_slow_in = ease_in
+	_slow_hold = hold
+	_slow_out = ease_out
+	_slow_zoom = zoom_to
+	_slow_blur = blur
+	_slow_t = 0.0
+
+
+## Back to full speed at once (a menu opens, the run ends).
+func end_slow() -> void:
+	_slow_on = false
+	zoom = 1.0
+	radial = 0.0
+	Engine.time_scale = 1.0
+
+
+## How deep in the slow motion we are now (0..1), by real time since it began.
+static func slow_strength(t: float, ease_in: float, hold: float, ease_out: float) -> float:
+	if t < ease_in:
+		return t / maxf(ease_in, 0.001)
+	if t < ease_in + hold:
+		return 1.0
+	return clampf(1.0 - (t - ease_in - hold) / maxf(ease_out, 0.001), 0.0, 1.0)
+
+
+func _tick_slow(real_dt: float) -> void:
+	if not _slow_on:
+		return
+	_slow_t += real_dt
+	if _slow_t >= _slow_in + _slow_hold + _slow_out:
+		end_slow()
+		return
+	var k := slow_strength(_slow_t, _slow_in, _slow_hold, _slow_out)
+	Engine.time_scale = lerpf(1.0, _slow_fraction, k)
+	zoom = lerpf(1.0, _slow_zoom, k)
+	radial = _slow_blur * k
 
 
 ## Ages the pooled effects (also during hit stop, so the impact frame keeps glowing).
@@ -303,6 +433,24 @@ func animate(delta: float) -> void:
 		if (s.node as Node3D).visible:
 			_age(s, delta)
 			(s.mat as ShaderMaterial).set_shader_parameter(&"life", s.life)
+	for g in _glints:
+		if (g.node as Node3D).visible:
+			if freeze_t >= 0.0:
+				g.life = freeze_t
+			else:
+				_age(g, delta)
+			if is_instance_valid(g.follow):
+				(g.node as Node3D).position = (g.follow as Node3D).global_position
+			(g.mat as ShaderMaterial).set_shader_parameter(&"life", g.life)
+	for c in _crescents:
+		if (c.node as Node3D).visible:
+			if freeze_t >= 0.0:
+				c.life = freeze_t
+			else:
+				_age(c, delta)
+			var out: float = 1.0 - pow(1.0 - c.life, 3.0)
+			(c.node as Node3D).scale = Vector3.ONE * lerpf(1.0, CRESCENT_GROW, out)
+			(c.mat as ShaderMaterial).set_shader_parameter(&"t", c.life)
 	for r in _rings:
 		if (r.node as Node3D).visible:
 			_age(r, delta)

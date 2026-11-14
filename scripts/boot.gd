@@ -51,20 +51,14 @@ func _build_scene() -> void:
 	add_child(arena)
 	arena.build()
 	arena.open_door()
-	var knight: Node3D = (load(Player.MODEL) as PackedScene).instantiate()
-	knight.position = Vector3(-7.0, 0, -22.0)
-	knight.rotation.y = 0.75
-	add_child(knight)
-	for part in Player.HIDDEN_PARTS:
-		var n := knight.find_child(part, true, false)
-		if n:
-			(n as Node3D).visible = false
-	var anim := PoseBaker.find_player(knight)
-	PoseBaker.find_skeleton(knight).add_child(Slender.new())
-	anim.get_animation(&"Idle").loop_mode = Animation.LOOP_LINEAR
-	anim.play(&"Idle")
+	var body := HeroBody.make()
+	var hero: Node3D = body[0]
+	hero.position = Vector3(-7.0, 0, -22.0)
+	hero.rotation.y = 0.75
+	add_child(hero)
+	(body[1] as AnimationPlayer).play(&"Idle")
 	var light := OmniLight3D.new()
-	light.position = knight.position + Vector3(0.5, 3.0, 1.5)
+	light.position = hero.position + Vector3(0.5, 3.0, 1.5)
 	light.light_color = Color(1.0, 0.78, 0.5)
 	light.light_energy = 2.4
 	light.omni_range = 11.0

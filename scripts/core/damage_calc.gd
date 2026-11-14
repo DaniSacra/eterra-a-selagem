@@ -12,6 +12,14 @@ static func combo_bonus(combo_count: int) -> float:
 	return clampi(combo_count, 0, COMBO_CAP) * COMBO_STEP
 
 
+## A blow against armor: returns [armor left, damage that reaches the life bar]. The blow that breaks the armor
+## does not spill over (breaking it is its own reward: the stagger).
+static func against_armor(armor: float, amount: float) -> Array[float]:
+	if armor <= 0.0:
+		return [0.0, amount]
+	return [maxf(0.0, armor - amount), 0.0]
+
+
 ## base: the move's damage. bonus_pct: sum of percentage bonuses from gifts (0.2 = +20%).
 ## launched: target is in the air. frozen + shatter_pct: breaking a frozen target adds that share.
 ## undead + undead_mult: the Luz gift against the risen dead.

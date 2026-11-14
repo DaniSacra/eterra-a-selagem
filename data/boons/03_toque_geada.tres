@@ -14,4 +14,5 @@ script = ExtResource("2_lawjm")
 id = &"toque_geada"
 family = 1
 icon = 3
+slot = 2
 mods = Array[ExtResource("1_de57o")]([SubResource("Resource_xi1k5")])

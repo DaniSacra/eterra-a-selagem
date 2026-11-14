@@ -3,15 +3,18 @@ extends RefCounted
 ## A stand-in player for screenshots and smoke runs. Feeds Controls through a virtual pad:
 ## walks to the nearest enemy, plays the combos of the tree, steps out of warnings and dodges bolts.
 
-const COMBOS: Array[String] = ["LLLL", "LLLH", "LH", "LLH", "HHL", "C", "dL", "dH"]
+## L attack, H special, C special held (Omega special), O attack held (Omega attack), Q circle of light, d dash.
+const COMBOS: Array[String] = ["LLL", "Q", "H", "LLL", "O", "LL", "H", "C", "dL", "LLL"]
 const GAP := 0.25
-const REACH := 2.6
+const REACH := 3.6
 
 var pad := Controls.VirtualPad.new()
 var _t := 0.0
 var _queue := ""
 var _wait := 0.0
 var _hold := 0.0
+## The button being held down for _hold more seconds.
+var _held := &"heavy_attack"
 var _rng := RandomNumberGenerator.new()
 var _pick := 0
 
@@ -24,13 +27,23 @@ func step(dt: float, game: Game) -> void:
 	pad.end_frame()
 	_t += dt
 	_wait -= dt
-	pad.release(&"light_attack")
+	if _held != &"light_attack" or _hold <= 0.0:
+		pad.release(&"light_attack")
 	pad.release(&"dodge")
+	pad.release(&"cast")
 	var p := game.player.pos
+	if game.rooms and game.horde.count() == 0:
+		# between fights: take the reward, buy what there is gold for, walk through a door
+		var goal: Variant = game.rooms.bot_goal()
+		pad.move = _steer(game, p, ((goal as Vector2) - p).normalized()) if goal != null and p.distance_to(goal) > 0.3 else Vector2.ZERO
+		_queue = ""
+		_hold = 0.0
+		pad.release(&"heavy_attack")
+		return
 	var target := _nearest(game)
 	var to := target - p
 	pad.aim = to.normalized() if to.length() > 0.01 else Vector2.DOWN
-	pad.move = to.normalized() if to.length() > REACH else Vector2.ZERO
+	pad.move = _steer(game, p, to.normalized()) if to.length() > REACH else Vector2.ZERO
 	if _queue.is_empty() and _wait > 0.25:
 		# hit and run: after a combo, step out of the crowd
 		pad.move = -to.normalized().rotated(0.6)
@@ -40,6 +53,7 @@ func step(dt: float, game: Game) -> void:
 		if game.player.dodge_charges > 0 and game.player.state != Player.State.DODGE:
 			pad.press(&"dodge")
 		pad.release(&"heavy_attack")
+		pad.release(&"light_attack")
 		_hold = 0.0
 		_queue = ""
 		return
@@ -49,7 +63,7 @@ func step(dt: float, game: Game) -> void:
 	if _hold > 0.0:
 		_hold -= dt
 		if _hold <= 0.0:
-			pad.release(&"heavy_attack")
+			pad.release(_held)
 		return
 	pad.release(&"heavy_attack")
 	if _wait > 0.0:
@@ -67,10 +81,18 @@ func step(dt: float, game: Game) -> void:
 			pad.press(&"light_attack")
 		"H":
 			pad.press(&"heavy_attack")
+			_held = &"heavy_attack"
 			_hold = 0.06
 		"C":
 			pad.press(&"heavy_attack")
-			_hold = 0.6
+			_held = &"heavy_attack"
+			_hold = 0.75
+		"O":
+			pad.press(&"light_attack")
+			_held = &"light_attack"
+			_hold = 0.9
+		"Q":
+			pad.press(&"cast")
 		"d":
 			pad.move = to.normalized() if to.length() > 0.1 else Vector2.RIGHT
 			pad.press(&"dodge")
@@ -109,3 +131,16 @@ func _danger(game: Game) -> Vector2:
 	if game.boss and game.boss.mist and p.distance_to(game.boss.center) > game.boss.mist_radius - 2.0:
 		return (game.boss.center - p).normalized()
 	return Vector2.ZERO
+
+
+## Walks around what blocks the way (pillars, stairs, rubble): the first direction, turning a little more each
+## try to either side, that is not stopped by a wall or a prop.
+func _steer(game: Game, from: Vector2, dir: Vector2) -> Vector2:
+	if dir == Vector2.ZERO:
+		return dir
+	for k in [0, 1, -1, 2, -2, 3, -3]:
+		var d := dir.rotated(k * PI / 7.0)
+		var probe := from + d * 1.2
+		if game.arena.resolve(probe, Player.RADIUS).distance_to(probe) < 0.05:
+			return d
+	return dir

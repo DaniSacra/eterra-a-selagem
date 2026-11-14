@@ -46,3 +46,19 @@ func test_spatial_hash_buckets_by_cell_and_clears() -> void:
 	assert_eq(h.at_cell(0, 0).size(), 0)
 	h.insert(Vector2(-1, -1), "d")
 	assert_eq(h.at_cell(-1, -1), ["d"])
+
+
+func test_armor_takes_the_blow_and_the_breaking_blow_does_not_spill() -> void:
+	assert_eq(DamageCalc.against_armor(0.0, 30.0), [0.0, 30.0] as Array[float])
+	assert_eq(DamageCalc.against_armor(100.0, 30.0), [70.0, 0.0] as Array[float])
+	assert_eq(DamageCalc.against_armor(20.0, 30.0), [0.0, 0.0] as Array[float])
+
+
+func test_magick_is_spent_only_when_there_is_enough() -> void:
+	var m := Magick.new(100.0)
+	assert_true(m.spend(60.0))
+	assert_false(m.spend(60.0), "40 left is not enough")
+	assert_almost_eq(m.value, 40.0, 0.001)
+	m.gain(500.0)
+	assert_almost_eq(m.value, 100.0, 0.001, "never above the maximum")
+	assert_almost_eq(m.ratio(), 1.0, 0.001)

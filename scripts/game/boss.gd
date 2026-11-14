@@ -13,7 +13,7 @@ const DASH_TIME := 0.42
 const MIST_FROM := 46.0
 const MIST_TO := 12.0
 const MIST_TIME := 12.0
-const MIST_DPS := 7.0
+const MIST_DPS := 3.0
 const BOLT_SPEED := 9.0
 const SLASH_RANGE := 4.6
 const SHADOW := Color(0.75, 0.3, 1.0)
@@ -42,7 +42,7 @@ func setup(g: Game, def: EnemyDef) -> void:
 	game = g
 	Dev.seed_rng(_rng, 3)
 	center = g.arena.door_pos + Vector2(0, 14)
-	e = g.horde.spawn(def, g.arena.door_pos + Vector2(0, 1.5), false)
+	e = g.horde.spawn(def, g.arena.door_pos + Vector2(0, Arena.STAIRS_DEPTH + def.radius), false)
 	e.invulnerable = true
 	e.dir = Vector2.DOWN
 	e.hp = e.max_hp * Dev.num("boss-hp", 1.0)
@@ -106,7 +106,7 @@ func step(dt: float) -> void:
 			if _t >= 1.1 and _step == 0:
 				_step = 1
 				var skeleton := game.horde.def(&"skeleton")
-				var n := 8 + phase * 2
+				var n := 2 + phase  # few, as the first boss of Hades II brings few helpers
 				for k in n:
 					var at := game.arena.resolve(p + Vector2.from_angle(TAU * k / n) * 7.0, 0.5)
 					game.horde.spawn(skeleton, at, true)
@@ -137,6 +137,7 @@ func step(dt: float) -> void:
 			e.stun_t = 0.1
 			if _t >= 2.6:
 				_stagger = 0
+				e.armor = e.max_armor
 				_rest(0.5)
 	e.pos = game.arena.resolve(e.pos, e.def.radius)
 
@@ -214,6 +215,7 @@ func _change_phase(next: int) -> void:
 	game.fx.shake(5.0)
 	game.fx.hit_stop(90)
 	game.fx.kick_split(1.0)
+	game.fx.impact_frame()
 	game.fx.ring(e.pos, 9.0, SHADOW, 0.6)
 	game.fx.beam(e.pos, SHADOW, 2.5, 18.0, 0.9)
 	game.fx.burst(&"shadow", Vector3(e.pos.x, 2.0, e.pos.y))
@@ -245,6 +247,17 @@ func _step_mist(dt: float) -> void:
 			game.player.hurt(MIST_DPS * 0.5, game.player.pos * 2.0 - center)
 
 
+## His armor broke: he staggers, and stands up armored again.
+func break_armor() -> void:
+	if state == State.STUNNED or state == State.DYING:
+		return
+	_go(State.STUNNED)
+	game.fx.shake(4.0)
+	game.fx.burst(&"light", Vector3(e.pos.x, 2.5, e.pos.y))
+	game.fx.word(Vector3(e.pos.x, 5.0, e.pos.y), T.t(&"word_stagger"), Combat.LIGHT)
+	Audio.play(&"stagger")
+
+
 ## In the last phase the paladin's heavy blows stagger the king.
 func _on_struck(target: Enemy, tags: Array[StringName], _damage: float) -> void:
 	if target != e or phase < 3 or state == State.STUNNED or state == State.ROAR or not tags.has(&"heavy") or tags.has(&"mark"):
@@ -268,8 +281,10 @@ func _on_killed(dead: Enemy) -> void:
 	game.ground.clear()
 	game.horde.clear_crowd.call_deferred()
 	game.fx.hit_stop(120)
+	game.fx.slow_mo(0.15, 1.0, 0.8, 1.2, 1.0)
 	game.fx.shake(6.0)
 	game.fx.kick_split(1.0)
+	game.fx.impact_frame()
 	Audio.play(&"boss_down")
 	Audio.music(&"")
 

@@ -3,7 +3,11 @@ extends Resource
 ## One kind of enemy. A new enemy with an existing behaviour and an already baked model is a new .tres in
 ## data/enemies, no code. Distances in meters, speeds in meters per second.
 
-enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS }
+## CHASE: walks up and swings. ARCHER: keeps away and shoots a bolt. RUNNER: marks a line and lunges along it.
+## CASTER: conjures a circle under the paladin (speed 0: it never moves). KNIGHT: charges along a long line, and
+## slams the ground (close_*) when the paladin is near. PRIEST: raises skeletons and conjures circles.
+## PULSE: runs in and bursts all around itself. CONE: stops and blasts a wide cone ahead.
+enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE }
 
 @export var id: StringName
 @export var name_key: StringName
@@ -28,6 +32,10 @@ enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS }
 ## Heavy enemies cannot be launched or pushed far, and freeze for less time.
 @export var heavy := false
 @export var elite := false
+## A yellow bar over the life bar: blows wear it down first and do not push or stun while it holds.
+## When it breaks the enemy staggers for armor_stagger seconds. 0 = no armor.
+@export var armor := 0.0
+@export var armor_stagger := 1.5
 
 @export_group("Attack")
 ## Damage of its special attack (bolt, lunge, circle, charge).
@@ -36,3 +44,19 @@ enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS }
 @export var attack_cooldown := 2.5
 ## Warning time before the attack lands. Every attack is announced.
 @export var attack_windup := 0.6
+## RUNNER and KNIGHT: speed of the lunge or charge (m/s) and how long it lasts.
+@export var lunge_speed := 14.0
+@export var lunge_time := 0.45
+## PULSE: radius of the burst. CONE: opening in degrees.
+@export var attack_width := 0.0
+## KNIGHT: a slam on whoever stands close (0 damage = none).
+@export var close_damage := 0.0
+@export var close_range := 3.0
+@export var close_windup := 0.65
+
+@export_group("Encounters")
+## Weight of this enemy in the room generator (Hades II "DifficultyRating"): a room of difficulty 100 holds
+## enemies whose ratings add up to about 100.
+@export var rating := 0.0
+## The armored version that can stand in for it in a room (empty: none).
+@export var elite_version: StringName

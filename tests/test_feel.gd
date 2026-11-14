@@ -37,3 +37,17 @@ func test_move_scale_by_kind_of_move() -> void:
 	assert_eq(f.move_scale_for([&"light"] as Array[StringName]), 0.6)
 	assert_eq(f.move_scale_for([&"heavy"] as Array[StringName]), 0.35)
 	assert_eq(f.move_scale_for([&"heavy", &"finisher"] as Array[StringName]), 0.15)
+
+
+func test_slow_motion_eases_in_holds_and_eases_out() -> void:
+	assert_almost_eq(Fx.slow_strength(0.03, 0.06, 0.5, 0.4), 0.5, 0.001, "half way in")
+	assert_eq(Fx.slow_strength(0.3, 0.06, 0.5, 0.4), 1.0, "held")
+	assert_almost_eq(Fx.slow_strength(0.76, 0.06, 0.5, 0.4), 0.5, 0.001, "half way back")
+	assert_eq(Fx.slow_strength(2.0, 0.06, 0.5, 0.4), 0.0, "over")
+
+
+func test_slow_motion_only_for_big_blows() -> void:
+	assert_false(Combat.wants_slow_mo(3, 0), "a finisher on a few is not enough")
+	assert_false(Combat.wants_slow_mo(6, 2), "a handful hit, two felled")
+	assert_true(Combat.wants_slow_mo(3, 3), "three felled at once")
+	assert_true(Combat.wants_slow_mo(Combat.SLOW_MO_CROWD, 0), "a crowd hit")

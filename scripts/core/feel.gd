@@ -16,6 +16,8 @@ const OVERRIDE := "user://feel_override.tres"
 @export_range(0.0, 0.8, 0.01) var dodge_iframes := 0.3
 @export_range(1, 5, 1) var dodge_charges := 2
 @export_range(0.2, 3.0, 0.05) var dodge_recharge := 0.8
+## Holding the dodge button after the roll runs this many times the walking speed.
+@export_range(1.0, 3.0, 0.05) var sprint_scale := 1.5
 ## How much of the walking speed a swing keeps, by kind of move (a ComboNode can set its own move_scale).
 @export_range(0.0, 1.0, 0.01) var move_scale_light := 0.6
 @export_range(0.0, 1.0, 0.01) var move_scale_heavy := 0.35
@@ -34,10 +36,14 @@ const OVERRIDE := "user://feel_override.tres"
 
 @export_group("Impact")
 ## Multiplies the hit stop of every move in the combo data.
-@export_range(0.0, 3.0, 0.05) var hit_stop_scale := 1.35
+@export_range(0.0, 3.0, 0.05) var hit_stop_scale := 0.4
+## Multiplies the glint of every finisher (the hold with a star of light before it lands; 0 = off).
+@export_range(0.0, 3.0, 0.05) var glint_scale := 1.0
 @export_range(0.0, 3.0, 0.05) var shake_scale := 1.0
 ## The jolt of the camera along a blow.
 @export_range(0.0, 3.0, 0.05) var kick_scale := 1.0
+## Seconds of the flat black and white frame when a finisher strikes a crowd, an elite or the boss (0 = off).
+@export_range(0.0, 0.15, 0.005) var impact_frame := 0.05
 
 @export_group("Look")
 ## Gold edge and see-through silhouette on the paladin (0 = off).
@@ -49,8 +55,8 @@ const OVERRIDE := "user://feel_override.tres"
 ## Seconds the head of an arc takes to sweep through.
 @export_range(0.02, 0.4, 0.01) var slash_sweep_time := 0.1
 ## Dark ink stroke under it (slash_ink.gdshader): opacity, and how much longer than the streaks it lingers.
-@export_range(0.0, 1.0, 0.01) var ink_opacity := 0.85
-@export_range(1.0, 4.0, 0.05) var ink_life := 1.8
+@export_range(0.0, 1.0, 0.01) var ink_opacity := 0.92
+@export_range(1.0, 4.0, 0.05) var ink_life := 2.6
 
 static var _live: Feel
 

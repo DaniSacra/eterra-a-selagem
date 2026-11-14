@@ -7,6 +7,7 @@
 script = ExtResource("1_hbscw")
 stat = &"shield_cooldown"
 values = PackedFloat32Array(12, 9, 6)
+by_rarity = false
 
 [resource]
 script = ExtResource("2_1yar7")

@@ -8,7 +8,13 @@ static var _parsed := false
 
 static func _parse() -> void:
 	_parsed = true
-	for raw in OS.get_cmdline_user_args():
+	var raws := OS.get_cmdline_user_args()
+	# In the browser there is no command line: the same switches come in the address, ?fast=5&start=boss
+	if OS.has_feature("web"):
+		var query := str(JavaScriptBridge.eval("window.location.search", true)).trim_prefix("?")
+		for part in query.split("&", false):
+			raws.append(part.uri_decode())
+	for raw in raws:
 		var a := raw.trim_prefix("--")
 		var eq := a.find("=")
 		if eq < 0:

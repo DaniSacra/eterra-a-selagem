@@ -6,6 +6,8 @@ extends RefCounted
 enum Phase { IDLE, WINDUP, RECOVERY, WINDOW }
 
 signal move_started(node: ComboNode)
+## The windup is over and the move holds its glint for time seconds before it lands.
+signal move_glint(node: ComboNode, time: float)
 signal move_hit(node: ComboNode)
 signal move_ended(node: ComboNode)
 signal combo_dropped
@@ -17,10 +19,14 @@ var phase := Phase.IDLE
 var node: ComboNode
 ## While locked (during the dodge roll) inputs are buffered but nothing starts.
 var locked := false
+## Multiplies every move's glint (Feel.glint_scale, set by the paladin).
+var glint_scale := 1.0
 var _t := 0.0
 var _buffered := NO_INPUT
 var _buffer_age := 0.0
 var _dodge_left := 0.0
+## Glint still to announce in this windup (the windup timer counts windup + glint).
+var _hold := 0.0
 
 
 func _init(combo_tree: ComboTree) -> void:
@@ -36,9 +42,16 @@ func is_attacking() -> bool:
 	return phase == Phase.WINDUP or phase == Phase.RECOVERY
 
 
-## Share of walking speed the paladin keeps right now: all of it between moves, the move's own while swinging.
+## Share of walking speed the paladin keeps right now: the move's own while the blade swings (Ember & Blade and
+## Hades II plant the feet: a swing moves only by its lunge), all of it once the blow has landed, when walking
+## cuts the follow-through short and runs (the chain still holds for the next press).
 func move_scale(feel: Feel) -> float:
-	return node.move_scale_with(feel) if is_attacking() and node != null else 1.0
+	return node.move_scale_with(feel) if phase == Phase.WINDUP and node != null else 1.0
+
+
+## True while the blade swings (until the blow lands): the paladin stands planted and plays the swing.
+func is_swinging() -> bool:
+	return phase == Phase.WINDUP
 
 
 ## The end of any move can be cancelled by a dodge; the windup cannot.
@@ -46,9 +59,14 @@ func can_cancel() -> bool:
 	return phase != Phase.WINDUP
 
 
-## True when the moves available right now include a charged one (so a heavy press should start charging).
-func charge_available() -> bool:
-	return not is_attacking() and ComboTree.find(_options(), ComboNode.In.CHARGE) != null
+## The held move a press of this charge input would start right now (null when there is none).
+func charge_move(charge: ComboNode.In = ComboNode.In.CHARGE) -> ComboNode:
+	return null if is_attacking() else ComboTree.find(_options(), charge)
+
+
+## True when the moves available right now include this held move (so the press should start charging).
+func charge_available(charge: ComboNode.In = ComboNode.In.CHARGE) -> bool:
+	return charge_move(charge) != null
 
 
 ## Called when a dodge starts: drops the current chain and opens the dodge chains.
@@ -90,6 +108,9 @@ func step(dt: float) -> void:
 		Phase.WINDUP:
 			_expire_buffer()
 			_t -= dt
+			if _hold > 0.0 and _t <= _hold:
+				move_glint.emit(node, _hold)
+				_hold = 0.0
 			if _t <= 0.0:
 				phase = Phase.RECOVERY
 				_t += node.recovery
@@ -135,7 +156,8 @@ func _try_start() -> bool:
 	_dodge_left = 0.0
 	node = found
 	phase = Phase.WINDUP
-	_t = found.windup
+	_hold = found.glint * glint_scale
+	_t = found.windup + _hold
 	move_started.emit(found)
 	return true
 

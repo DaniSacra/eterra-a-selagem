@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_u3ex0"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_x5sw1"]
+
+[sub_resource type="Resource" id="Resource_t8adn"]
+script = ExtResource("1_u3ex0")
+stat = &"burn_dps"
+tag = &"heavy"
+values = PackedFloat32Array(6, 9, 12)
+
+[resource]
+script = ExtResource("2_x5sw1")
+id = &"pesado_brasa"
+family = 0
+slot = 2
+mods = Array[ExtResource("1_u3ex0")]([SubResource("Resource_t8adn")])

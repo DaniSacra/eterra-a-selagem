@@ -5,16 +5,22 @@ extends Node3D
 
 signal killed(e: Enemy)
 signal hit_player(amount: float, from: Vector2)
+## An enemy's armor (yellow bar) just broke.
+signal armor_broken(e: Enemy)
 
 const CELL := 1.5
 const KNOCKBACK_DECAY := 7.0
 const FLASH_TIME := 0.14
+## Flash of an ordinary blow (a strong one flashes at 1, so its first frame or two are pure white: crowd.gdshader).
+const WEAK_FLASH := 0.45
+## Numbers of blows that land on armor.
+const ARMOR_COLOR := Color(1.0, 0.82, 0.3)
 ## A killing blow throws light bodies: base speed away, upward speed, gravity.
 const THROW := 7.0
 const THROW_UP := 6.0
 const GRAVITY := 24.0
 const BURN_TICK := 0.5
-const HURT_TIME := 0.22
+const HURT_TIME := 0.3
 const DEATH_SHOW := 1.5
 const DISSOLVE_FROM := 0.85
 const MAX_DYING := 90
@@ -63,6 +69,8 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true) -> Enemy:
 	var scaled := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
 	e.max_hp = d.hp * (hp_scale if scaled else 1.0)
 	e.hp = e.max_hp
+	e.max_armor = d.armor
+	e.armor = d.armor
 	e.cooldown = d.attack_cooldown * _rng.randf_range(0.4, 1.0)
 	e.side = 1.0 if _rng.randf() < 0.5 else -1.0
 	e.dir = (target - at).normalized() if target.distance_to(at) > 0.1 else Vector2.DOWN
@@ -163,6 +171,10 @@ func _behave(e: Enemy, dt: float) -> void:
 			_behave_knight(e, dt, toward, dist)
 		EnemyDef.Behavior.PRIEST:
 			_behave_priest(e, dt, toward, dist)
+		EnemyDef.Behavior.PULSE:
+			_behave_pulse(e, dt, toward, dist)
+		EnemyDef.Behavior.CONE:
+			_behave_cone(e, dt, toward, dist)
 
 
 ## Walks up, raises the blade (the warning) and swings. Only the swing hurts, and only if the paladin is still close.
@@ -227,8 +239,8 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if e.state_t >= d.attack_windup:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		Enemy.State.ATTACK:
-			e.pos += e.aim * 14.0 * dt
-			if e.state_t >= 0.45:
+			e.pos += e.aim * d.lunge_speed * dt
+			if e.state_t >= d.lunge_time:
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.8, 1.3)
 				_set_state(e, Enemy.State.WALK, &"walk")
 		_:
@@ -239,7 +251,7 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"windup")
-				ground.add_line_warning(e.pos, toward, 7.0, 1.3, d.attack_windup + 0.1, d.attack_damage * damage_scale)
+				ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius + 1.0, 1.3, d.attack_windup + d.lunge_time * 0.5, d.attack_damage * damage_scale)
 			else:
 				var circle := (toward.rotated(e.side * PI * 0.5) + toward * (0.3 if dist > d.attack_range * 0.6 else -0.5)).normalized()
 				e.pos += circle * _speed(e) * 0.8 * dt
@@ -254,20 +266,34 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 				fx.shake(1.5)
 		Enemy.State.ATTACK:
-			e.pos += e.aim * 20.0 * dt
+			if e.memo == 1:
+				# the close slam: stands still while it lands
+				if e.state_t >= 0.5:
+					e.memo = 0
+					e.cooldown = d.attack_cooldown * 0.6
+					_set_state(e, Enemy.State.WALK, &"walk")
+				return
+			e.pos += e.aim * d.lunge_speed * dt
 			if _frame % 3 == 0:
 				fx.burst(&"dust", Vector3(e.pos.x, 0.2, e.pos.y), Vector3(-e.aim.x, 0, -e.aim.y))
-			if e.state_t >= 0.7:
+			if e.state_t >= d.lunge_time:
 				e.cooldown = d.attack_cooldown
 				e.stun_t = 0.8
 				_set_state(e, Enemy.State.WALK, &"walk")
 		_:
 			_behave_melee_walk(e, dt, toward, dist)
-			if e.cooldown <= 0.0 and dist < d.attack_range and dist > 3.0 and target_alive:
+			if d.close_damage > 0.0 and e.cooldown <= 0.0 and dist < d.close_range and target_alive:
+				e.memo = 1
+				e.dir = toward
+				_set_state(e, Enemy.State.WINDUP, &"attack")
+				ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * damage_scale)
+				e.state_t = d.attack_windup - d.close_windup
+				return
+			if e.cooldown <= 0.0 and dist < d.attack_range and dist > d.close_range and target_alive:
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"idle")
-				ground.add_line_warning(e.pos, toward, 14.0, 2.4, d.attack_windup, d.attack_damage * damage_scale)
+				ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, d.attack_windup, d.attack_damage * damage_scale)
 
 
 ## Between charges the knight still swings at whoever is close.
@@ -285,8 +311,8 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			e.memo += 1
 			if e.memo % 2 == 1:
 				var skeleton := def(&"skeleton")
-				for k in 7:
-					var at := arena.resolve(e.pos + Vector2.from_angle(TAU * k / 7.0) * 3.5, 0.5)
+				for k in 3:
+					var at := arena.resolve(e.pos + Vector2.from_angle(TAU * k / 3.0) * 3.5, 0.5)
 					spawn(skeleton, at, true)
 					fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
 				Audio.play(&"summon")
@@ -310,6 +336,49 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
 	if e.cooldown <= 0.0 and target_alive:
 		_set_state(e, Enemy.State.WINDUP, &"cast")
+
+
+## Runs in close, stops, glows (the warning ring) and bursts all around itself.
+func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
+	var d := e.def
+	match e.state:
+		Enemy.State.WINDUP:
+			if e.state_t >= d.attack_windup:
+				_set_state(e, Enemy.State.ATTACK, &"attack", false)
+		Enemy.State.ATTACK:
+			if e.state_t >= 0.4:
+				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
+				_set_state(e, Enemy.State.WALK, &"walk")
+		_:
+			e.dir = toward
+			if dist > d.attack_range:
+				e.pos += toward * _speed(e) * dt
+			elif e.cooldown <= 0.0 and target_alive:
+				_set_state(e, Enemy.State.WINDUP, &"windup")
+				ground.add_warning(e.pos, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
+			else:
+				e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
+
+
+## Comes to mid range, plants itself and blasts a wide cone ahead.
+func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
+	var d := e.def
+	match e.state:
+		Enemy.State.WINDUP:
+			if e.state_t >= d.attack_windup:
+				_set_state(e, Enemy.State.ATTACK, &"attack", false)
+		Enemy.State.ATTACK:
+			if e.state_t >= 0.5:
+				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
+				_set_state(e, Enemy.State.WALK, &"walk")
+		_:
+			e.dir = toward
+			if dist > d.attack_range * 0.8:
+				e.pos += toward * _speed(e) * dt
+			if dist < d.attack_range and e.cooldown <= 0.0 and target_alive:
+				e.aim = toward
+				_set_state(e, Enemy.State.WINDUP, &"aim")
+				ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
 
 
 func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = true) -> void:
@@ -344,12 +413,23 @@ func _separate(e: Enemy) -> void:
 func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color: Color = Fx.GOLD, show_number: bool = true, big: bool = false) -> bool:
 	if not e.alive or e.invulnerable:
 		return false
+	if e.armor > 0.0:
+		# armor takes the blow: no push, no flinch; breaking it staggers (Game listens to armor_broken)
+		e.armor = DamageCalc.against_armor(e.armor, amount)[0]
+		e.flash_t = FLASH_TIME
+		e.flash_power = WEAK_FLASH
+		if show_number:
+			fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, ARMOR_COLOR, big)
+		if e.armor <= 0.0:
+			armor_broken.emit(e)
+		return false
 	e.hp -= amount
 	e.flash_t = FLASH_TIME
+	e.flash_power = 1.0 if big else WEAK_FLASH
 	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if knockback > 0.0:
-		e.push = from_dir * knockback * (0.2 if e.def.heavy else 1.0)
+		e.push = from_dir * knockback * (0.35 if e.def.heavy else 1.0)
 	if show_number:
 		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big)
 	if e.hp <= 0.0:
@@ -400,9 +480,14 @@ func clear_crowd() -> void:
 	_sweep()
 
 
+## Up to this many enemies on the floor, every one shows its life bar (as in Hades II); more, only the hurt.
+const BARS_FOR_ALL := 24
+
+
 ## Draws every living and dying enemy. Called every frame, also while the game is paused for hit stop.
 func render() -> void:
 	renderer.begin()
+	var few := list.size() <= BARS_FOR_ALL
 	for e in list:
 		var anim := e.anim
 		var t := e.anim_t
@@ -422,10 +507,16 @@ func render() -> void:
 			var clip := renderer.model_of(e.def).duration(&"attack")
 			t = clip * IMPACT_SHARE + e.state_t * 1.4
 		var k := clampf(e.flash_t / FLASH_TIME, 0.0, 1.0)
-		var state := Color(k, 1.0 if e.frozen_t > 0.0 else 0.0, 1.0 if e.burn_t > 0.0 else 0.0, 0.0)
+		var state := Color(k * e.flash_power, 1.0 if e.frozen_t > 0.0 else 0.0, 1.0 if e.burn_t > 0.0 else 0.0, 0.0)
 		# a blow flattens and widens the body for an instant, and lifts it a little
 		var squash := Vector3(1.0 + 0.25 * k, 1.0 - 0.2 * k, 1.0 + 0.25 * k)
 		renderer.add(e.def, anim, t, Vector3(e.pos.x, e.y + 0.18 * k, e.pos.y), e.yaw(), state, squash)
+		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
+		# the hurt and the armored show one, so the screen stays clear
+		if e.def.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
+			var top := e.y + renderer.model_of(e.def).height * e.def.size
+			renderer.add_bar(e.def, Vector3(e.pos.x, top, e.pos.y), e.hp / maxf(e.max_hp, 0.001),
+				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0)
 	for e in dying:
 		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
 		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2
@@ -471,6 +562,18 @@ func in_line(from: Vector2, dir: Vector2, length: float, width: float, out: Arra
 			continue
 		if absf(d.cross(dir)) <= width * 0.5 + e.def.radius:
 			out.append(e)
+
+
+## The closest living enemy within a cone (half angle in radians) around dir.
+func nearest_ahead(from: Vector2, dir: Vector2, max_dist: float, half_angle: float) -> Enemy:
+	var best: Enemy = null
+	var best_d := max_dist * max_dist
+	for e in list:
+		var d := e.pos.distance_squared_to(from)
+		if e.alive and d < best_d and absf(dir.angle_to(e.pos - from)) < half_angle:
+			best_d = d
+			best = e
+	return best
 
 
 func nearest(from: Vector2, max_dist: float = INF) -> Enemy:

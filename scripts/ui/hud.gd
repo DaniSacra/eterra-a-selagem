@@ -1,7 +1,11 @@
 class_name Hud
 extends Control
-## What stays on screen during the run: life and dodges (bottom left), experience and level (top), the clock and the
+## What stays on screen during the run: Magia, life, dodges and the circle of light (bottom left), experience and level (top), the clock and the
 ## kills (top), the boss's life (top centre), the combo counter and the move name (right), the gifts (bottom centre).
+
+const MAGICK_COLOR := Color(0.35, 0.55, 1.0)
+const CAST_READY := Color(1.0, 0.92, 0.7)
+const CAST_WAIT := Color(0.2, 0.18, 0.22, 0.8)
 
 var game: Game
 var _hp_fill: ColorRect
@@ -16,6 +20,9 @@ var _boss_box: VBoxContainer
 var _boss_name: Label
 var _boss_fill: ColorRect
 var _boss_back: ColorRect
+var _boss_armor: ColorRect
+var _magick_fill: ColorRect
+var _cast: ColorRect
 var _combo: Label
 var _combo_word: Label
 var _move: Label
@@ -62,6 +69,17 @@ func _ready() -> void:
 	_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hp_back.add_child(_hp_text)
+	# Magia: a thin blue bar above the life
+	var magick_back := _rect(Color(0.04, 0.03, 0.08, 0.9), Control.PRESET_BOTTOM_LEFT)
+	_place(magick_back, Control.PRESET_BOTTOM_LEFT, Vector2(24, -78), Vector2(340, 8))
+	_magick_fill = ColorRect.new()
+	_magick_fill.color = MAGICK_COLOR
+	_magick_fill.size = Vector2(340, 8)
+	magick_back.add_child(_magick_fill)
+	# the circle of light: a diamond right of the dodges, lit when ready
+	_cast = _rect(CAST_READY, Control.PRESET_BOTTOM_LEFT)
+	_place(_cast, Control.PRESET_BOTTOM_LEFT, Vector2(380, -44), Vector2(16, 16))
+	_cast.rotation = PI / 4.0
 	_dodges = HBoxContainer.new()
 	add_child(_dodges)
 	_place(_dodges, Control.PRESET_BOTTOM_LEFT, Vector2(24, -24), Vector2(200, 8))
@@ -80,6 +98,9 @@ func _ready() -> void:
 	_boss_fill = ColorRect.new()
 	_boss_fill.color = Color(0.62, 0.22, 0.85)
 	_boss_back.add_child(_boss_fill)
+	_boss_armor = ColorRect.new()
+	_boss_armor.color = Horde.ARMOR_COLOR
+	_boss_back.add_child(_boss_armor)
 	# combo, right side
 	_combo = _label("", UiKit.GOLD, 64, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -120))
 	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
@@ -131,21 +152,30 @@ func _process(delta: float) -> void:
 		return
 	var p := game.player
 	var w := get_viewport_rect().size.x
-	_xp_fill.size.x = w * game.xp_ratio()
-	_level.text = T.t(&"hud_level", {"n": game.level})
 	_clock.text = SaveData.format_time(game.time)
-	_kills.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
+	if game.rooms:
+		# the descent: which room, and the gold for the shop (no experience here)
+		_xp_fill.size.x = 0.0
+		_level.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
+		_kills.text = "%s  %d" % [T.t(&"hud_gold"), game.rooms.gold]
+	else:
+		_xp_fill.size.x = w * game.xp_ratio()
+		_level.text = T.t(&"hud_level", {"n": game.level})
+		_kills.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
 	var ratio := clampf(p.hp / p.max_hp, 0.0, 1.0)
 	_hp_shown = move_toward(_hp_shown, ratio, delta * 0.5) if _hp_shown > ratio else ratio
 	_hp_fill.size = Vector2(340 * ratio, 26)
 	(_hp_back.get_node("Lag") as ColorRect).size = Vector2(340 * _hp_shown, 26)
 	_hp_text.text = "%d / %d" % [ceili(p.hp), roundi(p.max_hp)]
 	_update_dodges(p)
+	_magick_fill.size = Vector2(340 * p.magick.ratio(), 8)
+	_cast.color = CAST_READY if p.cast_cooldown <= 0.0 else CAST_WAIT
 	var b := game.boss_enemy()
 	_boss_box.visible = b != null
 	if b:
 		_boss_name.text = T.t(b.def.name_key)
 		_boss_fill.size = Vector2(640 * clampf(b.hp / b.max_hp, 0.0, 1.0), 14)
+		_boss_armor.size = Vector2(640 * (b.armor / b.max_armor if b.max_armor > 0.0 else 0.0), 6)
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
 	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)

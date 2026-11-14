@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_w1dba"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_w82fd"]
+
+[sub_resource type="Resource" id="Resource_kltuy"]
+script = ExtResource("1_w1dba")
+stat = &"damage_pct"
+tag = &"dash"
+values = PackedFloat32Array(0.4, 0.6, 0.8)
+
+[resource]
+script = ExtResource("2_w82fd")
+id = &"passo_radiante"
+icon = 10
+slot = 4
+mods = Array[ExtResource("1_w1dba")]([SubResource("Resource_kltuy")])

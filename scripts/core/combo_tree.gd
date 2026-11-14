@@ -55,5 +55,13 @@ static func notation(path: Array, from_dodge: bool, words: Dictionary) -> String
 	if from_dodge:
 		parts.append(words.dodge + " +")
 	for input: ComboNode.In in path:
-		parts.append(words.charge if input == ComboNode.In.CHARGE else "E" if input == ComboNode.In.LIGHT else "D")
+		match input:
+			ComboNode.In.CHARGE:
+				parts.append(words.charge)
+			ComboNode.In.CHARGE_LIGHT:
+				parts.append(words.get("charge_light", "E+"))
+			ComboNode.In.LIGHT:
+				parts.append("E")
+			_:
+				parts.append("D")
 	return " ".join(parts)

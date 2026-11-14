@@ -2,11 +2,11 @@ class_name Ground
 extends Node3D
 ## Areas on the floor. WARNING: an enemy attack announced before it lands (hurts the paladin when it fills).
 ## The others hurt enemies standing in them every TICK: EMBER (fire), MARK (light), HOLY (consecrated, slows),
-## STEAM (blinds). Positions are (x, z) in meters.
+## STEAM (blinds), BIND (the paladin's circle of light: holds the enemies inside). Positions are (x, z) in meters.
 
 signal hit_player(amount: float, from: Vector2)
 
-enum Kind { WARNING, EMBER, MARK, HOLY, STEAM }
+enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND }
 enum Shape { CIRCLE, LINE, ARC }
 
 const SHADER := preload("res://assets/shaders/ground.gdshader")
@@ -14,7 +14,7 @@ const TICK := 0.25
 const POOL := 48
 const COLORS := {
 	Kind.WARNING: Color(1.0, 0.18, 0.12), Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
-	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95),
+	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
 }
 
 class Zone:
@@ -32,6 +32,8 @@ class Zone:
 	var tick := 0.0
 	var color := Color.WHITE
 	var tags: Array[StringName] = []
+	## Damage dealt to everything inside when the zone runs out (the held circle of light). 0 = none.
+	var burst := 0.0
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -39,6 +41,8 @@ var zones: Array[Zone] = []
 var player: Player
 ## Called with (enemy, zone) for every enemy inside a damaging area at each tick.
 var on_zone_hit: Callable
+## Called with (zone) when a zone with a burst runs out.
+var on_zone_burst: Callable
 var horde: Horde
 var fx: Fx
 var _pool: Array[MeshInstance3D] = []
@@ -116,6 +120,8 @@ func step(dt: float) -> void:
 			if z.life <= 0.0 and zones.has(z):
 				_release(z)
 				zones.erase(z)
+				if z.burst > 0.0 and on_zone_burst.is_valid():
+					on_zone_burst.call(z)
 		i -= 1
 
 
@@ -150,7 +156,8 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	m.set_shader_parameter(&"style", 0 if kind == Kind.WARNING else 1)
 	m.set_shader_parameter(&"shape", shape)
 	m.set_shader_parameter(&"fade", 1.0)
-	m.set_shader_parameter(&"strength", 1.4 if kind == Kind.WARNING else 1.0)
+	# the circle of light is big and stays 3 s: a soft glow, so the fight inside still reads
+	m.set_shader_parameter(&"strength", 1.4 if kind == Kind.WARNING else 0.35 if kind == Kind.BIND else 1.0)
 	var y := 0.06 + zones.size() * 0.0005
 	match shape:
 		Shape.LINE:

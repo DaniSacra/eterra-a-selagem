@@ -44,58 +44,73 @@ func play_all(inputs: Array) -> void:
 		play(input)
 
 
-func test_the_eight_starting_combos_exist() -> void:
+func test_the_named_moves_exist() -> void:
 	var names := {}
 	for m in tree.named_moves():
-		names[m.node.id] = ComboTree.notation(m.path, m.from_dodge, {"dodge": "Esquiva", "charge": "D segurado"})
-	assert_eq(names.get(&"spin"), "E E E E")
-	assert_eq(names.get(&"thrust"), "E E E D")
-	assert_eq(names.get(&"launch"), "E D")
-	assert_eq(names.get(&"cross"), "E E D")
-	assert_eq(names.get(&"wave"), "D D E")
+		names[m.node.id] = ComboTree.notation(m.path, m.from_dodge, {"dodge": "Esquiva", "charge": "D segurado", "charge_light": "E segurado"})
+	assert_eq(names.get(&"lance"), "E segurado")
+	assert_eq(names.get(&"cut3"), "E E E")
+	assert_eq(names.get(&"bolt"), "D")
 	assert_eq(names.get(&"burst"), "D segurado")
 	assert_eq(names.get(&"dash_cut"), "Esquiva + E")
-	assert_eq(names.get(&"slam"), "Esquiva + D")
-	assert_eq(names.size(), 8)
+	assert_eq(names.size(), 5)
 
 
-func test_four_lights_end_in_the_spin() -> void:
-	play_all([L, L, L, L])
-	assert_eq(started, [&"cut1", &"cut2", &"cut3", &"spin"] as Array[StringName])
-	assert_eq(hits.size(), 4)
+## The attack is three swings (as the first weapon of Hades II): 20, 25, then 60 all around.
+func test_three_attacks_end_in_the_spin() -> void:
+	play_all([L, L, L])
+	assert_eq(started, [&"cut1", &"cut2", &"cut3"] as Array[StringName])
+	assert_eq(hits.size(), 3)
+	assert_eq(runner.node.shape, ComboNode.Shape.CIRCLE)
 
 
-func test_three_lights_and_a_heavy_thrust() -> void:
-	play_all([L, L, L, H])
-	assert_eq(started[3], &"thrust")
+func test_attack_damage_and_timing_follow_hades() -> void:
+	var cut1 := ComboTree.find(tree.neutral, L)
+	var cut2 := cut1.next[0]
+	var cut3 := cut2.next[0]
+	assert_eq([cut1.damage, cut2.damage, cut3.damage], [20.0, 25.0, 60.0])
+	assert_almost_eq(cut1.windup, 0.06, 0.001)
+	assert_almost_eq(cut2.windup, 0.11, 0.001)
+	assert_almost_eq(cut3.windup, 0.28, 0.001)  # Hades: 0.36; quicker at Daniel's ask (2026-11-14)
+	assert_almost_eq(cut3.chain_window, 0.6, 0.001)
 
 
-func test_light_heavy_launches() -> void:
+func test_the_special_strikes_only_with_its_bolt() -> void:
+	play(H)
+	assert_eq(started, [&"bolt"] as Array[StringName])
+	assert_eq(runner.node.damage, 0.0)
+	assert_eq(runner.node.effect, ComboNode.Effect.WAVE)
+	assert_eq(runner.node.effect_power, 40.0)
+
+
+func test_the_special_can_follow_any_swing() -> void:
 	play_all([L, H])
-	assert_eq(started, [&"cut1", &"launch"] as Array[StringName])
-
-
-func test_two_lights_and_a_heavy_leave_the_mark() -> void:
-	play_all([L, L, H])
-	assert_eq(started[2], &"cross")
-	assert_eq(runner.node.effect, ComboNode.Effect.GROUND_MARK)
-
-
-func test_two_heavies_and_a_light_send_the_wave() -> void:
-	play_all([H, H, L])
-	assert_eq(started, [&"heavy1", &"heavy2", &"wave"] as Array[StringName])
+	assert_eq(started, [&"cut1", &"bolt"] as Array[StringName])
 
 
 func test_charge_input_bursts() -> void:
-	assert_true(runner.charge_available(), "standing still, heavy can be charged")
+	assert_true(runner.charge_available(), "standing still, the special can be charged")
 	play(C)
 	assert_eq(started, [&"burst"] as Array[StringName])
-	assert_eq(runner.node.effect, ComboNode.Effect.STUN)
+	assert_almost_eq(runner.node.charge_time, 0.65, 0.001)
 
 
-func test_charge_is_not_offered_in_the_middle_of_a_chain() -> void:
-	play(L)
-	assert_false(runner.charge_available())
+func test_the_omega_attack_strikes_both_ways() -> void:
+	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
+	assert_true(lance.both_ways)
+	assert_eq(lance.damage, 160.0)
+	assert_almost_eq(lance.charge_time, 0.8, 0.001)
+	assert_eq(lance.magick_cost, 20.0)
+
+
+## A charge pressed while a swing ends is honoured (the paladin fires the Omega when the charge fills).
+func test_a_buffered_omega_starts_after_the_swing() -> void:
+	runner.press(L)
+	runner.step(0.0)
+	run(0.05)
+	runner.press(ComboNode.In.CHARGE_LIGHT)
+	run(1.0)
+	assert_eq(started, [&"cut1", &"lance"] as Array[StringName])
 
 
 func test_dodge_opens_the_dodge_moves() -> void:
@@ -104,13 +119,6 @@ func test_dodge_opens_the_dodge_moves() -> void:
 	runner.on_dodge_end()
 	play(L)
 	assert_eq(started, [&"dash_cut"] as Array[StringName])
-
-
-func test_dodge_then_heavy_slams() -> void:
-	runner.on_dodge()
-	runner.on_dodge_end()
-	play(H)
-	assert_eq(started, [&"slam"] as Array[StringName])
 
 
 func test_input_during_the_roll_is_buffered_until_it_ends() -> void:
@@ -169,13 +177,13 @@ func test_chain_drops_after_the_window() -> void:
 	assert_eq(started[1], &"cut1", "after the window the chain starts over")
 
 
-func test_wrong_input_at_the_end_of_a_chain_starts_a_new_one() -> void:
-	play_all([L, L, L, L, L])
-	assert_eq(started[4], &"cut1")
+func test_a_fourth_attack_starts_the_chain_again() -> void:
+	play_all([L, L, L, L])
+	assert_eq(started[3], &"cut1")
 
 
 func test_only_the_end_of_a_move_can_be_cancelled() -> void:
-	runner.press(H)
+	runner.press(L)
 	runner.step(0.0)
 	assert_false(runner.can_cancel(), "not during the windup")
 	run(runner.node.windup + 0.01)
@@ -195,15 +203,15 @@ func test_reset_drops_the_chain_and_the_buffer() -> void:
 
 
 func test_tree_data_is_sane() -> void:
-	var knight: Node = (load(Player.MODEL) as PackedScene).instantiate()
-	var player: AnimationPlayer = PoseBaker.find_player(knight)
+	var player: AnimationPlayer = AnimationPlayer.new()
+	player.add_animation_library(&"", load(HeroBody.ANIMS))
 	var ids := {}
 	for node in tree.all_nodes():
 		assert_false(ids.has(node.id), "duplicate id %s" % node.id)
 		ids[node.id] = true
-		assert_gt(node.damage, 0.0, String(node.id))
+		assert_true(node.damage > 0.0 or node.effect == ComboNode.Effect.WAVE, "%s strikes somehow" % node.id)
 		assert_gt(node.windup, 0.0, String(node.id))
-		assert_between(node.hit_stop_ms, 40.0, 80.0, String(node.id))
+		assert_between(node.hit_stop_ms, 0.0, 80.0, String(node.id))
 		assert_true(player.has_animation(node.anim), "missing animation %s" % node.anim)
 		assert_gt(node.anim_speed, 0.0, String(node.id))
 		if node.title != &"":
@@ -213,7 +221,7 @@ func test_tree_data_is_sane() -> void:
 			assert_false(inputs.has(child.input), "%s has two moves on the same input" % node.id)
 			inputs[child.input] = true
 	assert_almost_eq(tree.buffer_time, 0.15, 0.001)
-	knight.free()
+	player.free()
 
 func test_a_new_combo_needs_only_data() -> void:
 	var extra := ComboNode.new()
@@ -221,34 +229,23 @@ func test_a_new_combo_needs_only_data() -> void:
 	extra.input = H
 	extra.title = &"move_spin"
 	tree = tree.duplicate(true)
-	ComboTree.find(tree.neutral, H).next[0].next.append(extra)
+	ComboTree.find(tree.neutral, L).next[0].next.append(extra)
 	runner.tree = tree
-	play_all([H, H, H])
+	play_all([L, L, H])
 	assert_eq(started[2], &"test_extra")
 
 
 func test_move_scale_follows_the_kind_of_move() -> void:
 	var feel := Feel.new()
-	feel.move_scale_light = 0.6
-	feel.move_scale_heavy = 0.35
-	feel.move_scale_finisher = 0.15
 	assert_eq(runner.move_scale(feel), 1.0, "free to walk between moves")
 	runner.press(ComboNode.In.LIGHT)
 	runner.step(0.0)
 	assert_eq(runner.node.id, &"cut1")
-	assert_eq(runner.move_scale(feel), 0.6, "a light cut keeps most of the speed")
-	runner.reset()
-	runner.press(ComboNode.In.HEAVY)
+	assert_eq(runner.move_scale(feel), 0.0, "the feet stay planted while the blade swings (Ember & Blade)")
+	play_all([L, L])
+	runner.press(L)
 	runner.step(0.0)
-	assert_eq(runner.move_scale(feel), 0.35, "a heavy blow slows down")
-	play_all([ComboNode.In.HEAVY, ComboNode.In.LIGHT, ComboNode.In.LIGHT, ComboNode.In.LIGHT])
-	runner.reset()
-	for input: ComboNode.In in [ComboNode.In.LIGHT, ComboNode.In.LIGHT, ComboNode.In.LIGHT]:
-		play(input)
-	runner.press(ComboNode.In.LIGHT)
-	runner.step(0.0)
-	assert_eq(runner.node.id, &"spin")
-	assert_eq(runner.move_scale(feel), 0.15, "a finisher almost roots the paladin")
+	assert_eq(runner.node.id, &"cut3")
 
 
 func test_a_move_can_set_its_own_move_scale() -> void:
@@ -272,13 +269,89 @@ func test_the_drawn_arc_is_exactly_what_the_blow_reaches() -> void:
 				assert_eq(float(s.draw_width), 360.0, "%s goes all around" % node.id)
 
 
-func test_finisher_arcs_sweep_up_to_270_degrees() -> void:
-	var wide := 0
-	for node in tree.all_nodes():
-		if node.shape != ComboNode.Shape.ARC:
+## Only finishers may glint (the plain swings never hold).
+func test_only_finishers_glint() -> void:
+	for n in tree.all_nodes():
+		if n.glint > 0.0:
+			assert_true(n.has_tag(&"finisher"), "%s glints but is not a finisher" % n.id)
+
+
+func _enemy(id: StringName) -> Enemy:
+	var e := Enemy.new()
+	e.def = load("res://data/enemies/%s.tres" % id)
+	return e
+
+
+## The impact frame (a flat black and white frame) is kept for the big moments: a finisher into a crowd,
+## an elite or the boss; a finisher into a few common enemies does not get it.
+func test_impact_frame_only_for_big_strikes() -> void:
+	var few: Array[Enemy] = []
+	for i in Combat.IMPACT_FRAME_CROWD - 1:
+		few.append(_enemy(&"skeleton"))
+	assert_false(Combat.big_strike(few))
+	var crowd := few.duplicate()
+	crowd.append(_enemy(&"skeleton"))
+	assert_true(Combat.big_strike(crowd))
+	var elite: Array[Enemy] = [_enemy(&"knight")]
+	assert_true(Combat.big_strike(elite))
+	var boss: Array[Enemy] = [_enemy(&"morvath")]
+	assert_true(Combat.big_strike(boss))
+
+
+## The held (Omega) moves cost Magia; a plain chain never does.
+func test_only_omega_moves_cost_magick() -> void:
+	for n in tree.all_nodes():
+		if n.has_tag(&"omega"):
+			assert_gt(n.magick_cost, 0.0, String(n.id))
+			assert_true(n.input == ComboNode.In.CHARGE or n.input == ComboNode.In.CHARGE_LIGHT, String(n.id))
+		else:
+			assert_eq(n.magick_cost, 0.0, String(n.id))
+
+
+func test_holding_light_offers_the_omega_attack() -> void:
+	assert_eq(runner.charge_move(ComboNode.In.CHARGE_LIGHT).id, &"lance")
+
+
+func test_sweep_follows_the_arm() -> void:
+	var n := ComboNode.new()
+	assert_true(n.sweep_flip(true), "no sweep set: alternate")
+	assert_false(n.sweep_flip(false), "no sweep set: alternate")
+	n.sweep = 1
+	assert_false(n.sweep_flip(true), "right to left is the slash's own way")
+	n.sweep = 2
+	assert_true(n.sweep_flip(false), "left to right flips it")
+
+
+func test_feet_planted_while_swinging_free_after_the_blow() -> void:
+	var feel := Feel.new()
+	feel.move_scale_light = 0.0
+	runner.press(L)
+	runner.step(0.0)
+	assert_true(runner.is_swinging())
+	assert_eq(runner.move_scale(feel), 0.0, "planted during the swing")
+	run(runner.node.windup + 0.01)
+	assert_false(runner.is_swinging())
+	assert_true(runner.is_attacking(), "still in the follow-through")
+	assert_eq(runner.move_scale(feel), 1.0, "walking cuts the follow-through")
+
+
+func test_lunge_carries_to_the_enemy_ahead() -> void:
+	var n := ComboNode.new()
+	n.lunge = 1.0
+	assert_eq(n.lunge_toward(INF), 1.0, "nobody ahead: the plain step")
+	assert_eq(n.lunge_toward(2.0), 2.0, "an enemy a little away: the step stretches to reach it")
+	assert_eq(n.lunge_toward(99.0), 1.0 + ComboNode.LUNGE_MAGNET, "but only so far")
+	assert_eq(n.lunge_toward(-0.5), 0.15, "an enemy already in reach: barely a step, no running through it")
+	n.lunge = 0.0
+	assert_eq(n.lunge_toward(2.0), 0.0, "moves without a step stay put")
+
+
+func test_blade_lands_with_the_blow() -> void:
+	# the clip reaches its swing peak (measured by tools/bake_hero.gd) exactly when the windup ends, never before
+	var peaks: Dictionary = (load("res://tools/make_data.gd") as GDScript).get_script_constant_map()["PEAK"]
+	var tree: ComboTree = load("res://data/combos/paladin.tres")
+	for node: ComboNode in tree.all_nodes():
+		if not peaks.has(node.anim):
 			continue
-		assert_lte(node.width, 270.0, String(node.id))
-		if node.has_tag(&"finisher"):
-			assert_eq(node.width, 270.0, "%s is a finisher" % node.id)
-			wide += 1
-	assert_gt(wide, 0)
+		var at_windup_end := node.anim_from + node.windup * node.anim_speed
+		assert_almost_eq(at_windup_end, float(peaks[node.anim]), 0.02, String(node.id))

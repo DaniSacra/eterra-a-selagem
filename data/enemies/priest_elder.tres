@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_ijfeo"]
+
+[resource]
+script = ExtResource("1_ijfeo")
+id = &"priest_elder"
+name_key = &"enemy_priest"
+model = &"mage"
+size = 1.5
+rim_color = Color(1, 0.22, 0.3, 1)
+rim = 1.0
+behavior = 5
+hp = 510.0
+speed = 2.0
+damage = 9.0
+radius = 0.9
+heavy = true
+elite = true
+armor = 1450.0
+armor_stagger = 2.5
+attack_damage = 9.0
+attack_range = 9.0
+attack_cooldown = 3.4
+attack_windup = 1.0
+rating = 50.0

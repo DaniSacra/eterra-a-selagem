@@ -1,16 +1,26 @@
 shader_type spatial;
-// Laid over the tiled floor of the hall (alpha blended) so the even hexagons stop reading as a pattern:
-// large damp stains, thin cracks and a haze that darkens towards the walls. Near the torches it thins out,
-// so their light pools on clean stone.
-render_mode unshaded, blend_mix, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
+// Laid over the tiled floor of the hall (alpha blended, lit like the stone) so the even hexagons stop reading as a
+// pattern: a flat wash of dark slate over the tiles, pale painted clearings with ragged edges (where the eye rests),
+// damp stains, thin cracks and a haze that darkens towards the walls. Near the torches it thins out, so their
+// light pools on clean stone.
+render_mode blend_mix, cull_disabled, depth_draw_never, diffuse_lambert, specular_disabled;
 
 uniform float half_size = 36.0;
 // Torch positions on the floor (x, z) and how many are set.
 uniform vec2 torches[32];
 uniform int torch_count = 0;
-uniform vec3 stain_color : source_color = vec3(0.12, 0.09, 0.075);
-uniform vec3 crack_color : source_color = vec3(0.06, 0.04, 0.035);
-uniform vec3 haze_color : source_color = vec3(0.07, 0.05, 0.045);
+uniform vec3 wash_color : source_color = vec3(0.11, 0.13, 0.14);
+uniform float wash_strength = 0.7;
+uniform vec3 clearing_color : source_color = vec3(0.3, 0.32, 0.31);
+uniform float clearing_strength = 0.8;
+// How much of the floor the clearings cover (higher is less) and how ragged their edges are.
+uniform float clearing_threshold = 0.6;
+uniform float clearing_ragged = 0.08;
+// Size of the clearings: higher is smaller and more of them.
+uniform float clearing_scale = 0.075;
+uniform vec3 stain_color : source_color = vec3(0.07, 0.1, 0.11);
+uniform vec3 crack_color : source_color = vec3(0.03, 0.045, 0.05);
+uniform vec3 haze_color : source_color = vec3(0.025, 0.05, 0.06);
 uniform float stain_strength = 0.6;
 uniform float crack_strength = 0.75;
 uniform float haze_strength = 0.85;
@@ -77,11 +87,18 @@ void fragment() {
 	}
 	haze *= 1.0 - pool * 0.8;
 	stain *= 1.0 - pool * 0.6;
-	// layer them: haze over stains over cracks
-	vec3 c = crack_color;
-	float alpha = crack;
+	// pale clearings: big shapes with a ragged, dry-brushed edge, mottled inside
+	float shape = fbm(world * clearing_scale + 31.0) + (noise(world * 0.9) - 0.5) * clearing_ragged + (noise(world * 3.1) - 0.5) * clearing_ragged * 0.4;
+	float clearing = smoothstep(clearing_threshold, clearing_threshold + 0.03, shape);
+	vec3 pale = clearing_color * (0.85 + 0.25 * fbm(world * 0.6));
+	// layer them: haze over cracks over stains over clearings over the wash
+	vec3 c = mix(wash_color, pale, clearing);
+	float alpha = mix(wash_strength, clearing_strength, clearing);
+	stain *= 1.0 - clearing * 0.7;
 	c = mix(c, stain_color, stain / max(alpha + stain, 0.001));
 	alpha = alpha + stain * (1.0 - alpha);
+	c = mix(c, crack_color, crack);
+	alpha = alpha + crack * (1.0 - alpha);
 	c = mix(c, haze_color, haze / max(alpha + haze, 0.001));
 	alpha = alpha + haze * (1.0 - alpha);
 	ALBEDO = c;

@@ -5,12 +5,21 @@ extends Node3D
 
 enum Mode { PLAY, CHOICE, PAUSE, OVER, ENDING }
 
+## Magia a kill gives back (Player.magick).
+const MAGICK_PER_KILL := 1.0
+const MAGICK_PER_ELITE := 40.0
 const WAVES := "res://data/waves/catacombs.tres"
 const FOUNTAIN_HEAL := 0.4
 ## Each new level, the gift arrives with a little of the companions' strength.
 const LEVEL_HEAL := 0.15
+## --start= in the room mode: which room to begin in.
+const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN}
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
+## How far the point the camera looks at stays from the side walls and from the north and south ends (meters).
+const CAM_MARGIN := Vector2(10.0, 5.0)
+## The low camera sees far past the south edge: it stops sooner there.
+const CAM_SOUTH := 9.0
 
 var arena: Arena
 var ground: Ground
@@ -22,6 +31,10 @@ var combat: Combat
 var skills: Skills
 var boons: BoonState
 var director: WaveDirector
+## The descent room by room (null in the endless hall, --horde).
+var rooms: Rooms
+## Life gained from hearts (kept when gifts change the life bar).
+var life_bonus := 0.0
 var boss: Boss
 var fx: Fx
 var hud: Hud
@@ -40,6 +53,8 @@ var step_ms := 0.0
 ## When set, the camera looks here instead of at the paladin (the final scene).
 var focus: Variant = null
 var _pending_levels := 0
+## Rarity of each card on the table (Boon.Rarity by gift id).
+var _offer_rarity: Dictionary = {}
 var _screen: Control
 var _screen_fx: ShaderMaterial
 var _hurt_flash := 0.0
@@ -72,6 +87,7 @@ func _ready() -> void:
 	ground.player = player
 	ground.fx = fx
 	ground.on_zone_hit = combat.on_zone_hit
+	ground.on_zone_burst = combat.cast_burst
 	projectiles.horde = horde
 	projectiles.player = player
 	projectiles.fx = fx
@@ -81,6 +97,8 @@ func _ready() -> void:
 	horde.projectiles = projectiles
 
 	player.struck.connect(combat.strike)
+	player.glinted.connect(combat.glint)
+	player.cast_released.connect(combat.cast)
 	player.was_hurt.connect(func(_a: float) -> void:
 		combat.drop_combo()
 		_hurt_flash = 1.0)
@@ -95,13 +113,22 @@ func _ready() -> void:
 	for source: Object in [horde, ground, projectiles]:
 		source.hit_player.connect(_on_hit_player)
 	horde.killed.connect(_on_killed)
+	horde.armor_broken.connect(_on_armor_broken)
 	combat.combo_changed.connect(hud.on_combo)
 	fx.shake_scale = 1.0 if Save.option("shake") else 0.0
 
 	if Dev.has("bot"):
 		bot = Bot.new()
 		Controls.virtual = bot.pad
-	if Dev.has("start"):
+	if not Dev.has("horde"):
+		rooms = Rooms.new()
+		add_child(rooms)
+		rooms.setup(self, _rng)
+		if Dev.has("start") and Dev.arg("start") in ROOM_STARTS:
+			rooms.start_at(ROOM_STARTS[Dev.arg("start")])
+		else:
+			rooms.start()
+	elif Dev.has("start"):
 		_dev_start(Dev.arg("start"))
 	if Dev.has("boons"):
 		for i in int(Dev.num("boons", 0)):
@@ -130,11 +157,12 @@ func _build_world() -> void:
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.02, 0.015, 0.03)
+	e.background_color = Color(0.015, 0.03, 0.04)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	# warm mid-tone light: dark ink strokes and bright effects both read on the floor
-	e.ambient_light_color = Color(0.62, 0.5, 0.42)
-	e.ambient_light_energy = 0.6
+	# cool slate-teal mid-tone (painterly night look): dark ink strokes and bright effects both read on the floor,
+	# torches and the paladin's red stay the warm accents
+	e.ambient_light_color = Color(0.42, 0.58, 0.62)
+	e.ambient_light_energy = 0.45
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	e.tonemap_exposure = 1.05
 	e.glow_enabled = true
@@ -146,17 +174,17 @@ func _build_world() -> void:
 	for i in 7:
 		e.set_glow_level(i, 1.0 if i in [1, 2, 3, 4] else 0.0)
 	e.fog_enabled = true
-	e.fog_light_color = Color(0.09, 0.06, 0.05)
-	e.fog_density = 0.006
+	e.fog_light_color = Color(0.05, 0.1, 0.11)
+	e.fog_density = 0.008
 	e.adjustment_enabled = true
-	e.adjustment_contrast = 1.15
-	e.adjustment_saturation = 0.85
+	e.adjustment_contrast = 1.1
+	e.adjustment_saturation = 0.6
 	env.environment = e
 	add_child(env)
 	var moon := DirectionalLight3D.new()
 	moon.rotation_degrees = Vector3(-58, -32, 0)
-	moon.light_color = Color(1.0, 0.86, 0.72)
-	moon.light_energy = 0.6
+	moon.light_color = Color(0.72, 0.88, 0.95)
+	moon.light_energy = 0.55
 	moon.shadow_enabled = true
 	moon.directional_shadow_max_distance = 80.0
 	add_child(moon)
@@ -218,6 +246,7 @@ func _build_ui() -> void:
 
 func _exit_tree() -> void:
 	Controls.virtual = null
+	Engine.time_scale = 1.0
 
 
 func _process(delta: float) -> void:
@@ -240,7 +269,11 @@ func _process(delta: float) -> void:
 		_toggle_feel_panel()
 	_hurt_flash = maxf(0.0, _hurt_flash - delta * 2.5)
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
+	if mode != Mode.PLAY and mode != Mode.ENDING and not Dev.has("lab"):
+		fx.end_slow()
 	_screen_fx.set_shader_parameter(&"split", fx.split)
+	_screen_fx.set_shader_parameter(&"radial", fx.radial)
+	_screen_fx.set_shader_parameter(&"impact", 1.0 if fx.frame_left > 0.0 else 0.0)
 	_screen_fx.set_shader_parameter(&"hurt", maxf(_hurt_flash, low * (0.35 + 0.15 * sin(time * 6.0))))
 	_follow(delta, shake)
 	# a button pressed during a hit stop is kept for the next step (a swing must never be lost)
@@ -249,9 +282,16 @@ func _process(delta: float) -> void:
 
 
 func _step(dt: float) -> void:
-	if mode == Mode.PLAY:
-		_step_waves(dt)
-	time = director.time
+	if rooms:
+		if mode == Mode.PLAY:
+			time += dt
+			rooms.step(dt)
+	else:
+		if mode == Mode.PLAY:
+			_step_waves(dt)
+		# the clock the player sees is play time; the timeline may run faster (WaveTable.pace)
+		time = director.time / director.table.pace
+	player.cast_active = _circle_standing()
 	if mode == Mode.ENDING:
 		player.rest()
 		player.step(dt, Vector2.ZERO, Vector2.ZERO)
@@ -268,10 +308,10 @@ func _step(dt: float) -> void:
 	if mode == Mode.PLAY:
 		skills.step(dt)
 	var got := orbs.step(dt, player.pos)
-	if got > 0:
+	if got > 0 and rooms == null:
 		_gain_xp(got)
 	_step_fountain()
-	if _pending_levels > 0 and mode == Mode.PLAY and player.alive():
+	if _pending_levels > 0 and mode == Mode.PLAY and player.alive() and rooms == null:
 		_open_choice()
 
 
@@ -328,6 +368,52 @@ func _spawn_elite(id: StringName) -> void:
 	Audio.play(&"elite")
 
 
+func _circle_standing() -> bool:
+	for z in ground.zones:
+		if z.kind == Ground.Kind.BIND:
+			return true
+	return false
+
+
+## A new room: the old one is taken down and this one built (layout null: the great hall).
+func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
+	ground.clear()
+	projectiles.clear_hostile()
+	horde.clear_crowd()
+	if _fountain != null:
+		_fountain.queue_free()
+		_fountain = null
+	arena.queue_free()
+	arena = Arena.new()
+	add_child(arena)
+	arena.build(layout, exits, seed_)
+	horde.arena = arena
+	player.arena = arena
+
+
+## Gifts by a cleared room or the shop: three cards drawn with these rarity weights.
+func open_boon_choice(weights: Array[float] = Boon.RARITY_WEIGHT) -> void:
+	_open_choice(boons.offers(_rng), weights)
+
+
+## A level more for a gift already owned (the paladin picks which).
+func open_grow_choice() -> void:
+	var offers := boons.grow_offers(_rng)
+	_open_choice(offers, Boon.RARITY_WEIGHT, true)
+
+
+## A heart: more life, and that much healed.
+func add_max_life(amount: float) -> void:
+	life_bonus += amount
+	player.max_hp += amount
+	player.heal(amount)
+	fx.word(Vector3(player.pos.x, 3.0, player.pos.y), "+%d %s" % [int(amount), T.t(&"hud_life")], Color(1.0, 0.4, 0.5))
+
+
+func start_boss(id: StringName) -> void:
+	_start_boss(id)
+
+
 func _start_boss(id: StringName) -> void:
 	director.stopped = true
 	horde.clear_crowd()
@@ -371,18 +457,21 @@ func xp_ratio() -> float:
 	return float(xp) / Leveling.needed(level)
 
 
-func _open_choice() -> void:
+func _open_choice(offers: Array[Boon] = [], weights: Array[float] = Boon.RARITY_WEIGHT, grow: bool = false) -> void:
 	mode = Mode.CHOICE
-	if Dev.has("autopick"):
+	if rooms == null:
+		offers = boons.offers(_rng)
+	_offer_rarity.clear()
+	for b in offers:
+		_offer_rarity[b.id] = boons.rarity(b.id) if grow else BoonState.roll_rarity(_rng, weights)
+	if Dev.has("autopick") or offers.is_empty():
 		# captures of the fight: take a gift at once, no screen
-		var picks := boons.offers(_rng)
-		_on_chosen(picks[0] if not picks.is_empty() else null)
+		_on_chosen(offers[0] if not offers.is_empty() else null)
 		return
 	var choice := BoonChoice.new()
 	_screen = choice
 	ui.add_child(choice)
-	var offers := boons.offers(_rng)
-	choice.open(offers, boons)
+	choice.open(offers, boons, _offer_rarity)
 	choice.chosen.connect(_on_chosen)
 	fx.burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 	if bot and not Dev.has("hold"):
@@ -395,8 +484,9 @@ func _on_chosen(b: Boon) -> void:
 	if mode != Mode.CHOICE:
 		return
 	_close_screen()
-	_pending_levels -= 1
-	player.heal(player.max_hp * LEVEL_HEAL)
+	if rooms == null:
+		_pending_levels -= 1
+		player.heal(player.max_hp * LEVEL_HEAL)
 	if b == null:
 		player.heal(BoonChoice.REST_HEAL)
 	else:
@@ -406,7 +496,7 @@ func _on_chosen(b: Boon) -> void:
 
 func _take(b: Boon) -> void:
 	var old_hp_bonus := boons.stat(&"max_hp")
-	boons.take(b)
+	boons.take(b, _offer_rarity.get(b.id, Boon.Rarity.COMMON))
 	player.dodge_max = Feel.live().dodge_charges + int(boons.stat(&"dodge_charges"))
 	player.speed_bonus = boons.stat(&"move_speed_pct")
 	var shield := boons.stat(&"shield_cooldown")
@@ -414,7 +504,7 @@ func _take(b: Boon) -> void:
 		player.shield_ready = true
 	player.shield_cooldown = shield
 	var hp_bonus := boons.stat(&"max_hp")
-	player.max_hp = Player.MAX_HP + hp_bonus
+	player.max_hp = Player.MAX_HP + hp_bonus + life_bonus
 	player.heal(hp_bonus - old_hp_bonus)
 	fx.ring(player.pos, 3.0, b.color(), 0.5)
 	fx.beam(player.pos, b.color(), 1.2, 8.0, 0.6)
@@ -442,9 +532,14 @@ func _on_shield_broke() -> void:
 # ---------- the light fountain ----------
 
 func _spawn_fountain() -> void:
+	spawn_fountain(arena.resolve(player.pos + Vector2.from_angle(_rng.randf() * TAU) * 13.0, 2.5))
+
+
+func spawn_fountain(at: Vector2) -> void:
 	if _fountain != null:
 		return
-	_fountain_at = arena.resolve(player.pos + Vector2.from_angle(_rng.randf() * TAU) * 13.0, 2.5)
+	_fountain_used = false
+	_fountain_at = at
 	_fountain = Node3D.new()
 	_fountain.position = Vector3(_fountain_at.x, 0, _fountain_at.y)
 	add_child(_fountain)
@@ -506,9 +601,25 @@ func _on_hit_player(amount: float, from: Vector2) -> void:
 		player.hurt(amount, from)
 
 
+## An elite's or Morvath's armor broke: a stagger, and a moment to punish.
+func _on_armor_broken(e: Enemy) -> void:
+	fx.shake(3.0)
+	fx.impact(Vector3(e.pos.x, 1.6 * e.def.size, e.pos.y), Horde.ARMOR_COLOR, 2.6)
+	if boss and boss.e == e:
+		boss.break_armor()
+		return
+	e.stun_t = maxf(e.stun_t, e.def.armor_stagger)
+	fx.word(Vector3(e.pos.x, 2.0 + 2.0 * e.def.size, e.pos.y), T.t(&"word_stagger"), Combat.LIGHT)
+	Audio.play(&"stagger")
+
+
 func _on_killed(e: Enemy) -> void:
 	kills += 1
-	if e.def.elite:
+	if rooms == null:
+		player.magick.gain(MAGICK_PER_ELITE if e.def.elite else MAGICK_PER_KILL)
+	if rooms:
+		pass  # no experience in the rooms: gifts come from rewards
+	elif e.def.elite:
 		for i in 14:
 			orbs.drop(e.pos + Vector2.from_angle(TAU * i / 14.0) * 1.2, maxi(1, e.def.xp / 14))
 		fx.shake(3.0)
@@ -623,25 +734,43 @@ func boss_enemy() -> Enemy:
 	return null
 
 
+## How much closer the camera gets at the end of an Omega's charge.
+const OMEGA_ZOOM := 0.08
+var _charge_zoom := 0.0
+## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
+var _cam_last := Vector2.ZERO
+var _cam_vel := Vector2.ZERO
+
+
 func _follow(delta: float, shake: Vector3) -> void:
 	var look: Vector3
 	if focus != null:
 		look = focus
 	else:
-		look = Vector3(player.pos.x, 0, player.pos.y) + Vector3(player.facing.x, 0, player.facing.y) * Feel.live().cam_lead
+		# a little ahead of where the paladin walks (never where he aims: standing still, he stays in the middle)
+		var walked := (player.pos - _cam_last) / maxf(delta, 0.001)
+		_cam_last = player.pos
+		_cam_vel = _cam_vel.lerp(walked, 1.0 - exp(-delta * 5.0))
+		var lead := (_cam_vel / maxf(Feel.live().speed, 0.1)).limit_length(1.0) * Feel.live().cam_lead
+		look = Vector3(player.pos.x + lead.x, 0, player.pos.y + lead.y)
 	_cam_target = _cam_target.lerp(look, 1.0 - exp(-delta * (2.5 if focus != null else Feel.live().cam_smooth)))
 	_place_camera(shake, delta)
 
 
 func _place_camera(shake: Vector3, _delta: float) -> void:
-	var t := Vector3(clampf(_cam_target.x, -Arena.HALF + 10.0, Arena.HALF - 10.0), 0, clampf(_cam_target.z, -Arena.HALF + 4.0, Arena.HALF - 4.0))
+	var h := arena.half
+	var t := Vector3(clampf(_cam_target.x, -maxf(0.0, h.x - CAM_MARGIN.x), maxf(0.0, h.x - CAM_MARGIN.x)), 0,
+		clampf(_cam_target.z, minf(0.0, -h.y + CAM_MARGIN.y), maxf(0.0, h.y - CAM_SOUTH)))
 	camera.look_at_from_position(t + _cam_offset() + shake, t + shake * 0.5, Vector3.UP)
 
 
 ## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.
 func _cam_offset() -> Vector3:
 	var feel := Feel.live()
-	camera.fov = Dev.num("cam-fov", feel.cam_fov)
+	# the camera closes in during slow motion and while an Omega charges (Hades II: 8% over the charge)
+	var charge := player.charge_progress() * OMEGA_ZOOM
+	_charge_zoom = charge if charge > _charge_zoom else lerpf(_charge_zoom, charge, 1.0 - exp(-get_process_delta_time() / maxf(Engine.time_scale, 0.001) * 6.0))
+	camera.fov = Dev.num("cam-fov", feel.cam_fov) / (fx.zoom * (1.0 + _charge_zoom))
 	return Feel.cam_offset_of(Dev.num("cam-dist", feel.cam_distance), Dev.num("cam-pitch", feel.cam_pitch))
 
 
@@ -668,6 +797,8 @@ func _frames() -> void:
 
 ## --lab: a frozen still for judging effects. A crowd around the paladin, one big finisher slash frozen at
 ## --lab-t (0..1 of its life), damage numbers on the enemies it covers; pair with --shot.
+## --lab-crescent adds the finisher's flying crescent; --lab-glint shows the glint on the blade instead;
+## --lab-impact holds the impact frame; --lab-slow shows the last-kill slow motion (zoom, radial blur).
 func _lab() -> void:
 	player.max_hp = 99999.0
 	player.hp = 99999.0
@@ -684,7 +815,17 @@ func _lab() -> void:
 	mode = Mode.CHOICE
 	fx.freeze_t = Dev.num("lab-t", 0.35)
 	var reach := Dev.num("lab-reach", 5.5)
-	fx.slash(player.pos, dir, reach, Dev.num("lab-width", 270.0), Color(0.85, 0.82, 1.0), 0.25)
+	if Dev.has("lab-glint"):
+		# the glint of a finisher at --lab-t of its life (its hold ends at about 0.55)
+		fx.glint(Vector3.ZERO, Combat.STEEL, 0.2, player.blade_tip)
+	else:
+		fx.slash(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.STEEL, 0.25)
+		if Dev.has("lab-crescent"):
+			fx.crescent(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.STEEL)
+	if Dev.has("lab-impact"):
+		fx.frame_left = 1000.0  # hold the impact frame for the still
+	if Dev.has("lab-slow"):
+		fx.slow_mo(0.35, 1000.0, 0.4, 1.1, 0.85, 0.01)  # the last-kill slow motion at its deepest
 	var shown := 0
 	for e in horde.list:
 		if e.pos.distance_to(player.pos) <= reach + 0.4 and shown < int(Dev.num("lab-numbers", 12)):
@@ -694,7 +835,7 @@ func _lab() -> void:
 
 ## A line of numbers about the run, for smoke tests and tuning.
 func result() -> Dictionary:
-	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "kills": kills, "best_combo": combat.best_combo,
+	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": kills, "spawned": director.spawned, "best_combo": combat.best_combo,
 		"enemies": horde.count(), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
 		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second()}
 

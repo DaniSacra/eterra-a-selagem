@@ -7,12 +7,16 @@ signal hit_player(amount: float, from: Vector2)
 ## A friendly shot touched an enemy: the game decides the damage and the gifts that apply.
 signal shot_hit(e: Enemy, shot: Shot)
 
-enum Kind { BOLT, ORB, WAVE, BLADE }
+## SPARK: the paladin's bolt of light (the special): a bright streak with a trail.
+enum Kind { BOLT, ORB, WAVE, BLADE, SPARK }
 
 const HEIGHT := 1.1
+## Meters per second of the paladin's bolt of light.
+const SPARK_SPEED := 30.0
 const LOOK := {
 	Kind.BOLT: [Color(3.0, 0.5, 0.3), 0.18, 0.6], Kind.ORB: [Color(1.6, 0.4, 2.8), 0.45, 0.45],
 	Kind.WAVE: [Color(3.0, 2.4, 1.2), 0.0, 0.0], Kind.BLADE: [Color(2.8, 2.4, 1.4), 0.0, 0.0],
+	Kind.SPARK: [Color(4.0, 3.0, 1.5), 0.22, 0.0],
 }
 
 class Shot:
@@ -56,11 +60,15 @@ func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, 
 
 ## A friendly crescent (the Onda de Luz, the light blades) that flies distance meters through the crowd.
 func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance: float, size: float, color: Color, tags: Array[StringName]) -> Shot:
-	var speed := 22.0 if kind == Kind.WAVE else 19.0
+	var speed: float = SPARK_SPEED if kind == Kind.SPARK else 22.0 if kind == Kind.WAVE else 19.0
 	var s := fire(kind, from, dir, speed, damage, size * 0.5, distance / speed)
 	s.color = color
 	s.tags = tags
-	s.knockback = 7.0
+	s.knockback = 10.0
+	if kind == Kind.SPARK:
+		var trail := s.node.get_node(^"Trail") as CPUParticles3D
+		trail.restart()
+		return s
 	s.node.scale = Vector3.ONE * size
 	var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
 	mat.set_shader_parameter(&"color", color)
@@ -86,7 +94,7 @@ func step(dt: float) -> void:
 		var s := shots[i]
 		s.pos += s.vel * dt
 		s.life -= dt
-		var gone := s.life <= 0.0 or absf(s.pos.x) > Arena.HALF + 4.0 or absf(s.pos.y) > Arena.HALF + 4.0
+		var gone := s.life <= 0.0 or absf(s.pos.x) > Arena.HALF * 2.0 or absf(s.pos.y) > Arena.HALF * 2.0
 		if not gone:
 			if _hostile(s):
 				if player.alive() and s.pos.distance_to(player.pos) < s.radius + Player.RADIUS:
@@ -148,6 +156,16 @@ func _take(kind: Kind) -> Node3D:
 		mi.material_override = m
 		if kind == Kind.BOLT:
 			mi.scale = Vector3(0.6, 0.6, 2.4)
+		elif kind == Kind.SPARK:
+			# the streak is a stretched child, so the trail and the glow keep their shape
+			var core := MeshInstance3D.new()
+			core.mesh = mi.mesh
+			core.material_override = mi.material_override
+			core.scale = Vector3(0.7, 0.7, 4.0)
+			core.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mi.mesh = null
+			mi.add_child(core)
+			mi.add_child(_trail(look[0]))
 		var glow := MeshInstance3D.new()
 		glow.mesh = Fx.quad(look[1] * 5.0, look[0])
 		glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -160,9 +178,32 @@ func _take(kind: Kind) -> Node3D:
 func _release(s: Shot) -> void:
 	s.node.visible = false
 	s.node.scale = Vector3(0.6, 0.6, 2.4) if s.kind == Kind.BOLT else Vector3.ONE
+	if s.kind == Kind.SPARK:
+		fx.burst(&"light", s.node.position)
 	if not _pools.has(s.kind):
 		_pools[s.kind] = []
 	(_pools[s.kind] as Array).append(s.node)
+
+
+## The streak of light left behind a bolt (in the world, so it stays where the bolt passed).
+func _trail(color: Color) -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.name = "Trail"
+	p.local_coords = false
+	p.amount = 40
+	p.lifetime = 0.3
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.12
+	p.direction = Vector3.UP
+	p.spread = 180.0
+	p.initial_velocity_min = 0.3
+	p.initial_velocity_max = 1.2
+	p.gravity = Vector3.ZERO
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.2
+	p.mesh = Fx.quad(0.35, color)
+	p.color_ramp = Fx.fade_ramp(Color(1, 1, 1, 1))
+	return p
 
 
 var _crescent_mesh: ArrayMesh

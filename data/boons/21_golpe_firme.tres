@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_jodns"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_r34jj"]
+
+[sub_resource type="Resource" id="Resource_hiwu2"]
+script = ExtResource("1_jodns")
+stat = &"reach_pct"
+tag = &"light"
+values = PackedFloat32Array(0.12, 0.18, 0.25)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_bjwvr"]
+script = ExtResource("1_jodns")
+stat = &"damage_pct"
+tag = &"light"
+values = PackedFloat32Array(0.1, 0.15, 0.2)
+
+[resource]
+script = ExtResource("2_r34jj")
+id = &"golpe_firme"
+family = 3
+icon = 11
+slot = 1
+mods = Array[ExtResource("1_jodns")]([SubResource("Resource_hiwu2"), SubResource("Resource_bjwvr")])

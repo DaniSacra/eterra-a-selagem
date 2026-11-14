@@ -16,7 +16,7 @@ func open() -> void:
 	list.add_theme_constant_override(&"separation", 6)
 	panel.add_child(list)
 	var tree: ComboTree = load(Player.COMBOS)
-	var words := {"dodge": T.t(&"moves_dodge"), "charge": T.t(&"moves_charge")}
+	var words := {"dodge": T.t(&"moves_dodge"), "charge": T.t(&"moves_charge"), "charge_light": T.t(&"moves_charge_light")}
 	var known: Array = Save.data.moves
 	for m in tree.named_moves():
 		var node: ComboNode = m.node

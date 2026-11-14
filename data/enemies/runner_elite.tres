@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_tl3ky"]
+
+[resource]
+script = ExtResource("1_tl3ky")
+id = &"runner_elite"
+name_key = &"enemy_runner"
+model = &"runner"
+size = 0.6
+tint = Color(0.8, 0.85, 1, 1)
+rim_color = Color(1, 0.22, 0.3, 1)
+rim = 1.0
+behavior = 7
+hp = 45.0
+speed = 7.375
+damage = 5.0
+radius = 0.35
+elite = true
+armor = 85.0
+attack_damage = 5.0
+attack_range = 1.6
+attack_cooldown = 1.4
+attack_windup = 0.7
+attack_width = 2.6
+rating = 17.0

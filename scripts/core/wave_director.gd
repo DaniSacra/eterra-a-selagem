@@ -6,6 +6,8 @@ var table: WaveTable
 var time := 0.0
 ## Once the crypt opens, the crowd stops coming.
 var stopped := false
+## How many of the crowd have been sent so far (for pacing checks).
+var spawned := 0
 var _acc := 0.0
 var _next_event := 0
 var _rng: RandomNumberGenerator
@@ -16,9 +18,9 @@ func _init(wave_table: WaveTable, rng: RandomNumberGenerator = null) -> void:
 	_rng = rng if rng != null else RandomNumberGenerator.new()
 
 
-## Advances the clock. Returns the ids of the enemies to spawn this step, never going past the cap.
+## Advances the clock by dt seconds of play (the timeline moves table.pace times as fast). Returns the ids of the enemies to spawn this step, never going past the cap.
 func step(dt: float, alive: int) -> Array[StringName]:
-	time += dt
+	time += dt * table.pace
 	var out: Array[StringName] = []
 	var seg := table.segment_at(time)
 	if seg == null or stopped or seg.enemies.is_empty():
@@ -29,6 +31,7 @@ func step(dt: float, alive: int) -> Array[StringName]:
 		_acc -= 1.0
 		if out.size() < room:
 			out.append(pick(seg))
+	spawned += out.size()
 	return out
 
 
