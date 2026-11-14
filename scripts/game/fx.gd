@@ -4,12 +4,13 @@ extends Node3D
 ## camera shake, hit stop and the full screen colour split. Pooled; nothing here changes the game.
 
 const SLASH := preload("res://assets/shaders/slash.gdshader")
+const INK := preload("res://assets/shaders/slash_ink.gdshader")
+## How long the head of an arc takes to sweep through, in seconds; the ink stroke outlives the bright streaks by INK_LIFE.
+const SWEEP_TIME := 0.1
+const INK_LIFE := 1.8
 const RING := preload("res://assets/shaders/ring.gdshader")
 const BEAM := preload("res://assets/shaders/beam.gdshader")
-const SMOKE := preload("res://assets/shaders/smoke_arc.gdshader")
 const IMPACT := preload("res://assets/shaders/impact.gdshader")
-## Sword arcs are drawn bigger than what they hit, like the big sweeps of the genre.
-const SLASH_LOOK := 1.75
 const IMPACT_POOL := 40
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
@@ -38,11 +39,13 @@ var stop_left := 0.0
 ## Strength of the colour split on screen (0..1), read by the screen pass.
 var split := 0.0
 var shake_scale := 1.0
+## When >= 0, sword arcs hold at this point of their life (the --lab still).
+var freeze_t := -1.0
 var _shake := 0.0
 var _pools: Dictionary = {}
 var _next: Dictionary = {}
 var _slashes: Array[Dictionary] = []
-var _smokes: Array[Dictionary] = []
+var _inks: Array[Dictionary] = []
 var _impacts: Array[Dictionary] = []
 var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
@@ -126,8 +129,12 @@ func setup(cam: Camera3D, over: Control) -> void:
 		_pools[kind] = list
 		_next[kind] = 0
 	for i in SLASH_POOL:
+		_inks.append(_effect_node(INK, null))
 		_slashes.append(_effect_node(SLASH, null))
-		_smokes.append(_effect_node(SMOKE, null))
+	for e in _inks:
+		(e.mat as ShaderMaterial).render_priority = -1
+	for e in _slashes:
+		(e.mat as ShaderMaterial).render_priority = 1
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE
 	for i in IMPACT_POOL:
@@ -186,21 +193,28 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 
 ## A sword arc on the floor plane at waist height: from origin towards dir, reach meters, width degrees.
 func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9) -> void:
-	var tilt := _rng.randf_range(-0.22, 0.22)
-	var seed := _rng.randf() * 100.0
-	for k in 2:
-		var s: Dictionary = _take(_slashes if k == 0 else _smokes)
-		var mi: MeshInstance3D = s.node
-		mi.mesh = _arc(reach * SLASH_LOOK * (1.0 if k == 0 else 1.08), width_deg)
-		mi.position = Vector3(origin.x, height - k * 0.05, origin.y)
-		mi.rotation = Vector3(tilt, atan2(dir.x, dir.y), 0.0)
-		var mat: ShaderMaterial = s.mat
-		if k == 0:
-			mat.set_shader_parameter(&"color", color)
+	var tilt := _rng.randf_range(-0.08, 0.08)
+	var s: Dictionary = _take(_slashes)
+	var ink: Dictionary = _take(_inks)
+	_place_arc(s, _arc(reach, width_deg, 0.5), origin, dir, height, tilt)
+	_place_arc(ink, _arc(reach * 1.08, width_deg, 0.42), origin, dir, height - 0.05, tilt)
+	s.time = time
+	ink.time = time * INK_LIFE
+	var sweep := clampf(SWEEP_TIME / time, 0.25, 0.7)
+	for e: Dictionary in [s, ink]:
+		var mat: ShaderMaterial = e.mat
 		mat.set_shader_parameter(&"flip", flip)
-		mat.set_shader_parameter(&"seed", seed)
 		mat.set_shader_parameter(&"t", 0.0)
-		s.time = time * (1.7 if k == 0 else 2.6)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / INK_LIFE)
+
+
+func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height: float, tilt: float) -> void:
+	var mi: MeshInstance3D = e.node
+	mi.mesh = mesh
+	mi.position = Vector3(origin.x, height, origin.y)
+	mi.rotation = Vector3(tilt, atan2(dir.x, dir.y), 0.0)
 
 
 ## The star of a blow landing on someone.
@@ -276,11 +290,18 @@ func tick(delta: float) -> Vector3:
 
 ## Ages the pooled effects (also during hit stop, so the impact frame keeps glowing).
 func animate(delta: float) -> void:
-	for list: Array[Dictionary] in [_slashes, _smokes, _impacts]:
+	for list: Array[Dictionary] in [_slashes, _inks]:
 		for s in list:
-			if (s.node as Node3D).visible:
-				_age(s, delta)
-				(s.mat as ShaderMaterial).set_shader_parameter(&"life" if list == _impacts else &"t", s.life)
+			if s.life < 1.0 or (s.node as Node3D).visible:
+				if freeze_t >= 0.0:
+					s.life = freeze_t / (INK_LIFE if list == _inks else 1.0)
+				else:
+					_age(s, delta)
+				(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)
+	for s in _impacts:
+		if (s.node as Node3D).visible:
+			_age(s, delta)
+			(s.mat as ShaderMaterial).set_shader_parameter(&"life", s.life)
 	for r in _rings:
 		if (r.node as Node3D).visible:
 			_age(r, delta)
@@ -298,7 +319,7 @@ func animate(delta: float) -> void:
 		var l: Label = n.label
 		if not l.visible:
 			continue
-		n.life += delta
+		n.life = 0.2 if freeze_t >= 0.0 else n.life + delta
 		if n.life > 0.75 or camera == null:
 			l.visible = false
 			continue
@@ -355,16 +376,16 @@ func _text(pos: Vector3, text: String, color: Color, size: int) -> void:
 		l.visible = false
 
 
-## Ring sector mesh: UV.x along the swing, UV.y from the inner to the outer edge. Cached by size.
-func _arc(reach: float, width_deg: float) -> ArrayMesh:
-	var key := Vector2i(roundi(reach * 10.0), roundi(width_deg))
+## Ring sector mesh: UV.x along the swing, UV.y from the inner (inner_frac of reach) to the outer edge. Cached by size.
+func _arc(reach: float, width_deg: float, inner_frac: float) -> ArrayMesh:
+	var key := Vector3i(roundi(reach * 10.0), roundi(width_deg), roundi(inner_frac * 100.0))
 	if _arc_meshes.has(key):
 		return _arc_meshes[key]
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var seg := 24
+	var seg := maxi(12, ceili(width_deg / 5.0))
 	var half := deg_to_rad(minf(width_deg, 359.0)) * 0.5
-	var inner := reach * 0.22
+	var inner := reach * inner_frac
 	for i in seg:
 		var a0 := -half + 2.0 * half * i / seg
 		var a1 := -half + 2.0 * half * (i + 1) / seg

@@ -123,6 +123,8 @@ func _ready() -> void:
 		_frames.call_deferred()
 	if Dev.has("smoke"):
 		_smoke.call_deferred()
+	if Dev.has("lab"):
+		_lab.call_deferred()
 
 
 func _build_world() -> void:
@@ -149,12 +151,20 @@ func _build_world() -> void:
 	e.adjustment_enabled = true
 	e.adjustment_contrast = 1.15
 	e.adjustment_saturation = 1.2
+	if Dev.arg("look") == "warm":
+		# a test light: a warm mid-tone floor and quieter colours, so dark ink strokes and bright effects both read
+		e.ambient_light_color = Color(0.62, 0.5, 0.42)
+		e.ambient_light_energy = 0.6
+		e.adjustment_saturation = 0.85
 	env.environment = e
 	add_child(env)
 	var moon := DirectionalLight3D.new()
 	moon.rotation_degrees = Vector3(-58, -32, 0)
 	moon.light_color = Color(0.6, 0.66, 0.95)
 	moon.light_energy = 0.35
+	if Dev.arg("look") == "warm":
+		moon.light_color = Color(1.0, 0.86, 0.72)
+		moon.light_energy = 0.75
 	moon.shadow_enabled = true
 	moon.directional_shadow_max_distance = 45.0
 	add_child(moon)
@@ -179,7 +189,7 @@ func _build_world() -> void:
 	player.pos = Vector2(0, 8)
 	add_child(player)
 	camera = Camera3D.new()
-	camera.fov = CAM_FOV
+	camera.fov = Dev.num("cam-fov", CAM_FOV)
 	camera.far = 160.0
 	add_child(camera)
 	camera.make_current()
@@ -621,7 +631,16 @@ func _follow(delta: float, shake: Vector3) -> void:
 
 func _place_camera(shake: Vector3, _delta: float) -> void:
 	var t := Vector3(clampf(_cam_target.x, -Arena.HALF + 10.0, Arena.HALF - 10.0), 0, clampf(_cam_target.z, -Arena.HALF + 4.0, Arena.HALF - 4.0))
-	camera.look_at_from_position(t + CAM_OFFSET + shake, t + shake * 0.5, Vector3.UP)
+	camera.look_at_from_position(t + _cam_offset() + shake, t + shake * 0.5, Vector3.UP)
+
+
+## Camera offset; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override the defaults for tuning.
+func _cam_offset() -> Vector3:
+	if not Dev.has("cam-dist") and not Dev.has("cam-pitch"):
+		return CAM_OFFSET
+	var dist := Dev.num("cam-dist", CAM_OFFSET.length())
+	var pitch := deg_to_rad(Dev.num("cam-pitch", rad_to_deg(atan2(CAM_OFFSET.y, CAM_OFFSET.z))))
+	return Vector3(0, sin(pitch) * dist, cos(pitch) * dist)
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits.
@@ -643,6 +662,32 @@ func _frames() -> void:
 		await get_tree().create_timer(Dev.num("every", 0.1)).timeout
 	print("RESULT ", result())
 	get_tree().quit()
+
+
+## --lab: a frozen still for judging effects. A crowd around the paladin, one big finisher slash frozen at
+## --lab-t (0..1 of its life), damage numbers on the enemies it covers; pair with --shot.
+func _lab() -> void:
+	player.max_hp = 99999.0
+	player.hp = 99999.0
+	var dir := Vector2(0.75, 0.45).normalized()
+	player.facing = dir
+	var lab_rng := RandomNumberGenerator.new()
+	lab_rng.seed = 7
+	var kinds: Array[StringName] = [&"skeleton", &"skeleton", &"skeleton", &"runner", &"guard"]
+	for i in int(Dev.num("lab-count", 70)):
+		var at := player.pos + Vector2.from_angle(lab_rng.randf() * TAU) * lab_rng.randf_range(1.6, 11.0)
+		horde.spawn(horde.def(kinds[i % kinds.size()]), arena.resolve(at, 0.5), false)
+	for i in 3:
+		await get_tree().process_frame
+	mode = Mode.CHOICE
+	fx.freeze_t = Dev.num("lab-t", 0.35)
+	var reach := Dev.num("lab-reach", 5.5)
+	fx.slash(player.pos, dir, reach, Dev.num("lab-width", 270.0), Color(0.85, 0.82, 1.0), 0.25)
+	var shown := 0
+	for e in horde.list:
+		if e.pos.distance_to(player.pos) <= reach + 0.4 and shown < int(Dev.num("lab-numbers", 12)):
+			fx.number(Vector3(e.pos.x, 1.6, e.pos.y), 114, Color(1, 1, 1))
+			shown += 1
 
 
 ## A line of numbers about the run, for smoke tests and tuning.

@@ -51,7 +51,8 @@ func register(d: EnemyDef) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
 	mat.set_shader_parameter(&"albedo", model(d.model).albedo)
-	mat.set_shader_parameter(&"tint", d.tint)
+	# --look=warm (test light): the crowd a step darker and greener, so the hero and the effects stand out
+	mat.set_shader_parameter(&"tint", d.tint * (Color(0.55, 0.62, 0.55) if Dev.arg("look") == "warm" and not d.elite else Color.WHITE))
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
 	mat.set_shader_parameter(&"rim_power", d.rim)
 	_materials[d.id] = mat

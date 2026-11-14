@@ -74,6 +74,14 @@ func _ready() -> void:
 	add_child(_model)
 	_overlay = ShaderMaterial.new()
 	_overlay.shader = FLASH
+	if Dev.has("outline"):
+		var strength := Dev.num("outline", 1.0)
+		_overlay.set_shader_parameter(&"outline", Color(1.0, 0.78, 0.35, strength))
+		var xray := ShaderMaterial.new()
+		xray.shader = load("res://assets/shaders/xray.gdshader")
+		xray.set_shader_parameter(&"color", Color(1.0, 0.78, 0.35, strength))
+		xray.render_priority = 2
+		_overlay.next_pass = xray
 	_prepare(_model)
 	_anim = PoseBaker.find_player(_model)
 	PoseBaker.find_skeleton(_model).add_child(Slender.new())
