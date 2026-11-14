@@ -29,6 +29,9 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export var knockback := 8.0
 ## Meters the paladin steps forward during the windup.
 @export var lunge := 0.0
+## Share of walking speed kept while this move plays. Below 0: the default of data/feel.tres for its kind
+## (light, heavy, finisher).
+@export_range(-1.0, 1.0, 0.01) var move_scale := -1.0
 
 @export_group("Timing")
 @export var windup := 0.07
@@ -57,3 +60,8 @@ func has_tag(tag: StringName) -> bool:
 
 func duration() -> float:
 	return windup + recovery
+
+
+## The share of walking speed this move keeps, with Feel's default for its kind when it sets none.
+func move_scale_with(feel: Feel) -> float:
+	return move_scale if move_scale >= 0.0 else feel.move_scale_for(tags)

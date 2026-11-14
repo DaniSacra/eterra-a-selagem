@@ -225,3 +225,36 @@ func test_a_new_combo_needs_only_data() -> void:
 	runner.tree = tree
 	play_all([H, H, H])
 	assert_eq(started[2], &"test_extra")
+
+
+func test_move_scale_follows_the_kind_of_move() -> void:
+	var feel := Feel.new()
+	feel.move_scale_light = 0.6
+	feel.move_scale_heavy = 0.35
+	feel.move_scale_finisher = 0.15
+	assert_eq(runner.move_scale(feel), 1.0, "free to walk between moves")
+	runner.press(ComboNode.In.LIGHT)
+	runner.step(0.0)
+	assert_eq(runner.node.id, &"cut1")
+	assert_eq(runner.move_scale(feel), 0.6, "a light cut keeps most of the speed")
+	runner.reset()
+	runner.press(ComboNode.In.HEAVY)
+	runner.step(0.0)
+	assert_eq(runner.move_scale(feel), 0.35, "a heavy blow slows down")
+	play_all([ComboNode.In.HEAVY, ComboNode.In.LIGHT, ComboNode.In.LIGHT, ComboNode.In.LIGHT])
+	runner.reset()
+	for input: ComboNode.In in [ComboNode.In.LIGHT, ComboNode.In.LIGHT, ComboNode.In.LIGHT]:
+		play(input)
+	runner.press(ComboNode.In.LIGHT)
+	runner.step(0.0)
+	assert_eq(runner.node.id, &"spin")
+	assert_eq(runner.move_scale(feel), 0.15, "a finisher almost roots the paladin")
+
+
+func test_a_move_can_set_its_own_move_scale() -> void:
+	var feel := Feel.new()
+	var n := ComboNode.new()
+	n.tags = [&"heavy"]
+	assert_eq(n.move_scale_with(feel), feel.move_scale_heavy)
+	n.move_scale = 0.9
+	assert_eq(n.move_scale_with(feel), 0.9)

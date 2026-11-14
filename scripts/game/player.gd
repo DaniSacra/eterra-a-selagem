@@ -147,7 +147,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			if state == State.MOVE:
 				var sp := Feel.live().speed * (1.0 + speed_bonus)
 				if runner.is_attacking():
-					pos += move * sp * Feel.live().move_scale_light * dt + _lunge * dt
+					pos += move * sp * runner.move_scale(Feel.live()) * dt + _lunge * dt
 				else:
 					pos += move * sp * dt
 					if move.length() > 0.1:

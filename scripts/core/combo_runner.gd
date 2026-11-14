@@ -36,6 +36,11 @@ func is_attacking() -> bool:
 	return phase == Phase.WINDUP or phase == Phase.RECOVERY
 
 
+## Share of walking speed the paladin keeps right now: all of it between moves, the move's own while swinging.
+func move_scale(feel: Feel) -> float:
+	return node.move_scale_with(feel) if is_attacking() and node != null else 1.0
+
+
 ## The end of any move can be cancelled by a dodge; the windup cannot.
 func can_cancel() -> bool:
 	return phase != Phase.WINDUP

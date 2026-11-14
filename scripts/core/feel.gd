@@ -15,11 +15,11 @@ const OVERRIDE := "user://feel_override.tres"
 @export_range(0.05, 0.5, 0.01) var dodge_time := 0.2
 @export_range(0.0, 0.8, 0.01) var dodge_iframes := 0.3
 @export_range(1, 5, 1) var dodge_charges := 2
-@export_range(0.2, 3.0, 0.05) var dodge_recharge := 1.1
+@export_range(0.2, 3.0, 0.05) var dodge_recharge := 0.8
 ## How much of the walking speed a swing keeps, by kind of move (a ComboNode can set its own move_scale).
-@export_range(0.0, 1.0, 0.01) var move_scale_light := 0.22
-@export_range(0.0, 1.0, 0.01) var move_scale_heavy := 0.22
-@export_range(0.0, 1.0, 0.01) var move_scale_finisher := 0.22
+@export_range(0.0, 1.0, 0.01) var move_scale_light := 0.6
+@export_range(0.0, 1.0, 0.01) var move_scale_heavy := 0.35
+@export_range(0.0, 1.0, 0.01) var move_scale_finisher := 0.15
 
 @export_group("Camera")
 ## Meters from the point the camera looks at.

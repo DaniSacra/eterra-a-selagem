@@ -221,10 +221,10 @@ func _feel() -> void:
 	f.dodge_time = 0.2
 	f.dodge_iframes = 0.3
 	f.dodge_charges = 2
-	f.dodge_recharge = 1.1
-	f.move_scale_light = 0.22
-	f.move_scale_heavy = 0.22
-	f.move_scale_finisher = 0.22
+	f.dodge_recharge = 0.8
+	f.move_scale_light = 0.6
+	f.move_scale_heavy = 0.35
+	f.move_scale_finisher = 0.15
 	f.cam_distance = 17.33
 	f.cam_pitch = 33.2
 	f.cam_fov = 40.0
