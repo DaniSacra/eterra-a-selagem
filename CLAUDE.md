@@ -24,7 +24,7 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
 - Testes: `tools/test.sh` (GUT sem tela). Um arquivo só: `tools/test.sh -gtest=res://tests/test_combo.gd`
 - Captura sem tela: `tools/shot.sh saida.png 3 --bot` (segundos antes da captura; o resto são opções do jogo).
 - Opções de teste (depois de `--`): `--bot` (joga sozinho), `--fast=N` (o relógio da partida corre N vezes mais rápido),
-  `--start=boss|miniboss|shop|fountain` (sala onde começar), `--arena=piloto` (todas as salas na arena piloto), `--horde` (o modo antigo de horda contínua, com `--start=boss|elite1|elite2`), `--shot=arquivo.png`, `--shot-at=segundos`, `--frames=prefixo --count=N --every=s`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
+  `--start=boss|miniboss|shop|fountain` (sala onde começar), `--showcase` (câmera fixa no enquadramento da imagem de referência; `--cam-yaw`, `--cam-pitch`, `--cam-dist`, `--cam-fov` ajustam), `--horde` (o modo antigo de horda contínua, com `--start=boss|elite1|elite2`), `--shot=arquivo.png`, `--shot-at=segundos`, `--frames=prefixo --count=N --every=s`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
 - Depois de criar arquivos ou classes novas (`class_name`): `~/tools/godot/godot --headless --path . --import`.
 - Regerar os dados (combos, inimigos, dons, ondas, salas, sensação): `~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [feel]`.
   Editar os números em `tools/make_data.gd` (fonte da verdade) e regerar; não editar os `.tres` à mão.
@@ -37,13 +37,17 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   Android fica para depois (sem preset ainda).
 
 ## Direção de arte e modelos
-- **Todas as salas são plataformas sobre o abismo (redesenho de 2026-11-14; o Daniel pediu em todas)**: a piloto tem 40 x 32 m; as outras são os layouts antigos 30% maiores, no
-  molde da imagem de referência dele (`RoomLayout.platform`, montada por `Arena._platform` com as peças de `ArenaKit`:
-  chão de lajes pintado (`catacomb_floor.gdshader`), abismo em camadas de névoa roxa (`abyss_fog.gdshader`), portal
-  verde sobre cada escada de saída (`portal.gdshader`), braseiros, estátuas encapuzadas (`assets/baked/statue.res`,
-  o encapuzado do KayKit em pedra), correntes, estandartes vermelhos, pilares gigantes no abismo). Peças do KayKit Dungeon
-  Remastered (CC0) em `assets/models/dungeon_r/`. É o último layout de `_stage` e entra no sorteio; `--arena=piloto`
-  põe todas as salas nela. Cânone pendente: quem são as estátuas, o símbolo dos estandartes (lisos por ora), o verde.
+- **Toda sala é o Salão das Catacumbas da imagem de referência do Daniel (2026-11-14, "Arena das Catacumbas")**,
+  reconstruído peça por peça onde a pintura as tem (`CatacombHall`, `scripts/game/catacomb_hall.gd`; análise, medidas
+  e pendências em `docs/art/arena_reference.md`): sala de 32 x 30 m sobre o abismo, altar com escada larga e o portal
+  verde numa fachada gótica ao norte, estátuas encapuzadas, estátua gigante no abismo a oeste, balaustradas com velas e
+  potes, obeliscos, patamar de entrada a sudoeste (o herói entra por ali), escada descendo a leste (porta 1) e ao sul
+  (porta 2, com três portas), medalhão gravado. Pedra construída em `Masonry` (`masonry.gdshader`, cantaria triplanar,
+  vale também para as peças de pedra do KayKit), chão em `catacomb_floor.gdshader`. Chão andável fora do retângulo:
+  `Arena.walk`. Modelos que faltam para a fidelidade: `docs/art/meshy_asset_plan.md` (nada gerado).
+- **Renderizador**: Forward+ no desktop (névoa volumétrica, SSAO, reflexos nas poças, sombras dos braseiros);
+  Compatibility no navegador e no celular, com exposição compensada (`Game.COMPAT_*`). Capturas usam Vulkan
+  (`tools/shot.sh`; `DRIVER=opengl3` para ver como o navegador, `RES=1920x1080` para outro tamanho).
 - Guia da estética (análise das referências, paleta, tempos dos golpes): `docs/arte/estetica.md`. Trabalho visual
   vai para o agente `art-director` (`.claude/agents/art-director.md`). Meshy: `tools/meshy/` (pedir antes de gastar créditos).
 - Referência atual: Hades 2 e Ember & Blade (vídeos do Daniel). Mesmo gênero, mecânica e sensação; nada copiado
@@ -52,7 +56,9 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), no assador para a multidão (o herói do Meshy já tem a proporção certa).
-- Câmera baixa, meio de lado (`Feel.cam_distance` 50,5, inclinação 30, campo de visão 20, em `_feel` do `make_data.gd`), como nos vídeos de referência.
+- Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),
+  inclinação 30, campo de visão 24, distância 60 (`_feel` do `make_data.gd`). Teclado e controle giram junto
+  (`Feel.screen_to_floor`). `--showcase`: câmera fixa no enquadramento da pintura, para comparar.
 - Escala (1º teste do Daniel, "tudo é muito grande"): o cenário do KayKit é encolhido por peça em `Arena.PROP_SCALE`
   (paredes 72% da altura, escadas 0,8 x 0,55, barris 0,55, entulho 0,5 a 0,6, velas 0,7); pilares desenhados pelo raio que
   bloqueia (`RoomLayout.pillars`, 0,6 m; `Arena.PILLAR_MODEL_RADIUS`, `PILLAR_HEIGHT` 0,68). A colisão segue o modelo escalado.

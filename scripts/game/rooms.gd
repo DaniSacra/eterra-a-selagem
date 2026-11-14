@@ -112,9 +112,6 @@ func _enter(next: RunMap.Room) -> void:
 	map.enter(room)
 	next_rooms = map.options(game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
 	var layout: RoomLayout = stage.layouts[room.layout] if not stage.layouts.is_empty() else null
-	# --arena=piloto: every room on the pilot platform of the new art direction (the last layout)
-	if Dev.arg("arena") == "piloto" and not stage.layouts.is_empty():
-		layout = stage.layouts[stage.layouts.size() - 1]
 	match room.kind:
 		RunMap.Kind.BOSS:
 			layout = stage.boss_layout
@@ -123,8 +120,8 @@ func _enter(next: RunMap.Room) -> void:
 	var exits := 0 if room.kind == RunMap.Kind.BOSS else next_rooms.size()
 	game.rebuild_room(layout, exits, 1406 + room.depth * 31 + room.layout)
 	_clear_props()
-	game.player.place(Vector2(0, game.arena.half.y - 3.0))
-	game.player.facing = Vector2.UP
+	game.player.place(game.arena.start)
+	game.player.facing = game.arena.start_facing
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
 	_queue.clear()
 	_waves.clear()
@@ -260,10 +257,9 @@ func _open_doors() -> void:
 	phase = Phase.OPEN
 	for i in next_rooms.size():
 		var r := next_rooms[i]
-		var at := game.arena.exits[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
 		var text := T.t(RunMap.REWARD_KEY[r.reward]) if r.kind == RunMap.Kind.COMBAT else T.t(RunMap.KIND_KEY[r.kind])
-		_door_labels.append(_marker(Vector2(at.x, at.y + 2.6), r.reward, text, r.kind))
+		_door_labels.append(_marker(game.arena.door_label(i), r.reward, text, r.kind))
 	if not next_rooms.is_empty():
 		Audio.play(&"door")
 
@@ -320,7 +316,7 @@ func bot_goal() -> Variant:
 				return p.at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return Vector2(game.arena.exits[0].x, -game.arena.half.y + 1.4 + Arena.STAIRS_DEPTH + 0.3)
+			return game.arena.door_goal(0)
 	return null
 
 

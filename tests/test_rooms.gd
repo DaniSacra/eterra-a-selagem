@@ -120,23 +120,35 @@ func test_nobody_stands_inside_a_solid_prop() -> void:
 	assert_eq(Arena.push_out_of_box(Vector2(0, 0), 0.5, stairs), Vector2(0, 0), "far away: untouched")
 
 
-func test_pilot_platform_keeps_the_fight_on_it() -> void:
-	var pilot: RoomLayout = stage.layouts[stage.layouts.size() - 1]
-	assert_true(pilot.platform, "the last layout is the pilot platform")
+func test_catacomb_hall_keeps_the_fight_on_it() -> void:
+	var hall: RoomLayout = stage.layouts[0]
+	assert_true(hall.platform, "every room is the catacomb hall")
 	var arena := Arena.new()
 	add_child_autofree(arena)
-	arena.build(pilot, 2, 7)
-	assert_eq(arena.exits.size(), 2)
-	# nobody walks off into the abyss
-	var out := arena.resolve(Vector2(pilot.half.x + 5.0, 0), 0.5)
-	assert_lt(out.x, pilot.half.x - 1.0)
-	# the fire bowls block like small pillars
-	var b := pilot.braziers[0]
-	assert_gt(arena.resolve(b, 0.5).distance_to(b), 0.9)
-	# the middle is clear
+	arena.build(hall, 3, 7)
+	assert_eq(arena.exits.size(), 3, "the portal, the east stairs and the south stairs")
+	# nobody walks off into the abyss, on any side
+	for far: Vector2 in [Vector2(30, 0), Vector2(-30, 0), Vector2(0, 30), Vector2(0, -30)]:
+		assert_true(arena.on_floor(arena.resolve(far, 0.5), 0.5), "kept on the platform from %s" % far)
+	# the middle is clear, and the paladin walks in clear of everything
 	assert_eq(arena.resolve(Vector2.ZERO, 0.5), Vector2.ZERO)
-	# the paladin leaves by stepping onto the stairs up to a portal
-	var foot := Vector2(arena.exits[0].x, -pilot.half.y + 1.4 + Arena.STAIRS_DEPTH + 0.3)
-	assert_eq(arena.exit_at(foot), 0)
-	# the layout itself is not changed by building (the kit's blockers go to the arena's own copy)
-	assert_eq(pilot.pillars.size(), 2)
+	assert_eq(arena.resolve(arena.start, 0.5), arena.start)
+	# from the landing by the way in, one walks straight north into the room (no seam between the two floors)
+	var p := Vector2(-5.5, arena.start.y)
+	for i in 200:
+		p = arena.resolve(p + Vector2(0, -0.1), 0.5)
+	assert_lt(p.y, 0.0, "walked from the landing into the room")
+	# each door is reached from inside: its goal is reachable and leaves by it, its sign floats inside the room
+	for i in 3:
+		var goal := arena.resolve(arena.door_goal(i), 0.5)
+		assert_eq(arena.exit_at(goal), i, "door %d is left by walking to it" % i)
+		assert_true(arena.inside(arena.door_label(i)), "door %d's sign is inside" % i)
+	assert_eq(arena.exit_at(Vector2.ZERO), -1)
+
+
+func test_hall_doors_follow_the_count() -> void:
+	for n in [0, 1, 2]:
+		var arena := Arena.new()
+		add_child_autofree(arena)
+		arena.build(stage.layouts[0], n, 7)
+		assert_eq(arena.exits.size(), n)

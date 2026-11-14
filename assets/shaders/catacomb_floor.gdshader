@@ -4,20 +4,21 @@ shader_type spatial;
 // size and shape takes it. The middle stays dark and calm so the fighters read on it; an engraved ring marks it.
 render_mode diffuse_lambert, specular_schlick_ggx;
 
-uniform vec3 stone_a : source_color = vec3(0.15, 0.165, 0.19);
-uniform vec3 stone_b : source_color = vec3(0.25, 0.25, 0.28);
+uniform vec3 stone_a : source_color = vec3(0.29, 0.25, 0.28);
+uniform vec3 stone_b : source_color = vec3(0.42, 0.37, 0.39);
 uniform vec3 joint_color : source_color = vec3(0.025, 0.03, 0.045);
 uniform vec3 crack_color : source_color = vec3(0.05, 0.055, 0.07);
 uniform vec3 moss_color : source_color = vec3(0.12, 0.2, 0.2);
-uniform vec3 engrave_color : source_color = vec3(0.55, 0.42, 0.22);
+uniform vec3 engrave_color : source_color = vec3(0.62, 0.46, 0.22);
 // Meters between the centres of two flagstones.
-uniform float stone_size = 1.3;
+uniform float stone_size = 2.1;
 uniform float joint_width = 0.025;
 // The calm middle: radius in meters, and how much of the stones' contrast it keeps.
 uniform float calm_radius = 9.0;
 uniform float calm_contrast = 0.55;
 // The engraved ring in the middle (0 = none): its radius in meters.
 uniform float ring_radius = 6.5;
+uniform vec2 ring_center = vec2(0.0);
 uniform float ring_glow = 0.0;
 
 varying vec3 world;
@@ -49,36 +50,61 @@ float fbm(vec2 p) {
 	return s;
 }
 
-// Flagstones laid in courses (rows along x): each course its own depth, each stone its own length, the joints of
-// one course never lining up with the next. p in stone units. Returns (distance to the nearest joint, stone id).
+// Big flagstones, almost square, laid in rows of uneven depth: each row its own depth (0.8 to 1.25 units), each
+// stone its own length (0.8 to 1.7), the joints of one row never lining up with the next. p in stone units.
+// Returns (distance to the nearest joint in units, stone id, row).
 vec3 stones(vec2 p) {
-	// courses of two depths: most one unit, some a unit and a half (big slabs)
-	float band = floor(p.y / 2.5);
-	float split = 0.9 + hash1(vec2(band, 3.0)) * 0.7;
-	float ly = p.y - band * 2.5;
-	float row = band * 2.0 + (ly < split ? 0.0 : 1.0);
-	float fy = ly < split ? ly / split : (ly - split) / (2.5 - split);
-	float depth = ly < split ? split : 2.5 - split;
-	// stagger each course, and give its stones uneven lengths around 1.4 units
-	float len = 1.1 + depth * 0.7;
+	// rows: the boundary of row k sits at k + a jitter, so rows differ in depth
+	float k = floor(p.y);
+	float y0 = k + (hash1(vec2(k, 3.0)) - 0.5) * 0.35;
+	float row = k;
+	if (p.y < y0) { row = k - 1.0; }
+	float a = row + (hash1(vec2(row, 3.0)) - 0.5) * 0.35;
+	float b = row + 1.0 + (hash1(vec2(row + 1.0, 3.0)) - 0.5) * 0.35;
+	float depth = b - a;
+	float fy = (p.y - a) / depth;
+	float len = 1.25;
 	float x = p.x / len + hash1(vec2(row, 7.0)) * 3.0;
 	float i = floor(x);
-	float jit = 0.55;
+	float jit = 0.5;
 	float b0 = i + (hash1(vec2(i, row)) - 0.5) * jit;
 	float b1 = i + 1.0 + (hash1(vec2(i + 1.0, row)) - 0.5) * jit;
 	float id = i;
-	if (x < b0) {
-		b1 = b0;
-		b0 = i - 1.0 + (hash1(vec2(i - 1.0, row)) - 0.5) * jit;
-		id = i - 1.0;
-	} else if (x > b1) {
-		b0 = b1;
-		b1 = i + 2.0 + (hash1(vec2(i + 2.0, row)) - 0.5) * jit;
-		id = i + 1.0;
-	}
+	if (x < b0) { b1 = b0; b0 = i - 1.0 + (hash1(vec2(i - 1.0, row)) - 0.5) * jit; id = i - 1.0; }
+	else if (x > b1) { b0 = b1; b1 = i + 2.0 + (hash1(vec2(i + 2.0, row)) - 0.5) * jit; id = i + 1.0; }
 	float dx = min(x - b0, b1 - x) * len;
 	float dy = min(fy, 1.0 - fy) * depth;
+	// some big stones are split in two across (the small slabs between the big ones)
+	if (hash1(vec2(id, row) + 11.0) > 0.72) {
+		float mid = mix(b0, b1, 0.35 + 0.3 * hash1(vec2(id, row) + 2.0));
+		dx = min(dx, abs(x - mid) * len);
+		id += x < mid ? 0.5 : 0.25;
+	}
 	return vec3(min(dx, dy), id, row);
+}
+
+// The engraved medallion in the middle: an outer double ring, an eight-pointed star of two crossed squares, an inner
+// ring and a small hub. Returns how much of an engraved line is at p (meters from the middle), 0 to 1.
+float medallion(vec2 p, float r) {
+	float d = length(p);
+	float w = 0.07;
+	float m = 0.0;
+	m = max(m, 1.0 - smoothstep(w * 0.5, w, abs(d - r)));
+	m = max(m, 1.0 - smoothstep(w * 0.5, w, abs(d - r * 0.93)));
+	m = max(m, 1.0 - smoothstep(w * 0.5, w, abs(d - r * 0.42)));
+	m = max(m, 1.0 - smoothstep(w * 0.5, w, abs(d - r * 0.16)));
+	// two squares, one turned an eighth: their outlines make the star
+	for (int k = 0; k < 2; k++) {
+		float a = float(k) * 0.7853982;
+		vec2 q = mat2(vec2(cos(a), -sin(a)), vec2(sin(a), cos(a))) * p;
+		float sq = max(abs(q.x), abs(q.y));
+		m = max(m, (1.0 - smoothstep(w * 0.5, w, abs(sq - r * 0.66))) * step(d, r * 0.93));
+	}
+	// eight thin spokes from the hub to the inner ring
+	float ang = atan(p.y, p.x);
+	float spoke = 1.0 - smoothstep(0.02, 0.05, abs(sin(ang * 4.0)) * d);
+	m = max(m, spoke * step(r * 0.16, d) * step(d, r * 0.42));
+	return m;
 }
 
 void vertex() {
@@ -114,20 +140,15 @@ void fragment() {
 	vec3 mean = (stone_a + stone_b) * 0.5;
 	c = mix(c, mix(mean, c, calm_contrast), calm);
 	c = mix(c, joint_color, joint);
-	// the engraved ring: two thin circles and eight spokes between them, a faint old gold
-	float r = length(world.xz);
-	float ring = 0.0;
-	if (ring_radius > 0.0) {
-		ring = 1.0 - smoothstep(0.03, 0.08, abs(r - ring_radius));
-		ring = max(ring, 1.0 - smoothstep(0.03, 0.07, abs(r - ring_radius * 0.82)));
-		float a = atan(world.z, world.x);
-		float spoke = 1.0 - smoothstep(0.02, 0.06, abs(sin(a * 4.0)) * r);
-		ring = max(ring, spoke * step(ring_radius * 0.82, r) * step(r, ring_radius));
-		ring *= 0.75 + 0.25 * fbm(world.xz * 2.0);
-	}
-	c = mix(c, engrave_color * 0.45, ring * 0.7);
+	// the engraved medallion: dark grooves with old gold in them
+	float ring = ring_radius > 0.0 ? medallion(world.xz - ring_center, ring_radius) : 0.0;
+	ring *= 0.7 + 0.3 * fbm(world.xz * 2.0);
+	c = mix(c, engrave_color * 0.6, ring * 0.8);
+	// wet patches: smooth enough to mirror the fire and the portal (screen-space reflections on desktop)
+	float wet = smoothstep(0.55, 0.72, fbm(world.xz * 0.16 + 31.0));
+	c *= mix(1.0, 0.8, wet);
 	ALBEDO = c;
-	ROUGHNESS = mix(0.85, 0.6, joint);
+	ROUGHNESS = mix(mix(0.82, 0.22, wet), 0.9, joint);
 	SPECULAR = 0.2;
 	// relief: the stone tops bulge, the joints sink (a normal bent by the edge distance)
 	float h = smoothstep(0.0, 0.2, edge);

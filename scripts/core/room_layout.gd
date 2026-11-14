@@ -8,8 +8,6 @@ extends Resource
 @export var pillars: Array[Vector3] = []
 ## Cold light falling from cracks in the ceiling.
 @export var shafts: Array[Vector2] = []
-## A platform over the abyss (balustrades on the sides, a raised dais with the portals to the north, stairs down to
-## the south) instead of a hall closed by walls. Built by Arena from ArenaKit.
+## The catacomb hall of the reference image (CatacombHall: a platform over the abyss, the portal on its dais) instead
+## of a hall closed by walls; its size and pieces are CatacombHall's.
 @export var platform := false
-## Stone fire bowls on the platform (x, z): its warm light; they block like a small pillar.
-@export var braziers: Array[Vector2] = []

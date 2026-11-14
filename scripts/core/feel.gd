@@ -29,6 +29,9 @@ const OVERRIDE := "user://feel_override.tres"
 ## Degrees above the floor.
 @export_range(15.0, 85.0, 0.5) var cam_pitch := 50.0
 @export_range(15.0, 70.0, 0.5) var cam_fov := 32.0
+## Turn of the camera around the floor's up axis, degrees: 0 looks straight north; positive stands it to the
+## south-east looking north-west (the diamond view of the catacomb hall). Movement turns with it (screen up = away).
+@export_range(-90.0, 90.0, 0.5) var cam_yaw := 0.0
 ## Meters the camera leads towards where the paladin faces.
 @export_range(0.0, 6.0, 0.1) var cam_lead := 2.2
 ## How fast the camera catches up (higher is stiffer).
@@ -90,9 +93,14 @@ static func reset() -> void:
 
 
 ## Where the camera sits relative to what it looks at.
-static func cam_offset_of(distance: float, pitch_deg: float) -> Vector3:
+static func cam_offset_of(distance: float, pitch_deg: float, yaw_deg: float = 0.0) -> Vector3:
 	var p := deg_to_rad(pitch_deg)
-	return Vector3(0, sin(p) * distance, cos(p) * distance)
+	return Vector3(0, sin(p) * distance, cos(p) * distance).rotated(Vector3.UP, deg_to_rad(yaw_deg))
+
+
+## A direction on the screen (x right, y down) as a direction on the floor (x, z), for a camera turned yaw degrees.
+static func screen_to_floor(v: Vector2, yaw_deg: float) -> Vector2:
+	return v.rotated(-deg_to_rad(yaw_deg))
 
 
 ## Default share of walking speed kept during a swing, by the move's tags.

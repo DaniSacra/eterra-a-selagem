@@ -100,8 +100,12 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 		# on the middle of a wall piece, so the arched piece is the doorway
 		var piece := clampi(roundi((x + half.x) / TILE - 0.5), 0, ceili(half.x * 2.0 / TILE) - 1)
 		exits.append(Vector2(-half.x + TILE * (piece + 0.5), -half.y + 1.0))
+	start = Vector2(0, half.y - 3.0)
 	if layout != null and layout.platform:
-		_platform(layout, seed_)
+		exits.clear()
+		var hall := CatacombHall.new(self, seed_)
+		hall.build(exit_count)
+		_kit = hall.kit
 		return
 	_floor()
 	_walls()
@@ -118,10 +122,14 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 	_floor_detail()
 
 
+## Floor beyond the room's rectangle where one may still walk (the catacomb hall's landing by the way in), each
+## rectangle with the same 1.2 m margin as the room.
+var walk: Array[Rect2] = []
+
+
 ## Keeps a circle of this radius inside the hall and out of the pillars.
 func resolve(pos: Vector2, radius: float) -> Vector2:
-	pos.x = clampf(pos.x, -half.x + 1.2 + radius, half.x - 1.2 - radius)
-	pos.y = clampf(pos.y, -half.y + 1.2 + radius, half.y - 1.2 - radius)
+	pos = _onto_floor(pos, 1.2 + radius)
 	for p in pillars:
 		var c := Vector2(p.x, p.y)
 		var d := pos - c
@@ -160,6 +168,21 @@ func inside(pos: Vector2, margin: float = 0.0) -> bool:
 	return absf(pos.x) < half.x - 1.2 - margin and absf(pos.y) < half.y - 1.2 - margin
 
 
+## True when a body of this radius stands on the room's floor or one of its extra floors (walk).
+func on_floor(pos: Vector2, radius: float) -> bool:
+	return _onto_floor(pos, 1.2 + radius).distance_to(pos) < 0.001
+
+
+## The nearest point to pos at least `margin` inside the room or one of its extra floors (walk).
+func _onto_floor(pos: Vector2, margin: float) -> Vector2:
+	var best := pos.clamp(-half + Vector2(margin, margin), half - Vector2(margin, margin))
+	for r in walk:
+		var q := pos.clamp(r.position + Vector2(margin, margin), r.end - Vector2(margin, margin))
+		if q.distance_squared_to(pos) < best.distance_squared_to(pos):
+			best = q
+	return best
+
+
 ## Lights a door (its reward can be taken through it) or dims it.
 func light_exit(i: int, on: bool, color: Color = Color(1.0, 0.85, 0.5)) -> void:
 	if _kit != null:
@@ -172,11 +195,29 @@ func light_exit(i: int, on: bool, color: Color = Color(1.0, 0.85, 0.5)) -> void:
 
 ## The door the paladin stands in, or -1.
 func exit_at(pos: Vector2) -> int:
+	if not exit_zones.is_empty():
+		for i in exit_zones.size():
+			if exit_zones[i].has_point(pos):
+				return i
+		return -1
 	var foot := -half.y + 1.4 + STAIRS_DEPTH
 	for i in exits.size():
 		if absf(pos.x - exits[i].x) < STAIRS_HALF_WIDTH and pos.y < foot + 1.0:
 			return i
 	return -1
+
+
+## Where the sign of a door floats: in front of it, inside the room.
+func door_label(i: int) -> Vector2:
+	var inward := exit_inward[i] if i < exit_inward.size() else Vector2(0, 1)
+	return exits[i] + inward * 2.6
+
+
+## Where to walk to leave by a door (the bot).
+func door_goal(i: int) -> Vector2:
+	if not exit_zones.is_empty():
+		return exits[i]
+	return Vector2(exits[i].x, -half.y + 1.4 + STAIRS_DEPTH + 0.3)
 
 
 ## The crypt doors open for the last fight: a cold light in the north wall.
@@ -190,136 +231,20 @@ func open_door() -> void:
 		_door_light.omni_range = 16.0
 
 
-# ---------- the platform over the abyss (art direction of 2026-11-14) ----------
+# ---------- the catacomb hall (Daniel's reference image of 2026-11-14) ----------
 
-## Height of the dais to the north, where the portals stand (the height of a flight of stairs).
-const DAIS_HEIGHT := 2.8
-## How deep the dais reaches behind the room's north edge, and where the back wall stands on it.
-const DAIS_DEPTH := 7.0
-## Far behind and beside the platform: the great pillars that hold the catacombs up, out of the abyss.
-const GIANT_PILLAR := Vector3(2.4, 4.2, 2.4)
-## How much farther north the camera may look in a platform room, to show the dais.
-const DAIS_VIEW := 5.0
+## The hall of the reference image (CatacombHall): it fills exits, exit_inward, exit_zones, start, showcase.
 var _kit: ArenaKit
-## Meters more the camera may look north of the room (the platform's dais and portals stand beyond its edge).
+## Meters more the camera may look north of the room.
 var view_north := 0.0
-
-
-## A wide platform over the abyss: the fight in the clear middle, balustrades on the abyss sides, a raised dais to
-## the north with a portal (green light) over each flight of stairs, hooded statues and red banners on it, stairs
-## down to the south where the paladin came in, fire bowls at the corners, and monumental stone in the depths.
-func _platform(layout: RoomLayout, seed_: int) -> void:
-	_kit = ArenaKit.new(self, seed_)
-	view_north = DAIS_VIEW
-	var k := _kit
-	var hx := half.x
-	var hz := half.y
-	k.floor_plate(Vector3.ZERO, Vector2(hx * 2.0 + 1.0, hz * 2.0 + 1.0), 6.5)
-	k.abyss(half)
-	# the lip of the platform: stone blocks under its edges, seen from above the abyss
-	for side in [-1.0, 1.0]:
-		k.row("floor_foundation_front", Vector3(side * (hx + 0.5), -2.0, -hz), Vector3(side * (hx + 0.5), -2.0, hz + 0.5), 2.0,
-			PI * 0.5 if side > 0 else -PI * 0.5)
-		# the balustrade along the abyss, a post every 8 m
-		k.row("barrier", Vector3(side * (hx - 0.3), 0, -hz + 1.4), Vector3(side * (hx - 0.3), 0, hz), 4.0, 0.0)
-		for i in range(0, ceili(hz * 2.0 / 8.0) + 1):
-			k.piece("barrier_column", Vector3(side * (hx - 0.3), 0, -hz + 1.4 + i * 8.0), PI * 0.5, Vector3(0.2, 1.1, 1.0))
-	k.row("floor_foundation_front", Vector3(-hx, -2.0, hz + 0.5), Vector3(hx, -2.0, hz + 0.5), 2.0, PI)
-	# the south side, where the camera looks in: low balustrade at the corners only, the way in open in the middle
-	for side in [-1.0, 1.0]:
-		k.row("barrier", Vector3(side * hx, 0, hz - 0.3), Vector3(side * 6.0, 0, hz - 0.3), 4.0, 0.0)
-	k.piece("stairs_wide", Vector3(0, -DAIS_HEIGHT, hz + 0.2), 0.0, Vector3(0.8, 0.55, 0.8))
-	_dais(k)
-	var bowls := layout.braziers
-	if bowls.is_empty():
-		bowls = [Vector2(-hx + 3.5, -hz + 4.5), Vector2(hx - 3.5, -hz + 4.5), Vector2(-hx + 3.5, hz - 3.5), Vector2(hx - 3.5, hz - 3.5)]
-	for b in bowls:
-		k.brazier(b)
-	for p in pillars:
-		k.piece("pillar_decorated" if _rng.randf() < 0.5 else "pillar", Vector3(p.x, 0, p.y), _rng.randi() % 4 * PI * 0.5,
-			Vector3(p.z / 0.75, 0.75, p.z / 0.75))
-	_clutter(k)
-	_depths(k)
-	pillars.append_array(k.circles)
-	boxes.append_array(k.boxes)
-
-
-## The raised dais to the north: its stone front, the stairs up, a portal over each, statues beside them, the back
-## wall with red banners and torches.
-func _dais(k: ArenaKit) -> void:
-	var hx := half.x
-	var top := -half.y + 1.2
-	var back := top - DAIS_DEPTH
-	var block := Vector3(1.0, DAIS_HEIGHT / 2.0, 1.0)
-	for z in [top - 1.0, top - 3.0, top - 5.0, top - 7.0]:
-		k.row("floor_foundation_allsides", Vector3(-hx - 1.0, 0, z), Vector3(hx + 1.0, 0, z), 2.0, 0.0, block)
-	k.floor_plate(Vector3(0, DAIS_HEIGHT + 0.02, top - DAIS_DEPTH * 0.5), Vector2(hx * 2.0 + 2.0, DAIS_DEPTH))
-	var doors: Array[Vector2] = exits.duplicate()
-	if doors.is_empty():
-		doors.append(door_pos)
-	for i in doors.size():
-		var x := doors[i].x
-		if not exits.is_empty():
-			k.piece("stairs_wide", Vector3(x, 0, -half.y + 1.4), 0.0, Vector3(0.8, 0.55, 0.8), 1.0)
-		k.portal(Vector3(x, DAIS_HEIGHT, top - 2.6), 0.0, 0.95)
-		for s in [-1.0, 1.0]:
-			k.statue(Vector2(x + s * 3.6, top - 2.2), -s * 0.35)
-	# the back wall: tall arches, a banner between every other pair, torches
-	var n := ceili((hx * 2.0 + 2.0) / 4.0)
-	for i in n:
-		var x := -hx - 1.0 + 4.0 * (i + 0.5)
-		var near := false
-		for d in doors:
-			near = near or absf(x - d.x) < 2.5
-		if near:
-			continue
-		k.piece("wall_archedwindow_open" if i % 3 == 1 else "wall_pillar", Vector3(x, DAIS_HEIGHT, back + 0.5), 0.0, Vector3(1.0, 1.3, 1.0))
-		if i % 2 == 0:
-			k.piece("banner_thin_red" if i % 4 == 0 else "banner_patternA_red", Vector3(x, DAIS_HEIGHT + 0.6, back + 1.0), 0.0, Vector3(0.9, 1.1, 0.9))
-		elif i % 4 == 1:
-			k.piece("torch_mounted", Vector3(x, DAIS_HEIGHT + 2.4, back + 1.0), 0.0)
-			k.fire(Vector3(x, DAIS_HEIGHT + 2.95, back + 1.4), 0.12, 8)
-
-
-## Candles, pots and broken stone along the balustrades and the dais front, never in the middle.
-func _clutter(k: ArenaKit) -> void:
-	var hx := half.x
-	var hz := half.y
-	for i in int(hz * 1.2):
-		var side := -1.0 if i % 2 == 0 else 1.0
-		var z := _rng.randf_range(-hz + 4.0, hz - 2.0)
-		var at := Vector3(side * (hx - 1.1), 0, z)
-		var r := _rng.randf()
-		if r < 0.55:
-			k.piece("candle_triple" if _rng.randf() < 0.5 else "candle_thin_lit", at, _rng.randf() * TAU, Vector3.ONE * 0.7)
-			k.piece("candle_melted", at + Vector3(-side * 0.35, 0, 0.3), 0.0, Vector3.ONE * 0.7)
-		elif r < 0.8:
-			k.piece("barrel_small" if _rng.randf() < 0.5 else "box_small", at, _rng.randf() * TAU, Vector3.ONE * 0.6, 0.8)
-		else:
-			k.piece("sword_shield_broken", at + Vector3(0, 0.3, 0), _rng.randf() * TAU, Vector3.ONE * 0.6)
-	# candles at the foot of the dais, between the stairs
-	for i in int(hx * 0.6):
-		var x := _rng.randf_range(-hx + 1.5, hx - 1.5)
-		if _near_exit(x, 3.4):
-			continue
-		k.piece("candle_triple", Vector3(x, 0, -half.y + 1.6), _rng.randf() * TAU, Vector3.ONE * 0.7)
-
-
-## The depths: giant pillars rising out of the abyss behind and beside the platform, chains slung between them.
-func _depths(k: ArenaKit) -> void:
-	var hx := half.x
-	var hz := half.y
-	var tops: Array[Vector3] = []
-	var spots: Array[Vector2] = [Vector2(-hx - 9.0, -hz - 4.0), Vector2(hx + 9.0, -hz - 4.0), Vector2(-hx - 10.0, hz * 0.3),
-		Vector2(hx + 10.0, hz * 0.3), Vector2(-hx * 0.45, -hz - 16.0), Vector2(hx * 0.45, -hz - 16.0)]
-	for p in spots:
-		var base := Vector3(p.x, -18.0, p.y)
-		k.piece("pillar_decorated", base, _rng.randi() % 4 * PI * 0.5, GIANT_PILLAR * Vector3(1, 2.2, 1))
-		tops.append(base + Vector3(0, 4.0 * GIANT_PILLAR.y * 2.2 - 1.5, 0))
-	k.chain(tops[0], tops[4], 5.0)
-	k.chain(tops[1], tops[5], 5.0)
-	k.chain(tops[0], tops[2], 6.0)
-	k.chain(tops[1], tops[3], 6.0)
+## Where the paladin walks in, and the way he faces.
+var start := Vector2.ZERO
+var start_facing := Vector2.UP
+## The way into the room from each door (to set its sign in front of it) and the zone that leaves by it.
+var exit_inward: Array[Vector2] = []
+var exit_zones: Array[Rect2] = []
+## Where the fixed showcase camera (--showcase) looks: the middle of the composition.
+var showcase := Vector3.ZERO
 
 
 func _floor() -> void:

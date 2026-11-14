@@ -321,41 +321,14 @@ func _stage() -> void:
 	st.reward_weights = PackedFloat32Array([6.0, 2.5, 1.5, 1.0, 1.5])
 	st.shop_items = PackedInt32Array([R.BOON, R.POM, R.HEART, R.HEAL])
 	st.shop_prices = PackedInt32Array([150, 100, 125, 60])
-	# rooms about the size of Hades II's (its view is 28 m wide at this scale)
-	# pillars: (x, z, radius that blocks); Arena draws each one that wide (slim, as Hades II's props next to its heroes)
-	var V3 := func(x: float, z: float, r: float = 0.6) -> Vector3: return Vector3(x, z, r)
-	st.layouts = [
-		_layout(Vector2(14, 12), [V3.call(-7, -4), V3.call(7, -4), V3.call(-7, 5), V3.call(7, 5)], [Vector2(-4, 2), Vector2(6, -6)]),
-		_layout(Vector2(16, 12), [V3.call(0, 0, 0.85)], [Vector2(-8, 4), Vector2(8, -4)]),
-		_layout(Vector2(14, 14), [V3.call(-5, -6), V3.call(5, 6)], [Vector2(0, 0)]),
-		_layout(Vector2(18, 12), [V3.call(-10, 0), V3.call(10, 0), V3.call(0, 3)], [Vector2(-5, 3), Vector2(6, 2)]),
-		_layout(Vector2(14, 14), [], [Vector2(-5, -5), Vector2(5, 5)]),
-		_layout(Vector2(16, 14), [V3.call(-6, -3), V3.call(6, -3), V3.call(-8, 7), V3.call(8, 7), V3.call(0, 0, 0.72)], [Vector2(-3, -2), Vector2(9, 3)]),
-	]
-	# the pilot of the art direction of 2026-11-14: a wide platform over the abyss (Arena._platform), the fight in
-	# the clear middle, fire bowls at the corners; always the last layout (--arena=piloto starts in it)
-	var pilot := _layout(Vector2(20, 16), [V3.call(-12, -7, 0.75), V3.call(12, -7, 0.75)], [])
-	pilot.platform = true
-	pilot.braziers = [Vector2(-16.5, -11.5), Vector2(16.5, -11.5), Vector2(-16.5, 12.5), Vector2(16.5, 12.5)]
-	st.layouts.append(pilot)
-	# every room is a platform over the abyss now (art direction of 2026-11-14, applied to all rooms at Daniel's ask):
-	# the same pillars, the room a third bigger, fire bowls at its corners (Arena places them when none are given)
-	for l: RoomLayout in st.layouts:
-		if l == pilot:
-			continue
-		l.platform = true
-		l.half = (l.half * 1.3).round()
-		var grown: Array[Vector3] = []
-		for p in l.pillars:
-			grown.append(Vector3(p.x * 1.3, p.y * 1.3, p.z))
-		l.pillars = grown
-		l.shafts = []
-	st.boss_layout = _layout(Vector2(18, 16), [V3.call(-11, -9), V3.call(11, -9), V3.call(-11, 9), V3.call(11, 9)], [Vector2(-6, 2), Vector2(7, -3), Vector2(0, 8)])
-	st.boss_layout.platform = true
-	st.boss_layout.half = Vector2(22, 18)
-	st.boss_layout.shafts = []
-	st.shop_layout = _layout(Vector2(14, 11), [], [])
-	st.shop_layout.platform = true
+	# every room is the catacomb hall of Daniel's reference image (redesign of 2026-11-14, CatacombHall: a 28 m square
+	# by 30 m platform over the abyss, built in code to match the picture); its size and pieces live in CatacombHall, so the
+	# layout only says "the hall". The boss and the shop fight in it too (Morvath's portal burns red).
+	var hall := _layout(CatacombHall.HALF, [], [])
+	hall.platform = true
+	st.layouts = [hall]
+	st.boss_layout = hall
+	st.shop_layout = hall
 	_save(st, "res://data/stages/catacombs.tres")
 
 
@@ -384,10 +357,12 @@ func _feel() -> void:
 	f.move_scale_light = 0.0
 	f.move_scale_heavy = 0.0
 	f.move_scale_finisher = 0.0
-	# 12% farther than the first test (45): more of the room on screen, the paladin still reads
-	f.cam_distance = 50.5
+	# the frame of Daniel's reference image of the catacomb hall (2026-11-14): high and turned, the square room seen
+	# as a diamond from its south-east corner (docs/art/arena_reference.md)
+	f.cam_distance = 60.0
 	f.cam_pitch = 30.0
-	f.cam_fov = 20.0
+	f.cam_yaw = 35.0
+	f.cam_fov = 24.0
 	f.cam_lead = 1.2
 	f.cam_smooth = 9.0
 	f.hit_stop_scale = 1.0

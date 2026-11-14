@@ -156,39 +156,60 @@ func _ready() -> void:
 func _build_world() -> void:
 	var env := WorldEnvironment.new()
 	var e := Environment.new()
+	# the catacomb hall of the reference image (2026-11-14): a cold, dark teal air; the warmth comes only from fire
+	# and candles, the green from the portal, the violet from the depths
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.015, 0.03, 0.04)
+	e.background_color = Color(0.05, 0.12, 0.13)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	# cool slate-teal mid-tone (painterly night look): dark ink strokes and bright effects both read on the floor,
-	# torches and the paladin's red stay the warm accents
-	e.ambient_light_color = Color(0.45, 0.52, 0.66)
-	# low, so the fire bowls make warm pools and deep shadows (the platform look of 2026-11-14)
-	e.ambient_light_energy = 0.3
+	e.ambient_light_color = Color(0.46, 0.44, 0.58)
+	e.ambient_light_energy = 0.55
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	e.tonemap_exposure = 1.05
+	e.tonemap_exposure = 1.3
 	e.glow_enabled = true
-	e.glow_intensity = 0.9
+	e.glow_intensity = 0.45
 	e.glow_strength = 1.0
-	e.glow_bloom = 0.04
-	e.glow_hdr_threshold = 0.85
+	e.glow_bloom = 0.03
+	e.glow_hdr_threshold = 1.1
 	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	for i in 7:
 		e.set_glow_level(i, 1.0 if i in [1, 2, 3, 4] else 0.0)
+	# distance haze: the far arches and towers fade into the teal air
 	e.fog_enabled = true
-	e.fog_light_color = Color(0.05, 0.1, 0.11)
-	e.fog_density = 0.008
+	e.fog_light_color = Color(0.1, 0.24, 0.27)
+	e.fog_density = 0.011
+	e.fog_aerial_perspective = 0.2
+	# desktop (Forward+) only, ignored by the browser's renderer: light in the air around the fires and the portal,
+	# contact shadows in the stonework, the wet patches of the floor mirroring the light
+	e.volumetric_fog_enabled = true
+	e.volumetric_fog_density = 0.008
+	e.volumetric_fog_albedo = Color(0.7, 0.72, 0.78)
+	e.volumetric_fog_emission = Color(0.01, 0.025, 0.03)
+	e.volumetric_fog_gi_inject = 0.0
+	e.volumetric_fog_length = 90.0
+	e.volumetric_fog_ambient_inject = 0.15
+	e.ssao_enabled = true
+	e.ssao_radius = 1.4
+	e.ssao_intensity = 2.2
+	e.ssr_enabled = true
+	e.ssr_max_steps = 48
 	e.adjustment_enabled = true
-	e.adjustment_contrast = 1.1
-	# the catacomb palette shows: green portals, red banners, gold fire, purple depths
-	e.adjustment_saturation = 0.95
+	e.adjustment_contrast = 1.12
+	e.adjustment_saturation = 1.3
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		# the browser's renderer has no fog in the air nor contact shadows and lights the stone brighter: darker
+		# exposure and ambient so it keeps the desktop's mood
+		e.tonemap_exposure = COMPAT_EXPOSURE
+		e.ambient_light_energy = COMPAT_AMBIENT
 	env.environment = e
 	add_child(env)
 	var moon := DirectionalLight3D.new()
-	moon.rotation_degrees = Vector3(-58, -32, 0)
-	moon.light_color = Color(0.72, 0.88, 0.95)
-	moon.light_energy = 0.4
+	# a cold light from high behind the hall (north-west), rimming the stone and the fighters
+	moon.rotation_degrees = Vector3(-50, 150, 0)
+	moon.light_color = Color(0.5, 0.75, 0.85)
+	moon.light_energy = 0.35
 	moon.shadow_enabled = true
-	moon.directional_shadow_max_distance = 80.0
+	moon.directional_shadow_max_distance = 90.0
+	moon.light_volumetric_fog_energy = 0.3
 	add_child(moon)
 
 	arena = Arena.new()
@@ -298,7 +319,7 @@ func _step(dt: float) -> void:
 		player.rest()
 		player.step(dt, Vector2.ZERO, Vector2.ZERO)
 	else:
-		player.step(dt, Controls.move(), _aim())
+		player.step(dt, _move(), _aim())
 	horde.target = player.pos
 	horde.target_alive = player.alive() and mode == Mode.PLAY
 	horde.step(dt)
@@ -317,6 +338,18 @@ func _step(dt: float) -> void:
 		_open_choice()
 
 
+## The camera's turn around the up axis, degrees (--cam-yaw overrides it).
+func cam_yaw() -> float:
+	return Dev.num("cam-yaw", Feel.live().cam_yaw)
+
+
+## Where the player pushes, on the floor: keys and sticks are screen directions, turned by the camera's yaw; the bot
+## (and touch) already give floor directions.
+func _move() -> Vector2:
+	var v := Controls.move()
+	return v if Controls.virtual != null else Feel.screen_to_floor(v, cam_yaw())
+
+
 ## Where the paladin aims: the mouse pointer on the floor, or the stick (Controls).
 func _aim() -> Vector2:
 	if Controls.aims_with_mouse():
@@ -329,7 +362,7 @@ func _aim() -> Vector2:
 			return d.normalized() if d.length() > 0.2 else Vector2.ZERO
 		return Vector2.ZERO
 	var a := Controls.aim(Vector2.ZERO, Vector2.ZERO)
-	return a
+	return a if Controls.virtual != null else Feel.screen_to_floor(a, cam_yaw())
 
 
 # ---------- waves ----------
@@ -738,6 +771,11 @@ func boss_enemy() -> Enemy:
 
 ## How much closer the camera gets at the end of an Omega's charge.
 const OMEGA_ZOOM := 0.08
+## How far the fixed showcase camera (--showcase) stands from the hall's middle, to frame all of it like the reference.
+const SHOWCASE_DISTANCE := 60.0
+## The browser's renderer (GL Compatibility) lights brighter than the desktop's (Forward+): its exposure and ambient.
+const COMPAT_EXPOSURE := 0.72
+const COMPAT_AMBIENT := 0.3
 var _charge_zoom := 0.0
 ## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
 var _cam_last := Vector2.ZERO
@@ -760,6 +798,13 @@ func _follow(delta: float, shake: Vector3) -> void:
 
 
 func _place_camera(shake: Vector3, _delta: float) -> void:
+	if Dev.has("showcase"):
+		# the fixed frame of the whole hall, to set side by side with the reference image
+		var c := arena.showcase
+		var off := Feel.cam_offset_of(Dev.num("cam-dist", SHOWCASE_DISTANCE), Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw())
+		camera.fov = Dev.num("cam-fov", Feel.live().cam_fov)
+		camera.look_at_from_position(c + off, c, Vector3.UP)
+		return
 	var h := arena.half
 	var t := Vector3(clampf(_cam_target.x, -maxf(0.0, h.x - CAM_MARGIN.x), maxf(0.0, h.x - CAM_MARGIN.x)), 0,
 		clampf(_cam_target.z, minf(0.0, -h.y + CAM_MARGIN.y - arena.view_north), maxf(0.0, h.y - CAM_SOUTH)))
@@ -773,7 +818,7 @@ func _cam_offset() -> Vector3:
 	var charge := player.charge_progress() * OMEGA_ZOOM
 	_charge_zoom = charge if charge > _charge_zoom else lerpf(_charge_zoom, charge, 1.0 - exp(-get_process_delta_time() / maxf(Engine.time_scale, 0.001) * 6.0))
 	camera.fov = Dev.num("cam-fov", feel.cam_fov) / (fx.zoom * (1.0 + _charge_zoom))
-	return Feel.cam_offset_of(Dev.num("cam-dist", feel.cam_distance), Dev.num("cam-pitch", feel.cam_pitch))
+	return Feel.cam_offset_of(Dev.num("cam-dist", feel.cam_distance), Dev.num("cam-pitch", feel.cam_pitch), cam_yaw())
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits.
