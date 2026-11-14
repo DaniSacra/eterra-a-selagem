@@ -13,29 +13,40 @@ const GLINT := preload("res://assets/shaders/glint.gdshader")
 const CRESCENT := preload("res://assets/shaders/crescent.gdshader")
 const GLINT_POOL := 4
 ## Meters across the quad of a finisher's glint (its long streak reaches the edges).
-const GLINT_SIZE := 20.0
+const GLINT_SIZE := 13.0
 ## Seconds the glint takes to burst and fade after its hold.
 const GLINT_BURST := 0.16
 const CRESCENT_POOL := 6
 ## A finisher's crescent flies out to this many times the reach of the blow while it fades.
-const CRESCENT_GROW := 5.0
+const CRESCENT_GROW := 1.8
 ## Seconds it lasts (the white edge goes in the first half, the ink lingers).
-const CRESCENT_TIME := 0.55
+const CRESCENT_TIME := 0.42
 ## Where its band starts, as a share of the reach (lower is a broader sweep).
-const CRESCENT_INNER := 0.55
+const CRESCENT_INNER := 0.72
 ## Share of the ink opacity (Feel.ink_opacity) its dark body keeps: lighter than a blow, so the white edge leads.
-const CRESCENT_INK := 0.35
+const CRESCENT_INK := 0.28
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
 ## Where the ink of a sword arc starts, as a share of its reach (lower is a fatter crescent of ink).
-const INK_INNER := 0.3
+const INK_INNER := 0.42
 ## Where the bright streaks start, as a share of the reach: a wide band from near the paladin out to the tip
-## (Ember & Blade's cuts are fat sheets of light, not thin lines).
-const SLASH_INNER := 0.28
+## (Ember & Blade's cuts are sheets of light, not thin lines; a narrower band since the first test found them too big).
+const SLASH_INNER := 0.5
 const RING_POOL := 16
 const BEAM_POOL := 24
 const NUMBER_POOL := 90
+## Damage numbers and floating words: font sizes in pixels at 720 lines (small and white, as in the references)
+## and the dark outline around them.
+const NUMBER_SIZE := 17
+const NUMBER_BIG := 24
+const WORD_SIZE := 21
+const NUMBER_OUTLINE := 5
+## Size of the star of a blow landing, in meters (times the size asked for).
+const IMPACT_SIZE := 1.6
+## Particle bursts are drawn this much smaller than their BURSTS size, with this share of their specks.
+const BURST_SCALE := 0.7
+const BURST_AMOUNT := 0.7
 const SHAKE_METERS := 0.12
 
 ## kind -> [colour, amount, speed, gravity, size, lifetime, spread]
@@ -145,7 +156,7 @@ func setup(cam: Camera3D, over: Control) -> void:
 			p.emitting = false
 			p.one_shot = true
 			p.explosiveness = 0.92
-			p.amount = spec[1]
+			p.amount = maxi(3, roundi(spec[1] * BURST_AMOUNT))
 			p.lifetime = spec[5]
 			p.initial_velocity_min = spec[2] * 0.4
 			p.initial_velocity_max = spec[2]
@@ -156,7 +167,7 @@ func setup(cam: Camera3D, over: Control) -> void:
 			p.scale_amount_max = 1.0
 			p.damping_min = 2.0
 			p.damping_max = 4.0
-			p.mesh = quad(spec[4], spec[0])
+			p.mesh = quad(spec[4] * BURST_SCALE, spec[0])
 			p.color_ramp = fade_ramp(Color.WHITE)
 			p.local_coords = false
 			add_child(p)
@@ -202,7 +213,7 @@ func setup(cam: Camera3D, over: Control) -> void:
 	for i in NUMBER_POOL:
 		var l := Label.new()
 		l.add_theme_font_override(&"font", _font)
-		l.add_theme_constant_override(&"outline_size", 8)
+		l.add_theme_constant_override(&"outline_size", NUMBER_OUTLINE)
 		l.add_theme_color_override(&"font_outline_color", Color(0.05, 0.02, 0.06, 0.9))
 		l.visible = false
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -273,7 +284,7 @@ func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -
 	var mat: ShaderMaterial = e.mat
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"seed", _rng.randf() * 100.0)
-	mat.set_shader_parameter(&"size", 2.3 * size)
+	mat.set_shader_parameter(&"size", IMPACT_SIZE * size)
 	mat.set_shader_parameter(&"life", 0.0)
 	e.time = time if time > 0.0 else 0.16 + 0.04 * size
 
@@ -341,11 +352,11 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 
 
 func number(pos: Vector3, amount: float, color: Color, big: bool = false) -> void:
-	_text(pos, str(roundi(amount)), color, 34 if big else 24)
+	_text(pos, str(roundi(amount)), color, NUMBER_BIG if big else NUMBER_SIZE)
 
 
 func word(pos: Vector3, text: String, color: Color) -> void:
-	_text(pos, text, color, 30)
+	_text(pos, text, color, WORD_SIZE)
 
 
 func hit_stop(ms: float) -> void:

@@ -6,6 +6,20 @@ extends Control
 const MAGICK_COLOR := Color(0.35, 0.55, 1.0)
 const CAST_READY := Color(1.0, 0.92, 0.7)
 const CAST_WAIT := Color(0.2, 0.18, 0.22, 0.8)
+## Sizes in pixels at 720 lines: a quiet HUD in the corners, as in Hades II (the first test found it too big).
+const BAR_W := 240.0
+const HP_H := 14.0
+const MAGICK_H := 5.0
+const BOSS_W := 480.0
+const BOSS_H := 9.0
+const PIP := Vector2(26, 5)
+const CAST_SIZE := 11.0
+const ICON_SIZE := 38
+const MARGIN := 20.0
+const FONT_SMALL := 15
+const FONT_TEXT := 18
+const FONT_CLOCK := 26
+const FONT_COMBO := 40
 
 var game: Game
 var _hp_fill: ColorRect
@@ -42,17 +56,17 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# experience: a thin gold line across the top
 	var xp_back := _rect(Color(0.05, 0.03, 0.06, 0.85), Control.PRESET_TOP_WIDE)
-	xp_back.offset_bottom = 8
+	xp_back.offset_bottom = 5
 	_xp_fill = _rect(Color(1.0, 0.8, 0.35), Control.PRESET_TOP_LEFT)
-	_xp_fill.size = Vector2(0, 8)
-	_level = _label("", UiKit.GOLD, 26, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(24, 16))
-	_clock = _label("0:00", UiKit.PALE, 38, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 12))
+	_xp_fill.size = Vector2(0, 5)
+	_level = _label("", UiKit.GOLD, FONT_TEXT, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 14))
+	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 10))
 	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_kills = _label("", UiKit.PALE, 24, UiKit.BOLD_FONT, Control.PRESET_TOP_RIGHT, Vector2(-24, 18))
+	_kills = _label("", UiKit.PALE, FONT_TEXT, UiKit.BOLD_FONT, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, 14))
 	_kills.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	# life, bottom left
 	_hp_back = _rect(Color(0.04, 0.02, 0.04, 0.9), Control.PRESET_BOTTOM_LEFT)
-	_place(_hp_back, Control.PRESET_BOTTOM_LEFT, Vector2(24, -46), Vector2(340, 26))
+	_place(_hp_back, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN - 12), Vector2(BAR_W, HP_H))
 	var hp_lag := ColorRect.new()
 	hp_lag.color = Color(1.0, 0.85, 0.7, 0.5)
 	hp_lag.name = "Lag"
@@ -62,38 +76,38 @@ func _ready() -> void:
 	_hp_back.add_child(_hp_fill)
 	var shine := ColorRect.new()
 	shine.color = Color(1, 1, 1, 0.12)
-	shine.size = Vector2(340, 8)
+	shine.size = Vector2(BAR_W, HP_H * 0.3)
 	_hp_back.add_child(shine)
-	_hp_text = UiKit.label("", UiKit.PALE, 20, UiKit.BOLD_FONT)
-	_hp_text.size = Vector2(340, 26)
+	_hp_text = UiKit.label("", UiKit.PALE, FONT_SMALL - 2, UiKit.BOLD_FONT)
+	_hp_text.size = Vector2(BAR_W, HP_H)
 	_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hp_back.add_child(_hp_text)
 	# Magia: a thin blue bar above the life
 	var magick_back := _rect(Color(0.04, 0.03, 0.08, 0.9), Control.PRESET_BOTTOM_LEFT)
-	_place(magick_back, Control.PRESET_BOTTOM_LEFT, Vector2(24, -78), Vector2(340, 8))
+	_place(magick_back, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN - 12 - HP_H - 4), Vector2(BAR_W, MAGICK_H))
 	_magick_fill = ColorRect.new()
 	_magick_fill.color = MAGICK_COLOR
-	_magick_fill.size = Vector2(340, 8)
+	_magick_fill.size = Vector2(BAR_W, MAGICK_H)
 	magick_back.add_child(_magick_fill)
 	# the circle of light: a diamond right of the dodges, lit when ready
 	_cast = _rect(CAST_READY, Control.PRESET_BOTTOM_LEFT)
-	_place(_cast, Control.PRESET_BOTTOM_LEFT, Vector2(380, -44), Vector2(16, 16))
+	_place(_cast, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + BAR_W + 14, -MARGIN - 12 - HP_H * 0.5 + CAST_SIZE * 0.5), Vector2(CAST_SIZE, CAST_SIZE))
 	_cast.rotation = PI / 4.0
 	_dodges = HBoxContainer.new()
 	add_child(_dodges)
-	_place(_dodges, Control.PRESET_BOTTOM_LEFT, Vector2(24, -24), Vector2(200, 8))
+	_place(_dodges, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(200, PIP.y))
 	# boss
 	_boss_box = VBoxContainer.new()
-	_boss_box.custom_minimum_size = Vector2(640, 0)
+	_boss_box.custom_minimum_size = Vector2(BOSS_W, 0)
 	_boss_box.visible = false
 	add_child(_boss_box)
-	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, 62), Vector2(640, 50))
-	_boss_name = UiKit.title("", 24, Color(0.9, 0.75, 1.0))
+	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, 44), Vector2(BOSS_W, 36))
+	_boss_name = UiKit.title("", FONT_TEXT, Color(0.9, 0.75, 1.0))
 	_boss_box.add_child(_boss_name)
 	_boss_back = ColorRect.new()
 	_boss_back.color = Color(0.04, 0.02, 0.06, 0.9)
-	_boss_back.custom_minimum_size = Vector2(640, 14)
+	_boss_back.custom_minimum_size = Vector2(BOSS_W, BOSS_H)
 	_boss_box.add_child(_boss_back)
 	_boss_fill = ColorRect.new()
 	_boss_fill.color = Color(0.62, 0.22, 0.85)
@@ -102,26 +116,27 @@ func _ready() -> void:
 	_boss_armor.color = Horde.ARMOR_COLOR
 	_boss_back.add_child(_boss_armor)
 	# combo, right side
-	_combo = _label("", UiKit.GOLD, 64, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -120))
+	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -86))
 	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo_word = _label(T.t(&"hud_combo"), UiKit.PALE, 22, UiKit.BOLD_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -44))
+	_combo_word = _label(T.t(&"hud_combo"), UiKit.PALE, FONT_SMALL, UiKit.BOLD_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -38))
 	_combo_word.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_move = _label("", Color(1.0, 0.92, 0.7), 30, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-40, -10))
+	_move = _label("", Color(1.0, 0.92, 0.7), FONT_TEXT + 2, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -14))
 	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_combo.visible = false
 	_combo_word.visible = false
-	_notice = _label("", UiKit.PALE, 30, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 130))
+	_notice = _label("", UiKit.PALE, FONT_TEXT + 4, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 110))
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_icons = HBoxContainer.new()
-	_icons.add_theme_constant_override(&"separation", 8)
+	_icons.add_theme_constant_override(&"separation", 6)
 	_icons.alignment = BoxContainer.ALIGNMENT_CENTER
 	add_child(_icons)
-	_place(_icons, Control.PRESET_CENTER_BOTTOM, Vector2(0, -16), Vector2(900, 64))
-	_arrow = _label("", Color(1.0, 0.9, 0.6), 22, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
+	_place(_icons, Control.PRESET_CENTER_BOTTOM, Vector2(0, -12), Vector2(900, ICON_SIZE + 10))
+	_arrow = _label("", Color(1.0, 0.9, 0.6), FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
 
 
 ## Puts a control of a given size at a corner or edge of the screen, moved by offset from there.
+## (Bottom presets: offset.y is how far the control's bottom edge sits above the screen's.)
 func _place(c: Control, preset: Control.LayoutPreset, offset: Vector2, size_px: Vector2) -> void:
 	c.size = size_px
 	c.set_anchors_and_offsets_preset(preset, Control.PRESET_MODE_KEEP_SIZE)
@@ -164,18 +179,18 @@ func _process(delta: float) -> void:
 		_kills.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
 	var ratio := clampf(p.hp / p.max_hp, 0.0, 1.0)
 	_hp_shown = move_toward(_hp_shown, ratio, delta * 0.5) if _hp_shown > ratio else ratio
-	_hp_fill.size = Vector2(340 * ratio, 26)
-	(_hp_back.get_node("Lag") as ColorRect).size = Vector2(340 * _hp_shown, 26)
+	_hp_fill.size = Vector2(BAR_W * ratio, HP_H)
+	(_hp_back.get_node("Lag") as ColorRect).size = Vector2(BAR_W * _hp_shown, HP_H)
 	_hp_text.text = "%d / %d" % [ceili(p.hp), roundi(p.max_hp)]
 	_update_dodges(p)
-	_magick_fill.size = Vector2(340 * p.magick.ratio(), 8)
+	_magick_fill.size = Vector2(BAR_W * p.magick.ratio(), MAGICK_H)
 	_cast.color = CAST_READY if p.cast_cooldown <= 0.0 else CAST_WAIT
 	var b := game.boss_enemy()
 	_boss_box.visible = b != null
 	if b:
 		_boss_name.text = T.t(b.def.name_key)
-		_boss_fill.size = Vector2(640 * clampf(b.hp / b.max_hp, 0.0, 1.0), 14)
-		_boss_armor.size = Vector2(640 * (b.armor / b.max_armor if b.max_armor > 0.0 else 0.0), 6)
+		_boss_fill.size = Vector2(BOSS_W * clampf(b.hp / b.max_hp, 0.0, 1.0), BOSS_H)
+		_boss_armor.size = Vector2(BOSS_W * (b.armor / b.max_armor if b.max_armor > 0.0 else 0.0), BOSS_H * 0.4)
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
 	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
@@ -190,7 +205,7 @@ func _process(delta: float) -> void:
 func _update_dodges(p: Player) -> void:
 	while _dodges.get_child_count() < p.dodge_max:
 		var pip := ColorRect.new()
-		pip.custom_minimum_size = Vector2(36, 8)
+		pip.custom_minimum_size = PIP
 		_dodges.add_child(pip)
 	while _dodges.get_child_count() > p.dodge_max:
 		_dodges.get_child(_dodges.get_child_count() - 1).free()
@@ -205,7 +220,7 @@ func _update_icons() -> void:
 		for c in _icons.get_children():
 			c.queue_free()
 		for b in owned:
-			_icons.add_child(BoonIcon.new().setup(b, 52))
+			_icons.add_child(BoonIcon.new().setup(b, ICON_SIZE))
 	var i := 0
 	for c in _icons.get_children():
 		if c.is_queued_for_deletion():

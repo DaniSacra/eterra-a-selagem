@@ -45,7 +45,11 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), no assador para a multidão (o herói do Meshy já tem a proporção certa).
-- Câmera baixa, meio de lado (`CAM_OFFSET` e `CAM_FOV` em `game.gd`), como nos vídeos de referência.
+- Câmera baixa, meio de lado (`Feel.cam_distance` 50,5, inclinação 30, campo de visão 20, em `_feel` do `make_data.gd`), como nos vídeos de referência.
+- Escala (1º teste do Daniel, "tudo é muito grande"): o cenário do KayKit é encolhido por peça em `Arena.PROP_SCALE`
+  (paredes 72% da altura, escadas 0,8 x 0,55, barris 0,55, entulho 0,5 a 0,6, velas 0,7); pilares desenhados pelo raio que
+  bloqueia (`RoomLayout.pillars`, 0,6 m; `Arena.PILLAR_MODEL_RADIUS`, `PILLAR_HEIGHT` 0,68). A colisão segue o modelo escalado.
+  Efeitos e HUD mais discretos (números `Fx.NUMBER_SIZE` 17, HUD em `Hud` com barra de 240 por 14). Números em `docs/arte/estetica.md`.
 - Impacto de cada golpe: corte grande de faixas sobre uma meia-lua de tinta escura (`slash.gdshader`, `slash_ink.gdshader`),
   estrela no acerto (`impact.gdshader`, `Fx.impact`), inimigo pisca branco e achata, corpo arremessado ao morrer
   (`Horde.THROW`), tranco de câmera (`Fx.kick`), hit stop curto (`Feel.hit_stop_scale`) e brilho de antecipação nos finalizadores

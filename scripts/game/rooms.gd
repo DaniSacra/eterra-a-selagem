@@ -12,6 +12,8 @@ const START_DELAY := 1.0
 ## Meters from the reward or a pedestal that count as touching it.
 const TOUCH := 1.6
 const FADE := 0.35
+## Meters per pixel of the words over doors and rewards (64 px font: about 0.6 m tall letters).
+const MARKER_TEXT_PIXEL := 0.009
 ## The last kill of a room: world speed, seconds held and seconds back to normal (Hades II: 0.35, about 0.6, 0.4).
 const LAST_KILL_SLOW := 0.35
 const LAST_KILL_HOLD := 0.55
@@ -354,7 +356,7 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 		label.text = text
 		label.font = UiKit.BOLD_FONT
 		label.font_size = 64
-		label.pixel_size = 0.012
+		label.pixel_size = MARKER_TEXT_PIXEL
 		label.outline_size = 16
 		label.modulate = UiKit.PALE
 		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED

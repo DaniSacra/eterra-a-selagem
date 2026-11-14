@@ -73,7 +73,8 @@ cinco finalizadores das sequências, preparação de 0,2 s, ajuste ao vivo em `F
 ## 4. Câmera
 
 - Alta e inclinada (perto de 50 a 55 graus), perspectiva leve, enquadramento largo: dá para ver a horda
-  chegando de todos os lados. A nossa (`Feel`: distância 44, inclinação 50, campo de visão 32) está perto.
+  chegando de todos os lados. A nossa (`Feel`: distância 50,5, inclinação 30, campo de visão 20, no molde do Hades II)
+  mostra cerca de 31 m de largura.
 
 ## 5. Personagens
 
@@ -116,6 +117,37 @@ cinco finalizadores das sequências, preparação de 0,2 s, ajuste ao vivo em `F
 - **Clima**: poeira fina caindo devagar na diagonal em cada facho de luz (`Arena._dust`, constantes `DUST_*`).
 - Cena mais escura e menos saturada (`ambient_light_energy` 0,45, `adjustment_saturation` 0,6).
 - Laboratório: `tools/lab.sh` aceita `--lab-glint`, `--lab-crescent` e `--lab-impact` (quadros parados para julgar).
+
+### Escala e discrição (2026-11-14, depois do 1º teste do Daniel)
+
+O Daniel achou "tudo muito grande": o cenário parecia de brinquedo perto do herói, a câmera mostrava pouca sala,
+e efeitos e interface ocupavam espaço demais. Os personagens ficaram como estavam. Antes e depois:
+
+- **Cenário** (`Arena.PROP_SCALE`, colisão acompanha o modelo escalado):
+  paredes 4 m para 2,9 m de altura (0,72; seguem cobrindo `TILE` 4 m de largura), tochas de 2,4 m para 1,75 m
+  (`TORCH_HEIGHT`); escadas 7 x 5,1 x 4 m para 5,6 x 2,8 x 3,2 m (`STAIRS_DEPTH` 4 para 3,2, `STAIRS_HALF_WIDTH`
+  3,3 para 2,65); barris 2 m para 1,1 m; entulho 3,5 m para 1,75 m de altura (0,6 e 0,55 no chão); espada e escudo
+  quebrados 0,7; velas 0,7; estandartes 0,7 de altura. Pilares: raio que bloqueia 1,0 para 0,6 (os grandes 1,4 para
+  0,85 e 1,2 para 0,72, em `_stage` do `make_data.gd`), desenhados com a largura do raio (`PILLAR_MODEL_RADIUS` 0,82)
+  e 4 m para 2,7 m de altura (`PILLAR_HEIGHT` 0,68). Tamanho das salas não mudou.
+- **Câmera**: `Feel.cam_distance` 45 para 50,5 (12% mais longe; inclinação 30 e campo de visão 20 iguais).
+- **Cortes**: banda clara mais estreita (`Fx.SLASH_INNER` 0,28 para 0,5), tinta mais estreita (`INK_INNER` 0,3 para
+  0,42), mais clara e mais curta (`Feel.ink_opacity` 0,92 para 0,85, `ink_life` 2,6 para 2,0), brilho
+  `Feel.slash_intensity` 2,2 para 1,7. O alcance desenhado continua igual ao que acerta.
+- **Meia-lua do finalizador**: cresce até 1,8 vezes o alcance (era 5), dura 0,42 s (era 0,55), banda de 0,72 do
+  alcance para fora (era 0,55), tinta 0,28 (era 0,35).
+- **Brilho do finalizador** `GLINT_SIZE` 20 para 13 m; estrela de acerto `IMPACT_SIZE` 2,3 para 1,6; partículas
+  70% do tamanho e da quantidade (`BURST_SCALE`, `BURST_AMOUNT`); anéis mais finos e fracos (`ring.gdshader`
+  `band` 0,12 para 0,08, `intensity` 2 para 1,5); anel do círculo de luz que explode 1,25 para 1,1 do raio.
+- **Áreas no chão** (`Ground`): o tamanho continua sendo o do ataque; a borda clara agora tem largura fixa em metros
+  (`RIM_METERS` 0,28, uniforms `size_m` e `rim_m` do `ground.gdshader`) em vez de 14% do raio, então as grandes
+  ficam com borda fina. Círculo de luz do paladino mais suave (`BIND_STRENGTH` 0,35 para 0,24), áreas dos dons 1 para
+  0,8 (`AREA_STRENGTH`). Avisos com o mesmo brilho (`WARNING_STRENGTH` 1,4), para continuar legíveis.
+- **Números e palavras**: `Fx.NUMBER_SIZE` 24 para 17, `NUMBER_BIG` 34 para 24, `WORD_SIZE` 30 para 21, contorno
+  8 para 5. Palavras sobre portas e recompensas 25% menores (`Rooms.MARKER_TEXT_PIXEL` 0,012 para 0,009).
+- **HUD** (`Hud`, constantes no topo): vida 340 x 26 para 240 x 14, Magia 8 para 5 de altura, avanços 36 x 8 para
+  26 x 5, chefe 640 x 14 para 480 x 9, relógio 38 para 26, sala e ouro 26/24 para 18, contador de golpes 64 para 40,
+  nome do golpe 30 para 20, ícones dos dons 52 para 38, margem 24 para 20.
 
 ## Pendências
 

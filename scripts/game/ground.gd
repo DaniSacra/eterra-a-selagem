@@ -12,6 +12,13 @@ enum Shape { CIRCLE, LINE, ARC }
 const SHADER := preload("res://assets/shaders/ground.gdshader")
 const TICK := 0.25
 const POOL := 48
+## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
+## circle of light (big, 3 s) a soft glow so the fight inside still reads, the rest in between.
+const WARNING_STRENGTH := 1.4
+const BIND_STRENGTH := 0.24
+const AREA_STRENGTH := 0.8
+## Meters of the bright rim around a warning (its size is always the attack's).
+const RIM_METERS := 0.28
 const COLORS := {
 	Kind.WARNING: Color(1.0, 0.18, 0.12), Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
 	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
@@ -156,8 +163,9 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	m.set_shader_parameter(&"style", 0 if kind == Kind.WARNING else 1)
 	m.set_shader_parameter(&"shape", shape)
 	m.set_shader_parameter(&"fade", 1.0)
-	# the circle of light is big and stays 3 s: a soft glow, so the fight inside still reads
-	m.set_shader_parameter(&"strength", 1.4 if kind == Kind.WARNING else 0.35 if kind == Kind.BIND else 1.0)
+	m.set_shader_parameter(&"strength", WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if kind == Kind.BIND else AREA_STRENGTH)
+	m.set_shader_parameter(&"size_m", maxf(0.1, width * 0.5 if shape == Shape.LINE else radius))
+	m.set_shader_parameter(&"rim_m", RIM_METERS)
 	var y := 0.06 + zones.size() * 0.0005
 	match shape:
 		Shape.LINE:

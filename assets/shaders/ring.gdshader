@@ -4,8 +4,8 @@ render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabl
 
 uniform vec4 color : source_color = vec4(1.0, 0.85, 0.4, 1.0);
 uniform float life = 0.0;
-uniform float band = 0.12;
-uniform float intensity = 2.0;
+uniform float band = 0.08;
+uniform float intensity = 1.5;
 
 void fragment() {
 	float d = length(UV * 2.0 - 1.0);

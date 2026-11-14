@@ -11,6 +11,10 @@ uniform float arc_half = 1.0;
 uniform int style = 0;
 uniform float strength = 1.0;
 uniform float fade = 1.0;
+// Meters from the middle to the edge (circle and arc) or half the width (line), and the width of the bright rim
+// in meters: the rim stays thin on big areas instead of growing with them. The area itself is the attack's.
+uniform float size_m = 1.0;
+uniform float rim_m = 0.28;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -25,7 +29,8 @@ void fragment() {
 	if (shape == 1) {
 		float along = UV.y;
 		float side = abs(uv.x);
-		float edge = smoothstep(0.82, 0.95, side) * step(side, 1.0);
+		float rim = clamp(rim_m / size_m, 0.04, 0.2);
+		float edge = smoothstep(1.0 - rim, 1.0 - rim * 0.3, side) * step(side, 1.0);
 		float ends = smoothstep(0.96, 0.995, abs(uv.y));
 		if (style == 0) {
 			a = max(edge, ends) * 0.9 + step(along, progress) * 0.35 + 0.08;
@@ -40,13 +45,14 @@ void fragment() {
 			if (ang > arc_half) discard;
 		}
 		if (style == 0) {
-			float ring = smoothstep(0.86, 0.96, d) * (1.0 - smoothstep(0.985, 1.0, d));
+			float rim = clamp(rim_m / size_m, 0.025, 0.14);
+			float ring = smoothstep(1.0 - rim, 1.0 - rim * 0.3, d) * (1.0 - smoothstep(0.985, 1.0, d));
 			float fill = step(d, progress) * 0.38 + smoothstep(progress - 0.06, progress, d) * step(d, progress) * 0.6;
 			a = ring + fill + 0.06;
 		} else {
 			float n = noise(uv * 4.0 + vec2(TIME * 0.7, -TIME * 0.5)) * 0.6 + noise(uv * 9.0 - TIME) * 0.4;
-			float rim = smoothstep(0.75, 1.0, d);
-			a = (0.25 + 0.55 * n) * (1.0 - smoothstep(0.9, 1.0, d)) + rim * 0.35 * (1.0 - smoothstep(0.97, 1.0, d));
+			float edge = smoothstep(1.0 - clamp(rim_m * 2.0 / size_m, 0.06, 0.25), 1.0, d);
+			a = (0.25 + 0.55 * n) * (1.0 - smoothstep(0.9, 1.0, d)) + edge * 0.35 * (1.0 - smoothstep(0.97, 1.0, d));
 		}
 	}
 	ALBEDO = color.rgb * a * strength * fade;

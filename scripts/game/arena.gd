@@ -11,10 +11,33 @@ const DUNGEON := "res://assets/models/dungeon/"
 const CROWD_LAYER := 2
 ## Pillars that stand in the hall: (x, z) and the radius that blocks movement.
 const PILLARS: Array[Vector3] = [
-	Vector3(-14, -14, 1.0), Vector3(14, -14, 1.0), Vector3(-14, 14, 1.0), Vector3(14, 14, 1.0),
-	Vector3(-26, 0, 1.0), Vector3(26, 0, 1.0), Vector3(0, -26, 1.0), Vector3(0, 24, 1.0),
-	Vector3(-27, -25, 1.0), Vector3(27, -25, 1.0), Vector3(-27, 25, 1.0), Vector3(27, 25, 1.0),
+	Vector3(-14, -14, 0.6), Vector3(14, -14, 0.6), Vector3(-14, 14, 0.6), Vector3(14, 14, 0.6),
+	Vector3(-26, 0, 0.6), Vector3(26, 0, 0.6), Vector3(0, -26, 0.6), Vector3(0, 24, 0.6),
+	Vector3(-27, -25, 0.6), Vector3(27, -25, 0.6), Vector3(-27, 25, 0.6), Vector3(27, 25, 0.6),
 ]
+## The kit is chunky next to a 2.5 m paladin (its pillars and walls are 4 m, its barrels 2 m); Hades II's props are
+## slimmer and lower than its heroes. Scale (x, y, z) of each piece; missing ones stay as they are.
+## Walls and banners only lose height (they still tile every TILE meters).
+const PROP_SCALE := {
+	"wall": Vector3(1.0, 0.72, 1.0), "wall_cracked": Vector3(1.0, 0.72, 1.0), "wall_arched": Vector3(1.0, 0.72, 1.0),
+	"wall_broken": Vector3(1.0, 0.72, 1.0), "wall_corner": Vector3(1.0, 0.72, 1.0),
+	"stairs_wide": Vector3(0.8, 0.55, 0.8),
+	"barrel_large": Vector3(0.55, 0.55, 0.55),
+	"rubble_half": Vector3(0.6, 0.5, 0.6), "rubble_large": Vector3(0.55, 0.5, 0.55),
+	"sword_shield_broken": Vector3(0.7, 0.7, 0.7),
+	"candle_triple": Vector3(0.7, 0.7, 0.7), "candle_lit": Vector3(0.7, 0.7, 0.7),
+	"torch_mounted": Vector3(0.8, 0.8, 0.8),
+	"banner_patternA_white": Vector3(0.8, 0.7, 0.8), "banner_thin_yellow": Vector3(0.8, 0.7, 0.8),
+}
+## A pillar is drawn from its blocking radius (RoomLayout.pillars): the kit's pillar is PILLAR_MODEL_RADIUS meters
+## round (its decorated twin a little more), so radius / PILLAR_MODEL_RADIUS is its width; PILLAR_HEIGHT its height
+## as a share of the kit's 4 m.
+const PILLAR_MODEL_RADIUS := 0.82
+const PILLAR_HEIGHT := 0.68
+## Candles stand this far out from a pillar's blocking circle.
+const CANDLE_GAP := 0.35
+## Height of the torches on the walls (the walls are 4 * 0.72 m).
+const TORCH_HEIGHT := 1.75
 const FLOOR_VARIANTS: Array[String] = ["floor_tile_large"]
 const WALL_VARIANTS: Array[String] = ["wall", "wall", "wall_cracked", "wall_arched", "wall", "wall_broken"]
 ## Multiplies the kit's warm sandstone into cool slate (the painterly night look).
@@ -39,10 +62,10 @@ var shafts: Array[Vector2] = SHAFTS
 var exits: Array[Vector2] = []
 ## Floor footprints of the solid props (stairs, rubble, barrels): nobody walks through or under them.
 var boxes: Array[Rect2] = []
-## How far into the room the stairs of a door reach: the paladin leaves by stepping onto them.
-const STAIRS_DEPTH := 4.0
-## Half the width of a flight of stairs, a little less than the model (the paladin leaves by touching its foot).
-const STAIRS_HALF_WIDTH := 3.3
+## How far into the room the stairs of a door reach (the kit's 4 m times PROP_SCALE): the paladin leaves by stepping onto them.
+const STAIRS_DEPTH := 3.2
+## Half the width of a flight of stairs (5.6 m wide), a little less than the model (the paladin leaves by touching its foot).
+const STAIRS_HALF_WIDTH := 2.65
 ## Meters between the middles of two doors.
 const STAIRS_GAP := 8.5
 ## Share of a rough prop's footprint that blocks (its outline is ragged; the bounding box would feel like glass).
@@ -80,10 +103,13 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 	_floor()
 	_walls()
 	for p in pillars:
-		_place("pillar_decorated" if _rng.randf() < 0.5 else "pillar", Vector3(p.x, 0, p.y), _rng.randi() % 4 * PI * 0.5)
+		var w := p.z / PILLAR_MODEL_RADIUS
+		_place("pillar_decorated" if _rng.randf() < 0.5 else "pillar", Vector3(p.x, 0, p.y), _rng.randi() % 4 * PI * 0.5, 0.0,
+			Vector3(w, PILLAR_HEIGHT, w))
 		for k in 2:
 			var a := _rng.randf() * TAU
-			_place("candle_triple" if k == 0 else "candle_lit", Vector3(p.x + cos(a) * 1.4, 0, p.y + sin(a) * 1.4), _rng.randf() * TAU)
+			var r := p.z + CANDLE_GAP
+			_place("candle_triple" if k == 0 else "candle_lit", Vector3(p.x + cos(a) * r, 0, p.y + sin(a) * r), _rng.randf() * TAU)
 	_decorate()
 	_shafts()
 	_floor_detail()
@@ -186,7 +212,7 @@ func _walls() -> void:
 			north = "wall_arched"
 		_place(north, Vector3(t, 0, -half.y - 0.5), 0.0)
 		if i % 2 == 1 and not _near_exit(t):
-			_torch(Vector3(t, 2.4, -half.y + 0.1), 0.0)
+			_torch(Vector3(t, TORCH_HEIGHT, -half.y + 0.1), 0.0)
 		# the open south side: a broken line of rubble and low stones
 		if _hall and _rng.randf() < 0.55:
 			_place("rubble_large" if _rng.randf() < 0.5 else "rubble_half", Vector3(t + _rng.randf_range(-1, 1), 0, half.y + 0.6), _rng.randf() * TAU)
@@ -195,8 +221,8 @@ func _walls() -> void:
 		_place(WALL_VARIANTS[_rng.randi() % WALL_VARIANTS.size()], Vector3(-half.x - 0.5, 0, t), PI * 0.5)
 		_place(WALL_VARIANTS[_rng.randi() % WALL_VARIANTS.size()], Vector3(half.x + 0.5, 0, t), -PI * 0.5)
 		if i % 2 == 1:
-			_torch(Vector3(-half.x + 0.1, 2.4, t), PI * 0.5)
-			_torch(Vector3(half.x - 0.1, 2.4, t), -PI * 0.5)
+			_torch(Vector3(-half.x + 0.1, TORCH_HEIGHT, t), PI * 0.5)
+			_torch(Vector3(half.x - 0.1, TORCH_HEIGHT, t), -PI * 0.5)
 	for c: Vector2 in [Vector2(-1, -1), Vector2(1, -1)]:
 		_place("wall_corner", Vector3(c.x * (half.x + 0.5), 0, c.y * (half.y + 0.5)), 0.0 if c.x < 0 else -PI * 0.5)
 	_exit_lights.clear()
@@ -231,7 +257,7 @@ func _torch(pos: Vector3, yaw: float) -> void:
 	l.light_cull_mask = ~CROWD_LAYER
 	add_child(l)
 	var flame := CPUParticles3D.new()
-	flame.position = pos + Vector3(sin(yaw), 0.65, cos(yaw)) * 0.45
+	flame.position = pos + Vector3(sin(yaw), 0.65, cos(yaw)) * 0.45 * (PROP_SCALE["torch_mounted"] as Vector3).y
 	flame.amount = 10
 	flame.lifetime = 0.5
 	flame.direction = Vector3.UP
@@ -362,7 +388,8 @@ func _to_wall(r: Rect2) -> Rect2:
 
 
 ## solid: share of the footprint that blocks the way (0: walk through it, like candles and banners).
-func _place(name_: String, pos: Vector3, yaw: float, solid: float = 0.0) -> MeshInstance3D:
+## size: scale of the piece (zero: its PROP_SCALE). The blocking box follows the scaled model.
+func _place(name_: String, pos: Vector3, yaw: float, solid: float = 0.0, size := Vector3.ZERO) -> MeshInstance3D:
 	if not _meshes.has(name_):
 		var scene: Node = (load(DUNGEON + name_ + ".glb") as PackedScene).instantiate()
 		var mi := _first_mesh(scene)
@@ -371,7 +398,9 @@ func _place(name_: String, pos: Vector3, yaw: float, solid: float = 0.0) -> Mesh
 	var entry: Array = _meshes[name_]
 	var out := MeshInstance3D.new()
 	out.mesh = entry[0]
-	out.transform = Transform3D(Basis(Vector3.UP, yaw), pos) * (entry[1] as Transform3D)
+	if size == Vector3.ZERO:
+		size = PROP_SCALE.get(name_, Vector3.ONE)
+	out.transform = Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(size), pos) * (entry[1] as Transform3D)
 	for i in out.mesh.get_surface_count():
 		out.set_surface_override_material(i, _tinted(out.mesh.surface_get_material(i)))
 	add_child(out)

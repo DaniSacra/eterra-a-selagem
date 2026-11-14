@@ -51,12 +51,12 @@ const OVERRIDE := "user://feel_override.tres"
 
 @export_group("Sword arc")
 ## Bright streaks (slash.gdshader).
-@export_range(0.0, 6.0, 0.1) var slash_intensity := 2.2
+@export_range(0.0, 6.0, 0.1) var slash_intensity := 1.7
 ## Seconds the head of an arc takes to sweep through.
 @export_range(0.02, 0.4, 0.01) var slash_sweep_time := 0.1
 ## Dark ink stroke under it (slash_ink.gdshader): opacity, and how much longer than the streaks it lingers.
-@export_range(0.0, 1.0, 0.01) var ink_opacity := 0.92
-@export_range(1.0, 4.0, 0.05) var ink_life := 2.6
+@export_range(0.0, 1.0, 0.01) var ink_opacity := 0.85
+@export_range(1.0, 4.0, 0.05) var ink_life := 2.0
 
 static var _live: Feel
 

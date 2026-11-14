@@ -214,7 +214,7 @@ func cast(at: Vector2, omega: bool) -> void:
 ## The held circle of light runs out: everything inside takes the burst.
 func cast_burst(z: Ground.Zone) -> void:
 	horde.in_circle(z.pos, z.radius, _hits)
-	fx.ring(z.pos, z.radius * 1.25, CAST_COLOR, 0.35)
+	fx.ring(z.pos, z.radius * 1.1, CAST_COLOR, 0.3)
 	fx.impact(Vector3(z.pos.x, 1.0, z.pos.y), CAST_COLOR, 2.2)
 	fx.shake(2.0)
 	for e: Enemy in _hits.duplicate():

@@ -322,14 +322,15 @@ func _stage() -> void:
 	st.shop_items = PackedInt32Array([R.BOON, R.POM, R.HEART, R.HEAL])
 	st.shop_prices = PackedInt32Array([150, 100, 125, 60])
 	# rooms about the size of Hades II's (its view is 28 m wide at this scale)
-	var V3 := func(x: float, z: float, r: float = 1.0) -> Vector3: return Vector3(x, z, r)
+	# pillars: (x, z, radius that blocks); Arena draws each one that wide (slim, as Hades II's props next to its heroes)
+	var V3 := func(x: float, z: float, r: float = 0.6) -> Vector3: return Vector3(x, z, r)
 	st.layouts = [
 		_layout(Vector2(14, 12), [V3.call(-7, -4), V3.call(7, -4), V3.call(-7, 5), V3.call(7, 5)], [Vector2(-4, 2), Vector2(6, -6)]),
-		_layout(Vector2(16, 12), [V3.call(0, 0, 1.4)], [Vector2(-8, 4), Vector2(8, -4)]),
+		_layout(Vector2(16, 12), [V3.call(0, 0, 0.85)], [Vector2(-8, 4), Vector2(8, -4)]),
 		_layout(Vector2(14, 14), [V3.call(-5, -6), V3.call(5, 6)], [Vector2(0, 0)]),
 		_layout(Vector2(18, 12), [V3.call(-10, 0), V3.call(10, 0), V3.call(0, 3)], [Vector2(-5, 3), Vector2(6, 2)]),
 		_layout(Vector2(14, 14), [], [Vector2(-5, -5), Vector2(5, 5)]),
-		_layout(Vector2(16, 14), [V3.call(-6, -3), V3.call(6, -3), V3.call(-8, 7), V3.call(8, 7), V3.call(0, 0, 1.2)], [Vector2(-3, -2), Vector2(9, 3)]),
+		_layout(Vector2(16, 14), [V3.call(-6, -3), V3.call(6, -3), V3.call(-8, 7), V3.call(8, 7), V3.call(0, 0, 0.72)], [Vector2(-3, -2), Vector2(9, 3)]),
 	]
 	st.boss_layout = _layout(Vector2(18, 16), [V3.call(-11, -9), V3.call(11, -9), V3.call(-11, 9), V3.call(11, 9)], [Vector2(-6, 2), Vector2(7, -3), Vector2(0, 8)])
 	st.shop_layout = _layout(Vector2(12, 10), [], [Vector2(0, 0)])
@@ -347,7 +348,7 @@ func _save(r: Resource, path: String) -> void:
 ## How the game feels in the hands (scripts/core/feel.gd). The F1 panel tunes these live; copy good values here.
 ## Movement, dash and camera of Hades II at our scale (80 of its units to a meter): walk 540, dash 450 in 0.2 s
 ## with 16 frames of safety and 0.74 s to come back, sprint 1.65 times the walk; a near-flat camera 30 degrees above
-## the floor (its circles are drawn half as tall as wide) showing about 28 m across.
+## the floor (its circles are drawn half as tall as wide) showing about 28 m across (ours a little farther: about 32 m).
 func _feel() -> void:
 	var f := Feel.new()
 	f.speed = 540.0 / U
@@ -361,7 +362,8 @@ func _feel() -> void:
 	f.move_scale_light = 0.0
 	f.move_scale_heavy = 0.0
 	f.move_scale_finisher = 0.0
-	f.cam_distance = 45.0
+	# 12% farther than the first test (45): more of the room on screen, the paladin still reads
+	f.cam_distance = 50.5
 	f.cam_pitch = 30.0
 	f.cam_fov = 20.0
 	f.cam_lead = 1.2
@@ -372,8 +374,9 @@ func _feel() -> void:
 	f.kick_scale = 1.0
 	f.impact_frame = 0.05
 	f.outline = 0.5
-	f.slash_intensity = 2.2
+	# effects a little quieter after the first test ("everything is too big"): dimmer cut, ink gone sooner
+	f.slash_intensity = 1.7
 	f.slash_sweep_time = 0.1
-	f.ink_opacity = 0.92
-	f.ink_life = 2.6
+	f.ink_opacity = 0.85
+	f.ink_life = 2.0
 	_save(f, Feel.PATH)
