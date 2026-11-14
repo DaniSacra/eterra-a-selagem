@@ -10,6 +10,10 @@ const MARK_TAGS: Array[StringName] = [&"mark", &"cross"]
 const EMBER_TAGS: Array[StringName] = [&"ember", &"chama"]
 const HOLY_TAGS: Array[StringName] = [&"skill", &"vigilia"]
 const SHATTER_SPLASH := 0.4
+## Stars drawn per swing (the rest of the crowd hit only flashes).
+const MAX_STARS := 8
+## Hit stop of the combo data, stretched: the freeze is what sells the weight of a blow.
+const HIT_STOP_SCALE := 1.35
 const SHATTER_RADIUS := 2.2
 const BURN_TIME := 3.0
 const FIRE := Color(1.0, 0.45, 0.12)
@@ -62,8 +66,12 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			horde.in_line(origin, dir, reach, node.width, _hits)
 			fx.slash(origin + dir * reach * 0.15, dir, reach * 0.85, 22.0, color, 0.18)
 	var struck := _hits.duplicate()
+	var stars := 0
 	for e: Enemy in struck:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir
+		if stars < MAX_STARS:
+			stars += 1
+			fx.impact(Vector3(e.pos.x, 1.0 + e.y, e.pos.y) - Vector3(away.x, 0, away.y) * 0.3, color, 1.4 if heavy else 1.0)
 		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, node.has_tag(&"finisher"))
 		if died:
 			continue
@@ -78,8 +86,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	if struck.is_empty():
 		Audio.play(&"swing")
 	else:
-		fx.hit_stop(node.hit_stop_ms + minf(struck.size(), 8) * 3.0)
+		fx.hit_stop(node.hit_stop_ms * HIT_STOP_SCALE + minf(struck.size(), 8) * 4.0)
 		fx.shake(node.shake * (1.0 + minf(struck.size(), 10) * 0.05))
+		fx.kick(dir, 1.6 if heavy else 0.9)
 		if node.has_tag(&"finisher"):
 			fx.kick_split(0.5)
 		Audio.play(&"hit_heavy" if heavy else &"hit")

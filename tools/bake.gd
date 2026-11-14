@@ -93,12 +93,14 @@ func _bake(spec: Dictionary) -> BakedModel:
 			var t := clip.length * i / (frames if loops else maxi(frames - 1, 1))
 			player.play(a[0])
 			player.seek(t, true)
+			Slender.apply(skeleton)
 			meshes.append(PoseBaker.snapshot(root, skeleton, extra))
 		out.anims[anim] = meshes
 		out.fps[anim] = frames / clip.length
 		out.loops[anim] = loops
 	player.play(spec.anims.idle[0])
 	player.seek(0.0, true)
+	Slender.apply(skeleton)
 	out.height = (out.anims.idle[0] as Mesh).get_aabb().end.y
 	root.free()
 	return out

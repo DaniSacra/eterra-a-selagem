@@ -8,7 +8,11 @@ signal hit_player(amount: float, from: Vector2)
 
 const CELL := 1.5
 const KNOCKBACK_DECAY := 7.0
-const FLASH_TIME := 0.12
+const FLASH_TIME := 0.14
+## A killing blow throws light bodies: base speed away, upward speed, gravity.
+const THROW := 7.0
+const THROW_UP := 6.0
+const GRAVITY := 24.0
 const BURN_TICK := 0.5
 const HURT_TIME := 0.22
 const DEATH_SHOW := 1.5
@@ -100,6 +104,15 @@ func step(dt: float) -> void:
 	_sweep()
 	for d in dying:
 		d.dead_t += dt
+		if d.push.length_squared() > 0.01:
+			d.pos = arena.resolve(d.pos + d.push * dt, d.def.radius)
+			d.push *= maxf(0.0, 1.0 - KNOCKBACK_DECAY * 0.6 * dt)
+		if d.vy != 0.0 or d.y > 0.0:
+			d.y += d.vy * dt
+			d.vy -= GRAVITY * dt
+			if d.y <= 0.0:
+				d.y = 0.0
+				d.vy = -d.vy * 0.3 if d.vy < -4.0 else 0.0
 
 
 func _timers(e: Enemy, dt: float) -> void:
@@ -346,6 +359,12 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		e.anim = &"death"
 		if from_dir != Vector2.ZERO:
 			e.dir = -from_dir
+			if not e.def.heavy and e.def.behavior != EnemyDef.Behavior.BOSS:
+				var power := THROW + knockback * 0.8 + (5.0 if big else 0.0)
+				e.push = from_dir * power * randf_range(0.8, 1.2)
+				e.vy = THROW_UP * randf_range(0.7, 1.2) + (3.0 if big else 0.0)
+				e.spin = randf_range(0.6, 1.0)
+		Audio.play(&"bone")
 		fx.burst(&"bone" if e.def.undead else &"dust", Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(from_dir.x, 0, from_dir.y))
 		killed.emit(e)
 		return true
@@ -402,11 +421,16 @@ func render() -> void:
 		elif e.state == Enemy.State.ATTACK and anim == &"attack":
 			var clip := renderer.model_of(e.def).duration(&"attack")
 			t = clip * IMPACT_SHARE + e.state_t * 1.4
-		var state := Color(clampf(e.flash_t / FLASH_TIME, 0.0, 1.0), 1.0 if e.frozen_t > 0.0 else 0.0, 1.0 if e.burn_t > 0.0 else 0.0, 0.0)
-		renderer.add(e.def, anim, t, Vector3(e.pos.x, e.y, e.pos.y), e.yaw(), state)
+		var k := clampf(e.flash_t / FLASH_TIME, 0.0, 1.0)
+		var state := Color(k, 1.0 if e.frozen_t > 0.0 else 0.0, 1.0 if e.burn_t > 0.0 else 0.0, 0.0)
+		# a blow flattens and widens the body for an instant, and lifts it a little
+		var squash := Vector3(1.0 + 0.25 * k, 1.0 - 0.2 * k, 1.0 + 0.25 * k)
+		renderer.add(e.def, anim, t, Vector3(e.pos.x, e.y + 0.18 * k, e.pos.y), e.yaw(), state, squash)
 	for e in dying:
 		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
-		renderer.add(e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, maxf(0.0, e.y - e.dead_t * 4.0), e.pos.y), e.yaw(), Color(maxf(0.0, 1.0 - e.dead_t * 8.0), 0, 0, dissolve))
+		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2
+		var tumble := -e.spin * sin(clampf(e.dead_t * 2.2, 0.0, 1.0) * PI) * 1.1
+		renderer.add(e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(), Color(maxf(0.0, 1.0 - e.dead_t * 8.0), 0, 0, dissolve), Vector3.ONE, tumble)
 	renderer.commit()
 
 

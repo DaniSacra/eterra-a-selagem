@@ -60,6 +60,7 @@ func _build_scene() -> void:
 		if n:
 			(n as Node3D).visible = false
 	var anim := PoseBaker.find_player(knight)
+	PoseBaker.find_skeleton(knight).add_child(Slender.new())
 	anim.get_animation(&"Idle").loop_mode = Animation.LOOP_LINEAR
 	anim.play(&"Idle")
 	var light := OmniLight3D.new()

@@ -10,6 +10,7 @@ const REPEAT_GAP_MS := 45
 const SOUNDS := {
 	&"swing": [[W.NOISE, 3000, 900, 0.09, 0.22, 5.0, 0.0]],
 	&"hit": [[W.NOISE, 2400, 500, 0.08, 0.4, 6.0, 0.0], [W.SQUARE, 220, 110, 0.07, 0.25, 6.0, 0.0]],
+	&"bone": [[W.NOISE, 3200, 1200, 0.05, 0.3, 8.0, 0.0]],
 	&"hit_heavy": [[W.NOISE, 1600, 200, 0.16, 0.5, 5.0, 0.0], [W.SINE, 140, 50, 0.2, 0.6, 4.0, 0.0]],
 	&"dodge": [[W.NOISE, 700, 2600, 0.13, 0.2, 3.0, 0.0]],
 	&"hurt": [[W.SQUARE, 300, 90, 0.22, 0.4, 4.0, 0.0], [W.NOISE, 900, 300, 0.12, 0.3, 5.0, 0.0]],
@@ -146,6 +147,16 @@ func _start_music(track: StringName) -> void:
 
 
 func _from_file(sound: StringName) -> AudioStream:
+	# <name>_0.ogg, <name>_1.ogg...: one of them at random each time, with a little pitch play
+	if ResourceLoader.exists(FILE_DIR + sound + "_0.ogg"):
+		var r := AudioStreamRandomizer.new()
+		r.random_pitch = 1.12
+		r.random_volume_offset_db = 2.0
+		var i := 0
+		while ResourceLoader.exists(FILE_DIR + "%s_%d.ogg" % [sound, i]):
+			r.add_stream(-1, load(FILE_DIR + "%s_%d.ogg" % [sound, i]))
+			i += 1
+		return r
 	for ext: String in [".ogg", ".wav"]:
 		if ResourceLoader.exists(FILE_DIR + sound + ext):
 			return load(FILE_DIR + sound + ext)

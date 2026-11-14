@@ -12,7 +12,7 @@ const LEVEL_HEAL := 0.15
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
 ## The camera looks down at the paladin from behind and above.
-const CAM_OFFSET := Vector3(0, 25.0, 15.5)
+const CAM_OFFSET := Vector3(0, 9.5, 14.5)
 const CAM_FOV := 40.0
 const CAM_LEAD := 2.2
 
@@ -369,6 +369,11 @@ func xp_ratio() -> float:
 
 func _open_choice() -> void:
 	mode = Mode.CHOICE
+	if Dev.has("autopick"):
+		# captures of the fight: take a gift at once, no screen
+		var picks := boons.offers(_rng)
+		_on_chosen(picks[0] if not picks.is_empty() else null)
+		return
 	var choice := BoonChoice.new()
 	_screen = choice
 	ui.add_child(choice)

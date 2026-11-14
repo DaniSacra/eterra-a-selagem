@@ -39,6 +39,9 @@ var memo := 0
 var invulnerable := false
 ## Seconds since death (the death animation and the dissolve play from it).
 var dead_t := 0.0
+## A killing blow throws the body: upward speed and how hard it tumbles (0 when it just falls).
+var vy := 0.0
+var spin := 0.0
 
 
 func helpless() -> bool:

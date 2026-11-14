@@ -3,7 +3,7 @@ shader_type canvas_item;
 uniform sampler2D screen : hint_screen_texture, filter_linear;
 uniform float split = 0.0;
 uniform float hurt = 0.0;
-uniform float vignette = 0.8;
+uniform float vignette = 0.55;
 
 void fragment() {
 	vec2 uv = SCREEN_UV;

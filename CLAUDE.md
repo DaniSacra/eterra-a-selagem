@@ -28,7 +28,8 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   Editar os números em `tools/make_data.gd` (fonte da verdade) e regerar; não editar os `.tres` à mão.
 - Achar erros de script sem rodar: `~/tools/godot/godot --headless --path . -s tools/check.gd`.
 - Partida sem tela com o robô (rápida, para ritmo e regressão): `tools/smoke.sh 1100` ou `tools/smoke.sh 300 --start=boss --boons=25`.
-  Outras opções: `--boons=N` (N dons sorteados), `--boss-hp=0.2`, `--stress=300`, `--title --screen=options|moves`, `--hold`.
+  Outras opções: `--boons=N` (N dons sorteados), `--boss-hp=0.2`, `--stress=300`, `--title --screen=options|moves`, `--hold`,
+  `--autopick` (pega o primeiro dom sem abrir a tela, bom para capturas).
 - Build: `~/tools/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/ASelagem.exe`
   (e `"Linux"` em `build/linux/ASelagem.x86_64`). Web para ver no navegador: `tools/web.sh` e abrir `http://localhost:8070`.
   Android fica para depois (sem preset ainda).
@@ -38,6 +39,12 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   (personagens, nomes, UI e visual são de Eterra). A versão 2D em pixel art está na tag `v1-pixel-2d`.
 - Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens, masmorra, armas).
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
+- Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
+  menor, pernas e tronco mais longos), ao vivo no paladino e no assador para a multidão.
+- Câmera baixa, meio de lado (`CAM_OFFSET` e `CAM_FOV` em `game.gd`), como nos vídeos de referência.
+- Impacto de cada golpe: corte grande de faixas com rastro de fumaça (`slash.gdshader`, `smoke_arc.gdshader`),
+  estrela no acerto (`impact.gdshader`, `Fx.impact`), inimigo pisca branco e achata, corpo arremessado ao morrer
+  (`Horde.THROW`), tranco de câmera (`Fx.kick`) e hit stop (`Combat.HIT_STOP_SCALE`).
 - Efeitos: `scripts/game/fx.gd` (partículas, cortes, anéis, feixes, números, hit stop, tremor) e shaders em `assets/shaders/`.
   Brilho pelo glow do `WorldEnvironment` (cores acima de 1 brilham).
 
@@ -59,7 +66,8 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
 - Entrada só por ações (`Controls`): `light_attack`, `heavy_attack`, `dodge`, mira (`Controls.aim`). Nunca ler tecla direto.
   Toque e robô usam `Controls.VirtualPad`. Toques durante o hit stop ficam guardados (`Controls.flush`).
 - Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`).
-- Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita.
+- Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita;
+  `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Golpes, ossos, escudo e atordoamento usam o Kenney Impact Sounds (CC0).
   Música desligada por enquanto.
 
 ## Onde mexer

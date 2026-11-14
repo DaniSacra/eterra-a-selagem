@@ -68,7 +68,8 @@ func begin() -> void:
 
 ## One character: kind, animation, seconds into it, where it stands, which way it faces (radians around Y),
 ## and its state (r flash, g frost, b burn, a dissolve).
-func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color) -> void:
+## squash: scale on top of the def's size (a blow flattens and widens). tilt: tumbling backwards, in radians.
+func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0) -> void:
 	var m := model(d.model)
 	if m.frame_count(anim) == 0:
 		anim = &"walk" if anim != &"idle" and m.frame_count(&"walk") > 0 else &"idle"
@@ -76,7 +77,10 @@ func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, stat
 	if b.count == 0:
 		_used.append(b)
 	var s := d.size
-	_put(b, Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3(s, s, s)), pos), state)
+	var basis := Basis(Vector3.UP, yaw)
+	if tilt != 0.0:
+		basis = basis * Basis(Vector3.RIGHT, tilt)
+	_put(b, Transform3D(basis.scaled(squash * s), pos), state)
 	if state.a < 0.5:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
 		_put(_shadow, Transform3D(Basis().scaled(Vector3(r, 1.0, r)), Vector3(pos.x, 0.03, pos.z)), Color())

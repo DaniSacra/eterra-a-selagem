@@ -76,6 +76,7 @@ func _ready() -> void:
 	_overlay.shader = FLASH
 	_prepare(_model)
 	_anim = PoseBaker.find_player(_model)
+	PoseBaker.find_skeleton(_model).add_child(Slender.new())
 	_anim.playback_default_blend_time = 0.08
 	for a in LOOPS:
 		_anim.get_animation(a).loop_mode = Animation.LOOP_LINEAR
@@ -83,7 +84,7 @@ func _ready() -> void:
 	_light = OmniLight3D.new()
 	_light.position = Vector3(0, 3.2, 0.6)
 	_light.light_color = Color(1.0, 0.78, 0.5)
-	_light.light_energy = 2.4
+	_light.light_energy = 1.7
 	_light.omni_range = 12.0
 	_light.omni_attenuation = 1.2
 	_light.light_cull_mask = ~Arena.CROWD_LAYER

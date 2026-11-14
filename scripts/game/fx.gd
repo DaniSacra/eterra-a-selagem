@@ -6,6 +6,12 @@ extends Node3D
 const SLASH := preload("res://assets/shaders/slash.gdshader")
 const RING := preload("res://assets/shaders/ring.gdshader")
 const BEAM := preload("res://assets/shaders/beam.gdshader")
+const SMOKE := preload("res://assets/shaders/smoke_arc.gdshader")
+const IMPACT := preload("res://assets/shaders/impact.gdshader")
+## Sword arcs are drawn bigger than what they hit, like the big sweeps of the genre.
+const SLASH_LOOK := 1.75
+const IMPACT_POOL := 40
+const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
 const RING_POOL := 16
@@ -36,6 +42,9 @@ var _shake := 0.0
 var _pools: Dictionary = {}
 var _next: Dictionary = {}
 var _slashes: Array[Dictionary] = []
+var _smokes: Array[Dictionary] = []
+var _impacts: Array[Dictionary] = []
+var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
 var _numbers: Array[Dictionary] = []
@@ -118,6 +127,13 @@ func setup(cam: Camera3D, over: Control) -> void:
 		_next[kind] = 0
 	for i in SLASH_POOL:
 		_slashes.append(_effect_node(SLASH, null))
+		_smokes.append(_effect_node(SMOKE, null))
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	for i in IMPACT_POOL:
+		var e := _effect_node(IMPACT, q)
+		(e.node as MeshInstance3D).sorting_offset = 10.0
+		_impacts.append(e)
 	for i in RING_POOL:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2(2, 2)
@@ -170,16 +186,38 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 
 ## A sword arc on the floor plane at waist height: from origin towards dir, reach meters, width degrees.
 func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9) -> void:
-	var s: Dictionary = _take(_slashes)
-	var mi: MeshInstance3D = s.node
-	mi.mesh = _arc(reach, width_deg)
-	mi.position = Vector3(origin.x, height, origin.y)
-	mi.rotation = Vector3(_rng.randf_range(-0.18, 0.18), atan2(dir.x, dir.y), 0.0)
-	var mat: ShaderMaterial = s.mat
+	var tilt := _rng.randf_range(-0.22, 0.22)
+	var seed := _rng.randf() * 100.0
+	for k in 2:
+		var s: Dictionary = _take(_slashes if k == 0 else _smokes)
+		var mi: MeshInstance3D = s.node
+		mi.mesh = _arc(reach * SLASH_LOOK * (1.0 if k == 0 else 1.08), width_deg)
+		mi.position = Vector3(origin.x, height - k * 0.05, origin.y)
+		mi.rotation = Vector3(tilt, atan2(dir.x, dir.y), 0.0)
+		var mat: ShaderMaterial = s.mat
+		if k == 0:
+			mat.set_shader_parameter(&"color", color)
+		mat.set_shader_parameter(&"flip", flip)
+		mat.set_shader_parameter(&"seed", seed)
+		mat.set_shader_parameter(&"t", 0.0)
+		s.time = time * (1.7 if k == 0 else 2.6)
+
+
+## The star of a blow landing on someone.
+func impact(pos: Vector3, color: Color, size: float = 1.0) -> void:
+	var e: Dictionary = _take(_impacts)
+	(e.node as Node3D).position = pos
+	var mat: ShaderMaterial = e.mat
 	mat.set_shader_parameter(&"color", color)
-	mat.set_shader_parameter(&"flip", flip)
-	mat.set_shader_parameter(&"t", 0.0)
-	s.time = time
+	mat.set_shader_parameter(&"seed", _rng.randf() * 100.0)
+	mat.set_shader_parameter(&"size", 2.3 * size)
+	mat.set_shader_parameter(&"life", 0.0)
+	e.time = 0.16 + 0.04 * size
+
+
+## The camera jolts along a blow (dir on the floor plane).
+func kick(dir: Vector2, amount: float) -> void:
+	_kick += Vector3(dir.x, 0, dir.y) * KICK_METERS * amount * shake_scale
 
 
 ## A flat shockwave growing to radius.
@@ -230,17 +268,19 @@ func tick(delta: float) -> Vector3:
 	stop_left = maxf(0.0, stop_left - delta)
 	_shake = maxf(0.0, _shake - delta * (0.6 + _shake * 6.0))
 	split = maxf(0.0, split - delta * 3.0)
+	_kick *= maxf(0.0, 1.0 - delta * 14.0)
 	if _shake <= 0.0:
-		return Vector3.ZERO
-	return Vector3(_rng.randf_range(-1, 1), _rng.randf_range(-0.5, 0.5), _rng.randf_range(-1, 1)) * _shake
+		return _kick
+	return _kick + Vector3(_rng.randf_range(-1, 1), _rng.randf_range(-0.5, 0.5), _rng.randf_range(-1, 1)) * _shake
 
 
 ## Ages the pooled effects (also during hit stop, so the impact frame keeps glowing).
 func animate(delta: float) -> void:
-	for s in _slashes:
-		if s.life < 1.0 or (s.node as Node3D).visible:
-			_age(s, delta)
-			(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)
+	for list: Array[Dictionary] in [_slashes, _smokes, _impacts]:
+		for s in list:
+			if (s.node as Node3D).visible:
+				_age(s, delta)
+				(s.mat as ShaderMaterial).set_shader_parameter(&"life" if list == _impacts else &"t", s.life)
 	for r in _rings:
 		if (r.node as Node3D).visible:
 			_age(r, delta)
@@ -324,7 +364,7 @@ func _arc(reach: float, width_deg: float) -> ArrayMesh:
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var seg := 24
 	var half := deg_to_rad(minf(width_deg, 359.0)) * 0.5
-	var inner := reach * 0.35
+	var inner := reach * 0.22
 	for i in seg:
 		var a0 := -half + 2.0 * half * i / seg
 		var a1 := -half + 2.0 * half * (i + 1) / seg
