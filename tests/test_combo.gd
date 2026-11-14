@@ -258,3 +258,27 @@ func test_a_move_can_set_its_own_move_scale() -> void:
 	assert_eq(n.move_scale_with(feel), feel.move_scale_heavy)
 	n.move_scale = 0.9
 	assert_eq(n.move_scale_with(feel), 0.9)
+
+
+func test_the_drawn_arc_is_exactly_what_the_blow_reaches() -> void:
+	for node in tree.all_nodes():
+		for bonus: float in [0.0, 0.25]:
+			var s := Combat.swing_shape(node, bonus)
+			assert_almost_eq(float(s.draw_reach), float(s.hit_reach), 0.0001, "%s reach" % node.id)
+			assert_almost_eq(float(s.hit_reach), node.reach * (1.0 + bonus), 0.0001, "%s reach bonus" % node.id)
+			if node.shape == ComboNode.Shape.ARC:
+				assert_eq(float(s.draw_width), float(s.hit_width), "%s width" % node.id)
+			if node.shape == ComboNode.Shape.CIRCLE:
+				assert_eq(float(s.draw_width), 360.0, "%s goes all around" % node.id)
+
+
+func test_finisher_arcs_sweep_up_to_270_degrees() -> void:
+	var wide := 0
+	for node in tree.all_nodes():
+		if node.shape != ComboNode.Shape.ARC:
+			continue
+		assert_lte(node.width, 270.0, String(node.id))
+		if node.has_tag(&"finisher"):
+			assert_eq(node.width, 270.0, "%s is a finisher" % node.id)
+			wide += 1
+	assert_gt(wide, 0)

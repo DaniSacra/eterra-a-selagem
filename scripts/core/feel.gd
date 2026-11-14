@@ -23,10 +23,10 @@ const OVERRIDE := "user://feel_override.tres"
 
 @export_group("Camera")
 ## Meters from the point the camera looks at.
-@export_range(8.0, 70.0, 0.5) var cam_distance := 17.33
+@export_range(8.0, 70.0, 0.5) var cam_distance := 44.0
 ## Degrees above the floor.
-@export_range(15.0, 85.0, 0.5) var cam_pitch := 33.2
-@export_range(15.0, 70.0, 0.5) var cam_fov := 40.0
+@export_range(15.0, 85.0, 0.5) var cam_pitch := 50.0
+@export_range(15.0, 70.0, 0.5) var cam_fov := 32.0
 ## Meters the camera leads towards where the paladin faces.
 @export_range(0.0, 6.0, 0.1) var cam_lead := 2.2
 ## How fast the camera catches up (higher is stiffer).
@@ -41,7 +41,7 @@ const OVERRIDE := "user://feel_override.tres"
 
 @export_group("Look")
 ## Gold edge and see-through silhouette on the paladin (0 = off).
-@export_range(0.0, 2.0, 0.05) var outline := 0.0
+@export_range(0.0, 2.0, 0.05) var outline := 1.0
 
 @export_group("Sword arc")
 ## Bright streaks (slash.gdshader).

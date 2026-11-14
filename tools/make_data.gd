@@ -3,6 +3,12 @@ extends SceneTree
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [feel]
 
+## Elites wear a red edge (the rim of crowd.gdshader), so they read in the crowd.
+const ELITE_RIM := Color(1.0, 0.12, 0.08)
+const ELITE_RIM_POWER := 2.6
+## Finishers that swing an arc sweep this wide.
+const FINISHER_ARC := 270.0
+
 const L := ComboNode.In.LIGHT
 const H := ComboNode.In.HEAVY
 const C := ComboNode.In.CHARGE
@@ -51,17 +57,17 @@ func _combos() -> void:
 	var cut3 := _move(&"cut3", L, &"1H_Melee_Attack_Chop", [&"light"],
 		{"damage": 13.0, "reach": 3.3, "width": 160.0, "knockback": 8.0, "lunge": 0.8, "windup": 0.1, "recovery": 0.18, "hit_stop_ms": 45.0, "shake": 0.7}, [spin, thrust])
 	var cross := _move(&"cross", H, &"2H_Melee_Attack_Chop", [&"heavy", &"cross", &"finisher"],
-		{"damage": 18.0, "reach": 3.4, "width": 170.0, "knockback": 8.0, "windup": 0.16, "recovery": 0.24, "hit_stop_ms": 60.0, "shake": 1.3,
+		{"damage": 18.0, "reach": 3.4, "width": FINISHER_ARC, "knockback": 8.0, "windup": 0.16, "recovery": 0.24, "hit_stop_ms": 60.0, "shake": 1.3,
 		"effect": ComboNode.Effect.GROUND_MARK, "effect_power": 9.0, "effect_time": 4.0, "effect_radius": 2.8}, [], &"move_cross")
 	var cut2 := _move(&"cut2", L, &"1H_Melee_Attack_Slice_Horizontal", [&"light"],
 		{"damage": 10.0, "reach": 3.0, "width": 150.0, "knockback": 6.0, "lunge": 0.5, "windup": 0.08, "recovery": 0.16, "hit_stop_ms": 40.0, "shake": 0.5}, [cut3, cross])
 	var launch := _move(&"launch", H, &"2H_Melee_Attack_Slice", [&"heavy", &"launch", &"finisher"],
-		{"damage": 14.0, "reach": 3.2, "width": 150.0, "knockback": 1.0, "windup": 0.12, "recovery": 0.2, "hit_stop_ms": 60.0, "shake": 1.3,
+		{"damage": 14.0, "reach": 3.2, "width": FINISHER_ARC, "knockback": 1.0, "windup": 0.12, "recovery": 0.2, "hit_stop_ms": 60.0, "shake": 1.3,
 		"effect": ComboNode.Effect.LAUNCH, "effect_time": 1.0}, [], &"move_launch")
 	var cut1 := _move(&"cut1", L, &"1H_Melee_Attack_Slice_Diagonal", [&"light"],
 		{"damage": 10.0, "reach": 3.0, "width": 150.0, "knockback": 6.0, "lunge": 0.5, "windup": 0.09, "recovery": 0.16, "hit_stop_ms": 40.0, "shake": 0.5}, [cut2, launch])
 	var wave := _move(&"wave", L, &"2H_Melee_Attack_Stab", [&"light", &"wave", &"finisher"],
-		{"damage": 14.0, "reach": 3.4, "width": 140.0, "knockback": 8.0, "windup": 0.12, "recovery": 0.24, "hit_stop_ms": 55.0, "shake": 1.3,
+		{"damage": 14.0, "reach": 3.4, "width": FINISHER_ARC, "knockback": 8.0, "windup": 0.12, "recovery": 0.24, "hit_stop_ms": 55.0, "shake": 1.3,
 		"effect": ComboNode.Effect.WAVE, "effect_power": 24.0, "effect_radius": 12.0}, [], &"move_wave")
 	var heavy2 := _move(&"heavy2", H, &"2H_Melee_Attack_Chop", [&"heavy"],
 		{"damage": 24.0, "reach": 3.8, "width": 180.0, "knockback": 16.0, "lunge": 0.8, "windup": 0.22, "recovery": 0.24, "chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 1.4}, [wave])
@@ -104,10 +110,10 @@ func _enemies() -> void:
 	_enemy({"id": &"guard", "model": &"warrior", "size": 1.15, "hp": 80.0, "speed": 1.7, "damage": 10.0, "radius": 0.6, "xp": 4, "heavy": true})
 	_enemy({"id": &"knight", "model": &"warrior", "size": 1.8, "behavior": B.KNIGHT, "hp": 1100.0, "speed": 2.4, "damage": 12.0, "radius": 1.0, "xp": 60,
 		"heavy": true, "elite": true, "attack_damage": 22.0, "attack_range": 12.0, "attack_cooldown": 4.5, "attack_windup": 0.9,
-		"rim_color": Color(1.0, 0.35, 0.15), "rim": 1.6})
+		"rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
 	_enemy({"id": &"priest", "model": &"mage", "size": 1.8, "behavior": B.PRIEST, "hp": 900.0, "speed": 2.0, "damage": 10.0, "radius": 0.9, "xp": 60,
 		"heavy": true, "elite": true, "attack_damage": 18.0, "attack_range": 10.0, "attack_cooldown": 3.8, "attack_windup": 1.0,
-		"rim_color": Color(0.75, 0.35, 1.0), "rim": 1.6})
+		"rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
 	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.5, "behavior": B.BOSS, "hp": 7000.0, "speed": 3.0, "damage": 16.0, "radius": 1.4, "xp": 0,
 		"heavy": true, "attack_damage": 20.0, "tint": Color(0.62, 0.52, 0.82), "rim_color": Color(0.7, 0.3, 1.0), "rim": 2.0})
 
@@ -225,15 +231,15 @@ func _feel() -> void:
 	f.move_scale_light = 0.6
 	f.move_scale_heavy = 0.35
 	f.move_scale_finisher = 0.15
-	f.cam_distance = 17.33
-	f.cam_pitch = 33.2
-	f.cam_fov = 40.0
+	f.cam_distance = 44.0
+	f.cam_pitch = 50.0
+	f.cam_fov = 32.0
 	f.cam_lead = 2.2
 	f.cam_smooth = 6.0
 	f.hit_stop_scale = 1.35
 	f.shake_scale = 1.0
 	f.kick_scale = 1.0
-	f.outline = 0.0
+	f.outline = 1.0
 	f.slash_intensity = 2.2
 	f.slash_sweep_time = 0.1
 	f.ink_opacity = 0.85

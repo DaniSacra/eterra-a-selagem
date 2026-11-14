@@ -10,13 +10,20 @@ const MARK_TAGS: Array[StringName] = [&"mark", &"cross"]
 const EMBER_TAGS: Array[StringName] = [&"ember", &"chama"]
 const HOLY_TAGS: Array[StringName] = [&"skill", &"vigilia"]
 const SHATTER_SPLASH := 0.4
+## Degrees of the narrow arc drawn for a thrust.
+const LINE_ARC := 22.0
 ## Stars drawn per swing (the rest of the crowd hit only flashes).
 const MAX_STARS := 8
 const SHATTER_RADIUS := 2.2
 const BURN_TIME := 3.0
 const FIRE := Color(1.0, 0.45, 0.12)
 const FROST := Color(0.5, 0.82, 1.0)
+## Elun's gold: only blows that come from gifts.
 const LIGHT := Color(1.0, 0.82, 0.38)
+## The paladin's own sword: white with a touch of lavender.
+const STEEL := Color(0.85, 0.82, 1.0)
+## Tags that mark a blow as coming from a gift (skills carry "skill" and their family's tag).
+const GIFT_TAGS: Array[StringName] = [&"skill", &"luz", &"vigilia", &"duo"]
 
 var horde: Horde
 var fx: Fx
@@ -49,20 +56,19 @@ func drop_combo() -> void:
 func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
 	var tags := node.tags
-	var reach := node.reach * (1.0 + boons.stat(&"reach_pct", tags))
+	var shape := swing_shape(node, boons.stat(&"reach_pct", tags))
+	var reach: float = shape.hit_reach
 	var color := color_of(tags)
 	var heavy := node.has_tag(&"heavy")
 	match node.shape:
 		ComboNode.Shape.ARC:
-			horde.in_arc(origin, dir, reach, node.width, _hits)
-			fx.slash(origin, dir, reach, node.width, color, 0.2 if heavy else 0.16, _swing % 2 == 0)
+			horde.in_arc(origin, dir, reach, shape.hit_width, _hits)
 		ComboNode.Shape.CIRCLE:
 			horde.in_circle(origin, reach, _hits)
-			fx.slash(origin, dir, reach, 359.0, color, 0.24, _swing % 2 == 0)
-			fx.ring(origin, reach * 1.1, color, 0.35)
+			fx.ring(origin, reach, color, 0.35)
 		ComboNode.Shape.LINE:
 			horde.in_line(origin, dir, reach, node.width, _hits)
-			fx.slash(origin + dir * reach * 0.15, dir, reach * 0.85, 22.0, color, 0.18)
+	fx.slash(origin, dir, shape.draw_reach, shape.draw_width, color, 0.2 if heavy else 0.16, _swing % 2 == 0)
 	var struck := _hits.duplicate()
 	var stars := 0
 	for e: Enemy in struck:
@@ -203,10 +209,27 @@ func _steam(e: Enemy) -> void:
 		fx.burst(&"dust", Vector3(e.pos.x, 0.8, e.pos.y))
 
 
-## The colour of a blow: the family of the gift that changes it, gold when none does.
+## The colour of a blow: the family of the gift that changes it; Elun's gold for the other gifts; the white of
+## the sword when no gift touches it.
 func color_of(tags: Array[StringName]) -> Color:
 	if tags.has(&"chama") or tags.has(&"ember") or boons.stat(&"burn_dps", tags) > 0.0:
 		return FIRE
 	if tags.has(&"geada") or boons.stat(&"freeze_time", tags) > 0.0:
 		return FROST
-	return LIGHT
+	for t in GIFT_TAGS:
+		if tags.has(t):
+			return LIGHT
+	return STEEL
+
+
+## Where a move hits and what is drawn for it. The arc on screen covers exactly what the blow reaches
+## (tests/test_combo.gd checks every move of the tree). reach_pct: the gifts' bonus to reach.
+static func swing_shape(node: ComboNode, reach_pct: float) -> Dictionary:
+	var reach := node.reach * (1.0 + reach_pct)
+	match node.shape:
+		ComboNode.Shape.CIRCLE:
+			return {"hit_reach": reach, "hit_width": 360.0, "draw_reach": reach, "draw_width": 360.0}
+		ComboNode.Shape.LINE:
+			# a thrust: a narrow arc whose tip is the end of the line (width is meters across, not degrees)
+			return {"hit_reach": reach, "hit_width": node.width, "draw_reach": reach, "draw_width": LINE_ARC}
+	return {"hit_reach": reach, "hit_width": node.width, "draw_reach": reach, "draw_width": node.width}

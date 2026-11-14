@@ -23,6 +23,7 @@ var door_pos := Vector2(0, -HALF + 2.0)
 var _meshes: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
 var _door_light: OmniLight3D
+var _torches: PackedVector2Array = []
 
 
 func build() -> void:
@@ -35,6 +36,7 @@ func build() -> void:
 			var a := _rng.randf() * TAU
 			_place("candle_triple" if k == 0 else "candle_lit", Vector3(p.x + cos(a) * 1.4, 0, p.y + sin(a) * 1.4), _rng.randf() * TAU)
 	_decorate()
+	_floor_detail()
 
 
 ## Keeps a circle of this radius inside the hall and out of the pillars.
@@ -115,11 +117,12 @@ func _walls() -> void:
 
 func _torch(pos: Vector3, yaw: float) -> void:
 	_place("torch_mounted", pos, yaw)
+	_torches.append(Vector2(pos.x + sin(yaw) * 2.0, pos.z + cos(yaw) * 2.0))
 	var l := OmniLight3D.new()
 	l.position = pos + Vector3(sin(yaw), 0.5, cos(yaw)) * 0.6
 	l.light_color = Color(1.0, 0.6, 0.3)
-	l.light_energy = 2.2
-	l.omni_range = 8.0
+	l.light_energy = 2.4
+	l.omni_range = 9.0
 	l.omni_attenuation = 1.4
 	l.light_cull_mask = ~CROWD_LAYER
 	add_child(l)
@@ -156,6 +159,25 @@ func _decorate() -> void:
 			var side := -1.0 if i % 2 == 0 else 1.0
 			_place(banner, Vector3(side * (HALF - 0.1), 0, _rng.randf_range(-28, 28)), -side * PI * 0.5)
 	_place("stairs_wide", Vector3(door_pos.x, 0, -HALF + 2.0), 0.0)
+
+
+## Stains, cracks, warm pools under the torches and haze at the edges, multiplied over the tiles
+## (assets/shaders/floor_detail.gdshader), so the even hexagons stop reading as a pattern.
+func _floor_detail() -> void:
+	var mi := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(HALF * 2.0, HALF * 2.0)
+	mi.mesh = plane
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://assets/shaders/floor_detail.gdshader")
+	mat.set_shader_parameter(&"half_size", HALF)
+	var list := _torches.slice(0, 32)
+	mat.set_shader_parameter(&"torches", list)
+	mat.set_shader_parameter(&"torch_count", list.size())
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position.y = 0.06  # just above the tiles (their top is at 0.05)
+	add_child(mi)
 
 
 ## A mesh of the dungeon kit at a spot, turned around Y.

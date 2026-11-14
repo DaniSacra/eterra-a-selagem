@@ -195,7 +195,7 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	var s: Dictionary = _take(_slashes)
 	var ink: Dictionary = _take(_inks)
 	_place_arc(s, _arc(reach, width_deg, 0.5), origin, dir, height, tilt)
-	_place_arc(ink, _arc(reach * 1.08, width_deg, 0.42), origin, dir, height - 0.05, tilt)
+	_place_arc(ink, _arc(reach, width_deg, 0.42), origin, dir, height - 0.05, tilt)
 	s.time = time
 	var feel := Feel.live()
 	ink.time = time * feel.ink_life

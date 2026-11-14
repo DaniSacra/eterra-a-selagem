@@ -35,6 +35,8 @@ void fragment() {
 	ALBEDO = c;
 	float near = 1.0 - clamp(distance(world_pos.xz, hero_pos.xz) / hero_range, 0.0, 1.0);
 	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
+	// a crisp edge for elites (rim_power > 0): sharper than the soft rim, so it reads as an outline
+	float edge = smoothstep(0.35, 0.6, pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 1.5));
 	EMISSION = vec3(2.2) * state.r + vec3(0.35, 0.7, 1.4) * state.g * 0.5 + vec3(2.0, 0.6, 0.1) * state.b * (0.4 + 0.4 * rim)
-		+ rim_color * rim * rim_power + vec3(1.6, 0.5, 0.1) * state.a * 2.0 + c * hero_color * near * near * 0.55;
+		+ rim_color * (rim * 0.5 + edge) * rim_power + vec3(1.6, 0.5, 0.1) * state.a * 2.0 + c * hero_color * near * near * 0.55;
 }

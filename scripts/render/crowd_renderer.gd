@@ -3,6 +3,8 @@ extends Node3D
 ## Draws hundreds of characters from baked poses: one MultiMesh per (kind of enemy, animation, frame), plus one
 ## MultiMesh of soft round shadows. Each frame: begin(), add() once per character, commit().
 
+## Multiplies the colour of the common crowd (elites and the boss keep theirs).
+const CROWD_SHADE := Color(0.55, 0.62, 0.55)
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
 
@@ -51,8 +53,8 @@ func register(d: EnemyDef) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
 	mat.set_shader_parameter(&"albedo", model(d.model).albedo)
-	# --look=warm (test light): the crowd a step darker and greener, so the hero and the effects stand out
-	mat.set_shader_parameter(&"tint", d.tint * (Color(0.55, 0.62, 0.55) if Dev.arg("look") == "warm" and not d.elite else Color.WHITE))
+	# the common crowd a step darker and greener, so the hero, the elites and the effects stand out
+	mat.set_shader_parameter(&"tint", d.tint * (CROWD_SHADE if not d.elite and d.behavior != EnemyDef.Behavior.BOSS else Color.WHITE))
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
 	mat.set_shader_parameter(&"rim_power", d.rim)
 	_materials[d.id] = mat

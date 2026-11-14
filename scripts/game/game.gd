@@ -132,8 +132,9 @@ func _build_world() -> void:
 	e.background_mode = Environment.BG_COLOR
 	e.background_color = Color(0.02, 0.015, 0.03)
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.28, 0.34, 0.5)
-	e.ambient_light_energy = 0.22
+	# warm mid-tone light: dark ink strokes and bright effects both read on the floor
+	e.ambient_light_color = Color(0.62, 0.5, 0.42)
+	e.ambient_light_energy = 0.6
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	e.tonemap_exposure = 1.05
 	e.glow_enabled = true
@@ -145,27 +146,19 @@ func _build_world() -> void:
 	for i in 7:
 		e.set_glow_level(i, 1.0 if i in [1, 2, 3, 4] else 0.0)
 	e.fog_enabled = true
-	e.fog_light_color = Color(0.05, 0.04, 0.09)
-	e.fog_density = 0.018
+	e.fog_light_color = Color(0.09, 0.06, 0.05)
+	e.fog_density = 0.006
 	e.adjustment_enabled = true
 	e.adjustment_contrast = 1.15
-	e.adjustment_saturation = 1.2
-	if Dev.arg("look") == "warm":
-		# a test light: a warm mid-tone floor and quieter colours, so dark ink strokes and bright effects both read
-		e.ambient_light_color = Color(0.62, 0.5, 0.42)
-		e.ambient_light_energy = 0.6
-		e.adjustment_saturation = 0.85
+	e.adjustment_saturation = 0.85
 	env.environment = e
 	add_child(env)
 	var moon := DirectionalLight3D.new()
 	moon.rotation_degrees = Vector3(-58, -32, 0)
-	moon.light_color = Color(0.6, 0.66, 0.95)
-	moon.light_energy = 0.35
-	if Dev.arg("look") == "warm":
-		moon.light_color = Color(1.0, 0.86, 0.72)
-		moon.light_energy = 0.75
+	moon.light_color = Color(1.0, 0.86, 0.72)
+	moon.light_energy = 0.6
 	moon.shadow_enabled = true
-	moon.directional_shadow_max_distance = 45.0
+	moon.directional_shadow_max_distance = 80.0
 	add_child(moon)
 
 	arena = Arena.new()
