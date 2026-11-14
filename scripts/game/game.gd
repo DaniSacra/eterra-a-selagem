@@ -52,7 +52,7 @@ var _found: Array[Enemy] = []
 
 
 func _ready() -> void:
-	_rng.randomize()
+	Dev.seed_rng(_rng, 1)
 	fast = Dev.num("fast", 1.0)
 	_build_world()
 	_build_ui()

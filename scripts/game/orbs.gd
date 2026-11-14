@@ -22,7 +22,7 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	_rng.randomize()
+	Dev.seed_rng(_rng, 2)
 	var gem := SphereMesh.new()
 	gem.radius = 0.16
 	gem.height = 0.42

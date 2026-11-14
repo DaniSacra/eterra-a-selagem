@@ -40,7 +40,7 @@ var _rng := RandomNumberGenerator.new()
 
 func setup(g: Game, def: EnemyDef) -> void:
 	game = g
-	_rng.randomize()
+	Dev.seed_rng(_rng, 3)
 	center = g.arena.door_pos + Vector2(0, 14)
 	e = g.horde.spawn(def, g.arena.door_pos + Vector2(0, 1.5), false)
 	e.invulnerable = true

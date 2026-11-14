@@ -96,6 +96,7 @@ static func fade_ramp(c: Color) -> Gradient:
 
 
 func setup(cam: Camera3D, over: Control) -> void:
+	Dev.seed_rng(_rng, 6)
 	camera = cam
 	overlay = over
 	_font = load("res://assets/fonts/AlegreyaSans-Bold.ttf")

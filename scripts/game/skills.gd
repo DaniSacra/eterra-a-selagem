@@ -30,7 +30,7 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	_rng.randomize()
+	Dev.seed_rng(_rng, 4)
 
 
 ## Seconds until a gift's skill fires again, and its full cooldown (for the HUD).

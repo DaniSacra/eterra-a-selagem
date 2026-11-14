@@ -31,3 +31,11 @@ static func arg(key: String, fallback: String = "") -> String:
 
 static func num(key: String, fallback: float) -> float:
 	return float(arg(key)) if has(key) else fallback
+
+
+## Seeds a generator from --seed (plus a salt per system) so two runs play the same; random otherwise.
+static func seed_rng(rng: RandomNumberGenerator, salt: int) -> void:
+	if has("seed"):
+		rng.seed = int(num("seed", 0)) * 1000 + salt
+	else:
+		rng.randomize()

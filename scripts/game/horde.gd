@@ -41,7 +41,7 @@ var _rng := RandomNumberGenerator.new()
 
 
 func _ready() -> void:
-	_rng.randomize()
+	Dev.seed_rng(_rng, 5)
 	renderer = CrowdRenderer.new()
 	renderer.layers = Arena.CROWD_LAYER
 	add_child(renderer)
@@ -361,9 +361,9 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			e.dir = -from_dir
 			if not e.def.heavy and e.def.behavior != EnemyDef.Behavior.BOSS:
 				var power := THROW + knockback * 0.8 + (5.0 if big else 0.0)
-				e.push = from_dir * power * randf_range(0.8, 1.2)
-				e.vy = THROW_UP * randf_range(0.7, 1.2) + (3.0 if big else 0.0)
-				e.spin = randf_range(0.6, 1.0)
+				e.push = from_dir * power * _rng.randf_range(0.8, 1.2)
+				e.vy = THROW_UP * _rng.randf_range(0.7, 1.2) + (3.0 if big else 0.0)
+				e.spin = _rng.randf_range(0.6, 1.0)
 		Audio.play(&"bone")
 		fx.burst(&"bone" if e.def.undead else &"dust", Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(from_dir.x, 0, from_dir.y))
 		killed.emit(e)
