@@ -2,12 +2,14 @@ extends Node
 ## Autoload "Controls": the game never reads a key directly, only these actions.
 ## Keyboard and mouse, gamepad and (later, on phones) on-screen buttons all feed the same actions.
 
-const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"pause"]
+const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"pause", &"feel_panel"]
 ## Actions the player may rebind in Options.
 const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge"]
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],
 	&"dodge": [KEY_SPACE], &"pause": [KEY_ESCAPE, KEY_P],
+	# debug builds only: the live tuning panel (scripts/ui/feel_panel.gd)
+	&"feel_panel": [KEY_F1],
 }
 const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOUSE_BUTTON_RIGHT}
 const DEFAULT_PAD := {&"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"pause": JOY_BUTTON_START}

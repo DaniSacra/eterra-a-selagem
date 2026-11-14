@@ -11,10 +11,6 @@ const FOUNTAIN_HEAL := 0.4
 const LEVEL_HEAL := 0.15
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
-## The camera looks down at the paladin from behind and above.
-const CAM_OFFSET := Vector3(0, 9.5, 14.5)
-const CAM_FOV := 40.0
-const CAM_LEAD := 2.2
 
 var arena: Arena
 var ground: Ground
@@ -30,6 +26,7 @@ var boss: Boss
 var fx: Fx
 var hud: Hud
 var ui: CanvasLayer
+var _feel_panel: FeelPanel
 var camera: Camera3D
 var bot: Bot
 var mode := Mode.PLAY
@@ -117,6 +114,8 @@ func _ready() -> void:
 		var kinds: Array[StringName] = [&"skeleton", &"skeleton", &"archer", &"runner", &"mage", &"guard"]
 		for i in int(Dev.num("stress", 300)):
 			horde.spawn(horde.def(kinds[i % kinds.size()]), arena.resolve(player.pos + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(4.0, 20.0), 0.5), false)
+	if Dev.has("feel-panel"):
+		_toggle_feel_panel.call_deferred()
 	if Dev.has("shot"):
 		_shot.call_deferred()
 	if Dev.has("frames"):
@@ -189,7 +188,7 @@ func _build_world() -> void:
 	player.pos = Vector2(0, 8)
 	add_child(player)
 	camera = Camera3D.new()
-	camera.fov = Dev.num("cam-fov", CAM_FOV)
+	camera.fov = Dev.num("cam-fov", Feel.live().cam_fov)
 	camera.far = 160.0
 	add_child(camera)
 	camera.make_current()
@@ -244,6 +243,8 @@ func _process(delta: float) -> void:
 	orbs.render()
 	if mode == Mode.PLAY and Controls.pressed(&"pause"):
 		_open_pause()
+	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
+		_toggle_feel_panel()
 	_hurt_flash = maxf(0.0, _hurt_flash - delta * 2.5)
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
 	_screen_fx.set_shader_parameter(&"split", fx.split)
@@ -413,7 +414,7 @@ func _on_chosen(b: Boon) -> void:
 func _take(b: Boon) -> void:
 	var old_hp_bonus := boons.stat(&"max_hp")
 	boons.take(b)
-	player.dodge_max = Player.BASE_DODGES + int(boons.stat(&"dodge_charges"))
+	player.dodge_max = Feel.live().dodge_charges + int(boons.stat(&"dodge_charges"))
 	player.speed_bonus = boons.stat(&"move_speed_pct")
 	var shield := boons.stat(&"shield_cooldown")
 	if shield > 0.0 and player.shield_cooldown <= 0.0:
@@ -591,6 +592,16 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	end.menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn"))
 
 
+## F1 (debug builds): the live tuning panel for data/feel.tres. The run keeps going behind it.
+func _toggle_feel_panel() -> void:
+	if is_instance_valid(_feel_panel):
+		_feel_panel.queue_free()
+		_feel_panel = null
+	else:
+		_feel_panel = FeelPanel.new()
+		add_child(_feel_panel)
+
+
 func _open_pause() -> void:
 	mode = Mode.PAUSE
 	var pause := PauseMenu.new()
@@ -624,8 +635,8 @@ func _follow(delta: float, shake: Vector3) -> void:
 	if focus != null:
 		look = focus
 	else:
-		look = Vector3(player.pos.x, 0, player.pos.y) + Vector3(player.facing.x, 0, player.facing.y) * CAM_LEAD
-	_cam_target = _cam_target.lerp(look, 1.0 - exp(-delta * (2.5 if focus != null else 6.0)))
+		look = Vector3(player.pos.x, 0, player.pos.y) + Vector3(player.facing.x, 0, player.facing.y) * Feel.live().cam_lead
+	_cam_target = _cam_target.lerp(look, 1.0 - exp(-delta * (2.5 if focus != null else Feel.live().cam_smooth)))
 	_place_camera(shake, delta)
 
 
@@ -634,13 +645,11 @@ func _place_camera(shake: Vector3, _delta: float) -> void:
 	camera.look_at_from_position(t + _cam_offset() + shake, t + shake * 0.5, Vector3.UP)
 
 
-## Camera offset; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override the defaults for tuning.
+## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.
 func _cam_offset() -> Vector3:
-	if not Dev.has("cam-dist") and not Dev.has("cam-pitch"):
-		return CAM_OFFSET
-	var dist := Dev.num("cam-dist", CAM_OFFSET.length())
-	var pitch := deg_to_rad(Dev.num("cam-pitch", rad_to_deg(atan2(CAM_OFFSET.y, CAM_OFFSET.z))))
-	return Vector3(0, sin(pitch) * dist, cos(pitch) * dist)
+	var feel := Feel.live()
+	camera.fov = Dev.num("cam-fov", feel.cam_fov)
+	return Feel.cam_offset_of(Dev.num("cam-dist", feel.cam_distance), Dev.num("cam-pitch", feel.cam_pitch))
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits.

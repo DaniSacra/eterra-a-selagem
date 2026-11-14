@@ -5,9 +5,6 @@ extends Node3D
 
 const SLASH := preload("res://assets/shaders/slash.gdshader")
 const INK := preload("res://assets/shaders/slash_ink.gdshader")
-## How long the head of an arc takes to sweep through, in seconds; the ink stroke outlives the bright streaks by INK_LIFE.
-const SWEEP_TIME := 0.1
-const INK_LIFE := 1.8
 const RING := preload("res://assets/shaders/ring.gdshader")
 const BEAM := preload("res://assets/shaders/beam.gdshader")
 const IMPACT := preload("res://assets/shaders/impact.gdshader")
@@ -199,15 +196,18 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	_place_arc(s, _arc(reach, width_deg, 0.5), origin, dir, height, tilt)
 	_place_arc(ink, _arc(reach * 1.08, width_deg, 0.42), origin, dir, height - 0.05, tilt)
 	s.time = time
-	ink.time = time * INK_LIFE
-	var sweep := clampf(SWEEP_TIME / time, 0.25, 0.7)
+	var feel := Feel.live()
+	ink.time = time * feel.ink_life
+	var sweep := clampf(feel.slash_sweep_time / time, 0.25, 0.7)
 	for e: Dictionary in [s, ink]:
 		var mat: ShaderMaterial = e.mat
 		mat.set_shader_parameter(&"flip", flip)
 		mat.set_shader_parameter(&"t", 0.0)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
-	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / INK_LIFE)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / feel.ink_life)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity)
 
 
 func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height: float, tilt: float) -> void:
@@ -231,7 +231,7 @@ func impact(pos: Vector3, color: Color, size: float = 1.0) -> void:
 
 ## The camera jolts along a blow (dir on the floor plane).
 func kick(dir: Vector2, amount: float) -> void:
-	_kick += Vector3(dir.x, 0, dir.y) * KICK_METERS * amount * shake_scale
+	_kick += Vector3(dir.x, 0, dir.y) * KICK_METERS * amount * shake_scale * Feel.live().kick_scale
 
 
 ## A flat shockwave growing to radius.
@@ -270,7 +270,7 @@ func hit_stop(ms: float) -> void:
 
 
 func shake(amount: float) -> void:
-	_shake = maxf(_shake, amount * SHAKE_METERS * shake_scale)
+	_shake = maxf(_shake, amount * SHAKE_METERS * shake_scale * Feel.live().shake_scale)
 
 
 func kick_split(amount: float) -> void:
@@ -294,7 +294,7 @@ func animate(delta: float) -> void:
 		for s in list:
 			if s.life < 1.0 or (s.node as Node3D).visible:
 				if freeze_t >= 0.0:
-					s.life = freeze_t / (INK_LIFE if list == _inks else 1.0)
+					s.life = freeze_t / (Feel.live().ink_life if list == _inks else 1.0)
 				else:
 					_age(s, delta)
 				(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)

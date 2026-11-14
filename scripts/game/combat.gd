@@ -12,8 +12,6 @@ const HOLY_TAGS: Array[StringName] = [&"skill", &"vigilia"]
 const SHATTER_SPLASH := 0.4
 ## Stars drawn per swing (the rest of the crowd hit only flashes).
 const MAX_STARS := 8
-## Hit stop of the combo data, stretched: the freeze is what sells the weight of a blow.
-const HIT_STOP_SCALE := 1.35
 const SHATTER_RADIUS := 2.2
 const BURN_TIME := 3.0
 const FIRE := Color(1.0, 0.45, 0.12)
@@ -86,7 +84,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	if struck.is_empty():
 		Audio.play(&"swing")
 	else:
-		fx.hit_stop(node.hit_stop_ms * HIT_STOP_SCALE + minf(struck.size(), 8) * 4.0)
+		fx.hit_stop(node.hit_stop_ms * Feel.live().hit_stop_scale + minf(struck.size(), 8) * 4.0)
 		fx.shake(node.shake * (1.0 + minf(struck.size(), 10) * 0.05))
 		fx.kick(dir, 1.6 if heavy else 0.9)
 		if node.has_tag(&"finisher"):

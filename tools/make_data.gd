@@ -1,7 +1,7 @@
 extends SceneTree
 ## One-off generator of the content files in data/ (combos, enemies, gifts, waves) for the 3D version.
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
-## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves]
+## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [feel]
 
 const L := ComboNode.In.LIGHT
 const H := ComboNode.In.HEAVY
@@ -17,7 +17,7 @@ const PEAK := {
 
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
-	for part in ["combos", "enemies", "boons", "waves"]:
+	for part in ["combos", "enemies", "boons", "waves", "feel"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -209,3 +209,33 @@ func _save(r: Resource, path: String) -> void:
 	var err := ResourceSaver.save(r, path)
 	if err != OK:
 		push_error("could not save %s: %d" % [path, err])
+
+
+# ---------- feel ----------
+
+## How the game feels in the hands (scripts/core/feel.gd). The F1 panel tunes these live; copy good values here.
+func _feel() -> void:
+	var f := Feel.new()
+	f.speed = 6.8
+	f.dodge_speed = 24.0
+	f.dodge_time = 0.2
+	f.dodge_iframes = 0.3
+	f.dodge_charges = 2
+	f.dodge_recharge = 1.1
+	f.move_scale_light = 0.22
+	f.move_scale_heavy = 0.22
+	f.move_scale_finisher = 0.22
+	f.cam_distance = 17.33
+	f.cam_pitch = 33.2
+	f.cam_fov = 40.0
+	f.cam_lead = 2.2
+	f.cam_smooth = 6.0
+	f.hit_stop_scale = 1.35
+	f.shake_scale = 1.0
+	f.kick_scale = 1.0
+	f.outline = 0.0
+	f.slash_intensity = 2.2
+	f.slash_sweep_time = 0.1
+	f.ink_opacity = 0.85
+	f.ink_life = 1.8
+	_save(f, Feel.PATH)

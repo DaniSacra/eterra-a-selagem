@@ -17,13 +17,6 @@ const HIDDEN_PARTS: Array[String] = ["1H_Sword_Offhand", "Rectangle_Shield", "Ro
 const COMBOS := "res://data/combos/paladin.tres"
 const RADIUS := 0.5
 const MAX_HP := 100.0
-const SPEED := 6.8
-const ATTACK_DRIFT := 0.22
-const DODGE_SPEED := 24.0
-const DODGE_TIME := 0.2
-const DODGE_IFRAMES := 0.3
-const BASE_DODGES := 2
-const DODGE_RECHARGE := 1.1
 const HURT_TIME := 0.18
 const HURT_INVULN := 0.8
 const TURN := 18.0
@@ -31,6 +24,8 @@ const TURN := 18.0
 const ASSIST_RANGE := 6.0
 const LOOPS: Array[StringName] = [&"Idle", &"Running_A"]
 const FLASH := preload("res://assets/shaders/flash.gdshader")
+const XRAY := preload("res://assets/shaders/xray.gdshader")
+const OUTLINE := Color(1.0, 0.78, 0.35)
 
 var arena: Arena
 var horde: Horde
@@ -40,8 +35,8 @@ var facing := Vector2.DOWN
 var state := State.MOVE
 var hp := MAX_HP
 var max_hp := MAX_HP
-var dodge_max := BASE_DODGES
-var dodge_charges := BASE_DODGES
+var dodge_max := 2
+var dodge_charges := 2
 var speed_bonus := 0.0
 var damage_reduction := 0.0
 var shield_cooldown := 0.0
@@ -61,6 +56,7 @@ var _flash := 0.0
 var _model: Node3D
 var _anim: AnimationPlayer
 var _overlay: ShaderMaterial
+var _xray: ShaderMaterial
 var _current_anim := &""
 var _light: OmniLight3D
 
@@ -74,14 +70,12 @@ func _ready() -> void:
 	add_child(_model)
 	_overlay = ShaderMaterial.new()
 	_overlay.shader = FLASH
-	if Dev.has("outline"):
-		var strength := Dev.num("outline", 1.0)
-		_overlay.set_shader_parameter(&"outline", Color(1.0, 0.78, 0.35, strength))
-		var xray := ShaderMaterial.new()
-		xray.shader = load("res://assets/shaders/xray.gdshader")
-		xray.set_shader_parameter(&"color", Color(1.0, 0.78, 0.35, strength))
-		xray.render_priority = 2
-		_overlay.next_pass = xray
+	_xray = ShaderMaterial.new()
+	_xray.shader = XRAY
+	_xray.render_priority = 2
+	_overlay.next_pass = _xray
+	dodge_max = Feel.live().dodge_charges
+	dodge_charges = dodge_max
 	_prepare(_model)
 	_anim = PoseBaker.find_player(_model)
 	PoseBaker.find_skeleton(_model).add_child(Slender.new())
@@ -129,7 +123,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			fx.burst(&"heal", Vector3(pos.x, 1.2, pos.y))
 	if dodge_charges < dodge_max:
 		_dodge_recharge += dt
-		if _dodge_recharge >= DODGE_RECHARGE:
+		if _dodge_recharge >= Feel.live().dodge_recharge:
 			_dodge_recharge = 0.0
 			dodge_charges += 1
 	match state:
@@ -142,17 +136,18 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			if _state_t >= HURT_TIME:
 				state = State.MOVE
 		State.DODGE:
-			pos += _dodge_dir * DODGE_SPEED * dt * (1.0 - _state_t / DODGE_TIME * 0.5)
-			if _state_t >= DODGE_TIME:
+			var feel := Feel.live()
+			pos += _dodge_dir * feel.dodge_speed * dt * (1.0 - _state_t / feel.dodge_time * 0.5)
+			if _state_t >= feel.dodge_time:
 				state = State.MOVE
 				runner.on_dodge_end()
-				invuln = maxf(invuln, DODGE_IFRAMES - DODGE_TIME)
+				invuln = maxf(invuln, feel.dodge_iframes - feel.dodge_time)
 		State.MOVE:
 			_read_buttons(dt, move, aim)
 			if state == State.MOVE:
-				var sp := SPEED * (1.0 + speed_bonus)
+				var sp := Feel.live().speed * (1.0 + speed_bonus)
 				if runner.is_attacking():
-					pos += move * sp * ATTACK_DRIFT * dt + _lunge * dt
+					pos += move * sp * Feel.live().move_scale_light * dt + _lunge * dt
 				else:
 					pos += move * sp * dt
 					if move.length() > 0.1:
@@ -282,6 +277,9 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 		glow = Color(0.4, 1.0, 0.6, 0.35)
 	_overlay.set_shader_parameter(&"flash", maxf(_flash, 0.6 if invuln > 0.0 and state != State.DODGE and fmod(invuln, 0.16) < 0.08 else 0.0))
 	_overlay.set_shader_parameter(&"glow", glow)
+	var edge := Dev.num("outline", Feel.live().outline)
+	_overlay.set_shader_parameter(&"outline", Color(OUTLINE, edge))
+	_xray.set_shader_parameter(&"color", Color(OUTLINE, edge))
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if state != State.MOVE or runner.is_attacking():
 		return
