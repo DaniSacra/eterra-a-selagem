@@ -49,6 +49,6 @@ void fragment() {
 		value += line;
 	}
 	float life = 1.0 - smoothstep(0.55, 1.0, t);
-	vec3 c = mix(color.rgb, vec3(1.0), smoothstep(0.4, 1.2, value));
+	vec3 c = mix(color.rgb, vec3(1.0), smoothstep(0.8, 1.6, value));
 	ALBEDO = c * value * life * intensity;
 }

@@ -17,14 +17,14 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
 - DRY e KISS, máximo de reuso. Lógica nova entra com teste (GUT).
 - **Conteúdo é dado, não código.** Combos, dons, inimigos e ondas são Resources em `data/`. Um combo novo, um dom novo
   (com estatísticas que já existem) ou um inimigo novo (com um comportamento que já existe) não pode exigir código.
-- A Steam exige declarar conteúdo gerado por IA.
+- A Steam exige declarar conteúdo gerado por IA: manter `docs/steam-ia.md` em dia.
 
 ## Comandos
 - Godot: `~/tools/godot/godot` (4.7.2). Rodar o jogo: `~/tools/godot/godot --path .`
 - Testes: `tools/test.sh` (GUT sem tela). Um arquivo só: `tools/test.sh -gtest=res://tests/test_combo.gd`
 - Captura sem tela: `tools/shot.sh saida.png 3 --bot` (segundos antes da captura; o resto são opções do jogo).
 - Opções de teste (depois de `--`): `--bot` (joga sozinho), `--fast=N` (o relógio da partida corre N vezes mais rápido),
-  `--start=boss|miniboss|shop|fountain` (sala onde começar), `--horde` (o modo antigo de horda contínua, com `--start=boss|elite1|elite2`), `--shot=arquivo.png`, `--shot-at=segundos`, `--frames=prefixo --count=N --every=s`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
+  `--start=boss|miniboss|shop|fountain` (sala onde começar), `--arena=piloto` (todas as salas na arena piloto), `--horde` (o modo antigo de horda contínua, com `--start=boss|elite1|elite2`), `--shot=arquivo.png`, `--shot-at=segundos`, `--frames=prefixo --count=N --every=s`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
 - Depois de criar arquivos ou classes novas (`class_name`): `~/tools/godot/godot --headless --path . --import`.
 - Regerar os dados (combos, inimigos, dons, ondas, salas, sensação): `~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [feel]`.
   Editar os números em `tools/make_data.gd` (fonte da verdade) e regerar; não editar os `.tres` à mão.
@@ -37,6 +37,13 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   Android fica para depois (sem preset ainda).
 
 ## Direção de arte e modelos
+- **Todas as salas são plataformas sobre o abismo (redesenho de 2026-11-14; o Daniel pediu em todas)**: a piloto tem 40 x 32 m; as outras são os layouts antigos 30% maiores, no
+  molde da imagem de referência dele (`RoomLayout.platform`, montada por `Arena._platform` com as peças de `ArenaKit`:
+  chão de lajes pintado (`catacomb_floor.gdshader`), abismo em camadas de névoa roxa (`abyss_fog.gdshader`), portal
+  verde sobre cada escada de saída (`portal.gdshader`), braseiros, estátuas encapuzadas (`assets/baked/statue.res`,
+  o encapuzado do KayKit em pedra), correntes, estandartes vermelhos, pilares gigantes no abismo). Peças do KayKit Dungeon
+  Remastered (CC0) em `assets/models/dungeon_r/`. É o último layout de `_stage` e entra no sorteio; `--arena=piloto`
+  põe todas as salas nela. Cânone pendente: quem são as estátuas, o símbolo dos estandartes (lisos por ora), o verde.
 - Guia da estética (análise das referências, paleta, tempos dos golpes): `docs/arte/estetica.md`. Trabalho visual
   vai para o agente `art-director` (`.claude/agents/art-director.md`). Meshy: `tools/meshy/` (pedir antes de gastar créditos).
 - Referência atual: Hades 2 e Ember & Blade (vídeos do Daniel). Mesmo gênero, mecânica e sensação; nada copiado
@@ -98,7 +105,7 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   (`PEAK` em `make_data.gd`), o passo da corrida (`Player.RUN_CLIP_PACE`), achata o sobe e desce do quadril na corrida, mantém o braço da espada em guarda e a pegada da espada (pela linha dos nós dos
   dedos do manequim). Clipe novo: editar `CLIPS` em `tools/bake_hero.gd` e rodar
   `~/tools/godot/godot --headless --path . -s tools/bake_hero.gd`. Ver as poses: `tools/pose_lab.gd` (comando no topo).
-  A espada é a do Knight do KayKit. Desenho escolhido pelo Daniel: memória do projeto e `build/web/herois.html`.
+  A espada é a Emeth (arte do Daniel de 2026-11-14): lâmina de luz verde, guarda dourada com esmeralda, provisória em formas simples (`EmethSword`, `scripts/render/emeth_sword.gd`), do tamanho da espada do KayKit que substituiu. Emeth é o nome da espada, não do herói (o Daniel, 2026-11-14). Os cortes sem dom são do verde dela (`Combat.EMETH`); dons mudam a cor (fogo, gelo, ouro de Elun). Desenho escolhido pelo Daniel: memória do projeto e `build/web/herois.html`.
 - Dons agem sozinhos por `SkillDef` (`scripts/game/skills.gd`: STRIKES, NOVA, ORBIT, FAN, METEOR, CONSECRATE) e/ou
   mudam golpes por `BoonMod`.
 - **Combate no estilo Hades 2** (o visual segue o Ember & Blade): ataque (E), especial (D), círculo de luz (`cast`, Q)

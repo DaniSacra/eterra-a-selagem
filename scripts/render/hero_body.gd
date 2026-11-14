@@ -5,9 +5,6 @@ extends RefCounted
 
 const MODEL := "res://assets/models/meshy/hero_sombra/hero_sombra-rigged.glb"
 const ANIMS := "res://assets/models/meshy/hero_sombra/hero_anims.res"
-## The KayKit Knight only lends its sword (blade along +Y from the grip).
-const SWORD_FROM := "res://assets/models/characters/Knight.glb"
-const SWORD_MESH := "1H_Sword"
 ## The model is this tall as it comes; the game shows him HEIGHT tall (Hades II scale: 2.5 m).
 const MODEL_HEIGHT := 1.8
 const HEIGHT := 2.5
@@ -29,19 +26,15 @@ static func make() -> Array:
 
 ## The sword in the right hand, held where tools/bake_hero.gd found the grip (stored on the clips' library).
 static func _arm(model: Node3D, clips: AnimationLibrary) -> MeshInstance3D:
-	var knight := (load(SWORD_FROM) as PackedScene).instantiate()
-	var src := knight.find_child(SWORD_MESH, true, false) as MeshInstance3D
-	var mesh := src.mesh if src else null
-	knight.free()
 	var skeleton := PoseBaker.find_skeleton(model)
 	var hand := skeleton.find_bone(&"RightHand")
-	if mesh == null or hand < 0:
+	if hand < 0:
 		return null
 	var grip := BoneAttachment3D.new()
 	grip.bone_name = &"RightHand"
 	skeleton.add_child(grip)
-	var sword := MeshInstance3D.new()
-	sword.mesh = mesh
+	# Emeth, the sword of truth (Daniel's concept of 2026-11-14), the size of the KayKit sword it replaced
+	var sword := EmethSword.make()
 	grip.add_child(sword)
 	var space := Retarget._space(skeleton, model)
 	var unit := space.get_scale().x

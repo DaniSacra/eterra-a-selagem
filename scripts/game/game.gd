@@ -161,8 +161,9 @@ func _build_world() -> void:
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	# cool slate-teal mid-tone (painterly night look): dark ink strokes and bright effects both read on the floor,
 	# torches and the paladin's red stay the warm accents
-	e.ambient_light_color = Color(0.42, 0.58, 0.62)
-	e.ambient_light_energy = 0.45
+	e.ambient_light_color = Color(0.45, 0.52, 0.66)
+	# low, so the fire bowls make warm pools and deep shadows (the platform look of 2026-11-14)
+	e.ambient_light_energy = 0.3
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	e.tonemap_exposure = 1.05
 	e.glow_enabled = true
@@ -178,13 +179,14 @@ func _build_world() -> void:
 	e.fog_density = 0.008
 	e.adjustment_enabled = true
 	e.adjustment_contrast = 1.1
-	e.adjustment_saturation = 0.6
+	# the catacomb palette shows: green portals, red banners, gold fire, purple depths
+	e.adjustment_saturation = 0.95
 	env.environment = e
 	add_child(env)
 	var moon := DirectionalLight3D.new()
 	moon.rotation_degrees = Vector3(-58, -32, 0)
 	moon.light_color = Color(0.72, 0.88, 0.95)
-	moon.light_energy = 0.55
+	moon.light_energy = 0.4
 	moon.shadow_enabled = true
 	moon.directional_shadow_max_distance = 80.0
 	add_child(moon)
@@ -760,7 +762,7 @@ func _follow(delta: float, shake: Vector3) -> void:
 func _place_camera(shake: Vector3, _delta: float) -> void:
 	var h := arena.half
 	var t := Vector3(clampf(_cam_target.x, -maxf(0.0, h.x - CAM_MARGIN.x), maxf(0.0, h.x - CAM_MARGIN.x)), 0,
-		clampf(_cam_target.z, minf(0.0, -h.y + CAM_MARGIN.y), maxf(0.0, h.y - CAM_SOUTH)))
+		clampf(_cam_target.z, minf(0.0, -h.y + CAM_MARGIN.y - arena.view_north), maxf(0.0, h.y - CAM_SOUTH)))
 	camera.look_at_from_position(t + _cam_offset() + shake, t + shake * 0.5, Vector3.UP)
 
 
@@ -817,11 +819,11 @@ func _lab() -> void:
 	var reach := Dev.num("lab-reach", 5.5)
 	if Dev.has("lab-glint"):
 		# the glint of a finisher at --lab-t of its life (its hold ends at about 0.55)
-		fx.glint(Vector3.ZERO, Combat.STEEL, 0.2, player.blade_tip)
+		fx.glint(Vector3.ZERO, Combat.EMETH, 0.2, player.blade_tip)
 	else:
-		fx.slash(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.STEEL, 0.25)
+		fx.slash(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.EMETH, 0.25)
 		if Dev.has("lab-crescent"):
-			fx.crescent(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.STEEL)
+			fx.crescent(player.pos, dir, reach, Dev.num("lab-width", 270.0), Combat.EMETH)
 	if Dev.has("lab-impact"):
 		fx.frame_left = 1000.0  # hold the impact frame for the still
 	if Dev.has("lab-slow"):

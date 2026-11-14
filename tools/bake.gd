@@ -7,6 +7,12 @@ const WEAPON := "res://assets/models/weapons/"
 
 ## id -> model, weapons per bone, and the animations: name in the game -> [glTF animation, frames, loops].
 const MODELS := {
+	# not an enemy: the hooded figure of the catacomb statues, one still pose (drawn in stone by ArenaKit.statue)
+	"statue": {
+		"model": "Rogue_Hooded.glb",
+		"weapons": [],
+		"anims": {"idle": ["Unarmed_Idle", 1, true]},
+	},
 	"minion": {
 		"model": "Skeleton_Minion.glb",
 		"weapons": [["Skeleton_Blade.gltf", "handslot.r"]],

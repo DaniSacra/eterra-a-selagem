@@ -118,3 +118,25 @@ func test_nobody_stands_inside_a_solid_prop() -> void:
 	var beside := Arena.push_out_of_box(Vector2(3.8, -8.0), 0.5, stairs)
 	assert_almost_eq(beside.x, 4.0, 0.001, "a circle touching the side slides along it")
 	assert_eq(Arena.push_out_of_box(Vector2(0, 0), 0.5, stairs), Vector2(0, 0), "far away: untouched")
+
+
+func test_pilot_platform_keeps_the_fight_on_it() -> void:
+	var pilot: RoomLayout = stage.layouts[stage.layouts.size() - 1]
+	assert_true(pilot.platform, "the last layout is the pilot platform")
+	var arena := Arena.new()
+	add_child_autofree(arena)
+	arena.build(pilot, 2, 7)
+	assert_eq(arena.exits.size(), 2)
+	# nobody walks off into the abyss
+	var out := arena.resolve(Vector2(pilot.half.x + 5.0, 0), 0.5)
+	assert_lt(out.x, pilot.half.x - 1.0)
+	# the fire bowls block like small pillars
+	var b := pilot.braziers[0]
+	assert_gt(arena.resolve(b, 0.5).distance_to(b), 0.9)
+	# the middle is clear
+	assert_eq(arena.resolve(Vector2.ZERO, 0.5), Vector2.ZERO)
+	# the paladin leaves by stepping onto the stairs up to a portal
+	var foot := Vector2(arena.exits[0].x, -pilot.half.y + 1.4 + Arena.STAIRS_DEPTH + 0.3)
+	assert_eq(arena.exit_at(foot), 0)
+	# the layout itself is not changed by building (the kit's blockers go to the arena's own copy)
+	assert_eq(pilot.pillars.size(), 2)

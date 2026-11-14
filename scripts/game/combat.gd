@@ -45,8 +45,8 @@ const FIRE := Color(1.0, 0.45, 0.12)
 const FROST := Color(0.5, 0.82, 1.0)
 ## Elun's gold: only blows that come from gifts.
 const LIGHT := Color(1.0, 0.82, 0.38)
-## The paladin's own sword: white with a touch of lavender.
-const STEEL := Color(0.85, 0.82, 1.0)
+## The paladin's own sword, Emeth: the green of its blade.
+const EMETH := Color(0.3, 1.0, 0.45)
 ## Tags that mark a blow as coming from a gift (skills carry "skill" and their family's tag).
 const GIFT_TAGS: Array[StringName] = [&"skill", &"luz", &"vigilia", &"duo"]
 
@@ -341,7 +341,7 @@ func _steam(e: Enemy) -> void:
 		fx.burst(&"dust", Vector3(e.pos.x, 0.8, e.pos.y))
 
 
-## The colour of a blow: the family of the gift that changes it; Elun's gold for the other gifts; the white of
+## The colour of a blow: the family of the gift that changes it; Elun's gold for the other gifts; the green of
 ## the sword when no gift touches it.
 func color_of(tags: Array[StringName]) -> Color:
 	if tags.has(&"chama") or tags.has(&"ember") or boons.stat(&"burn_dps", tags) > 0.0:
@@ -351,7 +351,7 @@ func color_of(tags: Array[StringName]) -> Color:
 	for t in GIFT_TAGS:
 		if tags.has(t):
 			return LIGHT
-	return STEEL
+	return EMETH
 
 
 ## Where a move hits and what is drawn for it. The arc on screen covers exactly what the blow reaches

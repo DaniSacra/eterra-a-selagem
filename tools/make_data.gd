@@ -332,8 +332,30 @@ func _stage() -> void:
 		_layout(Vector2(14, 14), [], [Vector2(-5, -5), Vector2(5, 5)]),
 		_layout(Vector2(16, 14), [V3.call(-6, -3), V3.call(6, -3), V3.call(-8, 7), V3.call(8, 7), V3.call(0, 0, 0.72)], [Vector2(-3, -2), Vector2(9, 3)]),
 	]
+	# the pilot of the art direction of 2026-11-14: a wide platform over the abyss (Arena._platform), the fight in
+	# the clear middle, fire bowls at the corners; always the last layout (--arena=piloto starts in it)
+	var pilot := _layout(Vector2(20, 16), [V3.call(-12, -7, 0.75), V3.call(12, -7, 0.75)], [])
+	pilot.platform = true
+	pilot.braziers = [Vector2(-16.5, -11.5), Vector2(16.5, -11.5), Vector2(-16.5, 12.5), Vector2(16.5, 12.5)]
+	st.layouts.append(pilot)
+	# every room is a platform over the abyss now (art direction of 2026-11-14, applied to all rooms at Daniel's ask):
+	# the same pillars, the room a third bigger, fire bowls at its corners (Arena places them when none are given)
+	for l: RoomLayout in st.layouts:
+		if l == pilot:
+			continue
+		l.platform = true
+		l.half = (l.half * 1.3).round()
+		var grown: Array[Vector3] = []
+		for p in l.pillars:
+			grown.append(Vector3(p.x * 1.3, p.y * 1.3, p.z))
+		l.pillars = grown
+		l.shafts = []
 	st.boss_layout = _layout(Vector2(18, 16), [V3.call(-11, -9), V3.call(11, -9), V3.call(-11, 9), V3.call(11, 9)], [Vector2(-6, 2), Vector2(7, -3), Vector2(0, 8)])
-	st.shop_layout = _layout(Vector2(12, 10), [], [Vector2(0, 0)])
+	st.boss_layout.platform = true
+	st.boss_layout.half = Vector2(22, 18)
+	st.boss_layout.shafts = []
+	st.shop_layout = _layout(Vector2(14, 11), [], [])
+	st.shop_layout.platform = true
 	_save(st, "res://data/stages/catacombs.tres")
 
 

@@ -40,7 +40,7 @@ void fragment() {
 	edge *= 1.0 - smoothstep(edge_life * 0.4, edge_life, t);
 	float a = max(body * ink_opacity, edge);
 	if (a <= 0.01) discard;
-	vec3 white = mix(color.rgb, vec3(1.0), 0.7) * edge_intensity;
+	vec3 white = mix(color.rgb, vec3(1.0), 0.35) * edge_intensity;
 	ALBEDO = mix(ink.rgb, white, clamp(edge / max(a, 0.001), 0.0, 1.0));
 	ALPHA = clamp(a, 0.0, 1.0);
 }

@@ -112,6 +112,9 @@ func _enter(next: RunMap.Room) -> void:
 	map.enter(room)
 	next_rooms = map.options(game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
 	var layout: RoomLayout = stage.layouts[room.layout] if not stage.layouts.is_empty() else null
+	# --arena=piloto: every room on the pilot platform of the new art direction (the last layout)
+	if Dev.arg("arena") == "piloto" and not stage.layouts.is_empty():
+		layout = stage.layouts[stage.layouts.size() - 1]
 	match room.kind:
 		RunMap.Kind.BOSS:
 			layout = stage.boss_layout
