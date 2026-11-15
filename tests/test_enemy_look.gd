@@ -58,3 +58,23 @@ func test_magic_colours() -> void:
 	assert_true(mage.magic_color.g > priest.magic_color.g, "the sorcerer's violet is lighter and colder")
 	assert_true(priest.magic_color.b > priest.magic_color.g and priest.magic_color.r > priest.magic_color.g)
 	assert_true(archer.magic_color.r > archer.magic_color.g and archer.magic_color.g > archer.magic_color.b, "orange bolts")
+
+
+## Cycle 5 (docs/art/cycle5_spec.md A1): the figure is costume, so its gold is old and calm; yellow on the screen
+## is left for the armor bar. Elites and guardians read by their trims and the bar, with a faint edge (no halo);
+## Morvath keeps an edge of his own purple.
+func test_gold_is_old_gold_and_the_edges_are_faint() -> void:
+	for id: String in ["skeleton_elite", "knight", "priest_elder", "morvath"]:
+		var d: EnemyDef = load(DIR + "%s.tres" % id)
+		assert_lt(d.rim, 0.35, "%s: a faint edge, not a halo" % id)
+		assert_lt(d.rim_color.get_luminance(), 0.55, "%s: the edge is not a bright gold" % id)
+	var morvath: EnemyDef = load(DIR + "morvath.tres")
+	assert_true(morvath.rim_color.b > morvath.rim_color.r and morvath.rim_color.r > morvath.rim_color.g, "his own purple")
+	# the old gold cell of the palettes (tools/make_palettes.gd, 25) is not a saturated yellow
+	var img := (load("res://assets/models/palettes/priest_elder.png") as Texture2D).get_image()
+	img.decompress()
+	var cell := 25
+	var px := Vector2i(int((cell % 8 + 0.5) * img.get_width() / 8.0), int((cell / 8 + 0.1) * img.get_height() / 4.0))
+	var gold := img.get_pixelv(px)
+	assert_lt(gold.s, 0.55, "old gold, not yellow: %s" % gold.to_html(false))
+	assert_between(gold.h * 360.0, 25.0, 50.0, "still gold")

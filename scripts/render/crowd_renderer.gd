@@ -12,17 +12,22 @@ extends Node3D
 const CROWD_GREY := 0.15
 const CROWD_TINT_KEEP := 0.3
 const CROWD_SCENE_LIGHT := 0.55
-## Elites keep their colours and are a step brighter than the crowd.
-const ELITE_SHADE := Color(1.15, 1.1, 1.1)
+## Elites keep their colours, under the same light as the crowd (cycle 5: no longer a step brighter, the gilded look
+## made them the brightest thing in the room), a little calmed.
+const ELITE_SHADE := Color(1, 1, 1)
+const ELITE_GREY := 0.12
 ## The painted light of every figure in the crowd (crowd.gdshader): key on the lit side, fill on the far side,
 ## brightness at the feet, how dark the edge goes.
 const KEY := 0.8
 const KEY_FILL := 0.16
 const FOOT_SHADE := 0.55
 const INK := 0.65
-## Glowing outline of elites and the boss (crowd_outline.gdshader): meters in the world (any size), brightness.
-const OUTLINE_WIDTH := 0.03
-const OUTLINE_INTENSITY := 0.9
+## Outline of elites and the boss (crowd_outline.gdshader): dark ink, like the stroke of the painting (cycle 5: no
+## longer the rim's glowing gold; the elite reads by its gold trims and its armor bar), meters in the world (any
+## size), brightness.
+const OUTLINE_COLOR := Color(0.1, 0.08, 0.06)
+const OUTLINE_WIDTH := 0.022
+const OUTLINE_INTENSITY := 1.0
 const OUTLINE := preload("res://assets/shaders/crowd_outline.gdshader")
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
@@ -79,18 +84,18 @@ func model_of(d: EnemyDef) -> BakedModel:
 	return model(d.model)
 
 
-## Prepares the look of a kind of enemy (its model's texture, tint, glowing edge).
+## Prepares the look of a kind of enemy (its model's texture, tint, edge and outline).
 func register(d: EnemyDef) -> void:
 	if _materials.has(d.id):
 		return
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
 	mat.set_shader_parameter(&"albedo", d.palette if d.palette else model(d.model).albedo)
-	# the common crowd in calmed bone colours; elites and the boss in full colour, brighter, with a glowing outline
+	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline
 	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
 	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) if common else d.tint * (ELITE_SHADE if d.elite else Color.WHITE)
 	mat.set_shader_parameter(&"tint", tint)
-	mat.set_shader_parameter(&"desaturate", CROWD_GREY if common else 0.0)
+	mat.set_shader_parameter(&"desaturate", CROWD_GREY if common else ELITE_GREY)
 	mat.set_shader_parameter(&"scene_light", CROWD_SCENE_LIGHT)
 	mat.set_shader_parameter(&"key", KEY)
 	mat.set_shader_parameter(&"key_fill", KEY_FILL)
@@ -101,7 +106,7 @@ func register(d: EnemyDef) -> void:
 	if d.rim > 0.0:
 		var edge := ShaderMaterial.new()
 		edge.shader = OUTLINE
-		edge.set_shader_parameter(&"color", d.rim_color)
+		edge.set_shader_parameter(&"color", OUTLINE_COLOR)
 		edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
 		edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
 		mat.next_pass = edge

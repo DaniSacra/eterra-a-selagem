@@ -6,10 +6,18 @@ extends RefCounted
 ## at the origin; its tip near BLADE_TOP).
 
 const BLADE_TOP := 1.42
-const GREEN := Color(0.12, 1.0, 0.32)
-## How bright the blade glows (above 1 the WorldEnvironment glow picks it up).
-const BLADE_GLOW := 1.7
-const GOLD := Color(1.0, 0.74, 0.3)
+## Emerald, not cyan (cycle 5, docs/art/cycle5_spec.md A2: 18d961 on the screen; the tone mapper turns a bright green
+## toward cyan, so the colour is set a little yellower than that).
+const GREEN := Color(0.08, 0.85, 0.27)
+## How bright the blade's body is: under the WorldEnvironment glow threshold (Game.GLOW_THRESHOLD, after the
+## exposure), so the blade keeps its shape.
+const BLADE_GLOW := 1.1
+## The light edge down the middle, CORE_WIDTH of the blade's width: the only part of the blade that blooms.
+const CORE := Color(0.6, 1.0, 0.75)
+const CORE_GLOW := 1.25
+const CORE_WIDTH := 0.3
+## Old gold (yellow on the screen is kept for the armor bar); the emerald of the guard stays lit.
+const GOLD := Color(0.6, 0.47, 0.27)
 const LEATHER := Color(0.16, 0.09, 0.06)
 
 
@@ -26,11 +34,12 @@ static func make() -> MeshInstance3D:
 	tip.position.y = 0.55 + 0.1
 	tip.material_override = blade.material_override
 	blade.add_child(tip)
-	# a pale core down the middle of the blade
+	# a pale edge down the middle of the blade: a flat strip standing a little out of both faces
 	var core := MeshInstance3D.new()
-	core.mesh = _diamond(0.02, 0.012, 1.15)
-	core.scale = Vector3(1.0, 1.0, 1.6)
-	core.material_override = _light(Color(0.9, 2.4, 1.1))
+	var strip := BoxMesh.new()
+	strip.size = Vector3(0.15 * CORE_WIDTH, 1.05, 0.046)
+	core.mesh = strip
+	core.material_override = _light(CORE * CORE_GLOW)
 	blade.add_child(core)
 	var gold := _metal(GOLD)
 	# the crossguard: a bar whose ends sweep up toward the blade, an emerald in the middle

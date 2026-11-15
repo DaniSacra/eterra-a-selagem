@@ -24,6 +24,7 @@ const ROWS := 4
 const HEAD_SHRINK := 0.72
 
 ## Cells of the palettes (tools/make_palettes.gd).
+const C_BLACK := 2
 const C_ARMOR := 3
 const C_DARK_METAL := 4
 const C_BONE := 9
@@ -49,6 +50,12 @@ const WAIST_FRONT := {"bone": "hips", "shape": "box", "at": Vector3(0, -0.1, 0.1
 const WAIST_BACK := {"bone": "hips", "shape": "box", "at": Vector3(0, -0.1, -0.16), "rot": Vector3(8, 0, 0), "size": Vector3(0.34, 0.3, 0.03), "cell": C_RED}
 ## The crown of spikes (knight, elder, Morvath): on the skull, in the head's space.
 const CROWN := {"bone": "head", "shape": "crown", "at": Vector3(0, 0.92, 0), "size": Vector3(0.36, 0.34, 7), "cell": C_GOLD}
+## The priests' hood (the sheet's blocks 6 and 8): in the dark cell, so the skull reads inside a dark frame; pushed
+## back and its brim lifted, so the game's high camera still sees the eyes under it.
+const PRIEST_HOOD := {"bone": "head", "part": "Skeleton_Rogue.glb:Skeleton_Rogue_Hood", "cell": C_BLACK,
+	"at": Vector3(0, 0.03, -0.06), "rot": Vector3(-12, 0, 0)}
+## The elder's crown sits on the hood, a little higher and wider than on a bare skull.
+const ELDER_CROWN := {"bone": "head", "shape": "crown", "at": Vector3(0, 1.02, 0), "size": Vector3(0.4, 0.34, 7), "cell": C_GOLD}
 
 const MODELS := {
 	# not an enemy: the hooded figure of the catacomb statues, one still pose (drawn in stone by ArenaKit.statue)
@@ -128,14 +135,15 @@ const MODELS := {
 		],
 		"anims": BRUTE_ANIMS,
 	},
-	# 6. the priest of the dead: purple hood and robe with gold trims, purple eyes, no weapon
+	# 6. the priest of the dead: a dark hood framing the skull (the sheet: the face reads inside it), purple robe with
+	# gold trims, purple eyes, no weapon
 	"priest": {
 		"model": "Skeleton_Mage.glb",
 		"texture": PALETTE + "priest.png",
 		"weapons": [],
 		"hide": ["Skeleton_Mage_Hat"],
 		"props": [
-			{"bone": "head", "part": "Skeleton_Rogue.glb:Skeleton_Rogue_Hood", "cell": C_PURPLE},
+			PRIEST_HOOD,
 			{"bone": "chest", "part": "Mage.glb:Mage_Cape", "cell": C_PURPLE},
 		],
 		"anims": CASTER_ANIMS,
@@ -154,7 +162,7 @@ const MODELS := {
 		],
 		"anims": BRUTE_ANIMS,
 	},
-	# 8. the elder priest: crown, purple and gold robe and cape, staff with a purple orb
+	# 8. the elder priest: the priest's dark hood under a crown, purple and gold robe and cape, staff with a purple orb
 	"priest_elder": {
 		"model": "Skeleton_Mage.glb",
 		"texture": PALETTE + "priest_elder.png",
@@ -162,9 +170,12 @@ const MODELS := {
 		"hide": ["Skeleton_Mage_Hat"],
 		"remap": {"Skeleton_Staff.gltf": {17: C_GLOW_PURPLE, C_BONE: C_WOOD}},
 		"props": [
+			PRIEST_HOOD,
 			{"bone": "chest", "part": "Mage.glb:Mage_Cape", "cell": C_PURPLE},
-			CROWN,
-			{"bone": "head", "shape": "sphere", "at": Vector3(0, 1.0, 0.36), "size": Vector3(0.07, 0.1, 0), "cell": C_GLOW_PURPLE},
+			ELDER_CROWN,
+			{"bone": "head", "shape": "sphere", "at": Vector3(0, 1.1, 0.4), "size": Vector3(0.07, 0.1, 0), "cell": C_GLOW_PURPLE},
+			# the purple orb held in the top of the staff (the sheet's block 8)
+			{"bone": "handslot.r", "shape": "sphere", "at": Vector3(0, 1.38, 0), "size": Vector3(0.13, 0.13, 0), "cell": C_GLOW_PURPLE},
 		],
 		"anims": CASTER_ANIMS,
 	},

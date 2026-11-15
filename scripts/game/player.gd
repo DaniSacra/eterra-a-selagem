@@ -25,8 +25,8 @@ const HURT_INVULN := 1.3
 const TURN := 18.0
 ## Meters per second the run and sprint clips cover at their own speed (tools/bake_hero.gd measures them), so the
 ## clips play as fast as the paladin moves and the feet keep up.
-const RUN_CLIP_PACE := 7.8
-const SPRINT_CLIP_PACE := 11.8
+const RUN_CLIP_PACE := 8.7
+const SPRINT_CLIP_PACE := 13.0
 ## The dash clip (0.6 s of a low lunge) squeezed into the 0.2 s dodge, with its end blending into the run.
 const DASH_CLIP_SPEED := 2.4
 ## How fast the swing animation creeps while a finisher holds its glint (it lands when the hold ends).
@@ -150,8 +150,8 @@ func _ready() -> void:
 	_anim.playback_default_blend_time = 0.08
 	_play(&"Idle")
 	_light = OmniLight3D.new()
-	# ahead of the paladin and clear of the head (2.5 m tall): close to it the light burns the model white
-	_light.position = Vector3(0, 4.0, 2.5)
+	# ahead of the paladin and clear of the head (2.75 m tall as drawn): close to it the light burns the model white
+	_light.position = Vector3(0, 4.4, 2.5)
 	_light.light_color = Color(1.0, 0.78, 0.5)
 	_light.light_energy = 1.7
 	_light.omni_range = 12.0

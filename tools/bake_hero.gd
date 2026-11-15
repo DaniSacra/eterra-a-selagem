@@ -6,7 +6,7 @@ extends SceneTree
 
 ## The bones of the sword arm (taken from the arm clip, see CLIPS).
 const SWORD_ARM: Array[StringName] = [&"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
-const OUT := "res://assets/models/meshy/hero_sombra/hero_anims.res"
+const OUT := HeroBody.ANIMS
 const FPS := 30.0
 const SOURCES := {
 	&"ual": "res://assets/models/anim/ual_standard.glb",

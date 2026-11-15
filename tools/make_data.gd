@@ -3,9 +3,10 @@ extends SceneTree
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [feel]
 
-## Elites wear a rose-red edge (the rim of crowd.gdshader and the thick outline of crowd_outline.gdshader).
-const ELITE_RIM := Color(1.0, 0.68, 0.28)
-const ELITE_RIM_POWER := 0.7
+## Elites wear a faint old-gold edge (the rim of crowd.gdshader; cycle 5: the gilded halo is gone, the elite reads by
+## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
+const ELITE_RIM := Color(0.62, 0.46, 0.22)
+const ELITE_RIM_POWER := 0.3
 ## Finishers that swing an arc sweep this wide.
 const FINISHER_ARC := 270.0
 ## The run: 5 plays the 15-minute timeline in 3 (Morvath at 3:00); 1 = the full run. Spawning keeps its rate per
@@ -19,7 +20,7 @@ const CL := ComboNode.In.CHARGE_LIGHT
 
 ## Swing peak (seconds into the clip) of the hero's attack clips, measured from the sword hand by tools/bake_hero.gd.
 const PEAK := {
-	&"Slash_A": 0.27, &"Slash_B": 0.27, &"Slash_C": 0.67, &"Sword_Attack": 0.40, &"Cast": 0.10, &"Throw": 0.40,
+	&"Slash_A": 0.23, &"Slash_B": 0.27, &"Slash_C": 0.67, &"Sword_Attack": 0.40, &"Cast": 0.10, &"Throw": 0.40,
 }
 ## Which way the blade crosses in each clip (ComboNode.sweep: 1 from the right to the left, 2 the other way).
 const SWEEP := {
@@ -156,7 +157,7 @@ func _enemies() -> void:
 		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14
 	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.4,
-		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": Color(1.9, 0.45, 3.0), "rim_color": Color(0.7, 0.3, 1.0), "rim": 0.45})
+		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": Color(1.9, 0.45, 3.0), "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3})
 
 
 ## An enemy and its elite version: the same, wearing an armor bar (Hades II "HealthBuffer"), faster and outlined.
@@ -365,8 +366,9 @@ func _feel() -> void:
 	f.move_scale_heavy = 0.0
 	f.move_scale_finisher = 0.0
 	# the frame of Daniel's reference image of the catacomb hall (2026-11-14): high and turned, the square room seen
-	# as a diamond from its south-east corner (docs/art/arena_reference.md)
-	f.cam_distance = 60.0
+	# as a diamond from its south-east corner (docs/art/arena_reference.md); cycle 5 brings it 10% closer (60 to 54,
+	# Daniel's "discreet camera adjustments") so the figures read the size of the painting's; --showcase keeps 60
+	f.cam_distance = 54.0
 	f.cam_pitch = 30.0
 	f.cam_yaw = 35.0
 	f.cam_fov = 24.0

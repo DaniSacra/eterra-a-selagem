@@ -43,8 +43,8 @@ const FACTION := {
 	18: ["8c2420", "360c0e"],
 	22: ["6a5040", "2a1c14"],
 	RED: ["8c2420", "360c0e"],
-	GOLD: ["e0b45a", "6a4618"],
-	PURPLE: ["7a46a8", "26123c"],
+	GOLD: ["8e7444", "34281a"],
+	PURPLE: ["5e4474", "1e1428"],
 	HAIR: ["f4f0e8", "9a948c"],
 	GLOW_COLD: ["d2b4ff", "8a64f0"],
 	GLOW_PURPLE: ["c050ff", "6c12c8"],
@@ -52,8 +52,12 @@ const FACTION := {
 	EYES: ["ff7a3a", "c42a10"],
 }
 const DARK_ROBE := ["4c3c54", "1a1420"]
-const ROYAL_PURPLE := ["6c3a96", "22102e"]
+const ROYAL_PURPLE := ["54386a", "1a1022"]
 const DARK_BRONZE := ["8c6c48", "2c2014"]
+## The priests (cycle 5, docs/art/cycle5_spec.md A1): dark metal, aged bone that does not burn white under the key
+## light, and the hood in the black cell turned a little purple, a dark frame around the light skull.
+const PRIESTS := ["priest", "priest_elder"]
+const PRIEST_METAL := {3: ["4e4a52", "18161c"], 4: ["3a3436", "121012"], 9: ["d8cbb0", "4e3e30"], 2: ["2e2236", "0e0a12"]}
 
 ## Each enemy over the faction. cell -> [light, shadow].
 const PALETTES := {
@@ -69,13 +73,13 @@ const PALETTES := {
 	# the brute: dark bronze plate, red cloth
 	"guard": {3: DARK_BRONZE, 4: ["5a4630", "1e160c"], 22: ["5a4430", "1e140c"]},
 	# the priest: purple hood and robe with old gold trims, purple eyes
-	"priest": {18: ROYAL_PURPLE, PURPLE: ROYAL_PURPLE, 17: ROYAL_PURPLE, 21: FACTION[GOLD], 16: FACTION[GOLD],
-		EYES: ["d070ff", "8a20e0"]},
+	"priest": {18: ROYAL_PURPLE, PURPLE: ROYAL_PURPLE, 17: ROYAL_PURPLE, 21: FACTION[GOLD],
+		16: FACTION[GOLD], EYES: ["d070ff", "8a20e0"]},
 	# the guardian knight: dark steel with gold, red cape, crown of spikes
 	"knight": {3: ["6a6a74", "202028"], 4: FACTION[GOLD], 22: FACTION[GOLD]},
 	# the elder: purple and gold, crown, staff with a purple orb
-	"priest_elder": {18: ROYAL_PURPLE, PURPLE: ROYAL_PURPLE, 17: ROYAL_PURPLE, 21: FACTION[GOLD], 16: FACTION[GOLD],
-		EYES: ["d070ff", "8a20e0"]},
+	"priest_elder": {18: ROYAL_PURPLE, PURPLE: ROYAL_PURPLE, 17: ROYAL_PURPLE, 21: FACTION[GOLD],
+		16: FACTION[GOLD], EYES: ["d070ff", "8a20e0"]},
 	# Morvath, the king who betrayed the light: pale bone, dark armor with gold, purple robes, white hair, purple gem
 	"morvath": {9: ["f6eee0", "7a6a5c"], 3: ["4c4654", "18141e"], 4: FACTION[GOLD], 18: ROYAL_PURPLE, 22: FACTION[GOLD],
 		EYES: ["d070ff", "8a20e0"]},
@@ -100,6 +104,8 @@ func _init() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	for id: String in PALETTES:
 		var cells := FACTION.duplicate()
+		if PRIESTS.has(id):
+			cells.merge(PRIEST_METAL, true)
 		cells.merge(PALETTES[id], true)
 		_write(base, cells, OUT + id + ".png")
 		if ELITE_TRIMS.has(id):

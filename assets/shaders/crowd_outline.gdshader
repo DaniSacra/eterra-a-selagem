@@ -1,6 +1,7 @@
 shader_type spatial;
 // Second pass on elites and the boss in the crowd: the body pushed out along its normals and drawn from behind,
-// a thick glowing outline (Hades-style read of "this one matters"). Same per-instance state as crowd.gdshader:
+// a thin dark ink stroke around the figure (CrowdRenderer.OUTLINE_COLOR; until cycle 5 a glowing gold halo). Same
+// per-instance state as crowd.gdshader:
 // it flashes white with the body and goes away while the body dissolves.
 render_mode unshaded, cull_front, shadows_disabled, fog_disabled;
 
