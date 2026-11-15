@@ -58,27 +58,35 @@ uniform float band_stones = 16.0;
 uniform float band_joint = 0.04;
 uniform float band_value = 0.8;
 uniform float band_grain = 0.3;
-uniform float band_bevel = 0.14;
-uniform vec2 bevel_value = vec2(1.4, 0.42);
-uniform float band_groove = 0.12;
-uniform float groove_dark = 0.5;
+// Cycle 7 (relief by value, so the ring parts from the slabs at the game's camera): wider bevels and grooves, the
+// grooves near black (groove_cover: how much of the stone they hide), runes of twice the stroke.
+uniform float band_bevel = 0.2;
+uniform vec2 bevel_value = vec2(1.32, 0.42);
+uniform float band_groove = 0.2;
+uniform float groove_dark = 0.3;
+uniform float groove_cover = 0.94;
 uniform float runes = 24.0;
-uniform float rune_stroke = 0.12;
-uniform float rune_size = 0.38;
-uniform float rune_dark = 0.95;
+uniform float rune_stroke = 0.24;
+uniform float rune_size = 0.32;
+uniform float rune_dark = 1.0;
 uniform float rune_worn = 0.14;
 // Cycle 6, so the runes read as cuts from the game's camera: how wide a rune is (share of its height), the lit lip on
 // the far wall of each cut (width in m, how much lighter than the band), and the worn bronze thread in the bottom of
 // one rune in three (share of them, how much of it is left).
 uniform float rune_wide = 0.75;
-uniform float rune_lip = 0.035;
-uniform float rune_light = 1.3;
+uniform float rune_lip = 0.06;
+uniform float rune_light = 1.28;
 uniform float rune_bronze = 0.34;
 uniform float rune_bronze_left = 0.4;
 uniform vec2 crack_run = vec2(0.6, 1.2);
 // The points: value of their light and dark halves, the groove along their edges.
 uniform vec2 point_value = vec2(1.1, 0.7);
 uniform float point_groove = 0.1;
+// The four long points have a lit ridge down their middle (its width in m, how much lighter than the light half).
+uniform vec2 point_ridge = vec2(0.07, 1.2);
+// The rosette in the middle: its cut (width in m, darkness) and the lit lip on the far wall of the cut (how much
+// lighter than the slabs: less than the runes', the slabs inside the ring are already the lightest of the floor).
+uniform vec3 rosette_cut = vec3(0.09, 0.95, 1.1);
 // Where the key light comes from, in the medallion's space (rose_turn = the camera's yaw: x is screen right, y screen
 // down), for the relief painted on the bevels.
 uniform vec2 relief_light = vec2(-0.7071, -0.7071);
@@ -291,6 +299,10 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	groove = max(groove, pg);
 	metal = max(metal, past * line_at(edge + point_groove * 0.5, metal_width * 0.4) * wear * step(u, broken - 0.05));
 	float half_v = v < 0.0 ? point_value.y : point_value.x;
+	if (long_point) {
+		// the ridge thins out toward the tip
+		half_v = mix(half_v, point_value.x * point_ridge.y, line_at(v, point_ridge.x * 0.5) * smoothstep(0.0, 0.25, edge));
+	}
 	shade = mix(shade, half_v, inside);
 	raised = max(raised, inside * 2.0);
 	vec2 perp = vec2(-axis.y, axis.x);
@@ -317,7 +329,11 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	groove = max(groove, in_groove);
 	// the soft rosette of eight petals in the middle
 	float petal = d - 1.2 * (0.55 + 0.45 * abs(cos(ang * 4.0)));
-	groove = max(groove, line_at(petal, 0.035) * 0.6 * step(d, 1.25));
+	float cut = line_at(petal, rosette_cut.x * 0.5) * step(d, 1.3);
+	vec2 ql = q + lit * rune_lip;
+	float petal_l = length(ql) - 1.2 * (0.55 + 0.45 * abs(cos(atan(ql.y, ql.x) * 4.0)));
+	shade *= mix(1.0, rosette_cut.z, clamp(line_at(petal_l, rosette_cut.x * 0.5) - cut, 0.0, 1.0) * step(d, 1.3));
+	groove = max(groove, cut * rosette_cut.y);
 	groove = max(groove, crack * 1.2);
 	// back to floor space
 	tilt = vec2(c * tilt.x + sn * tilt.y, -sn * tilt.x + c * tilt.y);
@@ -401,7 +417,7 @@ void fragment() {
 	vec3 gravel = joint_color * (0.7 + 0.9 * noise(wp * 30.0));
 	c = mix(c, gravel, max(joint, gone));
 	// the grooves, runes and cracks, and the thread of dark bronze in them
-	c = mix(c, joint_color * groove_dark, clamp(rose.w, 0.0, 1.0) * 0.85);
+	c = mix(c, joint_color * groove_dark, clamp(rose.w, 0.0, 1.0) * groove_cover);
 	c = mix(c, mix(gold_dark, gold_light, noise(wp * 6.0)), rose.y * metal_cover);
 	// red petals in rare clusters, near the slabs' edges
 	vec2 pc = floor(wp / 0.35);

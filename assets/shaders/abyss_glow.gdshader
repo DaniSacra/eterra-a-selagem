@@ -25,6 +25,15 @@ uniform float edge_fade = 0.12;
 uniform float tatter_soft = 0.3;
 // How far the slow noise bends the card's coordinates (share of the card).
 uniform float warp = 0.3;
+// Cycle 7 (the glow seen through an arch was a smooth panel, like glass): upright wisps drawn through it (how much
+// they darken it, how many across the card, how fast they rise) and how much darker its top is than its fall-off
+// alone would leave it (a plain gradient from the bright foot up).
+uniform float wisps = 0.5;
+uniform float wisp_count = 9.0;
+uniform float wisp_rise = 0.05;
+uniform float top_dark = 0.25;
+// The wisps part the light, they do not dim it: the glow between them is this much brighter.
+uniform float wisp_gain = 1.95;
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -73,5 +82,11 @@ void fragment() {
 	// tatters: the higher, the more of the card is cut away
 	float t = fbm(vec2(uv.x * 5.0 + uv.y * 1.5, uv.y * 2.5 + TIME * rise));
 	float keep = smoothstep(breakup * (0.5 + up * 0.7) - tatter_soft, breakup * (0.5 + up * 0.7) + tatter_soft, t);
+	// wisps: long upright streaks, more of the card cut by them the higher up; and the gradient up the card
+	float w = fbm(vec2(uv.x * wisp_count, uv.y * 1.1 + TIME * wisp_rise));
+	float w2 = fbm(vec2(uv.x * wisp_count * 2.6 + 5.0, uv.y * 1.9 + TIME * wisp_rise * 1.8));
+	float streak = smoothstep(0.32, 0.68, w * 0.65 + w2 * 0.35);
+	v *= wisp_gain * (1.0 - wisps * (1.0 - streak) * (0.4 + 0.6 * smoothstep(0.0, 0.5, up)));
+	v *= 1.0 - top_dark * smoothstep(0.1, 0.8, up);
 	ALBEDO = color * energy * v * h * keep * (0.6 + 0.6 * n) * (0.9 + 0.1 * sin(TIME * 0.7));
 }

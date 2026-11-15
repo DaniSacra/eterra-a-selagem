@@ -12,7 +12,10 @@ const CROWD_LAYER := 2
 ## The depths (cliffs, far arcades, the tower) are also on this layer: only the abyss lights reach them, and the warm
 ## lights of the hall leave them out (WARM_MASK), so the depths stay cold and dark against their mist.
 const DEPTH_LAYER := 4
-const WARM_MASK := ~(CROWD_LAYER | DEPTH_LAYER)
+## The statues out in the abyss (cycle 7): the fires beside them and the violet below leave them out, so they stay the
+## same cold stone as the ones by the portal; each takes only a weak warm light on the side turned to its bowl.
+const STATUE_LAYER := 16
+const WARM_MASK := ~(CROWD_LAYER | DEPTH_LAYER | STATUE_LAYER)
 ## The facade and the statues by the portal: the portal's spill down the steps leaves them out (it would turn them green).
 const FACADE_LAYER := 8
 ## The palette of the catacombs.
@@ -99,19 +102,28 @@ const BRAZIER_COLOR := Color(1.0, 0.68, 0.42)
 const BRAZIER_WET := Vector2(1.5, 3.0)
 const WET_SPOTS := 8
 ## A portal's glow and light while closed and open (a closed portal still glows: the room's green accent).
-const PORTAL_DIM := 1.5
-const PORTAL_OPEN := 2.0
+## (cycle 7: the sheet's own values keep it under the tonemap's white but for its core, see portal.gdshader; closed
+## and open differ more by the light on the stone than by the sheet).
+const PORTAL_DIM := 0.85
+const PORTAL_OPEN := 1.0
 const PORTAL_LIGHT_DIM := 2.5
 const PORTAL_LIGHT := 3.5
 const PORTAL_RANGE := 5.5
-## Where the portal's light hangs in front of its sheet (m), and two small lights on the doorway's inner faces
-## (energy at full light, range).
-const PORTAL_LIGHT_AHEAD := 1.2
+## Where the portal's light hangs in front of its sheet (m) and how far under the sheet's middle (share of its
+## height; cycle 7: low, so it rakes up the jambs and the arch and leaves the tops dark), and two small lights on
+## the doorway's inner faces (energy at full light, range; PORTAL_SIDE_AT: m in from the sheet's side, share of its
+## height under its middle, m ahead of it).
+const PORTAL_LIGHT_AHEAD := 1.0
+const PORTAL_LIGHT_DROP := 0.3
 const PORTAL_SIDE := Vector2(1.5, 2.5)
+const PORTAL_SIDE_AT := Vector3(0.4, 0.3, 0.8)
 ## The medallion reads by its value, not by light (the picture's does not glow).
 const MEDALLION_GLOW := 0.0
-## A statue's plinth height, as a share of the statue's.
+## A statue's plinth height, as a share of the statue's; the width of its two steps (shares of the height: the upper
+## one narrower than the robe's hem, which hangs over it); the value of a statue's stone unless told otherwise.
 const STATUE_PLINTH := 0.1
+const STATUE_BASE := Vector2(0.52, 0.41)
+const STATUE_VALUE := 0.8
 ## Chains: meters between two links, and the links' size.
 const LINK_GAP := 0.32
 const LINK_SIZE := 0.2
@@ -451,16 +463,30 @@ static func tongue(size: Vector2, color: Color, shape := Tongue.POINT, priority 
 
 
 ## A hooded figure carved in stone (Masonry.hooded_statue), standing on a plinth. height: of the figure, in meters;
-## y: the ground under the plinth; tint: the stone's colour (green near a portal); solid: it blocks the way.
-func statue(at: Vector2, yaw: float, height: float = 4.2, y: float = 0.0, tint := Color(0.25, 0.27, 0.31), solid := true) -> void:
+## y: the ground under the plinth; value: how light its stone is (the same stone for all); solid: it blocks the way.
+func statue(at: Vector2, yaw: float, height: float = 4.2, y: float = 0.0, value := STATUE_VALUE, solid := true) -> void:
 	var plinth := STATUE_PLINTH * height
-	# a carved base of two bevelled steps
+	# a carved base of two bevelled steps, the upper one narrower than the robe's hem
 	var low := Masonry.BASE_STEPS.x * height
-	masonry.block(Vector3(at.x, y, at.y), Vector3(1.0, 0.0, 1.0) * height * 0.56 + Vector3(0, low, 0), yaw)
-	masonry.block(Vector3(at.x, y + low, at.y), Vector3(1.0, 0.0, 1.0) * height * 0.48 + Vector3(0, plinth - low, 0), yaw)
-	masonry.hooded_statue(Vector3(at.x, y + plinth, at.y), yaw, height, tint)
+	masonry.block(Vector3(at.x, y, at.y), Vector3(1.0, 0.0, 1.0) * height * STATUE_BASE.x + Vector3(0, low, 0), yaw)
+	masonry.block(Vector3(at.x, y + low, at.y), Vector3(1.0, 0.0, 1.0) * height * STATUE_BASE.y + Vector3(0, plinth - low, 0), yaw)
+	masonry.hooded_statue(Vector3(at.x, y + plinth, at.y), yaw, height, value)
 	if solid:
 		circles.append(Vector3(at.x, at.y, height * 0.25))
+
+
+## A light on the statues of STATUE_LAYER alone (the weak warm light of a fire bowl, or a cold one from the hall):
+## a spot from `from` at `to`, with no shadow.
+func statue_glow(from: Vector3, to: Vector3, energy: float, reach: float, cone: float, color := FIRE, attenuation := 1.0) -> void:
+	var up := SpotLight3D.new()
+	root.add_child(up)
+	up.look_at_from_position(from, to)
+	up.light_color = color
+	up.light_energy = energy
+	up.spot_range = reach
+	up.spot_angle = cone
+	up.spot_attenuation = attenuation
+	up.light_cull_mask = STATUE_LAYER
 
 
 ## A chain hanging between two points, sagging `sag` meters at its middle.
@@ -524,7 +550,7 @@ func portal_glow(center: Vector3, yaw: float, size: Vector2, arch := Vector3.ZER
 	sheet.transform = Transform3D(Basis(Vector3.UP, yaw), center)
 	root.add_child(sheet)
 	var l := OmniLight3D.new()
-	l.position = center + Basis(Vector3.UP, yaw) * Vector3(0, 0.3, PORTAL_LIGHT_AHEAD)
+	l.position = center + Basis(Vector3.UP, yaw) * Vector3(0, -size.y * PORTAL_LIGHT_DROP, PORTAL_LIGHT_AHEAD)
 	l.light_color = PORTAL
 	l.light_energy = PORTAL_LIGHT_DIM
 	l.omni_range = PORTAL_RANGE
@@ -534,7 +560,7 @@ func portal_glow(center: Vector3, yaw: float, size: Vector2, arch := Vector3.ZER
 	var entry: Array = [m, l]
 	for s: float in [-1.0, 1.0]:
 		var side := OmniLight3D.new()
-		side.position = center + Basis(Vector3.UP, yaw) * Vector3(s * (size.x * 0.5 - 0.4), -size.y * 0.15, 0.8)
+		side.position = center + Basis(Vector3.UP, yaw) * Vector3(s * (size.x * 0.5 - PORTAL_SIDE_AT.x), -size.y * PORTAL_SIDE_AT.y, PORTAL_SIDE_AT.z)
 		side.light_color = PORTAL
 		side.light_energy = PORTAL_SIDE.x * PORTAL_LIGHT_DIM / PORTAL_LIGHT
 		side.omni_range = PORTAL_SIDE.y
@@ -624,8 +650,8 @@ func ruin_card(center: Vector3, size: Vector2, yaw: float, mist: Color, haze: fl
 
 
 ## A bank of pale mist in the abyss (abyss_mist.gdshader): a wide low card turning to the camera, its middle at
-## `center`, ragged at its edges; grain: a finer mottle mixed in.
-func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain := 0.0) -> void:
+## `center`, ragged at its edges; grain: a finer mottle mixed in; bands: how much it parts into level streaks.
+func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain := 0.0, bands := 0.0) -> void:
 	var card := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = size
@@ -635,6 +661,7 @@ func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain
 	m.set_shader_parameter(&"color", color)
 	m.set_shader_parameter(&"alpha", alpha)
 	m.set_shader_parameter(&"grain", grain)
+	m.set_shader_parameter(&"bands", bands)
 	card.material_override = m
 	card.position = center
 	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

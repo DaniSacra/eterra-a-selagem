@@ -21,28 +21,52 @@ const RAIL_TOP := 1.05
 const CURB := 0.26
 const BALUSTERS := 3
 const BALUSTER := 0.22
-## Hooded statue (shares of its height H): the robe's radius at the hem and at the chest, its pleats (how many, how
-## deep), the hood's middle height and how far forward it is pulled, the joined hands' height, the face's darkness.
-const ROBE_HEM := 0.2
+## Hooded statue (shares of its height H; cycle 7: a brimmed hood over a sunken face, deeper pleats, shading by
+## vertex value). The robe's radius at the hem and at the chest, its pleats (how many round it: half show from any
+## side; how deep at the hem and at the waist, as shares of the height; the value left in the bottom of a fold).
+const ROBE_HEM := 0.215
 const ROBE_CHEST := 0.13
 const ROBE_TOP := 0.78
-const PLEATS := 7
-const PLEAT_DEPTH := 0.04
+const PLEATS := 12
+const PLEAT_SEGMENTS := 4
+const PLEAT_DEPTH := Vector2(0.036, 0.008)
+const PLEAT_SHADE := 0.36
 ## Where the pleats fade out (share of the height: up to the chest), the belt (height, thickness), the sleeves' mouth
 ## (radius) over the hands, the two steps of the carved base (each as a share of the statue's height).
 const PLEAT_TOP := 0.72
 const BELT := Vector2(0.55, 0.03)
-const SLEEVE := 0.07
+const SLEEVE := 0.085
 const BASE_STEPS := Vector2(0.06, 0.04)
 ## The shoulders' half width and the arms' reach from the middle (shares of the height; cycle 6: 1.4 times broader).
 const SHOULDERS := 0.2
 const ARM_OUT := 0.165
+## The hood: its middle (height, how far forward), its half size (across, front to back, up), how far it bows down
+## (radians), and its outline turned round the way it looks (radius, then distance along that way, as shares of the
+## half size; then the vertex value): the ball of the hood, the brim standing out round the opening, the opening's
+## wall and the sunken face, darkest in its middle.
 const HOOD_AT := 0.86
 const HOOD_FORWARD := 0.03
+const HOOD_SIZE := Vector3(0.082, 0.09, 0.1)
+const HOOD_BOW := 0.3
+const HOOD_OUTLINE: Array[Vector3] = [Vector3(0.0, -1.0, 0.85), Vector3(0.38, -0.92, 0.9), Vector3(0.71, -0.71, 0.95),
+	Vector3(0.92, -0.38, 1.0), Vector3(1.0, 0.0, 1.0), Vector3(0.96, 0.3, 0.95), Vector3(0.9, 0.5, 0.8),
+	Vector3(0.98, 0.58, 1.25), Vector3(1.0, 0.72, 1.35), Vector3(0.9, 0.82, 1.35), Vector3(0.76, 0.8, 1.1),
+	Vector3(0.68, 0.66, 0.42), Vector3(0.6, 0.5, 0.26), Vector3(0.34, 0.4, 0.14), Vector3(0.0, 0.36, 0.08)]
 const HANDS_AT := 0.6
-const FACE_DARK := 0.04
-## The statue's vertex value of the robe (the hollow of the hood is FACE_DARK of it, the darkest part of the figure).
+## The statue's vertex value of plain stone (the mesh stores value times this, so the brim can be lighter than 1),
+## and the robe's value by height (height, value): dark where it meets the plinth, under the arms and under the hood.
 const ROBE_VALUE := 0.5
+const ROBE_SHADE: Array[Vector2] = [Vector2(0.0, 0.55), Vector2(0.05, 0.72), Vector2(0.2, 1.0), Vector2(0.42, 1.0),
+	Vector2(0.54, 0.72), Vector2(0.62, 0.8), Vector2(0.7, 1.0), Vector2(0.76, 0.75), Vector2(0.8, 0.6)]
+## The statues' stone: Masonry's own, carved from one piece (no courses), a cold grey; each statue only changes its
+## value. Its grime climbs this share of the statue's height from its feet.
+const STATUE_STONE := Color(0.8, 0.88, 0.94)
+const STATUE_GRIME := 0.16
+## How much of the built stone's fine cracks and of its rock's hollows a statue keeps (smoother, carved stone).
+const STATUE_CRACKS := 0.2
+const STATUE_ROCK := 0.22
+## How much lighter the faces turned up are (hood, shoulders, sleeves: the form reads from above, as the camera sees it).
+const STATUE_TOP_LIGHT := 1.45
 ## Pots: the belly's radius (share of the pot's height). Candles: the wax, the flame's size and colour.
 const POT_BELLY := 0.38
 ## Standing stones: the share of their columns cracked upright, the frame round their niche.
@@ -549,34 +573,26 @@ func pendant(top: Vector3, length: float, root: float, mat: Material) -> void:
 
 
 ## A hooded monk carved in dark stone (the picture's statues, no model yet): a pleated robe to the ground, broad
-## shoulders, hands joined on the chest, a deep hood over a face in shadow. foot: the middle of its base; it looks
-## along +Z turned by yaw; height in meters; tint: the stone's colour.
-func hooded_statue(foot: Vector3, yaw: float, height: float, tint: Color) -> MeshInstance3D:
+## shoulders, hands joined on the chest in wide sleeves, a brimmed hood over a face in shadow. foot: the middle of its
+## base; it looks along +Z turned by yaw; height in meters; value: how light its stone is (STATUE_STONE times it).
+func hooded_statue(foot: Vector3, yaw: float, height: float, value: float) -> MeshInstance3D:
 	if _statue_mesh == null:
 		_statue_mesh = _build_statue()
-	var key := tint.to_html()
+	var key := "%.2f|%.1f|%.1f" % [value, foot.y, height]
 	if not _statue_mats.has(key):
-		var mat := StandardMaterial3D.new()
-		mat.vertex_color_use_as_albedo = true
-		mat.albedo_color = tint / ROBE_VALUE
-		var tex := NoiseTexture2D.new()
-		var noise := FastNoiseLite.new()
-		noise.frequency = 0.15
-		noise.fractal_octaves = 3
-		tex.noise = noise
-		tex.seamless = true
-		# weathered stone: the noise only from 0.65 to 1 (no black blotches)
-		var ramp := Gradient.new()
-		ramp.colors = PackedColorArray([Color.WHITE * 0.65, Color.WHITE])
-		tex.color_ramp = ramp
-		mat.albedo_texture = tex
-		mat.uv1_triplanar = true
-		mat.uv1_world_triplanar = true
-		mat.uv1_scale = Vector3.ONE * 0.6
-		mat.roughness = 0.95
-		mat.rim_enabled = true
-		mat.rim = 0.15
-		mat.rim_tint = 0.8
+		var mat := stone(foot.y, STATUE_STONE * value).duplicate() as ShaderMaterial
+		# one piece of stone: no courses, no blocks, no chipped corners; shaded by the mesh's vertex value
+		mat.set_shader_parameter(&"course", 10000.0)
+		mat.set_shader_parameter(&"block_len", 10000.0)
+		mat.set_shader_parameter(&"block_var", 0.0)
+		mat.set_shader_parameter(&"joint_width", 0.001)
+		mat.set_shader_parameter(&"chipped", 0.0)
+		mat.set_shader_parameter(&"side_light", 1.0)
+		mat.set_shader_parameter(&"cracks", STATUE_CRACKS)
+		mat.set_shader_parameter(&"top_light", STATUE_TOP_LIGHT)
+		mat.set_shader_parameter(&"rock_value", STATUE_ROCK)
+		mat.set_shader_parameter(&"grime_height", height * STATUE_GRIME)
+		mat.set_shader_parameter(&"vertex_shade", 1.0 / ROBE_VALUE)
 		_statue_mats[key] = mat
 	var mi := MeshInstance3D.new()
 	mi.mesh = _statue_mesh
@@ -586,45 +602,72 @@ func hooded_statue(foot: Vector3, yaw: float, height: float, tint: Color) -> Mes
 	return mi
 
 
-## The statue of height 1, looking along +Z: lathed robe, shoulders, hood with its point behind, arms and hands, and
-## the dark face (vertex colour: the face is near black, the rest white and taking the tint).
+## The statue of height 1, looking along +Z: lathed robe with deep pleats, belt, shoulders, the hood with its brim
+## and sunken face and its point behind, arms in wide sleeves, hands. Vertex colour: the stone's value there
+## (ROBE_VALUE = plain stone), which the material multiplies in: the folds, the foot, under the arms and the face.
 func _build_statue() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var stone_v := Color.WHITE * ROBE_VALUE
 	var robe: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(ROBE_HEM * 1.04, 0.0), Vector2(ROBE_HEM, 0.04),
-		Vector2(ROBE_HEM * 0.93, 0.18), Vector2(ROBE_HEM * 0.82, 0.4), Vector2(ROBE_CHEST * 1.08, 0.56),
+		Vector2(ROBE_HEM * 0.93, 0.18), Vector2(ROBE_HEM * 0.86, 0.3), Vector2(ROBE_HEM * 0.78, 0.42), Vector2(ROBE_CHEST * 1.08, 0.56),
 		Vector2(ROBE_CHEST, 0.7), Vector2(ROBE_CHEST * 0.85, ROBE_TOP), Vector2(0.06, ROBE_TOP + 0.02), Vector2(0.0, ROBE_TOP + 0.02)]
-	_lathe(st, robe, Transform3D.IDENTITY, stone_v, PLEAT_DEPTH, 42)
+	var robe_shade := PackedFloat32Array()
+	for p in robe:
+		robe_shade.append(_shade_at(p.y))
+	_lathe(st, robe, Transform3D.IDENTITY, robe_shade, true)
 	# the belt round the waist
 	var belt_r := ROBE_CHEST * 1.12
 	var belt: Array[Vector2] = [Vector2(0.0, BELT.x - BELT.y * 0.5), Vector2(belt_r, BELT.x - BELT.y * 0.5),
 		Vector2(belt_r * 1.03, BELT.x), Vector2(belt_r, BELT.x + BELT.y * 0.5), Vector2(0.0, BELT.x + BELT.y * 0.5)]
-	_lathe(st, belt, Transform3D.IDENTITY, stone_v * 0.8)
-	# shoulders and the cape over them, a flattened ball
-	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(SHOULDERS, 0.055, 0.11)), Vector3(0, 0.755, -0.01)), stone_v)
-	# the hood, pulled forward, and its point falling behind
-	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.068, 0.088, 0.08)), Vector3(0, HOOD_AT, HOOD_FORWARD)), stone_v)
-	var tip: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.045, 0.0), Vector2(0.0, 0.11)]
-	_lathe(st, tip, Transform3D(Basis(Vector3.RIGHT, -2.2), Vector3(0, HOOD_AT + 0.02, -0.02)), stone_v)
-	# the face: a dark hollow in the hood's front, nothing in it (a pale mask read as a white disc from the camera)
-	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.042, 0.055, 0.02)), Vector3(0, HOOD_AT - 0.012, HOOD_FORWARD + 0.068)),
-		stone_v * FACE_DARK)
+	_lathe(st, belt, Transform3D.IDENTITY, _flat(belt.size(), 0.8))
+	# shoulders and the cape over them, a flattened ball (darker underneath)
+	var ball := _ellipse()
+	var under := PackedFloat32Array()
+	for p in ball:
+		under.append(lerpf(0.65, 1.05, smoothstep(-0.6, 0.5, p.y)))
+	_lathe(st, ball, Transform3D(Basis.from_scale(Vector3(SHOULDERS, 0.055, 0.11)), Vector3(0, 0.755, -0.01)), under)
+	# the hood, turned round the way it looks and bowed: its ball, the brim round the opening, the sunken face
+	var hood: Array[Vector2] = []
+	var hood_shade := PackedFloat32Array()
+	for p in HOOD_OUTLINE:
+		hood.append(Vector2(p.x, p.y))
+		hood_shade.append(p.z)
+	var look := Basis(Vector3.RIGHT, PI * 0.5 + HOOD_BOW) * Basis.from_scale(Vector3(HOOD_SIZE.x, HOOD_SIZE.y, HOOD_SIZE.z))
+	_lathe(st, hood, Transform3D(look, Vector3(0, HOOD_AT, HOOD_FORWARD)), hood_shade)
+	# its point falling behind
+	var tip: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.05, 0.0), Vector2(0.03, 0.07), Vector2(0.0, 0.14)]
+	_lathe(st, tip, Transform3D(Basis(Vector3.RIGHT, -2.1), Vector3(0, HOOD_AT + 0.035, -0.035)), PackedFloat32Array([0.9, 0.9, 1.0, 1.05]))
 	# the arms from the shoulders down to the hands joined on the chest, in wide sleeves that hide the hands
 	for s in [-1.0, 1.0]:
 		var from := Vector3(s * ARM_OUT, 0.74, 0.02)
 		var to := Vector3(s * 0.035, HANDS_AT, ROBE_CHEST + 0.02)
 		var up := (to - from).normalized()
 		var side := up.cross(Vector3.FORWARD).normalized()
-		var basis := Basis(side * 0.042, up * from.distance_to(to), side.cross(up) * 0.042)
+		var basis := Basis(side * 0.046, up * from.distance_to(to), side.cross(up) * 0.046)
 		var arm: Array[Vector2] = [Vector2(0.0, -0.05), Vector2(0.9, 0.0), Vector2(1.0, 0.5), Vector2(0.9, 1.0), Vector2(0.0, 1.05)]
-		_lathe(st, arm, Transform3D(basis, from), stone_v)
-		var mouth := SLEEVE / 0.042
-		var sleeve: Array[Vector2] = [Vector2(0.0, 0.5), Vector2(1.0, 0.5), Vector2(mouth * 0.8, 0.9), Vector2(mouth, 1.08), Vector2(mouth * 0.7, 1.1), Vector2(0.0, 1.1)]
-		_lathe(st, sleeve, Transform3D(basis, from), stone_v)
-	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.05, 0.04, 0.035)), Vector3(0, HANDS_AT, ROBE_CHEST + 0.04)), stone_v * 0.7)
+		_lathe(st, arm, Transform3D(basis, from), _flat(arm.size(), 0.95))
+		var mouth := SLEEVE / 0.046
+		var sleeve: Array[Vector2] = [Vector2(0.0, 0.4), Vector2(1.05, 0.4), Vector2(mouth * 0.75, 0.75), Vector2(mouth, 1.06),
+			Vector2(mouth * 0.92, 1.1), Vector2(mouth * 0.6, 1.02), Vector2(0.0, 0.98)]
+		_lathe(st, sleeve, Transform3D(basis, from), PackedFloat32Array([0.9, 0.9, 1.0, 1.15, 1.1, 0.4, 0.25]))
+	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.05, 0.04, 0.035)), Vector3(0, HANDS_AT, ROBE_CHEST + 0.04)), _flat(9, 0.7))
 	st.generate_normals()
 	return st.commit()
+
+
+## The robe's value at a height (ROBE_SHADE).
+func _shade_at(y: float) -> float:
+	for i in range(1, ROBE_SHADE.size()):
+		if y <= ROBE_SHADE[i].x:
+			return remap(y, ROBE_SHADE[i - 1].x, ROBE_SHADE[i].x, ROBE_SHADE[i - 1].y, ROBE_SHADE[i].y)
+	return ROBE_SHADE[ROBE_SHADE.size() - 1].y
+
+
+func _flat(count: int, value: float) -> PackedFloat32Array:
+	var f := PackedFloat32Array()
+	f.resize(count)
+	f.fill(value)
+	return f
 
 
 ## The half outline of a ball of radius 1 (bottom to top), to lathe.
@@ -636,31 +679,35 @@ func _ellipse() -> Array[Vector2]:
 	return e
 
 
-## Turns an outline (radius, height) around Y into a closed surface, placed by xf; pleat: depth of vertical folds.
-func _lathe(st: SurfaceTool, outline: Array[Vector2], xf: Transform3D, color: Color, pleat := 0.0, segs := 20) -> void:
+## Turns an outline (radius, height) around Y into a closed surface, placed by xf. shade: the value of each point of
+## the outline (1 = plain stone). pleated: upright folds round it (PLEATS: round ridges, sharp dark valleys), deepest
+## at the hem and gone by PLEAT_TOP.
+func _lathe(st: SurfaceTool, outline: Array[Vector2], xf: Transform3D, shade: PackedFloat32Array, pleated := false) -> void:
+	var segs := PLEATS * PLEAT_SEGMENTS if pleated else 20
 	var rings: Array[PackedVector3Array] = []
-	for p in outline:
+	var values: Array[PackedFloat32Array] = []
+	for i in outline.size():
+		var p := outline[i]
 		var ring := PackedVector3Array()
+		var vals := PackedFloat32Array()
+		var fold := (1.0 - smoothstep(PLEAT_TOP - 0.2, PLEAT_TOP, p.y)) * float(p.x > 0.0) if pleated else 0.0
+		var depth := lerpf(PLEAT_DEPTH.x, PLEAT_DEPTH.y, clampf(p.y / PLEAT_TOP, 0.0, 1.0)) * fold
 		for j in segs:
 			var a := TAU * j / segs
-			var r := p.x + pleat * sin(a * PLEATS) * (1.0 - smoothstep(PLEAT_TOP - 0.2, PLEAT_TOP, p.y)) * float(p.x > 0.0)
+			# 0 in the bottom of a fold, 1 on its ridge
+			var ridge := absf(sin(a * PLEATS * 0.5))
+			var r := p.x + depth * (ridge - 0.6)
 			ring.append(xf * Vector3(sin(a) * r, p.y, cos(a) * r))
+			vals.append(shade[i] * lerpf(1.0, lerpf(PLEAT_SHADE, 1.0, ridge), fold))
 		rings.append(ring)
-	st.set_color(color)
+		values.append(vals)
 	st.set_smooth_group(0)
 	for i in rings.size() - 1:
 		for j in segs:
 			var k := (j + 1) % segs
-			var a: Vector3 = rings[i][j]
-			var b: Vector3 = rings[i][k]
-			var c: Vector3 = rings[i + 1][j]
-			var d: Vector3 = rings[i + 1][k]
-			st.add_vertex(a)
-			st.add_vertex(c)
-			st.add_vertex(b)
-			st.add_vertex(b)
-			st.add_vertex(c)
-			st.add_vertex(d)
+			for q: Vector2i in [Vector2i(i, j), Vector2i(i + 1, j), Vector2i(i, k), Vector2i(i, k), Vector2i(i + 1, j), Vector2i(i + 1, k)]:
+				st.set_color(Color.WHITE * minf(values[q.x][q.y] * ROBE_VALUE, 1.0))
+				st.add_vertex(rings[q.x][q.y])
 
 
 ## A clay pot: belly, shoulder, neck, a lip turned out and its dark mouth. size: its height in meters.

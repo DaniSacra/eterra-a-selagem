@@ -48,6 +48,7 @@ uniform vec2 roof_fall = vec2(-10.0, -32.0);
 uniform float backdrop = 0.0;
 uniform vec2 mottle = vec2(0.55, 1.5);
 uniform float drift = 0.006;
+uniform float mottle_fine = 0.2;
 uniform vec4 patch_a = vec4(0.0, 0.0, 1.0, 1.0);
 uniform vec4 patch_b = vec4(0.0, 0.0, 1.0, 1.0);
 uniform float patch_light = 0.9;
@@ -70,6 +71,8 @@ float noise(vec2 p) {
 float mist_value(vec2 p) {
 	float n = noise(vec2(p.x * 0.035 + TIME * drift, p.y * 0.08)) * 0.55 + noise(vec2(p.x * 0.09 - TIME * drift * 1.7, p.y * 0.2 + 7.0)) * 0.3
 		+ noise(vec2(p.x * 0.3, p.y * 0.5 - TIME * drift * 3.0)) * 0.15;
+	// a finer curl on top (cycle 7: no patch of the veil the size of a hand is one flat value)
+	n += (noise(vec2(p.x * 0.8 + TIME * drift * 4.0, p.y * 1.3)) - 0.5) * mottle_fine;
 	return mix(mottle.x, mottle.y, n);
 }
 

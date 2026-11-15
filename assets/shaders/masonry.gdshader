@@ -41,6 +41,11 @@ uniform float upright_cracks = 0.0;
 uniform float upright_crack_length = 1.5;
 // What is left of the value in the joints and chips (cavities).
 uniform float cavity = 0.35;
+// Carved pieces (the statues) paint their own shading in the mesh's vertex colour: the value is the red channel
+// times this (0: the vertex colour is ignored, as on every built block).
+uniform float vertex_shade = 0.0;
+// How dark the fine cracks on the cracked blocks are (a carved statue keeps only a trace of them).
+uniform float cracks = 0.8;
 
 varying vec3 world;
 varying vec3 wnormal;
@@ -138,7 +143,7 @@ void fragment() {
 	c = mix(c, c * vec3(1.08, 0.95, 1.15), smoothstep(0.45, 0.8, fbm(wp * 0.25 + 4.0)));
 	// chips and cracks
 	float crack = 1.0 - smoothstep(0.0, 0.025, abs(fbm(wp * 2.2 + s.yz * 3.0) - 0.5));
-	c = mix(c, joint_color * 1.5, crack * step(0.65, hash1(s.yz + 5.0)) * 0.8);
+	c = mix(c, joint_color * 1.5, crack * step(0.65, hash1(s.yz + 5.0)) * cracks);
 	// upright cracks on the upright faces, a few columns, each one course long
 	if (upright_cracks > 0.0 && n.y < 0.5) {
 		float cu = wp.x * 1.4 + (noise(wp * 3.0) - 0.5) * 0.35;
@@ -164,6 +169,9 @@ void fragment() {
 	c *= mix(1.0, side_light, side_bevel);
 	float grime = 1.0 - smoothstep(0.0, grime_height, world.y - base_y + (fbm(wp * 1.5) - 0.5) * 0.6);
 	c = mix(c, grime_color, grime * 0.55 * (1.0 - top));
+	if (vertex_shade > 0.0) {
+		c *= COLOR.r * vertex_shade;
+	}
 	ALBEDO = c;
 	ROUGHNESS = mix(0.88, 0.97, hollow);
 	SPECULAR = 0.25;
