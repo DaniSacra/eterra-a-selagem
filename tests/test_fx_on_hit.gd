@@ -156,13 +156,17 @@ func test_numbers_in_a_crowd_keep_only_the_biggest() -> void:
 	for i in Fx.NUMBER_CROWD:
 		fx.number(Vector3(i * 0.1, 2.0, 0.0), 10.0 + i, Color.WHITE)
 	assert_eq(fx.showing(&"numbers"), Fx.NUMBER_CROWD)
+	# each next hit in a frame of its own: within one frame, past NumberTally.GROUP_FROM they join one total
+	await wait_process_frames(1)
 	fx.number(Vector3(0.2, 2.0, 0.0), 5.0, Color.WHITE)
 	assert_eq(fx.showing(&"numbers"), Fx.NUMBER_CROWD, "a smaller one does not show")
 	assert_false(_shown().has("5"))
+	await wait_process_frames(1)
 	fx.number(Vector3(0.2, 2.0, 0.0), 99.0, Color.WHITE)
 	assert_eq(fx.showing(&"numbers"), Fx.NUMBER_CROWD, "a bigger one takes the place of the smallest")
 	assert_true(_shown().has("99"))
 	assert_false(_shown().has("10"))
+	await wait_process_frames(1)
 	fx.number(Vector3(Fx.NUMBER_CROWD_RADIUS + 2.0, 2.0, 0.0), 1.0, Color.WHITE)
 	assert_eq(fx.showing(&"numbers"), Fx.NUMBER_CROWD + 1, "far from the crowd every number shows")
 	fx.word(Vector3(0.2, 2.0, 0.0), "x", Color.WHITE)

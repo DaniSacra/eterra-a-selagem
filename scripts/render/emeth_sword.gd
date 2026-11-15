@@ -89,6 +89,12 @@ static func set_pulse(blade: ShaderMaterial, k: float) -> void:
 	blade.set_shader_parameter(&"pulse", (PULSE_GLOW - BLADE_GLOW) * clampf(k, 0.0, 1.0))
 
 
+## A boss's curse on the blade's material: k 1 lets the violet creep up the crystal (emeth.gdshader corrupt), 0 is
+## Emeth's emerald whole.
+static func set_corrupt(blade: ShaderMaterial, k: float) -> void:
+	blade.set_shader_parameter(&"corrupt", clampf(k, 0.0, 1.0))
+
+
 ## The model's size in the sword's space: its blade and guard fill GRIP_TOP to TIP.
 static func scale() -> float:
 	return (TIP - GRIP_TOP) / (MODEL_TIP - MODEL_GRIP_TOP)

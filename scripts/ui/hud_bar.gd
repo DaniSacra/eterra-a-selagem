@@ -5,6 +5,9 @@ extends Control
 ## dark at the bottom) with a sheen on top, a pale trail that shows for a moment what a hit took, a short glint at the
 ## fill's end whenever the value changes, an optional thin second bar on top (the boss's armour), the numbers in
 ## the middle, and for a boss the marks where his phases begin and a veil of his shield while it stands.
+## Boss marks: dark notches ahead of his life; the ones his life has passed turn to old gold with a small diamond,
+## and the one just reached flashes (MARK_FLASH seconds). The shield: the frame in its colour and slanted bands that
+## drift along a thin veil, so the bar reads as warded while his life stays readable under it.
 
 const BACK := Color(0.1, 0.12, 0.16, 0.72)
 const TRAIL := Color(1.0, 0.9, 0.78, 0.8)
@@ -34,7 +37,18 @@ var shield := 0.0
 var shield_color := Color(0.4, 1.0, 0.75)
 const MARK := Color(0.05, 0.04, 0.06, 0.9)
 const MARK_WIDTH := 2.0
-const SHIELD_VEIL := 0.45
+const MARK_FLASH := 0.9
+## The shield: veil opacity, the bands' opacity, width, spacing and drift (pixels a second).
+const SHIELD_VEIL := 0.22
+const SHIELD_BAND := 0.5
+const SHIELD_BAND_WIDTH := 4.0
+const SHIELD_BAND_GAP := 12.0
+const SHIELD_DRIFT := 22.0
+## Marks passed when last looked (-1: not looked yet, so a fight joined late does not flash).
+var _reached := -1
+var _mark_flash := 0.0
+var _flash_at := -1.0
+var _drift := 0.0
 var _ratio := 1.0
 ## Where the trail started (the value before the hit) and how long it still shows.
 var _trail_from := 1.0
@@ -82,6 +96,15 @@ func show_boss(phase_marks: PackedFloat32Array, shielded: float) -> void:
 	queue_redraw()
 
 
+## How many of the boss's marks his life has passed (the phases begun after the first).
+func reached() -> int:
+	var n := 0
+	for m in marks:
+		if _ratio <= m:
+			n += 1
+	return n
+
+
 ## Where the trail ends now (0..1): the value before the hit, draining to the fill at the end of its time.
 func trail() -> float:
 	if _trail_t <= 0.0:
@@ -94,6 +117,18 @@ func _process(delta: float) -> void:
 	if _trail_t > 0.0 or _tip > 0.0:
 		_trail_t = maxf(0.0, _trail_t - delta)
 		_tip = maxf(0.0, _tip - delta / TIP_TIME)
+		queue_redraw()
+	if not marks.is_empty():
+		var n := reached()
+		if _reached >= 0 and n > _reached:
+			_mark_flash = 1.0
+			_flash_at = marks[n - 1] if n - 1 < marks.size() else -1.0
+		_reached = n
+	if _mark_flash > 0.0:
+		_mark_flash = maxf(0.0, _mark_flash - delta / MARK_FLASH)
+		queue_redraw()
+	if shield > 0.0:
+		_drift = fposmod(_drift + delta * SHIELD_DRIFT, SHIELD_BAND_GAP)
 		queue_redraw()
 
 
@@ -113,12 +148,13 @@ func _draw() -> void:
 		_band(body, _ratio - TIP_WIDTH / size.x, _ratio, glint, glint, 0.0, size.y)
 	if _over > 0.0:
 		_band(body, 0.0, _over, over_color, over_color.darkened(0.25), 0.0, size.y * 0.4)
-	for m in marks:
-		_band(body, m - MARK_WIDTH * 0.5 / size.x, m + MARK_WIDTH * 0.5 / size.x, MARK, MARK, 0.0, size.y)
 	if shield > 0.0:
 		var veil := Color(shield_color, SHIELD_VEIL * shield)
 		_band(body, 0.0, 1.0, veil, Color(shield_color.darkened(0.4), SHIELD_VEIL * shield), 0.0, size.y)
+		_shield_bands(body, Color(shield_color.lightened(0.3), SHIELD_BAND * shield))
 		_ring(inner, inner.grow(UiKit.FRAME), Color(shield_color, shield))
+	for m in marks:
+		_draw_mark(body, m)
 	if _text != "":
 		var font := UiKit.number_font()
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
@@ -126,6 +162,40 @@ func _draw() -> void:
 		UiKit.draw_shadow(self, font, at, _text, font_size)
 		draw_string_outline(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, UiKit.INK)
 		draw_string(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.PALE)
+
+
+## A boss's phase mark: a dark notch ahead of his life; once passed, old gold with a small diamond over the frame,
+## and a flash of light on the one just reached.
+func _draw_mark(body: PackedVector2Array, m: float) -> void:
+	var half := MARK_WIDTH * 0.5 / size.x
+	var x := size.x * m
+	if _ratio > m:
+		_band(body, m - half, m + half, MARK, MARK, 0.0, size.y)
+		return
+	var flash := _mark_flash if is_equal_approx(m, _flash_at) else 0.0
+	var gold := UiKit.OLD_GOLD.lerp(UiKit.GOLD, 0.5).lerp(UiKit.PALE, flash)
+	_band(body, m - half, m + half, gold, gold, 0.0, size.y)
+	var d := 3.5 + 3.0 * flash
+	for y: float in [-UiKit.FRAME - 1.0, size.y + UiKit.FRAME + 1.0]:
+		var c := Vector2(x, y)
+		draw_colored_polygon(PackedVector2Array([c + Vector2(0, -d - 1.5), c + Vector2(d + 1.5, 0), c + Vector2(0, d + 1.5), c + Vector2(-d - 1.5, 0)]), UiKit.INK)
+		draw_colored_polygon(PackedVector2Array([c + Vector2(0, -d), c + Vector2(d, 0), c + Vector2(0, d), c + Vector2(-d, 0)]), gold)
+	if flash > 0.0:
+		var glow := Color(UiKit.PALE, 0.5 * flash)
+		var w := (6.0 + 22.0 * (1.0 - flash)) / size.x
+		_band(body, m - w, m + w, glow, Color(glow, 0.0), 0.0, size.y)
+
+
+## Slanted bands drifting along the bar while the shield stands.
+func _shield_bands(body: PackedVector2Array, color: Color) -> void:
+	var slant := size.y
+	var x := -slant - SHIELD_BAND_GAP + _drift
+	while x < size.x:
+		var band := PackedVector2Array([Vector2(x + slant, 0), Vector2(x + slant + SHIELD_BAND_WIDTH, 0), Vector2(x + SHIELD_BAND_WIDTH, size.y), Vector2(x, size.y)])
+		for part in Geometry2D.intersect_polygons(body, band):
+			if _area(part) >= 0.5:
+				draw_colored_polygon(part, color)
+		x += SHIELD_BAND_GAP
 
 
 ## The bar's outline in a rectangle: square left end (or pointed) and a pointed right end.

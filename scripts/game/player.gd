@@ -105,10 +105,10 @@ const CAST_SLOW := 0.6
 const CAST_COOLDOWN := 0.2
 const CAST_OMEGA_TIME := 0.6
 const CAST_OMEGA_COST := 20.0
-## A boss's curse on him (CurseState): a dark purple edge on his body and wisps every CURSE_PUFF seconds; the special
-## (and its Omega) is locked while it lasts, walking and dodging never.
+## A boss's curse on him (CurseState): a dark violet edge on his body, a few runes turning around him and a haze
+## under his feet (CurseAura), Emeth's crystal corrupted by violet veins (EmethSword.set_corrupt), one puff of
+## violet when it lands. The special (and its Omega) is locked while it lasts, walking and dodging never.
 const CURSE_GLOW := Color(0.55, 0.12, 0.8, 0.65)
-const CURSE_PUFF := 0.2
 const CURSE_ACTION := &"heavy_attack"
 
 var arena: Arena
@@ -136,7 +136,9 @@ var _charge_tap := ComboNode.In.HEAVY
 var _charge_held := ComboNode.In.CHARGE
 var magick := Magick.new(MAGICK_MAX)
 var curse := CurseState.new()
-var _curse_puff := 0.0
+var _curse_aura: CurseAura
+var _blade_mat: ShaderMaterial
+var _shown_corrupt := -1.0
 ## Holding the dodge button after the roll keeps running fast.
 var sprinting := false
 var cast_cooldown := 0.0
@@ -224,6 +226,10 @@ func _ready() -> void:
 	add_child(_light)
 	_model.add_child(_contact_shadow())
 	add_child(_ring())
+	_curse_aura = CurseAura.new()
+	add_child(_curse_aura)
+	if _sword and _sword.has_node(^"Blade"):
+		_blade_mat = (_sword.get_node(^"Blade") as MeshInstance3D).material_override as ShaderMaterial
 
 
 ## A soft dark ellipse on the floor under him (it turns with him, longer front to back).
@@ -369,11 +375,6 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	_flash = maxf(0.0, _flash - dt / HURT_FLASH)
 	_blink = maxf(0.0, _blink - dt)
 	curse.step(dt)
-	if curse.active() and alive():
-		_curse_puff -= dt
-		if _curse_puff <= 0.0:
-			_curse_puff = CURSE_PUFF
-			fx.burst(&"curse", Vector3(pos.x, 1.3, pos.y))
 	if shield_cooldown > 0.0 and not shield_ready:
 		_shield_t += dt
 		if _shield_t >= shield_cooldown:
@@ -596,7 +597,7 @@ func apply_curse(seconds: float, slow: float, immunity: float) -> bool:
 		return false
 	if charging and _charge_action == CURSE_ACTION:
 		charging = false
-	_curse_puff = 0.0
+	fx.burst(&"curse", Vector3(pos.x, 1.3, pos.y))
 	fx.word(Vector3(pos.x, 3.2, pos.y), T.t(&"word_cursed"), Color(CURSE_GLOW, 1.0))
 	Audio.play(&"cursed")
 	return true
@@ -625,6 +626,7 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 		glow = SHIELD_GLOW
 	if curse.active():
 		glow = CURSE_GLOW
+	_show_curse()
 	_overlay.set_shader_parameter(&"flash", _flash)
 	# the blink after a hit: more of his own painting as light, on the body and on what shows through a cover
 	var fill := HeroBody.FILL + blink_lighten(_blink) * BODY_LIGHT
@@ -647,6 +649,8 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	_ring_look.set_shader_parameter(&"facing", faces)
 	_ring_through.set_shader_parameter(&"facing", faces)
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
+	if fx:
+		fx.hero_head = position + Vector3(0, HeroBody.HEIGHT, 0)
 	if state != State.MOVE or runner.is_swinging():
 		return
 	if move.length() > 0.1:
@@ -659,6 +663,15 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 		return  # let the follow-through of a swing finish
 	else:
 		_play(&"Idle")
+
+
+## The curse's look follows the curse: the runes and the haze ease in and out, Emeth's violet veins with them.
+func _show_curse() -> void:
+	_curse_aura.on = curse.active() and alive()
+	var k := snappedf(_curse_aura.power, 0.02)
+	if _blade_mat and k != _shown_corrupt:
+		_shown_corrupt = k
+		EmethSword.set_corrupt(_blade_mat, k)
 
 
 func _play(anim: StringName, speed: float = 1.0, from: float = -1.0) -> void:

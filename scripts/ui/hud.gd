@@ -7,6 +7,10 @@ extends Control
 ## actions turn translucent while someone stands behind them, and small chevrons on the edge point at the elites,
 ## the guardian or the boss out of view (the diamonds keep their glyph, recharge and key whole, ActionSlot.veil). One gold for the frames (UiKit.OLD_GOLD, UiKit.FRAME wide), one shadow
 ## under every text (UiKit.shadow).
+## A boss's curse: a seal beside the medallion with a ring that empties and two short lines (what it is, what it
+## does), the medallion's ring tinted violet, the special's diamond locked until a ring of light says it is back.
+## A boss's phase: the mark reached on his bar lights and the phase's name shows under the bar for PHASE_TIME (the
+## boss's notice for it goes there instead of the middle of the screen).
 ## Sizes are in pixels at 720 lines; the window stretches the whole canvas (project.godot), so the layout holds at
 ## any resolution.
 
@@ -34,6 +38,14 @@ const FONT_COMBO := 46
 ## The move's name: how long it shows, and how fast it goes (a short cut, no long ghost).
 const MOVE_TIME := 1.2
 const MOVE_FADE := 0.25
+## The phase's name under the boss's bar: seconds it shows, its fade, font sizes.
+const PHASE_TIME := 3.0
+const PHASE_FADE := 0.4
+const PHASE_NAME_SIZE := 18
+const PHASE_TIP_SIZE := 15
+## The curse's colour on the HUD (the same violet as the runes around the paladin) and on the medallion's ring.
+const CURSE_COLOR := CurseAura.COLOR
+const CURSE_TINT := 0.85
 ## The actions while someone stands behind them, how fast they change and how often the crowd is checked (seconds).
 const VEIL_ALPHA := 0.5
 const VEIL_SPEED := 5.0
@@ -66,6 +78,11 @@ var _xp_fill: ColorRect
 var _boss_box: VBoxContainer
 var _boss_name: Label
 var _boss_bar: HudBar
+var _phase_box: VBoxContainer
+var _phase_name: Label
+var _phase_tip: Label
+var _phase_t := 0.0
+var _curse_badge: ConditionBadge
 var _shield_t := 0.0
 var _combo: Label
 var _combo_word: Label
@@ -151,6 +168,19 @@ func _build_top() -> void:
 	_boss_bar = HudBar.new().setup(BOSS_COLOR, BOSS, 11, true)
 	_boss_bar.over_color = Horde.ARMOR_COLOR
 	_boss_box.add_child(_boss_bar)
+	# the phase's name and its hint, under the bar for a moment
+	_phase_box = VBoxContainer.new()
+	_phase_box.add_theme_constant_override(&"separation", 0)
+	_phase_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_phase_box.modulate.a = 0.0
+	add_child(_phase_box)
+	_place(_phase_box, Control.PRESET_CENTER_TOP, Vector2(0, 42 + 40 + 2), Vector2(BOSS.x + 160, 44))
+	_phase_name = UiKit.shadow(UiKit.title("", PHASE_NAME_SIZE, UiKit.GOLD))
+	_phase_name.add_theme_constant_override(&"outline_size", 5)
+	_phase_box.add_child(_phase_name)
+	_phase_tip = UiKit.shadow(UiKit.label("", UiKit.PALE, PHASE_TIP_SIZE))
+	_phase_tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_phase_box.add_child(_phase_tip)
 
 
 ## Bottom left: the medallion, with life and Magia coming out from behind it.
@@ -166,6 +196,10 @@ func _build_life() -> void:
 	_crest = HeroCrest.new().setup(CREST)
 	add_child(_crest)
 	_place(_crest, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(CREST, CREST))
+	# a condition (the boss's curse): over the left end of the life bar, against the medallion's shoulder
+	_curse_badge = ConditionBadge.new().setup(CURSE_COLOR, T.t(&"hud_cursed"), T.t(&"hud_cursed_effects"))
+	add_child(_curse_badge)
+	_place(_curse_badge, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 4, -mid - LIFE.y - 2.0 * UiKit.FRAME - 6), _curse_badge.size)
 
 
 ## Bottom centre: the four action diamonds; the gifts that act alone sit in a row to their right.
@@ -272,6 +306,9 @@ func _process(delta: float) -> void:
 	_move.modulate.a = clampf(_move_t / MOVE_FADE, 0.0, 1.0)
 	_notice_t -= delta
 	_notice.modulate.a = clampf(_notice_t / 0.6, 0.0, 1.0)
+	_phase_t -= delta
+	_phase_box.modulate.a = minf(clampf(_phase_t / PHASE_FADE, 0.0, 1.0), clampf((PHASE_TIME - _phase_t) / 0.15, 0.0, 1.0))
+	_phase_box.visible = _phase_t > 0.0 and _boss_box.visible
 	_update_pointers(chief)
 	_update_veil(delta)
 
@@ -283,6 +320,8 @@ func _update_life(p: Player) -> void:
 		_crest.flash = 1.0
 	_last_hp = p.hp
 	_crest.danger = 1.0 - clampf(p.hp / p.max_hp / 0.3, 0.0, 1.0)
+	_curse_badge.ratio = p.curse.ratio()
+	_crest.tint = Color(CURSE_COLOR, CURSE_TINT * _curse_badge.shown())
 
 
 func _update_slots(p: Player) -> void:
@@ -298,8 +337,9 @@ func _update_slots(p: Player) -> void:
 			Boon.Slot.DASH:
 				s.refresh(b, _dash_wait(p), p.dodge_charges, p.dodge_max)
 			Boon.Slot.SPECIAL:
-				# a boss's curse locks the special: the diamond shows it recharging as the curse runs out
-				s.refresh(b, p.curse.ratio(), 0, 0, starved or p.curse.active())
+				# a boss's curse locks the special: the diamond shows the lock running out, then a ring when it lifts
+				s.refresh(b, 0.0, 0, 0, starved and not p.curse.active())
+				s.locked = p.curse.ratio()
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
 
@@ -487,7 +527,29 @@ func show_move(node: ComboNode, _color: Color) -> void:
 
 
 func show_notice(text: String, time: float = 2.5) -> void:
+	if game and game.boss and text == T.t("boss_phase_%d" % game.boss.phase):
+		show_phase(text)
+		return
 	_notice.text = text
 	_notice.size = Vector2.ZERO
 	_notice.position.x = (get_viewport_rect().size.x - _notice.get_combined_minimum_size().x) * 0.5
 	_notice_t = time
+
+
+## A boss's phase begins: its name (up to the first full stop) and its hint (the rest) under his bar, for a moment.
+func show_phase(text: String) -> void:
+	var parts := phase_parts(text)
+	_phase_name.text = parts[0]
+	_phase_tip.text = parts[1]
+	_phase_tip.visible = parts[1] != ""
+	_phase_t = PHASE_TIME
+	_notice_t = minf(_notice_t, 0.0)
+
+
+## A phase's text split into its name and its hint ("O Ritual dos Mortos. Derrube..." -> the two; a name alone keeps
+## an empty hint).
+static func phase_parts(text: String) -> PackedStringArray:
+	var cut := text.find(". ")
+	if cut < 0:
+		return PackedStringArray([text.trim_suffix("."), ""])
+	return PackedStringArray([text.substr(0, cut), text.substr(cut + 2).strip_edges()])

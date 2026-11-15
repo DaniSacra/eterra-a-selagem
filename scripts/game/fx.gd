@@ -148,6 +148,8 @@ var _beams: Array[Dictionary] = []
 ## One label per entry of the tally.
 var _labels: Array[Label] = []
 var _tally := NumberTally.new(NUMBER_POOL)
+## The paladin's head in the world (Player sets it each frame): no number stands within NumberTally.HERO_CLEAR of it.
+var hero_head := Vector3.INF
 var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS})
 var _font: Font
 var _arc_meshes: Dictionary = {}
@@ -518,13 +520,13 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 ## A damage number over pos (the top of whoever took it). key: who took it (an instance id; 0 for none): hits that
 ## follow each other on the same target join its number, which counts up and pops again (NumberTally).
 func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: int = 0) -> void:
-	var i := _tally.add(key, pos + Vector3(0, NUMBER_LIFT, 0), amount, color, big)
+	var i := _tally.add(key, pos + Vector3(0, NUMBER_LIFT, 0), amount, color, big, Engine.get_process_frames())
 	if i < 0:
 		return
 	var e := _tally.entries[i]
 	if not _tally.merged:
 		e.pos += _jitter()
-	_show_label(i, str(roundi(e.amount)), e.color, NUMBER_BIG if e.big else NUMBER_SIZE)
+	_show_label(i, str(roundi(e.amount)), e.color, NUMBER_BIG if e.big else (NumberTally.GROUP_SIZE if e.group else NUMBER_SIZE))
 
 
 func word(pos: Vector3, text: String, color: Color) -> void:
@@ -675,6 +677,8 @@ func animate(delta: float) -> void:
 			_tally.hide(i)
 			continue
 		var sp := camera.unproject_position(p)
+		if hero_head.is_finite() and not camera.is_position_behind(hero_head):
+			sp = NumberTally.clear_of(sp, camera.unproject_position(hero_head), NumberTally.HERO_CLEAR + l.size.y * 0.5)
 		var pop := 1.0 + maxf(0.0, 0.12 - e.life) * 4.0
 		l.scale = Vector2.ONE * pop
 		l.position = sp - l.size * 0.5 * pop

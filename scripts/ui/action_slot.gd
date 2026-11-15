@@ -8,6 +8,9 @@ extends Control
 ## as gems in the lower half; a dull blue dash there says the held (Omega) version has no Magia.
 ## Someone standing behind the diamond (veil): only the body goes translucent; the glyph, the recharge and the key
 ## stay whole (cycle 7 faded all of it, and a recharging action almost vanished).
+## Locked (a boss's curse): the gem veiled in the condition's violet, the glyph dimmed under a padlock, a violet line
+## around the frame that shrinks as the lock runs out; the moment it lifts, a ring of light leaves the diamond
+## (RELEASE seconds), stronger than the shine of a plain recharge.
 
 const DIAMOND := 54.0
 const KEY_H := 17.0
@@ -30,6 +33,13 @@ const CHARGE_SPENT := Color(0.17, 0.19, 0.25)
 ## The dash under the glyph when the Omega cannot be paid: Magia's blue, dulled.
 const STARVED := Color("44708c")
 const STARVED_SIZE := Vector2(14.0, 3.0)
+## The lock: its colour (the curse's violet, CurseAura.COLOR), the veil over the gem, the glyph under it and how
+## long (seconds) and how far (pixels) the ring of its release runs.
+const LOCK := Color(0.62, 0.32, 0.95)
+const LOCK_VEIL := Color(0.16, 0.04, 0.24, 0.78)
+const LOCK_GLYPH := 0.3
+const RELEASE := 0.45
+const RELEASE_REACH := 16.0
 
 var action: StringName
 var slot: Boon.Slot
@@ -47,9 +57,21 @@ var veil := 0.0:
 		if not is_equal_approx(v, veil):
 			veil = v
 			queue_redraw()
+## 0..1: the action is locked (a boss's curse) and this share of the lock is still to run.
+var locked := 0.0:
+	set(v):
+		v = snappedf(clampf(v, 0.0, 1.0), 0.01)
+		if v == locked:
+			return
+		if locked > 0.0 and v == 0.0:
+			_release = 1.0
+			set_process(true)
+		locked = v
+		queue_redraw()
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
+var _release := 0.0
 
 
 func setup(action_name: StringName, action_slot: Boon.Slot) -> ActionSlot:
@@ -88,7 +110,8 @@ func busy() -> bool:
 
 func _process(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta / READY_FLASH)
-	if _flash == 0.0:
+	_release = maxf(0.0, _release - delta / RELEASE)
+	if _flash == 0.0 and _release == 0.0:
 		set_process(false)
 	queue_redraw()
 
@@ -114,7 +137,21 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(c, core), VEIL)
 		for part in band(c, core, wait, 1.0):
 			draw_colored_polygon(part, Color(UiKit.OLD_GOLD, REFILL_ALPHA))
+	if locked > 0.0:
+		draw_colored_polygon(_diamond(c, core), LOCK_VEIL)
+		ink = Color(IVORY, LOCK_GLYPH)
 	BoonIcon.glyph(self, boon.icon if boon else BoonIcon.ACTION_GLYPH + slot, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
+	if locked > 0.0:
+		# the violet line around the frame, shrinking from the top as the lock runs out, and the padlock over the glyph
+		draw_polyline(_closed(_diamond(c, r - UiKit.FRAME * 0.5)), Color(LOCK.darkened(0.5), 0.9), UiKit.FRAME, true)
+		var left := _sweep(c, r - UiKit.FRAME * 0.5, locked)
+		if left.size() > 1:
+			draw_polyline(left, LOCK.lightened(0.2), UiKit.FRAME + 1.0, true)
+		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, LOCK.lightened(0.55))
+	if _release > 0.0:
+		var k := 1.0 - _release
+		draw_polyline(_closed(_diamond(c, r + 2.0 + RELEASE_REACH * ease(k, 0.4))), Color(UiKit.PALE, _release * 0.9), 2.0, true)
+		draw_colored_polygon(_diamond(c, core), Color(LOCK.lightened(0.6), 0.35 * _release * _release))
 	if waiting:
 		# the recharge: a pale line running around the frame, from the top, clockwise
 		var done := _sweep(c, r - UiKit.FRAME * 0.5, 1.0 - wait)
@@ -131,6 +168,16 @@ func _draw() -> void:
 		draw_rect(bar.grow(1.0), UiKit.INK)
 		draw_rect(bar, STARVED)
 	_draw_key(Vector2(c.x, DIAMOND))
+
+
+## A small padlock (body and shackle) in ink-outlined colour, centred at c, half as tall as 2 r.
+static func padlock(ci: CanvasItem, c: Vector2, r: float, ink: Color) -> void:
+	var body := Rect2(c + Vector2(-r * 0.75, -r * 0.1), Vector2(r * 1.5, r * 1.1))
+	ci.draw_arc(c + Vector2(0, -r * 0.1), r * 0.48, PI, TAU, 12, UiKit.INK, r * 0.34 + 2.0, true)
+	ci.draw_rect(body.grow(1.5), UiKit.INK)
+	ci.draw_arc(c + Vector2(0, -r * 0.1), r * 0.48, PI, TAU, 12, ink, r * 0.34, true)
+	ci.draw_rect(body, ink)
+	ci.draw_circle(body.get_center() + Vector2(0, -r * 0.08), r * 0.17, UiKit.INK)
 
 
 ## The key or button on a small dark plate over the diamond's lower point (a little mouse for the mouse buttons).

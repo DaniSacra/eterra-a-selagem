@@ -6,6 +6,10 @@ extends RefCounted
 ## stand within CROWD_RADIUS of each other and at most MAX_SHOWN on the whole screen: past that, the smallest
 ## give way to bigger ones. The numbers of big blows (finishers, the held moves) are never hidden for a smaller one
 ## nor by the crowd limit; only a screen already full of them lets the smallest go for a bigger one.
+## A swing through a pack (cycle 8 review, P2): past GROUP_FROM plain numbers in one frame, the plain ones of that
+## frame join one total (a group entry, at the middle of the hits it sums) that keeps counting while the swing goes
+## on (GROUP_JOIN). Big numbers are never summed. No number stands within HERO_CLEAR pixels of the paladin's head
+## (clear_of, applied where Fx places the labels).
 
 ## Seconds a number shows.
 const LIFE := 0.75
@@ -15,6 +19,14 @@ const MERGE_TIME := 0.6
 const CROWD := 6
 const CROWD_RADIUS := 3.0
 const MAX_SHOWN := 12
+## Plain numbers in one frame before the rest of that frame's join one total.
+const GROUP_FROM := 6
+## A total keeps taking the next frames' overflow for this many seconds (one swing that sweeps over a few frames).
+const GROUP_JOIN := 0.15
+## Font size Fx draws a total with (pixels at 720 lines): a little over a plain number, under a big one.
+const GROUP_SIZE := 20
+## Pixels (at 720 lines) a number keeps from the paladin's head on screen.
+const HERO_CLEAR := 60.0
 
 
 class Entry:
@@ -27,11 +39,18 @@ class Entry:
 	var pos := Vector3.ZERO
 	var life := 0.0
 	var shown := false
+	## A total of one swing's plain hits (GROUP_FROM).
+	var group := false
 
 
 var entries: Array[Entry] = []
 ## Whether the last add() joined a number that was already showing.
 var merged := false
+## The frame being counted, how many plain hits it had, the entries it made and the total they joined (-1: none).
+var _frame := -1
+var _frame_hits := 0
+var _frame_new: Array[int] = []
+var _group := -1
 
 
 func _init(pool: int) -> void:
@@ -39,9 +58,25 @@ func _init(pool: int) -> void:
 		entries.append(Entry.new())
 
 
-## A hit of `amount` on `key` at `at`: the index of the entry that shows it, or -1 when it is not shown.
-func add(key: int, at: Vector3, amount: float, color: Color, big: bool) -> int:
+## A hit of `amount` on `key` at `at`: the index of the entry that shows it, or -1 when it is not shown. frame: the
+## frame it lands in (Engine.get_process_frames), so one swing's many plain hits join a total; -1 never sums.
+func add(key: int, at: Vector3, amount: float, color: Color, big: bool, frame: int = -1) -> int:
 	merged = false
+	if frame >= 0 and not big:
+		if frame != _frame:
+			_frame = frame
+			_frame_hits = 0
+			_frame_new.clear()
+		_frame_hits += 1
+		if _frame_hits > GROUP_FROM:
+			return _join_group(at, amount, color)
+	var i := _add_one(key, at, amount, color, big)
+	if i >= 0 and frame >= 0 and not big and not merged and not _frame_new.has(i):
+		_frame_new.append(i)
+	return i
+
+
+func _add_one(key: int, at: Vector3, amount: float, color: Color, big: bool) -> int:
 	if key != 0:
 		for i in entries.size():
 			var e := entries[i]
@@ -65,7 +100,53 @@ func add(key: int, at: Vector3, amount: float, color: Color, big: bool) -> int:
 	e.pos = at
 	e.life = 0.0
 	e.shown = true
+	e.group = false
 	return i
+
+
+## One more plain hit past GROUP_FROM in a frame: it joins the swing's total. A new total takes in the numbers this
+## frame already made (they go) and stands at the middle of them all; it always shows.
+func _join_group(at: Vector3, amount: float, color: Color) -> int:
+	if _group >= 0:
+		var g := entries[_group]
+		if g.shown and g.group and g.life <= GROUP_JOIN:
+			g.amount += amount
+			g.life = 0.0
+			merged = true
+			return _group
+	var sum := amount
+	var mid := at
+	var n := 1
+	for k in _frame_new:
+		var e := entries[k]
+		if e.shown and not e.big and not e.group:
+			sum += e.amount
+			mid += e.pos
+			n += 1
+			e.shown = false
+	_frame_new.clear()
+	var i := _free()
+	var g := entries[i]
+	g.key = 0
+	g.amount = sum
+	g.color = color
+	g.big = false
+	g.group = true
+	g.pos = mid / float(n)
+	g.life = 0.0
+	g.shown = true
+	_group = i
+	return i
+
+
+## Where a number's label centre goes so that it keeps `clear` pixels from the paladin's head on screen (pushed
+## straight away from it; straight up when it sits right on it).
+static func clear_of(at: Vector2, head: Vector2, clear: float) -> Vector2:
+	var d := at - head
+	if d.length() >= clear:
+		return at
+	var dir := d.normalized() if d.length() > 0.5 else Vector2.UP
+	return head + dir * clear
 
 
 ## A floating word: always shown (it takes the oldest place when there is none free).
@@ -77,6 +158,7 @@ func add_word(at: Vector3, color: Color) -> int:
 	e.amount = -1.0
 	e.color = color
 	e.big = false
+	e.group = false
 	e.pos = at
 	e.life = 0.0
 	e.shown = true

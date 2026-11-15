@@ -18,6 +18,12 @@ var danger := 0.0:
 			queue_redraw()
 ## 1 right after a hit, fades by itself.
 var flash := 0.0
+## A condition's colour on the ring (a boss's curse), its alpha how much (0 none).
+var tint := Color(0, 0, 0, 0):
+	set(v):
+		if v != tint:
+			tint = v
+			queue_redraw()
 ## Text of the seal at the lower left ("" hides it).
 var seal := "":
 	set(v):
@@ -63,7 +69,7 @@ func _draw() -> void:
 ## The ring of old gold over ink: red and beating when life is low, white for a moment after a hit.
 func _draw_rim(c: Vector2, r: float) -> void:
 	var pulse := danger * (0.5 + 0.5 * sin(_beat))
-	var rim := UiKit.OLD_GOLD.lerp(UiKit.RED, pulse).lerp(Color.WHITE, flash * 0.8)
+	var rim := UiKit.OLD_GOLD.lerp(Color(tint, 1.0), tint.a).lerp(UiKit.RED, pulse).lerp(Color.WHITE, flash * 0.8)
 	draw_arc(c, r - UiKit.FRAME * 0.5, 0.0, TAU, 56, rim, UiKit.FRAME, true)
 
 
