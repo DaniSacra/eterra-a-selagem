@@ -93,15 +93,21 @@ fora do repositório, em `C:\Users\danie\ASelagem-teste\arena-comparacao.png`.
 Composição, posições, câmera, paleta e luz seguem a imagem. O que ainda separa o jogo da pintura depende de modelos e
 texturas que não existem no projeto (plano em `meshy_asset_plan.md`):
 
-- Estátuas encapuzadas: hoje é o encapuzado do KayKit em pedra lisa; a pintura tem estátuas esculpidas, de mãos postas.
-- Fachada do portal: feita de caixas; a pintura tem cantaria esculpida, arquivolta e gárgulas.
-- Obeliscos, balaustradas, braseiros: caixas com material de cantaria; a pintura tem pedra lascada e volumosa.
-- Potes, caixotes e velas: KayKit e formas simples; menores e mais limpos que os da pintura.
+- Estátuas encapuzadas: monges procedurais em `Masonry.hooded_statue` (manto pregueado, capuz, rosto escuro, mãos
+  juntas; ciclo 3); a pintura tem escultura com rosto, mãos e dobras que só um modelo dá.
+- Fachada do portal: vão retangular com pedras pendentes, lintel, duas ordens em ogiva e a janela em losango (ciclo
+  3), tudo em caixas; a pintura tem cantaria esculpida, arquivolta e gárgulas.
+- Obeliscos, balaustradas, braseiros: na massa e nas medidas da pintura (ciclos 2 e 3), em caixas com material de
+  cantaria; a pintura tem pedra lascada.
+- Potes e velas: círios grossos de cera creme e potes com gargalo e lábio, nos grupos da pintura (ciclo 3); caixotes
+  ainda do KayKit.
+- Abismo: fileiras de pilares góticos de frente para a câmera da vitrine em pedra sem luz (`depth_stone.gdshader`),
+  escuras contra a bruma petróleo e o violeta, mais apagadas a cada fileira (ciclo 3).
 - Estandartes: lisos (o símbolo da pintura é cânone pendente com o Daniel).
 - Herói e inimigos: os da pintura (minotauro de escudos, esqueletos) são outros modelos.
 - HUD da pintura (retrato, losangos Q/E/R) não foi copiado: o HUD do jogo é outro trabalho.
-- No navegador (Compatibility) a luz rende diferente: mais claro e azulado mesmo com a compensação
-  (`Game.COMPAT_EXPOSURE`).
+- No navegador (Compatibility) a luz rende diferente: mais escuro, azulado e sem o violeta do abismo, mesmo com a
+  compensação (`Game.COMPAT_EXPOSURE`); o Daniel decidiu que só o desktop precisa ficar ótimo.
 
 ## Critérios de fidelidade (missão de reprodução, 2026-11-14)
 

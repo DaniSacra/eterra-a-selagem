@@ -7,7 +7,7 @@ render_mode diffuse_burley, specular_schlick_ggx;
 
 uniform vec3 stone_a : source_color = vec3(0.21, 0.22, 0.27);
 uniform vec3 stone_b : source_color = vec3(0.3, 0.3, 0.35);
-uniform vec3 joint_color : source_color = vec3(0.04, 0.04, 0.06);
+uniform vec3 joint_color : source_color = vec3(0.07, 0.07, 0.09);
 uniform vec3 grime_color : source_color = vec3(0.07, 0.065, 0.08);
 // Height of a course and length of a block, in meters.
 uniform float course = 0.85;
@@ -17,7 +17,7 @@ uniform float joint_width = 0.045;
 uniform float base_y = 0.0;
 uniform float grime_height = 1.2;
 // Lighter worn edges on the tops.
-uniform float top_light = 1.18;
+uniform float top_light = 1.3;
 
 varying vec3 world;
 varying vec3 wnormal;

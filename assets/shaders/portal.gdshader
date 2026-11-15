@@ -23,7 +23,7 @@ void fragment() {
 	float top = 0.04;
 	for (int i = 0; i < 3; i++) {
 		float x = 0.22 + float(i) * 0.28 + (hash1(vec2(float(i), 4.0)) - 0.5) * 0.08;
-		float len = 0.06 + 0.06 * hash1(vec2(float(i), 9.0));
+		float len = 0.1 + 0.07 * hash1(vec2(float(i), 9.0));
 		top = max(top, len * (1.0 - smoothstep(0.0, 0.07, abs(UV.x - x))));
 	}
 	float open = smoothstep(top, top + 0.015, UV.y) * smoothstep(0.0, 0.03, UV.x) * smoothstep(1.0, 0.97, UV.x);

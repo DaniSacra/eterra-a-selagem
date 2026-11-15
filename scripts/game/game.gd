@@ -784,16 +784,16 @@ const COMPAT_EXPOSURE := 1.25
 const COMPAT_AMBIENT := 0.4
 ## The air of the hall (the reference image): cold teal behind and below, a low teal ambient, no violet in the air
 ## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
-const SKY := Color(0.03, 0.2, 0.26)
+const SKY := Color(0.07, 0.28, 0.31)
 const AMBIENT := Color(0.3, 0.45, 0.5)
-const AMBIENT_ENERGY := 0.45
+const AMBIENT_ENERGY := 0.65
 const EXPOSURE := 1.25
-const FOG := Color(0.02, 0.2, 0.26)
+const FOG := Color(0.07, 0.28, 0.31)
 const FOG_BEGIN := 64.0
 const FOG_END := 170.0
 const FOG_HEIGHT := -3.0
 const FOG_HEIGHT_DENSITY := 0.6
-const VOLUMETRIC_DENSITY := 0.003
+const VOLUMETRIC_DENSITY := 0.0
 var _charge_zoom := 0.0
 ## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
 var _cam_last := Vector2.ZERO

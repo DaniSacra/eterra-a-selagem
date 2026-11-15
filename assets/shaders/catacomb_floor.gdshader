@@ -6,7 +6,7 @@ render_mode diffuse_lambert, specular_schlick_ggx;
 
 uniform vec3 stone_a : source_color = vec3(0.29, 0.25, 0.28);
 uniform vec3 stone_b : source_color = vec3(0.42, 0.37, 0.39);
-uniform vec3 joint_color : source_color = vec3(0.025, 0.03, 0.045);
+uniform vec3 joint_color : source_color = vec3(0.08, 0.085, 0.11);
 uniform vec3 crack_color : source_color = vec3(0.05, 0.055, 0.07);
 uniform vec3 moss_color : source_color = vec3(0.12, 0.2, 0.2);
 uniform vec3 engrave_color : source_color = vec3(0.62, 0.46, 0.22);

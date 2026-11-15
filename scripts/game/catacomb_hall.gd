@@ -30,7 +30,9 @@ const FACADE_X := Vector2(-6.5, 20.0)
 const FACADE_Z := -20.0
 const FACADE_HEIGHT := 10.5
 const PORTAL_X := 2.8
-const PORTAL_SIZE := Vector2(3.4, 5.4)
+const PORTAL_SIZE := Vector2(3.4, 4.8)
+## How deep in the doorway the sheet of light hangs, behind the facade's front.
+const PORTAL_DEPTH := 0.7
 ## The landing west of the south standing stone (the way in): its x range and how far south it reaches; the gap of
 ## its steps down (x range).
 const LANDING := Vector2(-16.0, -3.6)
@@ -45,13 +47,20 @@ const SOUTH_GAP := Vector2(6.4, 10.8)
 ## The north-west pier (fire bowl, statue) and the giant's pier and tower out to the west.
 const NW_PIER := Vector2(-12.4, -18.3)
 const GIANT_BOWL := Vector2(-23.0, -4.4)
-const GIANT := Vector3(-26.0, -4.4, 7.6)
+const GIANT := Vector3(-26.0, -4.4, 7.0)
+## Height of the giant's feet (its tower and plinth end just under it): the hood's top lands near the picture's top.
+const GIANT_FOOT := -0.4
+## The fire bowl's light up the giant's robe (warm only on its hem and hands, the rest stays dark stone).
+const GIANT_UPLIGHT := 2.5
 const DEPTH := 26.0
 ## Where the fixed showcase camera looks: the floor point at the middle of the reference image.
 const SHOWCASE := Vector3(-2.0, 0, 0)
-## Candles: one warm light per cluster.
-const CANDLE_LIGHT := 2.6
-const CANDLE_RANGE := 5.0
+## Candles: their height and radius ranges (m), the warm halo over a cluster, one warm light per cluster.
+const CANDLE_HEIGHT := Vector2(0.3, 0.9)
+const CANDLE_RADIUS := Vector2(0.07, 0.11)
+const CANDLE_HALO := 0.9
+const CANDLE_LIGHT := 1.5
+const CANDLE_RANGE := 3.5
 const ABYSS_LIGHT := Color(0.55, 0.25, 1.0)
 const ABYSS_LIGHT_ENERGY := 5.0
 ## Width of the two standing stones (thick and blunt, as in the picture).
@@ -59,9 +68,21 @@ const OBELISK_SOUTH := 2.2
 const OBELISK_EAST := 2.3
 ## The floor in front of the portal's steps, always wet (x, z rect).
 const WET := Rect2(-1.0, -15.0, 9.0, 5.0)
-## The lit diamond window over the portal: its size (m) and how far above the opening's top.
-const PORTAL_WINDOW := 0.75
-const PORTAL_WINDOW_ABOVE := 0.9
+## The portal's rectangle of light: the lintel over it (height), the pointed orders round it (how many; each this much
+## wider on each side and higher than the one inside).
+const PORTAL_LINTEL := 0.6
+## Height of the hooded statues beside the portal.
+const PORTAL_STATUE := 5.0
+const PORTAL_ORDERS := 2
+const PORTAL_ORDER_STEP := Vector2(0.45, 0.3)
+const PORTAL_ORDER_STONE := 0.8
+## The orders' stone is a little lighter than the wall, so their edges catch the light as in the picture.
+const PORTAL_ORDER_TINT := Color(1.35, 1.4, 1.4)
+## The lit diamond window over the portal: its size (m, width and height), its middle's height over the opening's
+## top, its glow.
+const PORTAL_WINDOW := Vector2(1.0, 1.2)
+const PORTAL_WINDOW_ABOVE := 1.4
+const PORTAL_WINDOW_GLOW := 1.6
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.95, 0.82, 0.88)
 const KEY_ENERGY := 6.0
@@ -69,9 +90,34 @@ const KEY_HEIGHT := 9.0
 const KEY_RANGE := 18.0
 ## Tint of the stone in the depths and of the walls under the platform (dark against the lighter mist).
 const FAR_TINT := 0.35
-const CLIFF_TINT := 0.5
-## Rows of silhouettes in the abyss to the west (x of each row), fading into the mist one behind the other.
-const WEST_ROWS: Array[float] = [-24.0, -32.0, -42.0]
+const CLIFF_TINT := 0.9
+## Rows of silhouettes in the abyss, across the showcase camera's view: each row's distance from the camera (m), the
+## height of its piers' tops (every third one a step higher), their width, meters between two piers; rows reach from
+## this share of their distance left of the view's middle to this share right of it. Near rows are low, so their
+## capitals and arches read against the mist; far ones are tall and fade into it.
+const ROW_DIST: Array[float] = [68.0, 82.0, 98.0]
+const ROW_TOPS: Array[float] = [1.0, 0.0, 16.0]
+const ROW_WIDTHS: Array[float] = [2.4, 2.0, 1.7]
+const ROW_SPANS: Array[float] = [8.5, 7.5, 6.5]
+const ROW_STEP := 3.0
+const ROW_REACH := Vector2(0.52, 0.14)
+## The violet glow cards to the west: their distance from the showcase camera (between the near and middle rows),
+## the height of their foot, and where they stand across the view (shares of that distance, left of its middle).
+const GLOW_DIST := 76.0
+const GLOW_FOOT := -14.0
+const GLOW_LATS: Array[float] = [-0.46, -0.32, -0.18]
+const GLOW_WEST := 1.5
+const GLOW_EAST := 2.6
+## The far tower the chains hang from (behind the giant, in the middle of the picture's top).
+const TOWER := Vector3(-35.0, 0, -23.0)
+const TOWER_TOP := 12.0
+const TOWER_WIDTH := 2.6
+## The lit window under the near arcade (the picture's lantern): its size and height, its warm glass.
+const LANTERN := Vector2(0.8, 1.4)
+const LANTERN_Y := -2.4
+## Where the wall with the window stands in the near row (share of that row's distance, left of the view's middle).
+const LANTERN_LAT := -0.33
+const LANTERN_GLASS := Color(1.5, 0.8, 0.28)
 
 var arena: Arena
 var kit: ArenaKit
@@ -162,8 +208,8 @@ func _dais() -> void:
 	m.block(Vector3((FLIGHT.y + FACADE_X.y) * 0.5, -0.4, cheek_z), Vector3(FACADE_X.y - FLIGHT.y, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
 	_facade()
 	# the hooded statues beside the portal, lit green by it; small plinths with candles at the top of the steps
-	kit.statue(Vector2(PORTAL_X - 4.2, FACADE_Z + 1.2), 0.25, 4.4, DAIS_Y, Color(0.22, 0.3, 0.27), false)
-	kit.statue(Vector2(PORTAL_X + 4.4, FACADE_Z + 1.2), -0.25, 4.4, DAIS_Y, Color(0.22, 0.3, 0.27), false)
+	kit.statue(Vector2(PORTAL_X - 4.2, FACADE_Z + 1.2), 0.25, PORTAL_STATUE, DAIS_Y, Color(0.22, 0.3, 0.27), false)
+	kit.statue(Vector2(PORTAL_X + 4.4, FACADE_Z + 1.2), -0.25, PORTAL_STATUE, DAIS_Y, Color(0.22, 0.3, 0.27), false)
 	for px: float in [PORTAL_X - 2.2, PORTAL_X + 2.5]:
 		m.block(Vector3(px, DAIS_Y, steps_z - 0.8), Vector3(0.8, 0.9, 0.8))
 		_candles(Vector3(px, DAIS_Y + 0.9, steps_z - 0.8), 2, false)
@@ -172,14 +218,14 @@ func _dais() -> void:
 	kit.piece("box_small", foot, 0.3, Vector3.ONE * 0.9)
 	kit.piece("box_small", foot + Vector3(0.1, 0.75, 0), 0.1, Vector3.ONE * 0.7)
 	kit.piece("box_small", foot + Vector3(1.1, 0, 0.2), -0.2, Vector3.ONE * 0.8)
-	m.pot(foot + Vector3(-1.0, 0, -0.1), 0.75)
-	m.pot(foot + Vector3(-0.6, 0, 0.6), 0.55)
+	m.pot(foot + Vector3(-1.0, 0, -0.1), 1.0)
+	m.pot(foot + Vector3(-0.5, 0, 0.6), 0.8)
 	_candles(foot + Vector3(-1.7, 0, 0.3), 3)
 	arena.boxes.append(Rect2(foot.x - 1.4, -HALF.y - 0.5, 3.4, 2.2))
 
 
-## The gothic facade with the portal in it: a thick wall, three pointed frames stepping back into the opening, a gable,
-## buttresses with red banners, the green sheet of light deep in the doorway.
+## The gothic facade with the portal in it: a thick wall, a rectangular opening under a lintel with pointed orders
+## round it and a lit diamond window between, buttresses with red banners, the green sheet of light deep in the doorway.
 func _facade() -> void:
 	var y := DAIS_Y
 	var w := PORTAL_SIZE.x
@@ -191,27 +237,37 @@ func _facade() -> void:
 	var right := Vector2(PORTAL_X + w * 0.5 + 1.2, FACADE_X.y)
 	m.block(Vector3((left.x + left.y) * 0.5, y, back), Vector3(left.y - left.x, FACADE_HEIGHT, 3.2), 0.0, mat)
 	m.block(Vector3((right.x + right.y) * 0.5, y, back), Vector3(right.y - right.x, FACADE_HEIGHT, 3.2), 0.0, mat)
-	m.block(Vector3(PORTAL_X, y + h + 1.3, back), Vector3(right.x - left.y, FACADE_HEIGHT - h - 1.3, 3.2), 0.0, mat)
+	m.block(Vector3(PORTAL_X, y + h, back), Vector3(right.x - left.y, FACADE_HEIGHT - h, 3.2), 0.0, mat)
 	# the doorway's depth: dark stone behind the light
 	var dark := StandardMaterial3D.new()
 	dark.albedo_color = Color(0.02, 0.06, 0.04)
 	m.block(Vector3(PORTAL_X, y, back - 1.2), Vector3(w + 2.6, h + 2.4, 0.4), 0.0, dark)
-	# three frames, each wider and farther forward, a gable over the outermost
-	for k in 3:
-		var grow := k * 0.55
-		m.pointed_arch(Vector3(PORTAL_X, y, FACADE_Z - 0.9 + k * 0.45), Vector2(0, 1), w + grow * 2.0, h + grow * 1.6, 0.55, 0.5, mat)
-	m.block(Vector3(PORTAL_X, y + h + 2.2, FACADE_Z + 0.2), Vector3(w + 4.2, 0.5, 0.8), 0.0, mat)
-	m.point(Vector3(PORTAL_X, y + h + 2.7, FACADE_Z - 0.2), 2.4, 2.2)
-	kit.portal_glow(Vector3(PORTAL_X, y + h * 0.42, back - 0.9), 0.0, Vector2(w + 0.4, h * 0.95))
+	# the opening is a rectangle of light between thick jambs under a lintel; round it, pointed orders of stones, each
+	# wider and farther forward, their points high over the lintel with the lit window in the stone between
+	var jamb := (right.x - left.y - w) * 0.5
+	for sd: float in [-1.0, 1.0]:
+		m.block(Vector3(PORTAL_X + sd * (w + jamb) * 0.5, y, FACADE_Z - 0.9), Vector3(jamb, h, 1.8), 0.0, mat)
+	m.block(Vector3(PORTAL_X, y + h, FACADE_Z - 0.9), Vector3(w + jamb * 2.0, PORTAL_LINTEL, 1.8), 0.0, mat)
+	var apex := 0.0
+	var order := m.stone(y, PORTAL_ORDER_TINT)
+	for k in PORTAL_ORDERS:
+		var ow := w + PORTAL_ORDER_STEP.x * 2.0 * (k + 1)
+		var oh := h + PORTAL_LINTEL + ow * 0.55 + PORTAL_ORDER_STEP.y * k
+		apex = oh
+		m.pointed_arch(Vector3(PORTAL_X, y, FACADE_Z + 0.4 + k * 0.35), Vector2(0, 1), ow, oh, PORTAL_ORDER_STONE, PORTAL_ORDER_STONE, order)
+	m.block(Vector3(PORTAL_X, y + apex + 0.6, FACADE_Z + 0.2), Vector3(w + 4.2, 0.5, 0.8), 0.0, mat)
+	kit.portal_glow(Vector3(PORTAL_X, y + h * 0.5, FACADE_Z - PORTAL_DEPTH), 0.0, Vector2(w + 0.4, h + 0.2))
+	# the lit diamond window in the stone between the lintel and the points
 	var win := MeshInstance3D.new()
 	var wq := QuadMesh.new()
-	wq.size = Vector2.ONE * PORTAL_WINDOW
+	wq.size = Vector2.ONE * PORTAL_WINDOW.x * 0.7071
 	win.mesh = wq
 	var wm := StandardMaterial3D.new()
 	wm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	wm.albedo_color = ArenaKit.PORTAL * 1.2
+	wm.albedo_color = ArenaKit.PORTAL_SHEET * PORTAL_WINDOW_GLOW
 	win.material_override = wm
-	win.transform = Transform3D(Basis(Vector3.BACK, PI * 0.25), Vector3(PORTAL_X, y + h * 0.9 + PORTAL_WINDOW_ABOVE, FACADE_Z + 0.7))
+	var diamond := Basis.from_scale(Vector3(1.0, PORTAL_WINDOW.y / PORTAL_WINDOW.x, 1.0)) * Basis(Vector3.BACK, PI * 0.25)
+	win.transform = Transform3D(diamond, Vector3(PORTAL_X, y + h + PORTAL_WINDOW_ABOVE, FACADE_Z + 0.3))
 	arena.add_child(win)
 	# its light spilling down the steps and over the wet floor in front of them
 	var spill := SpotLight3D.new()
@@ -242,9 +298,9 @@ func _north_west() -> void:
 	kit.brazier(NW_PIER, 0.0, false)
 	m.block(Vector3(NW_PIER.x, 0, NW_PIER.y - 2.4), Vector3(1.8, 0.6, 1.8))
 	kit.statue(Vector2(NW_PIER.x, NW_PIER.y - 2.4), 0.5, 3.8, 0.6, Color(0.2, 0.27, 0.26), false)
-	_candles(Vector3(-9.0, 0, z + 0.8), 4)
-	m.pot(Vector3(-11.6, 0, z + 0.8), 0.7)
-	m.pot(Vector3(-11.0, 0, z + 1.1), 0.5)
+	_candles(Vector3(-9.0, 0, z + 0.9), 5)
+	m.pot(Vector3(-11.6, 0, z + 0.8), 1.0)
+	m.pot(Vector3(-10.9, 0, z + 1.2), 0.8)
 	kit.piece("rubble_half", Vector3(FACADE_X.x + 0.8, 0, z + 0.8), 0.4, Vector3.ONE * 0.6)
 
 
@@ -257,29 +313,31 @@ func _west() -> void:
 	# over the hall
 	m.block(Vector3((GIANT_BOWL.x + x) * 0.5 - 0.6, -DEPTH, GIANT_BOWL.y), Vector3(x - GIANT_BOWL.x + 1.6, DEPTH, 3.0))
 	kit.brazier(GIANT_BOWL, 0.0, false, 5.5)
-	m.block(Vector3(GIANT.x, -DEPTH, GIANT.y), Vector3(4.4, DEPTH + 1.4, 4.4))
-	m.block(Vector3(GIANT.x, 1.4, GIANT.y), Vector3(3.6, 0.6, 3.6))
-	kit.statue(Vector2(GIANT.x, GIANT.y), PI * 0.5, GIANT.z, 2.0, Color(0.24, 0.24, 0.28), false)
+	var tower_top := GIANT_FOOT - GIANT.z * ArenaKit.STATUE_PLINTH
+	m.block(Vector3(GIANT.x, -DEPTH, GIANT.y), Vector3(4.6, DEPTH + tower_top - 0.6, 4.6))
+	m.block(Vector3(GIANT.x, tower_top - 0.6, GIANT.y), Vector3(4.0, 0.6, 4.0))
+	kit.statue(Vector2(GIANT.x, GIANT.y), PI * 0.5, GIANT.z, tower_top, Color(0.24, 0.24, 0.28), false)
 	var up := SpotLight3D.new()
 	arena.add_child(up)
-	up.look_at_from_position(Vector3(GIANT_BOWL.x + 0.5, 2.0, GIANT_BOWL.y), Vector3(GIANT.x, 2.0 + GIANT.z * 0.7, GIANT.y))
+	up.look_at_from_position(Vector3(GIANT_BOWL.x + 0.5, 2.0, GIANT_BOWL.y), Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.6, GIANT.y))
 	up.light_color = ArenaKit.FIRE
-	up.light_energy = 6.0
-	up.spot_range = 12.0
-	up.spot_angle = 35.0
+	up.light_energy = GIANT_UPLIGHT
+	up.spot_range = 9.0
+	up.spot_angle = 28.0
 	up.light_cull_mask = ~Arena.CROWD_LAYER
-	# candles and clay pots along the balustrade, a small altar of a crate with candles on it
-	kit.piece("box_small", Vector3(x + 0.8, 0, -9.0), 0.2, Vector3(1.1, 0.8, 1.1))
-	_candles(Vector3(x + 0.8, 0.8, -9.0), 3, false)
-	_candles(Vector3(x + 0.9, 0, -12.0), 2)
-	m.pot(Vector3(x + 0.8, 0, -6.6), 0.75)
-	m.pot(Vector3(x + 1.0, 0, -5.9), 0.55)
-	_candles(Vector3(x + 0.8, 0, -1.2), 4)
-	m.pot(Vector3(x + 0.8, 0, 2.4), 0.8)
-	m.pot(Vector3(x + 1.3, 0, 3.0), 0.5)
-	_candles(Vector3(x + 0.9, 0, 6.0), 3)
-	m.pot(Vector3(x + 0.9, 0, 9.4), 0.6)
-	_candles(Vector3(x + 0.8, 0, 12.4), 3)
+	# candles and clay pots along the balustrade (the picture's groups), a small altar of a crate with candles and two
+	# pots on it
+	kit.piece("box_small", Vector3(x + 1.0, 0, -10.4), 0.2, Vector3(1.3, 0.8, 1.3))
+	_candles(Vector3(x + 1.0, 0.8, -10.4), 4, false)
+	m.pot(Vector3(x + 1.0, 0, -11.9), 1.0)
+	m.pot(Vector3(x + 1.6, 0, -12.5), 0.8)
+	_candles(Vector3(x + 1.2, 0, -6.3), 5)
+	m.pot(Vector3(x + 0.9, 0, 0.6), 1.05)
+	m.pot(Vector3(x + 1.5, 0, 1.3), 0.85)
+	_candles(Vector3(x + 1.3, 0, 2.2), 4)
+	_candles(Vector3(x + 1.2, 0, 7.1), 6)
+	m.pot(Vector3(x + 0.9, 0, 9.4), 0.9)
+	_candles(Vector3(x + 0.9, 0, 12.4), 3)
 
 
 # ---------- south-west: the landing and the way in ----------
@@ -296,9 +354,9 @@ func _landing() -> void:
 	# the standing stone in the middle of the south edge, where the landing meets the hall
 	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), 5.2, OBELISK_SOUTH, Vector2(1, 1).normalized())
 	kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, OBELISK_SOUTH * 0.68))
-	_candles(Vector3(SOUTH_STONE.x + 1.6, 0, HALF.y - 1.0), 5)
-	m.pot(Vector3(SOUTH_STONE.x + 2.6, 0, HALF.y - 0.7), 0.55)
-	_candles(Vector3(LANDING.x + 1.0, 0, LANDING_END - 1.0), 2)
+	_candles(Vector3(SOUTH_STONE.x + 2.4, 0, HALF.y - 2.0), 7, true, true)
+	m.pot(Vector3(SOUTH_STONE.x + 3.6, 0, HALF.y - 0.8), 0.9)
+	_candles(Vector3(LANDING.x + 2.4, 0, HALF.y + 0.4), 4)
 
 
 # ---------- south and east ----------
@@ -323,7 +381,7 @@ func _east(stairs_down: bool) -> void:
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
 	kit.piece("box_small", Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 0.7)
-	_candles(Vector3(x - 1.0, 0, EAST_STONE.y + 2.7), 3)
+	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4)
 	kit.piece("rubble_half", Vector3(x - 2.4, 0, EAST_STONE.y + 4.2), 1.1, Vector3.ONE * 0.55)
 	kit.piece("rubble_large", Vector3(x - 1.3, 0, EAST_STONE.y + 4.8), 0.3, Vector3.ONE * 0.5)
 	# north of the stone: the stairs down out of the hall (or a plain balustrade), a fire bowl on a pier past them
@@ -336,8 +394,8 @@ func _east(stairs_down: bool) -> void:
 	m.block(Vector3(pier.x, -DEPTH, pier.y), Vector3(2.0, DEPTH + 0.5, 2.0))
 	kit.brazier(pier, 0.5, false)
 	m.balustrade(Vector3(x, 0, EAST_GAP.x - 2.4), Vector3(x, 0, -HALF.y))
-	m.pot(Vector3(x - 0.9, 0, -11.0), 0.6)
-	_candles(Vector3(x - 0.8, 0, -12.4), 2)
+	m.pot(Vector3(x - 0.9, 0, -11.0), 0.9)
+	_candles(Vector3(x - 0.9, 0, -12.6), 3)
 
 
 ## A flight of stairs going down out of the hall from its edge at `edge`, along `out`, `width` wide, with posts at its
@@ -359,54 +417,54 @@ func _stairs_down(edge: Vector3, out: Vector2, width: float) -> void:
 
 # ---------- the depths ----------
 
-## Far below and around: an arcade of pointed arches to the west, a tower in the north-west the chains hang from,
-## more arches to the north behind the facade, violet light from under the platform.
+## Far below and around, all in the unlit stone of the depths (dark against the teal mist, each row farther and
+## paler): rows of gothic piers and pointed arches to the west, a tower in the north-west the chains hang from,
+## arches to the north behind the facade, a lit window under the near arcade, violet light from under the platform.
 func _depths() -> void:
 	m.layers = ArenaKit.DEPTH_LAYER
-	var far := m.stone(-40.0, Color(0.8, 0.85, 0.95) * FAR_TINT)
-	var ax := -38.0
-	for i in 7:
-		var z := -30.0 + i * 7.0
-		m.box(Vector3(ax, -14.0, z), Vector3(2.0, 34.0, 2.0), 0.0, far)
-		if i < 6:
-			m.pointed_arch(Vector3(ax, -2.0, z + 3.5), Vector2(1, 0), 5.0, 6.0, 0.9, 1.6, far)
-	m.box(Vector3(ax, 4.6, -9.0), Vector3(2.6, 1.0, 44.0), 0.0, far)
-	# rows of gothic piers and arches rising out of the mist to the west, each row farther and paler, a bridge on
-	# the nearest
-	for k in WEST_ROWS.size():
-		var rx: float = WEST_ROWS[k]
-		var top := 10.0 - k * 1.5
-		var width := 2.5 - k * 0.4
-		for i in 5:
-			var z := -22.0 + i * 9.0 + k * 3.0
-			m.box(Vector3(rx, top - 20.0, z), Vector3(width, 40.0, width), 0.0, far)
-			if i < 4:
-				m.pointed_arch(Vector3(rx, top - 8.0, z + 4.5), Vector2(1, 0), 9.0 - width, 7.0, width * 0.4, width * 0.7, far)
-		if k == 0:
-			m.box(Vector3(rx, -2.5, -4.0), Vector3(1.6, 0.8, 18.0), 0.0, far)
-	m.layers = 1
-	var lantern := OmniLight3D.new()
-	lantern.position = Vector3(ax + 1.6, 2.8, -4.0)
-	lantern.light_color = ArenaKit.FIRE
-	lantern.light_energy = 2.0
-	lantern.omni_range = 7.0
-	lantern.light_cull_mask = ArenaKit.DEPTH_LAYER
-	arena.add_child(lantern)
-	var flame := MeshInstance3D.new()
-	flame.mesh = Fx.quad(0.9, Color(3.0, 1.4, 0.4))
-	flame.position = lantern.position
-	arena.add_child(flame)
-	m.layers = ArenaKit.DEPTH_LAYER
-	var tower := Vector3(-30.0, 0, -30.0)
-	m.box(tower + Vector3(0, -8.0, 0), Vector3(4.0, 44.0, 4.0), 0.0, far)
-	m.point(tower + Vector3(0, 14.0, 0), 4.0, 4.0)
+	var far := m.depth_stone(Game.FOG)
+	# the rows stand across the showcase camera's view (their arches face it), left of the hall and behind it
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var eye := SHOWCASE + Feel.cam_offset_of(Game.SHOWCASE_DISTANCE, Feel.live().cam_pitch, Feel.live().cam_yaw)
+	var ahead := Vector3(-sin(yaw), 0, -cos(yaw))
+	var right := Vector3(cos(yaw), 0, -sin(yaw))
+	var facing := Vector2(-ahead.x, -ahead.z)
+	for k in ROW_DIST.size():
+		var d: float = ROW_DIST[k]
+		var span: float = ROW_SPANS[k]
+		var width: float = ROW_WIDTHS[k]
+		var prev := Vector3.INF
+		var i := 0
+		var lat := -ROW_REACH.x * d
+		while lat < ROW_REACH.y * d:
+			var p := Vector3(eye.x, 0, eye.z) + ahead * d + right * lat
+			lat += span
+			i += 1
+			# none inside the hall, its dais and the giant's tower
+			if (p.x > -HALF.x - 3.0 and p.z > FACADE_Z - 9.0) or Vector2(p.x, p.z).distance_to(Vector2(GIANT.x, GIANT.y)) < 4.5:
+				prev = Vector3.INF
+				continue
+			var top: float = ROW_TOPS[k] + (ROW_STEP * float(i % 3 == 1))
+			p.y = top
+			_pier(p, width, far, k == ROW_DIST.size() - 1 or i % 2 == 0)
+			if prev != Vector3.INF:
+				var mid := (prev + p) * 0.5
+				var h := span * 0.8
+				m.pointed_arch(Vector3(mid.x, minf(prev.y, p.y) - 1.4 - h, mid.z), facing, span - width, h, width * 0.45, width * 0.8, far)
+			prev = p
+	# a wall under the near arcade, with the lit window of the picture in it
+	var wall := Vector3(eye.x, LANTERN_Y, eye.z) + ahead * (ROW_DIST[0] + 1.2) + right * (LANTERN_LAT * ROW_DIST[0])
+	m.box(wall + Vector3(0, -6.0, 0), Vector3(2.6, 14.0, 0.8), yaw, far)
+	var tower := TOWER
+	_pier(tower + Vector3(0, TOWER_TOP, 0), TOWER_WIDTH, far, true)
 	for i in 4:
 		var x := -10.0 + i * 9.0
 		m.box(Vector3(x, -10.0, -40.0), Vector3(2.4, 40.0, 2.4), 0.0, far)
 		if i < 3:
 			m.pointed_arch(Vector3(x + 4.5, 2.0, -40.0), Vector2(0, 1), 6.6, 8.0, 1.0, 1.8, far)
 	m.layers = 1
-	var giant_top := Vector3(GIANT.x, 2.0 + GIANT.z * 0.95, GIANT.y)
+	_lantern(wall - ahead * 0.45)
+	var giant_top := Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.95, GIANT.y)
 	# the great chains of the picture's top: from the giant across to the far tower and on to the facade, and one
 	# from the giant out over the abyss
 	kit.chain(giant_top + Vector3(0, -1.0, 0), tower + Vector3(0, 10.0, 0), 2.5, 2.2)
@@ -426,12 +484,53 @@ func _depths() -> void:
 		arena.add_child(l)
 	# the glow itself rising out of the mist at the foot of the piers, facing the camera's way, and on desktop a
 	# violet fog filling the sides
-	var yaw := deg_to_rad(Feel.live().cam_yaw)
-	for g: Vector3 in [Vector3(-HALF.x - 4.0, -8.0, -6.0), Vector3(-HALF.x - 9.0, -8.0, 8.0), Vector3(-26.0, -9.0, -18.0),
-			Vector3(HALF.x + 4.0, -8.0, 2.0), Vector3(HALF.x + 5.0, -8.0, -12.0), Vector3(8.0, -8.0, HALF.y + 5.0)]:
-		kit.abyss_glow(g, Vector2(16.0, 12.0), yaw, ArenaKit.ABYSS_GLOW_ENERGY * (1.0 if g.x < 0.0 else 1.8))
+	# violet behind the near row to the west, so its piers stand dark against it
+	for lat: float in GLOW_LATS:
+		var g := Vector3(eye.x, GLOW_FOOT, eye.z) + ahead * GLOW_DIST + right * (lat * GLOW_DIST)
+		kit.abyss_glow(g, Vector2(18.0, 19.0), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_WEST)
+	for g: Vector3 in [Vector3(HALF.x + 3.0, -9.0, -12.0), Vector3(HALF.x + 4.0, -9.0, -22.0), Vector3(8.0, -8.0, HALF.y + 5.0)]:
+		kit.abyss_glow(g, Vector2(16.0, 12.0), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_EAST)
 	kit.abyss_fog(Vector3(-HALF.x - 14.0, -8.0, 0.0), Vector3(24.0, 14.0, 50.0))
 	kit.abyss_fog(Vector3(HALF.x + 10.0, -8.0, 0.0), Vector3(16.0, 14.0, 40.0))
+
+
+## A gothic pier of the depths: its top at `top`, a shaft out of the mist, a wide capital, and a short spire on some.
+func _pier(top: Vector3, width: float, mat: Material, spire: bool) -> void:
+	m.box(Vector3(top.x, top.y - 20.0, top.z), Vector3(width, 40.0, width), 0.0, mat)
+	m.box(Vector3(top.x, top.y - 1.6, top.z), Vector3(width + 0.7, 0.6, width + 0.7), 0.0, mat)
+	m.box(Vector3(top.x, top.y + 0.2, top.z), Vector3(width + 0.4, 0.4, width + 0.4), 0.0, mat)
+	if spire:
+		m.point(Vector3(top.x, top.y + 0.4, top.z), width * 0.9, width * 1.6, 0.0, 0.0, mat)
+
+
+## The lit window of the abyss (the picture's, under the near arcade): a pointed opening of warm glass and its light.
+func _lantern(at: Vector3) -> void:
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var glass := StandardMaterial3D.new()
+	glass.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	glass.albedo_color = LANTERN_GLASS
+	var pane := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(LANTERN.x, LANTERN.y - LANTERN.x * 0.5)
+	pane.mesh = q
+	pane.material_override = glass
+	pane.transform = Transform3D(Basis(Vector3.UP, yaw), at + Vector3(0, q.size.y * 0.5, 0))
+	arena.add_child(pane)
+	# the pointed head: a square turned on its corner over the pane
+	var head := MeshInstance3D.new()
+	var hq := QuadMesh.new()
+	hq.size = Vector2.ONE * LANTERN.x * 0.7071
+	head.mesh = hq
+	head.material_override = glass
+	head.transform = Transform3D(Basis(Vector3.UP, yaw) * Basis(Vector3.BACK, PI * 0.25), at + Vector3(0, q.size.y, 0))
+	arena.add_child(head)
+	var l := OmniLight3D.new()
+	l.position = at + Basis(Vector3.UP, yaw) * Vector3(0, 0.8, 1.0)
+	l.light_color = ArenaKit.FIRE
+	l.light_energy = 1.0
+	l.omni_range = 4.0
+	l.light_cull_mask = ArenaKit.DEPTH_LAYER
+	arena.add_child(l)
 
 
 # ---------- doors ----------
@@ -456,22 +555,24 @@ func _doors(count: int) -> void:
 
 # ---------- candles ----------
 
-## A cluster of candles on the floor (or on top of something at `at`), with one warm light unless light is false.
-func _candles(at: Vector3, count: int, light := true) -> void:
-	var names: Array[String] = ["candle_thin_lit", "candle_lit", "candle_triple", "candle_melted"]
+## A cluster of thick candles of varied heights on the floor (or on top of something at `at`), a warm halo over them
+## and one warm light unless light is false. tall: the cluster's candles are the taller ones (the south stone's).
+func _candles(at: Vector3, count: int, light := true, tall := false) -> void:
+	var spread := 0.35 + count * 0.07
 	for i in count:
-		var p := at + Vector3(_rng.randf_range(-0.45, 0.45), 0, _rng.randf_range(-0.45, 0.45))
-		kit.piece(names[_rng.randi() % names.size()], p, _rng.randf() * TAU, Vector3.ONE * _rng.randf_range(0.7, 1.15))
+		var p := at + Vector3(_rng.randf_range(-spread, spread), 0, _rng.randf_range(-spread, spread))
+		var h := _rng.randf_range(CANDLE_HEIGHT.x if not tall else (CANDLE_HEIGHT.x + CANDLE_HEIGHT.y) * 0.5, CANDLE_HEIGHT.y)
+		m.candle(p, h, _rng.randf_range(CANDLE_RADIUS.x, CANDLE_RADIUS.y))
 	var glow := MeshInstance3D.new()
-	glow.mesh = Fx.quad(0.55, Color(0.8, 0.45, 0.18))
-	glow.position = at + Vector3(0, 0.7, 0)
+	glow.mesh = Fx.quad(CANDLE_HALO, Color(0.8, 0.45, 0.18))
+	glow.position = at + Vector3(0, CANDLE_HEIGHT.y * 0.8, 0)
 	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	arena.add_child(glow)
 	if not light:
 		return
 	var l := OmniLight3D.new()
 	l.position = at + Vector3(0, 0.9, 0)
-	l.light_color = Color(1.0, 0.62, 0.3)
+	l.light_color = Color(1.0, 0.7, 0.4)
 	l.light_energy = CANDLE_LIGHT
 	l.omni_range = CANDLE_RANGE
 	l.light_cull_mask = ~Arena.CROWD_LAYER

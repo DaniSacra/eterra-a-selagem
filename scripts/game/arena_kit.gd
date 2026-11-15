@@ -4,8 +4,8 @@ extends RefCounted
 ## abyss, blue-petrol stone, gold firelight, green ways onward, purple depths, red for Morvath). Each function puts one
 ## finished element under `root` (meshes, its lights, its particles) and records what blocks the way in `circles`
 ## and `boxes`, which Arena.resolve reads. Arena lays them out from a RoomLayout; a new room is data, not code.
-## Pieces come from KayKit Dungeon Remastered (CC0, assets/models/dungeon_r) and the hooded statue from the baked
-## KayKit hooded figure; what the kit lacks (bowls, chains, the portal light, the cliffs, the mist) is built here.
+## Pieces come from KayKit Dungeon Remastered (CC0, assets/models/dungeon_r); the hooded statues are built in
+## Masonry (no model yet); what the kit lacks (bowls, chains, the portal light, the cliffs, the mist) is built here.
 
 const KIT := "res://assets/models/dungeon_r/"
 const CROWD_LAYER := 2
@@ -17,6 +17,8 @@ const WARM_MASK := ~(CROWD_LAYER | DEPTH_LAYER)
 const STONE_DARK := Color(0.07, 0.09, 0.12)
 const FIRE := Color(1.0, 0.58, 0.25)
 const PORTAL := Color(0.3, 1.0, 0.5)
+## The portal's sheet of light: a deeper green than its light, so its bright heart stays green and not white.
+const PORTAL_SHEET := Color(0.2, 1.0, 0.14)
 const ABYSS := Color(0.34, 0.17, 0.52)
 ## The mist of the abyss (teal, lighter than the stone in it) and the violet glowing up from under it.
 const MIST := Color(0.03, 0.2, 0.25)
@@ -32,8 +34,18 @@ const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "ba
 	"floor_foundation_corner", "floor_foundation_front", "floor_foundation_front_and_sides", "stairs_wide", "stairs_walled",
 	"wall", "wall_arched", "wall_doorway", "wall_pillar", "wall_corner", "wall_half", "wall_endcap", "wall_archedwindow_open",
 	"pillar", "pillar_decorated", "column", "rubble_half", "rubble_large", "floor_tile_large", "floor_tile_large_rocks"]
-## Brazier: the bowl's radius and height above the floor; the fire's light.
-const BRAZIER_TOP := 1.25
+## Brazier (the picture's: a deep bronze bowl with a rim on a capped stone pedestal, a tall flame): the pedestal's
+## height, the bowl (top radius, bottom radius, height), the rim's thickness, the fire (radius, tongues, tongue size)
+## and a tongue's life, what blocks the way, the fire's light.
+const BRAZIER_PEDESTAL := 0.9
+const BRAZIER_BOWL := Vector3(0.65, 0.35, 0.45)
+const BRAZIER_RIM := 0.06
+const BRAZIER_FIRE := Vector3(0.6, 30, 0.36)
+const BRAZIER_FIRE_LIFE := 0.8
+const BRAZIER_RADIUS := 0.6
+const BRONZE := Color(0.2, 0.13, 0.07)
+## A fire's tongue at its hottest (the colour ramp takes it to orange and out).
+const FLAME := Color(2.4, 1.5, 0.6)
 const BRAZIER_LIGHT := 3.5
 const BRAZIER_RANGE := 10.0
 const BRAZIER_ATTENUATION := 1.3
@@ -46,9 +58,12 @@ const PORTAL_LIGHT := 5.5
 const PORTAL_RANGE := 9.0
 ## The medallion reads by its value, not by light (the picture's does not glow).
 const MEDALLION_GLOW := 0.1
+## A statue's plinth height, as a share of the statue's.
+const STATUE_PLINTH := 0.1
 ## Chains: meters between two links, and the links' size.
 const LINK_GAP := 0.32
 const LINK_SIZE := 0.2
+const LINK_STRETCH := 1.6
 
 var root: Node3D
 var rng := RandomNumberGenerator.new()
@@ -61,6 +76,7 @@ var portals: Array[Array] = []
 var masonry: Masonry
 var _meshes := {}
 var _glow_mats := {}
+var _bronze_mat: StandardMaterial3D
 ## A rectangle of floor (x, z) the floor plates keep wet (in front of the portal).
 var wet_zone := Rect2()
 
@@ -103,33 +119,44 @@ func row(name_: String, a: Vector3, b: Vector3, step: float, yaw_offset: float =
 		piece(name_, a + dir * (i + 0.5), yaw, size)
 
 
-## A stone fire bowl on a short column: the warm light of the room. y: the ground it stands on; solid: it blocks
-## the way (a circle of 0.6 m).
+## A deep bronze fire bowl on a capped stone pedestal: the warm light of the room. y: the ground it stands on; solid:
+## it blocks the way (a circle of BRAZIER_RADIUS).
 func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT) -> void:
 	var base := Vector3(at.x, y, at.y)
-	piece("column", base, rng.randf() * TAU, Vector3(1.1, 0.8, 1.1))
+	masonry.post(base, 0.0, BRAZIER_PEDESTAL)
+	var foot := BRAZIER_PEDESTAL + Masonry.POST_STEP.y + Masonry.POST_CAP.y
 	var bowl := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.62
-	cyl.bottom_radius = 0.3
-	cyl.height = 0.34
-	cyl.radial_segments = 10
+	cyl.top_radius = BRAZIER_BOWL.x
+	cyl.bottom_radius = BRAZIER_BOWL.y
+	cyl.height = BRAZIER_BOWL.z
+	cyl.radial_segments = 14
 	bowl.mesh = cyl
-	bowl.material_override = _plain(METAL, 0.5)
-	bowl.position = base + Vector3(0, BRAZIER_TOP - 0.05, 0)
+	bowl.material_override = _bronze()
+	bowl.position = base + Vector3(0, foot + BRAZIER_BOWL.z * 0.5, 0)
 	root.add_child(bowl)
+	var rim := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = BRAZIER_BOWL.x - BRAZIER_RIM
+	torus.outer_radius = BRAZIER_BOWL.x + BRAZIER_RIM
+	torus.rings = 16
+	torus.ring_segments = 6
+	rim.mesh = torus
+	rim.material_override = _bronze()
+	rim.position = base + Vector3(0, foot + BRAZIER_BOWL.z, 0)
+	root.add_child(rim)
 	var coals := MeshInstance3D.new()
 	var disc := CylinderMesh.new()
-	disc.top_radius = 0.52
-	disc.bottom_radius = 0.52
+	disc.top_radius = BRAZIER_BOWL.x - 0.08
+	disc.bottom_radius = BRAZIER_BOWL.x - 0.08
 	disc.height = 0.04
 	coals.mesh = disc
 	coals.material_override = _glow(Color(2.4, 0.7, 0.15))
-	coals.position = base + Vector3(0, BRAZIER_TOP + 0.1, 0)
+	coals.position = base + Vector3(0, foot + BRAZIER_BOWL.z - 0.06, 0)
 	root.add_child(coals)
-	fire(base + Vector3(0, BRAZIER_TOP + 0.15, 0), 0.5, 22)
+	fire(base + Vector3(0, foot + BRAZIER_BOWL.z - 0.02, 0), BRAZIER_FIRE.x, int(BRAZIER_FIRE.y), BRAZIER_FIRE.z, BRAZIER_FIRE_LIFE)
 	var l := OmniLight3D.new()
-	l.position = base + Vector3(0, BRAZIER_TOP + 1.2, 0)
+	l.position = base + Vector3(0, foot + 1.6, 0)
 	l.light_color = BRAZIER_COLOR
 	l.light_energy = light
 	l.omni_range = BRAZIER_RANGE
@@ -138,26 +165,34 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	l.light_cull_mask = WARM_MASK
 	root.add_child(l)
 	if solid:
-		circles.append(Vector3(at.x, at.y, 0.6))
+		circles.append(Vector3(at.x, at.y, BRAZIER_RADIUS))
 
 
-## Flames rising from a point: radius of the fire, how many tongues.
-func fire(at: Vector3, radius: float, amount: int) -> void:
+## Flames rising from a point: radius of the fire, how many tongues, the size of a tongue, how long one lives.
+func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) -> void:
 	var f := CPUParticles3D.new()
 	f.position = at
 	f.amount = amount
-	f.lifetime = 0.7
+	f.lifetime = life
 	f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 	f.emission_sphere_radius = radius * 0.6
 	f.direction = Vector3.UP
 	f.spread = 10.0
-	f.initial_velocity_min = 0.8
-	f.initial_velocity_max = 1.6
+	f.initial_velocity_min = 1.0
+	f.initial_velocity_max = 1.9
 	f.gravity = Vector3(0, 1.2, 0)
 	f.scale_amount_min = 0.6
-	f.scale_amount_max = 1.3
-	f.mesh = Fx.quad(0.42, Color(2.2, 0.95, 0.28))
-	f.color_ramp = Fx.fade_ramp(Color(1, 1, 1, 1))
+	f.scale_amount_max = 1.2
+	# each tongue narrows as it rises, from a white-gold heart to an orange edge
+	var taper := Curve.new()
+	taper.add_point(Vector2(0, 1))
+	taper.add_point(Vector2(1, 0.25))
+	f.scale_amount_curve = taper
+	f.mesh = Fx.quad(tongue, FLAME)
+	var ramp := Gradient.new()
+	ramp.offsets = PackedFloat32Array([0.0, 0.35, 1.0])
+	ramp.colors = PackedColorArray([Color(1.0, 1.0, 0.9, 1.0), Color(1.0, 0.6, 0.35, 0.9), Color(0.8, 0.25, 0.1, 0.0)])
+	f.color_ramp = ramp
 	root.add_child(f)
 	# embers drifting up out of it
 	var e := CPUParticles3D.new()
@@ -176,26 +211,14 @@ func fire(at: Vector3, radius: float, amount: int) -> void:
 	root.add_child(e)
 
 
-## A hooded figure carved in stone, standing on a plinth. height: of the figure, in meters; y: the ground under the
-## plinth; tint: the stone's colour (green near a portal); solid: it blocks the way.
+## A hooded figure carved in stone (Masonry.hooded_statue), standing on a plinth. height: of the figure, in meters;
+## y: the ground under the plinth; tint: the stone's colour (green near a portal); solid: it blocks the way.
 func statue(at: Vector2, yaw: float, height: float = 4.2, y: float = 0.0, tint := Color(0.25, 0.27, 0.31), solid := true) -> void:
-	piece("floor_foundation_allsides", Vector3(at.x, y, at.y), yaw, Vector3(0.75, 0.45, 0.75) * Vector3(height / 4.2, 1, height / 4.2))
-	var model: BakedModel = load("res://assets/baked/statue.res")
-	var mi := MeshInstance3D.new()
-	mi.mesh = model.anims[&"idle"][0]
-	var k := height / maxf(model.height, 0.01)
-	mi.transform = Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * k), Vector3(at.x, y + 0.9, at.y))
-	var m := StandardMaterial3D.new()
-	# all one carved stone: no paint, the folds read from the light alone
-	m.albedo_color = tint
-	m.roughness = 1.0
-	m.rim_enabled = true
-	m.rim = 0.35
-	m.rim_tint = 0.6
-	mi.material_override = m
-	root.add_child(mi)
+	var plinth := STATUE_PLINTH * height
+	masonry.block(Vector3(at.x, y, at.y), Vector3(1.0, 0.0, 1.0) * height * 0.5 + Vector3(0, plinth, 0), yaw)
+	masonry.hooded_statue(Vector3(at.x, y + plinth, at.y), yaw, height, tint)
 	if solid:
-		circles.append(Vector3(at.x, at.y, 1.0))
+		circles.append(Vector3(at.x, at.y, height * 0.25))
 
 
 ## A chain hanging between two points, sagging `sag` meters at its middle.
@@ -219,9 +242,10 @@ func chain(a: Vector3, b: Vector3, sag: float, size: float = 1.0) -> void:
 		if side.length() < 0.1:
 			side = Vector3.RIGHT
 		var up := side.cross(along)
-		# links stand along the chain, every other one turned a quarter
-		var basis := Basis(up, along, side) if i % 2 == 0 else Basis(side, along, -up)
-		mm.set_instance_transform(i, Transform3D(basis.scaled(Vector3(1.0, 1.6, 1.0)), p))
+		# each link lies along the chain (the ring's hole across it), stretched, every other one turned a quarter
+		var hole := side if i % 2 == 0 else up
+		var basis := Basis(along * LINK_STRETCH, hole, along.cross(hole))
+		mm.set_instance_transform(i, Transform3D(basis, p))
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
 	mmi.material_override = _plain(METAL, 0.45)
@@ -243,7 +267,7 @@ func portal_glow(center: Vector3, yaw: float, size: Vector2) -> void:
 	sheet.mesh = q
 	var m := ShaderMaterial.new()
 	m.shader = preload("res://assets/shaders/portal.gdshader")
-	m.set_shader_parameter(&"color", PORTAL)
+	m.set_shader_parameter(&"color", PORTAL_SHEET)
 	m.set_shader_parameter(&"power", PORTAL_DIM)
 	sheet.material_override = m
 	sheet.transform = Transform3D(Basis(Vector3.UP, yaw), center)
@@ -264,7 +288,7 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 	if i >= portals.size():
 		return
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"power", PORTAL_OPEN if on else PORTAL_DIM)
-	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"color", tint)
+	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"color", PORTAL_SHEET if tint == PORTAL else tint)
 	var l: OmniLight3D = portals[i][1]
 	l.light_color = tint
 	l.light_energy = PORTAL_LIGHT if on else PORTAL_LIGHT_DIM
@@ -397,6 +421,13 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 
 func _stone(_m: Material) -> Material:
 	return masonry.stone()
+
+
+func _bronze() -> StandardMaterial3D:
+	if _bronze_mat == null:
+		_bronze_mat = _plain(BRONZE, 0.45)
+		_bronze_mat.metallic = 0.8
+	return _bronze_mat
 
 
 func _plain(c: Color, roughness: float) -> StandardMaterial3D:

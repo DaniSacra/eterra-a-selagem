@@ -1,0 +1,72 @@
+shader_type spatial;
+// The stone of the depths (the piers, arches and the tower far out in the abyss): dark shapes standing in the lighter
+// teal mist, as in the picture's background. Unlit, so no light of the hall or of the sky flattens it: a dark stone in
+// courses, a cold edge on the faces turned to the mist's light, its own fading into the mist with distance (each row
+// behind paler than the one in front) and with depth, and violet light rising from below at the sides of the hall.
+render_mode unshaded, fog_disabled, cull_back;
+
+uniform vec3 stone_color : source_color = vec3(0.04, 0.085, 0.115);
+// The faces turned toward the mist's light (from the north-west, high) take this cold edge.
+uniform vec3 edge_color : source_color = vec3(0.07, 0.24, 0.3);
+uniform vec3 light_dir = vec3(-0.6, 0.5, -0.4);
+// The mist the stone fades into: the colour of the abyss behind it (Game.FOG, which also covers the background).
+uniform vec3 mist_color : source_color = vec3(0.07, 0.28, 0.31);
+// Distance from the camera (m) where the fading starts and where it reaches `fade_max`.
+uniform float fade_near = 70.0;
+uniform float fade_far = 115.0;
+uniform float fade_max = 0.8;
+// Height (m) under which the stone sinks into the mist, and where it is gone.
+uniform float sink_top = -3.0;
+uniform float sink_bottom = -26.0;
+// Violet from below at the sides: its colour, how high it climbs (from glow_bottom up to glow_top) and from which
+// distance off the hall's middle (|x|) it starts.
+uniform vec3 glow_color : source_color = vec3(0.45, 0.3, 0.95);
+uniform float glow_energy = 0.25;
+uniform float glow_top = -2.0;
+uniform float glow_bottom = -14.0;
+uniform float glow_side = 18.0;
+// Courses of blocks, so the near piers are built stone and not flat paint.
+uniform float course = 1.1;
+uniform float block_len = 1.9;
+
+varying vec3 world;
+varying vec3 wnormal;
+
+float hash1(vec2 p) {
+	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash1(i), hash1(i + vec2(1, 0)), f.x), mix(hash1(i + vec2(0, 1)), hash1(i + vec2(1, 1)), f.x), f.y);
+}
+
+void vertex() {
+	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+}
+
+void fragment() {
+	vec3 n = abs(wnormal);
+	vec2 uv = n.y > 0.7 ? world.xz : (n.x > n.z ? world.zy : world.xy);
+	float row = floor(uv.y / course);
+	float bx = uv.x / block_len + hash1(vec2(row, 3.1));
+	float id = hash1(vec2(floor(bx), row));
+	float joint = max(1.0 - smoothstep(0.0, 0.05, min(fract(uv.y / course), 1.0 - fract(uv.y / course)) * course),
+		1.0 - smoothstep(0.0, 0.05, min(fract(bx), 1.0 - fract(bx)) * block_len));
+	vec3 c = stone_color * (0.75 + 0.5 * id) * (0.8 + 0.4 * noise(uv * 0.7));
+	// the cold edge of the mist's light on the faces turned to it, stronger up high
+	float lit = clamp(dot(wnormal, normalize(light_dir)), 0.0, 1.0);
+	c = mix(c, edge_color * (0.7 + 0.3 * id), lit * 0.55 * smoothstep(-10.0, 8.0, world.y));
+	c *= 1.0 - joint * 0.45;
+	float dist = length(world - CAMERA_POSITION_WORLD);
+	float fade = smoothstep(fade_near, fade_far, dist) * fade_max;
+	fade = max(fade, smoothstep(sink_top, sink_bottom, world.y));
+	c = mix(c, mist_color, fade);
+	float side = smoothstep(glow_side - 4.0, glow_side + 4.0, abs(world.x));
+	float rise = smoothstep(glow_top, glow_bottom, world.y);
+	c += glow_color * glow_energy * rise * rise * side * (0.7 + 0.3 * lit);
+	ALBEDO = c;
+}
