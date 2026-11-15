@@ -5,7 +5,7 @@ shader_type spatial;
 render_mode unshaded, cull_front, shadows_disabled, fog_disabled;
 
 uniform vec3 color : source_color = vec3(1.0, 0.2, 0.25);
-// Meters in the model's own space (the instance's size scales it).
+// Meters in the world: the same thin rim on a skeleton and on a guardian twice its size.
 uniform float width = 0.05;
 uniform float intensity = 2.4;
 
@@ -13,7 +13,7 @@ varying vec4 state;
 
 void vertex() {
 	state = INSTANCE_CUSTOM;
-	VERTEX += normalize(NORMAL) * width;
+	VERTEX += normalize(NORMAL) * width / max(length(MODEL_MATRIX[0].xyz), 0.001);
 }
 
 void fragment() {

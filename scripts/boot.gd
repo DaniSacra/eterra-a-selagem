@@ -123,8 +123,12 @@ func _build_menu() -> void:
 		box.add_child(UiKit.label("%s: %s" % [T.t(&"end_best"), SaveData.format_time(best[0])], UiKit.GOLD, 22))
 	var help := UiKit.label(T.t(&"title_controls") + "\n" + T.t(&"title_pad"), UiKit.DIM, 18)
 	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	help.offset_top = -64
+	help.offset_top = -84
 	help.offset_bottom = -14
+	help.offset_left = 32
+	help.offset_right = -32
+	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	help.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_menu.add_child(help)
 	_first.grab_focus.call_deferred()
