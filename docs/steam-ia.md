@@ -10,7 +10,8 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   da névoa e do portal) e a espada Emeth (`EmethSword`).
 - **Arte da tela de título (vai no jogo)**: `assets/ui/title/title_screen_reference.png` (2026-11-15, feita por IA para o
   Daniel): os quatro heróis, a fortaleza, o portal e o logotipo "Crônicas de Eterra: A Selagem". No jogo entra uma cópia
-  com os botões pintados apagados (os botões reais são da Godot por cima); o logotipo é o da imagem.
+  com os botões pintados apagados (os botões reais são da Godot por cima); o logotipo é o da imagem. O retrato do herói no HUD (`assets/ui/hud/hero_portrait.png`) é o rosto do Explorador
+  recortado dessa mesma arte.
 - **Modelos 3D do Meshy** (lista completa e ids em `tools/meshy/tasks.json`):
   - no jogo: o herói Explorador (`assets/models/meshy/hero_explorer/`, 2026-11-15, gerado a partir da folha do Explorador,
     também feita por IA), com o esqueleto do Meshy; os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das

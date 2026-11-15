@@ -36,3 +36,21 @@ roda o jogo (outro assistente, revisão de arte). Imagens em JPG.
 
 Refazer: `tools/enemy_lab.gd` (o argumento `clip` espalha a fila pelo clipe inteiro) e `tools/pose_lab.gd`, pela
 `tools/gpu.sh run`.
+
+## CICLO 7: IDENTIDADE VISUAL E COMBATE
+
+Capturas reais da Godot na placa de vídeo (RTX 5060, Forward+), com o comando de cada uma em
+[`cycle7/CAPTURAS.md`](cycle7/CAPTURAS.md). As pastas acima (`jogo/`, `enemies/`, `hero/`) ficam como o ANTES.
+
+- **Relatório artístico:** [`cycle7/ART_REVIEW.md`](cycle7/ART_REVIEW.md) (comparação por área, critérios, desempenho, testes)
+- **Antes e depois:** [título](cycle7/before_after_titulo.jpg), [arena](cycle7/before_after_arena.jpg),
+  [combate](cycle7/before_after_combate.jpg), [inimigos](cycle7/before_after_inimigos.jpg)
+- **Tela inicial:** [1280](cycle7/01_titulo_1280.jpg), [1920](cycle7/02_titulo_1920.jpg), [mouse sobre Como Jogar](cycle7/03_titulo_hover.jpg)
+- **Explorador:** [parado](cycle7/04_explorador_idle.jpg), [correndo](cycle7/05_explorador_corrida.jpg)
+- **Emeth:** [ataque](cycle7/06_emeth_ataque.jpg), [Ômega](cycle7/06b_emeth_omega.jpg), [impacto](cycle7/07_emeth_impacto.jpg), [especial](cycle7/08_emeth_especial.jpg)
+- **Inimigos:** [comparativo](cycle7/09_inimigos_comparativo.jpg), [em combate](cycle7/10_inimigos_em_combate.jpg),
+  [elite](cycle7/11_inimigo_elite.jpg), [guardião](cycle7/12_guardiao.jpg), [Ancião](cycle7/12b_guardiao_anciao.jpg), [Morvath](cycle7/13_morvath.jpg)
+- **Arena:** [geral](cycle7/14_arena_geral.jpg), [portal](cycle7/15_portal.jpg), [estátuas](cycle7/16_estatuas.jpg),
+  [abismo](cycle7/17_abismo.jpg), [medalhão](cycle7/18_medalhao.jpg)
+- **Combate:** [40 inimigos](cycle7/19_combate_40_inimigos.jpg), [90 inimigos](cycle7/20_combate_90_inimigos.jpg)
+- **HUD:** [1280](cycle7/21_hud_1280.jpg), [1920](cycle7/22_hud_1920.jpg)

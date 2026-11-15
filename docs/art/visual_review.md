@@ -251,3 +251,29 @@ caixa, critérios de aceite, donos por arquivo e contrato de capturas: `docs/art
   medalhão quase sem relevo; retrato do HUD em outro estilo; nome do golpe e relógio com pouco contraste.
 - Depende de modelo que não existe: estátuas, moldura do portal e ruínas (provisórias até o `meshy_asset_plan.md`).
 - Veredito: nada a aprovar ainda; ciclo 7 não começou.
+
+## 2026-11-15: ciclo 7, revisão final (Art Director)
+
+Capturas reais na RTX 5060 (Vulkan Forward+, commit `7fb5b4b`): `docs/gallery/cycle7/` (22 do contrato, `06b`, `12b`
+e quatro montagens de antes e depois); antes em `docs/gallery/jogo/`, `docs/gallery/enemies/` e
+`docs/art/shots/cycle7_before/`. Revisão completa, com imagens e medidas refeitas nos JPG:
+`docs/gallery/cycle7/ART_REVIEW.md`.
+
+- Bate: tela de título com a arte aprovada; herói nas próprias cores quando coberto (cobre 21%, petróleo 5,0%, ciano
+  1,3% na caixa dele em `20`) e sem silhueta branca ao levar golpe; fita única, dardo verde reto, estocada sem
+  listras, círculo de luz em aro fino, meia-lua do Ômega em cerca de 25% da largura; Morvath violeta (36% da caixa);
+  orbe violeta do Feiticeiro; caveira do elite marfim; portal sem estouro (18% de canais em 250, mediana de L 159,
+  desvio 53); fachada com verde 0,146; estátuas com pregas (desvio 18,5 e 27,1 nas do portal); medalhão com relevo;
+  retrato do HUD no estilo do título; textos do HUD com sombra.
+- Difere: B5 herói mais difícil de achar no bolo de 90 que o ciano antigo (multidão mais colorida, orbes, números);
+  B4 inimigos atingidos em branco chapado cobrindo o herói no Ômega (14,3% de brancos na caixa de 300 x 220, meta 10%);
+  B2 verde nos degraus com o portal vermelho (`13`); B3 herói atrás do obelisco parece em cima dele; cerca de 16
+  números num grupo em `19` (meta 8); barras vermelhas 2,3% do bolo (meta 2%); ouro do elite quase invisível;
+  estátua gigante com desvio 17,3 (meta 18); capuz ainda lê como furo de perto; B6 herói a cerca de 17% da borda em `19`.
+- Sem evidência: `08b_emeth_circulo`, `15b_porta_amarela`, `22b_hud_2560`; aro de ritual do Sacerdote; divisa para
+  guardião fora da tela; teste de silhueta J1 (figuras pequenas demais no laboratório `09`).
+- Depende de modelo que não existe: estátuas, moldura do portal e ruínas (provisórias, `meshy_asset_plan.md`).
+- Desempenho: 90 inimigos +0,48 ms e 300 inimigos +1,19 ms por quadro, acima do orçamento da especificação (M1, em
+  correção; medir de novo). Retrato do HUD recortado da arte do título feita por IA: registrar em `docs/steam-ia.md`.
+- Veredito: título, Explorador, Emeth, inimigos, arena e HUD aprovados com ressalvas; combate com hordas pendente
+  (B5). Pode ir para o teste do Daniel como versão do ciclo, com B5, B4 e B2 como os três pedidos seguintes.
