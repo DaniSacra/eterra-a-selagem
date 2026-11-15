@@ -34,7 +34,12 @@ Você é o engenheiro de gameplay de "Crônicas de Eterra: A Selagem" (Godot 4.7
 2. `tools/test.sh` passando (sem afrouxar teste para passar).
 3. `tools/smoke.sh 300 --seed=5` (partida inteira: deve chegar em Morvath) e, se mexeu no chefe,
    `tools/smoke.sh 120 --start=boss --boons=25 --seed=5`.
-4. Se a mudança aparece na tela, uma captura real: `tools/shot.sh <scratchpad>/jogo.png 9 --bot --autopick --seed=5`.
+4. Se a mudança aparece na tela, uma captura real na GPU: `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick --seed=5 --shot-at=9`.
+- **Capturas e FPS na placa de vídeo** (RTX 5060 do Daniel): `tools/gpu.sh shot <saída> [opções do jogo]`, cerca de 30 s,
+  Forward+ como no PC dele (a linha `RESULT` traz `fps` e `step_ms`). Ex.: `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick
+  --seed=5 --shot-at=9`; `RES=1920x1080` muda o tamanho; `tools/gpu.sh run [args]` roda qualquer outra coisa (caminhos C:/...).
+  Um uso por vez (trava; os outros esperam) e abre uma janela na tela do Daniel. `tools/shot.sh` (CPU, 2 a 4 min) só se a
+  GPU falhar, e para o renderizador do navegador (`DRIVER=opengl3`).
 
 ## Entrega
 Responda ao Game Director em português: o que mudou (arquivos), testes novos, resultado de check, testes e smoke

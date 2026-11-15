@@ -36,9 +36,14 @@ Você define e valida; quem constrói o cenário é o `environment-artist` e que
 
 ## Como revisar
 - Capture o jogo de verdade (nunca use imagem gerada por IA como evidência):
-  `tools/shot.sh <scratchpad>/vitrine.png 2 --showcase --seed=5` (enquadramento da referência) e
-  `tools/shot.sh <scratchpad>/jogo.png 9 --bot --autopick --seed=5` (em luta). `RES=1920x1080` para outro tamanho,
-  `DRIVER=opengl3` para ver como no navegador.
+  `tools/gpu.sh shot <scratchpad>/vitrine.png --showcase --seed=5 --shot-at=2` (enquadramento da referência) e
+  `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick --seed=5 --shot-at=9` (em luta), na placa de vídeo, como o
+  Daniel vê. `RES=1920x1080` para outro tamanho; `DRIVER=opengl3 tools/shot.sh` (CPU) para ver como no navegador.
+- **Capturas e FPS na placa de vídeo** (RTX 5060 do Daniel): `tools/gpu.sh shot <saída> [opções do jogo]`, cerca de 30 s,
+  Forward+ como no PC dele (a linha `RESULT` traz `fps` e `step_ms`). Ex.: `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick
+  --seed=5 --shot-at=9`; `RES=1920x1080` muda o tamanho; `tools/gpu.sh run [args]` roda qualquer outra coisa (caminhos C:/...).
+  Um uso por vez (trava; os outros esperam) e abre uma janela na tela do Daniel. `tools/shot.sh` (CPU, 2 a 4 min) só se a
+  GPU falhar, e para o renderizador do navegador (`DRIVER=opengl3`).
 - Compare lado a lado com a referência e avalie, nesta ordem: composição, proporções, arquitetura, materiais, luz,
   profundidade, atmosfera, leitura do combate (herói, inimigos e avisos no chão legíveis).
 - Vídeos do Daniel (fora do repositório, caminhos no guia): folha de quadros com

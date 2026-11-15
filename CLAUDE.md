@@ -30,7 +30,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 ## Comandos
 - Godot: `~/tools/godot/godot` (4.7.2). Rodar o jogo: `~/tools/godot/godot --path .`
 - Testes: `tools/test.sh` (GUT sem tela). Um arquivo só: `tools/test.sh -gtest=res://tests/test_combo.gd`
-- Captura sem tela: `tools/shot.sh saida.png 3 --bot` (segundos antes da captura; o resto são opções do jogo).
+- **Captura na placa de vídeo (preferir)**: `tools/gpu.sh shot saida.png --bot --shot-at=9` (cerca de 30 s, Forward+ na RTX 5060
+  do Daniel pela Godot de Windows em `C:\Users\danie\tools\godot`, com o projeto espelhado em `C:\Users\danie\tools\eterra-gpu`;
+  abre uma janela na tela dele). O WSL não tem Vulkan da GPU (cai no llvmpipe, 2 a 4 min por captura); OpenGL na GPU
+  funciona com `MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA GALLIUM_DRIVER=d3d12 LD_LIBRARY_PATH=/usr/lib/wsl/lib` e `--rendering-driver opengl3`.
+- Captura sem tela (CPU, lenta): `tools/shot.sh saida.png 3 --bot` (segundos antes da captura; o resto são opções do jogo).
 - Opções de teste (depois de `--`): `--bot` (joga sozinho), `--fast=N` (o relógio da partida corre N vezes mais rápido),
   `--start=boss|miniboss|shop|fountain` (sala onde começar), `--showcase` (câmera fixa no enquadramento da imagem de referência; `--cam-yaw`, `--cam-pitch`, `--cam-dist`, `--cam-fov` ajustam), `--horde` (o modo antigo de horda contínua, com `--start=boss|elite1|elite2`), `--shot=arquivo.png`, `--shot-at=segundos`, `--frames=prefixo --count=N --every=s`, `--nosave`, `--smoke` (partida sem tela, imprime `RESULT`).
 - Depois de criar arquivos ou classes novas (`class_name`): `~/tools/godot/godot --headless --path . --import`.
@@ -57,15 +61,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Compatibility no navegador e no celular, com exposição compensada (`Game.COMPAT_*`). Capturas usam Vulkan
   (`tools/shot.sh`; `DRIVER=opengl3` para ver como o navegador, `RES=1920x1080` para outro tamanho).
 - Guia da estética (análise das referências, paleta, tempos dos golpes): `docs/arte/estetica.md`. Trabalho visual
-  vai para o agente `art-director` (`.claude/agents/art-director.md`). Meshy: `tools/meshy/` (pedir antes de gastar créditos).
-- Referência atual: Hades 2 e Ember & Blade (vídeos do Daniel). Mesmo gênero, mecânica e sensação; nada copiado
-  (personagens, nomes, UI e visual são de Eterra). A versão 2D em pixel art está na tag `v1-pixel-2d`.
+  vai para o agente `art-director` (`.claude/agents/art-director.md`). Meshy: `tools/meshy/` (`meshy.mjs`: `image`, `retexture` para repintar a mesma malha, `rig`; pedir antes de gastar créditos; o Daniel comprou 1000 em 2026-11-15 e pediu para segurar depois dos inimigos e da Emeth, sobram 546).
+- Referência atual: Hades 2 e Ember & Blade (vídeos do Daniel). **Do Hades II copiamos as mecânicas e os números,
+  fielmente** (base para evoluir; o Daniel, 2026-11-15); do Ember & Blade, a sensação visual. Nomes, personagens, UI e
+  arte são de Eterra. Comparação sistema por sistema e o que falta: `docs/design/comparativo.md` (manter em dia). A versão 2D em pixel art está na tag `v1-pixel-2d`.
 - Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens, masmorra, armas).
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), no assador para a multidão (o herói do Meshy já tem a proporção certa).
 - Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),
-  inclinação 30, campo de visão 24, distância 60 (`_feel` do `make_data.gd`). Teclado e controle giram junto
+  inclinação 30, campo de visão 24, distância 54 no jogo (ciclo 5, para o herói ler maior; a vitrine `--showcase` fica em 60) (`_feel` do `make_data.gd`). Teclado e controle giram junto
   (`Feel.screen_to_floor`). `--showcase`: câmera fixa no enquadramento da pintura, para comparar.
 - Escala (1º teste do Daniel, "tudo é muito grande"): o cenário do KayKit é encolhido por peça em `Arena.PROP_SCALE`
   (paredes 72% da altura, escadas 0,8 x 0,55, barris 0,55, entulho 0,5 a 0,6, velas 0,7); pilares desenhados pelo raio que
@@ -75,8 +80,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   estrela no acerto (`impact.gdshader`, `Fx.impact`), inimigo pisca branco e achata, corpo arremessado ao morrer
   (`Horde.THROW`), tranco de câmera (`Fx.kick`), hit stop curto (`Feel.hit_stop_scale`) e brilho de antecipação nos finalizadores
   (`ComboNode.glint`, desenhado por `Fx.glint` na ponta da espada). Finalizadores soltam a meia-lua enorme (`Fx.crescent`) e,
-  nos grandes, o quadro de impacto em preto e branco (`Fx.impact_frame`). Multidão cinza clara sobre o chão escuro, que brilha um pouco sozinha para ser lida longe da luz (`CrowdRenderer.CROWD_*`, `lift` e `flat_light` no `crowd.gdshader`); cortes em faixa larga (`Fx.SLASH_INNER`); elites com contorno grosso
-  (`crowd_outline.gdshader`). Detalhes e pendências em `docs/arte/estetica.md`.
+  nos grandes, o quadro de impacto em preto e branco (`Fx.impact_frame`). Multidão cinza clara sobre o chão escuro, que brilha um pouco sozinha para ser lida longe da luz (`CrowdRenderer.CROWD_*`, `lift` e `flat_light` no `crowd.gdshader`); cortes em faixa larga (`Fx.SLASH_INNER`); elites com contorno escuro e fino
+  (`crowd_outline.gdshader`, `CrowdRenderer.OUTLINE_*`; largura em metros do mundo) e borda de ouro velho fraca (`ELITE_RIM`); o ouro das paletas é velho (8e7444), nunca amarelo vivo. Detalhes e pendências em `docs/arte/estetica.md`.
 - Câmera lenta no molde do Hades II (`Fx.slow_mo`: velocidade do mundo por `Engine.time_scale`, zoom, desfoque radial e
   brilho no `screen.gdshader`): último abate da sala (0,35 por 0,55 s, `Rooms.LAST_KILL_*`), golpe que derruba 3 ou
   acerta 7 de uma vez, no máximo uma vez a cada 6 s (`Combat.SLOW_MO_*`, `wants_slow_mo`; no Hades só o último abate e o chefe
@@ -103,7 +108,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `docs/art/ref/`): um modelo assado por inimigo, paleta própria (`tools/make_palettes.gd` gera `assets/models/palettes/`,
   `_elite` com frisos dourados), peças nos ossos (`props`, `hide`, `remap`, `bend` em `MODELS` de `tools/bake.gd`), escala
   da prancha e cor da magia (`EnemyDef.magic_color`: feiticeiro violeta frio, sacerdotes e Morvath roxo; verde só da
-  Emeth e do portal). Elites com contorno dourado (`ELITE_RIM`). Galeria: `tools/enemy_lab.gd`.
+  Emeth e do portal). Elites com frisos de ouro velho e contorno escuro fino. Galeria: `tools/enemy_lab.gd`.
+- **Modelos do Meshy dos nove inimigos** (2026-11-15, aprovados pelo Daniel, tom da 3ª versão do Sacerdote: caveira de
+  marfim, roxo apagado, metal escuro, brilho só nos olhos e gemas): `assets/models/meshy/enemy_<id>/` com esqueleto de 24
+  ossos (`-rigged.glb`). **Ainda não estão no jogo**: a multidão assa poses de clipes do KayKit; falta transferir os clipes
+  para o esqueleto do Meshy (como o `Retarget` do herói) e assar. Prompts e repinturas em `tools/meshy/prompts.json`.
 
 ## Arquitetura
 - `scripts/core/`: lógica pura (sem nós), toda testada. `scripts/game/`: nós da partida. `scripts/ui/`: telas.
@@ -117,14 +126,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `BakedModel`). Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
   `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]`. A multidão fica fora da luz das tochas (camada 2)
   e recebe a luz do paladino pelo global `hero_pos`.
-- O herói é o modelo do Meshy "Sombra" (`assets/models/meshy/hero_sombra/hero_sombra-rigged.glb`, 24 ossos, pose em A),
-  montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na tela de título). Ele veste o Explorador aprovado (folha de 2026-11-14) de forma provisória, sem créditos do Meshy: textura repintada por `tools/recolor_hero.gd` e acessórios presos aos ossos (`HeroGear`); o pedido ao Meshy fica pronto em `docs/art/hero_explorer.md` (seções 2 e 6), alternativas gratuitas em `docs/art/free_assets_research.md`. As animações dele são próprias
-  (`hero_anims.res`): `tools/bake_hero.gd` transfere clipes da Universal Animation Library 1 e 2 da Quaternius (CC0,
+- O herói é o Explorador do Meshy (2026-11-15, da folha aprovada; `assets/models/meshy/hero_explorer/hero_explorer-rigged.glb`,
+  24 ossos, os mesmos da antiga "Sombra", pose em A), montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na
+  tela de título), desenhado com 2,75 m (`HeroBody.HEIGHT`; o combate continua com 2,5). A "Sombra" repintada
+  (`tools/recolor_hero.gd`, `HeroGear`) ficou guardada, sem uso. As animações dele são próprias
+  (`hero_explorer/hero_anims.res`): `tools/bake_hero.gd` transfere clipes da Universal Animation Library 1 e 2 da Quaternius (CC0,
   `assets/models/anim/`) para o esqueleto dele pelo `Retarget` (`scripts/render/retarget.gd`) e mede o pico de cada golpe
   (`PEAK` em `make_data.gd`), o passo da corrida (`Player.RUN_CLIP_PACE`), achata o sobe e desce do quadril na corrida, mantém o braço da espada em guarda e a pegada da espada (pela linha dos nós dos
   dedos do manequim). Clipe novo: editar `CLIPS` em `tools/bake_hero.gd` e rodar
   `~/tools/godot/godot --headless --path . -s tools/bake_hero.gd`. Ver as poses: `tools/pose_lab.gd` (comando no topo).
-  A espada é a Emeth (arte do Daniel de 2026-11-14): lâmina de luz verde, guarda dourada com esmeralda, provisória em formas simples (`EmethSword`, `scripts/render/emeth_sword.gd`), do tamanho da espada do KayKit que substituiu. Emeth é o nome da espada, não do herói (o Daniel, 2026-11-14). Os cortes sem dom são do verde dela (`Combat.EMETH`); dons mudam a cor (fogo, gelo, ouro de Elun). Desenho escolhido pelo Daniel: memória do projeto e `build/web/herois.html`.
+  A espada é a Emeth (arte do Daniel de 2026-11-14; nova imagem em 2026-11-15: lâmina de cristal esmeralda com veios de ouro, guarda de chifres com esmeralda, punho vermelho; modelo do Meshy pronto em `assets/models/meshy/emeth/`, ainda não ligado): lâmina esmeralda com fio central aceso, guarda de ouro velho, provisória em formas simples (`EmethSword`, `scripts/render/emeth_sword.gd`), do tamanho da espada do KayKit que substituiu. Emeth é o nome da espada, não do herói (o Daniel, 2026-11-14). Os cortes sem dom são do verde dela (`Combat.EMETH`); dons mudam a cor (fogo, gelo, ouro de Elun). Desenho escolhido pelo Daniel: memória do projeto e `build/web/herois.html`.
 - Dons agem sozinhos por `SkillDef` (`scripts/game/skills.gd`: STRIKES, NOVA, ORBIT, FAN, METEOR, CONSECRATE) e/ou
   mudam golpes por `BoonMod`.
 - **Combate no estilo Hades 2** (o visual segue o Ember & Blade): ataque (E), especial (D), círculo de luz (`cast`, Q)
@@ -141,6 +152,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Música desligada por enquanto.
 
 ## Onde mexer
+- **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
+  `requires` de dois outros (6 hoje, ainda com o nome "Dons unidos" no texto; renomear para Elo depois do ciclo 5).
 - Combos: `data/combos/paladin.tres` (nós `ComboNode`; `tags` é o que os dons enxergam). Dons: `data/boons/*.tres`
   (`Boon.slot`: um dom por ação, ATTACK/SPECIAL/CAST/DASH, o novo substitui o antigo; NONE = age sozinho, sem limite.
   Raridade sorteada por carta, `Boon.RARITY_MULT` multiplica os números com `BoonMod.by_rarity`)

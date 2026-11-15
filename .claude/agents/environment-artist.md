@@ -33,7 +33,12 @@ Compatibility no navegador e no celular). Leia o `CLAUDE.md`, `docs/development/
   `ArenaKit` antes de criar peça nova. Comentários e código em inglês.
 - Desempenho: sem luz por inimigo, sem material por instância; luzes de cenário com `light_cull_mask = ~Arena.CROWD_LAYER`.
   Meça com `tools/smoke.sh 300 --stress=300` (olhe `step_ms` e `fps`).
-- Teste os dois renderizadores: Forward+ (`tools/shot.sh`) e o do navegador (`DRIVER=opengl3 tools/shot.sh`).
+- Teste os dois renderizadores: Forward+ na GPU (`tools/gpu.sh shot`) e o do navegador (`DRIVER=opengl3 tools/shot.sh`).
+- **Capturas e FPS na placa de vídeo** (RTX 5060 do Daniel): `tools/gpu.sh shot <saída> [opções do jogo]`, cerca de 30 s,
+  Forward+ como no PC dele (a linha `RESULT` traz `fps` e `step_ms`). Ex.: `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick
+  --seed=5 --shot-at=9`; `RES=1920x1080` muda o tamanho; `tools/gpu.sh run [args]` roda qualquer outra coisa (caminhos C:/...).
+  Um uso por vez (trava; os outros esperam) e abre uma janela na tela do Daniel. `tools/shot.sh` (CPU, 2 a 4 min) só se a
+  GPU falhar, e para o renderizador do navegador (`DRIVER=opengl3`).
 
 ## Meshy e modelos externos
 - Plano e prompts em `docs/art/meshy_asset_plan.md`; pipeline em `tools/meshy/meshy.mjs` (`preview`, `refine`,
@@ -48,8 +53,8 @@ Compatibility no navegador e no celular). Leia o `CLAUDE.md`, `docs/development/
 1. `~/tools/godot/godot --headless --path . --import` se criou arquivo ou `class_name` novo.
 2. `~/tools/godot/godot --headless --path . -s tools/check.gd` sem erros de script.
 3. `tools/test.sh` passando.
-4. Capturas reais: `tools/shot.sh <scratchpad>/vitrine.png 2 --showcase --seed=5` e
-   `tools/shot.sh <scratchpad>/jogo.png 9 --bot --autopick --seed=5`; olhe as imagens antes de entregar.
+4. Capturas reais na GPU: `tools/gpu.sh shot <scratchpad>/vitrine.png --showcase --seed=5 --shot-at=2` e
+   `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick --seed=5 --shot-at=9`; olhe as imagens antes de entregar.
 
 ## Entrega
 Responda ao Game Director em português: o que mudou (arquivos), as capturas (caminhos), resultado dos testes e da

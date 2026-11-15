@@ -26,8 +26,13 @@ Você é o designer de interface de "Crônicas de Eterra: A Selagem" (Godot 4.7,
 
 ## Verificação antes de entregar
 1. `~/tools/godot/godot --headless --path . -s tools/check.gd` e `tools/test.sh`.
-2. Capturas reais nas duas resoluções: `tools/shot.sh <scratchpad>/hud.png 9 --bot --autopick --seed=5` e com
-   `RES=1920x1080`; telas: `--title --screen=options|moves`.
+2. Capturas reais na GPU nas duas resoluções: `RES=1280x720 tools/gpu.sh shot <scratchpad>/hud.png --bot --autopick
+   --seed=5 --shot-at=9` e com `RES=1920x1080`; telas: `--title --screen=options|moves`.
+- **Capturas e FPS na placa de vídeo** (RTX 5060 do Daniel): `tools/gpu.sh shot <saída> [opções do jogo]`, cerca de 30 s,
+  Forward+ como no PC dele (a linha `RESULT` traz `fps` e `step_ms`). Ex.: `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick
+  --seed=5 --shot-at=9`; `RES=1920x1080` muda o tamanho; `tools/gpu.sh run [args]` roda qualquer outra coisa (caminhos C:/...).
+  Um uso por vez (trava; os outros esperam) e abre uma janela na tela do Daniel. `tools/shot.sh` (CPU, 2 a 4 min) só se a
+  GPU falhar, e para o renderizador do navegador (`DRIVER=opengl3`).
 3. Uma captura com horda (`--stress=300`) para conferir a leitura.
 
 ## Entrega

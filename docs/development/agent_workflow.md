@@ -61,6 +61,8 @@ Tarefas pequenas (um ajuste de número, um texto) o Game Director faz direto, se
 - Não gastar créditos do Meshy nem outro serviço pago sem autorização específica do Daniel.
 - Sem push forçado, sem reescrever histórico, sem apagar dados ou recursos externos.
 - Evidência antes de afirmação: capturas reais do jogo, saída dos comandos; nada de métricas inventadas.
+- Capturas e FPS na placa de vídeo do Daniel com `tools/gpu.sh` (cerca de 30 s, um agente por vez); `tools/shot.sh`
+  (CPU, minutos) só se a GPU falhar ou para o renderizador do navegador.
 - Ao terminar, cada agente responde ao Game Director em português com o que mudou, a verificação e as pendências.
 
 ## Entrega ao Daniel

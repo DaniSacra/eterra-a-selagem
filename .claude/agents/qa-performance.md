@@ -14,11 +14,17 @@ Você é o engenheiro de QA e desempenho de "Crônicas de Eterra: A Selagem" (Go
    `test_only_finishers_glint`).
 3. Partidas do robô: `tools/smoke.sh 300 --seed=5` (deve chegar em Morvath, sala 5),
    `tools/smoke.sh 120 --start=boss --boons=25 --seed=5` (chefe), outras sementes quando a mudança for de sala.
-4. Desempenho: `tools/smoke.sh 120 --stress=300 --seed=5` (`step_ms` e `fps` da linha `RESULT`). O `fps` sem tela
-   não é o FPS de jogo; para a tela, capture com `tools/shot.sh` e leia o tempo, sabendo que aqui o Vulkan roda por
-   software (llvmpipe) e é muito mais lento que uma placa de vídeo.
-5. Capturas reais: `tools/shot.sh <saída> 9 --bot --autopick --seed=5` (luta), `--showcase` (enquadramento da
-   referência), `RES=1920x1080` e `DRIVER=opengl3` (renderizador do navegador). Abra e olhe cada imagem.
+4. Desempenho: `tools/smoke.sh 120 --stress=300 --seed=5` (`step_ms` da simulação, sem tela). FPS de verdade na placa de
+   vídeo: `tools/gpu.sh shot <saída> --stress=300 --seed=5 --shot-at=8` (`fps` da linha `RESULT`, quadros já assentados).
+   Antes e depois: rode o antes numa cópia do commit base com `MIRROR=/mnt/c/Users/danie/tools/eterra-gpu-head`.
+5. Capturas reais na GPU: `tools/gpu.sh shot <saída> --bot --autopick --seed=5 --shot-at=9` (luta), `--showcase --shot-at=4`
+   (enquadramento da referência), `RES=1920x1080`. O renderizador do navegador: `DRIVER=opengl3 tools/shot.sh` (CPU).
+   Abra e olhe cada imagem.
+- **Capturas e FPS na placa de vídeo** (RTX 5060 do Daniel): `tools/gpu.sh shot <saída> [opções do jogo]`, cerca de 30 s,
+  Forward+ como no PC dele (a linha `RESULT` traz `fps` e `step_ms`). Ex.: `tools/gpu.sh shot <scratchpad>/jogo.png --bot --autopick
+  --seed=5 --shot-at=9`; `RES=1920x1080` muda o tamanho; `tools/gpu.sh run [args]` roda qualquer outra coisa (caminhos C:/...).
+  Um uso por vez (trava; os outros esperam) e abre uma janela na tela do Daniel. `tools/shot.sh` (CPU, 2 a 4 min) só se a
+  GPU falhar, e para o renderizador do navegador (`DRIVER=opengl3`).
 6. Versões quando pedido: exportar Windows e Web (comandos no `CLAUDE.md`).
 
 ## Regras
