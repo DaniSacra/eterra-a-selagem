@@ -37,6 +37,18 @@ const PAINT_RIM := 0.3
 ## (a gamma on its colours; 1 = as painted) so the robed figures read as bodies.
 const PAINT_GAMMA := 0.7
 const GILD_COLOR := Color(0.62, 0.46, 0.22)
+## The old gold goes on the steel only (cycle 7): skull, bones and cloth keep the colours of the common figure
+## (until then the whole elite took 0.3 of it and its skull read yellow).
+const GILD_REST := 0.0
+## A staff's orb and gems, in the colour of the figure's magic: always lit under the glow's threshold, swelling
+## past it while it winds up (crowd.gdshader `orb`, `orb_tell`).
+## Morvath fights beside the hero, whose warm light turned his violet robes grey and brown: he takes this share of it.
+const BOSS_HERO_LIGHT := 0.25
+const ORB_GLOW := 1.2
+const ORB_TELL := 1.8
+## With many enemies on the floor (more than Horde.BARS_FOR_ALL) the life bars thin out: opacity and height.
+const BAR_CROWD_FADE := 0.7
+const BAR_CROWD_HEIGHT := 0.75
 const OUTLINE := preload("res://assets/shaders/crowd_outline.gdshader")
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
@@ -102,15 +114,24 @@ func register(d: EnemyDef) -> void:
 	var baked := model(d.model)
 	mat.set_shader_parameter(&"albedo", d.palette if d.palette and not baked.painted else baked.albedo)
 	mat.set_shader_parameter(&"glow_from", baked.glow_from)
-	mat.set_shader_parameter(&"paint_glow", PAINT_GLOW if baked.painted else 0.0)
+	mat.set_shader_parameter(&"paint_glow", PAINT_GLOW * d.shine if baked.painted else 0.0)
 	mat.set_shader_parameter(&"paint_gamma", PAINT_GAMMA if baked.painted else 1.0)
 	mat.set_shader_parameter(&"gild", d.gild if baked.painted else 0.0)
 	mat.set_shader_parameter(&"gild_color", GILD_COLOR)
+	mat.set_shader_parameter(&"gild_rest", GILD_REST)
+	var magic := EnemyFx.magic_of(d) if d.magic_color.a > 0.0 else Color(0, 0, 0)
+	mat.set_shader_parameter(&"magic", Vector3(magic.r, magic.g, magic.b))
+	mat.set_shader_parameter(&"orb", ORB_GLOW)
+	mat.set_shader_parameter(&"orb_tell", ORB_TELL)
+	mat.set_shader_parameter(&"crest", d.crest)
+	mat.set_shader_parameter(&"hero_light", BOSS_HERO_LIGHT if d.behavior == EnemyDef.Behavior.BOSS else 1.0)
+	mat.set_shader_parameter(&"crest_from", baked.height * 0.8)
 	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline
 	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
-	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) if common else d.tint * (ELITE_SHADE if d.elite else Color.WHITE)
+	# an elite's cloth and bone stay the colour of the common figure's (cycle 7): the same share of the tint
+	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) * (Color.WHITE if common else ELITE_SHADE) if d.behavior != EnemyDef.Behavior.BOSS else d.tint
 	mat.set_shader_parameter(&"tint", tint)
-	mat.set_shader_parameter(&"desaturate", CROWD_GREY if common else ELITE_GREY)
+	mat.set_shader_parameter(&"desaturate", (CROWD_GREY if common else ELITE_GREY) - d.vivid)
 	mat.set_shader_parameter(&"scene_light", CROWD_SCENE_LIGHT)
 	mat.set_shader_parameter(&"key", KEY)
 	mat.set_shader_parameter(&"key_fill", KEY_FILL)
@@ -142,7 +163,8 @@ func begin() -> void:
 ## One character: kind, animation, seconds into it, where it stands, which way it faces (radians around Y),
 ## and its state (r flash, g frost, b burn, a dissolve).
 ## squash: scale on top of the def's size (a blow flattens and widens). tilt: tumbling backwards, in radians.
-func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0) -> void:
+## lean: tipped to its side, in radians (an unsteady runner's sway).
+func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0, lean := 0.0) -> void:
 	var m := model(d.model)
 	if m.frame_count(anim) == 0:
 		anim = &"walk" if anim != &"idle" and m.frame_count(&"walk") > 0 else &"idle"
@@ -153,6 +175,8 @@ func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, stat
 	var basis := Basis(Vector3.UP, yaw)
 	if tilt != 0.0:
 		basis = basis * Basis(Vector3.RIGHT, tilt)
+	if lean != 0.0:
+		basis = basis * Basis(Vector3.BACK, lean)
 	_put(b, Transform3D(basis.scaled(squash * s), pos), state)
 	if state.a < 0.5:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
@@ -160,10 +184,26 @@ func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, stat
 
 
 ## A thin life bar over one enemy's head. top: the top of its head (world). life, armor: what is left (0..1).
-func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float) -> void:
+## crowded: the floor is full, the bar is drawn thinner and fainter so the bars do not make a grid over the heads.
+func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := false) -> void:
 	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH)
-	_put(_bars, Transform3D(Basis().scaled(Vector3(w, BAR_HEIGHT, 1.0)), top + Vector3(0, BAR_ABOVE, 0)),
-		Color(clampf(life, 0.0, 1.0), clampf(armor, 0.0, 1.0), 0, 0))
+	_put(_bars, Transform3D(Basis().scaled(Vector3(w, BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0), 1.0)), top + Vector3(0, BAR_ABOVE, 0)),
+		Color(clampf(life, 0.0, 1.0), clampf(armor, 0.0, 1.0), BAR_CROWD_FADE if crowded else 1.0, 0))
+
+
+## The state of one character for add(), as crowd.gdshader reads it. flash: 0..1 (how white the blow left it);
+## absorbed: the blow landed on armor (a gleam of old gold instead); tell: 0..1 of its wind-up; broken: its armor is gone.
+static func state(flash: float, frozen: bool, burning: bool, dissolve := 0.0, absorbed := false, tell := 0.0, broken := false) -> Color:
+	return Color(-flash if absorbed else flash, (1.0 if frozen else 0.0) + (0.5 if broken else 0.0),
+		(1.0 if burning else 0.0) + 0.5 * clampf(tell, 0.0, 1.0), dissolve)
+
+
+## What the shader reads back from a state: [flash, absorbed, frost, armored, burn, tell] (the same arithmetic as
+## crowd.gdshader, kept beside the packing so a test holds the two together).
+static func unpack(s: Color) -> Array[float]:
+	var frost := 1.0 if s.g >= 0.75 else 0.0
+	var burn := 1.0 if s.b >= 0.75 else 0.0
+	return [maxf(s.r, 0.0), maxf(-s.r, 0.0), frost, 1.0 - clampf((s.g - frost) * 2.0, 0.0, 1.0), burn, clampf((s.b - burn) * 2.0, 0.0, 1.0)]
 
 
 func commit() -> void:

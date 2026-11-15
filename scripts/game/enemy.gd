@@ -23,6 +23,11 @@ var contact_cd := 0.0
 var flash_t := 0.0
 ## How white the last blow flashed it (1: a strong blow, the body goes pure white for a frame or two).
 var flash_power := 1.0
+## The last blow landed on armor (drawn as a gleam of old gold on the edges, never the white of a wound).
+var absorbed := false
+## A number of its own from 0 to 1, for what is only drawn (the phase of a sway, where its dust falls): given in
+## the order of spawning, never by the simulation's dice.
+var look := 0.0
 var frozen_t := 0.0
 var stun_t := 0.0
 var air_t := 0.0

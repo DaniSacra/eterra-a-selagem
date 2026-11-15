@@ -23,6 +23,15 @@ const THROW_UP := 6.0
 const GRAVITY := 24.0
 const BURN_TICK := 0.5
 const HURT_TIME := 0.3
+## A heavy body does not reel: only the first jolt of its hit pose shows, this long.
+const HEAVY_HURT := 0.12
+## How much of the squash of a blow a heavy body takes.
+const HEAVY_SQUASH := 0.4
+## Only drawn (EnemyDef.sway, windup_shake): the unsteady runner's trunk sways this many times a second as it
+## runs, and it trembles this fast while it winds up; its stride is uneven by this share.
+const SWAY_HZ := 9.0
+const SHAKE_HZ := 14.0
+const UNEVEN_STEP := 0.12
 const DEATH_SHOW := 1.5
 const DISSOLVE_FROM := 0.85
 const MAX_DYING := 90
@@ -38,6 +47,8 @@ var fx: Fx
 var ground: Ground
 var projectiles: Projectiles
 var renderer: CrowdRenderer
+## The lights of the wind-ups and of the armor (never red: the warnings on the floor are Ground's).
+var tells: EnemyFx
 var hp_scale := 1.0
 var damage_scale := 1.0
 var target := Vector2.ZERO
@@ -46,6 +57,8 @@ var _hash := SpatialHash.new(CELL)
 var _defs: Dictionary = {}
 var _frame := 0
 var _rng := RandomNumberGenerator.new()
+## How many were ever spawned: each takes a number of its own for what is only drawn (Enemy.look).
+var _born := 0
 
 
 func _ready() -> void:
@@ -53,6 +66,9 @@ func _ready() -> void:
 	renderer = CrowdRenderer.new()
 	renderer.layers = Arena.CROWD_LAYER
 	add_child(renderer)
+	tells = EnemyFx.new()
+	tells.layers = Arena.CROWD_LAYER
+	add_child(tells)
 
 
 func def(id: StringName) -> EnemyDef:
@@ -76,6 +92,8 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true) -> Enemy:
 	e.cooldown = d.attack_cooldown * _rng.randf_range(0.4, 1.0)
 	e.side = 1.0 if _rng.randf() < 0.5 else -1.0
 	e.dir = (target - at).normalized() if target.distance_to(at) > 0.1 else Vector2.DOWN
+	_born += 1
+	e.look = fposmod(_born * 0.618034, 1.0)
 	if rising:
 		e.state = Enemy.State.RISE
 		e.anim = &"rise"
@@ -423,11 +441,16 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		e.armor = DamageCalc.against_armor(e.armor, amount)[0]
 		e.flash_t = FLASH_TIME
 		e.flash_power = WEAK_FLASH
+		e.absorbed = true
+		var chest := Vector3(e.pos.x, e.y + 1.2 * e.def.size, e.pos.y)
 		if show_number:
 			fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, ARMOR_COLOR, big)
+			tells.armor_hit(chest, from_dir)
 		if e.armor <= 0.0:
+			tells.armor_break(chest, e.def.size)
 			armor_broken.emit(e)
 		return false
+	e.absorbed = false
 	e.hp -= amount
 	e.flash_t = FLASH_TIME
 	e.flash_power = 1.0 if big else WEAK_FLASH
@@ -493,41 +516,66 @@ const BARS_FOR_ALL := 24
 func render() -> void:
 	renderer.begin()
 	var few := list.size() <= BARS_FOR_ALL
+	var crowded := not few
+	tells.begin()
 	for e in list:
+		var d := e.def
 		var anim := e.anim
 		var t := e.anim_t
+		var at := Vector3(e.pos.x, e.y, e.pos.y)
+		var lean := 0.0
+		var tell := 0.0
 		if e.state == Enemy.State.WALK:
-			if e.hurt_t > 0.0:
+			if e.hurt_t > 0.0 and (not d.heavy or e.hurt_t > HURT_TIME - HEAVY_HURT):
 				anim = &"hit"
 				t = HURT_TIME - e.hurt_t
 			elif e.stun_t > 0.0:
 				anim = &"idle"
 			else:
 				t = e.anim_t * clampf(_speed(e) / 2.3, 0.6, 1.6)
-		elif e.state == Enemy.State.WINDUP and anim == &"attack":
-			# stretch the swing so the blade comes down when the windup ends
-			var clip := renderer.model_of(e.def).duration(&"attack")
-			t = e.state_t / _windup(e) * clip * IMPACT_SHARE
-		elif e.state == Enemy.State.ATTACK and anim == &"attack":
-			var clip := renderer.model_of(e.def).duration(&"attack")
-			t = clip * IMPACT_SHARE + e.state_t * 1.4
+				if d.sway > 0.0 and e.frozen_t <= 0.0:
+					# unsteady: the trunk rocks from side to side and the stride is uneven (the place does not change)
+					lean = deg_to_rad(d.sway) * sin(TAU * (SWAY_HZ * e.anim_t + e.look))
+					t = maxf(0.0, t + UNEVEN_STEP * sin(TAU * (1.7 * e.anim_t + e.look)))
+		elif e.state == Enemy.State.WINDUP:
+			tell = clampf(e.state_t / maxf(_windup(e), 0.01), 0.0, 1.0)
+			tells.tell(e, tell)
+			if anim == &"attack":
+				# stretch the swing so the blade comes down when the windup ends
+				var clip := renderer.model_of(d).duration(&"attack")
+				t = e.state_t / _windup(e) * clip * IMPACT_SHARE
+			elif anim == &"idle" and renderer.model_of(d).frame_count(&"brace") > 0:
+				# the charge is announced standing still: braced behind the shield, when the figure has that pose
+				anim = &"brace"
+			if d.windup_shake > 0.0 and e.frozen_t <= 0.0:
+				var side := Vector2(e.dir.y, -e.dir.x) * d.windup_shake * sin(TAU * SHAKE_HZ * e.state_t)
+				at += Vector3(side.x, 0, side.y)
+		elif e.state == Enemy.State.ATTACK:
+			tells.loosed(e, e.state_t)
+			if anim == &"attack":
+				var clip := renderer.model_of(d).duration(&"attack")
+				t = clip * IMPACT_SHARE + e.state_t * 1.4
 		var k := clampf(e.flash_t / FLASH_TIME, 0.0, 1.0)
-		var state := Color(k * e.flash_power, 1.0 if e.frozen_t > 0.0 else 0.0, 1.0 if e.burn_t > 0.0 else 0.0, 0.0)
-		# a blow flattens and widens the body for an instant, and lifts it a little
-		var squash := Vector3(1.0 + 0.25 * k, 1.0 - 0.2 * k, 1.0 + 0.25 * k)
-		renderer.add(e.def, anim, t, Vector3(e.pos.x, e.y + 0.18 * k, e.pos.y), e.yaw(), state, squash)
+		var state := CrowdRenderer.state(k * e.flash_power, e.frozen_t > 0.0, e.burn_t > 0.0, 0.0, e.absorbed, tell,
+			e.max_armor > 0.0 and e.armor <= 0.0)
+		# a blow flattens and widens the body for an instant, and lifts it a little; less on a heavy body, and not at
+		# all when its armor took it
+		var give := 0.0 if e.absorbed else k * (HEAVY_SQUASH if d.heavy else 1.0)
+		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
+		renderer.add(d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, 0.0, lean)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
-		# the hurt and the armored show one, so the screen stays clear
-		if e.def.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
-			var top := e.y + renderer.model_of(e.def).height * e.def.size
-			renderer.add_bar(e.def, Vector3(e.pos.x, top, e.pos.y), e.hp / maxf(e.max_hp, 0.001),
-				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0)
+		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
+		if d.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
+			var top := e.y + renderer.model_of(d).height * d.size
+			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), e.hp / maxf(e.max_hp, 0.001),
+				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded)
 	for e in dying:
 		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
 		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2
 		var tumble := -e.spin * sin(clampf(e.dead_t * 2.2, 0.0, 1.0) * PI) * 1.1
 		renderer.add(e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(), Color(maxf(0.0, 1.0 - e.dead_t * 8.0), 0, 0, dissolve), Vector3.ONE, tumble)
 	renderer.commit()
+	tells.commit()
 
 
 # ---------- queries (only on the frames something lands, so a plain loop is enough) ----------

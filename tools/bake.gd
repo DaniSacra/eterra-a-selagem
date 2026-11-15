@@ -13,7 +13,14 @@ extends SceneTree
 ## as tools/bake_hero.gd does for the hero. Options of a clip: "from" and "to" (seconds of the clip), "time"
 ## (seconds it plays in, in the game), "lift" (the share of the hips' rise and fall that is kept) and "guard"
 ## ([rig, clip, bones], or a list of those: the bones, parents first, point where another clip has them, e.g. the
-## sword arm kept in guard while the legs run).
+## sword arm kept in guard while the legs run) and "bend" (as the entry's, for this clip only, on top of it).
+## "rigid" (pieces the model carries by itself and its rig tears between bones, e.g. the brute's tower shield, half
+## of it skinned to the leg it hangs beside: {"bone": the one bone it follows from now on, "seeds": the bones that
+## hold its core, "plate" or "rod": a flat or a long piece, and how far from its plane or its line it still is the
+## piece, in the model's meters, "worn": true to lift its painting off the dark, turn its rim to worn light steel
+## and scratch its faces, _worn}) and "hold" ({"bones": parents first, "swing": degrees}: those bones stay as the
+## model rests, whatever the clip, the first one swung around the figure's upright axis; a clip's own "hold" is
+## its swing: the shield arm stays behind the shield, and the shield comes in front of the body).
 ## A held piece: "hand" (Right or Left), then "file" (assets/models/weapons) or "shape" (see _prop), "scale",
 ## "at" (meters) and "rot" (degrees) in the hand's grip (+Y along the fist toward the pinky, which is where the
 ## libraries' sword clips carry the blade; +Z out of the knuckles, along the forearm) and "remap" (palette cells
@@ -105,6 +112,13 @@ const CROSSBOW_GUARD := {"guard": [&"ual", "Pistol_Idle", RIGHT_ARM]}
 ## The shield arm up and the sword arm in guard (the shield clip lets it hang: the blade would drag in the floor).
 const SHIELD_GUARD := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]]}
 const SHIELD_IDLE := [&"ual2", "Idle_Shield", 4, true, SWORD_GUARD]
+## The brute's own tower shield (MODELS.guard "hold"): degrees its arm and shield are swung from the model's rest
+## toward the middle of the body, standing and walking, and braced for the charge.
+const SHIELD_FRONT := -14.0
+const SHIELD_BRACE := -26.0
+## Both hands held out, palms up, as one who carries an offering (the priest: no object, no symbol).
+const BOTH_ARMS: Array[StringName] = [&"LeftShoulder", &"LeftArm", &"LeftForeArm", &"LeftHand", &"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
+const OFFERING_GUARD := {"guard": [&"ual2", "Walk_Carry", BOTH_ARMS]}
 
 ## What every figure does the same way. The rise plays in the 0.9 s the horde gives it (Horde, State.RISE).
 const COMMON_ANIMS := {
@@ -136,10 +150,12 @@ const MODELS := {
 	"skeleton": {
 		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "skeleton.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.8, "rot": EDGE_OUT}],
+		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 1.0, "rot": EDGE_OUT}],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 10, true, SWORD_GUARD], "idle": [&"ual", "Idle", 4, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
+			# the lunge is announced with the blade raised over the head (Horde plays "windup" for its 0.9 s)
+			"windup": [&"ual", "Sword_Attack", 4, false, {"from": 0.1, "to": 0.3, "time": 0.9}],
 		},
 	},
 	# 2. the runner: burnt bone and red rags, no weapon, stooped, an ember in the chest
@@ -155,17 +171,24 @@ const MODELS := {
 	"mage": {
 		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
-		"held": [{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.75, "rot": THUMB_UP, "remap": {17: C_GLOW_COLD, C_BONE: C_WOOD}}],
+		"held": [
+			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "remap": {17: C_GLOW_COLD, C_BONE: C_WOOD}},
+			# the cold violet orb in the top of the staff: always lit, it swells as the bolt is conjured
+			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD},
+		],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 10, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
+			# its bolt is announced by "aim" (Horde): the conjuring pose, not the walk it fell back to
+			"aim": STAFF_CLIPS.cast,
 		},
 	},
 	# 4. the crossbowman: dark hood, red scarf; the crossbow is KayKit's
 	"archer": {
 		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": 0.6, "rot": THUMB_UP}],
+		# the crossbow a sixth larger and its bow in light steel, so it reads as the weapon from the game's camera
+		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": 0.7, "rot": THUMB_UP, "remap": {C_ARMOR: C_BLADE}}],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 8, true, CROSSBOW_GUARD], "idle": [&"ual", "Pistol_Idle", 4, true],
 			"attack": [&"ual", "Pistol_Shoot", 6, false], "aim": [&"ual", "Pistol_Idle", 3, true],
@@ -174,17 +197,27 @@ const MODELS := {
 	# 5. the brute: dark plate, the tower shield with its emblem and the sword are the model's own
 	"guard": {
 		"meshy": "guard", "height": 2.03, "triangles": BODY_TRIANGLES,
+		# the tower shield follows the shoulder in one piece, the arm behind it as the model rests, swung in front of
+		# the body; charcoal on a dark floor, it takes a rim of worn light steel and scratches. The sword is one piece too.
+		"rigid": [
+			{"bone": "LeftShoulder", "seeds": ["LeftHand", "LeftForeArm"], "plate": 0.09, "worn": true},
+			{"bone": "RightHand", "seeds": ["RightHand"], "rod": 0.07},
+		],
+		"hold": {"bones": LEFT_ARM, "swing": SHIELD_FRONT},
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true, SHIELD_GUARD], "idle": SHIELD_IDLE,
+			"walk": [&"ual", "Walk", 10, true, SWORD_GUARD], "idle": [&"ual2", "Idle_Shield", 4, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
+			# the charge is announced braced behind the shield, brought further across the body
+			"brace": [&"ual2", "Shield_Dash_RM", 4, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
 	# 6. the priest of the dead: dark purple hood and robes, no weapon
 	"priest": {
 		"meshy": "priest", "height": 1.93, "triangles": BODY_TRIANGLES,
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true], "idle": [&"ual", "Idle", 4, true],
-			"attack": CASTER_CLIPS.attack, "cast": CASTER_CLIPS.cast,
+			"walk": [&"ual", "Walk", 10, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 4, true, OFFERING_GUARD],
+			# the ritual: both hands rise over the second its blow takes to fall
+			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 6, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 1.0}],
 		},
 	},
 	# 7. the guardian knight: crowned helmet, heavy plate, red cape; blade and shield are KayKit's
@@ -383,6 +416,8 @@ const KAYKIT := {
 var _done := false
 ## rig -> [model, AnimationPlayer, Skeleton3D], loaded when a figure first asks for it.
 var _rigs := {}
+## The entry's "hold" while it is baked (see MODELS).
+var _hold := {}
 
 
 func _process(_delta: float) -> bool:
@@ -419,6 +454,10 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var slim := MeshSlim.slim(mi.mesh.surface_get_arrays(0), PoseBaker.find_albedo(mi).get_image(), spec.triangles, ATLAS)
 	var arrays: Array = slim[0]
 	var atlas: Image = slim[1]
+	for r: Dictionary in spec.get("rigid", []):
+		var piece := _rigid(arrays, mi, r)
+		if r.get("worn", false):
+			_worn(arrays, atlas, piece)
 	var held: Array = spec.get("held", [])
 	if not held.is_empty():
 		atlas = _with_strip(atlas, load(spec.palette))
@@ -428,6 +467,7 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	mi.mesh = light
 	var anims: Dictionary = COMMON_ANIMS.merged(spec.anims, true)
 	var bend: Dictionary = spec.get("bend", {})
+	_hold = spec.get("hold", {})
 	# the model at the height the game draws it at size 1: measured standing idle (the models rest in poses of their
 	# own, the brute with its legs apart), then scaled; Retarget measures the scaled model
 	var retargets := {}
@@ -460,17 +500,20 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 		var loops: bool = a[3]
 		var meshes: Array = []
 		var low := INF
+		var lean := 0.0
 		for i in frames:
 			# loops sample [from, to); one-shots include the last pose
 			var t := from + (to - from) * i / (frames if loops else maxi(frames - 1, 1))
-			_pose_meshy(skeleton, model, retargets, a, t, bend)
+			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})))
+			if i == 0:
+				lean = _lean(skeleton)
 			var mesh := PoseBaker.snapshot(model, skeleton, extra)
 			low = minf(low, mesh.get_aabb().position.y)
 			meshes.append(mesh)
 		out.anims[anim] = meshes
 		out.fps[anim] = frames / float(opts.get("time", to - from))
 		out.loops[anim] = loops
-		print("  %s: %s %s, %.2f s, lowest point %.2f m" % [anim, a[0], a[1], frames / float(out.fps[anim]), low])
+		print("  %s: %s %s, %.2f s, lowest point %.2f m, trunk leaning %.0f degrees" % [anim, a[0], a[1], frames / float(out.fps[anim]), low, lean])
 	# the top of the head, not of what it holds (a staff stands taller than its bearer)
 	out.height = spec.height
 	model.free()
@@ -493,6 +536,15 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		for bone: StringName in guards[i][2]:
 			var b := skeleton.find_bone(bone)
 			pose[b] = (rt.turn(skeleton.get_bone_parent(b), pose).inverse() * rt.turn(b, held[i])).get_rotation_quaternion()
+	if not _hold.is_empty():
+		var held_bones: Array = _hold.bones
+		for bone: StringName in held_bones:
+			var b := skeleton.find_bone(bone)
+			pose[b] = skeleton.get_bone_rest(b).basis.get_rotation_quaternion()
+		var first := skeleton.find_bone(held_bones[0])
+		var parent := rt.turn(skeleton.get_bone_parent(first), pose)
+		var swing := Basis(Vector3.UP, deg_to_rad(float(opts.get("hold", _hold.get("swing", 0.0)))))
+		pose[first] = (parent.inverse() * swing * parent * Basis(pose[first] as Quaternion)).get_rotation_quaternion()
 	for b: int in pose:
 		skeleton.set_bone_pose_rotation(b, pose[b])
 	# clips that walk across the floor (_RM) stay in place: the game moves the figure
@@ -513,6 +565,20 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		var foot := String(skeleton.get_bone_name(b)).contains("Foot") or String(skeleton.get_bone_name(b)).contains("Toe")
 		low = minf(low, skeleton.get_bone_global_pose(b).origin.y - (skeleton.get_bone_global_rest(b).origin.y if foot else BODY_THICKNESS))
 	skeleton.set_bone_pose_position(rt.hips_bone(), hips - Vector3(0, low, 0))
+
+
+## Two lists of bends as one (the same bone in both: the degrees add up).
+func _bends(a: Dictionary, b: Dictionary) -> Dictionary:
+	var out := a.duplicate()
+	for bone: String in b:
+		out[bone] = (out.get(bone, Vector3.ZERO) as Vector3) + (b[bone] as Vector3)
+	return out
+
+
+## Degrees the trunk leans from upright in the pose the skeleton is in (hips to neck).
+func _lean(skeleton: Skeleton3D) -> float:
+	var up := skeleton.get_bone_global_pose(skeleton.find_bone("neck")).origin - skeleton.get_bone_global_pose(skeleton.find_bone("Hips")).origin
+	return rad_to_deg(up.angle_to(Vector3.UP))
 
 
 ## The figure's bone rotations for a clip of a rig at t seconds (wrap: t past the end starts again).
@@ -579,6 +645,235 @@ func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 		strip.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		p.mesh = strip
 	return pieces
+
+
+## Worn light steel (the rim of a shield, a scratch), how much lighter the plate's painting gets, how many scratches
+## cross its faces and how wide they are (the model's meters).
+const WORN_STEEL := Color(0.6, 0.6, 0.57)
+const WORN_LIFT := 1.4
+const WORN_SCRATCHES := 16
+const WORN_SCRATCH_WIDTH := 0.0055
+## A triangle whose normal is this close to the faces' plane is rim; the faces take a band of the same steel this
+## wide (meters of the model: 3 to 4 cm at the brute's size) along it.
+const WORN_RIM := 0.45
+const WORN_EDGE := 0.024
+
+
+## A piece of the model's own body made rigid (see "rigid" in MODELS): from the vertices its seed bones hold, the
+## piece is everything joined to them that lies in the same plane (a plate) or along the same line (a rod); all of
+## it then follows one bone. Returns which vertices are the piece.
+func _rigid(arrays: Array, mi: MeshInstance3D, r: Dictionary) -> PackedByteArray:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var index: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var per := bones.size() / verts.size()
+	var binds := {}
+	for i in mi.skin.get_bind_count():
+		binds[String(mi.skin.get_bind_name(i))] = i
+	var seed_binds: Array[int] = []
+	for name: String in r.seeds:
+		seed_binds.append(binds[name])
+	var seeds: Array[int] = []
+	for v in verts.size():
+		var share := 0.0
+		for k in per:
+			if seed_binds.has(bones[v * per + k]):
+				share += weights[v * per + k]
+		if share > 0.6:
+			seeds.append(v)
+	var plate := r.has("plate")
+	var band: float = r.plate if plate else r.rod
+	# vertices at the same place are one (the texture's seams split them), joined along the triangles' sides
+	var place := {}
+	var rep := PackedInt32Array()
+	rep.resize(verts.size())
+	for v in verts.size():
+		var key := Vector3i((verts[v] * 20000.0).round())
+		if not place.has(key):
+			place[key] = v
+		rep[v] = place[key]
+	var next := {}
+	for t in range(0, index.size(), 3):
+		for k in 3:
+			var a := rep[index[t + k]]
+			var b := rep[index[t + (k + 1) % 3]]
+			if not next.has(a):
+				next[a] = []
+			if not next.has(b):
+				next[b] = []
+			(next[a] as Array).append(b)
+			(next[b] as Array).append(a)
+	# its plane (the direction it is thinnest in) or its line (the one it is longest in) is fitted to the seeds,
+	# the piece is grown from them over the surface as far as it stays in that plane or on that line, and the fit
+	# is made again on what was found (the seeds are only the part of it the right bones happened to hold)
+	var inside := PackedByteArray()
+	var chosen := seeds
+	for pass_i in 5:
+		var center := Vector3.ZERO
+		for v in chosen:
+			center += verts[v]
+		center /= chosen.size()
+		var cov := Basis(Vector3.ZERO, Vector3.ZERO, Vector3.ZERO)
+		for v in chosen:
+			var d := verts[v] - center
+			cov.x += d * d.x
+			cov.y += d * d.y
+			cov.z += d * d.z
+		var trace := cov.x.x + cov.y.y + cov.z.z
+		var m := Basis(Vector3(trace, 0, 0) - cov.x, Vector3(0, trace, 0) - cov.y, Vector3(0, 0, trace) - cov.z) if plate else cov
+		var axis := Vector3(0.3, 0.5, 0.8).normalized()
+		for it in 80:
+			axis = (m * axis).normalized()
+		inside = PackedByteArray()
+		inside.resize(verts.size())
+		var queue: Array[int] = []
+		for v in seeds:
+			if inside[rep[v]] == 0 and _off(verts[v], center, axis, plate) < band:
+				inside[rep[v]] = 1
+				queue.append(rep[v])
+		chosen = queue.duplicate()
+		while not queue.is_empty():
+			var v: int = queue.pop_back()
+			for o: int in next.get(v, []):
+				if inside[o] == 0 and _off(verts[o], center, axis, plate) < band:
+					inside[o] = 1
+					queue.append(o)
+					chosen.append(o)
+	var bind: int = binds[String(r.bone)]
+	var count := 0
+	for v in verts.size():
+		inside[v] = inside[rep[v]]
+		if inside[v] == 1:
+			count += 1
+			for k in per:
+				bones[v * per + k] = bind
+				weights[v * per + k] = 1.0 if k == 0 else 0.0
+	arrays[Mesh.ARRAY_BONES] = bones
+	arrays[Mesh.ARRAY_WEIGHTS] = weights
+	print("  rigid on %s: %d of %d vertices, %d seeds" % [r.bone, count, verts.size(), seeds.size()])
+	return inside
+
+
+## How far a point is from a plate's plane (axis: its normal) or from a rod's line (axis: its direction).
+func _off(p: Vector3, center: Vector3, axis: Vector3, plate: bool) -> float:
+	var d := p - center
+	return absf(d.dot(axis)) if plate else (d - axis * d.dot(axis)).length()
+
+
+## Repaints a rigid piece of the model's own body in its texture: its flat faces are lifted off the dark and
+## scratched; what joins them (the rim) becomes worn light steel.
+func _worn(arrays: Array, atlas: Image, part: PackedByteArray) -> void:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var index: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	# the piece's triangles, and the axis its faces look along (the mean of their normals, folded to one side)
+	var tris: Array[int] = []
+	var normals: Array[Vector3] = []
+	var face := Vector3.ZERO
+	var biggest := 0.0
+	for t in range(0, index.size(), 3):
+		if part[index[t]] + part[index[t + 1]] + part[index[t + 2]] < 3:
+			continue
+		var n := (verts[index[t + 1]] - verts[index[t]]).cross(verts[index[t + 2]] - verts[index[t]])
+		tris.append(t)
+		normals.append(n)
+		if n.length() > biggest:
+			biggest = n.length()
+			face = n.normalized()
+	if tris.is_empty():
+		push_error("bake: nothing to wear")
+		return
+	for pass_i in 6:
+		var sum := Vector3.ZERO
+		for n in normals:
+			sum += n * signf(n.dot(face))
+		face = sum.normalized()
+	var across := face.cross(Vector3.UP).normalized()
+	var along := face.cross(across)
+	# scratches: short straight strokes across the faces, the same every bake
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for t in tris:
+		for k in 3:
+			var p := verts[index[t + k]]
+			lo = lo.min(Vector2(p.dot(across), p.dot(along)))
+			hi = hi.max(Vector2(p.dot(across), p.dot(along)))
+	var strokes: Array[PackedVector2Array] = []
+	for i in WORN_SCRATCHES:
+		var from := Vector2(rng.randf_range(lo.x, hi.x), rng.randf_range(lo.y, hi.y))
+		var to := from + Vector2.from_angle(rng.randf_range(-1.2, -0.3) + (PI if rng.randf() < 0.3 else 0.0)) * rng.randf_range(0.12, 0.3) * (hi - lo).length()
+		strokes.append(PackedVector2Array([from, to]))
+	# where a face meets the rim: the sides shared by a triangle of each (by place: the texture's seams split them)
+	var sides := {}
+	for i in tris.size():
+		var is_rim := absf(normals[i].normalized().dot(face)) < WORN_RIM
+		for k in 3:
+			var p0 := verts[index[tris[i] + k]]
+			var p1 := verts[index[tris[i] + (k + 1) % 3]]
+			var k0 := Vector3i((p0 * 20000.0).round())
+			var k1 := Vector3i((p1 * 20000.0).round())
+			var key := [k0, k1] if k0 < k1 else [k1, k0]
+			if not sides.has(key):
+				sides[key] = [false, false, p0, p1]
+			sides[key][0 if is_rim else 1] = true
+	var creases: Array[PackedVector3Array] = []
+	for key: Array in sides:
+		if sides[key][0] and sides[key][1]:
+			creases.append(PackedVector3Array([sides[key][2], sides[key][3]]))
+	var size := Vector2(atlas.get_width(), atlas.get_height())
+	var painted := 0
+	for i in tris.size():
+		var t := tris[i]
+		var rim := absf(normals[i].normalized().dot(face)) < WORN_RIM
+		var middle := (verts[index[t]] + verts[index[t + 1]] + verts[index[t + 2]]) / 3.0
+		var reach := maxf(middle.distance_to(verts[index[t]]), maxf(middle.distance_to(verts[index[t + 1]]), middle.distance_to(verts[index[t + 2]]))) + WORN_EDGE
+		var close: Array[PackedVector3Array] = []
+		if not rim:
+			for crease in creases:
+				if Geometry3D.get_closest_point_to_segment(middle, crease[0], crease[1]).distance_to(middle) < reach:
+					close.append(crease)
+		var a := uvs[index[t]] * size
+		var b := uvs[index[t + 1]] * size
+		var c := uvs[index[t + 2]] * size
+		var area := (b - a).cross(c - a)
+		if absf(area) < 0.0001:
+			continue
+		var from_px := Vector2i(a.min(b).min(c).floor()) - Vector2i.ONE
+		var to_px := Vector2i(a.max(b).max(c).ceil()) + Vector2i.ONE
+		for y in range(maxi(from_px.y, 0), mini(to_px.y, atlas.get_height() - 1) + 1):
+			for x in range(maxi(from_px.x, 0), mini(to_px.x, atlas.get_width() - 1) + 1):
+				var q := Vector2(x + 0.5, y + 0.5)
+				var wa := (b - q).cross(c - q) / area
+				var wb := (c - q).cross(a - q) / area
+				var wc := 1.0 - wa - wb
+				# a texel past the edge is still painted: the texture is sampled between texels
+				if wa < -0.35 or wb < -0.35 or wc < -0.35:
+					continue
+				var old := atlas.get_pixel(x, y)
+				var steel := WORN_STEEL * (0.8 + 0.2 * rng.randf())
+				var out: Color
+				if rim:
+					out = old.lerp(steel, 0.85)
+				else:
+					var p := verts[index[t]] * wa + verts[index[t + 1]] * wb + verts[index[t + 2]] * wc
+					var flat := Vector2(p.dot(across), p.dot(along))
+					var scratched := false
+					for s in strokes:
+						if Geometry2D.get_closest_point_to_segment(flat, s[0], s[1]).distance_to(flat) < WORN_SCRATCH_WIDTH:
+							scratched = true
+							break
+					var edge := false
+					for crease in close:
+						if Geometry3D.get_closest_point_to_segment(p, crease[0], crease[1]).distance_to(p) < WORN_EDGE:
+							edge = true
+							break
+					out = Color(old.r * WORN_LIFT, old.g * WORN_LIFT, old.b * WORN_LIFT).lerp(steel, 0.85 if edge else (0.75 if scratched else 0.0))
+				atlas.set_pixel(x, y, Color(minf(out.r, 1.0), minf(out.g, 1.0), minf(out.b, 1.0)))
+				painted += 1
+	print("  worn: %d triangles, %d texels" % [tris.size(), painted])
 
 
 ## The body's atlas squeezed into the top BODY of the square, the palette into the strip under it.

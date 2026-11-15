@@ -8,6 +8,12 @@ extends Resource
 ## slams the ground (close_*) when the paladin is near. PRIEST: raises skeletons and conjures circles.
 ## PULSE: runs in and bursts all around itself. CONE: stops and blasts a wide cone ahead.
 enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE }
+## What its wind-up shows besides the pose and the warning on the floor (EnemyFx; never red, gone when the attack
+## is loosed). GLINT: a pale gleam on the raised blade. TREMBLE: dust at its feet (with windup_shake).
+## ORB: its staff's orb swells and sparks spiral up from it. BOLT: a pale spark at the tip of the bolt as it looses.
+## SHIELD: a pale stroke on the shield's edge at the blow. RITUAL: a thin ring of its magic around it and motes
+## turning between its hands.
+enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 
 @export var id: StringName
 @export var name_key: StringName
@@ -25,6 +31,21 @@ enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE
 @export var gild := 0.0
 ## Colour of its magic (bolts, the burst where its blows land, the fan of its volley). Alpha 0: the default look.
 @export var magic_color := Color(0, 0, 0, 0)
+## Colour added to the painting or taken from it (crowd.gdshader): above 0 the figure is more saturated than the
+## crowd (Morvath's violet robes, the priests' purple), below 0 greyer (the soldier is the crowd's base line).
+@export var vivid := 0.0
+## A pale light on the edges of the top of the figure, cutting it out of the dark floor (Morvath's crown).
+@export var crest := 0.0
+## How much more than the crowd the painting's eyes and gems shine (1: as everyone; CrowdRenderer.PAINT_GLOW).
+@export var shine := 1.0
+## Degrees its trunk sways from side to side as it runs, unsteady (drawn only: Horde.SWAY_HZ).
+@export var sway := 0.0
+## Meters it trembles during its wind-up (drawn only: Horde.SHAKE_HZ).
+@export var windup_shake := 0.0
+## The effect of its wind-up, and where it sits on the figure: meters at size 1, x to its right, y up, z ahead
+## (the tip of the blade, the orb of the staff, the tip of the bolt, the shield's edge, between the hands).
+@export var tell: Tell = Tell.NONE
+@export var tell_at := Vector3.ZERO
 @export_group("Body")
 @export var behavior: Behavior = Behavior.CHASE
 @export var hp := 20.0

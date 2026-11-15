@@ -5,6 +5,9 @@ extends SceneTree
 ## (or xvfb-run -a ~/tools/godot/godot --path . ... on the CPU). Writes <out_prefix>_game.png (the game's camera
 ## angle), _front.png, _back.png and _side.png (the right side). With ids (EnemyDef ids), only those, in one row and closer; seconds as "a:b"
 ## spreads that row over the clip (the same id many times shows the clip as a strip); "clip" spreads it over the whole clip.
+## Options anywhere after the prefix: --zoom=2 (the camera that much closer), --tell=0.8 (every figure as if that far
+## into its wind-up: the swollen orb and the lights of EnemyFx), --loosed=0.03 (as if its attack was loosed that many
+## seconds ago), --absorbed (a blow just landed on its armor), --broken (its armor is gone).
 
 const ROW: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder", &"morvath"]
 const ELITES: Array[StringName] = [&"skeleton_elite", &"runner_elite", &"mage_elite", &"archer_elite", &"guard_elite", &"priest_elite"]
@@ -18,7 +21,14 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var args := OS.get_cmdline_user_args()
+	var args := PackedStringArray()
+	var opts := {}
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--"):
+			var kv := a.trim_prefix("--").split("=")
+			opts[kv[0]] = kv[1] if kv.size() > 1 else "1"
+		else:
+			args.append(a)
 	var out: String = args[0] if args.size() > 0 else "enemies"
 	var anim := StringName(args[1]) if args.size() > 1 else &"idle"
 	# seconds into the clip; "a:b" spreads the row from a to b (the same id many times: the clip as a strip)
@@ -59,6 +69,8 @@ func _run() -> void:
 	world.add_child(hero)
 	var renderer := CrowdRenderer.new()
 	world.add_child(renderer)
+	var tells := EnemyFx.new()
+	world.add_child(tells)
 	var row: Array[StringName] = ROW
 	var elites: Array[StringName] = ELITES
 	if args.size() > 3:
@@ -70,7 +82,7 @@ func _run() -> void:
 	var gap := GAP if elites.size() > 0 else CLOSE_GAP
 	var width := (row.size() - 1) * gap
 	# how much closer the camera comes when the row is short
-	var zoom := maxf(width + 2.0 * gap, 6.0) / ((ROW.size() + 1) * GAP)
+	var zoom := maxf(width + 2.0 * gap, 6.0) / ((ROW.size() + 1) * GAP) / float(opts.get("zoom", "1"))
 	hero.position = Vector3(-width * 0.5 - gap, 0, 0)
 	RenderingServer.global_shader_parameter_set(&"hero_pos", Vector3(0, 0, 40))
 	var defs: Array[EnemyDef] = []
@@ -85,14 +97,29 @@ func _run() -> void:
 	world.add_child(cam)
 	for view: String in ["game", "front", "back", "side"]:
 		renderer.begin()
+		tells.begin()
 		# side: turned to show the right hand
 		var yaw := PI if view == "back" else (PI * 0.5 if view == "side" else 0.0)
 		for i in defs.size():
 			var back_row := 0 if i < row.size() else 1
 			var k := i if back_row == 0 else i - row.size()
 			var pos := Vector3(-width * 0.5 + k * gap, 0, -back_row * 5.0)
-			renderer.add(defs[i], anim, lerpf(at_t, to_t, k / maxf(row.size() - 1, 1.0)) if back_row == 0 else at_t, pos, yaw, Color(0, 0, 0, 0))
+			var tell := float(opts.get("tell", "0"))
+			var state := CrowdRenderer.state(0.6 if opts.has("absorbed") else 0.0, false, false, 0.0, opts.has("absorbed"), tell, opts.has("broken"))
+			renderer.add(defs[i], anim, lerpf(at_t, to_t, k / maxf(row.size() - 1, 1.0)) if back_row == 0 else at_t, pos, yaw, state)
+			if opts.has("tell") or opts.has("loosed"):
+				var foe := Enemy.new()
+				foe.def = defs[i]
+				foe.pos = Vector2(pos.x, pos.z)
+				foe.dir = Vector2(sin(yaw), cos(yaw))
+				foe.aim = foe.dir
+				foe.look = fposmod(i * 0.618034, 1.0)
+				if opts.has("loosed"):
+					tells.loosed(foe, float(opts.loosed))
+				else:
+					tells.tell(foe, tell)
 		renderer.commit()
+		tells.commit()
 		hero.rotation.y = yaw
 		if view == "game":
 			# the game's camera: 30 degrees over the floor, a narrow lens

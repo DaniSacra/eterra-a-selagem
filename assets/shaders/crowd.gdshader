@@ -1,7 +1,10 @@
 shader_type spatial;
 // The crowd: baked poses drawn by MultiMesh. INSTANCE_CUSTOM carries the per-enemy state:
-// r = white hit flash (above WHITE_FROM the body is pure white: the first frame or two of a strong blow),
-// g = frost, b = burning, a = dissolve on death.
+// r = white hit flash (above WHITE_FROM the body is pure white: the first frame or two of a strong blow); below 0,
+//     a blow its armor took: old gold gleams on its edges, no white (it was not wounded),
+// g = frost (1) plus 0.5 when its armor is broken (the armored edge light goes out),
+// b = burning (1) plus half of how far its wind-up is (0..0.5: the orb of a staff swells),
+// a = dissolve on death. (CrowdRenderer.state packs them.)
 //
 // The crowd is not lit by the torches (too many lights for hundreds of characters), so it carries its own
 // painted light: a fixed key from the top left of the screen (light bone, dark crevices), darker feet, and a thin
@@ -34,6 +37,17 @@ uniform float ink_from = 0.55;
 // The palette's glowing cells (tools/make_palettes.gd: the last four of its bottom row, eyes, embers, gems) shine
 // this much by themselves.
 uniform float glow = 2.2;
+// Figures with a magic of their own (EnemyDef.magic_color, here with its largest channel at 1): those cells and the
+// painting's glowing spots shine in that colour, never in the white of an overexposed texel. The cells (the orb of
+// a staff) are always lit at orb, under the glow's threshold, and swell to orb_tell while it winds up.
+uniform vec3 magic = vec3(0.0);
+uniform float orb = 1.2;
+uniform float orb_tell = 1.8;
+// The lamp's colour is the magic's raised to this (more saturated), and its edge is this dark (a ball, not a disc).
+uniform float orb_depth = 1.7;
+uniform float orb_edge = 0.4;
+// How much of a glowing spot's own colour gives way to the magic's.
+uniform float magic_tint = 0.75;
 // Where those cells start (BakedModel.glow_from).
 uniform vec2 glow_from = vec2(0.5, 0.75);
 // Painted figures (the Meshy models, BakedModel.painted) have no cells: what shines is read from the painting, its
@@ -51,6 +65,13 @@ uniform float gild = 0.0;
 uniform float gild_rest = 0.3;
 uniform vec3 gild_color : source_color = vec3(0.62, 0.46, 0.22);
 uniform float gild_light = 1.7;
+// Armor that takes a blow: the edges gleam this much in the gild colour for the time of the flash.
+uniform float absorb_light = 1.8;
+// A pale light on the edges of the top of the figure (EnemyDef.crest: Morvath's crown cut out of the dark floor):
+// strength, and the height in the model's meters from which it is full.
+uniform float crest = 0.0;
+uniform float crest_from = 1.4;
+uniform vec3 crest_color : source_color = vec3(0.86, 0.84, 1.0);
 // Flash strength above which the body is drawn pure white.
 uniform float white_from = 0.75;
 
@@ -58,6 +79,8 @@ uniform float white_from = 0.75;
 global uniform vec3 hero_pos;
 uniform vec3 hero_color : source_color = vec3(1.0, 0.72, 0.42);
 uniform float hero_range = 11.0;
+// How much of that warm light the figure takes (Morvath, always beside the hero, read grey and brown under it).
+uniform float hero_light = 1.0;
 
 varying vec4 state;
 varying vec3 world_pos;
@@ -77,6 +100,12 @@ void fragment() {
 	if (state.a > 0.0 && hash(floor(UV * 96.0)) < state.a) {
 		discard;
 	}
+	float flash = max(state.r, 0.0);
+	float absorbed = max(-state.r, 0.0);
+	float frost = step(0.75, state.g);
+	float armored = 1.0 - clamp((state.g - frost) * 2.0, 0.0, 1.0);
+	float burn = step(0.75, state.b);
+	float tell = clamp((state.b - burn) * 2.0, 0.0, 1.0);
 	vec3 raw = texture(albedo, UV).rgb;
 	float top = max(raw.r, max(raw.g, raw.b));
 	float colourful = top - min(raw.r, min(raw.g, raw.b));
@@ -84,9 +113,16 @@ void fragment() {
 		* smoothstep(0.1, 0.2, top);
 	raw = mix(raw, gild_color * top * gild_light, max(steel, gild_rest) * gild);
 	vec3 c = pow(raw, vec3(paint_gamma));
-	c = mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))), desaturate);
+	c = max(mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))), desaturate), vec3(0.0));
 	c *= tint.rgb;
-	c = mix(c, vec3(0.6, 0.85, 1.0), state.g * 0.65);
+	c = mix(c, vec3(0.6, 0.85, 1.0), frost * 0.65);
+	float has_magic = step(0.001, magic.r + magic.g + magic.b);
+	// the cells that glow (a staff's gem, its orb): with a magic of its own they are that light and nothing else
+	float cell = step(glow_from.x, fract(UV.x)) * step(glow_from.y, fract(UV.y));
+	float lamp = cell * has_magic;
+	c *= 1.0 - lamp;
+	// deeper than the magic's own colour (a lamp that is only bright reads white), and darker where it turns away
+	vec3 lamp_color = pow(magic, vec3(orb_depth));
 	float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
 	float shade = mix(foot_shade, 1.0, smoothstep(0.0, foot_height, height))
 		* (1.0 - ink * smoothstep(ink_from, 1.0, 1.0 - facing));
@@ -96,12 +132,17 @@ void fragment() {
 	float rim = pow(1.0 - facing, 3.0);
 	// a crisp edge for elites (rim_power > 0): sharper than the soft rim, so it reads as an outline
 	float edge = smoothstep(0.35, 0.6, pow(1.0 - facing, 1.5));
-	EMISSION = vec3(1.8) * state.r + vec3(0.35, 0.7, 1.4) * state.g * 0.5 + vec3(2.0, 0.6, 0.1) * state.b * (0.4 + 0.4 * rim)
-		+ rim_color * (rim * 0.5 + edge) * rim_power + vec3(1.6, 0.5, 0.1) * state.a * 2.0
-		+ c * shade * (key_color * lit + hero_color * near * near * 0.55)
-		+ raw * glow * step(glow_from.x, fract(UV.x)) * step(glow_from.y, fract(UV.y))
-		+ raw * paint_glow * smoothstep(paint_glow_from, paint_glow_full, colourful);
-	if (state.r > white_from) {
+	// the painting's own lights (eyes, gems, embers), leaning to the colour of its magic
+	vec3 spot = mix(raw, mix(raw, magic * top, magic_tint), has_magic);
+	EMISSION = vec3(1.8) * flash + vec3(0.35, 0.7, 1.4) * frost * 0.5 + vec3(2.0, 0.6, 0.1) * burn * (0.4 + 0.4 * rim)
+		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + vec3(1.6, 0.5, 0.1) * state.a * 2.0
+		+ gild_color * (rim + edge) * absorbed * absorb_light
+		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)
+		+ c * shade * (key_color * lit + hero_color * near * near * 0.55 * hero_light)
+		+ raw * glow * cell * (1.0 - has_magic)
+		+ lamp_color * mix(orb, orb_tell, tell) * mix(orb_edge, 1.0, facing * facing) * lamp
+		+ spot * paint_glow * smoothstep(paint_glow_from, paint_glow_full, colourful) * (1.0 - lamp);
+	if (flash > white_from) {
 		ALBEDO = vec3(0.0);
 		EMISSION = vec3(3.0);
 	}

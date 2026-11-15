@@ -122,44 +122,51 @@ func _enemy(props: Dictionary) -> void:
 ## (the painted Meshy figures, tools/bake.gd), sizes from the sheet's scale with the soldier at 1.15, the colour
 ## of its magic. Radius: what it blocks and where blows reach it; it grows less than the figure (a taller enemy is
 ## not much wider).
+## Cycle 7, the part each one plays read at a glance (only drawn, EnemyDef's Look group): `tell` and `tell_at` (the
+## light of its wind-up and where it sits on the figure), `sway` and `windup_shake` (the unsteady runner), `vivid`
+## (the soldier is the greyest, the base line; the priests and Morvath keep their purple), `tint`, `crest`, `shine`.
 func _enemies() -> void:
 	var B := EnemyDef.Behavior
+	var T := EnemyDef.Tell
 	# the foot soldier: walks up, raises its blade 0.9 s and lunges (Hades: the common melee shade)
 	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
 		"attack_damage": 3.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
-		"rating": 5.0}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
+		"rating": 5.0, "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
-		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
+		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
+		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
 	# the caster that shoots bolts from afar (cold violet: Daniel, 2026-11-14)
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 340.0 / U, "damage": 4.0, "radius": 0.5,
 		"attack_damage": 4.0, "attack_range": 9.0, "attack_cooldown": 1.9, "attack_windup": 0.8, "magic_color": Color(1.7, 1.25, 3.2),
-		"rating": 12.0}, {"armor": 155.0, "speed": 440.0 / U, "rating": 24.0})
+		"rating": 12.0, "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58)}, {"armor": 155.0, "speed": 440.0 / U, "rating": 24.0})
 	# the crossbowman that plants itself and looses a wide fan of orange bolts
 	_pair({"id": &"archer", "model": &"archer", "behavior": B.CONE, "size": 1.27, "hp": 130.0, "speed": 340.0 / U, "damage": 3.0, "radius": 0.55,
 		"attack_damage": 3.0, "attack_range": 5.0, "attack_width": 70.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
-		"rating": 13.0}, {"armor": 190.0, "speed": 390.0 / U, "rating": 34.0})
+		"rating": 13.0, "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42)}, {"armor": 190.0, "speed": 390.0 / U, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
-		"rating": 18.0}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
+		"rating": 18.0, "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4)}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
 	# the one rooted in place that drops purple blows from above
 	_pair({"id": &"priest", "model": &"priest", "behavior": B.CASTER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
 		"heavy": true, "attack_damage": 6.0, "attack_range": 16.0, "attack_cooldown": 2.2, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0),
-		"rating": 22.0}, {"armor": 390.0, "rating": 48.0})
+		"rating": 22.0, "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25}, {"armor": 390.0, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
 		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 12.0, "close_range": 3.2, "close_windup": 0.8,
-		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
+		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35)})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
-		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
+		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
+		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14
 	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.4,
-		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": Color(1.9, 0.45, 3.0), "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3})
+		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": Color(1.9, 0.45, 3.0), "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
+		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5})
 
 
 ## An enemy and its elite version: the same, wearing an armor bar (Hades II "HealthBuffer"), faster and outlined.
