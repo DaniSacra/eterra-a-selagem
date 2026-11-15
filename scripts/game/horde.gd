@@ -520,6 +520,7 @@ func render() -> void:
 	tells.begin()
 	for e in list:
 		var d := e.def
+		var kind := renderer.kind(d)
 		var anim := e.anim
 		var t := e.anim_t
 		var at := Vector3(e.pos.x, e.y, e.pos.y)
@@ -542,9 +543,8 @@ func render() -> void:
 			tells.tell(e, tell)
 			if anim == &"attack":
 				# stretch the swing so the blade comes down when the windup ends
-				var clip := renderer.model_of(d).duration(&"attack")
-				t = e.state_t / _windup(e) * clip * IMPACT_SHARE
-			elif anim == &"idle" and renderer.model_of(d).frame_count(&"brace") > 0:
+				t = e.state_t / _windup(e) * kind.attack_time * IMPACT_SHARE
+			elif anim == &"idle" and kind.has_brace:
 				# the charge is announced standing still: braced behind the shield, when the figure has that pose
 				anim = &"brace"
 			if d.windup_shake > 0.0 and e.frozen_t <= 0.0:
@@ -553,8 +553,7 @@ func render() -> void:
 		elif e.state == Enemy.State.ATTACK:
 			tells.loosed(e, e.state_t)
 			if anim == &"attack":
-				var clip := renderer.model_of(d).duration(&"attack")
-				t = clip * IMPACT_SHARE + e.state_t * 1.4
+				t = kind.attack_time * IMPACT_SHARE + e.state_t * 1.4
 		var k := clampf(e.flash_t / FLASH_TIME, 0.0, 1.0)
 		var state := CrowdRenderer.state(k * e.flash_power, e.frozen_t > 0.0, e.burn_t > 0.0, 0.0, e.absorbed, tell,
 			e.max_armor > 0.0 and e.armor <= 0.0)
@@ -562,11 +561,11 @@ func render() -> void:
 		# all when its armor took it
 		var give := 0.0 if e.absorbed else k * (HEAVY_SQUASH if d.heavy else 1.0)
 		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
-		renderer.add(d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, 0.0, lean)
+		renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, 0.0, lean)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
 		if d.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
-			var top := e.y + renderer.model_of(d).height * d.size
+			var top := e.y + kind.model.height * d.size
 			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), e.hp / maxf(e.max_hp, 0.001),
 				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded)
 	for e in dying:

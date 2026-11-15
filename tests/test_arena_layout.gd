@@ -243,3 +243,17 @@ func test_a_pillar_and_a_box_at_the_edge_settle() -> void:
 		var q := a.resolve(p, Player.RADIUS)
 		assert_true(a.on_floor(q, Player.RADIUS), "%s -> %s stays on the floor" % [p, q])
 		assert_true(_free(a, q), "%s -> %s settles" % [p, q])
+
+
+## QA B2 (cycle 7): the light the portal spills down the steps is the portal's light, so it turns red with it when
+## Morvath's doors open (it stayed green), and is green again in the next hall.
+func test_the_portal_spill_follows_the_portal() -> void:
+	var a := _arena(stage.boss_layout, 0)
+	var kit := a._kit
+	assert_false(kit.portal_tinted.get(0, []).is_empty(), "the hall's spill follows the portal")
+	var spill: Light3D = kit.portal_tinted[0][0][0]
+	assert_eq(spill.light_color, CatacombHall.SPILL_COLOR, "green while the portal is")
+	a.open_door()
+	assert_eq(spill.light_color, ArenaKit.MORVATH, "red with Morvath's portal")
+	kit.light_portal(0, false)
+	assert_eq(spill.light_color, CatacombHall.SPILL_COLOR, "its own green back with the portal's")

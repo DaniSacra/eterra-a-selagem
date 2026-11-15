@@ -45,10 +45,10 @@ do HUD. Regra do ciclo: só apresentação, nenhum número de jogo muda (as part
 **O que está pendente** (detalhes nas seções C e D)
 - Herói mais difícil de achar no bolo de 90 do que antes (B5 do QA).
 - Inimigos atingidos ainda viram mancha branca chapada; no Ômega ela cobre o herói (B4).
-- Luz verde do portal continua nos degraus quando o portal fica vermelho (sala de Morvath, B2).
+- ~~B2~~ corrigido depois da revisão: a luz que escorre pelos degraus segue a cor do portal (vermelha com Morvath).
 - Herói atrás do obelisco lê como se estivesse em cima dele (B3).
 - Grupos de números de dano acima do limite de 8 em lutas grandes; barras vermelhas um pouco acima da meta no bolo.
-- Regressão de CPU com hordas grandes (M1), em correção, a medir de novo.
+- ~~M1~~ corrigido depois da revisão: com 90 e 300 inimigos o quadro ficou mais rápido que antes do ciclo (seção E).
 - Capturas auxiliares do contrato não feitas: `08b_emeth_circulo`, `15b_porta_amarela`, `22b_hud_2560`.
 - Peças provisórias continuam provisórias: estátuas, moldura do portal e ruínas (formas simples à espera dos modelos
   do `docs/art/meshy_asset_plan.md`); nada deste ciclo eleva a fidelidade à pintura de referência.
@@ -307,7 +307,7 @@ cima da montagem) o quadro está mais limpo que antes.
 | 4 Inimigos | APROVADO COM RESSALVAS | Morvath violeta (36%), orbe do Feiticeiro, Corredor por postura, caveira do elite marfim. Ressalvas: ouro do elite quase invisível; barras 2,3% contra 2%; aro do Sacerdote sem evidência; Arqueiro e Sacerdote se confundem no fundo |
 | 5 Arena | APROVADO COM RESSALVAS | Portal sem estouro (18%, mediana 159), fachada menos verde, estátuas com pregas, ruínas, medalhão com relevo. Ressalvas: B2 (verde com portal vermelho); capuz ainda lê como furo de perto; peças provisórias |
 | 6 HUD | APROVADO COM RESSALVAS | Retrato no estilo do título, barras, contraste dos textos, translucidez sobre inimigos. Ressalvas: retrato derivado da arte de IA a declarar; U8 e U10 sem captura; ações translúcidas em recarga quase somem |
-| 7 Combate com hordas | PENDENTE | B5: herói mais difícil de achar no bolo de 90 que antes; ruído de orbes e números; B6 no limite da borda; regressão de CPU (M1) em correção |
+| 7 Combate com hordas | PENDENTE | B5: herói mais difícil de achar no bolo de 90 que antes; ruído de orbes e números; B6 no limite da borda (a regressão de CPU M1 foi corrigida depois, seção E) |
 
 Nenhuma área recebe APROVADO TECNICAMENTE sem ressalva: todas têm pelo menos um critério sem captura ou fora da meta.
 A aprovação artística final é do Daniel, depois da revisão externa.
@@ -330,8 +330,20 @@ antes `5429394` e depois `7fb5b4b`.
 - Celular, navegador real (Compatibility), placa de vídeo fraca, versões exportadas: NÃO MEDIDO.
 - Contra o orçamento da especificação (seção 1, regra 5): luta +0,09 (limite +0,2) passa; 90 inimigos +0,48 (limite
   +0,4) e 300 inimigos +1,19 (limite +0,5) passam do limite. A GPU quase não mudou; o custo é de CPU por quadro
-  (M1, regressão média do ciclo). **Uma correção de M1 está sendo feita agora** e os números de 90 e 300 inimigos
-  serão medidos de novo depois dela.
+  (M1, regressão média do ciclo).
+
+**Depois da correção de M1** (mesma imagem e mesma simulação; `CrowdRenderer` consulta cada tipo de inimigo uma vez
+por registro e só mexe nos lotes usados, `Horde.render` sem `model_of` repetido, faíscas num buffer só, HUD procura o
+chefe uma vez por quadro). Medido na RTX 5060, 1672x941, `--fixed-fps 30 --disable-vsync --seed=5 --bot --autopick`,
+três rodadas alternadas com a cópia de antes (`5429394`), mediana das medianas (cada rodada varia ±0,3 ms):
+
+| Cena | Antes do ciclo 7 | Ciclo 7 sem correção | Com a correção | Diferença para antes | Limite |
+|---|---|---|---|---|---|
+| 90 inimigos | 3,75 ms | 4,13 ms | **3,46 ms** | −0,29 | +0,4 |
+| 300 inimigos | 7,91 ms | 8,89 ms | **7,54 ms** | −0,37 | +0,5 |
+
+GPU igual (2,63 ms com 90, 3,11 com 300). Os dois casos agora passam do orçamento com folga. Fica de fora o custo
+quase fixo do cenário novo no desenho da CPU (cerca de +0,1 ms), compensado pela correção.
 
 ## F. Testes
 
@@ -355,6 +367,6 @@ Do relatório de QA, no commit `7fb5b4b`:
 2. **Mancha branca dos inimigos atingidos (B4).** Responsável: Gameplay Engineer, frente C. Pedido: o pisca vira o
    próprio inimigo 60% mais claro (como o herói), branco chapado só no 1º quadro e nunca por cima do herói. Aceite:
    em `06b`, no máximo 10% de brancos na caixa de 300 x 220 em volta do herói e cabelo cobre visível (30 pixels ou mais).
-3. **Verde do portal com o portal vermelho (B2).** Responsável: Environment Artist. Pedido: `Arena.open_door` e
+3. **Verde do portal com o portal vermelho (B2). CORRIGIDO depois desta revisão** (`ArenaKit.tint_with_portal`; o derrame também ganha a cor da recompensa no portal norte das salas comuns, a conferir). Responsável: Environment Artist. Pedido: `Arena.open_door` e
    `ArenaKit.light_portal` levam a cor da folha também para o derrame dos degraus (`SPILL_COLOR` de
    `catacomb_hall.gd`). Aceite: em `13`, degraus e chão em frente ao portal sem pixels com G > R + 40.

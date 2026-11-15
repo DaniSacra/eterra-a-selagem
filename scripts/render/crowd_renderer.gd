@@ -62,16 +62,39 @@ const BAR_ABOVE := 0.35
 
 class Batch:
 	var mmi: MultiMeshInstance3D
+	var mm: MultiMesh
 	var data := PackedFloat32Array()
 	var count := 0
 	var capacity := 0
+	## Floats per instance: FLOATS with the custom state, 12 without.
+	var per := FLOATS
+
+## One animation of one kind of enemy, looked up once: its batches (one per frame, made when first drawn) and its
+## timing (BakedModel.frame_at's numbers), so add() costs no dictionary walk per character.
+class Clip:
+	var batches: Array[Batch] = []
+	var frames: Array = []
+	var fps := 10.0
+	var loops := false
+
+## What drawing one kind of enemy needs (render() asks for it for each of hundreds of characters every frame).
+class Kind:
+	var model: BakedModel
+	var material: Material
+	## Requested animation -> Clip (an animation the model lacks resolves as add() always did: walk, else idle).
+	var clips: Dictionary = {}
+	## Seconds of the attack clip, and whether the figure has a braced pose.
+	var attack_time := 0.0
+	var has_brace := false
 
 ## Visual layers of everything drawn here (torches skip the crowd's layer).
 var layers := 1
 var _models: Dictionary = {}  # model id -> BakedModel
 var _materials: Dictionary = {}  # enemy id -> ShaderMaterial
-var _batches: Dictionary = {}  # enemy id -> anim -> Array[Batch] (one per frame)
+var _kinds: Dictionary = {}  # enemy id -> Kind
+## Batches with something to draw this frame, and the ones shown last frame (hidden when they go unused).
 var _used: Array[Batch] = []
+var _shown: Array[Batch] = []
 var _shadow: Batch
 var _bars: Batch
 
@@ -147,7 +170,36 @@ func register(d: EnemyDef) -> void:
 		edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
 		mat.next_pass = edge
 	_materials[d.id] = mat
-	_batches[d.id] = {}
+	var kind := Kind.new()
+	kind.model = baked
+	kind.material = mat
+	kind.attack_time = baked.duration(&"attack")
+	kind.has_brace = baked.frame_count(&"brace") > 0
+	_kinds[d.id] = kind
+
+
+## The cached look of a registered kind of enemy (register() first).
+func kind(d: EnemyDef) -> Kind:
+	return _kinds[d.id]
+
+
+func _clip(k: Kind, anim: StringName) -> Clip:
+	var c: Clip = k.clips.get(anim)
+	if c == null:
+		var m := k.model
+		var shown := anim
+		if m.frame_count(shown) == 0:
+			shown = &"walk" if shown != &"idle" and m.frame_count(&"walk") > 0 else &"idle"
+		c = k.clips.get(shown) if shown != anim else null
+		if c == null:
+			c = Clip.new()
+			c.frames = m.anims[shown]
+			c.batches.resize(c.frames.size())
+			c.fps = float(m.fps.get(shown, 10.0))
+			c.loops = m.loops.get(shown, false)
+			k.clips[shown] = c
+		k.clips[anim] = c
+	return c
 
 
 func begin() -> void:
@@ -165,29 +217,39 @@ func begin() -> void:
 ## squash: scale on top of the def's size (a blow flattens and widens). tilt: tumbling backwards, in radians.
 ## lean: tipped to its side, in radians (an unsteady runner's sway).
 func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0, lean := 0.0) -> void:
-	var m := model(d.model)
-	if m.frame_count(anim) == 0:
-		anim = &"walk" if anim != &"idle" and m.frame_count(&"walk") > 0 else &"idle"
-	var b := _batch(d, anim, m.frame_at(anim, t))
+	add_kind(_kinds[d.id], d, anim, t, pos, yaw, state, squash, tilt, lean)
+
+
+## add() with the kind already looked up (Horde.render: once per character, not once per question).
+func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0, lean := 0.0) -> void:
+	var c := _clip(k, anim)
+	# BakedModel.frame_at
+	var n := c.batches.size()
+	var i := int(t * c.fps)
+	i = i % n if c.loops else mini(i, n - 1)
+	var b := c.batches[i]
+	if b == null:
+		b = _new_batch(c.frames[i], k.material, true)
+		c.batches[i] = b
 	if b.count == 0:
 		_used.append(b)
-	var s := d.size
 	var basis := Basis(Vector3.UP, yaw)
 	if tilt != 0.0:
 		basis = basis * Basis(Vector3.RIGHT, tilt)
 	if lean != 0.0:
 		basis = basis * Basis(Vector3.BACK, lean)
-	_put(b, Transform3D(basis.scaled(squash * s), pos), state)
+	basis = basis.scaled(squash * d.size)
+	_put(b, basis.x, basis.y, basis.z, pos, state)
 	if state.a < 0.5:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
-		_put(_shadow, Transform3D(Basis().scaled(Vector3(r, 1.0, r)), Vector3(pos.x, 0.03, pos.z)), Color())
+		_put(_shadow, Vector3(r, 0, 0), Vector3.UP, Vector3(0, 0, r), Vector3(pos.x, 0.03, pos.z), Color())
 
 
 ## A thin life bar over one enemy's head. top: the top of its head (world). life, armor: what is left (0..1).
 ## crowded: the floor is full, the bar is drawn thinner and fainter so the bars do not make a grid over the heads.
 func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := false) -> void:
 	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH)
-	_put(_bars, Transform3D(Basis().scaled(Vector3(w, BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0), 1.0)), top + Vector3(0, BAR_ABOVE, 0)),
+	_put(_bars, Vector3(w, 0, 0), Vector3(0, BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0), 0), Vector3.BACK, top + Vector3(0, BAR_ABOVE, 0),
 		Color(clampf(life, 0.0, 1.0), clampf(armor, 0.0, 1.0), BAR_CROWD_FADE if crowded else 1.0, 0))
 
 
@@ -207,46 +269,34 @@ static func unpack(s: Color) -> Array[float]:
 
 
 func commit() -> void:
-	for b in _all_batches():
-		var mm := b.mmi.multimesh
+	# what was shown last frame and has nothing now goes (begin() set its count to 0); only those are touched
+	for b in _shown:
+		if b.count == 0:
+			b.mmi.visible = false
+	for b in _used:
 		if b.count == 0:
 			b.mmi.visible = false
 			continue
 		b.mmi.visible = true
-		mm.buffer = b.data
-		mm.visible_instance_count = b.count
+		b.mm.buffer = b.data
+		b.mm.visible_instance_count = b.count
+	_shown.assign(_used)
 
 
-func _put(b: Batch, xf: Transform3D, state: Color) -> void:
+## One instance: the columns of its basis, where it stands, its state (custom data, when the batch has it).
+func _put(b: Batch, x: Vector3, y: Vector3, z: Vector3, at: Vector3, state: Color) -> void:
 	if b.count >= b.capacity:
 		b.capacity = maxi(32, b.capacity * 2)
-		b.data.resize(b.capacity * FLOATS if b.mmi.multimesh.use_custom_data else b.capacity * 12)
-		b.mmi.multimesh.instance_count = b.capacity
-	var per := FLOATS if b.mmi.multimesh.use_custom_data else 12
-	var o := b.count * per
+		b.data.resize(b.capacity * b.per)
+		b.mm.instance_count = b.capacity
+	var o := b.count * b.per
 	var d := b.data
-	var x := xf.basis.x
-	var y := xf.basis.y
-	var z := xf.basis.z
-	d[o] = x.x; d[o + 1] = y.x; d[o + 2] = z.x; d[o + 3] = xf.origin.x
-	d[o + 4] = x.y; d[o + 5] = y.y; d[o + 6] = z.y; d[o + 7] = xf.origin.y
-	d[o + 8] = x.z; d[o + 9] = y.z; d[o + 10] = z.z; d[o + 11] = xf.origin.z
-	if per == FLOATS:
+	d[o] = x.x; d[o + 1] = y.x; d[o + 2] = z.x; d[o + 3] = at.x
+	d[o + 4] = x.y; d[o + 5] = y.y; d[o + 6] = z.y; d[o + 7] = at.y
+	d[o + 8] = x.z; d[o + 9] = y.z; d[o + 10] = z.z; d[o + 11] = at.z
+	if b.per == FLOATS:
 		d[o + 12] = state.r; d[o + 13] = state.g; d[o + 14] = state.b; d[o + 15] = state.a
 	b.count += 1
-
-
-func _batch(d: EnemyDef, anim: StringName, frame: int) -> Batch:
-	var by_anim: Dictionary = _batches[d.id]
-	if not by_anim.has(anim):
-		var frames: Array = model(d.model).anims[anim]
-		var arr: Array[Batch] = []
-		arr.resize(frames.size())
-		by_anim[anim] = arr
-	var arr: Array[Batch] = by_anim[anim]
-	if arr[frame] == null:
-		arr[frame] = _new_batch(model(d.model).anims[anim][frame], _materials[d.id], true)
-	return arr[frame]
 
 
 func _new_batch(mesh: Mesh, mat: Material, custom: bool) -> Batch:
@@ -255,6 +305,8 @@ func _new_batch(mesh: Mesh, mat: Material, custom: bool) -> Batch:
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_custom_data = custom
 	mm.mesh = mesh
+	b.mm = mm
+	b.per = FLOATS if custom else 12
 	b.mmi = MultiMeshInstance3D.new()
 	b.mmi.multimesh = mm
 	if mat:
@@ -266,13 +318,3 @@ func _new_batch(mesh: Mesh, mat: Material, custom: bool) -> Batch:
 	b.mmi.custom_aabb = AABB(Vector3(-200, -10, -200), Vector3(400, 60, 400))
 	add_child(b.mmi)
 	return b
-
-
-func _all_batches() -> Array[Batch]:
-	var out: Array[Batch] = [_shadow, _bars]
-	for id: StringName in _batches:
-		for anim: StringName in _batches[id]:
-			for b: Batch in _batches[id][anim]:
-				if b != null:
-					out.append(b)
-	return out

@@ -108,7 +108,7 @@ Nenhuma crítica nem alta.
 
 ### Média
 
-**M1. Custo de CPU por quadro subiu com hordas grandes** (regressão do ciclo 7). `--stress=300`: 7,70 para 8,89 ms
+**M1. Custo de CPU por quadro subiu com hordas grandes** (regressão do ciclo 7). **CORRIGIDO**: `--stress=90` 3,46 ms e `--stress=300` 7,54 ms, abaixo dos 3,75 e 7,91 do antes medidos na mesma rodada (mediana de três; tabela em `docs/gallery/cycle7/ART_REVIEW.md`, seção E). Causa: trabalho por inimigo em `Horde.render`/`CrowdRenderer.add`, HUD procurando o chefe duas vezes, faíscas uma a uma. Medida original: `--stress=300`: 7,70 para 8,89 ms
 (130 para 112 FPS); `--stress=90`: 3,65 para 4,13 ms. GPU e simulação sem tela não mudaram, então o custo está no
 trabalho por quadro do desenho (candidatos: `EnemyFx` dos preparos de ataque, barras mais finas e efeitos de armadura
 do commit `760f335`; raio-x e borda do herói do `31098c5`; não isolei qual). Reproduzir: `c7qa/perf.sh` (ou
@@ -118,7 +118,7 @@ Responsável sugerido: Gameplay Engineer (`scripts/render/`, `EnemyFx`, `CrowdRe
 acima de 100 FPS no notebook; sem medida em máquina fraca.
 
 ### Baixa (visuais: decisão do `art-director`)
-- **B2. Luz do portal continua verde na sala de Morvath com o portal vermelho.** `scripts/game/catacomb_hall.gd:578-581`
+- **B2 (CORRIGIDO: `ArenaKit.tint_with_portal`, teste `test_the_portal_spill_follows_the_portal`). Luz do portal continua verde na sala de Morvath com o portal vermelho.** `scripts/game/catacomb_hall.gd:578-581`
   cria a luz que escorre pelos degraus (`SPILL_COLOR` verde, linha 151), mas `ArenaKit.light_portal`
   (`scripts/game/arena_kit.gd:574`) só pinta a folha e as luzes do próprio portal; `Arena.open_door`
   (`scripts/game/arena.gd:253`) deixa o derrame verde. Evidência: `13_morvath.jpg` (portal vermelho, degraus e chão

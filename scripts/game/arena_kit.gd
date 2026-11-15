@@ -139,6 +139,9 @@ var circles: Array[Vector3] = []
 var boxes: Array[Rect2] = []
 ## The portals' glowing sheets and lights, to dim or light them (Arena.light_exit).
 var portals: Array[Array] = []
+## Lights away from a portal that take its colour when it is lit (the hall's spill down the steps), by portal index:
+## [light, its own colour for the portal's green]; their energy stays their own.
+var portal_tinted: Dictionary = {}
 ## Built stone (and the dressed-stone material the kit's stony pieces take too).
 var masonry: Masonry
 var _meshes := {}
@@ -583,6 +586,15 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 		var side: OmniLight3D = portals[i][k]
 		side.light_color = tint
 		side.light_energy = PORTAL_SIDE.x * (1.0 if on else PORTAL_LIGHT_DIM / PORTAL_LIGHT)
+	for extra: Array in portal_tinted.get(i, []):
+		(extra[0] as Light3D).light_color = extra[1] if tint == PORTAL else tint
+
+
+## A light that shows the colour of portal i whenever light_portal tints it (its own colour while the portal is green).
+func tint_with_portal(i: int, light: Light3D) -> void:
+	if not portal_tinted.has(i):
+		portal_tinted[i] = []
+	(portal_tinted[i] as Array).append([light, light.light_color])
 
 
 ## Violet light glowing up out of the abyss: an upright card facing the camera's way (yaw), its foot at `foot`.

@@ -126,6 +126,8 @@ var _mote_life := PackedFloat32Array()
 var _mote_time := PackedFloat32Array()
 var _mote_size := PackedFloat32Array()
 var _mote_color := PackedColorArray()
+## The motes' MultiMesh buffer (12 floats of transform, 4 of colour each), sent in one call a frame.
+var _mote_buf := PackedFloat32Array()
 var _blade: ShaderMaterial
 var _blade_looked := false
 var _pulse := 0.0
@@ -285,6 +287,7 @@ func _build_motes() -> void:
 	_mote_time.resize(MOTE_POOL)
 	_mote_size.resize(MOTE_POOL)
 	_mote_color.resize(MOTE_POOL)
+	_mote_buf.resize(MOTE_POOL * 16)
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = _motes
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -684,9 +687,20 @@ func _animate_motes(delta: float) -> void:
 		_mote_vel[i] = vel
 		_mote_pos[i] += vel * delta
 		var fade := 1.0 - life * life
-		_motes.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * _mote_size[i] * (0.7 + 0.3 * fade)), _mote_pos[i]))
-		_motes.set_instance_color(i, _mote_color[i] * fade)
+		# a billboard scaled evenly where it is, and its colour fading (what set_instance_transform and
+		# set_instance_color would store, written into the buffer)
+		var s := Vector3.ONE * _mote_size[i] * (0.7 + 0.3 * fade)
+		var at := _mote_pos[i]
+		var c := _mote_color[i] * fade
+		var o := i * 16
+		var d := _mote_buf
+		d[o] = s.x; d[o + 1] = 0.0; d[o + 2] = 0.0; d[o + 3] = at.x
+		d[o + 4] = 0.0; d[o + 5] = s.y; d[o + 6] = 0.0; d[o + 7] = at.y
+		d[o + 8] = 0.0; d[o + 9] = 0.0; d[o + 10] = s.z; d[o + 11] = at.z
+		d[o + 12] = c.r; d[o + 13] = c.g; d[o + 14] = c.b; d[o + 15] = c.a
 		i += 1
+	if _mote_n > 0:
+		_motes.buffer = _mote_buf
 	_motes.visible_instance_count = _mote_n
 
 

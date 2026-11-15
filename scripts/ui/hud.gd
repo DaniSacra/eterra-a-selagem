@@ -261,7 +261,9 @@ func _process(delta: float) -> void:
 	_update_slots(p)
 	_update_passives()
 	_update_elos()
-	_update_boss()
+	# the boss (or the guardian) once a frame: finding a guardian walks the whole crowd
+	var chief := game.boss_enemy()
+	_update_boss(chief)
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
 	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
@@ -269,7 +271,7 @@ func _process(delta: float) -> void:
 	_move.modulate.a = clampf(_move_t / MOVE_FADE, 0.0, 1.0)
 	_notice_t -= delta
 	_notice.modulate.a = clampf(_notice_t / 0.6, 0.0, 1.0)
-	_update_pointers()
+	_update_pointers(chief)
 	_update_veil(delta)
 
 
@@ -356,8 +358,7 @@ func _update_elos() -> void:
 	_elos_ready = true
 
 
-func _update_boss() -> void:
-	var b := game.boss_enemy()
+func _update_boss(b: Enemy) -> void:
 	_boss_box.visible = b != null
 	if b:
 		_boss_name.text = T.t(b.def.name_key)
@@ -366,7 +367,7 @@ func _update_boss() -> void:
 
 ## Chevrons on the edge of the screen: the light fountain (with its name) and the nearest elites, guardian or boss
 ## out of view. Nothing shows while they are all on screen.
-func _update_pointers() -> void:
+func _update_pointers(chief: Enemy) -> void:
 	var view := get_viewport_rect()
 	var frame := Rect2(view.position + Vector2(EDGE_INSET.x, EDGE_INSET.y), view.size - Vector2(EDGE_INSET.x + EDGE_INSET.z, EDGE_INSET.y + EDGE_INSET.w))
 	var at: Variant = game.fountain_target()
@@ -379,8 +380,7 @@ func _update_pointers() -> void:
 		var half := _arrow.size * 0.5
 		_arrow.position = (edge as Vector2) + dir * (POINTER_SIZE * 0.5 + 6.0 + absf(dir.x) * half.x + absf(dir.y) * half.y) - half
 	var foes: Array[Enemy] = []
-	var chief := game.boss_enemy()  # Morvath is not an elite by his data
-	if chief:
+	if chief:  # Morvath is not an elite by his data
 		foes.append(chief)
 	for e in game.horde.list:
 		if e.alive and e.def.elite and e != chief:

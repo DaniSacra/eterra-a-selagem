@@ -50,7 +50,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 
 ## Direção de arte e modelos
 - Ciclo 7 na arena: estátuas com pregas, mangas e rosto afundado (sombreado na cor de vértice, camada de luz própria
-  `ArenaKit.STATUE_LAYER`), ruínas distantes (`RUIN_GROUPS`), portal sem estouro (núcleo pequeno, luz baixa nas ombreiras),
+  `ArenaKit.STATUE_LAYER`), ruínas distantes (`RUIN_GROUPS`), portal sem estouro (núcleo pequeno, luz baixa nas ombreiras; o derrame nos degraus segue a cor do portal, `ArenaKit.tint_with_portal`),
   medalhão com chanfro e runas fundas. Opções de captura: `--shot-on=swing|hit|special|omega` com `--shot-after`,
   `--cam-at=x,z` na vitrine, `--stress-ids=a,b`, `--hover=N` no título. Evidências do ciclo: `docs/gallery/cycle7/`.
 - **Toda sala é o Salão das Catacumbas da imagem de referência do Daniel (2026-11-14, "Arena das Catacumbas")**,
@@ -159,7 +159,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - `scripts/game/game.gd` é dono do relógio: chama `step(dt)` de cada sistema. Hit stop, pausa e a escolha de dom são
   só "não chamar step". Cada sistema que emite sinal dentro do laço (golpe que mata o paladino limpa tudo) precisa
   aguentar a lista mudar no meio (ver `Ground.step`, `Projectiles.step`).
-- **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer`, um MultiMesh por (inimigo, animação,
+- **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer` (cada tipo consultado uma vez em `register`: `Kind`, `Clip`; `add_kind` no laço; só os lotes usados são mexidos), um MultiMesh por (inimigo, animação,
   quadro). As poses vêm assadas: `tools/bake.gd` esqueleta os modelos (Meshy; os do KayKit ficaram em `KAYKIT`) em malhas estáticas
   (`assets/baked/*.res`, `BakedModel`). Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
   `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]` (o Godot do editor: o atlas novo usa o xatlas). A multidão fica fora da luz das tochas (camada 2)

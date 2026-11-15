@@ -298,3 +298,61 @@ func test_a_full_floor_is_what_thins_them() -> void:
 	horde.render()
 	assert_eq(horde.renderer._bars.count, 1, "past it only the hurt show one")
 	assert_almost_eq(horde.renderer._bars.data[14], CrowdRenderer.BAR_CROWD_FADE, 0.0001, "and fainter")
+
+
+## The crowd's drawing looks each kind up once (CrowdRenderer.Kind, Clip): the frame shown is still
+## BakedModel.frame_at's, a missing animation still falls back to walking, and only the batches with someone in them
+## are shown (the ones emptied since the last frame are hidden).
+func test_the_crowd_draws_the_frame_the_model_says() -> void:
+	var renderer := CrowdRenderer.new()
+	add_child_autofree(renderer)
+	var d := _def(&"skeleton")
+	renderer.register(d)
+	var m := renderer.model_of(d)
+	var kind := renderer.kind(d)
+	assert_eq(kind.model, m)
+	assert_almost_eq(kind.attack_time, m.duration(&"attack"), 0.0001)
+	assert_eq(kind.has_brace, m.frame_count(&"brace") > 0)
+	for anim: StringName in [&"walk", &"attack", &"death", &"idle"]:
+		for t: float in [0.0, 0.07, 0.4, 1.3, 9.0]:
+			renderer.begin()
+			renderer.add(d, anim, t, Vector3.ZERO, 0.0, Color())
+			renderer.commit()
+			var want: Mesh = (m.anims[anim] as Array)[m.frame_at(anim, t)]
+			var shown: Array[Mesh] = []
+			for c in renderer.get_children():
+				var mmi := c as MultiMeshInstance3D
+				if mmi and mmi.visible and mmi.multimesh.use_custom_data and mmi.material_override is ShaderMaterial \
+						and (mmi.material_override as ShaderMaterial).shader == CrowdRenderer.SHADER:
+					shown.append(mmi.multimesh.mesh)
+			assert_eq(shown, [want] as Array[Mesh], "%s at %.2f s: only frame %d" % [anim, t, m.frame_at(anim, t)])
+	if m.frame_count(&"brace") == 0:
+		assert_eq(renderer._clip(kind, &"brace"), renderer._clip(kind, &"walk"), "a pose the figure lacks: it walks")
+	renderer.begin()
+	renderer.add(d, &"walk", 0.0, Vector3.ZERO, 0.0, Color())
+	renderer.commit()
+	renderer.begin()
+	renderer.add(d, &"idle", 0.0, Vector3.ZERO, 0.0, Color())
+	renderer.commit()
+	var walking: CrowdRenderer.Clip = renderer._clip(kind, &"walk")
+	assert_false(walking.batches[0].mmi.visible, "nobody walks now: hidden")
+
+
+func test_a_character_is_placed_as_its_transform_says() -> void:
+	var renderer := CrowdRenderer.new()
+	add_child_autofree(renderer)
+	var d := _def(&"runner")
+	renderer.register(d)
+	renderer.begin()
+	var at := Vector3(3.0, 0.5, -2.0)
+	var squash := Vector3(1.2, 0.8, 1.2)
+	renderer.add(d, &"walk", 0.0, at, 0.7, Color(0.1, 0.2, 0.3, 0.0), squash, 0.3, 0.2)
+	var b: CrowdRenderer.Batch = renderer._clip(renderer.kind(d), &"walk").batches[0]
+	var basis := (Basis(Vector3.UP, 0.7) * Basis(Vector3.RIGHT, 0.3) * Basis(Vector3.BACK, 0.2)).scaled(squash * d.size)
+	var want := [basis.x.x, basis.y.x, basis.z.x, at.x, basis.x.y, basis.y.y, basis.z.y, at.y, basis.x.z, basis.y.z, basis.z.z, at.z, 0.1, 0.2, 0.3, 0.0]
+	for i in want.size():
+		assert_almost_eq(b.data[i], float(want[i]), 0.00001, "float %d" % i)
+	var r := d.radius * 2.6 / maxf(1.0 + at.y * 0.3, 1.0)
+	assert_almost_eq(renderer._shadow.data[0], r, 0.00001, "its shadow under it")
+	assert_almost_eq(renderer._shadow.data[10], r, 0.00001)
+	assert_almost_eq(renderer._shadow.data[7], 0.03, 0.00001)

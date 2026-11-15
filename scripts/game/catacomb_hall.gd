@@ -583,6 +583,8 @@ func _facade() -> void:
 	spill.spot_range = SPILL.y
 	spill.spot_angle = SPILL.z
 	spill.light_cull_mask = ~(Arena.CROWD_LAYER | ArenaKit.FACADE_LAYER)
+	# it is the portal's light: red when Morvath's doors open, the reward's colour when the way is lit
+	kit.tint_with_portal(kit.portals.size() - 1, spill)
 	# a cold light from the hall on the facade alone: its stone and statues read dark teal, never black
 	var fill := SpotLight3D.new()
 	arena.add_child(fill)
