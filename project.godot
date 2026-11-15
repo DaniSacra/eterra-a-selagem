@@ -47,3 +47,8 @@ hero_pos={
 "type": "vec3",
 "value": Vector3(0, 0, 0)
 }
+
+[debug]
+
+file_logging/enable_file_logging=true
+file_logging/max_log_files=30
