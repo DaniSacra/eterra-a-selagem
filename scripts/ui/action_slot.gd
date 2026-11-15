@@ -2,8 +2,12 @@ class_name ActionSlot
 extends Control
 ## One of the paladin's four actions in the HUD: a diamond in the HUD's gold frame, the gift that changed the action
 ## (or the bare action), the key or button under it, and its state. Ready: the glyph in ivory. Recharging: the glyph
-## dimmed under a veil and a pale line that runs around the frame as the recharge fills, then a short shine. The
-## dodges show as gems in the lower half; a dull blue dash there says the held (Omega) version has no Magia.
+## dimmed over a dark gem that fills again from the bottom with a level of old gold as the recharge runs (how much
+## is left reads at a glance, even on a bare action whose gem is near black) and a pale line that runs around the
+## frame, then a short shine. The dodges show
+## as gems in the lower half; a dull blue dash there says the held (Omega) version has no Magia.
+## Someone standing behind the diamond (veil): only the body goes translucent; the glyph, the recharge and the key
+## stay whole (cycle 7 faded all of it, and a recharging action almost vanished).
 
 const DIAMOND := 54.0
 const KEY_H := 17.0
@@ -12,8 +16,12 @@ const KEY_FONT := 13
 const READY_FLASH := 0.25
 const IVORY := Color(1.0, 0.97, 0.88)
 ## The glyph while the action recharges, and the veil over the gem.
-const BUSY_ALPHA := 0.45
-const VEIL := Color(0.0, 0.0, 0.02, 0.55)
+const BUSY_ALPHA := 0.6
+const VEIL := Color(0.0, 0.0, 0.02, 0.62)
+## The level of old gold that rises in the gem as it recharges (its opacity).
+const REFILL_ALPHA := 0.42
+## The body's opacity with someone behind it (Hud).
+const SEE_THROUGH := 0.45
 ## The dodge gems: half width in pixels, the gap between them, lit and spent.
 const CHARGE := 4.0
 const CHARGE_GAP := 13.0
@@ -33,6 +41,12 @@ var charges := 0
 var charges_max := 0
 ## The held version of the action costs more Magia than there is.
 var starved := false
+## 0..1: someone stands behind the diamond (its body turns translucent).
+var veil := 0.0:
+	set(v):
+		if not is_equal_approx(v, veil):
+			veil = v
+			queue_redraw()
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
@@ -86,17 +100,20 @@ func _draw() -> void:
 	var core := r - UiKit.FRAME - 0.5
 	var waiting := wait > 0.0
 	var rim := UiKit.OLD_GOLD.darkened(0.5) if waiting else UiKit.OLD_GOLD.lerp(UiKit.PALE, _flash)
-	draw_colored_polygon(_diamond(c, r + 2.0), Color(UiKit.INK, 0.92))
-	draw_colored_polygon(_diamond(c, r), rim)
-	draw_colored_polygon(_diamond(c, r - UiKit.FRAME), UiKit.INK)
-	draw_colored_polygon(_diamond(c, core), gem.darkened(0.78) if boon else Color(0.06, 0.045, 0.06, 0.94))
+	var body := lerpf(1.0, SEE_THROUGH, veil)
+	draw_colored_polygon(_diamond(c, r + 2.0), Color(UiKit.INK, 0.92 * body))
+	draw_colored_polygon(_diamond(c, r), Color(rim, body))
+	draw_colored_polygon(_diamond(c, r - UiKit.FRAME), Color(UiKit.INK, body))
+	draw_colored_polygon(_diamond(c, core), Color(gem.darkened(0.78), body) if boon else Color(0.06, 0.045, 0.06, 0.94 * body))
 	if boon:
-		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.08), r * 0.72), gem.darkened(0.5))
-		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.16), r * 0.4), Color(gem.darkened(0.1), 0.55))
+		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.08), r * 0.72), Color(gem.darkened(0.5), body))
+		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.16), r * 0.4), Color(gem.darkened(0.1), 0.55 * body))
 	var lift := r * 0.14 if charges_max > 0 or starved else 0.0
 	var ink := Color(IVORY, BUSY_ALPHA) if busy() else IVORY
 	if busy():
 		draw_colored_polygon(_diamond(c, core), VEIL)
+		for part in band(c, core, wait, 1.0):
+			draw_colored_polygon(part, Color(UiKit.OLD_GOLD, REFILL_ALPHA))
 	BoonIcon.glyph(self, boon.icon if boon else BoonIcon.ACTION_GLYPH + slot, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
 	if waiting:
 		# the recharge: a pale line running around the frame, from the top, clockwise
@@ -158,6 +175,22 @@ static func _capsule(r: Rect2) -> PackedVector2Array:
 		var a := PI * i / 8.0
 		pts.append(Vector2(r.get_center().x + cos(a) * k, r.end.y - k + sin(a) * k))
 	return pts
+
+
+## The part of a diamond (half size r around c) between two heights, as shares of its height from the top (0) to
+## the bottom (1): the recharge's level fills from `from` down.
+static func band(c: Vector2, r: float, from: float, to: float) -> Array[PackedVector2Array]:
+	var out: Array[PackedVector2Array] = []
+	from = clampf(from, 0.0, 1.0)
+	to = clampf(to, 0.0, 1.0)
+	if to <= from:
+		return out
+	var y0 := c.y - r + 2.0 * r * from
+	var y1 := c.y - r + 2.0 * r * to
+	var cut := PackedVector2Array([Vector2(c.x - r, y0), Vector2(c.x + r, y0), Vector2(c.x + r, y1), Vector2(c.x - r, y1)])
+	for part in Geometry2D.intersect_polygons(_diamond(c, r), cut):
+		out.append(part)
+	return out
 
 
 static func _diamond(c: Vector2, r: float) -> PackedVector2Array:

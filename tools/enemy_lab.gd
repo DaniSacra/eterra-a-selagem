@@ -8,6 +8,9 @@ extends SceneTree
 ## Options anywhere after the prefix: --zoom=2 (the camera that much closer), --tell=0.8 (every figure as if that far
 ## into its wind-up: the swollen orb and the lights of EnemyFx), --loosed=0.03 (as if its attack was loosed that many
 ## seconds ago), --absorbed (a blow just landed on its armor), --broken (its armor is gone).
+## Cycle 8: --bars (each one's life bar as the game draws it: 60% life with a pale trail to 85%, an elite with 70% of
+## its armor, or none with --broken) and --warn=0.6 (the warning of its attack on the floor, that far filled, aimed
+## down and to the right of the screen).
 
 const ROW: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder", &"morvath"]
 const ELITES: Array[StringName] = [&"skeleton_elite", &"runner_elite", &"mage_elite", &"archer_elite", &"guard_elite", &"priest_elite"]
@@ -71,6 +74,8 @@ func _run() -> void:
 	world.add_child(renderer)
 	var tells := EnemyFx.new()
 	world.add_child(tells)
+	var warnings := Node3D.new()
+	world.add_child(warnings)
 	var row: Array[StringName] = ROW
 	var elites: Array[StringName] = ELITES
 	if args.size() > 3:
@@ -105,6 +110,11 @@ func _run() -> void:
 			var k := i if back_row == 0 else i - row.size()
 			var pos := Vector3(-width * 0.5 + k * gap, 0, -back_row * 5.0)
 			var tell := float(opts.get("tell", "0"))
+			if opts.has("bars"):
+				var top := pos + Vector3(0, renderer.model_of(defs[i]).height * defs[i].size, 0)
+				renderer.add_bar(defs[i], top, 0.6, 0.7 if defs[i].armor > 0.0 and not opts.has("broken") else 0.0, false, 0.85)
+			if opts.has("warn") and view == "game":
+				_warn(warnings, defs[i], Vector2(pos.x, pos.z), float(opts.warn))
 			var state := CrowdRenderer.state(0.6 if opts.has("absorbed") else 0.0, false, false, 0.0, opts.has("absorbed"), tell, opts.has("broken"))
 			renderer.add(defs[i], anim, lerpf(at_t, to_t, k / maxf(row.size() - 1, 1.0)) if back_row == 0 else at_t, pos, yaw, state)
 			if opts.has("tell") or opts.has("loosed"):
@@ -120,6 +130,9 @@ func _run() -> void:
 					tells.tell(foe, tell)
 		renderer.commit()
 		tells.commit()
+		if view != "game":
+			for w in warnings.get_children():
+				w.queue_free()
 		hero.rotation.y = yaw
 		if view == "game":
 			# the game's camera: 30 degrees over the floor, a narrow lens
@@ -132,3 +145,25 @@ func _run() -> void:
 			await process_frame
 		root.get_viewport().get_texture().get_image().save_png("%s_%s.png" % [out, view])
 	quit()
+
+
+## The warning the figure's attack puts on the floor (Horde's numbers and Ground's look), filled to progress.
+func _warn(parent: Node3D, d: EnemyDef, at: Vector2, progress: float) -> void:
+	var aim := Vector2(0.45, 0.9).normalized()
+	var B := EnemyDef.Behavior
+	var S := GroundLook.Shape
+	var node := GroundLook.new_node()
+	parent.add_child(node)
+	var y := 0.06 + parent.get_child_count() * 0.0005
+	match d.behavior:
+		B.RUNNER:
+			GroundLook.warning(node, S.LINE, at, aim, d.lunge_speed * d.lunge_time + d.radius + 1.0, 1.3, y)
+		B.KNIGHT:
+			GroundLook.warning(node, S.LINE, at, aim, d.lunge_speed * d.lunge_time + d.radius, 2.4, y)
+		B.CONE:
+			GroundLook.warning(node, S.ARC, at, aim, d.attack_range + 0.5, d.attack_width, y)
+		B.PULSE:
+			GroundLook.warning(node, S.CIRCLE, at, aim, d.attack_width, 0.0, y)
+		_:
+			GroundLook.warning(node, S.CIRCLE, at + aim * 3.0, aim, 2.3, 0.0, y)
+	(node.material_override as ShaderMaterial).set_shader_parameter(&"progress", progress)

@@ -5,7 +5,7 @@ extends Control
 ## Top: the room (or the level), the clock, the gold (or the kills); the boss's life under the clock. Right: the
 ## hit count and the move's name. Everything sits on the edges so the middle of the screen stays for the fight: the
 ## actions turn translucent while someone stands behind them, and small chevrons on the edge point at the elites,
-## the guardian or the boss out of view. One gold for the frames (UiKit.OLD_GOLD, UiKit.FRAME wide), one shadow
+## the guardian or the boss out of view (the diamonds keep their glyph, recharge and key whole, ActionSlot.veil). One gold for the frames (UiKit.OLD_GOLD, UiKit.FRAME wide), one shadow
 ## under every text (UiKit.shadow).
 ## Sizes are in pixels at 720 lines; the window stretches the whole canvas (project.godot), so the layout holds at
 ## any resolution.
@@ -432,9 +432,11 @@ func _update_veil(delta: float) -> void:
 	if _veil_t <= 0.0:
 		_veil_t = VEIL_EVERY
 		_veiled = _someone_behind(_actions_rect())
-	var a := move_toward(_action_row.modulate.a, VEIL_ALPHA if _veiled else 1.0, delta * VEIL_SPEED)
-	_action_row.modulate.a = a
+	var a := move_toward(_passives.modulate.a, VEIL_ALPHA if _veiled else 1.0, delta * VEIL_SPEED)
 	_passives.modulate.a = a
+	# the diamonds fade only their bodies: what they say (glyph, recharge, key) stays whole
+	for s in _slots:
+		s.veil = (1.0 - a) / (1.0 - VEIL_ALPHA)
 
 
 ## The diamonds and the gifts beside them, on screen.

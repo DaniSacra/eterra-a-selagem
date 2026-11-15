@@ -15,6 +15,8 @@ uniform float fade = 1.0;
 // in meters: the rim stays thin on big areas instead of growing with them. The area itself is the attack's.
 uniform float size_m = 1.0;
 uniform float rim_m = 0.28;
+// A line warning's length in meters (its chevrons keep their size on short and long lines).
+uniform float length_m = 4.0;
 // The paladin's circle (style 2): how much of its light fills the inside, and how many marks turn inside its rim.
 uniform float circle_veil = 0.02;
 uniform float circle_marks = 7.0;
@@ -34,9 +36,22 @@ void fragment() {
 		float side = abs(uv.x);
 		float rim = clamp(rim_m / size_m, 0.04, 0.2);
 		float edge = smoothstep(1.0 - rim, 1.0 - rim * 0.3, side) * step(side, 1.0);
-		float ends = smoothstep(0.96, 0.995, abs(uv.y));
 		if (style == 0) {
-			a = max(edge, ends) * 0.9 + step(along, progress) * 0.35 + 0.08;
+			// which way the blow goes (cycle 8): the far end is the bright one, the near end only a faint line, the
+			// filling front is a chevron pointing ahead, and faint chevrons wait in the part still to fill
+			float far = smoothstep(0.96, 0.995, along);
+			float near = 1.0 - smoothstep(0.005, 0.04, along);
+			float x_m = side * size_m;
+			float front = progress * (length_m + size_m * 0.7);
+			float tip = along * length_m + x_m * 0.7;
+			float head = smoothstep(rim_m * 1.4, rim_m * 0.4, abs(tip - front)) * step(0.02, progress);
+			float step_m = max(size_m * 1.6, 0.9);
+			float lane = fract((tip - front) / step_m);
+			float marks = smoothstep(0.0, 0.08, lane) * (1.0 - smoothstep(0.16, 0.24, lane)) * step(front + rim_m, tip);
+			marks *= step(tip, length_m - rim_m * 1.5) * (1.0 - edge);
+			// the fill brightens toward its front, as the circle's does: the eye follows it to where the blow lands
+			float fill = step(tip, front) * (0.3 + 0.35 * smoothstep(front - 1.2, front, tip));
+			a = max(max(edge, far) * 0.9, near * 0.3) + fill + head * 0.6 + marks * 0.16 + 0.08;
 		} else {
 			a = (1.0 - side * side) * (0.5 + 0.5 * noise(vec2(uv.x * 3.0, along * 8.0 - TIME * 2.0)));
 		}
@@ -51,6 +66,13 @@ void fragment() {
 			float rim = clamp(rim_m / size_m, 0.025, 0.14);
 			float ring = smoothstep(1.0 - rim, 1.0 - rim * 0.3, d) * (1.0 - smoothstep(0.985, 1.0, d));
 			float fill = step(d, progress) * 0.38 + smoothstep(progress - 0.06, progress, d) * step(d, progress) * 0.6;
+			if (shape == 2) {
+				// the arc's straight sides get the same rim as its curve (until cycle 8 only the curve had one, and a
+				// wide arc read as a blot): the slice of floor the blow sweeps, and which way it opens
+				float ang = abs(atan(uv.x, -uv.y));
+				float side_m = (arc_half - ang) * d * size_m;
+				ring = max(ring, smoothstep(rim_m, rim_m * 0.3, side_m) * step(0.08, d) * 0.85);
+			}
 			a = ring + fill + 0.06;
 		} else if (style == 2) {
 			// the paladin's circle of light: a veil thin enough for the floor to show through, read by its rim

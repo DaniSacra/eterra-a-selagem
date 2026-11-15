@@ -54,11 +54,21 @@ const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
 const BAR := preload("res://assets/shaders/life_bar.gdshader")
 ## The thin life bar over enemies' heads (Hades II): meters wide per meter of the enemy's radius, meters tall,
-## and how far above the head.
+## and how far above the head (its middle). Cycle 8 (4 to 20 enemies a room, each one read on its own): a little
+## taller, and an armored bar grows down by BAR_ARMOR_HEIGHT for the armor's own strip on top, so the armor never
+## covers the life; its top edge stays where the plain bar's is (the damage numbers start clear of it).
 const BAR_WIDTH := 2.2
 const BAR_MIN_WIDTH := 1.1
-const BAR_HEIGHT := 0.13
+const BAR_HEIGHT := 0.18
+const BAR_ARMOR_HEIGHT := 0.09
 const BAR_ABOVE := 0.35
+## Bars are drawn over everything, so where two overlap the one nearer the camera is drawn last, whole (sorted when
+## there are at most this many: every room of the game; the stress tests skip it).
+const BAR_SORT_MAX := 48
+## An elite's bar: the frame in old gold (it still says "elite" once the armor is gone) and this much wider.
+const BAR_ELITE_WIDTH := 1.15
+## The HUD's old gold (UiKit.OLD_GOLD; not named here: the labs draw the crowd without the game's autoloads).
+const BAR_ELITE_FRAME := Color("8e7444")
 
 class Batch:
 	var mmi: MultiMeshInstance3D
@@ -115,6 +125,7 @@ func _ready() -> void:
 	var bar_mat := ShaderMaterial.new()
 	bar_mat.shader = BAR
 	bar_mat.render_priority = 10
+	bar_mat.set_shader_parameter(&"elite_frame", BAR_ELITE_FRAME)
 	_bars = _new_batch(quad, bar_mat, true)
 
 
@@ -247,10 +258,36 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 
 ## A thin life bar over one enemy's head. top: the top of its head (world). life, armor: what is left (0..1).
 ## crowded: the floor is full, the bar is drawn thinner and fainter so the bars do not make a grid over the heads.
-func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := false) -> void:
-	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH)
-	_put(_bars, Vector3(w, 0, 0), Vector3(0, BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0), 0), Vector3.BACK, top + Vector3(0, BAR_ABOVE, 0),
-		Color(clampf(life, 0.0, 1.0), clampf(armor, 0.0, 1.0), BAR_CROWD_FADE if crowded else 1.0, 0))
+## trail: where the pale trail of a recent loss ends (BarTrails; <= life for none).
+func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := false, trail := 0.0) -> void:
+	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH) * (BAR_ELITE_WIDTH if d.elite else 1.0)
+	var h := BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0)
+	var at := top + Vector3(0, BAR_ABOVE, 0)
+	if armor > 0.0:
+		var extra := BAR_ARMOR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0)
+		h += extra
+		at.y -= extra * 0.5
+	life = clampf(life, 0.0, 1.0)
+	_put(_bars, Vector3(w, 0, 0), Vector3(0, h, 0), Vector3.BACK, at,
+		Color(life, clampf(armor, 0.0, 1.0), (BAR_CROWD_FADE if crowded else 1.0) + (2.0 if d.elite else 0.0), maxf(life, clampf(trail, 0.0, 1.0))))
+
+
+## Orders this frame's bars from the farthest to the nearest along the camera's view (forward: where it looks).
+func sort_bars(forward: Vector3) -> void:
+	var n := _bars.count
+	var per := _bars.per
+	var src := _bars.data
+	var order: Array[Vector2] = []
+	for i in n:
+		var o := i * per
+		order.append(Vector2(-(src[o + 3] * forward.x + src[o + 7] * forward.y + src[o + 11] * forward.z), i))
+	order.sort()
+	var out := src.duplicate()
+	for k in n:
+		var from := int(order[k].y) * per
+		for f in per:
+			out[k * per + f] = src[from + f]
+	_bars.data = out
 
 
 ## The state of one character for add(), as crowd.gdshader reads it. flash: 0..1 (how white the blow left it);
@@ -269,6 +306,9 @@ static func unpack(s: Color) -> Array[float]:
 
 
 func commit() -> void:
+	var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if cam and _bars.count > 1 and _bars.count <= BAR_SORT_MAX:
+		sort_bars(-cam.global_basis.z)
 	# what was shown last frame and has nothing now goes (begin() set its count to 0); only those are touched
 	for b in _shown:
 		if b.count == 0:

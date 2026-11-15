@@ -7,14 +7,14 @@ extends Node3D
 signal hit_player(amount: float, from: Vector2)
 
 enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND }
+## The same order as GroundLook.Shape (which draws them).
 enum Shape { CIRCLE, LINE, ARC }
 
-const SHADER := preload("res://assets/shaders/ground.gdshader")
 const TICK := 0.25
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
-const WARNING_STRENGTH := 1.4
+const WARNING_STRENGTH := GroundLook.WARNING_STRENGTH
 ## The circle of light is read by its rim and the marks inside it (this strength); its fill is only a veil
 ## (BIND_VEIL of this strength: the floor inside stays within a few steps of brightness of the floor outside).
 const BIND_STRENGTH := 0.55
@@ -22,11 +22,11 @@ const BIND_VEIL := 0.009
 const BIND_MARKS := 7.0
 const AREA_STRENGTH := 0.8
 ## Meters of the bright rim around a warning (its size is always the attack's).
-const RIM_METERS := 0.28
+const RIM_METERS := GroundLook.RIM_METERS
 ## The ring where an enemy's blow lands, when its caster has no colour of its own.
 const LAND_COLOR := Color(1.0, 0.3, 0.2)
 const COLORS := {
-	Kind.WARNING: Color(1.0, 0.18, 0.12), Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
+	Kind.WARNING: GroundLook.WARNING_COLOR, Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
 	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
 }
 
@@ -168,47 +168,17 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	z.node = _pool.pop_back() if not _pool.is_empty() else _new_node()
 	z.mat = z.node.material_override
 	z.node.visible = true
-	var m := z.mat
-	m.set_shader_parameter(&"color", z.color)
-	m.set_shader_parameter(&"progress", 0.0)
-	m.set_shader_parameter(&"style", 0 if kind == Kind.WARNING else 2 if kind == Kind.BIND else 1)
-	m.set_shader_parameter(&"circle_veil", BIND_VEIL)
-	m.set_shader_parameter(&"circle_marks", BIND_MARKS)
-	m.set_shader_parameter(&"shape", shape)
-	m.set_shader_parameter(&"fade", 1.0)
-	m.set_shader_parameter(&"strength", WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if kind == Kind.BIND else AREA_STRENGTH)
-	m.set_shader_parameter(&"size_m", maxf(0.1, width * 0.5 if shape == Shape.LINE else radius))
-	m.set_shader_parameter(&"rim_m", RIM_METERS)
-	var y := 0.06 + zones.size() * 0.0005
-	match shape:
-		Shape.LINE:
-			z.node.scale = Vector3(width, 1.0, radius)
-			z.node.rotation = Vector3(0, atan2(z.dir.x, z.dir.y), 0)
-			var mid := at + z.dir * radius * 0.5
-			z.node.position = Vector3(mid.x, y, mid.y)
-		Shape.ARC:
-			m.set_shader_parameter(&"arc_half", deg_to_rad(width) * 0.5)
-			z.node.scale = Vector3(radius * 2.0, 1.0, radius * 2.0)
-			# the shader opens the arc towards -V of the quad; turn the quad so that points along dir
-			z.node.rotation = Vector3(0, atan2(-z.dir.x, -z.dir.y), 0)
-			z.node.position = Vector3(at.x, y, at.y)
-		_:
-			z.node.scale = Vector3(radius * 2.0, 1.0, radius * 2.0)
-			z.node.rotation = Vector3.ZERO
-			z.node.position = Vector3(at.x, y, at.y)
+	var style := GroundLook.Style.WARNING if kind == Kind.WARNING else GroundLook.Style.CIRCLE if kind == Kind.BIND else GroundLook.Style.AREA
+	GroundLook.dress(z.node, style, shape, z.color, WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if kind == Kind.BIND else AREA_STRENGTH,
+		RIM_METERS, at, z.dir, radius, width, 0.06 + zones.size() * 0.0005)
+	z.mat.set_shader_parameter(&"circle_veil", BIND_VEIL)
+	z.mat.set_shader_parameter(&"circle_marks", BIND_MARKS)
 	zones.append(z)
 	return z
 
 
 func _new_node() -> MeshInstance3D:
-	var mi := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(1, 1)
-	mi.mesh = plane
-	var mat := ShaderMaterial.new()
-	mat.shader = SHADER
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mi := GroundLook.new_node()
 	add_child(mi)
 	return mi
 

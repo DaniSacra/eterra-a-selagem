@@ -521,7 +521,13 @@ func clear_crowd() -> void:
 
 
 ## Up to this many enemies on the floor, every one shows its life bar (as in Hades II); more, only the hurt.
+## Cycle 8: a room holds 4 to 20 at once, so in the game every enemy always shows its bar (the bar is how a
+## wounded one is told from a fresh one, and an elite by its frame); only the stress tests thin them out.
 const BARS_FOR_ALL := 24
+## A blow tips the body back, away from the paladin, for an instant (radians at a full flash; a heavy body less).
+const RECOIL_TILT := 0.2
+## The pale trails on the life bars (only drawn).
+var bar_trails := BarTrails.new()
 
 
 ## Draws every living and dying enemy. Called every frame, also while the game is paused for hit stop.
@@ -529,6 +535,9 @@ func render() -> void:
 	renderer.begin()
 	var few := list.size() <= BARS_FOR_ALL
 	var crowded := not few
+	var now := Time.get_ticks_msec() * 0.001
+	if bar_trails.size() > list.size() + 32:
+		bar_trails.prune(func(who: Object) -> bool: return (who as Enemy).alive)
 	tells.begin()
 	for e in list:
 		var d := e.def
@@ -573,13 +582,14 @@ func render() -> void:
 		# all when its armor took it
 		var give := 0.0 if e.absorbed else k * (HEAVY_SQUASH if d.heavy else 1.0)
 		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
-		renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, 0.0, lean)
+		renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
 		if d.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
 			var top := e.y + kind.model.height * d.size
-			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), e.hp / maxf(e.max_hp, 0.001),
-				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded)
+			var life := e.hp / maxf(e.max_hp, 0.001)
+			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), life,
+				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded, bar_trails.shown(e, life, now))
 	for e in dying:
 		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
 		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2

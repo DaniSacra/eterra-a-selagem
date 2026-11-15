@@ -21,9 +21,20 @@ const PALE := Color(1.25, 1.2, 1.05)
 const DUST := Color(0.34, 0.31, 0.28)
 ## Armor: old gold, as the elites' trims (CrowdRenderer.GILD_COLOR), bright enough to read as a spark.
 const OLD_GOLD := Color(1.5, 1.1, 0.5)
-## The blade's gleam starts at this share of the wind-up.
-const GLINT_FROM := 0.5
-const GLINT_SIZE := 0.55
+## The blade's gleam starts at this share of the wind-up, is fullest at GLINT_PEAK (the moment to dodge) and is gone
+## by the blow. Cycle 8 (few enemies, each read alone): it swells late instead of in the middle, a little larger,
+## with a short cross stroke so it reads as a point of light on steel and not a mote.
+const GLINT_FROM := 0.45
+const GLINT_PEAK := 0.85
+const GLINT_SIZE := 0.7
+## The crossbow's bolt drawn back: a pale streak along the aim, growing to this length (meters at size 1), from
+## this share of the wind-up.
+const BOLT_FROM := 0.35
+const BOLT_DRAW := 0.9
+## The shield's edge catches the light from this share of the wind-up (the long charge reads early), dust kicked up
+## at its feet in the last part.
+const SHIELD_FROM := 0.3
+const SHIELD_DUST := 0.6
 ## Sparks spiralling up from a staff's orb: how many, how wide and how high (meters at size 1).
 const ORB_SPARKS := 4
 const ORB_RADIUS := 0.2
@@ -121,6 +132,12 @@ static func magic_of(d: EnemyDef) -> Color:
 	return Color(m.r / top, m.g / top, m.b / top) if m.a > 0.0 and top > 0.0 else PALE
 
 
+## 0 before from, rising to 1 at peak, held, and gone by the end of the wind-up (the last 8%): a cue that is fullest
+## just before the blow and never still on screen when it lands.
+static func ramp(k: float, from: float, peak: float) -> float:
+	return smoothstep(from, peak, k) * (1.0 - smoothstep(0.92, 1.0, k))
+
+
 ## The wind-up of one enemy, k from 0 (it just started) to 1 (the attack is loosed).
 func tell(e: Enemy, k: float) -> void:
 	var d := e.def
@@ -129,11 +146,12 @@ func tell(e: Enemy, k: float) -> void:
 	var at := anchor(e.pos, e.y, e.yaw(), d.size, d.tell_at)
 	match d.tell:
 		EnemyDef.Tell.GLINT:
-			if k >= GLINT_FROM:
-				# a short pale gleam on the edge: it swells and is gone before the blow
-				var g := sin((k - GLINT_FROM) / (1.0 - GLINT_FROM) * PI)
+			var g := ramp(k, GLINT_FROM, GLINT_PEAK)
+			if g > 0.0:
+				# a pale gleam on the edge: it swells toward the blow and is gone when the blade comes down
 				_put(Shape.DOT, at, Vector2.ONE * GLINT_SIZE * 0.5 * d.size * g, PALE, 0.8 * g)
 				_put(Shape.STREAK, at, Vector2(GLINT_SIZE * d.size * g, 0.07 * d.size), PALE, 0.9 * g, 0.5)
+				_put(Shape.STREAK, at, Vector2(GLINT_SIZE * 0.55 * d.size * g, 0.06 * d.size), PALE, 0.7 * g, 0.5 + PI * 0.5)
 		EnemyDef.Tell.TREMBLE:
 			# dust shaken off the floor under it
 			for i in 3:
@@ -151,11 +169,24 @@ func tell(e: Enemy, k: float) -> void:
 				_put(Shape.DOT, at + Vector3(cos(a) * r, phase * ORB_RISE * d.size, sin(a) * r), Vector2.ONE * 0.16 * d.size, c * 1.6,
 					sin(phase * PI) * minf(1.0, k * 3.0))
 		EnemyDef.Tell.BOLT:
-			if k > 0.6:
-				_put(Shape.DOT, at, Vector2.ONE * 0.3 * d.size, PALE, 0.5 * (k - 0.6) / 0.4)
+			var b := ramp(k, BOLT_FROM, 1.0)
+			if b > 0.0:
+				# the bolt drawn back: its tip lights and a pale streak grows along the aim, the way it will fly
+				_put(Shape.DOT, at, Vector2.ONE * 0.32 * d.size, PALE, 0.65 * b)
+				var length := BOLT_DRAW * d.size * b
+				var mid := Vector2(at.x, at.z) + e.aim * length * 0.5
+				_floor(Shape.STREAK, Vector3(mid.x, at.y, mid.y), e.aim, Vector2(length, 0.07 * d.size), PALE, 0.55 * b)
 		EnemyDef.Tell.SHIELD:
-			if k > 0.7:
-				_put(Shape.STREAK, at, Vector2(0.9 * d.size, 0.06 * d.size), PALE, 0.5 * (k - 0.7) / 0.3, PI * 0.5)
+			var s := ramp(k, SHIELD_FROM, 1.0)
+			if s > 0.0:
+				# the edge of the raised shield catches the light, stronger as the charge comes
+				_put(Shape.STREAK, at, Vector2(0.95 * d.size, 0.06 * d.size), PALE, 0.75 * s, PI * 0.5)
+			if k > SHIELD_DUST:
+				var dust := (k - SHIELD_DUST) / (1.0 - SHIELD_DUST)
+				for i in 2:
+					var a := TAU * (i / 2.0) + e.look * TAU
+					var foot := e.pos - e.aim * 0.3 * d.size + Vector2(cos(a), sin(a)) * 0.35 * d.size
+					_put(Shape.DOT, Vector3(foot.x, 0.15 + 0.2 * dust, foot.y), Vector2.ONE * 0.6 * d.size, DUST, 0.5 * sin(dust * PI))
 		EnemyDef.Tell.RITUAL:
 			var c := magic_of(d)
 			var rise := smoothstep(0.0, 0.3, k)
