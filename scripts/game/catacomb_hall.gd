@@ -116,12 +116,12 @@ const SPILL_AIM := 0.8
 const SPILL_COLOR := Color(0.25, 0.95, 0.7)
 ## The cold light on the facade alone (its colour, energy, and where it shines from: x off the portal, height, z out
 ## of the facade), so the stone and the statues read dark teal against the green.
-const FACADE_FILL := Color(0.45, 0.75, 0.85)
+const FACADE_FILL := Color(0.55, 0.74, 0.82)
 const FACADE_FILL_ENERGY := 3.0
 const FACADE_FILL_FROM := Vector3(-7.0, 16.0, 11.0)
 ## Where along the facade it aims (m east of the portal) and its cone (degrees): the whole facade east of the portal.
-const FACADE_FILL_AIM := 6.0
-const FACADE_FILL_CONE := 62.0
+const FACADE_FILL_AIM := 8.0
+const FACADE_FILL_CONE := 70.0
 ## The facade's relief: a plinth along its foot (height, how far out), two cornices (heights over the dais, height,
 ## how far out), blind pointed niches between the buttresses (width, height, how far over the dais; their dark back),
 ## and the tall windows over them (width, height, over the dais) with a mullion.
@@ -136,8 +136,8 @@ const MULLION := 0.1
 const BUTTRESSES: Array[float] = [-5.9, -3.6, 7.5, 12.6, 19.0]
 const BAYS: Array[float] = [10.05, 15.8]
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
-const KEY_LIGHT := Color(0.95, 0.8, 0.74)
-const KEY_ENERGY := 5.2
+const KEY_LIGHT := Color(0.92, 0.8, 0.78)
+const KEY_ENERGY := 5.6
 const KEY_HEIGHT := 9.0
 const KEY_RANGE := 16.0
 ## Tint of the stone in the depths and of the walls under the platform (dark against the lighter mist).
@@ -155,19 +155,40 @@ const ROW_SPANS: Array[float] = [8.5, 7.5, 6.5, 6.0]
 const ROW_STEP := 3.0
 const ROW_REACH := Vector2(0.52, 0.14)
 const BROKEN := 0.6
+## The arches between the piers of each plane: their arcs' radius as a share of the opening (0.5 round, more pointed),
+## the ring's width (share of the pier's), how far under the capital their apex stands (m), the share of them broken
+## off (only a stump of this share of the arch left on one side).
+const ROW_ARCS: Array[float] = [0.5, 0.75, 0.5, 0.8]
+const ARCH_RING := 0.5
+const ARCH_UNDER := 1.7
+const ARCH_BROKEN := 0.3
+const ARCH_STUMP := Vector2(0.25, 0.6)
 ## String courses down each pier of the depths: how many, meters between them.
-const PIER_BANDS := 2
-const PIER_BAND_STEP := 5.0
+const PIER_BANDS := 3
+const PIER_BAND_STEP := 4.0
 ## The aqueduct of the near plane (to the west): which gap of piers it spans, its deck's height and thickness, how
 ## many small arches carry it.
 const AQUEDUCT_GAP := 1
 const AQUEDUCT := Vector2(1.2, 0.9)
 const AQUEDUCT_ARCHES := 3
-## Banks of pale mist between the planes (distance from the camera, height of their middle, size, opacity).
+## A broken bridge in each plane behind the first: which gap of piers it spans (counted from the west), how far under
+## the piers' tops its deck runs (m), and the share of its length missing in the middle.
+const BRIDGE_GAPS: Array[int] = [-1, 2, 1, 3]
+const BRIDGE_UNDER := 4.0
+const BRIDGE_MISSING := 0.3
+## Banks of pale mist between the planes (distance from the camera, height of their middle, size, opacity from the
+## nearest to the farthest: the far planes sink deeper into it).
 const MIST_BANKS: Array[float] = [75.0, 90.0, 108.0]
 const MIST_Y := -1.0
 const MIST_SIZE := Vector2(120.0, 6.0)
-const MIST_ALPHA := 0.25
+const MIST_ALPHAS: Array[float] = [0.18, 0.28, 0.35]
+## The far veil of mist behind everything (distance from the camera, height of its middle, size, opacity, how much
+## lighter than the fog, how fine its mottle): the background up high is moving mist, never a flat card; it ends
+## above the violet glow low down (teal over it would grey the violet).
+const VEIL := Vector4(135.0, 5.0, 280.0, 90.0)
+const VEIL_ALPHA := 0.16
+const VEIL_LIGHT := 1.6
+const VEIL_GRAIN := 0.45
 ## The violet glow cards: behind each gap of the near plane, rising from the mist (foot) to at most GLOW_TOP, only to
 ## the west of the hall; energy shares for the west and the east ones.
 const GLOW_FOOT := -10.0
@@ -177,8 +198,12 @@ const GLOW_WIDTH := 8.0
 const GLOW_DIST := 76.0
 const GLOW_LATS: Array[float] = [-0.46, -0.32, -0.18]
 const GLOW_WIDE := 16.0
-const GLOW_WEST := 1.5
+const GLOW_WEST := 1.9
 const GLOW_EAST := 1.5
+## A glow card low beside the east cliff (foot; width, height; energy share), seen right of the east stairs.
+const EAST_FOOT_GLOW := Vector3(HALF.x + 2.5, -7.0, -11.0)
+const EAST_FOOT_GLOW_SIZE := Vector2(12.0, 9.0)
+const EAST_FOOT_GLOW_ENERGY := 2.5
 ## The far tower the chains hang from (behind the giant, in the middle of the picture's top).
 const TOWER := Vector3(-35.0, 0, -23.0)
 const TOWER_TOP := 12.0
@@ -194,7 +219,11 @@ const LANTERN_HALO := 0.5
 const LANTERN_LAT := -0.33
 ## How far the wall with the window rises over the window.
 const LANTERN_WALL := 1.6
-const LANTERN_GLASS := Color(1.5, 0.8, 0.28)
+const LANTERN_GLASS := Color(1.1, 0.6, 0.22)
+## The lead of its glazing in the dark stone of the depths: bar width, upright bars, cross bars.
+const LANTERN_BAR := 0.05
+const LANTERN_UPRIGHTS := 1
+const LANTERN_CROSSES := 3
 
 var arena: Arena
 var kit: ArenaKit
@@ -651,13 +680,14 @@ func _depths() -> void:
 			_pier(p, width, far, not last and (k == ROW_DIST.size() - 2 or i % 2 == 0), last)
 			if prev != Vector3.INF:
 				var mid := (prev + p) * 0.5
-				var h := span * 0.8
-				m.pointed_arch(Vector3(mid.x, minf(prev.y, p.y) - 1.4 - h, mid.z), facing, span - width, h, width * 0.45, width * 0.8, far)
+				_arch(prev, p, width, ROW_ARCS[k], facing, far, r)
+				if k > 0 and gap == BRIDGE_GAPS[k]:
+					_bridge(prev, p, width, yaw, far)
 				if k == 0:
 					gaps.append(mid)
 					if gap <= AQUEDUCT_GAP:
 						_aqueduct(prev, p, width, yaw, far)
-					gap += 1
+				gap += 1
 			prev = p
 	# a wall under the near arcade, with the lit window of the picture in it
 	var wall := Vector3(eye.x, LANTERN_Y, eye.z) + ahead * (ROW_DIST[0] + 1.2) + right * (LANTERN_LAT * ROW_DIST[0])
@@ -700,9 +730,13 @@ func _depths() -> void:
 	for g: Vector3 in [Vector3(HALF.x + 3.0, GLOW_FOOT, -12.0), Vector3(HALF.x + 4.0, GLOW_FOOT, -22.0), Vector3(8.0, GLOW_FOOT, HALF.y + 5.0),
 			Vector3(HALF.x + 2.5, GLOW_FOOT, 9.0), Vector3(HALF.x + 2.5, GLOW_FOOT, 15.5)]:
 		kit.abyss_glow(g, Vector2(16.0, GLOW_TOP - GLOW_FOOT), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_EAST)
+	# and low at the foot of the east cliff, beside the stairs down (the picture's violet at the bottom right)
+	kit.abyss_glow(EAST_FOOT_GLOW, EAST_FOOT_GLOW_SIZE, yaw, ArenaKit.ABYSS_GLOW_ENERGY * EAST_FOOT_GLOW_ENERGY)
 	# banks of pale mist between the planes, so each stands out against the one behind
-	for md: float in MIST_BANKS:
-		kit.mist_bank(Vector3(eye.x, MIST_Y, eye.z) + ahead * md + right * (-0.2 * md), MIST_SIZE, Game.FOG * 1.0, MIST_ALPHA)
+	for i in MIST_BANKS.size():
+		var md: float = MIST_BANKS[i]
+		kit.mist_bank(Vector3(eye.x, MIST_Y, eye.z) + ahead * md + right * (-0.2 * md), MIST_SIZE, Game.FOG, MIST_ALPHAS[i])
+	kit.mist_bank(Vector3(eye.x, VEIL.y, eye.z) + ahead * VEIL.x, Vector2(VEIL.z, VEIL.w), Game.FOG * VEIL_LIGHT, VEIL_ALPHA, VEIL_GRAIN)
 	kit.abyss_fog(Vector3(-HALF.x - 14.0, -12.0, 0.0), Vector3(24.0, 10.0, 50.0))
 	kit.abyss_fog(Vector3(HALF.x + 10.0, -12.0, 0.0), Vector3(16.0, 10.0, 40.0))
 
@@ -723,6 +757,41 @@ func _pier(top: Vector3, width: float, mat: Material, spire: bool, broken := fal
 	m.box(Vector3(top.x, top.y + 0.2, top.z), Vector3(width + 0.4, 0.4, width + 0.4), 0.0, mat)
 	if spire:
 		m.point(Vector3(top.x, top.y + 0.4, top.z), width * 0.9, width * 1.6, 0.0, 0.0, mat)
+
+
+## The arch between two piers of a plane of the depths, its apex ARCH_UNDER under the lower capital; a share of them
+## broken off, a stump left on one side.
+func _arch(a: Vector3, b: Vector3, width: float, radius: float, facing: Vector2, mat: Material, r: RandomNumberGenerator) -> void:
+	var open := Vector2(b.x - a.x, b.z - a.z).length() - width
+	var share := maxf(radius, 0.5)
+	var rr := open * share
+	var cx := rr - open * 0.5
+	var rise := sqrt(rr * rr - cx * cx)
+	var mid := (a + b) * 0.5
+	var from := 0.0
+	var to := 1.0
+	if r.randf() < ARCH_BROKEN:
+		var stump := r.randf_range(ARCH_STUMP.x, ARCH_STUMP.y)
+		if r.randf() < 0.5:
+			to = stump
+		else:
+			from = 1.0 - stump
+	m.arch_ring(Vector3(mid.x, minf(a.y, b.y) - ARCH_UNDER - rise - width * ARCH_RING, mid.z), facing, open, width * ARCH_RING, width * 0.8, mat, share, from, to)
+
+
+## A broken bridge between two piers of a far plane: its deck from each pier toward the other, the middle fallen.
+func _bridge(a: Vector3, b: Vector3, width: float, yaw: float, mat: Material) -> void:
+	var deck_y := minf(a.y, b.y) - BRIDGE_UNDER
+	var along := Vector3(b.x - a.x, 0, b.z - a.z)
+	var length := along.length() - width
+	along = along.normalized()
+	var piece := length * (1.0 - BRIDGE_MISSING) * 0.5
+	for s: float in [-1.0, 1.0]:
+		var from := (a if s < 0.0 else b)
+		var at := Vector3(from.x, deck_y, from.z) - along * s * (width * 0.5 + piece * 0.5)
+		var deck := m.box(at, Vector3(piece, 0.8, width * 0.7), yaw, mat, false)
+		# the broken end sags a little
+		deck.basis = Basis(Vector3.UP, yaw) * Basis(Vector3.BACK, s * 0.06)
 
 
 ## An aqueduct between two piers of the near plane: a deck and small pointed arches carrying it.
@@ -781,6 +850,13 @@ func _lantern(at: Vector3, yaw: float, frame: Material) -> void:
 	var lit := m.ashlar(LANTERN_Y)
 	m.pointed_arch(at + face * 0.05, Vector2(face.x, face.z), LANTERN.x, LANTERN.y, LANTERN_FRAME, 0.2, lit)
 	m.box(at + face * 0.08 + Vector3(0, -0.06, 0), Vector3(LANTERN.x + 0.4, 0.12, 0.25), yaw, lit)
+	# the glazing bars, dark against the warm glass
+	for i in LANTERN_UPRIGHTS:
+		var x := LANTERN.x * ((i + 1.0) / (LANTERN_UPRIGHTS + 1.0) - 0.5)
+		m.box(at + basis * Vector3(x, LANTERN.y * 0.5, 0.04), Vector3(LANTERN_BAR, LANTERN.y, LANTERN_BAR), yaw, frame, false)
+	for i in LANTERN_CROSSES:
+		var y := LANTERN.y * (i + 1.0) / (LANTERN_CROSSES + 1.0)
+		m.box(at + basis * Vector3(0, y, 0.04), Vector3(LANTERN.x, LANTERN_BAR, LANTERN_BAR), yaw, frame, false)
 	m.layers = 1
 	var halo := MeshInstance3D.new()
 	halo.mesh = Fx.quad(LANTERN.y + LANTERN_HALO, Color(0.6, 0.3, 0.1) * 0.35)

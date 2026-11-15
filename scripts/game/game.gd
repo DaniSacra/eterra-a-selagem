@@ -201,8 +201,8 @@ func _build_world() -> void:
 	e.ssr_enabled = true
 	e.ssr_max_steps = 48
 	e.adjustment_enabled = true
-	e.adjustment_contrast = 1.12
-	e.adjustment_saturation = 1.3
+	e.adjustment_contrast = ADJUST_CONTRAST
+	e.adjustment_saturation = ADJUST_SATURATION
 	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
 		# the browser's renderer has no fog in the air nor contact shadows and lights the stone brighter: darker
 		# exposure and ambient so it keeps the desktop's mood
@@ -786,11 +786,11 @@ const COMPAT_EXPOSURE := 1.25
 const COMPAT_AMBIENT := 0.4
 ## The air of the hall (the reference image): cold teal behind and below, a low teal ambient, no violet in the air
 ## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
-const SKY := Color(0.07, 0.28, 0.31)
-const AMBIENT := Color(0.3, 0.45, 0.5)
-const AMBIENT_ENERGY := 0.85
+const SKY := Color(0.06, 0.22, 0.27)
+const AMBIENT := Color(0.3, 0.4, 0.46)
+const AMBIENT_ENERGY := 0.9
 const EXPOSURE := 1.25
-const FOG := Color(0.07, 0.28, 0.31)
+const FOG := Color(0.06, 0.22, 0.27)
 const FOG_BEGIN := 64.0
 const FOG_END := 170.0
 const FOG_HEIGHT := -3.0
@@ -805,6 +805,10 @@ const GLOW_LEVELS: Array[float] = [0.0, 1.0, 1.0, 1.0, 0.3, 0.0, 0.0]
 const SSAO_RADIUS := 1.0
 const SSAO_INTENSITY := 3.0
 const SSAO_LIGHT_AFFECT := 0.2
+## Colour adjustment after the tone map. Contrast over 1 cuts every value under 0.5 - 0.5 / contrast to black (1.12
+## crushed the darkest teal to pure black and so to full saturation): kept low, the shadows keep their colour.
+const ADJUST_CONTRAST := 1.05
+const ADJUST_SATURATION := 1.3
 var _charge_zoom := 0.0
 ## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
 var _cam_last := Vector2.ZERO

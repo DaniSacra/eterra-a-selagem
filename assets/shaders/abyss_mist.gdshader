@@ -6,8 +6,13 @@ render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabl
 
 uniform vec3 color : source_color = vec3(0.07, 0.28, 0.31);
 uniform float alpha = 0.25;
-// Share of the card that is ragged edge.
+// Share of the card that is ragged edge; how fast (UV per second) the mist drifts along.
 uniform float ragged = 0.3;
+uniform float drift = 0.02;
+// A finer mottle mixed into the noise (0 none; the far veil behind everything uses it, so the background is never a
+// flat card) and its scale across the card.
+uniform float grain = 0.0;
+uniform vec2 grain_scale = vec2(40.0, 16.0);
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -40,7 +45,11 @@ void vertex() {
 }
 
 void fragment() {
-	float n = fbm(vec2(UV.x * 7.0 + TIME * 0.02, UV.y * 2.5));
+	float n = fbm(vec2(UV.x * 7.0 + TIME * drift, UV.y * 2.5));
+	n = mix(n, fbm(vec2(UV.x * 13.0 - TIME * drift * 1.7, UV.y * 4.0 + 5.0)), 0.35);
+	if (grain > 0.0) {
+		n = mix(n, fbm(UV * grain_scale + vec2(TIME * drift * 3.0, 0.0)), grain);
+	}
 	vec2 e = min(UV, 1.0 - UV);
 	float edge = smoothstep(0.0, ragged, e.y + (n - 0.5) * ragged) * smoothstep(0.0, ragged * 0.5, e.x + (n - 0.5) * ragged * 0.5);
 	ALBEDO = color * (0.85 + 0.3 * n);

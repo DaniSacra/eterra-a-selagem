@@ -5,7 +5,7 @@ shader_type spatial;
 // behind paler than the one in front) and with depth, and violet light rising from below at the sides of the hall.
 render_mode unshaded, fog_disabled, cull_back;
 
-uniform vec3 stone_color : source_color = vec3(0.03, 0.07, 0.095);
+uniform vec3 stone_color : source_color = vec3(0.052, 0.095, 0.12);
 // The tops of capitals, arches and cornices take a thin cold edge (the mist's light from above); the upright faces
 // only a faint one on the side turned to the light (from the north-west, high).
 uniform vec3 edge_color : source_color = vec3(0.07, 0.24, 0.3);
@@ -29,6 +29,13 @@ uniform float glow_side = 18.0;
 // Courses of blocks, so the near piers are built stone and not flat paint.
 uniform float course = 1.1;
 uniform float block_len = 1.9;
+// How much the blocks differ in value, how weathered each is (noise), the fine grit on them (amount, per meter), how
+// dark the joints are.
+uniform float block_spread = 1.0;
+uniform float weather = 0.8;
+uniform float grit = 0.5;
+uniform float grit_scale = 4.0;
+uniform float joint_dark = 0.75;
 
 varying vec3 world;
 varying vec3 wnormal;
@@ -57,12 +64,12 @@ void fragment() {
 	float id = hash1(vec2(floor(bx), row));
 	float joint = max(1.0 - smoothstep(0.0, 0.05, min(fract(uv.y / course), 1.0 - fract(uv.y / course)) * course),
 		1.0 - smoothstep(0.0, 0.05, min(fract(bx), 1.0 - fract(bx)) * block_len));
-	vec3 c = stone_color * (0.75 + 0.5 * id) * (0.8 + 0.4 * noise(uv * 0.7));
+	vec3 c = stone_color * (1.0 - block_spread * 0.5 + block_spread * id) * (1.0 - weather * 0.5 + weather * noise(uv * 1.3)) * (1.0 - grit * 0.5 + grit * noise(uv * grit_scale + 17.0));
 	// the cold edge of the mist's light on the faces turned to it, stronger up high
 	float lit = clamp(dot(wnormal, normalize(light_dir)), 0.0, 1.0) * (1.0 - smoothstep(0.3, 0.6, wnormal.y));
 	float top = smoothstep(0.6, 0.9, wnormal.y);
 	c = mix(c, edge_color * (0.7 + 0.3 * id), max(top * 0.85, lit * 0.45) * smoothstep(-10.0, 8.0, world.y));
-	c *= 1.0 - joint * 0.45;
+	c *= 1.0 - joint * joint_dark;
 	float dist = length(world - CAMERA_POSITION_WORLD);
 	float fade = smoothstep(fade_near, fade_far, dist) * fade_max;
 	fade = max(fade, smoothstep(sink_top, sink_bottom, world.y));

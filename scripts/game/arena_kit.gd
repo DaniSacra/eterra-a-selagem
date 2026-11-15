@@ -24,7 +24,7 @@ const PORTAL_SHEET := Color(0.22, 1.0, 0.34)
 const ABYSS := Color(0.34, 0.17, 0.52)
 ## The mist of the abyss (teal, lighter than the stone in it) and the violet glowing up from under it.
 const MIST := Color(0.03, 0.2, 0.25)
-const ABYSS_GLOW := Color(0.45, 0.3, 0.95)
+const ABYSS_GLOW := Color(0.4, 0.3, 0.75)
 const ABYSS_GLOW_ENERGY := 1.6
 ## Forward+ only: violet glowing fog filling the sides of the abyss (density, emission).
 const ABYSS_FOG_DENSITY := 0.04
@@ -50,11 +50,13 @@ const BRONZE := Color(0.2, 0.13, 0.07)
 ## tongues; both stay under 2 so the glow only softens them and the tongues keep their shape.
 const FLAME := Color(1.9, 1.15, 0.42)
 const FLAME_HEART := Color(1.8, 1.6, 1.0)
-## A tongue's size (width, height) as shares of the fire's tongue size; the inner tongues' share of that.
+## A tongue's size (width, height) as shares of the fire's tongue size; the inner tongues' share of that, and the
+## share of the fire's radius they rise from (a fuller white-gold heart, the outer tongues and the light unchanged).
 const TONGUE := Vector2(0.75, 1.7)
-const HEART := 0.6
+const HEART := 0.75
+const HEART_SPREAD := 0.5
 ## The coals in the bowl and the rim of bronze lit from inside by them (so it reads against the flame).
-const COALS := Color(1.4, 0.45, 0.1)
+const COALS := Color(1.6, 0.7, 0.15)
 const RIM_GLOW := Color(0.85, 0.3, 0.08)
 const RIM_GLOW_ENERGY := 0.3
 const BRAZIER_LIGHT := 4.5
@@ -76,7 +78,7 @@ const PORTAL_RANGE := 5.5
 const PORTAL_LIGHT_AHEAD := 1.2
 const PORTAL_SIDE := Vector2(1.5, 2.5)
 ## The medallion reads by its value, not by light (the picture's does not glow).
-const MEDALLION_GLOW := 0.1
+const MEDALLION_GLOW := 0.0
 ## A statue's plinth height, as a share of the statue's.
 const STATUE_PLINTH := 0.1
 ## Chains: meters between two links, and the links' size.
@@ -203,7 +205,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 ## tongues (pointed, ArenaKit.tongue) in orange round a smaller white-gold heart, and embers drifting up.
 func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) -> void:
 	_flames(at, radius, amount, tongue, life, FLAME, Color(1.0, 0.75, 0.45, 1.0))
-	_flames(at, radius * 0.45, maxi(3, roundi(amount / 3.0)), tongue * HEART, life * 0.8, FLAME_HEART, Color(1.0, 0.95, 0.8, 1.0))
+	_flames(at, radius * HEART_SPREAD, maxi(3, roundi(amount / 3.0)), tongue * HEART, life * 0.8, FLAME_HEART, Color(1.0, 0.95, 0.8, 1.0))
 	# embers drifting up out of it
 	var e := CPUParticles3D.new()
 	e.position = at
@@ -412,8 +414,8 @@ func abyss_glow(foot: Vector3, size: Vector2, yaw: float, energy := ABYSS_GLOW_E
 
 
 ## A bank of pale mist in the abyss (abyss_mist.gdshader): a wide low card turning to the camera, its middle at
-## `center`, ragged at its edges.
-func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float) -> void:
+## `center`, ragged at its edges; grain: a finer mottle mixed in.
+func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain := 0.0) -> void:
 	var card := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = size
@@ -422,6 +424,7 @@ func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float) -> vo
 	m.shader = preload("res://assets/shaders/abyss_mist.gdshader")
 	m.set_shader_parameter(&"color", color)
 	m.set_shader_parameter(&"alpha", alpha)
+	m.set_shader_parameter(&"grain", grain)
 	card.material_override = m
 	card.position = center
 	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

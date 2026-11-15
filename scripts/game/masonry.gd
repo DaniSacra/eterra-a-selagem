@@ -46,8 +46,10 @@ const POT_BELLY := 0.38
 ## Standing stones: the share of their columns cracked upright, the frame round their niche.
 const OBELISK_CRACKS := 0.3
 const OBELISK_FRAME := 0.08
-const WAX := Color(0.9, 0.76, 0.56)
-const CANDLE_FLAME := 0.28
+const WAX := Color(0.95, 0.7, 0.5)
+## The wax lit a little from inside by its flame, so its shaded side stays cream under the cold teal air (not olive).
+const WAX_GLOW := Color(0.12, 0.05, 0.015)
+const CANDLE_FLAME := 0.3
 const CANDLE_FIRE := Color(2.3, 1.4, 0.55)
 const CLAY := Color(0.55, 0.2, 0.1)
 ## Bevelled stone (no bare box anywhere): the chamfer on every edge (CHAMFER on blocks up to CHAMFER_BIG_AT meters,
@@ -77,6 +79,8 @@ const ASHLAR_B := Color(0.34, 0.37, 0.41)
 const VOUSSOIR := 0.55
 const VOUSSOIR_JOINT := 0.04
 const VOUSSOIR_SINK := 0.05
+## Segments along a whole one-mesh arch ring (arch_ring).
+const ARCH_SEGMENTS := 16
 ## A pinnacle's crockets (blocks along each edge of its spire): how many, their size; its finial's size.
 const CROCKETS := 4
 const CROCKET := 0.18
@@ -365,6 +369,66 @@ func pointed_arch(foot: Vector3, facing: Vector2, width: float, height: float, t
 		mi.basis = basis * Basis(Vector3.FORWARD, -tilt)
 
 
+## A curved arch ring in one mesh (cheap: the far arcades of the depths): from its left springing (t 0) over the apex
+## (t 0.5) to its right springing (t 1), only the part from `from` to `to` (a broken arch keeps a stump). foot: the
+## middle of the opening on the springing line; facing: the way it looks; span: the opening's width; ring: how wide
+## the ring is; deep: its depth; radius: of its arcs as a share of the span (0.5 a round arch, more a pointed one).
+func arch_ring(foot: Vector3, facing: Vector2, span: float, ring: float, deep: float, mat: Material, radius := 0.5,
+		from := 0.0, to := 1.0) -> void:
+	var r := span * maxf(radius, 0.5)
+	var cx := r - span * 0.5
+	var top := acos(clampf(cx / r, -1.0, 1.0))
+	var n := maxi(2, ceili(ARCH_SEGMENTS * (to - from)))
+	var inner: Array[Vector3] = []
+	var outer: Array[Vector3] = []
+	for i in n + 1:
+		var t := lerpf(from, to, float(i) / n)
+		# the left arc (centred right of the middle) up to the apex, then the right one down
+		var a := top * (t * 2.0) if t <= 0.5 else top * ((1.0 - t) * 2.0)
+		var side := -1.0 if t <= 0.5 else 1.0
+		var dir := Vector3(side * cos(a), sin(a), 0.0)
+		var centre := Vector3(-side * cx, 0.0, 0.0)
+		inner.append(centre + dir * r)
+		outer.append(centre + dir * (r + ring))
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var f := Vector3(0, 0, deep * 0.5)
+	for i in n:
+		var mid := (inner[i] + inner[i + 1] + outer[i] + outer[i + 1]) * 0.25
+		_face(st, inner[i] + f, inner[i + 1] + f, outer[i + 1] + f, outer[i] + f, Vector3.BACK)
+		_face(st, inner[i] - f, inner[i + 1] - f, outer[i + 1] - f, outer[i] - f, Vector3.FORWARD)
+		_face(st, outer[i] - f, outer[i + 1] - f, outer[i + 1] + f, outer[i] + f, (outer[i] + outer[i + 1]) * 0.5 - mid)
+		_face(st, inner[i] - f, inner[i + 1] - f, inner[i + 1] + f, inner[i] + f, mid - (inner[i] + inner[i + 1]) * 0.5)
+	for k: int in [0, n]:
+		var along := (inner[k] - inner[1 if k == 0 else n - 1]).normalized()
+		_face(st, inner[k] - f, outer[k] - f, outer[k] + f, inner[k] + f, along)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.transform = Transform3D(Basis(Vector3.UP, atan2(facing.x, facing.y)), foot)
+	mi.material_override = mat
+	_add(mi)
+
+
+## A flat quad with a given outward direction (its winding turned to face it).
+func _face(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, out: Vector3) -> void:
+	for tri: Array in [[a, b, c], [a, c, d]]:
+		var p: Vector3 = tri[0]
+		var q: Vector3 = tri[1]
+		var s: Vector3 = tri[2]
+		var n := (s - p).cross(q - p)
+		if n.length_squared() < 1e-10:
+			continue
+		if n.dot(out) < 0.0:
+			var t := q
+			q = s
+			s = t
+			n = -n
+		st.set_normal(n.normalized())
+		st.add_vertex(p)
+		st.add_vertex(q)
+		st.add_vertex(s)
+
+
 ## A pointed arch of separate voussoirs (the portal's orders): two arcs of radius `radius` times the span, their
 ## centres on the springing line, each stone a little sunk back at random, a keystone where they meet. foot: the middle
 ## of the opening on the ground; facing: the way it looks; span: the opening's width; spring: the springing line's
@@ -630,6 +694,8 @@ func candle(at: Vector3, height: float, radius: float) -> void:
 		_wax.roughness = 0.6
 		_wax.rim_enabled = true
 		_wax.rim = 0.3
+		_wax.emission_enabled = true
+		_wax.emission = WAX_GLOW
 		_wax_mesh = CylinderMesh.new()
 		_wax_mesh.top_radius = 1.0
 		_wax_mesh.bottom_radius = 1.0
