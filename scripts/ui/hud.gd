@@ -7,13 +7,19 @@ extends Control
 ## Sizes are in pixels at 720 lines; the window stretches the whole canvas (project.godot), so the layout holds at
 ## any resolution.
 
-const MAGICK_COLOR := Color(0.3, 0.52, 1.0)
-const LIFE_COLOR := Color(0.78, 0.14, 0.12)
+## Fills of the bars, top and bottom of the gradient: life red, Magia a light petrol blue (apart from Emeth's green
+## and, by its value, from the scarf's petrol).
+const LIFE_COLOR := Color("c0302a")
+const LIFE_BOTTOM := Color("6a1410")
+const MAGICK_COLOR := Color("2a8fb8")
+const MAGICK_BOTTOM := Color("14506a")
 const BOSS_COLOR := Color(0.62, 0.22, 0.85)
 const MARGIN := 22.0
 const CREST := 76.0
 const LIFE := Vector2(244, 19)
 const MAGICK := Vector2(196, 15)
+const LIFE_FONT := 15
+const MAGICK_FONT := 13
 const BOSS := Vector2(480, 12)
 const PASSIVE_ICON := 30
 const SLOT_GAP := 8
@@ -106,10 +112,10 @@ func _build_top() -> void:
 ## Bottom left: the medallion, with life and Magia coming out from behind it.
 func _build_life() -> void:
 	var mid := MARGIN + CREST * 0.5
-	_life = HudBar.new().setup(LIFE_COLOR, LIFE, 13)
+	_life = HudBar.new().setup(LIFE_COLOR, LIFE, LIFE_FONT, false, LIFE_BOTTOM)
 	add_child(_life)
 	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 10, -mid - 1), LIFE)
-	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK, 12)
+	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK, MAGICK_FONT, false, MAGICK_BOTTOM)
 	add_child(_magick)
 	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 10, -mid + 3 + MAGICK.y), MAGICK)
 	_crest = HeroCrest.new().setup(CREST)

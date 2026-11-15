@@ -11,6 +11,10 @@ const DIM := Color(0.66, 0.62, 0.7)
 const RED := Color(0.86, 0.2, 0.18)
 const PANEL := Color(0.055, 0.04, 0.075, 0.94)
 const EDGE := Color(0.72, 0.56, 0.3)
+## The HUD's palette (cycle 5): frames in ink with a line of old gold, empty glyphs in parchment.
+const INK := Color("0c0a0e")
+const OLD_GOLD := Color("8e7444")
+const PARCHMENT := Color("d8c8a8")
 
 static var _theme: Theme
 

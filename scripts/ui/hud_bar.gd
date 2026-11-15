@@ -1,14 +1,18 @@
 class_name HudBar
 extends Control
-## A framed bar with a pointed end (life, Magia, the boss): the fill, a pale trail that drains behind it after a hit,
-## an optional thin second bar on top (the boss's armour) and the numbers in the middle.
+## A framed bar with a pointed end (life, Magia, the boss): a dark frame with a thin line of old gold, the fill in a
+## gradient (light at the top, dark at the bottom) with a sheen on top, a pale trail that drains behind it after a
+## hit, an optional thin second bar on top (the boss's armour) and the numbers in the middle.
 
-const FRAME := Color(0.03, 0.02, 0.035, 0.92)
-const BACK := Color(0.09, 0.06, 0.08, 0.92)
+const BACK := Color(0.07, 0.05, 0.065, 0.94)
 const TRAIL := Color(1.0, 0.86, 0.7, 0.55)
 const TRAIL_SPEED := 0.5
+## Frame: 2 px of ink outside a 1 px line of old gold.
+const FRAME_WIDTH := 2.0
+const SHEEN := Color(1.0, 0.96, 0.9, 0.16)
 
-var fill_color := Color.WHITE
+var fill_top := Color.WHITE
+var fill_bottom := Color.WHITE
 var over_color := Color.WHITE
 ## Pointed at both ends (the boss), or only at the right.
 var both_ends := false
@@ -19,8 +23,10 @@ var _over := 0.0
 var _text := ""
 
 
-func setup(color: Color, size_px: Vector2, font_px: int = 12, both: bool = false) -> HudBar:
-	fill_color = color
+## color is the top of the fill; bottom the lower edge of the gradient (by default the same colour, darker).
+func setup(color: Color, size_px: Vector2, font_px: int = 12, both: bool = false, bottom: Color = Color(0, 0, 0, 0)) -> HudBar:
+	fill_top = color
+	fill_bottom = bottom if bottom.a > 0.0 else color.darkened(0.45)
 	custom_minimum_size = size_px
 	size = size_px
 	font_size = font_px
@@ -50,23 +56,22 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var inner := Rect2(Vector2.ZERO, size)
-	draw_colored_polygon(shape(inner.grow(2.0)), FRAME)
-	var edge := shape(inner.grow(1.0))
-	edge.append(edge[0])
-	draw_polyline(edge, Color(UiKit.EDGE, 0.75), 1.0, true)
+	draw_colored_polygon(shape(inner.grow(1.0 + FRAME_WIDTH)), UiKit.INK)
+	draw_colored_polygon(shape(inner.grow(1.0)), UiKit.OLD_GOLD)
 	var body := shape(inner)
 	draw_colored_polygon(body, BACK)
-	_fill(body, _trail, TRAIL, 0.0, size.y)
-	_fill(body, _ratio, fill_color, 0.0, size.y)
-	_fill(body, _ratio, Color(1, 1, 1, 0.14), 0.0, size.y * 0.32)
-	_fill(body, _ratio, fill_color.darkened(0.35), size.y * 0.75, size.y)
+	_fill(body, _trail, TRAIL, TRAIL, 0.0, size.y)
+	_fill(body, _ratio, fill_top, fill_bottom, 0.0, size.y)
+	# the sheen: a soft band on the upper third and a brighter hairline at the very top
+	_fill(body, _ratio, SHEEN, Color(SHEEN, 0.0), 0.0, size.y * 0.45)
+	_fill(body, _ratio, Color(SHEEN, 0.3), Color(SHEEN, 0.3), 0.0, 1.0)
 	if _over > 0.0:
-		_fill(body, _over, over_color, 0.0, size.y * 0.4)
+		_fill(body, _over, over_color, over_color.darkened(0.25), 0.0, size.y * 0.4)
 	if _text != "":
 		var font := UiKit.BOLD_FONT
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 		var at := Vector2((size.x - w) * 0.5, (size.y + font.get_ascent(font_size) - font.get_descent(font_size)) * 0.5)
-		draw_string_outline(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, Color(0.02, 0.01, 0.03))
+		draw_string_outline(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, UiKit.INK)
 		draw_string(font, at, _text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.PALE)
 
 
@@ -82,10 +87,13 @@ func shape(r: Rect2) -> PackedVector2Array:
 	return pts
 
 
-## Fills the part of the body left of ratio, between the heights y0 and y1.
-func _fill(body: PackedVector2Array, ratio: float, color: Color, y0: float, y1: float) -> void:
+## Fills the part of the body left of ratio, between the heights y0 and y1, from top (at y0) to bottom (at y1).
+func _fill(body: PackedVector2Array, ratio: float, top: Color, bottom: Color, y0: float, y1: float) -> void:
 	if ratio <= 0.0:
 		return
 	var clip := PackedVector2Array([Vector2(-1.0, y0), Vector2(size.x * ratio, y0), Vector2(size.x * ratio, y1), Vector2(-1.0, y1)])
 	for part in Geometry2D.intersect_polygons(body, clip):
-		draw_colored_polygon(part, color)
+		var colors := PackedColorArray()
+		for p in part:
+			colors.append(top.lerp(bottom, clampf((p.y - y0) / maxf(y1 - y0, 0.001), 0.0, 1.0)))
+		draw_polygon(part, colors)

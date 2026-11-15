@@ -116,8 +116,13 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 4:
 				var d := Vector2.from_angle(TAU * k / 4.0 + PI * 0.25)
 				ci.draw_line(c + d * r * 0.38, c + d * r * 0.62, w, th * 0.8, true)
-		104:  # a wing of speed
-			glyph(ci, 10, c, r, w, accent)
+		104:  # the dash: two chevrons forward with speed lines behind
+			for k in 2:
+				var x := -r * 0.1 + k * r * 0.45
+				ci.draw_polyline(PackedVector2Array([c + Vector2(x - r * 0.3, -r * 0.55), c + Vector2(x + r * 0.15, 0.0), c + Vector2(x - r * 0.3, r * 0.55)]), w, th, true)
+			for k in 3:
+				var y := (k - 1) * r * 0.4
+				ci.draw_line(c + Vector2(-r * (0.95 - absf(k - 1) * 0.2), y), c + Vector2(-r * 0.45, y), w, th * 0.8, true)
 		_:
 			ci.draw_circle(c, r * 0.5, w)
 

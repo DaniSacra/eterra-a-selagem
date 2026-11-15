@@ -6,6 +6,10 @@ extends Control
 const DIAMOND := 54.0
 const KEY_H := 17.0
 const KEY_FONT := 13
+## The frame: a line of old gold this wide over ink.
+const RIM := 1.5
+## How long the frame shines after the recharge ends.
+const READY_FLASH := 0.35
 
 var action: StringName
 var slot: Boon.Slot
@@ -17,6 +21,7 @@ var charges := 0
 var charges_max := 0
 var _key := ""
 var _mouse := 0
+var _flash := 0.0
 
 
 func setup(action_name: StringName, action_slot: Boon.Slot) -> ActionSlot:
@@ -24,6 +29,7 @@ func setup(action_name: StringName, action_slot: Boon.Slot) -> ActionSlot:
 	slot = action_slot
 	custom_minimum_size = Vector2(DIAMOND + 12.0, DIAMOND + KEY_H * 0.5)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_process(false)
 	return self
 
 
@@ -34,6 +40,9 @@ func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0) -> void:
 	wait_ratio = snappedf(clampf(wait_ratio, 0.0, 1.0), 0.01)
 	if b == boon and wait_ratio == wait and n == charges and n_max == charges_max and key == _key and mouse == _mouse:
 		return
+	if wait > 0.0 and wait_ratio == 0.0:
+		_flash = 1.0
+		set_process(true)
 	_mouse = mouse
 	boon = b
 	wait = wait_ratio
@@ -43,24 +52,36 @@ func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0) -> void:
 	queue_redraw()
 
 
+func _process(delta: float) -> void:
+	_flash = maxf(0.0, _flash - delta / READY_FLASH)
+	if _flash == 0.0:
+		set_process(false)
+	queue_redraw()
+
+
 func _draw() -> void:
 	var c := Vector2(size.x * 0.5, DIAMOND * 0.5)
 	var r := DIAMOND * 0.5
 	var gem := boon.color() if boon else Color(0.3, 0.32, 0.36)
-	draw_colored_polygon(_diamond(c, r + 1.5), Color(0.02, 0.01, 0.03, 0.9))
-	draw_colored_polygon(_diamond(c, r), UiKit.EDGE if boon else UiKit.EDGE.darkened(0.25))
-	draw_colored_polygon(_diamond(c, r - 2.5), gem.darkened(0.78) if boon else Color(0.05, 0.04, 0.06, 0.92))
+	var core := r - RIM - 0.5
+	var rim := UiKit.OLD_GOLD.lerp(UiKit.PALE, _flash)
+	draw_colored_polygon(_diamond(c, r + 2.0), Color(UiKit.INK, 0.92))
+	draw_colored_polygon(_diamond(c, r), rim)
+	draw_colored_polygon(_diamond(c, r - RIM), UiKit.INK)
+	draw_colored_polygon(_diamond(c, core), gem.darkened(0.78) if boon else Color(0.06, 0.045, 0.06, 0.94))
 	if boon:
 		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.08), r * 0.72), gem.darkened(0.5))
 		draw_colored_polygon(_diamond(c + Vector2(0, -r * 0.16), r * 0.4), Color(gem.darkened(0.1), 0.55))
 	var lift := r * 0.14 if charges_max > 0 else 0.0
-	var ink := Color(1.0, 0.97, 0.88) if boon else UiKit.PALE.darkened(0.25)
+	var ink := Color(1.0, 0.97, 0.88) if boon else Color(UiKit.PARCHMENT, 0.85)
 	BoonIcon.glyph(self, boon.icon if boon else BoonIcon.ACTION_GLYPH + slot, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
 	if wait > 0.0:
 		var clip := PackedVector2Array([Vector2(0, 0), Vector2(size.x, 0), Vector2(size.x, DIAMOND * wait), Vector2(0, DIAMOND * wait)])
-		for part in Geometry2D.intersect_polygons(_diamond(c, r - 2.5), clip):
+		for part in Geometry2D.intersect_polygons(_diamond(c, core), clip):
 			draw_colored_polygon(part, Color(0.0, 0.0, 0.02, 0.62))
-	draw_polyline(_closed(_diamond(c, r - 5.0)), Color(UiKit.GOLD, 0.35 if boon else 0.15), 1.0, true)
+	draw_polyline(_closed(_diamond(c, r - 5.0)), Color(UiKit.OLD_GOLD, 0.45 if boon else 0.25), 1.0, true)
+	if _flash > 0.0:
+		draw_polyline(_closed(_diamond(c, r + 2.0 + 4.0 * (1.0 - _flash))), Color(UiKit.PALE, _flash * 0.8), 1.5, true)
 	for i in charges_max:
 		var p := c + Vector2((i - (charges_max - 1) * 0.5) * 11.0, r * 0.46)
 		draw_colored_polygon(_diamond(p, 4.8), Color(0.02, 0.01, 0.03))
@@ -76,7 +97,7 @@ func _draw_key(at: Vector2) -> void:
 	var font := UiKit.BOLD_FONT
 	var w := maxf(KEY_H, font.get_string_size(_key, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FONT).x + 8.0)
 	var plate := Rect2(at - Vector2(w * 0.5, KEY_H * 0.5), Vector2(w, KEY_H))
-	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), UiKit.EDGE, 1, 0, 3), plate)
+	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), UiKit.OLD_GOLD, 1, 0, 3), plate)
 	var base := Vector2(plate.position.x + 4.0 + (w - 8.0 - font.get_string_size(_key, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FONT).x) * 0.5, at.y + (font.get_ascent(KEY_FONT) - font.get_descent(KEY_FONT)) * 0.5)
 	draw_string(font, base, _key, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FONT, UiKit.PALE)
 
@@ -84,7 +105,7 @@ func _draw_key(at: Vector2) -> void:
 ## A mouse seen from above with the bound button lit.
 func _draw_mouse(at: Vector2) -> void:
 	var body := Rect2(at - Vector2(8.5, 11.0), Vector2(17, 22))
-	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), UiKit.EDGE, 1, 0, 8), body)
+	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), UiKit.OLD_GOLD, 1, 0, 8), body)
 	var top := body.position.y + 2.0
 	var half := Vector2(6.0, 8.0)
 	var lit := Color(1.0, 0.9, 0.6)
@@ -95,8 +116,8 @@ func _draw_mouse(at: Vector2) -> void:
 			draw_rect(Rect2(Vector2(at.x + 0.5, top + 0.5), half), lit)
 		_:
 			draw_rect(Rect2(Vector2(at.x - 1.5, top + 1.0), Vector2(3, 6)), lit)
-	draw_line(Vector2(at.x, body.position.y + 1.0), Vector2(at.x, top + half.y), Color(UiKit.EDGE, 0.8), 1.0)
-	draw_line(Vector2(body.position.x + 1.0, top + half.y), Vector2(body.end.x - 1.0, top + half.y), Color(UiKit.EDGE, 0.8), 1.0)
+	draw_line(Vector2(at.x, body.position.y + 1.0), Vector2(at.x, top + half.y), Color(UiKit.OLD_GOLD, 0.8), 1.0)
+	draw_line(Vector2(body.position.x + 1.0, top + half.y), Vector2(body.end.x - 1.0, top + half.y), Color(UiKit.OLD_GOLD, 0.8), 1.0)
 
 
 static func _diamond(c: Vector2, r: float) -> PackedVector2Array:
