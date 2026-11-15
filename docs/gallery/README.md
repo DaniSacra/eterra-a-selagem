@@ -1,8 +1,7 @@
 # Galeria: inimigos, herói e jogo
 
 Capturas reais da Godot na placa de vídeo (Vulkan Forward+, RTX 5060), do commit 963e16b em diante, para quem não
-roda o jogo (outro assistente, revisão de arte). Imagens em JPG. Nada aqui é a imagem de referência do Daniel (essas
-ficam só no PC dele).
+roda o jogo (outro assistente, revisão de arte). Imagens em JPG.
 
 ## `enemies/`: os nove inimigos da Fase 1 e todas as animações
 - `_todos_game.jpg` (câmera do jogo), `_todos_front.jpg`, `_todos_back.jpg`, `_todos_side.jpg`: o herói à esquerda para
@@ -25,6 +24,8 @@ ficam só no PC dele).
   `Knockback`, `Death`.
 
 ## `jogo/`: o jogo rodando
+- `referencia_arena`: a imagem de referência do Daniel ("Arena das Catacumbas", feita com IA), o objetivo da arena;
+  comparar com `final_vitrine` (mesmo enquadramento, `--showcase`).
 - `1_arena` a `7_morvath`: as sete cenas do QA final (arena vazia, combate, sacerdote, elite, medalhão, horda,
   Morvath), do commit 78b0642, antes das correções de arte do ciclo 6.
 - `final_vitrine`, `final_luta`, `final_boss`: as mesmas cenas depois das correções (vinheta, estátuas, estandartes).
