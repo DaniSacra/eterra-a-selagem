@@ -769,12 +769,15 @@ func _close_screen() -> void:
 		_screen = null
 
 
-## The elite or boss whose life bar is on screen, if any.
+## The guardian or boss whose life bar is on screen, if any. In the rooms only guardians and Morvath get the big bar
+## (as in Hades II; common elites keep the bar over their heads); the old horde mode still gives it to its elites.
 func boss_enemy() -> Enemy:
 	if boss and boss.e and boss.e.alive:
 		return boss.e
 	for e in horde.list:
-		if e.def.elite:
+		if not e.def.elite:
+			continue
+		if rooms == null or rooms.stage.minibosses.has(e.def.id):
 			return e
 	return null
 

@@ -1,192 +1,165 @@
-# Relatório de QA e desempenho: ciclo 5 (polimento visual)
+# Relatório de QA e desempenho: versão final antes do teste do Daniel (ciclo 6)
 
-- **Data**: 2026-11-15, 10:55 a 12:25
-- **Branch**: `arpg-3d`
-- **Testado**: o working tree do ciclo 5 **sem commit**, sobre o `4e67876` ("depois"), comparado com o `4e67876`
-  ("antes"). O "antes" roda numa cópia exata do HEAD fora do projeto
-  (`.../scratchpad/c5/base/`; conferida com `diff -rq` contra um `git archive HEAD`: só a pasta `.godot` difere).
-- **Ambiente**: WSL2 (Linux 6.18), 12 núcleos, 7 GB. Notebook do Daniel na tomada, em modo desempenho, nas duas
-  versões. As capturas de Linux usam Vulkan por software (llvmpipe) em tela virtual (xvfb). O desempenho foi medido
-  na **placa de vídeo real** (NVIDIA GeForce RTX 5060 Laptop GPU, Vulkan Forward+, Godot 4.7.2 de Windows) por
-  `tools/gpu.sh`. **Sem som** (o áudio do WSL falha; não verificado).
+- **Data**: 2026-11-15, 13:10 a 14:10
+- **Branch**: `arpg-3d`, **commit testado `78b0642`** (working tree limpo; só aparece o `tests/test_cam_frame.gd.uid`
+  que a importação gera, ver B1).
+- **Comparação ("antes")**: o commit do ciclo 5 já com QA, `1709da2`, extraído por `git archive` numa pasta fora do
+  projeto e espelhado em `C:/Users/danie/tools/eterra-gpu-head` (`MIRROR=`). Entre os dois entraram: elites desde a
+  sala 2, a interface do Elo (`EloLink`, `EloBanner`, `BoonsScreen`), os inimigos do Meshy e a Emeth no jogo
+  (`MeshSlim`, multidão assada), o raio-x do herói e o `CamFrame`, a arena do ciclo 6 (abismo, estandartes, portal ogival).
+- **Ambiente**: WSL2 (Linux 6.18). Testes e partidas do robô sem tela (Godot 4.7.2 de Linux). Capturas e medidas de
+  quadro na **placa de vídeo real** (NVIDIA GeForce RTX 5060 Laptop GPU, Vulkan Forward+, Godot 4.7.2 de Windows) por
+  `tools/gpu.sh`. **Sem som** (não verificado).
 
-Evidências (tudo abaixo é relativo a esta pasta, salvo indicação):
-`/tmp/claude-1000/-home-dani-games-eterra-a-selagem/9a4c8b90-ded5-40ad-bc10-27c4c52b9e83/scratchpad/`
+Evidências em `/tmp/claude-1000/-home-dani-games-eterra-a-selagem/9a4c8b90-ded5-40ad-bc10-27c4c52b9e83/scratchpad/final/qa/`
+(abaixo, `qa/`), capturas em `qa/shots/`.
 
 ## Veredito
 
-**Pronto para o Daniel testar.** Nada quebra: 0 `SCRIPT ERROR`, 0 `Parse Error`, 137 testes com 136 passando (o
-arriscado é o conhecido), as partidas do robô dão resultados **idênticos** antes e depois (nenhum número de combate
-mudou), e na placa de vídeo o custo novo é pequeno: no máximo +0,34 ms por quadro (`--stress=90`), o jogo fica entre
-3,3 e 8,2 ms por quadro (de 120 a 300 quadros por segundo) em todas as cenas medidas. O que melhorou se vê nas
-capturas: halo amarelo dos elites e do Ancião sumiu, herói maior e mais detalhado, medalhão em pedra, HUD com moldura.
-
-Não há falha crítica nem alta. As ressalvas médias são de leitura (herói some no bolo de inimigos, como antes; elite
-pouco diferente do comum na galeria; câmera mais perto deixa o herói perto da borda da tela no patamar oeste) e um
-achado de conteúdo: na partida curta **nenhum inimigo `_elite` aparece** nas salas. O critério visual final é do
-`art-director` e do Daniel.
+**Pronto para o Daniel testar.** 0 `SCRIPT ERROR` e 0 `Parse Error` em todas as execuções; 161 testes, 160 passando,
+0 falhando, 1 arriscado (o conhecido); o robô chega em Morvath (sala 5) nas cinco sementes; a versão de Windows exporta
+e roda na placa de vídeo sem erro; o custo na placa fica dentro do guarda (no máximo +0,38 ms por quadro com 90
+inimigos, e o jogo fica entre 128 e mais de 1000 quadros por segundo em todas as cenas medidas). Dois achados médios
+de interface sobre os elites (M1) e um aviso para o teste (M2: o elite só aparece se o Daniel escolher uma porta de
+luta na sala 2). O critério visual é do `art-director` e do Daniel.
 
 ## 1. Checagem, testes e partidas do robô
 
-| Comando | Antes (`4e67876`) | Depois (ciclo 5) |
+| Comando | Resultado | Saída |
 |---|---|---|
-| `godot --headless --path . --import` | | ok, 0 erro de script |
-| `godot --headless --path . -s tools/check.gd` | | `CHECK ok`, 0 SCRIPT ERROR, 0 Parse Error |
-| `tools/test.sh` | 11 arquivos, 134 testes, 133 passando, 1 arriscado, 9638 asserções | **12 arquivos, 137 testes, 136 passando, 0 falhando, 1 arriscado** (`test_only_finishers_glint`, "Did not assert"), 9661 asserções; novo `test_hero_look.gd` (2 de 2) |
+| `godot --headless --path . --import` | ok, 0 erro de script | `qa/import.txt` |
+| `godot --headless --path . -s tools/check.gd` | `CHECK ok`, 0 SCRIPT ERROR, 0 Parse Error | `qa/check.txt` |
+| `tools/test.sh` | **16 arquivos, 161 testes, 160 passando, 0 falhando, 1 arriscado** (`test_only_finishers_glint`, "Did not assert"), 13479 asserções, 3,7 s | `qa/test.txt` |
 
-Partidas do robô (`qa5/smoke/antes.txt` e `qa5/smoke/depois.txt`). **As linhas `RESULT` são idênticas** antes
-e depois, número por número (só o `fps` sem tela varia, e ele não é FPS de jogo):
+No ciclo 5 eram 12 arquivos e 137 testes; entraram `test_cam_frame`, `test_elo`, `test_mesh_slim`, `test_retarget`.
+
+Partidas do robô (`tools/smoke.sh`, sem tela, `--fixed-fps 60`):
 
 | Comando | Sala | Modo | Tempo | Abates | Dons | Vida de Morvath | step_ms |
 |---|---|---|---|---|---|---|---|
-| `tools/smoke.sh 300 --seed=5` | 5 (Morvath) | OVER (perdeu) | 183,5 | 20 | 2 | 2623 (fase 2) | 0,06 |
-| `tools/smoke.sh 120 --start=boss --boons=25 --seed=5` | 5 | PLAY (Morvath com 5) | 118,3 | 21 | 8 | 5 (fase 3) | 0,10 |
-| `tools/smoke.sh 120 --stress=300 --seed=5` | 1 | PLAY | 118,1 | 259 (41 de pé) | 0 | | 0,33 |
+| `300 --seed=5` | 5 (Morvath) | OVER (perdeu) | 183,5 | 20 | 2 | 2623 (fase 2) | 0,07 |
+| `120 --start=boss --boons=25 --seed=5` | 5 | PLAY (Morvath com 5) | 118,3 | 21 | 8 | 5 (fase 3) | 0,11 |
+| `120 --stress=300 --seed=5` | 1 | PLAY | 118,1 | 259 (41 de pé) | 0 | | 0,36 |
+| `300 --seed=1` | 5 | OVER | 200,7 | 32 | 2 | 1382 (fase 3) | 0,12 |
+| `300 --seed=2` | 5 | OVER | 153,1 | 16 | 2 | 3106 (fase 2) | 0,07 |
+| `300 --seed=3` | 5 | OVER | 130,0 | 10 | 2 | 4001 (fase 1) | 0,07 |
+| `300 --seed=7` | 5 | OVER | 213,4 | 51 | 2 | 994 (fase 3) | 0,17 |
 
-Sequência de 49 s na tela (`qa5/seq/s5_00..09.png`, folha `qa5/seq_s5_sheet.png`): sala 1, fonte (sala 2), guardião
-Ancião (sala 3) chegando aos 29 s; 0 erro. Em toda execução seguem o `2 ObjectDB instances leaked` e o
-`1 resources still in use at exit` de antes (baixa, já registrado).
+As três primeiras linhas são **idênticas** às do ciclo 5, número por número (só o `step_ms` do `--stress` passou de
+0,33 para 0,36, dentro do ruído): nenhuma regra de combate mudou na semente 5. Saídas em `qa/smoke_*.txt`. Em toda
+execução seguem o `2 ObjectDB instances leaked` e o `1 resources still in use at exit` (B4).
 
-## 2. Desempenho
+## 2. Desempenho na placa de vídeo
 
-### Placa de vídeo (o que o Daniel sente)
-RTX 5060 Laptop, Vulkan Forward+, janela 1672 x 941, `--fixed-fps 30 --disable-vsync` (os mesmos instantes de jogo em
-toda rodada), `--seed=5`. Sonda `qa5/gpuperf.gd` (cópia em `C:/Users/danie/tools/qa/`): descarta 300 quadros
-(compilação dos shaders), mede os 300 seguintes. "Quadro" = tempo real entre quadros (CPU + GPU, com a simulação);
-"GPU" = `viewport_get_measured_render_time_gpu`. Antes no espelho `C:/Users/danie/tools/eterra-gpu-head`
-(`MIRROR=`), depois no `eterra-gpu`. Três rodadas alternadas; a tabela mostra a mediana das três medianas
-(`qa5/gpu_perf.txt` tem as 24 linhas).
+RTX 5060 Laptop, Vulkan Forward+, janela 1672 x 941, `--fixed-fps 30 --disable-vsync`, `--seed=5`. Sonda
+`C:/Users/danie/tools/qa/gpuperf.gd`: descarta 300 quadros (compilação dos shaders) e mede os 300 seguintes. "Quadro" é
+o tempo real entre quadros (CPU e GPU, com a simulação); "GPU" é `viewport_get_measured_render_time_gpu`. Três rodadas
+alternando antes e depois; a tabela mostra a mediana das três medianas (as 24 linhas em `qa/gpu_perf.txt`; script
+`final/tools/perf.sh`).
 
-| Cena | Quadro antes | Quadro depois | Diferença | GPU antes | GPU depois | Primitivas antes / depois | Chamadas de desenho |
-|---|---|---|---|---|---|---|---|
-| Vitrine `--showcase` | 1,22 ms | 1,29 ms | +0,07 | 1,15 | 1,20 | 47 mil / 65 mil (+38%) | 72 / 62 |
-| Luta `--bot --autopick` | 3,38 ms | 3,48 ms | +0,10 | 3,27 | 3,33 | 420 mil / 678 mil (+61%) | 1022 / 986 |
-| `--bot --autopick --stress=90` | 3,75 ms | 4,09 ms | **+0,34** | 3,30 | 3,42 | 841 mil / 1,16 milhão | 1107 / 1090 |
-| `--bot --autopick --stress=300` | 8,23 ms | 8,21 ms | 0 (ruído) | 3,24 | 3,27 | 2,11 / 2,43 milhões | 1106 / 1026 |
+| Cena (`--seed=5 ...`) | Quadro antes | Quadro depois | Diferença | FPS depois | GPU antes / depois | p90 do quadro depois | Primitivas antes / depois | Chamadas antes / depois |
+|---|---|---|---|---|---|---|---|---|
+| `--showcase` | 0,95 ms | 0,95 ms | 0 | 1053 | 0,91 / 0,92 | 1,07 | 65 mil / 69 mil | 62 / 53 |
+| `--bot --autopick` (luta) | 2,59 ms | 2,60 ms | +0,01 | 385 | 2,53 / 2,55 | 2,97 | 678 mil / 930 mil | 987 / 1000 |
+| `--bot --autopick --stress=90` | 3,34 ms | 3,72 ms | **+0,38** | 269 | 2,56 / 2,61 | 4,45 | 1,16 / 1,34 milhão | 1090 / 1098 |
+| `--bot --autopick --stress=300` | 7,68 ms | 7,79 ms | +0,11 | 128 | 2,80 / **3,26** | 8,78 | 2,43 / 2,27 milhões | 1025 / 1001 |
 
 Leitura:
-- O guarda do ciclo (`cycle5_spec.md` D: no máximo +0,5 ms com `--stress=90` no desktop) **passa**: +0,34 ms.
-  A variação entre rodadas iguais é de 0,1 a 0,9 ms (na rodada 2 o `stress=300` depois foi mais rápido que o antes).
-- As primitivas sobem cerca de 258 mil por quadro na luta: é o herói do Meshy desenhado em várias passadas (sombras
-  das luzes, profundidade, contorno). A GPU quase não sente (+0,06 ms); com 300 inimigos o gargalo é a CPU
-  (simulação e multidão), não a GPU, e lá não muda.
-- Em quadros por segundo: de 290 (luta) a 120 (300 inimigos), muito acima de 60. **Não medido**: celular,
-  navegador de verdade, placa de vídeo fraca.
+- Guarda do ciclo (no máximo +0,5 ms com `--stress=90`): **passa** com +0,38 ms. As três rodadas do depois deram
+  3,72, 3,60 e 3,85; as do antes 3,31, 3,53 e 3,34. A alta é do lado da CPU (o desenho na CPU subiu de 0,92 para
+  1,04 ms; a GPU só +0,05).
+- Com 300 inimigos a GPU sobe 0,46 ms (2,80 para 3,26, nas três rodadas), mas o gargalo continua a CPU (simulação e
+  multidão): o quadro fica em 7,8 ms, 128 por segundo. O commit `faef8d6` dizia "acima de 114 fps": confere.
+- Primitivas na luta +37% (inimigos do Meshy com cerca de 3,9 mil triângulos e o cenário do ciclo 6); a GPU não sente.
+- Os números absolutos estão mais baixos que os do relatório do ciclo 5 (luta 3,48 ms naquele dia, 2,59 hoje no mesmo
+  commit): o estado do notebook muda entre dias. Só a comparação na mesma sessão vale.
+- **Não medido**: celular, navegador de verdade (o OpenGL 3 só foi capturado), placa de vídeo fraca.
 
-### Processador sem placa (só nota)
-O `step_ms` da simulação é igual (tabela da seção 1). O tempo de quadro por software (llvmpipe) não entrou: o Game
-Director pediu a GPU real e a rodada de CPU foi interrompida. A medição do Environment Artist no llvmpipe
-(`perf/exp3.txt`, `exp4.txt`) dá a vitrine igual e o `--stress` de 918 para 1018 ms por quadro (+11%), pelo mesmo
-aumento de primitivas.
+Na captura com 300 inimigos (`6_horda.png`, Windows, 267 de pé aos 8 s) o `step_ms` da simulação é 2,77 ms; no
+`smoke` sem tela, 0,36 ms em média nos 118 s (com 41 de pé no fim).
 
-## 3. Capturas (reais, abertas e olhadas uma a uma)
+## 3. Versão de Windows
 
-Pares antes | depois, 1672 x 941, Vulkan, `--seed=5`, em `c5/depois/`:
+- `~/tools/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/ASelagem.exe`: código 0,
+  sem `ERROR` nem `SCRIPT ERROR` no log (`qa/export_windows.txt`), `ASelagem.exe` com 191,7 MB (pacote embutido).
+- Rodei uma cópia do exe por interoperabilidade do Windows (`ASelagem.exe --resolution 1672x941 -- --nosave --bot
+  --autopick --seed=5 --shot=... --shot-at=9`; `qa/exe_run.txt`): `Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA
+  GeForce RTX 5060 Laptop GPU`, linha `RESULT` com a partida rodando (2 abates aos 8,7 s), **nenhum erro**. A captura
+  (`shots/12_exe_windows.png`) mostra a Emeth verde na mão, inimigos pintados e o HUD inteiro. A cópia foi apagada
+  depois; não copiei para as pastas de teste do Daniel (isso é do Game Director).
 
-| # | Par | Comando (depois de `--`) | O que se vê |
-|---|---|---|---|
-| 1 | `cmp_1_arena.png` | `--showcase --shot-at=4` | medalhão em pedra, abismo com arcos e bruma, lanterna com caixilho |
-| 2 | `cmp_2_combate.png` | `--bot --autopick --shot-at=9` | herói maior (Explorador), aviso vermelho sobre o medalhão inteiro e legível |
-| 3 | `cmp_3_sacerdote.png` | `--start=miniboss --seed=2 --bot --autopick --shot-at=9` | Ancião sem halo amarelo, de capuz; antes em `c5/antes_qa/8_sacerdote.png` |
-| 3b | `cmp_3_lab_game.png` | `tools/enemy_lab.gd` | galeria dos nove inimigos e seis elites |
-| 4 | `cmp_4_elite.png` | `--start=miniboss --seed=5 --bot --autopick --shot-at=9` | Cavaleiro (guardião, `elite = true`) na arena das catacumbas; ver M1 sobre `_elite` |
-| 4b | `cmp_4b_elite_horda.png` | `--horde --start=elite1 ...` | o par antigo, no modo horda |
-| 5 | `cmp_5_medalhao.png` | `--showcase --cam-dist=32 --shot-at=4` | faixa larga de 16 pedras, runas, bronze escuro |
-| 6 | `cmp_6_horda.png` | `--bot --autopick --stress=90 --shot-at=6` | combate com vários |
-| 7 | `cmp_7_morvath.png` | `--start=boss --bot --autopick --shot-at=12` | Morvath, arco de aviso inteiro, barra do chefe |
-| 8 | `cmp_8_cercado.png` | `--bot --autopick --stress=40 --shot-at=7` | herói cercado de perto (o `10_cercado.png` aos 5 s caiu no clarão vermelho do golpe e não serve) |
-| 9 | `cmp_9_titulo.png` | `--title --shot-at=3` | tela de título com o Explorador |
+## 4. Capturas reais (abertas e olhadas uma a uma)
 
-Mais: `c5/depois/2_combate_1280_gpu.png`, `2_combate_1920_gpu.png`, `2_combate_gpu.png` (placa de vídeo) e
-`2_combate_gl3_gpu.png` (OpenGL 3, o renderizador do navegador, na placa): abrem, HUD inteiro e sem sobreposição nos
-três tamanhos, nada faltando no OpenGL 3. Recortes ampliados em `qa5/crops/` (`hero_cmp.png`, `boss_hero_cmp.png`,
-`elder_cmp.png`, `blob_cmp.png`, `d_cerc.png`, `d_lab.png`).
+Placa de vídeo, Vulkan Forward+, 1672 x 941, `--seed=5` salvo indicação, em `qa/shots/`:
 
-### Medidas (scripts do Art Director em `tools/`, `tools/art_metrics.py`)
+| Arquivo | Comando (depois de `--`) | O que se vê |
+|---|---|---|
+| `1_arena.png` | `--showcase --shot-at=4` | arena do ciclo 6: correntes sobre o abismo, estandartes vermelhos, portal verde ogival, arcos violeta a oeste, medalhão |
+| `2_combate.png` | `--bot --autopick --shot-at=9` | Explorador com a Emeth, aviso vermelho inteiro, Escudo e Feiticeiro do Meshy com barras sobre a cabeça |
+| `3_sacerdote.png` | `--start=miniboss --bot --autopick --shot-at=9 --seed=2` | Sacerdote dos Mortos (guardião) com a barra do topo e a armadura amarela, esqueletos chamados |
+| `4_elite.png`, `crop_elite.png` | laboratório `final/tools/elite_room.gd` (sala 2 de luta com `guard_elite` na 1ª onda), aos 6 s | Escudo elite em ouro velho e contorno escuro ao lado do herói; ver M1 |
+| `5_medalhao.png` | `--showcase --cam-dist=32 --shot-at=4` | medalhão de pedra de perto, runas e bronze |
+| `6_horda.png` | `--bot --autopick --stress=300 --shot-at=8` | 267 inimigos; herói na frente do bolo, lido |
+| `7_morvath.png` | `--start=boss --bot --autopick --shot-at=12` | Morvath, arco de aviso inteiro, portal vermelho, barra do chefe; herói coberto por Morvath aparece em raio-x |
+| `8_horda90.png`, `crop_horda90.png` | `--bot --autopick --stress=90 --shot-at=6` | herói **dentro** do bolo, achável pela silhueta petróleo e pelo anel |
+| `9_cercado40.png`, `crop_cercado40.png` | `--bot --autopick --stress=40 --shot-at=7` | herói no patamar oeste, a cerca de 18% da borda esquerda (x 307 de 1672) |
+| `10_combate_1920.png` | `RES=1920x1080`, como o 2 | HUD inteiro e proporcional em 1920 x 1080 |
+| `11_titulo.png` | `--title --shot-at=3` | título com o Explorador; ver B3 |
+| `elo_card.png`, `elo_formed.png`, `elo_formed_late.png`, `elo_panel.png` | `tools/ui_lab.gd` em 1280 x 720 | carta do Elo com a corrente de ouro e os dois dons de origem, "Elo formado" sem pausar, painel "Seus dons" com 8 dons cabendo |
+| `12_exe_windows.png` | o `ASelagem.exe` exportado | ver seção 3 |
+| `13_combate_opengl3_gpu.png` | `--rendering-driver opengl3`, como o 2 | renderizador do navegador na placa: nada falta, mais claro e mais saturado, como esperado |
 
-| Medida | Antes | Depois | Meta |
-|---|---|---|---|
-| Ancião (770,400)-(900,610) em `8_sacerdote`: amarelo saturado / L > 200 | 9,0% / 10,6% | **1,8% / 1,7%** | <= 2% |
-| Cavaleiro (560,440)-(730,620) em `9_elite_arena`: amarelo saturado / L > 200 | 7,2% / 5,1% | **0,9% / 0,7%** | <= 2% / <= 3% |
-| Herói de pé (Morvath, `boss_hero_cmp.png`, grade de 10 px) | cerca de 77 px | **cerca de 93 px** | 85 a 100 |
-| Herói (795,365)-(860,470) em `7_morvath`: média / desvio de L | 71,4 / 29,7 | 76,1 / 31,5 | não lavar: contraste não caiu |
-| Herói na luta (`2_combate`): desvio de L | 38,3 | 37,6 | igual |
-| Vitrine p1 / p50 / p95 / p99 | 1,6 / 44,8 / 107,8 / 166,8 | 4,9 / 45,3 / **104,4** / 166,5 | p50 42 a 50, p95 >= 105 |
-| Globais do ciclo 3 | 5 de 11 | 7 de 11 | |
-| Aceite por regiões do ciclo 4 | 7 de 13 | 7 de 13 | |
+Itens do relatório anterior conferidos nas capturas:
+- **M3 antigo (herói na borda oeste)**: resolvido. No `9_cercado40.png` o herói fica em x 307 (18,4% da largura); no
+  ciclo 5 ficava a cerca de 11%.
+- **M4 antigo (herói some no bolo)**: muito melhor. No `crop_horda90.png` a silhueta petróleo com borda clara e o anel
+  acham o herói de imediato; no `crop_cercado40.png` ele estava no clarão branco do golpe recebido, ainda achável pelo
+  anel e pelo cabelo. A silhueta lê mais ciano que "as cores dele" (decisão do `art-director`).
+- **M1 antigo (nenhum elite aparece)**: resolvido na regra, com ressalva (M2 abaixo).
+- **M2 antigo (elite igual ao comum)**: o ouro velho e o contorno escuro separam o Escudo elite do comum lado a lado
+  (`crop_elite.png`).
+- **B2 antigo (`docs/steam-ia.md`)**: resolvido, cita o Explorador, os nove inimigos e a Emeth do Meshy.
 
-Saída completa: `qa5/art_metrics_1_arena.txt`.
-
-### Regressões e legibilidade, item por item
-- **Herói**: Explorador do Meshy com cabelo ruivo, cachecol e manto petróleo, couro com contraste, lâmina verde
-  esmeralda; maior e mais detalhado (`qa5/crops/hero_cmp.png`, `boss_hero_cmp.png`). Contraste não caiu (tabela).
-- **Inimigos**: legíveis no chão; Ancião com capuz escuro e sem contorno amarelo (`elder_cmp.png`); Cavaleiro sem o
-  vulto amarelo (`cmp_4_elite.png`).
-- **Avisos vermelhos sobre o medalhão**: inteiros, borda contínua, o medalhão não tem vermelho (`2_combate.png`,
-  `9_elite_arena.png`, `7_morvath.png`).
-- **Clarão do golpe**: inimigos piscam branco (`qa5/seq/s5_08.png`, Ancião e soldados brancos no acerto).
-- **Barra de armadura**: amarela por cima da barra do guardião e do chefe (`8_sacerdote`, `9_elite_arena`), igual.
-- **Marcação de elite**: ver M2.
-- **Câmera a 54**: na sequência de 49 s (`seq_s5_sheet.png`) as portas com recompensa ("Fonte de luz", "Mais vida",
-  "Guardião") e a escada leste aparecem inteiras; todo aviso vermelho dos quadros aparece inteiro; o arco de Morvath
-  e a barra do chefe cabem (`7_morvath.png`). Exceção no patamar oeste: M3.
-- **Tela de título**: o Explorador cabe inteiro, texto e botões no lugar (`12_titulo.png`); a câmera do título não
-  usa a distância de jogo.
-
-## 4. Falhas e regressões por gravidade
+## 5. Falhas e regressões por gravidade
 
 Nenhuma crítica nem alta.
 
 ### Média
 
-**M1. Nenhum inimigo `_elite` aparece na partida curta** (não é regressão; o pedido de capturar um elite comum na
-arena não é possível). Responsável: Gameplay Engineer (`tools/make_data.gd` `_stage`, `scripts/core/stage_def.gd`).
-Por quê: `StageDef.elite_from_depth = 3` (`stage_def.gd:41`), e na descida encurtada (`st.rooms = 4`, guardião fixo
-na 3) as salas de luta comum só existem nas profundidades 1 e 2 (`run_map.gd` `options`: 3 é o guardião, 4 a loja, 5
-Morvath). `EncounterGen.pick_types` (`encounter_gen.gd:56`) tira os `_elite` antes da 3. O `--stress` só põe comuns.
-Efeito: o Daniel não vai ver o novo visual dos elites no teste (só os dois guardiões, que têm `elite = true`). Passos:
-ler as linhas citadas, ou `tools/smoke.sh 300 --seed=N` para qualquer semente: a sala 1 e a 2 nunca têm armadura
-amarela fora do guardião. Sugestão: `elite_from_depth = 2` enquanto a partida for curta (decisão do Game Director).
+**M1. Todo elite comum ganha a barra de chefe no topo da tela, com o nome do inimigo comum.** Novo para o jogador
+(antes nenhum elite comum aparecia nas salas). Responsável: Gameplay Engineer (`scripts/game/game.gd:773`
+`boss_enemy`), com o UI/UX (`scripts/ui/hud.gd:287` `_update_boss`).
+`boss_enemy()` devolve o primeiro inimigo com `def.elite` da horda (`game.gd:776-778`), e o HUD mostra a barra grande
+do topo para ele. Efeito: numa sala 2 com `guard_elite` aparece "Esqueleto de Escudo" na barra de chefe
+(`shots/4_elite.png`), igual ao guardião; com dois elites, só o primeiro tem barra no topo. No Hades II os inimigos
+blindados comuns só têm a barra sobre a cabeça; a barra do topo é dos guardiões e do chefe. Passos: rodar
+`final/tools/elite_room.gd` (comando no topo do arquivo) ou, jogando, escolher na sala 2 uma porta que não seja a da
+fonte até sair um elite. Sugestão: só `Behavior.BOSS` e os `stage.minibosses` na barra do topo; decisão do Game Director.
 
-**M2. Elite quase igual ao comum fora do combate.** Responsável: Art Director (aceite), Gameplay Engineer
-(`make_palettes.gd`, `crowd_renderer.gd`). Na galeria (`qa5/crops/d_lab.png`, fileira de cima = elites) só os
-frisos de ouro velho distinguem, e no Escudo e no Feiticeiro quase não se vê a diferença lado a lado. Em jogo a barra
-amarela de armadura marca o elite, então a leitura funcional fica; a dúvida é estética. Não medi o aceite "frisos de
-ouro >= 2% da caixa no `6_horda`" porque nenhum `_elite` aparece nessa cena (M1).
-
-**M3. No patamar oeste o herói fica perto da borda esquerda da tela.** Responsável: Gameplay Engineer
-(`scripts/game/game.gd` `CAM_MARGIN := Vector2(10.0, 5.0)` e `CAM_SOUTH`, ajustados para a distância 60).
-Passos: `--bot --autopick --stress=40 --seed=5`, captura aos 7 s (`cmp_8_cercado.png`). Visto: o herói (no meio do
-bolo) passa de cerca de x 270 (16% da largura) para cerca de x 185 (11%); o que estiver a oeste dele no patamar tem
-menos tela. Com a câmera mais perto, a mesma margem de trava deixa ver menos além da beira. Sugestão: reduzir
-`CAM_MARGIN.x` em proporção (cerca de 10% menor) e recapturar.
-
-**M4. O herói continua sumindo dentro do bolo de inimigos** (vinha de antes; o aceite A2 do ciclo pedia achá-lo em
-menos de 2 s). Responsável: Gameplay Engineer (raio-x do herói), Art Director (aceite).
-Passos: `--bot --autopick --stress=90 --shot-at=6` (`cmp_6_horda.png`, recorte `qa5/crops/blob_cmp.png`) e
-`--stress=40 --shot-at=7` (`qa5/crops/d_cerc.png`). Visto: o raio-x ainda é uma mancha azul-esbranquiçada, só o
-cabelo aparece um pouco; no `--stress=40` não achei o herói sem saber onde ele estava.
+**M2. O robô nunca vê um elite, e o Daniel só vê se escolher a porta certa na sala 2.** Não é falha de código; é
+aviso para o teste. Responsável: Game Director (instrução de teste) ou Gameplay Engineer (`tools/make_data.gd` `_stage`).
+Medido com `final/tools/elite_odds.gd` (geração real, 1000 sementes): sala 1, 0 de 1000 com elite; sala 2 de luta,
+**764 de 1000** com elite. Mas na sala 2 a porta 0 é **sempre** a fonte (200 de 200 sementes, `run_map.gd:58`, porque
+`fountain_depth_min = fountain_depth_max = 2`), e o robô sempre pega a porta 0 (`rooms.gd:310` `bot_goal`,
+`door_goal(0)`). Por isso as partidas do robô são idênticas às do ciclo 5. Para ver um elite o Daniel precisa pegar a
+porta de luta na sala 2 (abrindo mão da fonte).
 
 ### Baixa
-- **B1. p95 da vitrine 104,4** (guarda D pede >= 105; era 107,8). O p50 e o p1 melhoraram. Art Director decide.
-- **B2. `docs/steam-ia.md` desatualizado**: ainda descreve o herói "Sombra" repintado; não cita o Explorador do Meshy
-  (`assets/models/meshy/hero_explorer/`, agora no jogo), os nove inimigos e a Emeth do Meshy (no disco). O
-  `CLAUDE.md` exige mantê-lo em dia. Game Director.
-- **B3. Cartão violeta do abismo leste ainda com bordas retas** em `7_morvath.png` (canto direito). Vem do ciclo 4.
-  Environment Artist.
-- **B4. Espaçamento irregular das palavras na premissa do título** ("traiu a luz", "sob a igreja"; `12_titulo.png`),
-  vem do ciclo 4. UI/UX.
-- **B5. Vazamento ao sair** (`2 ObjectDB instances leaked`, `1 resources still in use`), igual a antes.
+- **B1. `tests/test_cam_frame.gd.uid` não está no commit**: a importação gera e o working tree fica sujo
+  (`git status`: `?? tests/test_cam_frame.gd.uid`). Game Director (commitar o arquivo).
+- **B2. No `2_combate.png` um Feiticeiro fica atrás da barra de ações** (centro inferior), parte do corpo coberta pelo
+  HUD. O `CamFrame` só protege o herói. Leitura de borda; UI/UX decide se vale.
+- **B3. Espaçamento irregular das palavras na premissa do título** ("traiu a luz", "ergueu os", "sob a igreja";
+  `11_titulo.png`), vem do ciclo 4. UI/UX.
+- **B4. Vazamento ao sair** (`2 ObjectDB instances leaked`, `1 resources still in use`), igual a antes.
+- **B5. Mancha violeta do abismo leste ainda com a borda esquerda reta** em `7_morvath.png` (canto direito), vinda do
+  ciclo 4. Environment Artist.
 
-Resolvidos neste ciclo em relação ao relatório anterior: contorno dourado dos elites e guardiões (M1 antigo:
-`elder_cmp.png`, `cmp_4_elite.png`); linha de controles do título agora quebra e cabe (M2 antigo, `12_titulo.png`).
-
-## 5. Limitações
-- Desempenho na placa do notebook do Daniel (RTX 5060), uma janela de 1672 x 941; **não medido** em celular,
-  navegador de verdade (o OpenGL 3 só foi capturado, não medido) nem em placa fraca. Variação entre rodadas iguais de
-  até 0,9 ms.
-- Capturas de comparação em Vulkan por software (llvmpipe), para bater com o "antes" do Game Director; as da placa
-  (`*_gpu.png`) mostram a mesma cena.
-- Sem som; sem gente jogando (só o robô): sensação e leitura em movimento ficam para o Daniel.
-- Builds de Windows e Web não exportados (não pedidos).
-- Mudei só arquivos fora do projeto, mais este relatório; a cópia do HEAD recebeu o `tools/gpu.sh` para medir.
+## 6. Limitações
+- Desempenho medido só no notebook do Daniel (RTX 5060), uma janela de 1672 x 941; variação entre rodadas iguais de
+  até 0,5 ms. **Não medido**: celular, navegador de verdade, placa fraca, Linux exportado, Web exportado (não pedidos).
+- Sem som; sem gente jogando (só o robô): sensação, ritmo e leitura em movimento ficam para o Daniel.
+- A captura do elite usa um laboratório de QA fora do projeto (`final/tools/elite_room.gd`, chama `rooms._enter` com uma
+  sala de luta da profundidade 2); o elite em si é o do jogo, a sala é a mesma que o jogador encontra.
+- Mudei só arquivos fora do projeto e este relatório; o espelho `C:/Users/danie/tools/eterra-gpu-head` agora tem o
+  `1709da2`. Nenhum crédito externo usado.
