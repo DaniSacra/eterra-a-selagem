@@ -11,6 +11,18 @@
       "pose": "a-pose",
       "style": "Stylized hand-painted game character, soft painterly textures, near-monochrome black and dark grey clothes, realistic proportions eight heads tall, not chibi, not a child, no base, no ground, empty hands, no weapons.",
       "prompt": "Full body tall lanky teenage boy about seventeen, thin and wiry, small head, long thin legs and arms, narrow shoulders. No armor, no cape, no cloak: fitted black cloth tunic to mid-thigh, black trousers, slim black boots, dark grey belt, a tiny grey lion pin, one long thin teal scarf around the neck with two narrow ends hanging down the back. Short messy copper-red hair, serious face. A-pose facing forward."
+    },
+    "hero_explorer": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 30000,
+      "images": [
+        "tools/meshy/ref/hero_explorer/front.png",
+        "tools/meshy/ref/hero_explorer/side.png",
+        "tools/meshy/ref/hero_explorer/back.png",
+        "tools/meshy/ref/hero_explorer/threequarter.png"
+      ],
+      "texture_prompt": "Premium stylized dark fantasy explorer: tousled copper-red hair, deep teal scarf and short teal mantle with gold trim, dark weathered leather armor and straps with antique brass buckles, steel shoulder guards, fitted leather gloves, brown adventurer boots, hand-painted materials, no weapons."
     }
   }
 }

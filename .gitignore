@@ -3,3 +3,5 @@ build/
 *.tmp
 __pycache__/
 .claude/settings.local.json
+# Meshy input images cut from Daniel's AI concept art (kept out of the repo, see docs/steam-ia.md)
+tools/meshy/ref/

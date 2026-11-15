@@ -3,6 +3,8 @@
 //   node tools/meshy/meshy.mjs balance
 //   node tools/meshy/meshy.mjs preview <key>   mesh only (meshy-t2.5: 5 credits), saves <key>-preview.png
 //   node tools/meshy/meshy.mjs refine <key>    texture (10 credits), saves <key>.glb and <key>.png
+//   node tools/meshy/meshy.mjs image <key> [--dry]   image(s) to 3D with texture (30 credits on latest; checks the
+//                                              balance first; --dry only prints the request), saves <key>.glb and <key>.png
 //   node tools/meshy/meshy.mjs rig <key>       skeleton + walk/run (5 credits), saves <key>-rigged.glb, -walk.glb, -run.glb
 //
 // Prompts live in tools/meshy/prompts.json; task ids and credits in tools/meshy/tasks.json.
@@ -102,9 +104,46 @@ async function refine(key) {
   console.log(`${key}: refine done (${t.consumed_credits} credits, ${bytes} bytes)`);
 }
 
+// Image to 3D from approved concept art: models[key].images (first = front view; up to 4 go to multi-image).
+// Credits per the Meshy pricing page (2026-11-14): meshy-7.1/latest/meshy-6 = 30 with a 2K texture, meshy-6-lite = 15.
+const IMAGE_COST = { latest: 30, 'meshy-7.1': 30, 'meshy-6': 30, 'meshy-6-lite': 15 };
+const dataUri = (file) => `data:image/png;base64,${readFileSync(join(ROOT, file)).toString('base64')}`;
+
+async function image(key, dry) {
+  const spec = JSON.parse(readFileSync(join(here, 'prompts.json'), 'utf8')).models[key];
+  if (!spec?.images?.length) throw new Error(`no images for ${key}`);
+  const ai = spec.ai_model ?? 'latest';
+  const multi = spec.images.length > 1;
+  const body = {
+    ai_model: ai, should_texture: true, texture_resolution: '2k', enable_pbr: false, target_formats: ['glb'],
+    should_remesh: true, topology: 'triangle', target_polycount: spec.polycount ?? 30000,
+  };
+  if (spec.pose) body.pose_mode = spec.pose;
+  if (spec.texture_prompt) body.texture_prompt = spec.texture_prompt;
+  const cost = IMAGE_COST[ai];
+  const balance = (await call('GET', '/v1/balance')).balance;
+  console.log(`${key}: ${multi ? 'multi-image' : 'image'} to 3D, ${ai}, ${spec.images.length} image(s), about ${cost} credits; balance ${balance}`);
+  console.log(JSON.stringify(body));
+  if (dry) return;
+  if (cost === undefined || balance < cost) throw new Error(`not enough credits (${balance} < ${cost}); nothing was sent`);
+  const images = spec.images.map(dataUri);
+  if (multi) body.image_urls = images; else body.image_url = images[0];
+  const path = multi ? '/v1/multi-image-to-3d' : '/v1/image-to-3d';
+  const id = (await call('POST', path, body)).result;
+  saveTask(key, { mode: path.slice(4), images: spec.images, ai_model: ai, imageId: id, attempt: (loadTasks()[key]?.attempt ?? 0) + 1 });
+  console.log(`${key}: ${id}`);
+  const t = await wait(`${path}/${id}`, `${key} image`);
+  const dir = outDir(key);
+  const bytes = await download(t.model_urls.glb, join(dir, `${key}.glb`));
+  if (t.thumbnail_url) await download(t.thumbnail_url, join(dir, `${key}.png`));
+  saveTask(key, { imageCredits: t.consumed_credits, bytes });
+  console.log(`${key}: done (${t.consumed_credits} credits, ${bytes} bytes)`);
+}
+
 async function rig(key) {
   const task = loadTasks()[key];
-  const id = (await call('POST', '/v1/rigging', { input_task_id: task.refineId, height_meters: 1.8 })).result;
+  const source = task.imageId ?? task.refineId;
+  const id = (await call('POST', '/v1/rigging', { input_task_id: source, height_meters: 1.8 })).result;
   saveTask(key, { rigId: id });
   console.log(`${key}: rig ${id}`);
   const t = await wait(`/v1/rigging/${id}`, `${key} rig`);
@@ -119,8 +158,8 @@ async function rig(key) {
   console.log(`${key}: rig done (${t.consumed_credits} credits)`);
 }
 
-const [cmd, key] = process.argv.slice(2);
-const steps = { preview, refine, rig };
+const [cmd, key, flag] = process.argv.slice(2);
+const steps = { preview, refine, rig, image };
 if (cmd === 'balance') console.log((await call('GET', '/v1/balance')).balance);
-else if (steps[cmd] && key) await steps[cmd](key);
-else console.log('usage: balance | preview <key> | refine <key> | rig <key>');
+else if (steps[cmd] && key) await steps[cmd](key, flag === '--dry');
+else console.log('usage: balance | preview <key> | refine <key> | image <key> [--dry] | rig <key>');
