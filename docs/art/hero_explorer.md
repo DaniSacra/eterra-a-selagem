@@ -239,3 +239,35 @@ gold pommel with an emerald, stylized hand-painted, matte antique gold, no glow,
 6. **Créditos**: 35 (30 da geração + 5 do esqueleto); a espada procedural não gasta nada. Autoriza quando recarregar?
 7. **Substituição**: o Explorador substitui o Sombra também na tela de título? E ele é o `PALADIN_1` (ele não usa
    armadura de paladino) ou outro personagem?
+
+## 6. Versão provisória sem créditos (2026-11-14)
+
+O Daniel suspendeu as gerações pagas: a seção 2 (pedido ao Meshy, recortes em `tools/meshy/ref/hero_explorer/`,
+`node tools/meshy/meshy.mjs image hero_explorer`) fica pronta para quando houver créditos (35). Enquanto isso, o corpo
+provisório (o "Sombra" do Meshy, mesmo esqueleto e mesmas animações) veste o Explorador:
+
+- **Textura repintada** (`tools/recolor_hero.gd` gera `assets/models/meshy/hero_sombra/hero_explorer_albedo.png`; a
+  original fica intacta): cada pixel do atlas é localizado no corpo em repouso e o pano preto vira, pela altura,
+  botas marrons com punho claro, calça marrom escura, cinto de couro, colete de couro com correias cruzadas e placa,
+  braçadeiras e luvas; os braços de cima viram pele (braços nus da folha); o cachecol passa ao petróleo da folha.
+  Cabelo e pele não mudam. Cores e alturas são constantes no topo do script.
+- **Acessórios nos ossos** (`HeroGear`, `scripts/render/hero_gear.gd`, chamado por `HeroBody`): ombreira de aço em
+  duas placas no ombro esquerdo, fivela de latão, bolsa no quadril, manto curto petróleo nas costas com barra
+  dourada, punhos de couro nas botas. Nada muda no esqueleto, nos clipes nem no jogo.
+
+| Ponto | Fidelidade à folha | Observação |
+|---|---|---|
+| Cabelo cobre | MÉDIA | cor certa; volume e corte do Sombra (mais curto e redondo) |
+| Rosto | BAIXA | é o rosto do Sombra; sem expressão própria |
+| Cachecol petróleo | ALTA | cor e volume próximos; o do Sombra é mais longo |
+| Manto curto | MÉDIA | placa rígida nas costas (sem tecido que balança); o cachecol longo ajuda |
+| Couro (colete, correias, cinto) | MÉDIA | pintado na textura; sem relevo; correias em X e placa legíveis de perto |
+| Ombreira | MÉDIA | caixas de aço; lê de longe, sem rebites nem curva |
+| Braços nus e braçadeiras | MÉDIA | pintados sobre a manga do Sombra (o volume da manga continua) |
+| Botas | ALTA | marrons, altas, com punho |
+| Silhueta e proporção | MÉDIA | corpo esguio do Sombra; a folha é mais atlética (ombros 1,8 x cintura) |
+| Estrela dourada, fivela "אמת" | ausente | perguntas 2 e 3 da seção 5 |
+
+**Provisório, a substituir**: o corpo inteiro (pelo modelo da seção 2 ou por uma base gratuita, ver
+`docs/art/free_assets_research.md`), a textura repintada e os acessórios em caixas. Quando o modelo novo vier, apagar
+`hero_explorer_albedo.png`, `tools/recolor_hero.gd` e `HeroGear` (ou trocar as caixas por malhas de verdade).

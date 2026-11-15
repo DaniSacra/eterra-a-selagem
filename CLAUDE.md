@@ -113,7 +113,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]`. A multidão fica fora da luz das tochas (camada 2)
   e recebe a luz do paladino pelo global `hero_pos`.
 - O herói é o modelo do Meshy "Sombra" (`assets/models/meshy/hero_sombra/hero_sombra-rigged.glb`, 24 ossos, pose em A),
-  montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na tela de título). As animações dele são próprias
+  montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na tela de título). Ele veste o Explorador aprovado (folha de 2026-11-14) de forma provisória, sem créditos do Meshy: textura repintada por `tools/recolor_hero.gd` e acessórios presos aos ossos (`HeroGear`); o pedido ao Meshy fica pronto em `docs/art/hero_explorer.md` (seções 2 e 6), alternativas gratuitas em `docs/art/free_assets_research.md`. As animações dele são próprias
   (`hero_anims.res`): `tools/bake_hero.gd` transfere clipes da Universal Animation Library 1 e 2 da Quaternius (CC0,
   `assets/models/anim/`) para o esqueleto dele pelo `Retarget` (`scripts/render/retarget.gd`) e mede o pico de cada golpe
   (`PEAK` em `make_data.gd`), o passo da corrida (`Player.RUN_CLIP_PACE`), achata o sobe e desce do quadril na corrida, mantém o braço da espada em guarda e a pegada da espada (pela linha dos nós dos

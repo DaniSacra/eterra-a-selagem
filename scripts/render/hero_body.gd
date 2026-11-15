@@ -5,6 +5,8 @@ extends RefCounted
 
 const MODEL := "res://assets/models/meshy/hero_sombra/hero_sombra-rigged.glb"
 const ANIMS := "res://assets/models/meshy/hero_sombra/hero_anims.res"
+## The body repainted toward the approved explorer sheet (tools/recolor_hero.gd); provisional, see docs/art/hero_explorer.md.
+const SKIN := "res://assets/models/meshy/hero_sombra/hero_explorer_albedo.png"
 ## The model is this tall as it comes; the game shows him HEIGHT tall (Hades II scale: 2.5 m).
 const MODEL_HEIGHT := 1.8
 const HEIGHT := 2.5
@@ -21,6 +23,7 @@ static func make() -> Array:
 	for lib in anim.get_animation_library_list():
 		anim.remove_animation_library(lib)
 	anim.add_animation_library(&"", load(ANIMS))
+	_explorer(model)
 	return [model, anim, _arm(model, anim.get_animation_library(&""))]
 
 
@@ -42,3 +45,13 @@ static func _arm(model: Node3D, clips: AnimationLibrary) -> MeshInstance3D:
 	var size := SWORD_SCALE * MODEL_HEIGHT / HEIGHT / unit
 	sword.transform = Transform3D(Basis(Quaternion(Vector3.UP, blade)).scaled(Vector3.ONE * size), clips.get_meta(&"grip_at", Vector3.ZERO))
 	return sword
+
+
+## The explorer's look over the provisional body: the repainted texture and his gear (HeroGear).
+static func _explorer(model: Node3D) -> void:
+	for n in model.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		var mat := (mi.get_active_material(0) as StandardMaterial3D).duplicate() as StandardMaterial3D
+		mat.albedo_texture = load(SKIN)
+		mi.material_override = mat
+	HeroGear.dress(model, PoseBaker.find_skeleton(model))
