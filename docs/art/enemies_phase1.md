@@ -59,3 +59,45 @@ cada bloco da prancha, como o do Explorador) para quando houver créditos.
    frio e claro no Feiticeiro).
 2. **Ancião invoca reforços**: depois (não nesta versão).
 3. **Morvath**: como na prancha, rei esqueleto com coroa, cabelo branco longo, mantos roxos e dourados, gema roxa.
+
+## Feito em 2026-11-14 (sem modelos novos, sem créditos)
+
+Ferramentas e dados:
+- `tools/make_palettes.gd`: uma paleta por inimigo (`assets/models/palettes/<id>.png`) sobre a paleta de 32 quadrados
+  do KayKit; tabela de cores no topo (`FACTION` e `PALETTES`). A versão elite de cada um é a mesma paleta com
+  dourado velho nos frisos (`ELITE_TRIMS`, `<id>_elite.png`, ligada por `EnemyDef.palette` no `_pair` do
+  `make_data.gd`); a barra de armadura e o contorno das elites ficam como estavam.
+- Quadrados que brilham sozinhos (`crowd.gdshader`, `glow`): os quatro últimos da fileira de baixo (violeta frio do
+  Feiticeiro, roxo dos sacerdotes e de Morvath, brasa, olhos).
+- `tools/bake.gd`: cada inimigo com entrada própria em `MODELS` (`texture`, `hide`, `remap` de quadrados por peça,
+  `props` presos aos ossos antes de assar, `bend` para curvar, armas com escala). Peças de outros modelos KayKit
+  (`Knight_Cape`, `Mage_Cape`, `Skeleton_Rogue_Hood`) entram pintadas num quadrado da paleta, com o sombreado delas.
+  A cabeça da multidão encolhe mais 28% (`HEAD_SHRINK`): a prancha tem proporção adulta.
+- `PoseBaker.snapshot` grava os assados em 16 bits (`ARRAY_FLAG_COMPRESS_ATTRIBUTES`): com três modelos a mais,
+  `assets/baked` ficou em 45 MB (antes 46).
+- Escala da prancha em `make_data.gd` (Esqueleto 1,15). Raio de colisão cresce menos que a figura: corredor 0,35 para
+  0,45, feiticeiro 0,45 para 0,5, besteiro 0,5 para 0,55, escudo 0,7 para 0,75, cavaleiro 1,0 para 1,1, ancião 0,9
+  para 1,0, Morvath 1,2 para 1,4. Os tons frios por inimigo (`tint`) saíram: a cor vem da paleta.
+- Cor da magia (`EnemyDef.magic_color`): virote do Feiticeiro violeta frio, leque laranja do Besteiro (corte em
+  leque sobre o cone marcado), explosão do Corredor em brasa, anel onde caem os golpes do Sacerdote, do Ancião e da
+  chuva de Morvath em roxo. Os avisos no chão continuam vermelhos.
+- Pedidos ao Meshy prontos (não rodados): `tools/meshy/prompts.json`, entradas `enemy_<id>`, com as quatro vistas de
+  cada bloco da prancha em `tools/meshy/ref/enemies/<id>/` (tira inteira em `<id>.png`; elites em `elites.png`).
+  Custo estimado: 35 créditos por inimigo (geração e esqueleto), sem animação (o assado usa as do KayKit).
+- Prancha do jogo: `tools/enemy_lab.gd` (vista do jogo, frente e costas, com o herói para escala).
+
+| Inimigo | Fidelidade | O que tem | O que ficou para modelo |
+|---|---|---|---|
+| Esqueleto | MÉDIA | osso marfim, elmo redondo, ombreira, trapos vermelhos na cintura e no pescoço, lâmina | corpo do KayKit (largo, curto), crânio sem expressão |
+| Corredor | MÉDIA | sem arma, curvado, trapos vermelhos, brasas acesas no peito, olhos de brasa | costelas abertas, corpo magro |
+| Feiticeiro | MÉDIA | capuz e manto escuros com vermelho, olhos e gema violeta frio, cajado de madeira | manto longo com pregas, ombreiras |
+| Besteiro | MÉDIA | capuz roxo escuro, capa e lenço vermelhos, bronze e couro, besta | aljava, armadura das pernas |
+| Escudo | MÉDIA | bronze escuro, escudo grande com emblema, espada, trapos vermelhos | escudo-torre de verdade, ombreiras grandes |
+| Sacerdote | MÉDIA | capuz e manto roxos, frisos dourados, olhos roxos | manto até o chão com barra rasgada |
+| Elites | MÉDIA | mesma figura com frisos de dourado velho, contorno e barra de armadura | brilho nos frisos |
+| Cavaleiro | MÉDIA | elmo com chifres e coroa de pontas, capa vermelha, espada e escudo, aço com ouro | placas esculpidas, capa longa |
+| Ancião | MÉDIA | coroa com gema, manto e capa roxos com ouro, cajado com orbe roxo | manto em camadas, cajado alto |
+| Morvath | BAIXA | coroa, gema roxa no peito, mantos roxos, ombreiras de ouro, cabelo branco em placas | cabelo longo de verdade, mantos em camadas, rosto de rei |
+
+Escala: os corpos do KayKit são largos e curtos; mesmo com o `Slender` e a cabeça menor, ainda não são as figuras
+esguias da prancha. Os pedidos ao Meshy resolvem isso.

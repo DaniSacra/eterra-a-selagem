@@ -4,12 +4,12 @@ extends Node3D
 ## MultiMesh of soft round shadows. Each frame: begin(), add() once per character, commit().
 
 ## The common crowd is light bone with painted shading, as in the reference (docs/art/ref/arena_catacumbas_1672.png):
-## the KayKit colours a little calmed (ivory bone, dark leather, grey steel), lit by a fixed key from the top left
+## each enemy in its own palette after Daniel's sheet (tools/make_palettes.gd), a little calmed, lit by a fixed key from the top left
 ## of the screen with darker feet and a thin dark edge, so every figure reads as a shaded body on the dark floor.
 ## (Until 2026-11-14 it was grey, lifted toward one value and glowing flat: plaster cut-outs that the cold ambient
 ## turned green.) How much colour goes, how much of the def's tint stays (the tints are cold and green), how much
 ## the scene's cold light still lights it.
-const CROWD_GREY := 0.5
+const CROWD_GREY := 0.15
 const CROWD_TINT_KEEP := 0.3
 const CROWD_SCENE_LIGHT := 0.55
 ## Elites keep their colours and are a step brighter than the crowd.
@@ -85,7 +85,7 @@ func register(d: EnemyDef) -> void:
 		return
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
-	mat.set_shader_parameter(&"albedo", model(d.model).albedo)
+	mat.set_shader_parameter(&"albedo", d.palette if d.palette else model(d.model).albedo)
 	# the common crowd in calmed bone colours; elites and the boss in full colour, brighter, with a glowing outline
 	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
 	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) if common else d.tint * (ELITE_SHADE if d.elite else Color.WHITE)

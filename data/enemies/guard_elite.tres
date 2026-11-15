@@ -1,20 +1,22 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_4j2bw"]
+[ext_resource type="Texture2D" path="res://assets/models/palettes/guard_elite.png" id="1_jmv2j"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_vjm31"]
 
 [resource]
-script = ExtResource("1_4j2bw")
+script = ExtResource("2_vjm31")
 id = &"guard_elite"
 name_key = &"enemy_guard"
-model = &"warrior"
-size = 1.25
-rim_color = Color(1, 0.22, 0.3, 1)
-rim = 1.0
+model = &"guard"
+palette = ExtResource("1_jmv2j")
+size = 1.5
+rim_color = Color(1, 0.68, 0.28, 1)
+rim = 0.7
 behavior = 4
 hp = 255.0
 speed = 4.25
 damage = 9.0
-radius = 0.7
+radius = 0.75
 heavy = true
 elite = true
 armor = 330.0

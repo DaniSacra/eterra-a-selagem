@@ -15,6 +15,8 @@ const FLASH_TIME := 0.14
 const WEAK_FLASH := 0.45
 ## Numbers of blows that land on armor.
 const ARMOR_COLOR := Color(1.0, 0.82, 0.3)
+## Seconds the fan of a crossbowman's volley shows (in its EnemyDef.magic_color).
+const VOLLEY_TIME := 0.22
 ## A killing blow throws light bodies: base speed away, upward speed, gravity.
 const THROW := 7.0
 const THROW_UP := 6.0
@@ -209,9 +211,9 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		e.dir = toward
 		if e.state_t >= d.attack_windup:
 			if caster:
-				ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale)
+				ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
 			else:
-				projectiles.fire(Projectiles.Kind.BOLT, e.pos + toward * 0.6, toward, 13.0, d.attack_damage * damage_scale)
+				projectiles.fire(Projectiles.Kind.BOLT, e.pos + toward * 0.6, toward, 13.0, d.attack_damage * damage_scale, 0.4, 3.0, d.magic_color)
 			e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
@@ -319,7 +321,7 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			else:
 				for k in 3:
 					var at := target + (Vector2.ZERO if k == 0 else Vector2.from_angle(TAU * k / 3.0 + e.state_t) * 3.2)
-					ground.add_warning(at, 2.4, 0.9 + k * 0.25, d.attack_damage * damage_scale)
+					ground.add_warning(at, 2.4, 0.9 + k * 0.25, d.attack_damage * damage_scale, d.magic_color)
 			e.cooldown = d.attack_cooldown
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
@@ -355,7 +357,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.pos += toward * _speed(e) * dt
 			elif e.cooldown <= 0.0 and target_alive:
 				_set_state(e, Enemy.State.WINDUP, &"windup")
-				ground.add_warning(e.pos, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
+				ground.add_warning(e.pos, d.attack_width, d.attack_windup, d.attack_damage * damage_scale, d.magic_color)
 			else:
 				e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
 
@@ -367,6 +369,9 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		Enemy.State.WINDUP:
 			if e.state_t >= d.attack_windup:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
+				if d.magic_color.a > 0.0:
+					# the fan of bolts flying out over the cone that was marked
+					fx.slash(e.pos, e.aim, d.attack_range + 0.5, d.attack_width, d.magic_color, VOLLEY_TIME, false, 0.9, false)
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.5:
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)

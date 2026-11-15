@@ -13,12 +13,16 @@ enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE
 @export var name_key: StringName
 @export_group("Look")
 ## Baked model in assets/baked (tools/bake.gd).
-@export var model: StringName = &"minion"
+@export var model: StringName = &"skeleton"
+## Its own palette over the baked model's (tools/make_palettes.gd): the elites wear the gilded one. Empty: the model's.
+@export var palette: Texture2D
 @export var size := 1.0
 @export var tint := Color.WHITE
 ## Glow around the edges (elites and the boss stand out from the crowd).
 @export var rim_color := Color(0.4, 0.55, 1.0)
 @export var rim := 0.0
+## Colour of its magic (bolts, the burst where its blows land, the fan of its volley). Alpha 0: the default look.
+@export var magic_color := Color(0, 0, 0, 0)
 @export_group("Body")
 @export var behavior: Behavior = Behavior.CHASE
 @export var hp := 20.0

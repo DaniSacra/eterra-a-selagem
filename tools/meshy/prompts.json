@@ -23,6 +23,114 @@
         "tools/meshy/ref/hero_explorer/threequarter.png"
       ],
       "texture_prompt": "Premium stylized dark fantasy explorer: tousled copper-red hair, deep teal scarf and short teal mantle with gold trim, dark weathered leather armor and straps with antique brass buckles, steel shoulder guards, fitted leather gloves, brown adventurer boots, hand-painted materials, no weapons."
+    },
+    "enemy_skeleton": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/skeleton/front.png",
+        "tools/meshy/ref/enemies/skeleton/side.png",
+        "tools/meshy/ref/enemies/skeleton/back.png",
+        "tools/meshy/ref/enemies/skeleton/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton foot soldier: round dented steel helmet, one steel pauldron, ragged dark blood-red cloth at the waist and neck, leather straps, a short rusty blade. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_runner": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/runner/front.png",
+        "tools/meshy/ref/enemies/runner/side.png",
+        "tools/meshy/ref/enemies/runner/back.png",
+        "tools/meshy/ref/enemies/runner/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Hunched fast skeleton, no weapon, ragged dark red rags, cracked ribcage with glowing orange embers inside the chest, burnt bone. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_mage": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/mage/front.png",
+        "tools/meshy/ref/enemies/mage/side.png",
+        "tools/meshy/ref/enemies/mage/back.png",
+        "tools/meshy/ref/enemies/mage/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton sorcerer: dark hooded robe almost black with dark red trims and scarf, glowing cold violet eyes, wooden staff topped with a cold violet gem (violet, not green). A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_archer": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/archer/front.png",
+        "tools/meshy/ref/enemies/archer/side.png",
+        "tools/meshy/ref/enemies/archer/back.png",
+        "tools/meshy/ref/enemies/archer/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton crossbowman: dark purple hood, dark red scarf and short cape, dark bronze and leather armor pieces, a crossbow. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_guard": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/guard/front.png",
+        "tools/meshy/ref/enemies/guard/side.png",
+        "tools/meshy/ref/enemies/guard/back.png",
+        "tools/meshy/ref/enemies/guard/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Heavy skeleton brute: dark bronze plate armor, tall tower shield with an engraved emblem, a straight sword, dark red cloth at the waist. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_priest": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/priest/front.png",
+        "tools/meshy/ref/enemies/priest/side.png",
+        "tools/meshy/ref/enemies/priest/back.png",
+        "tools/meshy/ref/enemies/priest/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton priest of the dead: deep purple hood and long robe with old gold trims, glowing purple eyes, empty hands. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_knight": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/knight/front.png",
+        "tools/meshy/ref/enemies/knight/side.png",
+        "tools/meshy/ref/enemies/knight/back.png",
+        "tools/meshy/ref/enemies/knight/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant skeleton knight guardian: dark steel plate with old gold trims, helmet with a crown of spikes, long ragged red cape, sword and shield. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_priest_elder": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/priest_elder/front.png",
+        "tools/meshy/ref/enemies/priest_elder/side.png",
+        "tools/meshy/ref/enemies/priest_elder/back.png",
+        "tools/meshy/ref/enemies/priest_elder/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant elder skeleton priest guardian: golden crown, purple and old gold layered robes and mantle, staff with a glowing purple orb. A-pose facing forward, no base, no ground, no text."
+    },
+    "enemy_morvath": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 15000,
+      "images": [
+        "tools/meshy/ref/enemies/morvath/front.png",
+        "tools/meshy/ref/enemies/morvath/side.png",
+        "tools/meshy/ref/enemies/morvath/back.png",
+        "tools/meshy/ref/enemies/morvath/threequarter.png"
+      ],
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton king Morvath, the king who betrayed the light: golden crown, long white hair, layered purple and old gold royal robes and mantle, ornate dark armor, a glowing purple gem on the chest, glowing purple eyes. A-pose facing forward, no base, no ground, no text."
     }
   }
 }

@@ -99,6 +99,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   frente e para trás, 20 de Magia), Ômega do especial 0,65 s (80, 10 de Magia), avanço 0,2 s / 5,6 m com 16 quadros de
   proteção e 1 carga, círculo em volta do paladino (5,4 m, 3 s, um por vez). Vida 30, 1,3 s de proteção após um golpe.
 - Inimigos com os números de Érebo: cada um tem a versão elite (`_elite`, armadura do Hades). Guardiões: `knight` e `priest_elder`.
+- Aparência dos inimigos pela prancha do Daniel "Inimigos da Fase 1" (`docs/art/enemies_phase1.md`; imagem só local em
+  `docs/art/ref/`): um modelo assado por inimigo, paleta própria (`tools/make_palettes.gd` gera `assets/models/palettes/`,
+  `_elite` com frisos dourados), peças nos ossos (`props`, `hide`, `remap`, `bend` em `MODELS` de `tools/bake.gd`), escala
+  da prancha e cor da magia (`EnemyDef.magic_color`: feiticeiro violeta frio, sacerdotes e Morvath roxo; verde só da
+  Emeth e do portal). Elites com contorno dourado (`ELITE_RIM`). Galeria: `tools/enemy_lab.gd`.
 
 ## Arquitetura
 - `scripts/core/`: lógica pura (sem nós), toda testada. `scripts/game/`: nós da partida. `scripts/ui/`: telas.
@@ -158,7 +163,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`ComboNode.sweep`, `SWEEP` em `make_data.gd`), golpes
   empurram mais, inimigos mais rápidos (esqueleto 3,75 m/s) e com menos espera entre ataques (avisos iguais); a câmera
   se adianta para onde ele anda, não para a mira.
-- Modelos KayKit, fontes e áudio sintetizado são provisórios. Assados somam cerca de 46 MB (o pacote web tem 61 MB).
+- Modelos KayKit, fontes e áudio sintetizado são provisórios. Assados somam cerca de 45 MB (16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`) (o pacote web tem 61 MB).
 - O lobo de geada do spec virou o esqueleto corredor. Vigília aparece como voto do PALADIN_1 (provisório).
 - O spec fala em quatro paladinos; o cânone de 12/11 fala em um paladino do leão e quatro guardiões. Vale o que o Daniel decidir.
 - Toque (celular) ainda não tem botões na tela.

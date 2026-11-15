@@ -19,6 +19,8 @@ const BIND_STRENGTH := 0.24
 const AREA_STRENGTH := 0.8
 ## Meters of the bright rim around a warning (its size is always the attack's).
 const RIM_METERS := 0.28
+## The ring where an enemy's blow lands, when its caster has no colour of its own.
+const LAND_COLOR := Color(1.0, 0.3, 0.2)
 const COLORS := {
 	Kind.WARNING: Color(1.0, 0.18, 0.12), Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
 	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
@@ -39,6 +41,8 @@ class Zone:
 	var tick := 0.0
 	var color := Color.WHITE
 	var tags: Array[StringName] = []
+	## Colour of the ring where a warning lands (alpha 0: LAND_COLOR).
+	var land_color := Color(0, 0, 0, 0)
 	## Damage dealt to everything inside when the zone runs out (the held circle of light). 0 = none.
 	var burst := 0.0
 	var node: MeshInstance3D
@@ -56,8 +60,11 @@ var _pool: Array[MeshInstance3D] = []
 var _found: Array[Enemy] = []
 
 
-func add_warning(at: Vector2, radius: float, time: float, damage: float) -> Zone:
-	return _add(Kind.WARNING, Shape.CIRCLE, at, Vector2.DOWN, radius, 0.0, time, damage)
+## burst: the colour of the magic where the blow lands (the caster's EnemyDef.magic_color); alpha 0: the default.
+func add_warning(at: Vector2, radius: float, time: float, damage: float, burst := Color(0, 0, 0, 0)) -> Zone:
+	var z := _add(Kind.WARNING, Shape.CIRCLE, at, Vector2.DOWN, radius, 0.0, time, damage)
+	z.land_color = burst
+	return z
 
 
 func add_line_warning(from: Vector2, dir: Vector2, length: float, width: float, time: float, damage: float) -> Zone:
@@ -136,7 +143,7 @@ func step(dt: float) -> void:
 func _land(z: Zone) -> void:
 	var center := z.pos + (z.dir * z.radius * 0.5 if z.shape == Shape.LINE else Vector2.ZERO)
 	if z.shape == Shape.CIRCLE:
-		fx.ring(z.pos, z.radius * 1.1, Color(1.0, 0.3, 0.2), 0.3)
+		fx.ring(z.pos, z.radius * 1.1, z.land_color if z.land_color.a > 0.0 else LAND_COLOR, 0.3)
 		fx.burst(&"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
 	if player and player.alive() and inside(z, player.pos, Player.RADIUS * 0.6):
 		hit_player.emit(z.power, center)

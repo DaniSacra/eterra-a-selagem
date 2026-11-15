@@ -31,6 +31,9 @@ uniform float foot_height = 1.2;
 // grazing angle).
 uniform float ink = 0.0;
 uniform float ink_from = 0.55;
+// The palette's glowing cells (tools/make_palettes.gd: the last four of its bottom row, eyes, embers, gems) shine
+// this much by themselves.
+uniform float glow = 2.2;
 // Flash strength above which the body is drawn pure white.
 uniform float white_from = 0.75;
 
@@ -57,7 +60,8 @@ void fragment() {
 	if (state.a > 0.0 && hash(floor(UV * 96.0)) < state.a) {
 		discard;
 	}
-	vec3 c = texture(albedo, UV).rgb;
+	vec3 raw = texture(albedo, UV).rgb;
+	vec3 c = raw;
 	c = mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))), desaturate);
 	c *= tint.rgb;
 	c = mix(c, vec3(0.6, 0.85, 1.0), state.g * 0.65);
@@ -72,7 +76,8 @@ void fragment() {
 	float edge = smoothstep(0.35, 0.6, pow(1.0 - facing, 1.5));
 	EMISSION = vec3(1.8) * state.r + vec3(0.35, 0.7, 1.4) * state.g * 0.5 + vec3(2.0, 0.6, 0.1) * state.b * (0.4 + 0.4 * rim)
 		+ rim_color * (rim * 0.5 + edge) * rim_power + vec3(1.6, 0.5, 0.1) * state.a * 2.0
-		+ c * shade * (key_color * lit + hero_color * near * near * 0.55);
+		+ c * shade * (key_color * lit + hero_color * near * near * 0.55)
+		+ raw * glow * step(0.5, fract(UV.x)) * step(0.75, fract(UV.y));
 	if (state.r > white_from) {
 		ALBEDO = vec3(0.0);
 		EMISSION = vec3(3.0);

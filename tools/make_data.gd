@@ -4,8 +4,8 @@ extends SceneTree
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [feel]
 
 ## Elites wear a rose-red edge (the rim of crowd.gdshader and the thick outline of crowd_outline.gdshader).
-const ELITE_RIM := Color(1.0, 0.22, 0.3)
-const ELITE_RIM_POWER := 1.0
+const ELITE_RIM := Color(1.0, 0.68, 0.28)
+const ELITE_RIM_POWER := 0.7
 ## Finishers that swing an arc sweep this wide.
 const FINISHER_ARC := 270.0
 ## The run: 5 plays the 15-minute timeline in 3 (Morvath at 3:00); 1 = the full run. Spawning keeps its rate per
@@ -115,45 +115,48 @@ func _enemy(props: Dictionary) -> void:
 
 ## Each enemy takes the numbers of the Hades II enemy that plays the same part in its first region (life, speed,
 ## damage, attack timings, room-generator rating, elite armor), with our own creatures, names and look.
-## Sizes follow the height of each one next to the heroine there (200 tall = size 1).
+## Look: Daniel's sheet of the first region's enemies (docs/art/enemies_phase1.md): each one its own baked model and
+## palette (tools/bake.gd, tools/make_palettes.gd), sizes from the sheet's scale with the soldier at 1.15, the colour
+## of its magic. Radius: what it blocks and where blows reach it; it grows less than the figure (a taller enemy is
+## not much wider).
 func _enemies() -> void:
 	var B := EnemyDef.Behavior
 	# the foot soldier: walks up, raises its blade 0.9 s and lunges (Hades: the common melee shade)
-	_pair({"id": &"skeleton", "model": &"minion", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
+	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
 		"attack_damage": 3.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
 		"rating": 5.0}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
-	# the small fast one that bursts all around itself
-	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 0.6, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.35,
-		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7, "tint": Color(0.8, 0.85, 1.0),
-		"rating": 7.0}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
-	# the caster that shoots bolts from afar
-	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 0.9, "hp": 80.0, "speed": 340.0 / U, "damage": 4.0, "radius": 0.45,
-		"attack_damage": 4.0, "attack_range": 9.0, "attack_cooldown": 1.9, "attack_windup": 0.8,
+	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
+	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
+		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
+		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
+	# the caster that shoots bolts from afar (cold violet: Daniel, 2026-11-14)
+	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 340.0 / U, "damage": 4.0, "radius": 0.5,
+		"attack_damage": 4.0, "attack_range": 9.0, "attack_cooldown": 1.9, "attack_windup": 0.8, "magic_color": Color(1.7, 1.25, 3.2),
 		"rating": 12.0}, {"armor": 155.0, "speed": 440.0 / U, "rating": 24.0})
-	# the one that plants itself and blasts a wide cone
-	_pair({"id": &"archer", "model": &"rogue", "behavior": B.CONE, "size": 1.0, "hp": 130.0, "speed": 340.0 / U, "damage": 3.0, "radius": 0.5,
-		"attack_damage": 3.0, "attack_range": 5.0, "attack_width": 70.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "tint": Color(0.85, 0.95, 0.85),
+	# the crossbowman that plants itself and looses a wide fan of orange bolts
+	_pair({"id": &"archer", "model": &"archer", "behavior": B.CONE, "size": 1.27, "hp": 130.0, "speed": 340.0 / U, "damage": 3.0, "radius": 0.55,
+		"attack_damage": 3.0, "attack_range": 5.0, "attack_width": 70.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
 		"rating": 13.0}, {"armor": 190.0, "speed": 390.0 / U, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
-	_pair({"id": &"guard", "model": &"warrior", "behavior": B.KNIGHT, "size": 1.25, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.7,
+	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
 		"rating": 18.0}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
-	# the one rooted in place that drops blows from above
-	_pair({"id": &"priest", "model": &"mage", "behavior": B.CASTER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
-		"heavy": true, "attack_damage": 6.0, "attack_range": 16.0, "attack_cooldown": 2.2, "attack_windup": 1.0, "tint": Color(0.75, 0.7, 0.9),
+	# the one rooted in place that drops purple blows from above
+	_pair({"id": &"priest", "model": &"priest", "behavior": B.CASTER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
+		"heavy": true, "attack_damage": 6.0, "attack_range": 16.0, "attack_cooldown": 2.2, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0),
 		"rating": 22.0}, {"armor": 390.0, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
-	_enemy({"id": &"knight", "model": &"warrior", "size": 1.6, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.0,
+	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
 		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 12.0, "close_range": 3.2, "close_windup": 0.8,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
-	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"mage", "size": 1.5, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
-		"damage": 9.0, "radius": 0.9, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
-		"attack_cooldown": 3.4, "attack_windup": 1.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
+	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
+		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
+		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14
-	_enemy({"id": &"morvath", "model": &"morvath", "size": 1.6, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.2,
-		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "tint": Color(0.62, 0.52, 0.82), "rim_color": Color(0.7, 0.3, 1.0), "rim": 1.0})
+	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.4,
+		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": Color(1.9, 0.45, 3.0), "rim_color": Color(0.7, 0.3, 1.0), "rim": 0.45})
 
 
 ## An enemy and its elite version: the same, wearing an armor bar (Hades II "HealthBuffer"), faster and outlined.
@@ -167,6 +170,10 @@ func _pair(base: Dictionary, elite: Dictionary) -> void:
 	e["elite"] = true
 	e["rim_color"] = ELITE_RIM
 	e["rim"] = ELITE_RIM_POWER
+	# the same figure with old gold on its trims (tools/make_palettes.gd)
+	var gilded := "res://assets/models/palettes/%s_elite.png" % base.model
+	if ResourceLoader.exists(gilded):
+		e["palette"] = load(gilded)
 	for k: String in elite:
 		e[k] = elite[k]
 	_enemy(e)

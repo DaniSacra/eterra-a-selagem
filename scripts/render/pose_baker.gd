@@ -38,7 +38,8 @@ static func snapshot(root: Node3D, skeleton: Skeleton3D, extra: Array[Dictionary
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
 	var mesh := ArrayMesh.new()
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	# 16-bit positions, normals and UVs: the baked crowd is hundreds of frames, this halves it on disk and in memory
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, Mesh.ARRAY_FLAG_COMPRESS_ATTRIBUTES)
 	return mesh
 
 

@@ -118,10 +118,10 @@ func step(dt: float) -> void:
 			_anim(&"rain")
 			if _step < 3 and _t >= _step * 0.7:
 				_step += 1
-				game.ground.add_warning(p, 2.2, 0.9, e.def.attack_damage)
+				game.ground.add_warning(p, 2.2, 0.9, e.def.attack_damage, e.def.magic_color)
 				for k in 4 + phase:
 					var at := p + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(3.0, 11.0)
-					game.ground.add_warning(at, 2.0, _rng.randf_range(0.9, 1.5), e.def.attack_damage)
+					game.ground.add_warning(at, 2.0, _rng.randf_range(0.9, 1.5), e.def.attack_damage, e.def.magic_color)
 				Audio.play(&"rain")
 			if _t >= 2.6:
 				_rest(1.0)

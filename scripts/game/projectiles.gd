@@ -43,7 +43,8 @@ var _pools: Dictionary = {}
 var _found: Array[Enemy] = []
 
 
-func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, radius: float = 0.4, life: float = 3.0) -> Shot:
+## color: the shooter's magic (EnemyDef.magic_color) for bolts and orbs; alpha 0 keeps the kind's own look.
+func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, radius: float = 0.4, life: float = 3.0, color := Color(0, 0, 0, 0)) -> Shot:
 	var s := Shot.new()
 	s.kind = kind
 	s.pos = from
@@ -53,6 +54,8 @@ func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, 
 	s.life = life
 	s.node = _take(kind)
 	s.node.visible = true
+	if kind == Kind.BOLT or kind == Kind.ORB:
+		_tint(s.node, color if color.a > 0.0 else (LOOK[kind] as Array)[0])
 	_place(s)
 	shots.append(s)
 	return s
@@ -173,6 +176,14 @@ func _take(kind: Kind) -> Node3D:
 		mi.add_child(glow)
 	add_child(mi)
 	return mi
+
+
+## The colour of a pooled bolt or orb: its core and its glow.
+func _tint(node: Node3D, color: Color) -> void:
+	((node as MeshInstance3D).material_override as StandardMaterial3D).albedo_color = color
+	for c in node.get_children():
+		if c is MeshInstance3D and (c as MeshInstance3D).mesh is QuadMesh:
+			((c as MeshInstance3D).mesh.surface_get_material(0) as StandardMaterial3D).albedo_color = color
 
 
 func _release(s: Shot) -> void:

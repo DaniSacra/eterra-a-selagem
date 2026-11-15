@@ -1,19 +1,23 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_c3cuf"]
+[ext_resource type="Texture2D" path="res://assets/models/palettes/mage_elite.png" id="1_eypku"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_f1kby"]
 
 [resource]
-script = ExtResource("1_c3cuf")
+script = ExtResource("2_f1kby")
 id = &"mage_elite"
 name_key = &"enemy_mage"
 model = &"mage"
-size = 0.9
-rim_color = Color(1, 0.22, 0.3, 1)
-rim = 1.0
+palette = ExtResource("1_eypku")
+size = 1.27
+rim_color = Color(1, 0.68, 0.28, 1)
+rim = 0.7
+magic_color = Color(1.7, 1.25, 3.2, 1)
 behavior = 1
 hp = 80.0
 speed = 5.5
 damage = 4.0
+radius = 0.5
 elite = true
 armor = 155.0
 attack_damage = 4.0
