@@ -64,3 +64,21 @@ func test_warnings_know_who_stands_inside() -> void:
 	assert_true(Ground.inside(z, Vector2(30, 10)))
 	assert_false(Ground.inside(z, Vector2(-30, 0)), "behind the swing")
 	assert_false(Ground.inside(z, Vector2(50, 0)), "past the reach")
+
+
+## The crash Daniel hit (exported game, 0xc0000094): phase 1, the paladin far away, right after a dash left Morvath
+## nothing to choose, and `randi() % 0` took the game down.
+func test_morvath_always_has_an_attack_to_choose() -> void:
+	for phase in [1, 2, 3]:
+		for dist in [0.0, 5.0, 12.5, 40.0]:
+			for last: StringName in [&"", &"slashes", &"dash", &"rain", &"summon", &"volley"]:
+				for summon in [true, false]:
+					var options := BossRules.attacks(phase, dist, last, summon)
+					assert_gt(options.size(), 0, "phase %d dist %.1f last %s" % [phase, dist, last])
+					if dist > BossRules.SLASH_CHOICE_RANGE:
+						assert_false(options.has(&"slashes"), "no slashes from afar")
+
+
+func test_morvath_far_away_after_a_dash_dashes_again() -> void:
+	assert_eq(BossRules.attacks(1, 20.0, &"dash", false), [&"dash"] as Array[StringName])
+	assert_false(BossRules.attacks(1, 5.0, &"dash", false).has(&"dash"), "close by, he does not repeat the dash")

@@ -34,6 +34,29 @@ static func fan(aim: Vector2, count: int, spread: float) -> PackedVector2Array:
 	return out
 
 
+## Beyond this distance (m) the king does not choose his sword slashes.
+const SLASH_CHOICE_RANGE := 12.0
+
+
+## The attacks Morvath may choose next: what the phase allows, never his slashes from afar, and not the last one
+## again unless nothing else is left. Never empty: an empty list made `randi() % 0` crash the exported game
+## (phase 1, the paladin far away, right after a dash).
+static func attacks(phase: int, dist: float, last: StringName, can_summon: bool) -> Array[StringName]:
+	var out: Array[StringName] = [&"slashes", &"dash"]
+	if phase >= 2:
+		out.append(&"rain")
+		if can_summon:
+			out.append(&"summon")
+	if phase >= 3:
+		out.append(&"volley")
+		out.append(&"volley")
+	if dist > SLASH_CHOICE_RANGE:
+		out.erase(&"slashes")
+	var fresh := out.duplicate()
+	fresh.erase(last)
+	return fresh if not fresh.is_empty() else out
+
+
 ## Skeletons Morvath would raise in one summon at this phase (few, as the first boss of Hades II brings few helpers).
 static func summon_want(phase: int) -> int:
 	return 2 + phase

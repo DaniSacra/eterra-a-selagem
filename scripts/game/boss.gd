@@ -8,6 +8,9 @@ signal defeated
 
 enum State { ENTER, CHASE, SLASHES, DASH_WARN, DASH, SUMMON, RAIN, VOLLEY, ROAR, STUNNED, DYING }
 
+## The states Morvath chooses among, by the names BossRules.attacks uses.
+const ATTACKS := {&"slashes": State.SLASHES, &"dash": State.DASH_WARN, &"rain": State.RAIN, &"summon": State.SUMMON, &"volley": State.VOLLEY}
+const ATTACK_NAMES := {State.SLASHES: &"slashes", State.DASH_WARN: &"dash", State.RAIN: &"rain", State.SUMMON: &"summon", State.VOLLEY: &"volley"}
 const DASH_LENGTH := 16.0
 const DASH_TIME := 0.42
 const MIST_FROM := 46.0
@@ -144,18 +147,8 @@ func step(dt: float) -> void:
 
 ## Picks the next attack: never the same twice in a row, and only what the phase allows.
 func _choose(dist: float) -> void:
-	var options: Array[State] = [State.SLASHES, State.DASH_WARN]
-	if phase >= 2:
-		options.append(State.RAIN)
-		if _summon_count() > 0:
-			options.append(State.SUMMON)
-	if phase >= 3:
-		options.append(State.VOLLEY)
-		options.append(State.VOLLEY)
-	if dist > 12.0:
-		options.erase(State.SLASHES)
-	options.erase(_last as State)
-	var pick: State = options[_rng.randi() % options.size()]
+	var options := BossRules.attacks(phase, dist, ATTACK_NAMES.get(_last, &""), _summon_count() > 0)
+	var pick: State = ATTACKS[options[_rng.randi() % options.size()]]
 	_last = pick
 	_go(pick)
 	if pick == State.DASH_WARN:

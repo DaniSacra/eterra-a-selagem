@@ -236,6 +236,9 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 	var c := _clip(k, anim)
 	# BakedModel.frame_at
 	var n := c.batches.size()
+	if n == 0:
+		# a clip with no frames: draw nothing rather than `i % 0`, which crashes an exported game
+		return
 	var i := int(t * c.fps)
 	i = i % n if c.loops else mini(i, n - 1)
 	var b := c.batches[i]
