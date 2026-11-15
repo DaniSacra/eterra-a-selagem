@@ -96,7 +96,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Daniel; nada de arte, nome, história ou som copiado). Notas do estudo: fora do repositório (scratchpad da sessão).
 - Escala: 80 unidades do Hades = 1 m (andar 540 = 6,75 m/s; heroína de 200 de altura = paladino de 2,5 m). `U` em `make_data.gd`.
 - Salas: `RunMap` (`core/run_map.gd`: abertura com dom, portas que mostram a recompensa, guardião entre as salas 4 e 6,
-  uma fonte entre 5 e 8, loja na 10, Morvath na 11; **encurtado para teste**: fonte na 2, guardião na 3, loja na 4, Morvath na 5, `_stage` em `make_data.gd`), `EncounterGen` (`core/encounter_gen.gd`: dificuldade 55 + 15 por sala,
+  uma fonte entre 5 e 8, loja na 10, Morvath na 11; **encurtado para teste**: fonte na 2, guardião na 3, loja na 4, Morvath na 5, elites desde a sala 2 (`elite_from_depth`; no Hades, 3), `_stage` em `make_data.gd`), `EncounterGen` (`core/encounter_gen.gd`: dificuldade 55 + 15 por sala,
   1 a 3 ondas, 2 a 3 tipos, no máximo 1 tipo de elite, próxima onda com 1 inimigo de pé, limite 4 + 0,35 por sala), dados
   em `data/stages/catacombs.tres` (`StageDef`, `RoomLayout`). Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
   portas, fonte, loja (pisar compra), chefe. Magia enche em toda sala; sem experiência nem níveis.

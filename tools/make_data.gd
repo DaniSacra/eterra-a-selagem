@@ -316,6 +316,8 @@ func _stage() -> void:
 	# short descent for testing (Daniel, 2026-11-14): fight, fountain, guardian, shop, Morvath in room 5.
 	# Hades II's region: rooms 10, guardian 4 to 6, fountain 5 to 8.
 	st.rooms = 4
+	# elites from the 2nd room while the descent is short (Hades II: from depth 3); back to 3 with the full region
+	st.elite_from_depth = 2
 	st.miniboss_depth_min = 3
 	st.miniboss_depth_max = 3
 	st.minibosses = [&"knight", &"priest_elder"]
