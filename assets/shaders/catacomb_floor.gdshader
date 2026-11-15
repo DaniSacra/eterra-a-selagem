@@ -52,7 +52,7 @@ uniform float metal_left = 0.55;
 uniform float metal_cover = 0.7;
 // The band: curved stones (how many, their joint's width), their value and worn grain, the bevel along both rims
 // (width; value on the side turned to the key light and on the side away), the groove round it (width, darkness), the
-// runes cut in it (how many, stroke width, height as a share of the band, darkness, share worn away), and how far
+// runes cut in it (how many, stroke width, half their height as a share of the band, darkness, share worn away), and how far
 // (m, min to max) its four cracks run on into the slabs.
 uniform float band_stones = 16.0;
 uniform float band_joint = 0.04;
@@ -62,11 +62,19 @@ uniform float band_bevel = 0.14;
 uniform vec2 bevel_value = vec2(1.4, 0.42);
 uniform float band_groove = 0.12;
 uniform float groove_dark = 0.5;
-uniform float runes = 32.0;
-uniform float rune_stroke = 0.05;
-uniform float rune_size = 0.3;
-uniform float rune_dark = 0.6;
-uniform float rune_worn = 0.3;
+uniform float runes = 24.0;
+uniform float rune_stroke = 0.12;
+uniform float rune_size = 0.38;
+uniform float rune_dark = 0.95;
+uniform float rune_worn = 0.14;
+// Cycle 6, so the runes read as cuts from the game's camera: how wide a rune is (share of its height), the lit lip on
+// the far wall of each cut (width in m, how much lighter than the band), and the worn bronze thread in the bottom of
+// one rune in three (share of them, how much of it is left).
+uniform float rune_wide = 0.75;
+uniform float rune_lip = 0.035;
+uniform float rune_light = 1.3;
+uniform float rune_bronze = 0.34;
+uniform float rune_bronze_left = 0.4;
 uniform vec2 crack_run = vec2(0.6, 1.2);
 // The points: value of their light and dark halves, the groove along their edges.
 uniform vec2 point_value = vec2(1.1, 0.7);
@@ -166,6 +174,39 @@ float seg(vec2 p, vec2 a, vec2 b) {
 	return length(p - a - ab * clamp(dot(p - a, ab) / dot(ab, ab), 0.0, 1.0));
 }
 
+// The rune cut in the band at q (the medallion's turned space; the band runs from inner to outer): 1 in its strokes.
+// A stroke along the radius and one to three of a slanted branch, a shorter one under it, a loose tick beside it:
+// abstract cuts like twigs, with no crossing strokes, no right angle and no ring (so no cross, letter, number or
+// sign comes out of them). Wear rubs away pieces of the strokes, not whole runes. core: the middle of the strokes;
+// cell: which rune.
+float rune_at(vec2 q, float inner, float outer, out float core, out float cell) {
+	float turn = 6.2831853 / runes;
+	float k = floor(atan(q.y, q.x) / turn);
+	float a = (k + 0.5) * turn;
+	vec2 ax = vec2(cos(a), sin(a));
+	vec2 l = vec2(dot(q, ax) - (outer + inner) * 0.5, dot(q, vec2(-ax.y, ax.x)));
+	float h = (outer - inner) * rune_size;
+	float w = h * rune_wide;
+	float hs = hash1(vec2(k, 3.0));
+	float pick = hash1(vec2(k, 5.0));
+	float u0 = (hash1(vec2(k, 9.0)) - 0.5) * h;
+	float side = hs > 0.5 ? 1.0 : -1.0;
+	float dist = seg(l, vec2(-h, 0.0), vec2(h, 0.0));
+	if (pick < 0.4 || hs > 0.6) {
+		dist = min(dist, seg(l, vec2(u0, 0.0), vec2(u0 + h * 0.55, w * side)));
+	}
+	if (pick >= 0.4 || hs < 0.25) {
+		dist = min(dist, seg(l, vec2(-h * 0.15, -w * side), vec2(h * 0.7, -w * side * 0.8)));
+	}
+	if (pick > 0.7) {
+		dist = min(dist, seg(l, vec2(u0 - h * 0.5, 0.0), vec2(u0 - h * 0.15, w * side * 0.6)));
+	}
+	float worn = smoothstep(rune_worn - 0.08, rune_worn + 0.08, noise(q * 6.0 + k));
+	core = line_at(dist, rune_stroke * 0.2) * worn;
+	cell = k;
+	return line_at(dist, rune_stroke * 0.5) * worn;
+}
+
 // The medallion carved in the floor (a compass rose of eight points on a ring of sixteen stones). Returns x = how much
 // darker or lighter the stone is painted (a multiplier), y = the bronze thread, z = how raised it is (band 1, points 2:
 // the slab joints fade under it), w = the dark of its grooves, runes and cracks. Its outward normal tilt (floor space)
@@ -209,27 +250,15 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 		float face = out_b * dot(radial, lit) - in_b * dot(radial, lit);
 		float bev = mix(bevel_value.y, bevel_value.x, smoothstep(-0.55, 0.55, face));
 		float v = mix(band_value, bev, max(out_b, in_b));
-		// the runes: a stroke along the radius and one or two of a short bar across, a slant, a ring, worn in places
-		float step32 = 6.2831853 / runes;
-		float k32 = floor(ang / step32);
-		float a32 = (k32 + 0.5) * step32;
-		vec2 ax = vec2(cos(a32), sin(a32));
-		vec2 l = vec2(dot(q, ax) - (outer + inner) * 0.5, dot(q, vec2(-ax.y, ax.x)));
-		float h = (outer - inner) * rune_size;
-		float hs = hash1(vec2(k32, 3.0));
-		float rune = line_at(seg(l, vec2(-h, 0.0), vec2(h, 0.0)), rune_stroke * 0.5);
-		float pick = hash1(vec2(k32, 5.0));
-		float u0 = (hash1(vec2(k32, 9.0)) - 0.5) * h;
-		if (pick < 0.4 || hs > 0.6) {
-			rune = max(rune, line_at(seg(l, vec2(u0, 0.0), vec2(u0 + h * 0.3, h * 0.55 * (hs > 0.5 ? 1.0 : -1.0))), rune_stroke * 0.5));
-		}
-		if (pick >= 0.4 || hs < 0.25) {
-			rune = max(rune, line_at(seg(l, vec2(h * 0.45, -h * 0.4), vec2(h * 0.45, h * 0.4)), rune_stroke * 0.5));
-		}
-		if (pick > 0.75) {
-			rune = max(rune, line_at(length(l - vec2(-h * 0.5, h * 0.35)) - h * 0.22, rune_stroke * 0.5));
-		}
-		rune *= smoothstep(rune_worn - 0.1, rune_worn + 0.1, noise(q * 2.3 + k32));
+		// the runes, the lit lip on the far wall of each cut (so it reads as carved) and the bronze left in some
+		float rune_core;
+		float rune_cell;
+		float rune = rune_at(q, inner, outer, rune_core, rune_cell);
+		float lip_core;
+		float lip_cell;
+		float lip = clamp(rune_at(q + lit * rune_lip, inner, outer, lip_core, lip_cell) - rune, 0.0, 1.0);
+		v *= mix(1.0, rune_light, lip);
+		metal = max(metal, rune_core * step(hash1(vec2(rune_cell, 17.0)), rune_bronze) * rune_bronze_left);
 		groove = max(groove, max(joint, rune * rune_dark));
 		shade = mix(shade, v * stone_v, band);
 		raised = band;

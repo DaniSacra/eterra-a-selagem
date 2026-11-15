@@ -27,13 +27,16 @@ const ROBE_HEM := 0.2
 const ROBE_CHEST := 0.13
 const ROBE_TOP := 0.78
 const PLEATS := 7
-const PLEAT_DEPTH := 0.025
+const PLEAT_DEPTH := 0.04
 ## Where the pleats fade out (share of the height: up to the chest), the belt (height, thickness), the sleeves' mouth
 ## (radius) over the hands, the two steps of the carved base (each as a share of the statue's height).
 const PLEAT_TOP := 0.72
 const BELT := Vector2(0.55, 0.03)
 const SLEEVE := 0.07
 const BASE_STEPS := Vector2(0.06, 0.04)
+## The shoulders' half width and the arms' reach from the middle (shares of the height; cycle 6: 1.4 times broader).
+const SHOULDERS := 0.2
+const ARM_OUT := 0.165
 const HOOD_AT := 0.86
 const HOOD_FORWARD := 0.03
 const HANDS_AT := 0.6
@@ -46,12 +49,31 @@ const POT_BELLY := 0.38
 ## Standing stones: the share of their columns cracked upright, the frame round their niche.
 const OBELISK_CRACKS := 0.3
 const OBELISK_FRAME := 0.08
-const WAX := Color(0.95, 0.7, 0.5)
-## The wax lit a little from inside by its flame, so its shaded side stays cream under the cold teal air (not olive).
-const WAX_GLOW := Color(0.12, 0.05, 0.015)
-const CANDLE_FLAME := 0.3
-const CANDLE_FIRE := Color(2.3, 1.4, 0.55)
-const CLAY := Color(0.55, 0.2, 0.1)
+const WAX := Color(1.0, 0.8, 0.55)
+## The wax lit from inside by its flame, so its shaded side stays amber under the cold teal air (not olive): strongest
+## at the top, this share of it at the foot. The pool of wax run down round the foot (times the candle's radius).
+const WAX_GLOW := Color(0.36, 0.14, 0.04)
+const WAX_GLOW_FOOT := 0.55
+const WAX_POOL := 1.8
+## A candle's flame: its size (m), the orange tongue, the near-white core inside it and the core's share of the size.
+const CANDLE_FLAME := 0.34
+const CANDLE_FIRE := Color(2.3, 1.1, 0.35)
+const CANDLE_CORE := Color(2.6, 2.0, 1.1)
+const CANDLE_CORE_SIZE := 0.55
+## Terracotta, dark in the shade (cycle 6: the pots were too orange).
+const CLAY := Color(0.45, 0.18, 0.1)
+const CLAY_RIM := 0.08
+## Crates (dark wood with darker corner posts and bands, in place of the kit's pale-framed box): the planks' two
+## values, the posts' and bands' colour, the width of a plank (m), the posts' width and the bands' height (shares of
+## the crate's size), how far they stand out (m).
+const WOOD_A := Color(0.19, 0.125, 0.09)
+const WOOD_B := Color(0.26, 0.175, 0.125)
+const WOOD_JOINT := Color(0.045, 0.03, 0.025)
+const WOOD_FRAME := 0.5
+const PLANK := 0.24
+const CRATE_POST := 0.14
+const CRATE_BAND := 0.12
+const CRATE_PROUD := 0.035
 ## Bevelled stone (no bare box anywhere): the chamfer on every edge (CHAMFER on blocks up to CHAMFER_BIG_AT meters,
 ## CHAMFER_BIG on bigger ones); blocks up to VARY_MAX meters are each set a little askew (yaw, tilt in degrees), a
 ## little smaller on each axis (down to VARY_SCALE), and a share of them (CHIPPED) has one corner knocked off (the
@@ -88,17 +110,21 @@ const FINIAL := 0.3
 ## Pendants longer than this (m) grow two smaller teeth off their sides.
 const PENDANT_SIDE_TEETH := 0.9
 const CLAY_DARK := Color(0.3, 0.1, 0.06)
+## How much of the mist the stone of the depths takes far away (depth_stone).
+const DEPTH_FADE := 0.8
 
 var root: Node3D
 ## Visual layers given to what is built next (the depths take ArenaKit.DEPTH_LAYER too, for their own lights).
 var layers := 1
 var _mats := {}
 var _clay: StandardMaterial3D
-var _depth: ShaderMaterial
+var _depths := {}
 var _mouth: StandardMaterial3D
 var _wax: StandardMaterial3D
 var _wax_mesh: CylinderMesh
 var _flame: QuadMesh
+var _flame_core: QuadMesh
+var _wood := {}
 var _statue_mesh: ArrayMesh
 var _statue_mats := {}
 var _bevels := {}
@@ -141,13 +167,18 @@ func ashlar(base_y: float = 0.0, tint := Color.WHITE) -> ShaderMaterial:
 	return _mats[key]
 
 
-## The unlit stone of the far depths (depth_stone.gdshader): dark shapes fading into a mist of colour `mist`.
-func depth_stone(mist: Color) -> ShaderMaterial:
-	if _depth == null:
-		_depth = ShaderMaterial.new()
-		_depth.shader = DEPTH_SHADER
-		_depth.set_shader_parameter(&"mist_color", mist)
-	return _depth
+## The unlit stone of the far depths (depth_stone.gdshader): dark shapes fading into a mist of colour `mist`. fade:
+## how much of the mist the far ones take (the near masses less: they stand dark against it); tint: of the stone.
+func depth_stone(mist: Color, fade := DEPTH_FADE, tint := 1.0) -> ShaderMaterial:
+	var key := "%.2f|%.2f" % [fade, tint]
+	if not _depths.has(key):
+		var d := ShaderMaterial.new()
+		d.shader = DEPTH_SHADER
+		d.set_shader_parameter(&"mist_color", mist)
+		d.set_shader_parameter(&"fade_max", fade)
+		d.set_shader_parameter(&"tint", tint)
+		_depths[key] = d
+	return _depths[key]
 
 
 ## A box of stone: its centre, size and turn around Y. Bevelled (bevel_mesh); a small one (vary) is also set a little
@@ -572,7 +603,7 @@ func _build_statue() -> ArrayMesh:
 		Vector2(belt_r * 1.03, BELT.x), Vector2(belt_r, BELT.x + BELT.y * 0.5), Vector2(0.0, BELT.x + BELT.y * 0.5)]
 	_lathe(st, belt, Transform3D.IDENTITY, stone_v * 0.8)
 	# shoulders and the cape over them, a flattened ball
-	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.15, 0.05, 0.1)), Vector3(0, 0.755, -0.01)), stone_v)
+	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(SHOULDERS, 0.055, 0.11)), Vector3(0, 0.755, -0.01)), stone_v)
 	# the hood, pulled forward, and its point falling behind
 	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.068, 0.088, 0.08)), Vector3(0, HOOD_AT, HOOD_FORWARD)), stone_v)
 	var tip: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.045, 0.0), Vector2(0.0, 0.11)]
@@ -583,7 +614,7 @@ func _build_statue() -> ArrayMesh:
 	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(MASK), Vector3(0, HOOD_AT - 0.016, HOOD_FORWARD + 0.082)), Color.WHITE)
 	# the arms from the shoulders down to the hands joined on the chest, in wide sleeves that hide the hands
 	for s in [-1.0, 1.0]:
-		var from := Vector3(s * 0.12, 0.74, 0.02)
+		var from := Vector3(s * ARM_OUT, 0.74, 0.02)
 		var to := Vector3(s * 0.035, HANDS_AT, ROBE_CHEST + 0.02)
 		var up := (to - from).normalized()
 		var side := up.cross(Vector3.FORWARD).normalized()
@@ -641,7 +672,7 @@ func pot(at: Vector3, size: float = 0.9) -> void:
 		_clay.albedo_color = CLAY
 		_clay.roughness = 0.75
 		_clay.rim_enabled = true
-		_clay.rim = 0.2
+		_clay.rim = CLAY_RIM
 		_mouth = StandardMaterial3D.new()
 		_mouth.albedo_color = CLAY_DARK * 0.2
 	var body := MeshInstance3D.new()
@@ -686,7 +717,8 @@ func pot(at: Vector3, size: float = 0.9) -> void:
 	_add(mouth)
 
 
-## A thick candle of cream wax with drips at its foot, and its flame (unlit, glowing). height, radius in meters.
+## A thick candle of cream wax, the wax run down in a wide pool round its foot, and its flame (unlit, glowing: an
+## orange tongue with a near-white core). height, radius in meters.
 func candle(at: Vector3, height: float, radius: float) -> void:
 	if _wax == null:
 		_wax = StandardMaterial3D.new()
@@ -696,13 +728,17 @@ func candle(at: Vector3, height: float, radius: float) -> void:
 		_wax.rim = 0.3
 		_wax.emission_enabled = true
 		_wax.emission = WAX_GLOW
+		_wax.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
+		_wax.emission_texture = _wax_glow()
 		_wax_mesh = CylinderMesh.new()
 		_wax_mesh.top_radius = 1.0
 		_wax_mesh.bottom_radius = 1.0
 		_wax_mesh.height = 1.0
-		_wax_mesh.radial_segments = 8
+		_wax_mesh.radial_segments = 10
 		_wax_mesh.rings = 1
-		_flame = ArenaKit.tongue(Vector2(CANDLE_FLAME * 0.6, CANDLE_FLAME * 1.3), CANDLE_FIRE)
+		var size := Vector2(CANDLE_FLAME * 0.6, CANDLE_FLAME * 1.3)
+		_flame = ArenaKit.tongue(size, CANDLE_FIRE)
+		_flame_core = ArenaKit.tongue(size * CANDLE_CORE_SIZE, CANDLE_CORE)
 	var body := MeshInstance3D.new()
 	body.mesh = _wax_mesh
 	body.material_override = _wax
@@ -712,13 +748,70 @@ func candle(at: Vector3, height: float, radius: float) -> void:
 	var drip := MeshInstance3D.new()
 	drip.mesh = _wax_mesh
 	drip.material_override = _wax
-	drip.transform = Transform3D(Basis.from_scale(Vector3(radius * 1.5, height * 0.18, radius * 1.5)), at + Vector3(0, height * 0.09, 0))
+	drip.transform = Transform3D(Basis.from_scale(Vector3(radius * WAX_POOL, 0.04, radius * WAX_POOL)), at + Vector3(0, 0.0, 0))
 	_add(drip)
-	var f := MeshInstance3D.new()
-	f.mesh = _flame
-	f.position = at + Vector3(0, height + CANDLE_FLAME * 0.4, 0)
-	f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_add(f)
+	var run := MeshInstance3D.new()
+	run.mesh = _wax_mesh
+	run.material_override = _wax
+	run.transform = Transform3D(Basis.from_scale(Vector3(radius * 1.25, height * 0.3, radius * 1.25)), at + Vector3(radius * 0.12, height * 0.15, 0))
+	_add(run)
+	for mesh: QuadMesh in [_flame, _flame_core]:
+		var f := MeshInstance3D.new()
+		f.mesh = mesh
+		f.position = at + Vector3(0, height + CANDLE_FLAME * 0.4 * (1.0 if mesh == _flame else CANDLE_CORE_SIZE), 0)
+		f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		_add(f)
+
+
+## How much of the wax's glow each part of a candle takes (the cylinder's UVs: its side in the upper half of the
+## texture, top to foot; its top cap in the lower left, its bottom cap in the lower right).
+func _wax_glow() -> ImageTexture:
+	var h := 16
+	var img := Image.create(2, h, false, Image.FORMAT_L8)
+	for y in h:
+		var v := (y + 0.5) / h
+		for x in 2:
+			var foot := v * 2.0 if v < 0.5 else float(x)
+			img.set_pixel(x, y, Color.WHITE * lerpf(1.0, WAX_GLOW_FOOT, clampf(foot, 0.0, 1.0)))
+	return ImageTexture.create_from_image(img)
+
+
+## A wooden crate standing at `foot` (the middle of its base): planks, darker corner posts and bands at top and bottom.
+func crate(foot: Vector3, size: Vector3, yaw: float = 0.0) -> void:
+	var wood := _wood_mat(foot.y, 1.0)
+	var frame := _wood_mat(foot.y, WOOD_FRAME)
+	var inner := size - Vector3(CRATE_PROUD, 0.0, CRATE_PROUD) * 2.0
+	block(foot, inner, yaw, wood, false)
+	var basis := Basis(Vector3.UP, yaw)
+	var post := maxf(size.x, size.z) * CRATE_POST
+	for sx: float in [-1.0, 1.0]:
+		for sz: float in [-1.0, 1.0]:
+			block(foot + basis * Vector3(sx * (size.x - post) * 0.5, 0, sz * (size.z - post) * 0.5), Vector3(post, size.y, post), yaw, frame, false)
+	var band := size.y * CRATE_BAND
+	for y: float in [0.0, size.y - band]:
+		block(foot + Vector3(0, y, 0), Vector3(size.x - post * 0.5, band, size.z - post * 0.5), yaw, frame, false)
+
+
+## Wood for the crates: the stone's shader with planks for courses (their joints the gaps between the boards).
+func _wood_mat(base_y: float, value: float) -> ShaderMaterial:
+	var key := "%.1f|%.2f" % [base_y, value]
+	if not _wood.has(key):
+		var w := ShaderMaterial.new()
+		w.shader = SHADER
+		w.set_shader_parameter(&"base_y", base_y)
+		w.set_shader_parameter(&"stone_a", WOOD_A * value)
+		w.set_shader_parameter(&"stone_b", WOOD_B * value)
+		w.set_shader_parameter(&"joint_color", WOOD_JOINT)
+		w.set_shader_parameter(&"course", PLANK)
+		w.set_shader_parameter(&"block_len", 3.0)
+		w.set_shader_parameter(&"block_var", 0.2)
+		w.set_shader_parameter(&"joint_width", 0.02)
+		w.set_shader_parameter(&"chipped", 0.0)
+		w.set_shader_parameter(&"grime_height", 0.4)
+		w.set_shader_parameter(&"rock_normal", ROCK_NORMAL)
+		w.set_shader_parameter(&"rock_height", ROCK_HEIGHT)
+		_wood[key] = w
+	return _wood[key]
 
 
 func _add(mi: GeometryInstance3D) -> void:

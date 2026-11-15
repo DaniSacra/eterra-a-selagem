@@ -12,10 +12,14 @@ uniform vec2 size = vec2(3.8, 4.6);
 uniform float top_value = 0.65;
 uniform float side_dark = 0.3;
 // The wisps: how much they change the light, how fast they rise (m/s).
-uniform float wisp = 0.15;
+uniform float wisp = 0.22;
 uniform float rise = 0.08;
-// The two lighter patches at the foot: how much lighter.
-uniform float mouth = 0.45;
+// The two lighter patches at the foot and the wider one in the middle, up to half the height: how much lighter.
+uniform float mouth = 0.8;
+uniform float heart = 0.5;
+// The sheet cut to a pointed arch: x = the springing's height over the sheet's foot, y = the span, z = the radius of
+// the two arcs (m; their centres on the springing line). Zero span: the whole rectangle glows.
+uniform vec3 arch = vec3(0.0);
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -52,5 +56,13 @@ void fragment() {
 	vec2 a = (m - vec2(size.x * 0.33, 0.35)) / vec2(0.7, 0.45);
 	vec2 b = (m - vec2(size.x * 0.68, 0.3)) / vec2(0.6, 0.4);
 	v += mouth * (exp(-dot(a, a)) + exp(-dot(b, b)));
+	vec2 c = (m - vec2(size.x * 0.5, size.y * 0.2)) / vec2(size.x * 0.32, size.y * 0.3);
+	v += heart * exp(-dot(c, c));
+	if (arch.y > 0.0) {
+		float off = abs(m.x - size.x * 0.5);
+		float cx = arch.z - arch.y * 0.5;
+		float d = m.y > arch.x ? length(vec2(off + cx, m.y - arch.x)) - arch.z : off - arch.y * 0.5;
+		v *= 1.0 - smoothstep(-0.05, 0.0, d);
+	}
 	ALBEDO = color * max(v, 0.0) * power * (0.96 + 0.04 * sin(TIME * 1.3));
 }

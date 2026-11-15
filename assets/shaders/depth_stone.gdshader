@@ -6,6 +6,8 @@ shader_type spatial;
 render_mode unshaded, fog_disabled, cull_back;
 
 uniform vec3 stone_color : source_color = vec3(0.052, 0.095, 0.12);
+// Multiplies the stone and its cold edge (the iron pylon of the chains is darker than the stone).
+uniform float tint = 1.0;
 // The tops of capitals, arches and cornices take a thin cold edge (the mist's light from above); the upright faces
 // only a faint one on the side turned to the light (from the north-west, high).
 uniform vec3 edge_color : source_color = vec3(0.07, 0.24, 0.3);
@@ -69,7 +71,7 @@ void fragment() {
 	float lit = clamp(dot(wnormal, normalize(light_dir)), 0.0, 1.0) * (1.0 - smoothstep(0.3, 0.6, wnormal.y));
 	float top = smoothstep(0.6, 0.9, wnormal.y);
 	c = mix(c, edge_color * (0.7 + 0.3 * id), max(top * 0.85, lit * 0.45) * smoothstep(-10.0, 8.0, world.y));
-	c *= 1.0 - joint * joint_dark;
+	c *= (1.0 - joint * joint_dark) * tint;
 	float dist = length(world - CAMERA_POSITION_WORLD);
 	float fade = smoothstep(fade_near, fade_far, dist) * fade_max;
 	fade = max(fade, smoothstep(sink_top, sink_bottom, world.y));

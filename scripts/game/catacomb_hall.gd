@@ -47,22 +47,40 @@ const SOUTH_GAP := Vector2(6.4, 10.8)
 ## The north-west pier (fire bowl, statue) and the giant's pier and tower out to the west.
 const NW_PIER := Vector2(-12.4, -18.3)
 const GIANT_BOWL := Vector2(-23.0, -4.4)
-const GIANT := Vector3(-26.0, -4.4, 7.0)
+const GIANT := Vector3(-26.0, -4.4, 8.3)
 ## Height of the giant's feet (its tower and plinth end just under it): the hood's top lands near the picture's top.
 const GIANT_FOOT := -0.4
-## The fire bowl's light up the giant's robe (warm only on its hem and hands, the rest stays dark stone).
-const GIANT_UPLIGHT := 2.5
-const GIANT_TINT := Color(0.14, 0.12, 0.12)
+## The fire bowl's light on the giant (cycle 6: the giant is out of the bowl's own light, so it stays dark neutral
+## stone and only the side turned to the fire is warm): energy, range, cone, and the share of the giant's height it
+## aims at.
+const GIANT_UPLIGHT := 6.0
+const GIANT_UPLIGHT_RANGE := 8.0
+const GIANT_UPLIGHT_CONE := 30.0
+const GIANT_UPLIGHT_AIM := 0.45
+const GIANT_TINT := Color(0.23, 0.21, 0.21)
+## The pile of rough blocks the giant and its bowl stand on, out of the abyss (dark, out of the fires' light): the
+## stone's tint; the courses from the top down (each: height of its top, then its blocks as x middle, x width, z depth).
+const PILE_TINT := 0.55
+const PILE_FOOT := -6.2
+const PILE_COURSES: Array[Array] = [
+	[-1.25, [Vector3(-26.2, 4.3, 4.5), Vector3(-22.9, 2.3, 3.4)]],
+	[-2.9, [Vector3(-27.0, 2.9, 4.8), Vector3(-24.4, 2.2, 4.3), Vector3(-22.4, 1.9, 3.9)]],
+	[-4.5, [Vector3(-26.6, 3.4, 5.0), Vector3(-23.3, 3.3, 4.5)]],
+]
 const DEPTH := 26.0
 ## Where the fixed showcase camera looks: the floor point at the middle of the reference image.
 const SHOWCASE := Vector3(-2.0, 0, 0)
 ## Candles: their height and radius ranges (m), the warm halo over a cluster, one warm light per cluster.
-const CANDLE_HEIGHT := Vector2(0.3, 0.9)
-const CANDLE_RADIUS := Vector2(0.07, 0.11)
+const CANDLE_HEIGHT := Vector2(0.3, 1.1)
+const CANDLE_RADIUS := Vector2(0.12, 0.22)
+## A cluster has 3 to CANDLE_MAX candles (one tall and thick, one or two of middle height, the rest stubs); those
+## standing on something (a plinth, a crate) are this share of the size and may be fewer.
+const CANDLE_MAX := 5
+const CANDLE_ON_TOP := 0.6
 const CANDLE_HALO := 0.5
 const CANDLE_HALO_ALPHA := 0.35
-const CANDLE_LIGHT := 2.6
-const CANDLE_RANGE := 3.5
+const CANDLE_LIGHT := 1.5
+const CANDLE_RANGE := 2.8
 const ABYSS_LIGHT := Color(0.55, 0.25, 1.0)
 const ABYSS_LIGHT_ENERGY := 5.0
 ## The violet lights stand this low, so only the foot of the cliffs and piers turns violet.
@@ -92,8 +110,13 @@ const COLONNETTE := 0.13
 const COLONNETTE_ORDERS: Array[int] = [1, 3]
 ## The dark teeth hanging from the lintel against the light (share of the opening's width across, length, root width),
 ## their stone's darkness.
-const PENDANTS: Array[Vector3] = [Vector3(-0.3, 1.0, 0.55), Vector3(0.03, 2.3, 0.8), Vector3(0.24, 1.2, 0.6),
-	Vector3(0.41, 0.5, 0.4)]
+const PENDANTS: Array[Vector3] = [Vector3(-0.3, 0.7, 0.5), Vector3(0.03, 1.5, 0.7), Vector3(0.24, 0.9, 0.5),
+	Vector3(0.41, 0.4, 0.35)]
+## The opening is a pointed arch (cycle 6; the picture's, not a square doorway): the springing's height as a share of
+## the opening's, the ring of stone under the lintel that draws it (width, depth) and its stone's darkness.
+const PORTAL_SPRING := 0.5
+const PORTAL_INNER_RING := Vector2(0.32, 0.5)
+const PORTAL_INNER_TINT := 0.6
 const PENDANT_TINT := 0.4
 ## The tympanum over the lintel, set back behind the inmost order; the lit diamond window in it: its size (m, width and
 ## height), its frame and the stone cross dividing the glass, its glow.
@@ -109,11 +132,11 @@ const GABLE := Vector2(0.4, 0.2)
 const PINNACLE := Vector2(1.3, 1.8)
 ## The spill of the portal's light down the steps (energy, range, cone): it lights the floor, the steps and the
 ## fighters, not the facade nor the statues (FACADE_LAYER).
-const SPILL := Vector3(12.0, 16.0, 60.0)
+const SPILL := Vector3(6.5, 16.0, 60.0)
 ## Where the spill aims: this far into the hall from its north edge (the steps and the wet floor at their foot).
 const SPILL_AIM := 0.8
-## Its colour: the portal's green toward teal (the picture's steps are teal-green, not pure green).
-const SPILL_COLOR := Color(0.25, 0.95, 0.7)
+## Its colour: the portal's green, a little toward teal (cycle 6: less cyan, the picture's steps are a purer green).
+const SPILL_COLOR := Color(0.3, 1.0, 0.5)
 ## The cold light on the facade alone (its colour, energy, and where it shines from: x off the portal, height, z out
 ## of the facade), so the stone and the statues read dark teal against the green.
 const FACADE_FILL := Color(0.55, 0.74, 0.82)
@@ -135,95 +158,127 @@ const MULLION := 0.1
 ## The buttresses along the facade (x), and the bays between them that take a niche and a window (x).
 const BUTTRESSES: Array[float] = [-5.9, -3.6, 7.5, 12.6, 19.0]
 const BAYS: Array[float] = [10.05, 15.8]
+## The banners on the buttresses (plain: no emblem until Daniel names Eterra's): x, height of the bar over the dais,
+## width, length; how far in front of the facade's face they hang.
+const BANNERS: Array[Vector4] = [Vector4(-5.9, 5.9, 2.1, 4.6), Vector4(12.9, 6.8, 2.6, 5.8)]
+const BANNER_OUT := 1.3
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.92, 0.8, 0.78)
 const KEY_ENERGY := 5.6
 const KEY_HEIGHT := 9.0
 const KEY_RANGE := 16.0
-## Tint of the stone in the depths and of the walls under the platform (dark against the lighter mist).
-const FAR_TINT := 0.35
+## Tint of the walls under the platform (dark against the lighter mist).
 const CLIFF_TINT := 0.9
-## Planes of silhouettes in the abyss, across the showcase camera's view: each plane's distance from the camera (m),
-## the height of its piers' tops (every third one a step higher), their width, meters between two piers; planes reach
-## from this share of their distance left of the view's middle to this share right of it. Near planes are low, so
-## their capitals and arches read against the mist; far ones are tall, thin, broken and fade into it (the last plane's
-## piers stand from BROKEN to 1 of their height).
-const ROW_DIST: Array[float] = [68.0, 82.0, 98.0, 120.0]
-const ROW_TOPS: Array[float] = [7.0, 4.0, 16.0, 20.0]
-const ROW_WIDTHS: Array[float] = [1.8, 1.6, 1.4, 1.2]
-const ROW_SPANS: Array[float] = [8.5, 7.5, 6.5, 6.0]
-const ROW_STEP := 3.0
-const ROW_REACH := Vector2(0.52, 0.14)
-const BROKEN := 0.6
-## The arches between the piers of each plane: their arcs' radius as a share of the opening (0.5 round, more pointed),
-## the ring's width (share of the pier's), how far under the capital their apex stands (m), the share of them broken
-## off (only a stump of this share of the arch left on one side).
-const ROW_ARCS: Array[float] = [0.5, 0.75, 0.5, 0.8]
-const ARCH_RING := 0.5
-const ARCH_UNDER := 1.7
-const ARCH_BROKEN := 0.3
-const ARCH_STUMP := Vector2(0.25, 0.6)
-## String courses down each pier of the depths: how many, meters between them.
-const PIER_BANDS := 3
-const PIER_BAND_STEP := 4.0
-## The aqueduct of the near plane (to the west): which gap of piers it spans, its deck's height and thickness, how
-## many small arches carry it.
-const AQUEDUCT_GAP := 1
-const AQUEDUCT := Vector2(1.2, 0.9)
-const AQUEDUCT_ARCHES := 3
-## A broken bridge in each plane behind the first: which gap of piers it spans (counted from the west), how far under
-## the piers' tops its deck runs (m), and the share of its length missing in the middle.
-const BRIDGE_GAPS: Array[int] = [-1, 2, 1, 3]
-const BRIDGE_UNDER := 4.0
-const BRIDGE_MISSING := 0.3
+## The depths (cycle 6: three uneven masses near, cards of painted silhouettes far; no rows of equal piers). Everything
+## out there is placed across the showcase camera's view: d meters ahead of it, l meters right of its middle (left is
+## negative), at a height. How much the near masses fade into the mist (the tower of the chains least: dark iron).
+const NEAR_FADE := 0.5
+const PYLON_FADE := 0.12
+const PYLON_TINT := 0.55
+## The west bridge, running from the giant's tower out of the picture: its distance, the lateral range of its deck,
+## the deck (top height, thickness, depth).
+const BRIDGE_DIST := 69.0
+const BRIDGE := Vector2(-37.0, -18.6)
+const BRIDGE_DECK := Vector3(0.6, 1.2, 2.6)
+## On it: a tower of three stacked blocks (lateral, base width; each block's share of that width and its height), a
+## loose block (lateral, width, height), stumps of a broken parapet (lateral, length; their height).
+const BRIDGE_TOWER := Vector2(-22.4, 2.5)
+const BRIDGE_TOWER_BLOCKS: Array[Vector2] = [Vector2(1.0, 1.0), Vector2(0.78, 0.9), Vector2(0.58, 0.8)]
+const BRIDGE_CUBE := Vector3(-25.7, 1.7, 1.0)
+const BRIDGE_PARAPET: Array[Vector2] = [Vector2(-33.5, 3.0), Vector2(-28.4, 1.6), Vector2(-19.9, 1.4)]
+const BRIDGE_PARAPET_HEIGHT := 0.55
+## Under it, open to the violet behind: piers out of the mist (lateral, width), a pointed arch in each gap between
+## two of them (its apex this far under the deck, its ring's width); the pier with the lit window is the wide one.
+const BRIDGE_PIERS: Array[Vector2] = [Vector2(-18.9, 0.8), Vector2(-20.35, 0.5), Vector2(-21.8, 0.8), Vector2(-24.1, 1.7), Vector2(-28.6, 1.1),
+	Vector2(-32.6, 1.4), Vector2(-36.4, 1.2)]
+const BRIDGE_ARCH := Vector2(0.35, 0.4)
+## The middle gate, a wide dark block behind the hall's north-west corner: its distance, lateral range, top, depth;
+## its pointed arch (lateral of its middle, span, springing height, arc radius as a share of the span) and the ring
+## of stone over it; uneven merlons on top (lateral, width, height); a low wing west of it with a lancet (lateral of
+## its middle, opening width, sill height, apex height) and how far its top stands over that apex.
+const GATE_DIST := 88.0
+const GATE := Vector2(-16.3, -5.4)
+const GATE_TOP := -5.2
+const GATE_DEPTH := 2.4
+const GATE_ARCH := Vector4(-10.5, 5.2, -9.6, 0.68)
+const GATE_RING := 0.9
+## The dark of the passage behind the gate's arches (the violet glows against it), and how far behind them it stands.
+const GATE_PASSAGE := Color(0.02, 0.012, 0.045)
+const GATE_PASSAGE_BACK := 4.5
+## Its top this far under the gate's (so it never shows over it).
+const GATE_PASSAGE_UNDER := 3.0
+const GATE_MERLONS: Array[Vector3] = [Vector3(-15.4, 1.5, 0.9), Vector3(-12.6, 2.2, 0.5), Vector3(-9.6, 1.3, 1.1), Vector3(-6.5, 1.9, 0.6)]
+const GATE_WING := Vector4(-17.6, 1.5, -14.0, -8.6)
+const GATE_WING_OVER := 1.0
+## The far ruins: three cards of silhouettes drawn by abyss_ruins.gdshader (broken towers of stacked blocks, arches
+## and decks between some, a cave's roof and stalactites on the farthest), fixed across the view so they slide against
+## each other when the game's camera moves. Per card: distance; share of mist in its stone; width of a column of its
+## silhouettes (m); the towers' mean top and how much it varies (m: low, since the camera looks down on them); the
+## heights where its feet start to sink into the mist and where they are gone. All of it nearer than the camera's far
+## plane (160 m) from any place the game's camera stands. The cards' size (they reach from RUIN_TOP down), how far left
+## of the view's middle their middle is (share of their distance), the cave's roof on the last card (its height, how
+## much lower it hangs to the west, where along the card it starts to drop and is lowest).
+const RUIN_DIST: Array[float] = [98.0, 108.0, 120.0]
+const RUIN_HAZE: Array[float] = [0.25, 0.45, 0.65]
+const RUIN_COLUMN: Array[float] = [9.0, 6.5, 5.0]
+const RUIN_TOPS: Array[Vector2] = [Vector2(-6.5, 3.0), Vector2(-10.0, 3.5), Vector2(-14.5, 4.0)]
+const RUIN_SINK: Array[Vector2] = [Vector2(-9.0, -22.0), Vector2(-13.0, -26.0), Vector2(-18.0, -31.0)]
+const RUIN_SIZE := Vector2(300.0, 110.0)
+const RUIN_TOP := 24.0
+const RUIN_LEFT := 0.1
+const RUIN_ROOF := Vector4(-8.0, 12.0, -10.0, -32.0)
 ## Banks of pale mist between the planes (distance from the camera, height of their middle, size, opacity from the
 ## nearest to the farthest: the far planes sink deeper into it).
-const MIST_BANKS: Array[float] = [75.0, 90.0, 108.0]
-const MIST_Y := -1.0
-const MIST_SIZE := Vector2(120.0, 6.0)
+const MIST_BANKS: Array[float] = [94.0, 103.0, 114.0]
+const MIST_YS: Array[float] = [-15.0, -19.0, -24.0]
+const MIST_SIZE := Vector2(150.0, 12.0)
 const MIST_ALPHAS: Array[float] = [0.18, 0.28, 0.35]
-## The far veil of mist behind everything (distance from the camera, height of its middle, size, opacity, how much
-## lighter than the fog, how fine its mottle): the background up high is moving mist, never a flat card; it ends
-## above the violet glow low down (teal over it would grey the violet).
-const VEIL := Vector4(135.0, 5.0, 280.0, 90.0)
-const VEIL_ALPHA := 0.16
-const VEIL_LIGHT := 1.6
-const VEIL_GRAIN := 0.45
-## The violet glow cards: behind each gap of the near plane, rising from the mist (foot) to at most GLOW_TOP, only to
-## the west of the hall; energy shares for the west and the east ones.
+## The veil of mist behind everything is painted by the last card of ruins where no stone stands (opaque: no blended
+## card over the screen): how much lighter than the fog it is, and its two lighter patches (the picture's bright spots
+## up high: lateral on that card's distance, height, radii).
+const VEIL_LIGHT := 1.35
+const VEIL_PATCHES: Array[Vector4] = [Vector4(-27.1, -11.6, 6.5, 4.5), Vector4(-15.2, -14.6, 3.4, 3.8)]
+## The violet glow cards (cycle 6: only low down, never over the mist up high): in the gate's arches, under the
+## bridge, at the foot of the west side, and the east ones. West ones: distance, lateral, foot height, then width,
+## height, energy share, then its shape (ArenaKit.abyss_glow: reach, falloff, soft share of each side).
+const GLOW_WEST: Array[Array] = [
+	[90.6, -10.5, -20.0, 9.0, 14.5, 1.0, 1.0, 1.2, 0.2],
+	[90.3, -17.6, -19.0, 3.0, 10.0, 0.7, 1.0, 1.2, 0.3],
+	[72.5, -27.0, -22.0, 24.0, 21.5, 0.85, 1.0, 1.8, 0.15],
+	[62.0, -27.0, -25.0, 16.0, 25.0, 1.1, 1.0, 1.3, 0.25],
+	[56.0, -19.5, -25.0, 10.0, 23.0, 1.0, 1.0, 1.3, 0.3],
+]
+## East ones: rising from the mist (foot) to at most GLOW_TOP; their energy share.
 const GLOW_FOOT := -10.0
-const GLOW_TOP := 0.0
-const GLOW_WIDTH := 8.0
-## Wide glow cards west of the hall too, across the view (shares of GLOW_DIST left of its middle).
-const GLOW_DIST := 76.0
-const GLOW_LATS: Array[float] = [-0.46, -0.32, -0.18]
-const GLOW_WIDE := 16.0
-const GLOW_WEST := 1.9
+const GLOW_TOP := -4.0
 const GLOW_EAST := 1.5
 ## A glow card low beside the east cliff (foot; width, height; energy share), seen right of the east stairs.
 const EAST_FOOT_GLOW := Vector3(HALF.x + 2.5, -7.0, -11.0)
 const EAST_FOOT_GLOW_SIZE := Vector2(12.0, 9.0)
-const EAST_FOOT_GLOW_ENERGY := 2.5
-## The far tower the chains hang from (behind the giant, in the middle of the picture's top).
+const EAST_FOOT_GLOW_ENERGY := 1.8
+## The iron pylon the chains hang from (behind the giant, standing on the gate): its place, top and width; collars
+## round it (heights, how much wider) and the arm the chains hang from (height, length).
 const TOWER := Vector3(-35.0, 0, -23.0)
 const TOWER_TOP := 12.0
-const TOWER_WIDTH := 2.6
-## The lit window under the near arcade (the picture's lantern): its size and height, its frame, its warm glass (the
+const TOWER_WIDTH := 1.5
+const TOWER_COLLARS: Array[float] = [-3.0, 2.5, 7.0]
+const TOWER_COLLAR := 0.5
+const TOWER_ARM := Vector2(9.5, 4.2)
+## The lit window under the bridge (the picture's lantern): its size and height, its frame, its warm glass (the
 ## top of the pane this share of the bottom's colour) and the halo round it.
-const LANTERN := Vector2(0.8, 1.4)
-const LANTERN_Y := -2.4
+const LANTERN := Vector2(0.95, 1.7)
+const LANTERN_Y := -3.2
 const LANTERN_FRAME := 0.12
-const LANTERN_TOP := 0.6
-const LANTERN_HALO := 0.5
-## Where the wall with the window stands in the near row (share of that row's distance, left of the view's middle).
-const LANTERN_LAT := -0.33
-## How far the wall with the window rises over the window.
-const LANTERN_WALL := 1.6
-const LANTERN_GLASS := Color(1.1, 0.6, 0.22)
-## The lead of its glazing in the dark stone of the depths: bar width, upright bars, cross bars.
+const LANTERN_TOP := 0.5
+const LANTERN_HALO := 0.9
+## Where the wall with the window stands under the bridge (share of the bridge's distance, left of the view's middle).
+const LANTERN_LAT := -0.349
+const LANTERN_GLASS := Color(1.25, 0.36, 0.08)
+const LANTERN_HALO_COLOR := Color(0.24, 0.1, 0.03)
+## The lead of its glazing, dark against the glass: bar width, upright bars, cross bars.
 const LANTERN_BAR := 0.05
 const LANTERN_UPRIGHTS := 1
-const LANTERN_CROSSES := 3
+const LANTERN_CROSSES := 1
 
 var arena: Arena
 var kit: ArenaKit
@@ -324,9 +379,9 @@ func _dais() -> void:
 		_candles(Vector3(px, DAIS_Y + 0.9, steps_z - 0.45), 2, false)
 	# pots, crates and candles at the east foot of the steps
 	var foot := Vector3(FLIGHT.y + 1.6, 0, -HALF.y + 1.0)
-	kit.piece("box_small", foot, 0.3, Vector3.ONE * 0.9)
-	kit.piece("box_small", foot + Vector3(0.1, 0.75, 0), 0.1, Vector3.ONE * 0.7)
-	kit.piece("box_small", foot + Vector3(1.1, 0, 0.2), -0.2, Vector3.ONE * 0.8)
+	kit.crate(foot, 0.3, Vector3.ONE * 0.9)
+	kit.crate(foot + Vector3(0.1, 0.75, 0), 0.1, Vector3.ONE * 0.7)
+	kit.crate(foot + Vector3(1.1, 0, 0.2), -0.2, Vector3.ONE * 0.8)
 	m.pot(foot + Vector3(-1.0, 0, -0.1), 1.0)
 	m.pot(foot + Vector3(-0.5, 0, 0.6), 0.8)
 	_candles(foot + Vector3(-1.7, 0, 0.3), 3)
@@ -392,9 +447,16 @@ func _facade() -> void:
 	_portal_window(Vector3(PORTAL_X, win_y, tymp))
 	# the dark teeth hanging from the lintel, in front of the sheet of light
 	var teeth := m.stone(y, Color.WHITE * PENDANT_TINT)
+	# the opening itself a pointed arch: its apex at the lintel, its arcs' centres on the springing line
+	var spring := h * PORTAL_SPRING
+	var arc := ((h - spring) * (h - spring) + w * w * 0.25) / w
+	m.voussoir_arch(Vector3(PORTAL_X, y, sheet_z + 0.2 + PORTAL_INNER_RING.y * 0.5), Vector2(0, 1), w, spring, PORTAL_INNER_RING.x, PORTAL_INNER_RING.y,
+		m.stone(y, Color.WHITE * PORTAL_INNER_TINT), arc / w)
 	for p: Vector3 in PENDANTS:
-		m.pendant(Vector3(PORTAL_X + p.x * w, y + h + 0.05, sheet_z + 0.35), p.y, p.z, teeth)
-	kit.portal_glow(Vector3(PORTAL_X, y + h * 0.5, sheet_z), 0.0, Vector2(w + 0.4, h + 0.2))
+		var px := absf(p.x) * w + arc - w * 0.5
+		m.pendant(Vector3(PORTAL_X + p.x * w, y + spring + sqrt(maxf(0.0, arc * arc - px * px)) + 0.05, sheet_z + 0.35), p.y, p.z, teeth)
+	var sheet := Vector2(w + 0.4, h + 0.2)
+	kit.portal_glow(Vector3(PORTAL_X, y + h * 0.5, sheet_z), 0.0, sheet, Vector3(spring + (sheet.y - h) * 0.5, w, arc))
 	# over the outer order: the spandrels in courses up to a gable (its sloped copings), the wall above it
 	var slope := tan(deg_to_rad(GABLE_SLOPE))
 	var oc := spans[PORTAL_ORDERS - 1]
@@ -440,8 +502,8 @@ func _facade() -> void:
 		else:
 			m.point(Vector3(bx, y + top - 1.5, FACADE_Z + 0.2), 1.3, 1.2)
 	m.layers = 1
-	for bx: float in [BUTTRESSES[1], BUTTRESSES[3]]:
-		kit.piece("banner_thin_red", Vector3(bx, y + 3.4, FACADE_Z + 1.0), 0.0, Vector3(1.6, 2.1, 1.6))
+	for b: Vector4 in BANNERS:
+		kit.banner(Vector3(b.x, y + b.y, FACADE_Z + BANNER_OUT), 0.0, Vector2(b.z, b.w))
 	m.layers = ArenaKit.FACADE_LAYER
 	# blind pointed niches low between the buttresses, tall windows over them, both dark and deep with a stone frame
 	var hollow := m.stone(y, Color.WHITE * NICHE_DARK)
@@ -519,7 +581,12 @@ func _north_west() -> void:
 	_candles(Vector3(-9.0, 0, z + 0.9), 5)
 	m.pot(Vector3(-11.6, 0, z + 0.8), 1.0)
 	m.pot(Vector3(-10.9, 0, z + 1.2), 0.8)
-	kit.piece("rubble_half", Vector3(FACADE_X.x + 0.8, 0, z + 0.8), 0.4, Vector3.ONE * 0.6)
+	# at the west foot of the dais (the picture's: low crates, a pot and candles; nothing here blocks the way)
+	var nook := Vector3(FACADE_X.x + 0.8, 0, z + 0.8)
+	kit.crate(nook + Vector3(0.35, 0, -0.1), 0.4, Vector3(0.9, 0.55, 0.9))
+	kit.crate(nook + Vector3(-0.55, 0, 0.35), -0.15, Vector3(0.75, 0.45, 0.75))
+	m.pot(nook + Vector3(0.5, 0, 0.75), 0.75)
+	_candles(nook + Vector3(-0.3, 0, 1.0), 3, false)
 
 
 # ---------- west: the long balustrade and the giant in the abyss ----------
@@ -529,23 +596,32 @@ func _west() -> void:
 	m.balustrade(Vector3(x, 0, -HALF.y), Vector3(x, 0, LANDING_END))
 	# the giant: a pier out to its fire bowl, a tower of stone out of the depths, the hooded figure on it looking
 	# over the hall
-	m.block(Vector3((GIANT_BOWL.x + x) * 0.5 - 0.6, -DEPTH, GIANT_BOWL.y), Vector3(x - GIANT_BOWL.x + 1.6, DEPTH, 3.0))
-	kit.brazier(GIANT_BOWL, 0.0, false, 5.5)
 	var tower_top := GIANT_FOOT - GIANT.z * ArenaKit.STATUE_PLINTH
-	m.block(Vector3(GIANT.x, -DEPTH, GIANT.y), Vector3(4.6, DEPTH + tower_top - 0.6, 4.6))
-	m.block(Vector3(GIANT.x, tower_top - 0.6, GIANT.y), Vector3(4.0, 0.6, 4.0))
+	# the pile and the giant on the depths' layer: the fires of the hall leave them dark, only the spot below warms
+	# the side of the giant turned to its bowl
+	m.layers = ArenaKit.DEPTH_LAYER
+	var rough := m.stone(PILE_FOOT, Color.WHITE * PILE_TINT)
+	for i in PILE_COURSES.size():
+		var top: float = PILE_COURSES[i][0]
+		var bottom: float = PILE_COURSES[i + 1][0] if i + 1 < PILE_COURSES.size() else PILE_FOOT
+		for b: Vector3 in PILE_COURSES[i][1]:
+			m.block(Vector3(b.x, bottom, GIANT.y), Vector3(b.y, top - bottom, b.z), 0.0, rough)
+	m.block(Vector3(-24.9, -DEPTH, GIANT.y), Vector3(6.4, DEPTH + PILE_FOOT, 4.2), 0.0, rough)
+	m.block(Vector3(GIANT_BOWL.x, PILE_COURSES[0][0], GIANT_BOWL.y), Vector3(2.0, -PILE_COURSES[0][0], 2.0), 0.0, rough)
 	kit.statue(Vector2(GIANT.x, GIANT.y), PI * 0.5, GIANT.z, tower_top, GIANT_TINT, false)
+	m.layers = 1
+	kit.brazier(GIANT_BOWL, 0.0, false, 5.5)
 	var up := SpotLight3D.new()
 	arena.add_child(up)
-	up.look_at_from_position(Vector3(GIANT_BOWL.x + 0.5, 2.0, GIANT_BOWL.y), Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.6, GIANT.y))
+	up.look_at_from_position(Vector3(GIANT_BOWL.x + 0.5, 2.0, GIANT_BOWL.y), Vector3(GIANT.x, GIANT_FOOT + GIANT.z * GIANT_UPLIGHT_AIM, GIANT.y))
 	up.light_color = ArenaKit.FIRE
 	up.light_energy = GIANT_UPLIGHT
-	up.spot_range = 9.0
-	up.spot_angle = 28.0
-	up.light_cull_mask = ~Arena.CROWD_LAYER
+	up.spot_range = GIANT_UPLIGHT_RANGE
+	up.spot_angle = GIANT_UPLIGHT_CONE
+	up.light_cull_mask = ArenaKit.DEPTH_LAYER
 	# candles and clay pots along the balustrade (the picture's groups), a small altar of a crate with candles and two
 	# pots on it
-	kit.piece("box_small", Vector3(x + 1.0, 0, -10.4), 0.2, Vector3(1.3, 0.8, 1.3))
+	kit.crate(Vector3(x + 1.0, 0, -10.4), 0.2, Vector3(1.3, 0.8, 1.3))
 	_candles(Vector3(x + 1.0, 0.8, -10.4), 4, false)
 	m.pot(Vector3(x + 1.0, 0, -11.9), 1.0)
 	m.pot(Vector3(x + 1.6, 0, -12.5), 0.8)
@@ -598,7 +674,7 @@ func _east(stairs_down: bool) -> void:
 	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
-	kit.piece("box_small", Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 0.7)
+	kit.crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 0.7)
 	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4)
 	kit.piece("rubble_half", Vector3(x - 2.4, 0, EAST_STONE.y + 4.2), 1.1, Vector3.ONE * 0.55)
 	kit.piece("rubble_large", Vector3(x - 1.3, 0, EAST_STONE.y + 4.8), 0.3, Vector3.ONE * 0.5)
@@ -639,74 +715,43 @@ func _stairs_down(edge: Vector3, out: Vector2, width: float) -> void:
 
 # ---------- the depths ----------
 
-## Far below and around, all in the unlit stone of the depths (dark against the teal mist, each plane farther and
-## paler, banks of pale mist between them): planes of gothic piers and pointed arches to the west with an aqueduct in
-## the near one, a tower in the north-west the chains hang from, arches to the north behind the facade, a lit window
-## under the near arcade, violet light rising out of the mist only low down, between the near piers.
+## Far below and around, all in the unlit stone of the depths (dark against the teal mist). Near, three uneven masses:
+## the west bridge running out from the giant's tower (a tower of blocks and a loose block on it, narrow arches and
+## the lit window under it), the wide gate behind the north-west corner (a pointed arch with violet in it) and the
+## iron pylon of the chains standing on it. Far, three cards of painted ruins sliding against each other, banks of
+## pale mist between them, a lighter veil behind. Violet light rises only low down: in the arches, under the bridge,
+## at the foot of the sides.
 func _depths() -> void:
 	m.layers = ArenaKit.DEPTH_LAYER
-	var far := m.depth_stone(Game.FOG)
-	# the planes stand across the showcase camera's view (their arches face it), left of the hall and behind it
+	var near := m.depth_stone(Game.FOG, NEAR_FADE)
+	# everything stands across the showcase camera's view (arches face it), left of the hall and behind it
 	var yaw := deg_to_rad(Feel.live().cam_yaw)
 	var eye := SHOWCASE + Feel.cam_offset_of(Game.SHOWCASE_DISTANCE, Feel.live().cam_pitch, Feel.live().cam_yaw)
 	var ahead := Vector3(-sin(yaw), 0, -cos(yaw))
 	var right := Vector3(cos(yaw), 0, -sin(yaw))
 	var facing := Vector2(-ahead.x, -ahead.z)
-	var gaps: Array[Vector3] = []
-	var r := RandomNumberGenerator.new()
-	r.seed = 7
-	for k in ROW_DIST.size():
-		var d: float = ROW_DIST[k]
-		var span: float = ROW_SPANS[k]
-		var width: float = ROW_WIDTHS[k]
-		var last := k == ROW_DIST.size() - 1
-		var prev := Vector3.INF
-		var i := 0
-		var gap := 0
-		var lat := -ROW_REACH.x * d
-		while lat < ROW_REACH.y * d:
-			var p := Vector3(eye.x, 0, eye.z) + ahead * d + right * lat
-			lat += span
-			i += 1
-			# none inside the hall, its dais and the giant's tower
-			if (p.x > -HALF.x - 3.0 and p.z > FACADE_Z - 9.0) or Vector2(p.x, p.z).distance_to(Vector2(GIANT.x, GIANT.y)) < 4.5:
-				prev = Vector3.INF
-				continue
-			var top: float = ROW_TOPS[k] + (ROW_STEP * float(i % 3 == 1))
-			if last:
-				# the far plane's piers broken off at uneven heights
-				top = lerpf(-12.0, top, r.randf_range(BROKEN, 1.0))
-			p.y = top
-			_pier(p, width, far, not last and (k == ROW_DIST.size() - 2 or i % 2 == 0), last)
-			if prev != Vector3.INF:
-				var mid := (prev + p) * 0.5
-				_arch(prev, p, width, ROW_ARCS[k], facing, far, r)
-				if k > 0 and gap == BRIDGE_GAPS[k]:
-					_bridge(prev, p, width, yaw, far)
-				if k == 0:
-					gaps.append(mid)
-					if gap <= AQUEDUCT_GAP:
-						_aqueduct(prev, p, width, yaw, far)
-				gap += 1
-			prev = p
-	# a wall under the near arcade, with the lit window of the picture in it
-	var wall := Vector3(eye.x, LANTERN_Y, eye.z) + ahead * (ROW_DIST[0] + 1.2) + right * (LANTERN_LAT * ROW_DIST[0])
-	var wall_top := LANTERN_Y + LANTERN.y + LANTERN_WALL
-	m.box(Vector3(wall.x, (wall_top - 20.0) * 0.5, wall.z), Vector3(2.6, wall_top + 20.0, 0.8), yaw, far)
-	var tower := TOWER
-	_pier(tower + Vector3(0, TOWER_TOP, 0), TOWER_WIDTH, far, true, false)
+	# the place d meters ahead of the camera, l meters right of its view's middle, at height y
+	var at := func(d: float, l: float, y: float) -> Vector3:
+		return Vector3(eye.x, y, eye.z) + ahead * d + right * l
+	_bridge(at, yaw, facing, near)
+	_gate(at, yaw, facing, near)
+	_pylon(m.depth_stone(Game.FOG, PYLON_FADE, PYLON_TINT))
+	# arches to the north, behind the facade
+	var far := m.depth_stone(Game.FOG)
 	for i in 4:
 		var x := -10.0 + i * 9.0
 		m.box(Vector3(x, -10.0, -40.0), Vector3(2.4, 40.0, 2.4), 0.0, far)
 		if i < 3:
 			m.pointed_arch(Vector3(x + 4.5, 2.0, -40.0), Vector2(0, 1), 6.6, 8.0, 1.0, 1.8, far)
 	m.layers = 1
-	_lantern(wall - ahead * 0.45, yaw, far)
+	var wall: Vector3 = at.call(BRIDGE_DIST, LANTERN_LAT * BRIDGE_DIST, LANTERN_Y)
+	_lantern(wall - ahead * (BRIDGE_DECK.z * 0.4 + 0.05), yaw, near)
 	var giant_top := Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.95, GIANT.y)
-	# the great chains of the picture's top: from the giant across to the far tower and on to the facade, and one
-	# from the giant out over the abyss
-	kit.chain(giant_top + Vector3(0, -1.0, 0), tower + Vector3(0, 10.0, 0), 2.5, 2.2)
-	kit.chain(tower + Vector3(0, 9.0, 0), Vector3(FACADE_X.x + 0.6, DAIS_Y + FACADE_HEIGHT - 2.0, FACADE_Z), 3.0, 2.2)
+	var hook := TOWER + Vector3(0, TOWER_ARM.x, 0)
+	# the great chains of the picture's top: from the giant across to the pylon and on to the facade, and one from the
+	# giant out over the abyss
+	kit.chain(giant_top + Vector3(0, -1.0, 0), hook + Vector3(0, 0.5, 0), 2.5, 2.2)
+	kit.chain(hook + Vector3(0, -0.5, 0), Vector3(FACADE_X.x + 0.6, DAIS_Y + FACADE_HEIGHT - 2.0, FACADE_Z), 3.0, 2.2)
 	kit.chain(giant_top + Vector3(0, -2.0, 0), Vector3(-6.0, 9.0, -26.0), 3.5, 2.2)
 	kit.chain(giant_top + Vector3(0, -1.5, 0), Vector3(-40.0, 8.0, 14.0), 4.0, 2.2)
 	# violet from far below, only at the sides (west and east of the frame) and low, lighting only the depths
@@ -720,98 +765,117 @@ func _depths() -> void:
 		l.omni_attenuation = 1.1
 		l.light_cull_mask = ArenaKit.DEPTH_LAYER
 		arena.add_child(l)
-	# the glow itself rising out of the mist behind the gaps of the near plane (so its piers stand dark against it),
-	# and at the east side; on desktop a violet fog filling the sides low down
-	for g: Vector3 in gaps:
-		kit.abyss_glow(Vector3(g.x, GLOW_FOOT, g.z) + ahead * 3.0, Vector2(GLOW_WIDTH, GLOW_TOP - GLOW_FOOT), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_WEST)
-	for lat: float in GLOW_LATS:
-		var g := Vector3(eye.x, GLOW_FOOT, eye.z) + ahead * GLOW_DIST + right * (lat * GLOW_DIST)
-		kit.abyss_glow(g, Vector2(GLOW_WIDE, GLOW_TOP - GLOW_FOOT), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_WEST)
+	# the glow itself: inside the gate's arches, under the bridge and low at the west side (the masses stand dark
+	# against it), and at the east side; on desktop a violet fog filling the sides low down
+	for g: Array in GLOW_WEST:
+		kit.abyss_glow(at.call(g[0], g[1], g[2]), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * float(g[5]), Vector3(g[6], g[7], g[8]))
 	for g: Vector3 in [Vector3(HALF.x + 3.0, GLOW_FOOT, -12.0), Vector3(HALF.x + 4.0, GLOW_FOOT, -22.0), Vector3(8.0, GLOW_FOOT, HALF.y + 5.0),
 			Vector3(HALF.x + 2.5, GLOW_FOOT, 9.0), Vector3(HALF.x + 2.5, GLOW_FOOT, 15.5)]:
 		kit.abyss_glow(g, Vector2(16.0, GLOW_TOP - GLOW_FOOT), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_EAST)
 	# and low at the foot of the east cliff, beside the stairs down (the picture's violet at the bottom right)
 	kit.abyss_glow(EAST_FOOT_GLOW, EAST_FOOT_GLOW_SIZE, yaw, ArenaKit.ABYSS_GLOW_ENERGY * EAST_FOOT_GLOW_ENERGY)
+	# the far ruins, the mist they sink into the colour of the veil over the background
+	var mist := Game.FOG * VEIL_LIGHT
+	for i in RUIN_DIST.size():
+		var d: float = RUIN_DIST[i]
+		var last := i == RUIN_DIST.size() - 1
+		var patches: Array[Vector4] = []
+		if last:
+			for p: Vector4 in VEIL_PATCHES:
+				patches.append(p + Vector4(RUIN_LEFT * d, 0, 0, 0))
+		kit.ruin_card(at.call(d, -RUIN_LEFT * d, RUIN_TOP - RUIN_SIZE.y * 0.5), RUIN_SIZE, yaw, mist, RUIN_HAZE[i], RUIN_COLUMN[i], float(i) * 17.0 + 3.0,
+			RUIN_TOPS[i], RUIN_SINK[i], RUIN_ROOF if last else Vector4.ZERO, patches)
 	# banks of pale mist between the planes, so each stands out against the one behind
 	for i in MIST_BANKS.size():
 		var md: float = MIST_BANKS[i]
-		kit.mist_bank(Vector3(eye.x, MIST_Y, eye.z) + ahead * md + right * (-0.2 * md), MIST_SIZE, Game.FOG, MIST_ALPHAS[i])
-	kit.mist_bank(Vector3(eye.x, VEIL.y, eye.z) + ahead * VEIL.x, Vector2(VEIL.z, VEIL.w), Game.FOG * VEIL_LIGHT, VEIL_ALPHA, VEIL_GRAIN)
+		kit.mist_bank(at.call(md, -0.2 * md, MIST_YS[i]), MIST_SIZE, mist, MIST_ALPHAS[i])
 	kit.abyss_fog(Vector3(-HALF.x - 14.0, -12.0, 0.0), Vector3(24.0, 10.0, 50.0))
 	kit.abyss_fog(Vector3(HALF.x + 10.0, -12.0, 0.0), Vector3(16.0, 10.0, 40.0))
 
 
-## A gothic pier of the depths: its top at `top`, a shaft out of the mist, a chamfered capital, and a short spire on
-## some; a broken one ends in a slanted jagged stump instead.
-func _pier(top: Vector3, width: float, mat: Material, spire: bool, broken := false) -> void:
-	m.box(Vector3(top.x, top.y - 20.0, top.z), Vector3(width, 40.0, width), 0.0, mat)
-	# string courses down the shaft, so it reads as built stone against the mist
-	for i in PIER_BANDS:
-		m.box(Vector3(top.x, top.y - PIER_BAND_STEP * (i + 1), top.z), Vector3(width + 0.3, 0.35, width + 0.3), 0.0, mat)
-	if broken:
-		var stump := m.box(Vector3(top.x, top.y, top.z), Vector3(width * 1.05, width * 0.8, width * 1.05), 0.0, mat)
-		stump.basis = Basis.from_euler(Vector3(0.35, 0.6, 0.25))
-		return
-	m.box(Vector3(top.x, top.y - 1.6, top.z), Vector3(width + 0.7, 0.6, width + 0.7), 0.0, mat)
-	m.box(Vector3(top.x, top.y - 1.15, top.z), Vector3(width + 0.35, 0.3, width + 0.35), 0.0, mat)
-	m.box(Vector3(top.x, top.y + 0.2, top.z), Vector3(width + 0.4, 0.4, width + 0.4), 0.0, mat)
-	if spire:
-		m.point(Vector3(top.x, top.y + 0.4, top.z), width * 0.9, width * 1.6, 0.0, 0.0, mat)
+## The west bridge (BRIDGE_*): a deck out of the picture's left edge, on it a tower of three blocks, a loose block and
+## stumps of a parapet; under it narrow pointed arches, the wall of the lit window and a wider arch.
+func _bridge(at: Callable, yaw: float, facing: Vector2, mat: Material) -> void:
+	var d := BRIDGE_DIST
+	var deck_y := BRIDGE_DECK.x - BRIDGE_DECK.y * 0.5
+	var under := BRIDGE_DECK.x - BRIDGE_DECK.y
+	var deep := BRIDGE_DECK.z
+	m.box(at.call(d, (BRIDGE.x + BRIDGE.y) * 0.5, deck_y), Vector3(BRIDGE.y - BRIDGE.x, BRIDGE_DECK.y, deep), yaw, mat, false)
+	# a string course under the deck's edge
+	m.box(at.call(d, (BRIDGE.x + BRIDGE.y) * 0.5, under - 0.15), Vector3(BRIDGE.y - BRIDGE.x, 0.3, deep + 0.3), yaw, mat, false)
+	var y := BRIDGE_DECK.x
+	for b: Vector2 in BRIDGE_TOWER_BLOCKS:
+		m.box(at.call(d, BRIDGE_TOWER.x, y + b.y * 0.5), Vector3(BRIDGE_TOWER.y * b.x, b.y - 0.05, BRIDGE_TOWER.y * b.x * 0.9), yaw, mat)
+		y += b.y
+	var cube := m.box(at.call(d - 0.3, BRIDGE_CUBE.x, BRIDGE_DECK.x + BRIDGE_CUBE.z * 0.5), Vector3(BRIDGE_CUBE.y, BRIDGE_CUBE.z, BRIDGE_CUBE.y), yaw + 0.3, mat)
+	cube.rotate_object_local(Vector3.BACK, 0.05)
+	for p: Vector2 in BRIDGE_PARAPET:
+		m.box(at.call(d - deep * 0.5 + 0.25, p.x, BRIDGE_DECK.x + BRIDGE_PARAPET_HEIGHT * 0.5), Vector3(p.y, BRIDGE_PARAPET_HEIGHT, 0.4), yaw, mat)
+	# piers under it and a pointed arch in each gap
+	var prev := Vector2.ZERO
+	for p: Vector2 in BRIDGE_PIERS:
+		_wall(at.call(d, p.x, 0.0), p.y, under, deep * 0.8, yaw, mat)
+		if prev != Vector2.ZERO:
+			var span := (prev.x - prev.y * 0.5) - (p.x + p.y * 0.5)
+			var mid := ((prev.x - prev.y * 0.5) + (p.x + p.y * 0.5)) * 0.5
+			var rise := sqrt(0.75 * 0.75 - 0.25 * 0.25) * span
+			m.arch_ring(at.call(d, mid, under - BRIDGE_ARCH.x - rise - BRIDGE_ARCH.y), facing, span, BRIDGE_ARCH.y + BRIDGE_ARCH.x + 0.3, deep * 0.7, mat, 0.75)
+		prev = p
 
 
-## The arch between two piers of a plane of the depths, its apex ARCH_UNDER under the lower capital; a share of them
-## broken off, a stump left on one side.
-func _arch(a: Vector3, b: Vector3, width: float, radius: float, facing: Vector2, mat: Material, r: RandomNumberGenerator) -> void:
-	var open := Vector2(b.x - a.x, b.z - a.z).length() - width
-	var share := maxf(radius, 0.5)
-	var rr := open * share
-	var cx := rr - open * 0.5
-	var rise := sqrt(rr * rr - cx * cx)
-	var mid := (a + b) * 0.5
-	var from := 0.0
-	var to := 1.0
-	if r.randf() < ARCH_BROKEN:
-		var stump := r.randf_range(ARCH_STUMP.x, ARCH_STUMP.y)
-		if r.randf() < 0.5:
-			to = stump
-		else:
-			from = 1.0 - stump
-	m.arch_ring(Vector3(mid.x, minf(a.y, b.y) - ARCH_UNDER - rise - width * ARCH_RING, mid.z), facing, open, width * ARCH_RING, width * 0.8, mat, share, from, to)
-
-
-## A broken bridge between two piers of a far plane: its deck from each pier toward the other, the middle fallen.
-func _bridge(a: Vector3, b: Vector3, width: float, yaw: float, mat: Material) -> void:
-	var deck_y := minf(a.y, b.y) - BRIDGE_UNDER
-	var along := Vector3(b.x - a.x, 0, b.z - a.z)
-	var length := along.length() - width
-	along = along.normalized()
-	var piece := length * (1.0 - BRIDGE_MISSING) * 0.5
+## The middle gate (GATE_*): two uneven masses, a pointed arch between them under a ring of stone and a lintel, uneven
+## merlons on top (one corner broken off), a low wing with a lancet to the west.
+func _gate(at: Callable, yaw: float, facing: Vector2, mat: Material) -> void:
+	var d := GATE_DIST
+	var a := GATE_ARCH
+	var lintel := 1.0
+	var open := Vector2(a.x - a.y * 0.5, a.x + a.y * 0.5)
+	_wall(at.call(d, (GATE.x + open.x) * 0.5, 0.0), open.x - GATE.x, GATE_TOP, GATE_DEPTH, yaw, mat)
+	_wall(at.call(d, (open.y + GATE.y) * 0.5, 0.0), GATE.y - open.y, GATE_TOP, GATE_DEPTH, yaw, mat)
+	m.arch_ring(at.call(d, a.x, a.z), facing, a.y, GATE_RING, GATE_DEPTH * 0.9, mat, a.w)
+	m.box(at.call(d, a.x, GATE_TOP - lintel * 0.5), Vector3(a.y + 0.2, lintel, GATE_DEPTH), yaw, mat, false)
+	# the spandrels: the corners between the ring, the masses and the lintel
+	var corner := Vector2(a.y * 0.3, 1.3)
 	for s: float in [-1.0, 1.0]:
-		var from := (a if s < 0.0 else b)
-		var at := Vector3(from.x, deck_y, from.z) - along * s * (width * 0.5 + piece * 0.5)
-		var deck := m.box(at, Vector3(piece, 0.8, width * 0.7), yaw, mat, false)
-		# the broken end sags a little
-		deck.basis = Basis(Vector3.UP, yaw) * Basis(Vector3.BACK, s * 0.06)
+		m.box(at.call(d, a.x + s * (a.y * 0.5 - corner.x * 0.5), GATE_TOP - lintel - corner.y * 0.5 + 0.1), Vector3(corner.x, corner.y, GATE_DEPTH * 0.9), yaw, mat, false)
+	for b: Vector3 in GATE_MERLONS:
+		m.box(at.call(d, b.x, GATE_TOP + b.z * 0.5), Vector3(b.y, b.z, GATE_DEPTH * 0.8), yaw, mat)
+	# the broken corner: a block fallen askew on the east end
+	var chip := m.box(at.call(d - 0.2, GATE.y - 0.5, GATE_TOP + 0.25), Vector3(1.6, 0.9, 1.6), yaw, mat)
+	chip.rotate_object_local(Vector3.BACK, -0.45)
+	# the dark of the passage behind the arches
+	var dark := StandardMaterial3D.new()
+	dark.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	dark.albedo_color = GATE_PASSAGE
+	dark.disable_fog = true
+	m.box(at.call(d + GATE_PASSAGE_BACK, a.x, GATE_TOP - GATE_PASSAGE_UNDER - 20.0), Vector3(a.y + 2.0, 40.0, 0.4), yaw, dark, false)
+	# the low wing with its lancet
+	var w := GATE_WING
+	var jamb := 0.7
+	m.pointed_arch(at.call(d + 0.3, w.x, w.z), facing, w.y, w.w - w.z - jamb * 0.4, jamb, GATE_DEPTH * 0.7, mat)
+	_wall(at.call(d + 0.3, w.x, 0.0), w.y + jamb * 2.0, w.z, GATE_DEPTH * 0.7, yaw, mat)
+	m.box(at.call(d + 0.3, w.x - 0.3, w.w + GATE_WING_OVER * 0.5), Vector3(w.y + jamb * 2.0 + 0.6, GATE_WING_OVER, GATE_DEPTH * 0.7), yaw, mat)
 
 
-## An aqueduct between two piers of the near plane: a deck and small pointed arches carrying it.
-func _aqueduct(a: Vector3, b: Vector3, width: float, yaw: float, mat: Material) -> void:
-	var deck_y := minf(a.y, b.y) + AQUEDUCT.x
-	var mid := (a + b) * 0.5
-	var length := Vector2(b.x - a.x, b.z - a.z).length() - width
-	m.box(Vector3(mid.x, deck_y, mid.z), Vector3(length, AQUEDUCT.y, width * 0.8), yaw, mat, false)
-	m.box(Vector3(mid.x, deck_y + AQUEDUCT.y * 0.5 + 0.12, mid.z), Vector3(length + 0.3, 0.24, width * 0.9), yaw, mat, false)
-	var along := (b - a)
-	along.y = 0.0
-	along = along.normalized()
-	var facing := Vector2(-sin(yaw), -cos(yaw)) * -1.0
-	var bay := length / AQUEDUCT_ARCHES
-	for i in AQUEDUCT_ARCHES:
-		var at := Vector3(a.x, 0, a.z) + along * (width * 0.5 + bay * (i + 0.5))
-		m.pointed_arch(Vector3(at.x, deck_y - AQUEDUCT.y * 0.5 - 2.4, at.z), facing, bay - 0.5, 2.4, 0.3, width * 0.6, mat)
+## The iron pylon the chains hang from: a slender shaft out of the mist with collars round it, a cap, and the arm
+## the chains hang from.
+func _pylon(mat: Material) -> void:
+	var top := TOWER + Vector3(0, TOWER_TOP, 0)
+	m.box(top + Vector3(0, -20.0, 0), Vector3(TOWER_WIDTH, 40.0, TOWER_WIDTH), 0.0, mat)
+	for y: float in TOWER_COLLARS:
+		m.box(TOWER + Vector3(0, y, 0), Vector3(TOWER_WIDTH + TOWER_COLLAR, 0.4, TOWER_WIDTH + TOWER_COLLAR), 0.0, mat)
+	m.box(top + Vector3(0, 0.25, 0), Vector3(TOWER_WIDTH + TOWER_COLLAR, 0.5, TOWER_WIDTH + TOWER_COLLAR), 0.0, mat)
+	m.point(top + Vector3(0, 0.5, 0), TOWER_WIDTH, TOWER_WIDTH * 1.4, 0.0, 0.0, mat)
+	m.box(TOWER + Vector3(0, TOWER_ARM.x, 0), Vector3(TOWER_ARM.y, 0.45, 0.45), PI * 0.25, mat)
 
 
-## The lit window of the abyss (the picture's, under the near arcade): a pointed opening of warm glass, lighter low
+## A wall of the depths standing out of the mist: its middle on the ground plan (`foot`, y ignored), width, the height
+## of its top, depth.
+func _wall(foot: Vector3, width: float, top: float, deep: float, yaw: float, mat: Material) -> void:
+	m.box(Vector3(foot.x, top - 20.0, foot.z), Vector3(width, 40.0, deep), yaw, mat, false)
+
+
+## The lit window of the abyss (the picture's, under the west bridge): a pointed opening of warm glass, lighter low
 ## down, in a stone frame, a small halo round it and a little warm light.
 func _lantern(at: Vector3, yaw: float, frame: Material) -> void:
 	var basis := Basis(Vector3.UP, yaw)
@@ -847,9 +911,8 @@ func _lantern(at: Vector3, yaw: float, frame: Material) -> void:
 	arena.add_child(pane)
 	m.layers = ArenaKit.DEPTH_LAYER
 	var face := basis * Vector3.BACK
-	var lit := m.ashlar(LANTERN_Y)
-	m.pointed_arch(at + face * 0.05, Vector2(face.x, face.z), LANTERN.x, LANTERN.y, LANTERN_FRAME, 0.2, lit)
-	m.box(at + face * 0.08 + Vector3(0, -0.06, 0), Vector3(LANTERN.x + 0.4, 0.12, 0.25), yaw, lit)
+	m.pointed_arch(at + face * 0.05, Vector2(face.x, face.z), LANTERN.x, LANTERN.y, LANTERN_FRAME, 0.2, frame)
+	m.box(at + face * 0.08 + Vector3(0, -0.06, 0), Vector3(LANTERN.x + 0.4, 0.12, 0.25), yaw, frame)
 	# the glazing bars, dark against the warm glass
 	for i in LANTERN_UPRIGHTS:
 		var x := LANTERN.x * ((i + 1.0) / (LANTERN_UPRIGHTS + 1.0) - 0.5)
@@ -859,7 +922,7 @@ func _lantern(at: Vector3, yaw: float, frame: Material) -> void:
 		m.box(at + basis * Vector3(0, y, 0.04), Vector3(LANTERN.x, LANTERN_BAR, LANTERN_BAR), yaw, frame, false)
 	m.layers = 1
 	var halo := MeshInstance3D.new()
-	halo.mesh = Fx.quad(LANTERN.y + LANTERN_HALO, Color(0.6, 0.3, 0.1) * 0.35)
+	halo.mesh = Fx.quad(LANTERN.y + LANTERN_HALO, LANTERN_HALO_COLOR)
 	halo.position = at + Vector3(0, LANTERN.y * 0.5, 0) + face * 0.3
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	arena.add_child(halo)
@@ -894,17 +957,27 @@ func _doors(count: int) -> void:
 
 # ---------- candles ----------
 
-## A cluster of thick candles of varied heights on the floor (or on top of something at `at`), a warm halo over them
-## and one warm light unless light is false. tall: the cluster's candles are the taller ones (the south stone's).
+## A cluster of thick candles on the floor (or on top of something at `at`: then smaller), a warm halo over them and
+## one warm light unless light is false: one tall thick candle in the middle, one or two of middle height and stubs
+## round it (the taller, the thicker). tall: the stubs are left out (the south stone's cluster).
 func _candles(at: Vector3, count: int, light := true, tall := false) -> void:
-	var spread := 0.35 + count * 0.07
-	for i in count:
-		var p := at + Vector3(_rng.randf_range(-spread, spread), 0, _rng.randf_range(-spread, spread))
-		var h := _rng.randf_range(CANDLE_HEIGHT.x if not tall else (CANDLE_HEIGHT.x + CANDLE_HEIGHT.y) * 0.5, CANDLE_HEIGHT.y)
-		m.candle(p, h, _rng.randf_range(CANDLE_RADIUS.x, CANDLE_RADIUS.y))
+	var on_top := at.y > 0.3
+	var size := CANDLE_ON_TOP if on_top else 1.0
+	var n := mini(count, CANDLE_MAX) if on_top else clampi(count, 3, CANDLE_MAX)
+	var turn := _rng.randf() * TAU
+	for i in n:
+		var t := 1.0
+		if i > 0:
+			t = _rng.randf_range(0.4, 0.65) if (i <= (n - 1) / 2 or tall) else _rng.randf_range(0.0, 0.2)
+		var r := lerpf(CANDLE_RADIUS.x, CANDLE_RADIUS.y, t) * size
+		var p := at
+		if i > 0:
+			var a := turn + TAU * float(i) / float(n - 1) + _rng.randf_range(-0.3, 0.3)
+			p += Vector3(cos(a), 0, sin(a)) * (CANDLE_RADIUS.y * size + r + _rng.randf_range(0.04, 0.22) * size)
+		m.candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r)
 	var glow := MeshInstance3D.new()
 	glow.mesh = Fx.quad(CANDLE_HALO, Color(0.8, 0.45, 0.18) * CANDLE_HALO_ALPHA)
-	glow.position = at + Vector3(0, CANDLE_HEIGHT.y * 0.8, 0)
+	glow.position = at + Vector3(0, CANDLE_HEIGHT.y * 0.8 * size, 0)
 	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	arena.add_child(glow)
 	if not light:

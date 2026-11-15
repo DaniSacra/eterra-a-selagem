@@ -10,6 +10,8 @@ uniform vec3 color : source_color = vec3(0.4, 0.3, 0.75);
 uniform float energy = 1.6;
 // How far up the card the glow reaches (0 to 1 of its height), how soft its sides are, how ragged its edge (share).
 uniform float reach = 0.7;
+// How fast it fades up from its foot (higher: only the foot is bright).
+uniform float falloff = 2.2;
 uniform float side = 0.45;
 uniform float ragged = 0.6;
 // How much of the card the tatters cut away (0 none, 1 all), and how fast they drift up.
@@ -17,6 +19,8 @@ uniform float breakup = 0.25;
 uniform float rise = 0.12;
 // The share of the card at its foot that fades in (so its bottom edge never shows).
 uniform float foot_fade = 0.12;
+// How far the slow noise bends the card's coordinates (share of the card).
+uniform float warp = 0.3;
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -34,7 +38,8 @@ float fbm(vec2 p) {
 	float a = 0.5;
 	for (int i = 0; i < 3; i++) {
 		s += noise(p) * a;
-		p = p * 2.03 + 1.7;
+		// each octave turned, so the lattice of the noise never shows as squares on a card seen from near
+		p = mat2(vec2(0.8, 0.6), vec2(-0.6, 0.8)) * p * 2.03 + 1.7;
 		a *= 0.5;
 	}
 	return s;
@@ -51,12 +56,14 @@ void vertex() {
 
 void fragment() {
 	float up = 1.0 - UV.y;
-	float n = noise(vec2(UV.x * 6.0, UV.y * 3.0 - TIME * 0.15));
-	float rag = (noise(vec2(UV.x * 9.0, UV.y * 5.0 + 3.0)) - 0.5) * ragged;
-	float v = pow(1.0 - smoothstep(0.0, reach, up + rag), 2.2) * smoothstep(0.0, foot_fade, up);
+	// the card's own coordinates bent by a slow noise (cycle 6): no straight edge, no square of the noise's lattice
+	vec2 uv = UV + (vec2(fbm(UV * 3.0 + 7.0), fbm(UV * 3.0 + 13.0 + TIME * 0.02)) - 0.5) * warp;
+	float n = fbm(vec2(uv.x * 6.0 + uv.y * 2.0, uv.y * 3.0 - TIME * 0.15));
+	float rag = (fbm(vec2(uv.x * 7.0 - uv.y * 3.0, uv.y * 5.0 + 3.0)) - 0.5) * ragged * 1.6;
+	float v = pow(1.0 - smoothstep(0.0, reach, up + rag), falloff) * smoothstep(0.0, foot_fade, up);
 	float h = 1.0 - smoothstep(0.5 - side, 0.5, abs(UV.x - 0.5) + rag * 0.5);
 	// tatters: the higher, the more of the card is cut away
-	float t = fbm(vec2(UV.x * 5.0, UV.y * 2.5 + TIME * rise));
+	float t = fbm(vec2(uv.x * 5.0 + uv.y * 1.5, uv.y * 2.5 + TIME * rise));
 	float keep = smoothstep(breakup * (0.5 + up * 0.7) - 0.15, breakup * (0.5 + up * 0.7) + 0.15, t);
 	ALBEDO = color * energy * v * h * keep * (0.6 + 0.6 * n) * (0.9 + 0.1 * sin(TIME * 0.7));
 }
