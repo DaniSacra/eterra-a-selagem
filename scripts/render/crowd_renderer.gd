@@ -3,17 +3,23 @@ extends Node3D
 ## Draws hundreds of characters from baked poses: one MultiMesh per (kind of enemy, animation, frame), plus one
 ## MultiMesh of soft round shadows. Each frame: begin(), add() once per character, commit().
 
-## The common crowd is light ash grey on the dark floor, as in Ember & Blade: it reads at a glance and never fights
-## the effects (they are white and gold, it is grey). How much of the texture's colour goes (1 = all), what multiplies
-## it, and how much it glows by itself so it stays readable out of the paladin's light.
-const CROWD_GREY := 0.92
-const CROWD_SHADE := Color(0.74, 0.76, 0.78)
-const CROWD_FLAT := 0.45
-const CROWD_LIFT := 0.45
-## Elites glow a little by themselves too, so their colours show away from the light.
-const ELITE_FLAT := 0.2
+## The common crowd is light bone with painted shading, as in the reference (docs/art/ref/arena_catacumbas_1672.png):
+## the KayKit colours a little calmed (ivory bone, dark leather, grey steel), lit by a fixed key from the top left
+## of the screen with darker feet and a thin dark edge, so every figure reads as a shaded body on the dark floor.
+## (Until 2026-11-14 it was grey, lifted toward one value and glowing flat: plaster cut-outs that the cold ambient
+## turned green.) How much colour goes, how much of the def's tint stays (the tints are cold and green), how much
+## the scene's cold light still lights it.
+const CROWD_GREY := 0.5
+const CROWD_TINT_KEEP := 0.3
+const CROWD_SCENE_LIGHT := 0.55
 ## Elites keep their colours and are a step brighter than the crowd.
-const ELITE_SHADE := Color(1.25, 1.2, 1.2)
+const ELITE_SHADE := Color(1.15, 1.1, 1.1)
+## The painted light of every figure in the crowd (crowd.gdshader): key on the lit side, fill on the far side,
+## brightness at the feet, how dark the edge goes.
+const KEY := 0.8
+const KEY_FILL := 0.16
+const FOOT_SHADE := 0.55
+const INK := 0.65
 ## Thick glowing outline of elites and the boss (crowd_outline.gdshader): meters in model space, brightness.
 const OUTLINE_WIDTH := 0.045
 const OUTLINE_INTENSITY := 2.4
@@ -80,12 +86,16 @@ func register(d: EnemyDef) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
 	mat.set_shader_parameter(&"albedo", model(d.model).albedo)
-	# the common crowd grey and dim; elites and the boss brighter, in colour, with a thick glowing outline
+	# the common crowd in calmed bone colours; elites and the boss in full colour, brighter, with a glowing outline
 	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
-	mat.set_shader_parameter(&"tint", d.tint * (CROWD_SHADE if common else ELITE_SHADE if d.elite else Color.WHITE))
+	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) if common else d.tint * (ELITE_SHADE if d.elite else Color.WHITE)
+	mat.set_shader_parameter(&"tint", tint)
 	mat.set_shader_parameter(&"desaturate", CROWD_GREY if common else 0.0)
-	mat.set_shader_parameter(&"flat_light", CROWD_FLAT if common else ELITE_FLAT if d.elite else 0.0)
-	mat.set_shader_parameter(&"lift", CROWD_LIFT if common else 0.0)
+	mat.set_shader_parameter(&"scene_light", CROWD_SCENE_LIGHT)
+	mat.set_shader_parameter(&"key", KEY)
+	mat.set_shader_parameter(&"key_fill", KEY_FILL)
+	mat.set_shader_parameter(&"foot_shade", FOOT_SHADE)
+	mat.set_shader_parameter(&"ink", INK)
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
 	mat.set_shader_parameter(&"rim_power", d.rim)
 	if d.rim > 0.0:

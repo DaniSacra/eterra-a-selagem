@@ -45,7 +45,7 @@ func _build() -> void:
 	keys.add_child(UiKit.label(T.t(&"options_keys"), UiKit.GOLD, 24, UiKit.BOLD_FONT))
 	for action in Controls.REMAPPABLE:
 		var waiting := _waiting == action
-		var b := UiKit.button("%s: %s" % [T.t("action_" + action), T.t(&"options_press") if waiting else Controls.label(action)], func() -> void:
+		var b := UiKit.button("%s: %s" % [T.t("action_" + action), T.t(&"options_press") if waiting else UiKit.action_label(action)], func() -> void:
 			_waiting = action
 			_focus_key = "key_" + action
 			_build())

@@ -1,139 +1,157 @@
 class_name Hud
 extends Control
-## What stays on screen during the run: Magia, life, dodges and the circle of light (bottom left), experience and level (top), the clock and the
-## kills (top), the boss's life (top centre), the combo counter and the move name (right), the gifts (bottom centre).
+## What stays on screen during the run. Bottom left: the paladin's medallion with life and Magia. Bottom centre: the
+## four actions as diamonds (the gift on each, the key, the recharge, the dodges) and the gifts that act alone.
+## Top: the room (or the level), the clock, the gold (or the kills); the boss's life under the clock. Right: the
+## hit count and the move's name. Everything sits on the edges so the middle of the screen stays for the fight.
+## Sizes are in pixels at 720 lines; the window stretches the whole canvas (project.godot), so the layout holds at
+## any resolution.
 
-const MAGICK_COLOR := Color(0.35, 0.55, 1.0)
-const CAST_READY := Color(1.0, 0.92, 0.7)
-const CAST_WAIT := Color(0.2, 0.18, 0.22, 0.8)
-## Sizes in pixels at 720 lines: a quiet HUD in the corners, as in Hades II (the first test found it too big).
-const BAR_W := 240.0
-const HP_H := 14.0
-const MAGICK_H := 5.0
-const BOSS_W := 480.0
-const BOSS_H := 9.0
-const PIP := Vector2(26, 5)
-const CAST_SIZE := 11.0
-const ICON_SIZE := 38
-const MARGIN := 20.0
+const MAGICK_COLOR := Color(0.3, 0.52, 1.0)
+const LIFE_COLOR := Color(0.78, 0.14, 0.12)
+const BOSS_COLOR := Color(0.62, 0.22, 0.85)
+const MARGIN := 22.0
+const CREST := 76.0
+const LIFE := Vector2(244, 19)
+const MAGICK := Vector2(196, 15)
+const BOSS := Vector2(480, 12)
+const PASSIVE_ICON := 30
+const SLOT_GAP := 8
 const FONT_SMALL := 15
-const FONT_TEXT := 18
-const FONT_CLOCK := 26
-const FONT_COMBO := 40
+const FONT_TEXT := 19
+const FONT_CLOCK := 24
+const FONT_COMBO := 46
+## The four actions in the order of the diamonds, with the gift slot that changes each.
+const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"dodge"]
+const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
 
 var game: Game
-var _hp_fill: ColorRect
-var _hp_back: ColorRect
-var _hp_text: Label
-var _dodges: HBoxContainer
+var _crest: HeroCrest
+var _life: HudBar
+var _magick: HudBar
+var _room: Label
+var _clock: Label
+var _purse: HBoxContainer
+var _coin: HudMark
+var _gold: Label
 var _xp_back: ColorRect
 var _xp_fill: ColorRect
-var _level: Label
-var _clock: Label
-var _kills: Label
 var _boss_box: VBoxContainer
 var _boss_name: Label
-var _boss_fill: ColorRect
-var _boss_back: ColorRect
-var _boss_armor: ColorRect
-var _magick_fill: ColorRect
-var _cast: ColorRect
+var _boss_bar: HudBar
 var _combo: Label
 var _combo_word: Label
+var _combo_stroke: HudMark
 var _move: Label
 var _notice: Label
-var _icons: HBoxContainer
+var _slots: Array[ActionSlot] = []
+var _passives: HBoxContainer
 var _arrow: Label
-var _hp_shown := 1.0
+var _last_hp := -1.0
 var _combo_pop := 0.0
 var _move_t := 0.0
 var _notice_t := 0.0
-var _icon_count := -1
+var _passive_count := -1
 
 
 func _ready() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# experience (horde mode only): a thin gold line across the top
-	_xp_back = _rect(Color(0.05, 0.03, 0.06, 0.85), Control.PRESET_TOP_WIDE)
-	_xp_back.offset_bottom = 5
-	_xp_fill = _rect(Color(1.0, 0.8, 0.35), Control.PRESET_TOP_LEFT)
-	_xp_fill.size = Vector2(0, 5)
-	_level = _label("", UiKit.GOLD, FONT_TEXT, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 14))
-	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 10))
-	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_kills = _label("", UiKit.PALE, FONT_TEXT, UiKit.BOLD_FONT, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, 14))
-	_kills.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	# life, bottom left
-	_hp_back = _rect(Color(0.04, 0.02, 0.04, 0.9), Control.PRESET_BOTTOM_LEFT)
-	_place(_hp_back, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN - 12), Vector2(BAR_W, HP_H))
-	var hp_lag := ColorRect.new()
-	hp_lag.color = Color(1.0, 0.85, 0.7, 0.5)
-	hp_lag.name = "Lag"
-	_hp_back.add_child(hp_lag)
-	_hp_fill = ColorRect.new()
-	_hp_fill.color = Color(0.78, 0.14, 0.12)
-	_hp_back.add_child(_hp_fill)
-	var shine := ColorRect.new()
-	shine.color = Color(1, 1, 1, 0.12)
-	shine.size = Vector2(BAR_W, HP_H * 0.3)
-	_hp_back.add_child(shine)
-	_hp_text = UiKit.label("", UiKit.PALE, FONT_SMALL - 2, UiKit.BOLD_FONT)
-	_hp_text.size = Vector2(BAR_W, HP_H)
-	_hp_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_hp_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hp_back.add_child(_hp_text)
-	# Magia: a thin blue bar above the life
-	var magick_back := _rect(Color(0.04, 0.03, 0.08, 0.9), Control.PRESET_BOTTOM_LEFT)
-	_place(magick_back, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN - 12 - HP_H - 4), Vector2(BAR_W, MAGICK_H))
-	_magick_fill = ColorRect.new()
-	_magick_fill.color = MAGICK_COLOR
-	_magick_fill.size = Vector2(BAR_W, MAGICK_H)
-	magick_back.add_child(_magick_fill)
-	# the circle of light: a diamond right of the dodges, lit when ready
-	_cast = _rect(CAST_READY, Control.PRESET_BOTTOM_LEFT)
-	_place(_cast, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + BAR_W + 14, -MARGIN - 12 - HP_H * 0.5 + CAST_SIZE * 0.5), Vector2(CAST_SIZE, CAST_SIZE))
-	_cast.rotation = PI / 4.0
-	_dodges = HBoxContainer.new()
-	add_child(_dodges)
-	_place(_dodges, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(200, PIP.y))
-	# boss
-	_boss_box = VBoxContainer.new()
-	_boss_box.custom_minimum_size = Vector2(BOSS_W, 0)
-	_boss_box.visible = false
-	add_child(_boss_box)
-	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, 44), Vector2(BOSS_W, 36))
-	_boss_name = UiKit.title("", FONT_TEXT, Color(0.9, 0.75, 1.0))
-	_boss_box.add_child(_boss_name)
-	_boss_back = ColorRect.new()
-	_boss_back.color = Color(0.04, 0.02, 0.06, 0.9)
-	_boss_back.custom_minimum_size = Vector2(BOSS_W, BOSS_H)
-	_boss_box.add_child(_boss_back)
-	_boss_fill = ColorRect.new()
-	_boss_fill.color = Color(0.62, 0.22, 0.85)
-	_boss_back.add_child(_boss_fill)
-	_boss_armor = ColorRect.new()
-	_boss_armor.color = Horde.ARMOR_COLOR
-	_boss_back.add_child(_boss_armor)
-	# combo, right side
-	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -86))
-	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo_word = _label(T.t(&"hud_combo"), UiKit.PALE, FONT_SMALL, UiKit.BOLD_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -38))
-	_combo_word.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_move = _label("", Color(1.0, 0.92, 0.7), FONT_TEXT + 2, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -14))
-	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo.visible = false
-	_combo_word.visible = false
-	_notice = _label("", UiKit.PALE, FONT_TEXT + 4, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 110))
+	_build_top()
+	_build_life()
+	_build_actions()
+	_build_combo()
+	_notice = _label("", UiKit.PALE, FONT_TEXT + 3, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 110))
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_icons = HBoxContainer.new()
-	_icons.add_theme_constant_override(&"separation", 6)
-	_icons.alignment = BoxContainer.ALIGNMENT_CENTER
-	add_child(_icons)
-	_place(_icons, Control.PRESET_CENTER_BOTTOM, Vector2(0, -12), Vector2(900, ICON_SIZE + 10))
 	_arrow = _label("", Color(1.0, 0.9, 0.6), FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
+
+
+## Top: experience (horde mode only, a thin gold line across the top), room or level, clock, gold or kills, boss.
+func _build_top() -> void:
+	_xp_back = _rect(Color(0.05, 0.03, 0.06, 0.85), Control.PRESET_TOP_WIDE)
+	_xp_back.offset_bottom = 4
+	_xp_fill = _rect(Color(1.0, 0.8, 0.35), Control.PRESET_TOP_LEFT)
+	_xp_fill.size = Vector2(0, 4)
+	_room = _label("", UiKit.PALE, FONT_TEXT, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 12))
+	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 8))
+	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_clock.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_purse = HBoxContainer.new()
+	_purse.add_theme_constant_override(&"separation", 6)
+	_purse.alignment = BoxContainer.ALIGNMENT_END
+	_purse.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_purse)
+	_place(_purse, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, 10), Vector2(260, 30))
+	_coin = HudMark.new().setup(HudMark.Kind.COIN, Vector2(17, 17))
+	_coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_purse.add_child(_coin)
+	_gold = UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.TITLE_FONT)
+	_purse.add_child(_gold)
+	_boss_box = VBoxContainer.new()
+	_boss_box.add_theme_constant_override(&"separation", 2)
+	_boss_box.visible = false
+	_boss_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_boss_box)
+	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, 42), Vector2(BOSS.x, 40))
+	_boss_name = UiKit.title("", FONT_TEXT, Color(0.9, 0.75, 1.0))
+	_boss_name.add_theme_constant_override(&"outline_size", 5)
+	_boss_box.add_child(_boss_name)
+	_boss_bar = HudBar.new().setup(BOSS_COLOR, BOSS, 11, true)
+	_boss_bar.over_color = Horde.ARMOR_COLOR
+	_boss_box.add_child(_boss_bar)
+
+
+## Bottom left: the medallion, with life and Magia coming out from behind it.
+func _build_life() -> void:
+	var mid := MARGIN + CREST * 0.5
+	_life = HudBar.new().setup(LIFE_COLOR, LIFE, 13)
+	add_child(_life)
+	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 10, -mid - 1), LIFE)
+	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK, 12)
+	add_child(_magick)
+	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 10, -mid + 3 + MAGICK.y), MAGICK)
+	_crest = HeroCrest.new().setup(CREST)
+	add_child(_crest)
+	_place(_crest, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(CREST, CREST))
+
+
+## Bottom centre: the four action diamonds; the gifts that act alone sit in a row to their right.
+func _build_actions() -> void:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", SLOT_GAP)
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(row)
+	for i in ACTIONS.size():
+		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i])
+		row.add_child(s)
+		_slots.append(s)
+	var width := row.get_combined_minimum_size().x
+	var height := ActionSlot.DIAMOND + ActionSlot.KEY_H * 0.5
+	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0, -MARGIN + 6), Vector2(width, height))
+	_passives = HBoxContainer.new()
+	_passives.add_theme_constant_override(&"separation", 4)
+	_passives.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_passives)
+	var room := 300.0
+	_place(_passives, Control.PRESET_CENTER_BOTTOM, Vector2(width * 0.5 + 18 + room * 0.5, -MARGIN - 4), Vector2(room, PASSIVE_ICON + 6))
+
+
+## Right: the hit count with a brush stroke, and the move's name under it.
+func _build_combo() -> void:
+	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 10, -118))
+	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_combo.add_theme_constant_override(&"outline_size", 8)
+	_combo_word = _label(T.t(&"hud_hits"), UiKit.PALE, FONT_TEXT - 1, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -72))
+	_combo_word.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_combo_stroke = HudMark.new().setup(HudMark.Kind.STROKE, Vector2(100, 16))
+	add_child(_combo_stroke)
+	_place(_combo_stroke, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN + 8, -48), Vector2(100, 16))
+	_move = _label("", Color(1.0, 0.92, 0.7), FONT_TEXT + 1, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -30))
+	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
+		c.visible = false
 
 
 ## Puts a control of a given size at a corner or edge of the screen, moved by offset from there.
@@ -167,32 +185,24 @@ func _process(delta: float) -> void:
 	if game == null or game.player == null:
 		return
 	var p := game.player
-	var w := get_viewport_rect().size.x
 	_clock.text = SaveData.format_time(game.time)
+	_coin.visible = game.rooms != null
 	if game.rooms:
 		# the descent: which room, and the gold for the shop (no experience here, so no bar over the scene)
 		_xp_back.visible = false
 		_xp_fill.size.x = 0.0
-		_level.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
-		_kills.text = "%s  %d" % [T.t(&"hud_gold"), game.rooms.gold]
+		_room.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
+		_gold.text = T.t(&"hud_gold_count", {"n": game.rooms.gold})
+		_crest.seal = ""
 	else:
-		_xp_fill.size.x = w * game.xp_ratio()
-		_level.text = T.t(&"hud_level", {"n": game.level})
-		_kills.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
-	var ratio := clampf(p.hp / p.max_hp, 0.0, 1.0)
-	_hp_shown = move_toward(_hp_shown, ratio, delta * 0.5) if _hp_shown > ratio else ratio
-	_hp_fill.size = Vector2(BAR_W * ratio, HP_H)
-	(_hp_back.get_node("Lag") as ColorRect).size = Vector2(BAR_W * _hp_shown, HP_H)
-	_hp_text.text = "%d / %d" % [ceili(p.hp), roundi(p.max_hp)]
-	_update_dodges(p)
-	_magick_fill.size = Vector2(BAR_W * p.magick.ratio(), MAGICK_H)
-	_cast.color = CAST_READY if p.cast_cooldown <= 0.0 else CAST_WAIT
-	var b := game.boss_enemy()
-	_boss_box.visible = b != null
-	if b:
-		_boss_name.text = T.t(b.def.name_key)
-		_boss_fill.size = Vector2(BOSS_W * clampf(b.hp / b.max_hp, 0.0, 1.0), BOSS_H)
-		_boss_armor.size = Vector2(BOSS_W * (b.armor / b.max_armor if b.max_armor > 0.0 else 0.0), BOSS_H * 0.4)
+		_xp_fill.size.x = get_viewport_rect().size.x * game.xp_ratio()
+		_room.text = T.t(&"hud_level", {"n": game.level})
+		_gold.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
+		_crest.seal = str(game.level)
+	_update_life(p)
+	_update_slots(p)
+	_update_passives()
+	_update_boss()
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
 	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
@@ -200,31 +210,44 @@ func _process(delta: float) -> void:
 	_move.modulate.a = clampf(_move_t / 0.4, 0.0, 1.0)
 	_notice_t -= delta
 	_notice.modulate.a = clampf(_notice_t / 0.6, 0.0, 1.0)
-	_update_icons()
 	_update_arrow()
 
 
-func _update_dodges(p: Player) -> void:
-	while _dodges.get_child_count() < p.dodge_max:
-		var pip := ColorRect.new()
-		pip.custom_minimum_size = PIP
-		_dodges.add_child(pip)
-	while _dodges.get_child_count() > p.dodge_max:
-		_dodges.get_child(_dodges.get_child_count() - 1).free()
-	for i in _dodges.get_child_count():
-		(_dodges.get_child(i) as ColorRect).color = Color(0.5, 0.85, 1.0) if i < p.dodge_charges else Color(0.15, 0.2, 0.28, 0.8)
+func _update_life(p: Player) -> void:
+	_life.show_value(p.hp / p.max_hp, "%d / %d" % [ceili(p.hp), roundi(p.max_hp)])
+	_magick.show_value(p.magick.ratio(), "%d / %d" % [floori(p.magick.value), roundi(p.magick.max_value)])
+	if _last_hp >= 0.0 and p.hp < _last_hp - 0.01:
+		_crest.flash = 1.0
+	_last_hp = p.hp
+	_crest.danger = 1.0 - clampf(p.hp / p.max_hp / 0.3, 0.0, 1.0)
 
 
-func _update_icons() -> void:
-	var owned := game.boons.owned()
-	if owned.size() != _icon_count:
-		_icon_count = owned.size()
-		for c in _icons.get_children():
+func _update_slots(p: Player) -> void:
+	var by_slot := {}
+	for b in game.boons.owned():
+		by_slot[b.slot] = b
+	for s in _slots:
+		var b: Boon = by_slot.get(s.slot)
+		match s.slot:
+			Boon.Slot.CAST:
+				s.refresh(b, 1.0 if p.cast_active else p.cast_cooldown / Player.CAST_COOLDOWN)
+			Boon.Slot.DASH:
+				s.refresh(b, 1.0 if p.dodge_charges <= 0 else 0.0, p.dodge_charges, p.dodge_max)
+			_:
+				s.refresh(b, 0.0)
+
+
+## The gifts with no action of their own: small medallions with their recharge.
+func _update_passives() -> void:
+	var owned: Array[Boon] = []
+	owned.assign(game.boons.owned().filter(func(b: Boon) -> bool: return b.slot == Boon.Slot.NONE))
+	if owned.size() != _passive_count:
+		_passive_count = owned.size()
+		for c in _passives.get_children():
 			c.queue_free()
 		for b in owned:
-			_icons.add_child(BoonIcon.new().setup(b, ICON_SIZE))
-	var i := 0
-	for c in _icons.get_children():
+			_passives.add_child(BoonIcon.new().setup(b, PASSIVE_ICON))
+	for c in _passives.get_children():
 		if c.is_queued_for_deletion():
 			continue
 		var icon := c as BoonIcon
@@ -234,7 +257,14 @@ func _update_icons() -> void:
 			var t := game.skills.timer(icon.boon)
 			icon.cooldown = clampf(t.x / maxf(t.y, 0.01), 0.0, 1.0)
 		icon.queue_redraw()
-		i += 1
+
+
+func _update_boss() -> void:
+	var b := game.boss_enemy()
+	_boss_box.visible = b != null
+	if b:
+		_boss_name.text = T.t(b.def.name_key)
+		_boss_bar.show_value(b.hp / b.max_hp, "", b.armor / b.max_armor if b.max_armor > 0.0 else 0.0)
 
 
 ## Where the light fountain is, when it is off screen.
@@ -259,8 +289,8 @@ func _update_arrow() -> void:
 
 
 func on_combo(count: int) -> void:
-	_combo.visible = count >= 3
-	_combo_word.visible = count >= 3
+	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
+		c.visible = count >= 3
 	_combo.text = str(count)
 	_combo_pop = 1.0
 

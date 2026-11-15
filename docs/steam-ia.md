@@ -5,7 +5,7 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
 
 ## Pré-gerado
 - **Arte de referência do Daniel (toda feita por IA, confirmado em 2026-11-14)**: a imagem da arena
-  ("Arena das Catacumbas: Golpe Dourado") e a ficha do herói com a espada Emeth. Não vão no jogo, mas o jogo foi
+  ("Arena das Catacumbas: Golpe Dourado"), a ficha do herói com a espada Emeth, a folha do Explorador e a prancha "Inimigos da Fase 1" (docs/art/enemies_phase1.md). Não vão no jogo, mas o jogo foi
   desenhado a partir delas: as arenas em plataforma sobre o abismo (`Arena._platform`, `ArenaKit`, shaders do chão,
   da névoa e do portal) e a espada Emeth (`EmethSword`).
 - **Modelos 3D do Meshy**: o herói "Sombra" (hoje repintado como o Explorador por `tools/recolor_hero.gd`, a folha conceitual do Explorador também foi feita por IA) e o `paladin_1` (lista completa em `tools/meshy/tasks.json`).

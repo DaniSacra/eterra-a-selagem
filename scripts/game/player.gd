@@ -37,6 +37,21 @@ const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
 const FLASH := preload("res://assets/shaders/flash.gdshader")
 const XRAY := preload("res://assets/shaders/xray.gdshader")
 const OUTLINE := Color(1.0, 0.78, 0.35)
+## The thin edge on his body and his silhouette through what hides him: cold and light, never gold over the body
+## (docs/art/cycle4_spec.md, c).
+const EDGE := Color(0.75, 0.9, 1.0)
+## The dark blot under his feet, as under every figure of the reference painting: meters across and deep, opacity.
+const CONTACT_SHADOW := Vector2(1.2, 0.8)
+const CONTACT_SHADOW_ALPHA := 0.5
+## The look of his state on the body (flash.gdshader), kept small so he reads as the explorer in the fight
+## (Daniel's capture of 2026-11-14 showed him all gold or white): after a hit he blinks white this strong every
+## BLINK_PERIOD seconds (only after a hit, not after a dodge or a cast); the Omega's gold shows past this share of
+## its charge, up to CHARGE_GLOW; the ready shield is a faint green edge.
+const HURT_BLINK := 0.3
+const BLINK_PERIOD := 0.16
+const CHARGE_GLOW_FROM := 0.25
+const CHARGE_GLOW := 0.55
+const SHIELD_GLOW := Color(0.4, 1.0, 0.6, 0.12)
 ## The point near the tip of the sword (in the sword's own space, HeroBody) where a finisher's glint sits.
 const BLADE_TIP := Vector3(0, 1.15, 0)
 ## Magia: full at the start of every room (Game refills it), spent by the held Omega moves.
@@ -91,6 +106,8 @@ const LUNGE_STANDOFF := 0.45
 var _push := Vector2.ZERO
 var _shield_t := 0.0
 var _flash := 0.0
+## Seconds of the white blink after a hit (the safety after a dodge or a cast does not blink).
+var _blink := 0.0
 var _model: Node3D
 var _anim: AnimationPlayer
 var _overlay: ShaderMaterial
@@ -141,6 +158,26 @@ func _ready() -> void:
 	_light.omni_attenuation = 1.2
 	_light.light_cull_mask = ~Arena.CROWD_LAYER
 	add_child(_light)
+	_model.add_child(_contact_shadow())
+
+
+## A soft dark ellipse on the floor under him (it turns with him, longer front to back).
+func _contact_shadow() -> MeshInstance3D:
+	var plane := PlaneMesh.new()
+	# in the model's space (the model is scaled to the hero's height)
+	plane.size = Vector2(CONTACT_SHADOW.y, CONTACT_SHADOW.x) / _model.scale.x
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(0.0, 0.0, 0.02, CONTACT_SHADOW_ALPHA)
+	m.albedo_texture = Fx.soft_dot()
+	m.disable_receive_shadows = true
+	var mi := MeshInstance3D.new()
+	mi.mesh = plane
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position.y = 0.03 / _model.scale.x
+	return mi
 
 
 func _prepare(n: Node) -> void:
@@ -164,6 +201,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	invuln = maxf(0.0, invuln - dt)
 	cast_cooldown = maxf(0.0, cast_cooldown - dt)
 	_flash = maxf(0.0, _flash - dt * 6.0)
+	_blink = maxf(0.0, _blink - dt)
 	if shield_cooldown > 0.0 and not shield_ready:
 		_shield_t += dt
 		if _shield_t >= shield_cooldown:
@@ -351,6 +389,7 @@ func hurt(amount: float, from: Vector2) -> void:
 	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction)))
 	hp -= amount
 	invuln = HURT_INVULN
+	_blink = HURT_INVULN
 	_flash = 1.0
 	charging = false
 	runner.reset()
@@ -392,14 +431,15 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	position = Vector3(pos.x, 0, pos.y)
 	var want := atan2(facing.x, facing.y)
 	_model.rotation.y = lerp_angle(_model.rotation.y, want, minf(1.0, dt * (30.0 if runner.is_attacking() else TURN)))
-	var glow := Color(1.0, 0.8, 0.35, clampf(charge_t / _charge_time(), 0.0, 1.0) * (0.8 if charging else 0.0))
+	var glow := Color(OUTLINE, inverse_lerp(CHARGE_GLOW_FROM, 1.0, maxf(charge_progress(), CHARGE_GLOW_FROM)) * CHARGE_GLOW)
 	if shield_ready and not charging:
-		glow = Color(0.4, 1.0, 0.6, 0.12)
-	_overlay.set_shader_parameter(&"flash", maxf(_flash, 0.6 if invuln > 0.0 and state != State.DODGE and fmod(invuln, 0.16) < 0.08 else 0.0))
+		glow = SHIELD_GLOW
+	var blink := HURT_BLINK if _blink > 0.0 and fmod(_blink, BLINK_PERIOD) < BLINK_PERIOD * 0.5 else 0.0
+	_overlay.set_shader_parameter(&"flash", maxf(_flash, blink))
 	_overlay.set_shader_parameter(&"glow", glow)
 	var edge := Dev.num("outline", Feel.live().outline)
-	_overlay.set_shader_parameter(&"outline", Color(OUTLINE, edge))
-	_xray.set_shader_parameter(&"color", Color(OUTLINE, edge))
+	_overlay.set_shader_parameter(&"outline", Color(EDGE, edge))
+	_xray.set_shader_parameter(&"color", Color(EDGE, edge))
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if state != State.MOVE or runner.is_swinging():
 		return

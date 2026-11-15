@@ -7,6 +7,9 @@ const MODEL := "res://assets/models/meshy/hero_sombra/hero_sombra-rigged.glb"
 const ANIMS := "res://assets/models/meshy/hero_sombra/hero_anims.res"
 ## The body repainted toward the approved explorer sheet (tools/recolor_hero.gd); provisional, see docs/art/hero_explorer.md.
 const SKIN := "res://assets/models/meshy/hero_sombra/hero_explorer_albedo.png"
+## How much of his own colours he shows away from any light (emission from the albedo): the game's lights are warm
+## and few, and from the back (where the camera sees him most) the leathers went black and the gold edge took over.
+const FILL := 0.28
 ## The model is this tall as it comes; the game shows him HEIGHT tall (Hades II scale: 2.5 m).
 const MODEL_HEIGHT := 1.8
 const HEIGHT := 2.5
@@ -52,6 +55,13 @@ static func _explorer(model: Node3D) -> void:
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		var mat := (mi.get_active_material(0) as StandardMaterial3D).duplicate() as StandardMaterial3D
-		mat.albedo_texture = load(SKIN)
+		var skin: Texture2D = load(SKIN)
+		mat.albedo_texture = skin
+		mat.emission_enabled = true
+		mat.emission = Color.WHITE
+		# multiply: the colour times the texture (the default, add, puts the full white on top of it)
+		mat.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
+		mat.emission_texture = skin
+		mat.emission_energy_multiplier = FILL
 		mi.material_override = mat
 	HeroGear.dress(model, PoseBaker.find_skeleton(model))

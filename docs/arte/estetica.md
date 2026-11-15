@@ -82,6 +82,35 @@ cinco finalizadores das sequências, preparação de 0,2 s, ajuste ao vivo em `F
 - Textura pintada à mão, cores apagadas e um único acento forte (no nosso paladino, a capa vermelha).
 - Modelos do Meshy: ver `tools/meshy/` (prompts, tarefas e créditos) e `assets/models/meshy/`.
 
+### Leitura na luta (correção de 2026-11-14, captura do Daniel: "herói dourado ou branco, inimigos verdes e chapados")
+
+Causas medidas em capturas reais (Forward+, `--bot --seed=5`; recortes no scratchpad da sessão):
+- Herói dourado: o contorno do `flash.gdshader` (dourado, `pow(rim, 2.5) * 2,2`) cobria quase todo o corpo a 70 px,
+  somado ao raio X (`xray.gdshader`, sem teste de profundidade) que pintava dourado sobre o corpo inteiro mesmo
+  sem nada na frente; com `--outline=0` o herói voltou às cores dele. Durante a carga do Ômega o brilho dourado
+  cobria o corpo (25% fixo mais a borda) e o robô (e quem segura o botão) carrega quase sempre.
+- Herói branco: o pisca de proteção (0,6 x 1,6 de branco somado, a cada 0,16 s) acontecia em toda proteção,
+  inclusive depois de cada avanço e de cada círculo, não só depois de levar golpe.
+- Herói escuro de costas: a única luz dele fica à frente; de costas (como a câmera mais o vê) o couro virava preto
+  e só a borda dourada aparecia.
+- Multidão chapada e esverdeada: `CROWD_GREY` 0,92, `CROWD_LIFT` 0,45 e `CROWD_FLAT` 0,45 apagavam a textura e a
+  forma (gesso); o ambiente frio, a lua azul-petróleo e os tons frios dos inimigos (`tint` do arqueiro 0,85, 0,95,
+  0,85) esverdeavam o cinza.
+
+O que mudou:
+- `flash.gdshader`: borda fina e fria (`Player.EDGE` 0,75, 0,9, 1,0; `edge_from` 0,9, `edge_gain` 0,18; mais forte, ela cobria os ombros de branco a 70 px; abaixo do limiar de brilho);
+  o brilho da carga fica na borda (`glow_body` 0,06). `xray.gdshader`: só onde algo encobre o herói (compara com a
+  profundidade da cena; `hidden_by` 1 m, senão o manto e o cachecol escondem o resto dele e o raio X pinta o
+  próprio corpo). `Player`: pisca só depois de levar golpe (`HURT_BLINK` 0,3), o dourado da carga aparece
+  depois de 25% dela (`CHARGE_GLOW` 0,55), sombra de contato 1,2 x 0,8 m a 50%.
+- `HeroBody.FILL` 0,28: o herói mostra parte da própria cor sem luz (emissão pela textura, modo multiplicar);
+  `HeroGear` igual. Cabelo cobre mais claro no `recolor_hero.gd` (`HAIR_*`), ombreira nos dois ombros, manto até
+  abaixo do joelho (`HeroGear.MANTLE`).
+- Multidão (`crowd.gdshader`, `CrowdRenderer`): cores da textura do KayKit pouco apagadas (`CROWD_GREY` 0,5,
+  `CROWD_TINT_KEEP` 0,3), luz pintada fixa vinda do alto à esquerda da tela (`KEY` 0,8, `KEY_FILL` 0,16), pés mais
+  escuros (`FOOT_SHADE` 0,55) e borda escura onde o corpo vira (`INK` 0,65); a luz fria da sala só tinge
+  (`CROWD_SCENE_LIGHT` 0,55). Partículas de sombra em violeta do abismo (`Fx.BURSTS.shadow`), não magenta.
+
 ## O que já foi feito (2026-11-14)
 
 - Luz e ambiente frios em `game.gd` (`_build_world`), pedra do KayKit tingida (`Arena.STONE_TINT`),
@@ -148,6 +177,9 @@ e efeitos e interface ocupavam espaço demais. Os personagens ficaram como estav
 - **HUD** (`Hud`, constantes no topo): vida 340 x 26 para 240 x 14, Magia 8 para 5 de altura, avanços 36 x 8 para
   26 x 5, chefe 640 x 14 para 480 x 9, relógio 38 para 26, sala e ouro 26/24 para 18, contador de golpes 64 para 40,
   nome do golpe 30 para 20, ícones dos dons 52 para 38, margem 24 para 20.
+  Redesenhado no molde da imagem de referência (ciclo 4, 2026-11-14): medalhão do herói `HeroCrest` (76), vida 244 x 19 e
+  Magia 196 x 15 em `HudBar` com ponta em ângulo, as quatro ações em losango (`ActionSlot`) com a tecla real, moeda e
+  traço pincelado em `HudMark` (números em unidades de 720 linhas).
 
 ## Pendências
 

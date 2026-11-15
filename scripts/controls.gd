@@ -105,7 +105,7 @@ func reset_bindings() -> void:
 func label(action: StringName) -> String:
 	for ev in InputMap.action_get_events(action):
 		if using_pad and ev is InputEventJoypadButton:
-			return ["A", "B", "X", "Y"][(ev as InputEventJoypadButton).button_index] if (ev as InputEventJoypadButton).button_index < 4 else "Start"
+			return T.t("pad_%d" % (ev as InputEventJoypadButton).button_index)
 		if not using_pad and ev is InputEventKey:
 			return OS.get_keycode_string((ev as InputEventKey).physical_keycode)
 		if not using_pad and ev is InputEventMouseButton:

@@ -107,3 +107,22 @@ static func format_number(v: float) -> String:
 	if is_equal_approx(v, roundf(v)):
 		return str(roundi(v))
 	return ("%.1f" % v).replace(".", ",")
+
+
+## Label of the key or button of an action, with every gamepad button named (Controls.label names only A, B, X, Y).
+static func action_label(action: StringName) -> String:
+	var label := Controls.label(action)
+	# key names come from the system in English ("Space"); the common ones have a Portuguese name
+	return T.t("key_" + label) if T.table.entries.has("key_" + label) else label
+
+
+## The mouse button bound to an action (0 when it is a key, or the gamepad is in use): the HUD draws a mouse for it.
+static func action_mouse_button(action: StringName) -> int:
+	if Controls.using_pad:
+		return 0
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventKey:
+			return 0
+		if ev is InputEventMouseButton:
+			return (ev as InputEventMouseButton).button_index
+	return 0

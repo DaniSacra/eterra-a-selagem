@@ -2,8 +2,8 @@ extends SceneTree
 ## Repaints the hero's texture toward the approved "Explorador" sheet (docs/art/hero_explorer.md) without touching the
 ## mesh, the skeleton or the clips: every texel of the atlas is found on the model in its rest pose (by rasterizing the
 ## triangles in UV space), and the black cloth of the "Sombra" becomes the explorer's leathers by where it sits on the
-## body (boots, trousers, belt, vest with crossed straps, bracers); the scarf turns to the sheet's deep teal; hair and
-## skin stay. Provisional until a real model of the explorer is made (Meshy plan in docs/art/hero_explorer.md).
+## body (boots, trousers, belt, vest with crossed straps, bracers); the scarf turns to the sheet's deep teal; the hair to
+## a brighter copper; skin stays. Provisional until a real model of the explorer is made (Meshy plan in docs/art/hero_explorer.md).
 ##   ~/tools/godot/godot --headless --path . -s tools/recolor_hero.gd
 
 const SOURCE := "res://assets/models/meshy/hero_sombra/hero_sombra-rigged_Image_0.jpg"
@@ -24,6 +24,13 @@ const BRACER := Color("6a3e27")
 const GLOVE := Color("402621")
 const SKIN := Color("e28e61")
 const TEAL := Color("2f6b5e")
+## The hair (above HAIR_FROM, saturated and red-orange): the sheet's copper, brighter than the Sombra's (from the
+## game's camera it is the top of his head that shows): hue, saturation, how much its value rises, the most it gets.
+const HAIR_FROM := 1.58
+const HAIR_HUE := 0.045
+const HAIR_SAT := 0.86
+const HAIR_LIFT := 1.3
+const HAIR_MAX := 0.92
 ## The value the black cloth has on average: texels darker or lighter keep their shading around the new colour.
 const CLOTH_VALUE := 0.17
 
@@ -78,6 +85,8 @@ static func _paint(c: Color, p: Vector3) -> Color:
 	var ax := absf(p.x)
 	var upper_arm := ax > ARM_X and p.y > ELBOW + 0.03 and p.y < CHEST_TOP + 0.02
 	var skin_or_hair := c.s > 0.5 and c.h < 0.12
+	if p.y > HAIR_FROM and c.s > 0.7 and c.h < 0.12:
+		return Color.from_hsv(HAIR_HUE, HAIR_SAT, minf(v * HAIR_LIFT, HAIR_MAX))
 	# bare upper arms, as on the sheet: smooth skin over whatever the sleeve had
 	if upper_arm and not skin_or_hair:
 		return SKIN * 0.92
