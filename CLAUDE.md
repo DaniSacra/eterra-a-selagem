@@ -68,7 +68,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens, masmorra, armas).
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
-  menor, pernas e tronco mais longos), no assador para a multidão (o herói do Meshy já tem a proporção certa).
+  menor, pernas e tronco mais longos), só no assado dos bonecos do KayKit guardados (os modelos do Meshy já têm a proporção certa).
 - Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),
   inclinação 30, campo de visão 24, distância 54 no jogo (ciclo 5, para o herói ler maior; a vitrine `--showcase` fica em 60) (`_feel` do `make_data.gd`). Teclado e controle giram junto
   (`Feel.screen_to_floor`). `--showcase`: câmera fixa no enquadramento da pintura, para comparar.
@@ -81,7 +81,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Horde.THROW`), tranco de câmera (`Fx.kick`), hit stop curto (`Feel.hit_stop_scale`) e brilho de antecipação nos finalizadores
   (`ComboNode.glint`, desenhado por `Fx.glint` na ponta da espada). Finalizadores soltam a meia-lua enorme (`Fx.crescent`) e,
   nos grandes, o quadro de impacto em preto e branco (`Fx.impact_frame`). Multidão cinza clara sobre o chão escuro, que brilha um pouco sozinha para ser lida longe da luz (`CrowdRenderer.CROWD_*`, `lift` e `flat_light` no `crowd.gdshader`); cortes em faixa larga (`Fx.SLASH_INNER`); elites com contorno escuro e fino
-  (`crowd_outline.gdshader`, `CrowdRenderer.OUTLINE_*`; largura em metros do mundo) e borda de ouro velho fraca (`ELITE_RIM`); o ouro das paletas é velho (8e7444), nunca amarelo vivo. Detalhes e pendências em `docs/arte/estetica.md`.
+  (`crowd_outline.gdshader`, `CrowdRenderer.OUTLINE_*`; largura em metros do mundo) e borda de ouro velho fraca (`ELITE_RIM`); o ouro das elites é velho (`CrowdRenderer.GILD_COLOR`), nunca amarelo vivo. Detalhes e pendências em `docs/arte/estetica.md`.
 - Câmera lenta no molde do Hades II (`Fx.slow_mo`: velocidade do mundo por `Engine.time_scale`, zoom, desfoque radial e
   brilho no `screen.gdshader`): último abate da sala (0,35 por 0,55 s, `Rooms.LAST_KILL_*`), golpe que derruba 3 ou
   acerta 7 de uma vez, no máximo uma vez a cada 6 s (`Combat.SLOW_MO_*`, `wants_slow_mo`; no Hades só o último abate e o chefe
@@ -105,14 +105,19 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   proteção e 1 carga, círculo em volta do paladino (5,4 m, 3 s, um por vez). Vida 30, 1,3 s de proteção após um golpe.
 - Inimigos com os números de Érebo: cada um tem a versão elite (`_elite`, armadura do Hades). Guardiões: `knight` e `priest_elder`.
 - Aparência dos inimigos pela prancha do Daniel "Inimigos da Fase 1" (`docs/art/enemies_phase1.md`; imagem só local em
-  `docs/art/ref/`): um modelo assado por inimigo, paleta própria (`tools/make_palettes.gd` gera `assets/models/palettes/`,
-  `_elite` com frisos dourados), peças nos ossos (`props`, `hide`, `remap`, `bend` em `MODELS` de `tools/bake.gd`), escala
-  da prancha e cor da magia (`EnemyDef.magic_color`: feiticeiro violeta frio, sacerdotes e Morvath roxo; verde só da
-  Emeth e do portal). Elites com frisos de ouro velho e contorno escuro fino. Galeria: `tools/enemy_lab.gd`.
-- **Modelos do Meshy dos nove inimigos** (2026-11-15, aprovados pelo Daniel, tom da 3ª versão do Sacerdote: caveira de
-  marfim, roxo apagado, metal escuro, brilho só nos olhos e gemas): `assets/models/meshy/enemy_<id>/` com esqueleto de 24
-  ossos (`-rigged.glb`). **Ainda não estão no jogo**: a multidão assa poses de clipes do KayKit; falta transferir os clipes
-  para o esqueleto do Meshy (como o `Retarget` do herói) e assar. Prompts e repinturas em `tools/meshy/prompts.json`.
+  `docs/art/ref/`): **os nove são os modelos do Meshy** aprovados pelo Daniel (2026-11-15; `assets/models/meshy/enemy_<id>/`,
+  esqueleto de 24 ossos, `-rigged.glb`; tom da 3ª versão do Sacerdote: caveira de marfim, roxo apagado, metal escuro, brilho só
+  nos olhos e gemas). `tools/bake.gd` (`MODELS`, entrada com `"meshy"`) faz tudo: reduz a malha de 15,5 mil para cerca de 3,9 mil
+  triângulos e repassa a pintura para um atlas novo de 1024 (`MeshSlim`, `scripts/render/mesh_slim.gd`), transfere clipes da
+  Quaternius e do KayKit pelo `Retarget`, prende as armas do KayKit que o modelo não tem (`held`: lâmina, cajado, besta, escudo
+  do Cavaleiro; o Escudo já traz as dele), põe os pés no chão e a altura da prancha (`height`). A textura vai dentro do `.res`
+  (`BakedModel.painted`). Cor da magia em `EnemyDef.magic_color` (feiticeiro violeta frio, sacerdotes e Morvath roxo; verde só da
+  Emeth e do portal); olhos, gemas e orbes brilham pela própria pintura (`paint_glow` no `crowd.gdshader`).
+  **Elites sem créditos**: a mesma figura com o aço em ouro velho por shader (`EnemyDef.gild`, `ELITE_GILD` no `make_data.gd`,
+  `gild` no `crowd.gdshader`), contorno escuro fino, borda fraca e barra de armadura; uma repintura no Meshy (10 créditos cada)
+  ficaria melhor e depende do Daniel. Galeria: `tools/enemy_lab.gd` (ids opcionais para ver de perto).
+  Os bonecos do KayKit e as paletas (`tools/make_palettes.gd`, `assets/models/palettes/`) ficam guardados, sem uso:
+  `tools/bake.gd -- kaykit [ids]` volta a assá-los. Prompts e repinturas em `tools/meshy/prompts.json`.
 
 ## Arquitetura
 - `scripts/core/`: lógica pura (sem nós), toda testada. `scripts/game/`: nós da partida. `scripts/ui/`: telas.
@@ -122,9 +127,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   só "não chamar step". Cada sistema que emite sinal dentro do laço (golpe que mata o paladino limpa tudo) precisa
   aguentar a lista mudar no meio (ver `Ground.step`, `Projectiles.step`).
 - **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer`, um MultiMesh por (inimigo, animação,
-  quadro). As poses vêm assadas: `tools/bake.gd` esqueleta os modelos KayKit em malhas estáticas (`assets/baked/*.res`,
-  `BakedModel`). Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
-  `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]`. A multidão fica fora da luz das tochas (camada 2)
+  quadro). As poses vêm assadas: `tools/bake.gd` esqueleta os modelos (Meshy; os do KayKit ficaram em `KAYKIT`) em malhas estáticas
+  (`assets/baked/*.res`, `BakedModel`). Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
+  `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]` (o Godot do editor: o atlas novo usa o xatlas). A multidão fica fora da luz das tochas (camada 2)
   e recebe a luz do paladino pelo global `hero_pos`.
 - O herói é o Explorador do Meshy (2026-11-15, da folha aprovada; `assets/models/meshy/hero_explorer/hero_explorer-rigged.glb`,
   24 ossos, os mesmos da antiga "Sombra", pose em A), montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na
@@ -135,7 +140,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`PEAK` em `make_data.gd`), o passo da corrida (`Player.RUN_CLIP_PACE`), achata o sobe e desce do quadril na corrida, mantém o braço da espada em guarda e a pegada da espada (pela linha dos nós dos
   dedos do manequim). Clipe novo: editar `CLIPS` em `tools/bake_hero.gd` e rodar
   `~/tools/godot/godot --headless --path . -s tools/bake_hero.gd`. Ver as poses: `tools/pose_lab.gd` (comando no topo).
-  A espada é a Emeth (arte do Daniel de 2026-11-14; nova imagem em 2026-11-15: lâmina de cristal esmeralda com veios de ouro, guarda de chifres com esmeralda, punho vermelho; modelo do Meshy pronto em `assets/models/meshy/emeth/`, ainda não ligado): lâmina esmeralda com fio central aceso, guarda de ouro velho, provisória em formas simples (`EmethSword`, `scripts/render/emeth_sword.gd`), do tamanho da espada do KayKit que substituiu. Emeth é o nome da espada, não do herói (o Daniel, 2026-11-14). Os cortes sem dom são do verde dela (`Combat.EMETH`); dons mudam a cor (fogo, gelo, ouro de Elun). Desenho escolhido pelo Daniel: memória do projeto e `build/web/herois.html`.
+  A espada é a Emeth, o modelo do Meshy (`assets/models/meshy/emeth/emeth.glb`, da imagem do Daniel de 2026-11-15: lâmina de cristal esmeralda com veios de ouro, guarda de chifres com esmeralda, punho vermelho), montada por `EmethSword` (`scripts/render/emeth_sword.gd`) com o tamanho e a pegada da anterior (topo do punho em 0,13 m, ponta em 1,5 m); só a lâmina brilha, abaixo do limiar do glow (`emeth.gdshader`, `BLADE_GLOW`), com o fio central aceso por cima (`CORE_*`). Emeth é o nome da espada, não do herói (o Daniel, 2026-11-14). Os cortes sem dom são do verde dela (`Combat.EMETH`); dons mudam a cor (fogo, gelo, ouro de Elun). Desenho escolhido pelo Daniel: memória do projeto e `build/web/herois.html`.
 - Dons agem sozinhos por `SkillDef` (`scripts/game/skills.gd`: STRIKES, NOVA, ORBIT, FAN, METEOR, CONSECRATE) e/ou
   mudam golpes por `BoonMod`.
 - **Combate no estilo Hades 2** (o visual segue o Ember & Blade): ataque (E), especial (D), círculo de luz (`cast`, Q)
@@ -179,7 +184,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`ComboNode.sweep`, `SWEEP` em `make_data.gd`), golpes
   empurram mais, inimigos mais rápidos (esqueleto 3,75 m/s) e com menos espera entre ataques (avisos iguais); a câmera
   se adianta para onde ele anda, não para a mira.
-- Modelos KayKit, fontes e áudio sintetizado são provisórios. Assados somam cerca de 45 MB (16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`) (o pacote web tem 61 MB).
+- Cenário do KayKit, fontes e áudio sintetizado são provisórios. Assados somam cerca de 44 MB (16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`, textura S3TC de 1024 dentro de cada um; os `enemy_*` de origem não vão no pacote, ver `export_presets.cfg`) (o pacote web tem 61 MB).
 - O lobo de geada do spec virou o esqueleto corredor. Vigília aparece como voto do PALADIN_1 (provisório).
 - O spec fala em quatro paladinos; o cânone de 12/11 fala em um paladino do leão e quatro guardiões. Vale o que o Daniel decidir.
 - Toque (celular) ainda não tem botões na tela.

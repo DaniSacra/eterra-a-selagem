@@ -1,17 +1,16 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Texture2D" path="res://assets/models/palettes/priest_elite.png" id="1_jyi0i"]
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_bjb6r"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_pwv7v"]
 
 [resource]
-script = ExtResource("2_bjb6r")
+script = ExtResource("1_pwv7v")
 id = &"priest_elite"
 name_key = &"enemy_priest"
 model = &"priest"
-palette = ExtResource("1_jyi0i")
 size = 1.3
 rim_color = Color(0.62, 0.46, 0.22, 1)
 rim = 0.3
+gild = 0.85
 magic_color = Color(1.9, 0.45, 3, 1)
 behavior = 3
 hp = 290.0

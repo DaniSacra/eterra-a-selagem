@@ -166,6 +166,12 @@ func source_rest(bone: StringName) -> Vector3:
 	return _src_space_full * source.get_bone_global_rest(source.find_bone(bone)).origin
 
 
+## A target bone's turn in skeleton space for a solved pose (see solve): what it is turned to whatever its parents
+## do, e.g. to hold an arm where another clip has it while the body follows this one.
+func turn(bone: int, solved: Dictionary) -> Basis:
+	return _turn(bone, solved, {}) if bone >= 0 else Basis.IDENTITY
+
+
 ## A target bone's turn in skeleton space: solved bones from `solved`, the others at their rest.
 func _turn(bone: int, solved: Dictionary, memo: Dictionary) -> Basis:
 	if memo.has(bone):

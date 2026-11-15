@@ -101,3 +101,45 @@ Ferramentas e dados:
 
 Escala: os corpos do KayKit são largos e curtos; mesmo com o `Slender` e a cabeça menor, ainda não são as figuras
 esguias da prancha. Os pedidos ao Meshy resolvem isso.
+
+## Feito em 2026-11-15: os nove modelos do Meshy na multidão
+
+O Daniel aprovou e pagou os nove modelos (`assets/models/meshy/enemy_<id>/enemy_<id>-rigged.glb`, 24 ossos). Eles
+substituem os bonecos do KayKit, que ficam guardados (`KAYKIT` em `tools/bake.gd`, paletas em `assets/models/palettes/`;
+`tools/bake.gd -- kaykit [ids]` volta atrás). Nada de mecânica mudou: raio, alcance, avisos e números são os mesmos.
+
+Como entram (`tools/bake.gd`, entradas com `"meshy"` em `MODELS`):
+- **Malha leve** (`MeshSlim`, `scripts/render/mesh_slim.gd`): os modelos vêm com 15,5 mil triângulos e de 750 a 1500 ilhas
+  de UV, que travam qualquer simplificador. O assador solda os vértices pela posição, reduz (corrente de LODs do
+  `ImporterMesh`, nível mais perto de `BODY_TRIANGLES` 3900), abre um atlas novo (xatlas) e repassa a pintura do modelo
+  original para ele (1024 x 1024, com a faixa da paleta do KayKit embaixo para as armas).
+- **Animações** pelo `Retarget`: Universal Animation Library 1 e 2 da Quaternius e, para as magias de Morvath, clipes do
+  KayKit. Os braços ficam em guarda no espaço do modelo (`SWORD_GUARD`, `STAFF_GUARD`, `CROSSBOW_GUARD`, `SHIELD_GUARD`).
+- **Armas**: peças do KayKit na mão, só onde o modelo não tem (`held`): lâmina do Esqueleto e de Morvath, cajado do
+  Feiticeiro e do Ancião (com orbe), besta do Besteiro, espada e escudo do Cavaleiro. O Escudo usa a espada e o escudo do
+  próprio modelo; Corredor e Sacerdote não têm arma.
+- **Altura** da prancha por `height` (medida na pose parada), pés no chão em toda pose.
+- **Brilho**: olhos, gemas e orbes brilham pela cor da própria pintura (`paint_glow`); a cor da magia continua em
+  `EnemyDef.magic_color`.
+- **Elites sem créditos**: `EnemyDef.gild` 0,85 (`ELITE_GILD`) pinta o aço de ouro velho no shader (`gild`, `gild_rest`
+  para quem quase não tem aço), contorno escuro fino, borda fraca, barra de armadura. Lê diferente da versão comum, mas
+  é um banho de bronze sobre a figura toda (o pano vermelho puxa para o marrom): a repintura no Meshy (10 créditos por
+  elite) ficaria melhor e espera a decisão do Daniel.
+
+| Inimigo | Altura do modelo (m, antes do `size`) | Triângulos (parado, com arma) | Assado (MB) |
+|---|---|---|---|
+| Esqueleto | 1,92 | 4311 | 4,3 |
+| Corredor | 1,65 | 3866 | 3,9 |
+| Feiticeiro | 1,92 | 5362 | 5,2 |
+| Besteiro | 1,92 | 4435 | 4,3 |
+| Escudo | 2,03 | 3877 | 3,6 |
+| Sacerdote | 1,93 | 3846 | 3,9 |
+| Cavaleiro | 2,03 | 4956 | 4,5 |
+| Ancião | 2,07 | 5557 | 5,3 |
+| Morvath | 2,02 | 4281 | 10,3 |
+
+Os bonecos do KayKit tinham de 5292 a 7001 triângulos. Total de `assets/baked`: 44 MB (antes 45). Na placa do Daniel (1672 x 941, sem vsync): 300 inimigos 8,1 a 8,8 ms por
+quadro (antes 8,1 a 9,1), 90 inimigos 3,4 ms (antes 3,5 a 4,0).
+
+Pendências: as armas do KayKit são grossas para as figuras esguias (estão reduzidas); as magias de Morvath usam clipes
+aproximados; elites pedem repintura; sem LOD por distância (a câmera vê todos de longe por igual).

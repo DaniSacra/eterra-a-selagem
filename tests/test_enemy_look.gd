@@ -1,6 +1,7 @@
 extends GutTest
 ## The first region's enemies after Daniel's sheet (docs/art/enemies_phase1.md): each one drawn by its own baked
-## model, the elites by the gilded palette of the same figure, sizes in the sheet's order, magic in its colours.
+## model (the Meshy figures since 2026-11-15), the elites by the same figure in old gold, sizes in the sheet's order,
+## magic in its colours.
 
 const DIR := "res://data/enemies/"
 ## The sheet's scale, the soldier at 1.15 (docs/art/enemies_phase1.md).
@@ -39,14 +40,74 @@ func test_sizes_follow_the_sheet() -> void:
 			assert_almost_eq((load(DIR + "%s.tres" % d.elite_version) as EnemyDef).size, d.size, 0.001, "the elite is as big")
 
 
-func test_elites_wear_the_gilded_palette_of_the_same_figure() -> void:
+## The Meshy figures are painted, not coloured by a palette: the elite is the same baked model with its steel in old
+## gold (EnemyDef.gild, crowd.gdshader), the faint edge and the armor bar.
+func test_elites_are_the_same_figure_in_old_gold() -> void:
 	for d in _defs():
 		if d.elite_version == &"":
 			continue
 		var e: EnemyDef = load(DIR + "%s.tres" % d.elite_version)
 		assert_eq(e.model, d.model, "the elite of %s is the same figure" % d.id)
-		assert_not_null(e.palette, "the elite of %s has its gilded palette" % d.id)
+		assert_gt(e.gild, 0.5, "the elite of %s wears old gold" % d.id)
+		assert_eq(d.gild, 0.0, "the common %s does not" % d.id)
 		assert_true(e.armor > 0.0, "the elite of %s keeps its armor bar" % d.id)
+		assert_gt(e.rim, 0.0, "the elite of %s keeps its edge and outline" % d.id)
+
+
+## Every enemy of the sheet is drawn by its Meshy model, made light for the crowd (tools/bake.gd, MeshSlim), at the
+## height the KayKit figure it replaced stood idle (so EnemyDef.size, the bars and the warnings did not move).
+const STANDING := {
+	&"skeleton": 1.92, &"runner": 1.65, &"mage": 1.92, &"archer": 1.92, &"guard": 2.03, &"priest": 1.93,
+	&"knight": 2.03, &"priest_elder": 2.07, &"morvath": 2.02,
+}
+
+
+func test_the_figures_are_the_painted_models_made_light() -> void:
+	for id: StringName in SHEET_SIZE:
+		var baked: BakedModel = load("res://assets/baked/%s.res" % id)
+		assert_true(baked.painted, "%s is a painted figure" % id)
+		assert_not_null(baked.albedo, "%s carries its own texture" % id)
+		var idle: Mesh = baked.anims.idle[0]
+		var triangles := (idle.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3
+		assert_between(triangles, 2000, 6000, "%s: light enough for a crowd of hundreds (%d)" % [id, triangles])
+		assert_almost_eq(baked.height, float(STANDING[id]), 0.011, "%s stands as tall as before" % id)
+		# what it holds may stand taller than its head (a staff), never the body by much
+		assert_between(idle.get_aabb().end.y, baked.height - 0.05, baked.height + 0.9, "%s: the baked body is that tall" % id)
+		assert_almost_eq(idle.get_aabb().position.y, 0.0, 0.12, "%s has its feet on the floor" % id)
+
+
+## Every animation the horde and Morvath ask for is baked (a missing one falls back to the walk without a word).
+func test_every_animation_the_game_asks_for_is_baked() -> void:
+	var common: Array[StringName] = [&"walk", &"idle", &"attack", &"hit", &"death", &"rise"]
+	var more := {
+		&"runner": [&"windup"], &"mage": [&"cast"], &"priest": [&"cast"], &"priest_elder": [&"cast"], &"archer": [&"aim"],
+		&"morvath": [&"slash1", &"slash2", &"slash3", &"dash_windup", &"dash", &"summon", &"rain", &"volley", &"roar", &"stunned"],
+	}
+	for id: StringName in SHEET_SIZE:
+		var baked: BakedModel = load("res://assets/baked/%s.res" % id)
+		for anim: StringName in common + Array(more.get(id, []), TYPE_STRING_NAME, &"", null):
+			assert_gt(baked.frame_count(anim), 0, "%s: %s" % [id, anim])
+	# the rise fits the time the horde gives it
+	assert_almost_eq((load("res://assets/baked/skeleton.res") as BakedModel).duration(&"rise"), 0.9, 0.01)
+
+
+## The renderer draws a painted figure by its own texture and passes the elite's gold on.
+func test_the_renderer_gilds_the_elite_of_a_painted_figure() -> void:
+	var renderer := CrowdRenderer.new()
+	add_child_autofree(renderer)
+	var common: EnemyDef = load(DIR + "guard.tres")
+	var elite: EnemyDef = load(DIR + "guard_elite.tres")
+	renderer.register(common)
+	renderer.register(elite)
+	var plain: ShaderMaterial = renderer._materials[common.id]
+	var gilded: ShaderMaterial = renderer._materials[elite.id]
+	assert_eq(plain.get_shader_parameter(&"albedo"), renderer.model(&"guard").albedo)
+	assert_eq(gilded.get_shader_parameter(&"albedo"), plain.get_shader_parameter(&"albedo"), "the same painting")
+	assert_eq(plain.get_shader_parameter(&"gild"), 0.0)
+	assert_almost_eq(float(gilded.get_shader_parameter(&"gild")), elite.gild, 0.001)
+	assert_gt(float(plain.get_shader_parameter(&"paint_glow")), 0.0, "eyes and gems of the painting glow")
+	assert_not_null(gilded.next_pass, "the elite keeps its thin dark outline")
+	assert_null(plain.next_pass)
 
 
 func test_magic_colours() -> void:

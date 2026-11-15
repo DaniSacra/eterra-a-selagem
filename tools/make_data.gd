@@ -7,6 +7,8 @@ extends SceneTree
 ## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
 const ELITE_RIM := Color(0.62, 0.46, 0.22)
 const ELITE_RIM_POWER := 0.3
+## Elites are the common figure with its steel in old gold (EnemyDef.gild, crowd.gdshader).
+const ELITE_GILD := 0.85
 ## Finishers that swing an arc sweep this wide.
 const FINISHER_ARC := 270.0
 ## The run: 5 plays the 15-minute timeline in 3 (Morvath at 3:00); 1 = the full run. Spawning keeps its rate per
@@ -116,8 +118,8 @@ func _enemy(props: Dictionary) -> void:
 
 ## Each enemy takes the numbers of the Hades II enemy that plays the same part in its first region (life, speed,
 ## damage, attack timings, room-generator rating, elite armor), with our own creatures, names and look.
-## Look: Daniel's sheet of the first region's enemies (docs/art/enemies_phase1.md): each one its own baked model and
-## palette (tools/bake.gd, tools/make_palettes.gd), sizes from the sheet's scale with the soldier at 1.15, the colour
+## Look: Daniel's sheet of the first region's enemies (docs/art/enemies_phase1.md): each one its own baked model
+## (the painted Meshy figures, tools/bake.gd), sizes from the sheet's scale with the soldier at 1.15, the colour
 ## of its magic. Radius: what it blocks and where blows reach it; it grows less than the figure (a taller enemy is
 ## not much wider).
 func _enemies() -> void:
@@ -171,10 +173,9 @@ func _pair(base: Dictionary, elite: Dictionary) -> void:
 	e["elite"] = true
 	e["rim_color"] = ELITE_RIM
 	e["rim"] = ELITE_RIM_POWER
-	# the same figure with old gold on its trims (tools/make_palettes.gd)
-	var gilded := "res://assets/models/palettes/%s_elite.png" % base.model
-	if ResourceLoader.exists(gilded):
-		e["palette"] = load(gilded)
+	# the same figure with its steel in old gold (the KayKit figures wore a gilded palette, EnemyDef.palette:
+	# assets/models/palettes/<id>_elite.png, tools/make_palettes.gd)
+	e["gild"] = ELITE_GILD
 	for k: String in elite:
 		e[k] = elite[k]
 	_enemy(e)

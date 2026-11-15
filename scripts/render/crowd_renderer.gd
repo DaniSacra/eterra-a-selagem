@@ -28,6 +28,15 @@ const INK := 0.65
 const OUTLINE_COLOR := Color(0.1, 0.08, 0.06)
 const OUTLINE_WIDTH := 0.022
 const OUTLINE_INTENSITY := 1.0
+## Painted figures (the Meshy models): how much the bright saturated spots of the painting (eyes, gems, orbs, embers)
+## shine by themselves, and the old gold the steel of an elite turns to (EnemyDef.gild says how much).
+const PAINT_GLOW := 2.2
+## The share of the edge light (EnemyDef.rim) a painted figure takes: its many small folds all catch it.
+const PAINT_RIM := 0.3
+## Their black and purple cloth is painted near black, and the floor is dark: the shadows of the painting are lifted
+## (a gamma on its colours; 1 = as painted) so the robed figures read as bodies.
+const PAINT_GAMMA := 0.7
+const GILD_COLOR := Color(0.62, 0.46, 0.22)
 const OUTLINE := preload("res://assets/shaders/crowd_outline.gdshader")
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
@@ -90,7 +99,13 @@ func register(d: EnemyDef) -> void:
 		return
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
-	mat.set_shader_parameter(&"albedo", d.palette if d.palette else model(d.model).albedo)
+	var baked := model(d.model)
+	mat.set_shader_parameter(&"albedo", d.palette if d.palette and not baked.painted else baked.albedo)
+	mat.set_shader_parameter(&"glow_from", baked.glow_from)
+	mat.set_shader_parameter(&"paint_glow", PAINT_GLOW if baked.painted else 0.0)
+	mat.set_shader_parameter(&"paint_gamma", PAINT_GAMMA if baked.painted else 1.0)
+	mat.set_shader_parameter(&"gild", d.gild if baked.painted else 0.0)
+	mat.set_shader_parameter(&"gild_color", GILD_COLOR)
 	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline
 	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
 	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) if common else d.tint * (ELITE_SHADE if d.elite else Color.WHITE)
@@ -102,7 +117,7 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"foot_shade", FOOT_SHADE)
 	mat.set_shader_parameter(&"ink", INK)
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
-	mat.set_shader_parameter(&"rim_power", d.rim)
+	mat.set_shader_parameter(&"rim_power", d.rim * (PAINT_RIM if baked.painted else 1.0))
 	if d.rim > 0.0:
 		var edge := ShaderMaterial.new()
 		edge.shader = OUTLINE

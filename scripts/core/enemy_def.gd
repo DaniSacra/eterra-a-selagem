@@ -21,6 +21,8 @@ enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE
 ## Glow around the edges (elites and the boss stand out from the crowd).
 @export var rim_color := Color(0.4, 0.55, 1.0)
 @export var rim := 0.0
+## How much of its steel is old gold (0..1): the elites of the painted figures, the same model as the common one.
+@export var gild := 0.0
 ## Colour of its magic (bolts, the burst where its blows land, the fan of its volley). Alpha 0: the default look.
 @export var magic_color := Color(0, 0, 0, 0)
 @export_group("Body")

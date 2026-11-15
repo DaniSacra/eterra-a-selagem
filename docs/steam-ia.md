@@ -10,9 +10,9 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   da névoa e do portal) e a espada Emeth (`EmethSword`).
 - **Modelos 3D do Meshy** (lista completa e ids em `tools/meshy/tasks.json`):
   - no jogo: o herói Explorador (`assets/models/meshy/hero_explorer/`, 2026-11-15, gerado a partir da folha do Explorador,
-    também feita por IA), com o esqueleto do Meshy;
-  - prontos, ainda fora do jogo (2026-11-15): os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das
-    vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto) e a espada Emeth (`assets/models/meshy/emeth/`,
+    também feita por IA), com o esqueleto do Meshy; os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das
+    vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
+    `assets/baked/`, com animações CC0 da Quaternius e do KayKit) e a espada Emeth (`assets/models/meshy/emeth/`,
     gerada da imagem da Emeth enviada pelo Daniel, também feita por IA);
   - sem uso: o herói "Sombra" e o `paladin_1`.
 - **Código, shaders e textos**: escritos com assistentes de IA (Claude, Codex).

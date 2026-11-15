@@ -10,6 +10,12 @@ extends Resource
 ## Animation name -> true when the animation loops.
 @export var loops: Dictionary = {}
 @export var albedo: Texture2D
+## True when the albedo is a painted texture of its own (the Meshy figures): what glows and what is metal is read
+## from its colours (crowd.gdshader). False: a KayKit palette, whose glowing cells are fixed.
+@export var painted := false
+## Cells of the texture that glow by themselves: every texel from this UV on (the last four cells of a KayKit
+## palette's bottom row: eyes, embers, gems; on a painted figure, the same cells of the palette strip under it).
+@export var glow_from := Vector2(0.5, 0.75)
 ## Height of the model standing, in meters (for life bars and hit effects).
 @export var height := 2.0
 
