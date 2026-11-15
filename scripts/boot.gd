@@ -1,14 +1,21 @@
-extends Node3D
-## Title screen: the hall of the catacombs behind, the paladin waiting before the crypt, the name and the menu.
-## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it.
+extends Node
+## Title screen: Daniel's cinematic art (TitleBackdrop: the painting contained, mist, motes) with the real menu over
+## the painted one (TitleMenu). Iniciar starts the run; Como Jogar, Configurações open their panels over the art.
+## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
+## --title --screen=options|moves|howto opens a panel at once.
 
 const GAME := "res://scenes/game.tscn"
+## Seconds to black before the run starts, and before quitting.
+const START_FADE := 0.45
+const QUIT_FADE := 0.25
+const MENU_FADE := 0.2
 
-var _menu: Control
+var _backdrop: TitleBackdrop
+var _menu: TitleMenu
 var _sub: Control
-var _first: Button
-var _cam: Camera3D
-var _t := 0.0
+## The button that opened the panel on screen, to give the focus back to it.
+var _opener: TitleButton
+var _leaving := false
 
 
 func _ready() -> void:
@@ -20,122 +27,74 @@ func _ready() -> void:
 	if Dev.has("shot") and not Dev.has("title"):
 		get_tree().change_scene_to_file.call_deferred(GAME)
 		return
-	_build_scene()
-	_build_menu()
-	if Dev.arg("screen") == "options":
-		_show(OptionsScreen.new())
-	elif Dev.arg("screen") == "moves":
-		_show(MovesScreen.new())
+	_build()
+	match Dev.arg("screen"):
+		"options":
+			_open(OptionsScreen.new(), TitleButton.Kind.SETTINGS)
+		"moves":
+			_open(MovesScreen.new(), TitleButton.Kind.HOWTO)
+		"howto":
+			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 	if Dev.has("shot"):
 		_shot.call_deferred()
 
 
-func _build_scene() -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.02, 0.015, 0.03)
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.3, 0.32, 0.5)
-	e.ambient_light_energy = 0.45
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	e.glow_enabled = true
-	e.glow_intensity = 0.9
-	e.glow_hdr_threshold = 0.85
-	e.fog_enabled = true
-	e.fog_light_color = Color(0.05, 0.04, 0.09)
-	e.fog_density = 0.02
-	env.environment = e
-	add_child(env)
-	var arena := Arena.new()
-	add_child(arena)
-	arena.build()
-	arena.open_door()
-	var body := HeroBody.make()
-	var hero: Node3D = body[0]
-	hero.position = Vector3(-7.0, 0, -22.0)
-	hero.rotation.y = 0.75
-	add_child(hero)
-	(body[1] as AnimationPlayer).play(&"Idle")
-	var light := OmniLight3D.new()
-	light.position = hero.position + Vector3(0.5, 3.0, 1.5)
-	light.light_color = Color(1.0, 0.78, 0.5)
-	light.light_energy = 2.4
-	light.omni_range = 11.0
-	add_child(light)
-	_cam = Camera3D.new()
-	_cam.fov = 45.0
-	add_child(_cam)
-	_cam.make_current()
-	_place_camera()
-
-
-func _place_camera() -> void:
-	var target := Vector3(-9.6 + sin(_t * 0.15) * 0.4, 1.3, -22.6)
-	_cam.look_at_from_position(target + Vector3(5.5 + sin(_t * 0.2) * 0.6, 3.0, 8.0), target, Vector3.UP)
-
-
-func _process(delta: float) -> void:
-	_t += delta
-	if _cam:
-		_place_camera()
-
-
-func _build_menu() -> void:
+func _build() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
-	_menu = Control.new()
+	_backdrop = TitleBackdrop.new()
+	layer.add_child(_backdrop)
+	_menu = TitleMenu.new()
 	_menu.theme = UiKit.theme()
-	_menu.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(_menu)
-	var shade := ColorRect.new()
-	shade.color = Color(0.015, 0.01, 0.025, 0.55)
-	shade.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
-	shade.offset_right = 520
-	_menu.add_child(shade)
-	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
-	box.offset_left = 60
-	box.offset_right = 480
-	box.offset_top = 70
-	box.add_theme_constant_override(&"separation", 12)
-	_menu.add_child(box)
-	var name_l := UiKit.label(T.t(&"title"), UiKit.PALE, 30, UiKit.TITLE_FONT)
-	box.add_child(name_l)
-	var sub := UiKit.label(T.t(&"subtitle"), UiKit.GOLD, 66, UiKit.TITLE_FONT)
-	sub.add_theme_constant_override(&"outline_size", 10)
-	box.add_child(sub)
-	var premise := UiKit.label(T.t(&"premise"), UiKit.PALE, 21)
-	premise.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	premise.custom_minimum_size.x = 420
-	box.add_child(premise)
-	var gap := Control.new()
-	gap.custom_minimum_size.y = 18
-	box.add_child(gap)
-	_first = UiKit.button(T.t(&"menu_play"), func() -> void: get_tree().change_scene_to_file(GAME), 360)
-	box.add_child(_first)
-	box.add_child(UiKit.button(T.t(&"menu_moves"), func() -> void: _show(MovesScreen.new()), 360))
-	box.add_child(UiKit.button(T.t(&"menu_options"), func() -> void: _show(OptionsScreen.new()), 360))
-	if not OS.has_feature("web") and not OS.has_feature("mobile"):
-		box.add_child(UiKit.button(T.t(&"menu_quit"), func() -> void: get_tree().quit(), 360))
-	var best: Array = Save.data.best_times
-	if not best.is_empty():
-		box.add_child(UiKit.label("%s: %s" % [T.t(&"end_best"), SaveData.format_time(best[0])], UiKit.GOLD, 22))
-	var help := UiKit.label(T.t(&"title_controls") + "\n" + T.t(&"title_pad"), UiKit.DIM, 18)
-	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	help.offset_top = -84
-	help.offset_bottom = -14
-	help.offset_left = 32
-	help.offset_right = -32
-	help.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	help.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	help.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_menu.add_child(help)
-	_first.grab_focus.call_deferred()
+	_menu.setup(_backdrop)
+	# a browser tab or a phone app cannot be closed from inside: no Sair there
+	_menu.set_quit_visible(not OS.has_feature("web") and not OS.has_feature("mobile"))
+	_menu.start_pressed.connect(_start)
+	_menu.howto_pressed.connect(func() -> void: _open(HowToScreen.new(), TitleButton.Kind.HOWTO))
+	_menu.settings_pressed.connect(func() -> void: _open(OptionsScreen.new(), TitleButton.Kind.SETTINGS))
+	_menu.quit_pressed.connect(_quit)
+	if Dev.has("shot"):
+		# captures show the screen settled, not halfway through its entrance
+		_menu.focus_first()
+		return
+	_backdrop.fade_in()
+	_menu.focus_first()
+	_menu.set_enabled(false)
+	_menu.intro()
+	get_tree().create_timer(0.6).timeout.connect(func() -> void:
+		if not _leaving:
+			_menu.set_enabled(true))
 
 
-func _show(screen: Control) -> void:
+func _start() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	_menu.set_enabled(false)
+	create_tween().tween_property(_menu, ^"modulate:a", 0.0, START_FADE)
+	await _backdrop.fade_out(START_FADE)
+	get_tree().change_scene_to_file(GAME)
+
+
+func _quit() -> void:
+	if _leaving:
+		return
+	_leaving = true
+	_menu.set_enabled(false)
+	create_tween().tween_property(_menu, ^"modulate:a", 0.0, QUIT_FADE)
+	await _backdrop.fade_out(QUIT_FADE)
+	get_tree().quit()
+
+
+func _open(screen: Control, opener: TitleButton.Kind) -> void:
+	if _sub:
+		return
+	_menu.finish_intro()
+	_menu.set_enabled(true)
+	_opener = _menu.button(opener)
 	_menu.visible = false
+	_backdrop.dim(true)
 	_sub = screen
 	_menu.get_parent().add_child(screen)
 	screen.call(&"open")
@@ -146,14 +105,22 @@ func _close_sub() -> void:
 	if _sub:
 		_sub.queue_free()
 		_sub = null
+	_backdrop.dim(false)
 	_menu.visible = true
-	_first.grab_focus()
+	if _opener:
+		_opener.grab_focus()
+	else:
+		_menu.focus_first()
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _sub and event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_close_sub()
+	elif not _sub and not _leaving and event.is_pressed() and not event.is_echo():
+		# any key during the entrance finishes it
+		_menu.finish_intro()
+		_menu.set_enabled(true)
 
 
 func _shot() -> void:
