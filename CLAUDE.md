@@ -19,6 +19,14 @@ Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs
   (com estatísticas que já existem) ou um inimigo novo (com um comportamento que já existe) não pode exigir código.
 - A Steam exige declarar conteúdo gerado por IA: manter `docs/steam-ia.md` em dia.
 
+## Equipe de agentes
+A sessão principal é o Game Director / Tech Lead: planeja, delega, integra, valida e é a única que faz commit e push.
+Subagentes em `.claude/agents/`: `art-director` (identidade visual, especificação e revisão), `environment-artist`
+(cenário, materiais, luz), `gameplay-engineer` (combate, inimigos, salas, câmera de jogo, colisão, testes),
+`ui-ux-designer` (HUD, menus, legibilidade), `qa-performance` (testes, medições, capturas reais, relatório em
+`docs/qa/latest_report.md`). Cada arquivo tem um dono por tarefa; agentes em paralelo só com arquivos distintos (ou em
+worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/development/agent_workflow.md`.
+
 ## Comandos
 - Godot: `~/tools/godot/godot` (4.7.2). Rodar o jogo: `~/tools/godot/godot --path .`
 - Testes: `tools/test.sh` (GUT sem tela). Um arquivo só: `tools/test.sh -gtest=res://tests/test_combo.gd`
