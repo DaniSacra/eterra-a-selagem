@@ -127,18 +127,45 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 var walk: Array[Rect2] = []
 
 
-## Keeps a circle of this radius inside the hall and out of the pillars.
+## Passes of resolve: a prop by the floor's edge can push a body off the floor, the edge pushes it back into the prop;
+## a few passes let it slide along both to where it fits.
+const RESOLVE_PASSES := 4
+
+
+## Keeps a circle of this radius on the floor (the room and walk) and out of the pillars and solid boxes.
 func resolve(pos: Vector2, radius: float) -> Vector2:
-	pos = _onto_floor(pos, 1.2 + radius)
-	for p in pillars:
-		var c := Vector2(p.x, p.y)
-		var d := pos - c
-		var min_d := p.z + radius
-		if d.length_squared() < min_d * min_d:
-			pos = c + (d.normalized() if d.length_squared() > 0.0001 else Vector2.DOWN) * min_d
-	for b in boxes:
-		pos = push_out_of_box(pos, radius, b)
-	return pos
+	var margin := 1.2 + radius
+	for i in RESOLVE_PASSES:
+		pos = _onto_floor(pos, margin)
+		var before := pos
+		for p in pillars:
+			var c := Vector2(p.x, p.y)
+			var d := pos - c
+			var min_d := p.z + radius
+			if d.length_squared() < min_d * min_d:
+				pos = c + (d.normalized() if d.length_squared() > 0.0001 else Vector2.DOWN) * min_d
+		for b in boxes:
+			pos = _out_of_box(pos, radius, b, margin)
+		if pos.distance_squared_to(before) < 0.000001:
+			return pos
+	return _onto_floor(pos, margin)
+
+
+## Out of a box, and when the body stands inside it, by the nearest side that keeps it on the floor (a box against
+## the floor's edge must not push it over the edge).
+func _out_of_box(pos: Vector2, radius: float, b: Rect2, margin: float) -> Vector2:
+	var out := push_out_of_box(pos, radius, b)
+	if not b.has_point(pos) or _onto_floor(out, margin).distance_squared_to(out) < 0.000001:
+		return out
+	var best := out
+	var best_d := INF
+	for side: Vector2 in [Vector2(b.position.x - radius, pos.y), Vector2(b.end.x + radius, pos.y),
+			Vector2(pos.x, b.position.y - radius), Vector2(pos.x, b.end.y + radius)]:
+		var d := side.distance_squared_to(pos)
+		if d < best_d and _onto_floor(side, margin).distance_squared_to(side) < 0.000001:
+			best = side
+			best_d = d
+	return best
 
 
 ## Moves a circle out of a rectangle on the floor (the shortest way out when its centre is inside).
