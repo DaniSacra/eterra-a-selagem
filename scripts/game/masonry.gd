@@ -54,11 +54,12 @@ func block(foot: Vector3, size: Vector3, yaw: float = 0.0, mat: Material = null)
 	return box(foot + Vector3(0, size.y * 0.5, 0), size, yaw, mat if mat else stone(foot.y))
 
 
-## A four-sided point (pyramid) on top of something: its base centre, base width, height.
-func point(base: Vector3, width: float, height: float, yaw: float = 0.0) -> MeshInstance3D:
+## A four-sided point (pyramid) on top of something: its base centre, base width, height; `top` > 0 cuts it flat
+## (a frustum whose top is that share of the base).
+func point(base: Vector3, width: float, height: float, yaw: float = 0.0, top := 0.0) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var c := CylinderMesh.new()
-	c.top_radius = 0.0
+	c.top_radius = width * 0.7071 * top
 	c.bottom_radius = width * 0.7071
 	c.height = height
 	c.radial_segments = 4
@@ -116,25 +117,29 @@ func stairs(foot: Vector3, up: Vector2, width: float, steps: int, rise: float, r
 		box(Vector3(c.x, foot.y - 0.6 + h * 0.5, c.z), Vector3(width, h, run), yaw, stone(foot.y))
 
 
-## A tall tapering standing stone: a base, a shaft of stacked blocks narrowing up, a point, and a dark niche on the
-## face that looks along `face`.
+## A thick, blunt standing stone (the picture's): a base, three stacked blocks each a little narrower and turned, a low
+## flat-topped cap set a little askew, and a dark pointed niche on the face that looks along `face`.
 func obelisk(at: Vector3, height: float, width: float, face: Vector2) -> void:
 	var yaw := atan2(face.x, face.y)
-	block(at, Vector3(width * 1.35, 0.5, width * 1.35), yaw)
+	block(at, Vector3(width * 1.3, 0.5, width * 1.3), yaw)
 	var y := 0.5
-	var shaft := height - 0.5 - width * 0.9
-	var layers := 4
+	var cap := width * 0.45
+	var shaft := height - 0.5 - cap
+	var layers := 3
+	var w := width
 	for i in layers:
-		var w := width * lerpf(1.0, 0.72, float(i) / layers)
 		var h := shaft / layers
-		block(at + Vector3(0, y, 0), Vector3(w, h, w), yaw + (0.03 if i % 2 else -0.02))
+		block(at + Vector3(0, y, 0), Vector3(w, h - 0.06, w), yaw + [-0.04, 0.05, -0.02][i])
 		y += h
-	point(at + Vector3(0, y, 0), width * 0.74, width * 0.9, yaw)
+		w *= 0.91
+	var c := point(at + Vector3(0, y, 0), w * 1.02, cap, yaw + 0.06, 0.55)
+	c.rotate_object_local(Vector3.RIGHT, 0.07)
 	var dark := StandardMaterial3D.new()
 	dark.albedo_color = Color(0.02, 0.02, 0.03)
 	dark.roughness = 1.0
 	var f := Vector3(face.x, 0, face.y).normalized()
-	box(at + Vector3(0, height * 0.62, 0) + f * (width * 0.36), Vector3(width * 0.32, height * 0.16, 0.12), yaw, dark)
+	pointed_arch(at + Vector3(0, height * 0.55, 0) + f * (width * 0.44), face, width * 0.45, height * 0.2, 0.08, 0.1, dark)
+	box(at + Vector3(0, height * 0.55 + height * 0.08, 0) + f * (width * 0.43), Vector3(width * 0.4, height * 0.16, 0.06), yaw, dark)
 
 
 ## A pointed (gothic) arch frame standing on the ground: two jambs and two slanted stones meeting at the apex.

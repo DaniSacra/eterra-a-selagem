@@ -19,12 +19,16 @@ float noise(vec2 p) {
 }
 
 void fragment() {
-	vec2 uv = UV - vec2(0.5, 0.55);
-	float r = length(uv * vec2(1.4, 1.0));
-	float a = atan(uv.y, uv.x);
-	float swirl = noise(vec2(a * 2.0 + TIME * 0.6 - r * 6.0, r * 5.0 - TIME * 0.8));
-	float heart = 1.0 - smoothstep(0.0, 0.55, r);
-	float edge = smoothstep(0.5, 0.0, abs(UV.x - 0.5)) * smoothstep(1.0, 0.75, UV.y) * smoothstep(0.0, 0.1, UV.y);
-	float glow = (heart * 1.6 + swirl * 0.7) * edge;
-	ALBEDO = color * glow * 2.2 * power;
+	// the opening: almost the whole card, with soft sides; three dark stones hang from its top
+	float top = 0.04;
+	for (int i = 0; i < 3; i++) {
+		float x = 0.22 + float(i) * 0.28 + (hash1(vec2(float(i), 4.0)) - 0.5) * 0.08;
+		float len = 0.06 + 0.06 * hash1(vec2(float(i), 9.0));
+		top = max(top, len * (1.0 - smoothstep(0.0, 0.07, abs(UV.x - x))));
+	}
+	float open = smoothstep(top, top + 0.015, UV.y) * smoothstep(0.0, 0.03, UV.x) * smoothstep(1.0, 0.97, UV.x);
+	float swirl = noise(vec2(UV.x * 5.0 + TIME * 0.3, UV.y * 4.0 - TIME * 0.6));
+	// brightest low down, where the light pours out onto the steps, and in the middle
+	float pour = 0.75 + 0.45 * UV.y - 0.35 * abs(UV.x - 0.5);
+	ALBEDO = color * open * (pour + 0.35 * swirl) * 0.9 * power * (0.95 + 0.05 * sin(TIME * 1.3));
 }

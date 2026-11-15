@@ -54,6 +54,14 @@ const CANDLE_LIGHT := 2.6
 const CANDLE_RANGE := 5.0
 const ABYSS_LIGHT := Color(0.55, 0.25, 1.0)
 const ABYSS_LIGHT_ENERGY := 5.0
+## Width of the two standing stones (thick and blunt, as in the picture).
+const OBELISK_SOUTH := 2.2
+const OBELISK_EAST := 2.3
+## The floor in front of the portal's steps, always wet (x, z rect).
+const WET := Rect2(-1.0, -15.0, 9.0, 5.0)
+## The lit diamond window over the portal: its size (m) and how far above the opening's top.
+const PORTAL_WINDOW := 0.75
+const PORTAL_WINDOW_ABOVE := 0.9
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.95, 0.82, 0.88)
 const KEY_ENERGY := 6.0
@@ -107,6 +115,7 @@ func build(exit_count: int) -> void:
 # ---------- the floor, its lip and the cliffs under it ----------
 
 func _floor() -> void:
+	kit.wet_zone = WET
 	kit.floor_plate(Vector3.ZERO, HALF * 2.0 + Vector2(0.6, 0.6), MEDALLION, MEDALLION_AT)
 	kit.abyss(HALF, DEPTH, false)
 	_cliff(Rect2(-HALF, HALF * 2.0))
@@ -194,6 +203,16 @@ func _facade() -> void:
 	m.block(Vector3(PORTAL_X, y + h + 2.2, FACADE_Z + 0.2), Vector3(w + 4.2, 0.5, 0.8), 0.0, mat)
 	m.point(Vector3(PORTAL_X, y + h + 2.7, FACADE_Z - 0.2), 2.4, 2.2)
 	kit.portal_glow(Vector3(PORTAL_X, y + h * 0.42, back - 0.9), 0.0, Vector2(w + 0.4, h * 0.95))
+	var win := MeshInstance3D.new()
+	var wq := QuadMesh.new()
+	wq.size = Vector2.ONE * PORTAL_WINDOW
+	win.mesh = wq
+	var wm := StandardMaterial3D.new()
+	wm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	wm.albedo_color = ArenaKit.PORTAL * 1.2
+	win.material_override = wm
+	win.transform = Transform3D(Basis(Vector3.BACK, PI * 0.25), Vector3(PORTAL_X, y + h * 0.9 + PORTAL_WINDOW_ABOVE, FACADE_Z + 0.7))
+	arena.add_child(win)
 	# its light spilling down the steps and over the wet floor in front of them
 	var spill := SpotLight3D.new()
 	arena.add_child(spill)
@@ -275,8 +294,8 @@ func _landing() -> void:
 	m.balustrade(Vector3(LANDING.y - 0.1, 0, HALF.y + 0.8), Vector3(LANDING.y - 0.1, 0, z), false)
 	_stairs_down(Vector3((WAY_IN.x + WAY_IN.y) * 0.5, 0, LANDING_END), Vector2(0, 1), WAY_IN.y - WAY_IN.x)
 	# the standing stone in the middle of the south edge, where the landing meets the hall
-	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), 5.2, 1.5, Vector2(1, 1).normalized())
-	kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, 1.2))
+	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), 5.2, OBELISK_SOUTH, Vector2(1, 1).normalized())
+	kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, OBELISK_SOUTH * 0.68))
 	_candles(Vector3(SOUTH_STONE.x + 1.6, 0, HALF.y - 1.0), 5)
 	m.pot(Vector3(SOUTH_STONE.x + 2.6, 0, HALF.y - 0.7), 0.55)
 	_candles(Vector3(LANDING.x + 1.0, 0, LANDING_END - 1.0), 2)
@@ -300,8 +319,8 @@ func _east(stairs_down: bool) -> void:
 	var x := HALF.x - 0.1
 	# from the south-east corner up to the standing stone, its fire bowl and clutter on the inside
 	m.balustrade(Vector3(x, 0, HALF.y), Vector3(x, 0, EAST_STONE.y + 1.2))
-	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, 1.5, Vector2(-1, 1).normalized())
-	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, 1.1))
+	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
+	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
 	kit.piece("box_small", Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 0.7)
 	_candles(Vector3(x - 1.0, 0, EAST_STONE.y + 2.7), 3)

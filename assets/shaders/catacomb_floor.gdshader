@@ -11,8 +11,8 @@ uniform vec3 crack_color : source_color = vec3(0.05, 0.055, 0.07);
 uniform vec3 moss_color : source_color = vec3(0.12, 0.2, 0.2);
 uniform vec3 engrave_color : source_color = vec3(0.62, 0.46, 0.22);
 // Meters between the centres of two flagstones.
-uniform float stone_size = 2.1;
-uniform float joint_width = 0.025;
+uniform float stone_size = 1.9;
+uniform float joint_width = 0.055;
 // The calm middle: radius in meters, and how much of the stones' contrast it keeps.
 uniform float calm_radius = 9.0;
 uniform float calm_contrast = 0.55;
@@ -20,6 +20,8 @@ uniform float calm_contrast = 0.55;
 uniform float ring_radius = 6.5;
 uniform vec2 ring_center = vec2(0.0);
 uniform float ring_glow = 0.0;
+// A rectangle of floor (x min, z min, x max, z max) that is always wet.
+uniform vec4 wet_zone = vec4(0.0);
 
 varying vec3 world;
 
@@ -63,10 +65,10 @@ vec3 stones(vec2 p) {
 	float b = row + 1.0 + (hash1(vec2(row + 1.0, 3.0)) - 0.5) * 0.35;
 	float depth = b - a;
 	float fy = (p.y - a) / depth;
-	float len = 1.25;
+	float len = 1.0;
 	float x = p.x / len + hash1(vec2(row, 7.0)) * 3.0;
 	float i = floor(x);
-	float jit = 0.5;
+	float jit = 0.35;
 	float b0 = i + (hash1(vec2(i, row)) - 0.5) * jit;
 	float b1 = i + 1.0 + (hash1(vec2(i + 1.0, row)) - 0.5) * jit;
 	float id = i;
@@ -154,7 +156,7 @@ void fragment() {
 	c *= 0.85 + 0.3 * hash1(s.yz + 9.0);
 	c = mix(c, moss_color, smoothstep(0.62, 0.8, fbm(world.xz * 0.3 + 11.0)) * 0.35);
 	// a darker bevel along each edge, then the deep joint
-	c *= mix(0.7, 1.0, smoothstep(joint_width, joint_width + 0.12, edge));
+	c *= mix(0.55, 1.0, smoothstep(joint_width, joint_width + 0.14, edge));
 	float joint = 1.0 - smoothstep(joint_width * 0.5, joint_width, edge);
 	// cracks: thin dark lines across some stones
 	float cn = fbm(world.xz * 1.3 + s.yz * 5.0);
@@ -176,13 +178,12 @@ void fragment() {
 	c = mix(c, engrave_color * 0.6, ring * 0.8);
 	// wet patches: smooth enough to mirror the fire and the portal (screen-space reflections on desktop)
 	float wet = smoothstep(0.55, 0.72, fbm(world.xz * 0.16 + 31.0));
+	// the wet floor in front of the portal's steps, always (it mirrors the green)
+	vec2 wz = step(wet_zone.xy, world.xz) * step(world.xz, wet_zone.zw);
+	wet = max(wet, wz.x * wz.y * smoothstep(0.3, 0.6, fbm(world.xz * 0.5 + 5.0)));
 	c *= mix(1.0, 0.8, wet);
 	ALBEDO = c;
 	ROUGHNESS = mix(mix(0.82, 0.22, wet), 0.9, joint);
 	SPECULAR = 0.2;
-	// relief: the stone tops bulge, the joints sink (a normal bent by the edge distance)
-	float h = smoothstep(0.0, 0.2, edge);
-	vec2 grad = vec2(dFdx(h), dFdy(h));
-	NORMAL = normalize(NORMAL + vec3(grad.x, grad.y, 0.0) * -6.0);
 	EMISSION = engrave_color * ring * ring_glow;
 }

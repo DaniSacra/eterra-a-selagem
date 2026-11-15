@@ -36,3 +36,16 @@ Critérios e métricas da arena: `docs/art/arena_reference.md`, seção "Critér
   quentes fracos; verde do portal no chão (P0-4); lanterna do abismo como janela ogival (P0-2).
 - Navegador: `COMPAT_EXPOSURE` 0,72 para 1,25 e `COMPAT_AMBIENT` 0,3 para 0,4 (p50 36); o violeta do abismo sai azul
   e o chão fica azul dominante 75%: a acertar.
+
+## 2026-11-14: ciclo 2 (P0-4, P1-1, P1-2)
+
+- Referência guardada em `docs/art/ref/arena_catacumbas_1672.png` (fora do git: o repositório é público).
+- Feito: chão em lajes quase quadradas (`stone_size` 1,9, `len` 1,0, `jit` 0,35), juntas de 0,055 m, chanfro 0,55, sem
+  a normal por derivada (o serrilhado sumiu); poça molhada fixa em frente à escada do portal (`CatacombHall.WET`);
+  portal como vão de luz com três pedras pendentes no alto e mais claro embaixo; janela em losango verde acima do vão;
+  obeliscos grossos (2,2 e 2,3 m) em três blocos girados, topo em tronco de pirâmide torto, nicho ogival; colisão
+  dos obeliscos pelo raio novo; fundo do abismo na cor da bruma e névoa de profundidade até 170 m.
+- Medidas (vitrine): p50 37, p95/p99 101/167, < 20: 30%, verde no chão 4,6% a 7,5%, portal com mediana #21ca63.
+- Falta: colunas do fundo a oeste e ao norte lidas como painéis azuis lisos (precisam de textura ou silhueta mais
+  escura na bruma); pretos ainda fundos demais; o vão do portal ainda fecha em ponta (a fachada corta o alto);
+  estátuas encapuzadas (P1-4), balaustradas (P1-3), velas e potes maiores (P1-6).

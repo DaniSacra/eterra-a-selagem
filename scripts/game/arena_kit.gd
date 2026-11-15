@@ -61,6 +61,8 @@ var portals: Array[Array] = []
 var masonry: Masonry
 var _meshes := {}
 var _glow_mats := {}
+## A rectangle of floor (x, z) the floor plates keep wet (in front of the portal).
+var wet_zone := Rect2()
 
 
 func _init(parent: Node3D, seed_: int) -> void:
@@ -376,6 +378,7 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 	m.set_shader_parameter(&"ring_radius", ring_radius)
 	m.set_shader_parameter(&"ring_glow", MEDALLION_GLOW)
 	m.set_shader_parameter(&"ring_center", ring_center)
+	m.set_shader_parameter(&"wet_zone", Vector4(wet_zone.position.x, wet_zone.position.y, wet_zone.end.x, wet_zone.end.y))
 	# the rose's long points run across the screen, as in the picture
 	m.set_shader_parameter(&"rose_turn", deg_to_rad(Feel.live().cam_yaw))
 	m.set_shader_parameter(&"calm_radius", minf(size.x, size.y) * 0.32)
