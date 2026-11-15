@@ -39,18 +39,32 @@ const XRAY := preload("res://assets/shaders/xray.gdshader")
 const XRAY_DEPTH := preload("res://assets/shaders/xray_depth.gdshader")
 const XRAY_EDGE := preload("res://assets/shaders/xray_edge.gdshader")
 const RING := preload("res://assets/shaders/hero_ring.gdshader")
-## The paladin through a crowd (docs/art/cycle5_spec.md A2; QA M4): where enemies cover him he shows in his own
-## colours with a thin pale rim (xray.gdshader and its two helper passes), drawn after everything else in this
-## order: his depth, his colours, the rim (the enemies' life bars are at CrowdRenderer's priority 10).
+## The paladin through a crowd (docs/art/cycle5_spec.md A2; QA M4; docs/art/cycle7_spec.md 3.2): where enemies cover
+## him he shows as his own body, lit like it (xray.gdshader and its two helper passes), drawn after everything else
+## in this order: his depth, his colours, the rim (the enemies' life bars are at CrowdRenderer's priority 10).
+## The covered body at XRAY_OPACITY with its shadows lifted by XRAY_FLOOR (light added in the painting's own hue)
+## and XRAY_LIGHT more of his painting shown as light, so he is a step brighter than the pack in front of him;
+## Emeth's blade at XRAY_BLADE_OPACITY with the light it has uncovered; around them a hair of ivory, XRAY_RIM_WIDTH
+## pixels on a 941 line screen (never cyan, never a thick white outline).
 const XRAY_PRIORITY := 11
-const XRAY_OPACITY := 0.92
-const XRAY_RIM := Color(0.6, 0.95, 0.95, 0.9)
+const XRAY_OPACITY := 0.85
+const XRAY_BLADE_OPACITY := 0.8
+const XRAY_FLOOR := 0.25
+const XRAY_LIGHT := 0.45
+const XRAY_RIM := Color(0.96, 0.9, 0.78, 0.5)
+const XRAY_RIM_WIDTH := 1.5
 ## A thin ring on the floor at his feet, in the petrol of his scarf (never the red of a warning): meters across,
-## the colour, how opaque on the open floor and through what stands over it.
+## the colour, how opaque on the open floor and through what stands over it. The side he faces is a wedge
+## RING_WEDGE degrees wide and RING_WEDGE_GAIN times brighter: the ring says where he looks.
 const RING_SIZE := 2.1
 const RING_COLOR := Color("3e9094")
 const RING_OPEN := 0.35
 const RING_THROUGH := 0.75
+const RING_WEDGE := 30.0
+const RING_WEDGE_GAIN := 1.4
+## The painted light on his shoulders and hair, from the top left of the screen like the crowd's key
+## (crowd.gdshader): it lifts him off the pack, covered or not. Alpha is the gain.
+const KEY_LIGHT := Color(1.0, 0.93, 0.8, 0.25)
 const OUTLINE := Color(1.0, 0.78, 0.35)
 ## The thin edge on his body and his silhouette through what hides him: cold and light, never gold over the body
 ## (docs/art/cycle4_spec.md, c).
@@ -59,10 +73,14 @@ const EDGE := Color(0.75, 0.9, 1.0)
 const CONTACT_SHADOW := Vector2(1.2, 0.8)
 const CONTACT_SHADOW_ALPHA := 0.5
 ## The look of his state on the body (flash.gdshader), kept small so he reads as the explorer in the fight
-## (Daniel's capture of 2026-11-14 showed him all gold or white): after a hit he blinks white this strong every
-## BLINK_PERIOD seconds (only after a hit, not after a dodge or a cast); the Omega's gold shows past this share of
-## its charge, up to CHARGE_GLOW; the ready shield is a faint green edge.
-const HURT_BLINK := 0.3
+## (Daniel's capture of 2026-11-14 showed him all gold or white; a white body is how a struck enemy looks): a hit
+## flashes him for HURT_FLASH seconds, then, while he is safe, his own colours go HURT_LIGHTEN lighter and back every
+## BLINK_PERIOD seconds (only after a hit, not after a dodge or a cast), never white. BODY_LIGHT is about how much
+## light his body gets in the game, which turns that share into the painting shown as light (HeroBody.FILL). The
+## Omega's gold shows past this share of its charge, up to CHARGE_GLOW; the ready shield is a faint green edge.
+const HURT_FLASH := 0.05
+const HURT_LIGHTEN := 0.35
+const BODY_LIGHT := 0.8
 const BLINK_PERIOD := 0.16
 const CHARGE_GLOW_FROM := 0.25
 const CHARGE_GLOW := 0.55
@@ -121,7 +139,7 @@ const LUNGE_STANDOFF := 0.45
 var _push := Vector2.ZERO
 var _shield_t := 0.0
 var _flash := 0.0
-## Seconds of the white blink after a hit (the safety after a dodge or a cast does not blink).
+## Seconds of the blink after a hit (the safety after a dodge or a cast does not blink).
 var _blink := 0.0
 var _model: Node3D
 var _anim: AnimationPlayer
@@ -129,6 +147,12 @@ var _overlay: ShaderMaterial
 ## One x-ray material per mesh of his (each paints that mesh's own texture); the rim after them.
 var _xrays: Array[ShaderMaterial] = []
 var _xray_edge: ShaderMaterial
+## His body's own materials (HeroBody), lightened while he blinks after a hit.
+var _fills: Array[StandardMaterial3D] = []
+var _ring_look: ShaderMaterial
+## What the materials were last told (they are only told again when it changes).
+var _shown_fill := -1.0
+var _shown_edge := -1.0
 var _current_anim := &""
 var _light: OmniLight3D
 ## A point near the tip of the sword (moves with the swing).
@@ -159,6 +183,8 @@ func _ready() -> void:
 	_xray_edge = ShaderMaterial.new()
 	_xray_edge.shader = XRAY_EDGE
 	_xray_edge.render_priority = XRAY_PRIORITY + 2
+	_xray_edge.set_shader_parameter(&"width", XRAY_RIM_WIDTH)
+	_overlay.set_shader_parameter(&"key", KEY_LIGHT)
 	_overlay.next_pass = depth
 	depth.next_pass = _xray_edge
 	dodge_max = Feel.live().dodge_charges
@@ -212,6 +238,9 @@ func _ring() -> MeshInstance3D:
 	m.set_shader_parameter(&"color", RING_COLOR)
 	m.set_shader_parameter(&"open", RING_OPEN)
 	m.set_shader_parameter(&"through", RING_THROUGH)
+	m.set_shader_parameter(&"wedge_cos", cos(deg_to_rad(RING_WEDGE * 0.5)))
+	m.set_shader_parameter(&"wedge_gain", RING_WEDGE_GAIN)
+	_ring_look = m
 	var mi := MeshInstance3D.new()
 	mi.mesh = plane
 	mi.material_override = m
@@ -225,7 +254,11 @@ func _ring() -> MeshInstance3D:
 func _prepare(n: Node) -> void:
 	for c in n.get_children():
 		if c is MeshInstance3D:
-			(c as MeshInstance3D).material_overlay = _xray_of(c as MeshInstance3D)
+			var mesh := c as MeshInstance3D
+			mesh.material_overlay = _xray_of(mesh)
+			var own := mesh.material_override as StandardMaterial3D
+			if own and own.emission_enabled and own.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED:
+				_fills.append(own)
 		_prepare(c)
 
 
@@ -233,9 +266,10 @@ func _xray_of(mesh: MeshInstance3D) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
 	m.shader = XRAY
 	m.render_priority = XRAY_PRIORITY + 1
-	var look := xray_look(mesh.get_active_material(0))
-	m.set_shader_parameter(&"albedo", look[0])
-	m.set_shader_parameter(&"tint", look[1])
+	var look := xray_params(mesh.get_active_material(0))
+	for param: StringName in look:
+		m.set_shader_parameter(param, look[param])
+	m.set_shader_parameter(&"key", KEY_LIGHT)
 	m.next_pass = _overlay
 	_xrays.append(m)
 	return m
@@ -251,6 +285,40 @@ static func xray_look(mat: Material) -> Array:
 	return [null, Color.WHITE]
 
 
+## Everything xray.gdshader needs to draw a mesh as its own material does, by parameter: the body as painted and as
+## lit (HeroBody), a piece without light as it is (the pale edge of the blade), Emeth with the light of its blade
+## (emeth.gdshader: the numbers are read from the sword's own material, so the two never drift apart).
+static func xray_params(mat: Material) -> Dictionary[StringName, Variant]:
+	var look := xray_look(mat)
+	var out: Dictionary[StringName, Variant] = {
+		&"albedo": look[0], &"tint": look[1], &"opacity": XRAY_OPACITY, &"floor_light": XRAY_FLOOR, &"cover_light": XRAY_LIGHT,
+		&"fill": HeroBody.FILL,
+	}
+	if mat is BaseMaterial3D:
+		var base := mat as BaseMaterial3D
+		out[&"roughness"] = base.roughness
+		out[&"metallic"] = base.metallic
+		if base.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
+			out[&"own_light"] = 1.0
+			out[&"opacity"] = XRAY_BLADE_OPACITY
+	elif mat is ShaderMaterial:
+		var shader := mat as ShaderMaterial
+		for param: StringName in [&"fill", &"roughness", &"metallic", &"blade_from", &"blade_color", &"blade_glow", &"blade_paint"]:
+			var value: Variant = shader.get_shader_parameter(param)
+			if value != null:
+				out[param] = value
+		if out.has(&"blade_from"):
+			out[&"blade"] = 1.0
+			out[&"opacity"] = XRAY_BLADE_OPACITY
+	return out
+
+
+## How much lighter than usual his colours are drawn with this much of the blink after a hit left: HURT_LIGHTEN
+## half of every BLINK_PERIOD, nothing the other half (never a white body).
+static func blink_lighten(blink: float) -> float:
+	return HURT_LIGHTEN if blink > 0.0 and fmod(blink, BLINK_PERIOD) < BLINK_PERIOD * 0.5 else 0.0
+
+
 func alive() -> bool:
 	return state != State.DEAD
 
@@ -264,7 +332,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	_state_t += dt
 	invuln = maxf(0.0, invuln - dt)
 	cast_cooldown = maxf(0.0, cast_cooldown - dt)
-	_flash = maxf(0.0, _flash - dt * 6.0)
+	_flash = maxf(0.0, _flash - dt / HURT_FLASH)
 	_blink = maxf(0.0, _blink - dt)
 	if shield_cooldown > 0.0 and not shield_ready:
 		_shield_t += dt
@@ -498,15 +566,25 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	var glow := Color(OUTLINE, inverse_lerp(CHARGE_GLOW_FROM, 1.0, maxf(charge_progress(), CHARGE_GLOW_FROM)) * CHARGE_GLOW)
 	if shield_ready and not charging:
 		glow = SHIELD_GLOW
-	var blink := HURT_BLINK if _blink > 0.0 and fmod(_blink, BLINK_PERIOD) < BLINK_PERIOD * 0.5 else 0.0
-	_overlay.set_shader_parameter(&"flash", maxf(_flash, blink))
+	_overlay.set_shader_parameter(&"flash", _flash)
+	# the blink after a hit: more of his own painting as light, on the body and on what shows through a cover
+	var fill := HeroBody.FILL + blink_lighten(_blink) * BODY_LIGHT
+	if fill != _shown_fill:
+		_shown_fill = fill
+		for own in _fills:
+			own.emission_energy_multiplier = fill
+		for x in _xrays:
+			x.set_shader_parameter(&"lighten", fill - HeroBody.FILL)
 	_overlay.set_shader_parameter(&"glow", glow)
 	var edge := Dev.num("outline", Feel.live().outline)
 	_overlay.set_shader_parameter(&"outline", Color(EDGE, edge))
 	# --outline=0 (or the feel panel) turns the x-ray off with the edge
-	for x in _xrays:
-		x.set_shader_parameter(&"opacity", XRAY_OPACITY if edge > 0.0 else 0.0)
-	_xray_edge.set_shader_parameter(&"color", Color(XRAY_RIM, XRAY_RIM.a if edge > 0.0 else 0.0))
+	if edge != _shown_edge:
+		_shown_edge = edge
+		for x in _xrays:
+			x.set_shader_parameter(&"show", 1.0 if edge > 0.0 else 0.0)
+		_xray_edge.set_shader_parameter(&"color", Color(XRAY_RIM, XRAY_RIM.a if edge > 0.0 else 0.0))
+	_ring_look.set_shader_parameter(&"facing", Vector2(sin(_model.rotation.y), cos(_model.rotation.y)))
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if state != State.MOVE or runner.is_swinging():
 		return

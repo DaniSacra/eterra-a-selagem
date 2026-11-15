@@ -69,6 +69,65 @@ func test_the_xray_paints_each_mesh_with_its_own_texture() -> void:
 	assert_null(Player.xray_look(null)[0])
 
 
+## Covered, he is the same body: lit and painted as his own materials are, the blade with the light of Emeth's own
+## shader, a little see-through (docs/art/cycle7_spec.md 3.2, items 1 and 4).
+func test_the_xray_draws_the_body_and_the_blade_as_their_own_materials_do() -> void:
+	var body: Array = HeroBody.make()
+	var model: Node3D = autofree(body[0])
+	var skin := (model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_active_material(0)
+	var covered := Player.xray_params(skin)
+	assert_almost_eq(float(covered[&"fill"]), HeroBody.FILL, 0.001, "the same painting as light as the body")
+	assert_almost_eq(float(covered[&"opacity"]), 0.85, 0.001)
+	assert_false(covered.has(&"blade"), "the body is not a blade")
+	assert_between(float(covered[&"floor_light"]), 0.05, 0.3, "shadows lifted, not recoloured")
+	var sword := body[2] as MeshInstance3D
+	var emeth := (sword.get_node("Blade") as MeshInstance3D).material_override as ShaderMaterial
+	var blade := Player.xray_params(emeth)
+	assert_eq(float(blade[&"blade"]), 1.0, "the blade shows through a cover")
+	assert_almost_eq(float(blade[&"opacity"]), 0.8, 0.001)
+	assert_eq(blade[&"blade_color"], emeth.get_shader_parameter(&"blade_color"), "Emeth's own emerald")
+	assert_lt(float(blade[&"blade_glow"]), Game.GLOW_THRESHOLD, "under the glow threshold, covered too")
+	var core := Player.xray_params((sword.get_node("Blade/Core") as MeshInstance3D).material_override)
+	assert_eq(float(core[&"own_light"]), 1.0, "the pale edge of the blade has its own light")
+	var shader_params: Array = Player.XRAY.get_shader_uniform_list().map(func(u: Dictionary) -> String: return u.name)
+	for param: StringName in blade:
+		assert_has(shader_params, String(param), "xray.gdshader knows it")
+
+
+## The rim through a cover is a hair of ivory, never cyan nor a thick white outline (item 2).
+func test_the_xray_rim_is_a_warm_hair() -> void:
+	assert_lte(Player.XRAY_RIM_WIDTH, 1.5, "pixels on a 941 line screen")
+	assert_lte(Player.XRAY_RIM.a, 0.5)
+	assert_gt(Player.XRAY_RIM.r, Player.XRAY_RIM.b + 0.1, "warm (ivory), not cyan")
+	assert_lte(Player.KEY_LIGHT.a, 0.25, "the painted light on his shoulders stays small")
+
+
+## After a hit he never turns white (a struck enemy does): a flash of at most 0.05 s, then his own colours lighter
+## and back (item 3).
+func test_a_hit_lightens_his_own_colours_and_never_paints_him_white() -> void:
+	assert_lte(Player.HURT_FLASH, 0.05)
+	assert_almost_eq(Player.HURT_LIGHTEN, 0.35, 0.001)
+	assert_eq(Player.blink_lighten(0.0), 0.0, "no blink when he is not hurt")
+	var on := 0
+	var steps := 130
+	for i in steps:
+		var lighten := Player.blink_lighten(Player.HURT_INVULN * float(i + 1) / steps)
+		assert_true(lighten == 0.0 or lighten == Player.HURT_LIGHTEN)
+		on += 1 if lighten > 0.0 else 0
+	assert_between(float(on) / steps, 0.4, 0.6, "half the time lighter, half as he is")
+	var flash := Player.FLASH.get_shader_uniform_list().map(func(u: Dictionary) -> String: return u.name)
+	assert_has(flash, "key", "the painted light is on the uncovered body too")
+
+
+## The ring says where he looks: a wedge on that side, a little brighter, still thin and petrol (item 5).
+func test_the_ring_has_a_brighter_wedge_where_he_faces() -> void:
+	assert_almost_eq(Player.RING_WEDGE, 30.0, 0.001)
+	assert_almost_eq(Player.RING_WEDGE_GAIN, 1.4, 0.001)
+	var ring := Player.RING.get_shader_uniform_list().map(func(u: Dictionary) -> String: return u.name)
+	assert_has(ring, "facing")
+	assert_lt(Player.RING_OPEN * Player.RING_WEDGE_GAIN, 0.5, "still faint on the open floor")
+
+
 func test_the_xray_is_drawn_after_the_life_bars_and_the_ring_is_not_a_warning() -> void:
 	assert_gt(Player.XRAY_PRIORITY, 10, "after the enemies' life bars (CrowdRenderer)")
 	assert_gt(Player.RING_COLOR.g, Player.RING_COLOR.r * 2.0, "petrol, never the red of a warning")
