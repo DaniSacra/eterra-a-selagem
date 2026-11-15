@@ -1,6 +1,6 @@
 class_name PauseMenu
 extends Control
-## Pause: continue, the list of moves found so far, options, back to the title.
+## Pause: continue, the gifts held (Elos on their chain), the list of moves found so far, options, back to the title.
 
 signal resumed
 
@@ -18,10 +18,22 @@ func open() -> void:
 	v.add_child(UiKit.title(T.t(&"pause_title"), 44))
 	var first := UiKit.button(T.t(&"pause_continue"), func() -> void: resumed.emit())
 	v.add_child(first)
+	v.add_child(UiKit.button(T.t(&"pause_boons"), func() -> void: _show(_boons_screen())))
 	v.add_child(UiKit.button(T.t(&"pause_moves"), func() -> void: _show(MovesScreen.new())))
 	v.add_child(UiKit.button(T.t(&"pause_options"), func() -> void: _show(OptionsScreen.new())))
 	v.add_child(UiKit.button(T.t(&"pause_quit"), func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn")))
 	first.grab_focus.call_deferred()
+
+
+## The gifts panel, with the gifts of the run this pause belongs to (the Game above it).
+func _boons_screen() -> BoonsScreen:
+	var screen := BoonsScreen.new()
+	var n := get_parent()
+	while n != null and not n is Game:
+		n = n.get_parent()
+	if n != null:
+		screen.state = (n as Game).boons
+	return screen
 
 
 func _show(screen: Control) -> void:

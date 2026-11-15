@@ -153,7 +153,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
-  `requires` de dois outros (6 hoje, ainda com o nome "Dons unidos" no texto; renomear para Elo depois do ciclo 5).
+  `requires` de dois outros (6 hoje; nome "Elo" no texto desde 2026-11-15). A carta mostra os dois dons de origem
+  numa corrente de ouro velho com o Elo no meio (`EloLink`, `BoonState.sources`), o medalhão do Elo tem aro de elos,
+  a HUD saúda cada Elo novo com "Elo formado" sem pausar (`EloBanner`) e a pausa tem o painel "Dons" (`BoonsScreen`).
+  Capturas dessas telas numa partida real: `tools/ui_lab.gd` (comando no topo).
 - Combos: `data/combos/paladin.tres` (nós `ComboNode`; `tags` é o que os dons enxergam). Dons: `data/boons/*.tres`
   (`Boon.slot`: um dom por ação, ATTACK/SPECIAL/CAST/DASH, o novo substitui o antigo; NONE = age sozinho, sem limite.
   Raridade sorteada por carta, `Boon.RARITY_MULT` multiplica os números com `BoonMod.by_rarity`)

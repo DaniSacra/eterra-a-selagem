@@ -1,6 +1,7 @@
 class_name BoonIcon
 extends Control
 ## A gift's medallion, drawn in code: a round gem in the family's colour and a simple glyph for the gift.
+## An Elo (a gift forged from two others) has a rim of chain links.
 ## cooldown (0..1) darkens the part of the medallion that is still recharging.
 
 ## Glyph ids of the bare actions: ACTION_GLYPH + Boon.Slot (attack, special, circle of light, dodge).
@@ -40,9 +41,12 @@ func _draw() -> void:
 		if pts.size() >= 3:
 			draw_colored_polygon(pts, Color(0, 0, 0, 0.6))
 	draw_arc(c, r, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8), maxf(1.5, s * 0.02), true)
+	if boon.is_duo():
+		# an Elo wears a rim of chain links (see EloLink)
+		EloLink.ring(self, c, r + s * 0.02, maxf(6.0, s * 0.15))
 	for i in max_level:
 		var x := c.x + (i - (max_level - 1) * 0.5) * s * 0.16
-		var y := s * 0.98
+		var y := s * (1.06 if boon.is_duo() else 0.98)  # under the chain rim of an Elo
 		draw_circle(Vector2(x, y), s * 0.05, Color(0.1, 0.08, 0.1))
 		draw_circle(Vector2(x, y), s * 0.035, col.lightened(0.3) if i < level else Color(0.25, 0.22, 0.25))
 

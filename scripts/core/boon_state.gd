@@ -66,6 +66,28 @@ func find(id: StringName) -> Boon:
 	return null
 
 
+## The two gifts an Elo (a gift with requires) is forged from, in the order listed; empty for any other gift.
+## A source missing from the catalog is skipped.
+func sources(b: Boon) -> Array[Boon]:
+	var out: Array[Boon] = []
+	if b == null:
+		return out
+	for id in b.requires:
+		var s := find(id)
+		if s != null:
+			out.append(s)
+	return out
+
+
+## The owned Elos that are not in seen (ids), so a screen can greet each one once.
+func new_elos(seen: Dictionary) -> Array[Boon]:
+	var out: Array[Boon] = []
+	for b in owned():
+		if b.is_duo() and not seen.has(b.id):
+			out.append(b)
+	return out
+
+
 func owned() -> Array[Boon]:
 	var out: Array[Boon] = []
 	for b in catalog:

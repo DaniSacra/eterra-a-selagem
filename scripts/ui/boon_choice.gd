@@ -7,6 +7,10 @@ signal chosen(b: Boon)
 
 const REST_HEAL := 10.0
 const CARD := Vector2(320, 430)
+## An Elo's card: its medallion and the two gifts it is forged from, on a chain (276 px inside the card).
+const ELO_ICON := 88.0
+const ELO_SOURCE := 52.0
+const ELO_GAP := 34.0
 
 var _cards: Array[Button] = []
 var _opened_at := 0
@@ -74,15 +78,24 @@ func _card(b: Boon, state: BoonState) -> Button:
 	icon_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(icon_row)
 	if b:
-		var icon := BoonIcon.new().setup(b, 110)
 		var lv := state.level(b.id)
+		var from := state.sources(b)
+		var icon: BoonIcon
+		if from.is_empty():
+			icon = BoonIcon.new().setup(b, 110)
+			icon_row.add_child(icon)
+		else:
+			# an Elo: its two gifts joined by a chain, the Elo hanging in the middle
+			var link := EloLink.new().setup(b, from, ELO_ICON, ELO_SOURCE, ELO_GAP)
+			icon_row.add_child(link)
+			icon = link.main_icon()
 		icon.level = lv + 1
 		icon.max_level = b.max_level
-		icon_row.add_child(icon)
 		var name_l := UiKit.title(T.t("boon_" + String(b.id)), 26, Color(1.0, 0.95, 0.85))
 		name_l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(name_l)
-		var fam := UiKit.label(T.t(Boon.FAMILY_KEY[b.family]), color.lightened(0.25), 19, UiKit.BOLD_FONT)
+		var fam_text := T.t(Boon.FAMILY_KEY[b.family]) if from.is_empty() else EloLink.caption(from)
+		var fam := UiKit.label(fam_text, color.lightened(0.25) if from.is_empty() else EloLink.METAL_LIT, 19, UiKit.BOLD_FONT)
 		fam.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		fam.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		box.add_child(fam)

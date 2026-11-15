@@ -56,7 +56,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Um por ação | sim | sim (mais o ganho de Magia) | sim: ataque, especial, círculo, esquiva; o novo substitui o antigo |
 | Passivos | sim | sim | sim (brasas, redemoinho, onda, meteoro, escudo etc.) |
 | Raridade | comum a heroica | comum a heroica | três níveis que multiplicam os números |
-| Duplos | dons duplos (dois deuses) | dons duplos | **Elo** (mecânica das Crônicas de Eterra): 6 hoje, ainda com o nome "Dons unidos" |
+| Duplos | dons duplos (dois deuses) | dons duplos | **Elo** (mecânica das Crônicas de Eterra): 6 hoje, com a corrente ligando os dois dons na carta e no painel "Dons" da pausa, e o aviso "Elo formado" |
 | Lendários | sim | sim | falta |
 | Subir o nível de um dom | romã | romã | falta |
 | Infusões (exigem X de um elemento) | não | sim | falta |
@@ -67,7 +67,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 
 ## Próximos passos (na ordem)
 
-1. **Elo**: renomear os "Dons unidos" para Elo, com a corrente ligando os dois dons na carta e no painel.
+1. **Elo**: feito em 2026-11-15 (nome, corrente na carta e no painel, aviso "Elo formado"); falta o teste do Daniel.
 2. Levantar com cuidado as regras e os números dos sistemas que faltam no Hades II (romã, lendários, infusões,
    martelo, Caos, feitiços, progressão entre partidas, Votos) e propor ao Daniel a versão de Eterra antes de
    implementar.

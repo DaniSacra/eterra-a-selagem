@@ -58,6 +58,10 @@ var _combo_pop := 0.0
 var _move_t := 0.0
 var _notice_t := 0.0
 var _passive_count := -1
+var _elo_banner: EloBanner
+## Elos already greeted (the ones owned when the run starts are not).
+var _elos_seen := {}
+var _elos_ready := false
 
 
 func _ready() -> void:
@@ -72,6 +76,10 @@ func _ready() -> void:
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	_arrow = _label("", Color(1.0, 0.9, 0.6), FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
+	# the moment an Elo forms: in the notices' place under the clock, well above the paladin
+	_elo_banner = EloBanner.new()
+	add_child(_elo_banner)
+	_place(_elo_banner, Control.PRESET_CENTER_TOP, Vector2(0, 92), Vector2(420, 100))
 
 
 ## Top: experience (horde mode only, a thin gold line across the top), room or level, clock, gold or kills, boss.
@@ -208,6 +216,7 @@ func _process(delta: float) -> void:
 	_update_life(p)
 	_update_slots(p)
 	_update_passives()
+	_update_elos()
 	_update_boss()
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
@@ -263,6 +272,16 @@ func _update_passives() -> void:
 			var t := game.skills.timer(icon.boon)
 			icon.cooldown = clampf(t.x / maxf(t.y, 0.01), 0.0, 1.0)
 		icon.queue_redraw()
+
+
+## Greets each Elo once, when it is taken.
+func _update_elos() -> void:
+	for b in game.boons.new_elos(_elos_seen):
+		_elos_seen[b.id] = true
+		if _elos_ready:
+			_elo_banner.show_elo(b, game.boons.sources(b))
+			_notice_t = 0.0  # the Elo takes the notice's place
+	_elos_ready = true
 
 
 func _update_boss() -> void:
