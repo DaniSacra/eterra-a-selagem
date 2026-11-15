@@ -20,7 +20,7 @@ const STONE_DARK := Color(0.07, 0.09, 0.12)
 const FIRE := Color(1.0, 0.58, 0.25)
 const PORTAL := Color(0.3, 1.0, 0.5)
 ## The portal's sheet of light: a deeper green than its light, so its bright heart stays green and not white.
-const PORTAL_SHEET := Color(0.2, 1.0, 0.14)
+const PORTAL_SHEET := Color(0.22, 1.0, 0.34)
 const ABYSS := Color(0.34, 0.17, 0.52)
 ## The mist of the abyss (teal, lighter than the stone in it) and the violet glowing up from under it.
 const MIST := Color(0.03, 0.2, 0.25)
@@ -55,8 +55,8 @@ const TONGUE := Vector2(0.75, 1.7)
 const HEART := 0.6
 ## The coals in the bowl and the rim of bronze lit from inside by them (so it reads against the flame).
 const COALS := Color(1.4, 0.45, 0.1)
-const RIM_GLOW := Color(0.9, 0.4, 0.12)
-const RIM_GLOW_ENERGY := 0.6
+const RIM_GLOW := Color(0.85, 0.3, 0.08)
+const RIM_GLOW_ENERGY := 0.3
 const BRAZIER_LIGHT := 4.5
 const BRAZIER_RANGE := 10.0
 const BRAZIER_ATTENUATION := 1.3

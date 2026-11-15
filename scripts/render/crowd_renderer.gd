@@ -22,7 +22,7 @@ const FOOT_SHADE := 0.55
 const INK := 0.65
 ## Thick glowing outline of elites and the boss (crowd_outline.gdshader): meters in model space, brightness.
 const OUTLINE_WIDTH := 0.045
-const OUTLINE_INTENSITY := 2.4
+const OUTLINE_INTENSITY := 1.1
 const OUTLINE := preload("res://assets/shaders/crowd_outline.gdshader")
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
 const SHADER := preload("res://assets/shaders/crowd.gdshader")

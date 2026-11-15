@@ -46,7 +46,7 @@ const POT_BELLY := 0.38
 ## Standing stones: the share of their columns cracked upright, the frame round their niche.
 const OBELISK_CRACKS := 0.3
 const OBELISK_FRAME := 0.08
-const WAX := Color(0.92, 0.86, 0.72)
+const WAX := Color(0.9, 0.76, 0.56)
 const CANDLE_FLAME := 0.28
 const CANDLE_FIRE := Color(2.3, 1.4, 0.55)
 const CLAY := Color(0.55, 0.2, 0.1)

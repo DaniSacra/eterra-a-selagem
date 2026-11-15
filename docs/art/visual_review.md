@@ -207,3 +207,30 @@ O que ainda difere da pintura (honesto):
   recortado pelos blocos da escada leste (silhueta de pedra contra a luz, como na pintura, mas grande na tela).
 - Verificação: `check.gd` sem erros; `tools/test.sh` 134 testes, 133 passando, 1 sem asserção (`test_only_finishers_glint`,
   de outro dono); `tools/smoke.sh 120` step_ms 0,1; com `--stress=300` step_ms 0,11.
+
+## 2026-11-15: ciclo 4, revisão final (Art Director)
+
+- Capturas próprias (Vulkan, 1672 x 941, `--fixed-fps 30`, commits até `37631ab`), no scratchpad da sessão, pasta
+  `ad2/`: `vitrine.png` (`--showcase --seed=5`, 2 s; idêntica à `env4/v9.png`), `jogo9.png` e `jogo14.png`
+  (`--bot --autopick --seed=5`). A máquina estava com carga de 15 a 29: a captura de 14 s passou dos 500 s na primeira
+  tentativa e foi refeita com prazo maior. Recortes lado a lado `c_portal`, `c_abismo`, `c_chao`, `c_chars`, `c_hero`,
+  `c_hud`; comparação inteira em `ad2/comparacao.png`. Inimigos pela galeria `en/lab4_game.png` contra a prancha.
+- Medidas: aceite das regiões do ciclo 4 em 8 de 13 (passam verde da fachada, portal, verde das estátuas, detalhe da
+  fachada, halo e detalhe do braseiro, cor das colunas do abismo, obelisco; falham fachada à direita 6,8, estátuas
+  8,9, chão 7,6, sd do chão ao fundo 18,9, detalhe das colunas do abismo 3,3). Herói com 0,2% de dourado (meta 3%).
+- Bate: composição e câmera (todas as peças no lugar da pintura); herói escuro com cabelo cobre, cachecol petróleo e
+  lâmina verde; verde só no vão, no degrau e no chão em frente; fogo com línguas; pedra chanfrada; chão sem as faixas;
+  HUD na linguagem da pintura (retrato, barras em ângulo, losangos com tecla, contador de golpes com pincel).
+- Difere, por prioridade: (1) inimigos cabeçudos do KayKit ao lado do herói esguio, elites e guardiões com halo rosa
+  e roxo, o Escudo lê como anão de chifres; (2) centro do chão claro e lilás pela luz-chave do medalhão, onde a
+  pintura é escura com poças quentes; (3) abismo liso e saturado, e na luta de 14 s um painel lilás chapado no canto
+  leste; (4) estátuas sem rosto nem mãos; (5) medalhão ainda lê como traço; (6) véu do portal verde-amarelado liso;
+  (7) estandartes curtos; (8) aro do braseiro como anel amarelo e velas esverdeadas.
+- Depende de modelo: esqueleto base adulto, herói Explorador, estátua encapuzada, Escudo, Cavaleiro e Morvath,
+  moldura do portal, obelisco, braseiro e balaustrada, ruínas do abismo (ordem em `docs/art/cycle4_final.md`).
+- Pedidos: seis correções de constante em `docs/art/cycle4_final.md`, seção 3 (contorno dos elites para o Gameplay
+  Engineer; luz-chave, véu do portal, aro do braseiro, cartão violeta do leste e estandartes para o Environment
+  Artist), cada uma com aceite medido.
+- Veredito: aprovado para o teste do Daniel como a versão do ciclo 4, sem declarar fidelidade alta (só a composição
+  é ALTA; personagens, portal, piso, arquitetura, luz e HUD em MÉDIA; inimigos, estátuas, medalhão e abismo em BAIXA).
+  Recomendo aplicar antes as correções 1, 2 e 5 (as que mais aparecem na luta) e recapturar.

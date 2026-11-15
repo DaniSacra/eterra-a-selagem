@@ -136,10 +136,10 @@ const MULLION := 0.1
 const BUTTRESSES: Array[float] = [-5.9, -3.6, 7.5, 12.6, 19.0]
 const BAYS: Array[float] = [10.05, 15.8]
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
-const KEY_LIGHT := Color(0.95, 0.82, 0.88)
-const KEY_ENERGY := 6.0
+const KEY_LIGHT := Color(0.95, 0.8, 0.68)
+const KEY_ENERGY := 4.5
 const KEY_HEIGHT := 9.0
-const KEY_RANGE := 18.0
+const KEY_RANGE := 14.0
 ## Tint of the stone in the depths and of the walls under the platform (dark against the lighter mist).
 const FAR_TINT := 0.35
 const CLIFF_TINT := 0.9
@@ -178,7 +178,7 @@ const GLOW_DIST := 76.0
 const GLOW_LATS: Array[float] = [-0.46, -0.32, -0.18]
 const GLOW_WIDE := 16.0
 const GLOW_WEST := 1.5
-const GLOW_EAST := 2.6
+const GLOW_EAST := 1.5
 ## The far tower the chains hang from (behind the giant, in the middle of the picture's top).
 const TOWER := Vector3(-35.0, 0, -23.0)
 const TOWER_TOP := 12.0
