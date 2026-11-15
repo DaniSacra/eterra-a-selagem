@@ -124,6 +124,13 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _shot() -> void:
+	if Dev.has("hover"):
+		# --hover=N: the mouse rests on button N (0 Iniciar to 3 Sair), for captures of the hover look
+		await get_tree().create_timer(0.3).timeout
+		var motion := InputEventMouseMotion.new()
+		motion.position = _menu.button(int(Dev.num("hover", 0))).get_global_rect().get_center()
+		motion.global_position = motion.position
+		get_viewport().push_input(motion)
 	await get_tree().create_timer(Dev.num("shot-at", 1.0)).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(Dev.arg("shot"))

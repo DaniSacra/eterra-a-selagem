@@ -141,6 +141,9 @@ func _ready() -> void:
 		player.max_hp = 99999.0
 		player.hp = 99999.0
 		var kinds: Array[StringName] = [&"skeleton", &"skeleton", &"archer", &"runner", &"mage", &"guard"]
+		if Dev.has("stress-ids"):
+			# --stress-ids=a,b,c: these enemies (EnemyDef ids), in turn, for captures of chosen kinds
+			kinds.assign(Array(Dev.arg("stress-ids").split(",")).map(func(id: String) -> StringName: return StringName(id)))
 		for i in int(Dev.num("stress", 300)):
 			horde.spawn(horde.def(kinds[i % kinds.size()]), arena.resolve(player.pos + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(4.0, 20.0), 0.5), false)
 	if Dev.has("feel-panel"):
@@ -839,6 +842,10 @@ func _place_camera(shake: Vector3, _delta: float) -> void:
 	if Dev.has("showcase"):
 		# the fixed frame of the whole hall, to set side by side with the reference image
 		var c := arena.showcase
+		if Dev.has("cam-at"):
+			# --cam-at=x,z: the fixed camera looks at this floor point instead (close-ups of the hall)
+			var xz := Dev.arg("cam-at").split(",")
+			c = Vector3(float(xz[0]), 0.0, float(xz[1]))
 		var off := Feel.cam_offset_of(Dev.num("cam-dist", SHOWCASE_DISTANCE), Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw())
 		camera.fov = Dev.num("cam-fov", Feel.live().cam_fov)
 		camera.look_at_from_position(c + off, c, Vector3.UP)
@@ -873,9 +880,21 @@ func _cam_offset() -> Vector3:
 	return Feel.cam_offset_of(Dev.num("cam-dist", feel.cam_distance), Dev.num("cam-pitch", feel.cam_pitch), cam_yaw())
 
 
-## --shot=file.png: saves what the player would see after --shot-at seconds, then quits.
+## --shot=file.png: saves what the player would see after --shot-at seconds, then quits. With --shot-on=swing|hit|
+## special|omega it then waits for the next such swing of the paladin (hit: one that reaches someone; special: the
+## special's wave) and saves --shot-after seconds of real time later, so the swing's effects are on screen.
 func _shot() -> void:
 	await get_tree().create_timer(Dev.num("shot-at", 2.0)).timeout
+	if Dev.has("shot-on"):
+		var want := Dev.arg("shot-on")
+		while true:
+			var got: Array = await combat.swung
+			var node: ComboNode = got[0]
+			if want == "swing" or (want == "hit" and got[1] > 0) or (want == "special" and node.has_tag(&"wave") and not node.has_tag(&"omega")) \
+					or (want == "omega" and node.has_tag(&"omega")):
+				break
+		# real time: hit stop and slow motion must not stretch the wait
+		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(Dev.arg("shot"))

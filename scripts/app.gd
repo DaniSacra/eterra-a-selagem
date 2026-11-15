@@ -18,7 +18,7 @@ static func apply_options() -> void:
 			win.mode = want
 		if not full:
 			var size := window_size()
-			if win.size != size and not Dev.has("shot"):
+			if win.size != size and not Dev.has("shot") and not Dev.has("frames"):
 				win.size = size
 				win.move_to_center()
 	Audio.apply_volumes()

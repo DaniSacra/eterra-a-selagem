@@ -4,6 +4,8 @@ extends RefCounted
 
 signal combo_changed(count: int)
 signal enemy_struck(e: Enemy, tags: Array[StringName], damage: float)
+## Every swing of the combo, after its hits (struck: how many it reached); captures freeze on it (--shot-on).
+signal swung(node: ComboNode, struck: int)
 
 const COMBO_KEEP := 3.0
 ## Extra hit slow when a blow kills (Hades II: 0.04 s).
@@ -157,6 +159,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
 		ComboNode.Effect.STUN:
 			fx.burst(&"light", Vector3(origin.x, 0.4, origin.y))
+	swung.emit(node, struck.size())
 
 
 func _draw_swing(node: ComboNode, shape: Dictionary, origin: Vector2, dir: Vector2, color: Color, heavy: bool, finisher: bool) -> void:

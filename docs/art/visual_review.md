@@ -234,3 +234,20 @@ O que ainda difere da pintura (honesto):
 - Veredito: aprovado para o teste do Daniel como a versão do ciclo 4, sem declarar fidelidade alta (só a composição
   é ALTA; personagens, portal, piso, arquitetura, luz e HUD em MÉDIA; inimigos, estátuas, medalhão e abismo em BAIXA).
   Recomendo aplicar antes as correções 1, 2 e 5 (as que mais aparecem na luta) e recapturar.
+
+## 2026-11-15: ciclo 7, diagnóstico (Art Director)
+
+Antes de qualquer mudança. Capturas: `docs/gallery/jogo/` (ciclo 6) e as novas de `docs/art/shots/cycle7_before/`
+(golpes da Emeth em rajada, herói parado e correndo, Cavaleiro, sala da fonte). Especificação com problemas por
+caixa, critérios de aceite, donos por arquivo e contrato de capturas: `docs/art/cycle7_spec.md`.
+
+- Bate: herói legível em campo aberto (L 77 contra 46 do chão), escala dos guardiões e de Morvath, avisos vermelhos
+  inteiros sobre o medalhão, efeitos de acerto só em acerto real.
+- Difere do pedido do Daniel: corte em leque de faixas sem direção; clarão branco que apaga herói e inimigos no golpe
+  forte; meia-lua do Ômega com 73% da largura da tela; Seta de Luz como bola de fogo amarela; círculo de luz como
+  disco creme opaco; herói ciano chapado quando coberto e branco inteiro ao levar golpe; Esqueleto e Corredor com a
+  mesma paleta; Sacerdote sem sinal de ritual; ouro do elite cobrindo a caveira; Morvath cinza no jogo; portal com 75%
+  da folha estourada (porta amarela 54%); estátuas com capuz que lê como furo; painéis violeta lisos no abismo; aro do
+  medalhão quase sem relevo; retrato do HUD em outro estilo; nome do golpe e relógio com pouco contraste.
+- Depende de modelo que não existe: estátuas, moldura do portal e ruínas (provisórias até o `meshy_asset_plan.md`).
+- Veredito: nada a aprovar ainda; ciclo 7 não começou.
