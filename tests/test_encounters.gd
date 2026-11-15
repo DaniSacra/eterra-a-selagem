@@ -35,7 +35,6 @@ func test_the_numbers_daniel_asked_for() -> void:
 	assert_eq(stage.tier_alive[StageDef.Tier.HARD], Vector2i(8, 12))
 	assert_eq(stage.tier_alive[StageDef.Tier.SPECIAL], Vector2i(12, 16))
 	assert_eq(stage.miniboss_tier, StageDef.Tier.HARD, "the guardian's room is hard")
-	assert_eq(stage.boss_adds, PackedInt32Array([4, 4, 6]), "Morvath: 4 reinforcements, 6 in his last phase")
 
 
 func test_cap_grows_down_the_region_inside_the_tier() -> void:
@@ -112,19 +111,6 @@ func test_every_part_has_a_plain_kind_and_its_elite_plays_it_too() -> void:
 		assert_between(pool.roles.size(), 2, 4)
 		for role in pool.roles:
 			assert_true(roles.has(role), "the part %s is played by someone" % role)
-
-
-func test_morvath_reinforcements_stop_at_the_ceiling() -> void:
-	var caps := stage.boss_adds
-	assert_eq(BossRules.summon_count(2, 0, caps), 4)
-	assert_eq(BossRules.summon_count(2, 3, caps), 1, "near the ceiling he raises fewer")
-	assert_eq(BossRules.summon_count(2, 4, caps), 0, "at it, none")
-	assert_eq(BossRules.summon_count(3, 0, caps), 5, "his last phase raises five at most")
-	assert_eq(BossRules.summon_count(3, 3, caps), 3)
-	assert_eq(BossRules.summon_count(3, 6, caps), 0)
-	assert_eq(BossRules.summon_count(3, 9, caps), 0, "summons that piled up before never let him raise more")
-	assert_eq(BossRules.adds_cap(caps, 7), 6, "the last value holds after")
-	assert_eq(BossRules.summon_count(2, 50, PackedInt32Array()), 4, "no ceiling of his own: the old count")
 
 
 func test_horde_summons_stop_at_its_ceiling() -> void:

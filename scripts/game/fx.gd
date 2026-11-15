@@ -91,6 +91,10 @@ const BURSTS := {
 	&"shadow": [Color(0.75, 0.52, 1.3), 16, 3.0, 1.5, 0.55, 0.8, 90.0],
 	&"dust": [Color(0.5, 0.45, 0.42), 10, 2.5, 0.5, 0.6, 0.6, 70.0],
 	&"heal": [Color(0.8, 2.6, 1.2), 16, 2.5, 2.5, 0.3, 0.8, 90.0],
+	# a boss's souls and necromancy: a cold, pale green smoke that rises slowly (never Emeth's crystal green)
+	&"soul": [Color(0.38, 1.55, 1.1), 14, 2.2, 2.2, 0.5, 0.9, 80.0],
+	# a curse: dark purple wisps
+	&"curse": [Color(0.55, 0.15, 0.8), 10, 1.6, 1.2, 0.35, 0.7, 90.0],
 }
 
 var camera: Camera3D

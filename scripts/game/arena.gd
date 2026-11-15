@@ -247,13 +247,14 @@ func door_goal(i: int) -> Vector2:
 	return Vector2(exits[i].x, -half.y + 1.4 + STAIRS_DEPTH + 0.3)
 
 
-## The crypt doors open for the last fight: a cold light in the north wall.
-func open_door() -> void:
+## The crypt doors open for the last fight: a cold light in the north wall (tint: its colour; Morvath's last phase
+## turns it to his spectral fire).
+func open_door(tint: Color = ArenaKit.MORVATH) -> void:
 	if _kit != null:
-		_kit.light_portal(0, true, ArenaKit.MORVATH)
+		_kit.light_portal(0, true, tint)
 		return
 	if _door_light:
-		_door_light.light_color = Color(0.75, 0.45, 1.0)
+		_door_light.light_color = tint if tint != ArenaKit.MORVATH else Color(0.75, 0.45, 1.0)
 		_door_light.light_energy = 6.0
 		_door_light.omni_range = 16.0
 

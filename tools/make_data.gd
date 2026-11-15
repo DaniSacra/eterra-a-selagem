@@ -1,7 +1,7 @@
 extends SceneTree
 ## One-off generator of the content files in data/ (combos, enemies, gifts, waves) for the 3D version.
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
-## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [feel]
+## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [bosses] [feel]
 
 ## Elites wear a faint old-gold edge (the rim of crowd.gdshader; cycle 5: the gilded halo is gone, the elite reads by
 ## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
@@ -32,7 +32,7 @@ const SWEEP := {
 
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
-	for part in ["combos", "enemies", "boons", "waves", "stage", "feel"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -166,9 +166,11 @@ func _enemies() -> void:
 		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
 		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
-	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14
+	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
+	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
+	# fight's numbers are data/bosses/morvath.tres (_bosses)
 	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.4,
-		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": Color(1.9, 0.45, 3.0), "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
+		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": SPECTRAL, "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
 		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5})
 
 
@@ -350,13 +352,12 @@ func _stage() -> void:
 		&"guard", &"guard_elite", &"priest", &"priest_elite"]
 	# Few enemies at once, each with its part, a fight won by skill as in Hades II (Daniel, 2026-11-15: not a horde
 	# survivor). Standing at once: common 4 to 8, hard 8 to 12 (guardians, elites), special 12 to 16, never past 20;
-	# Morvath brings at most 4 skeletons, 6 in his last phase. A room may have several waves: the next one comes when
+	# Morvath's summons have their own ceiling (BossDef.adds_cap, ritual_cap). A room may have several waves: the next one comes when
 	# one enemy is left (wave_remaining), and only while there is room under the cap.
 	var Tier := StageDef.Tier
 	st.alive_cap = 20
 	st.tier_alive = [Vector2i(4, 8), Vector2i(8, 12), Vector2i(12, 16)]
 	st.miniboss_tier = Tier.HARD
-	st.boss_adds = PackedInt32Array([4, 4, 6])
 	# The fights by how far down the region (0 the first room, 1 the last fight before the shop; EncounterGen.progress).
 	# The parts (EnemyDef.role): pressure the soldier, react the runner, control the caster, flank the crossbowman,
 	# block the shield-bearer, area the priest. Never every kind at once without a reason.
@@ -397,6 +398,78 @@ func _save(r: Resource, path: String) -> void:
 	var err := ResourceSaver.save(r, path)
 	if err != OK:
 		push_error("could not save %s: %d" % [path, err])
+
+
+# ---------- bosses ----------
+
+## Morvath's necromancy and the souls he throws: a cold, pale spectral green (never Emeth's warm crystal green).
+const SPECTRAL := Color(0.38, 1.55, 1.1)
+
+
+func _attack(id: StringName, props: Dictionary) -> BossAttack:
+	var a := BossAttack.new()
+	a.id = id
+	for k: String in props:
+		a.set(k, props[k])
+	return a
+
+
+## Morvath, the first boss, in four phases (Daniel's request of 2026-11-15; docs/design/morvath_boss_fight.md):
+## 1 "O Despertar" (100 to 66%): the Sepulchral Scythe and the Blades of the Souls, the dash to close in.
+## 2 "O Ritual dos Mortos" (66 to 33%): the ritual behind a shield (the only time he cannot be hurt), then
+##   eruptions and a few summons. 3 "A Maldicao dos Condenados" (33 to 15%): the curse. 4 "O Ultimo Suspiro"
+##   (15 to 0%): the blades become the Storm of the Six Souls, shorter rests.
+## Distances from his middle (he is 1.4 m wide of radius, the paladin walks 6.75 m/s and dodges 5.6 m in 0.2 s):
+## every warning leaves time to walk out of it (tests/test_boss.gd proves each).
+func _bosses() -> void:
+	var b := BossDef.new()
+	b.id = &"morvath"
+	b.enemy = &"morvath"
+	b.thresholds = PackedFloat32Array([0.66, 0.33, 0.15])
+	b.ritual_phase = 2
+	b.rest = PackedFloat32Array([1.1, 1.0, 0.9, 0.75])
+	b.windup_scale = PackedFloat32Array([1.0, 1.0, 0.95, 0.9])
+	b.final_light_phase = 4
+	b.adds_cap = PackedInt32Array([0, 4, 4, 4])
+	var numbers := {
+		"roar_time": 1.6, "roar_push": 4.0, "near": 6.0, "far": 10.0, "still_after": 0.8, "lead": 0.45,
+		"summon_raise": [&"skeleton", &"skeleton"] as Array[StringName], "summon_windup": 1.1,
+		# the Sepulchral Scythe: half a circle 5 m from his middle (3.6 m past his body), 0.8 s to read it, 1 s to punish
+		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 12.0, "scythe_approach": 1.2,
+		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
+		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 10.0,
+		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
+		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 2, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
+		"storm_recovery": 1.2, "storm_damage": 10.0,
+		# the Sepulchral Eruptions: 2 or 3 circles of 2 m, one on the paladin, the lane to the middle of the hall kept free
+		"eruption_radius": 2.0, "eruption_delay": 0.9, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
+		"eruption_gap": 1.0, "eruption_damage": 10.0, "eruption_recovery": 0.8,
+		# the ritual: at most 20 s behind the shield, 2 soldiers and 2 casters, never more than 6 of his standing
+		"ritual_time": 20.0, "ritual_raise": [&"skeleton", &"skeleton", &"mage", &"mage"] as Array[StringName], "ritual_cap": 6,
+		"ritual_reinforce_every": 6.0, "ritual_reinforce": [&"skeleton", &"mage"] as Array[StringName], "ritual_eruption_every": 2.8,
+		"ritual_stun": 2.0, "shield_radius": 2.9,
+		# the curse: a slow bolt that follows a little (75 degrees a second for 1.4 s), 3 s of 30% slower walking and
+		# no special, then 2 s immune
+		"curse_windup": 0.8, "curse_speed": 7.0, "curse_turn": 75.0, "curse_homing": 1.4, "curse_life": 4.0, "curse_radius": 0.55,
+		"curse_damage": 6.0, "curse_time": 3.0, "curse_slow": 0.3, "curse_immunity": 2.0, "curse_recovery": 0.6,
+		"dash_length": 16.0, "dash_time": 0.42, "dash_windup": 0.8, "dash_width": 2.8, "dash_damage": 12.0, "dash_recovery": 1.1,
+		"stagger_from_phase": 3, "stagger_hits": 3, "stagger_forget": 4.0, "stagger_time": 2.6,
+	}
+	for k: String in numbers:
+		b.set(k, numbers[k])
+	b.attacks = [
+		# close: the scythe; it walks in first (scythe_approach)
+		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2}),
+		# far: the blades (until the storm takes their place)
+		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 3.5, "near_bias": 0.5, "far_bias": 2.2}),
+		# the paladin keeps away: the dash closes in
+		_attack(&"dash", {"weight": 1.0, "cooldown": 6.0, "min_dist": 9.0, "far_bias": 1.5}),
+		_attack(&"eruptions", {"from_phase": 2, "weight": 1.4, "cooldown": 5.0, "still_bias": 3.0}),
+		_attack(&"summon", {"from_phase": 2, "weight": 0.8, "cooldown": 12.0}),
+		_attack(&"curse", {"from_phase": 3, "weight": 1.6, "cooldown": 7.0, "min_dist": 3.0}),
+		_attack(&"storm", {"from_phase": 4, "weight": 2.2, "cooldown": 5.0, "near_bias": 1.3, "far_bias": 1.3}),
+	]
+	_save(b, "res://data/bosses/morvath.tres")
 
 
 # ---------- feel ----------

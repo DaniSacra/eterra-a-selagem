@@ -105,6 +105,11 @@ const CAST_SLOW := 0.6
 const CAST_COOLDOWN := 0.2
 const CAST_OMEGA_TIME := 0.6
 const CAST_OMEGA_COST := 20.0
+## A boss's curse on him (CurseState): a dark purple edge on his body and wisps every CURSE_PUFF seconds; the special
+## (and its Omega) is locked while it lasts, walking and dodging never.
+const CURSE_GLOW := Color(0.55, 0.12, 0.8, 0.65)
+const CURSE_PUFF := 0.2
+const CURSE_ACTION := &"heavy_attack"
 
 var arena: Arena
 var horde: Horde
@@ -130,6 +135,8 @@ var _charge_action := &""
 var _charge_tap := ComboNode.In.HEAVY
 var _charge_held := ComboNode.In.CHARGE
 var magick := Magick.new(MAGICK_MAX)
+var curse := CurseState.new()
+var _curse_puff := 0.0
 ## Holding the dodge button after the roll keeps running fast.
 var sprinting := false
 var cast_cooldown := 0.0
@@ -361,6 +368,12 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	cast_cooldown = maxf(0.0, cast_cooldown - dt)
 	_flash = maxf(0.0, _flash - dt / HURT_FLASH)
 	_blink = maxf(0.0, _blink - dt)
+	curse.step(dt)
+	if curse.active() and alive():
+		_curse_puff -= dt
+		if _curse_puff <= 0.0:
+			_curse_puff = CURSE_PUFF
+			fx.burst(&"curse", Vector3(pos.x, 1.3, pos.y))
 	if shield_cooldown > 0.0 and not shield_ready:
 		_shield_t += dt
 		if _shield_t >= shield_cooldown:
@@ -391,7 +404,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 		State.MOVE:
 			_read_buttons(dt, move, aim)
 			if state == State.MOVE:
-				var sp := Feel.live().speed * (1.0 + speed_bonus)
+				var sp := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale()
 				if sprinting and (runner.is_attacking() or charging or move.length() < 0.1 or not Controls.held(&"dodge")):
 					sprinting = false
 				if sprinting:
@@ -418,7 +431,12 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		_start_dodge(move)
 		return
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
-	_press_attack(&"heavy_attack", ComboNode.In.HEAVY, ComboNode.In.CHARGE)
+	if curse.active():
+		# the curse locks the special: a press does nothing, a charge already under way is dropped
+		if charging and _charge_action == CURSE_ACTION:
+			charging = false
+	else:
+		_press_attack(CURSE_ACTION, ComboNode.In.HEAVY, ComboNode.In.CHARGE)
 	if charging:
 		charge_t += dt
 		if not Controls.held(_charge_action):
@@ -572,6 +590,18 @@ func hurt(amount: float, from: Vector2) -> void:
 	_play(&"Hit", 1.6)
 
 
+## A boss's curse lands (false while one runs or he is still immune to the next).
+func apply_curse(seconds: float, slow: float, immunity: float) -> bool:
+	if not alive() or not curse.apply(seconds, slow, immunity):
+		return false
+	if charging and _charge_action == CURSE_ACTION:
+		charging = false
+	_curse_puff = 0.0
+	fx.word(Vector3(pos.x, 3.2, pos.y), T.t(&"word_cursed"), Color(CURSE_GLOW, 1.0))
+	Audio.play(&"cursed")
+	return true
+
+
 ## The fight is over: stand still and look on (the final scene).
 func rest() -> void:
 	if state == State.DEAD:
@@ -593,6 +623,8 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	var glow := Color(OUTLINE, inverse_lerp(CHARGE_GLOW_FROM, 1.0, maxf(charge_progress(), CHARGE_GLOW_FROM)) * CHARGE_GLOW)
 	if shield_ready and not charging:
 		glow = SHIELD_GLOW
+	if curse.active():
+		glow = CURSE_GLOW
 	_overlay.set_shader_parameter(&"flash", _flash)
 	# the blink after a hit: more of his own painting as light, on the body and on what shows through a cover
 	var fill := HeroBody.FILL + blink_lighten(_blink) * BODY_LIGHT
@@ -618,7 +650,7 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	if state != State.MOVE or runner.is_swinging():
 		return
 	if move.length() > 0.1:
-		var pace := Feel.live().speed * (1.0 + speed_bonus) * (Feel.live().sprint_scale if sprinting else 1.0)
+		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * (Feel.live().sprint_scale if sprinting else 1.0)
 		if sprinting:
 			_play(&"Sprint", pace / SPRINT_CLIP_PACE)
 		else:

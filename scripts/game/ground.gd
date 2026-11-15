@@ -25,6 +25,10 @@ const AREA_STRENGTH := 0.8
 const RIM_METERS := GroundLook.RIM_METERS
 ## The ring where an enemy's blow lands, when its caster has no colour of its own.
 const LAND_COLOR := Color(1.0, 0.3, 0.2)
+## The column of an eruption: its width (share of the circle), height (m) and seconds.
+const ERUPTION_WIDTH := 0.55
+const ERUPTION_HEIGHT := 5.0
+const ERUPTION_TIME := 0.55
 const COLORS := {
 	Kind.WARNING: GroundLook.WARNING_COLOR, Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
 	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
@@ -49,6 +53,8 @@ class Zone:
 	var land_color := Color(0, 0, 0, 0)
 	## Damage dealt to everything inside when the zone runs out (the held circle of light). 0 = none.
 	var burst := 0.0
+	## A warning that lands as a column of spectral fire (a boss's eruption) instead of a burst of shadow.
+	var eruption := false
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -147,8 +153,11 @@ func step(dt: float) -> void:
 func _land(z: Zone) -> void:
 	var center := z.pos + (z.dir * z.radius * 0.5 if z.shape == Shape.LINE else Vector2.ZERO)
 	if z.shape == Shape.CIRCLE:
-		fx.ring(z.pos, z.radius * 1.1, z.land_color if z.land_color.a > 0.0 else LAND_COLOR, 0.3)
-		fx.burst(&"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
+		var color := z.land_color if z.land_color.a > 0.0 else LAND_COLOR
+		fx.ring(z.pos, z.radius * 1.1, color, 0.3)
+		fx.burst(&"soul" if z.eruption else &"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
+		if z.eruption:
+			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)
 	if player and player.alive() and inside(z, player.pos, Player.RADIUS * 0.6):
 		hit_player.emit(z.power, center)
 

@@ -99,12 +99,16 @@ func step(dt: float, game: Game) -> void:
 			_wait = 0.2
 
 
+## The nearest enemy that can be hurt (behind his ritual's shield the boss waits: his dead come first).
 func _nearest(game: Game) -> Vector2:
 	var p := game.player.pos
 	var best := p + Vector2(cos(_t * 0.5), sin(_t * 0.5)) * 6.0
-	var e := game.horde.nearest(p)
-	if e:
-		best = e.pos
+	var best_d := INF
+	for e in game.horde.list:
+		var d := p.distance_squared_to(e.pos)
+		if e.alive and not e.invulnerable and d < best_d:
+			best_d = d
+			best = e.pos
 	return best
 
 
@@ -122,14 +126,15 @@ func _danger(game: Game) -> Vector2:
 		var away := p - z.pos
 		return away.normalized() if away.length() > 0.1 else Vector2.RIGHT
 	for shot in game.projectiles.shots:
-		if shot.kind != Projectiles.Kind.BOLT and shot.kind != Projectiles.Kind.ORB:
+		if not Projectiles.hostile(shot) or shot.seen.has(game.player):
 			continue
 		var to := p - shot.pos
-		if to.length() < 3.0 and to.dot(shot.vel) > 0.0:
-			var side := shot.vel.normalized().orthogonal()
+		var ahead := shot.vel.normalized()
+		# a crescent is wide across its flight: step out of its lane, not just away from its middle
+		var lane := shot.half_width + 0.9 if shot.kind == Projectiles.Kind.SOUL else 1.2
+		if to.dot(ahead) > -0.5 and to.dot(ahead) < 4.0 and absf(to.cross(ahead)) < lane:
+			var side := ahead.orthogonal()
 			return side if to.dot(side) >= 0.0 else -side
-	if game.boss and game.boss.mist and p.distance_to(game.boss.center) > game.boss.mist_radius - 2.0:
-		return (game.boss.center - p).normalized()
 	return Vector2.ZERO
 
 

@@ -99,7 +99,6 @@ miniboss_depth_max = 3
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
 fountain_depth_min = 2
 fountain_depth_max = 2
-boss_adds = PackedInt32Array(4, 4, 6)
 layouts = Array[ExtResource("1_dhpac")]([SubResource("Resource_brfyt")])
 boss_layout = SubResource("Resource_brfyt")
 shop_layout = SubResource("Resource_brfyt")

@@ -38,6 +38,8 @@ var rooms: Rooms
 ## Life gained from hearts (kept when gifts change the life bar).
 var life_bonus := 0.0
 var boss: Boss
+## The boss fight in numbers (Boss.stats; kept after he falls), for RESULT.
+var boss_stats := {}
 var fx: Fx
 var hud: Hud
 var ui: CanvasLayer
@@ -116,6 +118,7 @@ func _ready() -> void:
 		if SaveData.discover_move(Save.data, String(node.id)):
 			Save.write())
 	projectiles.shot_hit.connect(combat.on_shot_hit)
+	projectiles.status_player.connect(_on_status_player)
 	for source: Object in [horde, ground, projectiles]:
 		source.hit_player.connect(_on_hit_player)
 	horde.killed.connect(_on_killed)
@@ -655,6 +658,15 @@ func _on_hit_player(amount: float, from: Vector2) -> void:
 		player.hurt(amount, from)
 
 
+## A boss's shot with a status struck the paladin: the curse (its numbers are the boss's BossDef).
+func _on_status_player(status: StringName) -> void:
+	if mode != Mode.PLAY or boss == null or status != &"curse":
+		return
+	if player.apply_curse(boss.def.curse_time, boss.def.curse_slow, boss.def.curse_immunity):
+		boss.stats.curses = int(boss.stats.curses) + 1
+		boss.moment.emit(&"cursed")
+
+
 ## An elite's or Morvath's armor broke: a stagger, and a moment to punish.
 func _on_armor_broken(e: Enemy) -> void:
 	# the gold shards of the break are EnemyFx's (one effect, not two)
@@ -887,11 +899,23 @@ func _cam_offset() -> Vector3:
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits. With --shot-on=swing|hit|
-## special|omega it then waits for the next such swing of the paladin (hit: one that reaches someone; special: the
+## special|omega|boss:<moment> it then waits for the next such swing of the paladin (hit: one that reaches someone; special: the
 ## special's wave) and saves --shot-after seconds of real time later, so the swing's effects are on screen.
 func _shot() -> void:
 	await get_tree().create_timer(Dev.num("shot-at", 2.0)).timeout
-	if Dev.has("shot-on"):
+	if Dev.arg("shot-on").begins_with("boss:"):
+		# a moment of the boss fight (Boss.moment): an attack's id, scythe_strike, blades_fire, storm_fire, ritual,
+		# cursed, fallen
+		var name := StringName(Dev.arg("shot-on").trim_prefix("boss:"))
+		while true:
+			if boss == null:
+				await get_tree().process_frame
+				continue
+			var got: StringName = await boss.moment
+			if got == name:
+				break
+		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
+	elif Dev.has("shot-on"):
 		var want := Dev.arg("shot-on")
 		while true:
 			var got: Array = await combat.swung
@@ -961,7 +985,8 @@ func _lab() -> void:
 func result() -> Dictionary:
 	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": kills, "spawned": director.spawned, "best_combo": combat.best_combo,
 		"enemies": horde.count(), "max_alive": max_alive, "boss_at": snappedf(boss_at, 0.1), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
-		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second()}
+		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second(),
+		"boss": boss_stats}
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

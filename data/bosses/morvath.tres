@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="BossDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boss_attack.gd" id="1_l3fcv"]
+[ext_resource type="Script" path="res://scripts/core/boss_def.gd" id="2_cnblm"]
+
+[sub_resource type="Resource" id="Resource_1hpx3"]
+script = ExtResource("1_l3fcv")
+id = &"scythe"
+weight = 3.0
+max_dist = 11.0
+near_bias = 2.2
+far_bias = 0.35
+streak = 2
+
+[sub_resource type="Resource" id="Resource_o6cgo"]
+script = ExtResource("1_l3fcv")
+id = &"blades"
+until_phase = 3
+weight = 2.0
+cooldown = 3.0
+min_dist = 3.5
+near_bias = 0.5
+far_bias = 2.2
+
+[sub_resource type="Resource" id="Resource_o6yho"]
+script = ExtResource("1_l3fcv")
+id = &"dash"
+cooldown = 6.0
+min_dist = 9.0
+far_bias = 1.5
+
+[sub_resource type="Resource" id="Resource_glh3x"]
+script = ExtResource("1_l3fcv")
+id = &"eruptions"
+from_phase = 2
+weight = 1.4
+cooldown = 5.0
+still_bias = 3.0
+
+[sub_resource type="Resource" id="Resource_gjm27"]
+script = ExtResource("1_l3fcv")
+id = &"summon"
+from_phase = 2
+weight = 0.8
+cooldown = 12.0
+
+[sub_resource type="Resource" id="Resource_56gpt"]
+script = ExtResource("1_l3fcv")
+id = &"curse"
+from_phase = 3
+weight = 1.6
+cooldown = 7.0
+min_dist = 3.0
+
+[sub_resource type="Resource" id="Resource_p6s5y"]
+script = ExtResource("1_l3fcv")
+id = &"storm"
+from_phase = 4
+weight = 2.2
+cooldown = 5.0
+near_bias = 1.3
+far_bias = 1.3
+
+[resource]
+script = ExtResource("2_cnblm")
+id = &"morvath"
+enemy = &"morvath"
+thresholds = PackedFloat32Array(0.66, 0.33, 0.15)
+rest = PackedFloat32Array(1.1, 1, 0.9, 0.75)
+windup_scale = PackedFloat32Array(1, 1, 0.95, 0.9)
+attacks = Array[ExtResource("1_l3fcv")]([SubResource("Resource_1hpx3"), SubResource("Resource_o6cgo"), SubResource("Resource_o6yho"), SubResource("Resource_glh3x"), SubResource("Resource_gjm27"), SubResource("Resource_56gpt"), SubResource("Resource_p6s5y")])
+adds_cap = PackedInt32Array(0, 4, 4, 4)

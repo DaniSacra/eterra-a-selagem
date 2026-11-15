@@ -3,8 +3,8 @@ extends Control
 ## A framed bar with a pointed end (life, Magia, the boss): the HUD's line of old gold over ink, an empty part in dark
 ## translucent slate (the floor shows through, it is never a black hole), the fill in a gradient (light at the top,
 ## dark at the bottom) with a sheen on top, a pale trail that shows for a moment what a hit took, a short glint at the
-## fill's end whenever the value changes, an optional thin second bar on top (the boss's armour) and the numbers in
-## the middle.
+## fill's end whenever the value changes, an optional thin second bar on top (the boss's armour), the numbers in
+## the middle, and for a boss the marks where his phases begin and a veil of his shield while it stands.
 
 const BACK := Color(0.1, 0.12, 0.16, 0.72)
 const TRAIL := Color(1.0, 0.9, 0.78, 0.8)
@@ -27,6 +27,14 @@ var over_color := Color.WHITE
 ## Pointed at both ends (the boss), or only at the right.
 var both_ends := false
 var font_size := 12
+## Shares of the bar where a boss's next phases begin (thin notches across it).
+var marks := PackedFloat32Array()
+## The boss's shield stands (0..1): the bar is veiled in its colour and framed in it.
+var shield := 0.0
+var shield_color := Color(0.4, 1.0, 0.75)
+const MARK := Color(0.05, 0.04, 0.06, 0.9)
+const MARK_WIDTH := 2.0
+const SHIELD_VEIL := 0.45
 var _ratio := 1.0
 ## Where the trail started (the value before the hit) and how long it still shows.
 var _trail_from := 1.0
@@ -65,6 +73,15 @@ func show_value(ratio: float, text: String = "", over: float = 0.0) -> void:
 	queue_redraw()
 
 
+## A boss's phase marks and how much his shield stands (redraws only on a change).
+func show_boss(phase_marks: PackedFloat32Array, shielded: float) -> void:
+	if phase_marks == marks and is_equal_approx(shielded, shield):
+		return
+	marks = phase_marks
+	shield = shielded
+	queue_redraw()
+
+
 ## Where the trail ends now (0..1): the value before the hit, draining to the fill at the end of its time.
 func trail() -> float:
 	if _trail_t <= 0.0:
@@ -96,6 +113,12 @@ func _draw() -> void:
 		_band(body, _ratio - TIP_WIDTH / size.x, _ratio, glint, glint, 0.0, size.y)
 	if _over > 0.0:
 		_band(body, 0.0, _over, over_color, over_color.darkened(0.25), 0.0, size.y * 0.4)
+	for m in marks:
+		_band(body, m - MARK_WIDTH * 0.5 / size.x, m + MARK_WIDTH * 0.5 / size.x, MARK, MARK, 0.0, size.y)
+	if shield > 0.0:
+		var veil := Color(shield_color, SHIELD_VEIL * shield)
+		_band(body, 0.0, 1.0, veil, Color(shield_color.darkened(0.4), SHIELD_VEIL * shield), 0.0, size.y)
+		_ring(inner, inner.grow(UiKit.FRAME), Color(shield_color, shield))
 	if _text != "":
 		var font := UiKit.number_font()
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x

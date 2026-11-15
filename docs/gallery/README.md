@@ -71,3 +71,24 @@ Capturas reais da Godot na placa de vídeo (RTX 5060, Forward+, 1920 x 1080), co
 - **Inimigos:** [preparando ataque](cycle8/10_inimigos_preparando_ataque.jpg), [preparo no laboratório](cycle8/10b_preparo_laboratorio.jpg),
   [elite](cycle8/11_elite.jpg), [Morvath e o portal vermelho](cycle8/14_morvath_atual.jpg)
 - **HUD:** [1920](cycle8/13_hud.jpg)
+
+## MORVATH: A LUTA EM QUATRO FASES
+
+Pedido do Daniel de 2026-11-15, implementado logo depois do ciclo 8 (a proposta de três fases do documento de design foi
+substituída por esta). Capturas reais da Godot na RTX 5060 (Forward+), feitas com `--start=boss --boss-only=<ataque>
+--shot-on=boss:<momento>` (comandos em `CLAUDE.md`). Números da luta em `data/bosses/morvath.tres` (gerado por `_bosses`
+em `tools/make_data.gd`); regras em `scripts/core/boss_rules.gd` e `boss_director.gd`; estados em `scripts/game/boss.gd`.
+
+- **Fase 1, O Despertar (100 a 66%):** [Foice Sepulcral, aviso em arco de 180°](morvath/01_foice_aviso.jpg),
+  [o golpe](morvath/02_foice_golpe.jpg), [Lâminas das Almas, duas meias-luas com abertura](morvath/03_laminas.jpg)
+- **Fase 2, O Ritual dos Mortos (66 a 33%):** [escudo e erupções](morvath/04_ritual_escudo_erupcoes.jpg),
+  [esqueletos guerreiros e magos invocados](morvath/05_ritual_invocados.jpg)
+- **Fase 3, A Maldição dos Condenados (33 a 15%):** [o herói amaldiçoado, especial travado](morvath/06_maldicao_heroi.jpg)
+- **Fase 4, O Último Suspiro (15 a 0%):** [Tempestade das Seis Almas, aviso](morvath/07_seis_almas_aviso.jpg),
+  [as seis meias-luas](morvath/08_seis_almas.jpg), portal e luz verdes espectrais
+- **Vitória:** [nada dele fica na sala](morvath/09_vitoria_limpa.jpg)
+- **Design:** [`docs/design/morvath_boss_fight.md`](../design/morvath_boss_fight.md)
+
+Pendências visuais: as erupções aparecem como círculos vermelhos, sem as runas verdes da referência; as meias-luas não têm
+as caveiras; Morvath golpeia com a lâmina do modelo aprovado, não com uma foice; a maldição no herói é discreta. Na
+dificuldade, o robô vence quase sempre: falta medir com gente.

@@ -1,5 +1,12 @@
 # Morvath, a luta inteira (proposta)
 
+> **IMPLEMENTADO PELO PEDIDO DE 4 FASES DO DANIEL (2026-11-15), que substitui esta proposta onde ela diverge.**
+> Fases em 66, 33 e 15% (O Despertar, O Ritual dos Mortos, A Maldição dos Condenados, O Último Suspiro); sem os
+> interlúdios, as cópias, a névoa e a corrupção da Emeth daqui. Onde está: números em `data/bosses/morvath.tres`
+> (`BossDef`, `_bosses` no `tools/make_data.gd`), diretor em `scripts/core/boss_director.gd`, regras em
+> `scripts/core/boss_rules.gd`, maldição em `scripts/core/curse_state.gd`, estados em `scripts/game/boss.gd`, testes em
+> `tests/test_boss.gd`, capturas em `docs/gallery/morvath/`. O resto deste documento fica como registro da proposta.
+
 > **PROPOSTA PARA O CICLO 9, SEM IMPLEMENTAÇÃO.** Nada deste documento está no jogo. Os números são ponto de partida
 > para o teste, não decisão. Lore: só o que está no cânone (`../dungeon-rpg/docs/mundo/canone.md` e
 > `personagens.md`); o resto está marcado como **pergunta para o Daniel**. Nomes de ataques e de interlúdios são

@@ -20,8 +20,6 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var fountain_depth_max := 8
 @export var fountain_chance := 0.35
 @export var boss: StringName = &"morvath"
-## Most of the boss's reinforcements standing at once in each of his phases (the last value holds after).
-@export var boss_adds := PackedInt32Array([4, 4, 6])
 ## Chance that a cleared room shows three doors instead of two.
 @export var three_doors_chance := 0.25
 ## Room shapes the generator draws from (the boss and the shop have their own).

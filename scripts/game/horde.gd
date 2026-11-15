@@ -463,7 +463,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			armor_broken.emit(e)
 		return false
 	e.absorbed = false
-	e.hp -= amount
+	e.hp = maxf(e.hp - amount, e.hp_floor)
 	e.flash_t = FLASH_TIME
 	e.flash_power = 1.0 if big else WEAK_FLASH
 	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:

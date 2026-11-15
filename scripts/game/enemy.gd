@@ -45,8 +45,10 @@ var aim := Vector2.DOWN
 var side := 1.0
 ## Free for the behaviour (attack counters, phase).
 var memo := 0
-## Takes no damage (the boss while it enters or changes phase).
+## Takes no damage (a boss behind its ritual's shield).
 var invulnerable := false
+## Life it cannot drop under (a boss stops at the threshold of its next phase; 0: none).
+var hp_floor := 0.0
 ## Seconds since death (the death animation and the dissolve play from it).
 var dead_t := 0.0
 ## A killing blow throws the body: upward speed and how hard it tumbles (0 when it just falls).

@@ -66,6 +66,7 @@ var _xp_fill: ColorRect
 var _boss_box: VBoxContainer
 var _boss_name: Label
 var _boss_bar: HudBar
+var _shield_t := 0.0
 var _combo: Label
 var _combo_word: Label
 var _combo_stroke: HudMark
@@ -296,6 +297,9 @@ func _update_slots(p: Player) -> void:
 				s.refresh(b, 1.0 if p.cast_active else p.cast_cooldown / Player.CAST_COOLDOWN, 0, 0, starved)
 			Boon.Slot.DASH:
 				s.refresh(b, _dash_wait(p), p.dodge_charges, p.dodge_max)
+			Boon.Slot.SPECIAL:
+				# a boss's curse locks the special: the diamond shows it recharging as the curse runs out
+				s.refresh(b, p.curse.ratio(), 0, 0, starved or p.curse.active())
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
 
@@ -363,6 +367,10 @@ func _update_boss(b: Enemy) -> void:
 	if b:
 		_boss_name.text = T.t(b.def.name_key)
 		_boss_bar.show_value(b.hp / b.max_hp, "", b.armor / b.max_armor if b.max_armor > 0.0 else 0.0)
+		var boss := game.boss if game.boss and game.boss.e == b else null
+		# a boss's bar: notches where his next phases begin, veiled in his colour while the ritual's shield stands
+		_shield_t = move_toward(_shield_t, 1.0 if boss and boss.shielded() else 0.0, get_process_delta_time() * 4.0)
+		_boss_bar.show_boss(boss.def.thresholds if boss else PackedFloat32Array(), _shield_t)
 
 
 ## Chevrons on the edge of the screen: the light fountain (with its name) and the nearest elites, guardian or boss
