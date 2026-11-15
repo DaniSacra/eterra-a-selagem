@@ -26,6 +26,7 @@ var _hp_fill: ColorRect
 var _hp_back: ColorRect
 var _hp_text: Label
 var _dodges: HBoxContainer
+var _xp_back: ColorRect
 var _xp_fill: ColorRect
 var _level: Label
 var _clock: Label
@@ -54,9 +55,9 @@ func _ready() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# experience: a thin gold line across the top
-	var xp_back := _rect(Color(0.05, 0.03, 0.06, 0.85), Control.PRESET_TOP_WIDE)
-	xp_back.offset_bottom = 5
+	# experience (horde mode only): a thin gold line across the top
+	_xp_back = _rect(Color(0.05, 0.03, 0.06, 0.85), Control.PRESET_TOP_WIDE)
+	_xp_back.offset_bottom = 5
 	_xp_fill = _rect(Color(1.0, 0.8, 0.35), Control.PRESET_TOP_LEFT)
 	_xp_fill.size = Vector2(0, 5)
 	_level = _label("", UiKit.GOLD, FONT_TEXT, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 14))
@@ -169,7 +170,8 @@ func _process(delta: float) -> void:
 	var w := get_viewport_rect().size.x
 	_clock.text = SaveData.format_time(game.time)
 	if game.rooms:
-		# the descent: which room, and the gold for the shop (no experience here)
+		# the descent: which room, and the gold for the shop (no experience here, so no bar over the scene)
+		_xp_back.visible = false
 		_xp_fill.size.x = 0.0
 		_level.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
 		_kills.text = "%s  %d" % [T.t(&"hud_gold"), game.rooms.gold]
