@@ -18,7 +18,11 @@ uniform float ragged = 0.6;
 uniform float breakup = 0.25;
 uniform float rise = 0.12;
 // The share of the card at its foot that fades in (so its bottom edge never shows).
-uniform float foot_fade = 0.12;
+uniform float foot_fade = 0.3;
+// The outer share of each side where the glow always dies out, whatever the ragged noise does (so the card's upright
+// edges never show), and how soft the cut of the tatters is.
+uniform float edge_fade = 0.12;
+uniform float tatter_soft = 0.3;
 // How far the slow noise bends the card's coordinates (share of the card).
 uniform float warp = 0.3;
 
@@ -60,10 +64,14 @@ void fragment() {
 	vec2 uv = UV + (vec2(fbm(UV * 3.0 + 7.0), fbm(UV * 3.0 + 13.0 + TIME * 0.02)) - 0.5) * warp;
 	float n = fbm(vec2(uv.x * 6.0 + uv.y * 2.0, uv.y * 3.0 - TIME * 0.15));
 	float rag = (fbm(vec2(uv.x * 7.0 - uv.y * 3.0, uv.y * 5.0 + 3.0)) - 0.5) * ragged * 1.6;
-	float v = pow(1.0 - smoothstep(0.0, reach, up + rag), falloff) * smoothstep(0.0, foot_fade, up);
+	float v = pow(1.0 - smoothstep(0.0, reach, up + rag), falloff);
+	// the foot fades in on a squared curve: a bright card would clip at once and show its bottom edge
+	float foot = smoothstep(0.0, foot_fade, up);
+	v *= foot * foot;
 	float h = 1.0 - smoothstep(0.5 - side, 0.5, abs(UV.x - 0.5) + rag * 0.5);
+	h *= 1.0 - smoothstep(0.5 - edge_fade, 0.5, abs(UV.x - 0.5));
 	// tatters: the higher, the more of the card is cut away
 	float t = fbm(vec2(uv.x * 5.0 + uv.y * 1.5, uv.y * 2.5 + TIME * rise));
-	float keep = smoothstep(breakup * (0.5 + up * 0.7) - 0.15, breakup * (0.5 + up * 0.7) + 0.15, t);
+	float keep = smoothstep(breakup * (0.5 + up * 0.7) - tatter_soft, breakup * (0.5 + up * 0.7) + tatter_soft, t);
 	ALBEDO = color * energy * v * h * keep * (0.6 + 0.6 * n) * (0.9 + 0.1 * sin(TIME * 0.7));
 }

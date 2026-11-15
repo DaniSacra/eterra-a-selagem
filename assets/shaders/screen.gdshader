@@ -4,7 +4,14 @@ shader_type canvas_item;
 uniform sampler2D screen : hint_screen_texture, filter_linear;
 uniform float split = 0.0;
 uniform float hurt = 0.0;
-uniform float vignette = 0.55;
+uniform float vignette = 0.45;
+// The vignette spares the highlights: it fades out between these two values of a pixel's brightest channel (fires,
+// the portal and the banners keep their white core near the edges of the screen).
+uniform float vignette_spare_from = 0.6;
+uniform float vignette_spare_to = 1.0;
+// Red and blue count less than green as a highlight: the white heart of a fire and the portal are spared, the wide
+// orange halo round a fire and the violet glow of the abyss are not.
+uniform vec3 vignette_spare_weight = vec3(0.7, 1.0, 0.7);
 uniform float impact = 0.0;
 // Slow motion: blur streaking out from the middle (0..1) and a lift of the bright parts.
 uniform float radial = 0.0;
@@ -32,7 +39,8 @@ void fragment() {
 	}
 	float d = length(from_center * vec2(1.6, 1.0));
 	float v = smoothstep(0.3, 0.95, d);
-	c *= 1.0 - v * vignette;
+	vec3 lit = c * vignette_spare_weight;
+	c *= 1.0 - v * vignette * (1.0 - smoothstep(vignette_spare_from, vignette_spare_to, max(lit.r, max(lit.g, lit.b))));
 	c = mix(c, vec3(0.7, 0.03, 0.05), v * hurt * 0.75);
 	if (impact > 0.0) {
 		float lum = dot(c, vec3(0.3, 0.55, 0.15));

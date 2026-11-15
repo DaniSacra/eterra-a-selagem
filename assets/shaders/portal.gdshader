@@ -17,6 +17,10 @@ uniform float rise = 0.08;
 // The two lighter patches at the foot and the wider one in the middle, up to half the height: how much lighter.
 uniform float mouth = 0.8;
 uniform float heart = 0.5;
+// The bright core keeps this share of each channel (less blue: where the sheet goes over 1 the tonemap and the glow
+// wash it toward cyan, and the picture's core is a pure green), between these two values of the light.
+uniform vec3 core_tint = vec3(0.6, 1.0, 0.4);
+uniform vec2 core_range = vec2(0.3, 0.9);
 // The sheet cut to a pointed arch: x = the springing's height over the sheet's foot, y = the span, z = the radius of
 // the two arcs (m; their centres on the springing line). Zero span: the whole rectangle glows.
 uniform vec3 arch = vec3(0.0);
@@ -64,5 +68,6 @@ void fragment() {
 		float d = m.y > arch.x ? length(vec2(off + cx, m.y - arch.x)) - arch.z : off - arch.y * 0.5;
 		v *= 1.0 - smoothstep(-0.05, 0.0, d);
 	}
-	ALBEDO = color * max(v, 0.0) * power * (0.96 + 0.04 * sin(TIME * 1.3));
+	vec3 tint = mix(vec3(1.0), core_tint, smoothstep(core_range.x, core_range.y, v));
+	ALBEDO = color * tint * max(v, 0.0) * power * (0.96 + 0.04 * sin(TIME * 1.3));
 }

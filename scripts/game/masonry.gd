@@ -41,9 +41,8 @@ const HOOD_AT := 0.86
 const HOOD_FORWARD := 0.03
 const HANDS_AT := 0.6
 const FACE_DARK := 0.04
-## The statue's vertex values: the robe takes ROBE_VALUE, the pale mask in the hood's shadow twice that.
+## The statue's vertex value of the robe (the hollow of the hood is FACE_DARK of it, the darkest part of the figure).
 const ROBE_VALUE := 0.5
-const MASK := Vector3(0.03, 0.04, 0.012)
 ## Pots: the belly's radius (share of the pot's height). Candles: the wax, the flame's size and colour.
 const POT_BELLY := 0.38
 ## Standing stones: the share of their columns cracked upright, the frame round their niche.
@@ -608,10 +607,9 @@ func _build_statue() -> ArrayMesh:
 	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.068, 0.088, 0.08)), Vector3(0, HOOD_AT, HOOD_FORWARD)), stone_v)
 	var tip: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(0.045, 0.0), Vector2(0.0, 0.11)]
 	_lathe(st, tip, Transform3D(Basis(Vector3.RIGHT, -2.2), Vector3(0, HOOD_AT + 0.02, -0.02)), stone_v)
-	# the face: a dark hollow in the hood's front, a pale mask deep in it
+	# the face: a dark hollow in the hood's front, nothing in it (a pale mask read as a white disc from the camera)
 	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.042, 0.055, 0.02)), Vector3(0, HOOD_AT - 0.012, HOOD_FORWARD + 0.068)),
 		stone_v * FACE_DARK)
-	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(MASK), Vector3(0, HOOD_AT - 0.016, HOOD_FORWARD + 0.082)), Color.WHITE)
 	# the arms from the shoulders down to the hands joined on the chest, in wide sleeves that hide the hands
 	for s in [-1.0, 1.0]:
 		var from := Vector3(s * ARM_OUT, 0.74, 0.02)

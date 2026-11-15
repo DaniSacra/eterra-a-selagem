@@ -161,7 +161,7 @@ const BAYS: Array[float] = [10.05, 15.8]
 ## The banners on the buttresses (plain: no emblem until Daniel names Eterra's): x, height of the bar over the dais,
 ## width, length; how far in front of the facade's face they hang.
 const BANNERS: Array[Vector4] = [Vector4(-5.9, 5.9, 2.1, 4.6), Vector4(12.9, 6.8, 2.6, 5.8)]
-const BANNER_OUT := 1.3
+const BANNER_OUT := 1.5
 ## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
 const KEY_LIGHT := Color(0.92, 0.8, 0.78)
 const KEY_ENERGY := 5.6
@@ -189,7 +189,7 @@ const BRIDGE_PARAPET: Array[Vector2] = [Vector2(-33.5, 3.0), Vector2(-28.4, 1.6)
 const BRIDGE_PARAPET_HEIGHT := 0.55
 ## Under it, open to the violet behind: piers out of the mist (lateral, width), a pointed arch in each gap between
 ## two of them (its apex this far under the deck, its ring's width); the pier with the lit window is the wide one.
-const BRIDGE_PIERS: Array[Vector2] = [Vector2(-18.9, 0.8), Vector2(-20.35, 0.5), Vector2(-21.8, 0.8), Vector2(-24.1, 1.7), Vector2(-28.6, 1.1),
+const BRIDGE_PIERS: Array[Vector2] = [Vector2(-18.9, 0.8), Vector2(-21.8, 0.8), Vector2(-24.1, 1.7), Vector2(-28.6, 1.1),
 	Vector2(-32.6, 1.4), Vector2(-36.4, 1.2)]
 const BRIDGE_ARCH := Vector2(0.35, 0.4)
 ## The middle gate, a wide dark block behind the hall's north-west corner: its distance, lateral range, top, depth;
@@ -202,11 +202,19 @@ const GATE_TOP := -5.2
 const GATE_DEPTH := 2.4
 const GATE_ARCH := Vector4(-10.5, 5.2, -9.6, 0.68)
 const GATE_RING := 0.9
+## The spandrels, the stone between the ring, the masses and the lintel (width as a share of the span, height): small
+## enough to stay outside the ring, so the opening follows its curve.
+const GATE_SPANDREL := Vector2(0.165, 0.9)
 ## The dark of the passage behind the gate's arches (the violet glows against it), and how far behind them it stands.
 const GATE_PASSAGE := Color(0.02, 0.012, 0.045)
 const GATE_PASSAGE_BACK := 4.5
 ## Its top this far under the gate's (so it never shows over it).
 const GATE_PASSAGE_UNDER := 3.0
+## Two thin dark shafts standing in the passage, before the violet (lateral from the arch's middle, width; how far
+## behind the gate; their top under the gate's).
+const GATE_SHAFTS: Array[Vector2] = [Vector2(-1.05, 0.34), Vector2(0.7, 0.26)]
+const GATE_SHAFT_BACK := 1.6
+const GATE_SHAFT_UNDER := 0.8
 const GATE_MERLONS: Array[Vector3] = [Vector3(-15.4, 1.5, 0.9), Vector3(-12.6, 2.2, 0.5), Vector3(-9.6, 1.3, 1.1), Vector3(-6.5, 1.9, 0.6)]
 const GATE_WING := Vector4(-17.6, 1.5, -14.0, -8.6)
 const GATE_WING_OVER := 1.0
@@ -242,20 +250,20 @@ const VEIL_PATCHES: Array[Vector4] = [Vector4(-27.1, -11.6, 6.5, 4.5), Vector4(-
 ## bridge, at the foot of the west side, and the east ones. West ones: distance, lateral, foot height, then width,
 ## height, energy share, then its shape (ArenaKit.abyss_glow: reach, falloff, soft share of each side).
 const GLOW_WEST: Array[Array] = [
-	[90.6, -10.5, -20.0, 9.0, 14.5, 1.0, 1.0, 1.2, 0.2],
+	[90.6, -10.5, -16.0, 9.0, 11.0, 0.8, 1.0, 2.0, 0.2],
 	[90.3, -17.6, -19.0, 3.0, 10.0, 0.7, 1.0, 1.2, 0.3],
-	[72.5, -27.0, -22.0, 24.0, 21.5, 0.85, 1.0, 1.8, 0.15],
-	[62.0, -27.0, -25.0, 16.0, 25.0, 1.1, 1.0, 1.3, 0.25],
-	[56.0, -19.5, -25.0, 10.0, 23.0, 1.0, 1.0, 1.3, 0.3],
+	[72.5, -32.5, -22.0, 15.0, 21.5, 0.8, 1.0, 1.8, 0.15],
+	[62.0, -27.0, -25.0, 16.0, 25.0, 0.9, 0.9, 1.3, 0.25],
+	[56.0, -19.5, -25.0, 10.0, 23.0, 0.85, 0.9, 1.3, 0.3],
 ]
 ## East ones: rising from the mist (foot) to at most GLOW_TOP; their energy share.
 const GLOW_FOOT := -10.0
 const GLOW_TOP := -4.0
-const GLOW_EAST := 1.5
+const GLOW_EAST := 1.4
 ## A glow card low beside the east cliff (foot; width, height; energy share), seen right of the east stairs.
 const EAST_FOOT_GLOW := Vector3(HALF.x + 2.5, -7.0, -11.0)
 const EAST_FOOT_GLOW_SIZE := Vector2(12.0, 9.0)
-const EAST_FOOT_GLOW_ENERGY := 1.8
+const EAST_FOOT_GLOW_ENERGY := 1.6
 ## The iron pylon the chains hang from (behind the giant, standing on the gate): its place, top and width; collars
 ## round it (heights, how much wider) and the arm the chains hang from (height, length).
 const TOWER := Vector3(-35.0, 0, -23.0)
@@ -835,7 +843,7 @@ func _gate(at: Callable, yaw: float, facing: Vector2, mat: Material) -> void:
 	m.arch_ring(at.call(d, a.x, a.z), facing, a.y, GATE_RING, GATE_DEPTH * 0.9, mat, a.w)
 	m.box(at.call(d, a.x, GATE_TOP - lintel * 0.5), Vector3(a.y + 0.2, lintel, GATE_DEPTH), yaw, mat, false)
 	# the spandrels: the corners between the ring, the masses and the lintel
-	var corner := Vector2(a.y * 0.3, 1.3)
+	var corner := Vector2(a.y * GATE_SPANDREL.x, GATE_SPANDREL.y)
 	for s: float in [-1.0, 1.0]:
 		m.box(at.call(d, a.x + s * (a.y * 0.5 - corner.x * 0.5), GATE_TOP - lintel - corner.y * 0.5 + 0.1), Vector3(corner.x, corner.y, GATE_DEPTH * 0.9), yaw, mat, false)
 	for b: Vector3 in GATE_MERLONS:
@@ -849,6 +857,8 @@ func _gate(at: Callable, yaw: float, facing: Vector2, mat: Material) -> void:
 	dark.albedo_color = GATE_PASSAGE
 	dark.disable_fog = true
 	m.box(at.call(d + GATE_PASSAGE_BACK, a.x, GATE_TOP - GATE_PASSAGE_UNDER - 20.0), Vector3(a.y + 2.0, 40.0, 0.4), yaw, dark, false)
+	for s: Vector2 in GATE_SHAFTS:
+		m.box(at.call(d + GATE_SHAFT_BACK, a.x + s.x, GATE_TOP - GATE_SHAFT_UNDER - 20.0), Vector3(s.y, 40.0, s.y), yaw, dark, false)
 	# the low wing with its lancet
 	var w := GATE_WING
 	var jamb := 0.7

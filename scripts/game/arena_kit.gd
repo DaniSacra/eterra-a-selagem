@@ -40,7 +40,7 @@ const MORVATH := Color(1.0, 0.18, 0.15)
 ## glow (so it is neither black in the cold light nor green by the portal), old gold trim (width in m), how dark the
 ## folds are, how many folds, and the dark bar it hangs from.
 const BANNER_CLOTH := Color(0.6, 0.1, 0.12)
-const BANNER_GLOW := Color(0.28, 0.03, 0.035)
+const BANNER_GLOW := Color(0.34, 0.036, 0.042)
 const BANNER_TRIM := Color(0.5, 0.36, 0.14)
 const BANNER_TRIM_WIDTH := 0.08
 const BANNER_FOLD := 0.62
