@@ -116,8 +116,17 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Escala: 80 unidades do Hades = 1 m (andar 540 = 6,75 m/s; heroína de 200 de altura = paladino de 2,5 m). `U` em `make_data.gd`.
 - Salas: `RunMap` (`core/run_map.gd`: abertura com dom, portas que mostram a recompensa, guardião entre as salas 4 e 6,
   uma fonte entre 5 e 8, loja na 10, Morvath na 11; **encurtado para teste**: fonte na 2, guardião na 3, loja na 4, Morvath na 5, elites desde a sala 2 (`elite_from_depth`; no Hades, 3), `_stage` em `make_data.gd`), `EncounterGen` (`core/encounter_gen.gd`: dificuldade 55 + 15 por sala,
-  1 a 3 ondas, 2 a 3 tipos, no máximo 1 tipo de elite, próxima onda com 1 inimigo de pé, limite 4 + 0,35 por sala), dados
-  em `data/stages/catacombs.tres` (`StageDef`, `RoomLayout`). Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
+  1 a 3 ondas, no máximo 1 tipo de elite, próxima onda com 1 inimigo de pé), dados
+  em `data/stages/catacombs.tres` (`StageDef`, `EncounterPool`, `RoomLayout`).
+  **Poucos inimigos, cada um com seu papel** (ciclo 8; o Daniel, 2026-11-15: não é survivor de horda, a referência é o
+  Hades II): de pé ao mesmo tempo, comum 4 a 8, difícil 8 a 12 (guardião e elites), especial 12 a 16, teto absoluto 20
+  contando invocações (`StageDef.tier_alive`, `alive_cap`; `Horde.alive_cap` e `room_for` cortam a invocação do Ancião
+  e de Morvath); Morvath com até 4 reforços de pé, 6 na fase 3 (`StageDef.boss_adds`, `BossRules.summon_count`). O limite de
+  cada sala vai do mínimo ao máximo da faixa ao longo da região (`EncounterGen.cap`, `progress`); cada onda cabe na faixa
+  (sobra vira outra onda). Composição por papel (`EnemyDef.role`: pressure esqueleto, react corredor, control feiticeiro,
+  flank besteiro, block Escudo, area sacerdote) em conjuntos `EncounterPool` no `_stage` do `make_data.gd`: começo da
+  região 2 papéis, meio 3 que se completam, fim misturas exigentes com elites e uma especial rara de 4. `--horde` e
+  `--stress` ignoram os tetos. O RESULT do `--smoke` traz `max_alive` (pico de inimigos de pé, chefe incluído) e `boss_at`. Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
   portas, fonte, loja (pisar compra), chefe. Magia enche em toda sala; sem experiência nem níveis.
 - Golpes do Hades: ataque em 3 (20, 25, 60 em volta), especial = seta (40), Ômega do ataque segurando 0,8 s (160, para
   frente e para trás, 20 de Magia), Ômega do especial 0,65 s (80, 10 de Magia), avanço 0,2 s / 5,6 m com 16 quadros de

@@ -27,3 +27,4 @@ attack_cooldown = 1.8
 attack_windup = 0.8
 attack_width = 70.0
 rating = 34.0
+role = &"flank"

@@ -26,3 +26,4 @@ attack_range = 9.0
 attack_cooldown = 1.9
 attack_windup = 0.8
 rating = 24.0
+role = &"control"

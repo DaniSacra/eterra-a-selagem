@@ -22,4 +22,5 @@ attack_windup = 0.9
 lunge_speed = 8.75
 lunge_time = 0.3
 rating = 5.0
+role = &"pressure"
 elite_version = &"skeleton_elite"

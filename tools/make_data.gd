@@ -125,35 +125,38 @@ func _enemy(props: Dictionary) -> void:
 ## Cycle 7, the part each one plays read at a glance (only drawn, EnemyDef's Look group): `tell` and `tell_at` (the
 ## light of its wind-up and where it sits on the figure), `sway` and `windup_shake` (the unsteady runner), `vivid`
 ## (the soldier is the greyest, the base line; the priests and Morvath keep their purple), `tint`, `crest`, `shine`.
+## Cycle 8, the part each plays in a fight (`role`, drawn by the pools of _stage): the soldier presses, the runner asks
+## for a quick answer, the caster closes space, the crossbowman makes him move sideways, the shield-bearer blocks the
+## front, the priest threatens ground. Guardians and Morvath have none (their own rooms).
 func _enemies() -> void:
 	var B := EnemyDef.Behavior
 	var T := EnemyDef.Tell
 	# the foot soldier: walks up, raises its blade 0.9 s and lunges (Hades: the common melee shade)
 	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
 		"attack_damage": 3.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
-		"rating": 5.0, "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
+		"rating": 5.0, "role": &"pressure", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
-		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
+		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
 	# the caster that shoots bolts from afar (cold violet: Daniel, 2026-11-14)
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 340.0 / U, "damage": 4.0, "radius": 0.5,
 		"attack_damage": 4.0, "attack_range": 9.0, "attack_cooldown": 1.9, "attack_windup": 0.8, "magic_color": Color(1.7, 1.25, 3.2),
-		"rating": 12.0, "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58)}, {"armor": 155.0, "speed": 440.0 / U, "rating": 24.0})
+		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58)}, {"armor": 155.0, "speed": 440.0 / U, "rating": 24.0})
 	# the crossbowman that plants itself and looses a wide fan of orange bolts
 	_pair({"id": &"archer", "model": &"archer", "behavior": B.CONE, "size": 1.27, "hp": 130.0, "speed": 340.0 / U, "damage": 3.0, "radius": 0.55,
 		"attack_damage": 3.0, "attack_range": 5.0, "attack_width": 70.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
-		"rating": 13.0, "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42)}, {"armor": 190.0, "speed": 390.0 / U, "rating": 34.0})
+		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42)}, {"armor": 190.0, "speed": 390.0 / U, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
-		"rating": 18.0, "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4)}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
+		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4)}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
 	# the one rooted in place that drops purple blows from above
 	_pair({"id": &"priest", "model": &"priest", "behavior": B.CASTER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
 		"heavy": true, "attack_damage": 6.0, "attack_range": 16.0, "attack_cooldown": 2.2, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0),
-		"rating": 22.0, "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25}, {"armor": 390.0, "rating": 48.0})
+		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25}, {"armor": 390.0, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
@@ -318,6 +321,17 @@ func _layout(half: Vector2, pillars: Array[Vector3], shafts: Array[Vector2]) -> 
 	return l
 
 
+func _pool(tier: StageDef.Tier, from: float, until: float, weight: float, roles: Array[StringName], elite_chance: float = 0.0) -> EncounterPool:
+	var p := EncounterPool.new()
+	p.tier = tier
+	p.from = from
+	p.until = until
+	p.weight = weight
+	p.roles = roles
+	p.elite_chance = elite_chance
+	return p
+
+
 ## The catacombs as a region of rooms, with the room generator and rewards of the first region of Hades II.
 func _stage() -> void:
 	var st := StageDef.new()
@@ -334,6 +348,35 @@ func _stage() -> void:
 	st.boss = &"morvath"
 	st.enemies = [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite",
 		&"guard", &"guard_elite", &"priest", &"priest_elite"]
+	# Few enemies at once, each with its part, a fight won by skill as in Hades II (Daniel, 2026-11-15: not a horde
+	# survivor). Standing at once: common 4 to 8, hard 8 to 12 (guardians, elites), special 12 to 16, never past 20;
+	# Morvath brings at most 4 skeletons, 6 in his last phase. A room may have several waves: the next one comes when
+	# one enemy is left (wave_remaining), and only while there is room under the cap.
+	var Tier := StageDef.Tier
+	st.alive_cap = 20
+	st.tier_alive = [Vector2i(4, 8), Vector2i(8, 12), Vector2i(12, 16)]
+	st.miniboss_tier = Tier.HARD
+	st.boss_adds = PackedInt32Array([4, 4, 6])
+	# The fights by how far down the region (0 the first room, 1 the last fight before the shop; EncounterGen.progress).
+	# The parts (EnemyDef.role): pressure the soldier, react the runner, control the caster, flank the crossbowman,
+	# block the shield-bearer, area the priest. Never every kind at once without a reason.
+	st.pools = [
+		# the top: two simple parts, the pressing soldier with one other
+		_pool(Tier.COMMON, 0.0, 0.34, 3.0, [&"pressure", &"react"]),
+		_pool(Tier.COMMON, 0.0, 0.34, 2.0, [&"pressure", &"flank"]),
+		_pool(Tier.COMMON, 0.0, 0.34, 1.0, [&"block", &"react"]),
+		# the middle: three parts that complete each other
+		_pool(Tier.COMMON, 0.34, 0.67, 3.0, [&"pressure", &"flank", &"control"]),
+		_pool(Tier.COMMON, 0.34, 0.67, 2.0, [&"block", &"react", &"flank"]),
+		_pool(Tier.COMMON, 0.34, 0.67, 2.0, [&"pressure", &"block", &"area"]),
+		_pool(Tier.HARD, 0.34, 0.67, 1.0, [&"pressure", &"react", &"control"], 1.0),
+		# the bottom: demanding mixes, elites likely, and a rare special fight of four parts
+		_pool(Tier.HARD, 0.67, 1.0, 3.0, [&"block", &"flank", &"area"], 0.6),
+		_pool(Tier.HARD, 0.67, 1.0, 3.0, [&"pressure", &"control", &"area"], 0.6),
+		_pool(Tier.HARD, 0.67, 1.0, 2.0, [&"react", &"flank", &"control"], 0.6),
+		_pool(Tier.COMMON, 0.67, 1.0, 1.0, [&"pressure", &"block", &"control"]),
+		_pool(Tier.SPECIAL, 0.8, 1.0, 1.0, [&"pressure", &"react", &"flank", &"area"], 0.5),
+	]
 	var R := RunMap.Reward
 	st.rewards = PackedInt32Array([R.BOON, R.POM, R.HEART, R.MAGICK, R.GOLD])
 	st.reward_weights = PackedFloat32Array([6.0, 2.5, 1.5, 1.0, 1.5])

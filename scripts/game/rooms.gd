@@ -127,14 +127,20 @@ func _enter(next: RunMap.Room) -> void:
 	_waves.clear()
 	_wave = -1
 	_wave_wait = START_DELAY
-	_cap = EncounterGen.cap(stage, room.depth)
+	# nobody stands past the stage's ceiling, summons included; a fight lowers it to its tier's most
+	game.horde.alive_cap = stage.alive_cap
 	match room.kind:
 		RunMap.Kind.COMBAT:
-			_waves = EncounterGen.generate(stage, room.depth, _defs, _rng)
+			var fight := EncounterGen.generate(stage, room.depth, _defs, _rng)
+			_waves = fight.waves
+			_cap = fight.cap
+			game.horde.alive_cap = fight.ceiling
 			phase = Phase.FIGHT
 		RunMap.Kind.MINIBOSS:
 			var guardian: Array[StringName] = [stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 			_waves = [guardian]
+			_cap = EncounterGen.cap(stage, stage.miniboss_tier, room.depth)
+			game.horde.alive_cap = EncounterGen.alive_range(stage, stage.miniboss_tier).y
 			phase = Phase.FIGHT
 		RunMap.Kind.FOUNTAIN:
 			game.spawn_fountain(Vector2(0, -2.0))

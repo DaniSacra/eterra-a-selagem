@@ -34,6 +34,24 @@ static func fan(aim: Vector2, count: int, spread: float) -> PackedVector2Array:
 	return out
 
 
+## Skeletons Morvath would raise in one summon at this phase (few, as the first boss of Hades II brings few helpers).
+static func summon_want(phase: int) -> int:
+	return 2 + phase
+
+
+## Most of his reinforcements standing at once at this phase (caps: one per phase, the last holds after; empty: no
+## ceiling of his own).
+static func adds_cap(caps: PackedInt32Array, phase: int) -> int:
+	if caps.is_empty():
+		return 1 << 30
+	return caps[clampi(phase - 1, 0, caps.size() - 1)]
+
+
+## Skeletons one summon raises with `adds` of his reinforcements already standing: fewer near the ceiling, none at it.
+static func summon_count(phase: int, adds: int, caps: PackedInt32Array) -> int:
+	return EncounterGen.room_for(adds, adds_cap(caps, phase), summon_want(phase))
+
+
 ## Radius of the safe ground as the dark mist closes in.
 static func mist_radius(elapsed: float, from: float, to: float, time: float) -> float:
 	return lerpf(from, to, clampf(elapsed / time, 0.0, 1.0))

@@ -85,5 +85,9 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## Weight of this enemy in the room generator (Hades II "DifficultyRating"): a room of difficulty 100 holds
 ## enemies whose ratings add up to about 100.
 @export var rating := 0.0
+## The part it plays in a fight (EncounterPool.roles): pressure (walks in and keeps the paladin busy), react (fast,
+## asks for a quick answer), control (closes space from afar), flank (makes him move sideways), block (stands in
+## front, must be gone around), area (threatens ground). Empty: never drawn into a generated fight.
+@export var role: StringName
 ## The armored version that can stand in for it in a room (empty: none).
 @export var elite_version: StringName

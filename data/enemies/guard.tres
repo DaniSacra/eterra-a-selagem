@@ -25,4 +25,5 @@ lunge_time = 0.4
 close_damage = 7.0
 close_range = 2.6
 rating = 18.0
+role = &"block"
 elite_version = &"guard_elite"

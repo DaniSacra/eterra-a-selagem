@@ -106,7 +106,7 @@ func step(dt: float) -> void:
 			if _t >= 1.1 and _step == 0:
 				_step = 1
 				var skeleton := game.horde.def(&"skeleton")
-				var n := 2 + phase  # few, as the first boss of Hades II brings few helpers
+				var n := _summon_count()
 				for k in n:
 					var at := game.arena.resolve(p + Vector2.from_angle(TAU * k / n) * 7.0, 0.5)
 					game.horde.spawn(skeleton, at, true)
@@ -147,7 +147,7 @@ func _choose(dist: float) -> void:
 	var options: Array[State] = [State.SLASHES, State.DASH_WARN]
 	if phase >= 2:
 		options.append(State.RAIN)
-		if game.horde.count() < 30:
+		if _summon_count() > 0:
 			options.append(State.SUMMON)
 	if phase >= 3:
 		options.append(State.VOLLEY)
@@ -162,6 +162,16 @@ func _choose(dist: float) -> void:
 		_dir = (game.player.pos - e.pos).normalized()
 		e.dir = _dir
 		game.ground.add_line_warning(e.pos, _dir, DASH_LENGTH, 2.8, 0.8, e.def.attack_damage * 1.2)
+
+
+## Skeletons a summon raises now: never past his reinforcements' ceiling of the phase (StageDef.boss_adds) nor the
+## fight's (Horde.room_for). The endless hall (--horde) keeps its old limit of 30 standing.
+func _summon_count() -> int:
+	var want := BossRules.summon_want(phase)
+	if game.rooms == null:
+		return want if game.horde.count() < 30 else 0
+	var adds := game.horde.count() - (1 if e.alive else 0)
+	return mini(BossRules.summon_count(phase, adds, game.rooms.stage.boss_adds), game.horde.room_for(want))
 
 
 ## Three cuts in a row: each one shows its arc, steps in and lands.

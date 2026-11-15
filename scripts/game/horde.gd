@@ -39,6 +39,8 @@ const DEFS_DIR := "res://data/enemies/"
 ## Share of an attack clip at which the blow lands (the windup is stretched to end there).
 const IMPACT_SHARE := 0.55
 const MELEE_COOLDOWN := 1.3
+## Skeletons the elder priest raises around itself in one cast (fewer when the fight is full: room_for).
+const PRIEST_RAISES := 3
 
 var list: Array[Enemy] = []
 var dying: Array[Enemy] = []
@@ -50,6 +52,9 @@ var renderer: CrowdRenderer
 ## The lights of the wind-ups and of the armor (never red: the warnings on the floor are Ground's).
 var tells: EnemyFx
 var hp_scale := 1.0
+## Summons never raise anyone past this many standing (EncounterGen.Fight.ceiling, set by Rooms for each fight;
+## 0: no ceiling, the endless hall --horde).
+var alive_cap := 0
 var damage_scale := 1.0
 var target := Vector2.ZERO
 var target_alive := true
@@ -103,6 +108,11 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true) -> Enemy:
 
 func count() -> int:
 	return list.size()
+
+
+## How many of `want` summoned enemies may still rise under alive_cap (fewer, or none).
+func room_for(want: int) -> int:
+	return want if alive_cap <= 0 else EncounterGen.room_for(list.size(), alive_cap, want)
 
 
 func step(dt: float) -> void:
@@ -329,10 +339,12 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	if e.state == Enemy.State.WINDUP:
 		if e.state_t >= d.attack_windup:
 			e.memo += 1
-			if e.memo % 2 == 1:
+			# every other cast raises skeletons, as many as the fight has room for (none: it conjures circles)
+			var raised := room_for(PRIEST_RAISES) if e.memo % 2 == 1 else 0
+			if raised > 0:
 				var skeleton := def(&"skeleton")
-				for k in 3:
-					var at := arena.resolve(e.pos + Vector2.from_angle(TAU * k / 3.0) * 3.5, 0.5)
+				for k in raised:
+					var at := arena.resolve(e.pos + Vector2.from_angle(TAU * k / PRIEST_RAISES) * 3.5, 0.5)
 					spawn(skeleton, at, true)
 					fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
 				Audio.play(&"summon")

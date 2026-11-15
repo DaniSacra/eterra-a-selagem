@@ -49,6 +49,10 @@ var time := 0.0
 var level := 1
 var xp := 0
 var kills := 0
+## Most enemies ever standing at once in this run (the boss and every summon included; RESULT max_alive).
+var max_alive := 0
+## Play time when Morvath came in (RESULT boss_at; -1: not yet).
+var boss_at := -1.0
 var fast := 1.0
 ## Smoothed cost of one simulation step, in milliseconds.
 var step_ms := 0.0
@@ -338,6 +342,7 @@ func _step(dt: float) -> void:
 	horde.step(dt)
 	if boss:
 		boss.step(dt)
+	max_alive = maxi(max_alive, horde.count())
 	projectiles.step(dt)
 	ground.step(dt)
 	combat.step(dt)
@@ -463,6 +468,7 @@ func start_boss(id: StringName) -> void:
 
 
 func _start_boss(id: StringName) -> void:
+	boss_at = time
 	director.stopped = true
 	horde.clear_crowd()
 	projectiles.clear_hostile()
@@ -954,7 +960,7 @@ func _lab() -> void:
 ## A line of numbers about the run, for smoke tests and tuning.
 func result() -> Dictionary:
 	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": kills, "spawned": director.spawned, "best_combo": combat.best_combo,
-		"enemies": horde.count(), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
+		"enemies": horde.count(), "max_alive": max_alive, "boss_at": snappedf(boss_at, 0.1), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
 		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second()}
 
 

@@ -16,7 +16,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 
 | | Hades | Hades II | Ember & Blade | A Selagem |
 |---|---|---|---|---|
-| Gênero | roguelite de ação, salas | roguelite de ação, salas | ação em horda, combos | roguelite de ação em salas, com horda |
+| Gênero | roguelite de ação, salas | roguelite de ação, salas | ação em horda, combos | roguelite de ação em salas, com poucos inimigos de papel claro (não é survivor de horda; o Daniel, 2026-11-15) |
 | Herói | Zagreus foge do submundo | Melinoë desce (ou sobe) para derrotar Cronos | (não estudado) | um paladino (o Explorador) desce às catacumbas de Valmor para selar Morvath |
 | Câmera | isométrica | isométrica | alta e inclinada | inclinada 30°, girada 35°, campo de visão 24, distância 54 (`Feel`) |
 | Visual | pintado, colorido | pintado, colorido | escuro, frio, efeitos brancos | o do Ember & Blade, com a arena da pintura do Daniel |
@@ -27,6 +27,8 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 |---|---|---|---|
 | Regiões | 4 em sequência (Tártaro, Asfódelos, Elísio, Templo do Estige) | duas rotas de 4 regiões (Submundo e Superfície) | 1 região (as catacumbas); a fase 2 seria a próxima |
 | Salas | combate em ondas; a porta mostra a recompensa | igual | igual (`RunMap`, `EncounterGen`) |
+| Inimigos de pé ao mesmo tempo | poucos, em ondas | poucos, em ondas | ciclo 8: comum 4 a 8, difícil 8 a 12 (guardião, elites), especial 12 a 16, nunca mais de 20 contando invocações; Morvath com até 4 reforços (6 na fase 3). O teto de cada sala sobe do mínimo ao máximo da faixa ao longo da região; cada onda cabe na faixa e a próxima vem quando resta 1 (`StageDef.tier_alive`, `alive_cap`, `boss_adds`) |
+| Composição | tipos por região | tipos por região, sorteados pela dificuldade | por papel (`EnemyDef.role`: esqueleto pressiona, corredor pede reação, feiticeiro controla espaço, besteiro força andar de lado, Escudo bloqueia a frente, sacerdote ameaça áreas) em conjuntos de dado (`EncounterPool`): no começo da região 2 papéis simples, no meio 3 que se completam, no fim misturas exigentes com elites e uma sala especial rara de 4 papéis |
 | Minichefe | guardiões no meio da região | igual | guardião entre as salas 4 e 6 (Cavaleiro ou Ancião) |
 | Fonte, loja | fonte de cura, loja do Caronte | igual | fonte entre 5 e 8, loja na 10 (pisar compra) |
 | Chefe | fim de cada região, com fases | igual | Morvath na sala 11, três fases (vida 6050 e dano na escala da 1ª chefe do Hades II; ataques próprios) |

@@ -29,3 +29,4 @@ attack_cooldown = 1.4
 attack_windup = 0.7
 attack_width = 2.6
 rating = 17.0
+role = &"react"
