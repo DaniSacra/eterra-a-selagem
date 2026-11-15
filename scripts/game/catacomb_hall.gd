@@ -53,6 +53,17 @@ const SHOWCASE := Vector3(-2.0, 0, 0)
 const CANDLE_LIGHT := 2.6
 const CANDLE_RANGE := 5.0
 const ABYSS_LIGHT := Color(0.55, 0.25, 1.0)
+const ABYSS_LIGHT_ENERGY := 5.0
+## The key light over the hall (the picture's middle of the room is a greyed mauve, its edges dark teal).
+const KEY_LIGHT := Color(0.95, 0.82, 0.88)
+const KEY_ENERGY := 6.0
+const KEY_HEIGHT := 9.0
+const KEY_RANGE := 18.0
+## Tint of the stone in the depths and of the walls under the platform (dark against the lighter mist).
+const FAR_TINT := 0.35
+const CLIFF_TINT := 0.5
+## Rows of silhouettes in the abyss to the west (x of each row), fading into the mist one behind the other.
+const WEST_ROWS: Array[float] = [-24.0, -32.0, -42.0]
 
 var arena: Arena
 var kit: ArenaKit
@@ -99,6 +110,14 @@ func _floor() -> void:
 	kit.floor_plate(Vector3.ZERO, HALF * 2.0 + Vector2(0.6, 0.6), MEDALLION, MEDALLION_AT)
 	kit.abyss(HALF, DEPTH, false)
 	_cliff(Rect2(-HALF, HALF * 2.0))
+	var key := OmniLight3D.new()
+	key.position = Vector3(MEDALLION_AT.x, KEY_HEIGHT, MEDALLION_AT.y)
+	key.light_color = KEY_LIGHT
+	key.light_energy = KEY_ENERGY
+	key.omni_range = KEY_RANGE
+	key.omni_attenuation = 1.0
+	key.light_cull_mask = ArenaKit.WARM_MASK
+	arena.add_child(key)
 	# buttresses under the lip on the open sides, so the drop reads as built stone
 	for i in 8:
 		var t := -HALF.y + 2.0 + i * 3.8
@@ -112,7 +131,9 @@ func _floor() -> void:
 ## A block of platform: its walls dropping into the abyss under a floor (x, z rect), and a thick lip under its edge.
 func _cliff(r: Rect2) -> void:
 	var c := r.get_center()
-	m.box(Vector3(c.x, -DEPTH * 0.5 - 0.05, c.y), Vector3(r.size.x + 0.4, DEPTH, r.size.y + 0.4), 0.0, m.stone(-DEPTH, Color(0.85, 0.85, 0.9)))
+	m.layers = ArenaKit.DEPTH_LAYER
+	m.box(Vector3(c.x, -DEPTH * 0.5 - 0.05, c.y), Vector3(r.size.x + 0.4, DEPTH, r.size.y + 0.4), 0.0, m.stone(-DEPTH, Color.WHITE * CLIFF_TINT))
+	m.layers = 1
 	m.box(Vector3(c.x, -0.4, c.y), Vector3(r.size.x + 1.0, 0.7, r.size.y + 1.0))
 
 
@@ -178,9 +199,9 @@ func _facade() -> void:
 	arena.add_child(spill)
 	spill.look_at_from_position(Vector3(PORTAL_X, y + h * 0.6, FACADE_Z - 0.5), Vector3(PORTAL_X - 0.5, 0, -HALF.y + 3.0))
 	spill.light_color = ArenaKit.PORTAL
-	spill.light_energy = 7.0
-	spill.spot_range = 16.0
-	spill.spot_angle = 32.0
+	spill.light_energy = 9.0
+	spill.spot_range = 14.0
+	spill.spot_angle = 40.0
 	spill.light_cull_mask = ~Arena.CROWD_LAYER
 	# buttresses: piers standing out of the wall with pointed tops, red banners on two of them
 	for bx: float in [FACADE_X.x + 0.6, FLIGHT.x + 0.2, PORTAL_X + w * 0.5 + 3.0, 12.6, FACADE_X.y - 1.0]:
@@ -322,7 +343,8 @@ func _stairs_down(edge: Vector3, out: Vector2, width: float) -> void:
 ## Far below and around: an arcade of pointed arches to the west, a tower in the north-west the chains hang from,
 ## more arches to the north behind the facade, violet light from under the platform.
 func _depths() -> void:
-	var far := m.stone(-40.0, Color(0.8, 0.85, 0.95))
+	m.layers = ArenaKit.DEPTH_LAYER
+	var far := m.stone(-40.0, Color(0.8, 0.85, 0.95) * FAR_TINT)
 	var ax := -38.0
 	for i in 7:
 		var z := -30.0 + i * 7.0
@@ -330,16 +352,32 @@ func _depths() -> void:
 		if i < 6:
 			m.pointed_arch(Vector3(ax, -2.0, z + 3.5), Vector2(1, 0), 5.0, 6.0, 0.9, 1.6, far)
 	m.box(Vector3(ax, 4.6, -9.0), Vector3(2.6, 1.0, 44.0), 0.0, far)
+	# rows of gothic piers and arches rising out of the mist to the west, each row farther and paler, a bridge on
+	# the nearest
+	for k in WEST_ROWS.size():
+		var rx: float = WEST_ROWS[k]
+		var top := 10.0 - k * 1.5
+		var width := 2.5 - k * 0.4
+		for i in 5:
+			var z := -22.0 + i * 9.0 + k * 3.0
+			m.box(Vector3(rx, top - 20.0, z), Vector3(width, 40.0, width), 0.0, far)
+			if i < 4:
+				m.pointed_arch(Vector3(rx, top - 8.0, z + 4.5), Vector2(1, 0), 9.0 - width, 7.0, width * 0.4, width * 0.7, far)
+		if k == 0:
+			m.box(Vector3(rx, -2.5, -4.0), Vector3(1.6, 0.8, 18.0), 0.0, far)
+	m.layers = 1
 	var lantern := OmniLight3D.new()
 	lantern.position = Vector3(ax + 1.6, 2.8, -4.0)
 	lantern.light_color = ArenaKit.FIRE
 	lantern.light_energy = 2.0
 	lantern.omni_range = 7.0
+	lantern.light_cull_mask = ArenaKit.DEPTH_LAYER
 	arena.add_child(lantern)
 	var flame := MeshInstance3D.new()
 	flame.mesh = Fx.quad(0.9, Color(3.0, 1.4, 0.4))
 	flame.position = lantern.position
 	arena.add_child(flame)
+	m.layers = ArenaKit.DEPTH_LAYER
 	var tower := Vector3(-30.0, 0, -30.0)
 	m.box(tower + Vector3(0, -8.0, 0), Vector3(4.0, 44.0, 4.0), 0.0, far)
 	m.point(tower + Vector3(0, 14.0, 0), 4.0, 4.0)
@@ -348,6 +386,7 @@ func _depths() -> void:
 		m.box(Vector3(x, -10.0, -40.0), Vector3(2.4, 40.0, 2.4), 0.0, far)
 		if i < 3:
 			m.pointed_arch(Vector3(x + 4.5, 2.0, -40.0), Vector2(0, 1), 6.6, 8.0, 1.0, 1.8, far)
+	m.layers = 1
 	var giant_top := Vector3(GIANT.x, 2.0 + GIANT.z * 0.95, GIANT.y)
 	# the great chains of the picture's top: from the giant across to the far tower and on to the facade, and one
 	# from the giant out over the abyss
@@ -355,16 +394,25 @@ func _depths() -> void:
 	kit.chain(tower + Vector3(0, 9.0, 0), Vector3(FACADE_X.x + 0.6, DAIS_Y + FACADE_HEIGHT - 2.0, FACADE_Z), 3.0, 2.2)
 	kit.chain(giant_top + Vector3(0, -2.0, 0), Vector3(-6.0, 9.0, -26.0), 3.5, 2.2)
 	kit.chain(giant_top + Vector3(0, -1.5, 0), Vector3(-40.0, 8.0, 14.0), 4.0, 2.2)
-	for p: Vector3 in [Vector3(-HALF.x - 6.0, -7.0, 2.0), Vector3(-10.0, -8.0, LANDING_END + 6.0), Vector3(6.0, -9.0, HALF.y + 7.0),
-			Vector3(HALF.x + 6.0, -7.0, 6.0), Vector3(-HALF.x - 12.0, -6.0, -18.0)]:
+	# violet from far below, only at the sides (west and east of the frame), lighting only the depths
+	for p: Vector3 in [Vector3(-HALF.x - 6.0, -12.0, 2.0), Vector3(-HALF.x - 14.0, -12.0, -16.0), Vector3(-28.0, -12.0, 10.0),
+			Vector3(HALF.x + 6.0, -12.0, 6.0), Vector3(HALF.x + 6.0, -12.0, -8.0)]:
 		var l := OmniLight3D.new()
 		l.position = p
 		l.light_color = ABYSS_LIGHT
-		l.light_energy = 14.0
+		l.light_energy = ABYSS_LIGHT_ENERGY
 		l.omni_range = 22.0
 		l.omni_attenuation = 1.1
-		l.light_cull_mask = ~Arena.CROWD_LAYER
+		l.light_cull_mask = ArenaKit.DEPTH_LAYER
 		arena.add_child(l)
+	# the glow itself rising out of the mist at the foot of the piers, facing the camera's way, and on desktop a
+	# violet fog filling the sides
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	for g: Vector3 in [Vector3(-HALF.x - 4.0, -8.0, -6.0), Vector3(-HALF.x - 9.0, -8.0, 8.0), Vector3(-26.0, -9.0, -18.0),
+			Vector3(HALF.x + 4.0, -8.0, 2.0), Vector3(HALF.x + 5.0, -8.0, -12.0), Vector3(8.0, -8.0, HALF.y + 5.0)]:
+		kit.abyss_glow(g, Vector2(16.0, 12.0), yaw, ArenaKit.ABYSS_GLOW_ENERGY * (1.0 if g.x < 0.0 else 1.8))
+	kit.abyss_fog(Vector3(-HALF.x - 14.0, -8.0, 0.0), Vector3(24.0, 14.0, 50.0))
+	kit.abyss_fog(Vector3(HALF.x + 10.0, -8.0, 0.0), Vector3(16.0, 14.0, 40.0))
 
 
 # ---------- doors ----------

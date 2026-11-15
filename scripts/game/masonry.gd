@@ -14,6 +14,8 @@ const CLAY := Color(0.52, 0.17, 0.09)
 const CLAY_DARK := Color(0.3, 0.1, 0.06)
 
 var root: Node3D
+## Visual layers given to what is built next (the depths take ArenaKit.DEPTH_LAYER too, for their own lights).
+var layers := 1
 var _mats := {}
 var _clay: StandardMaterial3D
 
@@ -43,7 +45,7 @@ func box(center: Vector3, size: Vector3, yaw: float = 0.0, mat: Material = null)
 	mi.mesh = b
 	mi.transform = Transform3D(Basis(Vector3.UP, yaw), center)
 	mi.material_override = mat if mat else stone(center.y - size.y * 0.5)
-	root.add_child(mi)
+	_add(mi)
 	return mi
 
 
@@ -64,7 +66,7 @@ func point(base: Vector3, width: float, height: float, yaw: float = 0.0) -> Mesh
 	mi.mesh = c
 	mi.transform = Transform3D(Basis(Vector3.UP, yaw + PI * 0.25), base + Vector3(0, height * 0.5, 0))
 	mi.material_override = stone(base.y)
-	root.add_child(mi)
+	_add(mi)
 	return mi
 
 
@@ -173,7 +175,7 @@ func pot(at: Vector3, size: float = 0.6) -> void:
 	body.mesh = s
 	body.material_override = _clay
 	body.position = at + Vector3(0, size * 0.4, 0)
-	root.add_child(body)
+	_add(body)
 	var neck := MeshInstance3D.new()
 	var c := CylinderMesh.new()
 	c.top_radius = size * 0.2
@@ -183,4 +185,9 @@ func pot(at: Vector3, size: float = 0.6) -> void:
 	neck.mesh = c
 	neck.material_override = _clay
 	neck.position = at + Vector3(0, size * 0.85, 0)
-	root.add_child(neck)
+	_add(neck)
+
+
+func _add(mi: GeometryInstance3D) -> void:
+	mi.layers = layers
+	root.add_child(mi)

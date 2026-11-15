@@ -9,11 +9,22 @@ extends RefCounted
 
 const KIT := "res://assets/models/dungeon_r/"
 const CROWD_LAYER := 2
+## The depths (cliffs, far arcades, the tower) are also on this layer: only the abyss lights reach them, and the warm
+## lights of the hall leave them out (WARM_MASK), so the depths stay cold and dark against their mist.
+const DEPTH_LAYER := 4
+const WARM_MASK := ~(CROWD_LAYER | DEPTH_LAYER)
 ## The palette of the catacombs.
 const STONE_DARK := Color(0.07, 0.09, 0.12)
 const FIRE := Color(1.0, 0.58, 0.25)
 const PORTAL := Color(0.3, 1.0, 0.5)
 const ABYSS := Color(0.34, 0.17, 0.52)
+## The mist of the abyss (teal, lighter than the stone in it) and the violet glowing up from under it.
+const MIST := Color(0.03, 0.2, 0.25)
+const ABYSS_GLOW := Color(0.45, 0.3, 0.95)
+const ABYSS_GLOW_ENERGY := 1.6
+## Forward+ only: violet glowing fog filling the sides of the abyss (density, emission).
+const ABYSS_FOG_DENSITY := 0.04
+const ABYSS_FOG_EMISSION := Color(0.25, 0.12, 0.5)
 const METAL := Color(0.16, 0.17, 0.2)
 const MORVATH := Color(1.0, 0.18, 0.15)
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
@@ -23,13 +34,16 @@ const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "ba
 	"pillar", "pillar_decorated", "column", "rubble_half", "rubble_large", "floor_tile_large", "floor_tile_large_rocks"]
 ## Brazier: the bowl's radius and height above the floor; the fire's light.
 const BRAZIER_TOP := 1.25
-const BRAZIER_LIGHT := 7.0
-const BRAZIER_RANGE := 16.0
+const BRAZIER_LIGHT := 3.5
+const BRAZIER_RANGE := 10.0
+const BRAZIER_ATTENUATION := 1.3
+const BRAZIER_COLOR := Color(1.0, 0.68, 0.42)
 ## A portal's glow and light while closed and open (a closed portal still glows: the room's green accent).
-const PORTAL_DIM := 1.0
-const PORTAL_OPEN := 1.4
-const PORTAL_LIGHT_DIM := 6.0
-const PORTAL_LIGHT := 8.0
+const PORTAL_DIM := 2.0
+const PORTAL_OPEN := 2.8
+const PORTAL_LIGHT_DIM := 4.0
+const PORTAL_LIGHT := 5.5
+const PORTAL_RANGE := 9.0
 ## Chains: meters between two links, and the links' size.
 const LINK_GAP := 0.32
 const LINK_SIZE := 0.2
@@ -44,6 +58,7 @@ var portals: Array[Array] = []
 ## Built stone (and the dressed-stone material the kit's stony pieces take too).
 var masonry: Masonry
 var _meshes := {}
+var _glow_mats := {}
 
 
 func _init(parent: Node3D, seed_: int) -> void:
@@ -111,12 +126,12 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	fire(base + Vector3(0, BRAZIER_TOP + 0.15, 0), 0.5, 22)
 	var l := OmniLight3D.new()
 	l.position = base + Vector3(0, BRAZIER_TOP + 1.2, 0)
-	l.light_color = FIRE
+	l.light_color = BRAZIER_COLOR
 	l.light_energy = light
 	l.omni_range = BRAZIER_RANGE
-	l.omni_attenuation = 0.9
+	l.omni_attenuation = BRAZIER_ATTENUATION
 	l.shadow_enabled = true
-	l.light_cull_mask = ~CROWD_LAYER
+	l.light_cull_mask = WARM_MASK
 	root.add_child(l)
 	if solid:
 		circles.append(Vector3(at.x, at.y, 0.6))
@@ -233,9 +248,9 @@ func portal_glow(center: Vector3, yaw: float, size: Vector2) -> void:
 	l.position = center + Basis(Vector3.UP, yaw) * Vector3(0, 0.3, 2.2)
 	l.light_color = PORTAL
 	l.light_energy = PORTAL_LIGHT_DIM
-	l.omni_range = 14.0
+	l.omni_range = PORTAL_RANGE
 	l.omni_attenuation = 1.2
-	l.light_cull_mask = ~CROWD_LAYER
+	l.light_cull_mask = WARM_MASK
 	root.add_child(l)
 	portals.append([m, l])
 
@@ -251,6 +266,42 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 	l.light_energy = PORTAL_LIGHT if on else PORTAL_LIGHT_DIM
 
 
+## Violet light glowing up out of the abyss: an upright card facing the camera's way (yaw), its foot at `foot`.
+func abyss_glow(foot: Vector3, size: Vector2, yaw: float, energy := ABYSS_GLOW_ENERGY) -> void:
+	var card := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = size
+	card.mesh = q
+	if not _glow_mats.has(energy):
+		var m := ShaderMaterial.new()
+		m.shader = preload("res://assets/shaders/abyss_glow.gdshader")
+		m.set_shader_parameter(&"color", ABYSS_GLOW)
+		m.set_shader_parameter(&"energy", energy)
+		_glow_mats[energy] = m
+	card.material_override = _glow_mats[energy]
+	card.transform = Transform3D(Basis(Vector3.UP, yaw), foot + Vector3(0, size.y * 0.5, 0))
+	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(card)
+
+
+## Forward+ only: a box of violet glowing fog in the abyss (the browser's renderer has no fog volumes: the glow cards
+## carry the colour there).
+func abyss_fog(center: Vector3, size: Vector3) -> void:
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		return
+	var v := FogVolume.new()
+	v.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
+	v.size = size
+	v.position = center
+	var fm := FogMaterial.new()
+	fm.density = ABYSS_FOG_DENSITY
+	fm.albedo = Color(0.3, 0.2, 0.5)
+	fm.emission = ABYSS_FOG_EMISSION
+	fm.edge_fade = 0.4
+	v.material = fm
+	root.add_child(v)
+
+
 ## The abyss around a platform of half size `half`: mist in layers over a deep glow, and dark cliffs under the
 ## platform's sides (from the floor down out of sight).
 func abyss(half: Vector2, depth: float = 18.0, cliff := true) -> void:
@@ -262,7 +313,7 @@ func abyss(half: Vector2, depth: float = 18.0, cliff := true) -> void:
 		plane.mesh = pm
 		var m := ShaderMaterial.new()
 		m.shader = preload("res://assets/shaders/abyss_fog.gdshader")
-		m.set_shader_parameter(&"color", ABYSS * (1.0 - k * 0.12))
+		m.set_shader_parameter(&"color", MIST * (1.0 + k * 0.15))
 		m.set_shader_parameter(&"floor_layer", 1.0 if k == 0 else 0.0)
 		m.set_shader_parameter(&"density", 0.55 - k * 0.08)
 		m.set_shader_parameter(&"scale", 0.05 + k * 0.02)

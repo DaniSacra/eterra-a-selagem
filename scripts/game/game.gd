@@ -159,12 +159,12 @@ func _build_world() -> void:
 	# the catacomb hall of the reference image (2026-11-14): a cold, dark teal air; the warmth comes only from fire
 	# and candles, the green from the portal, the violet from the depths
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = Color(0.05, 0.12, 0.13)
+	e.background_color = SKY
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = Color(0.46, 0.44, 0.58)
-	e.ambient_light_energy = 0.55
+	e.ambient_light_color = AMBIENT
+	e.ambient_light_energy = AMBIENT_ENERGY
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	e.tonemap_exposure = 1.3
+	e.tonemap_exposure = EXPOSURE
 	e.glow_enabled = true
 	e.glow_intensity = 0.45
 	e.glow_strength = 1.0
@@ -173,20 +173,26 @@ func _build_world() -> void:
 	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
 	for i in 7:
 		e.set_glow_level(i, 1.0 if i in [1, 2, 3, 4] else 0.0)
-	# distance haze: the far arches and towers fade into the teal air
+	# haze only past the hall (by depth from the camera), and a height fog filling the abyss below the floor: the
+	# depths turn to teal mist, the hall itself stays clear
 	e.fog_enabled = true
-	e.fog_light_color = Color(0.1, 0.24, 0.27)
-	e.fog_density = 0.011
+	e.fog_mode = Environment.FOG_MODE_DEPTH
+	e.fog_light_color = FOG
+	e.fog_depth_begin = FOG_BEGIN
+	e.fog_depth_end = FOG_END
+	e.fog_depth_curve = 1.0
+	e.fog_height = FOG_HEIGHT
+	e.fog_height_density = FOG_HEIGHT_DENSITY
 	e.fog_aerial_perspective = 0.2
-	# desktop (Forward+) only, ignored by the browser's renderer: light in the air around the fires and the portal,
-	# contact shadows in the stonework, the wet patches of the floor mirroring the light
+	# desktop (Forward+) only, ignored by the browser's renderer: a little light in the air around the fires and the
+	# portal (no ambient in it: it would lift every black), contact shadows, the wet floor mirroring the light
 	e.volumetric_fog_enabled = true
-	e.volumetric_fog_density = 0.008
+	e.volumetric_fog_density = VOLUMETRIC_DENSITY
 	e.volumetric_fog_albedo = Color(0.7, 0.72, 0.78)
-	e.volumetric_fog_emission = Color(0.01, 0.025, 0.03)
+	e.volumetric_fog_emission = Color.BLACK
 	e.volumetric_fog_gi_inject = 0.0
 	e.volumetric_fog_length = 90.0
-	e.volumetric_fog_ambient_inject = 0.15
+	e.volumetric_fog_ambient_inject = 0.0
 	e.ssao_enabled = true
 	e.ssao_radius = 1.4
 	e.ssao_intensity = 2.2
@@ -776,6 +782,18 @@ const SHOWCASE_DISTANCE := 60.0
 ## The browser's renderer (GL Compatibility) lights brighter than the desktop's (Forward+): its exposure and ambient.
 const COMPAT_EXPOSURE := 0.72
 const COMPAT_AMBIENT := 0.3
+## The air of the hall (the reference image): cold teal behind and below, a low teal ambient, no violet in the air
+## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
+const SKY := Color(0.01, 0.1, 0.14)
+const AMBIENT := Color(0.3, 0.45, 0.5)
+const AMBIENT_ENERGY := 0.45
+const EXPOSURE := 1.25
+const FOG := Color(0.02, 0.2, 0.26)
+const FOG_BEGIN := 64.0
+const FOG_END := 130.0
+const FOG_HEIGHT := -3.0
+const FOG_HEIGHT_DENSITY := 0.6
+const VOLUMETRIC_DENSITY := 0.003
 var _charge_zoom := 0.0
 ## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
 var _cam_last := Vector2.ZERO
