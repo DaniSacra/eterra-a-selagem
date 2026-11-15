@@ -72,6 +72,12 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),
   inclinação 30, campo de visão 24, distância 54 no jogo (ciclo 5, para o herói ler maior; a vitrine `--showcase` fica em 60) (`_feel` do `make_data.gd`). Teclado e controle giram junto
   (`Feel.screen_to_floor`). `--showcase`: câmera fixa no enquadramento da pintura, para comparar.
+  Enquadramento (`CamFrame`, `core/cam_frame.gd`): o ponto que a câmera olha fica dentro das margens da sala (`Game.CAM_MARGIN`,
+  `CAM_SOUTH`, medidas a 60 m e escaladas pela distância), mas o herói nunca fica a menos de 18% de uma borda da tela
+  (`CamFrame.SAFE`, `keep`): no patamar oeste a câmera segue ele além das margens.
+- Herói no meio da multidão: onde algo o cobre ele aparece nas cores dele (corpo petróleo, cachecol, cabelo cobre) com
+  borda clara fina, em três passes desenhados por último (`xray_depth`, `xray`, `xray_edge`; `Player.XRAY_*`), mais um
+  anel fino petróleo no chão (`hero_ring.gdshader`, `Player.RING_*`). `--outline=0` desliga o raio-x.
 - Escala (1º teste do Daniel, "tudo é muito grande"): o cenário do KayKit é encolhido por peça em `Arena.PROP_SCALE`
   (paredes 72% da altura, escadas 0,8 x 0,55, barris 0,55, entulho 0,5 a 0,6, velas 0,7); pilares desenhados pelo raio que
   bloqueia (`RoomLayout.pillars`, 0,6 m; `Arena.PILLAR_MODEL_RADIUS`, `PILLAR_HEIGHT` 0,68). A colisão segue o modelo escalado.

@@ -36,6 +36,21 @@ const ASSIST_RANGE := 6.0
 const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
 const FLASH := preload("res://assets/shaders/flash.gdshader")
 const XRAY := preload("res://assets/shaders/xray.gdshader")
+const XRAY_DEPTH := preload("res://assets/shaders/xray_depth.gdshader")
+const XRAY_EDGE := preload("res://assets/shaders/xray_edge.gdshader")
+const RING := preload("res://assets/shaders/hero_ring.gdshader")
+## The paladin through a crowd (docs/art/cycle5_spec.md A2; QA M4): where enemies cover him he shows in his own
+## colours with a thin pale rim (xray.gdshader and its two helper passes), drawn after everything else in this
+## order: his depth, his colours, the rim (the enemies' life bars are at CrowdRenderer's priority 10).
+const XRAY_PRIORITY := 11
+const XRAY_OPACITY := 0.92
+const XRAY_RIM := Color(0.6, 0.95, 0.95, 0.9)
+## A thin ring on the floor at his feet, in the petrol of his scarf (never the red of a warning): meters across,
+## the colour, how opaque on the open floor and through what stands over it.
+const RING_SIZE := 2.1
+const RING_COLOR := Color("3e9094")
+const RING_OPEN := 0.35
+const RING_THROUGH := 0.75
 const OUTLINE := Color(1.0, 0.78, 0.35)
 ## The thin edge on his body and his silhouette through what hides him: cold and light, never gold over the body
 ## (docs/art/cycle4_spec.md, c).
@@ -111,7 +126,9 @@ var _blink := 0.0
 var _model: Node3D
 var _anim: AnimationPlayer
 var _overlay: ShaderMaterial
-var _xray: ShaderMaterial
+## One x-ray material per mesh of his (each paints that mesh's own texture); the rim after them.
+var _xrays: Array[ShaderMaterial] = []
+var _xray_edge: ShaderMaterial
 var _current_anim := &""
 var _light: OmniLight3D
 ## A point near the tip of the sword (moves with the swing).
@@ -136,10 +153,14 @@ func _ready() -> void:
 	add_child(_model)
 	_overlay = ShaderMaterial.new()
 	_overlay.shader = FLASH
-	_xray = ShaderMaterial.new()
-	_xray.shader = XRAY
-	_xray.render_priority = 2
-	_overlay.next_pass = _xray
+	var depth := ShaderMaterial.new()
+	depth.shader = XRAY_DEPTH
+	depth.render_priority = XRAY_PRIORITY
+	_xray_edge = ShaderMaterial.new()
+	_xray_edge.shader = XRAY_EDGE
+	_xray_edge.render_priority = XRAY_PRIORITY + 2
+	_overlay.next_pass = depth
+	depth.next_pass = _xray_edge
 	dodge_max = Feel.live().dodge_charges
 	dodge_charges = dodge_max
 	_prepare(_model)
@@ -159,6 +180,7 @@ func _ready() -> void:
 	_light.light_cull_mask = ~Arena.CROWD_LAYER
 	add_child(_light)
 	_model.add_child(_contact_shadow())
+	add_child(_ring())
 
 
 ## A soft dark ellipse on the floor under him (it turns with him, longer front to back).
@@ -180,11 +202,53 @@ func _contact_shadow() -> MeshInstance3D:
 	return mi
 
 
+## The ring on the floor around his feet (hero_ring.gdshader): it does not turn with him.
+func _ring() -> MeshInstance3D:
+	var plane := PlaneMesh.new()
+	plane.size = Vector2.ONE * RING_SIZE
+	var m := ShaderMaterial.new()
+	m.shader = RING
+	m.render_priority = XRAY_PRIORITY
+	m.set_shader_parameter(&"color", RING_COLOR)
+	m.set_shader_parameter(&"open", RING_OPEN)
+	m.set_shader_parameter(&"through", RING_THROUGH)
+	var mi := MeshInstance3D.new()
+	mi.mesh = plane
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position.y = 0.05
+	return mi
+
+
+## Every mesh of his gets the x-ray in its own colours, then the passes all of them share (the flash and glow of
+## his state, his depth for the x-ray, its rim).
 func _prepare(n: Node) -> void:
 	for c in n.get_children():
 		if c is MeshInstance3D:
-			(c as MeshInstance3D).material_overlay = _overlay
+			(c as MeshInstance3D).material_overlay = _xray_of(c as MeshInstance3D)
 		_prepare(c)
+
+
+func _xray_of(mesh: MeshInstance3D) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = XRAY
+	m.render_priority = XRAY_PRIORITY + 1
+	var look := xray_look(mesh.get_active_material(0))
+	m.set_shader_parameter(&"albedo", look[0])
+	m.set_shader_parameter(&"tint", look[1])
+	m.next_pass = _overlay
+	_xrays.append(m)
+	return m
+
+
+## What the x-ray paints for a mesh drawn with this material: [its painted texture or null, its colour].
+static func xray_look(mat: Material) -> Array:
+	if mat is BaseMaterial3D:
+		var c := (mat as BaseMaterial3D).albedo_color
+		return [(mat as BaseMaterial3D).albedo_texture, Color(minf(c.r, 1.0), minf(c.g, 1.0), minf(c.b, 1.0))]
+	if mat is ShaderMaterial:
+		return [(mat as ShaderMaterial).get_shader_parameter(&"albedo") as Texture2D, Color.WHITE]
+	return [null, Color.WHITE]
 
 
 func alive() -> bool:
@@ -439,7 +503,10 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	_overlay.set_shader_parameter(&"glow", glow)
 	var edge := Dev.num("outline", Feel.live().outline)
 	_overlay.set_shader_parameter(&"outline", Color(EDGE, edge))
-	_xray.set_shader_parameter(&"color", Color(EDGE, edge))
+	# --outline=0 (or the feel panel) turns the x-ray off with the edge
+	for x in _xrays:
+		x.set_shader_parameter(&"opacity", XRAY_OPACITY if edge > 0.0 else 0.0)
+	_xray_edge.set_shader_parameter(&"color", Color(XRAY_RIM, XRAY_RIM.a if edge > 0.0 else 0.0))
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if state != State.MOVE or runner.is_swinging():
 		return

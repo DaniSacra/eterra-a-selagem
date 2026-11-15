@@ -16,7 +16,9 @@ const LEVEL_HEAL := 0.15
 const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN}
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
-## How far the point the camera looks at stays from the side walls and from the north and south ends (meters).
+## How far the point the camera looks at stays from the side walls and from the north and south ends (meters), with
+## the camera CamFrame.MARGIN_DISTANCE away: a closer camera gets closer to them (CamFrame.margin). The paladin comes
+## first: the margins give way so that he never stands near an edge of the screen (CamFrame.keep).
 const CAM_MARGIN := Vector2(10.0, 5.0)
 ## The low camera sees far past the south edge: it stops sooner there.
 const CAM_SOUTH := 9.0
@@ -838,10 +840,24 @@ func _place_camera(shake: Vector3, _delta: float) -> void:
 		camera.fov = Dev.num("cam-fov", Feel.live().cam_fov)
 		camera.look_at_from_position(c + off, c, Vector3.UP)
 		return
+	var off := _cam_offset()
+	var at := cam_look_at(Vector2(_cam_target.x, _cam_target.z), Dev.num("cam-dist", Feel.live().cam_distance), camera.fov)
+	var t := Vector3(at.x, 0, at.y)
+	camera.look_at_from_position(t + off + shake, t + shake * 0.5, Vector3.UP)
+
+
+## The floor point the camera looks at, for the point it follows: inside the room's margins, unless the paladin
+## would stand near an edge of the screen (the landing by the way in lies outside the room's rectangle).
+func cam_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 	var h := arena.half
-	var t := Vector3(clampf(_cam_target.x, -maxf(0.0, h.x - CAM_MARGIN.x), maxf(0.0, h.x - CAM_MARGIN.x)), 0,
-		clampf(_cam_target.z, minf(0.0, -h.y + CAM_MARGIN.y - arena.view_north), maxf(0.0, h.y - CAM_SOUTH)))
-	camera.look_at_from_position(t + _cam_offset() + shake, t + shake * 0.5, Vector3.UP)
+	var side := maxf(0.0, h.x - CamFrame.margin(CAM_MARGIN.x, distance))
+	var at := Vector2(clampf(want.x, -side, side), clampf(want.y,
+		minf(0.0, -h.y + CamFrame.margin(CAM_MARGIN.y, distance) - arena.view_north), maxf(0.0, h.y - CamFrame.margin(CAM_SOUTH, distance))))
+	if focus != null:
+		# a scene of its own (the fall of Morvath): the camera looks at it, wherever the paladin stands
+		return at
+	var view := get_viewport().get_visible_rect().size
+	return CamFrame.keep(at, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw(), fov, view.x / maxf(view.y, 1.0))
 
 
 ## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.

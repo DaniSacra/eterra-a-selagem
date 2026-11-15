@@ -51,3 +51,25 @@ func test_only_the_blade_of_emeth_is_lit_and_it_does_not_bloom() -> void:
 	assert_true(green.g > green.b * 2.0 and green.g > green.r * 4.0, "emerald, not cyan")
 	var core := sword.get_node("Blade/Core") as MeshInstance3D
 	assert_lt(core.mesh.get_aabb().size.x, 0.03, "a thin edge of light down the middle")
+
+
+## Through a crowd he shows in his own colours (xray.gdshader): each mesh of his gives its painted texture.
+func test_the_xray_paints_each_mesh_with_its_own_texture() -> void:
+	var body: Array = HeroBody.make()
+	var model: Node3D = autofree(body[0])
+	var meshes := model.find_children("*", "MeshInstance3D", true, false)
+	assert_gt(meshes.size(), 1, "his body and the sword")
+	var textured := 0
+	for n in meshes:
+		var look := Player.xray_look((n as MeshInstance3D).get_active_material(0))
+		var c: Color = look[1]
+		assert_true(maxf(c.r, maxf(c.g, c.b)) <= 1.0, "no colour over 1: the x-ray never blooms")
+		textured += 1 if look[0] != null else 0
+	assert_gt(textured, 1, "the body and the Emeth are painted from their textures")
+	assert_null(Player.xray_look(null)[0])
+
+
+func test_the_xray_is_drawn_after_the_life_bars_and_the_ring_is_not_a_warning() -> void:
+	assert_gt(Player.XRAY_PRIORITY, 10, "after the enemies' life bars (CrowdRenderer)")
+	assert_gt(Player.RING_COLOR.g, Player.RING_COLOR.r * 2.0, "petrol, never the red of a warning")
+	assert_lt(Player.RING_OPEN, 0.5, "faint on the open floor")
