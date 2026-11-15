@@ -12,6 +12,8 @@ uniform float fill = 0.28;
 uniform float blade_from = -0.1;
 uniform vec3 blade_color : source_color = vec3(0.08, 0.85, 0.27);
 uniform float blade_glow = 1.0;
+// A swing lifts the blade's light for an instant (EmethSword.set_pulse): added to blade_glow.
+uniform float pulse = 0.0;
 // How much of the painting's own colour (the gold veins, the pale crystal) the blade's light keeps.
 uniform float blade_paint = 0.35;
 uniform float roughness = 0.4;
@@ -30,5 +32,5 @@ void fragment() {
 	ALBEDO = c * (1.0 - 0.5 * blade);
 	ROUGHNESS = roughness;
 	METALLIC = metallic * (1.0 - blade);
-	EMISSION = c * fill + mix(blade_color * value, c, blade_paint) * blade_glow * blade;
+	EMISSION = c * fill + mix(blade_color * value, c, blade_paint) * (blade_glow + pulse) * blade;
 }

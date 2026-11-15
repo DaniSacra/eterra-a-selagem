@@ -134,7 +134,7 @@ void fragment() {
 	float edge = smoothstep(0.35, 0.6, pow(1.0 - facing, 1.5));
 	// the painting's own lights (eyes, gems, embers), leaning to the colour of its magic
 	vec3 spot = mix(raw, mix(raw, magic * top, magic_tint), has_magic);
-	EMISSION = vec3(1.8) * flash + vec3(0.35, 0.7, 1.4) * frost * 0.5 + vec3(2.0, 0.6, 0.1) * burn * (0.4 + 0.4 * rim)
+	EMISSION = vec3(1.15) * flash + vec3(0.35, 0.7, 1.4) * frost * 0.5 + vec3(2.0, 0.6, 0.1) * burn * (0.4 + 0.4 * rim)
 		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + vec3(1.6, 0.5, 0.1) * state.a * 2.0
 		+ gild_color * (rim + edge) * absorbed * absorb_light
 		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)

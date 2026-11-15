@@ -1,6 +1,6 @@
 class_name Fx
 extends Node3D
-## Everything that only shows: particle bursts, sword arcs, shockwaves, pillars of light, damage numbers,
+## Everything that only shows: particle bursts, sword arcs, thrusts, cuts, motes, shockwaves, pillars of light, damage numbers,
 ## camera shake, hit stop and the full screen colour split. Pooled; nothing here changes the game.
 
 const SLASH := preload("res://assets/shaders/slash.gdshader")
@@ -9,6 +9,19 @@ const RING := preload("res://assets/shaders/ring.gdshader")
 const BEAM := preload("res://assets/shaders/beam.gdshader")
 const IMPACT := preload("res://assets/shaders/impact.gdshader")
 const IMPACT_POOL := 40
+const THRUST := preload("res://assets/shaders/emeth_thrust.gdshader")
+const THRUST_POOL := 4
+## Motes: the specks of magic a swing sheds and the chips of a blow landing, all in one MultiMesh.
+const MOTE_POOL := 192
+const MOTE_GRAVITY := 5.0
+const MOTE_DRAG := 3.5
+## Old gold, lit: one mote in MOTE_GOLD_EVERY (the veins of the blade).
+const OLD_GOLD := Color(0.95, 0.72, 0.3)
+const MOTE_GOLD_EVERY := 4
+## How bright a mote is (times its colour): small, so it may pass the glow threshold.
+const MOTE_GLOW := 2.2
+## The blade's pulse on a swing: seconds it takes to fall back (EmethSword.PULSE_GLOW at its top).
+const BLADE_PULSE := 0.15
 const GLINT := preload("res://assets/shaders/glint.gdshader")
 const CRESCENT := preload("res://assets/shaders/crescent.gdshader")
 const GLINT_POOL := 4
@@ -18,11 +31,14 @@ const GLINT_SIZE := 13.0
 const GLINT_BURST := 0.16
 const CRESCENT_POOL := 6
 ## A finisher's crescent flies out to this many times the reach of the blow while it fades.
-const CRESCENT_GROW := 1.8
-## Seconds it lasts (the white edge goes in the first half, the ink lingers).
-const CRESCENT_TIME := 0.42
-## Where its band starts, as a share of the reach (lower is a broader sweep).
-const CRESCENT_INNER := 0.72
+const CRESCENT_GROW := 1.3
+## Seconds it lasts (the light edge goes in the first half, the ink lingers).
+const CRESCENT_TIME := 0.3
+## Where its band starts, as a share of the reach (lower is a broader sweep): a thin blade of a wave, under a
+## meter across when it has flown out.
+const CRESCENT_INNER := 0.87
+## The longest reach it is drawn with: the wave of a long thrust stays a crescent at the paladin, not across the room.
+const CRESCENT_MAX_REACH := 5.5
 ## Share of the ink opacity (Feel.ink_opacity) its dark body keeps: lighter than a blow, so the white edge leads.
 const CRESCENT_INK := 0.28
 const KICK_METERS := 0.35
@@ -33,6 +49,10 @@ const INK_INNER := 0.42
 ## Where the bright streaks start, as a share of the reach: a wide band from near the paladin out to the tip
 ## (Ember & Blade's cuts are sheets of light, not thin lines; a narrower band since the first test found them too big).
 const SLASH_INNER := 0.5
+## The ribbon's tail behind the head of the swing: at most this share of the arc, and at most this many degrees
+## (a spin all around keeps a blade of light, not a full disc).
+const SLASH_TAIL := 0.6
+const SLASH_TAIL_DEGREES := 120.0
 const RING_POOL := 16
 const BEAM_POOL := 24
 const NUMBER_POOL := 90
@@ -42,8 +62,15 @@ const NUMBER_SIZE := 17
 const NUMBER_BIG := 24
 const WORD_SIZE := 21
 const NUMBER_OUTLINE := 5
-## Size of the star of a blow landing, in meters (times the size asked for).
-const IMPACT_SIZE := 1.6
+## Meters across the crossed cuts of Fx.impact (times the size asked for).
+const IMPACT_SIZE := 1.0
+## A damage number starts this far above the point asked for (the top of the enemy's head): clear of the life bar
+## that sits there (CrowdRenderer.BAR_ABOVE), a quarter of a meter above it.
+const NUMBER_LIFT := 1.0
+## With NUMBER_CROWD numbers younger than NUMBER_CROWD_TIME within NUMBER_CROWD_RADIUS meters, only the biggest show.
+const NUMBER_CROWD := 8
+const NUMBER_CROWD_TIME := 0.25
+const NUMBER_CROWD_RADIUS := 3.0
 ## Particle bursts are drawn this much smaller than their BURSTS size, with this share of their specks.
 const BURST_SCALE := 0.7
 const BURST_AMOUNT := 0.7
@@ -90,6 +117,18 @@ var _next: Dictionary = {}
 var _slashes: Array[Dictionary] = []
 var _inks: Array[Dictionary] = []
 var _impacts: Array[Dictionary] = []
+var _thrusts: Array[Dictionary] = []
+var _motes: MultiMesh
+var _mote_n := 0
+var _mote_pos := PackedVector3Array()
+var _mote_vel := PackedVector3Array()
+var _mote_life := PackedFloat32Array()
+var _mote_time := PackedFloat32Array()
+var _mote_size := PackedFloat32Array()
+var _mote_color := PackedColorArray()
+var _blade: ShaderMaterial
+var _blade_looked := false
+var _pulse := 0.0
 var _glints: Array[Dictionary] = []
 var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
@@ -186,7 +225,15 @@ func setup(cam: Camera3D, over: Control) -> void:
 	for i in IMPACT_POOL:
 		var e := _effect_node(IMPACT, q)
 		(e.node as MeshInstance3D).sorting_offset = 10.0
+		(e.node as MeshInstance3D).extra_cull_margin = 3.0
 		_impacts.append(e)
+	var strip := PlaneMesh.new()
+	strip.size = Vector2.ONE
+	for i in THRUST_POOL:
+		var e := _effect_node(THRUST, strip)
+		(e.mat as ShaderMaterial).render_priority = 1
+		_thrusts.append(e)
+	_build_motes()
 	var gq := QuadMesh.new()
 	gq.size = Vector2.ONE
 	for i in GLINT_POOL:
@@ -218,7 +265,32 @@ func setup(cam: Camera3D, over: Control) -> void:
 		l.visible = false
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		overlay.add_child(l)
-		_numbers.append({"label": l, "life": 0.0, "pos": Vector3.ZERO, "rise": 0.0})
+		_numbers.append({"label": l, "life": 0.0, "pos": Vector3.ZERO, "rise": 0.0, "amount": -1.0})
+
+
+func _build_motes() -> void:
+	_motes = MultiMesh.new()
+	_motes.transform_format = MultiMesh.TRANSFORM_3D
+	_motes.use_colors = true
+	var dot := quad(1.0, Color.WHITE)
+	var mat: StandardMaterial3D = dot.material
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	mat.billboard_keep_scale = true
+	_motes.mesh = dot
+	_motes.instance_count = MOTE_POOL
+	_motes.visible_instance_count = 0
+	_mote_pos.resize(MOTE_POOL)
+	_mote_vel.resize(MOTE_POOL)
+	_mote_life.resize(MOTE_POOL)
+	_mote_time.resize(MOTE_POOL)
+	_mote_size.resize(MOTE_POOL)
+	_mote_color.resize(MOTE_POOL)
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = _motes
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# the motes fly anywhere in the room: never culled by the box of the first ones
+	mmi.custom_aabb = AABB(Vector3(-60, -5, -60), Vector3(120, 30, 120))
+	add_child(mmi)
 
 
 func _effect_node(shader: Shader, mesh: Mesh) -> Dictionary:
@@ -266,6 +338,7 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"tail", minf(SLASH_TAIL, SLASH_TAIL_DEGREES / maxf(width_deg, 1.0)))
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep / feel.ink_life)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"opacity", feel.ink_opacity if ink_under else 0.0)
 
@@ -277,16 +350,87 @@ func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height
 	mi.rotation = Vector3(tilt, atan2(dir.x, dir.y), 0.0)
 
 
-## The star of a blow landing on someone. time: seconds it lasts (by default, quicker for smaller stars).
-func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -> void:
+## The cut a blow leaves on whoever it lands on: a short streak of length meters along axis (the way the blade was
+## moving there), a pale core in the blow's colour. cross: a second, thinner streak across it (a heavy blow).
+func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross: bool = false, time: float = 0.15) -> void:
 	var e: Dictionary = _take(_impacts)
 	(e.node as Node3D).position = pos
 	var mat: ShaderMaterial = e.mat
 	mat.set_shader_parameter(&"color", color)
-	mat.set_shader_parameter(&"seed", _rng.randf() * 100.0)
-	mat.set_shader_parameter(&"size", IMPACT_SIZE * size)
+	mat.set_shader_parameter(&"axis", axis.normalized() if axis.length_squared() > 0.0001 else Vector3.RIGHT)
+	mat.set_shader_parameter(&"size", length)
+	mat.set_shader_parameter(&"cross_cut", 1.0 if cross else 0.0)
 	mat.set_shader_parameter(&"life", 0.0)
-	e.time = time if time > 0.0 else 0.16 + 0.04 * size
+	e.time = time
+
+
+## A burst where something breaks (armor): two crossed cuts, upright. size 1 is IMPACT_SIZE meters across.
+func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -> void:
+	gash(pos, Vector3(_rng.randf_range(-0.4, 0.4), 1.0, 0.0), color, IMPACT_SIZE * size, true, time if time > 0.0 else 0.18)
+
+
+## A thrust: a thin beam from origin along dir, reach meters long and width meters across at its widest (what the
+## blow reaches), tapering to a point.
+func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Color, time: float = 0.2, height: float = 0.9) -> void:
+	var e: Dictionary = _take(_thrusts)
+	var mi: MeshInstance3D = e.node
+	var mid := origin + dir * reach * 0.5
+	mi.position = Vector3(mid.x, height, mid.y)
+	mi.rotation = Vector3(0.0, atan2(dir.x, dir.y), 0.0)
+	mi.scale = Vector3(width, 1.0, reach)
+	e.time = time
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"t", 0.0)
+	mat.set_shader_parameter(&"intensity", Feel.live().slash_intensity)
+
+
+## Small specks flying from pos along dir (meters per second at most; a third of that at least) within spread
+## radians of it: the magic a swing sheds, the chips of a blow landing. size in meters, life in
+## seconds, both at most. gold_every: one in so many is old gold instead of color (0: none).
+func chips(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float = 6.0, size: float = 0.1, life: float = 0.35, spread: float = 0.6, gold_every: int = 0) -> void:
+	var lit := Color(color.r * MOTE_GLOW, color.g * MOTE_GLOW, color.b * MOTE_GLOW)
+	var forward := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.UP
+	var side := forward.cross(Vector3.UP)
+	side = side.normalized() if side.length_squared() > 0.0001 else Vector3.RIGHT
+	var up := side.cross(forward)
+	for i in count:
+		if _mote_n >= MOTE_POOL:
+			return
+		var k := _mote_n
+		_mote_n += 1
+		var a := _rng.randf_range(-spread, spread)
+		var b := _rng.randf_range(-spread, spread) * 0.6
+		_mote_pos[k] = pos
+		_mote_vel[k] = (forward + side * tan(a) + up * tan(b)).normalized() * speed * _rng.randf_range(0.35, 1.0)
+		_mote_life[k] = 0.0
+		_mote_time[k] = life * _rng.randf_range(0.6, 1.0)
+		_mote_size[k] = size * _rng.randf_range(0.75, 1.0)
+		_mote_color[k] = OLD_GOLD if gold_every > 0 and i % gold_every == gold_every - 1 else lit
+
+
+## The blade answers a swing: its light rises for an instant (never a light on the room).
+func blade_pulse() -> void:
+	_pulse = 1.0
+
+
+## How many effects of a kind are on screen now (tests: nothing shows without a real hit).
+func showing(kind: StringName) -> int:
+	match kind:
+		&"motes":
+			return _mote_n
+		&"numbers":
+			var shown := 0
+			for n in _numbers:
+				if (n.label as Label).visible:
+					shown += 1
+			return shown
+	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"glints": _glints}
+	var count := 0
+	for e: Dictionary in pools.get(kind, []):
+		if (e.node as Node3D).visible:
+			count += 1
+	return count
 
 
 ## A finisher gathering light on the blade: a thin cross, a long streak and a ring that grow for hold seconds,
@@ -307,7 +451,7 @@ func glint(pos: Vector3, color: Color, hold: float, follow: Node3D = null) -> vo
 ## The wave of a finisher: a thin crescent of ink with a white edge that flies far past the blow and fades.
 func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, height: float = 0.7) -> void:
 	var e: Dictionary = _take(_crescents)
-	_place_arc(e, _arc(reach, width_deg, CRESCENT_INNER), origin, dir, height, 0.0)
+	_place_arc(e, _arc(minf(reach, CRESCENT_MAX_REACH), width_deg, CRESCENT_INNER), origin, dir, height, 0.0)
 	(e.node as Node3D).scale = Vector3.ONE
 	e.time = CRESCENT_TIME
 	var mat: ShaderMaterial = e.mat
@@ -328,8 +472,8 @@ func kick(dir: Vector2, amount: float) -> void:
 	_kick += Vector3(dir.x, 0, dir.y) * KICK_METERS * amount * shake_scale * Feel.live().kick_scale
 
 
-## A flat shockwave growing to radius.
-func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, height: float = 0.15) -> void:
+## A flat shockwave growing to radius. thin: only a fine line, nothing inside it.
+func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, height: float = 0.15, thin: bool = false) -> void:
 	var r: Dictionary = _take(_rings)
 	var mi: MeshInstance3D = r.node
 	mi.position = Vector3(center.x, height, center.y)
@@ -337,6 +481,8 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 	r.grow = 1.0
 	mi.scale = Vector3.ONE * radius * 0.3
 	(r.mat as ShaderMaterial).set_shader_parameter(&"color", color)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"band", 0.035 if thin else 0.08)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"fill", 0.0 if thin else 0.18)
 	r.time = time
 
 
@@ -351,12 +497,26 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 	b.time = time
 
 
+## A damage number over pos (the top of whoever took it). In a crowd only the biggest show (NUMBER_CROWD).
 func number(pos: Vector3, amount: float, color: Color, big: bool = false) -> void:
-	_text(pos, str(roundi(amount)), color, NUMBER_BIG if big else NUMBER_SIZE)
+	var at := pos + Vector3(0, NUMBER_LIFT, 0)
+	var near := 0
+	var least: Dictionary = {}
+	for n in _numbers:
+		if (n.label as Label).visible and n.amount >= 0.0 and n.life < NUMBER_CROWD_TIME \
+				and Vector2(n.pos.x - at.x, n.pos.z - at.z).length() < NUMBER_CROWD_RADIUS:
+			near += 1
+			if least.is_empty() or n.amount < least.amount:
+				least = n
+	if near >= NUMBER_CROWD:
+		if amount <= least.amount:
+			return
+		(least.label as Label).visible = false
+	_text(at, str(roundi(amount)), color, NUMBER_BIG if big else NUMBER_SIZE).amount = amount
 
 
 func word(pos: Vector3, text: String, color: Color) -> void:
-	_text(pos, text, color, WORD_SIZE)
+	_text(pos, text, color, WORD_SIZE).amount = -1.0
 
 
 func hit_stop(ms: float) -> void:
@@ -444,6 +604,12 @@ func animate(delta: float) -> void:
 		if (s.node as Node3D).visible:
 			_age(s, delta)
 			(s.mat as ShaderMaterial).set_shader_parameter(&"life", s.life)
+	for s in _thrusts:
+		if (s.node as Node3D).visible:
+			_age(s, delta)
+			(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)
+	_animate_motes(delta)
+	_animate_blade(delta)
 	for g in _glints:
 		if (g.node as Node3D).visible:
 			if freeze_t >= 0.0:
@@ -494,6 +660,49 @@ func animate(delta: float) -> void:
 		l.modulate.a = 1.0 - smoothstep(0.45, 0.75, n.life)
 
 
+func _animate_motes(delta: float) -> void:
+	if _mote_n == 0:
+		if _motes.visible_instance_count != 0:
+			_motes.visible_instance_count = 0
+		return
+	var i := 0
+	var drag := maxf(0.0, 1.0 - MOTE_DRAG * delta)
+	while i < _mote_n:
+		var life := _mote_life[i] + delta / _mote_time[i]
+		if life >= 1.0:
+			# the last one takes its place
+			_mote_n -= 1
+			_mote_pos[i] = _mote_pos[_mote_n]
+			_mote_vel[i] = _mote_vel[_mote_n]
+			_mote_life[i] = _mote_life[_mote_n]
+			_mote_time[i] = _mote_time[_mote_n]
+			_mote_size[i] = _mote_size[_mote_n]
+			_mote_color[i] = _mote_color[_mote_n]
+			continue
+		_mote_life[i] = life
+		var vel := _mote_vel[i] * drag - Vector3(0, MOTE_GRAVITY * delta, 0)
+		_mote_vel[i] = vel
+		_mote_pos[i] += vel * delta
+		var fade := 1.0 - life * life
+		_motes.set_instance_transform(i, Transform3D(Basis().scaled(Vector3.ONE * _mote_size[i] * (0.7 + 0.3 * fade)), _mote_pos[i]))
+		_motes.set_instance_color(i, _mote_color[i] * fade)
+		i += 1
+	_motes.visible_instance_count = _mote_n
+
+
+## The pulse of the blade falls back to its still light. The blade is looked for once: the sword EmethSword made
+## that lives in this game (the title screen has one of its own).
+func _animate_blade(delta: float) -> void:
+	if _pulse <= 0.0:
+		return
+	_pulse = maxf(0.0, _pulse - delta / BLADE_PULSE)
+	if not _blade_looked:
+		_blade_looked = true
+		_blade = EmethSword.blade_of(get_parent())
+	if _blade:
+		EmethSword.set_pulse(_blade, _pulse)
+
+
 func _age(e: Dictionary, delta: float) -> void:
 	e.life = minf(1.0, e.life + delta / maxf(e.time, 0.01))
 	if e.life >= 1.0:
@@ -513,7 +722,7 @@ func _take(pool: Array[Dictionary]) -> Dictionary:
 	return best
 
 
-func _text(pos: Vector3, text: String, color: Color, size: int) -> void:
+func _text(pos: Vector3, text: String, color: Color, size: int) -> Dictionary:
 	var best: Dictionary = _numbers[0]
 	for n in _numbers:
 		if not (n.label as Label).visible:
@@ -534,6 +743,7 @@ func _text(pos: Vector3, text: String, color: Color, size: int) -> void:
 		l.position = camera.unproject_position(best.pos) - l.get_combined_minimum_size() * 0.5
 	else:
 		l.visible = false
+	return best
 
 
 ## Ring sector mesh: UV.x along the swing, UV.y from the inner (inner_frac of reach) to the outer edge. Cached by size.

@@ -651,8 +651,8 @@ func _on_hit_player(amount: float, from: Vector2) -> void:
 
 ## An elite's or Morvath's armor broke: a stagger, and a moment to punish.
 func _on_armor_broken(e: Enemy) -> void:
+	# the gold shards of the break are EnemyFx's (one effect, not two)
 	fx.shake(3.0)
-	fx.impact(Vector3(e.pos.x, 1.6 * e.def.size, e.pos.y), Horde.ARMOR_COLOR, 2.6)
 	if boss and boss.e == e:
 		boss.break_armor()
 		return

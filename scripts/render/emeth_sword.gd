@@ -24,6 +24,11 @@ const GREEN := Color(0.08, 0.85, 0.27)
 ## How bright the blade's body is: under the WorldEnvironment glow threshold (Game.GLOW_THRESHOLD, after the
 ## exposure), so the blade keeps its shape.
 const BLADE_GLOW := 1.0
+## The most a swing lifts it to, for an instant (Fx.blade_pulse): past the threshold, so the blade answers the blow
+## without ever lighting the room (it is no light, only its own surface).
+const PULSE_GLOW := 1.6
+## The group the blade's mesh is in, so the effects find it.
+const GROUP := &"emeth_blade"
 ## The light edge down the middle of the blade, the only part that blooms: its colour, brightness, width and
 ## depth in meters (it stands a little out of both faces of the crystal) and the share of the blade it runs along.
 const CORE := Color(0.6, 1.0, 0.75)
@@ -50,6 +55,7 @@ static func make() -> MeshInstance3D:
 	mat.set_shader_parameter(&"blade_color", GREEN)
 	mat.set_shader_parameter(&"blade_glow", BLADE_GLOW)
 	blade.material_override = mat
+	blade.add_to_group(GROUP)
 	root.add_child(blade)
 	scene.free()
 	# the pale edge down the middle of the blade (in the model's space, under the blade)
@@ -66,6 +72,21 @@ static func make() -> MeshInstance3D:
 	core.material_override = light
 	blade.add_child(core)
 	return root
+
+
+## The blade's material of the sword that lives under a node (the game's own, not the title screen's); null if none.
+static func blade_of(under: Node) -> ShaderMaterial:
+	if under == null or not under.is_inside_tree():
+		return null
+	for n in under.get_tree().get_nodes_in_group(GROUP):
+		if under.is_ancestor_of(n):
+			return (n as MeshInstance3D).material_override as ShaderMaterial
+	return null
+
+
+## The pulse of a swing on a blade's material: k 1 lifts its light to PULSE_GLOW, 0 leaves it still.
+static func set_pulse(blade: ShaderMaterial, k: float) -> void:
+	blade.set_shader_parameter(&"pulse", (PULSE_GLOW - BLADE_GLOW) * clampf(k, 0.0, 1.0))
 
 
 ## The model's size in the sword's space: its blade and guard fill GRIP_TOP to TIP.

@@ -7,7 +7,7 @@ uniform vec4 color : source_color = vec4(1.0, 0.2, 0.1, 1.0);
 uniform float progress = 0.0;
 uniform int shape = 0;
 uniform float arc_half = 1.0;
-// 0 = warning (outline + filling), 1 = area (soft animated fill)
+// 0 = warning (outline + filling), 1 = area (soft animated fill), 2 = the paladin's circle of light (rim and marks)
 uniform int style = 0;
 uniform float strength = 1.0;
 uniform float fade = 1.0;
@@ -15,6 +15,9 @@ uniform float fade = 1.0;
 // in meters: the rim stays thin on big areas instead of growing with them. The area itself is the attack's.
 uniform float size_m = 1.0;
 uniform float rim_m = 0.28;
+// The paladin's circle (style 2): how much of its light fills the inside, and how many marks turn inside its rim.
+uniform float circle_veil = 0.02;
+uniform float circle_marks = 7.0;
 
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
 float noise(vec2 p) {
@@ -49,6 +52,16 @@ void fragment() {
 			float ring = smoothstep(1.0 - rim, 1.0 - rim * 0.3, d) * (1.0 - smoothstep(0.985, 1.0, d));
 			float fill = step(d, progress) * 0.38 + smoothstep(progress - 0.06, progress, d) * step(d, progress) * 0.6;
 			a = ring + fill + 0.06;
+		} else if (style == 2) {
+			// the paladin's circle of light: a veil thin enough for the floor to show through, read by its rim
+			// (a fine line of fixed width) and a few short marks turning slowly just inside it
+			float rim = clamp(rim_m * 0.5 / size_m, 0.012, 0.08);
+			float ring = smoothstep(1.0 - rim * 1.6, 1.0 - rim * 0.8, d) * (1.0 - smoothstep(1.0 - rim * 0.4, 1.0, d));
+			float turn = fract((atan(uv.y, uv.x) + TIME * 0.3) / 6.28318 * circle_marks);
+			float mark = smoothstep(0.0, 0.03, turn) * (1.0 - smoothstep(0.17, 0.2, turn));
+			float lane = 1.0 - rim * 4.5;
+			mark *= smoothstep(lane - rim * 1.1, lane - rim * 0.6, d) * (1.0 - smoothstep(lane + rim * 0.1, lane + rim * 0.6, d));
+			a = ring + mark * 0.55 + circle_veil * (0.6 + 0.4 * d);
 		} else {
 			float n = noise(uv * 4.0 + vec2(TIME * 0.7, -TIME * 0.5)) * 0.6 + noise(uv * 9.0 - TIME) * 0.4;
 			float edge = smoothstep(1.0 - clamp(rim_m * 2.0 / size_m, 0.06, 0.25), 1.0, d);

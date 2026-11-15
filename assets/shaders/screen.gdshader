@@ -23,7 +23,9 @@ uniform vec3 impact_light : source_color = vec3(1.0, 0.97, 0.92);
 void fragment() {
 	vec2 uv = SCREEN_UV;
 	vec2 from_center = uv - 0.5;
-	vec2 off = from_center * split * 0.012;
+	// the colour split only shows toward the edges: nothing within 30% of the height from the middle
+	float split_edge = smoothstep(0.3, 0.62, length(from_center * vec2(SCREEN_PIXEL_SIZE.y / SCREEN_PIXEL_SIZE.x, 1.0)));
+	vec2 off = from_center * split * 0.012 * split_edge;
 	vec3 c;
 	c.r = texture(screen, uv + off).r;
 	c.g = texture(screen, uv).g;

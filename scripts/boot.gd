@@ -114,6 +114,9 @@ func _close_sub() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _menu == null:
+		# a test switch is on its way to the run: there is no menu
+		return
 	if _sub and event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_close_sub()

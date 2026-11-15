@@ -10,7 +10,9 @@ uniform float life = 0.0;
 // Share of the life spent holding (the rest is the burst).
 uniform float hold = 0.6;
 uniform float size = 12.0;
-uniform float intensity = 3.2;
+uniform float intensity = 1.6;
+// The most the parts add up to at any point (before the intensity).
+uniform float max_light = 1.2;
 // Angle of the long streak, radians from the screen's horizontal.
 uniform float streak_angle = 0.35;
 // Reach of each part in units of the half quad (1 = its edge).
@@ -39,23 +41,27 @@ void fragment() {
 	float grow = mix(0.25, 1.0, charge) * (1.0 + burst * 0.6);
 	// a quick pulse while it gathers, a white flash at the instant of the blow
 	float pulse = 0.85 + 0.15 * sin(life * 70.0);
-	float flash = burst > 0.0 ? (1.0 - smoothstep(0.0, 0.35, burst)) * 1.6 : 0.0;
-	float fade = 1.0 - smoothstep(0.15, 1.0, burst);
+	float flash = burst > 0.0 ? (1.0 - smoothstep(0.0, 0.35, burst)) * 0.2 : 0.0;
+	float fade = 1.0 - smoothstep(0.0, 0.75, burst);
 
-	float cross = spike(p.y, p.x, spike_long * grow, 0.045) + spike(p.x, p.y, spike_short * grow, 0.035);
+	// (hairlines: at 13 m across, a wider spike is a ball of white over the paladin and whoever he strikes)
+	float cross = spike(p.y, p.x, spike_long * grow, 0.016) + spike(p.x, p.y, spike_short * grow, 0.013);
 	float c = cos(streak_angle);
 	float s = sin(streak_angle);
 	vec2 q = vec2(c * p.x + s * p.y, -s * p.x + c * p.y);
-	float streak = spike(q.x, q.y, streak_length * mix(0.35, 1.0, charge) * (1.0 + burst * 0.3), 0.012);
+	float streak = spike(q.x, q.y, streak_length * mix(0.35, 1.0, charge) * (1.0 + burst * 0.3), 0.008);
 	float r = length(p);
 	float ring_r = ring_radius * mix(0.6, 1.0, charge) + burst * 0.45;
 	float ring = (1.0 - smoothstep(0.0, 0.009 + burst * 0.01, abs(r - ring_r))) * (1.0 - burst);
-	float core = 1.0 - smoothstep(0.0, 0.05 * grow, r);
-	float halo = (1.0 - smoothstep(0.0, 0.3 * grow, r)) * 0.12;
+	float core = 1.0 - smoothstep(0.0, 0.018 * grow, r);
+	float halo = (1.0 - smoothstep(0.0, 0.3 * grow, r)) * 0.06;
 	// a soft smear of light along the streak
-	float smear = exp(-q.y * q.y * 900.0) * (1.0 - smoothstep(0.0, 0.8, abs(q.x))) * 0.35;
+	float smear = exp(-q.y * q.y * 2500.0) * (1.0 - smoothstep(0.0, 0.8, abs(q.x))) * 0.25;
 
-	float v = (cross * 1.2 + streak * 0.9 + ring * 0.9 + core * 1.5 + halo + smear) * pulse * (1.0 + flash) * fade;
-	vec3 tint = mix(color.rgb, vec3(1.0), 0.65);
+	// where the cross, the streak and the core meet they must not add up to a ball of white over the paladin:
+	// the middle is never brighter than one of the lines
+	float v = min(cross * 1.2 + streak * 0.9 + ring * 0.9 + core * 1.0 + halo + smear, max_light) * pulse * (1.0 + flash) * fade;
+	// the blow's colour, pale but never white: the paladin behind it must still read
+	vec3 tint = mix(color.rgb, vec3(1.0), 0.35);
 	ALBEDO = tint * v * intensity * mix(0.5, 1.0, charge);
 }
