@@ -166,13 +166,14 @@ func _build_world() -> void:
 	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	e.tonemap_exposure = EXPOSURE
 	e.glow_enabled = true
-	e.glow_intensity = 0.45
+	e.glow_intensity = GLOW_INTENSITY
 	e.glow_strength = 1.0
 	e.glow_bloom = 0.03
-	e.glow_hdr_threshold = 1.1
+	e.glow_hdr_threshold = GLOW_THRESHOLD
 	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
+	# the fires and the portal keep their shape: the widest level only a little, so no big halo washes the stone
 	for i in 7:
-		e.set_glow_level(i, 1.0 if i in [1, 2, 3, 4] else 0.0)
+		e.set_glow_level(i, GLOW_LEVELS[i])
 	# haze only past the hall (by depth from the camera), and a height fog filling the abyss below the floor: the
 	# depths turn to teal mist, the hall itself stays clear
 	e.fog_enabled = true
@@ -194,8 +195,9 @@ func _build_world() -> void:
 	e.volumetric_fog_length = 90.0
 	e.volumetric_fog_ambient_inject = 0.0
 	e.ssao_enabled = true
-	e.ssao_radius = 1.4
-	e.ssao_intensity = 2.2
+	e.ssao_radius = SSAO_RADIUS
+	e.ssao_intensity = SSAO_INTENSITY
+	e.ssao_light_affect = SSAO_LIGHT_AFFECT
 	e.ssr_enabled = true
 	e.ssr_max_steps = 48
 	e.adjustment_enabled = true
@@ -786,7 +788,7 @@ const COMPAT_AMBIENT := 0.4
 ## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
 const SKY := Color(0.07, 0.28, 0.31)
 const AMBIENT := Color(0.3, 0.45, 0.5)
-const AMBIENT_ENERGY := 0.65
+const AMBIENT_ENERGY := 0.85
 const EXPOSURE := 1.25
 const FOG := Color(0.07, 0.28, 0.31)
 const FOG_BEGIN := 64.0
@@ -794,6 +796,15 @@ const FOG_END := 170.0
 const FOG_HEIGHT := -3.0
 const FOG_HEIGHT_DENSITY := 0.6
 const VOLUMETRIC_DENSITY := 0.0
+## Glow: only colours over the threshold bloom (blades and slashes go past 2, fire tongues stay under 2), weight of
+## each glow level (the widest, 4, kept low so fires and the portal have no big halo).
+const GLOW_INTENSITY := 0.45
+const GLOW_THRESHOLD := 1.3
+const GLOW_LEVELS: Array[float] = [0.0, 1.0, 1.0, 1.0, 0.3, 0.0, 0.0]
+## Contact shadows (desktop): corners and the feet of every piece dark, also where light falls.
+const SSAO_RADIUS := 1.0
+const SSAO_INTENSITY := 3.0
+const SSAO_LIGHT_AFFECT := 0.2
 var _charge_zoom := 0.0
 ## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
 var _cam_last := Vector2.ZERO

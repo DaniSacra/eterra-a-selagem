@@ -1,0 +1,7 @@
+Rock Surface (rock_surface), by Amal Kumar, Poly Haven.
+Source: https://polyhaven.com/a/rock_surface
+Files: rock_surface_nor_gl_1k.jpg (normal map, OpenGL), rock_surface_disp_1k.jpg (displacement), 1K JPG,
+downloaded from https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/rock_surface/ on 2026-11-14.
+License: CC0 1.0 Universal (public domain dedication), as stated on the asset page and on
+https://polyhaven.com/license. No attribution required; credited anyway in docs/art/asset_credits.md.
+Not AI-generated.

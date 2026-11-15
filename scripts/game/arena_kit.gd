@@ -13,6 +13,8 @@ const CROWD_LAYER := 2
 ## lights of the hall leave them out (WARM_MASK), so the depths stay cold and dark against their mist.
 const DEPTH_LAYER := 4
 const WARM_MASK := ~(CROWD_LAYER | DEPTH_LAYER)
+## The facade and the statues by the portal: the portal's spill down the steps leaves them out (it would turn them green).
+const FACADE_LAYER := 8
 ## The palette of the catacombs.
 const STONE_DARK := Color(0.07, 0.09, 0.12)
 const FIRE := Color(1.0, 0.58, 0.25)
@@ -40,22 +42,39 @@ const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "ba
 const BRAZIER_PEDESTAL := 0.9
 const BRAZIER_BOWL := Vector3(0.65, 0.35, 0.45)
 const BRAZIER_RIM := 0.06
-const BRAZIER_FIRE := Vector3(0.6, 30, 0.36)
+const BRAZIER_FIRE := Vector3(0.6, 36, 0.4)
 const BRAZIER_FIRE_LIFE := 0.8
 const BRAZIER_RADIUS := 0.6
 const BRONZE := Color(0.2, 0.13, 0.07)
-## A fire's tongue at its hottest (the colour ramp takes it to orange and out).
-const FLAME := Color(2.4, 1.5, 0.6)
-const BRAZIER_LIGHT := 3.5
+## A fire's tongue at its hottest (the colour ramp takes it to orange and out), and the white-gold heart of the inner
+## tongues; both stay under 2 so the glow only softens them and the tongues keep their shape.
+const FLAME := Color(1.9, 1.15, 0.42)
+const FLAME_HEART := Color(1.8, 1.6, 1.0)
+## A tongue's size (width, height) as shares of the fire's tongue size; the inner tongues' share of that.
+const TONGUE := Vector2(0.75, 1.7)
+const HEART := 0.6
+## The coals in the bowl and the rim of bronze lit from inside by them (so it reads against the flame).
+const COALS := Color(1.4, 0.45, 0.1)
+const RIM_GLOW := Color(0.9, 0.4, 0.12)
+const RIM_GLOW_ENERGY := 0.6
+const BRAZIER_LIGHT := 4.5
 const BRAZIER_RANGE := 10.0
 const BRAZIER_ATTENUATION := 1.3
 const BRAZIER_COLOR := Color(1.0, 0.68, 0.42)
+## The floor round a fire bowl's foot is wet (it mirrors the fire): from this radius it dries, by that one it is dry.
+## At most WET_SPOTS of them (the floor shader's array).
+const BRAZIER_WET := Vector2(1.5, 3.0)
+const WET_SPOTS := 8
 ## A portal's glow and light while closed and open (a closed portal still glows: the room's green accent).
-const PORTAL_DIM := 2.0
-const PORTAL_OPEN := 2.8
-const PORTAL_LIGHT_DIM := 4.0
-const PORTAL_LIGHT := 5.5
-const PORTAL_RANGE := 9.0
+const PORTAL_DIM := 1.5
+const PORTAL_OPEN := 2.0
+const PORTAL_LIGHT_DIM := 2.5
+const PORTAL_LIGHT := 3.5
+const PORTAL_RANGE := 5.5
+## Where the portal's light hangs in front of its sheet (m), and two small lights on the doorway's inner faces
+## (energy at full light, range).
+const PORTAL_LIGHT_AHEAD := 1.2
+const PORTAL_SIDE := Vector2(1.5, 2.5)
 ## The medallion reads by its value, not by light (the picture's does not glow).
 const MEDALLION_GLOW := 0.1
 ## A statue's plinth height, as a share of the statue's.
@@ -63,7 +82,10 @@ const STATUE_PLINTH := 0.1
 ## Chains: meters between two links, and the links' size.
 const LINK_GAP := 0.32
 const LINK_SIZE := 0.2
+const LINK_WIRE := 0.12
 const LINK_STRETCH := 1.6
+## The iron's faint cold rim against the mist.
+const CHAIN_RIM := 0.25
 
 var root: Node3D
 var rng := RandomNumberGenerator.new()
@@ -77,8 +99,13 @@ var masonry: Masonry
 var _meshes := {}
 var _glow_mats := {}
 var _bronze_mat: StandardMaterial3D
+var _rim_mat: StandardMaterial3D
+var _iron: StandardMaterial3D
 ## A rectangle of floor (x, z) the floor plates keep wet (in front of the portal).
 var wet_zone := Rect2()
+## The floors' materials and the wet rings round the fire bowls on them (x, z, radius where it starts drying, dry).
+var _floors: Array[ShaderMaterial] = []
+var _wet_spots := PackedVector4Array()
 
 
 func _init(parent: Node3D, seed_: int) -> void:
@@ -142,7 +169,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	torus.rings = 16
 	torus.ring_segments = 6
 	rim.mesh = torus
-	rim.material_override = _bronze()
+	rim.material_override = _rim()
 	rim.position = base + Vector3(0, foot + BRAZIER_BOWL.z, 0)
 	root.add_child(rim)
 	var coals := MeshInstance3D.new()
@@ -151,7 +178,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	disc.bottom_radius = BRAZIER_BOWL.x - 0.08
 	disc.height = 0.04
 	coals.mesh = disc
-	coals.material_override = _glow(Color(2.4, 0.7, 0.15))
+	coals.material_override = _glow(COALS)
 	coals.position = base + Vector3(0, foot + BRAZIER_BOWL.z - 0.06, 0)
 	root.add_child(coals)
 	fire(base + Vector3(0, foot + BRAZIER_BOWL.z - 0.02, 0), BRAZIER_FIRE.x, int(BRAZIER_FIRE.y), BRAZIER_FIRE.z, BRAZIER_FIRE_LIFE)
@@ -166,34 +193,17 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	root.add_child(l)
 	if solid:
 		circles.append(Vector3(at.x, at.y, BRAZIER_RADIUS))
+	if _wet_spots.size() < WET_SPOTS:
+		_wet_spots.append(Vector4(at.x, at.y, BRAZIER_WET.x, BRAZIER_WET.y))
+		for f in _floors:
+			_wet(f)
 
 
-## Flames rising from a point: radius of the fire, how many tongues, the size of a tongue, how long one lives.
+## Flames rising from a point: radius of the fire, how many tongues, the size of a tongue, how long one lives. Upright
+## tongues (pointed, ArenaKit.tongue) in orange round a smaller white-gold heart, and embers drifting up.
 func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) -> void:
-	var f := CPUParticles3D.new()
-	f.position = at
-	f.amount = amount
-	f.lifetime = life
-	f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	f.emission_sphere_radius = radius * 0.6
-	f.direction = Vector3.UP
-	f.spread = 10.0
-	f.initial_velocity_min = 1.0
-	f.initial_velocity_max = 1.9
-	f.gravity = Vector3(0, 1.2, 0)
-	f.scale_amount_min = 0.6
-	f.scale_amount_max = 1.2
-	# each tongue narrows as it rises, from a white-gold heart to an orange edge
-	var taper := Curve.new()
-	taper.add_point(Vector2(0, 1))
-	taper.add_point(Vector2(1, 0.25))
-	f.scale_amount_curve = taper
-	f.mesh = Fx.quad(tongue, FLAME)
-	var ramp := Gradient.new()
-	ramp.offsets = PackedFloat32Array([0.0, 0.35, 1.0])
-	ramp.colors = PackedColorArray([Color(1.0, 1.0, 0.9, 1.0), Color(1.0, 0.6, 0.35, 0.9), Color(0.8, 0.25, 0.1, 0.0)])
-	f.color_ramp = ramp
-	root.add_child(f)
+	_flames(at, radius, amount, tongue, life, FLAME, Color(1.0, 0.75, 0.45, 1.0))
+	_flames(at, radius * 0.45, maxi(3, roundi(amount / 3.0)), tongue * HEART, life * 0.8, FLAME_HEART, Color(1.0, 0.95, 0.8, 1.0))
 	# embers drifting up out of it
 	var e := CPUParticles3D.new()
 	e.position = at
@@ -206,16 +216,84 @@ func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) 
 	e.initial_velocity_min = 0.7
 	e.initial_velocity_max = 1.4
 	e.gravity = Vector3(0.2, 0.3, 0)
-	e.mesh = Fx.quad(0.06, Color(4.0, 1.6, 0.4))
+	e.mesh = Fx.quad(0.05, Color(1.8, 0.8, 0.3))
 	e.color_ramp = Fx.fade_ramp(Color(1, 1, 1, 1))
 	root.add_child(e)
+
+
+func _flames(at: Vector3, radius: float, amount: int, size: float, life: float, color: Color, hot: Color) -> void:
+	var f := CPUParticles3D.new()
+	f.position = at
+	f.amount = amount
+	f.lifetime = life
+	f.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	f.emission_sphere_radius = radius * 0.6
+	f.direction = Vector3.UP
+	f.spread = 8.0
+	f.initial_velocity_min = 0.5
+	f.initial_velocity_max = 1.1
+	f.gravity = Vector3(0, 0.8, 0)
+	f.scale_amount_min = 0.7
+	f.scale_amount_max = 1.2
+	# each tongue narrows as it rises, from its hot colour to an orange edge and out
+	var taper := Curve.new()
+	taper.add_point(Vector2(0, 0.6))
+	taper.add_point(Vector2(0.3, 1.0))
+	taper.add_point(Vector2(1, 0.2))
+	f.scale_amount_curve = taper
+	f.mesh = tongue(Vector2(TONGUE.x, TONGUE.y) * size, color)
+	var ramp := Gradient.new()
+	ramp.offsets = PackedFloat32Array([0.0, 0.4, 1.0])
+	ramp.colors = PackedColorArray([hot, Color(1.0, 0.55, 0.3, 0.8), Color(0.8, 0.25, 0.1, 0.0)])
+	f.color_ramp = ramp
+	root.add_child(f)
+
+
+static var _tongue_tex: ImageTexture
+
+## A flame's tongue: an upright card (turning round Y to the camera) with a pointed, round-bottomed shape, its colour
+## added on top (HDR, so the core blooms a little). size: width and height in meters.
+static func tongue(size: Vector2, color: Color) -> QuadMesh:
+	if _tongue_tex == null:
+		var w := 32
+		var h := 64
+		var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+		for y in h:
+			var v := 1.0 - (y + 0.5) / h
+			# the radius of the tongue at height v: round at the foot, widest low, a long point
+			var r := 0.95 * pow(1.0 - v, 0.85) * sqrt(clampf(v / 0.22, 0.0, 1.0))
+			for x in w:
+				var u := absf((x + 0.5) / w * 2.0 - 1.0)
+				var a := clampf((r - u) / maxf(r * 0.55, 0.02), 0.0, 1.0)
+				# brighter in the middle and low down
+				var core := clampf(1.0 - u / maxf(r, 0.01), 0.0, 1.0) * (1.0 - v * 0.5)
+				img.set_pixel(x, y, Color(1, 1, 1, a * (0.55 + 0.45 * core)))
+		_tongue_tex = ImageTexture.create_from_image(img)
+	var q := QuadMesh.new()
+	q.size = size
+	q.center_offset = Vector3(0, size.y * 0.35, 0)
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
+	m.billboard_keep_scale = true
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.vertex_color_use_as_albedo = true
+	m.albedo_color = color
+	m.albedo_texture = _tongue_tex
+	m.disable_receive_shadows = true
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	q.material = m
+	return q
 
 
 ## A hooded figure carved in stone (Masonry.hooded_statue), standing on a plinth. height: of the figure, in meters;
 ## y: the ground under the plinth; tint: the stone's colour (green near a portal); solid: it blocks the way.
 func statue(at: Vector2, yaw: float, height: float = 4.2, y: float = 0.0, tint := Color(0.25, 0.27, 0.31), solid := true) -> void:
 	var plinth := STATUE_PLINTH * height
-	masonry.block(Vector3(at.x, y, at.y), Vector3(1.0, 0.0, 1.0) * height * 0.5 + Vector3(0, plinth, 0), yaw)
+	# a carved base of two bevelled steps
+	var low := Masonry.BASE_STEPS.x * height
+	masonry.block(Vector3(at.x, y, at.y), Vector3(1.0, 0.0, 1.0) * height * 0.56 + Vector3(0, low, 0), yaw)
+	masonry.block(Vector3(at.x, y + low, at.y), Vector3(1.0, 0.0, 1.0) * height * 0.48 + Vector3(0, plinth - low, 0), yaw)
 	masonry.hooded_statue(Vector3(at.x, y + plinth, at.y), yaw, height, tint)
 	if solid:
 		circles.append(Vector3(at.x, at.y, height * 0.25))
@@ -227,7 +305,7 @@ func chain(a: Vector3, b: Vector3, sag: float, size: float = 1.0) -> void:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	var torus := TorusMesh.new()
-	torus.inner_radius = LINK_SIZE * size * 0.55
+	torus.inner_radius = maxf(LINK_SIZE * size - LINK_WIRE * size * 0.5, LINK_SIZE * size * 0.2)
 	torus.outer_radius = LINK_SIZE * size
 	torus.rings = 8
 	torus.ring_segments = 6
@@ -248,7 +326,12 @@ func chain(a: Vector3, b: Vector3, sag: float, size: float = 1.0) -> void:
 		mm.set_instance_transform(i, Transform3D(basis, p))
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
-	mmi.material_override = _plain(METAL, 0.45)
+	if _iron == null:
+		_iron = _plain(METAL, 0.45)
+		_iron.rim_enabled = true
+		_iron.rim = CHAIN_RIM
+		_iron.rim_tint = 0.2
+	mmi.material_override = _iron
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mmi)
 
@@ -269,18 +352,29 @@ func portal_glow(center: Vector3, yaw: float, size: Vector2) -> void:
 	m.shader = preload("res://assets/shaders/portal.gdshader")
 	m.set_shader_parameter(&"color", PORTAL_SHEET)
 	m.set_shader_parameter(&"power", PORTAL_DIM)
+	m.set_shader_parameter(&"size", size)
 	sheet.material_override = m
 	sheet.transform = Transform3D(Basis(Vector3.UP, yaw), center)
 	root.add_child(sheet)
 	var l := OmniLight3D.new()
-	l.position = center + Basis(Vector3.UP, yaw) * Vector3(0, 0.3, 2.2)
+	l.position = center + Basis(Vector3.UP, yaw) * Vector3(0, 0.3, PORTAL_LIGHT_AHEAD)
 	l.light_color = PORTAL
 	l.light_energy = PORTAL_LIGHT_DIM
 	l.omni_range = PORTAL_RANGE
 	l.omni_attenuation = 1.2
 	l.light_cull_mask = WARM_MASK
 	root.add_child(l)
-	portals.append([m, l])
+	var entry: Array = [m, l]
+	for s: float in [-1.0, 1.0]:
+		var side := OmniLight3D.new()
+		side.position = center + Basis(Vector3.UP, yaw) * Vector3(s * (size.x * 0.5 - 0.4), -size.y * 0.15, 0.8)
+		side.light_color = PORTAL
+		side.light_energy = PORTAL_SIDE.x * PORTAL_LIGHT_DIM / PORTAL_LIGHT
+		side.omni_range = PORTAL_SIDE.y
+		side.light_cull_mask = WARM_MASK
+		root.add_child(side)
+		entry.append(side)
+	portals.append(entry)
 
 
 ## Lights or dims a portal (open: the room is cleared and its reward waits behind it).
@@ -292,6 +386,10 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 	var l: OmniLight3D = portals[i][1]
 	l.light_color = tint
 	l.light_energy = PORTAL_LIGHT if on else PORTAL_LIGHT_DIM
+	for k in range(2, portals[i].size()):
+		var side: OmniLight3D = portals[i][k]
+		side.light_color = tint
+		side.light_energy = PORTAL_SIDE.x * (1.0 if on else PORTAL_LIGHT_DIM / PORTAL_LIGHT)
 
 
 ## Violet light glowing up out of the abyss: an upright card facing the camera's way (yaw), its foot at `foot`.
@@ -309,6 +407,25 @@ func abyss_glow(foot: Vector3, size: Vector2, yaw: float, energy := ABYSS_GLOW_E
 	card.material_override = _glow_mats[energy]
 	card.transform = Transform3D(Basis(Vector3.UP, yaw), foot + Vector3(0, size.y * 0.5, 0))
 	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	card.extra_cull_margin = maxf(size.x, size.y)
+	root.add_child(card)
+
+
+## A bank of pale mist in the abyss (abyss_mist.gdshader): a wide low card turning to the camera, its middle at
+## `center`, ragged at its edges.
+func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float) -> void:
+	var card := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = size
+	card.mesh = q
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://assets/shaders/abyss_mist.gdshader")
+	m.set_shader_parameter(&"color", color)
+	m.set_shader_parameter(&"alpha", alpha)
+	card.material_override = m
+	card.position = center
+	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	card.extra_cull_margin = maxf(size.x, size.y)
 	root.add_child(card)
 
 
@@ -406,6 +523,10 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 	# the rose's long points run across the screen, as in the picture
 	m.set_shader_parameter(&"rose_turn", deg_to_rad(Feel.live().cam_yaw))
 	m.set_shader_parameter(&"calm_radius", minf(size.x, size.y) * 0.32)
+	m.set_shader_parameter(&"rock_normal", Masonry.ROCK_NORMAL)
+	m.set_shader_parameter(&"rock_height", Masonry.ROCK_HEIGHT)
+	_floors.append(m)
+	_wet(m)
 	var nx := maxi(1, ceili(size.x / 8.0))
 	var nz := maxi(1, ceili(size.y / 8.0))
 	var pm := PlaneMesh.new()
@@ -419,8 +540,26 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 			root.add_child(mi)
 
 
+func _wet(m: ShaderMaterial) -> void:
+	var spots := _wet_spots.duplicate()
+	spots.resize(WET_SPOTS)
+	m.set_shader_parameter(&"wet_spots", spots)
+	m.set_shader_parameter(&"wet_spot_count", _wet_spots.size())
+
+
 func _stone(_m: Material) -> Material:
 	return masonry.stone()
+
+
+## The bowl's rim: bronze lit warm from inside by the coals.
+func _rim() -> StandardMaterial3D:
+	if _rim_mat == null:
+		_rim_mat = _plain(BRONZE * 1.6, 0.4)
+		_rim_mat.metallic = 0.7
+		_rim_mat.emission_enabled = true
+		_rim_mat.emission = RIM_GLOW
+		_rim_mat.emission_energy_multiplier = RIM_GLOW_ENERGY
+	return _rim_mat
 
 
 func _bronze() -> StandardMaterial3D:

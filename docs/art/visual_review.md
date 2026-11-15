@@ -96,3 +96,114 @@ Critérios e métricas da arena: `docs/art/arena_reference.md`, seção "Critér
   um borrão de brilho atrás do entulho; potes pequenos na tela perto da pintura; estandartes (P1-9), manchas
   vermelhas (P2) e multidão (P1-10) não foram tocados; composição do lado esquerdo baixo (a pintura tem abismo onde
   o jogo tem o patamar) é da planta da sala, não do cenário.
+
+## 2026-11-14 (noite): ciclo 4, diagnóstico
+
+- Pedido do Daniel: "ainda distante da qualidade visual desejada"; meta `docs/art/ref/arena_catacumbas_1672.png`.
+- Capturas: `ad_vitrine`, `ad_luta` (9 s) e `ad_luta14` (Vulkan, 1672 x 941, `--seed=5`) e recortes `ref_*` / `g_*`
+  no scratchpad da sessão; a captura do Daniel (1901 x 1010, sala 1) descrita pelo Game Director confirma o mesmo.
+- Achado: as oito métricas globais do ciclo 3 estão na faixa, mas a imagem não lê como a pintura. A distância agora
+  é de forma, material e forma da luz: medida nova de detalhe (laplaciano) fica de 1,5x a 9x abaixo da pintura na
+  fachada, no miolo do portal, nas estátuas, no braseiro, no chão e no abismo; o verde cobre 49% da fachada (ref 13%)
+  e 63% das estátuas do portal (ref 10%); o halo quente do braseiro leste é o dobro. `abyss_left_cols` (#26215d)
+  reprova o aceite P0-2 que o ciclo 3 não mediu.
+- Mais perceptível: herói dourado translúcido (suspeita: passe de raio X aditivo sem teste de profundidade sobre o
+  corpo todo), multidão de gesso sem preto interno nem sombra, portal retângulo liso lavando a fachada de verde,
+  fogo em bolhas de glow, cantaria de tijolos regulares e caixas sem chanfro, chão com fileiras contínuas.
+- Especificação completa, valores, donos e aceite: `docs/art/cycle4_spec.md`.
+- Veredito: não aprovado para teste do Daniel.
+
+## 2026-11-15 (madrugada): ciclo 4, implementação (Environment Artist)
+
+Capturas (Vulkan, 1672 x 941, `--seed=5`) no scratchpad da sessão, pasta `env4/`: `v0.png` (início do ciclo) a
+`v9.png` (final, vitrine), `l4.png`, `l7.png` e `l9.png` (luta, 9 s), `o8.png` (navegador, `DRIVER=opengl3`);
+recortes lado a lado `c_*.png` (pintura à esquerda). Medidas com `tools/art_metrics.py` e o script de estudo do Art
+Director (regiões do aceite (e)).
+
+| Medida (vitrine) | Pintura | Início (v0) | Final (v9) | Meta |
+|---|---|---|---|---|
+| Verde na fachada | 13% | 49% | 17% | <= 20% ok |
+| sd do miolo do portal | 64 | 9 | 38 | >= 35 ok |
+| Mediana do portal (L; G - R) | 195; 198 | 173; 86 | 158; 152 | >= 150; >= 120 ok |
+| Verde nas estátuas do portal | 10% | 63% | 4% | <= 25% ok |
+| Detalhe da fachada | 13,3 | 6,3 | 11,1 | >= 9 ok |
+| Detalhe da fachada à direita | 9,8 | 5,8 | 6,8 | >= 7 falta pouco |
+| Detalhe das estátuas do portal | 15,1 | 6,4 | 8,9 | >= 10 não |
+| Halo quente no braseiro leste | 13,6% | 28% | 14% | <= 16% ok |
+| Detalhe no braseiro leste | 13,5 | 4,9 | 10,1 | >= 9 ok |
+| Detalhe do chão | 10,9 | 5,1 | 7,6 | >= 8,5 não |
+| sd do chão ao fundo | 33 | 17 | 19 | >= 25 não |
+| `abyss_left_cols` mediana (G - R; B - R) | 23; 61 | -5; 41 | 44; 53 | >= 20; >= 25 ok |
+| Detalhe `abyss_left_cols` | 5,6 | 2,7 | 3,3 | >= 4,5 não |
+| Detalhe do obelisco sul | 6,8 | 5,8 | 8,5 | >= 6,5 ok |
+| Globais p1 / p5 / p50 | 7 / 14 / 46 | 2 / 9 / 49 | 2 / 9 / 47 | 4-10 / 10-16 / 42-50 (p1, p5 baixos, como antes) |
+| Globais p95 / p99 | 116 / 201 | 139 / 188 | 110 / 166 | >= 105 / >= 170 (p99 caiu com o fim do estouro) |
+| Pixels < 20 | 13% | 16% | 18% | 9% a 17% (um ponto acima) |
+| Chão azul dominante | 54% | 50% | 56% | 40% a 65% ok |
+| Quentes estourados | 0,9% | 1,2% | 0,5% | >= 0,7% não (o estouro saiu com o glow) |
+| Violeta esquerda / direita | 11% / 4,9% | 8,5% / 3,6% | 7,4% / 0,1% | >= 6% / >= 3% (direita não) |
+| Verde do portal no chão | 13% | 13,9% | 13,4% | >= 8% ok |
+| `stairs` mediana | #136462 | #1c5f1f | #0a4a4b | #0f5050 a #1a7068 (no limite) |
+
+O que mudou, por área:
+- Luz (B5): glow com limiar 1,3 e o nível mais largo a 0,3 (`Game.GLOW_*`), SSAO 3,0 / raio 1,0 / 0,2 na luz direta
+  (`Game.SSAO_*`), ambiente 0,65 para 0,85 (o SSAO mais forte escurecia tudo). Fogo em línguas de verdade: cartão em
+  gota pontuda que gira em Y (`ArenaKit.tongue`), línguas laranja em volta de um miolo branco-ouro (`FLAME`,
+  `FLAME_HEART`, cores abaixo de 2), aro de bronze aceso por dentro (`RIM_GLOW`), brasas menos estouradas; velas na
+  mesma forma, halo 0,5 a 35%. O braseiro lê como bacia com chama em línguas (recorte `c_se8.png`).
+- Portal (B1): pórtico que avança 1,6 m da parede (`PORTAL_PORCH`; com o vão fundo dentro da parede o portal saía
+  35 px alto e 25 px à direita da pintura; agora vão em x 1265 a 1374), quatro ordens de aduelas separadas em arco
+  quebrado (`Masonry.voussoir_arch`, raio 0,8 do vão), colunelos com base e capitel, véu 2,2 m atrás da ordem de fora
+  com degradê, bordas escuras, fiapos subindo e duas manchas claras no pé (`portal.gdshader`), pendentes escuros
+  serrilhados em duas peças (o do meio com 2,3 m), tímpano recuado com a janela em losango com moldura e cruz de
+  pedra, gablete de 60 graus, pináculos com ganchos nos contrafortes ao lado. Luz verde: omni de alcance 5,5 dentro do
+  pórtico mais duas pequenas nas faces internas; o foco da escada não acende mais a fachada nem as estátuas
+  (`ArenaKit.FACADE_LAYER`), virou verde-petróleo e abriu para 60 graus (os degraus pegam o verde como na pintura).
+- Fachada (B2): cantaria grande e irregular (`Masonry.ashlar`: fiadas de 0,9 a 1,4 m, blocos de 1,2 a 2,6 m, lascas
+  nos cantos, tom petróleo), plinto, duas cornijas, nichos ogivais cegos e janelas altas com mainel, e uma luz fria
+  rasante só na fachada (`FACADE_FILL`) para as pedras e as estátuas lerem petróleo escuro, nunca pretas.
+- Pedra (B0): toda caixa de `Masonry` é chanfrada (`bevel_mesh`, 0,06 m e 0,1 m nos blocos grandes), as pequenas com
+  giro de até 1,5 grau, tamanho de 96% a 100% e 30% com um canto lascado; o shader acende o chanfro de cima (1,45) e
+  o do lado da luz (1,15), escurece juntas e lascas; obeliscos com rachaduras verticais e moldura no nicho. A normal
+  por `dFdx` saiu (era o serrilhado dos degraus). Relevo de pedra real CC0 (Poly Haven "Rock Surface", só normal e
+  altura, sob a nossa cor; `docs/art/asset_credits.md`).
+- Chão (B3): as duas faixas escuras retas eram um defeito do `stones()` antigo (quando a borda de cima de uma fileira
+  caía abaixo da linha inteira, a faixa entre as duas virava junta preta de ponta a ponta), não sombra. Chão novo em
+  amarelinha (lajes de 2,4 m e 1,2 m, 30% das grandes partidas em duas e 10% em três; nenhuma junta reta passa de
+  3,6 m), cantos arredondados, borda tremida por laje, valor e tom por laje, inclinação de até 3 graus e chanfro com
+  normal analítica, cantos faltando com cascalho, lascas, rachaduras em 25%, pétalas vermelhas raras; molhado só em
+  frente ao portal e num anel em volta de cada braseiro (`ArenaKit.BRAZIER_WET`).
+- Medalhão (B4): faixa larga em relevo, mais clara, com volutas em S em sulco, pontas cheias com metade clara e
+  metade escura e uma crista no meio, sulco escuro com fio de ouro velho sem emissão; as juntas passam por baixo a 40%.
+- Abismo (B7): quatro planos (o último com pilares quebrados), fileira da frente mais alta e fina com arcos acima do
+  chão, aqueduto sobre os capitéis, faixas nos fustes, aresta fria só no topo, pedra mais escura e petróleo; bancos de
+  bruma clara entre os planos (`abyss_mist.gdshader`); cartões violetas viram para a câmera real e têm borda de
+  ruído, do -10 ao 0 (sem faixa violeta acima disso); lanterna como janela ogival de vidro em degradê com moldura e
+  halo pequeno. Luzes violeta em -12.
+- Estátuas e correntes (B6): pregas mais fundas até o peito, cinto, mangas largas sobre as mãos, máscara clara no
+  capuz escuro, base em dois degraus, ruído menos contrastado e rim 0,15; gigante mais escura; elos de corrente mais
+  grossos com um rim frio.
+- Desempenho: a pedra estática é juntada por material, camada e quadrado de 8 m depois de montada
+  (`Masonry.merge`): a sala de três portas passou de 1043 malhas (antes do ciclo) para 300; luzes 18 omni + 4 com
+  sombra + 2 spots para 20 omni + 4 com sombra + 3 spots (nenhuma luz com sombra nova); partículas 10 para 14.
+
+O que ainda difere da pintura (honesto):
+- Estátuas: continuam bonecos de revolução; leem como vulto encapuzado com pregas, sem rosto, mãos nem dobras
+  esculpidas (detalhe 8,9 contra 15). Precisa de modelo.
+- Chão: mais vivo, mas ainda mais uniforme e mais "contornado" que a pintura (detalhe 7,6 contra 10,9); falta a
+  pincelada fina e o brilho de borda das lajes.
+- Abismo: a esquerda tem planos e violeta embaixo, mas a arquitetura é de caixas (detalhe 3,3 contra 5,6); a direita
+  de baixo é ocupada pela escada leste (planta), então o violeta da direita sumiu (0,1%).
+- Quentes estourados caíram de 1,2% para 0,5% com o fim dos halos; a pintura tem 0,9% em chamas com forma. Mais
+  línguas e velas maiores ajudaram pouco.
+- Portal: lê como arco fundo com ordens, pendentes e janela, mas as ordens se separam pouco (falta sombra entre elas)
+  e a ponta da ogiva sai do quadro.
+- Estandartes (P1-9) não foram tocados.
+- Navegador: sem quebra; violeta do abismo continua sem aparecer no Compatibility (como no ciclo 3) e o relevo do
+  chão fica mais forte que no desktop.
+- Luta (9 s e 14 s, `--bot --seed=5`): a câmera de jogo não mostra cartão violeta de lado nem faixa reta; o "ponto
+  vermelho" no alto da corrente não é do cenário: é o projétil violeta do mago (aparece também no meio do chão aos
+  9 s); nenhum emissor vermelho existe no cenário. Perto do canto leste, aos 14 s, o violeta do abismo fica forte e
+  recortado pelos blocos da escada leste (silhueta de pedra contra a luz, como na pintura, mas grande na tela).
+- Verificação: `check.gd` sem erros; `tools/test.sh` 134 testes, 133 passando, 1 sem asserção (`test_only_finishers_glint`,
+  de outro dono); `tools/smoke.sh 120` step_ms 0,1; com `--stress=300` step_ms 0,11.

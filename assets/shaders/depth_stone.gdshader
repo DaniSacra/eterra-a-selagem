@@ -5,8 +5,9 @@ shader_type spatial;
 // behind paler than the one in front) and with depth, and violet light rising from below at the sides of the hall.
 render_mode unshaded, fog_disabled, cull_back;
 
-uniform vec3 stone_color : source_color = vec3(0.04, 0.085, 0.115);
-// The faces turned toward the mist's light (from the north-west, high) take this cold edge.
+uniform vec3 stone_color : source_color = vec3(0.03, 0.07, 0.095);
+// The tops of capitals, arches and cornices take a thin cold edge (the mist's light from above); the upright faces
+// only a faint one on the side turned to the light (from the north-west, high).
 uniform vec3 edge_color : source_color = vec3(0.07, 0.24, 0.3);
 uniform vec3 light_dir = vec3(-0.6, 0.5, -0.4);
 // The mist the stone fades into: the colour of the abyss behind it (Game.FOG, which also covers the background).
@@ -22,7 +23,7 @@ uniform float sink_bottom = -26.0;
 // distance off the hall's middle (|x|) it starts.
 uniform vec3 glow_color : source_color = vec3(0.45, 0.3, 0.95);
 uniform float glow_energy = 0.25;
-uniform float glow_top = -2.0;
+uniform float glow_top = -8.0;
 uniform float glow_bottom = -14.0;
 uniform float glow_side = 18.0;
 // Courses of blocks, so the near piers are built stone and not flat paint.
@@ -58,8 +59,9 @@ void fragment() {
 		1.0 - smoothstep(0.0, 0.05, min(fract(bx), 1.0 - fract(bx)) * block_len));
 	vec3 c = stone_color * (0.75 + 0.5 * id) * (0.8 + 0.4 * noise(uv * 0.7));
 	// the cold edge of the mist's light on the faces turned to it, stronger up high
-	float lit = clamp(dot(wnormal, normalize(light_dir)), 0.0, 1.0);
-	c = mix(c, edge_color * (0.7 + 0.3 * id), lit * 0.55 * smoothstep(-10.0, 8.0, world.y));
+	float lit = clamp(dot(wnormal, normalize(light_dir)), 0.0, 1.0) * (1.0 - smoothstep(0.3, 0.6, wnormal.y));
+	float top = smoothstep(0.6, 0.9, wnormal.y);
+	c = mix(c, edge_color * (0.7 + 0.3 * id), max(top * 0.85, lit * 0.45) * smoothstep(-10.0, 8.0, world.y));
 	c *= 1.0 - joint * 0.45;
 	float dist = length(world - CAMERA_POSITION_WORLD);
 	float fade = smoothstep(fade_near, fade_far, dist) * fade_max;
@@ -67,6 +69,6 @@ void fragment() {
 	c = mix(c, mist_color, fade);
 	float side = smoothstep(glow_side - 4.0, glow_side + 4.0, abs(world.x));
 	float rise = smoothstep(glow_top, glow_bottom, world.y);
-	c += glow_color * glow_energy * rise * rise * side * (0.7 + 0.3 * lit);
+	c += glow_color * glow_energy * rise * rise * side * (0.7 + 0.3 * lit) * (1.0 - top);
 	ALBEDO = c;
 }
