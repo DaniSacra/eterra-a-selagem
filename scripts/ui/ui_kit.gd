@@ -15,8 +15,16 @@ const EDGE := Color(0.72, 0.56, 0.3)
 const INK := Color("0c0a0e")
 const OLD_GOLD := Color("8e7444")
 const PARCHMENT := Color("d8c8a8")
+## Every frame of the HUD (portrait ring, action diamonds, bars, key plates) is one line of OLD_GOLD this wide, in
+## pixels at 720 lines, over ink.
+const FRAME := 2.0
+## The dark shadow under every text of the HUD, so pale letters hold over a lit floor: this far down, this soft.
+const SHADOW := Color(0.047, 0.039, 0.055, 0.6)
+const SHADOW_DROP := 2
+const SHADOW_SPREAD := 6
 
 static var _theme: Theme
+static var _number_font: FontVariation
 
 
 static func theme() -> Theme:
@@ -72,6 +80,31 @@ static func title(text: String, size: int = 44, color: Color = GOLD) -> Label:
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.add_theme_constant_override(&"outline_size", 8)
 	return l
+
+
+## Gives a label the HUD's text shadow (on top of the theme's thin outline).
+static func shadow(l: Label) -> Label:
+	l.add_theme_color_override(&"font_shadow_color", SHADOW)
+	l.add_theme_constant_override(&"shadow_offset_x", 0)
+	l.add_theme_constant_override(&"shadow_offset_y", SHADOW_DROP)
+	l.add_theme_constant_override(&"shadow_outline_size", SHADOW_SPREAD)
+	return l
+
+
+## The same shadow for text drawn by hand in a _draw: call it before draw_string, with the same arguments.
+static func draw_shadow(ci: CanvasItem, font: Font, at: Vector2, text: String, size: int) -> void:
+	ci.draw_string_outline(font, at + Vector2(0, SHADOW_DROP), text, HORIZONTAL_ALIGNMENT_LEFT, -1, size, SHADOW_SPREAD, SHADOW)
+
+
+## The bold text font with lining, fixed-width figures: Alegreya's own figures are old style (as low as the small
+## letters), too small to read on the bars.
+static func number_font() -> Font:
+	if _number_font == null:
+		var ts := TextServerManager.get_primary_interface()
+		_number_font = FontVariation.new()
+		_number_font.base_font = BOLD_FONT
+		_number_font.opentype_features = {ts.name_to_tag("lnum"): 1, ts.name_to_tag("tnum"): 1}
+	return _number_font
 
 
 ## A button that takes focus when the mouse touches it, so mouse, keys and gamepad always agree.

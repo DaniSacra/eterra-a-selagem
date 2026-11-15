@@ -1,8 +1,12 @@
 class_name HudMark
 extends Control
-## Small ornaments of the HUD drawn in code: the gold coin beside the gold, and the brush stroke under the hit count.
+## Small ornaments of the HUD drawn in code: the gold coin beside the gold, the brush stroke under the hit count and
+## the chevron that points, from the edge of the screen, at something out of view (it points right; turn the control).
 
-enum Kind { COIN, STROKE }
+enum Kind { COIN, STROKE, CHEVRON }
+
+## The chevron's outline in units of its size, pointing right.
+const CHEVRON_SHAPE: Array[Vector2] = [Vector2(0.14, 0.04), Vector2(0.44, 0.04), Vector2(0.92, 0.5), Vector2(0.44, 0.96), Vector2(0.14, 0.96), Vector2(0.6, 0.5)]
 
 var kind := Kind.COIN
 var color := UiKit.GOLD
@@ -13,6 +17,7 @@ func setup(k: Kind, size_px: Vector2, c: Color = UiKit.GOLD) -> HudMark:
 	color = c
 	custom_minimum_size = size_px
 	size = size_px
+	pivot_offset = size_px * 0.5
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return self
 
@@ -48,3 +53,13 @@ func _draw() -> void:
 			for k in 3:
 				var y := size.y * (0.3 + 0.18 * k)
 				draw_line(Vector2(size.x * (0.5 + 0.1 * k), y), Vector2(size.x * (0.7 + 0.08 * k), y - 0.5), Color(color.darkened(0.45), 0.8), 1.0, true)
+		Kind.CHEVRON:
+			var pts := PackedVector2Array()
+			for p in CHEVRON_SHAPE:
+				pts.append(p * size)
+			var outline := pts.duplicate()
+			outline.append(pts[0])
+			draw_polyline(outline, UiKit.INK, 4.0, true)
+			# a concave shape: two halves, so the fill never depends on the triangulation
+			draw_colored_polygon(PackedVector2Array([pts[0], pts[1], pts[2], pts[5]]), color)
+			draw_colored_polygon(PackedVector2Array([pts[5], pts[2], pts[3], pts[4]]), color)

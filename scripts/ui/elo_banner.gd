@@ -26,12 +26,12 @@ func _ready() -> void:
 func show_elo(b: Boon, from: Array[Boon]) -> void:
 	for c in get_children():
 		c.queue_free()
-	add_child(UiKit.title(T.t(&"elo_formed"), TITLE_SIZE, UiKit.GOLD))
+	add_child(UiKit.shadow(UiKit.title(T.t(&"elo_formed"), TITLE_SIZE, UiKit.GOLD)))
 	_link = EloLink.new().setup(b, from, 44.0, 30.0, 26.0)
 	_link.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_link.progress = 0.0
 	add_child(_link)
-	var name_l := UiKit.title(T.t("boon_" + String(b.id)), NAME_SIZE, UiKit.PALE)
+	var name_l := UiKit.shadow(UiKit.title(T.t("boon_" + String(b.id)), NAME_SIZE, UiKit.PALE))
 	name_l.add_theme_constant_override(&"outline_size", 6)
 	add_child(name_l)
 	_t = 0.0
