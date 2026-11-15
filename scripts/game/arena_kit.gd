@@ -44,6 +44,8 @@ const PORTAL_OPEN := 2.8
 const PORTAL_LIGHT_DIM := 4.0
 const PORTAL_LIGHT := 5.5
 const PORTAL_RANGE := 9.0
+## The medallion reads by its value, not by light (the picture's does not glow).
+const MEDALLION_GLOW := 0.1
 ## Chains: meters between two links, and the links' size.
 const LINK_GAP := 0.32
 const LINK_SIZE := 0.2
@@ -372,8 +374,10 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 	var m := ShaderMaterial.new()
 	m.shader = preload("res://assets/shaders/catacomb_floor.gdshader")
 	m.set_shader_parameter(&"ring_radius", ring_radius)
-	m.set_shader_parameter(&"ring_glow", 0.35)
+	m.set_shader_parameter(&"ring_glow", MEDALLION_GLOW)
 	m.set_shader_parameter(&"ring_center", ring_center)
+	# the rose's long points run across the screen, as in the picture
+	m.set_shader_parameter(&"rose_turn", deg_to_rad(Feel.live().cam_yaw))
 	m.set_shader_parameter(&"calm_radius", minf(size.x, size.y) * 0.32)
 	var nx := maxi(1, ceili(size.x / 8.0))
 	var nz := maxi(1, ceili(size.y / 8.0))

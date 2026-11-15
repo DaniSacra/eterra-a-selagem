@@ -780,8 +780,8 @@ const OMEGA_ZOOM := 0.08
 ## How far the fixed showcase camera (--showcase) stands from the hall's middle, to frame all of it like the reference.
 const SHOWCASE_DISTANCE := 60.0
 ## The browser's renderer (GL Compatibility) lights brighter than the desktop's (Forward+): its exposure and ambient.
-const COMPAT_EXPOSURE := 0.72
-const COMPAT_AMBIENT := 0.3
+const COMPAT_EXPOSURE := 1.25
+const COMPAT_AMBIENT := 0.4
 ## The air of the hall (the reference image): cold teal behind and below, a low teal ambient, no violet in the air
 ## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
 const SKY := Color(0.01, 0.1, 0.14)
