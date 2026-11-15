@@ -54,3 +54,20 @@ Capturas reais da Godot na placa de vídeo (RTX 5060, Forward+), com o comando d
   [abismo](cycle7/17_abismo.jpg), [medalhão](cycle7/18_medalhao.jpg)
 - **Combate:** [40 inimigos](cycle7/19_combate_40_inimigos.jpg), [90 inimigos](cycle7/20_combate_90_inimigos.jpg)
 - **HUD:** [1280](cycle7/21_hud_1280.jpg), [1920](cycle7/22_hud_1920.jpg)
+
+## CICLO 8: COMBATE TÁTICO, LEGIBILIDADE E POLIMENTO
+
+Capturas reais da Godot na placa de vídeo (RTX 5060, Forward+, 1920 x 1080), com o comando de cada uma em
+[`cycle8/CAPTURAS.md`](cycle8/CAPTURAS.md). Antes = `eb1e9d7` (fim do ciclo 7), depois = `84285e8`.
+
+- **Relatório artístico:** [`cycle8/ART_REVIEW.md`](cycle8/ART_REVIEW.md) (critérios do ciclo, problemas, pendências, testes, desempenho a 1080p)
+- **Proposta da luta de Morvath (ciclo 9, sem implementação):** [`docs/design/morvath_boss_fight.md`](../design/morvath_boss_fight.md)
+- **Antes e depois:** [combate](cycle8/before_after_combate.jpg), [Emeth](cycle8/before_after_emeth.jpg),
+  [obstáculo](cycle8/before_after_obstaculo.jpg), [HUD](cycle8/before_after_hud.jpg); trabalho das frentes em [`cycle8/work/`](cycle8/work/)
+- **Combate:** [4 inimigos](cycle8/01_combate_4_inimigos.jpg), [8](cycle8/02_combate_8_inimigos.jpg),
+  [12](cycle8/03_combate_12_inimigos.jpg), [16](cycle8/04_combate_16_inimigos.jpg), [20](cycle8/05_combate_20_inimigos.jpg)
+- **Explorador:** [em combate](cycle8/06_explorador_em_combate.jpg), [atrás do obelisco](cycle8/12_obstaculo_transparencia.jpg)
+- **Emeth:** [ataque](cycle8/07_emeth_ataque.jpg), [impacto (Ômega)](cycle8/08_emeth_impacto.jpg), [especial](cycle8/09_emeth_especial.jpg)
+- **Inimigos:** [preparando ataque](cycle8/10_inimigos_preparando_ataque.jpg), [preparo no laboratório](cycle8/10b_preparo_laboratorio.jpg),
+  [elite](cycle8/11_elite.jpg), [Morvath e o portal vermelho](cycle8/14_morvath_atual.jpg)
+- **HUD:** [1920](cycle8/13_hud.jpg)
