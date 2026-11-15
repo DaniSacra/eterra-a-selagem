@@ -4,7 +4,7 @@ extends SceneTree
 ## tools/gpu.sh run --rendering-driver vulkan --resolution 1672x941 -s tools/enemy_lab.gd -- C:/out_prefix [anim] [seconds] [ids...]
 ## (or xvfb-run -a ~/tools/godot/godot --path . ... on the CPU). Writes <out_prefix>_game.png (the game's camera
 ## angle), _front.png, _back.png and _side.png (the right side). With ids (EnemyDef ids), only those, in one row and closer; seconds as "a:b"
-## spreads that row over the clip (the same id many times shows the clip as a strip).
+## spreads that row over the clip (the same id many times shows the clip as a strip); "clip" spreads it over the whole clip.
 
 const ROW: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder", &"morvath"]
 const ELITES: Array[StringName] = [&"skeleton_elite", &"runner_elite", &"mage_elite", &"archer_elite", &"guard_elite", &"priest_elite"]
@@ -22,7 +22,8 @@ func _run() -> void:
 	var out: String = args[0] if args.size() > 0 else "enemies"
 	var anim := StringName(args[1]) if args.size() > 1 else &"idle"
 	# seconds into the clip; "a:b" spreads the row from a to b (the same id many times: the clip as a strip)
-	var times := (args[2] if args.size() > 2 else "0").split(":")
+	var whole := args.size() > 2 and args[2] == "clip"
+	var times := ("0" if whole else (args[2] if args.size() > 2 else "0")).split(":")
 	var at_t := float(times[0])
 	var to_t := float(times[1]) if times.size() > 1 else at_t
 	var world := Node3D.new()
@@ -77,6 +78,9 @@ func _run() -> void:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
 		renderer.register(d)
 		defs.append(d)
+	if whole and defs.size() > 0:
+		# the last frame a little before the end, so a looping clip does not wrap back to its first pose
+		to_t = renderer.model_of(defs[0]).duration(anim) * 0.97
 	var cam := Camera3D.new()
 	world.add_child(cam)
 	for view: String in ["game", "front", "back", "side"]:
