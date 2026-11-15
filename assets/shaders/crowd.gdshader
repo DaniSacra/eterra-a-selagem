@@ -1,7 +1,8 @@
 shader_type spatial;
 // The crowd: baked poses drawn by MultiMesh. INSTANCE_CUSTOM carries the per-enemy state:
-// r = white hit flash (above WHITE_FROM the body is pure white: the first frame or two of a strong blow); below 0,
-//     a blow its armor took: old gold gleams on its edges, no white (it was not wounded),
+// r = hit flash (0..1): the figure's own body, lighter and warmer for an instant (never a flat white: a strong blow
+//     reaches white_from only on its first frame, and even then it keeps its shading under the glow threshold);
+//     below 0, a blow its armor took: old gold gleams on its edges, no white (it was not wounded),
 // g = frost (1) plus 0.5 when its armor is broken (the armored edge light goes out),
 // b = burning (1) plus half of how far its wind-up is (0..0.5: the orb of a staff swells),
 // a = dissolve on death. (CrowdRenderer.state packs them.)
@@ -11,6 +12,9 @@ shader_type spatial;
 // dark edge where the body turns away, so each one reads as a shaded figure against the dark floor (reference
 // docs/art/ref/arena_catacumbas_1672.png), never a flat cut-out.
 render_mode cull_back, diffuse_lambert, specular_disabled;
+// Where a figure of the crowd is the front surface, the stencil says so (CROWD_STENCIL = 1): the paladin's x-ray
+// shows him in full through the crowd and faint through stone (xray.gdshader, xray_behind.gdshader; cycle 8, B3).
+stencil_mode write, compare_always, 1;
 
 uniform sampler2D albedo : source_color, filter_linear_mipmap;
 uniform vec4 tint : source_color = vec4(1.0);
@@ -72,8 +76,18 @@ uniform float absorb_light = 1.8;
 uniform float crest = 0.0;
 uniform float crest_from = 1.4;
 uniform vec3 crest_color : source_color = vec3(0.86, 0.84, 1.0);
-// Flash strength above which the body is drawn pure white.
-uniform float white_from = 0.75;
+// The flash of a struck figure (cycle 8, B4 of the cycle 7 review: struck enemies were flat white blots, and on an
+// Omega one covered the paladin): at its peak the body shows flash_light more of its own painting as light, in a
+// warm cast, plus a little warm floor so dark cloth flashes too. Above white_from (the first frame of a strong blow)
+// it goes flash_white of the way to a pale ivory, still shaded. Nothing passes flash_cap, under the glow threshold
+// (Game.GLOW_THRESHOLD 1.3): a struck figure never blooms into a ball of light.
+uniform float flash_light = 0.6;
+uniform vec3 flash_warm : source_color = vec3(1.0, 0.9, 0.74);
+uniform float flash_floor = 0.1;
+uniform float white_from = 0.85;
+uniform float flash_white = 0.35;
+uniform vec3 flash_ivory : source_color = vec3(0.95, 0.9, 0.8);
+uniform float flash_cap = 1.0;
 
 // The paladin carries the light of Elun: the warm light around the hero is added here.
 global uniform vec3 hero_pos;
@@ -134,7 +148,7 @@ void fragment() {
 	float edge = smoothstep(0.35, 0.6, pow(1.0 - facing, 1.5));
 	// the painting's own lights (eyes, gems, embers), leaning to the colour of its magic
 	vec3 spot = mix(raw, mix(raw, magic * top, magic_tint), has_magic);
-	EMISSION = vec3(1.15) * flash + vec3(0.35, 0.7, 1.4) * frost * 0.5 + vec3(2.0, 0.6, 0.1) * burn * (0.4 + 0.4 * rim)
+	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + vec3(2.0, 0.6, 0.1) * burn * (0.4 + 0.4 * rim)
 		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + vec3(1.6, 0.5, 0.1) * state.a * 2.0
 		+ gild_color * (rim + edge) * absorbed * absorb_light
 		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)
@@ -142,8 +156,13 @@ void fragment() {
 		+ raw * glow * cell * (1.0 - has_magic)
 		+ lamp_color * mix(orb, orb_tell, tell) * mix(orb_edge, 1.0, facing * facing) * lamp
 		+ spot * paint_glow * smoothstep(paint_glow_from, paint_glow_full, colourful) * (1.0 - lamp);
-	if (flash > white_from) {
-		ALBEDO = vec3(0.0);
-		EMISSION = vec3(3.0);
+	if (flash > 0.0) {
+		// the body itself, lighter and warmer: its painting as light, more where it is already lit; what it adds
+		// stops at flash_cap (the figure's own lights, an orb winding up, keep theirs)
+		vec3 lighter = (c * shade * (0.45 + lit) * flash_light + vec3(flash_floor)) * flash_warm * flash;
+		EMISSION += min(lighter, max(vec3(flash_cap) - EMISSION, vec3(0.0)));
+		float white = step(white_from, flash) * flash_white;
+		EMISSION = mix(EMISSION, min(flash_ivory * shade * (0.75 + 0.25 * facing), vec3(flash_cap)), white);
+		ALBEDO *= 1.0 - white;
 	}
 }

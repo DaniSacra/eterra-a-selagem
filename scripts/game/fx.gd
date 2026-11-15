@@ -55,7 +55,7 @@ const SLASH_TAIL := 0.6
 const SLASH_TAIL_DEGREES := 120.0
 const RING_POOL := 16
 const BEAM_POOL := 24
-const NUMBER_POOL := 90
+const NUMBER_POOL := 32
 ## Damage numbers and floating words: font sizes in pixels at 720 lines (small and white, as in the references)
 ## and the dark outline around them.
 const NUMBER_SIZE := 17
@@ -67,10 +67,15 @@ const IMPACT_SIZE := 1.0
 ## A damage number starts this far above the point asked for (the top of the enemy's head): clear of the life bar
 ## that sits there (CrowdRenderer.BAR_ABOVE), a quarter of a meter above it.
 const NUMBER_LIFT := 1.0
-## With NUMBER_CROWD numbers younger than NUMBER_CROWD_TIME within NUMBER_CROWD_RADIUS meters, only the biggest show.
-const NUMBER_CROWD := 8
-const NUMBER_CROWD_TIME := 0.25
-const NUMBER_CROWD_RADIUS := 3.0
+## Which numbers show is NumberTally's: one per target that counts up while the hits keep coming, at most
+## NUMBER_CROWD within NUMBER_CROWD_RADIUS meters and NumberTally.MAX_SHOWN on screen; finishers never hidden.
+const NUMBER_CROWD := NumberTally.CROWD
+const NUMBER_CROWD_RADIUS := NumberTally.CROWD_RADIUS
+## What may start in one frame (FxBudget): chips and motes, cuts on the struck, particle bursts. Past it, nothing
+## more is drawn that frame (a swing through a pack piled cuts, chips and numbers on the paladin).
+const BUDGET_MOTES := 40
+const BUDGET_GASHES := 8
+const BUDGET_BURSTS := 6
 ## Particle bursts are drawn this much smaller than their BURSTS size, with this share of their specks.
 const BURST_SCALE := 0.7
 const BURST_AMOUNT := 0.7
@@ -136,7 +141,10 @@ var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
-var _numbers: Array[Dictionary] = []
+## One label per entry of the tally.
+var _labels: Array[Label] = []
+var _tally := NumberTally.new(NUMBER_POOL)
+var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS})
 var _font: Font
 var _arc_meshes: Dictionary = {}
 var _rng := RandomNumberGenerator.new()
@@ -267,7 +275,7 @@ func setup(cam: Camera3D, over: Control) -> void:
 		l.visible = false
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		overlay.add_child(l)
-		_numbers.append({"label": l, "life": 0.0, "pos": Vector3.ZERO, "rise": 0.0, "amount": -1.0})
+		_labels.append(l)
 
 
 func _build_motes() -> void:
@@ -312,7 +320,7 @@ func _effect_node(shader: Shader, mesh: Mesh) -> Dictionary:
 
 func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 	var list: Array = _pools.get(kind, [])
-	if list.is_empty():
+	if list.is_empty() or not budget.allows(&"bursts"):
 		return
 	var i: int = _next[kind]
 	_next[kind] = (i + 1) % list.size()
@@ -356,6 +364,8 @@ func _place_arc(e: Dictionary, mesh: Mesh, origin: Vector2, dir: Vector2, height
 ## The cut a blow leaves on whoever it lands on: a short streak of length meters along axis (the way the blade was
 ## moving there), a pale core in the blow's colour. cross: a second, thinner streak across it (a heavy blow).
 func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross: bool = false, time: float = 0.15) -> void:
+	if not budget.allows(&"gashes"):
+		return
 	var e: Dictionary = _take(_impacts)
 	(e.node as Node3D).position = pos
 	var mat: ShaderMaterial = e.mat
@@ -373,8 +383,8 @@ func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -
 
 
 ## A thrust: a thin beam from origin along dir, reach meters long and width meters across at its widest (what the
-## blow reaches), tapering to a point.
-func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Color, time: float = 0.2, height: float = 0.9) -> void:
+## blow reaches), tapering to a point. omega: the held thrust (a broader, paler thread with the gold veins of Emeth).
+func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Color, time: float = 0.2, height: float = 0.9, omega: bool = false) -> void:
 	var e: Dictionary = _take(_thrusts)
 	var mi: MeshInstance3D = e.node
 	var mid := origin + dir * reach * 0.5
@@ -386,6 +396,7 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"intensity", Feel.live().slash_intensity)
+	mat.set_shader_parameter(&"omega", 1.0 if omega else 0.0)
 
 
 ## Small specks flying from pos along dir (meters per second at most; a third of that at least) within spread
@@ -397,7 +408,7 @@ func chips(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float = 
 	var side := forward.cross(Vector3.UP)
 	side = side.normalized() if side.length_squared() > 0.0001 else Vector3.RIGHT
 	var up := side.cross(forward)
-	for i in count:
+	for i in budget.take(&"motes", count):
 		if _mote_n >= MOTE_POOL:
 			return
 		var k := _mote_n
@@ -424,8 +435,8 @@ func showing(kind: StringName) -> int:
 			return _mote_n
 		&"numbers":
 			var shown := 0
-			for n in _numbers:
-				if (n.label as Label).visible:
+			for l in _labels:
+				if l.visible:
 					shown += 1
 			return shown
 	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"glints": _glints}
@@ -500,26 +511,21 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 	b.time = time
 
 
-## A damage number over pos (the top of whoever took it). In a crowd only the biggest show (NUMBER_CROWD).
-func number(pos: Vector3, amount: float, color: Color, big: bool = false) -> void:
-	var at := pos + Vector3(0, NUMBER_LIFT, 0)
-	var near := 0
-	var least: Dictionary = {}
-	for n in _numbers:
-		if (n.label as Label).visible and n.amount >= 0.0 and n.life < NUMBER_CROWD_TIME \
-				and Vector2(n.pos.x - at.x, n.pos.z - at.z).length() < NUMBER_CROWD_RADIUS:
-			near += 1
-			if least.is_empty() or n.amount < least.amount:
-				least = n
-	if near >= NUMBER_CROWD:
-		if amount <= least.amount:
-			return
-		(least.label as Label).visible = false
-	_text(at, str(roundi(amount)), color, NUMBER_BIG if big else NUMBER_SIZE).amount = amount
+## A damage number over pos (the top of whoever took it). key: who took it (an instance id; 0 for none): hits that
+## follow each other on the same target join its number, which counts up and pops again (NumberTally).
+func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: int = 0) -> void:
+	var i := _tally.add(key, pos + Vector3(0, NUMBER_LIFT, 0), amount, color, big)
+	if i < 0:
+		return
+	var e := _tally.entries[i]
+	if not _tally.merged:
+		e.pos += _jitter()
+	_show_label(i, str(roundi(e.amount)), e.color, NUMBER_BIG if e.big else NUMBER_SIZE)
 
 
 func word(pos: Vector3, text: String, color: Color) -> void:
-	_text(pos, text, color, WORD_SIZE).amount = -1.0
+	var i := _tally.add_word(pos + _jitter(), color)
+	_show_label(i, text, color, WORD_SIZE)
 
 
 func hit_stop(ms: float) -> void:
@@ -593,8 +599,10 @@ func _tick_slow(real_dt: float) -> void:
 	radial = _slow_blur * k
 
 
-## Ages the pooled effects (also during hit stop, so the impact frame keeps glowing).
+## Ages the pooled effects (also during hit stop, so the impact frame keeps glowing). A new frame: the budget of
+## what may start is whole again.
 func animate(delta: float) -> void:
+	budget.reset()
 	for list: Array[Dictionary] in [_slashes, _inks]:
 		for s in list:
 			if s.life < 1.0 or (s.node as Node3D).visible:
@@ -644,23 +652,29 @@ func animate(delta: float) -> void:
 			mi.scale.x = b.size * (1.0 - b.life * 0.6)
 			mi.scale.z = mi.scale.x
 			(b.mat as ShaderMaterial).set_shader_parameter(&"life", b.life)
-	for n in _numbers:
-		var l: Label = n.label
+	if freeze_t >= 0.0:
+		for e in _tally.entries:
+			e.life = 0.2
+	else:
+		_tally.age(delta)
+	for i in _labels.size():
+		var l := _labels[i]
+		var e := _tally.entries[i]
+		if not e.shown or camera == null:
+			l.visible = false
+			continue
 		if not l.visible:
 			continue
-		n.life = 0.2 if freeze_t >= 0.0 else n.life + delta
-		if n.life > 0.75 or camera == null:
-			l.visible = false
-			continue
-		var p: Vector3 = n.pos + Vector3(0, n.life * 1.6, 0)
+		var p: Vector3 = e.pos + Vector3(0, e.life * 1.6, 0)
 		if camera.is_position_behind(p):
 			l.visible = false
+			_tally.hide(i)
 			continue
 		var sp := camera.unproject_position(p)
-		var pop := 1.0 + maxf(0.0, 0.12 - n.life) * 4.0
+		var pop := 1.0 + maxf(0.0, 0.12 - e.life) * 4.0
 		l.scale = Vector2.ONE * pop
 		l.position = sp - l.size * 0.5 * pop
-		l.modulate.a = 1.0 - smoothstep(0.45, 0.75, n.life)
+		l.modulate.a = 1.0 - smoothstep(0.45, NumberTally.LIFE, e.life)
 
 
 func _animate_motes(delta: float) -> void:
@@ -736,28 +750,28 @@ func _take(pool: Array[Dictionary]) -> Dictionary:
 	return best
 
 
-func _text(pos: Vector3, text: String, color: Color, size: int) -> Dictionary:
-	var best: Dictionary = _numbers[0]
-	for n in _numbers:
-		if not (n.label as Label).visible:
-			best = n
-			break
-		if n.life > best.life:
-			best = n
-	var l: Label = best.label
+## The label of tally entry i shows text; the labels of entries the tally let go are hidden.
+func _show_label(i: int, text: String, color: Color, size: int) -> void:
+	for k in _labels.size():
+		if not _tally.entries[k].shown:
+			_labels[k].visible = false
+	var l := _labels[i]
 	l.text = text
 	l.add_theme_font_size_override(&"font_size", size)
 	l.add_theme_color_override(&"font_color", color)
 	l.visible = true
 	l.size = Vector2.ZERO
 	l.pivot_offset = l.get_combined_minimum_size() * 0.5
-	best.life = 0.0
-	best.pos = pos + Vector3(_rng.randf_range(-0.4, 0.4), 0, _rng.randf_range(-0.2, 0.2))
-	if camera and not camera.is_position_behind(best.pos):
-		l.position = camera.unproject_position(best.pos) - l.get_combined_minimum_size() * 0.5
+	var at := _tally.entries[i].pos
+	if camera and not camera.is_position_behind(at):
+		l.position = camera.unproject_position(at) - l.get_combined_minimum_size() * 0.5
 	else:
 		l.visible = false
-	return best
+		_tally.hide(i)
+
+
+func _jitter() -> Vector3:
+	return Vector3(_rng.randf_range(-0.4, 0.4), 0, _rng.randf_range(-0.2, 0.2))
 
 
 ## Ring sector mesh: UV.x along the swing, UV.y from the inner (inner_frac of reach) to the outer edge. Cached by size.

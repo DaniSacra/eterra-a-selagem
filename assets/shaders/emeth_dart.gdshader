@@ -22,6 +22,9 @@ uniform float trail_m = 1.5;
 // 1: the held version (side darts and bow wave reaching reach_m to each side).
 uniform float omega = 0.0;
 uniform float reach_m = 4.0;
+// The gold thread: its width as a share of the dart's half width, and its light.
+uniform float vein_width = 0.3;
+uniform float vein_light = 1.25;
 
 varying vec2 at;
 
@@ -50,9 +53,10 @@ void fragment() {
 	// pale at the point, the blade's colour behind it
 	float tip = 1.0 - smoothstep(0.0, 0.45, s);
 	vec3 c = mix(color.rgb, vec3(1.0), 0.42 * tip * body.y) * (body.x * 0.9 + body.y * 0.5);
-	// the thread of old gold down the axis
-	float vein = (1.0 - smoothstep(0.0, half_m * 0.22, abs(at.y))) * smoothstep(0.12, 0.3, s) * (1.0 - smoothstep(0.85, 1.0, s));
-	c = mix(c, gold * 1.1, vein * 0.85);
+	// the thread of old gold down the axis: the special's own mark (cycle 8: a common thrust has a pale thread, the
+	// Omega gold on its edges; the dart is gold at its heart)
+	float vein = (1.0 - smoothstep(0.0, half_m * vein_width, abs(at.y))) * smoothstep(0.12, 0.3, s) * (1.0 - smoothstep(0.85, 1.0, s));
+	c = mix(c, gold * vein_light, vein);
 	// the trail
 	float back = (at.x - dart_m * 0.8) / max(trail_m, 0.01);
 	if (back > 0.0 && back < 1.0) {

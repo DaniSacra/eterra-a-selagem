@@ -16,6 +16,10 @@ uniform bool flip = false;
 uniform float tail = 0.6;
 // How far the front of the ribbon goes from the blow's colour toward white (never all the way).
 uniform float core = 0.42;
+// The ribbon at its widest, as a share of the band (cycle 8: a blade of light, not a sheet), and how much light its
+// inner, soft side keeps (the edge of the blade carries the cut).
+uniform float widest = 0.72;
+uniform float inner_light = 0.25;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -42,14 +46,14 @@ void fragment() {
 	// its outer edge is always the reach of the blow
 	// (and at the very end of the arc, where the swing stops: never a straight cut across the ribbon)
 	float nose = pow(clamp(behind / 0.11, 0.0, 1.0), 0.8) * sqrt(smoothstep(0.0, 0.07, 1.0 - along));
-	float width = nose * pow(1.0 - k, 1.3) * 0.95;
+	float width = nose * pow(1.0 - k, 1.3) * widest;
 	float outer = 0.975 - noise(vec2(along * 40.0, 3.0)) * 0.025;
 	float inner = outer - width;
 	float across = (y - inner) / max(width, 0.001);
 	if (across <= 0.0 || y >= outer) discard;
 	// soft on the inside, sharp on the edge of the blade
 	float body = smoothstep(0.0, 0.7, across) * (1.0 - smoothstep(outer - 0.02, outer, y));
-	body *= mix(0.4, 1.0, across * across);
+	body *= mix(inner_light, 1.0, across * across * across);
 	// the edge of the blade: a fine line along the outside that lasts to the end of the tail
 	float wire = (1.0 - smoothstep(0.0, 0.022, abs(y - (outer - 0.035)))) * nose;
 	// the head is the brightest: the light falls along the ribbon

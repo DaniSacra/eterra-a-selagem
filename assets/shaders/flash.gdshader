@@ -19,7 +19,7 @@ uniform float glow_body = 0.06;
 uniform float edge_from = 0.9;
 uniform float edge_gain = 0.18;
 // The painted light that lifts his shoulders and hair off the crowd: from the top left of the screen, the crowd's
-// own key (crowd.gdshader `key_dir`, view space); alpha is the gain (at most 0.25).
+// own key (crowd.gdshader `key_dir`, view space); alpha is the gain (at most 0.35).
 uniform vec3 key_dir = vec3(-0.45, 0.75, 0.5);
 uniform vec4 key : source_color = vec4(1.0, 0.93, 0.8, 0.0);
 

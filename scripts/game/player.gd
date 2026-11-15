@@ -36,9 +36,11 @@ const ASSIST_RANGE := 6.0
 const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
 const FLASH := preload("res://assets/shaders/flash.gdshader")
 const XRAY := preload("res://assets/shaders/xray.gdshader")
+const XRAY_BEHIND := preload("res://assets/shaders/xray_behind.gdshader")
 const XRAY_DEPTH := preload("res://assets/shaders/xray_depth.gdshader")
 const XRAY_EDGE := preload("res://assets/shaders/xray_edge.gdshader")
 const RING := preload("res://assets/shaders/hero_ring.gdshader")
+const RING_THROUGH_SHADER := preload("res://assets/shaders/hero_ring_through.gdshader")
 ## The paladin through a crowd (docs/art/cycle5_spec.md A2; QA M4; docs/art/cycle7_spec.md 3.2): where enemies cover
 ## him he shows as his own body, lit like it (xray.gdshader and its two helper passes), drawn after everything else
 ## in this order: his depth, his colours, the rim (the enemies' life bars are at CrowdRenderer's priority 10).
@@ -46,6 +48,10 @@ const RING := preload("res://assets/shaders/hero_ring.gdshader")
 ## and XRAY_LIGHT more of his painting shown as light, so he is a step brighter than the pack in front of him;
 ## Emeth's blade at XRAY_BLADE_OPACITY with the light it has uncovered; around them a hair of ivory, XRAY_RIM_WIDTH
 ## pixels on a 941 line screen (never cyan, never a thick white outline).
+## Behind stone (an obelisk, a balustrade: wherever the crowd did not draw, by the stencil crowd.gdshader writes) the
+## same body shows XRAY_BEHIND_SHARE times as opaque, without the extra light and with its shadows lifted only by
+## XRAY_BEHIND_FLOOR, and the ring is hidden: with the rim he reads as behind the stone, not standing on top of it
+## (cycle 8, B3 of the cycle 7 review; xray_behind.gdshader).
 const XRAY_PRIORITY := 11
 const XRAY_OPACITY := 0.85
 const XRAY_BLADE_OPACITY := 0.8
@@ -53,6 +59,8 @@ const XRAY_FLOOR := 0.25
 const XRAY_LIGHT := 0.45
 const XRAY_RIM := Color(0.96, 0.9, 0.78, 0.5)
 const XRAY_RIM_WIDTH := 1.5
+const XRAY_BEHIND_SHARE := 0.45
+const XRAY_BEHIND_FLOOR := 0.1
 ## A thin ring on the floor at his feet, in the petrol of his scarf (never the red of a warning): meters across,
 ## the colour, how opaque on the open floor and through what stands over it. The side he faces is a wedge
 ## RING_WEDGE degrees wide and RING_WEDGE_GAIN times brighter: the ring says where he looks.
@@ -63,8 +71,9 @@ const RING_THROUGH := 0.75
 const RING_WEDGE := 30.0
 const RING_WEDGE_GAIN := 1.4
 ## The painted light on his shoulders and hair, from the top left of the screen like the crowd's key
-## (crowd.gdshader): it lifts him off the pack, covered or not. Alpha is the gain.
-const KEY_LIGHT := Color(1.0, 0.93, 0.8, 0.25)
+## (crowd.gdshader): it lifts him off the pack, covered or not. Alpha is the gain (0.3 since cycle 8: a step more,
+## so the red hair and the petrol scarf catch the eye first in a fight of 8 to 20; never a glow).
+const KEY_LIGHT := Color(1.0, 0.93, 0.8, 0.3)
 const OUTLINE := Color(1.0, 0.78, 0.35)
 ## The thin edge on his body and his silhouette through what hides him: cold and light, never gold over the body
 ## (docs/art/cycle4_spec.md, c).
@@ -150,6 +159,7 @@ var _xray_edge: ShaderMaterial
 ## His body's own materials (HeroBody), lightened while he blinks after a hit.
 var _fills: Array[StandardMaterial3D] = []
 var _ring_look: ShaderMaterial
+var _ring_through: ShaderMaterial
 ## What the materials were last told (they are only told again when it changes).
 var _shown_fill := -1.0
 var _shown_edge := -1.0
@@ -228,7 +238,8 @@ func _contact_shadow() -> MeshInstance3D:
 	return mi
 
 
-## The ring on the floor around his feet (hero_ring.gdshader): it does not turn with him.
+## The ring on the floor around his feet: it does not turn with him. On the open floor (hero_ring.gdshader) and,
+## in a second pass, through the crowd standing over it (hero_ring_through.gdshader); never over stone.
 func _ring() -> MeshInstance3D:
 	var plane := PlaneMesh.new()
 	plane.size = Vector2.ONE * RING_SIZE
@@ -241,6 +252,9 @@ func _ring() -> MeshInstance3D:
 	m.set_shader_parameter(&"wedge_cos", cos(deg_to_rad(RING_WEDGE * 0.5)))
 	m.set_shader_parameter(&"wedge_gain", RING_WEDGE_GAIN)
 	_ring_look = m
+	_ring_through = m.duplicate() as ShaderMaterial
+	_ring_through.shader = RING_THROUGH_SHADER
+	m.next_pass = _ring_through
 	var mi := MeshInstance3D.new()
 	mi.mesh = plane
 	mi.material_override = m
@@ -262,15 +276,22 @@ func _prepare(n: Node) -> void:
 		_prepare(c)
 
 
+## Each mesh: through the crowd (xray.gdshader), then behind stone (xray_behind.gdshader), then the passes they share.
 func _xray_of(mesh: MeshInstance3D) -> ShaderMaterial:
+	var through := _xray_pass(XRAY, xray_params(mesh.get_active_material(0)))
+	var behind := _xray_pass(XRAY_BEHIND, xray_params(mesh.get_active_material(0), true))
+	through.next_pass = behind
+	behind.next_pass = _overlay
+	return through
+
+
+func _xray_pass(shader: Shader, look: Dictionary[StringName, Variant]) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
-	m.shader = XRAY
+	m.shader = shader
 	m.render_priority = XRAY_PRIORITY + 1
-	var look := xray_params(mesh.get_active_material(0))
 	for param: StringName in look:
 		m.set_shader_parameter(param, look[param])
 	m.set_shader_parameter(&"key", KEY_LIGHT)
-	m.next_pass = _overlay
 	_xrays.append(m)
 	return m
 
@@ -288,7 +309,8 @@ static func xray_look(mat: Material) -> Array:
 ## Everything xray.gdshader needs to draw a mesh as its own material does, by parameter: the body as painted and as
 ## lit (HeroBody), a piece without light as it is (the pale edge of the blade), Emeth with the light of its blade
 ## (emeth.gdshader: the numbers are read from the sword's own material, so the two never drift apart).
-static func xray_params(mat: Material) -> Dictionary[StringName, Variant]:
+## behind: the numbers behind stone (XRAY_BEHIND_*), fainter and without the extra light.
+static func xray_params(mat: Material, behind := false) -> Dictionary[StringName, Variant]:
 	var look := xray_look(mat)
 	var out: Dictionary[StringName, Variant] = {
 		&"albedo": look[0], &"tint": look[1], &"opacity": XRAY_OPACITY, &"floor_light": XRAY_FLOOR, &"cover_light": XRAY_LIGHT,
@@ -310,6 +332,11 @@ static func xray_params(mat: Material) -> Dictionary[StringName, Variant]:
 		if out.has(&"blade_from"):
 			out[&"blade"] = 1.0
 			out[&"opacity"] = XRAY_BLADE_OPACITY
+	if behind:
+		out[&"opacity"] = float(out[&"opacity"]) * XRAY_BEHIND_SHARE
+		out[&"cover_light"] = 0.0
+		out[&"floor_light"] = XRAY_BEHIND_FLOOR
+		out[&"cover_pure"] = 1.0
 	return out
 
 
@@ -584,7 +611,9 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 		for x in _xrays:
 			x.set_shader_parameter(&"show", 1.0 if edge > 0.0 else 0.0)
 		_xray_edge.set_shader_parameter(&"color", Color(XRAY_RIM, XRAY_RIM.a if edge > 0.0 else 0.0))
-	_ring_look.set_shader_parameter(&"facing", Vector2(sin(_model.rotation.y), cos(_model.rotation.y)))
+	var faces := Vector2(sin(_model.rotation.y), cos(_model.rotation.y))
+	_ring_look.set_shader_parameter(&"facing", faces)
+	_ring_through.set_shader_parameter(&"facing", faces)
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if state != State.MOVE or runner.is_swinging():
 		return

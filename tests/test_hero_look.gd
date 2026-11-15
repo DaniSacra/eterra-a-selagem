@@ -99,7 +99,7 @@ func test_the_xray_rim_is_a_warm_hair() -> void:
 	assert_lte(Player.XRAY_RIM_WIDTH, 1.5, "pixels on a 941 line screen")
 	assert_lte(Player.XRAY_RIM.a, 0.5)
 	assert_gt(Player.XRAY_RIM.r, Player.XRAY_RIM.b + 0.1, "warm (ivory), not cyan")
-	assert_lte(Player.KEY_LIGHT.a, 0.25, "the painted light on his shoulders stays small")
+	assert_lte(Player.KEY_LIGHT.a, 0.35, "the painted light on his shoulders stays small (cycle 7 review, B5: up to 0.35)")
 
 
 ## After a hit he never turns white (a struck enemy does): a flash of at most 0.05 s, then his own colours lighter
@@ -132,3 +132,22 @@ func test_the_xray_is_drawn_after_the_life_bars_and_the_ring_is_not_a_warning() 
 	assert_gt(Player.XRAY_PRIORITY, 10, "after the enemies' life bars (CrowdRenderer)")
 	assert_gt(Player.RING_COLOR.g, Player.RING_COLOR.r * 2.0, "petrol, never the red of a warning")
 	assert_lt(Player.RING_OPEN, 0.5, "faint on the open floor")
+
+
+## Behind stone he is fainter than through the crowd and the ring is not drawn over it (cycle 8, B3): the x-ray of
+## each mesh has a pass for each, told apart by the stencil the crowd writes.
+func test_behind_stone_he_is_fainter_than_through_the_crowd() -> void:
+	var body: Array = HeroBody.make()
+	var model: Node3D = autofree(body[0])
+	var skin := (model.find_children("*", "MeshInstance3D", true, false)[0] as MeshInstance3D).get_active_material(0)
+	var crowd := Player.xray_params(skin)
+	var stone := Player.xray_params(skin, true)
+	assert_lt(float(stone[&"opacity"]), float(crowd[&"opacity"]) * 0.6, "clearly fainter behind stone")
+	assert_eq(float(stone[&"cover_light"]), 0.0, "no extra light behind stone")
+	assert_lt(float(stone[&"floor_light"]), float(crowd[&"floor_light"]))
+	assert_true(Player.XRAY.code.contains("compare_equal, 1"), "through the crowd: where the crowd drew")
+	assert_true(Player.XRAY_BEHIND.code.contains("compare_not_equal, 1"), "behind stone: where it did not")
+	assert_true(load("res://assets/shaders/crowd.gdshader").code.contains("stencil_mode write, compare_always, 1"),
+		"the crowd marks where it is the front surface")
+	assert_false(Player.RING.code.contains("stencil_mode"), "the ring on the open floor needs no stencil")
+	assert_true(Player.RING_THROUGH_SHADER.code.contains("compare_equal, 1"), "the ring shows only through the crowd")

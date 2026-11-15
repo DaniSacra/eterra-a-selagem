@@ -456,7 +456,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		e.absorbed = true
 		var chest := Vector3(e.pos.x, e.y + 1.2 * e.def.size, e.pos.y)
 		if show_number:
-			fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, ARMOR_COLOR, big)
+			fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, ARMOR_COLOR, big, e.get_instance_id())
 			tells.armor_hit(chest, from_dir)
 		if e.armor <= 0.0:
 			tells.armor_break(chest, e.def.size)
@@ -471,7 +471,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if knockback > 0.0:
 		e.push = from_dir * knockback * (0.35 if e.def.heavy else 1.0)
 	if show_number:
-		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big)
+		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id())
 	if e.hp <= 0.0:
 		e.alive = false
 		e.state = Enemy.State.DEAD

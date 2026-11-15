@@ -42,7 +42,10 @@ const GASH_HEAVY := 1.8
 const GASH_LEAN := 0.5
 const GASH_TIME := Vector2(0.16, 0.18)
 const GASH_CHIPS := Vector2i(4, 6)
-## The special lands as a thrust: a streak this long along its flight.
+## The special (the Seta de Luz dart) lands as a small star of two crossed cuts, this size (Fx.impact), with chips
+## of old gold: a puncture, never the streak of a sword cut. Its held version lands as a streak this long (STAB)
+## along its flight, crossed (cycle 8: attack, special and Omega told apart at a glance).
+const SPECIAL_STAR := 0.7
 const STAB := 1.2
 ## A finisher that lands adds one thin ring, once per blow: meters it grows to, seconds it lasts.
 const FINISHER_RING := 1.5
@@ -147,10 +150,10 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir if (e.pos - origin).dot(dir) >= 0.0 else -dir
 		if stars < MAX_STARS:
 			stars += 1
-			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy, finisher)
+			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
 		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
 		if heavy:
-			e.flash_power = 1.0  # a strong blow: pure white for a frame or two
+			e.flash_power = 1.0  # a strong blow: its first frame goes toward ivory (crowd.gdshader)
 		if died:
 			kills += 1
 			continue
@@ -202,7 +205,7 @@ func _draw_swing(node: ComboNode, shape: Dictionary, origin: Vector2, dir: Vecto
 	if node.shape == ComboNode.Shape.LINE:
 		# a thrust: straight, as wide as it reaches, never the arc of a cut
 		for way: Vector2 in ([dir, -dir] if node.both_ways else [dir]):
-			fx.thrust(origin, way, reach, node.width, color, time)
+			fx.thrust(origin, way, reach, node.width, color, time, 0.9, node.has_tag(&"omega"))
 			var tip := origin + way * reach * 0.9
 			fx.chips(Vector3(tip.x, 0.9, tip.y), Vector3(way.x, 0.2, way.y), color, motes, 4.0, 0.12, 0.4, 0.5, Fx.MOTE_GOLD_EVERY)
 	else:
@@ -220,7 +223,8 @@ func _draw_swing(node: ComboNode, shape: Dictionary, origin: Vector2, dir: Vecto
 
 
 ## What one enemy shows when a blow lands on it: the cut along the way the blade was moving and the chips flying
-## away from the paladin. Only called from the loop of those really hit.
+## away from the paladin. Only called from the loop of those really hit. heavy: a heavy or held blow (a second streak
+## across the cut).
 func _draw_hit(e: Enemy, axis: Vector2, away: Vector2, color: Color, heavy: bool, finisher: bool) -> void:
 	var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y) - Vector3(away.x, 0, away.y) * 0.3
 	var lean := tan(_look.randf_range(-GASH_LEAN, GASH_LEAN))
@@ -300,10 +304,15 @@ func cast_burst(z: Ground.Zone) -> void:
 func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 	var along := shot.vel.normalized()
 	if shot.kind != Projectiles.Kind.BLADE and shot.seen.size() <= MAX_STARS:
-		# the special lands as a thrust: a streak along its flight
 		var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y)
-		fx.gash(at, Vector3(along.x, 0.0, along.y), shot.color, STAB, false, GASH_TIME.y)
-		fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6)
+		if shot.kind == Projectiles.Kind.SPARK:
+			# the dart: a puncture star, chips with the gold of the blade's veins
+			fx.impact(at, shot.color, SPECIAL_STAR, GASH_TIME.y)
+			fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6, 2)
+		else:
+			# the held special: a crossed streak along its flight
+			fx.gash(at, Vector3(along.x, 0.0, along.y), shot.color, STAB, true, GASH_TIME.y)
+			fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6)
 	hit_enemy(e, shot.damage, shot.tags, along, shot.knockback, false)
 	_apply_status(e, shot.status, shot.status_power)
 

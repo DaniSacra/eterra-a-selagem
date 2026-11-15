@@ -189,9 +189,55 @@ func test_effects_end_on_their_own() -> void:
 	assert_eq(fx.showing(&"numbers"), 0)
 
 
+## Cycle 8: hits that follow each other on one enemy join one number that counts up.
+func test_a_combo_on_one_enemy_shows_one_number_counting_up() -> void:
+	var node := _node(ComboNode.Shape.ARC, [&"light"])
+	horde.spawn(horde.def(&"skeleton"), Vector2(2.0, 0.0), false)
+	combat.strike(node, Vector2.ZERO, Vector2.RIGHT)
+	fx.animate(0.1)
+	combat.strike(node, Vector2.ZERO, Vector2.RIGHT)
+	assert_eq(fx.showing(&"numbers"), 1, "one number for the one enemy")
+	assert_true(_shown().has("2"), "the two hits added up")
+
+
+## Cycle 8: what may start in one frame is bounded (FxBudget); the next frame has the whole budget again.
+func test_effects_started_in_one_frame_are_bounded() -> void:
+	var node := _node(ComboNode.Shape.CIRCLE, [&"light", &"finisher"])
+	for i in 20:
+		horde.spawn(horde.def(&"skeleton"), Vector2.from_angle(i * TAU / 20.0) * 3.0, false)
+	combat.strike(node, Vector2.ZERO, Vector2.RIGHT)
+	assert_lte(fx.showing(&"motes"), Fx.BUDGET_MOTES)
+	assert_lte(fx.showing(&"gashes"), Fx.BUDGET_GASHES)
+	assert_lte(fx.showing(&"numbers"), NumberTally.MAX_SHOWN)
+	var before := fx.showing(&"motes")
+	fx.chips(Vector3.ZERO, Vector3.UP, Color.WHITE, 10)
+	assert_eq(fx.showing(&"motes"), before, "nothing more this frame")
+	fx.animate(0.0)
+	fx.chips(Vector3.ZERO, Vector3.UP, Color.WHITE, 10)
+	assert_eq(fx.showing(&"motes"), before + 10, "a new frame")
+
+
+## Cycle 8 (B4): a struck enemy is its own body lighter and warmer; the ivory of a strong blow lasts one frame at
+## most and nothing it adds passes the glow threshold (no ball of light over the paladin).
+func test_the_hit_flash_never_blooms_and_its_ivory_is_one_frame() -> void:
+	var code: String = load("res://assets/shaders/crowd.gdshader").code
+	assert_false(code.contains("EMISSION = vec3(3.0)"), "no flat white body")
+	var white_from := _uniform(code, "white_from")
+	assert_lte(Horde.FLASH_TIME * (1.0 - white_from), 1.0 / 30.0 + 0.001, "ivory for one frame at most")
+	assert_lt(_uniform(code, "flash_cap"), Game.GLOW_THRESHOLD, "under the glow threshold")
+	assert_lt(_uniform(code, "flash_white"), 0.5, "the ivory keeps the body's shading")
+
+
+func _uniform(code: String, name: String) -> float:
+	var re := RegEx.create_from_string("uniform float %s = ([0-9.]+);" % name)
+	var m := re.search(code)
+	assert_not_null(m, name)
+	return float(m.get_string(1)) if m else 0.0
+
+
 func _shown() -> Dictionary:
 	var out := {}
-	for n in fx._numbers:
-		if (n.label as Label).visible:
-			out[(n.label as Label).text] = true
+	for l in fx._labels:
+		if l.visible:
+			out[l.text] = true
 	return out
