@@ -5,6 +5,7 @@
 //   node tools/meshy/meshy.mjs refine <key>    texture (10 credits), saves <key>.glb and <key>.png
 //   node tools/meshy/meshy.mjs image <key> [--dry]   image(s) to 3D with texture (30 credits on latest; checks the
 //                                              balance first; --dry only prints the request), saves <key>.glb and <key>.png
+//   node tools/meshy/meshy.mjs retexture <key> [--dry]  new texture on the same mesh from models[key].retexture (10)
 //   node tools/meshy/meshy.mjs rig <key>       skeleton + walk/run (5 credits), saves <key>-rigged.glb, -walk.glb, -run.glb
 //
 // Prompts live in tools/meshy/prompts.json; task ids and credits in tools/meshy/tasks.json.
@@ -140,9 +141,36 @@ async function image(key, dry) {
   console.log(`${key}: done (${t.consumed_credits} credits, ${bytes} bytes)`);
 }
 
+// Repaints the texture of a model already made (same mesh and UVs), from a text prompt: models[key].retexture.
+// About 10 credits. The first texture is kept as <key>-v1.glb / -v1.png; the new one becomes <key>.glb.
+async function retexture(key, dry) {
+  const spec = JSON.parse(readFileSync(join(here, 'prompts.json'), 'utf8')).models[key];
+  const task = loadTasks()[key];
+  const source = task.retextureId ?? task.imageId ?? task.refineId;
+  if (!spec?.retexture || !source) throw new Error(`no retexture prompt or no model for ${key}`);
+  const body = { input_task_id: source, text_style_prompt: spec.retexture, enable_original_uv: true, enable_pbr: false };
+  const balance = (await call('GET', '/v1/balance')).balance;
+  console.log(`${key}: retexture, about 10 credits; balance ${balance}`);
+  console.log(JSON.stringify(body));
+  if (dry) return;
+  if (balance < 10) throw new Error(`not enough credits (${balance}); nothing was sent`);
+  const dir = outDir(key);
+  const n = (task.retextures ?? 0) + 1;
+  for (const ext of ['glb', 'png'])
+    if (existsSync(join(dir, `${key}.${ext}`))) writeFileSync(join(dir, `${key}-v${n}.${ext}`), readFileSync(join(dir, `${key}.${ext}`)));
+  const id = (await call('POST', '/v1/retexture', body)).result;
+  saveTask(key, { retextureId: id, retextures: n, retexturePrompt: spec.retexture });
+  console.log(`${key}: retexture ${id}`);
+  const t = await wait(`/v1/retexture/${id}`, `${key} retexture`);
+  const bytes = await download(t.model_urls.glb, join(dir, `${key}.glb`));
+  if (t.thumbnail_url) await download(t.thumbnail_url, join(dir, `${key}.png`));
+  saveTask(key, { retextureCredits: t.consumed_credits, bytes });
+  console.log(`${key}: retexture done (${t.consumed_credits} credits, ${bytes} bytes)`);
+}
+
 async function rig(key) {
   const task = loadTasks()[key];
-  const source = task.imageId ?? task.refineId;
+  const source = task.retextureId ?? task.imageId ?? task.refineId;
   const id = (await call('POST', '/v1/rigging', { input_task_id: source, height_meters: 1.8 })).result;
   saveTask(key, { rigId: id });
   console.log(`${key}: rig ${id}`);
@@ -159,7 +187,7 @@ async function rig(key) {
 }
 
 const [cmd, key, flag] = process.argv.slice(2);
-const steps = { preview, refine, rig, image };
+const steps = { preview, refine, rig, image, retexture };
 if (cmd === 'balance') console.log((await call('GET', '/v1/balance')).balance);
 else if (steps[cmd] && key) await steps[cmd](key, flag === '--dry');
-else console.log('usage: balance | preview <key> | refine <key> | image <key> [--dry] | rig <key>');
+else console.log('usage: balance | preview <key> | refine <key> | image <key> [--dry] | retexture <key> [--dry] | rig <key>');

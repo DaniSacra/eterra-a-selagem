@@ -22,5 +22,204 @@
     "bytes": 3576028,
     "rigId": "01a1db69-efc0-77b1-83c6-6a77dc75da20",
     "rigCredits": 5
+  },
+  "hero_explorer": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/hero_explorer/front.png",
+      "tools/meshy/ref/hero_explorer/side.png",
+      "tools/meshy/ref/hero_explorer/back.png",
+      "tools/meshy/ref/hero_explorer/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df2c-f439-7662-aba3-2bb8a1ff5a25",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 5129068,
+    "rigId": "01a1df2e-eab4-71b0-8669-e23b363d3c93",
+    "rigCredits": 5
+  },
+  "enemy_priest": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/priest/front.png",
+      "tools/meshy/ref/enemies/priest/side.png",
+      "tools/meshy/ref/enemies/priest/back.png",
+      "tools/meshy/ref/enemies/priest/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df30-9779-7389-a22f-f72c8aa07377",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4471376,
+    "retextureId": "01a1df34-2b4c-73b0-a3b9-281c198db1cf",
+    "retextures": 2,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte. Undead skeleton priest of the dead: the face inside the hood is a pale ivory human skull with dark eye sockets and two small glowing purple eyes. Deep desaturated plum-purple hood and long tattered robe. The shoulder plates, the chest ornament, the belt and the vertical bands down the front of the robe and the hood's edge are dark aged gold / antique bronze metal with worn darker edges, clearly gold, never bright yellow. Ivory bone hands and forearms. No red, no pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-992f-744f-b982-8d28b56dfdb9",
+    "rigCredits": 5
+  },
+  "enemy_skeleton": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/skeleton/front.png",
+      "tools/meshy/ref/enemies/skeleton/side.png",
+      "tools/meshy/ref/enemies/skeleton/back.png",
+      "tools/meshy/ref/enemies/skeleton/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-6087-7335-b6d5-a774402b0590",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4173016,
+    "rigId": "01a1df3c-6a3b-7421-a6ac-4dc262e789ec",
+    "rigCredits": 5
+  },
+  "enemy_runner": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/runner/front.png",
+      "tools/meshy/ref/enemies/runner/side.png",
+      "tools/meshy/ref/enemies/runner/back.png",
+      "tools/meshy/ref/enemies/runner/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-688f-740a-8804-30779d2c7064",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4185536,
+    "rigId": "01a1df3c-71de-74d4-99fe-8ede68d8c746",
+    "rigCredits": 5
+  },
+  "enemy_mage": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/mage/front.png",
+      "tools/meshy/ref/enemies/mage/side.png",
+      "tools/meshy/ref/enemies/mage/back.png",
+      "tools/meshy/ref/enemies/mage/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-7111-712e-a6a3-c8d25bb09347",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4609556,
+    "retextureId": "01a1df3a-977e-712f-b8cd-ebfeb74679ce",
+    "retextures": 1,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton sorcerer: dark charcoal hood and long robe with faded dark red lining, glowing cold violet eyes and a cold violet gem, dark wooden details. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-799f-7557-b23f-1fc110588abd",
+    "rigCredits": 5
+  },
+  "enemy_archer": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/archer/front.png",
+      "tools/meshy/ref/enemies/archer/side.png",
+      "tools/meshy/ref/enemies/archer/back.png",
+      "tools/meshy/ref/enemies/archer/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-78f0-7592-a952-9a8864543920",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4583464,
+    "retextureId": "01a1df3a-9dcb-7270-9407-7bb01709d411",
+    "retextures": 1,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton crossbowman: dark desaturated purple hood, faded dark red cloak and scarf, dark leather and blackened bronze armor pieces, dark wooden crossbow, small orange glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-8273-71ff-969c-5a8715be457f",
+    "rigCredits": 5
+  },
+  "enemy_guard": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/guard/front.png",
+      "tools/meshy/ref/enemies/guard/side.png",
+      "tools/meshy/ref/enemies/guard/back.png",
+      "tools/meshy/ref/enemies/guard/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-809d-7680-a754-312b0a74adec",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4372140,
+    "retextureId": "01a1df3a-a570-74ae-bc81-672d48f58bb4",
+    "retextures": 1,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Heavy skeleton shieldbearer: heavy blackened bronze plate armor, a large dark bronze tower shield with a worn engraved emblem, faded dark red rags, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-8992-712b-866f-b2ee9a489705",
+    "rigCredits": 5
+  },
+  "enemy_knight": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/knight/front.png",
+      "tools/meshy/ref/enemies/knight/side.png",
+      "tools/meshy/ref/enemies/knight/back.png",
+      "tools/meshy/ref/enemies/knight/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-892e-7588-bf4f-a9d5c457e702",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4128776,
+    "retextureId": "01a1df3a-ae12-7321-8fc3-5415b2c3fb59",
+    "retextures": 1,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Giant skeleton knight guardian, the face under the helmet is an ivory skull: dark steel plate armor with dark aged gold trims, a horned helmet with a crown of spikes in dark aged gold, long faded dark red cape, dark steel shield and sword, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-91ff-70c1-9d8e-ec7262250076",
+    "rigCredits": 5
+  },
+  "enemy_priest_elder": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/priest_elder/front.png",
+      "tools/meshy/ref/enemies/priest_elder/side.png",
+      "tools/meshy/ref/enemies/priest_elder/back.png",
+      "tools/meshy/ref/enemies/priest_elder/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-9211-749b-9210-9cc9978c5d1d",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4549576,
+    "retextureId": "01a1df3a-b633-75c7-83b3-09bb67fda3a8",
+    "retextures": 1,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Elder skeleton priest guardian: dark aged gold crown with a purple gem, deep desaturated plum-purple layered robes and cape, dark steel shoulder plates with dark aged gold trims, glowing purple eyes, a staff with a glowing purple orb. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-a123-7512-94cc-d4e594151811",
+    "rigCredits": 5
+  },
+  "enemy_morvath": {
+    "mode": "multi-image-to-3d",
+    "images": [
+      "tools/meshy/ref/enemies/morvath/front.png",
+      "tools/meshy/ref/enemies/morvath/side.png",
+      "tools/meshy/ref/enemies/morvath/back.png",
+      "tools/meshy/ref/enemies/morvath/threequarter.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df37-989f-71cf-97e1-57018982f5ca",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4281828,
+    "retextureId": "01a1df3a-bd0a-743a-a28f-3e809b4fab23",
+    "retextures": 1,
+    "retexturePrompt": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Morvath, the skeleton king who betrayed the light: long white hair, a dark aged gold crown, ivory skull with glowing purple eyes, layered deep plum-purple royal robes and cape, dark steel armor with dark aged gold trims, a glowing purple gem on the chest. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink.",
+    "retextureCredits": 10,
+    "rigId": "01a1df3c-a8cb-763a-8443-9451e3866e02",
+    "rigCredits": 5
+  },
+  "emeth": {
+    "mode": "image-to-3d",
+    "images": [
+      "tools/meshy/ref/emeth/emeth.png"
+    ],
+    "ai_model": "latest",
+    "imageId": "01a1df3a-95cf-76a0-be08-392f1b4ba90f",
+    "attempt": 1,
+    "imageCredits": 30,
+    "bytes": 4271476
   }
 }

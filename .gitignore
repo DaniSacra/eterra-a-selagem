@@ -5,3 +5,16 @@ __pycache__/
 .claude/settings.local.json
 # Meshy input images cut from Daniel's AI concept art (kept out of the repo, see docs/steam-ia.md)
 tools/meshy/ref/
+# Meshy (2026-11-15): only the rigged model the game uses is kept (the base, walk/run and older texture versions stay
+# local; their task ids are in tools/meshy/tasks.json)
+assets/models/meshy/enemy_*/*-v[0-9]*
+assets/models/meshy/enemy_*/*-walk*
+assets/models/meshy/enemy_*/*-run*
+assets/models/meshy/enemy_*/enemy_*.glb*
+assets/models/meshy/enemy_*/enemy_*_0.jpg*
+!assets/models/meshy/enemy_*/*-rigged.glb*
+assets/models/meshy/hero_explorer/*-walk*
+assets/models/meshy/hero_explorer/*-run*
+assets/models/meshy/hero_explorer/hero_explorer.glb*
+assets/models/meshy/hero_explorer/hero_explorer_0.jpg*
+!assets/models/meshy/enemy_*/*-rigged_Image_0.jpg*

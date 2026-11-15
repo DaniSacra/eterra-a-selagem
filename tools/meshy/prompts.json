@@ -34,7 +34,8 @@
         "tools/meshy/ref/enemies/skeleton/back.png",
         "tools/meshy/ref/enemies/skeleton/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton foot soldier: round dented steel helmet, one steel pauldron, ragged dark blood-red cloth at the waist and neck, leather straps, a short rusty blade. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton foot soldier: round dented steel helmet, one steel pauldron, ragged dark blood-red cloth at the waist and neck, leather straps, a short rusty blade. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton soldier: dark steel round helmet and one dark steel shoulder plate, faded dark red cloth at the waist and neck, worn leather straps, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_runner": {
       "ai_model": "latest",
@@ -46,7 +47,8 @@
         "tools/meshy/ref/enemies/runner/back.png",
         "tools/meshy/ref/enemies/runner/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Hunched fast skeleton, no weapon, ragged dark red rags, cracked ribcage with glowing orange embers inside the chest, burnt bone. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Hunched fast skeleton, no weapon, ragged dark red rags, cracked ribcage with glowing orange embers inside the chest, burnt bone. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Explosive skeleton runner: bare ivory bones and open ribs, faded dark red rags, glowing orange embers and cracks in the chest like burning coals, small orange glowing eyes, no weapon. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_mage": {
       "ai_model": "latest",
@@ -58,7 +60,8 @@
         "tools/meshy/ref/enemies/mage/back.png",
         "tools/meshy/ref/enemies/mage/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton sorcerer: dark hooded robe almost black with dark red trims and scarf, glowing cold violet eyes, wooden staff topped with a cold violet gem (violet, not green). A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton sorcerer: dark hooded robe almost black with dark red trims and scarf, glowing cold violet eyes, wooden staff topped with a cold violet gem (violet, not green). A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton sorcerer: dark charcoal hood and long robe with faded dark red lining, glowing cold violet eyes and a cold violet gem, dark wooden details. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_archer": {
       "ai_model": "latest",
@@ -70,7 +73,8 @@
         "tools/meshy/ref/enemies/archer/back.png",
         "tools/meshy/ref/enemies/archer/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton crossbowman: dark purple hood, dark red scarf and short cape, dark bronze and leather armor pieces, a crossbow. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton crossbowman: dark purple hood, dark red scarf and short cape, dark bronze and leather armor pieces, a crossbow. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Skeleton crossbowman: dark desaturated purple hood, faded dark red cloak and scarf, dark leather and blackened bronze armor pieces, dark wooden crossbow, small orange glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_guard": {
       "ai_model": "latest",
@@ -82,7 +86,8 @@
         "tools/meshy/ref/enemies/guard/back.png",
         "tools/meshy/ref/enemies/guard/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Heavy skeleton brute: dark bronze plate armor, tall tower shield with an engraved emblem, a straight sword, dark red cloth at the waist. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Heavy skeleton brute: dark bronze plate armor, tall tower shield with an engraved emblem, a straight sword, dark red cloth at the waist. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Heavy skeleton shieldbearer: heavy blackened bronze plate armor, a large dark bronze tower shield with a worn engraved emblem, faded dark red rags, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_priest": {
       "ai_model": "latest",
@@ -94,7 +99,8 @@
         "tools/meshy/ref/enemies/priest/back.png",
         "tools/meshy/ref/enemies/priest/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton priest of the dead: deep purple hood and long robe with old gold trims, glowing purple eyes, empty hands. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton priest of the dead: deep purple hood and long robe with old gold trims, glowing purple eyes, empty hands. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte. Undead skeleton priest of the dead: the face inside the hood is a pale ivory human skull with dark eye sockets and two small glowing purple eyes. Deep desaturated plum-purple hood and long tattered robe. The shoulder plates, the chest ornament, the belt and the vertical bands down the front of the robe and the hood's edge are dark aged gold / antique bronze metal with worn darker edges, clearly gold, never bright yellow. Ivory bone hands and forearms. No red, no pink."
     },
     "enemy_knight": {
       "ai_model": "latest",
@@ -106,7 +112,8 @@
         "tools/meshy/ref/enemies/knight/back.png",
         "tools/meshy/ref/enemies/knight/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant skeleton knight guardian: dark steel plate with old gold trims, helmet with a crown of spikes, long ragged red cape, sword and shield. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant skeleton knight guardian: dark steel plate with old gold trims, helmet with a crown of spikes, long ragged red cape, sword and shield. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Giant skeleton knight guardian, the face under the helmet is an ivory skull: dark steel plate armor with dark aged gold trims, a horned helmet with a crown of spikes in dark aged gold, long faded dark red cape, dark steel shield and sword, small red glowing eyes. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_priest_elder": {
       "ai_model": "latest",
@@ -118,7 +125,8 @@
         "tools/meshy/ref/enemies/priest_elder/back.png",
         "tools/meshy/ref/enemies/priest_elder/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant elder skeleton priest guardian: golden crown, purple and old gold layered robes and mantle, staff with a glowing purple orb. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Giant elder skeleton priest guardian: golden crown, purple and old gold layered robes and mantle, staff with a glowing purple orb. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Elder skeleton priest guardian: dark aged gold crown with a purple gem, deep desaturated plum-purple layered robes and cape, dark steel shoulder plates with dark aged gold trims, glowing purple eyes, a staff with a glowing purple orb. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
     },
     "enemy_morvath": {
       "ai_model": "latest",
@@ -130,7 +138,16 @@
         "tools/meshy/ref/enemies/morvath/back.png",
         "tools/meshy/ref/enemies/morvath/threequarter.png"
       ],
-      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton king Morvath, the king who betrayed the light: golden crown, long white hair, layered purple and old gold royal robes and mantle, ornate dark armor, a glowing purple gem on the chest, glowing purple eyes. A-pose facing forward, no base, no ground, no text."
+      "texture_prompt_fallback": "Stylized hand-painted dark fantasy undead skeleton, adult proportions (not chibi), painterly matte materials, warm ivory bone with dark sockets and joints. Skeleton king Morvath, the king who betrayed the light: golden crown, long white hair, layered purple and old gold royal robes and mantle, ornate dark armor, a glowing purple gem on the chest, glowing purple eyes. A-pose facing forward, no base, no ground, no text.",
+      "retexture": "Stylized hand-painted dark fantasy, painterly matte, same family as a skeleton priest with dark steel plates and a desaturated plum robe. Undead skeleton: pale ivory human skull with dark eye sockets, ivory bones. Morvath, the skeleton king who betrayed the light: long white hair, a dark aged gold crown, ivory skull with glowing purple eyes, layered deep plum-purple royal robes and cape, dark steel armor with dark aged gold trims, a glowing purple gem on the chest. Metal is dark weathered steel or blackened bronze with worn edges, never bright yellow; cloth colours are desaturated. No pink."
+    },
+    "emeth": {
+      "ai_model": "latest",
+      "polycount": 8000,
+      "images": [
+        "tools/meshy/ref/emeth/emeth.png"
+      ],
+      "texture_prompt": "Stylized hand-painted fantasy longsword Emeth: translucent emerald-green crystal blade with thin gold veins and a pale glowing edge, ornate antique gold crossguard with curved horn-like quillons and a round emerald in the centre, dark red leather-wrapped grip, gold pommel with an emerald. Only the sword, no background, no crystals, no ground."
     }
   }
 }
