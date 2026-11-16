@@ -1,6 +1,7 @@
 # Roteiro da Fase 1: revisão executiva e próximos ciclos
 
-- **Data**: 2026-11-16 (tarde). **Autor**: game-director. **Commit lido**: `87ba686` (HEAD de `arpg-3d`).
+- **Data**: 2026-11-16 (tarde; seção 0 acrescentada à noite sobre o `71cb8cc`). **Autor**: game-director. **Commit lido**:
+  `87ba686` (HEAD de `arpg-3d`) nas seções A a H; `71cb8cc` na seção 0.
 - **Pedido**: `docs/design/roadmap_brief_2026-11-16.md` (resumo fiel do Daniel). Este documento é o planejamento; o
   backlog executável está em `docs/backlog.md` (seção "C12c" e as seguintes).
 - **Decisão confirmada pelo Daniel hoje (D-39)**: "vale copiar do Hades, nomes nossos". Continua valendo a regra antiga:
@@ -19,6 +20,64 @@
 - **Vídeo olhado**: `C:\Users\danie\Videos\ASelagem\partida_ASelagem.mp4` (robô com reação 0,25, 4 min 10 s, 1280 x
   720, com som; derrota na fase 4 de Morvath aos 3:50). Tirei folhas de um quadro a cada 10 s, quadros nas transições
   (1:20 a 1:31, 1:58 a 2:08) e medi o som com `ffmpeg` (`volumedetect`, `astats`, `silencedetect`).
+
+## 0. Atualização de 2026-11-16 (noite): diretriz de game feel e excelência visual
+
+Fonte: `docs/design/game_feel_directive.md` (prioridade máxima, do Daniel) e a revisão oficial
+`docs/design/game_feel_review.md` (commit lido `71cb8cc`). Esta seção **manda sobre as seções B a H** onde elas divergirem.
+
+### 0.1 Regra de priorização (da diretriz, vale para todo ciclo)
+Antes de aprovar mapa, inimigo ou funcionalidade nova, responder por escrito no plano do ciclo:
+1. Melhora o prazer de jogar? 2. Melhora a apresentação? 3. Oferece experiência diferente? 4. Justifica o custo?
+5. Há algo pronto que pede mais polimento?
+- Se o combate está rígido: **combate primeiro**. Se modelos e animações estão muito abaixo da direção: **acabamento
+  visual primeiro**. **Não aumentar conteúdo para esconder falta de qualidade.**
+- Mecânicas e números do Hades II continuam copiados fielmente (D-39); a revisão separa "cópia errada" (corrige sem
+  perguntar) de "mudança de design ou dificuldade" (decisão do Daniel).
+- O robô vencer não prova game feel. Todo ciclo de combate ou visual entrega a sonda (`tools/feel_probe_run.gd`) e os
+  vídeos de game feel antes e depois (`docs/gallery/game_feel/`, mesmos comandos do `VIDEOS.md`).
+
+### 0.2 Definição de "Fase 1 concluída" (da diretriz) com o que mede cada critério
+A Fase 1 só está concluída quando todos valem. A última coluna é o que mostra que vale; o "teste humano" é sempre o do
+Daniel (e, se ele quiser, mais testadores, D-13).
+
+| # | Critério da diretriz | Como se mede | Onde estamos (2026-11-16) |
+|---|---|---|---|
+| 1 | Combate responsivo e prazeroso | sonda: nenhum aperto `LOST`, hit stop no molde do Hades, metas do C12d ok; latência de ponta a ponta medida na placa (GF-13); **teste humano**: "nada deixou de sair" e "o golpe pesa" | não: esquiva e ataque somem em janelas medidas, hit stop congela, inimigos não reagem |
+| 2 | Evolução de habilidade sentida | registro de gente: dano levado por sala cai entre a 1ª e a 3ª partida; Morvath com 5 a 8 dons (C13); **teste humano** | não medido; 3 dons em Morvath |
+| 3 | Animações e efeitos sincronizados | fita do corte a menos de 0,5 m da ponta da lâmina; nenhum inimigo repete pose em 2 quadros seguidos a 30 qps; som do golpe no quadro do disparo (vídeo com som) | não (V-E1, V-A1, sem som de disparo) |
+| 4 | Cenários consistentes | aprovação do `art-director` com medidas por arena; nenhuma peça do KayKit sem tratamento à vista na câmera do jogo | quase: arenas aprovadas; KayKit ainda à vista (V-C2) |
+| 5 | Personagens marcantes | armas próprias (não KayKit) nos inimigos e em Morvath; Morvath com clipes próprios; cor dele mantida em qualquer efeito | não (V-P1, V-A5, V-M2) |
+| 6 | Interface clara | nenhum marcador ou texto provisório visível; nada da HUD sobre a luta acima do medido; **teste humano** | quase (V-U1 `PALADIN_4` na carta) |
+| 7 | Desempenho estável | quadro a 1080 na RTX 5060 até 6 ms; placa fraca ou iGPU medida (DT-003); nenhum pico de passo acima de 4 ms no p99 | metade: RTX 3,6 a 5,9 ms; iGPU nunca |
+| 8 | Playtests humanos satisfatórios | T3 e T4 com as perguntas de game feel respondidas sem item grave; 3 partidas cada | nenhum teste humano desde o C12 |
+
+### 0.3 Ordem nova dos ciclos (revisão das seções B e H; decisão D-47 do Daniel)
+
+**Fechar o C12c (A-1) → C12d "Game feel I: a mão" → T3 → C12e "Excelência visual I: movimento e coerência" → C12f "Game
+feel II: inimigos, Morvath e som do combate" → T4 → C13 "Progressão" → C15 "Som e música" → C14 "Arenas II" → C16
+"Steam".**
+
+| Ciclo | Objetivo em uma frase | Por que nesta posição |
+|---|---|---|
+| C12d | Nenhum aperto perdido, golpe que morde sem grudar e impacto que se lê, com os números do Hades II | combate rígido (medido): regra 0.1 manda primeiro; sem isso o T3 mede a mão errada |
+| T3 | O Daniel joga a mão nova (perguntas no `backlog.md` seção 5) | uma versão completa (MVP), não a do C12c (D-45) |
+| C12e | Inimigos e Morvath que se movem tão bem quanto o herói, armas no estilo dos modelos | animação muito abaixo da direção (V-A1 alta); sem créditos |
+| C12f | O golpe mudar o comportamento dos inimigos; som de ação, carga, aviso e impacto | depende da D-42; som do combate é game feel (diretriz), não só polimento |
+| T4 | O Daniel diz se o critério 1 da Fase 1 está atendido | antes de alongar a partida |
+| C13 | Chegar a Morvath com 5 a 8 dons (descida de 10 salas, economia do Hades II) | é sistema e cura o critério 2, mas alonga a partida: depois da mão boa |
+| C15 | Música por fase, ambiência por arena, mixagem | o som do combate já subiu para o C12f |
+| C14 | Três arenas novas | conteúdo: só depois de o que existe estar no nível (regra 0.1) |
+| C16 | Steam | como antes |
+
+Detalhe do C12d (donos por arquivo, aceite pela sonda, evidências): `docs/backlog.md`, seção 6. Itens GF-* e VX-*:
+`docs/backlog.md`, seção 1a.
+
+### 0.4 O que o C12c deixou
+Aceite (seção D, C12c): itens 1, 2, 4 a 9 passam; o 3 não passa (colunas da recompensa e da fonte 255 na tela, A-1, em
+correção) e o 3b passa em parte (Cripta: 4 de 8 recortes, M-1). Fonte: `docs/qa/latest_report.md` (QA-02, `71cb8cc`).
+
+---
 
 Legenda: "medido" é dado do jogo ou do vídeo; "simulação" é o robô (não é diversão); "opinião" é minha; "pede teste
 humano" é o que só o Daniel jogando responde.
@@ -91,8 +150,8 @@ humano" é o que só o Daniel jogando responde.
 
 ## B. Roadmap
 
-**Ordem recomendada: C12c "Qualidade da experiência" (hoje) → teste final do Daniel → C13 "Progressão e
-rejogabilidade" → C15 "Som e polimento" → C14 "Arenas II" → C16 "Steam".**
+**Ordem desta seção, substituída pela seção 0.3 (diretriz de game feel):** C12c → teste final do Daniel → C13 →
+C15 → C14 → C16.
 
 Mudança em relação ao pedido: **C15 antes do C14** (opinião minha, decisão D-40 do Daniel). Por quê:
 1. O som está em todo golpe de toda sala; as arenas novas acrescentam 3 salas. A meta é "uma Fase 1 que o jogador queira
@@ -144,6 +203,9 @@ Reservatório (D-31, D-32).
 ---
 
 ## D. Aceite por ciclo
+
+Aceite da Fase 1 inteira: seção 0.2. Aceite do C12d (pela sonda e pelos vídeos antes e depois), do C12e e do C12f:
+`docs/backlog.md`, seção 6. Os aceites do C13, C15 e C14 abaixo continuam, na ordem da seção 0.3.
 
 ### C12c
 1. Nenhum bug crítico ou alto aberto; 0 inimigo preso e 0 robô preso em 96 lutas (16 sementes por arena e variante) e em

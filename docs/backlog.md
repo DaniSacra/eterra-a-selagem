@@ -1,30 +1,29 @@
 # Backlog de A Selagem
 
-- **Data**: 2026-11-16 (fim da tarde). **Autor**: game-director (quinta revisão, a revisão executiva pedida pelo Daniel).
-  **Commit lido**: `87ba686` (HEAD de `arpg-3d`); desde a revisão anterior (`95c29c6`): `7e7495e` (backlog), `87ba686`
-  (correções F-1 a F-6 e G-1 nas Fendas).
-- **Planejamento completo** (diagnóstico, hipóteses A a F, roadmap, aceite, testes, evidências, decisões, próxima
-  execução): `docs/design/roadmap_plan.md`. Pedido do Daniel: `docs/design/roadmap_brief_2026-11-16.md`.
-- **Fontes lidas**: as da revisão anterior, mais `work/fix_rift_vA_antes_depois_cenario.jpg` (olhado), o registro humano
-  (`runs_antes_ciclo12.jsonl`, 3 partidas; `runs.jsonl`, 1 partida sem mouse, pouco representativa pelo Daniel) e o vídeo
-  `C:\Users\danie\Videos\ASelagem\partida_ASelagem.mp4` (robô 0,25, derrota na fase 4 aos 3:50; quadros e som medidos
-  com `ffmpeg`).
-- **Rodado por mim**: `tools/test.sh` no `87ba686`: **462 de 462** (104113 asserções). Nada do jogo foi mudado.
-- **Decidido hoje pelo Daniel (D-39)**: "vale copiar do Hades, nomes nossos": mecânicas e números do Hades II, fielmente;
-  nomes, personagens, UI e arte de Eterra. O C13 segue isso.
+- **Data**: 2026-11-16 (noite). **Autor**: game-director (sexta revisão: a Game Feel Review pedida pela diretriz do Daniel).
+  **Commit lido**: `71cb8cc` (HEAD de `arpg-3d`); desde a revisão anterior (`87ba686`): `fffd677` (roteiro), `4d281bc`
+  (ART-R1), `c5798a8` (QA-01), `beb6c27` (C12c), `f07549f` (revisão visual), `74af372` (medidas de game feel), `71cb8cc`
+  (QA-02 e vídeos de game feel).
+- **Diretriz de prioridade máxima**: `docs/design/game_feel_directive.md` (game feel e excelência visual antes de
+  conteúdo). **Revisão oficial**: `docs/design/game_feel_review.md` (por área, com evidência e tipo de cada problema).
+  Planejamento e ordem dos ciclos: `docs/design/roadmap_plan.md` (seção 0, nova).
+- **Fontes lidas**: `game_feel_measures.md` (A a L), `visual_review.md` (V-*), `docs/gallery/game_feel/VIDEOS.md` e os
+  vídeos (quadros tirados com `ffmpeg` e olhados), `docs/qa/latest_report.md` (QA-02), `docs/gallery/cycle12c/AFTER.md`.
+- **Rodado por mim**: `tools/feel_probe_run.gd` no `71cb8cc` (a saída bate com as medidas). Nada do jogo foi mudado.
+- **Decidido pelo Daniel**: D-39 (mecânicas e números do Hades II fielmente, nomes e arte de Eterra) continua valendo.
 
 ## Estado do jogo em 5 linhas
 
-1. A Fase 1 joga do título à selagem em 7 salas (D-27): salão, três lutas sorteadas entre Cripta, Fendas e Jardim (duas
-   variantes cada), fonte, guardião, loja e Morvath em 4 fases na Câmara do Selo. 462 de 462 testes.
-2. As Fendas foram corrigidas (`87ba686`): agora leem como rasgo com pontes (olhado no antes e depois); falta a
-   reconferência do `art-director` (ART-R1). Cripta e Jardim aprovados.
-3. O dado mais forte que temos: **chega-se a Morvath com 3 dons** (3 de 3 partidas de gente e o vídeo do robô) e a loja
-   não vende nada (37 de ouro, item mais barato 60). Morvath foi feito para 5 a 8 dons: isso é o C13.
-4. No vídeo: coluna de recompensa amarela com miolo branco sobre o herói, coluna ciano que esconde Morvath na entrada,
-   gemas das portas acima do glow; 20% de silêncio e pico de 0,04 dBFS sem limitador. Isso é o C12c.
-5. Nenhum teste humano do C12 ainda; o registro atual não separa "injusto" de "não reagiu". O C12c acrescenta isso e
-   termina numa versão para o teste final do Daniel.
+1. A Fase 1 joga do título à selagem em 7 salas; o C12c (`beb6c27`) passou em 7 dos 9 itens de aceite (QA-02): 0 preso em
+   96 lutas e 8 descidas, câmera 0,4 m, som -2,94 dBFS, registro v2, 495 testes, nenhum número de combate mudado.
+2. Abertos do C12c: **A-1** colunas da recompensa e da fonte ainda 255 na tela (em correção), **M-1** cantos da Cripta
+   abaixo de 45, B-1 a B-3 baixos.
+3. A Game Feel Review diz: o combate responde no quadro mas **some aperto** (esquiva na preparação, ataque na esquiva,
+   buffer curto) e **gruda** (hit stop copiado como congelamento); os inimigos não reagem ao golpe.
+4. No visual: fita do corte opaca longe da lâmina, brilho do finalizador sobre o herói, avisos vermelhos empilhados,
+   multidão animada aos saltos, armas do KayKit. O cenário e as silhuetas estão no caminho.
+5. Próximo: **C12d "Game feel I"** (a mão do jogador: resposta, impacto e leitura) e depois o teste do Daniel; conteúdo
+   novo (C13 longo, C14 arenas) espera o acabamento, pela regra da diretriz.
 
 Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade** P0 (antes de tudo), P1 (neste ciclo), P2
 (próximo), P3 (depois). **Estado**: aberto, em andamento, proposta (espera o Daniel), aprovado, feito. Responsáveis:
@@ -33,6 +32,28 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 ---
 
 ## 0. Feito (fechado com evidência)
+
+### C12c "Qualidade da experiência" (`beb6c27`, medido no QA-02 `71cb8cc`)
+
+| ID | Item | Estado | Prova |
+|---|---|---|---|
+| GP-01 | Colunas e gemas abaixo do glow; Morvath entra sem coluna | **em parte**: entrada de Morvath passa (corpo 45 aos 0,5 s, sem coluna); gemas com cor de volta mas canal dominante 255; colunas da recompensa e da fonte **255 na tela** (A-1, em correção) | `cycle12c/AFTER.md` GP-01; `after/coluna_recompensa_criptaA.jpg`, `coluna_fonte.jpg`, `morvath_entrada_0_5s.jpg` |
+| GP-02 | Registro v2 (`source`, `boons_at_boss`, `shop`, `fountain_used`, `hurt_ctx` com `warn_s`, `dash_ready`, `offscreen`; por sala `variant`, ouro, dons, esquivas, golpes, tiros, `blocked_by`) | feito | QA-02 item 6; `after/descida_run.jsonl` |
+| GP-03, GP-04 | `resolve` acha o lugar livre mais perto; cercado nos corredores mais estreitos, 16 de 16 esquivas saem | feito | `beb6c27`; testes |
+| GP-05 | Limitador -1 dB no `Master` | feito | pico -2,94 dBFS na descida com som (QA-02 item 5) |
+| GP-06 | `--trace-cam`; alvo da câmera a no máximo 24 m/s | feito | maior salto 0,400 m em 46 salas (antes 2,9 m) |
+| (QA-01) | Aviso no chão não fere depois da sala vencida | feito | `after/sem_dano_apos_sala_vencida.jpg` |
+| UI-01, UI-02 | `DoorSign` (18 px a 1080, contraste 12:1); derrota com sala, arena e dons | feito | `work/ui_after_doors_1080.jpg`, `ui_after_end_1080.jpg`, `tests/test_end_screen_run.gd` |
+| ENV-01 | Chão da Cripta na luta 45 a 60 | **em parte**: mediana 30 para 43,5, 4 de 8 recortes no alvo; oeste e norte 19 a 34 (M-1) | `after/crypt_vA_c_recortes.jpg`, `crypt_vB_c_recortes.jpg` |
+| ENV-02 | Fraturas da árvore até 200 | feito (máximo 198) | `AFTER.md` ENV-02 |
+| ENV-03 | Jardim no Compatibility (sem sombra da lua) | feito pelo `environment-artist`, não remedido pelo QA | `work/env_garden_compat_antes_depois.jpg` |
+| ART-R1 | Fendas reconferidas (F-1 a F-3, F-5, F-6, G-1 passam; F-4 dois pontos abaixo) | feito; D-38 sem objeto | `4d281bc` |
+| QA-01, QA-02 | Linha de base e medidas depois, vídeo de descida com som a 1080 (DT-004), 11 vídeos de game feel | feito | `c5798a8`, `71cb8cc`; `docs/gallery/cycle12c/`, `docs/gallery/game_feel/` |
+| GF-R | Game Feel Review: medidas (`74af372`), revisão visual (`f07549f`), vídeos (`71cb8cc`), revisão oficial | feito | `docs/design/game_feel_review.md` |
+
+Aceite do C12c (roadmap D): itens 1, 2, 4, 5, 6, 7, 8, 9 passam; **3 não passa** (colunas, A-1) e o 3b passa em parte
+(M-1). O C12c fecha quando o A-1 entrar com captura na GPU; o M-1 pode fechar por aceite do `art-director` (cantos
+escuros de propósito, aceite só no terço central) ou por correção.
 
 ### C12b "Fecho das Fendas" (2026-11-16)
 
@@ -76,59 +97,101 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 
 ## 1. Bugs
 
-Nenhum crítico nem alto aberto. As três altas de arte das Fendas (F-1 a F-3) foram corrigidas no `87ba686` (seção 0) e
-esperam só a reconferência do `art-director` (ART-R1). Os clarões vistos no vídeo do robô entraram como GP-01 (seção 1b),
-com prioridade P0 porque ferem a regra de leitura da direção.
+Nenhum crítico. Os altos são do combate: aperto que some é regra quebrada (D-39) e fere a direção ("o jogador vence por
+habilidade e esquiva"). Os itens completos estão na seção 1a (GF, VX).
+
+### Alto
+
+| ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
+|---|---|---|---|---|---|---|
+| A-1 | Colunas de luz da recompensa e da fonte 255 na tela (miolo 93 a 100% acima de 235) | QA-02 A-1; `after/coluna_recompensa_criptaA.jpg`, `coluna_fonte.jpg` | P | `gameplay-engineer` (valor do `art-director`) | **em correção** | recorte da coluna (915, 120, 90 x 330) com maior canal até 235 na captura da GPU; herói dentro dela legível |
+| GF-02 | Esquiva apertada na preparação de um golpe some (golpe 1 quadros 1 a 4, seta 1 a 6, giro 1 a 22) | `game_feel_measures.md` problema 2; sonda `_s_dodge_cancel` | P | `gameplay-engineer` | aberto | `_s_dodge_cancel` sem nenhum `LOST` |
+| GF-03 | Ataque apertado durante a esquiva (quadros 1 a 13), no último quadro dela e durante o golpe sofrido some | problemas 3 e 4; `_s_attack_in_dodge`, `_s_extra`, `_s_hurt` | P | `gameplay-engineer` | aberto | aperto nos quadros 1 a 13 vira golpe da esquiva no 13 ou 14; nada `LOST` |
+| GF-01 | Hit stop é congelamento total (cópia errada do `ScreenPreWait` do Hades) | problema 1; `_s_kill` (3 quadros parados no abate do golpe 1), `_s_combo_on_hit` (`frozen_frames=6`) | M | `gameplay-engineer` | aberto | ver GF-01 na seção 1a |
+| VX-11 | `PALADIN_4`, `PALADIN_2` e `PALADIN_3` aparecem para o jogador na carta de dom ("Luz, dom de PALADIN_4") | V-U1, `carta_dom_720.jpg`; `data/text_pt.tres` linhas 29 a 31 | P | `ui-ux-designer` | aberto | nenhuma chave `PALADIN_` visível em nenhuma tela (teste que monta a carta de cada família e procura "PALADIN") |
 
 ### Médio
 
 | ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
 |---|---|---|---|---|---|---|
-| F-4 | Chão das Fendas escuro longe das lanternas (25 a 29 na luta) | F-4 | P | `environment-artist` | feito no `87ba686`, a reconferir (ART-R1) | recortes da F-4 com 40 ou mais |
-| F-5 | Paredão de cantaria azul iluminada sob as bordas de fora | F-5 | P | `environment-artist` | feito no `87ba686`, a reconferir (ART-R1) | recorte do paredão até 60% do chão |
-| QA M-1 | Referência `04` (IA) em tamanho cheio no histórico (`91cc656:docs/gallery/cycle12_maps/work/garden_vs_04.png`), já enviada ao `origin` | QA M-1; `git remote -v` aponta para o GitHub | P | Daniel (D-37) | aberto | decisão D-37 tomada; regra para os agentes: miniatura de 480 px rotulada, nunca a referência inteira em `docs/gallery` |
+| GF-05 | Câmera lenta de 3 abates vira 0,28 s de tela congelada | problema 5; `_s_kill` (17 quadros `stepped=false` a 0,2) | P | `gameplay-engineer` | aberto | no máximo 3 quadros parados, depois a lentidão a 0,2 visível (`stepped=true`) |
+| GF-06 | Controle virtual (robô, toque futuro) perde apertos no hit stop | problema 9; `_s_hitstop_buffer` (`pad ... LOST`) | P | `gameplay-engineer` | aberto | `pad` igual ao `keyboard` |
+| M-1 | Cantos oeste e norte da Cripta com chão 19 a 34 na luta | QA-02 M-1; `after/crypt_vA_c_recortes.jpg` | P | `environment-artist` ou aceite do `art-director` | aberto | recortes do QA com 45 ou mais, ou aceite escrito só para o terço central |
+| QA M-1 (antigo) | Referência `04` em tamanho cheio no histórico do git | backlog anterior | P | Daniel (D-37) | aberto | D-37 tomada |
 
 ### Baixo
 
-| ID | Título | Evidência | Esforço | Responsável | Pronto quando |
-|---|---|---|---|---|---|
-| B-1 | Pico do passo acima de 2 ms (mediana 2,3 a 2,95; 5 passos de 4,2 a 11,4 em 48 lutas; o salão sem campo de fluxo também passa) | QA B-1, `METRICAS.md` seção 3 | P | `gameplay-engineer` | meta reescrita como percentil (p99 do passo abaixo de 2 ms) e medida; ou um pico explicado no Windows nativo |
-| B-2 | `--hero-at` no centro exato de um obstáculo deixa o herói dentro (só a opção de desenvolvimento) | QA B-2, `crypt/vA_g_hero_at_dentro_do_tumulo.jpg` | P | `gameplay-engineer` | `Arena.resolve` empurra para a face mais perto quando o ponto é o centro; teste GUT; e conferir que invocação do Ancião e reforços de Morvath nunca caem dentro de peça |
-| B-3 | Teste "cercado" do GUT só olha o chão | QA B-3, `test_no_dead_end_traps_a_cornered_paladin` | P | `gameplay-engineer` | teste com 2 inimigos de cada lado e uma esquiva que sai em pelo menos 12 de 16 direções, nos 4 corredores mais estreitos |
-| B-4 | Jardim no Compatibility com p90 de 6,03 ms a 1080p | QA B-4 | P | `qa-performance` (medir de novo depois do `95c29c6`, que diz 5,2 ms), `environment-artist` | p90 até 6 ms no Compatibility na RTX 5060, ou registrado como aceito (o navegador é secundário) |
-| BUG-013 | O comando da investida na spec da câmara não dá investida | QA anterior B-1 | P | `art-director` | `boss_chamber_spec.md` seção 9 com `--bot --bot-kite=1` |
+| ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
+|---|---|---|---|---|---|---|
+| B-1 (QA-02) | Gemas das portas com o canal dominante em 255; Dom e Ouro da fonte quase brancas (239, 238) | `after/gemas_portas_criptaA.jpg`, `coluna_fonte.jpg` | P | `gameplay-engineer` (`Rooms.gem_color`) | aberto | maior canal até 235 se o `art-director` mantiver o aceite; senão aceite escrito |
+| B-2 (QA-02) | O robô nunca usa a fonte (`fountain_used: false` em 8 de 8): `Bot.step` volta antes do trecho da fonte com a sala vazia | QA-02 B-2; `bot.gd` perto da linha 189 | P | `gameplay-engineer` | aberto | `fountain_used: true` em pelo menos 6 de 8 descidas em que ele entra com menos de 60% |
+| B-3 (QA-02) | Limitador no teto em 67 janelas de 0,1 s | QA-02 B-3 | P | `gameplay-engineer` | aberto, vai para a mixagem do C15 | pico e LUFS do C15 |
+| B-1 (antigo) | Pico do passo acima de 2 ms em poucos quadros | backlog anterior | P | `gameplay-engineer` | aberto | p99 do passo abaixo de 2 ms |
+| BUG-013 | Comando da investida na spec da câmara | backlog anterior | P | `art-director` | aberto | spec com `--bot-kite=1` |
 
 ---
+
+## 1a. Game Feel e Excelência Visual (GF, VX)
+
+Origem: `docs/design/game_feel_review.md` (área e evidência de cada item), `game_feel_measures.md` (propostas A a L),
+`visual_review.md` (V-*). Campos: ID, ciclo, prioridade, descrição, problema, valor para o jogador, aceite, dependências,
+responsável, estado, evidência. "Sonda" = `~/tools/godot/godot --headless --path . --fixed-fps 60 -s
+tools/feel_probe_run.gd -- --nosave --start=fountain` (`PROBE=_s_x` roda um cenário). Tipo: **cópia** (errada ou que
+faltou do Hades II, corrige sem perguntar), **bug**, **arte** (direção já aprovada), **Daniel** (decisão aberta).
+
+### Game feel (GF)
+
+| ID | Ciclo | P | Descrição | Problema | Valor para o jogador | Aceite | Dependências | Responsável | Estado | Evidência |
+|---|---|---|---|---|---|---|---|---|---|---|
+| GF-14 | C12d | P0 | Sonda com metas: a `feel_probe` imprime uma linha `FEEL <meta> ok/falha` por meta deste ciclo e um `FEEL_SUMMARY n/m` | hoje a sonda imprime quadros, não diz se passou | aceite do ciclo verificável por qualquer agente | rodada no HEAD antes das mudanças mostra as falhas esperadas (GF-01 a GF-08); a mesma rodada no fim mostra todas ok | nenhuma (roda primeiro) | `qa-performance` | aberto | `tools/feel_probe.gd` |
+| GF-02 | C12d | P0 | Esquiva corta a preparação (`ComboRunner.can_cancel` também no WINDUP) e o aperto da esquiva entra no buffer | aperto some (cópia: o Hades corta a carga) | "apertei e esquivou", sempre | `_s_dodge_cancel`: nenhum `LOST`; golpe cortado não dá dano; teste GUT | nenhuma | `gameplay-engineer` | aberto | medidas tabela 3 e 5, problema 2 |
+| GF-03 | C12d | P0 | Ler ataque e especial durante a esquiva e o golpe sofrido; soltar o golpe da esquiva no fim dela; aperto no último quadro vale | ataque some nos quadros 1 a 13 (cópia: `DashAttackQueue`) | ataque e esquiva encadeiam como no Hades | `_s_attack_in_dodge` e `_s_extra`: aperto nos quadros 1 a 13 vira golpe da esquiva no 13 ou 14; `_s_hurt`: aperto guardado sai no 11 | nenhuma | `gameplay-engineer` | aberto | problema 3, tabela 4 |
+| GF-04 | C12d | P0 | Buffer contado do momento em que o golpe pode sair (trava de gatilho), não do aperto | apertos nos quadros 1 a 3 do golpe 1 e nos 32 primeiros do giro somem | combo sem aperto perdido | `_s_buffer`: o 2º aperto vale em qualquer quadro do golpe 1 e do giro; `tests/test_combo.gd` estendido | nenhuma | `gameplay-engineer` | aberto | tabela 4 |
+| GF-01 | C12d | P0 | Hit stop no molde do Hades: por golpe a espera (25, 65, 70, 50 ms), a fração (6%) e a lentidão (10 ms; +40 com abate), volta em 20 ms; em tempo real, por `Engine.time_scale`; dados no `ComboNode` gerados pelo `make_data.gd` | congelamento inteiro a partir do quadro seguinte | o golpe morde sem grudar; o clarão e o empurrão aparecem | `_s_attack_hit`, `_s_combo_on_hit`, `_s_kill`: 0 quadros `stepped=false` por hit stop; 1 a 3 quadros a 6% depois da espera; teste GUT da agenda | nenhuma | `gameplay-engineer` | aberto | problema 1, tabela 7 |
+| GF-05 | C12d | P0 | `Fx.tick` desconta o hit stop em tempo real; a câmera lenta de vários abates só começa quando o hit stop acaba | 0,28 s de tela congelada | a câmera lenta se vê | `_s_kill` (3 abates): no máximo 3 quadros parados, depois `time_scale` 0,2 com `stepped=true` | GF-01 | `gameplay-engineer` | aberto | problema 5 |
+| GF-06 | C12d | P1 | `VirtualPad` guarda os toques até o jogo andar (como o `_latched` do teclado) | o robô e o toque perdem apertos | métricas do robô sem esse viés; toque futuro | `_s_hitstop_buffer`: `pad` sai como `keyboard` | nenhuma | `gameplay-engineer` | aberto | problema 9 |
+| GF-07 | C12d | P1 | Seta: trava de ataque 18 quadros após o disparo, recarga própria 0,7 s, dardo 62,5 m/s (a parada das pernas de 0,71 s espera a D-44) | trava 35 quadros, dardo a 30 m/s | especial deixa de travar o combo | `_s_special`: golpe no quadro 25, especial no 48 | D-44 só para a parada | `gameplay-engineer` | aberto | problema 7, tabela 5 |
+| GF-08 | C12d | P1 | Ômega do ataque acerta ao encher (brilho dentro da carga) | acerta 0,14 s depois | o Ômega sai quando a barra enche | `_s_omegas`: acerto no quadro 48 | nenhuma | `gameplay-engineer` | aberto | problema 10 |
+| GF-09 | C12d | P2 | Pequenos fiéis: direção instantânea e corpo a 1340 graus/s; botões lidos antes de andar (planta no quadro do aperto); proteção da esquiva 19 quadros desde o aperto; Ômega do especial conferido contra `ProjectileStaffBallCharged` | divergências sem razão escrita | virada e golpe mais limpos | `_s_turn`: direção a 180 no quadro 1, corpo em até 8 quadros; `_s_walk_cancel`: `walked 0:0.00`; `_s_dodge`: `inv` até o quadro 18; tabela do Ômega do especial no `game_feel_measures.md` preenchida | nenhuma | `gameplay-engineer` | aberto | problemas 13, tabela 10 |
+| GF-10 | C12d | P1 | Impacto seco: tranco e tremor dos golpes comuns na escala do Hades (0,05 a 0,1 m); clarão do inimigo 0,05 s com o 1º quadro visível; o que fica maior nos finalizadores e no Ômega o `art-director` fixa pelo vídeo | tranco 6 a 11 vezes o do Hades; clarão 0,14 s | golpe legível, avisos não tremem | sonda `_s_attack_hit`: `kick` até 0,1 m no golpe 1, `flash_t` 0,05; vídeo (c) antes e depois aprovado pelo `art-director` | GF-01 | `gameplay-engineer`, `art-director` | aberto | problemas 8 e 12 |
+| GF-11 | C12d | P1 | Som de lâmina no disparo de cada golpe (não só se erra), som de carga no giro e nos Ômegas; vibração por golpe no controle (`Input.start_joy_vibration`), com opção no Conforto | 0,37 s mudos no giro; sem vibração | o golpe se ouve antes de acertar | teste do `Audio`: todo `ComboNode` tem som de disparo; vídeo (b) com som mostra o som no quadro do disparo; opção de vibração salva | nenhuma | `gameplay-engineer` (sons provisórios CC0 ou síntese), `ui-ux-designer` (opção) | aberto | problema 11 |
+| GF-13 | C12d | P1 | Latência de ponta a ponta na placa (vsync ligado e desligado): aperto marcado e quadros até o primeiro pixel mudar | só a lógica foi medida | saber se o vsync atrasa | número em ms por ação (andar, golpe, esquiva) no relatório do QA | nenhuma | `qa-performance` | aberto | medidas, "Como foi medido" |
+| GF-12 | C12f | P1 | Reação ao golpe dos comuns sem armadura no molde do Hades: atordoamento curto, para de andar, interrompe a preparação, por inimigo (`EnemyDef`, imune no próprio ataque como no Hades) | o golpe não muda o comportamento de ninguém | acertar faz diferença; leitura de controle da luta | teste GUT: esqueleto acertado na preparação não ataca; robô 0,25 em 8 descidas antes e depois | **D-42** | `gameplay-engineer` | proposta | tabela 8, problema 6 |
+| GF-15 | C12e | P2 | Arranque e parada animados (clipes curtos só no desenho) | sem peso visual ao arrancar e parar | corpo com peso sem atraso | sonda `_s_move` igual (velocidade cheia no quadro 0); vídeo (a) antes e depois | nenhuma | `gameplay-engineer` (`tools/bake_hero.gd`) | aberto | tabela 2 |
+
+### Excelência visual (VX)
+
+| ID | Ciclo | P | Descrição | Problema | Valor para o jogador | Aceite | Dependências | Responsável | Estado | Evidência |
+|---|---|---|---|---|---|---|---|---|---|---|
+| VX-01 | C12d | P0 | Fita do corte comum presa à lâmina: corpo em tinta escura translúcida (alfa até 0,6), borda de ataque fina marfim-menta, verde pálido (saturação até 0,45); começa na ponta da Emeth no quadro do golpe e varre com ela 2 a 3 quadros | folha verde opaca a 2 ou 3 m da lâmina | o corte lê como luz da espada | `--shot-on=hit --shot-after=0.033`: menos de 15% dos pixels da fita com saturação acima de 0,6; ponta a menos de 0,5 m da ponta da Emeth; vídeo (g) antes e depois | nenhuma | `environment-artist` (`slash.gdshader`, `slash_ink.gdshader`), `gameplay-engineer` (o encaixe na lâmina em `fx.gd`/`combat.gd`) | aberto | V-E1; `g_combo_finalizador_0_25x.mp4` 4,5 a 6,5 s |
+| VX-02 | C12d | P0 | Brilho do finalizador fora do corpo: anel até 0,6 da altura do herói, centro na ponta da espada, cruz com miolo transparente | o anel cobre o herói 5 a 6 quadros | herói sempre legível | no quadro do brilho, nenhum pixel do anel com alfa acima de 0,5 sobre a caixa do corpo do herói | nenhuma | `environment-artist` (`glint.gdshader`), `gameplay-engineer` (`Fx.GLINT_SIZE` e a posição) | aberto | V-E2; `g_acertos_reacao_0_25x.mp4` 7,4 a 8,4 s |
+| VX-03 | C12d | P0 | Avisos em linha e retângulo: preenchimento até 0,35 que sobe só nos últimos 30% do preparo; sobreposição pelo máximo, não pela soma; borda e divisa como estão; tempo, área e assinatura de Morvath iguais | massa vermelha sob o herói em grupo | escolher a saída dentro de três avisos | três avisos sobrepostos não passam do alfa de um cheio; anel do herói visível dentro deles; `test_storm_wedge.gd` e testes de aviso passando | nenhuma | `environment-artist` (`ground.gdshader`, `ground_look.gd`) | aberto | V-L1; `d_especial_circulo_omegas.mp4` 0:01 a 0:02 e 0:10 a 0:15 |
+| VX-08 | C12d | P1 | Morvath e guardiões mantêm a cor queimando: borda de fogo até 0,25, brasas pela metade | manto violeta vira laranja | o chefe sempre lê como ele | no meio da fase 3 queimando, mediana do manto com matiz 260 a 300 | nenhuma | `environment-artist` (`crowd.gdshader`, só o ramo da queimadura) | aberto | V-M2; `f1_morvath_despertar.mp4` por volta de 0:07 |
+| VX-09 | C12d | P1 | Aro do círculo de luz com alfa até 0,45, metade da espessura, traços finos | lê como marca de interface por cima dos corpos | zona clara sem cobrir os inimigos | esqueleto em pé sobre o aro com os pés legíveis na captura | nenhuma | `environment-artist` (`ground.gdshader` estilo CIRCLE) | aberto | V-M1 |
+| VX-10 | C12d | P2 | Lascas alongadas na direção do corte (2:1 a 4:1), marfim a cinza, vida até 0,25 s | pontos brancos redondos 10 ou mais quadros no ar | impacto sem sujeira | nenhuma lasca visível 8 quadros depois do golpe | nenhuma | `environment-artist` (`impact.gdshader`), `gameplay-engineer` (vida das lascas em `fx.gd`) | aberto | V-E3 |
+| VX-11 | C12d | P0 | Sem marcador `PALADIN_n` para o jogador: a linha "dom de X" some até o Daniel dar os nomes (sem inventar nome) | bug visível na carta | texto limpo | teste que monta cada carta e não acha "PALADIN" | nenhuma | `ui-ux-designer` | aberto | V-U1 |
+| VX-12 | C12d | P2 | Contador de golpes até 48 px a 1080, nome do golpe com alfa 0,7 | compete com a luta | olho na luta | captura a 1080 medida | nenhuma | `ui-ux-designer` | aberto | V-U3 |
+| VX-04 | C12e | P0 | Multidão e Morvath sem saltos: mais poses (andar 20 a 24, ataque 14 a 16, golpe sofrido 8, parado 12, morte 16) e mistura entre a pose atual e a seguinte no vértice; medir memória e quadro | 10 poses por ciclo sem mistura, stop motion ao lado do herói | inimigos vivos | vídeo a 30 qps: nenhum inimigo andando repete a pose em 2 quadros seguidos; pacote dos assados medido; quadro sem piora acima de 0,3 ms | nenhuma | `environment-artist` (`tools/bake.gd`), `gameplay-engineer` (`crowd_renderer.gd`, `crowd.gdshader`), `qa-performance` | aberto | V-A1; `crowd_renderer.gd:242` |
+| VX-05 | C12e | P1 | Passo do andar medido por clipe no assado e guardado no `BakedModel` | `clip_rate` genérico, pé deslizando | pés no chão | pé de apoio desliza menos de 5 cm por passo no `enemy_lab` | VX-04 | `environment-artist`, `gameplay-engineer` | aberto | V-A2 |
+| VX-06 | C12e | P1 | Recuo visível: golpe sofrido com 8 poses e deslocamento de 0,15 a 0,3 m que se vê em 3 quadros | recuo invisível | o golpe se vê no corpo | `--shot-on=hit` + 6 quadros: o alvo se desloca e volta | VX-04; GF-12 se a D-42 aprovar | `gameplay-engineer` | aberto | V-A3 |
+| VX-07 | C12e | P1 | Armas do KayKit, paliativo no assado: ferro escuro e osso sem listras, cutelo até 0,6 do tronco, gancho de Morvath em ouro velho (matiz 35 a 45, saturação até 0,5) | outro estilo colado em figuras pintadas | inimigos coerentes | `enemy_lab`: nenhuma arma em faixas de duas cores; gancho medido | nenhuma (o final é D-46) | `environment-artist` (`tools/bake.gd` `held`) | aberto | V-P1 |
+| VX-13 | C12e | P2 | Metade dos grupos de velas da borda leste e sul do salão apagados | quente por toda a borda | quente como acento | fração de pixels quentes saturados na vitrine pela metade, chão acima de 45 | nenhuma | `environment-artist` | aberto | V-C1 |
+| VX-17 | C12e | P2 | Pose final do finalizador como carga (o corpo recua 5 a 10 cm, o brilho cresce desde o começo) | lê como parada | antecipação clara | `g_combo` antes e depois aprovado pelo `art-director` | VX-02, GF-01 | `gameplay-engineer` | aberto | V-A4 |
+| VX-14 | C12f | P1 | Clipes de Morvath mais pesados (UAL CC0: golpe de duas mãos para a foice, lançamento para a tempestade) | ataques são golpes genéricos | o chefe tem presença | vídeo por fase antes e depois aprovado pelo `art-director`; `test_boss*.gd` com os mesmos tempos de aviso | VX-04 | `gameplay-engineer` (`tools/bake.gd` bloco de Morvath, tempos) | aberto | V-A5 |
+| VX-15 | depois | P3 | Peças próprias de cenário (velas, balaustradas, sarcófagos), ícones de dom por família, retrato do medalhão a partir do Explorador | KayKit ao lado de pintura; ícones genéricos; retrato de outro estilo | identidade | spec do `art-director` por família | D-46 (Meshy), arte 2D | `art-director`, `environment-artist`, `ui-ux-designer` | proposta | V-C2, V-M3, V-U2 |
+| VX-16 | depois | P3 | Gema do cajado do mago até 235 | estoura branco | | `enemy_lab` | nenhuma | `environment-artist` | aberto | V-P2 |
 
 ## 1b. Itens priorizados do C12c em diante (formato completo)
 
 Campos: ID, ciclo, prioridade (P0 a P3), descrição, problema, valor para o jogador, aceite, dependências, responsável,
 estado, evidência. Planejamento e justificativas em `docs/design/roadmap_plan.md`. Nada do C12c muda número de combate.
 
-### C12c "Qualidade da experiência" (hoje; termina na versão do teste final do Daniel)
+### C12c "Qualidade da experiência"
 
-| ID | P | Descrição | Problema | Valor para o jogador | Aceite | Dependências | Responsável | Estado | Evidência |
-|---|---|---|---|---|---|---|---|---|---|
-| GP-01 | P0 | Colunas de luz e gemas das portas abaixo do glow; entrada de Morvath sem coluna sobre ele | coluna amarela com miolo branco sobre o herói ao vencer a sala; coluna ciano que deixa Morvath em silhueta preta por 1 s; gemas amarelas acima do glow | herói e chefe sempre legíveis; paleta de Eterra | teste GUT: todo `Fx.beam` do jogo com `cap` até 1,0; capturas do QA-02: maior canal da coluna até 235, mediana do recorte de Morvath aos 0,5 s acima de 30 | nenhuma | `gameplay-engineer` | aberto | vídeo 1:20, 1:58, 2:08; `Fx.beam` com `BEAM_INTENSITY` 2,5 sem teto em `rooms.gd:297`, `boss.gd:218`, `game.gd:702`; `rooms.gd:418` (albedo x 2,2); comentário em `boss.gd:979` |
-| GP-02 | P0 | Registro que separa injusto de não reagiu: por sala `variant`, `dodges`, `hits`, `hits_by`, `shots` por tipo `{fired, hit, blocked}`, `blocked_by`, `gold_in`, `boons_in`; por partida `source`, `boons_at_boss`, `shop {gold, bought}`, `fountain_used`; por golpe levado `hurt_ctx` (fonte, `warn_s`, `dash_ready`, `offscreen`, até 60) | `RoomTally` só tem dano por fonte, tempo e contato; o teste humano não decide se feiticeiro, Ancião e foice são injustos | as próximas mudanças de número saem de dado de gente, não do robô | `tests/test_cycle12c.gd` cobre cada campo; `tools/smoke.sh 120 --seed=5 --runlog=<arq>` grava a linha com todos e `source: bot`; campos antigos iguais | nenhuma | `gameplay-engineer` | aberto | `core/room_tally.gd`; `boss.hurt_by` do Daniel: foice 36 de 62 (vitória), 12 de 24 (derrota) contra o robô que morre na tempestade |
-| GP-03 | P1 | B-2: `Arena.resolve` com o ponto no centro de uma peça empurra para a face mais perto; invocações nunca dentro de peça | `--hero-at` no centro do túmulo deixa o herói dentro | ninguém nasce dentro de pedra | teste GUT por peça de cada arena; 200 invocações do Ancião e 200 reforços de Morvath sorteados, 0 dentro de peça | nenhuma | `gameplay-engineer` | aberto | QA B-2, `crypt/vA_g_hero_at_dentro_do_tumulo.jpg` |
-| GP-04 | P1 | B-3: teste "cercado" com inimigos | o teste atual só olha o chão | garante saída em corredor estreito | teste GUT: 2 esqueletos de cada lado nos 4 corredores mais estreitos de cada arena e variante, pelo menos 12 de 16 esquivas saem mais de 2,5 m | nenhuma | `gameplay-engineer` | aberto | QA B-3 |
-| GP-05 | P1 | `AudioEffectHardLimiter` no `Master`, teto -1,0 dB | pico de 0,04 dBFS (corte) no vídeo; `audio.gd` sem limitador | sem estalo em lutas cheias | teste GUT do efeito no barramento; pico até -1,0 dBFS no vídeo do QA-02 | nenhuma | `gameplay-engineer` | aberto | `astats` no vídeo (pico aos 12 s); `scripts/audio.gd:84` |
-| GP-06 | P1 | DT-009: `--trace-cam` imprime o maior salto do alvo da câmera e onde | salto nunca medido | câmera estável nas salas grandes | opção existe e está no `CLAUDE.md`; QA-02 mede abaixo de 0,5 m por quadro a 60 FPS nas 4 arenas | nenhuma | `gameplay-engineer` | aberto | QA, limitações |
-| ENV-01 | P0 | Cripta: chão da luta no alvo sem acender a periferia | chão longe das velas com 40 (alvo 45 a 60); terço do quadro preto no vídeo | inimigos e avisos legíveis em toda a sala (hipótese C) | `crypt/vA_c_combate` e `vB_c_combate` refeitas: recortes de chão longe das velas com mediana 45 a 60; tampa sob o facho até 150; quadro sem piora de mais de 0,3 ms | nenhuma | `environment-artist` | aberto | `ART_REVIEW.md` Medidas; vídeo 1:01 a 1:23 |
-| ENV-02 | P2 | J-5: fraturas dos galhos no valor do marfim | as fraturas saem quase brancas (opinião minha) | nada compete com o herói | maior canal das fraturas até 200 no `garden/vA_a_cenario` | nenhuma | `environment-artist` | aberto | `work/fix_garden_arvore_antes_depois` |
-| ENV-03 | P2 | B-4: Jardim no Compatibility | p90 de 6,03 ms | navegador e máquina fraca | p90 até 6,0 ms medido pelo QA, ou registrado como aceito | QA-02 mede | `environment-artist` | aberto | QA B-4 |
-| UI-01 | P1 | Placas das portas legíveis (`DoorSign`, classe nova em `scripts/ui/door_sign.gd`) | rótulos "Ouro", "Fonte de luz", "Loja" pequenos e brancos sobre a gema | escolher a porta sem procurar | teste GUT da classe; na captura a 1080 do QA-02 maiúsculas de pelo menos 16 px e contraste de pelo menos 4,5:1 | o `gameplay-engineer` troca a chamada em `rooms.gd` `_marker` | `ui-ux-designer` | aberto | vídeo 1:23, 2:02 |
-| UI-02 | P1 | Tela de derrota com "Sala N de M", a arena e os dons levados | a derrota mostra tempo, abates, sequência e número de dons, não onde nem com quê | o Daniel e quem testar contam a partida pela tela | teste GUT da `EndScreen` com derrota na sala 3 da Cripta e 2 dons; captura `--shot-on=end` | nenhuma | `ui-ux-designer` | aberto | vídeo 3:50 |
-| QA-01 | P0 | Linha de base antes das mudanças: capturas `antes/`, vídeo de descida com som, pico e silêncios | sem antes não há prova do depois | | arquivos em `docs/gallery/cycle12c/antes/` com comando no `CAPTURAS.md` | nenhuma (roda primeiro) | `qa-performance` | aberto | plano, seção F |
-| QA-02 | P0 | Medidas do aceite do C12c, relatório, galeria `cycle12c`, DT-004 (descida inteira com som a 1080p) | | | todos os itens da seção D do `roadmap_plan.md` com número | integração dos outros itens | `qa-performance` | aberto | plano, seções D a F |
-| ART-R1 | P1 | Reconferir F-1 a F-6 com as medidas da `ART_REVIEW.md` | correções sem reconferência | | adendo na `ART_REVIEW.md` com cada aceite medido; se passar, D-38 fecha | nenhuma | `art-director` | aberto | `87ba686` |
+Fechado na seção 0 (estado de cada item com a prova do QA-02). Abertos que ficaram: A-1 (em correção), M-1, B-1 a B-3
+(seção 1). As hipóteses A, B, D e F seguem pedindo teste humano; o registro v2 (GP-02) já as mede.
 
-Hipóteses que pedem teste humano (não viram mudança de número no C12c; o GP-02 as mede): A (catacumbas interligadas),
-B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidade do som). Roteiro de 7 perguntas no
-`roadmap_plan.md`, seção E.
-
-### C13 "Progressão e rejogabilidade" (depois do teste final; números do Hades II pela D-39)
+### C13 "Progressão e rejogabilidade" (depois do C12f e do teste T4; números do Hades II pela D-39)
 
 | ID | P | Descrição | Problema | Valor | Aceite | Dependências | Responsável | Estado | Evidência |
 |---|---|---|---|---|---|---|---|---|---|
@@ -141,7 +204,7 @@ B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidad
 | C13-07 | P2 | Bônus de sequência de golpes fora (D-10) | não existe no Hades II | fidelidade | `DamageCalc.combo_bonus` desligado e testado | D-10 | `gameplay-engineer` | proposta | comparativo, Dons |
 | C13-08 | P1 | Métricas do C13: dons e ouro por sala no registro, 8 descidas longas | | | `METRICAS.md` do ciclo | GP-02 | `qa-performance` | aberto | |
 
-### C15 "Som e polimento" e C14 "Arenas II" (ordem pela D-40)
+### C15 "Som e polimento" e C14 "Arenas II" (ordem pela D-47; os sons de ação do C15-02 sobem para o GF-11 e o C12f)
 
 | ID | Ciclo | P | Descrição | Aceite | Responsável | Estado |
 |---|---|---|---|---|---|---|
@@ -156,12 +219,15 @@ B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidad
 
 ## 2. Quickwins
 
+Os quickwins de sensação desta revisão são do C12d (cabem em horas cada): GF-02, GF-03, GF-04, GF-06 (P), VX-02, VX-11.
+Abaixo, os de processo.
+
 | ID | Título | Evidência | Impacto | Esforço | Responsável | Prioridade | Pronto quando |
 |---|---|---|---|---|---|---|---|
-| QW-014 | Montar a versão do teste final (era "T2"; agora sai depois do C12c, `roadmap_plan.md` H) | regra de entrega MVP; memória "Test build folders" | o Daniel testa tudo de uma vez | P | sessão principal | P0, depois do QA-02 | `ASelagem.exe` exportado do commit das Fendas, copiado para `Downloads\ASelagem-3D` e `ASelagem-teste`; `runs.jsonl` antigo do Daniel guardado com outro nome para não misturar com o T2 |
-| QW-015 | Ler o teste final por um roteiro fixo (com os campos do GP-02) | QW-011 e GP-02 gravam o que precisamos | separar "salas difíceis" de "Morvath difícil" e "atirador injusto" de "atirador fácil" | P | `qa-performance` | P0 depois do T2 | tabela por sala do T2 (arena, `hp_in`, dano por fonte, tempo, `contact`) ao lado da mesma tabela do robô 0,25 (`METRICAS.md` seção 1) |
-| QW-012 | Teste humano dos atiradores novos | `c666f4a` nunca jogado | decide o balanceamento deles | P | Daniel | P0 (dentro do T2) | 3 partidas no registro e as respostas do roteiro do T2 |
-| G-1b | Compatibility das Fendas (vermelho some, azul satura): **feito no `87ba686`**, a reconferir no ART-R1 | `ART_REVIEW.md` G-1, `work/fix_rift_vA_compat_vs_forward.jpg` | navegador; desktop não muda | P | `environment-artist` | feito | recortes do `vA_c` em Forward+ e Compatibility com diferença de até 15 por canal |
+| QW-014 | Versão de teste do Daniel: **sai depois do C12d** (T3), não do C12c (recomendação, D-45) | regra de entrega MVP; o C12d muda a mão e invalidaria um teste da mão antiga | um teste só, da mão nova | P | sessão principal | P0, depois do QA do C12d | `ASelagem.exe` do commit do C12d em `Downloads\ASelagem-3D` e `ASelagem-teste`; `runs.jsonl` antigo guardado com outro nome |
+| QW-015 | Ler o T3 por roteiro fixo (registro v2) | GP-02 grava `hurt_ctx`, esquivas, golpes por sala | separar "injusto" de "não reagiu" | P | `qa-performance` | P0 depois do T3 | tabela por sala do T3 ao lado da do robô 0,25 |
+| QW-012 | Teste humano dos atiradores | `c666f4a` nunca jogado por gente | balanceamento deles | P | Daniel | dentro do T3 | 3 partidas no registro |
+| QW-016 | Galeria de game feel antes e depois | `docs/gallery/game_feel/` é o "antes" | comparação externa da diretriz | P | `qa-performance` | P0 no QA do C12d | `docs/gallery/game_feel/after_c12d/` com os mesmos comandos do `VIDEOS.md` e a saída da sonda |
 
 ---
 
@@ -181,9 +247,19 @@ B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidad
   C16. **Responsável**: `qa-performance`. **Pronto quando**: salão, Fendas e Jardim medidos a 1280 x 720 numa iGPU (a placa
   integrada do próprio notebook do Daniel, se ele permitir forçar) ou registrado por que não dá.
 
-### DT-004 Vídeo da luta com som
-- Travessias feitas (720p, mudas). Falta o vídeo da luta com Morvath no HEAD a 1920 x 1080 com som. **Responsável**:
-  `gameplay-engineer`, `qa-performance`. **Esforço**: P.
+### DT-004 Vídeo da luta com som (feito)
+- Feito no QA-02 (`71cb8cc`): `docs/gallery/cycle12c/after/descida_com_som.mp4` (7 salas e Morvath, 1080, com som) e os
+  vídeos de game feel `f1` a `f4`. `tools/movie.sh` grava a 1080.
+
+### DT-010 A sonda de game feel não é teste
+- **Evidência**: `tools/feel_probe.gd` mede, mas nada falha quando um aperto volta a sumir. **Responsável**:
+  `qa-performance` (GF-14) e depois `gameplay-engineer` (um teste GUT por regra de entrada, ver GF-02 a GF-04). **Pronto
+  quando**: as regras de entrada do C12d têm teste GUT que quebra se voltarem.
+
+### DT-011 Vídeos de game feel com roteiro fixo e vida alta
+- **Evidência**: `VIDEOS.md`, limitações: roteiro com mira automática, herói com 200 ou 999 de vida, fase 4 curta. Não
+  mostram pressão real. **Responsável**: `qa-performance`. **Pronto quando**: o QA do C12d regrava (a) a (g) com os
+  mesmos comandos (antes e depois comparáveis) e acrescenta a fase 4 inteira com `--bot-kite`.
 
 ### DT-005 "Resources still in use at exit"
 - Igual. **Pronto quando**: `tools/test.sh` e `tools/smoke.sh` sem a linha.
@@ -191,7 +267,7 @@ B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidad
 ### DT-006 Vídeo dirigido do bloqueio de corpo
 - O roteiro à mão do QA (`METRICAS.md` seção 4) cobriu a mecânica em números; falta o vídeo. Baixa prioridade.
 
-### DT-009 Medidas de câmera da F6 nunca em número
+### DT-009 Medidas de câmera da F6 nunca em número (feito: GP-06, 0,400 m)
 - **Evidência**: QA, limitações: o salto do alvo entre quadros (meta abaixo de 0,5 m a 60 FPS) só foi visto nos vídeos.
 - **Responsável**: `qa-performance`. **Esforço**: P. **Pronto quando**: `--trace-cam` ou sonda que imprime o maior salto
   do alvo numa travessia de cada arena.
@@ -223,95 +299,109 @@ B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidad
 
 ---
 
-## 5. T2: teste do Daniel desta entrega
+## 5. T3: teste do Daniel depois do C12d
 
-**Atualização (quinta revisão)**: o T2 virou o teste final do C12c. O roteiro novo, com 7 perguntas ligadas às hipóteses A a F,
-está no `roadmap_plan.md`, seção E; as perguntas abaixo continuam valendo como apoio.
+**Quando**: depois do commit do C12d e do QW-014. **Quanto**: 3 partidas do título ao fim, teclado e mouse ou controle.
+Substitui o "teste final do C12c" (o roteiro de 7 perguntas do `roadmap_plan.md` E continua valendo e entra junto).
 
-**Quando**: depois do commit do C12c e do QW-014. **Quanto**: 3 partidas, do título ao fim (vitória ou morte), no
-teclado ou no controle, como ele preferir. Nenhum teste à parte para cada coisa.
-
-### O que observar
-
-1. **As salas parecem lugares diferentes?** Cripta (fechada, colunas e túmulo), Fendas (abismo com pontes), Jardim
-   (árvore de pedra). O nome aparece por 2 s ao entrar. Alguma sala pareceu a mesma, ou alguma pareceu injusta?
-2. **Ficou preso ou viu inimigo preso?** Em pilar, raiz, borda da fenda, ponte ou porta. Se sim, em que sala e onde.
-3. **A fenda e a cobertura mudaram como você luta?** Usou as pontes, se escondeu atrás de coluna ou do tronco? Algum
-   inimigo ou tiro pegou você de um lugar que não dava para ver?
-4. **Os atiradores são justos?** O mago (rajada de 3 orbes que perseguem e se esconde atrás de coluna), o sacerdote (a
-   trepadeira que rasteja pelo chão) e o besteiro (atira e foge): deu para ver o tiro chegando e sair dele? Algum era
-   chato de alcançar demais?
-5. **O guardião** (Cavaleiro ou Ancião, sala 5): pelo robô o Ancião é quem mais fere na descida. Foi o momento mais
-   difícil antes de Morvath?
-6. **Com quanta vida você chegou a Morvath** e se a luta pareceu mais curta ou mais longa que a da última vez.
-7. **Os golpes e o herói ainda leem** no meio da luta nas salas novas (mais escuras na Cripta, azuis nas Fendas)? Qualquer
-   coisa que esconda o herói ou um aviso.
+### Perguntas de game feel (uma linha cada)
+1. Alguma vez apertou a esquiva ou o ataque e nada saiu? Onde (no meio do combo, logo depois da esquiva, ao levar golpe)?
+2. O golpe pesa? Gruda ou fica fraco? O finalizador (o giro) está no tempo certo?
+3. A seta de luz e o Ômega: dá vontade de usar? Algum ficou rígido?
+4. No meio de um grupo, os avisos vermelhos deixaram escolher a saída?
+5. Os inimigos parecem sentir o golpe? (antes da D-42, a resposta esperada é "não": serve de linha de base)
+6. Morvath: alguma coisa da foice ou da tempestade pareceu sem aviso?
+7. Qualquer coisa que tenha coberto o herói.
 
 ### O que mandar
-- O arquivo `%APPDATA%\EterraASelagem\runs.jsonl` inteiro (cada partida já traz `rooms`, com a arena, a vida ao entrar, o
-  dano por inimigo, o tempo e o primeiro contato de cada sala, e `hp_at_boss`, `defeated_by`, os dons e o controle).
-- As respostas curtas às 7 perguntas (uma linha cada basta) e, se puder, um print de onde ficou preso ou do que escondeu
-  o herói.
+O `%APPDATA%\EterraASelagem\runs.jsonl` inteiro e as respostas. Se puder, o tempo do vídeo ou um print do que escondeu o
+herói.
 
 ---
 
 ## 6. Próximos ciclos
 
-**Ordem atual (quinta revisão, `roadmap_plan.md` B)**: **C12c "Qualidade da experiência"** (hoje, seção 1b) → teste final
-do Daniel → **C13 "Progressão e rejogabilidade"** (D-39: economia e dons do Hades II) → **C15 "Som e polimento"** →
-**C14 "Arenas II"** → **C16 "Steam"**. A troca C15 antes do C14 é recomendação minha e espera a D-40; sem resposta vale a
-ordem do pedido (C14 antes do C15). O C12c deixou de ser "Leitura do T2" (balanceamento): agora não muda número nenhum e
-instrumenta o teste; o balanceamento pelos dados de gente vai para o começo do C13. O texto abaixo é o histórico da
-revisão anterior.
+**Ordem nova (sexta revisão; `roadmap_plan.md` seção 0)**: fechar o C12c (A-1) → **C12d "Game feel I: a mão"** → T3 (teste
+do Daniel) → **C12e "Excelência visual I: movimento e coerência"** → **C12f "Game feel II: inimigos, Morvath e som do
+combate"** → T4 → C13 "Progressão" → C15 "Som e música" → C14 "Arenas II" → C16 "Steam".
+Por quê: a diretriz manda combate primeiro quando ele está rígido e acabamento visual primeiro quando modelos e animações
+estão abaixo da direção, e proíbe aumentar conteúdo para esconder falta de qualidade. A revisão achou as duas coisas. O
+C13 (descida de 10 salas, economia) é sistema, não só conteúdo, mas alonga a partida sobre uma mão que ainda perde
+aperto: vem depois. Os sons de ação, carga e aviso (C15-02) sobem para o GF-11 e o C12f; música, ambiência e mixagem
+continuam no C15. A D-40 perde o objeto (o C15 foi partido); a ordem nova é a D-47.
 
-Ordem da revisão anterior: C12b (feito no `87ba686`) → T2 → C12c "Leitura do T2" → C13 → C14 → C15 → C16.
+### C12d "Game feel I: a mão do jogador" (próximo; 1 a 2 dias)
+- **Objetivo**: nenhum aperto perdido, golpe que morde sem grudar e impacto que se lê, com os números do Hades II.
+- **Por que agora**: é o centro da diretriz e do jogo; um teste do Daniel antes disso mediria a mão errada.
+- **Pré-requisito**: o A-1 integrado e com captura (mexe em `fx.gd`, `game.gd`, `rooms.gd`); o C12d parte desse commit.
+- **Entregas e donos (arquivos distintos; o `environment-artist` em worktree)**:
 
-### C12b "Fecho das Fendas" (feito no `87ba686`; falta ART-R1)
-- **Objetivo**: a fenda ler como abismo com pontes e a versão de teste sair.
-- **Por que agora**: é a única arena segurada pela revisão; o resto está pronto para o Daniel.
-- **Entregas**: F-1 a F-5, capturas e vídeo das Fendas refeitos, QW-014.
-- **Aceite**: os aceites de F-1 a F-5 na `ART_REVIEW.md`; testes todos passando; smoke `300 --seed=5` sem erro; nenhuma
-  mudança na forma andável (testes de `test_arenas.gd` iguais).
-- **Evidências**: `cycle12_maps/rift/` refeito, antes e depois em `work/`.
-- **Responsáveis**: `environment-artist`, `art-director` (confere), sessão principal (versão).
-- **Riscos**: a fenda continuar lendo como poços; nesse caso vale a D-38 (sai assim e a ponte única fica para depois).
+| Ordem | Agente | Itens | Arquivos donos | Não mexe em |
+|---|---|---|---|---|
+| 1 (primeiro, horas) | `qa-performance` | GF-14 (metas na sonda e rodada "antes" guardada) | `tools/feel_probe.gd`, `tools/feel_probe_run.gd`, `docs/gallery/game_feel/` | código do jogo |
+| 2 | `gameplay-engineer` | na ordem: GF-02, GF-03, GF-04, GF-06 (entrada); GF-01, GF-05 (hit stop); GF-07, GF-08, GF-09; GF-10; GF-11 (sons e vibração); encaixe do VX-01, VX-02 e VX-10 em `fx.gd` com os valores que o `environment-artist` entregar | `scripts/game/player.gd`, `scripts/core/combo_runner.gd`, `combo_tree.gd`, `combo_node.gd`, `feel.gd`, `scripts/controls.gd`, `scripts/game/fx.gd`, `combat.gd`, `game.gd` (relógio e `apply_options`, não `_build_world`), `horde.gd` (só `FLASH_TIME`), `scripts/audio.gd`, `tools/make_data.gd` (`_combos`, `_feel`) e `data/` regerado, `tests/test_feel_c12d.gd` (novo), `tests/test_combo.gd` | shaders, `scripts/ui/`, `text_pt.tres`, ferramentas do QA |
+| 2 (paralelo) | `environment-artist` | VX-01, VX-02, VX-03, VX-08, VX-09, VX-10 (shaders e desenho dos avisos) | `assets/shaders/slash.gdshader`, `slash_ink.gdshader`, `glint.gdshader`, `impact.gdshader`, `ground.gdshader`, `crowd.gdshader` (só o ramo da queimadura), `scripts/game/ground_look.gd` | `fx.gd`, `combat.gd` (passa os valores ao `gameplay-engineer`) |
+| 2 (paralelo) | `ui-ux-designer` | VX-11 (só texto), VX-12, opção de vibração do GF-11 | `data/text_pt.tres`, `scripts/ui/hud.gd` (contador), `scripts/ui/options_screen.gd`, `scripts/core/save_data.gd` (chave `rumble`), `tests/test_comfort_ui.gd` | regras de combate |
+| 3 | `art-director` | valores do GF-10 nos finalizadores; aprovação de VX-01 a VX-03, VX-08 a VX-10 nas capturas; adendo na `visual_review.md` | `docs/design/visual_review.md`, `docs/arte/estetica.md` | código |
+| 4 | `qa-performance` | GF-13 (latência na placa), QW-016 (vídeos (a) a (g) regravados com os mesmos comandos, mais a fase 4 inteira com `--bot-kite`), relatório | `docs/qa/latest_report.md`, `docs/gallery/game_feel/after_c12d/` | código |
 
-### T2 (seção 5)
+- **Aceite (medível)**:
+  1. Sonda: `FEEL_SUMMARY` com todas as metas ok: `_s_dodge_cancel`, `_s_attack_in_dodge`, `_s_extra` e `_s_hurt` sem
+     nenhum `LOST`; `_s_buffer` com o 2º aperto valendo em todo quadro do golpe 1 e do giro; `_s_hitstop_buffer` com o
+     `pad` igual ao `keyboard`; `_s_attack_hit`, `_s_combo_on_hit` e `_s_kill` sem quadro `stepped=false` por hit stop e
+     com 1 a 3 quadros a `time_scale` até 0,06 depois da espera do golpe; `_s_kill` de 3 abates com no máximo 3 quadros
+     parados e depois `time_scale` 0,2 andando; `_s_special` golpe no 25 e especial no 48; `_s_omegas` lança no 48;
+     `_s_turn` direção a 180 no quadro 1; `_s_attack_hit` com `kick` até 0,1 m e clarão até 0,05 s nos golpes comuns.
+  2. Testes GUT novos para cada regra de entrada e para a agenda do hit stop; `tools/test.sh` inteiro, `check.gd`,
+     `title_flow_check.gd`.
+  3. Diff do `make_data.gd` só em `_combos` (campos de hit stop, travas e velocidade da seta, Ômega) e `_feel` (tranco,
+     tremor); nenhum dano, vida, alcance, aviso inimigo ou número de Morvath mudado.
+  4. Robô: `tools/smoke.sh 300 --seed=5` vence; 8 descidas com reação 0,25 com `stuck` 0 e entre 3 e 8 vitórias (antes 5;
+     simulação, só para pegar regressão grande).
+  5. Visual: aceites de VX-01, VX-02, VX-03, VX-08, VX-09, VX-10 medidos nas capturas da GPU e aprovados pelo
+     `art-director`; nenhuma chave `PALADIN_` visível (VX-11).
+  6. Vídeos antes (`docs/gallery/game_feel/`) e depois (`after_c12d/`) com os mesmos comandos; quadro a 1080 sem piora
+     acima de 0,3 ms por arena; latência de ponta a ponta reportada (GF-13).
+- **Evidências**: saída da sonda antes e depois, capturas `--shot-on=hit|swing|omega` e `--frames` na Cripta com
+  `--cam-dist=26`, vídeos (a) a (g), relatório do QA.
+- **Riscos**: hit stop por `Engine.time_scale` se cruzar com a câmera lenta, os menus e a vitória (testar os três);
+  esquiva que corta a preparação deixa o jogo mais fácil (medir no robô e no T3); o Daniel achar o golpe fraco sem o tranco
+  grande (D-43 guarda o tranco maior nos finalizadores).
+- **Sem o Daniel**: tudo acima. **Com o Daniel**: a parada das pernas da seta (D-44; até ele responder, fica como está), a
+  proteção do círculo (D-44), o atordoamento dos comuns (D-42, vai para o C12f).
 
-### C12c "Leitura do T2" (horas a 1 dia, só com dados)
-- **Objetivo**: as salas e os atiradores ficarem justos para gente, medido pelo registro dele.
-- **Por que agora**: o robô diz que o feiticeiro na sala 3 (276 a 288 de dano somado nas Fendas e no Jardim) e o Ancião como
-  guardião (279 a 459) fazem a maior parte do dano; só gente diz se isso é injusto ou só difícil.
-- **Entregas**: QW-015; ajuste de números em `make_data.gd` só onde o registro e as respostas apontarem (sem mexer em
-  mecânica sem nova decisão); correções de preso e de leitura que o Daniel achar; B-2 e B-3.
-- **Aceite**: nenhum preso relatado sem correção; para cada mudança de número, a linha do registro que a justifica; robô 0,25
-  continua entre 3 e 6 vitórias em 8 na descida de 7.
-- **Responsáveis**: `qa-performance` (leitura), `gameplay-engineer` (ajustes). **Riscos**: 3 partidas são pouca amostra:
-  mexer só no que for gritante e repetir no teste com três pessoas (D-13).
+### T3 (seção 5), depois do C12d
 
-### C13 "Progressão do Hades"
-- **Objetivo**: chegar a Morvath com 5 a 8 dons, com a progressão de dons do Hades II.
-- **Entregas**: DT-001 (descida inteira com as arenas espalhadas), baralho de recompensas, romã por nível, loja em 3 grupos,
-  ouro por inimigo, D-09 e D-10 decididos com o registro.
-- **Aceite**: robô chega com 5 a 8 dons em 8 partidas; partida inteira entre 10 e 13 min; robô 0,25 entre 4 e 7 vitórias
-  em 8. **Responsáveis**: `gameplay-engineer`, `ui-ux-designer`, `qa-performance`.
+### C12e "Excelência visual I: movimento e coerência" (2 a 3 dias)
+- **Objetivo**: inimigos e Morvath que se movem tão bem quanto o herói e armas no estilo dos modelos.
+- **Por que agora**: o maior déficit visual depois da mão (V-A1 alta: stop motion ao lado do herói); sem créditos.
+- **Entregas**: VX-04, VX-05, VX-06 (sem o atordoamento se a D-42 não vier), VX-07, VX-13, VX-17, GF-15, M-1, B-1 (gemas).
+- **Aceite**: os de cada item; pacote dos assados medido (hoje cerca de 44 MB) e com teto escrito; quadro sem piora acima
+  de 0,3 ms; vídeos (b), (c), (e), (f1) antes e depois aprovados pelo `art-director`.
+- **Responsáveis**: `environment-artist` (`tools/bake.gd`), `gameplay-engineer` (`crowd_renderer.gd`, `crowd.gdshader`,
+  `bake_hero.gd`), `qa-performance`, `art-director`. **Riscos**: memória e tempo de assado; mistura de pose no vértice no
+  Compatibility.
 
-### C14 "Arenas II"
-- Santuário, Ponte e Runas (D-29), terceira variante das arenas do C12. Mesmos testes e evidências. Fidelidade às imagens
-  conceituais (densidade, F-6, G-2, peças pelo Meshy) entra aqui se o Daniel quiser (D-36).
+### C12f "Game feel II: inimigos, Morvath e som do combate" (2 dias)
+- **Objetivo**: o golpe mudar o comportamento dos inimigos e o combate se ouvir.
+- **Entregas**: GF-12 (se a D-42 aprovar), VX-06 completo, VX-14 (clipes de Morvath), C15-02 subido (som por ação, aviso e
+  inimigo, impacto por material), B-2 (robô usa a fonte), correção do que o GF-13 e o T3 apontarem.
+- **Aceite**: teste GUT do atordoamento por inimigo; 8 descidas antes e depois; teste que acusa evento de combate sem som;
+  vídeos por fase de Morvath aprovados. **Riscos**: dificuldade cai com o atordoamento; medir antes de mexer em vida.
 
-### C15 "Som" e C16 "Steam"
-- Como antes: ART-002 (som de combate e música, D-12), ART-010, ART-011; depois controle com ícones, opções de vídeo, save
-  robusto, DT-003 nas metas da Steam, D-07, D-13; Biblioteca e Reservatório se o Daniel quiser antes do lançamento.
+### T4, depois do C12f: o Daniel diz se o combate está aprovado para a Fase 1 (critério 1 da definição, `roadmap_plan.md` 0).
+
+### C13, C15, C14, C16
+- Como na seção 1b e no `roadmap_plan.md` (B e D). O C13 só começa depois do T4.
 
 ### Itens de arte que seguem abertos
 
 | ID | Título | Esforço | Responsável | Quando |
 |---|---|---|---|---|
-| ART-002 | Som de combate e música | G | `art-director`, Daniel (fonte) | C15 |
-| ART-010 | Peças definitivas (estátuas, sarcófagos, porta em relevo, foice de Morvath, árvore) | M | `art-director`, `environment-artist`; Daniel autoriza créditos | C14 ou C15 |
-| ART-011 | Gancho amarelo de Morvath e ouro das elites por repintura | P | Daniel | C15 |
-| QW-009, QW-010 | Coroa da fachada fora do quadro; medir a `02` contra a planta | P | `art-director` | quando sobrar |
+| ART-002 | Música (o som de combate subiu para o C12f) | G | `art-director`, Daniel (fonte) | C15 |
+| ART-010 | Peças definitivas (estátuas, sarcófagos, porta, foice de Morvath, árvore) | M | `art-director`, `environment-artist`; Daniel autoriza créditos | depois do C12f (D-46) |
+| ART-011 | Gancho amarelo de Morvath e ouro das elites por repintura | P | Daniel | paliativo no VX-07; repintura com D-46 |
+| QW-009, QW-010 | Coroa da fachada; medir a `02` contra a planta | P | `art-director` | quando sobrar |
 
 ---
 
@@ -331,16 +421,28 @@ Ordem da revisão anterior: C12b (feito no `87ba686`) → T2 → C12c "Leitura d
 |---|---|---|
 | D-39 | "Vale copiar do Hades, nomes nossos": mecânicas e números do Hades II fielmente; nomes, personagens, UI e arte de Eterra. Resolve o conflito com a frase "não copiar mecanicamente" do pedido de hoje | `roadmap_plan.md`; C13 planejado com isso |
 
-### Abertas
+### Abertas da Game Feel Review (novas)
 
 | ID | Pergunta | Opções | Minha recomendação |
 |---|---|---|---|
-| D-40 | Ordem depois do C13 | (a) C14 Arenas II e depois C15 Som (pedido); (b) C15 antes do C14 | **(b)**: o som está em todo golpe e hoje 20% da partida é silêncio; a descida longa do C13 mostra se as 4 arenas cansam antes de fazer mais 3. Sem resposta, vale (a) |
+| D-42 | Os inimigos comuns sem armadura atordoam ao levar golpe, como no Hades II (param de andar, a preparação é interrompida; elites imunes até a armadura quebrar; alguns imunes só durante o próprio ataque)? Muda muito a dificuldade | (a) copiar o Hades por inimigo; (b) só parar de andar no recuo, sem interromper o ataque; (c) como está | **(a)**, pela D-39 e porque hoje acertar não muda nada; entra no C12f, medido no robô e no T4 antes de mexer em vida |
+| D-43 | O que fica nosso no impacto (apresentação, não dificuldade): câmera lenta rara por vários abates (o Hades só tem no último abate e no chefe), tranco de câmera maior só nos finalizadores e no Ômega, clarão morno em vez do vermelho do Hades | (a) manter os três, corrigidos (GF-05, GF-10); (b) tirar e ficar só com o Hades | **(a)**: é a sensação do Ember & Blade, rara e corrigida; o `art-director` fixa os valores pelo vídeo |
+| D-44 | Três diferenças que mexem na dificuldade: (1) esquiva sai no quadro 0 (o Hades espera 3 quadros protegido); (2) o círculo dá 0,2 s de proteção e deixa atacar na hora (o Hades não protege e trava 8 quadros); (3) depois da seta o herói anda na hora (o Hades segura as pernas 0,71 s, só a esquiva corta) | para cada uma: copiar o Hades ou manter | **(1) manter** (só ganha resposta); **(2) copiar** (é erro de cópia que facilita); **(3) copiar**, porque o especial é o golpe de maior dano por aperto, mas contraria o "mais dinâmico" do 1º teste: até a resposta, fica como está |
+| D-45 | Quando o Daniel testa | (a) a versão do C12c agora; (b) depois do C12d (1 a 2 dias), um teste só | **(b)**: o C12d muda a mão (esquiva, buffer, hit stop); um teste antes mediria a mão que vamos trocar |
+| D-46 | Créditos do Meshy (546) para armas próprias dos inimigos e de Morvath (hoje do KayKit) | (a) nada agora, paliativo no assado (VX-07); (b) autorizar um lote depois do C12e, com orçamento do `art-director` por peça antes de gastar | **(b)** depois do paliativo: as armas são o que mais destoa nos modelos, e o custo por peça precisa ser orçado (não sei o preço de geração; a repintura é 10 créditos) |
+| D-47 | Nova ordem dos ciclos (seção 6): C12d, T3, C12e, C12f, T4, C13, C15, C14, C16 | (a) a nova; (b) a anterior (C13 logo depois do teste) | **(a)**: é a regra da sua diretriz; o C13 alonga a partida sobre uma mão que ainda perde aperto |
+
+### Abertas de antes
+
+| ID | Pergunta | Opções | Minha recomendação |
+|---|---|---|---|
 | D-41 | Nomes de Eterra para romã, raridades e loja no C13 | os nomes provisórios do `hades2_sistemas.md` ou os seus | mandar só os que quiser trocar |
-| D-12b | Licença do som e da música no C15 | (a) só CC0 e síntese; (b) CC0 e CC-BY com créditos | **(b)** |
-| D-37 | A referência `04` (feita por IA) em tamanho cheio está no histórico do git e no GitHub (`91cc656`) | (a) deixar como está, já que o repositório é seu e as referências são suas; (b) reescrever o histórico e forçar o envio (só com a sua ordem expressa; quebra as cópias e os outros ramos); (c) deixar e só proibir de novo | **(a) com (c)**, se o repositório for privado: não vale reescrever história por uma imagem sua. Se ele for público, ou for ficar público antes do lançamento, **(b)** numa única vez, com você mandando |
-| D-38 | Se depois de F-1 a F-5 a fenda ainda ler como poços (provavelmente sem objeto: no `87ba686` ela lê como rasgo; fecha com o ART-R1) | (a) o T2 sai assim; (b) segurar o T2 e passar a variante A para uma ponte só (o rasgo ganha comprimento; muda a forma andável e os testes) | **(a)**: pela D-36 o que vale agora é a sala ser diferente, e ela já é; a ponte única entra no C14 se você sentir falta |
-| D-31, D-32 | Água que desacelera; destrutíveis que abrem passagem | decidir depois do T2 | como antes |
+| D-12b | Licença do som e da música (C12f e C15) | (a) só CC0 e síntese; (b) CC0 e CC-BY com créditos | **(b)** |
+| D-37 | A referência `04` (feita por IA) em tamanho cheio está no histórico do git e no GitHub (`91cc656`) | (a) deixar; (b) reescrever o histórico (só com ordem expressa); (c) deixar e só proibir de novo | **(a) com (c)** se o repositório for privado; **(b)** numa única vez se for ficar público |
+| D-31, D-32 | Água que desacelera; destrutíveis que abrem passagem | decidir depois do T4 | como antes |
+
+Fechadas sem objeto: **D-38** (o ART-R1 aprovou as Fendas, `4d281bc`); **D-40** (o C15 foi partido: sons do combate no
+C12f, música no C15; a ordem é a D-47).
 
 ### Tomadas pela sessão na noite de 2026-11-16 (a confirmar; o Daniel ainda não respondeu)
 
@@ -353,7 +455,7 @@ Ordem da revisão anterior: C12b (feito no `87ba686`) → T2 → C12c "Leitura d
 | D-18 | Raio de 12,5 m | `boss_arena.md` | Confirmar |
 | D-20 | Morvath vai ao centro nas fases 3 e 4 | `6b16045` | Confirmar |
 | D-21, D-22 | "A Câmara do Selo"; tela de fim sem nível | `6801e87` | Confirmar |
-| C12a | O miolo do selo escurece com as faixas da tempestade | `b7f5f4d` | Confirmar no T2 |
+| C12a | O miolo do selo escurece com as faixas da tempestade | `b7f5f4d` | Confirmar no T3 |
 
 D-15 (salas comuns no salão) e D-06 (descida curta) foram superadas pelas arenas e pela D-27.
 
@@ -370,7 +472,7 @@ petrificada), D-33 (nome por 2 s): todas seguiram a recomendação e estão entr
 | D-09 | Magia na luta do chefe | Decidir no C13 com o registro |
 | D-10 | Bônus de sequência (não existe no Hades II) | Tirar no C13 (C13-07), coerente com a D-39 |
 | D-01 | Título de Morvath | "o Rei que Traiu a Luz" ou "o Lich-Rei do Sul" (cânone) |
-| D-02, D-04 | Quem sela Morvath; nomes dos paladinos | Seguir o cânone de 12/11; nomes depois |
+| D-02, D-04 | Quem sela Morvath; nomes dos paladinos (os marcadores `PALADIN_n` apareciam na carta de dom; o VX-11 esconde a linha até os nomes existirem) | Seguir o cânone de 12/11; nomes depois |
 | D-05 | Créditos do Meshy (546) | Nada até você pedir; fidelidade das arenas é candidata (D-36) |
 | D-07, D-12, D-13 | Entre partidas; origem do som; executável para testadores | Como antes |
 | D-03 | Imagens da Hécate | Desistir |
