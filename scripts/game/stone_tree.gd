@@ -11,15 +11,22 @@ extends RefCounted
 ## Bearings are in degrees from the north (-z), clockwise (east 90), as in the spec; the camera stands at 145.
 
 const SHADER := preload("res://assets/shaders/stone_tree.gdshader")
+## The tree's own visual layer (besides 1): the garden's soft fill from the camera's side lights only it (GardenLook
+## TREE_FILL), so its trunk reads a step lighter than the floor round it without lighting the floor.
+const LAYER := 32
 
 # ---------- the trunk ----------
 ## The spine leans this many degrees toward LEAN_BEARING (away from the camera).
 const LEAN := 8.0
 const LEAN_BEARING := 300.0
-## The cords of the bark, the points each one takes round a ring, and how far they turn from the foot to the fork.
+## The cords of the bark, the points each one takes round a ring, and how far they turn from the foot to the fork (more
+## than a quarter turn: at 40 the twist did not read, ART_REVIEW J-2).
 const LOBES := 9
 const LOBE_SIDES := 8
-const TWIST := 40.0
+const TWIST := 100.0
+## How unequal the cords are: a fixed warp of the angle round the trunk (radians; its slope makes some cords up to
+## about 35% wider or narrower than others), so they never read as the flutes of a column or the folds of a cloth.
+const LOBE_UNEVEN := 0.06
 ## The trunk's radius at each height (m): 3.5 at the floor (the collision's circle), 2.6 at 1 m, 2.0 at 2.5, 1.7 at the
 ## fork. The ring under the floor keeps the floor's radius (no gap at the joint).
 const TRUNK_PROFILE: Array[Vector2] = [Vector2(-0.3, 3.5), Vector2(0.0, 3.5), Vector2(0.08, 3.36), Vector2(0.2, 3.2),
@@ -68,6 +75,12 @@ const BRANCH_WANDER := 0.15
 ## The branches broken off clean (their number in the order they are grown) and how much of their length is left.
 const BROKEN: Array[int] = [5, 13, 22]
 const BROKEN_LEFT := 0.55
+## Old limbs broken off low on the trunk, turned to the camera so their light fracture shows (ART_REVIEW J-2): bearing,
+## height on the axis (m), length (m), radius at the trunk (m). They stay within NEAR_TRUNK of the axis and off the
+## camera's side (the crown's rule), climbing STUB_CLIMB degrees.
+const STUBS: Array[Vector4] = [Vector4(208.0, 3.1, 1.95, 0.42), Vector4(82.0, 3.7, 1.85, 0.38)]
+const STUB_CLIMB := 45.0
+const STUB_FROM := 1.15
 ## Where a lantern may hang under a limb: how far out from the trunk (m) and how high its spine is there (m).
 const HANG_OUT := Vector2(3.5, 5.5)
 const HANG_HEIGHT := Vector2(6.4, 8.5)
@@ -86,22 +99,30 @@ const RULE_MARGIN := Vector2(8.0, 0.25)
 ## round end).
 const ROOT_WIDTH := 1.0
 const ROOT_SINK := 0.15
-const ROOT_TOP: Array[Vector2] = [Vector2(-0.25, 1.25), Vector2(0.0, 0.85), Vector2(0.18, 0.7), Vector2(0.45, 0.46),
-	Vector2(0.68, 0.66), Vector2(0.88, 0.34), Vector2(1.0, -0.04)]
+const ROOT_TOP: Array[Vector2] = [Vector2(-0.25, 1.25), Vector2(0.0, 0.85), Vector2(0.13, 0.55), Vector2(0.29, 0.86),
+	Vector2(0.46, 0.3), Vector2(0.64, 0.76), Vector2(0.8, 0.28), Vector2(0.92, 0.12), Vector2(1.0, -0.04)]
 ## Its width toward the tip (share along, share of ROOT_WIDTH): it dives into the floor there, a little narrower.
 const ROOT_TIP_WIDTH := Vector2(0.86, 0.8)
 const ROOT_PAST := 0.45
 const ROOT_LOBES := 5
 const ROOT_GROOVE := 0.2
+## How light a root's cords are between its hollows (top ROOT_SHADE_TOP.x and lower) and its humps (ROOT_SHADE_TOP.y
+## and higher), so its two humps read from the camera (ART_REVIEW J-3).
+const ROOT_SHADE := Vector2(0.55, 1.0)
+const ROOT_SHADE_TOP := Vector2(0.32, 0.78)
 ## The section a little wider than the collision, so its grooves still meet the capsule's sides.
 const ROOT_FULL := 1.1
 ## Knots on the roots and their cords' wandering (the foot stays within the spec's tolerance of its capsule).
-const ROOT_KNOTS := 0.07
+const ROOT_KNOTS := 0.08
 const ROOT_WANDER := 0.4
 ## Where a root starts, inside the trunk (m from its middle).
 const ROOT_FROM := 2.3
 ## A fine root (no collision, class A): its radius and top at its start, its length; it sinks into the floor's joints.
-const FINE := Vector3(0.13, 0.08, 2.6)
+const FINE := Vector3(0.16, 0.11, 2.4)
+## Each big root ends in a fan of TIP_ROOTS fine roots (fewest, most) spread TIP_SPREAD degrees, never a single point
+## (ART_REVIEW J-3: tubes tapering to one point read as tentacles).
+const TIP_ROOTS := Vector2i(2, 3)
+const TIP_SPREAD := 34.0
 ## Rootlets from each big root's sides.
 const ROOTLETS := 2
 ## How light the fine roots' cords are (darker, grimy).
@@ -123,8 +144,13 @@ const CRYSTAL_COUNT := Vector2i(5, 9)
 const CRYSTAL_RADIUS := Vector2(0.15, 0.35)
 const CRYSTAL_HEIGHT := Vector2(0.4, 1.4)
 const CRYSTAL_TILT := Vector2(10.0, 35.0)
-const CRYSTAL_ALBEDO := Color(0.10, 0.25, 0.22)
-const CRYSTAL_GLOW := Color(0.32, 0.70, 0.60)
+## Corrupted emerald, dark (Boss.CORRUPT's hue, about 165): far from Emeth's bright crystal green (Combat.EMETH, hue
+## about 135) and never summing to white with its own light (ART_REVIEW J-1: the largest channel on screen up to 160).
+const CRYSTAL_ALBEDO := Color(0.04, 0.12, 0.1)
+const CRYSTAL_GLOW := Color(0.315, 0.7, 0.604)
+## A dull, glassy face: rough enough that the cold beam leaves no white highlight on it.
+const CRYSTAL_ROUGHNESS := 0.45
+const CRYSTAL_SPECULAR := 0.3
 
 enum End { NONE, POINT, FRACTURE }
 
@@ -156,8 +182,10 @@ class Tube:
 	var wander := 0.0
 	## A point's length (a share of the last radius).
 	var tip := 1.6
-	## How light its cords are (1: as the material says; the fine roots are darker, half in the floor's grime).
+	## How light its cords are (1: as the material says; the fine roots are darker, half in the floor's grime), and at
+	## each ring if not empty (a root's humps lighter than the hollows between them).
 	var shade := 1.0
+	var ring_shade := PackedFloat32Array()
 
 var root: Node3D
 ## The middle of the trunk's foot.
@@ -204,6 +232,7 @@ func build(parent: Node3D, foot: Vector2, roots: Array[PackedVector2Array], glow
 	rng.seed = seed_ * 31 + 5
 	for i in LIMBS.size():
 		_limb(i)
+	_stubs()
 	_find_hangs()
 	_commit()
 	_crystals(bearings, glow)
@@ -312,8 +341,16 @@ func _root(pts: PackedVector2Array) -> void:
 		t.ry.append(hh)
 		t.groove.append(ROOT_GROOVE)
 		t.lichen.append(0.7)
+		t.ring_shade.append(lerpf(ROOT_SHADE.x, ROOT_SHADE.y, smoothstep(ROOT_SHADE_TOP.x, ROOT_SHADE_TOP.y, top)))
 	_sweep(t)
-	_fine_root(pts[pts.size() - 1] + tip_way * (ROOT_PAST - 0.25), tip_way, FINE.z, 1.0)
+	# its tip opens into a fan of fine roots gripping the floor's joints
+	var fan := rng.randi_range(TIP_ROOTS.x, TIP_ROOTS.y)
+	var tip_at := pts[pts.size() - 1] + tip_way * (ROOT_PAST - 0.3)
+	for k in fan:
+		var turn := deg_to_rad(TIP_SPREAD) * (float(k) / (fan - 1) - 0.5) + rng.randf_range(-0.12, 0.12)
+		var way_k := tip_way.rotated(turn)
+		var side := Vector2(-tip_way.y, tip_way.x) * (float(k) / (fan - 1) - 0.5) * 0.3
+		_fine_root(tip_at + side, way_k, FINE.z * rng.randf_range(0.7, 1.1), rng.randf_range(0.85, 1.0))
 	# rootlets leaving its sides along the way, gripping the floor
 	for k in ROOTLETS:
 		var at_i := clampi(int(line.size() * rng.randf_range(0.3, 0.85)), 1, line.size() - 2)
@@ -371,6 +408,29 @@ func _fine_roots(big: Array[float]) -> void:
 
 
 # ---------- the crown ----------
+
+## The old limbs broken off low on the trunk (STUBS): a short thick tube out of the trunk, its end a clean light
+## fracture with chips.
+func _stubs() -> void:
+	for st in STUBS:
+		var way := toward(st.x)
+		var w3 := Vector3(way.x, 0.0, way.y)
+		var start := axis(st.y) + w3 * STUB_FROM
+		var dir := (w3 * cos(deg_to_rad(STUB_CLIMB)) + Vector3.UP * sin(deg_to_rad(STUB_CLIMB))).normalized()
+		var spine := PackedVector3Array()
+		var radii := PackedFloat32Array()
+		var n := 4
+		for k in n + 1:
+			var s := float(k) / n
+			spine.append(start + dir * st.z * s + Vector3.UP * sin(s * PI) * 0.06)
+			# a collar where it swells into the trunk
+			radii.append(st.w * lerpf(1.0, 0.82, s) * (1.0 + LIMB_COLLAR * maxf(0.0, 1.0 - s * 2.5)))
+		var t := _branch_tube(spine, radii, 1)
+		t.end = End.FRACTURE
+		_add_crown(spine, radii, 0)
+		_sweep(t)
+		_chips(spine[n], dir, radii[n])
+
 
 ## One of the three limbs from the fork, then its children.
 func _limb(i: int) -> void:
@@ -593,7 +653,8 @@ func _sweep(t: Tube, fracture := 0.0) -> void:
 			var along_m := float(i) / (n - 1) * 6.0
 			if t.lobes > 0:
 				# the cords wander round and swell unevenly (not the flutes of a column)
-				var x := (a + turn + t.wander * sin(a * 2.0 + along_m * 0.8 + t.phase)) * t.lobes * 0.5
+				var uneven := LOBE_UNEVEN * (sin(a * 3.0 + t.phase * 2.0) + 0.7 * sin(a * 5.0 - t.phase))
+				var x := (a + uneven + turn + t.wander * sin(a * 2.0 + along_m * 0.8 + t.phase)) * t.lobes * 0.5
 				var s := absf(sin(x))
 				cord = sqrt(s)
 				lobe = posmod(floori(x / PI), t.lobes)
@@ -619,7 +680,8 @@ func _sweep(t: Tube, fracture := 0.0) -> void:
 			var vein := 0.0
 			if t.veins and VEIN_LOBES.has(lobe):
 				vein = 1.0 - smoothstep(VEIN_TOP * 0.75, VEIN_TOP, t.spine[i].y - at.y)
-			ring_c.append(Color(cord * t.shade, t.lichen[i], fracture, vein))
+			var lit := t.shade * (t.ring_shade[i] if t.ring_shade.size() == n else 1.0)
+			ring_c.append(Color(cord * lit, t.lichen[i], fracture, vein))
 			if t.solid and p.y <= at.y + 0.05:
 				footprint.append(p)
 		grid.append(ring)
@@ -721,6 +783,7 @@ func _commit() -> void:
 	stone_material.set_shader_parameter(&"rock_height", Masonry.ROCK_HEIGHT)
 	var mi := MeshInstance3D.new()
 	mi.name = "StoneTree"
+	mi.layers = 1 | LAYER
 	mi.mesh = mesh
 	mi.material_override = stone_material
 	root.add_child(mi)
@@ -759,11 +822,11 @@ func _crystals(root_bearings: Array[float], glow: float) -> void:
 		return
 	crystal_material = StandardMaterial3D.new()
 	crystal_material.albedo_color = CRYSTAL_ALBEDO
-	crystal_material.roughness = 0.25
-	crystal_material.metallic_specular = 0.7
+	crystal_material.roughness = CRYSTAL_ROUGHNESS
+	crystal_material.metallic_specular = CRYSTAL_SPECULAR
 	crystal_material.emission_enabled = true
 	crystal_material.emission = CRYSTAL_GLOW
-	# the largest channel of the light, under the glow's threshold (0.8 in A, 0.9 in B)
+	# the largest channel of the light, far under the glow's threshold (GardenLook.CRYSTAL_GLOW)
 	crystal_material.emission_energy_multiplier = glow / maxf(CRYSTAL_GLOW.r, maxf(CRYSTAL_GLOW.g, CRYSTAL_GLOW.b))
 	var mi := MeshInstance3D.new()
 	mi.name = "StoneTreeCrystals"

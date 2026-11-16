@@ -393,15 +393,15 @@ func prism(points: PackedVector2Array, y0: float, y1: float, mat: Material = nul
 
 
 ## A flight of stairs. foot: the middle of the lowest step's front edge; up: the way up the flight (on the floor);
-## width, number of steps, rise and run of each.
-func stairs(foot: Vector3, up: Vector2, width: float, steps: int, rise: float, run: float) -> void:
+## width, number of steps, rise and run of each; mat: their stone (default the plain stone at their foot).
+func stairs(foot: Vector3, up: Vector2, width: float, steps: int, rise: float, run: float, mat: Material = null) -> void:
 	var dir := Vector3(up.x, 0, up.y).normalized()
 	var yaw := atan2(dir.x, dir.z)
 	for i in steps:
 		# each step a block from a little under the flight's foot up to its top, so the flight is solid
 		var h := rise * (i + 1) + 0.6
 		var c := foot + dir * (run * (i + 0.5))
-		box(Vector3(c.x, foot.y - 0.6 + h * 0.5, c.z), Vector3(width, h, run), yaw, stone(foot.y), false)
+		box(Vector3(c.x, foot.y - 0.6 + h * 0.5, c.z), Vector3(width, h, run), yaw, mat if mat else stone(foot.y), false)
 
 
 ## A thick, blunt standing stone (the picture's): a base, three stacked blocks each a little narrower and turned, a low

@@ -4,10 +4,11 @@ shader_type spatial;
 // foot. One MultiMesh; each tuft picks its own blades by where it stands. Never glows.
 render_mode cull_disabled, diffuse_burley, specular_schlick_ggx;
 
-uniform vec3 color : source_color = vec3(0.33, 0.31, 0.27);
-uniform vec3 foot_color : source_color = vec3(0.14, 0.13, 0.11);
-uniform int blades = 7;
-uniform float blade_width = 0.06;
+// Straw a step lighter than the floor's slabs, so the tufts read as grass and not as dark specks (ART_REVIEW J-4).
+uniform vec3 color : source_color = vec3(0.52, 0.48, 0.37);
+uniform vec3 foot_color : source_color = vec3(0.2, 0.19, 0.16);
+uniform int blades = 9;
+uniform float blade_width = 0.075;
 
 varying float seed;
 

@@ -30,6 +30,10 @@ const AIR := {
 ## The soft key over the middle (no shadow), cold grey.
 const KEY := Color(0.78, 0.8, 0.9)
 const KEY_ENERGY := 5.5
+## The browser's renderer (Compatibility) turns the cold key and beam into a saturated blue on the floor (ART_REVIEW G-1):
+## there they are a share weaker and the key a neutral grey.
+const COMPAT_LIGHT := 0.7
+const COMPAT_KEY := Color(0.8, 0.8, 0.8)
 ## The inscription round the trunk: its band (inner and outer radius, m) and its arcs (bearings, degrees): never closed,
 ## gaps of 2 m and more; the floor's edges, the roots and every other piece cut it further.
 const INSCRIPTION := Vector2(9.05, 9.75)
@@ -40,9 +44,15 @@ const INSCRIPTION_CLEAR := 0.25
 # ---------- the tree ----------
 ## The crown stays inside the walls (their inner faces, a little in).
 const CROWN_BOUNDS := Rect2(-16.4, -13.4, 33.0, 27.0)
-## The crystals' largest channel in each variant, their light (green-blue, no shadow: energy, reach, height).
-const CRYSTAL_GLOW := Vector2(0.8, 0.9)
-const CRYSTAL_LIGHT := Vector3(0.6, 3.0, 0.7)
+## The crystals' largest channel of emission in each variant (dark corrupted emerald, ART_REVIEW J-1: was 0.8 and 0.9,
+## near white on screen), their light (StoneTree.CRYSTAL_GLOW's hue, no shadow: energy, reach, height).
+const CRYSTAL_GLOW := Vector2(0.12, 0.15)
+const CRYSTAL_LIGHT := Vector3(0.35, 2.6, 0.7)
+## A soft fill on the tree alone (StoneTree.LAYER, no shadow) from the camera's side (bearing), so the trunk's face
+## reads 10 to 20% lighter than the floor beside it (ART_REVIEW J-2): colour, energy, reach, how far out and how high.
+const TREE_FILL := Color(0.78, 0.8, 0.88)
+const TREE_FILL_LIGHT := Vector4(0.32, 13.0, 7.5, 3.5)
+const TREE_FILL_BEARING := 150.0
 ## The hanging lanterns: their height (the ring at the chain's foot), how many in each variant, cage size, light.
 const LANTERN_AT := 5.5
 const LANTERNS := Vector2i(1, 2)
@@ -106,9 +116,17 @@ const ENTRY_WIDTH := 4.4
 const STATUES: Array[Vector4] = [Vector4(7.6, -14.9, 0.0, 3.0), Vector4(-17.9, 6.0, 90.0, 3.0)]
 ## A niche's width and depth behind a statue.
 const NICHE := Vector2(2.0, 1.1)
-## Tufts of dry grass: how many at most, their size.
-const GRASS := 80
-const GRASS_SIZE := Vector2(0.2, 0.45)
+## Tufts of dry grass: how many at most, their size; along each root, how far out of its middle line and how likely at
+## each of its points (ART_REVIEW J-4).
+const GRASS := 130
+const ROOT_GRASS := Vector2(0.72, 0.8)
+const GRASS_SIZE := Vector2(0.25, 0.55)
+## Slabs of the floor the roots lifted and split (ART_REVIEW J-3): per root, size (m), how far out of its middle line,
+## the tilt (degrees, fewest and most). Drawn only: they lie low beside the root's collision, never on open ground.
+const LIFTED := 2
+const LIFTED_SLAB := Vector3(0.75, 0.08, 0.55)
+const LIFTED_OUT := 0.78
+const LIFTED_TILT := Vector2(9.0, 18.0)
 ## Candles on each sarcophagus's lid.
 const LID_CANDLES := 2
 
@@ -180,7 +198,15 @@ func dress() -> void:
 	_statues()
 	_grass()
 	_beam()
-	key_light(KEY, KEY_ENERGY)
+	if _compat():
+		key_light(COMPAT_KEY, KEY_ENERGY * COMPAT_LIGHT)
+	else:
+		key_light(KEY, KEY_ENERGY)
+
+
+## True in the browser's renderer (Compatibility).
+static func _compat() -> bool:
+	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
 
 
 ## The trunk and the roots are the tree's (drawn on their collision by StoneTree); a sarcophagus gets candles on its
@@ -291,6 +317,15 @@ func _tree() -> void:
 	tree.build(self, _trunk_o.center, root_paths(layout, _trunk_o), CRYSTAL_GLOW.y if variant_b else CRYSTAL_GLOW.x)
 	for i in mini(LANTERNS.y if variant_b else LANTERNS.x, tree.hangs.size()):
 		_hanging_lantern(tree.hangs[i])
+	var fill := OmniLight3D.new()
+	var fw := StoneTree.toward(TREE_FILL_BEARING) * TREE_FILL_LIGHT.z
+	fill.position = tree.at + Vector3(fw.x, TREE_FILL_LIGHT.w, fw.y)
+	fill.light_color = TREE_FILL
+	fill.light_energy = TREE_FILL_LIGHT.x
+	fill.omni_range = TREE_FILL_LIGHT.y
+	fill.omni_attenuation = 0.6
+	fill.light_cull_mask = StoneTree.LAYER
+	add_child(fill)
 	for spot in tree.crystal_spots:
 		var out := (spot - tree.at).normalized()
 		var l := OmniLight3D.new()
@@ -306,6 +341,51 @@ func _tree() -> void:
 	for k in 14:
 		var w := StoneTree.toward(r.randf() * 360.0)
 		_tuft_near(_trunk_o.center + w * (_trunk_o.radius + 0.15), r, 1)
+	_root_floor(r)
+
+
+## Along each root: dry grass at its sides and a few slabs of the floor lifted and split by it.
+func _root_floor(r: RandomNumberGenerator) -> void:
+	var slab := stone()
+	for path in root_paths(layout, _trunk_o):
+		var from := _trunk_o.center + (path[0] - _trunk_o.center).normalized() * _trunk_o.radius
+		var pts := PackedVector2Array([from])
+		pts.append_array(path)
+		for i in range(1, pts.size()):
+			var a := pts[i - 1]
+			var b := pts[i]
+			var along := (b - a).normalized()
+			var side := Vector2(-along.y, along.x)
+			var steps := maxi(1, ceili(a.distance_to(b) / 0.8))
+			for k in steps:
+				var q := a.lerp(b, (k + 0.5) / steps)
+				for sd: float in [-1.0, 1.0]:
+					if r.randf() < ROOT_GRASS.y:
+						_tuft_near(q + side * sd * ROOT_GRASS.x, r, 1)
+		for k in LIFTED:
+			var i := r.randi_range(1, pts.size() - 1)
+			var q := pts[i - 1].lerp(pts[i], r.randf_range(0.25, 0.75))
+			var along := (pts[i] - pts[i - 1]).normalized()
+			var sd := 1.0 if r.randf() < 0.5 else -1.0
+			var side := Vector2(-along.y, along.x) * sd
+			var c := q + side * LIFTED_OUT
+			if not _clear_of_others(c, LIFTED_SLAB.x * 0.5):
+				continue
+			var tilt := deg_to_rad(r.randf_range(LIFTED_TILT.x, LIFTED_TILT.y))
+			# lifted along its edge on the root's side: that edge up, the far one sunk in the floor
+			var blk := m.box(Vector3(c.x, LIFTED_SLAB.y * 0.5 + sin(tilt) * LIFTED_SLAB.z * 0.3, c.y), LIFTED_SLAB,
+				atan2(-along.y, along.x) + r.randf_range(-0.3, 0.3), slab, false)
+			blk.rotate_object_local(Vector3.RIGHT, tilt * sd)
+
+
+## True where nothing but the tree stands within `r` of p and the floor is there.
+func _clear_of_others(p: Vector2, r: float) -> bool:
+	if not arena.shape().contains(p, r):
+		return false
+	for o in layout.obstacles:
+		if o.piece != &"root" and o.piece != &"trunk" and o.blocks_move and o.depth(p, r) > 0.0:
+			return false
+	return true
 
 
 ## Each root's points from where it leaves the trunk out to its tip, read back from the layout's capsules (each leg a
@@ -656,7 +736,7 @@ func _beam() -> void:
 	add_child(s)
 	s.look_at_from_position(BEAM_FROM, BEAM_AT)
 	s.light_color = BEAM_COLOR
-	s.light_energy = BEAM_ENERGY.y if variant_b else BEAM_ENERGY.x
+	s.light_energy = (BEAM_ENERGY.y if variant_b else BEAM_ENERGY.x) * (COMPAT_LIGHT if _compat() else 1.0)
 	s.spot_angle = BEAM_CONE
 	s.spot_range = BEAM_REACH
 	s.spot_attenuation = 0.4

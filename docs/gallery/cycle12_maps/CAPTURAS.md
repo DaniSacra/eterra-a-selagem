@@ -52,3 +52,15 @@ cinza). Apagados por serem rodadas intermediárias já cobertas: `w1_*`, `w2_*`,
 acima os substituem). `garden_vs_04` **trazia a referência de IA em tamanho cheio (1919 px) dentro de `docs/gallery`**;
 foi refeito com a miniatura de 480 px e o rótulo, mantendo a metade do jogo como estava. O arquivo antigo continua no
 histórico do git (commit `91cc656`).
+
+## Correções da revisão de arte na Cripta e no Jardim (C-1 a C-4, J-1 a J-4, G-1)
+
+Depois da `ART_REVIEW.md`, o environment-artist refez **todas as capturas da Cripta e do Jardim** desta pasta (`crypt/`,
+`garden/`, inclusive `travessia.mp4`, e `work/garden_grid_a`/`_b`) com os mesmos comandos acima, na mesma placa (RTX 5060,
+Forward+), espelho `C:/Users/danie/tools/eterra-gpu-garden`, 2026-11-16. As Fendas (`rift/`) não mudaram. Antes e depois em
+`work/`: `fix_crypt_antes`/`_depois` e `fix_garden_antes`/`_depois` (o laboratório, `lab --arena=<a> --variant=0 --bare`),
+`fix_crypt_detalhe_antes_depois` e `fix_garden_arvore_antes_depois` (recortes dos mesmos quadros), `fix_crypt_compat` e
+`fix_garden_compat` (o `_c_combate` no Forward+, no Compatibility antes e no Compatibility depois da compensação por sala).
+As grades `work/garden_grid_a`/`_b` foram tiradas com `--autopick` a mais (`tools/garden_grid.gd -- <saída> --arena=garden
+--variant=n --nosave --autopick`): sem ele a tela de dom da sala vencida cobria as últimas células da folha. Quadros das
+saídas abertas nos `_e_`: Cripta A 0:15, B 0:14; Jardim A 0:12, B 0:10.

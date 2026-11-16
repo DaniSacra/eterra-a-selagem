@@ -53,8 +53,26 @@ const BONE := Color(1.6, 1.55, 1.4)
 const SLAB := Vector2(0.9, 1.9)
 const SLAB_ROWS: Array[Vector3] = [Vector3(-9.0, -8.3, 0), Vector3(-3.2, -8.3, 0), Vector3(3.2, -8.3, 0),
 	Vector3(-8.6, 8.3, 0), Vector3(0.6, 8.3, 0), Vector3(7.2, 8.3, 0)]
-const SLAB_STONE := 0.75
-const SLAB_FRAME := 0.55
+const SLAB_STONE := 0.8
+const SLAB_FRAME := 0.4
+## The dark sunk border round each grave slab (ART_REVIEW C-4: a step deeper, so they can be counted): how far it
+## reaches past the slab, its height, its stone.
+const SLAB_BORDER := Vector2(0.1, 0.006)
+const SLAB_BORDER_TINT := 0.35
+## The steps of the way in and of the doors (ART_REVIEW C-3: they read as planks, lighter than all round them): their
+## stone in the value of the walls' cut stone.
+const STAIR_TINT := 0.8
+## A whole column's head (ART_REVIEW C-2, spec 1.3: no askew cubes over it): the round capital (necking ring height,
+## bell height, how far the bell flares and the abacus reaches as shares of the shaft's radius, abacus height) and two
+## arches springing from it as curved voussoirs, across the camera's view so their curve shows (their bearings; span
+## of their arch, ring width, the share of the arch each keeps).
+const CAPITAL := Vector4(0.09, 0.3, 1.38, 1.55)
+const ABACUS := 0.12
+const SPRING_BEARINGS: Array[float] = [55.0, 235.0]
+const SPRING_ARCH := Vector3(2.2, 0.34, 0.36)
+## The springers' depth (a share of the shaft's radius) and the round pieces' sides (smoother than a plain shaft).
+const SPRING_DEEP := 1.2
+const CAPITAL_SIDES := 18
 ## The floor (spec 2.5): small cold slabs.
 const FLOOR := {
 	&"unit": 0.8, &"stone_a": Color(0.24, 0.24, 0.28), &"stone_b": Color(0.34, 0.33, 0.38),
@@ -69,13 +87,21 @@ const AIR := {
 }
 ## The cold shaft from the vault: colour, energy, cone, how high it starts, how far off the plumb (toward the back).
 const COLD := Color(0.62, 0.74, 0.9)
-const COLD_ENERGY := 2.5
+## (ART_REVIEW C-1: at 2.5 the great tomb's lid went near white; the shaft stays the frame's middle.)
+const COLD_ENERGY := 1.6
+## The great tomb's lid under the shaft: lighter than its stone by this much (ArenaRoom.SARC_LID_LIGHT is 1.5 for the
+## other sarcophagi; under the shaft that went white, ART_REVIEW C-1).
+const TOMB_LID_LIGHT := 1.0
 const COLD_ANGLE := 18.0
 const COLD_HEIGHT := 14.0
 const COLD_LEAN := Vector2(-2.0, -2.5)
 ## The soft key over the middle (no shadow): its colour and energy (the pools of fire stay the brighter).
 const KEY := Color(0.85, 0.78, 0.74)
 const KEY_ENERGY := 6.5
+## The browser's renderer (Compatibility) leaves the crypt darker than the desktop (ART_REVIEW G-1): there the key and
+## the ambient are this much stronger.
+const COMPAT_KEY := 1.4
+const COMPAT_AMBIENT := 1.4
 ## Candle lights with shadow (energy) and the plain ones (spec 2.5: at most 6 without shadow).
 const CANDLE_SHADOW_ENERGY := 1.6
 const CANDLE_PLAIN := 6
@@ -97,8 +123,17 @@ func stone_tint() -> Color:
 	return STONE
 
 
+## True in the browser's renderer (Compatibility).
+static func _compat() -> bool:
+	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
+
+
 func air() -> Dictionary:
-	return AIR
+	if not _compat():
+		return AIR
+	var a := AIR.duplicate()
+	a[&"ambient_gain"] = float(AIR[&"ambient_gain"]) * COMPAT_AMBIENT
+	return a
 
 
 ## The north door (X1) opens in the wall.
@@ -133,7 +168,71 @@ func dress() -> void:
 	_slabs()
 	_candles()
 	_cold_shaft()
-	key_light(KEY, KEY_ENERGY)
+	key_light(KEY, KEY_ENERGY * (COMPAT_KEY if _compat() else 1.0))
+	# the doors' stairs (ArenaRoom._doors) take Masonry's plain stone at their foot: this room's is darker
+	var plain := m.stone(-EXIT_RISE * EXIT_STEPS)
+	var dark := _stair_stone(-EXIT_RISE * EXIT_STEPS)
+	for k: StringName in [&"stone_a", &"stone_b"]:
+		plain.set_shader_parameter(k, dark.get_shader_parameter(k))
+
+
+## The stone of the steps: Masonry's plain stone at their foot in the value of the walls (STAIR_TINT).
+func _stair_stone(base_y: float) -> ShaderMaterial:
+	return m.stone(base_y, STONE * STAIR_TINT)
+
+
+## The great tomb (under the cold shaft) keeps its lid in the value of its stone; the other sarcophagi as ArenaRoom
+## draws them.
+func sarcophagus(o: ArenaObstacle) -> Vector3:
+	var long_x := o.half.x >= o.half.y
+	var half := o.half if long_x else Vector2(o.half.y, o.half.x)
+	if half.x * 2.0 < TOMB_FROM:
+		return super.sarcophagus(o)
+	var yaw := -o.yaw + (0.0 if long_x else PI * 0.5)
+	var lid := m.stone(0.0, stone_tint() * TOMB_LID_LIGHT)
+	var st := stone()
+	var hollow := m.stone(0.0, stone_tint() * 0.6)
+	if o.see_through:
+		st = see(st)
+		lid = see(lid)
+		hollow = see(hollow)
+	return tomb.tomb(o.center, half, yaw, o.height, st, lid, hollow)
+
+
+## A whole column gets a round moulded capital and a curved springer (column_head); the rest as ArenaRoom draws it.
+func piece(o: ArenaObstacle) -> void:
+	if o.piece == &"column" and o.height >= WHOLE_COLUMN:
+		_column(o)
+		return
+	super.piece(o)
+
+
+## A whole column (TombKit.column's foot and shaft, which the Seal Chamber keeps): plinth, base, shaft, then a necking
+## ring, a round bell flaring to a round abacus, and the arch springing from it as one curved voussoir toward the back.
+func _column(o: ArenaObstacle) -> void:
+	var mat := see(stone()) if o.see_through else stone()
+	var foot := Vector3(o.center.x, 0.0, o.center.y)
+	var r := o.radius
+	var shaft_r := r * TombKit.COLUMN_SHAFT
+	m.block(foot, Vector3(r * 1.41, TombKit.COLUMN_PLINTH, r * 1.41), PI * 0.25, mat, false)
+	m.shaft(foot + Vector3(0, TombKit.COLUMN_PLINTH, 0), r * 0.98, TombKit.COLUMN_BASE - TombKit.COLUMN_PLINTH, mat)
+	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r * 1.12, 0.12, mat)
+	var head := CAPITAL.x + CAPITAL.y + ABACUS
+	var cap_y := o.height - TombKit.COLUMN_SPRING.x - head
+	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r, cap_y - TombKit.COLUMN_BASE, mat)
+	var ring := m.shaft(foot + Vector3(0, cap_y, 0), shaft_r * 1.1, CAPITAL.x, mat)
+	var bell := m.shaft(foot + Vector3(0, cap_y + CAPITAL.x, 0), shaft_r * CAPITAL.z, CAPITAL.y, mat)
+	(bell.mesh as CylinderMesh).bottom_radius = shaft_r
+	var top := cap_y + CAPITAL.x + CAPITAL.y
+	var abacus := m.shaft(foot + Vector3(0, top, 0), shaft_r * CAPITAL.w, ABACUS, mat)
+	for piece_mi: MeshInstance3D in [ring, bell, abacus]:
+		(piece_mi.mesh as CylinderMesh).radial_segments = CAPITAL_SIDES
+	# the springers: the first part of a round arch whose left foot sits on the abacus (centred on it), rising away
+	for b in SPRING_BEARINGS:
+		var way := Vector2(sin(deg_to_rad(b)), -cos(deg_to_rad(b)))
+		var yaw := atan2(-way.y, way.x)
+		var mid := foot + Vector3(way.x, 0.0, way.y) * (SPRING_ARCH.x + SPRING_ARCH.y) * 0.5 + Vector3(0, top + ABACUS, 0)
+		m.arch_ring(mid, Vector2(sin(yaw), cos(yaw)), SPRING_ARCH.x, SPRING_ARCH.y, shaft_r * SPRING_DEEP, mat, 0.5, 0.0, SPRING_ARCH.z)
 
 
 # ---------- the walls ----------
@@ -335,7 +434,7 @@ func _entry() -> void:
 	var mid := Vector2(_west, (ENTRY.x + ENTRY.y) * 0.5)
 	var w := ENTRY.y - ENTRY.x
 	door_arch(mid, Vector2(1, 0), w, WALL_SET + 0.45)
-	m.stairs(Vector3(_west - 0.05, 0.0, mid.y), Vector2(-1, 0), w, ENTRY_STEPS, 0.2, 0.45)
+	m.stairs(Vector3(_west - 0.05, 0.0, mid.y), Vector2(-1, 0), w, ENTRY_STEPS, 0.2, 0.45, _stair_stone(0.0))
 	tomb.bar(Vector3(_west + 0.04, 0.004, mid.y), Vector3(0.05, 0.008, w), 0.0, tomb.gold())
 
 
@@ -344,10 +443,13 @@ func _entry() -> void:
 func _slabs() -> void:
 	var st := m.stone(0.0, STONE * SLAB_STONE)
 	var fr := m.stone(0.0, STONE * SLAB_FRAME)
+	var border := m.stone(0.0, HOLLOW * SLAB_BORDER_TINT)
 	for s in SLAB_ROWS:
 		var at := Vector2(s.x, s.y)
 		if not _clear(at, SLAB.length() * 0.5):
 			continue
+		var h := SLAB * 0.5 + Vector2.ONE * SLAB_BORDER.x
+		m.prism(PackedVector2Array([at - h, at + Vector2(h.x, -h.y), at + h, at + Vector2(-h.x, h.y)]), 0.0, SLAB_BORDER.y, border)
 		tomb.slab(at, SLAB, 0.0, st, fr)
 
 
