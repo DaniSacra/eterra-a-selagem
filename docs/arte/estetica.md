@@ -217,6 +217,15 @@ violeta profundo, azul espectral, esmeralda corrompido e ouro antigo. Capturas e
   exposição e glow não mudam. A selagem (`Arena.seal_portal`) devolve o ar da sala no mesmo tempo. Uma sala nova liga
   outro clima com `arena.mood().blend(look, true)`.
 
+## Arenas do ciclo C12 (Cripta, Fendas, Jardim)
+
+Especificação, planta em metros e critérios: `docs/art/cycle12_arenas_spec.md`. Regras que valem para todo cenário novo:
+mesma câmera e mesmo valor de chão (mediana 45 a 60) em todas as salas, o matiz do ar é o que muda; norte e oeste são o
+fundo (peças altas), sul e leste a frente (só peças baixas ou com pontilhado); peça com topo a 1,25 m ou mais bloqueia
+tiro, até 1,0 m não; velas, braseiros e cristais nunca soltos no chão andável; nada de fogo verde, nada de círculo
+fechado ou inscrição acesa no chão (círculo é de Morvath); estandartes lisos e estátuas de mãos vazias até o Daniel
+decidir outra coisa. O ar de cada sala pode ser um `RoomMood.Look` (`arena.mood().blend(look, true)`).
+
 ## Pendências
 
 1. Colocar o `paladin_1` no jogo. Não foi feito: o esqueleto do Meshy (24 ossos, `Hips`, `LeftArm`...) é outro, e os
