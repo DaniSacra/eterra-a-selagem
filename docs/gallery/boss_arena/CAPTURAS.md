@@ -18,6 +18,21 @@ quadros inteiros (ou recortes, no `selo_estados`) com uma faixa de rótulo **aci
   `drawtext`, Alegreya Sans Bold). O texto "o que se vê" das tabelas é o das capturas anteriores: o enquadramento e o
   momento são os mesmos; mudaram o chão (mais claro), o céu (azul), as janelinhas do anel distante, as faixas da
   tempestade (cada uma na sua cunha, nada a 1,2 m de Morvath) e o miolo vermelho das erupções.
+- **Refeitas em 2026-11-16 pelo C12a (BOSS-001, BOSS-002, BOSS-003, QW-006, QW-007, QW-008)**, sobre o `fe75462` com as
+  mudanças ainda sem commit, espelho próprio `C:/Users/danie/tools/eterra-gpu-c12a` (apagado ao fim), os mesmos comandos
+  abaixo: `01`, `03`, `09`, `10`, `borda_e_camera` (os cinco quadros) e a metade direita de `lado_a_lado_referencia` (a
+  esquerda, a pintura, recortada da montagem anterior). PNG da Godot para JPG pelo ffmpeg (`-q:v 3`); a `borda_e_camera`
+  com `scale=1440:810`, `pad` e `drawtext` (Alegreya Sans Bold). As outras capturas da pasta continuam as da rodada
+  anterior (as variantes `03b`, `04`, `09b`, `10a`, `10b` e `selo_estados` não mostram ainda o fio violeta separado, as faixas
+  mais leves nem a estrela mais fraca). Medidas (luminância Rec. 601, média do recorte):
+  - `09`: recorte do centro (860, 470, 200 x 120) com luminância **85,8** (antes 121 pela medida do Game Director, 123 pela
+    minha no JPG antigo), 1,8% acima de 200 (os pontos de ordem); meio de uma faixa (1250, 640, 30 x 20) **69,7**, com as
+    juntas do chão visíveis; aro da faixa mais clara abaixo de 1,0 (0,95 de vermelho somado).
+  - `10`: recorte 60 x 60 no centro do selo (938, 500): **0,0%** dos pixels com luminância acima de 200 (antes 24,1%),
+    máximo 196; 10,8% têm algum canal acima de 200 (o vermelho e o verde do ouro aceso).
+  - `01`: 13 janelinhas visíveis (seis pares nos pilares do anel distante e a da torre), todas sobre a parede; nenhuma na
+    bruma oeste (antes 8, duas flutuando).
+  - `borda_e_camera`, quadro (8.5, 8.5): as velas da frente abrem em pontilhado em volta do herói; pernas inteiras.
 - **Antes**: `2de07b0` (fim do ciclo 9, salão retangular), extraído com `git archive 2de07b0 | tar -x -C
   /home/dani/games/qa1011-before`, espelho `C:/Users/danie/tools/eterra-gpu-qa1011b`. A queimadura também foi tirada no
   `196f33c` (fim do C10), espelho `eterra-gpu-qa1011c`. Cópias e espelhos apagados ao fim.

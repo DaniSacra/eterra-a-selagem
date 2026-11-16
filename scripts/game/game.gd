@@ -242,8 +242,10 @@ func _build_world() -> void:
 	e.fog_height_density = FOG_HEIGHT_DENSITY
 	e.fog_aerial_perspective = 0.2
 	# desktop (Forward+) only, ignored by the browser's renderer: a little light in the air around the fires and the
-	# portal (no ambient in it: it would lift every black), contact shadows, the wet floor mirroring the light
-	e.volumetric_fog_enabled = true
+	# portal (no ambient in it: it would lift every black), contact shadows, the wet floor mirroring the light (fog in
+	# the air and reflections only switched on there: the browser's renderer warns in the log for each, BUG-011)
+	var forward := RenderingServer.get_current_rendering_method() != "gl_compatibility"
+	e.volumetric_fog_enabled = forward
 	e.volumetric_fog_density = VOLUMETRIC_DENSITY
 	e.volumetric_fog_albedo = Color(0.7, 0.72, 0.78)
 	e.volumetric_fog_emission = Color.BLACK
@@ -254,7 +256,7 @@ func _build_world() -> void:
 	e.ssao_radius = SSAO_RADIUS
 	e.ssao_intensity = SSAO_INTENSITY
 	e.ssao_light_affect = SSAO_LIGHT_AFFECT
-	e.ssr_enabled = true
+	e.ssr_enabled = forward
 	e.ssr_max_steps = 48
 	e.adjustment_enabled = true
 	e.adjustment_contrast = ADJUST_CONTRAST

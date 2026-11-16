@@ -74,6 +74,12 @@ const SWORD_BLADE := 0.74
 const SWORD_WIDTH := Vector4(0.1, 0.03, 0.035, 0.07)
 const SWORD_TAPER: Array[float] = [1.0, 0.85, 0.68, 0.5, 0.32, 0.14]
 const SARC_TINT := 1.35
+## C12a QW-008 (the west pair read as a block of the parapet): the lid a step lighter than the chest (SARC_LID_LIGHT
+## times its stone), and a frieze that reads at 1080 lines: a band of the lid's stone round the chest (height, how far
+## it stands out, its middle as a share of the chest's height) with a thread of gold under it (height).
+const SARC_LID_LIGHT := 1.8
+const SARC_FRIEZE := Vector3(0.16, 0.07, 0.7)
+const SARC_FRIEZE_GOLD := 0.05
 ## The pair on the camera's half of the rim (NEAR_HALF, the east one) stands between the eye and a paladin walking
 ## the rim: its niche goes back NEAR_SARC.x meters, its chest is NEAR_SARC.y tall (the spec's 0.85, not SARC_SIZE.z)
 ## on a plinth NEAR_SARC.z tall, so its lid stays under his feet in the camera and its stone opens round him
@@ -200,6 +206,11 @@ const WINDOW_EVERY := 1
 ## and hot enough to read warm through the blue air (size, colour: past the glow threshold, a small point of glow each).
 const FAR_WINDOW := Vector2(0.55, 0.95)
 const FAR_WINDOW_GLASS := Color(2.4, 1.2, 0.45)
+## C12a QW-006 (8 windows in the game camera, and the two in the west mist floated over it as cards with no wall
+## behind): each pier carries a pair of lancets this far apart (m) on its face, and none where the violet columns
+## (COLUMNS) hide the ring's wall (bearings, FAR_WINDOW_HIDDEN).
+const FAR_WINDOW_PAIR := 1.0
+const FAR_WINDOW_HIDDEN := Vector2(215.0, 280.0)
 const SPIRE_DIST: Array[float] = [86.0, 104.0]
 const SPIRE_HAZE: Array[float] = [0.35, 0.55]
 const SPIRE_COLUMN: Array[float] = [7.0, 5.0]
@@ -314,6 +325,11 @@ const FLOOR_B := Color(0.46, 0.42, 0.42)
 const CRACK_HEART := Vector2(-0.6, -0.7)
 ## Morvath's phases: the ritual's and the last one's (BossDef.ritual_phase, final_light_phase).
 const RITUAL_PHASE := 2
+## C12a BOSS-001: while the storm's lanes are on the floor (from storm_wave until its last storm_blade) the seal's heart
+## goes this much darker (seal_inside_dark, as under the ritual's shield), easing in and out over STORM_DARK_FADE
+## seconds: the lit heart under the six roots and Morvath was the lightest shape of the frame.
+const STORM_DARK := 0.4
+const STORM_DARK_FADE := 0.3
 const FINAL_PHASE := 4
 
 ## Footprints of the pieces round the floor (x, z, radius): all outside FLOOR_RADIUS. Nothing here needs to block (the
@@ -343,6 +359,8 @@ var _veil := 0.0
 var _veil_want := 0.0
 ## The world's air as it was before the chamber dressed it (_dress_world), put back when the chamber leaves.
 var _air: Dictionary = {}
+var _storm_left := 0
+var _storm_dark := 0.0
 var _air_env: Environment
 var _air_moon: DirectionalLight3D
 
@@ -489,7 +507,12 @@ func on_cue(name_: StringName, at: Vector2, dir: Vector2, size: float, _seconds:
 			seal.enter(SealLook.State.RITUAL)
 		&"shield_break":
 			seal.enter(SealLook.State.BREAK)
+		&"storm_wave":
+			_storm_left += int(size)
+		&"storm_blade":
+			_storm_left = maxi(0, _storm_left - 1)
 		&"victory_blow":
+			_storm_left = 0
 			seal_restore()
 		&"victory_done", &"victory_fade":
 			set_veil(false)
@@ -513,6 +536,7 @@ func on_floor(pos: Vector2, radius: float) -> bool:
 
 func _process(delta: float) -> void:
 	seal.step(delta)
+	_storm_dark = move_toward(_storm_dark, STORM_DARK if _storm_left > 0 else 0.0, delta * STORM_DARK / STORM_DARK_FADE)
 	_veil = move_toward(_veil, _veil_want, delta / VEIL_FADE)
 	if _sealing:
 		_door_seal += delta
@@ -526,6 +550,8 @@ func _apply_seal() -> void:
 	for k: StringName in v:
 		var key := &"seal_turns" if k == &"turn" else (&"seal_violet_left" if k == &"violet" else StringName("seal_" + k))
 		_floor_mat.set_shader_parameter(key, v[k])
+	if _storm_dark > 0.0:
+		_floor_mat.set_shader_parameter(&"seal_inside_dark", maxf(float(v[&"inside_dark"]), _storm_dark))
 	if _door_mat == null:
 		return
 	var light := SEAM_REST
@@ -734,10 +760,10 @@ func _perimeter() -> void:
 		var in_front := c.x > FRONT_ARC.x and c.x < FRONT_ARC.y
 		if _in_near_niche(c.x):
 			# on the plinth of the near pair, gone back with it
-			_candle_row(c.x, NEAR_SARC.z, int(c.y), c.z > 0.0, CANDLE_FRONT_MAX, CANDLE_R + Vector2.ONE * NEAR_SARC.x)
+			_candle_row(c.x, NEAR_SARC.z, int(c.y), c.z > 0.0, CANDLE_FRONT_MAX, CANDLE_R + Vector2.ONE * NEAR_SARC.x, true)
 			continue
 		_candle_row(c.x, LEDGE.y, int(c.y), c.z > 0.0, CANDLE_FRONT_MAX if in_front else CatacombHall.CANDLE_HEIGHT.y,
-			CANDLE_FRONT_R if in_front else CANDLE_R)
+			CANDLE_FRONT_R if in_front else CANDLE_R, in_front)
 
 
 ## The ledge at the balustrade's foot between two bearings: from the floor's edge out under the rail.
@@ -753,8 +779,9 @@ func _ledge(b0: float, b1: float, mat: Material) -> void:
 
 ## A group of candles along the floor's edge at a bearing (the hall's candles, Masonry.candle, laid along the edge
 ## in the band `band`, CANDLE_R by default, so none stands on the walkable floor): `count` of them, the first the tallest, a warm halo, a
-## light of its own if lit; none taller than max_height.
-func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: float, band := CANDLE_R) -> void:
+## light of its own if lit; none taller than max_height. open: wax, flames and halo open round the paladin behind them
+## like the front balustrade (Masonry.candle's open; C12a BOSS-002: on the south rim they were drawn over his legs).
+func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: float, band := CANDLE_R, open := false) -> void:
 	var along := 0.0
 	var top := 0.0
 	for i in count:
@@ -767,12 +794,14 @@ func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: fl
 		var p := at_bearing(b, _rng.randf_range(band.x + r, band.y - r))
 		var h := minf(lerpf(CatacombHall.CANDLE_HEIGHT.x, CatacombHall.CANDLE_HEIGHT.y * 0.8, t), max_height)
 		top = maxf(top, h)
-		m.candle(_v3(p, y), h, r)
+		m.candle(_v3(p, y), h, r, open)
 	var at := at_bearing(bearing, (band.x + band.y) * 0.5)
 	var glow := MeshInstance3D.new()
 	glow.mesh = Fx.quad(CatacombHall.CANDLE_HALO, Color(0.8, 0.45, 0.18) * CatacombHall.CANDLE_HALO_ALPHA)
 	glow.position = _v3(at, y + top * 0.8)
 	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if open:
+		glow.material_override = Masonry.see_open(glow.mesh.surface_get_material(0))
 	add_child(glow)
 	if not lit:
 		return
@@ -829,7 +858,7 @@ func _niche(bearing: float) -> void:
 	for sd: float in [-1.0, 1.0]:
 		var cb := bearing + sd * NICHE_CANDLES
 		if near:
-			_candle_row(cb, plinth_y, 3, false, CANDLE_FRONT_MAX, CANDLE_R + Vector2.ONE * back)
+			_candle_row(cb, plinth_y, 3, false, CANDLE_FRONT_MAX, CANDLE_R + Vector2.ONE * back, true)
 		else:
 			_candle_row(cb, plinth_y, 3, false, CatacombHall.CANDLE_HEIGHT.y)
 
@@ -846,9 +875,13 @@ func _sarcophagus(bearing: float, back := 0.0, plinth_y := SARC_PLINTH, tall := 
 	var base := _v3(at, y)
 	m.block(base, Vector3(size.x, size.z, size.y), yaw, stone, false)
 	m.block(base, Vector3(size.x + 0.1, 0.12, size.y + 0.1), yaw, stone, false)
-	m.box(base + Vector3(0, size.z * 0.7, 0), Vector3(size.x + 0.06, 0.06, size.y + 0.06), yaw, stone, false)
+	var light := _see_through(m.stone(plinth_y, Color.WHITE * SARC_TINT * SARC_LID_LIGHT), bearing)
+	var frieze := base + Vector3(0, size.z * SARC_FRIEZE.z, 0)
+	m.box(frieze, Vector3(size.x + SARC_FRIEZE.y * 2.0, SARC_FRIEZE.x, size.y + SARC_FRIEZE.y * 2.0), yaw, light, false)
+	_bar(frieze - Vector3(0, SARC_FRIEZE.x * 0.5 + SARC_FRIEZE_GOLD * 0.5, 0),
+		Vector3(size.x + SARC_FRIEZE.y * 2.0, SARC_FRIEZE_GOLD, size.y + SARC_FRIEZE.y * 2.0), yaw, _gold())
 	var lid := base + Vector3(0, size.z, 0)
-	m.block(lid, Vector3(size.x + SARC_LID.y * 2.0, SARC_LID.x, size.y + SARC_LID.y * 2.0), yaw, stone, false)
+	m.block(lid, Vector3(size.x + SARC_LID.y * 2.0, SARC_LID.x, size.y + SARC_LID.y * 2.0), yaw, light, false)
 	var top := lid + Vector3(0, SARC_LID.x, 0)
 	# the sunk panel on the face to the middle
 	var face := basis * Vector3(0, 0, size.y * 0.5 + 0.005)
@@ -1400,15 +1433,19 @@ func _far() -> void:
 		m.box(_v3(at, FAR_RING.y - 0.8), Vector3(bay + 0.2, 1.6, 2.2), yaw, far, false)
 		m.arch_ring(_v3(at, FAR_RING.y - 4.5), at_bearing(b, 1.0), 4.0, 0.7, 1.8, far, 0.75)
 		m.box(_v3(at_bearing(b, FAR_RING.x + 3.0), (FAR_RING.y + FAR_RING.z) * 0.5 - 2.0), Vector3(bay, FAR_RING.y - FAR_RING.z, 1.0), yaw, _deep(0.9, 0.3), false)
-		if i % WINDOW_EVERY == WINDOW_EVERY - 1:
-			var wp := at_bearing(b + FAR_STEP * 0.5, FAR_RING.x - 1.05)
-			var lw := MeshInstance3D.new()
+		var wb := b + FAR_STEP * 0.5
+		if i % WINDOW_EVERY == WINDOW_EVERY - 1 and (wb < FAR_WINDOW_HIDDEN.x or wb > FAR_WINDOW_HIDDEN.y):
+			var wyaw := yaw + deg_to_rad(FAR_STEP * 0.5)
+			var wbasis := Basis(Vector3.UP, wyaw)
+			var wp := _v3(at_bearing(wb, FAR_RING.x - 1.05), FAR_RING.y - 3.0)
 			var lq := QuadMesh.new()
 			lq.size = FAR_WINDOW
-			lw.mesh = lq
-			lw.material_override = _unlit(FAR_WINDOW_GLASS)
-			lw.transform = Transform3D(Basis(Vector3.UP, yaw + deg_to_rad(FAR_STEP * 0.5)), _v3(wp, FAR_RING.y - 3.0))
-			add_child(lw)
+			for sd: float in [-0.5, 0.5]:
+				var lw := MeshInstance3D.new()
+				lw.mesh = lq
+				lw.material_override = _unlit(FAR_WINDOW_GLASS)
+				lw.transform = Transform3D(wbasis, wp + wbasis * Vector3(sd * FAR_WINDOW_PAIR, 0, 0))
+				add_child(lw)
 		b += FAR_STEP
 		i += 1
 	m.layers = 1

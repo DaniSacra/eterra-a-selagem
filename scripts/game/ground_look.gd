@@ -15,20 +15,34 @@ const WARNING_STRENGTH := 1.4
 const RIM_METERS := 0.28
 ## Morvath's signature on his warnings (ART-001, docs/art/boss_chamber_spec.md section 8): a narrower red rim, and
 ## the quad reaches this far past the area for the violet thread and the band of spectral runes (thread 2 px, gap,
-## runes 0.3 m: ground.gdshader's signature).
+## runes 0.3 m: ground.gdshader's signature; C12a: a 2 px dark gap between the rim and the thread, so 0.44 m).
 const SIGN_RIM := 0.18
-const SIGN_PAD := 0.38
+const SIGN_PAD := 0.44
 ## The red fill of his warnings (ground.gdshader's sign_fill; the eruptions' circles take it too, art review P5).
 const SIGN_FILL := 0.35
+## Every other warning's faint floor and light (ground.gdshader's defaults: base_fill, no light_cap).
+const BASE_FILL := 0.08
+const NO_CAP := 64.0
 ## The storm's lanes (art review P2): nothing drawn this close to their root (Morvath), and their fill comes up from
-## STORM_ROOT_FILL of itself there to all of it STORM_SOFT meters further out.
+## STORM_ROOT_FILL of itself there to all of it STORM_SOFT meters further out (C12a BOSS-001: from nothing, across the seal, and
+## the faint floor, the violet thread and the runes come up with it, and the rims from STORM_ROOT_RIM: the six roots
+## met in a pink disc over the seal).
 const STORM_CLEAR := 1.2
-const STORM_SOFT := 2.5
-const STORM_ROOT_FILL := 0.35
+const STORM_SOFT := 5.0
+const STORM_ROOT_FILL := 0.0
+const STORM_ROOT_RIM := 0.3
 ## The storm's lanes cover most of the floor at once: their red fill is lighter than his other warnings' (SIGN_FILL),
 ## so the lighter floor of the chamber (P1) under six of them does not go to a hot pink (the rims, the fronts, the order
 ## marks and the runes stay as they are).
-const STORM_FILL := 0.2
+const STORM_FILL := 0.09
+## C12a (BOSS-001: the middle still read the lightest shape of the frame, luminance 121, where the six roots and the
+## paladin's circle meet): a lighter fill (STORM_FILL, was 0.2: the floor's joints show in the lanes' middles), the
+## lanes' faint floor (ground.gdshader's base_fill, 0.08 on every other warning), their rims at STORM_RIM of the light
+## (the brightest, the next to leave, adds 0.95 of red: under 1, never past the glow threshold) and the most light any
+## channel of a lane adds where its parts stack (light_cap).
+const STORM_BASE := 0.02
+const STORM_RIM := 0.75
+const STORM_CAP := 0.95
 ## The storm's rim by its place in the order of leaving (the next to leave first): its share of the light.
 const ORDER_LEVELS: Array[float] = [1.0, 0.7, 0.55, 0.45, 0.38, 0.32]
 
@@ -60,7 +74,11 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	m.set_shader_parameter(&"root_clear_m", 0.0)
 	m.set_shader_parameter(&"root_soft_m", 0.0)
 	m.set_shader_parameter(&"root_fill", 1.0)
+	m.set_shader_parameter(&"root_rim", 1.0)
 	m.set_shader_parameter(&"sign_fill", SIGN_FILL)
+	m.set_shader_parameter(&"base_fill", BASE_FILL)
+	m.set_shader_parameter(&"rim_scale", 1.0)
+	m.set_shader_parameter(&"light_cap", NO_CAP)
 	m.set_shader_parameter(&"color", color)
 	m.set_shader_parameter(&"progress", 0.0)
 	m.set_shader_parameter(&"style", style)
@@ -115,7 +133,11 @@ static func storm_wedge(node: MeshInstance3D, wedge: Vector2) -> void:
 	m.set_shader_parameter(&"root_clear_m", STORM_CLEAR)
 	m.set_shader_parameter(&"root_soft_m", STORM_SOFT)
 	m.set_shader_parameter(&"root_fill", STORM_ROOT_FILL)
+	m.set_shader_parameter(&"root_rim", STORM_ROOT_RIM)
 	m.set_shader_parameter(&"sign_fill", STORM_FILL)
+	m.set_shader_parameter(&"base_fill", STORM_BASE)
+	m.set_shader_parameter(&"rim_scale", STORM_RIM)
+	m.set_shader_parameter(&"light_cap", STORM_CAP)
 
 
 ## The wedges of lanes leaving one point the ways in dirs (unit): for each, half the angle to its neighbour with the

@@ -83,6 +83,11 @@ uniform float seal_veins = 0.0;
 uniform float seal_vein_light = 0.0;
 uniform float seal_tremor = 0.0;
 uniform float seal_converge = -1.0;
+// The light of the victory's eight traces and of the heart they meet in (C12a BOSS-003: at 1.0 over the lit gold the
+// heart went past the glow threshold and read as a white-gold star): a share low enough that the heart's whole
+// pixel, the lit inlay plus this, stays at or under 1.0.
+uniform float seal_converge_light = 0.2;
+uniform float seal_heart_light = 0.08;
 uniform float seal_lion_glow = 0.0;
 uniform float seal_flash = 0.0;
 uniform float seal_violet_left = 1.0;
@@ -299,8 +304,8 @@ void seal_draw(vec2 wp, inout vec3 c, inout vec3 emit, inout vec2 lean, inout fl
 		float head = seal_point.y * (1.0 - seal_converge);
 		float on_axis = 1.0 - smoothstep(0.03, 0.07, abs(v));
 		float trail = smoothstep(head - 0.05, head + 0.02, u) * (1.0 - smoothstep(head + 0.6, head + 1.6, u)) * step(u, seal_point.y);
-		light += seal_gold * on_axis * trail * step(0.0, u);
-		light += seal_gold * (1.0 - smoothstep(0.0, 0.5, d)) * smoothstep(0.85, 1.0, seal_converge);
+		light += seal_gold * on_axis * trail * step(0.0, u) * seal_converge_light;
+		light += seal_gold * (1.0 - smoothstep(0.0, 0.5, d)) * smoothstep(0.85, 1.0, seal_converge) * seal_heart_light;
 	}
 	// the gold: inlaid metal (its own sheen), eaten where the veins of the last phase pass, a faint light of its own
 	// at rest after the victory

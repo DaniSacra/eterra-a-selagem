@@ -175,7 +175,7 @@ func _environment() -> Environment:
 	e.fog_height = G.FOG_HEIGHT
 	e.fog_height_density = G.FOG_HEIGHT_DENSITY
 	e.fog_aerial_perspective = 0.2
-	e.volumetric_fog_enabled = true
+	e.volumetric_fog_enabled = RenderingServer.get_current_rendering_method() != "gl_compatibility"
 	e.volumetric_fog_density = G.VOLUMETRIC_DENSITY
 	e.volumetric_fog_albedo = Color(0.7, 0.72, 0.78)
 	e.volumetric_fog_emission = Color.BLACK
@@ -186,7 +186,7 @@ func _environment() -> Environment:
 	e.ssao_radius = G.SSAO_RADIUS
 	e.ssao_intensity = G.SSAO_INTENSITY
 	e.ssao_light_affect = G.SSAO_LIGHT_AFFECT
-	e.ssr_enabled = true
+	e.ssr_enabled = e.volumetric_fog_enabled
 	e.ssr_max_steps = 48
 	e.adjustment_enabled = true
 	e.adjustment_contrast = G.ADJUST_CONTRAST

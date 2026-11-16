@@ -800,8 +800,9 @@ func pot(at: Vector3, size: float = 0.9) -> void:
 
 
 ## A thick candle of cream wax, the wax run down in a wide pool round its foot, and its flame (unlit, glowing: an
-## orange tongue with a near-white core). height, radius in meters.
-func candle(at: Vector3, height: float, radius: float) -> void:
+## orange tongue with a near-white core). height, radius in meters. open: it opens round the paladin behind it, like
+## the stone with see_through (the Chamber of the Seal's front candles; see_open() gives the materials).
+func candle(at: Vector3, height: float, radius: float, open := false) -> void:
 	if _wax == null:
 		_wax = StandardMaterial3D.new()
 		_wax.albedo_color = WAX
@@ -821,20 +822,21 @@ func candle(at: Vector3, height: float, radius: float) -> void:
 		var size := Vector2(CANDLE_FLAME * 0.6, CANDLE_FLAME * 1.3)
 		_flame = ArenaKit.tongue(size, CANDLE_FIRE)
 		_flame_core = ArenaKit.tongue(size * CANDLE_CORE_SIZE, CANDLE_CORE)
+	var wax: Material = see_open(_wax) if open else _wax
 	var body := MeshInstance3D.new()
 	body.mesh = _wax_mesh
-	body.material_override = _wax
+	body.material_override = wax
 	body.transform = Transform3D(Basis.from_scale(Vector3(radius, height, radius)), at + Vector3(0, height * 0.5, 0))
 	_add(body)
 	# the wax run down and pooled round its foot
 	var drip := MeshInstance3D.new()
 	drip.mesh = _wax_mesh
-	drip.material_override = _wax
+	drip.material_override = wax
 	drip.transform = Transform3D(Basis.from_scale(Vector3(radius * WAX_POOL, 0.04, radius * WAX_POOL)), at + Vector3(0, 0.0, 0))
 	_add(drip)
 	var run := MeshInstance3D.new()
 	run.mesh = _wax_mesh
-	run.material_override = _wax
+	run.material_override = wax
 	run.transform = Transform3D(Basis.from_scale(Vector3(radius * 1.25, height * 0.3, radius * 1.25)), at + Vector3(radius * 0.12, height * 0.15, 0))
 	_add(run)
 	for mesh: QuadMesh in [_flame, _flame_core]:
@@ -842,7 +844,42 @@ func candle(at: Vector3, height: float, radius: float) -> void:
 		f.mesh = mesh
 		f.position = at + Vector3(0, height + CANDLE_FLAME * 0.4 * (1.0 if mesh == _flame else CANDLE_CORE_SIZE), 0)
 		f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		if open:
+			# a billboard: kept out of merge() (joined meshes lose their own upright)
+			f.material_override = see_open(mesh.material)
+			f.layers = layers
+			root.add_child(f)
+			continue
 		_add(f)
+
+
+const CANDLE_WAX_SEE := preload("res://assets/shaders/candle_wax_see.gdshader")
+const FLAME_SEE := preload("res://assets/shaders/flame_see.gdshader")
+static var _see_twins: Dictionary = {}
+
+
+## The twin of a candle's wax, of a flame (ArenaKit.tongue) or of a warm halo (Fx.quad) that opens round the paladin
+## behind it (see_through.gdshaderinc): the same colours, one twin per material.
+static func see_open(mat: Material) -> ShaderMaterial:
+	if _see_twins.has(mat):
+		return _see_twins[mat]
+	var base := mat as StandardMaterial3D
+	var twin := ShaderMaterial.new()
+	if base.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
+		twin.shader = FLAME_SEE
+		twin.set_shader_parameter(&"color", base.albedo_color)
+		twin.set_shader_parameter(&"shape", base.albedo_texture)
+		twin.set_shader_parameter(&"facing", 1 if base.billboard_mode == BaseMaterial3D.BILLBOARD_PARTICLES else 0)
+		twin.render_priority = base.render_priority
+	else:
+		twin.shader = CANDLE_WAX_SEE
+		twin.set_shader_parameter(&"wax", base.albedo_color)
+		twin.set_shader_parameter(&"roughness", base.roughness)
+		twin.set_shader_parameter(&"rim", base.rim)
+		twin.set_shader_parameter(&"glow", base.emission)
+		twin.set_shader_parameter(&"glow_share", base.emission_texture)
+	_see_twins[mat] = twin
+	return twin
 
 
 ## How much of the wax's glow each part of a candle takes (the cylinder's UVs: its side in the upper half of the

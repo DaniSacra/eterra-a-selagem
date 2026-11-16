@@ -54,7 +54,13 @@ const BANNER_BAR := Color(0.06, 0.05, 0.05)
 ## cross (O-1 of the C11 QA: a blade as thin as the grip read as the long arm of a cross): the blade three times the
 ## grip's width at the guard, one long taper to the point.
 const BANNER_SWORD := Vector3(1.2, 0.74, 0.24)
-const BANNER_SWORD_WIDTH := Vector3(0.07, 0.022, 0.06)
+const BANNER_SWORD_WIDTH := Vector3(0.085, 0.026, 0.065)
+## C12a QW-008 (at 1080 lines the sword was a speck at the cloth's top, under the frame's edge in the game camera): its
+## middle this share of the way down the cloth (was a third), the gold a little lighter than the trim, and a dark edge
+## round the blade and the guard (this many meters wider, in the bar's iron) so it reads on the folds of red.
+const BANNER_SWORD_AT := 0.6
+const BANNER_SWORD_GOLD := 1.3
+const BANNER_SWORD_EDGE := 0.035
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
 const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "barrier_half", "floor_foundation_allsides",
 	"floor_foundation_corner", "floor_foundation_front", "floor_foundation_front_and_sides", "stairs_wide", "stairs_walled",
@@ -280,23 +286,35 @@ func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emb
 
 ## The raised sword on a banner (docs/art/boss_chamber_spec.md 5.4): point up, the blade BANNER_SWORD.y of its height
 ## narrowing to the point, a short guard (BANNER_SWORD.z of the height) with its tips falling a little, the grip and a
-## round pommel; BANNER_SWORD.x tall, its middle a third of the way down the cloth, laid on its folds. No ring behind
-## it and no equal arms: it reads as a sword, never as a cross.
+## round pommel; BANNER_SWORD.x tall, its middle BANNER_SWORD_AT of the way down the cloth, laid on its folds, with a
+## dark edge round blade and guard. No ring behind it and no equal arms: it reads as a sword, never as a cross.
 func _banner_sword(st: SurfaceTool, size: Vector2) -> void:
 	var h := BANNER_SWORD.x
-	var foot := -size.y / 3.0 - h * 0.5
+	var foot := -size.y * BANNER_SWORD_AT - h * 0.5
 	var blade := h * BANNER_SWORD.y
 	var guard := h * BANNER_SWORD.z
 	var grip := h - blade - 0.06 - h * BANNER_SWORD_WIDTH.z * 2.0
 	# a point of the emblem at (x, y on the cloth), just in front of the folds
+	var lift := [0.02]
 	var on := func(x: float, y: float) -> Vector3:
 		var wave := cos((x + size.x * 0.5) / size.x * TAU * BANNER_FOLDS)
-		return Vector3(x, y, wave * lerpf(0.05, 0.08, -y / size.y) + 0.02)
-	var g := BANNER_TRIM
-	var shade := BANNER_TRIM * 0.75
+		return Vector3(x, y, wave * lerpf(0.05, 0.08, -y / size.y) + lift[0])
+	var g := BANNER_TRIM * BANNER_SWORD_GOLD
+	var shade := g * 0.75
 	var base := foot + h - blade
-	# the blade: its two halves, the one away from the light a little darker, one long taper to the point
 	var w := h * BANNER_SWORD_WIDTH.x
+	# the dark edge, just behind the gold: the blade's outline to past the point and the guard's bar
+	var e := BANNER_SWORD_EDGE
+	var gy0 := base - 0.06
+	lift[0] = 0.015
+	_banner_quad(st, on.call(-w - e, base - e), on.call(w + e, base - e), on.call(0.0, foot + h + e * 1.5), on.call(-w * 0.45 - e, foot + h - blade * 0.55),
+		BANNER_BAR, BANNER_BAR)
+	_banner_quad(st, on.call(w + e, base - e), on.call(w * 0.45 + e, foot + h - blade * 0.55), on.call(0.0, foot + h + e * 1.5), on.call(0.0, foot + h + e * 1.5),
+		BANNER_BAR, BANNER_BAR)
+	var gd := h * BANNER_SWORD.z * 0.5 + e
+	_banner_quad(st, on.call(-gd, gy0 - 0.03 - e), on.call(gd, gy0 - 0.03 - e), on.call(gd, gy0 + 0.05 + e), on.call(-gd, gy0 + 0.05 + e), BANNER_BAR, BANNER_BAR)
+	lift[0] = 0.02
+	# the blade: its two halves, the one away from the light a little darker, one long taper to the point
 	_banner_quad(st, on.call(-w, base), on.call(0.0, base), on.call(0.0, foot + h), on.call(-w * 0.45, foot + h - blade * 0.55), g, g)
 	_banner_quad(st, on.call(0.0, base), on.call(w, base), on.call(w * 0.45, foot + h - blade * 0.55), on.call(0.0, foot + h), shade, shade)
 	# the guard, its tips falling

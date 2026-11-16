@@ -33,6 +33,10 @@ uniform float sign_front_m = 0.12;
 uniform float sign_front = 0.6;
 uniform vec3 thread_color = vec3(0.496, 0.176, 0.96);
 uniform float thread_px = 2.0;
+// A dark gap (pixels) between the red rim and the thread (C12a QW-007: touching the rim, the thread blended into it as
+// a pink edge and did not read as his violet), and how strongly the thread is drawn (additive on the dark floor).
+uniform float thread_gap_px = 2.0;
+uniform float thread_light = 1.0;
 uniform vec3 rune_color = vec3(0.16, 0.3, 0.5);
 uniform float rune_gap_m = 0.04;
 uniform float rune_band_m = 0.3;
@@ -54,6 +58,14 @@ uniform vec2 wedge = vec2(0.0);
 uniform float root_clear_m = 0.0;
 uniform float root_soft_m = 0.0;
 uniform float root_fill = 1.0;
+// How much of the rims is left at the root (C12a BOSS-001: their bright ends met round him); 1: all of it.
+uniform float root_rim = 1.0;
+// The faint floor of a line warning's whole area (its share of the colour), and the most light any channel of it adds
+// (C12a BOSS-001: the storm's six lanes keep their rims under the glow threshold and their middles let the floor's
+// joints show; everything else keeps no cap).
+uniform float base_fill = 0.08;
+uniform float rim_scale = 1.0;
+uniform float light_cap = 64.0;
 
 global uniform vec3 floor_round;
 
@@ -76,9 +88,10 @@ void vertex() {
 // its edge. Returns (thread, runes).
 vec2 signature(float out_m, float run_m) {
 	float px = max(fwidth(out_m), 0.0005);
+	float gap = px * thread_gap_px;
 	float w = px * thread_px;
-	float thread = (1.0 - smoothstep(w, w + px, out_m)) * step(0.0, out_m);
-	float band0 = w + rune_gap_m;
+	float thread = smoothstep(gap - px * 0.5, gap + px * 0.5, out_m) * (1.0 - smoothstep(gap + w - px * 0.5, gap + w + px * 0.5, out_m));
+	float band0 = gap + w + rune_gap_m;
 	float across = out_m - band0;
 	float runes = 0.0;
 	if (across > 0.0 && across < rune_band_m) {
@@ -119,7 +132,7 @@ void fragment() {
 			// past the lane's long sides: only the signature
 			if (!sign) discard;
 			vec2 sg = signature(side_m - size_m, along * length_m);
-			extra = thread_color * sg.x + rune_color * sg.y;
+			extra = (thread_color * sg.x * thread_light + rune_color * sg.y) * root_k;
 		} else if (style == 0) {
 			// which way the blow goes (cycle 8): the far end is the bright one, the near end only a faint line, the
 			// filling front is a chevron pointing ahead, and faint chevrons wait in the part still to fill
@@ -140,7 +153,7 @@ void fragment() {
 				fill = step(tip, front) * sign_fill * root_k;
 				float fw = max(fwidth(tip), 0.001);
 				head = (1.0 - smoothstep(sign_front_m * 0.5, sign_front_m * 0.5 + fw, abs(tip - front))) * step(0.02, progress) * sign_front / 0.6;
-				rim_light = order_level;
+				rim_light = order_level * rim_scale;
 				if (order_marks > 0.5) {
 					// the order of leaving: as many spectral marks in a row at the root as its place in the order
 					float at_m = along * length_m - mark_from_m;
@@ -152,7 +165,7 @@ void fragment() {
 					extra += mark_color * on * (1.0 - smoothstep(mark_r_m, mark_r_m + fw2, dot_m)) * 0.9;
 				}
 			}
-			a = max(max(edge, far) * 0.9 * rim_light, near * 0.3) + fill + head * 0.6 + marks * 0.16 + 0.08;
+			a = max(max(edge, far) * 0.9 * rim_light * mix(root_rim, 1.0, root_k), near * 0.3) + fill + head * 0.6 + marks * 0.16 + base_fill * root_k;
 		} else {
 			a = (1.0 - side * side) * (0.5 + 0.5 * noise(vec2(uv.x * 3.0, along * 8.0 - TIME * 2.0)));
 		}
@@ -166,7 +179,7 @@ void fragment() {
 			// past the curve: only the signature
 			if (!sign) discard;
 			vec2 sg = signature(dm - size_m, atan(uv.x, -uv.y) * size_m);
-			extra = thread_color * sg.x + rune_color * sg.y;
+			extra = thread_color * sg.x * thread_light + rune_color * sg.y;
 		} else if (style == 0) {
 			float rim = clamp(rim_m / size_m, 0.025, 0.14);
 			float ring = smoothstep(1.0 - rim, 1.0 - rim * 0.3, d) * (1.0 - smoothstep(0.985, 1.0, d));
@@ -200,5 +213,5 @@ void fragment() {
 			a = (0.25 + 0.55 * n) * (1.0 - smoothstep(0.9, 1.0, d)) + edge * 0.35 * (1.0 - smoothstep(0.97, 1.0, d));
 		}
 	}
-	ALBEDO = color.rgb * a * strength * fade + extra * fade;
+	ALBEDO = min(color.rgb * a * strength, vec3(light_cap)) * fade + extra * fade;
 }

@@ -50,9 +50,7 @@ uniform float cracks = 0.8;
 // stands between the eye and him, a round hole is stippled out of it around him (see_radius m at his distance, round
 // his middle see_height m over his feet), keeping see_keep of the stone in its middle, so he reads behind the stone
 // and never on top of it. Only for the camera's own view (the shadows keep the whole stone).
-global uniform vec3 hero_pos;
-// The Chamber of the Seal (C11): the same hole opens round Morvath too (BossChamber.BOSS_FAR when there is none).
-global uniform vec3 boss_pos;
+// (hero_pos and boss_pos: see_through.gdshaderinc)
 uniform float see_through = 0.0;
 uniform float see_radius = 2.2;
 uniform float see_height = 1.3;
@@ -129,31 +127,11 @@ void vertex() {
 	wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 
-// A 4 x 4 ordered dither: the threshold of this pixel (0..1).
-float bayer4(vec2 frag) {
-	ivec2 p = ivec2(mod(frag, 4.0));
-	int i = p.x + p.y * 4;
-	int m[16] = int[](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
-	return (float(m[i]) + 0.5) / 16.0;
-}
+#include "res://assets/shaders/see_through.gdshaderinc"
 
 void fragment() {
-	// the camera's view only: a narrow perspective (shadow maps are orthographic or 90 degrees wide; the browser's
-	// renderer flips Y, hence abs)
-	if (see_through > 0.0 && PROJECTION_MATRIX[3][3] < 0.5 && abs(PROJECTION_MATRIX[1][1]) > 1.5) {
-		float open = 0.0;
-		for (int k = 0; k < 2; k++) {
-			vec3 who = k == 0 ? hero_pos : boss_pos;
-			vec3 hv = (VIEW_MATRIX * vec4(who + vec3(0.0, see_height, 0.0), 1.0)).xyz;
-			if (VERTEX.z > hv.z + see_gap) {
-				// this pixel's line of sight where it crosses his depth, and how far from him that is
-				float d = length(VERTEX.xy * (hv.z / VERTEX.z) - hv.xy) / see_radius;
-				open = max(open, (1.0 - smoothstep(0.5, 1.0, d)) * (1.0 - see_keep) * see_through);
-			}
-		}
-		if (bayer4(FRAGCOORD.xy) < open) {
-			discard;
-		}
+	if (see_through_hole(VERTEX, FRAGCOORD.xy, VIEW_MATRIX, PROJECTION_MATRIX, see_through, see_radius, see_height, see_keep, see_gap)) {
+		discard;
 	}
 	vec3 n = abs(wnormal);
 	vec4 s;
