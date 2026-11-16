@@ -595,7 +595,7 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 				if d.magic_color.a > 0.0:
 					# the fan of bolts flying out over the cone that was marked
-					fx.slash(e.pos, e.aim, d.attack_range + 0.5, d.attack_width, d.magic_color, VOLLEY_TIME, false, 0.9, false)
+					fx.slash(e.pos, e.aim, d.attack_range + 0.5, d.attack_width, d.magic_color, VOLLEY_TIME, false, 0.9, false, 0.0)
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.5:
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)

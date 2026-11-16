@@ -784,7 +784,7 @@ func _feel() -> void:
 	f.outline = 0.5
 	# effects a little quieter after the first test ("everything is too big"): dimmer cut, ink gone sooner
 	f.slash_intensity = 1.7
-	f.slash_sweep_time = 0.1
+	f.slash_sweep_time = 0.05  # C12d (VX-01): the head sweeps in 3 frames with the blade (Fx.SLASH_LEAD the first)
 	f.ink_opacity = 0.85
 	f.ink_life = 2.0
 	_save(f, Feel.PATH)

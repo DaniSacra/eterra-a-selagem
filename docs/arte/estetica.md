@@ -243,8 +243,15 @@ Medido na GPU (Forward+, 1080p, `--cam-dist=26`); quadros em `docs/gallery/c12d/
   `core_light` 0,24, `core_depth` 0,45); o corpo é tinta escura translúcida (cor 0,02 / 0,028 / 0,034, `max_alpha` 0,6) do
   fio para dentro (`body_depth` 0,75) e, além dele até o alcance, só um véu (`reach_veil` 0,2). O fio fica onde a ponta
   da lâmina passou: `blade_m` metros do paladino quando o `Fx` passa `reach_m` e `band_from`; sem eles, na borda de fora.
-  Pixels da fita com saturação acima de 0,6: 27% antes, 8% depois (vitrine `--lab`). A distância até a ponta da Emeth
-  depende do encaixe no `fx.gd` (`BLADE_REACH`, `SLASH_INNER`, `INK_INNER`; gameplay-engineer).
+  Pixels da fita com saturação acima de 0,6: 27% antes, 8% depois (vitrine `--lab`). Encaixe no `fx.gd`: `BLADE_REACH`
+  2,6 m (a ponta real da Emeth, `EmethSword.TIP`, medida quadro a quadro nos golpes 1 a 3: de 2,3 m quando desce a 2,85 m
+  na altura da cintura; o 2,2 pedido deixava a ponta nivelada a 0,64 m do fio), `SLASH_INNER` e `INK_INNER` 0,12 (eram
+  0,5 e 0,42). Antes o fio ficava na borda de fora, a 5,25 m do paladino nos golpes 1 e 2: 2,4 a 2,6 m além da ponta;
+  agora a diferença no chão é de até 0,3 m com a lâmina na cintura e 0,49 m em 3D no quadro do golpe 3. O corte já
+  aparece no quadro do golpe (`Fx.SLASH_LEAD`, um quadro) e varre em 3 (`Feel.slash_sweep_time` 0,1 para 0,05; o
+  clipe ainda passa a lâmina 1 a 2 quadros antes do quadro do golpe nos golpes 1 e 2, coisa do `PEAK`). Vitrine vazia na
+  GPU (`--lab --lab-count=0 --cam-dist=26`, 1080): fita com saturação acima de 0,6 em 1,1% (t 0,15) e 4,4% (t 0,3) dos
+  pixels; `docs/gallery/c12d/work/vx_wire_*.jpg`.
 - **Brilho do finalizador** (`glint.gdshader`): anel em metros (`ring_m` 0,5, abre `ring_burst_m` 0,3: diâmetro máximo
   1,6 m, menos de 0,6 da altura do herói), cruz menor (`spike_long` 0,3, `spike_short` 0,12) com o meio vazado
   (`hollow_m` 0,14) e, sobre o corpo do herói visto da câmera (coluna de `body_half_m` 0,5 por `body_height_m` 2,8 sobre
@@ -259,8 +266,12 @@ Medido na GPU (Forward+, 1080p, `--cam-dist=26`); quadros em `docs/gallery/c12d/
 - **Queimadura em elites, guardiões e Morvath** (`crowd.gdshader`, quem tem `rim_power`): borda de fogo até
   `burn_rim_own` 0,25, brasas pela metade (`burn_coals_own`), a borda própria fica a `burn_keep_own` 0,7. Morvath
   queimando na fase 3: pixels quentes saturados no recorte dele 11 a 13% para 4 a 5,5%, matiz mediano 269 a 277.
-- **Lascas** (`chip.gdshader`, novo): lasca alongada no sentido do voo (2:1 a 4:1), mais clara no meio. Precisa do
-  encaixe no `fx.gd` (a MultiMesh das partículas) e da cor marfim-cinza e vida 0,22 s no `combat.gd` (gameplay-engineer).
+- **Lascas** (`chip.gdshader`, novo): lasca alongada no sentido do voo (2:1 a 4:1), mais clara no meio. Encaixada na
+  MultiMesh das partículas do `Fx` (todas: as do golpe e as do acerto; `MOTE_WIDTH` 0,5 do tamanho, comprimento
+  `MOTE_STREAK` 0,03 s do voo entre 2 e 4 larguras, `Fx.streak`). Lascas do acerto: `Combat.CHIP_COLOR` 0,42 / 0,4 /
+  0,37 (vezes `MOTE_GLOW`), 6 m/s, 0,08 m, vida até 0,22 s. Medido a 60 Hz: num acerto comum a última some 15 quadros
+  depois (0,25 s, 7,5 quadros do vídeo de 30); num abate o hit stop estica para 17 (0,28 s), com a última já em 0,09 da
+  luz no 8º quadro do vídeo.
 - **Colunas de luz** (`beam.gdshader`): continuam pré-multiplicadas sob o teto da tela (235), mas cada face deposita só
   uma parte do teto (`body` 0,68), com lados suaves (`side_soft` 1,6), miolo mais claro e pálido (`core_width` 8,
   `core_light` 0,6, `core_white` 0,45), somem em degradê a partir de 15% da altura (`top_from`, altura pelo vértice),

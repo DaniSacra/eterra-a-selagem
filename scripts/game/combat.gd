@@ -51,6 +51,12 @@ const GASH_HEAVY := 1.8
 const GASH_LEAN := 0.5
 const GASH_TIME := Vector2(0.16, 0.18)
 const GASH_CHIPS := Vector2i(4, 6)
+## The chips of a blow landing (C12d, VX-10): stone grey slivers (Fx.chips lights them by Fx.MOTE_GLOW), their
+## speed in m/s, size in meters and life in seconds at most: gone well before 8 frames of the movie (30 fps).
+const CHIP_COLOR := Color(0.42, 0.4, 0.37)
+const CHIP_SPEED := 6.0
+const CHIP_SIZE := 0.08
+const CHIP_LIFE := 0.22
 ## The special (the Seta de Luz dart) lands as a small star of two crossed cuts, this size (Fx.impact), with chips
 ## of old gold: a puncture, never the streak of a sword cut. Its held version lands as a streak this long (STAB)
 ## along its flight, crossed (cycle 8: attack, special and Omega told apart at a glance).
@@ -253,7 +259,7 @@ func _draw_hit(e: Enemy, axis: Vector2, away: Vector2, color: Color, heavy: bool
 	var lean := tan(_look.randf_range(-GASH_LEAN, GASH_LEAN))
 	var length := GASH_HEAVY if heavy else GASH.y if finisher else _look.randf_range(GASH.x, GASH.y)
 	fx.gash(at, Vector3(axis.x, lean, axis.y), color, length, heavy, GASH_TIME.y if heavy or finisher else GASH_TIME.x)
-	fx.chips(at, Vector3(away.x, 0.35, away.y), color, _look.randi_range(GASH_CHIPS.x, GASH_CHIPS.y), 7.0, 0.1, 0.35, 0.7)
+	fx.chips(at, Vector3(away.x, 0.35, away.y), CHIP_COLOR, _look.randi_range(GASH_CHIPS.x, GASH_CHIPS.y), CHIP_SPEED, CHIP_SIZE, CHIP_LIFE, 0.7)
 
 
 ## The way the blade was moving where it met an enemy, on the floor plane: along the thrust for a line, across the

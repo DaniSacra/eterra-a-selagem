@@ -34,6 +34,12 @@ const OLD_GOLD := Color(0.95, 0.72, 0.3)
 const MOTE_GOLD_EVERY := 4
 ## How bright a mote is (times its colour): small, so it may pass the glow threshold.
 const MOTE_GLOW := 2.2
+## The specks as slivers (chip.gdshader, C12d VX-10): width as a share of their size, length as the seconds of
+## their flight they streak (at least MOTE_LONG.x, at most MOTE_LONG.y times their width).
+const MOTE_WIDTH := 0.5
+const MOTE_STREAK := 0.03
+const MOTE_LONG := Vector2(2, 4)
+const CHIP := preload("res://assets/shaders/chip.gdshader")
 ## The blade's pulse on a swing: seconds it takes to fall back (EmethSword.PULSE_GLOW at its top).
 const BLADE_PULSE := 0.15
 const GLINT := preload("res://assets/shaders/glint.gdshader")
@@ -58,11 +64,20 @@ const CRESCENT_INK := 0.28
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
-## Where the ink of a sword arc starts, as a share of its reach (lower is a fatter crescent of ink).
-const INK_INNER := 0.42
-## Where the bright streaks start, as a share of the reach: a wide band from near the paladin out to the tip
-## (Ember & Blade's cuts are sheets of light, not thin lines; a narrower band since the first test found them too big).
-const SLASH_INNER := 0.5
+## Where the ink of a sword arc starts, as a share of its reach (lower is a fatter crescent of ink). C12d (VX-01): the
+## mesh runs from near the paladin; the shaders draw only up to the blade's edge (BLADE_REACH), so the band no longer
+## sets where the cut shows.
+const INK_INNER := 0.12
+## Where the mesh of the light of a cut starts, as a share of the reach (slash.gdshader draws a fine edge at
+## BLADE_REACH and a soft core just inside it, nothing past the tip).
+const SLASH_INNER := 0.12
+## Meters from the paladin to the Emeth's tip in a swing, on the floor: where the edge of every cut of his is drawn
+## (reach_m and blade_m in slash.gdshader and slash_ink.gdshader). Measured on the model in the swing frames of cut1
+## to cut3 (the tip, EmethSword.TIP, from 2.3 m as it drops through to 2.85 m level with the waist; C12d).
+const BLADE_REACH := 2.6
+## Seconds of its sweep a cut already shows on the frame of the blow (one frame at 60): it starts with the blade,
+## never a frame behind it (VX-01).
+const SLASH_LEAD := 1.0 / 60.0
 ## The ribbon's tail behind the head of the swing: at most this share of the arc, and at most this many degrees
 ## (a spin all around keeps a blade of light, not a full disc).
 const SLASH_TAIL := 0.6
@@ -340,11 +355,13 @@ func _build_motes() -> void:
 	_motes = MultiMesh.new()
 	_motes.transform_format = MultiMesh.TRANSFORM_3D
 	_motes.use_colors = true
-	var dot := quad(1.0, Color.WHITE)
-	var mat: StandardMaterial3D = dot.material
-	mat.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	mat.billboard_keep_scale = true
-	_motes.mesh = dot
+	# a sliver stretched along its flight (chip.gdshader turns it to the camera round its axis), never a round dot
+	var sliver := QuadMesh.new()
+	sliver.size = Vector2.ONE
+	var mat := ShaderMaterial.new()
+	mat.shader = CHIP
+	sliver.material = mat
+	_motes.mesh = sliver
 	_motes.instance_count = MOTE_POOL
 	_motes.visible_instance_count = 0
 	_mote_pos.resize(MOTE_POOL)
@@ -407,8 +424,10 @@ func behind(pos: Vector3, meters: float) -> Vector3:
 
 
 ## A sword arc on the floor plane at waist height: from origin towards dir, reach meters, width degrees.
-## ink: lay the dark half-moon under the cut.
-func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true) -> void:
+## ink: lay the dark half-moon under the cut. blade: meters from origin where its edge is drawn (the Emeth's tip;
+## 0: the outer edge of the arc, for a cut that is not the paladin's). The head sweeps the arc in
+## Feel.slash_sweep_time and is already SLASH_LEAD into it on the frame it starts.
+func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true, blade: float = BLADE_REACH) -> void:
 	var tilt := _rng.randf_range(-0.08, 0.08)
 	var s: Dictionary = _take(_slashes)
 	var ink: Dictionary = _take(_inks)
@@ -417,11 +436,17 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	s.time = time
 	var feel := Feel.live()
 	ink.time = time * feel.ink_life
-	var sweep := clampf(feel.slash_sweep_time / time, 0.25, 0.7)
+	var sweep := clampf(feel.slash_sweep_time / time, 0.1, 0.7)
+	s.life = minf(SLASH_LEAD / time, sweep)
+	ink.life = s.life / feel.ink_life
 	for e: Dictionary in [s, ink]:
 		var mat: ShaderMaterial = e.mat
 		mat.set_shader_parameter(&"flip", flip)
-		mat.set_shader_parameter(&"t", 0.0)
+		mat.set_shader_parameter(&"t", e.life)
+		mat.set_shader_parameter(&"reach_m", reach)
+		mat.set_shader_parameter(&"blade_m", blade)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"band_from", SLASH_INNER)
+	(ink.mat as ShaderMaterial).set_shader_parameter(&"band_from", INK_INNER)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
@@ -887,21 +912,30 @@ func _animate_motes(delta: float) -> void:
 		_mote_vel[i] = vel
 		_mote_pos[i] += vel * delta
 		var fade := 1.0 - life * life
-		# a billboard scaled evenly where it is, and its colour fading (what set_instance_transform and
-		# set_instance_color would store, written into the buffer)
-		var s := Vector3.ONE * _mote_size[i] * (0.7 + 0.3 * fade)
+		# a sliver where it is (chip.gdshader): the basis's x column is its axis along the flight, as long as the
+		# streak, the y column's length its width; its colour fading (what set_instance_transform and
+		# set_instance_color would store, written into the buffer: three rows of basis x, y, z and origin)
+		var w := _mote_size[i] * MOTE_WIDTH * (0.7 + 0.3 * fade)
+		var ax := streak(vel, w)
 		var at := _mote_pos[i]
 		var c := _mote_color[i] * fade
 		var o := i * 16
 		var d := _mote_buf
-		d[o] = s.x; d[o + 1] = 0.0; d[o + 2] = 0.0; d[o + 3] = at.x
-		d[o + 4] = 0.0; d[o + 5] = s.y; d[o + 6] = 0.0; d[o + 7] = at.y
-		d[o + 8] = 0.0; d[o + 9] = 0.0; d[o + 10] = s.z; d[o + 11] = at.z
+		d[o] = ax.x; d[o + 1] = 0.0; d[o + 2] = 0.0; d[o + 3] = at.x
+		d[o + 4] = ax.y; d[o + 5] = w; d[o + 6] = 0.0; d[o + 7] = at.y
+		d[o + 8] = ax.z; d[o + 9] = 0.0; d[o + 10] = w; d[o + 11] = at.z
 		d[o + 12] = c.r; d[o + 13] = c.g; d[o + 14] = c.b; d[o + 15] = c.a
 		i += 1
 	if _mote_n > 0:
 		_motes.buffer = _mote_buf
 	_motes.visible_instance_count = _mote_n
+
+
+## The axis of a sliver flying at vel, width w meters across: along the flight, MOTE_STREAK seconds of it long but
+## never shorter or longer than MOTE_LONG times its width (still, it lies along x).
+static func streak(vel: Vector3, w: float) -> Vector3:
+	var along := vel.normalized() if vel.length_squared() > 0.000001 else Vector3.RIGHT
+	return along * clampf(vel.length() * MOTE_STREAK, w * MOTE_LONG.x, w * MOTE_LONG.y)
 
 
 ## The pulse of the blade falls back to its still light. The blade is looked for once: the sword EmethSword made

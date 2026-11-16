@@ -114,7 +114,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   branco (`Fx.impact_frame`; ciclo 10, decisão D-08): só no Ômega que acerta e no golpe que derruba uma fase do chefe (ou o
   derruba), no máximo um a cada 10 s (`Feel.impact_frame_every`, `Combat.wants_impact_frame`, `breaks_phase`), e nunca com a
   opção `impact_frames` do save desligada (`SaveData`, padrão ligada; `Game.apply_options` passa para `Fx.impact_frames`; a tela
-  da opção é do ui-ux-designer, texto `opt_impact_frames`). Multidão cinza clara sobre o chão escuro, que brilha um pouco sozinha para ser lida longe da luz (`CrowdRenderer.CROWD_*`, `lift` e `flat_light` no `crowd.gdshader`); cortes em faixa larga (`Fx.SLASH_INNER`); elites com contorno escuro e fino
+  da opção é do ui-ux-designer, texto `opt_impact_frames`). Multidão cinza clara sobre o chão escuro, que brilha um pouco sozinha para ser lida longe da luz (`CrowdRenderer.CROWD_*`, `lift` e `flat_light` no `crowd.gdshader`); cortes desenhados até a ponta da Emeth (`Fx.BLADE_REACH`, C12d); elites com contorno escuro e fino
   (`crowd_outline.gdshader`, `CrowdRenderer.OUTLINE_*`; largura em metros do mundo) e borda de ouro velho fraca (`ELITE_RIM`); o ouro das elites é velho (`CrowdRenderer.GILD_COLOR`), nunca amarelo vivo. Detalhes e pendências em `docs/arte/estetica.md`.
   Ciclo 8: o inimigo atingido é o próprio corpo mais claro e morno (`flash_light`, `flash_warm` no `crowd.gdshader`), o que o
   pisca soma para em `flash_cap` 1,0 (abaixo do limiar do glow, nada de bola branca sobre o herói); só o 1º quadro de um golpe
@@ -145,13 +145,18 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Ciclo C12d (VX-01 a VX-03, VX-08 a VX-10, VX-COL; números em `docs/arte/estetica.md`, quadros em
   `docs/gallery/c12d/work/vx_*.jpg`): o corte é só o fio marfim-menta da borda de ataque com miolo pálido (saturação até
   0,4) sobre tinta escura translúcida (alfa até 0,6), o fio onde a ponta da lâmina passou (`blade_m`, `reach_m`,
-  `band_from` no `slash.gdshader` e no `slash_ink.gdshader`, passados pelo `Fx`), e só um véu até o alcance; o brilho do
+  `band_from` no `slash.gdshader` e no `slash_ink.gdshader`, passados pelo `Fx`: `BLADE_REACH` 2,6 m medido na ponta
+  real da Emeth nos golpes, `SLASH_INNER` e `INK_INNER` 0,12; o inimigo passa `blade` 0 e fica com a borda de fora), e só
+  um véu até o alcance; o corte já aparece no quadro do golpe (`Fx.SLASH_LEAD`, um quadro) e varre em 3 quadros
+  (`Feel.slash_sweep_time` 0,05; `tests/test_slash_wire.gd`); o brilho do
   finalizador tem anel em metros (até 1,6 m de diâmetro), cruz vazada no meio e só 0,2 da luz sobre o corpo do herói
   (`hero_pos`, `glint.gdshader`); o preenchimento dos avisos dos inimigos sai numa segunda passada (`ground_fill.gdshader`,
   corpo comum em `ground.gdshaderinc`, uniforms nos dois por `GroundLook.put`), fraco até os últimos 30% do preparo
   (`fill_max` 0,35) e sem somar onde avisos se cruzam (stencil 2; a multidão usa 1); aro do círculo de luz mais fino e
   fraco (`circle_rim*`, `circle_mark_*`); quem tem borda própria (elites, guardiões, Morvath) queima sem perder a cor
-  (`burn_*_own` no `crowd.gdshader`); lascas alongadas pelo voo em `chip.gdshader` (encaixe no `fx.gd` pendente); colunas
+  (`burn_*_own` no `crowd.gdshader`); partículas e lascas alongadas pelo voo em `chip.gdshader` (a MultiMesh do `Fx`: `MOTE_WIDTH` 0,5, `MOTE_STREAK` 0,03,
+  `MOTE_LONG` 2 a 4 larguras, `Fx.streak`); as lascas de um acerto são cinza-pedra e somem em até 0,22 s (`Combat.CHIP_*`:
+  cor 0,42 / 0,4 / 0,37, 6 m/s, 0,08 m); colunas
   de luz translúcidas, lados suaves, miolo pálido, degradê para cima e veios subindo, sempre sob o teto da tela
   (`beam.gdshader`: `body`, `side_soft`, `core_*`, `top_from`, `foot`, `streaks`).
 - Câmera lenta no molde do Hades II (`Fx.slow_mo`: velocidade do mundo por `Engine.time_scale`, zoom, desfoque radial e
