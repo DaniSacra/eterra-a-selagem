@@ -22,10 +22,15 @@ uniform vec2 seal_inner = vec2(2.82, 2.96);
 uniform float seal_filet = 0.06;
 uniform vec2 seal_lozenge = vec2(0.22, 0.12);
 uniform float seal_band_contrast = 0.5;
-uniform vec3 seal_point = vec3(3.66, 5.0, 0.5);
-uniform float seal_point_edge = 0.05;
+// C11 polish (the points read as thin outlines next to the reference's star): wider at the base, a thicker gold edge,
+// a bronze inlay over the lighter stone (its darker half darker still) and a fine gold spine down the middle; all of it
+// metal and stone in the albedo, nothing emitted at rest.
+uniform vec3 seal_point = vec3(3.66, 5.15, 0.86);
+uniform float seal_point_edge = 0.085;
 uniform float seal_point_stone = 1.12;
-uniform float seal_point_dark = 0.85;
+uniform float seal_point_dark = 0.7;
+uniform float seal_point_bronze = 0.4;
+uniform float seal_point_spine = 0.035;
 uniform vec2 seal_leaf = vec2(4.0, 0.4);
 // The lion: its distance field (red: body, green: cuts; 0.5 on the edge, `seal_lion_spread` pixels to the full swing
 // on a `seal_lion_px` texture covering `seal_lion_span` m), the field's point laid on the seal's middle (m, in the
@@ -246,8 +251,10 @@ void seal_draw(vec2 wp, inout vec3 c, inout vec3 emit, inout vec2 lean, inout fl
 	float past = step(seal_outer.y, u);
 	float in_point = step(0.0, pedge) * past;
 	c *= mix(1.0, seal_point_stone * (v < 0.0 ? seal_point_dark : 1.0), in_point);
+	c = mix(c, gold_dark * (v < 0.0 ? seal_point_dark : 1.0), in_point * seal_point_bronze);
 	float p_edge = filet(pedge - seal_point_edge * 0.5, seal_point_edge) * past * step(u, seal_point.y);
 	gold_k = max(gold_k, p_edge);
+	gold_k = max(gold_k, filet(v, seal_point_spine) * in_point * 0.8);
 	// which points are lit (from the one pointing at Morvath, clockwise on the screen)
 	float idx = mod(k8 + 2.0, 8.0);
 	float rel = mod(idx - seal_first_point + 8.0, 8.0);
@@ -306,21 +313,43 @@ void seal_draw(vec2 wp, inout vec3 c, inout vec3 emit, inout vec2 lean, inout fl
 	emit += light / max(top, 1.0);
 }
 
-// The veins of the last phase: the floor's joints near the crack light up out to seal_veins meters.
+// The veins of the last phase (C11 polish: they followed the slabs' joints and read as a cyan circuit board): roots of
+// corruption out to seal_veins meters, drawn by a warped noise's ridges, thick near the seal and thinning to hair out
+// at their reach, a few twigs off them, with a dark violet bruise in the stone around. A corrupted emerald, dark,
+// only in the core of the thickest; violet along the rest. The joints they cross darken a little more (they seep in).
+uniform vec3 vein_core : source_color = vec3(0.2, 0.46, 0.33);
+uniform vec3 vein_bruise = vec3(0.55, 0.42, 0.72);
+uniform vec2 vein_width = vec2(0.03, 0.012);
+uniform float vein_twigs = 0.7;
 void veins_draw(vec2 wp, float joint, inout vec3 c, inout vec3 emit) {
 	if (seal_veins <= 0.0) {
 		return;
 	}
 	float d = length(wp);
-	float net = smoothstep(0.48, 0.62, fbm(wp * 0.6 + 7.0));
-	float reach = 1.0 - smoothstep(seal_veins - 0.6, seal_veins + 0.2, d + (noise(wp * 1.3) - 0.5) * 1.2);
-	float vein = joint * net * reach;
+	if (d > seal_veins + 1.0) {
+		return;
+	}
+	float reach = 1.0 - smoothstep(seal_veins - 0.8, seal_veins + 0.3, d + (noise(wp * 1.3) - 0.5) * 1.4);
+	if (reach <= 0.0) {
+		return;
+	}
+	vec2 w = wp * 0.42 + (vec2(fbm(wp * 0.35 + 3.0), fbm(wp * 0.35 + 11.0)) - 0.5) * 2.6;
+	float out_share = clamp(d / max(seal_veins, 0.1), 0.0, 1.0);
+	float width = mix(vein_width.x, vein_width.y, out_share) * reach;
+	float r1 = abs(fbm(w) - 0.5);
+	float r2 = abs(fbm(w * 2.3 + 17.0) - 0.5);
+	float main = 1.0 - smoothstep(width * 0.4, width, r1);
+	float twig = (1.0 - smoothstep(width * 0.25, width * 0.6, r2)) * smoothstep(0.45, 0.7, noise(wp * 0.7 + 4.0)) * vein_twigs;
+	float vein = max(main, twig) * reach;
+	float bruise = (1.0 - smoothstep(0.0, width * 4.0, r1)) * reach * (1.0 - out_share * 0.5);
+	c = mix(c, c * vein_bruise, bruise * 0.6);
+	c *= 1.0 - joint * bruise * 0.3;
 	if (vein <= 0.0) {
 		return;
 	}
-	// a corrupted emerald core with a violet edge (the edge where the joint is thin)
-	vec3 col = mix(seal_violet, seal_emerald, smoothstep(0.75, 1.0, joint));
-	c = mix(c, c * 0.5, vein);
+	float core = (1.0 - smoothstep(width * 0.1, width * 0.45, r1)) * (1.0 - out_share) * main;
+	vec3 col = mix(seal_violet * 0.7, vein_core, core);
+	c = mix(c, c * 0.35, vein);
 	vec3 l = col * vein * seal_vein_light;
 	float top = max(l.r, max(l.g, l.b));
 	emit += l / max(top, 1.0);

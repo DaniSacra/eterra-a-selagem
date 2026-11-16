@@ -322,3 +322,41 @@ func test_the_storm_lanes_show_their_order_of_leaving() -> void:
 	for i in range(1, levels.size()):
 		assert_lt(levels[i], levels[i - 1], "each later one dimmer")
 	assert_eq(marks.size(), boss.def.storm_count, "each its own count of marks (1 to 6)")
+
+
+func test_the_chamber_air_goes_back_to_the_hall_air_on_the_next_room() -> void:
+	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	await get_tree().process_frame
+	var e := game.get_world_3d().environment
+	if e == null:
+		for n in get_tree().root.find_children("*", "WorldEnvironment", true, false):
+			e = (n as WorldEnvironment).environment
+	assert_not_null(e, "the game has its air")
+	var moon: DirectionalLight3D = null
+	for n in get_tree().root.find_children("*", "DirectionalLight3D", true, false):
+		moon = n as DirectionalLight3D
+	var hall := BossChamber.air_of(e, moon)
+	game.rooms.start_at(RunMap.Kind.BOSS)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	assert_eq(e.background_color, BossChamber.SKY, "the chamber dressed the air")
+	assert_eq(e.fog_light_color, BossChamber.FOG)
+	# the last phase turns the room's mood too (RoomMood): it must leave with the room as well
+	game.arena.final_phase(true)
+	for i in 30:
+		await get_tree().process_frame
+	game.boss = null
+	game.rebuild_room(null, 1, 7)
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var now := BossChamber.air_of(e, moon)
+	for k: StringName in hall:
+		if k == &"moon":
+			var was: Array = hall[k]
+			var is_now: Array = now[k]
+			assert_true((is_now[0] as Vector3).is_equal_approx(was[0]), "the hall's moon turns back")
+			for i in range(1, was.size()):
+				assert_eq(str(is_now[i]), str(was[i]), "the hall's moon is back")
+		else:
+			assert_eq(str(now[k]), str(hall[k]), "the hall's %s is back" % k)

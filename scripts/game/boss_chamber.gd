@@ -48,15 +48,18 @@ const FRONT_ARC := Vector2(100.0, 195.0)
 ## Sarcophagi: the pairs' bearings (each one this many degrees either side), their size (long, wide, tall), lid
 ## (height, overhang), the plinth under them (height), the niche (half its arc in degrees, the low parapet's radius,
 ## height and thickness, the ledge it stands on out to this radius), the sword on the lid (height), the gold edge
-## (width), the stone a step lighter.
+## (width), the stone a step lighter. C11 polish: a quarter bigger than the first build (they read small next to the
+## reference's chests), still clear of the walkable circle and inside the niche's parapet; the plinth's candles move
+## out to NICHE_CANDLES degrees either side so they never stand in a chest.
 const SARCOPHAGI: Array[float] = [278.0, 96.0]
-const SARC_SPREAD := 5.0
-const SARC_SIZE := Vector3(2.0, 1.0, 0.85)
-const SARC_LID := Vector2(0.15, 0.08)
-const SARC_PLINTH := 0.2
+const SARC_SPREAD := 5.7
+const SARC_SIZE := Vector3(2.45, 1.15, 1.15)
+const SARC_LID := Vector2(0.2, 0.1)
+const SARC_PLINTH := 0.3
+const NICHE_CANDLES := 12.4
 const NICHE := Vector4(14.0, 14.1, 0.6, 0.35)
 const NICHE_LEDGE := 14.5
-const SARC_SWORD := 1.5
+const SARC_SWORD := 1.85
 const SARC_GOLD := 0.03
 ## The raised sword's guard, as a share of its length (narrow: it must read as a sword, never as a cross).
 const GUARD_SHARE := 0.22
@@ -174,16 +177,24 @@ const SPIRE_TOPS: Array[Vector2] = [Vector2(2.0, 6.0), Vector2(-2.0, 7.0)]
 const SPIRE_SINK: Array[Vector2] = [Vector2(-10.0, -24.0), Vector2(-14.0, -30.0)]
 const SPIRE_SIZE := Vector2(320.0, 110.0)
 const SPIRE_TOP := 30.0
+## C11 polish (the sky read a bright saturated blue at the top): the spires are navy silhouettes in a navy mist, their
+## block tops only a little lighter (abyss_ruins: stone, edge, mist).
+const SPIRE_STONE := Color(0.012, 0.018, 0.045)
+const SPIRE_EDGE := Color(0.05, 0.08, 0.2)
+const SPIRE_MIST := Color(0.02, 0.04, 0.11)
 ## Two lighter patches of mist on the farthest card (ArenaKit.ruin_card: x, height, radii).
 const SPIRE_PATCHES: Array[Vector4] = [Vector4(-30.0, -6.0, 18.0, 8.0), Vector4(20.0, -10.0, 14.0, 6.0)]
 const NO_PATCHES: Array[Vector4] = []
 ## The chains (each: from, to, sag), the links' size (2.5: links a meter long).
+## C11 polish: low enough to cross the game camera's upper band (they were above its frame): from the far arcades to
+## the tower, the tower to the facade's west buttress, the facade's east side out to the far ring twice.
 const CHAINS: Array[Array] = [
-	[Vector3(-44.0, 11.0, -10.0), Vector3(-15.4, 9.5, -4.4), 3.0],
-	[Vector3(-15.4, 9.5, -4.4), Vector3(-5.3, 10.0, -17.2), 2.5],
-	[Vector3(6.6, 10.0, -18.5), Vector3(36.0, 12.0, -26.0), 3.0],
+	[Vector3(-38.0, -3.0, 0.0), Vector3(-15.4, 5.0, -4.4), 2.5],
+	[Vector3(-15.4, 5.5, -4.4), Vector3(-5.3, 6.0, -17.2), 1.5],
+	[Vector3(6.6, 6.0, -18.5), Vector3(9.8, -3.0, -36.7), 1.5],
+	[Vector3(7.2, 5.0, -17.0), Vector3(24.0, -3.0, -30.0), 2.5],
 ]
-const CHAIN_SIZE := 2.5
+const CHAIN_SIZE := 3.4
 
 ## ---- light and air (spec 5.2): the light over the middle (place, colour, energy, range), the violet of the abyss
 ## (bearings, r, height, colour, energy, range), the blue light on the far stone (bearing, r, height, colour, energy,
@@ -197,14 +208,14 @@ const ABYSS_LIGHT := Vector4(22.0, -12.0, 5.0, 26.0)
 const ABYSS_COLOR := Color(0.55, 0.25, 1.0)
 const BLUE_AT := Vector3(330.0, 45.0, 4.0)
 const BLUE_COLOR := Color(0.25, 0.5, 1.0)
-const BLUE_ENERGY := 3.0
+const BLUE_ENERGY := 1.2
 const BLUE_RANGE := 70.0
 const SKY := Color(0.012, 0.035, 0.09)
 ## The depths' stone (depth_stone.gdshader: body and lit edge), violet grey.
 const DEEP_STONE := Color(0.07, 0.065, 0.11)
 const DEEP_EDGE := Color(0.17, 0.14, 0.28)
-const FOG := Color(0.03, 0.08, 0.2)
-const MIST := Color(0.04, 0.08, 0.2)
+const FOG := Color(0.022, 0.05, 0.13)
+const MIST := Color(0.03, 0.055, 0.14)
 const FOG_DEPTH := Vector2(64.0, 130.0)
 const AMBIENT := Color(0.30, 0.33, 0.50)
 const AMBIENT_ENERGY := 0.3
@@ -217,6 +228,14 @@ const GLOWS: Array[Array] = [
 	[75.0, 24.0, -16.0, 26.0, 20.0, 1.3], [100.0, 22.0, -16.0, 20.0, 16.0, 1.1], [50.0, 26.0, -16.0, 18.0, 13.0, 1.0],
 	[160.0, 22.0, -18.0, 24.0, 10.0, 0.8], [200.0, 22.0, -18.0, 24.0, 10.0, 0.8],
 ]
+## C11 polish: tall columns of violet mist rising out of the abyss at the frame's sides, far out, up past the far
+## arcades (bearing, r, foot height, width, height, energy share), with a long reach and a slow fall-off
+## (ArenaKit.abyss_glow shape: reach, falloff, side).
+const COLUMNS: Array[Array] = [
+	[245.0, 34.0, -24.0, 18.0, 46.0, 0.5], [268.0, 36.0, -24.0, 14.0, 52.0, 0.4], [222.0, 32.0, -24.0, 16.0, 40.0, 0.45],
+	[70.0, 34.0, -24.0, 16.0, 46.0, 0.75], [95.0, 36.0, -24.0, 12.0, 52.0, 0.6], [118.0, 32.0, -24.0, 14.0, 40.0, 0.6],
+]
+const COLUMN_SHAPE := Vector3(0.95, 1.25, 0.42)
 ## Violet fog boxes in the abyss (Forward+): bearing, r, size.
 const FOG_BOXES: Array[Vector4] = [Vector4(265.0, 24.0, 18.0, 40.0), Vector4(85.0, 24.0, 18.0, 40.0)]
 
@@ -287,6 +306,10 @@ var _door_seal := 0.0
 var _door_seal_time := SealLook.VICTORY_SEAL
 var _veil := 0.0
 var _veil_want := 0.0
+## The world's air as it was before the chamber dressed it (_dress_world), put back when the chamber leaves.
+var _air: Dictionary = {}
+var _air_env: Environment
+var _air_moon: DirectionalLight3D
 
 
 ## Builds the chamber (call once, in the tree or not). In the fight (Arena._chamber_look) it takes the room's layout
@@ -334,7 +357,17 @@ func _dress_world() -> void:
 	var moon: DirectionalLight3D = null
 	for n in get_tree().root.find_children("*", "DirectionalLight3D", true, false):
 		moon = n as DirectionalLight3D
+	_air_env = e
+	_air_moon = moon
+	_air = air_of(e, moon)
 	dress(e, moon)
+
+
+## The chamber leaves (a common room after it, without a new scene): the world's air goes back exactly as it was.
+func _exit_tree() -> void:
+	if _air_env != null and not _air.is_empty():
+		restore_air(_air_env, _air_moon, _air)
+		_air = {}
 
 
 # ---------- the interface for the fight ----------
@@ -748,7 +781,7 @@ func _niche(bearing: float) -> void:
 		_sarcophagus(bearing + sd * SARC_SPREAD)
 	# candles on the plinth between the sarcophagi and the lanterns
 	for sd: float in [-1.0, 1.0]:
-		_candle_row(bearing + sd * 10.0, SARC_PLINTH, 3, false, CatacombHall.CANDLE_HEIGHT.y)
+		_candle_row(bearing + sd * NICHE_CANDLES, SARC_PLINTH, 3, false, CatacombHall.CANDLE_HEIGHT.y)
 
 
 ## One sarcophagus at a bearing, its long side along the floor's edge (its inner face on it): a chamfered chest with a
@@ -762,7 +795,7 @@ func _sarcophagus(bearing: float) -> void:
 	var base := _v3(at, y)
 	m.block(base, Vector3(SARC_SIZE.x, SARC_SIZE.z, SARC_SIZE.y), yaw, stone, false)
 	m.block(base, Vector3(SARC_SIZE.x + 0.1, 0.12, SARC_SIZE.y + 0.1), yaw, stone, false)
-	m.box(base + Vector3(0, 0.6, 0), Vector3(SARC_SIZE.x + 0.06, 0.06, SARC_SIZE.y + 0.06), yaw, stone, false)
+	m.box(base + Vector3(0, SARC_SIZE.z * 0.7, 0), Vector3(SARC_SIZE.x + 0.06, 0.06, SARC_SIZE.y + 0.06), yaw, stone, false)
 	var lid := base + Vector3(0, SARC_SIZE.z, 0)
 	m.block(lid, Vector3(SARC_SIZE.x + SARC_LID.y * 2.0, SARC_LID.x, SARC_SIZE.y + SARC_LID.y * 2.0), yaw, stone, false)
 	var top := lid + Vector3(0, SARC_LID.x, 0)
@@ -1299,8 +1332,12 @@ func _far() -> void:
 	for k in SPIRE_DIST.size():
 		var d: float = SPIRE_DIST[k]
 		var c := Vector3(eye.x, SPIRE_TOP - SPIRE_SIZE.y * 0.5, eye.z) + ahead * d
-		kit.ruin_card(c, SPIRE_SIZE, yaw, FOG * 1.4, SPIRE_HAZE[k], SPIRE_COLUMN[k], 11.0 + k * 13.0, SPIRE_TOPS[k], SPIRE_SINK[k],
+		kit.ruin_card(c, SPIRE_SIZE, yaw, SPIRE_MIST, SPIRE_HAZE[k], SPIRE_COLUMN[k], 11.0 + k * 13.0, SPIRE_TOPS[k], SPIRE_SINK[k],
 			Vector4.ZERO, SPIRE_PATCHES if k == SPIRE_DIST.size() - 1 else NO_PATCHES)
+		var card := get_child(get_child_count() - 1) as MeshInstance3D
+		var cm := card.material_override as ShaderMaterial
+		cm.set_shader_parameter(&"stone_color", SPIRE_STONE)
+		cm.set_shader_parameter(&"edge_color", SPIRE_EDGE)
 	# the chains
 	for ch in CHAINS:
 		kit.chain(ch[0], ch[1], ch[2], CHAIN_SIZE)
@@ -1308,6 +1345,9 @@ func _far() -> void:
 	for g in GLOWS:
 		var p := at_bearing(g[0], g[1])
 		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * float(g[5]))
+	for g in COLUMNS:
+		var p := at_bearing(g[0], g[1])
+		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * float(g[5]), COLUMN_SHAPE)
 	for f in FOG_BOXES:
 		var p := at_bearing(f.x, f.y)
 		kit.abyss_fog(Vector3(p.x, -12.0, p.y), Vector3(f.z, 10.0, f.w))
@@ -1346,6 +1386,31 @@ func _light() -> void:
 
 ## The chamber's air on the game's environment and moon (Game._build_world makes them; the fight hands them here):
 ## a deep blue night, a little cold ambient, distance fog from past the platform, height fog filling the abyss.
+## What dress changes, as it is now (restore_air puts it back).
+static func air_of(e: Environment, moon: DirectionalLight3D = null) -> Dictionary:
+	var d := {
+		&"background_mode": e.background_mode, &"background_color": e.background_color,
+		&"ambient_light_source": e.ambient_light_source, &"ambient_light_color": e.ambient_light_color,
+		&"ambient_light_energy": e.ambient_light_energy, &"fog_enabled": e.fog_enabled, &"fog_mode": e.fog_mode,
+		&"fog_light_color": e.fog_light_color, &"fog_depth_begin": e.fog_depth_begin, &"fog_depth_end": e.fog_depth_end,
+	}
+	if moon != null:
+		d[&"moon"] = [moon.rotation_degrees, moon.light_color, moon.light_energy, moon.shadow_enabled]
+	return d
+
+
+static func restore_air(e: Environment, moon: DirectionalLight3D, d: Dictionary) -> void:
+	for k: StringName in d:
+		if k != &"moon":
+			e.set(k, d[k])
+	if moon != null and is_instance_valid(moon) and d.has(&"moon"):
+		var mv: Array = d[&"moon"]
+		moon.rotation_degrees = mv[0]
+		moon.light_color = mv[1]
+		moon.light_energy = mv[2]
+		moon.shadow_enabled = mv[3]
+
+
 static func dress(e: Environment, moon: DirectionalLight3D = null) -> void:
 	e.background_mode = Environment.BG_COLOR
 	e.background_color = SKY

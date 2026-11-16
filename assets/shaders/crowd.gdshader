@@ -71,6 +71,10 @@ uniform vec3 gild_color : source_color = vec3(0.62, 0.46, 0.22);
 uniform float gild_light = 1.7;
 // Armor that takes a blow: the edges gleam this much in the gild colour for the time of the flash.
 uniform float absorb_light = 1.8;
+// The death dissolve (state.a): only the specks about to go smoulder, in old gold under the glow threshold (C11
+// polish: the old whole-body orange at 3.2 lit Morvath's fall as a saturated yellow blot over the seal).
+uniform vec3 dissolve_color : source_color = vec3(0.62, 0.42, 0.18);
+uniform float dissolve_band = 0.08;
 // A pale light on the edges of the top of the figure (EnemyDef.crest: Morvath's crown cut out of the dark floor):
 // strength, and the height in the model's meters from which it is full.
 uniform float crest = 0.0;
@@ -123,9 +127,12 @@ float hash(vec2 p) {
 }
 
 void fragment() {
-	if (state.a > 0.0 && hash(floor(UV * 96.0)) < state.a) {
+	float speck = hash(floor(UV * 96.0));
+	if (state.a > 0.0 && speck < state.a) {
 		discard;
 	}
+	// the cells just about to go (dissolve_band above the cut) smoulder in dissolve_color; the rest keeps its painting
+	float smoulder = state.a > 0.0 ? 1.0 - smoothstep(state.a, state.a + dissolve_band, speck) : 0.0;
 	float flash = max(state.r, 0.0);
 	float absorbed = max(-state.r, 0.0);
 	float frost = step(0.75, state.g);
@@ -166,7 +173,7 @@ void fragment() {
 	float coal_dot = 1.0 - smoothstep(0.15, 0.45, length(fract(coal_at) - 0.5));
 	float coal = step(1.0 - burn_coals, coal_seed) * coal_dot * (0.5 + 0.5 * sin(TIME * 7.0 + coal_seed * 40.0));
 	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + (burn_color * rim * burn_rim + coal_color * coal) * burn
-		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + vec3(1.6, 0.5, 0.1) * state.a * 2.0
+		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + dissolve_color * smoulder
 		+ gild_color * (rim + edge) * absorbed * absorb_light
 		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)
 		+ c * shade * (key_color * lit + hero_color * near * near * 0.55 * hero_light)
