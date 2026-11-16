@@ -324,19 +324,20 @@ func point(base: Vector3, width: float, height: float, yaw: float = 0.0, top := 
 
 
 ## A balustrade from a to b on the floor: chunky capped posts at both ends and every POST_GAP meters, a thick rail
-## on top, a curb at the foot and bellied square balusters between each pair of posts.
-func balustrade(a: Vector3, b: Vector3, end_posts := true) -> void:
+## on top, a curb at the foot and bellied square balusters between each pair of posts. mat: its stone (none: stone()).
+func balustrade(a: Vector3, b: Vector3, end_posts := true, mat: Material = null) -> void:
 	var length := Vector2(b.x - a.x, b.z - a.z).length()
 	if length < 0.3:
 		return
 	var yaw := atan2(b.x - a.x, b.z - a.z) + PI * 0.5
 	var spans := maxi(1, roundi(length / POST_GAP))
-	var mat := stone(a.y)
+	if mat == null:
+		mat = stone(a.y)
 	for i in spans + 1:
 		if not end_posts and (i == 0 or i == spans):
 			continue
 		var p := a.lerp(b, float(i) / spans)
-		post(p, yaw)
+		post(p, yaw, POST.y, mat)
 	var shaft := RAIL_TOP - RAIL.x - CURB
 	for i in spans:
 		var p0 := a.lerp(b, float(i) / spans)
@@ -352,13 +353,43 @@ func balustrade(a: Vector3, b: Vector3, end_posts := true) -> void:
 			box(at + Vector3(0, shaft * 0.35, 0), Vector3(BALUSTER * 1.45, shaft * 0.3, BALUSTER * 1.45), yaw, mat)
 
 
-## One balustrade post: plinth, shaft, a step under a wide cap.
-func post(at: Vector3, yaw: float = 0.0, height: float = POST.y) -> void:
-	var mat := stone(at.y)
+## One balustrade post: plinth, shaft, a step under a wide cap. mat: its stone (none: stone()).
+func post(at: Vector3, yaw: float = 0.0, height: float = POST.y, mat: Material = null) -> void:
+	if mat == null:
+		mat = stone(at.y)
 	box(at + Vector3(0, CURB * 0.5, 0), Vector3(POST.x + 0.12, CURB, POST.z + 0.12), yaw, mat)
 	box(at + Vector3(0, height * 0.5, 0), Vector3(POST.x, height, POST.z), yaw, mat)
 	box(at + Vector3(0, height + POST_STEP.y * 0.5, 0), Vector3(POST_STEP.x, POST_STEP.y, POST_STEP.x), yaw, mat)
 	box(at + Vector3(0, height + POST_STEP.y + POST_CAP.y * 0.5, 0), Vector3(POST_CAP.x, POST_CAP.y, POST_CAP.x), yaw, mat)
+
+
+## An upright prism of stone: its footprint (a simple polygon on the floor, x and z, either winding) from height y0 up
+## to y1, with flat normals (the curved bottom step of a stair, a plinth along an arc). Concave footprints are cut into
+## triangles for the caps; the sides follow the outline.
+func prism(points: PackedVector2Array, y0: float, y1: float, mat: Material = null) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var tris := Geometry2D.triangulate_polygon(points)
+	for i in range(0, tris.size(), 3):
+		for cap: float in [y0, y1]:
+			var tri: Array[Vector3] = []
+			for k in 3:
+				var p := points[tris[i + k]]
+				tri.append(Vector3(p.x, cap, p.y))
+			_face(st, tri[0], tri[1], tri[2], tri[2], Vector3.UP if cap == y1 else Vector3.DOWN)
+	for i in points.size():
+		var a := points[i]
+		var b := points[(i + 1) % points.size()]
+		var along := (b - a).normalized()
+		var out := Vector2(along.y, -along.x)
+		if Geometry2D.is_point_in_polygon((a + b) * 0.5 + out * 0.01, points):
+			out = -out
+		_face(st, Vector3(a.x, y0, a.y), Vector3(b.x, y0, b.y), Vector3(b.x, y1, b.y), Vector3(a.x, y1, a.y), Vector3(out.x, 0.0, out.y))
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat if mat else stone(y0)
+	_add(mi)
+	return mi
 
 
 ## A flight of stairs. foot: the middle of the lowest step's front edge; up: the way up the flight (on the floor);

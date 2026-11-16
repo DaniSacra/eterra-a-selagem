@@ -207,6 +207,11 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 	e.hp_floor = BossRules.hp_floor(phase, def.thresholds) * e.max_hp
 	_player_last = g.player.pos
 	_init_stats()
+	# his chamber's scenery follows the fight (BossChamber.on_cue: the seal's five states, the veil)
+	var room := g.arena.chamber
+	if room != null and room.has_method(&"on_cue"):
+		cue.connect(Callable(room, &"on_cue"))
+		room.call(&"set_phase", phase)
 	g.combat.enemy_struck.connect(_on_struck)
 	g.horde.killed.connect(_on_killed)
 	g.fx.burst(&"soul", Vector3(e.pos.x, 1.0, e.pos.y))

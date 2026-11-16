@@ -384,10 +384,6 @@ var cam_reach := 0.0
 ## are passed on to it by the same names (seal_portal falls back to its seal_restore), so the fight never names its
 ## pieces.
 var chamber: Node3D
-## The provisional floor of the chamber while it has no scenery of its own (a plain disc), and its centre light.
-const DISC_COLOR := Color(0.19, 0.2, 0.3)
-const DISC_EDGE := 13.6
-const DISC_LINE := Color(0.48, 0.38, 0.22)
 
 
 ## A boss's round chamber from its layout (RoomLayout.chamber): the circle is its whole collision (no walls, no
@@ -414,44 +410,13 @@ func _build_boss_room(layout: RoomLayout, seed_: int) -> void:
 	_chamber_look(layout, seed_)
 
 
-## The chamber's look. Provisional (cycle C11, until BossChamber is in): a plain stone disc to the balustrade's
-## outer edge with an old-gold line at the edge of the walkable circle and a cold light over the seal.
-## To put the real chamber in, replace this body with:
-##   chamber = BossChamber.new(); add_child(chamber); chamber.build(self, layout, seed_)
-## (whatever its constructor wants: it reads floor, start, boss_spawn and door_pos from here).
-func _chamber_look(_layout: RoomLayout, _seed: int) -> void:
-	var disc := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = floor.radius + (DISC_EDGE - 12.5)
-	cyl.bottom_radius = cyl.top_radius
-	cyl.height = 0.6
-	cyl.radial_segments = 96
-	disc.mesh = cyl
-	var m := StandardMaterial3D.new()
-	m.albedo_color = DISC_COLOR
-	m.roughness = 0.9
-	disc.material_override = m
-	disc.position = Vector3(floor.center.x, -0.3, floor.center.y)
-	add_child(disc)
-	var line := MeshInstance3D.new()
-	var torus := TorusMesh.new()
-	torus.inner_radius = floor.radius - 0.08
-	torus.outer_radius = floor.radius
-	torus.rings = 96
-	line.mesh = torus
-	var lm := StandardMaterial3D.new()
-	lm.albedo_color = DISC_LINE
-	line.material_override = lm
-	line.scale = Vector3(1.0, 0.05, 1.0)
-	line.position = Vector3(floor.center.x, 0.01, floor.center.y)
-	add_child(line)
-	var key := OmniLight3D.new()
-	key.position = Vector3(floor.center.x, 9.0, floor.center.y)
-	key.light_color = Color(0.78, 0.76, 0.95)
-	key.light_energy = 3.0
-	key.omni_range = 17.0
-	key.light_cull_mask = ~CROWD_LAYER
-	add_child(key)
+## The chamber's look: the Seal Chamber's scenery (BossChamber, cycle C11), built on the layout's circle; the fight's
+## calls reach it through _to_chamber and the boss's cues (Boss.setup).
+func _chamber_look(layout: RoomLayout, seed_: int) -> void:
+	var c := BossChamber.new()
+	chamber = c
+	add_child(c)
+	c.build(self, layout, seed_)
 
 
 ## Passes a call on to the chamber's scenery, if it has it (false when there is none to take it).

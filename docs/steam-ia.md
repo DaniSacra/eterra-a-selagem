@@ -20,6 +20,10 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
     gerada da imagem da Emeth enviada pelo Daniel, também feita por IA);
   - sem uso: o herói "Sombra" e o `paladin_1`.
 - **Código, shaders e textos**: escritos com assistentes de IA (Claude, Codex).
+- **Leão do selo da Câmara do Selo** (vai no jogo, 2026-11-15): desenho vetorial do leão rampante
+  (`assets/textures/seal/lion.svg`) escrito à mão em SVG por um assistente de IA (Claude), sem gerador de imagem; o
+  campo de distância `lion_sdf.res` sai dele por `tools/make_seal_lion.gd`. Toda a cenografia da câmara é geometria e
+  shader (`BossChamber`, `chamber_*.gdshader`), sem modelo nem textura gerada.
 
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), sons Kenney (CC0), fontes Cinzel e Alegreya Sans (OFL).

@@ -49,6 +49,8 @@ const BANNER_TRIM_WIDTH := 0.08
 const BANNER_FOLD := 0.62
 const BANNER_FOLDS := 5
 const BANNER_BAR := Color(0.06, 0.05, 0.05)
+## The raised sword on a banner (_banner_sword): its height (m), the blade's and the guard's share of it.
+const BANNER_SWORD := Vector3(1.2, 0.7, 0.3)
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
 const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "barrier_half", "floor_foundation_allsides",
 	"floor_foundation_corner", "floor_foundation_front", "floor_foundation_front_and_sides", "stairs_wide", "stairs_walled",
@@ -215,7 +217,8 @@ func crate(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE, solid := 0.0) ->
 
 ## A banner hanging on the facade from `top` (the middle of its bar), facing along yaw: cloth with a pointed foot,
 ## folds as darker upright bands, old gold trim down its sides and round the point, a tassel. size: width, length.
-func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER) -> void:
+## emblem: the raised sword of Eterra's canon in old gold on it (BANNER_SWORD; the Chamber of the Seal's banners).
+func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emblem := false) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := size.x * 0.5
@@ -249,6 +252,8 @@ func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER) -> 
 	var bar := Vector3(half + 0.18, 0.07, 0.09)
 	_banner_quad(st, Vector3(-bar.x, bar.y, bar.z), Vector3(bar.x, bar.y, bar.z), Vector3(bar.x, -bar.y, bar.z), Vector3(-bar.x, -bar.y, bar.z),
 		BANNER_BAR, BANNER_BAR)
+	if emblem:
+		_banner_sword(st, size)
 	var tip := Vector3(0, -size.y, 0.09)
 	_banner_quad(st, tip + Vector3(0, 0.05, 0), tip + Vector3(0.09, -0.16, 0), tip + Vector3(0, -0.42, 0), tip + Vector3(-0.09, -0.16, 0),
 		BANNER_TRIM, BANNER_TRIM * 0.7)
@@ -267,6 +272,44 @@ func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER) -> 
 	mi.layers = layers
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mi)
+
+
+## The raised sword on a banner (docs/art/boss_chamber_spec.md 5.4): point up, the blade BANNER_SWORD.y of its height
+## narrowing to the point, a short guard (BANNER_SWORD.z of the height) with its tips falling a little, the grip and a
+## round pommel; BANNER_SWORD.x tall, its middle a third of the way down the cloth, laid on its folds. No ring behind
+## it and no equal arms: it reads as a sword, never as a cross.
+func _banner_sword(st: SurfaceTool, size: Vector2) -> void:
+	var h := BANNER_SWORD.x
+	var foot := -size.y / 3.0 - h * 0.5
+	var blade := h * BANNER_SWORD.y
+	var guard := h * BANNER_SWORD.z
+	var grip := h - blade - 0.14
+	# a point of the emblem at (x, y on the cloth), just in front of the folds
+	var on := func(x: float, y: float) -> Vector3:
+		var wave := cos((x + size.x * 0.5) / size.x * TAU * BANNER_FOLDS)
+		return Vector3(x, y, wave * lerpf(0.05, 0.08, -y / size.y) + 0.02)
+	var g := BANNER_TRIM
+	var shade := BANNER_TRIM * 0.75
+	var base := foot + h - blade
+	# the blade: its two halves, the one away from the light a little darker, to the point
+	var w := h * 0.045
+	_banner_quad(st, on.call(-w, base), on.call(0.0, base), on.call(0.0, foot + h), on.call(-w * 0.3, foot + h - w * 3.0), g, g)
+	_banner_quad(st, on.call(0.0, base), on.call(w, base), on.call(w * 0.3, foot + h - w * 3.0), on.call(0.0, foot + h), shade, shade)
+	# the guard, its tips falling
+	var gy := base - 0.06
+	_banner_quad(st, on.call(-guard * 0.5, gy - 0.05), on.call(guard * 0.5, gy - 0.05), on.call(guard * 0.42, gy + 0.06), on.call(-guard * 0.42, gy + 0.06), g, g)
+	_banner_quad(st, on.call(-guard * 0.5, gy - 0.05), on.call(-guard * 0.42, gy + 0.06), on.call(-guard * 0.56, gy - 0.12), on.call(-guard * 0.56, gy - 0.12), g, g)
+	_banner_quad(st, on.call(guard * 0.5, gy - 0.05), on.call(guard * 0.42, gy + 0.06), on.call(guard * 0.56, gy - 0.12), on.call(guard * 0.56, gy - 0.12), g, g)
+	# the grip and the round pommel
+	var gw := h * 0.022
+	_banner_quad(st, on.call(-gw, gy - 0.05), on.call(gw, gy - 0.05), on.call(gw, gy - 0.05 - grip), on.call(-gw, gy - 0.05 - grip), shade, shade)
+	var pc := Vector2(0.0, gy - 0.05 - grip - 0.045)
+	var r := 0.065
+	for i in 8:
+		var a0 := TAU * i / 8.0
+		var a1 := TAU * (i + 1) / 8.0
+		_banner_quad(st, on.call(pc.x, pc.y), on.call(pc.x + cos(a0) * r, pc.y + sin(a0) * r), on.call(pc.x + cos(a1) * r, pc.y + sin(a1) * r),
+			on.call(pc.x, pc.y), g, g)
 
 
 ## One quad of a banner (a, b, c, d round it), the colour ca on the a-d side and cb on the b-c side.
@@ -288,8 +331,8 @@ func row(name_: String, a: Vector3, b: Vector3, step: float, yaw_offset: float =
 
 
 ## A deep bronze fire bowl on a capped stone pedestal: the warm light of the room. y: the ground it stands on; solid:
-## it blocks the way (a circle of BRAZIER_RADIUS).
-func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT) -> void:
+## it blocks the way (a circle of BRAZIER_RADIUS). Returns its light.
+func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT) -> OmniLight3D:
 	var base := Vector3(at.x, y, at.y)
 	masonry.post(base, 0.0, BRAZIER_PEDESTAL)
 	var foot := BRAZIER_PEDESTAL + Masonry.POST_STEP.y + Masonry.POST_CAP.y
@@ -348,6 +391,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 		_wet_spots.append(Vector4(at.x, at.y, BRAZIER_WET.x, BRAZIER_WET.y))
 		for f in _floors:
 			_wet(f)
+	return l
 
 
 ## Flames rising from a point: radius of the fire, how many tongues, the size of a tongue, how long one lives. Upright
@@ -725,9 +769,9 @@ func abyss_fog(center: Vector3, size: Vector3) -> void:
 	root.add_child(v)
 
 
-## The abyss around a platform of half size `half`: mist in layers over a deep glow, and dark cliffs under the
-## platform's sides (from the floor down out of sight).
-func abyss(half: Vector2, depth: float = 18.0, cliff := true) -> void:
+## The abyss around a platform of half size `half`: mist in layers (of colour `mist`) over a deep glow, and dark cliffs
+## under the platform's sides (from the floor down out of sight).
+func abyss(half: Vector2, depth: float = 18.0, cliff := true, mist := MIST) -> void:
 	var span := maxf(half.x, half.y) * 6.0
 	for k in 4:
 		var plane := MeshInstance3D.new()
@@ -736,7 +780,7 @@ func abyss(half: Vector2, depth: float = 18.0, cliff := true) -> void:
 		plane.mesh = pm
 		var m := ShaderMaterial.new()
 		m.shader = preload("res://assets/shaders/abyss_fog.gdshader")
-		m.set_shader_parameter(&"color", MIST * (1.0 + k * 0.15))
+		m.set_shader_parameter(&"color", mist * (1.0 + k * 0.15))
 		m.set_shader_parameter(&"floor_layer", 1.0 if k == 0 else 0.0)
 		m.set_shader_parameter(&"density", 0.55 - k * 0.08)
 		m.set_shader_parameter(&"scale", 0.05 + k * 0.02)
@@ -792,19 +836,7 @@ func _wisps(half: Vector2) -> void:
 
 ## The floor of a platform (catacomb_floor.gdshader), cut in pieces so each only takes the lights near it.
 func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_center := Vector2.ZERO) -> void:
-	var m := ShaderMaterial.new()
-	m.shader = preload("res://assets/shaders/catacomb_floor.gdshader")
-	m.set_shader_parameter(&"ring_radius", ring_radius)
-	m.set_shader_parameter(&"ring_glow", MEDALLION_GLOW)
-	m.set_shader_parameter(&"ring_center", ring_center)
-	m.set_shader_parameter(&"wet_zone", Vector4(wet_zone.position.x, wet_zone.position.y, wet_zone.end.x, wet_zone.end.y))
-	# the rose's long points run across the screen, as in the picture
-	m.set_shader_parameter(&"rose_turn", deg_to_rad(Feel.live().cam_yaw))
-	m.set_shader_parameter(&"calm_radius", minf(size.x, size.y) * 0.32)
-	m.set_shader_parameter(&"rock_normal", Masonry.ROCK_NORMAL)
-	m.set_shader_parameter(&"rock_height", Masonry.ROCK_HEIGHT)
-	_floors.append(m)
-	_wet(m)
+	var m := floor_material(ring_radius, ring_center, minf(size.x, size.y) * 0.32)
 	var nx := maxi(1, ceili(size.x / 8.0))
 	var nz := maxi(1, ceili(size.y / 8.0))
 	var pm := PlaneMesh.new()
@@ -816,6 +848,25 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 			mi.material_override = m
 			mi.position = center + Vector3(-size.x * 0.5 + pm.size.x * (ix + 0.5), 0, -size.y * 0.5 + pm.size.y * (iz + 0.5))
 			root.add_child(mi)
+
+
+## A floor's material (the catacomb floor's shader unless told: the Chamber's floor shares its slabs), kept wet
+## round the fire bowls (brazier). ring_radius: the medallion's (0: none); calm_radius: the calm middle's.
+func floor_material(ring_radius := 0.0, ring_center := Vector2.ZERO, calm_radius := 9.0, shader: Shader = null) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = shader if shader else preload("res://assets/shaders/catacomb_floor.gdshader")
+	m.set_shader_parameter(&"ring_radius", ring_radius)
+	m.set_shader_parameter(&"ring_glow", MEDALLION_GLOW)
+	m.set_shader_parameter(&"ring_center", ring_center)
+	m.set_shader_parameter(&"wet_zone", Vector4(wet_zone.position.x, wet_zone.position.y, wet_zone.end.x, wet_zone.end.y))
+	# the rose's long points run across the screen, as in the picture
+	m.set_shader_parameter(&"rose_turn", deg_to_rad(Feel.live().cam_yaw))
+	m.set_shader_parameter(&"calm_radius", calm_radius)
+	m.set_shader_parameter(&"rock_normal", Masonry.ROCK_NORMAL)
+	m.set_shader_parameter(&"rock_height", Masonry.ROCK_HEIGHT)
+	_floors.append(m)
+	_wet(m)
+	return m
 
 
 func _wet(m: ShaderMaterial) -> void:
