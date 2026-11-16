@@ -146,22 +146,29 @@ func _enemies() -> void:
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
 		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
-	# the caster that shoots bolts from afar (cold violet: Daniel, 2026-11-14)
+	# the caster that shoots slow orbs from afar (cold violet: Daniel, 2026-11-14) and keeps away: the paladin has to
+	# go to it through its orbs (Daniel, 2026-11-16: ranged enemies stay at their farthest and shoot, never close in)
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 340.0 / U, "damage": 4.0, "radius": 0.5,
-		"attack_damage": 4.0, "attack_range": 9.0, "attack_cooldown": 1.9, "attack_windup": 0.8, "magic_color": Color(1.7, 1.25, 3.2),
+		"attack_damage": 4.0, "attack_range": 10.0, "attack_cooldown": 1.9, "attack_windup": 0.8, "magic_color": Color(1.7, 1.25, 3.2),
+		"shot_orb": true, "shot_speed": 8.0, "keep_away": 0.7,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58)}, {"armor": 155.0, "speed": 440.0 / U, "rating": 24.0})
-	# the crossbowman that plants itself and looses a wide fan of orange bolts
-	_pair({"id": &"archer", "model": &"archer", "behavior": B.CONE, "size": 1.27, "hp": 130.0, "speed": 340.0 / U, "damage": 3.0, "radius": 0.55,
-		"attack_damage": 3.0, "attack_range": 5.0, "attack_width": 70.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
+	# the crossbowman: from the far end of its reach a fast orange bolt along a line marked on the floor (the aim
+	# locks there: a step aside is the answer); it runs when the paladin comes closer (before 2026-11-16 it walked in
+	# and blasted a cone on the floor)
+	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 340.0 / U, "damage": 3.0, "radius": 0.55,
+		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
+		"shot_speed": 16.0, "shot_line": true, "keep_away": 0.65,
 		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42)}, {"armor": 190.0, "speed": 390.0 / U, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
 		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4)}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
-	# the one rooted in place that drops purple blows from above
-	_pair({"id": &"priest", "model": &"priest", "behavior": B.CASTER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
+	# the one rooted in place that looses a fan of three slow purple orbs (before 2026-11-16 it dropped circles on
+	# the floor under the paladin: those are Morvath's alone now)
+	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
 		"heavy": true, "attack_damage": 6.0, "attack_range": 16.0, "attack_cooldown": 2.2, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0),
+		"shot_orb": true, "shot_speed": 7.0, "shot_count": 3, "shot_spread": 40.0,
 		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25}, {"armor": 390.0, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
@@ -170,7 +177,8 @@ func _enemies() -> void:
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35)})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
-		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
+		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "shot_orb": true, "shot_speed": 7.0,
+		"shot_count": 5, "shot_spread": 70.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
 	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
@@ -478,8 +486,8 @@ func _bosses() -> void:
 		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
 		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 2, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
 		"storm_recovery": 1.2, "storm_damage": 10.0, "storm_stagger": 0.08,
-		# the Sepulchral Eruptions: 2 or 3 circles of 2 m, one on the paladin, the lane to the middle of the hall kept free
-		"eruption_radius": 2.0, "eruption_delay": 0.9, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
+		# the Sepulchral Eruptions: 2 or 3 circles of 4 m (2 m until Daniel's test of 2026-11-16: too easy to step out of; the warning 0.9 to 1.2 s so they can still be walked out of), one on the paladin, the lane to the middle of the hall kept free
+		"eruption_radius": 4.0, "eruption_delay": 1.2, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
 		"eruption_gap": 1.0, "eruption_damage": 10.0, "eruption_recovery": 0.8,
 		# the ritual: at most 20 s behind the shield, 2 soldiers and 2 casters, never more than 6 of his standing
 		"ritual_time": 20.0, "ritual_raise": [&"skeleton", &"skeleton", &"mage", &"mage"] as Array[StringName], "ritual_cap": 6,

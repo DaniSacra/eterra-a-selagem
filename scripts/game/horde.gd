@@ -44,6 +44,13 @@ const IMPACT_SHARE := 0.55
 const MELEE_COOLDOWN := 1.3
 ## Skeletons the elder priest raises around itself in one cast (fewer when the fight is full: room_for).
 const PRIEST_RAISES := 3
+## Ranged enemies: the last seconds of a wind-up in which the aim no longer follows the paladin (his sidestep is
+## the answer), how far past its reach a shot flies, how far ahead it looks for floor when it runs, and how close
+## (a part of keep_away) the paladin must be for it to keep running instead of stopping to shoot.
+const RANGED_LOCK := 0.25
+const RANGED_REACH := 1.5
+const RANGED_LOOK := 2.0
+const RANGED_SHOOT_WHILE_RUNNING := 0.75
 
 var list: Array[Enemy] = []
 var dying: Array[Enemy] = []
@@ -256,16 +263,21 @@ func _windup(e: Enemy) -> float:
 	return e.def.attack_windup if e.def.behavior != EnemyDef.Behavior.CHASE else 0.5
 
 
-## Keeps its distance; when ready, aims (the warning) and shoots a bolt, or conjures a circle under the paladin.
+## Keeps to the far end of its reach (Hades II's ranged shades): walks in only while out of reach, runs from the
+## paladin once he is closer than keep_away of it (around the walls, never into them) and shoots from there; only
+## cornered does it shoot from close. A caster (CASTER) conjures a circle under him instead (no enemy uses it now).
 func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: bool) -> void:
 	var d := e.def
 	if e.state == Enemy.State.WINDUP:
-		e.dir = toward
+		# it follows him until the last moment, unless its aim is marked on the floor (then it is locked there)
+		if not d.shot_line and e.state_t < d.attack_windup - RANGED_LOCK:
+			e.aim = toward
+		e.dir = e.aim
 		if e.state_t >= d.attack_windup:
 			if caster:
 				ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
 			else:
-				projectiles.fire(Projectiles.Kind.BOLT, e.pos + toward * 0.6, toward, 13.0, d.attack_damage * damage_scale, 0.4, 3.0, d.magic_color)
+				shoot(e, e.aim)
 			e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
@@ -275,14 +287,48 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		return
 	e.dir = toward
 	var sp := _speed(e)
-	if dist > d.attack_range:
+	var cornered := false
+	if sp <= 0.0:
+		pass
+	elif dist > d.attack_range:
 		e.pos += toward * sp * dt
-	elif dist < d.attack_range * 0.5:
-		e.pos -= toward * sp * 0.8 * dt
+	elif dist < d.attack_range * d.keep_away:
+		var away := flee_dir(e.pos, -toward, d.radius, e.side)
+		cornered = away == Vector2.ZERO
+		e.pos += away * sp * dt
+		if not cornered:
+			e.dir = away
 	else:
 		e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
-	if e.cooldown <= 0.0 and dist < d.attack_range + 2.0 and target_alive and arena.inside(e.pos, 1.0):
-		_set_state(e, Enemy.State.WINDUP, &"cast" if caster else &"aim")
+	var running := sp > 0.0 and dist < d.attack_range * d.keep_away * RANGED_SHOOT_WHILE_RUNNING and not cornered
+	if e.cooldown <= 0.0 and dist < d.attack_range + 2.0 and not running and target_alive and arena.inside(e.pos, 1.0):
+		e.aim = toward
+		e.dir = toward
+		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
+		if d.shot_line and not caster:
+			ground.add_line_warning(e.pos, toward, d.attack_range * RANGED_REACH, 0.5, d.attack_windup, 0.0)
+
+
+## Its shots (EnemyDef.shot_*): a fan of shot_count around dir, flying a little past its reach.
+func shoot(e: Enemy, dir: Vector2) -> void:
+	var d := e.def
+	var n := maxi(1, d.shot_count)
+	var life := d.attack_range * RANGED_REACH / maxf(0.1, d.shot_speed)
+	for i in n:
+		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
+		var aim := dir.rotated(turn)
+		projectiles.fire(Projectiles.Kind.ORB if d.shot_orb else Projectiles.Kind.BOLT, e.pos + aim * (d.radius + 0.2), aim,
+			d.shot_speed, d.attack_damage * damage_scale, 0.45 if d.shot_orb else 0.4, life, d.magic_color)
+
+
+## Where a ranged enemy runs to get away from the paladin: straight away, else turned along the wall (its own side
+## first), never off the floor. ZERO: cornered, nowhere to go.
+func flee_dir(from: Vector2, away: Vector2, radius: float, side: float) -> Vector2:
+	for deg: float in [0.0, 35.0, -35.0, 70.0, -70.0, 105.0, -105.0]:
+		var dir := away.rotated(deg_to_rad(deg) * (side if side != 0.0 else 1.0))
+		if arena.inside(from + dir * RANGED_LOOK, radius + 0.3):
+			return dir
+	return Vector2.ZERO
 
 
 ## Runs in, stops, marks a line on the floor and lunges along it.
@@ -357,7 +403,7 @@ func _behave_melee_walk(e: Enemy, dt: float, toward: Vector2, dist: float) -> vo
 		e.pos += toward * _speed(e) * dt
 
 
-## Elite: stays back, raises skeletons around itself and conjures circles.
+## Elite: stays back, raises skeletons around itself and shoots a fan of orbs.
 func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
 	if e.state == Enemy.State.WINDUP:
@@ -373,9 +419,8 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
 				Audio.play(&"summon")
 			else:
-				for k in 3:
-					var at := target + (Vector2.ZERO if k == 0 else Vector2.from_angle(TAU * k / 3.0 + e.state_t) * 3.2)
-					ground.add_warning(at, 2.4, 0.9 + k * 0.25, d.attack_damage * damage_scale, d.magic_color)
+				# the circles on the floor are Morvath's alone (Daniel, 2026-11-16): a fan of orbs
+				shoot(e, toward)
 			e.cooldown = d.attack_cooldown
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return

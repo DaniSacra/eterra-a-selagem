@@ -3,9 +3,11 @@ extends Resource
 ## One kind of enemy. A new enemy with an existing behaviour and an already baked model is a new .tres in
 ## data/enemies, no code. Distances in meters, speeds in meters per second.
 
-## CHASE: walks up and swings. ARCHER: keeps away and shoots a bolt. RUNNER: marks a line and lunges along it.
-## CASTER: conjures a circle under the paladin (speed 0: it never moves). KNIGHT: charges along a long line, and
-## slams the ground (close_*) when the paladin is near. PRIEST: raises skeletons and conjures circles.
+## CHASE: walks up and swings. ARCHER: keeps to the far end of its reach, runs when the paladin comes closer than
+## keep_away of it, and shoots (shot_*; speed 0: it never moves and only shoots). RUNNER: marks a line and lunges
+## along it. CASTER: conjures a circle under the paladin (no enemy uses it now: circles on the floor are Morvath's,
+## Daniel, 2026-11-16). KNIGHT: charges along a long line, and slams the ground (close_*) when the paladin is near.
+## PRIEST: raises skeletons and shoots a fan of orbs.
 ## PULSE: runs in and bursts all around itself. CONE: stops and blasts a wide cone ahead.
 enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE }
 ## What its wind-up shows besides the pose and the warning on the floor (EnemyFx; never red, gone when the attack
@@ -77,6 +79,15 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## RUNNER and KNIGHT: speed of the lunge or charge (m/s) and how long it lasts.
 @export var lunge_speed := 14.0
 @export var lunge_time := 0.45
+## ARCHER and PRIEST: the shots. A bolt (fast, thin) or an orb (slow, round); shot_count of them in a fan of
+## shot_spread degrees; shot_line marks the aim on the floor during the wind-up (it locks there).
+@export var shot_speed := 13.0
+@export var shot_count := 1
+@export var shot_spread := 0.0
+@export var shot_orb := false
+@export var shot_line := false
+## ARCHER: the part of attack_range the paladin may come to before it runs away (it shoots from the far end).
+@export var keep_away := 0.7
 ## PULSE: radius of the burst. CONE: opening in degrees.
 @export var attack_width := 0.0
 ## KNIGHT: a slam on whoever stands close (0 damage = none).

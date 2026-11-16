@@ -85,6 +85,9 @@ static func min_gap(dirs: PackedVector2Array) -> float:
 
 ## Meters a whole eruption circle keeps from the floor's edge (its rune drawn wholly on the floor).
 const ERUPTION_EDGE := 0.3
+## How far (a part of its radius) the circle under the paladin is nudged against his way out: 0.35 with circles of
+## 2 m; with 4 m (2026-11-16) 0.2, so walking out in its warning stays possible.
+const ERUPTION_NUDGE := 0.2
 
 
 ## The Sepulchral Eruptions: up to count circles of radius r, the first on the paladin (moved a little away from his
@@ -100,7 +103,7 @@ static func eruptions(player: Vector2, count: int, radius: float, toward: Vector
 	var half := deg_to_rad(lane_deg) * 0.5
 	# the first: on him, nudged against his way out (his escape is shorter than its radius); at the edge it stays on
 	# the floor by half its radius and still covers him
-	out.append(floor.clamp(player - Vector2.from_angle(lane) * radius * rng.randf_range(0.0, 0.35), radius * 0.5))
+	out.append(floor.clamp(player - Vector2.from_angle(lane) * radius * rng.randf_range(0.0, ERUPTION_NUDGE), radius * 0.5))
 	var tries := 0
 	while out.size() < count and tries < 24:
 		tries += 1
