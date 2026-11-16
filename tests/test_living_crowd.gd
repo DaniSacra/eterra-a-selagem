@@ -21,11 +21,15 @@ const BEFORE := {
 	&"runner": {&"attack": 1.0, &"death": 1.9, &"hit": 0.333, &"idle": 1.333, &"rise": 0.9, &"windup": 2.933},
 	&"skeleton": {&"attack": 1.1, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9, &"windup": 0.9},
 }
-## The walking figures whose walk (the library's Walk carried to their skeleton) still slides past 5 cm a step at any one
-## pace, with what E1a measured (the brute's right foot floated 20 cm over the floor in the whole loop until its legs
-## were evened in the bake, E1a-4: 0.107 m since). The fix is a foot locked on the floor in the bake (E1b); this keeps
-## them from getting worse meanwhile. The priest never walks (speed 0).
-const STRIDE_PENDING := {&"guard": 0.12, &"knight": 0.11, &"morvath": 0.065}
+## E1b-A1: how far the planted foot may slide in a step, in the game's meters (the baked slide times EnemyDef.size):
+## 5 cm for those who run, 8 cm for the big ones who walk. The priest never walks (speed 0).
+const SLIDE_RUN := 0.05
+const SLIDE_WALK := 0.08
+const BIG_WALKERS: Array[StringName] = [&"guard", &"knight", &"morvath", &"priest_elder"]
+## E1b-A2 and A3: steps a minute in the game, at the enemy's speed and size (the walk's two steps a loop): the brute's
+## heavy walk, the knight's and Morvath's long stride, the sorcerer's and the crossbowman's short trot.
+const CADENCE := {&"guard": Vector2(110, 140), &"knight": Vector2(90, 120), &"morvath": Vector2(90, 120),
+	&"mage": Vector2(120, 150), &"archer": Vector2(120, 150)}
 ## The ceiling of the baked figures on disk (E1a: 70 MB).
 const BAKED_MB := 70.0
 
@@ -122,21 +126,21 @@ func test_the_baked_figures_fit_their_ceiling() -> void:
 	assert_lt(total / 1048576.0, BAKED_MB)
 
 
-## VX-05: the planted foot of every walk strays less than 5 cm from where it was put in a step, at the speed measured
-## in the bake, and the horde plays the walk at that speed for the enemy's own (its size and pace).
+## VX-05 and E1b-A1: the planted foot of every walk strays from where it was put, in a step, less than its ceiling in
+## the game's meters (the figure drawn at its size), at the speed measured in the bake, and the horde plays the walk at
+## that speed for the enemy's own (its size and pace).
 func test_the_planted_foot_stays_put() -> void:
 	for id in FIGURES:
 		var m := _model(id)
 		assert_true(m.ground_speed.has(&"walk"), "%s: the walk is measured" % id)
 		var ground: float = m.ground_speed[&"walk"]
 		assert_gt(ground, 0.0, String(id))
-		var slide := BakedModel.slide_per_step(m.feet[&"walk"], 1.0 / float(m.fps[&"walk"]), ground)
-		gut.p("%s: the floor runs %.2f m/s under the walk, the foot slides %.3f m a step" % [id, ground, slide])
-		if STRIDE_PENDING.has(id):
-			# known and reported (E1a): their slow walk, carried from another skeleton, slides at any one pace
-			assert_lt(slide, float(STRIDE_PENDING[id]), "%s: no worse than measured in E1a" % id)
-		elif id != &"priest":
-			assert_lt(slide, 0.05, "%s: %.3f m a step" % [id, slide])
+		if id == &"priest":
+			continue
+		var d: EnemyDef = load(DIR + "%s.tres" % id)
+		var slide := BakedModel.slide_per_step(m.feet[&"walk"], 1.0 / float(m.fps[&"walk"]), ground) * d.size
+		gut.p("%s: the floor runs %.2f m/s under the walk, the foot slides %.3f m a step in the game" % [id, ground, slide])
+		assert_lt(slide, SLIDE_WALK if BIG_WALKERS.has(id) else SLIDE_RUN, "%s: %.3f m a step in the game" % [id, slide])
 	for f in DirAccess.get_files_at(DIR):
 		if not f.ends_with(".tres"):
 			continue
@@ -147,6 +151,18 @@ func test_the_planted_foot_stays_put() -> void:
 		var rate := Horde.walk_rate(d.speed, float(m.ground_speed[&"walk"]), d.size)
 		# the foot goes back as fast as the body goes forward
 		assert_almost_eq(rate * float(m.ground_speed[&"walk"]) * d.size, d.speed, 0.001, String(d.id))
+
+
+## E1b-A2 and A3: each walk takes the steps a minute of its figure's weight at its speed in the game.
+func test_the_steps_a_minute_fit_the_figure() -> void:
+	for id: StringName in CADENCE:
+		var d: EnemyDef = load(DIR + "%s.tres" % id)
+		var m := _model(d.model)
+		var rate := Horde.walk_rate(d.speed, float(m.ground_speed[&"walk"]), d.size)
+		var steps := 120.0 * rate / m.duration(&"walk")
+		gut.p("%s: %.0f steps a minute" % [id, steps])
+		var band: Vector2 = CADENCE[id]
+		assert_between(steps, band.x, band.y, String(id))
 
 
 ## The walk is measured on a foot that bears the figure: a made-up stride, the foot on the floor going back 0.1 m a

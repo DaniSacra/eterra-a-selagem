@@ -286,9 +286,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `ground_of`, `slide_per_step`) e o `Horde.walk_rate` toca o andar a velocidade / (chão x tamanho); o andar guarda a subida e descida
   do próprio clipe (uma altura só para o ciclo inteiro: a corrida voa, o pé no chão nunca é um preso no meio do passo). Para isso os
   quatro que correm trocaram o `Jog_Fwd`/`Sprint` pelo `Running_B` do KayKit (esqueleto, corredor, mago e besteiro; o `Jog_Fwd` daria
-  1 passo por segundo) e o sacerdote ancião anda com o `Walk_Formal`: escorregam 1 a 4,5 cm por passo. Pendentes (andar da biblioteca
-  passado para outro esqueleto, escorrega em qualquer ritmo; precisa de pé travado no assado): Escudo 13 cm (o pé direito dele flutua
-  20 cm acima do chão no ciclo inteiro), Cavaleiro 10 cm, Morvath 6 cm. Golpe sofrido (VX-06): o corpo desenhado recua 0,24 m
+  1 passo por segundo) e o sacerdote ancião anda com o `Walk_Formal`: escorregam 1 a 4,5 cm por passo.
+  E1b (A1 a A3): o escorregamento é medido em **metros do jogo** (vezes `EnemyDef.size`; teste em `test_living_crowd.gd`: menos
+  de 5 cm para quem corre, 8 cm para os grandes que andam; o assado imprime "walk in the game" com passos por minuto e
+  escorregamento) e o pé de apoio é **travado no chão no assado** (`"lock"` nas opções do andar, `_foot_lock` e `_place_feet` em
+  `tools/bake.gd`: com cada pose do ciclo já posta, enquanto um pé está no chão o ponto onde ele pisa recua a uma velocidade
+  só, a média do clipe vezes `"stride"`, e a perna se dobra até lá por IK de duas juntas, `_bend_limb`, o giro do pé mantido; no
+  ar o pé vai suave de onde saiu para onde desce). O `"stride"` acerta a cadência sem mudar a velocidade da simulação: Escudo
+  com o `Walking_A` do KayKit (o andar pesado do bruto) a 120 passos por minuto, Cavaleiro 96 e Morvath 102 no `Walk` da UAL
+  em passada longa, mago 130 e besteiro 126 num trote curto (o `Running_B` com passada 0,62 e 0,67 e meio pulo, `"lift"` 0,5),
+  ancião 67; todos escorregam até 1,6 cm em jogo (antes Escudo 16, Cavaleiro 21, Morvath 15, ancião 10). O braço livre do mago
+  fica junto ao corpo (`MAGE_TROT`, guarda do `Idle`; o assado imprime o quanto cada braço abre). Medir clipes sem assar:
+  `tools/walk_probe.gd` (andares; `id=rig:clip:stride`) e `tools/clip_probe.gd` (altura e velocidade da mão por clipe, para
+  acertar o tempo de um clipe novo no antigo). Tiras de andar: `tools/walk_strip.gd` (chão xadrez de 0,5 m, câmera seguindo;
+  `docs/gallery/e1b/walk/`). VX-14: os golpes de Morvath são com as duas mãos (`"two_hands"`, `_both_hands`: a mão esquerda
+  no punho abaixo da direita), a foice (`slash3`) é o golpe por cima da cabeça `Sword_Regular_C` da UAL 2 cortado para a
+  lâmina estar no alto em `Boss.SCYTHE_LIFT` e descer dentro do `SCYTHE_SWEEP` (o `Sword_Attack` de antes já tinha descido no
+  meio do preparo), `volley` é o arremesso `OverhandThrow` (maldição e o primeiro sopro de cada onda da tempestade,
+  `Boss._step_storm`) e `roar` os braços abertos para cima com o peito aberto (`Taunt_Longer`, `ROAR_BEND`); a duração de
+  todo clipe é a de antes (`BEFORE` no teste). Golpe sofrido (VX-06): o corpo desenhado recua 0,24 m
   (0,15 nos pesados) em 3 quadros e volta em 0,3 s (`HitRecoil`, `core/hit_recoil.gd`; `Enemy.recoil_t`/`recoil_dir`, só desenho).
   Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
   `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]` (cerca de 4 s por figura; o Godot do editor: o atlas novo usa o xatlas). A multidão fica fora da luz das tochas (camada 2)
