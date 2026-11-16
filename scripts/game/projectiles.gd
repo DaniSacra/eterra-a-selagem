@@ -240,7 +240,6 @@ func step(dt: float) -> void:
 			if hostile(s):
 				shot_logged.emit(shooter(s), RoomTally.SHOT_BLOCKED, String(arena.last_cover.piece) if arena.last_cover else "")
 			fx.burst(&"spark", Vector3(s.pos.x, LOW_HEIGHT if s.low else HEIGHT, s.pos.y), Vector3(-s.vel.x, 0, -s.vel.y).normalized())
-			Audio.play(CombatSounds.EVENTS[&"ward"])
 		elif not gone:
 			if s.kind == Kind.SOUL:
 				if player.alive() and not s.seen.has(player) and touches_soul(s, player.pos, Player.RADIUS):
