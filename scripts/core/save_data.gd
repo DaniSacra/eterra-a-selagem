@@ -2,14 +2,15 @@ class_name SaveData
 extends RefCounted
 ## Pure rules of the save file (options, best times, discovered moves). The Save autoload does the disk part.
 
-const VERSION := 1
+## 2: full screen by default (Daniel, 2026-11-16); an older file switches to it once.
+const VERSION := 2
 const MAX_BEST_TIMES := 5
 
 
 static func defaults() -> Dictionary:
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": false, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "bindings": {}},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "bindings": {}},
 		"best_times": [],
 		"moves": [],
 		"wins": 0,
@@ -31,6 +32,9 @@ static func merged(loaded: Variant) -> Dictionary:
 					out[key][sub] = _coerced(loaded[key][sub], out[key][sub])
 		else:
 			out[key] = _coerced(loaded[key], out[key])
+	# files before version 2 kept the old windowed default: they open in full screen once, then the choice is theirs
+	if int(_coerced(loaded.get("version", 1), 1)) < 2:
+		out.options.fullscreen = true
 	out.version = VERSION
 	return out
 

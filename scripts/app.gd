@@ -11,7 +11,8 @@ static func window_size() -> Vector2i:
 
 static func apply_options() -> void:
 	if DisplayServer.get_name() != "headless" and not OS.has_feature("mobile") and not OS.has_feature("web"):
-		var full: bool = Save.option("fullscreen")
+		# captures, videos and test runs keep their window size
+		var full: bool = Save.option("fullscreen") and not (Dev.has("shot") or Dev.has("frames") or Dev.has("nosave"))
 		var win := Engine.get_main_loop().root as Window
 		var want := Window.MODE_FULLSCREEN if full else Window.MODE_WINDOWED
 		if win.mode != want:

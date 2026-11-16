@@ -43,3 +43,13 @@ func test_player_text_has_no_dash_and_keeps_placeholders() -> void:
 		assert_false((table.entries[key] as String).contains("—"), key)
 		assert_false((table.entries[key] as String).contains("–"), key)
 	assert_eq(table.text(&"PALADIN_1"), "PALADIN_1")
+
+
+func test_the_game_opens_in_full_screen() -> void:
+	assert_true(SaveData.defaults().options.fullscreen, "full screen by default")
+	# an older file kept the old windowed default: it switches once
+	var old := SaveData.merged({"version": 1, "options": {"fullscreen": false}})
+	assert_true(old.options.fullscreen)
+	# from version 2 on, a player who picked a window keeps it
+	var chosen := SaveData.merged({"version": 2, "options": {"fullscreen": false}})
+	assert_false(chosen.options.fullscreen)

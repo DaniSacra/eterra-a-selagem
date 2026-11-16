@@ -22,6 +22,9 @@ func open() -> void:
 	v.add_child(UiKit.button(T.t(&"pause_moves"), func() -> void: _show(MovesScreen.new())))
 	v.add_child(UiKit.button(T.t(&"pause_options"), func() -> void: _show(OptionsScreen.new())))
 	v.add_child(UiKit.button(T.t(&"pause_quit"), func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn")))
+	# leave the game from the pause too (desktop only: phones and the browser close by themselves)
+	if not OS.has_feature("mobile") and not OS.has_feature("web"):
+		v.add_child(UiKit.button(T.t(&"pause_exit_game"), func() -> void: get_tree().quit()))
 	first.grab_focus.call_deferred()
 
 
