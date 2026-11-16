@@ -1,0 +1,399 @@
+# feel_probe, rodada antes do C12d. HEAD 1e25f21 (arvore principal, so tools/feel_probe.gd mudado), 2026-11-16
+# ~/tools/godot/godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain   (saida 1)
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+== MOVE (walk right from rest 30 frames, then let go)
+f0 stepped=true speed=6.75 m/s anim=Run x=0.113
+f1 stepped=true speed=6.75 m/s anim=Run x=0.225
+f2 stepped=true speed=6.75 m/s anim=Run x=0.338
+f3 stepped=true speed=6.75 m/s anim=Run x=0.450
+f28 stepped=true speed=6.75 m/s anim=Run x=3.262
+f29 stepped=true speed=6.75 m/s anim=Run x=3.375
+f30 stepped=true speed=0.00 m/s anim=Idle x=3.375
+f31 stepped=true speed=0.00 m/s anim=Idle x=3.375
+f32 stepped=true speed=0.00 m/s anim=Idle x=3.375
+f33 stepped=true speed=0.00 m/s anim=Idle x=3.375
+f34 stepped=true speed=0.00 m/s anim=Idle x=3.375
+f35 stepped=true speed=0.00 m/s anim=Idle x=3.375
+== SPRINT (hold dodge while moving, 50 frames)
+f0 state=DODGE speed=0.00 sprint=false inv=true
+f1 state=DODGE speed=35.94 sprint=false inv=true
+f2 state=DODGE speed=34.38 sprint=false inv=true
+f3 state=DODGE speed=32.81 sprint=false inv=true
+f4 state=DODGE speed=31.25 sprint=false inv=true
+f5 state=DODGE speed=29.69 sprint=false inv=true
+f6 state=DODGE speed=28.12 sprint=false inv=true
+f7 state=DODGE speed=26.56 sprint=false inv=true
+f8 state=DODGE speed=25.00 sprint=false inv=true
+f9 state=DODGE speed=23.44 sprint=false inv=true
+f10 state=DODGE speed=21.87 sprint=false inv=true
+f11 state=DODGE speed=20.31 sprint=false inv=true
+f12 state=DODGE speed=18.75 sprint=false inv=true
+f13 state=MOVE speed=17.19 sprint=true inv=true
+f14 state=MOVE speed=11.13 sprint=true inv=true
+f15 state=MOVE speed=11.13 sprint=true inv=true
+f16 state=MOVE speed=11.13 sprint=true inv=true
+f17 state=MOVE speed=11.13 sprint=true inv=false
+f20 state=MOVE speed=11.13 sprint=true inv=false
+f30 state=MOVE speed=11.13 sprint=true inv=false
+f40 state=MOVE speed=11.13 sprint=true inv=false
+== SPRINT let go: speed by frame
+f28 speed=11.13 sprint=true
+f29 speed=11.13 sprint=true
+f30 speed=6.75 sprint=false
+f31 speed=6.75 sprint=false
+f32 speed=6.75 sprint=false
+f33 speed=6.75 sprint=false
+== TURN (walk right, then left: facing and model yaw by frame)
+f0 facing=54 deg model=74 deg
+f1 facing=92 deg model=51 deg
+f2 facing=118 deg model=27 deg
+f3 facing=137 deg model=5 deg
+f4 facing=150 deg model=-14 deg
+f5 facing=159 deg model=-31 deg
+f6 facing=165 deg model=-44 deg
+f7 facing=170 deg model=-55 deg
+f8 facing=173 deg model=-63 deg
+f9 facing=175 deg model=-70 deg
+f10 facing=176 deg model=-75 deg
+f11 facing=178 deg model=-79 deg
+FEEL falha GF-09a turn_facing | alvo: direcao a 5 graus da nova ate f1 | medido: f10
+FEEL falha GF-09b turn_body | alvo: corpo a 5 graus do final ate f7 (8 quadros) | medido: f14
+== ATTACK 1 tap, nobody near (frames from the press)
+events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 12], ["drop", "", 37]]
+== ATTACK 1 tap on a dummy 2 m ahead: hit stop, flash, push, kick, shake
+f0 stepped=true stop_left=0ms flash_t=-0.05 hurt_t=-0.05 push=0.00 moved=0.05 kick=0.000m shake=0.000m e.state=WALK phase=WINDUP
+f1 stepped=true stop_left=0ms flash_t=-0.07 hurt_t=-0.07 push=0.00 moved=0.10 kick=0.000m shake=0.000m e.state=WALK phase=WINDUP
+f2 stepped=true stop_left=0ms flash_t=-0.08 hurt_t=-0.08 push=0.00 moved=0.15 kick=0.000m shake=0.000m e.state=WALK phase=WINDUP
+f3 stepped=true stop_left=0ms flash_t=-0.10 hurt_t=-0.10 push=0.00 moved=0.20 kick=0.000m shake=0.000m e.state=WALK phase=WINDUP
+f4 stepped=true stop_left=25ms flash_t=0.12 hurt_t=0.28 push=7.07 moved=0.33 kick=0.315m shake=0.076m e.state=WALK phase=RECOVERY
+f5 stepped=false stop_left=8ms flash_t=0.12 hurt_t=0.28 push=7.07 moved=0.33 kick=0.241m shake=0.058m e.state=WALK phase=RECOVERY
+f6 stepped=true stop_left=0ms flash_t=0.11 hurt_t=0.27 push=6.24 moved=0.43 kick=0.185m shake=0.042m e.state=WALK phase=RECOVERY
+f7 stepped=true stop_left=0ms flash_t=0.09 hurt_t=0.25 push=5.51 moved=0.53 kick=0.142m shake=0.028m e.state=WALK phase=RECOVERY
+f8 stepped=true stop_left=0ms flash_t=0.07 hurt_t=0.23 push=4.87 moved=0.61 kick=0.109m shake=0.015m e.state=WALK phase=RECOVERY
+f9 stepped=true stop_left=0ms flash_t=0.06 hurt_t=0.22 push=4.30 moved=0.69 kick=0.083m shake=0.004m e.state=WALK phase=RECOVERY
+f10 stepped=true stop_left=0ms flash_t=0.04 hurt_t=0.20 push=3.80 moved=0.75 kick=0.064m shake=0.000m e.state=WALK phase=RECOVERY
+f11 stepped=true stop_left=0ms flash_t=0.02 hurt_t=0.18 push=3.36 moved=0.81 kick=0.049m shake=0.000m e.state=WALK phase=RECOVERY
+f12 stepped=true stop_left=0ms flash_t=0.01 hurt_t=0.17 push=2.97 moved=0.87 kick=0.038m shake=0.000m e.state=WALK phase=RECOVERY
+f13 stepped=true stop_left=0ms flash_t=-0.01 hurt_t=0.15 push=2.62 moved=0.91 kick=0.029m shake=0.000m e.state=WALK phase=WINDOW
+f14 stepped=true stop_left=0ms flash_t=-0.03 hurt_t=0.13 push=2.31 moved=0.96 kick=0.022m shake=0.000m e.state=WALK phase=WINDOW
+f15 stepped=true stop_left=0ms flash_t=-0.04 hurt_t=0.12 push=2.04 moved=0.99 kick=0.017m shake=0.000m e.state=WALK phase=WINDOW
+f16 stepped=true stop_left=0ms flash_t=-0.06 hurt_t=0.10 push=1.81 moved=1.03 kick=0.013m shake=0.000m e.state=WALK phase=WINDOW
+f17 stepped=true stop_left=0ms flash_t=-0.08 hurt_t=0.08 push=1.59 moved=1.06 kick=0.010m shake=0.000m e.state=WALK phase=WINDOW
+f18 stepped=true stop_left=0ms flash_t=-0.09 hurt_t=0.07 push=1.41 moved=1.09 kick=0.008m shake=0.000m e.state=WALK phase=WINDOW
+f19 stepped=true stop_left=0ms flash_t=-0.11 hurt_t=0.05 push=1.24 moved=1.12 kick=0.006m shake=0.000m e.state=WALK phase=WINDOW
+f20 stepped=true stop_left=0ms flash_t=-0.13 hurt_t=0.03 push=1.10 moved=1.15 kick=0.004m shake=0.000m e.state=WALK phase=WINDOW
+f21 stepped=true stop_left=0ms flash_t=-0.14 hurt_t=0.02 push=0.97 moved=1.17 kick=0.003m shake=0.000m e.state=WALK phase=WINDOW
+f22 stepped=true stop_left=0ms flash_t=-0.16 hurt_t=0.00 push=0.86 moved=1.20 kick=0.003m shake=0.000m e.state=WALK phase=WINDOW
+f23 stepped=true stop_left=0ms flash_t=-0.18 hurt_t=-0.02 push=0.76 moved=1.22 kick=0.002m shake=0.000m e.state=WALK phase=WINDOW
+f24 stepped=true stop_left=0ms flash_t=-0.19 hurt_t=-0.03 push=0.67 moved=1.24 kick=0.002m shake=0.000m e.state=WALK phase=WINDOW
+f25 stepped=true stop_left=0ms flash_t=-0.21 hurt_t=-0.05 push=0.59 moved=1.27 kick=0.001m shake=0.000m e.state=WALK phase=WINDOW
+f26 stepped=true stop_left=0ms flash_t=-0.23 hurt_t=-0.07 push=0.52 moved=1.29 kick=0.001m shake=0.000m e.state=WALK phase=WINDOW
+f27 stepped=true stop_left=0ms flash_t=-0.24 hurt_t=-0.08 push=0.46 moved=1.31 kick=0.001m shake=0.000m e.state=WALK phase=WINDOW
+f28 stepped=true stop_left=0ms flash_t=-0.26 hurt_t=-0.10 push=0.41 moved=1.33 kick=0.001m shake=0.000m e.state=WALK phase=WINDOW
+f29 stepped=true stop_left=0ms flash_t=-0.28 hurt_t=-0.12 push=0.36 moved=1.36 kick=0.000m shake=0.000m e.state=WALK phase=WINDOW
+events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 13]]
+FEEL falha GF-01a hit_stop_shape_cut1 | alvo: 0 parados, mundo anda 1+ quadros, 1 a 3 quadros a 6%, volta em 2 | medido: parados 1, espera 0, lentos 1, volta f6 (ritmo desde o acerto f4: 1.00 0.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00)
+FEEL falha GF-10a kick_cut1 | alvo: tranco do golpe 1 ate 0,10 m | medido: 0.315 m
+FEEL ok GF-10b shake_cut1 | alvo: tremor do golpe 1 ate 0,10 m | medido: 0.076 m
+FEEL falha GF-10c flash_cut1 | alvo: clarao do inimigo 0,05 s (2 a 4 quadros) | medido: 9 quadros (0.15 s)
+== COMBO mash (a tap every other frame) in the air
+events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 12], ["start", "cut2", 12], ["hit", "cut2", 19], ["end", "cut2", 32], ["start", "cut3", 32], ["glint", "cut3 0.08s", 49], ["hit", "cut3", 54], ["end", "cut3", 72], ["start", "cut1", 72], ["hit", "cut1", 76], ["end", "cut1", 84], ["start", "cut2", 84], ["hit", "cut2", 91], ["end", "cut2", 104]] frozen_frames=0
+== COMBO mash (a tap every other frame) on a dummy
+events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 13], ["start", "cut2", 13], ["hit", "cut2", 20], ["end", "cut2", 33], ["start", "cut3", 33], ["glint", "cut3 0.08s", 50], ["hit", "cut3", 55], ["end", "cut3", 77], ["start", "cut1", 77], ["hit", "cut1", 81], ["end", "cut1", 90]] frozen_frames=6
+FEEL falha GF-01b no_freeze_combo | alvo: 0 quadros parados no combo de 3 sobre um alvo | medido: 6
+FEEL falha GF-01c hit_stop_shape_spin | alvo: 0 parados, mundo anda 3+ quadros, 1 a 3 quadros a 6%, volta em 2 | medido: parados 4, espera 0, lentos 4, volta f60 (ritmo desde o acerto f55: 1.00 0.00 0.00 0.00 0.00 1.00 1.00 1.00 1.00 1.00)
+== COMBO one tap per blow, pressed 3 frames after the blow lands (dummy)
+events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 13], ["start", "cut2", 13], ["hit", "cut2", 20], ["end", "cut2", 33], ["drop", "", 58]]
+== BUFFER: second tap d frames after the first (air): when does cut2 start
+d=1 cut1 hit f4 end f12 -> cut2 starts LOST
+d=2 cut1 hit f4 end f12 -> cut2 starts LOST
+d=3 cut1 hit f4 end f12 -> cut2 starts LOST
+d=4 cut1 hit f4 end f12 -> cut2 starts f12
+d=5 cut1 hit f4 end f12 -> cut2 starts f12
+d=6 cut1 hit f4 end f12 -> cut2 starts f12
+d=8 cut1 hit f4 end f12 -> cut2 starts f12
+d=10 cut1 hit f4 end f12 -> cut2 starts f12
+d=12 cut1 hit f4 end f12 -> cut2 starts f12
+d=14 cut1 hit f4 end f12 -> cut2 starts f14
+d=16 cut1 hit f4 end f12 -> cut2 starts f16
+d=18 cut1 hit f4 end f12 -> cut2 starts f18
+d=20 cut1 hit f4 end f12 -> cut2 starts f20
+d=22 cut1 hit f4 end f12 -> cut2 starts f22
+d=24 cut1 hit f4 end f12 -> cut2 starts f24
+d=30 cut1 hit f4 end f12 -> cut2 starts f30
+d=36 cut1 hit f4 end f12 -> cut2 starts f36
+FEEL falha GF-04a buffer_cut1 | alvo: 2o aperto em qualquer quadro 1 a 36 do golpe 1: golpe 2 em max(aperto, fim do golpe 1) | medido: fora: d1:LOST d2:LOST d3:LOST
+== BUFFER: tap during cut3's windup and recovery (air), from the cut2 hit
+tap 1 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 3 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 6 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 10 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 15 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 20 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 26 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 30 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 31 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32"]
+tap 32 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32", "cut1@f72"]
+tap 34 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32", "cut1@f72"]
+tap 36 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32", "cut1@f72"]
+tap 39 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32", "cut1@f72"]
+tap 40 frames after cut3 starts: ["cut1@f0", "cut2@f12", "cut3@f32", "cut1@f72"]
+FEEL falha GF-04b buffer_spin | alvo: aperto em qualquer quadro 1 a 39 do giro: golpe 1 em max(aperto, fim do giro) | medido: fora: d1:LOST d3:LOST d6:LOST d10:LOST d15:LOST d20:LOST d26:LOST d30:LOST d31:LOST
+== DODGE right from rest: state, safety, distance, when the next one is allowed
+f0 state=MOVE inv=false x=0.11 charges=1 dodges=0
+f1 state=DODGE inv=true x=0.11 charges=0 dodges=1
+f2 state=DODGE inv=true x=0.71 charges=0 dodges=1
+f3 state=DODGE inv=true x=1.28 charges=0 dodges=1
+f4 state=DODGE inv=true x=1.83 charges=0 dodges=1
+f5 state=DODGE inv=true x=2.35 charges=0 dodges=1
+f6 state=DODGE inv=true x=2.85 charges=0 dodges=1
+f7 state=DODGE inv=true x=3.32 charges=0 dodges=1
+f8 state=DODGE inv=true x=3.76 charges=0 dodges=1
+f9 state=DODGE inv=true x=4.17 charges=0 dodges=1
+f10 state=DODGE inv=true x=4.57 charges=0 dodges=1
+f11 state=DODGE inv=true x=4.93 charges=0 dodges=1
+f12 state=DODGE inv=true x=5.27 charges=0 dodges=1
+f13 state=DODGE inv=true x=5.58 charges=0 dodges=1
+f14 state=MOVE inv=true x=5.87 charges=0 dodges=1
+f15 state=MOVE inv=true x=6.05 charges=0 dodges=1
+f16 state=MOVE inv=true x=6.24 charges=0 dodges=1
+f17 state=MOVE inv=true x=6.42 charges=0 dodges=1
+f18 state=MOVE inv=false x=6.61 charges=0 dodges=1
+f19 state=MOVE inv=false x=6.79 charges=0 dodges=1
+f20 state=MOVE inv=false x=6.98 charges=0 dodges=1
+f21 state=MOVE inv=false x=7.17 charges=0 dodges=1
+f22 state=MOVE inv=false x=7.35 charges=0 dodges=1
+f23 state=MOVE inv=false x=7.54 charges=0 dodges=1
+f25 state=MOVE inv=false x=7.91 charges=0 dodges=1
+f30 state=MOVE inv=false x=8.65 charges=0 dodges=1
+f35 state=MOVE inv=false x=8.65 charges=0 dodges=1
+f40 state=MOVE inv=false x=8.65 charges=0 dodges=1
+f45 state=MOVE inv=false x=8.65 charges=0 dodges=1
+f50 state=DODGE inv=true x=10.89 charges=0 dodges=2
+f55 state=DODGE inv=true x=13.10 charges=0 dodges=2
+f60 state=MOVE inv=true x=14.40 charges=0 dodges=2
+f65 state=MOVE inv=false x=14.40 charges=0 dodges=2
+FEEL falha GF-09d dodge_safety_19 | alvo: protecao de 19 a 20 quadros desde o aperto | medido: 17
+== DODGE alone (no move held): distance
+dodge distance standing (facing right): 5.76 m
+FEEL ok D-44a dodge_frame_0 | alvo: esquiva parada sai no quadro do aperto (f0) | medido: f0
+== DODGE pressed d frames after an attack tap (air): frame it starts or LOST
+light_attack then dodge at f0: blow lands NEVER (cut), dodge f0
+light_attack then dodge at f1: blow lands f4, dodge LOST
+light_attack then dodge at f2: blow lands f4, dodge LOST
+light_attack then dodge at f3: blow lands f4, dodge LOST
+light_attack then dodge at f4: blow lands f4, dodge LOST
+light_attack then dodge at f5: blow lands f4, dodge f5
+light_attack then dodge at f6: blow lands f4, dodge f6
+light_attack then dodge at f7: blow lands f4, dodge f7
+light_attack then dodge at f8: blow lands f4, dodge f8
+light_attack then dodge at f10: blow lands f4, dodge f10
+light_attack then dodge at f14: blow lands f4, dodge f14
+light_attack then dodge at f20: blow lands f4, dodge f20
+light_attack then dodge at f30: blow lands f4, dodge f30
+light_attack then dodge at f40: blow lands f4, dodge f40
+heavy_attack then dodge at f0: blow lands NEVER (cut), dodge f0
+heavy_attack then dodge at f1: blow lands f7, dodge LOST
+heavy_attack then dodge at f2: blow lands f7, dodge LOST
+heavy_attack then dodge at f3: blow lands f7, dodge LOST
+heavy_attack then dodge at f4: blow lands f7, dodge LOST
+heavy_attack then dodge at f5: blow lands f7, dodge LOST
+heavy_attack then dodge at f6: blow lands f7, dodge LOST
+heavy_attack then dodge at f7: blow lands f7, dodge LOST
+heavy_attack then dodge at f8: blow lands f7, dodge f8
+heavy_attack then dodge at f10: blow lands f7, dodge f10
+heavy_attack then dodge at f14: blow lands f7, dodge f14
+heavy_attack then dodge at f20: blow lands f7, dodge f20
+heavy_attack then dodge at f30: blow lands f7, dodge f30
+heavy_attack then dodge at f40: blow lands f7, dodge f40
+FEEL falha GF-02a dodge_in_windup | alvo: esquiva apertada em qualquer quadro do golpe 1 ou da seta sai no quadro (ou no seguinte) | medido: fora: cut1:d1=LOST cut1:d2=LOST cut1:d3=LOST cut1:d4=LOST bolt:d1=LOST bolt:d2=LOST bolt:d3=LOST bolt:d4=LOST bolt:d5=LOST bolt:d6=LOST bolt:d7=LOST
+FEEL ok GF-02b cut_blow_no_damage | alvo: golpe cortado pela esquiva nao acerta depois que ela sai | medido: nenhum
+== ATTACK tapped d frames after a dodge tap: what starts and when
+attack at f1: LOST
+attack at f3: LOST
+attack at f5: LOST
+attack at f8: LOST
+attack at f11: LOST
+attack at f12: LOST
+attack at f13: LOST
+attack at f16: dash_cut@f16
+attack at f20: dash_cut@f20
+attack at f30: dash_cut@f30
+attack at f35: dash_cut@f35
+attack at f40: cut1@f40
+FEEL falha GF-03a attack_in_dodge | alvo: ataque nos quadros 1 a 13 da esquiva vira dash_cut no 13 ou 14; depois, na hora | medido: fora: d1:LOST d3:LOST d5:LOST d8:LOST d11:LOST d12:LOST d13:LOST
+== WALK during an attack (move held down-screen from the tap): meters walked each frame
+cut1 events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 12], ["drop", "", 37]]
+  walked 0:0.11 1:0.00 2:0.00 3:0.00 4:0.00 5:0.11 6:0.11 7:0.11 8:0.11 9:0.11 10:0.11 11:0.11 12:0.11 13:0.11 14:0.11 15:0.11 16:0.11 17:0.11 18:0.11 19:0.11 20:0.11 21:0.11 22:0.11 23:0.11 24:0.11 25:0.11 26:0.11 27:0.11 28:0.11 29:0.11 30:0.11 31:0.11 32:0.11 33:0.11 34:0.11 35:0.11 36:0.11 37:0.11 38:0.11 39:0.11 40:0.11 41:0.11 42:0.11 43:0.11 44:0.11 45:0.11 46:0.11 47:0.11 48:0.11 49:0.11 50:0.11 51:0.11 52:0.11 53:0.11 54:0.11 55:0.11 56:0.11 57:0.11 58:0.11 59:0.11 60:0.11
+cut3 events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 12], ["start", "cut2", 12], ["hit", "cut2", 19], ["end", "cut2", 32], ["start", "cut3", 32], ["glint", "cut3 0.08s", 49], ["hit", "cut3", 54], ["end", "cut3", 72]]
+  walked 0:0.00 1:0.00 2:0.00 3:0.00 4:0.00 5:0.00 6:0.00 7:0.00 8:0.00 9:0.00 10:0.00 11:0.00 12:0.00 13:0.00 14:0.00 15:0.00 16:0.00 17:0.00 18:0.00 19:0.00 20:0.00 21:0.00 22:0.00 23:0.00 24:0.00 25:0.00 26:0.00 27:0.00 28:0.00 29:0.00 30:0.00 31:0.00 32:0.11 33:0.00 34:0.00 35:0.00 36:0.00 37:0.00 38:0.00 39:0.00 40:0.00 41:0.00 42:0.00 43:0.00 44:0.00 45:0.00 46:0.00 47:0.00 48:0.00 49:0.00 50:0.00 51:0.00 52:0.00 53:0.00 54:0.00 55:0.11 56:0.11 57:0.11 58:0.11 59:0.11 60:0.11
+bolt events [["start", "bolt", 0], ["hit", "bolt", 7], ["end", "bolt", 42], ["drop", "", 55]]
+  walked 0:0.11 1:0.00 2:0.00 3:0.00 4:0.00 5:0.00 6:0.00 7:0.00 8:0.11 9:0.11 10:0.11 11:0.11 12:0.11 13:0.11 14:0.11 15:0.11 16:0.11 17:0.11 18:0.11 19:0.11 20:0.11 21:0.11 22:0.11 23:0.11 24:0.11 25:0.11 26:0.11 27:0.11 28:0.11 29:0.11 30:0.11 31:0.11 32:0.11 33:0.11 34:0.11 35:0.11 36:0.11 37:0.11 38:0.11 39:0.11 40:0.11 41:0.11 42:0.11 43:0.11 44:0.11 45:0.11 46:0.11 47:0.11 48:0.11 49:0.11 50:0.11 51:0.11 52:0.11 53:0.11 54:0.11 55:0.11 56:0.11 57:0.11 58:0.11 59:0.11 60:0.11
+FEEL falha GF-09c plant_on_press | alvo: 0,00 m andados no quadro do aperto (golpe 1 e seta) | medido: golpe 1 0.11, seta 0.11
+FEEL falha GF-07d bolt_holds_legs | alvo: D-44: parado de f1 a f48 depois da seta (0,71 s depois do dardo), anda de novo ate f53 | medido: anda em f8, anda de novo f49
+== SPECIAL tap: the bolt leaves, and when an attack or a second special may start (tapped every frame)
+special then light_attack every frame: [["start", "bolt", 0], ["hit", "bolt", 7], ["end", "bolt", 42], ["start", "cut1", 42], ["hit", "cut1", 46], ["end", "cut1", 54]]
+FEEL falha GF-07a bolt_attack_lock | alvo: golpe 1 sai em f25 (24 a 26) com o ataque apertado todo quadro | medido: f42
+special then heavy_attack every frame: [["start", "bolt", 0], ["hit", "bolt", 7], ["end", "bolt", 42], ["start", "bolt", 42], ["hit", "bolt", 49]]
+FEEL falha GF-07b bolt_recharge | alvo: 2a seta sai em f48 (47 a 49) com o especial apertado todo quadro | medido: f42
+== SPECIAL: dart speed, and a dodge on f20 (move held)
+dart 30.0 m/s, dodge on f20 starts f20
+FEEL falha GF-07c bolt_speed | alvo: dardo a 62,5 m/s (61,5 a 63,5) | medido: 30.0 m/s
+FEEL ok GF-07e dodge_cuts_bolt | alvo: D-44: esquiva apertada em f20 da seta sai em f20 | medido: f20
+== OMEGA attack: hold light from f0
+f0 charging=true progress=0.02 phase=WINDUP node=cut1
+f6 charging=true progress=0.15 phase=RECOVERY node=cut1
+f12 charging=true progress=0.27 phase=WINDOW node=cut1
+f18 charging=true progress=0.40 phase=WINDOW node=cut1
+f24 charging=true progress=0.52 phase=WINDOW node=cut1
+f30 charging=true progress=0.65 phase=WINDOW node=cut1
+f36 charging=true progress=0.77 phase=WINDOW node=cut1
+f42 charging=true progress=0.90 phase=IDLE node=-
+f48 charging=false progress=0.00 phase=WINDUP node=lance
+f54 charging=false progress=0.00 phase=WINDUP node=lance
+f60 charging=false progress=0.00 phase=RECOVERY node=lance
+f66 charging=false progress=0.00 phase=RECOVERY node=lance
+f72 charging=false progress=0.00 phase=RECOVERY node=lance
+f78 charging=false progress=0.00 phase=RECOVERY node=lance
+f84 charging=false progress=0.00 phase=RECOVERY node=lance
+events [["start", "cut1", 0], ["hit", "cut1", 4], ["end", "cut1", 12], ["drop", "", 37], ["start", "lance", 47], ["glint", "lance 0.08s", 51], ["hit", "lance", 56]]
+FEEL falha GF-08 omega_when_full | alvo: lanca acerta em f48 (47 a 49; carga de 0,8 s) | medido: f56
+== OMEGA special: hold heavy from f0
+events [["start", "bolt", 0], ["hit", "bolt", 7], ["end", "bolt", 42], ["start", "burst", 42], ["hit", "burst", 47], ["end", "burst", 74]]
+== CAST tap
+f0 speed=4.05 inv=false
+f1 speed=4.05 inv=false
+f2 speed=4.05 inv=false
+f14 speed=4.05 inv=false
+f15 speed=6.75 inv=true
+f16 speed=6.75 inv=true
+f36 speed=6.75 inv=false
+f37 speed=6.75 inv=false
+circle released at f15 omega=false
+== CAST held 50 frames
+f0 speed=4.05 inv=false
+f1 speed=4.05 inv=false
+f2 speed=4.05 inv=false
+f14 speed=4.05 inv=false
+f15 speed=4.05 inv=false
+f16 speed=4.05 inv=false
+f36 speed=6.75 inv=true
+f37 speed=6.75 inv=true
+circle released at f35 omega=true
+FEEL falha D-44b cast_no_safety | alvo: D-44: nenhum quadro protegido depois de soltar o circulo | medido: 26 quadros (toque f15 ... omega f47)
+== CAST tap, then attack tapped every frame from the release
+circle released at f15, first blow f16
+FEEL falha D-44c cast_attack_lock | alvo: D-44: golpe so 8 quadros ou mais depois de soltar o circulo | medido: 1 quadros depois
+== HIT STOP: a dodge pressed on a frozen frame (keyboard path latches it; the pad as the bot and touch use it)
+keyboard: frozen frames [5, 6, 7], dodge pressed on f6, dodge starts f8
+pad: frozen frames [5, 6, 7], dodge pressed on f6, dodge starts LOST
+FEEL falha GF-06 pad_in_hit_stop | alvo: esquiva apertada em f6 de um acerto: controle virtual igual ao teclado, nenhum LOST | medido: teclado f8, controle virtual LOST
+== ENEMY hit during its windup: is the attack cut
+f11 e.state=WINDUP state_t=0.18 hurt_t=-0.20 anim=windup
+f12 e.state=WINDUP state_t=0.20 hurt_t=-0.22 anim=windup
+f13 e.state=WINDUP state_t=0.22 hurt_t=-0.23 anim=windup
+f14 e.state=WINDUP state_t=0.23 hurt_t=-0.25 anim=windup
+f15 e.state=WINDUP state_t=0.25 hurt_t=-0.27 anim=windup
+f16 e.state=WINDUP state_t=0.25 hurt_t=-0.27 anim=windup
+f17 e.state=WINDUP state_t=0.27 hurt_t=-0.28 anim=windup
+f18 e.state=WINDUP state_t=0.28 hurt_t=-0.30 anim=windup
+f19 e.state=WINDUP state_t=0.30 hurt_t=-0.32 anim=windup
+f20 e.state=WINDUP state_t=0.32 hurt_t=-0.33 anim=windup
+f21 e.state=WINDUP state_t=0.33 hurt_t=-0.35 anim=windup
+f22 e.state=WINDUP state_t=0.35 hurt_t=-0.37 anim=windup
+f23 e.state=WINDUP state_t=0.37 hurt_t=-0.38 anim=windup
+tap at f11; enemy states [["WINDUP", 0], ["ATTACK", 55], ["WALK", 73]]
+== KILL a skeleton with cut1 (20 dmg on 15 hp): throw, time scale, hit stop
+f0 stepped=true rate=1.00 alive=true push=0.0 vy=0.0 y=0.00 time_scale=1.00 stop=0ms
+f1 stepped=true rate=1.00 alive=true push=0.0 vy=0.0 y=0.00 time_scale=1.00 stop=0ms
+f2 stepped=true rate=1.00 alive=true push=0.0 vy=0.0 y=0.00 time_scale=1.00 stop=0ms
+f3 stepped=true rate=1.00 alive=true push=0.0 vy=0.0 y=0.00 time_scale=1.00 stop=0ms
+f4 stepped=true rate=1.00 alive=false push=10.6 vy=6.7 y=0.12 time_scale=1.00 stop=65ms
+f5 stepped=false rate=0.00 alive=false push=10.6 vy=6.7 y=0.12 time_scale=1.00 stop=48ms
+f6 stepped=false rate=0.00 alive=false push=10.6 vy=6.7 y=0.12 time_scale=1.00 stop=32ms
+f7 stepped=false rate=0.00 alive=false push=10.6 vy=6.7 y=0.12 time_scale=1.00 stop=15ms
+f8 stepped=true rate=1.00 alive=false push=9.9 vy=6.3 y=0.23 time_scale=1.00 stop=0ms
+f9 stepped=true rate=1.00 alive=false push=9.2 vy=5.9 y=0.34 time_scale=1.00 stop=0ms
+f10 stepped=true rate=1.00 alive=false push=8.5 vy=5.5 y=0.44 time_scale=1.00 stop=0ms
+f11 stepped=true rate=1.00 alive=false push=7.9 vy=5.1 y=0.53 time_scale=1.00 stop=0ms
+f12 stepped=true rate=1.00 alive=false push=7.4 vy=4.7 y=0.61 time_scale=1.00 stop=0ms
+f13 stepped=true rate=1.00 alive=false push=6.9 vy=4.3 y=0.69 time_scale=1.00 stop=0ms
+f16 stepped=true rate=1.00 alive=false push=5.5 vy=3.1 y=0.89 time_scale=1.00 stop=0ms
+f24 stepped=true rate=1.00 alive=false push=3.1 vy=-0.1 y=1.12 time_scale=1.00 stop=0ms
+f32 stepped=true rate=1.00 alive=false push=1.7 vy=-3.3 y=0.93 time_scale=1.00 stop=0ms
+FEEL falha GF-01d hit_stop_shape_kill | alvo: 0 parados, mundo anda 1+ quadros, 2 a 4 quadros a 6%, volta em 2 | medido: parados 3, espera 0, lentos 3, volta f8 (ritmo desde o acerto f4: 1.00 0.00 0.00 0.00 1.00 1.00 1.00 1.00 1.00 1.00)
+== KILL 3 at once with cut3 (spin): slow motion
+f23 stepped=false rate=0.00 time_scale=0.78 zoom=1.01
+f24 stepped=false rate=0.00 time_scale=0.56 zoom=1.03
+f25 stepped=false rate=0.00 time_scale=0.33 zoom=1.04
+f26 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f27 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f28 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f29 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f30 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f31 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f32 stepped=false rate=0.00 time_scale=0.20 zoom=1.05
+f33 stepped=false rate=0.00 time_scale=0.21 zoom=1.05
+f34 stepped=false rate=0.00 time_scale=0.26 zoom=1.05
+f35 stepped=false rate=0.00 time_scale=0.32 zoom=1.04
+f36 stepped=false rate=0.00 time_scale=0.37 zoom=1.04
+f37 stepped=false rate=0.00 time_scale=0.42 zoom=1.04
+f38 stepped=false rate=0.00 time_scale=0.48 zoom=1.03
+f39 stepped=false rate=0.00 time_scale=0.53 zoom=1.03
+f40 stepped=true rate=0.53 time_scale=0.58 zoom=1.03
+f41 stepped=true rate=0.58 time_scale=0.64 zoom=1.02
+f42 stepped=true rate=0.64 time_scale=0.69 zoom=1.02
+f43 stepped=true rate=0.69 time_scale=0.74 zoom=1.02
+f44 stepped=true rate=0.74 time_scale=0.80 zoom=1.01
+f45 stepped=true rate=0.80 time_scale=0.85 zoom=1.01
+f46 stepped=true rate=0.85 time_scale=0.90 zoom=1.01
+f47 stepped=true rate=0.90 time_scale=0.96 zoom=1.00
+FEEL falha GF-05 slow_mo_visible | alvo: 3 abates: ate 3 quadros parados, depois 5 ou mais quadros andando a 0,15 a 0,25 | medido: parados 17, andando lento 0
+== HURT: a blow on the paladin; when can he act again (dodge and attack tapped every frame)
+after a hurt at f0, dodge every frame: dodge f11, attack -
+after a hurt at f0, light_attack every frame: dodge -, attack f11
+== HURT: one tap while hurt (attack on f3, special on f5): is it kept
+after a hurt at f0, light_attack tapped once on f3: LOST
+after a hurt at f0, heavy_attack tapped once on f5: LOST
+FEEL falha GF-03c attack_while_hurt | alvo: um toque de ataque (f3) ou especial (f5) ferido sai em f11 (10 a 12) | medido: light_attack f3 -> LOST, heavy_attack f5 -> LOST
+== ATTACK right around the end of a dodge (dodge tapped f0)
+attack at f11: LOST  (10:DODGE 11:DODGE 12:DODGE 13:MOVE 14:MOVE 15:MOVE)
+attack at f12: LOST  (10:DODGE 11:DODGE 12:DODGE 13:MOVE 14:MOVE 15:MOVE)
+attack at f13: LOST  (10:DODGE 11:DODGE 12:DODGE 13:MOVE 14:MOVE 15:MOVE)
+attack at f14: dash_cut@f14  (10:DODGE 11:DODGE 12:DODGE 13:MOVE 14:MOVE 15:MOVE)
+attack at f15: dash_cut@f15  (10:DODGE 11:DODGE 12:DODGE 13:MOVE 14:MOVE 15:MOVE)
+FEEL falha GF-03b attack_at_dodge_end | alvo: ataque nos quadros 11 a 15 da esquiva sai ate max(aperto, 14) | medido: fora: d11:LOST d12:LOST d13:LOST
+== DODGE tapped every frame from f1 after a cut3 starts (air): first dodge frame
+cut3 events [["start", "cut3", 0], ["glint", "cut3 0.08s", 17], ["hit", "cut3", 22]], first dodge f23
+FEEL falha GF-02c dodge_cuts_spin | alvo: esquiva apertada todo quadro desde f1 do giro sai em f1 | medido: f23
+FEEL falha ALL no_lost_press | alvo: 0 lines with LOST | medido: 28
+FEEL_SUMMARY 4/31 ok
+FEEL_FAIL GF-09a turn_facing (medido: f10)
+FEEL_FAIL GF-09b turn_body (medido: f14)
+FEEL_FAIL GF-01a hit_stop_shape_cut1 (medido: parados 1, espera 0, lentos 1, volta f6 (ritmo desde o acerto f4: 1.00 0.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00))
+FEEL_FAIL GF-10a kick_cut1 (medido: 0.315 m)
+FEEL_FAIL GF-10c flash_cut1 (medido: 9 quadros (0.15 s))
+FEEL_FAIL GF-01b no_freeze_combo (medido: 6)
+FEEL_FAIL GF-01c hit_stop_shape_spin (medido: parados 4, espera 0, lentos 4, volta f60 (ritmo desde o acerto f55: 1.00 0.00 0.00 0.00 0.00 1.00 1.00 1.00 1.00 1.00))
+FEEL_FAIL GF-04a buffer_cut1 (medido: fora: d1:LOST d2:LOST d3:LOST)
+FEEL_FAIL GF-04b buffer_spin (medido: fora: d1:LOST d3:LOST d6:LOST d10:LOST d15:LOST d20:LOST d26:LOST d30:LOST d31:LOST)
+FEEL_FAIL GF-09d dodge_safety_19 (medido: 17)
+FEEL_FAIL GF-02a dodge_in_windup (medido: fora: cut1:d1=LOST cut1:d2=LOST cut1:d3=LOST cut1:d4=LOST bolt:d1=LOST bolt:d2=LOST bolt:d3=LOST bolt:d4=LOST bolt:d5=LOST bolt:d6=LOST bolt:d7=LOST)
+FEEL_FAIL GF-03a attack_in_dodge (medido: fora: d1:LOST d3:LOST d5:LOST d8:LOST d11:LOST d12:LOST d13:LOST)
+FEEL_FAIL GF-09c plant_on_press (medido: golpe 1 0.11, seta 0.11)
+FEEL_FAIL GF-07d bolt_holds_legs (medido: anda em f8, anda de novo f49)
+FEEL_FAIL GF-07a bolt_attack_lock (medido: f42)
+FEEL_FAIL GF-07b bolt_recharge (medido: f42)
+FEEL_FAIL GF-07c bolt_speed (medido: 30.0 m/s)
+FEEL_FAIL GF-08 omega_when_full (medido: f56)
+FEEL_FAIL D-44b cast_no_safety (medido: 26 quadros (toque f15 ... omega f47))
+FEEL_FAIL D-44c cast_attack_lock (medido: 1 quadros depois)
+FEEL_FAIL GF-06 pad_in_hit_stop (medido: teclado f8, controle virtual LOST)
+FEEL_FAIL GF-01d hit_stop_shape_kill (medido: parados 3, espera 0, lentos 3, volta f8 (ritmo desde o acerto f4: 1.00 0.00 0.00 0.00 1.00 1.00 1.00 1.00 1.00 1.00))
+FEEL_FAIL GF-05 slow_mo_visible (medido: parados 17, andando lento 0)
+FEEL_FAIL GF-03c attack_while_hurt (medido: light_attack f3 -> LOST, heavy_attack f5 -> LOST)
+FEEL_FAIL GF-03b attack_at_dodge_end (medido: fora: d11:LOST d12:LOST d13:LOST)
+FEEL_FAIL GF-02c dodge_cuts_spin (medido: f23)
+FEEL_FAIL ALL no_lost_press (medido: 28)
+PROBE DONE
