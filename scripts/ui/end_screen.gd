@@ -57,7 +57,8 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	var rows := VBoxContainer.new()
 	panel.add_child(rows)
 	_row(rows, T.t(&"end_time"), SaveData.format_time(stats.time))
-	_row(rows, T.t(&"end_level"), str(stats.level))
+	if int(stats.get("level", 0)) > 0: # the old horde mode has levels; the room run does not
+		_row(rows, T.t(&"end_level"), str(stats.level))
 	_row(rows, T.t(&"end_kills"), str(stats.kills))
 	_row(rows, T.t(&"end_combo"), str(stats.best_combo))
 	_row(rows, T.t(&"end_boons"), str(stats.boons))

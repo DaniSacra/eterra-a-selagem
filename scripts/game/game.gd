@@ -835,7 +835,7 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	var end := EndScreen.new()
 	_screen = end
 	ui.add_child(end)
-	end.open(victory, {"time": time, "level": level, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
+	end.open(victory, {"time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
 		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &""}, new_best)
 	end.retry.connect(func() -> void: get_tree().reload_current_scene())
 	end.menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn"))
