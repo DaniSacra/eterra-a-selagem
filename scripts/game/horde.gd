@@ -13,6 +13,9 @@ const KNOCKBACK_DECAY := 7.0
 const FLASH_TIME := 0.14
 ## Flash of an ordinary blow (a strong one flashes at 1, so its first frame or two are pure white: crowd.gdshader).
 const WEAK_FLASH := 0.45
+## A boss's strongest flash (art review P4: a strong frost blow sent Morvath's dark robe to the pale ivory of the
+## first frame for one frame, crowd.gdshader's white_from 0.85): his body only gets lighter and warmer, never ivory.
+const BOSS_FLASH := 0.8
 ## Numbers of blows that land on armor.
 const ARMOR_COLOR := Color(1.0, 0.82, 0.3)
 ## Seconds the fan of a crossbowman's volley shows (in its EnemyDef.magic_color).
@@ -578,6 +581,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if flash:
 		e.flash_t = FLASH_TIME
 		e.flash_power = 1.0 if big else WEAK_FLASH
+		if e.def.behavior == EnemyDef.Behavior.BOSS:
+			e.flash_power = minf(e.flash_power, BOSS_FLASH)
 	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if knockback > 0.0:

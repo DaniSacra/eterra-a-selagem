@@ -86,3 +86,19 @@ func test_a_column_falling_on_him_is_faint() -> void:
 	assert_false(Skills.over_boss(boss.e, boss.e.pos + Vector2(8.0, 0.0), 0.35))
 	assert_false(Skills.over_boss(null, Vector2.ZERO, 1.0))
 	assert_lt(Skills.BEAM_OVER_BOSS * Fx.BEAM_INTENSITY, 1.0, "its core stays under the glow over him")
+	# art review P4: a tall column between him and the camera covers him on the screen too; one behind him does not
+	var toward_cam := Vector2(sin(deg_to_rad(35.0)), cos(deg_to_rad(35.0)))
+	assert_true(Skills.over_boss(boss.e, boss.e.pos + toward_cam * 6.0, 1.6, 16.0, 35.0, 30.0), "in front of him")
+	assert_false(Skills.over_boss(boss.e, boss.e.pos - toward_cam * 6.0, 1.6, 16.0, 35.0, 30.0), "behind him")
+	assert_false(Skills.over_boss(boss.e, boss.e.pos + toward_cam * 6.0, 1.6), "without its height, only on him")
+	assert_lt(Skills.BEAM_CORE_CAP, 1.01, "the core over him never past the glow threshold")
+
+
+func test_a_strong_blow_never_turns_him_ivory() -> void:
+	var boss := _start_fight()
+	_run(1.0)
+	boss.e.armor = 0.0
+	boss.e.invulnerable = false
+	game.horde.damage(boss.e, 1.0, Vector2.DOWN, 0.0, Fx.GOLD, true, true)
+	assert_lt(boss.e.flash_power, 0.85, "under crowd.gdshader's white_from: lighter and warmer, never the ivory frame")
+	assert_almost_eq(boss.e.flash_power, Horde.BOSS_FLASH, 0.001)

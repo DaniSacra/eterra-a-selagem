@@ -10,6 +10,14 @@ quadros inteiros (ou recortes, no `selo_estados`) com uma faixa de rótulo **aci
 (feita por IA), não o jogo**; a direita é o jogo.
 
 - **Depois**: `6bab080` (HEAD de `arpg-3d`), espelho padrão `C:/Users/danie/tools/eterra-gpu`.
+- **Refeitas em 2026-11-16 pela rodada de correções da revisão de arte (P1, P2, P4, P5, P6 do `ART_REVIEW.md`)**, sobre o
+  `76e8fe7` com as correções ainda sem commit, espelho próprio `C:/Users/danie/tools/eterra-gpu-p5`, os mesmos comandos
+  abaixo: `01` a `10` e as variantes, `selo_estados`, `borda_e_camera`, `lado_a_lado_referencia`, a metade "depois" dos cinco
+  antes e depois (a metade "antes" é a mesma, recortada da montagem anterior) e a nova `11_geada_golpe_forte`. Nesta rodada
+  o PNG da Godot virou JPG pelo ffmpeg (`-q:v 3`), não pelo `save_jpg`; as montagens com o mesmo `ffmpeg` (`scale`, `pad`,
+  `drawtext`, Alegreya Sans Bold). O texto "o que se vê" das tabelas é o das capturas anteriores: o enquadramento e o
+  momento são os mesmos; mudaram o chão (mais claro), o céu (azul), as janelinhas do anel distante, as faixas da
+  tempestade (cada uma na sua cunha, nada a 1,2 m de Morvath) e o miolo vermelho das erupções.
 - **Antes**: `2de07b0` (fim do ciclo 9, salão retangular), extraído com `git archive 2de07b0 | tar -x -C
   /home/dani/games/qa1011-before`, espelho `C:/Users/danie/tools/eterra-gpu-qa1011b`. A queimadura também foi tirada no
   `196f33c` (fim do C10), espelho `eterra-gpu-qa1011c`. Cópias e espelhos apagados ao fim.
@@ -39,19 +47,20 @@ quadros inteiros (ou recortes, no `selo_estados`) com uma faixa de rótulo **aci
 | `10_vitoria_selagem.jpg` | `--bot --boss-hp=0.02 --shot-at=1 --shot-on=boss:victory --shot-after=3.3` | 5,7 s; selo de ouro com a estrela de luz no centro, porta fechada sem o raio, texto da selagem |
 | `10a_vitoria_1s2.jpg` | o mesmo com `--shot-after=1.2` | 3,6 s; veios violeta recuando para o selo, a energia verde de Morvath sobre ele |
 | `10b_vitoria_2s5.jpg` | o mesmo com `--shot-after=2.5` | 4,9 s; o texto "A magia de Morvath se desfaz..." e o selo clareando |
+| `11_geada_golpe_forte.jpg` | `--bot --boon-ids=golpe_geada,toque_geada,circulo_geada,passo_geada,estilhaco,peso_inverno --shot-at=12 --shot-on=omega --shot-after=0.1` (P3/P4; 0,03 s depois cai no quadro de impacto em preto e branco, que é de propósito) | 26,0 s; o Ômega de geada (203) acaba de atravessar Morvath: o corpo dele fica cinza-lavanda pela geada (congelado), com a coroa e o manto legíveis, sem o quadro marfim de antes (o pisca do chefe para em `Horde.BOSS_FLASH` 0,8, abaixo do `white_from` 0,85). Numa sequência de 150 quadros (0,1 s) com o mesmo kit, nenhum quadro com o corpo dele coberto de branco |
 
 ## Extras
 
 | Arquivo | Como |
 |---|---|
-| `selo_estados.jpg` | recortes de 700 x 400 em volta do selo (x 610, y 330) de `01`, `05a`, `05`, `cycle10/fase4_clima` (fase 4 sem tempestade: `shot --bot --boss-hp=0.14 --shot-at=6`, 5,9 s; na `09` as faixas cobrem o selo) e `10`, com rótulo acima |
+| `selo_estados.jpg` | recortes de 700 x 400 em volta do selo (x 610, y 330) de `01`, `05a`, `05`, `fase4_clima` (fase 4 sem tempestade: `shot --bot --boss-hp=0.14 --shot-at=6`, 5,9 s; refeita nesta rodada, fora da pasta; na `09` as faixas cobrem o selo) e `10`, com rótulo acima |
 | `borda_e_camera.jpg` | cinco `shot --no-boss --shot-at=2` com `--hero-at=0,12`, `12,0`, `0,-12`, `8.5,8.5` e `9.7,5.7`. Em todos o herói fica a mais de 18% das bordas (medido a olho no quadro inteiro: a menor folga é a de `12,0`, herói perto de x 1510 de 1920, 21% da borda direita). Em `12,0` ele aparece em pé **sobre a tampa do sarcófago sudeste**, e em `8.5,8.5` sobre as velas da balaustrada (ver o relatório de QA). Em `9.7,5.7` o herói ficou na frente do pilarete, não atrás: o pontilhado não aparece neste quadro |
 | `before_after_arena.jpg` | `shot --shot-at=1` no `2de07b0` e no `6bab080` |
 | `before_after_investida.jpg` | **comandos diferentes**: o antes é `--boss-only=dash --shot-at=2 --shot-on=boss:dash --shot-after=1.05` sem robô (o `2de07b0` não tem `--bot-kite`); na câmara esse comando sem robô **nunca dá investida** (esperou 300 s e foi cancelado: o herói parado na boca da escadaria fica perto demais ou sem os 8 m livres que a regra nova pede), então o depois é o `04b` (`--bot --bot-kite=1`) |
 | `before_after_ritual.jpg` | ritual + 1,2 s nos dois (o antes ainda tem o ponto branco no escudo que o C10 tirou) |
 | `before_after_tempestade.jpg` | tempestade + 0,5 s nos dois |
 | `before_after_vitoria.jpg` | vitória + 3,3 s nos dois |
-| `lado_a_lado_referencia.jpg` | cópia de `work/chamber_09_side_by_side_reference.jpg` (pintura de IA à esquerda, jogo à direita) |
+| `lado_a_lado_referencia.jpg` | pintura de IA à esquerda; à direita o jogo, refeito nesta rodada com `tools/gpu.sh run --rendering-driver vulkan --resolution 1920x1080 -s tools/chamber_lab.gd -- <saída> --hero --boss` (câmara sem HUD, herói na boca da escadaria e Morvath sobre o selo) |
 
 Descartadas: `before_after_investida` com o mesmo comando nos dois (cancelada, acima); `c10_fase4_clima` com
 `--shot-on=boss:phase` (com `--boss-hp=0.14` a fase 4 começa antes dos 2 s de espera e o momento não vem de novo:

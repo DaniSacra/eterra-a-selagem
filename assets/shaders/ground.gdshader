@@ -45,6 +45,15 @@ uniform float mark_from_m = 2.2;
 uniform float mark_step_m = 0.32;
 uniform float mark_r_m = 0.09;
 uniform vec3 mark_color = vec3(0.32, 0.6, 1.0);
+// The storm's lanes share the floor round him (art review P2: six lanes added up to a near white pink in the middle,
+// over the order marks and over Morvath): each lane draws only its wedge, out to half the angle to its neighbour on
+// either side (wedge.x on the +x side of the quad, wedge.y on the other; 0: the whole lane), so no two ever add, and
+// nothing within root_clear_m of its root (him); the fill comes up from root_fill of itself there to all of it
+// root_soft_m further out (the lanes' roots meet round him: a solid red disc over the seal hid him and the marks).
+uniform vec2 wedge = vec2(0.0);
+uniform float root_clear_m = 0.0;
+uniform float root_soft_m = 0.0;
+uniform float root_fill = 1.0;
 
 global uniform vec3 floor_round;
 
@@ -92,8 +101,16 @@ void fragment() {
 	float rim_light = 1.0;
 	vec3 extra = vec3(0.0);
 	bool sign = signed > 0.5;
+	float root_k = 1.0;
 	if (shape == 1) {
 		float along = UV.y;
+		if (wedge.x > 0.0 || root_clear_m > 0.0) {
+			vec2 from_root = vec2(along * length_m, uv.x * (size_m + pad_m));
+			if (length(from_root) < root_clear_m) discard;
+			root_k = mix(root_fill, 1.0, smoothstep(root_clear_m, root_clear_m + root_soft_m, length(from_root)));
+			float turn = atan(from_root.y, max(from_root.x, 1e-4));
+			if (wedge.x > 0.0 && (turn > wedge.x || -turn > wedge.y)) discard;
+		}
 		float side_m = abs(uv.x) * (size_m + pad_m);
 		float side = side_m / size_m;
 		float rim = clamp(rim_m / size_m, 0.04, 0.2);
@@ -120,7 +137,7 @@ void fragment() {
 			float fill = step(tip, front) * (0.3 + 0.35 * smoothstep(front - 1.2, front, tip));
 			if (sign) {
 				// his: an even fill (the joints of the floor show through) and a thin bright front
-				fill = step(tip, front) * sign_fill;
+				fill = step(tip, front) * sign_fill * root_k;
 				float fw = max(fwidth(tip), 0.001);
 				head = (1.0 - smoothstep(sign_front_m * 0.5, sign_front_m * 0.5 + fw, abs(tip - front))) * step(0.02, progress) * sign_front / 0.6;
 				rim_light = order_level;

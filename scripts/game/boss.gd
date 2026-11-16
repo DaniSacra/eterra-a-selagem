@@ -499,6 +499,7 @@ func _step_storm() -> void:
 		var offset := rad_to_deg(aim.angle()) + def.storm_turn * _wave
 		_dirs = BossRules.storm(def.storm_count, offset, def.storm_jitter, def.storm_min_gap, _rng)
 		var order := BossRules.storm_order(_dirs, aim)
+		var wedges := GroundLook.storm_wedges(_dirs)
 		_due.resize(_dirs.size())
 		_lanes.clear()
 		_lanes.resize(_dirs.size())
@@ -509,6 +510,7 @@ func _step_storm() -> void:
 			_lanes[i] = _warn(game.ground.add_line_warning(e.pos, _dirs[i], _lane(_dirs[i], def.blade_range), def.blade_width, wait, 0.0))
 			# its order of leaving: rank + 1 marks at its root, the next to leave the brightest (ART-001)
 			game.ground.storm_rank(_lanes[i], rank + 1, rank)
+			game.ground.storm_wedge(_lanes[i], wedges[i])
 		_anim(&"rain")
 		game.fx.ring(e.pos, 3.0, VIOLET, 0.5, 0.15, true)
 		game.fx.burst(&"soul", Vector3(e.pos.x, 2.5, e.pos.y))

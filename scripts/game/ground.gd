@@ -25,6 +25,9 @@ const AREA_STRENGTH := 0.8
 const RIM_METERS := GroundLook.RIM_METERS
 ## The ring where an enemy's blow lands, when its caster has no colour of its own.
 const LAND_COLOR := Color(1.0, 0.3, 0.2)
+## The red of danger in an eruption's circle (art review P5): the warnings' strength less the circle's own violet veil
+## and rim that add to it (at GroundLook.WARNING_STRENGTH its middle clipped to a hot pink).
+const RUNE_DANGER := 0.75
 ## The column of an eruption: its width (share of the circle), height (m) and seconds.
 const ERUPTION_WIDTH := 0.55
 const ERUPTION_HEIGHT := 5.0
@@ -169,6 +172,12 @@ func sign_boss(z: Zone) -> void:
 func storm_rank(z: Zone, marks: int, rank: int) -> void:
 	if z != null and z.node != null and z.rune == Rune.NONE:
 		GroundLook.order(z.node, marks, rank)
+
+
+## A storm lane's wedge round its root (GroundLook.storm_wedge, from GroundLook.storm_wedges): the lanes never add up.
+func storm_wedge(z: Zone, wedge: Vector2) -> void:
+	if z != null and z.node != null and z.rune == Rune.NONE:
+		GroundLook.storm_wedge(z.node, wedge)
 
 
 func clear_warnings() -> void:
@@ -329,6 +338,9 @@ func _rune_node(at: Vector2, radius: float, kind: Rune) -> MeshInstance3D:
 	m.set_shader_parameter(&"rim_m", RUNE_RIM)
 	m.set_shader_parameter(&"strength", RUNE_STRENGTH)
 	m.set_shader_parameter(&"seed", _seed(at))
+	m.set_shader_parameter(&"danger", GroundLook.WARNING_COLOR)
+	m.set_shader_parameter(&"danger_fill", GroundLook.SIGN_FILL)
+	m.set_shader_parameter(&"danger_strength", RUNE_DANGER)
 	node.scale = Vector3(radius * 2.0, 1.0, radius * 2.0)
 	node.rotation = Vector3.ZERO
 	node.position = Vector3(at.x, 0.06 + (zones.size() + _after.size()) * 0.0005, at.y)

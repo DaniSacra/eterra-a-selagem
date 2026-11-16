@@ -35,6 +35,11 @@ uniform float veil = 0.18;
 uniform float front_light = 1.0;
 uniform float pulse_from = 0.84;
 uniform float pulse = 0.6;
+// The red of danger inside an eruption (art review P5, the signature of his other warnings: ground.gdshader's
+// sign_fill of the warning red at its strength), filling from the middle with the veil; never on a summon.
+uniform vec3 danger : source_color = vec3(1.0, 0.18, 0.12);
+uniform float danger_fill = 0.35;
+uniform float danger_strength = 1.4;
 
 const float TAU_ = 6.2831853;
 #include "res://assets/shaders/rune_glyph.gdshaderinc"
@@ -111,5 +116,6 @@ void fragment() {
 	c += deep * fill * (1.0 + beat * 0.5);
 	// once landed: a last flare at the middle that fades with it
 	c += spirit * (1.0 - smoothstep(0.0, 0.7, d)) * (after > 0.0 ? (1.0 - smoothstep(0.0, 0.35, after)) * 0.2 : 0.0);
-	ALBEDO = c * lvl * strength * shown * gone * gone;
+	float harm = kind == 0 ? step(d, p) * danger_fill * danger_strength : 0.0;
+	ALBEDO = (c * lvl * strength + danger * harm) * shown * gone * gone;
 }

@@ -8,6 +8,10 @@ const METEOR_DELAY := 0.45
 ## A column of a gift that falls on a boss or a guardian is drawn this much fainter (ART-004 of cycle 10: the
 ## column's white core covered Morvath; his shape must read through it).
 const BEAM_OVER_BOSS := 0.2
+## Art review P4 (2026-11-16): a column standing in front of him covered him too (the frost gift's 16 m column, the
+## camera 30 degrees up: a column hides the floor behind it out to its height / tan(pitch)), and its white core went
+## past the glow even faint. Over him its light also stops at this (beam.gdshader's cap: under the glow threshold).
+const BEAM_CORE_CAP := 1.0
 const ORBIT_SPEED := 2.6
 const ORBIT_TICK := 0.3
 
@@ -122,12 +126,29 @@ func _cast(b: Boon) -> bool:
 
 ## The column of light (or fire, or frost) of a gift falling at a point; faint where it would stand over the boss.
 func _beam(at: Vector2, color: Color, radius: float, height: float, time: float) -> void:
-	game.fx.beam(at, color, radius, height, time, Fx.BEAM_INTENSITY * (BEAM_OVER_BOSS if over_boss(game.boss_enemy(), at, radius) else 1.0))
+	var feel := Feel.live()
+	if over_boss(game.boss_enemy(), at, radius, height, feel.cam_yaw, feel.cam_pitch):
+		game.fx.beam(at, color, radius, height, time, Fx.BEAM_INTENSITY * BEAM_OVER_BOSS, BEAM_CORE_CAP)
+	else:
+		game.fx.beam(at, color, radius, height, time)
 
 
-## True when a column of this radius at this point stands over the boss (or guardian) shown, if any.
-static func over_boss(boss: Enemy, at: Vector2, radius: float) -> bool:
-	return boss != null and boss.alive and at.distance_to(boss.pos) < boss.def.radius + radius
+## True when a column of this radius at this point stands over the boss (or guardian) shown, if any: on him, or, with
+## its height and the camera's yaw and pitch, in front of him on the screen (he stands in the strip of floor the
+## column hides, behind its foot as the camera sees it).
+static func over_boss(boss: Enemy, at: Vector2, radius: float, height := 0.0, yaw_deg := 0.0, pitch_deg := 30.0) -> bool:
+	if boss == null or not boss.alive:
+		return false
+	var reach := boss.def.radius + radius
+	if at.distance_to(boss.pos) < reach:
+		return true
+	if height <= 0.0:
+		return false
+	# away from the camera along the floor (the camera sits at +(sin yaw, cos yaw) from what it looks at)
+	var away := -Vector2(sin(deg_to_rad(yaw_deg)), cos(deg_to_rad(yaw_deg)))
+	var v := boss.pos - at
+	var along := v.dot(away)
+	return along > 0.0 and along < height / tan(deg_to_rad(maxf(pitch_deg, 5.0))) and absf(v.cross(away)) < reach
 
 
 func _queue(at: Vector2, delay: float, radius: float, damage: float, tags: Array[StringName], status: StringName, power: float, color: Color, big: bool = false) -> void:

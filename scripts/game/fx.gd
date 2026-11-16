@@ -23,6 +23,7 @@ const MOTE_GRAVITY := 5.0
 const MOTE_DRAG := 3.5
 ## The light of a pillar (beam.gdshader's intensity) when nothing asks for less.
 const BEAM_INTENSITY := 2.5
+const BEAM_NO_CAP := 1000.0
 ## Old gold, lit: one mote in MOTE_GOLD_EVERY (the veins of the blade).
 const OLD_GOLD := Color(0.95, 0.72, 0.3)
 const MOTE_GOLD_EVERY := 4
@@ -611,7 +612,9 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
 ## is the usual one, less where it must not cover someone).
-func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, time: float = 0.45, intensity: float = BEAM_INTENSITY) -> void:
+## cap: no channel of its light past this (BEAM_NO_CAP: as bright as it comes).
+func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, time: float = 0.45, intensity: float = BEAM_INTENSITY,
+		cap: float = BEAM_NO_CAP) -> void:
 	var b: Dictionary = _take(_beams)
 	var mi: MeshInstance3D = b.node
 	mi.position = Vector3(at.x, height * 0.5, at.y)
@@ -619,6 +622,7 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 	b.size = radius
 	(b.mat as ShaderMaterial).set_shader_parameter(&"color", color)
 	(b.mat as ShaderMaterial).set_shader_parameter(&"intensity", intensity)
+	(b.mat as ShaderMaterial).set_shader_parameter(&"cap", cap)
 	b.time = time
 
 

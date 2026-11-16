@@ -192,9 +192,14 @@ const TOWER := Vector4(286.0, 16.0, 3.2, 30.0)
 const TOWER_WINDOW := Vector3(3.5, 0.5, 0.9)
 const WARM_GLASS := Color(0.8, 0.45, 0.2)
 const FAR_RING := Vector3(38.0, -4.0, -30.0)
-const FAR_SPAN := Vector2(230.0, 400.0)
+const FAR_SPAN := Vector2(200.0, 470.0)
 const FAR_STEP := 10.0
-const WINDOW_EVERY := 3
+const WINDOW_EVERY := 1
+## Art review P6 (2026-11-16): the painting's far ring wraps the chamber on both sides with small warm windows; the
+## ring now spans from the west-south-west round the north to the east (FAR_SPAN), a window in every pier, small
+## and hot enough to read warm through the blue air (size, colour: past the glow threshold, a small point of glow each).
+const FAR_WINDOW := Vector2(0.55, 0.95)
+const FAR_WINDOW_GLASS := Color(2.4, 1.2, 0.45)
 const SPIRE_DIST: Array[float] = [86.0, 104.0]
 const SPIRE_HAZE: Array[float] = [0.35, 0.55]
 const SPIRE_COLUMN: Array[float] = [7.0, 5.0]
@@ -203,10 +208,12 @@ const SPIRE_SINK: Array[Vector2] = [Vector2(-10.0, -24.0), Vector2(-14.0, -30.0)
 const SPIRE_SIZE := Vector2(320.0, 110.0)
 const SPIRE_TOP := 30.0
 ## C11 polish (the sky read a bright saturated blue at the top): the spires are navy silhouettes in a navy mist, their
-## block tops only a little lighter (abyss_ruins: stone, edge, mist).
-const SPIRE_STONE := Color(0.012, 0.018, 0.045)
-const SPIRE_EDGE := Color(0.05, 0.08, 0.2)
-const SPIRE_MIST := Color(0.02, 0.04, 0.11)
+## block tops only a little lighter (abyss_ruins: stone, edge, mist). Art review P6: that went to near black (top of
+## the frame R 0, G 7, B 36); the painting's top between the chains is a deep blue (about R 12, G 41, B 84), so the
+## mist, the sky and the spires' edges go back up to it, the spires still darker than their mist.
+const SPIRE_STONE := Color(0.02, 0.04, 0.1)
+const SPIRE_EDGE := Color(0.08, 0.16, 0.36)
+const SPIRE_MIST := Color(0.04, 0.11, 0.22)
 ## Two lighter patches of mist on the farthest card (ArenaKit.ruin_card: x, height, radii).
 const SPIRE_PATCHES: Array[Vector4] = [Vector4(-30.0, -6.0, 18.0, 8.0), Vector4(20.0, -10.0, 14.0, 6.0)]
 const NO_PATCHES: Array[Vector4] = []
@@ -235,7 +242,7 @@ const BLUE_AT := Vector3(330.0, 45.0, 4.0)
 const BLUE_COLOR := Color(0.25, 0.5, 1.0)
 const BLUE_ENERGY := 1.2
 const BLUE_RANGE := 70.0
-const SKY := Color(0.012, 0.035, 0.09)
+const SKY := Color(0.035, 0.1, 0.2)
 ## The depths' stone (depth_stone.gdshader: body and lit edge), violet grey.
 const DEEP_STONE := Color(0.07, 0.065, 0.11)
 const DEEP_EDGE := Color(0.17, 0.14, 0.28)
@@ -297,9 +304,12 @@ const CRACK: Array[Array] = [
 	[Vector2(-3.0, 3.05), Vector2(-3.5, 3.5), 3.4, 4.0, 0.035, 0.03],
 	[Vector2(2.2, -2.2), Vector2(2.65, -2.65), 3.0, 3.6, 0.035, 0.03],
 ]
-## The floor's slate (catacomb_floor: the two ends of its stones' colour), a grey with a little violet.
-const FLOOR_A := Color(0.2, 0.2, 0.25)
-const FLOOR_B := Color(0.28, 0.27, 0.33)
+## The floor's slate (catacomb_floor: the two ends of its stones' colour), a grey with a little violet. Art review P1
+## (2026-11-16): the painting's floor reads a mid grey violet (luminance 53); at 0.2 to 0.28 it read 18 under the
+## chamber's cold light, so the slate is lighter and a touch warmer (the blue comes from the light), the joints and
+## the seal keep their own dark. The hall's floor is its own (CatacombHall), untouched.
+const FLOOR_A := Color(0.36, 0.33, 0.33)
+const FLOOR_B := Color(0.46, 0.42, 0.42)
 ## Where the crack closes to in the victory (the lion's heart, seal's frame).
 const CRACK_HEART := Vector2(-0.6, -0.7)
 ## Morvath's phases: the ritual's and the last one's (BossDef.ritual_phase, final_light_phase).
@@ -1390,13 +1400,13 @@ func _far() -> void:
 		m.box(_v3(at, FAR_RING.y - 0.8), Vector3(bay + 0.2, 1.6, 2.2), yaw, far, false)
 		m.arch_ring(_v3(at, FAR_RING.y - 4.5), at_bearing(b, 1.0), 4.0, 0.7, 1.8, far, 0.75)
 		m.box(_v3(at_bearing(b, FAR_RING.x + 3.0), (FAR_RING.y + FAR_RING.z) * 0.5 - 2.0), Vector3(bay, FAR_RING.y - FAR_RING.z, 1.0), yaw, _deep(0.9, 0.3), false)
-		if i % WINDOW_EVERY == 1:
+		if i % WINDOW_EVERY == WINDOW_EVERY - 1:
 			var wp := at_bearing(b + FAR_STEP * 0.5, FAR_RING.x - 1.05)
 			var lw := MeshInstance3D.new()
 			var lq := QuadMesh.new()
-			lq.size = Vector2(0.6, 1.0)
+			lq.size = FAR_WINDOW
 			lw.mesh = lq
-			lw.material_override = _unlit(WARM_GLASS * 1.2)
+			lw.material_override = _unlit(FAR_WINDOW_GLASS)
 			lw.transform = Transform3D(Basis(Vector3.UP, yaw + deg_to_rad(FAR_STEP * 0.5)), _v3(wp, FAR_RING.y - 3.0))
 			add_child(lw)
 		b += FAR_STEP

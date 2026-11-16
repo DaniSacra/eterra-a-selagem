@@ -18,6 +18,17 @@ const RIM_METERS := 0.28
 ## runes 0.3 m: ground.gdshader's signature).
 const SIGN_RIM := 0.18
 const SIGN_PAD := 0.38
+## The red fill of his warnings (ground.gdshader's sign_fill; the eruptions' circles take it too, art review P5).
+const SIGN_FILL := 0.35
+## The storm's lanes (art review P2): nothing drawn this close to their root (Morvath), and their fill comes up from
+## STORM_ROOT_FILL of itself there to all of it STORM_SOFT meters further out.
+const STORM_CLEAR := 1.2
+const STORM_SOFT := 2.5
+const STORM_ROOT_FILL := 0.35
+## The storm's lanes cover most of the floor at once: their red fill is lighter than his other warnings' (SIGN_FILL),
+## so the lighter floor of the chamber (P1) under six of them does not go to a hot pink (the rims, the fronts, the order
+## marks and the runes stay as they are).
+const STORM_FILL := 0.2
 ## The storm's rim by its place in the order of leaving (the next to leave first): its share of the light.
 const ORDER_LEVELS: Array[float] = [1.0, 0.7, 0.55, 0.45, 0.38, 0.32]
 
@@ -45,6 +56,11 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	m.set_shader_parameter(&"pad_m", pad)
 	m.set_shader_parameter(&"order_marks", 0.0)
 	m.set_shader_parameter(&"order_level", 1.0)
+	m.set_shader_parameter(&"wedge", Vector2.ZERO)
+	m.set_shader_parameter(&"root_clear_m", 0.0)
+	m.set_shader_parameter(&"root_soft_m", 0.0)
+	m.set_shader_parameter(&"root_fill", 1.0)
+	m.set_shader_parameter(&"sign_fill", SIGN_FILL)
 	m.set_shader_parameter(&"color", color)
 	m.set_shader_parameter(&"progress", 0.0)
 	m.set_shader_parameter(&"style", style)
@@ -89,3 +105,35 @@ static func order(node: MeshInstance3D, marks: int, rank: int) -> void:
 	if marks >= 0:
 		m.set_shader_parameter(&"order_marks", float(marks))
 	m.set_shader_parameter(&"order_level", ORDER_LEVELS[clampi(rank, 0, ORDER_LEVELS.size() - 1)])
+
+
+## A storm lane's share of the floor round its root (ground.gdshader's wedge): half the angle to the lane next to it on
+## the quad's +x side (the next smaller angle, Vector2.angle) and on the other side, and nothing within STORM_CLEAR.
+static func storm_wedge(node: MeshInstance3D, wedge: Vector2) -> void:
+	var m := node.material_override as ShaderMaterial
+	m.set_shader_parameter(&"wedge", wedge)
+	m.set_shader_parameter(&"root_clear_m", STORM_CLEAR)
+	m.set_shader_parameter(&"root_soft_m", STORM_SOFT)
+	m.set_shader_parameter(&"root_fill", STORM_ROOT_FILL)
+	m.set_shader_parameter(&"sign_fill", STORM_FILL)
+
+
+## The wedges of lanes leaving one point the ways in dirs (unit): for each, half the angle to its neighbour with the
+## next smaller angle (x) and to the one with the next larger (y), in radians. One lane alone keeps its whole width.
+static func storm_wedges(dirs: PackedVector2Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var n := dirs.size()
+	for i in n:
+		if n < 2:
+			out.append(Vector2.ZERO)
+			continue
+		var lo := TAU
+		var hi := TAU
+		for j in n:
+			if j == i:
+				continue
+			var gap := fposmod(dirs[j].angle() - dirs[i].angle(), TAU)
+			hi = minf(hi, gap)
+			lo = minf(lo, TAU - gap)
+		out.append(Vector2(lo, hi) * 0.5)
+	return out
