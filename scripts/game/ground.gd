@@ -86,6 +86,8 @@ class Zone:
 	var source: StringName = &""
 	## Which kind of enemy laid it (EnemyDef.id, Horde.acting; &"": none, as the boss's own): "Derrotado por".
 	var by: StringName = &""
+	## Whoever laid it was off the screen (1), on it (0), unknown (-1: the boss's own; Game reads his place).
+	var offscreen := -1
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -101,6 +103,12 @@ var fx: Fx
 var last_source: StringName = &""
 ## Which kind of enemy laid it (Zone.by).
 var last_by: StringName = &""
+## That warning's seconds on the floor and Zone.offscreen, for the run's log (GP-02).
+var last_warn := -1.0
+var last_offscreen := -1
+## The seconds the last warning of each source (Zone.source) showed, kept as it ends: a boss's crescents follow
+## the lanes he marks first (warned_for).
+var _warned := {}
 var _pool: Array[MeshInstance3D] = []
 var _found: Array[Enemy] = []
 var _rune_pool: Array[MeshInstance3D] = []
@@ -122,6 +130,11 @@ func rune_burst(at: Vector2, radius: float, warn_time: float, kind: Rune, damage
 	z.eruption = kind == Rune.ERUPTION
 	_as_rune(z, kind)
 	return z
+
+
+## The seconds the last warning of this source showed on the floor (0: none yet).
+func warned_for(source: StringName) -> float:
+	return float(_warned.get(source, 0.0))
 
 
 ## How many ritual circles are still dissolving (tests).
@@ -221,6 +234,8 @@ func step(dt: float) -> void:
 			if z.eruption and z.rune == Rune.NONE:
 				_as_rune(z, Rune.ERUPTION)
 			if z.life <= 0.0:
+				if z.source != &"":
+					_warned[z.source] = z.total
 				# the circle and its column live on a moment after the blow (only drawn: the zone itself is gone)
 				if z.rune != Rune.NONE and not z.cancelled:
 					_dissolve(z.node, z.pos, z.radius, z.rune)
@@ -262,6 +277,8 @@ func _land(z: Zone) -> void:
 	if player and player.alive() and inside(z, player.pos, Player.RADIUS * 0.6):
 		last_source = z.source
 		last_by = z.by
+		last_warn = z.total
+		last_offscreen = z.offscreen
 		hit_player.emit(z.power, center)
 
 
@@ -278,6 +295,7 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	z.power = power
 	z.color = COLORS[kind]
 	z.by = horde.acting if horde else &""
+	z.offscreen = horde.screen_flag(horde.acting_pos) if horde else -1
 	z.node = _pool.pop_back() if not _pool.is_empty() else _new_node()
 	z.mat = z.node.material_override
 	z.node.visible = true

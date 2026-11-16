@@ -68,6 +68,11 @@ const MUSIC := {
 	&"seal": [0.6, W.SINE, W.TRIANGLE, [0, R, 5, R, 7, R, 0, R, 5, R, 7, R, 12, R, R, R], [16, R, 19, 21, 24, R, 21, 19, 16, R, 19, 21, 24, 28, 24, R]],
 }
 
+## The ceiling of everything heard (GP-05 of cycle C12c): a hard limiter at the end of the Master bus keeps the sum
+## of a full fight at most this loud (the video of cycle 12 peaked at +0.04 dBFS, a clip).
+const LIMIT_DB := -1.0
+const LIMIT_RELEASE := 0.1
+
 var _streams: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
@@ -93,7 +98,22 @@ func _ready() -> void:
 	_music = AudioStreamPlayer.new()
 	_music.bus = &"Music"
 	add_child(_music)
+	limit_master()
 	apply_volumes()
+
+
+## Puts the limiter (LIMIT_DB) at the end of the Master bus, once. Returns it.
+static func limit_master() -> AudioEffectHardLimiter:
+	var bus := AudioServer.get_bus_index(&"Master")
+	for i in AudioServer.get_bus_effect_count(bus):
+		var fx := AudioServer.get_bus_effect(bus, i)
+		if fx is AudioEffectHardLimiter:
+			return fx
+	var limiter := AudioEffectHardLimiter.new()
+	limiter.ceiling_db = LIMIT_DB
+	limiter.release = LIMIT_RELEASE
+	AudioServer.add_bus_effect(bus, limiter)
+	return limiter
 
 
 func apply_volumes() -> void:

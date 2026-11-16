@@ -12,8 +12,6 @@ const START_DELAY := 1.0
 ## Meters from the reward or a pedestal that count as touching it.
 const TOUCH := 1.6
 const FADE := 0.35
-## Meters per pixel of the words over doors and rewards (64 px font: about 0.6 m tall letters).
-const MARKER_TEXT_PIXEL := 0.009
 ## The last kill of a room: world speed, seconds held and seconds back to normal (Hades II: 0.35, about 0.6, 0.4).
 const LAST_KILL_SLOW := 0.35
 const LAST_KILL_HOLD := 0.55
@@ -132,8 +130,8 @@ func _enter(next: RunMap.Room) -> void:
 			layout = stage.boss_layout
 		RunMap.Kind.SHOP:
 			layout = stage.shop_layout
+	var variant := room.variant
 	if layout != null:
-		var variant := room.variant
 		if Dev.has("variant") and room.depth == 1:
 			variant = int(Dev.num("variant", 0))
 		layout = layout.variant(variant)
@@ -149,7 +147,10 @@ func _enter(next: RunMap.Room) -> void:
 		if xz.size() == 2:
 			game.player.place(Vector2(float(xz[0]), float(xz[1])))
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
-	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS)
+	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS,
+		variant, gold, game.boons.owned().size())
+	if room.kind == RunMap.Kind.SHOP:
+		game.room_tally.shop_entered(gold)
 	_queue.clear()
 	_waves.clear()
 	_wave = -1
@@ -185,6 +186,7 @@ func _enter(next: RunMap.Room) -> void:
 	if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"":
 		# the arena's name for 2 s (decision D-33)
 		game.hud.show_place(T.t(game.arena.name_key))
+	game.snap_camera()
 	_fade_in()
 
 
@@ -223,7 +225,7 @@ func _spawn(id: StringName) -> void:
 	game.horde.spawn(d, at, true)
 	game.fx.burst(&"shadow", Vector3(at.x, 0.6, at.y))
 	if d.elite:
-		game.fx.beam(at, d.rim_color, 1.2, 8.0, 0.8)
+		game.column(at, d.rim_color, 1.2, 8.0, 0.8)
 		if room.kind == RunMap.Kind.MINIBOSS:
 			game.hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}), 3.0)
 			Audio.play(&"elite")
@@ -283,6 +285,8 @@ func _room_cleared() -> void:
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
 	game.projectiles.clear_hostile()
+	# a warning still on the floor never hurts him once the room is won (QA-01)
+	game.ground.clear_warnings()
 	Audio.play(&"elite_down")
 	var found := _rng.randi_range(stage.room_gold_min, stage.room_gold_max)
 	if room.kind == RunMap.Kind.COMBAT:
@@ -294,7 +298,7 @@ func _room_cleared() -> void:
 		return
 	_reward_at = game.arena.resolve(game.arena.middle, 1.0)
 	_reward_node = _marker(_reward_at, room.reward, "")
-	game.fx.beam(_reward_at, _reward_color(room.reward), 1.4, 12.0, 1.0)
+	game.column(_reward_at, _reward_color(room.reward), 1.4, 12.0, 1.0)
 
 
 func _collect() -> void:
@@ -378,6 +382,7 @@ func _step_shop() -> void:
 				game.hud.show_notice(T.t(&"notice_no_gold"), 1.5)
 			continue
 		gold -= p.price
+		game.room_tally.bought(RunMap.Reward.keys()[p.item].to_lower(), p.price)
 		(p.node as Node3D).queue_free()
 		_pedestals.erase(p)
 		_give(p.item)
@@ -399,6 +404,22 @@ func bot_goal() -> Variant:
 
 # ---------- markers ----------
 
+## How bright a door's or a reward's gem is: its colour lifted this much, no channel past GEM_CAP (GP-01 of cycle
+## C12c: at 2.2 times its colour it went past the glow threshold and bloomed yellow; it glows by its light).
+const GEM_LIFT := 2.2
+const GEM_CAP := 1.0
+
+
+## The gem's colour: lifted by GEM_LIFT, then scaled down (hue kept) until its strongest channel is GEM_CAP.
+static func gem_color(c: Color) -> Color:
+	var lifted := Color(c.r * GEM_LIFT, c.g * GEM_LIFT, c.b * GEM_LIFT)
+	var top := maxf(lifted.r, maxf(lifted.g, lifted.b))
+	if top <= GEM_CAP:
+		return lifted
+	var k := GEM_CAP / top
+	return Color(lifted.r * k, lifted.g * k, lifted.b * k)
+
+
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).
 func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind = RunMap.Kind.COMBAT) -> Node3D:
 	var root := Node3D.new()
@@ -415,7 +436,7 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	gem.mesh = shape
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = Color(color.r * 2.2, color.g * 2.2, color.b * 2.2)
+	m.albedo_color = gem_color(color)
 	gem.material_override = m
 	gem.position.y = 1.6
 	root.add_child(gem)
@@ -428,17 +449,11 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	light.light_cull_mask = ~Arena.CROWD_LAYER
 	root.add_child(light)
 	if text != "":
-		var label := Label3D.new()
-		label.text = text
-		label.font = UiKit.BOLD_FONT
-		label.font_size = 64
-		label.pixel_size = MARKER_TEXT_PIXEL
-		label.outline_size = 16
-		label.modulate = UiKit.PALE
-		label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-		label.no_depth_test = true
-		label.position.y = 2.7
-		root.add_child(label)
+		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
+		var lines := text.split("\n", true, 1)
+		var sign := DoorSign.make(lines[0], lines[1] if lines.size() > 1 else "")
+		sign.position.y = 2.7
+		root.add_child(sign)
 	return root
 
 

@@ -10,8 +10,9 @@ const METEOR_DELAY := 0.45
 const BEAM_OVER_BOSS := 0.2
 ## Art review P4 (2026-11-16): a column standing in front of him covered him too (the frost gift's 16 m column, the
 ## camera 30 degrees up: a column hides the floor behind it out to its height / tan(pitch)), and its white core went
-## past the glow even faint. Over him its light also stops at this (beam.gdshader's cap: under the glow threshold).
-const BEAM_CORE_CAP := 1.0
+## past the glow even faint. Over him its light also stops at this (beam.gdshader's cap: under the glow threshold;
+## since cycle C12c every column stops there, Fx.BEAM_CORE_CAP).
+const BEAM_CORE_CAP := Fx.BEAM_CORE_CAP
 const ORBIT_SPEED := 2.6
 const ORBIT_TICK := 0.3
 
@@ -124,13 +125,10 @@ func _cast(b: Boon) -> bool:
 	return true
 
 
-## The column of light (or fire, or frost) of a gift falling at a point; faint where it would stand over the boss.
+## The column of light (or fire, or frost) of a gift falling at a point; faint where it would stand over the boss
+## or the paladin (Game.column).
 func _beam(at: Vector2, color: Color, radius: float, height: float, time: float) -> void:
-	var feel := Feel.live()
-	if over_boss(game.boss_enemy(), at, radius, height, feel.cam_yaw, feel.cam_pitch):
-		game.fx.beam(at, color, radius, height, time, Fx.BEAM_INTENSITY * BEAM_OVER_BOSS, BEAM_CORE_CAP)
-	else:
-		game.fx.beam(at, color, radius, height, time)
+	game.column(at, color, radius, height, time)
 
 
 ## True when a column of this radius at this point stands over the boss (or guardian) shown, if any: on him, or, with
@@ -139,14 +137,21 @@ func _beam(at: Vector2, color: Color, radius: float, height: float, time: float)
 static func over_boss(boss: Enemy, at: Vector2, radius: float, height := 0.0, yaw_deg := 0.0, pitch_deg := 30.0) -> bool:
 	if boss == null or not boss.alive:
 		return false
-	var reach := boss.def.radius + radius
-	if at.distance_to(boss.pos) < reach:
+	return covers(boss.pos, boss.def.radius, at, radius, height, yaw_deg, pitch_deg)
+
+
+## True when a column of this radius and height at `at` covers a body of body_radius standing at `body`: on it, or in
+## front of it on the screen (the body stands in the strip of floor the column hides, behind its foot as the camera
+## at yaw and pitch sees it). Height 0: only on it.
+static func covers(body: Vector2, body_radius: float, at: Vector2, radius: float, height := 0.0, yaw_deg := 0.0, pitch_deg := 30.0) -> bool:
+	var reach := body_radius + radius
+	if at.distance_to(body) < reach:
 		return true
 	if height <= 0.0:
 		return false
 	# away from the camera along the floor (the camera sits at +(sin yaw, cos yaw) from what it looks at)
 	var away := -Vector2(sin(deg_to_rad(yaw_deg)), cos(deg_to_rad(yaw_deg)))
-	var v := boss.pos - at
+	var v := body - at
 	var along := v.dot(away)
 	return along > 0.0 and along < height / tan(deg_to_rad(maxf(pitch_deg, 5.0))) and absf(v.cross(away)) < reach
 

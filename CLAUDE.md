@@ -84,7 +84,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Feel.screen_to_floor`). `--showcase`: câmera fixa no enquadramento da pintura, para comparar.
   Enquadramento (`CamFrame`, `core/cam_frame.gd`): o ponto que a câmera olha fica dentro das margens da sala (`Game.CAM_MARGIN`,
   `CAM_SOUTH`, medidas a 60 m e escaladas pela distância), mas o herói nunca fica a menos de 18% de uma borda da tela
-  (`CamFrame.SAFE`, `keep`): no patamar oeste a câmera segue ele além das margens.
+  (`CamFrame.SAFE`, `keep`): no patamar oeste a câmera segue ele além das margens. Ciclo C12c (GP-06): o ponto que a câmera
+  olha nunca anda mais que `CamFrame.MAX_SPEED` 24 m/s (0,4 m por quadro a 60 FPS; `CamFrame.follow`; no avanço o herói passa
+  dele por até 0,8 m, uns 2% da tela) e cada sala nova começa enquadrada nele (`Game.snap_camera` no `Rooms._enter`; antes a
+  câmera voava da sala anterior, até 2,9 m por quadro atrás do escurecimento). `--trace-cam` imprime por sala o maior salto
+  do alvo entre quadros e onde (`CAM_TRACE`, `CamFrame.JumpTrace`), e o da partida no fim.
 - Herói no meio da multidão: onde algo o cobre ele aparece como o próprio corpo iluminado, nas cores dele (ciclo 7: nada de
   silhueta chapada), com fio marfim fino em pixels da tela e a Emeth por cima, em três passes desenhados por último
   (`xray_depth`, `xray`, `xray_edge`; `Player.XRAY_*`), mais um anel fino petróleo no chão com uma cunha para onde ele olha
@@ -148,7 +152,12 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Ciclo 10: a coluna de um dom que cai sobre o chefe ou um guardião sai fraca (`Skills.BEAM_OVER_BOSS` 0,2 da luz,
   `Fx.beam(..., intensity)`; ART-004); as partículas de luz do herói (dom tomado, Ômega carregado, círculo) são marfim abaixo
   do glow (`&"light"` em `Fx.BURSTS`, até 1,1) e saem atrás dele vistas da câmera (`Fx.hero_burst`, `HERO_BURST_BACK`; ART-009).
-  Brilho pelo glow do `WorldEnvironment` (cores acima de 1 brilham).
+  Brilho pelo glow do `WorldEnvironment` (cores acima de 1 brilham). Ciclo C12c (GP-01): toda coluna de luz para em 1,0 por
+  canal (`Fx.BEAM_CORE_CAP`, o padrão do `Fx.beam`; `BEAM_NO_CAP` só pedido pelo nome) e passa por `Game.column`, que a deixa
+  fraca (`Skills.BEAM_OVER_BOSS`) a menos de 2 m do herói (`Game.BEAM_NEAR_HERO`) ou na frente dele ou do chefe na tela
+  (`Skills.covers`, `over_boss`): recompensa, fonte, dom tomado, dom que cai, elite que surge. Morvath entra sem coluna: anel
+  espectral no chão e almas aos pés (`Boss.ENTRANCE_RING`, `ENTRANCE_SOULS`). Gemas das portas e das recompensas com a cor
+  2,2 vezes e o maior canal em 1,0, mesmo matiz (`Rooms.gem_color`, `GEM_LIFT`, `GEM_CAP`). Testes em `tests/test_cycle12c.gd`.
 
 ## Primeira fase no molde do Hades II (2026-11-14)
 - A partida é por salas, com a estrutura e os números da primeira região do Hades II (estudo dos dados do jogo do
@@ -248,6 +257,15 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`gifts`: id, nível, raridade), o controle (`device`: keyboard, gamepad, both; `Controls.seen_keys`/`seen_pad`), `omegas`,
   `dodges`, o que feriu por último (`last_hurt`) e, na morte, `defeated_by` (chave de texto). Nada sai do computador; o robô e
   `--nosave` não gravam. Formato em `core/run_log.gd` (`RunLog`), sinal `Game.run_logged(outcome, entry)`.
+  Ciclo C12c (GP-02, `RunLog.VERSION` 2, para separar injusto de não reagiu): `source` (`human` ou `bot`), `boons_at_boss`,
+  `shop` (`gold` ao entrar, `bought`, `spent`), `fountain_used` e `hurt_ctx` (até 60 golpes levados: `by`, `t`, `room`, `dmg`,
+  `warn_s` = segundos de aviso antes do golpe, -1 sem aviso conhecido; `dash_ready`; `offscreen` = quem bateu fora dos 5 a
+  95% da tela ao bater ou atirar). Por sala (`RoomTally`): `variant`, `gold_in`, `boons_in`, `dodges`, `hits`, `hits_by`,
+  `shots` por atirador (`fired`, `hit`, `blocked`; Morvath é `morvath`) e `blocked_by` (peça que barrou). O aviso vem de quem
+  bate: `Horde.last_warn` (golpe erguido), `Ground.last_warn` (tempo do aviso no chão), `Projectiles.last_warn` (mira do
+  atirador, `Shot.warned`, mais o voo); a meia-lua de Morvath soma a faixa que ele marcou antes (`Ground.warned_for`).
+  Tela: `Horde.on_screen`/`screen_flag`, `Shot.offscreen`, `Zone.offscreen` (os avisos do próprio Morvath leem onde ele está).
+  `--runlog=arquivo` grava também a partida do robô, com `source: bot`.
 - "Derrotado por" (ciclo 10, QW-003, lógica): todo aviso e tiro de inimigo leva o tipo de quem o fez (`Ground.Zone.by`,
   `Projectiles.Shot.by`, preenchidos por `Horde.acting` durante o passo da multidão; o golpe direto por `Horde.last_by`);
   `Game.last_hurt` guarda `{attack, enemy}` do último golpe que tirou vida e `Game.defeated_by()` devolve a chave de texto
@@ -256,7 +274,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `name_key` do inimigo, senão `killer_unknown`; rótulo `defeated_by` ("Derrotado por: {name}"). A tela é do ui-ux-designer.
 - Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita;
   `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Golpes, ossos, escudo e atordoamento usam o Kenney Impact Sounds (CC0).
-  Música desligada por enquanto.
+  Música desligada por enquanto. Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1 dB
+  (`Audio.LIMIT_DB`, `Audio.limit_master`, posto uma vez ao iniciar; ciclo C12c, GP-05).
 
 ## Arenas (ciclo C12, Arenas I; plano em `docs/design/cycle12_arenas_plan.md`, plantas em `docs/art/cycle12_arenas_spec.md`)
 - A descida de teste tem 7 salas (D-27): abertura no Salão das Catacumbas, lutas sorteadas entre a Cripta dos Esquecidos,
@@ -307,10 +326,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   quebrados (`STUBS`), cristais esmeralda corrompido escuro (`CRYSTAL_GLOW`), raízes com dois lombos e pontas abertas
   (`TIP_ROOTS`); compensação de luz no Compatibility por sala (`COMPAT_*` na Cripta e no Jardim). Para estas arenas o Daniel
   pediu variedade de salas, não fidelidade às imagens conceituais (2026-11-16).
+  C12c (ENV-01 a ENV-03; evidências em `docs/gallery/cycle12c/work/env_*`): chão da luta na Cripta entre 45 e 60 longe das
+  velas (lajes mais claras em `CryptLook.FLOOR`, a luz de cima mais alta, mais larga e de queda lenta, deslocada para as
+  baías do oeste: `KEY_ENERGY` 1,8, `KEY_HEIGHT` 11, `KEY_FALLOFF` 0,5, `KEY_REACH` 26, `KEY_SHIFT`; sem luz nova, paredes
+  continuam escuras); fraturas da árvore no marfim velho, nunca brancas (`fracture_color` 0,5 no `stone_tree.gdshader`);
+  no Compatibility a lua do Jardim não faz sombra (`GardenLook.COMPAT_MOON_SHADOW`, menos 270 chamadas de desenho).
 - `RESULT` e o registro trazem `rooms` (por sala: profundidade, arena, vida ao entrar, dano por fonte, tempo e primeiro
-  contato), `hp_at_boss`, `arena`, `stuck`/`stuck_by` (inimigo que queria andar e ficou 3 s parado) e `shots_blocked`.
+  contato), `hp_at_boss`, `arena`, `stuck`/`stuck_by` (inimigo que queria andar e ficou 3 s parado) e `shots_blocked`;
+  desde o C12c também os campos do GP-02 por sala e `boons_at_boss`, `shop`, `fountain_used` (ver Registro das partidas).
 - Opções: `--arena=crypt|rift|garden|hall` (a primeira sala), `--variant=n`, `--short`, `--trace-steps` (imprime os
-  passos acima de 4 ms e onde o tempo foi). Laboratório sem personagens, com grade, bordas, peças, zonas e câmera:
+  passos acima de 4 ms e onde o tempo foi), `--trace-cam` (maior salto do alvo da câmera por sala, GP-06). Laboratório sem personagens, com grade, bordas, peças, zonas e câmera:
   `tools/arena_lab.gd` (comando no topo; `--top` vista de cima). Testes: `test_arenas.gd`, `test_descent.gd`,
   `test_killing_blow.gd`.
 
@@ -370,7 +395,13 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   10 de dano), separação de cores pequena só nos fortes; amaldiçoado (ou pelo projétil da maldição), borda violeta da aura com
   alfa 0,2 por 0,2 s e sem separação (`HurtTint`, `core/hurt_tint.gd`; números no grupo Hurt do `Feel`, `_feel` do
   `make_data.gd`; `hurt`, `curse` e `hurt_edge` no `screen.gdshader`). Derrota: "Derrotado por: X" logo abaixo do título
-  (`EndScreen`, `stats.defeated_by`). "Novo melhor tempo!" nunca sem save (`EndScreen.open` confere `Save.enabled`).
+  (`EndScreen`, `stats.defeated_by`) e, embaixo, onde caiu ("Sala 3 de 7, Cripta dos Esquecidos", `EndScreen.where_text`:
+  `stats.room`, `rooms_total`, `arena` ou, sem eles, o `Game` de cima; a sala de Morvath diz "A Câmara do Selo", o salão
+  "Salão das Catacumbas") e os dons levados em medalhões, como na vitória (`stats.gifts` ou `game.boons`; ciclo C12c, UI-02,
+  `tests/test_end_screen_run.gd`). Placas das portas, da recompensa e da loja: `DoorSign` (`scripts/ui/door_sign.gd`, UI-01):
+  nome em ouro claro e preço em marfim, Alegreya Sans Bold com contorno escuro, `fixed_size` com maiúsculas de
+  `DoorSign.CAP_PX` 19 px a 1080 linhas (proporcional em outras telas, pelo campo de visão da câmera) e contraste de pelo
+  menos 4,5:1 com o contorno (`DoorSign.contrast`). "Novo melhor tempo!" nunca sem save (`EndScreen.open` confere `Save.enabled`).
   Configurações: grupo "Conforto" com tremor, clarões de impacto, câmera lenta (com zoom e desfoque) e separação de cores, todos
   ligados por padrão (`OptionsScreen.COMFORT`, `Fx.slow_motion`, `Fx.color_split`, `Game.apply_options`); fluxo por teclas
   em `tools/title_flow_check.gd`, testes em `tests/test_comfort_ui.gd`. Capturas: `--shot-on=hurt|hurt-cursed|end|ritual-left:N`.
@@ -459,6 +490,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   máximo `Horde.BOSS_FLASH` 0,8, abaixo do `white_from` (antes o 1º quadro de um Ômega de geada deixava Morvath marfim).
 - Colisão do cenário: pilares são círculos (`RoomLayout.pillars`); escadas, entulho e barris são caixas sólidas
   (`Arena.boxes`, pelo `solid` de `_place`). Sai-se da sala pisando no pé da escada (`Arena.exit_at`).
+  `Arena.resolve` nunca deixa ninguém dentro de pedra (ciclo C12c, GP-03): espremido onde duas peças (ou peça e borda) ficam
+  mais perto que o corpo é largo, vai para o lugar livre mais perto (`Arena.overlaps`, `_free_near`, anéis de 0,1 m até 3 m);
+  invocações do Ancião por `Horde.raise_spot`. Testes em `test_arenas.gd`: o centro e 400 pontos dentro das peças de cada
+  arena e variante, 200 invocações do Ancião e 200 de Morvath, e "cercado" (GP-04: 2 esqueletos de cada lado nos 4
+  corredores mais estreitos de cada arena e variante, 16 de 16 esquivas saem mais de 2,5 m).
 - Corpos sólidos como no Hades II (`StopsUnits` na heroína e nos inimigos; pedido do Daniel, 2026-11-15: "trombar nos
   inimigos e empurrar eles" era estranho): o paladino andando, correndo, levando golpe ou no avanço de um golpe para no
   contorno do inimigo (círculo de `EnemyDef.radius`) e desliza ao longo dele, sem empurrar ninguém

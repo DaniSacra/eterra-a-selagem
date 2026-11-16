@@ -244,3 +244,147 @@ func test_the_grid_and_the_field_stay_cheap() -> void:
 			total += used
 		gut.p("%s: field and 8 bodies %.3f ms per step, worst %.3f ms" % [id, total / 240.0 / 1000.0, worst / 1000.0])
 		assert_lt(total / 240.0, 2000.0, "%s: well under 2 ms a step" % id)
+
+
+## GP-03 (QA B-2 of cycle C12): a point in the very middle of a piece (or anywhere inside it) is pushed out to its
+## nearest face, never left inside, and nobody raised (an elder's skeletons, Morvath's dead) stands in stone.
+func test_resolve_pushes_out_of_every_piece_even_from_its_middle() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 12
+	var all: Array[RoomLayout] = stage.layouts.duplicate()
+	all.append(stage.boss_layout)
+	for l in all:
+		for v in l.variant_count():
+			var a := _arena(l.variant(v), 3)
+			var pieces := a.blockers()
+			var inside := 0
+			var samples := 0
+			for o in pieces:
+				for r: float in [0.4, Player.RADIUS, 1.0]:
+					if _in_stone(a, a.resolve(o.center, r), r - 0.01):
+						inside += 1
+			# 400 points drawn inside the pieces
+			while samples < 400 and not pieces.is_empty():
+				var o: ArenaObstacle = pieces[rng.randi() % pieces.size()]
+				var size := Vector2.ONE * o.radius if o.shape == ArenaObstacle.Shape.CIRCLE else o.half
+				var p := o.center + (Vector2(rng.randf_range(-1, 1), rng.randf_range(-1, 1)) * size).rotated(o.yaw)
+				if o.depth(p, 0.0) <= 0.0:
+					continue
+				samples += 1
+				if _in_stone(a, a.resolve(p, Player.RADIUS), Player.RADIUS - 0.01):
+					inside += 1
+			assert_eq(inside, 0, "%s %d: nothing left inside a piece (%d pieces)" % [l.id, v, pieces.size()])
+
+
+func test_no_one_raised_stands_in_stone() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 21
+	# 200 skeletons of the elder (Horde.raise_spot), from where he may stand in each arena
+	var h := Horde.new()
+	add_child_autofree(h)
+	var bad := 0
+	for id: StringName in [&"hall", &"crypt", &"rift", &"garden"]:
+		var l := _layout(id)
+		for v in l.variant_count():
+			var a := _arena(l.variant(v), 3)
+			h.arena = a
+			for i in 200 / 7 + 1:
+				var from := Rooms.spawn_point(a, a.start, rng)
+				var at := h.raise_spot(from, i % Horde.PRIEST_RAISES)
+				if _in_stone(a, at, 0.49):
+					bad += 1
+	assert_eq(bad, 0, "200 of the elder's skeletons, none in stone")
+	# 200 of Morvath's dead (Boss._ring_spots), around him, the paladin anywhere on his floor
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	game.rooms.start_at(RunMap.Kind.BOSS)
+	for i in 50:
+		game.player.place(Vector2.from_angle(rng.randf() * TAU) * rng.randf_range(0.0, 11.0))
+		for at in game.boss._ring_spots(game.boss.e.pos, rng.randf_range(3.0, 9.0), 4):
+			if _in_stone(game.arena, at, 0.49) or not game.arena.inside(at, 0.5):
+				bad += 1
+	assert_eq(bad, 0, "and 200 of Morvath's, none in stone nor off his floor")
+
+
+func _in_stone(a: Arena, p: Vector2, r: float) -> bool:
+	for o in a.blockers():
+		if o.depth(p, r) > 0.0:
+			return true
+	return false
+
+
+## GP-04 (QA B-3 of cycle C12): "surrounded" with enemies. In the 4 narrowest ways of each arena and variant, two
+## skeletons on each side of the paladin; of his 16 dodges (4 in each way: toward each side, and each turned 25
+## degrees) at least 12 take him more than 2.5 m away (the dash goes through bodies, not through stone).
+func test_surrounded_in_the_narrowest_ways_the_dash_gets_out() -> void:
+	for id in ARENAS:
+		var l := _layout(id)
+		for v in l.variant_count():
+			var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+			add_child_autofree(game)
+			game.rebuild_room(l.variant(v), 2, 1406)
+			for e in game.horde.list:
+				e.alive = false
+			game.horde.list.clear()
+			var out := 0
+			var ways := _narrowest(game.arena, 4)
+			assert_eq(ways.size(), 4, "%s %d: four ways found" % [id, v])
+			var told: Array[String] = []
+			for w: Dictionary in ways:
+				var at: Vector2 = w.at
+				var axis: Vector2 = w.axis
+				for side: float in [1.0, -1.0]:
+					for gap: float in [1.3, 2.1]:
+						var e := game.horde.spawn(game.horde.def(&"skeleton"), game.arena.resolve(at + axis * side * gap, 0.5), false)
+						e.stun_t = 1000.0
+				game.horde.rehash()
+				for dir: Vector2 in [axis, -axis, axis.rotated(0.44), -axis.rotated(0.44)]:
+					var p := game.player
+					p.place(at)
+					var start := p.pos
+					p.invuln = 100.0
+					p.dodge_charges = p.dodge_max
+					p._start_dodge(dir)
+					for i in int((Feel.live().dodge_time + 0.05) * 60.0):
+						p.step(1.0 / 60.0, dir, Vector2.ZERO)
+						game.horde.target = p.pos
+						game.horde.step(1.0 / 60.0)
+					if p.pos.distance_to(start) > 2.5:
+						out += 1
+				for e in game.horde.list:
+					e.alive = false
+				game.horde.list.clear()
+				told.append("%s %.1f m" % [at, w.width])
+			gut.p("%s %d: %d of 16 dodges out of the narrowest ways %s" % [id, v, out, told])
+			assert_gte(out, 12, "%s %d: the dash gets him out" % [id, v])
+			game.queue_free()
+			await wait_process_frames(1)
+
+
+## The n narrowest ways of an arena's floor: walkable cells whose width across (free sweeps both sides, at most 3 m
+## each) is smallest along an axis with at least 2.5 m free each way; at least 3 m apart. {at, axis, width}.
+func _narrowest(a: Arena, n: int) -> Array[Dictionary]:
+	var found: Array[Dictionary] = []
+	var nav := a.nav
+	for i in range(0, nav.free.size(), 2):
+		if nav.free[i] == 0:
+			continue
+		var p := nav.center(i)
+		if not a.free_at(p, Player.RADIUS):
+			continue
+		var reach: Array[float] = []
+		for k in 8:
+			reach.append(a.sweep(p, p + Vector2.RIGHT.rotated(TAU * k / 8.0) * 3.0, Player.RADIUS).distance_to(p))
+		for k in 4:
+			if reach[k] < 2.5 or reach[k + 4] < 2.5:
+				continue
+			var width := reach[(k + 2) % 8] + reach[(k + 6) % 8]
+			found.append({"at": p, "axis": Vector2.RIGHT.rotated(TAU * k / 8.0), "width": width})
+	found.sort_custom(func(x: Dictionary, y: Dictionary) -> bool: return float(x.width) < float(y.width))
+	var out: Array[Dictionary] = []
+	for f in found:
+		if out.all(func(o: Dictionary) -> bool: return Vector2(o.at).distance_to(f.at) >= 3.0):
+			out.append(f)
+			if out.size() == n:
+				break
+	return out

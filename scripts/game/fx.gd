@@ -23,6 +23,10 @@ const MOTE_GRAVITY := 5.0
 const MOTE_DRAG := 3.5
 ## The light of a pillar (beam.gdshader's intensity) when nothing asks for less.
 const BEAM_INTENSITY := 2.5
+## No channel of a pillar's light past this (cycle C12c, GP-01): every column of the game (reward, fountain, a gift
+## taken, a gift falling, an elite rising) stays under the glow threshold, so it never whitens over the paladin or
+## Morvath. BEAM_NO_CAP only when asked for by name.
+const BEAM_CORE_CAP := 1.0
 const BEAM_NO_CAP := 1000.0
 ## Old gold, lit: one mote in MOTE_GOLD_EVERY (the veins of the blade).
 const OLD_GOLD := Color(0.95, 0.72, 0.3)
@@ -162,6 +166,8 @@ var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
+## The last pillar raised (beam): where, its intensity and cap (tests of GP-01).
+var last_beam := {}
 ## One label per entry of the tally.
 var _labels: Array[Label] = []
 var _tally := NumberTally.new(NUMBER_POOL)
@@ -612,10 +618,11 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
 ## is the usual one, less where it must not cover someone).
-## cap: no channel of its light past this (BEAM_NO_CAP: as bright as it comes).
+## cap: no channel of its light past this (BEAM_CORE_CAP, under the glow; BEAM_NO_CAP: as bright as it comes).
 func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, time: float = 0.45, intensity: float = BEAM_INTENSITY,
-		cap: float = BEAM_NO_CAP) -> void:
+		cap: float = BEAM_CORE_CAP) -> void:
 	var b: Dictionary = _take(_beams)
+	last_beam = {"at": at, "intensity": intensity, "cap": cap}
 	var mi: MeshInstance3D = b.node
 	mi.position = Vector3(at.x, height * 0.5, at.y)
 	mi.scale = Vector3(radius, height, radius)

@@ -1,31 +1,103 @@
 class_name RoomTally
 extends RefCounted
 ## The rooms of one run in numbers (QW-011, for the human tests): for each room entered, its depth, the arena it was
-## (RoomLayout.id), the paladin's life walking in, the damage he took there by what dealt it (DefeatCause.key: an
-## enemy kind or a boss attack), the seconds spent in it and the seconds to the first blow given or taken (contact).
-## Pure; Game feeds it, RESULT and the run's log carry rooms() and hp_at_boss.
+## (RoomLayout.id) and its variant, the paladin's life, gold and gifts walking in, the damage he took there by what
+## dealt it (DefeatCause.key: an enemy kind or a boss attack) and how many blows, his dodges, the enemies' shots by
+## kind (fired, hit, blocked) and what stone stopped them, the seconds spent in it and the seconds to the first blow
+## given or taken (contact). For the whole run (GP-02 of cycle C12c): every blow taken in its context (hurt_ctx: was
+## it warned, could he dash, was the attacker on the screen), the gifts held at Morvath, the shop and the fountain.
+## Pure; Game feeds it, RESULT and the run's log carry rooms() and the rest.
+
+## At most this many blows are kept in hurt_ctx (a run of a person rarely takes more; the log stays small).
+const HURT_CTX_MAX := 60
+## What happens to a shot (shots: per enemy kind, how many of each).
+const SHOT_FIRED := "fired"
+const SHOT_HIT := "hit"
+const SHOT_BLOCKED := "blocked"
 
 var _rooms: Array[Dictionary] = []
 var _started := 0.0
 ## Life when the boss room was entered (-1: not yet).
 var hp_at_boss := -1.0
+## Gifts held when the boss room was entered (-1: not yet).
+var boons_at_boss := -1
+## Every blow taken (up to HURT_CTX_MAX): {by, t, room, dmg, warn_s, dash_ready, offscreen}.
+var hurt_ctx: Array[Dictionary] = []
+## The shop: gold walking in and what was bought ({} before it).
+var shop := {}
+## The fountain healed him.
+var fountain_used := false
 
 
-## A room is entered at play time `time` with `hp` life. The room before it is closed.
-func enter(depth: int, layout: String, hp: float, time: float, boss := false) -> void:
+## A room is entered at play time `time` with `hp` life, `gold` and `boons` gifts held. The room before it is closed.
+func enter(depth: int, layout: String, hp: float, time: float, boss := false, variant := 0, gold := 0, boons := 0) -> void:
 	close(time)
 	_started = time
-	_rooms.append({"depth": depth, "layout": layout, "hp_in": snappedf(hp, 0.1), "hurt_by": {}, "time": 0.0, "contact": -1.0})
+	_rooms.append({"depth": depth, "layout": layout, "variant": variant, "hp_in": snappedf(hp, 0.1), "gold_in": gold,
+		"boons_in": boons, "hurt_by": {}, "hits": 0, "hits_by": {}, "dodges": 0, "shots": {}, "blocked_by": {},
+		"time": 0.0, "contact": -1.0})
 	if boss:
 		hp_at_boss = snappedf(hp, 0.1)
+		boons_at_boss = boons
 
 
-## The paladin lost `amount` life to `by` in the current room.
+## The paladin lost `amount` life to `by` in the current room (one blow).
 func hurt(by: String, amount: float) -> void:
 	if _rooms.is_empty() or amount <= 0.0:
 		return
-	var h: Dictionary = _rooms[-1].hurt_by
+	var r := _rooms[-1]
+	var h: Dictionary = r.hurt_by
 	h[by] = snappedf(float(h.get(by, 0.0)) + amount, 0.1)
+	r.hits = int(r.hits) + 1
+	_count(r.hits_by, by)
+
+
+## A blow taken, in its context: by (DefeatCause.key), at play time `time`, `amount` lost, warn_s (seconds its
+## warning was shown before it landed; -1: none), dash_ready (a dodge charge was there to use), offscreen (whoever
+## dealt it was off the screen when it struck or fired).
+func hurt_context(by: String, time: float, amount: float, warn_s: float, dash_ready: bool, offscreen: bool) -> void:
+	if hurt_ctx.size() >= HURT_CTX_MAX:
+		return
+	hurt_ctx.append({"by": by, "t": snappedf(time, 0.1), "room": int(_rooms[-1].depth) if not _rooms.is_empty() else 0,
+		"dmg": snappedf(amount, 0.1), "warn_s": snappedf(warn_s, 0.01) if warn_s >= 0.0 else -1.0,
+		"dash_ready": dash_ready, "offscreen": offscreen})
+
+
+## The paladin dodged in the current room.
+func dodge() -> void:
+	if not _rooms.is_empty():
+		_rooms[-1].dodges = int(_rooms[-1].dodges) + 1
+
+
+## An enemy's shot (by: its kind, or the boss) was fired, hit him or was stopped (SHOT_*); a stopped one names the
+## piece of stone it died on (blocked_by).
+func shot(by: String, what: String, piece := "") -> void:
+	if _rooms.is_empty():
+		return
+	var shots: Dictionary = _rooms[-1].shots
+	if not shots.has(by):
+		shots[by] = {SHOT_FIRED: 0, SHOT_HIT: 0, SHOT_BLOCKED: 0}
+	shots[by][what] = int(shots[by].get(what, 0)) + 1
+	if what == SHOT_BLOCKED and piece != "":
+		_count(_rooms[-1].blocked_by, piece)
+
+
+## The shop was walked into with `gold`.
+func shop_entered(gold: int) -> void:
+	shop = {"gold": gold, "bought": [], "spent": 0}
+
+
+## Bought `item` (a RunMap.Reward's name) for `price` in the shop.
+func bought(item: String, price: int) -> void:
+	if shop.is_empty():
+		shop_entered(0)
+	(shop.bought as Array).append(item)
+	shop.spent = int(shop.spent) + price
+
+
+## The fountain healed him.
+func fountain() -> void:
+	fountain_used = true
 
 
 ## The first blow given or taken in the current room, at play time `time` (contact: seconds after walking in; only
@@ -45,3 +117,13 @@ func close(time: float) -> void:
 func rooms(time: float) -> Array:
 	close(time)
 	return _rooms.duplicate(true)
+
+
+## The run's own fields (GP-02) for the log: boons_at_boss, shop, fountain_used and hurt_ctx (copies).
+func run_fields() -> Dictionary:
+	return {"boons_at_boss": boons_at_boss, "shop": shop.duplicate(true), "fountain_used": fountain_used,
+		"hurt_ctx": hurt_ctx.duplicate(true)}
+
+
+static func _count(d: Dictionary, key: String) -> void:
+	d[key] = int(d.get(key, 0)) + 1

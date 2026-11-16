@@ -89,8 +89,14 @@ var target_alive := true
 ## The kind (EnemyDef.id) acting now, while the crowd steps (&"" outside it): the warnings and shots it lays carry it
 ## (Ground.Zone.by, Projectiles.Shot.by), so the game knows what hurt the paladin ("Derrotado por").
 var acting: StringName = &""
+## Where the kind acting now stands (Vector2.INF outside the crowd's step): its warnings know if it was on the screen.
+var acting_pos := Vector2.INF
 ## The kind whose blow hurt the paladin last (its own swing, no warning in between), read as hit_player is emitted.
 var last_by: StringName = &""
+## That blow's warning (the seconds its swing was raised) and whether it came from off the screen (1), on it (0) or
+## unknown (-1), for the run's log (RoomTally.hurt_context; GP-02).
+var last_warn := -1.0
+var last_offscreen := -1
 ## Where a floor point shows on the screen (0 to 1; Game sets it from its camera; unset: everywhere is seen).
 var view := Callable()
 ## Enemies that got stuck this run, by kind (RESULT stuck; Bot.stats).
@@ -177,8 +183,10 @@ func step(dt: float) -> void:
 		_timers(e, dt)
 		if e.alive and not e.helpless():
 			acting = e.def.id
+			acting_pos = e.pos
 			_behave(e, dt)
 			acting = &""
+			acting_pos = Vector2.INF
 			_watch_stuck(e, dt)
 		if (i + _frame) % 2 == 0:
 			_separate(e)
@@ -279,6 +287,8 @@ func _behave_melee(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 				if target_alive and dist < reach + 0.5:
 					last_by = e.def.id
+					last_warn = e.state_t
+					last_offscreen = screen_flag(e.pos)
 					hit_player.emit(e.def.damage * damage_scale, e.pos)
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.35:
@@ -418,6 +428,8 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 		var aim := dir.rotated(turn)
 		var s := projectiles.fire(Projectiles.Kind.ORB if d.shot_orb else Projectiles.Kind.BOLT, e.pos + aim * (d.radius + 0.2), aim,
 			d.shot_speed, d.attack_damage * damage_scale, 0.45 if d.shot_orb else 0.4, life, d.magic_color)
+		# its warning so far: the aim it held (a shot of a burst, the time since the burst began too)
+		s.warned = e.state_t + (d.attack_windup if e.state == Enemy.State.ATTACK else 0.0)
 		if d.shot_turn > 0.0:
 			s.turn = deg_to_rad(d.shot_turn)
 			s.turn_decay = deg_to_rad(d.shot_turn_decay)
@@ -509,6 +521,11 @@ func _behave_melee_walk(e: Enemy, dt: float, _toward: Vector2, dist: float) -> v
 		e.pos += _walk * _speed(e) * dt
 
 
+## Where the k-th skeleton an elder raises from `from` stands: on a ring of 3.5 m, on the floor and out of stone.
+func raise_spot(from: Vector2, k: int) -> Vector2:
+	return arena.resolve(from + Vector2.from_angle(TAU * k / PRIEST_RAISES) * 3.5, 0.5)
+
+
 ## Elite: stays back, raises skeletons around itself and shoots a fan of orbs.
 func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
@@ -520,7 +537,7 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if raised > 0:
 				var skeleton := def(&"skeleton")
 				for k in raised:
-					var at := arena.resolve(e.pos + Vector2.from_angle(TAU * k / PRIEST_RAISES) * 3.5, 0.5)
+					var at := raise_spot(e.pos, k)
 					spawn(skeleton, at, true)
 					fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
 				Audio.play(&"summon")
@@ -612,10 +629,22 @@ func _way(e: Enemy, toward: Vector2, dist: float) -> Vector2:
 func _can_fire(e: Enemy) -> bool:
 	if not arena.clear_shot(e.pos, target, LINE_OF_FIRE):
 		return false
+	return on_screen(e.pos)
+
+
+## True when a body at p shows on the screen, VIEW_EDGE inside its edges (always, without a view).
+func on_screen(p: Vector2) -> bool:
 	if not view.is_valid():
 		return true
-	var s: Vector2 = view.call(e.pos)
+	var s: Vector2 = view.call(p)
 	return s.x >= VIEW_EDGE and s.x <= 1.0 - VIEW_EDGE and s.y >= VIEW_EDGE and s.y <= 1.0 - VIEW_EDGE
+
+
+## For the run's log: 1 when a body at p is off the screen, 0 on it, -1 unknown (no view, or p is Vector2.INF).
+func screen_flag(p: Vector2) -> int:
+	if not view.is_valid() or not p.is_finite():
+		return -1
+	return 0 if on_screen(p) else 1
 
 
 ## Counts an enemy that wants to come closer and has not moved for STUCK_TIME seconds (once each).

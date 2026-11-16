@@ -73,9 +73,10 @@ const SPRING_ARCH := Vector3(2.2, 0.34, 0.36)
 ## The springers' depth (a share of the shaft's radius) and the round pieces' sides (smoother than a plain shaft).
 const SPRING_DEEP := 1.2
 const CAPITAL_SIDES := 18
-## The floor (spec 2.5): small cold slabs.
+## The floor (spec 2.5): small cold slabs, a step lighter than the walls' cut stone so the fight's ground reads 45 to 60
+## away from the candles (ENV-01: was 0.24 and 0.34, the fight's floor at 27 to 42).
 const FLOOR := {
-	&"unit": 0.8, &"stone_a": Color(0.24, 0.24, 0.28), &"stone_b": Color(0.34, 0.33, 0.38),
+	&"unit": 0.8, &"stone_a": Color(0.31, 0.31, 0.36), &"stone_b": Color(0.44, 0.43, 0.49),
 	&"joint_color": Color(0.08, 0.08, 0.1), &"moss_color": Color(0.22, 0.22, 0.25), &"petal_color": Color(0.24, 0.24, 0.28),
 	&"missing": 0.08, &"cracked": 0.3,
 }
@@ -97,7 +98,15 @@ const COLD_HEIGHT := 14.0
 const COLD_LEAN := Vector2(-2.0, -2.5)
 ## The soft key over the middle (no shadow): its colour and energy (the pools of fire stay the brighter).
 const KEY := Color(0.85, 0.78, 0.74)
-const KEY_ENERGY := 6.5
+## ENV-01: the key hangs higher (KEY_HEIGHT; the hall's is 9 m) and falls off slower (KEY_FALLOFF, its attenuation, was
+## 1.0; KEY_REACH, its range, was 19 m), so its pool spreads flat over the whole floor of the fight instead of a bright
+## middle and dark bays (the fight's floor was 27 to 42 away from the candles, the aim 45 to 60).
+const KEY_ENERGY := 1.8
+const KEY_HEIGHT := 11.0
+const KEY_FALLOFF := 0.5
+const KEY_REACH := 26.0
+## ...and stands this far off the floor's middle (x, z), toward the west bays the candles leave dark.
+const KEY_SHIFT := Vector2(-3.0, 2.5)
 ## The browser's renderer (Compatibility) leaves the crypt darker than the desktop (ART_REVIEW G-1): there the key and
 ## the ambient are this much stronger.
 const COMPAT_KEY := 1.4
@@ -168,7 +177,10 @@ func dress() -> void:
 	_slabs()
 	_candles()
 	_cold_shaft()
-	key_light(KEY, KEY_ENERGY * (COMPAT_KEY if _compat() else 1.0))
+	var key := key_light(KEY, KEY_ENERGY * (COMPAT_KEY if _compat() else 1.0), KEY_HEIGHT)
+	key.omni_attenuation = KEY_FALLOFF
+	key.omni_range = KEY_REACH
+	key.position += Vector3(KEY_SHIFT.x, 0.0, KEY_SHIFT.y)
 	# the doors' stairs (ArenaRoom._doors) take Masonry's plain stone at their foot: this room's is darker
 	var plain := m.stone(-EXIT_RISE * EXIT_STEPS)
 	var dark := _stair_stone(-EXIT_RISE * EXIT_STEPS)

@@ -51,6 +51,9 @@ const DEFS_DIR := "res://data/bosses/"
 ## His palette (Daniel, cycle 9): deep violet, spectral blue-green, a corrupted emerald (murkier and colder than
 ## Emeth's crystal green, Combat.EMETH), old gold, dark stone. SPECTRAL is his necromancy and the souls.
 const SPECTRAL := Color(0.38, 1.55, 1.1)
+## His entrance (GP-01): a ring of this radius on the floor and souls rising from this height (no column).
+const ENTRANCE_RING := 4.5
+const ENTRANCE_SOULS := 0.3
 const VIOLET := Color(0.62, 0.22, 1.2)
 const CORRUPT := Color(0.315, 0.7, 0.604)
 ## The curse: dark purple.
@@ -214,8 +217,10 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 		room.call(&"set_phase", phase)
 	g.combat.enemy_struck.connect(_on_struck)
 	g.horde.killed.connect(_on_killed)
-	g.fx.burst(&"soul", Vector3(e.pos.x, 1.0, e.pos.y))
-	g.fx.beam(e.pos, SPECTRAL, 2.0, 14.0, 1.0)
+	# his entrance stays on the floor (GP-01 of cycle C12c): the cyan column over him left him a black shape for a
+	# second; a ring of his spectral light and souls at his feet, nothing at the height of his body
+	g.fx.burst(&"soul", Vector3(e.pos.x, ENTRANCE_SOULS, e.pos.y))
+	g.fx.ring(e.pos, ENTRANCE_RING, SPECTRAL, 0.7, 0.15, true)
 	_shield = _make_shield()
 	g.add_child(_shield)
 	if phase >= def.final_light_phase:

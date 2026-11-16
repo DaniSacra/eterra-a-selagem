@@ -163,6 +163,7 @@ func _ready() -> void:
 		if SaveData.discover_move(Save.data, String(node.id)):
 			Save.write())
 	projectiles.shot_hit.connect(combat.on_shot_hit)
+	projectiles.shot_logged.connect(room_tally.shot)
 	projectiles.status_player.connect(_on_status_player)
 	for source: Object in [horde, ground, projectiles]:
 		source.hit_player.connect(_on_hit_player.bind(source))
@@ -349,6 +350,8 @@ func _build_ui() -> void:
 func _exit_tree() -> void:
 	# left in the middle (to the title, a new descent, the window closed): the run is logged as left
 	log_run("quit")
+	if _cam_trace != null and _cam_trace.frames > 0:
+		_trace_cam_cut(true)
 	Controls.virtual = null
 	Engine.time_scale = 1.0
 
@@ -489,7 +492,7 @@ func _spawn_elite(id: StringName) -> void:
 	var at := _spawn_point()
 	horde.spawn(d, at, true)
 	fx.burst(&"shadow", Vector3(at.x, 1.0, at.y))
-	fx.beam(at, d.rim_color, 1.5, 12.0, 1.0)
+	column(at, d.rim_color, 1.5, 12.0, 1.0)
 	hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}))
 	Audio.play(&"elite")
 
@@ -502,7 +505,29 @@ func _circle_standing() -> bool:
 
 
 ## A new room: the old one is taken down and this one built (layout null: the great hall).
+## Dev (--trace-cam, GP-06): the largest jump of the camera's target between frames, printed per room (CAM_TRACE).
+var _cam_trace: CamFrame.JumpTrace = CamFrame.JumpTrace.new() if Dev.has("trace-cam") else null
+## The largest of every room so far.
+var _cam_worst := {"worst": 0.0}
+
+
+## Dev (--trace-cam): prints the room's largest jump of the camera's target and starts over (a new room places the
+## camera anew; that first frame is not a jump). last: also the run's largest.
+func _trace_cam_cut(last := false) -> void:
+	if _cam_trace == null:
+		return
+	var r := _cam_trace.cut()
+	if int(r.frames) > 1:
+		print("CAM_TRACE room %s %s: max jump %.3f m over %d frames at %s" % [r.at.get("room", "?"), r.at.get("arena", "?"),
+			r.worst, r.frames, r.at])
+		if float(r.worst) > float(_cam_worst.worst):
+			_cam_worst = r
+	if last:
+		print("CAM_TRACE run: max jump %.3f m at %s" % [_cam_worst.worst, _cam_worst.get("at", {})])
+
+
 func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
+	_trace_cam_cut()
 	ground.clear()
 	projectiles.clear_hostile()
 	horde.clear_crowd()
@@ -638,12 +663,13 @@ func _take(b: Boon) -> void:
 	player.max_hp = Player.MAX_HP + hp_bonus + life_bonus
 	player.heal(hp_bonus - old_hp_bonus)
 	fx.ring(player.pos, 3.0, b.color(), 0.5)
-	fx.beam(player.pos, b.color(), 1.2, 8.0, 0.6)
+	column(player.pos, b.color(), 1.2, 8.0, 0.6)
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 
 
 func _on_dodged(dir: Vector2) -> void:
 	dodges += 1
+	room_tally.dodge()
 	var dps := boons.stat(&"dodge_ember_dps")
 	if dps > 0.0:
 		for k in 3:
@@ -699,7 +725,7 @@ func spawn_fountain(at: Vector2) -> void:
 	_fountain.add_child(spring)
 	var pool := ground.add_zone(Ground.Kind.HOLY, _fountain_at, 1.8, 9999.0, 0.0)
 	pool.tags = []
-	fx.beam(_fountain_at, Combat.LIGHT, 1.4, 14.0, 1.2)
+	column(_fountain_at, Combat.LIGHT, 1.4, 14.0, 1.2)
 	hud.show_notice(T.t(&"notice_fountain"), 4.0)
 	Audio.play(&"fountain")
 
@@ -709,6 +735,7 @@ func _step_fountain() -> void:
 		return
 	if player.pos.distance_to(_fountain_at) < 2.0 and player.hp < player.max_hp:
 		_fountain_used = true
+		room_tally.fountain()
 		player.heal(player.max_hp * FOUNTAIN_HEAL)
 		(_fountain.get_node("Light") as OmniLight3D).light_energy = 0.6
 		(_fountain.get_node("Spring") as CPUParticles3D).emitting = false
@@ -736,12 +763,31 @@ func _on_hit_player(amount: float, from: Vector2, source: Object = null) -> void
 	# Player.died inside hurt(), and the run is logged right there (BUG-014: it used to log the blow before).
 	var id: Variant = source.get(&"last_source") if source else null
 	_blow = {"cause": DefeatCause.of(id, source.get(&"last_by") if source else null), "id": id}
+	_blow.merge(_blow_context(source, id))
 	player.hurt(amount, from)
 	_blow = {}
 
 
-## The blow being dealt (_on_hit_player), while Player.hurt runs: its cause and attack id.
+## The blow being dealt (_on_hit_player), while Player.hurt runs: its cause and attack id, and its context for the
+## run's log (_blow_context).
 var _blow := {}
+
+
+## The context of a blow about to land, for the run's log (GP-02): warn_s (seconds its warning showed: the swing
+## raised, the warning on the floor, the shooter's aim and the shot's flight; a boss's crescent adds the lane he
+## marked first; -1: none known), dash_ready (a dodge charge to use), offscreen (whoever dealt it off the screen as
+## it struck or fired; the boss's own warnings read where he stands now) and, for a shot, its shooter.
+func _blow_context(source: Object, id: Variant) -> Dictionary:
+	var warn: Variant = source.get(&"last_warn") if source else null
+	var warn_s := float(warn) if warn != null else -1.0
+	if source == projectiles and warn_s >= 0.0 and id is StringName and id != &"":
+		warn_s += ground.warned_for(id)
+	var flag: Variant = source.get(&"last_offscreen") if source else null
+	var off := int(flag) if flag != null else -1
+	if off < 0 and boss != null and boss.e != null:
+		off = horde.screen_flag(boss.e.pos)
+	return {"warn_s": warn_s, "dash_ready": player.dodge_charges > 0, "offscreen": off == 1,
+		"shooter": Projectiles.shooter_of(projectiles.last_by) if source == projectiles else ""}
 
 
 ## The paladin lost life (Player.was_hurt, emitted before died): the blow's cause is kept and counted now, so a
@@ -754,7 +800,12 @@ func _on_was_hurt(amount: float) -> void:
 	last_hurt = _blow.cause
 	# what he really lost (a killing blow's overkill is not counted)
 	amount += minf(player.hp, 0.0)
-	room_tally.hurt(DefeatCause.key(last_hurt), amount)
+	var by := DefeatCause.key(last_hurt)
+	room_tally.hurt(by, amount)
+	room_tally.hurt_context(by, time, amount, float(_blow.get("warn_s", -1.0)), bool(_blow.get("dash_ready", false)),
+		bool(_blow.get("offscreen", false)))
+	if String(_blow.get("shooter", "")) != "":
+		room_tally.shot(_blow.shooter, RoomTally.SHOT_HIT)
 	room_tally.touch(time)
 	# the edge of the screen says it: red, or the curse's violet (its bolt too, the curse lands just after)
 	fx.kick_split(_hurt_tint.hit(amount, player.curse.active() or id == &"curse", Feel.live()))
@@ -793,7 +844,7 @@ func _on_killed(e: Enemy) -> void:
 		for i in 14:
 			orbs.drop(e.pos + Vector2.from_angle(TAU * i / 14.0) * 1.2, maxi(1, e.def.xp / 14))
 		fx.shake(3.0)
-		fx.beam(e.pos, e.def.rim_color, 1.5, 12.0, 0.8)
+		column(e.pos, e.def.rim_color, 1.5, 12.0, 0.8)
 		Audio.play(&"elite_down")
 	elif e.def.behavior != EnemyDef.Behavior.BOSS:
 		orbs.drop(e.pos, e.def.xp)
@@ -932,6 +983,21 @@ func boss_enemy() -> Enemy:
 	return null
 
 
+## A column standing within this many meters of the paladin is drawn faint (GP-01: the reward's column rose on him).
+const BEAM_NEAR_HERO := 2.0
+
+
+## A column of light at a point (a reward, the fountain, a gift taken or falling, an elite rising): every one under
+## the glow threshold (Fx.BEAM_CORE_CAP), and faint (Skills.BEAM_OVER_BOSS) where it would stand on or in front of
+## the paladin or the boss on the screen, so neither of them is ever lost in it (GP-01 of cycle C12c).
+func column(at: Vector2, color: Color, radius: float, height: float, time: float) -> void:
+	var pitch := Dev.num("cam-pitch", Feel.live().cam_pitch)
+	var faint := at.distance_to(player.pos) < BEAM_NEAR_HERO \
+		or Skills.covers(player.pos, Player.RADIUS, at, radius, height, cam_yaw(), pitch) \
+		or Skills.over_boss(boss_enemy(), at, radius, height, cam_yaw(), pitch)
+	fx.beam(at, color, radius, height, time, Fx.BEAM_INTENSITY * (Skills.BEAM_OVER_BOSS if faint else 1.0))
+
+
 ## How much closer the camera gets at the end of an Omega's charge.
 const OMEGA_ZOOM := 0.08
 ## How far the fixed showcase camera (--showcase) stands from the hall's middle, to frame all of it like the reference.
@@ -968,6 +1034,20 @@ var _charge_zoom := 0.0
 ## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
 var _cam_last := Vector2.ZERO
 var _cam_vel := Vector2.ZERO
+## The point the camera looked at last frame (INF: place it anew).
+var _cam_at := Vector2.INF
+
+
+## A new room: the camera starts framed on the paladin where he walks in, not flying over from where it looked in
+## the room before (GP-06: that flight, behind the fade in, moved its target up to 2.9 m a frame).
+func snap_camera() -> void:
+	var at := arena.cam_target if arena.cam_reach > 0.0 else player.pos
+	_cam_target = Vector3(at.x, 0, at.y)
+	_cam_last = player.pos
+	_cam_vel = Vector2.ZERO
+	_cam_at = Vector2.INF
+	if _cam_trace != null:
+		_cam_trace.cut()
 
 
 func _follow(delta: float, shake: Vector3) -> void:
@@ -988,7 +1068,7 @@ func _follow(delta: float, shake: Vector3) -> void:
 	_place_camera(shake, delta)
 
 
-func _place_camera(shake: Vector3, _delta: float) -> void:
+func _place_camera(shake: Vector3, delta: float) -> void:
 	if Dev.has("showcase"):
 		# the fixed frame of the whole hall, to set side by side with the reference image
 		var c := arena.showcase
@@ -1002,6 +1082,13 @@ func _place_camera(shake: Vector3, _delta: float) -> void:
 		return
 	var off := _cam_offset()
 	var at := cam_look_at(Vector2(_cam_target.x, _cam_target.z), Dev.num("cam-dist", Feel.live().cam_distance), camera.fov)
+	# never faster than CamFrame.MAX_SPEED (GP-06): the safe frame follows a dash or a push without a jump
+	if _cam_at.is_finite():
+		at = CamFrame.follow(_cam_at, at, delta)
+	_cam_at = at
+	if _cam_trace != null:
+		_cam_trace.add(at, {"t": snappedf(time, 0.01), "room": rooms.depth() if rooms else 0, "arena": String(arena.id),
+			"hero": player.pos, "mode": Mode.keys()[mode]})
 	var t := Vector3(at.x, 0, at.y)
 	camera.look_at_from_position(t + off + shake, t + shake * 0.5, Vector3.UP)
 
@@ -1095,6 +1182,7 @@ func _shot() -> void:
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(Dev.arg("shot"))
+	_trace_cam_cut(true)
 	print("RESULT ", result())
 	get_tree().quit()
 
@@ -1164,10 +1252,12 @@ func run_entry(outcome: String) -> Dictionary:
 	for id in gifts_taken:
 		gifts.append({"id": String(id), "level": boons.level(id), "rarity": Boon.Rarity.keys()[boons.rarity(id)].to_lower()})
 	var device := "bot" if bot else RunLog.device(Controls.seen_keys, Controls.seen_pad)
-	return RunLog.entry(result(), {"outcome": outcome, "when": Time.get_datetime_string_from_system(), "gifts": gifts,
+	var extra := {"outcome": outcome, "when": Time.get_datetime_string_from_system(), "gifts": gifts,
 		"device": device, "omegas": omegas, "dodges": dodges,
 		"last_hurt": {"attack": String(last_hurt.get("attack", &"")), "enemy": String(last_hurt.get("enemy", &""))},
-		"defeated_by": String(defeated_by()) if outcome == "death" else ""})
+		"defeated_by": String(defeated_by()) if outcome == "death" else "", "source": RunLog.source(bot != null)}
+	extra.merge(room_tally.run_fields())
+	return RunLog.entry(result(), extra)
 
 
 ## Logs the run once, when it ends (victory, death, or quit when left before either). Written to RunLog.PATH for a
@@ -1226,7 +1316,8 @@ func result() -> Dictionary:
 		"step_ms_avg": snappedf(step_timer.average(), 0.01), "step_ms_peak": snappedf(step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
 		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
-		"shots_blocked": projectiles.blocked}
+		"shots_blocked": projectiles.blocked, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
+		"fountain_used": room_tally.fountain_used}
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

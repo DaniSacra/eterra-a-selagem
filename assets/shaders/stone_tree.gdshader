@@ -20,8 +20,9 @@ uniform float lichen = 0.7;
 // The lichen's patches: how many a meter (round, along) and where on the noise they begin and are full.
 uniform vec2 lichen_patch = vec2(2.2, 1.6);
 uniform vec2 lichen_cover = vec2(0.55, 0.68);
-// A clean fracture: fresh stone, a step lighter and a touch warmer than any cord.
-uniform vec3 fracture_color : source_color = vec3(0.58, 0.55, 0.52);
+// A clean fracture: fresh stone, a step lighter and a touch warmer than any cord, in the value of old ivory, never white
+// (ART_REVIEW J-5, ENV-02: at 0.58 its largest channel reached 199 under the beam; the cords are 0.43 to 0.48).
+uniform vec3 fracture_color : source_color = vec3(0.5, 0.47, 0.44);
 // The vein's colour (its hue; its largest channel is set to vein_light) and how wide it runs in a groove (of the
 // cord-to-groove value).
 uniform vec3 vein_color : source_color = vec3(0.315, 0.7, 0.604);

@@ -1,8 +1,9 @@
 class_name EndScreen
 extends Control
 ## Defeat or victory. Defeat: the title, what struck the last blow ("Derrotado por: Tempestade das Seis Almas", under
-## the title, the name in warm gold: what to learn for the next try), the numbers of the run, the best time, "Tentar
-## de novo". Victory (after the sealing):
+## the title, the name in warm gold: what to learn for the next try), where it fell ("Sala 3 de 7, Cripta dos
+## Esquecidos"), the gifts carried (the victory's row of medallions), the numbers of the run, the best time, "Tentar
+## de novo" (UI-02: the run can be told from this screen alone). Victory (after the sealing):
 ## in the title screen's voice (Cinzel and Alegreya, old gold, short), the king sealed, what the descent gathered
 ## (the gifts carried, the time, the foes, the longest sequence, the gold) and "Continuar" (to the title) or a new
 ## descent. It rises in VICTORY_RISE seconds; keys, mouse and gamepad all reach the buttons (Continuar has the focus).
@@ -25,12 +26,17 @@ const KILLER_SIZE := 24
 const KILLER_COLOR := Color(1.0, 0.82, 0.6)
 ## The defeat's column (the line under the title fits on one line).
 const DEFEAT_WIDTH := 520.0
+## "Sala N de M, arena": its size (pale, under the warm killer line).
+const WHERE_SIZE := 21
 
 var _rise := 0.0
 var _ornaments: Array[Ornament] = []
 
 
 ## stats may carry "defeated_by", the text key of what struck the last blow (Game.defeated_by()); a defeat shows it.
+## Where the run ended and what it carried come from stats when it has them (tests, other callers), else from the Game
+## above this screen: "room" (depth), "rooms_total", "arena" (the arena's name key), "gifts" (Array of
+## {"boon": Boon, "level": int}).
 ## new_best only counts with a save (Save.enabled; --nosave keeps no record, BUG-008).
 func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	theme = UiKit.theme()
@@ -47,11 +53,26 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		by.name = "defeated_by"
 		by.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(by)
+	var where := where_text(stats)
+	if where != "":
+		var w := UiKit.shadow(UiKit.label(where, UiKit.PALE, WHERE_SIZE))
+		w.name = "where"
+		w.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(w)
 	var sub := UiKit.label(T.t(&"end_defeat_sub"), UiKit.DIM, 22)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sub.custom_minimum_size.x = DEFEAT_WIDTH
 	v.add_child(sub)
+	var gifts := _gifts(stats)
+	var shows_gifts := gifts.get_child_count() > 0
+	if shows_gifts:
+		var head := UiKit.title(T.t(&"end_gifts"), HEAD_SIZE, UiKit.OLD_GOLD.lightened(0.25))
+		head.add_theme_constant_override(&"outline_size", 4)
+		v.add_child(head)
+		v.add_child(gifts)
+	else:
+		gifts.free()
 	var panel := PanelContainer.new()
 	v.add_child(panel)
 	var rows := VBoxContainer.new()
@@ -61,7 +82,8 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		_row(rows, T.t(&"end_level"), str(stats.level))
 	_row(rows, T.t(&"end_kills"), str(stats.kills))
 	_row(rows, T.t(&"end_combo"), str(stats.best_combo))
-	_row(rows, T.t(&"end_boons"), str(stats.boons))
+	if not shows_gifts: # the medallions above already count them
+		_row(rows, T.t(&"end_boons"), str(stats.boons))
 	var best: Array = Save.data.best_times
 	if not best.is_empty():
 		_row(rows, T.t(&"end_best"), SaveData.format_time(best[0]), UiKit.GOLD)
@@ -96,7 +118,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 	var head := UiKit.title(T.t(&"end_spoils"), HEAD_SIZE, UiKit.OLD_GOLD.lightened(0.25))
 	head.add_theme_constant_override(&"outline_size", 4)
 	v.add_child(head)
-	var gifts := _gifts()
+	var gifts := _gifts(stats)
 	if gifts.get_child_count() > 0:
 		v.add_child(gifts)
 	else:
@@ -151,22 +173,53 @@ func _process(delta: float) -> void:
 		set_process(false)
 
 
-## The gifts carried to the end, in a row of medallions.
-func _gifts() -> HBoxContainer:
+## "Sala N de M, arena" for the run this screen closes ("" when it was not a room run).
+func where_text(stats: Dictionary) -> String:
+	var room := int(stats.get("room", 0))
+	var total := int(stats.get("rooms_total", 0))
+	var arena: StringName = stats.get("arena", &"")
+	var game := _game()
+	if game != null and game.rooms != null:
+		if room <= 0:
+			room = game.rooms.depth()
+		if total <= 0:
+			total = game.rooms.stage.rooms + 1
+		if arena == &"":
+			arena = arena_key(game)
+	if room <= 0 or total <= 0:
+		return ""
+	var at := T.t(&"end_room", {"n": room, "of": total})
+	return at if arena == &"" else T.t(&"end_where", {"room": at, "place": T.t(arena)})
+
+
+## The text key of the arena the run stands in: its own name, the Seal Chamber in Morvath's room, else the hall.
+static func arena_key(game: Game) -> StringName:
+	if game.rooms.room != null and game.rooms.room.kind == RunMap.Kind.BOSS:
+		return RunMap.KIND_KEY[RunMap.Kind.BOSS]
+	if game.arena != null and game.arena.name_key != &"":
+		return game.arena.name_key
+	return &"arena_hall"
+
+
+## The gifts carried to the end, in a row of medallions (stats "gifts", else the Game's).
+func _gifts(stats: Dictionary) -> HBoxContainer:
 	var row := HBoxContainer.new()
+	row.name = "gifts"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 6)
+	var carried: Array = stats.get("gifts", [])
 	var game := _game()
-	if game == null or game.boons == null:
-		return row
-	var owned: Array[Boon] = game.boons.owned()
-	for i in mini(owned.size(), GIFTS_MAX):
-		var icon := BoonIcon.new().setup(owned[i], GIFT_ICON)
-		icon.level = game.boons.level(owned[i].id)
-		icon.max_level = owned[i].max_level
+	if carried.is_empty() and game != null and game.boons != null:
+		for b: Boon in game.boons.owned():
+			carried.append({"boon": b, "level": game.boons.level(b.id)})
+	for i in mini(carried.size(), GIFTS_MAX):
+		var b: Boon = carried[i].boon
+		var icon := BoonIcon.new().setup(b, GIFT_ICON)
+		icon.level = int(carried[i].get("level", 1))
+		icon.max_level = b.max_level
 		row.add_child(icon)
-	if owned.size() > GIFTS_MAX:
-		row.add_child(UiKit.label("+%d" % (owned.size() - GIFTS_MAX), UiKit.PALE, STAT_VALUE_SIZE, UiKit.BOLD_FONT))
+	if carried.size() > GIFTS_MAX:
+		row.add_child(UiKit.label("+%d" % (carried.size() - GIFTS_MAX), UiKit.PALE, STAT_VALUE_SIZE, UiKit.BOLD_FONT))
 	return row
 
 

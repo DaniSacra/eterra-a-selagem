@@ -5,11 +5,19 @@ extends RefCounted
 ## the entry: the RESULT line (Game.result) plus FIELDS.
 
 const PATH := "user://runs.jsonl"
-const VERSION := 1
+## 2 (cycle C12c, GP-02): source, boons_at_boss, shop, fountain_used, hurt_ctx, and more numbers in each room
+## (RoomTally: variant, dodges, hits, hits_by, shots, blocked_by, gold_in, boons_in).
+const VERSION := 2
 ## What an entry adds to the RESULT: outcome (victory, death, quit), when (local date and time), the gifts taken (in
 ## order: id, level and rarity), the device used (keyboard, gamepad, both, none; bot for the test robot), how many
-## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key.
-const FIELDS: Array[String] = ["version", "outcome", "when", "gifts", "device", "omegas", "dodges", "last_hurt", "defeated_by"]
+## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key. Since
+## VERSION 2: who played (source: human or bot), the gifts held at Morvath, the shop (gold walking in, what was
+## bought and for how much), whether the fountain healed him and every blow taken in context (RoomTally.hurt_ctx).
+const FIELDS: Array[String] = ["version", "outcome", "when", "gifts", "device", "omegas", "dodges", "last_hurt", "defeated_by",
+	"source", "boons_at_boss", "shop", "fountain_used", "hurt_ctx"]
+## Who played a run (source).
+const HUMAN := "human"
+const BOT := "bot"
 const OUTCOMES: Array[String] = ["victory", "death", "quit"]
 
 
@@ -56,3 +64,8 @@ static func device(keys: bool, pad: bool) -> String:
 	if pad:
 		return "gamepad"
 	return "keyboard" if keys else "none"
+
+
+## Who played: the test robot or a person.
+static func source(bot: bool) -> String:
+	return BOT if bot else HUMAN

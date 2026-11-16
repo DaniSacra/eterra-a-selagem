@@ -247,13 +247,20 @@ func free_at(p: Vector2, radius: float) -> bool:
 
 ## Where along a to b (0 to 1) a shot of radius r first meets cover (-1: never). low: a shot creeping on the floor,
 ## stopped by everything that stops a body (the low walls and roots too).
+## last_cover: the piece it meets first (null: none), read right after the call (the run's log, blocked_by).
 func shot_hit(a: Vector2, b: Vector2, r: float = 0.0, low := false) -> float:
 	var best := -1.0
+	last_cover = null
 	for o in (cover_low if low else cover):
 		var t := o.hit_by(a, b, r)
 		if t >= 0.0 and (best < 0.0 or t < best):
 			best = t
+			last_cover = o
 	return best
+
+
+## The piece the last shot_hit met first (null: none).
+var last_cover: ArenaObstacle
 
 
 ## True when nothing stops a shot of radius r from a to b (a shooter's line of fire).
@@ -288,8 +295,45 @@ func resolve(pos: Vector2, radius: float) -> Vector2:
 		for o in turned:
 			pos = o.push_out(pos, radius)
 		if pos.distance_squared_to(before) < 0.000001:
-			return pos
-	return _onto_floor(pos, radius)
+			break
+	pos = _onto_floor(pos, radius)
+	# squeezed where two pieces (or a piece and the edge) stand closer than the body is wide, the passes only rock it
+	# between them: the nearest spot where it fits (GP-03 of cycle C12c: nobody is left inside stone)
+	return pos if not overlaps(pos, radius) else _free_near(pos, radius)
+
+
+## How far into a piece a resolved body may still stand (meters): rounding, not stone.
+const RESOLVE_SLACK := 0.005
+## Where _free_near looks: rings this far apart, out to RESOLVE_SEARCH rings, in RESOLVE_WAYS directions.
+const RESOLVE_RING := 0.1
+const RESOLVE_SEARCH := 30
+const RESOLVE_WAYS := 16
+
+
+## True when a body of this radius at pos stands in a pillar, a solid box or a turned piece (past RESOLVE_SLACK).
+func overlaps(pos: Vector2, radius: float) -> bool:
+	var r := radius - RESOLVE_SLACK
+	for p in pillars:
+		if pos.distance_squared_to(Vector2(p.x, p.y)) < (p.z + r) * (p.z + r):
+			return true
+	for b in boxes:
+		if pos.distance_squared_to(pos.clamp(b.position, b.end)) < r * r:
+			return true
+	for o in turned:
+		if o.depth(pos, r) > 0.0:
+			return true
+	return false
+
+
+## The nearest spot to pos (rings of RESOLVE_RING) where a body of this radius stands on the floor and in no piece;
+## pos itself when none is found within RESOLVE_SEARCH rings.
+func _free_near(pos: Vector2, radius: float) -> Vector2:
+	for ring in range(1, RESOLVE_SEARCH + 1):
+		for k in RESOLVE_WAYS:
+			var p := _onto_floor(pos + Vector2.RIGHT.rotated(TAU * k / RESOLVE_WAYS) * ring * RESOLVE_RING, radius)
+			if not overlaps(p, radius):
+				return p
+	return pos
 
 
 ## Out of a box, and when the body stands inside it, by the nearest side that keeps it on the floor (a box against

@@ -34,6 +34,9 @@ const KEY_ENERGY := 5.5
 ## there they are a share weaker and the key a neutral grey.
 const COMPAT_LIGHT := 0.7
 const COMPAT_KEY := Color(0.8, 0.8, 0.8)
+## There the weak moon (0.25) casts no shadow (ENV-03, QA B-4: the garden was the one arena past 6 ms in the p90 there;
+## its shadow pass draws the whole hall again for shadows hardly seen under the beam's).
+const COMPAT_MOON_SHADOW := false
 ## The inscription round the trunk: its band (inner and outer radius, m) and its arcs (bearings, degrees): never closed,
 ## gaps of 2 m and more; the floor's edges, the roots and every other piece cut it further.
 const INSCRIPTION := Vector2(9.05, 9.75)
@@ -171,7 +174,11 @@ func cliff_look() -> Dictionary:
 
 
 func air() -> Dictionary:
-	return AIR
+	if not _compat():
+		return AIR
+	var a := AIR.duplicate()
+	a[&"moon_shadow"] = COMPAT_MOON_SHADOW
+	return a
 
 
 ## The north door (X1) opens in the north wall.

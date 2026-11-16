@@ -61,3 +61,46 @@ static func hold(target: Vector2, want: Vector2, reach: float, hero: Vector2, di
 	if follow:
 		at = keep(at, hero, distance, pitch_deg, yaw_deg, fov_deg, aspect)
 	return target + (at - target).limit_length(reach)
+
+
+## The point the camera looks at never moves faster than this (m/s; GP-06 of cycle C12c): the safe frame (keep,
+## hold) followed a dash (28 m/s) or a push rigidly, 0.6 m in one frame at 60 FPS. The paladin's dash outruns it by
+## at most about 0.8 m for its 0.2 s (2% of the screen's width at the game's distance).
+const MAX_SPEED := 24.0
+
+
+## The point the camera looks at this frame: `from` (the last) toward `want`, at most MAX_SPEED for delta seconds.
+static func follow(from: Vector2, want: Vector2, delta: float) -> Vector2:
+	return from.move_toward(want, MAX_SPEED * maxf(delta, 0.0))
+
+
+## Dev (--trace-cam, GP-06 of cycle C12c): the largest jump of the point the camera looks at from one frame to the
+## next, and where it happened. cut() starts over (a new room: the camera is placed anew).
+class JumpTrace:
+	extends RefCounted
+	## The point of the frame before (INF: none yet).
+	var last := Vector2.INF
+	## The largest jump since the last cut (meters), what was given with it, and the frames measured.
+	var worst := 0.0
+	var worst_at := {}
+	var frames := 0
+
+	## The point of this frame; info says where (time, hero, room). Returns the jump from the frame before.
+	func add(at: Vector2, info: Dictionary) -> float:
+		var jump := at.distance_to(last) if last.is_finite() else 0.0
+		last = at
+		frames += 1
+		if jump > worst:
+			worst = jump
+			worst_at = info.duplicate()
+			worst_at["target"] = at
+		return jump
+
+	## Starts over; returns what was measured until now ({worst, at, frames}).
+	func cut() -> Dictionary:
+		var out := {"worst": worst, "at": worst_at, "frames": frames}
+		last = Vector2.INF
+		worst = 0.0
+		worst_at = {}
+		frames = 0
+		return out

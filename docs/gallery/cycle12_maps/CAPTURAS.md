@@ -73,3 +73,11 @@ partir de uma worktree com espelho próprio (`MIRROR=C:/Users/danie/tools/eterra
 laboratório com o alvo (-2; 0)), `*_depois_*` os novos; `fix_rift_vA_antes_depois_*` lado a lado, `fix_rift_vA_miniatura_320`
 as duas a 320 px (critério da F-2), `fix_rift_vA_compat_vs_forward` o mesmo combate nos dois renderizadores (G-1). A
 Cripta e o Jardim não mudaram (nada do código comum foi tocado).
+
+## Cripta refeita no C12c (ENV-01; environment-artist, 2026-11-16)
+
+Todos os arquivos de `crypt/` (inclusive `travessia.mp4` e as montagens `_e_` e `_f_`) foram refeitos com os mesmos
+comandos das tabelas acima, na mesma placa (RTX 5060, Forward+), espelho `C:/Users/danie/tools/eterra-gpu-env2`, depois
+do chão da luta subir para 45 a 60 (lajes mais claras e a luz de cima mais larga, `CryptLook.KEY_*`). Quadros das saídas
+abertas nos `_e_`: A 0:15, B 0:14. Do Jardim só `vA`/`vB_a_cenario` e `_f_referencia` foram refeitos (fraturas da árvore no
+marfim velho, ENV-02); o resto do Jardim e as Fendas não mudaram. Antes e depois em `docs/gallery/cycle12c/work/env_*`.

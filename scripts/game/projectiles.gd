@@ -4,6 +4,8 @@ extends Node3D
 ## the light gifts (hurt enemies, pass through them). Positions are (x, z) on the floor; they fly at a fixed height.
 
 signal hit_player(amount: float, from: Vector2)
+## A hostile shot was fired or died on stone (RoomTally.SHOT_*), by its shooter (shooter()), on piece (blocked_by).
+signal shot_logged(by: String, what: String, piece: String)
 ## A friendly shot touched an enemy: the game decides the damage and the gifts that apply.
 signal shot_hit(e: Enemy, shot: Shot)
 ## A hostile shot with a status (Shot.status, the boss's curse) struck the paladin while he could be hurt.
@@ -79,6 +81,10 @@ class Shot:
 	var by: StringName = &""
 	## Seconds it has flown (the crescent's look: its first flare, its fade at the end).
 	var age := 0.0
+	## Seconds its shooter's warning showed before it left (the aim held; the run's log, warn_s).
+	var warned := 0.0
+	## Its shooter was off the screen as it fired (1), on it (0), unknown (-1) (Horde.screen_flag).
+	var offscreen := -1
 
 ## How far a shot is from the stone when it dies on it (meters; its ball is about this round).
 const SHOT_EDGE := 0.15
@@ -92,6 +98,9 @@ var blocked := 0
 var last_source: StringName = &""
 ## Which kind of enemy fired it (Shot.by).
 var last_by: StringName = &""
+## That shot's warning in seconds (its shooter's aim and its flight) and Shot.offscreen, for the run's log.
+var last_warn := -1.0
+var last_offscreen := -1
 var horde: Horde
 var player: Player
 var fx: Fx
@@ -110,6 +119,9 @@ func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, 
 	s.radius = radius
 	s.life = life
 	s.by = horde.acting if horde else &""
+	if hostile(s):
+		s.offscreen = horde.screen_flag(from) if horde else -1
+		shot_logged.emit(shooter(s), RoomTally.SHOT_FIRED, "")
 	s.node = _take(kind)
 	s.node.visible = true
 	if kind == Kind.BOLT or kind == Kind.ORB or kind == Kind.CURSE:
@@ -211,6 +223,8 @@ func step(dt: float) -> void:
 		if stop >= 0.0:
 			gone = true
 			blocked += 1
+			if hostile(s):
+				shot_logged.emit(shooter(s), RoomTally.SHOT_BLOCKED, String(arena.last_cover.piece) if arena.last_cover else "")
 			fx.burst(&"spark", Vector3(s.pos.x, LOW_HEIGHT if s.low else HEIGHT, s.pos.y), Vector3(-s.vel.x, 0, -s.vel.y).normalized())
 		elif not gone:
 			if s.kind == Kind.SOUL:
@@ -218,6 +232,8 @@ func step(dt: float) -> void:
 					s.seen[player] = true
 					last_source = s.source
 					last_by = s.by
+					last_warn = s.warned + s.age
+					last_offscreen = s.offscreen
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					fx.burst(&"soul", Vector3(player.pos.x, HEIGHT, player.pos.y))
 			elif hostile(s):
@@ -225,6 +241,8 @@ func step(dt: float) -> void:
 					var safe := player.invulnerable()
 					last_source = s.source
 					last_by = s.by
+					last_warn = s.warned + s.age
+					last_offscreen = s.offscreen
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					if s.status != &"" and not safe:
 						status_player.emit(s.status)
@@ -243,6 +261,16 @@ func step(dt: float) -> void:
 		else:
 			_place(s)
 		i -= 1
+
+
+## Who fired a shot, for the run's log: its kind (EnemyDef.id), or "morvath" for the boss's own.
+static func shooter(s: Shot) -> String:
+	return shooter_of(s.by)
+
+
+## The same, from the kind that fired it (Shot.by; &"": the boss's own).
+static func shooter_of(by: StringName) -> String:
+	return String(by) if by != &"" else "morvath"
 
 
 static func hostile(s: Shot) -> bool:
