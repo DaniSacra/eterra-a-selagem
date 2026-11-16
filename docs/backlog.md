@@ -253,27 +253,36 @@ Fechado na seção 0 (estado de cada item com a prova do QA-02). Abertos que fic
 
 ## 3. Dívidas
 
-### DT-012 O save perde dicionários de chaves livres (bloqueia a E2)
+### DT-012 O save perde dicionários de chaves livres (feito)
 - **Evidência**: `scripts/core/save_data.gd` linhas 24 a 31: `merged` só copia as subchaves que existem em `defaults()`.
   Maestria (`heroes.explorer.mastery_xp`) e Compêndio (`codex.boons.<id>`) seriam apagados a cada leitura. O `moves`
   sobrevive porque é lista. **Responsável**: `gameplay-engineer`. **Esforço**: P. **Pronto quando**: `merged` preserva
   dicionários de chaves livres com tipo conferido; `test_save.gd` com arquivos fixos das versões 1, 2 e 3; `VERSION` 3.
+   **Feito (E2a, fundação, 2026-11-16, worktree do `gameplay-engineer`)**: `SaveData.VERSION` 3 com `heroes.<id>` (`mastery_xp`, `unlocked`, `equipped`,
+  `ultimate`, `firsts`) e `codex` (`boons`, `elos`, `psalms`, `talents`, `enemies`); heróis e entradas do Compêndio com chaves
+  livres e tipo conferido; Maestria retroativa uma vez nas versões 1 e 2; `tests/fixtures/save_v1.json` a `save_v3.json`.
 
-### DT-013 O herói é um conjunto de constantes
+### DT-013 O herói é um conjunto de constantes (feito)
 - **Evidência**: `player.gd` linhas 19 a 118 (`COMBOS`, `MAX_HP`, `MAGICK_MAX`, `CAST_*`), `combat.gd` 36 a 39
   (`CAST_RADIUS`, `CAST_TIME`, `CAST_BURST`). O próximo herói viraria `if`. **Responsável**: `gameplay-engineer`.
   **Esforço**: M. **Pronto quando**: `HeroDef` gerado por `_hero` no `make_data.gd` com os mesmos números; mesma semente dá
   o mesmo `RESULT` antes e depois (`tools/smoke.sh 300 --seed=5`, `120 --start=boss --boons=25 --seed=5`).
+   **Feito (E2a, fundação, 2026-11-16, worktree do `gameplay-engineer`)**: `HeroDef` `warrior` (`data/heroes/warrior.tres`, `_hero`) com vida, proteção,
+  esquiva (cargas e recarga, que saíram do `Feel`), Magia, círculo, passiva e ultimates; `Player`, `Combat`, `Game` e a HUD
+  leem dele. Os dois `RESULT` iguais aos de antes, fora os campos de tempo (`step_ms*`, `fps`). `Player.RADIUS` ficou
+  constante (lido em expressões constantes de vários sistemas).
 
 ### DT-014 Raridade e Elo fora do Hades II
 - **Evidência**: `boon.gd` (pesos 85/10/5/0, `HEROIC`, guardião 0/90/7/5 com o 5 em heroica), `boon_state.gd`
   (`DUO_WEIGHT` 3, `requires` exato, Elo sobe de nível). **Responsável**: `gameplay-engineer` na E3 (C13-03, C13-05,
   C13-06, BUG-017). **Pronto quando**: os testes de `guardian_spec.md` seção 16 (`test_rarity`, `test_elo`).
 
-### DT-015 Registro sem o herói
+### DT-015 Registro sem o herói (feito)
 - **Evidência**: `run_log.gd` `FIELDS` (versão 2). **Responsável**: `gameplay-engineer` na E2a. **Pronto quando**:
   versão 3 com `hero`, `mastery_level`, `talents`, `ultimate`, `psalms`, `discoveries`; `gifts` continua (Bênçãos);
   linhas da versão 2 lidas.
+   **Feito (E2a, fundação, 2026-11-16, worktree do `gameplay-engineer`)**: `RunLog.VERSION` 3 com `hero`, `xp`, `xp_by`, `mastery_level`, `talents`,
+  `ultimate`; linhas antigas lidas por `RunLog.normalized`. `psalms` e `discoveries` entram quando houver Salmos (E4).
 
 ### DT-016 Dano feito por fonte não é medido
 - **Evidência**: o `RESULT` tem `hurt_by` (o que feriu o herói) e `damage` total, mas não o dano por ação, Bênção, Dom ou
@@ -420,11 +429,11 @@ Depois do T4: o lote do Meshy para as armas (D-46, orçamento do `art-director` 
 
 | ID | Parte | P | Descrição | Aceite (medível) | Responsável | Arquivos |
 |---|---|---|---|---|---|---|
-| E2-01 | E2a | P0 | DT-012 (save 3) e DT-015 (registro 3) | testes de `guardian_spec.md` 16 (`test_save`, `test_run_log`) | `gameplay-engineer` | `core/save_data.gd`, `core/run_log.gd`, `game.gd` (`run_entry`) |
-| E2-02 | E2a | P0 | DT-013 `HeroDef` do Guardião com os números de hoje | mesma semente, mesmo `RESULT` (smoke 300 e chefe com 25 Bênçãos) | `gameplay-engineer` | `core/hero_def.gd`, `player.gd`, `combat.gd`, `make_data.gd` `_hero` |
+| E2-01 | E2a | P0 | **feito** DT-012 (save 3) e DT-015 (registro 3) | testes de `guardian_spec.md` 16 (`test_save`, `test_run_log`) | `gameplay-engineer` | `core/save_data.gd`, `core/run_log.gd`, `game.gd` (`run_entry`) |
+| E2-02 | E2a | P0 | **feito** DT-013 `HeroDef` do Guerreiro (`warrior`) com os números de hoje | mesma semente, mesmo `RESULT` (smoke 300 e chefe com 25 Bênçãos) | `gameplay-engineer` | `core/hero_def.gd`, `player.gd`, `combat.gd`, `make_data.gd` `_hero` |
 | E2-03 | E2a | P0 | QW-018 Bênção no texto (se não entrou no T3) | ver QW-018 | `ui-ux-designer` | `text_pt.tres` |
-| E2-04 | E2a | P1 | Maestria: `MasteryCurve` pura (40 + 10 por nível), XP por fonte (seção 7.2), retroativo uma vez (D-57), XP e nível novo na tela de fim | `test_mastery`; uma partida do robô com `--runlog` grava XP certo; morte guarda XP | `gameplay-engineer` (regras), `ui-ux-designer` (tela de fim) | `core/mastery.gd`, `game.gd`, `end_screen.gd` |
-| E2-05 | E2a | P1 | Dons de dado (níveis 1 a 7, 9 e 10 do catálogo), Devoção (5 + nível), um por ação, soma com Bênção em `BoonState.stat` | `test_talents`: custo, um por ação, soma, tags mantidas; partida com Maestria 1 e sem Dom igual à de hoje | `gameplay-engineer` | `core/talent_def.gd`, `core/boon_state.gd`, `make_data.gd` `_talents`, `data/talents/explorer/` |
+| E2-04 | E2a | P1 | **regras feitas** (falta a tela de fim, `ui-ux-designer`) Maestria: `MasteryCurve` pura (40 + 10 por nível), XP por fonte (seção 7.2), retroativo uma vez (D-57), XP e nível novo na tela de fim | `test_mastery`; uma partida do robô com `--runlog` grava XP certo; morte guarda XP | `gameplay-engineer` (regras), `ui-ux-designer` (tela de fim) | `core/mastery.gd`, `game.gd`, `end_screen.gd` |
+| E2-05 | E2a | P1 | **dados e regras feitos** (árvore da `warrior_spec.md` 4 em `data/talents/warrior/`, 19 Dons; Fio Longo, Reserva e Firmeza já agem; os efeitos dos seis iniciais são outra tarefa) Dons de dado (níveis 1 a 7, 9 e 10 do catálogo), Devoção (5 + nível), um por ação, soma com Bênção em `BoonState.stat` | `test_talents`: custo, um por ação, soma, tags mantidas; partida com Maestria 1 e sem Dom igual à de hoje | `gameplay-engineer` | `core/talent_def.gd`, `core/boon_state.gd`, `make_data.gd` `_talents`, `data/talents/explorer/` |
 | E2-06 | E2a | P1 | Tela do herói no título: nível, barra de XP, Dons (destravados, custo, Devoção livre), escolha da ultimate; teclado, mouse e controle | `title_flow_check` passa pela tela; capturas a 720 e 1080 | `ui-ux-designer` | `scripts/ui/hero_screen.gd` (nova), `title_menu.gd`, `boot.gd` |
 | E2-07 | E2b | P0 | Passiva (D-56; P-A recomendada: 2 de Magia por finalizador que acerta) | teste; a Magia nunca passa do máximo; robô 0,25 em 8 descidas | `gameplay-engineer` | `combat.gd`, `player.gd`, `make_data.gd` |
 | E2-08 | E2b | P0 | Ultimate U-1 (D-54): ação `ultimate` remapeável, carga pela Magia gasta (60), 5º losango com o nível de carga, gesto protegido 0,35 s, área de 6 m, 240 de dano, atordoa 1 s, som e efeito sem clarão branco | `test_ultimate`; sonda com metas novas (sai no quadro do aperto, aperto guardado no hit stop, não cobre o herói: nenhum pixel acima de 235 na caixa do corpo); não atravessa menus nem a vitória | `gameplay-engineer` (regra, entrada), `environment-artist` (efeito), `ui-ux-designer` (losango, remapear), `art-director` (aprovação) | `controls.gd`, `player.gd`, `skills.gd`, `fx.gd`, `action_slot.gd`, `hud.gd`, shaders novos |

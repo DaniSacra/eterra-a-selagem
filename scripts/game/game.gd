@@ -45,6 +45,13 @@ var projectiles: Projectiles
 var combat: Combat
 var skills: Skills
 var boons: BoonState
+## The hero played (DT-013) and, for this descent, the Gifts equipped (ids) and the ultimate chosen (id or "").
+var hero: HeroDef = HeroDef.warrior()
+var talents: Array[StringName] = []
+var ultimate := ""
+## Blessings offered on a card and Elos formed in this run (ids), for the Mastery's first times and the Codex.
+var seen_boons := {}
+var elos_formed := {}
 var director: WaveDirector
 ## The descent room by room (null in the endless hall, --horde).
 var rooms: Rooms
@@ -114,6 +121,7 @@ func _ready() -> void:
 	combat.ground = ground
 	combat.projectiles = projectiles
 	combat.boons = boons
+	combat.hero = hero
 	director = WaveDirector.new(load(WAVES), _rng)
 	skills = Skills.new()
 	skills.game = self
@@ -175,6 +183,8 @@ func _ready() -> void:
 	if Dev.has("bot"):
 		bot = Bot.new()
 		Controls.virtual = bot.pad
+	# the Gifts before the first room: it records the life he walks in with
+	_equip_talents()
 	if not Dev.has("horde"):
 		rooms = Rooms.new()
 		add_child(rooms)
@@ -209,7 +219,7 @@ func _ready() -> void:
 			horde.spawn(horde.def(kinds[i % kinds.size()]), arena.resolve(player.pos + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(4.0, 20.0), 0.5), false)
 	if Dev.has("hero-hp"):
 		# dev, for captures: the paladin's life (a defeat in a few blows, or blows taken without falling)
-		player.max_hp = Dev.num("hero-hp", Player.MAX_HP)
+		player.max_hp = Dev.num("hero-hp", hero.max_hp)
 		player.hp = player.max_hp
 	if Dev.has("feel-panel"):
 		_toggle_feel_panel.call_deferred()
@@ -306,6 +316,7 @@ func _build_world() -> void:
 	fx = Fx.new()
 	add_child(fx)
 	player = Player.new()
+	player.hero = hero
 	player.arena = arena
 	player.horde = horde
 	player.fx = fx
@@ -624,6 +635,8 @@ func _open_choice(offers: Array[Boon] = [], weights: Array[float] = Boon.RARITY_
 	_offer_rarity.clear()
 	for b in offers:
 		_offer_rarity[b.id] = boons.rarity(b.id) if grow else BoonState.roll_rarity(_rng, weights)
+		if not grow:
+			seen_boons[b.id] = true
 	if Dev.has("autopick") or offers.is_empty():
 		# captures of the fight: take a gift at once, no screen
 		_on_chosen(offers[0] if not offers.is_empty() else null)
@@ -658,14 +671,16 @@ func _take(b: Boon) -> void:
 	var old_hp_bonus := boons.stat(&"max_hp")
 	boons.take(b, _offer_rarity.get(b.id, Boon.Rarity.COMMON))
 	gifts_taken.append(b.id)
-	player.dodge_max = Feel.live().dodge_charges + int(boons.stat(&"dodge_charges"))
+	if b.is_duo():
+		elos_formed[b.id] = true
+	player.dodge_max = hero.dodge_charges + int(boons.stat(&"dodge_charges"))
 	player.speed_bonus = boons.stat(&"move_speed_pct")
 	var shield := boons.stat(&"shield_cooldown")
 	if shield > 0.0 and player.shield_cooldown <= 0.0:
 		player.shield_ready = true
 	player.shield_cooldown = shield
 	var hp_bonus := boons.stat(&"max_hp")
-	player.max_hp = Player.MAX_HP + hp_bonus + life_bonus
+	player.max_hp = hero.max_hp + hp_bonus + life_bonus
 	player.heal(hp_bonus - old_hp_bonus)
 	fx.ring(player.pos, 3.0, b.color(), 0.5)
 	column(player.pos, b.color(), 1.2, 8.0, 0.6)
@@ -1253,8 +1268,9 @@ func defeated_by() -> StringName:
 	return DefeatCause.text_key(last_hurt, name_key)
 
 
-## The run's entry for the log (RunLog): the RESULT line, the gifts taken, the device, Omegas, dodges, what hurt last.
-func run_entry(outcome: String) -> Dictionary:
+## The run's entry for the log (RunLog): the RESULT line, the gifts taken, the device, Omegas, dodges, what hurt last
+## and (version 3) the hero, the Mastery the run gave (gain, from mastery_gain), the Gifts and the ultimate.
+func run_entry(outcome: String, gain: Dictionary) -> Dictionary:
 	var gifts: Array = []
 	for id in gifts_taken:
 		gifts.append({"id": String(id), "level": boons.level(id), "rarity": Boon.Rarity.keys()[boons.rarity(id)].to_lower()})
@@ -1263,6 +1279,12 @@ func run_entry(outcome: String) -> Dictionary:
 		"device": device, "omegas": omegas, "dodges": dodges,
 		"last_hurt": {"attack": String(last_hurt.get("attack", &"")), "enemy": String(last_hurt.get("enemy", &""))},
 		"defeated_by": String(defeated_by()) if outcome == "death" else "", "source": RunLog.source(bot != null)}
+	var by := gain.duplicate()
+	by.erase("total")
+	var xp_now := int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)
+	extra.merge({"hero": String(hero.id), "xp": int(gain.get("total", 0)), "xp_by": by,
+		"mastery_level": hero.mastery.level_of(xp_now + int(gain.get("total", 0))),
+		"talents": talents.map(func(id: StringName) -> String: return String(id)), "ultimate": ultimate})
 	extra.merge(room_tally.run_fields())
 	return RunLog.entry(result(), extra)
 
@@ -1274,12 +1296,83 @@ func log_run(outcome: String) -> void:
 	if _logged or not is_instance_valid(player):
 		return
 	_logged = true
-	var e := run_entry(outcome)
+	var gain := mastery_gain(outcome, Save.data)
+	var e := run_entry(outcome, gain)
+	# the Mastery is kept by a death too (D-57); never for the test robot (unless --mastery) nor without a save
+	if Save.enabled and (bot == null or Dev.has("mastery")):
+		award_mastery(gain, outcome, Save.data)
+		Save.write()
 	if Dev.has("runlog"):
 		RunLog.append(RunLog.PATH if Dev.arg("runlog") == "1" else Dev.arg("runlog"), e)
 	elif Save.enabled and bot == null:
 		RunLog.append(RunLog.PATH, e)
 	run_logged.emit(outcome, e)
+
+
+## The hero's Gifts for this descent (E2a): the loadout saved in heroes.<id>.equipped, kept only where it is valid at
+## the Mastery level (Talents.sanitized), with the ultimate chosen if unlocked; or --talents=a,b (any Gift, as at the
+## top level, for tests). The test robot without --talents takes none. Their plain numbers (life, Magia, reach) count
+## from the first room; with none equipped nothing changes.
+func _equip_talents() -> void:
+	var book := hero.talents()
+	var ids: Array[StringName] = []
+	if Dev.has("talents"):
+		var top := hero.mastery.max_level
+		ids = book.sanitized(Array(Dev.arg("talents").split(",", false)), top, hero.mastery.devotion(top))
+	elif bot == null:
+		var block := SaveData.hero(Save.data, String(hero.id))
+		var level := hero.mastery.level_of(int(block.mastery_xp))
+		ids = book.sanitized(block.equipped, level, hero.mastery.devotion(level))
+		var ult := hero.ultimate(StringName(block.ultimate))
+		ultimate = String(ult.id) if ult != null and ult.mastery_level <= level else ""
+	talents = ids
+	if ids.is_empty():
+		return
+	boons.equip_talents(book.defs(ids))
+	player.max_hp = hero.max_hp + boons.stat(&"max_hp") + life_bonus
+	player.hp = player.max_hp
+	player.magick.max_value = hero.magick_max + boons.stat(&"magick_max")
+	player.magick.value = player.magick.max_value
+
+
+## The Mastery XP this run gives (MasteryCurve.run_xp), by source and in total: fight rooms and guardians won,
+## Morvath's highest phase reached, the sealing, and the first times against what the save data has seen (Blessings
+## offered, Elos formed, the first guardian, the first victory).
+func mastery_gain(outcome: String, data: Dictionary) -> Dictionary:
+	var block := SaveData.hero(data, String(hero.id))
+	var firsts: Dictionary = block.firsts
+	var codex: Dictionary = data.get("codex", {})
+	var won: Array[RunMap.Kind] = rooms.won if rooms else ([] as Array[RunMap.Kind])
+	var guardians := won.count(RunMap.Kind.MINIBOSS)
+	var victory := outcome == "victory"
+	var seen: Dictionary = codex.get("boons", {})
+	var formed: Dictionary = codex.get("elos", {})
+	return hero.mastery.run_xp({
+		"rooms": won.count(RunMap.Kind.COMBAT), "guardians": guardians, "phase": int(boss_stats.get("max_phase", 0)),
+		"victory": victory,
+		"new_boons": seen_boons.keys().filter(func(id: StringName) -> bool: return not seen.has(String(id))).size(),
+		"new_elos": elos_formed.keys().filter(func(id: StringName) -> bool: return not formed.has(String(id))).size(),
+		"first_guardian": guardians > 0 and int(firsts.get("guardian", 0)) == 0,
+		"first_victory": victory and int(firsts.get("victory", 0)) == 0,
+	})
+
+
+## Adds a run's Mastery to save data: the hero's XP (kept on a death too), the Gifts its level unlocks, the first
+## times and the Codex (Blessings seen, Elos formed).
+func award_mastery(gain: Dictionary, outcome: String, data: Dictionary) -> void:
+	var block := SaveData.hero(data, String(hero.id))
+	block.mastery_xp = int(block.mastery_xp) + int(gain.get("total", 0))
+	var level := hero.mastery.level_of(block.mastery_xp)
+	block.unlocked = hero.talents().unlocked(level).map(func(t: TalentDef) -> String: return String(t.id))
+	for id: StringName in seen_boons:
+		SaveData.codex_add(data, "boons", String(id), "seen")
+	for id: StringName in elos_formed:
+		SaveData.codex_add(data, "elos", String(id), "formed")
+	var guardians := rooms.won.count(RunMap.Kind.MINIBOSS) if rooms else 0
+	if guardians > 0:
+		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
+	if outcome == "victory":
+		block.firsts["victory"] = int(block.firsts.get("victory", 0)) + 1
 
 
 ## One step of the run, timed: step_ms (smoothed, read at any moment) and step_timer (only frames with enemies

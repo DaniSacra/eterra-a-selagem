@@ -353,7 +353,7 @@ func _update_slots(p: Player) -> void:
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
 		match s.slot:
 			Boon.Slot.CAST:
-				s.refresh(b, 1.0 if p.cast_active else p.cast_cooldown / Player.CAST_COOLDOWN, 0, 0, starved)
+				s.refresh(b, 1.0 if p.cast_active else p.cast_cooldown / p.hero.cast_cooldown, 0, 0, starved)
 			Boon.Slot.DASH:
 				s.refresh(b, _dash_wait(p), p.dodge_charges, p.dodge_max)
 			Boon.Slot.SPECIAL:
@@ -373,7 +373,7 @@ func _omega(p: Player, slot: Boon.Slot) -> float:
 				var node := ComboTree.find(p.tree.neutral, ComboNode.In.CHARGE_LIGHT if slot == Boon.Slot.ATTACK else ComboNode.In.CHARGE)
 				cost = node.magick_cost if node else 0.0
 			Boon.Slot.CAST:
-				cost = Player.CAST_OMEGA_COST
+				cost = p.hero.cast_omega_cost
 		_omega_cost[slot] = cost
 	return _omega_cost[slot]
 
@@ -387,7 +387,7 @@ func _dash_wait(p: Player) -> float:
 		_dash_charges = p.dodge_charges
 	if p.dodge_charges >= p.dodge_max:
 		return 0.0
-	return 1.0 - clampf((game.time - _dash_from) / maxf(Feel.live().dodge_recharge, 0.01), 0.0, 1.0)
+	return 1.0 - clampf((game.time - _dash_from) / maxf(p.hero.dodge_recharge, 0.01), 0.0, 1.0)
 
 
 ## The gifts with no action of their own: small medallions with their recharge.

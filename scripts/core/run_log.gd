@@ -7,14 +7,19 @@ extends RefCounted
 const PATH := "user://runs.jsonl"
 ## 2 (cycle C12c, GP-02): source, boons_at_boss, shop, fountain_used, hurt_ctx, and more numbers in each room
 ## (RoomTally: variant, dodges, hits, hits_by, shots, blocked_by, gold_in, boons_in).
-const VERSION := 2
+## 3 (DT-015, E2a): the hero (hero: warrior), the Mastery XP the run gave (xp, by source in xp_by) and the level after
+## it (mastery_level), the Gifts equipped (talents) and the ultimate chosen. gifts stays the list of Blessings.
+const VERSION := 3
 ## What an entry adds to the RESULT: outcome (victory, death, quit), when (local date and time), the gifts taken (in
 ## order: id, level and rarity), the device used (keyboard, gamepad, both, none; bot for the test robot), how many
 ## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key. Since
 ## VERSION 2: who played (source: human or bot), the gifts held at Morvath, the shop (gold walking in, what was
 ## bought and for how much), whether the fountain healed him and every blow taken in context (RoomTally.hurt_ctx).
+## Since VERSION 3: HERO_FIELDS.
 const FIELDS: Array[String] = ["version", "outcome", "when", "gifts", "device", "omegas", "dodges", "last_hurt", "defeated_by",
-	"source", "boons_at_boss", "shop", "fountain_used", "hurt_ctx"]
+	"source", "boons_at_boss", "shop", "fountain_used", "hurt_ctx", "hero", "xp", "xp_by", "mastery_level", "talents", "ultimate"]
+## The fields of version 3 and what an older line (version 1 or 2, all played by the first hero) reads as.
+const HERO_FIELDS := {"hero": "warrior", "xp": 0, "xp_by": {}, "mastery_level": 0, "talents": [], "ultimate": ""}
 ## Who played a run (source).
 const HUMAN := "human"
 const BOT := "bot"
@@ -45,7 +50,7 @@ static func append(path: String, e: Dictionary) -> Error:
 	return OK
 
 
-## Every entry in the file at path (a damaged line is skipped).
+## Every entry in the file at path (a damaged line is skipped), older versions read in the current shape (normalized).
 static func read(path: String) -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	if not FileAccess.file_exists(path):
@@ -53,7 +58,19 @@ static func read(path: String) -> Array[Dictionary]:
 	var json := JSON.new()
 	for text in FileAccess.get_file_as_string(path).split("\n", false):
 		if json.parse(text) == OK and json.data is Dictionary:
-			out.append(json.data)
+			out.append(normalized(json.data))
+	return out
+
+
+## An entry of any version with the fields of this one: an older line (version 1 or 2, or none) gets HERO_FIELDS
+## (the first hero, no XP, no Gifts) and keeps its own version number, so a reader still knows what it was.
+static func normalized(e: Dictionary) -> Dictionary:
+	if int(e.get("version", 1)) >= VERSION:
+		return e
+	var out := e.duplicate(true)
+	for k: String in HERO_FIELDS:
+		if not out.has(k):
+			out[k] = HERO_FIELDS[k].duplicate() if HERO_FIELDS[k] is Array or HERO_FIELDS[k] is Dictionary else HERO_FIELDS[k]
 	return out
 
 

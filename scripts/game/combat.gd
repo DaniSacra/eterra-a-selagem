@@ -32,11 +32,9 @@ const RUMBLE_OMEGA := Vector3(0.6, 0.8, 0.18)
 const MARK_TAGS: Array[StringName] = [&"mark", &"cross"]
 const EMBER_TAGS: Array[StringName] = [&"ember", &"chama"]
 const HOLY_TAGS: Array[StringName] = [&"skill", &"vigilia"]
-## The circle of light (cast): what gifts see, its size, how long it holds, and the burst of the held version.
+## The circle of light (cast): what gifts see (its size, how long it holds and the burst of the held version are the
+## hero's: HeroDef.cast_radius, cast_time, cast_burst).
 const CAST_TAGS: Array[StringName] = [&"cast"]
-const CAST_RADIUS := 5.4
-const CAST_TIME := 3.0
-const CAST_BURST := 150.0
 const CAST_COLOR := Color(1.0, 0.95, 0.8)
 const SHATTER_SPLASH := 0.4
 ## Degrees of the narrow arc drawn for a thrust.
@@ -103,6 +101,7 @@ var fx: Fx
 var ground: Ground
 var projectiles: Projectiles
 var boons: BoonState
+var hero: HeroDef = HeroDef.warrior()
 var combo := 0
 var best_combo := 0
 var damage_dealt := 0.0
@@ -329,10 +328,10 @@ func _impact_frame(omega: bool, phase_broken: bool) -> void:
 
 ## The paladin lets go of the circle of light at a point. omega: the held version, which bursts when it ends.
 func cast(at: Vector2, omega: bool) -> void:
-	var radius := CAST_RADIUS * (1.0 + boons.stat(&"cast_size_pct"))
-	var z := ground.add_zone(Ground.Kind.BIND, at, radius, CAST_TIME, boons.stat(&"cast_dps", CAST_TAGS), CAST_TAGS)
+	var radius := hero.cast_radius * (1.0 + boons.stat(&"cast_size_pct"))
+	var z := ground.add_zone(Ground.Kind.BIND, at, radius, hero.cast_time, boons.stat(&"cast_dps", CAST_TAGS), CAST_TAGS)
 	if omega:
-		z.burst = CAST_BURST * (1.0 + boons.stat(&"damage_pct", CAST_TAGS))
+		z.burst = hero.cast_burst * (1.0 + boons.stat(&"damage_pct", CAST_TAGS))
 	fx.ring(at, radius, CAST_COLOR, 0.3)
 	fx.hero_burst(&"light", Vector3(at.x, 0.4, at.y))
 	Audio.play(&"charged" if omega else &"blade")

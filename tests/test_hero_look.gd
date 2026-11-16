@@ -139,7 +139,7 @@ func test_a_hit_lightens_his_own_colours_and_never_paints_him_white() -> void:
 	var on := 0
 	var steps := 130
 	for i in steps:
-		var lighten := Player.blink_lighten(Player.HURT_INVULN * float(i + 1) / steps)
+		var lighten := Player.blink_lighten(HeroDef.warrior().hurt_invuln * float(i + 1) / steps)
 		assert_true(lighten == 0.0 or lighten == Player.HURT_LIGHTEN)
 		on += 1 if lighten > 0.0 else 0
 	assert_between(float(on) / steps, 0.4, 0.6, "half the time lighter, half as he is")

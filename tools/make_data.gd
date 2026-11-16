@@ -2,6 +2,7 @@ extends SceneTree
 ## One-off generator of the content files in data/ (combos, enemies, gifts, waves) for the 3D version.
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [bosses] [feel]
+##   [talents] [ultimates] [mastery] [hero]
 
 ## Elites wear a faint old-gold edge (the rim of crowd.gdshader; cycle 5: the gilded halo is gone, the elite reads by
 ## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
@@ -35,7 +36,8 @@ const FINISHER_GLINT := 0.08
 
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel"]:
+	# the hero last: it points at the talents, ultimates and Mastery written before it
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -749,8 +751,7 @@ func _feel() -> void:
 	f.dodge_speed = 450.0 / U / 0.2 / 0.75
 	# protected 19 frames from the press, as Hades II (3 of charge and 16 of the jump; ours leaves on the press frame)
 	f.dodge_iframes = 18.0 / 60.0
-	f.dodge_charges = 1
-	f.dodge_recharge = 0.74
+	# (the dodge charges, 1, and their 0.74 s to come back are the hero's: _hero)
 	f.sprint_scale = 890.0 / 540.0
 	f.move_scale_light = 0.0
 	f.move_scale_heavy = 0.0
@@ -788,3 +789,140 @@ func _feel() -> void:
 	f.ink_opacity = 0.85
 	f.ink_life = 2.0
 	_save(f, Feel.PATH)
+
+
+# ---------- the hero ----------
+
+const HERO_DIR := "res://data/heroes/"
+const TALENT_DIR := "res://data/talents/warrior/"
+const ULT_DIR := "res://data/ultimates/"
+const MASTERY_PATH := "res://data/heroes/warrior_mastery.tres"
+
+
+## The Warrior's Mastery (guardian_spec.md 7; warrior_spec.md 4.4): 20 levels, 40 + 10 (n - 1) XP from n to n + 1
+## (2470 in all), Devotion 5 + level; XP by source and first times; older saves get 40 a run and 60 a win once, up to
+## level 5 (D-57).
+func _mastery() -> void:
+	var m := MasteryCurve.new()
+	var numbers := {
+		"max_level": 20, "xp_base": 40, "xp_step": 10, "devotion_base": 5,
+		"room_xp": 10, "guardian_xp": 25, "phase_xp": 10, "phase_max": 4, "victory_xp": 50,
+		"first_boon_xp": 2, "first_elo_xp": 10, "first_psalm_xp": 25, "first_guardian_xp": 25, "first_victory_xp": 100,
+		"retro_run_xp": 40, "retro_win_xp": 60, "retro_max_level": 5,
+	}
+	for k: String in numbers:
+		m.set(k, numbers[k])
+	DirAccess.make_dir_recursive_absolute(HERO_DIR)
+	_save(m, MASTERY_PATH)
+
+
+func _ult(n: int, id: StringName, kind: UltDef.Kind, props: Dictionary) -> void:
+	var u := UltDef.new()
+	u.id = id
+	u.kind = kind
+	u.name_key = StringName("ult_" + id)
+	u.desc_key = StringName("ult_%s_desc" % id)
+	for k: String in props:
+		u.set(k, props[k])
+	_save(u, ULT_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The two ultimates (D-54; warrior_spec.md 3.2): only their numbers, no behaviour yet. U-1: a band 12 x 4 m ahead,
+## 300 on the middle strip and 200 on the rest, charged by 60 of Magia spent (Sky Fall), Mastery 2. U-2, the Voragem
+## (ultimate_u2_proposals.md, proposal A): 6 m thrown 4 m ahead for 4 s, ticks of 8 every 0.25 s and an implosion of
+## 120 within 3 m, charged by 70 (Moon Water), Mastery 6. Names are pending (D-55, D-68: none with Elun).
+func _ultimates() -> void:
+	DirAccess.make_dir_recursive_absolute(ULT_DIR)
+	for f in DirAccess.get_files_at(ULT_DIR):
+		DirAccess.remove_absolute(ULT_DIR + f)
+	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "mastery_level": 2, "gesture": 0.3,
+		"tags": [&"ultimate", &"light"] as Array[StringName],
+		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 300.0, "damage": 200.0, "stun": 1.0, "armor_mult": 2.0})
+	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "mastery_level": 6, "gesture": 0.3,
+		"tags": [&"ultimate", &"cast"] as Array[StringName],
+		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 8.0,
+		"implode_damage": 120.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
+		"elite_pull": 0.5, "guardian_pull": 0.25, "stun": 0.0, "armor_mult": 2.0})
+
+
+func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.Tier, cost: int, unlock: int, props: Dictionary = {}) -> void:
+	var t := TalentDef.new()
+	t.id = id
+	t.name_key = StringName("talent_" + id)
+	t.desc_key = StringName("talent_%s_desc" % id)
+	t.branch = branch
+	t.tier = tier
+	t.cost = cost
+	t.unlock_level = unlock
+	for k: String in props:
+		t.set(k, props[k])
+	_save(t, TALENT_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The Warrior's tree of Gifts (warrior_spec.md 4): four branches (Combo, Furia, Emeth, Magia), each an entry, a middle
+## and an apex; four bridges; three sustain Gifts. Costs of the six first Gifts from 4.2, the rest proposals; unlock
+## levels in the order of 4.4 (transforming Gifts first; levels 2 and 6 are the ultimates; 20 unlocks two apexes).
+## Only Fio Longo, Reserva and Firmeza are plain numbers (mods, already applied); the effects of the others come in
+## another task.
+func _talents() -> void:
+	DirAccess.make_dir_recursive_absolute(TALENT_DIR)
+	for f in DirAccess.get_files_at(TALENT_DIR):
+		DirAccess.remove_absolute(TALENT_DIR + f)
+	var B := TalentDef.Branch
+	var T := TalentDef.Tier
+	var S := Boon.Slot
+	# Combo
+	_talent(0, &"quarto_corte", B.COMBO, T.ENTRY, 3, 1, {"slot": S.ATTACK})
+	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 7, {"slot": S.DASH})
+	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 15, {"partner": B.FURIA})
+	# Furia (charges that fade in 3 s, no new bar: D-70)
+	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 3)
+	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 8)
+	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO})
+	# Emeth
+	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 4)
+	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 9, {"mods": [_fixed(&"reach_pct", [0.15], &"light")] as Array[BoonMod]})
+	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA})
+	# Magia
+	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 5)
+	_talent(10, &"reserva", B.MAGIA, T.MIDDLE, 3, 10, {"mods": [_fixed(&"magick_max", [20])] as Array[BoonMod]})
+	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH})
+	# bridges between neighbouring branches
+	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch]})
+	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch]})
+	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL})
+	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH})
+	# sustain, off the branches
+	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 16, {"mods": [_fixed(&"max_hp", [10]), _fixed(&"magick_max", [10])] as Array[BoonMod]})
+	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17)
+	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19)
+
+
+## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
+## life 30 and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
+## (5.4 m, 3 s, Omega 20 of Magia held 0.6 s, bursts for 150). The passive gives 2 of Magia a finisher (D-56).
+func _hero() -> void:
+	var h := HeroDef.new()
+	h.id = &"warrior"
+	h.name_key = &"hero_warrior"
+	h.model = &"hero_explorer"
+	h.combos = "res://data/combos/paladin.tres"
+	var numbers := {
+		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 0.74,
+		"magick_max": 50.0,
+		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 0.2, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
+		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
+		"magick_on_finisher": 2.0,
+	}
+	for k: String in numbers:
+		h.set(k, numbers[k])
+	var ults: Array[UltDef] = []
+	var files := DirAccess.get_files_at(ULT_DIR)
+	files.sort()
+	for f in files:
+		ults.append(ResourceLoader.load(ULT_DIR + f, "", ResourceLoader.CACHE_MODE_REPLACE))
+	h.ultimates = ults
+	h.talents_dir = TALENT_DIR
+	h.mastery = ResourceLoader.load(MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
+	DirAccess.make_dir_recursive_absolute(HERO_DIR)
+	_save(h, HeroDef.WARRIOR)

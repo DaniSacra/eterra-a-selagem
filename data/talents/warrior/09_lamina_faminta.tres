@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_s1fk7"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_y4h0a"]
+
+[resource]
+script = ExtResource("2_y4h0a")
+id = &"lamina_faminta"
+name_key = &"talent_lamina_faminta"
+desc_key = &"talent_lamina_faminta_desc"
+branch = 3
+cost = 2
+unlock_level = 5

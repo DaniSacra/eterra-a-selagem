@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_6jxfn"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_eyshx"]
+
+[resource]
+script = ExtResource("2_eyshx")
+id = &"ainda_de_pe"
+name_key = &"talent_ainda_de_pe"
+desc_key = &"talent_ainda_de_pe_desc"
+branch = 5
+tier = 4
+cost = 5
+unlock_level = 19

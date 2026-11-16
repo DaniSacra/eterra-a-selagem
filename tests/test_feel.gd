@@ -6,7 +6,7 @@ func test_feel_loads_from_data() -> void:
 	var f := load(Feel.PATH) as Feel
 	assert_not_null(f)
 	assert_gt(f.speed, 0.0)
-	assert_gt(f.dodge_charges, 0)
+	assert_gt(f.dodge_time, 0.0, "the dodge charges are the hero's (test_hero_def.gd)")
 
 
 func test_every_number_has_a_range_and_sits_in_it() -> void:

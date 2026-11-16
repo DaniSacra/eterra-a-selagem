@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_66asu"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_t5m48"]
+
+[resource]
+script = ExtResource("2_t5m48")
+id = &"onda_carregada"
+name_key = &"talent_onda_carregada"
+desc_key = &"talent_onda_carregada_desc"
+branch = 4
+tier = 3
+cost = 3
+unlock_level = 13
+slot = 2
+joins = Array[int]([3, 2])

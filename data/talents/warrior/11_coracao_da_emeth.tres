@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_yew0c"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_25p0l"]
+
+[resource]
+script = ExtResource("2_25p0l")
+id = &"coracao_da_emeth"
+name_key = &"talent_coracao_da_emeth"
+desc_key = &"talent_coracao_da_emeth_desc"
+branch = 3
+tier = 2
+cost = 4
+unlock_level = 20
+partner = 2

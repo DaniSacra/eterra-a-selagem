@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="HeroDef" format=3]
+
+[ext_resource type="Resource" path="res://data/heroes/warrior_mastery.tres" id="1_iqgsx"]
+[ext_resource type="Script" path="res://scripts/core/hero_def.gd" id="2_oyckq"]
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="3_rujxb"]
+[ext_resource type="Resource" path="res://data/ultimates/00_cleave.tres" id="4_wgqt4"]
+[ext_resource type="Resource" path="res://data/ultimates/01_vortex.tres" id="5_dl24e"]
+
+[resource]
+script = ExtResource("2_oyckq")
+name_key = &"hero_warrior"
+combos = "res://data/combos/paladin.tres"
+ultimates = Array[ExtResource("3_rujxb")]([ExtResource("4_wgqt4"), ExtResource("5_dl24e")])
+talents_dir = "res://data/talents/warrior/"
+mastery = ExtResource("1_iqgsx")
