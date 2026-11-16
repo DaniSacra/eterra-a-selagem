@@ -4,7 +4,8 @@ extends Node
 
 const W := Synth.Wave
 const FILE_DIR := "res://audio/"
-const VOICES := 10
+## Voices at once (C15-02: a blow now layers its material over the hit, and the enemies' wind-ups and shots sound).
+const VOICES := 16
 const REPEAT_GAP_MS := 45
 ## name -> list of voices [wave, f0, f1, seconds, volume, curve, start]
 const SOUNDS := {
@@ -61,6 +62,37 @@ const SOUNDS := {
 	&"boss_down": [[W.NOISE, 900, 60, 1.2, 0.5, 2.0, 0.0], [W.SINE, 220, 30, 1.2, 0.5, 2.0, 0.0]],
 	&"seal": [[W.SINE, 196, 196, 1.2, 0.4, 1.6, 0.0], [W.SINE, 294, 294, 1.2, 0.3, 1.6, 0.0], [W.TRIANGLE, 784, 784, 0.8, 0.15, 2.0, 0.1]],
 	&"sword_rise": [[W.TRIANGLE, 660, 990, 0.3, 0.3, 3.0, 0.0], [W.NOISE, 5000, 2500, 0.05, 0.15, 6.0, 0.0]],
+	# C15-02, the fight's sounds (CombatSounds; provisional synthesis, D-12b). A blow's material, laid over the blade's
+	# hit: dry bone, a shield's dull clonk, the ring of plate (also any blow on an armor bar), Morvath's hollow
+	# spectral flesh; a blow on his ritual's ward; a wind-up cut by a blow; the armor bar breaking
+	&"mat_bone": [[W.NOISE, 3800, 1500, 0.04, 0.22, 9.0, 0.0], [W.TRIANGLE, 900, 600, 0.04, 0.1, 8.0, 0.0]],
+	&"mat_shield": [[W.SQUARE, 240, 180, 0.1, 0.16, 6.0, 0.0], [W.NOISE, 1200, 500, 0.08, 0.2, 6.0, 0.0]],
+	&"mat_armor": [[W.TRIANGLE, 1760, 1480, 0.18, 0.14, 4.0, 0.0], [W.SQUARE, 660, 620, 0.12, 0.06, 5.0, 0.0], [W.NOISE, 5000, 2500, 0.05, 0.14, 7.0, 0.0]],
+	&"mat_spectral": [[W.SINE, 330, 220, 0.25, 0.16, 3.0, 0.0], [W.TRIANGLE, 990, 660, 0.2, 0.08, 3.5, 0.02], [W.NOISE, 1200, 400, 0.15, 0.1, 4.0, 0.0]],
+	&"ward": [[W.TRIANGLE, 1760, 1320, 0.1, 0.14, 5.0, 0.0], [W.NOISE, 6000, 3000, 0.05, 0.08, 6.0, 0.0]],
+	&"interrupt": [[W.NOISE, 2600, 700, 0.07, 0.26, 7.0, 0.0], [W.SQUARE, 520, 260, 0.09, 0.12, 5.0, 0.0]],
+	&"armor_break": [[W.NOISE, 5000, 1500, 0.3, 0.3, 3.0, 0.0], [W.TRIANGLE, 1320, 440, 0.25, 0.16, 3.5, 0.0], [W.SQUARE, 180, 90, 0.15, 0.12, 5.0, 0.0]],
+	# the fall of a shielded or armored body, and of a spectral one
+	&"kill_metal": [[W.NOISE, 2200, 400, 0.3, 0.28, 3.5, 0.0], [W.SQUARE, 330, 150, 0.2, 0.1, 4.0, 0.0], [W.TRIANGLE, 1320, 990, 0.25, 0.08, 4.0, 0.05]],
+	&"kill_spectral": [[W.SINE, 440, 110, 0.6, 0.24, 2.0, 0.0], [W.NOISE, 1600, 300, 0.5, 0.14, 2.5, 0.0]],
+	# an enemy's wind-up starting, one per EnemyDef.Tell, short and soft (it helps a dodge): a blade drawn, embers
+	# hissing, an orb swelling, a crossbow cocked, a shield set with a grunt, a ritual's hum
+	&"tell_blade": [[W.NOISE, 3000, 6000, 0.18, 0.1, 2.0, 0.0], [W.TRIANGLE, 1200, 1500, 0.15, 0.05, 3.0, 0.0]],
+	&"tell_ember": [[W.NOISE, 1500, 4500, 0.25, 0.12, 1.6, 0.0]],
+	&"tell_orb": [[W.SINE, 660, 990, 0.3, 0.1, 1.8, 0.0], [W.TRIANGLE, 1320, 1980, 0.25, 0.05, 2.2, 0.03]],
+	&"tell_bolt": [[W.SQUARE, 160, 240, 0.12, 0.09, 3.0, 0.0], [W.NOISE, 2000, 800, 0.05, 0.12, 7.0, 0.1]],
+	&"tell_shield": [[W.SAW, 90, 70, 0.3, 0.14, 2.5, 0.0], [W.NOISE, 400, 200, 0.2, 0.12, 3.0, 0.0]],
+	&"tell_ritual": [[W.SINE, 147, 220, 0.5, 0.12, 1.6, 0.0], [W.TRIANGLE, 294, 440, 0.45, 0.06, 2.0, 0.0]],
+	# its blow loosed, its shots leaving (the bolt is the recipe above)
+	&"enemy_swing": [[W.NOISE, 900, 2600, 0.12, 0.16, 3.5, 0.0]],
+	&"enemy_charge": [[W.NOISE, 300, 900, 0.35, 0.2, 2.0, 0.0], [W.SAW, 80, 60, 0.3, 0.12, 2.5, 0.0]],
+	&"enemy_burst": [[W.NOISE, 2000, 300, 0.25, 0.26, 3.0, 0.0], [W.SINE, 160, 60, 0.25, 0.22, 3.0, 0.0]],
+	&"shot_orb": [[W.TRIANGLE, 1100, 700, 0.12, 0.12, 4.0, 0.0], [W.SINE, 550, 350, 0.12, 0.1, 4.0, 0.0]],
+	&"shot_vine": [[W.NOISE, 500, 1500, 0.3, 0.12, 2.0, 0.0], [W.SAW, 110, 90, 0.25, 0.07, 3.0, 0.0]],
+	# the circle of light let go, its held version, and that one bursting
+	&"circle": [[W.SINE, 523, 784, 0.35, 0.18, 2.5, 0.0], [W.TRIANGLE, 1046, 1568, 0.3, 0.08, 3.0, 0.05]],
+	&"circle_omega": [[W.SINE, 392, 784, 0.5, 0.22, 2.0, 0.0], [W.TRIANGLE, 784, 1568, 0.45, 0.1, 2.5, 0.06], [W.NOISE, 2000, 5000, 0.3, 0.06, 3.0, 0.0]],
+	&"circle_burst": [[W.NOISE, 1400, 300, 0.3, 0.32, 3.0, 0.0], [W.SINE, 196, 98, 0.35, 0.32, 3.0, 0.0], [W.TRIANGLE, 784, 392, 0.3, 0.12, 3.0, 0.0]],
 	&"ui_move": [[W.SQUARE, 660, 660, 0.03, 0.12, 6.0, 0.0]],
 	&"ui_ok": [[W.SQUARE, 660, 990, 0.07, 0.18, 4.0, 0.0]],
 }

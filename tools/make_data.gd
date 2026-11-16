@@ -140,18 +140,28 @@ func _enemy(props: Dictionary) -> void:
 ## Cycle 8, the part each plays in a fight (`role`, drawn by the pools of _stage): the soldier presses, the runner asks
 ## for a quick answer, the caster closes space, the crossbowman makes him move sideways, the shield-bearer blocks the
 ## front, the priest threatens ground. Guardians and Morvath have none (their own rooms).
+## GF-12 (D-42): a blow stuns a common enemy as in Hades II, per enemy (Enemies.sjson, EnemyData_*.lua of the first
+## region, study of 2026-11-16). Hades plays each one's StunAnimations, whose length lives in the animations; ours is
+## the hit pose (Horde.HURT_TIME). A Heavy stun plays the same pose at half speed (GrannyAnimationSpeed 0.5: Guard,
+## Mage); the Brawler (our guard) plays its Default at 1.3 and its long one at 0.6; Radiator, Screamer and SiegeVine
+## have only the Default. Elites flinch once their armor is broken (Hades: ImmuneToStun only while the HealthBuffer
+## holds); guardians and Morvath never (ImmuneToStun).
+const STUN := 0.3
+
+
 func _enemies() -> void:
 	var B := EnemyDef.Behavior
 	var T := EnemyDef.Tell
 	# the foot soldier: walks up, raises its blade 0.9 s and lunges (Hades: the common melee shade)
 	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
 		"attack_damage": 3.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
-		"rating": 5.0, "role": &"pressure", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
+		"rating": 5.0, "role": &"pressure", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1,
+		"stun_time": STUN, "stun_heavy_time": STUN * 2.0}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
 		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
-		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
+		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
 	# Ranged enemies with the numbers of Hades II's ranged ones in its first region (study of 2026-11-16) and Daniel's
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
@@ -163,7 +173,7 @@ func _enemies() -> void:
 		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": Color(1.7, 1.25, 3.2),
 		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 40.0, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
-		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58)},
+		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN * 2.0},
 		{"armor": 155.0, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
 	# the crossbowman (Hades: the Screamer's life and rating; it has no shot there, a cone held on itself): a fast
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
@@ -171,12 +181,14 @@ func _enemies() -> void:
 	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 290.0 / U, "damage": 3.0, "radius": 0.55,
 		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
 		"shot_speed": 16.0, "shot_line": true, "keep_away": 0.65, "retreat_far": 700.0 / U, "retreat_time": Vector2(1.5, 1.75), "max_attackers": 2,
-		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42)}, {"armor": 190.0, "rating": 34.0})
+		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42), "stun_time": STUN, "stun_heavy_time": STUN}, {"armor": 190.0, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
-		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4)}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
+		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield",
+		# its charge in flight is not cut (Hades: the charging Brute, WeaponSetImmuneToStun while it runs)
+		"stun_time": STUN / 1.3, "stun_heavy_time": STUN / 0.6, "stun_immune_attacking": true}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
 	# the one rooted in place (Hades: the SiegeVine's life, rating and attack): from up to 22.5 m, 0.8 s of warning,
 	# one shadow vine creeping along the floor after the paladin at 1.9 m/s, turning 90 degrees a second at first and
 	# 15 less each second, for 12 s, 6 damage; then 3.25 s (elite: 3 vines 0.7 s apart, then 2.25 s). Before
@@ -184,13 +196,14 @@ func _enemies() -> void:
 	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
 		"heavy": true, "attack_damage": 6.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": Color(1.9, 0.45, 3.0),
 		"shot_orb": true, "shot_speed": 150.0 / U, "shot_turn": 90.0, "shot_turn_decay": 15.0, "shot_range": 150.0 / U * 12.0, "shot_low": true,
-		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25},
+		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25,
+		"stun_time": STUN, "stun_heavy_time": STUN},
 		{"armor": 390.0, "shot_ticks": 3, "shot_interval": 0.7, "attack_cooldown": 2.25, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
 		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 12.0, "close_range": 3.2, "close_windup": 0.8,
-		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35)})
+		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
 		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "shot_orb": true, "shot_speed": 7.0,
@@ -201,7 +214,7 @@ func _enemies() -> void:
 	# fight's numbers are data/bosses/morvath.tres (_bosses)
 	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.4,
 		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": SPECTRAL, "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
-		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5})
+		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5, "material": &"spectral"})
 
 
 ## An enemy and its elite version: the same, wearing an armor bar (Hades II "HealthBuffer"), faster and outlined.
@@ -901,6 +914,7 @@ func _talents() -> void:
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
 ## life 30 and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
 ## (5.4 m, 3 s, Omega 20 of Magia held 0.6 s, bursts for 150). The passive gives 2 of Magia a finisher (D-56).
+## The lunge stops at 0.3 of the blow's reach (E1b, Game Director: it was 0.45, 2.4 m for cut1, and he hardly moved).
 func _hero() -> void:
 	var h := HeroDef.new()
 	h.id = &"warrior"
@@ -908,7 +922,7 @@ func _hero() -> void:
 	h.model = &"hero_explorer"
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
-		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 0.74,
+		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "lunge_standoff": 0.3, "dodge_charges": 1, "dodge_recharge": 0.74,
 		"magick_max": 50.0,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 0.2, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,

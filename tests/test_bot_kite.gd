@@ -70,3 +70,33 @@ func test_the_paladins_light_stays_under_the_glow_and_behind_him() -> void:
 	assert_eq(off.y, 0.0)
 	var to_camera := Vector3(camera.global_position.x - at.x, 0, camera.global_position.z - at.z)
 	assert_lt(off.dot(to_camera), 0.0, "away from the camera")
+
+
+## B-2: the bot walks to a fountain that still has light when under 60% of its life, never otherwise.
+func test_the_bot_drinks_from_the_fountain_when_hurt() -> void:
+	var spring := Vector2(0, -2)
+	assert_eq(Bot.drink_at(spring, 10.0, 30.0), spring, "hurt: to the fountain")
+	assert_null(Bot.drink_at(spring, 18.0, 30.0), "at 60% it goes on")
+	assert_null(Bot.drink_at(spring, 30.0, 30.0))
+	assert_null(Bot.drink_at(null, 5.0, 30.0), "no fountain, or its light is spent")
+
+
+## B-2 in a real room: hurt in the fountain room (no fight), the bot drinks before it takes a door.
+func test_the_bot_drinks_in_the_fountain_room() -> void:
+	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	game.rooms.start_at(RunMap.Kind.FOUNTAIN)
+	var bot := Bot.new()
+	game.bot = bot
+	var old: Variant = Controls.virtual
+	Controls.virtual = bot.pad
+	game.player.hp = game.player.max_hp * 0.4
+	var dt := 1.0 / 60.0
+	var t := 0.0
+	while t < 12.0 and game.fountain_target() != null:
+		bot.step(dt, game)
+		game._step(dt)
+		t += dt
+	Controls.virtual = old
+	assert_null(game.fountain_target(), "the fountain's light is spent: it drank")
+	assert_gt(game.player.hp, game.player.max_hp * 0.6, "and was healed")

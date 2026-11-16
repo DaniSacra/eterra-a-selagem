@@ -103,6 +103,9 @@ var last_offscreen := -1
 var view := Callable()
 ## Enemies that got stuck this run, by kind (RESULT stuck; Bot.stats).
 var stuck_by := {}
+## Blows that stunned someone, and attacks those blows cut, this run (GF-12; RESULT flinches, interrupts).
+var flinches := 0
+var interrupts := 0
 ## The way the enemy behaving now walks toward the paladin (_way).
 var _walk := Vector2.ZERO
 var _dt := 0.0
@@ -334,7 +337,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		e.dir = e.aim
 		if e.state_t >= d.attack_windup:
 			if caster:
-				ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
+				e.warning = ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
 			e.memo = 0
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
@@ -397,7 +400,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
 		if d.shot_line and not caster:
 			# the line on the floor ends where the bolt will die on cover
-			ground.add_line_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
+			e.warning = ground.add_line_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
 				d.attack_windup, 0.0)
 
 
@@ -436,6 +439,7 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 	var n := maxi(1, d.shot_count)
 	var reach := d.shot_range if d.shot_range > 0.0 else d.attack_range * RANGED_REACH
 	var life := reach / maxf(0.1, d.shot_speed)
+	Audio.play(CombatSounds.shot(d))
 	for i in n:
 		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
 		var aim := dir.rotated(turn)
@@ -482,7 +486,7 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"windup")
-				ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius + 1.0, 1.3, d.attack_windup + d.lunge_time * 0.5, d.attack_damage * damage_scale)
+				e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius + 1.0, 1.3, d.attack_windup + d.lunge_time * 0.5, d.attack_damage * damage_scale)
 			else:
 				var circle := (toward.rotated(e.side * PI * 0.5) + toward * (0.3 if dist > d.attack_range * 0.6 else -0.5)).normalized()
 				e.pos += circle * _speed(e) * 0.8 * dt
@@ -517,14 +521,14 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.memo = 1
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"attack")
-				ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * damage_scale)
+				e.warning = ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * damage_scale)
 				e.state_t = d.attack_windup - d.close_windup
 				return
 			if e.cooldown <= 0.0 and dist < d.attack_range and dist > d.close_range and target_alive and e.straight:
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"idle")
-				ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, d.attack_windup, d.attack_damage * damage_scale)
+				e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, d.attack_windup, d.attack_damage * damage_scale)
 
 
 ## Between charges the knight still swings at whoever is close.
@@ -592,7 +596,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.pos += _walk * _speed(e) * dt
 			elif e.cooldown <= 0.0 and target_alive:
 				_set_state(e, Enemy.State.WINDUP, &"windup")
-				ground.add_warning(e.pos, d.attack_width, d.attack_windup, d.attack_damage * damage_scale, d.magic_color)
+				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup, d.attack_damage * damage_scale, d.magic_color)
 			else:
 				e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
 
@@ -618,7 +622,7 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if dist < d.attack_range and e.cooldown <= 0.0 and target_alive:
 				e.aim = toward
 				_set_state(e, Enemy.State.WINDUP, &"aim")
-				ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
+				e.warning = ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
 
 
 ## The way to walk toward the paladin (cycle C12): straight while the floor between is clear (or he is near), else
@@ -688,6 +692,12 @@ func stuck_count() -> int:
 
 
 func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = true) -> void:
+	if state == Enemy.State.WINDUP and e.state != Enemy.State.WINDUP:
+		Audio.play(CombatSounds.windup(e.def))  # (C15-02: every wind-up is heard, by what it shows)
+	elif state == Enemy.State.ATTACK:
+		var loosed := CombatSounds.strike(e.def)
+		if loosed != &"":
+			Audio.play(loosed)
 	e.state = state
 	e.state_t = 0.0
 	if e.anim != anim or restart:
@@ -836,6 +846,9 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			e.recoil_dir = from_dir.normalized()
 	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
+	if flash and from_dir != Vector2.ZERO and e.hp > 0.0:
+		# a blow, not a burn's tick or a zone's: a common body flinches (GF-12)
+		flinch(e, e.def.stun_heavy_time if big else e.def.stun_time)
 	if knockback > 0.0:
 		e.push = from_dir * knockback * (0.35 if e.def.heavy else 1.0)
 	if show_number:
@@ -854,11 +867,46 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 				e.push = from_dir * power * _rng.randf_range(0.8, 1.2)
 				e.vy = THROW_UP * _rng.randf_range(0.7, 1.2) + (3.0 if big else 0.0)
 				e.spin = _rng.randf_range(0.6, 1.0)
-		Audio.play(&"bone")
+		Audio.play(CombatSounds.kill(e.def))
 		fx.burst(&"bone" if e.def.undead else &"dust", Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(from_dir.x, 0, from_dir.y))
 		killed.emit(e)
 		return true
 	return false
+
+
+## GF-12 (D-42, Hades II per enemy): a blow stuns it for `seconds` (EnemyDef.stun_time, stun_heavy_time): it stops
+## (helpless), a wind-up or an attack under way is cut (interrupt) and it shows the hit pose. Not while it rises, nor
+## while its own attack is loosed when that cannot be cut (EnemyDef.stun_immune_attacking); 0 seconds: never (the
+## guardians, Morvath). Armor never gets here: a blow on the bar returns before (damage). True when it took.
+func flinch(e: Enemy, seconds: float) -> bool:
+	if seconds <= 0.0 or not e.alive or e.state == Enemy.State.RISE:
+		return false
+	if e.state == Enemy.State.ATTACK and e.def.stun_immune_attacking:
+		return false
+	interrupt(e)
+	e.stun_t = maxf(e.stun_t, seconds)
+	e.hurt_t = HURT_TIME
+	flinches += 1
+	return true
+
+
+## Cuts the attack it is winding up or loosing: it never lands, its warning on the floor goes at once (a wind-up
+## shows nothing more) and it walks again when it can move. A cut attack that was already loosed counts as spent
+## (its cooldown starts); a cut wind-up leaves it ready, to be announced again in full. True when one was cut.
+func interrupt(e: Enemy) -> bool:
+	if e.state != Enemy.State.WINDUP and e.state != Enemy.State.ATTACK:
+		return false
+	if e.state == Enemy.State.ATTACK:
+		e.cooldown = maxf(e.cooldown, e.def.attack_cooldown)
+	if e.warning != null:
+		Ground.end_zone(e.warning as Ground.Zone)
+		e.warning = null
+	if e.def.behavior != EnemyDef.Behavior.PRIEST:
+		e.memo = 0  # (a knight's slam, a burst's ticks; the elder priest counts its casts there)
+	_set_state(e, Enemy.State.WALK, &"walk")
+	interrupts += 1
+	Audio.play(CombatSounds.EVENTS[&"interrupt"])
+	return true
 
 
 func _sweep() -> void:

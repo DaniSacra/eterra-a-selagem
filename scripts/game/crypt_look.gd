@@ -111,6 +111,15 @@ const KEY_SHIFT := Vector2(-3.0, 2.5)
 ## the ambient are this much stronger.
 const COMPAT_KEY := 1.4
 const COMPAT_AMBIENT := 1.4
+## M-1 (QA-02): the fight's floor in the west and north bays, far from the candles and the key, read 19 to 34 (the aim
+## 45 or more). A soft fill over them that lights the floor alone (ArenaRoom.FLOOR_LAYER; the walls stay as dark as
+## they were) and casts no shadow: its colour (the key's), energy, height, reach, falloff and where it stands (x, z).
+const FLOOR_FILL := Color(0.8, 0.76, 0.78)
+const FLOOR_FILL_ENERGY := 1.8
+const FLOOR_FILL_HEIGHT := 6.0
+const FLOOR_FILL_REACH := 16.0
+const FLOOR_FILL_FALLOFF := 0.6
+const FLOOR_FILL_AT := Vector2(-9.0, -1.5)
 ## Candle lights with shadow (energy) and the plain ones (spec 2.5: at most 6 without shadow).
 const CANDLE_SHADOW_ENERGY := 1.6
 const CANDLE_PLAIN := 6
@@ -126,6 +135,10 @@ var _plain_lights := 0
 
 func floor_look() -> Dictionary:
 	return FLOOR
+
+
+func floor_layers() -> int:
+	return 1 | FLOOR_LAYER
 
 
 func stone_tint() -> Color:
@@ -181,6 +194,14 @@ func dress() -> void:
 	key.omni_attenuation = KEY_FALLOFF
 	key.omni_range = KEY_REACH
 	key.position += Vector3(KEY_SHIFT.x, 0.0, KEY_SHIFT.y)
+	var fill := OmniLight3D.new()
+	fill.position = Vector3(FLOOR_FILL_AT.x, FLOOR_FILL_HEIGHT, FLOOR_FILL_AT.y)
+	fill.light_color = FLOOR_FILL
+	fill.light_energy = FLOOR_FILL_ENERGY * (COMPAT_KEY if _compat() else 1.0)
+	fill.omni_range = FLOOR_FILL_REACH
+	fill.omni_attenuation = FLOOR_FILL_FALLOFF
+	fill.light_cull_mask = FLOOR_LAYER
+	add_child(fill)
 	# the doors' stairs (ArenaRoom._doors) take Masonry's plain stone at their foot: this room's is darker
 	var plain := m.stone(-EXIT_RISE * EXIT_STEPS)
 	var dark := _stair_stone(-EXIT_RISE * EXIT_STEPS)

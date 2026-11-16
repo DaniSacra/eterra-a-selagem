@@ -21,3 +21,4 @@ speed = 3.75
 damage = 8.0
 radius = 1.4
 heavy = true
+material = &"spectral"

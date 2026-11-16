@@ -127,6 +127,18 @@ func on_died() -> void:
 	died_pinned = _pin_t >= PIN_TIME or _pin_since < PIN_TIME
 
 
+## Below this share of its life the bot walks to a fountain that still has light (B-2).
+const DRINK_BELOW := 0.6
+
+
+## Where the bot goes to drink: the fountain (`spring`, Game.fountain_target) when its life is under DRINK_BELOW of
+## the most, else null.
+static func drink_at(spring: Variant, hp: float, max_hp: float) -> Variant:
+	if spring == null or hp >= max_hp * DRINK_BELOW:
+		return null
+	return spring
+
+
 ## The bot's numbers for RESULT.
 func stats() -> Dictionary:
 	return {"stuck": pinned, "died_stuck": died_pinned}
@@ -147,8 +159,11 @@ func step(dt: float, game: Game) -> void:
 		pad.release(&"dodge")
 	pad.release(&"cast")
 	if game.rooms and game.horde.count() == 0:
-		# between fights: take the reward, buy what there is gold for, walk through a door
-		var goal: Variant = game.rooms.bot_goal()
+		# between fights: drink from the fountain when hurt (B-2), take the reward, buy what there is gold for, walk
+		# through a door
+		var goal: Variant = drink_at(game.fountain_target(), game.player.hp, game.player.max_hp)
+		if goal == null:
+			goal = game.rooms.bot_goal()
 		pad.move = _steer(game, p, _way(game, p, goal as Vector2, dt)) if goal != null and p.distance_to(goal) > 0.3 else Vector2.ZERO
 		_queue = ""
 		_hold = 0.0
@@ -186,8 +201,8 @@ func step(dt: float, game: Game) -> void:
 	if was_kiting:
 		pad.release(&"heavy_attack")
 		_hold = 0.0
-	var spring: Variant = game.fountain_target()
-	if spring != null and game.player.hp < game.player.max_hp * 0.6:
+	var spring: Variant = drink_at(game.fountain_target(), game.player.hp, game.player.max_hp)
+	if spring != null:
 		pad.move = ((spring as Vector2) - p).normalized()
 	if _hold > 0.0:
 		_hold -= dt

@@ -846,12 +846,15 @@ func _on_status_player(status: StringName) -> void:
 func _on_armor_broken(e: Enemy) -> void:
 	# the gold shards of the break are EnemyFx's (one effect, not two)
 	fx.shake(3.0)
+	Audio.play(CombatSounds.EVENTS[&"armor_break"])
 	if boss and boss.e == e:
 		boss.break_armor()
 		return
+	# the stagger of a broken armor is a stun (Hades ArmorBreakStun): the attack it was winding up is cut (GF-12)
+	horde.interrupt(e)
 	e.stun_t = maxf(e.stun_t, e.def.armor_stagger)
 	fx.word(Vector3(e.pos.x, 2.0 + 2.0 * e.def.size, e.pos.y), T.t(&"word_stagger"), Combat.LIGHT)
-	Audio.play(&"stagger")
+	Audio.play(CombatSounds.EVENTS[&"stagger"])
 
 
 func _on_killed(e: Enemy) -> void:
@@ -1416,7 +1419,7 @@ func result() -> Dictionary:
 		"step_ms_avg": snappedf(step_timer.average(), 0.01), "step_ms_peak": snappedf(step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
 		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
-		"shots_blocked": projectiles.blocked, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
+		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
 		"fountain_used": room_tally.fountain_used}
 
 

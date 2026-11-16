@@ -11,9 +11,10 @@ signal shot_hit(e: Enemy, shot: Shot)
 ## A hostile shot with a status (Shot.status, the boss's curse) struck the paladin while he could be hurt.
 signal status_player(status: StringName)
 
-## SPARK: the paladin's Seta de Luz (the special): a straight dart of the sword's emerald. WAVE: its held version, a
-## broader dart with one on each side. SOUL: a boss's spectral crescent, wide across its flight, that goes on after
-## it strikes (each one hurts the paladin once). CURSE: a boss's bolt that follows the paladin a little and curses him.
+## SPARK: the paladin's Seta de Luz (the special), drawn as the Guerreiro's blade wave (W-1, D-69): a short thin
+## crescent of the Emeth's emerald flying flat. WAVE: its held version, the same wave as wide as it hits. SOUL: a boss's
+## spectral crescent, wide across its flight, that goes on after it strikes (each one hurts the paladin once). CURSE: a
+## boss's bolt that follows the paladin a little and curses him.
 enum Kind { BOLT, ORB, WAVE, BLADE, SPARK, SOUL, CURSE }
 
 ## Meters a crescent (SOUL) reaches along its flight, before and behind its middle line.
@@ -23,24 +24,34 @@ const SOUL_HEIGHT := 0.55
 ## Height of a shot that creeps along the floor (Shot.low).
 const LOW_HEIGHT := 0.3
 
-const DART := preload("res://assets/shaders/emeth_dart.gdshader")
-## The dart of the special, in meters: its length, half its width and the trail behind it.
-const DART_LENGTH := 2.0
-const DART_HALF := 0.15
-const DART_TRAIL := 1.5
-## The held version: longer and broader (0.45 m across).
-const OMEGA_LENGTH := 2.6
-const OMEGA_HALF := 0.225
-## Meters behind the point its bow wave is drawn for each meter to the side (emeth_dart.gdshader).
-const OMEGA_WAVE_BACK := 3.4
-
+## The special's wave (emeth_wave.gdshader; W-1, decision D-69): only its look, the hit stays the circle of Shot.radius
+## (the special 0.7 m, its held version 4.125 m) flying at SPARK_SPEED (the held one 22 m/s).
+const WAVE_SHADER := preload("res://assets/shaders/emeth_wave.gdshader")
+## The special: meters across from point to point (a little over its hit, 1.4 m), its bow ahead of the points, the
+## band's thickness and the wake behind it at its longest.
+const WAVE_SPAN := 1.6
+const WAVE_BOW := 0.38
+const WAVE_THICK := 0.2
+const WAVE_WAKE := 0.9
+## The held one: as wide as it hits (2 x Shot.radius), its bow, band and wake in proportion but thicker.
+const OMEGA_BOW := 0.24
+const OMEGA_THICK := 0.4
+const OMEGA_WAKE := 1.4
+## Brightest channel the wave writes (linear, under Game.GLOW_THRESHOLD 1.3) and its gold thread's share of it.
+const WAVE_PEAK := 1.0
+## How far the leading edge goes toward white (emeth_wave.gdshader edge_pale).
+const WAVE_EDGE_PALE := 0.35
+const WAVE_GOLD := Color(0.95, 0.72, 0.3)
+const WAVE_GOLD_LIGHT := 0.85
+## Seconds the wave fades over at the end of its flight (the special flies 0.18 s, the held one 0.5 s).
+const WAVE_FADE := Vector2(0.04, 0.12)
 const HEIGHT := 1.1
 ## Enemy shots (bolts, orbs, the curse): their ball and halo (cycle 10, BUG-006), and the halo's radius as a share of
 ## the ball's (at most 1.5: a crowd of sorcerers never fills the air with light).
 const ORB_SHADER := preload("res://assets/shaders/enemy_orb.gdshader")
 const HALO_SHADER := preload("res://assets/shaders/enemy_orb_halo.gdshader")
 const HALO := 1.5
-## The dart flies at the speed of Hades II's special (ProjectileStaffBall, 5000 units: 62.5 m/s; GF-07).
+## The special flies at the speed of Hades II's special (ProjectileStaffBall, 5000 units: 62.5 m/s; GF-07).
 const SPARK_SPEED := 5000.0 / 80.0
 const LOOK := {
 	Kind.BOLT: [Color(3.0, 0.5, 0.3), 0.18, 0.6], Kind.ORB: [Color(1.6, 0.4, 2.8), 0.45, 0.45],
@@ -64,7 +75,7 @@ class Shot:
 	## Enemies already hit (piercing shots hit each one once).
 	var seen: Dictionary = {}
 	var node: Node3D
-	## Meters flown (only for the look: the trail grows as the dart leaves the blade).
+	## Meters flown (only for the look: the wave's wake grows as it leaves the blade).
 	var flown := 0.0
 	## A crescent (SOUL): half its width across the flight.
 	var half_width := 0.0
@@ -143,21 +154,22 @@ func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance:
 	if kind == Kind.BLADE:
 		s.node.scale = Vector3.ONE * size
 		return s
-	# a dart: the quad turns around the flight to face the camera
+	# the blade wave, flat, its bow along the flight (emeth_wave.gdshader)
 	var omega := kind == Kind.WAVE
-	var length := OMEGA_LENGTH if omega else DART_LENGTH
-	var half := OMEGA_HALF if omega else DART_HALF
-	mat.set_shader_parameter(&"axis", Vector3(dir.x, 0.0, dir.y).normalized())
-	mat.set_shader_parameter(&"omega", 1.0 if omega else 0.0)
-	mat.set_shader_parameter(&"dart_m", length)
-	mat.set_shader_parameter(&"half_m", half)
-	# the held one reaches far ahead of its middle: its point leads
-	mat.set_shader_parameter(&"nose_m", maxf(length * 0.5, s.radius * 0.6) if omega else length * 0.5)
-	mat.set_shader_parameter(&"reach_m", s.radius)
-	mat.set_shader_parameter(&"length_m", maxf(length + DART_TRAIL, OMEGA_WAVE_BACK) if omega else length + DART_TRAIL)
-	mat.set_shader_parameter(&"width_m", maxf(s.radius * 2.0, half * 4.0) if omega else half * 4.0)
-	mat.set_shader_parameter(&"trail_m", 0.01)
+	mat.set_shader_parameter(&"span_m", s.radius * 2.0 if omega else WAVE_SPAN)
+	mat.set_shader_parameter(&"bow_m", s.radius * 2.0 * OMEGA_BOW if omega else WAVE_BOW)
+	mat.set_shader_parameter(&"thick_m", OMEGA_THICK if omega else WAVE_THICK)
+	mat.set_shader_parameter(&"wake_m", OMEGA_WAKE if omega else WAVE_WAKE)
+	mat.set_shader_parameter(&"flown", 0.0)
+	mat.set_shader_parameter(&"fade", 1.0)
+	mat.set_shader_parameter(&"peak", wave_peak(color))
 	return s
+
+
+## The brightest channel of the wave's leading edge for a blow of this colour: WAVE_PEAK, lowered so the pale edge
+## stays under ScreenTone.SAFE on the screen (the edge at 1.0 went to 255).
+static func wave_peak(color: Color) -> float:
+	return minf(WAVE_PEAK, ScreenTone.linear_peak(color.lerp(Color.WHITE, WAVE_EDGE_PALE)))
 
 
 ## A boss's spectral crescent: width meters across, flying distance meters (it strikes the paladin once).
@@ -223,9 +235,12 @@ func step(dt: float) -> void:
 		if stop >= 0.0:
 			gone = true
 			blocked += 1
+			# a shot dying on stone rings like a blow on a ward (E1b)
+			Audio.play(&"ward")
 			if hostile(s):
 				shot_logged.emit(shooter(s), RoomTally.SHOT_BLOCKED, String(arena.last_cover.piece) if arena.last_cover else "")
 			fx.burst(&"spark", Vector3(s.pos.x, LOW_HEIGHT if s.low else HEIGHT, s.pos.y), Vector3(-s.vel.x, 0, -s.vel.y).normalized())
+			Audio.play(CombatSounds.EVENTS[&"ward"])
 		elif not gone:
 			if s.kind == Kind.SOUL:
 				if player.alive() and not s.seen.has(player) and touches_soul(s, player.pos, Player.RADIUS):
@@ -291,8 +306,9 @@ func _place(s: Shot) -> void:
 	if s.kind == Kind.SOUL:
 		_place_soul(s)
 	if s.kind == Kind.WAVE or s.kind == Kind.SPARK:
-		s.node.rotation.y = 0.0
-		((s.node as MeshInstance3D).material_override as ShaderMaterial).set_shader_parameter(&"trail_m", clampf(s.flown, 0.01, DART_TRAIL))
+		var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
+		mat.set_shader_parameter(&"flown", s.flown)
+		mat.set_shader_parameter(&"fade", clampf(s.life / (WAVE_FADE.y if s.kind == Kind.WAVE else WAVE_FADE.x), 0.0, 1.0))
 
 
 func _take(kind: Kind) -> Node3D:
@@ -318,14 +334,15 @@ func _take(kind: Kind) -> Node3D:
 			mi.add_child(_soul_trail())
 		mi.material_override = mat
 	elif kind == Kind.WAVE or kind == Kind.SPARK:
-		var q := QuadMesh.new()
-		q.size = Vector2.ONE
-		mi.mesh = q
+		mi.mesh = _wave_plane()
 		var mat := ShaderMaterial.new()
-		mat.shader = DART
+		mat.shader = WAVE_SHADER
+		mat.set_shader_parameter(&"edge_pale", WAVE_EDGE_PALE)
+		mat.set_shader_parameter(&"gold", WAVE_GOLD)
+		mat.set_shader_parameter(&"gold_light", WAVE_GOLD_LIGHT)
 		mi.material_override = mat
-		# the shader draws it meters away from the quad's own box
-		mi.extra_cull_margin = 12.0
+		# the shader sets the plane to its size in meters (up to 8.25 m across)
+		mi.extra_cull_margin = 6.0
 	else:
 		# a ball in the shooter's hue with a small heart and a soft blended halo (enemy_orb*.gdshader): one material
 		# per part for every shot, the hue per shot (_tint), nothing over the glow threshold
@@ -372,7 +389,7 @@ func _release(s: Shot) -> void:
 	s.node.visible = false
 	s.node.scale = Vector3(0.6, 0.6, 2.4) if s.kind == Kind.BOLT else Vector3.ONE
 	if s.kind == Kind.SPARK:
-		# the dart breaks into a few chips of its own colour where it ends
+		# the wave breaks into a few chips of its own colour where it ends
 		fx.chips(s.node.position, Vector3(s.vel.x, 0.0, s.vel.y), s.color, 5, 5.0, 0.1, 0.3, 0.9)
 	elif s.kind == Kind.SOUL:
 		# the crescent comes apart where it is: specks across its width drift on and rise, a wisp of its smoke
@@ -384,6 +401,17 @@ func _release(s: Shot) -> void:
 	if not _pools.has(s.kind):
 		_pools[s.kind] = []
 	(_pools[s.kind] as Array).append(s.node)
+
+
+var _plane: PlaneMesh
+
+
+## The flat 1 x 1 plane the blade wave is drawn on (shared by every wave).
+func _wave_plane() -> PlaneMesh:
+	if _plane == null:
+		_plane = PlaneMesh.new()
+		_plane.size = Vector2.ONE
+	return _plane
 
 
 ## Meters across the crescent mesh at scale 1 (its two tips, 70 degrees each side of its middle).

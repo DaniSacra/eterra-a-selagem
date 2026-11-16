@@ -82,7 +82,10 @@ const PILE_COURSES: Array[Array] = [
 const DEPTH := 26.0
 ## Where the fixed showcase camera looks: the floor point at the middle of the reference image.
 const SHOWCASE := Vector3(-2.0, 0, 0)
-## Candles: their height and radius ranges (m), the warm halo over a cluster, one warm light per cluster.
+## Candles: their height and radius ranges (m), the warm halo over a cluster, one warm light per cluster. VX-13 (visual
+## review V-C1): warm is an accent, not the whole edge: half the clusters of the edge are burnt out, the east and south
+## ones (by the east stone, the north-east corner, the south stone, the landing) and one of the west balustrade; the
+## dais's, the west balustrade's other four, the north corner's and the fire bowls stay.
 const CANDLE_HEIGHT := Vector2(0.3, 1.1)
 const CANDLE_RADIUS := Vector2(0.12, 0.22)
 ## A cluster has 3 to CANDLE_MAX candles (one tall and thick, one or two of middle height, the rest stubs); those
@@ -684,8 +687,8 @@ func _west() -> void:
 		GIANT_UPLIGHT, GIANT_UPLIGHT_RANGE, GIANT_UPLIGHT_CONE)
 	var between := (Vector3(GIANT.x, GIANT_FOOT + GIANT.z * 0.5, GIANT.y) + Vector3(NW_PIER.x, NW_STATUE.x * 0.5, NW_PIER.y - 2.4)) * 0.5
 	kit.statue_glow(STATUE_FILL_FROM, between, STATUE_FILL_ENERGY, STATUE_FILL_RANGE, STATUE_FILL_CONE, FACADE_FILL, 0.5)
-	# candles and clay pots along the balustrade (the picture's groups), a small altar of a crate with candles and two
-	# pots on it
+	# candles and clay pots along the balustrade (the picture's groups; VX-13: the one at z 2.2 burnt out), a small altar
+	# of a crate with candles and two pots on it
 	kit.crate(Vector3(x + 1.0, 0, -10.4), 0.2, Vector3(1.3, 0.8, 1.3))
 	_candles(Vector3(x + 1.0, 0.8, -10.4), 4, false)
 	m.pot(Vector3(x + 1.0, 0, -11.9), 1.0)
@@ -693,7 +696,7 @@ func _west() -> void:
 	_candles(Vector3(x + 1.2, 0, -6.3), 5)
 	m.pot(Vector3(x + 0.9, 0, 0.6), 1.05)
 	m.pot(Vector3(x + 1.5, 0, 1.3), 0.85)
-	_candles(Vector3(x + 1.3, 0, 2.2), 4)
+	_candles(Vector3(x + 1.3, 0, 2.2), 4, false, false, true)
 	_candles(Vector3(x + 1.2, 0, 7.1), 6)
 	m.pot(Vector3(x + 0.9, 0, 9.4), 0.9)
 	_candles(Vector3(x + 0.9, 0, 12.4), 3)
@@ -713,9 +716,9 @@ func _landing() -> void:
 	# the standing stone in the middle of the south edge, where the landing meets the hall
 	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), 5.2, OBELISK_SOUTH, Vector2(1, 1).normalized())
 	kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, OBELISK_SOUTH * 0.68))
-	_candles(Vector3(SOUTH_STONE.x + 2.4, 0, HALF.y - 2.0), 7, true, true)
+	_candles(Vector3(SOUTH_STONE.x + 2.4, 0, HALF.y - 2.0), 7, false, true, true)
 	m.pot(Vector3(SOUTH_STONE.x + 3.6, 0, HALF.y - 0.8), 0.9)
-	_candles(Vector3(LANDING.x + 2.4, 0, HALF.y + 0.4), 4)
+	_candles(Vector3(LANDING.x + 2.4, 0, HALF.y + 0.4), 4, false, false, true)
 
 
 # ---------- south and east ----------
@@ -740,7 +743,7 @@ func _east(stairs_down: bool) -> void:
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
 	kit.crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 0.7)
-	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4)
+	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4, false, false, true)
 	kit.piece("rubble_half", Vector3(x - 2.4, 0, EAST_STONE.y + 4.2), 1.1, Vector3.ONE * 0.55)
 	kit.piece("rubble_large", Vector3(x - 1.3, 0, EAST_STONE.y + 4.8), 0.3, Vector3.ONE * 0.5)
 	# north of the stone: the stairs down out of the hall (or a plain balustrade), a fire bowl on a pier past them
@@ -754,7 +757,7 @@ func _east(stairs_down: bool) -> void:
 	kit.brazier(pier, 0.5, false)
 	m.balustrade(Vector3(x, 0, EAST_GAP.x - 2.4), Vector3(x, 0, -HALF.y))
 	m.pot(Vector3(x - 0.9, 0, -11.0), 0.9)
-	_candles(Vector3(x - 0.9, 0, -12.6), 3)
+	_candles(Vector3(x - 0.9, 0, -12.6), 3, false, false, true)
 
 
 ## A flight of stairs going down out of the hall from its edge at `edge`, along `out`, `width` wide, with posts at its
@@ -1095,8 +1098,9 @@ func _doors(count: int) -> void:
 
 ## A cluster of thick candles on the floor (or on top of something at `at`: then smaller), a warm halo over them and
 ## one warm light unless light is false: one tall thick candle in the middle, one or two of middle height and stubs
-## round it (the taller, the thicker). tall: the stubs are left out (the south stone's cluster).
-func _candles(at: Vector3, count: int, light := true, tall := false) -> void:
+## round it (the taller, the thicker). tall: the stubs are left out (the south stone's cluster). burnt: the cluster is
+## burnt out (VX-13): the same candles, dark wax and wicks, no flame, halo nor light.
+func _candles(at: Vector3, count: int, light := true, tall := false, burnt := false) -> void:
 	var on_top := at.y > 0.3
 	var size := CANDLE_ON_TOP if on_top else 1.0
 	var n := mini(count, CANDLE_MAX) if on_top else clampi(count, 3, CANDLE_MAX)
@@ -1110,7 +1114,12 @@ func _candles(at: Vector3, count: int, light := true, tall := false) -> void:
 		if i > 0:
 			var a := turn + TAU * float(i) / float(n - 1) + _rng.randf_range(-0.3, 0.3)
 			p += Vector3(cos(a), 0, sin(a)) * (CANDLE_RADIUS.y * size + r + _rng.randf_range(0.04, 0.22) * size)
-		m.candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r)
+		if burnt:
+			m.candle_out(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r)
+		else:
+			m.candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r)
+	if burnt:
+		return
 	var glow := MeshInstance3D.new()
 	glow.mesh = Fx.quad(CANDLE_HALO, Color(0.8, 0.45, 0.18) * CANDLE_HALO_ALPHA)
 	glow.position = at + Vector3(0, CANDLE_HEIGHT.y * 0.8 * size, 0)

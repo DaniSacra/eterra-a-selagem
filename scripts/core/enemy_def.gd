@@ -68,6 +68,18 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## When it breaks the enemy staggers for armor_stagger seconds. 0 = no armor.
 @export var armor := 0.0
 @export var armor_stagger := 1.5
+## GF-12 (D-42, Hades II per enemy): seconds a blow that wounds it stuns it (it stops, a wind-up or an attack under
+## way is cut and never lands, its warning on the floor goes; Horde.flinch). Hades plays its StunAnimations; their
+## length is in the animations, not the scripts: ours is the hit pose's (Horde.HURT_TIME). 0: never (Hades
+## ImmuneToStun: the guardians and Morvath). An elite's armor keeps it from flinching until it breaks.
+@export var stun_time := 0.0
+## The same for a strong blow (finishers, Omegas: Hades' Heavy stun, the same pose played slower).
+@export var stun_heavy_time := 0.0
+## Its own attack once loosed is not cut (Hades WeaponSetImmuneToStun: a charge in flight); the wind-up still is.
+@export var stun_immune_attacking := false
+## What a blow sounds on (CombatSounds.MATERIALS): bone, shield, armor (a guardian's plate), spectral (Morvath).
+## A blow on the armor bar always sounds armor.
+@export var material: StringName = &"bone"
 
 @export_group("Attack")
 ## Damage of its special attack (bolt, lunge, circle, charge).

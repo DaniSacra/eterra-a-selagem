@@ -80,6 +80,9 @@ const WAX := Color(1.0, 0.8, 0.55)
 const WAX_GLOW := Color(0.36, 0.14, 0.04)
 const WAX_GLOW_FOOT := 0.55
 const WAX_POOL := 1.8
+## A burnt-out candle's wax (a share of WAX) and its wick.
+const WAX_OUT := 0.4
+const WICK := Color(0.05, 0.045, 0.04)
 ## A candle's flame: its size (m), the orange tongue, the near-white core inside it and the core's share of the size.
 const CANDLE_FLAME := 0.34
 const CANDLE_FIRE := Color(2.3, 1.1, 0.35)
@@ -146,6 +149,8 @@ var _clay: StandardMaterial3D
 var _depths := {}
 var _mouth: StandardMaterial3D
 var _wax: StandardMaterial3D
+var _wax_out: StandardMaterial3D
+var _wick: StandardMaterial3D
 var _wax_mesh: CylinderMesh
 var _flame: QuadMesh
 var _flame_core: QuadMesh
@@ -803,25 +808,7 @@ func pot(at: Vector3, size: float = 0.9) -> void:
 ## orange tongue with a near-white core). height, radius in meters. open: it opens round the paladin behind it, like
 ## the stone with see_through (the Chamber of the Seal's front candles; see_open() gives the materials).
 func candle(at: Vector3, height: float, radius: float, open := false) -> void:
-	if _wax == null:
-		_wax = StandardMaterial3D.new()
-		_wax.albedo_color = WAX
-		_wax.roughness = 0.6
-		_wax.rim_enabled = true
-		_wax.rim = 0.3
-		_wax.emission_enabled = true
-		_wax.emission = WAX_GLOW
-		_wax.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
-		_wax.emission_texture = _wax_glow()
-		_wax_mesh = CylinderMesh.new()
-		_wax_mesh.top_radius = 1.0
-		_wax_mesh.bottom_radius = 1.0
-		_wax_mesh.height = 1.0
-		_wax_mesh.radial_segments = 10
-		_wax_mesh.rings = 1
-		var size := Vector2(CANDLE_FLAME * 0.6, CANDLE_FLAME * 1.3)
-		_flame = ArenaKit.tongue(size, CANDLE_FIRE)
-		_flame_core = ArenaKit.tongue(size * CANDLE_CORE_SIZE, CANDLE_CORE)
+	_wax_ready()
 	var wax: Material = see_open(_wax) if open else _wax
 	var body := MeshInstance3D.new()
 	body.mesh = _wax_mesh
@@ -851,6 +838,49 @@ func candle(at: Vector3, height: float, radius: float, open := false) -> void:
 			root.add_child(f)
 			continue
 		_add(f)
+
+
+## A burnt-out candle (VX-13: most of the hall's edge stays unlit, the warm a few accents): the wax darker and unlit
+## from inside, its pool, a dark wick; no flame, no halo, no light.
+func candle_out(at: Vector3, height: float, radius: float) -> void:
+	_wax_ready()
+	if _wax_out == null:
+		_wax_out = StandardMaterial3D.new()
+		_wax_out.albedo_color = WAX * WAX_OUT
+		_wax_out.roughness = 0.7
+		_wick = StandardMaterial3D.new()
+		_wick.albedo_color = WICK
+	for t: Transform3D in [Transform3D(Basis.from_scale(Vector3(radius, height, radius)), at + Vector3(0, height * 0.5, 0)),
+			Transform3D(Basis.from_scale(Vector3(radius * WAX_POOL, 0.04, radius * WAX_POOL)), at)]:
+		var body := MeshInstance3D.new()
+		body.mesh = _wax_mesh
+		body.material_override = _wax_out
+		body.transform = t
+		_add(body)
+	box(at + Vector3(0, height + 0.02, 0), Vector3(0.012, 0.04, 0.012), 0.0, _wick, false)
+
+
+func _wax_ready() -> void:
+	if _wax != null:
+		return
+	_wax = StandardMaterial3D.new()
+	_wax.albedo_color = WAX
+	_wax.roughness = 0.6
+	_wax.rim_enabled = true
+	_wax.rim = 0.3
+	_wax.emission_enabled = true
+	_wax.emission = WAX_GLOW
+	_wax.emission_operator = BaseMaterial3D.EMISSION_OP_MULTIPLY
+	_wax.emission_texture = _wax_glow()
+	_wax_mesh = CylinderMesh.new()
+	_wax_mesh.top_radius = 1.0
+	_wax_mesh.bottom_radius = 1.0
+	_wax_mesh.height = 1.0
+	_wax_mesh.radial_segments = 10
+	_wax_mesh.rings = 1
+	var size := Vector2(CANDLE_FLAME * 0.6, CANDLE_FLAME * 1.3)
+	_flame = ArenaKit.tongue(size, CANDLE_FIRE)
+	_flame_core = ArenaKit.tongue(size * CANDLE_CORE_SIZE, CANDLE_CORE)
 
 
 const CANDLE_WAX_SEE := preload("res://assets/shaders/candle_wax_see.gdshader")

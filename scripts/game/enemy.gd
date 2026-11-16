@@ -48,6 +48,10 @@ var anim_t := 0.0
 ## The direction a lunge or charge was aimed at when it was announced.
 var aim := Vector2.DOWN
 var side := 1.0
+## The warning on the floor of the attack it is winding up or loosing (null: none): a blow that cuts the attack ends
+## it (Horde.interrupt, GF-12). A Ground.Zone, kept untyped: Enemy is read by pure scripts (tools/make_data.gd) that
+## must not compile the game's nodes.
+var warning: RefCounted
 ## Free for the behaviour (attack counters, phase).
 var memo := 0
 ## Seconds a ranged enemy still runs from the paladin after its attack (EnemyDef.retreat_time).

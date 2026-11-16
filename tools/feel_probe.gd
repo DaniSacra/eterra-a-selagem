@@ -43,8 +43,13 @@ extends Node
 ##   D-44b  cast_no_safety      no protection after the circle is released (D-44 (2))
 ##   D-44c  cast_attack_lock    attack tapped every frame from the release starts 8 frames or more after it (D-44 (2))
 ##   ALL    no_lost_press       no line of the run says LOST
-## Not in the probe: GF-11 (sound, a GUT test of Audio and a video), GF-12 (enemy flinch, C12f; the ENEMY scenario
-## only prints), GF-13 (latency on the GPU), the omega special table of GF-09 (a document).
+##   GF-12  enemy_flinch       E1b (D-42): a skeleton struck in its wind-up goes back to walking on the hit frame and
+##                              attacks no sooner than its stun plus a whole new wind-up after it (the cut blow never comes)
+##   E1b-L2 first_attack_lunge  E1b (Game Director, warrior_spec 2 and 10.1): first attack with a skeleton 2 m ahead
+##                              (already within cut1's reach): lands on f4, never into its body (BodyBlock)
+##   E1b-L35 first_attack_lunge with it 3.5 m ahead: 1.2 m or more and cut1 lands on f4, as before (HeroDef.lunge_standoff)
+## Not in the probe: GF-11 (sound, a GUT test of Audio and a video), GF-13 (latency on the GPU), the omega special table
+## of GF-09 (a document).
 
 var game: Game
 ## FEEL verdicts of this run: [ok, id, text].
@@ -68,7 +73,7 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(game)
 	_queue = [_s_move, _s_turn, _s_attack_air, _s_attack_hit, _s_combo_mash, _s_combo_on_hit, _s_buffer, _s_dodge,
 		_s_dodge_cancel, _s_attack_in_dodge, _s_walk_cancel, _s_special, _s_omegas, _s_cast, _s_hitstop_buffer,
-		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra]
+		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_lunge]
 	var only := OS.get_environment("PROBE")
 	if only != "":
 		_queue = _queue.filter(func(c: Callable) -> bool: return only.split(",").has(c.get_method()))
@@ -817,8 +822,11 @@ func _s_enemy_interrupt() -> void:
 	var e := dummy(p.pos + Vector2(2.2, 0))
 	e.cooldown = 0.0
 	var hit_at := [-1]
+	var struck := [-1]
+	var walk_at := [-1]
+	var attack_at := [-1]
 	var states: Array = []
-	await run(120, func(i: int) -> void:
+	await run(150, func(i: int) -> void:
 		_cur = i
 		if hit_at[0] < 0 and e.state == Enemy.State.WINDUP and e.state_t > 0.15:
 			tap(&"light_attack")
@@ -827,9 +835,19 @@ func _s_enemy_interrupt() -> void:
 			var s: String = Enemy.State.keys()[e.state]
 			if states.is_empty() or states[-1][0] != s:
 				states.append([s, i])
+			if struck[0] < 0 and e.hp < e.max_hp:
+				struck[0] = i
+			if struck[0] >= 0 and walk_at[0] < 0 and e.state == Enemy.State.WALK:
+				walk_at[0] = i
+			if struck[0] >= 0 and attack_at[0] < 0 and e.state == Enemy.State.ATTACK:
+				attack_at[0] = i
 			if hit_at[0] >= 0 and i <= hit_at[0] + 12:
-				out("f%d e.state=%s state_t=%.2f hurt_t=%.2f anim=%s" % [i, s, e.state_t, e.hurt_t, e.anim]))
-	out("tap at f%d; enemy states %s" % [hit_at[0], str(states)])
+				out("f%d e.state=%s state_t=%.2f hurt_t=%.2f stun_t=%.2f anim=%s" % [i, s, e.state_t, e.hurt_t, e.stun_t, e.anim]))
+	out("tap at f%d, struck f%d; enemy states %s" % [hit_at[0], struck[0], str(states)])
+	var soonest: int = int(struck[0]) + int((e.def.stun_time + e.def.attack_windup) * 60.0) - 1
+	meta("GF-12", "enemy_flinch", "esqueleto acertado na preparacao volta a andar no quadro do acerto e so ataca depois do atordoamento e de uma preparacao inteira (f%d ou depois)" % soonest,
+		"acerto f%d, anda f%d, ataque %s" % [struck[0], walk_at[0], ("f%d" % attack_at[0]) if attack_at[0] >= 0 else "nenhum"],
+		struck[0] >= 0 and walk_at[0] == struck[0] and (attack_at[0] < 0 or attack_at[0] >= soonest))
 	p.invuln = 0.0
 
 
@@ -964,3 +982,54 @@ func _s_extra() -> void:
 	_unwatch.call()
 	out("cut3 events %s, first dodge f%d" % [str(seen), at[0]])
 	meta("GF-02c", "dodge_cuts_spin", "esquiva apertada todo quadro desde f1 do giro sai em f1", "f%d" % at[0], at[0] == 1)
+
+
+## E1b "o Guerreiro se reconhece no primeiro ataque" (only measured, no number changed): the first attack tapped from
+## rest with a skeleton `gap` meters ahead (centre to centre): how far the lunge (ComboNode.lunge_toward) carries him
+## in all and by the hit, in how many frames (90% of it), how far from the skeleton's edge he strikes, and whether
+## cut1 lands. (Player._gap_ahead stops the lunge at HeroDef.lunge_standoff of the blow's reach.)
+func _s_lunge() -> void:
+	for gap: float in [2.0, 3.5]:
+		out("== LUNGE: first attack with a skeleton %.1f m ahead" % gap)
+		await reset_hero(Vector2(-4, 4))
+		var p := game.player
+		var e := dummy(p.pos + Vector2(gap, 0))
+		e.stun_t = 99.0  # it stands where it was put (no circling round him)
+		await step(2)
+		var seen := _combo_watch()
+		var start := p.pos
+		var trail: Array = []
+		var at_hit := {moved = -1.0, edge = -1.0}
+		var before := [e.pos]
+		var closest := [INF]
+		await run(40, func(i: int) -> void:
+			_cur = i
+			if i == 0:
+				tap(&"light_attack"),
+			func(_i: int, _s: bool) -> void:
+				trail.append(p.pos.distance_to(start))
+				if at_hit.moved < 0.0 and e.hp < e.max_hp:
+					# from where it stood before the blow pushed it
+					at_hit.moved = p.pos.distance_to(start)
+					at_hit.edge = (before[0] as Vector2).distance_to(p.pos) - e.def.radius
+				closest[0] = minf(closest[0], e.pos.distance_to(p.pos) - e.def.radius - Player.RADIUS)
+				before[0] = e.pos)
+		_unwatch.call()
+		var total: float = trail[-1]
+		var near := -1
+		for i in trail.size():
+			if near < 0 and float(trail[i]) >= total * 0.9:
+				near = i
+		var hit := _first(seen, "hit", "cut1")
+		var line := "%.1f m: anda %.2f m (%.2f ate o acerto), 90%% em f%d, golpe 1 acerta em %s a %.2f m da borda do esqueleto" % [gap, total,
+			at_hit.moved, near, ("f%d" % hit) if hit >= 0 else "nunca", at_hit.edge]
+		out("LUNGE " + line)
+		line += ", folga minima entre os corpos %.2f m" % closest[0]
+		# Game Director (warrior_spec 2 and 10.1): the lunge visibly carries him to the enemy, never through its body
+		if gap < 3.0:
+			# already within cut1's reach: no lunge to speak of, it must land on the same frame and never go through it
+			meta("E1b-L2", "first_attack_lunge", "esqueleto a 2 m: acerta em f4 (o quadro de antes) sem atravessar o corpo", line,
+				hit == 4 and closest[0] >= -0.01)
+		else:
+			meta("E1b-L35", "first_attack_lunge", "esqueleto a 3,5 m: avanca 1,2 m ou mais e acerta em f4 (o quadro de antes)", line,
+				hit == 4 and total >= 1.2 and closest[0] >= -0.01)

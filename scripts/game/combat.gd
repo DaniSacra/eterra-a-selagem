@@ -107,6 +107,8 @@ var best_combo := 0
 var damage_dealt := 0.0
 var _combo_t := 0.0
 var _hits: Array[Enemy] = []
+## The materials one blow struck (C15-02: the loudest one sounds over the hit).
+var _mats: Array[StringName] = []
 var _near: Array[Enemy] = []
 var _swing := 0
 var _behind: Array[Enemy] = []
@@ -170,6 +172,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var struck: Array[Enemy] = _hits.duplicate()
 	var stars := 0
 	var kills := 0
+	_mats.clear()
 	for e: Enemy in struck:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir if (e.pos - origin).dot(dir) >= 0.0 else -dir
 		if e.invulnerable:
@@ -179,6 +182,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			stars += 1
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
 		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
+		_mats.append(CombatSounds.material_of(e))
 		if heavy:
 			e.flash_power = 1.0  # a strong blow: its first frame goes toward ivory (crowd.gdshader)
 		if died:
@@ -208,7 +212,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if finisher:
 			fx.kick_split(FINISHER_SPLIT)
 			fx.ring(struck[0].pos, FINISHER_RING, color, FINISHER_RING_TIME, 1.0 + struck[0].y, true)
-		Audio.play(&"hit_heavy" if heavy else &"hit")
+		Audio.play(CombatSounds.EVENTS[&"hit_heavy" if heavy else &"hit"])
+		_play_material(CombatSounds.loudest(_mats))
 	match node.effect:
 		ComboNode.Effect.GROUND_MARK:
 			ground.add_zone(Ground.Kind.MARK, origin + dir * reach * 0.55, node.effect_radius, node.effect_time, node.effect_power, MARK_TAGS)
@@ -334,7 +339,7 @@ func cast(at: Vector2, omega: bool) -> void:
 		z.burst = hero.cast_burst * (1.0 + boons.stat(&"damage_pct", CAST_TAGS))
 	fx.ring(at, radius, CAST_COLOR, 0.3)
 	fx.hero_burst(&"light", Vector3(at.x, 0.4, at.y))
-	Audio.play(&"charged" if omega else &"blade")
+	Audio.play(CombatSounds.EVENTS[&"circle_omega" if omega else &"circle"])
 
 
 ## The held circle of light runs out: everything inside takes the burst.
@@ -343,12 +348,15 @@ func cast_burst(z: Ground.Zone) -> void:
 	fx.ring(z.pos, z.radius * 1.1, CAST_COLOR, 0.3)
 	fx.chips(Vector3(z.pos.x, 0.6, z.pos.y), Vector3.UP, CAST_COLOR, 12, 7.0, 0.12, 0.4, 1.3)
 	fx.shake(2.0)
+	_mats.clear()
 	for e: Enemy in _hits.duplicate():
 		var away := (e.pos - z.pos).normalized() if e.pos.distance_to(z.pos) > 0.01 else Vector2.RIGHT
 		hit_enemy(e, z.burst, z.tags, away, 10.0, true, true)
 		if not e.invulnerable:
+			_mats.append(CombatSounds.material_of(e))
 			_impact_frame(true, false)  # the held circle's burst is an Omega
-	Audio.play(&"hit_heavy")
+	Audio.play(CombatSounds.EVENTS[&"circle_burst"])
+	_play_material(CombatSounds.loudest(_mats))
 
 
 ## A friendly projectile (wave or light blade) touched an enemy.
@@ -365,6 +373,9 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 			fx.gash(at, Vector3(along.x, 0.0, along.y), shot.color, STAB, true, GASH_TIME.y)
 			fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6)
 	hit_enemy(e, shot.damage, shot.tags, along, shot.knockback, false)
+	if not e.invulnerable:
+		Audio.play(CombatSounds.EVENTS[&"dart_hit"])
+		_play_material(CombatSounds.material_of(e))
 	_apply_status(e, shot.status, shot.status_power)
 
 
@@ -462,8 +473,16 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	return false
 
 
+## The layer of a material over a blow's hit (CombatSounds.MATERIAL_SOUND; none for &"").
+func _play_material(m: StringName) -> void:
+	var sound := CombatSounds.material(m)
+	if sound != &"":
+		Audio.play(sound)
+
+
 ## A blow on a ward: a few small spectral sparks on its face, toward the striker (FxBudget keeps a flurry cheap).
 func _ward_spark(e: Enemy, away: Vector2) -> void:
+	Audio.play(CombatSounds.EVENTS[&"ward"])
 	var at := e.pos - away * e.def.radius * WARD_SPARK_REACH
 	fx.chips(Vector3(at.x, 1.4 + e.y, at.y), Vector3(-away.x, 0.3, -away.y), WARD_SPARK, WARD_SPARK_COUNT, 4.0, 0.07, 0.25, 0.8)
 

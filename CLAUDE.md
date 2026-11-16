@@ -113,8 +113,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Impacto de cada golpe (ciclo 7): uma fita só que afina até a cauda, com ponta de lâmina, sobre a tinta escura (`slash.gdshader`,
   `Fx.slash`), pulso curto da lâmina sem luz nova (`EmethSword.PULSE_GLOW`), talho ao longo do corte e lascas só em acerto real
   (`impact.gdshader`, `Fx.gash`, `Combat.cut_axis`; testado em `tests/test_fx_on_hit.gd`), números pálidos (esmeralda só em
-  finalizador e Ômega, `Combat.number_color`), estocadas em feixe fino (`emeth_thrust.gdshader`), o especial como dardo
-  esmeralda (`emeth_dart.gdshader`), o círculo de luz como aro fino com marcas girando; inimigo pisca abaixo do limiar do glow e achata, corpo arremessado ao morrer
+  finalizador e Ômega, `Combat.number_color`), estocadas em feixe fino (`emeth_thrust.gdshader`), o especial como onda
+  esmeralda da lâmina (W-1, D-69: `emeth_wave.gdshader`), o círculo de luz como aro fino com marcas girando; inimigo pisca abaixo do limiar do glow e achata, corpo arremessado ao morrer
   (`Horde.THROW`), tranco de câmera (`Fx.kick`), hit stop do Hades, lentidão e não congelamento (`HitStop`, C12d) e brilho de antecipação nos finalizadores
   (`ComboNode.glint`, 0,08 s em todo finalizador, `FINISHER_GLINT` no `make_data.gd`, desenhado por `Fx.glint` na ponta da
   espada; ciclo 10: antes o dado era zero). Finalizadores soltam a meia-lua enorme (`Fx.crescent`). Quadro de impacto em preto e
@@ -128,7 +128,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   forte vai um pouco para o marfim (`white_from` 0,85, `flash_white` 0,35). Fita do corte mais estreita, lado de dentro mais
   suave (`widest`, `inner_light` no `slash.gdshader`). Ataque, especial e Ômega se distinguem: estocada comum com fio pálido;
   Ômega com fio mais largo e branco e os dois veios de ouro velho nas bordas (`omega` no `emeth_thrust.gdshader`,
-  `Fx.thrust(..., omega)`) e talho cruzado; o dardo do especial com o miolo de ouro (`vein_*` no `emeth_dart.gdshader`) e
+  `Fx.thrust(..., omega)`) e talho cruzado; a onda do especial com o fio de ouro velho no meio (`vein_*` e `gold_light` no `emeth_wave.gdshader`) e
   acerto em estrela furada com lascas de ouro (`Combat.SPECIAL_STAR`). Orçamento por quadro (`FxBudget`,
   `core/fx_budget.gd`; `Fx.BUDGET_*`: 40 lascas, 8 talhos, 6 explosões de partículas). Números de dano por `NumberTally`
   (`core/number_tally.gd`): acertos seguidos no mesmo alvo (até 0,6 s entre eles) somam num número só que pula de novo,
@@ -166,6 +166,19 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   cor 0,42 / 0,4 / 0,37, 6 m/s, 0,08 m); colunas
   de luz translúcidas, lados suaves, miolo pálido, degradê para cima e veios subindo, sempre sob o teto da tela
   (`beam.gdshader`: `body`, `side_soft`, `core_*`, `top_from`, `foot`, `streaks`).
+- E1b, cenário e especial (evidências em `docs/gallery/e1b/vfx/` e `env/`): **W-1 (D-69)** a Seta de Luz lê como a onda
+  da lâmina do Guerreiro, não como dardo: meia-lua curta e fina deitada a 1,1 m, a barriga para onde voa, borda de
+  ataque pálida, corpo esmeralda afinando para trás, fio de ouro velho no meio e um rastro curto, por cima do que está
+  atrás (`blend_premul_alpha`, tinta escura 0,3) e aberta em volta do herói (`hero_hole`); maior canal 1,0, abaixo do
+  limiar do glow 1,3 (`emeth_wave.gdshader`, `Projectiles.WAVE_*`, `WAVE_PEAK`, `WAVE_GOLD_LIGHT`). O especial tem
+  1,6 m de ponta a ponta (acerto de 1,4); o Ômega do especial é a mesma onda da largura do acerto (8,25 m, `OMEGA_*`).
+  Mesmas regras: velocidade, alcance, círculo do acerto, dano e tempos (`tests/test_special_wave.gd`); o acerto em
+  estrela com lascas de ouro continua. `emeth_dart.gdshader` saiu. **VX-13**: metade dos grupos de velas da borda do
+  salão apagados (`CatacombHall._candles(..., burnt)`, `Masonry.candle_out`: cera escura `WAX_OUT`, pavio, sem chama,
+  halo nem luz): os do leste, do canto nordeste, da pedra sul, do patamar e o de z 2,2 da balaustrada oeste; ficam o
+  altar, os outros quatro do oeste, o do canto norte e os braseiros. **M-1**: luz de preenchimento só do chão da Cripta
+  (`CryptLook.FLOOR_FILL*`, sem sombra, `light_cull_mask` = `ArenaRoom.FLOOR_LAYER` 64, que só o chão tem por
+  `ArenaRoom.floor_layers`): as paredes não mudam.
 - Câmera lenta no molde do Hades II (`Fx.slow_mo`: velocidade do mundo por `Engine.time_scale`, zoom, desfoque radial e
   brilho no `screen.gdshader`): último abate da sala (0,35 por 0,55 s, `Rooms.LAST_KILL_*`), golpe que derruba 3 ou
   acerta 7 de uma vez, no máximo uma vez a cada 6 s (`Combat.SLOW_MO_*`, `wants_slow_mo`; no Hades só o último abate e o chefe
@@ -305,6 +318,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Entrada só por ações (`Controls`): `light_attack`, `heavy_attack`, `dodge`, `cast`, mira (`Controls.aim`). Nunca ler tecla direto.
   Toque e robô usam `Controls.VirtualPad`. Toques num quadro em que o jogo não andou ficam guardados (`Controls.flush`;
   o controle virtual também, `Controls.latch_virtual`, GF-06).
+- Sonda de game feel (`tools/feel_probe.gd`) desde a E1b: 34 metas (as 31 do C12d, `GF-12` e `E1b-L2`/`E1b-L35`, o
+  primeiro ataque com um esqueleto a 2 m, já no alcance: acerta em f4 sem atravessar o corpo; a 3,5 m: avança pelo menos
+  1,2 m e acerta em f4). O avanço do golpe para a `HeroDef.lunge_standoff` do alcance do golpe (0,3 desde a E1b, decisão do Game
+  Director pela identidade do Guerreiro, `warrior_spec` 2 e 10.1; era 0,45, a constante `Player.LUNGE_STANDOFF`): com
+  0,3 ele anda 1,38 m a 3,5 m e 0,15 m a 2 m (o mínimo do `ComboNode.lunge_toward`: a 2 m o golpe 1 já alcança).
 - **Game feel I, a mão (ciclo C12d; números do Hades II, D-39, D-43, D-44; aceite pela sonda `tools/feel_probe_run.gd`,
   `docs/gallery/c12d/PROBE.md`; testes em `tests/test_feel_c12d.gd`)**: hit stop no molde do Hades, nunca congelamento
   (`HitStop`, `core/hit_stop.gd`; `Fx.blow_stop`): o mundo segue `ComboNode.hit_stop_ms` (25, 65, 70, 50 ms) depois do
@@ -353,8 +371,19 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `name_key` do inimigo, senão `killer_unknown`; rótulo `defeated_by` ("Derrotado por: {name}"). A tela é do ui-ux-designer.
 - Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita;
   `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Golpes, ossos, escudo e atordoamento usam o Kenney Impact Sounds (CC0).
-  Música desligada por enquanto. Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1 dB
+  Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e CC-BY com crédito). Música desligada por enquanto.
+  Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1 dB
   (`Audio.LIMIT_DB`, `Audio.limit_master`, posto uma vez ao iniciar; ciclo C12c, GP-05).
+  Som do combate (E1b, C15-02): a tabela é `CombatSounds` (`core/combat_sounds.gd`): `EVENTS` (golpe e golpe forte, dardo,
+  escudo do ritual `ward`, ataque cortado `interrupt`, quebra de armadura `armor_break`, atordoamento, Ômega carregando e
+  pronto, círculo, círculo Ômega e a explosão dele, esquiva, golpe sofrido, maldição, invocação); por cima do golpe, a
+  camada do material mais alto atingido (`EnemyDef.material`: `bone`, `shield` o Escudo, `armor` o Cavaleiro, `spectral`
+  Morvath; golpe na barra de armadura soa `armor`; `CombatSounds.material_of`, `loudest`); a queda por material
+  (`kill`); o começo de cada preparação de inimigo pelo `EnemyDef.tell` (um som curto por papel: lâmina, brasas, orbe,
+  besta, escudo, ritual; `Horde._set_state`), o golpe solto (`strike`) e o tiro (`shot`: virote, orbe, trepadeira). Um
+  inimigo novo com `tell`, comportamento e `material` que já existem soa sem código. 16 vozes (`Audio.VOICES`).
+  Teste: `tests/test_combat_sounds.gd` (todo evento, material, inimigo e golpe do herói com receita; nenhuma receita
+  passa de 0,95 sozinha; limitador a -1 dB). Projéteis barrados pela pedra ainda sem som (`projectiles.gd`).
 
 ## Arenas (ciclo C12, Arenas I; plano em `docs/design/cycle12_arenas_plan.md`, plantas em `docs/art/cycle12_arenas_spec.md`)
 - A descida de teste tem 7 salas (D-27): abertura no Salão das Catacumbas, lutas sorteadas entre a Cripta dos Esquecidos,
@@ -629,6 +658,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   devagar, a `BodyBlock.EASE` m/s, sem salto. `EnemyDef.blocks_body = false` (no `make_data.gd`) faz um tipo
   atravessável; hoje todos bloqueiam, Morvath (raio 1,4) e os guardiões (1,0 e 1,1) também. O robô contorna corpos
   (`Bot._steer`), foge do aviso para onde há chão (`Bot._escape`) e, preso, esquiva através deles. Testes em `tests/test_body_block.gd`.
+  Com menos de 60% da vida o robô vai à fonte que ainda tem luz, também entre as lutas (`Bot.drink_at`, `DRINK_BELOW`; B-2).
 - Barra de vida fina sobre a cabeça de cada inimigo, como no Hades II (`CrowdRenderer.add_bar`, `life_bar.gdshader`; o chefe usa a barra do topo). Ciclo 8 (salas de 4 a 20 inimigos): todos mostram a barra (`Horde.BARS_FOR_ALL` 24; acima disso, só nos testes de estresse, só os feridos, mais finas); a armadura ganha faixa amarela própria em cima da vida (a barra cresce para baixo, `BAR_ARMOR_HEIGHT`, sem cobrir a vida), elites e guardiões têm moldura de ouro velho e barra um pouco mais larga (`BAR_ELITE_*`, continua dizendo elite depois que a armadura quebra), rastro claro do que o golpe tirou (`BarTrails`), a barra mais perto da câmera desenhada por último (`sort_bars`). O topo da barra não sobe (os números de dano começam acima dela). A barra grande do topo é só de Morvath e dos guardiões (`Game.boss_enemy`); elites comuns não a ganham (no `--horde` ganham).
 - **Inimigos de longe** (teste do Daniel, 2026-11-16: "querem ficar na distância máxima atirando e não chegar perto"; números
   dos atiradores do Érebo do Hades II, estudo do mesmo dia, fontes na pasta local `estudo`): mago, besteiro e sacerdote têm o
@@ -647,6 +677,18 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Círculos mágicos no chão são só de Morvath (o `CASTER` e o cone ficaram sem uso). Erupções de Morvath com 4 m de raio (eram
   2) e aviso de 1,2 s (era 0,9) para ainda dar para sair andando (`BossRules.ERUPTION_NUDGE` 0,2). Testes em
   `tests/test_ranged_enemies.gd`.
+- **Atordoamento pelo golpe (E1b, GF-12, D-42: o Hades II por inimigo)**: golpe que fere um inimigo comum sem armadura o
+  atordoa (`Horde.flinch`): para de andar (`stun_t`, `Enemy.helpless`), a preparação ou o ataque em curso é cortado e não
+  sai (`Horde.interrupt`: volta a `WALK`, o aviso no chão do ataque some na hora por `Ground.end_zone(Enemy.warning)`, o
+  som `interrupt`), e mostra o golpe sofrido (o recuo do E1a, `HitRecoil`, continua). Duração por inimigo em
+  `EnemyDef.stun_time` e `stun_heavy_time` (finalizador e Ômega; `STUN` 0,3 s no `_enemies` do `make_data.gd`, a pose do
+  golpe sofrido: o Hades usa o comprimento das `StunAnimations`, que não está nos scripts; o Heavy é a mesma animação a
+  meia velocidade: esqueleto e mago 0,6, o Escudo 0,23 e 0,5 como o Brawler, os outros só o Default). Preparação cortada
+  fica pronta e se anuncia de novo inteira; ataque já solto cortado conta a recarga. Elites só depois que a armadura
+  quebra (a barra absorve antes); a quebra da armadura também corta o ataque (`Game._on_armor_broken`, o
+  `ArmorBreakStun`). Investida do Escudo em voo não é cortada (`stun_immune_attacking`, a carga do Brute do Hades; a
+  preparação é). Guardiões e Morvath nunca (`stun_time` 0, o `ImmuneToStun`). Queimadura e zonas não atordoam (só golpe
+  com direção e clarão). `RESULT` traz `flinches` e `interrupts`. Testes em `tests/test_flinch.gd`; sonda `GF-12`.
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## Pendências conhecidas

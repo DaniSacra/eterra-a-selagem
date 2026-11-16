@@ -157,8 +157,6 @@ var rooted := 0.0
 var _lunge := Vector2.ZERO
 ## The lunge's speed fades this fast (1/s): its distance is speed / LUNGE_DECAY, mostly covered in 0.25 s.
 const LUNGE_DECAY := 9.0
-## A lunge toward an enemy stops when it stands this share of the blow's reach away.
-const LUNGE_STANDOFF := 0.45
 var _push := Vector2.ZERO
 var _shield_t := 0.0
 var _flash := 0.0
@@ -597,7 +595,7 @@ func _on_move_started(node: ComboNode) -> void:
 func _gap_ahead(node: ComboNode) -> float:
 	if horde == null or node.lunge <= 0.0:
 		return INF
-	var strike := node.reach * LUNGE_STANDOFF
+	var strike := node.reach * hero.lunge_standoff
 	var e := horde.nearest_ahead(pos, facing, strike + node.lunge + ComboNode.LUNGE_MAGNET, 0.6)
 	if e == null:
 		return INF

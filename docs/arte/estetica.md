@@ -278,6 +278,31 @@ Medido na GPU (Forward+, 1080p, `--cam-dist=26`); quadros em `docs/gallery/c12d/
   pé suave (`foot` 0,55) e veios subindo (`streaks` 0,2). No recorte da coluna da recompensa: maior canal mediano 229
   chapado antes, 224 a 83 em degradê depois, o chão e o sarcófago aparecem através.
 
+## E1b: o especial como onda da lâmina (W-1, D-69), velas do salão (VX-13), chão da Cripta (M-1)
+
+Medido na GPU (Forward+, 1920 x 1080); quadros em `docs/gallery/e1b/vfx/` e `env/` (antes e depois lado a lado).
+
+- **Onda da lâmina** (`emeth_wave.gdshader`, `Projectiles.WAVE_*`): a Seta de Luz é uma meia-lua curta e fina deitada a
+  1,1 m, barriga para onde voa (o `Fx.crescent` em pequeno): 1,6 m de ponta a ponta, barriga 0,38 m, faixa 0,2 m, rastro
+  até 0,9 m crescendo com o voo, abre de 55% a 100% da largura no primeiro 1,2 m. Borda de ataque pálida (`edge_pale`
+  0,35), corpo esmeralda a 0,55 da borda afinando para trás, fio de ouro velho no meio (`vein_at` 0,45, `gold_light`
+  0,85). Deposita-se por cima do que está atrás (`blend_premul_alpha`, tinta 0,3 atrás da luz) e abre em volta do herói
+  (`hero_hole` 0,7 x 1,45 m, fica 0,15). Brilho: maior canal no material até 1,0 (`WAVE_PEAK`, glow começa em 1,3) e
+  rebaixado por cor para a borda não passar de 226 na tela (`Projectiles.wave_peak`, `ScreenTone.linear_peak`; a 1,0 a
+  borda ia a 255). Ômega do especial: a mesma onda da largura do acerto (8,25 m), barriga 0,24 da largura, faixa 0,4 m,
+  rastro 1,4 m; maior canal medido na onda 228. Some no fim do voo em 0,04 s (Ômega 0,12 s). Regra, velocidade, alcance,
+  círculo do acerto, dano e tempos iguais (`tests/test_special_wave.gd`).
+- **Velas do salão (VX-13)**: 5 dos 10 grupos da borda apagados (`Masonry.candle_out`, cera a 0,4 da cor, pavio, sem
+  chama, halo nem luz): leste, canto nordeste, pedra sul, patamar e o de z 2,2 da balaustrada oeste; 5 luzes de vela a
+  menos. Vitrine (`--showcase --seed=5`, pixels com R acima de 200 e B abaixo de 120 entre as linhas 80 e 880): 23091
+  para 18025 (menos 22%); o chão central de 57,8 para 53,6, oeste 51,4, sudeste 55,1 (acima de 45). Pela metade não dá
+  sem mexer nos braseiros: só eles somam cerca de 10 mil desses pixels (o braseiro do sudeste, perto da câmera, 5 mil).
+- **Chão da Cripta (M-1)**: luz de preenchimento só do chão (`CryptLook.FLOOR_FILL*`: omni sem sombra em (-9; -1,5) a
+  6 m, 1,8, alcance 16, queda 0,6; `light_cull_mask` = `ArenaRoom.FLOOR_LAYER` 64). Recortes do QA-02 (mediana de luminância,
+  `crypt_vX_c`): A norte 34 para 55, A sul 50, A sudeste 49; B oeste 39 para 46, B norte 32 para 47, B sul 56, B leste 46.
+  O recorte "A oeste" (230, 440) fica em 19: dois terços dele são a face da parede e o nicho com ossos, que ficam escuros de
+  propósito (a parede medida antes e depois: 21,8 e 21,8); o chão dentro dele (345, 495, 60 x 35) foi de 40 para 48.
+
 ## Pendências
 
 1. Colocar o `paladin_1` no jogo. Não foi feito: o esqueleto do Meshy (24 ossos, `Hips`, `LeftArm`...) é outro, e os

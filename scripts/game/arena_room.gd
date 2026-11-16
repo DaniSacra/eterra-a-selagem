@@ -13,6 +13,9 @@ extends Node3D
 const LOOKS: Array[StringName] = [&"crypt", &"rift", &"garden"]
 ## How deep the cliffs under the floor's edges drop, and the abyss under them.
 const DEPTH := 22.0
+## A render layer only an arena's floor is on (with 1), for a fill light of the floor alone (floor_layers; M-1, the
+## crypt). Not used by anything else (2 the crowd, 4 the depths, 8 the facade, 16 the statues, 32 the stone tree).
+const FLOOR_LAYER := 64
 ## A lip of stone along every edge: its height under the floor and how far it stands out.
 const LIP := Vector2(0.35, 0.18)
 ## Points along the floor's edges for its triangles (meters apart), and inside it; the floor is cut in squares this
@@ -133,6 +136,12 @@ func dress() -> void:
 	pass
 
 
+## The render layers of the floor's cells: an arena that lights its floor alone (a fill light whose light_cull_mask is
+## only FLOOR_LAYER, never the walls) adds FLOOR_LAYER.
+func floor_layers() -> int:
+	return 1
+
+
 ## The floor's shader parameters of the arena (catacomb_floor.gdshaderinc uniforms; spec 2.5, 3.5, 4.6).
 func floor_look() -> Dictionary:
 	return {}
@@ -234,6 +243,7 @@ func _floor() -> void:
 		var mi := MeshInstance3D.new()
 		mi.mesh = (cells[key] as SurfaceTool).commit()
 		mi.material_override = mat
+		mi.layers = floor_layers()
 		add_child(mi)
 
 
