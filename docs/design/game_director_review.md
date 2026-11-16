@@ -7,6 +7,63 @@
   simulação que rodei (comando ao lado). **Simulação do robô não é diversão**: o robô não erra mira, não usa a seta de
   longe e nunca se afasta.
 
+## Atualização de 2026-11-16 (C10 e C11)
+
+Commit lido: `552b55c`. Itens, evidências e critérios no [`docs/backlog.md`](../backlog.md). O que segue abaixo desta
+seção é a revisão de 2026-11-15 (ciclo 9), mantida como histórico.
+
+### Estado
+- **Pronto para o Daniel jogar.** Morvath luta na Câmara do Selo: círculo de 12,5 m sobre o abismo, selo de ouro com o
+  leão de pé e a rachadura que cresce por fase, porta selada ao norte, escadaria a sudoeste, câmera fixa que mostra a
+  câmara inteira. As salas 1 a 4 seguem no salão.
+- O C10 tirou os clarões e a confusão do ritual: quadro P&B raro (com opção para desligar), escudo, orbe e golpe final sem
+  branco, escudo que cai com os 4 primeiros mortos (contador em losangos), dano tingindo só as bordas, "Derrotado por",
+  registro de cada partida.
+- Fechado pela rodada `552b55c` (medi nas capturas novas): chão da câmara mais claro (luminância 41 a 45, meta 40 a 55),
+  céu azul no topo, erupções com miolo vermelho, faixas da tempestade sem somar entre si, coluna de geada e pisca de
+  Morvath abaixo do marfim.
+- **Ainda aberto**: o centro da tempestade continua claro (luminância 121, meta até 90; o aro do círculo do herói passa
+  ali); só 8 janelinhas no anel distante (meta 10 a 20); velas da balaustrada sul sobre as pernas do herói; a estrela da
+  vitória estoura (25% do miolo acima de 200). Nada disso impede jogar.
+
+### Métricas (simulação do robô, não diversão)
+| Medida | Câmara (`6bab080`) | Salão (C10) |
+|---|---|---|
+| Vitórias, reação 0,25, 4 kits com um dom de defesa | 57 de 64 | 43 de 64 |
+| Partidas inteiras, reação 0,25 (chega com 1 a 3 dons) | 4 de 8 | 1 de 8 |
+| Ritual, mediana nas partidas inteiras | 10,8 s | 10,3 s (ciclo 9: 20 s) |
+| Investida com o robô se afastando | em 72 de 72 lutas, nunca acertou | |
+| Robô preso | 0 em 136 lutas | não medido |
+| Duração nas vitórias | 92 a 162 s (meta 2 a 4 min) | |
+| Quadro a 1080p, p90 (RTX 5060) | 4,0 a 4,8 ms | 4,9 a 5,8 ms |
+
+Onde o robô morre: fase 4 (tempestade e maldição) e os mortos invocados. Testes: 413 de 413, 0 arriscados.
+
+### Roteiro da partida de hoje (cerca de 20 minutos)
+Build de Windows da pasta de teste. Jogar **3 partidas seguidas, sem `--nosave`** (o registro só grava com save). Depois,
+mandar o arquivo `%APPDATA%\EterraASelagem\runs.jsonl`. Anotar à mão o minuto de cada coisa abaixo, numa linha só.
+1. **Partida 1, com tudo ligado.** Nas salas: o bloqueio de corpo (ficou preso? o combo parou num inimigo do meio?).
+   Na câmara, ao entrar: a câmara inteira lê bem? Dá para ver o herói em todo canto, inclusive na borda de baixo?
+2. **Morvath, fase a fase.** Fase 1: a investida aparece quando você se afasta; deu para ver chegando? Fase 2: sem ler a
+   dica, você entendeu o que fazer para quebrar o escudo? Fase 3: percebeu a maldição (mais lento, especial travado)?
+   Fase 4: achou o vão da tempestade ou foi sorte? O centro vermelho atrapalhou ver Morvath?
+3. **Cada morte**: de 1 a 5, quanto você viu o golpe chegando? A tela "Derrotado por" bateu com o que você sentiu?
+4. **Partida 2, com "Clarões de impacto" desligado nas Configurações**: fez falta? O quadro P&B, quando aparece, vale a pena?
+5. **Partida 3, livre**: quantos minutos durou a luta e se pareceu longa ou curta; se deu vontade de descer de novo.
+6. **Vitória**: o que entendeu que aconteceu com Morvath? A selagem (selo acendendo, porta fechando) diz isso?
+7. **Olhar sem pressa** uma vez: o leão no selo, a espada erguida nos sarcófagos e pilaretes, a porta selada.
+
+### Perguntas para o Daniel
+1. Confirma as decisões da noite? Câmara só para Morvath, raio de 12,5 m, porta selada no lugar do portal, leão de pé
+   (nas patas de trás) no selo, espada erguida no lugar da cruz, Morvath indo ao centro nas fases 3 e 4, o nome "A Câmara
+   do Selo", o quadro P&B limitado com opção, a descida curta por enquanto.
+2. O que é a porta selada ao norte e o véu de runas da escadaria? (Não inventamos: sem resposta, fica sem texto.)
+3. Depois de jogar: a luta ficou fácil, justa ou difícil? Quantas tentativas você quer para a primeira vitória (D-11)?
+4. Sentiu falta de Magia na luta (D-09) ou do bônus de sequência, que não existe no Hades (D-10)?
+5. As quatro imagens de Morvath em `docs/art/ref/morvath/` são de IA? (Para o `docs/steam-ia.md`.)
+6. Podemos voltar à descida inteira (10 salas e chefe na 11) como padrão no próximo ciclo, com a curta só para teste?
+
+
 ## 1. Diagnóstico
 
 A Selagem tem hoje uma luta completa, do título à selagem, que funciona sem travar (0 erros de script em 80 simulações,
