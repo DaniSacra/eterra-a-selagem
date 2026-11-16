@@ -167,11 +167,23 @@ const THUMB_UP := Vector3(0, 0, 180)
 const SWORD_GUARD := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}
 ## The staff held upright, in the left hand (the library holds its torch there; the right hand casts).
 const STAFF_GUARD := {"guard": [&"ual", "Idle_Torch", LEFT_ARM]}
+## The sorcerer's trot (E1b-A3): the staff upright and the free arm close to the body (the run's own swings it out
+## 61 degrees, a scarecrow's), the feet locked on a short stride (_foot_lock).
+const MAGE_TROT := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", RIGHT_ARM]], "lock": true, "stride": 0.62, "lift": 0.5}
 ## The crossbow kept level.
 const CROSSBOW_GUARD := {"guard": [&"ual", "Pistol_Idle", RIGHT_ARM]}
 ## The shield arm up and the sword arm in guard (the shield clip lets it hang: the blade would drag in the floor).
 const SHIELD_GUARD := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]]}
 const SHIELD_IDLE := [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD]
+## The walks with the feet locked on the floor (_foot_lock, E1b-A1 and A2) and their stride, set so each figure
+## takes the steps a minute of its weight at its speed in the game (tools/walk_probe.gd prints them):
+## the crossbowman's trot like the sorcerer's (120 to 150); the brute's heavy walk, the one its KayKit figure had,
+## on a longer step (110 to 140); the knight and Morvath on a long stride (90 to 120); the elder's solemn walk.
+const CROSSBOW_TROT := {"guard": [&"ual", "Pistol_Idle", RIGHT_ARM], "lock": true, "stride": 0.67, "lift": 0.5}
+const BRUTE_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.92}
+const KNIGHT_STRIDE := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 1.1}
+const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, "stride": 1.2}
+const KING_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 1.3}
 ## The brute's own tower shield (MODELS.guard "hold"): degrees its arm and shield are swung from the model's rest
 ## toward the middle of the body, standing and walking, and braced for the charge.
 const SHIELD_FRONT := -14.0
@@ -179,6 +191,9 @@ const SHIELD_BRACE := -26.0
 ## Both hands held out, palms up, as one who carries an offering (the priest: no object, no symbol).
 const BOTH_ARMS: Array[StringName] = [&"LeftShoulder", &"LeftArm", &"LeftForeArm", &"LeftHand", &"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
 const OFFERING_GUARD := {"guard": [&"ual2", "Walk_Carry", BOTH_ARMS]}
+## Morvath's blows in both hands (_both_hands) and his roar thrown back (VX-14).
+const TWO_HANDS := {"two_hands": true}
+const ROAR_BEND := {"Spine01": Vector3(-10, 0, 0), "Head": Vector3(-18, 0, 0)}
 
 ## What every figure does the same way. The rise plays in the 0.9 s the horde gives it (Horde, State.RISE).
 const COMMON_ANIMS := {
@@ -237,7 +252,7 @@ const MODELS := {
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD},
 		],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
+			"walk": [&"kaykit", "Running_B", 20, true, MAGE_TROT], "idle": STAFF_CLIPS.idle,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
 			# its bolt is announced by "aim" (Horde): the conjuring pose, not the walk it fell back to
 			"aim": STAFF_CLIPS.cast,
@@ -251,7 +266,7 @@ const MODELS := {
 		# its head)
 		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT}],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, CROSSBOW_GUARD], "idle": [&"ual", "Pistol_Idle", 12, true],
+			"walk": [&"kaykit", "Running_B", 20, true, CROSSBOW_TROT], "idle": [&"ual", "Pistol_Idle", 12, true],
 			"attack": [&"ual", "Pistol_Shoot", 14, false], "aim": [&"ual", "Pistol_Idle", 8, true],
 		},
 	},
@@ -267,7 +282,7 @@ const MODELS := {
 		"hold": {"bones": LEFT_ARM, "swing": SHIELD_FRONT},
 		"even_legs": true,
 		"anims": {
-			"walk": [&"ual", "Walk", 20, true, SWORD_GUARD], "idle": [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD],
+			"walk": [&"kaykit", "Walking_A", 20, true, BRUTE_STRIDE], "idle": [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
 			# the charge is announced braced behind the shield, brought further across the body
 			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
@@ -291,7 +306,7 @@ const MODELS := {
 			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0), "paint": SHIELD_PAINT},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk", 20, true, SHIELD_GUARD], "idle": SHIELD_IDLE,
+			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE,
 			"attack": SWORD_BLOW,
 		},
 	},
@@ -305,7 +320,7 @@ const MODELS := {
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.38 * 0.9, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_PURPLE},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk_Formal", 20, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
+			"walk": [&"ual", "Walk_Formal", 20, true, ELDER_STRIDE], "idle": STAFF_CLIPS.idle,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
 		},
 	},
@@ -316,15 +331,23 @@ const MODELS := {
 		"palette": PALETTE + "morvath.png",
 		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.8, "rot": EDGE_OUT, "paint": MORVATH_BLADE_PAINT}],
 		"anims": {
-			"walk": [&"ual", "Walk", 20, true, SWORD_GUARD], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
+			"walk": [&"ual", "Walk", 20, true, KING_STRIDE], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
-			"slash1": [&"ual2", "Sword_Regular_A", 14, false], "slash2": [&"ual2", "Sword_Regular_B", 14, false],
-			"slash3": [&"ual", "Sword_Attack", 16, false, {"from": 0.1, "to": 1.2}],
+			# VX-14, heavier: every blow in both hands; the scythe is the library's great overhead blow, cut so the
+			# blade is highest at Boss.SCYTHE_LIFT of the clip (where the wind-up holds it) and comes down inside the
+			# Boss.SCYTHE_SWEEP after it, in the same 1.1 s (tools/clip_probe.gd: highest at 0.41, fastest at 0.46;
+			# the one-handed Sword_Attack it replaces had already struck at 0.28, inside the wind-up)
+			"slash1": [&"ual2", "Sword_Regular_A", 14, false, TWO_HANDS], "slash2": [&"ual2", "Sword_Regular_B", 14, false, TWO_HANDS],
+			"slash3": [&"ual2", "Sword_Regular_C", 16, false, {"from": 0.158, "to": 1.258, "two_hands": true}],
 			"dash_windup": [&"kaykit", "2H_Melee_Idle", 8, true, {"lift": 0.2}],
 			"dash": [&"ual2", "Sword_Dash_RM", 12, false, {"from": 0.12, "to": 0.72}],
 			# the KayKit figure is half his height and hops as it conjures: on him the hop would be a flight
 			"summon": [&"kaykit", "Spellcast_Summon", 20, false, {"lift": 0.2}], "rain": [&"kaykit", "Spellcast_Raise", 14, false, {"lift": 0.2}],
-			"volley": [&"ual", "Spell_Simple_Shoot", 14, false], "roar": [&"kaykit", "Taunt", 14, false, {"lift": 0.2}],
+			# the curse and each wave of the storm are thrown (Boss poses it as they leave): the library's overhand
+			# throw from the top of its swing, the release at the share the old cast had it, in the same 0.5 s
+			"volley": [&"ual2", "OverhandThrow", 14, false, {"from": 0.26, "to": 0.92, "time": 0.5}],
+			# the roar: both arms flung up and out, chest open and head thrown back, in the same 1.03 s
+			"roar": [&"kaykit", "Taunt_Longer", 14, false, {"from": 1.38, "to": 2.4133, "lift": 0.2, "bend": ROAR_BEND}],
 			"stunned": [&"ual", "Crouch_Idle", 12, true],
 		},
 	},
@@ -482,6 +505,8 @@ var _rigs := {}
 var _hold := {}
 ## The entry's "even_legs" (see MODELS), for _pose_meshy.
 var _even_legs := false
+## Only these clips are baked when not empty (tools/walk_probe.gd measures walks without baking the rest).
+var only_anims: Array = []
 
 
 func _process(_delta: float) -> bool:
@@ -503,6 +528,15 @@ func _process(_delta: float) -> bool:
 		ResourceSaver.save(baked, "res://assets/baked/%s.res" % id, ResourceSaver.FLAG_COMPRESS)
 		print("baked %s: %d anims, %d triangles, %.2f m, in %d ms" % [id, baked.frames.size(),
 			(baked.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3, baked.height, Time.get_ticks_msec() - t0])
+		# the walk in the game (E1b-A1): the slide is drawn at the enemy's size, the steps at its speed
+		var def_path := "res://data/enemies/%s.tres" % id
+		if baked.ground_speed.has("walk") and ResourceLoader.exists(def_path):
+			var d: EnemyDef = load(def_path)
+			var ground: float = baked.ground_speed.walk
+			if d.speed > 0.0:
+				var rate := d.speed / (ground * d.size)
+				print("  walk in the game: %.0f steps a minute, the foot slides %.1f cm a step" % [120.0 * rate / baked.duration(&"walk"),
+					BakedModel.slide_per_step(baked.feet.walk, 1.0 / float(baked.fps.walk), ground) * d.size * 100.0])
 	quit()
 	return true
 
@@ -559,6 +593,8 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var clips := {}
 	var walk_poses: Array = []
 	for anim: String in anims:
+		if not only_anims.is_empty() and not only_anims.has(anim):
+			continue
 		var a: Array = anims[anim]
 		var opts: Dictionary = a[4] if a.size() > 4 else {}
 		var rig: Array = _rig(a[0])
@@ -575,14 +611,25 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 		var lean := 0.0
 		# the walk keeps the clip's own rise and fall (E1a-2): one lift for the whole loop, the deepest any pose needs
 		var ground := NAN
+		var locked: Array = []
+		# degrees the upper arms swing out to the side at most (left, right; ART_REVIEW E1a 2b: a free arm held out
+		# like a scarecrow's)
+		var arm_out := [0.0, 0.0]
 		if anim == "walk":
 			for i in frames:
 				ground = minf(ground if not is_nan(ground) else INF,
 					_pose_meshy(skeleton, model, retargets, a, from + (to - from) * i / frames, _bends(bend, opts.get("bend", {}))))
+			if opts.get("lock", false):
+				locked = _foot_lock(skeleton, model, retargets, a, ground, arrays, mi.skin, _bends(bend, opts.get("bend", {})))
 		for i in frames:
 			# loops sample [from, to); one-shots include the last pose
 			var t := from + (to - from) * i / (frames if loops else maxi(frames - 1, 1))
 			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), ground)
+			if not locked.is_empty():
+				_place_feet(skeleton, locked[i])
+			if anim == "walk":
+				for side in 2:
+					arm_out[side] = maxf(arm_out[side], _arm_out(skeleton, model, "Left" if side == 0 else "Right"))
 			if i == 0:
 				lean = _lean(skeleton)
 			var posed := PoseBaker.pose_arrays(model, skeleton, extra)
@@ -592,6 +639,8 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 			if anim == "walk":
 				walk_poses.append(posed[Mesh.ARRAY_VERTEX])
 		clips[anim] = poses
+		if anim == "walk":
+			print("  walk: the upper arms out to the side at most %.0f (left) and %.0f (right) degrees" % arm_out)
 		out.fps[anim] = frames / float(opts.get("time", to - from))
 		out.loops[anim] = loops
 		print("  %s: %s %s, %d poses, %.2f s, lowest point %.2f m, trunk leaning %.0f degrees" % [anim, a[0], a[1], frames, frames / float(out.fps[anim]), low, lean])
@@ -669,6 +718,8 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 	if _even_legs:
 		for leg: Array in LEGS:
 			_even_leg(skeleton, leg)
+	if opts.get("two_hands", false):
+		_both_hands(skeleton, model, retargets)
 	# on the floor: Retarget sets the hips by their height at rest, and a model that rests with its legs apart (the
 	# brute) has longer legs than that, so standing straight would sink its feet. The lowest bone goes back to where
 	# it rests (feet and toes) or to a body's thickness over the floor (lying down).
@@ -708,21 +759,191 @@ func _even_leg(skeleton: Skeleton3D, leg: Array) -> void:
 	var knee := skeleton.get_bone_global_pose(mid)
 	var ankle := skeleton.get_bone_global_pose(end)
 	var reach := hip.origin.distance_to(ankle.origin)
-	var want := clampf(reach * share, absf(thigh - shin) + 0.01, thigh + shin - 0.01)
 	var down := (ankle.origin - hip.origin).normalized()
 	var hips := skeleton.find_bone("Hips")
 	var front := skeleton.get_bone_global_pose(hips).basis * skeleton.get_bone_global_rest(hips).basis.inverse() * Vector3(0, 0, 1)
-	var pole := (front - down * front.dot(down)).normalized()
+	_bend_limb(skeleton, leg, hip.origin + down * reach * share, front, thigh, shin)
+
+
+## Meters between the two wrists on a hilt held in both hands ("two_hands").
+const HAND_GAP := 0.11
+
+
+## The blade held in both hands ("two_hands" in a clip's options, VX-14: the libraries' sword clips are one-handed,
+## Morvath's blows are heavy): the left wrist goes to the hilt below the right one (toward the pommel, against the
+## blade, along the grip _held puts the weapon on), the arm bent to reach it, the elbow out the way it bends.
+func _both_hands(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary) -> void:
+	var ual := _retarget(&"ual", retargets, skeleton, model)
+	var grip: Vector3 = ual.carry(&"RightHand", ual.source_rest(&"DEF-f_pinky.01.R") - ual.source_rest(&"DEF-f_index.01.R"), Vector3.ZERO)[0]
+	var right := skeleton.get_bone_global_pose(skeleton.find_bone("RightHand"))
+	var unit := PoseBaker.local_to(model, skeleton).basis.get_scale().x
+	var target := right.origin - (right.basis * grip).normalized() * HAND_GAP / unit
+	var up := skeleton.find_bone(LEFT_ARM[1])
+	var mid := skeleton.find_bone(LEFT_ARM[2])
+	var end := skeleton.find_bone(LEFT_ARM[3])
+	var upper := skeleton.get_bone_global_rest(up).origin.distance_to(skeleton.get_bone_global_rest(mid).origin)
+	var lower := skeleton.get_bone_global_rest(mid).origin.distance_to(skeleton.get_bone_global_rest(end).origin)
+	var shoulder := skeleton.get_bone_global_pose(up).origin
+	var elbow := skeleton.get_bone_global_pose(mid).origin
+	var line := (target - shoulder).normalized()
+	var bent := (elbow - shoulder) - line * (elbow - shoulder).dot(line)
+	var pole := bent if bent.length() > 0.05 * (upper + lower) else Vector3.DOWN
+	_bend_limb(skeleton, [LEFT_ARM[1], LEFT_ARM[2], LEFT_ARM[3]], target, pole, upper, lower)
+
+
+## Two-bone reach: the end of a limb ([upper, lower, end] bones: a leg's ankle, an arm's wrist) to `target`
+## (skeleton space), or as near as the limb reaches, the middle joint bending toward `pole`; the end (the foot, the
+## hand) keeps the turn the clip gave it. thigh, shin: the lengths of its two bones.
+func _bend_limb(skeleton: Skeleton3D, leg: Array, target: Vector3, pole: Vector3, thigh: float, shin: float) -> void:
+	var up := skeleton.find_bone(leg[0])
+	var mid := skeleton.find_bone(leg[1])
+	var end := skeleton.find_bone(leg[2])
+	var hip := skeleton.get_bone_global_pose(up)
+	var knee := skeleton.get_bone_global_pose(mid)
+	var ankle := skeleton.get_bone_global_pose(end)
+	var want := clampf(hip.origin.distance_to(target), absf(thigh - shin) + 0.01 * (thigh + shin), (thigh + shin) * 0.995)
+	var down := (target - hip.origin).normalized()
+	var side := (pole - down * pole.dot(down)).normalized()
 	var along := (thigh * thigh + want * want - shin * shin) / (2.0 * want)
-	var new_knee := hip.origin + down * along + pole * sqrt(maxf(thigh * thigh - along * along, 0.0))
+	var new_knee := hip.origin + down * along + side * sqrt(maxf(thigh * thigh - along * along, 0.0))
 	var turn_thigh := Quaternion((knee.origin - hip.origin).normalized(), (new_knee - hip.origin).normalized())
 	skeleton.set_bone_global_pose(up, Transform3D(Basis(turn_thigh) * hip.basis, hip.origin))
 	var knee_now := skeleton.get_bone_global_pose(mid)
 	var ankle_now := skeleton.get_bone_global_pose(end).origin
-	var target := hip.origin + down * want
-	var turn_shin := Quaternion((ankle_now - knee_now.origin).normalized(), (target - knee_now.origin).normalized())
+	var reached := hip.origin + down * want
+	var turn_shin := Quaternion((ankle_now - knee_now.origin).normalized(), (reached - knee_now.origin).normalized())
 	skeleton.set_bone_global_pose(mid, Transform3D(Basis(turn_shin) * knee_now.basis, knee_now.origin))
-	skeleton.set_bone_global_pose(end, Transform3D(ankle.basis, target))
+	skeleton.set_bone_global_pose(end, Transform3D(ankle.basis, skeleton.get_bone_global_pose(end).origin))
+
+
+## A foot is planted (and locked, "lock") while its sole is this close to the lowest the feet go in the loop.
+const LOCK_CONTACT := 0.06
+
+
+## The walk's feet locked on the floor ("lock" in a clip's options, E1b-A2): the libraries' walks, carried to
+## another skeleton, slide at any one pace (the planted foot drifts back faster or slower than the body goes on).
+## Every pose of the loop is posed once and the soles read (as _soles); then, while a foot is planted, the point it
+## stands on (its lowest vertex) is made to go back at one speed, the mean the clip gives it times "stride"
+## (above 1, a longer step at the same pace: fewer steps a minute for the same speed in the game), by moving the
+## foot along the floor, its turn kept; in the air the foot goes smoothly from where it was lifted to where it comes
+## down. Returns, per pose, per leg (LEGS), how far the ankle moves (skeleton space); _place_feet bends the leg there.
+func _foot_lock(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: Array, ground: float, body: Array, skin: Skin, bend: Dictionary) -> Array:
+	var opts: Dictionary = a[4] if a.size() > 4 else {}
+	var from: float = opts.get("from", 0.0)
+	var to: float = opts.get("to", (_rig(a[0])[1] as AnimationPlayer).get_animation(a[1]).length)
+	var frames: int = a[2]
+	var dt := float(opts.get("time", to - from)) / frames
+	var verts: Array = []
+	for i in frames:
+		_pose_meshy(skeleton, model, retargets, a, from + (to - from) * i / frames, bend, ground)
+		verts.append(PoseBaker.pose_arrays(model, skeleton)[Mesh.ARRAY_VERTEX])
+	var soles := _soles(body, skin, verts)
+	var floor_y := INF
+	for track: Array in soles:
+		for p: PackedVector3Array in track:
+			for at in p:
+				floor_y = minf(floor_y, at.y)
+	# per foot: which poses it is planted in, the vertex it stands on, and its move to the next pose (x, z)
+	var planted: Array = []
+	var moves: Array = []
+	var back := 0.0
+	var count := 0
+	for track: Array in soles:
+		var down: Array[bool] = []
+		var step: Array[Vector2] = []
+		for i in frames:
+			var p: PackedVector3Array = track[i]
+			var v := 0
+			for k in p.size():
+				if p[k].y < p[v].y:
+					v = k
+			down.append(p[v].y < floor_y + LOCK_CONTACT)
+			var next: Vector3 = (track[(i + 1) % frames] as PackedVector3Array)[v]
+			step.append(Vector2(next.x - p[v].x, next.z - p[v].z))
+			if down[i]:
+				back -= step[i].y
+				count += 1
+		planted.append(down)
+		moves.append(step)
+	if count == 0:
+		return []
+	var speed := back / (count * dt) * float(opts.get("stride", 1.0))
+	var to_root := PoseBaker.local_to(model, skeleton).basis.inverse()
+	var out: Array = []
+	out.resize(frames)
+	for i in frames:
+		out[i] = [Vector3.ZERO, Vector3.ZERO]
+	for f in soles.size():
+		var down: Array[bool] = planted[f]
+		var step: Array[Vector2] = moves[f]
+		if not down.has(false) or not down.has(true):
+			continue
+		# the offsets along each run of planted poses (and the pose after it, where the foot lifts off)
+		var shift: Array[Vector2] = []
+		shift.resize(frames)
+		var known: Array[bool] = []
+		known.resize(frames)
+		known.fill(false)
+		var start := down.find(true)
+		while down[(start + frames - 1) % frames]:
+			start = (start + frames - 1) % frames
+		var i := start
+		for _guard in frames:
+			if down[i] and not down[(i + frames - 1) % frames]:
+				# a run starts: offsets add up the slide, then centered on the run
+				var run: Array[int] = [i]
+				var at := Vector2.ZERO
+				var sum := Vector2.ZERO
+				var j := i
+				var acc: Array[Vector2] = [at]
+				while down[j] and run.size() <= frames:
+					at += Vector2(0.0, -speed * dt) - step[j]
+					j = (j + 1) % frames
+					run.append(j)
+					acc.append(at)
+				for k in acc.size():
+					sum += acc[k]
+				for k in run.size():
+					shift[run[k]] = acc[k] - sum / acc.size()
+					known[run[k]] = true
+			i = (i + 1) % frames
+		# in the air: from the offset it lifted off with to the one it comes down with
+		for k in frames:
+			if known[k]:
+				continue
+			var b := k
+			while not known[(b + frames - 1) % frames]:
+				b = (b + frames - 1) % frames
+			var e := k
+			while not known[e]:
+				e = (e + 1) % frames
+			var span := ((e - b + frames) % frames) + 1
+			var w := smoothstep(0.0, 1.0, float((k - b + frames) % frames + 1) / span)
+			shift[k] = shift[(b + frames - 1) % frames].lerp(shift[e], w)
+		for k in frames:
+			(out[k] as Array)[f] = to_root * Vector3(shift[k].x, 0.0, shift[k].y)
+	return out
+
+
+## The feet of a posed skeleton moved by _foot_lock's offsets for the pose (per leg, skeleton space), each leg bent
+## to reach (_bend_limb), the knee keeping the side it bends to.
+func _place_feet(skeleton: Skeleton3D, offsets: Array) -> void:
+	var hips := skeleton.find_bone("Hips")
+	var front := skeleton.get_bone_global_pose(hips).basis * skeleton.get_bone_global_rest(hips).basis.inverse() * Vector3(0, 0, 1)
+	for l in LEGS.size():
+		var leg: Array = LEGS[l]
+		var up := skeleton.find_bone(leg[0])
+		var mid := skeleton.find_bone(leg[1])
+		var end := skeleton.find_bone(leg[2])
+		var thigh := skeleton.get_bone_global_rest(up).origin.distance_to(skeleton.get_bone_global_rest(mid).origin)
+		var shin := skeleton.get_bone_global_rest(mid).origin.distance_to(skeleton.get_bone_global_rest(end).origin)
+		var hip := skeleton.get_bone_global_pose(up).origin
+		var knee := skeleton.get_bone_global_pose(mid).origin
+		var ankle := skeleton.get_bone_global_pose(end).origin
+		var line := (ankle - hip).normalized()
+		var bent := (knee - hip) - line * (knee - hip).dot(line)
+		var pole := front if bent.length() < 0.02 * (thigh + shin) else bent.normalized() + front * 0.2
+		_bend_limb(skeleton, leg, ankle + (offsets[l] as Vector3), pole, thigh, shin)
 
 
 ## The bones of each foot (left, then right): their vertices are the feet whose stride is measured.
@@ -778,6 +999,16 @@ func _bends(a: Dictionary, b: Dictionary) -> Dictionary:
 	for bone: String in b:
 		out[bone] = (out.get(bone, Vector3.ZERO) as Vector3) + (b[bone] as Vector3)
 	return out
+
+
+## Degrees an upper arm ("Left" or "Right") is out to the side of the body, in the plane across it (0: hanging
+## along the side, 90: held level out to the side), in the pose the skeleton is in (the model faces +z).
+func _arm_out(skeleton: Skeleton3D, model: Node3D, side: String) -> float:
+	var to_root := PoseBaker.local_to(model, skeleton)
+	var arm := to_root * skeleton.get_bone_global_pose(skeleton.find_bone(side + "Arm")).origin
+	var fore := to_root * skeleton.get_bone_global_pose(skeleton.find_bone(side + "ForeArm")).origin
+	var d := (fore - arm).normalized()
+	return rad_to_deg(atan2(absf(d.x), -d.y))
 
 
 ## Degrees the trunk leans from upright in the pose the skeleton is in (hips to neck).

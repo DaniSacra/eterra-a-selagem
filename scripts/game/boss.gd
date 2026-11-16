@@ -530,6 +530,9 @@ func _step_storm() -> void:
 		if _due[i] < 0.0:
 			continue
 		if _t >= _due[i]:
+			if not _due.has(-1.0):
+				# the first soul of the wave leaves: he throws them (VX-14; only the pose, nothing is timed on it)
+				_pose(&"volley", 0.0)
 			_due[i] = -1.0
 			_lanes[i] = null
 			_fire_soul(_dirs[i], def.storm_damage)
