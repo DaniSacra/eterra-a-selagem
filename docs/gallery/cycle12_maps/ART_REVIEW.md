@@ -126,3 +126,39 @@ ponta sul da fenda cai perto de (830; 770), uns 200 px à direita do previsto (G
   que vale para essa sala.
 - Não declaro fidelidade alta às referências em nenhuma das três: as imagens são muito mais densas e trabalhadas, e as
   peças são procedurais.
+
+## Adendo de 2026-11-16: reconferência das Fendas (ART-R1, commit `87ba686`)
+
+Autor: `art-director`. Material: `rift/vA_a_cenario.jpg` e `rift/vA_c_combate.jpg` refeitas (idênticas byte a byte a
+`work/fix_rift_vA_depois_cenario.jpg` e `work/fix_rift_vA_depois_combate.jpg`), `work/fix_rift_vA_antes_*`,
+`work/fix_rift_vA_depois_alvo_-2_0.jpg`, `work/fix_rift_vA_miniatura_320.jpg`, `work/fix_rift_vA_depois_compat.jpg`,
+`work/fix_rift_vA_compat_vs_forward.jpg`, `work/fix_rift_vB_antes_depois_cenario.jpg`. Todas reais, Forward+ na RTX 5060,
+1920 x 1080 (a de Compatibility no renderizador do navegador). Medidas: mediana de recortes (x, y, largura x altura em
+pixels da imagem de 1080), luminância 0 a 255, pelo mesmo método da revisão. Nenhuma captura nova feita por mim. Lembrete
+da D-36: nesta entrega o Daniel pede salas diferentes e legíveis, não fidelidade às imagens conceituais; a `02` serve de
+norte, não de gabarito.
+
+| # | Resultado | Medida e o que se vê |
+|---|---|---|
+| F-1 | **passou** (com uma ressalva) | Dentro de cada buraco contra o chão ao lado, `vA_a_cenario`: sul (660, 640, 130 x 50) 14 contra 56 (25%), B 75 e R 21; meio entre as pontes (900, 435, 120 x 30) 24 contra 58 (41%), B 69 e R 33; leste (1460, 570, 130 x 55) 6 contra 47 (13%). As paredes de dentro iluminadas, o arco e os pegões no fundo sumiram (antes, recorte do buraco sul inteiro com percentil 95 de 69 sobre as paredes de cantaria acesas; agora só bruma violeta e pedras caídas na beira). Violeta visível nos três. Ressalva: no buraco leste o recorte inteiro dá B só 19 acima de R (a sombra das pedras caídas domina); a mancha violeta dele (1500, 612, 80 x 25) dá B 81 e R 22. Aceito: o violeta lê |
+| F-2 | **passou** | Na miniatura de 320 px lê-se "duas pontes sobre um vão violeta": parapeito vazado dos dois lados, o violeta passando por baixo. A 1080, nas cabeceiras, o tabuleiro tem lajes maiores no sentido do vão, meio-fio claro e pilar de canto com lanterna ou velas; a borda do tabuleiro se distingue da plataforma (degrau e mudança do desenho das lajes junto das lanternas da cabeceira sul e norte) |
+| F-3 | **passou** | Com o alvo (-2; 0): no lábio de baixo do trecho sul, cerca de 6 m à vista, quatro a cinco dentes, lajes baixadas e pedras caídas (um a cada 1,2 a 1,5 m). Os lábios de trás ficam escondidos pelas pontes e pela balaustrada e não se medem nesta câmera. Ao norte da ponte norte a boca está aberta: parapeito vazado com o abismo violeta atrás, sem a parede de sacada. A fenda lê como um canal só atravessado por duas pontes, não mais como dois poços; a alternativa de uma ponte só não é necessária |
+| F-4 | **passou por pouco não** | `vA_c_combate`: recorte (150, 250, 250 x 150) 38 (era 25; alvo 40), recorte (1300, 750, 250 x 120) 46 (era 29), meio 59 (teto 60). Falta 2 pontos num dos dois; sem efeito na leitura do combate (herói, anel, inimigos e barras leem). Fica como baixa |
+| F-5 | **passou** | Paredão embaixo à esquerda (80, 680, 250 x 180) 3 contra o chão perto (250, 430, 180 x 90) 43 (7%; teto 60%). A cantaria azul iluminada virou pedra escura que some no violeta |
+| F-6 | **passou** | A 200% (recorte 1050, 470, 500 x 250 da `vA_a_cenario`) os traços de ouro fraco aparecem nas lajes entre a fenda e o buraco leste; continuam discretos, como a spec pede |
+| G-1 (Fendas) | **passou nos canais, com ressalva** | Mesmos recortes, Compatibility contra Forward+: (150, 250) R +11, G +11, B +14; (1300, 750) R -5, G -8, B -11; meio R +11, G +2, B +3 (todos até 15; antes o vermelho caía a 1 a 6). Ressalva: no Compatibility os vãos da fenda e o buraco leste ficam quase pretos (vão sul B 14 contra 33 no Forward+), o violeta de baixo quase não se vê. O desktop é o que conta; fica como baixa |
+
+Fendas B (`work/fix_rift_vB_antes_depois_cenario.jpg`): a ponte de cima caída com o violeta de baixo e a ponte de baixo
+com o vão escuro leem como a mesma fenda; nada a pedir.
+
+**Veredito das Fendas: aprovada para o teste do Daniel.** A sala agora se lembra pela fenda com pontes, não só pelo azul:
+é diferente da Cripta e do Jardim e legível em luta, que é o que a D-36 pede. Não declaro fidelidade à `02`: lá o rasgo
+é contínuo, diagonal e de borda muito mais quebrada; aqui é um canal de três trechos com pontes, e o buraco leste
+continua octogonal.
+
+Sobra, baixa (`environment-artist`, depois do teste, nada impede jogar):
+- F-4b: o canto noroeste do chão na luta em 38; subir 2 pontos (ar ou `KEY_ENERGY`) sem passar de 60 no meio.
+- F-7: o filete de ouro segue um polígono reto por cima dos lábios quebrados (no buraco leste desenha o octógono): fazer o
+  filete acompanhar os dentes ou parar onde a borda quebra.
+- F-8: o buraco leste ainda lê como poço octogonal; quebrar dois ou três lados do contorno visual (sem mexer na colisão).
+- G-1c: no Compatibility, um pouco do violeta de baixo na fenda (compensação da bruma `rift_haze` só nesse renderizador).
