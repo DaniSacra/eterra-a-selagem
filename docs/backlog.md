@@ -1,34 +1,30 @@
 # Backlog de A Selagem
 
-- **Data**: 2026-11-16 (tarde). **Autor**: game-director (quarta revisão). **Commit lido**: `95c29c6` (HEAD de `arpg-3d`);
-  mudanças desde a revisão anterior (`61f591e`): `f916ea5`, `752ceee` (plano e aprovação das arenas), `79dc454`, `501f3d8`
-  (spec das arenas, leão nos estandartes), `f25ae5f` (C12a2 e fundação do C12), `e2297ee`, `91cc656` (cenário da Cripta, das
-  Fendas e do Jardim), `fd72101` (evidências e QA), `f045b9d` (revisão de arte), `95c29c6` (correções C-1 a C-4, J-1 a J-4,
-  G-1 na Cripta e no Jardim).
-- **Em andamento, fora deste commit**: a rodada F-1 a F-5 nas Fendas (`rift_look.gd`), que entra num commit seguinte. Tudo
-  que depende dela está marcado "em andamento".
-- **Fontes lidas**: `docs/qa/latest_report.md` (sobre `91cc656`), `docs/gallery/cycle12_maps/ART_REVIEW.md`, `CAPTURAS.md`,
-  `METRICAS.md`, a seção "Arenas" do `CLAUDE.md`, os commits acima; capturas olhadas: `rift/vA_c_combate`,
-  `work/fix_garden_arvore_antes_depois`. Código conferido: `core/room_tally.gd` (campos do registro por sala).
-- **Rodado por mim**: `tools/test.sh` no `95c29c6`: **462 de 462** testes passando (104635 asserções). Nada do jogo foi
-  mudado.
+- **Data**: 2026-11-16 (fim da tarde). **Autor**: game-director (quinta revisão, a revisão executiva pedida pelo Daniel).
+  **Commit lido**: `87ba686` (HEAD de `arpg-3d`); desde a revisão anterior (`95c29c6`): `7e7495e` (backlog), `87ba686`
+  (correções F-1 a F-6 e G-1 nas Fendas).
+- **Planejamento completo** (diagnóstico, hipóteses A a F, roadmap, aceite, testes, evidências, decisões, próxima
+  execução): `docs/design/roadmap_plan.md`. Pedido do Daniel: `docs/design/roadmap_brief_2026-11-16.md`.
+- **Fontes lidas**: as da revisão anterior, mais `work/fix_rift_vA_antes_depois_cenario.jpg` (olhado), o registro humano
+  (`runs_antes_ciclo12.jsonl`, 3 partidas; `runs.jsonl`, 1 partida sem mouse, pouco representativa pelo Daniel) e o vídeo
+  `C:\Users\danie\Videos\ASelagem\partida_ASelagem.mp4` (robô 0,25, derrota na fase 4 aos 3:50; quadros e som medidos
+  com `ffmpeg`).
+- **Rodado por mim**: `tools/test.sh` no `87ba686`: **462 de 462** (104113 asserções). Nada do jogo foi mudado.
+- **Decidido hoje pelo Daniel (D-39)**: "vale copiar do Hades, nomes nossos": mecânicas e números do Hades II, fielmente;
+  nomes, personagens, UI e arte de Eterra. O C13 segue isso.
 
 ## Estado do jogo em 5 linhas
 
-1. A Fase 1 joga do título à selagem numa **descida de 7 salas** (D-27): abertura no salão da pintura, três lutas sorteadas
-   entre **Cripta dos Esquecidos, Salão das Fendas e Jardim das Raízes Mortas** (duas variantes cada), fonte, guardião,
-   loja e Morvath na Câmara do Selo.
-2. A fundação espacial existe: chão com buracos, movimento varrido, caminho por grade e campo de fluxo, tiros que param na
-   pedra, atirador que só prepara com linha livre e na tela. QA: **0 inimigo preso e 0 robô preso em 192 lutas e 8
-   descidas**, 0 esquiva atravessando buraco em 6720 tentativas.
-3. Robô com reação 0,25: **4 vitórias em 8 descidas**, Morvath aos 95 a 120 s com mediana de **24 de vida** ao entrar (12 a
-   53; a base é 30); o feiticeiro na sala 3 e o Ancião como guardião fazem a maior parte do dano. **Ninguém jogou as arenas
-   nem os atiradores novos** (`c666f4a`): o T2 é a próxima coisa que importa.
-4. Arte: Cripta e Jardim aprovados pelo `art-director` e corrigidos (`95c29c6`); Fendas seguradas pela leitura da fenda
-   (F-1 a F-3), em correção agora. O Daniel disse que nesta entrega vale a **variedade de salas, não a fidelidade** às
-   imagens conceituais (D-36): a fidelidade fica para depois, talvez com Meshy.
-5. Saúde técnica: 462 de 462 testes, quadro de 3,3 a 4,7 ms a 1080p nas arenas (salão 5,1), Jardim no Compatibility no
-   limite de 6 ms; som ainda sintetizado; a referência `04` em tamanho cheio ficou no histórico do git (D-37).
+1. A Fase 1 joga do título à selagem em 7 salas (D-27): salão, três lutas sorteadas entre Cripta, Fendas e Jardim (duas
+   variantes cada), fonte, guardião, loja e Morvath em 4 fases na Câmara do Selo. 462 de 462 testes.
+2. As Fendas foram corrigidas (`87ba686`): agora leem como rasgo com pontes (olhado no antes e depois); falta a
+   reconferência do `art-director` (ART-R1). Cripta e Jardim aprovados.
+3. O dado mais forte que temos: **chega-se a Morvath com 3 dons** (3 de 3 partidas de gente e o vídeo do robô) e a loja
+   não vende nada (37 de ouro, item mais barato 60). Morvath foi feito para 5 a 8 dons: isso é o C13.
+4. No vídeo: coluna de recompensa amarela com miolo branco sobre o herói, coluna ciano que esconde Morvath na entrada,
+   gemas das portas acima do glow; 20% de silêncio e pico de 0,04 dBFS sem limitador. Isso é o C12c.
+5. Nenhum teste humano do C12 ainda; o registro atual não separa "injusto" de "não reagiu". O C12c acrescenta isso e
+   termina numa versão para o teste final do Daniel.
 
 Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade** P0 (antes de tudo), P1 (neste ciclo), P2
 (próximo), P3 (depois). **Estado**: aberto, em andamento, proposta (espera o Daniel), aprovado, feito. Responsáveis:
@@ -37,6 +33,15 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 ---
 
 ## 0. Feito (fechado com evidência)
+
+### C12b "Fecho das Fendas" (2026-11-16)
+
+| ID | Item | Commit | Prova |
+|---|---|---|---|
+| F-1 a F-5 | Paredes da fenda escuras com bruma violeta abaixo (`rift_haze.gdshader`), bordas quebradas com pedras caídas, pontes com lajes próprias, meio-fio, parapeito vazado, pilares de canto e pegões, lua como luz principal | `87ba686` | `work/fix_rift_vA_antes_depois_cenario.jpg` (olhado: a fenda lê como rasgo com pontes); medidas de aceite a reconferir pelo `art-director` (ART-R1) |
+| F-6 | Inscrições fracas entre a fenda e o buraco | `87ba686` | idem |
+| G-1b | Ar do Compatibility nas Fendas | `87ba686` | `work/fix_rift_vA_compat_vs_forward.jpg` |
+| D-39 | O Daniel confirmou: mecânicas e números do Hades II fielmente, nomes, personagens, UI e arte de Eterra | conversa de 2026-11-16 | `docs/design/roadmap_plan.md` |
 
 ### C12a2 "Medir certo" e C12 "Arenas I" (2026-11-16)
 
@@ -51,7 +56,7 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 | C12-F1 a F9 | `RoomLayout` estendido, `FloorShape.POLY` com buracos, `Arena.sweep`, `NavGrid` e `FlowField`, linha de tiro, nascimento e saídas, `cam_bounds`, robô com caminho, escolha da arena sem repetir, `--arena`, `--variant`, `tools/arena_lab.gd` | `f25ae5f` | 455 testes no commit; QA seções 2 e 3 |
 | C12-A0 | Salão das Catacumbas como arena (abertura, fonte, loja; `--arena=hall`) | `f25ae5f` | `METRICAS.md` seção 5 (5,09 ms) |
 | C12-A1 | Cripta dos Esquecidos, 2 variantes | `e2297ee`, `95c29c6` | `cycle12_maps/crypt/`; aprovada na `ART_REVIEW.md` |
-| C12-A2 | Salão das Fendas, 2 variantes | `e2297ee` | `cycle12_maps/rift/`; joga bem, arte segurada (F-1 a F-5 em andamento) |
+| C12-A2 | Salão das Fendas, 2 variantes | `e2297ee` | `cycle12_maps/rift/`; arte corrigida no `87ba686` (C12b acima) |
 | C12-A3 | Jardim das Raízes Mortas com a árvore petrificada (D-30) | `91cc656`, `95c29c6` | `cycle12_maps/garden/`, `work/garden_grid_a`; aprovado |
 | D-27 | Descida de teste de 7 salas (`--short` volta à de 5) | `f25ae5f` | `test_descent.gd` |
 | D-28 | Golpe empurra até a borda, ninguém cai | `f25ae5f` | `Arena.sweep`; 0 corpo fora do chão |
@@ -71,27 +76,16 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 
 ## 1. Bugs
 
-Nenhum crítico nem alto aberto no jogo. O QA (`91cc656`) não achou falha alta; a revisão de arte deu três altas nas Fendas,
-que estão em correção.
-
-### Alto (arte, em andamento)
-
-| ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
-|---|---|---|---|---|---|---|
-| F-1 | Buracos das Fendas com fundo claro, leem como poços (dentro do buraco 64 de luminância contra 50 do chão) | `ART_REVIEW.md` F-1, `rift/vA_a_cenario` | M | `environment-artist` | em andamento | aceite da F-1 na `ART_REVIEW.md` |
-| F-2 | Pontes leem como faixas do chão | F-2, `rift/vA_c_combate` (olhado: a ponte sul some no chão) | M | `environment-artist` | em andamento | aceite da F-2 |
-| F-3 | Borda reta, boca norte fechada como sacada | F-3 | M | `environment-artist` | em andamento | aceite da F-3 |
-
-Opinião minha depois da D-36: F-1 a F-3 continuam valendo, porque não são fidelidade e sim leitura de jogo ("aqui é
-abismo, ali é ponte"). Mas se a rodada não convergir em mais uma passada, **o T2 sai assim mesmo** e a variante de uma
-ponte só (ideia da F-3) fica para depois do teste. Ver D-38.
+Nenhum crítico nem alto aberto. As três altas de arte das Fendas (F-1 a F-3) foram corrigidas no `87ba686` (seção 0) e
+esperam só a reconferência do `art-director` (ART-R1). Os clarões vistos no vídeo do robô entraram como GP-01 (seção 1b),
+com prioridade P0 porque ferem a regra de leitura da direção.
 
 ### Médio
 
 | ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
 |---|---|---|---|---|---|---|
-| F-4 | Chão das Fendas escuro longe das lanternas (25 a 29 na luta) | F-4 | P | `environment-artist` | em andamento | recortes da F-4 com 40 ou mais |
-| F-5 | Paredão de cantaria azul iluminada sob as bordas de fora | F-5 | P | `environment-artist` | em andamento | recorte do paredão até 60% do chão |
+| F-4 | Chão das Fendas escuro longe das lanternas (25 a 29 na luta) | F-4 | P | `environment-artist` | feito no `87ba686`, a reconferir (ART-R1) | recortes da F-4 com 40 ou mais |
+| F-5 | Paredão de cantaria azul iluminada sob as bordas de fora | F-5 | P | `environment-artist` | feito no `87ba686`, a reconferir (ART-R1) | recorte do paredão até 60% do chão |
 | QA M-1 | Referência `04` (IA) em tamanho cheio no histórico (`91cc656:docs/gallery/cycle12_maps/work/garden_vs_04.png`), já enviada ao `origin` | QA M-1; `git remote -v` aponta para o GitHub | P | Daniel (D-37) | aberto | decisão D-37 tomada; regra para os agentes: miniatura de 480 px rotulada, nunca a referência inteira em `docs/gallery` |
 
 ### Baixo
@@ -106,14 +100,68 @@ ponte só (ideia da F-3) fica para depois do teste. Ver D-38.
 
 ---
 
+## 1b. Itens priorizados do C12c em diante (formato completo)
+
+Campos: ID, ciclo, prioridade (P0 a P3), descrição, problema, valor para o jogador, aceite, dependências, responsável,
+estado, evidência. Planejamento e justificativas em `docs/design/roadmap_plan.md`. Nada do C12c muda número de combate.
+
+### C12c "Qualidade da experiência" (hoje; termina na versão do teste final do Daniel)
+
+| ID | P | Descrição | Problema | Valor para o jogador | Aceite | Dependências | Responsável | Estado | Evidência |
+|---|---|---|---|---|---|---|---|---|---|
+| GP-01 | P0 | Colunas de luz e gemas das portas abaixo do glow; entrada de Morvath sem coluna sobre ele | coluna amarela com miolo branco sobre o herói ao vencer a sala; coluna ciano que deixa Morvath em silhueta preta por 1 s; gemas amarelas acima do glow | herói e chefe sempre legíveis; paleta de Eterra | teste GUT: todo `Fx.beam` do jogo com `cap` até 1,0; capturas do QA-02: maior canal da coluna até 235, mediana do recorte de Morvath aos 0,5 s acima de 30 | nenhuma | `gameplay-engineer` | aberto | vídeo 1:20, 1:58, 2:08; `Fx.beam` com `BEAM_INTENSITY` 2,5 sem teto em `rooms.gd:297`, `boss.gd:218`, `game.gd:702`; `rooms.gd:418` (albedo x 2,2); comentário em `boss.gd:979` |
+| GP-02 | P0 | Registro que separa injusto de não reagiu: por sala `variant`, `dodges`, `hits`, `hits_by`, `shots` por tipo `{fired, hit, blocked}`, `blocked_by`, `gold_in`, `boons_in`; por partida `source`, `boons_at_boss`, `shop {gold, bought}`, `fountain_used`; por golpe levado `hurt_ctx` (fonte, `warn_s`, `dash_ready`, `offscreen`, até 60) | `RoomTally` só tem dano por fonte, tempo e contato; o teste humano não decide se feiticeiro, Ancião e foice são injustos | as próximas mudanças de número saem de dado de gente, não do robô | `tests/test_cycle12c.gd` cobre cada campo; `tools/smoke.sh 120 --seed=5 --runlog=<arq>` grava a linha com todos e `source: bot`; campos antigos iguais | nenhuma | `gameplay-engineer` | aberto | `core/room_tally.gd`; `boss.hurt_by` do Daniel: foice 36 de 62 (vitória), 12 de 24 (derrota) contra o robô que morre na tempestade |
+| GP-03 | P1 | B-2: `Arena.resolve` com o ponto no centro de uma peça empurra para a face mais perto; invocações nunca dentro de peça | `--hero-at` no centro do túmulo deixa o herói dentro | ninguém nasce dentro de pedra | teste GUT por peça de cada arena; 200 invocações do Ancião e 200 reforços de Morvath sorteados, 0 dentro de peça | nenhuma | `gameplay-engineer` | aberto | QA B-2, `crypt/vA_g_hero_at_dentro_do_tumulo.jpg` |
+| GP-04 | P1 | B-3: teste "cercado" com inimigos | o teste atual só olha o chão | garante saída em corredor estreito | teste GUT: 2 esqueletos de cada lado nos 4 corredores mais estreitos de cada arena e variante, pelo menos 12 de 16 esquivas saem mais de 2,5 m | nenhuma | `gameplay-engineer` | aberto | QA B-3 |
+| GP-05 | P1 | `AudioEffectHardLimiter` no `Master`, teto -1,0 dB | pico de 0,04 dBFS (corte) no vídeo; `audio.gd` sem limitador | sem estalo em lutas cheias | teste GUT do efeito no barramento; pico até -1,0 dBFS no vídeo do QA-02 | nenhuma | `gameplay-engineer` | aberto | `astats` no vídeo (pico aos 12 s); `scripts/audio.gd:84` |
+| GP-06 | P1 | DT-009: `--trace-cam` imprime o maior salto do alvo da câmera e onde | salto nunca medido | câmera estável nas salas grandes | opção existe e está no `CLAUDE.md`; QA-02 mede abaixo de 0,5 m por quadro a 60 FPS nas 4 arenas | nenhuma | `gameplay-engineer` | aberto | QA, limitações |
+| ENV-01 | P0 | Cripta: chão da luta no alvo sem acender a periferia | chão longe das velas com 40 (alvo 45 a 60); terço do quadro preto no vídeo | inimigos e avisos legíveis em toda a sala (hipótese C) | `crypt/vA_c_combate` e `vB_c_combate` refeitas: recortes de chão longe das velas com mediana 45 a 60; tampa sob o facho até 150; quadro sem piora de mais de 0,3 ms | nenhuma | `environment-artist` | aberto | `ART_REVIEW.md` Medidas; vídeo 1:01 a 1:23 |
+| ENV-02 | P2 | J-5: fraturas dos galhos no valor do marfim | as fraturas saem quase brancas (opinião minha) | nada compete com o herói | maior canal das fraturas até 200 no `garden/vA_a_cenario` | nenhuma | `environment-artist` | aberto | `work/fix_garden_arvore_antes_depois` |
+| ENV-03 | P2 | B-4: Jardim no Compatibility | p90 de 6,03 ms | navegador e máquina fraca | p90 até 6,0 ms medido pelo QA, ou registrado como aceito | QA-02 mede | `environment-artist` | aberto | QA B-4 |
+| UI-01 | P1 | Placas das portas legíveis (`DoorSign`, classe nova em `scripts/ui/door_sign.gd`) | rótulos "Ouro", "Fonte de luz", "Loja" pequenos e brancos sobre a gema | escolher a porta sem procurar | teste GUT da classe; na captura a 1080 do QA-02 maiúsculas de pelo menos 16 px e contraste de pelo menos 4,5:1 | o `gameplay-engineer` troca a chamada em `rooms.gd` `_marker` | `ui-ux-designer` | aberto | vídeo 1:23, 2:02 |
+| UI-02 | P1 | Tela de derrota com "Sala N de M", a arena e os dons levados | a derrota mostra tempo, abates, sequência e número de dons, não onde nem com quê | o Daniel e quem testar contam a partida pela tela | teste GUT da `EndScreen` com derrota na sala 3 da Cripta e 2 dons; captura `--shot-on=end` | nenhuma | `ui-ux-designer` | aberto | vídeo 3:50 |
+| QA-01 | P0 | Linha de base antes das mudanças: capturas `antes/`, vídeo de descida com som, pico e silêncios | sem antes não há prova do depois | | arquivos em `docs/gallery/cycle12c/antes/` com comando no `CAPTURAS.md` | nenhuma (roda primeiro) | `qa-performance` | aberto | plano, seção F |
+| QA-02 | P0 | Medidas do aceite do C12c, relatório, galeria `cycle12c`, DT-004 (descida inteira com som a 1080p) | | | todos os itens da seção D do `roadmap_plan.md` com número | integração dos outros itens | `qa-performance` | aberto | plano, seções D a F |
+| ART-R1 | P1 | Reconferir F-1 a F-6 com as medidas da `ART_REVIEW.md` | correções sem reconferência | | adendo na `ART_REVIEW.md` com cada aceite medido; se passar, D-38 fecha | nenhuma | `art-director` | aberto | `87ba686` |
+
+Hipóteses que pedem teste humano (não viram mudança de número no C12c; o GP-02 as mede): A (catacumbas interligadas),
+B (árvore e raízes no combate), D (justiça da foice e da fase 4), F (qualidade do som). Roteiro de 7 perguntas no
+`roadmap_plan.md`, seção E.
+
+### C13 "Progressão e rejogabilidade" (depois do teste final; números do Hades II pela D-39)
+
+| ID | P | Descrição | Problema | Valor | Aceite | Dependências | Responsável | Estado | Evidência |
+|---|---|---|---|---|---|---|---|---|---|
+| C13-01 | P1 | Descida de 10 salas e Morvath na 11 por padrão; a de 7 e a de 5 por opção; arenas sem repetir seguidas, nenhuma mais de 3 vezes | 3 dons em Morvath | partida de 10 a 13 min com curva | robô 0,25 chega com 5 a 8 dons em 6 de 8; `test_descent.gd` | teste final do C12c | `gameplay-engineer` | aberto | DT-001; `runs_antes_ciclo12.jsonl` |
+| C13-02 | P1 | Baralho de recompensas do Hades II no lugar dos pesos | variedade sem repetir | portas mais interessantes | teste do baralho (sem reposição, reabastece) | C13-01 | `gameplay-engineer` | aberto | `hades2_sistemas.md` "achado" |
+| C13-03 | P1 | Raridade em sequência; guardião sem heroica | `RARITY_WEIGHT_GUARDIAN` diferente do Hades | fidelidade (D-39) | teste com 10 mil sorteios dentro de 1 ponto das chances | | `gameplay-engineer` | aberto | idem |
+| C13-04 | P1 | Ouro por inimigo (70%, teto 10 a 15 + 0,5 por profundidade), recompensa 100, loja em 3 grupos, cura 50 | loja inútil (37 de ouro, mínimo 60) | a loja vira escolha | robô compra na loja em 6 de 8 | C13-01 | `gameplay-engineer`, `ui-ux-designer` (loja) | aberto | vídeo 2:02; `_stage` `shop_prices` |
+| C13-05 | P1 | Romã com ganho fixo por nível (`base`, `per_level`), 32 dons migrados | | dons que crescem | testes por dom | | `gameplay-engineer` | aberto | `hades2_sistemas.md` seção 1 |
+| C13-06 | P2 | Elo com 12% por carta | | | teste de sorteio | C13-02 | `gameplay-engineer` | aberto | seção 3 |
+| C13-07 | P2 | Bônus de sequência de golpes fora (D-10) | não existe no Hades II | fidelidade | `DamageCalc.combo_bonus` desligado e testado | D-10 | `gameplay-engineer` | proposta | comparativo, Dons |
+| C13-08 | P1 | Métricas do C13: dons e ouro por sala no registro, 8 descidas longas | | | `METRICAS.md` do ciclo | GP-02 | `qa-performance` | aberto | |
+
+### C15 "Som e polimento" e C14 "Arenas II" (ordem pela D-40)
+
+| ID | Ciclo | P | Descrição | Aceite | Responsável | Estado |
+|---|---|---|---|---|---|---|
+| C15-01 | C15 | P2 | Mixagem por barramentos, ducking nos avisos de Morvath | pico até -1 dBTP; integrado -18 a -14 LUFS | `gameplay-engineer` | aberto |
+| C15-02 | C15 | P2 | Som em toda ação, aviso e ataque de Morvath | teste que acusa evento sem som | `gameplay-engineer`, `art-director` | aberto |
+| C15-03 | C15 | P2 | Música de combate e de Morvath por fase (CC0, CC-BY ou síntese, D-12b) | nenhum silêncio de 2 s com música ligada | `art-director`, Daniel (fonte) | aberto |
+| C15-04 | C15 | P2 | Ambiência por arena | idem | `environment-artist` | aberto |
+| C15-05 | C15 | P2 | `audio/LICENSES.md` e créditos | toda fonte listada | `ui-ux-designer` | aberto |
+| C14-A4 a A6 | C14 | P2 | Santuário, Ponte, Runas (D-29), cada uma com uma decisão de combate própria | testes do C12 e decisão medida | `environment-artist`, `gameplay-engineer`, `art-director` | aberto |
+
+---
+
 ## 2. Quickwins
 
 | ID | Título | Evidência | Impacto | Esforço | Responsável | Prioridade | Pronto quando |
 |---|---|---|---|---|---|---|---|
-| QW-014 | Montar a versão do T2 | regra de entrega MVP; memória "Test build folders" | o Daniel testa tudo de uma vez | P | sessão principal | P0, depois de F-1 a F-5 | `ASelagem.exe` exportado do commit das Fendas, copiado para `Downloads\ASelagem-3D` e `ASelagem-teste`; `runs.jsonl` antigo do Daniel guardado com outro nome para não misturar com o T2 |
-| QW-015 | Ler o T2 por um roteiro fixo | QW-011 já grava o que precisamos | separar "salas difíceis" de "Morvath difícil" e "atirador injusto" de "atirador fácil" | P | `qa-performance` | P0 depois do T2 | tabela por sala do T2 (arena, `hp_in`, dano por fonte, tempo, `contact`) ao lado da mesma tabela do robô 0,25 (`METRICAS.md` seção 1) |
+| QW-014 | Montar a versão do teste final (era "T2"; agora sai depois do C12c, `roadmap_plan.md` H) | regra de entrega MVP; memória "Test build folders" | o Daniel testa tudo de uma vez | P | sessão principal | P0, depois do QA-02 | `ASelagem.exe` exportado do commit das Fendas, copiado para `Downloads\ASelagem-3D` e `ASelagem-teste`; `runs.jsonl` antigo do Daniel guardado com outro nome para não misturar com o T2 |
+| QW-015 | Ler o teste final por um roteiro fixo (com os campos do GP-02) | QW-011 e GP-02 gravam o que precisamos | separar "salas difíceis" de "Morvath difícil" e "atirador injusto" de "atirador fácil" | P | `qa-performance` | P0 depois do T2 | tabela por sala do T2 (arena, `hp_in`, dano por fonte, tempo, `contact`) ao lado da mesma tabela do robô 0,25 (`METRICAS.md` seção 1) |
 | QW-012 | Teste humano dos atiradores novos | `c666f4a` nunca jogado | decide o balanceamento deles | P | Daniel | P0 (dentro do T2) | 3 partidas no registro e as respostas do roteiro do T2 |
-| G-1b | Compatibility das Fendas (vermelho some, azul satura) | `ART_REVIEW.md` G-1, `rift/vA_h_compatibility_combate`; o `95c29c6` só corrigiu Cripta e Jardim | navegador; desktop não muda | P | `environment-artist` | P2 | recortes do `vA_c` em Forward+ e Compatibility com diferença de até 15 por canal |
+| G-1b | Compatibility das Fendas (vermelho some, azul satura): **feito no `87ba686`**, a reconferir no ART-R1 | `ART_REVIEW.md` G-1, `work/fix_rift_vA_compat_vs_forward.jpg` | navegador; desktop não muda | P | `environment-artist` | feito | recortes do `vA_c` em Forward+ e Compatibility com diferença de até 15 por canal |
 
 ---
 
@@ -177,7 +225,10 @@ ponte só (ideia da F-3) fica para depois do teste. Ver D-38.
 
 ## 5. T2: teste do Daniel desta entrega
 
-**Quando**: depois do commit de F-1 a F-5 e do QW-014. **Quanto**: 3 partidas, do título ao fim (vitória ou morte), no
+**Atualização (quinta revisão)**: o T2 virou o teste final do C12c. O roteiro novo, com 7 perguntas ligadas às hipóteses A a F,
+está no `roadmap_plan.md`, seção E; as perguntas abaixo continuam valendo como apoio.
+
+**Quando**: depois do commit do C12c e do QW-014. **Quanto**: 3 partidas, do título ao fim (vitória ou morte), no
 teclado ou no controle, como ele preferir. Nenhum teste à parte para cada coisa.
 
 ### O que observar
@@ -206,13 +257,16 @@ teclado ou no controle, como ele preferir. Nenhum teste à parte para cada coisa
 
 ## 6. Próximos ciclos
 
-Ordem recomendada: **C12b "Fecho das Fendas"** (agora) → **T2** → **C12c "Leitura do T2"** (balanceamento pelos dados de
-gente) → **C13 "Progressão do Hades"** → **C14 "Arenas II"** → **C15 "Som"** → **C16 "Steam"**. Mudança em relação à
-revisão anterior: entra o C12c, curto, para mexer nos atiradores e no guardião só com dados de gente, antes de mudar a
-economia de dons (que muda tudo de novo). Opinião: o som (C15) é a maior distância para o Ember & Blade que ainda não foi
-medida; se o T2 disser que os golpes estão bons e as salas justas, vale trocar C14 e C15 de lugar.
+**Ordem atual (quinta revisão, `roadmap_plan.md` B)**: **C12c "Qualidade da experiência"** (hoje, seção 1b) → teste final
+do Daniel → **C13 "Progressão e rejogabilidade"** (D-39: economia e dons do Hades II) → **C15 "Som e polimento"** →
+**C14 "Arenas II"** → **C16 "Steam"**. A troca C15 antes do C14 é recomendação minha e espera a D-40; sem resposta vale a
+ordem do pedido (C14 antes do C15). O C12c deixou de ser "Leitura do T2" (balanceamento): agora não muda número nenhum e
+instrumenta o teste; o balanceamento pelos dados de gente vai para o começo do C13. O texto abaixo é o histórico da
+revisão anterior.
 
-### C12b "Fecho das Fendas" (em andamento)
+Ordem da revisão anterior: C12b (feito no `87ba686`) → T2 → C12c "Leitura do T2" → C13 → C14 → C15 → C16.
+
+### C12b "Fecho das Fendas" (feito no `87ba686`; falta ART-R1)
 - **Objetivo**: a fenda ler como abismo com pontes e a versão de teste sair.
 - **Por que agora**: é a única arena segurada pela revisão; o resto está pronto para o Daniel.
 - **Entregas**: F-1 a F-5, capturas e vídeo das Fendas refeitos, QW-014.
@@ -271,12 +325,21 @@ medida; se o T2 disser que os golpes estão bons e as salas justas, vale trocar 
 | D-35 | Estátuas encapuzadas de mãos vazias; nenhuma porta verde (nem braseiros pedidos na imagem) nas arenas | `501f3d8` |
 | D-36 | "Não precisa de fidelidade nesta entrega, o importante é ter as arenas salas diferentes, depois eu testo": fidelidade às imagens conceituais fica para depois, talvez com Meshy que ele autorize | registrado no `CLAUDE.md` (`95c29c6`) |
 
+### Decidida pelo Daniel nesta tarde
+
+| ID | Decisão | Onde |
+|---|---|---|
+| D-39 | "Vale copiar do Hades, nomes nossos": mecânicas e números do Hades II fielmente; nomes, personagens, UI e arte de Eterra. Resolve o conflito com a frase "não copiar mecanicamente" do pedido de hoje | `roadmap_plan.md`; C13 planejado com isso |
+
 ### Abertas
 
 | ID | Pergunta | Opções | Minha recomendação |
 |---|---|---|---|
+| D-40 | Ordem depois do C13 | (a) C14 Arenas II e depois C15 Som (pedido); (b) C15 antes do C14 | **(b)**: o som está em todo golpe e hoje 20% da partida é silêncio; a descida longa do C13 mostra se as 4 arenas cansam antes de fazer mais 3. Sem resposta, vale (a) |
+| D-41 | Nomes de Eterra para romã, raridades e loja no C13 | os nomes provisórios do `hades2_sistemas.md` ou os seus | mandar só os que quiser trocar |
+| D-12b | Licença do som e da música no C15 | (a) só CC0 e síntese; (b) CC0 e CC-BY com créditos | **(b)** |
 | D-37 | A referência `04` (feita por IA) em tamanho cheio está no histórico do git e no GitHub (`91cc656`) | (a) deixar como está, já que o repositório é seu e as referências são suas; (b) reescrever o histórico e forçar o envio (só com a sua ordem expressa; quebra as cópias e os outros ramos); (c) deixar e só proibir de novo | **(a) com (c)**, se o repositório for privado: não vale reescrever história por uma imagem sua. Se ele for público, ou for ficar público antes do lançamento, **(b)** numa única vez, com você mandando |
-| D-38 | Se depois de F-1 a F-5 a fenda ainda ler como poços | (a) o T2 sai assim; (b) segurar o T2 e passar a variante A para uma ponte só (o rasgo ganha comprimento; muda a forma andável e os testes) | **(a)**: pela D-36 o que vale agora é a sala ser diferente, e ela já é; a ponte única entra no C14 se você sentir falta |
+| D-38 | Se depois de F-1 a F-5 a fenda ainda ler como poços (provavelmente sem objeto: no `87ba686` ela lê como rasgo; fecha com o ART-R1) | (a) o T2 sai assim; (b) segurar o T2 e passar a variante A para uma ponte só (o rasgo ganha comprimento; muda a forma andável e os testes) | **(a)**: pela D-36 o que vale agora é a sala ser diferente, e ela já é; a ponte única entra no C14 se você sentir falta |
 | D-31, D-32 | Água que desacelera; destrutíveis que abrem passagem | decidir depois do T2 | como antes |
 
 ### Tomadas pela sessão na noite de 2026-11-16 (a confirmar; o Daniel ainda não respondeu)
@@ -305,7 +368,7 @@ petrificada), D-33 (nome por 2 s): todas seguiram a recomendação e estão entr
 | D-23 | O que é a porta selada e o véu de runas | Pendente na história; sem texto até o cânone ter |
 | D-11 | Meta de dificuldade da primeira vitória | Até 3 tentativas para quem jogou Hades, com a descida inteira |
 | D-09 | Magia na luta do chefe | Decidir no C13 com o registro |
-| D-10 | Bônus de sequência (não existe no Hades II) | Tirar no C13 se você não sentir falta |
+| D-10 | Bônus de sequência (não existe no Hades II) | Tirar no C13 (C13-07), coerente com a D-39 |
 | D-01 | Título de Morvath | "o Rei que Traiu a Luz" ou "o Lich-Rei do Sul" (cânone) |
 | D-02, D-04 | Quem sela Morvath; nomes dos paladinos | Seguir o cânone de 12/11; nomes depois |
 | D-05 | Créditos do Meshy (546) | Nada até você pedir; fidelidade das arenas é candidata (D-36) |
