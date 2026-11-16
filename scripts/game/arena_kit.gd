@@ -140,8 +140,11 @@ var boxes: Array[Rect2] = []
 ## The portals' glowing sheets and lights, to dim or light them (Arena.light_exit).
 var portals: Array[Array] = []
 ## Lights away from a portal that take its colour when it is lit (the hall's spill down the steps), by portal index:
-## [light, its own colour for the portal's green]; their energy stays their own.
+## [light, its own colour for the portal's green, its own energy]; their energy stays their own (but for surge).
 var portal_tinted: Dictionary = {}
+## The middle of each portal's sheet of light (where the sealing gathers), and the colour each was last lit with.
+var portal_centers: Array[Vector3] = []
+var portal_tints: Dictionary = {}
 ## Built stone (and the dressed-stone material the kit's stony pieces take too).
 var masonry: Masonry
 var _meshes := {}
@@ -571,12 +574,14 @@ func portal_glow(center: Vector3, yaw: float, size: Vector2, arch := Vector3.ZER
 		root.add_child(side)
 		entry.append(side)
 	portals.append(entry)
+	portal_centers.append(center)
 
 
 ## Lights or dims a portal (open: the room is cleared and its reward waits behind it).
 func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 	if i >= portals.size():
 		return
+	portal_tints[i] = tint
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"power", PORTAL_OPEN if on else PORTAL_DIM)
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"color", PORTAL_SHEET if tint == PORTAL else tint)
 	var l: OmniLight3D = portals[i][1]
@@ -594,7 +599,28 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 func tint_with_portal(i: int, light: Light3D) -> void:
 	if not portal_tinted.has(i):
 		portal_tinted[i] = []
-	(portal_tinted[i] as Array).append([light, light.light_color])
+	(portal_tinted[i] as Array).append([light, light.light_color, light.light_energy])
+
+
+## Morvath's hold on portal i (cycle 9, portal.gdshader): unrest 0..1 (the last phase: restless veils, a slow violet
+## pulse), seal 0..1 (the sealing: a ring of light closing on the core). gain: its lights (and the lights it tints)
+## times their open energy, 1 being the plain open portal; below 0 its lights are left as light_portal set them and
+## the lights it tints go back to their own energy.
+func portal_mood(i: int, unrest: float, seal: float, gain: float) -> void:
+	if i >= portals.size():
+		return
+	var m: ShaderMaterial = portals[i][0]
+	m.set_shader_parameter(&"unrest", unrest)
+	m.set_shader_parameter(&"seal", seal)
+	if gain < 0.0:
+		for extra: Array in portal_tinted.get(i, []):
+			(extra[0] as Light3D).light_energy = extra[2]
+		return
+	(portals[i][1] as OmniLight3D).light_energy = PORTAL_LIGHT * gain
+	for k in range(2, portals[i].size()):
+		(portals[i][k] as OmniLight3D).light_energy = PORTAL_SIDE.x * gain
+	for extra: Array in portal_tinted.get(i, []):
+		(extra[0] as Light3D).light_energy = (extra[2] as float) * gain
 
 
 ## Violet light glowing up out of the abyss: an upright card facing the camera's way (yaw), its foot at `foot`.

@@ -259,6 +259,38 @@ func open_door(tint: Color = ArenaKit.MORVATH) -> void:
 		_door_light.omni_range = 16.0
 
 
+## Morvath's last phase (cycle 9): the crypt's portal grows restless (faster veils, a slow violet pulse, its light
+## up a little and wavering) and a few spectral motes drift high in the air away from the paladin. off: it calms.
+## Only in the catacomb hall (the old great hall has no portal sheet). Call it with open_door(his colour).
+func final_phase(on: bool) -> void:
+	var o := _portal_omen()
+	if o != null:
+		o.final(on)
+
+
+## Morvath is sealed (cycle 9): over `seconds` his energy gathers from where he fell (`from`, x and z) back into the
+## crypt's portal, a ring of light closes on its core and it calms to its own green and dims. In place of
+## open_door(ArenaKit.PORTAL) when he falls.
+func seal_portal(seconds: float = PortalOmen.SEAL_TIME, from := Vector2.ZERO) -> void:
+	var o := _portal_omen()
+	if o != null:
+		o.seal(seconds, from)
+	else:
+		open_door(ArenaKit.PORTAL)
+
+
+var _omen: PortalOmen
+
+
+func _portal_omen() -> PortalOmen:
+	if _kit == null or _kit.portals.is_empty():
+		return null
+	if _omen == null:
+		_omen = PortalOmen.new(_kit, 0)
+		add_child(_omen)
+	return _omen
+
+
 # ---------- the catacomb hall (Daniel's reference image of 2026-11-14) ----------
 
 ## The hall of the reference image (CatacombHall): it fills exits, exit_inward, exit_zones, start, showcase.

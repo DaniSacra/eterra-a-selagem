@@ -72,6 +72,8 @@ const POT_BELLY := 0.38
 ## Standing stones: the share of their columns cracked upright, the frame round their niche.
 const OBELISK_CRACKS := 0.3
 const OBELISK_FRAME := 0.08
+## The niche's darkness (cycle 9: the niche is dressed stone too, so it opens round the paladin with the rest).
+const OBELISK_NICHE := Color(0.025, 0.025, 0.035)
 const WAX := Color(1.0, 0.8, 0.55)
 ## The wax lit from inside by its flame, so its shaded side stays amber under the cold teal air (not olive): strongest
 ## at the top, this share of it at the foot. The pool of wax run down round the foot (times the candle's radius).
@@ -377,6 +379,8 @@ func obelisk(at: Vector3, height: float, width: float, face: Vector2) -> void:
 	var yaw := atan2(face.x, face.y)
 	var mat := stone(at.y).duplicate() as ShaderMaterial
 	mat.set_shader_parameter(&"upright_cracks", OBELISK_CRACKS)
+	# the paladin behind it reads through a stippled hole round him (masonry.gdshader, see_through)
+	mat.set_shader_parameter(&"see_through", 1.0)
 	block(at, Vector3(width * 1.3, 0.5, width * 1.3), yaw, mat)
 	var y := 0.5
 	var cap := width * 0.45
@@ -390,9 +394,11 @@ func obelisk(at: Vector3, height: float, width: float, face: Vector2) -> void:
 		w *= 0.91
 	var c := point(at + Vector3(0, y, 0), w * 1.02, cap, yaw + 0.06, 0.55, mat)
 	c.rotate_object_local(Vector3.RIGHT, 0.07)
-	var dark := StandardMaterial3D.new()
-	dark.albedo_color = Color(0.02, 0.02, 0.03)
-	dark.roughness = 1.0
+	var dark := mat.duplicate() as ShaderMaterial
+	dark.set_shader_parameter(&"stone_a", OBELISK_NICHE)
+	dark.set_shader_parameter(&"stone_b", OBELISK_NICHE)
+	dark.set_shader_parameter(&"top_light", 1.0)
+	dark.set_shader_parameter(&"upright_cracks", 0.0)
 	var f := Vector3(face.x, 0, face.y).normalized()
 	pointed_arch(at + Vector3(0, height * 0.55, 0) + f * (width * 0.44), face, width * 0.45, height * 0.2, 0.08, 0.1, dark)
 	box(at + Vector3(0, height * 0.55 + height * 0.08, 0) + f * (width * 0.43), Vector3(width * 0.4, height * 0.16, 0.06), yaw, dark)

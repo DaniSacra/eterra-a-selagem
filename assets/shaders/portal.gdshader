@@ -36,6 +36,15 @@ uniform vec2 core_range = vec2(0.7, 1.4);
 // The sheet cut to a pointed arch: x = the springing's height over the sheet's foot, y = the span, z = the radius of
 // the two arcs (m; their centres on the springing line). Zero span: the whole rectangle glows.
 uniform vec3 arch = vec3(0.0);
+// Morvath's last phase (cycle 9, ArenaKit.portal_mood): unrest 0..1 adds a second, faster layer of veils, a small
+// flicker and a slow violet pulse through the body (the core keeps its colour); seal 0..1 (his sealing) draws a ring
+// of light closing from the sheet's edge onto the core. Both 0: the plain portal.
+uniform float unrest = 0.0;
+uniform vec3 unrest_color : source_color = vec3(0.42, 0.14, 0.9);
+uniform float unrest_pulse = 0.55;
+uniform float unrest_rate = 0.45;
+uniform float seal = 0.0;
+uniform float seal_light = 0.55;
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -70,11 +79,23 @@ void fragment() {
 	float wide = fbm(vec2(x * veil_streaks, m.y * veil_stretch - TIME * rise * veil_stretch));
 	float fine = fbm(vec2(x * veil_streaks * 2.7 + 3.0, m.y * veil_stretch * 1.6 - TIME * rise * veil_stretch * 2.2));
 	float fold = smoothstep(0.3, 0.62, wide) * 0.7 + smoothstep(0.35, 0.65, fine) * 0.3;
+	if (unrest > 0.0) {
+		// restless: a faster layer of veils twisting through the slow ones, and a small flicker
+		float twist = fbm(vec2(x * veil_streaks * 1.4 + sin(m.y * 2.1 + TIME * 1.7) * 0.3, m.y * 0.5 - TIME * 0.9));
+		fold = mix(fold, smoothstep(0.3, 0.7, twist), unrest * 0.55);
+		v *= 1.0 + unrest * 0.3 * (noise(vec2(TIME * 5.0, 0.0)) - 0.5);
+	}
 	v *= 1.0 - veil * (1.0 - fold);
 	// the core: a small bright heart low in the middle, the veils thinning it a little
 	vec2 c = (n - core_at) / core_radius;
 	float heart = exp(-dot(c, c));
 	v += core_value * heart * (0.75 + 0.25 * fold);
+	if (seal > 0.0) {
+		// the sealing: a ring of light closing from the sheet's edge onto the core, then the core settles
+		vec2 o = (n - core_at) / vec2(0.55, 0.75);
+		float ring = exp(-pow((length(o) - (1.0 - seal)) / 0.06, 2.0));
+		v += seal_light * ring * sin(seal * 3.14159);
+	}
 	if (arch.y > 0.0) {
 		float off = abs(m.x - size.x * 0.5);
 		float cx = arch.z - arch.y * 0.5;
@@ -85,5 +106,8 @@ void fragment() {
 	float near_core = smoothstep(0.0, 0.8, heart + across * 0.25);
 	vec3 col = pow(color, vec3(mix(deep, 1.0, near_core)));
 	col *= mix(vec3(1.0), core_tint, smoothstep(core_range.x, core_range.y, v));
+	// his slow violet pulse through the body, never the core
+	float throb = 0.5 + 0.5 * sin(TIME * unrest_rate * 6.2831853);
+	col = mix(col, unrest_color, unrest * unrest_pulse * throb * (1.0 - near_core));
 	ALBEDO = col * max(v, 0.0) * power * (0.96 + 0.04 * sin(TIME * 1.3));
 }

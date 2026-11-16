@@ -46,6 +46,17 @@ uniform float cavity = 0.35;
 uniform float vertex_shade = 0.0;
 // How dark the fine cracks on the cracked blocks are (a carved statue keeps only a trace of them).
 uniform float cracks = 0.8;
+// A tall piece the paladin can walk behind (cycle 9, the obelisks: Masonry.obelisk sets see_through 1): where its stone
+// stands between the eye and him, a round hole is stippled out of it around him (see_radius m at his distance, round
+// his middle see_height m over his feet), keeping see_keep of the stone in its middle, so he reads behind the stone
+// and never on top of it. Only for the camera's own view (the shadows keep the whole stone).
+global uniform vec3 hero_pos;
+uniform float see_through = 0.0;
+uniform float see_radius = 2.2;
+uniform float see_height = 1.3;
+uniform float see_keep = 0.1;
+// Stone nearer the eye than him by less than this (m) is left whole (he brushes against it, he is not behind it).
+uniform float see_gap = 0.4;
 
 varying vec3 world;
 varying vec3 wnormal;
@@ -116,7 +127,28 @@ void vertex() {
 	wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 
+// A 4 x 4 ordered dither: the threshold of this pixel (0..1).
+float bayer4(vec2 frag) {
+	ivec2 p = ivec2(mod(frag, 4.0));
+	int i = p.x + p.y * 4;
+	int m[16] = int[](0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5);
+	return (float(m[i]) + 0.5) / 16.0;
+}
+
 void fragment() {
+	// the camera's view only: a narrow perspective (shadow maps are orthographic or 90 degrees wide; the browser's
+	// renderer flips Y, hence abs)
+	if (see_through > 0.0 && PROJECTION_MATRIX[3][3] < 0.5 && abs(PROJECTION_MATRIX[1][1]) > 1.5) {
+		vec3 hv = (VIEW_MATRIX * vec4(hero_pos + vec3(0.0, see_height, 0.0), 1.0)).xyz;
+		if (VERTEX.z > hv.z + see_gap) {
+			// this pixel's line of sight where it crosses his depth, and how far from him that is
+			float d = length(VERTEX.xy * (hv.z / VERTEX.z) - hv.xy) / see_radius;
+			float open = (1.0 - smoothstep(0.5, 1.0, d)) * (1.0 - see_keep) * see_through;
+			if (bayer4(FRAGCOORD.xy) < open) {
+				discard;
+			}
+		}
+	}
 	vec3 n = abs(wnormal);
 	vec4 s;
 	float top = smoothstep(0.6, 0.85, n.y);
