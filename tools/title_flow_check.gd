@@ -52,7 +52,7 @@ func _comfort(options: Node) -> void:
 		return
 	first.grab_focus()
 	await process_frame
-	for key: String in ["impact_frames", "slow_motion", "color_split"]:
+	for key: String in ["impact_frames", "slow_motion", "color_split", "rumble"]:
 		var before: bool = save.call(&"option", key)
 		await _key(&"ui_accept")
 		_check(save.call(&"option", key) == not before, "Enter flips %s" % key)
@@ -60,7 +60,7 @@ func _comfort(options: Node) -> void:
 		_check(row != null and row.has_focus(), "the focus stays on %s" % key)
 		await _key(&"ui_accept")
 		_check(save.call(&"option", key) == before, "Enter flips %s back" % key)
-		if key != "color_split":
+		if key != "rumble":
 			await _key(&"ui_down")
 
 

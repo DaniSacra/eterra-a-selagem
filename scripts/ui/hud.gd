@@ -36,7 +36,11 @@ const SLOT_GAP := 8
 const FONT_SMALL := 15
 const FONT_TEXT := 19
 const FONT_CLOCK := 24
-const FONT_COMBO := 46
+## The hit count (VX-12): its digits stay under 48 px tall at 1080 lines even at the top of the pop, and the move's
+## name under it is dimmed, so neither competes with the fight.
+const FONT_COMBO := 30
+const COMBO_POP := 0.15
+const MOVE_ALPHA := 0.7
 ## The move's name: how long it shows, and how fast it goes (a short cut, no long ghost).
 const MOVE_TIME := 1.2
 const MOVE_FADE := 0.25
@@ -236,15 +240,15 @@ func _build_actions() -> void:
 
 ## Right: the hit count with a brush stroke, and the move's name under it.
 func _build_combo() -> void:
-	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 10, -118))
+	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -100))
 	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo.add_theme_constant_override(&"outline_size", 8)
-	_combo_word = _label(T.t(&"hud_hits"), UiKit.PALE, FONT_TEXT - 1, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -72))
+	_combo.add_theme_constant_override(&"outline_size", 6)
+	_combo_word = _label(T.t(&"hud_hits"), UiKit.PALE, FONT_SMALL, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -68))
 	_combo_word.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo_stroke = HudMark.new().setup(HudMark.Kind.STROKE, Vector2(100, 16))
+	_combo_stroke = HudMark.new().setup(HudMark.Kind.STROKE, Vector2(76, 12))
 	add_child(_combo_stroke)
-	_place(_combo_stroke, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN + 8, -48), Vector2(100, 16))
-	_move = _label("", UiKit.PALE, FONT_TEXT + 1, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -30))
+	_place(_combo_stroke, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN + 6, -50), Vector2(76, 12))
+	_move = _label("", UiKit.PALE, FONT_TEXT - 2, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -34))
 	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
 		c.visible = false
@@ -310,10 +314,10 @@ func _process(delta: float) -> void:
 	var chief := game.boss_enemy()
 	_update_boss(chief)
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
-	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * 0.35)
+	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * COMBO_POP)
 	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
 	_move_t -= delta
-	_move.modulate.a = clampf(_move_t / MOVE_FADE, 0.0, 1.0)
+	_move.modulate.a = MOVE_ALPHA * clampf(_move_t / MOVE_FADE, 0.0, 1.0)
 	_notice_t -= delta
 	_notice.modulate.a = clampf(_notice_t / 0.6, 0.0, 1.0)
 	_phase_t -= delta

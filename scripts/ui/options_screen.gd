@@ -1,14 +1,20 @@
 class_name OptionsScreen
 extends Control
 ## Options: volumes, window size, full screen, the comfort switches (screen shake, impact frames, slow motion,
-## colour split; all on by default, the run reads them in Game.apply_options) and key remapping. Everything is saved
+## colour split, gamepad vibration; all on by default, the run reads them in Game.apply_options) and key remapping. Everything is saved
 ## at once. Each row is a button: arrows, Enter, the gamepad's pad and A, and the mouse all work.
 
 signal closed
 
 const VOLUMES: Array[String] = ["master", "music", "sfx"]
 ## The comfort switches (save option -> text "opt_<option>"), in their order on screen.
-const COMFORT: Array[String] = ["shake", "impact_frames", "slow_motion", "color_split"]
+const COMFORT: Array[String] = ["shake", "impact_frames", "slow_motion", "color_split", "rumble"]
+## Turning the gamepad's vibration on gives a short buzz on every pad, so the player feels what it does: weak motor,
+## strong motor, seconds. The run reads the option as Save.option("rumble") (cycle C12d, GF-11).
+const RUMBLE_TRY := Vector3(0.3, 0.5, 0.18)
+## Height of a row and the gap between rows of the left column: with the comfort group it must still fit 720 lines.
+const ROW := 42.0
+const ROW_GAP := 4
 
 var _list: VBoxContainer
 var _waiting: StringName = &""
@@ -34,6 +40,7 @@ func _build() -> void:
 	page.add_child(cols)
 	_list = VBoxContainer.new()
 	_list.custom_minimum_size.x = 420
+	_list.add_theme_constant_override(&"separation", ROW_GAP)
 	cols.add_child(_list)
 	for key in VOLUMES:
 		_stepper("opt_" + key, "%d%%" % roundi(float(Save.option(key)) * 100.0), func(dir: int) -> void:
@@ -92,7 +99,7 @@ func _stepper(text_key: String, value: String, change: Callable) -> void:
 			change.call(dir)
 			_build())
 		b.name = "%s_%d" % [text_key, dir]
-		b.custom_minimum_size = Vector2(44, 44)
+		b.custom_minimum_size = Vector2(ROW, ROW)
 		row.add_child(b)
 		if dir < 0:
 			var v := UiKit.label(value, UiKit.GOLD, 22, UiKit.BOLD_FONT)
@@ -106,9 +113,13 @@ func _toggle(text_key: String, option: String) -> void:
 	var b := UiKit.button("%s: %s" % [T.t(text_key), T.t(&"on" if Save.option(option) else &"off")], func() -> void:
 		Save.set_option(option, not Save.option(option))
 		App.apply_options()
+		if option == "rumble" and Save.option(option):
+			for pad in Input.get_connected_joypads():
+				Input.start_joy_vibration(pad, RUMBLE_TRY.x, RUMBLE_TRY.y, RUMBLE_TRY.z)
 		_focus_key = text_key
 		_build())
 	b.name = text_key
+	b.custom_minimum_size.y = ROW
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_list.add_child(b)
 
