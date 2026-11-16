@@ -425,7 +425,8 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	runner.glint_scale = Feel.live().glint_scale
 	runner.step(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
-	pos = arena.resolve(pos, RADIUS)
+	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
+	pos = arena.sweep(start, pos, RADIUS)
 	if horde and not dashing:
 		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
 		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)

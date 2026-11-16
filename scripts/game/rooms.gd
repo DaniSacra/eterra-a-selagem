@@ -38,6 +38,8 @@ var _reward_node: Node3D
 var _pedestals: Array[Dictionary] = []
 var _door_labels: Array[Node3D] = []
 var _defs: Dictionary = {}
+## The arena of this room as it is dressed (its variant), or null.
+var _layout: RoomLayout
 var _rng: RandomNumberGenerator
 var _fade: ColorRect
 ## The floating signs turn slowly.
@@ -48,7 +50,20 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	game = g
 	_rng = rng
 	stage = load(STAGE)
+	if Dev.has("short"):
+		# the old short descent (fight, fountain, guardian, shop, Morvath in room 5), for quick tests
+		stage = stage.duplicate()
+		stage.rooms = 4
+		stage.fountain_depth_min = 2
+		stage.fountain_depth_max = 2
+		stage.miniboss_depth_min = 3
+		stage.miniboss_depth_max = 3
 	map = RunMap.new(stage, _rng)
+	if Dev.has("arena"):
+		# dev: --arena=id makes the opening room that arena (--variant=n dresses it)
+		for i in stage.layouts.size():
+			if String(stage.layouts[i].id) == Dev.arg("arena"):
+				map.forced_layout = i
 	for id in stage.enemies:
 		_defs[id] = game.horde.def(id)
 	_fade = ColorRect.new()
@@ -117,8 +132,14 @@ func _enter(next: RunMap.Room) -> void:
 			layout = stage.boss_layout
 		RunMap.Kind.SHOP:
 			layout = stage.shop_layout
+	if layout != null:
+		var variant := room.variant
+		if Dev.has("variant") and room.depth == 1:
+			variant = int(Dev.num("variant", 0))
+		layout = layout.variant(variant)
 	var exits := 0 if room.kind == RunMap.Kind.BOSS else next_rooms.size()
 	game.rebuild_room(layout, exits, 1406 + room.depth * 31 + room.layout)
+	_layout = layout
 	_clear_props()
 	game.player.place(game.arena.start)
 	game.player.facing = game.arena.start_facing
@@ -128,6 +149,7 @@ func _enter(next: RunMap.Room) -> void:
 		if xz.size() == 2:
 			game.player.place(Vector2(float(xz[0]), float(xz[1])))
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
+	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS)
 	_queue.clear()
 	_waves.clear()
 	_wave = -1
@@ -136,7 +158,7 @@ func _enter(next: RunMap.Room) -> void:
 	game.horde.alive_cap = stage.alive_cap
 	match room.kind:
 		RunMap.Kind.COMBAT:
-			var fight := EncounterGen.generate(stage, room.depth, _defs, _rng)
+			var fight := EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
 			_waves = fight.waves
 			_cap = fight.cap
 			game.horde.alive_cap = fight.ceiling
@@ -144,8 +166,9 @@ func _enter(next: RunMap.Room) -> void:
 		RunMap.Kind.MINIBOSS:
 			var guardian: Array[StringName] = [stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 			_waves = [guardian]
-			_cap = EncounterGen.cap(stage, stage.miniboss_tier, room.depth)
-			game.horde.alive_cap = EncounterGen.alive_range(stage, stage.miniboss_tier).y
+			var alive := EncounterGen.in_room(EncounterGen.alive_range(stage, stage.miniboss_tier), layout)
+			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
+			game.horde.alive_cap = alive.y
 			phase = Phase.FIGHT
 		RunMap.Kind.FOUNTAIN:
 			game.spawn_fountain(Vector2(0, -2.0))
@@ -159,6 +182,9 @@ func _enter(next: RunMap.Room) -> void:
 			if not Dev.has("no-boss"):
 				game.start_boss(stage.boss)
 	game.hud.show_notice(T.t(RunMap.KIND_KEY[room.kind]) if room.kind != RunMap.Kind.COMBAT else T.t(&"notice_room", {"n": room.depth}), 2.0)
+	if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"":
+		# the arena's name for 2 s (decision D-33)
+		game.hud.show_place(T.t(game.arena.name_key))
 	_fade_in()
 
 
@@ -173,7 +199,7 @@ func _step_fight(dt: float) -> void:
 	if not _queue.is_empty():
 		_spawn_t -= dt
 		if _spawn_t <= 0.0 and game.horde.count() < _cap:
-			_spawn(_queue.pop_front())
+			_spawn(_next_in_queue())
 			_spawn_t = _rng.randf_range(stage.spawn_interval_min, stage.spawn_interval_max)
 		return
 	var alive := game.horde.count()
@@ -203,15 +229,53 @@ func _spawn(id: StringName) -> void:
 			Audio.play(&"elite")
 
 
-## Anywhere in the room not too close to the paladin.
+## The next of the wave to rise: the first in line, unless the arena already has its most shooters standing
+## (RoomLayout.max_ranged), then the first that does not shoot (the shooter waits its turn).
+func _next_in_queue() -> StringName:
+	var most := _layout.max_ranged if _layout != null else 0
+	if most > 0:
+		var standing := 0
+		for e in game.horde.list:
+			if EncounterGen.ranged(e.def):
+				standing += 1
+		if standing >= most:
+			for i in _queue.size():
+				if not EncounterGen.ranged(_defs.get(_queue[i], game.horde.def(_queue[i]))):
+					return _queue.pop_at(i)
+	return _queue.pop_front()
+
+
+## Meters from the paladin an enemy rises at least, and the tries for a spot.
+const SPAWN_CLEAR := 6.0
+const SPAWN_TRIES := 16
+
+
+## Where an enemy rises (cycle C12, BUG-016): in one of the arena's spawn zones (anywhere on its floor when it has
+## none), on free floor reached from where the paladin stands, never within SPAWN_CLEAR of him.
 func _spawn_point() -> Vector2:
-	var h := game.arena.half
-	var at := Vector2.ZERO
-	for attempt in 12:
-		at = Vector2(_rng.randf_range(-h.x + 2.5, h.x - 2.5), _rng.randf_range(-h.y + 2.5, h.y - 2.5))
-		if at.distance_to(game.player.pos) > 6.0:
+	return spawn_point(game.arena, game.player.pos, _rng, _wave > 0)
+
+
+static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator, late := false) -> Vector2:
+	var zones: Array[Rect2] = arena.spawns.duplicate()
+	if late:
+		zones.append_array(arena.late_spawns)
+	if zones.is_empty():
+		zones.append(arena.shape().bounds().grow(-2.5))
+	var area := PackedFloat32Array()
+	for z: Rect2 in zones:
+		area.append(maxf(z.get_area(), 0.01))
+	var best := arena.resolve(zones[0].get_center(), 0.6)
+	for attempt in SPAWN_TRIES:
+		var z := zones[rng.rand_weighted(area)]
+		var at := Vector2(rng.randf_range(z.position.x, z.end.x), rng.randf_range(z.position.y, z.end.y))
+		at = arena.resolve(at, 0.6)
+		if not arena.nav.reachable(at, hero) or not arena.nav.walkable(at):
+			continue
+		best = at
+		if at.distance_to(hero) > SPAWN_CLEAR:
 			break
-	return game.arena.resolve(at, 0.6)
+	return best
 
 
 func _room_cleared() -> void:
@@ -228,7 +292,7 @@ func _room_cleared() -> void:
 	if room.reward == RunMap.Reward.NONE:
 		_open_doors()
 		return
-	_reward_at = game.arena.resolve(Vector2(0, 0), 1.0)
+	_reward_at = game.arena.resolve(game.arena.middle, 1.0)
 	_reward_node = _marker(_reward_at, room.reward, "")
 	game.fx.beam(_reward_at, _reward_color(room.reward), 1.4, 12.0, 1.0)
 

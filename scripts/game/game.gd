@@ -73,6 +73,8 @@ var omegas := 0
 var dodges := 0
 ## What hurt the paladin last (DefeatCause.of: {"attack", "enemy"}); empty before any blow. defeated_by() names it.
 var last_hurt := {}
+## Each room in numbers (QW-011): its arena, life walking in, damage taken by kind, time; RESULT rooms, hp_at_boss.
+var room_tally := RoomTally.new()
 ## The gifts in the order they were taken (ids), for the run's log.
 var gifts_taken: Array[StringName] = []
 var _logged := false
@@ -129,6 +131,17 @@ func _ready() -> void:
 	horde.fx = fx
 	horde.ground = ground
 	horde.projectiles = projectiles
+	# shooters only wind up on the screen (cycle C12): where a floor point shows, at chest height, in the frame the
+	# camera settles on for the paladin where he stands (the simulation's own, not the drawn camera's lag)
+	horde.view = func(p: Vector2) -> Vector2:
+		var fov := Feel.live().cam_fov
+		var distance := Dev.num("cam-dist", Feel.live().cam_distance)
+		var size := get_viewport().get_visible_rect().size
+		return CamFrame.screen_of(p, 1.0, cam_look_at(player.pos, distance, fov), distance, Dev.num("cam-pitch", Feel.live().cam_pitch),
+			cam_yaw(), fov, size.x / maxf(size.y, 1.0))
+	combat.swung.connect(func(_n: ComboNode, struck: int) -> void:
+		if struck > 0:
+			room_tally.touch(time))
 
 	player.struck.connect(combat.strike)
 	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
@@ -139,8 +152,8 @@ func _ready() -> void:
 			omegas += 1)
 	player.glinted.connect(combat.glint)
 	player.cast_released.connect(combat.cast)
-	player.was_hurt.connect(func(_a: float) -> void:
-		combat.drop_combo())
+	# was_hurt is emitted before died: the blow is counted before the run ends (BUG-014)
+	player.was_hurt.connect(_on_was_hurt)
 	player.died.connect(_on_player_died)
 	player.dodged.connect(_on_dodged)
 	Controls.forget_devices()
@@ -373,6 +386,7 @@ func _process(delta: float) -> void:
 
 
 func _step(dt: float) -> void:
+	_lap(&"")
 	if rooms:
 		if mode == Mode.PLAY:
 			time += dt
@@ -382,23 +396,31 @@ func _step(dt: float) -> void:
 			_step_waves(dt)
 		# the clock the player sees is play time; the timeline may run faster (WaveTable.pace)
 		time = director.time / director.table.pace
+	_lap(&"rooms")
 	player.cast_active = _circle_standing()
 	if mode == Mode.ENDING:
 		player.rest()
 		player.step(dt, Vector2.ZERO, Vector2.ZERO)
 	else:
 		player.step(dt, _move(), _aim())
+	_lap(&"player")
 	horde.target = player.pos
 	horde.target_alive = player.alive() and mode == Mode.PLAY
 	horde.step(dt)
+	_lap(&"horde")
 	if boss:
 		boss.step(dt)
+	_lap(&"boss")
 	max_alive = maxi(max_alive, horde.count())
 	projectiles.step(dt)
+	_lap(&"shots")
 	ground.step(dt)
+	_lap(&"ground")
 	combat.step(dt)
+	_lap(&"combat")
 	if mode == Mode.PLAY:
 		skills.step(dt)
+	_lap(&"skills")
 	var got := orbs.step(dt, player.pos)
 	if got > 0 and rooms == null:
 		_gain_xp(got)
@@ -709,19 +731,36 @@ func fountain_target() -> Variant:
 func _on_hit_player(amount: float, from: Vector2, source: Object = null) -> void:
 	if mode != Mode.PLAY:
 		return
-	var before := player.hp
-	player.hurt(amount, from)
-	if player.hp >= before:
-		return
 	# what hurt him: the warning or shot's attack (Ground/Projectiles.last_source) and the kind that laid it
-	# (last_by; for a plain blow of the crowd, Horde.last_by)
+	# (last_by; for a plain blow of the crowd, Horde.last_by). Read before the blow lands: a killing blow emits
+	# Player.died inside hurt(), and the run is logged right there (BUG-014: it used to log the blow before).
 	var id: Variant = source.get(&"last_source") if source else null
-	last_hurt = DefeatCause.of(id, source.get(&"last_by") if source else null)
+	_blow = {"cause": DefeatCause.of(id, source.get(&"last_by") if source else null), "id": id}
+	player.hurt(amount, from)
+	_blow = {}
+
+
+## The blow being dealt (_on_hit_player), while Player.hurt runs: its cause and attack id.
+var _blow := {}
+
+
+## The paladin lost life (Player.was_hurt, emitted before died): the blow's cause is kept and counted now, so a
+## killing blow is in the log, on the end screen and in the boss's numbers (BUG-014).
+func _on_was_hurt(amount: float) -> void:
+	combat.drop_combo()
+	if _blow.is_empty():
+		return
+	var id: Variant = _blow.id
+	last_hurt = _blow.cause
+	# what he really lost (a killing blow's overkill is not counted)
+	amount += minf(player.hp, 0.0)
+	room_tally.hurt(DefeatCause.key(last_hurt), amount)
+	room_tally.touch(time)
 	# the edge of the screen says it: red, or the curse's violet (its bolt too, the curse lands just after)
-	fx.kick_split(_hurt_tint.hit(before - player.hp, player.curse.active() or id == &"curse", Feel.live()))
+	fx.kick_split(_hurt_tint.hit(amount, player.curse.active() or id == &"curse", Feel.live()))
 	if boss:
 		# for the fight's numbers; blows of the crowd are his dead
-		boss.record_hurt(id if id is StringName else &"adds", before - player.hp)
+		boss.record_hurt(id if id is StringName else &"adds", amount)
 
 
 ## A boss's shot with a status struck the paladin: the curse (its numbers are the boss's BossDef).
@@ -976,6 +1015,9 @@ func cam_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 	var side := maxf(0.0, h.x - CamFrame.margin(CAM_MARGIN.x, distance))
 	var at := Vector2(clampf(want.x, -side, side), clampf(want.y,
 		minf(0.0, -h.y + CamFrame.margin(CAM_MARGIN.y, distance) - arena.view_north), maxf(0.0, h.y - CamFrame.margin(CAM_SOUTH, distance))))
+	if arena.cam_bounds.has_area():
+		# an arena's own box for the point the camera looks at (cycle C12; the same spring follows it, no zoom)
+		at = want.clamp(arena.cam_bounds.position, arena.cam_bounds.end)
 	if focus != null:
 		# a scene of its own (the fall of Morvath): the camera looks at it, wherever the paladin stands
 		return at
@@ -1152,6 +1194,28 @@ func _timed_step(dt: float) -> void:
 	var ms := (Time.get_ticks_usec() - t0) / 1000.0
 	step_ms = lerpf(step_ms, ms, 0.05)
 	step_timer.add(ms, busy)
+	if busy and ms > TRACE_SLOW and _tracing:
+		# dev (DT-008): which steps are slow, and where in the step the time went
+		print("SLOW_STEP %.2f ms at %.1f s, room %d, %d standing: %s" % [ms, time, rooms.depth() if rooms else 0, horde.count(), _laps])
+
+
+## Dev (--trace-steps, DT-008): a step slower than this many ms prints where its time went.
+const TRACE_SLOW := 4.0
+var _tracing := Dev.has("trace-steps")
+var _laps := {}
+var _lap_t := 0
+
+
+## Dev: the time since the last lap, kept under `what` (&"": starts the step).
+func _lap(what: StringName) -> void:
+	if not _tracing:
+		return
+	var now := Time.get_ticks_usec()
+	if what == &"":
+		_laps.clear()
+	else:
+		_laps[what] = snappedf((now - _lap_t) / 1000.0, 0.01)
+	_lap_t = now
 
 
 ## A line of numbers about the run, for smoke tests and tuning.
@@ -1160,7 +1224,9 @@ func result() -> Dictionary:
 		"enemies": horde.count(), "max_alive": max_alive, "boss_at": snappedf(boss_at, 0.1), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
 		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01),
 		"step_ms_avg": snappedf(step_timer.average(), 0.01), "step_ms_peak": snappedf(step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
-		"boss": boss_stats, "bot": bot.stats() if bot else {}}
+		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
+		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
+		"shots_blocked": projectiles.blocked}
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

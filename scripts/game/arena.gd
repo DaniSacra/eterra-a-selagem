@@ -84,9 +84,20 @@ var _torches: PackedVector2Array = []
 
 ## Builds the room. layout: its size and pillars (none: the great hall). exit_count: doors in the north wall.
 func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) -> void:
+	_build(layout, exit_count, seed_)
+	_finish(layout)
+
+
+func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	_rng.seed = seed_
 	_hall = layout == null
+	self.layout = layout
 	if layout != null:
+		id = layout.id
+		name_key = layout.name_key
+		cam_bounds = layout.cam_bounds
+		spawns = layout.spawns.duplicate()
+		late_spawns = layout.late_spawns.duplicate()
 		half = layout.half
 		pillars = layout.pillars.duplicate()
 		shafts = layout.shafts
@@ -115,6 +126,9 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 		hall.build(exit_count)
 		_kit = hall.kit
 		return
+	if layout != null and ArenaRoom.LOOKS.has(layout.look):
+		_build_arena(layout, exit_count, seed_)
+		return
 	_floor()
 	_walls()
 	for p in pillars:
@@ -135,6 +149,122 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 var walk: Array[Rect2] = []
 
 
+# ---------- arenas (cycle C12): what it is, what blocks, where to walk ----------
+
+## The layout it was built from (null: the old great hall), its id and the name shown on walking in.
+var layout: RoomLayout
+var id: StringName = &""
+var name_key: StringName = &""
+## Boxes turned off the axes that stop bodies (ArenaObstacle; the square ones are in `boxes`, circles in `pillars`).
+var turned: Array[ArenaObstacle] = []
+## Everything that stops a shot (the arena's obstacles with blocks_shots; in the hall its pillars, statues, stones and
+## solid props: BUG-015).
+var cover: Array[ArenaObstacle] = []
+## Where enemies may rise (empty: anywhere on the floor) and the box the camera's point stays in (no area: the old rule).
+var spawns: Array[Rect2] = []
+var late_spawns: Array[Rect2] = []
+var cam_bounds := Rect2()
+## What stops a shot creeping on the floor (the priest's vine): everything that stops a body.
+var cover_low: Array[ArenaObstacle] = []
+## Where bodies can walk (NavGrid, made at the end of build) and the enemies' shared way to the paladin.
+var nav: NavGrid
+var flow: FlowField
+## Meters of a step of a swept move (sweep): well under the narrowest wall of floor between two holes.
+const SWEEP_STEP := 0.2
+## The look of an arena (ArenaRoom and its kind), when one is built.
+var look: ArenaRoom
+## A spot in the middle of its floor (where a cleared room's reward rises; the hall's middle is the origin).
+var middle := Vector2.ZERO
+
+
+## After any build: what blocks shots, and the walking grid.
+func _finish(from: RoomLayout) -> void:
+	if from != null and not from.obstacles.is_empty():
+		for o in from.obstacles:
+			if o.blocks_shots:
+				cover.append(o)
+	else:
+		for p in pillars:
+			cover.append(ArenaObstacle.circle(Vector2(p.x, p.y), p.z, &"column", 2.0))
+		for b in boxes:
+			cover.append(ArenaObstacle.box(b.get_center(), b.size * 0.5, 0.0, &"block", 1.0))
+	cover_low = blockers()
+	_bounds = Rect2()
+	_bounds = bounds()
+	nav = NavGrid.build(_bounds.grow(1.0), shape(), walk, WALL, cover_low)
+	flow = FlowField.new(nav)
+	if not nav.walkable(middle):
+		# the reward rises on floor a body stands on (a root may cross the middle of the camera's box)
+		var free := nav.nearest_free(middle)
+		if free >= 0:
+			middle = nav.center(free)
+
+
+## Everything that stops bodies, as obstacles (for the walking grid).
+func blockers() -> Array[ArenaObstacle]:
+	var out: Array[ArenaObstacle] = []
+	for p in pillars:
+		out.append(ArenaObstacle.circle(Vector2(p.x, p.y), p.z, &"column", 2.0))
+	for b in boxes:
+		out.append(ArenaObstacle.box(b.get_center(), b.size * 0.5, 0.0, &"block", 1.0))
+	out.append_array(turned)
+	return out
+
+
+var _bounds := Rect2()
+
+
+## The box around all its floor (the shape and the extra floors).
+func bounds() -> Rect2:
+	if _bounds.has_area():
+		return _bounds
+	var b := shape().bounds()
+	for r in walk:
+		b = b.merge(r)
+	return b
+
+
+## Moves a body of this radius from `from` to `to` in steps of SWEEP_STEP, kept on the floor and out of what blocks
+## at each (resolve): a dash, a blow's push or a lunge never comes out across a hole (cycle C12).
+func sweep(from: Vector2, to: Vector2, radius: float) -> Vector2:
+	var d := to - from
+	var n := ceili(d.length() / SWEEP_STEP)
+	if n <= 1:
+		return resolve(to, radius)
+	var p := from
+	var step := d / n
+	for i in n:
+		p = resolve(p + step, radius)
+	return p
+
+
+## True when a body of this radius fits at p: on the floor and clear of everything that blocks.
+func free_at(p: Vector2, radius: float) -> bool:
+	return resolve(p, radius).distance_squared_to(p) < 0.0001
+
+
+## Where along a to b (0 to 1) a shot of radius r first meets cover (-1: never). low: a shot creeping on the floor,
+## stopped by everything that stops a body (the low walls and roots too).
+func shot_hit(a: Vector2, b: Vector2, r: float = 0.0, low := false) -> float:
+	var best := -1.0
+	for o in (cover_low if low else cover):
+		var t := o.hit_by(a, b, r)
+		if t >= 0.0 and (best < 0.0 or t < best):
+			best = t
+	return best
+
+
+## True when nothing stops a shot of radius r from a to b (a shooter's line of fire).
+func clear_shot(a: Vector2, b: Vector2, r: float = 0.0) -> bool:
+	return shot_hit(a, b, r) < 0.0
+
+
+## How far a shot goes from `from` along `dir` (unit) before cover stops it, at most `length`.
+func shot_reach(from: Vector2, dir: Vector2, length: float, r: float = 0.0) -> float:
+	var t := shot_hit(from, from + dir * length, r)
+	return length if t < 0.0 else t * length
+
+
 ## Passes of resolve: a prop by the floor's edge can push a body off the floor, the edge pushes it back into the prop;
 ## a few passes let it slide along both to where it fits.
 const RESOLVE_PASSES := 4
@@ -153,6 +283,8 @@ func resolve(pos: Vector2, radius: float) -> Vector2:
 				pos = c + (d.normalized() if d.length_squared() > 0.0001 else Vector2.DOWN) * min_d
 		for b in boxes:
 			pos = _out_of_box(pos, radius, b)
+		for o in turned:
+			pos = o.push_out(pos, radius)
 		if pos.distance_squared_to(before) < 0.000001:
 			return pos
 	return _onto_floor(pos, radius)
@@ -408,6 +540,51 @@ func _build_boss_room(layout: RoomLayout, seed_: int) -> void:
 	if floor.is_round():
 		RenderingServer.global_shader_parameter_set(&"floor_round", Vector3(floor.center.x, floor.center.y, floor.radius))
 	_chamber_look(layout, seed_)
+
+
+## An arena of cycle C12 from its layout (RoomLayout.look in ArenaRoom.LOOKS): its floor (with holes), what blocks
+## (its obstacles: circles are pillars, square boxes are boxes, the others turned), its doors and way in, all from the
+## data; then its look (ArenaRoom), drawn from the same data.
+func _build_arena(l: RoomLayout, exit_count: int, seed_: int) -> void:
+	floor = l.floor
+	half = floor.extent()
+	pillars = []
+	shafts = []
+	walk = []
+	for o in l.obstacles:
+		if not o.blocks_move:
+			continue
+		if o.shape == ArenaObstacle.Shape.CIRCLE:
+			pillars.append(Vector3(o.center.x, o.center.y, o.radius))
+		elif o.square():
+			boxes.append(o.rect())
+		else:
+			turned.append(o)
+	exits.clear()
+	exit_inward.clear()
+	exit_zones.clear()
+	var mouths: Array[PackedVector2Array] = []
+	for i in mini(exit_count, l.exits.size()):
+		exits.append(l.exits[i].at)
+		exit_inward.append(l.exits[i].inward)
+		exit_zones.append(l.exits[i].zone)
+		if l.exits[i].mouth.has_area():
+			mouths.append(FloorShape.box(l.exits[i].mouth))
+	# the mouths of the doors used are floor (the top landing of their stairs); the others stay closed
+	if not mouths.is_empty():
+		floor = floor.joined(mouths)
+		half = floor.extent()
+	cam_target = l.cam_target
+	cam_reach = l.cam_reach
+	start = l.hero_spawn
+	start_facing = l.hero_facing.normalized() if l.hero_facing.length() > 0.01 else Vector2.UP
+	var mid := l.cam_bounds.get_center() if l.cam_bounds.has_area() else floor.bounds().get_center()
+	door_pos = mid
+	middle = resolve(mid, 1.0)
+	showcase = Vector3(mid.x, 0.0, mid.y)
+	look = ArenaRoom.make(l.look)
+	add_child(look)
+	look.build(self, l, exit_count, seed_)
 
 
 ## The chamber's look: the Seal Chamber's scenery (BossChamber, cycle C11), built on the layout's circle; the fight's

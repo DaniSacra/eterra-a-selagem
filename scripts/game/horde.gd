@@ -57,6 +57,18 @@ const RANGED_RECOIL_FADE := 0.95
 const RANGED_COVER_FIND := 10.0
 ## A shot creeping on the floor (the vines): flat and long.
 const LOW_SHOT_SCALE := Vector3(1.2, 0.45, 1.8)
+## Ways round what blocks (cycle C12): the way along the arena's FlowField is looked up again every WAY_EVERY seconds
+## (straight while the floor between is clear: the open hall walks as before); closer than WAY_NEAR it walks straight.
+const WAY_EVERY := 0.12
+const WAY_NEAR := 1.2
+## A shooter only winds up with a clear line of fire (Arena.clear_shot, a shot this round) and with its body inside
+## this share of the screen (never shooting from off it: VIEW_EDGE to 1 - VIEW_EDGE), else it walks until it is.
+const LINE_OF_FIRE := 0.3
+const VIEW_EDGE := 0.05
+## An enemy that wants to come closer and has not moved STUCK_MOVE meters in STUCK_TIME seconds is stuck (RESULT
+## stuck; it should never happen).
+const STUCK_TIME := 3.0
+const STUCK_MOVE := 0.5
 
 var list: Array[Enemy] = []
 var dying: Array[Enemy] = []
@@ -79,6 +91,13 @@ var target_alive := true
 var acting: StringName = &""
 ## The kind whose blow hurt the paladin last (its own swing, no warning in between), read as hit_player is emitted.
 var last_by: StringName = &""
+## Where a floor point shows on the screen (0 to 1; Game sets it from its camera; unset: everywhere is seen).
+var view := Callable()
+## Enemies that got stuck this run, by kind (RESULT stuck; Bot.stats).
+var stuck_by := {}
+## The way the enemy behaving now walks toward the paladin (_way).
+var _walk := Vector2.ZERO
+var _dt := 0.0
 var _hash := SpatialHash.new(CELL)
 ## The widest body filed in the hash (rehash), and the bodies stop_walker last looked at (kept, not reallocated).
 var _widest := 0.0
@@ -143,11 +162,16 @@ func room_for(want: int) -> int:
 
 func step(dt: float) -> void:
 	_frame += 1
+	_dt = dt
 	rehash()
+	if arena != null and arena.flow != null and not list.is_empty():
+		# the shared way to the paladin, made again as he moves (at most 4 times a second, spread over frames)
+		arena.flow.aim(target, dt)
 	var i := 0
 	for e in list:
 		var reach := e.def.radius + Player.RADIUS
 		e.was_in_target = depth_in_target(e) if e.pos.distance_squared_to(target) < reach * reach else 0.0
+		e.last_pos = e.pos
 	for e in list:
 		i += 1
 		_timers(e, dt)
@@ -155,6 +179,7 @@ func step(dt: float) -> void:
 			acting = e.def.id
 			_behave(e, dt)
 			acting = &""
+			_watch_stuck(e, dt)
 		if (i + _frame) % 2 == 0:
 			_separate(e)
 		if e.push.length_squared() > 0.01:
@@ -166,13 +191,14 @@ func step(dt: float) -> void:
 		var reach := e.def.radius + Player.RADIUS
 		if e.state != Enemy.State.ATTACK and e.pos.distance_squared_to(target) < reach * reach:
 			keep_off_target(e, e.was_in_target, dt)
-		e.pos = arena.resolve(e.pos, e.def.radius)
+		# swept from where it stood: a push or a lunge stops at the abyss's edge, never across a hole (D-28)
+		e.pos = arena.sweep(e.last_pos, e.pos, e.def.radius)
 		e.y = e.height()
 	_sweep()
 	for d in dying:
 		d.dead_t += dt
 		if d.push.length_squared() > 0.01:
-			d.pos = arena.resolve(d.pos + d.push * dt, d.def.radius)
+			d.pos = arena.sweep(d.pos, d.pos + d.push * dt, d.def.radius)
 			d.push *= maxf(0.0, 1.0 - KNOCKBACK_DECAY * 0.6 * dt)
 		if d.vy != 0.0 or d.y > 0.0:
 			d.y += d.vy * dt
@@ -224,6 +250,7 @@ func _behave(e: Enemy, dt: float) -> void:
 		# blinded by steam: stumbles sideways, attacks nothing
 		e.pos += toward.rotated(e.side * 1.4) * _speed(e) * 0.5 * dt
 		return
+	_walk = _way(e, toward, dist)
 	match e.def.behavior:
 		EnemyDef.Behavior.CHASE:
 			_behave_melee(e, dt, toward, dist)
@@ -258,9 +285,9 @@ func _behave_melee(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.cooldown = MELEE_COOLDOWN * _rng.randf_range(0.8, 1.2)
 				_set_state(e, Enemy.State.WALK, &"walk")
 		_:
-			e.dir = e.dir.slerp(toward, minf(1.0, dt * 8.0))
+			e.dir = e.dir.slerp(_walk if dist > reach else toward, minf(1.0, dt * 8.0))
 			if dist > reach * 0.8:
-				e.pos += toward * _speed(e) * dt
+				e.pos += _walk * _speed(e) * dt
 			if dist < reach and e.cooldown <= 0.0 and target_alive:
 				_set_state(e, Enemy.State.WINDUP, &"attack")
 
@@ -327,8 +354,10 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		if to_cover.length() > 0.3:
 			e.pos += to_cover.normalized() * minf(sp * dt, to_cover.length())
 			e.dir = to_cover.normalized()
-	elif dist > d.attack_range:
-		e.pos += toward * sp * dt
+	elif dist > d.attack_range or (e.cooldown <= 0.0 and not _can_fire(e)):
+		# out of reach, or ready with no line of fire or off the screen: it walks the way to him until it has one
+		e.pos += _walk * sp * dt
+		e.dir = _walk
 	elif near:
 		var away := flee_dir(e.pos, -toward, d.radius, e.side)
 		cornered = away == Vector2.ZERO
@@ -339,12 +368,14 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
 	var running := sp > 0.0 and dist < d.attack_range * d.keep_away * RANGED_SHOOT_WHILE_RUNNING and not cornered
 	if e.cooldown <= 0.0 and dist < d.attack_range + 2.0 and not running and target_alive and arena.inside(e.pos, 1.0) \
-			and (d.max_attackers <= 0 or attackers(d) < d.max_attackers):
+			and (d.max_attackers <= 0 or attackers(d) < d.max_attackers) and _can_fire(e):
 		e.aim = toward
 		e.dir = toward
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
 		if d.shot_line and not caster:
-			ground.add_line_warning(e.pos, toward, d.attack_range * RANGED_REACH, 0.5, d.attack_windup, 0.0)
+			# the line on the floor ends where the bolt will die on cover
+			ground.add_line_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
+				d.attack_windup, 0.0)
 
 
 ## How many of this kind (the common one and its elite count together) are winding up or shooting now.
@@ -401,7 +432,7 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 func flee_dir(from: Vector2, away: Vector2, radius: float, side: float) -> Vector2:
 	for deg: float in [0.0, 35.0, -35.0, 70.0, -70.0, 105.0, -105.0]:
 		var dir := away.rotated(deg_to_rad(deg) * (side if side != 0.0 else 1.0))
-		if arena.inside(from + dir * RANGED_LOOK, radius + 0.3):
+		if arena.inside(from + dir * RANGED_LOOK, radius + 0.3) and arena.free_at(from + dir * RANGED_LOOK, radius):
 			return dir
 	return Vector2.ZERO
 
@@ -420,8 +451,8 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				_set_state(e, Enemy.State.WALK, &"walk")
 		_:
 			e.dir = toward
-			if dist > d.attack_range:
-				e.pos += toward * _speed(e) * dt
+			if dist > d.attack_range or not e.straight:
+				e.pos += _walk * _speed(e) * dt
 			elif e.cooldown <= 0.0 and target_alive:
 				e.aim = toward
 				e.dir = toward
@@ -464,7 +495,7 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * damage_scale)
 				e.state_t = d.attack_windup - d.close_windup
 				return
-			if e.cooldown <= 0.0 and dist < d.attack_range and dist > d.close_range and target_alive:
+			if e.cooldown <= 0.0 and dist < d.attack_range and dist > d.close_range and target_alive and e.straight:
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"idle")
@@ -472,10 +503,10 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 
 
 ## Between charges the knight still swings at whoever is close.
-func _behave_melee_walk(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
-	e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
+func _behave_melee_walk(e: Enemy, dt: float, _toward: Vector2, dist: float) -> void:
+	e.dir = e.dir.slerp(_walk, minf(1.0, dt * 6.0))
 	if dist > e.def.radius + Player.RADIUS + 0.5:
-		e.pos += toward * _speed(e) * dt
+		e.pos += _walk * _speed(e) * dt
 
 
 ## Elite: stays back, raises skeletons around itself and shoots a fan of orbs.
@@ -504,13 +535,13 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			_set_state(e, Enemy.State.WALK, &"walk")
 		return
 	e.dir = toward
-	if dist > d.attack_range:
-		e.pos += toward * _speed(e) * dt
+	if dist > d.attack_range or not _can_fire(e):
+		e.pos += _walk * _speed(e) * dt
 	elif dist < d.attack_range * 0.6:
 		e.pos -= toward * _speed(e) * dt
 	else:
 		e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
-	if e.cooldown <= 0.0 and target_alive:
+	if e.cooldown <= 0.0 and target_alive and _can_fire(e):
 		_set_state(e, Enemy.State.WINDUP, &"cast")
 
 
@@ -528,7 +559,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		_:
 			e.dir = toward
 			if dist > d.attack_range:
-				e.pos += toward * _speed(e) * dt
+				e.pos += _walk * _speed(e) * dt
 			elif e.cooldown <= 0.0 and target_alive:
 				_set_state(e, Enemy.State.WINDUP, &"windup")
 				ground.add_warning(e.pos, d.attack_width, d.attack_windup, d.attack_damage * damage_scale, d.magic_color)
@@ -553,11 +584,65 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		_:
 			e.dir = toward
 			if dist > d.attack_range * 0.8:
-				e.pos += toward * _speed(e) * dt
+				e.pos += _walk * _speed(e) * dt
 			if dist < d.attack_range and e.cooldown <= 0.0 and target_alive:
 				e.aim = toward
 				_set_state(e, Enemy.State.WINDUP, &"aim")
 				ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
+
+
+## The way to walk toward the paladin (cycle C12): straight while the floor between is clear (or he is near), else
+## along the arena's FlowField round what blocks; kept WAY_EVERY seconds. Enemy.straight says which it is.
+func _way(e: Enemy, toward: Vector2, dist: float) -> Vector2:
+	if arena == null or arena.flow == null:
+		e.straight = true
+		return toward
+	e.way_t -= _dt
+	if e.way_t <= 0.0:
+		e.way_t = WAY_EVERY * (0.75 + 0.5 * e.look)
+		e.straight = dist < WAY_NEAR or arena.nav.clear_line(e.pos, target)
+		if not e.straight:
+			e.way = arena.flow.next_step(e.pos)
+			if e.way == Vector2.ZERO:
+				e.straight = true
+	return toward if e.straight else e.way
+
+
+## A shooter may wind up: a clear line of fire to the paladin and its body on the screen (VIEW_EDGE).
+func _can_fire(e: Enemy) -> bool:
+	if not arena.clear_shot(e.pos, target, LINE_OF_FIRE):
+		return false
+	if not view.is_valid():
+		return true
+	var s: Vector2 = view.call(e.pos)
+	return s.x >= VIEW_EDGE and s.x <= 1.0 - VIEW_EDGE and s.y >= VIEW_EDGE and s.y <= 1.0 - VIEW_EDGE
+
+
+## Counts an enemy that wants to come closer and has not moved for STUCK_TIME seconds (once each).
+func _watch_stuck(e: Enemy, dt: float) -> void:
+	if e.pos.distance_squared_to(e.anchor) > STUCK_MOVE * STUCK_MOVE:
+		e.anchor = e.pos
+		e.anchor_t = 0.0
+		return
+	# a shooter waiting out its cooldown behind cover is not stuck; Morvath stands where Boss puts him
+	var waiting := (e.def.behavior == EnemyDef.Behavior.ARCHER and e.cooldown > 0.0) or e.def.behavior == EnemyDef.Behavior.BOSS
+	var wants := e.state == Enemy.State.WALK and _speed(e) > 0.0 and e.retreat_t <= 0.0 and not waiting \
+		and e.pos.distance_to(target) > e.def.attack_range + e.def.radius + 2.0 and target_alive
+	if not wants:
+		e.anchor_t = 0.0
+		return
+	e.anchor_t += dt
+	if e.anchor_t >= STUCK_TIME and not e.stuck:
+		e.stuck = true
+		stuck_by[String(e.def.id)] = int(stuck_by.get(String(e.def.id), 0)) + 1
+
+
+## How many got stuck this run.
+func stuck_count() -> int:
+	var n := 0
+	for k in stuck_by:
+		n += int(stuck_by[k])
+	return n
 
 
 func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = true) -> void:

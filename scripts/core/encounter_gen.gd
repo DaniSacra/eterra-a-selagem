@@ -47,22 +47,61 @@ static func room_for(alive: int, ceiling: int, want: int) -> int:
 	return clampi(ceiling - alive, 0, want)
 
 
-## defs: id -> EnemyDef for every id of stage.enemies.
-static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomNumberGenerator, mult: float = 1.0) -> Fight:
+## defs: id -> EnemyDef for every id of stage.enemies. room: the arena it is fought in (cycle C12): its own range of
+## enemies standing (RoomLayout.max_alive), the roles it never has and its most shooters at once.
+static func generate(stage: StageDef, depth: int, defs: Dictionary, rng: RandomNumberGenerator, mult: float = 1.0, room: RoomLayout = null) -> Fight:
 	var fight := Fight.new()
 	var pool := pick_pool(stage, depth, rng)
 	if pool == null:
 		return fight
-	fight.kinds = pick_kinds(stage, pool, depth, defs, rng)
+	fight.kinds = pick_kinds(stage, pool, depth, defs, rng, room.banned_roles if room else ([] as Array[StringName]))
 	fight.tier = pool.tier
 	for id in fight.kinds:
 		if (defs[id] as EnemyDef).elite:
 			fight.tier = maxi(fight.tier, StageDef.Tier.HARD) as StageDef.Tier  # an elite makes a fight hard
-	var alive := alive_range(stage, fight.tier)
-	fight.cap = cap(stage, fight.tier, depth)
+	var alive := in_room(alive_range(stage, fight.tier), room)
+	fight.cap = clampi(roundi(lerpf(alive.x, alive.y, progress(stage, depth))), alive.x, alive.y)
 	fight.ceiling = alive.y
 	fight.waves = waves(stage, depth, fight.kinds, alive, defs, rng, mult)
+	if room != null and room.max_ranged > 0:
+		for w in fight.waves:
+			limit_ranged(w, fight.kinds, room.max_ranged, defs)
 	return fight
+
+
+## A tier's range of enemies standing brought into an arena's own (RoomLayout.max_alive; none: as it is): never past
+## the tier's most nor the arena's.
+static func in_room(alive: Vector2i, room: RoomLayout) -> Vector2i:
+	if room == null or room.max_alive.y <= 0:
+		return alive
+	var most := mini(alive.y, room.max_alive.y)
+	return Vector2i(clampi(room.max_alive.x, 1, most), most)
+
+
+## True for a kind that shoots from afar (EnemyDef.Behavior.ARCHER: the caster, the crossbowman, the priest).
+static func ranged(d: EnemyDef) -> bool:
+	return d.behavior == EnemyDef.Behavior.ARCHER
+
+
+## No more than `most` shooters in a wave: the others become the wave's first kind that does not shoot (or leave).
+static func limit_ranged(wave: Array, kinds: Array[StringName], most: int, defs: Dictionary) -> void:
+	var melee: StringName = &""
+	for id in kinds:
+		if not ranged(defs[id]):
+			melee = id
+			break
+	var n := 0
+	var i := 0
+	while i < wave.size():
+		if ranged(defs[wave[i]]):
+			n += 1
+			if n > most:
+				if melee != &"":
+					wave[i] = melee
+				else:
+					wave.remove_at(i)
+					continue
+		i += 1
 
 
 ## One of the stage's pools that may be drawn at this depth, by weight (null: none).
@@ -81,10 +120,12 @@ static func pick_pool(stage: StageDef, depth: int, rng: RandomNumberGenerator) -
 
 ## One kind for each part of the pool (EnemyDef.role), in its order; some in their elite version (at most
 ## max_elite_types, from elite_from_depth on), never a kind twice nor a kind with its own elite.
-static func pick_kinds(stage: StageDef, pool: EncounterPool, depth: int, defs: Dictionary, rng: RandomNumberGenerator) -> Array[StringName]:
+static func pick_kinds(stage: StageDef, pool: EncounterPool, depth: int, defs: Dictionary, rng: RandomNumberGenerator, banned: Array[StringName] = []) -> Array[StringName]:
 	var out: Array[StringName] = []
 	var elites := 0
 	for role in pool.roles:
+		if banned.has(role):
+			continue
 		var options: Array[StringName] = []
 		for id in stage.enemies:
 			var d := defs.get(id) as EnemyDef

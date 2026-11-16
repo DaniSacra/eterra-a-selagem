@@ -58,6 +58,18 @@ var dead_t := 0.0
 ## A killing blow throws the body: upward speed and how hard it tumbles (0 when it just falls).
 var vy := 0.0
 var spin := 0.0
+## Where it stood when this frame's step began (Horde: its move is swept from there, Arena.sweep).
+var last_pos := Vector2.ZERO
+## The way it walks toward the paladin (Horde._way: straight, or along the arena's FlowField round what blocks), kept
+## way_t seconds more; straight: the way is the straight line, read fresh each frame.
+var way := Vector2.ZERO
+var way_t := 0.0
+var straight := true
+## Where it stood when it last moved half a meter, and how long ago (Horde: an enemy that wants to come and cannot is
+## stuck past Horde.STUCK_TIME; counted once).
+var anchor := Vector2.ZERO
+var anchor_t := 0.0
+var stuck := false
 
 
 func helpless() -> bool:

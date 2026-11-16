@@ -80,7 +80,14 @@ class Shot:
 	## Seconds it has flown (the crescent's look: its first flare, its fade at the end).
 	var age := 0.0
 
+## How far a shot is from the stone when it dies on it (meters; its ball is about this round).
+const SHOT_EDGE := 0.15
+## A shot flying this far past the room's floor is gone.
+const SHOT_MARGIN := 12.0
+
 var shots: Array[Shot] = []
+## Shots that died on cover (RESULT shots_blocked).
+var blocked := 0
 ## The source of the shot that hurt the paladin last (Shot.source), read by the game as hit_player is emitted.
 var last_source: StringName = &""
 ## Which kind of enemy fired it (Shot.by).
@@ -190,12 +197,22 @@ func step(dt: float) -> void:
 			var want := s.vel.angle_to(player.pos - s.pos)
 			s.vel = s.vel.rotated(clampf(want, -s.turn * dt, s.turn * dt))
 			s.turn = maxf(0.0, s.turn - s.turn_decay * dt)
-		s.pos += s.vel * dt
+		var to := s.pos + s.vel * dt
+		var arena := horde.arena if horde else null
+		# the room's cover stops every shot but a boss's crescents (cycle C12, BUG-015): it dies on the stone with a spark
+		var stop := arena.shot_hit(s.pos, to, SHOT_EDGE, s.low) if arena != null and s.kind != Kind.SOUL else -1.0
+		if stop >= 0.0:
+			to = s.pos.lerp(to, stop)
+		s.pos = to
 		s.life -= dt
 		s.age += dt
 		s.flown += s.vel.length() * dt
-		var gone := s.life <= 0.0 or absf(s.pos.x) > Arena.HALF * 2.0 or absf(s.pos.y) > Arena.HALF * 2.0
-		if not gone:
+		var gone := s.life <= 0.0 or (arena != null and not arena.bounds().grow(SHOT_MARGIN).has_point(s.pos))
+		if stop >= 0.0:
+			gone = true
+			blocked += 1
+			fx.burst(&"spark", Vector3(s.pos.x, LOW_HEIGHT if s.low else HEIGHT, s.pos.y), Vector3(-s.vel.x, 0, -s.vel.y).normalized())
+		elif not gone:
 			if s.kind == Kind.SOUL:
 				if player.alive() and not s.seen.has(player) and touches_soul(s, player.pos, Player.RADIUS):
 					s.seen[player] = true

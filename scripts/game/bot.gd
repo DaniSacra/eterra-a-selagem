@@ -59,6 +59,9 @@ const KITE_RUN := 2.0
 const KITE_DISTANCE := 11.0
 const KITE_THROW := 0.8
 
+## Its own way to where it walks (cycle C12): the arena's NavGrid, a FlowField toward its goal of the moment.
+var _field: FlowField
+
 
 func _init() -> void:
 	_rng.seed = 7
@@ -146,7 +149,7 @@ func step(dt: float, game: Game) -> void:
 	if game.rooms and game.horde.count() == 0:
 		# between fights: take the reward, buy what there is gold for, walk through a door
 		var goal: Variant = game.rooms.bot_goal()
-		pad.move = _steer(game, p, ((goal as Vector2) - p).normalized()) if goal != null and p.distance_to(goal) > 0.3 else Vector2.ZERO
+		pad.move = _steer(game, p, _way(game, p, goal as Vector2, dt)) if goal != null and p.distance_to(goal) > 0.3 else Vector2.ZERO
 		_queue = ""
 		_hold = 0.0
 		_seen.clear()
@@ -158,7 +161,7 @@ func step(dt: float, game: Game) -> void:
 	var target := _nearest(game)
 	var to := target - p
 	pad.aim = to.normalized() if to.length() > 0.01 else Vector2.DOWN
-	pad.move = _steer(game, p, to.normalized()) if to.length() > REACH else Vector2.ZERO
+	pad.move = _steer(game, p, _way(game, p, target, dt)) if to.length() > REACH else Vector2.ZERO
 	if _queue.is_empty() and _wait > 0.25:
 		# hit and run: after a combo, step out of the crowd (around the bodies in the way)
 		pad.move = _steer(game, p, -to.normalized().rotated(0.6))
@@ -324,6 +327,20 @@ func _threatened(game: Game, q: Vector2) -> bool:
 		if to.dot(ahead) > -0.5 and to.dot(ahead) < 6.0 and absf(to.cross(ahead)) < shot.half_width + 0.9:
 			return true
 	return false
+
+
+## The way toward a goal (cycle C12): straight while the floor between is clear, else along its own FlowField round
+## holes and obstacles (made again for each arena).
+func _way(game: Game, from: Vector2, goal: Vector2, dt: float) -> Vector2:
+	var straight := (goal - from).normalized()
+	var nav := game.arena.nav
+	if nav == null or nav.clear_line(from, goal):
+		return straight
+	if _field == null or _field.grid != nav:
+		_field = FlowField.new(nav)
+	_field.aim(goal, dt)
+	var w := _field.next_step(from)
+	return w if w != Vector2.ZERO else straight
 
 
 ## Walks around what blocks the way (pillars, stairs, rubble, the bodies of enemies): the first direction, turning a

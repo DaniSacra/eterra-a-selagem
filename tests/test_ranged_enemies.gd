@@ -18,7 +18,7 @@ func _alone(id: StringName, offset := Vector2(14, 0)) -> Enemy:
 ## Steps the game; walk: where the paladin heads each frame (6.75 m/s), ZERO stands still. Counts its shots and
 ## the circles laid on the floor that hurt.
 func _run(e: Enemy, seconds: float, walk := Callable()) -> Dictionary:
-	var out := {"shots": 0, "circles": 0, "lines": 0, "min_dist": INF}
+	var out := {"shots": 0, "circles": 0, "lines": 0, "min_dist": INF, "orbs": 0, "turning": 0}
 	var seen := {}
 	for i in int(seconds * 60.0):
 		game.player.invuln = 10.0
@@ -30,6 +30,10 @@ func _run(e: Enemy, seconds: float, walk := Callable()) -> Dictionary:
 			if not seen.has(s) and s.by == e.def.id:
 				seen[s] = true
 				out.shots += 1
+				if s.kind == Projectiles.Kind.ORB:
+					out.orbs += 1
+				if s.turn > 0.0:
+					out.turning += 1
 		for z in game.ground.zones:
 			if not seen.has(z):
 				seen[z] = true
@@ -49,12 +53,9 @@ func test_the_mage_shoots_bursts_of_turning_orbs_from_afar() -> void:
 	assert_eq(r.circles, 0, "never a circle on the floor")
 	var d := e.pos.distance_to(game.player.pos)
 	assert_between(d, e.def.attack_range * e.def.keep_away - 1.0, e.def.attack_range + 2.5, "it keeps away")
-	var turning := false
-	for s in game.projectiles.shots:
-		if s.by == &"mage":
-			assert_eq(s.kind, Projectiles.Kind.ORB)
-			turning = turning or s.turn > 0.0
-	assert_true(turning, "its orbs turn after him")
+	# every shot it fired over the run (not only those still flying at the end: a burst may have died out by then)
+	assert_eq(r.orbs, r.shots, "it shoots orbs")
+	assert_eq(r.turning, r.shots, "its orbs turn after him")
 
 
 func test_each_orb_of_the_burst_pushes_the_mage_back() -> void:

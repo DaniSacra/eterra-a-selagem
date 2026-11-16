@@ -145,6 +145,9 @@ func test_middle_of_the_room_is_clear() -> void:
 			assert_true(a.pillars.is_empty() and a.boxes.is_empty() and a.exit_zones.is_empty(), "%s: nothing on the floor" % c.name)
 			assert_gt(PI * pow(a.shape().radius - Player.RADIUS, 2.0), 300.0, "%s: a wide floor to fight on" % c.name)
 			continue
+		if c.layout.id != &"hall":
+			# the arenas of cycle C12 fight round their pieces on purpose (tests/test_arenas.gd checks their ways)
+			continue
 		var mid := Rect2(-a.half + Vector2.ONE * CLEAR_MARGIN, (a.half - Vector2.ONE * CLEAR_MARGIN) * 2.0)
 		assert_gt(mid.get_area(), 300.0, "%s: a wide middle to fight in" % c.name)
 		for p in a.pillars:
@@ -189,14 +192,19 @@ func test_enemies_rise_on_free_floor_the_hero_reaches() -> void:
 		var cells := _reachable(a, a.start)
 		var h := a.half
 		for i in 80:
-			# as Rooms._spawn_point draws them
+			# as Rooms._spawn_point draws them (in the arenas' spawn zones, the hall anywhere)
 			var at := Vector2(rng.randf_range(-h.x + 2.5, h.x - 2.5), rng.randf_range(-h.y + 2.5, h.y - 2.5))
+			if not a.spawns.is_empty():
+				at = Rooms.spawn_point(a, a.start, rng, i % 2 == 1)
 			var p := a.resolve(at, 0.6)
 			assert_true(_free(a, p, 0.6), "%s: spawn %s settles" % [c.name, p])
 			assert_true(_free(a, a.resolve(p, biggest), biggest), "%s: the biggest enemy settles near %s" % [c.name, p])
 			assert_true(_reached(cells, p), "%s: the paladin can reach the spawn %s" % [c.name, p])
 		# the reward rises in the middle (Rooms._room_cleared) and the fountain a little north of it
-		for spot: Vector2 in [a.resolve(Vector2.ZERO, 1.0), Vector2(0, -2.0)]:
+		var spots: Array[Vector2] = [a.resolve(a.middle, 1.0)]
+		if c.layout.fountain:
+			spots.append(Vector2(0, -2.0))
+		for spot: Vector2 in spots:
 			assert_true(_reached(cells, spot), "%s: %s is reachable" % [c.name, spot])
 
 

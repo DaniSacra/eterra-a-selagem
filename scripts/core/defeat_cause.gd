@@ -17,6 +17,16 @@ static func of(attack: Variant, enemy: Variant) -> Dictionary:
 	return {"attack": a if BOSS_ATTACKS.has(a) else &"", "enemy": by}
 
 
+## A short name for a cause, to count damage by (RoomTally): the boss attack's id, else the enemy kind's id, else
+## "unknown".
+static func key(cause: Dictionary) -> String:
+	var attack: StringName = cause.get("attack", &"")
+	if attack != &"":
+		return String(attack)
+	var enemy: StringName = cause.get("enemy", &"")
+	return String(enemy) if enemy != &"" else "unknown"
+
+
 ## The text key that names a cause. name_key: the enemy kind's EnemyDef.name_key (&"" when none or unknown).
 static func text_key(cause: Dictionary, name_key: StringName = &"") -> StringName:
 	var attack: StringName = cause.get("attack", &"")

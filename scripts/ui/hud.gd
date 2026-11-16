@@ -42,6 +42,8 @@ const MOVE_TIME := 1.2
 const MOVE_FADE := 0.25
 ## The phase's name under the boss's bar: seconds it shows, its fade, font sizes.
 const PHASE_TIME := 3.0
+## An arena's name on walking in (cycle C12, decision D-33): in the place and look of a phase's name, this long.
+const PLACE_TIME := 2.0
 const PHASE_FADE := 0.4
 const PHASE_NAME_SIZE := 18
 const PHASE_TIP_SIZE := 15
@@ -84,6 +86,10 @@ var _phase_box: VBoxContainer
 var _phase_name: Label
 var _phase_tip: Label
 var _phase_t := 0.0
+## Seconds the name under the bar shows this time (a phase's PHASE_TIME, an arena's PLACE_TIME), and whether it is an
+## arena's name (shown with no boss bar).
+var _phase_len := PHASE_TIME
+var _place_shown := false
 var _curse_badge: ConditionBadge
 var _shield_t := 0.0
 ## The ritual's shield stands: its hint stays under the bar once the phase's name has gone.
@@ -311,8 +317,8 @@ func _process(delta: float) -> void:
 	_notice_t -= delta
 	_notice.modulate.a = clampf(_notice_t / 0.6, 0.0, 1.0)
 	_phase_t -= delta
-	_phase_box.modulate.a = minf(clampf(_phase_t / PHASE_FADE, 0.0, 1.0), clampf((PHASE_TIME - _phase_t) / 0.15, 0.0, 1.0))
-	_phase_box.visible = _phase_t > 0.0 and _boss_box.visible
+	_phase_box.modulate.a = minf(clampf(_phase_t / PHASE_FADE, 0.0, 1.0), clampf((_phase_len - _phase_t) / 0.15, 0.0, 1.0))
+	_phase_box.visible = _phase_t > 0.0 and (_boss_box.visible or _place_shown)
 	if _phase_t <= 0.0 and _boss_box.visible and _shield_t > 0.0 and _ritual_hint:
 		_phase_name.visible = false
 		_phase_tip.text = T.t(&"ritual_hint")
@@ -557,7 +563,24 @@ func show_phase(text: String) -> void:
 	_phase_tip.text = parts[1]
 	_phase_tip.visible = parts[1] != ""
 	_phase_t = PHASE_TIME
+	_phase_len = PHASE_TIME
+	_place_shown = false
 	_notice_t = minf(_notice_t, 0.0)
+
+
+## An arena's name on walking in (cycle C12, D-33): where and as a boss phase's name shows, PLACE_TIME seconds.
+func show_place(text: String) -> void:
+	_phase_name.text = text
+	_phase_name.visible = true
+	_phase_tip.visible = false
+	_phase_t = PLACE_TIME
+	_phase_len = PLACE_TIME
+	_place_shown = true
+
+
+## The arena's name showing now ("" when none).
+func place_shown() -> String:
+	return _phase_name.text if _place_shown and _phase_t > 0.0 else ""
 
 
 ## A phase's text split into its name and its hint ("O Ritual dos Mortos. Derrube..." -> the two; a name alone keeps

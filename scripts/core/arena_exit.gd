@@ -1,0 +1,39 @@
+class_name ArenaExit
+extends Resource
+## One way out of an arena (cycle C12): where the paladin stands in front of it, the way into the room from it (its
+## sign floats that way) and the zone of floor that leaves by it when stepped on. RoomLayout.exits, in the order the
+## doors are numbered. Pure.
+
+## The spot in front of the door, on the floor (Arena.exits, where the bot walks to leave).
+@export var at := Vector2.ZERO
+## The way into the room from the door (unit).
+@export var inward := Vector2(0, 1)
+## Stepping inside this rectangle leaves by the door (Arena.exit_zones).
+@export var zone := Rect2()
+## The mouth: floor beyond the room's edge (the top landing of its stairs), walkable only when the door is used.
+@export var mouth := Rect2()
+
+
+static func make(spot: Vector2, into: Vector2, leave: Rect2, landing := Rect2()) -> ArenaExit:
+	var e := ArenaExit.new()
+	e.at = spot
+	e.inward = into.normalized()
+	e.zone = leave
+	e.mouth = landing
+	return e
+
+
+## A door in a straight edge (cycle C12 spec, section 0.4): its mouth `width` wide reaching `beyond` meters out of the
+## room from `edge` (the middle of the door on the edge), the outer half of the mouth leaves, the spot in its middle.
+static func at_edge(edge: Vector2, into: Vector2, width := 4.0, beyond := 2.4) -> ArenaExit:
+	var u := into.normalized()
+	var side := Vector2(-u.y, u.x) * width * 0.5
+	var out := edge - u * beyond
+	var landing := Rect2(edge + side, Vector2.ZERO).expand(edge - side).expand(out + side).expand(out - side)
+	var half_out := edge - u * beyond * 0.5
+	var zone_r := Rect2(half_out + side, Vector2.ZERO).expand(half_out - side).expand(out + side).expand(out - side)
+	return make(edge - u * beyond * 0.75, u, zone_r, landing)
+
+
+func mirrored() -> ArenaExit:
+	return make(Vector2(-at.x, at.y), Vector2(-inward.x, inward.y), RoomLayout.mirror_rect(zone), RoomLayout.mirror_rect(mouth))

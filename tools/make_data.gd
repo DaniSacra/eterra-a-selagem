@@ -361,16 +361,18 @@ func _pool(tier: StageDef.Tier, from: float, until: float, weight: float, roles:
 ## The catacombs as a region of rooms, with the room generator and rewards of the first region of Hades II.
 func _stage() -> void:
 	var st := StageDef.new()
-	# short descent for testing (Daniel, 2026-11-14): fight, fountain, guardian, shop, Morvath in room 5.
+	# the test descent of cycle C12 (decision D-27): three fights in different arenas (the opening in the catacomb
+	# hall, then two of the crypt, the rift hall and the garden), the fountain, the guardian, the shop, Morvath in
+	# room 7. --short plays the old one of 5 (fight, fountain, guardian, shop, Morvath; Rooms.setup).
 	# Hades II's region: rooms 10, guardian 4 to 6, fountain 5 to 8.
-	st.rooms = 4
+	st.rooms = 6
 	# elites from the 2nd room while the descent is short (Hades II: from depth 3); back to 3 with the full region
 	st.elite_from_depth = 2
-	st.miniboss_depth_min = 3
-	st.miniboss_depth_max = 3
+	st.miniboss_depth_min = 5
+	st.miniboss_depth_max = 5
 	st.minibosses = [&"knight", &"priest_elder"]
-	st.fountain_depth_min = 2
-	st.fountain_depth_max = 2
+	st.fountain_depth_min = 4
+	st.fountain_depth_max = 4
 	st.boss = &"morvath"
 	st.enemies = [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite",
 		&"guard", &"guard_elite", &"priest", &"priest_elite"]
@@ -407,12 +409,16 @@ func _stage() -> void:
 	st.reward_weights = PackedFloat32Array([6.0, 2.5, 1.5, 1.0, 1.5])
 	st.shop_items = PackedInt32Array([R.BOON, R.POM, R.HEART, R.HEAL])
 	st.shop_prices = PackedInt32Array([150, 100, 125, 60])
-	# every room is the catacomb hall of Daniel's reference image (redesign of 2026-11-14, CatacombHall: a 28 m square
-	# by 30 m platform over the abyss, built in code to match the picture); its size and pieces live in CatacombHall, so the
-	# layout only says "the hall". The boss and the shop fight in it too (Morvath's portal burns red).
+	# The arenas (cycle C12; docs/design/cycle12_arenas_plan.md, plans in docs/art/cycle12_arenas_spec.md). The catacomb
+	# hall of Daniel's reference image (CatacombHall: its pieces and collision live there) is the opening, the fountain
+	# and the shop (decision D-26); the fights after it are drawn among the crypt, the rift hall and the garden
+	# (RunMap._layout), never the same twice in a row. Each is data: floor with holes, obstacles (collision and look),
+	# spawn zones, doors, camera box, two variants.
 	var hall := _layout(CatacombHall.HALF, [], [])
 	hall.platform = true
-	st.layouts = [hall]
+	_arena(hall, &"hall", RoomLayout.Size.MEDIUM, 0, Vector2(0.0, 0.0))
+	hall.fountain = true
+	st.layouts = [hall, _crypt(), _rift(), _garden()]
 	st.shop_layout = hall
 	# Morvath fights in his own round chamber (cycle C11, the Seal Chamber: docs/design/boss_arena.md for the radius,
 	# docs/art/boss_chamber_spec.md for the plan): a circle of 12.5 m to the balustrade's inner face, so the paladin's
@@ -422,10 +428,205 @@ func _stage() -> void:
 	_save(st, "res://data/stages/catacombs.tres")
 
 
+# ---------- arenas (cycle C12) ----------
+
+## What an arena is: its id and name, who draws it, its size, difficulty and place in the descent.
+func _arena(l: RoomLayout, id: StringName, size: RoomLayout.Size, difficulty: int, depth: Vector2) -> void:
+	l.id = id
+	l.name_key = StringName("arena_" + String(id))
+	l.look = id
+	l.size_class = size
+	l.difficulty = difficulty
+	l.depth = depth
+
+
+## A polygon from flat pairs of numbers (x, z, x, z...).
+func _poly(xz: Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for i in range(0, xz.size(), 2):
+		out.append(Vector2(xz[i], xz[i + 1]))
+	return out
+
+
+func _rect(x0: float, x1: float, z0: float, z1: float) -> Rect2:
+	return Rect2(x0, z0, x1 - x0, z1 - z0)
+
+
+## Obstacles of the spec's tables. A piece blocks shots when its top passes 1.25 m (spec 0.3); up to 1.0 m a shot
+## flies over it. Columns and tall pieces open in a stipple round the paladin (see_through).
+func _column(x: float, z: float, top: float, r := 0.7) -> ArenaObstacle:
+	return ArenaObstacle.circle(Vector2(x, z), r, &"column", top, top >= 1.25, true)
+
+
+## A box lying along x (or along z when turned), of size w x d.
+func _sarcophagus(x: float, z: float, w: float, d: float, top := 1.35, piece := &"sarcophagus", see := false) -> ArenaObstacle:
+	return ArenaObstacle.box(Vector2(x, z), Vector2(w, d) * 0.5, 0.0, piece, top, top >= 1.25, see)
+
+
+## A capsule of the spec (a low wall, a root) from a to b, `width` across: a box over it, its round ends taken square.
+func _capsule(a: Vector2, b: Vector2, width: float, top: float, piece := &"block") -> ArenaObstacle:
+	var d := b - a
+	return ArenaObstacle.box((a + b) * 0.5, Vector2(d.length() * 0.5 + width * 0.5, width * 0.5), d.angle(), piece, top, top >= 1.25)
+
+
+## A root along points (each leg a capsule), from inside the trunk at `trunk` (radius r) out to its tip.
+func _root(trunk: Vector2, r: float, pts: Array, top := 0.6) -> Array[ArenaObstacle]:
+	var out: Array[ArenaObstacle] = []
+	var first: Vector2 = pts[0]
+	var prev := trunk + (first - trunk).normalized() * (r - 0.5)
+	for p: Vector2 in pts:
+		out.append(_capsule(prev, p, 1.0, top, &"root"))
+		prev = p
+	return out
+
+
+## A fire bowl or lantern of a door, off the walkable floor: drawn, never blocking.
+func _bowl(x: float, z: float) -> ArenaObstacle:
+	var o := ArenaObstacle.circle(Vector2(x, z), 0.45, &"brazier", 1.2, false)
+	o.blocks_move = false
+	return o
+
+
+func _variant(obstacles: Array[ArenaObstacle], floor: FloorShape = null, late: Array[Rect2] = []) -> ArenaVariant:
+	var v := ArenaVariant.new()
+	v.obstacles = obstacles
+	v.floor = floor
+	v.late_spawns = late
+	return v
+
+
+## Cripta dos Esquecidos (spec section 2): small, closed, sarcophagi and columns as cover; 4 to 6 enemies, at most 2
+## shooters, no priest.
+func _crypt() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"crypt", RoomLayout.Size.SMALL, 1, Vector2(0.1, 1.0))
+	l.floor = FloorShape.poly([_poly([-12, -10.5, 8.5, -10.5, 12, -7, 12, 10.5, -12, 10.5])])
+	l.half = l.floor.extent()
+	l.max_alive = Vector2i(4, 6)
+	l.max_ranged = 2
+	l.banned_roles = [&"area"]
+	l.guardian = false
+	var bowls: Array[ArenaObstacle] = [_bowl(1.5, -11.0), _bowl(7.1, -11.0)]
+	var a: Array[ArenaObstacle] = [
+		_sarcophagus(0.5, 0.0, 4.0, 2.0, 1.5),
+		_column(-6.0, -5.6, 5.2, 0.65), _column(7.0, -5.6, 5.2, 0.65), _column(-5.5, 5.6, 5.2, 0.65),
+		_sarcophagus(0.5, -5.6, 2.5, 1.2), _sarcophagus(4.0, 5.6, 2.5, 1.2), _sarcophagus(-11.4, -6.0, 1.2, 2.5),
+		_capsule(Vector2(-12, 0), Vector2(-8, 0), 0.6, 0.9), _capsule(Vector2(12, 0.5), Vector2(8, 0.5), 0.6, 0.9),
+	]
+	a.append_array(bowls)
+	l.obstacles = a
+	# variant B, "Ossuary": a dividing wall from the north wall, the south half open
+	var b: Array[ArenaObstacle] = [
+		_sarcophagus(0.5, -7.0, 0.8, 7.0, 3.2, &"block", true),
+		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _column(6.5, -6.0, 5.2, 0.65),
+		_sarcophagus(-4.0, 3.0, 2.5, 1.2), _sarcophagus(3.0, 3.0, 2.5, 1.2),
+		_capsule(Vector2(-12, -2.5), Vector2(-8, -2.5), 0.6, 0.9), _capsule(Vector2(12, 1.0), Vector2(8, 1.0), 0.6, 0.9),
+	]
+	b.append_array(bowls)
+	l.variants = [_variant(b)]
+	l.hero_spawn = Vector2(-10.0, 4.5)
+	l.hero_facing = Vector2(1, 0)
+	l.exits = [ArenaExit.at_edge(Vector2(4.3, -10.5), Vector2(0, 1)), ArenaExit.at_edge(Vector2(12, 5.5), Vector2(-1, 0)),
+		ArenaExit.at_edge(Vector2(-2, 10.5), Vector2(0, -1))]
+	l.spawns = [_rect(2, 7, -9.5, -7.5), _rect(8.5, 11.2, -4, -0.5), _rect(6.5, 11, 7, 9.5), _rect(-10, -7.5, -10, -8)]
+	# the whole crypt fits the screen: the camera keeps to one point, as in the Seal Chamber
+	l.cam_target = Vector2(1.0, 1.5)
+	l.cam_reach = 2.5
+	return l
+
+
+## The rift of the hall of the rifts, cut by its two bridges (each bridge is the floor left between two pieces of it)
+## or by one (variant B: the north bridge fell). It runs out through the north edge into the abyss outside.
+const RIFT_NORTH := [-7, -17, -7, -12, 2, -12, 2, -17]
+const RIFT_MIDDLE := [-7, -7, -7.8, -5, -6.6, -3, -7, -1, 2, -1, 1.6, -3, 2.8, -5, 2, -7]
+const RIFT_SOUTH := [-7, 4, -7.6, 6, -6.4, 8, -5, 9.4, -2.5, 10, 0.3, 9.2, 1.6, 8, 2.6, 6, 2, 4]
+const RIFT_FALLEN := [-7, -17, -7, -12, -7, -7, -7.8, -5, -6.6, -3, -7, -1, 2, -1, 1.6, -3, 2.8, -5, 2, -7, 2, -12, 2, -17]
+
+
+## Salão das Fendas (spec section 3): big, a rift across 83% of its depth, two bridges of 5 m and a way round its
+## south end; every door on the east platform. 6 to 8 enemies.
+func _rift() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"rift", RoomLayout.Size.LARGE, 1, Vector2(0.1, 1.0))
+	var outline := _poly([-21, -12, -18, -15, 21, -15, 21, 9, 15, 15, -15, 15, -21, 10])
+	l.floor = FloorShape.poly([outline], [_poly(RIFT_NORTH), _poly(RIFT_MIDDLE), _poly(RIFT_SOUTH),
+		_poly([8, -6.5, 9.5, -8.2, 12.5, -8.4, 14.6, -6.2, 14, -2.6, 11, -1.8, 8.4, -3.4])])
+	l.half = l.floor.extent()
+	l.max_alive = Vector2i(6, 8)
+	var bowls: Array[ArenaObstacle] = [_bowl(8.5, -15.6), _bowl(15.5, -15.6)]
+	var a: Array[ArenaObstacle] = [
+		_sarcophagus(14.0, 7.0, 3.6, 1.0, 2.6, &"block", true), _column(7.5, 3.0, 3.8),
+		_sarcophagus(-14.0, -5.5, 1.2, 2.5), _column(-13.0, 3.0, 3.2),
+	]
+	a.append_array(bowls)
+	l.obstacles = a
+	var b: Array[ArenaObstacle] = [
+		_sarcophagus(14.0, 7.0, 3.6, 1.0, 2.6, &"block", true), _column(8.0, -4.0, 3.8), _column(13.0, -8.5, 3.4),
+		_column(15.0, -1.0, 2.9), _sarcophagus(-13.5, -10.5, 2.5, 1.2),
+	]
+	b.append_array(bowls)
+	var fallen := FloorShape.poly([outline], [_poly(RIFT_FALLEN), _poly(RIFT_SOUTH),
+		_poly([-17.5, -3, -16, -5.2, -13, -5.6, -11.3, -3.5, -11.6, -0.4, -14, 0.6, -16.6, -0.6])])
+	l.variants = [_variant(b, fallen, [_rect(-19.5, -15.5, -12, -7)])]
+	l.hero_spawn = Vector2(-18.0, 6.5)
+	l.hero_facing = Vector2(1, 0)
+	l.exits = [ArenaExit.at_edge(Vector2(12, -15), Vector2(0, 1)), ArenaExit.at_edge(Vector2(21, 2), Vector2(-1, 0)),
+		ArenaExit.at_edge(Vector2(8, 15), Vector2(0, -1))]
+	# nobody rises on a bridge or in the south way; the first wave across the rift, the west zone from the second
+	l.spawns = [_rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(5, 11, 7, 12)]
+	l.late_spawns = [_rect(-17, -11, -13, -9)]
+	l.cam_bounds = _rect(-6, 7, -4, 5)
+	return l
+
+
+## Jardim das Raízes Mortas (spec section 4): a petrified tree off the middle (its trunk stops bodies and shots),
+## low roots that stop bodies only, sarcophagi and broken columns. 6 to 8 enemies.
+const TRUNK := Vector2(-8.0, -5.0)
+const TRUNK_RADIUS := 3.5
+
+
+func _garden() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"garden", RoomLayout.Size.MEDIUM, 1, Vector2(0.1, 1.0))
+	l.floor = FloorShape.poly([_poly([-17, -10, -13, -14, 17, -14, 17, 8, 11, 14, -12, 14, -17, 9])])
+	l.half = l.floor.extent()
+	l.max_alive = Vector2i(6, 8)
+	var trunk := ArenaObstacle.circle(TRUNK, TRUNK_RADIUS, &"trunk", 4.5, true, true)
+	var bowls: Array[ArenaObstacle] = [_bowl(10.5, -14.6), _bowl(15.5, -14.6), _bowl(17.6, -2.6)]
+	var a: Array[ArenaObstacle] = [trunk]
+	for pts: Array in [[Vector2(-4.5, -7.0), Vector2(-2.5, -7.7), Vector2(-0.4, -8.1), Vector2(1.8, -8.1)],
+			[Vector2(-5.2, -2.2), Vector2(-3.5, -0.8), Vector2(-1.6, 0.3), Vector2(0.3, 1.2)],
+			[Vector2(-10.0, -1.5), Vector2(-10.8, 0.1), Vector2(-11.4, 1.9), Vector2(-11.9, 3.6)],
+			[Vector2(-11.5, -7.0), Vector2(-12.8, -7.8)]]:
+		a.append_array(_root(TRUNK, TRUNK_RADIUS, pts))
+	a.append_array([_sarcophagus(7.5, -5.0, 2.5, 1.2), _sarcophagus(-16.4, -1.5, 1.2, 2.5),
+		_capsule(Vector2(9, 5), Vector2(13, 5), 0.8, 1.0), _column(4.5, 7.0, 3.6)])
+	a.append_array(bowls)
+	l.obstacles = a
+	var b: Array[ArenaObstacle] = [trunk]
+	for pts: Array in [[Vector2(-4.1, -5.7), Vector2(-2.4, -5.8), Vector2(-0.7, -5.7), Vector2(0.9, -5.4)],
+			[Vector2(-6.6, -1.2), Vector2(-6.2, 0.7), Vector2(-6.1, 2.7), Vector2(-6.3, 4.7)],
+			[Vector2(-11.5, -3.0), Vector2(-12.2, -2.5)]]:
+		b.append_array(_root(TRUNK, TRUNK_RADIUS, pts))
+	b.append_array([_sarcophagus(11.5, -6.0, 1.2, 2.5), _sarcophagus(6.5, 5.0, 2.5, 1.2), _column(12.0, 3.0, 3.4), _column(-12.5, 4.0, 3.0)])
+	b.append_array(bowls)
+	l.variants = [_variant(b)]
+	l.hero_spawn = Vector2(-12.0, 9.0)
+	l.hero_facing = Vector2(1, -1).normalized()
+	l.exits = [ArenaExit.at_edge(Vector2(13, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(17, 0), Vector2(-1, 0)),
+		ArenaExit.at_edge(Vector2(5, 14), Vector2(0, -1))]
+	l.spawns = [_rect(6, 12, -12.5, -9.5), _rect(13, 16, -4, 3), _rect(-6, 0, -13.2, -10.5), _rect(-2, 6, 9, 12.5)]
+	l.late_spawns = [_rect(-15, -13, -6, -3.5)]
+	l.cam_bounds = _rect(-3, 4, -2, 3)
+	return l
+
+
 ## The Seal Chamber (cycle C11). Every number is the spec's (docs/art/boss_chamber_spec.md, sections 2 and 4).
 func _chamber() -> RoomLayout:
 	var c := RoomLayout.new()
 	c.chamber = true
+	# named only for the run's log (QW-011); its look and its name stay the chamber's own
+	c.id = &"seal_chamber"
 	c.floor = FloorShape.circle(12.5)
 	c.half = Vector2(12.5, 12.5)
 	c.hero_spawn = Vector2(-0.9, 10.4)
