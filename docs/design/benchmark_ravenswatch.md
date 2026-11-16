@@ -8,6 +8,28 @@ entra como terceira referência, ao lado do Hades II (mecânicas e números, D-3
 está instalado na Steam do Daniel, então não há números lidos de arquivo. O que está abaixo é entendimento de
 segunda mão e deve ser conferido jogando antes de virar decisão.
 
+## Decisões do Daniel (2026-11-16, noite: diretriz "um herói definitivo")
+
+Fonte: `docs/design/one_hero_directive.md`. Especificação que aplica isto: `docs/design/guardian_spec.md`. O que o
+Ravenswatch inspirou e como ficou em Eterra:
+
+| Princípio do Ravenswatch | Decisão de Eterra | Onde está |
+|---|---|---|
+| O herói é a arma; kit de 4 ações e um traço | **Um herói só agora**, o Explorador/Guardião (nome final do Daniel, D-48), até a qualidade desejada; os outros três não entram (decisões 1 e 2). A Emeth continua a arma dele; sem equipamento nem troca de arma (9 e 10). Kit: as 4 ações de hoje, mais uma **passiva** e uma **ultimate** (duas opções) | `guardian_spec.md` seções 3 a 6 |
+| Talentos por herói que mudam as 4 ações | **Dons**: talentos permanentes e exclusivos do herói, destravados pela Maestria, equipados antes de descer com uma capacidade (Devoção) no molde das Arcana do Hades II (custo e capacidade), um Dom de ação por ação | seção 8 |
+| Progressão por herói fora da partida (posto) | **Maestria**: progressão permanente individual do herói, por XP de partida, que destrava Dons, capacidade e a 2ª ultimate (decisão 4) | seção 7 |
+| Objetos com raridade e custo | **Bênçãos**: as três cartas da descida (o que o jogo chamava de "dom"), com raridades comum, rara, épica e lendária (decisão 6), nas regras e números do Hades II (D-39). O "objeto amaldiçoado" fica para a Provação (o Caos do Hades II), na entrega de eventos | seções 9 e 10; roadmap E5 |
+| (sem equivalente) | **Salmos**: descobertas especiais que transformam Dons, Bênçãos ou combinações (decisão 7), com temas dos Salmos bíblicos, música e efeitos originais (8); regra do dom lendário do Hades II | seção 11 |
+| (sem equivalente) | **Compêndio**: registro do que foi visto e descoberto | seção 12 |
+| Dia e noite, mapa aberto, cooperativo | **não** (como antes): salas do Hades II; a Câmara do Selo e Morvath fecham a primeira região (11); a Fase 2 não entra agora (12) | |
+
+### O que fica para quando houver outros heróis
+- Escolha do herói no título, Maestria e Compêndio por herói (a estrutura `HeroDef` já nasce por herói na E2).
+- Bênçãos exclusivas de um herói (`heroes` na Bênção) e Salmos que pedem Dom de um herói.
+- Progressão de posto com "memórias" e o cooperativo: não planejados.
+- Responder no tempo certo: os kits dos outros três paladinos, quem concede as Bênçãos se eles forem jogáveis (D-51), e
+  se o cânone tem algo que mude o herói durante a partida.
+
 ## Como o jogo funciona (resumo)
 - Roguelite de ação visto de cima, solo ou cooperativo até 4. Heróis de contos e lendas reinterpretados (Chapeuzinho,
   o Flautista, Aladim, Julieta, Sun Wukong, Merlin e outros; 12 hoje).
@@ -57,10 +79,12 @@ segunda mão e deve ser conferido jogando antes de virar decisão.
 - Os heróis de contos, os nomes, a arte de quadrinho, o dia e noite como mecânica sem cânone.
 - Mapa aberto no lugar das salas.
 
-## Perguntas para o Daniel (entram como decisão quando o tema chegar)
-- Os quatro paladinos serão jogáveis, cada um com um kit próprio nas 4 ações? Em que fase?
-- Talentos por herói além dos dons? Ou os dons já bastam na Fase 1?
-- Existe no cânone algo que mude o herói durante a partida (como o dia e noite muda a Chapeuzinho)?
+## Perguntas para o Daniel (estado em 2026-11-16, noite)
+- ~~Os quatro paladinos serão jogáveis, cada um com um kit próprio nas 4 ações? Em que fase?~~ Respondida: só o
+  Explorador/Guardião agora (decisões 1 e 2); os outros depois, sobre a arquitetura validada.
+- ~~Talentos por herói além dos dons?~~ Respondida: sim, os **Dons** (talentos permanentes pela Maestria); as cartas da
+  descida passam a se chamar **Bênçãos**.
+- Existe no cânone algo que mude o herói durante a partida (como o dia e noite muda a Chapeuzinho)? Segue aberta.
 
 ## Fontes
 - Game Rant, análise: https://gamerant.com/ravenswatch-review/

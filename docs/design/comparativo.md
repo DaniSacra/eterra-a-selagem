@@ -35,7 +35,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Arena do chefe | sala própria de cada chefe | arena própria, redonda nos chefes de região | ciclo C11: Morvath luta na Câmara do Selo, um círculo de 12,5 m (o centro do herói anda até 12 m do selo; raio calculado pela mecânica em `docs/design/boss_arena.md`); a borda é a única colisão, os avisos dele param nela, as meias-luas se desfazem logo depois dela, a investida só com 8 m livres, ritual, maldição e tempestade abertos do meio, câmera com alvo fixo e no máximo 3 m de desvio; as salas comuns seguem no salão retangular |
 | Salas de luta | cada bioma com várias salas desenhadas à mão, com buracos, pontes e cobertura; a mesma sala com arrumações diferentes | igual | ciclo C12 (Arenas I): o Salão das Catacumbas abre a partida e recebe a fonte e a loja; as lutas depois dele são sorteadas entre a Cripta dos Esquecidos (pequena, colunas e sarcófagos como cobertura, 4 a 6 inimigos, no máximo 2 atiradores, sem sacerdote), o Salão das Fendas (grande, fenda com duas pontes de 5 m, câmera que anda) e o Jardim das Raízes Mortas (tronco de pedra que barra corpo e tiro, raízes baixas), nunca a mesma duas vezes seguidas, cada uma com 2 variantes. Tudo em dado (`RoomLayout`: chão com buracos, obstáculos, zonas de nascimento, saídas, caixa da câmera); peça com topo acima de 1,25 m para o tiro, até 1,0 m o tiro passa por cima; inimigos andam pela grade `NavGrid` e um campo de fluxo; nada cai no abismo ainda (D-28). Descida de teste com 7 salas (D-27); o visual das três é provisório (cinza) |
 | Teste | | | **encurtado**: fonte na 2, guardião na 3, loja na 4, Morvath na 5 |
-| Entre partidas | casa de Hades: espelho, contratos, Pacto | Encruzilhada: cartas de Arcana, encantamentos, Votos | **ainda não existe**: cada partida começa do zero |
+| Entre partidas | casa de Hades: espelho, contratos, Pacto | Encruzilhada: cartas de Arcana, encantamentos, Votos | **ainda não existe**: cada partida começa do zero. Planejado (diretriz de 2026-11-16, entrega E2): Maestria do herói que destrava Dons permanentes, equipados com capacidade e custo no molde das Arcana (`docs/design/guardian_spec.md`) |
 | Dificuldade extra | Pacto de Punição (Calor) | Votos da Noite (Medo) | não existe |
 
 ## Combate
@@ -62,7 +62,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Combos | sequência fixa por arma | sequência fixa por arma | árvore no molde do Ember & Blade (pesado depois de 1 a 4 leves muda o finalizador) |
 | Armas | 6, com aspectos | 5 ou mais, com aspectos | uma espada (a Emeth) |
 
-## Dons
+## Dons (para o jogador, desde a diretriz de 2026-11-16: **Bênçãos**; "Dom" passa a ser o talento permanente do herói)
 
 | | Hades | Hades II | A Selagem |
 |---|---|---|---|

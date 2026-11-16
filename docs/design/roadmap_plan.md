@@ -1,7 +1,8 @@
 # Roteiro da Fase 1: revisão executiva e próximos ciclos
 
-- **Data**: 2026-11-16 (tarde; seção 0 acrescentada à noite sobre o `71cb8cc`). **Autor**: game-director. **Commit lido**:
-  `87ba686` (HEAD de `arpg-3d`) nas seções A a H; `71cb8cc` na seção 0.
+- **Data**: 2026-11-16 (tarde; seção 0 acrescentada à noite sobre o `71cb8cc`; seção 00 sobre o `19af96b`, diretriz "um
+  herói definitivo"). **Autor**: game-director. **Commit lido**: `87ba686` (HEAD de `arpg-3d`) nas seções A a H;
+  `71cb8cc` na seção 0; `19af96b` na seção 00.
 - **Pedido**: `docs/design/roadmap_brief_2026-11-16.md` (resumo fiel do Daniel). Este documento é o planejamento; o
   backlog executável está em `docs/backlog.md` (seção "C12c" e as seguintes).
 - **Decisão confirmada pelo Daniel hoje (D-39)**: "vale copiar do Hades, nomes nossos". Continua valendo a regra antiga:
@@ -20,6 +21,59 @@
 - **Vídeo olhado**: `C:\Users\danie\Videos\ASelagem\partida_ASelagem.mp4` (robô com reação 0,25, 4 min 10 s, 1280 x
   720, com som; derrota na fase 4 de Morvath aos 3:50). Tirei folhas de um quadro a cada 10 s, quadros nas transições
   (1:20 a 1:31, 1:58 a 2:08) e medi o som com `ffmpeg` (`volumedetect`, `astats`, `silencedetect`).
+
+## 00. Atualização de 2026-11-16 (noite, mais tarde): diretriz "um herói definitivo"
+
+Fonte: `docs/design/one_hero_directive.md` (decisões 1 a 12 do Daniel). Especificação e auditoria:
+`docs/design/guardian_spec.md`. Esta seção **manda sobre a 0.3 e sobre as seções B a H** onde divergirem; a regra de
+priorização (0.1) e a definição de Fase 1 (0.2) continuam valendo, com o critério 2 ("evolução de habilidade sentida")
+agora medido também pela Maestria e pelos Dons.
+
+### 00.1 Onde estamos (commit `19af96b`)
+- C12d feito (`3fc721b`, `6f9bbc7`, `aaaacfc`, `4c560eb`, `491c6d4`, `1d06613`, QA `efa5cf4`): sonda 31/31 (antes 4/31),
+  latência 14 ms sem vsync e 35 a 42 ms com, 8 descidas com 4 vitórias e ninguém preso; falta o tempo de quadro na placa
+  com o notebook na tomada (M-a do QA).
+- Depois: carta nova (`262f99b`), tela cheia por padrão e "Sair do jogo" (`19af96b`); 541 testes passando (rodei).
+- T3 (teste do Daniel da mão nova) ainda não aconteceu: nenhum `runs.jsonl` novo foi lido.
+
+### 00.2 Ordem das entregas (prioridade da diretriz)
+
+| Entrega | Prioridade da diretriz | Objetivo em uma frase | Ciclos que entram | Depende de |
+|---|---|---|---|---|
+| **E1** | 1 game feel e visual | inimigos e Morvath que se movem e reagem como o herói, armas no estilo, combate que se ouve | T3, C12e, C12f, T4 (já planejados, sem mudança) | nada |
+| **E2** | 2 Maestria e Dons | o Guardião como herói definitivo: `HeroDef`, Maestria, Dons, passiva e ultimate, Bênção no texto | novo (era parte do C13 "entre partidas") | E1 (T4 aprova a mão); DT-012 |
+| **E3** | 3 Bênçãos e combinações | chegar a Morvath com 5 a 8 Bênçãos que combinam: raridades, romã, Elo, troca, descida de 10 salas e economia | o **C13 antigo inteiro** (C13-01 a C13-08) | E2 (Dom mais Bênção na mesma soma) |
+| **E4** | 4 Salmos e descobertas | Salmos que transformam, descoberta e Compêndio completo, com tema musical próprio | novo; puxa a parte de música do C15 (C15-03, C15-05) | E3; D-59 |
+| **E5** | 5 eventos e exploração | a descida com escolhas fora do combate e lugares que se ligam: Provação, salas de evento, Arenas II | Provação (`hades2_sistemas.md` seção 7), C14 (Santuário, Ponte, Runas), hipótese A | E3 |
+| **E6** | 6 balanceamento da primeira região | a região inteira medida com gente: dificuldade, curva, Maestria, máquina fraca, mixagem final | C15-01, C15-02 restante, C15-04, DT-003, Juramentos (D-63) | E2 a E5, testes T5 e T6 |
+| C16 | Steam | página, controle com ícones, opções, conquistas se o Daniel quiser, `steam-ia.md` | como antes | E6 |
+
+**Onde entra o C13 antigo (descida de 10 salas e economia)**: na **E3**, inteiro. Por quê: com 2 a 3 Bênçãos em Morvath
+(QA do C12d, `boons_at_boss`) quase nenhum Elo se forma e nenhum Salmo seria alcançável; a descida longa, o baralho de
+recompensas e o ouro por inimigo são o que torna as combinações possíveis. A alternativa (D-61) é deixar a descida de 7
+até a E6 e testar combinações com `--boons`.
+
+**Por que a E2 antes da E3** (a diretriz manda assim; minha leitura): os Dons e a ultimate mudam o kit; balancear as
+Bênçãos antes mediria o herói errado. A E2 não mexe em nenhum número de inimigo.
+
+**O que não muda**: E1 é exatamente o C12e e o C12f do backlog (seção 6), com o T3 antes e o T4 depois. Nada de
+progressão nova entra antes do T4.
+
+### 00.3 Cada entrega: escopo, dependências, agentes, aceite, testes, evidências
+O detalhe executável (itens com ID, dono por arquivo, aceite medível) está em `docs/backlog.md`, seção 6. Resumo:
+
+| Entrega | Escopo | Agentes | Aceite (resumo) | Testes | Evidências |
+|---|---|---|---|---|---|
+| E1 | C12e (VX-04 a VX-07, VX-13, VX-17, GF-15, M-1), C12f (GF-12, VX-06, VX-14, sons, B-2), T3 e T4 | `environment-artist`, `gameplay-engineer`, `qa-performance`, `art-director` | os do backlog seção 6; T4: o Daniel aprova o combate (critério 1) | sonda 31/31 sem regressão; GUT novos | vídeos antes e depois aprovados pelo `art-director` |
+| E2a | `HeroDef`; save 3 (DT-012); Maestria; 10 Dons de dado; Devoção; tela do herói; Bênção no texto (D-50); registro 3 | `gameplay-engineer`, `ui-ux-designer`, `qa-performance` | nenhum número de inimigo mudado; partida com Maestria 1 igual à de hoje (mesma semente, mesmo `RESULT`); Maestria sobe e salva; testes do `guardian_spec.md` 16 | `test_mastery`, `test_talents`, `test_save`, `test_run_log`, `title_flow_check` | capturas da tela do herói e da tela de fim com XP, a 720 e 1080 |
+| E2b | passiva (D-56) e ultimate U-1 (D-54): ação, losango, efeito, som | `gameplay-engineer`, `environment-artist`, `ui-ux-designer`, `art-director` | sonda com metas novas (ultimate responde no quadro, não perde aperto, não cobre o herói); robô 0,25 em 8 descidas sem queda de mais de 1 vitória nem subida de mais de 3 | `test_ultimate` | vídeo da ultimate a 1x e 0,25x aprovado pelo `art-director` |
+| E2c | Dons de código (níveis 11 a 20), U-2, Compêndio pequeno (Dons e Golpes) | `gameplay-engineer`, `ui-ux-designer` | todo Dom de ação mantém as tags; cada Dom com teste | `test_talents` estendido | vídeo por Dom de ação |
+| E3 | C13-01 a C13-08 mais raridades (D-52), Elo por grupos, troca, Compêndio de Bênçãos e Elos | `gameplay-engineer`, `ui-ux-designer`, `qa-performance` | robô chega a Morvath com 5 a 8 Bênçãos em 6 de 8; sorteio dentro de 1 ponto do Hades II; partida de gente de 10 a 13 min | `test_rarity`, `test_elo`, baralho, economia | `METRICAS.md` por sala, carta de cada raridade |
+| E4 | 4 Salmos (D-60), descoberta, Compêndio completo, tema musical por Salmo, moldura do Salmo | `gameplay-engineer`, `ui-ux-designer`, `art-director`, `environment-artist` | Salmo oferecido só com requisito; 10%; descoberta salva; nenhuma citação de texto bíblico na tela | `test_psalms`, `test_codex` | captura de cada Salmo e vídeo da transformação |
+| E5 | Provação, salas de evento, Arenas II (C14-A4 a A6) | todos | cada evento com uma decisão própria medida; arenas com os testes do C12 | testes do C12 e da Provação | capturas e travessias |
+| E6 | dificuldade da região com gente (T5, T6), curva de Maestria, máquina fraca, mixagem, Juramentos | `qa-performance`, `gameplay-engineer` | meta D-11 (primeira vitória em até 3 tentativas para quem jogou Hades); Maestria 20 sobe no máximo 25 pontos a vitória do robô; iGPU medida | smokes, registro de gente | relatório do QA |
+
+---
 
 ## 0. Atualização de 2026-11-16 (noite): diretriz de game feel e excelência visual
 
