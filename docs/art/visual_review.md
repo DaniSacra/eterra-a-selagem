@@ -292,3 +292,14 @@ pela câmera do jogo; especificação em `docs/art/boss_chamber_spec.md`.
 - Câmera: alvo fixo 0,7 m do centro na direção da câmera; em 16:9 a câmara cabe inteira com o herói a 20% da borda no pior ponto.
 - Depende de modelo que não existe: nada obrigatório; estátuas e leão em relevo são procedurais.
 - Veredito: especificação pronta para o `environment-artist` e o `gameplay-engineer`; revisão quando houver capturas.
+
+## 2026-11-16: revisão visual para a Game Feel Review (HEAD `beb6c27`)
+
+- Capturas: `docs/gallery/cycle12c/visual_review/` (GPU, 1920 x 1080; quadros seguidos com `--frames`, `--shot-on=special|omega`)
+  e folhas dos vídeos da descida e da partida.
+- Bate: cenário (salão, Fendas, Jardim, Câmara do Selo), silhuetas do Explorador, dos nove inimigos e de Morvath, Ômega, pisca morno.
+- Difere (alta): inimigos e Morvath em poses assadas sem mistura; fita do corte comum verde chapada e opaca, solta da lâmina;
+  armas do KayKit nos modelos do Meshy. (média): brilho do finalizador sobre o herói, avisos em linha empilhados, Morvath laranja
+  queimando, círculo de luz opaco, velas demais no salão, marcador `PALADIN_N` na carta de dom.
+- Pedidos e critérios: `docs/design/visual_review.md` (V-A1 a V-U3).
+- Veredito: não aprovado como excelência visual; V-E1, V-A1 e V-P1 primeiro, sem créditos.
