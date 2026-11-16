@@ -1,284 +1,317 @@
 # Backlog de A Selagem
 
-
-> **C12a feito na madrugada de 2026-11-16** (`75e7ada`, `b7f5f4d`): BOSS-001 (centro da tempestade 121 para 86), BOSS-002 (velas no pontilhado), BOSS-003 (estrela da vitória sem estouro), QW-006 (13 janelas), QW-007 (fio violeta), QW-008 (sarcófagos e estandartes), BUG-010 (conferido, com teste), BUG-011 (sem névoa volumétrica nem SSR no Compatibility), BUG-012 (`step_ms_avg`, `step_ms_peak`). Pendente do C12a: o que o Daniel anotar no teste e regravar o vídeo da luta no HEAD (DT-004). Mudança a confirmar: o miolo do selo escurece enquanto as faixas da tempestade estão no chão.
-
-- **Data**: 2026-11-16 (manhã). **Autor**: game-director (segunda revisão). **Commit lido**: `552b55c` (HEAD de
-  `arpg-3d`); ciclos lidos: C10 e C11, `6dbcec5..552b55c` (12 commits, feitos durante a noite).
-- **Fontes**: `CLAUDE.md`, `git log` e as mensagens de cada commit, `docs/qa/latest_report.md` (testado no `6bab080`),
-  `docs/gallery/boss_arena/` (ART_REVIEW escrito antes do `552b55c`, CAPTURAS, METRICAS, capturas 01 a 11 e as montagens,
-  olhadas), `docs/gallery/cycle10/`, `docs/gallery/README.md`, `docs/design/boss_arena.md`, `docs/art/boss_chamber_spec.md`.
-- **Medidas minhas** nesta revisão (mediana de recortes das capturas refeitas no `552b55c`, luminância Rec. 709, pelo
-  ffmpeg; nada no jogo foi mudado nem rodado): centro da tempestade em `09` (recorte 200 x 120 em 860, 470) luminância
-  **121**, R 229 (antes do `552b55c`: 123, R 252; pixels acima de 200 caíram de 9,3% para 2,7%); chão do meio em `01`
-  luminância **41 a 45**, B menos R de 29 a 33 (antes 16 a 19); topo do céu em `01` R 1, G 30, B 76; estrela da vitória em
-  `10` (60 x 60 no centro) com **24,7%** dos pixels acima de 200; corpo de Morvath em `11` (geada, Ômega acabando de
-  passar) luminância 87, R 102, G 82, B 98.
-- Relatório executivo com o roteiro do teste de hoje: [`docs/design/game_director_review.md`](design/game_director_review.md),
-  seção "Atualização de 2026-11-16 (C10 e C11)".
+- **Data**: 2026-11-16 (tarde). **Autor**: game-director (terceira revisão). **Commit lido**: `61f591e` (HEAD de `arpg-3d`);
+  mudanças desde a revisão anterior: `75e7ada`, `b7f5f4d` (C12a), `fa30024` (backlog), `da35721` e `c666f4a` (inimigos de
+  longe com os números do Hades II), `61f591e` (declaração de IA).
+- **Fontes novas**: o pedido do Daniel "Ciclo 12: diversidade de arenas" (`docs/design/cycle12_arenas_brief.md`) e as cinco
+  imagens em `docs/art/ref/cycle12_maps/` (olhadas uma a uma); o registro das 3 partidas do Daniel de hoje
+  (`%APPDATA%\EterraASelagem\runs.jsonl`); leitura do código de `arena.gd`, `floor_shape.gd`, `room_layout.gd`, `run_map.gd`,
+  `rooms.gd`, `horde.gd`, `projectiles.gd`, `player.gd`, `bot.gd`, `game.gd`, `cam_frame.gd`, `make_data.gd`.
+- **Rodado por mim**: `tools/test.sh` no `61f591e`: **437 de 437** testes passando. Nada do jogo foi mudado.
+- Avaliação completa das arenas, com contas de tamanho, câmera, estrutura de dados e testes:
+  [`docs/design/cycle12_arenas_plan.md`](design/cycle12_arenas_plan.md). Relatório executivo anterior:
+  [`docs/design/game_director_review.md`](design/game_director_review.md).
 
 ## Estado do jogo em 5 linhas
 
-1. A Fase 1 é jogável do título à selagem; Morvath agora luta na **Câmara do Selo** (círculo de 12,5 m sobre o abismo, selo
-   de ouro com o leão de pé, porta selada ao norte, cinco estados do selo); as salas comuns continuam no salão.
-2. O C10 limpou o que a direção proibia: quadro P&B raro (4 em 125 s, 0 com a opção desligada), escudo, orbe e golpe final
-   sem branco, ritual que cai com os 4 primeiros mortos, opções de conforto, "Derrotado por" e registro de partidas.
-3. Saúde técnica boa: 413 de 413 testes, 0 arriscados, 0 erros em 368 simulações, câmara a cerca de 4 ms por quadro a
-   1080p (1 ms mais leve que o salão); robô nunca preso em 136 lutas.
-4. Pela simulação, a câmara deixou a luta mais fácil para o robô com reação humana (57 de 64 contra 43 de 64 no salão);
-   as mortes se concentram na fase 4 (tempestade, maldição) e nos mortos; **ninguém jogou ainda**.
-5. Pendências visuais que restam são de leitura fina (centro da tempestade, velas sobre o herói, estrela da vitória) e de
-   fidelidade à pintura; o som continua sintetizado e a descida continua curta (5 salas).
+1. A Fase 1 é jogável do título à selagem e **o Daniel jogou** (3 partidas hoje, teclado): 1 vitória (luta de 132 s, terminou
+   com 10 de vida), 2 mortes, uma na fase 2 e outra na fase 1 entrando na câmara quase sem vida; chegou a Morvath aos 107 a
+   113 s com 3 dons nas três.
+2. Do teste saiu a mudança dos atiradores (`da35721`, `c666f4a`): mago em rajada que se esconde atrás de colunas, sacerdote
+   com a trepadeira que rasteja, besteiro que foge depois do tiro, círculos no chão só de Morvath. **Ninguém jogou essa
+   versão**; pelo robô as salas ficaram bem mais difíceis (1 a 2 vitórias em 4 a 6 partidas, chega a Morvath com pouca vida).
+3. Todas as salas comuns ainda são **o mesmo salão** (`StageDef.layouts` tem um só); o Daniel pediu arenas variadas. O
+   código tem forma de chão em dado (retângulo ou círculo) mas não tem buraco dentro da sala, busca de caminho, linha de
+   tiro nem câmera por sala, e os tiros atravessam pilares.
+4. Saúde técnica boa: 437 testes passando, câmara a cerca de 4 ms por quadro a 1080p na RTX 5060; desempenho em máquina
+   fraca nunca medido.
+5. "Derrotado por" está errado no registro de partidas (causa achada, BUG-014); o som continua sintetizado; a descida
+   continua curta (5 salas).
 
-Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). Responsáveis: `gameplay-engineer`, `environment-artist`,
-`ui-ux-designer`, `art-director`, `qa-performance`; "Daniel" quando a decisão é dele.
+Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade** P0 (antes de tudo), P1 (neste ciclo), P2
+(próximo), P3 (depois). **Estado**: aberto, proposta (espera o Daniel), aprovado, feito. Responsáveis: `gameplay-engineer`,
+`environment-artist`, `ui-ux-designer`, `art-director`, `qa-performance`; "Daniel" quando a decisão é dele.
 
 ---
 
-## 0. Feito nos ciclos C10 e C11 (fechado com evidência)
+## 0. Feito (fechado com evidência)
 
-| ID | Item | Commit | Prova |
-|---|---|---|---|
-| BUG-001 | Quadro P&B só em Ômega acertado e quebra de fase, no máximo 1 a cada 10 s, opção "Clarões de impacto" | `dcf6632`, `196f33c` | `cycle10/folha_quadros_2min.jpg` (4 em 125 s), `folha_quadros_pb_ligado_desligado.jpg` (0), `test_impact_frame.gd` |
-| BUG-002 | O escudo cai com os 4 primeiros mortos; reforços não contam | `dcf6632` | ritual mediano 10,8 s nas partidas inteiras (meta abaixo de 15) |
-| BUG-003 | Brilho de antecipação dos finalizadores ligado e testado | `dcf6632` | QA: 0 arriscados, `test_only_finishers_glint` passa de verdade |
-| BUG-004 | Morvath escurece no golpe final | `dcf6632` | `cycle10/golpe_final_sem_branco.jpg` |
-| BUG-005 | Escudo do ritual sem pontos brancos | `8a8fed2` | `cycle10/escudo_ritual_zoom.jpg` |
-| BUG-006 | Orbe do feiticeiro com cor, sem miolo branco | `8a8fed2` | `cycle10/orbe_feiticeiro_zoom.jpg` |
-| BUG-007 | Tingido de dano só nas bordas, curto, violeta amaldiçoado | `196f33c` | `cycle10/golpe_sofrido_comum.jpg`, `_amaldicoado.jpg` |
-| BUG-008 | Sem "Novo melhor tempo" sem save | `196f33c`, `dcf6632` | QA seção 1 |
-| BUG-009 | Métrica do ritual guardada na morte | `dcf6632` | `METRICAS.md` (ritual nas derrotas) |
-| QW-001 | Registro de partidas em `user://runs.jsonl` | `dcf6632` | `cycle10/runs_exemplo.jsonl` |
-| QW-002 | Opções de conforto (tremor, clarões, câmera lenta, separação de cores) | `196f33c` | `cycle10/opcoes.jpg`, `test_comfort_ui.gd` |
-| QW-003 | "Derrotado por" na derrota | `196f33c` | `cycle10/derrotado_por.jpg` |
-| QW-004 | `--bot-kite`: investida em 72 de 72 lutas da câmara | `dcf6632` | `METRICAS.md` |
-| QW-005 | Contador do ritual em losangos, "Derrube os mortos" | `196f33c` | `cycle10/contador_ritual.jpg`, `05` |
-| ART-001 | Avisos de Morvath assinados (miolo 0,35, aro, runas, ordem da tempestade) | `6b16045`, `552b55c` (erupções) | `03`, `04`, `07`; resta P8 e o centro da tempestade (BOSS-001) |
-| ART-003 | Portal vermelho fora da luta de Morvath (porta selada na câmara) | `482eb6f` | `01`; nas salas comuns segue a D-14 |
-| ART-004 | Colunas sobre Morvath apagadas e limitadas (Lança de Luz, geada) | `dcf6632`, `552b55c` | `11_geada_golpe_forte.jpg`; falta vídeo novo (DT-004) |
-| ART-005 | Cortina espectral na borda do escudo no lugar do feixe branco | `8a8fed2` | `before_after_ritual.jpg` |
-| ART-006 | Verde corrompido mais frio e escuro que o da Emeth | `8a8fed2` | `cycle10/fase4_clima.jpg` |
-| ART-007 | Queimadura em brasas, sem corpo branco (também em Morvath) | `8a8fed2`, `00dd13b` | `cycle10/queimadura_fogo_t7`, `_t12`; `work/fix_m1_*_depois` |
-| ART-008 | Fase 4 com clima próprio, restaurado na selagem | `8a8fed2`, `6bab080` | `cycle10/fase4_clima.jpg`, `selo_estados.jpg` |
-| ART-009 | Pontos de luz cor de marfim atrás do herói | `dcf6632` | mensagem do commit; sem captura dedicada |
-| C11 | Câmara do Selo inteira (chão de 12,5 m em dado, avisos recortados, câmera fixa, cinco estados, testes de saída 12 x 12) | `6b16045`, `482eb6f`, `6bab080`, `00dd13b`, `552b55c` | QA seção 5 (C11 todos SIM), `test_boss_exits.gd`, `selo_estados.jpg` |
-| QA M-1 | Morvath branco queimando | `00dd13b` | ART_REVIEW seção 6 |
-| QA M-2 | Herói "sobre" o sarcófago leste | `00dd13b` | `work/fix_m2_e12_depois`; as velas do sul seguem abertas (BOSS-002) |
-| QA B-6, O-4 | Tela de fim sem "Nível"; a sala chama "A Câmara do Selo" | `6801e87` | `data/text_pt.tres:226` |
-| ART P1 | Chão da câmara mais claro | `552b55c` | `01`: luminância 41 a 45, B menos R cerca de 30 (meta 40 a 55 e 25 a 45) |
-| ART P3 | Capturas oficiais refeitas no código final | `552b55c` | `CAPTURAS.md`; os dois vídeos continuam do `6bab080` (DT-004) |
-| ART P5 | Erupções com o miolo vermelho | `552b55c` | `07_erupcoes.jpg` (miolo vermelho dentro das runas, olhado) |
-| ART P6 (céu) | Céu azul-marinho no topo | `552b55c` | `01`: B menos R 75, G menos R 29 (meta 50 e 20) |
-| D-19 | Mortos do ritual atravessáveis | não precisou | 0 lutas presas em 136; reabrir só se o teste humano pedir |
+### C12a, madrugada de 2026-11-16
+
+| ID | Item | Commit |
+|---|---|---|
+| BOSS-001 | Centro da tempestade de 121 para 86 de luminância; o miolo do selo escurece com as faixas no chão (mudança a confirmar pelo Daniel) | `b7f5f4d` |
+| BOSS-002 | Velas da frente no pontilhado em volta do herói | `b7f5f4d` |
+| BOSS-003 | Estrela da vitória sem estouro | `b7f5f4d` |
+| QW-006, QW-007, QW-008 | 13 janelas, fio violeta com vão escuro, tampas e friso dos sarcófagos, espada dos estandartes | `b7f5f4d` |
+| BUG-010 | Luta começada depois do ritual sem escudo nem dica (testado) | `75e7ada` |
+| BUG-011 | Sem névoa volumétrica nem SSR no Compatibility | `b7f5f4d` |
+| BUG-012 | `step_ms_avg` e `step_ms_peak` medidos com inimigos de pé | `75e7ada` |
+| DT-007, D-24 | Referências de Morvath e as cinco do ciclo 12 declaradas como IA no `docs/steam-ia.md` | `61f591e` |
+| T1 | Teste do Daniel: 3 partidas no `runs.jsonl` | dados de 07:41 a 07:48 |
+
+### Depois do teste do Daniel (2026-11-16, manhã)
+
+| Item | Commit | Prova |
+|---|---|---|
+| Atiradores ficam longe e atiram; círculos no chão só de Morvath; erupções de 4 m | `da35721` | `tests/test_ranged_enemies.gd`; robô 4 de 6 (era 5 de 6) |
+| Mago, sacerdote e besteiro com os números do Hades II (rajada, trepadeira, fuga) | `c666f4a` | 437 testes; robô 1 a 2 vitórias em 4 a 6 |
+
+### C10 e C11 (histórico)
+BUG-001 a BUG-009, QW-001 a QW-005, ART-001, ART-003 a ART-009, a Câmara do Selo inteira, QA M-1, M-2, B-6, O-4, ART P1,
+P3, P5, P6: ver a revisão anterior no histórico do git (`fa30024:docs/backlog.md`).
 
 ---
 
 ## 1. Bugs
 
-Nenhum crítico nem alto confirmado: sem crash, sem travamento, sem regra que impeça vencer (QA, 368 simulações e 9
-partidas de regressão). O que segue é médio ou baixo.
+Nenhum crítico: sem crash nem travamento nas 3 partidas do Daniel (144 FPS, `step_ms_peak` de 12 a 47 ms, ver DT-008).
+
+### Alto
+
+#### BUG-014 "Derrotado por" errado no registro e o último golpe fora das métricas do chefe
+- **Prioridade**: P0. **Estado**: aberto. **Esforço**: P. **Responsável**: `gameplay-engineer`.
+- **Evidência**: 3ª partida do Daniel: `defeated_by: enemy_knight` e `last_hurt.enemy: knight` numa morte **dentro da luta
+  com Morvath** (fase 1, 26,9 s), com `boss.hurt_by` **vazio** (nenhum golpe da luta registrado, embora ele tenha morrido
+  ali). 1ª partida: `enemy_mage` na fase 2.
+- **Causa achada no código**: `Game._on_hit_player` (`scripts/game/game.gd:713`) chama `player.hurt()` e só **depois** grava
+  `last_hurt` e `boss.record_hurt`. Quando o golpe mata, `Player.hurt` emite `died` na mesma hora
+  (`player.gd`, fim de `hurt`), `_on_player_died` (`game.gd:766`) chama `log_run("death")` antes da volta: o registro leva o
+  golpe **anterior** (o Cavaleiro era o guardião da sala 3) e o chefe nunca conta o golpe que matou.
+- **A conferir**: a tela abre 1,8 s depois, quando `last_hurt` já foi atualizado, então pelo código ela deveria mostrar o
+  golpe certo. O Daniel viu "Cavaleiro" na tela; ou a tela também erra por outro caminho, ou o golpe que matou não tinha
+  origem. O teste do pronto responde.
+- **Impacto**: o registro é o único dado de gente que temos; a tela de derrota mente para o jogador.
+- **Pronto quando**: `last_hurt` e `record_hurt` gravados antes de `player.hurt` poder emitir `died` (ou o `died` adiado);
+  teste GUT: depois de um golpe do Cavaleiro, matar o herói com cada ataque de Morvath (foice, lâminas, investida,
+  erupção, maldição, tempestade) e com um morto invocado: o registro e a tela dizem o golpe certo e `boss.hurt_by` conta o
+  golpe final.
 
 ### Médio
 
-#### BOSS-001 Centro da tempestade ainda rosa claro (P2 do ART_REVIEW, só parte resolvida)
-- **Evidência**: `09_tempestade_seis_almas.jpg` refeita no `552b55c`; medida minha: luminância **121** no recorte 200 x 120
-  do centro (meta do ART_REVIEW: até 90), R 229; os pixels quase brancos caíram de 9,3% para 2,7%. As faixas agora não se
-  somam (cada uma na sua cunha, `test_storm_wedge.gd`), mas o miolo de cada faixa ficou mais claro junto com o chão (fora
-  do centro, R 162 a 164, luminância 87 a 97, contra 62 antes). O que sobra no centro é o encontro das seis cunhas com o
-  aro marfim do círculo do herói (`09`: o aro passa exatamente ali).
-- **Impacto**: os pontos de ordem se contam agora (olhei: as fileiras de pontos brancos aparecem nas raízes), mas o centro
-  é a forma mais clara da tela durante o aviso mais perigoso da luta, e é ali que Morvath está. Opinião minha: as seis
-  faixas estão perto do vermelho opaco, não do "vermelho translúcido" da direção; com o chão mais claro, o miolo de 0,35
-  deveria baixar junto.
-- **Esforço**: P. **Responsável**: `environment-artist` (`ground.gdshader`, `GroundLook`).
-- **Pronto quando**: em `09` o recorte do centro (860, 470, 200 x 120) com luminância até 90 e o meio de uma faixa com as
-  juntas do chão visíveis (luminância de 60 a 80); os pontos de ordem contáveis; o aviso da foice e da investida sem
-  mudança de leitura (`03`, `04`).
+#### BUG-015 Os tiros atravessam pilares e obeliscos, e o mago se esconde atrás deles
+- **Prioridade**: P1 (entra na fundação do C12). **Estado**: aberto. **Esforço**: P. **Responsável**: `gameplay-engineer`.
+- **Evidência**: `scripts/game/projectiles.gd` não consulta o cenário (nenhuma referência a `arena`, `pillars` ou `boxes`);
+  `Horde.cover_spot` (`c666f4a`) leva o mago para trás do pilar mais perto entre ataques.
+- **Impacto**: a cobertura não cobre, nem para ele nem para o herói; contradiz a regra do pedido "cada objeto se comporta
+  como parece". Opinião: mudar isso **facilita** as salas (o herói também se esconde); por isso medir junto com o teste dos
+  atiradores (QW-011).
+- **Pronto quando**: tiro inimigo e do herói morrem com faísca ao tocar pilar, obelisco, estátua ou caixa marcada como
+  sólida; teste GUT; a câmara de Morvath não muda (não tem obstáculo).
 
-#### BOSS-002 Velas da balaustrada sul desenhadas sobre as pernas do herói (P7)
-- **Evidência**: `borda_e_camera.jpg`, quadro "herói em (8.5,8.5)": as chamas e os tocos das velas cobrem as pernas dele;
-  QA M-2 (parte das velas não foi coberta pelo `00dd13b`).
-- **Impacto**: herói legível na borda sul, onde ele mais foge (é a borda mais perto da câmera); lê como se pisasse nas velas.
-- **Esforço**: P. **Responsável**: `environment-artist` (`boss_chamber.gd`).
-- **Pronto quando**: `--no-boss --hero-at=8.5,8.5` mostra as pernas inteiras (velas no pontilhado em volta do herói, como a
-  balaustrada) e o mesmo em `0,12` e `12,0`.
-
-#### BOSS-003 Estrela da vitória estoura em branco dourado (P9)
-- **Evidência**: `10_vitoria_selagem.jpg`; medida minha: 24,7% dos pixels acima de 200 num recorte de 60 x 60 no centro do
-  selo; ART_REVIEW critério 7 (PARCIAL).
-- **Impacto**: é o quadro que fecha a luta; a regra é "nada de clarão branco". Pequeno na tela, mas é o último que se vê.
-- **Esforço**: P. **Responsável**: `environment-artist`.
-- **Pronto quando**: miolo da estrela com máximo 1,0 (abaixo do limiar do glow); no mesmo recorte, menos de 5% acima de 200.
+#### BUG-016 Nascimento e limites que só valem para uma sala retangular centrada
+- **Prioridade**: P1 (fundação do C12). **Estado**: aberto, latente (não aparece no salão de hoje). **Esforço**: P.
+  **Responsável**: `gameplay-engineer`.
+- **Evidência**: `Rooms._spawn_point` (`rooms.gd:207`) sorteia no retângulo `arena.half` e só chama `resolve`; os tiros somem
+  fora de `Arena.HALF * 2` em volta da origem (`projectiles.gd:197`).
+- **Impacto**: com buraco ou ilha, inimigo nasce onde não se chega; numa sala comprida, tiro some no meio dela.
+- **Pronto quando**: nascimento só em zonas da sala com caminho até o herói; limite dos tiros pela caixa da sala real.
 
 ### Baixo
 
 | ID | Título | Evidência | Esforço | Responsável | Pronto quando |
 |---|---|---|---|---|---|
-| BUG-010 | Dica do ritual sem ritual com `--boss-hp` (só ferramenta) | QA do ciclo 9, B5; nenhum commit do C10 cita | P | `gameplay-engineer` | com `--boss-hp` abaixo de 0,66 o ritual roda ou a dica não aparece |
-| BUG-011 | Névoa volumétrica e SSR ligadas no Compatibility (só aviso no log) | QA B-5, `game.gd:244` e `:255` | P | `environment-artist` | log do `--rendering-driver opengl3` sem os dois avisos |
-| BUG-012 | `step_ms` do `RESULT` lido no fim, com a sala limpa | QA B-3 | P | `gameplay-engineer` | `RESULT` com o pico e a média enquanto há inimigos de pé |
-| BUG-013 | O comando do antes e depois da investida na especificação nunca dá investida na câmara | QA B-1, `CAPTURAS.md` | P | `art-director` | `boss_chamber_spec.md` seção 9 com `--bot --bot-kite=1` |
+| BUG-013 | O comando da investida na especificação nunca dá investida na câmara | QA B-1, `CAPTURAS.md` | P | `art-director` | `boss_chamber_spec.md` seção 9 com `--bot --bot-kite=1` |
 
 ---
 
 ## 2. Quickwins
 
-Fazer **depois** da partida do Daniel, junto com o que ele anotar (regra das versões completas: nada de pedir outro teste
-por isso).
-
-| ID | Título | Evidência | Impacto | Esforço | Responsável | Pronto quando |
-|---|---|---|---|---|---|---|
-| QW-006 | Janelinhas do anel distante: 10 a 20, lendo como janelas | `01`: contei 8 retângulos quentes (a sessão contou 7; meta do P6, 10 a 20); opinião minha: os de x 45 e x 228 flutuam sobre a bruma como cartões, sem parede atrás | fundo da pintura (o anel de arcadas) | P | `environment-artist` | `01` com 10 a 20 janelas, cada uma sobre uma silhueta de arcada |
-| QW-007 | Fio violeta dos avisos visível (P8) | ART_REVIEW critério 11 (b) | assinatura "de Morvath" | P | `environment-artist` | fio de 2 px com `Boss.VIOLET` x 0,8 visível em `03` a 200% |
-| QW-008 | Sarcófagos oeste e espada dos estandartes (P11) | ART_REVIEW seção 2; `01` | fidelidade e símbolos | P | `environment-artist` | sarcófagos com tampa mais clara e friso a 1080; espada de 1,2 m nos estandartes |
-| QW-009 | Coroa da fachada fora do quadro na câmera de luta | ART_REVIEW seção 2 (estandartes e pináculo cortados); `01` | monumentalidade (opinião minha) | P | `art-director` decide se aceita | decisão registrada no `boss_chamber_spec.md` |
-| QW-010 | Medir os marcos da `02` contra a planta (P10) | ART_REVIEW critério 2, NÃO MEDIDO | fidelidade comprovada | P | `art-director` | tabela de desvios em px no `ART_REVIEW` |
+| ID | Título | Evidência | Impacto | Esforço | Responsável | Prioridade | Pronto quando |
+|---|---|---|---|---|---|---|---|
+| QW-011 | Registro de partidas com dano levado por tipo de inimigo e por sala, e vida ao entrar em cada sala | o `runs.jsonl` de hoje só tem `hurt_by` dentro da luta do chefe; não dá para saber qual atirador feriu nas salas, nem com quanta vida ele chegou na câmara (morreu em 26,9 s) | mede os atiradores novos com gente, que é o que decide o balanceamento deles | P | `gameplay-engineer` | P0 | `runs.jsonl` com `rooms: [{depth, layout, hp_in, hurt_by: {mage: n, ...}, time}]`; teste do `RunLog` |
+| QW-012 | Teste humano dos atiradores novos (dentro da próxima entrega, sem pedido à parte) | `c666f4a` nunca jogado; robô caiu para 1 a 2 vitórias em 4 a 6 | saber se as salas ficaram justas antes de mexer nelas de novo | P | Daniel; `qa-performance` lê o registro | P1 | 3 partidas no registro com QW-011; pergunta no roteiro: "viu o tiro do mago chegando?", "a trepadeira dá para fugir?" |
+| QW-013 | Vida ao entrar na câmara visível na métrica do robô | o robô e o Daniel chegam com pouca vida (2 de 3 partidas morreram na câmara) | separar "Morvath difícil" de "salas difíceis" | P | `qa-performance` | P1 | `METRICAS` com a mediana de vida ao entrar no chefe, robô 0,25, 8 partidas |
 
 ---
 
 ## 3. Dívidas
 
-### DT-001 A descida curta continua o padrão e distorce todo balanceamento
-- **Evidência**: `tools/make_data.gd:348-350` (`st.rooms = 4`, `elite_from_depth = 2`); a sessão manteve a D-06 curta;
-  nas partidas inteiras com reação 0,25 o robô chega com 1 a 3 dons e vence 4 de 8 na câmara (`METRICAS.md`).
-- **Impacto**: Morvath tem os números da chefe do Hades II (6050 de vida) para 6 a 8 dons; qualquer ajuste feito agora,
-  com 2 dons, sai errado. Para o teste de hoje a curta é boa (partida de 5 min); para o C12 não.
-- **Esforço**: P. **Responsável**: `gameplay-engineer`; decisão do Daniel (D-06).
-- **Pronto quando**: `--short` mantém a descida de teste; o padrão volta às 10 salas e o chefe na 11; 8 partidas do robô
-  chegando com 5 a 8 dons.
+### DT-001 A descida curta continua o padrão e distorce o balanceamento
+- **Evidência**: `tools/make_data.gd` (`st.rooms = 4`); o Daniel chega a Morvath com 3 dons em 107 a 113 s.
+- **Impacto**: Morvath tem 6050 de vida para 6 a 8 dons; com 3, qualquer ajuste sai torto. Com arenas novas, numa descida de
+  5 salas só 2 são de luta comum: quase não se veria a variedade.
+- **Esforço**: P. **Responsável**: `gameplay-engineer`; decisão do Daniel (D-06, D-27).
+- **Pronto quando**: descida de teste com o número de salas que o Daniel escolher; `--short` mantém a de 5.
 
-### DT-002 O robô não mede dificuldade (a câmara pode ter ficado fácil)
-- **Evidência**: reação 0 vence 32 de 32; investida em todas as 72 lutas com afastamento e **nunca acertou** o robô; a
-  câmara subiu de 43 para 57 vitórias em 64 com reação 0,25 (`METRICAS.md`). Duração nas vitórias de 92 a 162 s (meta de
-  2 a 4 min na D-11).
-- **Impacto**: o robô diz "mais fácil", gente pode achar o contrário (sem cantos para descansar, a câmara põe tudo perto).
-  Só a coluna de gente responde. Nenhuma mudança de vida ou dano de Morvath antes dela.
-- **Esforço**: M. **Responsável**: `qa-performance` (planilha com três colunas: robô 0, robô 0,25, gente pelo `runs.jsonl`).
+### DT-002 O robô não mede dificuldade
+- Igual à revisão anterior: o robô vence demais com reação 0 e não sabe usar cobertura. Com arenas, ele precisa de caminho
+  (C12-F7) ou toda métrica de sala nova fica errada. **Responsável**: `qa-performance`, `gameplay-engineer`.
 
 ### DT-003 Desempenho em máquina fraca nunca medido
-- **Evidência**: QA seção 3 ("Não medido: celular, placa fraca, navegador com números"); só a RTX 5060 medida.
-- **Esforço**: M. **Responsável**: `qa-performance`.
-- **Pronto quando**: uma rodada no Compatibility e uma em 1280 x 720 com escala 0,67 nas três cenas; meta de 60 FPS escrita
-  para os requisitos mínimos da Steam.
+- Igual; pesa mais com salas grandes (mais peças e luzes). Medir no C12 pelo menos o Compatibility a 1280 x 720 no salão,
+  na cripta e na fenda. **Responsável**: `qa-performance`.
 
-### DT-004 Vídeos em 720p, mudos e de antes das correções
-- **Evidência**: QA B-2, `CAPTURAS.md` ("Saiu em 1280 x 720"); os dois vídeos da luta são do `6bab080`, antes do `00dd13b`
-  e do `552b55c` (Morvath clareando, coluna de geada, tempestade antiga).
-- **Esforço**: P. **Responsável**: `gameplay-engineer` (opção de gravação a 1080), `qa-performance` (regravar).
-- **Pronto quando**: um vídeo da luta no HEAD, 1920 x 1080, com som; nenhum quadro com Morvath coberto de branco.
+### DT-004 Vídeos da luta em 720p, mudos e de antes das correções
+- **Evidência**: QA B-2; os vídeos são do `6bab080`. **Esforço**: P. **Responsável**: `gameplay-engineer` (gravar a 1080),
+  `qa-performance`. **Pronto quando**: vídeo da luta no HEAD a 1920 x 1080 com som. Fazer junto com os vídeos de travessia
+  do C12.
 
 ### DT-005 "Resources still in use at exit" continua
-- **Evidência**: o `dcf6632` tirou o vazamento de ObjectDB; o QA ainda vê "resources still in use at exit" em toda execução.
 - **Esforço**: P. **Responsável**: `gameplay-engineer`. **Pronto quando**: `tools/test.sh` e `tools/smoke.sh` sem a linha.
 
-### DT-006 Vídeo dirigido do bloqueio de corpo (REG-001, parcial)
-- **Evidência**: `cycle10/bloqueio_de_corpo.mp4` é o robô lutando cercado, não um andar dirigido (QA C10, B-4). O risco de
-  ficar preso foi medido (0 em 136 lutas), a sensação não.
-- **Esforço**: P. **Responsável**: `gameplay-engineer` (`--walk-to`, `--stress-line`), `qa-performance` (vídeo); Daniel (sensação, hoje).
+### DT-006 Vídeo dirigido do bloqueio de corpo
+- Parcial desde o C10. Cabe no vídeo de travessia dos corredores da Cripta (C12). **Responsável**: `qa-performance`.
 
-### DT-007 `docs/steam-ia.md` com a origem das referências de Morvath em aberto
-- **Evidência**: `docs/steam-ia.md:8` ("A confirmar com o Daniel se também são de IA: as quatro imagens de Morvath").
-- **Esforço**: P. **Responsável**: a sessão principal, com a resposta do Daniel (D-24).
+### DT-008 Pico de 47 ms no passo da simulação em partida de gente
+- **Evidência**: `step_ms_peak` 46,74 (1ª partida), 24,11 (2ª), 11,95 (3ª) no `runs.jsonl`, com média 0,16 ms.
+- **Impacto**: um quadro de 47 ms é um engasgo visível; pode ser a escolha de dom, o carregamento de uma sala ou o primeiro
+  uso de um efeito, não necessariamente o passo. Com campo de fluxo (C12) o passo vai pesar mais.
+- **Esforço**: P. **Responsável**: `qa-performance` (achar o momento), `gameplay-engineer`.
+- **Pronto quando**: o RESULT diz em que momento foi o pico; abaixo de 8 ms fora das trocas de sala.
 
 ---
 
-## 4. Próximos ciclos
+## 4. Arenas variadas (pedido do Daniel de 2026-11-16)
 
-Ordem recomendada (confirmo a da sessão, com um ajuste): **T1, teste do Daniel hoje** (sem mexer em nada antes) →
-**C12a "Fechar a Câmara e ouvir o teste"** (poucas horas a 1 dia: o que o Daniel anotar mais BOSS-001 a 003 e o vídeo
-novo) → **C12 "Combate do Hades por inteiro"** (com a descida inteira) → **T2, teste com três pessoas** → **C13 "Som"** →
-**C14 "Steam"**. O ajuste: separar um C12a pequeno, porque o C12 é grande e mexe na economia; misturar os retoques da
-câmara nele atrasaria as duas coisas e confundiria a medida.
+Tudo nesta seção é **proposta**: nenhuma arena está aprovada até o Daniel aprovar o escopo (D-25). Avaliação, contas e
+riscos em `docs/design/cycle12_arenas_plan.md`. Evidências de toda arena em `docs/gallery/cycle12_maps/` (sem personagens,
+com o Explorador, em combate, o obstáculo principal, entrada e saída, lado a lado com a referência, vídeo de travessia) e
+`docs/gallery/cycle12_maps/ART_REVIEW.md`.
 
-### T1 Teste do Daniel (hoje)
-- **Objetivo**: a primeira coluna de gente na luta nova, com registro.
-- **Por que agora**: tudo o que o C10 e o C11 pediam está pronto; o robô não responde se é divertido nem se é justo.
-- **Entregas**: o Daniel joga 3 partidas no build de Windows da pasta de teste (há um `ASelagem.exe` de 01:55 em
-  `C:\Users\danie\ASelagem-teste`, mesma hora do `552b55c`; a sessão confirma que é o HEAD e copia também para
-  `Downloads\ASelagem-3D`), com o roteiro do relatório executivo; o `runs.jsonl` fica em
-  `%APPDATA%\EterraASelagem\runs.jsonl`.
-- **Aceite**: 3 linhas no `runs.jsonl`; respostas às perguntas do roteiro; decisões da seção 5 confirmadas ou trocadas.
-- **Responsáveis**: Daniel; `qa-performance` lê o `runs.jsonl` e soma à planilha.
-- **Riscos**: o Windows dele bloqueia o executável sem assinatura (Smart App Control; memória do projeto).
+### Fundação (entrega 1, antes de qualquer arte)
 
-### C12a "Fechar a Câmara e ouvir o teste"
-- **Objetivo**: corrigir o que o Daniel viu e fechar as três pendências de leitura da câmara.
-- **Por que agora**: são horas; deixam a luta pronta para mostrar a outras pessoas (o ART_REVIEW pede P1 a P3 antes disso).
-- **Entregas**: BOSS-001, BOSS-002, BOSS-003, QW-006 a QW-008, DT-004 (vídeo novo a 1080 com som), a lista do Daniel.
-- **Aceite**: os critérios de cada item; `tools/test.sh` 0 falhas e 0 arriscados; 64 lutas do robô sem queda de vitórias
-  acima de 4 em 64 contra o `METRICAS.md` atual (nada de balanceamento aqui).
-- **Evidências**: `09`, `10`, `borda_e_camera`, `01` refeitas; vídeo novo; revisão curta do `art-director`.
-- **Responsáveis**: `environment-artist`, `gameplay-engineer` (gravação), `qa-performance`, `art-director`.
-- **Riscos**: crescer com pedidos novos do Daniel; o que for sistema novo vai para o C12.
+| ID | Item | Prioridade | Responsável | Justificativa | Aceite | Depende de | Estado |
+|---|---|---|---|---|---|---|---|
+| C12-F1 | `RoomLayout` estendido: `id`, `size_class`, `difficulty`, `depth`, `max_alive`, `look`, `obstacles`, `spawns`, `exits`, `cam_bounds`, `variants`; tudo gerado pelo `_stage` do `make_data.gd` | P1 | `gameplay-engineer` | conteúdo é dado; reusa o que a câmara já estendeu, sem `ArenaDefinition` paralela | o salão de hoje descrito pelos campos novos sem mudar nada no jogo (smoke igual, capturas iguais) | D-25 | proposta |
+| C12-F2 | `FloorShape.POLY`: união de polígonos e buracos, com `contains`, `clamp`, `edge_distance`, `cut`; movimento do herói, da esquiva, dos empurrões e dos inimigos **varrido** (corta o passo na borda) | P1 | `gameplay-engineer` | abismo dentro da sala; o `resolve` de hoje deixaria a esquiva atravessar um vão estreito | teste 2 do plano: 200 posições x 16 direções por buraco, a 60 e a 30 FPS, nunca dentro nem do outro lado | F1 | proposta |
+| C12-F3 | `NavGrid` (core, puro): grade de 0,5 m, campo de fluxo até o herói refeito no máximo 4 vezes por segundo, `reachable`, `next_step`, `clear_line`; inimigo anda reto quando a linha está livre e segue o campo quando não está | P1 | `gameplay-engineer` | hoje o inimigo anda reto e fica preso em qualquer fenda; decisão técnica minha: campo de fluxo próprio, não o `NavigationServer2D` (determinístico, testável sem cena, serve ao robô) | testes 1 e 4: nenhuma ilha morta; 64 lutas por arena sem inimigo parado sem caminho por mais de 3 s; `step_ms_peak` abaixo de 2 ms com 8 inimigos | F2 | proposta |
+| C12-F4 | Linha de tiro e tiros que param na pedra (inclui BUG-015): obstáculo com `blocks_shots`; atirador só prepara com `clear_line` e anda até ter; ninguém prepara tiro com o corpo fora de 5% a 95% da tela | P1 | `gameplay-engineer` | cobertura real; nada ataca de fora da tela | teste 5 do plano; a câmara de Morvath igual (`test_boss_exits.gd` e `test_boss.gd` passam) | F1, F3 | proposta |
+| C12-F5 | Nascimento e saídas em dado (inclui BUG-016): zonas de nascimento, saídas por arena, caminho garantido do início a cada saída e zona | P1 | `gameplay-engineer` | "nenhum inimigo surge em área inacessível", "a saída permanece acessível" | teste 1 em toda arena e variante | F3 | proposta |
+| C12-F6 | Câmera por arena: `cam_bounds` para o alvo, `CamFrame.keep` mantém os 18%, sem zoom por sala | P1 | `gameplay-engineer` | salas grandes e compridas pedem que a câmera ande; nada de zoom brusco | vídeo de travessia de ponta a ponta sem salto do alvo (diferença de alvo entre quadros abaixo de 0,5 m a 60 FPS); herói sempre dentro da moldura segura | F1 | proposta |
+| C12-F7 | Robô com caminho (`NavGrid`) e métricas por sala: `arena`, `stuck` por inimigo, `shots_blocked`, tempo até o primeiro contato | P1 | `gameplay-engineer` | sem isso as métricas das arenas novas são falsas (DT-002) | robô nunca preso em 64 lutas por arena | F3 | proposta |
+| C12-F8 | Escolha da arena: `RunMap._layout()` por profundidade e dificuldade, sem repetir a anterior, com semente; fonte e loja no salão | P1 | `gameplay-engineer` | variedade sem caos; difícil não sai cedo | teste: 1000 descidas com semente, nunca a mesma arena seguida, nenhuma de dificuldade alta antes de 40% da descida | F1 | proposta |
+| C12-F9 | Laboratório: `--arena=id --variant=n`, `tools/arena_lab.gd` (vista sem personagens; de cima com a grade de caminho, os buracos e as zonas desenhados; na câmera do jogo) | P1 | `gameplay-engineer`, `qa-performance` | as evidências da seção 16 do pedido e a revisão de arte dependem disso | as seis capturas de cada arena saem por comando | F1 | proposta |
 
-### C12 "Combate do Hades por inteiro": descida, economia, romã e raridade
-- **Objetivo**: a partida ter a progressão de dons do Hades II e o jogador chegar a Morvath com 5 a 8 dons.
-- **Por que agora**: o C11 resolveu a arena; o que mais pesa na luta hoje é chegar com 1 a 3 dons (DT-001), e a escolha de
-  dons é rasa sem raridade em sequência, romã e loja do Hades (`docs/design/hades2_sistemas.md`, itens 1 a 3).
-- **Entregas**: DT-001 (descida inteira com `--short`); baralho de recompensas, romã por nível, loja em 3 grupos, ouro por
-  inimigo; D-09 e D-10 decididos com o `runs.jsonl`; ajuste de Morvath só se a coluna de gente pedir (D-11).
-- **Aceite**: robô chega com 5 a 8 dons em 8 partidas; nenhuma sala comum acima de 8 de pé; 32 dons em `base` e
-  `per_level` com teste de cada Elo; partida inteira do robô 0,25 entre 4 e 7 vitórias em 8.
-- **Evidências**: `METRICAS` com a coluna de gente; capturas de loja, romã e carta; relatório de QA.
-- **Responsáveis**: `gameplay-engineer`, `ui-ux-designer`, `qa-performance`.
-- **Riscos**: mexer nos 32 dons quebrar Elos; a partida passar de 12 min e cansar o teste (manter `--short` para teste).
+### Arenas da entrega 1 (minha recomendação: 3, cada uma com 2 variantes)
 
-### T2 Teste com três pessoas (depois do C12)
-- Protocolo da seção 8 do relatório executivo (quem já jogou Hades, quem nunca jogou, quem joga de controle). Requer a
-  D-13 (executável para estranhos).
+| ID | Arena | Prioridade | Responsável | Justificativa | Aceite | Depende de | Estado |
+|---|---|---|---|---|---|---|---|
+| C12-A1 | **Cripta dos Esquecidos** (pequena, cerca de 22 x 20 m andáveis; sarcófagos e colunas que bloqueiam tiro, corredores de 3,5 m ou mais, nichos com estátua encapuzada, velas) | P1 | `environment-artist` (cenário), `gameplay-engineer` (obstáculos, teto 4 a 6, no máximo 2 atiradores, sem sacerdote) | a mais barata (todas as peças existem) e a que prova cobertura e linha de tiro | testes 1, 4, 5, 6; capturas da seção 16; revisão do `art-director` sem pendência alta | F1 a F9 | proposta |
+| C12-A2 | **Salão das Fendas** (grande, cerca de 40 x 30 m; fenda de 6 a 9 m cortando 60% do chão, 2 pontes de 5 m e uma passagem lateral, borda quebrada, vista do abismo violeta) | P1 | `environment-artist`, `gameplay-engineer` (teto 6 a 8) | prova buracos, caminho e câmera que anda; é o pedido central do Daniel (salas com abismo) | testes 1 a 4 e 6; nenhum vão entre 3 e 6 m sem ponte; vídeo de travessia | F1 a F9 | proposta |
+| C12-A3 | **Jardim das Raízes Mortas** (média, cerca de 34 x 28 m; árvore **petrificada** de pedra com tronco de 3,5 m de raio que bloqueia corpo e tiro, 4 a 6 raízes baixas, cristais espectrais só de enfeite, copa no pontilhado em volta do herói) | P1, se a D-30 aceitar | `environment-artist`, `art-director` | obstáculo grande no meio, contornar e usar como cobertura; é a peça de arte mais difícil sem Meshy, por isso vem por último e pode cair | testes 1, 4, 5; herói visível em 100% das posições atrás da copa (captura em grade de 2 m); revisão do `art-director` aprova a árvore lado a lado com a `04` | F1 a F9, D-30 | proposta |
+| C12-A0 | **Salão das Catacumbas** (o de hoje, da pintura do Daniel) como uma das arenas: abertura, fonte e loja | P1 | `gameplay-engineer` | é a referência aprovada; continua sendo a sala de dificuldade baixa | descrito por F1 sem mudança visível | F1, D-26 | proposta |
 
-### C13 "Som e acabamento"
-- **Objetivo**: golpes e a luta com som de verdade; peças definitivas se a D-05 liberar.
-- **Por que nessa ordem**: o "peso" do golpe é a maior distância para o Ember & Blade que nunca foi medida; nenhum vídeo tem
-  som. Entregas: ART-002 (fonte decidida na D-12), ART-010, ART-011, QW-009. Aceite: o Daniel diz de olhos fechados qual
-  ataque de Morvath vem em 7 de 8; vídeo de 2 min a 1080 com som; `docs/steam-ia.md` em dia.
-- **Responsáveis**: `art-director`, `environment-artist`, `gameplay-engineer`, `qa-performance`.
+### Arenas das entregas seguintes
 
-### C14 "Caminho da Steam"
-- Como antes: controle físico com ícones, opções de vídeo, save robusto, DT-003, a menor meta progressão (D-07),
-  executável assinado (D-13). Aceite: fluxo inteiro só no controle verificado por gente; 60 FPS no preset baixo.
+| ID | Arena | Entrega | Por que depois | Decisão |
+|---|---|---|---|---|
+| C14-A4 | Santuário Desmoronado (grande, guardiões, dificuldade baixa a média) | 2 | só obstáculos; é a casa natural do guardião, entra junto com a descida mais longa | |
+| C14-A5 | Ponte dos Condenados (comprida, 2 plataformas de 16 m, ponte de 5 m, ninguém nasce na ponte, 3 a 5 por plataforma) | 2 | reaproveita os buracos da fenda; risco alto de bloqueio injusto e de câmera; precisa da entrega 1 validada | |
+| C14-A6 | Câmara das Runas Instáveis (média, perigo de chão periódico, no máximo 25% do chão ao mesmo tempo, desenhado por baixo dos avisos dos inimigos) | 2 | único sistema novo de perigo; dificuldade alta; círculos no chão são só de Morvath desde `da35721` | D-29 |
+| C16-A7 | Biblioteca Sepultada (em L, estantes destrutíveis que abrem passagem e mudam o caminho) | 3 | pede destrutíveis com caminho recalculado e estantes que não existem no kit | D-32 |
+| C16-A8 | Reservatório das Almas (ilhas e água rasa que desacelera) | 3 | terreno que desacelera é a mesma sensação da maldição de Morvath (30% mais lento); água não existe no kit | D-31 |
+
+---
+
+## 5. Próximos ciclos
+
+Ordem recomendada: **C12a2 "Medir certo"** (horas, já) → **C12 "Arenas I"** (fundação e 3 arenas) → **T2, teste do Daniel**
+(a entrega inteira, com os atiradores) → **C13 "Progressão do Hades"** (descida inteira, romã, raridade, loja) → **C14
+"Arenas II"** → **C15 "Som"** → **C16 "Steam"** (e as arenas da entrega 3 quando couberem). Mudança em relação à revisão
+anterior: o antigo C12 "Combate do Hades por inteiro" vira C13 e cede a vez às arenas, porque o Daniel pediu as arenas
+agora e porque o teste dos atiradores precisa ser lido antes de mexer em economia. O som cai mais uma posição; opinião: é a
+maior distância para o Ember & Blade que nunca foi medida, não deve passar do C15.
+
+### C12a2 "Medir certo" (poucas horas, sem pedir teste)
+- **Objetivo**: o próximo teste de gente responder o que precisamos saber.
+- **Por que agora**: o registro de hoje está errado no "Derrotado por" e não diz qual atirador fere nem com quanta vida o
+  jogador chega no chefe.
+- **Entregas**: BUG-014, QW-011, QW-013, DT-008 (achar o momento do pico).
+- **Aceite**: os critérios de cada item; 437 testes ou mais passando.
+- **Responsáveis**: `gameplay-engineer`, `qa-performance`. **Riscos**: nenhum relevante.
+
+### C12 "Arenas I": fundação e três arenas
+- **Objetivo**: a descida passar por salas de forma, tamanho e cobertura diferentes, sem nenhum inimigo ou herói preso.
+- **Por que agora**: pedido do Daniel; e o combate espacial (cobertura, contornar, linha de tiro) é a próxima camada de
+  combate depois dos atiradores, que já usam cobertura.
+- **Entregas**: C12-F1 a F9, C12-A0 a A3, a descida de teste escolhida na D-27, DT-004 junto com os vídeos de travessia,
+  DT-003 medido no Compatibility.
+- **Aceite**: todos os critérios das tabelas da seção 4; 64 lutas do robô 0,25 por arena sem preso; partida inteira do
+  robô 0,25 com a descida de teste entre 3 e 6 vitórias em 8; quadro a 1080p na RTX 5060 até 6 ms por arena; tempo até
+  Morvath do robô entre 3 e 5 min na descida de teste.
+- **Evidências**: `docs/gallery/cycle12_maps/` (seis capturas e um vídeo por arena), `ART_REVIEW.md` do `art-director`,
+  `docs/qa/latest_report.md` com os testes 1 a 7 do plano.
+- **Responsáveis**: `gameplay-engineer` (F1 a F9, encontros), `environment-artist` (A1 a A3), `art-director` (spec de cada
+  arena antes de construir e revisão depois), `ui-ux-designer` (leitura das bordas do abismo e das saídas; regra de que
+  nada de cenário cobre aviso), `qa-performance` (testes, medidas, capturas).
+- **Ordem dentro do ciclo**: F1 a F9 com testes e uma sala cinza de prova; depois a Cripta; depois a Fendas; por último o
+  Jardim. Paralelo possível: o `art-director` escreve as specs das três enquanto a fundação é feita.
+- **Riscos**: navegação (o maior); esquiva atravessando vão; a cobertura facilitar as salas ao mesmo tempo em que os
+  atiradores as dificultaram (medida misturada: por isso o QW-011 vem antes); árvore sem Meshy; desempenho em sala grande.
+  Detalhes e mitigação no plano, seção 8.
+
+### T2 Teste do Daniel (a entrega inteira)
+- 3 partidas com o registro novo; perguntas: as salas parecem lugares diferentes? ficou preso ou viu inimigo preso? a fenda
+  e a cobertura mudaram como você luta? os atiradores são justos? quanto durou até Morvath?
+- Depois dele, o teste com três pessoas da revisão anterior (D-13).
+
+### C13 "Progressão do Hades" (o antigo C12)
+- **Objetivo**: chegar a Morvath com 5 a 8 dons, com a progressão de dons do Hades II.
+- **Entregas**: DT-001 (descida inteira), baralho de recompensas, romã por nível, loja em 3 grupos, ouro por inimigo, D-09 e
+  D-10 decididos com o registro; arenas distribuídas pela descida inteira (plano, seção 6).
+- **Aceite**: robô chega com 5 a 8 dons em 8 partidas; partida inteira entre 10 e 13 min; robô 0,25 entre 4 e 7 vitórias
+  em 8. **Responsáveis**: `gameplay-engineer`, `ui-ux-designer`, `qa-performance`.
+
+### C14 "Arenas II"
+- Santuário, Ponte e Runas (com a D-29), terceira variante das arenas do C12. Mesmos testes e evidências.
+
+### C15 "Som" e C16 "Steam"
+- Como na revisão anterior: ART-002 (som de combate e música, D-12), ART-010, ART-011; depois controle com ícones, opções de
+  vídeo, save robusto, DT-003 nas metas da Steam, D-07, D-13; Biblioteca e Reservatório se o Daniel quiser antes do lançamento.
 
 ### Itens de arte que seguem abertos
 
 | ID | Título | Esforço | Responsável | Quando |
 |---|---|---|---|---|
-| ART-002 | Som de combate e música | G | `art-director`, Daniel (fonte) | C13 |
-| ART-010 | Peças definitivas (estátuas, sarcófagos, porta em relevo, foice de Morvath; P14) | M | `art-director`, `environment-artist`; Daniel autoriza créditos | C13 |
-| ART-011 | Gancho amarelo de Morvath e ouro das elites por repintura | P | Daniel | C13 |
+| ART-002 | Som de combate e música | G | `art-director`, Daniel (fonte) | C15 |
+| ART-010 | Peças definitivas (estátuas, sarcófagos, porta em relevo, foice de Morvath; árvore se a D-30 pedir Meshy) | M | `art-director`, `environment-artist`; Daniel autoriza créditos | C15 |
+| ART-011 | Gancho amarelo de Morvath e ouro das elites por repintura | P | Daniel | C15 |
+| QW-009, QW-010 | Coroa da fachada fora do quadro; medir a `02` contra a planta | P | `art-director` | quando sobrar |
 
 ---
 
-## 5. Decisões do Daniel
+## 6. Decisões do Daniel
 
-### Tomadas pela sessão durante a noite (reversíveis; a confirmar pelo Daniel)
+### Novas (arenas, 2026-11-16)
 
-| ID | Decisão tomada | Onde está | Minha recomendação |
+| ID | Pergunta | Opções | Minha recomendação | Estado |
+|---|---|---|---|---|
+| D-25 | Escopo da primeira entrega das arenas | (a) as 4 que você sugeriu (Fendas, Jardim, Cripta, Runas); (b) 3: Cripta, Fendas, Jardim, com Runas na 2ª; (c) só Cripta e Fendas | **(b)**. Runas é a única que pede um sistema novo de perigo, é difícil (sairia tarde na descida de teste) e esbarra na regra de hoje dos círculos no chão. Se a árvore não ficar boa sem Meshy, cai para (c) | pendente |
+| D-26 | O Salão das Catacumbas (a sua pintura) continua como uma das arenas? | sim: abertura, fonte e loja; sim, só fonte e loja; não | **Sim, abertura, fonte e loja** | pendente |
+| D-27 | Tamanho da descida de teste da próxima entrega | 5 salas como hoje (só 2 lutas comuns: quase não se vê a variedade); 7 salas (3 lutas, fonte, guardião, loja, Morvath; cerca de 4 a 5 min até o chefe); a inteira (10 e Morvath na 11) | **7 salas** no teste; a inteira no C13 | pendente |
+| D-28 | Golpe que empurra um inimigo para o abismo | ele para na borda; ele cai e morre (novo, muda o combate) | **Para na borda** nesta entrega; cair pode ser um dom depois, decisão sua | pendente |
+| D-29 | Forma das runas instáveis (entrega 2) | círculos (quebra a regra de hoje: círculo no chão é só de Morvath); faixas e ladrilhos ao longo das inscrições do chão, vermelho translúcido com runa | **Faixas e ladrilhos**, nunca círculo | pendente |
+| D-30 | A árvore do Jardim | petrificada, de pedra, feita no código (sem créditos); árvore viva pelo Meshy (créditos, depois do C12); tirar o Jardim | **Petrificada, de pedra**; se a revisão de arte reprovar, sai da entrega 1. Sem texto nem história sobre ela: o cânone não tem árvore nas catacumbas | pendente |
+| D-31 | Água rasa que desacelera (Reservatório, entrega 3) | desacelera herói e inimigos; só enfeite | **Decidir depois do T2**: a lentidão já é a marca da maldição de Morvath | pendente |
+| D-32 | Destrutíveis que abrem passagem (Biblioteca, entrega 3) | sim; não, só cobertura que quebra | **Depois do T2** | pendente |
+| D-33 | Nomes das arenas aparecem para o jogador ao entrar? | sim, por 2 s, como o nome das fases de Morvath; não | **Sim**, com os nomes que você deu (Cripta dos Esquecidos etc.); nenhum texto de história sobre elas | pendente |
+
+### Tomadas pela sessão na noite de 2026-11-16 (a confirmar; o Daniel ainda não respondeu)
+
+| ID | Decisão tomada | Onde está | Recomendação |
 |---|---|---|---|
-| D-08 | Quadro P&B só em Ômega acertado e quebra de fase, no máximo 1 a cada 10 s, com opção de desligar | `dcf6632`, `196f33c` | Confirmar; perguntar depois da partida se ele notou e se vale |
-| D-15 | Salas comuns continuam no salão; só Morvath na câmara | `6b16045` | Confirmar; guardiões numa câmara menor só se o teste pedir |
-| D-18 | Raio de 12,5 m (12 m andáveis) | `docs/design/boss_arena.md` | Confirmar; é dado, ajustável depois do T2 |
-| D-14 | Na luta, a porta selada no lugar do portal vermelho | `482eb6f` | Confirmar na luta; nas salas comuns o portal vermelho continua (proponho violeta apagado) |
-| D-16 | Selo com a geometria da pintura (anel duplo, oito pontas) e o leão de pé do cânone no miolo | `482eb6f` | Confirmar; perguntar se "de pé" é nas patas de trás (como está) |
-| D-17 | Espada erguida no lugar da cruz (pilaretes, sarcófagos, estandartes); leão só no selo | `482eb6f`, `00dd13b` | Confirmar; o cânone não cita cruz |
-| D-20 | Morvath vai ao centro ao abrir as fases 3 e 4 | `6b16045` | Confirmar; é o que dá o vão da tempestade (`boss_arena.md`, conta 2) |
-| D-21 | A sala do chefe chama "A Câmara do Selo" | `6801e87` | Confirmar |
-| D-22 | A tela de fim não mostra o nível (o modo por salas não tem) | `6801e87` | Confirmar (é correção) |
-| D-06 | Descida curta mantida (5 salas) | `make_data.gd:348` | Manter para o T1; voltar à inteira como padrão no C12 |
+| D-08 | Quadro P&B só em Ômega acertado e quebra de fase, 1 a cada 10 s, com opção | `dcf6632`, `196f33c` | Confirmar |
+| D-14 | Na luta, a porta selada no lugar do portal vermelho | `482eb6f` | Confirmar |
+| D-15 | Salas comuns no salão, só Morvath na câmara | `6b16045` | Confirmar a câmara só dele (o pedido das arenas já confirma); a primeira metade muda com as arenas |
+| D-16 | Selo com o leão de pé (patas de trás) | `482eb6f` | Confirmar |
+| D-17 | Espada erguida no lugar da cruz | `482eb6f`, `00dd13b` | Confirmar |
+| D-18 | Raio de 12,5 m | `boss_arena.md` | Confirmar |
+| D-20 | Morvath vai ao centro nas fases 3 e 4 | `6b16045` | Confirmar |
+| D-21, D-22 | "A Câmara do Selo"; tela de fim sem nível | `6801e87` | Confirmar |
+| C12a | O miolo do selo escurece com as faixas da tempestade | `b7f5f4d` | Confirmar |
+| D-06 | Descida curta mantida | `make_data.gd` | Trocar pela D-27 |
 
-### Abertas
+### Abertas de antes
 
-| ID | Pergunta | Opções | Recomendação |
-|---|---|---|---|
-| D-23 | O que é a porta selada ao norte e o véu de runas da escadaria sul (P12) | dar nome e papel no cânone; deixar sem explicação; trocar por parede | O Daniel (2026-11-16): ainda pendente na história. Fica sem texto e sem nome até ele definir no cânone |
-| D-24 | As quatro imagens de Morvath em `docs/art/ref/morvath/` são de IA? | sim (declarar como referência); não | Responder para fechar o `docs/steam-ia.md` (DT-007) |
-| D-11 | Meta de dificuldade da primeira vitória | 1ª tentativa; até 3; até 10 | Até 3 tentativas para quem jogou Hades, com a descida inteira; a partida de hoje dá o primeiro número |
-| D-09 | Magia na luta do chefe | como o Hades; mais Magia por janela punida ou pelos mortos | Ler os Ômegas no `runs.jsonl` de hoje antes de mudar |
-| D-10 | Bônus de sequência (não existe no Hades II) | manter; tirar | Tirar no C12 se o Daniel não sentir falta hoje |
-| D-01 | Título de Morvath | "o Rei que Traiu a Luz" (no jogo); "o Lich-Rei do Sul" (cânone) | Um dos dois; nunca "Guardião" (no cânone é o Juramentado) |
-| D-02 | Quem sela Morvath | quatro paladinos; um paladino do leão e quatro guardiões (cânone de 12/11); fora da tela | Seguir o cânone de 12/11; texto neutro até lá |
-| D-04 | Nomes de `PALADIN_1` a `PALADIN_4` e das famílias de dons | agora; depois da D-02 | Depois da D-02 |
-| D-05 | Créditos do Meshy (546) | peças da câmara e do salão; repintura de Morvath e elites; segurar | No C13: sarcófago, estátua encapuzada, porta em relevo e a foice (P14); nada antes do T1 |
-| D-07 | Algo entre partidas | nada; Juramentos; hub | Nada até o T2; Juramentos no C14 |
-| D-12 | Origem do som e da música | só CC0; encomenda; IA (declarar) | CC0 para efeitos; música por encomenda ou CC0 escolhida por ele |
-| D-13 | Executável para testadores | certificado; instruções | Instruções agora (T2); certificado antes da página da Steam |
-| D-03 | As nove imagens da Hécate | reenviar; desistir | Desistir: para a mecânica os dados bastam |
+| ID | Pergunta | Recomendação |
+|---|---|---|
+| D-23 | O que é a porta selada e o véu de runas | O Daniel (2026-11-16): pendente na história; sem texto até o cânone ter |
+| D-11 | Meta de dificuldade da primeira vitória | Até 3 tentativas para quem jogou Hades, com a descida inteira; hoje: 1 vitória em 3 com 3 dons |
+| D-09 | Magia na luta do chefe | O Daniel usou 2 a 6 Ômegas por partida; decidir no C13 |
+| D-10 | Bônus de sequência (não existe no Hades II) | Tirar no C13 se ele não sentir falta |
+| D-01 | Título de Morvath | "o Rei que Traiu a Luz" ou "o Lich-Rei do Sul" (cânone) |
+| D-02, D-04 | Quem sela Morvath; nomes dos paladinos | Seguir o cânone de 12/11; nomes depois |
+| D-05 | Créditos do Meshy (546) | Nada no C12 (regra do pedido); peças definitivas no C15 |
+| D-07, D-12, D-13 | Entre partidas; origem do som; executável para testadores | Como antes |
+| D-03 | Imagens da Hécate | Desistir |
