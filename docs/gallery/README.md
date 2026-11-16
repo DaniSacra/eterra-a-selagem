@@ -132,3 +132,61 @@ Pendências visuais principais (detalhes no relatório): Morvath quase branco no
 girando no escudo; quadros de impacto em preto e branco dos finalizadores a cada 5 s na luta; avisos da foice, da
 maldição e da tempestade no vermelho comum; tingido vermelho repetido a cada golpe amaldiçoado; portal vermelho nas fases
 1 a 3 (pergunta ao Daniel). A aprovação artística final é do Daniel.
+
+## CICLO 10: LIMPAR E MEDIR
+
+Capturas reais da Godot na placa de vídeo (RTX 5060, Forward+, 1920 x 1080), comandos em
+[`cycle10/CAPTURAS.md`](cycle10/CAPTURAS.md). Commits `8a8fed2` (arte), `dcf6632` (jogo) e `196f33c` (interface). Revisão
+de arte na seção "C10" de [`boss_arena/ART_REVIEW.md`](boss_arena/ART_REVIEW.md); QA em
+[`docs/qa/latest_report.md`](../qa/latest_report.md).
+
+- **Sem branco:** [golpe final, Morvath escurece](cycle10/golpe_final_sem_branco.jpg), [escudo do ritual](cycle10/escudo_ritual.jpg)
+  ([recorte](cycle10/escudo_ritual_zoom.jpg)), [orbe do feiticeiro](cycle10/orbe_feiticeiro.jpg) ([recorte](cycle10/orbe_feiticeiro_zoom.jpg))
+- **Queimadura:** [na câmara](cycle10/queimadura_fogo.jpg) (aos [7 s](cycle10/queimadura_fogo_t7.jpg) e [12 s](cycle10/queimadura_fogo_t12.jpg);
+  [no `196f33c`](cycle10/queimadura_fogo_196f33c.jpg)), [no salão comum](cycle10/queimadura_salao_comum.jpg). O branco que ainda
+  aparecia nessas capturas foi corrigido no `00dd13b`: ver [`boss_arena/work/fix_m1_*`](boss_arena/work/)
+- **Fase 4:** [clima violeta, fogo mais frio, veios](cycle10/fase4_clima.jpg)
+- **Quadro de impacto P&B:** [folha de 2 min](cycle10/folha_quadros_2min.jpg) (4 quadros), [ligado e desligado](cycle10/folha_quadros_pb_ligado_desligado.jpg)
+- **Interface:** [opções de conforto](cycle10/opcoes.jpg), [contador do ritual](cycle10/contador_ritual.jpg),
+  [golpe sofrido](cycle10/golpe_sofrido_comum.jpg), [amaldiçoado](cycle10/golpe_sofrido_amaldicoado.jpg), ["Derrotado por"](cycle10/derrotado_por.jpg)
+- **Outros:** [vídeo do bloqueio de corpo](cycle10/bloqueio_de_corpo.mp4) (o robô lutando cercado, não um andar dirigido),
+  [registro de partidas](cycle10/runs_exemplo.jsonl); antes e depois das frentes em [`cycle10/work/`](cycle10/work/)
+
+Pendências visuais: Morvath branco por um quadro com o kit de geada (no vídeo, antes do `00dd13b`, sem captura depois) e a
+coluna de geada quase branca sobre ele.
+
+## CICLO 11: A CÂMARA DO SELO
+
+A arena circular de Morvath, pelo pedido do Daniel ([`docs/design/boss_arena_brief.md`](../design/boss_arena_brief.md)),
+especificação em [`docs/art/boss_chamber_spec.md`](../art/boss_chamber_spec.md), conta do raio em
+[`docs/design/boss_arena.md`](../design/boss_arena.md). Capturas reais na placa de vídeo (1920 x 1080) e dois vídeos
+gravados pela Godot (1280 x 720, sem som); comandos em [`boss_arena/CAPTURAS.md`](boss_arena/CAPTURAS.md). Commits
+`6b16045`, `482eb6f`, `6bab080`, `72285ab`, `6801e87` e `00dd13b`. **As oficiais `01` e `10` são do `00dd13b`; `02` a `09`,
+as montagens e os vídeos são do `6bab080`** (sarcófagos leste e velas da frente um pouco antes do ajuste final; a luta é a
+mesma).
+
+- **Revisão de arte:** [`boss_arena/ART_REVIEW.md`](boss_arena/ART_REVIEW.md) (critérios, fidelidade à pintura peça por peça,
+  identidade, legibilidade, estados do selo, C10, pendências com responsável, veredito)
+- **Métricas:** [`boss_arena/METRICAS.md`](boss_arena/METRICAS.md) (368 lutas do robô; simulação, não teste com gente)
+- **Vídeos:** [vitória, semente 4, 2:07](boss_arena/boss_arena_full_fight.mp4), [derrota na fase 4, semente 1, 2:10](boss_arena/boss_arena_full_fight_semente1_derrota.mp4)
+- **A câmara:** [vazia](boss_arena/01_arena_vazia.jpg), [Explorador e Morvath](boss_arena/02_explorador_e_morvath.jpg),
+  [lado a lado com a pintura](boss_arena/lado_a_lado_referencia.jpg) (a metade esquerda é a pintura de IA, não o jogo),
+  [borda e câmera](boss_arena/borda_e_camera.jpg), [os cinco estados do selo](boss_arena/selo_estados.jpg)
+- **Fase 1:** [foice, aviso](boss_arena/03_foice_sepulcral.jpg), [foice, golpe](boss_arena/03b_foice_golpe.jpg),
+  [investida, aviso](boss_arena/04_investida.jpg), [investida, meio](boss_arena/04b_investida_meio.jpg)
+- **Fase 2:** [preparo do ritual](boss_arena/05a_ritual_preparo.jpg), [ritual no centro](boss_arena/05_ritual_central.jpg),
+  [reforços](boss_arena/06_invocacao_reforcos.jpg), [erupções](boss_arena/07_erupcoes.jpg), [colunas](boss_arena/07b_erupcoes_colunas.jpg)
+- **Fase 3:** [maldição](boss_arena/08_maldicao.jpg), [herói amaldiçoado](boss_arena/08b_amaldicoado.jpg)
+- **Fase 4:** [Tempestade das Seis Almas](boss_arena/09_tempestade_seis_almas.jpg), [disparo](boss_arena/09b_tempestade_disparo.jpg)
+- **Vitória:** [selo restaurado](boss_arena/10_vitoria_selagem.jpg), [1,2 s](boss_arena/10a_vitoria_1s2.jpg), [2,5 s](boss_arena/10b_vitoria_2s5.jpg)
+- **Antes (salão) e depois (câmara):** [arena](boss_arena/before_after_arena.jpg), [investida](boss_arena/before_after_investida.jpg)
+  (comandos diferentes, ver `CAPTURAS.md`), [ritual](boss_arena/before_after_ritual.jpg), [tempestade](boss_arena/before_after_tempestade.jpg),
+  [vitória](boss_arena/before_after_vitoria.jpg)
+- **Trabalho:** [`boss_arena/work/`](boss_arena/work/): `chamber_*` (cenário, estados, navegador), `fix_*` (antes e depois
+  das correções do `00dd13b`: queimadura, herói na borda, vitória, pilarete)
+
+Pendências visuais principais (detalhes e pedidos no `ART_REVIEW.md`): chão da câmara muito mais escuro que a pintura;
+centro da tempestade sobreposto em rosa quase branco; topo do quadro quase preto, sem o anel de arcadas e as agulhas em
+azul; erupções sem o miolo vermelho; velas da frente por cima das pernas do herói; capturas `02` a `09` e vídeos a refazer
+no `00dd13b`; peças procedurais e do KayKit provisórias. Os símbolos (leão de pé só no selo, espada erguida no lugar da
+cruz) e o raio de 12 m são decisões da sessão a confirmar. A aprovação artística final é do Daniel.
