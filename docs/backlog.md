@@ -269,7 +269,7 @@ câmara nele atrasaria as duas coisas e confundiria a medida.
 
 | ID | Pergunta | Opções | Recomendação |
 |---|---|---|---|
-| D-23 | O que é a porta selada ao norte e o véu de runas da escadaria sul (P12) | dar nome e papel no cânone; deixar sem explicação; trocar por parede | Não inventar: perguntar ao Daniel o que fica atrás da porta; até lá, sem texto |
+| D-23 | O que é a porta selada ao norte e o véu de runas da escadaria sul (P12) | dar nome e papel no cânone; deixar sem explicação; trocar por parede | O Daniel (2026-11-16): ainda pendente na história. Fica sem texto e sem nome até ele definir no cânone |
 | D-24 | As quatro imagens de Morvath em `docs/art/ref/morvath/` são de IA? | sim (declarar como referência); não | Responder para fechar o `docs/steam-ia.md` (DT-007) |
 | D-11 | Meta de dificuldade da primeira vitória | 1ª tentativa; até 3; até 10 | Até 3 tentativas para quem jogou Hades, com a descida inteira; a partida de hoje dá o primeiro número |
 | D-09 | Magia na luta do chefe | como o Hades; mais Magia por janela punida ou pelos mortos | Ler os Ômegas no `runs.jsonl` de hoje antes de mudar |
