@@ -359,7 +359,7 @@ parapeito), no sarcófago e nos tocos das colunas; entulho baixo nas bordas.
   4. lanternas das saídas X2 e X3 sem sombra.
 - **Fundo**: borda norte da plataforma oeste aberta para o abismo (balaustrada baixa), com cartões de ruína (`ruin_card`)
   e duas correntes enormes cruzando o alto do quadro de uma torre (fora do chão, além da borda noroeste) até a fachada.
-  Fachada norte da plataforma leste: cantaria de 10 m, a porta X1, duas estátuas encapuzadas, dois estandartes lisos.
+  Fachada norte da plataforma leste: cantaria de 10 m, a porta X1, duas estátuas encapuzadas, dois estandartes com o leão.
 - **Diferença do salão**: o salão é teal com o portal verde no alto à direita e o abismo só em volta; aqui o abismo está
   **dentro** da sala, o ar é azul-violeta e a luz vem de baixo.
 
@@ -596,11 +596,12 @@ Ordem (do plano): Cripta, depois Fendas, por último o Jardim (a árvore pode ca
 
 ## 8. Pendências e perguntas ao Daniel (pelo Game Director)
 
-1. **Leão nos estandartes**: as cinco imagens põem um leão nos estandartes vermelhos. Hoje o salão tem estandarte liso e a
-   câmara tem a espada erguida (o leão ficou só no selo, decisão da sessão a confirmar). As arenas novas usam o liso até
-   ele decidir.
-2. **Espada na mão das estátuas** (`02`, `03`): mantive mãos juntas e vazias, como no salão. Muda só com a palavra dele.
-3. **Porta verde da `05`** (a cripta tem uma porta com luz verde): não usei, porque o verde é da Emeth e do portal.
+1. **Leão nos estandartes: DECIDIDO pelo Daniel (2026-11-16): estandartes com o leão**, como nas imagens. Vale para os
+   estandartes das três arenas novas e do Salão das Catacumbas: leão rampante em ouro velho sobre o vermelho (o mesmo
+   desenho do selo, `assets/textures/seal/lion_sdf.res`, por `ArenaKit.banner(..., emblem)`). Onde esta spec diz
+   "estandartes lisos", leia "estandartes com o leão". A Câmara do Selo não muda (os dela seguem com a espada).
+2. **Espada na mão das estátuas** (`02`, `03`): o Daniel (2026-11-16) mandou seguir assim: mãos juntas e vazias.
+3. **Porta verde da `05`**: o Daniel (2026-11-16) mandou seguir assim: sem a porta verde nem braseiros verdes.
 4. **Árvore**: de pedra, sem nome e sem explicação (D-30). Se ele quiser que a árvore signifique algo, é cânone, não arte.
 5. **Lápides sem texto**: nada escrito nelas, nem runa legível.
 
