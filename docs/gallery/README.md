@@ -102,3 +102,33 @@ em `tools/make_data.gd`); regras em `scripts/core/boss_rules.gd` e `boss_directo
 Pendências visuais: as erupções aparecem como círculos vermelhos, sem as runas verdes da referência; as meias-luas não têm
 as caveiras; Morvath golpeia com a lâmina do modelo aprovado, não com uma foice; a maldição no herói é discreta. Na
 dificuldade, o robô vence quase sempre: falta medir com gente.
+
+## CICLO 9: MORVATH, A BATALHA DEFINITIVA
+
+Capturas reais da Godot na placa de vídeo (RTX 5060, Forward+, 1920 x 1080) e dois vídeos gravados pela própria Godot
+(1280 x 720, sem som), com o comando de cada um em [`cycle9/CAPTURAS.md`](cycle9/CAPTURAS.md). Antes = `3b22cea`
+(começo do ciclo), depois = `b29e372` (o `147b481`, bloqueio de corpo, não tem captura). Nenhum dom de fogo nas capturas.
+
+- **Relatório artístico:** [`cycle9/ART_REVIEW.md`](cycle9/ART_REVIEW.md) (mudanças por fase, comparação com a estrutura da
+  Hécate sem as nove imagens dela, pendências com responsável e critério, critérios de aceite, veredito)
+- **Simulações do robô:** [`cycle9/METRICAS.md`](cycle9/METRICAS.md) (80 lutas; simulação, não teste com gente).
+  QA: [`docs/qa/latest_report.md`](../qa/latest_report.md)
+- **Vídeos:** [luta inteira sem cortes, 2:13](cycle9/morvath_full_fight.mp4), [cada ataque com rótulo, 1:31](cycle9/morvath_attacks_showcase.mp4)
+- **Antes e depois:** [foice](cycle9/before_after_foice.jpg), [ritual](cycle9/before_after_ritual.jpg),
+  [maldição](cycle9/before_after_maldicao.jpg), [tempestade](cycle9/before_after_tempestade.jpg), [vitória](cycle9/before_after_vitoria.jpg);
+  trabalho das frentes em [`cycle9/work/`](cycle9/work/) (`c9b_*` cenário, `c9c_*` maldição, HUD e vitória)
+- **Fase 1, O Despertar:** [Morvath](cycle9/01_morvath_fase1.jpg), [foice, preparo](cycle9/02_foice_preparacao.jpg),
+  [foice, golpe](cycle9/03_foice_ataque.jpg), [Lâminas das Almas](cycle9/04_laminas_almas.jpg), [investida](cycle9/05_investida.jpg)
+- **Fase 2, O Ritual dos Mortos:** [transição](cycle9/06_transicao_fase2.jpg), [escudo](cycle9/07_ritual_escudo.jpg),
+  [invocação](cycle9/08_ritual_invocacao.jpg), [erupções](cycle9/09_erupcoes.jpg)
+- **Fase 3, A Maldição dos Condenados:** [transição](cycle9/10_transicao_fase3.jpg), [a maldição pegando](cycle9/11_maldicao_aplicacao.jpg),
+  [o Explorador amaldiçoado](cycle9/12_explorador_amaldicoado.jpg)
+- **Fase 4, O Último Suspiro:** [transição](cycle9/13_transicao_fase4.jpg), [Tempestade das Seis Almas](cycle9/14_tempestade_seis_almas.jpg),
+  [combinação](cycle9/15_combate_final.jpg)
+- **Vitória:** [golpe final](cycle9/16_morvath_derrota.jpg), [selagem do portal](cycle9/17_portal_selagem.jpg), [tela "Morvath foi selado"](cycle9/18_tela_vitoria.jpg)
+- **Explorador e Emeth:** pegada nova em [`hero/grip/`](hero/grip/)
+
+Pendências visuais principais (detalhes no relatório): Morvath quase branco no golpe final; pontos brancos estourados
+girando no escudo; quadros de impacto em preto e branco dos finalizadores a cada 5 s na luta; avisos da foice, da
+maldição e da tempestade no vermelho comum; tingido vermelho repetido a cada golpe amaldiçoado; portal vermelho nas fases
+1 a 3 (pergunta ao Daniel). A aprovação artística final é do Daniel.
