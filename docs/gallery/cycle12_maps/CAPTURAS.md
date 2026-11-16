@@ -64,3 +64,12 @@ Forward+), espelho `C:/Users/danie/tools/eterra-gpu-garden`, 2026-11-16. As Fend
 As grades `work/garden_grid_a`/`_b` foram tiradas com `--autopick` a mais (`tools/garden_grid.gd -- <saída> --arena=garden
 --variant=n --nosave --autopick`): sem ele a tela de dom da sala vencida cobria as últimas células da folha. Quadros das
 saídas abertas nos `_e_`: Cripta A 0:15, B 0:14; Jardim A 0:12, B 0:10.
+## Fendas refeitas depois das correções F-1 a F-6 e G-1 (environment-artist, 2026-11-16)
+
+Todos os arquivos de `rift/` (inclusive `travessia.mp4`, as montagens `_e_` e `_f_` e os `_g_` e `_h_`) foram refeitos com
+os mesmos comandos das tabelas acima, na mesma placa (RTX 5060, Forward+; o `_h_` em Compatibility pelo `opengl3`), a
+partir de uma worktree com espelho próprio (`MIRROR=C:/Users/danie/tools/eterra-gpu-wt`). Quadros usados no `_e_`: A e B
+0:14. Antes e depois em `work/fix_rift_*`: `*_antes_*` são os arquivos desta pasta no commit `fd72101` (e uma captura do
+laboratório com o alvo (-2; 0)), `*_depois_*` os novos; `fix_rift_vA_antes_depois_*` lado a lado, `fix_rift_vA_miniatura_320`
+as duas a 320 px (critério da F-2), `fix_rift_vA_compat_vs_forward` o mesmo combate nos dois renderizadores (G-1). A
+Cripta e o Jardim não mudaram (nada do código comum foi tocado).
