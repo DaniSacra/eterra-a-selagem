@@ -88,6 +88,18 @@ uniform float white_from = 0.85;
 uniform float flash_white = 0.35;
 uniform vec3 flash_ivory : source_color = vec3(0.95, 0.9, 0.8);
 uniform float flash_cap = 1.0;
+// Burning (a fire gift; cycle 10, N4 of the cycle 9 review: the old burn lit the whole body gold and orange, which hid
+// the figure and read like an elite's gild): the painting keeps its colours, only embers live on it. A rim of fire
+// where the body turns away (burn_rim at most, on the silhouette), and small coals crawling up the body, each one
+// flaring and fading on its own: burn_coals of the cells (burn_grid across the texture, burn_rows a meter of height)
+// glow, climbing burn_climb cells a second. All under the glow threshold (Game.GLOW_THRESHOLD 1.3), never yellow.
+uniform vec3 burn_color : source_color = vec3(1.0, 0.36, 0.08);
+uniform float burn_rim = 0.5;
+uniform vec3 coal_color : source_color = vec3(1.1, 0.42, 0.1);
+uniform float burn_coals = 0.07;
+uniform float burn_grid = 42.0;
+uniform float burn_rows = 7.0;
+uniform float burn_climb = 1.6;
 
 // The paladin carries the light of Elun: the warm light around the hero is added here.
 global uniform vec3 hero_pos;
@@ -148,7 +160,12 @@ void fragment() {
 	float edge = smoothstep(0.35, 0.6, pow(1.0 - facing, 1.5));
 	// the painting's own lights (eyes, gems, embers), leaning to the colour of its magic
 	vec3 spot = mix(raw, mix(raw, magic * top, magic_tint), has_magic);
-	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + vec3(2.0, 0.6, 0.1) * burn * (0.4 + 0.4 * rim)
+	// burning: a rim of fire and coals flaring up the body (the painting itself untouched)
+	vec2 coal_at = vec2(fract(UV.x) * burn_grid, height * burn_rows - TIME * burn_climb);
+	float coal_seed = hash(floor(coal_at));
+	float coal_dot = 1.0 - smoothstep(0.15, 0.45, length(fract(coal_at) - 0.5));
+	float coal = step(1.0 - burn_coals, coal_seed) * coal_dot * (0.5 + 0.5 * sin(TIME * 7.0 + coal_seed * 40.0));
+	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + (burn_color * rim * burn_rim + coal_color * coal) * burn
 		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + vec3(1.6, 0.5, 0.1) * state.a * 2.0
 		+ gild_color * (rim + edge) * absorbed * absorb_light
 		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)

@@ -22,6 +22,8 @@ const AIR_SIZE := 0.16
 const AIR_LIGHT := 1.1
 const VIOLET := Color(0.45, 0.18, 0.95)
 const GREEN := Color(0.32, 0.95, 0.62)
+## The air's green motes are his corrupted emerald (cycle 10, ART-006), not the portal's own green of the sealing.
+const AIR_GREEN := BossShield.COLOR
 ## The sealing: its seconds unless told, the motes that gather (count, size, light, how far around where he fell they
 ## start, m), the share of the time they take to arrive, when the ring closes (shares of the time), the light at the
 ## moment the portal takes the energy in (times its open light), and the light it is left with (closed).
@@ -58,7 +60,7 @@ func final(on: bool) -> void:
 	_want = 1.0 if on else 0.0
 	if on and _air.is_empty():
 		for k in 2:
-			var m := SpectralMotes.make(SpectralMotes.Mode.DRIFT, AIR_MOTES[k], VIOLET if k == 0 else GREEN, AIR_SIZE, AIR_LIGHT, 21 + k)
+			var m := SpectralMotes.make(SpectralMotes.Mode.DRIFT, AIR_MOTES[k], VIOLET if k == 0 else AIR_GREEN, AIR_SIZE, AIR_LIGHT, 21 + k)
 			m.set_param(&"box_size", AIR_BOX)
 			m.position = Vector3(0, AIR_FOOT, 0)
 			add_child(m)

@@ -8,8 +8,9 @@ shader_type spatial;
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled, depth_prepass_alpha;
 
 // Corrupted emerald (rim and glyphs, colder and dirtier than Emeth's crystal), the violet veil, the spectral blue of
-// the cracks and the filling front.
-uniform vec3 color : source_color = vec3(0.22, 0.85, 0.5);
+// the cracks and the filling front. Cycle 10 (ART-006): a cold, dark teal green far from the Emeth's mint (hue about
+// 165), a little more saturated than the shield's (BossShield.COLOR) so a circle that hurts still reads at a glance.
+uniform vec3 color : source_color = vec3(0.26, 0.74, 0.6);
 uniform vec3 deep : source_color = vec3(0.28, 0.08, 0.62);
 uniform vec3 spirit : source_color = vec3(0.32, 0.6, 1.0);
 uniform float progress = 0.0;

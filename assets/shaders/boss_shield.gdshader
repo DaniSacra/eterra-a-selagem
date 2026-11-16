@@ -1,6 +1,6 @@
 shader_type spatial;
 // The shield of Morvath's ritual (cycle 9, after Daniel's reference "ritual_escudo_erupcoes"): a sphere of spectral
-// glass in his corrupted emerald, nearly clear where it faces the eye (his silhouette always reads through it), a fine
+// glass in his corrupted emerald (cold and dark, BossShield.COLOR), nearly clear where it faces the eye (his silhouette always reads through it), a fine
 // bright rim, slow veins crawling over it, two bands of his runes drifting around it and breathing in and out, violet
 // pooling at its foot. The far side shows faintly (the sphere has a volume). Added light: never white, never gold;
 // only the rim touches the glow threshold. power: 0..1 as it grows in (Boss drives it); shatter: 0..1 as it breaks
@@ -9,7 +9,7 @@ render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabl
 
 #include "res://assets/shaders/rune_glyph.gdshaderinc"
 
-uniform vec4 color : source_color = vec4(0.32, 0.95, 0.62, 1.0);
+uniform vec4 color : source_color = vec4(0.315, 0.7, 0.604, 1.0);
 // The violet pooling at its foot and the spectral blue of its veins.
 uniform vec3 deep : source_color = vec3(0.36, 0.12, 0.78);
 uniform vec3 spirit : source_color = vec3(0.3, 0.6, 1.0);
@@ -54,8 +54,9 @@ void vertex() {
 }
 
 void fragment() {
-	vec3 s = normalize(local);
-	float facing = abs(dot(NORMAL, VIEW));
+	// guarded (cycle 10, BUG-005): a NaN or a value over 1 here would bloom as a white blot through the glow
+	vec3 s = local / max(length(local), 0.0001);
+	float facing = clamp(abs(dot(NORMAL, VIEW)), 0.0, 1.0);
 	float rim = pow(1.0 - facing, 2.6);
 	float side = FRONT_FACING ? 1.0 : far_side;
 	// veins: thin lines where a slow noise crosses its middle
@@ -63,7 +64,7 @@ void fragment() {
 	float n = noise3(p) * 0.6 + noise3(p * 2.3) * 0.4;
 	float vein = 1.0 - smoothstep(0.0, 0.045, abs(n - 0.5));
 	// runes: two bands drifting around the sphere, each glyph fading in and out on its own
-	float lon = atan(s.z, s.x) / 6.2831853 + 0.5;
+	float lon = atan(s.z, s.x + 0.00001) / 6.2831853 + 0.5;
 	float runes = 0.0;
 	for (int b = 0; b < 2; b++) {
 		float h = (s.y - rune_bands[b]) / rune_height;

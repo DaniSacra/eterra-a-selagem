@@ -2,10 +2,11 @@ shader_type spatial;
 // The column of spectral fire that rises out of one of Morvath's ritual circles when it lands (cycle 9): an open
 // cylinder of tongues licking upward, violet at the foot, his corrupted emerald in the body, spectral blue at the
 // tips. `life` (0 to 1) shoots it up, holds it a moment and thins it away. Added light, below the glow threshold
-// but for the hot foot of the blow.
+// but for the hot foot of the blow. Cycle 10 (ART-006): the corrupted emerald is cold and dark (BossShield.COLOR),
+// never the Emeth's mint. BossShield raises a faint one around the ritual's shield (its curtain).
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
 
-uniform vec3 color : source_color = vec3(0.3, 0.92, 0.58);
+uniform vec3 color : source_color = vec3(0.315, 0.7, 0.604);
 uniform vec3 foot : source_color = vec3(0.4, 0.12, 0.8);
 uniform vec3 tip : source_color = vec3(0.3, 0.55, 1.0);
 uniform float life = 0.0;

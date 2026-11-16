@@ -181,12 +181,49 @@ e efeitos e interface ocupavam espaço demais. Os personagens ficaram como estav
   Magia 196 x 15 em `HudBar` com ponta em ângulo, as quatro ações em losango (`ActionSlot`) com a tecla real, moeda e
   traço pincelado em `HudMark` (números em unidades de 720 linhas).
 
+### Ciclo 10: brilho limpo na luta de Morvath, verde corrompido, queimadura e a fase 4 (2026-11-15)
+
+Pedido do backlog (BUG-005, BUG-006, ART-005 a ART-008; revisão do ciclo 9, B2, N3, N4, N5, N9 e seção 8). Regra de
+leitura: nada acima do limiar do glow (1,3) sobre o herói, sem clarão branco, sem amarelo saturado; paleta de Morvath em
+violeta profundo, azul espectral, esmeralda corrompido e ouro antigo. Capturas em `docs/gallery/cycle10/work/`.
+
+- **Escudo do ritual sem pontos brancos** (BUG-005): os borrões brancos com um ponto preto no meio que giravam em
+  volta do escudo têm a assinatura de um valor inválido (NaN) espalhado pelo glow; o `boss_shield.gdshader` agora
+  protege o vetor e o ângulo de visão (`facing` limitado a 0..1) e as partículas mudaram, e nos 24 quadros seguidos do
+  começo do ritual não sobra nenhum. As partículas em órbita (`BossShield.MOTE_*`) são metade
+  esmeralda corrompido, metade azul espectral, 0,12 m, cor vezes luz no máximo 1,2. O escudo é `unshaded` e somado: não
+  tem especular.
+- **Esmeralda corrompido frio e escuro** (ART-006): matiz 165, saturação 0,55, valor 0,7 (`BossShield.COLOR`
+  0,315 / 0,7 / 0,604), igual nas colunas (`spectral_column.gdshader`) e nas partículas do ar da fase 4; os círculos
+  de runa um pouco mais vivos (0,26 / 0,74 / 0,6) para o perigo ler de relance. O verde-menta vivo fica só da Emeth.
+- **Coluna do escudo** (ART-005): o pilar de luz de 12 m sobre Morvath no começo do ritual (`Fx.beam`, com miolo
+  branco) saiu. No lugar, uma cortina fina de fogo espectral sobe na borda do escudo, uma vez, por 0,8 s, com luz até
+  0,4 (`BossShield.CURTAIN_*`): ele fica lido em todos os quadros.
+- **Orbe do feiticeiro** (BUG-006): os tiros inimigos (virote, orbe, maldição) são uma bola no matiz da magia de quem
+  atira (canal maior em 1), borda mais escura, miolo de 30% do raio a 1,2 e um halo misturado (não somado) de 1,5 raio
+  (`enemy_orb.gdshader`, `enemy_orb_halo.gdshader`, `Projectiles.HALO`); um material por parte para todos os tiros,
+  o matiz por instância. Seis feiticeiros juntos não somam branco. As centelhas do preparo do cajado e do rito
+  (`EnemyFx.MAGIC_SPARK`) foram de 1,6 para 1,2.
+- **Queimadura em brasas** (ART-007): o corpo não fica mais dourado. O albedo não muda; brilha uma borda de fogo laranja
+  (`burn_rim` 0,5) e brasas pequenas que sobem pelo corpo, cada uma acendendo e apagando (`burn_coals`, `coal_color`
+  1,1 / 0,42 / 0,1), tudo abaixo do glow e nunca amarelo (`crowd.gdshader`). O esqueleto queimando continua esqueleto e
+  não se confunde com a elite de ouro velho.
+- **Atmosfera da fase 4** (ART-008): `RoomMood` (`scripts/game/room_mood.gd`) vira o ar da sala para um clima
+  (`RoomMood.Look`) e devolve tudo exatamente como era; vale para qualquer cenário (lê o `Environment` do mundo e as
+  luzes de baixo da arena). `Arena.final_phase` liga `LAST_BREATH`: as profundezas e as ruínas do abismo passam do teal
+  para violeta (`room_air`, global de shader em `room_air.gdshaderinc`, mantém o brilho e muda só o matiz), névoa e
+  fundo violeta, sombras levantadas para o violeta por uma curva de cor só nos escuros (`shadow_lift`), lua espectral,
+  fogos 40% mais baixos e frios, o brilho violeta do abismo 1,5 vez, respiração lenta. Herói, multidão, avisos,
+  exposição e glow não mudam. A selagem (`Arena.seal_portal`) devolve o ar da sala no mesmo tempo. Uma sala nova liga
+  outro clima com `arena.mood().blend(look, true)`.
+
 ## Pendências
 
 1. Colocar o `paladin_1` no jogo. Não foi feito: o esqueleto do Meshy (24 ossos, `Hips`, `LeftArm`...) é outro, e os
    golpes do Knight precisam ser redirecionados. Caminho: importar os dois GLB com `BoneMap` para o
    `SkeletonProfileHumanoid` (Godot reaproveita as animações entre esqueletos do mesmo perfil), conferir a pose de
    descanso (o Meshy vem em pose A) e prender a espada na mão direita (`RightHand`). Sem créditos.
-2. Arena do chefe puxando para o roxo azulado (hoje só a porta muda de luz).
+2. Arena do chefe puxando para o roxo azulado: feito na fase 4 de Morvath (`RoomMood.LAST_BREATH`, ciclo 10); as fases 1
+   a 3 seguem com o ar da sala.
 3. Explosões de cristais ou espinhos brotando do chão nos finalizadores grandes.
 4. Medir desempenho em placa de vídeo fraca (o contorno dos elites é uma passada a mais só nos elites e no chefe).

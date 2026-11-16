@@ -262,10 +262,32 @@ func open_door(tint: Color = ArenaKit.MORVATH) -> void:
 ## Morvath's last phase (cycle 9): the crypt's portal grows restless (faster veils, a slow violet pulse, its light
 ## up a little and wavering) and a few spectral motes drift high in the air away from the paladin. off: it calms.
 ## Only in the catacomb hall (the old great hall has no portal sheet). Call it with open_door(his colour).
+## The air of the whole room turns too (RoomMood.LAST_BREATH, cycle 10): violet dusk, the abyss in violet fog, the moon
+## spectral, the fires low; any scenery has it (the mood reads the world's environment and the lights under the arena).
 func final_phase(on: bool) -> void:
 	var o := _portal_omen()
 	if o != null:
 		o.final(on)
+	mood().blend(RoomMood.LAST_BREATH, on)
+
+
+var _mood: RoomMood
+
+
+## The room's mood (RoomMood): what a boss turns the air of the room toward, whatever the scenery. The portal's lights
+## (and those it tints) stay the portal's.
+func mood() -> RoomMood:
+	if _mood == null:
+		_mood = RoomMood.new(self)
+		if _kit != null:
+			for p in _kit.portals:
+				for k in range(1, p.size()):
+					_mood.keep.append(p[k])
+			for i in _kit.portal_tinted:
+				for t in _kit.portal_tinted[i]:
+					_mood.keep.append(t[0])
+		add_child(_mood)
+	return _mood
 
 
 ## Morvath is sealed (cycle 9): over `seconds` his energy gathers from where he fell (`from`, x and z) back into the
@@ -277,6 +299,9 @@ func seal_portal(seconds: float = PortalOmen.SEAL_TIME, from := Vector2.ZERO) ->
 		o.seal(seconds, from)
 	else:
 		open_door(ArenaKit.PORTAL)
+	# the room's own air comes back as the portal takes his energy in
+	if _mood != null:
+		_mood.blend(RoomMood.LAST_BREATH, false, seconds)
 
 
 var _omen: PortalOmen

@@ -4,6 +4,8 @@ shader_type spatial;
 // noise and slowly drifting. Unlit, blended over what is behind it.
 render_mode unshaded, blend_mix, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
 
+#include "res://assets/shaders/room_air.gdshaderinc"
+
 uniform vec3 color : source_color = vec3(0.07, 0.28, 0.31);
 uniform float alpha = 0.25;
 // Share of the card that is ragged edge; how fast (UV per second) the mist drifts along.
@@ -56,7 +58,7 @@ void fragment() {
 	}
 	vec2 e = min(UV, 1.0 - UV);
 	float edge = smoothstep(0.0, ragged, e.y + (n - 0.5) * ragged) * smoothstep(0.0, ragged * 0.5, e.x + (n - 0.5) * ragged * 0.5);
-	ALBEDO = color * (0.85 + 0.3 * n);
+	ALBEDO = room_air_tint(color * (0.85 + 0.3 * n));
 	float a = alpha * edge * (0.6 + 0.8 * n);
 	if (bands > 0.0) {
 		// long level streaks, each drifting its own way, thinner toward the top of the bank

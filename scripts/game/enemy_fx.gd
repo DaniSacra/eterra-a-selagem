@@ -40,6 +40,9 @@ const ORB_SPARKS := 4
 const ORB_RADIUS := 0.2
 const ORB_RISE := 0.75
 const ORB_HALO := 0.55
+## The light of the magic's sparks round a staff's orb and a priest's rite: the magic's hue (largest channel 1) times
+## this, under the glow threshold (cycle 10, BUG-006: at 1.6 a few sorcerers winding up together bloomed white).
+const MAGIC_SPARK := 1.2
 ## The priest's ritual: the ring on the floor (meters, opacity at its most: not a warning) and the motes between its hands.
 const RITUAL_RING := 1.2
 const RITUAL_RING_ALPHA := 0.3
@@ -166,7 +169,7 @@ func tell(e: Enemy, k: float) -> void:
 				var phase := fposmod(k * 1.6 + float(i) / ORB_SPARKS, 1.0)
 				var a := phase * TAU * 1.5 + TAU * i / ORB_SPARKS
 				var r := ORB_RADIUS * d.size * (1.0 - 0.5 * phase)
-				_put(Shape.DOT, at + Vector3(cos(a) * r, phase * ORB_RISE * d.size, sin(a) * r), Vector2.ONE * 0.16 * d.size, c * 1.6,
+				_put(Shape.DOT, at + Vector3(cos(a) * r, phase * ORB_RISE * d.size, sin(a) * r), Vector2.ONE * 0.16 * d.size, c * MAGIC_SPARK,
 					sin(phase * PI) * minf(1.0, k * 3.0))
 		EnemyDef.Tell.BOLT:
 			var b := ramp(k, BOLT_FROM, 1.0)
@@ -193,7 +196,7 @@ func tell(e: Enemy, k: float) -> void:
 			_floor(Shape.RING, Vector3(e.pos.x, 0.06, e.pos.y), Vector2.RIGHT, Vector2.ONE * 2.0 * RITUAL_RING, c, RITUAL_RING_ALPHA * rise, 0.05)
 			for i in RITUAL_MOTES:
 				var a := k * TAU * 2.0 + TAU * i / RITUAL_MOTES
-				_put(Shape.DOT, at + Vector3(cos(a), 0.35 * sin(a * 0.5), sin(a)) * RITUAL_ORBIT * d.size, Vector2.ONE * 0.2 * d.size, c * 1.6, rise)
+				_put(Shape.DOT, at + Vector3(cos(a), 0.35 * sin(a * 0.5), sin(a)) * RITUAL_ORBIT * d.size, Vector2.ONE * 0.2 * d.size, c * MAGIC_SPARK, rise)
 
 
 ## One enemy whose attack was just loosed, t seconds ago.

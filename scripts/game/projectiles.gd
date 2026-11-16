@@ -31,6 +31,11 @@ const OMEGA_HALF := 0.225
 const OMEGA_WAVE_BACK := 3.4
 
 const HEIGHT := 1.1
+## Enemy shots (bolts, orbs, the curse): their ball and halo (cycle 10, BUG-006), and the halo's radius as a share of
+## the ball's (at most 1.5: a crowd of sorcerers never fills the air with light).
+const ORB_SHADER := preload("res://assets/shaders/enemy_orb.gdshader")
+const HALO_SHADER := preload("res://assets/shaders/enemy_orb_halo.gdshader")
+const HALO := 1.5
 ## Meters per second of the paladin's bolt of light.
 const SPARK_SPEED := 30.0
 const LOOK := {
@@ -74,6 +79,7 @@ var horde: Horde
 var player: Player
 var fx: Fx
 var _pools: Dictionary = {}
+var _orb_mats: Dictionary = {}
 var _found: Array[Enemy] = []
 
 
@@ -262,33 +268,45 @@ func _take(kind: Kind) -> Node3D:
 		# the shader draws it meters away from the quad's own box
 		mi.extra_cull_margin = 12.0
 	else:
+		# a ball in the shooter's hue with a small heart and a soft blended halo (enemy_orb*.gdshader): one material
+		# per part for every shot, the hue per shot (_tint), nothing over the glow threshold
 		var sphere := SphereMesh.new()
 		sphere.radius = look[1]
 		sphere.height = look[1] * 2.0
 		sphere.radial_segments = 10
 		sphere.rings = 6
 		mi.mesh = sphere
-		var m := StandardMaterial3D.new()
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = look[0]
-		mi.material_override = m
+		mi.material_override = _orb_material(ORB_SHADER)
 		if kind == Kind.BOLT:
 			mi.scale = Vector3(0.6, 0.6, 2.4)
 		var glow := MeshInstance3D.new()
-		glow.mesh = Fx.quad(look[1] * 5.0, look[0])
+		var q := QuadMesh.new()
+		q.size = Vector2.ONE * look[1] * 2.0 * HALO
+		glow.mesh = q
+		glow.material_override = _orb_material(HALO_SHADER)
 		glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		(glow.mesh as QuadMesh).material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 		mi.add_child(glow)
 	add_child(mi)
 	return mi
 
 
-## The colour of a pooled bolt or orb: its core and its glow.
+## The colour of a pooled bolt or orb, its core and its halo: the hue of the shooter's magic (its largest channel
+## at 1; the magic colours are written over 1 for the crowd's lamps and would draw white).
 func _tint(node: Node3D, color: Color) -> void:
-	((node as MeshInstance3D).material_override as StandardMaterial3D).albedo_color = color
+	var hue := Vector3(color.r, color.g, color.b) / maxf(maxf(color.r, color.g), maxf(color.b, 0.001))
+	(node as GeometryInstance3D).set_instance_shader_parameter(&"hue", hue)
 	for c in node.get_children():
-		if c is MeshInstance3D and (c as MeshInstance3D).mesh is QuadMesh:
-			((c as MeshInstance3D).mesh.surface_get_material(0) as StandardMaterial3D).albedo_color = color
+		if c is GeometryInstance3D:
+			(c as GeometryInstance3D).set_instance_shader_parameter(&"hue", hue)
+
+
+## The shared material of an enemy shot's ball or halo.
+func _orb_material(shader: Shader) -> ShaderMaterial:
+	if not _orb_mats.has(shader):
+		var m := ShaderMaterial.new()
+		m.shader = shader
+		_orb_mats[shader] = m
+	return _orb_mats[shader]
 
 
 func _release(s: Shot) -> void:

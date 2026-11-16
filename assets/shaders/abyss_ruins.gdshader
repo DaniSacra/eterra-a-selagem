@@ -7,6 +7,8 @@ shader_type spatial;
 // opaque pass: one depth test, no blending over the screen.
 render_mode unshaded, fog_disabled, cull_disabled, shadows_disabled;
 
+#include "res://assets/shaders/room_air.gdshaderinc"
+
 uniform vec3 stone_color : source_color = vec3(0.039, 0.11, 0.149);
 // The cold light of the mist on the top of each block, and how much of it.
 uniform vec3 edge_color : source_color = vec3(0.086, 0.47, 0.545);
@@ -200,7 +202,7 @@ void fragment() {
 		col = mist * (1.0 + patch_light * (exp(-dot(a, a)) + exp(-dot(b, b))));
 		solid = 1.0;
 	}
-	ALBEDO = col;
+	ALBEDO = room_air_tint(col);
 	ALPHA = solid;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
 }

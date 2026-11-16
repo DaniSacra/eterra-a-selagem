@@ -772,7 +772,7 @@ func _start_ritual() -> void:
 	_raised.clear()
 	_call(def.ritual_raise, e.pos, RITUAL_RING, def.ritual_cap, RITUAL_FIRST_RISE, true)
 	game.fx.ring(e.pos, def.shield_radius * 2.0, SPECTRAL, 0.6, 0.15, true)
-	game.fx.beam(e.pos, SPECTRAL, def.shield_radius, 12.0, 0.8)
+	# no pillar of light over him (it hid him, ART-005): the shield raises its own faint curtain around him (BossShield)
 	Audio.play(&"shield_up")
 	Audio.play(&"summon")
 	moment.emit(&"ritual")
