@@ -20,6 +20,15 @@ const SLOW_MO_FRACTION := 0.2
 const SLOW_MO_HOLD := 0.12
 const SLOW_MO_OUT := 0.25
 const HIT_SLOW_COOLDOWN := 0.3
+## The jolt of the camera along a blow that lands (Fx.kick, times Fx.KICK_METERS): a common blow on the scale of
+## Hades II's 0.05 m shake (GF-10, at most 0.1 m), bigger only on a finisher and on an Omega (decision D-43).
+const KICK_COMMON := 0.25
+const KICK_FINISHER := 0.9
+const KICK_OMEGA := 1.6
+## The gamepad's buzz on a blow that lands (Fx.buzz): weak motor, strong motor, seconds; common, finisher, Omega.
+const RUMBLE_COMMON := Vector3(0.25, 0.0, 0.06)
+const RUMBLE_FINISHER := Vector3(0.4, 0.45, 0.12)
+const RUMBLE_OMEGA := Vector3(0.6, 0.8, 0.18)
 const MARK_TAGS: Array[StringName] = [&"mark", &"cross"]
 const EMBER_TAGS: Array[StringName] = [&"ember", &"chama"]
 const HOLY_TAGS: Array[StringName] = [&"skill", &"vigilia"]
@@ -178,16 +187,19 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			ComboNode.Effect.STUN:
 				if e.def.behavior != EnemyDef.Behavior.BOSS:
 					e.stun_t = maxf(e.stun_t, node.effect_time * (0.5 if e.def.heavy else 1.0))
-	if struck.is_empty():
-		Audio.play(&"swing")
-	else:
+	# (the blade's own sound plays when the move starts, ComboNode.sound: GF-11)
+	if not struck.is_empty():
 		# Hades II holds the hit slow a little longer when the blow kills
-		_hit_slow(node.hit_stop_ms + (KILL_HOLD_MS if kills > 0 else 0.0))
+		_hit_slow(node, KILL_HOLD_MS if kills > 0 else 0.0)
 		if _cine_cd <= 0.0 and wants_slow_mo(struck.size(), kills):
 			_cine_cd = SLOW_MO_COOLDOWN
+			# (Fx starts it once the hit stop is over: GF-05)
 			fx.slow_mo(SLOW_MO_FRACTION, SLOW_MO_HOLD, SLOW_MO_OUT, 1.05, 0.45)
 		fx.shake(node.shake * (1.0 + minf(struck.size(), 10) * 0.05))
-		fx.kick(dir, 1.6 if heavy else 0.9)
+		var omega := node.has_tag(OMEGA_TAG)
+		fx.kick(dir, kick_of(node))
+		var buzz := RUMBLE_OMEGA if omega else RUMBLE_FINISHER if finisher else RUMBLE_COMMON
+		fx.buzz(buzz.x, buzz.y, buzz.z)
 		if finisher:
 			fx.kick_split(FINISHER_SPLIT)
 			fx.ring(struck[0].pos, FINISHER_RING, color, FINISHER_RING_TIME, 1.0 + struck[0].y, true)
@@ -257,13 +269,22 @@ static func cut_axis(shape: ComboNode.Shape, origin: Vector2, at: Vector2, away:
 	return Vector2(-out.y, out.x) if flip else Vector2(out.y, -out.x)
 
 
-## The brief slow on a hit (Hades II slows the world for a few hundredths of a second instead of freezing it; at
-## these lengths a freeze reads the same). One slow at most every HIT_SLOW_COOLDOWN seconds.
-func _hit_slow(ms: float) -> void:
-	if _slow_cd > 0.0 or ms <= 0.0:
+## The hit stop of a blow as Hades II plays it (GF-01): the world keeps its speed for the move's wait
+## (ComboNode.hit_stop_ms), then slows to hit_slow_scale for hit_slow_ms (and extra_ms more when it kills), then comes
+## back (HitStop). Never a freeze. One at most every HIT_SLOW_COOLDOWN seconds, as there.
+func _hit_slow(node: ComboNode, extra_ms: float = 0.0) -> void:
+	if _slow_cd > 0.0 or node.hit_slow_ms <= 0.0:
 		return
 	_slow_cd = HIT_SLOW_COOLDOWN
-	fx.hit_stop(ms * Feel.live().hit_stop_scale)
+	var k := Feel.live().hit_stop_scale
+	fx.blow_stop(node.hit_stop_ms * k, (node.hit_slow_ms + extra_ms) * k, node.hit_slow_scale)
+
+
+## How hard the camera jolts when this move lands (times Fx.KICK_METERS): KICK_COMMON, KICK_FINISHER or KICK_OMEGA.
+static func kick_of(node: ComboNode) -> float:
+	if node.has_tag(OMEGA_TAG):
+		return KICK_OMEGA
+	return KICK_FINISHER if node.has_tag(&"finisher") else KICK_COMMON
 
 
 ## A finisher holds at the top of its swing: the blade gathers light (Fx.glint) and bursts when it lands.
@@ -308,7 +329,7 @@ func cast(at: Vector2, omega: bool) -> void:
 		z.burst = CAST_BURST * (1.0 + boons.stat(&"damage_pct", CAST_TAGS))
 	fx.ring(at, radius, CAST_COLOR, 0.3)
 	fx.hero_burst(&"light", Vector3(at.x, 0.4, at.y))
-	Audio.play(&"charged" if omega else &"swing")
+	Audio.play(&"charged" if omega else &"blade")
 
 
 ## The held circle of light runs out: everything inside takes the burst.

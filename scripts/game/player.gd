@@ -22,7 +22,15 @@ const RADIUS := 0.5
 const MAX_HP := 30.0
 const HURT_TIME := 0.18
 const HURT_INVULN := 1.3
-const TURN := 18.0
+## How fast the drawn body turns to where he faces, as in Hades II (1340 degrees a second: 180 in 8 frames); the way
+## he faces turns at once (GF-09). A swing turns the body faster (TURN_SWING, a share per second).
+const TURN_BODY := deg_to_rad(1340.0)
+const TURN_SWING := 30.0
+## A press of the dodge while he cannot move (the stagger, the roll) waits this long once he can (GF-02). Without a
+## charge left a press does nothing, as in Hades II.
+const DODGE_BUFFER := 0.15
+## The Omega's charge sound starts once the button has been held this long (a tap plays none).
+const CHARGE_SOUND_AT := 0.12
 ## Meters per second the run and sprint clips cover at their own speed (tools/bake_hero.gd measures them), so the
 ## clips play as fast as the paladin moves and the feet keep up.
 const RUN_CLIP_PACE := 8.7
@@ -103,6 +111,9 @@ const MAGICK_MAX := 50.0
 const CAST_CHARGE := 0.25
 const CAST_SLOW := 0.6
 const CAST_COOLDOWN := 0.2
+## Seconds after the circle is let go in which no blow may start (Hades II: 8 frames; D-44, which also took away the
+## 0.2 s of safety it gave).
+const CAST_ATTACK_LOCK := 8.0 / 60.0
 const CAST_OMEGA_TIME := 0.6
 const CAST_OMEGA_COST := 20.0
 ## A boss's curse on him (CurseState): a dark violet edge on his body, a few runes turning around him and a haze
@@ -149,6 +160,10 @@ var _cast_t := 0.0
 var _state_t := 0.0
 var _dodge_dir := Vector2.DOWN
 var _dodge_recharge := 0.0
+## Seconds a dodge press still waits to be used (DODGE_BUFFER).
+var _dodge_want := 0.0
+## Seconds his legs stay planted after a move (ComboNode.root_time: the special's); the dodge cuts it.
+var rooted := 0.0
 var _lunge := Vector2.ZERO
 ## The lunge's speed fades this fast (1/s): its distance is speed / LUNGE_DECAY, mostly covered in 0.25 s.
 const LUNGE_DECAY := 9.0
@@ -185,6 +200,7 @@ func _ready() -> void:
 	runner.move_started.connect(_on_move_started)
 	runner.move_hit.connect(func(node: ComboNode) -> void:
 		_anim.speed_scale = 1.0
+		rooted = maxf(rooted, node.root_time)
 		struck.emit(node, pos, facing))
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
 		_anim.speed_scale = GLINT_ANIM_SPEED
@@ -388,16 +404,23 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 		if _dodge_recharge >= Feel.live().dodge_recharge:
 			_dodge_recharge = 0.0
 			dodge_charges += 1
+	rooted = maxf(0.0, rooted - dt)
+	var ran := false
 	match state:
 		State.DEAD, State.REST:
 			_show(dt)
 			return
 		State.HURT:
+			# presses during the stagger wait for its end (GF-03): the runner is locked while it lasts
+			_queue_buttons()
 			pos += _push * dt
 			_push *= maxf(0.0, 1.0 - 10.0 * dt)
 			if _state_t >= HURT_TIME:
 				state = State.MOVE
+				runner.locked = false
 		State.DODGE:
+			# an attack pressed in the roll comes out as the dash attack when it ends (Hades II's DashAttackQueue)
+			_queue_buttons()
 			var feel := Feel.live()
 			pos += _dodge_dir * feel.dodge_speed * dt * (1.0 - _state_t / feel.dodge_time * 0.5)
 			if _state_t >= feel.dodge_time:
@@ -405,25 +428,32 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 				runner.on_dodge_end()
 				invuln = maxf(invuln, feel.dodge_iframes - feel.dodge_time)
 				sprinting = Controls.held(&"dodge")
-		State.MOVE:
-			_read_buttons(dt, move, aim)
-			if state == State.MOVE:
-				var sp := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale()
-				if sprinting and (runner.is_attacking() or charging or move.length() < 0.1 or not Controls.held(&"dodge")):
-					sprinting = false
-				if sprinting:
-					sp *= Feel.live().sprint_scale
-				if _casting:
-					sp *= CAST_SLOW
-				if runner.is_swinging():
-					pos += move * sp * runner.move_scale(Feel.live()) * dt + _lunge * dt
-				else:
-					# after the blow lands, walking cuts the follow-through short (the legs run, no sliding)
-					pos += move * sp * dt + _lunge * dt
-					if move.length() > 0.1:
-						facing = facing.slerp(move.normalized(), minf(1.0, dt * TURN)).normalized()
-	runner.glint_scale = Feel.live().glint_scale
-	runner.step(dt)
+	if state == State.MOVE and not dashing:
+		_read_buttons(dt, move, aim)
+		if state == State.MOVE:
+			# the runner first: a blow pressed this frame plants him on this very frame (GF-09)
+			runner.glint_scale = Feel.live().glint_scale
+			runner.step(dt)
+			ran = true
+			var sp := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale()
+			if sprinting and (runner.is_attacking() or charging or move.length() < 0.1 or not Controls.held(&"dodge")):
+				sprinting = false
+			if sprinting:
+				sp *= Feel.live().sprint_scale
+			if _casting:
+				sp *= CAST_SLOW
+			if rooted > 0.0:
+				pos += _lunge * dt
+			elif runner.is_swinging():
+				pos += move * sp * runner.move_scale(Feel.live()) * dt + _lunge * dt
+			else:
+				# after the blow lands, walking cuts the follow-through short (the legs run, no sliding)
+				pos += move * sp * dt + _lunge * dt
+				if move.length() > 0.1:
+					facing = move.normalized()
+	if not ran:
+		runner.glint_scale = Feel.live().glint_scale
+		runner.step(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
 	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
 	pos = arena.sweep(start, pos, RADIUS)
@@ -435,9 +465,10 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 
 func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 	_aim = aim
-	if Controls.pressed(&"dodge") and dodge_charges > 0 and runner.can_cancel():
+	if (Controls.pressed(&"dodge") or _dodge_want > 0.0) and dodge_charges > 0 and runner.can_cancel():
 		_start_dodge(move)
 		return
+	_dodge_want = maxf(0.0, _dodge_want - dt)
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
 	if curse.active():
 		# the curse locks the special: a press does nothing, a charge already under way is dropped
@@ -447,14 +478,28 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		_press_attack(CURSE_ACTION, ComboNode.In.HEAVY, ComboNode.In.CHARGE)
 	if charging:
 		charge_t += dt
+		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
+			Audio.play(&"charge_up")
 		if not Controls.held(_charge_action):
 			charging = false  # let go before the charge filled: nothing more comes
-		elif charge_t >= _charge_time():
+		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
+			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
 			charging = false
 			runner.press(_charge_held)
 			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 			Audio.play(&"charged")
 	_read_cast(dt)
+
+
+## Presses while he cannot act (the roll, the stagger): attack and special are kept by the runner (it is locked, so
+## they wait unaged), the dodge waits DODGE_BUFFER once he can move.
+func _queue_buttons() -> void:
+	if Controls.pressed(&"dodge"):
+		_dodge_want = DODGE_BUFFER
+	if Controls.pressed(&"light_attack"):
+		runner.press(ComboNode.In.LIGHT)
+	if Controls.pressed(CURSE_ACTION) and not curse.active():
+		runner.press(ComboNode.In.HEAVY)
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -463,7 +508,9 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 	if not Controls.pressed(action):
 		return
 	runner.press(tap)
-	if not charging and _affordable(held):
+	if charging and _charge_action == action:
+		charge_t = 0.0  # pressed again: it was let go in between, the charge starts over
+	elif not charging and _affordable(held):
 		charging = true
 		charge_t = 0.0
 		_charge_action = action
@@ -486,6 +533,12 @@ func _charge_time() -> float:
 	return node.charge_time if node != null else tree.charge_time
 
 
+## Seconds the held move takes from its start to its landing (windup and glint), played inside the charge.
+func _charge_lead() -> float:
+	var node := ComboTree.find(tree.neutral, _charge_held)
+	return node.windup + node.glint * Feel.live().glint_scale if node != null else 0.0
+
+
 ## The circle of light: a tap draws it around the paladin; holding on (with Magia) arms it to burst at the end.
 ## Only one circle stands at a time (cast_active is kept by Game while the zone lives).
 func _read_cast(dt: float) -> void:
@@ -504,7 +557,7 @@ func _read_cast(dt: float) -> void:
 		var omega := _cast_t >= CAST_OMEGA_TIME and magick.spend(CAST_OMEGA_COST)
 		cast_cooldown = CAST_COOLDOWN
 		cast_active = true
-		invuln = maxf(invuln, 0.2)
+		runner.hold_for(CAST_ATTACK_LOCK)
 		cast_released.emit(pos, omega)
 
 
@@ -516,6 +569,8 @@ func _start_dodge(move: Vector2) -> void:
 	_casting = false
 	state = State.DODGE
 	_state_t = 0.0
+	_dodge_want = 0.0
+	rooted = 0.0
 	dodge_charges -= 1
 	_dodge_dir = move.normalized() if move.length() > 0.2 else facing
 	facing = _dodge_dir
@@ -536,6 +591,8 @@ func _on_move_started(node: ComboNode) -> void:
 	if node.magick_cost > 0.0:
 		magick.spend(node.magick_cost)
 	_anim.speed_scale = 1.0
+	if node.sound != &"":
+		Audio.play(node.sound)
 	_lunge = facing * node.lunge_toward(_gap_ahead(node)) * LUNGE_DECAY
 	_play(node.anim, node.anim_speed, node.anim_from)
 	if node.title != &"":
@@ -577,8 +634,11 @@ func hurt(amount: float, from: Vector2) -> void:
 	_blink = HURT_INVULN
 	_flash = 1.0
 	charging = false
-	runner.reset()
+	runner.reset(false)
+	# presses in the stagger are kept for its end (GF-03)
+	runner.locked = true
 	_anim.speed_scale = 1.0
+	fx.buzz(0.5, 0.8, 0.2)
 	var away := (pos - from).normalized() if pos.distance_to(from) > 0.01 else -facing
 	_push = away * 9.0
 	fx.number(Vector3(pos.x, 2.4, pos.y), amount, Color(1.0, 0.3, 0.25), true)
@@ -627,7 +687,10 @@ func place(at: Vector2) -> void:
 func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	position = Vector3(pos.x, 0, pos.y)
 	var want := atan2(facing.x, facing.y)
-	_model.rotation.y = lerp_angle(_model.rotation.y, want, minf(1.0, dt * (30.0 if runner.is_attacking() else TURN)))
+	if runner.is_attacking():
+		_model.rotation.y = lerp_angle(_model.rotation.y, want, minf(1.0, dt * TURN_SWING))
+	else:
+		_model.rotation.y = rotate_toward(_model.rotation.y, want, TURN_BODY * dt)
 	var glow := Color(OUTLINE, inverse_lerp(CHARGE_GLOW_FROM, 1.0, maxf(charge_progress(), CHARGE_GLOW_FROM)) * CHARGE_GLOW)
 	if shield_ready and not charging:
 		glow = SHIELD_GLOW

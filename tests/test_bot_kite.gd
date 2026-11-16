@@ -49,7 +49,8 @@ func test_keeping_away_draws_his_dash_in_a_real_fight() -> void:
 		t += dt
 	Controls.virtual = old
 	assert_not_null(game.boss)
-	assert_gt(far[0], 1.0, "it got away from him")
+	# since C12d the dart roots him 0.71 s (D-44, as in Hades II): standing still far away draws the dash sooner
+	assert_gt(far[0], 0.3, "it got away from him")
 	assert_gt(int((game.boss.stats.attacks as Dictionary).get(&"dash", 0)), 0, "and he dashed at it")
 
 

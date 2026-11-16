@@ -40,8 +40,8 @@ const HEIGHT := 1.1
 const ORB_SHADER := preload("res://assets/shaders/enemy_orb.gdshader")
 const HALO_SHADER := preload("res://assets/shaders/enemy_orb_halo.gdshader")
 const HALO := 1.5
-## Meters per second of the paladin's bolt of light.
-const SPARK_SPEED := 30.0
+## The dart flies at the speed of Hades II's special (ProjectileStaffBall, 5000 units: 62.5 m/s; GF-07).
+const SPARK_SPEED := 5000.0 / 80.0
 const LOOK := {
 	Kind.BOLT: [Color(3.0, 0.5, 0.3), 0.18, 0.6], Kind.ORB: [Color(1.6, 0.4, 2.8), 0.45, 0.45],
 	Kind.WAVE: [Color(3.0, 2.4, 1.2), 0.0, 0.0], Kind.BLADE: [Color(2.8, 2.4, 1.4), 0.0, 0.0],

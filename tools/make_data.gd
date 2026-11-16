@@ -77,28 +77,32 @@ func _combos() -> void:
 	# attack: three swings, the third a turn of the blade all around
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 60.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "lunge": 0.8, "windup": 0.28, "recovery": 18.0 / 60.0,
-		"chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0}, [], &"move_spin")
+		"chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin"}, [], &"move_spin")
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 25.0, "reach": 430.0 / U, "width": 150.0, "knockback": 10.0, "lunge": 1.2, "windup": 0.11, "recovery": 13.0 / 60.0,
 		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0}, [cut3])
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": 8.0, "lunge": 1.0, "windup": 0.06, "recovery": 8.0 / 60.0,
 		"chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.6, "move_scale": 0.0}, [cut2])
-	# special: a bolt of light thrown ahead (strikes only with its bolt)
+	# special: a bolt of light thrown ahead (strikes only with its bolt). Hades II's Special1: the attack is free again
+	# 18 frames after the dart, the special itself 0.7 s after it, and the legs stay planted 0.71 s (only the dodge
+	# cuts it; decision D-44 (3)); the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED)
 	var bolt := _move(&"bolt", H, &"Cast", [&"heavy", &"wave"],
-		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 0.6, "chain_window": 0.2,
+		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
+		"cooldown": 0.7, "root_time": 0.71, "sound": &"dart",
 		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 40.0, "effect_radius": 880.0 / U,
 		"effect_size": 1.4, "wave_bolt": true}, [], &"move_bolt")
 	# Omega special (special held 0.65 s, 10 Magia): a wide bolt that bursts through the crowd
 	var burst := _move(&"burst", C, &"Cast", [&"heavy", &"wave", &"charge", &"omega"],
 		{"magick_cost": 10.0, "charge_time": 0.65, "damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.08,
-		"recovery": 0.45, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
+		"recovery": 0.45, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
 		"effect_radius": 880.0 / U, "effect_size": 330.0 / U * 2.0}, [], &"move_burst")
-	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back
+	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back. Its windup and
+	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead)
 	var lance := _move(&"lance", CL, &"Sword_Attack", [&"light", &"thrust", &"finisher", &"omega"],
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 160.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.6, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
-		"move_scale": 0.0}, [], &"move_lance")
+		"move_scale": 0.0, "sound": &"thrust"}, [], &"move_lance")
 	# out of a dash: a thrust along the way
 	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
 		{"damage": 30.0, "shape": ComboNode.Shape.LINE, "reach": 640.0 / U, "width": 1.6, "knockback": 10.0, "lunge": 3.2, "windup": 0.06,
@@ -743,7 +747,8 @@ func _feel() -> void:
 	f.dodge_time = 0.2
 	# the roll slows to half by its end, so it covers 0.75 * speed * time
 	f.dodge_speed = 450.0 / U / 0.2 / 0.75
-	f.dodge_iframes = 16.0 / 60.0
+	# protected 19 frames from the press, as Hades II (3 of charge and 16 of the jump; ours leaves on the press frame)
+	f.dodge_iframes = 18.0 / 60.0
 	f.dodge_charges = 1
 	f.dodge_recharge = 0.74
 	f.sprint_scale = 890.0 / 540.0

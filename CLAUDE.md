@@ -108,7 +108,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`impact.gdshader`, `Fx.gash`, `Combat.cut_axis`; testado em `tests/test_fx_on_hit.gd`), números pálidos (esmeralda só em
   finalizador e Ômega, `Combat.number_color`), estocadas em feixe fino (`emeth_thrust.gdshader`), o especial como dardo
   esmeralda (`emeth_dart.gdshader`), o círculo de luz como aro fino com marcas girando; inimigo pisca abaixo do limiar do glow e achata, corpo arremessado ao morrer
-  (`Horde.THROW`), tranco de câmera (`Fx.kick`), hit stop curto (`Feel.hit_stop_scale`) e brilho de antecipação nos finalizadores
+  (`Horde.THROW`), tranco de câmera (`Fx.kick`), hit stop do Hades, lentidão e não congelamento (`HitStop`, C12d) e brilho de antecipação nos finalizadores
   (`ComboNode.glint`, 0,08 s em todo finalizador, `FINISHER_GLINT` no `make_data.gd`, desenhado por `Fx.glint` na ponta da
   espada; ciclo 10: antes o dado era zero). Finalizadores soltam a meia-lua enorme (`Fx.crescent`). Quadro de impacto em preto e
   branco (`Fx.impact_frame`; ciclo 10, decisão D-08): só no Ômega que acerta e no golpe que derruba uma fase do chefe (ou o
@@ -186,8 +186,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `--stress` ignoram os tetos. O RESULT do `--smoke` traz `max_alive` (pico de inimigos de pé, chefe incluído), `boss_at` e o custo do passo da simulação medido só nos quadros com inimigos de pé, `step_ms_avg` e `step_ms_peak` (`StepTimer`, `core/step_timer.gd`; `step_ms` continua, suavizado e lido no fim). Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
   portas, fonte, loja (pisar compra), chefe. Magia enche em toda sala; sem experiência nem níveis.
 - Golpes do Hades: ataque em 3 (20, 25, 60 em volta), especial = seta (40), Ômega do ataque segurando 0,8 s (160, para
-  frente e para trás, 20 de Magia), Ômega do especial 0,65 s (80, 10 de Magia), avanço 0,2 s / 5,6 m com 16 quadros de
-  proteção e 1 carga, círculo em volta do paladino (5,4 m, 3 s, um por vez). Vida 30, 1,3 s de proteção após um golpe.
+  frente e para trás, 20 de Magia), Ômega do especial 0,65 s (80, 10 de Magia), avanço 0,2 s / 5,6 m com 19 quadros de
+  proteção desde o aperto (C12d) e 1 carga, círculo em volta do paladino (5,4 m, 3 s, um por vez). Vida 30, 1,3 s de proteção após um golpe.
 - Inimigos com os números de Érebo: cada um tem a versão elite (`_elite`, armadura do Hades). Guardiões: `knight` e `priest_elder`.
 - Aparência dos inimigos pela prancha do Daniel "Inimigos da Fase 1" (`docs/art/enemies_phase1.md`; imagem só local em
   `docs/art/ref/`): **os nove são os modelos do Meshy** aprovados pelo Daniel (2026-11-15; `assets/models/meshy/enemy_<id>/`,
@@ -256,7 +256,30 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Combat.cast_burst`). Armadura (`EnemyDef.armor`, barra amarela): absorve os golpes, ao quebrar atordoa
   (`Horde.armor_broken`; Morvath se rearma depois do atordoamento).
 - Entrada só por ações (`Controls`): `light_attack`, `heavy_attack`, `dodge`, `cast`, mira (`Controls.aim`). Nunca ler tecla direto.
-  Toque e robô usam `Controls.VirtualPad`. Toques durante o hit stop ficam guardados (`Controls.flush`).
+  Toque e robô usam `Controls.VirtualPad`. Toques num quadro em que o jogo não andou ficam guardados (`Controls.flush`;
+  o controle virtual também, `Controls.latch_virtual`, GF-06).
+- **Game feel I, a mão (ciclo C12d; números do Hades II, D-39, D-43, D-44; aceite pela sonda `tools/feel_probe_run.gd`,
+  `docs/gallery/c12d/PROBE.md`; testes em `tests/test_feel_c12d.gd`)**: hit stop no molde do Hades, nunca congelamento
+  (`HitStop`, `core/hit_stop.gd`; `Fx.blow_stop`): o mundo segue `ComboNode.hit_stop_ms` (25, 65, 70, 50 ms) depois do
+  acerto, cai a `hit_slow_scale` (6%) por `hit_slow_ms` (10; +40 com abate, `Combat.KILL_HOLD_MS`) e volta em 20 ms, em
+  tempo real; `Fx.tick` conta tudo em tempo real e dá `Fx.rate` (câmera lenta vezes hit stop) e `Fx.real_dt`; `Game`
+  anda o mundo `real_dt * rate` e põe `Engine.time_scale = rate` (animações seguem um quadro depois). `Fx.hit_stop(ms)`
+  (Morvath, dons) é lentidão imediata a 6%. A câmera lenta pedida durante um hit stop espera ele acabar (GF-05).
+  Entrada: a esquiva corta qualquer golpe, a preparação também (golpe cortado não acerta, `ComboRunner.can_cancel`);
+  ataque e especial apertados na esquiva ou ferido ficam no `ComboRunner` travado (`locked`) e saem no fim (o da esquiva
+  vira `dash_cut`); o buffer só envelhece quando o golpe poderia sair (IDLE e WINDOW; trava de gatilho do Hades), então
+  o aperto em qualquer quadro do golpe vale; esquiva apertada ferido ou na esquiva espera `Player.DODGE_BUFFER` (sem
+  carga, nada). Botões lidos e o golpe começado antes de andar: ele planta no quadro do aperto. Direção na hora, corpo a
+  1340 graus/s (`Player.TURN_BODY`). Esquiva no quadro do aperto (nosso, D-44) com 19 quadros de proteção
+  (`Feel.dodge_iframes` 0,3). Seta: ataque livre 18 quadros depois do dardo (`recovery`), especial 0,7 s
+  (`ComboNode.cooldown`, guardado pelo golpe sofrido), pernas presas 0,71 s que só a esquiva corta (`root_time`,
+  `Player.rooted`), dardo a 62,5 m/s (`Projectiles.SPARK_SPEED`). Ômega do ataque: preparação e brilho dentro da carga,
+  acerta quando ela enche (`Player._charge_lead`); apertar de novo recomeça a carga. Círculo sem proteção e 8 quadros
+  sem golpe (`ComboRunner.hold_for`, `Player.CAST_ATTACK_LOCK`). Impacto: tranco do golpe comum 0,09 m, finalizador
+  0,32, Ômega 0,56 (`Combat.KICK_*`, `kick_of`); clarão do inimigo 0,05 s (`Horde.FLASH_TIME`). Som da lâmina no
+  começo de cada golpe (`ComboNode.sound`: `blade`, `blade_spin`, `thrust`, `dart`; nada mais de `swing` só no erro) e
+  `charge_up` segurando o Ômega; vibração por golpe e ao ser ferido (`Fx.buzz`, `Combat.RUMBLE_*`), só com controle
+  em uso e a opção `rumble` do save ligada (`Fx.rumble`, `Game.apply_options`).
 - Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`). Sem save (`--nosave`) não há recorde
   (`SaveData.record_win_time`). Os testes nunca gravam o save nem o registro (`tests/hooks/pre_run.gd`, `pre_run_script` no
   `.gutconfig.json`; `tools/title_flow_check.gd` também desliga).

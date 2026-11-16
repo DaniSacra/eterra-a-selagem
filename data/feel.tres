@@ -6,7 +6,6 @@
 script = ExtResource("1_oingo")
 speed = 6.75
 dodge_speed = 37.5
-dodge_iframes = 0.26666666666666666
 dodge_charges = 1
 dodge_recharge = 0.74
 sprint_scale = 1.6481481481481481

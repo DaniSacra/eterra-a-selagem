@@ -10,7 +10,9 @@ signal armor_broken(e: Enemy)
 
 const CELL := 1.5
 const KNOCKBACK_DECAY := 7.0
-const FLASH_TIME := 0.14
+## Seconds a blow's flash lasts on the body: short and dry, 2 to 4 frames with its first one seen (GF-10; Hades II
+## 0.03 s; it was 0.14 and read soft).
+const FLASH_TIME := 0.05
 ## Flash of an ordinary blow (a strong one flashes at 1, so its first frame or two are pure white: crowd.gdshader).
 const WEAK_FLASH := 0.45
 ## A boss's strongest flash (art review P4: a strong frost blow sent Morvath's dark robe to the pale ivory of the

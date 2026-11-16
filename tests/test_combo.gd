@@ -150,7 +150,9 @@ func test_buffer_keeps_an_early_press_for_150_ms() -> void:
 	assert_eq(started, [&"cut1", &"cut2"] as Array[StringName], "pressed 100 ms before the end: honoured")
 
 
-func test_buffer_drops_a_press_that_came_too_early() -> void:
+## GF-04 (C12d): the buffer counts from the moment the blow could start (Hades II's trigger lock), so a press at the
+## very start of a swing still chains, even with no window after it.
+func test_buffer_keeps_a_press_from_the_start_of_the_swing() -> void:
 	tree = tree.duplicate(true)
 	tree.neutral[0].chain_window = 0.0
 	runner.tree = tree
@@ -159,7 +161,17 @@ func test_buffer_drops_a_press_that_came_too_early() -> void:
 	run(0.01)
 	runner.press(L)
 	run(tree.neutral[0].duration() + 0.1)
-	assert_eq(started.size(), 1, "pressed more than 150 ms before the end, and no window after it")
+	assert_eq(started, [&"cut1", &"cut2"] as Array[StringName], "pressed in the windup: it waits for the swing to end")
+
+
+## A press that cannot start yet in the open (the special still on its cooldown) is dropped after buffer_time.
+func test_buffer_drops_a_press_that_waits_in_the_open() -> void:
+	play(H)
+	run(tree.neutral[1].chain_window + 0.01)
+	assert_gt(runner.cooldown_left(&"bolt"), tree.buffer_time + 0.02, "still on its cooldown")
+	runner.press(H)
+	run(runner.cooldown_left(&"bolt") + 0.1)
+	assert_eq(started, [&"bolt"] as Array[StringName], "the press waited only buffer_time")
 
 
 func test_chain_window_is_per_node() -> void:
@@ -182,15 +194,15 @@ func test_a_fourth_attack_starts_the_chain_again() -> void:
 	assert_eq(started[3], &"cut1")
 
 
-func test_only_the_end_of_a_move_can_be_cancelled() -> void:
+## GF-02 (C12d): a dodge cuts any move, its windup too (Hades II cuts the charge); a cut windup never lands.
+func test_a_dodge_cuts_the_windup_and_the_blow_never_lands() -> void:
 	runner.press(L)
 	runner.step(0.0)
-	assert_false(runner.can_cancel(), "not during the windup")
-	run(runner.node.windup + 0.01)
-	assert_eq(hits.size(), 1)
-	assert_true(runner.can_cancel(), "the recovery can be cut by a dodge")
+	assert_true(runner.can_cancel(), "the windup can be cut")
 	runner.on_dodge()
 	assert_false(runner.is_attacking())
+	run(0.5)
+	assert_eq(hits.size(), 0, "the blow it cut never lands")
 
 
 func test_reset_drops_the_chain_and_the_buffer() -> void:

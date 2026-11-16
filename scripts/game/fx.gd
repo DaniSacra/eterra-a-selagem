@@ -116,7 +116,21 @@ const BURSTS := {
 var camera: Camera3D
 ## Where damage numbers are drawn (a Control over the 3D view).
 var overlay: Control
-var stop_left := 0.0
+## The hit stop playing (HitStop, GF-01: the world slows, never freezes). stop_left: real seconds left of it (setting
+## it to 0 ends it).
+var hits := HitStop.new()
+var stop_left: float:
+	get:
+		return hits.left()
+	set(value):
+		if value <= 0.0:
+			hits.clear()
+## The speed of the world this frame (tick: slow motion times hit stop; 1 = full speed) and the real seconds the
+## frame took. Game steps the world by real_dt * rate.
+var rate := 1.0
+var real_dt := 0.0
+## The "rumble" option: false, the gamepad never vibrates (Game.apply_options reads it from the save).
+var rumble := true
 ## Strength of the colour split on screen (0..1), read by the screen pass.
 var split := 0.0
 ## Seconds left of the impact frame (the screen in flat black and white), read by the screen pass.
@@ -142,6 +156,8 @@ var _slow_out := 0.3
 var _slow_zoom := 1.0
 var _slow_blur := 0.0
 var _slow_t := 0.0
+## A slow motion asked for during a hit stop waits for it to end (GF-05: else the two together read as a freeze).
+var _slow_wait := false
 var _shake := 0.0
 var _pools: Dictionary = {}
 var _next: Dictionary = {}
@@ -655,8 +671,25 @@ func word(pos: Vector3, text: String, color: Color) -> void:
 	_show_label(i, text, color, WORD_SIZE)
 
 
+## The hit stop of a blow (Hades II, GF-01): wait_ms at full speed, slow_ms at fraction of the speed, back to full in
+## HitStop.BACK. Milliseconds of real time.
+func blow_stop(wait_ms: float, slow_ms: float = 10.0, fraction: float = HitStop.FRACTION) -> void:
+	hits.start(wait_ms / 1000.0, slow_ms / 1000.0, fraction)
+
+
+## A heavy moment (a boss's roar, a gift's blast): the world slows to a few percent at once for ms, then comes back
+## (never a freeze since GF-01).
 func hit_stop(ms: float) -> void:
-	stop_left = maxf(stop_left, ms / 1000.0)
+	blow_stop(0.0, ms)
+
+
+## The gamepad buzzes (a blow that lands, a hit taken): weak and strong motor (0..1), seconds. Only with a pad in use
+## and the "rumble" option on.
+func buzz(weak: float, strong: float, seconds: float) -> void:
+	if not rumble or not Controls.using_pad:
+		return
+	for pad in Input.get_connected_joypads():
+		Input.start_joy_vibration(pad, weak, strong, seconds)
 
 
 func shake(amount: float) -> void:
@@ -668,10 +701,20 @@ func kick_split(amount: float) -> void:
 		split = maxf(split, amount)
 
 
-## Runs every frame, even during hit stop. Returns the camera's shake offset.
+## Runs every frame with the frame's delta (scaled by Engine.time_scale as Godot gives it). Everything here counts in
+## real time (GF-05: a hit stop under slow motion is as short as anywhere else). Sets rate and real_dt, and
+## Engine.time_scale for what Godot animates by itself. Returns the camera's shake offset.
 func tick(delta: float) -> Vector3:
-	_tick_slow(delta / maxf(Engine.time_scale, 0.001))
-	stop_left = maxf(0.0, stop_left - delta)
+	real_dt = delta / maxf(Engine.time_scale, 0.0001)
+	var hit := hits.advance(real_dt)
+	if not hits.active() and _slow_wait:
+		_slow_wait = false
+		_slow_t = 0.0
+	_tick_slow(real_dt)
+	rate = _slow_scale() * hit
+	# what Godot moves by itself (animations, particles) follows the world one frame later
+	Engine.time_scale = maxf(rate, 0.0001)
+	delta = real_dt
 	_shake = maxf(0.0, _shake - delta * (0.6 + _shake * 6.0))
 	split = maxf(0.0, split - delta * 3.0)
 	frame_left = maxf(0.0, frame_left - delta)
@@ -695,11 +738,15 @@ func slow_mo(fraction: float, hold: float, ease_out: float, zoom_to: float = 1.0
 	_slow_zoom = zoom_to
 	_slow_blur = blur
 	_slow_t = 0.0
+	_slow_wait = hits.active()
 
 
 ## Back to full speed at once (a menu opens, the run ends).
 func end_slow() -> void:
 	_slow_on = false
+	_slow_wait = false
+	hits.clear()
+	rate = 1.0
 	zoom = 1.0
 	radial = 0.0
 	Engine.time_scale = 1.0
@@ -714,17 +761,25 @@ static func slow_strength(t: float, ease_in: float, hold: float, ease_out: float
 	return clampf(1.0 - (t - ease_in - hold) / maxf(ease_out, 0.001), 0.0, 1.0)
 
 
-func _tick_slow(real_dt: float) -> void:
-	if not _slow_on:
+func _tick_slow(dt: float) -> void:
+	if not _slow_on or _slow_wait:
 		return
-	_slow_t += real_dt
+	_slow_t += dt
 	if _slow_t >= _slow_in + _slow_hold + _slow_out:
-		end_slow()
+		_slow_on = false
+		zoom = 1.0
+		radial = 0.0
 		return
 	var k := slow_strength(_slow_t, _slow_in, _slow_hold, _slow_out)
-	Engine.time_scale = lerpf(1.0, _slow_fraction, k)
 	zoom = lerpf(1.0, _slow_zoom, k)
 	radial = _slow_blur * k
+
+
+## The speed the slow motion leaves the world at now (1 when none plays).
+func _slow_scale() -> float:
+	if not _slow_on or _slow_wait:
+		return 1.0
+	return lerpf(1.0, _slow_fraction, slow_strength(_slow_t, _slow_in, _slow_hold, _slow_out))
 
 
 ## Ages the pooled effects (also during hit stop, so the impact frame keeps glowing). A new frame: the budget of

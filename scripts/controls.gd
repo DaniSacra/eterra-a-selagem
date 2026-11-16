@@ -25,6 +25,9 @@ var virtual: VirtualPad = null
 var _last_aim := Vector2.RIGHT
 ## Presses seen since the game last stepped (kept through hit stop frames, cleared by flush()).
 var _latched: Dictionary = {}
+## The same for the virtual pad (the bot, touch): its taps last one frame, so a frame the game did not step keeps
+## them here until it does (GF-06; Game calls latch_virtual).
+var _pad_latched: Dictionary = {}
 
 
 class VirtualPad:
@@ -135,6 +138,14 @@ func _process(_delta: float) -> void:
 ## The game stepped: presses so far have been seen.
 func flush() -> void:
 	_latched.clear()
+	_pad_latched.clear()
+
+
+## The game did not step this frame: the virtual pad's taps are kept for the next step (as the keyboard's are).
+func latch_virtual() -> void:
+	if virtual:
+		for action: StringName in virtual.tapped:
+			_pad_latched[action] = true
 
 
 func _input(event: InputEvent) -> void:
@@ -160,7 +171,7 @@ func move() -> Vector2:
 
 func pressed(action: StringName) -> bool:
 	if virtual:
-		return virtual.tapped.has(action)
+		return virtual.tapped.has(action) or _pad_latched.has(action)
 	return _latched.has(action) or Input.is_action_just_pressed(action)
 
 

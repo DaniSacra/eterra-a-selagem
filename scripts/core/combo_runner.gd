@@ -17,7 +17,8 @@ const NO_INPUT := -1
 var tree: ComboTree
 var phase := Phase.IDLE
 var node: ComboNode
-## While locked (during the dodge roll) inputs are buffered but nothing starts.
+## While locked (during the dodge roll, while hurt) inputs are buffered but nothing starts, and the buffer does not
+## age (GF-03: a press in the roll or the stagger comes out when it ends).
 var locked := false
 ## Multiplies every move's glint (Feel.glint_scale, set by the paladin).
 var glint_scale := 1.0
@@ -27,6 +28,10 @@ var _buffer_age := 0.0
 var _dodge_left := 0.0
 ## Glint still to announce in this windup (the windup timer counts windup + glint).
 var _hold := 0.0
+## Seconds more nothing may start (hold_for: the 8 frames after the circle of light, D-44); presses wait as when locked.
+var _held := 0.0
+## Seconds left before a move may start again, by id (ComboNode.cooldown).
+var _cooldowns: Dictionary[StringName, float] = {}
 
 
 func _init(combo_tree: ComboTree) -> void:
@@ -54,9 +59,19 @@ func is_swinging() -> bool:
 	return phase == Phase.WINDUP
 
 
-## The end of any move can be cancelled by a dodge; the windup cannot.
+## A dodge may cut any move, its windup too (Hades II cuts the charge; GF-02): a blow cut before it lands deals nothing.
 func can_cancel() -> bool:
-	return phase != Phase.WINDUP
+	return true
+
+
+## Nothing may start for this many seconds (presses wait for it, unaged).
+func hold_for(seconds: float) -> void:
+	_held = maxf(_held, seconds)
+
+
+## Seconds left before this move may start again.
+func cooldown_left(id: StringName) -> float:
+	return _cooldowns.get(id, 0.0)
 
 
 ## The held move a press of this charge input would start right now (null when there is none).
@@ -69,11 +84,13 @@ func charge_available(charge: ComboNode.In = ComboNode.In.CHARGE) -> bool:
 	return charge_move(charge) != null
 
 
-## Called when a dodge starts: drops the current chain and opens the dodge chains.
+## Called when a dodge starts: drops the current chain (a windup it cuts never lands) and opens the dodge chains.
+## Presses from before the dodge are dropped; those made during it come out when it ends (the dash attack).
 func on_dodge() -> void:
 	phase = Phase.IDLE
 	node = null
 	locked = true
+	_buffered = NO_INPUT
 	_dodge_left = tree.dodge_window
 
 
@@ -82,31 +99,39 @@ func on_dodge_end() -> void:
 	_dodge_left = tree.dodge_window
 
 
-## Drops everything (the paladin was hurt).
-func reset() -> void:
+## Drops everything (the paladin was hurt). clear_cooldowns: also the moves' own cooldowns (a blow taken keeps them).
+func reset(clear_cooldowns: bool = true) -> void:
 	var had_chain := node != null
+	if clear_cooldowns:
+		_cooldowns.clear()
 	phase = Phase.IDLE
 	node = null
 	locked = false
 	_buffered = NO_INPUT
 	_dodge_left = 0.0
+	_held = 0.0
 	if had_chain:
 		combo_dropped.emit()
 
 
+## The buffer counts only while a press could be used (GF-04: Hades II's trigger lock): a press during a swing, the
+## roll, the stagger or a hold waits for it whole, then gets tree.buffer_time to find a move.
 func step(dt: float) -> void:
-	if _buffered != NO_INPUT:
-		_buffer_age += dt
+	for id: StringName in _cooldowns.keys():
+		_cooldowns[id] -= dt
+		if _cooldowns[id] <= 0.0:
+			_cooldowns.erase(id)
 	if locked:
-		_expire_buffer()
 		return
+	# (checked before it counts down, with room for the sum of frames: a hold of 8 frames starts on the 8th after it)
+	var held := _held > 0.0001
+	_held = maxf(0.0, _held - dt)
 	match phase:
 		Phase.IDLE:
-			if not _try_start():
+			if not held and not _try_start():
 				_dodge_left = maxf(0.0, _dodge_left - dt)
-				_expire_buffer()
+				_age(dt)
 		Phase.WINDUP:
-			_expire_buffer()
 			_t -= dt
 			if _hold > 0.0 and _t <= _hold:
 				move_glint.emit(node, _hold)
@@ -114,20 +139,23 @@ func step(dt: float) -> void:
 			if _t <= 0.0:
 				phase = Phase.RECOVERY
 				_t += node.recovery
+				if node.cooldown > 0.0:
+					_cooldowns[node.id] = node.cooldown
 				move_hit.emit(node)
 		Phase.RECOVERY:
-			_expire_buffer()
 			_t -= dt
 			if _t <= 0.0:
 				phase = Phase.WINDOW
 				_t = node.chain_window
 				move_ended.emit(node)
-				_try_start()
+				if not held:
+					_try_start()
 		Phase.WINDOW:
-			if _try_start():
+			if not held and _try_start():
 				return
 			_t -= dt
-			_expire_buffer()
+			if not held:
+				_age(dt)
 			if _t <= 0.0:
 				phase = Phase.IDLE
 				node = null
@@ -150,7 +178,7 @@ func _try_start() -> bool:
 		found = ComboTree.find(tree.neutral, input)
 	if found == null and _dodge_left > 0.0:
 		found = ComboTree.find(tree.neutral, input)
-	if found == null:
+	if found == null or _cooldowns.has(found.id):
 		return false
 	_buffered = NO_INPUT
 	_dodge_left = 0.0
@@ -162,6 +190,9 @@ func _try_start() -> bool:
 	return true
 
 
-func _expire_buffer() -> void:
-	if _buffered != NO_INPUT and _buffer_age > tree.buffer_time:
+func _age(dt: float) -> void:
+	if _buffered == NO_INPUT:
+		return
+	_buffer_age += dt
+	if _buffer_age > tree.buffer_time:
 		_buffered = NO_INPUT

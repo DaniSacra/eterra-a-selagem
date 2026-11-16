@@ -358,13 +358,16 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
 	var shake := fx.tick(delta)
-	fx.animate(delta)
+	# the world's own seconds this frame: real time times the slow motion and the hit stop (Fx.rate, GF-01: a hit
+	# stop slows the world to a few percent, it never stops it)
+	var world_dt := fx.real_dt * fx.rate
+	fx.animate(world_dt)
 	if bot:
-		bot.step(delta, self)
+		bot.step(world_dt, self)
 	var stepped := false
 	if mode == Mode.PLAY or mode == Mode.OVER or mode == Mode.ENDING:
-		if fx.stop_left <= 0.0:
-			_timed_step(minf(delta, 0.05))
+		if world_dt > 0.0:
+			_timed_step(minf(world_dt, 0.05))
 			stepped = true
 	horde.render()
 	orbs.render()
@@ -372,7 +375,7 @@ func _process(delta: float) -> void:
 		_open_pause()
 	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
 		_toggle_feel_panel()
-	_hurt_tint.step(delta / maxf(Engine.time_scale, 0.001), Feel.live())
+	_hurt_tint.step(fx.real_dt, Feel.live())
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
 	if mode != Mode.PLAY and mode != Mode.ENDING and not Dev.has("lab"):
 		fx.end_slow()
@@ -386,6 +389,8 @@ func _process(delta: float) -> void:
 	# a button pressed during a hit stop is kept for the next step (a swing must never be lost)
 	if stepped or mode != Mode.PLAY:
 		Controls.flush()
+	else:
+		Controls.latch_virtual()
 
 
 func _step(dt: float) -> void:
@@ -962,6 +967,8 @@ func apply_options() -> void:
 	fx.impact_frames = bool(Save.option("impact_frames"))
 	fx.slow_motion = bool(Save.option("slow_motion"))
 	fx.color_split = bool(Save.option("color_split"))
+	# the gamepad's vibration (GF-11; on by default, also in saves from before the option)
+	fx.rumble = bool(Save.option("rumble"))
 
 
 func _close_screen() -> void:

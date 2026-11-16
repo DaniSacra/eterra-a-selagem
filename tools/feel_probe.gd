@@ -530,7 +530,7 @@ func _s_dodge() -> void:
 
 
 func _s_dodge_cancel() -> void:
-	out("== DODGE pressed d frames after an attack tap (air): frame it starts or LOST")
+	out("== DODGE pressed d frames after an attack tap (air): frame it starts, or lost")
 	var late: PackedStringArray = []
 	var landed: PackedStringArray = []
 	for move_id in [&"light_attack", &"heavy_attack"]:

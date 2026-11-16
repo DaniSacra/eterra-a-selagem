@@ -50,7 +50,19 @@ const LUNGE_MAGNET := 2.5
 @export var recovery := 0.17
 ## Seconds after the move ends in which the next input still continues the combo.
 @export var chain_window := 0.35
+## The hit stop when it lands, as in Hades II (HitStop, GF-01): the world keeps its full speed for hit_stop_ms after
+## the blow (the wait, ScreenPreWait), then runs at hit_slow_scale of its speed for hit_slow_ms (Combat adds
+## KILL_HOLD_MS when the blow kills), then comes back. Real milliseconds.
 @export var hit_stop_ms := 40.0
+@export var hit_slow_ms := 10.0
+@export_range(0.0, 1.0, 0.01) var hit_slow_scale := 0.06
+## Seconds after this move lands before it may start again (the special's 0.7 s of Hades II; 0 = none).
+@export var cooldown := 0.0
+## Seconds after this move lands in which the paladin's legs stay planted (the special's 0.71 s of Hades II); only
+## the dodge cuts it.
+@export var root_time := 0.0
+## Played when the move starts (the blade leaving, before it lands: GF-11). Audio.SOUNDS or an audio/ file.
+@export var sound: StringName = &"blade"
 ## Magia this move spends (the held Omega moves). A press without enough Magia plays the plain move instead.
 @export var magick_cost := 0.0
 ## Held moves (CHARGE, CHARGE_LIGHT): seconds the button must be held. The move fires by itself when the charge
