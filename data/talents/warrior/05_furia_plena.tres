@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_blkbi"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_gerbb"]
+
+[resource]
+script = ExtResource("2_gerbb")
+id = &"furia_plena"
+name_key = &"talent_furia_plena"
+desc_key = &"talent_furia_plena_desc"
+branch = 1
+tier = 2
+cost = 4
+unlock_level = 18

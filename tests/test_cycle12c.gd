@@ -174,7 +174,7 @@ func test_the_run_keeps_the_gifts_at_morvath_the_shop_and_the_fountain() -> void
 func test_the_log_says_who_played() -> void:
 	assert_eq(RunLog.source(true), "bot")
 	assert_eq(RunLog.source(false), "human")
-	assert_eq(RunLog.VERSION, 2)
+	assert_gte(RunLog.VERSION, 2, "these fields since version 2 (version 3: test_run_log.gd)")
 	for k in ["source", "boons_at_boss", "shop", "fountain_used", "hurt_ctx"]:
 		assert_true(RunLog.FIELDS.has(k), "the entry has %s" % k)
 

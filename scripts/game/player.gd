@@ -16,12 +16,9 @@ signal cast_released(at: Vector2, omega: bool)
 
 enum State { MOVE, DODGE, HURT, DEAD, REST }
 
-const COMBOS := "res://data/combos/paladin.tres"
+## The body on the floor (meters): every collision and every enemy's reach is measured with it (kept a constant, it
+## is read in constant expressions; the hero's other numbers are HeroDef's).
 const RADIUS := 0.5
-## Life and the moments of safety after a hit, as in Hades II (30 life, 1.3 s).
-const MAX_HP := 30.0
-const HURT_TIME := 0.18
-const HURT_INVULN := 1.3
 ## How fast the drawn body turns to where he faces, as in Hades II (1340 degrees a second: 180 in 8 frames); the way
 ## he faces turns at once (GF-09). A swing turns the body faster (TURN_SWING, a share per second).
 const TURN_BODY := deg_to_rad(1340.0)
@@ -104,18 +101,6 @@ const CHARGE_GLOW := 0.55
 const SHIELD_GLOW := Color(0.4, 1.0, 0.6, 0.12)
 ## The point near the tip of the sword (in the sword's own space, HeroBody) where a finisher's glint sits.
 const BLADE_TIP := Vector3(0, 1.15, 0)
-## Magia: full at the start of every room (Game refills it), spent by the held Omega moves.
-const MAGICK_MAX := 50.0
-## The circle of light rises around the paladin. It takes CAST_CHARGE seconds to draw (walking slowed to
-## CAST_SLOW), only one can stand at a time, and holding the button CAST_OMEGA_TIME (with Magia) arms it to burst.
-const CAST_CHARGE := 0.25
-const CAST_SLOW := 0.6
-const CAST_COOLDOWN := 0.2
-## Seconds after the circle is let go in which no blow may start (Hades II: 8 frames; D-44, which also took away the
-## 0.2 s of safety it gave).
-const CAST_ATTACK_LOCK := 8.0 / 60.0
-const CAST_OMEGA_TIME := 0.6
-const CAST_OMEGA_COST := 20.0
 ## A boss's curse on him (CurseState): a dark violet edge on his body, a few runes turning around him and a haze
 ## under his feet (CurseAura), Emeth's crystal corrupted by violet veins (EmethSword.set_corrupt), one puff of
 ## violet when it lands. The special (and its Omega) is locked while it lasts, walking and dodging never.
@@ -128,8 +113,13 @@ var fx: Fx
 var pos := Vector2.ZERO
 var facing := Vector2.DOWN
 var state := State.MOVE
-var hp := MAX_HP
-var max_hp := MAX_HP
+## The hero's numbers (DT-013): life, body, dodge charges, Magia and the circle of light (HeroDef; Magia is full at
+## the start of every room, Game refills it; the circle takes cast_charge seconds to draw, walking slowed to
+## cast_slow, only one stands at a time, held cast_omega_time with Magia it bursts; for cast_attack_lock seconds after
+## it is let go no blow may start, Hades II's 8 frames, D-44).
+var hero: HeroDef = HeroDef.warrior()
+var hp: float = hero.max_hp
+var max_hp: float = hero.max_hp
 var dodge_max := 2
 var dodge_charges := 2
 var speed_bonus := 0.0
@@ -145,7 +135,7 @@ var charge_t := 0.0
 var _charge_action := &""
 var _charge_tap := ComboNode.In.HEAVY
 var _charge_held := ComboNode.In.CHARGE
-var magick := Magick.new(MAGICK_MAX)
+var magick := Magick.new(hero.magick_max)
 var curse := CurseState.new()
 var _curse_aura: CurseAura
 var _blade_mat: ShaderMaterial
@@ -195,7 +185,11 @@ var _sword: MeshInstance3D
 
 
 func _ready() -> void:
-	tree = load(COMBOS)
+	# the hero may have been set after the node was made (Game sets player.hero)
+	max_hp = hero.max_hp
+	hp = max_hp
+	magick = Magick.new(hero.magick_max)
+	tree = load(hero.combos)
 	runner = ComboRunner.new(tree)
 	runner.move_started.connect(_on_move_started)
 	runner.move_hit.connect(func(node: ComboNode) -> void:
@@ -222,7 +216,7 @@ func _ready() -> void:
 	_overlay.set_shader_parameter(&"key", KEY_LIGHT)
 	_overlay.next_pass = depth
 	depth.next_pass = _xray_edge
-	dodge_max = Feel.live().dodge_charges
+	dodge_max = hero.dodge_charges
 	dodge_charges = dodge_max
 	_prepare(_model)
 	if _sword:
@@ -401,7 +395,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			fx.burst(&"heal", Vector3(pos.x, 1.2, pos.y))
 	if dodge_charges < dodge_max:
 		_dodge_recharge += dt
-		if _dodge_recharge >= Feel.live().dodge_recharge:
+		if _dodge_recharge >= hero.dodge_recharge:
 			_dodge_recharge = 0.0
 			dodge_charges += 1
 	rooted = maxf(0.0, rooted - dt)
@@ -415,7 +409,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			_queue_buttons()
 			pos += _push * dt
 			_push *= maxf(0.0, 1.0 - 10.0 * dt)
-			if _state_t >= HURT_TIME:
+			if _state_t >= hero.hurt_time:
 				state = State.MOVE
 				runner.locked = false
 		State.DODGE:
@@ -441,7 +435,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			if sprinting:
 				sp *= Feel.live().sprint_scale
 			if _casting:
-				sp *= CAST_SLOW
+				sp *= hero.cast_slow
 			if rooted > 0.0:
 				pos += _lunge * dt
 			elif runner.is_swinging():
@@ -548,16 +542,16 @@ func _read_cast(dt: float) -> void:
 	if not _casting:
 		return
 	_cast_t += dt
-	if _cast_t >= CAST_OMEGA_TIME and _cast_t - dt < CAST_OMEGA_TIME and magick.can_pay(CAST_OMEGA_COST):
+	if _cast_t >= hero.cast_omega_time and _cast_t - dt < hero.cast_omega_time and magick.can_pay(hero.cast_omega_cost):
 		fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 		Audio.play(&"charged")
-	var held := Controls.held(&"cast") and magick.can_pay(CAST_OMEGA_COST)
-	if _cast_t >= CAST_CHARGE and (not held or _cast_t >= CAST_OMEGA_TIME):
+	var held := Controls.held(&"cast") and magick.can_pay(hero.cast_omega_cost)
+	if _cast_t >= hero.cast_charge and (not held or _cast_t >= hero.cast_omega_time):
 		_casting = false
-		var omega := _cast_t >= CAST_OMEGA_TIME and magick.spend(CAST_OMEGA_COST)
-		cast_cooldown = CAST_COOLDOWN
+		var omega := _cast_t >= hero.cast_omega_time and magick.spend(hero.cast_omega_cost)
+		cast_cooldown = hero.cast_cooldown
 		cast_active = true
-		runner.hold_for(CAST_ATTACK_LOCK)
+		runner.hold_for(hero.cast_attack_lock)
 		cast_released.emit(pos, omega)
 
 
@@ -630,8 +624,8 @@ func hurt(amount: float, from: Vector2) -> void:
 		return
 	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction)))
 	hp -= amount
-	invuln = HURT_INVULN
-	_blink = HURT_INVULN
+	invuln = hero.hurt_invuln
+	_blink = hero.hurt_invuln
 	_flash = 1.0
 	charging = false
 	runner.reset(false)

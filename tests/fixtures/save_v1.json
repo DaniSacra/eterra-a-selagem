@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "options": {"master": 0.5, "music": 0.7, "sfx": 0.9, "fullscreen": false, "scale": 2, "shake": false, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "bindings": {"dodge": [{"type": "key", "code": 32.0}]}},
+  "best_times": [612.4, 700.0],
+  "moves": ["cut1", "cut2", "spin"],
+  "wins": 1.0,
+  "runs": 2.0
+}

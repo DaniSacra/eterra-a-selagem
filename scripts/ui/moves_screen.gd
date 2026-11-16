@@ -15,7 +15,7 @@ func open() -> void:
 	var list := VBoxContainer.new()
 	list.add_theme_constant_override(&"separation", 6)
 	panel.add_child(list)
-	var tree: ComboTree = load(Player.COMBOS)
+	var tree: ComboTree = load(HeroDef.warrior().combos)
 	var words := {"dodge": T.t(&"moves_dodge"), "charge": T.t(&"moves_charge"), "charge_light": T.t(&"moves_charge_light")}
 	var known: Array = Save.data.moves
 	for m in tree.named_moves():

@@ -25,6 +25,8 @@ var room: RunMap.Room
 var next_rooms: Array[RunMap.Room] = []
 var phase := Phase.FIGHT
 var gold := 0
+## The kinds of the rooms won in this run (fights and the guardian's), for the Mastery (Game.mastery_gain).
+var won: Array[RunMap.Kind] = []
 var _waves: Array[Array] = []
 var _queue: Array[StringName] = []
 var _wave := -1
@@ -282,6 +284,7 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 
 func _room_cleared() -> void:
 	phase = Phase.REWARD
+	won.append(room.kind)
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
 	game.projectiles.clear_hostile()

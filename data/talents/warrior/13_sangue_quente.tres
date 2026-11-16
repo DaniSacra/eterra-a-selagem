@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_62l1x"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_vpu13"]
+
+[resource]
+script = ExtResource("2_vpu13")
+id = &"sangue_quente"
+name_key = &"talent_sangue_quente"
+desc_key = &"talent_sangue_quente_desc"
+branch = 4
+tier = 3
+cost = 3
+unlock_level = 12
+joins = Array[int]([1, 3])

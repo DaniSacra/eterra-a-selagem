@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="UltDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="1_e2lpn"]
+
+[resource]
+script = ExtResource("1_e2lpn")
+id = &"cleave"
+name_key = &"ult_cleave"
+desc_key = &"ult_cleave_desc"
+tags = Array[StringName]([&"ultimate", &"light"])

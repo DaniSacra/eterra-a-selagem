@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_y8jm2"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_473o2"]
+
+[sub_resource type="Resource" id="Resource_yeldi"]
+script = ExtResource("1_y8jm2")
+stat = &"reach_pct"
+tag = &"light"
+values = PackedFloat32Array(0.15)
+by_rarity = false
+
+[resource]
+script = ExtResource("2_473o2")
+id = &"fio_longo"
+name_key = &"talent_fio_longo"
+desc_key = &"talent_fio_longo_desc"
+branch = 2
+tier = 1
+unlock_level = 9
+mods = Array[ExtResource("1_y8jm2")]([SubResource("Resource_yeldi")])

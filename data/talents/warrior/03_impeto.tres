@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_eytow"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_mxf6c"]
+
+[resource]
+script = ExtResource("2_mxf6c")
+id = &"impeto"
+name_key = &"talent_impeto"
+desc_key = &"talent_impeto_desc"
+branch = 1
+cost = 2
+unlock_level = 3

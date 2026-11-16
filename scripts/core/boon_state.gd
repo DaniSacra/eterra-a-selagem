@@ -8,6 +8,9 @@ var catalog: Array[Boon] = []
 var levels: Dictionary = {}
 ## Rarity of each owned gift (Boon.Rarity); a gift keeps the best rarity it was taken at.
 var rarities: Dictionary = {}
+## The hero's Gifts equipped for this descent (TalentDef): their mods add up with the Blessings' in stat (at level 1,
+## never scaled by rarity), so every blow reads Gift and Blessing in the same sum.
+var talents: Array[TalentDef] = []
 var _cache: Dictionary = {}
 
 
@@ -120,12 +123,23 @@ func take(b: Boon, at: Boon.Rarity = Boon.Rarity.COMMON) -> int:
 	return levels[b.id]
 
 
-## Sum of a stat over every owned gift. With tags, only modifiers that are untagged or match one of them count.
+## Equips the hero's Gifts for the descent (Talents.check decides which are valid).
+func equip_talents(defs: Array[TalentDef]) -> void:
+	talents = defs
+	_cache.clear()
+
+
+## Sum of a stat over every owned gift and equipped Gift. With tags, only modifiers that are untagged or match one of
+## them count.
 func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 	var use_cache := tags.is_empty()
 	if use_cache and _cache.has(stat_name):
 		return _cache[stat_name]
 	var total := 0.0
+	for t in talents:
+		for m in t.mods:
+			if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
+				total += m.value(1)
 	for b in catalog:
 		var lv := level(b.id)
 		if lv <= 0:

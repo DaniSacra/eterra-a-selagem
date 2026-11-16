@@ -298,7 +298,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   mudam golpes por `BoonMod`.
 - **Combate no estilo Hades 2** (o visual segue o Ember & Blade): ataque (E), especial (D), círculo de luz (`cast`, Q)
   e esquiva (segurar = corrida, `Feel.sprint_scale`). Segurar E, D ou Q faz a versão Ômega, que gasta Magia
-  (`Magick`, `ComboNode.magick_cost`, `In.CHARGE_LIGHT`/`In.CHARGE`, `Player.CAST_OMEGA_COST`); Magia volta por abate
+  (`Magick`, `ComboNode.magick_cost`, `In.CHARGE_LIGHT`/`In.CHARGE`, `HeroDef.cast_omega_cost`); Magia volta por abate
   (`Game.MAGICK_PER_KILL`). Círculo: zona `Ground.Kind.BIND` que prende (chefe só fica lento); o Ômega explode no fim
   (`Combat.cast_burst`). Armadura (`EnemyDef.armor`, barra amarela): absorve os golpes, ao quebrar atordoa
   (`Horde.armor_broken`; Morvath se rearma depois do atordoamento).
@@ -322,13 +322,13 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`ComboNode.cooldown`, guardado pelo golpe sofrido), pernas presas 0,71 s que só a esquiva corta (`root_time`,
   `Player.rooted`), dardo a 62,5 m/s (`Projectiles.SPARK_SPEED`). Ômega do ataque: preparação e brilho dentro da carga,
   acerta quando ela enche (`Player._charge_lead`); apertar de novo recomeça a carga. Círculo sem proteção e 8 quadros
-  sem golpe (`ComboRunner.hold_for`, `Player.CAST_ATTACK_LOCK`). Impacto: tranco do golpe comum 0,09 m, finalizador
+  sem golpe (`ComboRunner.hold_for`, `HeroDef.cast_attack_lock`). Impacto: tranco do golpe comum 0,09 m, finalizador
   0,32, Ômega 0,56 (`Combat.KICK_*`, `kick_of`); clarão do inimigo 0,05 s (`Horde.FLASH_TIME`). Som da lâmina no
   começo de cada golpe (`ComboNode.sound`: `blade`, `blade_spin`, `thrust`, `dart`; nada mais de `swing` só no erro) e
   `charge_up` segurando o Ômega; vibração por golpe e ao ser ferido (`Fx.buzz`, `Combat.RUMBLE_*`), só com controle
   em uso e a opção `rumble` do save ligada (`Fx.rumble`, `Game.apply_options`).
 - O jogo abre em tela cheia (padrão desde 2026-11-16, `SaveData.VERSION` 2 passa os saves antigos para tela cheia uma vez; capturas, vídeos e `--nosave` ficam em janela, `App.apply_options`); a pausa tem "Sair do jogo" no desktop (`pause_exit_game`).
-- Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`). Sem save (`--nosave`) não há recorde
+- Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio). Sem save (`--nosave`) não há recorde
   (`SaveData.record_win_time`). Os testes nunca gravam o save nem o registro (`tests/hooks/pre_run.gd`, `pre_run_script` no
   `.gutconfig.json`; `tools/title_flow_check.gd` também desliga).
 - Registro das partidas de gente (ciclo 10, QW-001): `user://runs.jsonl`, uma linha JSON por partida (vitória, morte ou saída,
@@ -417,6 +417,35 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   passos acima de 4 ms e onde o tempo foi), `--trace-cam` (maior salto do alvo da câmera por sala, GP-06). Laboratório sem personagens, com grade, bordas, peças, zonas e câmera:
   `tools/arena_lab.gd` (comando no topo; `--top` vista de cima). Testes: `test_arenas.gd`, `test_descent.gd`,
   `test_killing_blow.gd`.
+
+## Guerreiro: HeroDef, Maestria, Dons (E2a, fundação; especificação em `docs/design/warrior_spec.md`)
+- **`HeroDef`** (`core/hero_def.gd`, `data/heroes/warrior.tres`, parte `hero` do `make_data.gd`; DT-013): id técnico `warrior`,
+  modelo `hero_explorer`, combos, vida 30, `hurt_time`, proteção 1,3 s, 1 carga de esquiva em 0,74 s (saíram do `Feel`), Magia
+  50, os números do círculo (saíram de `Player.CAST_*` e `Combat.CAST_*`), passiva `magick_on_finisher` 2 (sem
+  comportamento ainda), as duas ultimates (`UltDef`, `core/ult_def.gd`, `data/ultimates/`, parte `ultimates`: U-1 faixa
+  12 x 4 m 300/200, carga 60, Maestria 2; U-2 Voragem, carga 70, Maestria 6; só dados), a pasta dos Dons e a curva.
+  `HeroDef.warrior()`; `Player.hero`, `Combat.hero` e `Game.hero` leem dele. `Player.RADIUS` continua constante.
+  Prova: mesma semente, mesmo `RESULT` antes e depois (smoke 300 e `--start=boss --boons=25`, `--seed=5`).
+- **Maestria** (`MasteryCurve`, `core/mastery.gd`, `data/heroes/warrior_mastery.tres`, parte `mastery`): 20 níveis, do n
+  para o n+1 `40 + 10 (n - 1)` (2470 no todo), Devoção 5 + nível; XP por sala de luta 10, guardião 25, fase de Morvath
+  alcançada 10 (até 40), vitória 50 e primeiras vezes (Bênção vista 2, Elo 10, Salmo 25, guardião 25, vitória 100). No
+  fim de toda partida (vitória, morte, saída) `Game.log_run` calcula (`mastery_gain`) e soma ao save (`award_mastery`:
+  XP, Dons destravados, primeiras vezes, Compêndio); nunca sem save nem com o robô (`--mastery` deixa o robô somar).
+- **Save versão 3** (DT-012, `SaveData`): `heroes.<id>` (`mastery_xp`, `unlocked`, `equipped`, `ultimate`, `firsts`) e
+  `codex` (`boons`, `elos`, `psalms`, `talents`, `enemies`: id para contagens); dicionários de chaves livres sobrevivem a
+  ler e gravar. Saves 1 e 2 ganham a Maestria retroativa uma vez (40 por partida, 60 por vitória, até o nível 5).
+  Arquivos fixos em `tests/fixtures/save_v1.json` a `save_v3.json`.
+- **Registro versão 3** (DT-015, `RunLog`): `hero`, `xp`, `xp_by`, `mastery_level`, `talents`, `ultimate`; linhas antigas
+  lidas por `RunLog.normalized` (`tests/fixtures/runs_v2.jsonl`).
+- **Dons** (`TalentDef`, `core/talent_def.gd`; regras em `Talents`, `core/talents.gd`; 19 em `data/talents/warrior/`, parte
+  `talents`): a árvore da seção 4 (Combo, Fúria, Emeth, Magia com entrada, meio e ápice; quatro pontes; três de sustento),
+  custo, ramo, degrau, nível que destrava (ordem da 4.4), `slot` quando troca a ação, `partner` do ápice, `joins` da ponte.
+  Pré-requisito só vale equipado; ápice pede o meio e um Dom do ramo parceiro (vizinho); ponte pede as duas entradas; um
+  Dom por ação; `check`, `can_add`, `sanitized` (o que vem do save). Equipados na descida por `Game._equip_talents`
+  (do save, validado pelo nível; `--talents=a,b` para testes); só os de número já agem: Fio Longo (`reach_pct` light 0,15),
+  Reserva e Firmeza (`magick_max`, `max_hp`), somados às Bênçãos em `BoonState.stat` (`equip_talents`). Os efeitos dos
+  outros, a tela do herói e a ultimate jogável são as próximas tarefas. Testes: `test_hero_def.gd`, `test_mastery.gd`,
+  `test_talents.gd`, `test_save.gd`, `test_run_log.gd`.
 
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com

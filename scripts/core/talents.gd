@@ -1,0 +1,156 @@
+class_name Talents
+extends RefCounted
+## The rules of a hero's Gifts (TalentDef), pure: what a Mastery level unlocks, the Devotion a loadout takes and
+## whether a loadout (the ids equipped before the descent) is valid. docs/design/warrior_spec.md 4.1:
+## - an entry needs only the centre (always on); a middle needs the entry of its branch; an apex needs the middle of
+##   its branch and a Gift of its neighbouring partner branch; a bridge needs the entries of the two branches it joins;
+##   sustain needs only the centre;
+## - a requirement counts only when EQUIPPED, not just unlocked;
+## - one Gift per action (TalentDef.slot); the loadout fits the Devotion (5 + Mastery level).
+
+enum Problem { OK, UNKNOWN, TWICE, LOCKED, DEVOTION, SLOT_TAKEN, NEEDS }
+
+var catalog: Array[TalentDef] = []
+
+
+func _init(defs: Array[TalentDef] = []) -> void:
+	catalog = defs
+
+
+static func load_catalog(dir: String) -> Array[TalentDef]:
+	var out: Array[TalentDef] = []
+	var files := DirAccess.get_files_at(dir)
+	files.sort()
+	for file in files:
+		var path := file.trim_suffix(".remap")
+		if path.ends_with(".tres"):
+			out.append(load(dir.path_join(path)))
+	return out
+
+
+func find(id: StringName) -> TalentDef:
+	for t in catalog:
+		if t.id == id:
+			return t
+	return null
+
+
+## The Gifts unlocked at this Mastery level, in the order they unlock.
+func unlocked(level: int) -> Array[TalentDef]:
+	var out: Array[TalentDef] = []
+	for t in catalog:
+		if t.unlock_level <= level:
+			out.append(t)
+	out.sort_custom(func(a: TalentDef, b: TalentDef) -> bool: return a.unlock_level < b.unlock_level or (a.unlock_level == b.unlock_level and String(a.id) < String(b.id)))
+	return out
+
+
+## The Gifts a level unlocks (exactly that level).
+func unlocked_at(level: int) -> Array[TalentDef]:
+	return unlocked(level).filter(func(t: TalentDef) -> bool: return t.unlock_level == level)
+
+
+func defs(ids: Array) -> Array[TalentDef]:
+	var out: Array[TalentDef] = []
+	for id: Variant in ids:
+		var t := find(StringName(id))
+		if t != null:
+			out.append(t)
+	return out
+
+
+func cost(ids: Array) -> int:
+	var total := 0
+	for t in defs(ids):
+		total += t.cost
+	return total
+
+
+## True when the Gifts in equipped (TalentDefs) give t what its place in the tree asks for.
+static func needs_met(t: TalentDef, equipped: Array[TalentDef]) -> bool:
+	match t.tier:
+		TalentDef.Tier.MIDDLE:
+			return _has(equipped, t.branch, TalentDef.Tier.ENTRY)
+		TalentDef.Tier.APEX:
+			if not _has(equipped, t.branch, TalentDef.Tier.MIDDLE) or not TalentDef.neighbours(t.branch, t.partner):
+				return false
+			for o in equipped:
+				if o.branch == t.partner:
+					return true
+			return false
+		TalentDef.Tier.BRIDGE:
+			if t.joins.size() != 2:
+				return false
+			return _has(equipped, t.joins[0], TalentDef.Tier.ENTRY) and _has(equipped, t.joins[1], TalentDef.Tier.ENTRY)
+	return true
+
+
+static func _has(equipped: Array[TalentDef], branch: TalentDef.Branch, tier: TalentDef.Tier) -> bool:
+	for o in equipped:
+		if o.branch == branch and o.tier == tier:
+			return true
+	return false
+
+
+## Whether a whole loadout is valid at this Mastery level with this much Devotion: {problem, id} (the first Gift
+## that breaks a rule; problem OK and id &"" when it is valid).
+func check(ids: Array, level: int, devotion: int) -> Dictionary:
+	var seen := {}
+	var slots := {}
+	for id: Variant in ids:
+		var t := find(StringName(id))
+		if t == null:
+			return _fail(Problem.UNKNOWN, StringName(id))
+		if seen.has(t.id):
+			return _fail(Problem.TWICE, t.id)
+		seen[t.id] = true
+		if t.unlock_level > level:
+			return _fail(Problem.LOCKED, t.id)
+		if t.slot != Boon.Slot.NONE:
+			if slots.has(t.slot):
+				return _fail(Problem.SLOT_TAKEN, t.id)
+			slots[t.slot] = t.id
+	var equipped := defs(ids)
+	for t in equipped:
+		if not needs_met(t, equipped):
+			return _fail(Problem.NEEDS, t.id)
+	if cost(ids) > devotion:
+		return _fail(Problem.DEVOTION, StringName(ids[-1]) if not ids.is_empty() else &"")
+	return _fail(Problem.OK, &"")
+
+
+## Whether one more Gift can be equipped on top of ids (the screen's question for each card).
+func can_add(ids: Array, id: StringName, level: int, devotion: int) -> Problem:
+	var more := ids.duplicate()
+	more.append(id)
+	return check(more, level, devotion).problem
+
+
+## The valid part of a loadout read from a save (an older or edited file, a Gift that no longer exists): Gifts are
+## kept in order while the loadout stays valid; then any Gift whose needs left with a dropped one goes too.
+func sanitized(ids: Array, level: int, devotion: int) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for id: Variant in ids:
+		var t := find(StringName(id))
+		if t == null or out.has(t.id) or t.unlock_level > level:
+			continue
+		var more: Array[StringName] = out.duplicate()
+		more.append(t.id)
+		var p: Problem = check(more, level, devotion).problem
+		if (p == Problem.OK or p == Problem.NEEDS) and cost(more) <= devotion:
+			out = more
+	# needs are kept only when what they need stayed
+	var changed := true
+	while changed:
+		changed = false
+		var equipped := defs(out)
+		for t in equipped:
+			if not needs_met(t, equipped):
+				out.erase(t.id)
+				changed = true
+				break
+	return out
+
+
+static func _fail(problem: Problem, id: StringName) -> Dictionary:
+	return {"problem": problem, "id": id}

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_bt5vd"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_yl5c7"]
+
+[resource]
+script = ExtResource("2_yl5c7")
+id = &"onda_atravessante"
+name_key = &"talent_onda_atravessante"
+desc_key = &"talent_onda_atravessante_desc"
+branch = 2
+tier = 2
+cost = 4
+unlock_level = 20
+partner = 3

@@ -131,3 +131,88 @@ func test_no_new_best_time_without_a_save() -> void:
 	assert_true((data.best_times as Array).is_empty(), "nothing kept")
 	assert_true(SaveData.record_win_time(data, 100.0, true))
 	assert_false(SaveData.record_win_time(data, 120.0, true), "slower")
+
+
+# ---------- version 3 (DT-015, E2a): the hero, the Mastery, the Gifts ----------
+
+func test_version_2_lines_are_still_read() -> void:
+	var back := RunLog.read("res://tests/fixtures/runs_v2.jsonl")
+	assert_eq(back.size(), 2)
+	var old := back[0]
+	assert_eq(int(old.version), 2, "an older line keeps its version")
+	assert_eq(old.outcome, "death")
+	assert_eq(old.defeated_by, "enemy_mage")
+	assert_eq(old.hero, "warrior", "every older run was the first hero's")
+	assert_eq(old.xp, 0)
+	assert_eq(old.talents, [])
+	assert_eq(old.ultimate, "")
+	for k in RunLog.FIELDS:
+		assert_true(old.has(k), "a version 2 line reads with %s" % k)
+	var now := back[1]
+	assert_eq(int(now.version), 3)
+	assert_eq(float(now.xp), 175.0, "a version 3 line is read as written")
+	assert_eq(now.talents, ["quarto_corte"])
+
+
+func test_a_run_logs_the_hero_its_mastery_and_gifts() -> void:
+	_start(RunMap.Kind.FOUNTAIN)
+	var heard: Array = []
+	game.run_logged.connect(func(_o: String, e: Dictionary) -> void: heard.append(e))
+	game.talents.assign([&"quarto_corte"])
+	game.ultimate = "cleave"
+	game.rooms.won.assign([RunMap.Kind.COMBAT, RunMap.Kind.COMBAT, RunMap.Kind.MINIBOSS])
+	game.log_run("quit")
+	var e: Dictionary = heard[0]
+	assert_eq(int(e.version), 3)
+	assert_eq(e.hero, "warrior")
+	assert_eq(e.talents, ["quarto_corte"])
+	assert_eq(e.ultimate, "cleave")
+	var curve := HeroDef.warrior().mastery
+	assert_eq(e.xp_by.rooms, 2 * curve.room_xp)
+	assert_eq(e.xp_by.guardians, curve.guardian_xp)
+	assert_false(e.xp_by.has("total"), "the total is xp")
+	assert_eq(e.xp, int(game.mastery_gain("quit", Save.data).total))
+	assert_gte(e.mastery_level, 1)
+
+
+func test_the_mastery_of_a_run_goes_into_the_save_data_and_a_death_keeps_it() -> void:
+	_start(RunMap.Kind.FOUNTAIN)
+	var data := SaveData.defaults()
+	var curve := HeroDef.warrior().mastery
+	game.rooms.won.assign([RunMap.Kind.COMBAT, RunMap.Kind.COMBAT, RunMap.Kind.COMBAT, RunMap.Kind.MINIBOSS])
+	game.boss_stats = {"max_phase": 3}
+	game.seen_boons = {&"brasas": true, &"vapor": true}
+	game.elos_formed = {&"vapor": true}
+	var gain := game.mastery_gain("death", data)
+	assert_eq(gain.rooms, 3 * curve.room_xp)
+	assert_eq(gain.guardians, curve.guardian_xp)
+	assert_eq(gain.phases, 3 * curve.phase_xp)
+	assert_eq(gain.victory, 0, "a death is no victory")
+	assert_eq(gain.first_boons, 2 * curve.first_boon_xp)
+	assert_eq(gain.first_elos, curve.first_elo_xp)
+	assert_eq(gain.first_guardian, curve.first_guardian_xp)
+	assert_eq(gain.first_victory, 0)
+	game.award_mastery(gain, "death", data)
+	assert_eq(data.heroes.warrior.mastery_xp, gain.total, "a death keeps the XP")
+	assert_true((data.heroes.warrior.unlocked as Array).has("quarto_corte"))
+	assert_eq(data.codex.boons.brasas.seen, 1)
+	assert_eq(data.codex.elos.vapor.formed, 1)
+	assert_eq(int(data.heroes.warrior.firsts.guardian), 1)
+	# the same run again: the first times are gone, the rest counts again
+	var again := game.mastery_gain("victory", data)
+	assert_eq(again.first_boons, 0)
+	assert_eq(again.first_elos, 0)
+	assert_eq(again.first_guardian, 0)
+	assert_eq(again.victory, curve.victory_xp)
+	assert_eq(again.first_victory, curve.first_victory_xp)
+	game.award_mastery(again, "victory", data)
+	assert_eq(data.heroes.warrior.mastery_xp, gain.total + again.total)
+	assert_eq(game.mastery_gain("victory", data).first_victory, 0, "one first victory")
+
+
+func test_without_a_save_nothing_is_awarded() -> void:
+	_start(RunMap.Kind.FOUNTAIN)
+	var before := JSON.stringify(Save.data)
+	game.rooms.won.assign([RunMap.Kind.COMBAT])
+	game.log_run("death")
+	assert_eq(JSON.stringify(Save.data), before, "the tests (as --nosave) never touch the save data")

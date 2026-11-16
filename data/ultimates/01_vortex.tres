@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UltDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="1_trvow"]
+
+[resource]
+script = ExtResource("1_trvow")
+id = &"vortex"
+name_key = &"ult_vortex"
+desc_key = &"ult_vortex_desc"
+kind = 1
+charge = 70.0
+mastery_level = 6
+tags = Array[StringName]([&"ultimate", &"cast"])
+stun = 0.0
