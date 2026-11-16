@@ -1,196 +1,177 @@
-# Relatório de QA e desempenho: ciclo 8 (poucos inimigos)
+# Relatório de QA e desempenho: ciclo 9 (luta de Morvath)
 
-- **Data**: 2026-11-15, 18:55 a 20:00
-- **Branch**: `arpg-3d`, **commit testado `84285e8`** (frentes A `8b821b1`, B `84285e8` e C `41f532b` do ciclo 8
-  integradas). Working tree limpo no início; o QA só acrescentou arquivos em `docs/gallery/cycle8/` e este relatório.
-- **Antes**: `eb1e9d7` (fim do ciclo 7), extraído por `git archive eb1e9d7 | tar -x -C /home/dani/games/c8-before` e
-  espelhado em `C:/Users/danie/tools/eterra-gpu-before8`.
-- **Ambiente**: WSL2 (Linux 6.18) para testes e partidas do robô sem tela (Godot 4.7.2 Linux). Capturas e medidas de
-  quadro na **placa de vídeo real** pela Godot 4.7.2 de Windows (`tools/gpu.sh`, Vulkan 1.4.357, Forward+). **Sem som**.
-
-Saídas brutas em `/tmp/claude-1000/-home-dani-games-eterra-a-selagem/9a4c8b90-ded5-40ad-bc10-27c4c52b9e83/scratchpad/qa8/`
-(abaixo `qa8/`): `out/` (testes, partidas, desempenho), `png/` e `lab/` (capturas originais), `mont/` (montagens),
-`tools/` (sondas). Galeria: `docs/gallery/cycle8/` (comandos em `docs/gallery/cycle8/CAPTURAS.md`).
-
-## Máquina (lida pelo PowerShell `Get-CimInstance` e `nvidia-smi`, `qa8/out` não guarda; repetir com o comando da seção 6)
-
-| Item | Valor |
-|---|---|
-| Modelo | ASUS TUF Gaming F16 FX608JMI (notebook), na tomada (bateria 100%, `BatteryStatus` 2), plano de energia "PD Performance" |
-| CPU | Intel Core i7-14650HX, 16 núcleos, 24 linhas |
-| GPU usada | NVIDIA GeForce RTX 5060 Laptop GPU, 8151 MiB, driver 621.01 (Windows 32.0.16.2101), relógio máximo 3090 MHz |
-| GPU integrada | Intel UHD Graphics (não usada; o Vulkan escolhe a NVIDIA, linha `Using Device #0: NVIDIA`) |
-| RAM | 16 GB (2 x 8 GB, 5600 MT/s) |
-| Sistema | Windows 11 Home Single Language 10.0.26300; testes em WSL2 Linux 6.18 |
-| Tela | a janela do jogo abre na tela 1 (1920 x 1200 nativa, 144 Hz, escala 1,0, 96 dpi segundo a Godot) |
+- **Data**: 2026-11-15, 21:25 a 22:15
+- **Branch**: `arpg-3d`, **commit testado `b29e372`** (ciclo 9 completo: `3b22cea`, `ca7e97b`, `9aff1fc`, `579ce02`,
+  `b29e372`). Durante o trabalho entrou o `1f9d49c`, que só muda `.claude/agents/game-director.md` e `CLAUDE.md`
+  (`git diff b29e372 1f9d49c -- scripts data assets tools` vazio): o jogo testado é o mesmo do HEAD atual.
+- **Antes**: `3b22cea`, extraído por `git archive` em `/home/dani/games/c9-before`, espelho
+  `C:/Users/danie/tools/eterra-gpu-c9before` (os dois apagados ao fim).
+- **Ambiente**: WSL2 (Linux 6.18) para testes e simulações sem tela (Godot 4.7.2 Linux). Capturas, vídeos e medidas de
+  quadro na **placa de vídeo real** pela Godot 4.7.2 de Windows (`tools/gpu.sh`, Vulkan 1.4.357, Forward+, NVIDIA
+  GeForce RTX 5060 Laptop GPU). **Sem som** (o WSL não toca áudio e as gravações saíram mudas, ver 4). Nenhum teste com
+  gente: tudo abaixo é robô, captura ou medida.
+- O QA não mudou código de jogo nem ferramenta do projeto. Arquivos novos: `docs/gallery/cycle9/` (18 capturas, 5
+  montagens, 2 vídeos, `CAPTURAS.md`, `METRICAS.md`) e este relatório. Ferramentas temporárias fora do projeto
+  (`/home/dani/games/c9qa/`, apagada ao fim) e a sonda `C:/Users/danie/tools/qa/gpuperf9.gd` (mantida, ao lado da
+  `gpuperf8.gd`).
 
 ## Veredito
 
-**Pronto para o Daniel testar**, do ponto de vista de QA. Evidência: 0 `SCRIPT ERROR` e 0 `Parse Error` na
-importação, no `check.gd`, em todas as partidas, capturas e medidas; 260 testes, 259 passando, 0 falhando, 1 arriscado
-(o conhecido); fluxo do título ok; o robô chega em Morvath nas cinco sementes e vence na semente 7; nenhuma partida
-passa de 20 inimigos de pé (máximo 8). A 1920 x 1080 na RTX 5060 o quadro mediano fica entre 4,8 e 4,9 ms com 4 a 20
-inimigos (cerca de 205 FPS, mais de três vezes a meta de 60); o ciclo 8 custa no máximo +0,27 ms (dentro do ruído de
-cerca de 0,5 ms entre rodadas). Nenhuma falha crítica, alta ou média. O julgamento visual é do `art-director` e do
-Daniel; as observações visuais estão em 4 (baixa).
+**Pronto para o Daniel testar**, com uma ressalva de medida: o desempenho tem 2 rodadas válidas por cena em vez de 3,
+porque o notebook passou para a bateria no meio da medição (seção 3). Evidência: 0 `SCRIPT ERROR` e 0 `Parse Error` na
+importação, no `check.gd`, nos testes, em 80 simulações, 36 capturas, 9 gravações e 18 medidas; 323 testes, 322
+passando, 0 falhando, 1 arriscado (o conhecido); fluxo do título ok; as cinco partidas inteiras de regressão vencem
+Morvath; as 18 capturas pedidas existem e mostram o que o nome diz; a luta inteira gravada termina na tela "Morvath foi
+selado". A 1920 x 1080 na RTX 5060, na tomada, a luta fica em 5,4 a 5,5 ms por quadro (cerca de 180 FPS); o ciclo 9
+custa +0,1 a +0,3 ms. Nenhuma falha crítica ou alta. O julgamento visual é do `art-director` e do Daniel; o
+balanceamento é do Gameplay Engineer e do Daniel (as simulações mostram uma fase 4 dura com reação humana, seção 2).
 
 ## 1. Checagem, testes e partidas do robô
 
-| Comando | Resultado | Saída |
+| Comando | Resultado |
+|---|---|
+| `godot --headless --path . --import` | código 0, **0 SCRIPT ERROR, 0 Parse Error** |
+| `godot --headless --path . -s tools/check.gd` | código 0, **0 SCRIPT ERROR, 0 Parse Error** |
+| `tools/test.sh` | **27 arquivos, 323 testes, 322 passando, 0 falhando, 1 arriscado** (`test_only_finishers_glint`, "Did not assert", o conhecido), 35220 asserções, 12,5 s |
+| `godot --headless --path . -s tools/title_flow_check.gd` | **FLOW ok** |
+
+Partidas do robô (`tools/smoke.sh`, reação 0), as mesmas no `3b22cea` para comparar:
+
+| Opções | `b29e372` | `3b22cea` |
 |---|---|---|
-| `godot --headless --path . --import` | código 0, **0 SCRIPT ERROR, 0 Parse Error** | `out/import.txt` |
-| `godot --headless --path . -s tools/check.gd` | código 0, **0 SCRIPT ERROR, 0 Parse Error** | `out/check.txt` |
-| `tools/test.sh` | **24 arquivos, 260 testes, 259 passando, 0 falhando, 1 arriscado** (`test_only_finishers_glint`, "Did not assert", o conhecido), 24101 asserções, 4,6 s | `out/test.txt` |
-| `godot --headless --path . -s tools/title_flow_check.gd` | **FLOW ok** (12 de 12) | `out/title_flow.txt` |
+| `300 --seed=1` | **venceu** (`ENDING`), 194,0 s, Morvath aos 61,8 s, 2 dons | venceu, 175,4 s |
+| `300 --seed=2` | **venceu**, 199,4 s, Morvath aos 73,9 s | venceu, 187,0 s |
+| `300 --seed=3` | **venceu**, 182,1 s, Morvath aos 66,2 s | perdeu na fase 3 (Morvath com 1888), 137,9 s |
+| `300 --seed=5` | **venceu**, 206,2 s, Morvath aos 62,9 s (sala 5) | venceu, 202,2 s |
+| `300 --seed=7` | **venceu**, 207,9 s, Morvath aos 72,4 s | venceu, 193,2 s |
+| `120 --start=boss --boons=25 --seed=5` | **venceu**, 95,6 s, 8 dons | venceu, 92,3 s |
+| `120 --start=miniboss --seed=5` | `PLAY` aos 116,8 s, sala 5 | |
+| `60 --start=fountain --seed=5` | `PLAY`, `max_alive` 8 | |
+| `60 --start=shop --seed=5` | `PLAY`, Morvath na fase 2 | |
+| `120 --stress=300 --seed=5` | `step_ms` 0,08, 308 abates (na bateria, ver 3) | `step_ms` 0,10 |
 
-Partidas do robô (`godot --headless --path . --fixed-fps 60 -- --bot --nosave --smoke=N ...`, saída inteira em
-`out/raw_*.txt`; as mesmas no `eb1e9d7` em `out/before_raw_*.txt`). Rodadas em paralelo, então o `step_ms` sobe um
-pouco por disputa de CPU e não serve para comparar desempenho.
+Em todas, só o `ERROR: 1 resources still in use at exit` com `2 ObjectDB instances were leaked` de sempre.
 
-| Opções | Sala | Modo | Tempo | Abates | Dons | Morvath (fase) | `max_alive` | `boss_at` | No `eb1e9d7` |
-|---|---|---|---|---|---|---|---|---|---|
-| `300 --seed=1` | 5 | OVER | 233,2 | 29 | 2 | 127 (3) | 6 | 61,8 | OVER 200,7 s, Morvath 1382 |
-| `300 --seed=2` | 5 | OVER | 228,9 | 40 | 2 | 816 (3) | 7 | 73,9 | OVER 153,1 s, 3106 |
-| `300 --seed=3` | 5 | OVER | 200,5 | 39 | 2 | 1364 (3) | 5 | 66,2 | OVER 130,0 s, 4001 |
-| `300 --seed=5` | 5 | OVER | 171,1 | 17 | 2 | 3038 (2) | 5 | 62,9 | OVER 183,5 s, 2623 |
-| `300 --seed=7` | 5 | **ENDING (venceu)** | 229,5 | 60 | 2 | morto | 6 | 72,4 | OVER 213,4 s, 994 |
-| `120 --start=boss --boons=4 --seed=1` | 5 | PLAY | 118,3 | 16 | 3 | 2404 (2) | 5 | 0 | PLAY, 2381 |
-| `120 --start=boss --boons=4 --seed=2` | 5 | OVER | 109,6 | 20 | 3 | 638 (3) | 5 | 0 | igual |
-| `120 --start=boss --boons=4 --seed=3` | 5 | PLAY | 118,5 | 12 | 4 | 2129 (2) | 5 | 0 | igual |
-| `120 --start=boss --boons=4 --seed=4` | 5 | PLAY | 118,0 | 19 | 4 | 1145 (3) | 6 | 0 | igual |
-| `120 --start=boss --boons=4 --seed=5` | 5 | PLAY | 118,3 | 14 | 3 | 1588 (2) | 5 | 0 | OVER 111,5 s, 1895 |
-| `120 --start=boss --boons=25 --seed=5` | 5 | PLAY | 118,3 | 21 | 8 | 5 (3) | 6 | 0 | (não rodado no antes) |
-| `120 --start=miniboss --seed=5` (Cavaleiro) | 5 | OVER | 95,2 | 1 | 1 | 4181 (1) | 1 | 38,3 | igual |
-| `120 --start=miniboss --seed=2` (Ancião) | 5 | PLAY | 117,4 | 14 | 1 | 3413 (2) | 5 | 47,8 | (não rodado no antes) |
-| `60 --start=fountain --seed=5` | 5 | PLAY | 58,6 | 8 | 1 | 5115 (1) | 8 | 29,7 | |
-| `60 --start=shop --seed=5` | 5 | PLAY | 59,6 | 0 | 0 | 4556 (1) | 1 | 5,3 | |
-| `120 --stress=300 --seed=5` | 1 | PLAY | 118,0 | 300 | 0 | | **300** | | 259 abates, 41 de pé |
+### O que foi automatizado e o que não
 
-- **`max_alive` nunca passa de 20 numa partida** (máximo 8, na partida que começa na fonte; 5 a 7 nas partidas inteiras).
-  A única linha acima de 20 é o `--stress=300`, que é a opção de teste que põe 300 de uma vez por fora das salas
-  (`game.gd:144-152`, `horde.spawn` direto); não é o jogo.
-- **Salas comuns em 4 a 8**: a sonda `qa8/tools/enc_probe.gd` (só leitura, chama `EncounterGen.generate` com os dados
-  reais para 500 sementes por profundidade; `out/enc_probe.txt`) dá, nas salas comuns, limite de 4 (sala 1), 6 (sala 2)
-  e 8 (sala 3) de pé, maior onda de 4 a 8 e teto 8; difíceis com limite 10 a 12 e teto 12; especiais 16 e teto 16. Os
-  testes `test_encounters.gd` cobrem o mesmo (`test_the_numbers_daniel_asked_for`,
-  `test_no_wave_and_no_floor_past_the_tier_or_twenty`).
-- Todas as partidas chegam em Morvath (sala 5); o robô agora chega aos 62 a 74 s (`boss_at`) e a semente 7 **vence**
-  Morvath (`ENDING`, 60 abates). As partidas ficaram mais longas e Morvath cai mais (sementes 1, 2, 3 e 7). Mudança
-  esperada do `8b821b1` (menos inimigos de pé), não uma falha; o balanceamento é do Gameplay Engineer e do Daniel.
-- **Linhas `ERROR`**: 1 por execução, sempre `ERROR: 1 resources still in use at exit` com `2 ObjectDB instances were
-  leaked`, igual ao ciclo 7 (B7). Nenhum `SCRIPT ERROR` em nenhuma partida, captura ou medida (`out/shots.log`,
-  `out/extra.log`, `out/gpu_perf.txt`).
-- Elites: o robô sempre pega a porta 0, então não encontra elite numa partida normal; elites vistos pelo `--stress-ids`
-  (`11_elite.jpg`, `04`, `05`).
+- Automatizado: os 323 testes GUT (inclui as regras de Morvath, fases, padrões com saída segura, diretor de ataques,
+  maldição), o fluxo do título por teclado, 80 lutas do robô com métricas (seção 2), as regressões acima, 36 capturas e
+  9 gravações na GPU, 18 medidas de quadro.
+- **Não automatizado e não feito**: nenhum teste com gente (dificuldade real, leitura dos avisos por um jogador,
+  controle). Som (não há saída de áudio no WSL e as gravações saíram mudas). Controle e teclado físicos. Navegador
+  (`DRIVER=opengl3`) e versões exportadas (Windows e Web) não foram pedidos nesta rodada e não foram gerados. Celular
+  e placa fraca: não medidos.
 
-## 2. Desempenho na placa de vídeo, 1920 x 1080
+## 2. Métricas da luta (simulações do robô)
 
-Sonda nova `C:/Users/danie/tools/qa/gpuperf8.gd` (fora do projeto): carrega o jogo, descarta 180 quadros (3 s de
-partida), mede os 300 seguintes (5 s) e devolve mediana, média e p90 do quadro (relógio), tempo de GPU e de CPU de
-desenho do viewport, chamadas, primitivas e **quantos inimigos estavam de pé** em cada quadro (lido da `horde` do jogo).
-Comando: `tools/gpu.sh run --rendering-driver vulkan --resolution 1920x1080 --fixed-fps 60 --disable-vsync -s
-C:/Users/danie/tools/qa/gpuperf8.gd -- --probe-res=1920x1080 --nosave --seed=5 <cena>` (antes: `MIRROR=...-before8
-/home/dani/games/c8-before/tools/gpu.sh`). VSync desligado; `--fixed-fps 60` mantido para que as duas versões simulem
-o mesmo trecho (cada quadro avança 1/60 s de jogo, como a 60 FPS de verdade; o quadro em si roda o mais rápido que
-der). Três rodadas alternando a ordem (r1 antes primeiro, r2 depois primeiro, r3 antes primeiro); a tabela traz a
-mediana das três medianas. Linhas cruas: `qa8/out/gpu_perf.txt` (script `qa8/perf.sh`). Resolução conferida em cada
-rodada pela imagem do viewport (`image (1920, 1080)` na linha `PROBE`).
+Detalhes, comandos e todas as tabelas em `docs/gallery/cycle9/METRICAS.md`. 64 lutas começando no chefe (fogo, geada,
+luz com 6 dons cada, e 6 sorteios; reação 0 e 0,25 s; sementes 1 a 8) e 16 partidas inteiras. **São simulações**: o
+robô não erra mira e lê o próximo aviso; a reação de 0,25 s só atrasa o que ele vê.
 
-As cenas de 8 a 20 são `--autopick --stress=N --stress-ids=skeleton,runner,mage,archer,guard,priest` **sem o robô**: o
-herói (vida 99999) fica parado e os inimigos o atacam, então os N ficam de pé o tempo todo (de pé: N em todos os
-quadros). Com o robô eles morriam antes da medida (rodada abortada em `qa8/out/gpu_perf_bot_aborted.txt`: 2 a 7 de
-pé). A "partida" é `--bot --autopick` (sala 1 de verdade, herói lutando).
+| Configuração | Reação 0 | Reação 0,25 | Tempo da luta nas vitórias (mediana) | Mortes com reação 0,25 (fase) |
+|---|---|---|---|---|
+| fogo | 8 de 8 | 2 de 8 | 99,7 s | 4: 4, 3: 1, 2: 1 |
+| geada | 8 de 8 | 3 de 8 | 127,6 s | 4: 4, 3: 1 |
+| luz | 8 de 8 | 1 de 8 | 97,8 s | 4: 7 |
+| sorteados | 8 de 8 | 8 de 8 | 109,0 s | nenhuma |
+| partida inteira (1 ou 2 dons) | 7 de 8 | 1 de 8 | 128,7 s | 2: 4, 3: 2, 4: 1 |
 
-| Cena (`--seed=5`) | De pé | Quadro antes | Quadro depois | Diferença | FPS antes / depois | p90 depois | GPU antes / depois | CPU de desenho antes / depois | Chamadas depois | Primitivas antes / depois | `step_ms` depois |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| partida `--bot --autopick` | 2 antes, 4 depois | 4,51 ms | 4,78 ms | +0,27 | 222 / 209 | 5,43 | 4,43 / 4,67 | 1,26 / 1,13 | 909 | 674 mil / 831 mil | 0,14 |
-| 8 inimigos | 8 | 4,68 | 4,78 | +0,10 | 214 / 209 | 5,38 | 4,59 / 4,70 | 1,21 / 0,90 | 900 | 776 mil / 799 mil | 0,21 |
-| 12 inimigos | 12 | 4,73 | 4,84 | +0,11 | 211 / 207 | 5,36 | 4,61 / 4,76 | 0,92 / 1,09 | 908 | 877 mil / 965 mil | 0,25 |
-| 16 inimigos | 16 | 4,74 | 4,82 | +0,08 | 211 / 207 | 5,38 | 4,65 / 4,71 | 1,08 / 1,24 | 913 | 825 mil / 838 mil | 0,33 |
-| 20 inimigos | 20 | 4,73 | 4,82 | +0,09 | 211 / 207 | 5,41 | 4,64 / 4,72 | 1,02 / 1,32 | 917 | 784 mil / 866 mil | 0,40 |
-| 90 (referência, 1 rodada) | 90 | 5,16 | 5,54 | +0,38 | 194 / 181 | 6,05 | 4,93 / 5,44 | 1,13 / 1,10 | 966 | 1,09 / 1,34 milhão | 1,11 |
-| 300 (referência, 1 rodada) | 300 | 8,30 | 8,34 | +0,04 | 120 / 120 | 9,00 | 5,22 / 7,37 | 1,28 / 1,29 | 1057 | 2,01 / 2,09 milhões | 3,17 |
+- Fases nas vitórias (mediana): 26 a 35 s, 40 a 56 s (com o ritual), 15 a 20 s, 15 a 20 s.
+- Com reação 0,25, o que mais fere: os mortos invocados (16 a 26 golpes de 4 por configuração), a Tempestade (6 a 12
+  golpes de 10) e a maldição (7 a 9 golpes de 6). A foice não acertou nenhuma vez nas lutas a partir do chefe.
+- Ataques mais usados: foice (84 a 121 por 8 lutas), erupções (13 a 30), lâminas (18 a 36), maldição, tempestade,
+  invocação. **A investida nunca saiu em 80 lutas** (ver M1).
+- Janelas punidas: 79 a 90% com reação 0, 65 a 88% com 0,25. Reforços por luta: 10 a 12 (mediana), pico de 4 de pé (6
+  numa partida inteira). Ritual: 20 s (o limite) na mediana das partidas inteiras.
 
-Rodadas (quadro mediano, r1 / r2 / r3): partida antes 5,08 / 4,50 / 4,51, depois 4,96 / 4,78 / 4,62; 8 antes 4,70 /
-4,67 / 4,68, depois 4,98 / 4,72 / 4,78; 12 antes 4,73 / 4,78 / 4,62, depois 5,17 / 4,72 / 4,84; 16 antes 5,24 / 4,70 /
-4,74, depois 5,15 / 4,77 / 4,82; 20 antes 4,80 / 4,73 / 4,71, depois 4,82 / 4,83 / 4,80. FPS = 1000 / quadro mediano.
+## 3. Desempenho na placa de vídeo, 1920 x 1080, durante a luta
 
-Leitura:
-- **Meta de 60 FPS em 1080p: cumprida com folga** em todas as cenas (pior p90 com até 20 inimigos: 5,43 ms, cerca de
-  184 FPS). O quadro é quase todo GPU (4,6 a 4,8 ms); o custo por inimigo é pequeno (de 8 para 20 inimigos o quadro
-  não muda).
-- O ciclo 8 custa de +0,08 a +0,11 ms com 8 a 20 inimigos e +0,27 ms na partida (que agora tem 4 de pé contra 2 no
-  antes, porque a sala mudou); a variação entre rodadas da mesma cena chega a 0,5 ms (r1 sempre mais lenta), então só
-  a tendência de +0,1 ms é firme. As primitivas sobem (barras maiores, avisos e faixa de armadura).
-- Com 300 inimigos a GPU sobe 2,1 ms (5,22 para 7,37) mas o quadro não muda (8,3 ms), porque ali quem segura é a CPU
-  (`step_ms` 3,17); uma rodada só, citada como referência técnica.
-- **Correção do relatório anterior**: as medidas do ciclo 7 diziam 1672 x 941, mas com `-s` a sonda antiga não lê o
-  `--resolution` e o jogo devolve a janela ao tamanho salvo (`App.apply_options`, `scripts/app.gd:12-23`: 1280 x 720
-  sem `--shot`/`--frames`). A sonda deste ciclo, antes da correção, registrou `window (1280, 720) render (1280.0, 720.0)` mesmo com `--resolution 1920x1080` (a sonda antiga não imprimia o tamanho). Os números do ciclo 7
-  eram, então, de 1280 x 720. A sonda nova repõe o tamanho pedido (`--probe-res`) e confere pela imagem.
-- **NÃO MEDIDO**: celular, navegador (Compatibility), placa fraca, versão exportada, 1440p ou 4K, tela cheia.
+Sonda `C:/Users/danie/tools/qa/gpuperf9.gd` (nova, derivada da `gpuperf8.gd`): espera o momento pedido
+(`--probe-wait=ritual`: Morvath no estado `RITUAL`; `phase4`: fase 4), descarta `--probe-settle` quadros e mede os 300
+seguintes (5 s): mediana, média e p90 do quadro (relógio), tempo de GPU e de CPU de desenho, chamadas, primitivas, quantos
+de pé e em que estado Morvath estava em cada quadro. Comando: `tools/gpu.sh run --rendering-driver vulkan --resolution
+1920x1080 --fixed-fps 60 --disable-vsync -s C:/Users/danie/tools/qa/gpuperf9.gd -- --probe-res=1920x1080 --nosave
+--seed=5 --start=boss --bot <cena>`; fase 1: sem mais nada (3 s de partida descartados); ritual: `--boss-hp=0.67
+--probe-wait=ritual --probe-settle=30`; fase 4: `--boss-hp=0.14 --probe-wait=phase4`. Resolução conferida em cada
+rodada pela imagem do viewport (`image (1920, 1080)` na linha `PROBE`). Ordem alternada (r1 antes primeiro, r2 depois
+primeiro, r3 antes primeiro).
 
-## 3. Capturas (abertas e olhadas uma a uma)
+**Limitação**: no meio da rodada 2 o notebook saiu da tomada (`Win32_Battery.BatteryStatus` = 1, descarregando, 92% e
+depois 85%). Daí em diante todo quadro ficou preso em 16,7 ms (60 FPS, o limite do driver na bateria) com a GPU em 8 a 9 ms.
+Essas rodadas não servem para comparar e ficaram fora da tabela; a tomada não voltou até o fim do trabalho. Valem 2
+rodadas por cena no depois e 2 (fase 1) ou 1 (ritual, fase 4) no antes. A mediana de 3 pedida **não foi possível**;
+repetir na tomada com o comando acima (3 cenas x 2 versões x 3 rodadas).
 
-19 arquivos em `docs/gallery/cycle8/` (os 14 do contrato, `10b_preparo_laboratorio.jpg` e as quatro montagens), JPG
-de qualidade 85 regravado pela própria Godot, 1920 x 1080 (montagens 3840 de largura). Comando, momento e o que se vê
-em `docs/gallery/cycle8/CAPTURAS.md`. Notas:
-- Com o robô os inimigos caem rápido: com `--shot-at=5` sobravam 4 de 8 e 12 de 20. Os quadros de 8, 16 e 20 foram
-  tirados a 1,1 s (`--shot-at=1.2`) e o de 12 a 2,4 s; o número real de pé está na tabela do `CAPTURAS.md` (5, 10, 13
-  e 14). Sem o robô o herói fica parado, então não usei.
-- `10_inimigos_preparando_ataque` saiu do jogo (20 quadros seguidos, escolhido o do Escudo preparando a investida com o
-  aviso em linha); o laboratório `--tell=0.85` foi junto como `10b`.
-- `13_hud` saiu de `--frames` (o avanço em recarga só aparece por uns 0,7 s; não há `--shot-on=dash`).
-- Antes e depois não são o mesmo instante: o `8b821b1` muda o sorteio da partida (a linha `RESULT` difere). As
-  montagens comparam o mesmo comando.
+| Cena | Quadro antes (`3b22cea`) | Quadro depois (`b29e372`) | Diferença | FPS depois | p90 depois | GPU antes / depois | CPU de desenho depois | Chamadas antes / depois | Primitivas antes / depois | O que acontecia (estados) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| fase 1 | 5,16 ms (5,45; 4,87) | 5,50 ms (5,58; 5,42) | +0,34 | cerca de 182 | 6,08 a 6,35 | 5,08 / 5,44 | 1,03 a 1,16 | 936 / 936 | 738 mil / 737 mil | perseguição, foice, recuperação; 1 de pé |
+| ritual | 5,44 ms (1 rodada) | 5,53 ms (5,56; 5,49) | +0,09 | cerca de 181 | 6,14 a 6,42 | 5,33 / 5,42 | 1,10 a 1,29 | 886 / 1039 | 872 mil / **1,155 milhão** | `RITUAL` em todos os 300 quadros; 1 a 4 de pé |
+| fase 4 | 5,28 ms (1 rodada) | 5,42 ms (5,48; 5,35) | +0,14 | cerca de 185 | 5,89 a 6,26 | 5,19 / 5,34 | 1,05 a 1,26 | 943 / 967 | 729 mil / 732 mil | perseguição, foice, tempestade; 1 de pé |
 
-## 4. Falhas e regressões por gravidade
+- O ritual novo desenha 32% mais primitivas (escudo com runas, círculos, colunas) e custa cerca de 0,1 ms. Em
+  nenhuma cena o quadro passa de 6,5 ms no p90; a meta de 60 FPS (16,7 ms) tem folga de três vezes.
+- Na bateria (rodadas descartadas) o jogo manteve os 60 FPS do limite em todas as cenas (GPU 7,6 a 8,7 ms).
+- `step_ms` da simulação: 0,06 a 0,29 nas capturas e gravações; no `--stress=300` sem tela, 0,08 contra 0,10 no antes
+  (na bateria; serve de regressão, não de número absoluto).
+- Saídas cruas: `/home/dani/games/c9qa/out/gpu_perf.txt` (apagado ao fim com a pasta; os números estão aqui).
 
-Nenhuma crítica, alta ou média.
+## 4. Capturas e vídeos
 
-### Baixa
-- **B1. Herói atrás do obelisco ainda pode ler como em cima dele** (era o B3 do ciclo 7, melhorado). A frente B
-  escureceu as pernas cobertas, manteve o fio marfim e tirou o anel de cima da pedra
-  (`before_after_obstaculo.jpg`, recorte 3x), mas o corpo inteiro continua desenhado sobre o topo do obelisco e o
-  fio marfim contorna os pés sobre a pedra (`12_obstaculo_transparencia.jpg`). Reproduzir: `RES=1920x1080
-  tools/gpu.sh shot x.png --start=fountain --bot --seed=5 --cam-dist=26 --shot-at=1.5`. Responsável: Art Director
-  decide; Environment Artist/Gameplay se mudar.
-- **B2. Pilha de números com muitos atingidos.** Com o dom "Giro da Alvorada" e 13 a 14 inimigos em volta, 12 ou mais
-  números verdes e "Atordoado!" se amontoam sobre o herói (`04_combate_16_inimigos.jpg`, `05_combate_20_inimigos.jpg`,
-  linha de baixo de `before_after_combate.jpg`). O `NumberTally` soma por alvo, então cada alvo ainda tem o seu. Art
-  Director e UI/UX decidem se é demais.
-- **B3. Herói difícil de achar no bolo de 20** em alguns quadros (com o orbe branco do feiticeiro ao lado, em
-  `qa8/png/after_05b.png`, descartada). Risco já conhecido (B5 do ciclo 7). Art Director.
-- **B4. Separação de cor no Ômega**: o inimigo perto da borda direita fica com franjas vermelho, verde e azul
-  (`08_emeth_impacto.jpg`, x 1700 a 1850). É a separação de cor dos finalizadores (`screen.gdshader:26-28`, ciclo 7),
-  feita de propósito; registro para o Art Director avaliar se lê como defeito.
-- **B5. Balanceamento mudou** com menos inimigos: partidas inteiras do robô 171 a 233 s (antes 130 a 213), Morvath
-  termina mais baixo e a semente 7 vence (`ENDING`). Esperado do `8b821b1`; o Gameplay Engineer e o Daniel decidem.
-- **B6. O robô nunca encontra elite numa partida** (pega sempre a porta 0, a fonte), como no ciclo 7. Elites só por
-  `--stress-ids`. Gameplay Engineer, se quiser cobertura automática.
-- **B7. Vazamento ao sair** (`2 ObjectDB instances leaked`, `1 resources still in use`), igual a antes.
+Tudo em `docs/gallery/cycle9/`, com o comando de cada arquivo em `docs/gallery/cycle9/CAPTURAS.md`. Olhei cada imagem e
+cada montagem e troquei as que não mostravam o pedido (lista das descartadas no `CAPTURAS.md`).
 
-### Corrigidos desde o ciclo 7 (vistos nas capturas)
-- Inimigo atingido não vira mais silhueta branca chapada (era o B4 do ciclo 7): `before_after_emeth.jpg`, colunas da
-  esquerda (antes, branco) e da direita (depois, nas cores dele).
-- Luz do portal vermelho nos degraus da sala de Morvath (era o B2 do ciclo 7): `14_morvath_atual.jpg`.
-- Anel do herói sobre a pedra do obelisco: sumiu (`before_after_obstaculo.jpg`).
+- 18 capturas 1920 x 1080, JPG 85: `01_morvath_fase1` a `18_tela_vitoria`, nenhuma com dom de fogo.
+- 5 montagens antes e depois: `before_after_foice`, `_ritual`, `_maldicao`, `_tempestade`, `_vitoria` (`docs/gallery/morvath/`
+  intocado).
+- Vídeos (`--write-movie` da Godot na GPU, H.264): `morvath_full_fight.mp4` **34,0 MB**, 2:13, 1280 x 720, a luta
+  inteira do robô com reação 0,25 (geada, semente 1) do começo à tela de vitória, sem cortes, venceu com 14 de vida;
+  `morvath_attacks_showcase.mp4` **29,9 MB**, 1:31, 1280 x 720, oito trechos de `--boss-only` com rótulo. Conferidos por
+  folhas de quadros extraídos.
+- **Limitações dos vídeos**: a Godot gravou em 1280 x 720 (o tamanho do projeto) apesar do `--resolution 1920x1080`;
+  saíram sem som (o `--shot`, usado para encerrar depois da vitória e manter a janela, silencia o jogo; trilha em -91 dB).
 
-## 5. Limitações
-- Desempenho só no notebook do Daniel (RTX 5060 Laptop); nada medido em celular, navegador real, placa fraca ou
-  versão exportada (não pedidos). Sem som; sem gente jogando (só o robô).
-- As capturas e medidas abrem uma janela na tela do Daniel; a janela fica na tela 1 (1920 x 1200).
-- Não alterei código de jogo, arte nem ferramentas do projeto. Ferramentas novas, fora do projeto:
-  `C:/Users/danie/tools/qa/gpuperf8.gd` (sonda de quadro, ver seção 2) e `C:/Users/danie/tools/qa/wintest.gd`
-  (diagnóstico da janela), `qa8/tools/enc_probe.gd` (leitura dos encontros), `qa8/tools/tojpg.gd` (PNG para JPG 85).
-  Criei `/home/dani/games/c8-before` (cópia do `eb1e9d7`) e o espelho `C:/Users/danie/tools/eterra-gpu-before8`;
-  podem ser apagados. Nenhum commit.
+## 5. Falhas e observações por gravidade
 
-## 6. Como repetir
-- Testes e partidas: `qa8/cpu.sh` (depois) e `qa8/cpu_before.sh` (antes).
-- Capturas: `qa8/shots.sh`, `shots2.sh`, `shots3.sh` (`after|before` e os números), `qa8/extra.sh` (quadros de HUD,
-  preparo e laboratório), montagens `qa8/montage.sh`.
-- Desempenho: `qa8/perf.sh`, tabela `python3 qa8/tools/perf_table.py qa8/out/gpu_perf.txt`.
-- Máquina: `powershell.exe -NoProfile -Command "Get-CimInstance Win32_Processor; Get-CimInstance Win32_VideoController;
-  Get-CimInstance Win32_ComputerSystem; Get-CimInstance Win32_OperatingSystem; Get-CimInstance Win32_PhysicalMemory"`
-  e `nvidia-smi --query-gpu=name,memory.total,driver_version,clocks.max.graphics --format=csv`.
+Nenhuma crítica, alta ou média de funcionamento.
+
+**Média (medida e cobertura)**
+
+- **M1. A investida de Morvath nunca sai nas simulações** (0 em 80 lutas, `attacks.dash` = 0). Ela exige o paladino a 9 m
+  ou mais (`min_dist` 9 em `data/bosses/morvath.tres`) e o robô fica sempre perto, então nenhuma métrica ou regressão
+  automática passa por ela. Reproduzir: qualquer linha de `METRICAS.md`. Ela funciona com `--boss-only=dash` sem robô
+  (`05_investida.jpg`, vídeo de ataques). Sugestão ao **Gameplay Engineer**: um modo do robô que se afaste às vezes, ou
+  um teste da investida na luta. Não é falha do jogo.
+- **M2. Desempenho com 2 rodadas e não 3** (seção 3): repetir na tomada. Responsável: **QA**.
+
+**Baixa (para o `art-director`, `ui-ux-designer` e Gameplay Engineer; julgamento visual não é do QA)**
+
+- **B1. Morvath quase branco no golpe final** (`16_morvath_derrota.jpg`, `before_after_vitoria.jpg`): 0,4 s depois do
+  momento `victory`, o corpo dele está pálido, perto de uma silhueta branca, durante a câmera lenta. Pode ser o pisca de
+  dano esticado pela câmera lenta. Reproduzir: o comando de `16`. Responsável: **art-director** decidir.
+- **B2. Pontos brancos estourados no escudo do ritual** (`07_ritual_escudo.jpg`, e dois no vídeo de ataques, trecho
+  do ritual): esferas brancas pequenas e muito claras em cima do escudo. Responsável: **art-director** e
+  **environment-artist**.
+- **B3. Tela tingida de vermelho por bastante tempo ao levar dano com a maldição** (`11_maldicao_aplicacao.jpg` e o trecho
+  da maldição no vídeo: a sala inteira avermelhada). Responsável: **ui-ux-designer** ver se é o pretendido.
+- **B4. O aviso da foice no chão é o vermelho comum dos avisos** (`02_foice_preparacao.jpg`); o arco violeta com borda
+  verde-azulada só aparece no golpe (`03`). Só registro; se é o pedido, ok. Responsável: **art-director**.
+- **B5. Dica do ritual sem ritual** com `--boss-hp=0.5` (`09_erupcoes.jpg`: "O Ritual dos Mortos" e "Derrube os mortos
+  para quebrar o escudo!" sem escudo). Só acontece com a opção de teste que começa direto na fase 2; no jogo a fase 2
+  sempre abre com o ritual. Responsável: **Gameplay Engineer**, se quiser.
+- **B6. "Novo melhor tempo!" numa partida com `--nosave`** (`18_tela_vitoria.jpg`, 0:09 por começar com 2% de vida).
+  Só em teste. Responsável: **ui-ux-designer**, se quiser.
+- **B7. Métrica do ritual zerada se o paladino morre durante o ritual**: `boss.ritual` e `ritual_raised` só são escritos
+  no fim do ritual (`boss.gd:801`); em 3 partidas inteiras com reação 0,25 (sementes 3, 4 e 5) ficaram 0. Responsável:
+  **Gameplay Engineer** (gravar também em `record_death`).
+- **B8. Balanceamento** (não é falha): com reação de 0,25 s e seis dons de um estilo, o robô morre sobretudo na fase 4
+  (15 de 18 derrotas); nas partidas inteiras (1 ou 2 dons) morre sobretudo no ritual (4 de 7). Com reação 0 vence quase
+  sempre. Decisão do **Gameplay Engineer** e do Daniel depois de um teste com gente.
+
+## 6. Limitações do ambiente
+
+- WSL sem Vulkan da GPU: testes e simulações em Linux sem tela; tudo o que é imagem, vídeo ou quadro foi na Godot de
+  Windows pela `tools/gpu.sh` (abre uma janela na tela do Daniel).
+- Sem som em lugar nenhum (WSL e gravações).
+- O notebook saiu da tomada no meio da medição de quadro (seção 3).
+- A Godot grava filmes no tamanho do projeto (1280 x 720), não no `--resolution`.
+- Nenhum teste com gente, controle, navegador, celular ou placa fraca nesta rodada.
