@@ -47,6 +47,8 @@ var aim := Vector2.DOWN
 var side := 1.0
 ## Free for the behaviour (attack counters, phase).
 var memo := 0
+## Seconds a ranged enemy still runs from the paladin after its attack (EnemyDef.retreat_time).
+var retreat_t := 0.0
 ## Takes no damage (a boss behind its ritual's shield).
 var invulnerable := false
 ## Life it cannot drop under (a boss stops at the threshold of its next phase; 0: none).

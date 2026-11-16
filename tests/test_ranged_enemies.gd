@@ -42,12 +42,65 @@ func _run(e: Enemy, seconds: float, walk := Callable()) -> Dictionary:
 	return out
 
 
-func test_the_mage_waits_at_the_far_end_and_shoots_orbs() -> void:
-	var e := _alone(&"mage")
+func test_the_mage_shoots_bursts_of_turning_orbs_from_afar() -> void:
+	var e := _alone(&"mage", Vector2(16, 0))
 	var r := _run(e, 8.0)
-	assert_gt(r.shots, 1, "it shoots")
+	assert_gt(r.shots, 2, "at least one burst of three")
 	assert_eq(r.circles, 0, "never a circle on the floor")
-	assert_almost_eq(e.pos.distance_to(game.player.pos), e.def.attack_range, 1.0, "at the far end of its reach")
+	var d := e.pos.distance_to(game.player.pos)
+	assert_between(d, e.def.attack_range * e.def.keep_away - 1.0, e.def.attack_range + 2.5, "it keeps away")
+	var turning := false
+	for s in game.projectiles.shots:
+		if s.by == &"mage":
+			assert_eq(s.kind, Projectiles.Kind.ORB)
+			turning = turning or s.turn > 0.0
+	assert_true(turning, "its orbs turn after him")
+
+
+func test_each_orb_of_the_burst_pushes_the_mage_back() -> void:
+	var e := _alone(&"mage", Vector2(12, 0))
+	var pushed := [false]
+	for i in 6 * 60:
+		game.player.invuln = 10.0
+		game._step(1.0 / 60.0)
+		if e.state == Enemy.State.ATTACK and e.push.dot(e.pos - game.player.pos) > 1.0:
+			pushed[0] = true
+	assert_true(pushed[0], "the recoil pushes it away from him")
+
+
+func test_the_mage_waits_behind_a_pillar() -> void:
+	var e := _alone(&"mage", Vector2(10, 0))
+	game.arena.pillars.assign([Vector3(4, 0, 0.6)])
+	var spot: Variant = game.horde.cover_spot(e.pos, e.def.cover_hug)
+	assert_not_null(spot)
+	if spot:
+		assert_gt((spot as Vector2).x, 4.0, "past the pillar, away from him")
+	game.arena.pillars.clear()
+	assert_null(game.horde.cover_spot(e.pos, e.def.cover_hug), "no pillar, no cover")
+
+
+func test_the_crossbowman_runs_after_each_bolt() -> void:
+	var e := _alone(&"archer", Vector2(9, 0))
+	var ran := [false]
+	for i in 6 * 60:
+		game.player.invuln = 10.0
+		game._step(1.0 / 60.0)
+		if e.retreat_t > 0.0:
+			ran[0] = true
+	assert_true(ran[0])
+	assert_eq(e.def.retreat_far, 700.0 / 80.0)
+
+
+func test_no_more_than_two_crossbowmen_shoot_at_once() -> void:
+	var e := _alone(&"archer")
+	for k in 3:
+		game.horde.spawn(game.horde.def(&"archer"), game.arena.resolve(Vector2(-12, -6 + k * 6), 0.6), false)
+	var peak := [0]
+	for i in 8 * 60:
+		game.player.invuln = 10.0
+		game._step(1.0 / 60.0)
+		peak[0] = maxi(peak[0], game.horde.attackers(e.def))
+	assert_eq(peak[0], 2)
 
 
 func test_the_mage_runs_from_a_paladin_who_comes_for_it() -> void:
@@ -76,7 +129,25 @@ func test_the_crossbowman_marks_its_aim_and_shoots_a_bolt() -> void:
 			assert_eq(s.kind, Projectiles.Kind.BOLT)
 
 
-func test_the_priests_shoot_fans_of_orbs_not_circles() -> void:
+func test_the_priest_sends_a_vine_creeping_after_him() -> void:
+	var e := _alone(&"priest", Vector2(10, 0))
+	var vine: Projectiles.Shot = null
+	var first_life := 0.0
+	for i in 8 * 60:
+		game.player.invuln = 10.0
+		game._step(1.0 / 60.0)
+		for s in game.projectiles.shots:
+			if s.by == &"priest" and vine == null:
+				vine = s
+				first_life = s.life
+	assert_not_null(vine)
+	if vine:
+		assert_true(vine.low, "along the floor")
+		assert_almost_eq(vine.vel.length(), 150.0 / 80.0, 0.01)
+		assert_almost_eq(first_life, 12.0, 0.1, "it follows for 12 s")
+
+
+func test_the_priests_shoot_not_circles() -> void:
 	for id: StringName in [&"priest", &"priest_elder"]:
 		var e := _alone(id, Vector2(8, 0))
 		var r := _run(e, 10.0)

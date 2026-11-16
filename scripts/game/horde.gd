@@ -51,6 +51,12 @@ const RANGED_LOCK := 0.25
 const RANGED_REACH := 1.5
 const RANGED_LOOK := 2.0
 const RANGED_SHOOT_WHILE_RUNNING := 0.75
+## Each tick of a burst pushes the shooter back a little less (Hades: FireTickSelfVelocityConsecutiveMultiplier).
+const RANGED_RECOIL_FADE := 0.95
+## How far a ranged enemy looks for a pillar to wait behind.
+const RANGED_COVER_FIND := 10.0
+## A shot creeping on the floor (the vines): flat and long.
+const LOW_SHOT_SCALE := Vector3(1.2, 0.45, 1.8)
 
 var list: Array[Enemy] = []
 var dying: Array[Enemy] = []
@@ -263,9 +269,12 @@ func _windup(e: Enemy) -> float:
 	return e.def.attack_windup if e.def.behavior != EnemyDef.Behavior.CHASE else 0.5
 
 
-## Keeps to the far end of its reach (Hades II's ranged shades): walks in only while out of reach, runs from the
-## paladin once he is closer than keep_away of it (around the walls, never into them) and shoots from there; only
-## cornered does it shoot from close. A caster (CASTER) conjures a circle under him instead (no enemy uses it now).
+## Keeps to the far end of its reach: walks in only while out of reach, runs from the paladin once he is closer than
+## keep_away of it (around the walls, never into them; cornered it shoots from close) and shoots from there (Daniel,
+## 2026-11-16). With Hades II's numbers (study of 2026-11-16): a burst of shot_ticks, each pushing it back (the
+## mage); between attacks behind the nearest pillar (cover_hug, HideAndPeekAI); after an attack it runs retreat_far
+## for retreat_time (the crossbowman); at most max_attackers of its kind at once. A caster (CASTER) conjures a circle
+## under him instead (no enemy uses it now: circles on the floor are Morvath's).
 func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: bool) -> void:
 	var d := e.def
 	if e.state == Enemy.State.WINDUP:
@@ -276,23 +285,51 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		if e.state_t >= d.attack_windup:
 			if caster:
 				ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
-			else:
-				shoot(e, e.aim)
-			e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
+			e.memo = 0
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
 	if e.state == Enemy.State.ATTACK:
-		if e.state_t >= 0.4:
+		var ticks := 0 if caster else maxi(1, d.shot_ticks)
+		while e.memo < ticks and e.state_t >= e.memo * d.shot_interval:
+			if e.memo > 0 and not d.shot_line:
+				e.aim = toward
+			shoot(e, e.aim)
+			if d.recoil > 0.0:
+				e.push = -e.aim * d.recoil * pow(RANGED_RECOIL_FADE, e.memo)
+			e.memo += 1
+		if e.state_t >= maxi(0, ticks - 1) * d.shot_interval + 0.4:
+			e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
+			if d.retreat_far > 0.0:
+				e.retreat_t = _rng.randf_range(d.retreat_time.x, d.retreat_time.y)
 			_set_state(e, Enemy.State.WALK, &"walk")
 		return
 	e.dir = toward
 	var sp := _speed(e)
-	var cornered := false
 	if sp <= 0.0:
 		pass
+	elif e.retreat_t > 0.0:
+		# after its attack it gets away from him (Hades: RetreatAfterAttack), then comes back to its reach
+		e.retreat_t -= dt
+		if dist < d.retreat_far:
+			var away := flee_dir(e.pos, -toward, d.radius, e.side)
+			e.pos += away * sp * dt
+			if away != Vector2.ZERO:
+				e.dir = away
+		return
+	var near := dist < d.attack_range * d.keep_away
+	var cornered := false
+	var cover: Variant = cover_spot(e.pos, d.cover_hug) if d.cover_hug > 0.0 and e.cooldown > 0.0 and not near else null
+	if sp <= 0.0:
+		pass
+	elif cover != null:
+		# waiting for its next attack behind a pillar, out of his way
+		var to_cover: Vector2 = (cover as Vector2) - e.pos
+		if to_cover.length() > 0.3:
+			e.pos += to_cover.normalized() * minf(sp * dt, to_cover.length())
+			e.dir = to_cover.normalized()
 	elif dist > d.attack_range:
 		e.pos += toward * sp * dt
-	elif dist < d.attack_range * d.keep_away:
+	elif near:
 		var away := flee_dir(e.pos, -toward, d.radius, e.side)
 		cornered = away == Vector2.ZERO
 		e.pos += away * sp * dt
@@ -301,7 +338,8 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 	else:
 		e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
 	var running := sp > 0.0 and dist < d.attack_range * d.keep_away * RANGED_SHOOT_WHILE_RUNNING and not cornered
-	if e.cooldown <= 0.0 and dist < d.attack_range + 2.0 and not running and target_alive and arena.inside(e.pos, 1.0):
+	if e.cooldown <= 0.0 and dist < d.attack_range + 2.0 and not running and target_alive and arena.inside(e.pos, 1.0) \
+			and (d.max_attackers <= 0 or attackers(d) < d.max_attackers):
 		e.aim = toward
 		e.dir = toward
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
@@ -309,16 +347,53 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 			ground.add_line_warning(e.pos, toward, d.attack_range * RANGED_REACH, 0.5, d.attack_windup, 0.0)
 
 
-## Its shots (EnemyDef.shot_*): a fan of shot_count around dir, flying a little past its reach.
+## How many of this kind (the common one and its elite count together) are winding up or shooting now.
+func attackers(d: EnemyDef) -> int:
+	var n := 0
+	for o in list:
+		if o.alive and o.def.name_key == d.name_key and (o.state == Enemy.State.WINDUP or o.state == Enemy.State.ATTACK):
+			n += 1
+	return n
+
+
+## Where to wait behind the pillar nearest to `from` (within RANGED_COVER_FIND): `hug` meters past its middle on
+## the side away from the paladin, on the floor. null: no pillar near, or no floor behind it.
+func cover_spot(from: Vector2, hug: float) -> Variant:
+	var best: Variant = null
+	var best_d := RANGED_COVER_FIND
+	for p in arena.pillars:
+		var c := Vector2(p.x, p.y)
+		var dd := c.distance_to(from)
+		if dd >= best_d:
+			continue
+		var away := c - target
+		if away.length_squared() < 0.01:
+			continue
+		var spot := c + away.normalized() * maxf(hug, p.z + 0.8)
+		if arena.inside(spot, 0.8):
+			best = arena.resolve(spot, 0.6)
+			best_d = dd
+	return best
+
+
+## Its shots (EnemyDef.shot_*): a fan of shot_count around dir.
 func shoot(e: Enemy, dir: Vector2) -> void:
 	var d := e.def
 	var n := maxi(1, d.shot_count)
-	var life := d.attack_range * RANGED_REACH / maxf(0.1, d.shot_speed)
+	var reach := d.shot_range if d.shot_range > 0.0 else d.attack_range * RANGED_REACH
+	var life := reach / maxf(0.1, d.shot_speed)
 	for i in n:
 		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
 		var aim := dir.rotated(turn)
-		projectiles.fire(Projectiles.Kind.ORB if d.shot_orb else Projectiles.Kind.BOLT, e.pos + aim * (d.radius + 0.2), aim,
+		var s := projectiles.fire(Projectiles.Kind.ORB if d.shot_orb else Projectiles.Kind.BOLT, e.pos + aim * (d.radius + 0.2), aim,
 			d.shot_speed, d.attack_damage * damage_scale, 0.45 if d.shot_orb else 0.4, life, d.magic_color)
+		if d.shot_turn > 0.0:
+			s.turn = deg_to_rad(d.shot_turn)
+			s.turn_decay = deg_to_rad(d.shot_turn_decay)
+			s.homing = life
+		if d.shot_low:
+			s.low = true
+			s.node.scale = LOW_SHOT_SCALE
 
 
 ## Where a ranged enemy runs to get away from the paladin: straight away, else turned along the wall (its own side

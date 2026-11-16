@@ -88,6 +88,26 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var shot_line := false
 ## ARCHER: the part of attack_range the paladin may come to before it runs away (it shoots from the far end).
 @export var keep_away := 0.7
+## ARCHER and PRIEST, the numbers of Hades II's ranged enemies (study of 2026-11-16): shot_ticks volleys shot_interval
+## seconds apart (Hades FireTicks, FireInterval), each pushing it back at recoil m/s (FireTickSelfVelocity, a little
+## less each tick); shots that turn after the paladin at shot_turn degrees a second, that rate falling shot_turn_decay
+## a second (MaxAdjustRate, AdjustRateAcceleration); shot_range meters of flight (0: 1.5 of its reach); shot_low:
+## it creeps along the floor (the vines).
+@export var shot_ticks := 1
+@export var shot_interval := 0.17
+@export var recoil := 0.0
+@export var shot_turn := 0.0
+@export var shot_turn_decay := 0.0
+@export var shot_range := 0.0
+@export var shot_low := false
+## ARCHER: between attacks it goes behind the nearest pillar, cover_hug meters past it from the paladin (Hades
+## HideAndPeekAI, CoverHugDistance; 0: no cover). After each attack it runs retreat_far meters from him for
+## retreat_time seconds (RetreatAfterAttack; 0: it stays). At most max_attackers of its kind wind up or shoot at
+## once (MaxAttackers; 0: no limit).
+@export var cover_hug := 0.0
+@export var retreat_far := 0.0
+@export var retreat_time := Vector2.ZERO
+@export var max_attackers := 0
 ## PULSE: radius of the burst. CONE: opening in degrees.
 @export var attack_width := 0.0
 ## KNIGHT: a slam on whoever stands close (0 damage = none).

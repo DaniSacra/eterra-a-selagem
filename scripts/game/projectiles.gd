@@ -18,6 +18,8 @@ enum Kind { BOLT, ORB, WAVE, BLADE, SPARK, SOUL, CURSE }
 const SOUL_DEPTH := 0.45
 ## Height of the crescents over the floor (they read on the floor, like the warnings they follow).
 const SOUL_HEIGHT := 0.55
+## Height of a shot that creeps along the floor (Shot.low).
+const LOW_HEIGHT := 0.3
 
 const DART := preload("res://assets/shaders/emeth_dart.gdshader")
 ## The dart of the special, in meters: its length, half its width and the trail behind it.
@@ -67,6 +69,10 @@ class Shot:
 	## Seconds it still turns after the paladin, and how fast (radians a second).
 	var homing := 0.0
 	var turn := 0.0
+	## How fast that turning fades (radians a second, each second): the vines stop following after a while.
+	var turn_decay := 0.0
+	## It creeps along the floor (an enemy's vine) instead of flying at chest height.
+	var low := false
 	## Which attack fired it (a boss's attack id; the hurt_by count of the fight).
 	var source: StringName = &""
 	## Which kind of enemy fired it (EnemyDef.id, Horde.acting; &"": none, as the boss's own): "Derrotado por".
@@ -183,6 +189,7 @@ func step(dt: float) -> void:
 			s.homing -= dt
 			var want := s.vel.angle_to(player.pos - s.pos)
 			s.vel = s.vel.rotated(clampf(want, -s.turn * dt, s.turn * dt))
+			s.turn = maxf(0.0, s.turn - s.turn_decay * dt)
 		s.pos += s.vel * dt
 		s.life -= dt
 		s.age += dt
@@ -233,7 +240,7 @@ static func touches_soul(s: Shot, p: Vector2, radius: float) -> bool:
 
 
 func _place(s: Shot) -> void:
-	s.node.position = Vector3(s.pos.x, SOUL_HEIGHT if s.kind == Kind.SOUL else HEIGHT, s.pos.y)
+	s.node.position = Vector3(s.pos.x, SOUL_HEIGHT if s.kind == Kind.SOUL else (LOW_HEIGHT if s.low else HEIGHT), s.pos.y)
 	if s.vel.length_squared() > 0.0:
 		s.node.rotation.y = atan2(s.vel.x, s.vel.y)
 	if s.kind == Kind.SOUL:

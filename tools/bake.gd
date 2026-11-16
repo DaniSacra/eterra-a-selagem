@@ -217,7 +217,7 @@ const MODELS := {
 		"anims": {
 			"walk": [&"ual", "Walk", 10, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 4, true, OFFERING_GUARD],
 			# the ritual: both hands rise over the second its blow takes to fall
-			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 6, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 1.0}],
+			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 6, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
 		},
 	},
 	# 7. the guardian knight: crowned helmet, heavy plate, red cape; blade and shield are KayKit's
