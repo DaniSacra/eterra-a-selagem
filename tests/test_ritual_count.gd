@@ -106,3 +106,22 @@ func test_a_fight_begun_in_the_ritual_phase_runs_the_ritual() -> void:
 		ritual[0] = boss.state == Boss.State.RITUAL
 		t += 1.0 / 60.0
 	assert_true(ritual[0], "the ritual its name promises")
+
+
+func test_a_fight_begun_past_the_ritual_never_shows_its_shield_nor_hint() -> void:
+	var boss := _start_fight()
+	# what --boss-hp=0.3 sets up: the third phase, the ritual left behind (as Boss.setup does)
+	boss.e.hp = boss.e.max_hp * 0.3
+	boss.phase = BossRules.phase_for(0.3, def.thresholds)
+	boss._ritual_done = boss.phase > def.ritual_phase
+	boss.e.hp_floor = BossRules.hp_floor(boss.phase, def.thresholds) * boss.e.max_hp
+	assert_gt(boss.phase, def.ritual_phase)
+	var shown := false
+	var t := 0.0
+	while t < 15.0 and game.boss != null:
+		_run(1.0 / 60.0)
+		game.hud._update_boss(game.boss_enemy())
+		shown = shown or boss.shielded() or game.hud._ritual_hint
+		t += 1.0 / 60.0
+	assert_false(shown, "no shield and no 'Derrube os mortos' without the ritual")
+	assert_eq(float(boss.stats.ritual), 0.0)

@@ -79,6 +79,8 @@ var _logged := false
 var fast := 1.0
 ## Smoothed cost of one simulation step, in milliseconds.
 var step_ms := 0.0
+## The step's cost while enemies stand (RESULT step_ms_avg, step_ms_peak).
+var step_timer := StepTimer.new()
 ## When set, the camera looks here instead of at the paladin (the final scene).
 var focus: Variant = null
 var _pending_levels := 0
@@ -344,10 +346,8 @@ func _process(delta: float) -> void:
 	var stepped := false
 	if mode == Mode.PLAY or mode == Mode.OVER or mode == Mode.ENDING:
 		if fx.stop_left <= 0.0:
-			var t0 := Time.get_ticks_usec()
-			_step(minf(delta, 0.05))
+			_timed_step(minf(delta, 0.05))
 			stepped = true
-			step_ms = lerpf(step_ms, (Time.get_ticks_usec() - t0) / 1000.0, 0.05)
 	horde.render()
 	orbs.render()
 	if mode == Mode.PLAY and Controls.pressed(&"pause"):
@@ -1141,11 +1141,23 @@ func log_run(outcome: String) -> void:
 	run_logged.emit(outcome, e)
 
 
+## One step of the run, timed: step_ms (smoothed, read at any moment) and step_timer (only frames with enemies
+## standing, RESULT step_ms_avg and step_ms_peak; BUG-012).
+func _timed_step(dt: float) -> void:
+	var busy := horde.count() > 0
+	var t0 := Time.get_ticks_usec()
+	_step(dt)
+	var ms := (Time.get_ticks_usec() - t0) / 1000.0
+	step_ms = lerpf(step_ms, ms, 0.05)
+	step_timer.add(ms, busy)
+
+
 ## A line of numbers about the run, for smoke tests and tuning.
 func result() -> Dictionary:
 	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": kills, "spawned": director.spawned, "best_combo": combat.best_combo,
 		"enemies": horde.count(), "max_alive": max_alive, "boss_at": snappedf(boss_at, 0.1), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
-		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second(),
+		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01),
+		"step_ms_avg": snappedf(step_timer.average(), 0.01), "step_ms_peak": snappedf(step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
 		"boss": boss_stats, "bot": bot.stats() if bot else {}}
 
 

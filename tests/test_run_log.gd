@@ -75,7 +75,9 @@ func test_a_real_run_counts_and_names_what_hurt_last() -> void:
 	_start()
 	var heard: Array = []
 	game.run_logged.connect(func(outcome: String, e: Dictionary) -> void: heard.append([outcome, e]))
-	var b: Boon = game.boons.offers(RandomNumberGenerator.new(), 1)[0]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7 # fixed: a random defensive boon could block the blows below
+	var b: Boon = game.boons.offers(rng, 1)[0]
 	game._take(b)
 	game.player.dodged.emit(Vector2.RIGHT)
 	game.player.cast_released.emit(game.player.pos, true)
