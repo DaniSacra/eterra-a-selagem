@@ -158,6 +158,14 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Skills.covers`, `over_boss`): recompensa, fonte, dom tomado, dom que cai, elite que surge. Morvath entra sem coluna: anel
   espectral no chão e almas aos pés (`Boss.ENTRANCE_RING`, `ENTRANCE_SOULS`). Gemas das portas e das recompensas com a cor
   2,2 vezes e o maior canal em 1,0, mesmo matiz (`Rooms.gem_color`, `GEM_LIFT`, `GEM_CAP`). Testes em `tests/test_cycle12c.gd`.
+  Correção A-1/B-1 do QA-02: 1,0 no material não é 1,0 na tela (exposição 1,25 e curva fílmica levam 0,9 a 255, a saturação
+  1,3 empurra o canal mais forte; a coluna era aditiva, duas faces e o chão somavam). `ScreenTone` (`core/screen_tone.gd`)
+  modela a tela do Forward+ (conferido na GPU por `tools/tone_probe.gd`, até 3 de diferença) e dá o teto na tela
+  (`SCREEN_MAX` 235, mira em `SAFE` 226): a coluna recebe `cap` = `ScreenTone.linear_peak(cor)` e se deposita por cima do
+  que está atrás (`blend_premul_alpha`, alfa = luz / teto, nada soma além do teto), lados pouco esbranquiçados (`whiten`
+  0,25: a cor da recompensa fica) e abre em volta do herói onde está na frente dele (`hero_hole`, global `hero_pos`); gemas
+  por `ScreenTone.fit`; o realce da câmera lenta no `screen.gdshader` não passa de `lift_ceiling` 0,9. Testes em
+  `tests/test_screen_tone.gd`.
 
 ## Primeira fase no molde do Hades II (2026-11-14)
 - A partida é por salas, com a estrutura e os números da primeira região do Hades II (estudo dos dados do jogo do
@@ -486,7 +494,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`STORM_SOFT`, `STORM_ROOT_FILL`) e mais leve no todo (`STORM_FILL` 0,2; testes em `tests/test_storm_wedge.gd`).
   Erupções com o miolo vermelho da assinatura dentro do círculo (`danger*` no `ritual_rune.gdshader`, `Ground.RUNE_DANGER`).
   Colunas de dom sobre o chefe: também as que ficam entre ele e a câmera (`Skills.over_boss` com altura, yaw e pitch),
-  fracas e com o miolo limitado a 1,0 (`Skills.BEAM_CORE_CAP`, `cap` no `beam.gdshader`); golpe forte no chefe pisca no
+  fracas e com o miolo limitado ao teto da tela (`Skills.BEAM_CORE_CAP`, `cap` no `beam.gdshader`, ver GP-01); golpe forte no chefe pisca no
   máximo `Horde.BOSS_FLASH` 0,8, abaixo do `white_from` (antes o 1º quadro de um Ômega de geada deixava Morvath marfim).
 - Colisão do cenário: pilares são círculos (`RoomLayout.pillars`); escadas, entulho e barris são caixas sólidas
   (`Arena.boxes`, pelo `solid` de `_place`). Sai-se da sala pisando no pé da escada (`Arena.exit_at`).

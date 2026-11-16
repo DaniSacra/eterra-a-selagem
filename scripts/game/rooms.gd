@@ -405,19 +405,21 @@ func bot_goal() -> Variant:
 # ---------- markers ----------
 
 ## How bright a door's or a reward's gem is: its colour lifted this much, no channel past GEM_CAP (GP-01 of cycle
-## C12c: at 2.2 times its colour it went past the glow threshold and bloomed yellow; it glows by its light).
+## C12c: at 2.2 times its colour it went past the glow threshold and bloomed yellow; it glows by its light), and then
+## no channel past ScreenTone.SAFE on the screen (B-1: at 1.0 the exposure and the saturation still took it to 255).
 const GEM_LIFT := 2.2
 const GEM_CAP := 1.0
 
 
-## The gem's colour: lifted by GEM_LIFT, then scaled down (hue kept) until its strongest channel is GEM_CAP.
+## The gem's colour: lifted by GEM_LIFT, then scaled down (hue kept) until its strongest channel is GEM_CAP and its
+## strongest on the screen ScreenTone.SAFE.
 static func gem_color(c: Color) -> Color:
 	var lifted := Color(c.r * GEM_LIFT, c.g * GEM_LIFT, c.b * GEM_LIFT)
 	var top := maxf(lifted.r, maxf(lifted.g, lifted.b))
-	if top <= GEM_CAP:
-		return lifted
-	var k := GEM_CAP / top
-	return Color(lifted.r * k, lifted.g * k, lifted.b * k)
+	if top > GEM_CAP:
+		var k := GEM_CAP / top
+		lifted = Color(lifted.r * k, lifted.g * k, lifted.b * k)
+	return ScreenTone.fit(lifted)
 
 
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).

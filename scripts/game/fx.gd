@@ -23,9 +23,10 @@ const MOTE_GRAVITY := 5.0
 const MOTE_DRAG := 3.5
 ## The light of a pillar (beam.gdshader's intensity) when nothing asks for less.
 const BEAM_INTENSITY := 2.5
-## No channel of a pillar's light past this (cycle C12c, GP-01): every column of the game (reward, fountain, a gift
-## taken, a gift falling, an elite rising) stays under the glow threshold, so it never whitens over the paladin or
-## Morvath. BEAM_NO_CAP only when asked for by name.
+## How bright a pillar may get, as a share of the light that keeps its colour at ScreenTone.SAFE on the screen
+## (cycle C12c, GP-01): every column of the game (reward, fountain, a gift taken, a gift falling, an elite rising, an
+## eruption) keeps its colour and stays under 235 on the screen, never white over the floor, the paladin or Morvath.
+## BEAM_NO_CAP only when asked for by name.
 const BEAM_CORE_CAP := 1.0
 const BEAM_NO_CAP := 1000.0
 ## Old gold, lit: one mote in MOTE_GOLD_EVERY (the veins of the blade).
@@ -618,18 +619,22 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
 ## is the usual one, less where it must not cover someone).
-## cap: no channel of its light past this (BEAM_CORE_CAP, under the glow; BEAM_NO_CAP: as bright as it comes).
+## cap: how bright its light may get, a share of what keeps its colour at ScreenTone.SAFE on the screen (BEAM_CORE_CAP;
+## BEAM_NO_CAP: as bright as it comes). The light covers what is behind it in that measure (beam.gdshader), so nothing
+## under a column, nor its two faces, sums past it.
 func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, time: float = 0.45, intensity: float = BEAM_INTENSITY,
 		cap: float = BEAM_CORE_CAP) -> void:
 	var b: Dictionary = _take(_beams)
-	last_beam = {"at": at, "intensity": intensity, "cap": cap}
+	# the cap is a share of the light that keeps this colour at ScreenTone.SAFE on the screen (GP-01)
+	var peak := cap * ScreenTone.linear_peak(color)
+	last_beam = {"at": at, "intensity": intensity, "cap": cap, "color": color, "peak": peak}
 	var mi: MeshInstance3D = b.node
 	mi.position = Vector3(at.x, height * 0.5, at.y)
 	mi.scale = Vector3(radius, height, radius)
 	b.size = radius
 	(b.mat as ShaderMaterial).set_shader_parameter(&"color", color)
 	(b.mat as ShaderMaterial).set_shader_parameter(&"intensity", intensity)
-	(b.mat as ShaderMaterial).set_shader_parameter(&"cap", cap)
+	(b.mat as ShaderMaterial).set_shader_parameter(&"cap", peak)
 	b.time = time
 
 

@@ -22,6 +22,9 @@ uniform vec3 vignette_spare_weight = vec3(0.7, 1.0, 0.7);
 uniform float impact = 0.0;
 // Slow motion: blur streaking out from the middle (0..1) and a lift of the bright parts.
 uniform float radial = 0.0;
+// The lift never takes a pixel past this (or past where it already was): the slow motion of the last kill took the
+// reward's column, risen in that same instant, from 226 to 255 (GP-01 of cycle C12c: under 235 / 255).
+uniform float lift_ceiling = 0.9;
 // Brightness above which a pixel turns white in the impact frame.
 uniform float impact_threshold = 0.4;
 uniform vec3 impact_dark : source_color = vec3(0.02, 0.015, 0.03);
@@ -44,7 +47,7 @@ void fragment() {
 			acc += texture(screen, 0.5 + from_center * (1.0 - radial * 0.008 * float(i))).rgb;
 		}
 		c = mix(c, acc / 8.0, smoothstep(0.12, 0.45, length(from_center)));
-		c += c * c * radial * 0.5;
+		c = min(c + c * c * radial * 0.5, max(c, vec3(lift_ceiling)));
 	}
 	float d = length(from_center * vec2(1.6, 1.0));
 	float v = smoothstep(0.3, 0.95, d);
