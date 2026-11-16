@@ -24,7 +24,8 @@ A sessão principal é o Game Director / Tech Lead: planeja, delega, integra, va
 Subagentes em `.claude/agents/`: `art-director` (identidade visual, especificação e revisão), `environment-artist`
 (cenário, materiais, luz), `gameplay-engineer` (combate, inimigos, salas, câmera de jogo, colisão, testes),
 `ui-ux-designer` (HUD, menus, legibilidade), `qa-performance` (testes, medições, capturas reais, relatório em
-`docs/qa/latest_report.md`). Cada arquivo tem um dono por tarefa; agentes em paralelo só com arquivos distintos (ou em
+`docs/qa/latest_report.md`), `game-director` (lê todas as evidências e revisões e mantém o backlog em `docs/backlog.md`: bugs e quickwins
+primeiro, depois os próximos ciclos; roda ao fim de cada ciclo, não implementa). Cada arquivo tem um dono por tarefa; agentes em paralelo só com arquivos distintos (ou em
 worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/development/agent_workflow.md`.
 
 ## Comandos
