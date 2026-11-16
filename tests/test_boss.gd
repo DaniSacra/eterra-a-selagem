@@ -175,7 +175,7 @@ func test_eruptions_always_leave_a_way_out() -> void:
 		rng.seed = 5000 + i
 		var p := Vector2(rng.randf_range(FLOOR.position.x, FLOOR.end.x), rng.randf_range(FLOOR.position.y, FLOOR.end.y))
 		var n := rng.randi_range(def.eruption_count.x, def.eruption_count.y)
-		var spots := BossRules.eruptions(p, n, def.eruption_radius, Vector2.ZERO, def.eruption_lane, FLOOR, rng)
+		var spots := BossRules.eruptions(p, n, def.eruption_radius, Vector2.ZERO, def.eruption_lane, FloorShape.rect(FLOOR.size * 0.5, FLOOR.get_center()), rng)
 		assert_between(spots.size(), 1, n)
 		if spots[0].distance_to(p) < def.eruption_radius:
 			near += 1

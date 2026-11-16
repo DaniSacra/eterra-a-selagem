@@ -156,6 +156,21 @@ func add_zone(kind: Kind, at: Vector2, radius: float, time: float, power: float,
 	return z
 
 
+## Morvath's warning (ART-001): drawn with his signature from now on (a ritual circle keeps its own look).
+func sign_boss(z: Zone) -> void:
+	if z == null or z.node == null or z.kind != Kind.WARNING or z.rune != Rune.NONE or z.eruption:
+		return
+	GroundLook.signed_warning(z.node, z.shape, z.pos, z.dir, z.radius, z.width, z.node.position.y)
+	z.mat.set_shader_parameter(&"progress", 1.0 - z.life / maxf(z.total, 0.001))
+
+
+## A storm lane's place in its order of leaving (GroundLook.order): marks at its root (1 to 6; < 0 keeps them) and
+## rank 0 for the next to leave.
+func storm_rank(z: Zone, marks: int, rank: int) -> void:
+	if z != null and z.node != null and z.rune == Rune.NONE:
+		GroundLook.order(z.node, marks, rank)
+
+
 func clear_warnings() -> void:
 	for z in zones:
 		if z.kind == Kind.WARNING:

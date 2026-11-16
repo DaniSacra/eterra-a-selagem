@@ -122,6 +122,11 @@ func _enter(next: RunMap.Room) -> void:
 	_clear_props()
 	game.player.place(game.arena.start)
 	game.player.facing = game.arena.start_facing
+	if Dev.has("hero-at"):
+		# dev, for captures: --hero-at=x,z puts the paladin there (kept on the floor)
+		var xz := Dev.arg("hero-at").split(",")
+		if xz.size() == 2:
+			game.player.place(Vector2(float(xz[0]), float(xz[1])))
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
 	_queue.clear()
 	_waves.clear()
@@ -150,7 +155,9 @@ func _enter(next: RunMap.Room) -> void:
 			_open_doors()
 		RunMap.Kind.BOSS:
 			phase = Phase.BOSS
-			game.start_boss(stage.boss)
+			# dev, for captures of the empty chamber: --no-boss
+			if not Dev.has("no-boss"):
+				game.start_boss(stage.boss)
 	game.hud.show_notice(T.t(RunMap.KIND_KEY[room.kind]) if room.kind != RunMap.Kind.COMBAT else T.t(&"notice_room", {"n": room.depth}), 2.0)
 	_fade_in()
 

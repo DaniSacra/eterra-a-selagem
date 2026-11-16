@@ -395,9 +395,27 @@ func _stage() -> void:
 	var hall := _layout(CatacombHall.HALF, [], [])
 	hall.platform = true
 	st.layouts = [hall]
-	st.boss_layout = hall
 	st.shop_layout = hall
+	# Morvath fights in his own round chamber (cycle C11, the Seal Chamber: docs/design/boss_arena.md for the radius,
+	# docs/art/boss_chamber_spec.md for the plan): a circle of 12.5 m to the balustrade's inner face, so the paladin's
+	# middle walks up to 12 m from the seal; he comes in at the mouth of the south stairs facing north, Morvath stands
+	# on the seal; the camera keeps to a point 0.7 m from the seal toward it and moves off it at most 3 m
+	st.boss_layout = _chamber()
 	_save(st, "res://data/stages/catacombs.tres")
+
+
+## The Seal Chamber (cycle C11). Every number is the spec's (docs/art/boss_chamber_spec.md, sections 2 and 4).
+func _chamber() -> RoomLayout:
+	var c := RoomLayout.new()
+	c.chamber = true
+	c.floor = FloorShape.circle(12.5)
+	c.half = Vector2(12.5, 12.5)
+	c.hero_spawn = Vector2(-0.9, 10.4)
+	c.hero_facing = Vector2.UP
+	c.boss_spawn = Vector2(0.0, -1.2)
+	c.cam_target = Vector2(0.40, 0.57)
+	c.cam_reach = 3.0
+	return c
 
 
 func _save(r: Resource, path: String) -> void:
@@ -439,11 +457,18 @@ func _bosses() -> void:
 	b.adds_cap = PackedInt32Array([0, 4, 4, 4])
 	# each phase opens on its own pattern, right after the roar: the ritual (by itself), the curse, the storm
 	b.phase_openers = [&"", &"", &"curse", &"storm"] as Array[StringName]
+	# the curse and the storm are opened from the middle of the floor, as the ritual is (cycle C11)
+	b.center_phases = PackedInt32Array([3, 4])
 	var numbers := {
 		"roar_time": 1.6, "roar_push": 4.0, "near": 6.0, "far": 10.0, "still_after": 0.8, "lead": 0.45,
 		"summon_raise": [&"skeleton", &"skeleton"] as Array[StringName], "summon_windup": 1.1,
 		# reinforcements rise one by one (a rune, the energy, the body, 0.45 s apart), 20 at most in the whole fight
 		"adds_total_cap": 20, "rise_stagger": 0.45,
+		# where they rise (cycle C11, fitted to the chamber's 12.5 m: the ritual's ring of 6.5 around the seal leaves
+		# 5.5 m of floor outside it to fight in; summons 5 m around him, never within 4 m of the paladin)
+		"summon_ring": 5.0, "summon_clear": 4.0, "ritual_ring": 6.5,
+		# the crescents come undone 0.3 m past the floor's edge; the charge stops at the edge and needs 8 m free
+		"soul_overrun": 0.3, "dash_min_free": 8.0,
 		# a combination waits for nothing of the first to be left, then rests only this long
 		"chain_rest": 0.35,
 		# the Sepulchral Scythe: half a circle 5 m from his middle (3.6 m past his body), 0.8 s to read it, 1 s to punish

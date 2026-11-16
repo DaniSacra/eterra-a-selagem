@@ -763,6 +763,8 @@ func _on_killed(e: Enemy) -> void:
 
 func _on_player_died() -> void:
 	mode = Mode.OVER
+	if bot:
+		bot.on_died()
 	if boss:
 		boss.record_death()
 	Save.data.runs += 1
@@ -931,6 +933,9 @@ func _follow(delta: float, shake: Vector3) -> void:
 	var look: Vector3
 	if focus != null:
 		look = focus
+	elif arena.cam_reach > 0.0:
+		# a boss chamber: the camera keeps to its point (cam_look_at moves it only for the paladin's safe frame)
+		look = Vector3(arena.cam_target.x, 0, arena.cam_target.y)
 	else:
 		# a little ahead of where the paladin walks (never where he aims: standing still, he stays in the middle)
 		var walked := (player.pos - _cam_last) / maxf(delta, 0.001)
@@ -963,6 +968,8 @@ func _place_camera(shake: Vector3, _delta: float) -> void:
 ## The floor point the camera looks at, for the point it follows: inside the room's margins, unless the paladin
 ## would stand near an edge of the screen (the landing by the way in lies outside the room's rectangle).
 func cam_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
+	if arena.cam_reach > 0.0:
+		return chamber_look_at(want, distance, fov)
 	var h := arena.half
 	var side := maxf(0.0, h.x - CamFrame.margin(CAM_MARGIN.x, distance))
 	var at := Vector2(clampf(want.x, -side, side), clampf(want.y,
@@ -972,6 +979,15 @@ func cam_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 		return at
 	var view := get_viewport().get_visible_rect().size
 	return CamFrame.keep(at, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw(), fov, view.x / maxf(view.y, 1.0))
+
+
+## The floor point the camera looks at in a boss chamber (cycle C11, docs/art/boss_chamber_spec.md section 4): its
+## fixed point (Arena.cam_target), moved only as much as the paladin's safe frame needs (CamFrame.keep, 18% of the
+## screen), and never more than Arena.cam_reach meters from it.
+func chamber_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
+	var view := get_viewport().get_visible_rect().size
+	return CamFrame.hold(arena.cam_target, want, arena.cam_reach, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw(),
+		fov, view.x / maxf(view.y, 1.0), focus == null)
 
 
 ## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.
@@ -1130,7 +1146,7 @@ func result() -> Dictionary:
 	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": kills, "spawned": director.spawned, "best_combo": combat.best_combo,
 		"enemies": horde.count(), "max_alive": max_alive, "boss_at": snappedf(boss_at, 0.1), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
 		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01), "fps": Engine.get_frames_per_second(),
-		"boss": boss_stats}
+		"boss": boss_stats, "bot": bot.stats() if bot else {}}
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

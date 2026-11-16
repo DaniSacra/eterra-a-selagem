@@ -25,6 +25,13 @@ var _seen: Array[Array] = []
 ## Seconds it has been walking without getting anywhere (wedged by bodies: it dodges through them, STUCK_TIME).
 var _stuck := 0.0
 var _last := Vector2.ZERO
+## Spells of being pinned (PIN_TIME or more), seconds of the one going on and since the last ended, and whether the
+## paladin fell pinned (RESULT "bot").
+var pinned := 0
+var died_pinned := false
+var _pin_t := 0.0
+var _pin_since := INF
+var _pin_last := Vector2.ZERO
 ## The share of a boss fight it keeps away (--bot-kite; 0: never).
 var kite := 0.0
 var _kiting := false
@@ -33,6 +40,14 @@ var _kite_cycle := 0.0
 var _kite_left := 0.0
 var _kite_cap := 0.0
 const STUCK_TIME := 0.4
+## "Pinned" (cycle C11, counted for RESULT): it wants to walk, walks under PIN_SPEED m/s and a body or the floor's
+## edge stands right where it walks, for PIN_TIME seconds or more in a row (one count per spell). A fall while pinned
+## or less than PIN_TIME after a spell ended is a death by being pinned.
+const PIN_TIME := 1.0
+const PIN_SPEED := 0.5
+const PIN_PROBE := 0.2
+## Seconds ahead a warning still counts when the bot looks for a way out (it never runs into the next to land).
+const ESCAPE_AHEAD := 1.0
 ## Meters of free floor it wants ahead of its way out of danger.
 const ESCAPE_PROBE := 2.0
 ## --bot-kite=0.2: that share of every KITE_PERIOD seconds of a boss fight it spends far from the boss, past
@@ -80,7 +95,42 @@ func _react(now: Vector2) -> Vector2:
 	return _seen[0][1] if float(_seen[0][0]) <= _t - reaction else Vector2.ZERO
 
 
+## How long it has been pinned against a body or the floor's edge (the step before told where it wanted to go).
+func _track_pinned(dt: float, game: Game) -> void:
+	var p := game.player.pos
+	var moved := p.distance_to(_pin_last)
+	_pin_last = p
+	if game.fx.stop_left > 0.0 or game.mode != Game.Mode.PLAY:
+		# a hit stop or a menu: nobody moves, nothing is counted
+		return
+	var held := false
+	if pad.move.length() > 0.1 and game.player.alive() and game.player.state == Player.State.MOVE and not game.player.runner.is_swinging() \
+			and dt > 0.0 and moved < PIN_SPEED * dt:
+		var probe := p + pad.move.normalized() * PIN_PROBE
+		held = game.horde.body_at(probe, Player.RADIUS) or game.arena.resolve(probe, Player.RADIUS).distance_to(probe) > 0.02
+	if held:
+		_pin_t += dt
+		if _pin_t >= PIN_TIME and _pin_t - dt < PIN_TIME:
+			pinned += 1
+	else:
+		if _pin_t >= PIN_TIME:
+			_pin_since = 0.0
+		_pin_t = 0.0
+		_pin_since += dt
+
+
+## The paladin fell (Game._on_player_died): was it while pinned?
+func on_died() -> void:
+	died_pinned = _pin_t >= PIN_TIME or _pin_since < PIN_TIME
+
+
+## The bot's numbers for RESULT.
+func stats() -> Dictionary:
+	return {"stuck": pinned, "died_stuck": died_pinned}
+
+
 func step(dt: float, game: Game) -> void:
+	_track_pinned(dt, game)
 	pad.end_frame()
 	_t += dt
 	_wait -= dt
@@ -243,15 +293,37 @@ func _danger(game: Game) -> Vector2:
 	return Vector2.ZERO
 
 
-## The way out of danger that the walls leave open: the first direction, turning further each try to either side
-## (all the way round: the dash goes through a body that stands in a corner with him), with floor ahead of it.
+## The way out of danger that the floor's edge and the other warnings leave open: the first direction, turning
+## further each try to either side (all the way round: the dash goes through a body that stands in a corner with
+## him), with floor ahead of it and no warning about to land there (in the storm: the gap between two lanes, cycle
+## C11). When no direction is clear of warnings, the first with floor.
 func _escape(game: Game, from: Vector2, dir: Vector2) -> Vector2:
+	var floor_only := Vector2.ZERO
 	for k in [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]:
 		var d := dir.rotated(k * PI / 6.0)
 		var probe := from + d * ESCAPE_PROBE
-		if game.arena.resolve(probe, Player.RADIUS).distance_to(probe) < 0.05:
+		if game.arena.resolve(probe, Player.RADIUS).distance_to(probe) >= 0.05:
+			continue
+		if not _threatened(game, probe):
 			return d
-	return dir
+		if floor_only == Vector2.ZERO:
+			floor_only = d
+	return floor_only if floor_only != Vector2.ZERO else dir
+
+
+## True when a warning lands at q within ESCAPE_AHEAD seconds, or a crescent flies at it.
+func _threatened(game: Game, q: Vector2) -> bool:
+	for z in game.ground.zones:
+		if z.kind == Ground.Kind.WARNING and z.rune != Ground.Rune.SUMMON and z.life <= ESCAPE_AHEAD and Ground.inside(z, q, 0.6):
+			return true
+	for shot in game.projectiles.shots:
+		if shot.kind != Projectiles.Kind.SOUL or shot.seen.has(game.player):
+			continue
+		var to := q - shot.pos
+		var ahead := shot.vel.normalized()
+		if to.dot(ahead) > -0.5 and to.dot(ahead) < 6.0 and absf(to.cross(ahead)) < shot.half_width + 0.9:
+			return true
+	return false
 
 
 ## Walks around what blocks the way (pillars, stairs, rubble, the bodies of enemies): the first direction, turning a

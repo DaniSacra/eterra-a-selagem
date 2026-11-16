@@ -26,6 +26,9 @@ extends Resource
 ## The first attack of each phase, right after its roar (empty: the director's choice): the new pattern is shown at
 ## once, so the player reads that something changed.
 @export var phase_openers: Array[StringName] = [&"", &"", &"curse", &"storm"]
+## Phases he opens from the middle of the floor (after the roar he walks there first, as for the ritual): the round
+## chamber's patterns are read the same from every side (cycle C11).
+@export var center_phases := PackedInt32Array([3, 4])
 
 @export_group("Director")
 @export var attacks: Array[BossAttack] = []
@@ -46,6 +49,11 @@ extends Resource
 @export var summon_windup := 1.1
 ## Most of his summons over the whole fight (the ritual's included); past it he calls nobody.
 @export var adds_total_cap := 20
+## His dead rise on a ring this far around him (m), never closer than summon_clear to the paladin; the ritual's on a
+## ring of ritual_ring around the middle (cycle C11: data, fitted to the chamber's 12.5 m, docs/design/boss_arena.md).
+@export var summon_ring := 5.0
+@export var summon_clear := 4.0
+@export var ritual_ring := 6.5
 ## Seconds between one rise and the next: a rune glows on the floor, the energy comes up, the dead rises and the
 ## rune goes; each in turn, never all at once.
 @export var rise_stagger := 0.45
@@ -67,6 +75,8 @@ extends Resource
 @export var blade_windup := 0.7
 @export var blade_recovery := 0.8
 @export var blade_damage := 10.0
+## A crescent comes undone this many meters past the floor's edge (it never flies on over the abyss).
+@export var soul_overrun := 0.3
 
 @export_group("Storm of the six souls")
 @export var storm_count := 6
@@ -126,6 +136,8 @@ extends Resource
 @export var dash_width := 2.8
 @export var dash_damage := 12.0
 @export var dash_recovery := 1.1
+## The charge ends at the floor's edge (its lane cut there) and only comes when this many meters are free ahead.
+@export var dash_min_free := 8.0
 
 @export_group("Stagger")
 ## From this phase, stagger_hits heavy blows within stagger_forget seconds make him kneel stagger_time seconds.

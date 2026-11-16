@@ -121,7 +121,7 @@ func _hazard(id: StringName, boss: Vector2, at: Vector2, rng: RandomNumberGenera
 						return true
 				return false, def.storm_windup * w]
 		&"eruptions":
-			var spots := BossRules.eruptions(at, rng.randi_range(def.eruption_count.x, def.eruption_count.y), def.eruption_radius, Vector2.ZERO, def.eruption_lane, FLOOR, rng)
+			var spots := BossRules.eruptions(at, rng.randi_range(def.eruption_count.x, def.eruption_count.y), def.eruption_radius, Vector2.ZERO, def.eruption_lane, FloorShape.rect(FLOOR.size * 0.5, FLOOR.get_center()), rng)
 			return [func(q: Vector2) -> bool:
 				for s in spots:
 					if q.distance_to(s) <= def.eruption_radius + Player.RADIUS * 0.6:
@@ -417,7 +417,7 @@ func test_his_dead_rise_out_of_summoning_circles_with_one_column_each() -> void:
 	var boss := _start_fight()
 	_run(3.0)
 	var ids: Array[StringName] = [&"skeleton", &"skeleton"]
-	var n := boss._call(ids, boss.e.pos, Boss.SUMMON_RING, 6, 0.5, false)
+	var n := boss._call(ids, boss.e.pos, def.summon_ring, 6, 0.5, false)
 	assert_eq(n, 2)
 	var circles: Array[Ground.Zone] = []
 	for z in game.ground.zones:
@@ -445,7 +445,7 @@ func test_a_summoning_ended_early_raises_no_column() -> void:
 	var boss := _start_fight()
 	_run(3.0)
 	var ids: Array[StringName] = [&"skeleton"]
-	boss._call(ids, boss.e.pos, Boss.SUMMON_RING, 6, 1.0, true)
+	boss._call(ids, boss.e.pos, def.summon_ring, 6, 1.0, true)
 	var columns := game.ground.dissolving()
 	for r in boss._rising:
 		Ground.end_zone(r.rune)

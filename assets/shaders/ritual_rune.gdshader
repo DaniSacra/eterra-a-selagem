@@ -46,10 +46,18 @@ float noise(vec2 p) {
 	return mix(mix(hash(i), hash(i + vec2(1, 0)), u.x), mix(hash(i + vec2(0, 1)), hash(i + vec2(1, 1)), u.x), u.y);
 }
 
+// A round floor's edge (cycle C11, Arena: x, z of its middle and its radius; 0 none): nothing past it.
+global uniform vec3 floor_round;
+varying vec3 world;
+
+void vertex() {
+	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
 void fragment() {
 	vec2 uv = UV * 2.0 - 1.0;
 	float d = length(uv);
-	if (d > 1.0) {
+	if (d > 1.0 || (floor_round.z > 0.0 && length(world.xz - floor_round.xy) > floor_round.z)) {
 		discard;
 	}
 	float R = size_m;

@@ -1,111 +1,127 @@
 [gd_resource type="Resource" script_class="StageDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/room_layout.gd" id="1_dhpac"]
-[ext_resource type="Script" path="res://scripts/core/encounter_pool.gd" id="2_2oc7l"]
-[ext_resource type="Script" path="res://scripts/core/stage_def.gd" id="3_2ory6"]
+[ext_resource type="Script" path="res://scripts/core/floor_shape.gd" id="1_2oc7l"]
+[ext_resource type="Script" path="res://scripts/core/room_layout.gd" id="2_2ory6"]
+[ext_resource type="Script" path="res://scripts/core/encounter_pool.gd" id="3_brfyt"]
+[ext_resource type="Script" path="res://scripts/core/stage_def.gd" id="4_ke0cv"]
 
-[sub_resource type="Resource" id="Resource_brfyt"]
-script = ExtResource("1_dhpac")
+[sub_resource type="Resource" id="Resource_cy7en"]
+script = ExtResource("1_2oc7l")
+kind = 1
+radius = 12.5
+
+[sub_resource type="Resource" id="Resource_wpebi"]
+script = ExtResource("2_2ory6")
+half = Vector2(12.5, 12.5)
+chamber = true
+floor = SubResource("Resource_cy7en")
+hero_spawn = Vector2(-0.9, 10.4)
+boss_spawn = Vector2(0, -1.2)
+cam_target = Vector2(0.4, 0.57)
+cam_reach = 3.0
+
+[sub_resource type="Resource" id="Resource_63so8"]
+script = ExtResource("2_2ory6")
 half = Vector2(16, 15)
 platform = true
 
-[sub_resource type="Resource" id="Resource_ke0cv"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_kin83"]
+script = ExtResource("3_brfyt")
 until = 0.34
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"react"])
 
-[sub_resource type="Resource" id="Resource_cy7en"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_8ur2y"]
+script = ExtResource("3_brfyt")
 until = 0.34
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"flank"])
 
-[sub_resource type="Resource" id="Resource_wpebi"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_wmys5"]
+script = ExtResource("3_brfyt")
 until = 0.34
 roles = Array[StringName]([&"block", &"react"])
 
-[sub_resource type="Resource" id="Resource_63so8"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_51rpt"]
+script = ExtResource("3_brfyt")
 from = 0.34
 until = 0.67
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"flank", &"control"])
 
-[sub_resource type="Resource" id="Resource_kin83"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_0uifc"]
+script = ExtResource("3_brfyt")
 from = 0.34
 until = 0.67
 weight = 2.0
 roles = Array[StringName]([&"block", &"react", &"flank"])
 
-[sub_resource type="Resource" id="Resource_8ur2y"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_gcpwj"]
+script = ExtResource("3_brfyt")
 from = 0.34
 until = 0.67
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"block", &"area"])
 
-[sub_resource type="Resource" id="Resource_wmys5"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_otjkh"]
+script = ExtResource("3_brfyt")
 tier = 1
 from = 0.34
 until = 0.67
 roles = Array[StringName]([&"pressure", &"react", &"control"])
 elite_chance = 1.0
 
-[sub_resource type="Resource" id="Resource_51rpt"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_6lsx0"]
+script = ExtResource("3_brfyt")
 tier = 1
 from = 0.67
 weight = 3.0
 roles = Array[StringName]([&"block", &"flank", &"area"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_0uifc"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_le80d"]
+script = ExtResource("3_brfyt")
 tier = 1
 from = 0.67
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"control", &"area"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_gcpwj"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_k0u17"]
+script = ExtResource("3_brfyt")
 tier = 1
 from = 0.67
 weight = 2.0
 roles = Array[StringName]([&"react", &"flank", &"control"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_otjkh"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_saspm"]
+script = ExtResource("3_brfyt")
 from = 0.67
 roles = Array[StringName]([&"pressure", &"block", &"control"])
 
-[sub_resource type="Resource" id="Resource_6lsx0"]
-script = ExtResource("2_2oc7l")
+[sub_resource type="Resource" id="Resource_j6o5n"]
+script = ExtResource("3_brfyt")
 tier = 2
 from = 0.8
 roles = Array[StringName]([&"pressure", &"react", &"flank", &"area"])
 elite_chance = 0.5
 
 [resource]
-script = ExtResource("3_2ory6")
+script = ExtResource("4_ke0cv")
 rooms = 4
 miniboss_depth_min = 3
 miniboss_depth_max = 3
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
 fountain_depth_min = 2
 fountain_depth_max = 2
-layouts = Array[ExtResource("1_dhpac")]([SubResource("Resource_brfyt")])
-boss_layout = SubResource("Resource_brfyt")
-shop_layout = SubResource("Resource_brfyt")
+layouts = Array[ExtResource("2_2ory6")]([SubResource("Resource_63so8")])
+boss_layout = SubResource("Resource_wpebi")
+shop_layout = SubResource("Resource_63so8")
 enemies = Array[StringName]([&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite", &"guard", &"guard_elite", &"priest", &"priest_elite"])
 elite_from_depth = 2
 wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
-pools = Array[ExtResource("2_2oc7l")]([SubResource("Resource_ke0cv"), SubResource("Resource_cy7en"), SubResource("Resource_wpebi"), SubResource("Resource_63so8"), SubResource("Resource_kin83"), SubResource("Resource_8ur2y"), SubResource("Resource_wmys5"), SubResource("Resource_51rpt"), SubResource("Resource_0uifc"), SubResource("Resource_gcpwj"), SubResource("Resource_otjkh"), SubResource("Resource_6lsx0")])
+pools = Array[ExtResource("3_brfyt")]([SubResource("Resource_kin83"), SubResource("Resource_8ur2y"), SubResource("Resource_wmys5"), SubResource("Resource_51rpt"), SubResource("Resource_0uifc"), SubResource("Resource_gcpwj"), SubResource("Resource_otjkh"), SubResource("Resource_6lsx0"), SubResource("Resource_le80d"), SubResource("Resource_k0u17"), SubResource("Resource_saspm"), SubResource("Resource_j6o5n")])
 rewards = PackedInt32Array(1, 2, 3, 4, 5)
 reward_weights = PackedFloat32Array(6, 2.5, 1.5, 1, 1.5)
 shop_items = PackedInt32Array(1, 2, 3, 6)

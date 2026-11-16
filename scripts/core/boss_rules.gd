@@ -83,25 +83,31 @@ static func min_gap(dirs: PackedVector2Array) -> float:
 	return least
 
 
+## Meters a whole eruption circle keeps from the floor's edge (its rune drawn wholly on the floor).
+const ERUPTION_EDGE := 0.3
+
+
 ## The Sepulchral Eruptions: up to count circles of radius r, the first on the paladin (moved a little away from his
-## way out), the rest around him but never in the lane of lane_deg degrees that points from him to `toward` (the
-## middle of the hall), and only where floor (a rectangle) is. Some near him, never a cage.
-static func eruptions(player: Vector2, count: int, radius: float, toward: Vector2, lane_deg: float, floor_rect: Rect2, rng: RandomNumberGenerator) -> PackedVector2Array:
+## way out; at the floor's edge its middle stays half its radius inside it),
+## the rest around him but never in the lane of lane_deg degrees that points from him to `toward` (the middle of the
+## floor), and only wholly on the floor (FloorShape, ERUPTION_EDGE inside its edge). Some near him, never a cage.
+static func eruptions(player: Vector2, count: int, radius: float, toward: Vector2, lane_deg: float, floor: FloorShape, rng: RandomNumberGenerator) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	if count <= 0:
 		return out
 	var way := toward - player
 	var lane := way.angle() if way.length() > 1.0 else rng.randf() * TAU
 	var half := deg_to_rad(lane_deg) * 0.5
-	# the first: on him, nudged against his way out (his escape is shorter than its radius)
-	out.append(player - Vector2.from_angle(lane) * radius * rng.randf_range(0.0, 0.35))
+	# the first: on him, nudged against his way out (his escape is shorter than its radius); at the edge it stays on
+	# the floor by half its radius and still covers him
+	out.append(floor.clamp(player - Vector2.from_angle(lane) * radius * rng.randf_range(0.0, 0.35), radius * 0.5))
 	var tries := 0
 	while out.size() < count and tries < 24:
 		tries += 1
 		# outside the lane, a little past it on either side
 		var off := rng.randf_range(half + deg_to_rad(15.0), TAU - half - deg_to_rad(15.0))
 		var at := player + Vector2.from_angle(lane + off) * rng.randf_range(radius * 2.0 + 0.8, radius * 2.0 + 4.0)
-		if not floor_rect.has_point(at):
+		if not floor.contains(at, radius + ERUPTION_EDGE):
 			continue
 		var apart := true
 		for o in out:

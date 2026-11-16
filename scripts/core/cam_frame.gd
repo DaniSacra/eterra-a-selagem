@@ -51,3 +51,13 @@ static func keep(target: Vector2, hero: Vector2, distance: float, pitch_deg: flo
 	# across the screen: the frame is wider the farther from the camera he stands
 	var half := m * aspect * maxf(base + ahead * cos(p), 0.001)
 	return hero - forward * ahead - right * clampf(d.dot(right), -half, half)
+
+
+## The point a fixed camera looks at (a boss chamber, cycle C11): `target`, moved toward `want` and as much as the
+## paladin's safe frame needs (keep), but never more than `reach` meters from `target`. follow false: only `want`
+## (a scene of its own, the paladin may leave the frame).
+static func hold(target: Vector2, want: Vector2, reach: float, hero: Vector2, distance: float, pitch_deg: float, yaw_deg: float, fov_deg: float, aspect: float, follow := true) -> Vector2:
+	var at := target + (want - target).limit_length(reach)
+	if follow:
+		at = keep(at, hero, distance, pitch_deg, yaw_deg, fov_deg, aspect)
+	return target + (at - target).limit_length(reach)

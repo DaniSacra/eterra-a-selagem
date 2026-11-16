@@ -101,6 +101,14 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 		var piece := clampi(roundi((x + half.x) / TILE - 0.5), 0, ceili(half.x * 2.0 / TILE) - 1)
 		exits.append(Vector2(-half.x + TILE * (piece + 0.5), -half.y + 1.0))
 	start = Vector2(0, half.y - 3.0)
+	floor = null
+	# warnings are cut at a round floor's edge (ground.gdshader); a hall has none
+	RenderingServer.global_shader_parameter_set(&"floor_round", Vector3.ZERO)
+	# nobody stands for the scenery to open around until a boss does (Boss.step sets it)
+	RenderingServer.global_shader_parameter_set(&"boss_pos", NO_BOSS)
+	if layout != null and layout.chamber:
+		_build_boss_room(layout, seed_)
+		return
 	if layout != null and layout.platform:
 		exits.clear()
 		var hall := CatacombHall.new(self, seed_)
@@ -132,11 +140,10 @@ var walk: Array[Rect2] = []
 const RESOLVE_PASSES := 4
 
 
-## Keeps a circle of this radius on the floor (the room and walk) and out of the pillars and solid boxes.
+## Keeps a circle of this radius on the floor (the room's FloorShape and walk) and out of the pillars and solid boxes.
 func resolve(pos: Vector2, radius: float) -> Vector2:
-	var margin := 1.2 + radius
 	for i in RESOLVE_PASSES:
-		pos = _onto_floor(pos, margin)
+		pos = _onto_floor(pos, radius)
 		var before := pos
 		for p in pillars:
 			var c := Vector2(p.x, p.y)
@@ -145,24 +152,24 @@ func resolve(pos: Vector2, radius: float) -> Vector2:
 			if d.length_squared() < min_d * min_d:
 				pos = c + (d.normalized() if d.length_squared() > 0.0001 else Vector2.DOWN) * min_d
 		for b in boxes:
-			pos = _out_of_box(pos, radius, b, margin)
+			pos = _out_of_box(pos, radius, b)
 		if pos.distance_squared_to(before) < 0.000001:
 			return pos
-	return _onto_floor(pos, margin)
+	return _onto_floor(pos, radius)
 
 
 ## Out of a box, and when the body stands inside it, by the nearest side that keeps it on the floor (a box against
 ## the floor's edge must not push it over the edge).
-func _out_of_box(pos: Vector2, radius: float, b: Rect2, margin: float) -> Vector2:
+func _out_of_box(pos: Vector2, radius: float, b: Rect2) -> Vector2:
 	var out := push_out_of_box(pos, radius, b)
-	if not b.has_point(pos) or _onto_floor(out, margin).distance_squared_to(out) < 0.000001:
+	if not b.has_point(pos) or _onto_floor(out, radius).distance_squared_to(out) < 0.000001:
 		return out
 	var best := out
 	var best_d := INF
 	for side: Vector2 in [Vector2(b.position.x - radius, pos.y), Vector2(b.end.x + radius, pos.y),
 			Vector2(pos.x, b.position.y - radius), Vector2(pos.x, b.end.y + radius)]:
 		var d := side.distance_squared_to(pos)
-		if d < best_d and _onto_floor(side, margin).distance_squared_to(side) < 0.000001:
+		if d < best_d and _onto_floor(side, radius).distance_squared_to(side) < 0.000001:
 			best = side
 			best_d = d
 	return best
@@ -191,23 +198,48 @@ static func push_out_of_box(pos: Vector2, radius: float, b: Rect2) -> Vector2:
 	return Vector2(b.end.x + radius, pos.y)
 
 
+## True when a body of radius `margin` stands wholly inside the room's floor (FloorShape; walk not counted).
 func inside(pos: Vector2, margin: float = 0.0) -> bool:
-	return absf(pos.x) < half.x - 1.2 - margin and absf(pos.y) < half.y - 1.2 - margin
+	return shape().contains(pos, margin)
 
 
 ## True when a body of this radius stands on the room's floor or one of its extra floors (walk).
 func on_floor(pos: Vector2, radius: float) -> bool:
-	return _onto_floor(pos, 1.2 + radius).distance_to(pos) < 0.001
+	return _onto_floor(pos, radius).distance_to(pos) < 0.001
 
 
-## The nearest point to pos at least `margin` inside the room or one of its extra floors (walk).
-func _onto_floor(pos: Vector2, margin: float) -> Vector2:
-	var best := pos.clamp(-half + Vector2(margin, margin), half - Vector2(margin, margin))
+## The nearest point to pos where a body of this radius stands on the room's floor or one of its extra floors (walk).
+func _onto_floor(pos: Vector2, radius: float) -> Vector2:
+	var best := shape().clamp(pos, radius)
+	var m := WALL + radius
 	for r in walk:
-		var q := pos.clamp(r.position + Vector2(margin, margin), r.end - Vector2(margin, margin))
+		var q := pos.clamp(r.position + Vector2(m, m), r.end - Vector2(m, m))
 		if q.distance_squared_to(pos) < best.distance_squared_to(pos):
 			best = q
 	return best
+
+
+## Where boss_pos (the global the scenery opens around, masonry.gdshader) stands when there is no boss: far below.
+const NO_BOSS := Vector3(0, -1000, 0)
+## Meters a body keeps from the edge of a rectangular room (its walls, or the hall's balustrades) and of each walk.
+const WALL := 1.2
+## The floor bodies stand on, for a point (RoomLayout.floor; a room without one: its rectangle less WALL).
+var floor: FloorShape
+var _rect_floor: FloorShape
+
+
+func shape() -> FloorShape:
+	if floor != null:
+		return floor
+	var h := half - Vector2(WALL, WALL)
+	if _rect_floor == null or _rect_floor.half != h:
+		_rect_floor = FloorShape.rect(h)
+	return _rect_floor
+
+
+## True in a round boss chamber (the circle is the only edge; the camera keeps to its target).
+func round_floor() -> bool:
+	return floor != null and floor.is_round()
 
 
 ## Lights a door (its reward can be taken through it) or dims it.
@@ -250,6 +282,8 @@ func door_goal(i: int) -> Vector2:
 ## The crypt doors open for the last fight: a cold light in the north wall (tint: its colour; Morvath's last phase
 ## turns it to his spectral fire).
 func open_door(tint: Color = ArenaKit.MORVATH) -> void:
+	if _to_chamber(&"open_door", [tint]) or chamber != null:
+		return
 	if _kit != null:
 		_kit.light_portal(0, true, tint)
 		return
@@ -265,6 +299,7 @@ func open_door(tint: Color = ArenaKit.MORVATH) -> void:
 ## The air of the whole room turns too (RoomMood.LAST_BREATH, cycle 10): violet dusk, the abyss in violet fog, the moon
 ## spectral, the fires low; any scenery has it (the mood reads the world's environment and the lights under the arena).
 func final_phase(on: bool) -> void:
+	_to_chamber(&"final_phase", [on])
 	var o := _portal_omen()
 	if o != null:
 		o.final(on)
@@ -294,6 +329,10 @@ func mood() -> RoomMood:
 ## crypt's portal, a ring of light closes on its core and it calms to its own green and dims. In place of
 ## open_door(ArenaKit.PORTAL) when he falls.
 func seal_portal(seconds: float = PortalOmen.SEAL_TIME, from := Vector2.ZERO) -> void:
+	if _to_chamber(&"seal_portal", [seconds, from]) or _to_chamber(&"seal_restore", [seconds]):
+		if _mood != null:
+			_mood.blend(RoomMood.LAST_BREATH, false, seconds)
+		return
 	var o := _portal_omen()
 	if o != null:
 		o.seal(seconds, from)
@@ -330,6 +369,97 @@ var exit_inward: Array[Vector2] = []
 var exit_zones: Array[Rect2] = []
 ## Where the fixed showcase camera (--showcase) looks: the middle of the composition.
 var showcase := Vector3.ZERO
+
+
+# ---------- a boss's round chamber (the Seal Chamber, cycle C11) ----------
+
+## Where the boss stands when his fight begins (Boss.setup): the chamber's boss_spawn; in a hall, at the foot of
+## the steps under the door.
+var boss_spawn := Vector2.ZERO
+## The camera of a boss chamber: it looks at cam_target and moves off it at most cam_reach meters (0: it follows the
+## paladin, as in the hall). Game.cam_look_at.
+var cam_target := Vector2.ZERO
+var cam_reach := 0.0
+## The chamber's scenery (BossChamber, the environment's), when one is built: open_door, final_phase and seal_portal
+## are passed on to it by the same names (seal_portal falls back to its seal_restore), so the fight never names its
+## pieces.
+var chamber: Node3D
+## The provisional floor of the chamber while it has no scenery of its own (a plain disc), and its centre light.
+const DISC_COLOR := Color(0.19, 0.2, 0.3)
+const DISC_EDGE := 13.6
+const DISC_LINE := Color(0.48, 0.38, 0.22)
+
+
+## A boss's round chamber from its layout (RoomLayout.chamber): the circle is its whole collision (no walls, no
+## boxes, no pillars), the paladin and the boss rise where the layout says, the door (where the ending's energy goes)
+## is the middle of the seal, and the camera keeps to the layout's target. Then its look: _chamber_look.
+func _build_boss_room(layout: RoomLayout, seed_: int) -> void:
+	floor = layout.floor if layout.floor != null else FloorShape.circle(maxf(layout.half.x, 1.0))
+	half = floor.extent()
+	pillars = []
+	shafts = []
+	walk = []
+	exits.clear()
+	exit_zones.clear()
+	exit_inward.clear()
+	start = layout.hero_spawn
+	start_facing = layout.hero_facing.normalized() if layout.hero_facing.length() > 0.01 else Vector2.UP
+	boss_spawn = layout.boss_spawn
+	door_pos = floor.center
+	cam_target = layout.cam_target
+	cam_reach = layout.cam_reach
+	showcase = Vector3(layout.cam_target.x, 0.0, layout.cam_target.y)
+	if floor.is_round():
+		RenderingServer.global_shader_parameter_set(&"floor_round", Vector3(floor.center.x, floor.center.y, floor.radius))
+	_chamber_look(layout, seed_)
+
+
+## The chamber's look. Provisional (cycle C11, until BossChamber is in): a plain stone disc to the balustrade's
+## outer edge with an old-gold line at the edge of the walkable circle and a cold light over the seal.
+## To put the real chamber in, replace this body with:
+##   chamber = BossChamber.new(); add_child(chamber); chamber.build(self, layout, seed_)
+## (whatever its constructor wants: it reads floor, start, boss_spawn and door_pos from here).
+func _chamber_look(_layout: RoomLayout, _seed: int) -> void:
+	var disc := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = floor.radius + (DISC_EDGE - 12.5)
+	cyl.bottom_radius = cyl.top_radius
+	cyl.height = 0.6
+	cyl.radial_segments = 96
+	disc.mesh = cyl
+	var m := StandardMaterial3D.new()
+	m.albedo_color = DISC_COLOR
+	m.roughness = 0.9
+	disc.material_override = m
+	disc.position = Vector3(floor.center.x, -0.3, floor.center.y)
+	add_child(disc)
+	var line := MeshInstance3D.new()
+	var torus := TorusMesh.new()
+	torus.inner_radius = floor.radius - 0.08
+	torus.outer_radius = floor.radius
+	torus.rings = 96
+	line.mesh = torus
+	var lm := StandardMaterial3D.new()
+	lm.albedo_color = DISC_LINE
+	line.material_override = lm
+	line.scale = Vector3(1.0, 0.05, 1.0)
+	line.position = Vector3(floor.center.x, 0.01, floor.center.y)
+	add_child(line)
+	var key := OmniLight3D.new()
+	key.position = Vector3(floor.center.x, 9.0, floor.center.y)
+	key.light_color = Color(0.78, 0.76, 0.95)
+	key.light_energy = 3.0
+	key.omni_range = 17.0
+	key.light_cull_mask = ~CROWD_LAYER
+	add_child(key)
+
+
+## Passes a call on to the chamber's scenery, if it has it (false when there is none to take it).
+func _to_chamber(method: StringName, args: Array) -> bool:
+	if chamber == null or not chamber.has_method(method):
+		return false
+	chamber.callv(method, args)
+	return true
 
 
 func _floor() -> void:

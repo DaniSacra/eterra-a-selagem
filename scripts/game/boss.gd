@@ -63,10 +63,7 @@ const SHIELD_SPEED := 2.5
 const SHIELD_FLARE := 2.2
 ## The shield's middle stands this share of its radius over the floor.
 const SHIELD_RISE := 0.7
-## His summons never rise closer than this to the paladin (m), on a ring this far from where they are called.
-const SUMMON_CLEAR := 4.0
-const SUMMON_RING := 5.0
-const RITUAL_RING := 6.5
+## Where his summons rise (rings and clearance) is his BossDef's (summon_ring, summon_clear, ritual_ring).
 ## The rune under a rising dead (m); its column is the summoning circle's (Ground.SUMMON_*).
 const RUNE_RADIUS := 1.0
 ## The ritual's first dead begin to rise this soon after the shield (s).
@@ -127,7 +124,14 @@ var center := Vector2.ZERO
 ## The fight in numbers, for RESULT (Game.boss_stats): see _init_stats.
 var stats := {}
 var _middle := Vector2.ZERO
-var _floor := Rect2()
+## The floor of his room (Arena.shape: the chamber's circle): his lanes and flights are cut at its edge.
+var _floor: FloorShape
+## How far the charge goes this time (cut at the floor's edge, never more than dash_length).
+var _dash_len := 0.0
+## He keeps his place until the next attack (the opener of a phase begun from the middle).
+var _held := false
+## The storm's lanes on the floor, by crescent (null once it left), for their order of leaving (Ground.storm_rank).
+var _lanes: Array[Ground.Zone] = []
 var _t := 0.0
 var _step := 0
 var _mark := 0.0
@@ -189,11 +193,12 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 	var path := DEFS_DIR + String(enemy_def.id) + ".tres"
 	def = load(path) as BossDef if ResourceLoader.exists(path) else BossDef.new()
 	director = BossDirector.new(def)
-	_middle = g.arena.resolve(Vector2.ZERO, enemy_def.radius)
-	var m := 1.2 + Player.RADIUS
-	_floor = Rect2(-g.arena.half + Vector2(m, m), (g.arena.half - Vector2(m, m)) * 2.0)
+	_floor = g.arena.shape()
+	_middle = g.arena.resolve(_floor.center, enemy_def.radius)
 	center = _middle
-	e = g.horde.spawn(enemy_def, g.arena.door_pos + Vector2(0, Arena.STAIRS_DEPTH + enemy_def.radius), false)
+	# in his chamber he stands on the seal (Arena.boss_spawn); in a hall he comes down the steps under the door
+	var at := g.arena.boss_spawn if g.arena.round_floor() else g.arena.door_pos + Vector2(0, Arena.STAIRS_DEPTH + enemy_def.radius)
+	e = g.horde.spawn(enemy_def, at, false)
 	e.dir = Vector2.DOWN
 	e.hp = e.max_hp * Dev.num("boss-hp", 1.0)
 	# --boss-hp starts him further down (dev): the phase of that life, without the ones before
@@ -254,8 +259,10 @@ func step(dt: float) -> void:
 		_step_final(dt)
 	match state:
 		State.ENTER:
-			e.pos += Vector2.DOWN * 3.2 * dt
-			_anim(&"walk")
+			# in a hall he walks down from the door; in his chamber he already stands on the seal
+			if not game.arena.round_floor():
+				e.pos += Vector2.DOWN * 3.2 * dt
+			_anim(&"idle" if game.arena.round_floor() else &"walk")
 			if _t > 2.4:
 				game.hud.show_notice(T.t("boss_phase_%d" % phase), 2.5)
 				if phase == def.ritual_phase and not _ritual_done:
@@ -265,7 +272,7 @@ func step(dt: float) -> void:
 					_rest(0.6)
 		State.CHASE:
 			e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
-			if to.length() > def.scythe_reach * 0.7:
+			if to.length() > def.scythe_reach * 0.7 and not _held:
 				e.pos += toward * e.def.speed * (1.0 + 0.08 * (phase - 1)) * dt
 				_anim(&"walk")
 			else:
@@ -293,7 +300,7 @@ func step(dt: float) -> void:
 		State.ROAR:
 			_anim(&"roar")
 			if _t >= def.roar_time:
-				if phase == def.ritual_phase and not _ritual_done:
+				if (phase == def.ritual_phase and not _ritual_done) or def.center_phases.has(phase):
 					_go(State.TO_CENTER)
 				else:
 					_rest(0.4)
@@ -303,8 +310,13 @@ func step(dt: float) -> void:
 			if way.length() > 0.6 and _t < CENTER_TIME:
 				e.dir = e.dir.slerp(way.normalized(), minf(1.0, dt * 8.0))
 				e.pos += way.normalized() * minf(way.length(), e.def.speed * CENTER_SPEED * dt)
-			else:
+			elif phase == def.ritual_phase and not _ritual_done:
 				_start_ritual()
+			else:
+				# the phase opens from the middle (BossDef.center_phases): he stands there through the rest a roar
+				# always had (0.4 more than the phase's), then opens from there
+				_rest(0.4)
+				_held = true
 		State.RITUAL:
 			_step_ritual(dt, toward)
 		State.STUNNED:
@@ -318,16 +330,22 @@ func step(dt: float) -> void:
 	if state != State.DASH:
 		game.horde.keep_off_target(e, was, dt)
 	e.pos = game.arena.resolve(e.pos, e.def.radius)
+	# where he stands, for the scenery that opens around him (masonry.gdshader's see_through)
+	RenderingServer.global_shader_parameter_set(&"boss_pos", Vector3(e.pos.x, 0.0, e.pos.y))
 
 
 # ---------- choosing ----------
 
 func _choose(dist: float) -> void:
+	_held = false
 	var blocked: Array[StringName] = []
 	if _call_room(def.summon_raise.size(), BossRules.adds_cap(def.adds_cap, phase)) <= 0:
 		blocked.append(&"summon")
 	if game.player.curse.active() or game.player.curse.immune_left > 0.0:
 		blocked.append(&"curse")
+	# the charge only when it has room to run before the floor's edge (dash_min_free)
+	if _dash_room(game.player.pos - e.pos) < def.dash_min_free:
+		blocked.append(&"dash")
 	var id := director.choose(phase, dist, _still_t, blocked, _rng)
 	var chained := false
 	# a new phase opens on its own pattern; a combination goes on with its second blow (if the moment allows it)
@@ -367,6 +385,17 @@ func _track_player(dt: float) -> void:
 
 func _aim(speed: float) -> Vector2:
 	return BossRules.aim_at(e.pos, game.player.pos, _player_vel, speed, def.lead)
+
+
+## How far a lane of his reaches from him along `dir` before the floor's edge (at most `length`): his warnings end
+## there and never paint the abyss.
+func _lane(dir: Vector2, length: float) -> float:
+	return maxf(_floor.cut(e.pos, dir, length), 0.5)
+
+
+## How far his charge could run toward `way` before his body meets the floor's edge.
+func _dash_room(way: Vector2) -> float:
+	return _floor.cut(e.pos, way, def.dash_length, e.def.radius) if way.length() > 0.01 else 0.0
 
 
 # ---------- the attacks ----------
@@ -441,7 +470,7 @@ func _step_blades(dt: float) -> void:
 		_dirs = BossRules.soul_pair(aim, def.blade_spread, 1.0 if _rng.randf() < 0.5 else -1.0)
 		e.dir = (_dirs[0] + _dirs[1]).normalized()
 		for d in _dirs:
-			_warn(game.ground.add_line_warning(e.pos, d, def.blade_range, def.blade_width, windup, 0.0))
+			_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0))
 		_anim(&"dash_windup")
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
 	elif _step == 1:
@@ -466,11 +495,15 @@ func _step_storm() -> void:
 		_dirs = BossRules.storm(def.storm_count, offset, def.storm_jitter, def.storm_min_gap, _rng)
 		var order := BossRules.storm_order(_dirs, aim)
 		_due.resize(_dirs.size())
+		_lanes.clear()
+		_lanes.resize(_dirs.size())
 		for rank in order.size():
 			var i := order[rank]
 			var wait := windup + def.storm_stagger * rank
 			_due[i] = _t + wait
-			_warn(game.ground.add_line_warning(e.pos, _dirs[i], def.blade_range, def.blade_width, wait, 0.0))
+			_lanes[i] = _warn(game.ground.add_line_warning(e.pos, _dirs[i], _lane(_dirs[i], def.blade_range), def.blade_width, wait, 0.0))
+			# its order of leaving: rank + 1 marks at its root, the next to leave the brightest (ART-001)
+			game.ground.storm_rank(_lanes[i], rank + 1, rank)
 		_anim(&"rain")
 		game.fx.ring(e.pos, 3.0, VIOLET, 0.5, 0.15, true)
 		game.fx.burst(&"soul", Vector3(e.pos.x, 2.5, e.pos.y))
@@ -486,10 +519,16 @@ func _step_storm() -> void:
 			continue
 		if _t >= _due[i]:
 			_due[i] = -1.0
+			_lanes[i] = null
 			_fire_soul(_dirs[i], def.storm_damage)
 			cue.emit(&"storm_blade", e.pos + _dirs[i] * 0.8, _dirs[i], def.blade_width, 0.0)
 		else:
 			left += 1
+	# the lanes still waiting step up: the next to leave is always drawn the brightest
+	var waiting := 0
+	for i in _storm_queue():
+		game.ground.storm_rank(_lanes[i], -1, waiting)
+		waiting += 1
 	if left == 0:
 		_wave += 1
 		_wave_at = _t + def.storm_gap
@@ -505,8 +544,22 @@ func _fire_souls(dirs: PackedVector2Array, damage: float) -> void:
 	game.fx.shake(1.2)
 
 
+## The storm's lanes still waiting, the next to leave first.
+func _storm_queue() -> Array[int]:
+	var out: Array[int] = []
+	for i in _due.size():
+		if _due[i] >= 0.0 and i < _lanes.size() and _lanes[i] != null:
+			out.append(i)
+	out.sort_custom(func(a: int, b: int) -> bool: return _due[a] < _due[b])
+	return out
+
+
+## One crescent: it flies blade_range meters, or until it crosses the floor's edge by soul_overrun (it comes undone
+## there, never flying on over the abyss).
 func _fire_soul(d: Vector2, damage: float) -> void:
-	var s := game.projectiles.fire_soul(e.pos + d * 0.8, d, def.blade_speed, damage, def.blade_width, def.blade_range, SPECTRAL)
+	var from := e.pos + d * 0.8
+	var reach := maxf(_floor.cut(from, d, def.blade_range, -def.soul_overrun), 1.0)
+	var s := game.projectiles.fire_soul(from, d, def.blade_speed, damage, def.blade_width, reach, SPECTRAL)
 	s.source = _attack
 	_shots.append(s)
 	var at := e.pos + d * 1.2
@@ -554,7 +607,7 @@ func _step_curse(dt: float) -> void:
 		_step = 1
 		_dir = _aim(def.curse_speed)
 		e.dir = _dir
-		_warn(game.ground.add_line_warning(e.pos, _dir, def.curse_speed * def.curse_homing, 1.4, windup, 0.0))
+		_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, def.curse_speed * def.curse_homing), 1.4, windup, 0.0))
 		game.fx.ring(e.pos, 2.4, Color(0.55, 0.15, 0.8), windup, 0.15, true)
 		game.fx.burst(&"curse", Vector3(e.pos.x, 2.6, e.pos.y))
 		_anim(&"summon")
@@ -594,7 +647,7 @@ func _step_summon() -> void:
 	_anim(&"summon")
 	if _step == 0:
 		_step = 1
-		_call(def.summon_raise, e.pos, SUMMON_RING, BossRules.adds_cap(def.adds_cap, phase), def.summon_windup, false)
+		_call(def.summon_raise, e.pos, def.summon_ring, BossRules.adds_cap(def.adds_cap, phase), def.summon_windup, false)
 		Audio.play(&"summon")
 	elif _step == 1 and _t >= def.summon_windup + def.rise_stagger * maxi(0, def.summon_raise.size() - 1):
 		_recover(0.8, &"summon")
@@ -609,8 +662,10 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 		_step = 1
 		_dir = toward
 		e.dir = _dir
-		_warn(game.ground.add_line_warning(e.pos, _dir, def.dash_length, def.dash_width, windup, def.dash_damage))
-		cue.emit(&"dash_aim", e.pos, _dir, def.dash_length, windup)
+		# the charge stops where his body meets the floor's edge; its lane goes on to the edge (his body's front)
+		_dash_len = maxf(_dash_room(_dir), 0.5)
+		_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, _dash_len + e.def.radius), def.dash_width, windup, def.dash_damage))
+		cue.emit(&"dash_aim", e.pos, _dir, _dash_len, windup)
 		Audio.play(&"dash_aim")
 	_gather -= dt
 	if _gather <= 0.0:
@@ -620,14 +675,14 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 	if _t >= windup:
 		_from = e.pos
 		_go(State.DASH)
-		game.fx.boss_dash(_from, _dir, def.dash_length, def.dash_width, def.dash_time, def.dash_time + DASH_WAKE, VIOLET, SPECTRAL)
+		game.fx.boss_dash(_from, _dir, _dash_len, def.dash_width, def.dash_time, def.dash_time + DASH_WAKE, VIOLET, SPECTRAL)
 		Audio.play(&"boss_dash")
-		cue.emit(&"dash_go", _from, _dir, def.dash_length, def.dash_time)
+		cue.emit(&"dash_go", _from, _dir, _dash_len, def.dash_time)
 
 
 func _step_dash() -> void:
 	_anim(&"dash")
-	e.pos = _from + _dir * def.dash_length * minf(_t / def.dash_time, 1.0)
+	e.pos = _from + _dir * _dash_len * minf(_t / def.dash_time, 1.0)
 	if _t >= def.dash_time:
 		# the landing, inside the end of the lane
 		var end := e.pos - _dir * def.dash_width * 0.5
@@ -697,6 +752,7 @@ func _warnings_live() -> int:
 
 func _warn(z: Ground.Zone) -> Ground.Zone:
 	z.source = _attack
+	game.ground.sign_boss(z)
 	return z
 
 
@@ -782,16 +838,18 @@ func ritual_total() -> int:
 	return _ritual_total
 
 
-## n spots on a ring around a point, on the floor and never close to the paladin.
+## n spots on a ring around a point, never close to the paladin, each with its whole rune on the floor (its middle
+## RUNE_RADIUS inside the edge: the dead and its circle never stand over the abyss).
 func _ring_spots(around: Vector2, radius: float, n: int) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var from := _rng.randf() * TAU
 	var p := game.player.pos
+	var keep := maxf(RUNE_RADIUS, 0.6)
 	for i in n:
-		var at := game.arena.resolve(around + Vector2.from_angle(from + TAU * i / maxi(n, 1)) * radius, 0.6)
-		if at.distance_to(p) < SUMMON_CLEAR:
+		var at := game.arena.resolve(around + Vector2.from_angle(from + TAU * i / maxi(n, 1)) * radius, keep)
+		if at.distance_to(p) < def.summon_clear:
 			var away := (at - p).normalized() if at.distance_to(p) > 0.1 else Vector2.from_angle(from)
-			at = game.arena.resolve(p + away * SUMMON_CLEAR, 0.6)
+			at = game.arena.resolve(p + away * def.summon_clear, keep)
 		out.append(at)
 	return out
 
@@ -808,7 +866,7 @@ func _start_ritual() -> void:
 	_ritual_more = def.ritual_reinforce_every
 	_raised.clear()
 	# only these first dead break the shield (BUG-002 of cycle 10): the reinforcements press, they never count
-	_ritual_total = _call(def.ritual_raise, e.pos, RITUAL_RING, def.ritual_cap, RITUAL_FIRST_RISE, true, true)
+	_ritual_total = _call(def.ritual_raise, e.pos, def.ritual_ring, def.ritual_cap, RITUAL_FIRST_RISE, true, true)
 	ritual_changed.emit(ritual_left(), _ritual_total)
 	game.fx.ring(e.pos, def.shield_radius * 2.0, SPECTRAL, 0.6, 0.15, true)
 	# no pillar of light over him (it hid him, ART-005): the shield raises its own faint curtain around him (BossShield)
@@ -832,7 +890,7 @@ func _step_ritual(dt: float, toward: Vector2) -> void:
 	_ritual_more -= dt
 	if _ritual_more <= 0.0:
 		_ritual_more = def.ritual_reinforce_every
-		if _call(def.ritual_reinforce, e.pos, RITUAL_RING, def.ritual_cap, def.summon_windup, true, false) > 0:
+		if _call(def.ritual_reinforce, e.pos, def.ritual_ring, def.ritual_cap, def.summon_windup, true, false) > 0:
 			Audio.play(&"summon")
 	if BossRules.ritual_over(_ritual_t, def.ritual_time, _raised.size(), _standing(_raised), _rising_ritual()):
 		_end_ritual()
@@ -1120,6 +1178,7 @@ func _step_dying(dt: float) -> void:
 		moment.emit(&"fallen")
 		cue.emit(&"victory_done", center, Vector2.ZERO, 0.0, 0.0)
 		game.boss = null
+		RenderingServer.global_shader_parameter_set(&"boss_pos", Arena.NO_BOSS)
 		defeated.emit()
 
 
@@ -1127,6 +1186,7 @@ func _step_dying(dt: float) -> void:
 
 func _go(next: State) -> void:
 	state = next
+	_held = false
 	_t = 0.0
 	_step = 0
 	_mark = 0.0

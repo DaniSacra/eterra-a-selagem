@@ -140,6 +140,11 @@ func test_door_zones_do_not_overlap() -> void:
 func test_middle_of_the_room_is_clear() -> void:
 	for c in _cases():
 		var a := _arena(c.layout, c.exits)
+		if a.round_floor():
+			# Morvath's chamber (cycle C11): the circle is all there is, nothing stands on it
+			assert_true(a.pillars.is_empty() and a.boxes.is_empty() and a.exit_zones.is_empty(), "%s: nothing on the floor" % c.name)
+			assert_gt(PI * pow(a.shape().radius - Player.RADIUS, 2.0), 300.0, "%s: a wide floor to fight on" % c.name)
+			continue
 		var mid := Rect2(-a.half + Vector2.ONE * CLEAR_MARGIN, (a.half - Vector2.ONE * CLEAR_MARGIN) * 2.0)
 		assert_gt(mid.get_area(), 300.0, "%s: a wide middle to fight in" % c.name)
 		for p in a.pillars:
@@ -198,14 +203,15 @@ func test_enemies_rise_on_free_floor_the_hero_reaches() -> void:
 func test_morvath_rises_in_reach() -> void:
 	var a := _arena(stage.boss_layout, 0)
 	var def: EnemyDef = load("res://data/enemies/%s.tres" % stage.boss)
-	var at := a.door_pos + Vector2(0, Arena.STAIRS_DEPTH + def.radius)
+	# in his round chamber he stands on the seal (Arena.boss_spawn), as Boss.setup puts him
+	var at := a.boss_spawn if a.round_floor() else a.door_pos + Vector2(0, Arena.STAIRS_DEPTH + def.radius)
 	var p := a.resolve(at, def.radius)
 	assert_true(a.on_floor(p, def.radius), "Morvath stands on the floor")
 	assert_lt(p.distance_to(at), 1.5, "Morvath rises about where Boss puts him")
 	var cells := _reachable(a, a.start)
 	assert_true(_reached(cells, a.resolve(p, Player.RADIUS)) or _reached(cells, p + Vector2(0, def.radius + Player.RADIUS)),
 		"the paladin can walk up to Morvath")
-	var center := a.door_pos + Vector2(0, 14)
+	var center := a.shape().center if a.round_floor() else a.door_pos + Vector2(0, 14)
 	assert_true(a.inside(center), "the middle of Morvath's patterns is inside the room")
 
 
@@ -248,7 +254,7 @@ func test_a_pillar_and_a_box_at_the_edge_settle() -> void:
 ## QA B2 (cycle 7): the light the portal spills down the steps is the portal's light, so it turns red with it when
 ## Morvath's doors open (it stayed green), and is green again in the next hall.
 func test_the_portal_spill_follows_the_portal() -> void:
-	var a := _arena(stage.boss_layout, 0)
+	var a := _arena(stage.layouts[0], 0)
 	var kit := a._kit
 	assert_false(kit.portal_tinted.get(0, []).is_empty(), "the hall's spill follows the portal")
 	var spill: Light3D = kit.portal_tinted[0][0][0]
