@@ -1,5 +1,8 @@
 # Backlog de A Selagem
 
+
+> **C12a feito na madrugada de 2026-11-16** (`75e7ada`, `b7f5f4d`): BOSS-001 (centro da tempestade 121 para 86), BOSS-002 (velas no pontilhado), BOSS-003 (estrela da vitória sem estouro), QW-006 (13 janelas), QW-007 (fio violeta), QW-008 (sarcófagos e estandartes), BUG-010 (conferido, com teste), BUG-011 (sem névoa volumétrica nem SSR no Compatibility), BUG-012 (`step_ms_avg`, `step_ms_peak`). Pendente do C12a: o que o Daniel anotar no teste e regravar o vídeo da luta no HEAD (DT-004). Mudança a confirmar: o miolo do selo escurece enquanto as faixas da tempestade estão no chão.
+
 - **Data**: 2026-11-16 (manhã). **Autor**: game-director (segunda revisão). **Commit lido**: `552b55c` (HEAD de
   `arpg-3d`); ciclos lidos: C10 e C11, `6dbcec5..552b55c` (12 commits, feitos durante a noite).
 - **Fontes**: `CLAUDE.md`, `git log` e as mensagens de cada commit, `docs/qa/latest_report.md` (testado no `6bab080`),
