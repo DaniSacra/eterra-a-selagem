@@ -8,21 +8,32 @@ extends SceneTree
 const SWORD_ARM: Array[StringName] = [&"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
 const OUT := HeroBody.ANIMS
 const FPS := 30.0
+## How far (degrees) the blade leans from the line of the knuckles toward the fingers.
+const GRIP_TILT := 25.0
 const SOURCES := {
 	&"ual": "res://assets/models/anim/ual_standard.glb",
 	&"ual2": "res://assets/models/anim/ual2_standard.glb",
 }
-## Hero clip -> [source rig, source clip, loops, from (s), to (s, 0 = end), bob]. Root motion is always dropped.
+## Hero clip -> [source rig, source clip, loops, from (s), to (s, 0 = end), bob, guard]. Root motion is always dropped.
 ## bob (optional): how much of the hips' rise and fall to keep above their lowest point. The library's jog lifts
 ## the hips 38 cm a step at the hero's size, which reads as hopping; a run of his size rises about 10.
-## arm (optional): a clip of the same rig whose sword arm replaces this one's (the library's runs are unarmed, so
-## the sword would flail; the guard keeps it steady while the legs run).
+## guard (optional, degrees): the sword arm is held in the GUARD stance instead of the clip's own (the library's runs
+## are unarmed, so the sword would flail), the upper arm turned this much forward of it. The upper arm keeps the
+## stance's direction on the body whatever the chest does (a run twists the chest, and an arm that followed it swung
+## the blade through the legs). GUARD [source rig, clip, at (s)] is the still sword stance the second library's
+## swings start from: the hand by the hip, the blade ahead of him and a little down (Ember & Blade's carry; the
+## first library's Sword_Idle holds the hand behind the hip, and the blade trailed behind him).
+const GUARD := [&"ual2", &"Sword_Regular_A", 0.0]
+const GUARD_IDLE := 12.0
+const GUARD_RUN := 20.0
+## How far (degrees) the held blade dips below where the stance points it (the stance holds it level).
+const GUARD_DOWN := 15.0
 const CLIPS := {
-	&"Idle": [&"ual", &"Sword_Idle", true, 0.0, 0.0],
-	&"Run": [&"ual", &"Jog_Fwd", true, 0.0, 0.0, 0.28, &"Sword_Idle"],
-	&"Sprint": [&"ual", &"Sprint", true, 0.0, 0.0, 0.5, &"Sword_Idle"],
+	&"Idle": [&"ual", &"Sword_Idle", true, 0.0, 0.0, 1.0, GUARD_IDLE],
+	&"Run": [&"ual", &"Jog_Fwd", true, 0.0, 0.0, 0.28, GUARD_RUN],
+	&"Sprint": [&"ual", &"Sprint", true, 0.0, 0.0, 0.5, GUARD_RUN],
 	&"Roll": [&"ual", &"Roll", false, 0.0, 0.0],
-	&"Dash": [&"ual2", &"Sword_Dash_RM", false, 0.12, 0.72],
+	&"Dash": [&"ual2", &"Sword_Dash_RM", false, 0.12, 0.72, 1.0, GUARD_RUN],
 	&"Slash_A": [&"ual2", &"Sword_Regular_A", false, 0.0, 0.0],
 	&"Slash_A_Rec": [&"ual2", &"Sword_Regular_A_Rec", false, 0.0, 0.0],
 	&"Slash_B": [&"ual2", &"Sword_Regular_B", false, 0.0, 0.0],
@@ -57,6 +68,13 @@ func _bake() -> void:
 		root.add_child(src)
 		var sk := PoseBaker.find_skeleton(src)
 		rigs[id] = [src, PoseBaker.find_player(src), Retarget.new(sk, src, hs, hero, Retarget.RIGS[id])]
+	# the sword stance, solved once (a still pose)
+	var g: Array = rigs[GUARD[0]]
+	(g[1] as AnimationPlayer).play(GUARD[1])
+	(g[1] as AnimationPlayer).seek(GUARD[2], true)
+	var guard := (g[2] as Retarget).solve()
+	guard[&"arm"] = (g[2] as Retarget).turn(hs.find_bone(&"RightArm"), guard)
+	guard[&"hand"] = (g[2] as Retarget).turn(hs.find_bone(&"RightHand"), guard)
 	for name: StringName in CLIPS:
 		var c: Array = CLIPS[name]
 		var rig: Array = rigs[c[0]]
@@ -88,20 +106,11 @@ func _bake() -> void:
 		var hips_keys: Array = []
 		for f in frames + 1:
 			var t := minf(f / FPS, anim.length)
-			var arm := {}
-			if c.size() > 6:
-				var guard: StringName = c[6]
-				ap.play(guard)
-				ap.seek(fmod(t, ap.get_animation(guard).length), true)
-				var held := rt.solve()
-				for bone in SWORD_ARM:
-					var bi := hs.find_bone(bone)
-					if held.has(bi):
-						arm[bi] = held[bi]
 			ap.play(c[1])
 			ap.seek(from + t, true)
 			var pose := rt.solve()
-			pose.merge(arm, true)
+			if c.size() > 6:
+				_hold_guard(pose, guard, c[6], rt, hs, space)
 			for b: int in pose:
 				anim.rotation_track_insert_key(tracks[b], t, pose[b])
 			var hips := rt.hips_position(true)
@@ -137,18 +146,48 @@ func _bake() -> void:
 			line += ", ground pace %.2f m/s at the game's size" % (_pace(feet) * HeroBody.HEIGHT / HeroBody.MODEL_HEIGHT)
 		print(line)
 	# the sword's grip: the handle runs across the knuckles of the mannequin's right fist, through the middle of the
-	# hand; the clips swing it with the blade on the pinky side (the index side leaves it behind the back at rest)
+	# hand, with the blade out of the thumb and index side as a fist holds it, leaning GRIP_TILT toward the fingers
+	# (a handle crosses the palm on a slant). (Until 2026-11-15 the blade came out of the pinky side, the fist held
+	# upside down: from the old idle it trailed behind his back, and raised in a swing it hung down.)
 	var ual: Retarget = rigs[&"ual"][2]
 	var index := ual.source_rest(&"DEF-f_index.01.R")
 	var pinky := ual.source_rest(&"DEF-f_pinky.01.R")
 	var wrist := ual.source_rest(&"DEF-hand.R")
-	var grip := ual.carry(&"RightHand", pinky - index, (index + pinky) * 0.5 - wrist)
+	var grip := ual.carry(&"RightHand", grip_line(index, pinky, wrist), (index + pinky) * 0.5 - wrist)
 	lib.set_meta(&"grip_dir", grip[0])
 	lib.set_meta(&"grip_at", grip[1])
 	print("grip ", grip)
 	ResourceSaver.save(lib, OUT)
 	print("saved ", OUT)
 	quit()
+
+
+## Holds the sword arm of a solved pose in the guard stance: the shoulder as the stance has it on the chest, the
+## upper arm turned as in the stance on the body (skeleton space; guard[&"arm"]) and raise degrees forward, the
+## forearm as in the stance, the hand turned as in the stance on the body and GUARD_DOWN lower (guard[&"hand"]).
+func _hold_guard(pose: Dictionary, guard: Dictionary, raise: float, rt: Retarget, hs: Skeleton3D, space: Basis) -> void:
+	for bone in SWORD_ARM:
+		var bi := hs.find_bone(bone)
+		if guard.has(bi):
+			pose[bi] = guard[bi]
+	var arm := hs.find_bone(&"RightArm")
+	# forward: the arm hanging down (-Y) swings toward the front (+Z), around the hero's left (+X)
+	var side := space.orthonormalized().inverse() * Vector3.RIGHT
+	var want := Basis(side.normalized(), deg_to_rad(-raise)) * (guard[&"arm"] as Basis)
+	pose[arm] = (rt.turn(hs.get_bone_parent(arm), pose).inverse() * want).get_rotation_quaternion()
+	# the wrist keeps the blade where the stance points it, GUARD_DOWN lower, however far the arm is raised
+	var hand := hs.find_bone(&"RightHand")
+	want = Basis(side.normalized(), deg_to_rad(GUARD_DOWN)) * (guard[&"hand"] as Basis)
+	pose[hand] = (rt.turn(hs.get_bone_parent(hand), pose).inverse() * want).get_rotation_quaternion()
+
+
+## The way the blade leaves a right fist (model space), from the rest of its index and pinky knuckles and its wrist:
+## out of the index side, leaning GRIP_TILT toward the fingers.
+static func grip_line(index: Vector3, pinky: Vector3, wrist: Vector3) -> Vector3:
+	var across := (index - pinky).normalized()
+	var fingers := (index + pinky) * 0.5 - wrist
+	fingers = (fingers - across * fingers.dot(across)).normalized()
+	return (across * cos(deg_to_rad(GRIP_TILT)) + fingers * sin(deg_to_rad(GRIP_TILT))).normalized()
 
 
 ## Where a bone sits (skeleton space) in a solved pose.

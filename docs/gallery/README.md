@@ -22,6 +22,16 @@ roda o jogo (outro assistente, revisão de arte). Imagens em JPG.
 - Clipes: `Idle`, `Run`, `Sprint`, `Roll`, `Dash`, `Slash_A`, `Slash_B`, `Slash_C` (os três golpes do ataque) e seus
   `_Rec` (volta à guarda), `Slash_Combo`, `Sword_Attack`, `Cast` (círculo de luz), `Throw` (especial), `Hit`,
   `Knockback`, `Death`.
+- Refeitas em 2026-11-15 com a pegada nova (a Emeth à frente do corpo, apontando para frente e um pouco para baixo,
+  como no quadro do Ember & Blade do Daniel; antes a lâmina ia para trás). Comando: `tools/gpu.sh run --resolution
+  960x540 -s tools/pose_lab.gd -- C:/<pasta>/p <clipes...>` e, para cada clipe e vista, os oito quadros reduzidos à
+  metade, os 320 px do meio de cada um lado a lado: `ffmpeg -i p_<clipe>_<vista>_0.png ... -i ..._7.png
+  -filter_complex "[0:v]scale=480:270,crop=320:270[v0];...;[v0]...[v7]hstack=8" -q:v 3 <clipe>_<vista>.jpg`.
+- `grip/`: antes e depois da pegada. `antes_<clipe>_1` e `depois_<clipe>_1` do lado direito, `_2` do lado direito e
+  30 graus de cima (a vista 2 do `pose_lab`, como a câmera do jogo o vê correndo pela tela), para `Idle`, `Run`,
+  `Sprint` (corrida longa), `Dash` (avanço), `Slash_A` e `Slash_C`; `antes_jogo_*` e `depois_jogo_*` no jogo, na GPU
+  a 1920 x 1080 com a câmera mais perto (`--bot --autopick --seed=5 --cam-dist=26`; correndo com `--shot-at=9`, no
+  golpe com `--shot-at=6 --shot-on=swing --shot-after=0.05`, parado sem `--bot` com `--shot-at=4`).
 
 ## `jogo/`: o jogo rodando
 - `referencia_arena`: a imagem de referência do Daniel ("Arena das Catacumbas", feita com IA), o objetivo da arena;

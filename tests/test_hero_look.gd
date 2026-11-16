@@ -16,6 +16,34 @@ func test_the_explorer_body_has_its_clips_and_grip() -> void:
 	assert_true(lib.has_meta(&"grip_at") and lib.has_meta(&"grip_dir"), "the grip measured on his hand")
 
 
+## Standing, running, sprinting and dashing he carries Emeth ahead of him, pointing forward and a little down, the
+## hand ahead of the hips (Daniel, 2026-11-15, from an Ember & Blade frame; it used to trail behind his back: the
+## fist held the blade out of the pinky side and the old idle kept the hand behind the hip). He faces +Z.
+func test_he_carries_the_blade_ahead_of_him() -> void:
+	var body: Array = HeroBody.make()
+	var model: Node3D = body[0]
+	add_child_autofree(model)
+	var anim: AnimationPlayer = body[1]
+	var sword: Node3D = body[2]
+	var sk := PoseBaker.find_skeleton(model)
+	var hand := sk.find_bone(&"RightHand")
+	var hips := sk.find_bone(&"Hips")
+	var space := Transform3D(Retarget._space(sk, model), Vector3.ZERO)
+	for clip: StringName in [&"Idle", &"Run", &"Sprint", &"Dash"]:
+		var length := anim.get_animation(clip).length
+		for i in 6:
+			anim.play(clip)
+			anim.seek(length * i / 5.0, true)
+			var at := sk.get_bone_global_pose(hand)
+			var grip := space * at.origin
+			var tip := space * (at * sword.transform * Vector3(0, EmethSword.TIP, 0))
+			var blade := (tip - grip).normalized()
+			var where := "%s at %.2f s" % [clip, length * i / 5.0]
+			assert_gt(blade.z, 0.7, "%s: the blade points ahead of him" % where)
+			assert_between(blade.y, -0.6, 0.05, "%s: level or a little down" % where)
+			assert_gt(tip.z - (space * sk.get_bone_global_pose(hips).origin).z, 0.6, "%s: the tip well ahead of his hips" % where)
+
+
 ## Emeth is the Meshy model made from Daniel's art, where the sword of simple shapes was: the hand at the origin
 ## under the guard, the blade up to the same tip, only the blade lit and under the glow threshold.
 func test_emeth_is_the_model_with_the_size_and_grip_of_the_sword_it_replaced() -> void:
