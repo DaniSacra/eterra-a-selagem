@@ -566,7 +566,7 @@ func _facade() -> void:
 			m.point(Vector3(bx, y + top - 1.5, FACADE_Z + 0.2), 1.3, 1.2)
 	m.layers = 1
 	for b: Vector4 in BANNERS:
-		kit.banner(Vector3(b.x, y + b.y, FACADE_Z + BANNER_OUT), 0.0, Vector2(b.z, b.w))
+		kit.banner(Vector3(b.x, y + b.y, FACADE_Z + BANNER_OUT), 0.0, Vector2(b.z, b.w), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION)
 	m.layers = ArenaKit.FACADE_LAYER
 	# blind pointed niches low between the buttresses, tall windows over them, both dark and deep with a stone frame
 	var hollow := m.stone(y, Color.WHITE * NICHE_DARK)

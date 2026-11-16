@@ -223,8 +223,16 @@ Especificação, planta em metros e critérios: `docs/art/cycle12_arenas_spec.md
 mesma câmera e mesmo valor de chão (mediana 45 a 60) em todas as salas, o matiz do ar é o que muda; norte e oeste são o
 fundo (peças altas), sul e leste a frente (só peças baixas ou com pontilhado); peça com topo a 1,25 m ou mais bloqueia
 tiro, até 1,0 m não; velas, braseiros e cristais nunca soltos no chão andável; nada de fogo verde, nada de círculo
-fechado ou inscrição acesa no chão (círculo é de Morvath); estandartes lisos e estátuas de mãos vazias até o Daniel
-decidir outra coisa. O ar de cada sala pode ser um `RoomMood.Look` (`arena.mood().blend(look, true)`).
+fechado ou inscrição acesa no chão (círculo é de Morvath); estátuas de mãos vazias; estandartes com o leão do selo
+(o Daniel, 2026-11-16; a Câmara do Selo fica com a espada). O ar de cada sala pode ser um `RoomMood.Look` (`arena.mood().blend(look, true)`).
+
+Feito (2026-11-16, environment-artist): mediana do chão na câmera do jogo a 1080p, Cripta 48,6 (A) e 44,6 (B), Fendas
+43,9 e 44,7 (antes 70 no cinza). Cripta quente e fechada: pedra cinza morna, luz-chave fraca sem sombra (`KEY`),
+braseiros e velas com sombra, um feixe frio azulado sobre o túmulo (`COLD`, a única luz fria). Fendas azul-violeta:
+lajes grandes e azuladas, névoa e paredes do abismo violeta (`MIST`, `CLIFF`), luz violeta vinda de dentro da fenda
+pintando as bordas (`LIP_*`), lanternas quentes nas cabeças das pontes, fogo só no pórtico da porta. Leão: ouro velho
+(`BANNER_LION_GOLD`) com borda escura sobre o vermelho, brilho 0,35, abaixo do glow. Quadro na GPU a 1080p sem vsync:
+cerca de 2 a 2,7 ms nas quatro variantes.
 
 ## Pendências
 

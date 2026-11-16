@@ -57,29 +57,29 @@ const NEAR_HALF := Vector2(55.0, 235.0)
 const SARCOPHAGI: Array[float] = [278.0, 96.0]
 const SARC_SPREAD := 5.7
 const SARC_SIZE := Vector3(2.45, 1.15, 1.15)
-const SARC_LID := Vector2(0.2, 0.1)
+const SARC_LID := TombKit.SARC_LID
 const SARC_PLINTH := 0.3
 const NICHE_CANDLES := 12.4
 const NICHE := Vector4(14.0, 14.1, 0.6, 0.35)
 const NICHE_LEDGE := 14.5
 const SARC_SWORD := 1.85
-const SARC_GOLD := 0.03
+const SARC_GOLD := TombKit.SARC_GOLD
 ## The raised sword (_sword): the guard's width and the blade's length as shares of its length, the blade's width
 ## at the guard, the grip's, the guard's thickness and the pommel (shares of its length), and how the blade narrows
 ## in steps from the guard to the point. Proportions of a sword, never of a cross (O-1 of the C11 QA: a blade as
 ## narrow as the grip with the guard a third of the way up read as a cross): a long blade far wider than the grip,
 ## tapering to its point, a short slim guard near the hilt end, a thin grip and a round knob of a pommel.
-const GUARD_SHARE := 0.2
-const SWORD_BLADE := 0.74
-const SWORD_WIDTH := Vector4(0.1, 0.03, 0.035, 0.07)
-const SWORD_TAPER: Array[float] = [1.0, 0.85, 0.68, 0.5, 0.32, 0.14]
+const GUARD_SHARE := TombKit.GUARD_SHARE
+const SWORD_BLADE := TombKit.SWORD_BLADE
+const SWORD_WIDTH := TombKit.SWORD_WIDTH
+const SWORD_TAPER: Array[float] = TombKit.SWORD_TAPER
 const SARC_TINT := 1.35
 ## C12a QW-008 (the west pair read as a block of the parapet): the lid a step lighter than the chest (SARC_LID_LIGHT
 ## times its stone), and a frieze that reads at 1080 lines: a band of the lid's stone round the chest (height, how far
 ## it stands out, its middle as a share of the chest's height) with a thread of gold under it (height).
 const SARC_LID_LIGHT := 1.8
-const SARC_FRIEZE := Vector3(0.16, 0.07, 0.7)
-const SARC_FRIEZE_GOLD := 0.05
+const SARC_FRIEZE := TombKit.SARC_FRIEZE
+const SARC_FRIEZE_GOLD := TombKit.SARC_FRIEZE_GOLD
 ## The pair on the camera's half of the rim (NEAR_HALF, the east one) stands between the eye and a paladin walking
 ## the rim: its niche goes back NEAR_SARC.x meters, its chest is NEAR_SARC.y tall (the spec's 0.85, not SARC_SIZE.z)
 ## on a plinth NEAR_SARC.z tall, so its lid stays under his feet in the camera and its stone opens round him
@@ -90,28 +90,28 @@ const NICHE_HALF := 12.0
 ## Lanterns of violet fire (bearings), their post (size), cage (width, height), roof, glass, flame and light.
 const LANTERNS: Array[float] = [264.0, 292.0, 82.0, 110.0]
 const LANTERN_R := 13.0
-const LANTERN_POST := Vector3(0.6, 1.0, 0.6)
-const LANTERN_CAGE := Vector2(0.45, 0.75)
-const LANTERN_ROOF := 0.3
+const LANTERN_POST := TombKit.LANTERN_POST
+const LANTERN_CAGE := TombKit.LANTERN_CAGE
+const LANTERN_ROOF := TombKit.LANTERN_ROOF
 const LANTERN_GLASS := Color(0.55, 0.25, 1.0)
 const LANTERN_FLAME := Color(0.9, 0.4, 1.6)
-const LANTERN_FLAME_SIZE := 0.12
+const LANTERN_FLAME_SIZE := TombKit.LANTERN_FLAME_SIZE
 const LANTERN_LIGHT := Color(0.6, 0.3, 1.0)
 const LANTERN_ENERGY := 1.5
 const LANTERN_RANGE := 4.5
 const LANTERN_ATTENUATION := 1.3
-const IRON := Color(0.06, 0.065, 0.07)
+const IRON := TombKit.IRON
 ## Gothic pinnacles (bearings): base, body's top, spire; the panel with the raised sword (width, height, its foot
 ## over the ground) and its gold thread.
 const PINNACLES: Array[float] = [125.0, 193.0, 310.0, 332.0]
 const PINNACLE_R := 13.1
-const PINNACLE := Vector3(0.9, 2.8, 0.6)
+const PINNACLE := TombKit.PINNACLE
 ## The hole a front pinnacle opens round the paladin behind it (masonry.gdshader see_radius, see_keep): smaller and
 ## fainter than the balustrade's, so the narrow pinnacle stays there in stipple (O-3 of the C11 QA: the full hole
 ## erased it and he read as standing in front of it).
 const PINNACLE_SEE := Vector2(1.3, 0.45)
-const PANEL := Vector3(0.5, 1.1, 1.5)
-const PANEL_GOLD := 0.03
+const PANEL := TombKit.PANEL
+const PANEL_GOLD := TombKit.PANEL_GOLD
 ## The east post at the stairs' mouth (bearing), the fire bowls (west on the balustrade's line, east in its own court
 ## by the facade), the clay pots (x, z, height).
 const MOUTH_POST := 167.0
@@ -344,6 +344,8 @@ var boss_spawn := BOSS_SPAWN
 var cam_target := CAM_TARGET
 var kit: ArenaKit
 var m: Masonry
+## The funerary pieces (sarcophagus, lantern, pinnacle, raised sword), shared with the arenas.
+var tomb: TombKit
 var seal := SealLook.new()
 var _floor_mat: ShaderMaterial
 var _door_mat: ShaderMaterial
@@ -383,6 +385,7 @@ func build(_arena: Node3D = null, layout: RoomLayout = null, seed_: int = 1406) 
 	_rng.seed = seed_
 	kit = ArenaKit.new(self, seed_)
 	m = kit.masonry
+	tomb = TombKit.new(m)
 	_floor()
 	_under()
 	_perimeter()
@@ -868,64 +871,16 @@ func _niche(bearing: float) -> void:
 func _sarcophagus(bearing: float, back := 0.0, plinth_y := SARC_PLINTH, tall := SARC_SIZE.z) -> void:
 	var size := Vector3(SARC_SIZE.x, SARC_SIZE.y, tall)
 	var at := at_bearing(bearing, FLOOR_RADIUS + SARC_SIZE.y * 0.5 + 0.15 + back)
-	var yaw := _facing_in(bearing)
-	var basis := Basis(Vector3.UP, yaw)
 	var stone := _see_through(m.stone(plinth_y, Color.WHITE * SARC_TINT), bearing)
-	var y := plinth_y
-	var base := _v3(at, y)
-	m.block(base, Vector3(size.x, size.z, size.y), yaw, stone, false)
-	m.block(base, Vector3(size.x + 0.1, 0.12, size.y + 0.1), yaw, stone, false)
 	var light := _see_through(m.stone(plinth_y, Color.WHITE * SARC_TINT * SARC_LID_LIGHT), bearing)
-	var frieze := base + Vector3(0, size.z * SARC_FRIEZE.z, 0)
-	m.box(frieze, Vector3(size.x + SARC_FRIEZE.y * 2.0, SARC_FRIEZE.x, size.y + SARC_FRIEZE.y * 2.0), yaw, light, false)
-	_bar(frieze - Vector3(0, SARC_FRIEZE.x * 0.5 + SARC_FRIEZE_GOLD * 0.5, 0),
-		Vector3(size.x + SARC_FRIEZE.y * 2.0, SARC_FRIEZE_GOLD, size.y + SARC_FRIEZE.y * 2.0), yaw, _gold())
-	var lid := base + Vector3(0, size.z, 0)
-	m.block(lid, Vector3(size.x + SARC_LID.y * 2.0, SARC_LID.x, size.y + SARC_LID.y * 2.0), yaw, light, false)
-	var top := lid + Vector3(0, SARC_LID.x, 0)
-	# the sunk panel on the face to the middle
-	var face := basis * Vector3(0, 0, size.y * 0.5 + 0.005)
 	var hollow := _see_through(m.stone(plinth_y, Color.WHITE * SARC_TINT * 0.7), bearing)
-	m.box(base + Vector3(0, size.z * 0.45, 0) + face, Vector3(size.x * 0.7, size.z * 0.45, 0.02), yaw, hollow, false)
-	# the gold edge round the lid's top
-	var gold := _gold()
-	var w := size.x + SARC_LID.y * 2.0 - 0.06
-	var d := size.y + SARC_LID.y * 2.0 - 0.06
-	for sd: float in [-1.0, 1.0]:
-		_bar(top + basis * Vector3(0, 0.005, sd * d * 0.5), Vector3(w, 0.012, SARC_GOLD), yaw, gold)
-		_bar(top + basis * Vector3(sd * w * 0.5, 0.005, 0), Vector3(SARC_GOLD, 0.012, d), yaw, gold)
-	# the raised sword along the lid, point toward the bearing's clockwise side, in low relief
-	_sword(top, basis, Vector3(1, 0, 0), Vector3(0, 0, 1), SARC_SWORD, gold, 0.03)
-
+	tomb.sarcophagus(_v3(at, plinth_y), _facing_in(bearing), size, stone, light, hollow, SARC_SWORD)
 
 ## The raised sword (spec 5.4) laid at `at` (its middle), its length along `along`, its width along `across` (both in
 ## the basis' frame), `size` long: the blade (SWORD_BLADE) far wider than the grip narrowing to the point, a short slim
 ## guard with its tips falling, the thin grip, a knob of a pommel; in stone `mat`, standing `relief` meters out (across x along). No ring, no equal arms: a sword.
 func _sword(at: Vector3, basis: Basis, along: Vector3, across: Vector3, size: float, mat: Material, relief: float) -> void:
-	var o := across.cross(along).normalized() * relief * 0.5
-	var foot := -size * 0.5
-	var blade := size * SWORD_BLADE
-	var guard := size * GUARD_SHARE
-	var bw := size * SWORD_WIDTH.x
-	var b0 := foot + size - blade
-	# the blade, much wider than the grip, narrowing step by step over its whole length to a sharp point
-	var steps := SWORD_TAPER.size()
-	for i in steps:
-		var t0 := float(i) / steps
-		var t1 := float(i + 1) / steps
-		_rel(at, basis, along * (b0 + blade * (t0 + t1) * 0.5) + o, along, across,
-			Vector3(blade / steps + 0.01, bw * SWORD_TAPER[i], relief), mat)
-	# a slim guard with its tips falling toward the grip
-	_rel(at, basis, along * (b0 - size * 0.015) + o, along, across, Vector3(size * SWORD_WIDTH.z, guard, relief), mat)
-	for sd: float in [-1.0, 1.0]:
-		_rel(at, basis, along * (b0 - size * 0.04) + across * sd * guard * 0.48 + o, along, across,
-			Vector3(size * 0.05, size * SWORD_WIDTH.z, relief), mat)
-	# the grip, thin, and the pommel, a knob clearly wider than it
-	var pommel := size * SWORD_WIDTH.w
-	var grip := b0 - size * 0.03 - foot - pommel
-	_rel(at, basis, along * (foot + pommel + grip * 0.5) + o, along, across, Vector3(grip, size * SWORD_WIDTH.y, relief), mat)
-	_rel(at, basis, along * (foot + pommel * 0.5) + o, along, across, Vector3(pommel, pommel, relief * 1.3), mat)
-
+	tomb.sword_relief(at, basis, along, across, size, mat, relief)
 
 ## The stone of a piece at a bearing on the camera's half of the rim (NEAR_HALF) opens round the paladin behind it
 ## (masonry.gdshader see_through), as the front balustrade does (M-2 of the C11 QA: walking the east rim behind the
@@ -958,142 +913,30 @@ func _near(bearing: float) -> bool:
 
 
 ## A small block of a relief: its middle at `at` + basis * offset, its size along, across and out.
-func _rel(at: Vector3, basis: Basis, offset: Vector3, along: Vector3, across: Vector3, size: Vector3, mat: Material) -> void:
-	var mi := m.box(at + basis * offset, size, 0.0, mat, false)
-	mi.basis = basis * Basis(along, across, along.cross(across))
-
-
-## A thin bar (gold edges and threads).
 func _bar(center_: Vector3, size: Vector3, yaw: float, mat: Material) -> void:
-	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = size
-	mi.mesh = bm
-	mi.transform = Transform3D(Basis(Vector3.UP, yaw), center_)
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(mi)
-
-
-var _gold_mat: StandardMaterial3D
+	tomb.bar(center_, size, yaw, mat)
 
 
 ## The old gold of the ironwork and the edges (inlaid metal, never bright yellow).
 func _gold() -> StandardMaterial3D:
-	if _gold_mat == null:
-		_gold_mat = StandardMaterial3D.new()
-		_gold_mat.albedo_color = Color(0.478, 0.384, 0.22)
-		_gold_mat.metallic = 0.7
-		_gold_mat.roughness = 0.4
-	return _gold_mat
-
-
-var _iron_mat: StandardMaterial3D
-
-
-func _iron() -> StandardMaterial3D:
-	if _iron_mat == null:
-		_iron_mat = StandardMaterial3D.new()
-		_iron_mat.albedo_color = IRON
-		_iron_mat.metallic = 0.6
-		_iron_mat.roughness = 0.5
-		_iron_mat.rim_enabled = true
-		_iron_mat.rim = 0.2
-	return _iron_mat
-
+	return tomb.gold()
 
 ## A lantern of violet fire at a bearing: a stone post, an iron cage with a pointed roof, violet glass with a small
 ## flame in it, a violet light on the floor and the stone near it.
 func _lantern(bearing: float, mat: Material) -> void:
 	var at := at_bearing(bearing, LANTERN_R)
-	var yaw := _facing_in(bearing)
-	var base := _v3(at)
-	m.block(base, Vector3(LANTERN_POST.x + 0.12, Masonry.CURB, LANTERN_POST.z + 0.12), yaw, mat)
-	m.block(base, LANTERN_POST, yaw, mat)
-	var y := LANTERN_POST.y
-	var c := LANTERN_CAGE
-	var iron := _iron()
-	m.box(base + Vector3(0, y + 0.03, 0), Vector3(c.x + 0.08, 0.06, c.x + 0.08), yaw, iron, false)
-	m.box(base + Vector3(0, y + c.y - 0.03, 0), Vector3(c.x + 0.1, 0.06, c.x + 0.1), yaw, iron, false)
-	var basis := Basis(Vector3.UP, yaw)
-	for sx: float in [-1.0, 1.0]:
-		for sz: float in [-1.0, 1.0]:
-			m.box(base + basis * Vector3(sx * c.x * 0.5, y + c.y * 0.5, sz * c.x * 0.5), Vector3(0.04, c.y, 0.04), yaw, iron, false)
-	m.point(base + Vector3(0, y + c.y, 0), c.x + 0.12, LANTERN_ROOF, yaw, 0.0, iron)
-	var glass := MeshInstance3D.new()
-	var gb := BoxMesh.new()
-	gb.size = Vector3(c.x - 0.04, c.y - 0.1, c.x - 0.04)
-	glass.mesh = gb
-	glass.material_override = _unlit(LANTERN_GLASS)
-	glass.transform = Transform3D(basis, base + Vector3(0, y + c.y * 0.5, 0))
-	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(glass)
-	var flame := MeshInstance3D.new()
-	flame.mesh = ArenaKit.tongue(Vector2(LANTERN_FLAME_SIZE * 0.6, LANTERN_FLAME_SIZE * 1.4), LANTERN_FLAME)
-	flame.position = base + Vector3(0, y + c.y * 0.35, 0) + (basis * Vector3(0, 0, c.x * 0.5 + 0.02))
-	flame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	add_child(flame)
-	var l := OmniLight3D.new()
-	l.position = base + Vector3(0, y + c.y * 0.5, 0) + basis * Vector3(0, 0, 0.4)
-	l.light_color = LANTERN_LIGHT
-	l.light_energy = LANTERN_ENERGY
-	l.omni_range = LANTERN_RANGE
-	l.omni_attenuation = LANTERN_ATTENUATION
-	l.light_cull_mask = ArenaKit.WARM_MASK
-	add_child(l)
+	tomb.lantern(_v3(at), _facing_in(bearing), mat, TombKit.Lamp.new(LANTERN_GLASS, LANTERN_FLAME, LANTERN_LIGHT, LANTERN_ENERGY, LANTERN_RANGE, LANTERN_ATTENUATION))
 	circles.append(Vector3(at.x, at.y, (LANTERN_POST.x + 0.12) * 0.5))
 
-
-var _unlit_mats := {}
-
-
 func _unlit(c: Color) -> StandardMaterial3D:
-	if not _unlit_mats.has(c):
-		var u := StandardMaterial3D.new()
-		u.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		u.albedo_color = c
-		u.disable_receive_shadows = true
-		_unlit_mats[c] = u
-	return _unlit_mats[c]
-
+	return tomb.unlit(c)
 
 ## A gothic pinnacle at a bearing: a base, a tall body, a spire; on its face to the middle (and on the one to the
 ## camera, if another) a pointed panel with the raised sword in relief and a thread of gold.
 func _pinnacle(bearing: float, mat: Material) -> void:
 	var at := at_bearing(bearing, PINNACLE_R)
-	var yaw := _facing_in(bearing)
-	var base := _v3(at)
-	var w := PINNACLE.x
-	m.block(base, Vector3(w + 0.16, 0.35, w + 0.16), yaw, mat)
-	m.block(base + Vector3(0, 0.35, 0), Vector3(w, PINNACLE.y - 0.35, w), yaw, mat)
-	m.block(base + Vector3(0, PINNACLE.y - 0.25, 0), Vector3(w + 0.14, 0.18, w + 0.14), yaw, mat)
-	m.point(base + Vector3(0, PINNACLE.y - 0.07, 0), w * 0.92, PINNACLE.z, yaw, 0.0, mat)
-	var faces: Array[float] = [yaw]
-	# the face most turned to the camera (bearing 145 from the middle), if not the same one
-	var cam := deg_to_rad(Feel.live().cam_yaw)
-	var to_cam := atan2(sin(cam), cos(cam))
-	var best := yaw
-	for k in 4:
-		var f := yaw + PI * 0.5 * k
-		if absf(angle_difference(f, to_cam)) < absf(angle_difference(best, to_cam)):
-			best = f
-	if absf(angle_difference(best, yaw)) > 0.1:
-		faces.append(best)
-	var hollow := m.stone(0.0, Color.WHITE * 0.55)
-	for f in faces:
-		var basis := Basis(Vector3.UP, f)
-		var face := base + basis * Vector3(0, PANEL.z + PANEL.y * 0.5, w * 0.5 + 0.01)
-		m.box(face, Vector3(PANEL.x, PANEL.y - PANEL.x * 0.3, 0.03), f, hollow, false)
-		var tip := m.box(face + Vector3(0, PANEL.y * 0.5 - PANEL.x * 0.15, 0), Vector3(PANEL.x * 0.5, PANEL.x * 0.5, 0.03), f, hollow, false)
-		tip.basis = basis * Basis(Vector3.BACK, PI * 0.25)
-		m.pointed_arch(base + basis * Vector3(0, PANEL.z - 0.02, w * 0.5 + 0.02), Vector2(sin(f), cos(f)), PANEL.x, PANEL.y + 0.02, 0.06, 0.05, mat)
-		_sword(face + basis * Vector3(0, 0, 0.03), basis, Vector3(0, 1, 0), Vector3(1, 0, 0), PANEL.y * 0.85, mat, 0.03)
-		# the gold thread round the panel's foot and sides
-		for sd: float in [-1.0, 1.0]:
-			_bar(face + basis * Vector3(sd * (PANEL.x * 0.5 + 0.02), -PANEL.x * 0.15, 0.02), Vector3(PANEL_GOLD, PANEL.y - PANEL.x * 0.3, 0.01), f, _gold())
-		_bar(face + basis * Vector3(0, -PANEL.y * 0.5 + PANEL.x * 0.15 - 0.02, 0.02), Vector3(PANEL.x + 0.04, PANEL_GOLD, 0.01), f, _gold())
-	circles.append(Vector3(at.x, at.y, (w + 0.16) * 0.5))
-
+	tomb.pinnacle(_v3(at), _facing_in(bearing), mat)
+	circles.append(Vector3(at.x, at.y, (PINNACLE.x + 0.16) * 0.5))
 
 # ---------- the facade and the sealed door ----------
 
@@ -1176,7 +1019,7 @@ func _facade() -> void:
 	for sd: float in [-1.0, 1.0]:
 		var s := _fa(sd * STATUE.x, STATUE.y)
 		kit.statue(Vector2(s.x, s.z), yaw, STATUE.z, PORCH_Y, STATUE.w, false)
-		kit.banner(_fa(sd * BANNER.x, BANNER.y, BANNER.z), yaw, BANNER_SIZE, 1, true)
+		kit.banner(_fa(sd * BANNER.x, BANNER.y, BANNER.z), yaw, BANNER_SIZE, 1, ArenaKit.Emblem.SWORD)
 	# a cold light from the hall on the facade alone
 	var fill := SpotLight3D.new()
 	add_child(fill)

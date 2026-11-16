@@ -55,6 +55,9 @@ func _run() -> void:
 	var arena: Variant = load("res://scripts/game/arena.gd").new()
 	world.add_child(arena)
 	arena.build(layout, int(opts.get("doors", "3")), 1406)
+	if arena.look != null:
+		# spec 0.5: at most 8 lights with shadows an arena (the moon is the world's)
+		print("SHADOWED LIGHTS %d" % arena.look.shadowed)
 	if not opts.has("bare"):
 		world.add_child(_overlay(arena))
 	var cam := Camera3D.new()

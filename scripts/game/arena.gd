@@ -90,6 +90,8 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 
 func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	_rng.seed = seed_
+	# an arena's air (ArenaRoom.air) goes back before the next room is built (the old room leaves after it)
+	ArenaRoom.leave_air()
 	_hall = layout == null
 	self.layout = layout
 	if layout != null:

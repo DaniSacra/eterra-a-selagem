@@ -61,6 +61,19 @@ const BANNER_SWORD_WIDTH := Vector3(0.085, 0.026, 0.065)
 const BANNER_SWORD_AT := 0.6
 const BANNER_SWORD_GOLD := 1.3
 const BANNER_SWORD_EDGE := 0.035
+## What a banner carries (banner): nothing, the raised sword (the Chamber of the Seal's) or the standing lion of Eterra
+## (cycle C12, Daniel 2026-11-16: the arenas' and the catacomb hall's banners), the seal's drawing in old gold.
+enum Emblem { NONE, SWORD, LION }
+const BANNER_LION_SHADER := preload("res://assets/shaders/banner_lion.gdshader")
+const LION_FIELD := preload("res://assets/textures/seal/lion_sdf.res")
+## The lion's patch: its side as a share of the cloth's width, its middle this share of the way down the cloth, and
+## the quads across it (it follows the folds).
+const BANNER_LION := 0.92
+const BANNER_LION_AT := 0.42
+const BANNER_LION_GRID := 8
+## The lion's gold (a step over the trim, as the sword's) and its dark edge (field pixels).
+const BANNER_LION_GOLD := Color(0.66, 0.48, 0.2)
+const BANNER_LION_EDGE := 5.0
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
 const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "barrier_half", "floor_foundation_allsides",
 	"floor_foundation_corner", "floor_foundation_front", "floor_foundation_front_and_sides", "stairs_wide", "stairs_walled",
@@ -227,8 +240,9 @@ func crate(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE, solid := 0.0) ->
 
 ## A banner hanging on the facade from `top` (the middle of its bar), facing along yaw: cloth with a pointed foot,
 ## folds as darker upright bands, old gold trim down its sides and round the point, a tassel. size: width, length.
-## emblem: the raised sword of Eterra's canon in old gold on it (BANNER_SWORD; the Chamber of the Seal's banners).
-func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emblem := false) -> void:
+## emblem (Emblem): the raised sword of Eterra's canon in old gold on it (BANNER_SWORD; the Chamber of the Seal's banners)
+## or the standing lion (BANNER_LION; the arenas' and the hall's).
+func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emblem := Emblem.NONE) -> void:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var half := size.x * 0.5
@@ -262,7 +276,7 @@ func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emb
 	var bar := Vector3(half + 0.18, 0.07, 0.09)
 	_banner_quad(st, Vector3(-bar.x, bar.y, bar.z), Vector3(bar.x, bar.y, bar.z), Vector3(bar.x, -bar.y, bar.z), Vector3(-bar.x, -bar.y, bar.z),
 		BANNER_BAR, BANNER_BAR)
-	if emblem:
+	if emblem == Emblem.SWORD:
 		_banner_sword(st, size)
 	var tip := Vector3(0, -size.y, 0.09)
 	_banner_quad(st, tip + Vector3(0, 0.05, 0), tip + Vector3(0.09, -0.16, 0), tip + Vector3(0, -0.42, 0), tip + Vector3(-0.09, -0.16, 0),
@@ -282,6 +296,64 @@ func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emb
 	mi.layers = layers
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mi)
+	if emblem == Emblem.LION:
+		var lion := MeshInstance3D.new()
+		lion.mesh = _banner_lion(size)
+		lion.material_override = _lion_material()
+		lion.transform = mi.transform
+		lion.layers = layers
+		lion.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(lion)
+
+
+## The lion's patch on a banner: a square grid of quads just in front of the folds (so it bends with them), UV 0..1
+## over it (banner_lion.gdshader draws the lion inside), each vertex's red the fold's shade.
+func _banner_lion(size: Vector2) -> ArrayMesh:
+	var key := "lion%.2f_%.2f" % [size.x, size.y]
+	if _meshes.has(key):
+		return _meshes[key]
+	var side := size.x * BANNER_LION
+	var mid_y := -size.y * BANNER_LION_AT
+	var n := BANNER_LION_GRID
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var at := func(u: float, v: float) -> Vector3:
+		var x := (u - 0.5) * side
+		var y := mid_y + (0.5 - v) * side
+		var wave := cos((x + size.x * 0.5) / size.x * TAU * BANNER_FOLDS)
+		return Vector3(x, y, wave * lerpf(0.05, 0.08, -y / size.y) + 0.02)
+	var shade := func(u: float) -> float:
+		var wave := cos(((u - 0.5) * side + size.x * 0.5) / size.x * TAU * BANNER_FOLDS)
+		return lerpf(BANNER_FOLD, 1.0, wave * 0.5 + 0.5) * 0.6 + 0.4
+	for i in n:
+		for j in n:
+			var u0 := float(i) / n
+			var u1 := float(i + 1) / n
+			var v0 := float(j) / n
+			var v1 := float(j + 1) / n
+			for q: Vector2 in [Vector2(u0, v0), Vector2(u1, v0), Vector2(u1, v1), Vector2(u0, v0), Vector2(u1, v1), Vector2(u0, v1)]:
+				st.set_color(Color(shade.call(q.x), 0, 0))
+				st.set_uv(q)
+				st.add_vertex(at.call(q.x, q.y))
+	st.generate_normals()
+	var mesh := st.commit()
+	_meshes[key] = mesh
+	return mesh
+
+
+static var _lion_mat: ShaderMaterial
+
+
+## One material for every lion (never one per banner).
+static func _lion_material() -> ShaderMaterial:
+	if _lion_mat == null:
+		_lion_mat = ShaderMaterial.new()
+		_lion_mat.shader = BANNER_LION_SHADER
+		_lion_mat.set_shader_parameter(&"lion", LION_FIELD)
+		_lion_mat.set_shader_parameter(&"gold", BANNER_LION_GOLD)
+		_lion_mat.set_shader_parameter(&"edge_color", BANNER_BAR)
+		_lion_mat.set_shader_parameter(&"edge_px", BANNER_LION_EDGE)
+	return _lion_mat
 
 
 ## The raised sword on a banner (docs/art/boss_chamber_spec.md 5.4): point up, the blade BANNER_SWORD.y of its height
