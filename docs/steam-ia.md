@@ -5,7 +5,7 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
 
 ## Pré-gerado
 - **Arte de referência do Daniel (toda feita por IA, confirmado em 2026-11-14)**: a imagem da arena
-  ("Arena das Catacumbas: Golpe Dourado"), a ficha do herói com a espada Emeth, a folha do Explorador, a prancha "Inimigos da Fase 1" (docs/art/enemies_phase1.md) e a nova imagem da Emeth (2026-11-15). Não vão no jogo, mas o jogo foi
+  ("Arena das Catacumbas: Golpe Dourado"), a ficha do herói com a espada Emeth, a folha do Explorador, a prancha "Inimigos da Fase 1" (docs/art/enemies_phase1.md) e a nova imagem da Emeth (2026-11-15). A confirmar com o Daniel se também são de IA: as quatro imagens de Morvath em `docs/art/ref/morvath/` (2026-11-15: `foice_laminas_1`, `foice_laminas_2`, `ritual_escudo_erupcoes` e a "Câmara circular do Selo de Morvath", `camara_do_selo`, base da arena circular do chefe, `docs/art/boss_chamber_spec.md`). Não vão no jogo, mas o jogo foi
   desenhado a partir delas: as arenas em plataforma sobre o abismo (`Arena._platform`, `ArenaKit`, shaders do chão,
   da névoa e do portal) e a espada Emeth (`EmethSword`).
 - **Arte da tela de título (vai no jogo)**: `assets/ui/title/title_screen_reference.png` (2026-11-15, feita por IA para o

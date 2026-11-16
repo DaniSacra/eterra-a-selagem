@@ -277,3 +277,18 @@ e quatro montagens de antes e depois); antes em `docs/gallery/jogo/`, `docs/gall
   correção; medir de novo). Retrato do HUD recortado da arte do título feita por IA: registrar em `docs/steam-ia.md`.
 - Veredito: título, Explorador, Emeth, inimigos, arena e HUD aprovados com ressalvas; combate com hordas pendente
   (B5). Pode ir para o teste do Daniel como versão do ciclo, com B5, B4 e B2 como os três pedidos seguintes.
+
+## 2026-11-15: C11, Câmara do Selo, análise da referência e especificação (Art Director)
+
+Sem captura do jogo (nada implementado ainda). Referência `docs/art/ref/morvath/camara_do_selo.png` (só local) medida
+pela câmera do jogo; especificação em `docs/art/boss_chamber_spec.md`.
+
+- Medido: a pintura fecha com giro 35°, inclinação 27°, campo 24° e distância 51 (a do jogo é 30° e 54); com esse giro
+  a porta fica ao norte (rumo 1°) e a escadaria de entrada ao sul (178°, embaixo à esquerda da tela); a fachada encara
+  a câmera (frente para o rumo 165°), não o centro. Selo: anel externo em r 3,5 a 3,66, interno em 2,82 a 2,96, oito
+  raios iguais até r 5,0.
+- Decidido pela regra de colisão (tudo na borda ou fora): o par de sarcófagos de baixo à direita sai de dentro do chão
+  para a borda; velas sobem para um ressalto da balaustrada. Cruzes trocadas por leão e espada erguida (D-16, D-17).
+- Câmera: alvo fixo 0,7 m do centro na direção da câmera; em 16:9 a câmara cabe inteira com o herói a 20% da borda no pior ponto.
+- Depende de modelo que não existe: nada obrigatório; estátuas e leão em relevo são procedurais.
+- Veredito: especificação pronta para o `environment-artist` e o `gameplay-engineer`; revisão quando houver capturas.
