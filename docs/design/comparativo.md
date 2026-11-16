@@ -46,6 +46,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Números | | ataque em 3 (20, 25, 60), especial 40, avanço 0,2 s, vida 30 | os mesmos, convertidos (80 unidades do Hades = 1 m) |
 | Inimigos | por região | por região, com elites com armadura | nove mortos-vivos nossos com os números do Érebo; elites com armadura (barra amarela) que atordoa ao quebrar |
 | Avisos | no chão | no chão | todo ataque inimigo tem aviso no chão |
+| Corpos | sólidos | sólidos (`StopsUnits`; inimigo comum em losango de 1,6 x 0,8 m); andando ela para ao encostar e não empurra, o avanço (BLINK) atravessa; alguns tipos são atravessáveis | os mesmos: sólidos (círculos de `EnemyDef.radius`), o paladino para e desliza no contorno, os inimigos param no corpo dele, só a esquiva atravessa (`BodyBlock`); `EnemyDef.blocks_body` para tipos atravessáveis (nenhum ainda) |
 | Impacto | pausa curta, tremor | pausa curta, câmera lenta no último abate e no chefe | sem pausa (medido no Ember & Blade), meia-lua de tinta, quadro de impacto, câmera lenta como no Hades II |
 | Combos | sequência fixa por arma | sequência fixa por arma | árvore no molde do Ember & Blade (pesado depois de 1 a 4 leves muda o finalizador) |
 | Armas | 6, com aspectos | 5 ou mais, com aspectos | uma espada (a Emeth) |

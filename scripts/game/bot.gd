@@ -22,6 +22,12 @@ var _pick := 0
 var reaction := 0.0
 ## What it saw, oldest first: [time, the way out (zero when safe)].
 var _seen: Array[Array] = []
+## Seconds it has been walking without getting anywhere (wedged by bodies: it dodges through them, STUCK_TIME).
+var _stuck := 0.0
+var _last := Vector2.ZERO
+const STUCK_TIME := 0.4
+## Meters of free floor it wants ahead of its way out of danger.
+const ESCAPE_PROBE := 2.0
 
 
 func _init() -> void:
@@ -57,16 +63,23 @@ func step(dt: float, game: Game) -> void:
 		_seen.clear()
 		pad.release(&"heavy_attack")
 		return
+	var walking := pad.move.length() > 0.1 and game.player.state == Player.State.MOVE and not game.player.runner.is_swinging()
+	_stuck = _stuck + dt if walking and p.distance_to(_last) < dt * 1.0 else 0.0
+	_last = p
 	var target := _nearest(game)
 	var to := target - p
 	pad.aim = to.normalized() if to.length() > 0.01 else Vector2.DOWN
 	pad.move = _steer(game, p, to.normalized()) if to.length() > REACH else Vector2.ZERO
 	if _queue.is_empty() and _wait > 0.25:
-		# hit and run: after a combo, step out of the crowd
-		pad.move = -to.normalized().rotated(0.6)
+		# hit and run: after a combo, step out of the crowd (around the bodies in the way)
+		pad.move = _steer(game, p, -to.normalized().rotated(0.6))
+	if _stuck > STUCK_TIME and pad.move != Vector2.ZERO and game.player.dodge_charges > 0:
+		# the bodies of the crowd hold it: the dash goes through them
+		pad.press(&"dodge")
+		_stuck = 0.0
 	var danger := _react(_danger(game))
 	if danger != Vector2.ZERO:
-		pad.move = danger
+		pad.move = _escape(game, p, danger)
 		if game.player.dodge_charges > 0 and game.player.state != Player.State.DODGE:
 			pad.press(&"dodge")
 		pad.release(&"heavy_attack")
@@ -155,14 +168,25 @@ func _danger(game: Game) -> Vector2:
 	return Vector2.ZERO
 
 
-## Walks around what blocks the way (pillars, stairs, rubble): the first direction, turning a little more each
-## try to either side, that is not stopped by a wall or a prop.
+## The way out of danger that the walls leave open: the first direction, turning further each try to either side
+## (all the way round: the dash goes through a body that stands in a corner with him), with floor ahead of it.
+func _escape(game: Game, from: Vector2, dir: Vector2) -> Vector2:
+	for k in [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]:
+		var d := dir.rotated(k * PI / 6.0)
+		var probe := from + d * ESCAPE_PROBE
+		if game.arena.resolve(probe, Player.RADIUS).distance_to(probe) < 0.05:
+			return d
+	return dir
+
+
+## Walks around what blocks the way (pillars, stairs, rubble, the bodies of enemies): the first direction, turning a
+## little more each try to either side, that is not stopped by a wall, a prop or a body.
 func _steer(game: Game, from: Vector2, dir: Vector2) -> Vector2:
 	if dir == Vector2.ZERO:
 		return dir
 	for k in [0, 1, -1, 2, -2, 3, -3]:
 		var d := dir.rotated(k * PI / 7.0)
 		var probe := from + d * 1.2
-		if game.arena.resolve(probe, Player.RADIUS).distance_to(probe) < 0.05:
+		if game.arena.resolve(probe, Player.RADIUS).distance_to(probe) < 0.05 and not game.horde.body_at(probe, Player.RADIUS):
 			return d
 	return dir

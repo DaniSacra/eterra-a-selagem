@@ -9,6 +9,8 @@ var def: EnemyDef
 var pos := Vector2.ZERO
 var y := 0.0
 var push := Vector2.ZERO
+## How deep it stood in the paladin's body when the frame began (Horde.keep_off_target lets it only work its way out).
+var was_in_target := 0.0
 var dir := Vector2.DOWN
 var hp := 1.0
 var max_hp := 1.0

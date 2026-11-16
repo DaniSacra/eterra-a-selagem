@@ -369,6 +369,9 @@ func invulnerable() -> bool:
 
 ## Every frame of play. move: stick or keys. aim: where the paladin wants to strike (unit vector, or zero).
 func step(dt: float, move: Vector2, aim: Vector2) -> void:
+	var start := pos
+	# the dash goes through bodies (Hades II: the BLINK), even on the frame it ends
+	var dashing := state == State.DODGE
 	_state_t += dt
 	invuln = maxf(0.0, invuln - dt)
 	cast_cooldown = maxf(0.0, cast_cooldown - dt)
@@ -423,6 +426,9 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	runner.step(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
 	pos = arena.resolve(pos, RADIUS)
+	if horde and not dashing:
+		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
+		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)
 	_show(dt, move)
 
 

@@ -121,7 +121,8 @@ func _enemy(props: Dictionary) -> void:
 ## Look: Daniel's sheet of the first region's enemies (docs/art/enemies_phase1.md): each one its own baked model
 ## (the painted Meshy figures, tools/bake.gd), sizes from the sheet's scale with the soldier at 1.15, the colour
 ## of its magic. Radius: what it blocks and where blows reach it; it grows less than the figure (a taller enemy is
-## not much wider).
+## not much wider). Every body is solid as in Hades II (EnemyDef.blocks_body, true by default: the paladin stops at
+## it and it at him, only the dash goes through); a kind he walks through takes "blocks_body": false.
 ## Cycle 7, the part each one plays read at a glance (only drawn, EnemyDef's Look group): `tell` and `tell_at` (the
 ## light of its wind-up and where it sits on the figure), `sway` and `windup_shake` (the unsteady runner), `vivid`
 ## (the soldier is the greyest, the base line; the priests and Morvath keep their purple), `tint`, `crest`, `shine`.

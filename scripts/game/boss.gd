@@ -212,6 +212,7 @@ func step(dt: float) -> void:
 		return
 	if e == null or not e.alive:
 		return
+	var was := game.horde.depth_in_target(e)
 	stats.time = snappedf(_clock, 0.1)
 	_t += dt
 	_cooldown -= dt
@@ -290,6 +291,9 @@ func step(dt: float) -> void:
 				_stagger = 0
 				e.armor = e.max_armor
 				_rest(0.5)
+	# he stops at the paladin's body like everyone (his charge goes through: it is the blow)
+	if state != State.DASH:
+		game.horde.keep_off_target(e, was, dt)
 	e.pos = game.arena.resolve(e.pos, e.def.radius)
 
 

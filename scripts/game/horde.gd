@@ -59,6 +59,11 @@ var damage_scale := 1.0
 var target := Vector2.ZERO
 var target_alive := true
 var _hash := SpatialHash.new(CELL)
+## The widest body filed in the hash (rehash), and the bodies stop_walker last looked at (kept, not reallocated).
+var _widest := 0.0
+var _centers := PackedVector2Array()
+var _reaches := PackedFloat32Array()
+var _allowed := PackedFloat32Array()
 var _defs: Dictionary = {}
 var _frame := 0
 var _rng := RandomNumberGenerator.new()
@@ -117,10 +122,11 @@ func room_for(want: int) -> int:
 
 func step(dt: float) -> void:
 	_frame += 1
-	_hash.clear()
-	for e in list:
-		_hash.insert(e.pos, e)
+	rehash()
 	var i := 0
+	for e in list:
+		var reach := e.def.radius + Player.RADIUS
+		e.was_in_target = depth_in_target(e) if e.pos.distance_squared_to(target) < reach * reach else 0.0
 	for e in list:
 		i += 1
 		_timers(e, dt)
@@ -131,12 +137,12 @@ func step(dt: float) -> void:
 		if e.push.length_squared() > 0.01:
 			e.pos += e.push * dt
 			e.push *= maxf(0.0, 1.0 - KNOCKBACK_DECAY * dt)
-		# nobody stands inside the paladin
-		var off := e.pos - target
-		var min_d := e.def.radius + Player.RADIUS
-		var len_sq := off.length_squared()
-		if e.state != Enemy.State.ATTACK and len_sq < min_d * min_d and len_sq > 0.0001:
-			e.pos = target + off / sqrt(len_sq) * min_d
+	# after everyone moved and was kept apart (so the crowd's shoving cannot leave anyone inside him): nobody walks
+	# into the paladin, nor is pressed into him by the others (a lunge in flight goes through him)
+	for e in list:
+		var reach := e.def.radius + Player.RADIUS
+		if e.state != Enemy.State.ATTACK and e.pos.distance_squared_to(target) < reach * reach:
+			keep_off_target(e, e.was_in_target, dt)
 		e.pos = arena.resolve(e.pos, e.def.radius)
 		e.y = e.height()
 	_sweep()
@@ -447,6 +453,95 @@ func _separate(e: Enemy) -> void:
 						e.pos += shove
 					if not other.def.heavy or e.def.heavy:
 						other.pos -= shove
+
+
+## Files every enemy in the spatial hash under where it stands now (Horde.step does it each frame; between two
+## steps the hash is a frame old, which bodies_near allows for).
+func rehash() -> void:
+	_hash.clear()
+	_widest = 0.0
+	for e in list:
+		_hash.insert(e.pos, e)
+		_widest = maxf(_widest, e.def.radius)
+
+
+## Whether an enemy's body stops the paladin and is stopped by him (alive, and a solid kind: EnemyDef.blocks_body).
+static func blocks(e: Enemy) -> bool:
+	return e.alive and e.def.blocks_body
+
+
+## How deep an enemy stands in the paladin's body (0: apart, or a kind he walks through).
+func depth_in_target(e: Enemy) -> float:
+	if not blocks(e):
+		return 0.0
+	return maxf(0.0, BodyBlock.depth(e.pos, target, e.def.radius + Player.RADIUS))
+
+
+## An enemy that moved stops at the paladin's edge, never pushing him; one that was already inside him (a dash or a
+## lunge ended there) works its way out, at most as deep as it was (`was`) less BodyBlock.EASE a second.
+func keep_off_target(e: Enemy, was: float, dt: float) -> void:
+	if not blocks(e):
+		return
+	var keep := e.def.radius + Player.RADIUS - BodyBlock.allowance(was, dt)
+	var off := e.pos - target
+	var len_sq := off.length_squared()
+	if keep <= 0.0 or len_sq >= keep * keep:
+		return
+	var dir := off / sqrt(len_sq) if len_sq > 0.0001 else -e.dir
+	e.pos = target + dir * keep
+
+
+## The bodies around `pos` that stop a walker of `radius` (BodyBlock.hold): centres, reaches (both radii), and how
+## deep he may stay in each (as deep as he stands at `pos`: a dash that ended inside an enemy does not snap out).
+## `extra`: meters more around `pos` to look (how far he is about to move).
+func bodies_near(pos: Vector2, radius: float, extra: float, centers: PackedVector2Array, reaches: PackedFloat32Array, allowed: PackedFloat32Array) -> void:
+	centers.clear()
+	reaches.clear()
+	allowed.clear()
+	# the hash is up to a frame old: look a cell further than the widest body could reach
+	var r := radius + _widest + extra + CELL
+	var x0 := int(floor((pos.x - r) / CELL))
+	var x1 := int(floor((pos.x + r) / CELL))
+	var y0 := int(floor((pos.y - r) / CELL))
+	var y1 := int(floor((pos.y + r) / CELL))
+	for cy in range(y0, y1 + 1):
+		for cx in range(x0, x1 + 1):
+			for e: Enemy in _hash.at_cell(cx, cy):
+				if not blocks(e):
+					continue
+				var reach := e.def.radius + radius
+				if e.pos.distance_squared_to(pos) > (reach + extra) * (reach + extra):
+					continue
+				centers.append(e.pos)
+				reaches.append(reach)
+				allowed.append(maxf(0.0, BodyBlock.depth(pos, e.pos, reach)))
+
+
+## Where a walker of `radius` going from `start` to `to` ends against the enemies' bodies: it stops at their edge and
+## slides along it, pushing no one (`resolve`: the walls, applied again after each push, so a body against a wall
+## cannot push him through it). If no spot both clear of the walls and of the bodies is found (wedged between
+## them), he stays at `start`, which always fits (he may stay as deep as he stands there): no overlap traps him,
+## and every step that does not go deeper is taken.
+func stop_walker(start: Vector2, to: Vector2, radius: float, resolve: Callable = Callable()) -> Vector2:
+	bodies_near(start, radius, start.distance_to(to), _centers, _reaches, _allowed)
+	if _centers.is_empty() or BodyBlock.fits(to, _centers, _reaches, _allowed):
+		return to
+	var p := to
+	for pass_ in 3:
+		p = BodyBlock.hold(p, _centers, _reaches, _allowed)
+		if resolve.is_valid():
+			p = resolve.call(p, radius)
+		if BodyBlock.fits(p, _centers, _reaches, _allowed):
+			return p
+	return start
+
+
+## True when a body of `radius` at `pos` would stand inside an enemy (the bot looks for a way around them).
+func body_at(pos: Vector2, radius: float, ignore: Enemy = null) -> bool:
+	for e in list:
+		if e != ignore and blocks(e) and e.pos.distance_squared_to(pos) < (e.def.radius + radius) * (e.def.radius + radius):
+			return true
+	return false
 
 
 ## Damage to an enemy. Returns true when it died.

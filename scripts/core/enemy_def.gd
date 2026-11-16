@@ -53,6 +53,9 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## Damage when it touches the paladin.
 @export var damage := 6.0
 @export var radius := 0.45
+## Its body stops the paladin and he stops it (BodyBlock; Hades II: StopsUnits). false: a body he walks through
+## and that walks through him (a swarm, a wisp), still kept apart from the other enemies.
+@export var blocks_body := true
 @export var xp := 1
 ## The risen dead take more damage from the Luz gifts.
 @export var undead := true
