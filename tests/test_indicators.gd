@@ -149,12 +149,12 @@ func test_a_blow_tips_the_body_back_away_from_where_it_faces() -> void:
 	var pos := e.pos
 	horde.render()
 	var clip: CrowdRenderer.Clip = horde.renderer._clip(horde.renderer.kind(e.def), &"walk")
-	var data := clip.batches[0].data
+	var data := clip.batch.data
 	assert_lt(data[9], 0.0, "the body's up leans toward -z, away from its front")
 	assert_eq(e.pos, pos, "only drawn")
 	e.absorbed = true
 	horde.render()
-	assert_almost_eq(clip.batches[0].data[9], 0.0, 0.0001, "armor takes it: the body does not give")
+	assert_almost_eq(clip.batch.data[9], 0.0, 0.0001, "armor takes it: the body does not give")
 
 
 # ---------- the wind-ups ----------

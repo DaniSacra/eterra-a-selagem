@@ -41,7 +41,7 @@ agora medido também pela Maestria e pelos Dons.
 | Entrega | Prioridade da diretriz | Objetivo em uma frase | Ciclos que entram | Depende de |
 |---|---|---|---|---|
 | **E1** | 1 game feel e visual | inimigos e Morvath que se movem e reagem como o herói, armas no estilo, combate que se ouve | T3, C12e, C12f, T4 (já planejados, sem mudança) | nada |
-| **E2** | 2 Maestria e Dons | o Guardião como herói definitivo: `HeroDef`, Maestria, Dons, passiva e ultimate, Bênção no texto | novo (era parte do C13 "entre partidas") | E1 (T4 aprova a mão); DT-012 |
+| **E2** | 2 Maestria e Dons | o Guerreiro como herói definitivo (`warrior_spec.md`): `HeroDef`, Maestria, Dons, passiva e ultimate, Bênção no texto | novo (era parte do C13 "entre partidas") | E1 (T4 aprova a mão); DT-012 |
 | **E3** | 3 Bênçãos e combinações | chegar a Morvath com 5 a 8 Bênçãos que combinam: raridades, romã, Elo, troca, descida de 10 salas e economia | o **C13 antigo inteiro** (C13-01 a C13-08) | E2 (Dom mais Bênção na mesma soma) |
 | **E4** | 4 Salmos e descobertas | Salmos que transformam, descoberta e Compêndio completo, com tema musical próprio | novo; puxa a parte de música do C15 (C15-03, C15-05) | E3; D-59 |
 | **E5** | 5 eventos e exploração | a descida com escolhas fora do combate e lugares que se ligam: Provação, salas de evento, Arenas II | Provação (`hades2_sistemas.md` seção 7), C14 (Santuário, Ponte, Runas), hipótese A | E3 |

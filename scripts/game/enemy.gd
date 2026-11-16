@@ -40,6 +40,9 @@ var burn_t := 0.0
 var burn_dps := 0.0
 var burn_tick := 0.0
 var hurt_t := 0.0
+## Only drawn (E1a-3): seconds since the last blow that wounded it (-1: none yet) and the way it pushed (HitRecoil).
+var recoil_t := -1.0
+var recoil_dir := Vector2.ZERO
 var anim: StringName = &"walk"
 var anim_t := 0.0
 ## The direction a lunge or charge was aimed at when it was announced.

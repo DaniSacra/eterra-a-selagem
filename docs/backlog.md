@@ -384,6 +384,44 @@ E3 Bênçãos e combinações → E4 Salmos e descobertas → E5 eventos e explo
 Cada entrega é uma versão MVP inteira para o Daniel testar de uma vez. A regra 0.1 do roteiro vale em todas: nenhuma
 progressão nova entra antes do T4; nenhum conteúdo para esconder falta de acabamento.
 
+### E1a "Inimigos vivos" (feita em 2026-11-16; QA em `docs/qa/latest_report.md`, arte em `docs/gallery/e1a/ART_REVIEW.md`; pendente: pé de apoio do Escudo, Cavaleiro e Morvath e GPU +0,30 ms no limite, ambos na E1b)
+
+**Auditoria das lacunas (feita no `10944b1`)**: a mão do herói passou no C12d (sonda 31/31, latência medida) e não é
+refeita. O que segue demonstravelmente abaixo do padrão:
+1. **Multidão e Morvath em stop motion** (VX-04): andar com 8 a 10 poses por ciclo, golpe sofrido 4, parado 4, morte 8,
+   sem mistura entre poses (`crowd_renderer.gd:242`, `int(t * c.fps)`; `tools/bake.gd` `SOLDIER_ANIMS` e `MODELS`).
+   Ao lado do herói (animação esquelética contínua) é o maior contraste visual da tela.
+2. **Pés deslizando** (VX-05): passo genérico por `clip_rate`.
+3. **Golpe sofrido invisível no corpo** (VX-06): 4 poses e nenhum deslocamento que se veja.
+4. **Armas do KayKit** em faixas de duas cores sobre figuras pintadas (VX-07).
+5. `RESULT` não é JSON válido (B-c): atrapalha toda medida automática das próximas entregas.
+
+**Por que esta e não o atordoamento (GF-12)**: o T3 ainda não aconteceu; a E1a não muda a mão nem a dificuldade, então a
+versão dela vai para o T3 medindo a mão do C12d **com** inimigos vivos (um teste só, regra do MVP). O GF-12 muda a
+dificuldade e entra na E1b com o resultado do T3. Também fica para a E1b: o W-1 (especial lido como onda, D-69), a medida do avanço magnético na sonda ("o Guerreiro se reconhece no primeiro ataque", `warrior_spec.md` seção 10), VX-14 (clipes de Morvath), som do combate,
+GF-15, VX-13, VX-17, M-1.
+
+| ID | Item | Aceite verificável | Responsável | Arquivos |
+|---|---|---|---|---|
+| E1a-1 (VX-04) | Mais poses e mistura entre a pose atual e a seguinte no vértice (todos os inimigos e Morvath), Forward+ e Compatibility | quadros seguidos a 30 qps de um esqueleto andando nunca repetem a pose; andar 20 ou mais poses por ciclo (ou mistura equivalente), golpe sofrido 8, parado 12, morte 16; assados com teto de **70 MB** medido; `step_ms` do smoke sem piora; tempo de quadro na GPU sem piora acima de 0,3 ms com `--stress=150` | `gameplay-engineer` | `tools/bake.gd` (clipes), `scripts/render/baked_model.gd`, `crowd_renderer.gd`, `crowd.gdshader`, `crowd_outline.gdshader`, `assets/baked/` |
+| E1a-2 (VX-05) | Passo do andar medido por clipe no assado, guardado no `BakedModel`, usado na velocidade da animação | pé de apoio desliza menos de 5 cm por passo (medido no assado, teste) | `gameplay-engineer` | idem, `horde.gd` |
+| E1a-3 (VX-06, só a apresentação) | Golpe sofrido com 8 poses e recuo do corpo de 0,15 a 0,3 m visível em 3 quadros, que volta; sem mudar o comportamento (o atordoamento é a E1b) | `--shot-on=hit` e quadros seguintes: o alvo se desloca e volta; nenhum número de combate muda (smoke com a mesma semente: mesmos abates e dano) | `gameplay-engineer` | `horde.gd`, `crowd_renderer.gd` |
+| E1a-4 (VX-07) | Armas no estilo dos modelos, paliativo no assado: ferro escuro e osso sem listras, cutelo até 0,6 do tronco, gancho de Morvath em ouro velho (matiz 35 a 45, saturação até 0,5) | `enemy_lab`: nenhuma arma em faixas de duas cores; gancho medido; aprovação do `art-director` | `environment-artist` (depois do E1a-1, mesmo arquivo) | `tools/bake.gd` (`held`, `remap`) |
+| E1a-5 (B-c) | `RESULT` em JSON válido | `JSON.parse` do `RESULT` de `--start=boss` sem erro; teste | `gameplay-engineer` | `game.gd` |
+| E1a-7 | Texto do jogador: "o paladino" do Como Jogar vira "o Guerreiro" (`howto_move_desc`, `howto_cast_desc`); premissa e título ficam (D-02, D-64) | nenhum "paladino" para o herói no Como Jogar; testes passando | sessão principal | `data/text_pt.tres` |
+| E1a-6 (D-54) | Duas propostas de U-2 ofensiva com controle (impacto visual, sinergias, custo), só documento | arquivo com as duas, números de partida e a recomendação | `gameplay-engineer` | `docs/design/ultimate_u2_proposals.md` |
+| E1a-QA | Antes e depois: vídeos a 30 qps de esqueletos, mago, Escudo e Morvath andando, levando golpe e morrendo (1x e 0,25x), sonda 31/31 sem regressão, 541+ testes, 8 descidas do robô, tamanho dos assados, quadro na GPU, avaliação nas perguntas da diretriz | `docs/qa/latest_report.md`, `docs/gallery/e1a/` | `qa-performance`, `art-director` (revisão) | |
+
+**Herdado da revisão de arte da E1a para a E1b** (`docs/gallery/e1a/ART_REVIEW.md`):
+- E1b-A1: o passo medido em **metros do jogo** (vezes o tamanho do inimigo; hoje o teste mede no tamanho 1): meta 5 cm para
+  quem corre e 8 cm para os grandes que andam. Hoje em jogo: Escudo cerca de 20 cm, Cavaleiro 21, Morvath 15, ancião 10.
+- E1b-A2: passada pesada do Escudo, 110 a 140 passos por minuto (hoje cerca de 195, o andar a 2,15x); Morvath e Cavaleiro
+  com passada longa, 90 a 120; pé preso ao chão no assado (IK de perna) se nenhum clipe servir; senão dependência de
+  animação própria (VX-14).
+- E1b-A3: mago e besteiro com trote de passada curta, 120 a 150 passos por minuto (hoje 82 e 90, trote em câmera lenta);
+  o braço livre do mago sem ficar esticado de lado.
+- Gancho de Morvath: se o Daniel achar esverdeado sob o violeta, subir o vermelho da tinta `gold` de 0,33 para 0,36.
+
 ### E1 "Game feel e qualidade visual" (T3, C12e, C12f, T4; 4 a 6 dias e dois testes)
 - **Objetivo**: inimigos e Morvath que se movem e reagem tão bem quanto o herói, armas no estilo, combate que se ouve.
 - **Por que agora**: prioridade 1 e 3 da diretriz; a mão já passou (C12d), o resto do quadro não.
@@ -503,7 +541,44 @@ outros três não agora; game feel e visual primeiro; Maestria por herói; Dons 
 Salmos transformam; Salmos com temas bíblicos e música e efeitos originais; sem equipamento; Emeth é a arma; Câmara do Selo
 e Morvath fecham a região; Fase 2 não agora.
 
-### Abertas desta especificação (D-48 a D-63; detalhes em `docs/design/guardian_spec.md`)
+### Correção do PO: o primeiro herói é o Guerreiro (2026-11-16, `docs/design/warrior_spec.md`)
+O herói é **o Guerreiro** (guerreiro ofensivo de espada, sem bloqueio nem aparo), não o Explorador nem o Guardião. Nos itens
+deste backlog, "Guardião" como herói passa a ser o Guerreiro; "guardião" como sala e inimigos de minichefe fica. Conferência
+no cânone: "Punho de Elun" é o título de **Hanokh** (discípulo mais próximo de Elun, origem da linhagem do leão), então o
+título no herói é decisão de história. Novas decisões D-64 a D-71: **decididas pelo Daniel em 2026-11-16, seguem a recomendação** (abaixo):
+
+| ID | Pergunta | Recomendação |
+|---|---|---|
+| D-64 | Como o Guerreiro se liga ao título "Punho de Elun" de Hanokh: é Hanokh, é do sangue dele, título de uma ordem, ou não usar | não usar no jogo por enquanto, mostrar "O Guerreiro"; o Daniel decide com a história |
+| D-65 | "Consagrado a Elun" (prancha) ou "à Yah" (Voto de Nazar no cânone) | a do cânone |
+| D-66 | Símbolo do herói: sol de oito raios (prancha) ou leão (cânone: sinal de Hanokh e Elun) | leão; o sol só como ornamento sem dizer Elun |
+| D-67 | "Aliança", "Espada da Aliança", "Convênio" (o cânone tem a Aliança Negra) | não usar |
+| D-68 | Nomes de poder com Elun ("Fúria de Elun", "Julgamento de Elun") | nenhum |
+| D-69 | Especial lido como onda da lâmina, mesmos números | sim, na E1b |
+| D-70 | Fúria como barra nova ou cargas curtas sem barra | cargas |
+| D-71 | Primeiro Salmo | Sentinela |
+
+Substituído (histórico em `warrior_spec.md` seção 12): U-1 vira faixa de 12 x 4 m à frente; U-2 é a Voragem
+(`ultimate_u2_proposals.md`), destravada na Maestria 6; Dons em árvore (centro, Combo, Fúria, Emeth, Magia, pontes,
+ápices) com seis iniciais; Dons de defesa parada saem; primeiro Salmo revisto para o ataque.
+
+### Tomadas pelo Daniel como Product Owner (2026-11-16, depois do `10944b1`; `docs/design/po_directive_guardian.md`)
+
+| ID | Decisão | Consequência |
+|---|---|---|
+| D-50 | Opção A: só o texto do jogador vira "Bênção"; `Boon`, ids, cartas, dados e registro ficam | E2-03 só em `text_pt.tres` |
+| D-54 | Carga pela Magia gasta aprovada; duas ultimates, uma escolhida antes da partida. **As duas ofensivas**: a U-2 defensiva (Muralha de Luz) sai; a nova U-2 controla área **e** fere, e deixa o Guardião seguir atacando | `gameplay-engineer` entrega duas propostas em `docs/design/ultimate_u2_proposals.md` (E1a, só documento); nomes pendentes (D-55) |
+| D-56 | P-A, Brilho da Emeth, provisória | os 2 de Magia por finalizador se validam em teste |
+| D-57 | 20 níveis; 25 a 30 partidas é hipótese; muitos desbloqueios interessantes no começo, priorizar os que transformam a jogabilidade; XP guardado na derrota; saves antigos compatíveis | E2: reordenar o catálogo com Dons de ação cedo |
+| D-58 | Catálogo com Devoção, **começando por cerca de 6 Dons excelentes** (efeito claro, impacto perceptível, sinergia com Bênçãos, retorno visual, critério de teste e de balanço); os 20 seguem como planejamento | E2-05 e E2-09 viram "conjunto inicial de 6" |
+| D-59, D-60 | Temas bíblicos com música e efeitos originais; Sentinela, Abrigo, Pastor, Rocha como proposta a validar. **Um Salmo completo** como prova de conceito, só depois de Dons e Bênçãos funcionarem juntos | E4-02 vira "1 Salmo" |
+| D-61 | Planejar a descida de 10 salas; as salas novas com variedade, eventos, escolhas e evolução; modos curtos preservados | E3 com aceite de variedade |
+| Outras | Sem equipamento, sem troca de arma, Emeth é a identidade, Elo fica (adaptado às Bênçãos), outros heróis e Fase 2 fora, sem cânone novo, sem Meshy nem serviço pago, nada de todos os sistemas de uma vez | |
+
+**Continuam pendentes** (o Daniel disse que não ficam aprovadas por tabela): D-48, D-49, D-51, D-52, D-53, D-55, D-62,
+D-63, os nomes de Dons, Devoção e Salmos e todo ponto de cânone. A tabela abaixo segue valendo para elas.
+
+### Abertas desta especificação (D-48 a D-63; detalhes em `docs/design/guardian_spec.md`; D-50, D-54, D-56 a D-61 decididas acima)
 
 | ID | Pergunta | Opções | Minha recomendação |
 |---|---|---|---|

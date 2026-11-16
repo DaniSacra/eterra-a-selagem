@@ -1,0 +1,1 @@
+RESULT { "time": 119.4, "hp": 99946, "level": 1, "room": 2, "gold": 15, "kills": 160, "spawned": 0, "best_combo": 60, "enemies": 2, "max_alive": 150, "boss_at": -1.0, "mode": "PLAY", "boss_hp": -1, "phase": 0, "boons": 1, "damage": 19692, "step_ms": 0.18, "step_ms_avg": 1.28, "step_ms_peak": 11.18, "fps": 1596.0, "boss": {  }, "

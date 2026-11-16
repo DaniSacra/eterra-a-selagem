@@ -1,0 +1,11 @@
+97307	assets/baked/statue.res
+3858357	assets/baked/priest.res
+3905990	assets/baked/runner.res
+3912411	assets/baked/guard.res
+4288759	assets/baked/archer.res
+4477834	assets/baked/knight.res
+4639081	assets/baked/skeleton.res
+5279842	assets/baked/priest_elder.res
+5910562	assets/baked/mage.res
+10343963	assets/baked/morvath.res
+46714106	assets/baked

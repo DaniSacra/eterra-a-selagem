@@ -1,0 +1,9 @@
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+PROBE window (1920, 1080) root (1920, 1080) render (2880.0, 1620.0) image (1920, 1080) scale 1.0 screen (1920, 1200)
+GPUPERF wait  start_frame 31 frame_ms [median 9.41 mean 9.48 p90 10.34] gpu_ms [median 5.63 mean 5.67 p90 5.76] cpu_render_ms [median 1.47 mean 1.48 p90 1.57] draw_calls 1032 primitives 1429742 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+PROBE window (1920, 1080) root (1920, 1080) render (2880.0, 1620.0) image (1920, 1080) scale 1.0 screen (1920, 1200)
+GPUPERF wait  start_frame 31 frame_ms [median 8.88 mean 8.91 p90 9.73] gpu_ms [median 5.87 mean 5.92 p90 6.19] cpu_render_ms [median 1.40 mean 1.40 p90 1.53] draw_calls 1032 primitives 1429728 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+PROBE window (1920, 1080) root (1920, 1080) render (2880.0, 1620.0) image (1920, 1080) scale 1.0 screen (1920, 1200)
+GPUPERF wait  start_frame 31 frame_ms [median 8.77 mean 8.79 p90 9.67] gpu_ms [median 5.85 mean 5.93 p90 6.28] cpu_render_ms [median 1.36 mean 1.37 p90 1.50] draw_calls 1032 primitives 1429779 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }

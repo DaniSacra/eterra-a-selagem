@@ -1,7 +1,9 @@
 class_name CrowdRenderer
 extends Node3D
-## Draws hundreds of characters from baked poses: one MultiMesh per (kind of enemy, animation, frame), plus one
-## MultiMesh of soft round shadows. Each frame: begin(), add() once per character, commit().
+## Draws hundreds of characters from baked poses: one MultiMesh per (kind of enemy, animation), plus one MultiMesh of
+## soft round shadows. Each frame: begin(), add() once per character, commit(). E1a (VX-04): the poses are a vertex
+## animation (BakedModel), and each character is drawn between two of them (its instance colour: pose, next pose,
+## share; crowd_pose.gdshaderinc), never jumping from one to the next (until then, one MultiMesh per frame).
 
 ## The common crowd is light bone with painted shading, as in the reference (docs/art/ref/arena_catacumbas_1672.png):
 ## each enemy in its own palette after Daniel's sheet (tools/make_palettes.gd), a little calmed, lit by a fixed key from the top left
@@ -51,6 +53,8 @@ const BAR_CROWD_FADE := 0.7
 const BAR_CROWD_HEIGHT := 0.75
 const OUTLINE := preload("res://assets/shaders/crowd_outline.gdshader")
 const FLOATS := 16  # 12 for the transform, 4 for the custom state
+## A posed figure's instance: 12 for the transform, 4 for the colour (which poses, how far between), 4 for the state.
+const POSED := 20
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
 const BAR := preload("res://assets/shaders/life_bar.gdshader")
 ## The thin life bar over enemies' heads (Hades II): meters wide per meter of the enemy's radius, meters tall,
@@ -76,15 +80,17 @@ class Batch:
 	var data := PackedFloat32Array()
 	var count := 0
 	var capacity := 0
-	## Floats per instance: FLOATS with the custom state, 12 without.
+	## Floats per instance: POSED with the poses and the custom state, FLOATS with the state only, 12 with neither.
 	var per := FLOATS
 
-## One animation of one kind of enemy, looked up once: its batches (one per frame, made when first drawn) and its
-## timing (BakedModel.frame_at's numbers), so add() costs no dictionary walk per character.
+## One animation of one kind of enemy, looked up once: its batch (made when first drawn) and its timing
+## (BakedModel.blend_at's numbers), so add() costs no dictionary walk per character.
 class Clip:
-	var batches: Array[Batch] = []
-	var frames: Array = []
-	var fps := 10.0
+	var batch: Batch
+	## Row of its first pose in the model's pose images, how many poses, poses a second, and whether it loops.
+	var first := 0
+	var frames := 0
+	var rate := 10.0
 	var loops := false
 
 ## What drawing one kind of enemy needs (render() asks for it for each of hundreds of characters every frame).
@@ -96,6 +102,9 @@ class Kind:
 	## Seconds of the attack clip, and whether the figure has a braced pose.
 	var attack_time := 0.0
 	var has_brace := false
+	## Meters a second the floor runs under its planted foot when the walk plays at its own pace, at size 1
+	## (BakedModel.ground_speed; 0: not measured, Horde.walk_rate falls back to its old pace).
+	var ground := 0.0
 
 ## Visual layers of everything drawn here (torches skip the crowd's layer).
 var layers := 1
@@ -173,12 +182,14 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"ink", INK)
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
 	mat.set_shader_parameter(&"rim_power", d.rim * (PAINT_RIM if baked.painted else 1.0))
+	_set_poses(mat, baked)
 	if d.rim > 0.0:
 		var edge := ShaderMaterial.new()
 		edge.shader = OUTLINE
 		edge.set_shader_parameter(&"color", OUTLINE_COLOR)
 		edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
 		edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
+		_set_poses(edge, baked)
 		mat.next_pass = edge
 	_materials[d.id] = mat
 	var kind := Kind.new()
@@ -186,7 +197,17 @@ func register(d: EnemyDef) -> void:
 	kind.material = mat
 	kind.attack_time = baked.duration(&"attack")
 	kind.has_brace = baked.frame_count(&"brace") > 0
+	kind.ground = float(baked.ground_speed.get(&"walk", 0.0))
 	_kinds[d.id] = kind
+
+
+## The model's poses on a material of the crowd (crowd_pose.gdshaderinc).
+static func _set_poses(mat: ShaderMaterial, baked: BakedModel) -> void:
+	var tex := baked.pose_textures()
+	mat.set_shader_parameter(&"pose_positions", tex[0])
+	mat.set_shader_parameter(&"pose_normals", tex[1])
+	mat.set_shader_parameter(&"pose_vertices", baked.vertices)
+	mat.set_shader_parameter(&"pose_width", BakedModel.WIDTH)
 
 
 ## The cached look of a registered kind of enemy (register() first).
@@ -204,9 +225,9 @@ func _clip(k: Kind, anim: StringName) -> Clip:
 		c = k.clips.get(shown) if shown != anim else null
 		if c == null:
 			c = Clip.new()
-			c.frames = m.anims[shown]
-			c.batches.resize(c.frames.size())
-			c.fps = float(m.fps.get(shown, 10.0))
+			c.first = int(m.first.get(shown, 0))
+			c.frames = m.frame_count(shown)
+			c.rate = m.pose_rate(shown)
 			c.loops = m.loops.get(shown, false)
 			k.clips[shown] = c
 		k.clips[anim] = c
@@ -234,17 +255,26 @@ func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, stat
 ## add() with the kind already looked up (Horde.render: once per character, not once per question).
 func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0, lean := 0.0) -> void:
 	var c := _clip(k, anim)
-	# BakedModel.frame_at
-	var n := c.batches.size()
+	# BakedModel.blend_at
+	var n := c.frames
 	if n == 0:
-		# a clip with no frames: draw nothing rather than `i % 0`, which crashes an exported game
+		# a clip with no poses: draw nothing rather than `% 0`, which crashes an exported game
 		return
-	var i := int(t * c.fps)
-	i = i % n if c.loops else mini(i, n - 1)
-	var b := c.batches[i]
+	var p := t * c.rate
+	var a := 0
+	var next := 0
+	if c.loops:
+		p = fposmod(p, float(n))
+		a = mini(int(p), n - 1)
+		next = (a + 1) % n
+	else:
+		p = clampf(p, 0.0, float(n - 1))
+		a = mini(int(p), n - 1)
+		next = mini(a + 1, n - 1)
+	var b := c.batch
 	if b == null:
-		b = _new_batch(c.frames[i], k.material, true)
-		c.batches[i] = b
+		b = _new_batch(k.model.mesh, k.material, true, true)
+		c.batch = b
 	if b.count == 0:
 		_used.append(b)
 	var basis := Basis(Vector3.UP, yaw)
@@ -253,7 +283,7 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 	if lean != 0.0:
 		basis = basis * Basis(Vector3.BACK, lean)
 	basis = basis.scaled(squash * d.size)
-	_put(b, basis.x, basis.y, basis.z, pos, state)
+	_put(b, basis.x, basis.y, basis.z, pos, state, Color(c.first + a, c.first + next, p - a, 1.0))
 	if state.a < 0.5:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
 		_put(_shadow, Vector3(r, 0, 0), Vector3.UP, Vector3(0, 0, r), Vector3(pos.x, 0.03, pos.z), Color())
@@ -326,8 +356,9 @@ func commit() -> void:
 	_shown.assign(_used)
 
 
-## One instance: the columns of its basis, where it stands, its state (custom data, when the batch has it).
-func _put(b: Batch, x: Vector3, y: Vector3, z: Vector3, at: Vector3, state: Color) -> void:
+## One instance: the columns of its basis, where it stands, its state (custom data, when the batch has it) and its
+## poses (the colour, when the batch has it).
+func _put(b: Batch, x: Vector3, y: Vector3, z: Vector3, at: Vector3, state: Color, poses := Color()) -> void:
 	if b.count >= b.capacity:
 		b.capacity = maxi(32, b.capacity * 2)
 		b.data.resize(b.capacity * b.per)
@@ -337,19 +368,24 @@ func _put(b: Batch, x: Vector3, y: Vector3, z: Vector3, at: Vector3, state: Colo
 	d[o] = x.x; d[o + 1] = y.x; d[o + 2] = z.x; d[o + 3] = at.x
 	d[o + 4] = x.y; d[o + 5] = y.y; d[o + 6] = z.y; d[o + 7] = at.y
 	d[o + 8] = x.z; d[o + 9] = y.z; d[o + 10] = z.z; d[o + 11] = at.z
-	if b.per == FLOATS:
+	if b.per == POSED:
+		d[o + 12] = poses.r; d[o + 13] = poses.g; d[o + 14] = poses.b; d[o + 15] = poses.a
+		d[o + 16] = state.r; d[o + 17] = state.g; d[o + 18] = state.b; d[o + 19] = state.a
+	elif b.per == FLOATS:
 		d[o + 12] = state.r; d[o + 13] = state.g; d[o + 14] = state.b; d[o + 15] = state.a
 	b.count += 1
 
 
-func _new_batch(mesh: Mesh, mat: Material, custom: bool) -> Batch:
+## colors: the instances carry their poses (a posed figure of the crowd).
+func _new_batch(mesh: Mesh, mat: Material, custom: bool, colors := false) -> Batch:
 	var b := Batch.new()
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = colors
 	mm.use_custom_data = custom
 	mm.mesh = mesh
 	b.mm = mm
-	b.per = FLOATS if custom else 12
+	b.per = (POSED if colors else FLOATS) if custom else 12
 	b.mmi = MultiMeshInstance3D.new()
 	b.mmi.multimesh = mm
 	if mat:

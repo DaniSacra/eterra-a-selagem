@@ -1190,7 +1190,7 @@ func _shot() -> void:
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(Dev.arg("shot"))
 	_trace_cam_cut(true)
-	print("RESULT ", result())
+	print(result_line())
 	get_tree().quit()
 
 
@@ -1201,7 +1201,7 @@ func _frames() -> void:
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("%s_%02d.png" % [Dev.arg("frames"), i])
 		await get_tree().create_timer(Dev.num("every", 0.1)).timeout
-	print("RESULT ", result())
+	print(result_line())
 	get_tree().quit()
 
 
@@ -1327,6 +1327,12 @@ func result() -> Dictionary:
 		"fountain_used": room_tally.fountain_used}
 
 
+## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a
+## Dictionary its StringName keys came out as &"scythe", and no tool could read the line).
+func result_line() -> String:
+	return "RESULT " + JSON.stringify(result())
+
+
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.
 func _smoke() -> void:
 	var limit := Dev.num("smoke", 60.0)
@@ -1334,5 +1340,5 @@ func _smoke() -> void:
 	while t < limit and mode != Mode.OVER and not (mode == Mode.ENDING and boss == null and _screen != null):
 		await get_tree().process_frame
 		t += get_process_delta_time()
-	print("RESULT ", result())
+	print(result_line())
 	get_tree().quit()

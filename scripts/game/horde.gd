@@ -223,6 +223,8 @@ func _timers(e: Enemy, dt: float) -> void:
 	e.cooldown -= dt
 	e.flash_t -= dt
 	e.hurt_t -= dt
+	if e.recoil_t >= 0.0:
+		e.recoil_t += dt
 	e.stun_t = maxf(0.0, e.stun_t - dt)
 	e.air_t = maxf(0.0, e.air_t - dt)
 	e.blind_t = maxf(0.0, e.blind_t - dt)
@@ -246,6 +248,15 @@ func _timers(e: Enemy, dt: float) -> void:
 ## How fast a walking enemy's clips play (its pace; a boss posing a clip divides by it: Boss._pose).
 func clip_rate(e: Enemy) -> float:
 	return clampf(_speed(e) / 2.3, 0.6, 1.6)
+
+
+## How fast its walk plays (E1a-2, VX-05): as fast as the floor runs under the planted foot of the baked walk at its
+## size (CrowdRenderer.Kind.ground), so the foot on the floor stays put; the old pace for a figure not measured or
+## one that does not move.
+static func walk_rate(speed: float, ground: float, size: float) -> float:
+	if ground <= 0.0 or speed <= 0.0:
+		return clampf(speed / 2.3, 0.6, 1.6)
+	return speed / (ground * maxf(size, 0.01))
 
 
 func _speed(e: Enemy) -> float:
@@ -819,6 +830,10 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		e.flash_power = 1.0 if big else WEAK_FLASH
 		if e.def.behavior == EnemyDef.Behavior.BOSS:
 			e.flash_power = minf(e.flash_power, BOSS_FLASH)
+		if from_dir != Vector2.ZERO:
+			# only drawn: the body jolts back from the blow and returns (HitRecoil)
+			e.recoil_t = 0.0
+			e.recoil_dir = from_dir.normalized()
 	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if knockback > 0.0:
@@ -909,7 +924,7 @@ func render() -> void:
 			elif e.stun_t > 0.0:
 				anim = &"idle"
 			else:
-				t = e.anim_t * clip_rate(e)
+				t = e.anim_t * (walk_rate(_speed(e), kind.ground, d.size) if anim == &"walk" else clip_rate(e))
 				if d.sway > 0.0 and e.frozen_t <= 0.0:
 					# unsteady: the trunk rocks from side to side and the stride is uneven (the place does not change)
 					lean = deg_to_rad(d.sway) * sin(TAU * (SWAY_HZ * e.anim_t + e.look))
@@ -937,6 +952,8 @@ func render() -> void:
 		# all when its armor took it
 		var give := 0.0 if e.absorbed else k * (HEAVY_SQUASH if d.heavy else 1.0)
 		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
+		var back := HitRecoil.offset(e.recoil_t, d.heavy)
+		at += Vector3(e.recoil_dir.x, 0.0, e.recoil_dir.y) * back
 		renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear

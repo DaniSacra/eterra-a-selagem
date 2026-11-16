@@ -7,6 +7,15 @@ extends RefCounted
 ## Every mesh of the model (skinned parts, attached weapons) posed as it is right now, merged into one surface,
 ## in the space of the model's root.
 static func snapshot(root: Node3D, skeleton: Skeleton3D, extra: Array[Dictionary] = []) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	# 16-bit positions, normals and UVs: the baked crowd is hundreds of frames, this halves it on disk and in memory
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, pose_arrays(root, skeleton, extra), [], {}, Mesh.ARRAY_FLAG_COMPRESS_ATTRIBUTES)
+	return mesh
+
+
+## The posed figure as mesh arrays (vertices, normals, UVs, indices), at full precision: what snapshot() makes a mesh
+## of, and what BakedModel.pack keeps of every pose.
+static func pose_arrays(root: Node3D, skeleton: Skeleton3D, extra: Array[Dictionary] = []) -> Array:
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	var uvs := PackedVector2Array()
@@ -37,10 +46,7 @@ static func snapshot(root: Node3D, skeleton: Skeleton3D, extra: Array[Dictionary
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
-	var mesh := ArrayMesh.new()
-	# 16-bit positions, normals and UVs: the baked crowd is hundreds of frames, this halves it on disk and in memory
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, Mesh.ARRAY_FLAG_COMPRESS_ATTRIBUTES)
-	return mesh
+	return arrays
 
 
 ## Transform of a node relative to one of its ancestors, without needing the scene tree.

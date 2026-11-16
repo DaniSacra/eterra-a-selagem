@@ -1,0 +1,18 @@
+Mon Nov 16 19:39:04 -03 2026
+BatteryStatus=2 Charge=89%
+PowerOnline=True
+== base run 1
+GPUPERF wait  start_frame 31 frame_ms [median 7.60 mean 7.61 p90 8.24] gpu_ms [median 6.31 mean 6.33 p90 6.48] cpu_render_ms [median 1.21 mean 1.21 p90 1.29] draw_calls 1032 primitives 1429797 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+== after run 1
+GPUPERF wait  start_frame 31 frame_ms [median 7.25 mean 7.30 p90 7.92] gpu_ms [median 6.72 mean 6.70 p90 7.03] cpu_render_ms [median 1.03 mean 1.03 p90 1.12] draw_calls 994 primitives 1429785 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+== base run 2
+GPUPERF wait  start_frame 31 frame_ms [median 7.09 mean 7.17 p90 7.97] gpu_ms [median 6.36 mean 6.36 p90 6.61] cpu_render_ms [median 1.08 mean 1.10 p90 1.23] draw_calls 1032 primitives 1429837 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+== after run 2
+GPUPERF wait  start_frame 31 frame_ms [median 6.86 mean 7.01 p90 7.68] gpu_ms [median 6.56 mean 6.58 p90 6.82] cpu_render_ms [median 0.92 mean 0.95 p90 1.11] draw_calls 994 primitives 1429742 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+== base run 3
+GPUPERF wait  start_frame 31 frame_ms [median 7.79 mean 7.84 p90 8.61] gpu_ms [median 6.31 mean 6.37 p90 6.64] cpu_render_ms [median 1.23 mean 1.23 p90 1.33] draw_calls 1032 primitives 1429614 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+== after run 3
+GPUPERF wait  start_frame 31 frame_ms [median 7.82 mean 7.92 p90 8.69] gpu_ms [median 6.60 mean 6.59 p90 6.88] cpu_render_ms [median 1.11 mean 1.11 p90 1.20] draw_calls 994 primitives 1429669 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+BatteryStatus=2 Charge=92%
+PowerOnline=True
+Mon Nov 16 19:43:36 -03 2026

@@ -67,7 +67,7 @@ func test_the_figures_are_the_painted_models_made_light() -> void:
 		var baked: BakedModel = load("res://assets/baked/%s.res" % id)
 		assert_true(baked.painted, "%s is a painted figure" % id)
 		assert_not_null(baked.albedo, "%s carries its own texture" % id)
-		var idle: Mesh = baked.anims.idle[0]
+		var idle: Mesh = baked.mesh
 		var triangles := (idle.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3
 		assert_between(triangles, 2000, 6000, "%s: light enough for a crowd of hundreds (%d)" % [id, triangles])
 		assert_almost_eq(baked.height, float(STANDING[id]), 0.011, "%s stands as tall as before" % id)

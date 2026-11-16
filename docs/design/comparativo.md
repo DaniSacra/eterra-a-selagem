@@ -17,7 +17,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | | Hades | Hades II | Ember & Blade | A Selagem |
 |---|---|---|---|---|
 | Gênero | roguelite de ação, salas | roguelite de ação, salas | ação em horda, combos | roguelite de ação em salas, com poucos inimigos de papel claro (não é survivor de horda; o Daniel, 2026-11-15) |
-| Herói | Zagreus foge do submundo | Melinoë desce (ou sobe) para derrotar Cronos | (não estudado) | um paladino (o Explorador) desce às catacumbas de Valmor para selar Morvath |
+| Herói | Zagreus foge do submundo | Melinoë desce (ou sobe) para derrotar Cronos | (não estudado) | o Guerreiro (modelo `hero_explorer`; título pendente, D-64) desce às catacumbas de Valmor para selar Morvath |
 | Câmera | isométrica | isométrica | alta e inclinada | inclinada 30°, girada 35°, campo de visão 24, distância 54 (`Feel`) |
 | Visual | pintado, colorido | pintado, colorido | escuro, frio, efeitos brancos | o do Ember & Blade, com a arena da pintura do Daniel |
 

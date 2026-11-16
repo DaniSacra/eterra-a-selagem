@@ -1,0 +1,783 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+---  GUT  ---
+[1m[INFO]:  [0musing [/home/dani/.local/share/EterraASelagem] for temporary output.
+Godot version:  4.7.2
+GUT version:  9.7.1
+[4m
+res://tests/test_arena_layout.gd
+[0m* test_stage_rooms_are_the_catacomb_hall
+* test_hero_walks_in_on_free_floor
+* test_doors_match_the_rooms
+* test_every_door_is_reachable_and_leaves
+* test_door_zones_do_not_overlap
+* test_middle_of_the_room_is_clear
+* test_resolve_keeps_bodies_on_the_floor
+* test_enemies_rise_on_free_floor_the_hero_reaches
+* test_morvath_rises_in_reach
+* test_push_out_of_box_leaves_by_the_nearest_side
+* test_a_box_at_the_edge_never_pushes_over_it
+* test_a_pillar_and_a_box_at_the_edge_settle
+* test_the_portal_spill_follows_the_portal
+[1m13/13 passed.
+[0m[4m
+res://tests/test_arenas.gd
+[0m* test_the_stage_has_the_three_arenas_and_the_hall_opens
+* test_every_door_and_spawn_zone_is_reached_and_no_island_is_cut_off
+* test_spawns_rise_far_from_him_on_reached_floor
+* test_a_dash_never_crosses_the_abyss
+* test_a_body_pushed_toward_the_abyss_stops_at_the_edge
+* test_cover_stops_shots_and_low_walls_only_the_creeping_vine
+* test_a_shot_dies_on_stone
+* test_no_dead_end_traps_a_cornered_paladin
+* test_the_grid_and_the_field_stay_cheap
+    crypt: field and 8 bodies 0.330 ms per step, worst 1.084 ms
+    rift: field and 8 bodies 0.411 ms per step, worst 1.166 ms
+    garden: field and 8 bodies 0.381 ms per step, worst 1.100 ms
+* test_resolve_pushes_out_of_every_piece_even_from_its_middle
+* test_no_one_raised_stands_in_stone
+* test_surrounded_in_the_narrowest_ways_the_dash_gets_out
+    crypt 0: 16 of 16 dodges out of the narrowest ways ["(9.75, -8.15) 2.9 m", "(0.25, -2.65) 3.0 m", "(-3.25, 9.85) 3.1 m", "(-6.25, 9.85) 3.1 m"]
+    crypt 1: 16 of 16 dodges out of the narrowest ways ["(9.25, -8.65) 2.9 m", "(-8.25, 9.85) 3.1 m", "(-5.25, 9.85) 3.1 m", "(-2.25, 9.85) 3.1 m"]
+    rift 0: 16 of 16 dodges out of the narrowest ways ["(1.75, -7.65) 3.1 m", "(-1.25, -7.65) 3.1 m", "(-4.25, -7.65) 3.1 m", "(0.75, 14.35) 3.1 m"]
+    rift 1: 16 of 16 dodges out of the narrowest ways ["(-20.25, -2.65) 2.7 m", "(-14.25, -13.65) 2.9 m", "(-6.25, 14.35) 3.1 m", "(-9.25, 14.35) 3.1 m"]
+    garden 0: 16 of 16 dodges out of the narrowest ways ["(-16.25, -7.65) 2.5 m", "(16.25, 4.85) 2.6 m", "(-3.25, 13.35) 3.1 m", "(-0.25, 13.35) 3.1 m"]
+    garden 1: 16 of 16 dodges out of the narrowest ways ["(-15.75, 3.85) 2.9 m", "(-16.25, -2.65) 3.1 m", "(1.75, 13.35) 3.1 m", "(-1.25, 13.35) 3.1 m"]
+[1m12/12 passed.
+[0m[4m
+res://tests/test_audio.gd
+[0m* test_tone_has_the_right_length_and_stays_in_range
+* test_mix_adds_at_an_offset_and_grows
+* test_stream_is_16_bit_and_loops_when_asked
+* test_notes_follow_equal_temperament
+* test_every_sound_the_game_asks_for_has_a_recipe
+* test_music_tracks_are_well_formed
+[1m6/6 passed.
+[0m[4m
+res://tests/test_body_block.gd
+[0m* test_hold_stops_at_the_edge_and_never_deeper_than_allowed
+* test_walking_into_an_enemy_stops_at_its_edge_and_it_does_not_move
+* test_walking_slides_along_an_enemy
+* test_wedged_between_two_enemies_he_stays_put_and_walks_back_out
+* test_an_enemy_he_walks_through
+* test_an_enemy_walking_into_him_stops_at_his_edge
+* test_an_enemy_left_inside_him_works_out_without_a_snap
+* test_an_enemy_of_a_kind_that_does_not_block_walks_into_him
+* test_every_kind_blocks_today
+* test_in_game_walking_stops_at_an_enemy_and_does_not_push_it
+* test_in_game_the_dash_goes_through_an_enemy
+* test_in_game_a_kind_that_does_not_block_is_walked_through
+* test_in_game_surrounded_walking_is_held_but_the_dash_always_gets_out
+* test_in_game_a_pressing_crowd_neither_enters_him_nor_shoves_him
+* test_left_inside_an_enemy_he_never_goes_deeper_and_walks_out
+[1m15/15 passed.
+[0m[4m
+res://tests/test_boon_cards.gd
+[0m* test_the_three_painted_gifts_have_their_medallion
+* test_the_medallion_follows_the_gift_in_any_position
+* test_an_elo_hangs_between_its_two_sources
+* test_a_gift_without_a_painting_keeps_its_drawn_icon
+* test_the_rarity_edge_does_not_change_with_focus
+* test_long_text_and_replacement_fit_the_card
+* test_rest_card_heals_with_null
+* test_a_press_right_after_opening_picks_nothing
+[1m8/8 passed.
+[0m[4m
+res://tests/test_boons.gd
+[0m* test_catalog_has_four_families_and_the_combinations
+* test_every_gift_has_three_levels_text_and_an_icon
+* test_combinations_join_two_different_families
+* test_levels_go_up_to_the_maximum_and_stop
+* test_stat_follows_the_level
+* test_tagged_modifiers_only_touch_their_moves
+* test_gifts_change_moves_of_the_tree_not_new_attacks
+* test_skill_gifts_cast_on_their_own
+* test_bonuses_from_different_gifts_add_up
+* test_offers_are_three_different_gifts
+* test_combinations_are_not_offered_before_both_gifts_are_owned
+* test_combination_shows_up_once_both_gifts_are_owned
+* test_maxed_gifts_leave_the_draw_and_the_draw_can_run_dry
+* test_same_seed_same_offers
+* test_values_are_written_the_brazilian_way
+* test_skill_values_grow_with_level
+* test_a_gift_on_a_taken_action_replaces_the_old_one
+* test_free_gifts_never_replace
+* test_rarity_multiplies_marked_numbers_and_keeps_the_best
+* test_rarity_draw_is_mostly_common_never_heroic
+* test_a_guardian_gift_is_never_common
+* test_grow_offers_only_owned_gifts_that_can_grow
+* test_each_action_has_a_gift_of_every_family
+[1m23/23 passed.
+[0m[4m
+res://tests/test_boss.gd
+[0m* test_four_phases_at_66_33_and_15_percent
+* test_each_phase_begins_once_and_in_order
+* test_morvath_keeps_hades_life_and_his_numbers_are_data
+* test_morvath_is_an_undead_heavy_boss_with_art_for_every_attack
+* test_ring_spreads_bullets_evenly
+* test_fan_is_centred_on_the_aim
+* test_the_aim_leads_a_moving_paladin_only_partly
+* test_the_blades_leave_an_opening_and_can_be_walked_out_of
+* test_the_six_souls_never_close_every_way_out
+* test_eruptions_always_leave_a_way_out
+* test_the_scythe_can_be_walked_out_of
+* test_the_director_always_has_something_to_choose
+* test_the_director_only_uses_what_the_phase_allows
+* test_the_director_reads_where_the_paladin_is
+* test_the_director_does_not_repeat_too_much_and_keeps_cooldowns
+* test_the_ritual_ends_by_time_or_when_its_dead_fall
+* test_summons_never_pass_their_ceiling
+* test_the_curse_slows_locks_ends_and_leaves_a_moment_of_immunity
+* test_morvath_is_hurt_everywhere_but_behind_the_ritual_shield
+* test_the_ritual_ends_by_itself_after_its_time
+* test_the_curse_locks_the_special_but_not_the_attack
+* test_nothing_of_his_outlives_him
+[1m22/22 passed.
+[0m[4m
+res://tests/test_boss_chamber.gd
+[0m* test_morvath_fights_in_the_round_chamber_and_the_rooms_stay_the_hall
+* test_the_arena_is_the_circle_and_nothing_else
+* test_walking_into_the_edge_slides_along_it
+* test_the_dodge_stops_at_the_edge
+* test_a_siege_against_the_edge_never_holds_him
+* test_an_open_edge_lets_him_run_around_the_chamber
+* test_the_camera_keeps_to_its_point_and_shows_him_everywhere
+* test_the_game_camera_looks_at_the_chamber_point
+* test_his_lanes_end_at_the_edge_and_his_crescents_come_undone_past_it
+* test_he_opens_the_curse_and_the_storm_from_the_middle
+* test_the_dash_only_with_room_and_its_lane_cut
+* test_the_storm_lanes_show_their_order_of_leaving
+* test_the_chamber_air_goes_back_to_the_hall_air_on_the_next_room
+[1m13/13 passed.
+[0m[4m
+res://tests/test_boss_exits.gd
+[0m* test_the_floor_is_a_circle_of_eleven_to_thirteen_meters
+* test_the_scythe_has_a_way_out_everywhere
+* test_the_blades_have_a_way_out_everywhere
+* test_the_dash_is_cut_at_the_edge_and_has_a_way_out
+* test_the_eruptions_have_a_way_out_both_times
+* test_the_storm_has_a_way_out_of_both_waves
+* test_the_curse_can_be_walked_or_dodged_away_from
+* after_all
+    scythe: 68 pairs walk out, 0 need the dodge
+    blades: 262 pairs walk out, 0 need the dodge
+    dash: 89 pairs walk out, 0 need the dodge
+    eruptions: 852 pairs walk out, 0 need the dodge
+    storm 1: 284 pairs walk out, 0 need the dodge
+    storm 2: 284 pairs walk out, 0 need the dodge
+    curse: 132 pairs walk out, 0 need the dodge
+[1m7/7 passed.
+[0m[4m
+res://tests/test_boss_fall.gd
+[0m* test_the_killing_blow_leaves_no_flash_nor_burn_on_him
+* test_his_body_darkens_over_the_ending
+* test_a_fallen_boss_is_drawn_without_the_flash_of_the_fallen
+* test_a_column_falling_on_him_is_faint
+* test_a_strong_blow_never_turns_him_ivory
+[1m5/5 passed.
+[0m[4m
+res://tests/test_boss_refine.gd
+[0m* test_reinforcements_count_those_still_rising_and_stop_at_twenty
+* test_the_dead_rise_one_by_one
+* test_the_ritual_is_not_over_while_its_dead_still_rise
+* test_the_storm_leaves_in_turn_nearest_the_aim_first
+* test_each_phase_opens_on_its_own_pattern
+* test_combinations_come_only_in_the_last_phase_and_never_repeat
+* test_every_combination_leaves_a_way_out_of_both_blows
+* test_a_cursed_paladin_can_still_walk_out_of_every_warning
+* test_phase_times_add_up
+* test_the_scythe_and_the_dash_are_drawn_only_over_what_they_hurt
+* test_a_crescent_trail_stays_inside_its_hit
+* test_in_the_last_phase_combinations_never_stack_two_attacks
+* test_the_storm_crescents_leave_one_at_a_time
+* test_recoveries_are_windows_and_blows_in_them_count
+* test_what_hurt_the_paladin_is_counted_by_attack
+* test_the_ending_is_short_and_keeps_control_then_signals
+* test_his_dead_rise_out_of_summoning_circles_with_one_column_each
+* test_a_summoning_ended_early_raises_no_column
+* test_the_bot_answers_a_danger_only_after_its_reaction_time
+* test_blows_on_his_ward_neither_flash_nor_burn_him
+* test_fire_on_the_ground_does_not_take_hold_through_his_ward
+[1m21/21 passed.
+[0m[4m
+res://tests/test_bot_kite.gd
+[0m* test_it_keeps_away_its_share_of_the_time
+* test_keeping_away_draws_his_dash_in_a_real_fight
+* test_the_paladins_light_stays_under_the_glow_and_behind_him
+[1m3/3 passed.
+[0m[4m
+res://tests/test_burn_flash.gd
+[0m* test_a_burning_boss_does_not_flash_on_each_tick
+* test_a_burning_skeleton_does_not_flash_on_each_tick_but_a_blow_does
+* test_the_outline_never_flashes_white
+[1m3/3 passed.
+[0m[4m
+res://tests/test_cam_frame.gd
+[0m* test_what_the_camera_looks_at_is_the_middle_of_the_screen
+* test_screen_directions_follow_the_turned_camera
+* test_screen_of_matches_a_real_camera
+* test_the_paladin_is_never_near_an_edge_of_the_screen
+* test_the_camera_stays_put_while_he_is_inside_the_safe_frame
+* test_the_camera_moves_only_as_far_as_needed
+* test_margins_follow_the_distance_of_the_camera
+[1m7/7 passed.
+[0m[4m
+res://tests/test_chamber_look.gd
+[0m* test_footprints_stay_outside_the_floor
+* test_nothing_stands_on_the_walkable_circle
+* test_spawns_and_camera_inside
+* test_seal_timing_matches_boss
+* test_every_state_gives_shader_values
+* test_states_by_name_and_timeline
+* test_cues_drive_the_seal
+* test_point_toward_counts_round_the_screen
+[1m8/8 passed.
+[0m[4m
+res://tests/test_combo.gd
+[0m* test_the_named_moves_exist
+* test_three_attacks_end_in_the_spin
+* test_attack_damage_and_timing_follow_hades
+* test_the_special_strikes_only_with_its_bolt
+* test_the_special_can_follow_any_swing
+* test_charge_input_bursts
+* test_the_omega_attack_strikes_both_ways
+* test_a_buffered_omega_starts_after_the_swing
+* test_dodge_opens_the_dodge_moves
+* test_input_during_the_roll_is_buffered_until_it_ends
+* test_dodge_window_closes
+* test_buffer_keeps_an_early_press_for_150_ms
+* test_buffer_keeps_a_press_from_the_start_of_the_swing
+* test_buffer_drops_a_press_that_waits_in_the_open
+* test_chain_window_is_per_node
+* test_chain_drops_after_the_window
+* test_a_fourth_attack_starts_the_chain_again
+* test_a_dodge_cuts_the_windup_and_the_blow_never_lands
+* test_reset_drops_the_chain_and_the_buffer
+* test_tree_data_is_sane
+* test_a_new_combo_needs_only_data
+* test_move_scale_follows_the_kind_of_move
+* test_a_move_can_set_its_own_move_scale
+* test_the_drawn_arc_is_exactly_what_the_blow_reaches
+* test_only_finishers_glint
+* test_impact_frame_only_for_omegas_and_phase_breaks
+* test_only_omega_moves_cost_magick
+* test_holding_light_offers_the_omega_attack
+* test_sweep_follows_the_arm
+* test_feet_planted_while_swinging_free_after_the_blow
+* test_lunge_carries_to_the_enemy_ahead
+* test_blade_lands_with_the_blow
+[1m32/32 passed.
+[0m[4m
+res://tests/test_comfort_ui.gd
+[0m* test_a_cursed_blow_tints_violet_weakly_and_briefly_with_no_split
+* test_a_plain_blow_tints_the_edges_red_shortly_small_ones_less
+* test_comfort_options_are_on_by_default_and_kept_from_older_saves
+* test_slow_motion_off_keeps_the_world_at_full_speed
+* test_colour_split_off_never_splits
+* test_each_comfort_switch_is_a_button_that_flips_its_option
+* test_the_run_reads_the_comfort_options
+* test_ritual_seals_count_down_and_the_fallen_one_flashes
+* test_defeat_names_what_struck_the_last_blow
+* test_defeat_without_a_cause_shows_no_line
+* test_no_new_best_without_a_save
+[1m11/11 passed.
+[0m[4m
+res://tests/test_curse_hud.gd
+[0m* test_past_group_from_a_frames_plain_hits_join_one_total
+* test_up_to_group_from_hits_keep_their_own_numbers
+* test_a_new_frame_counts_again_and_the_total_keeps_counting_briefly
+* test_finishers_are_never_summed
+* test_without_a_frame_nothing_is_summed
+* test_numbers_keep_clear_of_the_paladins_head
+* test_curse_runes_stay_between_waist_and_chest_around_him
+* test_curse_aura_eases_in_and_out
+* test_emeth_corruption_is_a_share
+* test_badge_shows_while_cursed_and_fades_after
+* test_locked_special_rings_once_when_the_lock_lifts
+* test_boss_marks_light_as_his_life_passes_them_and_flash_once
+* test_a_fight_joined_late_does_not_flash
+* test_phase_text_splits_into_name_and_hint
+* test_victory_screen_focuses_continue_and_both_ways_out_work
+* test_texts_have_no_dash
+[1m16/16 passed.
+[0m[4m
+res://tests/test_cycle10_look.gd
+[0m* test_the_shield_specks_stay_small_and_under_the_glow
+* test_his_corrupted_emerald_is_colder_and_darker_than_the_emeth
+* test_the_curtain_rises_once_around_him_and_is_gone
+* test_enemy_shots_keep_their_hue_under_the_glow
+* test_the_burn_is_embers_not_a_gold_body
+* test_a_mood_turns_the_air_and_fires_and_gives_them_back
+* test_a_room_that_leaves_in_its_mood_gives_the_world_back
+[1m7/7 passed.
+[0m[4m
+res://tests/test_cycle12c.gd
+[0m* test_every_column_stops_under_the_glow_by_default
+* test_no_script_raises_a_column_past_the_cap
+* test_the_reward_column_on_the_paladin_is_faint_and_far_from_him_full
+* test_a_column_in_front_of_him_on_the_screen_is_faint
+* test_the_gift_taken_the_fountain_and_a_falling_gift_stay_under_the_cap
+* test_morvath_walks_in_without_a_column_over_him
+* test_door_gems_keep_their_hue_under_the_glow
+* test_the_gems_drawn_in_a_room_stay_under_the_glow
+* test_a_room_counts_its_variant_gold_gifts_dodges_blows_and_shots
+* test_the_run_keeps_each_blow_in_context_up_to_sixty
+* test_the_run_keeps_the_gifts_at_morvath_the_shop_and_the_fountain
+* test_the_log_says_who_played
+* test_in_game_shots_and_blows_are_logged
+* test_a_boss_crescent_counts_the_lane_marked_before_it
+* test_the_master_bus_ends_in_a_limiter_at_minus_one_db
+* test_the_camera_target_never_jumps_past_its_speed
+* test_the_jump_trace_keeps_the_largest_and_starts_over
+* test_a_new_room_frames_the_paladin_at_once
+* test_in_game_walking_and_dashing_the_target_moves_under_half_a_meter_a_frame
+CAM_TRACE room 1 hall: max jump 0.400 m over 90 frames at { "t": 0.0, "room": 1, "arena": "hall", "hero": (-10.31563, 18.1), "mode": "PLAY", "target": (-9.307296, 8.515586) }
+CAM_TRACE run: max jump 0.400 m at { "t": 0.0, "room": 1, "arena": "hall", "hero": (-10.31563, 18.1), "mode": "PLAY", "target": (-9.307296, 8.515586) }
+* test_winning_a_room_clears_the_warnings_on_the_floor
+[1m20/20 passed.
+[0m[4m
+res://tests/test_damage.gd
+[0m* test_plain_hit_is_the_base_damage
+* test_gift_bonus_adds_a_percentage
+* test_combo_adds_one_percent_per_hit_up_to_the_cap
+* test_launched_enemies_take_half_again
+* test_frozen_enemies_shatter_for_extra
+* test_light_doubles_against_the_undead_only
+* test_everything_stacks_and_never_drops_below_one
+* test_spatial_hash_buckets_by_cell_and_clears
+* test_armor_takes_the_blow_and_the_breaking_blow_does_not_spill
+* test_magick_is_spent_only_when_there_is_enough
+[1m10/10 passed.
+[0m[4m
+res://tests/test_descent.gd
+[0m* test_seven_rooms_from_the_hall_to_morvath
+* test_every_arena_and_variant_comes_up
+* test_the_same_seed_gives_the_same_descent
+* test_each_arena_holds_its_ceiling_shooters_and_roles
+* test_the_rooms_are_counted_for_the_human_tests
+* test_the_result_and_the_arena_name
+[1m6/6 passed.
+[0m[4m
+res://tests/test_elo.gd
+[0m* test_sources_of_an_elo_are_its_two_gifts_in_order
+* test_every_elo_has_two_sources
+* test_a_plain_gift_has_no_sources
+* test_new_elos_lists_each_formed_elo_until_it_is_seen
+* test_elo_text_names_both_gifts_without_dash
+[1m5/5 passed.
+[0m[4m
+res://tests/test_encounters.gd
+[0m* test_the_numbers_daniel_asked_for
+* test_cap_grows_down_the_region_inside_the_tier
+* test_room_for_summons
+* test_no_wave_and_no_floor_past_the_tier_or_twenty
+* test_parts_grow_with_depth
+* test_every_part_has_a_plain_kind_and_its_elite_plays_it_too
+* test_horde_summons_stop_at_its_ceiling
+[1m7/7 passed.
+[0m[4m
+res://tests/test_end_screen_run.gd
+[0m* test_defeat_in_the_crypt_room_3_shows_the_room_the_arena_and_two_gifts
+* test_defeat_still_names_what_struck_the_last_blow
+* test_defeat_without_gifts_has_no_empty_row
+* test_defeat_outside_a_room_run_shows_no_place
+* test_new_texts_live_in_the_table_without_dashes
+* test_door_sign_shows_the_reward_in_gold_and_the_detail_in_pale
+* test_door_sign_without_detail_has_one_line
+* test_door_sign_capitals_stand_16_px_at_1080_and_scale_with_the_screen
+* test_door_sign_follows_its_point_on_the_screen
+* test_door_sign_colours_keep_4_5_to_1_against_the_outline
+[1m10/10 passed.
+[0m[4m
+res://tests/test_enemy_fx.gd
+[0m* test_each_part_has_its_wind_up
+* test_a_wind_up_draws_its_lights_and_none_is_red
+* test_the_blade_gleams_only_in_the_second_half_and_is_gone_at_the_blow
+* test_the_ritual_ring_is_faint_and_lies_around_the_priest
+* test_the_lights_follow_the_figure
+* test_the_reserve_is_fixed
+* test_a_lunge_trails_pale_streaks_and_leaves_dust_where_it_started
+* test_armor_sparks_are_old_gold_and_short
+* test_the_state_survives_its_packing
+* test_armor_answers_a_blow_without_the_white_of_a_wound
+* test_drawing_never_rolls_the_simulation_dice_nor_moves_anyone
+* test_each_enemy_gets_a_number_of_its_own_for_what_is_only_drawn
+* test_the_runner_is_unsteady_and_the_soldier_is_the_base_line
+* test_morvath_keeps_his_colours_and_his_crown_is_cut_out
+* test_magic_lights_are_the_colour_of_the_magic_and_gold_stays_on_the_steel
+* test_bars_thin_out_on_a_full_floor
+* test_a_full_floor_is_what_thins_them
+* test_the_crowd_draws_the_poses_the_model_says
+* test_a_character_is_placed_as_its_transform_says
+[1m19/19 passed.
+[0m[4m
+res://tests/test_enemy_look.gd
+[0m* test_every_enemy_has_its_baked_model
+* test_each_enemy_of_the_sheet_has_a_figure_of_its_own
+* test_sizes_follow_the_sheet
+* test_elites_are_the_same_figure_in_old_gold
+* test_the_figures_are_the_painted_models_made_light
+* test_every_animation_the_game_asks_for_is_baked
+* test_the_renderer_gilds_the_elite_of_a_painted_figure
+* test_magic_colours
+* test_gold_is_old_gold_and_the_edges_are_faint
+[1m9/9 passed.
+[0m[4m
+res://tests/test_feel.gd
+[0m* test_feel_loads_from_data
+* test_every_number_has_a_range_and_sits_in_it
+* test_camera_offset_follows_distance_and_pitch
+* test_move_scale_by_kind_of_move
+* test_slow_motion_eases_in_holds_and_eases_out
+* test_slow_motion_only_for_big_blows
+[1m6/6 passed.
+[0m[4m
+res://tests/test_feel_c12d.gd
+[0m* test_hit_stop_waits_then_slows_then_comes_back_never_a_freeze
+* test_the_spin_waits_longer_and_a_kill_slows_longer
+* test_a_slow_shorter_than_a_frame_is_still_seen
+* test_a_shorter_hit_stop_never_cuts_a_longer_one
+* test_fx_slow_motion_waits_for_the_hit_stop_and_counts_real_time
+* test_a_press_in_the_roll_waits_unaged_and_comes_out_as_the_dash_attack
+* test_a_dodge_drops_presses_made_before_it
+* test_hold_for_lets_nothing_start_for_its_frames
+* test_the_special_has_its_own_cooldown_and_frees_the_attack_first
+* test_a_dodge_in_the_windup_starts_at_once_and_the_blow_never_lands
+* test_an_attack_in_the_roll_or_the_stagger_is_kept
+* test_the_circle_gives_no_safety_and_holds_the_attack
+* test_the_special_plants_the_legs_until_a_dodge
+* test_the_omega_lands_when_its_charge_fills
+* test_turning_faces_at_once_and_the_body_follows_at_1340_degrees
+* test_the_virtual_pad_keeps_a_tap_until_the_game_steps
+* test_a_common_blow_jolts_the_camera_on_the_scale_of_hades_ii
+* test_every_move_has_a_sound_when_it_starts
+[1m18/18 passed.
+[0m[4m
+res://tests/test_floor_shape.gd
+[0m* test_circle_contains_clamps_and_measures_its_edge
+* test_a_circle_off_the_origin
+* test_circle_cuts_a_lane_at_its_edge
+* test_rectangle_keeps_the_hall_as_it_was
+[1m4/4 passed.
+[0m[4m
+res://tests/test_fx_budget.gd
+[0m* test_a_budget_grants_up_to_its_limit_each_frame
+* test_a_kind_without_a_limit_is_never_held_back
+* test_hits_on_the_same_target_join_one_number
+* test_other_targets_and_late_hits_get_their_own_number
+* test_a_finisher_joins_and_turns_the_number_big
+* test_another_colour_keeps_its_own_number
+* test_a_crowd_shows_at_most_its_limit_and_keeps_the_biggest
+* test_the_screen_shows_at_most_max_shown
+* test_finishers_are_never_hidden
+* test_a_screen_full_of_finishers_keeps_the_biggest
+* test_numbers_go_after_their_life_and_words_always_show
+[1m11/11 passed.
+[0m[4m
+res://tests/test_fx_on_hit.gd
+[0m* test_the_tree_has_moves_to_check
+* test_a_swing_in_the_air_shows_no_hit
+* test_an_enemy_out_of_reach_shows_no_hit
+* test_a_blow_that_lands_shows_the_hit_once_per_enemy
+* test_a_finisher_that_lands_adds_one_ring_and_a_mild_split
+* test_a_crowd_gets_a_bounded_number_of_cuts
+* test_the_cut_follows_the_blade_so_opposite_sides_differ
+* test_number_colours_keep_emerald_for_the_big_blows
+* test_numbers_in_a_crowd_keep_only_the_biggest
+* test_a_number_starts_clear_of_the_life_bar
+* test_effects_end_on_their_own
+* test_a_combo_on_one_enemy_shows_one_number_counting_up
+* test_effects_started_in_one_frame_are_bounded
+* test_the_hit_flash_never_blooms_and_its_ivory_is_one_frame
+[1m14/14 passed.
+[0m[4m
+res://tests/test_held_weapons.gd
+[0m* test_every_holder_carries_the_swatches
+* test_old_gold_is_old_not_toy_yellow
+* test_no_weapon_keeps_a_palette_cell
+* test_both_feet_come_down_in_every_walk
+[1m4/4 passed.
+[0m[4m
+res://tests/test_hero_look.gd
+[0m* test_drawn_taller_than_his_size_in_the_fight
+* test_the_explorer_body_has_its_clips_and_grip
+* test_he_carries_the_blade_ahead_of_him
+* test_emeth_is_the_model_with_the_size_and_grip_of_the_sword_it_replaced
+* test_only_the_blade_of_emeth_is_lit_and_it_does_not_bloom
+* test_the_xray_paints_each_mesh_with_its_own_texture
+* test_the_xray_draws_the_body_and_the_blade_as_their_own_materials_do
+* test_the_xray_rim_is_a_warm_hair
+* test_a_hit_lightens_his_own_colours_and_never_paints_him_white
+* test_the_ring_has_a_brighter_wedge_where_he_faces
+* test_the_xray_is_drawn_after_the_life_bars_and_the_ring_is_not_a_warning
+* test_behind_stone_he_is_fainter_than_through_the_crowd
+[1m12/12 passed.
+[0m[4m
+res://tests/test_how_to.gd
+[0m* test_builds_with_rows_and_buttons
+* test_lists_every_gameplay_action
+* test_labels_come_from_controls_and_follow_remaps
+* test_keyboard_column_ignores_the_device_in_use
+* test_golpes_opens_the_combo_list_and_comes_back
+[1m5/5 passed.
+[0m[4m
+res://tests/test_hud.gd
+[0m* test_bar_trail_shows_what_a_hit_took_then_drains
+* test_bar_trail_keeps_the_older_loss_on_a_second_hit
+* test_bar_gain_leaves_no_trail
+* test_bar_glint_only_on_a_visible_change
+* test_slot_busy_only_without_charges
+* test_slot_shines_when_the_recharge_ends
+* test_sweep_runs_around_the_diamond
+* test_no_chevron_for_what_is_on_screen
+* test_chevron_sits_on_the_frame_towards_the_target
+* test_body_behind_the_actions
+[1m10/10 passed.
+[0m[4m
+res://tests/test_impact_frame.gd
+[0m* test_the_data_keeps_a_cooldown
+* test_a_finisher_into_a_crowd_has_none
+* test_an_omega_that_lands_flashes_once_per_cooldown
+* test_the_blow_that_ends_a_phase_flashes
+* test_none_on_a_ward
+* test_the_option_turns_it_off
+* test_the_save_has_the_option_on_by_default
+[1m7/7 passed.
+[0m[4m
+res://tests/test_indicators.gd
+[0m* test_a_trail_holds_what_a_blow_took_then_drains
+* test_a_second_blow_keeps_the_older_trail_and_healing_leaves_none
+* test_trails_of_the_dead_are_forgotten
+* test_armor_has_its_own_strip_and_the_top_edge_stays
+* test_the_damage_numbers_start_clear_of_any_bar
+* test_an_elite_bar_has_a_frame_of_its_own_and_is_wider
+* test_the_trail_never_reads_below_the_life
+* test_the_nearest_bar_is_drawn_last
+* test_every_enemy_of_a_room_shows_its_bar
+* test_a_blow_tips_the_body_back_away_from_where_it_faces
+* test_the_cue_peaks_just_before_the_blow_and_is_gone_when_it_lands
+* test_the_bolt_is_drawn_back_along_its_aim
+* test_the_shield_reads_early_in_a_long_charge
+* test_a_line_warning_knows_its_length_and_lies_along_the_blow
+* test_the_recharge_level_rises_from_the_bottom
+* test_someone_behind_fades_only_the_body
+* test_the_elite_frame_is_the_hud_old_gold
+[1m17/17 passed.
+[0m[4m
+res://tests/test_killing_blow.gd
+[0m* test_each_of_his_attacks_is_named_when_it_kills
+* test_one_of_his_dead_is_named_by_its_kind
+* test_the_end_screen_names_the_killing_blow
+[33m    --- Awaiting 2.0 seconds  ---
+[0m[1m3/3 passed.
+[0m[4m
+res://tests/test_living_crowd.gd
+[0m* test_every_clip_has_the_poses_it_needs
+* test_more_poses_never_change_how_long_a_clip_plays
+* test_the_blend_between_poses
+* test_a_walking_soldier_never_repeats_a_pose_at_30_fps
+* test_the_pose_images_keep_the_poses
+* test_every_figure_is_one_mesh_and_its_poses
+* test_the_baked_figures_fit_their_ceiling
+    baked figures: 37.3 MB
+* test_the_planted_foot_stays_put
+    skeleton: the floor runs 3.83 m/s under the walk, the foot slides 0.024 m a step
+    runner: the floor runs 4.03 m/s under the walk, the foot slides 0.011 m a step
+    mage: the floor runs 3.75 m/s under the walk, the foot slides 0.018 m a step
+    archer: the floor runs 3.56 m/s under the walk, the foot slides 0.017 m a step
+    guard: the floor runs 1.08 m/s under the walk, the foot slides 0.107 m a step
+    priest: the floor runs 0.93 m/s under the walk, the foot slides 0.097 m a step
+    knight: the floor runs 1.13 m/s under the walk, the foot slides 0.102 m a step
+    priest_elder: the floor runs 1.37 m/s under the walk, the foot slides 0.045 m a step
+    morvath: the floor runs 1.19 m/s under the walk, the foot slides 0.058 m a step
+* test_the_stride_is_read_from_the_foot_on_the_floor
+* test_the_recoil_of_a_blow
+* test_the_recoil_is_only_drawn
+[1m11/11 passed.
+[0m[4m
+res://tests/test_mesh_slim.gd
+[0m* test_weld_closes_the_seams_and_keeps_the_skin
+* test_simplify_reaches_the_target_on_the_same_vertices
+* test_smooth_normals_point_out
+* test_slim_carries_the_painting_to_the_new_atlas
+[1m4/4 passed.
+[0m[4m
+res://tests/test_no_placeholder.gd
+[0m* test_no_text_in_the_table_shows_a_placeholder
+* test_a_clause_comes_back_once_the_paladin_is_named
+* test_every_family_card_shows_no_placeholder
+* test_the_gifts_panel_shows_no_placeholder
+* test_hit_count_digits_stay_under_48_px_at_1080
+[1m5/5 passed.
+[0m[4m
+res://tests/test_ranged_enemies.gd
+[0m* test_the_mage_shoots_bursts_of_turning_orbs_from_afar
+* test_each_orb_of_the_burst_pushes_the_mage_back
+* test_the_mage_waits_behind_a_pillar
+* test_the_crossbowman_runs_after_each_bolt
+* test_no_more_than_two_crossbowmen_shoot_at_once
+* test_the_mage_runs_from_a_paladin_who_comes_for_it
+* test_ranged_enemies_never_walk_up_to_him
+* test_the_crossbowman_marks_its_aim_and_shoots_a_bolt
+* test_the_priest_sends_a_vine_creeping_after_him
+* test_the_priests_shoot_not_circles
+* test_flee_dir_turns_along_the_wall_and_never_off_the_floor
+* test_morvaths_eruptions_are_twice_as_wide
+[1m12/12 passed.
+[0m[4m
+res://tests/test_result_json.gd
+[0m* test_the_result_of_a_fight_with_morvath_is_json
+[1m1/1 passed.
+[0m[4m
+res://tests/test_retarget.gd
+[0m* test_turn_follows_the_parents_and_holds_against_them
+[1m1/1 passed.
+[0m[4m
+res://tests/test_ritual_count.gd
+[0m* test_only_the_first_dead_break_the_shield_and_the_count_is_read
+* test_the_ritual_is_measured_when_the_paladin_falls_inside_it
+* test_a_fight_begun_in_the_ritual_phase_runs_the_ritual
+* test_a_fight_begun_past_the_ritual_never_shows_its_shield_nor_hint
+[1m4/4 passed.
+[0m[4m
+res://tests/test_ritual_look.gd
+[0m* test_a_ritual_circle_covers_exactly_the_area_that_hurts
+* test_his_eruptions_become_ritual_circles_on_their_own
+* test_the_circle_fills_then_lands_and_dissolves_with_its_column
+* test_a_called_off_circle_vanishes_without_landing
+* test_a_summon_circle_hurts_no_one_and_still_shows_the_rising
+* test_circles_are_pooled
+* test_the_shield_keeps_its_circle_on_the_floor_and_breaks_in_shards
+* test_the_last_phase_stirs_the_portal_and_the_sealing_calms_it
+* test_the_last_phase_ends_calm
+* test_obelisks_open_round_the_paladin_and_plain_stone_does_not
+[1m10/10 passed.
+[0m[4m
+res://tests/test_rooms.gd
+[0m* test_difficulty_grows_with_depth
+* test_waves_carry_about_the_difficulty
+* test_the_first_kind_is_in_every_wave
+* test_elites_wear_hades_armor
+* test_map_runs_opening_guardian_shop_boss
+* test_pom_is_only_promised_when_a_gift_can_grow
+* test_nobody_stands_inside_a_solid_prop
+* test_catacomb_hall_keeps_the_fight_on_it
+* test_hall_doors_follow_the_count
+[1m9/9 passed.
+[0m[4m
+res://tests/test_run_log.gd
+[0m* test_the_tests_never_write_this_machines_save_or_log
+* test_entries_are_one_json_line_each_and_read_back
+* test_a_damaged_line_is_skipped
+* test_the_device_is_named
+* test_a_cause_is_named_by_the_attack_else_the_kind
+* test_a_real_run_counts_and_names_what_hurt_last
+* test_a_warning_or_shot_carries_the_kind_that_laid_it
+* test_no_new_best_time_without_a_save
+[1m8/8 passed.
+[0m[4m
+res://tests/test_save.gd
+[0m* test_merged_fills_missing_keys_and_keeps_valid_ones
+* test_merged_survives_garbage
+* test_best_times_keep_the_fastest_in_order
+* test_moves_are_discovered_once
+* test_format_time
+* test_player_text_has_no_dash_and_keeps_placeholders
+* test_the_game_opens_in_full_screen
+[1m7/7 passed.
+[0m[4m
+res://tests/test_screen_tone.gd
+[0m* test_the_model_matches_what_the_gpu_drew
+* test_the_model_uses_the_games_tone
+* test_a_cap_of_one_was_white_on_the_screen
+* test_every_column_colour_stays_under_235_and_keeps_its_hue
+* test_a_column_over_anything_never_sums_past_its_cap
+* test_fx_beam_hands_the_shader_the_screen_cap_of_its_colour
+* test_every_gem_stays_under_235_on_the_screen
+* test_the_slow_motions_lift_stays_under_235
+[1m8/8 passed.
+[0m[4m
+res://tests/test_seal_victory.gd
+[0m* test_the_crack_is_open_as_the_victory_begins
+* test_the_crack_is_shut_before_the_calm_and_stays_shut
+[1m2/2 passed.
+[0m[4m
+res://tests/test_slash_wire.gd
+[0m* test_a_cut_is_drawn_at_the_blade_tip
+* test_a_cut_not_of_the_paladin_keeps_its_outer_edge
+* test_a_cut_sweeps_with_the_blade_in_three_frames
+* test_a_chip_is_a_sliver_along_its_flight
+* test_chips_are_gone_before_eight_movie_frames
+[1m5/5 passed.
+[0m[4m
+res://tests/test_step_timer.gd
+[0m* test_frames_without_enemies_are_left_out
+* test_nothing_measured_reads_zero
+* test_the_run_reports_the_step_while_enemies_stand
+[1m3/3 passed.
+[0m[4m
+res://tests/test_stone_tree.gd
+[0m* before_all
+    tree: 19297 triangles, 53 branches, 2 hangs, top 11.2 m, reach by bearing { 225: 8.34648895263672, 315: 6.31364583969116, 0: 7.86364126205444, 270: 5.41575050354004, 180: 2.55108523368835, 45: 2.07324767112732 }
+    tree: 15841 triangles, 53 branches, 2 hangs, top 11.2 m, reach by bearing { 225: 8.34648895263672, 315: 6.31364583969116, 0: 7.86364126205444, 270: 5.41575050354004, 180: 2.55108523368835, 45: 2.07324767112732 }
+* test_both_variants_have_the_tree
+* test_foot_lies_on_the_collision
+* test_collision_is_covered
+* test_crown_keeps_its_rule
+* test_budget
+* test_crystals_stay_in_the_trunk
+* test_lanterns_hang_away_from_the_camera
+[1m7/7 passed.
+[0m[4m
+res://tests/test_storm_wedge.gd
+[0m* test_the_wedges_split_every_gap_between_neighbours
+* test_a_lane_alone_keeps_its_width
+[1m2/2 passed.
+[0m[4m
+res://tests/test_title_menu.gd
+[0m* test_buttons_sit_on_the_painted_frames
+* test_follows_the_backdrop_when_it_moves
+* test_alone_it_contains_the_art_in_its_own_size
+* test_only_the_hexagon_takes_the_mouse
+* test_each_button_emits_its_signal
+* test_up_and_down_do_not_wrap
+* test_without_quit_the_others_keep_their_places
+* test_focus_first_and_lock
+* test_ring_shows_after_navigation_and_hides_with_the_mouse
+* test_intro_hides_then_finishes
+* test_labels_come_from_the_text_table
+[1m11/11 passed.
+[0m[4m
+res://tests/test_waves.gd
+[0m* test_the_run_is_covered_until_the_boss_with_no_gaps
+* test_elites_come_at_three_and_ten_minutes
+* test_the_fountain_springs_once
+* test_density_only_grows_and_reaches_300
+* test_every_enemy_in_the_table_exists
+* test_spawns_follow_the_rate
+* test_about_120_to_150_enemies_in_the_first_three_minutes
+* test_common_enemies_fall_to_one_attack_chain
+* test_spawns_never_pass_the_cap
+* test_a_full_hall_spawns_nothing_and_does_not_bank_spawns
+* test_events_fire_once_and_in_order
+* test_stopped_director_keeps_the_clock_but_spawns_nothing
+* test_enemies_get_tougher_with_time
+* test_only_listed_enemies_are_picked
+* test_levels_cost_more_each_time
+* test_experience_carries_over_and_can_give_two_levels
+* test_the_shipped_run_meets_morvath_at_three_minutes
+* test_pace_moves_the_timeline_not_the_spawn_rate
+[1m18/18 passed.
+[0m
+[33m==============================================
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts              58
+Tests               557
+Passing Tests       557
+Asserts           104890
+Time              124.4s
+[32m---- All tests passed! ----
+[0m

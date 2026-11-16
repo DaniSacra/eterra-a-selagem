@@ -5,6 +5,12 @@ Roguelite de ação em horda, 3D visto de cima (pegada de Hades 2 e Ember & Blad
 Steam primeiro (Windows e Linux, mouse e teclado ou controle), Android depois.
 Projetos irmãos: `../dungeon-rpg` (RPG original em JS, dono do cânone em `docs/mundo/`), `../cronicas-godot`
 (RPG em Godot) e `../eterra-survivors` (Valmor Resiste, Phaser). **Não publicar nada no GitHub sem o Daniel pedir.**
+**O herói jogável é o Guerreiro** (correção do PO de 2026-11-16; não é o Explorador nem o Guardião): guerreiro ofensivo de
+espada, sem bloqueio nem aparo; especificação canônica em `docs/design/warrior_spec.md`, prancha só local em
+`docs/art/ref/warrior_art_bible.png`. O título "Punho de Elun" é de Hanokh no cânone; decidido (D-64 a D-71, seguir as recomendações): o jogo mostra só
+"O Guerreiro", símbolo do herói é o leão, nada de "Aliança"/"Convênio" nem poder com nome de Elun, especial como onda
+(E1b), Fúria em cargas sem barra, primeiro Salmo o da Sentinela. `hero_explorer` continua como nome técnico do modelo; "guardião" no jogo é a sala e os inimigos de minichefe.
+Regra central: Dom define o herói, Bênção define a partida, Salmo transforma o poder (`docs/design/po_directive_guardian.md`).
 
 ## Regras
 - **Entregar em versões MVP completas**: juntar várias mudanças numa versão jogável e só então pedir para o Daniel
@@ -213,7 +219,14 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   nos olhos e gemas). `tools/bake.gd` (`MODELS`, entrada com `"meshy"`) faz tudo: reduz a malha de 15,5 mil para cerca de 3,9 mil
   triângulos e repassa a pintura para um atlas novo de 1024 (`MeshSlim`, `scripts/render/mesh_slim.gd`), transfere clipes da
   Quaternius e do KayKit pelo `Retarget`, prende as armas do KayKit que o modelo não tem (`held`: lâmina, cajado, besta, escudo
-  do Cavaleiro; o Escudo já traz as dele), põe os pés no chão e a altura da prancha (`height`). A textura vai dentro do `.res`
+  do Cavaleiro; o Escudo já traz as dele), põe os pés no chão e a altura da prancha (`height`). Armas do KayKit repintadas no
+  assado (E1a-4, VX-07, paliativo até o Meshy): `paint` de cada `held` troca as células da paleta por amostras pintadas no tom das
+  figuras (`SWATCHES`: ferro escuro, ferro gasto, osso, madeira escura, metal velho, ouro velho, couro, vermelho; primeira linha da
+  faixa da paleta, projetadas ao longo da arma, `_repainted`, `_paint_swatches`), sem faixas de duas cores; cutelo a `CLEAVER_SCALE`
+  0,58 (aço 0,52 m = 0,6 do tronco), besta a `CROSSBOW_SCALE` 0,5 em madeira e ferro, cajados em madeira escura com anéis de metal
+  velho, gancho de Morvath em ouro velho (na tela matiz 37, saturação 0,44). O Escudo tem a rótula esquerda do rig fora do lugar:
+  `even_legs` encurta a perna ao alcance que ela tem em repouso (`_even_leg`) e o pé direito, que flutuava 20 cm, pisa no chão.
+  Testes em `tests/test_held_weapons.gd`; antes e depois em `docs/gallery/e1a/after/weapons/`. A textura vai dentro do `.res`
   (`BakedModel.painted`). Cor da magia em `EnemyDef.magic_color` (feiticeiro violeta frio, sacerdotes roxo; a necromancia de Morvath é o verde
   espectral frio do pedido do Daniel de 2026-11-15, `SPECTRAL`, mais azulado e pálido que o verde cristalino da Emeth); olhos, gemas e orbes brilham pela própria pintura (`paint_glow` no `crowd.gdshader`).
   **Elites sem créditos**: a mesma figura com o aço em ouro velho por shader (`EnemyDef.gild`, `ELITE_GILD` no `make_data.gd`,
@@ -246,12 +259,28 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - `scripts/game/game.gd` é dono do relógio: chama `step(dt)` de cada sistema. Hit stop, pausa e a escolha de dom são
   só "não chamar step". Cada sistema que emite sinal dentro do laço (golpe que mata o paladino limpa tudo) precisa
   aguentar a lista mudar no meio (ver `Ground.step`, `Projectiles.step`).
-- **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer` (cada tipo consultado uma vez em `register`: `Kind`, `Clip`; `add_kind` no laço; só os lotes usados são mexidos), um MultiMesh por (inimigo, animação,
-  quadro). As poses vêm assadas: `tools/bake.gd` esqueleta os modelos (Meshy; os do KayKit ficaram em `KAYKIT`) em malhas estáticas
-  (`assets/baked/*.res`, `BakedModel`). Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
-  `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]` (o Godot do editor: o atlas novo usa o xatlas). A multidão fica fora da luz das tochas (camada 2)
-  e recebe a luz do paladino pelo global `hero_pos`.
-- O herói é o Explorador do Meshy (2026-11-15, da folha aprovada; `assets/models/meshy/hero_explorer/hero_explorer-rigged.glb`,
+- **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer` (cada tipo consultado uma vez em `register`: `Kind`, `Clip`; `add_kind` no laço; só os lotes usados são mexidos), um MultiMesh por (inimigo, animação).
+  As poses vêm assadas: `tools/bake.gd` esqueleta os modelos (Meshy; os do KayKit ficaram em `KAYKIT`) e guarda cada figura (`assets/baked/*.res`,
+  `BakedModel`) como uma malha só e uma **animação por vértice** (E1a, VX-04): toda pose de todo clipe vira texels em duas imagens
+  (`positions` RGBA meia precisão e `normals` octaédricas RG8, linhas de `BakedModel.WIDTH` 2048; vértice v da pose p no texel
+  p * vertices + v). Cada figura é desenhada **entre duas poses** (`crowd_pose.gdshaderinc`, lido pelo `crowd.gdshader` e pelo
+  `crowd_outline.gdshader` por `VERTEX_ID` e `texelFetch`): a cor da instância leva pose, próxima pose e fração (`CrowdRenderer.POSED`,
+  20 floats: transformação, cor, estado; o estado de `INSTANCE_CUSTOM` e a barra de vida não mudaram); `BakedModel.blend_at` e
+  `pose_rate` (um clipe que não repete chega à última pose quando acaba). Poses por clipe: andar 20, parado 12, golpe sofrido 8,
+  morte 16, erguer 12, ataque 14 a 16 (golpes de Morvath 14 a 20, preparos 8); a duração de cada clipe não mudou (testado contra a
+  tabela de antes em `tests/test_living_crowd.gd`). Assados: 45,7 MB antes, 39,0 MB depois (teto 70). Passo do andar (VX-05): o assado
+  mede a velocidade com que o chão corre sob o pé de apoio (`BakedModel.ground_speed`, pelos vértices da sola em `feet`,
+  `ground_of`, `slide_per_step`) e o `Horde.walk_rate` toca o andar a velocidade / (chão x tamanho); o andar guarda a subida e descida
+  do próprio clipe (uma altura só para o ciclo inteiro: a corrida voa, o pé no chão nunca é um preso no meio do passo). Para isso os
+  quatro que correm trocaram o `Jog_Fwd`/`Sprint` pelo `Running_B` do KayKit (esqueleto, corredor, mago e besteiro; o `Jog_Fwd` daria
+  1 passo por segundo) e o sacerdote ancião anda com o `Walk_Formal`: escorregam 1 a 4,5 cm por passo. Pendentes (andar da biblioteca
+  passado para outro esqueleto, escorrega em qualquer ritmo; precisa de pé travado no assado): Escudo 13 cm (o pé direito dele flutua
+  20 cm acima do chão no ciclo inteiro), Cavaleiro 10 cm, Morvath 6 cm. Golpe sofrido (VX-06): o corpo desenhado recua 0,24 m
+  (0,15 nos pesados) em 3 quadros e volta em 0,3 s (`HitRecoil`, `core/hit_recoil.gd`; `Enemy.recoil_t`/`recoil_dir`, só desenho).
+  Modelo ou animação nova de inimigo: editar `MODELS` em `tools/bake.gd` e rodar
+  `~/tools/godot/godot --headless --path . -s tools/bake.gd [-- ids]` (cerca de 4 s por figura; o Godot do editor: o atlas novo usa o xatlas). A multidão fica fora da luz das tochas (camada 2)
+  e recebe a luz do paladino pelo global `hero_pos`. O `RESULT` sai em JSON (`Game.result_line`, E1a-5).
+- O herói (o Guerreiro) usa o modelo do Explorador do Meshy (2026-11-15, da folha aprovada; `assets/models/meshy/hero_explorer/hero_explorer-rigged.glb`,
   24 ossos, os mesmos da antiga "Sombra", pose em A), montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na
   galeria de inimigos), desenhado com 2,75 m (`HeroBody.HEIGHT`; o combate continua com 2,5). A "Sombra" repintada
   (`tools/recolor_hero.gd`, `HeroGear`) ficou guardada, sem uso. As animações dele são próprias

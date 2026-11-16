@@ -1,5 +1,15 @@
 # O Guardião: auditoria e especificação do herói definitivo
 
+> **2026-11-16, correção do PO**: o primeiro herói é **o Guerreiro** (não o Explorador nem o Guardião). Especificação canônica: `docs/design/warrior_spec.md`; onde este arquivo diz Explorador/Guardião para o herói, vale o Guerreiro (o texto abaixo fica como histórico).
+
+
+> **Decisões do Daniel (2026-11-16, depois desta spec)**: `docs/design/po_directive_guardian.md`. Mudam esta spec:
+> D-50 só texto; D-54 com as **duas ultimates ofensivas** (a U-2 defensiva da seção 6.2 foi recusada; propostas novas em
+> `docs/design/ultimate_u2_proposals.md`); D-56 P-A provisória; D-57 desbloqueios que transformam o jogo primeiro; D-58
+> começa por cerca de **6 Dons** (os 20 da seção 8.2 são planejamento); D-59 e D-60 começam por **um Salmo** completo. Os
+> nomes e os demais pontos de cânone continuam pendentes. Regra central: **Dom define o herói, Bênção define a partida,
+> Salmo transforma o poder.**
+
 - **Data**: 2026-11-16 (noite). **Autor**: game-director. **Commit lido**: `19af96b` (HEAD de `arpg-3d`).
 - **Pedido**: `docs/design/one_hero_directive.md` (decisões 1 a 12 do Daniel e a missão desta rodada). Nesta rodada só
   auditoria, especificação e backlog: nada implementado.

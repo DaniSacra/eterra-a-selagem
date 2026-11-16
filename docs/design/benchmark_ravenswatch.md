@@ -1,5 +1,8 @@
 # Benchmarking: Ravenswatch (Passtech Games, 2023)
 
+> **2026-11-16, correção do PO**: o primeiro herói é **o Guerreiro** (não o Explorador nem o Guardião). Especificação canônica: `docs/design/warrior_spec.md`; onde este arquivo diz Explorador/Guardião para o herói, vale o Guerreiro (o texto abaixo fica como histórico).
+
+
 Pedido do Daniel em 2026-11-16: "gostei da ideia dos heróis, talentos, de não ter armas como o nosso jogo". Ravenswatch
 entra como terceira referência, ao lado do Hades II (mecânicas e números, D-39) e do Ember & Blade (sensação visual).
 **Dele estudamos princípios de design**, não copiamos números, nomes, heróis, arte, texto nem som.

@@ -1,0 +1,15 @@
+Mon Nov 16 19:37:10 -03 2026
+BatteryStatus=2 Charge=87%
+PowerOnline=True
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+PROBE window (1920, 1080) root (1920, 1080) render (2880.0, 1620.0) image (1920, 1080) scale 1.0 screen (1920, 1200)
+GPUPERF wait  start_frame 31 frame_ms [median 6.76 mean 7.01 p90 7.34] gpu_ms [median 6.55 mean 6.55 p90 6.84] cpu_render_ms [median 0.89 mean 0.91 p90 1.03] draw_calls 995 primitives 1429844 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+PROBE window (1920, 1080) root (1920, 1080) render (2880.0, 1620.0) image (1920, 1080) scale 1.0 screen (1920, 1200)
+GPUPERF wait  start_frame 31 frame_ms [median 7.50 mean 7.55 p90 8.32] gpu_ms [median 6.68 mean 6.69 p90 6.96] cpu_render_ms [median 1.09 mean 1.07 p90 1.17] draw_calls 995 primitives 1429740 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+PROBE window (1920, 1080) root (1920, 1080) render (2880.0, 1620.0) image (1920, 1080) scale 1.0 screen (1920, 1200)
+GPUPERF wait  start_frame 31 frame_ms [median 7.11 mean 7.23 p90 7.86] gpu_ms [median 6.34 mean 6.53 p90 7.18] cpu_render_ms [median 0.96 mean 0.99 p90 1.16] draw_calls 995 primitives 1429810 alive mean 150.0 min 150 max 150 render (2880.0, 1620.0) device NVIDIA GeForce RTX 5060 Laptop GPU states { "none": 300 }
+BatteryStatus=2 Charge=89%
+PowerOnline=True
+Mon Nov 16 19:38:49 -03 2026

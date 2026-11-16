@@ -1,0 +1,16 @@
+seed=1
+time=238.3 hp=30 room=7 kills=36 mode="ENDING" max_alive=7 step_ms_avg=0.19 step_ms_peak=9.45 stuck=0 died_phase=0 }
+seed=2
+time=256.2 hp=30 room=7 kills=47 mode="ENDING" max_alive=7 step_ms_avg=0.22 step_ms_peak=9.41 stuck=0 died_phase=0 }
+seed=3
+time=230.2 hp=3 room=7 kills=60 mode="ENDING" max_alive=7 step_ms_avg=0.21 step_ms_peak=4.92 stuck=0 died_phase=0 }
+seed=4
+time=281.9 hp=36 room=7 kills=57 mode="ENDING" max_alive=7 step_ms_avg=0.19 step_ms_peak=4.56 stuck=0 died_phase=0 }
+seed=5
+time=282.5 hp=45 room=7 kills=52 mode="ENDING" max_alive=7 step_ms_avg=0.18 step_ms_peak=10.14 stuck=0 died_phase=0 }
+seed=6
+time=216.4 hp=30 room=7 kills=55 mode="ENDING" max_alive=7 step_ms_avg=0.19 step_ms_peak=5.58 stuck=0 died_phase=0 }
+seed=7
+time=205.3 hp=8 room=7 kills=49 mode="ENDING" max_alive=7 step_ms_avg=0.2 step_ms_peak=4.6 stuck=0 died_phase=0 }
+seed=8
+time=191.6 hp=50 room=7 kills=46 mode="ENDING" max_alive=7 step_ms_avg=0.2 step_ms_peak=8.94 stuck=0 died_phase=0 }

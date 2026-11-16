@@ -20,9 +20,15 @@ uniform vec3 flash_color : source_color = vec3(0.3, 0.22, 0.14);
 
 varying vec4 state;
 
+#include "res://assets/shaders/crowd_pose.gdshaderinc"
+
 void vertex() {
+	vec3 at;
+	vec3 facing;
+	crowd_pose(VERTEX_ID, COLOR, at, facing);
+	NORMAL = facing;
 	state = INSTANCE_CUSTOM;
-	VERTEX += normalize(NORMAL) * width / max(length(MODEL_MATRIX[0].xyz), 0.001);
+	VERTEX = at + facing * width / max(length(MODEL_MATRIX[0].xyz), 0.001);
 }
 
 void fragment() {

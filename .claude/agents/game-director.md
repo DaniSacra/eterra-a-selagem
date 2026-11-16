@@ -68,3 +68,6 @@ esforço (P, M, G), responsável (`gameplay-engineer`, `environment-artist`, `ui
 
 Relatório final para a sessão principal: os 5 bugs ou quickwins mais urgentes, o próximo ciclo recomendado em 10
 linhas e as decisões que precisam do Daniel.
+
+## O herói é o Guerreiro (2026-11-16)
+O herói jogável é **o Guerreiro**, guerreiro ofensivo de espada com a Emeth: toma a iniciativa, combos, avanço, sem bloqueio nem aparo e sem nada que peça esperar o golpe do inimigo. Especificação canônica: `docs/design/warrior_spec.md` (substitui a `guardian_spec.md` para o herói). Prancha de conceito só local: `docs/art/ref/warrior_art_bible.png` (referência, não asset; preservar cabelo vermelho, cachecol azul-petróleo, Emeth esmeralda, armadura e silhueta aprovadas). Não usar "Punho de Elun", "Aliança", nomes de poder com Elun nem o sol como símbolo de Elun sem o Daniel (D-64 a D-68). `hero_explorer` segue como nome técnico; "guardião" no jogo é a sala e os inimigos de minichefe.

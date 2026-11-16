@@ -711,7 +711,9 @@ func hit_stop(ms: float) -> void:
 ## The gamepad buzzes (a blow that lands, a hit taken): weak and strong motor (0..1), seconds. Only with a pad in use
 ## and the "rumble" option on.
 func buzz(weak: float, strong: float, seconds: float) -> void:
-	if not rumble or not Controls.using_pad:
+	# the autoload looked up by its path, not its name: the labs (tools/enemy_lab.gd) run Fx as a script, without autoloads
+	var controls := get_node_or_null(^"/root/Controls")
+	if not rumble or controls == null or not controls.get(&"using_pad"):
 		return
 	for pad in Input.get_connected_joypads():
 		Input.start_joy_vibration(pad, weak, strong, seconds)

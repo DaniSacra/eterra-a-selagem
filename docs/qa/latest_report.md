@@ -1,129 +1,130 @@
-# Relatório de QA e desempenho: C12d "Game feel I: a mão" (QA final)
+# Relatório de QA e desempenho: E1a "Inimigos vivos"
 
 - **Data**: 2026-11-16.
-- **Branch**: `arpg-3d`, **commit testado `1d06613`** (C12d integrado: `aaaacfc`, `4c560eb`, `491c6d4`, `1d06613`). Antes: sonda
-  no `1e25f21` (`docs/gallery/c12d/PROBE.md`), vídeos no `beb6c27` (`docs/gallery/game_feel/`), base de desempenho `6f9bbc7`.
-  Árvore limpa no começo. O QA não mudou código de jogo, arte nem testes; acrescentou `docs/gallery/c12d/after/`,
-  `docs/gallery/c12d/AFTER.md` (tabelas, vídeos, como foi medido) e este relatório.
-- **Ambiente**: WSL2 (Linux 6.18) para importação, testes, sonda e robô (Godot 4.7.2 Linux, sem tela). Vídeos, capturas e
-  latência na **placa real** pela Godot 4.7.2 de Windows (Vulkan 1.4.357, Forward+, RTX 5060 Laptop), espelho
-  `C:/Users/danie/tools/eterra-gpu-qa`, monitor a 144 Hz. **Notebook na bateria** durante a sessão (ver seção 4). Som só
-  gravado, ninguém ouviu; sem controle; nenhum teste com gente.
+- **Testado**: a cópia de trabalho de `arpg-3d` com a E1a inteira **não commitada** sobre o `10944b1` (animação por textura
+  de poses com mistura, 20 poses no andar, recuo ao levar golpe, passo medido, `RESULT` em JSON, armas repintadas, pé do
+  Escudo). **Antes**: `10944b1` (`docs/gallery/e1a/before/BEFORE.md`) e, para as comparações que dependem da sessão, o
+  mesmo commit rodado de novo hoje (cópia por `git archive` e espelho `eterra-gpu-head`). O QA não mudou código, arte nem
+  testes; acrescentou `docs/gallery/e1a/after/` (detalhes, tabelas e comandos em `after/AFTER.md`) e este relatório.
+- **Ambiente**: WSL2 (Godot 4.7.2 Linux, sem tela) para importação, testes, sonda e robô. Placa real pela Godot 4.7.2 de
+  Windows (Vulkan 1.4.357, Forward+, RTX 5060 Laptop), espelho próprio `C:/Users/danie/tools/eterra-gpu-e1a`. **Notebook na
+  tomada** em todas as medidas de quadro (`BatteryStatus=2`, `PowerOnline=True`, 87% a 92%, lido antes e depois). Som
+  gravado pelo Movie Maker e descartado nos mp4; ninguém ouviu. Sem controle, sem celular, nenhum teste com gente.
 
 ## Veredito
 
-**Pronto para o Daniel testar.** O aceite de game feel do C12d passa inteiro: sonda **31/31** (antes 4/31), nenhum aperto
-perdido, **532/532** testes, `check` e fluxo do título ok, robô sem ninguém preso, chefe e partida inteira vencidos,
-estresse sem erro, nenhum número de dano, vida ou aviso mudado, vitória de Morvath e câmera lenta voltando a 1 nos menus.
-Nenhuma falha crítica, alta ou regressão encontrada. **Uma pendência de medição**: o tempo de quadro na placa (sem piora
-acima de 0,3 ms) não pôde ser comparado porque o notebook estava na bateria (quadro preso em 60 por segundo); repetir na
-tomada antes de fechar o C12d como "sem custo". A latência de ponta a ponta (GF-13) foi medida até o quadro do Windows,
-não até o pixel (sem câmera rápida).
+**Pronto para o Daniel testar, com duas ressalvas escritas.** A E1a entrega o principal: a multidão e Morvath não repetem
+mais pose em quadros seguidos (0 de 23 pares no andar, antes 43% a 65%; morte 0 de 39, antes 82%), todos os clipes têm o
+número de poses pedido, o recuo aparece, os assados encolheram de 45 para 38 MB, a simulação ficou idêntica (mesma semente,
+`RESULT` igual campo a campo) e nada regrediu (557/557, sonda 31/31, 8/8 descidas, 0 preso). Ressalvas:
+1. **E1a-2 não passa para três figuras**: o pé de apoio do Escudo (10,7 cm), do Cavaleiro (10,2) e de Morvath (5,8) ainda
+   desliza mais de 5 cm por passo. Está declarado no próprio teste (`STRIDE_PENDING`) e marcado para a E1b.
+2. **Tempo só da GPU no limite**: +0,30 ms em média (0,20 a 0,41 por par) com 150 inimigos, medido intercalado com a base;
+   o tempo de quadro total caiu 0,18 ms. Não piora o que o jogador vê, mas está exatamente no teto do aceite.
 
 ## 1. Checagem e testes
 
 | Comando | Resultado |
 |---|---|
-| `godot --headless --path . --import` | **0 SCRIPT ERROR, 0 Parse Error** |
-| `godot --headless --path . -s tools/check.gd` | `CHECK ok`, saída 0 |
-| `tools/test.sh` | **54 arquivos, 532 testes, 532 passando, 0 falhando, 0 arriscados** (o `test_only_finishers_glint` passa), 104085 asserções, 117,1 s |
-| `godot --headless --path . -s tools/title_flow_check.gd` | **`FLOW ok`** (inclui a opção nova de vibração) |
-| `godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain` | **`FEEL_SUMMARY 31/31 ok`, saída 0, 0 linhas LOST** (`docs/gallery/c12d/after/feel_probe.txt`) |
-| `git diff fffd677 -- tools/make_data.gd data/` | só `_combos` (sons de disparo; seta `recovery` 18/60, `cooldown` 0,7, `root_time` 0,71) e `_feel` (`dodge_iframes` 18/60, `slash_sweep_time` 0,05); `data/` igual a isso mais `text_pt.tres`. **Nenhum dano, vida, inimigo, chefe, onda ou aviso** |
+| `godot --headless --path . --import` | 0 `SCRIPT ERROR`, 0 `Parse Error` |
+| `godot --headless --path . -s tools/check.gd` | `CHECK ok` |
+| `tools/test.sh` | **58 scripts, 557 testes, 557 passando, 0 falhando, 0 arriscados**, 104 890 asserções, 124,4 s (antes 541) |
+| `godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain` | **`FEEL_SUMMARY 31/31 ok`**, 0 `LOST` |
 
 Exportação de Windows e Web: não pedida, não feita.
 
-## 2. Aceite do C12d, item a item
+## 2. Robô e números de combate
 
-| Item | Medida | Resultado |
+| Comando | Antes | Depois |
 |---|---|---|
-| Sonda com metas (GF-14) e GF-01 a GF-10 | 31/31; as 27 que falhavam passam (tabela antes e depois no `AFTER.md`); GF-07b (f49) e GF-10c (4 quadros) no limite da folga | **passa** |
-| Testes, `check`, título | seção 1 | **passa** |
-| 8 descidas, reação 0,25 (`--smoke=420`, sementes 5, 7, 13, 21, 3, 9, 11, 17) | **4 vitórias** (5, 7, 13, 17); derrotas na fase 3 (21), fase 2 (3, 11), sala 5 guardião (9); `stuck` 0 e `bot.stuck` 0 nas 8; `boons_at_boss` 2 a 3; `hp_at_boss` 5 a 55 | **passa** (preso 0; mesmo resultado que o commit diz) |
-| Chefe, 25 dons | venceu em 88,9 s | **passa** |
-| Partida inteira `tools/smoke.sh 300 --seed=5` | chega em Morvath (sala 7) aos 122,9 s e **vence** | **passa** |
-| Estresse `--stress=300` | 0 erro, 300 de pé; sozinho, `step_ms_avg` 2,02 e 2,03 (base `6f9bbc7` 3,15 e 3,00) | **passa** |
-| Quadro a 1080 por arena | cinco capturas na placa (`after/arena_*_combate.jpg`): cenário, luz e HUD iguais ao `cycle12c/AFTER.md`, corte e avisos novos | **passa no visual**; tempo de quadro **não medido** (seção 4) |
-| Números de combate | seção 1 | **passa** |
-| Vitória de Morvath | cena real com o robô: tela de fim 4,1 s depois da queda, `time_scale` 1,0; "Continuar" ao título com 1,0; no vídeo f4 a selagem aos 17 a 20 s | **passa** |
-| Menus e câmera lenta | cena real: câmera lenta 0,2, Esc abre a pausa e `Engine.time_scale` volta a 1,0 no mesmo quadro; continuar 1,0; sair da partida no meio de câmera lenta com hit stop: 1,0 | **passa** |
-| Vídeos depois e comparação | seção 5 | feito |
-| GF-13 latência | seção 3 | medido em parte (até o quadro do Windows) |
+| `tools/smoke.sh 300` (sem semente) | Morvath aos 122,6 s, vence | Morvath (sala 7) aos 135,4 s, **vence**, `max_alive` 7, `step_ms_avg` 0,18 |
+| `tools/smoke.sh 120 --start=boss --boons=25` (sem semente) | vence em 52,8 s | **vence** em 69,2 s (outros dons sorteados; sem semente não se compara) |
+| `tools/smoke.sh 300 --seed=1..8` | 8/8 vencem | **8/8 vencem, `stuck` 0, `bot.stuck` 0; tempo, hp, abates e `max_alive` idênticos nas 8** |
+| `--seed=5` 300 s e `--start=boss --boons=25 --seed=5`, base e depois rodados agora | | **0 diferenças** no `RESULT` fora de `step_ms*` e `fps` (dano 12 789 e 5 939 nos dois) |
+| `--stress=150 --seed=5` | avg 1,28, pico 11,18 | **avg 1,02**, pico 12,66; 160 abates e dano 19 692 iguais |
 
-## 3. Latência de ponta a ponta (GF-13)
+Conclusão: o recuo é só desenho (o aceite do E1a-3 pede "nenhum número de combate muda": confirmado).
 
-Do `SendInput` (tecla ou clique) ao primeiro quadro composto pelo Windows em que a região do herói muda, lido por GDI,
-mesmo relógio (`QueryPerformanceCounter`); 20 tentativas por ação, janela 1280 x 720, sala da fonte, monitor 144 Hz.
-Método, limiar e brutos: `docs/gallery/c12d/AFTER.md` seção 2 e `after/latencia/`.
+## 3. Desempenho
 
-| Ação | vsync ligado (padrão) | vsync desligado |
+| Medida | Antes | Depois |
 |---|---|---|
-| Andar | 34,8 ms (34,3 a 35,4) | 13,8 ms (6,7 a 14,8) |
-| Esquiva | 41,7 ms (21,5 a 42,2) | 14,0 ms (12,9 a 21,2) |
-| Golpe | 34,7 ms (33,7 a 41,9) | 13,8 ms (7,9 a 15,6) |
+| `step_ms_avg` descidas | 0,18 a 0,22 | 0,18 a 0,20 |
+| `step_ms_avg` estresse 150 | 1,28 | 1,02 |
+| Quadro na GPU, 150 inimigos, 1080 sem vsync, **intercalado na mesma sessão** (3 + 3) | frame mediana 7,60 / 7,09 / 7,79 (7,49); gpu 6,31 / 6,36 / 6,31 (6,33); 1032 chamadas | frame 7,25 / 6,86 / 7,82 (**7,31**); gpu 6,72 / 6,56 / 6,60 (**6,63**); 995 chamadas |
+| Os 3 do depois pedidos (`gpuperf9`, antes do intercalado) | (sessão do antes: frame 8,77 a 9,41, gpu 5,63 a 5,87) | frame 6,76 / 7,50 / 7,11; gpu 6,55 / 6,68 / 6,34 |
+| `gpu.sh shot`, vsync, só referência | fps 128 / 115 / 120 | fps 117 / 127 / 132 |
+| `du -sh assets/baked` | 45 MB | **38 MB** (teto 70) |
 
-O vsync ligado custa cerca de 21 ms (3 quadros a 144 Hz). **Não medido**: USB do teclado e mouse, varredura e resposta do
-monitor (pedem câmera rápida); tela cheia exclusiva; controle. Resolução de um quadro composto (7 ms), fase do aperto fixa
-logo depois de um quadro.
+A sessão do antes e a base de hoje diferem em 1 a 2 ms no quadro: comparar o depois com os números do `BEFORE.md`
+mostraria uma melhora falsa no quadro e uma piora exagerada na GPU. O que vale é o intercalado (`after/logs/gpu_perf_interleaved.log`).
+Leitura: a mistura de poses no vértice custa cerca de 0,3 ms de GPU com 150 figuras (duas leituras de textura por vértice
+mais a passada do contorno) e economiza CPU de render (1 lote por clipe em vez de 1 por pose: 37 chamadas a menos).
+Não medido: placa fraca, Compatibility na GPU, celular.
 
-## 4. Desempenho
+## 4. Aceite item a item
 
-- Simulação sem tela, estresse de 300 sozinho: `1d06613` 2,02 e 2,03 ms por passo contra 3,15 e 3,00 na base `6f9bbc7`.
-- **Placa: não medido de forma válida.** A sonda `gpuperf9.gd` (1080, base e depois alternados) passou a dar quadro de
-  16,67 ms nas duas versões a partir da 2ª cena e o tempo da placa subiu rodada a rodada (base 4,82 a 7,99, depois 5,68 a
-  7,07); o Windows dizia `PowerOnline False` (bateria, 99% e 96%). Parei. Chamadas de desenho iguais (700 e 725, 673 e
-  669, 856 e 837). Repetir na tomada com o comando do `cycle12c/AFTER.md`.
-- FPS da linha `RESULT` no `gpu.sh shot --stress=300`: não rodado pelo mesmo motivo.
-- Celular e placa fraca: não medidos (sem aparelho).
+| Item | Resultado | Evidência |
+|---|---|---|
+| E1a-1: pose repetida a 30 qps no andar = 0 | **passa** (0 de 23 nos quatro; golpe 0 de 9; morte 0 de 39) | `after/pose_repeats.txt`, `strip_blend_index.txt`, `pose_psnr_walk.txt`, `skeleton_walk_contact_12.png` |
+| E1a-1: 20 poses no andar, golpe 8, parado 12, morte 16 | **passa** nos nove | `after/baked_poses.txt` |
+| E1a-1: assados até 70 MB | **passa**, 38 MB | `after/baked_sizes.txt` |
+| E1a-1: `step_ms` sem piora | **passa** | seção 3 |
+| E1a-1: GPU sem piora acima de 0,3 ms | **no limite** (+0,30 GPU, -0,18 quadro) | `after/logs/gpu_perf_interleaved.log` |
+| E1a-2: pé de apoio menos de 5 cm | **falha para 3 de 8 que andam** (Escudo 10,7, Cavaleiro 10,2, Morvath 5,8); esqueleto 2,4, mago 1,8, corredor 1,1, besteiro 1,7, ancião 4,5 | `after/baked_poses.txt` (`BakedModel.slide_per_step`) |
+| E1a-3: recuo de 0,15 a 0,3 m em 3 quadros, que volta | **passa** na medida (0,24 m leve, 0,15 m pesado, pico no 3º quadro a 30 qps, volta em 0,3 s) | `after/compare/skeleton_hit_recoil_after.jpg`, `strip_blend_index.txt` |
+| E1a-3: números de combate iguais | **passa** (0 diferenças) | seção 2 |
+| E1a-4: armas | não refeito aqui (`after/weapons/`, revisão do `art-director`) | |
+| E1a-5: `RESULT` em JSON | **passa** (13 de 13 linhas desta sessão lidas por `json.loads`; `test_result_json.gd`) | `after/logs/*.log` |
+| E1a-QA | **passa** | `docs/gallery/e1a/after/` |
 
-## 5. Vídeos e capturas
+## 5. Falhas e regressões, por gravidade
 
-Em `docs/gallery/c12d/after/`, com os mesmos comandos e cortes de `docs/gallery/game_feel/VIDEOS.md` (1920 x 1080, câmera
-do jogo, com som; os lentos sem som): `a_movimento_esquiva`, `b_combo_finalizador`, `c_acertos_reacao`,
-`d_especial_circulo_omegas`, `e_grupo_misto`, `f1` a `f4` de Morvath (f4 com 22 s em vez de 15, para chegar à vitória, que
-agora sai aos 17 s), `g_combo_finalizador_0_25x`, `g_acertos_reacao_0_25x`, e **`comparacao_combo_finalizador_0_25x.mp4`
-e `comparacao_acertos_reacao_0_25x.mp4`**: antes e depois lado a lado, o mesmo quadro do jogo a 0,25x. O que observar em
-cada um: `docs/gallery/c12d/AFTER.md` seção 5. Visto nos quadros: o corte deixou de ser a folha verde opaca longe da
-lâmina e virou um fio marfim na ponta da Emeth que some em 3 quadros; os avisos sob o grupo viraram contorno com
-preenchimento leve; o grupo de 8 do (b) cai antes.
+Nenhuma falha crítica nem alta. Nenhuma regressão em teste, sonda, robô ou números de combate.
 
-## 6. Falhas e regressões por gravidade
+- **Média, E1a-2 incompleto (pés deslizando em 3 figuras)**. Reproduzir:
+  `~/tools/godot/godot --headless --path . -s docs/gallery/e1a/after/tools/qa_e1a_poses.gd` (coluna `slide`), ou
+  `tools/test.sh -gtest=res://tests/test_living_crowd.gd` (o `gut.p` imprime por figura). O teste passa porque tem a
+  exceção `STRIDE_PENDING` (guard 0,12, knight 0,11, morvath 0,065). Responsável: `gameplay-engineer` (travar o pé no
+  assado, E1b). Efeito colateral a revisar: para casar o passo, o Escudo anda a **2,01x** a velocidade do clipe (antes 1,41x)
+  e o esqueleto a 0,85x (antes 1,6x), o mago a 0,74x (antes 1,52x); a cadência mudou bastante (`after/guard_walk_contact_12.png`,
+  vídeos 0,25x). Decisão de aparência para o `art-director`.
+- **Média, GPU no teto do aceite (+0,30 ms com 150)**. Reproduzir: o bloco intercalado de `after/AFTER.md` seção 3.
+  Responsável: `gameplay-engineer` (`crowd_pose.gdshaderinc`; o contorno também lê as duas poses). Não passa de 0,3 na
+  média; um par passou (+0,41).
+- **Baixa, recuo pouco visível na câmera do jogo**: a 1080 o 0,24 m são uns 11 px e coincide com o achatamento e o clarão;
+  no recorte da luta (`after/compare/fight_f90_101_before_after.jpg`) não se distingue com clareza do antes. O aceite
+  pedia `--shot-on=hit` com os quadros seguintes: **não rodado** (medi pelas tiras com o `HitRecoil` do jogo e pelo
+  vídeo). Responsável: `art-director` (decidir se basta) e `gameplay-engineer`.
+- **Baixa, ferramenta**: o achado do `BEFORE.md` (`tools/enemy_lab.gd` não compila com `-s`) não foi reverificado nesta
+  rodada; as tiras continuam usando `load()` do `crowd_renderer.gd`.
 
-Nenhuma crítica. Nenhuma alta. Nenhuma regressão encontrada.
+## 6. Avaliação pelas perguntas da diretriz (`docs/design/po_directive_guardian.md`)
 
-**Média**
-- **M-a. Tempo de quadro do C12d na placa sem medida válida** (não é falha do jogo; o aceite "sem piora acima de 0,3 ms"
-  está aberto). Reproduzir na tomada: `MIRROR=... tools/gpu.sh run --rendering-driver vulkan --resolution 1920x1080
-  --fixed-fps 60 --disable-vsync -s C:/Users/danie/tools/qa/gpuperf9.gd -- --probe-res=1920x1080 --nosave --seed=5 --bot
-  --bot-reaction=0.25 --probe-settle=240 --arena=<a>`, base `6f9bbc7` e `1d06613` alternados. O C12d acrescentou um 2º
-  passe nos avisos (stencil 2) e mexeu nos shaders do corte e das lascas. Responsável: `qa-performance` (remedir).
+Sem teste humano: nada aqui diz que o jogo é divertido.
 
-**Baixa**
-- **B-a. `tests/test_slash_wire.gd.uid` fora do commit.** A importação criou o arquivo (o `.gd` está no `1d06613`, o `.uid`
-  não; os outros 54 testes têm o seu). Fica como não rastreado na árvore. Responsável: Game Director (juntar no próximo
-  commit).
-- **B-b. Com vsync, a esquiva aparece um quadro composto (7 ms) depois do andar e do golpe** (41,7 contra 34,8 ms; sem
-  vsync, 14,0 e 13,8). A sonda diz que ela sai no quadro do aperto; a primeira mudança visível vem um quadro do jogo
-  depois. Reproduzir: `after/latencia/latency.cs` (`latency.exe run space 20 90 290 400 300` com o jogo na fonte).
-  Responsável: `gameplay-engineer` (conferir se o deslocamento ou a pose do 1º quadro da esquiva é desenhado no quadro do
-  aperto).
-- **B-c. A linha `RESULT` não é JSON válido**: `boss.attacks` sai com chaves `&"scythe"` (StringName). Anterior ao C12d
-  (`3b22cea`). Atrapalha ler o `RESULT` por script (o registro `runs.jsonl` não foi conferido aqui). Responsável:
-  `gameplay-engineer`.
-- **B-2 (aberto desde o C12c). O robô nunca usa a fonte**: `fountain_used: false` nas 8 descidas. Responsável:
-  `gameplay-engineer`.
-- Duas metas da sonda no limite da folga do QA: GF-07b (2ª seta em f49, alvo 48) e GF-10c (clarão de 4 quadros, 0,07 s,
-  alvo 0,05). Passam pela regra escrita; anotar se o `art-director` quiser o clarão mais curto.
+**Game feel**
+- *Comandos respondem na hora? Dá para encadear?* A E1a não mexe na mão: sonda 31/31, 0 apertos perdidos, igual ao C12d.
+- *Ataques têm impacto?* O golpe agora desloca o corpo (0,24 m em 3 quadros a 60 qps) além do clarão e do achatamento.
+  Nas tiras se vê; na câmera do jogo é discreto. Se o impacto "chega" no inimigo, só o teste com gente dirá.
+- *Alguma animação ou pausa atrapalha?* O andar e a morte deixaram de engasgar. Ponto a observar no teste: a cadência nova
+  (Escudo bem mais rápido, esqueleto e mago mais lentos que antes) e o deslize que resta em Escudo, Cavaleiro e Morvath.
 
-Abertos de antes que este QA não remediu: A-1 e B-1 (colunas e gemas; o `6f9bbc7` diz que corrigiu, sem captura minha
-neste ciclo), M-1 (chão da Cripta), B-3 (limitador).
+**Visual**
+- *Animação adequada?* Muito melhor que o antes: nenhum quadro repetido, transições regulares (PSNR 25 a 35 dB entre
+  quadros em vez de alternar igual e salto), morte em 16 poses contínuas (`after/compare/strip_before_after_025x.mp4`). O
+  esqueleto anda ereto, com a cabeça visível (antes curvado com a cabeça atrás da ombreira; `compare/skeleton_walk_contact_before_after.png`).
+  A reação de golpe do esqueleto é pequena no corpo (quase a pose de parado; o deslocamento é que lê).
+- *Inimigos legíveis?* Iguais ou melhores: mesma silhueta, armas sem as faixas chapadas (`stills/fight_f100.jpg`), a
+  simulação é a mesma quadro a quadro.
+- *O poder impressiona? Efeitos na direção de arte?* Fora do escopo da E1a; nada mudou nos efeitos do herói.
+- *Parece jogo comercial?* A multidão em movimento deixou de denunciar o protótipo pela cadência; o deslize de pés nas
+  três figuras pesadas e a reação de golpe ainda curta são o que resta. O julgamento final é do `art-director`.
 
 ## 7. Limitações
 
-- Notebook na bateria: tempo de quadro na placa não comparável; a latência foi medida antes de eu notar, sem confirmar a
-  energia naquele momento (a dispersão pequena sem vsync sugere que não havia limite de 60).
-- Latência até o quadro do Windows, não até o pixel; GDI com resolução de 7 ms; aperto injetado, não de um teclado real.
-- Robô e roteiro de entrada não são gente; som gravado e não ouvido; vibração sem controle para testar.
-- As 8 descidas rodaram 4 de cada vez (os passos delas não valem como desempenho).
-- Brutos (AVI de cerca de 2 GB, PNG, BMP) em `C:/Users/danie/tools/qa/c12d/` apagados no fim; a cópia da base
-  (`/home/dani/games/qa-c12d-base`) e o espelho dela (`C:/Users/danie/tools/eterra-gpu-head`) apagados.
+- Robô, não gente. Smokes sem semente não são comparáveis entre versões (só os com semente).
+- Quadro na GPU: um notebook (RTX 5060 Laptop, escala 1,5 do Windows, render 2880x1620), na tomada; variação entre sessões
+  de 1 a 2 ms, por isso o intercalado. Compatibility na GPU, placa fraca e celular não medidos.
+- As tiras são o renderizador da multidão numa cena de laboratório (fundo liso), não a sala. Os vídeos da partida mostram o resto.
+- Som não ouvido.

@@ -23,8 +23,12 @@ extends SceneTree
 ## its swing: the shield arm stays behind the shield, and the shield comes in front of the body).
 ## A held piece: "hand" (Right or Left), then "file" (assets/models/weapons) or "shape" (see _prop), "scale",
 ## "at" (meters) and "rot" (degrees) in the hand's grip (+Y along the fist toward the pinky, which is where the
-## libraries' sword clips carry the blade; +Z out of the knuckles, along the forearm) and "remap" (palette cells
-## moved). A staff or a crossbow, held thumb up by the other clips, is turned over: rot (0, 0, 180).
+## libraries' sword clips carry the blade; +Z out of the knuckles, along the forearm) and "paint" (KayKit palette
+## cell of the weapon -> one of SWATCHES: the weapon is repainted in the figures' own painted tones, see _repainted).
+## A staff or a crossbow, held thumb up by the other clips, is turned over: rot (0, 0, 180).
+## "even_legs" (true): the model's rig has one leg's knee misplaced (the brute: its left shin bone 0.6 m long, the
+## right 0.35), so the clips that straighten the legs would push that foot through the floor and leave the other in
+## the air; each leg then reaches as far as it does at rest when the clip straightens it (_even_leg).
 ##
 ## The KayKit figures the game used until 2026-11-15 are kept in KAYKIT with their palettes (tools/make_palettes.gd),
 ## to go back: `-- kaykit [ids]` bakes them over the same files (then EnemyDef.palette draws the elites again).
@@ -79,6 +83,62 @@ const C_GLOW_COLD := 28
 const C_GLOW_PURPLE := 29
 const C_EMBER := 30
 
+## The held weapons repainted in the tones of the painted figures (VX-07; the KayKit palette made them flat toy
+## colours in two-tone bands): each swatch fills one cell of the first row of the palette strip, which no held
+## shape uses (the glowing cells are in the last row), and the weapon's faces are projected on it along the weapon
+## (_repainted), so the grain runs down the blade or the shaft. Per swatch: the cell, the base colour (sRGB, the
+## value and saturation of the figures' own painting: the brute's own sword and plate, the soldier's bone, the
+## priests' cloth, as they come out of the crowd shader; docs/arte/estetica.md), "grain" (fine noise),
+## "streak" (long marks along the weapon: brushed iron, wood grain), "stain" (broad darker patches, wear) and
+## "scratch" (share of thin light lines along it).
+const SWATCHES := {
+	"iron": {"cell": 0, "color": Color(0.13, 0.135, 0.14), "grain": 0.05, "streak": 0.06, "stain": 0.12, "scratch": 0.08},
+	# the rim and boss of a shield: the same iron, worn lighter where it is struck
+	"iron_worn": {"cell": 1, "color": Color(0.23, 0.23, 0.225), "grain": 0.06, "streak": 0.05, "stain": 0.18, "scratch": 0.12},
+	"bone": {"cell": 2, "color": Color(0.5, 0.45, 0.36), "grain": 0.05, "streak": 0.04, "stain": 0.2, "scratch": 0.0},
+	"wood": {"cell": 3, "color": Color(0.1, 0.064, 0.043), "grain": 0.04, "streak": 0.16, "stain": 0.12, "scratch": 0.0},
+	# tarnished bronze: the staffs' rings and claws, the knight's hilt
+	"metal": {"cell": 4, "color": Color(0.18, 0.16, 0.13), "grain": 0.05, "streak": 0.05, "stain": 0.2, "scratch": 0.06},
+	# Morvath's hilt: old gold on screen, hue 35 to 45, saturation under 0.5 (V-P1), never the yellow of a toy. He is
+	# drawn far more saturated than painted (EnemyDef.vivid 0.9) and tinted violet (the tint takes green and adds
+	# blue: the hue goes red): this paint, paler and yellower than the gold it reads as, is what comes out at hue 39
+	"gold": {"cell": 5, "color": Color(0.33, 0.305, 0.21), "grain": 0.05, "streak": 0.05, "stain": 0.16, "scratch": 0.05},
+	"leather": {"cell": 6, "color": Color(0.1, 0.07, 0.055), "grain": 0.06, "streak": 0.06, "stain": 0.1, "scratch": 0.0},
+	# the soldier's cleaver blade (ART_REVIEW 4b): worn iron of its own, lighter than the floor it hangs over (value
+	# 0.28, the iron's hue), its edge scratches at 0.48 ("lift": a scratch that much lighter than the swatch)
+	"blade": {"cell": 8, "color": Color(0.27, 0.28, 0.29), "grain": 0.05, "streak": 0.06, "stain": 0.1, "scratch": 0.2, "lift": 1.7},
+	"red": {"cell": 7, "color": Color(0.2, 0.06, 0.05), "grain": 0.06, "streak": 0.06, "stain": 0.12, "scratch": 0.0},
+}
+## A scratch: that much lighter than the swatch around it.
+const SCRATCH_LIFT := 1.6
+## Share of a swatch cell left at each side (the mipmaps of the compressed atlas bleed from the next cell).
+const SWATCH_MARGIN := 0.12
+## Lattice of the swatches' noise across a cell (along the weapon, across it): the fine grain, the streaks, the stains.
+const GRAIN_LATTICE := Vector2(64, 16)
+const STREAK_LATTICE := Vector2(4, 14)
+const STAIN_LATTICE := Vector2(6, 2)
+## How the KayKit weapons are repainted (paint of a held piece): their palette cells -> swatches.
+## The cleaver: blade (11) in its own worn iron, its back (6) and the spikes of the hilt (3) in iron, the knuckle bow
+## and the grip (22) in bone.
+const BLADE_PAINT := {C_BLADE: "blade", C_WRAP: "iron", C_ARMOR: "iron", C_WOOD: "bone"}
+## The knight's blade with a bronze hilt; Morvath's with the hilt (the hook beside his hip) in old gold.
+const KNIGHT_BLADE_PAINT := {C_BLADE: "iron", C_WRAP: "iron", C_ARMOR: "iron", C_WOOD: "metal"}
+const MORVATH_BLADE_PAINT := {C_BLADE: "iron", C_WRAP: "iron", C_ARMOR: "iron", C_WOOD: "gold"}
+## The staff: shaft (22) and its knots (9) dark wood, the rings (17), the band (19) and the claws at the top (13)
+## old metal.
+const STAFF_PAINT := {C_WOOD: "wood", C_BONE: "wood", 17: "metal", 19: "metal", 13: "metal"}
+## The crossbow: bow (3) in iron, stock (22) in dark wood, the lock (14) old metal.
+const CROSSBOW_PAINT := {C_ARMOR: "iron", C_WOOD: "wood", 14: "metal"}
+## The knight's round shield: rim and skull (3) worn iron, the boards (7) dark wood, the straps (6) leather.
+const SHIELD_PAINT := {C_ARMOR: "iron_worn", 7: "wood", C_WRAP: "leather"}
+## The soldier's cleaver: the KayKit blade is 1.5 m long with its hilt, the steel 0.89 m, longer than the trunk
+## (V-P1); this scale leaves the steel at 0.68 of the trunk, hips to the top of the head (0.87 m at the soldier's
+## size, printed by the bake): 0.59 m of steel, 0.99 m with the hilt (ART_REVIEW 4b: the thin figure's weapon is
+## its role, 0.6 did not read in the game's camera).
+const CLEAVER_SCALE := 0.66
+## The crossbow (1.1 m wide in KayKit's units): a hand crossbow beside a 1.9 m figure.
+const CROSSBOW_SCALE := 0.5
+
 const SOLDIER_ANIMS := {"walk": ["Walking_D_Skeletons", 10, true], "attack": ["1H_Melee_Attack_Chop", 7, false], "hit": ["Hit_A", 4, false],
 	"rise": ["Spawn_Ground_Skeletons", 8, false], "death": ["Death_C_Skeletons", 8, false], "idle": ["Idle_Combat", 4, true]}
 const CASTER_ANIMS := {"walk": ["Walking_C", 10, true], "attack": ["Spellcast_Shoot", 7, false], "cast": ["Spellcasting", 6, true], "hit": ["Hit_A", 4, false],
@@ -111,7 +171,7 @@ const STAFF_GUARD := {"guard": [&"ual", "Idle_Torch", LEFT_ARM]}
 const CROSSBOW_GUARD := {"guard": [&"ual", "Pistol_Idle", RIGHT_ARM]}
 ## The shield arm up and the sword arm in guard (the shield clip lets it hang: the blade would drag in the floor).
 const SHIELD_GUARD := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]]}
-const SHIELD_IDLE := [&"ual2", "Idle_Shield", 4, true, SWORD_GUARD]
+const SHIELD_IDLE := [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD]
 ## The brute's own tower shield (MODELS.guard "hold"): degrees its arm and shield are swung from the model's rest
 ## toward the middle of the body, standing and walking, and braced for the charge.
 const SHIELD_FRONT := -14.0
@@ -122,21 +182,21 @@ const OFFERING_GUARD := {"guard": [&"ual2", "Walk_Carry", BOTH_ARMS]}
 
 ## What every figure does the same way. The rise plays in the 0.9 s the horde gives it (Horde, State.RISE).
 const COMMON_ANIMS := {
-	"hit": [&"ual", "Hit_Chest", 4, false],
-	"death": [&"ual", "Death01", 8, false, {"to": 1.9}],
-	"rise": [&"ual2", "LayToIdle", 8, false, {"time": 0.9}],
+	"hit": [&"ual", "Hit_Chest", 8, false],
+	"death": [&"ual", "Death01", 16, false, {"to": 1.9}],
+	"rise": [&"ual2", "LayToIdle", 12, false, {"time": 0.9}],
 }
 ## Horde.IMPACT_SHARE of the swing is the windup: the clips are cut so the blade comes down there.
-const SWORD_BLOW := [&"ual", "Sword_Attack", 8, false, {"from": 0.1, "to": 1.2}]
+const SWORD_BLOW := [&"ual", "Sword_Attack", 16, false, {"from": 0.1, "to": 1.2}]
 const CASTER_CLIPS := {
-	"attack": [&"ual", "Spell_Simple_Shoot", 6, false],
-	"cast": [&"ual", "Spell_Simple_Idle", 6, true],
+	"attack": [&"ual", "Spell_Simple_Shoot", 14, false],
+	"cast": [&"ual", "Spell_Simple_Idle", 12, true],
 }
 ## The same with a staff: the library casts with the left hand, which is the one that holds it.
 const STAFF_CLIPS := {
-	"idle": [&"ual", "Idle_Torch", 4, true],
-	"attack": [&"ual", "Spell_Simple_Shoot", 6, false],
-	"cast": [&"ual", "Spell_Simple_Idle", 6, true],
+	"idle": [&"ual", "Idle_Torch", 12, true],
+	"attack": [&"ual", "Spell_Simple_Shoot", 14, false],
+	"cast": [&"ual", "Spell_Simple_Idle", 12, true],
 }
 
 const MODELS := {
@@ -150,12 +210,12 @@ const MODELS := {
 	"skeleton": {
 		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "skeleton.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 1.0, "rot": EDGE_OUT}],
+		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": CLEAVER_SCALE, "rot": EDGE_OUT, "paint": BLADE_PAINT}],
 		"anims": {
-			"walk": [&"ual", "Jog_Fwd", 10, true, SWORD_GUARD], "idle": [&"ual", "Idle", 4, true, SWORD_GUARD],
+			"walk": [&"kaykit", "Running_B", 20, true, SWORD_GUARD], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
 			# the lunge is announced with the blade raised over the head (Horde plays "windup" for its 0.9 s)
-			"windup": [&"ual", "Sword_Attack", 4, false, {"from": 0.1, "to": 0.3, "time": 0.9}],
+			"windup": [&"ual", "Sword_Attack", 8, false, {"from": 0.1, "to": 0.3, "time": 0.9}],
 		},
 	},
 	# 2. the runner: burnt bone and red rags, no weapon, stooped, an ember in the chest
@@ -163,8 +223,8 @@ const MODELS := {
 		"meshy": "runner", "height": 1.65, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
-			"walk": [&"ual", "Sprint", 8, true], "idle": [&"ual2", "Zombie_Idle", 4, true],
-			"attack": [&"ual", "Punch_Cross", 6, false], "windup": [&"ual", "Crouch_Idle", 3, true],
+			"walk": [&"kaykit", "Running_B", 20, true], "idle": [&"ual2", "Zombie_Idle", 12, true],
+			"attack": [&"ual", "Punch_Cross", 14, false], "windup": [&"ual", "Crouch_Idle", 8, true],
 		},
 	},
 	# 3. the sorcerer: dark hood and robe over the ribs, steel arms; the staff with the cold violet gem is KayKit's
@@ -172,12 +232,12 @@ const MODELS := {
 		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
-			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "remap": {17: C_GLOW_COLD, C_BONE: C_WOOD}},
+			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT},
 			# the cold violet orb in the top of the staff: always lit, it swells as the bolt is conjured
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD},
 		],
 		"anims": {
-			"walk": [&"ual", "Jog_Fwd", 10, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
+			"walk": [&"kaykit", "Running_B", 20, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
 			# its bolt is announced by "aim" (Horde): the conjuring pose, not the walk it fell back to
 			"aim": STAFF_CLIPS.cast,
@@ -187,11 +247,12 @@ const MODELS := {
 	"archer": {
 		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "archer.png",
-		# the crossbow a sixth larger and its bow in light steel, so it reads as the weapon from the game's camera
-		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": 0.7, "rot": THUMB_UP, "remap": {C_ARMOR: C_BLADE}}],
+		# the crossbow in dark wood and iron, the size of a hand crossbow beside the figure (it was a white piece over
+		# its head)
+		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT}],
 		"anims": {
-			"walk": [&"ual", "Jog_Fwd", 8, true, CROSSBOW_GUARD], "idle": [&"ual", "Pistol_Idle", 4, true],
-			"attack": [&"ual", "Pistol_Shoot", 6, false], "aim": [&"ual", "Pistol_Idle", 3, true],
+			"walk": [&"kaykit", "Running_B", 20, true, CROSSBOW_GUARD], "idle": [&"ual", "Pistol_Idle", 12, true],
+			"attack": [&"ual", "Pistol_Shoot", 14, false], "aim": [&"ual", "Pistol_Idle", 8, true],
 		},
 	},
 	# 5. the brute: dark plate, the tower shield with its emblem and the sword are the model's own
@@ -204,20 +265,21 @@ const MODELS := {
 			{"bone": "RightHand", "seeds": ["RightHand"], "rod": 0.07},
 		],
 		"hold": {"bones": LEFT_ARM, "swing": SHIELD_FRONT},
+		"even_legs": true,
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true, SWORD_GUARD], "idle": [&"ual2", "Idle_Shield", 4, true, SWORD_GUARD],
+			"walk": [&"ual", "Walk", 20, true, SWORD_GUARD], "idle": [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
 			# the charge is announced braced behind the shield, brought further across the body
-			"brace": [&"ual2", "Shield_Dash_RM", 4, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
 	# 6. the priest of the dead: dark purple hood and robes, no weapon
 	"priest": {
 		"meshy": "priest", "height": 1.93, "triangles": BODY_TRIANGLES,
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 4, true, OFFERING_GUARD],
+			"walk": [&"ual", "Walk", 20, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 12, true, OFFERING_GUARD],
 			# the ritual: both hands rise over the second its blow takes to fall
-			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 6, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
+			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 12, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
 		},
 	},
 	# 7. the guardian knight: crowned helmet, heavy plate, red cape; blade and shield are KayKit's
@@ -225,11 +287,11 @@ const MODELS := {
 		"meshy": "knight", "height": 2.03, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "knight.png",
 		"held": [
-			{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.95, "rot": EDGE_OUT, "remap": {C_BLADE: C_ARMOR, C_WRAP: C_RED}},
-			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0)},
+			{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.95, "rot": EDGE_OUT, "paint": KNIGHT_BLADE_PAINT},
+			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0), "paint": SHIELD_PAINT},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true, SHIELD_GUARD], "idle": SHIELD_IDLE,
+			"walk": [&"ual", "Walk", 20, true, SHIELD_GUARD], "idle": SHIELD_IDLE,
 			"attack": SWORD_BLOW,
 		},
 	},
@@ -238,12 +300,12 @@ const MODELS := {
 		"meshy": "priest_elder", "height": 2.07, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "priest_elder.png",
 		"held": [
-			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "remap": {17: C_GLOW_PURPLE, C_BONE: C_WOOD}},
+			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT},
 			# the purple orb held in the top of the staff (the sheet's block 8)
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.38 * 0.9, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_PURPLE},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
+			"walk": [&"ual", "Walk_Formal", 20, true, STAFF_GUARD], "idle": STAFF_CLIPS.idle,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
 		},
 	},
@@ -252,18 +314,18 @@ const MODELS := {
 	"morvath": {
 		"meshy": "morvath", "height": 2.02, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "morvath.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.8, "rot": EDGE_OUT, "remap": {C_BLADE: C_ARMOR, C_WRAP: C_PURPLE}}],
+		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.8, "rot": EDGE_OUT, "paint": MORVATH_BLADE_PAINT}],
 		"anims": {
-			"walk": [&"ual", "Walk", 10, true, SWORD_GUARD], "idle": [&"ual", "Idle", 4, true, SWORD_GUARD],
+			"walk": [&"ual", "Walk", 20, true, SWORD_GUARD], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
-			"slash1": [&"ual2", "Sword_Regular_A", 8, false], "slash2": [&"ual2", "Sword_Regular_B", 8, false],
-			"slash3": [&"ual", "Sword_Attack", 10, false, {"from": 0.1, "to": 1.2}],
-			"dash_windup": [&"kaykit", "2H_Melee_Idle", 4, true, {"lift": 0.2}],
-			"dash": [&"ual2", "Sword_Dash_RM", 8, false, {"from": 0.12, "to": 0.72}],
+			"slash1": [&"ual2", "Sword_Regular_A", 14, false], "slash2": [&"ual2", "Sword_Regular_B", 14, false],
+			"slash3": [&"ual", "Sword_Attack", 16, false, {"from": 0.1, "to": 1.2}],
+			"dash_windup": [&"kaykit", "2H_Melee_Idle", 8, true, {"lift": 0.2}],
+			"dash": [&"ual2", "Sword_Dash_RM", 12, false, {"from": 0.12, "to": 0.72}],
 			# the KayKit figure is half his height and hops as it conjures: on him the hop would be a flight
-			"summon": [&"kaykit", "Spellcast_Summon", 12, false, {"lift": 0.2}], "rain": [&"kaykit", "Spellcast_Raise", 8, false, {"lift": 0.2}],
-			"volley": [&"ual", "Spell_Simple_Shoot", 6, false], "roar": [&"kaykit", "Taunt", 8, false, {"lift": 0.2}],
-			"stunned": [&"ual", "Crouch_Idle", 6, true],
+			"summon": [&"kaykit", "Spellcast_Summon", 20, false, {"lift": 0.2}], "rain": [&"kaykit", "Spellcast_Raise", 14, false, {"lift": 0.2}],
+			"volley": [&"ual", "Spell_Simple_Shoot", 14, false], "roar": [&"kaykit", "Taunt", 14, false, {"lift": 0.2}],
+			"stunned": [&"ual", "Crouch_Idle", 12, true],
 		},
 	},
 }
@@ -418,6 +480,8 @@ var _done := false
 var _rigs := {}
 ## The entry's "hold" while it is baked (see MODELS).
 var _hold := {}
+## The entry's "even_legs" (see MODELS), for _pose_meshy.
+var _even_legs := false
 
 
 func _process(_delta: float) -> bool:
@@ -437,9 +501,8 @@ func _process(_delta: float) -> bool:
 		var spec: Dictionary = models[id]
 		var baked := _bake_meshy(spec) if spec.has("meshy") else _bake(spec)
 		ResourceSaver.save(baked, "res://assets/baked/%s.res" % id, ResourceSaver.FLAG_COMPRESS)
-		var idle: Mesh = baked.anims.idle[0]
-		print("baked %s: %d anims, %d triangles, %.2f m, in %d ms" % [id, baked.anims.size(),
-			(idle.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3, baked.height, Time.get_ticks_msec() - t0])
+		print("baked %s: %d anims, %d triangles, %.2f m, in %d ms" % [id, baked.frames.size(),
+			(baked.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3, baked.height, Time.get_ticks_msec() - t0])
 	quit()
 	return true
 
@@ -461,6 +524,7 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var held: Array = spec.get("held", [])
 	if not held.is_empty():
 		atlas = _with_strip(atlas, load(spec.palette))
+		_paint_swatches(atlas)
 		arrays[Mesh.ARRAY_TEX_UV] = _squeezed(arrays[Mesh.ARRAY_TEX_UV], 0.0, BODY)
 	var light := ArrayMesh.new()
 	light.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
@@ -468,6 +532,7 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var anims: Dictionary = COMMON_ANIMS.merged(spec.anims, true)
 	var bend: Dictionary = spec.get("bend", {})
 	_hold = spec.get("hold", {})
+	_even_legs = spec.get("even_legs", false)
 	# the model at the height the game draws it at size 1: measured standing idle (the models rest in poses of their
 	# own, the brute with its legs apart), then scaled; Retarget measures the scaled model
 	var retargets := {}
@@ -475,6 +540,11 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var armature := skeleton.get_parent() as Node3D
 	armature.scale *= float(spec.height) / PoseBaker.snapshot(model, skeleton).get_aabb().end.y
 	retargets.clear()
+	_pose_meshy(skeleton, model, retargets, anims.idle, 0.0, bend)
+	var trunk := (armature.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("Head")).origin).y \
+		- (armature.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("Hips")).origin).y
+	print("  trunk (hips to the head bone) %.2f m, hips to the top of the head %.2f m" % [trunk,
+		float(spec.height) - (armature.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("Hips")).origin).y])
 	var extra: Array[Dictionary] = []
 	for h: Dictionary in held:
 		extra.append_array(_held(h, _retarget(&"ual", retargets, skeleton, model), model))
@@ -486,6 +556,8 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	atlas.generate_mipmaps()
 	atlas.compress(Image.COMPRESS_S3TC, Image.COMPRESS_SOURCE_SRGB)
 	out.albedo = ImageTexture.create_from_image(atlas)
+	var clips := {}
+	var walk_poses: Array = []
 	for anim: String in anims:
 		var a: Array = anims[anim]
 		var opts: Dictionary = a[4] if a.size() > 4 else {}
@@ -498,30 +570,67 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 		var to: float = opts.get("to", player.get_animation(a[1]).length)
 		var frames: int = a[2]
 		var loops: bool = a[3]
-		var meshes: Array = []
+		var poses: Array = []
 		var low := INF
 		var lean := 0.0
+		# the walk keeps the clip's own rise and fall (E1a-2): one lift for the whole loop, the deepest any pose needs
+		var ground := NAN
+		if anim == "walk":
+			for i in frames:
+				ground = minf(ground if not is_nan(ground) else INF,
+					_pose_meshy(skeleton, model, retargets, a, from + (to - from) * i / frames, _bends(bend, opts.get("bend", {}))))
 		for i in frames:
 			# loops sample [from, to); one-shots include the last pose
 			var t := from + (to - from) * i / (frames if loops else maxi(frames - 1, 1))
-			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})))
+			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), ground)
 			if i == 0:
 				lean = _lean(skeleton)
-			var mesh := PoseBaker.snapshot(model, skeleton, extra)
-			low = minf(low, mesh.get_aabb().position.y)
-			meshes.append(mesh)
-		out.anims[anim] = meshes
+			var posed := PoseBaker.pose_arrays(model, skeleton, extra)
+			for at: Vector3 in posed[Mesh.ARRAY_VERTEX]:
+				low = minf(low, at.y)
+			poses.append(posed)
+			if anim == "walk":
+				walk_poses.append(posed[Mesh.ARRAY_VERTEX])
+		clips[anim] = poses
 		out.fps[anim] = frames / float(opts.get("time", to - from))
 		out.loops[anim] = loops
-		print("  %s: %s %s, %.2f s, lowest point %.2f m, trunk leaning %.0f degrees" % [anim, a[0], a[1], frames / float(out.fps[anim]), low, lean])
+		print("  %s: %s %s, %d poses, %.2f s, lowest point %.2f m, trunk leaning %.0f degrees" % [anim, a[0], a[1], frames, frames / float(out.fps[anim]), low, lean])
+	out.feet["walk"] = _soles(arrays, mi.skin, walk_poses)
+	_pack(out, clips)
 	# the top of the head, not of what it holds (a staff stands taller than its bearer)
 	out.height = spec.height
 	model.free()
 	return out
 
 
+## The poses of every clip (animation name -> Array of PoseBaker.pose_arrays) into the model's vertex animation
+## (BakedModel.pack), with the walk's stride measured (BakedModel.ground_speed).
+func _pack(out: BakedModel, clips: Dictionary) -> void:
+	var idle: Array = clips.idle[0]
+	var shape := ArrayMesh.new()
+	# the shape drawn: triangles and texture coordinates (its vertices are replaced by the poses' in the shader); full
+	# precision, it is only one mesh
+	shape.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, idle)
+	var packed := {}
+	for anim: String in clips:
+		var poses: Array = []
+		for arrays: Array in clips[anim]:
+			poses.append([arrays[Mesh.ARRAY_VERTEX], arrays[Mesh.ARRAY_NORMAL]])
+		packed[anim] = poses
+	out.pack(shape, packed)
+	if out.loops.get("walk", false) and out.feet.has("walk"):
+		var walk: Array = out.feet.walk
+		var dt := 1.0 / float(out.fps.walk)
+		var ground := BakedModel.ground_of(walk, dt)
+		out.ground_speed["walk"] = ground
+		print("  walk: the floor runs %.2f m/s under the planted foot, it slides %.3f m a step" % [ground, BakedModel.slide_per_step(walk, dt, ground)])
+	print("  %d vertices, %d poses, pose images %dx%d" % [out.vertices, out.positions.get_height() * BakedModel.WIDTH / maxi(out.vertices, 1), BakedModel.WIDTH, out.positions.get_height()])
+
+
 ## The figure's skeleton in the pose of a clip at t seconds (see MODELS for the clip's fields).
-func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: Array, t: float, bend: Dictionary) -> void:
+## Returns how far the lowest bone was lifted to the floor (or `ground`, when given, is used for every pose of the clip:
+## the walk, so a jog's flight stays in the air and the foot on the floor is never one pinned there in mid stride).
+func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: Array, t: float, bend: Dictionary, ground := NAN) -> float:
 	var opts: Dictionary = a[4] if a.size() > 4 else {}
 	var guards: Array = opts.get("guard", [])
 	if not guards.is_empty() and not guards[0] is Array:
@@ -557,6 +666,9 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		var deg: Vector3 = bend[bone]
 		var q := Quaternion.from_euler(Vector3(deg_to_rad(deg.x), deg_to_rad(deg.y), deg_to_rad(deg.z)))
 		skeleton.set_bone_pose_rotation(i, skeleton.get_bone_pose_rotation(i) * q)
+	if _even_legs:
+		for leg: Array in LEGS:
+			_even_leg(skeleton, leg)
 	# on the floor: Retarget sets the hips by their height at rest, and a model that rests with its legs apart (the
 	# brute) has longer legs than that, so standing straight would sink its feet. The lowest bone goes back to where
 	# it rests (feet and toes) or to a body's thickness over the floor (lying down).
@@ -564,7 +676,100 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 	for b in skeleton.get_bone_count():
 		var foot := String(skeleton.get_bone_name(b)).contains("Foot") or String(skeleton.get_bone_name(b)).contains("Toe")
 		low = minf(low, skeleton.get_bone_global_pose(b).origin.y - (skeleton.get_bone_global_rest(b).origin.y if foot else BODY_THICKNESS))
+	if not is_nan(ground):
+		low = ground
 	skeleton.set_bone_pose_position(rt.hips_bone(), hips - Vector3(0, low, 0))
+	return low
+
+
+## The bones of each leg, hip to ankle.
+const LEGS := [[&"LeftUpLeg", &"LeftLeg", &"LeftFoot"], [&"RightUpLeg", &"RightLeg", &"RightFoot"]]
+
+
+## One leg of a rig with a misplaced knee ("even_legs"), after the clip posed it: Retarget lines the rest up with
+## the mannequin's straight leg, so a knee that rests far out of the line hip to ankle makes the leg that much
+## longer once straight (the brute's left: 1.06 of its units against 0.8 at rest). The ankle is pulled back along
+## the line from the hip to the share of its reach the clip gives it, times the leg's reach at rest, the knee
+## bending toward the front of the body; the foot keeps the turn the clip gave it. A leg that rests straight is
+## left as it is.
+func _even_leg(skeleton: Skeleton3D, leg: Array) -> void:
+	var up := skeleton.find_bone(leg[0])
+	var mid := skeleton.find_bone(leg[1])
+	var end := skeleton.find_bone(leg[2])
+	var rest_a := skeleton.get_bone_global_rest(up).origin
+	var rest_b := skeleton.get_bone_global_rest(mid).origin
+	var rest_c := skeleton.get_bone_global_rest(end).origin
+	var thigh := rest_a.distance_to(rest_b)
+	var shin := rest_b.distance_to(rest_c)
+	var share := rest_a.distance_to(rest_c) / (thigh + shin)
+	if share > 0.97:
+		return
+	var hip := skeleton.get_bone_global_pose(up)
+	var knee := skeleton.get_bone_global_pose(mid)
+	var ankle := skeleton.get_bone_global_pose(end)
+	var reach := hip.origin.distance_to(ankle.origin)
+	var want := clampf(reach * share, absf(thigh - shin) + 0.01, thigh + shin - 0.01)
+	var down := (ankle.origin - hip.origin).normalized()
+	var hips := skeleton.find_bone("Hips")
+	var front := skeleton.get_bone_global_pose(hips).basis * skeleton.get_bone_global_rest(hips).basis.inverse() * Vector3(0, 0, 1)
+	var pole := (front - down * front.dot(down)).normalized()
+	var along := (thigh * thigh + want * want - shin * shin) / (2.0 * want)
+	var new_knee := hip.origin + down * along + pole * sqrt(maxf(thigh * thigh - along * along, 0.0))
+	var turn_thigh := Quaternion((knee.origin - hip.origin).normalized(), (new_knee - hip.origin).normalized())
+	skeleton.set_bone_global_pose(up, Transform3D(Basis(turn_thigh) * hip.basis, hip.origin))
+	var knee_now := skeleton.get_bone_global_pose(mid)
+	var ankle_now := skeleton.get_bone_global_pose(end).origin
+	var target := hip.origin + down * want
+	var turn_shin := Quaternion((ankle_now - knee_now.origin).normalized(), (target - knee_now.origin).normalized())
+	skeleton.set_bone_global_pose(mid, Transform3D(Basis(turn_shin) * knee_now.basis, knee_now.origin))
+	skeleton.set_bone_global_pose(end, Transform3D(ankle.basis, target))
+
+
+## The bones of each foot (left, then right): their vertices are the feet whose stride is measured.
+const FEET := [[&"LeftFoot", &"LeftToeBase"], [&"RightFoot", &"RightToeBase"]]
+const SOLE := 0.08
+
+
+## The soles of the feet through the poses of a loop (BakedModel.feet): per foot, per pose, the vertices of the foot
+## (half their skin or more on its bones) that come within SOLE meters of the floor in some pose of the loop. body: the figure's own mesh
+## arrays (the first vertices of every pose), skin: its binds.
+func _soles(body: Array, skin: Skin, poses: Array) -> Array:
+	var bones: PackedInt32Array = body[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = body[Mesh.ARRAY_WEIGHTS]
+	var count := (body[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	var per := bones.size() / count
+	var out := []
+	for foot: Array in FEET:
+		var binds: Array[int] = []
+		for i in skin.get_bind_count():
+			if foot.has(skin.get_bind_name(i)):
+				binds.append(i)
+		var mine: Array[int] = []
+		var floor_y := INF
+		for v in count:
+			var share := 0.0
+			for k in per:
+				if binds.has(bones[v * per + k]):
+					share += weights[v * per + k]
+			if share >= 0.5:
+				mine.append(v)
+				for p: PackedVector3Array in poses:
+					floor_y = minf(floor_y, p[v].y)
+		var sole: Array[int] = []
+		for v in mine:
+			var low := INF
+			for p: PackedVector3Array in poses:
+				low = minf(low, p[v].y)
+			if low < floor_y + SOLE:
+				sole.append(v)
+		var track: Array = []
+		for p: PackedVector3Array in poses:
+			var at := PackedVector3Array()
+			for v in sole:
+				at.append(p[v])
+			track.append(at)
+		out.append(track)
+	return out
 
 
 ## Two lists of bends as one (the same bone in both: the degrees add up).
@@ -625,8 +830,9 @@ func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 	if h.has("file"):
 		var scene: Node = (load(WEAPON + h.file) as PackedScene).instantiate()
 		var mi := _first_mesh(scene)
-		var mesh: Mesh = _moved(mi.mesh, h.remap) if h.has("remap") else mi.mesh
+		var mesh: Mesh = _repainted(mi.mesh, h.paint) if h.has("paint") else mi.mesh
 		pieces.append({"mesh": mesh, "bone": bone, "transform": hand * own * mi.transform})
+		print("  held %s: %.2f m long" % [h.file, mi.mesh.get_aabb().get_longest_axis_size() * float(h.get("scale", 1.0))])
 		scene.free()
 	else:
 		var shape := h.duplicate()
@@ -927,6 +1133,7 @@ func _bake(spec: Dictionary) -> BakedModel:
 	var out := BakedModel.new()
 	out.albedo = load(spec.texture) if spec.has("texture") else PoseBaker.find_albedo(root)
 	var bend: Dictionary = spec.get("bend", {})
+	var clips := {}
 	for anim: String in spec.anims:
 		var a: Array = spec.anims[anim]
 		var clip := player.get_animation(a[0])
@@ -935,21 +1142,19 @@ func _bake(spec: Dictionary) -> BakedModel:
 			continue
 		var frames: int = a[1]
 		var loops: bool = a[2]
-		var meshes: Array = []
+		var poses: Array = []
 		for i in frames:
 			# loops sample [0, length); one-shots include the last pose
 			var t := clip.length * i / (frames if loops else maxi(frames - 1, 1))
 			player.play(a[0])
 			player.seek(t, true)
 			_pose(skeleton, bend)
-			meshes.append(PoseBaker.snapshot(root, skeleton, extra))
-		out.anims[anim] = meshes
+			poses.append(PoseBaker.pose_arrays(root, skeleton, extra))
+		clips[anim] = poses
 		out.fps[anim] = frames / clip.length
 		out.loops[anim] = loops
-	player.play(spec.anims.idle[0])
-	player.seek(0.0, true)
-	_pose(skeleton, bend)
-	out.height = (out.anims.idle[0] as Mesh).get_aabb().end.y
+	_pack(out, clips)
+	out.height = out.mesh.get_aabb().end.y
 	root.free()
 	return out
 
@@ -1067,6 +1272,72 @@ func _painted(arrays: Array, cell: int, shade: Image = null) -> ArrayMesh:
 
 
 ## The same mesh (skin weights and all) with the UVs of some cells moved to others: {from: to}.
+## A held weapon repainted (see SWATCHES): each face of a painted palette cell takes its swatch, projected along the
+## weapon's longest side and across its second, so the grain runs down it.
+func _repainted(mesh: Mesh, paint: Dictionary) -> ArrayMesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var box := mesh.get_aabb()
+	var long := box.get_longest_axis_index()
+	var size := box.size
+	size[long] = -1.0
+	var across := size.max_axis_index()
+	for i in uvs.size():
+		var cell := clampi(int(fposmod(uvs[i].x, 1.0) * COLS), 0, COLS - 1) + clampi(int(fposmod(uvs[i].y, 1.0) * ROWS), 0, ROWS - 1) * COLS
+		if not paint.has(cell):
+			push_error("bake: palette cell %d of a held weapon has no swatch" % cell)
+			continue
+		var to: int = SWATCHES[paint[cell]].cell
+		var at := Vector2((verts[i][long] - box.position[long]) / box.size[long], (verts[i][across] - box.position[across]) / maxf(box.size[across], 0.001))
+		at = Vector2.ONE * SWATCH_MARGIN + at * (1.0 - 2.0 * SWATCH_MARGIN)
+		uvs[i] = Vector2((to % COLS + at.x) / COLS, (to / COLS + at.y) / ROWS)
+	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	var out := ArrayMesh.new()
+	out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return out
+
+
+## Paints SWATCHES into their cells of the palette strip under the body's atlas (see _with_strip).
+func _paint_swatches(atlas: Image) -> void:
+	var top := int(ATLAS * BODY)
+	var w := ATLAS / COLS
+	var h := (ATLAS - top) / ROWS
+	for id: String in SWATCHES:
+		var sw: Dictionary = SWATCHES[id]
+		var x0: int = (sw.cell % COLS) * w
+		var y0: int = top + (sw.cell / COLS) * h
+		var seed := float(sw.cell) * 17.0
+		for y in h:
+			for x in w:
+				var at := Vector2(float(x) / w, float(y) / h)
+				var lift := (_noise(at * GRAIN_LATTICE, seed) - 0.5) * 2.0 * float(sw.grain)
+				lift += (_noise(at * STREAK_LATTICE, seed + 3.0) - 0.5) * 2.0 * float(sw.streak)
+				lift -= smoothstep(0.45, 0.85, _noise(at * STAIN_LATTICE, seed + 7.0)) * float(sw.stain)
+				var c: Color = sw.color * (1.0 + lift)
+				# thin light lines along the weapon: a scratch on one row, broken along it
+				if _hash(Vector2(0, y), seed + 11.0) < float(sw.scratch) and _noise(Vector2(at.x * 10.0, y), seed + 13.0) > 0.55:
+					c *= float(sw.get("lift", SCRATCH_LIFT))
+				c.a = 1.0
+				atlas.set_pixel(x0 + x, y0 + y, c.clamp())
+
+
+func _hash(p: Vector2, seed: float) -> float:
+	return fposmod(sin(p.dot(Vector2(12.9898, 78.233)) + seed * 3.17) * 43758.5453, 1.0)
+
+
+## Smooth value noise on a lattice.
+func _noise(p: Vector2, seed: float) -> float:
+	var i := p.floor()
+	var f := p - i
+	f = f * f * (Vector2(3, 3) - 2.0 * f)
+	var a := _hash(i, seed)
+	var b := _hash(i + Vector2(1, 0), seed)
+	var c := _hash(i + Vector2(0, 1), seed)
+	var d := _hash(i + Vector2(1, 1), seed)
+	return lerpf(lerpf(a, b, f.x), lerpf(c, d, f.x), f.y)
+
+
 func _moved(mesh: Mesh, cells: Dictionary) -> ArrayMesh:
 	var arrays := mesh.surface_get_arrays(0)
 	var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]

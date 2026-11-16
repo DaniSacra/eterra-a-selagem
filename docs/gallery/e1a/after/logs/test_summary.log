@@ -1,0 +1,12 @@
+[0m[33m= Run Summary
+[0m[33m==============================================
+[0m
+Totals
+------
+Scripts              58
+Tests               557
+Passing Tests       557
+Asserts           104890
+Time              124.4s
+[32m---- All tests passed! ----
+[0m

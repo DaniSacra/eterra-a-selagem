@@ -1,0 +1,32 @@
+FEEL ok GF-09a turn_facing | alvo: direcao a 5 graus da nova ate f1 | medido: f0
+FEEL ok GF-09b turn_body | alvo: corpo a 5 graus do final ate f7 (8 quadros) | medido: f7
+FEEL ok GF-01a hit_stop_shape_cut1 | alvo: 0 parados, mundo anda 1+ quadros, 1 a 3 quadros a 6%, volta em 2 | medido: parados 0, espera 1, lentos 1, volta f8 (ritmo desde o acerto f4: 1.00 1.00 0.06 0.37 1.00 1.00 1.00 1.00 1.00 1.00)
+FEEL ok GF-10a kick_cut1 | alvo: tranco do golpe 1 ate 0,10 m | medido: 0.087 m
+FEEL ok GF-10b shake_cut1 | alvo: tremor do golpe 1 ate 0,10 m | medido: 0.076 m
+FEEL ok GF-10c flash_cut1 | alvo: clarao do inimigo 0,05 s (2 a 4 quadros) | medido: 4 quadros (0.07 s)
+FEEL ok GF-01b no_freeze_combo | alvo: 0 quadros parados no combo de 3 sobre um alvo | medido: 0
+FEEL ok GF-01c hit_stop_shape_spin | alvo: 0 parados, mundo anda 3+ quadros, 1 a 3 quadros a 6%, volta em 2 | medido: parados 0, espera 4, lentos 1, volta f63 (ritmo desde o acerto f56: 1.00 1.00 1.00 1.00 1.00 0.06 0.61 1.00 1.00 1.00)
+FEEL ok GF-04a buffer_cut1 | alvo: 2o aperto em qualquer quadro 1 a 36 do golpe 1: golpe 2 em max(aperto, fim do golpe 1) | medido: todos
+FEEL ok GF-04b buffer_spin | alvo: aperto em qualquer quadro 1 a 39 do giro: golpe 1 em max(aperto, fim do giro) | medido: todos
+FEEL ok GF-09d dodge_safety_19 | alvo: protecao de 19 a 20 quadros desde o aperto | medido: 19
+FEEL ok D-44a dodge_frame_0 | alvo: esquiva parada sai no quadro do aperto (f0) | medido: f0
+FEEL ok GF-02a dodge_in_windup | alvo: esquiva apertada em qualquer quadro do golpe 1 ou da seta sai no quadro (ou no seguinte) | medido: todos
+FEEL ok GF-02b cut_blow_no_damage | alvo: golpe cortado pela esquiva nao acerta depois que ela sai | medido: nenhum
+FEEL ok GF-03a attack_in_dodge | alvo: ataque nos quadros 1 a 13 da esquiva vira dash_cut no 13 ou 14; depois, na hora | medido: todos
+FEEL ok GF-09c plant_on_press | alvo: 0,00 m andados no quadro do aperto (golpe 1 e seta) | medido: golpe 1 0.00, seta 0.00
+FEEL ok GF-07d bolt_holds_legs | alvo: D-44: parado de f1 a f48 depois da seta (0,71 s depois do dardo), anda de novo ate f53 | medido: parado, anda de novo f50
+FEEL ok GF-07a bolt_attack_lock | alvo: golpe 1 sai em f25 (24 a 26) com o ataque apertado todo quadro | medido: f25
+FEEL ok GF-07b bolt_recharge | alvo: 2a seta sai em f48 (47 a 49) com o especial apertado todo quadro | medido: f49
+FEEL ok GF-07c bolt_speed | alvo: dardo a 62,5 m/s (61,5 a 63,5) | medido: 62.5 m/s
+FEEL ok GF-07e dodge_cuts_bolt | alvo: D-44: esquiva apertada em f20 da seta sai em f20 | medido: f20
+FEEL ok GF-08 omega_when_full | alvo: lanca acerta em f48 (47 a 49; carga de 0,8 s) | medido: f48
+FEEL ok D-44b cast_no_safety | alvo: D-44: nenhum quadro protegido depois de soltar o circulo | medido: nenhum
+FEEL ok D-44c cast_attack_lock | alvo: D-44: golpe so 8 quadros ou mais depois de soltar o circulo | medido: 8 quadros depois
+FEEL ok GF-06 pad_in_hit_stop | alvo: esquiva apertada em f6 de um acerto: controle virtual igual ao teclado, nenhum LOST | medido: teclado f6, controle virtual f6
+FEEL ok GF-01d hit_stop_shape_kill | alvo: 0 parados, mundo anda 1+ quadros, 2 a 4 quadros a 6%, volta em 2 | medido: parados 0, espera 1, lentos 4, volta f11 (ritmo desde o acerto f4: 1.00 1.00 0.06 0.06 0.06 0.06 0.84 1.00 1.00 1.00)
+FEEL ok GF-05 slow_mo_visible | alvo: 3 abates: ate 3 quadros parados, depois 5 ou mais quadros andando a 0,15 a 0,25 | medido: parados 0, andando lento 8
+FEEL ok GF-03c attack_while_hurt | alvo: um toque de ataque (f3) ou especial (f5) ferido sai em f11 (10 a 12) | medido: light_attack f3 -> cut1@f10, heavy_attack f5 -> bolt@f10
+FEEL ok GF-03b attack_at_dodge_end | alvo: ataque nos quadros 11 a 15 da esquiva sai ate max(aperto, 14) | medido: todos
+FEEL ok GF-02c dodge_cuts_spin | alvo: esquiva apertada todo quadro desde f1 do giro sai em f1 | medido: f1
+FEEL ok ALL no_lost_press | alvo: 0 lines with LOST | medido: 0
+FEEL_SUMMARY 31/31 ok

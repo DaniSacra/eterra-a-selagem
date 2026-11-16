@@ -1,5 +1,8 @@
 # Diretriz do Daniel: um herói definitivo (2026-11-16)
 
+> **2026-11-16, correção do PO**: o primeiro herói é **o Guerreiro** (não o Explorador nem o Guardião). Especificação canônica: `docs/design/warrior_spec.md`; onde este arquivo diz Explorador/Guardião para o herói, vale o Guerreiro (o texto abaixo fica como histórico).
+
+
 Colada pelo Daniel depois do commit `19af96b`. Base da auditoria e da especificação em `docs/design/guardian_spec.md`.
 
 ## Decisões aprovadas

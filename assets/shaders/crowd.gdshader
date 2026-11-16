@@ -1,5 +1,6 @@
 shader_type spatial;
-// The crowd: baked poses drawn by MultiMesh. INSTANCE_CUSTOM carries the per-enemy state:
+// The crowd: baked poses drawn by MultiMesh (the pose between two of them by the instance's colour,
+// crowd_pose.gdshaderinc). INSTANCE_CUSTOM carries the per-enemy state:
 // r = hit flash (0..1): the figure's own body, lighter and warmer for an instant (never a flat white: a strong blow
 //     reaches white_from only on its first frame, and even then it keeps its shading under the glow threshold);
 //     below 0, a blow its armor took: old gold gleams on its edges, no white (it was not wounded),
@@ -125,7 +126,14 @@ varying vec4 state;
 varying vec3 world_pos;
 varying float height;
 
+#include "res://assets/shaders/crowd_pose.gdshaderinc"
+
 void vertex() {
+	vec3 at;
+	vec3 facing;
+	crowd_pose(VERTEX_ID, COLOR, at, facing);
+	VERTEX = at;
+	NORMAL = facing;
 	state = INSTANCE_CUSTOM;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	height = VERTEX.y;
