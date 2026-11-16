@@ -78,9 +78,9 @@ func test_about_120_to_150_enemies_in_the_first_three_minutes() -> void:
 func test_common_enemies_fall_to_one_attack_chain() -> void:
 	var tree: ComboTree = load("res://data/combos/paladin.tres")
 	var cut1 := ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
-	var chain := cut1.damage + cut1.next[0].damage + cut1.next[0].next[0].damage
+	var chain := cut1.damage + cut1.following()[0].damage + cut1.following()[0].following()[0].damage
 	assert_lte((load("res://data/enemies/skeleton.tres") as EnemyDef).hp, chain)
-	assert_lte((load("res://data/enemies/runner.tres") as EnemyDef).hp, cut1.damage + cut1.next[0].damage)
+	assert_lte((load("res://data/enemies/runner.tres") as EnemyDef).hp, cut1.damage + cut1.following()[0].damage)
 
 
 func test_spawns_never_pass_the_cap() -> void:

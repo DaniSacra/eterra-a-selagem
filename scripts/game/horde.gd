@@ -58,6 +58,11 @@ var alive_cap := 0
 var damage_scale := 1.0
 var target := Vector2.ZERO
 var target_alive := true
+## The kind (EnemyDef.id) acting now, while the crowd steps (&"" outside it): the warnings and shots it lays carry it
+## (Ground.Zone.by, Projectiles.Shot.by), so the game knows what hurt the paladin ("Derrotado por").
+var acting: StringName = &""
+## The kind whose blow hurt the paladin last (its own swing, no warning in between), read as hit_player is emitted.
+var last_by: StringName = &""
 var _hash := SpatialHash.new(CELL)
 ## The widest body filed in the hash (rehash), and the bodies stop_walker last looked at (kept, not reallocated).
 var _widest := 0.0
@@ -131,7 +136,9 @@ func step(dt: float) -> void:
 		i += 1
 		_timers(e, dt)
 		if e.alive and not e.helpless():
+			acting = e.def.id
 			_behave(e, dt)
+			acting = &""
 		if (i + _frame) % 2 == 0:
 			_separate(e)
 		if e.push.length_squared() > 0.01:
@@ -226,6 +233,7 @@ func _behave_melee(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if e.state_t >= _windup(e):
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 				if target_alive and dist < reach + 0.5:
+					last_by = e.def.id
 					hit_player.emit(e.def.damage * damage_scale, e.pos)
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.35:
@@ -575,6 +583,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if e.hp <= 0.0:
 		e.alive = false
 		e.state = Enemy.State.DEAD
+		if e.def.behavior == EnemyDef.Behavior.BOSS:
+			e.flash_t = 0.0  # the blow that fells a boss leaves no flash on him (BUG-004)
 		e.dead_t = 0.0
 		e.anim = &"death"
 		if from_dir != Vector2.ZERO:
@@ -694,9 +704,17 @@ func render() -> void:
 		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
 		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2
 		var tumble := -e.spin * sin(clampf(e.dead_t * 2.2, 0.0, 1.0) * PI) * 1.1
-		renderer.add(e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(), Color(maxf(0.0, 1.0 - e.dead_t * 8.0), 0, 0, dissolve), Vector3.ONE, tumble)
+		renderer.add(e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(), Color(death_flash(e), 0, 0, dissolve), Vector3.ONE, tumble)
 	renderer.commit()
 	tells.commit()
+
+
+## How white one of the fallen is drawn (crowd.gdshader's flash): a flash for an instant as it falls; a boss never
+## (his fall is his ending: no white body, BUG-004 of cycle 10).
+static func death_flash(e: Enemy) -> float:
+	if e.def.behavior == EnemyDef.Behavior.BOSS:
+		return 0.0
+	return maxf(0.0, 1.0 - e.dead_t * 8.0)
 
 
 # ---------- queries (only on the frames something lands, so a plain loop is enough) ----------

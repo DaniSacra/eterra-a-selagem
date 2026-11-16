@@ -4,5 +4,6 @@
   "prefix": "test_",
   "suffix": ".gd",
   "should_exit": true,
+  "pre_run_script": "res://tests/hooks/pre_run.gd",
   "log_level": 1
 }

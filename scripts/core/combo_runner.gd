@@ -136,7 +136,7 @@ func step(dt: float) -> void:
 
 func _options() -> Array[ComboNode]:
 	if phase == Phase.WINDOW and node != null:
-		return node.next
+		return node.following()
 	return tree.dodge if _dodge_left > 0.0 else tree.neutral
 
 

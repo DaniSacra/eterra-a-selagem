@@ -7,6 +7,8 @@ var _fail := 0
 
 
 func _initialize() -> void:
+	# a check, not a person's run: nothing written to the save or the run log (as --nosave)
+	(func() -> void: root.get_node("Save").set("enabled", false)).call_deferred()
 	_run.call_deferred()
 
 

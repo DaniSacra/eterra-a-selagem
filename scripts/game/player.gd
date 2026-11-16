@@ -451,7 +451,7 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		elif charge_t >= _charge_time():
 			charging = false
 			runner.press(_charge_held)
-			fx.burst(&"light", Vector3(pos.x, 1.4, pos.y))
+			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 			Audio.play(&"charged")
 	_read_cast(dt)
 
@@ -495,7 +495,7 @@ func _read_cast(dt: float) -> void:
 		return
 	_cast_t += dt
 	if _cast_t >= CAST_OMEGA_TIME and _cast_t - dt < CAST_OMEGA_TIME and magick.can_pay(CAST_OMEGA_COST):
-		fx.burst(&"light", Vector3(pos.x, 1.4, pos.y))
+		fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 		Audio.play(&"charged")
 	var held := Controls.held(&"cast") and magick.can_pay(CAST_OMEGA_COST)
 	if _cast_t >= CAST_CHARGE and (not held or _cast_t >= CAST_OMEGA_TIME):

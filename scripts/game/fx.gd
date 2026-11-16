@@ -21,6 +21,8 @@ const THRUST_POOL := 4
 const MOTE_POOL := 192
 const MOTE_GRAVITY := 5.0
 const MOTE_DRAG := 3.5
+## The light of a pillar (beam.gdshader's intensity) when nothing asks for less.
+const BEAM_INTENSITY := 2.5
 ## Old gold, lit: one mote in MOTE_GOLD_EVERY (the veins of the blade).
 const OLD_GOLD := Color(0.95, 0.72, 0.3)
 const MOTE_GOLD_EVERY := 4
@@ -93,7 +95,9 @@ const BURSTS := {
 	&"bone": [Color(1.4, 1.35, 1.2), 9, 5.5, -16.0, 0.22, 0.7, 70.0],
 	&"fire": [Color(3.0, 1.2, 0.3), 16, 4.0, 3.0, 0.42, 0.55, 80.0],
 	&"frost": [Color(1.2, 2.2, 3.2), 14, 6.0, -5.0, 0.26, 0.5, 80.0],
-	&"light": [Color(3.0, 2.5, 1.2), 18, 4.0, 2.0, 0.3, 0.7, 90.0],
+	# the paladin's light (a gift taken, an Omega charged, the circle): warm ivory under the glow, never a saturated
+	# yellow over him (ART-009 of cycle 10); drawn behind him from the camera (hero_burst)
+	&"light": [Color(1.1, 0.98, 0.78), 18, 4.0, 2.0, 0.3, 0.7, 90.0],
 	&"shadow": [Color(0.75, 0.52, 1.3), 16, 3.0, 1.5, 0.55, 0.8, 90.0],
 	&"dust": [Color(0.5, 0.45, 0.42), 10, 2.5, 0.5, 0.6, 0.6, 70.0],
 	&"heal": [Color(0.8, 2.6, 1.2), 16, 2.5, 2.5, 0.3, 0.8, 90.0],
@@ -112,6 +116,8 @@ var split := 0.0
 ## Seconds left of the impact frame (the screen in flat black and white), read by the screen pass.
 var frame_left := 0.0
 var shake_scale := 1.0
+## The "impact_frames" option (SaveData): false, no impact frame ever.
+var impact_frames := true
 ## When >= 0, sword arcs hold at this point of their life (the --lab still).
 var freeze_t := -1.0
 ## The moment of slow motion now playing (Hades II slows the whole world on the last kill of a fight and on the
@@ -354,6 +360,24 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 	p.restart()
 
 
+## Meters behind the paladin (away from the camera, on the floor) where his own bursts are centred (hero_burst).
+const HERO_BURST_BACK := 0.8
+
+
+## A burst at the paladin, centred a little behind him from the camera: the specks never cover his body.
+func hero_burst(kind: StringName, pos: Vector3) -> void:
+	burst(kind, pos + behind(pos, HERO_BURST_BACK))
+
+
+## The offset of `meters` on the floor away from the camera, at pos (zero without a camera).
+func behind(pos: Vector3, meters: float) -> Vector3:
+	if camera == null:
+		return Vector3.ZERO
+	var back := pos - camera.global_position
+	back.y = 0.0
+	return back.normalized() * meters if back.length_squared() > 0.0001 else Vector3.ZERO
+
+
 ## A sword arc on the floor plane at waist height: from origin towards dir, reach meters, width degrees.
 ## ink: lay the dark half-moon under the cut.
 func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, time: float = 0.2, flip: bool = false, height: float = 0.9, ink_under: bool = true) -> void:
@@ -552,11 +576,14 @@ static func strip() -> ArrayMesh:
 	return _strip_mesh
 
 
-## One or two frames of the whole screen in flat black and white: only for the biggest blows.
-## Off with the screen shake option (fx.shake_scale 0), so it can be turned off for comfort.
-func impact_frame() -> void:
-	if shake_scale > 0.0:
-		frame_left = maxf(frame_left, Feel.live().impact_frame)
+## One or two frames of the whole screen in flat black and white: only for the biggest blows (Combat decides which,
+## and how often). Off with the "impact_frames" option (impact_frames false), for comfort and sensitivity to light.
+## Returns true when it flashed.
+func impact_frame() -> bool:
+	if not impact_frames or Feel.live().impact_frame <= 0.0:
+		return false
+	frame_left = maxf(frame_left, Feel.live().impact_frame)
+	return true
 
 
 ## The camera jolts along a blow (dir on the floor plane).
@@ -578,14 +605,16 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 	r.time = time
 
 
-## A pillar of light (or shadow) at a point on the floor.
-func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, time: float = 0.45) -> void:
+## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
+## is the usual one, less where it must not cover someone).
+func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, time: float = 0.45, intensity: float = BEAM_INTENSITY) -> void:
 	var b: Dictionary = _take(_beams)
 	var mi: MeshInstance3D = b.node
 	mi.position = Vector3(at.x, height * 0.5, at.y)
 	mi.scale = Vector3(radius, height, radius)
 	b.size = radius
 	(b.mat as ShaderMaterial).set_shader_parameter(&"color", color)
+	(b.mat as ShaderMaterial).set_shader_parameter(&"intensity", intensity)
 	b.time = time
 
 

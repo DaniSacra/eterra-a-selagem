@@ -69,12 +69,16 @@ class Shot:
 	var turn := 0.0
 	## Which attack fired it (a boss's attack id; the hurt_by count of the fight).
 	var source: StringName = &""
+	## Which kind of enemy fired it (EnemyDef.id, Horde.acting; &"": none, as the boss's own): "Derrotado por".
+	var by: StringName = &""
 	## Seconds it has flown (the crescent's look: its first flare, its fade at the end).
 	var age := 0.0
 
 var shots: Array[Shot] = []
 ## The source of the shot that hurt the paladin last (Shot.source), read by the game as hit_player is emitted.
 var last_source: StringName = &""
+## Which kind of enemy fired it (Shot.by).
+var last_by: StringName = &""
 var horde: Horde
 var player: Player
 var fx: Fx
@@ -92,6 +96,7 @@ func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, 
 	s.damage = damage
 	s.radius = radius
 	s.life = life
+	s.by = horde.acting if horde else &""
 	s.node = _take(kind)
 	s.node.visible = true
 	if kind == Kind.BOLT or kind == Kind.ORB or kind == Kind.CURSE:
@@ -188,12 +193,14 @@ func step(dt: float) -> void:
 				if player.alive() and not s.seen.has(player) and touches_soul(s, player.pos, Player.RADIUS):
 					s.seen[player] = true
 					last_source = s.source
+					last_by = s.by
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					fx.burst(&"soul", Vector3(player.pos.x, HEIGHT, player.pos.y))
 			elif hostile(s):
 				if player.alive() and s.pos.distance_to(player.pos) < s.radius + Player.RADIUS:
 					var safe := player.invulnerable()
 					last_source = s.source
+					last_by = s.by
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					if s.status != &"" and not safe:
 						status_player.emit(s.status)

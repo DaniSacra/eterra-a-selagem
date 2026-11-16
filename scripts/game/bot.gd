@@ -25,14 +25,49 @@ var _seen: Array[Array] = []
 ## Seconds it has been walking without getting anywhere (wedged by bodies: it dodges through them, STUCK_TIME).
 var _stuck := 0.0
 var _last := Vector2.ZERO
+## The share of a boss fight it keeps away (--bot-kite; 0: never).
+var kite := 0.0
+var _kiting := false
+## Seconds into this KITE_PERIOD, seconds still to spend far from the boss in it, and the most it may still take.
+var _kite_cycle := 0.0
+var _kite_left := 0.0
+var _kite_cap := 0.0
 const STUCK_TIME := 0.4
 ## Meters of free floor it wants ahead of its way out of danger.
 const ESCAPE_PROBE := 2.0
+## --bot-kite=0.2: that share of every KITE_PERIOD seconds of a boss fight it spends far from the boss, past
+## KITE_DISTANCE (it runs there first, the dodge held), and throws the special at him from there, as a person who
+## keeps away would (QW-004 of cycle 10: the bot that always stays close never saw Morvath's dash, which needs 9 m).
+const KITE_PERIOD := 10.0
+## Seconds a spell of keeping away may take beyond its share (to get there; cornered, it gives up then).
+const KITE_RUN := 2.0
+const KITE_DISTANCE := 11.0
+const KITE_THROW := 0.8
 
 
 func _init() -> void:
 	_rng.seed = 7
 	reaction = maxf(0.0, Dev.num("bot-reaction", 0.0))
+	kite = clampf(Dev.num("bot-kite", 0.0), 0.0, 1.0)
+
+
+## One step of keeping away: true while it should keep away from the boss. Each KITE_PERIOD (the first after one
+## period) it owes kite * KITE_PERIOD seconds far from him (far: past KITE_DISTANCE); running there does not count,
+## but a spell never lasts more than KITE_RUN beyond its share.
+func kite_step(dt: float, far: bool) -> bool:
+	if kite <= 0.0:
+		return false
+	_kite_cycle += dt
+	if _kite_cycle >= KITE_PERIOD:
+		_kite_cycle -= KITE_PERIOD
+		_kite_left = kite * KITE_PERIOD
+		_kite_cap = _kite_left + KITE_RUN
+	if _kite_left <= 0.0 or _kite_cap <= 0.0:
+		return false
+	_kite_cap -= dt
+	if far:
+		_kite_left -= dt
+	return true
 
 
 ## The way out of danger as the bot knows it now: what it saw `reaction` seconds ago.
@@ -51,9 +86,13 @@ func step(dt: float, game: Game) -> void:
 	_wait -= dt
 	if _held != &"light_attack" or _hold <= 0.0:
 		pad.release(&"light_attack")
-	pad.release(&"dodge")
-	pad.release(&"cast")
 	var p := game.player.pos
+	var was_kiting := _kiting
+	var fighting := game.boss != null and game.boss.e != null and game.boss.e.alive
+	_kiting = fighting and kite_step(dt, p.distance_to(game.boss.e.pos) >= KITE_DISTANCE)
+	if not _kiting:
+		pad.release(&"dodge")
+	pad.release(&"cast")
 	if game.rooms and game.horde.count() == 0:
 		# between fights: take the reward, buy what there is gold for, walk through a door
 		var goal: Variant = game.rooms.bot_goal()
@@ -81,12 +120,19 @@ func step(dt: float, game: Game) -> void:
 	if danger != Vector2.ZERO:
 		pad.move = _escape(game, p, danger)
 		if game.player.dodge_charges > 0 and game.player.state != Player.State.DODGE:
+			pad.release(&"dodge")  # (held while it runs away: let go, or the press would not dodge)
 			pad.press(&"dodge")
 		pad.release(&"heavy_attack")
 		pad.release(&"light_attack")
 		_hold = 0.0
 		_queue = ""
 		return
+	if _kiting:
+		_keep_away(game, p, game.boss.e.pos, not was_kiting, dt)
+		return
+	if was_kiting:
+		pad.release(&"heavy_attack")
+		_hold = 0.0
 	var spring: Variant = game.fountain_target()
 	if spring != null and game.player.hp < game.player.max_hp * 0.6:
 		pad.move = ((spring as Vector2) - p).normalized()
@@ -127,6 +173,35 @@ func step(dt: float, game: Game) -> void:
 			pad.move = to.normalized() if to.length() > 0.1 else Vector2.RIGHT
 			pad.press(&"dodge")
 			_wait = 0.2
+
+
+## Runs away from the boss (around walls and bodies, the dodge held to sprint) until KITE_DISTANCE, then throws the
+## special at him every KITE_THROW seconds. first: the first frame of a spell of keeping away.
+func _keep_away(game: Game, p: Vector2, boss: Vector2, first: bool, dt: float) -> void:
+	var away := p - boss
+	var far := away.length() >= KITE_DISTANCE
+	pad.aim = -away.normalized() if away.length() > 0.01 else Vector2.DOWN
+	pad.release(&"light_attack")
+	if first:
+		_queue = ""
+		_hold = 0.0
+		_wait = 0.0
+	if far:
+		pad.move = Vector2.ZERO
+		pad.release(&"dodge")
+		if _hold > 0.0:
+			_hold -= dt
+			if _hold <= 0.0:
+				pad.release(&"heavy_attack")
+		elif _wait <= 0.0:
+			pad.press(&"heavy_attack")
+			_held = &"heavy_attack"
+			_hold = 0.06
+			_wait = KITE_THROW
+		return
+	var out := away.normalized() if away.length() > 0.1 else Vector2.RIGHT
+	pad.move = _steer(game, p, _escape(game, p, out))
+	pad.press(&"dodge")  # held: the dodge, then the run
 
 
 ## The nearest enemy that can be hurt (behind his ritual's shield the boss waits: his dead come first).

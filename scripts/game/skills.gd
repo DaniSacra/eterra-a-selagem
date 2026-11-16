@@ -5,6 +5,9 @@ extends Node3D
 const STRIKE_RANGE := 13.0
 const STRIKE_DELAY := 0.28
 const METEOR_DELAY := 0.45
+## A column of a gift that falls on a boss or a guardian is drawn this much fainter (ART-004 of cycle 10: the
+## column's white core covered Morvath; his shape must read through it).
+const BEAM_OVER_BOSS := 0.2
 const ORBIT_SPEED := 2.6
 const ORBIT_TICK := 0.3
 
@@ -78,7 +81,7 @@ func _cast(b: Boon) -> bool:
 				var at: Vector2 = targets[i]
 				_queue(at, STRIKE_DELAY + i * 0.07, s.get_radius(lv), _damage(b, lv), tags, s.status, s.get_status_power(lv), color)
 				# what falls: a ball of fire or a pillar of light, seen coming down before it lands
-				game.fx.beam(at, color, 0.35, 10.0, STRIKE_DELAY + i * 0.07 + 0.12)
+				_beam(at, color, 0.35, 10.0, STRIKE_DELAY + i * 0.07 + 0.12)
 			Audio.play(&"rain")
 		SkillDef.Kind.NOVA:
 			var r := s.get_radius(lv)
@@ -106,7 +109,7 @@ func _cast(b: Boon) -> bool:
 				return false
 			var at: Vector2 = found
 			_queue(at, METEOR_DELAY, s.get_radius(lv), _damage(b, lv), tags, s.status, s.get_status_power(lv), color, true)
-			game.fx.beam(at, color, 1.6, 16.0, METEOR_DELAY + 0.2)
+			_beam(at, color, 1.6, 16.0, METEOR_DELAY + 0.2)
 			game.fx.ring(at, s.get_radius(lv), color, METEOR_DELAY)
 			Audio.play(&"rain")
 		SkillDef.Kind.CONSECRATE:
@@ -115,6 +118,16 @@ func _cast(b: Boon) -> bool:
 			game.fx.burst(&"light", Vector3(p.x, 0.3, p.y))
 			Audio.play(&"heal")
 	return true
+
+
+## The column of light (or fire, or frost) of a gift falling at a point; faint where it would stand over the boss.
+func _beam(at: Vector2, color: Color, radius: float, height: float, time: float) -> void:
+	game.fx.beam(at, color, radius, height, time, Fx.BEAM_INTENSITY * (BEAM_OVER_BOSS if over_boss(game.boss_enemy(), at, radius) else 1.0))
+
+
+## True when a column of this radius at this point stands over the boss (or guardian) shown, if any.
+static func over_boss(boss: Enemy, at: Vector2, radius: float) -> bool:
+	return boss != null and boss.alive and at.distance_to(boss.pos) < boss.def.radius + radius
 
 
 func _queue(at: Vector2, delay: float, radius: float, damage: float, tags: Array[StringName], status: StringName, power: float, color: Color, big: bool = false) -> void:

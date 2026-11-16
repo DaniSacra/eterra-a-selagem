@@ -66,8 +66,11 @@ const FINISHER_SLASH_TIME := 0.3
 const WARD_SPARK_COUNT := 3
 const WARD_SPARK_REACH := 1.6
 const WARD_SPARK := Color(0.3, 0.95, 0.75)
-## A finisher flashes the impact frame when it strikes at least this many enemies (or an elite, or the boss).
-const IMPACT_FRAME_CROWD := 6
+## The impact frame (a flat black and white frame of the whole screen, Fx.impact_frame) is kept for the two biggest
+## moments only (decision D-08 of cycle 10): an Omega that lands, and the blow that brings a boss down to his next
+## phase (or down for good). At most one every Feel.impact_frame_every seconds, and never with the "impact_frames"
+## option off (Fx.impact_frames).
+const OMEGA_TAG := &"omega"
 const BURN_TIME := 3.0
 const FIRE := Color(1.0, 0.45, 0.12)
 const FROST := Color(0.5, 0.82, 1.0)
@@ -95,6 +98,8 @@ var _swing := 0
 var _behind: Array[Enemy] = []
 var _slow_cd := 0.0
 var _cine_cd := 0.0
+## Seconds before another impact frame may flash.
+var _frame_cd := 0.0
 ## Only for what is drawn (how long a cut is, how many chips): never the game's own draw.
 var _look := RandomNumberGenerator.new()
 
@@ -106,6 +111,7 @@ func _init() -> void:
 func step(dt: float) -> void:
 	_slow_cd = maxf(0.0, _slow_cd - dt)
 	_cine_cd = maxf(0.0, _cine_cd - dt)
+	_frame_cd = maxf(0.0, _frame_cd - dt)
 	if combo > 0:
 		_combo_t -= dt
 		if _combo_t <= 0.0:
@@ -185,8 +191,6 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if finisher:
 			fx.kick_split(FINISHER_SPLIT)
 			fx.ring(struck[0].pos, FINISHER_RING, color, FINISHER_RING_TIME, 1.0 + struck[0].y, true)
-			if big_strike(struck):
-				fx.impact_frame()
 		Audio.play(&"hit_heavy" if heavy else &"hit")
 	match node.effect:
 		ComboNode.Effect.GROUND_MARK:
@@ -269,19 +273,31 @@ func glint(node: ComboNode, origin: Vector2, dir: Vector2, time: float, tip: Nod
 	fx.glint(Vector3(at.x, GLINT_HEIGHT, at.y), color_of(node.tags), time, tip)
 
 
-## A finisher earns the impact frame when it strikes a crowd, an elite or the boss.
 ## A blow big enough for slow motion: it fells several at once or lands on a crowd.
 static func wants_slow_mo(struck: int, kills: int) -> bool:
 	return kills >= SLOW_MO_KILLS or struck >= SLOW_MO_CROWD
 
 
-static func big_strike(struck: Array[Enemy]) -> bool:
-	if struck.size() >= IMPACT_FRAME_CROWD:
-		return true
-	for e in struck:
-		if e.def.elite or e.def.behavior == EnemyDef.Behavior.BOSS:
-			return true
-	return false
+## A hit earns the impact frame when it is an Omega that lands or the blow that ends a boss's phase (phase_broken),
+## and the last frame is at least Feel.impact_frame_every seconds old (cooldown_left: what is left of it).
+static func wants_impact_frame(omega: bool, phase_broken: bool, cooldown_left: float) -> bool:
+	return (omega or phase_broken) and cooldown_left <= 0.0
+
+
+## True when this hit takes a boss down to the floor of his phase (Enemy.hp_floor: the next phase begins) or kills
+## him. hp_before: his life before the hit.
+static func breaks_phase(e: Enemy, hp_before: float) -> bool:
+	if e.def.behavior != EnemyDef.Behavior.BOSS or hp_before <= e.hp_floor:
+		return false
+	return e.hp <= e.hp_floor or not e.alive
+
+
+## Flashes the impact frame if this hit earns it (wants_impact_frame) and starts its cooldown.
+func _impact_frame(omega: bool, phase_broken: bool) -> void:
+	if not wants_impact_frame(omega, phase_broken, _frame_cd):
+		return
+	if fx.impact_frame():
+		_frame_cd = Feel.live().impact_frame_every
 
 
 ## The paladin lets go of the circle of light at a point. omega: the held version, which bursts when it ends.
@@ -291,7 +307,7 @@ func cast(at: Vector2, omega: bool) -> void:
 	if omega:
 		z.burst = CAST_BURST * (1.0 + boons.stat(&"damage_pct", CAST_TAGS))
 	fx.ring(at, radius, CAST_COLOR, 0.3)
-	fx.burst(&"light", Vector3(at.x, 0.4, at.y))
+	fx.hero_burst(&"light", Vector3(at.x, 0.4, at.y))
 	Audio.play(&"charged" if omega else &"swing")
 
 
@@ -304,6 +320,8 @@ func cast_burst(z: Ground.Zone) -> void:
 	for e: Enemy in _hits.duplicate():
 		var away := (e.pos - z.pos).normalized() if e.pos.distance_to(z.pos) > 0.01 else Vector2.RIGHT
 		hit_enemy(e, z.burst, z.tags, away, 10.0, true, true)
+		if not e.invulnerable:
+			_impact_frame(true, false)  # the held circle's burst is an Omega
 	Audio.play(&"hit_heavy")
 
 
@@ -389,7 +407,9 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var frozen := e.frozen_t > 0.0
 	var shatter := boons.stat(&"shatter_pct") if frozen and counts else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), combo, e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
+	var hp_before := e.hp
 	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
+	_impact_frame(tags.has(OMEGA_TAG), breaks_phase(e, hp_before))
 	damage_dealt += dmg
 	enemy_struck.emit(e, tags, dmg)
 	if counts:

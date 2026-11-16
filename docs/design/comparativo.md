@@ -31,7 +31,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Composição | tipos por região | tipos por região, sorteados pela dificuldade | por papel (`EnemyDef.role`: esqueleto pressiona, corredor pede reação, feiticeiro controla espaço, besteiro força andar de lado, Escudo bloqueia a frente, sacerdote ameaça áreas) em conjuntos de dado (`EncounterPool`): no começo da região 2 papéis simples, no meio 3 que se completam, no fim misturas exigentes com elites e uma sala especial rara de 4 papéis |
 | Minichefe | guardiões no meio da região | igual | guardião entre as salas 4 e 6 (Cavaleiro ou Ancião) |
 | Fonte, loja | fonte de cura, loja do Caronte | igual | fonte entre 5 e 8, loja na 10 (pisar compra) |
-| Chefe | fim de cada região, com fases | igual | Morvath na sala 11, quatro fases em 66, 33 e 15% (pedido do Daniel de 2026-11-15; vida 6050 e dano de 6 a 12, na escala da 1ª chefe do Hades II; ataques próprios: foice, lâminas das almas, ritual com escudo e invocados, erupções, maldição, tempestade das seis almas; diretor de ataques; números em `data/bosses/morvath.tres`) |
+| Chefe | fim de cada região, com fases | igual | Morvath na sala 11, quatro fases em 66, 33 e 15% (pedido do Daniel de 2026-11-15; vida 6050 e dano de 6 a 12, na escala da 1ª chefe do Hades II; ataques próprios: foice, lâminas das almas, ritual com escudo e invocados (o escudo cai quando os 4 primeiros mortos caem; os reforços pressionam sem contar, ciclo 10), erupções, maldição, tempestade das seis almas; diretor de ataques; números em `data/bosses/morvath.tres`) |
 | Teste | | | **encurtado**: fonte na 2, guardião na 3, loja na 4, Morvath na 5 |
 | Entre partidas | casa de Hades: espelho, contratos, Pacto | Encruzilhada: cartas de Arcana, encantamentos, Votos | **ainda não existe**: cada partida começa do zero |
 | Dificuldade extra | Pacto de Punição (Calor) | Votos da Noite (Medo) | não existe |
@@ -47,7 +47,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Inimigos | por região | por região, com elites com armadura | nove mortos-vivos nossos com os números do Érebo; elites com armadura (barra amarela) que atordoa ao quebrar |
 | Avisos | no chão | no chão | todo ataque inimigo tem aviso no chão |
 | Corpos | sólidos | sólidos (`StopsUnits`; inimigo comum em losango de 1,6 x 0,8 m); andando ela para ao encostar e não empurra, o avanço (BLINK) atravessa; alguns tipos são atravessáveis | os mesmos: sólidos (círculos de `EnemyDef.radius`), o paladino para e desliza no contorno, os inimigos param no corpo dele, só a esquiva atravessa (`BodyBlock`); `EnemyDef.blocks_body` para tipos atravessáveis (nenhum ainda) |
-| Impacto | pausa curta, tremor | pausa curta, câmera lenta no último abate e no chefe | sem pausa (medido no Ember & Blade), meia-lua de tinta, quadro de impacto, câmera lenta como no Hades II |
+| Impacto | pausa curta, tremor | pausa curta, câmera lenta no último abate e no chefe | sem pausa (medido no Ember & Blade), meia-lua de tinta, brilho de 0,08 s na lâmina antes de cada finalizador, câmera lenta como no Hades II; quadro de impacto em preto e branco só no Ômega que acerta e no golpe que derruba uma fase do chefe, no máximo um a cada 10 s, com opção para desligar (ciclo 10, decisão D-08) |
 | Combos | sequência fixa por arma | sequência fixa por arma | árvore no molde do Ember & Blade (pesado depois de 1 a 4 leves muda o finalizador) |
 | Armas | 6, com aspectos | 5 ou mais, com aspectos | uma espada (a Emeth) |
 
@@ -67,6 +67,13 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Bênção com maldição | Caos | Caos | falta |
 | Feitiços de caminho | não | Selene | falta |
 | Bônus de sequência de golpes | não | não | **temos** (`DamageCalc.combo_bonus`), herança das versões antigas |
+
+## Medir com gente
+
+| | Hades | Hades II | A Selagem |
+|---|---|---|---|
+| Registro das partidas | (interno, não publicado) | (interno, não publicado) | ciclo 10: `user://runs.jsonl`, uma linha por partida de gente (vitória, morte ou saída) com o RESULT, os dons, o controle, Ômegas, esquivas e o que feriu por último; nada sai do computador (`RunLog`) |
+| O que matou | tela de morte com o nome do inimigo | igual | ciclo 10: a lógica guarda o ataque de Morvath ou o tipo de inimigo (`Game.defeated_by`, chaves `killer_*`); a tela fica com o ui-ux-designer |
 
 ## Próximos passos (na ordem)
 

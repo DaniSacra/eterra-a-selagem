@@ -28,6 +28,9 @@ const PEAK := {
 const SWEEP := {
 	&"Slash_A": 1, &"Slash_B": 2, &"Slash_C": 1, &"Sword_Attack": 2,
 }
+## Seconds every finisher holds its glint on the blade before it lands (ComboNode.glint; the anticipation beat of the
+## Ember & Blade, kept short so the timings of Hades II barely move: backlog BUG-003, 0.06 to 0.1 s).
+const FINISHER_GLINT := 0.08
 
 
 func _initialize() -> void:
@@ -50,7 +53,9 @@ func _move(id: StringName, input: ComboNode.In, anim: StringName, tags: Array[St
 	n.title = title
 	for k: String in props:
 		n.set(k, props[k])
-	n.next = next
+	n.next.assign(next)
+	if tags.has(&"finisher"):
+		n.glint = FINISHER_GLINT
 	# start the clip a little before the swing so the blade lands exactly when the windup ends
 	n.sweep = SWEEP.get(anim, 0)
 	var peak: float = PEAK.get(anim, 0.3)
@@ -514,7 +519,10 @@ func _feel() -> void:
 	f.glint_scale = 1.0
 	f.shake_scale = 1.0
 	f.kick_scale = 1.0
+	# the black and white impact frame only on an Omega that lands and on the blow that ends a boss's phase, at most
+	# one every 10 s (decision D-08 of cycle 10: it hid the boss's warnings 24 times in a 2 minute fight)
 	f.impact_frame = 0.05
+	f.impact_frame_every = 10.0
 	f.outline = 0.5
 	# effects a little quieter after the first test ("everything is too big"): dimmer cut, ink gone sooner
 	f.slash_intensity = 1.7

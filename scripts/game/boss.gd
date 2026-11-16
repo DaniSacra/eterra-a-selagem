@@ -35,6 +35,10 @@ signal phase_changed(phase: int)
 signal moment(name: StringName)
 ## A visual beat with its geometry (see above): at and dir on the floor (x, z), size in meters (or a count), seconds.
 signal cue(name: StringName, at: Vector2, dir: Vector2, size: float, seconds: float)
+## The ritual's count changed (for the HUD's "Mortos: 3/4"): left of the dead that break the shield (the first ones
+## raised, those still rising included; reinforcements never count), of total. Emitted when the ritual begins, at
+## each of those dead falling and when it ends (left 0). Also readable at any time: ritual_left(), ritual_total().
+signal ritual_changed(left: int, total: int)
 
 enum State { ENTER, CHASE, SCYTHE, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER }
 
@@ -48,7 +52,7 @@ const DEFS_DIR := "res://data/bosses/"
 ## Emeth's crystal green, Combat.EMETH), old gold, dark stone. SPECTRAL is his necromancy and the souls.
 const SPECTRAL := Color(0.38, 1.55, 1.1)
 const VIOLET := Color(0.62, 0.22, 1.2)
-const CORRUPT := Color(0.3, 0.95, 0.52)
+const CORRUPT := Color(0.315, 0.7, 0.604)
 ## The curse: dark purple.
 const CURSE_COLOR := Color(1.0, 0.22, 1.5)
 ## Walking to the middle for the ritual: times his speed, and at most this long.
@@ -103,6 +107,14 @@ const VICTORY_CALM := 3.1
 ## The portal's sealing (Arena.seal_portal: his energy gathers from where he fell into it, a ring of light closes on
 ## its core, it calms to its own green and dims) runs this long and ends at VICTORY_CALM, before the end screen.
 const VICTORY_SEAL := 2.4
+## As he falls his glow goes out and his body darkens to stone (ART_REVIEW B1 of cycle 9: never a white body at his
+## fall), quickly at first (eased out over VICTORY_DIM_TIME game seconds, so it shows inside the fall's slow motion):
+## his colour times VICTORY_DIM, VICTORY_GREY of the way to grey, his painted glow, edge and pale crest to nothing.
+const VICTORY_DIM := 0.55
+const VICTORY_GREY := 0.5
+const VICTORY_DIM_TIME := 0.3
+## The radial blur of his fall's slow motion (Fx.slow_mo; it also lifts the bright parts of the screen: kept low).
+const VICTORY_BLUR := 0.2
 
 var game: Game
 var def: BossDef
@@ -131,10 +143,14 @@ var _ritual_done := false
 var _ritual_t := 0.0
 var _ritual_quake := 0.0
 var _ritual_more := 0.0
-## What the ritual raised (it ends when they all fall) and every summon of his still counted.
+## The ritual's first dead (the shield breaks when they all fall; its reinforcements are not here) and every summon
+## of his still counted.
 var _raised: Array[Enemy] = []
+## How many dead the ritual began with (those that break the shield).
+var _ritual_total := 0
 var _adds: Array[Enemy] = []
-## The dead still to rise: {at, id, t (seconds left), ritual}.
+## The dead still to rise: {at, id, t (seconds left), ritual (raised by the ritual), counts (one of its first, that
+## break the shield), rune}.
 var _rising: Array[Dictionary] = []
 ## His shots still flying (he waits for them before the next attack).
 var _shots: Array[Projectiles.Shot] = []
@@ -161,6 +177,9 @@ var _still_t := 0.0
 var _wisp := 0.0
 var _pulse := 0.0
 var _clock := 0.0
+## His material's tint, grey and crest when he fell (the ending darkens him from there): [Color, float, float];
+## empty before.
+var _dim_from: Array = []
 var _rng := RandomNumberGenerator.new()
 
 
@@ -239,7 +258,11 @@ func step(dt: float) -> void:
 			_anim(&"walk")
 			if _t > 2.4:
 				game.hud.show_notice(T.t("boss_phase_%d" % phase), 2.5)
-				_rest(0.6)
+				if phase == def.ritual_phase and not _ritual_done:
+					# begun in the ritual's phase (--boss-hp): its name promises the ritual, so it runs (BUG-010)
+					_go(State.TO_CENTER)
+				else:
+					_rest(0.6)
 		State.CHASE:
 			e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
 			if to.length() > def.scythe_reach * 0.7:
@@ -681,7 +704,8 @@ func _warn(z: Ground.Zone) -> Ground.Zone:
 
 ## Calls up to ids.size() of his dead around a point, one by one: a rune on each spot (first after `first` seconds,
 ## then rise_stagger apart), under the ceiling `cap` standing (the rising count) and the fight's adds_total_cap.
-func _call(ids: Array[StringName], around: Vector2, radius: float, cap: int, first: float, ritual: bool) -> int:
+## ritual: raised by the ritual (they go when it ends); counts: they are the ones whose fall breaks the shield.
+func _call(ids: Array[StringName], around: Vector2, radius: float, cap: int, first: float, ritual: bool, counts: bool = false) -> int:
 	var n := _call_room(ids.size(), cap)
 	if n <= 0 or ids.is_empty():
 		return 0
@@ -694,7 +718,7 @@ func _call(ids: Array[StringName], around: Vector2, radius: float, cap: int, fir
 		var z := game.ground.rune_burst(spots[i], RUNE_RADIUS, times[i], Ground.Rune.SUMMON)
 		if z != null:
 			z.source = &"adds"
-		_rising.append({"at": spots[i], "id": ids[i % ids.size()], "t": times[i], "ritual": ritual, "rune": z})
+		_rising.append({"at": spots[i], "id": ids[i % ids.size()], "t": times[i], "ritual": ritual, "counts": counts, "rune": z})
 		cue.emit(&"rune", spots[i], Vector2.ZERO, RUNE_RADIUS, times[i])
 	return spots.size()
 
@@ -713,7 +737,7 @@ func _step_rising(dt: float) -> void:
 		if float(r.t) <= 0.0:
 			_rising.remove_at(i)
 			var add := _raise(r.id, r.at)
-			if r.ritual:
+			if r.counts:
 				_raised.append(add)
 		i -= 1
 
@@ -737,12 +761,25 @@ static func _standing(list: Array[Enemy]) -> int:
 	return n
 
 
+## The ritual's first dead still to rise (they count as standing: the shield cannot break before they are up).
 func _rising_ritual() -> int:
 	var n := 0
 	for r in _rising:
-		if r.ritual:
+		if r.counts:
 			n += 1
 	return n
+
+
+## Of the dead that break the ritual's shield, how many are still standing or rising (0 outside the ritual).
+func ritual_left() -> int:
+	if state != State.RITUAL:
+		return 0
+	return _standing(_raised) + _rising_ritual()
+
+
+## How many dead the ritual began with (those that break the shield; 0 before the first ritual).
+func ritual_total() -> int:
+	return _ritual_total
 
 
 ## n spots on a ring around a point, on the floor and never close to the paladin.
@@ -770,7 +807,9 @@ func _start_ritual() -> void:
 	_ritual_quake = 2.0
 	_ritual_more = def.ritual_reinforce_every
 	_raised.clear()
-	_call(def.ritual_raise, e.pos, RITUAL_RING, def.ritual_cap, RITUAL_FIRST_RISE, true)
+	# only these first dead break the shield (BUG-002 of cycle 10): the reinforcements press, they never count
+	_ritual_total = _call(def.ritual_raise, e.pos, RITUAL_RING, def.ritual_cap, RITUAL_FIRST_RISE, true, true)
+	ritual_changed.emit(ritual_left(), _ritual_total)
 	game.fx.ring(e.pos, def.shield_radius * 2.0, SPECTRAL, 0.6, 0.15, true)
 	# no pillar of light over him (it hid him, ART-005): the shield raises its own faint curtain around him (BossShield)
 	Audio.play(&"shield_up")
@@ -780,8 +819,8 @@ func _start_ritual() -> void:
 
 
 ## Behind the shield: his dead rise one by one and fight, the floor erupts every ritual_eruption_every seconds and
-## more rise every ritual_reinforce_every (never past ritual_cap standing). Over when they all fall or the time runs
-## out.
+## more rise every ritual_reinforce_every (never past ritual_cap standing). Over when its first dead all fall (the
+## reinforcements do not count) or the time runs out.
 func _step_ritual(dt: float, toward: Vector2) -> void:
 	_ritual_t += dt
 	e.dir = e.dir.slerp(toward, minf(1.0, dt * 3.0))
@@ -793,7 +832,7 @@ func _step_ritual(dt: float, toward: Vector2) -> void:
 	_ritual_more -= dt
 	if _ritual_more <= 0.0:
 		_ritual_more = def.ritual_reinforce_every
-		if _call(def.ritual_reinforce, e.pos, RITUAL_RING, def.ritual_cap, def.summon_windup, true) > 0:
+		if _call(def.ritual_reinforce, e.pos, RITUAL_RING, def.ritual_cap, def.summon_windup, true, false) > 0:
 			Audio.play(&"summon")
 	if BossRules.ritual_over(_ritual_t, def.ritual_time, _raised.size(), _standing(_raised), _rising_ritual()):
 		_end_ritual()
@@ -802,8 +841,7 @@ func _step_ritual(dt: float, toward: Vector2) -> void:
 func _end_ritual() -> void:
 	_ritual_done = true
 	e.invulnerable = false
-	stats.ritual = snappedf(_ritual_t, 0.1)
-	stats.ritual_raised = _raised.size()
+	_record_ritual()
 	# the dead not yet up stay down, and their runes go
 	for i in range(_rising.size() - 1, -1, -1):
 		if _rising[i].ritual:
@@ -818,6 +856,14 @@ func _end_ritual() -> void:
 	cue.emit(&"shield_break", e.pos, Vector2.ZERO, def.shield_radius, 0.0)
 	moment.emit(&"ritual_end")
 	_stun(def.ritual_stun)
+	ritual_changed.emit(0, _ritual_total)
+
+
+## The ritual's numbers for RESULT (also when the paladin falls inside it): seconds it lasted, how many of its
+## first dead rose.
+func _record_ritual() -> void:
+	stats.ritual = snappedf(_ritual_t, 0.1)
+	stats.ritual_raised = _raised.size()
 
 
 ## True while the ritual's shield stands (the HUD draws his bar shielded).
@@ -970,18 +1016,29 @@ func record_hurt(source: StringName, amount: float) -> void:
 func record_death() -> void:
 	stats.died_phase = phase
 	stats.phase_time = BossRules.phase_times(stats.phase_at, _clock)
+	if state == State.RITUAL:
+		_record_ritual()
 
 
 ## He falls: nothing of his outlives him (shots, warnings, summons, the shield, the curse on the paladin), and the
 ## ending begins (_step_dying).
 func _on_killed(dead: Enemy) -> void:
 	if dead != e:
+		if state == State.RITUAL and _raised.has(dead):
+			ritual_changed.emit(ritual_left(), _ritual_total)
 		return
 	state = State.DYING
 	_t = 0.0
 	_step = 0
 	center = e.pos
 	e.invulnerable = false
+	# no flash, no fire or frost glowing on him as he falls (BUG-004)
+	e.flash_t = 0.0
+	e.burn_t = 0.0
+	e.frozen_t = 0.0
+	var look := _material()
+	if look:
+		_dim_from = [look.get_shader_parameter(&"tint"), float(look.get_shader_parameter(&"desaturate")), float(look.get_shader_parameter(&"crest"))]
 	stats.time = snappedf(_clock, 0.1)
 	stats.phase_time = BossRules.phase_times(stats.phase_at, _clock)
 	_cancel()
@@ -991,7 +1048,7 @@ func _on_killed(dead: Enemy) -> void:
 	_raised.clear()
 	game.player.curse.clear()
 	game.fx.hit_stop(120)
-	game.fx.slow_mo(0.3, 0.35, 0.5, 1.05, 0.5)
+	game.fx.slow_mo(0.3, 0.35, 0.5, 1.05, VICTORY_BLUR)
 	game.fx.shake(5.0)
 	game.fx.kick_split(1.0)
 	game.fx.ring(center, 3.0, VIOLET, 0.4, 0.15, true)
@@ -1011,10 +1068,18 @@ func _step_dying(dt: float) -> void:
 	var crossed := func(at: float) -> bool: return before < at and _t >= at
 	var portal := game.arena.door_pos
 	var fade := clampf((_t - VICTORY_FADE.x) / (VICTORY_FADE.y - VICTORY_FADE.x), 0.0, 1.0)
+	var dim := 1.0 - pow(1.0 - clampf(_t / VICTORY_DIM_TIME, 0.0, 1.0), 3.0)
 	var mat := _material()
 	if mat:
-		mat.set_shader_parameter(&"paint_glow", lerpf(CrowdRenderer.PAINT_GLOW * e.def.shine, 0.0, fade))
-		mat.set_shader_parameter(&"rim_power", lerpf(e.def.rim * CrowdRenderer.PAINT_RIM, 0.0, fade))
+		mat.set_shader_parameter(&"paint_glow", lerpf(CrowdRenderer.PAINT_GLOW * e.def.shine, 0.0, dim))
+		mat.set_shader_parameter(&"rim_power", lerpf(e.def.rim * CrowdRenderer.PAINT_RIM, 0.0, dim))
+		if not _dim_from.is_empty():
+			var tint: Color = _dim_from[0]
+			var dark := Color(tint.r * VICTORY_DIM, tint.g * VICTORY_DIM, tint.b * VICTORY_DIM, tint.a)
+			mat.set_shader_parameter(&"tint", tint.lerp(dark, dim))
+			mat.set_shader_parameter(&"desaturate", lerpf(_dim_from[1], lerpf(_dim_from[1], 1.0, VICTORY_GREY), dim))
+			# the pale light on his crown and shoulders (crowd.gdshader's crest) goes out with the rest
+			mat.set_shader_parameter(&"crest", lerpf(_dim_from[2], 0.0, dim))
 	if _t < VICTORY_FADE.y and int(_t * 8.0) != int(before * 8.0):
 		# his spectral wisps fall away from where he stood, fewer as it goes
 		if _rng.randf() > fade:

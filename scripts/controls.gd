@@ -17,6 +17,9 @@ const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AX
 const STICK_DEADZONE := 0.3
 
 var using_pad := false
+## Which devices were touched since forget_devices() (the run's log: RunLog.device).
+var seen_keys := false
+var seen_pad := false
 ## Set by the test bot (or, later, touch buttons): overrides the devices while not null.
 var virtual: VirtualPad = null
 var _last_aim := Vector2.RIGHT
@@ -137,8 +140,16 @@ func flush() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > STICK_DEADZONE):
 		using_pad = true
+		seen_pad = true
 	elif event is InputEventKey or event is InputEventMouseButton or event is InputEventMouseMotion:
 		using_pad = false
+		seen_keys = seen_keys or not event is InputEventMouseMotion
+
+
+## Starts counting the devices anew (a run begins).
+func forget_devices() -> void:
+	seen_keys = false
+	seen_pad = false
 
 
 func move() -> Vector2:

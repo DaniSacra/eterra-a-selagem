@@ -45,8 +45,10 @@ const OVERRIDE := "user://feel_override.tres"
 @export_range(0.0, 3.0, 0.05) var shake_scale := 1.0
 ## The jolt of the camera along a blow.
 @export_range(0.0, 3.0, 0.05) var kick_scale := 1.0
-## Seconds of the flat black and white frame when a finisher strikes a crowd, an elite or the boss (0 = off).
+## Seconds of the flat black and white frame on an Omega that lands or the blow that ends a boss's phase (0 = off).
 @export_range(0.0, 0.15, 0.005) var impact_frame := 0.05
+## The fewest seconds between two impact frames (Combat).
+@export_range(0.0, 30.0, 0.5) var impact_frame_every := 10.0
 
 @export_group("Look")
 ## Gold edge and see-through silhouette on the paladin (0 = off).

@@ -39,6 +39,7 @@ knockback = 16.0
 lunge = 0.8
 move_scale = 0.0
 windup = 0.28
+glint = 0.08
 recovery = 0.3
 chain_window = 0.6
 hit_stop_ms = 70.0
@@ -63,7 +64,7 @@ recovery = 0.21666666666666667
 chain_window = 0.4
 hit_stop_ms = 65.0
 shake = 0.8
-next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_ckn7t")])
+next = Array[Resource]([SubResource("Resource_ckn7t")])
 
 [sub_resource type="Resource" id="Resource_ko4pd"]
 script = ExtResource("1_0fmu3")
@@ -83,7 +84,7 @@ recovery = 0.13333333333333333
 chain_window = 0.4
 hit_stop_ms = 25.0
 shake = 0.6
-next = Array[ExtResource("1_0fmu3")]([SubResource("Resource_ku8mk")])
+next = Array[Resource]([SubResource("Resource_ku8mk")])
 
 [sub_resource type="Resource" id="Resource_b3mom"]
 script = ExtResource("1_0fmu3")
@@ -150,6 +151,7 @@ knockback = 18.0
 both_ways = true
 move_scale = 0.0
 windup = 0.06
+glint = 0.08
 recovery = 0.6
 chain_window = 0.4
 hit_stop_ms = 50.0

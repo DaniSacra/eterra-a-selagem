@@ -81,6 +81,8 @@ class Zone:
 	var cancelled := false
 	## Which attack it belongs to (Boss: the attack's id; "adds" for his dead): the hurt_by count of the fight.
 	var source: StringName = &""
+	## Which kind of enemy laid it (EnemyDef.id, Horde.acting; &"": none, as the boss's own): "Derrotado por".
+	var by: StringName = &""
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -94,6 +96,8 @@ var horde: Horde
 var fx: Fx
 ## The source of the warning that hurt the paladin last (Zone.source), read by the game as hit_player is emitted.
 var last_source: StringName = &""
+## Which kind of enemy laid it (Zone.by).
+var last_by: StringName = &""
 var _pool: Array[MeshInstance3D] = []
 var _found: Array[Enemy] = []
 var _rune_pool: Array[MeshInstance3D] = []
@@ -233,6 +237,7 @@ func _land(z: Zone) -> void:
 			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)
 	if player and player.alive() and inside(z, player.pos, Player.RADIUS * 0.6):
 		last_source = z.source
+		last_by = z.by
 		hit_player.emit(z.power, center)
 
 
@@ -248,6 +253,7 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	z.total = time
 	z.power = power
 	z.color = COLORS[kind]
+	z.by = horde.acting if horde else &""
 	z.node = _pool.pop_back() if not _pool.is_empty() else _new_node()
 	z.mat = z.node.material_override
 	z.node.visible = true

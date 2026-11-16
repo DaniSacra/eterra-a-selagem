@@ -33,7 +33,7 @@ func _collect(options: Array[ComboNode], path: Array, from_dodge: bool, out: Arr
 		here.append(node.input)
 		if node.title != &"":
 			out.append({"node": node, "path": here, "from_dodge": from_dodge})
-		_collect(node.next, here, from_dodge, out)
+		_collect(node.following(), here, from_dodge, out)
 
 
 ## Every node of the tree, each once.

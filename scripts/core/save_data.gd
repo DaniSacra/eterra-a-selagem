@@ -9,7 +9,7 @@ const MAX_BEST_TIMES := 5
 static func defaults() -> Dictionary:
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": false, "scale": 1, "shake": true, "bindings": {}},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": false, "scale": 1, "shake": true, "impact_frames": true, "bindings": {}},
 		"best_times": [],
 		"moves": [],
 		"wins": 0,
@@ -53,6 +53,12 @@ static func add_best_time(data: Dictionary, seconds: float) -> bool:
 	if times.size() > MAX_BEST_TIMES:
 		times.resize(MAX_BEST_TIMES)
 	return best
+
+
+## A won run's time, kept only when the run has a save (saving false, as with --nosave: no record, never a new best,
+## BUG-008). Returns true when it is the new best.
+static func record_win_time(data: Dictionary, seconds: float, saving: bool) -> bool:
+	return saving and add_best_time(data, seconds)
 
 
 static func discover_move(data: Dictionary, id: String) -> bool:

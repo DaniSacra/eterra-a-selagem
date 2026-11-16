@@ -73,7 +73,16 @@ const LUNGE_MAGNET := 2.5
 @export var wave_bolt := false
 
 @export_group("Tree")
-@export var next: Array[ComboNode] = []
+## The moves that may follow this one (ComboNode each; read them typed with following()). Kept as Resource: a typed
+## array of its own class in its own script holds the script in a cycle, which leaked it at every exit.
+@export var next: Array[Resource] = []
+
+
+## The moves that may follow this one, typed.
+func following() -> Array[ComboNode]:
+	var out: Array[ComboNode] = []
+	out.assign(next)
+	return out
 
 
 func has_tag(tag: StringName) -> bool:

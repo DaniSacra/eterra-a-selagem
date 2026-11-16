@@ -9,6 +9,9 @@ enum Mode { PLAY, CHOICE, PAUSE, OVER, ENDING }
 signal victory_started
 ## The ending is over: the end screen opens right after (the fight's numbers: Boss.stats).
 signal victory_finished(stats: Dictionary)
+## The run is over and logged (RunLog): outcome is victory, death or quit; entry is the line written (also when the
+## log is off: --nosave and the bot write nothing).
+signal run_logged(outcome: String, entry: Dictionary)
 
 ## Magia a kill gives back (Player.magick).
 const MAGICK_PER_KILL := 1.0
@@ -65,6 +68,14 @@ var kills := 0
 var max_alive := 0
 ## Play time when Morvath came in (RESULT boss_at; -1: not yet).
 var boss_at := -1.0
+## Omegas let go (attack, special and circle) and dodges, for the run's log.
+var omegas := 0
+var dodges := 0
+## What hurt the paladin last (DefeatCause.of: {"attack", "enemy"}); empty before any blow. defeated_by() names it.
+var last_hurt := {}
+## The gifts in the order they were taken (ids), for the run's log.
+var gifts_taken: Array[StringName] = []
+var _logged := false
 var fast := 1.0
 ## Smoothed cost of one simulation step, in milliseconds.
 var step_ms := 0.0
@@ -117,6 +128,12 @@ func _ready() -> void:
 	horde.projectiles = projectiles
 
 	player.struck.connect(combat.strike)
+	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
+		if node.has_tag(Combat.OMEGA_TAG):
+			omegas += 1)
+	player.cast_released.connect(func(_at: Vector2, omega: bool) -> void:
+		if omega:
+			omegas += 1)
 	player.glinted.connect(combat.glint)
 	player.cast_released.connect(combat.cast)
 	player.was_hurt.connect(func(_a: float) -> void:
@@ -124,6 +141,7 @@ func _ready() -> void:
 		_hurt_flash = 1.0)
 	player.died.connect(_on_player_died)
 	player.dodged.connect(_on_dodged)
+	Controls.forget_devices()
 	player.shield_broke.connect(_on_shield_broke)
 	player.move_shown.connect(func(node: ComboNode) -> void:
 		hud.show_move(node, combat.color_of(node.tags))
@@ -136,7 +154,7 @@ func _ready() -> void:
 	horde.killed.connect(_on_killed)
 	horde.armor_broken.connect(_on_armor_broken)
 	combat.combo_changed.connect(hud.on_combo)
-	fx.shake_scale = 1.0 if Save.option("shake") else 0.0
+	apply_options()
 
 	if Dev.has("bot"):
 		bot = Bot.new()
@@ -308,6 +326,8 @@ func _build_ui() -> void:
 
 
 func _exit_tree() -> void:
+	# left in the middle (to the title, a new descent, the window closed): the run is logged as left
+	log_run("quit")
 	Controls.virtual = null
 	Engine.time_scale = 1.0
 
@@ -553,7 +573,7 @@ func _open_choice(offers: Array[Boon] = [], weights: Array[float] = Boon.RARITY_
 	ui.add_child(choice)
 	choice.open(offers, boons, _offer_rarity)
 	choice.chosen.connect(_on_chosen)
-	fx.burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
+	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 	if bot and not Dev.has("hold"):
 		get_tree().create_timer(0.6).timeout.connect(func() -> void:
 			if mode == Mode.CHOICE:
@@ -577,6 +597,7 @@ func _on_chosen(b: Boon) -> void:
 func _take(b: Boon) -> void:
 	var old_hp_bonus := boons.stat(&"max_hp")
 	boons.take(b, _offer_rarity.get(b.id, Boon.Rarity.COMMON))
+	gifts_taken.append(b.id)
 	player.dodge_max = Feel.live().dodge_charges + int(boons.stat(&"dodge_charges"))
 	player.speed_bonus = boons.stat(&"move_speed_pct")
 	var shield := boons.stat(&"shield_cooldown")
@@ -588,10 +609,11 @@ func _take(b: Boon) -> void:
 	player.heal(hp_bonus - old_hp_bonus)
 	fx.ring(player.pos, 3.0, b.color(), 0.5)
 	fx.beam(player.pos, b.color(), 1.2, 8.0, 0.6)
-	fx.burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
+	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 
 
 func _on_dodged(dir: Vector2) -> void:
+	dodges += 1
 	var dps := boons.stat(&"dodge_ember_dps")
 	if dps > 0.0:
 		for k in 3:
@@ -681,10 +703,14 @@ func _on_hit_player(amount: float, from: Vector2, source: Object = null) -> void
 		return
 	var before := player.hp
 	player.hurt(amount, from)
-	if boss and player.hp < before:
-		# what hurt him, for the fight's numbers: the warning or shot's attack (Ground/Projectiles.last_source);
-		# blows of the crowd are his dead
-		var id: Variant = source.get(&"last_source") if source else null
+	if player.hp >= before:
+		return
+	# what hurt him: the warning or shot's attack (Ground/Projectiles.last_source) and the kind that laid it
+	# (last_by; for a plain blow of the crowd, Horde.last_by)
+	var id: Variant = source.get(&"last_source") if source else null
+	last_hurt = DefeatCause.of(id, source.get(&"last_by") if source else null)
+	if boss:
+		# for the fight's numbers; blows of the crowd are his dead
 		boss.record_hurt(id if id is StringName else &"adds", before - player.hp)
 
 
@@ -733,6 +759,7 @@ func _on_player_died() -> void:
 		boss.record_death()
 	Save.data.runs += 1
 	Save.write()
+	log_run("death")
 	await get_tree().create_timer(1.8).timeout
 	_open_end(false, false)
 
@@ -750,8 +777,10 @@ func _on_boss_defeated() -> void:
 	var at := boss.center if boss else player.pos
 	Save.data.runs += 1
 	Save.data.wins += 1
-	var new_best := SaveData.add_best_time(Save.data, time)
+	# a run without a save (--nosave) keeps no record, so it can never be a new best (BUG-008)
+	var new_best := SaveData.record_win_time(Save.data, time, Save.enabled)
 	Save.write()
+	log_run("victory")
 	await _play_ending(at)
 	_open_end(true, new_best)
 
@@ -819,8 +848,15 @@ func _open_pause() -> void:
 	pause.open()
 	pause.resumed.connect(func() -> void:
 		_close_screen()
-		fx.shake_scale = 1.0 if Save.option("shake") else 0.0
+		apply_options()
 		mode = Mode.PLAY)
+
+
+## The comfort options of the save that the run reads (the pause's Options may change them): screen shake and the
+## black and white impact frames.
+func apply_options() -> void:
+	fx.shake_scale = 1.0 if Save.option("shake") else 0.0
+	fx.impact_frames = bool(Save.option("impact_frames"))
 
 
 func _close_screen() -> void:
@@ -1018,6 +1054,43 @@ func _lab() -> void:
 		if e.pos.distance_to(player.pos) <= reach + 0.4 and shown < int(Dev.num("lab-numbers", 12)):
 			fx.number(Vector3(e.pos.x, 1.6, e.pos.y), 114, Color(1, 1, 1))
 			shown += 1
+
+
+## The text key naming what hurt the paladin last (DefeatCause): a boss attack (killer_<attack>), else the enemy
+## kind's name (EnemyDef.name_key), else killer_unknown. The end screen shows it on a defeat ("Derrotado por").
+func defeated_by() -> StringName:
+	var enemy: StringName = last_hurt.get("enemy", &"")
+	var name_key: StringName = &""
+	if enemy != &"" and horde.def(enemy) != null:
+		name_key = horde.def(enemy).name_key
+	return DefeatCause.text_key(last_hurt, name_key)
+
+
+## The run's entry for the log (RunLog): the RESULT line, the gifts taken, the device, Omegas, dodges, what hurt last.
+func run_entry(outcome: String) -> Dictionary:
+	var gifts: Array = []
+	for id in gifts_taken:
+		gifts.append({"id": String(id), "level": boons.level(id), "rarity": Boon.Rarity.keys()[boons.rarity(id)].to_lower()})
+	var device := "bot" if bot else RunLog.device(Controls.seen_keys, Controls.seen_pad)
+	return RunLog.entry(result(), {"outcome": outcome, "when": Time.get_datetime_string_from_system(), "gifts": gifts,
+		"device": device, "omegas": omegas, "dodges": dodges,
+		"last_hurt": {"attack": String(last_hurt.get("attack", &"")), "enemy": String(last_hurt.get("enemy", &""))},
+		"defeated_by": String(defeated_by()) if outcome == "death" else ""})
+
+
+## Logs the run once, when it ends (victory, death, or quit when left before either). Written to RunLog.PATH for a
+## person's run with a save (never with --nosave nor for the bot); --runlog=file writes any run there (QA samples;
+## plain --runlog: to RunLog.PATH).
+func log_run(outcome: String) -> void:
+	if _logged or not is_instance_valid(player):
+		return
+	_logged = true
+	var e := run_entry(outcome)
+	if Dev.has("runlog"):
+		RunLog.append(RunLog.PATH if Dev.arg("runlog") == "1" else Dev.arg("runlog"), e)
+	elif Save.enabled and bot == null:
+		RunLog.append(RunLog.PATH, e)
+	run_logged.emit(outcome, e)
 
 
 ## A line of numbers about the run, for smoke tests and tuning.

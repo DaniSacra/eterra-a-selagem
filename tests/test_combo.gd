@@ -66,8 +66,8 @@ func test_three_attacks_end_in_the_spin() -> void:
 
 func test_attack_damage_and_timing_follow_hades() -> void:
 	var cut1 := ComboTree.find(tree.neutral, L)
-	var cut2 := cut1.next[0]
-	var cut3 := cut2.next[0]
+	var cut2 := cut1.following()[0]
+	var cut3 := cut2.following()[0]
 	assert_eq([cut1.damage, cut2.damage, cut3.damage], [20.0, 25.0, 60.0])
 	assert_almost_eq(cut1.windup, 0.06, 0.001)
 	assert_almost_eq(cut2.windup, 0.11, 0.001)
@@ -217,7 +217,7 @@ func test_tree_data_is_sane() -> void:
 		if node.title != &"":
 			assert_ne(T.t(node.title), String(node.title), "missing name for %s" % node.id)
 		var inputs := {}
-		for child in node.next:
+		for child in node.following():
 			assert_false(inputs.has(child.input), "%s has two moves on the same input" % node.id)
 			inputs[child.input] = true
 	assert_almost_eq(tree.buffer_time, 0.15, 0.001)
@@ -229,7 +229,7 @@ func test_a_new_combo_needs_only_data() -> void:
 	extra.input = H
 	extra.title = &"move_spin"
 	tree = tree.duplicate(true)
-	ComboTree.find(tree.neutral, L).next[0].next.append(extra)
+	ComboTree.find(tree.neutral, L).following()[0].next.append(extra)
 	runner.tree = tree
 	play_all([L, L, H])
 	assert_eq(started[2], &"test_extra")
@@ -269,11 +269,16 @@ func test_the_drawn_arc_is_exactly_what_the_blow_reaches() -> void:
 				assert_eq(float(s.draw_width), 360.0, "%s goes all around" % node.id)
 
 
-## Only finishers may glint (the plain swings never hold).
+## Every finisher holds a short glint before it lands (0.06 to 0.1 s, backlog BUG-003); the plain swings never hold.
 func test_only_finishers_glint() -> void:
+	var glinting := 0
 	for n in tree.all_nodes():
-		if n.glint > 0.0:
-			assert_true(n.has_tag(&"finisher"), "%s glints but is not a finisher" % n.id)
+		if n.has_tag(&"finisher"):
+			assert_between(n.glint, 0.06, 0.1, "%s is a finisher: it glints 0.06 to 0.1 s" % n.id)
+			glinting += 1
+		else:
+			assert_eq(n.glint, 0.0, "%s glints but is not a finisher" % n.id)
+	assert_gt(glinting, 0, "at least one move glints")
 
 
 func _enemy(id: StringName) -> Enemy:
@@ -282,20 +287,29 @@ func _enemy(id: StringName) -> Enemy:
 	return e
 
 
-## The impact frame (a flat black and white frame) is kept for the big moments: a finisher into a crowd,
-## an elite or the boss; a finisher into a few common enemies does not get it.
-func test_impact_frame_only_for_big_strikes() -> void:
-	var few: Array[Enemy] = []
-	for i in Combat.IMPACT_FRAME_CROWD - 1:
-		few.append(_enemy(&"skeleton"))
-	assert_false(Combat.big_strike(few))
-	var crowd := few.duplicate()
-	crowd.append(_enemy(&"skeleton"))
-	assert_true(Combat.big_strike(crowd))
-	var elite: Array[Enemy] = [_enemy(&"knight")]
-	assert_true(Combat.big_strike(elite))
-	var boss: Array[Enemy] = [_enemy(&"morvath")]
-	assert_true(Combat.big_strike(boss))
+## The impact frame (a flat black and white frame) is kept for the two biggest moments (D-08): an Omega that lands
+## and the blow that ends a boss's phase, never while the last one is less than Feel.impact_frame_every old.
+func test_impact_frame_only_for_omegas_and_phase_breaks() -> void:
+	assert_false(Combat.wants_impact_frame(false, false, 0.0), "a common blow, even a finisher into a crowd")
+	assert_true(Combat.wants_impact_frame(true, false, 0.0), "an Omega that lands")
+	assert_true(Combat.wants_impact_frame(false, true, 0.0), "the blow that ends a phase")
+	assert_false(Combat.wants_impact_frame(true, true, 0.5), "never inside the cooldown")
+	var boss := _enemy(&"morvath")
+	boss.max_hp = 100.0
+	boss.hp_floor = 66.0
+	boss.hp = 66.0
+	assert_true(Combat.breaks_phase(boss, 70.0), "down to the floor of his phase")
+	assert_false(Combat.breaks_phase(boss, 66.0), "already at the floor (his next phase not begun yet)")
+	boss.hp = 68.0
+	assert_false(Combat.breaks_phase(boss, 70.0), "still above it")
+	boss.hp_floor = 0.0
+	boss.hp = 0.0
+	boss.alive = false
+	assert_true(Combat.breaks_phase(boss, 5.0), "the blow that fells him")
+	var knight := _enemy(&"knight")
+	knight.hp = 0.0
+	knight.alive = false
+	assert_false(Combat.breaks_phase(knight, 5.0), "only a boss has phases")
 
 
 ## The held (Omega) moves cost Magia; a plain chain never does.
