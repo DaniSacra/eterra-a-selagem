@@ -118,6 +118,10 @@ var frame_left := 0.0
 var shake_scale := 1.0
 ## The "impact_frames" option (SaveData): false, no impact frame ever.
 var impact_frames := true
+## The "slow_motion" option: false, no slow motion (nor its zoom and radial blur); the world keeps its speed.
+var slow_motion := true
+## The "color_split" option: false, the screen never splits its colours.
+var color_split := true
 ## When >= 0, sword arcs hold at this point of their life (the --lab still).
 var freeze_t := -1.0
 ## The moment of slow motion now playing (Hades II slows the whole world on the last kill of a fight and on the
@@ -644,7 +648,8 @@ func shake(amount: float) -> void:
 
 
 func kick_split(amount: float) -> void:
-	split = maxf(split, amount)
+	if color_split:
+		split = maxf(split, amount)
 
 
 ## Runs every frame, even during hit stop. Returns the camera's shake offset.
@@ -664,7 +669,7 @@ func tick(delta: float) -> Vector3:
 ## ease_out), the camera closes in by zoom and the screen blurs toward its middle. A weaker one never cuts a
 ## stronger one short. Seconds here are real seconds.
 func slow_mo(fraction: float, hold: float, ease_out: float, zoom_to: float = 1.0, blur: float = 0.0, ease_in: float = 0.06) -> void:
-	if _slow_on and fraction > _slow_fraction:
+	if not slow_motion or (_slow_on and fraction > _slow_fraction):
 		return
 	_slow_on = true
 	_slow_fraction = fraction

@@ -1,9 +1,16 @@
 shader_type canvas_item;
-// Full screen pass: vignette, colour split on big hits, red edge when the paladin is hurt, and the impact frame
+// Full screen pass: vignette, colour split on big hits, a tint at the edges when the paladin is hurt (red; the
+// curse's violet under a boss's curse; HurtTint, numbers in Feel), and the impact frame
 // (impact = 1 for a frame or two: the screen in flat black and white, the bright parts as white shapes on black).
 uniform sampler2D screen : hint_screen_texture, filter_linear;
 uniform float split = 0.0;
+// Edge alpha of the red (a blow, low life) and of the curse's violet; the tint only lives toward the edges, between
+// hurt_edge.x and hurt_edge.y of the distance from the middle (1 = the middle of a side), never on the fight.
 uniform float hurt = 0.0;
+uniform float curse = 0.0;
+uniform vec3 hurt_color : source_color = vec3(0.7, 0.03, 0.05);
+uniform vec3 curse_color : source_color = vec3(0.62, 0.32, 0.95);
+uniform vec2 hurt_edge = vec2(0.5, 1.05);
 uniform float vignette = 0.45;
 // The vignette spares the highlights: it fades out between these two values of a pixel's brightest channel (fires,
 // the portal and the banners keep their white core near the edges of the screen).
@@ -43,7 +50,9 @@ void fragment() {
 	float v = smoothstep(0.3, 0.95, d);
 	vec3 lit = c * vignette_spare_weight;
 	c *= 1.0 - v * vignette * (1.0 - smoothstep(vignette_spare_from, vignette_spare_to, max(lit.r, max(lit.g, lit.b))));
-	c = mix(c, vec3(0.7, 0.03, 0.05), v * hurt * 0.75);
+	float edge = smoothstep(hurt_edge.x, hurt_edge.y, d);
+	c = mix(c, hurt_color, edge * clamp(hurt, 0.0, 1.0));
+	c = mix(c, curse_color, edge * clamp(curse, 0.0, 1.0));
 	if (impact > 0.0) {
 		float lum = dot(c, vec3(0.3, 0.55, 0.15));
 		c = mix(impact_dark, impact_light, smoothstep(impact_threshold - 0.03, impact_threshold + 0.03, lum));

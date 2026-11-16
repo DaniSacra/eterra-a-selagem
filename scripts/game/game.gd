@@ -88,7 +88,8 @@ var _screen: Control
 ## The two lines read during Morvath's ending.
 var _caption: Control
 var _screen_fx: ShaderMaterial
-var _hurt_flash := 0.0
+## The edge tint of a blow taken (BUG-007): red, or violet under the curse; numbers in Feel.
+var _hurt_tint := HurtTint.new()
 var _fountain: Node3D
 var _fountain_at := Vector2.ZERO
 var _fountain_used := false
@@ -137,8 +138,7 @@ func _ready() -> void:
 	player.glinted.connect(combat.glint)
 	player.cast_released.connect(combat.cast)
 	player.was_hurt.connect(func(_a: float) -> void:
-		combat.drop_combo()
-		_hurt_flash = 1.0)
+		combat.drop_combo())
 	player.died.connect(_on_player_died)
 	player.dodged.connect(_on_dodged)
 	Controls.forget_devices()
@@ -191,6 +191,10 @@ func _ready() -> void:
 			kinds.assign(Array(Dev.arg("stress-ids").split(",")).map(func(id: String) -> StringName: return StringName(id)))
 		for i in int(Dev.num("stress", 300)):
 			horde.spawn(horde.def(kinds[i % kinds.size()]), arena.resolve(player.pos + Vector2.from_angle(_rng.randf() * TAU) * _rng.randf_range(4.0, 20.0), 0.5), false)
+	if Dev.has("hero-hp"):
+		# dev, for captures: the paladin's life (a defeat in a few blows, or blows taken without falling)
+		player.max_hp = Dev.num("hero-hp", Player.MAX_HP)
+		player.hp = player.max_hp
 	if Dev.has("feel-panel"):
 		_toggle_feel_panel.call_deferred()
 	if Dev.has("shot"):
@@ -350,14 +354,16 @@ func _process(delta: float) -> void:
 		_open_pause()
 	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
 		_toggle_feel_panel()
-	_hurt_flash = maxf(0.0, _hurt_flash - delta * 2.5)
+	_hurt_tint.step(delta / maxf(Engine.time_scale, 0.001), Feel.live())
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
 	if mode != Mode.PLAY and mode != Mode.ENDING and not Dev.has("lab"):
 		fx.end_slow()
 	_screen_fx.set_shader_parameter(&"split", fx.split)
 	_screen_fx.set_shader_parameter(&"radial", fx.radial)
 	_screen_fx.set_shader_parameter(&"impact", 1.0 if fx.frame_left > 0.0 else 0.0)
-	_screen_fx.set_shader_parameter(&"hurt", maxf(_hurt_flash, low * (0.35 + 0.15 * sin(time * 6.0))))
+	# low life: a slow red pulse at the edges, as strong as a heavy blow at most
+	_screen_fx.set_shader_parameter(&"hurt", maxf(_hurt_tint.red, low * Feel.live().hurt_tint * (0.75 + 0.25 * sin(time * 6.0))))
+	_screen_fx.set_shader_parameter(&"curse", _hurt_tint.violet)
 	_follow(delta, shake)
 	# a button pressed during a hit stop is kept for the next step (a swing must never be lost)
 	if stepped or mode != Mode.PLAY:
@@ -709,6 +715,8 @@ func _on_hit_player(amount: float, from: Vector2, source: Object = null) -> void
 	# (last_by; for a plain blow of the crowd, Horde.last_by)
 	var id: Variant = source.get(&"last_source") if source else null
 	last_hurt = DefeatCause.of(id, source.get(&"last_by") if source else null)
+	# the edge of the screen says it: red, or the curse's violet (its bolt too, the curse lands just after)
+	fx.kick_split(_hurt_tint.hit(before - player.hp, player.curse.active() or id == &"curse", Feel.live()))
 	if boss:
 		# for the fight's numbers; blows of the crowd are his dead
 		boss.record_hurt(id if id is StringName else &"adds", before - player.hp)
@@ -825,7 +833,8 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	var end := EndScreen.new()
 	_screen = end
 	ui.add_child(end)
-	end.open(victory, {"time": time, "level": level, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size()}, new_best)
+	end.open(victory, {"time": time, "level": level, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
+		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &""}, new_best)
 	end.retry.connect(func() -> void: get_tree().reload_current_scene())
 	end.menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn"))
 
@@ -852,11 +861,13 @@ func _open_pause() -> void:
 		mode = Mode.PLAY)
 
 
-## The comfort options of the save that the run reads (the pause's Options may change them): screen shake and the
-## black and white impact frames.
+## The comfort options of the save that the run reads (the pause's Options may change them): screen shake, the
+## black and white impact frames, slow motion (with its zoom and radial blur) and the colour split.
 func apply_options() -> void:
 	fx.shake_scale = 1.0 if Save.option("shake") else 0.0
 	fx.impact_frames = bool(Save.option("impact_frames"))
+	fx.slow_motion = bool(Save.option("slow_motion"))
+	fx.color_split = bool(Save.option("color_split"))
 
 
 func _close_screen() -> void:
@@ -974,8 +985,10 @@ func _cam_offset() -> Vector3:
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits. With --shot-on=swing|hit|
-## special|omega|boss:<moment> it then waits for the next such swing of the paladin (hit: one that reaches someone; special: the
-## special's wave) and saves --shot-after seconds of real time later, so the swing's effects are on screen.
+## special|omega|boss:<moment> it then waits for the next such swing of the paladin (hit: one that reaches someone;
+## special: the special's wave) and saves --shot-after seconds of real time later, so the swing's effects are on
+## screen. Also ritual-left:<n> (n of the ritual's dead standing), hurt, hurt-cursed (a blow taken) and end (the end
+## screen).
 func _shot() -> void:
 	await get_tree().create_timer(Dev.num("shot-at", 2.0)).timeout
 	if Dev.arg("shot-on").begins_with("boss:"):
@@ -989,6 +1002,25 @@ func _shot() -> void:
 			var got: StringName = await boss.moment
 			if got == name:
 				break
+		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
+	elif Dev.arg("shot-on").begins_with("ritual-left:"):
+		# the ritual's count on the boss's bar: waits until only N of its dead stand (Boss.ritual_changed)
+		var left := int(Dev.arg("shot-on").trim_prefix("ritual-left:"))
+		while boss == null or boss.ritual_left() != left or not boss.shielded():
+			await get_tree().process_frame
+		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
+	elif Dev.arg("shot-on") == "hurt" or Dev.arg("shot-on") == "hurt-cursed":
+		# a blow taken (hurt-cursed: one under a boss's curse), --shot-after seconds of real time after it
+		var cursed := Dev.arg("shot-on") == "hurt-cursed"
+		while true:
+			await player.was_hurt
+			if not cursed or player.curse.active():
+				break
+		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
+	elif Dev.arg("shot-on") == "end":
+		# the end screen (a defeat or the victory), --shot-after seconds after it opens
+		while not _screen is EndScreen:
+			await get_tree().process_frame
 		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
 	elif Dev.has("shot-on"):
 		var want := Dev.arg("shot-on")

@@ -583,7 +583,7 @@ func hurt(amount: float, from: Vector2) -> void:
 	fx.number(Vector3(pos.x, 2.4, pos.y), amount, Color(1.0, 0.3, 0.25), true)
 	fx.burst(&"spark", Vector3(pos.x, 1.2, pos.y), Vector3(away.x, 0, away.y))
 	fx.shake(2.0)
-	fx.kick_split(1.0)
+	# the colour split and the edge tint of a blow taken are Game's (HurtTint: never on the whole screen)
 	Audio.play(&"hurt")
 	was_hurt.emit(amount)
 	if hp <= 0.0:

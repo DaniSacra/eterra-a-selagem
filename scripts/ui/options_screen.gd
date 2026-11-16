@@ -1,10 +1,14 @@
 class_name OptionsScreen
 extends Control
-## Options: volumes, full screen, window size, screen shake and key remapping. Everything is saved at once.
+## Options: volumes, window size, full screen, the comfort switches (screen shake, impact frames, slow motion,
+## colour split; all on by default, the run reads them in Game.apply_options) and key remapping. Everything is saved
+## at once. Each row is a button: arrows, Enter, the gamepad's pad and A, and the mouse all work.
 
 signal closed
 
 const VOLUMES: Array[String] = ["master", "music", "sfx"]
+## The comfort switches (save option -> text "opt_<option>"), in their order on screen.
+const COMFORT: Array[String] = ["shake", "impact_frames", "slow_motion", "color_split"]
 
 var _list: VBoxContainer
 var _waiting: StringName = &""
@@ -19,6 +23,8 @@ func open() -> void:
 
 func _build() -> void:
 	for c in get_children():
+		# out of the tree at once: the focus is restored by name, and the old row must not answer for the new one
+		remove_child(c)
 		c.queue_free()
 	var page := UiKit.column(self, 900.0, 0.8)
 	page.add_child(UiKit.title(T.t(&"options_title"), 40))
@@ -38,7 +44,10 @@ func _build() -> void:
 		Save.set_option("scale", clampi(int(Save.option("scale")) + dir, 1, App.WINDOW_SIZES.size()))
 		App.apply_options())
 	_toggle("opt_fullscreen", "fullscreen")
-	_toggle("opt_shake", "shake")
+	var comfort := UiKit.label(T.t(&"options_comfort"), UiKit.GOLD, 24, UiKit.BOLD_FONT)
+	_list.add_child(comfort)
+	for option in COMFORT:
+		_toggle("opt_" + option, option)
 	var keys := VBoxContainer.new()
 	keys.add_theme_constant_override(&"separation", 6)
 	cols.add_child(keys)

@@ -10,7 +10,9 @@ extends Control
 ## A boss's curse: a seal beside the medallion with a ring that empties and two short lines (what it is, what it
 ## does), the medallion's ring tinted violet, the special's diamond locked until a ring of light says it is back.
 ## A boss's phase: the mark reached on his bar lights and the phase's name shows under the bar for PHASE_TIME (the
-## boss's notice for it goes there instead of the middle of the screen).
+## boss's notice for it goes there instead of the middle of the screen). While his ritual's shield stands, the bar
+## carries a seal for each of its dead (HudBar.show_ritual) and, once the phase's name is gone, "Derrube os mortos"
+## stays under it.
 ## Sizes are in pixels at 720 lines; the window stretches the whole canvas (project.godot), so the layout holds at
 ## any resolution.
 
@@ -84,6 +86,8 @@ var _phase_tip: Label
 var _phase_t := 0.0
 var _curse_badge: ConditionBadge
 var _shield_t := 0.0
+## The ritual's shield stands: its hint stays under the bar once the phase's name has gone.
+var _ritual_hint := false
 var _combo: Label
 var _combo_word: Label
 var _combo_stroke: HudMark
@@ -309,6 +313,12 @@ func _process(delta: float) -> void:
 	_phase_t -= delta
 	_phase_box.modulate.a = minf(clampf(_phase_t / PHASE_FADE, 0.0, 1.0), clampf((PHASE_TIME - _phase_t) / 0.15, 0.0, 1.0))
 	_phase_box.visible = _phase_t > 0.0 and _boss_box.visible
+	if _phase_t <= 0.0 and _boss_box.visible and _shield_t > 0.0 and _ritual_hint:
+		_phase_name.visible = false
+		_phase_tip.text = T.t(&"ritual_hint")
+		_phase_tip.visible = true
+		_phase_box.visible = true
+		_phase_box.modulate.a = _shield_t
 	_update_pointers(chief)
 	_update_veil(delta)
 
@@ -411,6 +421,9 @@ func _update_boss(b: Enemy) -> void:
 		# a boss's bar: notches where his next phases begin, veiled in his colour while the ritual's shield stands
 		_shield_t = move_toward(_shield_t, 1.0 if boss and boss.shielded() else 0.0, get_process_delta_time() * 4.0)
 		_boss_bar.show_boss(boss.def.thresholds if boss else PackedFloat32Array(), _shield_t)
+		# the ritual's count: a seal per dead that breaks the shield, while the shield shows
+		_ritual_hint = boss != null and boss.shielded()
+		_boss_bar.show_ritual(boss.ritual_left() if boss else 0, boss.ritual_total() if boss and _shield_t > 0.0 else 0)
 
 
 ## Chevrons on the edge of the screen: the light fountain (with its name) and the nearest elites, guardian or boss
@@ -540,6 +553,7 @@ func show_notice(text: String, time: float = 2.5) -> void:
 func show_phase(text: String) -> void:
 	var parts := phase_parts(text)
 	_phase_name.text = parts[0]
+	_phase_name.visible = true
 	_phase_tip.text = parts[1]
 	_phase_tip.visible = parts[1] != ""
 	_phase_t = PHASE_TIME

@@ -50,6 +50,19 @@ const OVERRIDE := "user://feel_override.tres"
 ## The fewest seconds between two impact frames (Combat).
 @export_range(0.0, 30.0, 0.5) var impact_frame_every := 10.0
 
+@export_group("Hurt")
+## The red at the edges of the screen when the paladin is hurt (screen.gdshader): its strongest alpha, how long it
+## fades, the damage from which a blow gets all of it (smaller blows get hurt_tint_small of it) and the colour split
+## of those heavy blows (0 = none). It never reaches the middle of the screen.
+@export_range(0.0, 1.0, 0.01) var hurt_tint := 0.42
+@export_range(0.05, 1.0, 0.01) var hurt_tint_time := 0.22
+@export_range(0.0, 60.0, 0.5) var hurt_tint_heavy := 10.0
+@export_range(0.0, 1.0, 0.05) var hurt_tint_small := 0.5
+@export_range(0.0, 1.0, 0.05) var hurt_split := 0.35
+## Under a boss's curse the blow tints the edges in the curse's violet instead (CurseAura.COLOR), never with a split.
+@export_range(0.0, 1.0, 0.01) var curse_tint := 0.2
+@export_range(0.05, 1.0, 0.01) var curse_tint_time := 0.2
+
 @export_group("Look")
 ## Gold edge and see-through silhouette on the paladin (0 = off).
 @export_range(0.0, 2.0, 0.05) var outline := 1.0

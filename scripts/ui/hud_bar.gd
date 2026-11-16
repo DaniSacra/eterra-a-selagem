@@ -8,6 +8,9 @@ extends Control
 ## Boss marks: dark notches ahead of his life; the ones his life has passed turn to old gold with a small diamond,
 ## and the one just reached flashes (MARK_FLASH seconds). The shield: the frame in its colour and slanted bands that
 ## drift along a thin veil, so the bar reads as warded while his life stays readable under it.
+## The ritual's count (QW-005): a row of diamonds set in the middle of the bar, one for each dead that breaks the
+## shield; the ones still standing glow in the shield's colour inside old gold, the fallen go dark and hollow, and the
+## one that just fell flashes (SEAL_FLASH seconds).
 
 const BACK := Color(0.1, 0.12, 0.16, 0.72)
 const TRAIL := Color(1.0, 0.9, 0.78, 0.8)
@@ -44,6 +47,16 @@ const SHIELD_BAND := 0.5
 const SHIELD_BAND_WIDTH := 4.0
 const SHIELD_BAND_GAP := 12.0
 const SHIELD_DRIFT := 22.0
+## The ritual's seals: half the diagonal of a diamond and the gap between their middles, in pixels.
+const SEAL := 6.0
+const SEAL_GAP := 19.0
+const SEAL_FLASH := 0.6
+const SEAL_FALLEN := Color(0.07, 0.06, 0.09, 0.95)
+## The ritual's dead still standing and how many it began with (0: no ritual, nothing drawn).
+var ritual_left := 0
+var ritual_total := 0
+var _seal_flash := 0.0
+var _seal_flash_at := -1
 ## Marks passed when last looked (-1: not looked yet, so a fight joined late does not flash).
 var _reached := -1
 var _mark_flash := 0.0
@@ -96,6 +109,24 @@ func show_boss(phase_marks: PackedFloat32Array, shielded: float) -> void:
 	queue_redraw()
 
 
+## The ritual's count: left of total dead still standing (total 0 hides it). A dead that falls flashes its seal.
+func show_ritual(left: int, total: int) -> void:
+	left = clampi(left, 0, total)
+	if left == ritual_left and total == ritual_total:
+		return
+	if total == ritual_total and left < ritual_left:
+		_seal_flash = 1.0
+		_seal_flash_at = left
+	ritual_left = left
+	ritual_total = total
+	queue_redraw()
+
+
+## Where the middle of the ritual's seal i stands on the bar (pixels).
+func seal_at(i: int) -> Vector2:
+	return Vector2(size.x * 0.5 + (i - (ritual_total - 1) * 0.5) * SEAL_GAP, size.y * 0.5)
+
+
 ## How many of the boss's marks his life has passed (the phases begun after the first).
 func reached() -> int:
 	var n := 0
@@ -127,6 +158,9 @@ func _process(delta: float) -> void:
 	if _mark_flash > 0.0:
 		_mark_flash = maxf(0.0, _mark_flash - delta / MARK_FLASH)
 		queue_redraw()
+	if _seal_flash > 0.0:
+		_seal_flash = maxf(0.0, _seal_flash - delta / SEAL_FLASH)
+		queue_redraw()
 	if shield > 0.0:
 		_drift = fposmod(_drift + delta * SHIELD_DRIFT, SHIELD_BAND_GAP)
 		queue_redraw()
@@ -155,6 +189,8 @@ func _draw() -> void:
 		_ring(inner, inner.grow(UiKit.FRAME), Color(shield_color, shield))
 	for m in marks:
 		_draw_mark(body, m)
+	for i in ritual_total:
+		_draw_seal(i)
 	if _text != "":
 		var font := UiKit.number_font()
 		var w := font.get_string_size(_text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
@@ -184,6 +220,25 @@ func _draw_mark(body: PackedVector2Array, m: float) -> void:
 		var glow := Color(UiKit.PALE, 0.5 * flash)
 		var w := (6.0 + 22.0 * (1.0 - flash)) / size.x
 		_band(body, m - w, m + w, glow, Color(glow, 0.0), 0.0, size.y)
+
+
+## One of the ritual's seals: ink, an old gold diamond and inside it the shield's glow while its dead stands, a dark
+## hollow once it fell (with a short flash of light the moment it falls).
+func _draw_seal(i: int) -> void:
+	var c := seal_at(i)
+	var standing := i < ritual_left
+	var flash := _seal_flash if i == _seal_flash_at else 0.0
+	if flash > 0.0:
+		_diamond(c, SEAL + 2.5 + 8.0 * (1.0 - flash), Color(UiKit.PALE, 0.4 * flash))
+	_diamond(c, SEAL + 2.5, UiKit.INK)
+	_diamond(c, SEAL + 1.0, UiKit.OLD_GOLD.lerp(UiKit.GOLD, 0.4) if standing else UiKit.OLD_GOLD.darkened(0.35))
+	_diamond(c, SEAL - 0.5, shield_color.lightened(0.15) if standing else SEAL_FALLEN.lerp(UiKit.PALE, flash))
+	if standing:
+		_diamond(c + Vector2(0, -1.5), SEAL * 0.35, Color(UiKit.PALE, 0.55))
+
+
+func _diamond(c: Vector2, d: float, color: Color) -> void:
+	draw_colored_polygon(PackedVector2Array([c + Vector2(0, -d), c + Vector2(d, 0), c + Vector2(0, d), c + Vector2(-d, 0)]), color)
 
 
 ## Slanted bands drifting along the bar while the shield stands.

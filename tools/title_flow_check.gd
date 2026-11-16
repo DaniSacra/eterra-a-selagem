@@ -1,6 +1,7 @@
 extends SceneTree
 ## Drives the title like a player (keyboard): Iniciar starts the run, the pause's way back reaches the title again,
-## Como Jogar and Configurações open and close with Esc, focus moves with the arrows. Prints FLOW ok or FLOW FAIL.
+## Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
+## Enter and keep the focus. Prints FLOW ok or FLOW FAIL.
 ## ~/tools/godot/godot --headless --path . -s tools/title_flow_check.gd
 
 var _fail := 0
@@ -41,6 +42,28 @@ func _wait(s: float) -> void:
 	await create_timer(s).timeout
 
 
+## The comfort switches by keys: Enter flips one and the focus stays on it, down reaches the next. Each is flipped
+## back afterwards.
+func _comfort(options: Node) -> void:
+	var save := root.get_node("Save")
+	var first := options.find_child("opt_impact_frames", true, false) as Control
+	_check(first != null, "the options have Clarões de impacto")
+	if first == null:
+		return
+	first.grab_focus()
+	await process_frame
+	for key: String in ["impact_frames", "slow_motion", "color_split"]:
+		var before: bool = save.call(&"option", key)
+		await _key(&"ui_accept")
+		_check(save.call(&"option", key) == not before, "Enter flips %s" % key)
+		var row := options.find_child("opt_" + key, true, false) as Control
+		_check(row != null and row.has_focus(), "the focus stays on %s" % key)
+		await _key(&"ui_accept")
+		_check(save.call(&"option", key) == before, "Enter flips %s back" % key)
+		if key != "color_split":
+			await _key(&"ui_down")
+
+
 func _run() -> void:
 	change_scene_to_file("res://scenes/boot.tscn")
 	await _wait(1.5)
@@ -61,6 +84,7 @@ func _run() -> void:
 	await _key(&"ui_accept")
 	await _wait(0.3)
 	_check(_sub_is(boot, "options_screen.gd"), "Configurações opens the options")
+	await _comfort(boot.get(&"_sub"))
 	await _key(&"ui_cancel")
 	await _wait(0.3)
 	_check(boot.get(&"_sub") == null, "Esc closes the options")

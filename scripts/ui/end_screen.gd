@@ -1,6 +1,8 @@
 class_name EndScreen
 extends Control
-## Defeat or victory. Defeat: the numbers of the run, the best time, "Tentar de novo". Victory (after the sealing):
+## Defeat or victory. Defeat: the title, what struck the last blow ("Derrotado por: Tempestade das Seis Almas", under
+## the title, the name in warm gold: what to learn for the next try), the numbers of the run, the best time, "Tentar
+## de novo". Victory (after the sealing):
 ## in the title screen's voice (Cinzel and Alegreya, old gold, short), the king sealed, what the descent gathered
 ## (the gifts carried, the time, the foes, the longest sequence, the gold) and "Continuar" (to the title) or a new
 ## descent. It rises in VICTORY_RISE seconds; keys, mouse and gamepad all reach the buttons (Continuar has the focus).
@@ -18,23 +20,37 @@ const STAT_VALUE_SIZE := 22
 const GIFT_ICON := 38.0
 ## Gifts shown at most (the rest are summed in "+N").
 const GIFTS_MAX := 10
+## "Derrotado por": its size and colour (warm, under the defeat's red title).
+const KILLER_SIZE := 24
+const KILLER_COLOR := Color(1.0, 0.82, 0.6)
+## The defeat's column (the line under the title fits on one line).
+const DEFEAT_WIDTH := 520.0
 
 var _rise := 0.0
 var _ornaments: Array[Ornament] = []
 
 
+## stats may carry "defeated_by", the text key of what struck the last blow (Game.defeated_by()); a defeat shows it.
+## new_best only counts with a save (Save.enabled; --nosave keeps no record, BUG-008).
 func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	new_best = new_best and Save.enabled
 	if victory:
 		_open_victory(stats, new_best)
 		return
-	var v := UiKit.column(self, 460.0, 0.75)
-	v.add_child(UiKit.title(T.t(&"end_defeat"), 48, Color(1.0, 0.55, 0.45)))
+	var v := UiKit.column(self, DEFEAT_WIDTH, 0.75)
+	v.add_child(UiKit.shadow(UiKit.title(T.t(&"end_defeat"), 48, Color(1.0, 0.55, 0.45))))
+	var killer: StringName = stats.get("defeated_by", &"")
+	if killer != &"":
+		var by := UiKit.shadow(UiKit.label(T.t(&"defeated_by", {"name": T.t(killer)}), KILLER_COLOR, KILLER_SIZE, UiKit.BOLD_FONT))
+		by.name = "defeated_by"
+		by.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		v.add_child(by)
 	var sub := UiKit.label(T.t(&"end_defeat_sub"), UiKit.DIM, 22)
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	sub.custom_minimum_size.x = 460
+	sub.custom_minimum_size.x = DEFEAT_WIDTH
 	v.add_child(sub)
 	var panel := PanelContainer.new()
 	v.add_child(panel)
@@ -50,6 +66,7 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		_row(rows, T.t(&"end_best"), SaveData.format_time(best[0]), UiKit.GOLD)
 	if new_best:
 		var nb := UiKit.label(T.t(&"end_new_best"), UiKit.GOLD, 24, UiKit.BOLD_FONT)
+		nb.name = "new_best"
 		nb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nb)
 	var buttons := HBoxContainer.new()
@@ -102,6 +119,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		_stat(grid, T.t(&"end_boons"), str(stats.boons))
 	if new_best:
 		var nb := UiKit.shadow(UiKit.label(T.t(&"end_new_best"), UiKit.GOLD, 19, UiKit.BOLD_FONT))
+		nb.name = "new_best"
 		nb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nb)
 	var gap := Control.new()

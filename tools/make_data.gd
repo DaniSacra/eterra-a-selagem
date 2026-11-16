@@ -523,6 +523,15 @@ func _feel() -> void:
 	# one every 10 s (decision D-08 of cycle 10: it hid the boss's warnings 24 times in a 2 minute fight)
 	f.impact_frame = 0.05
 	f.impact_frame_every = 10.0
+	# a blow taken (BUG-007, cycle 10): a short red at the edges only, half of it under 10 damage, a small colour
+	# split only on the heavy ones; under the curse a violet edge (alpha 0.2 for 0.2 s) and no split
+	f.hurt_tint = 0.42
+	f.hurt_tint_time = 0.22
+	f.hurt_tint_heavy = 10.0
+	f.hurt_tint_small = 0.5
+	f.hurt_split = 0.35
+	f.curse_tint = 0.2
+	f.curse_tint_time = 0.2
 	f.outline = 0.5
 	# effects a little quieter after the first test ("everything is too big"): dimmer cut, ink gone sooner
 	f.slash_intensity = 1.7
