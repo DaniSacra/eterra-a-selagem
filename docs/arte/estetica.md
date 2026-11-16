@@ -234,6 +234,39 @@ pintando as bordas (`LIP_*`), lanternas quentes nas cabeças das pontes, fogo s�
 (`BANNER_LION_GOLD`) com borda escura sobre o vermelho, brilho 0,35, abaixo do glow. Quadro na GPU a 1080p sem vsync:
 cerca de 2 a 2,7 ms nas quatro variantes.
 
+## Ciclo C12d: efeitos que não cobrem o que deve ler (VX-01 a VX-03, VX-08 a VX-10, VX-COL)
+
+Medido na GPU (Forward+, 1080p, `--cam-dist=26`); quadros em `docs/gallery/c12d/work/vx_*.jpg`.
+
+- **Corte da Emeth** (`slash.gdshader`, `slash_ink.gdshader`): a luz é só o fio da borda de ataque, marfim-menta
+  (`edge_px` 3 px, `edge_pale` 0,8, `edge_light` 0,62) com um miolo pálido logo dentro dele (`core_sat` 0,4 no máximo,
+  `core_light` 0,24, `core_depth` 0,45); o corpo é tinta escura translúcida (cor 0,02 / 0,028 / 0,034, `max_alpha` 0,6) do
+  fio para dentro (`body_depth` 0,75) e, além dele até o alcance, só um véu (`reach_veil` 0,2). O fio fica onde a ponta
+  da lâmina passou: `blade_m` metros do paladino quando o `Fx` passa `reach_m` e `band_from`; sem eles, na borda de fora.
+  Pixels da fita com saturação acima de 0,6: 27% antes, 8% depois (vitrine `--lab`). A distância até a ponta da Emeth
+  depende do encaixe no `fx.gd` (`BLADE_REACH`, `SLASH_INNER`, `INK_INNER`; gameplay-engineer).
+- **Brilho do finalizador** (`glint.gdshader`): anel em metros (`ring_m` 0,5, abre `ring_burst_m` 0,3: diâmetro máximo
+  1,6 m, menos de 0,6 da altura do herói), cruz menor (`spike_long` 0,3, `spike_short` 0,12) com o meio vazado
+  (`hollow_m` 0,14) e, sobre o corpo do herói visto da câmera (coluna de `body_half_m` 0,5 por `body_height_m` 2,8 sobre
+  `hero_pos`), só `over_body` 0,2 da luz. Luz somada sobre o corpo: mediana 41 para 8 (de 255), p99 222 para 179.
+- **Avisos** (`ground.gdshaderinc`, `ground.gdshader`, `ground_fill.gdshader`, `GroundLook.put`): o preenchimento vermelho
+  dos avisos dos inimigos sai numa segunda passada, fraco (`fill_early` 0,1) e subindo até `fill_max` 0,35 só nos
+  últimos 30% do preparo (`fill_late`); onde avisos se cruzam só o primeiro preenchimento aparece (stencil 2, a multidão
+  usa 1): três avisos não somam mais que um. Borda, divisa e assinatura de Morvath iguais. Vermelho medido dentro de um
+  aviso cheio sob o herói: 146 para 91; no cruzamento 144 para 109; o anel do herói aparece dentro deles.
+- **Círculo de luz** (estilo 2 do `ground`): aro a 0,8 da força (0,44), metade da largura (`circle_rim_width` 0,25 do
+  `rim_m`), marcas mais finas e fracas (`circle_mark_span` 0,1, `circle_mark_light` 0,45).
+- **Queimadura em elites, guardiões e Morvath** (`crowd.gdshader`, quem tem `rim_power`): borda de fogo até
+  `burn_rim_own` 0,25, brasas pela metade (`burn_coals_own`), a borda própria fica a `burn_keep_own` 0,7. Morvath
+  queimando na fase 3: pixels quentes saturados no recorte dele 11 a 13% para 4 a 5,5%, matiz mediano 269 a 277.
+- **Lascas** (`chip.gdshader`, novo): lasca alongada no sentido do voo (2:1 a 4:1), mais clara no meio. Precisa do
+  encaixe no `fx.gd` (a MultiMesh das partículas) e da cor marfim-cinza e vida 0,22 s no `combat.gd` (gameplay-engineer).
+- **Colunas de luz** (`beam.gdshader`): continuam pré-multiplicadas sob o teto da tela (235), mas cada face deposita só
+  uma parte do teto (`body` 0,68), com lados suaves (`side_soft` 1,6), miolo mais claro e pálido (`core_width` 8,
+  `core_light` 0,6, `core_white` 0,45), somem em degradê a partir de 15% da altura (`top_from`, altura pelo vértice),
+  pé suave (`foot` 0,55) e veios subindo (`streaks` 0,2). No recorte da coluna da recompensa: maior canal mediano 229
+  chapado antes, 224 a 83 em degradê depois, o chão e o sarcófago aparecem através.
+
 ## Pendências
 
 1. Colocar o `paladin_1` no jogo. Não foi feito: o esqueleto do Meshy (24 ossos, `Hips`, `LeftArm`...) é outro, e os

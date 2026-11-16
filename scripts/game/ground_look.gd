@@ -4,6 +4,9 @@ extends RefCounted
 ## labs can draw a warning without a game around it (tools/enemy_lab.gd --warn).
 
 const SHADER := preload("res://assets/shaders/ground.gdshader")
+## The second pass of every floor area: an enemy's own warning's red fill, never added to another fill under it
+## (C12d, VX-03, the stencil in ground_fill.gdshader). Its uniforms are the first pass's: set both with put.
+const FILL_SHADER := preload("res://assets/shaders/ground_fill.gdshader")
 ## ground.gdshader's styles, and its shapes (the same order as Ground.Shape; this file does not name Ground, which
 ## needs the game's autoloads).
 enum Style { WARNING, AREA, CIRCLE }
@@ -54,6 +57,9 @@ static func new_node() -> MeshInstance3D:
 	mi.mesh = plane
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
+	var fill := ShaderMaterial.new()
+	fill.shader = FILL_SHADER
+	mat.next_pass = fill
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi
@@ -66,28 +72,28 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 		at: Vector2, dir: Vector2, radius: float, width: float, y: float, pad := 0.0) -> void:
 	var m := node.material_override as ShaderMaterial
 	var line := shape == Shape.LINE
-	m.set_shader_parameter(&"signed", 1.0 if pad > 0.0 else 0.0)
-	m.set_shader_parameter(&"pad_m", pad)
-	m.set_shader_parameter(&"order_marks", 0.0)
-	m.set_shader_parameter(&"order_level", 1.0)
-	m.set_shader_parameter(&"wedge", Vector2.ZERO)
-	m.set_shader_parameter(&"root_clear_m", 0.0)
-	m.set_shader_parameter(&"root_soft_m", 0.0)
-	m.set_shader_parameter(&"root_fill", 1.0)
-	m.set_shader_parameter(&"root_rim", 1.0)
-	m.set_shader_parameter(&"sign_fill", SIGN_FILL)
-	m.set_shader_parameter(&"base_fill", BASE_FILL)
-	m.set_shader_parameter(&"rim_scale", 1.0)
-	m.set_shader_parameter(&"light_cap", NO_CAP)
-	m.set_shader_parameter(&"color", color)
-	m.set_shader_parameter(&"progress", 0.0)
-	m.set_shader_parameter(&"style", style)
-	m.set_shader_parameter(&"shape", shape)
-	m.set_shader_parameter(&"fade", 1.0)
-	m.set_shader_parameter(&"strength", strength)
-	m.set_shader_parameter(&"size_m", maxf(0.1, width * 0.5 if line else radius))
-	m.set_shader_parameter(&"rim_m", rim_m)
-	m.set_shader_parameter(&"length_m", radius if line else 1.0)
+	put(m, &"signed", 1.0 if pad > 0.0 else 0.0)
+	put(m, &"pad_m", pad)
+	put(m, &"order_marks", 0.0)
+	put(m, &"order_level", 1.0)
+	put(m, &"wedge", Vector2.ZERO)
+	put(m, &"root_clear_m", 0.0)
+	put(m, &"root_soft_m", 0.0)
+	put(m, &"root_fill", 1.0)
+	put(m, &"root_rim", 1.0)
+	put(m, &"sign_fill", SIGN_FILL)
+	put(m, &"base_fill", BASE_FILL)
+	put(m, &"rim_scale", 1.0)
+	put(m, &"light_cap", NO_CAP)
+	put(m, &"color", color)
+	put(m, &"progress", 0.0)
+	put(m, &"style", style)
+	put(m, &"shape", shape)
+	put(m, &"fade", 1.0)
+	put(m, &"strength", strength)
+	put(m, &"size_m", maxf(0.1, width * 0.5 if line else radius))
+	put(m, &"rim_m", rim_m)
+	put(m, &"length_m", radius if line else 1.0)
 	match shape:
 		Shape.LINE:
 			node.scale = Vector3(width + pad * 2.0, 1.0, radius)
@@ -95,7 +101,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 			var mid := at + dir * radius * 0.5
 			node.position = Vector3(mid.x, y, mid.y)
 		Shape.ARC:
-			m.set_shader_parameter(&"arc_half", deg_to_rad(width) * 0.5)
+			put(m, &"arc_half", deg_to_rad(width) * 0.5)
 			node.scale = Vector3((radius + pad) * 2.0, 1.0, (radius + pad) * 2.0)
 			# the shader opens the arc towards -V of the quad; turn the quad so that points along dir
 			node.rotation = Vector3(0, atan2(-dir.x, -dir.y), 0)
@@ -104,6 +110,15 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 			node.scale = Vector3((radius + pad) * 2.0, 1.0, (radius + pad) * 2.0)
 			node.rotation = Vector3.ZERO
 			node.position = Vector3(at.x, y, at.y)
+
+
+## Sets a uniform of a floor area on its material and on its fill pass (new_node), so both draw the same area.
+## Any other material (a ritual circle's) takes it alone.
+static func put(m: ShaderMaterial, uniform: StringName, value: Variant) -> void:
+	m.set_shader_parameter(uniform, value)
+	var fill := m.next_pass as ShaderMaterial
+	if fill != null:
+		fill.set_shader_parameter(uniform, value)
 
 
 ## An enemy's warning, as Ground draws it.

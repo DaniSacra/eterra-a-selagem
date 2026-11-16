@@ -177,7 +177,7 @@ func sign_boss(z: Zone) -> void:
 	if z == null or z.node == null or z.kind != Kind.WARNING or z.rune != Rune.NONE or z.eruption:
 		return
 	GroundLook.signed_warning(z.node, z.shape, z.pos, z.dir, z.radius, z.width, z.node.position.y)
-	z.mat.set_shader_parameter(&"progress", 1.0 - z.life / maxf(z.total, 0.001))
+	GroundLook.put(z.mat, &"progress", 1.0 - z.life / maxf(z.total, 0.001))
 
 
 ## A storm lane's place in its order of leaving (GroundLook.order): marks at its root (1 to 6; < 0 keeps them) and
@@ -246,7 +246,7 @@ func step(dt: float) -> void:
 					_release(z)
 					zones.erase(z)
 			else:
-				z.mat.set_shader_parameter(&"progress", 1.0 - z.life / z.total)
+				GroundLook.put(z.mat, &"progress", 1.0 - z.life / z.total)
 		else:
 			z.tick -= dt
 			if z.tick <= 0.0:
@@ -254,7 +254,7 @@ func step(dt: float) -> void:
 				horde.in_circle(z.pos, z.radius, _found)
 				for e in _found.duplicate():
 					on_zone_hit.call(e, z)
-			z.mat.set_shader_parameter(&"fade", clampf(z.life / 0.4, 0.0, 1.0) * clampf((z.total - z.life) / 0.2, 0.0, 1.0))
+			GroundLook.put(z.mat, &"fade", clampf(z.life / 0.4, 0.0, 1.0) * clampf((z.total - z.life) / 0.2, 0.0, 1.0))
 			if z.life <= 0.0 and zones.has(z):
 				_release(z)
 				zones.erase(z)

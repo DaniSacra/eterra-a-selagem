@@ -1,8 +1,11 @@
 shader_type spatial;
-// The bright part of a sword arc, drawn over the dark ink layer (slash_ink.gdshader): one ribbon of light, not
-// streaks. It is widest right behind the head of the swing and thins to nothing along its tail, which covers at
-// most `tail` of the arc; the head is the brightest, so a still frame tells which way the blade went.
-// UV.x runs along the swing (0 start, 1 end), UV.y across it (0 inner, 1 outer edge: the reach of the blow).
+// The light of a sword arc (C12d, VX-01): only the leading edge of the blade, drawn over the dark ink body
+// (slash_ink.gdshader). A fine ivory-mint line where the edge of the blade passed (edge_px pixels, the only part
+// near white) and, just inside it, a soft core in the blow's colour made pale (core_sat at most), fading along the
+// tail; the head is the brightest, so a still frame tells which way the blade went. Never a sheet of saturated green.
+// UV.x runs along the swing (0 start, 1 end), UV.y across it (0 inner side of the mesh, 1 its outer edge).
+// The edge sits where the blade's tip passed: blade_m meters from the paladin when Fx gives reach_m and band_from (the
+// mesh runs from band_from * reach_m to reach_m); without them, at the outer edge of the mesh.
 // t goes 0 -> 1 over the life of the slash: the head sweeps through during the first `sweep` of it, then the tail
 // catches up with it while everything fades.
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled;
@@ -14,12 +17,23 @@ uniform float intensity = 2.2;
 uniform bool flip = false;
 // Share of the arc the tail covers behind the head.
 uniform float tail = 0.6;
-// How far the front of the ribbon goes from the blow's colour toward white (never all the way).
-uniform float core = 0.42;
-// The ribbon at its widest, as a share of the band (cycle 8: a blade of light, not a sheet), and how much light its
-// inner, soft side keeps (the edge of the blade carries the cut).
-uniform float widest = 0.72;
-uniform float inner_light = 0.25;
+// Where the mesh starts (a share of reach_m, Fx.SLASH_INNER), the reach in meters, and the meters from the paladin
+// where the blade's tip passes (0: the outer edge of the mesh).
+uniform float band_from = 0.5;
+uniform float reach_m = 0.0;
+uniform float blade_m = 0.0;
+// The leading edge: its width in pixels, how far it goes from the blow's colour toward ivory, and its light (with
+// intensity: its largest channel near 1, the only near-white of the arc).
+uniform float edge_px = 3.0;
+uniform float edge_pale = 0.8;
+uniform float edge_light = 0.62;
+// The soft core inside the edge: how deep it reaches inward (a share of the band between the mesh's inner side and
+// the edge), its light, and its colour's saturation at most (the blow's colour made pale; Emeth's green reads mint).
+uniform float core_depth = 0.45;
+uniform float core_light = 0.24;
+uniform float core_sat = 0.4;
+// The edge vanishes over this share of the tail (the head keeps the light).
+uniform float edge_tail = 0.85;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -32,6 +46,24 @@ float noise(vec2 p) {
 	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
+// The blow's colour with its saturation brought down to sat (its hue and brightest channel kept).
+vec3 pale_to(vec3 c, float sat) {
+	float top = max(c.r, max(c.g, c.b));
+	float low = min(c.r, min(c.g, c.b));
+	float now = (top - low) / max(top, 0.001);
+	float k = now > sat ? 1.0 - sat / now : 0.0;
+	return mix(c, vec3(top), k);
+}
+
+// Where the blade's edge lies across the mesh (UV.y).
+float edge_at() {
+	if (reach_m <= 0.0 || blade_m <= 0.0) {
+		return 0.975;
+	}
+	float inner = band_from * reach_m;
+	return clamp((blade_m - inner) / max(reach_m - inner, 0.001), 0.06, 0.975);
+}
+
 void fragment() {
 	float head = clamp(t / sweep, 0.0, 1.0);
 	float along = flip ? 1.0 - UV.x : UV.x;
@@ -41,26 +73,21 @@ void fragment() {
 	float k = behind / (tail * (1.0 - 0.5 * rest));
 	if (k >= 1.0) discard;
 	float y = UV.y;
-
-	// the ribbon: a pointed nose at the head, full width right behind it, a point again at the end of the tail;
-	// its outer edge is always the reach of the blow
-	// (and at the very end of the arc, where the swing stops: never a straight cut across the ribbon)
-	float nose = pow(clamp(behind / 0.11, 0.0, 1.0), 0.8) * sqrt(smoothstep(0.0, 0.07, 1.0 - along));
-	float width = nose * pow(1.0 - k, 1.3) * widest;
-	float outer = 0.975 - noise(vec2(along * 40.0, 3.0)) * 0.025;
-	float inner = outer - width;
-	float across = (y - inner) / max(width, 0.001);
-	if (across <= 0.0 || y >= outer) discard;
-	// soft on the inside, sharp on the edge of the blade
-	float body = smoothstep(0.0, 0.7, across) * (1.0 - smoothstep(outer - 0.02, outer, y));
-	body *= mix(inner_light, 1.0, across * across * across);
-	// the edge of the blade: a fine line along the outside that lasts to the end of the tail
-	float wire = (1.0 - smoothstep(0.0, 0.022, abs(y - (outer - 0.035)))) * nose;
-	// the head is the brightest: the light falls along the ribbon
-	float glow = pow(1.0 - k, 2.0);
-	float front = (1.0 - smoothstep(0.05, 0.34, k)) * smoothstep(0.3, 0.85, across);
-	float value = body * (0.1 + 1.0 * glow) + wire * (0.25 + 0.5 * glow);
+	float e = edge_at() - noise(vec2(along * 40.0, 3.0)) * 0.012;
+	// a pointed nose at the head and no straight cut where the swing stops
+	float nose = pow(clamp(behind / 0.08, 0.0, 1.0), 0.8) * sqrt(smoothstep(0.0, 0.07, 1.0 - along));
+	float px = max(fwidth(y), 0.0001);
+	// the fine leading edge: edge_px pixels wide, sharp, fading along the tail
+	float wire = (1.0 - smoothstep(px * edge_px * 0.5, px * (edge_px * 0.5 + 1.0), abs(y - e))) * nose;
+	wire *= 1.0 - smoothstep(edge_tail * 0.4, edge_tail, k);
+	// the core: light just inside the edge, thinner toward the end of the tail
+	float depth = core_depth * e * pow(1.0 - k, 1.2) * nose;
+	float inside = (e - y) / max(depth, 0.001);
+	float core = (y < e && inside < 1.0) ? pow(1.0 - inside, 2.0) : 0.0;
+	float glow = pow(1.0 - k, 1.6);
 	float life = pow(1.0 - rest, 1.5);
-	vec3 c = mix(color.rgb, vec3(1.0), core * max(front, wire * glow));
-	ALBEDO = c * value * life * intensity;
+	vec3 edge_c = mix(color.rgb, vec3(1.0), edge_pale);
+	vec3 core_c = pale_to(color.rgb, core_sat);
+	if (wire + core <= 0.002) discard;
+	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow) * life * intensity;
 }

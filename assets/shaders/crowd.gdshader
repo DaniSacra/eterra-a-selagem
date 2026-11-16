@@ -106,6 +106,13 @@ uniform float burn_coals = 0.07;
 uniform float burn_grid = 42.0;
 uniform float burn_rows = 7.0;
 uniform float burn_climb = 1.6;
+// C12d (VX-08): a figure with a rim of its own (rim_power > 0: elites, the guardians, Morvath) keeps its colour while it
+// burns: its fire rim at most burn_rim_own, its coals at burn_coals_own of theirs, and its own rim and crest kept at
+// burn_keep_own (Morvath's violet robe turned orange under a fire gift; the cool rim is never added on top of the fire
+// at full: M-1 of the C11 QA, a white outline).
+uniform float burn_rim_own = 0.25;
+uniform float burn_coals_own = 0.5;
+uniform float burn_keep_own = 0.7;
 
 // The paladin carries the light of Elun: the warm light around the hero is added here.
 global uniform vec3 hero_pos;
@@ -174,9 +181,12 @@ void fragment() {
 	float coal_seed = hash(floor(coal_at));
 	float coal_dot = 1.0 - smoothstep(0.15, 0.45, length(fract(coal_at) - 0.5));
 	float coal = step(1.0 - burn_coals, coal_seed) * coal_dot * (0.5 + 0.5 * sin(TIME * 7.0 + coal_seed * 40.0));
-	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + (burn_color * rim * burn_rim + coal_color * coal) * burn
+	float own = step(0.001, rim_power);
+	float fire_rim = mix(burn_rim, min(burn_rim, burn_rim_own), own);
+	float coals = mix(1.0, burn_coals_own, own);
+	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + (burn_color * rim * fire_rim + coal_color * coal * coals) * burn
 		+ (rim_color * (rim * 0.5 + edge) * rim_power * armored
-		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)) * (1.0 - burn)
+		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)) * (1.0 - burn * (1.0 - burn_keep_own * own))
 		+ dissolve_color * smoulder + gild_color * (rim + edge) * absorbed * absorb_light
 		+ c * shade * (key_color * lit + hero_color * near * near * 0.55 * hero_light)
 		+ raw * glow * cell * (1.0 - has_magic)
