@@ -12,6 +12,11 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   Daniel): os quatro heróis, a fortaleza, o portal e o logotipo "Crônicas de Eterra: A Selagem". No jogo entra uma cópia
   com os botões pintados apagados (os botões reais são da Godot por cima); o logotipo é o da imagem. O retrato do herói no HUD (`assets/ui/hud/hero_portrait.png`) é o rosto do Explorador
   recortado dessa mesma arte.
+- **Medalhões pintados da tela de dons (vão no jogo, 2026-11-16)**: `assets/ui/boons/vapor.png`, `aurora.png` e
+  `redemoinho.png` (Vapor, Aurora Gelada e Redemoinho de Fogo), recortados por `tools/cut_medallions.gd` da prancha de
+  medalhões feita por IA para o Daniel (`docs/art/ref/boon_cards/02_medalhoes.png`, só local). A outra imagem do pedido,
+  a tela completa com as três cartas (`docs/art/ref/boon_cards/01_tela_tres_dons.png`, também de IA, só local), não vai
+  no jogo: guiou a composição da tela (`BoonChoice`, `BoonCard`), que é feita com componentes da Godot.
 - **Modelos 3D do Meshy** (lista completa e ids em `tools/meshy/tasks.json`):
   - no jogo: o herói Explorador (`assets/models/meshy/hero_explorer/`, 2026-11-15, gerado a partir da folha do Explorador,
     também feita por IA), com o esqueleto do Meshy; os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das

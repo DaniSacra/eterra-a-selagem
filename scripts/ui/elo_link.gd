@@ -9,6 +9,8 @@ extends Control
 const METAL := UiKit.OLD_GOLD
 const METAL_LIT := Color("c9ab6e")
 const METAL_DARK := Color("4a3a22")
+## How far into a painted medallion (fraction of its side) the chain from a source runs, under the painted rim.
+const RIM_INSET := 0.07
 
 var elo: Boon
 var sources: Array[Boon] = []
@@ -21,10 +23,13 @@ var _big := 0.0
 var _small := 0.0
 var _gap := 0.0
 var _link := 0.0
+## The Elo's painted medallion (the gift card), with its own chain rim painted: the chain then stops at that rim.
+var _art: TextureRect
 
 
 ## big: the Elo's medallion; small: each source's; gap: the chain between a source and the Elo.
-func setup(b: Boon, from: Array[Boon], big: float, small: float, gap: float) -> EloLink:
+## art: a painted medallion (BoonArt) in place of the drawn one; its painted chain rim is the only rim.
+func setup(b: Boon, from: Array[Boon], big: float, small: float, gap: float, art: Texture2D = null) -> EloLink:
 	elo = b
 	sources = from
 	_big = big
@@ -39,16 +44,35 @@ func setup(b: Boon, from: Array[Boon], big: float, small: float, gap: float) -> 
 		icon.position = Vector2(0.0 if i == 0 else big + small + gap * 2.0, y)
 		icon.size = Vector2(small, small)
 		add_child(icon)
-	var main := BoonIcon.new().setup(b, big)
+	var main: Control
+	if art:
+		_art = BoonArt.rect(art, big)
+		main = _art
+	else:
+		main = BoonIcon.new().setup(b, big)
+		main.size = Vector2(big, big)
 	main.position = Vector2(small + gap, 0.0)
-	main.size = Vector2(big, big)
 	add_child(main)
 	return self
 
 
-## The Elo's medallion (to show its level).
+## The Elo's drawn medallion (to show its level); null when it is painted.
 func main_icon() -> BoonIcon:
 	return get_child(get_child_count() - 1) as BoonIcon
+
+
+## The painted medallion, when there is one.
+func main_art() -> TextureRect:
+	return _art
+
+
+## The two source medallions, in order.
+func source_icons() -> Array[BoonIcon]:
+	var out: Array[BoonIcon] = []
+	for c in get_children():
+		if c is BoonIcon and (c as BoonIcon).boon != elo:
+			out.append(c)
+	return out
 
 
 ## "Elo de A e B", with the names the two sources already have.
@@ -63,7 +87,13 @@ func _draw() -> void:
 	var y := _big * 0.5
 	var a := Vector2(_small * 0.5, y)
 	var b := Vector2(_big + _small * 1.5 + _gap * 2.0, y)
-	chain(self, a, b, _link, progress)
+	if _art == null:
+		chain(self, a, b, _link, progress)
+		return
+	# a painted medallion: one short chain from each source into its painted rim (never a second rim over it)
+	var into := _big * RIM_INSET
+	chain(self, a, Vector2(_small + _gap + into, y), _link, progress)
+	chain(self, Vector2(_small + _gap + _big - into, y), b, _link, progress)
 
 
 ## A chain from a to b, links about link pixels long. progress < 1 leaves out the middle (drawn from both ends).
