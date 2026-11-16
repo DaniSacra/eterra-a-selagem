@@ -184,7 +184,9 @@ func _timers(e: Enemy, dt: float) -> void:
 		e.burn_tick -= dt
 		if e.burn_tick <= 0.0:
 			e.burn_tick = BURN_TICK
-			damage(e, e.burn_dps * BURN_TICK, Vector2.ZERO, 0.0, Color(1.0, 0.5, 0.2), true, false)
+			# a tick of fire is no blow: the embers on the body show it (M-1: a flash every tick, on top of the
+			# blows' own, kept a burning boss lit nearly white)
+			damage(e, e.burn_dps * BURN_TICK, Vector2.ZERO, 0.0, Color(1.0, 0.5, 0.2), true, false, false)
 	if e.state == Enemy.State.RISE and e.state_t > 0.9:
 		_set_state(e, Enemy.State.WALK, &"walk")
 
@@ -553,7 +555,8 @@ func body_at(pos: Vector2, radius: float, ignore: Enemy = null) -> bool:
 
 
 ## Damage to an enemy. Returns true when it died.
-func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color: Color = Fx.GOLD, show_number: bool = true, big: bool = false) -> bool:
+## `flash` false: no flash of a blow on the body (a burn's tick).
+func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color: Color = Fx.GOLD, show_number: bool = true, big: bool = false, flash: bool = true) -> bool:
 	if not e.alive or e.invulnerable:
 		return false
 	if e.armor > 0.0:
@@ -572,8 +575,9 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		return false
 	e.absorbed = false
 	e.hp = maxf(e.hp - amount, e.hp_floor)
-	e.flash_t = FLASH_TIME
-	e.flash_power = 1.0 if big else WEAK_FLASH
+	if flash:
+		e.flash_t = FLASH_TIME
+		e.flash_power = 1.0 if big else WEAK_FLASH
 	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if knockback > 0.0:

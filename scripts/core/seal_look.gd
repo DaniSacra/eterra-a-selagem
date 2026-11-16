@@ -64,7 +64,11 @@ const FLARE := 0.2
 const CONVERGE := 0.5
 const CONVERGE_LIGHT := 0.86
 const LAST_TURN := 40.0
-const HEAL := 0.3
+const HEAL := 0.4
+## When the crack starts closing: as soon as the veins are back in it (VICTORY_STREAM.y), so it is shut for good well
+## before the calm and the victory's words (O-2 of the C11 QA: closing only from VICTORY_RITUAL, with the last kill's
+## slow motion on the seal's clock, a violet line still crossed the lion at victory + 3.3 s).
+const HEAL_FROM := VICTORY_STREAM.y
 const LION_LIGHT := 1.0
 const LION_TIME := 0.4
 const CALM_GOLD := 0.12
@@ -233,7 +237,7 @@ func _victory_values(v: Dictionary) -> void:
 		v[&"converge"] = clampf((t - converge_at) / (CONVERGE * s), 0.0, 1.0)
 		v[&"ring_light"] = Vector2.ONE * CONVERGE_LIGHT * (1.0 - clampf((t - converge_at - CONVERGE * s) / (CONVERGE * s), 0.0, 1.0))
 		v[&"ring_mix"] = Vector2(-1.0, -1.0)
-	var heal_at := _victory(VICTORY_RITUAL)
+	var heal_at := _victory(HEAL_FROM)
 	v[&"crack_heal"] = clampf((t - heal_at) / (HEAL * s), 0.0, 1.0)
 	if t >= heal_at and t < heal_at + LION_TIME * s:
 		v[&"lion_glow"] = LION_LIGHT * sin(PI * (t - heal_at) / (LION_TIME * s))

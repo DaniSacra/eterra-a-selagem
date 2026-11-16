@@ -45,6 +45,9 @@ const RAILS: Array[Vector2] = [Vector2(22.5, 82.0), Vector2(110.0, 167.0), Vecto
 const POST_ARC := 13.3
 ## The arc in front of the camera (bearings) whose stone opens round the fighters behind it (see_through).
 const FRONT_ARC := Vector2(100.0, 195.0)
+## The half of the rim nearer the camera (bearings): tall pieces there (the east sarcophagi) stand between the eye and
+## the paladin on the rim, and open round him (_see_through).
+const NEAR_HALF := Vector2(55.0, 235.0)
 ## Sarcophagi: the pairs' bearings (each one this many degrees either side), their size (long, wide, tall), lid
 ## (height, overhang), the plinth under them (height), the niche (half its arc in degrees, the low parapet's radius,
 ## height and thickness, the ledge it stands on out to this radius), the sword on the lid (height), the gold edge
@@ -61,9 +64,23 @@ const NICHE := Vector4(14.0, 14.1, 0.6, 0.35)
 const NICHE_LEDGE := 14.5
 const SARC_SWORD := 1.85
 const SARC_GOLD := 0.03
-## The raised sword's guard, as a share of its length (narrow: it must read as a sword, never as a cross).
-const GUARD_SHARE := 0.22
+## The raised sword (_sword): the guard's width and the blade's length as shares of its length, the blade's width
+## at the guard, the grip's, the guard's thickness and the pommel (shares of its length), and how the blade narrows
+## in steps from the guard to the point. Proportions of a sword, never of a cross (O-1 of the C11 QA: a blade as
+## narrow as the grip with the guard a third of the way up read as a cross): a long blade far wider than the grip,
+## tapering to its point, a short slim guard near the hilt end, a thin grip and a round knob of a pommel.
+const GUARD_SHARE := 0.2
+const SWORD_BLADE := 0.74
+const SWORD_WIDTH := Vector4(0.1, 0.03, 0.035, 0.07)
+const SWORD_TAPER: Array[float] = [1.0, 0.85, 0.68, 0.5, 0.32, 0.14]
 const SARC_TINT := 1.35
+## The pair on the camera's half of the rim (NEAR_HALF, the east one) stands between the eye and a paladin walking
+## the rim: its niche goes back NEAR_SARC.x meters, its chest is NEAR_SARC.y tall (the spec's 0.85, not SARC_SIZE.z)
+## on a plinth NEAR_SARC.z tall, so its lid stays under his feet in the camera and its stone opens round him
+## (_see_through) where it still covers him (M-2 of the C11 QA: he read as standing on its lid).
+const NEAR_SARC := Vector3(0.9, 0.85, 0.12)
+## A niche's half arc (degrees either side of its bearing).
+const NICHE_HALF := 12.0
 ## Lanterns of violet fire (bearings), their post (size), cage (width, height), roof, glass, flame and light.
 const LANTERNS: Array[float] = [264.0, 292.0, 82.0, 110.0]
 const LANTERN_R := 13.0
@@ -83,6 +100,10 @@ const IRON := Color(0.06, 0.065, 0.07)
 const PINNACLES: Array[float] = [125.0, 193.0, 310.0, 332.0]
 const PINNACLE_R := 13.1
 const PINNACLE := Vector3(0.9, 2.8, 0.6)
+## The hole a front pinnacle opens round the paladin behind it (masonry.gdshader see_radius, see_keep): smaller and
+## fainter than the balustrade's, so the narrow pinnacle stays there in stipple (O-3 of the C11 QA: the full hole
+## erased it and he read as standing in front of it).
+const PINNACLE_SEE := Vector2(1.3, 0.45)
 const PANEL := Vector3(0.5, 1.1, 1.5)
 const PANEL_GOLD := 0.03
 ## The east post at the stairs' mouth (bearing), the fire bowls (west on the balustrade's line, east in its own court
@@ -99,7 +120,11 @@ const CANDLE_R := Vector2(12.62, 12.92)
 ## A row's candles: how far apart along the edge (m), their radius (m), and one tall one in each row this much taller.
 const CANDLE_GAP := Vector2(0.16, 0.3)
 const CANDLE_THICK := Vector2(0.06, 0.11)
-const CANDLE_FRONT_MAX := 0.45
+## In front of the camera the rows stand back against the balusters (CANDLE_FRONT_R, on the curb) and lower
+## (CANDLE_FRONT_MAX): taller and nearer the floor's edge, a paladin on the rim behind them was drawn among their
+## flames and read as standing on them (M-2 of the C11 QA).
+const CANDLE_FRONT_MAX := 0.28
+const CANDLE_FRONT_R := Vector2(12.8, 12.96)
 const CANDLE_LIGHT := 1.2
 
 ## ---- the facade (spec 2.5), in its own frame: `a` along its front (to bearing 75), `n` out of it (to bearing 165),
@@ -685,8 +710,11 @@ func _perimeter() -> void:
 		_niche(s)
 	for b in LANTERNS:
 		_lantern(b, front if b > FRONT_ARC.x and b < FRONT_ARC.y else plain)
+	var slim := front.duplicate() as ShaderMaterial
+	slim.set_shader_parameter(&"see_radius", PINNACLE_SEE.x)
+	slim.set_shader_parameter(&"see_keep", PINNACLE_SEE.y)
 	for b in PINNACLES:
-		_pinnacle(b, front if b > FRONT_ARC.x and b < FRONT_ARC.y else plain)
+		_pinnacle(b, slim if b > FRONT_ARC.x and b < FRONT_ARC.y else plain)
 	var mp := at_bearing(MOUTH_POST, PINNACLE_R)
 	m.post(_v3(mp), _facing_in(MOUTH_POST), Masonry.POST.y, front)
 	circles.append(Vector3(mp.x, mp.y, Masonry.POST.x * 0.5))
@@ -694,7 +722,12 @@ func _perimeter() -> void:
 		m.pot(Vector3(p.x, 0, p.y), p.z)
 	for c in CANDLES:
 		var in_front := c.x > FRONT_ARC.x and c.x < FRONT_ARC.y
-		_candle_row(c.x, LEDGE.y, int(c.y), c.z > 0.0, CANDLE_FRONT_MAX if in_front else CatacombHall.CANDLE_HEIGHT.y)
+		if _in_near_niche(c.x):
+			# on the plinth of the near pair, gone back with it
+			_candle_row(c.x, NEAR_SARC.z, int(c.y), c.z > 0.0, CANDLE_FRONT_MAX, CANDLE_R + Vector2.ONE * NEAR_SARC.x)
+			continue
+		_candle_row(c.x, LEDGE.y, int(c.y), c.z > 0.0, CANDLE_FRONT_MAX if in_front else CatacombHall.CANDLE_HEIGHT.y,
+			CANDLE_FRONT_R if in_front else CANDLE_R)
 
 
 ## The ledge at the balustrade's foot between two bearings: from the floor's edge out under the rail.
@@ -709,9 +742,9 @@ func _ledge(b0: float, b1: float, mat: Material) -> void:
 
 
 ## A group of candles along the floor's edge at a bearing (the hall's candles, Masonry.candle, laid along the edge
-## between CANDLE_R so none stands on the walkable floor): `count` of them, the first the tallest, a warm halo, a
+## in the band `band`, CANDLE_R by default, so none stands on the walkable floor): `count` of them, the first the tallest, a warm halo, a
 ## light of its own if lit; none taller than max_height.
-func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: float) -> void:
+func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: float, band := CANDLE_R) -> void:
 	var along := 0.0
 	var top := 0.0
 	for i in count:
@@ -720,12 +753,12 @@ func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: fl
 		var side := -1.0 if i % 2 == 1 else 1.0
 		if i > 0:
 			along += _rng.randf_range(CANDLE_GAP.x, CANDLE_GAP.y)
-		var b := bearing + rad_to_deg(side * along / CANDLE_R.x)
-		var p := at_bearing(b, _rng.randf_range(CANDLE_R.x + r, CANDLE_R.y - r))
+		var b := bearing + rad_to_deg(side * along / band.x)
+		var p := at_bearing(b, _rng.randf_range(band.x + r, band.y - r))
 		var h := minf(lerpf(CatacombHall.CANDLE_HEIGHT.x, CatacombHall.CANDLE_HEIGHT.y * 0.8, t), max_height)
 		top = maxf(top, h)
 		m.candle(_v3(p, y), h, r)
-	var at := at_bearing(bearing, (CANDLE_R.x + CANDLE_R.y) * 0.5)
+	var at := at_bearing(bearing, (band.x + band.y) * 0.5)
 	var glow := MeshInstance3D.new()
 	glow.mesh = Fx.quad(CatacombHall.CANDLE_HALO, Color(0.8, 0.45, 0.18) * CatacombHall.CANDLE_HALO_ALPHA)
 	glow.position = _v3(at, y + top * 0.8)
@@ -745,7 +778,10 @@ func _candle_row(bearing: float, y: float, count: int, lit: bool, max_height: fl
 ## A pair of sarcophagi in their niche at a bearing: a plinth along the edge, the two on it, a low parapet behind on a
 ## ledge of the platform.
 func _niche(bearing: float) -> void:
-	var half := 12.0
+	var near := _near(bearing)
+	var back := NEAR_SARC.x if near else 0.0
+	var plinth_y := NEAR_SARC.z if near else SARC_PLINTH
+	var half := NICHE_HALF
 	var a := bearing - half
 	var b := bearing + half
 	# the platform's ledge out to the parapet, and the plinth along the floor's edge
@@ -758,55 +794,60 @@ func _niche(bearing: float) -> void:
 		plinth.append(at_bearing(t, FLOOR_RADIUS))
 	for i in range(steps, -1, -1):
 		var t := lerpf(a, b, float(i) / steps)
-		ledge.append(at_bearing(t, NICHE_LEDGE))
-		plinth.append(at_bearing(t, LIP_RADIUS))
+		ledge.append(at_bearing(t, NICHE_LEDGE + back))
+		plinth.append(at_bearing(t, LIP_RADIUS + back))
 	m.prism(ledge, -CORNICE.y, -0.02)
 	m.layers = ArenaKit.DEPTH_LAYER
 	var drop := PackedVector2Array(ledge)
 	m.prism(drop, -DEPTH, -CORNICE.y, _deep(0.3, 0.85))
 	m.layers = 1
-	m.prism(plinth, 0.0, SARC_PLINTH)
+	m.prism(plinth, 0.0, plinth_y)
 	# the low parapet behind, in chords
 	var pm := m.stone(0.0, Color.WHITE * 0.95)
 	for i in steps:
 		var t0 := lerpf(a, b, float(i) / steps)
 		var t1 := lerpf(a, b, float(i + 1) / steps)
-		var p0 := at_bearing(t0, NICHE.y)
-		var p1 := at_bearing(t1, NICHE.y)
+		var p0 := at_bearing(t0, NICHE.y + back)
+		var p1 := at_bearing(t1, NICHE.y + back)
 		var mid := (p0 + p1) * 0.5
 		var yaw := atan2(p1.x - p0.x, p1.y - p0.y) + PI * 0.5
 		m.box(_v3(mid, NICHE.z * 0.5 - 0.02), Vector3(p0.distance_to(p1) + 0.05, NICHE.z, NICHE.w), yaw, pm, false)
 		m.box(_v3(mid, NICHE.z + 0.06), Vector3(p0.distance_to(p1) + 0.1, 0.12, NICHE.w + 0.12), yaw, pm, false)
 	for sd: float in [-1.0, 1.0]:
-		_sarcophagus(bearing + sd * SARC_SPREAD)
+		_sarcophagus(bearing + sd * SARC_SPREAD, back, plinth_y, NEAR_SARC.y if near else SARC_SIZE.z)
 	# candles on the plinth between the sarcophagi and the lanterns
 	for sd: float in [-1.0, 1.0]:
-		_candle_row(bearing + sd * NICHE_CANDLES, SARC_PLINTH, 3, false, CatacombHall.CANDLE_HEIGHT.y)
+		var cb := bearing + sd * NICHE_CANDLES
+		if near:
+			_candle_row(cb, plinth_y, 3, false, CANDLE_FRONT_MAX, CANDLE_R + Vector2.ONE * back)
+		else:
+			_candle_row(cb, plinth_y, 3, false, CatacombHall.CANDLE_HEIGHT.y)
 
 
 ## One sarcophagus at a bearing, its long side along the floor's edge (its inner face on it): a chamfered chest with a
 ## frieze, a lid with a gold edge and the raised sword in low relief, a sunk panel on the face to the middle.
-func _sarcophagus(bearing: float) -> void:
-	var at := at_bearing(bearing, FLOOR_RADIUS + SARC_SIZE.y * 0.5 + 0.15)
+func _sarcophagus(bearing: float, back := 0.0, plinth_y := SARC_PLINTH, tall := SARC_SIZE.z) -> void:
+	var size := Vector3(SARC_SIZE.x, SARC_SIZE.y, tall)
+	var at := at_bearing(bearing, FLOOR_RADIUS + SARC_SIZE.y * 0.5 + 0.15 + back)
 	var yaw := _facing_in(bearing)
 	var basis := Basis(Vector3.UP, yaw)
-	var stone := m.stone(SARC_PLINTH, Color.WHITE * SARC_TINT)
-	var y := SARC_PLINTH
+	var stone := _see_through(m.stone(plinth_y, Color.WHITE * SARC_TINT), bearing)
+	var y := plinth_y
 	var base := _v3(at, y)
-	m.block(base, Vector3(SARC_SIZE.x, SARC_SIZE.z, SARC_SIZE.y), yaw, stone, false)
-	m.block(base, Vector3(SARC_SIZE.x + 0.1, 0.12, SARC_SIZE.y + 0.1), yaw, stone, false)
-	m.box(base + Vector3(0, SARC_SIZE.z * 0.7, 0), Vector3(SARC_SIZE.x + 0.06, 0.06, SARC_SIZE.y + 0.06), yaw, stone, false)
-	var lid := base + Vector3(0, SARC_SIZE.z, 0)
-	m.block(lid, Vector3(SARC_SIZE.x + SARC_LID.y * 2.0, SARC_LID.x, SARC_SIZE.y + SARC_LID.y * 2.0), yaw, stone, false)
+	m.block(base, Vector3(size.x, size.z, size.y), yaw, stone, false)
+	m.block(base, Vector3(size.x + 0.1, 0.12, size.y + 0.1), yaw, stone, false)
+	m.box(base + Vector3(0, size.z * 0.7, 0), Vector3(size.x + 0.06, 0.06, size.y + 0.06), yaw, stone, false)
+	var lid := base + Vector3(0, size.z, 0)
+	m.block(lid, Vector3(size.x + SARC_LID.y * 2.0, SARC_LID.x, size.y + SARC_LID.y * 2.0), yaw, stone, false)
 	var top := lid + Vector3(0, SARC_LID.x, 0)
 	# the sunk panel on the face to the middle
-	var face := basis * Vector3(0, 0, SARC_SIZE.y * 0.5 + 0.005)
-	var hollow := m.stone(SARC_PLINTH, Color.WHITE * SARC_TINT * 0.7)
-	m.box(base + Vector3(0, SARC_SIZE.z * 0.45, 0) + face, Vector3(SARC_SIZE.x * 0.7, SARC_SIZE.z * 0.45, 0.02), yaw, hollow, false)
+	var face := basis * Vector3(0, 0, size.y * 0.5 + 0.005)
+	var hollow := _see_through(m.stone(plinth_y, Color.WHITE * SARC_TINT * 0.7), bearing)
+	m.box(base + Vector3(0, size.z * 0.45, 0) + face, Vector3(size.x * 0.7, size.z * 0.45, 0.02), yaw, hollow, false)
 	# the gold edge round the lid's top
 	var gold := _gold()
-	var w := SARC_SIZE.x + SARC_LID.y * 2.0 - 0.06
-	var d := SARC_SIZE.y + SARC_LID.y * 2.0 - 0.06
+	var w := size.x + SARC_LID.y * 2.0 - 0.06
+	var d := size.y + SARC_LID.y * 2.0 - 0.06
 	for sd: float in [-1.0, 1.0]:
 		_bar(top + basis * Vector3(0, 0.005, sd * d * 0.5), Vector3(w, 0.012, SARC_GOLD), yaw, gold)
 		_bar(top + basis * Vector3(sd * w * 0.5, 0.005, 0), Vector3(SARC_GOLD, 0.012, d), yaw, gold)
@@ -815,26 +856,62 @@ func _sarcophagus(bearing: float) -> void:
 
 
 ## The raised sword (spec 5.4) laid at `at` (its middle), its length along `along`, its width along `across` (both in
-## the basis' frame), `size` long: the blade 70% narrowing to the point, a short guard with its tips falling, the grip,
-## a round pommel; in stone `mat`, standing `relief` meters out (across x along). No ring, no equal arms: a sword.
+## the basis' frame), `size` long: the blade (SWORD_BLADE) far wider than the grip narrowing to the point, a short slim
+## guard with its tips falling, the thin grip, a knob of a pommel; in stone `mat`, standing `relief` meters out (across x along). No ring, no equal arms: a sword.
 func _sword(at: Vector3, basis: Basis, along: Vector3, across: Vector3, size: float, mat: Material, relief: float) -> void:
 	var o := across.cross(along).normalized() * relief * 0.5
 	var foot := -size * 0.5
-	var blade := size * 0.7
+	var blade := size * SWORD_BLADE
 	var guard := size * GUARD_SHARE
-	var bw := size * 0.07
+	var bw := size * SWORD_WIDTH.x
 	var b0 := foot + size - blade
-	# the blade in three steps narrowing to the point
-	_rel(at, basis, along * (b0 + blade * 0.35) + o, along, across, Vector3(blade * 0.7, bw, relief), mat)
-	_rel(at, basis, along * (b0 + blade * 0.8) + o, along, across, Vector3(blade * 0.3, bw * 0.6, relief), mat)
-	_rel(at, basis, along * (b0 + blade * 0.97) + o, along, across, Vector3(blade * 0.08, bw * 0.3, relief), mat)
-	# the guard and its tips falling toward the grip, the grip, the pommel
-	_rel(at, basis, along * (b0 - 0.02) + o, along, across, Vector3(size * 0.05, guard, relief), mat)
+	# the blade, much wider than the grip, narrowing step by step over its whole length to a sharp point
+	var steps := SWORD_TAPER.size()
+	for i in steps:
+		var t0 := float(i) / steps
+		var t1 := float(i + 1) / steps
+		_rel(at, basis, along * (b0 + blade * (t0 + t1) * 0.5) + o, along, across,
+			Vector3(blade / steps + 0.01, bw * SWORD_TAPER[i], relief), mat)
+	# a slim guard with its tips falling toward the grip
+	_rel(at, basis, along * (b0 - size * 0.015) + o, along, across, Vector3(size * SWORD_WIDTH.z, guard, relief), mat)
 	for sd: float in [-1.0, 1.0]:
-		_rel(at, basis, along * (b0 - 0.05) + across * sd * guard * 0.5 + o, along, across, Vector3(size * 0.08, size * 0.04, relief), mat)
-	var grip := b0 - 0.04 - foot
-	_rel(at, basis, along * (foot + grip * 0.5 + 0.04) + o, along, across, Vector3(grip - 0.04, bw * 0.55, relief), mat)
-	_rel(at, basis, along * (foot + 0.03) + o, along, across, Vector3(size * 0.08, size * 0.08, relief), mat)
+		_rel(at, basis, along * (b0 - size * 0.04) + across * sd * guard * 0.48 + o, along, across,
+			Vector3(size * 0.05, size * SWORD_WIDTH.z, relief), mat)
+	# the grip, thin, and the pommel, a knob clearly wider than it
+	var pommel := size * SWORD_WIDTH.w
+	var grip := b0 - size * 0.03 - foot - pommel
+	_rel(at, basis, along * (foot + pommel + grip * 0.5) + o, along, across, Vector3(grip, size * SWORD_WIDTH.y, relief), mat)
+	_rel(at, basis, along * (foot + pommel * 0.5) + o, along, across, Vector3(pommel, pommel, relief * 1.3), mat)
+
+
+## The stone of a piece at a bearing on the camera's half of the rim (NEAR_HALF) opens round the paladin behind it
+## (masonry.gdshader see_through), as the front balustrade does (M-2 of the C11 QA: walking the east rim behind the
+## east sarcophagi he was drawn whole over the lid and read as standing on it); elsewhere the stone as it is.
+func _see_through(stone: ShaderMaterial, bearing: float) -> ShaderMaterial:
+	if not _near(bearing):
+		return stone
+	var key := stone.get_instance_id()
+	if not _open_stone.has(key):
+		var open := stone.duplicate() as ShaderMaterial
+		open.set_shader_parameter(&"see_through", 1.0)
+		_open_stone[key] = open
+	return _open_stone[key]
+
+
+var _open_stone: Dictionary = {}
+
+
+## In the arc of a niche on the camera's half of the rim (its candles go back and down with its pair).
+func _in_near_niche(bearing: float) -> bool:
+	for n in SARCOPHAGI:
+		if _near(n) and absf(bearing - n) < NICHE_HALF:
+			return true
+	return false
+
+
+## On the camera's half of the rim (NEAR_HALF).
+func _near(bearing: float) -> bool:
+	return bearing > NEAR_HALF.x and bearing < NEAR_HALF.y
 
 
 ## A small block of a relief: its middle at `at` + basis * offset, its size along, across and out.

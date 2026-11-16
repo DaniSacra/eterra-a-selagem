@@ -49,8 +49,12 @@ const BANNER_TRIM_WIDTH := 0.08
 const BANNER_FOLD := 0.62
 const BANNER_FOLDS := 5
 const BANNER_BAR := Color(0.06, 0.05, 0.05)
-## The raised sword on a banner (_banner_sword): its height (m), the blade's and the guard's share of it.
-const BANNER_SWORD := Vector3(1.2, 0.7, 0.3)
+## The raised sword on a banner (_banner_sword): its height (m), the blade's and the guard's share of it; the blade's
+## half width at the guard, the grip's half width and the pommel's radius (shares of its height). A sword, never a
+## cross (O-1 of the C11 QA: a blade as thin as the grip read as the long arm of a cross): the blade three times the
+## grip's width at the guard, one long taper to the point.
+const BANNER_SWORD := Vector3(1.2, 0.74, 0.24)
+const BANNER_SWORD_WIDTH := Vector3(0.07, 0.022, 0.06)
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
 const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "barrier_half", "floor_foundation_allsides",
 	"floor_foundation_corner", "floor_foundation_front", "floor_foundation_front_and_sides", "stairs_wide", "stairs_walled",
@@ -283,7 +287,7 @@ func _banner_sword(st: SurfaceTool, size: Vector2) -> void:
 	var foot := -size.y / 3.0 - h * 0.5
 	var blade := h * BANNER_SWORD.y
 	var guard := h * BANNER_SWORD.z
-	var grip := h - blade - 0.14
+	var grip := h - blade - 0.06 - h * BANNER_SWORD_WIDTH.z * 2.0
 	# a point of the emblem at (x, y on the cloth), just in front of the folds
 	var on := func(x: float, y: float) -> Vector3:
 		var wave := cos((x + size.x * 0.5) / size.x * TAU * BANNER_FOLDS)
@@ -291,20 +295,20 @@ func _banner_sword(st: SurfaceTool, size: Vector2) -> void:
 	var g := BANNER_TRIM
 	var shade := BANNER_TRIM * 0.75
 	var base := foot + h - blade
-	# the blade: its two halves, the one away from the light a little darker, to the point
-	var w := h * 0.045
-	_banner_quad(st, on.call(-w, base), on.call(0.0, base), on.call(0.0, foot + h), on.call(-w * 0.3, foot + h - w * 3.0), g, g)
-	_banner_quad(st, on.call(0.0, base), on.call(w, base), on.call(w * 0.3, foot + h - w * 3.0), on.call(0.0, foot + h), shade, shade)
+	# the blade: its two halves, the one away from the light a little darker, one long taper to the point
+	var w := h * BANNER_SWORD_WIDTH.x
+	_banner_quad(st, on.call(-w, base), on.call(0.0, base), on.call(0.0, foot + h), on.call(-w * 0.45, foot + h - blade * 0.55), g, g)
+	_banner_quad(st, on.call(0.0, base), on.call(w, base), on.call(w * 0.45, foot + h - blade * 0.55), on.call(0.0, foot + h), shade, shade)
 	# the guard, its tips falling
 	var gy := base - 0.06
-	_banner_quad(st, on.call(-guard * 0.5, gy - 0.05), on.call(guard * 0.5, gy - 0.05), on.call(guard * 0.42, gy + 0.06), on.call(-guard * 0.42, gy + 0.06), g, g)
+	_banner_quad(st, on.call(-guard * 0.5, gy - 0.03), on.call(guard * 0.5, gy - 0.03), on.call(guard * 0.42, gy + 0.05), on.call(-guard * 0.42, gy + 0.05), g, g)
 	_banner_quad(st, on.call(-guard * 0.5, gy - 0.05), on.call(-guard * 0.42, gy + 0.06), on.call(-guard * 0.56, gy - 0.12), on.call(-guard * 0.56, gy - 0.12), g, g)
 	_banner_quad(st, on.call(guard * 0.5, gy - 0.05), on.call(guard * 0.42, gy + 0.06), on.call(guard * 0.56, gy - 0.12), on.call(guard * 0.56, gy - 0.12), g, g)
 	# the grip and the round pommel
-	var gw := h * 0.022
-	_banner_quad(st, on.call(-gw, gy - 0.05), on.call(gw, gy - 0.05), on.call(gw, gy - 0.05 - grip), on.call(-gw, gy - 0.05 - grip), shade, shade)
-	var pc := Vector2(0.0, gy - 0.05 - grip - 0.045)
-	var r := 0.065
+	var gw := h * BANNER_SWORD_WIDTH.y
+	var r := h * BANNER_SWORD_WIDTH.z
+	_banner_quad(st, on.call(-gw, gy - 0.03), on.call(gw, gy - 0.03), on.call(gw, gy - 0.03 - grip), on.call(-gw, gy - 0.03 - grip), shade, shade)
+	var pc := Vector2(0.0, gy - 0.03 - grip - r * 0.8)
 	for i in 8:
 		var a0 := TAU * i / 8.0
 		var a1 := TAU * (i + 1) / 8.0

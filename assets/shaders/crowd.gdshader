@@ -97,6 +97,8 @@ uniform float flash_cap = 1.0;
 // where the body turns away (burn_rim at most, on the silhouette), and small coals crawling up the body, each one
 // flaring and fading on its own: burn_coals of the cells (burn_grid across the texture, burn_rows a meter of height)
 // glow, climbing burn_climb cells a second. All under the glow threshold (Game.GLOW_THRESHOLD 1.3), never yellow.
+// The fire's rim takes the place of the cool rim and the crest's edge while it burns (M-1 of the C11 QA: added on
+// top of them it outlined a burning Morvath's hood and shoulders in white).
 uniform vec3 burn_color : source_color = vec3(1.0, 0.36, 0.08);
 uniform float burn_rim = 0.5;
 uniform vec3 coal_color : source_color = vec3(1.1, 0.42, 0.1);
@@ -173,9 +175,9 @@ void fragment() {
 	float coal_dot = 1.0 - smoothstep(0.15, 0.45, length(fract(coal_at) - 0.5));
 	float coal = step(1.0 - burn_coals, coal_seed) * coal_dot * (0.5 + 0.5 * sin(TIME * 7.0 + coal_seed * 40.0));
 	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + (burn_color * rim * burn_rim + coal_color * coal) * burn
-		+ rim_color * (rim * 0.5 + edge) * rim_power * armored + dissolve_color * smoulder
-		+ gild_color * (rim + edge) * absorbed * absorb_light
-		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)
+		+ (rim_color * (rim * 0.5 + edge) * rim_power * armored
+		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)) * (1.0 - burn)
+		+ dissolve_color * smoulder + gild_color * (rim + edge) * absorbed * absorb_light
 		+ c * shade * (key_color * lit + hero_color * near * near * 0.55 * hero_light)
 		+ raw * glow * cell * (1.0 - has_magic)
 		+ lamp_color * mix(orb, orb_tell, tell) * mix(orb_edge, 1.0, facing * facing) * lamp
