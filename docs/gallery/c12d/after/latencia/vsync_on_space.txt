@@ -1,0 +1,22 @@
+window client 1280x720 at 320,240; display 144 Hz
+trial 0: 41,3 ms (previous poll 33,9 ms; diff 1958,0 > 49,1, idle max 7,0; poll 7,01 ms)
+trial 1: 41,7 ms (previous poll 34,7 ms; diff 1913,0 > 51,7, idle max 9,0; poll 7,05 ms)
+trial 2: 41,1 ms (previous poll 34,6 ms; diff 1949,0 > 56,9, idle max 13,0; poll 6,97 ms)
+trial 3: 42,1 ms (previous poll 35,4 ms; diff 1923,0 > 93,3, idle max 41,0; poll 7,17 ms)
+trial 4: 41,7 ms (previous poll 34,6 ms; diff 1909,0 > 66,0, idle max 20,0; poll 7,07 ms)
+trial 5: 21,5 ms (previous poll 13,8 ms; diff 683,0 > 49,1, idle max 7,0; poll 7,38 ms)
+trial 6: 41,7 ms (previous poll 34,8 ms; diff 3796,0 > 141,4, idle max 78,0; poll 7,10 ms)
+trial 7: 41,8 ms (previous poll 35,2 ms; diff 3806,0 > 58,2, idle max 14,0; poll 7,13 ms)
+trial 8: game not in front, skipped
+trial 9: -1,0 ms (previous poll 395,4 ms; diff 0,0 > 104890,2, idle max 80654,0; poll 6,94 ms)
+trial 10: 41,7 ms (previous poll 34,7 ms; diff 3847,0 > 102,4, idle max 48,0; poll 7,07 ms)
+trial 11: 41,8 ms (previous poll 35,0 ms; diff 3826,0 > 68,6, idle max 22,0; poll 7,12 ms)
+trial 12: 41,4 ms (previous poll 34,4 ms; diff 3868,0 > 107,6, idle max 52,0; poll 7,09 ms)
+trial 13: 41,7 ms (previous poll 34,6 ms; diff 3837,0 > 132,3, idle max 71,0; poll 7,08 ms)
+trial 14: 41,5 ms (previous poll 34,5 ms; diff 3842,0 > 59,5, idle max 15,0; poll 7,04 ms)
+trial 15: 41,1 ms (previous poll 34,4 ms; diff 3820,0 > 90,7, idle max 39,0; poll 6,97 ms)
+trial 16: 42,2 ms (previous poll 34,7 ms; diff 3761,0 > 56,9, idle max 13,0; poll 7,16 ms)
+trial 17: 41,5 ms (previous poll 34,7 ms; diff 3808,0 > 89,4, idle max 38,0; poll 7,05 ms)
+trial 18: 42,1 ms (previous poll 34,7 ms; diff 3796,0 > 66,0, idle max 20,0; poll 7,14 ms)
+trial 19: 41,7 ms (previous poll 35,0 ms; diff 3775,0 > 124,5, idle max 65,0; poll 7,07 ms)
+RESULT key=space n=18 min=21,5 median=41,7 mean=40,5 max=42,2 ms
