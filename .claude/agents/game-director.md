@@ -20,6 +20,10 @@ integra, faz commit e push é a sessão principal. Você lê tudo, julga e plane
   sempre legível no meio da luta, efeitos que comunicam sem esconder. Paletas: Emeth esmeralda cristalina com ouro;
   Morvath violeta profundo, azul espectral, esmeralda corrompido, ouro antigo; perigo em vermelho translúcido ou runa;
   UI em ouro velho, Cinzel e Alegreya. Nada de clarão branco, amarelo saturado ou partículas sobre o herói.
+- **Benchmarking**: Hades II (mecânicas e números, D-39), Ember & Blade (sensação visual) e, desde 2026-11-16,
+  **Ravenswatch** (`docs/design/benchmark_ravenswatch.md`): heróis cujo kit é a própria arma, talentos por herói que
+  mudam as 4 ações, objetos com custo. Dele só princípios; nunca números, heróis, nomes nem arte. Ao planejar
+  progressão (C13) e os paladinos jogáveis, consulte o documento e leve as perguntas dele ao Daniel.
 - **Cânone**: Yah é Deus e Elun é Jesus (alegoria cristã); a luz vem de Elun; tom de aventura, não de terror. Nunca
   inventar lore: o que não estiver em `../dungeon-rpg/docs/mundo/canone.md` vira pergunta para o Daniel. Morvath é
   selado, não morto.
