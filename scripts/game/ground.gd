@@ -74,10 +74,13 @@ class Zone:
 	var burst := 0.0
 	## A warning that lands as a column of spectral fire (a boss's eruption) instead of a burst of shadow.
 	var eruption := false
-	## Drawn as one of Morvath's ritual circles (Rune), or NONE.
+	## Drawn as one of Morvath's ritual circles (Rune), or NONE. A SUMMON hurts nothing: one of his dead rises there
+	## when it runs out (Boss._call times the rise by it).
 	var rune := Rune.NONE
-	## Called off (clear_warnings): it vanishes without landing.
+	## Called off (clear_warnings, end_zone): it vanishes without landing (no column).
 	var cancelled := false
+	## Which attack it belongs to (Boss: the attack's id; "adds" for his dead): the hurt_by count of the fight.
+	var source: StringName = &""
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -89,6 +92,8 @@ var on_zone_hit: Callable
 var on_zone_burst: Callable
 var horde: Horde
 var fx: Fx
+## The source of the warning that hurt the paladin last (Zone.source), read by the game as hit_player is emitted.
+var last_source: StringName = &""
 var _pool: Array[MeshInstance3D] = []
 var _found: Array[Enemy] = []
 var _rune_pool: Array[MeshInstance3D] = []
@@ -132,6 +137,15 @@ func add_arc_warning(at: Vector2, dir: Vector2, radius: float, degrees: float, t
 	return _add(Kind.WARNING, Shape.ARC, at, dir, radius, degrees, time, damage)
 
 
+## Ends one zone now (as clear_warnings does for all of them): it is released on the next step without landing (a
+## ritual circle goes without its column).
+static func end_zone(z: Zone) -> void:
+	if z != null:
+		z.life = -1.0
+		z.power = 0.0
+		z.cancelled = true
+
+
 func add_zone(kind: Kind, at: Vector2, radius: float, time: float, power: float, tags: Array[StringName] = []) -> Zone:
 	var z := _add(kind, Shape.CIRCLE, at, Vector2.DOWN, radius, 0.0, time, power)
 	z.tags = tags
@@ -141,9 +155,7 @@ func add_zone(kind: Kind, at: Vector2, radius: float, time: float, power: float,
 func clear_warnings() -> void:
 	for z in zones:
 		if z.kind == Kind.WARNING:
-			z.life = -1.0
-			z.power = 0.0
-			z.cancelled = true
+			end_zone(z)
 
 
 func clear() -> void:
@@ -220,6 +232,7 @@ func _land(z: Zone) -> void:
 		if z.eruption and z.rune == Rune.NONE:
 			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)
 	if player and player.alive() and inside(z, player.pos, Player.RADIUS * 0.6):
+		last_source = z.source
 		hit_player.emit(z.power, center)
 
 

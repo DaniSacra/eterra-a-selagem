@@ -23,9 +23,14 @@ extends Resource
 @export var roar_push := 4.0
 ## Phase from which the arena's light turns to his spectral fire.
 @export var final_light_phase := 4
+## The first attack of each phase, right after its roar (empty: the director's choice): the new pattern is shown at
+## once, so the player reads that something changed.
+@export var phase_openers: Array[StringName] = [&"", &"", &"curse", &"storm"]
 
 @export_group("Director")
 @export var attacks: Array[BossAttack] = []
+## Seconds of rest before the second attack of a combination (BossAttack.then).
+@export var chain_rest := 0.35
 ## Under near the paladin is close (more scythe), over far he is far (more blades); still after this many seconds.
 @export var near := 6.0
 @export var far := 10.0
@@ -39,6 +44,11 @@ extends Resource
 ## The occasional summon: who rises, and the wind-up (a warning on each spot).
 @export var summon_raise: Array[StringName] = [&"skeleton", &"skeleton"]
 @export var summon_windup := 1.1
+## Most of his summons over the whole fight (the ritual's included); past it he calls nobody.
+@export var adds_total_cap := 20
+## Seconds between one rise and the next: a rune glows on the floor, the energy comes up, the dead rises and the
+## rune goes; each in turn, never all at once.
+@export var rise_stagger := 0.45
 
 @export_group("Scythe")
 @export var scythe_reach := 5.0
@@ -70,6 +80,8 @@ extends Resource
 @export var storm_windup := 0.9
 @export var storm_recovery := 1.2
 @export var storm_damage := 10.0
+## Seconds between one crescent of a wave and the next (each its own lane and its own warning): never one burst.
+@export var storm_stagger := 0.08
 
 @export_group("Eruptions")
 @export var eruption_radius := 2.0

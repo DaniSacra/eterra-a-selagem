@@ -358,28 +358,32 @@ func test_morvath_is_hurt_everywhere_but_behind_the_ritual_shield() -> void:
 	var boss := _start_fight()
 	assert_not_null(boss)
 	var outside := [0]
-	var inside := [0]
-	var first := [-1]
 	_run(3.0, func() -> void:
 		if boss.e.invulnerable:
 			outside[0] += 1)
 	game.horde.damage(boss.e, 99999.0, Vector2.DOWN, 0.0)
 	assert_almost_eq(boss.e.hp / boss.e.max_hp, 0.66, 0.001, "the blow stops at the threshold")
-	_run(8.0, func() -> void:
+	for i in 8 * 60:
 		if boss.state == Boss.State.RITUAL:
-			if inside[0] == 0:
-				first[0] = game.horde.count() - 1
-			inside[0] += 1
-			assert_true(boss.e.invulnerable)
-		elif boss.e.invulnerable:
-			outside[0] += 1)
+			break
+		_run(1.0 / 60.0, func() -> void:
+			if boss.e.invulnerable and boss.state != Boss.State.RITUAL:
+				outside[0] += 1)
 	assert_eq(boss.phase, 2)
 	assert_eq(boss.state, Boss.State.RITUAL)
-	assert_gt(inside[0], 0)
+	assert_true(boss.e.invulnerable)
+	assert_eq(game.horde.count(), 1, "nobody rises in the shield's first instant")
 	var before := boss.e.hp
 	game.horde.damage(boss.e, 500.0, Vector2.DOWN, 0.0)
 	assert_eq(boss.e.hp, before, "the shield takes nothing")
-	assert_eq(first[0], def.ritual_raise.size(), "two soldiers and two casters")
+	# his dead rise one by one (a rune first), never two in the same moment
+	var peak := [game.horde.count() - 1]
+	var last := [game.horde.count()]
+	_run(def.summon_windup + def.rise_stagger * def.ritual_raise.size() + 0.5, func() -> void:
+		assert_lte(game.horde.count() - last[0], 1, "one rises at a time")
+		last[0] = game.horde.count()
+		peak[0] = maxi(peak[0], game.horde.count() - 1))
+	assert_eq(peak[0], def.ritual_raise.size(), "two soldiers and two casters")
 	# his dead fall: the ritual ends at once
 	for a in game.horde.list.duplicate():
 		if a != boss.e:
@@ -393,6 +397,7 @@ func test_morvath_is_hurt_everywhere_but_behind_the_ritual_shield() -> void:
 			outside[0] += 1
 		assert_lte(game.horde.count() - 1, 6, "never more than 6 of his standing"))
 	assert_eq(outside[0], 0, "never invulnerable outside the ritual")
+	assert_lte(boss.stats.adds_total, def.adds_total_cap)
 
 
 func test_the_ritual_ends_by_itself_after_its_time() -> void:
@@ -452,6 +457,6 @@ func test_nothing_of_his_outlives_him() -> void:
 	assert_false(game.player.curse.active(), "the curse lifts")
 	await get_tree().process_frame
 	assert_eq(game.horde.count(), 0, "his summons go with him")
-	_run(3.0)
+	_run(Boss.VICTORY_TIME + 0.2)
 	assert_null(game.boss)
 	assert_false(game.projectiles.hostile_left())

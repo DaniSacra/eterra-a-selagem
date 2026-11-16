@@ -1,15 +1,24 @@
 shader_type spatial;
-// A boss's spectral crescent (Morvath's Blades of the Souls): a half-moon of cold, pale green fire flying flat over
-// the floor. A bright leading edge (the side it flies to), a smoky translucent body that thins to the tips and
-// trails behind, the smoke crawling with time. Drawn on Projectiles' crescent mesh: UV.x 0.3 at the tips to 0.7 in
-// the middle, UV.y 0 on the inner (trailing) side to 1 on the outer (leading) edge.
+// A boss's spectral crescent (Morvath's Blades of the Souls and the Storm of the Six Souls): a half-moon of cold
+// blue-green fire flying flat over the floor. A bright leading edge (the side it flies to), a luminous core running
+// along the middle of its body, a smoky body that turns deep violet toward its trailing side and thins to the tips,
+// the smoke streaming backwards (its way reads in a still frame). It flares for an instant when it leaves and
+// fades as it ends (`fade`). Its size is its collision (Projectiles.touches_soul): only the look changed (cycle 9).
+// Drawn on Projectiles' crescent mesh: UV.x 0.3 at the tips to 0.7 in the middle, UV.y 0 on the inner (trailing)
+// side to 1 on the outer (leading) edge.
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
 
 uniform vec4 color : source_color = vec4(0.38, 1.55, 1.1, 1.0);
+// The violet of the smoke on its trailing side.
+uniform vec4 smoke_color : source_color = vec4(0.62, 0.22, 1.2, 1.0);
 uniform float intensity = 1.0;
-// How bright the leading edge is (above 1: it glows) and the smoky body (under the glow).
+// How bright the leading edge is (above 1: it glows), the core line and the smoky body (under the glow).
 uniform float edge = 1.6;
+uniform float core = 0.9;
 uniform float body = 1.0;
+// 1 while it flies, down to 0 as it ends; flare: 1 as it leaves, 0 a moment later.
+uniform float fade = 1.0;
+uniform float flare = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -31,15 +40,22 @@ void fragment() {
 	float inner = 1.0 - thick;
 	if (y < inner) discard;
 	float across = (y - inner) / max(thick, 0.001);
-	// smoke: noise flowing backwards from the edge
-	vec2 q = vec2(UV.x * 9.0, y * 4.0 + TIME * 2.2);
+	// smoke: noise flowing backwards from the edge, fast (the way it flies)
+	vec2 q = vec2(UV.x * 9.0, y * 4.0 + TIME * 3.4);
 	float smoke = noise(q) * 0.65 + noise(q * 2.7 + 3.0) * 0.35;
+	// as it ends the smoke breaks up from the trailing side
+	if (smoke < (1.0 - fade) * (1.2 - across)) discard;
 	float fumes = (0.3 + 0.7 * smoothstep(0.0, 0.6, across)) * (0.55 + 0.7 * smoke);
 	// the leading edge: a bright line along the outside, softer toward the tips
 	float line = (1.0 - smoothstep(0.02, 0.16, 1.0 - y)) * smoothstep(0.0, 0.35, mid);
+	// the core: a luminous thread through the thick of the body
+	float thread = exp(-pow((across - 0.62) / 0.12, 2.0)) * smoothstep(0.15, 0.6, mid);
 	float tips = smoothstep(0.0, 0.25, mid);
-	// the body in the colour brought under the glow threshold, the edge in the full colour (it glows)
+	// the body from violet (trailing side) to the spectral colour, both brought under the glow threshold
 	vec3 soft = color.rgb / max(max(color.r, max(color.g, color.b)), 1.0);
-	vec3 rim = mix(color.rgb, vec3(1.0, 1.15, 1.05), 0.35);
-	ALBEDO = (soft * fumes * body * tips + rim * line * edge) * intensity;
+	vec3 dusk = smoke_color.rgb / max(max(smoke_color.r, max(smoke_color.g, smoke_color.b)), 1.0);
+	vec3 cloth = mix(dusk, soft, smoothstep(0.2, 0.85, across));
+	vec3 rim = mix(color.rgb, vec3(1.0, 1.15, 1.05), 0.3);
+	vec3 heart = mix(soft, vec3(1.0), 0.25);
+	ALBEDO = (cloth * fumes * body * tips + heart * thread * core + rim * line * edge) * intensity * fade * (1.0 + 0.6 * flare);
 }

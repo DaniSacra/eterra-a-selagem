@@ -36,6 +36,18 @@ const SOUNDS := {
 	&"shield_down": [[W.NOISE, 3000, 600, 0.4, 0.45, 3.0, 0.0], [W.TRIANGLE, 880, 220, 0.4, 0.3, 3.0, 0.0]],
 	&"summon": [[W.SAW, 98, 196, 0.5, 0.3, 2.0, 0.0], [W.NOISE, 500, 1500, 0.4, 0.2, 3.0, 0.0]],
 	&"rain": [[W.TRIANGLE, 1200, 300, 0.35, 0.25, 3.0, 0.0]],
+	# cycle 9, Morvath's beats: the scythe lifted (a low swell) and biting the stone, the crouch before the charge and
+	# its landing, a dead coming up from its rune, the curse leaving his hand, the turn of a phase (a falling chord
+	# under the roar), and the ending (his power drawn away, then Emeth's clear answer)
+	&"scythe_raise": [[W.SAW, 70, 140, 0.55, 0.22, 1.6, 0.0], [W.NOISE, 300, 900, 0.5, 0.12, 2.0, 0.0]],
+	&"scythe_land": [[W.NOISE, 700, 90, 0.35, 0.4, 3.0, 0.0], [W.SINE, 80, 35, 0.35, 0.45, 3.0, 0.0]],
+	&"dash_aim": [[W.SAW, 55, 85, 0.6, 0.22, 1.8, 0.0]],
+	&"dash_land": [[W.NOISE, 500, 70, 0.4, 0.45, 3.0, 0.0], [W.SINE, 70, 30, 0.4, 0.5, 3.0, 0.0]],
+	&"rise": [[W.NOISE, 300, 1100, 0.35, 0.18, 2.5, 0.0], [W.TRIANGLE, 147, 220, 0.35, 0.14, 2.5, 0.0]],
+	&"curse_release": [[W.SAW, 330, 160, 0.3, 0.22, 3.0, 0.0], [W.NOISE, 1600, 500, 0.25, 0.15, 3.0, 0.0]],
+	&"phase_shift": [[W.SAW, 147, 73, 1.2, 0.25, 1.5, 0.0], [W.SAW, 175, 87, 1.2, 0.18, 1.5, 0.05], [W.TRIANGLE, 587, 293, 0.9, 0.12, 2.0, 0.15]],
+	&"victory_draw": [[W.NOISE, 1500, 300, 1.6, 0.25, 1.4, 0.0], [W.SINE, 110, 220, 1.6, 0.25, 1.5, 0.0]],
+	&"victory_release": [[W.TRIANGLE, 392, 392, 1.0, 0.3, 1.8, 0.0], [W.TRIANGLE, 587, 587, 1.0, 0.22, 1.8, 0.08], [W.SINE, 784, 784, 0.9, 0.18, 2.0, 0.16]],
 	&"bolt": [[W.SQUARE, 500, 180, 0.14, 0.2, 4.0, 0.0]],
 	&"roar": [[W.SAW, 90, 45, 1.0, 0.5, 1.6, 0.0], [W.NOISE, 400, 120, 1.0, 0.4, 1.8, 0.0]],
 	&"stagger": [[W.TRIANGLE, 880, 1760, 0.2, 0.35, 3.0, 0.0], [W.NOISE, 2000, 600, 0.15, 0.3, 5.0, 0.0]],

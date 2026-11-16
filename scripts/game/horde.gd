@@ -176,6 +176,11 @@ func _timers(e: Enemy, dt: float) -> void:
 		_set_state(e, Enemy.State.WALK, &"walk")
 
 
+## How fast a walking enemy's clips play (its pace; a boss posing a clip divides by it: Boss._pose).
+func clip_rate(e: Enemy) -> float:
+	return clampf(_speed(e) / 2.3, 0.6, 1.6)
+
+
 func _speed(e: Enemy) -> float:
 	return e.def.speed * (0.45 if e.slow_t > 0.0 else 1.0)
 
@@ -554,7 +559,7 @@ func render() -> void:
 			elif e.stun_t > 0.0:
 				anim = &"idle"
 			else:
-				t = e.anim_t * clampf(_speed(e) / 2.3, 0.6, 1.6)
+				t = e.anim_t * clip_rate(e)
 				if d.sway > 0.0 and e.frozen_t <= 0.0:
 					# unsteady: the trunk rocks from side to side and the stride is uneven (the place does not change)
 					lean = deg_to_rad(d.sway) * sin(TAU * (SWAY_HZ * e.anim_t + e.look))

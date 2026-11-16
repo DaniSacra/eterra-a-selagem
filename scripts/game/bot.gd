@@ -17,10 +17,26 @@ var _hold := 0.0
 var _held := &"heavy_attack"
 var _rng := RandomNumberGenerator.new()
 var _pick := 0
+## Seconds between seeing a danger and acting on it (--bot-reaction=0.25: a person's reaction time, so the boss
+## simulations are honest; 0: the old bot, who answers the same frame). What it does is what it saw that long ago.
+var reaction := 0.0
+## What it saw, oldest first: [time, the way out (zero when safe)].
+var _seen: Array[Array] = []
 
 
 func _init() -> void:
 	_rng.seed = 7
+	reaction = maxf(0.0, Dev.num("bot-reaction", 0.0))
+
+
+## The way out of danger as the bot knows it now: what it saw `reaction` seconds ago.
+func _react(now: Vector2) -> Vector2:
+	if reaction <= 0.0:
+		return now
+	_seen.append([_t, now])
+	while _seen.size() > 1 and float(_seen[1][0]) <= _t - reaction:
+		_seen.pop_front()
+	return _seen[0][1] if float(_seen[0][0]) <= _t - reaction else Vector2.ZERO
 
 
 func step(dt: float, game: Game) -> void:
@@ -38,6 +54,7 @@ func step(dt: float, game: Game) -> void:
 		pad.move = _steer(game, p, ((goal as Vector2) - p).normalized()) if goal != null and p.distance_to(goal) > 0.3 else Vector2.ZERO
 		_queue = ""
 		_hold = 0.0
+		_seen.clear()
 		pad.release(&"heavy_attack")
 		return
 	var target := _nearest(game)
@@ -47,7 +64,7 @@ func step(dt: float, game: Game) -> void:
 	if _queue.is_empty() and _wait > 0.25:
 		# hit and run: after a combo, step out of the crowd
 		pad.move = -to.normalized().rotated(0.6)
-	var danger := _danger(game)
+	var danger := _react(_danger(game))
 	if danger != Vector2.ZERO:
 		pad.move = danger
 		if game.player.dodge_charges > 0 and game.player.state != Player.State.DODGE:

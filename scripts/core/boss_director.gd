@@ -14,6 +14,8 @@ var attacks: Array[BossAttack] = []
 var near := 6.0
 var far := 10.0
 var still_after := 0.8
+## The first attack of each phase (BossDef.phase_openers).
+var openers: Array[StringName] = []
 ## Seconds left before each attack (by id) may come again.
 var cooldowns: Dictionary = {}
 ## The last attacks chosen, the newest last.
@@ -26,6 +28,7 @@ func _init(def: BossDef = null) -> void:
 		near = def.near
 		far = def.far
 		still_after = def.still_after
+		openers = def.phase_openers
 
 
 func step(dt: float) -> void:
@@ -92,6 +95,28 @@ func choose(phase: int, dist: float, still_t: float, blocked: Array[StringName],
 		var options := valid(phase, dist, blocked, strict)
 		if not options.is_empty():
 			return _draw(options, dist, still_t, rng).id
+	return &""
+
+
+## The attack that opens a phase (&"" when the phase has none or it is blocked now).
+func opener(phase: int, blocked: Array[StringName] = []) -> StringName:
+	if phase < 1 or phase > openers.size():
+		return &""
+	var id := openers[phase - 1]
+	for a in attacks:
+		if a.id == id and a.allowed_in(phase) and not blocked.has(id):
+			return id
+	return &""
+
+
+## The second blow of a combination after `id` (&"" for none): only from its phase on, and by its chance.
+func follow_up(id: StringName, phase: int, rng: RandomNumberGenerator) -> StringName:
+	for a in attacks:
+		if a.id != id or a.then == &"" or a.then == id or a.then_from_phase <= 0 or phase < a.then_from_phase:
+			continue
+		for b in attacks:
+			if b.id == a.then and b.allowed_in(phase) and rng.randf() < a.then_chance:
+				return b.id
 	return &""
 
 

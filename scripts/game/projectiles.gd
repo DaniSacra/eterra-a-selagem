@@ -62,8 +62,14 @@ class Shot:
 	## Seconds it still turns after the paladin, and how fast (radians a second).
 	var homing := 0.0
 	var turn := 0.0
+	## Which attack fired it (a boss's attack id; the hurt_by count of the fight).
+	var source: StringName = &""
+	## Seconds it has flown (the crescent's look: its first flare, its fade at the end).
+	var age := 0.0
 
 var shots: Array[Shot] = []
+## The source of the shot that hurt the paladin last (Shot.source), read by the game as hit_player is emitted.
+var last_source: StringName = &""
 var horde: Horde
 var player: Player
 var fx: Fx
@@ -168,17 +174,20 @@ func step(dt: float) -> void:
 			s.vel = s.vel.rotated(clampf(want, -s.turn * dt, s.turn * dt))
 		s.pos += s.vel * dt
 		s.life -= dt
+		s.age += dt
 		s.flown += s.vel.length() * dt
 		var gone := s.life <= 0.0 or absf(s.pos.x) > Arena.HALF * 2.0 or absf(s.pos.y) > Arena.HALF * 2.0
 		if not gone:
 			if s.kind == Kind.SOUL:
 				if player.alive() and not s.seen.has(player) and touches_soul(s, player.pos, Player.RADIUS):
 					s.seen[player] = true
+					last_source = s.source
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					fx.burst(&"soul", Vector3(player.pos.x, HEIGHT, player.pos.y))
 			elif hostile(s):
 				if player.alive() and s.pos.distance_to(player.pos) < s.radius + Player.RADIUS:
 					var safe := player.invulnerable()
+					last_source = s.source
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					if s.status != &"" and not safe:
 						status_player.emit(s.status)
@@ -214,6 +223,8 @@ func _place(s: Shot) -> void:
 	s.node.position = Vector3(s.pos.x, SOUL_HEIGHT if s.kind == Kind.SOUL else HEIGHT, s.pos.y)
 	if s.vel.length_squared() > 0.0:
 		s.node.rotation.y = atan2(s.vel.x, s.vel.y)
+	if s.kind == Kind.SOUL:
+		_place_soul(s)
 	if s.kind == Kind.WAVE or s.kind == Kind.SPARK:
 		s.node.rotation.y = 0.0
 		((s.node as MeshInstance3D).material_override as ShaderMaterial).set_shader_parameter(&"trail_m", clampf(s.flown, 0.01, DART_TRAIL))
@@ -236,9 +247,10 @@ func _take(kind: Kind) -> Node3D:
 		mat.set_shader_parameter(&"t", 1.0)
 		mat.set_shader_parameter(&"tail", 0.85)
 		if kind == Kind.SOUL:
-			# a boss's crescent of spectral fire (soul_crescent.gdshader)
+			# a boss's crescent of spectral fire (soul_crescent.gdshader) and its short trail (boss_wake.gdshader)
 			mat.shader = SOUL_SHADER
 			mat.set_shader_parameter(&"intensity", SOUL_INTENSITY)
+			mi.add_child(_soul_trail())
 		mi.material_override = mat
 	elif kind == Kind.WAVE or kind == Kind.SPARK:
 		var q := QuadMesh.new()
@@ -285,6 +297,13 @@ func _release(s: Shot) -> void:
 	if s.kind == Kind.SPARK:
 		# the dart breaks into a few chips of its own colour where it ends
 		fx.chips(s.node.position, Vector3(s.vel.x, 0.0, s.vel.y), s.color, 5, 5.0, 0.1, 0.3, 0.9)
+	elif s.kind == Kind.SOUL:
+		# the crescent comes apart where it is: specks across its width drift on and rise, a wisp of its smoke
+		var across := s.vel.normalized().orthogonal()
+		for k in 3:
+			var at := s.pos + across * s.half_width * (k - 1) * 0.6
+			fx.chips(Vector3(at.x, SOUL_HEIGHT, at.y), Vector3(s.vel.x, 2.0, s.vel.y), s.color if k != 1 else Boss.VIOLET, 2, 2.5, 0.12, 0.45, 0.6)
+		fx.burst(&"soul", Vector3(s.pos.x, SOUL_HEIGHT, s.pos.y))
 	if not _pools.has(s.kind):
 		_pools[s.kind] = []
 	(_pools[s.kind] as Array).append(s.node)
@@ -296,6 +315,48 @@ const CRESCENT_SPAN := 1.88
 const SOUL_INTENSITY := 1.0
 const SOUL_SHADER := preload("res://assets/shaders/soul_crescent.gdshader")
 var _crescent_mesh: ArrayMesh
+
+## Meters of trail a crescent leaves behind its middle at most: as far back as its hit reaches a body (SOUL_DEPTH
+## plus the paladin's radius), the share of its width the trail takes, and how long it flares as it leaves and fades
+## as it ends (s).
+const SOUL_TRAIL := SOUL_DEPTH + Player.RADIUS
+const SOUL_TRAIL_WIDTH := 0.55
+const SOUL_FLARE := 0.12
+const SOUL_FADE := 0.22
+
+
+func _soul_trail() -> MeshInstance3D:
+	var trail := MeshInstance3D.new()
+	trail.mesh = Fx.strip()
+	trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var mat := ShaderMaterial.new()
+	mat.shader = Fx.WAKE
+	mat.set_shader_parameter(&"trail_mode", true)
+	mat.set_shader_parameter(&"body", Boss.VIOLET)
+	mat.set_shader_parameter(&"edge", LOOK[Kind.SOUL][0])
+	mat.set_shader_parameter(&"edge_light", 0.35)
+	mat.set_shader_parameter(&"body_light", 0.45)
+	trail.material_override = mat
+	return trail
+
+
+## The crescent's flare, fade and trail (its scale is the parent's: the trail is put back in meters).
+func _place_soul(s: Shot) -> void:
+	var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
+	var fade := clampf(s.life / SOUL_FADE, 0.0, 1.0)
+	mat.set_shader_parameter(&"fade", fade)
+	mat.set_shader_parameter(&"flare", maxf(0.0, 1.0 - s.age / SOUL_FLARE))
+	var trail: MeshInstance3D = s.node.get_child(0) if s.node.get_child_count() > 0 else null
+	if trail == null:
+		return
+	var sx := maxf(s.node.scale.x, 0.001)
+	var sz := maxf(s.node.scale.z, 0.001)
+	var length := minf(s.flown, SOUL_TRAIL)
+	trail.visible = length > 0.05
+	trail.scale = Vector3(s.half_width * 2.0 * SOUL_TRAIL_WIDTH / sx, 1.0, length / sz)
+	trail.position = Vector3(0.0, -0.02, -length / sz)
+	(trail.material_override as ShaderMaterial).set_shader_parameter(&"fade", fade)
+
 
 ## A crescent 1 meter across, bulging forward (+Z), with the UVs of a slash.
 func _crescent() -> ArrayMesh:

@@ -4,6 +4,12 @@ extends Node3D
 ## camera shake, hit stop and the full screen colour split. Pooled; nothing here changes the game.
 
 const SLASH := preload("res://assets/shaders/slash.gdshader")
+## Morvath's scythe and the wake of his dash and of his crescents (cycle 9): each drawn only over what it hurts.
+const BOSS_SCYTHE := preload("res://assets/shaders/boss_scythe.gdshader")
+const WAKE := preload("res://assets/shaders/boss_wake.gdshader")
+const BOSS_POOL := 3
+## The scythe's sector starts this share of its reach out from his middle (his own body covers the rest).
+const BOSS_SCYTHE_INNER := 0.1
 const INK := preload("res://assets/shaders/slash_ink.gdshader")
 const RING := preload("res://assets/shaders/ring.gdshader")
 const BEAM := preload("res://assets/shaders/beam.gdshader")
@@ -153,6 +159,11 @@ var hero_head := Vector3.INF
 var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS})
 var _font: Font
 var _arc_meshes: Dictionary = {}
+var _boss_scythes: Array[Dictionary] = []
+var _boss_wakes: Array[Dictionary] = []
+## Seconds the blade's light is held up (the ending: Emeth answers).
+var _blade_hold := 0.0
+static var _strip_mesh: ArrayMesh
 var _rng := RandomNumberGenerator.new()
 
 
@@ -260,6 +271,13 @@ func setup(cam: Camera3D, over: Control) -> void:
 		var e := _effect_node(CRESCENT, null)
 		(e.mat as ShaderMaterial).render_priority = 2
 		_crescents.append(e)
+	for i in BOSS_POOL:
+		var e := _effect_node(BOSS_SCYTHE, null)
+		(e.mat as ShaderMaterial).render_priority = 1
+		_boss_scythes.append(e)
+		var w := _effect_node(WAKE, strip())
+		(w.mat as ShaderMaterial).render_priority = 1
+		_boss_wakes.append(w)
 	for i in RING_POOL:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2(2, 2)
@@ -445,7 +463,8 @@ func showing(kind: StringName) -> int:
 				if l.visible:
 					shown += 1
 			return shown
-	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"glints": _glints}
+	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"glints": _glints,
+		&"boss_scythes": _boss_scythes, &"boss_wakes": _boss_wakes}
 	var count := 0
 	for e: Dictionary in pools.get(kind, []):
 		if (e.node as Node3D).visible:
@@ -478,6 +497,59 @@ func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, col
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"ink_opacity", Feel.live().ink_opacity * CRESCENT_INK)
+
+
+## Morvath's Sepulchral Scythe: the blade crosses the half circle from origin along dir (reach m, degrees wide) in
+## sweep seconds, its trail and ashes last until `life`. body: the violet of the trail, edge: the blade and the reach.
+## Drawn flat on the floor, exactly over the sector the blow hurts.
+func boss_scythe(origin: Vector2, dir: Vector2, reach: float, degrees: float, sweep: float, life: float, body: Color, edge: Color) -> void:
+	var e: Dictionary = _take(_boss_scythes)
+	_place_arc(e, _arc(reach, degrees, BOSS_SCYTHE_INNER), origin, dir, 0.08, 0.0)
+	e.time = life
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"t", 0.0)
+	mat.set_shader_parameter(&"sweep", clampf(sweep / maxf(life, 0.01), 0.05, 0.95))
+	mat.set_shader_parameter(&"flip", _rng.randf() < 0.5)
+	mat.set_shader_parameter(&"body", body)
+	mat.set_shader_parameter(&"edge", edge)
+
+
+## Morvath's dash: its lane (from, dir, length, width in m) revealed as he runs it in `run` seconds, breaking into
+## ashes until `life`.
+func boss_dash(from: Vector2, dir: Vector2, length: float, width: float, run: float, life: float, body: Color, edge: Color) -> void:
+	var e: Dictionary = _take(_boss_wakes)
+	var mi: MeshInstance3D = e.node
+	mi.position = Vector3(from.x, 0.07, from.y)
+	mi.rotation = Vector3(0.0, atan2(dir.x, dir.y), 0.0)
+	mi.scale = Vector3(width, 1.0, length)
+	e.time = life
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"t", 0.0)
+	mat.set_shader_parameter(&"sweep", clampf(run / maxf(life, 0.01), 0.05, 0.95))
+	mat.set_shader_parameter(&"body", body)
+	mat.set_shader_parameter(&"edge", edge)
+
+
+## Emeth's blade holds its light up for `seconds` (the ending), then falls back as after a swing.
+func blade_glow(seconds: float) -> void:
+	_blade_hold = maxf(_blade_hold, seconds)
+	_pulse = 1.0
+
+
+## A flat strip one meter wide and one long on the floor plane: x across (-0.5 to 0.5), z along (0 to 1); UV.x across,
+## UV.y along.
+static func strip() -> ArrayMesh:
+	if _strip_mesh:
+		return _strip_mesh
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var p := [Vector3(-0.5, 0, 0), Vector3(0.5, 0, 0), Vector3(-0.5, 0, 1), Vector3(0.5, 0, 1)]
+	var uv := [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]
+	for k: int in [0, 2, 1, 1, 2, 3]:
+		st.set_uv(uv[k])
+		st.add_vertex(p[k])
+	_strip_mesh = st.commit()
+	return _strip_mesh
 
 
 ## One or two frames of the whole screen in flat black and white: only for the biggest blows.
@@ -621,10 +693,11 @@ func animate(delta: float) -> void:
 		if (s.node as Node3D).visible:
 			_age(s, delta)
 			(s.mat as ShaderMaterial).set_shader_parameter(&"life", s.life)
-	for s in _thrusts:
-		if (s.node as Node3D).visible:
-			_age(s, delta)
-			(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)
+	for list: Array[Dictionary] in [_thrusts, _boss_scythes, _boss_wakes]:
+		for s in list:
+			if (s.node as Node3D).visible:
+				_age(s, delta)
+				(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)
 	_animate_motes(delta)
 	_animate_blade(delta)
 	for g in _glints:
@@ -731,7 +804,10 @@ func _animate_motes(delta: float) -> void:
 func _animate_blade(delta: float) -> void:
 	if _pulse <= 0.0:
 		return
-	_pulse = maxf(0.0, _pulse - delta / BLADE_PULSE)
+	if _blade_hold > 0.0:
+		_blade_hold -= delta
+	else:
+		_pulse = maxf(0.0, _pulse - delta / BLADE_PULSE)
 	if not _blade_looked:
 		_blade_looked = true
 		_blade = EmethSword.blade_of(get_parent())

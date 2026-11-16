@@ -19,6 +19,12 @@ extends Resource
 @export var still_bias := 1.0
 ## Most times in a row it may come.
 @export var streak := 1
+## A combination: from then_from_phase on, right after this attack's recovery the boss follows with `then` (chance
+## then_chance) after only BossDef.chain_rest, but never while anything of the first is still on the floor or in
+## the air: each blow keeps its whole warning (BossRules.chain_ready).
+@export var then: StringName = &""
+@export var then_chance := 0.0
+@export var then_from_phase := 0
 
 
 func allowed_in(phase: int) -> bool:

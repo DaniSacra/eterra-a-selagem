@@ -11,6 +11,9 @@ max_dist = 11.0
 near_bias = 2.2
 far_bias = 0.35
 streak = 2
+then = &"storm"
+then_chance = 0.5
+then_from_phase = 4
 
 [sub_resource type="Resource" id="Resource_o6cgo"]
 script = ExtResource("1_l3fcv")
@@ -36,6 +39,9 @@ from_phase = 2
 weight = 1.4
 cooldown = 5.0
 still_bias = 3.0
+then = &"scythe"
+then_chance = 0.4
+then_from_phase = 4
 
 [sub_resource type="Resource" id="Resource_gjm27"]
 script = ExtResource("1_l3fcv")
@@ -60,6 +66,9 @@ weight = 2.2
 cooldown = 5.0
 near_bias = 1.3
 far_bias = 1.3
+then = &"dash"
+then_chance = 0.4
+then_from_phase = 4
 
 [resource]
 script = ExtResource("2_cnblm")

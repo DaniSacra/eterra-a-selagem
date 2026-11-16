@@ -7,6 +7,117 @@
 > `scripts/core/boss_rules.gd`, maldição em `scripts/core/curse_state.gd`, estados em `scripts/game/boss.gd`, testes em
 > `tests/test_boss.gd`, capturas em `docs/gallery/morvath/`. O resto deste documento fica como registro da proposta.
 
+> **CICLO 9, FRENTE A (gameplay-engineer, 2026-11-15): refinamento da luta, sem reconstruir.** Detalhes na seção 0.
+
+## 0. Ciclo 9: o que mudou na luta (frente A)
+
+Identidade pedida pelo Daniel: o Rei que Traiu a Luz, autoridade, corrupção, necromancia, solene. Paleta do chefe em
+`Boss` (`VIOLET` violeta profundo, `SPECTRAL` azul esverdeado espectral, `CORRUPT` verde esmeralda corrompido, mais
+turvo e frio que o da Emeth; ouro antigo `Combat.LIGHT` só no fim). Regra seguida em tudo: o efeito cobre só a área que
+fere (testado em `tests/test_boss_refine.gd`), sem clarão branco, sem partículas sobre o herói.
+
+### Por ataque
+- **Foice Sepulcral**: preparo com o clipe `slash3` do assado (a primeira parte, a lâmina erguida, esticada até o fim
+  do aviso; `SCYTHE_LIFT`), a magia violeta se juntando ao lado da lâmina, perto dele. No golpe, `Fx.boss_scythe`
+  (`boss_scythe.gdshader`): a lâmina azul esverdeada atravessa o meio círculo em 0,16 s, com rastro curto violeta e a
+  borda do alcance acesa, desenhada no setor exato do dano (malha de setor de `Fx._arc`); depois vira cinza e some
+  (0,55 s); cinzas violeta e azuis sobem só de dentro do setor; poeira no ponto mais longe; som próprio (`scythe_raise`,
+  `scythe_land`). Recuperação de `scythe_recovery` com o fim do clipe: é a janela de contra-ataque.
+- **Lâminas das Almas**: `soul_crescent.gdshader` com núcleo luminoso, fumaça que vai do violeta (atrás) ao espectral
+  (na frente), clarão curto na saída e fim que se desfaz (`fade`); rastro curto (`boss_wake.gdshader` em modo rastro)
+  com o comprimento exato do alcance do golpe para trás (`SOUL_DEPTH` + raio do paladino) e mais estreito que ela;
+  ao terminar, lascas e fumaça onde ela está. **A colisão não mudou** (`touches_soul`, largura e profundidade iguais).
+- **Investida**: postura agachada (`dash_windup`), a magia corre no chão à frente dos pés na direção do golpe, som de
+  preparo; na corrida, `Fx.boss_dash` revela a faixa do dano (16 x 2,8 m) enquanto ele corre e a deixa em cinzas;
+  impacto dentro do fim da faixa (anel do tamanho da largura, poeira, tranco), recuperação com o fim do clipe.
+- **Transições (66/33/15%)**: sem o quadro branco e preto de antes; rugido (1,6 s, como era), anéis finos violeta e
+  espectral, almas subindo (sem coluna de luz: o `Fx.beam` clareia para o branco no núcleo), som novo `phase_shift` sob o rugido, nome da fase na HUD. A fase seguinte
+  abre com o próprio padrão (`BossDef.phase_openers`: 3 abre na maldição, 4 na tempestade; a 2 abre no ritual).
+- **Ritual**: os reforços entram um por vez (`rise_stagger` 0,45 s): círculo de invocação no chão (`Ground.rune_burst`,
+  `Ground.Rune.SUMMON`), a coluna espectral dele sobe (a única: `_raise` não solta outra), o morto se ergue (animação `rise`), a runa some. Quem ainda vai subir conta como de pé no teto
+  (`BossRules.reinforce_room`): no máximo 6 vivos além dele e 20 na luta inteira (`adds_total_cap`); o ritual não acaba
+  antes de os que faltam subirem (`ritual_over` com `pending`). Erupções continuam a cada 2,8 s (o jogador se move).
+- **Maldição**: preparo com a mão erguida e a magia roxa se juntando nela, aro fino no chão, onda de energia saindo da mão
+  ao longo da faixa do projétil, som `curse_release`; ao pegar, um aro fino roxo no chão sob o paladino
+  (`Boss.on_cursed`; o visual no herói e a HUD são da frente C). **Justiça**: com o paladino amaldiçoado (30% mais
+  lento) todo aviso dura na mesma proporção (`BossRules.cursed_windup`), então sair andando continua possível.
+- **Fase 4**: as seis meias-luas saem uma por vez (`storm_stagger` 0,08 s, a mais perto da mira primeiro e depois uma
+  de cada lado, `BossRules.storm_order`), cada faixa com o próprio aviso até a sua sair; combinações
+  (`BossAttack.then`, só na fase 4): foice e depois tempestade (50%), tempestade e depois investida (40%, só de longe),
+  erupções e depois foice (40%); a segunda só começa quando nada da primeira está no chão ou no ar
+  (`BossRules.chain_ready`) e tem o aviso inteiro; descanso entre as duas `chain_rest` 0,35 s. Portal mais instável:
+  pulsa devagar do espectral ao violeta (`arena.open_door`, a cada 0,1 s). Morvath mais corrompido: a borda dele vira o
+  verde corrompido e brilha 1,8 vez (parâmetros `rim_color` e `rim_power` do material dele no `CrowdRenderer`; o
+  `crowd.gdshader` não mudou).
+- **Vitória** (`Boss.VICTORY_TIME` 3,6 s, o paladino não perde o controle): golpe final com hit stop e câmera lenta
+  curta (sem quadro branco), o brilho espectral dele se apaga (`paint_glow` e borda a zero) e as almas caem; de 0,5 s a
+  2,3 s a energia corrompida corre dele até o altar e o portal; o portal a recebe (violeta) e se acalma no verde dele em
+  3,1 s; a Emeth brilha esmeralda por 1,1 s (`Fx.blade_glow`); o ritual se rompe (aro fino de ouro antigo no meio da
+  sala); duas linhas na tela (`victory_1`, `victory_2`); ao fim, `Game._play_ending(at)` fecha a cena (tira as linhas,
+  emite `Game.victory_finished(stats)`) e depois `_open_end(true, new_best)` abre a tela de fim, o fluxo de sempre. As
+  quatro espadas que se erguiam (e os 9 s de texto) saíram: a tela de fim é da frente C, com a lápide (`ending_1` a
+  `ending_3`) disponível. **Cânone**: nada diz quem sela; o texto só diz que o poder dele se desfaz e é puxado de volta
+  para o altar (perguntas na seção 10, novas: 13 e 14).
+
+### APIs para as frentes B (efeitos) e C (HUD e telas)
+- `Boss.cue(name, at, dir, size, seconds)`: cada batida visual com a geometria (lista no topo de `boss.gd`).
+  `Boss.moment(name)` continua para capturas (novos: `scythe_warn`, `phase`, `ritual_end`, `victory`, `fallen`).
+- `Ground.Zone.rune` (`Ground.Rune`: NONE, ERUPTION, SUMMON; desenhado pelo `ritual_rune.gdshader`); `Zone.eruption` vira
+  círculo sozinho; `Zone.source` (de que ataque é); `Zone.cancelled` (some sem coluna).
+- `Fx.boss_scythe`, `Fx.boss_dash` (shaders `boss_scythe.gdshader`, `boss_wake.gdshader`: cores `body` e `edge`,
+  `blade_light`, `rim_light`, `body_light`, `edge_light` ajustáveis sem mexer na geometria).
+- `Game.victory_started`, `Game.victory_finished(stats)`; `Boss.stats` (abaixo); `Boss.shielded()` como antes.
+- Integração com a frente B (feita): `BossShield.create` em `_make_shield`, `ground.rune_burst(..., Ground.Rune.SUMMON)`
+  em `_call`, `arena.final_phase(true)` em `_corrupt`, `arena.seal_portal(VICTORY_SEAL, center)` na vitória, começando
+  em `VICTORY_CALM - VICTORY_SEAL` (0,7 s) para terminar em 3,1 s, antes da tela de fim (3,6 s).
+- **Escudo (ward)**: golpe em alvo invulnerável (`Enemy.invulnerable`, o escudo do ritual) não acende o flash, não dá
+  número nem combo e não pega fogo nem gelo (`Combat.hit_enemy`, `_burn`, `_freeze`, `_apply_status`); só três faíscas
+  espectrais na face do escudo (`Combat.WARD_SPARK*`). Fogo posto antes do escudo se apaga quando ele sobe. Antes, o fogo
+  dos dons atravessava o escudo e o corpo inteiro brilhava laranja dourado (o brilho de queimadura do `crowd.gdshader`).
+- Paleta: atordoamento solta almas e lascas violeta (antes, partículas `light` amarelas de Elun) e a palavra em espectral;
+  o aro do ritual rompido é ouro antigo (`Boss.OLD_GOLD`), nunca amarelo vivo. Sem coluna de luz na troca de fase nem no
+  portal da vitória (o `beam.gdshader` clareia para o branco no núcleo).
+
+### Métricas (`RESULT` "boss", `Boss.stats`)
+`time`, `phase_at`, `phase_time` (s por fase), `attacks` (vezes de cada), `hurt_by` e `hits_by` (vida perdida e golpes
+por ataque; `adds` = os mortos dele; `ritual` = erupções do ritual), `windows` (recuperações) e `punished` (as em que o
+paladino o acertou), `chains`, `adds_total`, `adds_peak`, `ritual`, `ritual_raised`, `curses`, `died_phase`.
+Simulações do robô: `--boon-ids=a,b,c` (dons exatos), `--bot-reaction=0.25` (o robô age sobre o que viu 0,25 s antes).
+Resultados na seção 0.1.
+
+### 0.1 Simulações do robô (2026-11-15; são simulações, não gente)
+Comando: `--start=boss --seed=1..8 --bot-reaction=0|0.25` com quatro configurações (`--boon-ids`): fogo
+(`golpe_brasa, pesado_brasa, brasas, lamina_ardente, passo_brasa`), geada (`golpe_geada, toque_geada, circulo_geada,
+estilhaco, peso_inverno`), luz e defesa (`golpe_radiante, pesado_radiante, circulo_radiante, escudo, firmeza,
+consolo`) e 5 sorteados (`--boons=5`); mais a partida inteira (`--seed=1..6`, chega em Morvath com 2 dons). 76 lutas.
+
+| Partida | Dons | Reação | Vitórias | Luta (mediana) | Fases 1/2/3/4 (mediana, s) | Vida perdida (média) | Mortes por fase | Janelas punidas |
+|---|---|---|---|---|---|---|---|---|
+| chefe | fogo | 0 | 8/8 | 96 s | 27/39/15/16 | 0,9 | | 90% |
+| chefe | fogo | 0,25 | 4/8 | 99 s | 28/42/17/15 | 22,8 | fase 4: 3, fase 2: 1 | 89% |
+| chefe | geada | 0 | 8/8 | 120 s | 32/50/19/20 | 10,5 | | 83% |
+| chefe | geada | 0,25 | 3/8 | 109 s | 34/48/19/18 | 27,8 | 2: 1, 3: 2, 4: 2 | 65% |
+| chefe | luz | 0 | 8/8 | 103 s | 26/46/16/16 | 1,5 | | 93% |
+| chefe | luz | 0,25 | 8/8 | 111 s | 29/48/17/18 | 17,5 | | 76% |
+| chefe | 5 sorteados | 0 | 8/8 | 110 s | 29/50/17/16 | 2,2 | | 83% |
+| chefe | 5 sorteados | 0,25 | 4/8 | 119 s | 30/53/18/18 | 30,0 | 3: 1, 4: 3 | 67% |
+| inteira | 2 dons | 0 | 5/6 | 121 s | 31/55/20/17 | 11,0 | 4: 1 | 77% |
+| inteira | 2 dons | 0,25 | 1/6 | 110 s | 36/46/15/16 | 24,2 | 2: 2, 3: 2, 4: 1 | 75% |
+
+Dano recebido por ataque, robô com reação 0,25 (32 lutas no chefe): tempestade 34% (29 golpes), mortos dele 33% (65),
+maldição 20% (27), foice 4%, lâminas 4%, erupções do ritual 4%, erupções 1%. Ataques por luta: foice 12, erupções 3,
+lâminas 3, invocação 2, maldição 1,5, tempestade 1,4, investida 0 (o robô fica sempre perto; ela só vem de 9 m).
+Reforços: média 10 a 12 por luta, pico 4 de pé fora do ritual e 6 no ritual, nunca acima de 20.
+
+Leitura:
+- O robô sem reação não serve de medida (vence sempre e quase não apanha). Com 0,25 s ele perde cerca de metade das
+  lutas, quase sempre na fase 4 (tempestade) ou na 3 (maldição): o fim é a parte mais dura, como pedido.
+- A luta dura 1 min 36 s a 2 min para o robô com 5 ou 6 dons, abaixo da meta de 2 a 4 min. **Não mexi na vida nem no
+  dano**: o robô pune 65 a 93% das janelas, gente pune menos; medir com o Daniel antes (a vida 6050 é a do Hades).
+- Ritmo: nenhum descanso nem preparo mudou. As únicas mudanças de tempo são de justiça: avisos mais longos na
+  proporção da lentidão da maldição (0,8 s viram 1,14 s amaldiçoado), as seis meias-luas saindo 0,08 s uma da outra
+  (a última faixa avisa 0,4 s a mais) e os reforços subindo 0,45 s um do outro.
+
 > **PROPOSTA PARA O CICLO 9, SEM IMPLEMENTAÇÃO.** Nada deste documento está no jogo. Os números são ponto de partida
 > para o teste, não decisão. Lore: só o que está no cânone (`../dungeon-rpg/docs/mundo/canone.md` e
 > `personagens.md`); o resto está marcado como **pergunta para o Daniel**. Nomes de ataques e de interlúdios são
@@ -339,6 +450,15 @@ corrupção. qa-performance: as medições da seção 7.
 11. **Dificuldade:** o objetivo do interlúdio pode falhar com um custo (chão lento, espada mais fraca), ou deve ser
     impossível perder a parte do objetivo?
 12. A variante de 7250 de vida entra como dificuldade futura (como os Votos do Hades II)?
+13. **(Ciclo 9) A vitória.** A cena mostra o poder de Morvath se desfazendo e sendo puxado de volta para o altar e o
+    portal, sem dizer quem fecha o selo. No cânone o selo se fecha por um paladino do sangue do leão que dá a vida. O
+    herói deste jogo fecha o selo? Dá a vida? O altar e o portal são o selo? O texto (`victory_1`, `victory_2`) fica
+    neutro até a resposta.
+14. **(Ciclo 9) A lápide.** `ending_1` diz "Quatro espadas se erguem sobre o túmulo" (a espada erguida é o sinal dos
+    guardiões no cânone); a cena não mostra mais as espadas. A tela de fim (frente C) mostra a lápide como está, troca
+    o texto, ou as espadas voltam como parte da tela de fim?
+15. **(Ciclo 9) A Emeth brilhando no fim**: a luz dela responde ao fim do ritual. Isso combina com a origem da luz dela
+    (pergunta 5)?
 
 ## 11. Riscos
 - **Escopo:** cópias, objetivos, âncoras, corrupção, robô novo e HUD nova somam um ciclo inteiro. Ordem sugerida, cada

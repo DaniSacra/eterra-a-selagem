@@ -62,6 +62,10 @@ const GLINT_HEIGHT := 1.8
 const SLASH_TIME := 0.12
 const HEAVY_SLASH_TIME := 0.16
 const FINISHER_SLASH_TIME := 0.3
+## Blows on a ward (an invulnerable enemy): this many sparks, this far out from its centre (in its radii), this colour.
+const WARD_SPARK_COUNT := 3
+const WARD_SPARK_REACH := 1.6
+const WARD_SPARK := Color(0.3, 0.95, 0.75)
 ## A finisher flashes the impact frame when it strikes at least this many enemies (or an elite, or the boss).
 const IMPACT_FRAME_CROWD := 6
 const BURN_TIME := 3.0
@@ -148,6 +152,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var kills := 0
 	for e: Enemy in struck:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir if (e.pos - origin).dot(dir) >= 0.0 else -dir
+		if e.invulnerable:
+			hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)  # only a spark on his ward
+			continue
 		if stars < MAX_STARS:
 			stars += 1
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
@@ -356,7 +363,7 @@ func skill_hit(e: Enemy, damage: float, tags: Array[StringName], away: Vector2, 
 
 
 func _apply_status(e: Enemy, status: StringName, power: float) -> void:
-	if power <= 0.0 or not e.alive:
+	if power <= 0.0 or not e.alive or e.invulnerable:
 		return
 	match status:
 		&"burn":
@@ -373,6 +380,12 @@ func _apply_status(e: Enemy, status: StringName, power: float) -> void:
 ## One enemy takes one hit, with every gift applied. counts: it is a blow of the paladin (feeds the combo counter).
 ## Returns true when it died.
 func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, knockback: float, counts: bool = true, big: bool = false) -> bool:
+	if e.invulnerable:
+		# a ward (Morvath's ritual shield): no flash, no number, no burn or frost, no combo; a few sparks where a blow
+		# or a shot struck it (not the ticks of a zone he stands in)
+		if counts or knockback > 0.0:
+			_ward_spark(e, away)
+		return false
 	var frozen := e.frozen_t > 0.0
 	var shatter := boons.stat(&"shatter_pct") if frozen and counts else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), combo, e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
@@ -403,8 +416,14 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	return false
 
 
+## A blow on a ward: a few small spectral sparks on its face, toward the striker (FxBudget keeps a flurry cheap).
+func _ward_spark(e: Enemy, away: Vector2) -> void:
+	var at := e.pos - away * e.def.radius * WARD_SPARK_REACH
+	fx.chips(Vector3(at.x, 1.4 + e.y, at.y), Vector3(-away.x, 0.3, -away.y), WARD_SPARK, WARD_SPARK_COUNT, 4.0, 0.07, 0.25, 0.8)
+
+
 func _freeze(e: Enemy, time: float) -> void:
-	if e.def.behavior == EnemyDef.Behavior.BOSS:
+	if e.def.behavior == EnemyDef.Behavior.BOSS or e.invulnerable:
 		return
 	if e.burn_t > 0.0:
 		_steam(e)
@@ -413,6 +432,8 @@ func _freeze(e: Enemy, time: float) -> void:
 
 
 func _burn(e: Enemy, dps: float) -> void:
+	if e.invulnerable:
+		return  # nothing takes hold through a ward (it would glow through it: crowd.gdshader's burn)
 	if e.frozen_t > 0.0:
 		_steam(e)
 	e.burn_t = BURN_TIME

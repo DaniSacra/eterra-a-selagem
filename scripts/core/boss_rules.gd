@@ -112,9 +112,10 @@ static func eruptions(player: Vector2, count: int, radius: float, toward: Vector
 	return out
 
 
-## The ritual ends when its time is up, or when everything it raised has fallen.
-static func ritual_over(elapsed: float, max_time: float, raised: int, standing: int) -> bool:
-	return elapsed >= max_time or (raised > 0 and standing <= 0)
+## The ritual ends when its time is up, or when everything it raised has fallen (those still to rise count as
+## standing: killing the first never ends it before the rest are up).
+static func ritual_over(elapsed: float, max_time: float, raised: int, standing: int, pending: int = 0) -> bool:
+	return elapsed >= max_time or (raised + pending > 0 and standing + pending <= 0)
 
 
 ## Most summons standing at once in this phase (caps: one per phase, the last holds after; empty: none).
@@ -127,3 +128,65 @@ static func adds_cap(caps: PackedInt32Array, phase: int) -> int:
 ## How many of `want` may rise with `standing` already up under `cap`.
 static func summon_count(want: int, standing: int, cap: int) -> int:
 	return EncounterGen.room_for(standing, cap, want)
+
+
+## How many of `want` may be called now: those still rising (pending) count as standing, and over the whole fight
+## never more than total_cap (total: how many were already called).
+static func reinforce_room(want: int, standing: int, pending: int, cap: int, total: int, total_cap: int) -> int:
+	return clampi(mini(summon_count(want, standing + pending, cap), total_cap - total), 0, maxi(want, 0))
+
+
+## When each of n rises after the call (seconds): the first after `first`, then one every `stagger`.
+static func rise_times(n: int, first: float, stagger: float) -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	for i in maxi(n, 0):
+		out.append(first + stagger * i)
+	return out
+
+
+## The order a wave of crescents leaves in: the one nearest the aim first, then outwards one on each side in turn
+## (each its own moment and its own lane, never one burst). A permutation of 0..dirs.size()-1.
+static func storm_order(dirs: PackedVector2Array, aim: Vector2) -> PackedInt32Array:
+	var out := PackedInt32Array()
+	var n := dirs.size()
+	if n == 0:
+		return out
+	var first := 0
+	for i in n:
+		if absf(aim.angle_to(dirs[i])) < absf(aim.angle_to(dirs[first])):
+			first = i
+	out.append(first)
+	for k in range(1, n):
+		# 1, -1, 2, -2... around the ring from the first
+		var step := ceili(k / 2.0) * (1 if k % 2 == 1 else -1)
+		var i := posmod(first + step, n)
+		if not out.has(i):
+			out.append(i)
+	for i in n:
+		if not out.has(i):
+			out.append(i)
+	return out
+
+
+## A warning while the paladin is cursed: longer by as much as he is slower (speed_scale: what he keeps of his
+## walking), so walking out of it stays as possible as uncursed (the curse never makes a blow unavoidable).
+static func cursed_windup(windup: float, speed_scale: float) -> float:
+	return windup / clampf(speed_scale, 0.1, 1.0)
+
+
+## A combination may begin only when nothing of the first attack is left: no warning of his on the floor and none of
+## his shots in the air (so every blow of a combination keeps its whole warning).
+static func chain_ready(warnings_live: int, shots_live: int) -> bool:
+	return warnings_live <= 0 and shots_live <= 0
+
+
+## Seconds spent in each phase: phase_at holds when each phase after the first began (seconds from the start of
+## the fight), `end` when the fight ended. One value per phase reached.
+static func phase_times(phase_at: Array, end: float) -> Array[float]:
+	var out: Array[float] = []
+	var from := 0.0
+	for at: float in phase_at:
+		out.append(snappedf(maxf(0.0, at - from), 0.1))
+		from = at
+	out.append(snappedf(maxf(0.0, end - from), 0.1))
+	return out

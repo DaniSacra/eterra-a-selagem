@@ -431,16 +431,22 @@ func _bosses() -> void:
 	b.windup_scale = PackedFloat32Array([1.0, 1.0, 0.95, 0.9])
 	b.final_light_phase = 4
 	b.adds_cap = PackedInt32Array([0, 4, 4, 4])
+	# each phase opens on its own pattern, right after the roar: the ritual (by itself), the curse, the storm
+	b.phase_openers = [&"", &"", &"curse", &"storm"] as Array[StringName]
 	var numbers := {
 		"roar_time": 1.6, "roar_push": 4.0, "near": 6.0, "far": 10.0, "still_after": 0.8, "lead": 0.45,
 		"summon_raise": [&"skeleton", &"skeleton"] as Array[StringName], "summon_windup": 1.1,
+		# reinforcements rise one by one (a rune, the energy, the body, 0.45 s apart), 20 at most in the whole fight
+		"adds_total_cap": 20, "rise_stagger": 0.45,
+		# a combination waits for nothing of the first to be left, then rests only this long
+		"chain_rest": 0.35,
 		# the Sepulchral Scythe: half a circle 5 m from his middle (3.6 m past his body), 0.8 s to read it, 1 s to punish
 		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 12.0, "scythe_approach": 1.2,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
 		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 10.0,
 		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
 		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 2, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
-		"storm_recovery": 1.2, "storm_damage": 10.0,
+		"storm_recovery": 1.2, "storm_damage": 10.0, "storm_stagger": 0.08,
 		# the Sepulchral Eruptions: 2 or 3 circles of 2 m, one on the paladin, the lane to the middle of the hall kept free
 		"eruption_radius": 2.0, "eruption_delay": 0.9, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
 		"eruption_gap": 1.0, "eruption_damage": 10.0, "eruption_recovery": 0.8,
@@ -459,15 +465,18 @@ func _bosses() -> void:
 		b.set(k, numbers[k])
 	b.attacks = [
 		# close: the scythe; it walks in first (scythe_approach)
-		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2}),
+		# in the last phase the scythe may be followed by the storm from where he stands
+		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2, "then": &"storm", "then_chance": 0.5, "then_from_phase": 4}),
 		# far: the blades (until the storm takes their place)
 		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 3.5, "near_bias": 0.5, "far_bias": 2.2}),
 		# the paladin keeps away: the dash closes in
 		_attack(&"dash", {"weight": 1.0, "cooldown": 6.0, "min_dist": 9.0, "far_bias": 1.5}),
-		_attack(&"eruptions", {"from_phase": 2, "weight": 1.4, "cooldown": 5.0, "still_bias": 3.0}),
+		# the eruptions drive the paladin; in the last phase the scythe waits where he lands
+		_attack(&"eruptions", {"from_phase": 2, "weight": 1.4, "cooldown": 5.0, "still_bias": 3.0, "then": &"scythe", "then_chance": 0.4, "then_from_phase": 4}),
 		_attack(&"summon", {"from_phase": 2, "weight": 0.8, "cooldown": 12.0}),
 		_attack(&"curse", {"from_phase": 3, "weight": 1.6, "cooldown": 7.0, "min_dist": 3.0}),
-		_attack(&"storm", {"from_phase": 4, "weight": 2.2, "cooldown": 5.0, "near_bias": 1.3, "far_bias": 1.3}),
+		# after the storm, a paladin far away is charged (only when he is far: the dash needs 9 m)
+		_attack(&"storm", {"from_phase": 4, "weight": 2.2, "cooldown": 5.0, "near_bias": 1.3, "far_bias": 1.3, "then": &"dash", "then_chance": 0.4, "then_from_phase": 4}),
 	]
 	_save(b, "res://data/bosses/morvath.tres")
 

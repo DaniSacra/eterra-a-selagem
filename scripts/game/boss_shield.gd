@@ -2,7 +2,7 @@ class_name BossShield
 extends MeshInstance3D
 ## The shield of Morvath's ritual (cycle 9): the sphere of spectral glass (boss_shield.gdshader), his circle of runes on
 ## the floor under it (ritual_rune.gdshader, kind 2) and a few motes orbiting it (SpectralMotes). Boss drives it as it
-## drove the old sphere: position (its middle SHIELD_RISE of the radius over the floor), uniform scale and the
+## drove the old sphere: position (its middle Boss.SHIELD_RISE of the radius over the floor), uniform scale and the
 ## material's `power` (0..1 growing in, over 1 when it breaks); this node follows that power with the rest and plays
 ## the breaking (the glass falls apart in shards) when the power goes over 1.
 

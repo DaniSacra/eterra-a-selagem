@@ -5,6 +5,11 @@ extends Node3D
 
 enum Mode { PLAY, CHOICE, PAUSE, OVER, ENDING }
 
+## Morvath fell: his short ending begins (Boss.VICTORY_TIME; the paladin keeps his control through it).
+signal victory_started
+## The ending is over: the end screen opens right after (the fight's numbers: Boss.stats).
+signal victory_finished(stats: Dictionary)
+
 ## Magia a kill gives back (Player.magick).
 const MAGICK_PER_KILL := 1.0
 const MAGICK_PER_ELITE := 40.0
@@ -22,6 +27,11 @@ const SPAWN_MAX := 25.0
 const CAM_MARGIN := Vector2(10.0, 5.0)
 ## The low camera sees far past the south edge: it stops sooner there.
 const CAM_SOUTH := 9.0
+## When the ending's lines fade in (s after Morvath falls, real time) and how far apart.
+const VICTORY_CAPTION_AT := 0.6
+const VICTORY_CAPTION_GAP := 1.1
+## The band of the screen the lines are read in (share of its height, from the top).
+const VICTORY_CAPTION_BAND := Vector2(0.7, 0.86)
 
 var arena: Arena
 var ground: Ground
@@ -64,6 +74,8 @@ var _pending_levels := 0
 ## Rarity of each card on the table (Boon.Rarity by gift id).
 var _offer_rarity: Dictionary = {}
 var _screen: Control
+## The two lines read during Morvath's ending.
+var _caption: Control
 var _screen_fx: ShaderMaterial
 var _hurt_flash := 0.0
 var _fountain: Node3D
@@ -120,7 +132,7 @@ func _ready() -> void:
 	projectiles.shot_hit.connect(combat.on_shot_hit)
 	projectiles.status_player.connect(_on_status_player)
 	for source: Object in [horde, ground, projectiles]:
-		source.hit_player.connect(_on_hit_player)
+		source.hit_player.connect(_on_hit_player.bind(source))
 	horde.killed.connect(_on_killed)
 	horde.armor_broken.connect(_on_armor_broken)
 	combat.combo_changed.connect(hud.on_combo)
@@ -144,6 +156,14 @@ func _ready() -> void:
 			var offers := boons.offers(_rng, 1)
 			if not offers.is_empty():
 				_take(offers[0])
+	if Dev.has("boon-ids"):
+		# --boon-ids=a,b,c: exactly these gifts (Boon ids, in order; an Elo after its two), for the boss simulations
+		for id in Dev.arg("boon-ids").split(",", false):
+			var b := boons.find(StringName(id))
+			if b:
+				_take(b)
+			else:
+				push_warning("--boon-ids: no gift %s" % id)
 	if Dev.has("stress"):
 		player.max_hp = 99999.0
 		player.hp = 99999.0
@@ -482,6 +502,9 @@ func _start_boss(id: StringName) -> void:
 	boss = Boss.new()
 	boss.setup(self, horde.def(id))
 	boss.defeated.connect(_on_boss_defeated)
+	boss.moment.connect(func(name: StringName) -> void:
+		if name == &"victory":
+			_on_boss_falling())
 
 
 func _dev_start(what: String) -> void:
@@ -653,9 +676,16 @@ func fountain_target() -> Variant:
 
 # ---------- hits, kills, endings ----------
 
-func _on_hit_player(amount: float, from: Vector2) -> void:
-	if mode == Mode.PLAY:
-		player.hurt(amount, from)
+func _on_hit_player(amount: float, from: Vector2, source: Object = null) -> void:
+	if mode != Mode.PLAY:
+		return
+	var before := player.hp
+	player.hurt(amount, from)
+	if boss and player.hp < before:
+		# what hurt him, for the fight's numbers: the warning or shot's attack (Ground/Projectiles.last_source);
+		# blows of the crowd are his dead
+		var id: Variant = source.get(&"last_source") if source else null
+		boss.record_hurt(id if id is StringName else &"adds", before - player.hp)
 
 
 ## A boss's shot with a status struck the paladin: the curse (its numbers are the boss's BossDef).
@@ -663,8 +693,7 @@ func _on_status_player(status: StringName) -> void:
 	if mode != Mode.PLAY or boss == null or status != &"curse":
 		return
 	if player.apply_curse(boss.def.curse_time, boss.def.curse_slow, boss.def.curse_immunity):
-		boss.stats.curses = int(boss.stats.curses) + 1
-		boss.moment.emit(&"cursed")
+		boss.on_cursed()
 
 
 ## An elite's or Morvath's armor broke: a stagger, and a moment to punish.
@@ -700,12 +729,22 @@ func _on_killed(e: Enemy) -> void:
 
 func _on_player_died() -> void:
 	mode = Mode.OVER
+	if boss:
+		boss.record_death()
 	Save.data.runs += 1
 	Save.write()
 	await get_tree().create_timer(1.8).timeout
 	_open_end(false, false)
 
 
+## Morvath fell (Boss._on_killed): his ending plays (Boss._step_dying) while two lines are read; the paladin keeps
+## his control. The epitaph (ending_1 to ending_3) is the end screen's.
+func _on_boss_falling() -> void:
+	_victory_caption()
+	victory_started.emit()
+
+
+## The ending is over: the run is won, the sealing closes (_play_ending) and the end screen opens.
 func _on_boss_defeated() -> void:
 	mode = Mode.ENDING
 	var at := boss.center if boss else player.pos
@@ -717,40 +756,40 @@ func _on_boss_defeated() -> void:
 	_open_end(true, new_best)
 
 
-## The sealing: four swords of light rise around the fallen king, and the epitaph is read.
-func _play_ending(at: Vector2) -> void:
-	focus = Vector3(at.x, 0, at.y)
-	Audio.play(&"seal")
-	for k in 4:
-		await get_tree().create_timer(0.5).timeout
-		var p := at + Vector2.from_angle(PI * 0.25 + PI * 0.5 * k) * 3.5
-		fx.beam(p, Combat.LIGHT, 0.6, 14.0, 6.0)
-		fx.ring(p, 1.5, Combat.LIGHT, 0.6)
-		fx.burst(&"light", Vector3(p.x, 0.5, p.y))
-		Audio.play(&"sword_rise")
-	await get_tree().create_timer(0.6).timeout
-	fx.ring(at, 7.0, Combat.LIGHT, 1.2)
-	fx.beam(at, Combat.LIGHT, 3.0, 20.0, 2.0)
-	fx.shake(2.0)
-	var holder := Control.new()
-	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	holder.theme = UiKit.theme()
-	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(holder)
-	var box := UiKit.column(holder, 900.0, 0.35)
-	for key: StringName in [&"ending_1", &"ending_2", &"ending_3"]:
-		var l := UiKit.label(T.t(key), UiKit.GOLD if key == &"ending_3" else UiKit.PALE, 30 if key == &"ending_3" else 24, UiKit.TITLE_FONT if key == &"ending_3" else null)
+## The close of the sealing. Its scene already played while the paladin kept control (Boss._step_dying, VICTORY_TIME,
+## during victory_started); here its caption goes and victory_finished tells the end screen. Kept a coroutine so the
+## end screen's flow stays "await _play_ending(at), then _open_end".
+func _play_ending(_at: Vector2) -> void:
+	if is_instance_valid(_caption):
+		_caption.queue_free()
+	victory_finished.emit(boss_stats)
+	await get_tree().process_frame
+
+
+## What the ending says while it plays (victory_1, victory_2), fading in one after the other.
+func _victory_caption() -> void:
+	_caption = Control.new()
+	_caption.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_caption.theme = UiKit.theme()
+	_caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ui.add_child(_caption)
+	# low on the screen and with no veil over it: the ending is seen, not covered
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.anchor_top = VICTORY_CAPTION_BAND.x
+	box.anchor_bottom = VICTORY_CAPTION_BAND.y
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_caption.add_child(box)
+	var delay := VICTORY_CAPTION_AT
+	for key: StringName in [&"victory_1", &"victory_2"]:
+		var l := UiKit.label(T.t(key), UiKit.PALE, 24, UiKit.TITLE_FONT)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.custom_minimum_size.x = 900
 		l.modulate.a = 0.0
 		box.add_child(l)
-		create_tween().tween_property(l, "modulate:a", 1.0, 0.8)
-		await get_tree().create_timer(2.2 if not bot else 0.3).timeout
-	await get_tree().create_timer(2.0 if not bot else 0.3).timeout
-	for c in ui.get_children():
-		if c != hud:
-			c.queue_free()
+		create_tween().tween_property(l, "modulate:a", 1.0, 0.6).set_delay(delay)
+		delay += VICTORY_CAPTION_GAP
 
 
 func _open_end(victory: bool, new_best: bool) -> void:
