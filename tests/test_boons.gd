@@ -25,18 +25,21 @@ func test_catalog_has_four_families_and_the_combinations() -> void:
 	assert_gte(per_family.get(Boon.Family.DUO), 4)
 
 
-func test_every_gift_has_three_levels_text_and_an_icon() -> void:
+func test_every_gift_has_its_levels_text_and_an_icon() -> void:
 	var icons := 18  # glyphs drawn by scripts/ui/boon_icon.gd
 	var seen := {}
 	for b in state.catalog:
 		assert_false(seen.has(b.id), "duplicate %s" % b.id)
 		seen[b.id] = true
-		assert_eq(b.max_level, 3, String(b.id))
+		assert_eq(b.max_level, 1 if b.is_duo() else 3, String(b.id))
 		assert_lt(b.icon, icons, String(b.id))
 		assert_ne(T.t("boon_%s" % b.id), "boon_%s" % b.id, "name of %s" % b.id)
 		assert_true(b.mods.size() > 0 or b.skill != null, "%s does nothing" % b.id)
 		for m in b.mods:
-			assert_gte(m.values.size(), b.max_level, "%s needs a value per level" % b.id)
+			if not b.is_duo():
+				assert_false(m.per_level.is_empty(), "%s needs a gain per level" % b.id)
+			else:
+				assert_true(m.per_level.is_empty(), "an Elo never grows (BUG-017): %s" % b.id)
 		for lv in range(1, b.max_level + 1):
 			var desc := BoonChoice.describe(b, lv)
 			assert_false(desc.contains("{"), "%s level %d: %s" % [b.id, lv, desc])
@@ -47,12 +50,22 @@ func test_combinations_join_two_different_families() -> void:
 	for b in state.catalog:
 		if not b.is_duo():
 			continue
-		assert_eq(b.requires.size(), 2, String(b.id))
-		var a := state.find(b.requires[0])
-		var c := state.find(b.requires[1])
-		assert_not_null(a, "%s requires an unknown gift" % b.id)
-		assert_not_null(c, "%s requires an unknown gift" % b.id)
-		assert_ne(a.family, c.family, "%s must join two families" % b.id)
+		assert_eq(b.requires_sets.size(), 2, String(b.id))
+		var families := []
+		for list in b.requires_sets:
+			assert_false(list.is_empty(), String(b.id))
+			var fam := -1
+			for id in list:
+				var g := state.find(StringName(id))
+				assert_not_null(g, "%s requires an unknown gift %s" % [b.id, id])
+				if g == null:
+					continue
+				assert_false(g.is_duo(), "%s: an Elo never asks for an Elo" % b.id)
+				if fam < 0:
+					fam = g.family
+				assert_eq(g.family, fam, "%s: a list is of one family" % b.id)
+			families.append(fam)
+		assert_ne(families[0], families[1], "%s must join two families" % b.id)
 
 
 func test_levels_go_up_to_the_maximum_and_stop() -> void:
@@ -70,6 +83,38 @@ func test_stat_follows_the_level() -> void:
 	assert_almost_eq(state.stat(&"freeze_time", [&"heavy"] as Array[StringName]), 1.0, 0.001)
 	_take(&"toque_geada", 2)
 	assert_almost_eq(state.stat(&"freeze_time", [&"heavy"] as Array[StringName]), 2.0, 0.001)
+
+
+## C13-05 (Hades II's GetProcessedValue): level 1 is the base times the rarity, every level after adds a fixed gain the
+## rarity never scales, the last gain again past the list.
+func test_a_level_adds_a_fixed_gain_the_rarity_never_scales() -> void:
+	var m := BoonMod.new()
+	m.base = 0.2
+	m.per_level = PackedFloat32Array([0.1, 0.05])
+	assert_almost_eq(m.at(1), 0.2, 0.0001)
+	assert_almost_eq(m.at(2), 0.3, 0.0001)
+	assert_almost_eq(m.at(3), 0.35, 0.0001)
+	assert_almost_eq(m.at(5), 0.45, 0.0001, "the last gain repeats")
+	assert_almost_eq(m.at(1, 2.0), 0.4, 0.0001, "an epic doubles the base")
+	assert_almost_eq(m.at(3, 2.0), 0.4 + 0.15, 0.0001, "and adds the gains as they are")
+	assert_eq(m.at(0), 0.0)
+	m.by_rarity = false
+	assert_almost_eq(m.at(2, 2.5), 0.3, 0.0001, "a number that never scales")
+	var s := SkillDef.new()
+	s.damage = PackedFloat32Array([20, 30, 42])
+	assert_almost_eq(s.damage_at(1, 1.5), 30.0, 0.0001)
+	assert_almost_eq(s.damage_at(3, 1.5), 30.0 + 22.0, 0.0001, "a skill's levels add as they are too")
+
+
+## Every Blessing's numbers at every level, migrated from the per-level lists (C13-05: the same at a common card).
+func test_every_blessing_grows_by_its_gains() -> void:
+	for b in state.catalog:
+		for m in b.mods:
+			for lv in range(1, b.max_level + 1):
+				var want := m.base
+				for k in range(2, lv + 1):
+					want += m.per_level[mini(k - 2, m.per_level.size() - 1)]
+				assert_almost_eq(m.value(lv), want, 0.0001, "%s %s level %d" % [b.id, m.stat, lv])
 
 
 func test_tagged_modifiers_only_touch_their_moves() -> void:
@@ -139,14 +184,22 @@ func test_combination_shows_up_once_both_gifts_are_owned() -> void:
 	assert_true(seen)
 	_take(&"vapor")
 	assert_gt(state.stat(&"steam_time"), 0.0)
-	_take(&"vapor", 2)
-	assert_false(state.can_offer(state.find(&"vapor")), "a maxed combination leaves the draw")
+	assert_false(state.can_offer(state.find(&"vapor")), "an Elo never grows: it leaves the draw once taken")
 
 
 func test_maxed_gifts_leave_the_draw_and_the_draw_can_run_dry() -> void:
 	for b in state.catalog:
 		state.levels[b.id] = b.max_level
 	assert_eq(state.offers(rng).size(), 0)
+
+
+func test_a_blessing_held_is_never_drawn_again() -> void:
+	_take(&"brasas")
+	_take(&"golpe_radiante")
+	for i in 200:
+		for b in state.offers(rng):
+			assert_ne(b.id, &"brasas", "it grows by the pomegranate, not by a card")
+			assert_ne(b.id, &"golpe_radiante")
 
 
 func test_same_seed_same_offers() -> void:
@@ -168,7 +221,7 @@ func test_skill_values_grow_with_level() -> void:
 		if b.skill == null:
 			continue
 		var s := b.skill
-		for lv in range(1, b.max_level + 1):
+		for lv in range(1, maxi(b.max_level, 1) + 1):
 			assert_gt(s.get_cooldown(lv), 0.0, String(b.id))
 			assert_gte(s.get_damage(lv), 0.0, String(b.id))
 		if b.max_level > 1:
@@ -184,7 +237,8 @@ func _slot_gift(id: StringName, slot: Boon.Slot, stat_name: StringName = &"damag
 	var m := BoonMod.new()
 	m.stat = stat_name
 	m.tag = tag
-	m.values = PackedFloat32Array([0.2, 0.3, 0.4])
+	m.base = 0.2
+	m.per_level = PackedFloat32Array([0.1, 0.1])
 	m.by_rarity = by_rarity
 	b.mods = [m]
 	state.catalog.append(b)
@@ -216,31 +270,32 @@ func test_rarity_multiplies_marked_numbers_and_keeps_the_best() -> void:
 	var a := _slot_gift(&"t_a", Boon.Slot.ATTACK)
 	var n := _slot_gift(&"t_n", Boon.Slot.DASH, &"dodge_charges", &"", false)
 	state.take(a, Boon.Rarity.EPIC)
-	state.take(n, Boon.Rarity.HEROIC)
+	state.take(n, Boon.Rarity.LEGENDARY)
 	var light: Array[StringName] = [&"light"]
 	assert_almost_eq(state.stat(&"damage_pct", light), 0.2 * 2.0, 0.001)
 	assert_almost_eq(state.stat(&"dodge_charges"), 0.2, 0.001, "counts do not scale")
 	state.take(a, Boon.Rarity.COMMON)
 	assert_eq(state.rarity(&"t_a"), Boon.Rarity.EPIC, "a later common card keeps the epic rarity")
-	assert_almost_eq(state.stat(&"damage_pct", light), 0.3 * 2.0, 0.001)
+	assert_almost_eq(state.stat(&"damage_pct", light), 0.2 * 2.0 + 0.1, 0.001, "the level's gain is not scaled")
 
 
-func test_rarity_draw_is_mostly_common_never_heroic() -> void:
+func test_rarity_draw_is_mostly_common_never_legendary() -> void:
 	var seen := [0, 0, 0, 0]
 	for i in 4000:
 		seen[BoonState.roll_rarity(rng)] += 1
 	assert_gt(seen[0], seen[1])
 	assert_gt(seen[1], seen[2])
 	assert_gt(seen[2], 0)
-	assert_eq(seen[3], 0, "a common card draw is never heroic (Hades II)")
+	assert_eq(seen[3], 0, "a card's draw is never legendary: only a trade (D-52)")
 
 
-func test_a_guardian_gift_is_never_common() -> void:
+func test_a_guardian_gift_is_mostly_rare_never_legendary() -> void:
 	var seen := [0, 0, 0, 0]
 	for i in 2000:
-		seen[BoonState.roll_rarity(rng, Boon.RARITY_WEIGHT_GUARDIAN)] += 1
-	assert_eq(seen[0], 0)
+		seen[BoonState.roll_rarity(rng, Boon.RARITY_CHANCE_GUARDIAN)] += 1
+	assert_gt(seen[1], seen[0] * 5)
 	assert_gt(seen[1], seen[2])
+	assert_eq(seen[3], 0, "the guardian gives no legendary (C13-03)")
 
 
 func test_grow_offers_only_owned_gifts_that_can_grow() -> void:

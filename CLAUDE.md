@@ -209,7 +209,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Daniel; nada de arte, nome, história ou som copiado). Notas do estudo: fora do repositório (scratchpad da sessão).
 - Escala: 80 unidades do Hades = 1 m (andar 540 = 6,75 m/s; heroína de 200 de altura = paladino de 2,5 m). `U` em `make_data.gd`.
 - Salas: `RunMap` (`core/run_map.gd`: abertura com dom, portas que mostram a recompensa, guardião entre as salas 4 e 6,
-  uma fonte entre 5 e 8, loja na 10, Morvath na 11; **encurtado para teste**: 7 salas desde o ciclo C12 (fonte na 4, guardião na 5, loja na 6, Morvath na 7; `--short` volta à de 5), elites desde a sala 2 (`elite_from_depth`; no Hades, 3), `_stage` em `make_data.gd`), `EncounterGen` (`core/encounter_gen.gd`: dificuldade 55 + 15 por sala,
+  uma fonte entre 5 e 8, loja na 10, Morvath na 11: **a descida padrão desde a E3** (C13-01, D-61; `--medium` é a de 7 do
+  ciclo C12, fonte na 4, guardião na 5, loja na 6, e `--short` a de 5, as duas com elites desde a sala 2,
+  `Rooms.short_stage`), elites desde a profundidade 3 (`elite_from_depth`), nenhuma arena mais de 3 vezes
+  (`arena_max_uses`, a menos usada primeiro), `_stage` em `make_data.gd`), `EncounterGen` (`core/encounter_gen.gd`: dificuldade 55 + 15 por sala,
   1 a 3 ondas, no máximo 1 tipo de elite, próxima onda com 1 inimigo de pé), dados
   em `data/stages/catacombs.tres` (`StageDef`, `EncounterPool`, `RoomLayout`).
   **Poucos inimigos, cada um com seu papel** (ciclo 8; o Daniel, 2026-11-15: não é survivor de horda, a referência é o
@@ -222,6 +225,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   região 2 papéis, meio 3 que se completam, fim misturas exigentes com elites e uma especial rara de 4. `--horde` e
   `--stress` ignoram os tetos. O RESULT do `--smoke` traz `max_alive` (pico de inimigos de pé, chefe incluído), `boss_at` e o custo do passo da simulação medido só nos quadros com inimigos de pé, `step_ms_avg` e `step_ms_peak` (`StepTimer`, `core/step_timer.gd`; `step_ms` continua, suavizado e lido no fim). Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
   portas, fonte, loja (pisar compra), chefe. Magia enche em toda sala; sem experiência nem níveis.
+- **Bênçãos e economia da E3 (Hades II; regras, números e decisões em `docs/design/e3_blessings.md`, métricas do robô em
+  `docs/qa/e3_metrics.md`)**: as portas tiram cartas de um baralho sem repor que volta inteiro quando nada serve
+  (`StageDef.reward_deck`, `RewardDeck`: 6 Bênçãos, 2 romãs, 2 corações, 2 Magia, 2 ouro). Raridade em sequência
+  (`BoonState.roll_rarity`: rara 10%, épica 5%, 85,5 / 9,5 / 5; guardião rara 90%, épica 7%), quatro raridades
+  comum 1, rara 1,5, épica 2 e lendária 2,5 (D-52, D-53), a lendária só pela troca (E3-01: 10% por carta, a Bênção de
+  uma ação ocupada troca por outra uma raridade acima e no nível dela, `BoonState.trade_card`). Cada carta é
+  `BoonState.Card` (`Game.offer_cards`: raridade, `trade`, `replaces`, `level`); Bênção que já se tem não volta nas
+  cartas (cresce pela romã). Romã: cada número tem `base` (nível 1, vezes a raridade) e `per_level` (ganho fixo por
+  nível, o último se repete, sem raridade; `BoonMod.at`, `SkillDef.damage_at`); teto de nível 3 mantido (E3-D1). Elo
+  12% por carta (`elo_chance`), pede uma Bênção de cada lista (`Boon.requires_sets`), sem raridade e sem nível
+  (BUG-017). Sem bônus de sequência de golpes (C13-07, D-10). Ouro cai dos inimigos (`GoldPurse`: teto de 10 a 15 +
+  0,5 por profundidade, 70% por inimigo da parte dele), recompensa de ouro 100; loja em 3 grupos (`StageDef.shop_groups`,
+  `ShopGroup.count`: Bênção 150; cura 50 e coração 125; dois de Magia 100, romã 100 e fatia de romã 50,
+  `RunMap.Reward.POM_SLICE`), 5 itens como a última loja antes do chefe final (`Rooms.shop()` para a tela). O robô
+  escolhe a porta como gente (`Rooms.bot_door`). `RESULT` com `dealt_by` (dano por fonte, `DealtBy`, `Horde.dealt`) e
+  `elos`. Testes: `test_rarity.gd`, `test_elo.gd`, `test_economy.gd`, `test_descent.gd`, `test_boons.gd`.
 - Golpes do Hades: ataque em 3 (20, 25, 60 em volta), especial = seta (40), Ômega do ataque segurando 0,8 s (160, para
   frente e para trás, 20 de Magia), Ômega do especial 0,65 s (80, 10 de Magia), avanço 0,2 s / 5,6 m com 19 quadros de
   proteção desde o aperto (C12d) e 1 carga, círculo em volta do paladino (5,4 m, 3 s, um por vez). Vida 30, 1,3 s de proteção após um golpe.
@@ -443,9 +462,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   passa de 0,95 sozinha; limitador a -1 dB). Projéteis barrados pela pedra ainda sem som (`projectiles.gd`).
 
 ## Arenas (ciclo C12, Arenas I; plano em `docs/design/cycle12_arenas_plan.md`, plantas em `docs/art/cycle12_arenas_spec.md`)
-- A descida de teste tem 7 salas (D-27): abertura no Salão das Catacumbas, lutas sorteadas entre a Cripta dos Esquecidos,
-  o Salão das Fendas e o Jardim das Raízes Mortas (nunca a mesma duas vezes seguidas, as ainda não vistas primeiro,
-  `RunMap._layout`), fonte na 4 (no salão), guardião na 5, loja na 6 (no salão), Morvath na 7. `--short` volta à de 5.
+- A descida tem 10 salas e Morvath na 11 desde a E3 (era a de teste de 7, D-27, hoje `--medium`): abertura no Salão das
+  Catacumbas, lutas sorteadas entre a Cripta dos Esquecidos, o Salão das Fendas e o Jardim das Raízes Mortas (nunca a
+  mesma duas vezes seguidas, nenhuma mais de 3 vezes, a menos usada primeiro, `RunMap._layout`, `RunMap.uses`),
+  guardião na 4 a 6, fonte uma vez na 5 a 8 (no salão), loja na 10 (no salão), Morvath na 11. `--short` volta à de 5.
 - Cada arena é dado no `_stage` do `make_data.gd` (`_crypt`, `_rift`, `_garden`): `RoomLayout` com `id`, `name_key`,
   `look`, tamanho, dificuldade, faixa da descida (`depth`), teto de inimigos (`max_alive`, `max_ranged`,
   `banned_roles`), chão `FloorShape.POLY` (polígonos menos buracos), obstáculos `ArenaObstacle` (círculo ou caixa
@@ -549,7 +569,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
-  `requires` de dois outros (6 hoje; nome "Elo" no texto desde 2026-11-15). A carta mostra os dois dons de origem
+  `requires_sets` (E3-02: uma lista por família, uma Bênção de cada forma o Elo; `BoonState.forged`), 12% por carta,
+  sem raridade e sem nível (BUG-017; `Boon.has_rarity`, `max_level` 1) (6 hoje; nome "Elo" no texto desde 2026-11-15). A carta mostra os dois dons de origem
   numa corrente de ouro velho com o Elo no meio (`EloLink`, `BoonState.sources`), o medalhão do Elo tem aro de elos,
   a HUD saúda cada Elo novo com "Elo formado" sem pausar (`EloBanner`) e a pausa tem o painel "Dons" (`BoonsScreen`).
   Capturas dessas telas numa partida real: `tools/ui_lab.gd` (comando no topo).
@@ -571,9 +592,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `Array[Resource]`, lidos tipados por `following()`: o `Array[ComboNode]` dentro da própria classe vazava o script na saída,
   as linhas "ObjectDB instances were leaked" e "resources still in use" de toda execução, ciclo 10). Dons: `data/boons/*.tres`
   (`Boon.slot`: um dom por ação, ATTACK/SPECIAL/CAST/DASH, o novo substitui o antigo; NONE = age sozinho, sem limite.
-  Raridade sorteada por carta, `Boon.RARITY_MULT` multiplica os números com `BoonMod.by_rarity`)
-  (`BoonMod`: `stat`, `tag`, `values` por nível; as estatísticas que o jogo conhece estão em `scripts/game/combat.gd` e
-  `game.gd` `_take`). Inimigos: `data/enemies/*.tres`. Ondas, elites, fonte e chefe: `data/waves/catacombs.tres`.
+  Raridade sorteada por carta em sequência, `Boon.RARITY_MULT` multiplica o nível 1 dos números com `BoonMod.by_rarity`)
+  (`BoonMod`: `stat`, `tag`, `base` e `per_level` (E3, C13-05: ganho fixo por nível); as estatísticas que o jogo
+  conhece estão em `scripts/game/combat.gd` e `game.gd` `_take`). Baralho das portas, raridade, loja e ouro: dados no
+  `_stage` do `make_data.gd` (`reward_deck`, `rarity_chance`, `guardian_rarity_chance`, `elo_chance`, `trade_chance`,
+  `gold_*`, `shop_groups`). Inimigos: `data/enemies/*.tres`. Ondas, elites, fonte e chefe: `data/waves/catacombs.tres`.
 - **E1c, Morvath sumia e aparecia em outro lugar para atacar (bug 3)**: a posição dele no jogo nunca saltou; o desenho
   sim. Os golpes dele vêm de clipes das bibliotecas com deslocamento de raiz assado no quadril: a foice (`slash3`,
   Sword_Regular_C, desde a E1b `43229d9`) punha o corpo até 8 m à frente (4 m já na primeira pose) e voltava de uma vez no
@@ -797,15 +820,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## Pendências conhecidas
-- **Fase por salas** (padrão): o robô desce as 10 salas em cerca de 5 minutos e chega em Morvath com 4 a 7 dons;
-  vence ou perde por pouco. Falta teste com gente. O modo de horda (`--horde`) ficou como estava, com os números novos.
+- **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
+  com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).
+  `tools/smoke.sh 300` não chega mais em Morvath: usar 600 (ou `--medium`). Falta teste com gente. O modo de horda (`--horde`) ficou como estava, com os números novos.
 - Morvath (4 fases, 2026-11-15; ciclo 9): o robô sem tempo de reação vence sempre e quase não apanha; com reação humana
   (`--bot-reaction=0.25`) vence cerca de metade das lutas com 5 dons, perde mais na fase 4 (a tempestade e a maldição
   somam mais da metade do dano). A luta dura de 1 min 40 s a 2 min para o robô (abaixo da meta de 2 a 4 min; gente bate
   menos, medir antes de mexer na vida). A dificuldade para gente ainda não foi medida. A foice é a lâmina do modelo aprovado (ele não
   tem foice); meias-luas sem as caveiras da referência; maldição lida pelo brilho roxo e fumaça no herói. Diferenças do Hades
   que ficaram: Morvath tem ataques próprios (não os da chefe do Hades), só a vida (6050) e o dano seguem a escala; sem martelo, feitiço lunar ou dom de velocidade como recompensa; a loja compra ao pisar (não há botão de
-  interagir); o bônus de dano por sequência de golpes (`DamageCalc.combo_bonus`) continua ligado; a seta especial não persegue.
+  interagir); a seta especial não persegue (o bônus de sequência de golpes saiu na E3, D-10).
   Depois do 1º teste do Daniel (mais dinâmico, 2026-11-14; o avanço e o "andar corta o golpe" desta época saíram na E1c,
   ver Golpe parado): o corte de luz segue o lado do braço
   (`ComboNode.sweep`, `SWEEP` em `make_data.gd`), golpes

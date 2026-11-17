@@ -6,12 +6,14 @@
 [sub_resource type="Resource" id="Resource_3jku6"]
 script = ExtResource("1_1fe7v")
 stat = &"dodge_ember_dps"
-values = PackedFloat32Array(8, 12, 16)
+base = 8.0
+per_level = PackedFloat32Array()
 
 [resource]
 script = ExtResource("2_t8ta7")
 id = &"rastro"
 family = 4
 icon = 16
-requires = Array[StringName]([&"passos", &"brasas"])
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme"), PackedStringArray("brasas", "redemoinho", "lamina_ardente", "golpe_brasa", "pesado_brasa", "circulo_brasa", "passo_brasa")])
 mods = Array[ExtResource("1_1fe7v")]([SubResource("Resource_3jku6")])

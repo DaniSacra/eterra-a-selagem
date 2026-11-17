@@ -6,10 +6,11 @@ extends RefCounted
 enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS }
 ## What a room gives when it is cleared (or what the shop sells).
 ## BOON: a gift (three to choose). POM: one more level for a gift already owned. HEART: more life.
-## MAGICK: more Magia. GOLD: gold for the shop. HEAL: life back (shop only).
-enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL }
+## MAGICK: more Magia. GOLD: gold for the shop. HEAL: life back (shop only). POM_SLICE: one level more for a gift
+## drawn among those held, no choice (shop only; Hades II's pom slice).
+enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE }
 
-const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal"]
+const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal", &"reward_pom_slice"]
 const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss"]
 
 
@@ -41,6 +42,10 @@ var fountain_seen := false
 ## The arena of the room the paladin stands in (-1: none yet), and every arena fought in so far.
 var current_layout := -1
 var seen_layouts: Array[int] = []
+## How many rooms each arena held so far (index in StageDef.layouts; the shop's and the fountain's count too).
+var uses: Dictionary = {}
+## The doors' rewards come off this deck (C13-02).
+var deck: RewardDeck
 ## Dev (--arena): the opening room is this arena (-1: drawn as any).
 var forced_layout := -1
 var _rng: RandomNumberGenerator
@@ -50,6 +55,7 @@ func _init(stage_def: StageDef, rng: RandomNumberGenerator) -> void:
 	stage = stage_def
 	_rng = rng
 	miniboss_depth = _rng.randi_range(stage.miniboss_depth_min, stage.miniboss_depth_max)
+	deck = RewardDeck.new(stage.reward_deck)
 
 
 ## The opening room: a fight that always ends in a gift.
@@ -65,7 +71,7 @@ func options(can_pom: bool) -> Array[Room]:
 		out.append(Room.new(Kind.BOSS, Reward.NONE, next))
 		return out
 	if next == stage.rooms:
-		out.append(Room.new(Kind.SHOP, Reward.NONE, next))
+		out.append(Room.new(Kind.SHOP, Reward.NONE, next, stage.layouts.find(stage.shop_layout)))
 		return out
 	if next == miniboss_depth:
 		out.append(_room(Kind.MINIBOSS, Reward.BOON, next))
@@ -87,7 +93,12 @@ func enter(room: Room) -> void:
 	depth = room.depth
 	if room.kind == Kind.FOUNTAIN:
 		fountain_seen = true
-	if room.kind == Kind.SHOP or room.kind == Kind.BOSS:
+	if room.kind == Kind.BOSS:
+		current_layout = -1
+		return
+	if room.layout >= 0:
+		uses[room.layout] = int(uses.get(room.layout, 0)) + 1
+	if room.kind == Kind.SHOP:
 		current_layout = -1
 		return
 	current_layout = room.layout
@@ -95,19 +106,12 @@ func enter(room: Room) -> void:
 		seen_layouts.append(room.layout)
 
 
-## A reward no other door of this room shows (unless every kind is taken already).
+## The next card of the deck that no other door of this room shows (a pomegranate only when a gift can grow); a
+## gift when the deck has nothing that fits even full.
 func _reward(used: Array[Reward], can_pom: bool) -> Reward:
-	var kinds: Array[Reward] = []
-	var weights := PackedFloat32Array()
-	for i in stage.rewards.size():
-		var r := stage.rewards[i] as Reward
-		if used.has(r) or (r == Reward.POM and not can_pom):
-			continue
-		kinds.append(r)
-		weights.append(stage.reward_weights[i] if i < stage.reward_weights.size() else 1.0)
-	if kinds.is_empty():
-		return Reward.BOON
-	return kinds[_rng.rand_weighted(weights)]
+	var r := deck.draw(_rng, func(card: int) -> bool:
+		return not used.has(card) and (card != Reward.POM or can_pom))
+	return Reward.BOON if r < 0 else r as Reward
 
 
 ## A room of this kind at this depth, in an arena drawn for it (_layout) and one of its variants.
@@ -119,7 +123,8 @@ func _room(kind: Kind, reward: Reward, at_depth: int) -> Room:
 
 ## The arena of a room (cycle C12): one whose place in the descent (RoomLayout.depth) holds this depth, that may hold
 ## this kind of room (guardian, fountain), never a high one before HARD_FROM, never the arena of the fight just left
-## (a fountain may follow its own), the ones not fought in yet first.
+## (a fountain may follow its own), never one already used StageDef.arena_max_uses times (C13-01), the least used
+## first (the ones not fought in yet before all).
 func _layout(kind: Kind, at_depth: int) -> int:
 	if stage.layouts.is_empty():
 		return 0
@@ -138,11 +143,16 @@ func _layout(kind: Kind, at_depth: int) -> int:
 		if at < l.depth.x - 0.001 or at > l.depth.y + 0.001 or (l.difficulty >= 2 and at < HARD_FROM):
 			continue
 		found.append(i)
+	var fits := found.filter(func(i: int) -> bool: return int(uses.get(i, 0)) < stage.arena_max_uses)
+	if not fits.is_empty():
+		found.assign(fits)
 	if found.is_empty():
 		# nothing fits (a stage of one room shape): anything but the arena just left
 		for i in stage.layouts.size():
 			if i != current_layout or stage.layouts.size() == 1:
 				found.append(i)
-	var fresh := found.filter(func(i: int) -> bool: return not seen_layouts.has(i))
-	var pool: Array = fresh if not fresh.is_empty() else found
+	var least := 1 << 30
+	for i in found:
+		least = mini(least, int(uses.get(i, 0)))
+	var pool := found.filter(func(i: int) -> bool: return int(uses.get(i, 0)) == least)
 	return pool[_rng.randi() % pool.size()]

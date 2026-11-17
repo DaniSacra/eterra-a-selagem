@@ -7,7 +7,8 @@
 script = ExtResource("1_nlwfi")
 stat = &"freeze_time"
 tag = &"dash"
-values = PackedFloat32Array(0.8, 1.2, 1.6)
+base = 0.8
+per_level = PackedFloat32Array(0.4, 0.4)
 
 [resource]
 script = ExtResource("2_twlni")

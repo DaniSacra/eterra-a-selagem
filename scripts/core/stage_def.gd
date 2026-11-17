@@ -10,6 +10,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export_group("Rooms")
 ## Depth of the last room before the boss (the shop). The boss comes right after it.
 @export var rooms := 10
+## No arena is fought in more than this many times in a descent (C13-01; the hall counts its opening, fountain, shop).
+@export var arena_max_uses := 3
 ## The guardian room comes at one depth between these two.
 @export var miniboss_depth_min := 4
 @export var miniboss_depth_max := 6
@@ -59,12 +61,16 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var wave_delay := 0.5
 
 @export_group("Rewards")
-## What a door can promise (RunMap.Reward) and how often.
-@export var rewards: PackedInt32Array = []
-@export var reward_weights: PackedFloat32Array = []
-## Gold left by every cleared fight, and the gold of a gold reward.
-@export var room_gold_min := 10
-@export var room_gold_max := 15
+## The deck the doors' rewards are drawn from (RunMap.Reward, each card listed once per copy; C13-02, Hades II's
+## RunProgress): drawn without putting back, filled again when no card left fits (RewardDeck).
+@export var reward_deck: PackedInt32Array = []
+## The gold of a fight (C13-04, Hades II): a ceiling drawn between gold_cap_min and gold_cap_max plus gold_per_depth a
+## room of depth; each enemy that falls leaves its share of it with gold_drop_chance (GoldPurse).
+@export var gold_cap_min := 10
+@export var gold_cap_max := 15
+@export var gold_per_depth := 0.5
+@export var gold_drop_chance := 0.7
+## The gold of a gold reward.
 @export var gold_reward := 100
 ## A heart: more life (and that much healed). Magia: more Magia.
 @export var heart_life := 25.0
@@ -72,9 +78,16 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## The fountain heals this share of life.
 @export var fountain_heal := 0.4
 
+@export_group("Blessings")
+## Rarity chances of a card, tried in turn (rare, epic, legendary; BoonState.roll_rarity), and the guardian's.
+@export var rarity_chance: Array[float] = Boon.RARITY_CHANCE
+@export var guardian_rarity_chance: Array[float] = Boon.RARITY_CHANCE_GUARDIAN
+## Chance a card is an Elo (when one can be formed) and chance it is a trade (E3-01).
+@export var elo_chance := Boon.ELO_CHANCE
+@export var trade_chance := Boon.TRADE_CHANCE
+
 @export_group("Shop")
-## What the shop sells (RunMap.Reward) and the price of each.
-@export var shop_items: PackedInt32Array = []
-@export var shop_prices: PackedInt32Array = []
+## The shop shows one item of each group (C13-04, Hades II's WorldShop: a Blessing; healing or life; growth).
+@export var shop_groups: Array[ShopGroup] = []
 ## The cure sold in the shop heals this share of life.
 @export var shop_heal := 0.4

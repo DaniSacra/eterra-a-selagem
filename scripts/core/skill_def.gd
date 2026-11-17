@@ -1,7 +1,8 @@
 class_name SkillDef
 extends Resource
 ## What a gift does on its own, every few seconds, without a button (the paladin keeps fighting meanwhile).
-## Every number has one value per level of the gift.
+## Every number has one value per level of the gift (the last one for every level after). The rarity scales only the
+## first level's damage; what a level adds on top of it never (C13-05, as BoonMod: damage_at).
 
 enum Kind {
 	## Strikes fall on enemies near the paladin (fire, light pillars).
@@ -41,6 +42,13 @@ func get_cooldown(level: int) -> float:
 
 func get_damage(level: int) -> float:
 	return at(damage, level)
+
+
+## The damage at a level with a rarity's multiplier: the first level's damage times it, plus what the levels add.
+func damage_at(level: int, mult: float = 1.0) -> float:
+	if level <= 0 or damage.is_empty():
+		return 0.0
+	return damage[0] * mult + get_damage(level) - damage[0]
 
 
 func get_count(level: int) -> int:

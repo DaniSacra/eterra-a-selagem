@@ -7,21 +7,24 @@
 script = ExtResource("1_fcmmy")
 stat = &"blow_wave"
 tag = &"dash"
-values = PackedFloat32Array(12)
+base = 12.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_13833"]
 script = ExtResource("1_fcmmy")
 stat = &"blow_wave_m"
 tag = &"dash"
-values = PackedFloat32Array(9.6)
+base = 9.6
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_4nh0p"]
 script = ExtResource("1_fcmmy")
 stat = &"blow_wave_w"
 tag = &"dash"
-values = PackedFloat32Array(1.6)
+base = 1.6
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

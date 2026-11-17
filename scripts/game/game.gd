@@ -101,6 +101,9 @@ var focus: Variant = null
 var _pending_levels := 0
 ## Rarity of each card on the table (Boon.Rarity by gift id).
 var _offer_rarity: Dictionary = {}
+## The cards of the choice open now (or last opened): rarity, trade (E3-01), the gift replaced and the level it comes
+## at, for the choice screen (BoonChoice reads _offer_rarity; the trade and the level are here).
+var offer_cards: Array[BoonState.Card] = []
 var _screen: Control
 ## The two lines read during Morvath's ending.
 var _caption: Control
@@ -585,15 +588,33 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	player.arena = arena
 
 
-## Gifts by a cleared room or the shop: three cards drawn with these rarity weights.
-func open_boon_choice(weights: Array[float] = Boon.RARITY_WEIGHT) -> void:
-	_open_choice(boons.offers(_rng), weights)
+## Gifts by a cleared room or the shop: three cards drawn with these rarity chances (Boon.RARITY_CHANCE; the stage's
+## own in the rooms), with the stage's chances of an Elo and of a trade.
+func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE) -> void:
+	_open_choice(_draw_cards(chances))
+
+
+func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE) -> Array[BoonState.Card]:
+	var elo := rooms.stage.elo_chance if rooms else Boon.ELO_CHANCE
+	var trade := rooms.stage.trade_chance if rooms else Boon.TRADE_CHANCE
+	return boons.draw(_rng, 3, chances, elo, trade)
 
 
 ## A level more for a gift already owned (the paladin picks which).
 func open_grow_choice() -> void:
-	var offers := boons.grow_offers(_rng)
-	_open_choice(offers, Boon.RARITY_WEIGHT, true)
+	_open_choice(boons.grow_cards(_rng))
+
+
+## A slice of pomegranate (the shop, C13-04): one level more for a Blessing held, drawn, no choice. False when none
+## can grow.
+func grow_random() -> bool:
+	var cards := boons.grow_cards(_rng, 1)
+	if cards.is_empty():
+		return false
+	offer_cards = cards
+	_take(cards[0].boon)
+	fx.word(Vector3(player.pos.x, 3.0, player.pos.y), T.t("boon_" + String(cards[0].boon.id)), cards[0].boon.color())
+	return true
 
 
 ## A heart: more life, and that much healed.
@@ -655,15 +676,21 @@ func xp_ratio() -> float:
 	return float(xp) / Leveling.needed(level)
 
 
-func _open_choice(offers: Array[Boon] = [], weights: Array[float] = Boon.RARITY_WEIGHT, grow: bool = false) -> void:
+## cards: BoonState.Card (or plain Boon, taken as common cards at one level more: the laboratories and tests).
+func _open_choice(cards: Array = []) -> void:
 	mode = Mode.CHOICE
 	if rooms == null:
-		offers = boons.offers(_rng)
+		cards = _draw_cards()
+	offer_cards.clear()
+	for c: Variant in cards:
+		offer_cards.append(c if c is BoonState.Card else boons.cards_for([c])[0])
 	_offer_rarity.clear()
-	for b in offers:
-		_offer_rarity[b.id] = boons.rarity(b.id) if grow else BoonState.roll_rarity(_rng, weights)
-		if not grow:
-			seen_boons[b.id] = true
+	var offers: Array[Boon] = []
+	for c in offer_cards:
+		offers.append(c.boon)
+		_offer_rarity[c.boon.id] = c.rarity
+		if not c.grow:
+			seen_boons[c.boon.id] = true
 	if Dev.has("autopick") or offers.is_empty():
 		# captures of the fight: take a gift at once, no screen
 		_on_chosen(offers[0] if not offers.is_empty() else null)
@@ -696,7 +723,15 @@ func _on_chosen(b: Boon) -> void:
 
 func _take(b: Boon) -> void:
 	var old_hp_bonus := boons.stat(&"max_hp")
-	boons.take(b, _offer_rarity.get(b.id, Boon.Rarity.COMMON))
+	var card: BoonState.Card = null
+	for c in offer_cards:
+		if c.boon == b:
+			card = c
+	if card != null:
+		boons.take_card(card)
+	else:
+		boons.take(b, _offer_rarity.get(b.id, Boon.Rarity.COMMON))
+	offer_cards.clear()
 	gifts_taken.append(b.id)
 	if b.is_duo():
 		elos_formed[b.id] = true
@@ -729,9 +764,11 @@ func _on_shield_broke() -> void:
 	if burst > 0.0:
 		fx.ring(player.pos, 5.5, Combat.LIGHT, 0.35)
 		horde.in_circle(player.pos, 5.5, _found)
+		horde.dealing = &"bastiao"
 		for e: Enemy in _found.duplicate():
 			if not horde.damage(e, burst, (e.pos - player.pos).normalized(), 12.0) and e.def.behavior != EnemyDef.Behavior.BOSS:
 				e.stun_t = maxf(e.stun_t, 1.0)
+		horde.dealing = &""
 
 
 # ---------- the light fountain ----------
@@ -1478,7 +1515,7 @@ func result() -> Dictionary:
 		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
 		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
-		"fountain_used": room_tally.fountain_used, "ult": ults.stats()}
+		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size()}
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

@@ -7,7 +7,8 @@
 script = ExtResource("1_3mig5")
 stat = &"spin_loop_hits"
 tag = &"spin"
-values = PackedFloat32Array(3)
+base = 3.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]
