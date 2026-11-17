@@ -77,6 +77,8 @@ const EDGE_INSET := Vector4(30.0, 96.0, 30.0, 116.0)
 ## The four actions in the order of the diamonds, with the gift slot that changes each.
 const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"dodge"]
 const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
+## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
+const ULT_HINT_TIME := 1.8
 
 var game: Game
 var _crest: HeroCrest
@@ -112,8 +114,16 @@ var _combo_stroke: HudMark
 var _move: Label
 var _notice: Label
 var _slots: Array[ActionSlot] = []
-## The ultimate's diamond, after the four (hidden without an ultimate): its gold level rises with the charge.
+## The ultimate's diamond, after the four: its gold level rises with the charge; sealed with "Maestria N" over it
+## before the Mastery unlocks one (hidden only for the robot, who has none); a press that cannot let it go says why
+## (T5, ult_caption).
 var _ult_slot: ActionSlot
+## Seconds the ultimate's caption still shows a refused press's reason or "Pronta"; whether the charge was full.
+var _ult_hint_t := 0.0
+var _ult_was_ready := false
+## The how-to-charge notice shows once a run, on the first refused press.
+var _ult_told := false
+var _ult_heard := false
 var _passives: HBoxContainer
 var _arrow: Label
 var _arrow_mark: HudMark
@@ -392,11 +402,56 @@ func _update_slots(p: Player) -> void:
 				s.show_lights(game.psalms.lights if flock else 0, flock.count if flock else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
+	_update_ult(p)
+
+
+## The ultimate's diamond (T5): sealed with the Mastery level it needs, or its charge; a refused press shows why for
+## a moment (and, the first time in a run, how it charges), a charge that fills shows "Pronta" and keeps pulsing.
+func _update_ult(p: Player) -> void:
+	if not _ult_heard:
+		_ult_heard = true
+		p.ult_refused.connect(_on_ult_refused)
+	_ult_hint_t = maxf(0.0, _ult_hint_t - get_process_delta_time())
 	var ult := game.ults.def if game.ults else null
-	_ult_slot.visible = ult != null
-	if ult != null:
-		_ult_slot.glyph = BoonIcon.ULT_GLYPH + ult.kind
-		_ult_slot.refresh(null, 1.0 - game.ults.ratio())
+	var first := game.hero.first_ult_level() if game.hero else 0
+	_ult_slot.visible = ult != null or (first > 0 and game.bot == null)
+	if not _ult_slot.visible:
+		return
+	var full := ult != null and game.ults.charge.ready()
+	if full and not _ult_was_ready:
+		_ult_hint_t = ULT_HINT_TIME
+	_ult_was_ready = full
+	var shown := ult if ult != null else game.hero.ult_for(&"", first)
+	_ult_slot.glyph = BoonIcon.ULT_GLYPH + shown.kind
+	_ult_slot.refresh(null, 1.0 - game.ults.ratio() if ult != null else 0.0)
+	_ult_slot.sealed = ult == null
+	_ult_slot.pulse = full
+	_ult_slot.caption = ult_caption(ult != null, full, game.ults.ratio(), first, _ult_hint_t > 0.0)
+	_ult_slot.caption_color = UiKit.PALE if _ult_hint_t > 0.0 else UiKit.DIM
+
+
+## The text over the ultimate's diamond: none (sealed) -> "Maestria N" always; full -> "Pronta" while hinting;
+## charging -> "Carga N%" while hinting (a refused press); else nothing.
+static func ult_caption(has_ult: bool, full: bool, ratio: float, first_level: int, hinting: bool) -> String:
+	if not has_ult:
+		return T.t(&"hud_ult_locked", {"n": first_level})
+	if not hinting:
+		return ""
+	if full:
+		return T.t(&"hud_ult_ready")
+	return T.t(&"hud_ult_charging", {"n": floori(ratio * 100.0)})
+
+
+func _on_ult_refused() -> void:
+	_ult_hint_t = ULT_HINT_TIME
+	if _ult_told:
+		return
+	_ult_told = true
+	var ult := game.ults.def if game.ults else null
+	if ult == null:
+		show_notice(T.t(&"hud_ult_locked_tip", {"n": game.hero.first_ult_level()}))
+	else:
+		show_notice(T.t(&"hud_ult_charge_tip"))
 
 
 ## Magia the held (Omega) version of a slot's action costs; 0 when it has none.

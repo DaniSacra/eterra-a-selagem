@@ -1,7 +1,7 @@
 class_name UltDef
 extends Resource
 ## A hero's ultimate (D-54; docs/design/warrior_spec.md 3.2, ultimate_u2_proposals.md): charged by the Magia spent on
-## Omegas, one chosen before the descent, unlocked by Mastery. Only the numbers for now (no behaviour yet): written by
+## Omegas and (T5) by the damage dealt and taken, one chosen before the descent, unlocked by Mastery. Written by
 ## _ultimates in tools/make_data.gd, read by HeroDef.ultimates; played by Ultimates (scripts/game/ultimates.gd), the
 ## shapes and the pull are the pure functions below (tests/test_ultimate.gd).
 
@@ -13,8 +13,13 @@ enum Kind { CLEAVE, VORTEX }
 @export var name_key: StringName
 @export var desc_key: StringName
 @export var kind: Kind = Kind.CLEAVE
-## Magia spent on Omegas to fill it (Hades II: Sky Fall 60, Moon Water 70).
+## The charge that fills it, in Magia spent on Omegas (Hades II: Sky Fall 60, Moon Water 70).
 @export var charge := 60.0
+## What else charges it (T5, docs/design/t5_ultimate.md): charge given per point of damage the hero deals (the
+## ultimate's own hits never count) and per point of life he loses. Without them a player who never holds an Omega
+## never had it.
+@export var damage_charge := 0.0
+@export var hurt_charge := 0.0
 @export_range(1, 20) var mastery_level := 2
 ## The protected gesture that starts it (cuts the blow in progress, as the dodge does).
 @export var gesture := 0.3

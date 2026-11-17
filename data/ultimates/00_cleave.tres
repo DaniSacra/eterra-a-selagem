@@ -7,4 +7,6 @@ script = ExtResource("1_e2lpn")
 id = &"cleave"
 name_key = &"ult_cleave"
 desc_key = &"ult_cleave_desc"
+damage_charge = 0.02
+hurt_charge = 1.0
 tags = Array[StringName]([&"ultimate", &"light"])

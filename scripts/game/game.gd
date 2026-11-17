@@ -1550,8 +1550,12 @@ func _equip_talents() -> void:
 		ids = book.sanitized(block.equipped, level, hero.mastery.devotion(level))
 		if Dev.has("hero-equip"):
 			_warn_dropped(book, block.equipped, ids, level)
-		var ult := hero.ultimate(StringName(block.ultimate))
-		ultimate = String(ult.id) if ult != null and ult.mastery_level <= level else ""
+		# the one chosen or, never chosen (T5), the first the level unlocks, kept in the save as the choice
+		var ult := hero.ult_for(StringName(block.ultimate), level)
+		ultimate = String(ult.id) if ult != null else ""
+		if ultimate != "" and block.ultimate != ultimate and Save.enabled:
+			block.ultimate = ultimate
+			Save.write()
 	elif Dev.has("hero-equip"):
 		push_warning("--hero-equip: the robot takes no Gifts from the save; use --talents=a,b")
 	if Dev.has("ultimate"):

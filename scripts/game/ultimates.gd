@@ -2,7 +2,7 @@ class_name Ultimates
 extends Node3D
 ## The hero's ultimate in play (D-54, E2-08 and E2-10; docs/design/warrior_spec.md 3.2, ultimate_u2_proposals.md
 ## section 1 and proposal A). One per descent (Game.ultimate, from the save or --ultimate=id), charged by the Magia
-## spent on Omegas (UltCharge), let go by the action "ultimate" when full. The Player plays the protected gesture
+## spent on Omegas and (T5) the damage dealt and the life lost (UltCharge), let go by the action "ultimate" when full. The Player plays the protected gesture
 ## (State.ULT: it cuts the blow under way as the dodge does); this node spends the charge when it begins and plays the
 ## blow when it ends. Its hits never feed the combo counter nor give Magia back (Combat.hit_enemy counts = false),
 ## never a finisher nor an Omega (no passive, no impact frame). Numbers: UltDef (data/ultimates/, make_data.gd).
@@ -82,6 +82,8 @@ var damage := 0.0
 ## The same in Morvath's room only (E6: does it charge there?).
 var boss_uses := 0
 var boss_damage := 0.0
+## Where the charge came from in this run (RESULT ultimate.charged: magick, damage, hurt; T5).
+var charged := {"magick": 0.0, "damage": 0.0, "hurt": 0.0}
 var vortex: Vortex
 ## Where the Voragem will land (chosen on the press) and the band's warning while the gesture lasts.
 var _target := Vector2.ZERO
@@ -95,13 +97,16 @@ func setup(g: Game) -> void:
 	game = g
 	game.player.ult_started.connect(_on_started)
 	game.player.ult_landed.connect(_on_landed)
+	game.player.was_hurt.connect(_on_hurt)
 
 
 ## The ultimate of this descent (null: none). The charge starts empty.
 func equip(u: UltDef) -> void:
 	def = u
 	charge = UltCharge.new(u.charge if u else 60.0)
-	charge.feed(game.player.magick.spent)  # (only what is spent from now on counts)
+	# (only what is spent and dealt from now on counts)
+	charge.feed(game.player.magick.spent)
+	charge.feed_from(&"damage", _dealt(), 0.0)
 	game.player.ult = u
 	game.player.ult_ready = false
 
@@ -111,7 +116,13 @@ func step(dt: float) -> void:
 	if def == null:
 		p.ult_ready = false
 		return
-	charge.feed(p.magick.spent, game.boons.stat(&"ult_charge_pct"))
+	var rate := game.boons.stat(&"ult_charge_pct")
+	var v := charge.value
+	charge.feed(p.magick.spent, rate)
+	charged.magick += charge.value - v
+	v = charge.value
+	charge.feed_from(&"damage", _dealt(), def.damage_charge, rate)
+	charged.damage += charge.value - v
 	p.ult_ready = charge.ready()
 	if _warn != null and _warn.visible:
 		GroundLook.put(_warn.material_override as ShaderMaterial, &"progress", p.ult_progress())
@@ -138,9 +149,26 @@ func ratio() -> float:
 	return charge.ratio() if def != null else 0.0
 
 
+## The damage the hero dealt so far in the run, without the ultimate's own hits (they never charge the next one).
+func _dealt() -> float:
+	if game.horde == null:
+		return 0.0
+	return game.horde.dealt.total() - float(game.horde.dealt.by.get("ultimate", 0.0))
+
+
+## Life lost charges it too (UltDef.hurt_charge a point).
+func _on_hurt(amount: float) -> void:
+	if def == null:
+		return
+	var v := charge.value
+	charge.add(amount * def.hurt_charge, game.boons.stat(&"ult_charge_pct"))
+	charged.hurt += charge.value - v
+
+
 func stats() -> Dictionary:
 	return {"id": String(def.id) if def else "", "uses": uses, "damage": int(damage), "charge": snappedf(charge.value, 0.1),
-		"boss_uses": boss_uses, "boss_damage": int(boss_damage)}
+		"boss_uses": boss_uses, "boss_damage": int(boss_damage),
+		"charged": {"magick": roundi(charged.magick), "damage": roundi(charged.damage), "hurt": roundi(charged.hurt)}}
 
 
 ## Whether letting it go from here towards dir would reach WORTH_PACK enemies or a big one (an elite, a guardian,

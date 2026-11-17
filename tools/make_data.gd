@@ -990,6 +990,11 @@ func _mastery() -> void:
 	_save(m, MASTERY_PATH)
 
 
+## The ultimate's charge besides Magia (T5): per point of damage dealt and of life lost.
+const ULT_DAMAGE_CHARGE := 0.02
+const ULT_HURT_CHARGE := 1.0
+
+
 func _ult(n: int, id: StringName, kind: UltDef.Kind, props: Dictionary) -> void:
 	var u := UltDef.new()
 	u.id = id
@@ -1011,10 +1016,12 @@ func _ultimates() -> void:
 	DirAccess.make_dir_recursive_absolute(ULT_DIR)
 	for f in DirAccess.get_files_at(ULT_DIR):
 		DirAccess.remove_absolute(ULT_DIR + f)
-	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "mastery_level": 2, "gesture": 0.3,
+	# T5 (docs/design/t5_ultimate.md): it also fills with the damage dealt (ULT_DAMAGE_CHARGE a point, 3000 for the
+	# cleave) and the life lost (ULT_HURT_CHARGE a point): a player who never holds an Omega still gets it
+	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3,
 		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
 		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 300.0, "damage": 200.0, "stun": 1.0, "armor_mult": 2.0})
-	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "mastery_level": 6, "gesture": 0.3,
+	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
 		"tags": [&"ultimate", &"cast"] as Array[StringName], "anim": &"Sword_Attack", "anim_peak": PEAK[&"Sword_Attack"], "knockback": 2.0,
 		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 8.0,
 		"implode_damage": 120.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
