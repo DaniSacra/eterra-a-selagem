@@ -43,10 +43,3 @@ func test_every_sound_the_game_asks_for_has_a_recipe() -> void:
 	assert_gt(asked.size(), 15)
 	for sound: String in asked:
 		assert_true(Audio.SOUNDS.has(StringName(sound)), "%s (asked by %s) has no recipe" % [sound, asked[sound]])
-
-
-func test_music_tracks_are_well_formed() -> void:
-	for track: StringName in [&"title", &"catacombs", &"morvath", &"seal"]:
-		assert_true(Audio.MUSIC.has(track), String(track))
-		var m: Array = Audio.MUSIC[track]
-		assert_eq((m[3] as Array).size(), (m[4] as Array).size(), "%s: bass and melody have the same number of steps" % track)

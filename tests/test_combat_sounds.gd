@@ -98,4 +98,5 @@ func test_no_recipe_clips_on_its_own() -> void:
 
 func test_the_master_limiter_holds_at_minus_one_db() -> void:
 	var limiter := Audio.limit_master()
-	assert_almost_eq(limiter.ceiling_db, -1.0, 0.001)
+	assert_almost_eq(limiter.ceiling_db, Audio.LIMIT_DB, 0.001)
+	assert_lte(Audio.LIMIT_DB, -1.0, "room under -1 dBTP for the peaks between samples")

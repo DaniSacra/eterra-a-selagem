@@ -1,6 +1,6 @@
 class_name Synth
 extends RefCounted
-## Tiny synthesiser: sounds and music are recipes turned into 16-bit samples. Placeholder until recorded audio exists.
+## Tiny synthesiser: sounds are recipes turned into 16-bit samples. Placeholder until recorded audio exists.
 
 const RATE := 22050
 
@@ -68,17 +68,3 @@ static func to_stream(samples: PackedFloat32Array, loop: bool = false, rate: int
 
 static func note(semitones_from_a2: int) -> float:
 	return 110.0 * pow(2.0, semitones_from_a2 / 12.0)
-
-
-## A looping piece from a bass line and a melody (semitones from A2, -99 = rest), one step per beat fraction.
-static func loop_track(bass: Array, melody: Array, step: float, bass_wave: Wave, lead_wave: Wave, rate: int = 11025) -> PackedFloat32Array:
-	var out := PackedFloat32Array()
-	out.resize(int(maxi(bass.size(), melody.size()) * step * rate))
-	for i in bass.size():
-		if bass[i] > -99:
-			mix(out, tone(bass_wave, note(bass[i] - 12), note(bass[i] - 12), step * 1.9, 0.22, 0.01, 2.2, rate), i * step, rate)
-	for i in melody.size():
-		if melody[i] > -99:
-			mix(out, tone(lead_wave, note(melody[i] + 12), note(melody[i] + 12), step * 1.4, 0.11, 0.01, 3.0, rate), i * step, rate)
-	out.resize(int(maxi(bass.size(), melody.size()) * step * rate))
-	return out

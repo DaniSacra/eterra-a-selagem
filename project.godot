@@ -15,6 +15,7 @@ Save="*res://scripts/save.gd"
 T="*res://scripts/text.gd"
 Controls="*res://scripts/controls.gd"
 Audio="*res://scripts/audio.gd"
+Music="*res://scripts/music.gd"
 
 [display]
 

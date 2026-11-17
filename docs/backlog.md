@@ -256,9 +256,9 @@ Fechado na seção 0 (estado de cada item com a prova do QA-02). Abertos que fic
 |---|---|---|---|---|---|---|
 | C15-01 | C15 | P2 | Mixagem por barramentos, ducking nos avisos de Morvath | pico até -1 dBTP; integrado -18 a -14 LUFS | `gameplay-engineer` | aberto |
 | C15-02 | C15 | P2 | Som em toda ação, aviso e ataque de Morvath | teste que acusa evento sem som | `gameplay-engineer`, `art-director` | **combate feito na E1b** (`CombatSounds`, material do golpe, preparação por papel, tiros, queda, corte, quebra, círculo; `tests/test_combat_sounds.gd`; só síntese, `audio/LICENSES.md`); faltam projétil barrado na pedra (`projectiles.gd`), revisão de ouvido do `art-director` e gravação da mixagem de uma luta |
-| C15-03 | C15 | P2 | Música de combate e de Morvath por fase (CC0, CC-BY ou síntese, D-12b) | nenhum silêncio de 2 s com música ligada | `art-director`, Daniel (fonte) | aberto |
+| C15-03 | C15 | P2 | Música de combate e de Morvath por fase (CC0, CC-BY ou síntese, D-12b) | nenhum silêncio de 2 s com música ligada | `art-director`, Daniel (fonte) | **feito na E4** (síntese própria, `tools/make_music.gd`; salas em 2 camadas, Morvath em 4 por fase, temas dos 4 Salmos, vitória; `Music`, `MusicMix`; `tests/test_music.gd`); falta ouvir com o Daniel |
 | C15-04 | C15 | P2 | Ambiência por arena | idem | `environment-artist` | aberto |
-| C15-05 | C15 | P2 | `audio/LICENSES.md` e créditos | toda fonte listada | `ui-ux-designer` | aberto |
+| C15-05 | C15 | P2 | `audio/LICENSES.md` e créditos | toda fonte listada | `ui-ux-designer` | **feito na E4** (`audio/LICENSES.md` com a música; Como Jogar, Créditos, `CreditsScreen`) |
 | C14-A4 a A6 | C14 | P2 | Santuário, Ponte, Runas (D-29), cada uma com uma decisão de combate própria | testes do C12 e decisão medida | `environment-artist`, `gameplay-engineer`, `art-director` | aberto |
 
 ---

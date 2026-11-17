@@ -442,8 +442,28 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `name_key` do inimigo, senão `killer_unknown`; rótulo `defeated_by` ("Derrotado por: {name}"). A tela é do ui-ux-designer.
 - Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita;
   `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Golpes, ossos, escudo e atordoamento usam o Kenney Impact Sounds (CC0).
-  Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e CC-BY com crédito). Música desligada por enquanto.
-  Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1 dB
+  Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e CC-BY com crédito); no jogo, Como Jogar, Créditos
+  (`CreditsScreen`, textos `credits_*`; C15-05).
+  **Música (E4-06, C15-03)**: composta nota por nota e sintetizada pelo projeto em `tools/make_music.gd` (licença nossa;
+  tabelas de onda, coro por formantes, corda Karplus-Strong, sinos, tambores, Freeverb; ré menor, a luz de Elun em maior),
+  rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- catacombs morvath psalms victory]` (cerca de
+  3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`, 6,1 MB).
+  Faixas: `catacombs` (96 s, 80 BPM, laço sem emenda: a reverberação do fim aquece o começo) em 2 camadas, caminhada e luta;
+  `morvath` (64 s, 120 BPM) em 4 camadas, uma por fase; temas dos Salmos `psalm_sentinel`, `psalm_shelter`,
+  `psalm_shepherd`, `psalm_rock` (16 s); `victory` (12,6 s, bVI, bVII, I). Tocador: autoload `Music`
+  (`scripts/music.gd`, regras puras em `MusicMix`, `core/music_mix.gd`): cada faixa é um deck com as camadas começando
+  juntas; `Music.play(id, nível)` (o nível liga as primeiras camadas; a mesma faixa só troca o nível), troca de faixa em
+  crossfade (entra 1,5 s, sai 2,5 s), camada entra ou sai em 2 s, `Music.boss_phase(n)`, `Music.sting(id)` (aceita
+  `sentinel` ou `psalm_sentinel`; a música de fundo abaixa para `MusicMix.DUCK` 0,45 por baixo), a vitória passa para a
+  caminhada 2 s antes de acabar (`HANDOVER`); fades em tempo real (câmera lenta não mexe). Ligado: título e salas
+  (`Rooms._enter`: luta e guardião nível 2, fonte e loja 1; sala vencida volta a 1), Morvath (`Game._start_boss`,
+  `Boss.phase_changed`), vitória (`Boss`, no golpe final), morte (volta à caminhada). Barramento `Music` vai ao `Master`
+  antes do limitador; volume da opção `music` do save (0,7) e `Music.MUSIC_DB` -3 por baixo. Mixagem medida: os 4 de
+  Morvath juntos ficam muito abaixo de -1 dBTP sozinhos e pelo menos 6 dB abaixo de um golpe (`tests/test_music.gd`,
+  também nenhum silêncio de 2 s nas faixas nem numa descida inteira no relógio do `MusicMix`); a mistura inteira (Morvath na
+  fase 4 com os golpes mais fortes juntos a cada 0,25 s) antes e depois de um modelo do limitador: `tools/mix_probe.gd` (medido: música sozinha -29 dBFS RMS e -13 dBTP;
+  com os golpes, +4,2 dBTP antes do limitador e -1,4 dBTP depois). A outra frente (Salmos) só chama `Music.sting`.
+  Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1,5 dB nas amostras (E4: assim o pico real entre elas fica abaixo de -1 dBTP)
   (`Audio.LIMIT_DB`, `Audio.limit_master`, posto uma vez ao iniciar; ciclo C12c, GP-05). E1c (bug 2, "E apertado sem
   parar parece pacman"): o sopro da lâmina (`blade`, `blade_spin`, `thrust`, `dart`, `ComboNode.sound`, só quando o golpe
   sai de verdade) é gravado, sorteado entre 3 a 5 amostras CC0 do qubodup por família (`audio/blade_*.ogg`...), tom
@@ -459,7 +479,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   besta, escudo, ritual; `Horde._set_state`), o golpe solto (`strike`) e o tiro (`shot`: virote, orbe, trepadeira). Um
   inimigo novo com `tell`, comportamento e `material` que já existem soa sem código. 16 vozes (`Audio.VOICES`).
   Teste: `tests/test_combat_sounds.gd` (todo evento, material, inimigo e golpe do herói com receita; nenhuma receita
-  passa de 0,95 sozinha; limitador a -1 dB). Projéteis barrados pela pedra ainda sem som (`projectiles.gd`).
+  passa de 0,95 sozinha; limitador a -1,5 dB). Projéteis barrados pela pedra ainda sem som (`projectiles.gd`).
 
 ## Arenas (ciclo C12, Arenas I; plano em `docs/design/cycle12_arenas_plan.md`, plantas em `docs/art/cycle12_arenas_spec.md`)
 - A descida tem 10 salas e Morvath na 11 desde a E3 (era a de teste de 7, D-27, hoje `--medium`): abertura no Salão das

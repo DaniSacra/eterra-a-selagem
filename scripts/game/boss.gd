@@ -1217,7 +1217,8 @@ func _on_killed(dead: Enemy) -> void:
 	game.fx.kick_split(1.0)
 	game.fx.ring(center, 3.0, VIOLET, 0.4, 0.15, true)
 	Audio.play(&"boss_down")
-	Audio.music(&"")
+	# his music gives way to the victory, which hands over to the walk (Music.TRACKS)
+	Music.play(&"victory")
 	cue.emit(&"victory_blow", center, Vector2.ZERO, 0.0, VICTORY_TIME)
 	moment.emit(&"victory")
 
