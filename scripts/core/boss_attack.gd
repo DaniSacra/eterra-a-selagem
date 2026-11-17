@@ -25,7 +25,22 @@ extends Resource
 @export var then: StringName = &""
 @export var then_chance := 0.0
 @export var then_from_phase := 0
+## Layers (E2, the harder end of the fight): from layer_from_phase on, with chance layer_chance, other patterns are
+## laid over this attack while it runs (&"eruptions": circles on the floor whose free lane points at this attack's
+## way out, BossRules.free_way; &"summon": BossDef.layer_raise rising around him under the phase's ceiling). They
+## are laid layer_share of this attack's wind-up after it begins (0: with its first warning, 1: as it lands).
+@export var layers: Array[StringName] = []
+@export var layer_from_phase := 0
+@export var layer_chance := 0.0
+@export var layer_share := 0.0
 
 
 func allowed_in(phase: int) -> bool:
 	return phase >= from_phase and (until_phase <= 0 or phase <= until_phase)
+
+
+## The layers laid over this attack in this phase (empty when it has none yet).
+func layers_in(phase: int) -> Array[StringName]:
+	if layers.is_empty() or layer_from_phase <= 0 or phase < layer_from_phase:
+		return []
+	return layers

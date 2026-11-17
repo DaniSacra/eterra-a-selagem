@@ -83,6 +83,35 @@ Poses assadas com deslocamento de raiz (centro da figura afastado da posição l
 `size`): todos os inimigos ficam abaixo de 0,45 em todo clipe que não é morte; Morvath `slash1` até 1,13, `slash2` 0,98 a
 1,26, **`slash3` 1,41 a 2,94**. Os outros clipes de Morvath ficam abaixo de 0,45.
 
+### 1.4 Morvath depois da E1c e na E2 (gameplay-engineer, 2026-11-16)
+
+Medido com `tools/boss_cadence.gd` (estados do `Boss` quadro a quadro, 60 qps fixos, sem tela): luta do robô com
+`--start=boss --boons=5 --bot-reaction=0.25`, sementes 1, 3 e 5, e a investida à parte (`--boss-only=dash --bot-kite=0.6`,
+56 investidas). "Estado do ataque" = do começo do ataque ao começo da recuperação (aproximação, preparo e ativo);
+"Punida" = recuperações em que o paladino o acertou. Depois da E1c os arremessos (lâminas, maldição) já soltam no quadro
+do tiro e os golpes ficam no lugar (P0-3 e P1-5 resolvidos). Números da E2 em `docs/qa/e2_morvath.md`.
+
+| Ataque | Fases | Preparo [D] (fase 1 / 3 / 4) | Estado do ataque [M] (mediana) | Ativo [D] | Recuperação = janela [D] / [M] | Descanso depois [M] (fases 1 / 2 / 3 / 4) | Punida [M] | Camada E2 |
+|---|---|---|---|---|---|---|---|---|
+| Foice Sepulcral | 1 a 4 | 0,8 / 0,76 / 0,72, mais até 1,2 s de aproximação | 1,16 s (0,96 a 2,19) | varredura 0,16 s | 1,0 / 0,84 (mais a varredura) | 1,11 / 1,01 / 0,62 / 0,37 | 48 de 58 | erupções desde a fase 3 |
+| Lâminas das Almas | 1 a 3 | 0,7 / 0,67 / - | 0,71 s | meias-luas a 11 m/s, 26 m | 0,8 / 0,80 | 1,12 / 1,00 / 0,63 | 9 de 10 | mortos (esqueleto e feiticeiro) na fase 3 |
+| Investida | 1 a 4 (de 9 m) | 0,8 / 0,76 / 0,72 | 1,23 s (preparo + 0,42 de corrida) | 16 m em 0,42 s | 1,1 / 1,10 | 1,12 / 1,00 / 0,62 / 0,42 | 50 de 56 | - |
+| Erupções | 2 a 4 | aviso 1,2 / 1,14 / 1,08, duas levas a 1,0 s | 3,41 / 3,28 / 3,17 s | círculos de 4 m | 0,8 / 0,80 | - / 1,01 / 0,62 / 0,37 | 13 de 14 | - (na fase 4 a foice pode vir depois) |
+| Invocação | 2 a 4 | 1,1 + 0,45 entre mortos | 1,56 s | 2 esqueletos | 0,8 / 0,81 | - / 1,01 / 0,62 / 0,42 | 9 de 10 | - |
+| Maldição | 3 e 4 | 0,8 / 0,76 / 0,72 | 0,77 / 0,73 s | projétil a 7 m/s, segue 1,4 s | 0,6 / 0,60 | - / - / **3,1 a 3,4** / 0,4 a 3,4 | 5 de 8 | erupções e mortos quando o projétil sai |
+| Tempestade das Seis Almas | 4 | 0,81 por onda, 0,08 entre meias-luas, 1,0 entre ondas | **5,72 s** (3 ondas; antes 3,48 com 2) | 6 meias-luas por onda | 1,2 / 1,21 | 0,37 a 0,42 | 2 de 3 | erupções e mortos com a 1ª onda |
+| Rugido (troca de fase) | | 1,6 s | | empurrão 4 m | | | | |
+
+Leitura:
+- Antes da E2 o robô punia 70 a 90% das recuperações e quase só se feria nas fases 3 e 4; os ataques da fase 1 não o feriram em
+  nenhuma das 8 lutas medidas (foice, lâminas e investida: 0 de vida tirada). A foice (48 de 58 janelas punidas) é o ritmo da luta: preparo de 0,8 s, varredura de
+  0,16 s e 0,84 s de janela, parecido com os golpes de perto da Hécate do Hades (0,85 / 0,4 / 0,35 e 0,5 / 0,5 / 2,2).
+- **Folga medida na fase 3**: depois da maldição ele espera 3,1 a 3,4 s (não escolhe outro ataque com um tiro dele no
+  ar, `Boss._shots_flying`, e o projétil vive 4 s). A E2 enche essa espera com as erupções e os mortos postos quando o
+  projétil sai, em vez de encurtar o tempo de vida do projétil.
+- Descansos da E2: fases 3 e 4 de 0,9 e 0,75 para 0,6 e 0,4 s. Nas fases 1 e 2 ficaram (1,1 e 1,0): descansos menores ali
+  deram mais janelas ao robô e encurtaram a luta sem feri-lo mais (`docs/qa/e2_morvath.md`, tentativas descartadas).
+
 ## 2. Problemas priorizados (ANTES, 18b0785)
 
 | Id | Prioridade | Problema | Causa | Confirmada? |
@@ -173,3 +202,4 @@ para a corrida [H]; clipes longos (Slash_C, Sword_Attack) terminando no retorno,
 ## 5. Histórico
 
 - 2026-11-16: matriz criada com o ANTES (18b0785). Aguarda o DEPOIS das correções da E1c.
+- 2026-11-16 (E2): seção 1.4, Morvath medido depois da E1c e com as camadas da E2 (`tools/boss_cadence.gd`).

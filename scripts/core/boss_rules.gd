@@ -121,6 +121,46 @@ static func eruptions(player: Vector2, count: int, radius: float, toward: Vector
 	return out
 
 
+## Meters ahead of the paladin a way out is weighed at (BossRules.free_way): about what he walks in a warning.
+const FREE_PROBE := 5.0
+## Ways tried around him.
+const FREE_WAYS := 24
+
+
+## The way out of an attack of his for a paladin at `player` (E2, the layers): of FREE_WAYS directions, the one whose
+## spot FREE_PROBE meters ahead (on the floor, a meter inside its edge) stands farthest from that attack: from his
+## body plus `reach` (the scythe's half circle) and from each of his `lanes` (rays from him, half_width wide: the
+## blades, the storm, the curse, the charge). The eruptions laid over that attack keep their free lane on it, so the
+## two never close the same way. Toward the middle when nothing on the floor is ahead.
+static func free_way(player: Vector2, boss: Vector2, reach: float, lanes: PackedVector2Array, half_width: float, floor: FloorShape) -> Vector2:
+	var best := Vector2.ZERO
+	var most := -INF
+	for k in FREE_WAYS:
+		var d := Vector2.from_angle(TAU * k / FREE_WAYS)
+		var q := player + d * FREE_PROBE
+		if not floor.contains(q, 1.0):
+			continue
+		var c := clearance(q, boss, reach, lanes, half_width)
+		if c > most + 0.001:
+			most = c
+			best = d
+	if best == Vector2.ZERO:
+		var mid := floor.center - player
+		return mid.normalized() if mid.length() > 0.01 else Vector2.DOWN
+	return best
+
+
+## How far a spot stands from an attack (negative inside it): his body plus reach, and his lanes.
+static func clearance(q: Vector2, boss: Vector2, reach: float, lanes: PackedVector2Array, half_width: float) -> float:
+	var rel := q - boss
+	var c := rel.length() - reach
+	for l in lanes:
+		var along := rel.dot(l)
+		var off := absf(rel.cross(l)) if along > 0.0 else rel.length()
+		c = minf(c, off - half_width)
+	return c
+
+
 ## The ritual ends when its time is up, or when everything it raised has fallen (those still to rise count as
 ## standing: killing the first never ends it before the rest are up).
 static func ritual_over(elapsed: float, max_time: float, raised: int, standing: int, pending: int = 0) -> bool:

@@ -1,10 +1,12 @@
 extends GutTest
 ## Every pattern of Morvath has a way out in his round chamber (cycle C11, docs/design/boss_arena.md): with Morvath at
 ## 12 spots of the floor and the paladin at 12 (every pair where their bodies do not overlap), the scythe, the
-## blades, the dash, the eruptions (both sequences), the storm (both waves, the first wave's crescents still flying
-## while he moves to the second's gap) and the curse can each be escaped walking or with one dodge, after a person's
-## reaction time (REACTION) and with the shortest wind-up of any phase. The floor is the chamber's own (the stage's
-## boss layout), the patterns are BossRules' and the lanes are cut at the edge exactly as Boss cuts them.
+## blades, the dash, the eruptions (both sequences), the storm (every wave, the crescents of the waves before still
+## flying while he moves to the next one's gap) and the curse can each be escaped walking or with one dodge, after a
+## person's reaction time (REACTION) and with the shortest wind-up of any phase. The floor is the chamber's own (the
+## stage's boss layout), the patterns are BossRules' and the lanes are cut at the edge exactly as Boss cuts them.
+## E2: so can the layers laid over his attacks late in the fight (BossAttack.layers): the storm with eruptions, the
+## scythe with eruptions and the curse with eruptions (his dead rising with them stand at least summon_clear away).
 
 const STAGE := "res://data/stages/catacombs.tres"
 const DEF := "res://data/bosses/morvath.tres"
@@ -39,8 +41,12 @@ func before_all() -> void:
 
 
 func after_all() -> void:
-	for id in walked:
-		gut.p("%s: %d pairs walk out, %d need the dodge" % [id, int(walked[id]), int(dodged.get(id, 0))])
+	var ids := walked.keys()
+	for id in dodged:
+		if not ids.has(id):
+			ids.append(id)
+	for id in ids:
+		gut.p("%s: %d pairs walk out, %d need the dodge" % [id, int(walked.get(id, 0)), int(dodged.get(id, 0))])
 
 
 func _scale(phase: int) -> float:
@@ -263,7 +269,7 @@ func test_the_eruptions_have_a_way_out_both_times() -> void:
 				at = out[0]
 
 
-func test_the_storm_has_a_way_out_of_both_waves() -> void:
+func test_the_storm_has_a_way_out_of_every_wave() -> void:
 	var windup := _windup(def.storm_windup, 4)
 	var rng := RandomNumberGenerator.new()
 	for pair in _pairs():
@@ -275,56 +281,67 @@ func test_the_storm_has_a_way_out_of_both_waves() -> void:
 			assert_true(ok, "storm: boss %s, paladin %s, seed %d" % [boss, p, s])
 
 
-## The two waves: out of the first's lanes by its wind-up, then from there out of the second's (aimed at where he
-## stands, turned storm_turn) while the first's crescents may still be flying across his way.
-func _storm(boss: Vector2, p: Vector2, windup: float, rng: RandomNumberGenerator) -> bool:
+## Every wave (BossDef.storm_waves): out of the first's lanes by its wind-up (and, with `erupting`, out of the
+## eruptions laid over it as it shows, E2: their free lane from BossRules.free_way), then from there out of each next
+## wave's (aimed at where he stands, turned storm_turn more each wave) while the crescents of the waves before may
+## still be flying across his way.
+func _storm(boss: Vector2, p: Vector2, windup: float, rng: RandomNumberGenerator, erupting := false) -> bool:
 	var aim := (p - boss).normalized()
-	var dirs := BossRules.storm(def.storm_count, rad_to_deg(aim.angle()), def.storm_jitter, def.storm_min_gap, rng)
-	var order := BossRules.storm_order(dirs, aim)
-	var first: Array = []
+	var at := p
+	var flying: Array = []
 	var leaves := PackedFloat32Array()
-	leaves.resize(dirs.size())
-	for rank in order.size():
-		leaves[order[rank]] = windup + def.storm_stagger * rank
-	for d in dirs:
-		first.append(_crescent(boss, d))
-	var in_first := func(q: Vector2) -> bool:
-		for c: Array in first:
-			if _in_flight(c[0], c[1], c[2], q):
-				return true
-		return false
-	var one := _way_out(p, boss, windup, in_first)
-	if one.is_empty():
-		return false
-	_count("storm 1", one)
-	var at: Vector2 = one[0]
-	# the second wave shows storm_gap after the last of the first left
-	var shown := windup + def.storm_stagger * (dirs.size() - 1) + def.storm_gap
-	var aim2 := (at - boss).normalized() if at.distance_to(boss) > 0.1 else aim
-	var dirs2 := BossRules.storm(def.storm_count, rad_to_deg(aim2.angle()) + def.storm_turn, def.storm_jitter, def.storm_min_gap, rng)
-	var second: Array = []
-	for d in dirs2:
-		second.append(_crescent(boss, d))
-	var in_second := func(q: Vector2) -> bool:
-		for c: Array in second:
-			if _in_flight(c[0], c[1], c[2], q):
-				return true
-		return false
-	if not in_second.call(at):
-		_count("storm 2", [at, false])
-		return true
+	var shown := 0.0
+	for wave in def.storm_waves:
+		var to := (at - boss).normalized() if at.distance_to(boss) > 0.1 else aim
+		var dirs := BossRules.storm(def.storm_count, rad_to_deg(to.angle()) + def.storm_turn * wave, def.storm_jitter, def.storm_min_gap, rng)
+		var order := BossRules.storm_order(dirs, to)
+		var lanes: Array = []
+		for d in dirs:
+			lanes.append(_crescent(boss, d))
+		var spots := PackedVector2Array()
+		if erupting and wave == 0:
+			var way := BossRules.free_way(at, boss, body, dirs, def.blade_width * 0.5 + 0.5, floor)
+			spots = BossRules.eruptions(at, def.layer_eruption_count.y, def.eruption_radius, at + way * 10.0, def.eruption_lane, floor, rng)
+		var hazard := func(q: Vector2) -> bool:
+			for c: Array in lanes:
+				if _in_flight(c[0], c[1], c[2], q):
+					return true
+			for e in spots:
+				if q.distance_to(e) <= def.eruption_radius + 0.3:
+					return true
+			return false
+		var name := "storm %d%s" % [wave + 1, " + eruptions" if erupting and wave == 0 else ""]
+		var out := _wave_out(at, boss, windup, shown + REACTION, hazard, flying, leaves)
+		if out.is_empty():
+			return false
+		_count(name, out)
+		at = out[0]
+		var last := 0.0
+		for rank in order.size():
+			flying.append(lanes[order[rank]])
+			leaves.append(shown + windup + def.storm_stagger * rank)
+			last = shown + windup + def.storm_stagger * rank
+		# the next wave shows storm_gap after the last of this one left
+		shown = last + def.storm_gap
+	return true
+
+
+## A spot out of `hazard` by `windup` from `at` (walking, else dodging), the way there begun at `start` and clear of
+## the crescents still flying from the waves before. [] when there is none; else [the spot, true with the dodge].
+func _wave_out(at: Vector2, boss: Vector2, windup: float, start: float, hazard: Callable, flying: Array, leaves: PackedFloat32Array) -> Array:
+	if not hazard.call(at):
+		return [at, false]
 	var t := windup - REACTION
 	for dodge in [false, true]:
 		var reach := speed * t if not dodge else dodge_len + speed * (t - dodge_time)
 		for ring in range(1, RINGS + 1):
 			for k in WAYS:
 				var q := at + Vector2.from_angle(TAU * k / WAYS) * reach * ring / RINGS
-				if not _stand(q, boss) or (not dodge and _through_body(at, q, boss)) or in_second.call(q):
+				if not _stand(q, boss) or (not dodge and _through_body(at, q, boss)) or hazard.call(q):
 					continue
-				if _clear_of_first(at, q, shown + REACTION, first, leaves, dodge):
-					_count("storm 2", [q, dodge])
-					return true
-	return false
+				if _clear_of_first(at, q, start, flying, leaves, dodge):
+					return [q, dodge]
+	return []
 
 
 ## The way from `from` to `to`, begun at `start` (seconds of the storm), meets none of the first wave's crescents
@@ -431,6 +448,178 @@ func _curse_dodge(boss: Vector2, p: Vector2, windup: float) -> bool:
 			if safe:
 				return true
 	return false
+
+
+# ---------- the layers (E2: the harder end of the fight) ----------
+
+## The attack `id` of the BossDef and the first phase it carries `layer` over it (0 when it never does).
+func _layer_phase(id: StringName, layer: StringName) -> int:
+	for a in def.attacks:
+		if a.id == id and a.layers.has(layer) and a.layer_chance > 0.0:
+			return a.layer_from_phase
+	return 0
+
+
+func _eruption_hazard(spots: PackedVector2Array) -> Callable:
+	return func(q: Vector2) -> bool:
+		for e in spots:
+			if q.distance_to(e) <= def.eruption_radius + 0.3:
+				return true
+		return false
+
+
+func test_the_free_way_leads_out_of_the_attack_it_is_laid_over() -> void:
+	# the scythe's half circle (the paladin within its reach) and a storm's wave: the way ends out of the attack
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	var lanes_half := def.blade_width * 0.5 + 0.5
+	var counts := {"scythe": [0, 0], "storm": [0, 0]}
+	for pair in _pairs():
+		var boss: Vector2 = pair[0]
+		var p: Vector2 = pair[1]
+		var way := BossRules.free_way(p, boss, def.scythe_reach, PackedVector2Array(), 0.0, floor)
+		assert_almost_eq(way.length(), 1.0, 0.001)
+		assert_true(floor.contains(p + way * BossRules.FREE_PROBE, 1.0), "the way keeps to the floor (paladin %s)" % p)
+		if p.distance_to(boss) <= def.scythe_reach + 0.5:
+			counts.scythe[1] += 1
+			if BossRules.clearance(p + way * BossRules.FREE_PROBE, boss, def.scythe_reach, PackedVector2Array(), 0.0) > 0.0:
+				counts.scythe[0] += 1
+		var dirs := BossRules.storm(def.storm_count, rad_to_deg((p - boss).angle()), def.storm_jitter, def.storm_min_gap, rng)
+		var w := BossRules.free_way(p, boss, body, dirs, lanes_half, floor)
+		counts.storm[1] += 1
+		if BossRules.clearance(p + w * BossRules.FREE_PROBE, boss, body, dirs, lanes_half) > 0.0:
+			counts.storm[0] += 1
+	for id: String in counts:
+		gut.p("free way out of the %s: %d of %d" % [id, counts[id][0], counts[id][1]])
+		assert_gt(counts[id][1], 10)
+		assert_gte(counts[id][0], counts[id][1] * 0.9, "the %s's way out ends out of it" % id)
+
+
+func test_the_storm_with_eruptions_and_his_dead_has_a_way_out_of_every_wave() -> void:
+	var from := _layer_phase(&"storm", &"eruptions")
+	assert_gt(from, 0, "the storm carries eruptions in the last phase")
+	var windup := _windup(def.storm_windup, from)
+	var rng := RandomNumberGenerator.new()
+	for pair in _pairs():
+		var boss: Vector2 = pair[0]
+		var p: Vector2 = pair[1]
+		for s in 2:
+			rng.seed = hash(p) + hash(boss) + s * 31
+			assert_true(_storm(boss, p, windup, rng, true), "storm + eruptions: boss %s, paladin %s, seed %d" % [boss, p, s])
+
+
+func test_the_scythe_with_eruptions_has_a_way_out() -> void:
+	var from := _layer_phase(&"scythe", &"eruptions")
+	assert_gt(from, 0, "the scythe carries eruptions late in the fight")
+	# both shown at once: one spot out of the half circle and the circles, by the scythe's (shorter) wind-up
+	var windup := _windup(def.scythe_windup, from)
+	assert_lte(windup, _windup(def.eruption_delay, from), "the eruptions land after the scythe")
+	var rng := RandomNumberGenerator.new()
+	for pair in _pairs():
+		var boss: Vector2 = pair[0]
+		var p: Vector2 = pair[1]
+		if p.distance_to(boss) > 11.0:
+			continue
+		for s in 3:
+			rng.seed = hash(p) + hash(boss) + s * 7
+			var z := Ground.Zone.new()
+			z.shape = Ground.Shape.ARC
+			z.pos = boss
+			z.dir = (p - boss).normalized()
+			z.radius = def.scythe_reach
+			z.width = def.scythe_degrees
+			var way := BossRules.free_way(p, boss, def.scythe_reach, PackedVector2Array(), 0.0, floor)
+			var spots := BossRules.eruptions(p, def.layer_eruption_count.y, def.eruption_radius, p + way * 10.0, def.eruption_lane, floor, rng)
+			var circles := _eruption_hazard(spots)
+			var out := _way_out(p, boss, windup, func(q: Vector2) -> bool: return Ground.inside(z, q, 0.3) or circles.call(q))
+			assert_false(out.is_empty(), "scythe + eruptions: boss %s, paladin %s, seed %d" % [boss, p, s])
+			_count("scythe + eruptions", out)
+
+
+## The curse with eruptions laid as its bolt leaves (BossAttack.layer_share 1), their first circle under the
+## paladin wherever he is then and their free lane off the bolt's way. He sees the curse's lane and may walk one way
+## (or stand) from REACTION; the circles fall where he is when the bolt leaves; then he walks one way and dodges once
+## (at once, or when the bolt comes close). Out of every circle when they land and never touched by the bolt outside
+## the dodge's safe frames.
+func test_the_curse_with_eruptions_can_be_escaped() -> void:
+	var from := _layer_phase(&"curse", &"eruptions")
+	assert_gt(from, 0, "the curse carries eruptions")
+	var windup := _windup(def.curse_windup, from)
+	var land := _windup(def.eruption_delay, from)
+	for pair in _pairs():
+		var boss: Vector2 = pair[0]
+		var p: Vector2 = pair[1]
+		if p.distance_to(boss) < 3.0:
+			continue
+		for s in 2:
+			var ok := _curse_and_circles(boss, p, windup, land, hash(p) + hash(boss) + s * 13)
+			assert_true(ok, "curse + eruptions: boss %s, paladin %s, seed %d" % [boss, p, s])
+			_count("curse + eruptions", [p, false] if ok else [])
+
+
+func _curse_and_circles(boss: Vector2, p: Vector2, windup: float, land: float, seed: int) -> bool:
+	var rng := RandomNumberGenerator.new()
+	var firsts: Array[Vector2] = [Vector2.ZERO]
+	for k in 8:
+		firsts.append(Vector2.from_angle(TAU * k / 8.0))
+	for first: Vector2 in firsts:
+		# until the bolt leaves: standing, or walking one way from REACTION (the bolt is not out yet)
+		var hero := p
+		var t := 0.0
+		while t < windup - DT * 0.5:
+			t += DT
+			if t >= REACTION and first != Vector2.ZERO:
+				hero = _slide(hero + first * speed * DT, boss)
+		rng.seed = seed
+		var aim := (hero - boss).normalized()
+		var way := BossRules.free_way(hero, boss, body, PackedVector2Array([aim]), 0.7 + 0.5, floor)
+		var spots := BossRules.eruptions(hero, def.layer_eruption_count.y, def.eruption_radius, hero + way * 10.0, def.eruption_lane, floor, rng)
+		for trigger in [-1.0, 0.0, 1.4, 2.2, 3.0]:
+			for k in 16:
+				if _after_release(boss, hero, Vector2.from_angle(TAU * k / 16.0), trigger, windup, land, spots, first):
+					return true
+	return false
+
+
+## From the bolt's release (the paladin at `hero`, the bolt aimed from where he stood): walking `way`, dodging once
+## by `trigger` (-1 never, 0 at once, else when the bolt is that close).
+func _after_release(boss: Vector2, hero: Vector2, way: Vector2, trigger: float, windup: float, land: float, spots: PackedVector2Array, first: Vector2) -> bool:
+	var circles := _eruption_hazard(spots)
+	var b := _bolt(boss, hero)
+	var t := windup
+	var dodge_at := -1.0
+	var bolt := true
+	var landed := false
+	while t < windup + def.curse_life or not landed:
+		t += DT
+		# until he reacts to the circles he goes on the way he was going
+		var dir := way if t >= windup + REACTION else first
+		if t >= windup + REACTION and dodge_at < 0.0 and trigger >= 0.0 and (trigger == 0.0 or (bolt and (b[0] as Vector2).distance_to(hero) <= trigger)):
+			dodge_at = t
+		var dodging := dodge_at >= 0.0 and t - dodge_at < dodge_time
+		if dir != Vector2.ZERO:
+			hero = _slide(hero + dir * (dodge_len / dodge_time if dodging else speed) * DT, boss, dodging)
+		if not landed and t >= windup + land:
+			landed = true
+			if circles.call(hero):
+				return false
+		if bolt:
+			_bolt_step(b, hero)
+			if (b[0] as Vector2).distance_to(hero) < def.curse_radius + 0.5:
+				bolt = false
+				if not (dodge_at >= 0.0 and t - dodge_at <= iframes):
+					return false
+	return true
+
+
+func test_the_layers_keep_his_ceiling_of_dead() -> void:
+	# every summon laid over an attack is under the phase's ceiling and the fight's (they share _call with the rest)
+	for a in def.attacks:
+		if a.layers.has(&"summon"):
+			assert_gt(a.layer_from_phase, 2, "his dead rise over an attack only after the ritual's phase")
+			assert_lte(def.layer_raise.size(), BossRules.adds_cap(def.adds_cap, a.layer_from_phase), "a layer never asks for more than the ceiling")
+	assert_eq(BossRules.reinforce_room(2, 4, 0, 4, 10, 20), 0, "a full ceiling raises nobody")
+	assert_eq(BossRules.reinforce_room(2, 1, 1, 4, 19, 20), 1, "the fight's 20 hold")
 
 
 func _slide(q: Vector2, boss: Vector2, through := false) -> Vector2:

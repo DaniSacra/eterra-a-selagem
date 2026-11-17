@@ -10,6 +10,9 @@ extends RefCounted
 ## 3 "A Maldicao dos Condenados": opens on the curse bolt (slower walking, no special for a few seconds).
 ## 4 "O Ultimo Suspiro": the portal pulses with his fire, he is more corrupted, the blades become the Storm of the
 ##    Six Souls (each crescent in turn) and some attacks follow each other (BossAttack.then).
+## E2: from the third phase eruptions and his dead are laid over some attacks while they run (BossAttack.layers,
+## _step_layers): their free lane where the attack beneath does not reach (BossRules.free_way), his dead under the
+## same ceilings.
 ## Every attack is announced on the floor before it lands and ends in a recovery (the window to punish, counted in
 ## stats); his life stops at each threshold, so each phase begins once and in order; when he falls everything of
 ## his goes with him and a short ending plays (VICTORY_TIME) while the paladin keeps his control.
@@ -172,6 +175,9 @@ var _attack: StringName = &""
 var _chain: StringName = &""
 ## The opener of the phase still to come (&"": none).
 var _opener: StringName = &""
+## Patterns laid over the attack under way (BossAttack.layers) and the seconds left until they are laid (E2).
+var _layers: Array[StringName] = []
+var _layer_due := 0.0
 ## The recovery now: how long, and its pose.
 var _recover_time := 0.0
 var _recover_anim: StringName = &"idle"
@@ -237,11 +243,12 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 ## The fight in numbers (RESULT "boss"): time (s from his entrance to his fall), phase_at (when each phase began),
 ## phase_time (s in each phase), attacks (how many of each), hurt_by and hits_by (the paladin's life lost to each
 ## attack, and how many blows; "adds" for his dead), windows (recoveries) and punished (those the paladin struck
-## him in), adds_total and adds_peak, ritual (s) and ritual_raised, curses, died_phase (the phase the paladin fell in).
+## him in), adds_total and adds_peak, ritual (s) and ritual_raised, curses, layers (how many of each laid over an
+## attack, E2), died_phase (the phase the paladin fell in).
 func _init_stats() -> void:
 	stats = {"time": 0.0, "phase_at": [], "phase_time": [], "max_phase": phase, "ritual": 0.0, "ritual_raised": 0,
 		"adds_peak": 0, "adds_total": 0, "curses": 0, "attacks": {}, "hurt_by": {}, "hits_by": {}, "windows": 0,
-		"punished": 0, "chains": 0, "died_phase": 0}
+		"punished": 0, "chains": 0, "layers": {}, "died_phase": 0}
 	game.boss_stats = stats
 
 
@@ -343,6 +350,7 @@ func step(dt: float) -> void:
 				_stagger = 0
 				e.armor = e.max_armor
 				_rest(0.5)
+	_step_layers(dt)
 	# he stops at the paladin's body like everyone (his charge goes through: it is the blow)
 	if state != State.DASH:
 		game.horde.keep_off_target(e, was, dt)
@@ -388,6 +396,10 @@ func _choose(dist: float) -> void:
 		stats.chains = int(stats.chains) + 1
 	_attack = id
 	_go(ATTACKS[id])
+	# what is laid over it (E2): from the moment its first warning shows, a share of its wind-up later
+	_layers = director.layers_for(id, phase, _rng)
+	var main := director.attack(id)
+	_layer_due = _windup(_base_windup(id)) * (main.layer_share if main else 0.0)
 	moment.emit(id)
 
 
@@ -565,6 +577,66 @@ func _step_storm() -> void:
 		game.fx.shake(2.0)
 
 
+# ---------- layers (E2) ----------
+
+## His attacks' wind-ups as the BossDef holds them (before the phase's scale).
+func _base_windup(id: StringName) -> float:
+	match id:
+		&"scythe": return def.scythe_windup
+		&"blades": return def.blade_windup
+		&"storm": return def.storm_windup
+		&"eruptions": return def.eruption_delay
+		&"curse": return def.curse_windup
+		&"summon": return def.summon_windup
+		&"dash": return def.dash_windup
+	return 0.0
+
+
+## The layers of the attack under way are laid when their time comes (the scythe's clock starts with its warning,
+## after the walk in).
+func _step_layers(dt: float) -> void:
+	# (not on the frame a state begins: the attack lays its own warnings first)
+	if _layers.is_empty() or _t <= 0.0 or (state == State.SCYTHE and _step == 0):
+		return
+	_layer_due -= dt
+	if _layer_due > 0.0:
+		return
+	var counts: Dictionary = stats.layers
+	for id in _layers:
+		counts[id] = int(counts.get(id, 0)) + 1
+		match id:
+			&"eruptions":
+				var lanes := _main_lanes()
+				var reach := def.scythe_reach if _attack == &"scythe" else e.def.radius
+				var way := BossRules.free_way(game.player.pos, e.pos, reach, lanes, _lane_half(), _floor)
+				_erupt(game.player.pos + way * 10.0, def.layer_eruption_count)
+			&"summon":
+				if _call(def.layer_raise, e.pos, def.summon_ring, BossRules.adds_cap(def.adds_cap, phase), def.summon_windup, false) > 0:
+					Audio.play(&"summon")
+	moment.emit(&"layer")
+	_layers.clear()
+
+
+## The lanes of the attack under way (rays from him): the blades', the storm's wave, the curse's, the charge's.
+func _main_lanes() -> PackedVector2Array:
+	match _attack:
+		&"blades", &"storm":
+			return _dirs
+		&"curse", &"dash":
+			return PackedVector2Array([_dir])
+	return PackedVector2Array()
+
+
+## Half the width of the attack under way's lanes, the paladin's body included.
+func _lane_half() -> float:
+	match _attack:
+		&"curse":
+			return 0.7 + 0.5
+		&"dash":
+			return def.dash_width * 0.5 + 0.5
+	return def.blade_width * 0.5 + 0.5
+
+
 func _fire_souls(dirs: PackedVector2Array, damage: float) -> void:
 	for d in dirs:
 		_fire_soul(d, damage)
@@ -616,9 +688,14 @@ func _step_eruptions() -> void:
 		_recover(def.eruption_recovery, &"idle")
 
 
-func _erupt() -> void:
-	var n := _rng.randi_range(def.eruption_count.x, maxi(def.eruption_count.x, def.eruption_count.y))
-	for at in BossRules.eruptions(game.player.pos, n, def.eruption_radius, _middle, def.eruption_lane, _floor, _rng):
+## One volley of eruptions; its free lane points at `toward` (the middle of the floor, or a layer's way out).
+func _erupt(toward := Vector2.INF, count := Vector2i.ZERO) -> void:
+	if toward == Vector2.INF:
+		toward = _middle
+	if count == Vector2i.ZERO:
+		count = def.eruption_count
+	var n := _rng.randi_range(count.x, maxi(count.x, count.y))
+	for at in BossRules.eruptions(game.player.pos, n, def.eruption_radius, toward, def.eruption_lane, _floor, _rng):
 		var z := game.ground.add_warning(at, def.eruption_radius, _windup(def.eruption_delay), def.eruption_damage, SPECTRAL)
 		z.eruption = true
 		z.source = &"eruptions" if state != State.RITUAL else &"ritual"
@@ -1050,6 +1127,7 @@ func _cancel() -> void:
 	_shots.clear()
 	_rising.clear()
 	_due.clear()
+	_layers.clear()
 
 
 ## His armor broke: he staggers, and stands up armored again.
@@ -1079,6 +1157,7 @@ func _on_struck(target: Enemy, tags: Array[StringName], _damage: float) -> void:
 
 func _stun(seconds: float) -> void:
 	_go(State.STUNNED)
+	_layers.clear()
 	_stun_time = seconds
 	game.fx.shake(4.0)
 	# his palette, never the yellow light of Elun's boons: souls knocked loose and violet chips
@@ -1227,6 +1306,7 @@ func _go(next: State) -> void:
 
 ## Back to walking; the next attack comes after the phase's rest (plus `extra`).
 func _rest(extra: float = 0.0) -> void:
+	_layers.clear()
 	_cooldown = BossDef.by_phase(def.rest, phase, 1.0) + extra
 	_attack = &""
 	_go(State.CHASE)

@@ -120,6 +120,25 @@ func follow_up(id: StringName, phase: int, rng: RandomNumberGenerator) -> String
 	return &""
 
 
+## The attack with this id (null when the boss has none).
+func attack(id: StringName) -> BossAttack:
+	for a in attacks:
+		if a.id == id:
+			return a
+	return null
+
+
+## The patterns laid over this attack now (BossAttack.layers): from its phase on and by its chance; empty for none.
+func layers_for(id: StringName, phase: int, rng: RandomNumberGenerator) -> Array[StringName]:
+	var a := attack(id)
+	if a == null:
+		return []
+	var out := a.layers_in(phase)
+	if out.is_empty() or rng.randf() >= a.layer_chance:
+		return []
+	return out.duplicate()
+
+
 func _draw(options: Array[BossAttack], dist: float, still_t: float, rng: RandomNumberGenerator) -> BossAttack:
 	var total := 0.0
 	for a in options:

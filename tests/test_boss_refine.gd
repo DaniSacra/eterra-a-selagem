@@ -313,12 +313,14 @@ func _live_attacks() -> Dictionary:
 func test_in_the_last_phase_combinations_never_stack_two_attacks() -> void:
 	var boss := _start_fight()
 	_to_phase(boss, 4)
-	# every combination always, for the test (the director's own copies of the attacks)
+	# every combination always, for the test (the director's own copies of the attacks); no layers here: a layer is
+	# laid over its attack on purpose (E2), tested in test_layers_lay_only_eruptions_and_his_dead_over_an_attack
 	var mine: Array[BossAttack] = []
 	for a in boss.director.attacks:
 		var c: BossAttack = a.duplicate()
 		if c.then != &"":
 			c.then_chance = 1.0
+		c.layer_chance = 0.0
 		mine.append(c)
 	boss.director.attacks = mine
 	var most := [0]
@@ -335,6 +337,46 @@ func test_in_the_last_phase_combinations_never_stack_two_attacks() -> void:
 	assert_eq(most[0], 1, "never two of his attacks able to hurt at once")
 
 
+## E2: late in the fight eruptions and his dead are laid over an attack (BossAttack.layers): at most that attack and
+## eruptions can hurt at once (never two of his attacks proper), his dead never pass the phase's ceiling nor the
+## fight's, and they rise away from the paladin. Every layer always, for the test.
+func test_layers_lay_only_eruptions_and_his_dead_over_an_attack() -> void:
+	for phase in [3, 4]:
+		var boss := _start_fight()
+		_to_phase(boss, phase)
+		var mine: Array[BossAttack] = []
+		for a in boss.director.attacks:
+			var c: BossAttack = a.duplicate()
+			c.then_chance = 0.0
+			if not c.layers.is_empty():
+				c.layer_chance = 1.0
+			mine.append(c)
+		boss.director.attacks = mine
+		var cap := BossRules.adds_cap(def.adds_cap, phase)
+		var worst := {"live": 0, "proper": 0, "adds": 0, "near": INF}
+		var spots := [Vector2(0, 6), Vector2(-9, -6), Vector2(10, 8), Vector2(3, -2)]
+		boss.cue.connect(func(n: StringName, at: Vector2, _d: Vector2, _s: float, _t: float) -> void:
+			if n == &"rune":
+				worst.near = minf(worst.near, at.distance_to(game.player.pos)))
+		for k in 6:
+			game.player.place(spots[k % spots.size()])
+			_run(6.0, func() -> void:
+				var live := _live_attacks()
+				worst.live = maxi(worst.live, live.size())
+				worst.proper = maxi(worst.proper, live.keys().filter(func(id: StringName) -> bool: return id != &"eruptions").size())
+				worst.adds = maxi(worst.adds, Boss._standing(boss._adds)))
+		var layers: Dictionary = boss.stats.layers
+		assert_gt(int(layers.get(&"eruptions", 0)), 0, "phase %d: eruptions were laid over an attack" % phase)
+		assert_gt(int(layers.get(&"summon", 0)), 0, "phase %d: his dead rose over an attack" % phase)
+		assert_lte(worst.live, 2, "phase %d: an attack and its eruptions, nothing more" % phase)
+		assert_lte(worst.proper, 1, "phase %d: never two of his attacks proper at once" % phase)
+		assert_lte(worst.adds, cap, "phase %d: his dead never pass the ceiling" % phase)
+		assert_lte(int(boss.stats.adds_total), def.adds_total_cap, "the fight's ceiling")
+		assert_gte(worst.near, def.summon_clear - 0.01, "phase %d: his dead rise away from the paladin" % phase)
+		game.queue_free()
+		game = null
+
+
 func test_the_storm_crescents_leave_one_at_a_time() -> void:
 	var boss := _start_fight()
 	_to_phase(boss, 4)
@@ -344,13 +386,14 @@ func test_the_storm_crescents_leave_one_at_a_time() -> void:
 	var most := [0]
 	var fired := [0]
 	var before := [0]
-	_run(def.storm_windup + def.storm_gap + 2.0 * def.storm_windup + 1.0, func() -> void:
+	var wave := def.storm_windup + def.storm_stagger * (def.storm_count - 1) + def.storm_gap
+	_run(wave * def.storm_waves + 1.0, func() -> void:
 		var now := game.projectiles.shots.filter(func(s: Projectiles.Shot) -> bool: return s.kind == Projectiles.Kind.SOUL).size()
 		if now > before[0]:
 			most[0] = maxi(most[0], now - before[0])
 			fired[0] += now - before[0]
 		before[0] = now)
-	assert_eq(fired[0], def.storm_count * def.storm_waves, "two waves of six")
+	assert_eq(fired[0], def.storm_count * def.storm_waves, "every wave of six")
 	assert_eq(most[0], 1, "never two crescents in the same instant")
 
 

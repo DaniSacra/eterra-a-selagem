@@ -58,6 +58,13 @@ extends Resource
 ## rune goes; each in turn, never all at once.
 @export var rise_stagger := 0.45
 
+@export_group("Layers")
+## Who rises when a summon is laid over another attack (BossAttack.layers, E2): one soldier and one caster.
+@export var layer_raise: Array[StringName] = [&"skeleton", &"mage"]
+## Circles of eruptions laid over another attack (one volley, the first under the paladin, the free lane at that
+## attack's way out: BossRules.free_way).
+@export var layer_eruption_count := Vector2i(2, 2)
+
 @export_group("Scythe")
 @export var scythe_reach := 5.0
 @export var scythe_degrees := 180.0
