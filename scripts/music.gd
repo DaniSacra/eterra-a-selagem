@@ -19,6 +19,8 @@ const TRACKS := {
 }
 ## Stings: one-shots over the bed (a Psalm discovered).
 const STINGS: Array[StringName] = [&"psalm_sentinel", &"psalm_shelter", &"psalm_shepherd", &"psalm_rock"]
+## The Psalms' own ids (data/psalms) to their themes (QA E4: Game.take_psalm passes p.id).
+const PSALM_STING := {&"sentinela": &"psalm_sentinel", &"abrigo": &"psalm_shelter", &"pastor": &"psalm_shepherd", &"rocha": &"psalm_rock"}
 ## Room levels.
 const WALK := 1
 const FIGHT := 2
@@ -87,7 +89,7 @@ func boss_phase(n: int) -> void:
 
 ## A theme over the bed: "psalm_sentinel" or just the Psalm's id, "sentinel".
 func sting(id: StringName) -> void:
-	var key := id if mix.catalog.has(id) else StringName("psalm_" + id)
+	var key: StringName = PSALM_STING.get(id, id if mix.catalog.has(id) else StringName("psalm_" + id))
 	mix.sting(key)
 	_sync()
 
