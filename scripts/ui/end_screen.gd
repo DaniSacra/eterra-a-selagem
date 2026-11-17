@@ -6,7 +6,8 @@ extends Control
 ## de novo" (UI-02: the run can be told from this screen alone). Victory (after the sealing):
 ## in the title screen's voice (Cinzel and Alegreya, old gold, short), the king sealed, what the descent gathered
 ## (the gifts carried, the time, the foes, the longest sequence, the gold) and "Continuar" (to the title) or a new
-## descent. It rises in VICTORY_RISE seconds; keys, mouse and gamepad all reach the buttons (Continuar has the focus).
+## descent. Both tell the Mastery the run gave (MasteryReport: XP by source, the bar filling, the level reached and
+## what it unlocked). It rises in VICTORY_RISE seconds; keys, mouse and gamepad all reach the buttons (Continuar has the focus).
 
 signal retry
 signal menu
@@ -73,6 +74,7 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		v.add_child(gifts)
 	else:
 		gifts.free()
+	_mastery(v, stats)
 	var panel := PanelContainer.new()
 	v.add_child(panel)
 	var rows := VBoxContainer.new()
@@ -140,6 +142,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		_stat(grid, T.t(&"hud_gold"), str(game.rooms.gold))
 	else:
 		_stat(grid, T.t(&"end_boons"), str(stats.boons))
+	_mastery(v, stats)
 	if new_best:
 		var nb := UiKit.shadow(UiKit.label(T.t(&"end_new_best"), UiKit.GOLD, 19, UiKit.BOLD_FONT))
 		nb.name = "new_best"
@@ -199,6 +202,13 @@ static func arena_key(game: Game) -> StringName:
 	if game.arena != null and game.arena.name_key != &"":
 		return game.arena.name_key
 	return &"arena_hall"
+
+
+## The Mastery the run gave (E2-04, MasteryReport), when stats carry it ("mastery": Game.mastery_report).
+func _mastery(parent: Control, stats: Dictionary) -> void:
+	var report: Dictionary = stats.get("mastery", {})
+	if report.has("gain"):
+		parent.add_child(MasteryReport.new().setup(report))
 
 
 ## The gifts carried to the end, in a row of medallions (stats "gifts", else the Game's).

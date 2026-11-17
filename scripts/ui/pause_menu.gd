@@ -1,6 +1,6 @@
 class_name PauseMenu
 extends Control
-## Pause: continue, the gifts held (Elos on their chain), the list of moves found so far, options, back to the title.
+## Pause: continue, the gifts held (Elos on their chain), the Compendium (Gifts and the moves found so far), options, back to the title.
 
 signal resumed
 
@@ -19,7 +19,7 @@ func open() -> void:
 	var first := UiKit.button(T.t(&"pause_continue"), func() -> void: resumed.emit())
 	v.add_child(first)
 	v.add_child(UiKit.button(T.t(&"pause_boons"), func() -> void: _show(_boons_screen())))
-	v.add_child(UiKit.button(T.t(&"pause_moves"), func() -> void: _show(MovesScreen.new())))
+	v.add_child(UiKit.button(T.t(&"pause_moves"), func() -> void: _show(CodexScreen.new())))
 	v.add_child(UiKit.button(T.t(&"pause_options"), func() -> void: _show(OptionsScreen.new())))
 	v.add_child(UiKit.button(T.t(&"pause_quit"), func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn")))
 	# leave the game from the pause too (desktop only: phones and the browser close by themselves)

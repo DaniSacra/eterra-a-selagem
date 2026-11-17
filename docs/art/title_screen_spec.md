@@ -70,6 +70,11 @@ Cores amostradas:
 
 ### 1.3 Botões Como Jogar, Configurações e Sair
 
+> **E2-06 (2026-11-16)**: entrou "O Guerreiro" logo abaixo de Iniciar. Os quatro botões pequenos ficam com 52 px de
+> altura a cada 62 px a partir de y 506 (O Guerreiro 506, Como Jogar 568, Configurações 630, Sair 692; termina em 744,
+> ainda na faixa escura da arte limpa); texto a 35,5 px do topo, ícone no meio (o do herói é uma espada de pé). As
+> medidas abaixo são as da pintura original, de três botões.
+
 Forma: hexágono alongado, fundo escuro, linha fina de bronze apagado, um pequeno ornamento em cada ponta. Os três
 são iguais e ficam a cada 71 px.
 

@@ -261,9 +261,30 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   desfocadas nas outras proporções; névoa, brasas e partículas do portal que não tocam rosto, lâmina nem logotipo). Os botões
   pintados foram apagados numa cópia limpa (`title_bg.png`, `tools/make_title_bg.sh`) e os reais (`TitleMenu`, `TitleButton`,
   vetor, Alegreya Sans Bold) ficam exatamente por cima, na escala da arte. Medidas: `docs/art/title_screen_spec.md`.
-- `scripts/boot.gd` compõe: Iniciar entra na partida (o único fluxo), Como Jogar (`HowToScreen`, teclas reais lidas do mapa,
-  com a lista de Golpes dentro), Configurações (`OptionsScreen`), Sair só no desktop. Fluxo testado por
-  `tools/title_flow_check.gd` (teclado, sem tela). Os outros três heróis da arte ainda não têm nome nem papel no jogo.
+- `scripts/boot.gd` compõe: Iniciar entra na partida (o único fluxo), O Guerreiro (`HeroScreen`, E2-06), Como Jogar
+  (`HowToScreen`, teclas reais lidas do mapa, com o Compêndio dentro), Configurações (`OptionsScreen`), Sair só no desktop.
+  Os quatro botões pequenos ficam numa coluna de 52 px de altura a cada 62 px a partir de y 506 da arte
+  (`TitleButton.SMALL_*`; antes três a cada 71). Fluxo testado por `tools/title_flow_check.gd` (teclado, sem tela, passa
+  pela tela do herói e pelo Compêndio). Os outros três heróis da arte ainda não têm nome nem papel no jogo.
+- **Tela do herói** (E2-06, `scripts/ui/hero_screen.gd`): medalhão e "O Guerreiro", Maestria (`MasteryBar`, nível num
+  losango de ouro velho, barra de XP e "No nível N: ..." do que o próximo nível dá), Devoção em losangos (usada e livre),
+  a árvore de Dons em losango (`TalentTree`, `TalentNode`: passiva no centro, Combo em cima, Fúria à direita, Magia
+  embaixo, Emeth à esquerda, entrada, meio e ápice para fora, pontes nas diagonais, sustento no canto de baixo à esquerda;
+  trancado mostra cadeado e o nível; custo em losangos pequenos embaixo de cada nó; linha acesa entre dois equipados) e as
+  duas ultimates (`UltCard`, trancada mostra o nível). O painel da direita conta o Dom ou a ultimate em foco e, quando
+  não dá para equipar, por quê, nas regras do `Talents` (`HeroLoadout`, `core/hero_loadout.gd`: `state`, `why`,
+  `toggle` que tira junto o que dependia, `choose_ult`). Enter, A ou clique equipa e tira; grava na hora em
+  `heroes.warrior.equipped`/`ultimate`. Nome da passiva: "Ímpeto da Emeth" (1ª opção da spec, `hero_passive`).
+  Capturas: `--title --screen=hero` com `--hero-xp=N`, `--hero-equip=a,b`, `--hero-ult=id` (só na sessão, nada gravado,
+  `Save._dev_hero`). Testes em `tests/test_hero_screen.gd`.
+- **Compêndio** (E2-11, `CodexScreen`): abas Dons (os do Guerreiro na ordem em que destravam; antes, "???" e "Maestria N")
+  e Golpes (a antiga `MovesScreen`, que saiu); aberto pelo Como Jogar e pela pausa; `--screen=codex|moves`.
+- **Tela de fim com Maestria** (E2-04, `MasteryReport`): "+N XP" ao lado da barra que enche do XP de antes ao de depois,
+  de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Novos Dons: ..." e "Nova ultimate: ..."; dados do
+  `Game.mastery_report` (o `mastery_gain` e o XP antes, guardados no `log_run`, passados no `stats.mastery`).
+- **Bênção no texto** (QW-018, D-50): o texto do jogador chama as cartas de Bênção (raridades no feminino: Comum, Rara,
+  Épica, Heroica); "Dom" só nos Dons do herói (`talent_*`, `hero_*`, `codex_*`, `end_unlocked*`; teste em
+  `test_hero_screen.gd`). Chaves, classes (`Boon`) e registro não mudaram.
 
 ## Arquitetura
 - `scripts/core/`: lógica pura (sem nós), toda testada. `scripts/game/`: nós da partida. `scripts/ui/`: telas.
@@ -509,7 +530,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Dom por ação; `check`, `can_add`, `sanitized` (o que vem do save). Equipados na descida por `Game._equip_talents`
   (do save, validado pelo nível; `--talents=a,b` para testes); só os de número já agem: Fio Longo (`reach_pct` light 0,15),
   Reserva e Firmeza (`magick_max`, `max_hp`), somados às Bênçãos em `BoonState.stat` (`equip_talents`). Os efeitos dos
-  outros, a tela do herói e a ultimate jogável são as próximas tarefas. Testes: `test_hero_def.gd`, `test_mastery.gd`,
+  outros e a ultimate jogável são as próximas tarefas (a tela do herói é a `HeroScreen`, ver Tela de título). Testes: `test_hero_def.gd`, `test_mastery.gd`,
   `test_talents.gd`, `test_save.gd`, `test_run_log.gd`.
 
 ## Onde mexer

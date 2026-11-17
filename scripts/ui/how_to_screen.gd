@@ -1,7 +1,8 @@
 class_name HowToScreen
 extends Control
 ## "Como Jogar": every action of the game with what is bound to it right now on the keyboard and mouse (remapped keys
-## show as remapped) and on the gamepad (read from the InputMap), and what it does. "Golpes" opens the combo list.
+## show as remapped) and on the gamepad (read from the InputMap), and what it does. "Compêndio" opens the Codex
+## (CodexScreen: Dons and Golpes).
 ## The caller closes this screen on ui_cancel, like the others; while the combo list is open this screen takes
 ## ui_cancel itself and goes back to its own page.
 
@@ -22,7 +23,7 @@ const ROWS: Array[Dictionary] = [
 const HIDDEN: Array[StringName] = [&"feel_panel"]
 
 var _page: Control
-var _moves: MovesScreen
+var _moves: CodexScreen
 var _moves_button: Button
 
 
@@ -119,7 +120,7 @@ static func _stick_label(action: StringName) -> String:
 
 func _open_moves() -> void:
 	_page.visible = false
-	_moves = MovesScreen.new()
+	_moves = CodexScreen.new()
 	add_child(_moves)
 	_moves.open()
 	_moves.closed.connect(_close_moves)

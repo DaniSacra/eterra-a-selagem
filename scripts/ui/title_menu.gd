@@ -1,9 +1,11 @@
 class_name TitleMenu
 extends Control
-## The four buttons of the title screen, laid over the places where the painting had them.
+## The five buttons of the title screen (Iniciar over the painted one; O Guerreiro, Como Jogar, Configurações and Sair
+## in the column under it, TitleButton.FRAMES).
 ## Follows the origin and the scale of the art (TitleBackdrop), never the screen's anchors.
 
 signal start_pressed
+signal hero_pressed
 signal howto_pressed
 signal settings_pressed
 signal quit_pressed
@@ -26,7 +28,7 @@ func _init() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# the menu itself never takes the mouse: only the buttons do, inside their hexagons
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var signals: Array[Signal] = [start_pressed, howto_pressed, settings_pressed, quit_pressed]
+	var signals: Array[Signal] = [start_pressed, hero_pressed, howto_pressed, settings_pressed, quit_pressed]
 	for kind: TitleButton.Kind in TitleButton.Kind.values():
 		var b := TitleButton.new(kind)
 		var out := signals[kind]

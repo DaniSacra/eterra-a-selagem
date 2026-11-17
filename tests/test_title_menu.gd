@@ -32,11 +32,14 @@ func test_buttons_sit_on_the_painted_frames() -> void:
 	assert_almost_eq(start.position.y, 401.0 * s, 0.01)
 	assert_almost_eq(start.size.x, 449.0 * s, 0.01)
 	var quit := m.button(TitleButton.Kind.QUIT)
-	assert_almost_eq(quit.position.y, 657.0 * s, 0.01)
-	# the three small ones are 71 art pixels apart and share the axis of Iniciar (x = 1151 in the art)
+	assert_almost_eq(quit.position.y, 692.0 * s, 0.01)
+	# the four small ones (O Guerreiro first) are 62 art pixels apart and share the axis of Iniciar (x = 1151 in the art)
 	for b in m.buttons:
 		assert_almost_eq(b.position.x + b.size.x * 0.5, 200.0 + 1150.75 * s, 0.5)
-	assert_almost_eq(m.buttons[2].position.y - m.buttons[1].position.y, 71.0 * s, 0.01)
+	assert_almost_eq(m.buttons[1].position.y, 506.0 * s, 0.01)
+	assert_almost_eq(m.buttons[2].position.y - m.buttons[1].position.y, 62.0 * s, 0.01)
+	# the column still ends on the dark band of the clean art, well above its bottom
+	assert_lt(TitleButton.FRAMES[TitleButton.Kind.QUIT].end.y, 750.0)
 
 
 func test_follows_the_backdrop_when_it_moves() -> void:
@@ -74,6 +77,7 @@ func test_each_button_emits_its_signal() -> void:
 	for b in m.buttons:
 		b.pressed.emit()
 	assert_signal_emit_count(m, "start_pressed", 1)
+	assert_signal_emit_count(m, "hero_pressed", 1)
 	assert_signal_emit_count(m, "howto_pressed", 1)
 	assert_signal_emit_count(m, "settings_pressed", 1)
 	assert_signal_emit_count(m, "quit_pressed", 1)
@@ -84,19 +88,19 @@ func test_up_and_down_do_not_wrap() -> void:
 	var b := m.buttons
 	assert_eq(b[0].get_node(b[0].focus_neighbor_top), b[0])
 	assert_eq(b[0].get_node(b[0].focus_neighbor_bottom), b[1])
-	assert_eq(b[2].get_node(b[2].focus_neighbor_bottom), b[3])
-	assert_eq(b[3].get_node(b[3].focus_neighbor_bottom), b[3])
+	assert_eq(b[3].get_node(b[3].focus_neighbor_bottom), b[4])
+	assert_eq(b[4].get_node(b[4].focus_neighbor_bottom), b[4])
 
 
 func test_without_quit_the_others_keep_their_places() -> void:
 	var m := _menu()
-	var before := m.buttons[2].position
+	var before := m.buttons[3].position
 	m.set_quit_visible(false)
-	assert_false(m.buttons[3].visible)
-	assert_eq(m.buttons[2].position, before)
-	assert_eq(m.buttons[2].get_node(m.buttons[2].focus_neighbor_bottom), m.buttons[2])
+	assert_false(m.buttons[4].visible)
+	assert_eq(m.buttons[3].position, before)
+	assert_eq(m.buttons[3].get_node(m.buttons[3].focus_neighbor_bottom), m.buttons[3])
 	m.set_quit_visible(true)
-	assert_eq(m.buttons[2].get_node(m.buttons[2].focus_neighbor_bottom), m.buttons[3])
+	assert_eq(m.buttons[3].get_node(m.buttons[3].focus_neighbor_bottom), m.buttons[4])
 
 
 func test_focus_first_and_lock() -> void:
@@ -130,7 +134,7 @@ func test_intro_hides_then_finishes() -> void:
 	m.intro()
 	assert_eq(m.buttons[0].appear, 0.0)
 	m.finish_intro()
-	assert_eq(m.buttons[3].appear, 1.0)
+	assert_eq(m.buttons[4].appear, 1.0)
 
 
 func test_labels_come_from_the_text_table() -> void:
