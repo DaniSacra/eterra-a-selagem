@@ -3,7 +3,9 @@ extends RefCounted
 ## The way down through one region, room by room, as in the first region of Hades II: an opening fight, rooms whose
 ## doors show the reward behind them, a guardian halfway, one fountain, the shop, then the boss. Pure logic.
 
-enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS }
+## E5: TRIAL is the Provação's chamber (no door leads there: its slab, Rooms; the depth stays), ALTAR the Altar
+## Esquecido (a door, once in a run, no fight).
+enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR }
 ## What a room gives when it is cleared (or what the shop sells).
 ## BOON: a gift (three to choose). POM: one more level for a gift already owned. HEART: more life.
 ## MAGICK: more Magia. GOLD: gold for the shop. HEAL: life back (shop only). POM_SLICE: one level more for a gift
@@ -11,7 +13,7 @@ enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS }
 enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE }
 
 const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal", &"reward_pom_slice"]
-const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss"]
+const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar"]
 
 
 class Room:
@@ -22,6 +24,22 @@ class Room:
 	## (RoomLayout.variant).
 	var layout := 0
 	var variant := 0
+	## E5, the doors that show the way: its fight drawn before its door opens (Rooms.prepare; null: none, or not yet).
+	var fight: EncounterGen.Fight
+
+	## What the door's sign may tell (E5-D8; docs/art/e5_spec.md 7.1): kind and reward (their enums), hard (a fight
+	## with an elite), guardian, tier (StageDef.Tier of its fight, -1: no fight), elites (ids), depth. The arena is
+	## not on the sign (the surprise stays); the look of the doorway reads it from Rooms.door_info.
+	func sign() -> Dictionary:
+		var elites: Array[String] = []
+		var tier := -1
+		if fight != null:
+			tier = fight.tier
+			for id in fight.kinds:
+				if String(id).ends_with("_elite"):
+					elites.append(String(id))
+		return {"kind": kind, "reward": reward, "depth": depth, "tier": tier, "guardian": kind == Kind.MINIBOSS,
+			"hard": kind == Kind.COMBAT and not elites.is_empty(), "elites": elites}
 
 	func _init(k: Kind, r: Reward, d: int, l: int = 0, v: int = 0) -> void:
 		kind = k
@@ -39,6 +57,7 @@ var stage: StageDef
 var depth := 0
 var miniboss_depth := 0
 var fountain_seen := false
+var altar_seen := false
 ## The arena of the room the paladin stands in (-1: none yet), and every arena fought in so far.
 var current_layout := -1
 var seen_layouts: Array[int] = []
@@ -80,6 +99,10 @@ func options(can_pom: bool) -> Array[Room]:
 	if not fountain_seen and next >= stage.fountain_depth_min and next <= stage.fountain_depth_max \
 			and (next == stage.fountain_depth_max or _rng.randf() < stage.fountain_chance):
 		out.append(_room(Kind.FOUNTAIN, Reward.NONE, next))
+	if not altar_seen and out.size() < doors and next >= stage.altar_depth_min and next <= stage.altar_depth_max \
+			and stage.altar_layout != null and _rng.randf() < stage.altar_chance:
+		altar_seen = true
+		out.append(Room.new(Kind.ALTAR, Reward.NONE, next, -1))
 	var used: Array[Reward] = []
 	while out.size() < doors:
 		var r := _reward(used, can_pom)
@@ -91,6 +114,9 @@ func options(can_pom: bool) -> Array[Room]:
 ## The paladin goes through a door into this room.
 func enter(room: Room) -> void:
 	depth = room.depth
+	if room.kind == Kind.TRIAL or room.kind == Kind.ALTAR:
+		# an event's room: the arena fought in before it stays the one the next fight may not repeat
+		return
 	if room.kind == Kind.FOUNTAIN:
 		fountain_seen = true
 	if room.kind == Kind.BOSS:
@@ -104,6 +130,11 @@ func enter(room: Room) -> void:
 	current_layout = room.layout
 	if not seen_layouts.has(room.layout):
 		seen_layouts.append(room.layout)
+
+
+## The Provação's chamber, entered from a room of this depth by its slab: the depth stays (E5).
+func trial(at_depth: int) -> Room:
+	return Room.new(Kind.TRIAL, Reward.NONE, at_depth, -1)
 
 
 ## The next card of the deck that no other door of this room shows (a pomegranate only when a gift can grow); a
@@ -130,6 +161,11 @@ func _layout(kind: Kind, at_depth: int) -> int:
 		return 0
 	if forced_layout >= 0 and at_depth == 1:
 		return forced_layout
+	if kind == Kind.MINIBOSS:
+		# the guardian's own room, whatever the depth (E5: the Santuário), unless it was just fought in or used up
+		for i in stage.layouts.size():
+			if stage.layouts[i].guardian_home and i != current_layout and int(uses.get(i, 0)) < stage.arena_max_uses:
+				return i
 	var at := EncounterGen.progress(stage, at_depth)
 	var found: Array[int] = []
 	for i in stage.layouts.size():

@@ -91,6 +91,8 @@ var list: Array[Enemy] = []
 ## comes from (Combat sets it around a hit; &"" counts as other).
 var dealt := DealtBy.new()
 var dealing: StringName = &""
+## How fast the enemies walk, times their own (E5: a Provação's curse, set by Rooms on entering a fight; 1: as is).
+var speed_scale := 1.0
 var dying: Array[Enemy] = []
 var arena: Arena
 var fx: Fx
@@ -327,7 +329,7 @@ static func walk_rate(speed: float, ground: float, size: float) -> float:
 
 
 func _speed(e: Enemy) -> float:
-	return e.def.speed * (0.45 if e.slow_t > 0.0 else 1.0)
+	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0)
 
 
 func _behave(e: Enemy, dt: float) -> void:

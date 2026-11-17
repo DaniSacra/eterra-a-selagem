@@ -156,7 +156,7 @@ func test_the_run_keeps_each_blow_in_context_up_to_sixty() -> void:
 
 func test_the_run_keeps_the_gifts_at_morvath_the_shop_and_the_fountain() -> void:
 	var t := RoomTally.new()
-	assert_eq(t.run_fields(), {"boons_at_boss": -1, "shop": {}, "fountain_used": false, "hurt_ctx": []})
+	assert_eq(t.run_fields(), {"boons_at_boss": -1, "shop": {}, "fountain_used": false, "hurt_ctx": [], "events": []})
 	t.enter(4, "hall", 20.0, 0.0)
 	t.fountain()
 	t.enter(6, "hall", 30.0, 50.0)

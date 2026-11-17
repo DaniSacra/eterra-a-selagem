@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TrialDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_lplmo"]
+[ext_resource type="Script" path="res://scripts/core/trial_def.gd" id="2_1khfs"]
+
+[sub_resource type="Resource" id="Resource_oedot"]
+script = ExtResource("1_lplmo")
+stat = &"hurt_pct"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_1khfs")
+id = &"trial_fragil"
+kind = 0
+name_key = &"trial_fragil"
+desc_key = &"trial_fragil_desc"
+mods = Array[ExtResource("1_lplmo")]([SubResource("Resource_oedot")])

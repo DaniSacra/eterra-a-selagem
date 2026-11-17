@@ -7,12 +7,16 @@ extends Node3D
 ## Positions are (x, z) in meters.
 
 signal hit_player(amount: float, from: Vector2)
+## A floor that strikes on its own (E5, the runes: add_hazard) struck: RuneFloor hurts the enemies standing in it.
+signal hazard_landed(z: Zone)
 
 enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND, SHELTER, STONE }
 ## The same order as GroundLook.Shape (which draws them).
 enum Shape { CIRCLE, LINE, ARC }
 
 const TICK := 0.25
+## The source of the floor's own warnings (the runes, E5): "Derrotado por: Runas Instáveis" (DefeatCause).
+const HAZARD_SOURCE := &"runes"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -98,6 +102,8 @@ class Zone:
 	## struck already.
 	var strike := 0.0
 	var struck := {}
+	## A warning of the floor itself (E5, the runes): what it deals to each enemy inside when it lands (0: not one).
+	var hazard := 0.0
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -161,6 +167,20 @@ func add_warning(at: Vector2, radius: float, time: float, damage: float, burst :
 
 func add_line_warning(from: Vector2, dir: Vector2, length: float, width: float, time: float, damage: float) -> Zone:
 	return _add(Kind.WARNING, Shape.LINE, from, dir, length, width, time, damage)
+
+
+## A band of the floor that strikes on its own (E5, the runes; ArenaHazard): the rectangle `r` warms up for `time`
+## seconds in amber (GroundLook.Style.HAZARD, drawn under the enemies' warnings) and strikes everyone in it as it ends:
+## hero_damage to the paladin (as any warning), enemy_damage to each enemy (hazard_landed).
+func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float) -> Zone:
+	var from := Vector2(r.position.x, r.get_center().y)
+	var z := _add(Kind.WARNING, Shape.LINE, from, Vector2.RIGHT, r.size.x, r.size.y, time, hero_damage)
+	z.hazard = enemy_damage
+	z.source = HAZARD_SOURCE
+	z.by = &""
+	z.offscreen = 0
+	GroundLook.hazard(z.node, from, Vector2.RIGHT, r.size.x, r.size.y, z.node.position.y)
+	return z
 
 
 func add_arc_warning(at: Vector2, dir: Vector2, radius: float, degrees: float, time: float, damage: float) -> Zone:
@@ -294,6 +314,8 @@ func _land(z: Zone) -> void:
 		last_warn = z.total
 		last_offscreen = z.offscreen
 		hit_player.emit(z.power, center)
+	if z.hazard > 0.0:
+		hazard_landed.emit(z)
 
 
 func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, width: float, time: float, power: float) -> Zone:

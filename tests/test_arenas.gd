@@ -6,7 +6,7 @@ extends GutTest
 ## grid and flow field stay cheap.
 
 const STAGE := "res://data/stages/catacombs.tres"
-const ARENAS: Array[StringName] = [&"crypt", &"rift", &"garden"]
+const ARENAS: Array[StringName] = [&"crypt", &"rift", &"garden", &"sanctuary", &"bridge", &"runes"]
 ## The dash (Hades II): 5.6 m in 0.2 s.
 const DASH := 5.6
 const DASH_TIME := 0.2
@@ -104,7 +104,7 @@ func test_spawns_rise_far_from_him_on_reached_floor() -> void:
 func test_a_dash_never_crosses_the_abyss() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
-	for id: StringName in [&"rift"]:
+	for id: StringName in [&"rift", &"sanctuary", &"bridge"]:
 		var l := _layout(id)
 		for v in l.variant_count():
 			var a := _arena(l.variant(v), 3)
@@ -283,7 +283,7 @@ func test_no_one_raised_stands_in_stone() -> void:
 	var h := Horde.new()
 	add_child_autofree(h)
 	var bad := 0
-	for id: StringName in [&"hall", &"crypt", &"rift", &"garden"]:
+	for id: StringName in [&"hall", &"crypt", &"rift", &"garden", &"sanctuary", &"bridge", &"runes"]:
 		var l := _layout(id)
 		for v in l.variant_count():
 			var a := _arena(l.variant(v), 3)
@@ -388,3 +388,25 @@ func _narrowest(a: Arena, n: int) -> Array[Dictionary]:
 			if out.size() == n:
 				break
 	return out
+
+
+## E5: the Provação's chamber and the Altar Esquecido: he walks in on free floor, reaches every door and the middle
+## where its choices stand, and its doors take him out.
+func test_the_event_rooms_walk_to_every_door() -> void:
+	for l: RoomLayout in [stage.trial_layout, stage.altar_layout]:
+		assert_not_null(l)
+		assert_ne(T.t(l.name_key), String(l.name_key), "%s has its name" % l.id)
+		for n in [1, 2, 3]:
+			var a := _arena(l, n)
+			assert_true(a.nav.walkable(a.start), "%s: walks in on free floor" % l.id)
+			for i in a.exits.size():
+				assert_true(a.nav.reachable(a.start, a.exits[i]), "%s %d doors: door %d is reached" % [l.id, n, i])
+				assert_eq(a.exit_at(a.resolve(a.door_goal(i), Player.RADIUS)), i, "%s: door %d leaves by its zone" % [l.id, i])
+	for p in Rooms.TRIAL_SPOTS:
+		var a := _arena(stage.trial_layout, 3)
+		assert_true(a.nav.reachable(a.start, p), "the trial's card at %s is reached" % p)
+		assert_true(a.free_at(p, Player.RADIUS), "and stands on free floor")
+	for p in Rooms.ALTAR_SPOTS:
+		var a := _arena(stage.altar_layout, 3)
+		assert_true(a.nav.reachable(a.start, p), "the altar's trade at %s is reached" % p)
+		assert_true(a.free_at(p, Player.RADIUS))

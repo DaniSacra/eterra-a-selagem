@@ -13,3 +13,7 @@ extends Resource
 @export var late_spawns: Array[Rect2] = []
 ## Stands in for the arena's floor when set (another hole, a fallen bridge).
 @export var floor: FloorShape
+## Stands in for the arena's floor that strikes (E5, the runes' variant B) and its named parts, when set.
+@export var hazard: HazardDef
+@export var areas: Array[Rect2] = []
+@export var area_names: PackedStringArray = PackedStringArray()

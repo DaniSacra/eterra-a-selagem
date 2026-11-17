@@ -28,6 +28,9 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var layouts: Array[RoomLayout] = []
 @export var boss_layout: RoomLayout
 @export var shop_layout: RoomLayout
+## The two rooms of the events (E5): the Provação's chamber and the Altar Esquecido.
+@export var trial_layout: RoomLayout
+@export var altar_layout: RoomLayout
 
 @export_group("Encounters")
 ## Enemies of the region, elite versions included (each listed once; an elite blocks its plain version).
@@ -94,3 +97,25 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var shop_groups: Array[ShopGroup] = []
 ## The cure sold in the shop heals this share of life.
 @export var shop_heal := 0.4
+
+@export_group("Events")
+## The Provação (E5; Hades II's Chaos, Trials): the chance a room just won shows its slab, the depths where it may
+## (a curse of 3 to 5 fights must have fights left to carry it), rooms before it may show again (Hades II: 10), the
+## life it asks (ceil(base + per_depth x depth)), the cards in its chamber and their rarity (Hades II's Chaos: rare
+## 40%, epic 10%).
+@export var trial_chance := 0.2
+@export var trial_depth_min := 2
+@export var trial_depth_max := 7
+@export var trial_cooldown := 10
+@export var trial_cost_base := 10.0
+@export var trial_cost_per_depth := 0.5
+@export var trial_cards := 3
+@export var trial_rarity_chance: Array[float] = [0.4, 0.1, 0.0]
+## The Altar Esquecido (E5, Altar): a door to it once in a run, within these depths, with this chance a room; what its
+## two trades ask and give.
+@export var altar_depth_min := 2
+@export var altar_depth_max := 8
+@export var altar_chance := 0.2
+@export var altar_life_cost := 10.0
+@export var altar_gold_cost := 75
+@export var altar_magick := 25.0

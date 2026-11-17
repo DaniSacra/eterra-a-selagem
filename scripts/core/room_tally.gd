@@ -27,6 +27,9 @@ var hurt_ctx: Array[Dictionary] = []
 var shop := {}
 ## The fountain healed him.
 var fountain_used := false
+## E5: every decision of the events, in order ({type, room, t, ...}: the Provação's slab shown, refused, paid, the card
+## taken and turned; the altar's door offered, its trade; each door taken and what the others showed).
+var events: Array[Dictionary] = []
 
 
 ## A room is entered at play time `time` with `hp` life, `gold` and `boons` gifts held. The room before it is closed.
@@ -35,7 +38,7 @@ func enter(depth: int, layout: String, hp: float, time: float, boss := false, va
 	_started = time
 	_rooms.append({"depth": depth, "layout": layout, "variant": variant, "hp_in": snappedf(hp, 0.1), "gold_in": gold,
 		"boons_in": boons, "hurt_by": {}, "hits": 0, "hits_by": {}, "dodges": 0, "shots": {}, "blocked_by": {},
-		"time": 0.0, "contact": -1.0})
+		"time": 0.0, "contact": -1.0, "zones": {}})
 	if boss:
 		hp_at_boss = snappedf(hp, 0.1)
 		boons_at_boss = boons
@@ -82,6 +85,29 @@ func shot(by: String, what: String, piece := "") -> void:
 		_count(_rooms[-1].blocked_by, piece)
 
 
+## E5: seconds the paladin spent in a named part of the current room's floor (RoomLayout.area_at) in a fight: the
+## decision each arena asks (the nave or the aisles, the island or the crossing).
+func zone_time(zone: String, dt: float) -> void:
+	if _rooms.is_empty() or dt <= 0.0:
+		return
+	var z: Dictionary = _rooms[-1].zones
+	z[zone] = float(z.get(zone, 0.0)) + dt
+
+
+## E5: what the floor of the runes did in the current room: life it took from the enemies, enemies it felled and how
+## many times it struck (what it took from him is in hurt_by, "runes").
+func hazard(enemy_damage: float, kills: int, strikes: int) -> void:
+	if not _rooms.is_empty():
+		_rooms[-1].hazard = {"enemy_damage": snappedf(enemy_damage, 0.1), "kills": kills, "strikes": strikes}
+
+
+## E5: a decision of an event (type: what happened; data: its details), at play time `time`, in the current room.
+func event(type: String, time: float, data := {}) -> void:
+	var e := {"type": type, "room": int(_rooms[-1].depth) if not _rooms.is_empty() else 0, "t": snappedf(time, 0.1)}
+	e.merge(data)
+	events.append(e)
+
+
 ## The shop was walked into with `gold`.
 func shop_entered(gold: int) -> void:
 	shop = {"gold": gold, "bought": [], "spent": 0}
@@ -116,13 +142,18 @@ func close(time: float) -> void:
 ## Every room so far, the current one timed up to `time` (a copy).
 func rooms(time: float) -> Array:
 	close(time)
-	return _rooms.duplicate(true)
+	var out := _rooms.duplicate(true)
+	for r: Dictionary in out:
+		var z: Dictionary = r.get("zones", {})
+		for k: String in z:
+			z[k] = snappedf(float(z[k]), 0.1)
+	return out
 
 
 ## The run's own fields (GP-02) for the log: boons_at_boss, shop, fountain_used and hurt_ctx (copies).
 func run_fields() -> Dictionary:
 	return {"boons_at_boss": boons_at_boss, "shop": shop.duplicate(true), "fountain_used": fountain_used,
-		"hurt_ctx": hurt_ctx.duplicate(true)}
+		"hurt_ctx": hurt_ctx.duplicate(true), "events": events.duplicate(true)}
 
 
 static func _count(d: Dictionary, key: String) -> void:

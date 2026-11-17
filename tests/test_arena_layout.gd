@@ -7,8 +7,9 @@ extends GutTest
 const STAGE := "res://data/stages/catacombs.tres"
 ## Meters between two cells of the walking grid (smaller than the paladin's radius, so no gap is skipped).
 const CELL := 0.25
-## The grid covers this square around the middle of the room (the hall, its landing and the doors' zones).
-const REACH := 26.0
+## The grid covers this square around the middle of the room (the hall, its landing and the doors' zones; E5: the
+## bridge reaches 28 m and its east door 2.4 m past it).
+const REACH := 31.0
 ## The free middle of the room: the room's rectangle less this many meters on each side.
 const CLEAR_MARGIN := 4.0
 ## A point is free when resolve moves it less than this.
