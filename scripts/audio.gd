@@ -1,5 +1,5 @@
 extends Node
-## Autoload "Audio": sounds and music by name. Everything is synthesised from the recipes below (single sound map);
+## Autoload "Audio": sounds by name (the music is the Music autoload, scripts/music.gd). Everything is synthesised from the recipes below (single sound map);
 ## to use a recorded file later, put res://audio/<name>.ogg or .wav and it is played instead.
 
 const W := Synth.Wave
@@ -106,20 +106,11 @@ const SOUNDS := {
 	&"ui_move": [[W.SQUARE, 660, 660, 0.03, 0.12, 6.0, 0.0]],
 	&"ui_ok": [[W.SQUARE, 660, 990, 0.07, 0.18, 4.0, 0.0]],
 }
-## name -> [step seconds, bass wave, lead wave, bass notes, melody notes] in semitones from A2 (-99 = rest)
-const R := -99
-const MUSIC := {
-	&"title": [0.5, W.SINE, W.TRIANGLE, [0, R, 7, R, 5, R, 3, R, 0, R, 7, R, 8, R, 7, R], [12, R, 15, 19, 17, R, 15, 12, 12, R, 15, 19, 20, 19, 17, R]],
-	&"catacombs": [0.3, W.TRIANGLE, W.SQUARE, [0, 0, 12, 0, 0, 12, 10, 12, 3, 3, 15, 3, 5, 5, 17, 15, 0, 0, 12, 0, 0, 12, 10, 12, 8, 8, 20, 8, 7, 7, 19, 17],
-		[12, R, 15, R, 19, R, 15, 17, R, 15, R, 12, 10, R, 12, R, 12, R, 15, R, 19, R, 22, 20, R, 19, R, 15, 17, 19, 17, R]],
-	&"morvath": [0.2, W.SAW, W.SQUARE, [0, 0, 0, 12, 0, 0, 11, 12, 1, 1, 1, 13, 1, 1, 12, 13, 0, 0, 0, 12, 0, 0, 11, 12, 5, 5, 17, 5, 6, 6, 18, 6],
-		[12, 15, 12, 18, 12, 15, 12, 19, 13, 16, 13, 19, 13, 16, 13, 20, 12, 15, 12, 18, 12, 15, 24, 23, 17, 20, 17, 23, 18, 21, 18, 24]],
-	&"seal": [0.6, W.SINE, W.TRIANGLE, [0, R, 5, R, 7, R, 0, R, 5, R, 7, R, 12, R, R, R], [16, R, 19, 21, 24, R, 21, 19, 16, R, 19, 21, 24, 28, 24, R]],
-}
-
 ## The ceiling of everything heard (GP-05 of cycle C12c): a hard limiter at the end of the Master bus keeps the sum
-## of a full fight at most this loud (the video of cycle 12 peaked at +0.04 dBFS, a clip).
-const LIMIT_DB := -1.0
+## of a full fight at most this loud (the video of cycle 12 peaked at +0.04 dBFS, a clip). E4 (C15-03): -1.5 on the
+## samples, so the true peak between them stays under -1 dBTP (tools/mix_probe.gd: at -1.0 the worst storm of blows
+## over Morvath's music reached -0.9 dBTP).
+const LIMIT_DB := -1.5
 const LIMIT_RELEASE := 0.1
 
 var _streams: Dictionary = {}
@@ -129,9 +120,6 @@ var _gate := VoiceGate.new()
 ## What each voice last played (its VoiceGate family) and when it started (ms).
 var _voice_family: Array[StringName] = []
 var _voice_start := PackedInt64Array()
-var _music: AudioStreamPlayer
-var _track: StringName = &""
-var _threads: Dictionary = {}
 var silent := false
 ## Tests: every sound let through the gate, as [name, ms] (only while record is on), and the clock the gate reads
 ## (the real one unless a test steps the game faster than real time).
@@ -154,9 +142,6 @@ func _ready() -> void:
 		_players.append(p)
 		_voice_family.append(&"")
 		_voice_start.append(0)
-	_music = AudioStreamPlayer.new()
-	_music.bus = &"Music"
-	add_child(_music)
 	limit_master()
 	apply_volumes()
 
@@ -225,43 +210,6 @@ func stream(sound: StringName) -> AudioStream:
 				samples = Synth.mix(samples, Synth.tone(v[0], v[1], v[2], v[3], v[4], 0.004, v[5]), v[6])
 			_streams[sound] = Synth.to_stream(samples)
 	return _streams[sound]
-
-
-## Starts a looping track ("" stops the music). Tracks are built on a worker thread the first time.
-func music(track: StringName) -> void:
-	_track = track
-	if silent:
-		return
-	_music.stop()
-	if track == &"" or not MUSIC.has(track):
-		return
-	if _streams.has(track):
-		_start_music(track)
-		return
-	var file := _from_file(track)
-	if file != null:
-		_streams[track] = file
-		_start_music(track)
-		return
-	if not _threads.has(track):
-		_threads[track] = WorkerThreadPool.add_task(_build_track.bind(track))
-
-
-func _build_track(track: StringName) -> void:
-	var m: Array = MUSIC[track]
-	var s := Synth.to_stream(Synth.loop_track(m[3], m[4], m[0], m[1], m[2]), true, 11025)
-	_track_ready.call_deferred(track, s)
-
-
-func _track_ready(track: StringName, s: AudioStream) -> void:
-	_streams[track] = s
-	if _track == track:
-		_start_music(track)
-
-
-func _start_music(track: StringName) -> void:
-	_music.stream = _streams[track]
-	_music.play()
 
 
 func _from_file(sound: StringName) -> AudioStream:

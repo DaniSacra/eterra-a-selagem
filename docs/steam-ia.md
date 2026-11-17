@@ -30,5 +30,9 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   campo de distância `lion_sdf.res` sai dele por `tools/make_seal_lion.gd`. Toda a cenografia da câmara é geometria e
   shader (`BossChamber`, `chamber_*.gdshader`), sem modelo nem textura gerada.
 
+- **Música (vai no jogo, E4-06, 2026-11-17)**: `audio/music/*.ogg`, composta e escrita em código (notas, timbres e
+  mixagem em `tools/make_music.gd`) por um assistente de IA (Claude), como o leão do selo: nenhum gerador de música ou
+  de áudio por IA, nenhuma amostra gravada; o som sai da síntese do próprio script.
+
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), sons Kenney (CC0), fontes Cinzel e Alegreya Sans (OFL).

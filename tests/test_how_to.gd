@@ -73,3 +73,17 @@ func test_compendio_opens_the_codex_and_comes_back() -> void:
 	(codex[0] as CodexScreen).closed.emit()
 	await wait_process_frames(1)
 	assert_eq(s.find_children("*", "CodexScreen", true, false).size(), 0)
+
+
+func test_credits_list_every_source() -> void:
+	var s := _screen()
+	assert_not_null(s.find_child("credits", true, false), "Como Jogar opens the credits (C15-05)")
+	var c := CreditsScreen.new()
+	add_child_autofree(c)
+	c.open()
+	for id in CreditsScreen.LINES:
+		var l := c.find_child("credits_" + id, true, false) as Label
+		assert_not_null(l, id)
+		if l:
+			assert_false(l.text.contains("credits_"), "text for " + id)
+			assert_false(l.text.contains("—") or l.text.contains("–"), "no dash in " + id)

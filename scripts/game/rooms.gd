@@ -183,6 +183,10 @@ func _enter(next: RunMap.Room) -> void:
 	# nobody stands past the stage's ceiling, summons included; a fight lowers it to its tier's most
 	game.horde.alive_cap = stage.alive_cap
 	purse = null
+	# the rooms' music (E4-06): the fight's layer comes in for a fight and goes when it is won; Morvath has his own
+	if room.kind != RunMap.Kind.BOSS:
+		var fighting := room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS
+		Music.play(&"catacombs", Music.FIGHT if fighting else Music.WALK)
 	match room.kind:
 		RunMap.Kind.COMBAT:
 			var fight := EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
@@ -313,6 +317,7 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 
 func _room_cleared() -> void:
 	phase = Phase.REWARD
+	Music.set_level(Music.WALK)
 	won.append(room.kind)
 	game.hero_gifts.room_won()  # Respiro
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)

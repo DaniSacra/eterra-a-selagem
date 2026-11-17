@@ -2,7 +2,7 @@ class_name HowToScreen
 extends Control
 ## "Como Jogar": every action of the game with what is bound to it right now on the keyboard and mouse (remapped keys
 ## show as remapped) and on the gamepad (read from the InputMap), and what it does. "Compêndio" opens the Codex
-## (CodexScreen: Dons and Golpes).
+## (CodexScreen: Dons and Golpes); "Créditos" the sources and licences (CreditsScreen).
 ## The caller closes this screen on ui_cancel, like the others; while the combo list is open this screen takes
 ## ui_cancel itself and goes back to its own page.
 
@@ -24,8 +24,10 @@ const ROWS: Array[Dictionary] = [
 const HIDDEN: Array[StringName] = [&"feel_panel"]
 
 var _page: Control
-var _moves: CodexScreen
+## The page open over this one (the Codex or the credits) and the button that opened it.
+var _moves: Control
 var _moves_button: Button
+var _from: Button
 
 
 func open() -> void:
@@ -69,6 +71,12 @@ func open() -> void:
 	_moves_button = UiKit.button(T.t(&"howto_moves"), _open_moves, 220)
 	_moves_button.name = "moves"
 	bottom.add_child(_moves_button)
+	var credits := UiKit.button(T.t(&"howto_credits"), Callable(), 220)
+	credits.name = "credits"
+	credits.pressed.connect(func() -> void:
+		Audio.play(&"ui_ok")
+		_open_sub(CreditsScreen.new(), credits))
+	bottom.add_child(credits)
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
 	back.name = "back"
 	bottom.add_child(back)
@@ -120,11 +128,16 @@ static func _stick_label(action: StringName) -> String:
 
 
 func _open_moves() -> void:
+	_open_sub(CodexScreen.new(), _moves_button)
+
+
+func _open_sub(screen: Control, from: Button) -> void:
 	_page.visible = false
-	_moves = CodexScreen.new()
-	add_child(_moves)
-	_moves.open()
-	_moves.closed.connect(_close_moves)
+	_moves = screen
+	_from = from
+	add_child(screen)
+	screen.call(&"open")
+	screen.connect(&"closed", _close_moves)
 
 
 func _close_moves() -> void:
@@ -133,7 +146,7 @@ func _close_moves() -> void:
 	_moves.queue_free()
 	_moves = null
 	_page.visible = true
-	_moves_button.grab_focus()
+	_from.grab_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:

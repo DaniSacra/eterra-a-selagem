@@ -709,6 +709,9 @@ func _start_boss(id: StringName) -> void:
 	boss = Boss.new()
 	boss.setup(self, horde.def(id))
 	boss.defeated.connect(_on_boss_defeated)
+	# his music, one layer more per phase (E4-06)
+	Music.boss_phase(boss.phase)
+	boss.phase_changed.connect(Music.boss_phase)
 	boss.moment.connect(func(name: StringName) -> void:
 		if name == &"victory":
 			_on_boss_falling())
@@ -1040,6 +1043,8 @@ func _on_player_died() -> void:
 	Save.data.runs += 1
 	Save.write()
 	log_run("death")
+	# the fight's music goes; the walk stays under the end screen (never silence with the music on)
+	Music.play(&"catacombs", Music.WALK)
 	await get_tree().create_timer(1.8).timeout
 	_open_end(false, false)
 
