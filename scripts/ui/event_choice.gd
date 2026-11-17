@@ -18,16 +18,19 @@ signal picked(index: int)
 const NONE := -1
 
 
+## T5 (the PO did not understand the events): a line under the title says the deal (the curse now, the Blessing after
+## the fights, for the rest of the descent), the hint under the cards that the life is paid and a card opens the doors.
 func open_trial(cards: Array[Trials.Card]) -> void:
-	var row := _page(T.t(&"trial_title"), T.t(&"trial_hint"))
+	var row := _page(T.t(&"trial_title"), T.t(&"trial_pick_hint"), T.t(&"trial_hint"))
 	for i in cards.size():
 		_add(row, BoonCard.new().setup_trial(cards[i]), i)
 	_ready_cards()
 
 
-## options: Altar.options ({option, id, cost, gain, ok}); a card that takes nothing comes last.
+## options: Altar.options ({option, id, cost, gain, ok, why, give_from...}); a card that takes nothing comes last. The
+## line under the title: one trade or none, for the rest of the descent; the hint: walking on costs nothing.
 func open_altar(options: Array[Dictionary]) -> void:
-	var row := _page(T.t(&"room_altar"), T.t(&"altar_hint"))
+	var row := _page(T.t(&"room_altar"), T.t(&"altar_hint"), T.t(&"altar_lead"))
 	for o in options:
 		_add(row, BoonCard.new().setup_altar(o), int(o.option))
 	_add(row, BoonCard.new().setup_altar({"id": &"none"}), NONE)

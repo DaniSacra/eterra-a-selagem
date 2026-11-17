@@ -640,17 +640,28 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `trial_turned`. Robô: paga se sobrar 60% da vida (`Trials.bot_accepts`) e pega a primeira carta.
   **Interface (spec 5.3)**: pisar diante do bloco (`Rooms.TRIAL_SPOT`) abre as cartas numa tela (`EventChoice.open_trial`,
   `scripts/ui/event_choice.gd`, filha da `BoonChoice`; `Game.open_screen`/`close_screen`; escolher chama `take_trial`):
-  `BoonCard.setup_trial` com a Bênção em cima (nome, "Provação" e a raridade, que também é a borda) e a maldição numa
-  faixa de tinta lilás-escura com "Por N encontros"; o ícone é o losango rachado (`TrialSeal`). Robô e `--autopick` pegam
+  `BoonCard.setup_trial` com a Bênção em cima (nome, "Bênção" e a raridade, que também é a borda) e a maldição numa
+  faixa de tinta lilás-escura com por quantas lutas; o ícone é o losango rachado (`TrialSeal`). Robô e `--autopick` pegam
   a primeira sem tela. No HUD, acima do medalhão, o selo `TrialSeal` (losango lilás acinzentado de 33 px a 1080, encontros
   que faltam dentro, nome da maldição ao lado, escondido enquanto o selo da maldição de Morvath está de pé; nada no herói,
   E5-D7); na virada a rachadura enche de ouro velho em 0,4 s e o `EloBanner.show_trial` diz "Provação vencida" com o nome e
-  o efeito da Bênção (`Hud.show_trial_won`, no lugar do aviso). A laje mostra o losango e troca "Custa N de vida" por "Vida
+  o efeito da Bênção (`Hud.show_trial_won`, no lugar do aviso). A laje mostra o losango e troca "Pisar custa N de vida" por "Vida
   insuficiente" no rosa apagado enquanto falta vida (`DoorSign.set_short`).
+  **T5 (o PO não entendeu Provação nem Altar)**: cada tela de evento tem uma linha sob o título (`BoonChoice._page(...,
+  lead)`, nó `Lead`): "A maldição começa agora. Vença as lutas e a Bênção fica com você até o fim da descida." e, embaixo,
+  "A vida já foi paga. Escolha uma carta para abrir as portas."; a carta da Provação (`TRIAL_SIZE` 320 x 404) diz
+  "Bênção · Rara", "VOCÊ RECEBE DEPOIS DE N LUTAS", o número e "e fica até o fim da descida" e, na faixa,
+  "VOCÊ CARREGA NAS PRÓXIMAS N LUTAS" (a Bênção só vem na virada, `Rooms._fight_won`; testado). A laje ganha uma nota
+  (`DoorSign.add_note`): "Uma Bênção forte, com uma maldição" e "Para recusar, não pise". Altar: "Uma troca só, ou
+  nenhuma. O que mudar vale até o fim desta descida."; cada carta com VOCÊ ENTREGA e VOCÊ RECEBE, os números e o antes e
+  depois (vida máxima, ouro, Magia máxima: `Altar.options` devolve `give_from`/`give_to`/`get_from`/`get_to`, `why` e
+  `short`, só informação), o porquê exato ("Faltam N de ouro", "Nenhuma Bênção sua pode subir de nível", "Vida máxima
+  baixa demais") e "Seguir em frente" com Nada e Nada; a porta do altar diz "Uma troca, sem luta" (`door_altar`).
+  Capturas em `docs/gallery/t5/ui/`.
 - **Altar Esquecido** (`Altar`, `stage.altar_layout`): porta uma vez por descida (profundidades 2 a 8, 20%), sem luta,
   uma troca ou nenhuma: 10 de vida máxima por uma romã (`Game.open_grow_choice`) ou 75 de ouro por 25 de Magia máxima.
   `Rooms.altar_options`, `take_altar(option)`, sinal `altar_used`. Robô: `Altar.bot_choice`. Pisar na laje gasta diante
-  do degrau (`Rooms.ALTAR_SPOT`) abre uma tela pequena (`EventChoice.open_altar`, `BoonCard.setup_altar`, 270 x 330 a
+  do degrau (`Rooms.ALTAR_SPOT`) abre uma tela pequena (`EventChoice.open_altar`, `BoonCard.setup_altar`, 290 x 392 a
   720): as duas trocas com medalhão desenhado (coração, chama) e o que pedem, a que não cabe agora apagada com o porquê,
   e "Seguir em frente" (nada); sair da laje e voltar abre de novo.
 - **Portas que mostram o caminho**: a luta atrás de cada porta é sorteada ao abrir a sala de antes (`Rooms._prepare`,

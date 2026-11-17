@@ -67,13 +67,21 @@ const PSALM_CUT := 14.0
 const PSALM_ARCH_INSET := 34.0
 const PSALM_ICON := 112.0
 ## The Provação's card: the crest, the curse's band (spec 5.3: ink (0.16; 0.12; 0.22), words (0.82; 0.76; 0.92)).
-const TRIAL_ICON := 104.0
+## T5: a shorter art band and card than a Blessing's, so the screen's lead line and the card's own heads fit at 720.
+const TRIAL_ICON := 92.0
+const TRIAL_SIZE := Vector2(320, 404)
+const TRIAL_ART_H := 118.0
 const TRIAL_BAND := TrialSeal.INK
 const TRIAL_WORDS := TrialSeal.PALE
-## The altar's cards: smaller, a shorter art band, the altar's warm ivory (Rooms.ALTAR_COLOR) in the glow.
-const ALTAR_SIZE := Vector2(270, 330)
-const ALTAR_ART_H := 120.0
-const ALTAR_ICON := 92.0
+## The heads of the events' sections ("Você entrega", "Você recebe"), their size and the room over each.
+const DEAL_HEAD := Color(0.78, 0.66, 0.44)
+const HEAD_SIZE := 13
+const DEAL_GAP := 22.0
+## The altar's cards: smaller than a Blessing's, a shorter art band, the altar's warm ivory (Rooms.ALTAR_COLOR) in the
+## glow (T5: taller than at E5, for what is given and what is got).
+const ALTAR_SIZE := Vector2(290, 392)
+const ALTAR_ART_H := 100.0
+const ALTAR_ICON := 80.0
 const ALTAR_GLOW := Color(0.95, 0.85, 0.65)
 ## The altar's medallion of each trade: its colour and BoonIcon.glyph (-1: an empty seal, "take nothing").
 const ALTAR_LOOK := {&"life": [Color(0.9, 0.36, 0.4), 6], &"candles": [Color(0.98, 0.78, 0.45), 0], &"none": [Color(0.62, 0.6, 0.66), -1]}
@@ -398,12 +406,15 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 
 
 ## The Provação's card (E5, spec 5.3): the blessing on top, the curse on a band of dark lilac below it with its length.
+## T5 (the PO did not understand it): each half says when it comes. On top "Você recebe depois de N lutas", the
+## blessing's number and that it stays to the end of the descent; on the band "Você carrega nas próximas N lutas", the
+## curse's name and its number. The blessing is not given now: Rooms._fight_won grants it when the curse turns.
 func setup_trial(c: Trials.Card) -> BoonCard:
 	trial = c
 	rarity = clampi(c.rarity, Boon.Rarity.COMMON, Boon.Rarity.LEGENDARY) as Boon.Rarity
-	var box := _shell(TrialSeal.GLOW)
+	var box := _shell(TrialSeal.GLOW, TRIAL_SIZE, TRIAL_ART_H)
 	crest = TrialSeal.new().setup(TRIAL_ICON)
-	_art(box).add_child(crest)
+	_art(box, TRIAL_ART_H).add_child(crest)
 	var title := _name(T.t(c.blessing.name_key))
 	title.name = &"Name"
 	box.add_child(title)
@@ -411,17 +422,23 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override(&"separation", 8)
-	row.add_child(UiKit.label(T.t(&"room_trial"), TrialSeal.PALE, 16, UiKit.BOLD_FONT))
+	row.add_child(UiKit.label(T.t(&"trial_blessing_word"), TrialSeal.PALE, 16, UiKit.BOLD_FONT))
 	row.add_child(UiKit.label("·", UiKit.DIM, 16))
 	var rar := UiKit.label(T.t(Boon.RARITY_KEY[rarity]), rarity_color(rarity).lightened(0.12), 16, UiKit.BOLD_FONT)
 	rar.name = &"Rarity"
 	row.add_child(rar)
 	box.add_child(row)
 	box.add_child(_rule())
-	var gain := _text(TrialSeal.blessing_text(c), UiKit.PALE, 18)
+	var when := _head(T.t(&"trial_gain_when", {"n": c.encounters}), DEAL_HEAD)
+	when.name = &"GainWhen"
+	box.add_child(when)
+	var gain := _text(TrialSeal.blessing_text(c), UiKit.PALE, 18, UiKit.BOLD_FONT)
 	gain.name = &"Blessing"
-	gain.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(gain)
+	var keep := _text(T.t(&"trial_gain_keep"), UiKit.DIM, 15)
+	keep.name = &"Keep"
+	keep.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(keep)
 	var band := PanelContainer.new()
 	band.name = &"CurseBand"
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -430,14 +447,14 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_theme_constant_override(&"separation", 1)
 	band.add_child(inner)
-	var width := SIZE.x - PAD * 2.0 - 18.0
+	var width := TRIAL_SIZE.x - PAD * 2.0 - 18.0
+	var lasts := _head(T.t(&"trial_card_for", {"n": c.encounters}), TrialSeal.LILAC.lightened(0.25))
+	lasts.name = &"Encounters"
 	var curse := _text(T.t(c.curse.name_key), TRIAL_WORDS.lightened(0.2), 16, UiKit.BOLD_FONT)
 	curse.name = &"CurseName"
 	var does := _text(TrialSeal.curse_text(c), TRIAL_WORDS, 16)
 	does.name = &"Curse"
-	var lasts := _text(T.t(&"trial_card_for", {"n": c.encounters}), TrialSeal.LILAC.lightened(0.1), 15, UiKit.BOLD_FONT)
-	lasts.name = &"Encounters"
-	for l: Label in [curse, does, lasts]:
+	for l: Label in [lasts, curse, does]:
 		l.custom_minimum_size.x = width
 		inner.add_child(l)
 	box.add_child(band)
@@ -445,8 +462,10 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 	return self
 
 
-## One of the altar's trades (E5, Altar.options: {option, id, cost, gain, ok}), or {id: &"none"} to take nothing. A
-## trade that cannot be taken now is dimmed, cannot be focused or pressed and says why.
+## One of the altar's trades (E5, Altar.options: {option, id, cost, gain, ok, why, give_from...}), or {id: &"none"} to
+## take nothing. T5: each card reads "Você entrega" and "Você recebe" with the numbers and what they become (life,
+## gold, Magia from now to after), so the cost shows before anything is pressed; "Seguir em frente" gives and gets
+## nothing. A trade that cannot be taken now is dimmed, cannot be focused or pressed and says why (Altar.options' why).
 func setup_altar(o: Dictionary) -> BoonCard:
 	altar = StringName(o.get("id", &"none"))
 	var look: Array = ALTAR_LOOK.get(altar, ALTAR_LOOK[&"none"])
@@ -461,18 +480,31 @@ func setup_altar(o: Dictionary) -> BoonCard:
 	title.name = &"Name"
 	box.add_child(title)
 	box.add_child(_rule())
-	var words := T.t(&"altar_none_desc")
-	if altar != &"none":
-		words = T.t(StringName("altar_%s_cost" % altar), {"n": int(o.get("cost", 0)), "m": int(o.get("gain", 0))})
-	var desc := _text(words, UiKit.PALE, 17)
-	desc.name = &"Desc"
-	desc.custom_minimum_size.x = ALTAR_SIZE.x - PAD * 2.0
-	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(desc)
-	if not bool(o.get("ok", true)):
-		var why := _text(T.t(&"altar_cannot"), WARN, 15, UiKit.BOLD_FONT)
+	var ok := bool(o.get("ok", true))
+	var n := {"n": num(float(o.get("cost", 0)))}
+	var give := T.t(&"altar_nothing")
+	var give_detail := ""
+	var got := T.t(&"altar_nothing")
+	var got_detail := T.t(&"altar_none_desc")
+	match altar:
+		&"life":
+			give = T.t(&"altar_life_give", n)
+			give_detail = T.t(&"altar_life_give_detail", _from_to(o, "give"))
+			got = T.t(&"altar_life_get")
+			got_detail = T.t(&"altar_life_get_detail")
+		&"candles":
+			give = T.t(&"altar_candles_give", n)
+			give_detail = T.t(&"altar_candles_give_detail", _from_to(o, "give")) if ok else ""
+			got = T.t(&"altar_candles_get", {"n": num(float(o.get("gain", 0)))})
+			got_detail = T.t(&"altar_candles_get_detail", _from_to(o, "get")) if float(o.get("get_from", 0.0)) > 0.0 else ""
+	_deal(box, &"Give", T.t(&"altar_give"), give, give_detail)
+	var last := _deal(box, &"Get", T.t(&"altar_get"), got, got_detail)
+	last.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if not ok:
+		var why_key := StringName(o.get("why", &""))
+		var why := _text(T.t(why_key if why_key != &"" else &"altar_cannot", {"n": int(o.get("short", 0))}), WARN, 15, UiKit.BOLD_FONT)
 		why.name = &"Cannot"
-		why.custom_minimum_size.x = desc.custom_minimum_size.x
+		why.custom_minimum_size.x = ALTAR_SIZE.x - PAD * 2.0
 		box.add_child(why)
 		disabled = true
 		focus_mode = Control.FOCUS_NONE
@@ -546,6 +578,42 @@ func _name(text: String) -> Label:
 	l.add_theme_constant_override(&"outline_size", 6)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	return l
+
+
+## A section's head on the events' cards ("Você entrega", "Você recebe depois de 5 lutas"): small bold capitals.
+func _head(text: String, color: Color) -> Label:
+	return _text(text.to_upper(), color, HEAD_SIZE, UiKit.BOLD_FONT)
+
+
+## One half of an altar's trade: the head, what (bold) and, under it, the detail (dim; empty: none). Returns the last
+## label added (the caller may let it fill the card).
+func _deal(box: VBoxContainer, id: StringName, head: String, what: String, detail: String) -> Label:
+	var width := custom_minimum_size.x - PAD * 2.0
+	var parts: Array[Label] = [_head(head, DEAL_HEAD), _text(what, UiKit.PALE, 17, UiKit.BOLD_FONT)]
+	parts[0].name = StringName(String(id) + "Head")
+	parts[1].name = id
+	if detail != "":
+		parts.append(_text(detail, UiKit.DIM, 15))
+		parts[2].name = StringName(String(id) + "Detail")
+	for l in parts:
+		l.custom_minimum_size.x = width
+		box.add_child(l)
+	parts[0].custom_minimum_size.y = DEAL_GAP
+	parts[0].vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	return parts.back()
+
+
+## A number as the player reads it: no ".0", a comma for the decimal (22,5).
+static func num(v: float) -> String:
+	var r := snappedf(v, 0.1)
+	if is_equal_approx(r, roundf(r)):
+		return str(roundi(r))
+	return String.num(r, 1).replace(".", ",")
+
+
+## {from, to} of an altar's option for "give" or "get" (Altar.options: give_from, give_to, get_from, get_to).
+static func _from_to(o: Dictionary, which: String) -> Dictionary:
+	return {"from": num(float(o.get(which + "_from", 0.0))), "to": num(float(o.get(which + "_to", 0.0)))}
 
 
 func _text(text: String, color: Color, size_: int, font: Font = null) -> Label:

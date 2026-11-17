@@ -490,6 +490,7 @@ func _open_doors() -> void:
 
 ## A door's sign (E5-D8, docs/art/e5_spec.md 7.1): the reward of a fight, under it "Difícil" for one with an elite
 ## and "Guardião" for the guardian's; the room's kind for the others (the pictogram beside it: DoorGlyph.of(door_info)).
+## The altar's says what it is in a line (T5): a trade with no fight.
 static func door_text(r: RunMap.Room) -> String:
 	match r.kind:
 		RunMap.Kind.COMBAT:
@@ -497,6 +498,8 @@ static func door_text(r: RunMap.Room) -> String:
 			return T.t(RunMap.REWARD_KEY[r.reward]) + ("\n" + T.t(&"door_hard") if hard else "")
 		RunMap.Kind.MINIBOSS:
 			return T.t(RunMap.REWARD_KEY[r.reward]) + "\n" + T.t(RunMap.KIND_KEY[r.kind])
+		RunMap.Kind.ALTAR:
+			return T.t(RunMap.KIND_KEY[r.kind]) + "\n" + T.t(&"door_altar")
 	return T.t(RunMap.KIND_KEY[r.kind])
 
 
@@ -717,7 +720,8 @@ func _step_slab(dt: float) -> void:
 
 
 ## The slab on the floor: the cracked slab of the Provação's look (TrialLook.entry_slab, spec 5.1), the ivory thread
-## of light that holds it as it rises, and its sign ("Provação", "Custa n de vida").
+## of light that holds it as it rises, and its sign ("Provação", "Pisar custa n de vida") with what it is and how to
+## refuse it under the price (T5: "Uma Bênção forte, com uma maldição", "Para recusar, não pise").
 const SLAB_THREAD := Color(0.95, 0.92, 0.85)
 const SLAB_THREAD_RADIUS := 0.125
 const SLAB_THREAD_HEIGHT := 14.0
@@ -729,6 +733,7 @@ func _slab_marker(at: Vector2, cost: int) -> Node3D:
 	TrialLook.entry_slab(root, at)
 	game.column(at, SLAB_THREAD, SLAB_THREAD_RADIUS, SLAB_THREAD_HEIGHT, SLAB_ARM)
 	var sign := DoorSign.make(T.t(&"room_trial"), T.t(&"trial_cost", {"n": cost}), DoorGlyph.Kind.TRIAL)
+	sign.add_note(T.t(&"trial_slab_offer") + "\n" + T.t(&"trial_slab_refuse"))
 	sign.position = Vector3(at.x, MARK_SIGN_Y, at.y)
 	root.add_child(sign)
 	_slab_sign = sign
@@ -777,7 +782,7 @@ const ALTAR_COLOR := Color(0.95, 0.85, 0.65)
 
 ## The altar's trades (Altar.options) open from the worn slab before its step (EventChoice.open_altar).
 func _build_altar() -> void:
-	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
+	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value)
 	_spots.append({"at": ALTAR_SPOT, "away": true, "node": _marker(ALTAR_SPOT, RunMap.Reward.NONE,
 		T.t(&"room_altar") + "\n" + T.t(&"altar_step"), RunMap.Kind.ALTAR, DoorGlyph.Kind.ALTAR)})
 
@@ -786,7 +791,7 @@ func _build_altar() -> void:
 func take_altar(option: int) -> bool:
 	if room == null or room.kind != RunMap.Kind.ALTAR or _spots.is_empty():
 		return false
-	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
+	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value)
 	if option < 0 or option >= altar_options.size() or not altar_options[option].ok:
 		return false
 	var p := game.player
@@ -849,7 +854,7 @@ func _choose_trial() -> void:
 
 ## The altar's trades on their screen (a last card takes nothing); the robot and --autopick take Altar.bot_choice.
 func _choose_altar() -> void:
-	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
+	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value)
 	if _no_screen():
 		var pick := Altar.bot_choice(altar_options, game.player.max_hp, gold)
 		if pick >= 0:
@@ -987,7 +992,7 @@ static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true) -> in
 
 ## The altar's trade the robot would make now (Altar.bot_choice; -1: none).
 func _bot_altar_pick() -> int:
-	return Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow()), game.player.max_hp, gold)
+	return Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow(), game.player.magick.max_value), game.player.max_hp, gold)
 
 
 ## Where the bot should walk when the room has no fight left (null: stay).
