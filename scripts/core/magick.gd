@@ -5,6 +5,8 @@ extends RefCounted
 
 var max_value := 100.0
 var value := 100.0
+## All the Magia ever spent from this pool (the ultimate's charge counts it: UltCharge.feed).
+var spent := 0.0
 
 
 func _init(maximum: float = 100.0) -> void:
@@ -21,6 +23,7 @@ func spend(cost: float) -> bool:
 	if not can_pay(cost):
 		return false
 	value -= cost
+	spent += cost
 	return true
 
 

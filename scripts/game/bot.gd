@@ -158,6 +158,7 @@ func step(dt: float, game: Game) -> void:
 	if not _kiting:
 		pad.release(&"dodge")
 	pad.release(&"cast")
+	pad.release(&"ultimate")
 	if game.rooms and game.horde.count() == 0:
 		# between fights: drink from the fountain when hurt (B-2), take the reward, buy what there is gold for, walk
 		# through a door
@@ -204,6 +205,10 @@ func step(dt: float, game: Game) -> void:
 	var spring: Variant = drink_at(game.fountain_target(), game.player.hp, game.player.max_hp)
 	if spring != null:
 		pad.move = ((spring as Vector2) - p).normalized()
+	if game.player.ult_ready and game.ults.worth(p, pad.aim):
+		# the ultimate as soon as it is full and worth it (the pack in the band or the Voragem, or a big one)
+		pad.press(&"ultimate")
+		return
 	if _hold > 0.0:
 		_hold -= dt
 		if _hold <= 0.0:

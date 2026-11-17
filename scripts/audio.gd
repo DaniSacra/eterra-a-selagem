@@ -97,6 +97,12 @@ const SOUNDS := {
 	&"circle": [[W.SINE, 523, 784, 0.35, 0.18, 2.5, 0.0], [W.TRIANGLE, 1046, 1568, 0.3, 0.08, 3.0, 0.05]],
 	&"circle_omega": [[W.SINE, 392, 784, 0.5, 0.22, 2.0, 0.0], [W.TRIANGLE, 784, 1568, 0.45, 0.1, 2.5, 0.06], [W.NOISE, 2000, 5000, 0.3, 0.06, 3.0, 0.0]],
 	&"circle_burst": [[W.NOISE, 1400, 300, 0.3, 0.32, 3.0, 0.0], [W.SINE, 196, 98, 0.35, 0.32, 3.0, 0.0], [W.TRIANGLE, 784, 392, 0.3, 0.12, 3.0, 0.0]],
+	# the ultimate: the Emeth gathering in the gesture, the cleave splitting the floor, the Voragem's turning breath
+	# and its implosion (Ultimates; CombatSounds ult_*)
+	&"ult_gesture": [[W.TRIANGLE, 330, 990, 0.3, 0.14, 1.5, 0.0], [W.NOISE, 800, 3200, 0.3, 0.08, 1.8, 0.0]],
+	&"ult_cleave": [[W.NOISE, 2200, 180, 0.45, 0.34, 3.0, 0.0], [W.SINE, 110, 40, 0.5, 0.36, 3.0, 0.0], [W.TRIANGLE, 660, 330, 0.3, 0.1, 3.0, 0.02]],
+	&"vortex": [[W.NOISE, 400, 1600, 0.9, 0.16, 1.2, 0.0], [W.SINE, 147, 196, 0.9, 0.14, 1.5, 0.0], [W.TRIANGLE, 587, 880, 0.6, 0.06, 2.0, 0.1]],
+	&"ult_implode": [[W.NOISE, 3000, 250, 0.35, 0.32, 3.0, 0.0], [W.SINE, 165, 55, 0.4, 0.34, 3.0, 0.0], [W.TRIANGLE, 988, 494, 0.3, 0.1, 3.0, 0.0]],
 	&"ui_move": [[W.SQUARE, 660, 660, 0.03, 0.12, 6.0, 0.0]],
 	&"ui_ok": [[W.SQUARE, 660, 990, 0.07, 0.18, 4.0, 0.0]],
 }

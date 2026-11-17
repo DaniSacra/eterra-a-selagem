@@ -11,4 +11,7 @@ kind = 1
 charge = 70.0
 mastery_level = 6
 tags = Array[StringName]([&"ultimate", &"cast"])
+anim = &"Sword_Attack"
+anim_peak = 0.4
 stun = 0.0
+knockback = 2.0

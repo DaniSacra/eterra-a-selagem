@@ -68,6 +68,12 @@ var locked := 0.0:
 			set_process(true)
 		locked = v
 		queue_redraw()
+## A glyph of its own instead of the action's (BoonIcon ids; -1: the action's or the gift's). The ultimate's diamond.
+var glyph := -1:
+	set(v):
+		if v != glyph:
+			glyph = v
+			queue_redraw()
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
@@ -140,7 +146,8 @@ func _draw() -> void:
 	if locked > 0.0:
 		draw_colored_polygon(_diamond(c, core), LOCK_VEIL)
 		ink = Color(IVORY, LOCK_GLYPH)
-	BoonIcon.glyph(self, boon.icon if boon else BoonIcon.ACTION_GLYPH + slot, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
+	var shape := glyph if glyph >= 0 else boon.icon if boon else BoonIcon.ACTION_GLYPH + slot
+	BoonIcon.glyph(self, shape, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
 	if locked > 0.0:
 		# the violet line around the frame, shrinking from the top as the lock runs out, and the padlock over the glyph
 		draw_polyline(_closed(_diamond(c, r - UiKit.FRAME * 0.5)), Color(LOCK.darkened(0.5), 0.9), UiKit.FRAME, true)

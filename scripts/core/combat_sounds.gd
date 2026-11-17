@@ -24,6 +24,11 @@ const EVENTS := {
 	&"hero_shield": &"shield",
 	&"cursed": &"cursed",
 	&"summon": &"summon",
+	# the ultimate (Ultimates): its gesture, the cleave landing, the Voragem opening and imploding
+	&"ult_gesture": &"ult_gesture",
+	&"ult_cleave": &"ult_cleave",
+	&"ult_vortex": &"vortex",
+	&"ult_implode": &"ult_implode",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
 const MATERIALS: Array[StringName] = [&"spectral", &"armor", &"shield", &"bone"]

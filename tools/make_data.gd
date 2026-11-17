@@ -876,19 +876,21 @@ func _ult(n: int, id: StringName, kind: UltDef.Kind, props: Dictionary) -> void:
 	_save(u, ULT_DIR + "%02d_%s.tres" % [n, id])
 
 
-## The two ultimates (D-54; warrior_spec.md 3.2): only their numbers, no behaviour yet. U-1: a band 12 x 4 m ahead,
+## The two ultimates (D-54; warrior_spec.md 3.2; played by Ultimates, E2-08 and E2-10). U-1: a band 12 x 4 m ahead,
 ## 300 on the middle strip and 200 on the rest, charged by 60 of Magia spent (Sky Fall), Mastery 2. U-2, the Voragem
 ## (ultimate_u2_proposals.md, proposal A): 6 m thrown 4 m ahead for 4 s, ticks of 8 every 0.25 s and an implosion of
-## 120 within 3 m, charged by 70 (Moon Water), Mastery 6. Names are pending (D-55, D-68: none with Elun).
+## 120 within 3 m, charged by 70 (Moon Water), Mastery 6. Names are pending (D-55, D-68: none with Elun). The gesture's
+## clip lands its blade as the 0.3 s gesture ends: the overhead cut (Slash_C, peak 0.67 s, PEAK) for the cleave, the
+## sword driven down (Sword_Attack, 0.40 s) for the Voragem.
 func _ultimates() -> void:
 	DirAccess.make_dir_recursive_absolute(ULT_DIR)
 	for f in DirAccess.get_files_at(ULT_DIR):
 		DirAccess.remove_absolute(ULT_DIR + f)
 	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "mastery_level": 2, "gesture": 0.3,
-		"tags": [&"ultimate", &"light"] as Array[StringName],
+		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
 		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 300.0, "damage": 200.0, "stun": 1.0, "armor_mult": 2.0})
 	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "mastery_level": 6, "gesture": 0.3,
-		"tags": [&"ultimate", &"cast"] as Array[StringName],
+		"tags": [&"ultimate", &"cast"] as Array[StringName], "anim": &"Sword_Attack", "anim_peak": PEAK[&"Sword_Attack"], "knockback": 2.0,
 		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 8.0,
 		"implode_damage": 120.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
 		"elite_pull": 0.5, "guardian_pull": 0.25, "stun": 0.0, "armor_mult": 2.0})

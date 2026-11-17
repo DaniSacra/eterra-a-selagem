@@ -16,6 +16,7 @@ const ROWS: Array[Dictionary] = [
 	{"id": "heavy_attack", "actions": [&"heavy_attack"]},
 	{"id": "cast", "actions": [&"cast"]},
 	{"id": "dodge", "actions": [&"dodge"]},
+	{"id": "ultimate", "actions": [&"ultimate"]},
 	{"id": "pause", "actions": [&"pause"]},
 ]
 ## Controls actions that are not for the player (the live tuning panel of debug builds).
