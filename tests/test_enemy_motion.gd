@@ -10,6 +10,18 @@ const TURN_FRAMES := 10
 var game: Game
 
 
+## Every game here plays the same dice (QA E2-12): without --seed each system's generator is randomize()d
+## (Dev.seed_rng), so each run drew other cooldowns, sides and attack turns; the walk test then crossed its 5% limit
+## now and then (0.0546 once). Seeded as --seed=1 does, from the game's _ready on, whatever ran before.
+func before_each() -> void:
+	Dev.has("seed")
+	Dev._args["seed"] = "1"
+
+
+func after_each() -> void:
+	Dev._args.erase("seed")
+
+
 func _room() -> void:
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)

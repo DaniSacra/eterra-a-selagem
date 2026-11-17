@@ -1,0 +1,9 @@
+    walk frames 1363, turning sideways 28, longest turn 5 frames
+[31m    [Failed]:  [0m[1] expected to be > than [1]:  
+[31m    [Failed]:  [0m[1] expected to be > than [1]:  
+Scripts              72
+Tests               723
+Passing Tests       722
+Failing Tests         1
+Asserts           110396/110397
+Time              179.171s

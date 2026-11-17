@@ -1,0 +1,40 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ok   title opens
+ok   focus starts on Iniciar
+ok   down moves to O Guerreiro
+ok   O Guerreiro opens the hero screen
+ok   the focus starts on a Gift
+ok   Enter puts quarto_corte on (or off)
+ok   Enter again takes it back
+ok   down walks the tree
+ok   Esc closes the hero screen
+ok   focus back on O Guerreiro
+ok   down moves to Como Jogar
+ok   Como Jogar opens its screen
+ok   Como Jogar has the Compêndio
+ok   Compêndio opens
+ok   right shows Golpes
+ok   Esc goes back to Como Jogar
+ok   Esc closes it
+ok   focus back on Como Jogar
+ok   Configurações opens the options
+ok   the options have Clarões de impacto
+ok   Enter flips impact_frames
+ok   the focus stays on impact_frames
+ok   Enter flips impact_frames back
+ok   Enter flips slow_motion
+ok   the focus stays on slow_motion
+ok   Enter flips slow_motion back
+ok   Enter flips color_split
+ok   the focus stays on color_split
+ok   Enter flips color_split back
+ok   Enter flips rumble
+ok   the focus stays on rumble
+ok   Enter flips rumble back
+ok   Esc closes the options
+ok   down reaches Sair
+ok   up returns to Iniciar
+ok   Iniciar starts the run
+ok   back to the title from the run
+FLOW ok
