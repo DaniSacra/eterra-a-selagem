@@ -12,16 +12,29 @@ const LEAST := {&"walk": 20, &"hit": 8, &"idle": 12, &"death": 16, &"attack": 14
 const BEFORE := {
 	# E1c (AUDIT.md P7): the crossbowman stands with the crossbow low (the Idle, 2.5 s; it was the pistol's 1.667)
 	&"archer": {&"aim": 1.667, &"attack": 0.633, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
-	&"guard": {&"attack": 1.1, &"brace": 1.15, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
-	&"knight": {&"attack": 1.1, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
-	&"mage": {&"aim": 2.1, &"attack": 0.5, &"cast": 2.1, &"death": 1.9, &"hit": 0.333, &"idle": 1.267, &"rise": 0.9},
-	&"morvath": {&"attack": 1.1, &"dash": 0.6, &"dash_windup": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rain": 2.1,
+	# T5-06, T5-07 (combat_cadence.md 6.3): the charge of the brute and the knight is its own clip (the shield's push,
+	# 0.5 s, drawn from the start of the charge), the spent recovery after it Idle_Shield_Break (1.07 s, played at its
+	# pace and faded to the guard; Horde.render), the knight braces as the brute does (its brace a one-shot of 0.3 s
+	# drawn by Horde.windup_arm over the wind-up)
+	&"guard": {&"attack": 1.1, &"brace": 1.15, &"charge": 0.5, &"recover": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
+	&"knight": {&"attack": 1.1, &"brace": 0.3, &"charge": 0.5, &"recover": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
+	# T5-03, T5-13: the staff rises (cast, Spell_Simple_Enter 0.53 s) over the arm of the wind-up (Horde.windup_arm, no
+	# longer a loop played as long as the wind-up), is held (cast_hold, the loop that was cast), each orb its own
+	# thrust (shot, 0.17 s: the bursts' interval) and comes down in the recovery (exit); the "aim" it never used is gone
+	&"mage": {&"attack": 0.5, &"cast": 0.533, &"cast_hold": 2.1, &"shot": 0.17, &"exit": 0.433, &"death": 1.9, &"hit": 0.333, &"idle": 1.267, &"rise": 0.9},
+	# T5-15: the charge's own crouch (0.12 s of Sword_Dash_RM, armed by Boss over the wind-up; it was a still guard
+	# loop of 1.067 s) and the Blades' draw (blades_windup)
+	&"morvath": {&"attack": 1.1, &"dash": 0.6, &"dash_windup": 0.12, &"blades_windup": 0.2, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rain": 2.1,
 		&"rise": 0.9, &"roar": 1.033, &"slash1": 0.433, &"slash2": 0.533, &"slash3": 1.1, &"stunned": 2.933, &"summon": 4.3, &"volley": 0.5},
 	&"priest": {&"attack": 0.5, &"cast": 0.8, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
-	&"priest_elder": {&"attack": 0.5, &"cast": 2.1, &"death": 1.9, &"hit": 0.333, &"idle": 1.267, &"rise": 0.9},
-	&"runner": {&"attack": 1.0, &"death": 1.9, &"hit": 0.333, &"idle": 1.333, &"rise": 0.9, &"windup": 2.933},
-	# E1c (AUDIT.md P3): the soldier's blow starts where its wind-up stops, 0.3 to 1.2 s of the clip (it was 0.1 to 1.2)
-	&"skeleton": {&"attack": 0.9, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9, &"windup": 0.9},
+	# T5-03: as the sorcerer's, and raising its dead is the priests' summon (0.8 s)
+	&"priest_elder": {&"attack": 0.5, &"cast": 0.533, &"cast_hold": 2.1, &"summon": 0.8, &"death": 1.9, &"hit": 0.333, &"idle": 1.267, &"rise": 0.9},
+	# T5-04: the runner gathers (windup, 0.15 s of Jump_Start, armed over its wind-up; it was a crouch loop of 2.933 s)
+	# and bursts spinning (attack, 2H_Melee_Attack_Spinning 0.667 s; it was a punch of 1.0)
+	&"runner": {&"attack": 0.667, &"death": 1.9, &"hit": 0.333, &"idle": 1.333, &"rise": 0.9, &"windup": 0.15},
+	# T5-02: the soldier's wind-up is the whole rise of the blade, 0 to 0.35 s of the clip, armed by Horde.windup_arm over
+	# its 0.9 s (it was 0.1 to 0.3 stretched to 0.9); its blow starts there, 0.35 to 1.2 s
+	&"skeleton": {&"attack": 0.85, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9, &"windup": 0.35},
 }
 ## E1b-A1: how far the planted foot may slide in a step, in the game's meters (the baked slide times EnemyDef.size):
 ## 5 cm for those who run, 8 cm for the big ones who walk. The priest never walks (speed 0).
@@ -32,8 +45,9 @@ const BIG_WALKERS: Array[StringName] = [&"guard", &"knight", &"morvath", &"pries
 ## heavy walk, the knight's and Morvath's long stride, the sorcerer's and the crossbowman's short trot.
 const CADENCE := {&"guard": Vector2(110, 140), &"knight": Vector2(90, 120), &"morvath": Vector2(90, 120),
 	&"mage": Vector2(120, 150), &"archer": Vector2(120, 150),
-	# E1c (AUDIT.md P6): the soldier runs about 150 a minute (it floated at 96), the elder walks about 90 (it was 67)
-	&"skeleton": Vector2(140, 165), &"priest_elder": Vector2(80, 100)}
+	# E1c (AUDIT.md P6): the soldier runs about 150 a minute (it floated at 96), the elder walks about 90 (it was 67);
+	# T5-11: the soldier jogs at 160 to 170 (Jog_Fwd, no longer the hop of a gazelle)
+	&"skeleton": Vector2(155, 170), &"priest_elder": Vector2(80, 100)}
 ## The ceiling of the baked figures on disk (E1a: 70 MB).
 const BAKED_MB := 70.0
 

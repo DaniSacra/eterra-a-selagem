@@ -214,11 +214,16 @@ func _enemies() -> void:
 		"rating": 5.0, "role": &"pressure", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1,
 		# at most 2 soldiers wind up at once (AUDIT.md P9: their red lines piled into one block)
 		"max_attackers": 2, "recover_time": ENEMY_RECOVER.skeleton[0],
+		# T5-02, T5-09: it trembles in the hold of its wind-up; its blade comes down 0.1 s into its pounce, reaching
+		# 1.1 m (at its size) past its body in an arc of 120 degrees ahead, as its body lands
+		"windup_shake": 0.025, "strike_at": 0.1, "strike_reach": 1.1, "strike_degrees": 120.0,
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1]})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
 		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
+		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
+		"strike_at": 0.1,
 		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "recover_time": ENEMY_RECOVER.runner[0]},
 		{"armor": 85.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1]})
 	# Ranged enemies with the numbers of Hades II's ranged ones in its first region (study of 2026-11-16) and Daniel's
@@ -241,12 +246,16 @@ func _enemies() -> void:
 	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 290.0 / U, "damage": 3.0, "radius": 0.55,
 		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
 		"shot_speed": 16.0, "shot_line": true, "keep_away": 0.65, "retreat_far": 700.0 / U, "retreat_time": Vector2(1.5, 1.75), "max_attackers": 2,
+		# T5-05: the crossbow rises to the shoulder over its settle (it rose in 0.1 s)
+		"windup_settle": 0.25,
 		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.archer[0]}, {"armor": 190.0, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
+		# T5-06: braced in three beats, 0.15 s to settle and the last 0.35 s held with a tremble
+		"windup_settle": 0.15, "windup_hold": 0.3, "windup_shake": 0.03,
 		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield",
 		# its charge in flight is not cut (Hades: the charging Brute, WeaponSetImmuneToStun while it runs)
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "stun_immune_attacking": true, "recover_time": ENEMY_RECOVER.guard[0]}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
@@ -264,6 +273,8 @@ func _enemies() -> void:
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
 		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 12.0, "close_range": 3.2, "close_windup": 0.8,
+		# T5-07: braced behind its shield in three beats (it stood idle), the last 0.3 s held with a tremble
+		"windup_settle": 0.12, "windup_hold": 0.3, "windup_shake": 0.03,
 		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
 		"recover_time": 0.8,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})

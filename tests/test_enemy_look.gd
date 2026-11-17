@@ -80,10 +80,13 @@ func test_the_figures_are_the_painted_models_made_light() -> void:
 func test_every_animation_the_game_asks_for_is_baked() -> void:
 	var common: Array[StringName] = [&"walk", &"idle", &"attack", &"hit", &"death", &"rise"]
 	var more := {
-		&"runner": [&"windup"], &"mage": [&"cast", &"aim"], &"priest": [&"cast"], &"priest_elder": [&"cast"], &"archer": [&"aim"],
-		# cycle 7: the soldier raises its blade before it lunges, the brute braces behind its shield before it charges
-		&"skeleton": [&"windup"], &"guard": [&"brace"],
-		&"morvath": [&"slash1", &"slash2", &"slash3", &"dash_windup", &"dash", &"summon", &"rain", &"volley", &"roar", &"stunned"],
+		&"runner": [&"windup"], &"mage": [&"cast", &"cast_hold", &"shot", &"exit"], &"priest": [&"cast", &"shot"],
+		&"priest_elder": [&"cast", &"cast_hold", &"summon"], &"archer": [&"aim"],
+		# cycle 7: the soldier raises its blade before it lunges, the brute braces behind its shield before it charges;
+		# T5: the knight too, both run their charge and sag after it
+		&"skeleton": [&"windup", &"strafe_l", &"strafe_r", &"back"], &"guard": [&"brace", &"charge", &"recover"],
+		&"knight": [&"brace", &"charge", &"recover"],
+		&"morvath": [&"slash1", &"slash2", &"slash3", &"dash_windup", &"blades_windup", &"dash", &"summon", &"rain", &"volley", &"roar", &"stunned"],
 	}
 	for id: StringName in SHEET_SIZE:
 		var baked: BakedModel = load("res://assets/baked/%s.res" % id)
@@ -91,13 +94,13 @@ func test_every_animation_the_game_asks_for_is_baked() -> void:
 			assert_gt(baked.frame_count(anim), 0, "%s: %s" % [id, anim])
 	# the rise fits the time the horde gives it
 	assert_almost_eq((load("res://assets/baked/skeleton.res") as BakedModel).duration(&"rise"), 0.9, 0.01)
-	# and the wind-ups that are one gesture last what the attack takes to come (EnemyDef.attack_windup)
-	for id: StringName in [&"skeleton", &"priest"]:
-		var d: EnemyDef = load(DIR + "%s.tres" % id)
-		var clip: StringName = &"windup" if id == &"skeleton" else &"cast"
-		assert_almost_eq((load("res://assets/baked/%s.res" % id) as BakedModel).duration(clip), d.attack_windup, 0.01, String(id))
-	var guard: EnemyDef = load(DIR + "guard.tres")
-	assert_almost_eq((load("res://assets/baked/guard.res") as BakedModel).duration(&"brace"), guard.attack_windup, 0.01)
+	# T5-01: every wind-up clip is one gesture (never a loop: a loop held still is what the PO saw), armed by
+	# Horde.windup_arm over the wind-up whatever its length; the archer's aim is the loop it holds the crossbow in
+	for id: StringName in [&"skeleton", &"runner", &"mage", &"guard", &"priest", &"knight", &"priest_elder"]:
+		var baked: BakedModel = load("res://assets/baked/%s.res" % id)
+		for clip: StringName in [&"windup", &"cast", &"brace", &"summon"]:
+			if baked.frame_count(clip) > 0:
+				assert_false(baked.loops.get(clip, false), "%s %s is one gesture" % [id, clip])
 
 
 ## The renderer draws a painted figure by its own texture and passes the elite's gold on.

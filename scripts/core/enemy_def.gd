@@ -92,6 +92,18 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## end of its blow (Enemy.State.RECOVER) before it walks again. A blow there stuns it but cuts nothing (the window is
 ## already open). 0: it walks at once.
 @export var recover_time := 0.0
+## T5-01 (docs/design/combat_cadence.md 6.3): its wind-up is drawn in three beats. Settle: windup_settle seconds, the
+## body stops and fades from its walk to its guard. Arm: its wind-up clip, eased in and out, until the last
+## windup_hold share of the wind-up. Hold: that share, the armed pose (or its own *_hold loop) with windup_shake.
+## The settle is also how long its last clip fades into the wind-up (T5-05: the crossbow rising to the shoulder).
+@export var windup_settle := 0.12
+@export var windup_hold := 0.3
+## T5-09: seconds into its attack at which its blow lands (a soldier's blade down, a runner's arms open): the warning
+## on the floor fills until that frame, and the damage is dealt there from where its body is.
+@export var strike_at := 0.0
+## RUNNER (T5-09): its blade's reach from the edge of its body when it lands (meters at size 1) and the arc ahead.
+@export var strike_reach := 1.1
+@export var strike_degrees := 120.0
 ## RUNNER and KNIGHT: speed of the lunge or charge (m/s) and how long it lasts.
 @export var lunge_speed := 14.0
 @export var lunge_time := 0.45

@@ -25,6 +25,7 @@ attack_range = 1.6
 attack_cooldown = 1.4
 attack_windup = 0.7
 recover_time = 1.35
+strike_at = 0.1
 attack_width = 2.6
 rating = 7.0
 role = &"react"

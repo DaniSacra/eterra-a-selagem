@@ -28,6 +28,7 @@ attack_range = 12.0
 attack_cooldown = 1.8
 attack_windup = 0.8
 recover_time = 0.6
+windup_settle = 0.25
 shot_speed = 16.0
 shot_line = true
 keep_away = 0.65
