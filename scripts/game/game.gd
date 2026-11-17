@@ -89,6 +89,8 @@ var room_tally := RoomTally.new()
 ## The gifts in the order they were taken (ids), for the run's log.
 var gifts_taken: Array[StringName] = []
 var _logged := false
+## The Mastery this run gave, for the end screen (E2-04): {gain (mastery_gain), xp_before (the hero's XP before it)}.
+var mastery_report: Dictionary = {}
 var fast := 1.0
 ## Smoothed cost of one simulation step, in milliseconds.
 var step_ms := 0.0
@@ -976,7 +978,7 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	_screen = end
 	ui.add_child(end)
 	end.open(victory, {"time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
-		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &""}, new_best)
+		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report}, new_best)
 	end.retry.connect(func() -> void: get_tree().reload_current_scene())
 	end.menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn"))
 
@@ -1340,6 +1342,7 @@ func log_run(outcome: String) -> void:
 	_logged = true
 	var gain := mastery_gain(outcome, Save.data)
 	var e := run_entry(outcome, gain)
+	mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)}
 	# the Mastery is kept by a death too (D-57); never for the test robot (unless --mastery) nor without a save
 	if Save.enabled and (bot == null or Dev.has("mastery")):
 		award_mastery(gain, outcome, Save.data)

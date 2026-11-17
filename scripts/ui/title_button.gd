@@ -3,31 +3,41 @@ extends BaseButton
 ## One button of the title menu, drawn in vectors exactly over the painted one it replaces.
 ## Every measure is in pixels of the title art (docs/art/title_screen_spec.md); `place` gives the art's origin and scale.
 
-enum Kind { START, HOWTO, SETTINGS, QUIT }
+enum Kind { START, HERO, HOWTO, SETTINGS, QUIT }
 
-## Frame of each button in the art, and the horizontal run of its slanted ends.
+## Frame of each button in the art, and the horizontal run of its slanted ends. The painting had three small buttons
+## 71 px apart; with "O Guerreiro" (E2-06) there are four, 52 px tall and 62 px apart, from just under Iniciar, so the
+## column still ends on the dark band of the clean art (docs/art/title_screen_spec.md).
+const SMALL_TOP := 506.0
+const SMALL_HEIGHT := 52.0
+const SMALL_STEP := 62.0
 const FRAMES: Dictionary[Kind, Rect2] = {
 	Kind.START: Rect2(926, 401, 449, 89),
-	Kind.HOWTO: Rect2(1008, 515, 286, 55),
-	Kind.SETTINGS: Rect2(1008, 586, 286, 55),
-	Kind.QUIT: Rect2(1008, 657, 286, 55),
+	Kind.HERO: Rect2(1008, SMALL_TOP, 286, SMALL_HEIGHT),
+	Kind.HOWTO: Rect2(1008, SMALL_TOP + SMALL_STEP, 286, SMALL_HEIGHT),
+	Kind.SETTINGS: Rect2(1008, SMALL_TOP + SMALL_STEP * 2.0, 286, SMALL_HEIGHT),
+	Kind.QUIT: Rect2(1008, SMALL_TOP + SMALL_STEP * 3.0, 286, SMALL_HEIGHT),
 }
 const CUT_START := 51.0
 const CUT_SMALL := 25.0
 const TEXT_KEYS: Dictionary[Kind, StringName] = {
-	Kind.START: &"title_start", Kind.HOWTO: &"title_howto", Kind.SETTINGS: &"title_settings", Kind.QUIT: &"title_quit",
+	Kind.START: &"title_start", Kind.HERO: &"title_hero", Kind.HOWTO: &"title_howto", Kind.SETTINGS: &"title_settings",
+	Kind.QUIT: &"title_quit",
 }
-## Left edge of the ink and baseline of each label, and the font size, in the art.
+## Left edge of the ink and baseline of each label, and the font size, in the art (the small ones: TEXT_X, and the
+## baseline TEXT_DROP under the frame's top).
 const TEXT_AT: Dictionary[Kind, Vector2] = {
-	Kind.START: Vector2(1117, 462), Kind.HOWTO: Vector2(1115, 552), Kind.SETTINGS: Vector2(1115, 623),
-	Kind.QUIT: Vector2(1116, 694),
+	Kind.START: Vector2(1117, 462),
 }
+const TEXT_X := 1115.0
+const TEXT_DROP := 35.5
 const FONT_START := 51.0
 const FONT_SMALL := 26.0
+## Centre of each icon (the small ones: ICON_X, in the middle of the frame).
 const ICON_AT: Dictionary[Kind, Vector2] = {
-	Kind.START: Vector2(1072, 447), Kind.HOWTO: Vector2(1070.5, 543), Kind.SETTINGS: Vector2(1071, 614.5),
-	Kind.QUIT: Vector2(1070.5, 686),
+	Kind.START: Vector2(1072, 447),
 }
+const ICON_X := 1070.5
 
 # Iniciar
 const GOLD := Color("ffca46")
@@ -157,6 +167,14 @@ func _ready() -> void:
 
 func frame() -> Rect2:
 	return FRAMES[kind]
+
+
+func text_at() -> Vector2:
+	return TEXT_AT[kind] if TEXT_AT.has(kind) else Vector2(TEXT_X, frame().position.y + TEXT_DROP)
+
+
+func icon_at() -> Vector2:
+	return ICON_AT[kind] if ICON_AT.has(kind) else Vector2(ICON_X, frame().get_center().y)
 
 
 func cut() -> float:
@@ -314,15 +332,28 @@ func _draw_small() -> void:
 	var cy := frame().get_center().y
 	for x: float in [frame().position.x + 12.5, frame().end.x - 12.5]:
 		_fill(_star(Vector2(x, cy), 3.8, 1.2), Color(line, line.a * 0.8))
-	var c := ICON_AT[kind]
+	var c := icon_at()
 	var paper := Color(fill, 1.0)
 	match kind:
+		Kind.HERO:
+			_draw_sword(c, icon)
 		Kind.HOWTO:
 			_draw_book(c, icon, paper)
 		Kind.SETTINGS:
 			_draw_gear(c, icon)
 		Kind.QUIT:
 			_draw_power(c, icon)
+
+
+## An upright sword, 18 x 36: a blade with its point and middle line, the guard, the grip and the pommel.
+func _draw_sword(c: Vector2, color: Color) -> void:
+	_fill(PackedVector2Array([c + Vector2(0.0, -18.0), c + Vector2(3.6, -12.0), c + Vector2(3.0, 7.0),
+		c + Vector2(-3.0, 7.0), c + Vector2(-3.6, -12.0)]), color)
+	draw_line(c + Vector2(0.0, -13.0), c + Vector2(0.0, 5.0), Color(0, 0, 0, 0.35), 1.0, true)
+	_fill(PackedVector2Array([c + Vector2(-9.5, 7.0), c + Vector2(9.5, 7.0), c + Vector2(8.0, 10.2),
+		c + Vector2(-8.0, 10.2)]), color)
+	draw_rect(Rect2(c + Vector2(-1.8, 10.2), Vector2(3.6, 6.4)), color)
+	_fill(_star(c + Vector2(0.0, 18.2), 2.8, 1.4), color)
 
 
 ## Open book, 37 x 28: two pages with three lines each, the cover showing under them.
@@ -364,7 +395,7 @@ func _draw_label(shift: Vector2) -> void:
 	var font := UiKit.BOLD_FONT
 	var start := kind == Kind.START
 	var font_size := maxi(roundi((FONT_START if start else FONT_SMALL) * _scale), 1)
-	var at := (TEXT_AT[kind] - frame().position) * _scale
+	var at := (text_at() - frame().position) * _scale
 	# measured on captures: the first glyph's side bearing (the spec gives the left edge of the ink) and the
 	# rounding of the baseline, in art pixels
 	at += Vector2(-3.6 if start else -1.0, 1.2) * _scale

@@ -1,8 +1,10 @@
 extends Node
 ## Title screen: Daniel's cinematic art (TitleBackdrop: the painting contained, mist, motes) with the real menu over
-## the painted one (TitleMenu). Iniciar starts the run; Como Jogar, Configurações open their panels over the art.
+## the painted one (TitleMenu). Iniciar starts the run; O Guerreiro (HeroScreen), Como Jogar and Configurações open
+## their panels over the art.
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
-## --title --screen=options|moves|howto opens a panel at once.
+## --title --screen=options|moves|howto|hero|codex opens a panel at once (--hero-xp=N and --hero-equip=a,b set the
+## Warrior's Mastery and Gifts for captures, in Save.data; Save.gd).
 
 const GAME := "res://scenes/game.tscn"
 ## Seconds to black before the run starts, and before quitting.
@@ -32,7 +34,11 @@ func _ready() -> void:
 		"options":
 			_open(OptionsScreen.new(), TitleButton.Kind.SETTINGS)
 		"moves":
-			_open(MovesScreen.new(), TitleButton.Kind.HOWTO)
+			_open(CodexScreen.new(), TitleButton.Kind.HOWTO, [CodexScreen.Tab.MOVES])
+		"codex":
+			_open(CodexScreen.new(), TitleButton.Kind.HOWTO)
+		"hero":
+			_open(HeroScreen.new(), TitleButton.Kind.HERO)
 		"howto":
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 	if Dev.has("shot"):
@@ -51,6 +57,7 @@ func _build() -> void:
 	# a browser tab or a phone app cannot be closed from inside: no Sair there
 	_menu.set_quit_visible(not OS.has_feature("web") and not OS.has_feature("mobile"))
 	_menu.start_pressed.connect(_start)
+	_menu.hero_pressed.connect(func() -> void: _open(HeroScreen.new(), TitleButton.Kind.HERO))
 	_menu.howto_pressed.connect(func() -> void: _open(HowToScreen.new(), TitleButton.Kind.HOWTO))
 	_menu.settings_pressed.connect(func() -> void: _open(OptionsScreen.new(), TitleButton.Kind.SETTINGS))
 	_menu.quit_pressed.connect(_quit)
@@ -87,7 +94,7 @@ func _quit() -> void:
 	get_tree().quit()
 
 
-func _open(screen: Control, opener: TitleButton.Kind) -> void:
+func _open(screen: Control, opener: TitleButton.Kind, args: Array = []) -> void:
 	if _sub:
 		return
 	_menu.finish_intro()
@@ -97,7 +104,7 @@ func _open(screen: Control, opener: TitleButton.Kind) -> void:
 	_backdrop.dim(true)
 	_sub = screen
 	_menu.get_parent().add_child(screen)
-	screen.call(&"open")
+	screen.callv(&"open", args)
 	screen.connect(&"closed", _close_sub)
 
 
@@ -128,7 +135,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _shot() -> void:
 	if Dev.has("hover"):
-		# --hover=N: the mouse rests on button N (0 Iniciar to 3 Sair), for captures of the hover look
+		# --hover=N: the mouse rests on button N (0 Iniciar to 4 Sair), for captures of the hover look
 		await get_tree().create_timer(0.3).timeout
 		var motion := InputEventMouseMotion.new()
 		motion.position = _menu.button(int(Dev.num("hover", 0))).get_global_rect().get_center()

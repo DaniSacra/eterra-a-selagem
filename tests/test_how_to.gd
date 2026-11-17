@@ -65,11 +65,11 @@ func test_keyboard_column_ignores_the_device_in_use() -> void:
 	assert_false(Controls.using_pad)
 
 
-func test_golpes_opens_the_combo_list_and_comes_back() -> void:
+func test_compendio_opens_the_codex_and_comes_back() -> void:
 	var s := _screen()
 	(s.find_child("moves", true, false) as Button).pressed.emit()
-	var moves := s.find_children("*", "MovesScreen", true, false)
-	assert_eq(moves.size(), 1)
-	(moves[0] as MovesScreen).closed.emit()
+	var codex := s.find_children("*", "CodexScreen", true, false)
+	assert_eq(codex.size(), 1)
+	(codex[0] as CodexScreen).closed.emit()
 	await wait_process_frames(1)
-	assert_eq(s.find_children("*", "MovesScreen", true, false).size(), 0)
+	assert_eq(s.find_children("*", "CodexScreen", true, false).size(), 0)

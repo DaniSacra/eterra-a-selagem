@@ -10,9 +10,24 @@ var enabled := true
 func _ready() -> void:
 	if Dev.has("nosave"):
 		enabled = false
-		return
-	if FileAccess.file_exists(PATH):
+	elif FileAccess.file_exists(PATH):
 		data = SaveData.merged(JSON.parse_string(FileAccess.get_file_as_string(PATH)))
+	_dev_hero()
+
+
+## Captures and checks (E2-06): --hero-xp=N and --hero-equip=a,b set the Warrior's Mastery XP and Gifts for this
+## session only (nothing is written afterwards).
+func _dev_hero() -> void:
+	if not Dev.has("hero-xp") and not Dev.has("hero-equip"):
+		return
+	enabled = false
+	var block := SaveData.hero(data, SaveData.FIRST_HERO)
+	if Dev.has("hero-xp"):
+		block.mastery_xp = int(Dev.num("hero-xp", 0))
+	if Dev.has("hero-equip"):
+		block.equipped = Array(Dev.arg("hero-equip").split(",", false))
+	if Dev.has("hero-ult"):
+		block.ultimate = Dev.arg("hero-ult")
 
 
 func write() -> void:

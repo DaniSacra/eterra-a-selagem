@@ -1,6 +1,7 @@
 extends SceneTree
 ## Drives the title like a player (keyboard): Iniciar starts the run, the pause's way back reaches the title again,
-## Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
+## O Guerreiro opens the hero screen (a Gift goes on and off with Enter, the arrows walk the tree), Como Jogar opens
+## the Compêndio, Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
 ## Enter and keep the focus. Prints FLOW ok or FLOW FAIL.
 ## ~/tools/godot/godot --headless --path . -s tools/title_flow_check.gd
 
@@ -64,6 +65,45 @@ func _comfort(options: Node) -> void:
 			await _key(&"ui_down")
 
 
+## The hero screen by keys: the focus starts on a Gift, Enter puts it on and takes it off, right walks to another node.
+func _hero(screen: Node) -> void:
+	var owner_ := root.gui_get_focus_owner()
+	_check(owner_ != null and owner_.get_script() != null and String(owner_.get_script().resource_path).ends_with("talent_node.gd"),
+		"the focus starts on a Gift")
+	if owner_ == null:
+		return
+	var block: Dictionary = screen.get(&"loadout").get(&"block")
+	var id := String(owner_.get(&"def").get(&"id"))
+	var had: bool = (block.equipped as Array).has(id)
+	await _key(&"ui_accept")
+	_check((block.equipped as Array).has(id) != had, "Enter puts %s on (or off)" % id)
+	await _key(&"ui_accept")
+	_check((block.equipped as Array).has(id) == had, "Enter again takes it back")
+	await _key(&"ui_down")
+	var moved := root.gui_get_focus_owner()
+	_check(moved != null and moved != owner_, "down walks the tree")
+
+
+## Como Jogar's Compêndio by keys: it opens on the Gifts tab, right shows Golpes, Esc goes back to Como Jogar.
+func _codex(howto: Node) -> void:
+	var button := howto.find_child("moves", true, false) as Control
+	_check(button != null, "Como Jogar has the Compêndio")
+	if button == null:
+		return
+	button.grab_focus()
+	await process_frame
+	await _key(&"ui_accept")
+	var codex := howto.find_children("*", "CodexScreen", true, false)
+	_check(codex.size() == 1, "Compêndio opens")
+	if codex.is_empty():
+		return
+	await _key(&"ui_right")
+	_check(int(codex[0].get(&"tab")) == 1, "right shows Golpes")
+	await _key(&"ui_cancel")
+	await _wait(0.1)
+	_check(howto.find_children("*", "CodexScreen", true, false).is_empty() and howto.is_inside_tree(), "Esc goes back to Como Jogar")
+
+
 func _run() -> void:
 	change_scene_to_file("res://scenes/boot.tscn")
 	await _wait(1.5)
@@ -72,14 +112,25 @@ func _run() -> void:
 	var menu = boot.get(&"_menu")  # untyped: a -s script compiles before the autoloads exist
 	_check(menu.button(0).has_focus(), "focus starts on Iniciar")
 	await _key(&"ui_down")
-	_check(menu.button(1).has_focus(), "down moves to Como Jogar")
+	_check(menu.button(1).has_focus(), "down moves to O Guerreiro")
+	await _key(&"ui_accept")
+	await _wait(0.3)
+	_check(_sub_is(boot, "hero_screen.gd"), "O Guerreiro opens the hero screen")
+	await _hero(boot.get(&"_sub"))
+	await _key(&"ui_cancel")
+	await _wait(0.3)
+	_check(boot.get(&"_sub") == null and menu.visible, "Esc closes the hero screen")
+	_check(menu.button(1).has_focus(), "focus back on O Guerreiro")
+	await _key(&"ui_down")
+	_check(menu.button(2).has_focus(), "down moves to Como Jogar")
 	await _key(&"ui_accept")
 	await _wait(0.3)
 	_check(_sub_is(boot, "how_to_screen.gd"), "Como Jogar opens its screen")
+	await _codex(boot.get(&"_sub"))
 	await _key(&"ui_cancel")
 	await _wait(0.3)
 	_check(boot.get(&"_sub") == null and menu.visible, "Esc closes it")
-	_check(menu.button(1).has_focus(), "focus back on Como Jogar")
+	_check(menu.button(2).has_focus(), "focus back on Como Jogar")
 	await _key(&"ui_down")
 	await _key(&"ui_accept")
 	await _wait(0.3)
@@ -89,7 +140,8 @@ func _run() -> void:
 	await _wait(0.3)
 	_check(boot.get(&"_sub") == null, "Esc closes the options")
 	await _key(&"ui_down")
-	_check(menu.button(3).has_focus(), "down reaches Sair")
+	_check(menu.button(4).has_focus(), "down reaches Sair")
+	await _key(&"ui_up")
 	await _key(&"ui_up")
 	await _key(&"ui_up")
 	await _key(&"ui_up")
