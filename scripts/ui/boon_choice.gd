@@ -53,9 +53,9 @@ func cards() -> Array[BoonCard]:
 static func offer_of(entry: Variant) -> Dictionary:
 	if entry is Dictionary:
 		var d: Dictionary = entry
-		return {"rarity": clampi(int(d.get("rarity", Boon.Rarity.COMMON)), 0, Boon.Rarity.HEROIC), "upgrade": bool(d.get("upgrade", false))}
+		return {"rarity": clampi(int(d.get("rarity", Boon.Rarity.COMMON)), 0, Boon.Rarity.LEGENDARY), "upgrade": bool(d.get("upgrade", false))}
 	if entry is int or entry is float:
-		return {"rarity": clampi(int(entry), 0, Boon.Rarity.HEROIC), "upgrade": false}
+		return {"rarity": clampi(int(entry), 0, Boon.Rarity.LEGENDARY), "upgrade": false}
 	return {"rarity": Boon.Rarity.COMMON, "upgrade": false}
 
 

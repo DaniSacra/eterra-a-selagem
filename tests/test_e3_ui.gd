@@ -25,7 +25,7 @@ func _open(ids: Array[StringName], rarities: Dictionary = {}, upgrades: Dictiona
 
 func test_each_rarity_has_its_own_frame() -> void:
 	var seen := {}
-	for r in [Boon.Rarity.COMMON, Boon.Rarity.RARE, Boon.Rarity.EPIC, Boon.Rarity.HEROIC]:
+	for r in [Boon.Rarity.COMMON, Boon.Rarity.RARE, Boon.Rarity.EPIC, Boon.Rarity.LEGENDARY]:
 		var card := BoonCard.new()
 		add_child_autofree(card)
 		card.setup(state.find(&"brasas"), r, 0, [], null, "x")
@@ -33,29 +33,29 @@ func test_each_rarity_has_its_own_frame() -> void:
 		assert_false(seen.has(key), "rarity %d looks like another" % r)
 		seen[key] = true
 	assert_eq(BoonCard.RARITY_LINES[Boon.Rarity.COMMON], 1)
-	assert_eq(BoonCard.RARITY_LINES[Boon.Rarity.HEROIC], 2, "heroic is doubled")
+	assert_eq(BoonCard.RARITY_LINES[Boon.Rarity.LEGENDARY], 2, "heroic is doubled")
 
 
 func test_heroic_is_old_gold_never_bright_yellow() -> void:
-	var c := BoonCard.rarity_color(Boon.Rarity.HEROIC)
+	var c := BoonCard.rarity_color(Boon.Rarity.LEGENDARY)
 	assert_between(c.h * 360.0, 30.0, 48.0, "a gold hue")
 	assert_lt(c.s, 0.6, "old: not saturated")
 	assert_lt(c.v, 0.9, "old: not bright")
 	# the game's heroic colour is red; the card never shows it
-	assert_ne(c, Boon.RARITY_COLOR[Boon.Rarity.HEROIC])
+	assert_ne(c, Boon.RARITY_COLOR[Boon.Rarity.LEGENDARY])
 
 
 func test_the_rarity_word_takes_the_card_colour() -> void:
-	var cards := _open([&"brasas"], {&"brasas": Boon.Rarity.HEROIC}).cards()
+	var cards := _open([&"brasas"], {&"brasas": Boon.Rarity.LEGENDARY}).cards()
 	var rar := cards[0].find_child("Rarity", true, false) as Label
-	assert_eq(rar.text, T.t(&"rarity_heroic"))
-	assert_eq(rar.get_theme_color(&"font_color"), BoonCard.rarity_color(Boon.Rarity.HEROIC).lightened(0.12))
+	assert_eq(rar.text, T.t(&"rarity_legendary"))
+	assert_eq(rar.get_theme_color(&"font_color"), BoonCard.rarity_color(Boon.Rarity.LEGENDARY).lightened(0.12))
 
 
 # ---------- BUG-017 on the card: an Elo has neither rarity nor level ----------
 
 func test_an_elo_shows_no_rarity_and_no_level() -> void:
-	var choice := _open([&"vapor", &"aurora", &"brasas"], {&"vapor": Boon.Rarity.EPIC, &"aurora": Boon.Rarity.HEROIC})
+	var choice := _open([&"vapor", &"aurora", &"brasas"], {&"vapor": Boon.Rarity.EPIC, &"aurora": Boon.Rarity.LEGENDARY})
 	for card in choice.cards():
 		var is_elo := card.boon.is_duo()
 		assert_eq(card.elo, is_elo, String(card.boon.id))
@@ -78,9 +78,9 @@ func test_an_elo_is_never_an_exchange() -> void:
 func test_offer_is_read_defensively() -> void:
 	assert_eq(BoonChoice.offer_of(null), {"rarity": Boon.Rarity.COMMON, "upgrade": false})
 	assert_eq(BoonChoice.offer_of(2), {"rarity": Boon.Rarity.EPIC, "upgrade": false})
-	assert_eq(BoonChoice.offer_of({"rarity": 3}), {"rarity": Boon.Rarity.HEROIC, "upgrade": false})
+	assert_eq(BoonChoice.offer_of({"rarity": 3}), {"rarity": Boon.Rarity.LEGENDARY, "upgrade": false})
 	assert_eq(BoonChoice.offer_of({"upgrade": true}), {"rarity": Boon.Rarity.COMMON, "upgrade": true})
-	assert_eq(BoonChoice.offer_of({"rarity": 9, "upgrade": 1}).rarity, Boon.Rarity.HEROIC, "clamped")
+	assert_eq(BoonChoice.offer_of({"rarity": 9, "upgrade": 1}).rarity, Boon.Rarity.LEGENDARY, "clamped")
 
 
 func test_an_exchange_wears_the_tab_and_names_the_trade() -> void:
@@ -114,7 +114,7 @@ func test_plain_rarities_still_work() -> void:
 
 func test_cards_with_tab_fit() -> void:
 	state.take(state.find(&"golpe_brasa"), Boon.Rarity.EPIC)
-	var cards := _open([&"golpe_geada", &"vapor", &"estilhaco"], {&"golpe_geada": {"rarity": Boon.Rarity.HEROIC, "upgrade": true}}).cards()
+	var cards := _open([&"golpe_geada", &"vapor", &"estilhaco"], {&"golpe_geada": {"rarity": Boon.Rarity.LEGENDARY, "upgrade": true}}).cards()
 	await wait_physics_frames(2)
 	for c in cards:
 		assert_lte(c.size.y, BoonCard.SIZE.y + 1.0, "%s grows past the card" % c.boon.id)

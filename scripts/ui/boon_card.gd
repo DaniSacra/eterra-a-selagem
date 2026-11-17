@@ -198,7 +198,7 @@ func _draw_frame(frame: Control) -> void:
 		var rivet := EloLink.METAL_LIT if rarity == Boon.Rarity.COMMON else edge.lightened(0.15)
 		for c in corners:
 			_diamond(frame, c, 3.5, rivet)
-		if rarity == Boon.Rarity.HEROIC:
+		if rarity == Boon.Rarity.LEGENDARY:
 			_draw_flourishes(frame, r.grow(-EDGE_W * 0.5), edge)
 	if has_focus():
 		var f := r.grow(-FOCUS_INSET)
