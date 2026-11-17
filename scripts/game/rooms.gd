@@ -197,6 +197,10 @@ func step(dt: float) -> void:
 
 # ---------- entering ----------
 
+func _exit_tree() -> void:
+	Music.ambience(&"")  # back to the title: no room, no air
+
+
 func _enter(next: RunMap.Room) -> void:
 	room = next
 	map.enter(room)
@@ -246,6 +250,7 @@ func _enter(next: RunMap.Room) -> void:
 	if room.kind != RunMap.Kind.BOSS:
 		var fighting := room.kind in [RunMap.Kind.COMBAT, RunMap.Kind.MINIBOSS, RunMap.Kind.TRIAL]
 		Music.play(&"catacombs", Music.FIGHT if fighting else Music.WALK)
+	Music.ambience(game.arena.id if game.arena.layout != null else &"hall")  # the room's air, crossfaded (E6, C15-04)
 	_stop_runes()
 	slab = null
 	_slab_node = null

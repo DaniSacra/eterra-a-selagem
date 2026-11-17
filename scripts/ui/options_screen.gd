@@ -51,6 +51,10 @@ func _build() -> void:
 		Save.set_option("scale", clampi(int(Save.option("scale")) + dir, 1, App.WINDOW_SIZES.size()))
 		App.apply_options())
 	_toggle("opt_fullscreen", "fullscreen")
+	# E6 (DT-003): Alta, Média, Baixa (GraphicsQuality); the run in progress gets it when the pause closes
+	_stepper("opt_quality", T.t(GraphicsQuality.TEXT[GraphicsQuality.clamp_level(int(Save.option("quality")))]), func(dir: int) -> void:
+		Save.set_option("quality", GraphicsQuality.clamp_level(int(Save.option("quality")) + dir))
+		App.apply_options())
 	var comfort := UiKit.label(T.t(&"options_comfort"), UiKit.GOLD, 24, UiKit.BOLD_FONT)
 	_list.add_child(comfort)
 	for option in COMFORT:

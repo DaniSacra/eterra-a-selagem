@@ -241,11 +241,17 @@ func test_music_runs_into_master_before_the_limiter() -> void:
 
 
 ## The mixing (C15-03): Morvath's full track (four layers, the loudest music) at the game's gain stays far under
-## -1 dBTP on its own, and its loudest moment sits at least 6 dB under a blow.
+## -1 dBTP on its own, and its loudest moment sits at least MUSIC_UNDER_BLOW under the loudest blow. E6 (C15-01): the
+## gains are the buses' (Audio.BUSES trims, Audio.GAIN_DB per sound); the music came up 9 dB so the whole mix reaches
+## -18 to -14 LUFS with the limiter only a guard (B-3; tests/test_mix.gd): its own true peak, -13 dBTP in E4, is now
+## about -3.5, so the rule on it went from 6 dB to 1.5 dB under the limiter's ceiling (docs/qa/e6_audio_perf.md).
+const MUSIC_UNDER_BLOW := 6.0
+
+
 func test_music_sits_under_the_blows() -> void:
 	var opts: Dictionary = SaveData.defaults().options
-	var music_db := Music.MUSIC_DB + linear_to_db(opts.music) + linear_to_db(opts.master)
-	var sfx_db := linear_to_db(opts.sfx) + linear_to_db(opts.master)
+	var music_db := Music.MUSIC_DB + linear_to_db(opts.music) + linear_to_db(opts.master) + float(Audio.BUSES[&"Music"].trim)
+	var sfx_db := linear_to_db(opts.sfx) + linear_to_db(opts.master) + float(Audio.BUSES[&"SFX"].trim)
 	var layers := []
 	for i in 4:
 		layers.append(decode(Music.stream_of(&"morvath", i, 4)))
@@ -253,8 +259,9 @@ func test_music_sits_under_the_blows() -> void:
 	var peak := true_peak(boss)
 	var loud := loudest_rms(boss, 0.4)
 	var blows := -100.0
-	for name: String in ["hit_0", "hit_1", "hit_heavy_0"]:
-		blows = maxf(blows, loudest_rms(_scaled(decode(load("res://audio/%s.ogg" % name)), sfx_db), 0.05))
+	for pair: Array in [["hit_0", &"hit"], ["hit_1", &"hit"], ["hit_heavy_0", &"hit_heavy"]]:
+		var db := sfx_db + float(Audio.GAIN_DB.get(pair[1], 0.0))
+		blows = maxf(blows, loudest_rms(_scaled(decode(load("res://audio/%s.ogg" % pair[0])), db), 0.05))
 	gut.p("music: true peak %.1f dBTP, loudest 0.4 s %.1f dBFS; blows %.1f dBFS" % [peak, loud, blows])
-	assert_lt(peak, Audio.LIMIT_DB - 6.0, "the music alone never drives the limiter")
-	assert_lt(loud + 6.0, blows, "the music sits under the blows")
+	assert_lt(peak, Audio.LIMIT_DB - 1.5, "the music alone never drives the limiter")
+	assert_lt(loud + MUSIC_UNDER_BLOW, blows, "the music sits under the blows")

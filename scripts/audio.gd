@@ -112,6 +112,31 @@ const SOUNDS := {
 ## over Morvath's music reached -0.9 dBTP).
 const LIMIT_DB := -1.5
 const LIMIT_RELEASE := 0.1
+## E6 (C15-01): the buses, all into Master (whose limiter is the last thing), each with its own trim in dB under the
+## save's volume: the blows (SFX) sit lower so the limiter is a guard, not a compressor (B-3: it was at the ceiling
+## in 67 windows of 0.1 s); the interface and the rooms' air follow the effects' volume, the air at its own level.
+## Which option sets each bus's volume: Master master, Music music, SFX/UI/Ambience sfx.
+const BUSES := {
+	&"Music": {"option": "music", "trim": 9.0},
+	&"SFX": {"option": "sfx", "trim": 2.0},
+	&"UI": {"option": "sfx", "trim": -6.0},
+	&"Ambience": {"option": "sfx", "trim": 0.0},
+}
+## Each sound's own trim, dB (C15-01, B-3; measured by tools/mix_probe.gd --log --why on a descent and Morvath): the
+## sounds that stacked into the limiter in a real run (a kill landing on a blow, a phase's roar) sit lower, so the
+## mix can be louder on the whole with the limiter only a guard. A sound not here plays at 0.
+const GAIN_DB := {
+	&"elite_down": -5.0, &"boss_down": -4.0, &"roar": -4.0, &"phase_shift": -2.0, &"bone": -5.0, &"hit": -4.0,
+	&"shield": -5.0, &"stagger": -5.0, &"armor_break": -3.0, &"door": -4.0, &"dash_land": -3.0, &"scythe": -2.0,
+	&"scythe_land": -2.0, &"eruption": -2.0, &"shield_down": -2.0, &"elite": -2.0, &"level_up": -3.0, &"hurt": -2.0,
+	&"heal": -3.0, &"mat_spectral": -2.0, &"mat_bone": -2.0,
+}
+## The menus' sounds go to the UI bus.
+const UI_SOUNDS: Array[StringName] = [&"ui_move", &"ui_ok"]
+## Morvath's warnings (C15-01): each ducks the music and the air for this long (seconds), so the tell is heard.
+const WARN_CUES := {
+	&"scythe_raise": 0.9, &"dash_aim": 0.9, &"eruption": 1.2, &"curse": 1.0, &"roar": 1.2, &"summon": 0.6,
+}
 
 var _streams: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
@@ -131,10 +156,11 @@ var clock: Callable = Time.get_ticks_msec
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	silent = DisplayServer.get_name() == "headless" or Dev.has("shot")
-	for bus in ["Music", "SFX"]:
-		if AudioServer.get_bus_index(bus) < 0:
-			AudioServer.add_bus()
-			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
+	make_buses()
+	if Dev.has("sound-log"):
+		# tools/mix_probe.gd --log: every sound, music and air change of a run on the game's clock (the smoke runs
+		# use --fixed-fps 60), written when the game quits
+		listen(true, func() -> int: return Engine.get_process_frames() * 1000 / 60)
 	for i in VOICES:
 		var p := AudioStreamPlayer.new()
 		p.bus = &"SFX"
@@ -160,12 +186,43 @@ static func limit_master() -> AudioEffectHardLimiter:
 	return limiter
 
 
+## The buses of BUSES under Master (made once).
+static func make_buses() -> void:
+	for bus: StringName in BUSES:
+		if AudioServer.get_bus_index(bus) < 0:
+			AudioServer.add_bus()
+			AudioServer.set_bus_name(AudioServer.bus_count - 1, bus)
+		AudioServer.set_bus_send(AudioServer.get_bus_index(bus), &"Master")
+
+
+## A bus's level in dB for a volume option (0 to 1) and its trim.
+static func bus_db(volume: float, trim: float) -> float:
+	return linear_to_db(maxf(volume, 0.001)) + trim
+
+
 func apply_volumes() -> void:
-	for pair: Array in [["Master", "master"], ["Music", "music"], ["SFX", "sfx"]]:
-		var idx := AudioServer.get_bus_index(pair[0])
-		var v: float = Save.option(pair[1])
+	var master: float = Save.option("master")
+	var idx := AudioServer.get_bus_index(&"Master")
+	AudioServer.set_bus_mute(idx, master <= 0.001)
+	AudioServer.set_bus_volume_db(idx, bus_db(master, 0.0))
+	for bus: StringName in BUSES:
+		var v: float = Save.option(BUSES[bus].option)
+		idx = AudioServer.get_bus_index(bus)
 		AudioServer.set_bus_mute(idx, v <= 0.001)
-		AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.001)))
+		AudioServer.set_bus_volume_db(idx, bus_db(v, BUSES[bus].trim))
+
+
+## The sound log (--sound-log=file): one entry, stamped with the clock, if the log is on.
+func log_event(entry: Array) -> void:
+	if record and Dev.has("sound-log"):
+		heard.append([int(clock.call())] + entry)
+
+
+func _exit_tree() -> void:
+	if Dev.has("sound-log"):
+		var f := FileAccess.open(Dev.arg("sound-log"), FileAccess.WRITE)
+		if f:
+			f.store_string(JSON.stringify({"events": heard}))
 
 
 ## Tests: start recording what is heard on the given clock, with the gate's memory cleared.
@@ -183,7 +240,12 @@ func play(sound: StringName, pitch: float = 1.0) -> void:
 	if not _gate.admit(sound, now):
 		return
 	if record:
-		heard.append([sound, now])
+		if Dev.has("sound-log"):
+			heard.append([now, "sfx", sound, pitch])
+		else:
+			heard.append([sound, now])
+	if WARN_CUES.has(sound):
+		Music.warn(WARN_CUES[sound])
 	if silent:
 		return
 	var playing: Array[bool] = []
@@ -197,7 +259,9 @@ func play(sound: StringName, pitch: float = 1.0) -> void:
 	var p := _players[i]
 	p.stop()
 	p.stream = stream(sound)
+	p.bus = &"UI" if sound in UI_SOUNDS else &"SFX"
 	p.pitch_scale = pitch
+	p.volume_db = GAIN_DB.get(sound, 0.0)
 	p.play()
 
 

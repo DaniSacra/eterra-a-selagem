@@ -7,6 +7,8 @@ extends Node
 ##   Music.boss_phase(n)              Morvath: phase n hears the first n layers (starts his track if needed)
 ##   Music.sting(&"sentinel")         a Psalm's theme over the bed (psalm_<id>; the Psalms' front calls it)
 ##   Music.play(&"victory")           the end, which hands over to the walk
+##   Music.ambience(&"crypt")         E6 (C15-04): the room's air (Ambience), crossfaded, on the Ambience bus
+##   Music.warn(seconds)              E6 (C15-01): one of Morvath's warnings, the music and the air duck under it
 
 const DIR := "res://audio/music/"
 ## Under every track, so the music sits below the blows (tests/test_music.gd measures it).
@@ -26,6 +28,8 @@ const WALK := 1
 const FIGHT := 2
 
 var mix: MusicMix
+## The rooms' air: its own decks (one layer each), the same crossfades.
+var air: MusicMix
 var silent := false
 var _players: Dictionary = {}  # MusicMix.Deck -> Array[AudioStreamPlayer]
 var _last_us := 0
@@ -35,6 +39,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	silent = DisplayServer.get_name() == "headless" or Dev.has("shot")
 	mix = MusicMix.new(catalog())
+	air = MusicMix.new(Ambience.catalog())
 	_last_us = Time.get_ticks_usec()
 
 
@@ -70,16 +75,36 @@ static func stream_of(id: StringName, layer: int, layers: int) -> AudioStream:
 
 
 func play(id: StringName, level: int = 1) -> void:
+	Audio.log_event(["music", id, level])
 	mix.play(id, level)
 	_sync()
 
 
 func set_level(n: int) -> void:
+	Audio.log_event(["level", n])
 	mix.set_level(n)
+
+
+## The room's air: the arena's loop (Ambience.BY_ARENA) fades in over the old one; an arena without one, silence.
+func ambience(arena: StringName) -> void:
+	var loop := Ambience.of(arena)
+	Audio.log_event(["air", loop])
+	if loop == &"" or not air.catalog.has(loop):
+		air.stop()
+	else:
+		air.play(loop)
+	_sync()
+
+
+## Morvath's warning (Audio.WARN_CUES): the music and the air duck for `seconds`.
+func warn(seconds: float) -> void:
+	mix.warn(seconds)
+	air.warn(seconds)
 
 
 ## Morvath's phase n (1 to 4): his track, with the first n layers.
 func boss_phase(n: int) -> void:
+	Audio.log_event(["boss", n])
 	if mix.current_id() != &"morvath":
 		mix.play(&"morvath", n)
 		_sync()
@@ -90,11 +115,13 @@ func boss_phase(n: int) -> void:
 ## A theme over the bed: "psalm_sentinel" or just the Psalm's id, "sentinel".
 func sting(id: StringName) -> void:
 	var key: StringName = PSALM_STING.get(id, id if mix.catalog.has(id) else StringName("psalm_" + id))
+	Audio.log_event(["sting", key])
 	mix.sting(key)
 	_sync()
 
 
 func stop() -> void:
+	Audio.log_event(["stop"])
 	mix.stop()
 
 
@@ -108,32 +135,37 @@ func _process(_delta: float) -> void:
 	var dt := minf((now - _last_us) / 1000000.0, 0.25)
 	_last_us = now
 	mix.step(dt)
+	air.step(dt)
 	_sync()
 
 
 func _sync() -> void:
-	var changes: Array = mix.take_changes()
-	for d: MusicMix.Deck in changes[0]:
-		_start(d)
-	for d: MusicMix.Deck in changes[1]:
-		for p: AudioStreamPlayer in _players.get(d, []):
-			p.queue_free()
-		_players.erase(d)
+	for m: MusicMix in [mix, air]:
+		var changes: Array = m.take_changes()
+		for d: MusicMix.Deck in changes[0]:
+			_start(d, m)
+		for d: MusicMix.Deck in changes[1]:
+			for p: AudioStreamPlayer in _players.get(d, []):
+				p.queue_free()
+			_players.erase(d)
 	for d: MusicMix.Deck in _players:
+		var m := air if air.decks.has(d) else mix
+		var base := Ambience.AMBIENCE_DB if m == air else MUSIC_DB
 		var list: Array = _players[d]
 		for i in list.size():
-			var g: float = mix.heard(d, i)
-			(list[i] as AudioStreamPlayer).volume_db = MUSIC_DB + linear_to_db(maxf(g, 0.0001))
+			var g: float = m.heard(d, i)
+			(list[i] as AudioStreamPlayer).volume_db = base + linear_to_db(maxf(g, 0.0001))
 
 
 ## All the layers of a deck start in the same frame, so they stay in time.
-func _start(d: MusicMix.Deck) -> void:
+func _start(d: MusicMix.Deck, m: MusicMix) -> void:
 	var list: Array[AudioStreamPlayer] = []
+	var is_air := m == air
 	for i in d.layers():
 		var p := AudioStreamPlayer.new()
-		p.bus = &"Music"
-		p.stream = stream_of(d.id, i, d.layers())
-		p.volume_db = MUSIC_DB + linear_to_db(maxf(mix.heard(d, i), 0.0001))
+		p.bus = &"Ambience" if is_air else &"Music"
+		p.stream = Ambience.stream_of(d.id) if is_air else stream_of(d.id, i, d.layers())
+		p.volume_db = (Ambience.AMBIENCE_DB if is_air else MUSIC_DB) + linear_to_db(maxf(m.heard(d, i), 0.0001))
 		add_child(p)
 		list.append(p)
 	_players[d] = list

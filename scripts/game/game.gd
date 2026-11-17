@@ -1195,6 +1195,10 @@ func apply_options() -> void:
 	fx.color_split = bool(Save.option("color_split"))
 	# the gamepad's vibration (GF-11; on by default, also in saves from before the option)
 	fx.rumble = bool(Save.option("rumble"))
+	# the graphics quality's screen effects (E6, DT-003; the viewport's part is App.apply_options)
+	for n in get_children():
+		if n is WorldEnvironment:
+			GraphicsQuality.apply_environment((n as WorldEnvironment).environment, GraphicsQuality.current(int(Save.option("quality"))))
 
 
 func _close_screen() -> void:
