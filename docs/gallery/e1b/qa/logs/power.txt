@@ -1,0 +1,5 @@
+PowerLineStatus      : Online
+BatteryChargeStatus  : High, Charging
+BatteryFullLifetime  : -1
+BatteryLifePercent   : 0,99
+BatteryLifeRemaining : -1

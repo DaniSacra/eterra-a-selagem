@@ -1,130 +1,145 @@
-# Relatório de QA e desempenho: E1a "Inimigos vivos"
+# Relatório de QA e desempenho: E1b (atordoamento, som do combate, pés travados)
 
 - **Data**: 2026-11-16.
-- **Testado**: a cópia de trabalho de `arpg-3d` com a E1a inteira **não commitada** sobre o `10944b1` (animação por textura
-  de poses com mistura, 20 poses no andar, recuo ao levar golpe, passo medido, `RESULT` em JSON, armas repintadas, pé do
-  Escudo). **Antes**: `10944b1` (`docs/gallery/e1a/before/BEFORE.md`) e, para as comparações que dependem da sessão, o
-  mesmo commit rodado de novo hoje (cópia por `git archive` e espelho `eterra-gpu-head`). O QA não mudou código, arte nem
-  testes; acrescentou `docs/gallery/e1a/after/` (detalhes, tabelas e comandos em `after/AFTER.md`) e este relatório.
-- **Ambiente**: WSL2 (Godot 4.7.2 Linux, sem tela) para importação, testes, sonda e robô. Placa real pela Godot 4.7.2 de
-  Windows (Vulkan 1.4.357, Forward+, RTX 5060 Laptop), espelho próprio `C:/Users/danie/tools/eterra-gpu-e1a`. **Notebook na
-  tomada** em todas as medidas de quadro (`BatteryStatus=2`, `PowerOnline=True`, 87% a 92%, lido antes e depois). Som
-  gravado pelo Movie Maker e descartado nos mp4; ninguém ouviu. Sem controle, sem celular, nenhum teste com gente.
+- **Testado**: `arpg-3d` no `18b0785` (E1b inteira commitada; árvore limpa). **Base de comparação**: `ec5d757` (HEAD da
+  E1a), copiado por `git archive` para o scratchpad (robô sem tela) e espelhado em `C:/Users/danie/tools/eterra-gpu-head`
+  (GPU). Atenção: entre os dois também entrou a fundação da E2a (`d9943c9`); o que muda abaixo não é só da E1b.
+- **Ambiente**: WSL2 (Godot 4.7.2 Linux, sem tela) para importação, testes, sonda e robô. GPU real pela Godot 4.7.2 de
+  Windows (Vulkan 1.4.357, Forward+, RTX 5060 Laptop) no espelho `C:/Users/danie/tools/eterra-gpu-e1b-qa`; Compatibility
+  pelo OpenGL 3.3 da mesma placa. **Na tomada** durante as medidas (`PowerLineStatus Online`, carga 99%, lido antes e
+  depois; `docs/gallery/e1b/qa/logs/power.txt`). O som foi **medido** no arquivo do Movie Maker (ffmpeg), **não ouvido**:
+  o QA não tem ouvidos. Sem controle, sem celular, nenhum teste com gente.
+- O QA não mudou código, arte nem testes. Evidências em `docs/gallery/e1b/qa/` (logs em `logs/`).
 
 ## Veredito
 
-**Pronto para o Daniel testar, com duas ressalvas escritas.** A E1a entrega o principal: a multidão e Morvath não repetem
-mais pose em quadros seguidos (0 de 23 pares no andar, antes 43% a 65%; morte 0 de 39, antes 82%), todos os clipes têm o
-número de poses pedido, o recuo aparece, os assados encolheram de 45 para 38 MB, a simulação ficou idêntica (mesma semente,
-`RESULT` igual campo a campo) e nada regrediu (557/557, sonda 31/31, 8/8 descidas, 0 preso). Ressalvas:
-1. **E1a-2 não passa para três figuras**: o pé de apoio do Escudo (10,7 cm), do Cavaleiro (10,2) e de Morvath (5,8) ainda
-   desliza mais de 5 cm por passo. Está declarado no próprio teste (`STRIDE_PENDING`) e marcado para a E1b.
-2. **Tempo só da GPU no limite**: +0,30 ms em média (0,20 a 0,41 por par) com 150 inimigos, medido intercalado com a base;
-   o tempo de quadro total caiu 0,18 ms. Não piora o que o jogador vê, mas está exatamente no teto do aceite.
+**Pronto para o Daniel testar.** Nada quebra a partida: 617/617 testes, sonda 34/34, `check.gd` limpo, 0 `SCRIPT ERROR`,
+o robô chega em Morvath e vence (`--seed=5`), 0 preso em 11 partidas, sem clipping no som, custo de GPU igual ao da E1a.
+Três coisas para ele saber (nenhuma bloqueia):
+1. **Com reação humana o robô perde um pouco mais**: 5 de 8 vitórias (base 6 de 8), chega em Morvath com menos vida (média
+   24,9 contra 36,4) e leva mais dano antes dele (91 contra 49 somados nas 8). Amostra pequena e as partidas divergem
+   (o atordoamento muda tudo depois do primeiro golpe); é o ponto que o teste do Daniel deve confirmar ou não.
+2. **A fonte nunca foi usada pelo robô** nas 11 partidas (`fountain_used: false` em todas): ele só bebe abaixo de 60% da
+   vida (`Bot.DRINK_BELOW`) e nunca chegou na sala 4 tão ferido. A regra tem teste (`test_bot_kite.gd`), mas não foi vista
+   acontecer numa partida.
+3. **Silêncio total entre as salas**: 9 s de 60 no vídeo são silêncio digital (`-inf`), sempre na caminhada até a porta e
+   na troca de sala (música desligada, sem ambiente). Não é defeito da E1b, mas vai se notar agora que o combate tem som.
 
 ## 1. Checagem e testes
 
-| Comando | Resultado |
-|---|---|
-| `godot --headless --path . --import` | 0 `SCRIPT ERROR`, 0 `Parse Error` |
-| `godot --headless --path . -s tools/check.gd` | `CHECK ok` |
-| `tools/test.sh` | **58 scripts, 557 testes, 557 passando, 0 falhando, 0 arriscados**, 104 890 asserções, 124,4 s (antes 541) |
-| `godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain` | **`FEEL_SUMMARY 31/31 ok`**, 0 `LOST` |
+| Comando | Resultado | Evidência |
+|---|---|---|
+| `godot --headless --path . --import` | 0 `SCRIPT ERROR`, 0 `Parse Error` | (log no scratchpad) |
+| `godot --headless --path . -s tools/check.gd` | `CHECK ok` | `logs/check.log` |
+| `tools/test.sh` | **64 scripts, 617 testes, 617 passando, 0 falhando, 0 arriscados**, 105 624 asserções, 140,8 s (E1a: 557) | `logs/test_summary.log` |
+| `godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain` | **`FEEL_SUMMARY 34/34 ok`**, 0 `LOST` | `logs/feel_probe.log` |
 
 Exportação de Windows e Web: não pedida, não feita.
 
-## 2. Robô e números de combate
+## 2. Robô (sem tela, `--fixed-fps 60`), E1b contra a base `ec5d757`
 
-| Comando | Antes | Depois |
+| Comando | Base `ec5d757` | E1b `18b0785` |
 |---|---|---|
-| `tools/smoke.sh 300` (sem semente) | Morvath aos 122,6 s, vence | Morvath (sala 7) aos 135,4 s, **vence**, `max_alive` 7, `step_ms_avg` 0,18 |
-| `tools/smoke.sh 120 --start=boss --boons=25` (sem semente) | vence em 52,8 s | **vence** em 69,2 s (outros dons sorteados; sem semente não se compara) |
-| `tools/smoke.sh 300 --seed=1..8` | 8/8 vencem | **8/8 vencem, `stuck` 0, `bot.stuck` 0; tempo, hp, abates e `max_alive` idênticos nas 8** |
-| `--seed=5` 300 s e `--start=boss --boons=25 --seed=5`, base e depois rodados agora | | **0 diferenças** no `RESULT` fora de `step_ms*` e `fps` (dano 12 789 e 5 939 nos dois) |
-| `--stress=150 --seed=5` | avg 1,28, pico 11,18 | **avg 1,02**, pico 12,66; 160 abates e dano 19 692 iguais |
+| `tools/smoke.sh 300 --seed=5` | vence, 282,5 s, Morvath (sala 7) aos 122,9 s, hp 45 | **vence, 242,1 s, Morvath (sala 7) aos 118,9 s**, hp 55, 51 abates, `flinches` 66, `interrupts` 18, avg 0,18 |
+| `tools/smoke.sh 120 --start=boss --boons=25 --seed=5` | vence em 88,9 s, hp 20 | **vence em 88,5 s**, hp 30, avg 0,17 |
+| `tools/smoke.sh 120 --stress=150 --seed=5` | avg **1,12**, 160 abates, dano 19 692 | avg **0,79**, 176 abates, dano 21 973, `flinches` 389 |
 
-Conclusão: o recuo é só desenho (o aceite do E1a-3 pede "nenhum número de combate muda": confirmado).
+`flinches` e `interrupts` são campos novos (não existem na base). Os números de jogo mudaram com a mesma semente: era o
+esperado (atordoamento e avanço do golpe mudam a luta).
+
+### 2.1 Oito descidas com reação humana (`tools/smoke.sh 300 --seed=N --bot-reaction=0.25`)
+
+| Semente | E1b: resultado, tempo, hp final | hp ao chegar em Morvath | dano antes de Morvath | dons no chefe | flinches / interrupts | dano em Morvath por | Base: resultado, hp em Morvath, dano antes |
+|---|---|---|---|---|---|---|---|
+| 1 | vence, 273,8 s, 26 | 30 | 0 | 3 | 54 / 24 | invocados 4 | vence, 30, 0 |
+| 2 | **perde** (fase 4), 233,8 s | 30 | 0 | 2 | 66 / 26 | tempestade 30 | vence, 30, 0 |
+| 3 | **perde** (fase 4), 210,0 s | 12 | 18 | 3 | 82 / 30 | invocados 4, maldição 6, tempestade 2 | perde (fase 2), 12, 18 |
+| 4 | vence, 239,7 s, 24 | 28 | 27 | 2 | 70 / 24 | invocados 4 | vence, 52, 3 |
+| 5 | vence, 238,7 s, **1** | 23 | 32 | 2 | 57 / 14 | maldição 12, tempestade 10 | vence, 46, 9 |
+| 6 | vence, 244,5 s, 3 | 27 | 3 | 2 | 61 / 24 | invocados 8, maldição 6, tempestade 10 | vence, 55, 0 |
+| 7 | **perde** (fase 3), 217,9 s | 19 | 11 | 2 | 62 / 20 | maldição 9, ritual 10 | vence, 51, 4 |
+| 8 | vence, 180,5 s, 16 | 30 | 0 | 3 | 58 / 14 | invocados 4, tempestade 10 | perde (fase 3), 15, 15 |
+| **Total** | **5 de 8** | média **24,9** | **91** | | 54 a 82 / 14 a 30 | | **6 de 8**, média 36,4, **49** |
+
+- `stuck` 0 e `bot.stuck` 0 em todas (E1b e base); `max_alive` 7 em todas; `fountain_used` falso em todas (as duas versões).
+- Mesma semente, mesmo resultado: `--seed=1` rodado de novo com `--trace-steps` deu o mesmo `RESULT` (273,8 s, hp 26, 44
+  abates, dano 12 528; `logs/trace1.log`).
+- Todos os `RESULT`: `logs/results_e1b.jsonl` e `logs/results_base_ec5d757.jsonl`.
 
 ## 3. Desempenho
 
-| Medida | Antes | Depois |
+| Medida | Base `ec5d757` | E1b |
 |---|---|---|
-| `step_ms_avg` descidas | 0,18 a 0,22 | 0,18 a 0,20 |
-| `step_ms_avg` estresse 150 | 1,28 | 1,02 |
-| Quadro na GPU, 150 inimigos, 1080 sem vsync, **intercalado na mesma sessão** (3 + 3) | frame mediana 7,60 / 7,09 / 7,79 (7,49); gpu 6,31 / 6,36 / 6,31 (6,33); 1032 chamadas | frame 7,25 / 6,86 / 7,82 (**7,31**); gpu 6,72 / 6,56 / 6,60 (**6,63**); 995 chamadas |
-| Os 3 do depois pedidos (`gpuperf9`, antes do intercalado) | (sessão do antes: frame 8,77 a 9,41, gpu 5,63 a 5,87) | frame 6,76 / 7,50 / 7,11; gpu 6,55 / 6,68 / 6,34 |
-| `gpu.sh shot`, vsync, só referência | fps 128 / 115 / 120 | fps 117 / 127 / 132 |
-| `du -sh assets/baked` | 45 MB | **38 MB** (teto 70) |
+| `step_ms_avg` nas 8 descidas (4 processos ao mesmo tempo) | 0,19 a 0,22 | 0,21 a 0,23 |
+| `step_ms_peak` nas 8 descidas (4 ao mesmo tempo, ruidoso) | 5,1 a 9,1 | 7,5 a 12,1 |
+| `--seed=1` sozinho, `--trace-steps` | | avg 0,17, pico **7,55** (só 3 passos acima de 4 ms: `horde` 7,48 e 4,43, `skills` 5,03) |
+| `step_ms_avg` estresse 150 | 1,12 | **0,79** |
+| **Quadro na GPU, 150 inimigos, 1920x1080 sem vsync, `gpuperf9`, intercalado (E, B, E, B, E, B)** | frame 8,40 / 8,52 / 8,55 (**8,49**); gpu 8,27 / 8,38 / 8,48 (**8,38**); cpu_render 1,10 / 1,00 / 1,08; 994 a 995 chamadas | frame 8,50 / 8,32 / 8,58 (**8,47**); gpu 8,39 / 8,27 / 8,44 (**8,37**); cpu_render 0,91 / 0,96 / 1,12; **985 chamadas** |
 
-A sessão do antes e a base de hoje diferem em 1 a 2 ms no quadro: comparar o depois com os números do `BEFORE.md`
-mostraria uma melhora falsa no quadro e uma piora exagerada na GPU. O que vale é o intercalado (`after/logs/gpu_perf_interleaved.log`).
-Leitura: a mistura de poses no vértice custa cerca de 0,3 ms de GPU com 150 figuras (duas leituras de textura por vértice
-mais a passada do contorno) e economiza CPU de render (1 lote por clipe em vez de 1 por pose: 37 chamadas a menos).
-Não medido: placa fraca, Compatibility na GPU, celular.
+Leitura: **sem diferença de GPU** (-0,01 ms, dentro do ruído), 10 chamadas a menos (velas apagadas). Os valores absolutos
+não se comparam com a tabela da E1a (7,3 ms): nesta sessão a sonda relata o render a 2880x1620 (`render (2880.0, 1620.0)`
+no `logs/gpu_perf_interleaved.log`), mais pixels que antes; por isso a base foi rodada de novo, intercalada. Os picos de
+`step_ms` com 4 processos em paralelo não valem como medida; o pico isolado (7,55 ms, um passo da multidão) fica abaixo de
+um quadro de 60 Hz. Não medido: placa fraca, celular, Compatibility em tempo de quadro.
 
-## 4. Aceite item a item
+## 4. Som (Movie Maker, 60 s, `--bot --seed=5`, 1920x1080, 48 kHz estéreo)
 
-| Item | Resultado | Evidência |
+Comando: `MIRROR=/mnt/c/Users/danie/tools/eterra-gpu-e1b-qa RES=1920x1080 FPS=30 tools/movie.sh C:/Users/danie/tools/e1b_out/qa_movie.avi 1800 --bot --seed=5`;
+medido com `ffmpeg -af astats,ebur128=peak=true` e `silencedetect=n=-50dB:d=0.7` (`logs/audio_stats.log`, `logs/silence.txt`,
+`logs/audio_peak_per_second.txt`). Vídeo: `docs/gallery/e1b/qa/partida_60s_som_1080.mp4` (10,4 MB, H.264 + AAC).
+
+| Medida | Valor | Leitura |
 |---|---|---|
-| E1a-1: pose repetida a 30 qps no andar = 0 | **passa** (0 de 23 nos quatro; golpe 0 de 9; morte 0 de 39) | `after/pose_repeats.txt`, `strip_blend_index.txt`, `pose_psnr_walk.txt`, `skeleton_walk_contact_12.png` |
-| E1a-1: 20 poses no andar, golpe 8, parado 12, morte 16 | **passa** nos nove | `after/baked_poses.txt` |
-| E1a-1: assados até 70 MB | **passa**, 38 MB | `after/baked_sizes.txt` |
-| E1a-1: `step_ms` sem piora | **passa** | seção 3 |
-| E1a-1: GPU sem piora acima de 0,3 ms | **no limite** (+0,30 GPU, -0,18 quadro) | `after/logs/gpu_perf_interleaved.log` |
-| E1a-2: pé de apoio menos de 5 cm | **falha para 3 de 8 que andam** (Escudo 10,7, Cavaleiro 10,2, Morvath 5,8); esqueleto 2,4, mago 1,8, corredor 1,1, besteiro 1,7, ancião 4,5 | `after/baked_poses.txt` (`BakedModel.slide_per_step`) |
-| E1a-3: recuo de 0,15 a 0,3 m em 3 quadros, que volta | **passa** na medida (0,24 m leve, 0,15 m pesado, pico no 3º quadro a 30 qps, volta em 0,3 s) | `after/compare/skeleton_hit_recoil_after.jpg`, `strip_blend_index.txt` |
-| E1a-3: números de combate iguais | **passa** (0 diferenças) | seção 2 |
-| E1a-4: armas | não refeito aqui (`after/weapons/`, revisão do `art-director`) | |
-| E1a-5: `RESULT` em JSON | **passa** (13 de 13 linhas desta sessão lidas por `json.loads`; `test_result_json.gd`) | `after/logs/*.log` |
-| E1a-QA | **passa** | `docs/gallery/e1a/after/` |
+| Pico de amostra | **-2,94 dBFS** (maior amostra 23 365 de 32 767) | **sem clipping**; abaixo do teto do limitador (-1 dB) |
+| Pico verdadeiro (ebur128) | -2,9 dBFS | sem estouro entre amostras |
+| Sonoridade integrada | -20,0 LUFS, faixa 5,0 LU | normal para jogo de ação; sem música |
+| RMS | -23,0 dB | |
+| Silêncio digital | 0 a 2,2 s (carregando), **18,2 a 23,1 s** e **40,5 a 44,6 s** | os dois do meio são as trocas de sala (quadros 540 a 660 e 1230 a 1335: "Sala vencida", caminhada até a porta, nome da arena); nenhum silêncio no meio de luta |
+| Pico por segundo | -2,9 dBFS em 16 dos 60 segundos, sempre o mesmo valor | o mais alto é sempre o mesmo som na mesma altura (provavelmente a mesma amostra de golpe, sem variar volume). **Não medi** quais sons repetem: o Movie Maker grava só a mistura e o jogo não registra os `Audio.play`. Se o Daniel achar repetitivo, pedir registro por som ao dono do áudio |
 
-## 5. Falhas e regressões, por gravidade
+## 5. Capturas na GPU (abertas e olhadas)
 
-Nenhuma falha crítica nem alta. Nenhuma regressão em teste, sonda, robô ou números de combate.
+- `docs/gallery/e1b/qa/fight_forward_1080.jpg`: `RES=1920x1080 tools/gpu.sh shot ... --bot --autopick --seed=5 --shot-at=9`
+  (Forward+). Salão com metade das velas da borda, Guerreiro em luta com o Escudo, onda verde do especial à direita dele,
+  número 43, contador "8 Golpes / Seta de Luz". Herói e inimigos legíveis.
+- `docs/gallery/e1b/qa/fight_compat_1080.jpg`: o mesmo quadro no **Compatibility** (`--rendering-driver opengl3`,
+  `OpenGL API 3.3.0 NVIDIA 621.01`). Sem erro; mesma cena, chão mais contrastado e portal menos aceso, como antes.
+- `docs/gallery/e1b/qa/boss_forward_1080.jpg`: `--start=boss --boons=5 --seed=5 --shot-at=20`. Morvath no meio da foice,
+  aviso em meio círculo vermelho com o fio violeta, herói dentro do arco do próprio golpe de fogo, barra com as marcas de
+  fase. Morvath aparece acima do chão nesse quadro (corpo inclinado sobre o aviso); não sei dizer de um quadro só se é o
+  clipe novo da foice de cima ou se ele flutua. Fica para o `art-director` olhar no vídeo `morvath/scythe_after.mp4`.
+- Quadros do vídeo nas trocas de sala: `/tmp/claude-1000/-home-dani-games-eterra-a-selagem/ef535818-db08-4d33-9659-643b5faf66d3/scratchpad/silence_frames.jpg` (não versionado).
 
-- **Média, E1a-2 incompleto (pés deslizando em 3 figuras)**. Reproduzir:
-  `~/tools/godot/godot --headless --path . -s docs/gallery/e1a/after/tools/qa_e1a_poses.gd` (coluna `slide`), ou
-  `tools/test.sh -gtest=res://tests/test_living_crowd.gd` (o `gut.p` imprime por figura). O teste passa porque tem a
-  exceção `STRIDE_PENDING` (guard 0,12, knight 0,11, morvath 0,065). Responsável: `gameplay-engineer` (travar o pé no
-  assado, E1b). Efeito colateral a revisar: para casar o passo, o Escudo anda a **2,01x** a velocidade do clipe (antes 1,41x)
-  e o esqueleto a 0,85x (antes 1,6x), o mago a 0,74x (antes 1,52x); a cadência mudou bastante (`after/guard_walk_contact_12.png`,
-  vídeos 0,25x). Decisão de aparência para o `art-director`.
-- **Média, GPU no teto do aceite (+0,30 ms com 150)**. Reproduzir: o bloco intercalado de `after/AFTER.md` seção 3.
-  Responsável: `gameplay-engineer` (`crowd_pose.gdshaderinc`; o contorno também lê as duas poses). Não passa de 0,3 na
-  média; um par passou (+0,41).
-- **Baixa, recuo pouco visível na câmera do jogo**: a 1080 o 0,24 m são uns 11 px e coincide com o achatamento e o clarão;
-  no recorte da luta (`after/compare/fight_f90_101_before_after.jpg`) não se distingue com clareza do antes. O aceite
-  pedia `--shot-on=hit` com os quadros seguintes: **não rodado** (medi pelas tiras com o `HitRecoil` do jogo e pelo
-  vídeo). Responsável: `art-director` (decidir se basta) e `gameplay-engineer`.
-- **Baixa, ferramenta**: o achado do `BEFORE.md` (`tools/enemy_lab.gd` não compila com `-s`) não foi reverificado nesta
-  rodada; as tiras continuam usando `load()` do `crowd_renderer.gd`.
+## 6. Falhas e regressões, por gravidade
 
-## 6. Avaliação pelas perguntas da diretriz (`docs/design/po_directive_guardian.md`)
+Nenhuma crítica nem alta.
 
-Sem teste humano: nada aqui diz que o jogo é divertido.
+| Gravidade | Item | Como reproduzir | Responsável sugerido |
+|---|---|---|---|
+| Média (observar no teste) | Robô com reação humana chega em Morvath mais ferido e vence 5 de 8 (base 6 de 8); dano antes de Morvath 91 contra 49 | seção 2.1, `tools/smoke.sh 300 --seed=5 --bot-reaction=0.25` (hp 1 no fim, 32 de dano antes do chefe) | `gameplay-engineer` (avanço do golpe a 0,3 do alcance deixa o herói mais perto; conferir com o teste do Daniel antes de mexer) |
+| Baixa | A fonte não é usada pelo robô em nenhuma partida medida | `fountain_used` em `logs/results_e1b.jsonl` | `gameplay-engineer` (se a métrica importa, um `--hero-hp` que só baixe a vida atual, ou limiar maior) |
+| Baixa | Silêncio digital entre salas (cerca de 4 a 5 s por troca) | `logs/silence.txt` | dono do áudio (ambiente de sala) |
+| Baixa | O nome do golpe no contador ainda diz "Seta de Luz" com o especial desenhado como onda | `fight_forward_1080.jpg` | `ui-ux-designer` / Game Director (texto) |
+| Baixa | Morvath parece acima do chão num quadro da foice | `boss_forward_1080.jpg` | `art-director` |
 
-**Game feel**
-- *Comandos respondem na hora? Dá para encadear?* A E1a não mexe na mão: sonda 31/31, 0 apertos perdidos, igual ao C12d.
-- *Ataques têm impacto?* O golpe agora desloca o corpo (0,24 m em 3 quadros a 60 qps) além do clarão e do achatamento.
-  Nas tiras se vê; na câmera do jogo é discreto. Se o impacto "chega" no inimigo, só o teste com gente dirá.
-- *Alguma animação ou pausa atrapalha?* O andar e a morte deixaram de engasgar. Ponto a observar no teste: a cadência nova
-  (Escudo bem mais rápido, esqueleto e mago mais lentos que antes) e o deslize que resta em Escudo, Cavaleiro e Morvath.
+## 7. Avaliação pelas perguntas da diretriz (`docs/design/po_directive_guardian.md`)
 
-**Visual**
-- *Animação adequada?* Muito melhor que o antes: nenhum quadro repetido, transições regulares (PSNR 25 a 35 dB entre
-  quadros em vez de alternar igual e salto), morte em 16 poses contínuas (`after/compare/strip_before_after_025x.mp4`). O
-  esqueleto anda ereto, com a cabeça visível (antes curvado com a cabeça atrás da ombreira; `compare/skeleton_walk_contact_before_after.png`).
-  A reação de golpe do esqueleto é pequena no corpo (quase a pose de parado; o deslocamento é que lê).
-- *Inimigos legíveis?* Iguais ou melhores: mesma silhueta, armas sem as faixas chapadas (`stills/fight_f100.jpg`), a
-  simulação é a mesma quadro a quadro.
-- *O poder impressiona? Efeitos na direção de arte?* Fora do escopo da E1a; nada mudou nos efeitos do herói.
-- *Parece jogo comercial?* A multidão em movimento deixou de denunciar o protótipo pela cadência; o deslize de pés nas
-  três figuras pesadas e a reação de golpe ainda curta são o que resta. O julgamento final é do `art-director`.
+Sem teste humano não há como dizer se é divertido; abaixo só o que as medidas e imagens mostram.
 
-## 7. Limitações
+- **Comandos respondem na hora?** A sonda passa 34/34 (inclui toques em hit stop pelo teclado e pelo controle virtual,
+  0 `LOST`). Medido pela máquina, não pela mão.
+- **Ataques têm impacto?** Agora cada golpe tem som (pico chega a -2,9 dBFS em 16 de 60 s sem estourar) e os comuns param
+  no golpe: 54 a 82 atordoamentos e 14 a 30 preparos cortados por descida. Se isso "pesa" na mão é pergunta para o Daniel.
+- **Dá para encadear?** O contador mostra 8 a 11 golpes seguidos nas capturas (`best_combo` 8 a 11 nos `RESULT`).
+- **Alguma pausa atrapalha?** No som, a pausa perceptível é o silêncio de troca de sala (seção 4). Nada travou.
+- **Visual: legível?** Sim nas três capturas (herói, Escudo, esqueleto, Morvath e avisos distinguíveis a 1080, nos dois
+  renderizadores). A onda do especial é pequena a 1080 (mesma ressalva do `docs/gallery/e1b/ART_REVIEW.md`).
+- **Parece jogo comercial acabado?** Não cabe ao QA; o critério é do `art-director` e do Daniel.
 
-- Robô, não gente. Smokes sem semente não são comparáveis entre versões (só os com semente).
-- Quadro na GPU: um notebook (RTX 5060 Laptop, escala 1,5 do Windows, render 2880x1620), na tomada; variação entre sessões
-  de 1 a 2 ms, por isso o intercalado. Compatibility na GPU, placa fraca e celular não medidos.
-- As tiras são o renderizador da multidão numa cena de laboratório (fundo liso), não a sala. Os vídeos da partida mostram o resto.
-- Som não ouvido.
+## 8. Limitações
+
+- WSL sem Vulkan da placa: tudo que é tela foi pela Godot de Windows; o robô e os testes rodam sem tela no WSL.
+- Robô em 4 processos simultâneos: `step_ms_peak` desses runs é ruidoso (o isolado está na seção 3).
+- O som foi medido, não ouvido; o Movie Maker grava a mistura final, sem saber qual som tocou.
+- Base inclui diferença da fundação E2a; não separei E1b de E2a.
+- Exportação, celular, placa fraca e controle físico: não testados.

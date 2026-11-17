@@ -1,0 +1,6 @@
+[silencedetect @ 0x7ab718003ac0] silence_start: 0
+[silencedetect @ 0x7ab718003ac0] silence_end: 2.244 | silence_duration: 2.244
+[silencedetect @ 0x7ab718003ac0] silence_start: 18.204271
+[silencedetect @ 0x7ab718003ac0] silence_end: 23.076 | silence_duration: 4.871729
+[silencedetect @ 0x7ab718003ac0] silence_start: 40.508271
+[silencedetect @ 0x7ab718003ac0] silence_end: 44.643687 | silence_duration: 4.135417

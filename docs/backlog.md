@@ -431,7 +431,16 @@ GF-15, VX-13, VX-17, M-1.
   o braço livre do mago sem ficar esticado de lado. **Feito na E1b (gameplay-engineer, aguarda revisão do `art-director`)**: A1 a A3 com o pé travado no assado (`_foot_lock`, `stride`): passos por minuto e escorregamento em jogo: Escudo 120 / 1,6 cm (`Walking_A` do KayKit), Cavaleiro 96 / 0,4, Morvath 102 / 1,3, ancião 67 / 1,1, mago 130 / 0,0 (braço livre a 14 graus do corpo, era 61), besteiro 126 / 0,5, esqueleto 96 / 2,8, corredor 131 / 1,1; `STRIDE_PENDING` saiu do teste; tiras em `docs/gallery/e1b/walk/`.
 - Gancho de Morvath: se o Daniel achar esverdeado sob o violeta, subir o vermelho da tinta `gold` de 0,33 para 0,36.
 
-### E1 "Game feel e qualidade visual" (T3, C12e, C12f, T4; 4 a 6 dias e dois testes)
+**Herdado da revisão de arte da E1b** (`docs/gallery/e1b/ART_REVIEW.md`; aprovada, nada bloqueia o teste do Daniel):
+1. E1c-1 trote do mago e do besteiro sem meio pulo: pés na sombra em todos os quadros de apoio (`tools/bake.gd`).
+2. E1c-2 fio de ouro da onda do especial legível a 1080 (onda 30% maior ou fio mais largo).
+3. E1c-3 rastro deitado no fim da foice de Morvath (o arco vertical sobre a área em meia-lua).
+4. E1c-4 besteiro com a besta abaixada andando; mira só no preparo.
+5. E1c-5 mão esquerda de Morvath a até 40 cm nos giros.
+6. E1c-6 conferir o clarão do golpe sofrido no herói (um quadro quase marfim em `scythe_after.mp4`; regra: clarear morno, `Player.HURT_*`).
+Esses entram junto com o que o Daniel apontar no teste da E1.
+
+### E1 "Game feel e qualidade visual": E1a e E1b feitas (2026-11-16, `ec5d757`, `18b0785`; QA e arte aprovam, nada bloqueia); agora o teste do Daniel
 - **Objetivo**: inimigos e Morvath que se movem e reagem tão bem quanto o herói, armas no estilo, combate que se ouve.
 - **Por que agora**: prioridade 1 e 3 da diretriz; a mão já passou (C12d), o resto do quadro não.
 - **T3 primeiro** (QW-014, seção 5). O C12e não espera a resposta do T3 para começar (não mexe na mão); o C12f espera,

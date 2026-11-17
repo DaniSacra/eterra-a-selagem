@@ -1,0 +1,22 @@
+[Parsed_astats_0 @ 0x7a9968003a80] Mean difference: 43.765261
+[Parsed_astats_0 @ 0x7a9968003a80] RMS difference: 153.906427
+[Parsed_astats_0 @ 0x7a9968003a80] Peak level dB: -2.937418
+[Parsed_astats_0 @ 0x7a9968003a80] RMS level dB: -22.994476
+[Parsed_astats_0 @ 0x7a9968003a80] RMS peak dB: -11.164425
+[Parsed_astats_0 @ 0x7a9968003a80] RMS through dB: -inf
+[Parsed_astats_0 @ 0x7a9968003a80] Flat factor: 0.000000
+[Parsed_astats_0 @ 0x7a9968003a80] Peak count: 6.000000
+[Parsed_astats_0 @ 0x7a9968003a80] Abs Peak count: 1.000000
+[Parsed_astats_0 @ 0x7a9968003a80] Noise floor dB: -inf
+[Parsed_astats_0 @ 0x7a9968003a80] Noise floor count: 924754.000000
+[Parsed_astats_0 @ 0x7a9968003a80] Entropy: 0.533211
+[Parsed_astats_0 @ 0x7a9968003a80] Bit depth: 15/16/16/16
+[Parsed_astats_0 @ 0x7a9968003a80] Number of samples: 2880000
+  Integrated loudness:
+    I:         -20.1 LUFS
+    Threshold: -31.0 LUFS
+    LRA:         5.0 LU
+    Threshold: -41.6 LUFS
+    LRA low:   -24.1 LUFS
+    LRA high:  -19.1 LUFS
+    Peak:       -2.9 dBFS
