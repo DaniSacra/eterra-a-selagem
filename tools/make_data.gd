@@ -2,7 +2,7 @@ extends SceneTree
 ## One-off generator of the content files in data/ (combos, enemies, gifts, waves) for the 3D version.
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [bosses] [feel]
-##   [talents] [ultimates] [mastery] [hero]
+##   [talents] [ultimates] [mastery] [hero] [psalms]
 
 ## Elites wear a faint old-gold edge (the rim of crowd.gdshader; cycle 5: the gilded halo is gone, the elite reads by
 ## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
@@ -46,7 +46,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -542,6 +542,9 @@ func _stage() -> void:
 	st.guardian_rarity_chance = [0.90, 0.07, 0.0] as Array[float]
 	st.elo_chance = 0.12
 	st.trade_chance = 0.1
+	# a Psalm (E4): 10% of the cards once one can be offered, 5% at the guardian (guardian_spec.md 11.1)
+	st.psalm_chance = 0.1
+	st.guardian_psalm_chance = 0.05
 	# The shop (C13-04, Hades II's WorldShop): items from three groups. A Blessing 150; healing 50 (40% of life) and a
 	# heart 125; growth: two of a Magia tonic 100, a pomegranate 100 and its slice 50. Ours is the last shop before the
 	# final boss, which in Hades II shows five items (one of each group in the shops along the way): 1 + 2 + 2. With one
@@ -1091,3 +1094,62 @@ func _hero() -> void:
 	h.mastery = ResourceLoader.load(MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
 	DirAccess.make_dir_recursive_absolute(HERO_DIR)
 	_save(h, HeroDef.WARRIOR)
+
+
+# ---------- Psalms (E4) ----------
+
+const PSALM_DIR := "res://data/psalms/"
+
+
+func _psalm(n: int, id: StringName, theme: StringName, slot: Boon.Slot, effect: PsalmDef.Effect, requires: Array, props: Dictionary) -> void:
+	var p := PsalmDef.new()
+	p.id = id
+	p.theme = theme
+	p.name_key = StringName("psalm_" + id)
+	p.desc_key = StringName("psalm_%s_desc" % id)
+	p.hint_key = StringName("psalm_%s_hint" % id)
+	p.line_key = StringName("psalm_%s_line" % id)
+	p.slot = slot
+	p.effect = effect
+	for group: Array in requires:
+		p.requires.append(PackedStringArray(group))
+	for k: String in props:
+		p.set(k, props[k])
+	_save(p, PSALM_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The four Psalms of E4 (D-59 (a): named by theme, no number, no verse; D-60: Sentinela, Abrigo, Pastor and Rocha;
+## docs/design/e4_psalms.md). Each transforms one action with a system the game has; three groups each (a Blessing or
+## an Elo of a list, or an equipped Gift: PsalmDef.GIFT before its id), one held thing a group, never the same for two.
+## The lists are wide on purpose so the robot (no Gifts) can meet them too; numbers are starting points for E6.
+func _psalms() -> void:
+	DirAccess.make_dir_recursive_absolute(PSALM_DIR)
+	for f in DirAccess.get_files_at(PSALM_DIR):
+		DirAccess.remove_absolute(PSALM_DIR + f)
+	var S := Boon.Slot
+	var E := PsalmDef.Effect
+	var G := PsalmDef.GIFT
+	# watching: the circle of light walks with him and strikes each one that comes in (30, the Corte Veloz's damage)
+	_psalm(0, &"sentinela", &"watch", S.CAST, E.SENTINEL, [
+		["circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"],
+		["escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"],
+		["bastiao", "rastro", "passo_frio", G + "reserva", G + "lamina_faminta", G + "coracao_da_emeth"]],
+		{"damage": 30.0})
+	# sheltering: the dodge leaves a shelter of 2.6 m for 3 s where it ends (two at most) that undoes enemy shots
+	_psalm(1, &"abrigo", &"shelter", S.DASH, E.SHELTER, [
+		["passos", "passo_brasa", "passo_geada", "passo_radiante"],
+		["escudo", "firmeza", "consolo", "circulo_firme"],
+		["rastro", "passo_frio", "bastiao", G + "passo_encadeado", G + "fio_do_passo", G + "investida"]],
+		{"radius": 2.6, "duration": 3.0, "count": 2})
+	# guiding: each kill gathers a light (three at most); the special throws one more wave for each, 14 degrees apart
+	_psalm(2, &"pastor", &"shepherd", S.SPECIAL, E.FLOCK, [
+		["toque_geada", "pesado_brasa", "pesado_radiante", "pesado_firme"],
+		["consolo", "onda_maior", "flagelo", "golpe_radiante", "circulo_radiante", "passo_radiante"],
+		["aurora", "chama_viva", G + "corte_crescente", G + "onda_carregada", G + "onda_atravessante"]],
+		{"count": 3, "spread": 14.0})
+	# firmness: the spin plants a stone of light: 30 within 4 m, the common ones stunned 1 s, then 3 s slowing there
+	_psalm(3, &"rocha", &"rock", S.ATTACK, E.STONE, [
+		["golpe_brasa", "golpe_geada", "golpe_radiante", "golpe_firme"],
+		["firmeza", "escudo", "pesado_firme", "estilhaco", "peso_inverno"],
+		["vapor", "bastiao", G + "quarto_corte", G + "golpe_sem_fim", G + "furia_plena", G + "fio_longo"]],
+		{"damage": 30.0, "radius": 4.0, "stun": 1.0, "duration": 3.0})

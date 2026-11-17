@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="PsalmDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/psalm_def.gd" id="1_pnrgv"]
+
+[resource]
+script = ExtResource("1_pnrgv")
+id = &"pastor"
+theme = &"shepherd"
+name_key = &"psalm_pastor"
+desc_key = &"psalm_pastor_desc"
+hint_key = &"psalm_pastor_hint"
+line_key = &"psalm_pastor_line"
+slot = 2
+requires = Array[PackedStringArray]([PackedStringArray("toque_geada", "pesado_brasa", "pesado_radiante", "pesado_firme"), PackedStringArray("consolo", "onda_maior", "flagelo", "golpe_radiante", "circulo_radiante", "passo_radiante"), PackedStringArray("aurora", "chama_viva", "dom:corte_crescente", "dom:onda_carregada", "dom:onda_atravessante")])
+effect = 2
+count = 3
+spread = 14.0

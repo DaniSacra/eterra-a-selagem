@@ -20,6 +20,8 @@ class Card:
 	var level := 1
 	## A pomegranate's card: one more level for a Blessing held (its rarity kept).
 	var grow := false
+	## A Psalm's card (E4, Psalms.fill): boon is null, the card offers this Psalm (no rarity, no level).
+	var psalm: PsalmDef
 
 	func _init(b: Boon = null, r: Boon.Rarity = Boon.Rarity.COMMON, lv: int = 1) -> void:
 		boon = b

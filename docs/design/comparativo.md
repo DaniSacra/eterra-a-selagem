@@ -74,7 +74,7 @@ Para que serve: deixar claro o que cada referência nos dá e onde A Selagem est
 | Passivos | sim | sim | sim (brasas, redemoinho, onda, meteoro, escudo etc.) |
 | Raridade | comum a heroica | rara 10%, épica 5% em sequência; heroica só pela troca (10% por carta numa ação ocupada, +1 de raridade, mesmo nível); guardião rara 90%, épica 7%, lendário 5% | igual desde a E3: comum, rara, épica e lendária (a heroica do Hades II; D-52), multiplicadores fixos 1,5, 2, 2,5 do nível 1 (D-53); guardião sem lendária (o lendário do Hades II será o Salmo) |
 | Duplos | dons duplos (dois deuses) | dons duplos: um de cada lista de dois deuses, 12% por carta, sem raridade e sem romã | **Elo** (mecânica das Crônicas de Eterra): 6 hoje, com a corrente ligando os dois dons na carta e no painel "Dons" da pausa, e o aviso "Elo formado"; desde a E3 com as regras do Hades II (`requires_sets`, 12%, sem raridade nem nível) |
-| Lendários | sim | sim | falta |
+| Lendários | sim | sim | **Salmos** desde a E4 (`docs/design/e4_psalms.md`): três grupos (Bênção, Elo ou Dom equipado, uma coisa por grupo), 10% por carta quando a condição vale, 5% no guardião, um por tema, dois por partida, sem nível; quatro (Sentinela, Abrigo, Pastor, Rocha) que mudam como uma ação funciona (círculo, esquiva, especial, giro); carta e Compêndio na tela ainda faltam (E4-03 a E4-05) |
 | Subir o nível de um dom | romã | romã: nível 1 vezes a raridade, ganho fixo por nível sem raridade; fatia na loja | igual desde a E3 (`BoonMod.base`, `per_level`; romã nas portas e na loja, fatia na loja); teto de nível 3 por enquanto (E3-D1); Bênção já tida não volta nas cartas |
 | Infusões (exigem X de um elemento) | não | sim | falta |
 | Mudar a arma | martelo de Dédalo | martelo de Dédalo | falta |

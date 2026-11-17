@@ -239,11 +239,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		ComboNode.Effect.GROUND_MARK:
 			ground.add_zone(Ground.Kind.MARK, origin + dir * reach * 0.55, node.effect_radius, node.effect_time, node.effect_power, MARK_TAGS)
 		ComboNode.Effect.WAVE:
-			var size := 1.0 + boons.stat(&"wave_size_pct", tags)
-			var width := node.effect_size if node.effect_size > 0.0 else 3.2
-			var look := Projectiles.Kind.SPARK if node.wave_bolt else Projectiles.Kind.WAVE
-			var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
-			shot.through = boons.stat(&"wave_through", tags) > 0.0
+			throw_wave(node, origin, dir, color, tags)
 		ComboNode.Effect.STUN:
 			fx.burst(&"light", Vector3(origin.x, 0.4, origin.y))
 	if gifts:
@@ -252,6 +248,17 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	swung.emit(node, struck.size())
 	if hits > 0:
 		landed.emit(node, tags, hits)
+
+
+## The wave of a move with Effect.WAVE (the special and its Omega; the Pastor's flock throws more of them, E4): its
+## look, reach and width grown by the Blessings (wave_size_pct), through the crowd with Onda Atravessante.
+func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, tags: Array[StringName]) -> Projectiles.Shot:
+	var size := 1.0 + boons.stat(&"wave_size_pct", tags)
+	var width := node.effect_size if node.effect_size > 0.0 else 3.2
+	var look := Projectiles.Kind.SPARK if node.wave_bolt else Projectiles.Kind.WAVE
+	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
+	shot.through = boons.stat(&"wave_through", tags) > 0.0
+	return shot
 
 
 ## The wave a Gift has a move throw, landing or not (Corte Crescente on the spin, Onda Carregada on the special's
@@ -450,7 +457,19 @@ func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
 		Ground.Kind.STEAM:
 			if not e.def.heavy:
 				e.blind_t = 1.0
+		Ground.Kind.STONE:
+			# the Rocha's stone (E4): whoever stands in it is slowed
+			e.slow_t = maxf(e.slow_t, Ground.TICK * 2.0)
 		Ground.Kind.BIND:
+			if z.strike > 0.0 and not z.struck.has(e):
+				# the Sentinela's circle (E4): a blow of light on each one as it comes in, once a circle
+				z.struck[e] = true
+				source = z.source
+				hit_enemy(e, z.strike, z.tags, (e.pos - z.pos).normalized() if e.pos.distance_to(z.pos) > 0.01 else Vector2.RIGHT, 6.0, false)
+				source = &""
+				fx.burst(&"light", Vector3(e.pos.x, 1.0, e.pos.y))
+				if not e.alive:
+					return
 			# held in place (the boss only slowed), plus whatever the cast gifts add
 			if e.def.behavior == EnemyDef.Behavior.BOSS:
 				e.slow_t = maxf(e.slow_t, Ground.TICK * 2.0)

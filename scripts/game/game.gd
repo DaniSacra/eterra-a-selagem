@@ -12,6 +12,10 @@ signal victory_finished(stats: Dictionary)
 ## The run is over and logged (RunLog): outcome is victory, death or quit; entry is the line written (also when the
 ## log is off: --nosave and the bot write nothing).
 signal run_logged(outcome: String, entry: Dictionary)
+## A Psalm came on a card (E4): first when the Codex never had it (the "Salmo descoberto" greeting, without pausing).
+signal psalm_offered(psalm: PsalmDef, first: bool)
+## A Psalm was taken: first when it was never taken before in the save (its short line, PsalmDef.line_key).
+signal psalm_taken(psalm: PsalmDef, first: bool)
 
 ## Magia a kill gives back (Player.magick).
 const MAGICK_PER_KILL := 1.0
@@ -45,6 +49,12 @@ var projectiles: Projectiles
 var combat: Combat
 ## The passive and the Gifts at play (E2-07, E2-09).
 var hero_gifts: HeroGifts
+## The Psalms of the run (E4): the rules (taken, seen, the draw) and their effects at play.
+var psalms: Psalms
+var psalm_play: PsalmPlay
+## Whether a draw may hold a Psalm card: the robot and --autopick take one at once; a person only once the choice
+## screen shows them (BoonChoice.open_cards; until then the Blessings' screen gets no Psalm card).
+var psalm_cards := false
 var skills: Skills
 ## The ultimate of this descent in play (charge, gesture's blow, the Voragem on the floor).
 var ults: Ultimates
@@ -203,6 +213,9 @@ func _ready() -> void:
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
 	hero_gifts = HeroGifts.new(self)
+	psalms = Psalms.new(Psalms.load_catalog())
+	psalm_play = PsalmPlay.new(self, psalms)
+	psalm_cards = bot != null or Dev.has("autopick") or screen_shows_psalms()
 	if not Dev.has("horde"):
 		rooms = Rooms.new()
 		add_child(rooms)
@@ -226,6 +239,12 @@ func _ready() -> void:
 				_take(b)
 			else:
 				push_warning("--boon-ids: no gift %s" % id)
+	if Dev.has("psalm"):
+		# --psalm=a,b: these Psalms taken from the start (PsalmDef ids), for tests and captures
+		for id in Dev.arg("psalm").split(",", false):
+			var p := psalms.find(StringName(id))
+			if p == null or not take_psalm(p):
+				push_warning("--psalm: cannot take %s" % id)
 	if Dev.has("stress"):
 		player.max_hp = 99999.0
 		player.hp = 99999.0
@@ -457,6 +476,7 @@ func _step(dt: float) -> void:
 	_lap(&"ground")
 	combat.step(dt)
 	hero_gifts.step(dt)
+	psalm_play.step(dt)
 	_lap(&"combat")
 	if mode == Mode.PLAY:
 		skills.step(dt)
@@ -575,6 +595,7 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	_trace_cam_cut()
 	ground.clear()
 	ults.clear()
+	psalm_play.clear()
 	projectiles.clear_hostile()
 	horde.clear_crowd()
 	if _fountain != null:
@@ -589,15 +610,55 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 
 
 ## Gifts by a cleared room or the shop: three cards drawn with these rarity chances (Boon.RARITY_CHANCE; the stage's
-## own in the rooms), with the stage's chances of an Elo and of a trade.
-func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE) -> void:
-	_open_choice(_draw_cards(chances))
+## own in the rooms), with the stage's chances of an Elo and of a trade, and of a Psalm (psalm_chance < 0: the stage's
+## for a room, StageDef.psalm_chance; the guardian passes its own).
+func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0) -> void:
+	_open_choice(_draw_cards(chances, psalm_chance))
 
 
-func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE) -> Array[BoonState.Card]:
+func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0) -> Array[BoonState.Card]:
 	var elo := rooms.stage.elo_chance if rooms else Boon.ELO_CHANCE
 	var trade := rooms.stage.trade_chance if rooms else Boon.TRADE_CHANCE
-	return boons.draw(_rng, 3, chances, elo, trade)
+	var cards := boons.draw(_rng, 3, chances, elo, trade)
+	# Psalms only in the descent by rooms (the old endless hall, --horde, stays as it was)
+	if psalm_cards and rooms != null:
+		psalms.fill(cards, _rng, rooms.stage.psalm_chance if psalm_chance < 0.0 else psalm_chance, boons, talents)
+	return cards
+
+
+## True when the choice screen shows Psalm cards (it has open_cards(cards, state, game) and emits
+## card_chosen(card); E4-03 is the UI's task).
+static func screen_shows_psalms() -> bool:
+	var screen: Script = load("res://scripts/ui/boon_choice.gd")
+	return screen.get_script_method_list().any(func(m: Dictionary) -> bool: return m.name == "open_cards")
+
+
+## Takes a Psalm (the card picked, the robot, --psalm). False when the rules say no (Psalms.take).
+func take_psalm(p: PsalmDef) -> bool:
+	if not psalms.take(p):
+		return false
+	var codex: Dictionary = (Save.data.get("codex", {}) as Dictionary).get("psalms", {})
+	var first := int((codex.get(String(p.id), {}) as Dictionary).get("taken", 0)) == 0
+	fx.ring(player.pos, 3.5, p.color, 0.6)
+	column(player.pos, p.color, 1.4, 9.0, 0.8)
+	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
+	fx.word(Vector3(player.pos.x, 3.2, player.pos.y), T.t(p.name_key), p.color)
+	psalm_taken.emit(p, first)
+	return true
+
+
+## Picks one card of the choice open now (a Blessing, an Elo, a trade or a Psalm): what a screen with Psalm cards
+## calls (card_chosen) and what the robot does.
+func choose_card(c: BoonState.Card) -> void:
+	if mode != Mode.CHOICE:
+		return
+	if c != null and c.psalm != null:
+		_close_screen()
+		take_psalm(c.psalm)
+		offer_cards.clear()
+		_back_to_play()
+	else:
+		_on_chosen(c.boon if c != null else null)
 
 
 ## A level more for a gift already owned (the paladin picks which).
@@ -686,25 +747,47 @@ func _open_choice(cards: Array = []) -> void:
 		offer_cards.append(c if c is BoonState.Card else boons.cards_for([c])[0])
 	_offer_rarity.clear()
 	var offers: Array[Boon] = []
+	var psalm_card: BoonState.Card = null
 	for c in offer_cards:
+		if c.psalm != null:
+			psalm_card = c
+			_saw_psalm(c.psalm)
+			continue
 		offers.append(c.boon)
 		_offer_rarity[c.boon.id] = c.rarity
 		if not c.grow:
 			seen_boons[c.boon.id] = true
-	if Dev.has("autopick") or offers.is_empty():
+	if (Dev.has("autopick") or bot) and psalm_card != null:
+		# the robot and the captures take the Psalm when one comes
+		choose_card(psalm_card)
+		return
+	if Dev.has("autopick") or (offers.is_empty() and psalm_card == null):
 		# captures of the fight: take a gift at once, no screen
 		_on_chosen(offers[0] if not offers.is_empty() else null)
 		return
 	var choice := BoonChoice.new()
 	_screen = choice
 	ui.add_child(choice)
-	choice.open(offers, boons, _offer_rarity)
+	if psalm_card != null and choice.has_method(&"open_cards"):
+		choice.call(&"open_cards", offer_cards, boons, self)
+		choice.connect(&"card_chosen", choose_card)
+	else:
+		choice.open(offers, boons, _offer_rarity)
 	choice.chosen.connect(_on_chosen)
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 	if bot and not Dev.has("hold"):
 		get_tree().create_timer(0.6).timeout.connect(func() -> void:
 			if mode == Mode.CHOICE:
 				_on_chosen(offers[_rng.randi() % offers.size()] if not offers.is_empty() else null))
+
+
+## A Psalm came on a card: seen in this run (the Codex at the end) and greeted the first time ever.
+func _saw_psalm(p: PsalmDef) -> void:
+	if psalms.seen.has(p.id):
+		return
+	psalms.seen[p.id] = true
+	var codex: Dictionary = (Save.data.get("codex", {}) as Dictionary).get("psalms", {})
+	psalm_offered.emit(p, not codex.has(String(p.id)))
 
 
 func _on_chosen(b: Boon) -> void:
@@ -1445,11 +1528,13 @@ func mastery_gain(outcome: String, data: Dictionary) -> Dictionary:
 	var victory := outcome == "victory"
 	var seen: Dictionary = codex.get("boons", {})
 	var formed: Dictionary = codex.get("elos", {})
+	var known: Dictionary = codex.get("psalms", {})
 	return hero.mastery.run_xp({
 		"rooms": won.count(RunMap.Kind.COMBAT), "guardians": guardians, "phase": int(boss_stats.get("max_phase", 0)),
 		"victory": victory,
 		"new_boons": seen_boons.keys().filter(func(id: StringName) -> bool: return not seen.has(String(id))).size(),
 		"new_elos": elos_formed.keys().filter(func(id: StringName) -> bool: return not formed.has(String(id))).size(),
+		"new_psalms": psalms.seen.keys().filter(func(id: StringName) -> bool: return not known.has(String(id))).size(),
 		"first_guardian": guardians > 0 and int(firsts.get("guardian", 0)) == 0,
 		"first_victory": victory and int(firsts.get("victory", 0)) == 0,
 	})
@@ -1466,6 +1551,11 @@ func award_mastery(gain: Dictionary, outcome: String, data: Dictionary) -> void:
 		SaveData.codex_add(data, "boons", String(id), "seen")
 	for id: StringName in elos_formed:
 		SaveData.codex_add(data, "elos", String(id), "formed")
+	# the Psalms (E4): seen on a card (found: the Codex shows them from then on) and taken
+	for id: StringName in psalms.seen:
+		SaveData.codex_add(data, "psalms", String(id), "seen")
+	for p in psalms.taken:
+		SaveData.codex_add(data, "psalms", String(p.id), "taken")
 	var guardians := rooms.won.count(RunMap.Kind.MINIBOSS) if rooms else 0
 	if guardians > 0:
 		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
@@ -1515,7 +1605,8 @@ func result() -> Dictionary:
 		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
 		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
-		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size()}
+		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
+		"psalms": psalms.ids()}
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

@@ -2,11 +2,13 @@ class_name Ground
 extends Node3D
 ## Areas on the floor. WARNING: an enemy attack announced before it lands (hurts the paladin when it fills).
 ## The others hurt enemies standing in them every TICK: EMBER (fire), MARK (light), HOLY (consecrated, slows),
-## STEAM (blinds), BIND (the paladin's circle of light: holds the enemies inside). Positions are (x, z) in meters.
+## STEAM (blinds), BIND (the paladin's circle of light: holds the enemies inside). Two of the Psalms' (E4): SHELTER (the
+## Abrigo's shelter: harms nobody, Psalms.bars undoes the shots) and STONE (the Rocha's stone: slows who stands in it).
+## Positions are (x, z) in meters.
 
 signal hit_player(amount: float, from: Vector2)
 
-enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND }
+enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND, SHELTER, STONE }
 ## The same order as GroundLook.Shape (which draws them).
 enum Shape { CIRCLE, LINE, ARC }
 
@@ -54,6 +56,8 @@ const COLUMN_SIDES := 20
 const COLORS := {
 	Kind.WARNING: GroundLook.WARNING_COLOR, Kind.EMBER: Color(1.0, 0.42, 0.1), Kind.MARK: Color(1.0, 0.82, 0.35),
 	Kind.HOLY: Color(1.0, 0.85, 0.45), Kind.STEAM: Color(0.75, 0.85, 0.95), Kind.BIND: Color(1.0, 0.95, 0.8),
+	# the Psalms' (E4): ivory over old gold and old gold, inside the palette (never bright yellow nor white)
+	Kind.SHELTER: Color(0.95, 0.86, 0.62), Kind.STONE: Color(0.78, 0.62, 0.34),
 }
 
 class Zone:
@@ -88,6 +92,12 @@ class Zone:
 	var by: StringName = &""
 	## Whoever laid it was off the screen (1), on it (0), unknown (-1: the boss's own; Game reads his place).
 	var offscreen := -1
+	## It walks with the paladin (the Sentinela's circle of light, E4): its middle is his at every step.
+	var follow := false
+	## A BIND that strikes each enemy as it comes in, once (the Sentinela): the blow's damage (0: none) and who was
+	## struck already.
+	var strike := 0.0
+	var struck := {}
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -229,6 +239,10 @@ func step(dt: float) -> void:
 			continue
 		var z := zones[i]
 		z.life -= dt
+		if z.follow and player != null:
+			z.pos = player.pos
+			if z.node != null:
+				z.node.position = Vector3(z.pos.x, z.node.position.y, z.pos.y)
 		if z.kind == Kind.WARNING:
 			# his eruptions are marked as such after they are made: drawn as his ritual circles from their first step
 			if z.eruption and z.rune == Rune.NONE:
@@ -299,8 +313,10 @@ func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, wi
 	z.node = _pool.pop_back() if not _pool.is_empty() else _new_node()
 	z.mat = z.node.material_override
 	z.node.visible = true
-	var style := GroundLook.Style.WARNING if kind == Kind.WARNING else GroundLook.Style.CIRCLE if kind == Kind.BIND else GroundLook.Style.AREA
-	GroundLook.dress(z.node, style, shape, z.color, WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if kind == Kind.BIND else AREA_STRENGTH,
+	# the Psalms' areas (E4) are drawn as the circle of light (a fine rim and a veil): a full area that size would cover him
+	var circle := kind == Kind.BIND or kind == Kind.SHELTER or kind == Kind.STONE
+	var style := GroundLook.Style.WARNING if kind == Kind.WARNING else GroundLook.Style.CIRCLE if circle else GroundLook.Style.AREA
+	GroundLook.dress(z.node, style, shape, z.color, WARNING_STRENGTH if kind == Kind.WARNING else BIND_STRENGTH if circle else AREA_STRENGTH,
 		RIM_METERS, at, z.dir, radius, width, 0.06 + zones.size() * 0.0005)
 	z.mat.set_shader_parameter(&"circle_veil", BIND_VEIL)
 	z.mat.set_shader_parameter(&"circle_marks", BIND_MARKS)
