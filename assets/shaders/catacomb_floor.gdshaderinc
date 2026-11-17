@@ -344,6 +344,9 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 #ifdef CHAMBER
 #include "res://assets/shaders/chamber_seal.gdshaderinc"
 #endif
+#ifdef RUNES
+#include "res://assets/shaders/rune_tiles.gdshaderinc"
+#endif
 
 void vertex() {
 	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -353,7 +356,11 @@ void fragment() {
 	vec2 wp = world.xz;
 	vec4 rect;
 	vec2 id;
+#ifdef RUNES
+	rune_slab(wp, rect, id);
+#else
 	slab(wp / unit, rect, id);
+#endif
 	// the slab in meters: its middle, half size, where we are in it (each slab's edge wobbles its own way)
 	vec2 half_size = rect.zw * unit * 0.5;
 	vec2 mid = (rect.xy + rect.zw * 0.5) * unit;
@@ -455,6 +462,9 @@ void fragment() {
 	lean += vec2(rn.x, -rn.y) * rock_relief * (1.0 - joint);
 #ifdef CHAMBER
 	chamber_floor(wp, id, rect, joint, c, emit, lean, rough);
+#endif
+#ifdef RUNES
+	rune_floor(wp, rect, edge, joint, c, emit, lean, rough);
 #endif
 	ALBEDO = c;
 	ROUGHNESS = rough;

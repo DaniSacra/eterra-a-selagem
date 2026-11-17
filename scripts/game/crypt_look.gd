@@ -62,17 +62,6 @@ const SLAB_BORDER_TINT := 0.35
 ## The steps of the way in and of the doors (ART_REVIEW C-3: they read as planks, lighter than all round them): their
 ## stone in the value of the walls' cut stone.
 const STAIR_TINT := 0.8
-## A whole column's head (ART_REVIEW C-2, spec 1.3: no askew cubes over it): the round capital (necking ring height,
-## bell height, how far the bell flares and the abacus reaches as shares of the shaft's radius, abacus height) and two
-## arches springing from it as curved voussoirs, across the camera's view so their curve shows (their bearings; span
-## of their arch, ring width, the share of the arch each keeps).
-const CAPITAL := Vector4(0.09, 0.3, 1.38, 1.55)
-const ABACUS := 0.12
-const SPRING_BEARINGS: Array[float] = [55.0, 235.0]
-const SPRING_ARCH := Vector3(2.2, 0.34, 0.36)
-## The springers' depth (a share of the shaft's radius) and the round pieces' sides (smoother than a plain shaft).
-const SPRING_DEEP := 1.2
-const CAPITAL_SIDES := 18
 ## The floor (spec 2.5): small cold slabs, a step lighter than the walls' cut stone so the fight's ground reads 45 to 60
 ## away from the candles (ENV-01: was 0.24 and 0.34, the fight's floor at 27 to 42).
 const FLOOR := {
@@ -235,37 +224,9 @@ func sarcophagus(o: ArenaObstacle) -> Vector3:
 ## A whole column gets a round moulded capital and a curved springer (column_head); the rest as ArenaRoom draws it.
 func piece(o: ArenaObstacle) -> void:
 	if o.piece == &"column" and o.height >= WHOLE_COLUMN:
-		_column(o)
+		round_column(o)
 		return
 	super.piece(o)
-
-
-## A whole column (TombKit.column's foot and shaft, which the Seal Chamber keeps): plinth, base, shaft, then a necking
-## ring, a round bell flaring to a round abacus, and the arch springing from it as one curved voussoir toward the back.
-func _column(o: ArenaObstacle) -> void:
-	var mat := see(stone()) if o.see_through else stone()
-	var foot := Vector3(o.center.x, 0.0, o.center.y)
-	var r := o.radius
-	var shaft_r := r * TombKit.COLUMN_SHAFT
-	m.block(foot, Vector3(r * 1.41, TombKit.COLUMN_PLINTH, r * 1.41), PI * 0.25, mat, false)
-	m.shaft(foot + Vector3(0, TombKit.COLUMN_PLINTH, 0), r * 0.98, TombKit.COLUMN_BASE - TombKit.COLUMN_PLINTH, mat)
-	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r * 1.12, 0.12, mat)
-	var head := CAPITAL.x + CAPITAL.y + ABACUS
-	var cap_y := o.height - TombKit.COLUMN_SPRING.x - head
-	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r, cap_y - TombKit.COLUMN_BASE, mat)
-	var ring := m.shaft(foot + Vector3(0, cap_y, 0), shaft_r * 1.1, CAPITAL.x, mat)
-	var bell := m.shaft(foot + Vector3(0, cap_y + CAPITAL.x, 0), shaft_r * CAPITAL.z, CAPITAL.y, mat)
-	(bell.mesh as CylinderMesh).bottom_radius = shaft_r
-	var top := cap_y + CAPITAL.x + CAPITAL.y
-	var abacus := m.shaft(foot + Vector3(0, top, 0), shaft_r * CAPITAL.w, ABACUS, mat)
-	for piece_mi: MeshInstance3D in [ring, bell, abacus]:
-		(piece_mi.mesh as CylinderMesh).radial_segments = CAPITAL_SIDES
-	# the springers: the first part of a round arch whose left foot sits on the abacus (centred on it), rising away
-	for b in SPRING_BEARINGS:
-		var way := Vector2(sin(deg_to_rad(b)), -cos(deg_to_rad(b)))
-		var yaw := atan2(-way.y, way.x)
-		var mid := foot + Vector3(way.x, 0.0, way.y) * (SPRING_ARCH.x + SPRING_ARCH.y) * 0.5 + Vector3(0, top + ABACUS, 0)
-		m.arch_ring(mid, Vector2(sin(yaw), cos(yaw)), SPRING_ARCH.x, SPRING_ARCH.y, shaft_r * SPRING_DEEP, mat, 0.5, 0.0, SPRING_ARCH.z)
 
 
 # ---------- the walls ----------
