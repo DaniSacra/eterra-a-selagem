@@ -700,9 +700,11 @@ func grow_random() -> bool:
 	var cards := boons.grow_cards(_rng, 1)
 	if cards.is_empty():
 		return false
+	# _take clears offer_cards, which is this very array: keep the Blessing first
+	var b := cards[0].boon
 	offer_cards = cards
-	_take(cards[0].boon)
-	fx.word(Vector3(player.pos.x, 3.0, player.pos.y), T.t("boon_" + String(cards[0].boon.id)), cards[0].boon.color())
+	_take(b)
+	fx.word(Vector3(player.pos.x, 3.0, player.pos.y), T.t("boon_" + String(b.id)), b.color())
 	return true
 
 
@@ -720,6 +722,8 @@ func start_boss(id: StringName) -> void:
 
 func _start_boss(id: StringName) -> void:
 	boss_at = time
+	if hero_gifts != null:
+		hero_gifts.state.boss_room = true  # Ainda de Pé guards the descent, not Morvath's fight (E6)
 	director.stopped = true
 	horde.clear_crowd()
 	projectiles.clear_hostile()
@@ -1533,13 +1537,19 @@ func _equip_talents() -> void:
 	var ids: Array[StringName] = []
 	if Dev.has("talents"):
 		var top := hero.mastery.max_level
-		ids = book.sanitized(Array(Dev.arg("talents").split(",", false)), top, hero.mastery.devotion(top))
+		var asked := Array(Dev.arg("talents").split(",", false))
+		ids = book.sanitized(asked, top, hero.mastery.devotion(top))
+		_warn_dropped(book, asked, ids, top)
 	elif bot == null:
 		var block := SaveData.hero(Save.data, String(hero.id))
 		var level := hero.mastery.level_of(int(block.mastery_xp))
 		ids = book.sanitized(block.equipped, level, hero.mastery.devotion(level))
+		if Dev.has("hero-equip"):
+			_warn_dropped(book, block.equipped, ids, level)
 		var ult := hero.ultimate(StringName(block.ultimate))
 		ultimate = String(ult.id) if ult != null and ult.mastery_level <= level else ""
+	elif Dev.has("hero-equip"):
+		push_warning("--hero-equip: the robot takes no Gifts from the save; use --talents=a,b")
 	if Dev.has("ultimate"):
 		# --ultimate=cleave|vortex: that one, whatever the Mastery (tests, captures, the robot)
 		var chosen := hero.ultimate(StringName(Dev.arg("ultimate")))
@@ -1562,6 +1572,13 @@ func _swear_juramentos() -> void:
 		chosen = Juramentos.block(Save.data).get("ranks", {})
 	juramentos = Juramentos.new(Juramentos.load_catalog(), chosen)
 	horde.vow_hp = juramentos.scale(&"enemy_hp_pct")
+
+
+## Says which Gifts asked for by --talents or --hero-equip were left out and why (Talents.why_dropped).
+func _warn_dropped(book: Talents, asked: Array, kept: Array[StringName], level: int) -> void:
+	var why := book.why_dropped(asked, kept, level, hero.mastery.devotion(level))
+	for id: StringName in why:
+		push_warning("Gift %s not equipped at Mastery %d: %s" % [id, level, Talents.Problem.keys()[why[id]]])
 
 
 ## Equips these Gifts now, as if the descent began with them (tests): their numbers and their rules (HeroGifts).

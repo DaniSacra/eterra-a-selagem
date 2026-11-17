@@ -79,6 +79,9 @@ var charge := UltCharge.new()
 ## Times let go and damage dealt in this run (RESULT ultimate).
 var uses := 0
 var damage := 0.0
+## The same in Morvath's room only (E6: does it charge there?).
+var boss_uses := 0
+var boss_damage := 0.0
 var vortex: Vortex
 ## Where the Voragem will land (chosen on the press) and the band's warning while the gesture lasts.
 var _target := Vector2.ZERO
@@ -136,7 +139,8 @@ func ratio() -> float:
 
 
 func stats() -> Dictionary:
-	return {"id": String(def.id) if def else "", "uses": uses, "damage": int(damage), "charge": snappedf(charge.value, 0.1)}
+	return {"id": String(def.id) if def else "", "uses": uses, "damage": int(damage), "charge": snappedf(charge.value, 0.1),
+		"boss_uses": boss_uses, "boss_damage": int(boss_damage)}
 
 
 ## Whether letting it go from here towards dir would reach WORTH_PACK enemies or a big one (an elite, a guardian,
@@ -162,6 +166,8 @@ func worth(from: Vector2, dir: Vector2) -> bool:
 func _on_started(dir: Vector2) -> void:
 	charge.use()
 	uses += 1
+	if game.boss != null:
+		boss_uses += 1
 	Audio.play(CombatSounds.EVENTS[&"ult_gesture"])
 	game.fx.hero_burst(&"light", Vector3(game.player.pos.x, 1.4, game.player.pos.y))
 	var p := game.player.pos
@@ -230,7 +236,10 @@ func _hit(e: Enemy, amount: float, away: Vector2, knockback: float, stun: float)
 	var hp_before := e.hp + e.armor
 	var died := game.combat.hit_enemy(e, amount * (def.armor_mult if e.armor > 0.0 else 1.0), def.tags, away, knockback, false)
 	if not e.invulnerable:
-		damage += maxf(0.0, hp_before - e.hp - e.armor)
+		var dealt := maxf(0.0, hp_before - e.hp - e.armor)
+		damage += dealt
+		if game.boss != null:
+			boss_damage += dealt
 	if not died and stun > 0.0 and e.armor <= 0.0 and e.def.stun_time > 0.0:
 		game.horde.flinch(e, stun)
 	return died

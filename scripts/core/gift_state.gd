@@ -16,7 +16,8 @@ extends RefCounted
 ## - Golpe sem Fim: a blow with spin_loop_hits that lands on that many starts the combo over at its 2nd blow.
 ## - Passo Encadeado: a blow with dash_chain counts as the combo's 1st blow.
 ## - Corte Crescente, Onda Carregada, Fio do Passo: blow_wave (damage), blow_wave_m, blow_wave_w (Combat throws it).
-## - Ainda de Pé: once a descent, a fall leaves him standing with rise_share of his life.
+## - Ainda de Pé: once a descent, a fall leaves him standing with rise_share of his life (rise_boss_share in Morvath's
+##   room, E6: none today).
 ## - Respiro: room_heal of life a room won. Coração da Emeth: ult_charge_pct (the ultimate reads it), finisher_magick.
 
 ## The Blessings and Gifts of the run (their stat sums every number; held here, a Callable would not keep it alive).
@@ -29,6 +30,9 @@ var fury_left := 0.0
 var hungry_left := 0.0
 ## Falls Ainda de Pé still stands him up from this descent.
 var rises := 0
+## Morvath's room has begun (Game._start_boss): a fall there rises only with rise_boss_share (E6, docs/design/
+## e6_balance.md: with the rise there the Mastery 20 robot never lost, 72 of 72).
+var boss_room := false
 ## The passive is on (always in play; --no-passive turns it off to compare runs with the game of before).
 var passive := true
 
@@ -145,14 +149,19 @@ func wave(tags: Array[StringName]) -> Dictionary:
 
 ## He falls: true (and one rise spent) when Ainda de Pé stands him up; the life he gets back is rise_life.
 func rise() -> bool:
-	if rises <= 0:
+	if rises <= 0 or _rise_share() <= 0.0:
 		return false
 	rises -= 1
 	return true
 
 
 func rise_life(max_hp: float) -> float:
-	return maxf(1.0, roundf(max_hp * value(&"rise_share")))
+	return maxf(1.0, roundf(max_hp * _rise_share()))
+
+
+## The share of life a rise gives here: rise_share on the descent, rise_boss_share in Morvath's room (0: no rise).
+func _rise_share() -> float:
+	return value(&"rise_boss_share") if boss_room else value(&"rise_share")
 
 
 func room_heal() -> float:

@@ -393,7 +393,7 @@ entries = {
 "talent_respiro": "Respiro",
 "talent_respiro_desc": "Cada sala vencida cura 2 de vida.",
 "talent_ainda_de_pe": "Ainda de Pé",
-"talent_ainda_de_pe_desc": "Uma vez por descida, ao cair, você levanta com metade da vida.",
+"talent_ainda_de_pe_desc": "Uma vez por descida, ao cair antes da Câmara do Selo, você levanta com metade da vida.",
 "title_hero": "O Guerreiro",
 "hero_mastery": "Maestria",
 "hero_level": "Nível {n}",

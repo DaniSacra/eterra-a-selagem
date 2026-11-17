@@ -721,6 +721,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `--juramentos=pain:2,grit:1`, `--wins=N` (abre só na sessão), `--title --screen=juramentos`. Testes em
   `tests/test_juramentos.gd`.
 
+## Balanceamento da região (E6; decisões em `docs/design/e6_balance.md`, números em `docs/qa/e6_metrics.md`)
+- Medir com `tools/smoke.sh 900 --seed=N --bot-reaction=0.25`, 72 sementes; Maestria 20 = `--talents=` (o robô não lê o
+  save nem `--hero-equip`; Dons que ficam de fora agora geram aviso, `Talents.why_dropped`). Robô 0,25: Maestria 1 vence
+  72%, Maestria 20 (montagem de sustento, a mais forte) 90%, diferença 18 (teto 25).
+- Ainda de Pé não levanta na sala de Morvath (`GiftState.boss_room`, estatística `rise_boss_share`, hoje 0): com ele lá
+  a Maestria 20 nunca perdia. Vida de Morvath fica 6050; carga da ultimate segue pela Magia gasta (`ult.boss_uses` e
+  `boss_damage` no `RESULT`).
+- O robô escolhe a carta da Provação pelo custo da maldição (`Trials.bot_card`; Pobreza só depois da loja), só entra no
+  altar para trocar (`Rooms.bot_door(doors, altar_useful)`) e guarda 50 de ouro para a loja (`Altar.BOT_GOLD_KEEP`).
+
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
   `requires_sets` (E3-02: uma lista por família, uma Bênção de cada forma o Elo; `BoonState.forged`), 12% por carta,
