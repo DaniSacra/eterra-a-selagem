@@ -3,6 +3,30 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_eytow"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_mxf6c"]
 
+[sub_resource type="Resource" id="Resource_uvhto"]
+script = ExtResource("1_eytow")
+stat = &"fury_per_kill"
+values = PackedFloat32Array(1)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_mycas"]
+script = ExtResource("1_eytow")
+stat = &"fury_max"
+values = PackedFloat32Array(3)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_6my4w"]
+script = ExtResource("1_eytow")
+stat = &"fury_time"
+values = PackedFloat32Array(3)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_abxk1"]
+script = ExtResource("1_eytow")
+stat = &"fury_speed"
+values = PackedFloat32Array(0.06)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_mxf6c")
 id = &"impeto"
@@ -11,3 +35,4 @@ desc_key = &"talent_impeto_desc"
 branch = 1
 cost = 2
 unlock_level = 3
+mods = Array[ExtResource("1_eytow")]([SubResource("Resource_uvhto"), SubResource("Resource_mycas"), SubResource("Resource_6my4w"), SubResource("Resource_abxk1")])

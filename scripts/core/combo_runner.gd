@@ -28,6 +28,12 @@ var node: ComboNode
 var locked := false
 ## Multiplies every move's glint (Feel.glint_scale, set by the paladin).
 var glint_scale := 1.0
+## How fast every blow plays (windup, glint, attack lock and leg hold; Ímpeto, GiftState.attack_speed): 1 = its own
+## timings.
+var speed := 1.0
+## The move whose followers the chain window offers instead of the last move's (chain_from: Passo Encadeado,
+## Golpe sem Fim); null: the last move's own.
+var _chain_from: ComboNode
 var _t := 0.0
 var _buffered := NO_INPUT
 var _buffer_age := 0.0
@@ -98,6 +104,18 @@ func can_cancel() -> bool:
 	return true
 
 
+## The chain of the move under way goes on as if `from` had been played (Passo Encadeado: the Corte Veloz counts as
+## cut1; Golpe sem Fim: the spin starts the combo over at cut2): its window offers from's followers.
+func chain_from(from: ComboNode) -> void:
+	if node != null and from != null:
+		_chain_from = from
+
+
+## The first move of the attack's chain (the one the light button starts standing still).
+func opener() -> ComboNode:
+	return ComboTree.find(tree.neutral, ComboNode.In.LIGHT)
+
+
 ## Nothing may start for this many seconds (presses wait for it, unaged).
 func hold_for(seconds: float) -> void:
 	_held = maxf(_held, seconds)
@@ -123,6 +141,7 @@ func charge_available(charge: ComboNode.In = ComboNode.In.CHARGE) -> bool:
 func on_dodge() -> void:
 	phase = Phase.IDLE
 	node = null
+	_chain_from = null
 	_legs = 0.0
 	locked = true
 	_buffered = NO_INPUT
@@ -141,6 +160,7 @@ func reset(clear_cooldowns: bool = true) -> void:
 		_cooldowns.clear()
 	phase = Phase.IDLE
 	node = null
+	_chain_from = null
 	locked = false
 	_buffered = NO_INPUT
 	_dodge_left = 0.0
@@ -160,7 +180,7 @@ func step(dt: float) -> void:
 	_struck = false
 	if locked:
 		return
-	_legs = maxf(0.0, _legs - dt)
+	_legs = maxf(0.0, _legs - dt * speed)
 	# (checked before it counts down, with room for the sum of frames: a hold of 8 frames starts on the 8th after it)
 	var held := _held > 0.0001
 	_held = maxf(0.0, _held - dt)
@@ -170,9 +190,9 @@ func step(dt: float) -> void:
 				_dodge_left = maxf(0.0, _dodge_left - dt)
 				_age(dt)
 		Phase.WINDUP:
-			_t -= dt
+			_t -= dt * speed
 			if _hold > 0.0 and _t <= _hold:
-				move_glint.emit(node, _hold)
+				move_glint.emit(node, _hold / speed)
 				_hold = 0.0
 			if _t <= 0.0:
 				phase = Phase.RECOVERY
@@ -183,7 +203,7 @@ func step(dt: float) -> void:
 				_struck = true
 				move_hit.emit(node)
 		Phase.RECOVERY:
-			_t -= dt
+			_t -= dt * speed
 			if _t <= 0.0:
 				phase = Phase.WINDOW
 				_t = node.chain_window
@@ -199,12 +219,13 @@ func step(dt: float) -> void:
 			if _t <= 0.0:
 				phase = Phase.IDLE
 				node = null
+				_chain_from = null
 				combo_dropped.emit()
 
 
 func _options() -> Array[ComboNode]:
 	if phase == Phase.WINDOW and node != null:
-		return node.following()
+		return _chain_from.following() if _chain_from != null else node.following()
 	return tree.dodge if _dodge_left > 0.0 else tree.neutral
 
 
@@ -223,6 +244,7 @@ func _try_start() -> bool:
 	_buffered = NO_INPUT
 	_dodge_left = 0.0
 	node = found
+	_chain_from = null
 	phase = Phase.WINDUP
 	_hold = found.glint * glint_scale
 	_t = found.windup + _hold

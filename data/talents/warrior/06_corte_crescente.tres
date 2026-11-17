@@ -3,6 +3,27 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_derrx"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_fanpd"]
 
+[sub_resource type="Resource" id="Resource_ojpvg"]
+script = ExtResource("1_derrx")
+stat = &"blow_wave"
+tag = &"spin"
+values = PackedFloat32Array(16)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_erk25"]
+script = ExtResource("1_derrx")
+stat = &"blow_wave_m"
+tag = &"spin"
+values = PackedFloat32Array(6)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_xo24x"]
+script = ExtResource("1_derrx")
+stat = &"blow_wave_w"
+tag = &"spin"
+values = PackedFloat32Array(3)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_fanpd")
 id = &"corte_crescente"
@@ -11,3 +32,4 @@ desc_key = &"talent_corte_crescente_desc"
 branch = 2
 cost = 3
 unlock_level = 4
+mods = Array[ExtResource("1_derrx")]([SubResource("Resource_ojpvg"), SubResource("Resource_erk25"), SubResource("Resource_xo24x")])

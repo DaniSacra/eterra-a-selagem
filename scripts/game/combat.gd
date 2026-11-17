@@ -6,6 +6,10 @@ signal combo_changed(count: int)
 signal enemy_struck(e: Enemy, tags: Array[StringName], damage: float)
 ## Every swing of the combo, after its hits (struck: how many it reached); captures freeze on it (--shot-on).
 signal swung(node: ComboNode, struck: int)
+## A blow of the paladin's landed on hits enemies (wards not counted): a move of the combo tree (node), or the first
+## enemy a wave of a move struck (node null; its shot is counted once, Projectiles.Shot.counted). The passive and the
+## Gifts read it (HeroGifts).
+signal landed(node: ComboNode, tags: Array[StringName], hits: int)
 
 const COMBO_KEEP := 3.0
 ## Extra hit slow when a blow kills (Hades II: 0.04 s).
@@ -102,6 +106,12 @@ var ground: Ground
 var projectiles: Projectiles
 var boons: BoonState
 var hero: HeroDef = HeroDef.warrior()
+## The rules of the Gifts in this run (HeroGifts sets it; null in the bare tests: no Gift).
+var gifts: GiftState
+## The tags of the blow being dealt and which blow it is (a swing, or a shot's instance id), while Horde.damage runs:
+## a kill (Horde.killed) reads what felled it. Empty outside a blow (a burn's tick, a shield's burst).
+var kill_tags: Array[StringName] = []
+var kill_blow := 0
 var combo := 0
 var best_combo := 0
 var damage_dealt := 0.0
@@ -143,7 +153,10 @@ func drop_combo() -> void:
 ## A move of the combo tree lands.
 func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
+	kill_blow = _swing
 	var tags := node.tags
+	var fury_stun := gifts.fury_stun(tags) if gifts else 0.0
+	var hits := 0
 	var shape := swing_shape(node, boons.stat(&"reach_pct", tags))
 	var reach: float = shape.hit_reach
 	var color := color_of(tags)
@@ -182,12 +195,17 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			stars += 1
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
 		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
+		hits += 1
 		_mats.append(CombatSounds.material_of(e))
 		if heavy:
 			e.flash_power = 1.0  # a strong blow: its first frame goes toward ivory (crowd.gdshader)
 		if died:
 			kills += 1
 			continue
+		if fury_stun > 0.0 and e.def.stun_heavy_time > 0.0:
+			# Fúria Plena: with every charge of Ímpeto a finisher stuns longer, those with armor too (never a guardian
+			# nor Morvath: their stun time is 0)
+			horde.flinch(e, e.def.stun_heavy_time + fury_stun)
 		match node.effect:
 			ComboNode.Effect.LAUNCH:
 				if not e.def.heavy:
@@ -221,10 +239,38 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			var size := 1.0 + boons.stat(&"wave_size_pct", tags)
 			var width := node.effect_size if node.effect_size > 0.0 else 3.2
 			var look := Projectiles.Kind.SPARK if node.wave_bolt else Projectiles.Kind.WAVE
-			projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
+			var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
+			shot.through = boons.stat(&"wave_through", tags) > 0.0
 		ComboNode.Effect.STUN:
 			fx.burst(&"light", Vector3(origin.x, 0.4, origin.y))
+	if gifts:
+		_gift_wave(node, origin, dir, color)
+	kill_blow = 0
 	swung.emit(node, struck.size())
+	if hits > 0:
+		landed.emit(node, tags, hits)
+
+
+## The wave a Gift has a move throw, landing or not (Corte Crescente on the spin, Onda Carregada on the special's
+## Omega, Fio do Passo on the Corte Veloz; GiftState.wave): the special's emerald blade wave (emeth_wave.gdshader,
+## under the glow), the slower wide one past 1.6 m across. Its tags are the move's (the Blessings count on it) as a
+## wave, never an Omega again (no second impact frame); its first hit is not another landing of the blow (counted).
+func _gift_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color) -> void:
+	var w := gifts.wave(node.tags)
+	if float(w.damage) <= 0.0:
+		return
+	var tags: Array[StringName] = []
+	for t in node.tags:
+		if t != OMEGA_TAG:
+			tags.append(t)
+	if not tags.has(&"wave"):
+		tags.append(&"wave")
+	var size := 1.0 + boons.stat(&"wave_size_pct", tags)
+	var width := float(w.width) * size
+	var look := Projectiles.Kind.SPARK if width <= Projectiles.WAVE_SPAN + 0.01 else Projectiles.Kind.WAVE
+	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, float(w.damage), float(w.reach) * size, width, color, tags)
+	shot.counted = true
+	shot.through = boons.stat(&"wave_through", tags) > 0.0
 
 
 ## What a swing shows whether it lands or not: the ribbon of the arc (a thin beam for a thrust), the motes off its
@@ -372,10 +418,16 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 			# the held special: a crossed streak along its flight
 			fx.gash(at, Vector3(along.x, 0.0, along.y), shot.color, STAB, true, GASH_TIME.y)
 			fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6)
+	kill_blow = -shot.get_instance_id()
 	hit_enemy(e, shot.damage, shot.tags, along, shot.knockback, false)
+	kill_blow = 0
 	if not e.invulnerable:
 		Audio.play(CombatSounds.EVENTS[&"dart_hit"])
 		_play_material(CombatSounds.material_of(e))
+		if not shot.counted:
+			# the special's wave lands with its first enemy (the passive counts its Omega once)
+			shot.counted = true
+			landed.emit(null, shot.tags, 1)
 	_apply_status(e, shot.status, shot.status_power)
 
 
@@ -445,7 +497,9 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var shatter := boons.stat(&"shatter_pct") if frozen and counts else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), combo, e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
 	var hp_before := e.hp
+	kill_tags = tags
 	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
+	kill_tags = []
 	_impact_frame(tags.has(OMEGA_TAG), breaks_phase(e, hp_before))
 	damage_dealt += dmg
 	enemy_struck.emit(e, tags, dmg)

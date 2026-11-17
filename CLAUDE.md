@@ -508,9 +508,21 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Pré-requisito só vale equipado; ápice pede o meio e um Dom do ramo parceiro (vizinho); ponte pede as duas entradas; um
   Dom por ação; `check`, `can_add`, `sanitized` (o que vem do save). Equipados na descida por `Game._equip_talents`
   (do save, validado pelo nível; `--talents=a,b` para testes); só os de número já agem: Fio Longo (`reach_pct` light 0,15),
-  Reserva e Firmeza (`magick_max`, `max_hp`), somados às Bênçãos em `BoonState.stat` (`equip_talents`). Os efeitos dos
-  outros, a tela do herói e a ultimate jogável são as próximas tarefas. Testes: `test_hero_def.gd`, `test_mastery.gd`,
-  `test_talents.gd`, `test_save.gd`, `test_run_log.gd`.
+  Reserva e Firmeza (`magick_max`, `max_hp`), somados às Bênçãos em `BoonState.stat` (`equip_talents`). Testes:
+  `test_hero_def.gd`, `test_mastery.gd`, `test_talents.gd`, `test_save.gd`, `test_run_log.gd`.
+- **Passiva e os 19 Dons agindo (E2-07, E2-09; escolhas na `warrior_spec.md` 4.5)**: todo efeito é estatística dos `mods`
+  do Dom (com a tag do golpe) lida por `GiftState` (`core/gift_state.gd`, puro) e feita por `HeroGifts`
+  (`game/hero_gifts.gd`, `Game.hero_gifts`, criado depois do `_equip_talents`; `Game.equip_talents(ids)` para testes),
+  `Combat` (sinal `landed(node, tags, hits)`, uma vez por golpe que acerta alguém, e uma por onda no primeiro inimigo;
+  `kill_tags`/`kill_blow` dizem o que derrubou cada abate; Fúria Plena e as ondas dos Dons em `_gift_wave`) e `Player`
+  (`omega_discount`, `give_dodge_back`, `show_fury`, `use_tree`, Ainda de Pé em `hurt`, sinal `rose`). Passiva P-A: 2 de
+  Magia por golpe com `HeroDef.passive_tags` (finisher, dash, omega) e nenhuma `passive_never` (ultimate), nunca acima
+  do máximo; `--no-passive` desliga (com ela desligada e sem Dons a partida é igual à de antes, mesma semente). Quarto
+  Corte troca a árvore (`TalentDef.combos`, `data/combos/paladin_fourth.tres`, estocada `thrust4` de 30, DPS do combo
+  86,5 contra 86,1); Passo Encadeado e Golpe sem Fim por `ComboRunner.chain_from(opener())`; Ímpeto por
+  `ComboRunner.speed` (preparo, brilho, trava, pernas e clipe); ondas de Dom pelo `Projectiles.fire_wave` (`Shot.counted`,
+  `Shot.through` da Onda Atravessante, que atravessa a pedra: a seta já atravessava todos os inimigos); Respiro no
+  `Rooms._room_cleared`; Coração da Emeth expõe `ult_charge_pct` para a ultimate. Testes em `tests/test_warrior_talents.gd`.
 
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com

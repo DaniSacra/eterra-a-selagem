@@ -3,6 +3,13 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_62l1x"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_vpu13"]
 
+[sub_resource type="Resource" id="Resource_q6ykn"]
+script = ExtResource("1_62l1x")
+stat = &"fury_per_kill"
+tag = &"omega"
+values = PackedFloat32Array(1)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_vpu13")
 id = &"sangue_quente"
@@ -13,3 +20,4 @@ tier = 3
 cost = 3
 unlock_level = 12
 joins = Array[int]([1, 3])
+mods = Array[ExtResource("1_62l1x")]([SubResource("Resource_q6ykn")])

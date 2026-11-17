@@ -1,0 +1,201 @@
+[gd_resource type="Resource" script_class="ComboTree" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/combo_node.gd" id="1_ni07j"]
+[ext_resource type="Script" path="res://scripts/core/combo_tree.gd" id="2_wicqm"]
+
+[sub_resource type="Resource" id="Resource_27m2j"]
+script = ExtResource("1_ni07j")
+id = &"dash_cut"
+title = &"move_dash_cut"
+anim = &"Slash_A"
+anim_speed = 3.666666666666667
+anim_from = 0.010000000000000009
+recover_anim = &"Slash_A_Rec"
+sweep = 1
+tags = Array[StringName]([&"light", &"dash"])
+damage = 30.0
+shape = 2
+reach = 8.0
+width = 1.6
+knockback = 10.0
+lunge = 3.2
+move_scale = 0.0
+windup = 0.06
+recovery = 0.23333333333333334
+chain_window = 0.4
+hit_stop_ms = 25.0
+shake = 0.9
+
+[sub_resource type="Resource" id="Resource_fulcj"]
+script = ExtResource("1_ni07j")
+id = &"cut3"
+title = &"move_spin"
+anim = &"Slash_C"
+anim_from = 0.39000000000000007
+sweep = 1
+tags = Array[StringName]([&"light", &"spin", &"finisher"])
+damage = 60.0
+shape = 1
+knockback = 16.0
+move_scale = 0.0
+windup = 0.27999999999999997
+glint = 0.08
+recovery = 0.3
+move_hold = 0.5
+chain_window = 0.6
+hit_stop_ms = 70.0
+sound = &"blade_spin"
+shake = 1.6
+
+[sub_resource type="Resource" id="Resource_14ox4"]
+script = ExtResource("1_ni07j")
+id = &"thrust4"
+anim = &"Sword_Attack"
+anim_speed = 1.5714285714285714
+anim_from = 0.18000000000000002
+sweep = 2
+tags = Array[StringName]([&"light", &"thrust"])
+damage = 30.0
+shape = 2
+reach = 5.375
+width = 1.6
+knockback = 3.0
+move_scale = 0.0
+windup = 0.14
+recovery = 0.2
+move_hold = 0.3
+chain_window = 0.4
+hit_stop_ms = 50.0
+sound = &"thrust"
+shake = 0.8
+next = Array[Resource]([SubResource("Resource_fulcj")])
+
+[sub_resource type="Resource" id="Resource_5fvx0"]
+script = ExtResource("1_ni07j")
+id = &"cut2"
+anim = &"Slash_B"
+anim_speed = 1.6923076923076923
+anim_from = 0.05000000000000002
+recover_anim = &"Slash_B_Rec"
+sweep = 2
+tags = Array[StringName]([&"light"])
+damage = 25.0
+reach = 5.375
+width = 150.0
+knockback = 3.0
+move_scale = 0.0
+windup = 0.13
+recovery = 0.21666666666666667
+move_hold = 0.31666666666666665
+chain_window = 0.4
+hit_stop_ms = 65.0
+shake = 0.8
+next = Array[Resource]([SubResource("Resource_14ox4")])
+
+[sub_resource type="Resource" id="Resource_x4ej5"]
+script = ExtResource("1_ni07j")
+id = &"cut1"
+anim = &"Slash_A"
+anim_speed = 2.75
+anim_from = 0.010000000000000009
+recover_anim = &"Slash_A_Rec"
+sweep = 1
+tags = Array[StringName]([&"light"])
+damage = 20.0
+reach = 5.375
+width = 150.0
+knockback = 2.5
+move_scale = 0.0
+windup = 0.08
+recovery = 0.13333333333333333
+move_hold = 0.18333333333333332
+chain_window = 0.4
+hit_stop_ms = 25.0
+shake = 0.6
+next = Array[Resource]([SubResource("Resource_5fvx0")])
+
+[sub_resource type="Resource" id="Resource_mv8ty"]
+script = ExtResource("1_ni07j")
+id = &"bolt"
+input = 1
+title = &"move_bolt"
+anim = &"Cast"
+tags = Array[StringName]([&"heavy", &"wave"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+move_scale = 0.0
+windup = 0.1
+recovery = 0.3
+move_hold = 0.71
+chain_window = 0.2
+hit_stop_ms = 0.0
+cooldown = 0.7
+sound = &"dart"
+shake = 0.3
+effect = 3
+effect_power = 40.0
+effect_radius = 11.0
+effect_size = 1.4
+wave_bolt = true
+
+[sub_resource type="Resource" id="Resource_vgjhi"]
+script = ExtResource("1_ni07j")
+id = &"burst"
+input = 2
+title = &"move_burst"
+anim = &"Cast"
+anim_speed = 1.25
+tags = Array[StringName]([&"heavy", &"wave", &"charge", &"omega"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+move_scale = 0.0
+windup = 0.08
+recovery = 0.45
+move_hold = 0.71
+hit_stop_ms = 0.0
+sound = &"dart"
+magick_cost = 10.0
+charge_time = 0.65
+shake = 1.5
+effect = 3
+effect_power = 80.0
+effect_radius = 11.0
+effect_size = 8.25
+
+[sub_resource type="Resource" id="Resource_l3soh"]
+script = ExtResource("1_ni07j")
+id = &"lance"
+input = 3
+title = &"move_lance"
+anim = &"Sword_Attack"
+anim_speed = 3.666666666666667
+anim_from = 0.18000000000000002
+sweep = 2
+tags = Array[StringName]([&"light", &"thrust", &"finisher", &"omega"])
+damage = 160.0
+shape = 2
+reach = 13.5
+width = 1.8
+knockback = 18.0
+both_ways = true
+move_scale = 0.0
+windup = 0.06
+glint = 0.08
+recovery = 0.78
+move_hold = 0.78
+chain_window = 0.4
+hit_stop_ms = 50.0
+sound = &"thrust"
+magick_cost = 20.0
+charge_time = 0.8
+shake = 2.0
+
+[resource]
+script = ExtResource("2_wicqm")
+neutral = Array[ExtResource("1_ni07j")]([SubResource("Resource_x4ej5"), SubResource("Resource_mv8ty"), SubResource("Resource_vgjhi"), SubResource("Resource_l3soh")])
+dodge = Array[ExtResource("1_ni07j")]([SubResource("Resource_27m2j")])
+dodge_window = 0.38333333333333336

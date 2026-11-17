@@ -3,6 +3,19 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_s1fk7"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_y4h0a"]
 
+[sub_resource type="Resource" id="Resource_ymhe0"]
+script = ExtResource("1_s1fk7")
+stat = &"hungry_time"
+tag = &"finisher"
+values = PackedFloat32Array(1)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_5kuc2"]
+script = ExtResource("1_s1fk7")
+stat = &"omega_discount"
+values = PackedFloat32Array(0.5)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_y4h0a")
 id = &"lamina_faminta"
@@ -11,3 +24,4 @@ desc_key = &"talent_lamina_faminta_desc"
 branch = 3
 cost = 2
 unlock_level = 5
+mods = Array[ExtResource("1_s1fk7")]([SubResource("Resource_ymhe0"), SubResource("Resource_5kuc2")])

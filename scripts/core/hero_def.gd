@@ -43,8 +43,13 @@ static var _warrior: HeroDef
 @export var cast_burst := 150.0
 
 @export_group("Passive")
-## The centre of the tree (D-56): a finisher that lands gives back this much Magia, once a blow (no behaviour yet).
+## The centre of the tree (D-56, P-A): a finisher that lands on at least one enemy gives back this much Magia, once a
+## blow, never past the maximum (GiftState.passive_magick; the Gift stat finisher_magick adds to it). A finisher here
+## is a move with one of passive_tags (the spin, the Corte Veloz, the Omegas) and none of passive_never (the
+## ultimate's blows never count).
 @export var magick_on_finisher := 2.0
+@export var passive_tags: Array[StringName] = [&"finisher", &"dash", &"omega"]
+@export var passive_never: Array[StringName] = [&"ultimate"]
 
 @export_group("Progression")
 @export var ultimates: Array[UltDef] = []

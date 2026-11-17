@@ -12,6 +12,8 @@ signal was_hurt(amount: float)
 signal died
 signal dodged(dir: Vector2)
 signal shield_broke
+## Ainda de Pé stood him up from a fall (once a descent).
+signal rose
 ## The circle of light (cast) is let go at a point; omega: it was held and paid for, so it bursts at the end.
 signal cast_released(at: Vector2, omega: bool)
 ## The ultimate's protected gesture begins (its charge is spent now) and, gesture seconds later, its blow lands
@@ -114,6 +116,13 @@ const BLADE_TIP := Vector3(0, 1.15, 0)
 ## violet when it lands. The special (and its Omega) is locked while it lasts, walking and dodging never.
 const CURSE_GLOW := Color(0.55, 0.12, 0.8, 0.65)
 const CURSE_ACTION := &"heavy_attack"
+## Ímpeto's embers (show_fury): where on the blade (the sword's own space: the grip's top at 0.13, the tip at 1.5),
+## meters across, the colour (Emeth's green, its brightest channel 1.0, drawn over what is behind: under the glow).
+const EMBER_AT: Array[Vector3] = [Vector3(0, 0.6, 0), Vector3(0, 0.85, 0), Vector3(0, 1.1, 0)]
+const EMBER_SIZE := 0.12
+const EMBER_COLOR := Color(0.3, 1.0, 0.45, 0.9)
+## The ring at his feet when a kill gives the dodge back (Avanço Feroz, Investida): meters.
+const DODGE_BACK_RING := 1.1
 
 var arena: Arena
 var horde: Horde
@@ -144,6 +153,15 @@ var _charge_action := &""
 var _charge_tap := ComboNode.In.HEAVY
 var _charge_held := ComboNode.In.CHARGE
 var magick := Magick.new(hero.magick_max)
+## The Gifts' rules in this run (HeroGifts sets it; null: no Gift). Ainda de Pé reads it when he falls.
+var gifts: GiftState
+## The share of an Omega's cost taken off if it is begun now (Lâmina Faminta; HeroGifts sets it every step), and the
+## share kept for the charge or the circle under way (taken when it began).
+var omega_discount := 0.0
+var _charge_discount := 0.0
+var _cast_discount := 0.0
+## Ímpeto's embers on the blade (one per charge; made the first time a charge shows).
+var _embers: Array[MeshInstance3D] = []
 var curse := CurseState.new()
 var _curse_aura: CurseAura
 var _blade_mat: ShaderMaterial
@@ -533,11 +551,66 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 		_charge_action = action
 		_charge_tap = tap
 		_charge_held = held
+		_charge_discount = omega_discount
 
 
 func _affordable(held: ComboNode.In) -> bool:
 	var node := ComboTree.find(tree.neutral, held)
-	return node != null and magick.can_pay(node.magick_cost)
+	return node != null and magick.can_pay(omega_cost(node.magick_cost, omega_discount))
+
+
+## What an Omega costing base Magia costs with this share taken off (Lâmina Faminta).
+static func omega_cost(base: float, discount: float) -> float:
+	return base * (1.0 - discount)
+
+
+## Plays this combo tree from now on (a Gift that changes the attack's chain: TalentDef.combos).
+func use_tree(path: String) -> void:
+	tree = load(path)
+	runner.tree = tree
+	runner.reset()
+
+
+## A kill gave the dodge's charge back (Avanço Feroz, Investida): a thin ring on the floor at his feet. False when
+## every charge was already there.
+func give_dodge_back() -> bool:
+	if dodge_charges >= dodge_max:
+		return false
+	dodge_charges += 1
+	_dodge_recharge = 0.0
+	fx.ring(pos, DODGE_BACK_RING, Combat.EMETH, 0.3, 0.06, true)
+	return true
+
+
+## Ímpeto's charges as embers on the blade: n small emerald motes along it, under the glow (EMBER_COLOR's brightest
+## channel is 1.0; the glow starts at 1.3), none without a charge.
+func show_fury(n: int) -> void:
+	if n > 0 and _embers.is_empty() and _sword:
+		for k in EMBER_AT.size():
+			_embers.append(_ember(EMBER_AT[k]))
+	for k in _embers.size():
+		_embers[k].visible = k < n
+
+
+func _ember(at: Vector3) -> MeshInstance3D:
+	var quad := QuadMesh.new()
+	# (in the sword's space, which the body scales: meters on the screen)
+	quad.size = Vector2.ONE * EMBER_SIZE / maxf(_sword.global_basis.get_scale().x, 0.001)
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.billboard_keep_scale = true
+	m.albedo_color = EMBER_COLOR
+	m.albedo_texture = Fx.soft_dot()
+	var mi := MeshInstance3D.new()
+	mi.mesh = quad
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = at
+	mi.visible = false
+	_sword.add_child(mi)
+	return mi
 
 
 ## How far an Omega's charge has got (0..1; 0 when nothing charges).
@@ -562,16 +635,18 @@ func _read_cast(dt: float) -> void:
 	if Controls.pressed(&"cast") and cast_cooldown <= 0.0 and not _casting and not cast_active:
 		_casting = true
 		_cast_t = 0.0
+		_cast_discount = omega_discount
 	if not _casting:
 		return
 	_cast_t += dt
-	if _cast_t >= hero.cast_omega_time and _cast_t - dt < hero.cast_omega_time and magick.can_pay(hero.cast_omega_cost):
+	var cost := omega_cost(hero.cast_omega_cost, _cast_discount)
+	if _cast_t >= hero.cast_omega_time and _cast_t - dt < hero.cast_omega_time and magick.can_pay(cost):
 		fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 		Audio.play(&"charged")
-	var held := Controls.held(&"cast") and magick.can_pay(hero.cast_omega_cost)
+	var held := Controls.held(&"cast") and magick.can_pay(cost)
 	if _cast_t >= hero.cast_charge and (not held or _cast_t >= hero.cast_omega_time):
 		_casting = false
-		var omega := _cast_t >= hero.cast_omega_time and magick.spend(hero.cast_omega_cost)
+		var omega := _cast_t >= hero.cast_omega_time and magick.spend(cost)
 		cast_cooldown = hero.cast_cooldown
 		cast_active = true
 		runner.hold_for(hero.cast_attack_lock)
@@ -633,12 +708,13 @@ func _strike_dir() -> Vector2:
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0:
-		magick.spend(node.magick_cost)
+		magick.spend(omega_cost(node.magick_cost, _charge_discount))
 	_anim.speed_scale = 1.0
 	if node.sound != &"":
 		Audio.play(node.sound)
 	_lunge = facing * node.lunge * LUNGE_DECAY
-	_play(node.anim, node.anim_speed, node.anim_from)
+	# (Ímpeto plays every blow faster: runner.speed)
+	_play(node.anim, node.anim_speed * runner.speed, node.anim_from)
 	_move_anim = node.anim
 	_recover_anim = node.recover_anim
 	if node.title != &"":
@@ -652,7 +728,7 @@ func _follow_through(node: ComboNode) -> void:
 	if _anim.current_animation == &"":
 		return
 	var tail := _anim.current_animation_length - _anim.current_animation_position
-	_anim.speed_scale = node.follow_speed(tail) / maxf(_anim.get_playing_speed(), 0.01)
+	_anim.speed_scale = node.follow_speed(tail) * runner.speed / maxf(_anim.get_playing_speed(), 0.01)
 
 
 func heal(amount: float) -> void:
@@ -692,6 +768,14 @@ func hurt(amount: float, from: Vector2) -> void:
 	# the colour split and the edge tint of a blow taken are Game's (HurtTint: never on the whole screen)
 	Audio.play(&"hurt")
 	was_hurt.emit(amount)
+	if hp <= 0.0 and gifts != null and gifts.rise():
+		# Ainda de Pé: once a descent he falls and gets up with part of his life (then the stagger of the blow)
+		hp = gifts.rise_life(max_hp)
+		fx.hero_burst(&"light", Vector3(pos.x, 1.2, pos.y))
+		fx.ring(pos, 2.0, Combat.EMETH, 0.5, 0.06, true)
+		fx.word(Vector3(pos.x, 3.2, pos.y), T.t(&"word_rise"), Combat.EMETH)
+		Audio.play(&"heal")
+		rose.emit()
 	if hp <= 0.0:
 		hp = 0.0
 		state = State.DEAD
