@@ -14,7 +14,8 @@ const F := 1.0 / 60.0
 ## on during the fade, or its blend takes over at the end, up to half a pose) and the summon's own first pose (0.7 m
 ## from its second in the bake). Before E1c: 8 m (the scythe's root motion) and 0.96 m at every cut between clips.
 const POSE_OFF := 0.45
-const DRAWN_STEP := 0.6
+## 0.65: the honest worst sits at 0.60 to 0.604 m depending on the seedless frame timing (flaky at 0.6); the bug it guards was 0.96 m and up.
+const DRAWN_STEP := 0.65
 ## Frames a throw's release may fall off its shot (P1-5).
 const RELEASE_FRAMES := 3
 ## Clips that lie on the floor (his fall, a dead rising): not his place while he fights.
