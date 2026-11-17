@@ -242,6 +242,35 @@ func test_the_rift_never_passes_the_screen_cap() -> void:
 	assert_lte(ScreenTone.peak8(Color(lip.r / maxf(lip.g, 0.001) * peak, peak, lip.b / maxf(lip.g, 0.001) * peak), false), ScreenTone.SCREEN_MAX)
 
 
+## The Voragem's floor (ult_vortex.gdshader): veil, ivory arms and old gold rim each under the glow and the screen cap,
+## the veil never more than 0.3 opaque, drawn before the enemies' warnings, closing on its middle before it implodes.
+func test_the_voragem_floor_stays_under_the_glow_and_the_screen_cap() -> void:
+	var peaks := Ultimates.vortex_peaks()
+	var hues := {"veil": Combat.EMETH, "arm": Ultimates.VORTEX_IVORY, "rim": Ultimates.VORTEX_GOLD}
+	for k: String in hues:
+		var p: float = peaks[k]
+		var c: Color = hues[k]
+		var top := maxf(c.r, maxf(c.g, c.b))
+		assert_lte(p, 1.0, "%s under the glow threshold" % k)
+		assert_lte(ScreenTone.peak8(Color(c.r / top, c.g / top, c.b / top) * p, false), ScreenTone.SCREEN_MAX, k)
+	assert_lte(Ultimates.VORTEX_VEIL, 0.3, "a faint veil")
+	assert_lte(maxf(Ultimates.VORTEX_MOTE.r, maxf(Ultimates.VORTEX_MOTE.g, Ultimates.VORTEX_MOTE.b)) * Fx.MOTE_GLOW, 1.1, "motes under the glow")
+
+
+func test_the_voragem_floor_draws_under_warnings_and_closes_before_it_implodes() -> void:
+	await _start(&"vortex")
+	game.ults.call(&"_open_vortex", Vector2(4.0, 0.0))
+	var v: Ultimates.Vortex = game.ults.vortex
+	var m := v.node.material_override as ShaderMaterial
+	assert_lt(m.render_priority, 0, "the enemies' warnings (priority 0) draw over it")
+	_step(30)
+	assert_eq(float(m.get_shader_parameter(&"close")), 0.0, "open while it pulls")
+	assert_gt(float(m.get_shader_parameter(&"turn")), 0.0, "its arms turn")
+	_step(int((game.player.ult.duration - 0.5 - Ultimates.VORTEX_CLOSE * 0.5) * 60.0))
+	assert_not_null(game.ults.vortex)
+	assert_gt(float(m.get_shader_parameter(&"close")), 0.2, "the rim closes on the middle")
+
+
 # ---------- U-2, the Voragem ----------
 
 func test_the_voragem_pulls_ticks_and_implodes() -> void:

@@ -45,6 +45,14 @@ const WAVE_GOLD := Color(0.95, 0.72, 0.3)
 const WAVE_GOLD_LIGHT := 0.85
 ## Seconds the wave fades over at the end of its flight (the special flies 0.18 s, the held one 0.5 s).
 const WAVE_FADE := Vector2(0.04, 0.12)
+## The body's share of the peak and the dark ink behind it (emeth_wave.gdshader's body_light, ink).
+const WAVE_BODY_LIGHT := 0.55
+const WAVE_INK := 0.3
+## A Gift's wave (bolden): its band (meters; the held special's is OMEGA_THICK), body, ink and fade (seconds).
+const GIFT_THICK := 0.62
+const GIFT_BODY_LIGHT := 0.78
+const GIFT_INK := 0.5
+const GIFT_FADE := 0.06
 const HEIGHT := 1.1
 ## Enemy shots (bolts, orbs, the curse): their ball and halo (cycle 10, BUG-006), and the halo's radius as a share of
 ## the ball's (at most 1.5: a crowd of sorcerers never fills the air with light).
@@ -101,6 +109,8 @@ class Shot:
 	var counted := false
 	## The paladin's wave goes through stone (Onda Atravessante, the stat wave_through).
 	var through := false
+	## A Gift's wave drawn bolder (bolden): its own fade at the end.
+	var bold := false
 
 ## How far a shot is from the stone when it dies on it (meters; its ball is about this round).
 const SHOT_EDGE := 0.15
@@ -168,7 +178,23 @@ func fire_wave(kind: Kind, from: Vector2, dir: Vector2, damage: float, distance:
 	mat.set_shader_parameter(&"flown", 0.0)
 	mat.set_shader_parameter(&"fade", 1.0)
 	mat.set_shader_parameter(&"peak", wave_peak(color))
+	mat.set_shader_parameter(&"body_light", WAVE_BODY_LIGHT)
+	mat.set_shader_parameter(&"ink", WAVE_INK)
 	return s
+
+
+## A Gift's wide wave (Corte Crescente on the spin, Onda Carregada, Fio do Passo; Combat._gift_wave) drawn bolder: it
+## flies 6 m in under 0.3 s right under the spin's big crescent, and at the special's held look it hardly read at
+## 1080 (E2 capture). A thicker band, a fuller body, more ink behind and a shorter fade, so it is whole most of its
+## flight; the same peak (under the glow and ScreenTone.SAFE), the same hit. Only the look.
+func bolden(s: Shot) -> void:
+	if s.kind != Kind.WAVE:
+		return
+	s.bold = true
+	var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
+	mat.set_shader_parameter(&"thick_m", GIFT_THICK)
+	mat.set_shader_parameter(&"body_light", GIFT_BODY_LIGHT)
+	mat.set_shader_parameter(&"ink", GIFT_INK)
 
 
 ## The brightest channel of the wave's leading edge for a blow of this colour: WAVE_PEAK, lowered so the pale edge
@@ -312,7 +338,8 @@ func _place(s: Shot) -> void:
 	if s.kind == Kind.WAVE or s.kind == Kind.SPARK:
 		var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
 		mat.set_shader_parameter(&"flown", s.flown)
-		mat.set_shader_parameter(&"fade", clampf(s.life / (WAVE_FADE.y if s.kind == Kind.WAVE else WAVE_FADE.x), 0.0, 1.0))
+		var fade_time := GIFT_FADE if s.bold else WAVE_FADE.y if s.kind == Kind.WAVE else WAVE_FADE.x
+		mat.set_shader_parameter(&"fade", clampf(s.life / fade_time, 0.0, 1.0))
 
 
 func _take(kind: Kind) -> Node3D:

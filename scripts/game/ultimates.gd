@@ -21,12 +21,35 @@ const RIFT_RUN := 0.12
 const RIFT_TIME := 0.9
 ## The pale lips of the rift (share toward white): the peak is kept so this colour stays under ScreenTone.SAFE.
 const RIFT_PALE := 0.3
-## The Voragem's floor (the circle of light's style: veil, rim, marks turning), its strength and marks.
-const VORTEX_STRENGTH := 0.55
-const VORTEX_VEIL := 0.03
-const VORTEX_MARKS := 3.0
-## Motes drawn into the middle every this many seconds (Fx.chips: dim, Fx.MOTE_GLOW lights them under the glow).
-const VORTEX_MOTES_EVERY := 0.12
+## The Voragem's floor (ult_vortex.gdshader; ultimate_u2_proposals.md A.3): an emerald veil up to VORTEX_VEIL of
+## opacity (VORTEX_VEIL_EDGE at the rim), three ivory arms in a spiral (VORTEX_TWIST turns from the rim to the middle)
+## turning inward at VORTEX_SPIN radians a second (the pattern runs to the middle at radius * spin / (twist * 2 pi),
+## 2.5 m/s on 6 m) and a fine rim of old gold. Its last VORTEX_CLOSE seconds the rim closes on the middle: the
+## implosion, never a column. Each part's brightest channel is its colour's ScreenTone peak, at most 1 (vortex_peaks).
+const VORTEX_SHADER := preload("res://assets/shaders/ult_vortex.gdshader")
+const VORTEX_IVORY := Color(0.95, 0.92, 0.82)
+const VORTEX_GOLD := Fx.OLD_GOLD
+const VORTEX_VEIL := 0.3
+const VORTEX_VEIL_EDGE := 0.08
+const VORTEX_TWIST := 0.9
+const VORTEX_SPIN := 2.4
+const VORTEX_ARMS := 3.0
+const VORTEX_RIM_M := 0.07
+const VORTEX_ARM_M := 0.16
+const VORTEX_HEIGHT := 0.065
+const VORTEX_FADE_IN := 0.2
+const VORTEX_CLOSE := 0.15
+## The ultimate's marks on the floor draw before the enemies' warnings (ground.gdshader, priority 0): their red always
+## reads over the veil and the rift.
+const FLOOR_PRIORITY := -1
+## Motes drawn into the middle every this many seconds: ivory slivers running in along the spiral (Fx.chips times
+## Fx.MOTE_GLOW 2.2: VORTEX_MOTE's brightest channel 0.48, so 1.05 lit, under the glow), how many and how far
+## along the turn they lean (share of the tangent).
+const VORTEX_MOTES_EVERY := 0.1
+const VORTEX_MOTE := Color(0.48, 0.465, 0.415)
+const VORTEX_MOTE_COUNT := 3
+const VORTEX_MOTE_SWIRL := 0.7
+## The cleave's chips (Fx.chips, lit by Fx.MOTE_GLOW under the glow).
 const MOTE_COLOR := Color(0.13, 0.42, 0.22)
 ## The hit slow of the cleave landing (as a finisher's, Hades II's numbers: ms of wait, ms slowed).
 const STOP_WAIT_MS := 70.0
@@ -44,6 +67,8 @@ class Vortex:
 	var life := 4.0
 	var tick := 0.0
 	var motes := 0.0
+	## Radians the arms have turned (ult_vortex.gdshader's turn).
+	var turn := 0.0
 	## Who it already cut out of a wind-up (once on entering).
 	var held: Dictionary = {}
 	var node: MeshInstance3D
@@ -219,6 +244,7 @@ func _show_rift(origin: Vector2, dir: Vector2) -> void:
 		_rift.mesh = plane
 		var m := ShaderMaterial.new()
 		m.shader = RIFT_SHADER
+		m.render_priority = FLOOR_PRIORITY
 		_rift.material_override = m
 		_rift.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(_rift)
@@ -264,13 +290,7 @@ func _open_vortex(at: Vector2) -> void:
 	v.radius = def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
 	v.life = def.duration
 	v.tick = def.tick
-	v.node = GroundLook.new_node()
-	add_child(v.node)
-	GroundLook.dress(v.node, GroundLook.Style.CIRCLE, GroundLook.Shape.CIRCLE, Combat.EMETH, VORTEX_STRENGTH, Ground.RIM_METERS,
-		at, Vector2.DOWN, v.radius, 0.0, 0.065)
-	var m := v.node.material_override as ShaderMaterial
-	GroundLook.put(m, &"circle_veil", VORTEX_VEIL)
-	GroundLook.put(m, &"circle_marks", VORTEX_MARKS)
+	v.node = _vortex_node(at, v.radius)
 	vortex = v
 	game.fx.ring(at, v.radius, Combat.EMETH, 0.3, 0.15, true)
 	Audio.play(CombatSounds.EVENTS[&"ult_vortex"])
@@ -279,7 +299,7 @@ func _open_vortex(at: Vector2) -> void:
 func _step_vortex(dt: float) -> void:
 	var v := vortex
 	v.life -= dt
-	GroundLook.put(v.node.material_override as ShaderMaterial, &"fade", clampf(v.life / 0.3, 0.0, 1.0) * clampf((def.duration - v.life) / 0.2, 0.0, 1.0))
+	_draw_vortex(v, dt)
 	var ticking := false
 	v.tick -= dt
 	if v.tick <= 0.0:
@@ -311,9 +331,61 @@ func _step_vortex(dt: float) -> void:
 		var a := float(Engine.get_process_frames()) * 2.39
 		var rim := v.at + Vector2.from_angle(a) * v.radius * 0.85
 		var inward := (v.at - rim).normalized()
-		game.fx.chips(Vector3(rim.x, 0.4, rim.y), Vector3(inward.x, 0.1, inward.y), MOTE_COLOR, 2, 5.0, 0.08, 0.6, 0.3)
+		# in, and along the arms' turn (their angle grows: the tangent that way)
+		var way := (inward + Vector2(-sin(a), cos(a)) * VORTEX_MOTE_SWIRL).normalized()
+		game.fx.chips(Vector3(rim.x, 0.35, rim.y), Vector3(way.x, 0.05, way.y), VORTEX_MOTE, VORTEX_MOTE_COUNT, 6.0, 0.09, 0.55, 0.25)
 	if v.life <= 0.0:
 		_implode(v)
+
+
+## The Voragem's floor (ult_vortex.gdshader): its own quad and material, made when it lands (one at a time).
+func _vortex_node(at: Vector2, radius: float) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2.ONE
+	mi.mesh = plane
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.extra_cull_margin = radius
+	var m := ShaderMaterial.new()
+	m.shader = VORTEX_SHADER
+	m.render_priority = FLOOR_PRIORITY
+	var peaks := vortex_peaks()
+	m.set_shader_parameter(&"color", Combat.EMETH)
+	m.set_shader_parameter(&"ivory", VORTEX_IVORY)
+	m.set_shader_parameter(&"gold", VORTEX_GOLD)
+	m.set_shader_parameter(&"veil_peak", peaks.veil)
+	m.set_shader_parameter(&"arm_peak", peaks.arm)
+	m.set_shader_parameter(&"rim_peak", peaks.rim)
+	m.set_shader_parameter(&"veil", VORTEX_VEIL)
+	m.set_shader_parameter(&"veil_edge", VORTEX_VEIL_EDGE)
+	m.set_shader_parameter(&"radius_m", radius)
+	m.set_shader_parameter(&"rim_m", VORTEX_RIM_M)
+	m.set_shader_parameter(&"arm_m", VORTEX_ARM_M)
+	m.set_shader_parameter(&"arms", VORTEX_ARMS)
+	m.set_shader_parameter(&"twist", VORTEX_TWIST)
+	m.set_shader_parameter(&"turn", 0.0)
+	m.set_shader_parameter(&"fade", 0.0)
+	m.set_shader_parameter(&"close", 0.0)
+	mi.material_override = m
+	mi.position = Vector3(at.x, VORTEX_HEIGHT, at.y)
+	add_child(mi)
+	return mi
+
+
+## The Voragem's floor this frame: fading in, its arms turning inward, its rim closing over its last VORTEX_CLOSE.
+func _draw_vortex(v: Vortex, dt: float) -> void:
+	var m := v.node.material_override as ShaderMaterial
+	v.turn += VORTEX_SPIN * dt
+	m.set_shader_parameter(&"turn", fposmod(v.turn, TAU))
+	m.set_shader_parameter(&"fade", clampf((def.duration - v.life) / VORTEX_FADE_IN, 0.0, 1.0))
+	m.set_shader_parameter(&"close", clampf(1.0 - v.life / VORTEX_CLOSE, 0.0, 1.0))
+
+
+## The brightest channel of each part of the Voragem's floor (veil, arm, rim): 1 at most (under the glow), less where
+## its colour would pass ScreenTone.SAFE on the screen.
+static func vortex_peaks() -> Dictionary:
+	return {"veil": minf(1.0, ScreenTone.linear_peak(Combat.EMETH)), "arm": minf(1.0, ScreenTone.linear_peak(VORTEX_IVORY)),
+		"rim": minf(1.0, ScreenTone.linear_peak(VORTEX_GOLD))}
 
 
 ## Inside a standing circle of light: the circle holds, the Voragem does not pull (ultimate_u2_proposals.md section 1).

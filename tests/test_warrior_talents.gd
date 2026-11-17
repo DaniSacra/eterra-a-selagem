@@ -302,8 +302,13 @@ func test_impeto_shows_its_charges_as_embers_and_speeds_the_runner() -> void:
 	for ember in p._embers:
 		shown += 1 if ember.visible else 0
 	assert_eq(shown, 1, "one ember a charge")
-	var mat := p._embers[0].material_override as StandardMaterial3D
-	assert_lte(maxf(mat.albedo_color.r, maxf(mat.albedo_color.g, mat.albedo_color.b)), 1.0, "under the glow")
+	var mat := p._embers[0].material_override as ShaderMaterial
+	var peak := float(mat.get_shader_parameter(&"peak"))
+	assert_lte(peak, 1.0, "under the glow")
+	var heart := Player.EMBER_COLOR.lerp(Color.WHITE, Player.EMBER_PALE)
+	var top := maxf(heart.r, maxf(heart.g, heart.b))
+	assert_lte(ScreenTone.peak8(Color(heart.r / top, heart.g / top, heart.b / top) * peak, false), ScreenTone.SCREEN_MAX, "its pale heart keeps its colour on the screen")
+	assert_eq(p._embers[1].material_override, mat, "one material for the three")
 
 
 func test_avanco_feroz_gives_the_dodge_back_on_a_finisher_kill_once_a_blow() -> void:
