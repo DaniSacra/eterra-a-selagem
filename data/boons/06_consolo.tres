@@ -6,7 +6,8 @@
 [sub_resource type="Resource" id="Resource_qh1af"]
 script = ExtResource("1_oiro7")
 stat = &"heal_on_kill"
-values = PackedFloat32Array(0.4, 0.7, 1)
+base = 0.4
+per_level = PackedFloat32Array(0.3, 0.3)
 
 [resource]
 script = ExtResource("2_sx6on")

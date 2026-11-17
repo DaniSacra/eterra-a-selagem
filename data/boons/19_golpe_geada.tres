@@ -7,7 +7,8 @@
 script = ExtResource("1_p6yte")
 stat = &"freeze_time"
 tag = &"light"
-values = PackedFloat32Array(0.3, 0.45, 0.6)
+base = 0.3
+per_level = PackedFloat32Array(0.15, 0.15)
 
 [resource]
 script = ExtResource("2_dxap4")

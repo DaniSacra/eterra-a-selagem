@@ -7,14 +7,16 @@
 script = ExtResource("1_1frgk")
 stat = &"reach_pct"
 tag = &"heavy"
-values = PackedFloat32Array(0.15, 0.22, 0.3)
+base = 0.15
+per_level = PackedFloat32Array(0.07, 0.08)
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_je01j"]
 script = ExtResource("1_1frgk")
 stat = &"damage_pct"
 tag = &"heavy"
-values = PackedFloat32Array(0.1, 0.15, 0.2)
+base = 0.1
+per_level = PackedFloat32Array(0.05, 0.05)
 
 [resource]
 script = ExtResource("2_4k13b")

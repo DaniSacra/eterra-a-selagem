@@ -6,12 +6,14 @@
 [sub_resource type="Resource" id="Resource_i21av"]
 script = ExtResource("1_cu6uw")
 stat = &"shield_burst"
-values = PackedFloat32Array(40, 70, 100)
+base = 40.0
+per_level = PackedFloat32Array()
 
 [resource]
 script = ExtResource("2_f1mm1")
 id = &"bastiao"
 family = 4
 icon = 15
-requires = Array[StringName]([&"escudo", &"consolo"])
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("escudo"), PackedStringArray("consolo", "onda_maior", "flagelo", "golpe_radiante", "pesado_radiante", "circulo_radiante", "passo_radiante")])
 mods = Array[ExtResource("1_cu6uw")]([SubResource("Resource_i21av")])

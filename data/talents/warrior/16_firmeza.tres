@@ -6,13 +6,15 @@
 [sub_resource type="Resource" id="Resource_hywx7"]
 script = ExtResource("1_w3453")
 stat = &"max_hp"
-values = PackedFloat32Array(10)
+base = 10.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_er2vq"]
 script = ExtResource("1_w3453")
 stat = &"magick_max"
-values = PackedFloat32Array(10)
+base = 10.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

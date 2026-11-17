@@ -7,7 +7,8 @@
 [sub_resource type="Resource" id="Resource_s5kd3"]
 script = ExtResource("1_c74ny")
 stat = &"shatter_pct"
-values = PackedFloat32Array(0.5, 0.8, 1)
+base = 0.5
+per_level = PackedFloat32Array(0.3, 0.2)
 
 [sub_resource type="Resource" id="Resource_ubdet"]
 script = ExtResource("3_01k3q")

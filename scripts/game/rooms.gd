@@ -27,6 +27,8 @@ var phase := Phase.FIGHT
 var gold := 0
 ## The kinds of the rooms won in this run (fights and the guardian's), for the Mastery (Game.mastery_gain).
 var won: Array[RunMap.Kind] = []
+## The gold this fight can still give, dropped by the enemies that fall (C13-04; null outside a fight).
+var purse: GoldPurse
 var _waves: Array[Array] = []
 var _queue: Array[StringName] = []
 var _wave := -1
@@ -51,13 +53,9 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	_rng = rng
 	stage = load(STAGE)
 	if Dev.has("short"):
-		# the old short descent (fight, fountain, guardian, shop, Morvath in room 5), for quick tests
-		stage = stage.duplicate()
-		stage.rooms = 4
-		stage.fountain_depth_min = 2
-		stage.fountain_depth_max = 2
-		stage.miniboss_depth_min = 3
-		stage.miniboss_depth_max = 3
+		stage = short_stage(stage, 4)
+	elif Dev.has("medium"):
+		stage = short_stage(stage, 6)
 	map = RunMap.new(stage, _rng)
 	if Dev.has("arena"):
 		# dev: --arena=id makes the opening room that arena (--variant=n dresses it)
@@ -66,11 +64,32 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 				map.forced_layout = i
 	for id in stage.enemies:
 		_defs[id] = game.horde.def(id)
+	game.horde.killed.connect(_on_killed)
 	_fade = ColorRect.new()
 	_fade.color = Color(0, 0, 0, 0)
 	_fade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	game.ui.add_child(_fade)
+
+
+## The shorter descents kept for tests (C13-01): rooms 4 is the old one of 5 (fight, fountain, guardian, shop, Morvath
+## in room 5; --short), rooms 6 the test one of 7 of cycle C12 (three fights, fountain in room 4, guardian in 5, shop
+## in 6, Morvath in 7; --medium). Elites from the 2nd room, as they were.
+static func short_stage(full: StageDef, rooms_: int) -> StageDef:
+	var st: StageDef = full.duplicate()
+	st.rooms = rooms_
+	st.elite_from_depth = 2
+	if rooms_ <= 4:
+		st.fountain_depth_min = 2
+		st.fountain_depth_max = 2
+		st.miniboss_depth_min = 3
+		st.miniboss_depth_max = 3
+	else:
+		st.fountain_depth_min = rooms_ - 2
+		st.fountain_depth_max = rooms_ - 2
+		st.miniboss_depth_min = rooms_ - 1
+		st.miniboss_depth_max = rooms_ - 1
+	return st
 
 
 func start() -> void:
@@ -159,10 +178,16 @@ func _enter(next: RunMap.Room) -> void:
 	_wave_wait = START_DELAY
 	# nobody stands past the stage's ceiling, summons included; a fight lowers it to its tier's most
 	game.horde.alive_cap = stage.alive_cap
+	purse = null
 	match room.kind:
 		RunMap.Kind.COMBAT:
 			var fight := EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
 			_waves = fight.waves
+			var rating := 0.0
+			for w: Array in fight.waves:
+				for id: StringName in w:
+					rating += (_defs[id] as EnemyDef).rating if _defs.has(id) else 0.0
+			purse = GoldPurse.for_fight(stage, room.depth, rating, _rng)
 			_cap = fight.cap
 			game.horde.alive_cap = fight.ceiling
 			phase = Phase.FIGHT
@@ -292,10 +317,7 @@ func _room_cleared() -> void:
 	# a warning still on the floor never hurts him once the room is won (QA-01)
 	game.ground.clear_warnings()
 	Audio.play(&"elite_down")
-	var found := _rng.randi_range(stage.room_gold_min, stage.room_gold_max)
-	if room.kind == RunMap.Kind.COMBAT:
-		gold += found
-		game.fx.word(Vector3(game.player.pos.x, 3.0, game.player.pos.y), "+%d %s" % [found, T.t(&"hud_gold_short")], GOLD_COLOR)
+	purse = null
 	game.hud.show_notice(T.t(&"notice_room_clear"), 2.0)
 	if room.reward == RunMap.Reward.NONE:
 		_open_doors()
@@ -303,6 +325,17 @@ func _room_cleared() -> void:
 	_reward_at = game.arena.resolve(game.arena.middle, 1.0)
 	_reward_node = _marker(_reward_at, room.reward, "")
 	game.column(_reward_at, _reward_color(room.reward), 1.4, 12.0, 1.0)
+
+
+## An enemy fell: in a fight it may leave its share of the fight's gold (GoldPurse), shown where it fell.
+func _on_killed(e: Enemy) -> void:
+	if purse == null or phase != Phase.FIGHT:
+		return
+	var found := purse.drop(e.def.rating, _rng)
+	if found <= 0:
+		return
+	gold += found
+	game.fx.word(Vector3(e.pos.x, 2.4, e.pos.y), "+%d %s" % [found, T.t(&"hud_gold_short")], GOLD_COLOR)
 
 
 func _collect() -> void:
@@ -318,9 +351,11 @@ func _give(reward: RunMap.Reward, guardian: bool = false) -> void:
 	var p := game.player
 	match reward:
 		RunMap.Reward.BOON:
-			game.open_boon_choice(Boon.RARITY_WEIGHT_GUARDIAN if guardian else Boon.RARITY_WEIGHT)
+			game.open_boon_choice(stage.guardian_rarity_chance if guardian else stage.rarity_chance)
 		RunMap.Reward.POM:
 			game.open_grow_choice()
+		RunMap.Reward.POM_SLICE:
+			game.grow_random()
 		RunMap.Reward.HEART:
 			game.add_max_life(stage.heart_life)
 		RunMap.Reward.MAGICK:
@@ -363,16 +398,33 @@ func _fade_in() -> void:
 
 # ---------- the shop ----------
 
+## The items of each shop group (C13-04: ShopGroup.count of each), on pedestals in a row; a pomegranate (or its slice)
+## only when a gift can grow.
 func _build_shop() -> void:
-	var n := stage.shop_items.size()
-	for i in n:
-		var item := stage.shop_items[i] as RunMap.Reward
-		if item == RunMap.Reward.POM and not game.boons.can_grow():
-			continue
-		var at := Vector2(lerpf(-6.0, 6.0, float(i) / maxf(1.0, n - 1.0)), 0.0)
-		var price := stage.shop_prices[i]
-		var node := _marker(at, item, "%s\n%d %s" % [T.t(RunMap.REWARD_KEY[item]), price, T.t(&"hud_gold_short")])
-		_pedestals.append({"at": at, "item": item, "price": price, "node": node})
+	var can_grow := game.boons.can_grow()
+	var valid := func(item: int) -> bool:
+		return can_grow or (item != RunMap.Reward.POM and item != RunMap.Reward.POM_SLICE)
+	var picks: Array[Dictionary] = []
+	for g in stage.shop_groups.size():
+		var group := stage.shop_groups[g]
+		for i in group.pick_all(_rng, valid):
+			picks.append({"item": group.items[i] as RunMap.Reward, "price": group.prices[i], "group": g})
+	var n := picks.size()
+	for k in n:
+		var p := picks[k]
+		var at := Vector2(lerpf(-6.0, 6.0, float(k) / maxf(1.0, n - 1.0)), 0.0)
+		p.at = at
+		p.node = _marker(at, p.item, "%s\n%d %s" % [T.t(RunMap.REWARD_KEY[p.item]), p.price, T.t(&"hud_gold_short")])
+		_pedestals.append(p)
+
+
+## What the shop shows now, for a screen (one entry per item left: item (RunMap.Reward), price, group (index in
+## StageDef.shop_groups), at (on the floor), affordable).
+func shop() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for p in _pedestals:
+		out.append({"item": p.item, "price": p.price, "group": p.group, "at": p.at, "affordable": gold >= int(p.price)})
+	return out
 
 
 ## Stepping onto an item buys it when there is gold for it.
@@ -392,6 +444,25 @@ func _step_shop() -> void:
 		_give(p.item)
 
 
+## The order in which the bot picks a door, as a player would (E3: before it took the first door, so the rewards it
+## got were the deck's draw, not a choice): the fountain, a Blessing, a pomegranate, a heart, gold, Magia.
+const BOT_PREFERENCE: Array[RunMap.Reward] = [RunMap.Reward.BOON, RunMap.Reward.POM, RunMap.Reward.HEART, RunMap.Reward.GOLD, RunMap.Reward.MAGICK]
+
+
+## The door the bot walks through (index in doors).
+static func bot_door(doors: Array[RunMap.Room]) -> int:
+	var best := 0
+	var rank := 1 << 20
+	for i in doors.size():
+		var r := -1 if doors[i].kind == RunMap.Kind.FOUNTAIN else BOT_PREFERENCE.find(doors[i].reward)
+		if r < 0 and doors[i].kind != RunMap.Kind.FOUNTAIN:
+			r = BOT_PREFERENCE.size()
+		if r < rank:
+			rank = r
+			best = i
+	return best
+
+
 ## Where the bot should walk when the room has no fight left (null: stay).
 func bot_goal() -> Variant:
 	if phase == Phase.REWARD and _reward_node != null:
@@ -402,7 +473,7 @@ func bot_goal() -> Variant:
 				return p.at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(0)
+			return game.arena.door_goal(clampi(bot_door(next_rooms), 0, game.arena.exits.size() - 1))
 	return null
 
 
@@ -433,7 +504,7 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	add_child(root)
 	var color := _reward_color(reward) if reward != RunMap.Reward.NONE else _kind_color(kind)
 	var gem := MeshInstance3D.new()
-	var shape: PrimitiveMesh = PrismMesh.new() if reward == RunMap.Reward.BOON else SphereMesh.new() if reward == RunMap.Reward.POM else BoxMesh.new()
+	var shape: PrimitiveMesh = PrismMesh.new() if reward == RunMap.Reward.BOON else SphereMesh.new() if reward == RunMap.Reward.POM or reward == RunMap.Reward.POM_SLICE else BoxMesh.new()
 	if shape is SphereMesh:
 		(shape as SphereMesh).radius = 0.35
 		(shape as SphereMesh).height = 0.7
@@ -476,7 +547,7 @@ static func _reward_color(r: RunMap.Reward) -> Color:
 	match r:
 		RunMap.Reward.BOON:
 			return Color(1.0, 0.82, 0.38)
-		RunMap.Reward.POM:
+		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
 			return Color(1.0, 0.4, 0.35)
 		RunMap.Reward.HEART:
 			return Color(1.0, 0.3, 0.45)

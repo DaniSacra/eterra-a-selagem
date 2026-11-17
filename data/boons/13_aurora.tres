@@ -7,12 +7,14 @@
 script = ExtResource("1_xdx6q")
 stat = &"freeze_time"
 tag = &"luz"
-values = PackedFloat32Array(0.8, 1.2, 1.6)
+base = 0.8
+per_level = PackedFloat32Array()
 
 [resource]
 script = ExtResource("2_wo172")
 id = &"aurora"
 family = 4
 icon = 13
-requires = Array[StringName]([&"onda_maior", &"toque_geada"])
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("onda_maior", "flagelo"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada")])
 mods = Array[ExtResource("1_xdx6q")]([SubResource("Resource_q7mlr")])

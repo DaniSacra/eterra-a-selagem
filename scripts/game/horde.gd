@@ -87,6 +87,10 @@ const REARM := 0.5
 const ATTACK_PLAY := 1.4
 
 var list: Array[Enemy] = []
+## The damage dealt to enemies by where it came from (DT-016; RESULT dealt_by), and where the damage being dealt now
+## comes from (Combat sets it around a hit; &"" counts as other).
+var dealt := DealtBy.new()
+var dealing: StringName = &""
 var dying: Array[Enemy] = []
 var arena: Arena
 var fx: Fx
@@ -262,7 +266,9 @@ func _timers(e: Enemy, dt: float) -> void:
 			e.burn_tick = BURN_TICK
 			# a tick of fire is no blow: the embers on the body show it (M-1: a flash every tick, on top of the
 			# blows' own, kept a burning boss lit nearly white)
+			dealing = &"burn"
 			damage(e, e.burn_dps * BURN_TICK, Vector2.ZERO, 0.0, Color(1.0, 0.5, 0.2), true, false, false)
+			dealing = &""
 	if e.state == Enemy.State.RISE and e.state_t > 0.9:
 		_set_state(e, Enemy.State.WALK, &"walk")
 	if e.rearm and not e.helpless():
@@ -882,6 +888,8 @@ func body_at(pos: Vector2, radius: float, ignore: Enemy = null) -> bool:
 func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color: Color = Fx.GOLD, show_number: bool = true, big: bool = false, flash: bool = true) -> bool:
 	if not e.alive or e.invulnerable:
 		return false
+	# what it really takes off (armor, or life down to its floor), under where it came from (DT-016)
+	dealt.add(dealing, minf(amount, e.armor) if e.armor > 0.0 else clampf(e.hp - e.hp_floor, 0.0, amount))
 	if e.armor > 0.0:
 		# armor takes the blow: no push, no flinch; breaking it staggers (Game listens to armor_broken)
 		e.armor = DamageCalc.against_armor(e.armor, amount)[0]

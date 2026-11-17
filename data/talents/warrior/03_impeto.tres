@@ -6,25 +6,29 @@
 [sub_resource type="Resource" id="Resource_uvhto"]
 script = ExtResource("1_eytow")
 stat = &"fury_per_kill"
-values = PackedFloat32Array(1)
+base = 1.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_mycas"]
 script = ExtResource("1_eytow")
 stat = &"fury_max"
-values = PackedFloat32Array(3)
+base = 3.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_6my4w"]
 script = ExtResource("1_eytow")
 stat = &"fury_time"
-values = PackedFloat32Array(3)
+base = 3.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_abxk1"]
 script = ExtResource("1_eytow")
 stat = &"fury_speed"
-values = PackedFloat32Array(0.06)
+base = 0.06
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

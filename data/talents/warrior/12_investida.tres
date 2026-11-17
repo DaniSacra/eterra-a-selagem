@@ -7,7 +7,8 @@
 script = ExtResource("1_aysay")
 stat = &"dash_back_on_kill"
 tag = &"dash"
-values = PackedFloat32Array(1)
+base = 1.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

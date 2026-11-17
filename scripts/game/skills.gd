@@ -66,15 +66,15 @@ func step(dt: float) -> void:
 	_step_pending(dt)
 
 
-## A skill's damage at a level, times the rarity the gift was taken at.
+## A skill's damage at a level, its first level's times the rarity the gift was taken at (C13-05).
 func _damage(b: Boon, lv: int) -> float:
-	return b.skill.get_damage(lv) * game.boons.rarity_mult(b.id)
+	return b.skill.damage_at(lv, game.boons.rarity_mult(b.id))
 
 
 func _cast(b: Boon) -> bool:
 	var lv := game.boons.level(b.id)
 	var s := b.skill
-	var tags: Array[StringName] = [&"skill", b.family_tag()]
+	var tags: Array[StringName] = [&"skill", b.family_tag(), b.id]  # its id third: DealtBy.source
 	var color := b.color()
 	var p := game.player.pos
 	match s.kind:
@@ -245,7 +245,7 @@ func _step_orbit(b: Boon, dt: float) -> void:
 	if _orbit_tick > 0.0:
 		return
 	_orbit_tick = ORBIT_TICK
-	var tags: Array[StringName] = [&"skill", b.family_tag()]
+	var tags: Array[StringName] = [&"skill", b.family_tag(), b.id]  # its id third: DealtBy.source
 	for orb in _orbs:
 		var at := Vector2(orb.position.x, orb.position.z)
 		game.horde.in_circle(at, 0.8, _found)

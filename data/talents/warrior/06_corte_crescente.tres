@@ -7,21 +7,24 @@
 script = ExtResource("1_derrx")
 stat = &"blow_wave"
 tag = &"spin"
-values = PackedFloat32Array(16)
+base = 16.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_erk25"]
 script = ExtResource("1_derrx")
 stat = &"blow_wave_m"
 tag = &"spin"
-values = PackedFloat32Array(6)
+base = 6.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_xo24x"]
 script = ExtResource("1_derrx")
 stat = &"blow_wave_w"
 tag = &"spin"
-values = PackedFloat32Array(3)
+base = 3.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

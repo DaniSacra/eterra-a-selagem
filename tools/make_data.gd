@@ -301,18 +301,22 @@ func _pair(base: Dictionary, elite: Dictionary) -> void:
 
 # ---------- gifts ----------
 
-func _mod(stat: StringName, values: Array, tag: StringName = &"", by_rarity: bool = true) -> BoonMod:
+## One number of a Blessing (C13-05, Hades II's curve): base at level 1 (times the rarity), per_level the fixed gain of
+## level 2, 3... (the last one again after it; never scaled by rarity). The numbers of before migrated as they were
+## at a common card: base the old level 1, the gains the old steps 1 to 2 and 2 to 3.
+func _mod(stat: StringName, base: float, per_level: Array = [], tag: StringName = &"", by_rarity: bool = true) -> BoonMod:
 	var m := BoonMod.new()
 	m.stat = stat
 	m.tag = tag
-	m.values = PackedFloat32Array(values)
+	m.base = base
+	m.per_level = PackedFloat32Array(per_level)
 	m.by_rarity = by_rarity
 	return m
 
 
 ## A number rarity must not change (counts, cooldowns, sizes).
-func _fixed(stat: StringName, values: Array, tag: StringName = &"") -> BoonMod:
-	return _mod(stat, values, tag, false)
+func _fixed(stat: StringName, base: float, per_level: Array = [], tag: StringName = &"") -> BoonMod:
+	return _mod(stat, base, per_level, tag, false)
 
 
 func _skill(kind: SkillDef.Kind, props: Dictionary) -> SkillDef:
@@ -323,7 +327,7 @@ func _skill(kind: SkillDef.Kind, props: Dictionary) -> SkillDef:
 	return s
 
 
-func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, requires: Array[StringName] = [], slot: Boon.Slot = Boon.Slot.NONE) -> void:
+func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[BoonMod], skill: SkillDef = null, slot: Boon.Slot = Boon.Slot.NONE) -> void:
 	var b := Boon.new()
 	b.id = id
 	b.slot = slot
@@ -331,7 +335,20 @@ func _boon(n: int, id: StringName, family: Boon.Family, icon: int, mods: Array[B
 	b.icon = icon
 	b.mods = mods
 	b.skill = skill
-	b.requires = requires
+	_save(b, "res://data/boons/%02d_%s.tres" % [n, id])
+
+
+## An Elo (E3-02, Hades II's duo): one gift of each list forms it (the first of each list is the one the card shows
+## when none is held); no level beyond 1 and no rarity (BUG-017), its number the old level 1.
+func _elo(n: int, id: StringName, icon: int, mods: Array[BoonMod], sets: Array) -> void:
+	var b := Boon.new()
+	b.id = id
+	b.family = Boon.Family.DUO
+	b.icon = icon
+	b.mods = mods
+	b.max_level = 1
+	for list: Array in sets:
+		b.requires_sets.append(PackedStringArray(list))
 	_save(b, "res://data/boons/%02d_%s.tres" % [n, id])
 
 
@@ -343,37 +360,45 @@ func _boons() -> void:
 	var S := Boon.Slot
 	_boon(0, &"brasas", F.CHAMA, 0, [], _skill(K.STRIKES, {"damage": [18, 26, 36], "count": [3, 4, 6], "cooldown": [3.5, 3.0, 2.5], "radius": [2.2, 2.4, 2.6], "status": &"burn", "status_power": [5, 7, 9]}))
 	_boon(1, &"redemoinho", F.CHAMA, 1, [], _skill(K.ORBIT, {"damage": [10, 14, 19], "count": [2, 3, 4], "cooldown": [0.5], "radius": [3.0, 3.3, 3.6], "status": &"burn", "status_power": [4, 6, 8]}))
-	_boon(2, &"lamina_ardente", F.CHAMA, 2, [_mod(&"burn_dps", [6, 9, 12], &"finisher"), _mod(&"damage_pct", [0.2, 0.35, 0.5], &"finisher")])
-	_boon(3, &"toque_geada", F.GEADA, 3, [_mod(&"freeze_time", [1.0, 1.5, 2.0], &"heavy")], null, [], S.SPECIAL)
-	_boon(4, &"estilhaco", F.GEADA, 4, [_mod(&"shatter_pct", [0.5, 0.8, 1.0])], _skill(K.NOVA, {"damage": [20, 30, 42], "cooldown": [6, 5, 4], "radius": [5, 6, 7], "status": &"freeze", "status_power": [1.2, 1.5, 1.8]}))
+	_boon(2, &"lamina_ardente", F.CHAMA, 2, [_mod(&"burn_dps", 6, [3, 3], &"finisher"), _mod(&"damage_pct", 0.2, [0.15, 0.15], &"finisher")])
+	_boon(3, &"toque_geada", F.GEADA, 3, [_mod(&"freeze_time", 1.0, [0.5, 0.5], &"heavy")], null, S.SPECIAL)
+	_boon(4, &"estilhaco", F.GEADA, 4, [_mod(&"shatter_pct", 0.5, [0.3, 0.2])], _skill(K.NOVA, {"damage": [20, 30, 42], "cooldown": [6, 5, 4], "radius": [5, 6, 7], "status": &"freeze", "status_power": [1.2, 1.5, 1.8]}))
 	_boon(5, &"peso_inverno", F.GEADA, 5, [], _skill(K.METEOR, {"damage": [60, 90, 130], "cooldown": [9, 8, 7], "radius": [4.0, 4.5, 5.0], "status": &"freeze", "status_power": [2.0, 2.2, 2.5]}))
-	_boon(6, &"consolo", F.LUZ, 6, [_mod(&"heal_on_kill", [0.4, 0.7, 1.0])])
+	_boon(6, &"consolo", F.LUZ, 6, [_mod(&"heal_on_kill", 0.4, [0.3, 0.3])])
 	_boon(7, &"onda_maior", F.LUZ, 7, [], _skill(K.FAN, {"damage": [16, 22, 30], "count": [5, 8, 11], "cooldown": [5.0, 4.5, 4.0], "radius": [12, 13, 14]}))
 	_boon(8, &"flagelo", F.LUZ, 8, [], _skill(K.STRIKES, {"damage": [24, 32, 44], "count": [4, 6, 9], "cooldown": [4.5, 4.0, 3.5], "radius": [1.6, 1.8, 2.0], "status": &"stun", "status_power": [0.4, 0.5, 0.6]}))
-	_boon(9, &"escudo", F.VIGILIA, 9, [_fixed(&"shield_cooldown", [12, 9, 6])])
-	_boon(10, &"passos", F.VIGILIA, 10, [_fixed(&"dodge_charges", [1, 1, 2]), _fixed(&"move_speed_pct", [0.08, 0.14, 0.2])], null, [], S.DASH)
-	_boon(11, &"firmeza", F.VIGILIA, 11, [_mod(&"max_hp", [20, 35, 50])], _skill(K.CONSECRATE, {"damage": [12, 18, 26], "cooldown": [8, 7, 6], "radius": [4, 5, 6], "status": &"slow", "status_power": [4.0, 4.5, 5.0]}))
-	_boon(12, &"vapor", F.DUO, 12, [_mod(&"steam_time", [2, 3, 4])], null, [&"brasas", &"toque_geada"])
-	_boon(13, &"aurora", F.DUO, 13, [_mod(&"freeze_time", [0.8, 1.2, 1.6], &"luz")], null, [&"onda_maior", &"toque_geada"])
-	_boon(14, &"chama_viva", F.DUO, 14, [_mod(&"burn_dps", [5, 8, 11], &"luz")], null, [&"brasas", &"flagelo"])
-	_boon(15, &"bastiao", F.DUO, 15, [_mod(&"shield_burst", [40, 70, 100])], null, [&"escudo", &"consolo"])
-	_boon(16, &"rastro", F.DUO, 16, [_mod(&"dodge_ember_dps", [8, 12, 16])], null, [&"passos", &"brasas"])
-	_boon(17, &"passo_frio", F.DUO, 17, [_mod(&"freeze_time", [1.0, 1.5, 2.0], &"dash")], null, [&"passos", &"toque_geada"])
+	_boon(9, &"escudo", F.VIGILIA, 9, [_fixed(&"shield_cooldown", 12, [-3, -3])])
+	_boon(10, &"passos", F.VIGILIA, 10, [_fixed(&"dodge_charges", 1, [0, 1]), _fixed(&"move_speed_pct", 0.08, [0.06, 0.06])], null, S.DASH)
+	_boon(11, &"firmeza", F.VIGILIA, 11, [_mod(&"max_hp", 20, [15, 15])], _skill(K.CONSECRATE, {"damage": [12, 18, 26], "cooldown": [8, 7, 6], "radius": [4, 5, 6], "status": &"slow", "status_power": [4.0, 4.5, 5.0]}))
+	# The Elos (E3-02): one gift of each family's list. Burn and frost come from any gift of the flame or the frost; the
+	# light that hits on its own (the fan, the scourge) is what aurora and chama_viva change; bastiao bursts the
+	# Vigília's shield; rastro and passo_frio ride the dodge of any Vigília gift.
+	var chama := [&"brasas", &"redemoinho", &"lamina_ardente", &"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa"]
+	var geada := [&"toque_geada", &"estilhaco", &"peso_inverno", &"golpe_geada", &"circulo_geada", &"passo_geada"]
+	var luz_hits := [&"onda_maior", &"flagelo"]
+	var luz := [&"consolo", &"onda_maior", &"flagelo", &"golpe_radiante", &"pesado_radiante", &"circulo_radiante", &"passo_radiante"]
+	var vigilia := [&"passos", &"escudo", &"firmeza", &"golpe_firme", &"pesado_firme", &"circulo_firme"]
+	_elo(12, &"vapor", 12, [_mod(&"steam_time", 2)], [chama, geada])
+	_elo(13, &"aurora", 13, [_mod(&"freeze_time", 0.8, [], &"luz")], [luz_hits, geada])
+	_elo(14, &"chama_viva", 14, [_mod(&"burn_dps", 5, [], &"luz")], [chama, [&"flagelo", &"onda_maior"]])
+	_elo(15, &"bastiao", 15, [_mod(&"shield_burst", 40)], [[&"escudo"], luz])
+	_elo(16, &"rastro", 16, [_mod(&"dodge_ember_dps", 8)], [vigilia, chama])
+	_elo(17, &"passo_frio", 17, [_mod(&"freeze_time", 1.0, [], &"dash")], [vigilia, geada])
 	# One gift per action (Boon.Slot): attack = light moves, special = heavy moves, cast = the circle of light, dash.
-	_boon(18, &"golpe_brasa", F.CHAMA, 2, [_mod(&"burn_dps", [4, 6, 8], &"light")], null, [], S.ATTACK)
-	_boon(19, &"golpe_geada", F.GEADA, 3, [_mod(&"freeze_time", [0.3, 0.45, 0.6], &"light")], null, [], S.ATTACK)
-	_boon(20, &"golpe_radiante", F.LUZ, 8, [_mod(&"damage_pct", [0.25, 0.4, 0.55], &"light")], null, [], S.ATTACK)
-	_boon(21, &"golpe_firme", F.VIGILIA, 11, [_fixed(&"reach_pct", [0.12, 0.18, 0.25], &"light"), _mod(&"damage_pct", [0.1, 0.15, 0.2], &"light")], null, [], S.ATTACK)
-	_boon(22, &"pesado_brasa", F.CHAMA, 0, [_mod(&"burn_dps", [6, 9, 12], &"heavy")], null, [], S.SPECIAL)
-	_boon(23, &"pesado_radiante", F.LUZ, 7, [_mod(&"damage_pct", [0.3, 0.45, 0.6], &"heavy")], null, [], S.SPECIAL)
-	_boon(24, &"pesado_firme", F.VIGILIA, 15, [_fixed(&"reach_pct", [0.15, 0.22, 0.3], &"heavy"), _mod(&"damage_pct", [0.1, 0.15, 0.2], &"heavy")], null, [], S.SPECIAL)
-	_boon(25, &"circulo_brasa", F.CHAMA, 1, [_mod(&"burn_dps", [8, 12, 16], &"cast")], null, [], S.CAST)
-	_boon(26, &"circulo_geada", F.GEADA, 4, [_mod(&"freeze_time", [1.0, 1.4, 1.8], &"cast")], null, [], S.CAST)
-	_boon(27, &"circulo_radiante", F.LUZ, 6, [_mod(&"cast_dps", [16, 24, 32], &"cast"), _mod(&"damage_pct", [0.3, 0.45, 0.6], &"cast")], null, [], S.CAST)
-	_boon(28, &"circulo_firme", F.VIGILIA, 9, [_fixed(&"cast_size_pct", [0.25, 0.4, 0.55])], null, [], S.CAST)
-	_boon(29, &"passo_brasa", F.CHAMA, 16, [_mod(&"dodge_ember_dps", [6, 9, 12])], null, [], S.DASH)
-	_boon(30, &"passo_geada", F.GEADA, 17, [_mod(&"freeze_time", [0.8, 1.2, 1.6], &"dash")], null, [], S.DASH)
-	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", [0.4, 0.6, 0.8], &"dash")], null, [], S.DASH)
+	_boon(18, &"golpe_brasa", F.CHAMA, 2, [_mod(&"burn_dps", 4, [2, 2], &"light")], null, S.ATTACK)
+	_boon(19, &"golpe_geada", F.GEADA, 3, [_mod(&"freeze_time", 0.3, [0.15, 0.15], &"light")], null, S.ATTACK)
+	_boon(20, &"golpe_radiante", F.LUZ, 8, [_mod(&"damage_pct", 0.25, [0.15, 0.15], &"light")], null, S.ATTACK)
+	_boon(21, &"golpe_firme", F.VIGILIA, 11, [_fixed(&"reach_pct", 0.12, [0.06, 0.07], &"light"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"light")], null, S.ATTACK)
+	_boon(22, &"pesado_brasa", F.CHAMA, 0, [_mod(&"burn_dps", 6, [3, 3], &"heavy")], null, S.SPECIAL)
+	_boon(23, &"pesado_radiante", F.LUZ, 7, [_mod(&"damage_pct", 0.3, [0.15, 0.15], &"heavy")], null, S.SPECIAL)
+	_boon(24, &"pesado_firme", F.VIGILIA, 15, [_fixed(&"reach_pct", 0.15, [0.07, 0.08], &"heavy"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"heavy")], null, S.SPECIAL)
+	_boon(25, &"circulo_brasa", F.CHAMA, 1, [_mod(&"burn_dps", 8, [4, 4], &"cast")], null, S.CAST)
+	_boon(26, &"circulo_geada", F.GEADA, 4, [_mod(&"freeze_time", 1.0, [0.4, 0.4], &"cast")], null, S.CAST)
+	_boon(27, &"circulo_radiante", F.LUZ, 6, [_mod(&"cast_dps", 16, [8, 8], &"cast"), _mod(&"damage_pct", 0.3, [0.15, 0.15], &"cast")], null, S.CAST)
+	_boon(28, &"circulo_firme", F.VIGILIA, 9, [_fixed(&"cast_size_pct", 0.25, [0.15, 0.15])], null, S.CAST)
+	_boon(29, &"passo_brasa", F.CHAMA, 16, [_mod(&"dodge_ember_dps", 6, [3, 3])], null, S.DASH)
+	_boon(30, &"passo_geada", F.GEADA, 17, [_mod(&"freeze_time", 0.8, [0.4, 0.4], &"dash")], null, S.DASH)
+	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash")], null, S.DASH)
 
 
 # ---------- waves ----------
@@ -440,21 +465,33 @@ func _pool(tier: StageDef.Tier, from: float, until: float, weight: float, roles:
 	return p
 
 
+func _shop_group(items: Array, prices: Array, weights: Array, count: int = 1) -> ShopGroup:
+	var g := ShopGroup.new()
+	g.count = count
+	g.items = PackedInt32Array(items)
+	g.prices = PackedInt32Array(prices)
+	g.weights = PackedFloat32Array(weights)
+	return g
+
+
 ## The catacombs as a region of rooms, with the room generator and rewards of the first region of Hades II.
 func _stage() -> void:
 	var st := StageDef.new()
-	# the test descent of cycle C12 (decision D-27): three fights in different arenas (the opening in the catacomb
-	# hall, then two of the crypt, the rift hall and the garden), the fountain, the guardian, the shop, Morvath in
-	# room 7. --short plays the old one of 5 (fight, fountain, guardian, shop, Morvath; Rooms.setup).
-	# Hades II's region: rooms 10, guardian 4 to 6, fountain 5 to 8.
-	st.rooms = 6
-	# elites from the 2nd room while the descent is short (Hades II: from depth 3); back to 3 with the full region
-	st.elite_from_depth = 2
-	st.miniboss_depth_min = 5
-	st.miniboss_depth_max = 5
+	# The whole region of Hades II (C13-01, decision D-61): ten rooms and Morvath in the 11th. The opening in the
+	# catacomb hall, fights drawn among the crypt, the rift hall and the garden (never the same twice in a row, none
+	# more than arena_max_uses times), the guardian in room 4 to 6, the fountain once in room 5 to 8, the shop in room
+	# 10 (Hades II's antechamber shop). --medium plays the test one of 7 of cycle C12, --short the old one of 5
+	# (Rooms.short_stage).
+	st.rooms = 10
+	st.arena_max_uses = 3
+	# elites from depth 3, as in Hades II (the shorter descents keep them from the 2nd room)
+	st.elite_from_depth = 3
+	st.miniboss_depth_min = 4
+	st.miniboss_depth_max = 6
 	st.minibosses = [&"knight", &"priest_elder"]
-	st.fountain_depth_min = 4
-	st.fountain_depth_max = 4
+	st.fountain_depth_min = 5
+	st.fountain_depth_max = 8
+	st.fountain_chance = 0.35
 	st.boss = &"morvath"
 	st.enemies = [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite",
 		&"guard", &"guard_elite", &"priest", &"priest_elite"]
@@ -487,10 +524,34 @@ func _stage() -> void:
 		_pool(Tier.SPECIAL, 0.8, 1.0, 1.0, [&"pressure", &"react", &"flank", &"area"], 0.5),
 	]
 	var R := RunMap.Reward
-	st.rewards = PackedInt32Array([R.BOON, R.POM, R.HEART, R.MAGICK, R.GOLD])
-	st.reward_weights = PackedFloat32Array([6.0, 2.5, 1.5, 1.0, 1.5])
-	st.shop_items = PackedInt32Array([R.BOON, R.POM, R.HEART, R.HEAL])
-	st.shop_prices = PackedInt32Array([150, 100, 125, 60])
+	# The doors' deck (C13-02, Hades II's RunProgress: 4 Blessings, 2 hearts, 2 Magia tonics, 2 gold, 2 pomegranates,
+	# 2 hammers, Hermes, Selene, the star path and a room of two gods). What we do not have yet is left out (hammer,
+	# Selene, star path); Hermes and the two gods' room are Blessings here. Drawn without putting back, filled again.
+	st.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.POM, R.HEART, R.HEART,
+		R.MAGICK, R.MAGICK, R.GOLD, R.GOLD])
+	# Gold (C13-04, Hades II): a fight's ceiling 10 to 15 plus 0.5 a room of depth, 70% that each enemy leaves its
+	# share; a gold reward 100.
+	st.gold_cap_min = 10
+	st.gold_cap_max = 15
+	st.gold_per_depth = 0.5
+	st.gold_drop_chance = 0.7
+	st.gold_reward = 100
+	# Blessings (C13-03, C13-06, E3-01): rarity tried in turn (rare 10%, epic 5%; the legendary only by a trade), the
+	# guardian's (rare 90%, epic 7%; Hades II's 5% legendary is the Psalm, none yet), Elo 12% a card, trade 10% a card.
+	st.rarity_chance = [0.10, 0.05, 0.0] as Array[float]
+	st.guardian_rarity_chance = [0.90, 0.07, 0.0] as Array[float]
+	st.elo_chance = 0.12
+	st.trade_chance = 0.1
+	# The shop (C13-04, Hades II's WorldShop): items from three groups. A Blessing 150; healing 50 (40% of life) and a
+	# heart 125; growth: two of a Magia tonic 100, a pomegranate 100 and its slice 50. Ours is the last shop before the
+	# final boss, which in Hades II shows five items (one of each group in the shops along the way): 1 + 2 + 2. With one
+	# of each (E3 first measure) the robot bought in 4 of 8 runs: healing and the slice were often not on the shelf.
+	st.shop_groups = [
+		_shop_group([R.BOON], [150], [1.0], 1),
+		_shop_group([R.HEAL, R.HEART], [50, 125], [1.0, 1.0], 2),
+		_shop_group([R.MAGICK, R.POM, R.POM_SLICE], [100, 100, 50], [1.0, 1.0, 1.0], 2),
+	]
+	st.shop_heal = 0.4
 	# The arenas (cycle C12; docs/design/cycle12_arenas_plan.md, plans in docs/art/cycle12_arenas_spec.md). The catacomb
 	# hall of Daniel's reference image (CatacombHall: its pieces and collision live there) is the opening, the fountain
 	# and the shop (decision D-26); the fights after it are drawn among the crypt, the rift hall and the garden
@@ -963,40 +1024,40 @@ func _talents() -> void:
 	# Combo: a 4th blow (a thrust of 30 before the spin, FOURTH); the Corte Veloz counts as the 1st blow (the next press
 	# is cut2); the spin that lands on 3 or more starts the combo over at cut2
 	_talent(0, &"quarto_corte", B.COMBO, T.ENTRY, 3, 1, {"slot": S.ATTACK, "combos": FOURTH_TREE})
-	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 7, {"slot": S.DASH, "mods": [_fixed(&"dash_chain", [1], &"dash")] as Array[BoonMod]})
-	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 15, {"partner": B.FURIA, "mods": [_fixed(&"spin_loop_hits", [3], &"spin")] as Array[BoonMod]})
+	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 7, {"slot": S.DASH, "mods": [_fixed(&"dash_chain", 1, [], &"dash")] as Array[BoonMod]})
+	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 15, {"partner": B.FURIA, "mods": [_fixed(&"spin_loop_hits", 3, [], &"spin")] as Array[BoonMod]})
 	# Furia (charges that fade in 3 s, no new bar: D-70): a charge a kill, up to 3, all gone 3 s after the last kill, 6%
 	# more speed of every blow a charge; a kill by a finisher gives the dodge's charge back; with 3 charges a finisher
 	# stuns 0.5 s longer, those with armor too
-	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 3, {"mods": [_fixed(&"fury_per_kill", [1]), _fixed(&"fury_max", [3]),
-		_fixed(&"fury_time", [3.0]), _fixed(&"fury_speed", [0.06])] as Array[BoonMod]})
-	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 8, {"mods": [_fixed(&"dash_back_on_kill", [1], &"finisher")] as Array[BoonMod]})
-	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO, "mods": [_fixed(&"fury_stun", [0.5], &"finisher")] as Array[BoonMod]})
+	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 3, {"mods": [_fixed(&"fury_per_kill", 1), _fixed(&"fury_max", 3),
+		_fixed(&"fury_time", 3.0), _fixed(&"fury_speed", 0.06)] as Array[BoonMod]})
+	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 8, {"mods": [_fixed(&"dash_back_on_kill", 1, [], &"finisher")] as Array[BoonMod]})
+	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO, "mods": [_fixed(&"fury_stun", 0.5, [], &"finisher")] as Array[BoonMod]})
 	# Emeth: the spin throws an emerald wave 6 m ahead for 16 (3 m across); the special's wave goes through stone
 	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 4, {"mods": _wave(&"spin", 16.0, 6.0, 3.0)})
-	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 9, {"mods": [_fixed(&"reach_pct", [0.15], &"light")] as Array[BoonMod]})
-	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA, "mods": [_fixed(&"wave_through", [1], &"wave")] as Array[BoonMod]})
+	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 9, {"mods": [_fixed(&"reach_pct", 0.15, [], &"light")] as Array[BoonMod]})
+	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA, "mods": [_fixed(&"wave_through", 1, [], &"wave")] as Array[BoonMod]})
 	# Magia: an Omega begun within 1 s of a finisher that landed costs half (the glint stays on the tip that long); the
 	# ultimate charges 25% faster (ult_charge_pct, read by the ultimate) and the passive gives 1 more
-	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 5, {"mods": [_fixed(&"hungry_time", [1.0], &"finisher"), _fixed(&"omega_discount", [0.5])] as Array[BoonMod]})
-	_talent(10, &"reserva", B.MAGIA, T.MIDDLE, 3, 10, {"mods": [_fixed(&"magick_max", [20])] as Array[BoonMod]})
-	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH, "mods": [_fixed(&"ult_charge_pct", [0.25]), _fixed(&"finisher_magick", [1])] as Array[BoonMod]})
+	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 5, {"mods": [_fixed(&"hungry_time", 1.0, [], &"finisher"), _fixed(&"omega_discount", 0.5)] as Array[BoonMod]})
+	_talent(10, &"reserva", B.MAGIA, T.MIDDLE, 3, 10, {"mods": [_fixed(&"magick_max", 20)] as Array[BoonMod]})
+	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH, "mods": [_fixed(&"ult_charge_pct", 0.25), _fixed(&"finisher_magick", 1)] as Array[BoonMod]})
 	# bridges between neighbouring branches: the Corte Veloz that kills gives the dodge back; a kill by an Omega gives 2
 	# charges; the special's Omega throws the spin's wave; the Corte Veloz throws a short wave (the special's look, 12,
 	# 9.6 m: just past the cut's 8 m)
-	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"dash_back_on_kill", [1], &"dash")] as Array[BoonMod]})
-	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", [1], &"omega")] as Array[BoonMod]})
+	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"dash_back_on_kill", 1, [], &"dash")] as Array[BoonMod]})
+	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", 1, [], &"omega")] as Array[BoonMod]})
 	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"charge", 16.0, 6.0, 3.0)})
 	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
 	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life
-	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 16, {"mods": [_fixed(&"max_hp", [10]), _fixed(&"magick_max", [10])] as Array[BoonMod]})
-	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17, {"mods": [_fixed(&"room_heal", [2])] as Array[BoonMod]})
-	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19, {"mods": [_fixed(&"rise_share", [0.5])] as Array[BoonMod]})
+	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 16, {"mods": [_fixed(&"max_hp", 10), _fixed(&"magick_max", 10)] as Array[BoonMod]})
+	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17, {"mods": [_fixed(&"room_heal", 2)] as Array[BoonMod]})
+	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19, {"mods": [_fixed(&"rise_share", 0.5)] as Array[BoonMod]})
 
 
 ## A wave a blow throws (Combat._gift_wave) on the moves with this tag: damage, meters it runs, meters across.
 func _wave(tag: StringName, damage: float, reach: float, width: float) -> Array[BoonMod]:
-	return [_fixed(&"blow_wave", [damage], tag), _fixed(&"blow_wave_m", [reach], tag), _fixed(&"blow_wave_w", [width], tag)]
+	return [_fixed(&"blow_wave", damage, [], tag), _fixed(&"blow_wave_m", reach, [], tag), _fixed(&"blow_wave_w", width, [], tag)]
 
 
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:

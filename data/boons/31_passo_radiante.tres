@@ -7,7 +7,8 @@
 script = ExtResource("1_w1dba")
 stat = &"damage_pct"
 tag = &"dash"
-values = PackedFloat32Array(0.4, 0.6, 0.8)
+base = 0.4
+per_level = PackedFloat32Array(0.2, 0.2)
 
 [resource]
 script = ExtResource("2_w82fd")

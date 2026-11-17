@@ -7,7 +7,8 @@
 script = ExtResource("1_blkbi")
 stat = &"fury_stun"
 tag = &"finisher"
-values = PackedFloat32Array(0.5)
+base = 0.5
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

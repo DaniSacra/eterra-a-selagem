@@ -111,6 +111,9 @@ var gifts: GiftState
 ## The tags of the blow being dealt and which blow it is (a swing, or a shot's instance id), while Horde.damage runs:
 ## a kill (Horde.killed) reads what felled it. Empty outside a blow (a burn's tick, a shield's burst).
 var kill_tags: Array[StringName] = []
+## Where the next hits come from for the damage ledger (DealtBy), when the tags do not say it (the held circle's
+## burst); &"": read from the tags.
+var source: StringName = &""
 var kill_blow := 0
 var combo := 0
 var best_combo := 0
@@ -395,12 +398,14 @@ func cast_burst(z: Ground.Zone) -> void:
 	fx.chips(Vector3(z.pos.x, 0.6, z.pos.y), Vector3.UP, CAST_COLOR, 12, 7.0, 0.12, 0.4, 1.3)
 	fx.shake(2.0)
 	_mats.clear()
+	source = &"cast_omega"
 	for e: Enemy in _hits.duplicate():
 		var away := (e.pos - z.pos).normalized() if e.pos.distance_to(z.pos) > 0.01 else Vector2.RIGHT
 		hit_enemy(e, z.burst, z.tags, away, 10.0, true, true)
 		if not e.invulnerable:
 			_mats.append(CombatSounds.material_of(e))
 			_impact_frame(true, false)  # the held circle's burst is an Omega
+	source = &""
 	Audio.play(CombatSounds.EVENTS[&"circle_burst"])
 	_play_material(CombatSounds.loudest(_mats))
 
@@ -439,7 +444,7 @@ func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
 			hit_enemy(e, z.power * Ground.TICK, EMBER_TAGS, Vector2.ZERO, 0.0, false)
 			_burn(e, z.power)
 		Ground.Kind.HOLY:
-			hit_enemy(e, z.power * Ground.TICK, HOLY_TAGS, Vector2.ZERO, 0.0, false)
+			hit_enemy(e, z.power * Ground.TICK, z.tags if not z.tags.is_empty() else HOLY_TAGS, Vector2.ZERO, 0.0, false)
 			e.slow_t = maxf(e.slow_t, 0.5)
 		Ground.Kind.STEAM:
 			if not e.def.heavy:
@@ -495,11 +500,13 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		return false
 	var frozen := e.frozen_t > 0.0
 	var shatter := boons.stat(&"shatter_pct") if frozen and counts else 0.0
-	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), combo, e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
+	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
 	var hp_before := e.hp
 	kill_tags = tags
+	horde.dealing = source if source != &"" else DealtBy.source(tags)
 	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
 	kill_tags = []
+	horde.dealing = &""
 	_impact_frame(tags.has(OMEGA_TAG), breaks_phase(e, hp_before))
 	damage_dealt += dmg
 	enemy_struck.emit(e, tags, dmg)
@@ -513,9 +520,11 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		fx.burst(&"frost", Vector3(e.pos.x, 1.0, e.pos.y))
 		fx.ring(e.pos, SHATTER_RADIUS, FROST, 0.3)
 		horde.in_circle(e.pos, SHATTER_RADIUS, _near)
+		horde.dealing = &"shatter"
 		for other in _near.duplicate():
 			if other != e:
 				horde.damage(other, maxf(1.0, roundf(dmg * SHATTER_SPLASH)), (other.pos - e.pos).normalized(), 5.0, FROST)
+		horde.dealing = &""
 	if died:
 		return true
 	var burn := boons.stat(&"burn_dps", tags)

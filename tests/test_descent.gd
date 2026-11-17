@@ -1,8 +1,10 @@
 extends GutTest
-## The descent of cycle C12 (decision D-27): seven rooms, the opening in the catacomb hall, then fights drawn among
-## the three arenas (never the same twice in a row), the fountain in the hall, the guardian, the shop, Morvath. Each
-## arena brings its own ceiling of enemies, shooters and banned roles to the fights in it. The rooms are counted for the
-## human tests (QW-011) and the arena's name shows on entering (D-33).
+## The descent (C13-01, decision D-61): ten rooms and Morvath in the 11th, as Hades II's region: the opening in the
+## catacomb hall, fights drawn among the three arenas (never the same twice in a row, none more than three times), the
+## guardian in room 4 to 6, the fountain once in room 5 to 8 (in the hall), the shop in room 10, Morvath. The test one of
+## 7 (--medium) and the old one of 5 (--short) stay. Each arena brings its own ceiling of enemies, shooters and banned
+## roles to the fights in it. The rooms are counted for the human tests (QW-011) and the arena's name shows on
+## entering (D-33).
 
 const STAGE := "res://data/stages/catacombs.tres"
 
@@ -17,9 +19,9 @@ func before_all() -> void:
 
 
 ## One whole descent by random doors: the rooms entered, in order. Every door offered is checked on the way: a
-## fountain is always in the hall.
-func _descend(rng: RandomNumberGenerator) -> Array[RunMap.Room]:
-	var map := RunMap.new(stage, rng)
+## fountain is always in the hall, inside its depths.
+func _descend(rng: RandomNumberGenerator, st: StageDef = stage) -> Array[RunMap.Room]:
+	var map := RunMap.new(st, rng)
 	var out: Array[RunMap.Room] = []
 	var room := map.first()
 	while true:
@@ -30,39 +32,77 @@ func _descend(rng: RandomNumberGenerator) -> Array[RunMap.Room]:
 		var doors := map.options(true)
 		for d in doors:
 			if d.kind == RunMap.Kind.FOUNTAIN:
-				assert_eq(stage.layouts[d.layout].id, &"hall", "the fountain is in the hall")
-				assert_eq(d.depth, 4, "the fountain is offered in room 4")
+				assert_eq(st.layouts[d.layout].id, &"hall", "the fountain is in the hall")
+				assert_between(d.depth, st.fountain_depth_min, st.fountain_depth_max)
 		room = doors[rng.randi() % doors.size()]
 	return out
 
 
-func test_seven_rooms_from_the_hall_to_morvath() -> void:
+## The arena of each room, by id (&"" for the boss).
+func _places(st: StageDef, rooms: Array[RunMap.Room]) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for r in rooms:
+		out.append(&"" if r.kind == RunMap.Kind.BOSS else st.layouts[r.layout].id)
+	return out
+
+
+func test_ten_rooms_and_morvath_in_the_eleventh() -> void:
 	var rng := RandomNumberGenerator.new()
 	for run in 1000:
 		rng.seed = run
 		var rooms := _descend(rng)
-		assert_eq(rooms.size(), 7, "seven rooms")
-		if rooms.size() != 7:
+		assert_eq(rooms.size(), 11, "eleven rooms")
+		if rooms.size() != 11:
 			return
 		assert_eq(stage.layouts[rooms[0].layout].id, &"hall", "the opening is the hall")
-		assert_eq(rooms[4].kind, RunMap.Kind.MINIBOSS)
-		assert_true(stage.layouts[rooms[4].layout].guardian, "the guardian fights where a guardian may")
-		assert_eq(rooms[5].kind, RunMap.Kind.SHOP)
-		assert_eq(rooms[6].kind, RunMap.Kind.BOSS)
-		# after the opening, fights in the arenas (never the hall again), never the same arena twice in a row; the
-		# first three fights in three different places
-		var places: Array[StringName] = [stage.layouts[rooms[0].layout].id]
-		for i in range(1, 5):
+		var guardian := -1
+		var fountains := 0
+		for i in rooms.size():
+			if rooms[i].kind == RunMap.Kind.MINIBOSS:
+				guardian = i + 1
+				assert_true(stage.layouts[rooms[i].layout].guardian, "the guardian fights where a guardian may")
 			if rooms[i].kind == RunMap.Kind.FOUNTAIN:
-				places.append(&"")
+				fountains += 1
+		assert_between(guardian, 4, 6, "run %d: the guardian in room 4 to 6" % run)
+		assert_lte(fountains, 1, "the fountain once at most")
+		assert_eq(rooms[9].kind, RunMap.Kind.SHOP)
+		assert_eq(rooms[10].kind, RunMap.Kind.BOSS)
+		var places := _places(stage, rooms)
+		var count := {}
+		for i in range(1, 9):
+			if rooms[i].kind == RunMap.Kind.FOUNTAIN:
 				continue
-			var at := stage.layouts[rooms[i].layout].id
-			assert_ne(at, &"hall", "run %d: room %d is an arena" % [run, i + 1])
-			assert_ne(at, places[-1], "run %d: two fights in a row in %s" % [run, at])
-			places.append(at)
+			assert_ne(places[i], &"hall", "run %d: room %d is an arena" % [run, i + 1])
+			assert_ne(places[i], places[i - 1], "run %d: two rooms in a row in %s" % [run, places[i]])
+		for p in places:
+			count[p] = count.get(p, 0) + 1
+		for p: StringName in count:
+			if p != &"":
+				assert_lte(count[p], 3, "run %d: %s more than three times" % [run, p])
 		assert_ne(places[1], places[2], "run %d: rooms 2 and 3 in different arenas" % run)
 		for r in rooms:
-			assert_lt(r.variant, stage.layouts[r.layout].variant_count(), "a variant the arena has")
+			if r.kind != RunMap.Kind.BOSS:
+				assert_lt(r.variant, stage.layouts[r.layout].variant_count(), "a variant the arena has")
+
+
+func test_the_shorter_descents_stay() -> void:
+	var rng := RandomNumberGenerator.new()
+	var medium := Rooms.short_stage(stage, 6)
+	var short := Rooms.short_stage(stage, 4)
+	for run in 200:
+		rng.seed = run
+		var seven := _descend(rng, medium)
+		assert_eq(seven.size(), 7)
+		assert_eq(seven[4].kind, RunMap.Kind.MINIBOSS)
+		assert_eq(seven[5].kind, RunMap.Kind.SHOP)
+		assert_eq(seven[6].kind, RunMap.Kind.BOSS)
+		var five := _descend(rng, short)
+		assert_eq(five.size(), 5)
+		assert_eq(five[2].kind, RunMap.Kind.MINIBOSS)
+		assert_eq(five[3].kind, RunMap.Kind.SHOP)
+	assert_eq(stage.rooms, 10, "the long descent is the default")
+	assert_eq(stage.elite_from_depth, 3, "elites from depth 3, as in Hades II")
+	assert_eq(medium.elite_from_depth, 2)
 
 
 func test_every_arena_and_variant_comes_up() -> void:

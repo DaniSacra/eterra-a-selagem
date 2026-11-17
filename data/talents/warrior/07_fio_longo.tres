@@ -7,7 +7,8 @@
 script = ExtResource("1_y8jm2")
 stat = &"reach_pct"
 tag = &"light"
-values = PackedFloat32Array(0.15)
+base = 0.15
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

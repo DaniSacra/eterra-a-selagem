@@ -1,31 +1,32 @@
 [gd_resource type="Resource" script_class="StageDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/arena_exit.gd" id="1_ke0cv"]
-[ext_resource type="Script" path="res://scripts/core/floor_shape.gd" id="2_cy7en"]
-[ext_resource type="Script" path="res://scripts/core/arena_obstacle.gd" id="3_wpebi"]
-[ext_resource type="Script" path="res://scripts/core/room_layout.gd" id="4_63so8"]
-[ext_resource type="Script" path="res://scripts/core/arena_variant.gd" id="5_kin83"]
-[ext_resource type="Script" path="res://scripts/core/encounter_pool.gd" id="6_8ur2y"]
-[ext_resource type="Script" path="res://scripts/core/stage_def.gd" id="7_wmys5"]
+[ext_resource type="Script" path="res://scripts/core/arena_exit.gd" id="1_cy7en"]
+[ext_resource type="Script" path="res://scripts/core/floor_shape.gd" id="2_wpebi"]
+[ext_resource type="Script" path="res://scripts/core/arena_obstacle.gd" id="3_63so8"]
+[ext_resource type="Script" path="res://scripts/core/room_layout.gd" id="4_kin83"]
+[ext_resource type="Script" path="res://scripts/core/arena_variant.gd" id="5_8ur2y"]
+[ext_resource type="Script" path="res://scripts/core/encounter_pool.gd" id="6_wmys5"]
+[ext_resource type="Script" path="res://scripts/core/stage_def.gd" id="7_51rpt"]
+[ext_resource type="Script" path="res://scripts/core/shop_group.gd" id="8_0uifc"]
 
-[sub_resource type="Resource" id="Resource_51rpt"]
-script = ExtResource("2_cy7en")
+[sub_resource type="Resource" id="Resource_gcpwj"]
+script = ExtResource("2_wpebi")
 kind = 1
 radius = 12.5
 
-[sub_resource type="Resource" id="Resource_0uifc"]
-script = ExtResource("4_63so8")
+[sub_resource type="Resource" id="Resource_otjkh"]
+script = ExtResource("4_kin83")
 half = Vector2(12.5, 12.5)
 chamber = true
-floor = SubResource("Resource_51rpt")
+floor = SubResource("Resource_gcpwj")
 hero_spawn = Vector2(-0.9, 10.4)
 boss_spawn = Vector2(0, -1.2)
 cam_target = Vector2(0.4, 0.57)
 cam_reach = 3.0
 id = &"seal_chamber"
 
-[sub_resource type="Resource" id="Resource_gcpwj"]
-script = ExtResource("4_63so8")
+[sub_resource type="Resource" id="Resource_6lsx0"]
+script = ExtResource("4_kin83")
 half = Vector2(16, 15)
 platform = true
 id = &"hall"
@@ -34,97 +35,97 @@ look = &"hall"
 depth = Vector2(0, 0)
 fountain = true
 
-[sub_resource type="Resource" id="Resource_otjkh"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_le80d"]
+script = ExtResource("1_cy7en")
 at = Vector2(4.3, -12.3)
 zone = Rect2(2.3000002, -12.9, 4, 1.1999998)
 mouth = Rect2(2.3000002, -12.9, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_6lsx0"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_k0u17"]
+script = ExtResource("1_cy7en")
 at = Vector2(13.8, 5.5)
 inward = Vector2(-1, 0)
 zone = Rect2(13.2, 3.5, 1.1999998, 4)
 mouth = Rect2(12, 3.5, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_le80d"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_saspm"]
+script = ExtResource("1_cy7en")
 at = Vector2(-2, 12.3)
 inward = Vector2(0, -1)
 zone = Rect2(-4, 11.7, 4, 1.1999998)
 mouth = Rect2(-4, 10.5, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_k0u17"]
-script = ExtResource("2_cy7en")
+[sub_resource type="Resource" id="Resource_j6o5n"]
+script = ExtResource("2_wpebi")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-12, -10.5, 8.5, -10.5, 12, -7, 12, 10.5, -12, 10.5)])
 
-[sub_resource type="Resource" id="Resource_saspm"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_psuxn"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(0.5, 0)
 half = Vector2(2, 1)
 piece = &"sarcophagus"
 height = 1.5
 
-[sub_resource type="Resource" id="Resource_j6o5n"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_cptnn"]
+script = ExtResource("3_63so8")
 center = Vector2(-6, -5.6)
 radius = 0.65
 see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_psuxn"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_hw7j7"]
+script = ExtResource("3_63so8")
 center = Vector2(7, -5.6)
 radius = 0.65
 see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_cptnn"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_ek1qt"]
+script = ExtResource("3_63so8")
 center = Vector2(-5.5, 5.6)
 radius = 0.65
 see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_hw7j7"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_m1xgu"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(0.5, -5.6)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_ek1qt"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_tk2fo"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(4, 5.6)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_m1xgu"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_4qm1u"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-11.4, -6)
 half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_tk2fo"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_tmqeo"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-10, 0)
 half = Vector2(2.3, 0.3)
 blocks_shots = false
 height = 0.9
 
-[sub_resource type="Resource" id="Resource_4qm1u"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_nyrx1"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(10, 0.5)
 half = Vector2(2.3, 0.3)
@@ -132,8 +133,8 @@ yaw = 3.1415927
 blocks_shots = false
 height = 0.9
 
-[sub_resource type="Resource" id="Resource_tmqeo"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_vbyah"]
+script = ExtResource("3_63so8")
 center = Vector2(1.5, -11)
 radius = 0.45
 blocks_move = false
@@ -141,8 +142,8 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_nyrx1"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_4au4r"]
+script = ExtResource("3_63so8")
 center = Vector2(7.1, -11)
 radius = 0.45
 blocks_move = false
@@ -150,56 +151,56 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_vbyah"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_060tc"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(0.5, -7)
 half = Vector2(0.4, 3.5)
 see_through = true
 height = 3.2
 
-[sub_resource type="Resource" id="Resource_4au4r"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_gkrjh"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-5.5, -9.25)
 half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_060tc"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_yvyes"]
+script = ExtResource("3_63so8")
 center = Vector2(6.5, -6)
 radius = 0.65
 see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_gkrjh"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_rgaty"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-4, 3)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_yvyes"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_scdup"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(3, 3)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_rgaty"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_pfter"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-10, -2.5)
 half = Vector2(2.3, 0.3)
 blocks_shots = false
 height = 0.9
 
-[sub_resource type="Resource" id="Resource_scdup"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_htts5"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(10, 1)
 half = Vector2(2.3, 0.3)
@@ -207,14 +208,14 @@ yaw = 3.1415927
 blocks_shots = false
 height = 0.9
 
-[sub_resource type="Resource" id="Resource_pfter"]
-script = ExtResource("5_kin83")
-obstacles = Array[ExtResource("3_wpebi")]([SubResource("Resource_vbyah"), SubResource("Resource_4au4r"), SubResource("Resource_060tc"), SubResource("Resource_gkrjh"), SubResource("Resource_yvyes"), SubResource("Resource_rgaty"), SubResource("Resource_scdup"), SubResource("Resource_tmqeo"), SubResource("Resource_nyrx1")])
+[sub_resource type="Resource" id="Resource_5a7yr"]
+script = ExtResource("5_8ur2y")
+obstacles = Array[ExtResource("3_63so8")]([SubResource("Resource_060tc"), SubResource("Resource_gkrjh"), SubResource("Resource_yvyes"), SubResource("Resource_rgaty"), SubResource("Resource_scdup"), SubResource("Resource_pfter"), SubResource("Resource_htts5"), SubResource("Resource_vbyah"), SubResource("Resource_4au4r")])
 
-[sub_resource type="Resource" id="Resource_htts5"]
-script = ExtResource("4_63so8")
+[sub_resource type="Resource" id="Resource_8a6mf"]
+script = ExtResource("4_kin83")
 half = Vector2(12, 10.5)
-floor = SubResource("Resource_k0u17")
+floor = SubResource("Resource_j6o5n")
 hero_spawn = Vector2(-10, 4.5)
 hero_facing = Vector2(1, 0)
 cam_target = Vector2(1, 1.5)
@@ -229,71 +230,71 @@ max_alive = Vector2i(4, 6)
 max_ranged = 2
 banned_roles = Array[StringName]([&"area"])
 guardian = false
-obstacles = Array[ExtResource("3_wpebi")]([SubResource("Resource_saspm"), SubResource("Resource_j6o5n"), SubResource("Resource_psuxn"), SubResource("Resource_cptnn"), SubResource("Resource_hw7j7"), SubResource("Resource_ek1qt"), SubResource("Resource_m1xgu"), SubResource("Resource_tk2fo"), SubResource("Resource_4qm1u"), SubResource("Resource_tmqeo"), SubResource("Resource_nyrx1")])
+obstacles = Array[ExtResource("3_63so8")]([SubResource("Resource_psuxn"), SubResource("Resource_cptnn"), SubResource("Resource_hw7j7"), SubResource("Resource_ek1qt"), SubResource("Resource_m1xgu"), SubResource("Resource_tk2fo"), SubResource("Resource_4qm1u"), SubResource("Resource_tmqeo"), SubResource("Resource_nyrx1"), SubResource("Resource_vbyah"), SubResource("Resource_4au4r")])
 spawns = Array[Rect2]([Rect2(2, -9.5, 5, 2), Rect2(8.5, -4, 2.7, 3.5), Rect2(6.5, 7, 4.5, 2.5), Rect2(-10, -10, 2.5, 2)])
-exits = Array[ExtResource("1_ke0cv")]([SubResource("Resource_otjkh"), SubResource("Resource_6lsx0"), SubResource("Resource_le80d")])
-variants = Array[ExtResource("5_kin83")]([SubResource("Resource_pfter")])
+exits = Array[ExtResource("1_cy7en")]([SubResource("Resource_le80d"), SubResource("Resource_k0u17"), SubResource("Resource_saspm")])
+variants = Array[ExtResource("5_8ur2y")]([SubResource("Resource_5a7yr")])
 
-[sub_resource type="Resource" id="Resource_5a7yr"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_h7k8s"]
+script = ExtResource("1_cy7en")
 at = Vector2(12, -16.8)
 zone = Rect2(10, -17.4, 4, 1.1999989)
 mouth = Rect2(10, -17.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_8a6mf"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_p8egx"]
+script = ExtResource("1_cy7en")
 at = Vector2(22.8, 2)
 inward = Vector2(-1, 0)
 zone = Rect2(22.2, 0, 1.1999989, 4)
 mouth = Rect2(21, 0, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_h7k8s"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_v7yka"]
+script = ExtResource("1_cy7en")
 at = Vector2(8, 16.8)
 inward = Vector2(0, -1)
 zone = Rect2(6, 16.2, 4, 1.1999989)
 mouth = Rect2(6, 15, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_p8egx"]
-script = ExtResource("2_cy7en")
+[sub_resource type="Resource" id="Resource_f4dbp"]
+script = ExtResource("2_wpebi")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-21, -12, -18, -15, 21, -15, 21, 9, 15, 15, -15, 15, -21, 10)])
 holes = Array[PackedVector2Array]([PackedVector2Array(-7, -17, -7, -12, 2, -12, 2, -17), PackedVector2Array(-7, -7, -7.8, -5, -6.6, -3, -7, -1, 2, -1, 1.6, -3, 2.8, -5, 2, -7), PackedVector2Array(-7, 4, -7.6, 6, -6.4, 8, -5, 9.4, -2.5, 10, 0.3, 9.2, 1.6, 8, 2.6, 6, 2, 4), PackedVector2Array(8, -6.5, 9.5, -8.2, 12.5, -8.4, 14.6, -6.2, 14, -2.6, 11, -1.8, 8.4, -3.4)])
 
-[sub_resource type="Resource" id="Resource_v7yka"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_vk885"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(14, 7)
 half = Vector2(1.8, 0.5)
 see_through = true
 height = 2.6
 
-[sub_resource type="Resource" id="Resource_f4dbp"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_tt172"]
+script = ExtResource("3_63so8")
 center = Vector2(7.5, 3)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.8
 
-[sub_resource type="Resource" id="Resource_vk885"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_h4aqg"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-14, -5.5)
 half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_tt172"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_v0w6p"]
+script = ExtResource("3_63so8")
 center = Vector2(-13, 3)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.2
 
-[sub_resource type="Resource" id="Resource_h4aqg"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_lk2yf"]
+script = ExtResource("3_63so8")
 center = Vector2(8.5, -15.6)
 radius = 0.45
 blocks_move = false
@@ -301,8 +302,8 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_v0w6p"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_6gi8n"]
+script = ExtResource("3_63so8")
 center = Vector2(15.5, -15.6)
 radius = 0.45
 blocks_move = false
@@ -310,62 +311,62 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_lk2yf"]
-script = ExtResource("2_cy7en")
+[sub_resource type="Resource" id="Resource_4a4md"]
+script = ExtResource("2_wpebi")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-21, -12, -18, -15, 21, -15, 21, 9, 15, 15, -15, 15, -21, 10)])
 holes = Array[PackedVector2Array]([PackedVector2Array(-7, -17, -7, -12, -7, -7, -7.8, -5, -6.6, -3, -7, -1, 2, -1, 1.6, -3, 2.8, -5, 2, -7, 2, -12, 2, -17), PackedVector2Array(-7, 4, -7.6, 6, -6.4, 8, -5, 9.4, -2.5, 10, 0.3, 9.2, 1.6, 8, 2.6, 6, 2, 4), PackedVector2Array(-17.5, -3, -16, -5.2, -13, -5.6, -11.3, -3.5, -11.6, -0.4, -14, 0.6, -16.6, -0.6)])
 
-[sub_resource type="Resource" id="Resource_6gi8n"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_jll04"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(14, 7)
 half = Vector2(1.8, 0.5)
 see_through = true
 height = 2.6
 
-[sub_resource type="Resource" id="Resource_4a4md"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_nsxxi"]
+script = ExtResource("3_63so8")
 center = Vector2(8, -4)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.8
 
-[sub_resource type="Resource" id="Resource_jll04"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_vjfq7"]
+script = ExtResource("3_63so8")
 center = Vector2(13, -8.5)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_nsxxi"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_thnpm"]
+script = ExtResource("3_63so8")
 center = Vector2(15, -1)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 2.9
 
-[sub_resource type="Resource" id="Resource_vjfq7"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_dyl17"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-13.5, -10.5)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_thnpm"]
-script = ExtResource("5_kin83")
-obstacles = Array[ExtResource("3_wpebi")]([SubResource("Resource_6gi8n"), SubResource("Resource_4a4md"), SubResource("Resource_jll04"), SubResource("Resource_nsxxi"), SubResource("Resource_vjfq7"), SubResource("Resource_h4aqg"), SubResource("Resource_v0w6p")])
+[sub_resource type="Resource" id="Resource_71eg4"]
+script = ExtResource("5_8ur2y")
+obstacles = Array[ExtResource("3_63so8")]([SubResource("Resource_jll04"), SubResource("Resource_nsxxi"), SubResource("Resource_vjfq7"), SubResource("Resource_thnpm"), SubResource("Resource_dyl17"), SubResource("Resource_lk2yf"), SubResource("Resource_6gi8n")])
 late_spawns = Array[Rect2]([Rect2(-19.5, -12, 4, 5)])
-floor = SubResource("Resource_lk2yf")
+floor = SubResource("Resource_4a4md")
 
-[sub_resource type="Resource" id="Resource_dyl17"]
-script = ExtResource("4_63so8")
+[sub_resource type="Resource" id="Resource_4s1gs"]
+script = ExtResource("4_kin83")
 half = Vector2(21, 15)
-floor = SubResource("Resource_p8egx")
+floor = SubResource("Resource_f4dbp")
 hero_spawn = Vector2(-18, 6.5)
 hero_facing = Vector2(1, 0)
 id = &"rift"
@@ -375,48 +376,48 @@ size_class = 2
 difficulty = 1
 depth = Vector2(0.1, 1)
 max_alive = Vector2i(6, 8)
-obstacles = Array[ExtResource("3_wpebi")]([SubResource("Resource_v7yka"), SubResource("Resource_f4dbp"), SubResource("Resource_vk885"), SubResource("Resource_tt172"), SubResource("Resource_h4aqg"), SubResource("Resource_v0w6p")])
+obstacles = Array[ExtResource("3_63so8")]([SubResource("Resource_vk885"), SubResource("Resource_tt172"), SubResource("Resource_h4aqg"), SubResource("Resource_v0w6p"), SubResource("Resource_lk2yf"), SubResource("Resource_6gi8n")])
 spawns = Array[Rect2]([Rect2(5, -13.5, 6, 3), Rect2(16, -8, 3.5, 6), Rect2(5, 7, 6, 5)])
 late_spawns = Array[Rect2]([Rect2(-17, -13, 6, 4)])
-exits = Array[ExtResource("1_ke0cv")]([SubResource("Resource_5a7yr"), SubResource("Resource_8a6mf"), SubResource("Resource_h7k8s")])
+exits = Array[ExtResource("1_cy7en")]([SubResource("Resource_h7k8s"), SubResource("Resource_p8egx"), SubResource("Resource_v7yka")])
 cam_bounds = Rect2(-6, -4, 13, 9)
-variants = Array[ExtResource("5_kin83")]([SubResource("Resource_thnpm")])
+variants = Array[ExtResource("5_8ur2y")]([SubResource("Resource_71eg4")])
 
-[sub_resource type="Resource" id="Resource_71eg4"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_6sy2k"]
+script = ExtResource("1_cy7en")
 at = Vector2(13, -15.8)
 zone = Rect2(11, -16.4, 4, 1.1999998)
 mouth = Rect2(11, -16.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_4s1gs"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_p8q88"]
+script = ExtResource("1_cy7en")
 at = Vector2(18.8, 0)
 inward = Vector2(-1, 0)
 zone = Rect2(18.2, -2, 1.1999989, 4)
 mouth = Rect2(17, -2, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_6sy2k"]
-script = ExtResource("1_ke0cv")
+[sub_resource type="Resource" id="Resource_maxa6"]
+script = ExtResource("1_cy7en")
 at = Vector2(5, 15.8)
 inward = Vector2(0, -1)
 zone = Rect2(3, 15.2, 4, 1.1999998)
 mouth = Rect2(3, 14, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_p8q88"]
-script = ExtResource("2_cy7en")
+[sub_resource type="Resource" id="Resource_k887a"]
+script = ExtResource("2_wpebi")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-17, -10, -13, -14, 17, -14, 17, 8, 11, 14, -12, 14, -17, 9)])
 
-[sub_resource type="Resource" id="Resource_maxa6"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_51h6f"]
+script = ExtResource("3_63so8")
 center = Vector2(-8, -5)
 radius = 3.5
 see_through = true
 piece = &"trunk"
 height = 4.5
 
-[sub_resource type="Resource" id="Resource_k887a"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_3pvnp"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-4.947635, -6.7442083)
 half = Vector2(1.0155644, 0.5)
@@ -425,8 +426,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_51h6f"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_0lpor"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-3.5, -7.35)
 half = Vector2(1.559481, 0.5)
@@ -435,8 +436,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_3pvnp"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_vlysx"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-1.45, -7.9)
 half = Vector2(1.5688779, 0.5)
@@ -445,8 +446,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_0lpor"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_fr2k5"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(0.7, -8.1)
 half = Vector2(1.6, 0.5)
@@ -454,8 +455,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_vlysx"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_q6hi7"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-5.5393395, -2.53934)
 half = Vector2(0.9798989, 0.5)
@@ -464,8 +465,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_fr2k5"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_hi33f"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-4.35, -1.5)
 half = Vector2(1.6011357, 0.5)
@@ -474,8 +475,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_q6hi7"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_vbe0e"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-2.55, -0.25)
 half = Vector2(1.5977249, 0.5)
@@ -484,8 +485,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_hi33f"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_7rjok"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-0.65, 0.75)
 half = Vector2(1.5511899, 0.5)
@@ -494,8 +495,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_vbe0e"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_s1sfb"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-9.744208, -1.9476353)
 half = Vector2(1.0155644, 0.5)
@@ -504,8 +505,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_7rjok"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_nif3a"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-10.4, -0.7)
 half = Vector2(1.3944273, 0.5)
@@ -514,8 +515,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_s1sfb"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_b2dkf"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-11.1, 1)
 half = Vector2(1.4486831, 0.5)
@@ -524,8 +525,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_nif3a"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_tpwa6"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-11.65, 2.75)
 half = Vector2(1.3860023, 0.5)
@@ -534,8 +535,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_b2dkf"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_sv271"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-11.052364, -6.7442083)
 half = Vector2(1.0155644, 0.5)
@@ -544,8 +545,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_tpwa6"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_di5o1"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-12.15, -7.4)
 half = Vector2(1.263217, 0.5)
@@ -554,39 +555,39 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_sv271"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_7xjok"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(7.5, -5)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_di5o1"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_afiot"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-16.4, -1.5)
 half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_7xjok"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_uibvc"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(11, 5)
 half = Vector2(2.4, 0.4)
 blocks_shots = false
 
-[sub_resource type="Resource" id="Resource_afiot"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_0ylts"]
+script = ExtResource("3_63so8")
 center = Vector2(4.5, 7)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_uibvc"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_vegw7"]
+script = ExtResource("3_63so8")
 center = Vector2(10.5, -14.6)
 radius = 0.45
 blocks_move = false
@@ -594,8 +595,8 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_0ylts"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_osx03"]
+script = ExtResource("3_63so8")
 center = Vector2(15.5, -14.6)
 radius = 0.45
 blocks_move = false
@@ -603,8 +604,8 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_vegw7"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_tkdd2"]
+script = ExtResource("3_63so8")
 center = Vector2(17.6, -2.6)
 radius = 0.45
 blocks_move = false
@@ -612,8 +613,8 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_osx03"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_a43mo"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-4.573593, -5.614996)
 half = Vector2(0.98116136, 0.5)
@@ -622,8 +623,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_tkdd2"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_65xxq"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-3.25, -5.75)
 half = Vector2(1.3514693, 0.5)
@@ -632,8 +633,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_a43mo"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_xph6e"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-1.5500001, -5.75)
 half = Vector2(1.3514693, 0.5)
@@ -642,8 +643,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_65xxq"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_dc66y"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(0.099999994, -5.55)
 half = Vector2(1.313941, 0.5)
@@ -652,8 +653,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_xph6e"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_u37gx"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-6.7814417, -1.6924852)
 half = Vector2(1.0248456, 0.5)
@@ -662,8 +663,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_dc66y"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_ynxxf"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-6.3999996, -0.25000003)
 half = Vector2(1.4708245, 0.5)
@@ -672,8 +673,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_u37gx"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_4agcp"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-6.1499996, 1.7)
 half = Vector2(1.5012492, 0.5)
@@ -682,8 +683,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_ynxxf"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_eqnfm"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-6.2, 3.6999998)
 half = Vector2(1.5049875, 0.5)
@@ -692,8 +693,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_4agcp"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_k7fyg"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-11.052364, -3.2557917)
 half = Vector2(1.0155644, 0.5)
@@ -702,8 +703,8 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_eqnfm"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_5w41h"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(-11.85, -2.75)
 half = Vector2(0.9301162, 0.5)
@@ -712,46 +713,46 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_k7fyg"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_se7u8"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(11.5, -6)
 half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_5w41h"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_rrms1"]
+script = ExtResource("3_63so8")
 shape = 1
 center = Vector2(6.5, 5)
 half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_se7u8"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_eacf8"]
+script = ExtResource("3_63so8")
 center = Vector2(12, 3)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_rrms1"]
-script = ExtResource("3_wpebi")
+[sub_resource type="Resource" id="Resource_6uc8j"]
+script = ExtResource("3_63so8")
 center = Vector2(-12.5, 4)
 radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.0
 
-[sub_resource type="Resource" id="Resource_eacf8"]
-script = ExtResource("5_kin83")
-obstacles = Array[ExtResource("3_wpebi")]([SubResource("Resource_maxa6"), SubResource("Resource_osx03"), SubResource("Resource_tkdd2"), SubResource("Resource_a43mo"), SubResource("Resource_65xxq"), SubResource("Resource_xph6e"), SubResource("Resource_dc66y"), SubResource("Resource_u37gx"), SubResource("Resource_ynxxf"), SubResource("Resource_4agcp"), SubResource("Resource_eqnfm"), SubResource("Resource_k7fyg"), SubResource("Resource_5w41h"), SubResource("Resource_se7u8"), SubResource("Resource_rrms1"), SubResource("Resource_uibvc"), SubResource("Resource_0ylts"), SubResource("Resource_vegw7")])
+[sub_resource type="Resource" id="Resource_582o2"]
+script = ExtResource("5_8ur2y")
+obstacles = Array[ExtResource("3_63so8")]([SubResource("Resource_51h6f"), SubResource("Resource_a43mo"), SubResource("Resource_65xxq"), SubResource("Resource_xph6e"), SubResource("Resource_dc66y"), SubResource("Resource_u37gx"), SubResource("Resource_ynxxf"), SubResource("Resource_4agcp"), SubResource("Resource_eqnfm"), SubResource("Resource_k7fyg"), SubResource("Resource_5w41h"), SubResource("Resource_se7u8"), SubResource("Resource_rrms1"), SubResource("Resource_eacf8"), SubResource("Resource_6uc8j"), SubResource("Resource_vegw7"), SubResource("Resource_osx03"), SubResource("Resource_tkdd2")])
 
-[sub_resource type="Resource" id="Resource_6uc8j"]
-script = ExtResource("4_63so8")
+[sub_resource type="Resource" id="Resource_vxcoi"]
+script = ExtResource("4_kin83")
 half = Vector2(17, 14)
-floor = SubResource("Resource_p8q88")
+floor = SubResource("Resource_k887a")
 hero_spawn = Vector2(-12, 9)
 hero_facing = Vector2(0.70710677, -0.70710677)
 id = &"garden"
@@ -760,111 +761,123 @@ look = &"garden"
 difficulty = 1
 depth = Vector2(0.1, 1)
 max_alive = Vector2i(6, 8)
-obstacles = Array[ExtResource("3_wpebi")]([SubResource("Resource_maxa6"), SubResource("Resource_k887a"), SubResource("Resource_51h6f"), SubResource("Resource_3pvnp"), SubResource("Resource_0lpor"), SubResource("Resource_vlysx"), SubResource("Resource_fr2k5"), SubResource("Resource_q6hi7"), SubResource("Resource_hi33f"), SubResource("Resource_vbe0e"), SubResource("Resource_7rjok"), SubResource("Resource_s1sfb"), SubResource("Resource_nif3a"), SubResource("Resource_b2dkf"), SubResource("Resource_tpwa6"), SubResource("Resource_sv271"), SubResource("Resource_di5o1"), SubResource("Resource_7xjok"), SubResource("Resource_afiot"), SubResource("Resource_uibvc"), SubResource("Resource_0ylts"), SubResource("Resource_vegw7")])
+obstacles = Array[ExtResource("3_63so8")]([SubResource("Resource_51h6f"), SubResource("Resource_3pvnp"), SubResource("Resource_0lpor"), SubResource("Resource_vlysx"), SubResource("Resource_fr2k5"), SubResource("Resource_q6hi7"), SubResource("Resource_hi33f"), SubResource("Resource_vbe0e"), SubResource("Resource_7rjok"), SubResource("Resource_s1sfb"), SubResource("Resource_nif3a"), SubResource("Resource_b2dkf"), SubResource("Resource_tpwa6"), SubResource("Resource_sv271"), SubResource("Resource_di5o1"), SubResource("Resource_7xjok"), SubResource("Resource_afiot"), SubResource("Resource_uibvc"), SubResource("Resource_0ylts"), SubResource("Resource_vegw7"), SubResource("Resource_osx03"), SubResource("Resource_tkdd2")])
 spawns = Array[Rect2]([Rect2(6, -12.5, 6, 3), Rect2(13, -4, 3, 7), Rect2(-6, -13.2, 6, 2.7), Rect2(-2, 9, 8, 3.5)])
 late_spawns = Array[Rect2]([Rect2(-15, -6, 2, 2.5)])
-exits = Array[ExtResource("1_ke0cv")]([SubResource("Resource_71eg4"), SubResource("Resource_4s1gs"), SubResource("Resource_6sy2k")])
+exits = Array[ExtResource("1_cy7en")]([SubResource("Resource_6sy2k"), SubResource("Resource_p8q88"), SubResource("Resource_maxa6")])
 cam_bounds = Rect2(-3, -2, 7, 5)
-variants = Array[ExtResource("5_kin83")]([SubResource("Resource_eacf8")])
+variants = Array[ExtResource("5_8ur2y")]([SubResource("Resource_582o2")])
 
-[sub_resource type="Resource" id="Resource_582o2"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_k5hx5"]
+script = ExtResource("6_wmys5")
 until = 0.34
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"react"])
 
-[sub_resource type="Resource" id="Resource_vxcoi"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_jw3ap"]
+script = ExtResource("6_wmys5")
 until = 0.34
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"flank"])
 
-[sub_resource type="Resource" id="Resource_k5hx5"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_bavs6"]
+script = ExtResource("6_wmys5")
 until = 0.34
 roles = Array[StringName]([&"block", &"react"])
 
-[sub_resource type="Resource" id="Resource_jw3ap"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_t738q"]
+script = ExtResource("6_wmys5")
 from = 0.34
 until = 0.67
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"flank", &"control"])
 
-[sub_resource type="Resource" id="Resource_bavs6"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_mpgig"]
+script = ExtResource("6_wmys5")
 from = 0.34
 until = 0.67
 weight = 2.0
 roles = Array[StringName]([&"block", &"react", &"flank"])
 
-[sub_resource type="Resource" id="Resource_t738q"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_ciqix"]
+script = ExtResource("6_wmys5")
 from = 0.34
 until = 0.67
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"block", &"area"])
 
-[sub_resource type="Resource" id="Resource_mpgig"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_d8yg1"]
+script = ExtResource("6_wmys5")
 tier = 1
 from = 0.34
 until = 0.67
 roles = Array[StringName]([&"pressure", &"react", &"control"])
 elite_chance = 1.0
 
-[sub_resource type="Resource" id="Resource_ciqix"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_bdugr"]
+script = ExtResource("6_wmys5")
 tier = 1
 from = 0.67
 weight = 3.0
 roles = Array[StringName]([&"block", &"flank", &"area"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_d8yg1"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_1wodb"]
+script = ExtResource("6_wmys5")
 tier = 1
 from = 0.67
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"control", &"area"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_bdugr"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_7l6y2"]
+script = ExtResource("6_wmys5")
 tier = 1
 from = 0.67
 weight = 2.0
 roles = Array[StringName]([&"react", &"flank", &"control"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_1wodb"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_lrxdf"]
+script = ExtResource("6_wmys5")
 from = 0.67
 roles = Array[StringName]([&"pressure", &"block", &"control"])
 
-[sub_resource type="Resource" id="Resource_7l6y2"]
-script = ExtResource("6_8ur2y")
+[sub_resource type="Resource" id="Resource_so63g"]
+script = ExtResource("6_wmys5")
 tier = 2
 from = 0.8
 roles = Array[StringName]([&"pressure", &"react", &"flank", &"area"])
 elite_chance = 0.5
 
+[sub_resource type="Resource" id="Resource_0supd"]
+script = ExtResource("8_0uifc")
+items = PackedInt32Array(1)
+prices = PackedInt32Array(150)
+weights = PackedFloat32Array(1)
+
+[sub_resource type="Resource" id="Resource_qvvqq"]
+script = ExtResource("8_0uifc")
+items = PackedInt32Array(6, 3)
+prices = PackedInt32Array(50, 125)
+weights = PackedFloat32Array(1, 1)
+count = 2
+
+[sub_resource type="Resource" id="Resource_68qus"]
+script = ExtResource("8_0uifc")
+items = PackedInt32Array(4, 2, 7)
+prices = PackedInt32Array(100, 100, 50)
+weights = PackedFloat32Array(1, 1, 1)
+count = 2
+
 [resource]
-script = ExtResource("7_wmys5")
-rooms = 6
-miniboss_depth_min = 5
-miniboss_depth_max = 5
+script = ExtResource("7_51rpt")
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
-fountain_depth_min = 4
-fountain_depth_max = 4
-layouts = Array[ExtResource("4_63so8")]([SubResource("Resource_gcpwj"), SubResource("Resource_htts5"), SubResource("Resource_dyl17"), SubResource("Resource_6uc8j")])
-boss_layout = SubResource("Resource_0uifc")
-shop_layout = SubResource("Resource_gcpwj")
+layouts = Array[ExtResource("4_kin83")]([SubResource("Resource_6lsx0"), SubResource("Resource_8a6mf"), SubResource("Resource_4s1gs"), SubResource("Resource_vxcoi")])
+boss_layout = SubResource("Resource_otjkh")
+shop_layout = SubResource("Resource_6lsx0")
 enemies = Array[StringName]([&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite", &"guard", &"guard_elite", &"priest", &"priest_elite"])
-elite_from_depth = 2
 wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
-pools = Array[ExtResource("6_8ur2y")]([SubResource("Resource_582o2"), SubResource("Resource_vxcoi"), SubResource("Resource_k5hx5"), SubResource("Resource_jw3ap"), SubResource("Resource_bavs6"), SubResource("Resource_t738q"), SubResource("Resource_mpgig"), SubResource("Resource_ciqix"), SubResource("Resource_d8yg1"), SubResource("Resource_bdugr"), SubResource("Resource_1wodb"), SubResource("Resource_7l6y2")])
-rewards = PackedInt32Array(1, 2, 3, 4, 5)
-reward_weights = PackedFloat32Array(6, 2.5, 1.5, 1, 1.5)
-shop_items = PackedInt32Array(1, 2, 3, 6)
-shop_prices = PackedInt32Array(150, 100, 125, 60)
+pools = Array[ExtResource("6_wmys5")]([SubResource("Resource_k5hx5"), SubResource("Resource_jw3ap"), SubResource("Resource_bavs6"), SubResource("Resource_t738q"), SubResource("Resource_mpgig"), SubResource("Resource_ciqix"), SubResource("Resource_d8yg1"), SubResource("Resource_bdugr"), SubResource("Resource_1wodb"), SubResource("Resource_7l6y2"), SubResource("Resource_lrxdf"), SubResource("Resource_so63g")])
+reward_deck = PackedInt32Array(1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5)
+shop_groups = Array[ExtResource("8_0uifc")]([SubResource("Resource_0supd"), SubResource("Resource_qvvqq"), SubResource("Resource_68qus")])

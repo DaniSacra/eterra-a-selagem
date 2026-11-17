@@ -7,21 +7,24 @@
 script = ExtResource("1_66asu")
 stat = &"blow_wave"
 tag = &"charge"
-values = PackedFloat32Array(16)
+base = 16.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_k28hu"]
 script = ExtResource("1_66asu")
 stat = &"blow_wave_m"
 tag = &"charge"
-values = PackedFloat32Array(6)
+base = 6.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [sub_resource type="Resource" id="Resource_3m3jt"]
 script = ExtResource("1_66asu")
 stat = &"blow_wave_w"
 tag = &"charge"
-values = PackedFloat32Array(3)
+base = 3.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]

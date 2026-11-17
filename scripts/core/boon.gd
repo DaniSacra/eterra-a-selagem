@@ -7,16 +7,26 @@ enum Family { CHAMA, GEADA, LUZ, VIGILIA, DUO }
 ## The action a gift rides on. One gift per action: taking another for the same action replaces it.
 ## NONE: a gift that acts on its own or helps always (any number of them).
 enum Slot { NONE, ATTACK, SPECIAL, CAST, DASH }
-## How strong the gift comes: rarer cards multiply its numbers (the ones marked by_rarity).
-enum Rarity { COMMON, RARE, EPIC, HEROIC }
+## How strong the gift comes: rarer cards multiply its first level (BoonMod.base, a skill's first damage). The four
+## rarities of decision D-52: common, rare, epic and legendary, the legendary only by a trade (E3-01; Hades II's heroic;
+## Hades II's legendary is our Psalm). An Elo has no rarity (BUG-017).
+enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
 
+## Fixed multipliers (decision D-53 (a); Hades II draws them in a range, 1.3 to 1.5 and so on).
 const RARITY_MULT: Array[float] = [1.0, 1.5, 2.0, 2.5]
-## Chance weights of each rarity when a card is drawn (Hades II: rare 10%, epic 5%, the rest common).
-const RARITY_WEIGHT: Array[float] = [85.0, 10.0, 5.0, 0.0]
-## The gift a guardian leaves is never common (Hades II: rare 90, epic 7, legendary 5).
-const RARITY_WEIGHT_GUARDIAN: Array[float] = [0.0, 90.0, 7.0, 5.0]
-const RARITY_COLOR: Array[Color] = [Color(0.92, 0.92, 0.92), Color(0.35, 0.6, 1.0), Color(0.75, 0.4, 1.0), Color(1.0, 0.3, 0.25)]
-const RARITY_KEY: Array[StringName] = [&"rarity_common", &"rarity_rare", &"rarity_epic", &"rarity_heroic"]
+## Chances of a card, tried in turn from common (C13-03, Hades II's RarityChances): rare, epic, legendary; the last
+## that passes is the card's. So 85.5% common, 9.5% rare, 5% epic. The legendary never in the draw (only a trade).
+## These are the defaults; a stage carries its own (StageDef.rarity_chance).
+const RARITY_CHANCE: Array[float] = [0.10, 0.05, 0.0]
+## The guardian's (Hades II's Erebus: rare 90, epic 7, legendary 5; that legendary is the Psalm, none yet): 9.3% common.
+const RARITY_CHANCE_GUARDIAN: Array[float] = [0.90, 0.07, 0.0]
+## Chance a card is an Elo when one can be formed (C13-06, Hades II's duo: 12%).
+const ELO_CHANCE := 0.12
+## Chance a card offers to trade the Blessing on an action already held for another, one rarity higher and at the
+## same level (E3-01, Hades II's ReplaceChance 0.1).
+const TRADE_CHANCE := 0.1
+const RARITY_COLOR: Array[Color] = [Color(0.92, 0.92, 0.92), Color(0.35, 0.6, 1.0), Color(0.75, 0.4, 1.0), Color(0.78, 0.62, 0.34)]
+const RARITY_KEY: Array[StringName] = [&"rarity_common", &"rarity_rare", &"rarity_epic", &"rarity_legendary"]
 ## The tag of the moves each action's gifts change (Slot order).
 const SLOT_TAG: Array[StringName] = [&"", &"light", &"heavy", &"cast", &"dash"]
 const SLOT_KEY: Array[StringName] = [&"", &"slot_attack", &"slot_special", &"slot_cast", &"slot_dash"]
@@ -30,10 +40,12 @@ const FAMILY_KEY: Array[StringName] = [&"family_chama", &"family_geada", &"famil
 @export var family: Family = Family.LUZ
 ## Which glyph the card and the HUD draw (see scripts/ui/boon_icon.gd).
 @export var icon := 0
+## The highest level (0: no ceiling, as in Hades II). An Elo stays at 1: it never grows (BUG-017).
 @export var max_level := 3
 @export var slot: Slot = Slot.NONE
-## A combination: offered only when every gift listed here is owned.
-@export var requires: Array[StringName] = []
+## An Elo (E3-02, Hades II's OneFromEachSet): offered when one gift of each list is owned (a list per family). The
+## first of each list is the one the card shows when none is owned.
+@export var requires_sets: Array[PackedStringArray] = []
 @export var mods: Array[BoonMod] = []
 @export var skill: SkillDef
 
@@ -47,4 +59,14 @@ func family_tag() -> StringName:
 
 
 func is_duo() -> bool:
-	return not requires.is_empty()
+	return family == Family.DUO or not requires_sets.is_empty()
+
+
+## An Elo has no rarity and no level beyond 1 (BUG-017: Hades II's duos never grow and never scale by rarity).
+func has_rarity() -> bool:
+	return not is_duo()
+
+
+## True while a level more is still possible at this level.
+func can_grow(level: int) -> bool:
+	return max_level <= 0 or level < max_level

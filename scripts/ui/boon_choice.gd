@@ -79,9 +79,9 @@ static func describe(b: Boon, level: int, mult: float = 1.0) -> String:
 	var letters := ["a", "b", "c"]
 	for i in mini(b.mods.size(), letters.size()):
 		var m := b.mods[i]
-		args[letters[i]] = BoonMod.format(m.stat, m.value(level) * (mult if m.by_rarity else 1.0))
+		args[letters[i]] = BoonMod.format(m.stat, m.at(level, mult))
 	if b.skill:
-		args["dmg"] = UiKit.format_number(b.skill.get_damage(level) * mult)
+		args["dmg"] = UiKit.format_number(b.skill.damage_at(level, mult))
 		args["count"] = b.skill.get_count(level)
 		args["cd"] = UiKit.format_number(b.skill.get_cooldown(level))
 		args["radius"] = UiKit.format_number(b.skill.get_radius(level))

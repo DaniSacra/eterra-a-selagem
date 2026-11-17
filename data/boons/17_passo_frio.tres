@@ -7,12 +7,14 @@
 script = ExtResource("1_msjli")
 stat = &"freeze_time"
 tag = &"dash"
-values = PackedFloat32Array(1, 1.5, 2)
+base = 1.0
+per_level = PackedFloat32Array()
 
 [resource]
 script = ExtResource("2_k546n")
 id = &"passo_frio"
 family = 4
 icon = 17
-requires = Array[StringName]([&"passos", &"toque_geada"])
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada")])
 mods = Array[ExtResource("1_msjli")]([SubResource("Resource_mloeq")])

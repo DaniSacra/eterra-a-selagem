@@ -7,7 +7,8 @@
 script = ExtResource("1_62l1x")
 stat = &"fury_per_kill"
 tag = &"omega"
-values = PackedFloat32Array(1)
+base = 1.0
+per_level = PackedFloat32Array()
 by_rarity = false
 
 [resource]
