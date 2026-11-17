@@ -63,6 +63,8 @@ static func offer_of(entry: Variant) -> Dictionary:
 static func offers_of(cards: Array[BoonState.Card]) -> Dictionary:
 	var out := {}
 	for c in cards:
+		if c.boon == null:
+			continue  # a Psalm card (E4) carries no Blessing
 		out[c.boon.id] = {"rarity": c.rarity, "upgrade": c.trade}
 	return out
 
