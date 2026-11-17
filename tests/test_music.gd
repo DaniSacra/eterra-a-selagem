@@ -218,6 +218,17 @@ func test_the_api_levels_phases_and_stings() -> void:
 	assert_gt(Music.mix.audible(), MusicMix.DUCK - 0.01)
 
 
+## QA E4: Game.take_psalm calls Music.sting(p.id) with the Psalm's real id (data/psalms: sentinela, abrigo, pastor,
+## rocha), not the English names the stings are filed under (psalm_sentinel...): every real Psalm must find its theme.
+func test_every_real_psalm_finds_its_sting() -> void:
+	var all := Psalms.load_catalog()
+	assert_gt(all.size(), 0, "the Psalms are there")
+	for p: PsalmDef in all:
+		var before := Music.mix.stings.size()
+		Music.sting(p.id)
+		assert_eq(Music.mix.stings.size(), before + 1, "Psalm %s (Music.sting(&\"%s\")) plays a theme" % [p.id, p.id])
+
+
 func test_music_runs_into_master_before_the_limiter() -> void:
 	var bus := AudioServer.get_bus_index(&"Music")
 	assert_gt(bus, 0)
