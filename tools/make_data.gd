@@ -1249,17 +1249,19 @@ func _sanctuary() -> RoomLayout:
 	l.max_ranged = 3
 	l.guardian = true
 	l.guardian_home = true
-	# fire bowls of the north door's recesses and of the grille's pillars (off the floor: drawn, never blocking)
-	var bowls: Array[ArenaObstacle] = [_bowl(4.3, -14.6), _bowl(8.7, -14.6), _bowl(-22.8, -6.6), _bowl(-22.8, 6.6)]
+	# fire bowls of the north door's recesses, 0.9 m out of the floor (drawn, never blocking; the bowl and its fire are
+	# 0.7 m round); the grille's two are the look's own, on its end pillars (SanctuaryLook), never in the data
+	var bowls: Array[ArenaObstacle] = [_bowl(4.3, -14.9), _bowl(8.7, -14.9)]
 	var walls: Array[ArenaObstacle] = [_sarcophagus(-12.0, -13.4, 2.5, 1.2), _sarcophagus(-4.0, -13.4, 2.5, 1.2),
-		_piece(-12.0, 10.2, 2.0, 0.6, 0.9, &"bench"), _piece(6.0, 10.2, 2.0, 0.6, 0.9, &"bench")]
+		_piece(-12.0, 10.2, 2.0, 0.6, 0.9, &"bench_broken"), _piece(6.0, 10.2, 2.0, 0.6, 0.9, &"bench_broken")]
 	var a: Array[ArenaObstacle] = []
 	for x: float in [-15.0, -9.0, -3.0, 9.0]:
 		a.append(_column(x, -6.0, 5.2, 0.65))
 	for x: float in [-15.0, -3.0, 3.0, 9.0, 15.0]:
 		a.append(_column(x, 6.0, 5.2, 0.65))
 	a.append_array([_column(15.0, -6.0, 3.4, 0.65), _column(-9.0, 6.0, 3.0, 0.65),
-		_column(3.0, -6.0, 0.6, 0.65), _capsule(Vector2(3.0, -6.9), Vector2(3.0, -9.8), 1.1, 1.0, &"drum")])
+		ArenaObstacle.circle(Vector2(3.0, -6.0), 0.65, &"column_base", 0.6, false),
+		_capsule(Vector2(3.0, -6.9), Vector2(3.0, -9.8), 1.1, 1.0, &"drums")])
 	a.append_array(walls)
 	a.append_array(bowls)
 	l.obstacles = a
@@ -1366,7 +1368,8 @@ func _runes() -> RoomLayout:
 	l.max_ranged = 2
 	l.banned_roles = [&"area"]
 	l.guardian = false
-	var bowls: Array[ArenaObstacle] = [_bowl(3.8, -12.6), _bowl(8.2, -12.6)]
+	# the north door's fire bowls, 0.9 m out of the floor (drawn, never blocking)
+	var bowls: Array[ArenaObstacle] = [_bowl(3.8, -12.9), _bowl(8.2, -12.9)]
 	var a: Array[ArenaObstacle] = []
 	for p: Vector2 in [Vector2(-6, -6), Vector2(6, -6), Vector2(-6, 6), Vector2(6, 6)]:
 		a.append(_piece(p.x, p.y, 1.2, 1.2, 4.0, &"rune_pillar", true))
@@ -1374,6 +1377,10 @@ func _runes() -> RoomLayout:
 	l.obstacles = a
 	l.hazard = _hazard([&"sweep", &"comb", &"cut"])
 	var b: Array[ArenaObstacle] = [_piece(-9, -6, 1.2, 1.2, 4.0, &"rune_pillar", true), _piece(9, 6, 1.2, 1.2, 4.0, &"rune_pillar", true)]
+	# the quiet stone in the middle (its four tiles never light, HazardDef.quiet): drawn smooth, it stops nothing
+	var quiet := ArenaObstacle.box(Vector2.ZERO, Vector2(3, 3), 0.0, &"quiet", 0.0, false)
+	quiet.blocks_move = false
+	b.append(quiet)
 	b.append_array(bowls)
 	var vb := _variant(b)
 	vb.hazard = _hazard([&"checker", &"frame", &"islands"], [_rect(-3, 3, -3, 3)])
@@ -1417,8 +1424,9 @@ func _altar_room() -> RoomLayout:
 	l.floor = FloorShape.poly([FloorShape.box(_rect(-9, 9, -7, 7))])
 	l.half = l.floor.extent()
 	l.guardian = false
+	# a whole bench and a broken one (spec 6.3)
 	l.obstacles = [_piece(0.0, -6.2, 3.6, 1.6, 1.3, &"altar"), _piece(-3.0, -1.0, 2.0, 0.6, 0.9, &"bench"),
-		_piece(3.0, -1.5, 2.0, 0.6, 0.9, &"bench")]
+		_piece(3.0, -1.5, 2.0, 0.6, 0.9, &"bench_broken")]
 	l.hero_spawn = Vector2(-6.5, 4.5)
 	l.hero_facing = Vector2(1, -1).normalized()
 	l.exits = [ArenaExit.at_edge(Vector2(9, 2), Vector2(-1, 0)), ArenaExit.at_edge(Vector2(9, -3.5), Vector2(-1, 0)),

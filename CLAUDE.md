@@ -593,21 +593,31 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Ponte dos Condenados (comprida, três plataformas e duas pontes de 5 m, portas só na plataforma leste, sem sacerdote,
   ninguém nasce numa ponte; B com a ponte longa e o patamar) e Câmara das Runas Instáveis (4 a 6 inimigos, no máximo 2
   atiradores, câmera fixa). Partes do chão com nome (`RoomLayout.areas`, `area_names`, `area_at`): o tempo do herói em
-  cada uma vai para `rooms[].zones` do `RESULT` (`RoomTally.zone_time`). Visual provisório: `PlainLook` (luz de cima) para
-  os looks `sanctuary`, `bridge`, `runes`, `trial`, `altar` (`Arena.look_for`, `PROVISIONAL_LOOKS`) até o environment-artist
-  entregar os seus em `ArenaRoom.LOOKS`. Opções: `--arena=sanctuary|bridge|runes`, `--start=trial|altar`.
+  cada uma vai para `rooms[].zones` do `RESULT` (`RoomTally.zone_time`). Desenhadas pelos looks do E5 (ver a seção de
+  cenário acima; o `PlainLook` provisório saiu). Peças do dado com o nome que o look desenha: `column` (5 m ou mais ganha
+  capitel), `column_base` (toco, para corpo e não tiro), `drums`, `bench`/`bench_broken`, `pylon`, `rune_pillar`, `quiet`
+  (a pedra quieta da B das Runas, caixa que não barra nada), `trial_block`, `altar`; braseiros de parede (`brazier`) a 0,9 m
+  ou mais fora do chão, os da grade do Santuário são do look. Cada porta que abre sopra o ar da sala de trás
+  (`ArenaRoom.breath`, `Rooms.door_look`; Morvath = `chamber`). Opções: `--arena=sanctuary|bridge|runes`, `--start=trial|altar`.
 - **Runas** (`HazardDef` no `RoomLayout.hazard`, lógica pura `ArenaHazard`, no jogo `RuneFloor`): grade de 10 x 8 ladrilhos
   de 3 m; padrões só em faixas e ladrilhos (A: `sweep`, `comb`, `cut`; B: `checker`, `frame`, `islands` e a pedra quieta no
   meio); aviso 1,2 s, golpe 0,25 s, descanso 2,4 s, nada nos 3 s do começo, nas portas nem em ladrilho cortado pela borda;
   no máximo 35% aceso (os densos, 50%, só com até 3 inimigos de pé) e todo ladrilho aceso tem um vizinho apagado. Fere o
   herói 4 (como aviso, `Ground.add_hazard`) e todo inimigo comum em cima 35 (`Ground.hazard_landed`); "Derrotado por: Runas
   Instáveis" (`killer_runes`). Desenho: estilo `GroundLook.Style.HAZARD` (âmbar `HAZARD_COLOR`, moldura por ladrilho
-  `tile_m`, preenchimento fraco, `render_priority` -1, abaixo dos avisos vermelhos). `rooms[].hazard` no `RESULT`.
+  `tile_m`, preenchimento fraco, `render_priority` -1, abaixo dos avisos vermelhos), mas na sala de verdade quem desenha é o
+  próprio chão: o `RuneFloor` escreve a cada quadro o estado de cada ladrilho no `RunesLook` (`RuneFloor.paint`:
+  `ArenaHazard.state` = preparo, golpe e brasa de 0,4 s, `ArenaHazard.EMBER`; divisas da varredura por `ArenaHazard.chevron`
+  só no preparo; um `apply`, nada quando em repouso) e os avisos do `Ground` ficam invisíveis (`add_hazard(..., drawn)`,
+  nada desenhado duas vezes; continuam ferindo). Grade conferida contra o look (`RuneFloor.fits`, 10 x 8 de 3 m desde
+  (-15; -12)); em outro look o âmbar volta. `rooms[].hazard` no `RESULT`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
   numa sala de luta vencida (20%, profundidades 2 a 7, intervalo de 10 salas, nunca com maldição em curso), custo
   `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3
   cartas (Bênção forte com raridade sorteada, maldição por 3 a 5 encontros) e as portas da sala de antes (fechadas até
-  pegar uma). A maldição age em `Horde.speed_scale`, `Player.heal_scale`, `Player.hurt_scale`, ondas (`wave_extra`) e
+  pegar uma). A laje é a do look (`TrialLook.entry_slab`, com a placa e um fio de luz marfim de 1,2 s ao surgir, sem
+  lâmpada própria); escolhida a carta, `TrialLook.settle`; feita a troca do altar, `AltarLook.kindle` (`Rooms._to_look`).
+  A maldição age em `Horde.speed_scale`, `Player.heal_scale`, `Player.hurt_scale`, ondas (`wave_extra`) e
   ouro (`gold_pct`); depois do último encontro vira a Bênção (`BoonState.grant`, "Provação vencida"). Provisório: as
   cartas são pedestais no chão (`Rooms.TRIAL_SPOTS`). Para a UI: `Rooms.trials` (`active`, `left`, `won`), `trial_cards`
   (`Trials.Card.view()`), `take_trial(i)`, sinais `trial_slab_shown`, `trial_entered`, `trial_offered`, `trial_taken`,
@@ -620,7 +630,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `Rooms.door_info(i)` dá `kind`, `reward`, `depth`, `tier`, `guardian`, `hard`, `elites`, `arena`, chaves de texto.
 - **Registro**: `events` no `RESULT` e no registro (`RoomTally.event`: `door`, `trial_shown`, `trial_paid`,
   `trial_refused`, `trial_offered`, `trial_taken`, `trial_turned`, `altar`), mais `trial` (`active`, `left`, `won`).
-  Testes: `test_hazard.gd`, `test_trial.gd`, `test_altar.gd`, `test_arenas.gd`, `test_descent.gd`.
+  Testes: `test_hazard.gd`, `test_trial.gd`, `test_altar.gd`, `test_arenas.gd`, `test_descent.gd`, `test_e5_wiring.gd`.
 
 ## Guerreiro: HeroDef, Maestria, Dons (E2a, fundação; especificação em `docs/design/warrior_spec.md`)
 - **`HeroDef`** (`core/hero_def.gd`, `data/heroes/warrior.tres`, parte `hero` do `make_data.gd`; DT-013): id técnico `warrior`,

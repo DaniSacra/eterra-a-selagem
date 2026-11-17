@@ -14,6 +14,8 @@ enum Event { NONE, ARMED, FIRED, ENDED }
 const PATTERNS: Array[StringName] = [&"sweep", &"comb", &"cut", &"checker", &"frame", &"islands"]
 ## The dense ones: more of the floor at once, only with few enemies standing.
 const DENSE: Array[StringName] = [&"comb", &"checker"]
+## Seconds the ember of a struck tile lasts after the strike (spec 3.4: what the floor shows, RunesLook.set_tile).
+const EMBER := 0.4
 
 var def: HazardDef
 var phase := Phase.CALM
@@ -27,6 +29,12 @@ var live := PackedByteArray()
 var floor_tile := PackedByteArray()
 ## How many patterns struck.
 var fired := 0
+## The tiles of the last strike (1) and the seconds their ember has left (EMBER down to 0).
+var ember := PackedByteArray()
+var ember_left := 0.0
+## The way the armed bands of a sweep will go next (toward the next band; zero for the other patterns): the floor's
+## chevrons (RunesLook.set_chevrons).
+var chevron := Vector2.ZERO
 var _rng: RandomNumberGenerator
 ## The sweep's row and way, the comb's and the checker's parity, the frame's ring.
 var _sweep := 0
@@ -43,6 +51,7 @@ func _init(hazard: HazardDef, floor: FloorShape, doors: Array[Rect2], rng: Rando
 	live.resize(n)
 	floor_tile.resize(n)
 	lit.resize(n)
+	ember.resize(n)
 	for r in def.rows:
 		for c in def.cols:
 			var box := tile_rect(c, r)
@@ -87,6 +96,20 @@ func is_lit(p: Vector2) -> bool:
 	return t.x >= 0 and lit[t.y * def.cols + t.x] == 1
 
 
+## What tile i shows now (RunesLook.set_tile): x arming 0 to 1 over the warning, y the strike 1 falling to 0, z the
+## ember of the last strike 1 falling to 0.
+func state(i: int) -> Vector3:
+	var arm := 0.0
+	var strike := 0.0
+	if lit[i] == 1:
+		if phase == Phase.ARM:
+			arm = clampf(1.0 - left / maxf(def.warn, 0.001), 0.0, 1.0)
+		elif phase == Phase.FIRE:
+			strike = clampf(left / maxf(def.fire, 0.001), 0.0, 1.0)
+	var glow := ember_left / EMBER if ember[i] == 1 and lit[i] == 0 else 0.0
+	return Vector3(arm, strike, glow)
+
+
 ## The share of the tiles that may light which are lit now.
 func share() -> float:
 	var total := 0
@@ -100,6 +123,7 @@ func share() -> float:
 ## One step: hero, where the paladin stands; standing, how many enemies stand.
 func step(dt: float, hero: Vector2, standing: int) -> Event:
 	left -= dt
+	ember_left = maxf(0.0, ember_left - dt)
 	if left > 0.0:
 		return Event.NONE
 	match phase:
@@ -116,9 +140,12 @@ func step(dt: float, hero: Vector2, standing: int) -> Event:
 		Phase.FIRE:
 			phase = Phase.REST
 			left = def.rest
+			ember = lit.duplicate()
+			ember_left = EMBER
 			for i in lit.size():
 				lit[i] = 0
 			pattern = &""
+			chevron = Vector2.ZERO
 			return Event.ENDED
 	return Event.NONE
 
@@ -162,13 +189,17 @@ func _draw(hero: Vector2, standing: int) -> void:
 	pattern = allowed[_rng.randi() % allowed.size()]
 	for i in lit.size():
 		lit[i] = 0
+	chevron = Vector2.ZERO
 	match pattern:
 		&"sweep":
 			_rows([_sweep, _sweep + 4])
+			var was := _sweep
 			_sweep += _sweep_way
 			if _sweep + 4 >= def.rows or _sweep < 0:
 				_sweep_way = -_sweep_way
 				_sweep = clampi(_sweep + _sweep_way * 2, 0, maxi(0, def.rows - 5))
+			# rows grow southward (z): the bands point where the next sweep lights
+			chevron = Vector2(0, signf(_sweep - was))
 		&"comb":
 			var every: Array[int] = []
 			for r in range(_parity, def.rows, 2):
