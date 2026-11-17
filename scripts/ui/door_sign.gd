@@ -7,6 +7,11 @@ extends Node3D
 ## colours keep at least MIN_CONTRAST against the outline (UI-01).
 ##   var sign := DoorSign.make(T.t(&"reward_gold"), "120 ouro")
 ##   sign.position.y = 2.7   # the point the sign stands on (its text grows upwards from there)
+## The shop (C13-04, three groups and the healing): DoorSign.shop(name, price, group) adds the group's word over the
+## name in a cool grey and the price in ivory under it; set_gold(gold) keeps the price ivory while there is gold for it
+## and, when not, turns it a muted rose with what is missing ("150 ouro, faltam 40"): the word, not only the colour.
+##   var sign := DoorSign.shop(T.t(&"reward_heal"), 50, T.t(&"shop_group_care"))
+##   sign.set_gold(rooms.gold)
 
 ## Height of the capitals at a screen 1080 lines tall (the backlog asks for 16 at least).
 const CAP_PX := 19.0
@@ -22,6 +27,10 @@ const DETAIL_SIZE := 16
 const OUTLINE := 4
 const TITLE_COLOR := Color(0.98, 0.84, 0.5)
 const DETAIL_COLOR := UiKit.PALE
+## The shop group's word over the name, smaller, and the price without gold enough for it.
+const GROUP_SIZE := 16
+const GROUP_COLOR := Color(0.74, 0.72, 0.8)
+const SHORT_COLOR := Color(0.92, 0.62, 0.58)
 const OUTLINE_COLOR := Color(0.035, 0.027, 0.04)
 ## WCAG contrast ratio each colour keeps against the outline.
 const MIN_CONTRAST := 4.5
@@ -30,6 +39,11 @@ const LAYER := 2
 
 var title: Label
 var detail: Label
+## The shop group's word (null: not a shop sign).
+var group: Label
+## The shop price (-1: not a shop sign) and the gold still missing for it (0: enough).
+var price := -1
+var missing := 0
 var _layer: CanvasLayer
 var _box: VBoxContainer
 
@@ -54,6 +68,41 @@ static func make(name_text: String, detail_text: String = "") -> DoorSign:
 		s.detail.name = "detail"
 		s._box.add_child(s.detail)
 	return s
+
+
+## A shop item's sign: the group's word over the name (empty: none), the name and its price in ivory.
+static func shop(name_text: String, price_: int, group_text: String = "") -> DoorSign:
+	var s := make(name_text, price_text(price_))
+	s.price = price_
+	if group_text != "":
+		s.group = _label(group_text, GROUP_COLOR, GROUP_SIZE)
+		s.group.name = "group"
+		s._box.add_child(s.group)
+		s._box.move_child(s.group, 0)
+	return s
+
+
+## "150 ouro".
+static func price_text(n: int) -> String:
+	return T.t(&"shop_price", {"n": n})
+
+
+## The price in ivory while gold is enough; without, muted rose and what is missing.
+func set_gold(gold: int) -> void:
+	if detail == null or price < 0:
+		return
+	missing = maxi(price - gold, 0)
+	if missing > 0:
+		detail.text = T.t(&"shop_price_short", {"n": price, "missing": missing})
+		detail.add_theme_color_override(&"font_color", SHORT_COLOR)
+	else:
+		detail.text = price_text(price)
+		detail.add_theme_color_override(&"font_color", DETAIL_COLOR)
+
+
+## Whether the gold given last (set_gold) is enough for this sign's price (true for a sign without price).
+func affordable() -> bool:
+	return missing == 0
 
 
 ## Follows the point it marks: the text's bottom centre on it; hidden behind the camera or with the sign hidden.

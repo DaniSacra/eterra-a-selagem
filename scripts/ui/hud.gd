@@ -124,7 +124,7 @@ var _move_t := 0.0
 var _notice_t := 0.0
 var _passive_count := -1
 var _elo_banner: EloBanner
-## Elos already greeted (the ones owned when the run starts are not).
+## Elos and new Blessings already greeted (the ones owned when the run starts are not).
 var _elos_seen := {}
 var _elos_ready := false
 
@@ -423,13 +423,20 @@ func _update_passives() -> void:
 		icon.queue_redraw()
 
 
-## Greets each Elo once, when it is taken.
+## Greets each Elo once, when it is taken, and each Blessing taken for the first time ever (E3-04: not yet in the
+## save's Codex). What the run starts with is not greeted.
 func _update_elos() -> void:
 	for b in game.boons.new_elos(_elos_seen):
 		_elos_seen[b.id] = true
 		if _elos_ready:
 			_elo_banner.show_elo(b, game.boons.sources(b))
 			_notice_t = 0.0  # the Elo takes the notice's place
+	var codex: Dictionary = Save.data.get("codex", {}).get("boons", {})
+	for b in EloBanner.fresh_boons(game.boons.owned(), _elos_seen, codex):
+		_elos_seen[b.id] = true
+		if _elos_ready:
+			_elo_banner.show_boon(b)
+			_notice_t = 0.0
 	_elos_ready = true
 
 
