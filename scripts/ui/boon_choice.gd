@@ -59,6 +59,14 @@ static func offer_of(entry: Variant) -> Dictionary:
 	return {"rarity": Boon.Rarity.COMMON, "upgrade": false}
 
 
+## The offers of a draw as open reads them (offer_of): {rarity, upgrade} by gift id, upgrade being a trade (E3-01).
+static func offers_of(cards: Array[BoonState.Card]) -> Dictionary:
+	var out := {}
+	for c in cards:
+		out[c.boon.id] = {"rarity": c.rarity, "upgrade": c.trade}
+	return out
+
+
 ## The rarity a card shows: the one drawn for it, or the best the gift already has. An Elo has none (common, BUG-017).
 func card_rarity(b: Boon, state: BoonState) -> Boon.Rarity:
 	if b == null or b.is_duo():

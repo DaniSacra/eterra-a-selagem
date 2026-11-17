@@ -86,12 +86,19 @@ func _entry(b: Boon) -> PanelContainer:
 	text.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(text)
 	var head := HBoxContainer.new()
+	head.add_theme_constant_override(&"separation", 0)
 	head.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	text.add_child(head)
 	var name_l := UiKit.label(T.t("boon_" + String(b.id)), Color(1.0, 0.95, 0.85), 20, UiKit.TITLE_FONT)
 	name_l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(name_l)
-	head.add_child(UiKit.label(T.t(&"choice_level", {"n": lv, "max": b.max_level}), UiKit.GOLD, 16))
+	if b.has_rarity():
+		# the same word and colour as on the card; an Elo has neither rarity nor level (BUG-017)
+		var rar := UiKit.label(T.t(Boon.RARITY_KEY[rarity]) + " · ", BoonCard.rarity_color(rarity).lightened(0.12), 16,
+				UiKit.BOLD_FONT)
+		rar.name = "Rarity"
+		head.add_child(rar)
+		head.add_child(UiKit.label(T.t(&"choice_level", {"n": lv, "max": b.max_level}), UiKit.GOLD, 16))
 	var tag := EloLink.caption(from) if not from.is_empty() else T.t(Boon.FAMILY_KEY[b.family])
 	if b.slot != Boon.Slot.NONE:
 		tag = T.t(Boon.SLOT_KEY[b.slot]) + "  ·  " + tag

@@ -51,7 +51,7 @@ func test_the_blessing_screens_say_bencao() -> void:
 		assert_false(T.t(key).contains("—"))
 	assert_eq(T.t(&"rarity_rare"), "Rara")
 	assert_eq(T.t(&"rarity_epic"), "Épica")
-	assert_eq(T.t(&"rarity_heroic"), "Heroica")
+	assert_eq(T.t(&"rarity_legendary"), "Lendária")
 
 
 # ---------- HeroLoadout ----------
@@ -162,6 +162,37 @@ func test_pressing_a_node_equips_it_in_the_save_data() -> void:
 	assert_eq(count.text, T.t(&"hero_devotion_count", {"used": 3, "max": 8}))
 	s.tree.node(&"quarto_corte").pressed.emit()
 	assert_eq(SaveData.hero(d, "warrior").equipped, [])
+
+
+## QA of E2: a Gift worn and a Gift only open read apart at a glance (filled, emerald line, glow against an outline),
+## and Combo has a colour of its own (it was a grey that read as switched off).
+func test_worn_and_open_gifts_look_apart() -> void:
+	var s := _screen(_data(XP_8, ["quarto_corte"]))
+	var worn := s.tree.node(&"quarto_corte")
+	var open := s.tree.node(&"impeto")
+	assert_eq(worn.state, HeroLoadout.State.EQUIPPED)
+	assert_eq(open.state, HeroLoadout.State.OPEN)
+	assert_eq(worn.line_color(), TalentNode.EQUIPPED_LINE)
+	assert_eq(open.line_color(), UiKit.OLD_GOLD)
+	assert_eq(open.ink_color(), UiKit.INK, "only an outline")
+	assert_gt(absf(worn.ink_color().get_luminance() - open.ink_color().get_luminance()) + absf(worn.ink_color().s - open.ink_color().s), 0.1)
+	var combo := TalentNode.BRANCH_COLOR[TalentDef.Branch.COMBO]
+	assert_gt(combo.s, 0.4, "Combo is a colour, not a grey")
+	for b in [TalentDef.Branch.FURIA, TalentDef.Branch.EMETH, TalentDef.Branch.MAGIA]:
+		assert_gt(absf(combo.h - TalentNode.BRANCH_COLOR[b].h), 0.03, "Combo apart from branch %d" % b)
+
+
+func test_the_hint_names_the_keys_of_the_device_in_hand() -> void:
+	var was := Controls.using_pad
+	Controls.using_pad = false
+	var s := _screen(_data(0))
+	var hint := s.find_child("hint", true, false) as Label
+	assert_eq(hint.text, T.t(&"hero_hint"))
+	Controls.using_pad = true
+	assert_eq(hint.text, T.t(&"hero_hint_pad"), "changes live")
+	Controls.using_pad = false
+	assert_eq(hint.text, T.t(&"hero_hint"))
+	Controls.using_pad = was
 
 
 func test_the_panel_says_why_a_gift_cannot_go_on() -> void:

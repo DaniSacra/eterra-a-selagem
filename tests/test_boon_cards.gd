@@ -76,7 +76,7 @@ func test_a_gift_without_a_painting_keeps_its_drawn_icon() -> void:
 
 
 func test_the_rarity_edge_does_not_change_with_focus() -> void:
-	# E3-06: the card's own rarity colours (BoonCard.RARITY_EDGE); an Elo has none (tests/test_e3_ui.gd)
+	# E3-06: the card's own rarity colours (BoonCard.rarity_color: Boon.RARITY_COLOR, common in metal); an Elo has none (tests/test_e3_ui.gd)
 	var choice := _open([&"redemoinho", &"brasas", &"estilhaco"], {&"redemoinho": Boon.Rarity.EPIC, &"estilhaco": Boon.Rarity.RARE})
 	var cards := choice.cards()
 	var before: Array[Color] = []

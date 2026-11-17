@@ -24,7 +24,11 @@ var map: RunMap
 var room: RunMap.Room
 var next_rooms: Array[RunMap.Room] = []
 var phase := Phase.FIGHT
-var gold := 0
+var gold := 0:
+	set(v):
+		gold = v
+		for p in _pedestals:
+			(p.sign as DoorSign).set_gold(gold)
 ## The kinds of the rooms won in this run (fights and the guardian's), for the Mastery (Game.mastery_gain).
 var won: Array[RunMap.Kind] = []
 ## The gold this fight can still give, dropped by the enemies that fall (C13-04; null outside a fight).
@@ -400,6 +404,19 @@ func _fade_in() -> void:
 
 ## The items of each shop group (C13-04: ShopGroup.count of each), on pedestals in a row; a pomegranate (or its slice)
 ## only when a gift can grow.
+## The shop's items stand in a row level on the screen (along the camera's right, Feel.cam_yaw), STEP apart: at 4 m
+## the signs of five items ("Fortalecer ao acaso" and a price with "faltam" the widest, about 150 px at 720 lines)
+## keep about 20 px between them at 1280 x 720 and at 1920 x 1080 (measured: docs/gallery/e3/ui/shop_real_*). The row's
+## middle sits SHOP_SHIFT m to the left of the hall's, toward the landing the hero comes in by, so the last sign is on
+## screen as he arrives.
+const SHOP_STEP := 5.0
+const SHOP_SHIFT := 3.5
+## The word of each shop group (StageDef.shop_groups, in order), over the item's name.
+const SHOP_GROUP_KEY: Array[StringName] = [&"shop_group_boon", &"shop_group_care", &"shop_group_growth"]
+## Height over the floor of the point a marker's sign stands on.
+const MARK_SIGN_Y := 2.7
+
+
 func _build_shop() -> void:
 	var can_grow := game.boons.can_grow()
 	var valid := func(item: int) -> bool:
@@ -410,11 +427,20 @@ func _build_shop() -> void:
 		for i in group.pick_all(_rng, valid):
 			picks.append({"item": group.items[i] as RunMap.Reward, "price": group.prices[i], "group": g})
 	var n := picks.size()
+	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
 	for k in n:
 		var p := picks[k]
-		var at := Vector2(lerpf(-6.0, 6.0, float(k) / maxf(1.0, n - 1.0)), 0.0)
+		var at := right * ((k - (n - 1) * 0.5) * SHOP_STEP - SHOP_SHIFT)
 		p.at = at
-		p.node = _marker(at, p.item, "%s\n%d %s" % [T.t(RunMap.REWARD_KEY[p.item]), p.price, T.t(&"hud_gold_short")])
+		p.node = _marker(at, p.item, "")
+		# the group's word over the name, the price under it (C13-04); a group named as its only item says it once
+		var name_text := T.t(RunMap.REWARD_KEY[p.item])
+		var group_text := T.t(SHOP_GROUP_KEY[p.group]) if p.group < SHOP_GROUP_KEY.size() else ""
+		var sign := DoorSign.shop(name_text, p.price, "" if group_text == name_text else group_text)
+		sign.position.y = MARK_SIGN_Y
+		sign.set_gold(gold)
+		(p.node as Node3D).add_child(sign)
+		p.sign = sign
 		_pedestals.append(p)
 
 
@@ -529,7 +555,7 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
 		var lines := text.split("\n", true, 1)
 		var sign := DoorSign.make(lines[0], lines[1] if lines.size() > 1 else "")
-		sign.position.y = 2.7
+		sign.position.y = MARK_SIGN_Y
 		root.add_child(sign)
 	return root
 

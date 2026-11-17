@@ -3,12 +3,22 @@ extends BaseButton
 ## One node of the Gift tree on the hero screen (E2-06): a diamond of ink with a line of old gold and the glyph of its
 ## branch (Combo two crossed blades, Fúria a flame, Emeth a crystal, Magia a four-pointed star of light, never the sun;
 ## a bridge two linked diamonds, sustain a drop; the centre the Emeth's blade). Locked: no glyph, a small lock and the
-## Mastery level that opens it. Equipped: the ink takes the branch's colour and the line brightens. The cost is a row
+## Mastery level that opens it. Equipped: the ink filled with the branch's colour, an emerald line and a glow; only open:
+## dark ink, the old gold line and the glyph in the branch's colour (an outline). The cost is a row
 ## of small diamonds under it. Focus (mouse, keys or gamepad: the mouse takes the focus with it) is an ivory line.
 
 ## The branch's colour, muted (TalentDef.Branch; the centre is CENTRE).
-const BRANCH_COLOR: Array[Color] = [Color("c9bfa8"), Color("c8643c"), Color("3fae7c"), Color("4f9cc6"), Color("a88e5c"), Color("b8665a")]
+## Combo is the crimson of the Emeth's hilt and the Warrior's hair (it was a grey that read as switched off).
+const BRANCH_COLOR: Array[Color] = [Color("c4404e"), Color("c8643c"), Color("3fae7c"), Color("4f9cc6"), Color("a88e5c"), Color("b8665a")]
 const CENTRE := Color("3fae7c")
+## A Gift worn: its ink takes this much of its branch's colour (darkened this much), the line is the Emeth's emerald
+## and a glow of GLOW_RINGS rings reaches GLOW_REACH px out. Only open: dark ink and the old gold line (an outline).
+const EQUIPPED_FILL := 0.85
+const EQUIPPED_DARKEN := 0.2
+const EQUIPPED_LINE := Color("6fe0a8")
+const GLOW_RINGS := 4
+const GLOW_REACH := 7.0
+const GLOW_ALPHA := 0.5
 const LOCK_LINE := Color("4a4239")
 const LOCK_INK := Color(0.035, 0.03, 0.04, 0.96)
 const FOCUS := Color(1.0, 0.95, 0.84, 0.95)
@@ -80,32 +90,56 @@ func _draw() -> void:
 	var c := size * 0.5 + Vector2(sin(_flash * 40.0) * 3.0 * _flash, 0.0)
 	var h := size.x * 0.5
 	var locked := state == HeroLoadout.State.LOCKED
-	var on := state == HeroLoadout.State.EQUIPPED or def == null
-	var tint := color()
-	var ink := LOCK_INK if locked else UiKit.INK
-	if on:
-		ink = UiKit.INK.lerp(tint.darkened(0.45), 0.55)
-	var line := LOCK_LINE if locked else UiKit.OLD_GOLD
-	if on:
-		line = UiKit.OLD_GOLD.lightened(0.45)
+	var on := equipped()
+	var line := line_color()
 	if _flash > 0.0:
 		line = line.lerp(Color(1.0, 0.62, 0.5), _flash)
 	var outer := _diamond(c, h)
-	draw_colored_polygon(outer, ink)
-	draw_polyline(_closed(outer), line, UiKit.FRAME, true)
-	draw_polyline(_closed(_diamond(c, h - 5.0)), Color(line, 0.4 if not locked else 0.25), 1.0, true)
+	if on:
+		# the glow of a Gift worn: soft emerald rings outside the line
+		for i in GLOW_RINGS:
+			var k := float(i + 1) / GLOW_RINGS
+			draw_polyline(_closed(_diamond(c, h + 1.5 + k * GLOW_REACH)), Color(EQUIPPED_LINE, GLOW_ALPHA * (1.0 - k)), 2.0, true)
+	draw_colored_polygon(outer, ink_color())
+	draw_polyline(_closed(outer), line, UiKit.FRAME + (1.0 if on else 0.0), true)
+	draw_polyline(_closed(_diamond(c, h - 5.0)), Color(line, 0.25 if locked else 0.4), 1.0, true)
 	if has_focus():
-		draw_polyline(_closed(_diamond(c, h + 4.0)), FOCUS, 1.6, true)
+		draw_polyline(_closed(_diamond(c, h + 4.0 + (GLOW_REACH * 0.5 if on else 0.0))), FOCUS, 1.6, true)
 	if locked:
 		_draw_lock(c, def.unlock_level if def else 1)
 	else:
-		var g := tint.lightened(0.25) if on else (UiKit.PARCHMENT if state == HeroLoadout.State.OPEN else UiKit.DIM.darkened(0.15))
-		_draw_glyph(c, h * 0.5, g)
+		_draw_glyph(c, h * 0.5, glyph_color())
 	if def != null and def.cost > 0:
-		var pip := UiKit.OLD_GOLD.lightened(0.3) if not locked else LOCK_LINE.lightened(0.2)
+		var pip := (EQUIPPED_LINE if on else UiKit.OLD_GOLD.lightened(0.3)) if not locked else LOCK_LINE.lightened(0.2)
 		var x0 := c.x - (def.cost - 1) * PIP_STEP * 0.5
 		for i in def.cost:
 			draw_colored_polygon(_diamond(Vector2(x0 + i * PIP_STEP, size.y + 7.0), PIP), pip)
+
+
+## Worn (the centre always is): filled in its branch's colour, an emerald line and a glow.
+func equipped() -> bool:
+	return state == HeroLoadout.State.EQUIPPED or def == null
+
+
+## The diamond's ink: the branch's colour when worn, plain dark ink when only open (an outline), darker when locked.
+func ink_color() -> Color:
+	if equipped():
+		return UiKit.INK.lerp(color().darkened(EQUIPPED_DARKEN), EQUIPPED_FILL)
+	return LOCK_INK if state == HeroLoadout.State.LOCKED else UiKit.INK
+
+
+## The outer line: emerald when worn, old gold when open, a dull line when locked.
+func line_color() -> Color:
+	if equipped():
+		return EQUIPPED_LINE
+	return LOCK_LINE if state == HeroLoadout.State.LOCKED else UiKit.OLD_GOLD
+
+
+## The branch's glyph: lit ivory over the branch's fill when worn, the branch's colour on dark ink when only open.
+func glyph_color() -> Color:
+	if equipped():
+		return color().lerp(Color.WHITE, 0.7)
+	return color().lightened(0.1) if state == HeroLoadout.State.OPEN else UiKit.DIM.darkened(0.15)
 
 
 func _draw_lock(c: Vector2, level: int) -> void:

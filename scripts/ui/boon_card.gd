@@ -7,7 +7,7 @@ extends Button
 ## a quiet metal), and the card in focus gains a pale inner line and lighter ink, so focus never hides the rarity (no
 ## scaling: a scaled card blurs its text).
 ## E3-06: each rarity has its own frame, read before the colour: common one quiet line, rare one line with coloured
-## rivets, epic a double line, heroic a double line of old gold with corner flourishes (never bright yellow). An Elo
+## rivets, epic a double line, legendary a double line of old gold with corner flourishes (never bright yellow). An Elo
 ## has no rarity and no level (BUG-017): its frame is the chain's metal with links on the corners and its card shows
 ## neither. An exchange (upgrade: the card replaces the Blessing on the same action one rarity up) wears a tab on top,
 ## "Sobe uma raridade", and says at the bottom what it trades and from which rarity to which.
@@ -33,18 +33,16 @@ const METAL_INSET := 5.0
 const FOCUS_INSET := 9.0
 const FOCUS_W := 2.0
 const FOCUS_COLOR := Color(1.0, 0.95, 0.84, 0.95)
-## The card's colour of each rarity (the interface's own; Boon.RARITY_COLOR stays the game's): common a quiet metal
-## (the game's common colour is a plain white), rare a cold blue, epic violet, heroic old gold (HSV saturation 0.52,
-## never bright yellow). The rarity's word on the card takes the same colour.
-const RARITY_EDGE: Array[Color] = [Color("8f7f63"), Color("6f9be6"), Color("b07ae6"), Color("d4ad66")]
+## The card's colour of each rarity is Boon.RARITY_COLOR (rare blue, epic violet, legendary old gold), but common is a
+## quiet metal here (the game's common colour is a plain white). The rarity's word on the card takes the same colour.
 const COMMON_EDGE := Color("8f7f63")
-## Lines of the outer edge per rarity (epic and heroic are doubled) and the gap between the two.
+## Lines of the outer edge per rarity (epic and legendary are doubled) and the gap between the two.
 const RARITY_LINES: Array[int] = [1, 1, 2, 2]
 const DOUBLE_GAP := 3.0
-## Heroic corner flourish: a diamond on the corner and a short spur along each side.
+## Legendary corner flourish: a diamond on the corner and a short spur along each side.
 const FLOURISH := 6.0
 const SPUR := 22.0
-## An Elo's edge: one line of the chain's darker metal (heroic is the lit old gold, doubled), links on the corners.
+## An Elo's edge: one line of the chain's darker metal (legendary is the lit old gold, doubled), links on the corners.
 const ELO_EDGE := EloLink.METAL
 ## The exchange's tab on the top edge: its height and how far it rises above the card.
 const TAB_H := 24.0
@@ -137,7 +135,7 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 	return self
 
 
-## The colour of the outer edge: the rarity's (RARITY_EDGE), the chain's metal for an Elo. Never changed by focus.
+## The colour of the outer edge: the rarity's (rarity_color), the chain's metal for an Elo. Never changed by focus.
 func edge_color() -> Color:
 	return ELO_EDGE if elo else rarity_color(rarity)
 
@@ -149,7 +147,7 @@ func edge_lines() -> int:
 
 ## The card's colour of a rarity.
 static func rarity_color(r: Boon.Rarity) -> Color:
-	return RARITY_EDGE[clampi(r, 0, RARITY_EDGE.size() - 1)]
+	return COMMON_EDGE if r <= Boon.Rarity.COMMON else Boon.RARITY_COLOR[mini(r, Boon.RARITY_COLOR.size() - 1)]
 
 
 ## Whether the pale inner line of focus is drawn.
@@ -218,7 +216,7 @@ static func _draw_link(ci: CanvasItem, c: Vector2) -> void:
 		ci.draw_arc(c + o, 3.6, 0.0, TAU, 14, EloLink.METAL_LIT, 1.6, true)
 
 
-## The heroic corners: a diamond on each corner of the outer edge and a short spur of old gold along both sides.
+## The legendary corners: a diamond on each corner of the outer edge and a short spur of old gold along both sides.
 static func _draw_flourishes(ci: CanvasItem, r: Rect2, col: Color) -> void:
 	var lit := col.lightened(0.2)
 	var pts: Array[Vector2] = [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]

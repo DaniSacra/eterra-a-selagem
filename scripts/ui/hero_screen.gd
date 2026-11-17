@@ -66,6 +66,7 @@ func open(data: Dictionary = {}) -> void:
 	tree = TalentTree.new().setup(loadout)
 	tree.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	tree.picked.connect(_pick)
+	Controls.device_changed.connect(_name_keys)
 	tree.focused.connect(_tell)
 	body.add_child(tree)
 	body.add_child(_panel())
@@ -163,6 +164,7 @@ func _panel() -> Control:
 func _footer() -> Control:
 	var row := HBoxContainer.new()
 	_hint = UiKit.shadow(UiKit.label("", UiKit.DIM, 16))
+	_hint.name = "hint"
 	_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(_hint)
@@ -215,8 +217,13 @@ func _refresh() -> void:
 	_devotion_count.text = T.t(&"hero_devotion_count", {"used": loadout.used(), "max": loadout.devotion()})
 	var next := loadout.next_unlocks()
 	_next.text = T.t(&"hero_next", {"n": loadout.level() + 1, "what": ", ".join(next)}) if not next.is_empty() else ""
-	_hint.text = T.t(&"hero_hint_pad" if Controls.using_pad else &"hero_hint")
+	_name_keys(Controls.using_pad)
 	_tell(_shown)
+
+
+## The footer names the keys of the device in hand, and changes live when the player picks up the other one.
+func _name_keys(pad: bool) -> void:
+	_hint.text = T.t(&"hero_hint_pad" if pad else &"hero_hint")
 
 
 ## The panel tells a Gift (TalentDef), an ultimate (UltDef) or the passive (null).

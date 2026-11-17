@@ -289,10 +289,14 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   losango de ouro velho, barra de XP e "No nível N: ..." do que o próximo nível dá), Devoção em losangos (usada e livre),
   a árvore de Dons em losango (`TalentTree`, `TalentNode`: passiva no centro, Combo em cima, Fúria à direita, Magia
   embaixo, Emeth à esquerda, entrada, meio e ápice para fora, pontes nas diagonais, sustento no canto de baixo à esquerda;
-  trancado mostra cadeado e o nível; custo em losangos pequenos embaixo de cada nó; linha acesa entre dois equipados) e as
+  trancado mostra cadeado e o nível; custo em losangos pequenos embaixo de cada nó; linha acesa entre dois equipados;
+  equipado = losango cheio da cor do ramo, fio esmeralda mais grosso e brilho em volta (`TalentNode.EQUIPPED_*`,
+  `GLOW_*`), só destravado = tinta escura com fio de ouro velho e o símbolo na cor do ramo; Combo em carmesim, a cor do
+  punho da Emeth, antes um cinza que lia como desligado, `TalentNode.BRANCH_COLOR`) e as
   duas ultimates (`UltCard`, trancada mostra o nível). O painel da direita conta o Dom ou a ultimate em foco e, quando
   não dá para equipar, por quê, nas regras do `Talents` (`HeroLoadout`, `core/hero_loadout.gd`: `state`, `why`,
-  `toggle` que tira junto o que dependia, `choose_ult`). Enter, A ou clique equipa e tira; grava na hora em
+  `toggle` que tira junto o que dependia, `choose_ult`). A dica de teclas do rodapé troca ao vivo entre teclado e
+  controle (`Controls.device_changed`). Enter, A ou clique equipa e tira; grava na hora em
   `heroes.warrior.equipped`/`ultimate`. Nome da passiva: "Ímpeto da Emeth" (1ª opção da spec, `hero_passive`).
   Capturas: `--title --screen=hero` com `--hero-xp=N`, `--hero-equip=a,b`, `--hero-ult=id` (só na sessão, nada gravado,
   `Save._dev_hero`). Testes em `tests/test_hero_screen.gd`.
@@ -586,8 +590,27 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   marfim por dentro e a tinta mais clara (`FOCUS_*`), sem escala (borrava o texto). Proteção de 350 ms
   (`BoonChoice.GUARD_MS`). A carta de descanso ("Fôlego") existe na tela, mas a partida por salas aplica o descanso
   direto quando não há oferta (`Game._open_choice`). Capturas: `tools/ui_lab.gd -- --card-only [--offer=a,b,c]
-  [--held=x,y] [--rarity=0,2,1] [--rest] [--focus-move]`; galeria em `docs/gallery/boon_cards/`; testes em
-  `tests/test_boon_cards.gd`.
+  [--held=x,y] [--rarity=0,2,1] [--upgrade=0,1,0] [--trade] [--rest] [--focus-move]`; galeria em
+  `docs/gallery/boon_cards/` e `docs/gallery/e3/ui/`; testes em `tests/test_boon_cards.gd` e `tests/test_e3_ui.gd`.
+  **E3 na interface**: uma moldura por raridade (comum no metal com rebites, rara uma linha azul, épica linha dupla
+  violeta, lendária linha dupla de ouro velho com floreios nos cantos, `BoonCard.RARITY_LINES`, `FLOURISH`); a cor de
+  cada raridade é uma só no jogo todo (`Boon.RARITY_COLOR`: rara `6f9be6`, épica `b07ae6`, lendária ouro velho
+  `d4ad66`, nunca amarelo vivo; `BoonCard.rarity_color` usa ela e só a comum fica no metal `COMMON_EDGE`), também na
+  palavra da raridade da carta e do painel "Dons" (`BoonsScreen`, ao lado do nível; Elo sem raridade). Elo sem raridade
+  nem nível, moldura de corrente. Troca (E3-01) com a aba "Sobe uma raridade" no alto da carta e "Troca X: de A para
+  B" embaixo, no nível da Bênção trocada. **Ligação com as regras**: `Game._open_choice` passa as cartas da regra
+  (`Game.offer_cards`, `BoonState.Card`) à tela por `BoonChoice.offers_of` (`{rarity, upgrade}` por id, upgrade =
+  `Card.trade`); a tela lê com `BoonChoice.offer_of` (aceita também a raridade crua) e `_take` toma a própria carta
+  (`BoonState.take_card`: raridade e nível da troca). "Bênção nova" (E3-04): a primeira vez que se toma uma Bênção na
+  vida do save, saudação curta no alto sem pausar (`EloBanner`, em fila com "Elo formado", `fresh_boons` contra
+  `codex.boons`). Compêndio com 4 abas (`CodexScreen`: Dons, Bênçãos, Elos, Golpes; desconhecidos como "???", receita
+  do Elo quando as duas Bênçãos já foram vistas). Loja: cada item com `DoorSign.shop(nome, preço, grupo)` (palavra do
+  grupo em cinza frio por cima, `Rooms.SHOP_GROUP_KEY`, omitida quando é igual ao nome; preço em marfim) e
+  `set_gold` sempre que o ouro muda (o `Rooms.gold` tem setter): sem ouro o preço fica rosa apagado com "faltam N".
+  Os itens ficam numa fileira reta na tela (ao longo da direita da câmera, `Feel.cam_yaw`), `Rooms.SHOP_STEP` 5 m entre
+  eles e o meio `SHOP_SHIFT` 3,5 m para o lado da entrada: com 5 itens sobram 45 px ou mais entre as placas a 1080 e
+  a última cabe na tela a 1280 x 720 (`docs/gallery/e3/ui/shop_real_*.jpg`; `tools/ui_lab.gd -- --start=shop --shop
+  [--gold=N]`).
 - Combos: `data/combos/paladin.tres` (nós `ComboNode`; `tags` é o que os dons enxergam; os seguintes em `next`, um
   `Array[Resource]`, lidos tipados por `following()`: o `Array[ComboNode]` dentro da própria classe vazava o script na saída,
   as linhas "ObjectDB instances were leaked" e "resources still in use" de toda execução, ciclo 10). Dons: `data/boons/*.tres`

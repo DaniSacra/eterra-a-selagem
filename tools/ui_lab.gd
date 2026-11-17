@@ -6,9 +6,10 @@ extends SceneTree
 ## Gift card only (writes <lab-out>_card.png and, with --focus-move, <lab-out>_card_focus.png after one ui_right):
 ##   --card-only [--offer=a,b,c] [--held=x,y] [--rarity=0,2,1] [--upgrade=0,1,0] [--rest]
 ##   (--upgrade marks cards as exchanges one rarity up, E3-01: the offer is read as {rarity, upgrade})
+##   --trade: the first offer comes as the rules' trade (BoonState.trade_card) through Game._open_choice, as in a run
 ## E3: --new-boon=id takes one Blessing never seen (writes _newboon.png with the "Bênção nova" greeting);
 ##   --codex=boons|elos opens the Compendium on that tab over sample save data (writes _codex.png, no run);
-##   --shop puts the shop's three groups and the healing on signs with gold short for some (writes _shop.png;
+##   --shop [--gold=110] shows the run's own shop signs with that much gold (writes _shop.png;
 ##   start the run with --start=shop).
 
 const GAME := "res://scenes/game.tscn"
@@ -55,19 +56,27 @@ func _run() -> void:
 	offers.clear()
 	for id in _ids("offer", OFFER):
 		offers.append(boons.call(&"find", id))
-	game.call(&"_open_choice", offers)
+	if Dev.has("trade"):
+		# the run's own path (Game._open_choice with the rules' cards): the first offer drawn as a trade of the Blessing
+		# on its action (BoonState.trade_card), the others as plain cards
+		var cards: Array = []
+		for i in offers.size():
+			cards.append(boons.call(&"trade_card", offers[i], RandomNumberGenerator.new()) if i == 0 else offers[i])
+		game.call(&"_open_choice", cards)
+	else:
+		game.call(&"_open_choice", offers)
 	if Dev.has("rest"):
 		# the run takes the rest at once when nothing is left to offer; show its card over the paused fight
 		offers.clear()
 	if Dev.has("rarity") or Dev.has("rest") or Dev.has("upgrade"):
 		# the rarities to show, in card order: reopen the screen with them (the run rolled its own); an exchange is
-		# given the way the rules may hand it over, a Dictionary {rarity, upgrade} (the run's own dictionary stays plain)
+		# given the way the run hands it over, a Dictionary {rarity, upgrade}
 		var rar: Dictionary = (game.get(&"_offer_rarity") as Dictionary).duplicate()
 		var parts := Dev.arg("rarity", "").split(",", false)
 		var ups := Dev.arg("upgrade", "").split(",", false)
 		for i in offers.size():
 			var id: Variant = offers[i].get(&"id")
-			var r := int(parts[i]) if i < parts.size() else int(rar.get(id, 0))
+			var r := int(parts[i]) if i < parts.size() else int((load("res://scripts/ui/boon_choice.gd") as GDScript).call(&"offer_of", rar.get(id)).rarity)
 			rar[id] = {"rarity": r, "upgrade": i < ups.size() and ups[i] == "1"}
 		var old: Node = game.get(&"_screen")
 		var parent := old.get_parent()
@@ -129,27 +138,18 @@ func _codex() -> void:
 
 ## The shop room with its signs remade as the three groups and the healing (C13-04), gold short for the dearer ones.
 func _shop(game: Node) -> void:
+	# the run's own shop (Rooms._build_shop puts DoorSign.shop on every item); 110 gold: some prices short. With a
+	# Blessing held the growth items can show too: the shelf is set again after taking one (five items)
 	var rooms: Node = game.get(&"rooms")
-	var sign_script: GDScript = load("res://scripts/ui/door_sign.gd")
-	var groups := ["shop_group_boon", "shop_group_care", "shop_group_growth", "shop_group_care"]
-	var names := ["reward_boon", "reward_heal", "reward_pom", "reward_heart"]
-	var prices := [150, 50, 100, 125]
-	var gold := 110
-	rooms.set(&"gold", gold)
-	var pedestals: Array = rooms.get(&"_pedestals")
-	var tr: Node = root.get_node("/root/T") if root.has_node("/root/T") else null
-	for i in pedestals.size():
-		var node: Node3D = pedestals[i].node
-		for c in node.get_children():
-			if c.get_script() == sign_script:
-				c.free()
-		var k := mini(i, names.size() - 1)
-		var title: String = tr.call(&"t", names[k]) if tr else names[k]
-		var group: String = tr.call(&"t", groups[k]) if tr else groups[k]
-		var s: Node3D = sign_script.call(&"shop", title, prices[k], group)
-		s.position.y = 2.7
-		node.add_child(s)
-		s.call(&"set_gold", gold)
+	var boons: Variant = game.get(&"boons")
+	if not boons.call(&"can_grow"):
+		game.call(&"_take", boons.call(&"find", &"brasas"))
+		var pedestals: Array = rooms.get(&"_pedestals")
+		for p: Dictionary in pedestals:
+			(p.node as Node).free()
+		pedestals.clear()
+		rooms.call(&"_build_shop")
+	rooms.set(&"gold", int(Dev.arg("gold", "110")))
 	await create_timer(0.6).timeout
 	await _shot("shop")
 

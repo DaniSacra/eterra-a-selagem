@@ -213,7 +213,6 @@ entries = {
 "rarity_common": "Comum",
 "rarity_rare": "Rara",
 "rarity_epic": "Épica",
-"rarity_heroic": "Heroica",
 "rarity_legendary": "Lendária",
 "choice_replaces": "Substitui {name}",
 "action_cast": "Círculo de luz",

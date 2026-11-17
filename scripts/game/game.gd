@@ -99,10 +99,11 @@ var step_timer := StepTimer.new()
 ## When set, the camera looks here instead of at the paladin (the final scene).
 var focus: Variant = null
 var _pending_levels := 0
-## Rarity of each card on the table (Boon.Rarity by gift id).
+## The offer of each card on the table by gift id, as the choice screen reads it (BoonChoice.offer_of): {rarity,
+## upgrade}, upgrade being a trade one rarity up (E3-01).
 var _offer_rarity: Dictionary = {}
 ## The cards of the choice open now (or last opened): rarity, trade (E3-01), the gift replaced and the level it comes
-## at, for the choice screen (BoonChoice reads _offer_rarity; the trade and the level are here).
+## at; _offer_rarity is what the screen is given from them.
 var offer_cards: Array[BoonState.Card] = []
 var _screen: Control
 ## The two lines read during Morvath's ending.
@@ -684,11 +685,10 @@ func _open_choice(cards: Array = []) -> void:
 	offer_cards.clear()
 	for c: Variant in cards:
 		offer_cards.append(c if c is BoonState.Card else boons.cards_for([c])[0])
-	_offer_rarity.clear()
+	_offer_rarity = BoonChoice.offers_of(offer_cards)
 	var offers: Array[Boon] = []
 	for c in offer_cards:
 		offers.append(c.boon)
-		_offer_rarity[c.boon.id] = c.rarity
 		if not c.grow:
 			seen_boons[c.boon.id] = true
 	if Dev.has("autopick") or offers.is_empty():
@@ -730,7 +730,7 @@ func _take(b: Boon) -> void:
 	if card != null:
 		boons.take_card(card)
 	else:
-		boons.take(b, _offer_rarity.get(b.id, Boon.Rarity.COMMON))
+		boons.take(b, BoonChoice.offer_of(_offer_rarity.get(b.id)).rarity)
 	offer_cards.clear()
 	gifts_taken.append(b.id)
 	if b.is_duo():

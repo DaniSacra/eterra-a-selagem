@@ -1,5 +1,5 @@
 extends GutTest
-## E3 interface: the card's frame for each rarity (E3-06, heroic in old gold), the Elo without rarity or level
+## E3 interface: the card's frame for each rarity (E3-06, legendary in old gold), the Elo without rarity or level
 ## (BUG-017 on the card), the exchange one rarity up read defensively from the offer (E3-01), the "Bênção nova"
 ## greeting that never stops the game (E3-04, EloBanner), the Compendium's Bênçãos and Elos tabs (E3-03) and the shop
 ## signs for the three groups and the healing (C13-04).
@@ -33,16 +33,17 @@ func test_each_rarity_has_its_own_frame() -> void:
 		assert_false(seen.has(key), "rarity %d looks like another" % r)
 		seen[key] = true
 	assert_eq(BoonCard.RARITY_LINES[Boon.Rarity.COMMON], 1)
-	assert_eq(BoonCard.RARITY_LINES[Boon.Rarity.LEGENDARY], 2, "heroic is doubled")
+	assert_eq(BoonCard.RARITY_LINES[Boon.Rarity.LEGENDARY], 2, "legendary is doubled")
 
 
-func test_heroic_is_old_gold_never_bright_yellow() -> void:
+func test_legendary_is_old_gold_never_bright_yellow() -> void:
 	var c := BoonCard.rarity_color(Boon.Rarity.LEGENDARY)
 	assert_between(c.h * 360.0, 30.0, 48.0, "a gold hue")
 	assert_lt(c.s, 0.6, "old: not saturated")
 	assert_lt(c.v, 0.9, "old: not bright")
-	# the game's heroic colour is red; the card never shows it
-	assert_ne(c, Boon.RARITY_COLOR[Boon.Rarity.LEGENDARY])
+	# one colour per rarity everywhere: the card's is the game's (common aside, a quiet metal on the card)
+	for r in [Boon.Rarity.RARE, Boon.Rarity.EPIC, Boon.Rarity.LEGENDARY]:
+		assert_eq(BoonCard.rarity_color(r), Boon.RARITY_COLOR[r])
 
 
 func test_the_rarity_word_takes_the_card_colour() -> void:
@@ -99,6 +100,32 @@ func test_an_exchange_wears_the_tab_and_names_the_trade() -> void:
 	assert_null(cards[1].find_child("UpgradeTab", true, false))
 
 
+## The run's own draw reaches the card (Game._open_choice gives BoonChoice.offers_of its cards): a trade drawn by the
+## rules shows the tab, one rarity above the Blessing it replaces, at that Blessing's level; taking the card keeps both.
+func test_a_trade_drawn_by_the_rules_reaches_the_card() -> void:
+	state.take(state.find(&"golpe_brasa"), Boon.Rarity.RARE)
+	state.take(state.find(&"golpe_brasa"))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	var card := state.trade_card(state.find(&"golpe_geada"), rng, [0.0, 0.0, 0.0] as Array[float])
+	assert_true(card.trade)
+	var plain := BoonState.Card.new(state.find(&"brasas"), Boon.Rarity.EPIC)
+	var cards: Array[BoonState.Card] = [card, plain]
+	var offers := BoonChoice.offers_of(cards)
+	assert_eq(offers[&"golpe_geada"], {"rarity": Boon.Rarity.EPIC, "upgrade": true})
+	assert_eq(offers[&"brasas"], {"rarity": Boon.Rarity.EPIC, "upgrade": false})
+	var shown := _open([&"golpe_geada", &"brasas"], offers).cards()
+	assert_true(shown[0].upgrade)
+	assert_eq(shown[0].rarity, Boon.Rarity.EPIC)
+	assert_eq((shown[0].find_child("Level", true, false) as Label).text, T.t(&"choice_level", {"n": 2, "max": shown[0].boon.max_level}))
+	assert_false(shown[1].upgrade)
+	assert_eq(shown[1].rarity, Boon.Rarity.EPIC)
+	state.take_card(card)
+	assert_eq(state.level(&"golpe_geada"), 2)
+	assert_eq(state.rarity(&"golpe_geada"), Boon.Rarity.EPIC)
+	assert_eq(state.level(&"golpe_brasa"), 0)
+
+
 func test_an_exchange_can_come_apart_from_the_rarities() -> void:
 	state.take(state.find(&"golpe_brasa"))
 	var cards := _open([&"golpe_geada"], {&"golpe_geada": Boon.Rarity.RARE}, {&"golpe_geada": true}).cards()
@@ -119,6 +146,24 @@ func test_cards_with_tab_fit() -> void:
 	for c in cards:
 		assert_lte(c.size.y, BoonCard.SIZE.y + 1.0, "%s grows past the card" % c.boon.id)
 		assert_lte(c.size.x, BoonCard.SIZE.x + 1.0)
+
+
+## The Blessings panel names each Blessing's rarity in the card's colour; an Elo shows neither rarity nor level.
+func test_the_panel_shows_the_rarity_like_the_card() -> void:
+	state.take(state.find(&"brasas"), Boon.Rarity.LEGENDARY)
+	state.take(state.find(&"toque_geada"))
+	state.take(state.find(&"vapor"))
+	var panel := BoonsScreen.new()
+	panel.state = state
+	add_child_autofree(panel)
+	panel.open()
+	var words: Array[String] = []
+	for l: Node in panel.find_children("Rarity", "Label", true, false):
+		words.append((l as Label).text)
+		if (l as Label).text.begins_with(T.t(&"rarity_legendary")):
+			assert_eq((l as Label).get_theme_color(&"font_color"), BoonCard.rarity_color(Boon.Rarity.LEGENDARY).lightened(0.12))
+	assert_eq(words.size(), 2, "the Elo has none: %s" % [words])
+	assert_true(words.any(func(w: String) -> bool: return w.begins_with(T.t(&"rarity_legendary"))))
 
 
 # ---------- E3-04: "Bênção nova" ----------

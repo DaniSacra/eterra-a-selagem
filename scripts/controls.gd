@@ -2,6 +2,9 @@ extends Node
 ## Autoload "Controls": the game never reads a key directly, only these actions.
 ## Keyboard and mouse, gamepad and (later, on phones) on-screen buttons all feed the same actions.
 
+## The player went from keys and mouse to a gamepad (pad true) or back.
+signal device_changed(pad: bool)
+
 const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"pause", &"feel_panel"]
 ## Actions the player may rebind in Options.
 const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate"]
@@ -16,7 +19,12 @@ const DEFAULT_PAD := {&"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
 
-var using_pad := false
+## The last device touched was a gamepad (device_changed when it flips, for hints that name the keys live).
+var using_pad := false:
+	set(v):
+		if v != using_pad:
+			using_pad = v
+			device_changed.emit(v)
 ## Which devices were touched since forget_devices() (the run's log: RunLog.device).
 var seen_keys := false
 var seen_pad := false

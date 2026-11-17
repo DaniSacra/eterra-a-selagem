@@ -25,7 +25,10 @@ const ELO_CHANCE := 0.12
 ## Chance a card offers to trade the Blessing on an action already held for another, one rarity higher and at the
 ## same level (E3-01, Hades II's ReplaceChance 0.1).
 const TRADE_CHANCE := 0.1
-const RARITY_COLOR: Array[Color] = [Color(0.92, 0.92, 0.92), Color(0.35, 0.6, 1.0), Color(0.75, 0.4, 1.0), Color(0.78, 0.62, 0.34)]
+## The colour of each rarity, the same everywhere (cards, the Blessings panel): rare a cold blue, epic violet,
+## legendary old gold (HSV saturation 0.52, never bright yellow). The card draws common in its own quiet metal
+## (BoonCard.COMMON_EDGE).
+const RARITY_COLOR: Array[Color] = [Color(0.92, 0.92, 0.92), Color("6f9be6"), Color("b07ae6"), Color("d4ad66")]
 const RARITY_KEY: Array[StringName] = [&"rarity_common", &"rarity_rare", &"rarity_epic", &"rarity_legendary"]
 ## The tag of the moves each action's gifts change (Slot order).
 const SLOT_TAG: Array[StringName] = [&"", &"light", &"heavy", &"cast", &"dash"]
