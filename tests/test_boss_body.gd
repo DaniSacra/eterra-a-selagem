@@ -24,8 +24,21 @@ const LYING: Array[StringName] = [&"death", &"rise"]
 var game: Game
 
 
+## Every fight here plays the same dice (QA E4, as test_enemy_motion.gd since E2-12): without --seed Morvath's
+## generator was randomize()d (Dev.seed_rng), so some runs never drew the charge and "dash was played" failed now and
+## then. Seeded as --seed=SEED does, from the game's _ready on, whatever ran before; this seed's fight plays the scythe,
+## the blades and the charge (the assertions below still check each one).
+const SEED := "1"
+
+
+func before_each() -> void:
+	Dev.has("seed")
+	Dev._args["seed"] = SEED
+
+
 func after_each() -> void:
 	Engine.time_scale = 1.0
+	Dev._args.erase("seed")
 
 
 func test_every_pose_of_his_keeps_the_body_over_his_place() -> void:

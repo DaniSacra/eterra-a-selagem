@@ -1,4 +1,32 @@
-# Relatório de QA e desempenho: E2 (Dons do Guerreiro, ultimates, tela do herói, Morvath mais difícil)
+# Relatório de QA e desempenho: E3 e E4 (Bênçãos, Elos, loja, Salmos, carta de Salmo, Compêndio, música)
+
+- **Data**: 2026-11-17. **Testado**: `arpg-3d` no `5316e9f` (E3, E4-01 a E4-06 e as regras da E5), na worktree do QA.
+  Relatório completo: `docs/qa/e4_report.md`. Logs: `/home/dani/tools/e4/qa/logs/`. Base de desempenho: `ec8529c` (E2).
+- **Ambiente**: WSL2 sem tela, sem som ouvido, sem GPU nesta rodada, sem controle, sem celular, nenhum teste com gente.
+
+## Veredito
+
+**Pronto para seguir, com um P1 a corrigir antes do teste do Daniel**: o tema do Salmo nunca toca (`Music.sting(p.id)`
+recebe `sentinela`, `abrigo`, `pastor`, `rocha`; os temas são `psalm_sentinel`...). Teste que falha entregue:
+`tests/test_music.gd`, `test_every_real_psalm_finds_its_sting` (dono: `gameplay-engineer`).
+
+| Item | Resultado |
+|---|---|
+| `tools/check.gd` / importação | `CHECK ok`, 0 `SCRIPT ERROR`, 0 `Parse Error` |
+| `tools/test.sh` (3 rodadas) | 838/838 antes das mudanças do QA; 839 com 838 passando depois (a falha é o teste novo do P1); 0 arriscados |
+| `tools/title_flow_check.gd` | `FLOW ok` |
+| Teste instável de Morvath (`test_boss_body.gd`, "dash was played") | semeado com `--seed=1` no `before_each`, mesmos `assert`; 6 de 6 |
+| Robô `smoke.sh 600 --bot-reaction=0.25`, sementes 1 a 8 | Morvath 8/8 (aos 196 a 289 s), vence 5/8, 5 a 8 Bênçãos 7/8, compra 6/8 (as 2 sem compra pegaram "Pobreza" na Provação), Salmo 2/8, `step_ms_avg` 0,21 a 0,23 |
+| `smoke.sh 180 --start=boss --boons=25 --seed=5` | vitória aos 83,8 s |
+| `smoke.sh 120 --stress=300 --seed=5` | avg 2,81 a 2,87 ms (outra arena que a da E2); mesma arena +6 a +9% contra a E2, com ruído de carga |
+| Música | cama, luta, fases de Morvath e vitória ligadas; limitador -1,5 dB; sonda: -1,40 dBTP depois do limitador; tema do Salmo **mudo** (P1) |
+| Capturas da E4 | já em `docs/gallery/e4/ui/` (720 e 1080), abertas e olhadas; nada novo capturado |
+
+P2 (detalhes e passos no `e4_report.md`): robô aceita a Provação sem olhar a maldição; semente 8 chega com 3 Bênçãos sem
+o `RESULT` dizer por quê; vazamentos no fim de toda execução (28 ObjectDB, 19 recursos); `CLAUDE.md` com limitador -1 dB
+e `-gtest` que não filtra (usar `-gselect`); avisos `Float/Int` em `test_boss_exits.gd`.
+
+## Relatório de QA e desempenho: E2 (Dons do Guerreiro, ultimates, tela do herói, Morvath mais difícil)
 
 - **Data**: 2026-11-17. Tarefa E2-12 do backlog.
 - **Testado**: `arpg-3d` no `ec8529c` (E2 integrada: passiva P-A, os 19 Dons, U-1 Corte do Juízo e U-2 Voragem, tela do
