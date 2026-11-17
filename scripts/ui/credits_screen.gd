@@ -6,7 +6,10 @@ extends Control
 signal closed
 
 ## The lines, in order on screen (text credits_<id>).
-const LINES: Array[String] = ["music", "sfx", "blade", "synth", "models", "anims", "rock", "fonts", "meshy", "engine"]
+## T5: the recorded music (CC BY 4.0) and sound effects (CC0, one pack CC BY 3.0) have their own lines.
+const LINES: Array[String] = [
+	"music", "music_own", "sfx", "blade", "rpg_sfx", "fantasy", "synth", "models", "anims", "rock", "fonts", "meshy", "engine",
+]
 
 
 func open() -> void:
@@ -17,10 +20,10 @@ func open() -> void:
 	var panel := PanelContainer.new()
 	v.add_child(panel)
 	var list := VBoxContainer.new()
-	list.add_theme_constant_override(&"separation", 8)
+	list.add_theme_constant_override(&"separation", 5)
 	panel.add_child(list)
 	for id in LINES:
-		var l := UiKit.label(T.t("credits_" + id), UiKit.PALE, 19)
+		var l := UiKit.label(T.t("credits_" + id), UiKit.PALE, 17)
 		l.name = "credits_" + id
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.custom_minimum_size.x = 900.0

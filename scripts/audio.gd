@@ -1,6 +1,9 @@
 extends Node
-## Autoload "Audio": sounds by name (the music is the Music autoload, scripts/music.gd). Everything is synthesised from the recipes below (single sound map);
-## to use a recorded file later, put res://audio/<name>.ogg or .wav and it is played instead.
+## Autoload "Audio": sounds by name (the music is the Music autoload, scripts/music.gd). The names are the recipes
+## below (single sound map); a file res://audio/<name>.ogg or .wav (or <name>_0.ogg, <name>_1.ogg... drawn at random)
+## is played instead. T5 (the PO: the synthesis "parece de fliperama"): every name has a recorded file now, CC0 and
+## CC-BY recordings layered by tools/make_sfx.sh (weapon in the air, contact, impact, magic; origins and licences in
+## audio/LICENSES.md and docs/design/t5_audio.md); the recipes only stand in if a file goes missing.
 
 const W := Synth.Wave
 const FILE_DIR := "res://audio/"
@@ -17,6 +20,9 @@ const SOUNDS := {
 	# dart_0..2: qubodup's CC0 swooshes, audio/LICENSES.md), one at random with a little pitch play, at most two at
 	# once (VoiceGate); these recipes only stand in if the files are missing. The Omega's charge rises while held.
 	&"blade": [[W.NOISE, 1800, 5200, 0.09, 0.2, 4.0, 0.0]],
+	# T5: the second cut heavier than the first (lower air, the body behind it), the Omega special its own surge
+	&"blade_heavy": [[W.NOISE, 1200, 4200, 0.14, 0.22, 3.5, 0.0]],
+	&"wave_omega": [[W.NOISE, 700, 3600, 0.4, 0.22, 2.0, 0.0], [W.SINE, 147, 98, 0.4, 0.2, 2.5, 0.0]],
 	&"blade_spin": [[W.NOISE, 900, 4200, 0.32, 0.22, 2.0, 0.0], [W.TRIANGLE, 330, 660, 0.28, 0.08, 2.5, 0.0]],
 	&"thrust": [[W.NOISE, 2500, 6000, 0.1, 0.22, 4.0, 0.0], [W.TRIANGLE, 880, 1320, 0.12, 0.1, 3.0, 0.0]],
 	&"dart": [[W.NOISE, 4000, 7000, 0.07, 0.16, 5.0, 0.0], [W.TRIANGLE, 1320, 1760, 0.08, 0.1, 4.0, 0.0]],

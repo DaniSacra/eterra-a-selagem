@@ -66,8 +66,8 @@ func _build() -> void:
 	_menu.howto_pressed.connect(func() -> void: _open(HowToScreen.new(), TitleButton.Kind.HOWTO))
 	_menu.settings_pressed.connect(func() -> void: _open(OptionsScreen.new(), TitleButton.Kind.SETTINGS))
 	_menu.quit_pressed.connect(_quit)
-	# the walk's music under the title (it carries on into the first room)
-	Music.play(&"catacombs", Music.WALK)
+	# the title's own piece (T5); the first room crossfades into the rooms' music
+	Music.play(&"title")
 	if Dev.has("shot"):
 		# captures show the screen settled, not halfway through its entrance
 		_menu.focus_first()

@@ -6,6 +6,8 @@ extends RefCounted
 ## n be heard (the fight's drums over the walk, Morvath's phases). A new track fades in while the old one fades out,
 ## so there is never a gap; a one-shot (the victory) hands over to its `then` before it ends; a sting (a Psalm's
 ## theme) plays over the bed, which ducks under it.
+## T5: a "solo" track (the rooms, Morvath: recorded pieces that cannot be stacked) hears only layer n at level n; the
+## others keep running unheard in time, so a level change is a LAYER_FADE crossfade that never restarts a piece.
 
 ## Seconds: a new track coming in, an old one going, a layer joining or leaving.
 const FADE_IN := 1.5
@@ -29,6 +31,8 @@ class Deck:
 	var length := 0.0
 	var then: StringName = &""
 	var sting := false
+	## Level n hears only layer n (T5), not the first n.
+	var solo := false
 	## Each layer's gain now and where it is going; the deck's own fade on top.
 	var gains := PackedFloat32Array()
 	var targets := PackedFloat32Array()
@@ -90,11 +94,12 @@ func play(id: StringName, level: int = 1) -> Deck:
 	d.loop = spec.get("loop", true)
 	d.length = spec.get("length", 0.0)
 	d.then = spec.get("then", &"")
+	d.solo = spec.get("solo", false)
 	var n: int = spec.get("layers", 1)
 	d.gains.resize(n)
 	d.targets.resize(n)
 	for i in n:
-		d.targets[i] = 1.0 if i < level else 0.0
+		d.targets[i] = _target(d, i, level)
 		d.gains[i] = d.targets[i]
 	d.fade_to = 1.0
 	decks.append(d)
@@ -102,13 +107,21 @@ func play(id: StringName, level: int = 1) -> Deck:
 	return d
 
 
-## The first n layers of the current track are heard (at least one).
+## The first n layers of the current track are heard (at least one); on a solo track, only layer n.
 func set_level(n: int) -> void:
 	var d := current()
 	if d == null:
 		return
 	for i in d.layers():
-		d.targets[i] = 1.0 if i < maxi(n, 1) else 0.0
+		d.targets[i] = _target(d, i, n)
+
+
+## Where layer i of d goes at level n.
+static func _target(d: Deck, i: int, n: int) -> float:
+	n = clampi(n, 1, d.layers())
+	if d.solo:
+		return 1.0 if i == n - 1 else 0.0
+	return 1.0 if i < n else 0.0
 
 
 func level() -> int:
@@ -118,7 +131,7 @@ func level() -> int:
 	var n := 0
 	for i in d.layers():
 		if d.targets[i] > 0.0:
-			n += 1
+			n = i + 1 if d.solo else n + 1
 	return n
 
 
