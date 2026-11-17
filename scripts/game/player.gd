@@ -20,6 +20,9 @@ signal cast_released(at: Vector2, omega: bool)
 ## (Ultimates plays both; dir: where he faces, the aim at the press).
 signal ult_started(dir: Vector2)
 signal ult_landed(dir: Vector2)
+## The ultimate's button was pressed while it cannot go (none this descent, or its charge not full): the HUD says why
+## (T5: "a ultimate não funciona" was a press that did nothing and told nothing).
+signal ult_refused
 
 ## ULT: the ultimate's gesture (UltDef.gesture), protected, planted, the runner locked as in the roll.
 enum State { MOVE, DODGE, HURT, DEAD, REST, ULT }
@@ -508,6 +511,8 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 	if (Controls.pressed(&"ultimate") or _ult_want > 0.0) and ult_ready and ult != null and runner.can_cancel():
 		_start_ult()
 		return
+	if Controls.pressed(&"ultimate"):
+		ult_refused.emit()
 	_ult_want = maxf(0.0, _ult_want - dt)
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
 	if curse.active():

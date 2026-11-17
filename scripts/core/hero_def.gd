@@ -71,5 +71,27 @@ func ultimate(ult_id: StringName) -> UltDef:
 	return null
 
 
+## The ultimate a descent plays at this Mastery level (T5): the one chosen when it is unlocked, else the first one the
+## level unlocks (a player who reached Mastery 2 and never opened the hero screen still has one), else null.
+func ult_for(chosen: StringName, level: int) -> UltDef:
+	var u := ultimate(chosen)
+	if u != null and u.mastery_level <= level:
+		return u
+	var first: UltDef = null
+	for o in ultimates:
+		if o.mastery_level <= level and (first == null or o.mastery_level < first.mastery_level):
+			first = o
+	return first
+
+
+## The lowest Mastery level that unlocks an ultimate (0: the hero has none).
+func first_ult_level() -> int:
+	var low := 0
+	for u in ultimates:
+		if low == 0 or u.mastery_level < low:
+			low = u.mastery_level
+	return low
+
+
 func talents() -> Talents:
 	return Talents.new(Talents.load_catalog(talents_dir))

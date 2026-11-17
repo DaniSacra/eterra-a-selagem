@@ -1,14 +1,16 @@
 class_name UltCharge
 extends RefCounted
 ## The ultimate's charge (D-54; ultimate_u2_proposals.md section 1): it fills with the Magia spent on Omegas (attack,
-## special, circle: every spend of Magick is an Omega's) and is ready at UltDef.charge; using it empties it. Magia
-## spent while an ultimate still runs already counts for the next one. Pure: Ultimates feeds it Magick.spent.
+## special, circle: every spend of Magick is an Omega's) and, since T5 (docs/design/t5_ultimate.md), with the damage
+## the hero deals and the life he loses (UltDef.damage_charge, hurt_charge); it is ready at UltDef.charge; using it
+## empties it. What is spent or dealt while an ultimate still runs already counts for the next one. Pure: Ultimates
+## feeds it running totals (Magick.spent, DealtBy.total without the ultimate's own hits).
 
 ## Magia needed to fill it (UltDef.charge).
 var need := 60.0
 var value := 0.0
-## The last Magick.spent seen (feed counts what was spent since; -1: nothing seen yet).
-var _seen := -1.0
+## The last running total seen of each source (feed counts what was added since; none yet: nothing seen).
+var _seen: Dictionary = {}
 
 
 func _init(cost: float = 60.0) -> void:
@@ -24,9 +26,14 @@ func add(spent: float, rate: float = 0.0) -> void:
 ## Counts the Magia spent since the last call, from Magick's running total (a total that went back, a new Magick,
 ## starts over from it).
 func feed(total_spent: float, rate: float = 0.0) -> void:
-	if _seen >= 0.0 and total_spent >= _seen:
-		add(total_spent - _seen, rate)
-	_seen = total_spent
+	feed_from(&"magick", total_spent, 1.0, rate)
+
+
+## The same for any running total (source names it): what it grew since the last call, times weight (charge per unit).
+func feed_from(source: StringName, total: float, weight: float, rate: float = 0.0) -> void:
+	if _seen.has(source) and total >= float(_seen[source]):
+		add((total - float(_seen[source])) * weight, rate)
+	_seen[source] = total
 
 
 func ready() -> bool:

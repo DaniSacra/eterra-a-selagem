@@ -13,6 +13,9 @@ extends Control
 ## (RELEASE seconds), stronger than the shine of a plain recharge.
 ## The Psalm of the Pastor (E4) on the special: the lights gathered as small diamonds over the top of the frame, lit in
 ## the Psalm's colour, dark sockets for the ones still to gather (lights_max 0: none drawn).
+## The ultimate's diamond (T5): sealed while the Mastery has not unlocked it (dark gem, dimmed glyph, an old gold
+## padlock), a short caption over it that says what is missing ("Maestria 2", "Carga 40%") or "Pronta", and, full, a
+## slow pale pulse around the frame so a ready ultimate never looks like any idle action.
 
 const DIAMOND := 54.0
 const KEY_H := 17.0
@@ -46,6 +49,13 @@ const RELEASE_REACH := 16.0
 const LIGHT := 3.5
 const LIGHT_GAP := 10.0
 const LIGHT_RISE := 7.0
+## The caption over the diamond (T5): its size, how far over the frame, and the ready pulse's period and reach.
+const CAPTION_FONT := 12
+const CAPTION_RISE := 6.0
+const PULSE_PERIOD := 1.2
+const PULSE_REACH := 5.0
+const SEAL_VEIL := Color(0.02, 0.016, 0.03, 0.7)
+const SEAL_GLYPH := 0.35
 
 var action: StringName
 var slot: Boon.Slot
@@ -84,6 +94,32 @@ var glyph := -1:
 var lights := 0
 var lights_max := 0
 var light_color := UiKit.OLD_GOLD
+## Not unlocked yet (the ultimate before its Mastery level): sealed, nothing to press.
+var sealed := false:
+	set(v):
+		if v != sealed:
+			sealed = v
+			queue_redraw()
+## A short text over the diamond ("" none) and its colour.
+var caption := "":
+	set(v):
+		if v != caption:
+			caption = v
+			queue_redraw()
+var caption_color := UiKit.DIM:
+	set(v):
+		if v != caption_color:
+			caption_color = v
+			queue_redraw()
+## Full and ready (the ultimate): a slow pale pulse around the frame.
+var pulse := false:
+	set(v):
+		if v != pulse:
+			pulse = v
+			_pulse_t = 0.0
+			set_process(true)
+			queue_redraw()
+var _pulse_t := 0.0
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
@@ -137,7 +173,8 @@ func busy() -> bool:
 func _process(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta / READY_FLASH)
 	_release = maxf(0.0, _release - delta / RELEASE)
-	if _flash == 0.0 and _release == 0.0:
+	_pulse_t = fmod(_pulse_t + delta, PULSE_PERIOD)
+	if _flash == 0.0 and _release == 0.0 and not pulse:
 		set_process(false)
 	queue_redraw()
 
@@ -166,6 +203,9 @@ func _draw() -> void:
 	if locked > 0.0:
 		draw_colored_polygon(_diamond(c, core), LOCK_VEIL)
 		ink = Color(IVORY, LOCK_GLYPH)
+	if sealed:
+		draw_colored_polygon(_diamond(c, core), SEAL_VEIL)
+		ink = Color(IVORY, SEAL_GLYPH)
 	var shape := glyph if glyph >= 0 else boon.icon if boon else BoonIcon.ACTION_GLYPH + slot
 	BoonIcon.glyph(self, shape, c - Vector2(0, lift), r * 0.42, ink, gem.darkened(0.5))
 	if locked > 0.0:
@@ -175,6 +215,11 @@ func _draw() -> void:
 		if left.size() > 1:
 			draw_polyline(left, LOCK.lightened(0.2), UiKit.FRAME + 1.0, true)
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, LOCK.lightened(0.55))
+	if sealed:
+		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, UiKit.OLD_GOLD.lightened(0.35))
+	if pulse and not busy():
+		var k := _pulse_t / PULSE_PERIOD
+		draw_polyline(_closed(_diamond(c, r + 2.0 + PULSE_REACH * k)), Color(UiKit.PALE, 0.7 * (1.0 - k)), 1.5, true)
 	if _release > 0.0:
 		var k := 1.0 - _release
 		draw_polyline(_closed(_diamond(c, r + 2.0 + RELEASE_REACH * ease(k, 0.4))), Color(UiKit.PALE, _release * 0.9), 2.0, true)
@@ -199,6 +244,17 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(p, LIGHT + 1.5), UiKit.INK)
 		draw_colored_polygon(_diamond(p, LIGHT), light_color if i < lights else CHARGE_SPENT)
 	_draw_key(Vector2(c.x, DIAMOND))
+	if caption != "":
+		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
+
+
+## The caption centred over the frame, with the HUD's dark shadow so it holds over a lit floor.
+func _draw_caption(at: Vector2) -> void:
+	var font := UiKit.BOLD_FONT
+	var w := font.get_string_size(caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FONT).x
+	var base := Vector2(at.x - w * 0.5, at.y)
+	draw_string(font, base + Vector2(0, UiKit.SHADOW_DROP), caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FONT, Color(UiKit.INK, 0.85))
+	draw_string(font, base, caption, HORIZONTAL_ALIGNMENT_LEFT, -1, CAPTION_FONT, caption_color)
 
 
 ## A small padlock (body and shackle) in ink-outlined colour, centred at c, half as tall as 2 r.

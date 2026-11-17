@@ -90,8 +90,10 @@ func toggle(id: StringName) -> bool:
 	return true
 
 
+## The ultimate the next descent plays: the one chosen, or the first unlocked when none is (HeroDef.ult_for, T5).
 func ultimate() -> StringName:
-	return StringName(block.ultimate)
+	var u := hero.ult_for(StringName(block.ultimate), level())
+	return u.id if u != null else &""
 
 
 func ult_open(u: UltDef) -> bool:
