@@ -269,6 +269,7 @@ func _gift_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color) ->
 	var width := float(w.width) * size
 	var look := Projectiles.Kind.SPARK if width <= Projectiles.WAVE_SPAN + 0.01 else Projectiles.Kind.WAVE
 	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, float(w.damage), float(w.reach) * size, width, color, tags)
+	projectiles.bolden(shot)
 	shot.counted = true
 	shot.through = boons.stat(&"wave_through", tags) > 0.0
 

@@ -116,11 +116,15 @@ const BLADE_TIP := Vector3(0, 1.15, 0)
 ## violet when it lands. The special (and its Omega) is locked while it lasts, walking and dodging never.
 const CURSE_GLOW := Color(0.55, 0.12, 0.8, 0.65)
 const CURSE_ACTION := &"heavy_attack"
-## Ímpeto's embers (show_fury): where on the blade (the sword's own space: the grip's top at 0.13, the tip at 1.5),
-## meters across, the colour (Emeth's green, its brightest channel 1.0, drawn over what is behind: under the glow).
-const EMBER_AT: Array[Vector3] = [Vector3(0, 0.6, 0), Vector3(0, 0.85, 0), Vector3(0, 1.1, 0)]
-const EMBER_SIZE := 0.12
-const EMBER_COLOR := Color(0.3, 1.0, 0.45, 0.9)
+## Ímpeto's embers (show_fury, fury_ember.gdshader): where on the blade (the sword's own space: the grip's top at 0.13,
+## the tip at 1.5), meters across, the colour (Emeth's green), how far the heart goes toward white (its brightest
+## channel, the peak, kept under the glow and ScreenTone.SAFE: ember_peak) and each one's flicker phase. E2: at 0.12 m
+## and plain green they vanished on the green blade; a pale heart in a dark ink ring reads on it at 1080.
+const EMBER_AT: Array[Vector3] = [Vector3(0, 0.55, 0), Vector3(0, 0.85, 0), Vector3(0, 1.15, 0)]
+const EMBER_SIZE := 0.3
+const EMBER_COLOR := Color(0.3, 1.0, 0.45)
+const EMBER_PALE := 0.5
+const EMBER_SHADER := preload("res://assets/shaders/fury_ember.gdshader")
 ## The ring at his feet when a kill gives the dodge back (Avanço Feroz, Investida): meters.
 const DODGE_BACK_RING := 1.1
 
@@ -582,30 +586,35 @@ func give_dodge_back() -> bool:
 	return true
 
 
-## Ímpeto's charges as embers on the blade: n small emerald motes along it, under the glow (EMBER_COLOR's brightest
-## channel is 1.0; the glow starts at 1.3), none without a charge.
+## Ímpeto's charges as embers on the blade: n small emerald embers along it, under the glow (ember_peak; the glow
+## starts at 1.3), none without a charge. One material for the three.
 func show_fury(n: int) -> void:
 	if n > 0 and _embers.is_empty() and _sword:
+		var m := ShaderMaterial.new()
+		m.shader = EMBER_SHADER
+		m.render_priority = XRAY_PRIORITY + 3
+		m.set_shader_parameter(&"color", EMBER_COLOR)
+		m.set_shader_parameter(&"heart_pale", EMBER_PALE)
+		m.set_shader_parameter(&"peak", ember_peak())
 		for k in EMBER_AT.size():
-			_embers.append(_ember(EMBER_AT[k]))
+			_embers.append(_ember(EMBER_AT[k], m, float(k) / EMBER_AT.size()))
 	for k in _embers.size():
 		_embers[k].visible = k < n
 
 
-func _ember(at: Vector3) -> MeshInstance3D:
+## The brightest channel of an ember's pale heart: 1 at most (under the glow), less where it would pass ScreenTone.SAFE.
+static func ember_peak() -> float:
+	return minf(1.0, ScreenTone.linear_peak(EMBER_COLOR.lerp(Color.WHITE, EMBER_PALE)))
+
+
+func _ember(at: Vector3, m: ShaderMaterial, phase: float) -> MeshInstance3D:
 	var quad := QuadMesh.new()
 	# (in the sword's space, which the body scales: meters on the screen)
 	quad.size = Vector2.ONE * EMBER_SIZE / maxf(_sword.global_basis.get_scale().x, 0.001)
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-	m.billboard_keep_scale = true
-	m.albedo_color = EMBER_COLOR
-	m.albedo_texture = Fx.soft_dot()
 	var mi := MeshInstance3D.new()
 	mi.mesh = quad
 	mi.material_override = m
+	mi.set_instance_shader_parameter(&"phase", phase)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.position = at
 	mi.visible = false
