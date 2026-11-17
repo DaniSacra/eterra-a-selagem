@@ -1,0 +1,468 @@
+class_name RunesLook
+extends ArenaRoom
+## The look of the Câmara das Runas Instáveis (the chamber of the unstable runes, E5 spec docs/art/e5_spec.md section 3):
+## a square room of dark cold stone where the floor is the room. Its slabs are the rune tiles of 3 m (rune_floor.gdshader:
+## a frame of old gold sunk round each, three worn straight marks inside), the quiet stone of variant B smooth basalt
+## (a box &"quiet" of the layout that stops nothing). The north wall (7 m of basalt) holds three tall stelae covered in
+## straight carved marks, nothing legible, the door of X1 between them with its fire bowls in recesses; the west wall
+## the arcade of the way in; south and east a balustrade over the abyss; the rune pillars (&"rune_pillar") of the layout
+## with their own grooves of gold. Light from above, cold and wide; the only warmth on the floor is the runes' amber.
+## The danger itself (patterns, timing, damage) is the gameplay's (ArenaHazard): it writes each tile's state here
+## (set_tile, then apply once a frame) and this draws it: the floor's frames warm to amber, the sheet of light of a
+## strike (rune_flash.gdshader), the pillars' grooves warming with any tile, up to four amber lights over the armed
+## bands (Forward+ only, no shadows). Nothing round, anywhere (D-29).
+
+## A tile's side (m) and what its alpha says it is (the shader reads it).
+const TILE := 3.0
+const RUNE := 1.0
+const QUIET := 0.5
+## The walls: height, the stelae (width, height, depth; their x on the north wall, the door between them), the ledge at
+## each stele's foot for its candles (height, depth out of the wall), the carved marks on a stele (rows, strokes a row,
+## stroke length range, width).
+const WALL_HEIGHT := 7.0
+const STELE := Vector3(1.2, 5.0, 0.4)
+## The stele's cap: two stepped courses this tall.
+const STELE_CAP := 0.22
+const STELAE: Array[float] = [-8.5, -1.0, 11.0]
+const LEDGE := Vector2(1.0, 0.25)
+const MARK_ROWS := 9
+const MARK_STROKES := 4
+const MARK_LENGTH := Vector2(0.12, 0.3)
+const MARK_WIDTH := 0.035
+## The way in: an arcade in the west wall at the paladin's z (width), stairs going down out of it.
+const ENTRY_WIDE := 4.0
+const ENTRY_STEPS := 6
+## A rune pillar: plinth (height, how much wider), cap (height, how much wider), the gold grooves up each face (how
+## many, width, how far from the foot and the top).
+const PILLAR_PLINTH := Vector2(0.35, 0.2)
+const PILLAR_CAP := Vector2(0.3, 0.16)
+const PILLAR_GROOVES := 2
+const PILLAR_GROOVE := 0.06
+const PILLAR_GROOVE_SPAN := Vector2(0.6, 0.6)
+## The pillars' grooves: old gold at rest, amber (to this light) while any tile arms.
+const GROOVE_HEAT := 1.0
+## The stone (spec 3.6): blue-black basalt, the floor a cold neutral stone, a slab a tile.
+const STONE := Color(0.72, 0.74, 0.82)
+const FLOOR := {
+	&"unit": 3.0, &"stone_a": Color(0.27, 0.27, 0.30), &"stone_b": Color(0.36, 0.36, 0.40),
+	&"joint_color": Color(0.06, 0.06, 0.08), &"moss_color": Color(0.27, 0.27, 0.30), &"petal_color": Color(0.27, 0.27, 0.30),
+	&"missing": 0.0, &"cracked": 0.85, &"slab_value": Vector2(0.85, 1.12), &"slab_tilt": 1.0, &"corner_round": 0.05,
+	&"wobble": 0.02,
+}
+## The air (spec 3.6).
+const AIR := {
+	&"sky": Color(0.03, 0.03, 0.05), &"fog": Color(0.07, 0.07, 0.10), &"fog_depth": Vector2(45.0, 100.0),
+	&"ambient": Color(0.30, 0.31, 0.36), &"ambient_gain": 0.7 / 0.9, &"moon": Color(0.6, 0.65, 0.8), &"moon_energy": 0.15,
+	&"moon_shadow": false,
+}
+const MIST := Color(0.03, 0.03, 0.06)
+## The tower's faces under the floor: the same blue-black basalt going down into the dark.
+const CLIFF := {&"stone_color": Color(0.07, 0.075, 0.1), &"edge_color": Color(0.14, 0.15, 0.2), &"mist_color": Color(0.03, 0.03, 0.06)}
+## The cold light from above (spec 3.6; B a step colder), no shadow, wide and even.
+const KEY := Color(0.78, 0.82, 0.95)
+const KEY_B := Color(0.74, 0.8, 0.98)
+const KEY_ENERGY := 1.8
+const KEY_HEIGHT := 12.0
+const KEY_REACH := 30.0
+const KEY_FALLOFF := 0.5
+## The north door's fire bowls: their pool kept within 2 m of the wall (spec 3.6: the amber on the floor is the runes').
+const BOWL_ENERGY := 2.6
+const BOWL_RANGE := 4.0
+## B: the stelae's candles, half lit, one group with shadow.
+const STELE_CANDLES := 1.4
+## Lights over the armed bands (spec 3.4): at most, their energy at full arming, height, least range; only Forward+.
+const ARM_LIGHTS := 4
+const ARM_ENERGY := 1.0
+const ARM_HEIGHT := 1.6
+const ARM_RANGE := 5.0
+const FLASH_SHADER := preload("res://assets/shaders/rune_flash.gdshader")
+const FLOOR_SHADER := preload("res://assets/shaders/rune_floor.gdshader")
+## The sheet of the strike: its colour (ivory-amber, spec 3.4) and how far inside the frame it starts.
+const FLASH := Color(1.0, 0.88, 0.70)
+const FLASH_INSET := 0.1
+
+var _origin := Vector2.ZERO
+var _grid := Vector2i.ZERO
+var _image: Image
+var _texture: ImageTexture
+var _flash: ShaderMaterial
+var _flash_mesh: MeshInstance3D
+var _groove: StandardMaterial3D
+var _lights: Array[OmniLight3D] = []
+var _heat := 0.0
+var _quiet := false
+
+
+func floor_shader() -> Shader:
+	return FLOOR_SHADER
+
+
+func floor_look() -> Dictionary:
+	return FLOOR
+
+
+func stone_tint() -> Color:
+	return STONE
+
+
+func air() -> Dictionary:
+	return AIR
+
+
+func mist() -> Color:
+	return MIST
+
+
+func cliff_look() -> Dictionary:
+	return CLIFF
+
+
+## The north door (X1) opens in the wall.
+func in_wall(i: int) -> bool:
+	return layout.exits[i].inward.y > 0.5
+
+
+## The north and west sides and the north-west cut are walls (drawn in dress); the rest stands over the abyss behind
+## a balustrade (dotted round the paladin on the edges the camera looks across).
+func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) -> void:
+	if kind == Edge.MOUTH:
+		super.edge(a, b, out, kind, faces)
+		return
+	if _walled(out):
+		return
+	broken_edge(a, b, out, faces)
+	balustrade_edge(a, b, out, false)
+
+
+func _walled(out: Vector2) -> bool:
+	return out.y < -0.5 and out.x < 0.5 or out.x < -0.9
+
+
+## The north door's fire bowls: a short warm pool by the wall only.
+func piece(o: ArenaObstacle) -> void:
+	match o.piece:
+		&"brazier":
+			var l := kit.brazier(o.center, 0.0, false)
+			l.light_energy = BOWL_ENERGY
+			l.omni_range = BOWL_RANGE
+		&"rune_pillar":
+			_pillar(o)
+		_:
+			super.piece(o)
+
+
+func dress() -> void:
+	var box := layout.floor.bounds()
+	_origin = box.position
+	_grid = Vector2i(ceili(box.size.x / TILE - 0.01), ceili(box.size.y / TILE - 0.01))
+	for o in layout.obstacles:
+		if o.piece == &"quiet":
+			_quiet = true
+	_tiles()
+	_walls(box)
+	_flash_sheet()
+	var key := key_light(KEY_B if _quiet else KEY, KEY_ENERGY, KEY_HEIGHT)
+	key.omni_range = KEY_REACH
+	key.omni_attenuation = KEY_FALLOFF
+	if not compat():
+		for k in ARM_LIGHTS:
+			var l := OmniLight3D.new()
+			l.light_color = ArenaKit.FIRE
+			l.light_energy = 0.0
+			l.omni_range = ARM_RANGE
+			l.visible = false
+			l.light_cull_mask = ~Arena.CROWD_LAYER
+			add_child(l)
+			_lights.append(l)
+
+
+# ---------- the tiles' state (the gameplay writes it) ----------
+
+## How many tiles across (columns west to east) and down (rows north to south).
+func grid() -> Vector2i:
+	return _grid
+
+
+## The tile under a floor point (may be outside the grid near the edges).
+func tile_at(p: Vector2) -> Vector2i:
+	return Vector2i(floori((p.x - _origin.x) / TILE), floori((p.y - _origin.y) / TILE))
+
+
+## The floor a tile covers.
+func tile_rect(t: Vector2i) -> Rect2:
+	return Rect2(_origin + Vector2(t) * TILE, Vector2(TILE, TILE))
+
+
+## True when the tile is the quiet stone (never lights).
+func is_quiet(t: Vector2i) -> bool:
+	return _image.get_pixel(t.x, t.y).a < (RUNE + QUIET) * 0.5
+
+
+## One tile's state: arming 0 to 1 (spec 3.4: 1.2 s), firing 1 at the strike falling to 0 (0.25 s), the ember left
+## after it 1 falling to 0 (0.4 s). Seen at the next apply().
+func set_tile(t: Vector2i, arm: float, fire: float, ember: float) -> void:
+	if t.x < 0 or t.y < 0 or t.x >= _grid.x or t.y >= _grid.y:
+		return
+	var kind := _image.get_pixel(t.x, t.y).a
+	if kind < (RUNE + QUIET) * 0.5:
+		return
+	_image.set_pixel(t.x, t.y, Color(clampf(arm, 0.0, 1.0), clampf(fire, 0.0, 1.0), clampf(ember, 0.0, 1.0), kind))
+
+
+## Every tile back to rest.
+func clear_tiles() -> void:
+	for y in _grid.y:
+		for x in _grid.x:
+			var kind := _image.get_pixel(x, y).a
+			_image.set_pixel(x, y, Color(0, 0, 0, kind))
+
+
+## The way the chevrons of the armed tiles run (toward the next band; zero: none).
+func set_chevrons(dir: Vector2) -> void:
+	floor_mat.set_shader_parameter(&"chevron_dir", dir)
+
+
+## Shows the tiles as set: the floor, the sheets of the strikes, the pillars' grooves and the lights over the armed bands.
+func apply() -> void:
+	_texture.update(_image)
+	var armed: Array[Vector3] = []
+	_heat = 0.0
+	for y in _grid.y:
+		for x in _grid.x:
+			var c := _image.get_pixel(x, y)
+			_heat = maxf(_heat, maxf(c.r, c.b * 0.5))
+			if c.r > 0.02:
+				var mid := tile_rect(Vector2i(x, y)).get_center()
+				armed.append(Vector3(mid.x, mid.y, c.r))
+	_groove.emission_energy_multiplier = _heat * GROOVE_HEAT
+	_groove.albedo_color = TombKit.GOLD.lerp(ArenaKit.FIRE, _heat * 0.5)
+	_place_lights(armed)
+
+
+## The state as the shader reads it (one texel a tile).
+func state_image() -> Image:
+	return _image
+
+
+## How warm the room is (the most armed tile): the pillars' grooves follow it.
+func heat() -> float:
+	return _heat
+
+
+## The tiles and their state texture; the quiet stone from the layout.
+func _tiles() -> void:
+	_image = Image.create(_grid.x, _grid.y, false, Image.FORMAT_RGBA8)
+	for y in _grid.y:
+		for x in _grid.x:
+			var mid := _origin + (Vector2(x, y) + Vector2(0.5, 0.5)) * TILE
+			var kind := RUNE
+			for o in layout.obstacles:
+				if o.piece == &"quiet" and o.depth(mid, 0.0) > 0.0:
+					kind = QUIET
+			_image.set_pixel(x, y, Color(0, 0, 0, kind))
+	_texture = ImageTexture.create_from_image(_image)
+	floor_mat.set_shader_parameter(&"rune_state", _texture)
+	floor_mat.set_shader_parameter(&"rune_grid", _grid)
+	floor_mat.set_shader_parameter(&"rune_origin", _origin)
+	# no calm middle: every tile reads the same
+	floor_mat.set_shader_parameter(&"calm_radius", 0.0)
+
+
+## The sheets of light of the strikes: one square a tile (inside its frame), folded away until the tile fires.
+func _flash_sheet() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for y in _grid.y:
+		for x in _grid.x:
+			var r := tile_rect(Vector2i(x, y)).grow(-FLASH_INSET)
+			var q: Array[Vector2] = [r.position, Vector2(r.end.x, r.position.y), r.end, Vector2(r.position.x, r.end.y)]
+			var uv: Array[Vector2] = [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+			for k: int in [0, 1, 2, 0, 2, 3]:
+				st.set_uv(uv[k])
+				st.set_uv2(Vector2(x, y) + Vector2(0.5, 0.5))
+				st.add_vertex(Vector3(q[k].x, 0.03, q[k].y))
+	_flash = ShaderMaterial.new()
+	_flash.shader = FLASH_SHADER
+	_flash.set_shader_parameter(&"rune_state", _texture)
+	_flash.set_shader_parameter(&"color", FLASH)
+	_flash.set_shader_parameter(&"cap", ScreenTone.linear_peak(FLASH))
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = _flash
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.extra_cull_margin = 1.0
+	add_child(mi)
+	_flash_mesh = mi
+
+
+## Up to ARM_LIGHTS warm lights over the armed tiles (spec 3.4): the tiles in reading order cut in even runs, a light
+## over each run's middle, as strong as its most armed tile.
+func _place_lights(armed: Array[Vector3]) -> void:
+	if _lights.is_empty():
+		return
+	var runs := mini(_lights.size(), armed.size())
+	for k in _lights.size():
+		var l := _lights[k]
+		if k >= runs:
+			l.visible = false
+			continue
+		var from := armed.size() * k / runs
+		var to := armed.size() * (k + 1) / runs
+		var mid := Vector2.ZERO
+		var most := 0.0
+		var box := Rect2(Vector2(armed[from].x, armed[from].y), Vector2.ZERO)
+		for i in range(from, to):
+			mid += Vector2(armed[i].x, armed[i].y)
+			most = maxf(most, armed[i].z)
+			box = box.expand(Vector2(armed[i].x, armed[i].y))
+		mid /= float(to - from)
+		l.position = Vector3(mid.x, ARM_HEIGHT, mid.y)
+		l.light_energy = ARM_ENERGY * most
+		l.omni_range = maxf(ARM_RANGE, box.size.length() * 0.6 + TILE)
+		l.visible = true
+
+
+## The lab's states (tools/arena_lab.gd --state=): "arm" two bands of the sweep armed with their chevrons, "fire" one
+## band striking and the other's ember ("fire_floor" the same without the sheet of light), "checker", "after"/"" at rest.
+func demo(state: String) -> void:
+	clear_tiles()
+	match state:
+		"arm":
+			for x in _grid.x:
+				set_tile(Vector2i(x, 1), 0.85, 0.0, 0.0)
+				set_tile(Vector2i(x, 5), 0.5, 0.0, 0.0)
+			set_chevrons(Vector2(0, 1))
+		"fire", "fire_floor":
+			# fire_floor: the floor alone, without the sheet of light over it
+			_flash_mesh.visible = state == "fire"
+			for x in _grid.x:
+				set_tile(Vector2i(x, 1), 0.0, 0.7, 0.0)
+				set_tile(Vector2i(x, 5), 0.0, 0.0, 0.6)
+		"checker":
+			for y in _grid.y:
+				for x in _grid.x:
+					if (x + y) % 2 == 0:
+						set_tile(Vector2i(x, y), 0.9, 0.0, 0.0)
+	apply()
+
+
+# ---------- the walls ----------
+
+## The north wall with its stelae, its door and the fire bowls' recesses; the north-west cut; the west wall with the
+## arcade of the way in.
+func _walls(box: Rect2) -> void:
+	var mat := ashlar()
+	var north := box.position.y
+	var west := box.position.x
+	var poly := layout.floor.polys[0]
+	# the corners where the north and west walls meet the cut, and their far ends, from the outline
+	var nw_a := Vector2(west, box.end.y)
+	var nw_b := Vector2(box.end.x, north)
+	var ne := Vector2(box.position.x, north)
+	var sw := Vector2(west, box.position.y)
+	for p in poly:
+		if is_equal_approx(p.x, west):
+			nw_a.y = minf(nw_a.y, p.y)
+			sw.y = maxf(sw.y, p.y)
+		if is_equal_approx(p.y, north):
+			nw_b.x = minf(nw_b.x, p.x)
+			ne.x = maxf(ne.x, p.x)
+	var openings: Array[Vector4] = []
+	var recesses: Array[Vector2] = []
+	for i in layout.exits.size():
+		var e := layout.exits[i]
+		if in_wall(i):
+			var w := absf(e.mouth.size.x)
+			var s := e.mouth.get_center().x - nw_b.x
+			openings.append(Vector4(s - w * 0.5 - JAMB, s + w * 0.5 + JAMB, 0.0, WALL_DOOR.y + 0.4))
+			door_arch(Vector2(e.mouth.get_center().x, north), Vector2(0, 1), w, FACE_SET + 0.45)
+	for o in layout.obstacles:
+		if o.piece == &"brazier" and o.center.y < north:
+			var s := o.center.x - nw_b.x
+			openings.append(Vector4(s - 0.75, s + 0.75, 0.0, 3.2))
+			recesses.append(Vector2(s - 0.75, s + 0.75))
+	var north_b := ne + Vector2(0.5, 0)
+	wall(nw_b, north_b, Vector2(0, -1), WALL_HEIGHT, openings, mat)
+	for r in recesses:
+		wall_part(nw_b, north_b, Vector2(0, -1), r.x, r.y, FACE_SET + 1.25, FACE_SET + FACE_THICK, 0.0, 3.2, mat)
+	# the north-west cut is the corner of the walls
+	var cut_out := (nw_b - nw_a).orthogonal().normalized()
+	if layout.floor.covers((nw_a + nw_b) * 0.5 + cut_out * 0.3):
+		cut_out = -cut_out
+	wall(nw_a, nw_b, cut_out, WALL_HEIGHT, [], mat)
+	# the west wall with the arcade of the way in at the paladin's z
+	var entry := layout.hero_spawn.y
+	var s0 := sw.y - entry - ENTRY_WIDE * 0.5
+	wall(sw, nw_a, Vector2(-1, 0), WALL_HEIGHT, [Vector4(s0 - JAMB, s0 + ENTRY_WIDE + JAMB, 0.0, WALL_DOOR.y + 0.4)], mat)
+	door_arch(Vector2(west, entry), Vector2(1, 0), ENTRY_WIDE, FACE_SET + 0.45)
+	m.stairs(Vector3(west - FACE_SET - 0.2, 0.0, entry), Vector2(-1, 0), ENTRY_WIDE, ENTRY_STEPS, 0.2, 0.45)
+	tomb.bar(Vector3(west + 0.04, 0.004, entry), Vector3(0.05, 0.008, ENTRY_WIDE), 0.0, tomb.gold())
+	for x in STELAE:
+		_stele(Vector2(x, north), mat)
+
+
+## A tall stele against the north wall (spec 3.1): a slab of basalt with rows of straight carved strokes in old gold
+## (traces and angles, no curve, nothing legible), a ledge at its foot with candles (B: half of them lit, one group
+## with shadow).
+func _stele(at: Vector2, mat: Material) -> void:
+	var face := at.y - 0.05
+	var c := Vector3(at.x, 0.0, face - STELE.z * 0.5)
+	m.block(c, Vector3(STELE.x + 0.3, 0.3, STELE.z + 0.1), 0.0, mat)
+	m.block(c + Vector3(0, 0.3, 0), Vector3(STELE.x, STELE.y - 0.3, STELE.z), 0.0, mat)
+	m.block(c + Vector3(0, STELE.y, 0), Vector3(STELE.x + 0.1, STELE_CAP, STELE.z + 0.06), 0.0, mat)
+	m.block(c + Vector3(0, STELE.y + STELE_CAP, 0), Vector3(STELE.x * 0.6, STELE_CAP, STELE.z), 0.0, mat)
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(Vector2i(at * 10.0))
+	var gold := tomb.gold()
+	var rows := MARK_ROWS
+	for row in rows:
+		var y := 1.4 + (STELE.y - 1.9) * (row + 0.5) / rows
+		for k in MARK_STROKES:
+			if r.randf() < 0.18:
+				continue
+			var x := at.x - STELE.x * 0.38 + STELE.x * 0.76 * (k + 0.5) / MARK_STROKES
+			var turn := float(r.randi_range(0, 3)) * PI * 0.25
+			var bar := tomb.bar(Vector3(x, y, face + 0.006), Vector3(r.randf_range(MARK_LENGTH.x, MARK_LENGTH.y), MARK_WIDTH, 0.012), 0.0, gold)
+			bar.rotate_object_local(Vector3.BACK, turn)
+	# the ledge at its foot, out of the floor (between the wall's face and the edge)
+	var ledge := Vector3(at.x, LEDGE.x, at.y - LEDGE.y * 0.5 - 0.04)
+	m.box(ledge - Vector3(0, 0.06, 0), Vector3(STELE.x + 0.4, 0.12, LEDGE.y), 0.0, mat, false)
+	var lit := _quiet and at.x < 0.0
+	candle_line(ledge + Vector3(-STELE.x * 0.4, 0, 0), ledge + Vector3(STELE.x * 0.4, 0, 0), 4, lit)
+	if lit and at.x < STELAE[1] + 0.1 and at.x > STELAE[1] - 0.1:
+		warm_light(ledge + Vector3(0, 0.6, 0.6), STELE_CANDLES, true, 3.5)
+
+
+## A rune pillar on its footprint (spec 3.2): basalt with a plinth and a cap, opening round the paladin behind it, two
+## straight grooves of old gold up each face that warm to amber with the floor (apply).
+func _pillar(o: ArenaObstacle) -> void:
+	var mat := see(ashlar()) if o.see_through else ashlar()
+	var foot := Vector3(o.center.x, 0.0, o.center.y)
+	var w := minf(o.half.x, o.half.y) * 2.0
+	var yaw := -o.yaw
+	m.block(foot, Vector3(w + PILLAR_PLINTH.y, PILLAR_PLINTH.x, w + PILLAR_PLINTH.y), yaw, mat)
+	m.block(foot, Vector3(w, o.height - PILLAR_CAP.x, w), yaw, mat)
+	m.block(foot + Vector3(0, o.height - PILLAR_CAP.x, 0), Vector3(w + PILLAR_CAP.y, PILLAR_CAP.x, w + PILLAR_CAP.y), yaw, mat)
+	if _groove == null:
+		_groove = StandardMaterial3D.new()
+		_groove.albedo_color = TombKit.GOLD
+		_groove.metallic = 0.6
+		_groove.roughness = 0.5
+		_groove.emission_enabled = true
+		_groove.emission = ArenaKit.FIRE
+		_groove.emission_energy_multiplier = 0.0
+	var span := o.height - PILLAR_GROOVE_SPAN.x - PILLAR_GROOVE_SPAN.y
+	for f in 4:
+		var face := Basis(Vector3.UP, yaw + PI * 0.5 * f)
+		for k in PILLAR_GROOVES:
+			var across := (float(k) - (PILLAR_GROOVES - 1) * 0.5) * w * 0.35
+			var p := foot + face * Vector3(across, PILLAR_GROOVE_SPAN.x + span * 0.5, w * 0.5 + 0.004)
+			var bar := MeshInstance3D.new()
+			var bm := BoxMesh.new()
+			bm.size = Vector3(PILLAR_GROOVE, span, 0.01)
+			bar.mesh = bm
+			bar.material_override = _groove
+			bar.transform = Transform3D(face, p)
+			bar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			add_child(bar)

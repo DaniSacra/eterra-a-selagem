@@ -8,12 +8,18 @@ extends SceneTree
 ## On the CPU: xvfb-run -a ~/tools/godot/godot --path . --resolution 1920x1080 -s tools/arena_lab.gd -- out.png --arena=rift
 ## Options after the output:
 ##   --arena=hall|crypt|rift|garden   which arena (default crypt); --variant=n (default 0); --doors=1..3 (default 3)
+##   --arena=sanctuary|bridge|runes|trial|altar   E5's rooms: the stage's plan when it has one, else the lab's
+##                    (tools/e5_layouts.gd, the spec's numbers)
+##   --state=...      E5 states: runes armed (--state=arm, --state=fire, --state=quiet), altar lit (--state=after),
+##                    trial chosen (--state=after); --breath=look lights door 0's breath with that arena's air
+##   --measure=s      after the capture, s seconds of frames: prints FRAME cpu and gpu ms (median and worst)
 ##   --top            seen from straight above, the whole arena in the frame (orthographic); else the game's camera
 ##   --cam-at=x,z     the game's camera looks at this floor point (default: the arena's camera point or box middle)
 ##   --bare           the arena alone, without the overlays
 ##   --wait=seconds   before the capture (default 1.0)
 
 const STAGE := "res://data/stages/catacombs.tres"
+const E5 := preload("res://tools/e5_layouts.gd")
 ## Height of the overlays over the floor.
 const LIFT := 0.06
 
@@ -37,9 +43,14 @@ func _run() -> void:
 	G = load("res://scripts/game/game.gd")
 	var stage: StageDef = load(STAGE)
 	var layout: RoomLayout = stage.layouts[0]
+	var want := StringName(str(opts.get("arena", "crypt")))
+	var found := false
 	for l in stage.layouts:
-		if String(l.id) == str(opts.get("arena", "crypt")):
+		if l.id == want:
 			layout = l
+			found = true
+	if not found and E5.IDS.has(want):
+		layout = E5.layout(want)
 	layout = layout.variant(int(opts.get("variant", "0")))
 	var world := Node3D.new()
 	root.add_child(world)
@@ -58,6 +69,8 @@ func _run() -> void:
 	if arena.look != null:
 		# spec 0.5: at most 8 lights with shadows an arena (the moon is the world's)
 		print("SHADOWED LIGHTS %d" % arena.look.shadowed)
+	if arena.look != null:
+		_state(arena.look)
 	if not opts.has("bare"):
 		world.add_child(_overlay(arena))
 	var cam := Camera3D.new()
@@ -85,7 +98,37 @@ func _run() -> void:
 		await process_frame
 	root.get_viewport().get_texture().get_image().save_png(out)
 	print("saved %s" % out)
+	if opts.has("measure"):
+		await _measure(float(opts["measure"]))
 	quit()
+
+
+## E5's states on the look (lab only): the runes' tiles armed or firing, the altar lit, the trial chosen, a door's breath.
+func _state(look: ArenaRoom) -> void:
+	var state := str(opts.get("state", ""))
+	if look.has_method("demo"):
+		look.call("demo", state)
+	if opts.has("breath"):
+		look.breath(0, StringName(str(opts["breath"])))
+
+
+## Frames for `seconds`: the CPU's and the GPU's time of each (RenderingServer's measure), median and worst.
+func _measure(seconds: float) -> void:
+	var vp := root.get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(vp, true)
+	var cpu: Array[float] = []
+	var gpu: Array[float] = []
+	var start := Time.get_ticks_msec()
+	while (Time.get_ticks_msec() - start) / 1000.0 < seconds:
+		await process_frame
+		cpu.append(RenderingServer.viewport_get_measured_render_time_cpu(vp) + RenderingServer.get_frame_setup_time_cpu())
+		gpu.append(RenderingServer.viewport_get_measured_render_time_gpu(vp))
+	cpu.sort()
+	gpu.sort()
+	if gpu.is_empty():
+		return
+	print("FRAME cpu %.2f ms (worst %.2f), gpu %.2f ms (worst %.2f), %d frames, draw calls %d" % [cpu[cpu.size() / 2], cpu[-1],
+		gpu[gpu.size() / 2], gpu[-1], gpu.size(), RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)])
 
 
 ## Lines and cells over the floor: the grid, edges, obstacles, zones, camera box and the way in.

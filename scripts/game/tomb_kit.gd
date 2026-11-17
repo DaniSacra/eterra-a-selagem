@@ -60,6 +60,14 @@ const SLAB_LIFT := 0.012
 const SLAB_DIAMOND := 0.32
 ## The iron grille that closes a door not used: its height, bars apart, a bar's thickness.
 const GRILLE := Vector3(0.9, 0.22, 0.05)
+## A stone bench (E5 spec 0.3, the "broken benches" of the old church's nave): its seat (height, thickness, how far it
+## stands out over the feet), its back (thickness, top), its two feet (width as a share of its depth, how far in from
+## each end); broken: the share of the back left, and the piece fallen at its foot (size).
+const BENCH_SEAT := Vector3(0.45, 0.1, 0.04)
+const BENCH_BACK := Vector2(0.12, 0.9)
+const BENCH_FOOT := Vector2(0.75, 0.25)
+const BENCH_BROKEN := 0.5
+const BENCH_FALLEN := Vector3(0.7, 0.14, 0.32)
 
 
 ## What a lantern burns: glass, flame, light colour, energy, range, attenuation (the chamber's violet, the crypts'
@@ -432,3 +440,35 @@ func grille(a: Vector3, b: Vector3) -> void:
 		m.point(p + Vector3(0, GRILLE.x, 0), GRILLE.z * 1.6, 0.1, 0.0, 0.0, ir)
 	for y: float in [0.08, GRILLE.x - 0.12]:
 		m.box((a + b) * 0.5 + Vector3(0, y, 0), Vector3(d.length(), 0.05, 0.04), yaw, ir, false)
+
+
+## A stone bench on its footprint (E5 spec 0.3): two feet, the seat at BENCH_SEAT.x, its back along the -z side of its
+## frame (`facing` the way one sits) up to BENCH_BACK.y; broken: half the back gone, that piece fallen at its foot inside
+## the footprint, the seat cracked. `half`: half the footprint (x along its length), turned yaw (Masonry's turn).
+func bench(at: Vector2, half: Vector2, yaw: float, mat: Material, broken := false) -> void:
+	var basis := Basis(Vector3.UP, yaw)
+	var foot := Vector3(at.x, 0.0, at.y)
+	var deep := half.y * 2.0
+	var long := half.x * 2.0
+	for sd: float in [-1.0, 1.0]:
+		m.block(foot + basis * Vector3(sd * (half.x - BENCH_FOOT.y), 0, 0), Vector3(0.22, BENCH_SEAT.x - BENCH_SEAT.y, deep * BENCH_FOOT.x), yaw, mat)
+	var seat_y := BENCH_SEAT.x - BENCH_SEAT.y
+	if broken:
+		# the seat cracked in two, one half sagging a little
+		for sd: float in [-1.0, 1.0]:
+			var piece := m.box(foot + basis * Vector3(sd * long * 0.25, seat_y + BENCH_SEAT.y * 0.5, 0), Vector3(long * 0.5 - 0.03, BENCH_SEAT.y, deep), yaw, mat, false)
+			if sd > 0.0:
+				piece.rotate_object_local(Vector3.BACK, -0.05)
+	else:
+		m.box(foot + Vector3(0, seat_y + BENCH_SEAT.y * 0.5, 0), Vector3(long, BENCH_SEAT.y, deep), yaw, mat, false)
+	var back_h := BENCH_BACK.y - BENCH_SEAT.x
+	var back_z := -half.y + BENCH_BACK.x * 0.5
+	var back_long := long * (BENCH_BROKEN if broken else 1.0)
+	var back_x := -half.x + back_long * 0.5
+	m.box(foot + basis * Vector3(back_x, BENCH_SEAT.x + back_h * 0.5, back_z), Vector3(back_long, back_h, BENCH_BACK.x), yaw, mat, false)
+	if broken:
+		# the back's other half fallen in front of the seat, still inside the footprint
+		var fallen := m.box(foot + basis * Vector3(half.x * 0.45, BENCH_FALLEN.y * 0.5, half.y - BENCH_FALLEN.z * 0.5),
+			Vector3(BENCH_FALLEN.x, BENCH_FALLEN.y, BENCH_FALLEN.z), yaw + 0.15, mat)
+		fallen.rotate_object_local(Vector3.RIGHT, 0.12)
+

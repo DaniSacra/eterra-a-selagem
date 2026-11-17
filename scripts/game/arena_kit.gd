@@ -826,8 +826,9 @@ func ruin_card(center: Vector3, size: Vector2, yaw: float, mist: Color, haze: fl
 
 
 ## A bank of pale mist in the abyss (abyss_mist.gdshader): a wide low card turning to the camera, its middle at
-## `center`, ragged at its edges; grain: a finer mottle mixed in; bands: how much it parts into level streaks.
-func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain := 0.0, bands := 0.0) -> void:
+## `center`, ragged at its edges; grain: a finer mottle mixed in; bands: how much it parts into level streaks; drift: how
+## fast it runs sideways (the shader's, UV per second; below 0: the shader's own).
+func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain := 0.0, bands := 0.0, drift := -1.0) -> void:
 	var card := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = size
@@ -838,6 +839,8 @@ func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain
 	m.set_shader_parameter(&"alpha", alpha)
 	m.set_shader_parameter(&"grain", grain)
 	m.set_shader_parameter(&"bands", bands)
+	if drift >= 0.0:
+		m.set_shader_parameter(&"drift", drift)
 	card.material_override = m
 	card.position = center
 	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

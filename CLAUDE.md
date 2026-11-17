@@ -556,6 +556,35 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   passos acima de 4 ms e onde o tempo foi), `--trace-cam` (maior salto do alvo da câmera por sala, GP-06). Laboratório sem personagens, com grade, bordas, peças, zonas e câmera:
   `tools/arena_lab.gd` (comando no topo; `--top` vista de cima). Testes: `test_arenas.gd`, `test_descent.gd`,
   `test_killing_blow.gd`.
+- **E5, cenário das arenas novas e das câmaras de evento** (`docs/art/e5_spec.md`; capturas em `docs/gallery/e5/env/`):
+  cinco looks novos em `ArenaRoom.LOOKS`, escolhidos por `RoomLayout.look`, que desenham o `RoomLayout` que recebem
+  (peças por `ArenaObstacle.piece`, nada do plano no código): `sanctuary` (`SanctuaryLook`, Santuário Desmoronado: nave
+  de colunas, paredes norte e oeste com janelas cegas, presbitério elevado atrás da grade em frente ao `boss_spawn`, dois
+  fachos de lua `moon_shaft` com poeira; variante B com o buraco para a cripta de baixo, `UNDER`), `bridge` (`BridgeLook`,
+  Ponte dos Condenados: plataformas e pontes lidas do chão, polígono de 4 cantos até `DECK_WIDE` 5,2 m é ponte e o largo
+  entre duas é o patamar da ponte longa da B; lábios quebrados ao norte, balaustradas nas outras bordas, estátuas nas
+  cabeceiras, pilone `pylon` com correntes, bruma que corre de lado, `ArenaKit.mist_bank(..., drift)`), `runes`
+  (`RunesLook`, Câmara das Runas Instáveis: chão em lajes de 3 m com moldura de ouro velho e marcas retas,
+  `rune_floor.gdshader` = o chão das catacumbas com `#define RUNES` e `rune_tiles.gdshaderinc`; estado por laje numa
+  textura 10 x 8 que o gameplay escreve: `set_tile(t, arm, fire, ember)`, `set_chevrons(dir)`, `apply()` uma vez por
+  quadro, `tile_at`, `tile_rect`, `clear_tiles`, `heat`, `is_quiet`; a lâmina do disparo em `rune_flash.gdshader` sob o
+  teto da tela, até 4 luzes âmbar sem sombra só no Forward+; pilares `rune_pillar` com sulcos que esquentam; estelas
+  com marcas retas; laje quieta `quiet` da B lisa; nada redondo, D-29), `trial` (`TrialLook`, Provação: veias lilás
+  `trial_veins.gdshader`, bloco `trial_block` com a rachadura em X `x_crack.gdshader`, um foco marfim com a única
+  sombra, lanternas frias, `settle(s)` apaga 60%, `vein_level`, `SETTLED`; a laje de entrada na sala anterior é
+  `TrialLook.entry_slab(pai, onde)`), `altar` (`AltarLook`, Altar Esquecido: arco cego com faixa gasta sem texto,
+  leão em relevo na frente do `altar` (`altar_lion.gdshader`, o campo do selo), 11 velas apagadas, estandartes
+  desbotados (um rasgado), facho frio; `kindle(s)` acende as velas com uma luz com sombra, `lit()`). Comum em
+  `ArenaRoom`: a ponte e os lábios do Salão das Fendas (`bridge(r, ..., arches, open)`, `broken_lip`, `deck`, `parapet`;
+  as Fendas não mudaram, antes e depois na GPU), `wall`, `wall_part`, `cut_wall`, `door_gaps`, `closed_edge` (sala
+  fechada: parede ao norte e oeste, corte baixo na frente), `blind_window`, `round_column` (a coluna da Cripta),
+  `drums`, `moon_shaft`, banco `TombKit.bench` (peças `bench`, `bench_broken`), toco `column_base`, `door_lamp()` e o
+  bafo de luz da porta (`breath(i, look)`: cartão de 4 x 3 m na boca da porta usada, na cor do ar da próxima arena,
+  `BREATH`, maior canal 0,6, sem luz; chamado quando as portas abrem). Plantas de laboratório com as medidas da spec em
+  `tools/e5_layouts.gd` (`arena_lab.gd` cai nelas quando o estágio não tem o id; `--state=arm|fire|after` chama
+  `demo`, `--measure=s` imprime `FRAME`); capturas em lote `tools/e5_shots.sh`. Sombras por sala no Forward+: santuário 5 (B 4),
+  ponte 2 (B 1) mais a lua, runas 2 (B 3), provação 1, altar 2; no Compatibility os fachos `moon_shaft` não fazem sombra
+  (`ArenaRoom.compat()`; listras). Quadro na GPU a 1080: 1,4 a 2,3 ms. Testes em `tests/test_e5_looks.gd`.
 
 ## E5, eventos e exploração (spec de arte `docs/art/e5_spec.md`; métricas em `docs/qa/e5_metrics.md`)
 - **Três arenas novas** no `_stage` do `make_data.gd` (`_sanctuary`, `_bridge`, `_runes`, duas variantes cada, dificuldade 2):

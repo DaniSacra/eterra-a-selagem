@@ -14,59 +14,6 @@ extends ArenaRoom
 ## The decks of the bridges over the rift (Rect2 on the floor: the walkable 5 m and the rift's width under them); a
 ## bridge stands when the floor covers its middle (variant B: the north one fell).
 const BRIDGES: Array[Rect2] = [Rect2(-7.0, -12.0, 9.0, 5.0), Rect2(-7.0, -1.0, 9.0, 5.0)]
-## A bridge: its deck's thickness under the floor (the cornice) and how far it stands out of the walkable 5 m on each
-## side (the parapet stands on it), the arch under it (its crown this far under the deck, the ring's width), the piers
-## going down into the mist. The arch, its haunches and the piers are the depths' dark stone (no light of their own).
-const DECK := 0.6
-const DECK_OUT := 0.65
-const ARCH_CROWN := 2.5
-const ARCH_RING := 0.7
-const ARCH_RADIUS := 0.8
-## The deck's own paving over the floor (F-2, so a bridge never reads as a strip of the floor): slabs running along the
-## span (length range, rows across between the kerbs, the joint, their top over the floor, their stone times the
-## arena's), a kerb of lighter stone along both sides of the walkable 5 m (width, top, stone), a dark seam where the
-## deck meets the platform (width), the joints' and seams' stone (the depths' dark).
-const DECK_SLAB := Vector2(1.1, 2.1)
-const DECK_ROWS := 4
-const DECK_JOINT := 0.06
-const DECK_TOP := 0.016
-const DECK_TINT := Color(0.8, 0.8, 0.8)
-const KERB := Vector3(0.3, 0.022, 1.1)
-const SEAM := 0.08
-const SEAM_TOP := 0.008
-## The open parapet outside the walkable 5 m (spec 1.3: low, 0.5 m wide; never see-through): its height, its depth, its
-## middle's distance out of the walkable edge; the curb and the rail (height, depth); balusters (side, spacing, the
-## belly's side and height); a post every PARAPET_POST meters (side).
-const PARAPET := Vector3(0.9, 0.4, 0.32)
-const PARAPET_CURB := Vector2(0.18, 0.4)
-const PARAPET_RAIL := Vector2(0.16, 0.38)
-const BALUSTER := Vector4(0.13, 0.42, 0.2, 0.16)
-const PARAPET_POST := 3.0
-const PARAPET_POST_SIDE := 0.36
-## A pillar at each of the four heads (F-2: 1.4 m; side, cap) and under each the abutment (F-3, "pegão") the bridge
-## springs from: a block of cut stone against the rift's wall beside the deck (along the wall out of the walkable edge,
-## into the rift, its cut stone this deep, then the depths' stone down to ABUTMENT_FOOT).
-const HEAD := Vector3(0.55, 1.4, 0.2)
-const HEAD_LANTERN := Vector3(0.5, 1.0, 0.5)
-const ABUTMENT := Vector3(1.35, 1.1, 1.3)
-const ABUTMENT_FOOT := -5.0
-## Its lanterns (one at each head, diagonally; the first of each with shadow, spec 3.5): warm, a little stronger.
-const BRIDGE_LAMP_ENERGY := 1.5
-const BRIDGE_LAMP_RANGE := 4.5
-## The rift's broken lips (spec 1.3, F-3): chunks of the brink's slabs standing out past the drop (length along the
-## lip, how far out at each end, their top sunk under the floor), a stretch with none between them (a missing stone),
-## each chunk's cut stone under its paving and the depths' stone hanging lower (heights); the ledge under the west
-## lip's balustrade (out of the drop); stones hanging in a gap (share, size, depth).
-const LIP_TOOTH := Vector2(0.4, 1.2)
-const LIP_OUT := Vector2(0.3, 1.0)
-const LIP_SINK := Vector2(0.03, 0.16)
-const LIP_GAP := Vector2(0.3, 0.9)
-const LIP_STONE := 0.45
-const LIP_HANG := Vector2(1.2, 2.6)
-const LIP_LEDGE := 1.05
-const LIP_FALLEN_SHARE := 0.45
-const LIP_FALLEN := Vector2(0.35, 0.7)
-const LIP_FALLEN_DEPTH := Vector2(0.3, 1.1)
 ## The fallen bridge (variant B): how much of the deck stays at each head (m), the chain and the hanging pieces.
 const STUMP := 1.5
 const HANGING := 2
@@ -261,74 +208,6 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 	balustrade_edge(a, b, out, false)
 
 
-## A lip of the rift or of a hole (spec 1.3, F-3): the wall going down into the dark (the cliffs' one mesh), and along
-## it chunks of the brink's slabs standing out past the drop at uneven lengths (paved with the floor's slabs, sunk a
-## little, cut stone under the paving, the depths' stone hanging lower), stretches with none between them (a stone
-## missing; sometimes one fallen in the gap), loose shards below. ledge: a shelf this far out under a balustrade, the
-## chunks past it. Nothing on the walkable floor.
-func broken_lip(a: Vector2, b: Vector2, out: Vector2, faces: SurfaceTool, ledge := 0.0) -> void:
-	_wall(a, b, out, faces)
-	var length := a.distance_to(b)
-	var along := (b - a) / maxf(length, 0.001)
-	var r := RandomNumberGenerator.new()
-	r.seed = hash(Vector2i((a + b) * 10.0))
-	var cut := stone()
-	if ledge > 0.0:
-		_chunk(PackedVector2Array([a, b, b + out * ledge, a + out * ledge]), -LIP_SINK.x, LIP_HANG.x)
-	var s := r.randf_range(0.0, LIP_GAP.x)
-	while s < length - LIP_TOOTH.x * 0.5:
-		var l := minf(r.randf_range(LIP_TOOTH.x, LIP_TOOTH.y), length - s)
-		var p0 := a + along * s + out * ledge
-		var p1 := a + along * (s + l) + out * ledge
-		var o0 := r.randf_range(LIP_OUT.x, LIP_OUT.y)
-		var o1 := r.randf_range(LIP_OUT.x, LIP_OUT.y)
-		var tip := (p0 + p1) * 0.5 + out * maxf(o0, o1) * r.randf_range(0.7, 1.15) + along * l * r.randf_range(-0.15, 0.15)
-		_chunk(PackedVector2Array([p0, p1, p1 + out * o1, tip, p0 + out * o0]), -r.randf_range(LIP_SINK.x, LIP_SINK.y),
-			r.randf_range(LIP_HANG.x, LIP_HANG.y))
-		s += l
-		var gap := r.randf_range(LIP_GAP.x, LIP_GAP.y)
-		if r.randf() < LIP_FALLEN_SHARE and s + gap < length:
-			var g := a + along * (s + gap * 0.5) + out * (ledge + r.randf_range(0.2, 0.6))
-			var size := r.randf_range(LIP_FALLEN.x, LIP_FALLEN.y)
-			var fallen := m.box(Vector3(g.x, -r.randf_range(LIP_FALLEN_DEPTH.x, LIP_FALLEN_DEPTH.y), g.y), Vector3(size, size * 0.6, size * 0.8), r.randf() * TAU, cut)
-			fallen.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.6, 0.6))
-		s += gap
-	# shards falling just below
-	for k in floori(length * SHARDS):
-		var p3 := a.lerp(b, r.randf()) + out * (ledge + r.randf_range(0.6, 2.0))
-		var size := r.randf_range(SHARD.x, SHARD.y)
-		var sh := m.box(Vector3(p3.x, -r.randf_range(0.8, 2.5), p3.y), Vector3(size, size * 0.8, size * 0.9), r.randf() * TAU, cut)
-		sh.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.8, 0.8))
-
-
-## The plain wall under a lip from the floor down into the abyss (the cliffs' mesh, the depths' dark stone; no
-## straight kerb along it: the chunks are the brink).
-func _wall(a: Vector2, b: Vector2, out: Vector2, faces: SurfaceTool) -> void:
-	var q: Array[Vector3] = [Vector3(a.x, 0.0, a.y), Vector3(b.x, 0.0, b.y), Vector3(b.x, -DEPTH, b.y), Vector3(a.x, -DEPTH, a.y)]
-	# facing out of the floor (clockwise as seen from outside)
-	if (b - a).cross(out) < 0.0:
-		q = [q[1], q[0], q[3], q[2]]
-	for k: int in [0, 1, 2, 0, 2, 3]:
-		faces.add_vertex(q[k])
-
-
-## One chunk of the brink on the footprint poly: the floor's paving on top at `top`, cut stone under it, the depths'
-## dark stone hanging `hang` meters lower, a little inset. On the depths' layer too (the violet from below).
-func _chunk(poly: PackedVector2Array, top: float, hang: float) -> void:
-	m.layers = 1 | ArenaKit.DEPTH_LAYER
-	m.prism(poly, top - 0.04, top, _paving())
-	m.prism(poly, top - LIP_STONE, top - 0.04, stone())
-	var c := Vector2.ZERO
-	for p in poly:
-		c += p
-	c /= poly.size()
-	var inset := PackedVector2Array()
-	for p in poly:
-		inset.append(p + (c - p).limit_length(0.06))
-	m.prism(inset, top - LIP_STONE - hang, top - LIP_STONE, _deep())
-	m.layers = 1
-
-
 var _glow: SurfaceTool
 
 
@@ -368,29 +247,6 @@ func _haze_material(color: Color, alpha: float, fade_u: float, fade_v: Vector2, 
 	mat.set_shader_parameter(&"fade_v", fade_v)
 	mat.set_shader_parameter(&"ramp", ramp)
 	return mat
-
-
-var _deep_mat: ShaderMaterial
-var _paving_mat: ShaderMaterial
-
-
-## The depths' dark stone of this hall (the cliffs' look): arches, piers, the lips' hanging stone, joints.
-func _deep() -> ShaderMaterial:
-	if _deep_mat == null:
-		_deep_mat = m.depth_stone(mist()).duplicate() as ShaderMaterial
-		for k in CLIFF:
-			_deep_mat.set_shader_parameter(k, CLIFF[k])
-	return _deep_mat
-
-
-## The floor's slabs (the same look as the floor) for the chunks of the brink.
-func _paving() -> ShaderMaterial:
-	if _paving_mat == null:
-		var b := arena.shape().bounds()
-		_paving_mat = kit.floor_material(0.0, Vector2.ZERO, minf(b.size.x, b.size.y) * 0.3)
-		for k in FLOOR:
-			_paving_mat.set_shader_parameter(k, FLOOR[k])
-	return _paving_mat
 
 
 ## The abyss under the hall and inside the rift: the mist, violet lights deep in the rift and the hole (only the
@@ -464,7 +320,7 @@ func _haze(area: Rect2, north: float) -> void:
 func dress() -> void:
 	for i in BRIDGES.size():
 		if layout.floor.covers(BRIDGES[i].get_center()):
-			_bridge(BRIDGES[i], i == 0)
+			bridge(BRIDGES[i], i == 0, i != 0)
 		else:
 			_fallen_bridge(BRIDGES[i])
 	_hole_blocks()
@@ -477,139 +333,6 @@ func dress() -> void:
 
 
 # ---------- the bridges ----------
-
-## A bridge over the rift (spec 1.3, F-2): its own paving over the floor (slabs along the span, kerbs, dark seams at
-## the heads), the deck's cornice of cut stone under it, an open parapet outside the 5 m on each side, a pillar at
-## each of the four heads on the abutment it springs from (two with a lantern, diagonally; two with candles), an arch
-## of voussoirs under it with its crown ARCH_CROWN under the deck, its haunches and the piers down into the mist in the
-## depths' dark stone. first: the north bridge (its west head's lantern casts shadows; the south bridge's east one).
-func _bridge(r: Rect2, first: bool) -> void:
-	var mat := ashlar()
-	var deep := _deep()
-	var cx := r.get_center().x
-	var cz := r.get_center().y
-	var span := r.size.x
-	m.box(Vector3(cx, -DECK * 0.5 - 0.02, cz), Vector3(span + 1.0, DECK, r.size.y + DECK_OUT * 2.0), 0.0, mat, false)
-	m.layers = 1 | ArenaKit.DEPTH_LAYER
-	# the arch: its crown ARCH_CROWN under the deck, springing from the rift's walls, and the fill over its haunches
-	var rr := span * ARCH_RADIUS
-	var hx := rr - span * 0.5
-	var rise := sqrt((rr + ARCH_RING) * (rr + ARCH_RING) - hx * hx)
-	var spring := -ARCH_CROWN - rise
-	m.voussoir_arch(Vector3(cx, spring, cz), Vector2(0, 1), span, 0.0, ARCH_RING, r.size.y, deep, ARCH_RADIUS)
-	var slices := 8
-	for k in slices:
-		var x0 := -span * 0.5 + span * k / slices
-		var x1 := x0 + span / slices
-		var xm := absf((x0 + x1) * 0.5)
-		# the arch's outer curve over this slice (the arc whose centre is on the other side)
-		var y := spring + sqrt(maxf(0.0, (rr + ARCH_RING) * (rr + ARCH_RING) - (xm + hx) * (xm + hx)))
-		if y < -DECK - 0.05:
-			m.box(Vector3(cx + (x0 + x1) * 0.5, (y - DECK) * 0.5, cz), Vector3(x1 - x0 + 0.02, -DECK - y, r.size.y * 0.92), 0.0, deep, false)
-	for sd: float in [-1.0, 1.0]:
-		var px := cx + sd * (span * 0.5 + 0.6)
-		m.box(Vector3(px, (spring - DEPTH) * 0.5, cz), Vector3(1.6, DEPTH + spring, r.size.y * 0.9), 0.0, deep, false)
-	m.layers = 1
-	_deck(r)
-	for z: float in [r.position.y - PARAPET.z, r.end.y + PARAPET.z]:
-		_parapet(Vector2(r.position.x + ABUTMENT.x * 0.5, z), Vector2(r.end.x - ABUTMENT.x * 0.5, z))
-	# the four heads: north-west and south-east with lanterns (the first of the pair casting shadows), the others candles
-	for k in 4:
-		var west := k == 0 or k == 3
-		var north := k == 0 or k == 2
-		var lip := r.position.x if west else r.end.x
-		var into := 1.0 if west else -1.0
-		var side := r.position.y if north else r.end.y
-		var away := -1.0 if north else 1.0
-		_abutment(Vector2(lip, side), into, away)
-		var head := Vector2(lip + into * ABUTMENT.x * 0.5, side + away * PARAPET.z)
-		if k < 2:
-			var l := tomb.lantern(Vector3(head.x, 0.0, head.y), 0.0, stone(), TombKit.WARM, ~Arena.CROWD_LAYER, HEAD_LANTERN)
-			l.light_energy = BRIDGE_LAMP_ENERGY
-			l.omni_range = BRIDGE_LAMP_RANGE
-			l.shadow_enabled = (k == 0) == first
-		else:
-			_head(head)
-			candles(Vector3(head.x, HEAD.y, head.y), 3)
-
-
-## The abutment a bridge springs from at one corner (F-3): against the rift's wall at `corner` (where the lip meets the
-## deck's side), reaching `into` the rift (x sign) and `away` from the deck (z sign): cut stone under the floor, then
-## the depths' stone down into the haze.
-func _abutment(corner: Vector2, into: float, away: float) -> void:
-	var c := corner + Vector2(into * ABUTMENT.x * 0.5, away * ABUTMENT.z * 0.5)
-	m.box(Vector3(c.x, -0.03 - ABUTMENT.y * 0.5, c.y), Vector3(ABUTMENT.x, ABUTMENT.y, ABUTMENT.z), 0.0, ashlar(), false)
-	m.layers = 1 | ArenaKit.DEPTH_LAYER
-	var top := -0.03 - ABUTMENT.y
-	m.box(Vector3(c.x, (top + ABUTMENT_FOOT) * 0.5, c.y), Vector3(ABUTMENT.x - 0.1, top - ABUTMENT_FOOT, ABUTMENT.z - 0.1), 0.0, _deep(), false)
-	m.layers = 1
-
-
-## A head pillar of a bridge (F-2): plinth, shaft and cap, HEAD.y tall.
-func _head(at: Vector2) -> void:
-	var mat := stone()
-	m.block(Vector3(at.x, 0.0, at.y), Vector3(HEAD.x + 0.12, Masonry.CURB * 0.7, HEAD.x + 0.12), 0.0, mat)
-	m.block(Vector3(at.x, 0.0, at.y), Vector3(HEAD.x, HEAD.y - HEAD.z, HEAD.x), 0.0, mat)
-	m.block(Vector3(at.x, HEAD.y - HEAD.z, at.y), Vector3(HEAD.x + 0.14, HEAD.z, HEAD.x + 0.14), 0.0, mat)
-
-
-## The deck's own paving over the floor (F-2): the depths' dark stone under it all (the joints, and the seams where it
-## meets the platforms), a kerb of lighter stone in lengths along each side, slabs running along the span in
-## DECK_ROWS staggered rows between the kerbs.
-func _deck(r: Rect2) -> void:
-	var x0 := r.position.x + SEAM
-	var x1 := r.end.x - SEAM
-	m.prism(_rect(r.position.x, r.end.x, r.position.y, r.end.y), 0.0, SEAM_TOP, _deep())
-	var kerb := m.stone(0.0, stone_tint() * KERB.z)
-	var slab := m.stone(0.0, stone_tint() * DECK_TINT)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(Vector2i(r.position * 10.0))
-	var rows: Array[Vector2] = [Vector2(r.position.y, r.position.y + KERB.x)]
-	var inner := (r.size.y - KERB.x * 2.0) / DECK_ROWS
-	for k in DECK_ROWS:
-		var z := r.position.y + KERB.x + inner * k
-		rows.append(Vector2(z, z + inner))
-	rows.append(Vector2(r.end.y - KERB.x, r.end.y))
-	for k in rows.size():
-		var is_kerb := k == 0 or k == rows.size() - 1
-		var x := x0
-		var first := true
-		while x < x1 - 0.05:
-			var l := rng.randf_range(DECK_SLAB.x, DECK_SLAB.y) * (0.5 if first and k % 2 == 1 else 1.0)
-			first = false
-			if x1 - (x + l) < DECK_SLAB.x * 0.5:
-				l = x1 - x
-			var j := DECK_JOINT * 0.5
-			m.prism(_rect(x + j, x + l - j, rows[k].x + j, rows[k].y - j), 0.0, KERB.y if is_kerb else DECK_TOP, kerb if is_kerb else slab)
-			x += l
-
-
-func _rect(x0: float, x1: float, z0: float, z1: float) -> PackedVector2Array:
-	return PackedVector2Array([Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)])
-
-
-## The open parapet of a bridge from a to b (along x; spec 1.3: 0.9 m, never see-through): a curb, a rail, posts every
-## PARAPET_POST meters and bellied balusters between them, the violet seen through it.
-func _parapet(a: Vector2, b: Vector2) -> void:
-	var mat := stone()
-	var length := b.x - a.x
-	var mid := (a + b) * 0.5
-	m.box(Vector3(mid.x, PARAPET_CURB.x * 0.5, mid.y), Vector3(length, PARAPET_CURB.x, PARAPET_CURB.y), 0.0, mat, false)
-	m.box(Vector3(mid.x, PARAPET.x - PARAPET_RAIL.x * 0.5, mid.y), Vector3(length, PARAPET_RAIL.x, PARAPET_RAIL.y), 0.0, mat, false)
-	var posts := maxi(1, roundi(length / PARAPET_POST))
-	var bay := length / posts
-	for i in posts + 1:
-		m.box(Vector3(a.x + bay * i, PARAPET.x * 0.5 + 0.03, mid.y), Vector3(PARAPET_POST_SIDE, PARAPET.x + 0.06, PARAPET.y), 0.0, mat)
-	var shaft := PARAPET.x - PARAPET_RAIL.x - PARAPET_CURB.x
-	var n := floori(length / BALUSTER.y)
-	for i in n:
-		var x := a.x + (i + 0.5) * length / n
-		var t := (x - a.x) / bay
-		if absf(t - roundf(t)) * bay < PARAPET_POST_SIDE:
-			continue
-		m.box(Vector3(x, PARAPET_CURB.x + shaft * 0.5, mid.y), Vector3(BALUSTER.x, shaft, BALUSTER.x), 0.0, mat)
-		m.box(Vector3(x, PARAPET_CURB.x + shaft * 0.35, mid.y), Vector3(BALUSTER.z, BALUSTER.w, BALUSTER.z), 0.0, mat)
-
 
 ## The bridge that fell (spec 3.3): at each head STUMP meters of broken deck with its teeth, closed by the
 ## balustrade of the edge, and pieces of the deck hanging by chains into the rift.
