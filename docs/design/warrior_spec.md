@@ -124,6 +124,25 @@ golpe em curso, `UltCharge`, `UltDef` em `make_data.gd`, golpes da ultimate sem 
 
 A Ronda (proposta B do documento) fica de reserva, sem decisão.
 
+**Implementado (E2-08 e E2-10, 2026-11-16, `gameplay-engineer`)**: `Ultimates` (`scripts/game/ultimates.gd`), carga
+`UltCharge` (`core/ult_charge.gd`, lê `Magick.spent`; a stat `ult_charge_pct` das Bênçãos e Dons acelera), gesto no
+`Player` (`State.ULT`, 0,3 s protegido, corta o golpe como a esquiva, aperto na esquiva ou ferido espera
+`DODGE_BUFFER`), formas e arrasto puros no `UltDef` (`cleave_damage`, `vortex_pull`, `pull_share`, `vortex_at`), 5º
+losango no HUD, robô usa quando enche e vale (`Ultimates.worth`), `--ultimate=id`, `--ult-full`, `--shot-on=ult`.
+Testes em `tests/test_ultimate.gd`; sonda E2-U1 a E2-U3. Decisões tomadas pelas recomendações (anotar no backlog):
+- Ação "Ultimate" no texto do jogador (como a descrição do Coração da Emeth já usa); tecla R, controle LB (o único
+  botão de ombro livre; os gatilhos são eixos e ficam para o remapeamento de controle).
+- Gesto de 0,3 s nas duas (a U-1 antiga tinha 0,35); a carga gasta no começo do gesto; fica de uma sala para a outra.
+- Golpes da ultimate: `counts = false`, sem número esmeralda de finalizador, sem quadro de impacto (exceto o de quebra
+  de fase do chefe, que é regra do golpe e não da origem), sem câmera lenta; hit slow de finalizador na U-1.
+- Voragem: os comuns dentro ficam presos como no círculo (preparo cortado uma vez ao entrar); guardião = não chefe com
+  `stun_time` 0. Visual provisório no estilo do círculo de luz em esmeralda com 3 marcas girando e partículas para o
+  centro; os braços marfim em espiral e o aro de ouro velho da A.3 ficam para o `environment-artist`/`art-director`.
+- U-1: aviso esmeralda da faixa durante o gesto (o estilo de aviso no verde da Emeth, força 0,7) e a fenda
+  `ult_rift.gdshader` (pico abaixo do glow pelo `ScreenTone`, `hero_hole`).
+- Risco de balanço: a Magia só volta por abate, então na sala de Morvath (sem a carga de antes) a U-1 enche no máximo
+  com os 50 de Magia da sala mais os abates do ritual; medir na E6.
+
 ---
 
 ## 4. Dons: a árvore do Guerreiro (D-58)

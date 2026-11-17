@@ -6,6 +6,8 @@ extends Control
 
 ## Glyph ids of the bare actions: ACTION_GLYPH + Boon.Slot (attack, special, circle of light, dodge).
 const ACTION_GLYPH := 100
+## Glyph ids of the ultimates: ULT_GLYPH + UltDef.Kind (the cleave, the Voragem).
+const ULT_GLYPH := 110
 
 var boon: Boon
 var cooldown := 0.0
@@ -127,6 +129,19 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 3:
 				var y := (k - 1) * r * 0.4
 				ci.draw_line(c + Vector2(-r * (0.95 - absf(k - 1) * 0.2), y), c + Vector2(-r * 0.45, y), w, th * 0.8, true)
+		110:  # the cleave: the blade coming straight down onto a split in the floor
+			ci.draw_line(c + Vector2(0, -r * 0.95), c + Vector2(0, r * 0.35), w, th * 1.5, true)
+			ci.draw_line(c + Vector2(-r * 0.4, -r * 0.45), c + Vector2(r * 0.4, -r * 0.45), w, th, true)
+			ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.9, r * 0.75), c + Vector2(-r * 0.4, r * 0.6), c + Vector2(-r * 0.1, r * 0.85),
+				c + Vector2(r * 0.3, r * 0.6), c + Vector2(r * 0.9, r * 0.75)]), w, th, true)
+		111:  # the Voragem: three arms turning into the middle
+			for k in 3:
+				var pts := PackedVector2Array()
+				for j in 9:
+					var t := float(j) / 8.0
+					pts.append(c + Vector2.from_angle(TAU * k / 3.0 + t * 2.4) * r * (0.95 - 0.8 * t))
+				ci.draw_polyline(pts, w, th, true)
+			ci.draw_circle(c, r * 0.14, w)
 		_:
 			ci.draw_circle(c, r * 0.5, w)
 

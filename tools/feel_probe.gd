@@ -53,6 +53,10 @@ extends Node
 ##   E1c-P5 leg_holds           blow to walking: cut1 11, cut2 19, spin 30, special and its Omega 43, lance 47 (within 1;
 ##                              Hades II's MoveHold; replaces GF-07d, which measured the special's from the press)
 ##   E1c-P6 combo_cadence       attack mashed: cut2 starts 13 frames after cut1, the spin 21 after cut2 (attack lock)
+##   E2-U1  ult_frame_0        E2-08: the ultimate (full) tapped from rest starts its gesture on the press frame (f0)
+##   E2-U2  ult_cuts_blow      the ultimate tapped on f3 of cut1 (in its windup) starts on f3 and cut1 never lands
+##   E2-U3  ult_in_hit_stop    the ultimate pressed on f8 of a hit (a frame of the hit stop's slow): keyboard and virtual
+##                             pad start it on f8, never LOST
 ## Not in the probe: GF-11 (sound, a GUT test of Audio and a video), GF-13 (latency on the GPU), the omega special table
 ## of GF-09 (a document).
 
@@ -78,7 +82,7 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(game)
 	_queue = [_s_move, _s_turn, _s_attack_air, _s_attack_hit, _s_combo_mash, _s_combo_on_hit, _s_buffer, _s_dodge,
 		_s_dodge_cancel, _s_attack_in_dodge, _s_walk_cancel, _s_special, _s_omegas, _s_cast, _s_hitstop_buffer,
-		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_planted]
+		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_planted, _s_ultimate]
 	var only := OS.get_environment("PROBE")
 	if only != "":
 		_queue = _queue.filter(func(c: Callable) -> bool: return only.split(",").has(c.get_method()))
@@ -143,6 +147,7 @@ func reset_hero(at := Vector2(0, 4)) -> void:
 	game.horde.list.clear()
 	game.horde.dying.clear()
 	game.ground.clear()
+	game.ults.clear()
 	game.combat.set(&"_slow_cd", 0.0)
 	game.combat.set(&"_cine_cd", 0.0)
 	await step(20)
@@ -1091,3 +1096,83 @@ func _planted_input(kind: String, i: int, seen: Array) -> void:
 			hold(action)
 		if started.call(kind):
 			let_go(action)
+
+
+# ---------- E2-08: the ultimate ----------
+
+## The cleave chosen and full (the probe plays without a save: no ultimate otherwise).
+func _ult_ready() -> void:
+	game.ults.equip(game.hero.ultimate(&"cleave"))
+	game.ults.charge.fill()
+
+
+func _s_ultimate() -> void:
+	out("== ULTIMATE: from rest, cutting cut1's windup, in a hit stop")
+	await reset_hero()
+	_ult_ready()
+	await step(2)
+	var at := [-1]
+	var cb := func(_d: Vector2) -> void:
+		if at[0] < 0:
+			at[0] = _cur
+	game.player.ult_started.connect(cb)
+	await run(30, func(i: int) -> void:
+		_cur = i
+		if i == 0:
+			tap(&"ultimate"),
+		func(i: int, _s: bool) -> void:
+			if i < 3:
+				out("f%d state=%s" % [i, Player.State.keys()[game.player.state]]))
+	meta("E2-U1", "ult_frame_0", "ultimate cheia sai no quadro do aperto (f0)", ("f%d" % at[0]) if at[0] >= 0 else "LOST", at[0] == 0)
+
+	await reset_hero()
+	_ult_ready()
+	await step(2)
+	at[0] = -1
+	var landed := [0]
+	var on_hit := func(_n: ComboNode) -> void: landed[0] += 1
+	game.player.runner.move_hit.connect(on_hit)
+	await run(40, func(i: int) -> void:
+		_cur = i
+		if i == 0:
+			tap(&"light_attack")
+		if i == 3:
+			tap(&"ultimate"),
+		func(_i: int, _s: bool) -> void: pass)
+	game.player.runner.move_hit.disconnect(on_hit)
+	meta("E2-U2", "ult_cuts_blow", "ultimate em f3 do golpe 1 (preparacao) sai em f3 e o golpe 1 nunca acerta",
+		"%s, acertos %d" % [("f%d" % at[0]) if at[0] >= 0 else "LOST", landed[0]], at[0] == 3 and landed[0] == 0)
+
+	var starts := {}
+	for real in [true, false]:
+		await reset_hero()
+		_ult_ready()
+		dummy(game.player.pos + Vector2(2.0, 0), 15.0)
+		await step(2)
+		at[0] = -1
+		var slowed: Array[int] = []
+		await run(30, func(i: int) -> void:
+			_cur = i
+			if i == 0:
+				tap(&"light_attack")
+			if i == 8:
+				if real:
+					Controls.virtual = null
+					Input.action_press(&"ultimate")
+				else:
+					tap(&"ultimate")
+			if i == 9 and real:
+				Input.action_release(&"ultimate")
+			if i == 14:
+				Controls.virtual = pad,
+			func(i: int, _stepped: bool) -> void:
+				if last_rate < 0.5:
+					slowed.append(i))
+		Controls.virtual = pad
+		starts[real] = at[0]
+		out("%s: slowed frames %s, ultimate pressed on f8, starts %s" % ["keyboard" if real else "pad", str(slowed),
+			("f%d" % at[0]) if at[0] >= 0 else "LOST"])
+	game.player.ult_started.disconnect(cb)
+	var fmt := func(f: int) -> String: return ("f%d" % f) if f >= 0 else "LOST"
+	meta("E2-U3", "ult_in_hit_stop", "ultimate apertada em f8 de um acerto (no hit stop): teclado e controle virtual saem em f8, nenhum LOST",
+		"teclado %s, controle virtual %s" % [fmt.call(starts[true]), fmt.call(starts[false])], starts[true] == 8 and starts[false] == 8)

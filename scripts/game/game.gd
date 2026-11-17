@@ -44,6 +44,8 @@ var horde: Horde
 var projectiles: Projectiles
 var combat: Combat
 var skills: Skills
+## The ultimate of this descent in play (charge, gesture's blow, the Voragem on the floor).
+var ults: Ultimates
 var boons: BoonState
 ## The hero played (DT-013) and, for this descent, the Gifts equipped (ids) and the ultimate chosen (id or "").
 var hero: HeroDef = HeroDef.warrior()
@@ -128,6 +130,9 @@ func _ready() -> void:
 	skills = Skills.new()
 	skills.game = self
 	add_child(skills)
+	ults = Ultimates.new()
+	add_child(ults)
+	ults.setup(self)
 
 	ground.horde = horde
 	ground.player = player
@@ -187,6 +192,9 @@ func _ready() -> void:
 		Controls.virtual = bot.pad
 	# the Gifts before the first room: it records the life he walks in with
 	_equip_talents()
+	ults.equip(hero.ultimate(StringName(ultimate)))
+	if Dev.has("ult-full"):
+		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
 	if not Dev.has("horde"):
 		rooms = Rooms.new()
 		add_child(rooms)
@@ -424,6 +432,8 @@ func _step(dt: float) -> void:
 		player.step(dt, Vector2.ZERO, Vector2.ZERO)
 	else:
 		player.step(dt, _move(), _aim())
+	# (before the crowd: the Voragem's pull is swept, then the crowd keeps off the paladin)
+	ults.step(dt)
 	_lap(&"player")
 	horde.target = player.pos
 	horde.target_alive = player.alive() and mode == Mode.PLAY
@@ -465,16 +475,24 @@ func _move() -> Vector2:
 ## Where the paladin aims: the mouse pointer on the floor, or the stick (Controls).
 func _aim() -> Vector2:
 	if Controls.aims_with_mouse():
-		var mouse := get_viewport().get_mouse_position()
-		var from := camera.project_ray_origin(mouse)
-		var dir := camera.project_ray_normal(mouse)
-		if absf(dir.y) > 0.001:
-			var hit := from + dir * ((1.0 - from.y) / dir.y)
-			var d := Vector2(hit.x, hit.z) - player.pos
-			return d.normalized() if d.length() > 0.2 else Vector2.ZERO
-		return Vector2.ZERO
+		var hit := aim_floor()
+		if hit == Vector2.INF:
+			return Vector2.ZERO
+		var d := hit - player.pos
+		return d.normalized() if d.length() > 0.2 else Vector2.ZERO
 	var a := Controls.aim(Vector2.ZERO, Vector2.ZERO)
 	return a if Controls.virtual != null else Feel.screen_to_floor(a, cam_yaw())
+
+
+## The point of the floor (x, z) under the mouse pointer, at the height of a blow (1 m); INF when the ray misses it.
+func aim_floor() -> Vector2:
+	var mouse := get_viewport().get_mouse_position()
+	var from := camera.project_ray_origin(mouse)
+	var dir := camera.project_ray_normal(mouse)
+	if absf(dir.y) <= 0.001:
+		return Vector2.INF
+	var hit := from + dir * ((1.0 - from.y) / dir.y)
+	return Vector2(hit.x, hit.z)
 
 
 # ---------- waves ----------
@@ -547,6 +565,7 @@ func _trace_cam_cut(last := false) -> void:
 func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	_trace_cam_cut()
 	ground.clear()
+	ults.clear()
 	projectiles.clear_hostile()
 	horde.clear_crowd()
 	if _fountain != null:
@@ -1203,6 +1222,13 @@ func _shot() -> void:
 		while not _screen is EndScreen:
 			await get_tree().process_frame
 		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
+	elif Dev.arg("shot-on") == "ult" or Dev.arg("shot-on") == "ult-gesture":
+		# the ultimate: as its gesture begins (the band's warning) or as its blow lands, --shot-after seconds later
+		if Dev.arg("shot-on") == "ult":
+			await player.ult_landed
+		else:
+			await player.ult_started
+		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
 	elif Dev.has("shot-on"):
 		var want := Dev.arg("shot-on")
 		while true:
@@ -1337,6 +1363,12 @@ func _equip_talents() -> void:
 		ids = book.sanitized(block.equipped, level, hero.mastery.devotion(level))
 		var ult := hero.ultimate(StringName(block.ultimate))
 		ultimate = String(ult.id) if ult != null and ult.mastery_level <= level else ""
+	if Dev.has("ultimate"):
+		# --ultimate=cleave|vortex: that one, whatever the Mastery (tests, captures, the robot)
+		var chosen := hero.ultimate(StringName(Dev.arg("ultimate")))
+		ultimate = String(chosen.id) if chosen != null else ""
+		if chosen == null:
+			push_warning("--ultimate: no ultimate %s" % Dev.arg("ultimate"))
 	talents = ids
 	if ids.is_empty():
 		return
@@ -1429,7 +1461,7 @@ func result() -> Dictionary:
 		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
 		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
-		"fountain_used": room_tally.fountain_used}
+		"fountain_used": room_tally.fountain_used, "ult": ults.stats()}
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

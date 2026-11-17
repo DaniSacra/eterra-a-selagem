@@ -14,8 +14,13 @@ signal dodged(dir: Vector2)
 signal shield_broke
 ## The circle of light (cast) is let go at a point; omega: it was held and paid for, so it bursts at the end.
 signal cast_released(at: Vector2, omega: bool)
+## The ultimate's protected gesture begins (its charge is spent now) and, gesture seconds later, its blow lands
+## (Ultimates plays both; dir: where he faces, the aim at the press).
+signal ult_started(dir: Vector2)
+signal ult_landed(dir: Vector2)
 
-enum State { MOVE, DODGE, HURT, DEAD, REST }
+## ULT: the ultimate's gesture (UltDef.gesture), protected, planted, the runner locked as in the roll.
+enum State { MOVE, DODGE, HURT, DEAD, REST, ULT }
 
 ## The body on the floor (meters): every collision and every enemy's reach is measured with it (kept a constant, it
 ## is read in constant expressions; the hero's other numbers are HeroDef's).
@@ -143,6 +148,11 @@ var curse := CurseState.new()
 var _curse_aura: CurseAura
 var _blade_mat: ShaderMaterial
 var _shown_corrupt := -1.0
+## The ultimate chosen for this descent (null: none) and whether its charge is full (both set by Ultimates).
+var ult: UltDef = null
+var ult_ready := false
+## Seconds an ultimate press still waits to be used (made in the roll or the stagger: DODGE_BUFFER, as the dodge's).
+var _ult_want := 0.0
 ## Holding the dodge button after the roll keeps running fast.
 var sprinting := false
 var cast_cooldown := 0.0
@@ -376,7 +386,7 @@ func alive() -> bool:
 
 
 func invulnerable() -> bool:
-	return invuln > 0.0 or state == State.DODGE or state == State.DEAD or state == State.REST
+	return invuln > 0.0 or state == State.DODGE or state == State.DEAD or state == State.REST or state == State.ULT
 
 
 ## Every frame of play. move: stick or keys. aim: where the paladin wants to strike (unit vector, or zero).
@@ -423,6 +433,13 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 				runner.on_dodge_end()
 				invuln = maxf(invuln, feel.dodge_iframes - feel.dodge_time)
 				sprinting = Controls.held(&"dodge")
+		State.ULT:
+			# planted and safe; attack and special pressed in it wait in the locked runner, a dodge DODGE_BUFFER
+			_queue_buttons()
+			if _state_t >= ult.gesture:
+				state = State.MOVE
+				runner.locked = false
+				ult_landed.emit(facing)
 	if state == State.MOVE and not dashing:
 		_read_buttons(dt, move, aim)
 		if state == State.MOVE:
@@ -463,6 +480,10 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		_start_dodge(move)
 		return
 	_dodge_want = maxf(0.0, _dodge_want - dt)
+	if (Controls.pressed(&"ultimate") or _ult_want > 0.0) and ult_ready and ult != null and runner.can_cancel():
+		_start_ult()
+		return
+	_ult_want = maxf(0.0, _ult_want - dt)
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
 	if curse.active():
 		# the curse locks the special: a press does nothing, a charge already under way is dropped
@@ -490,6 +511,8 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 func _queue_buttons() -> void:
 	if Controls.pressed(&"dodge"):
 		_dodge_want = DODGE_BUFFER
+	if Controls.pressed(&"ultimate"):
+		_ult_want = DODGE_BUFFER
 	if Controls.pressed(&"light_attack"):
 		runner.press(ComboNode.In.LIGHT)
 	if Controls.pressed(CURSE_ACTION) and not curse.active():
@@ -574,13 +597,41 @@ func _start_dodge(move: Vector2) -> void:
 	dodged.emit(_dodge_dir)
 
 
-func _on_move_started(node: ComboNode) -> void:
+## The ultimate's gesture (UltDef.gesture): it cuts any blow as the dodge does (a blow cut in its windup never lands),
+## the combo starts over, presses wait in the locked runner and come out when it ends. Its clip plays so that the
+## blade lands as the gesture ends (UltDef.anim_peak).
+func _start_ult() -> void:
+	charging = false
+	_casting = false
+	sprinting = false
+	state = State.ULT
+	_state_t = 0.0
+	_ult_want = 0.0
+	_lunge = Vector2.ZERO
+	runner.reset(false)
+	runner.locked = true
+	facing = _strike_dir()
+	_play(ult.anim, 1.0, maxf(0.0, ult.anim_peak - ult.gesture))
+	ult_started.emit(facing)
+
+
+## How far the ultimate's gesture has got (0..1; 0 outside it).
+func ult_progress() -> float:
+	return clampf(_state_t / maxf(ult.gesture, 0.01), 0.0, 1.0) if state == State.ULT and ult != null else 0.0
+
+
+## Where a blow goes: the aim, or where he faces; without the mouse it turns to the closest enemy ahead (soft lock).
+func _strike_dir() -> Vector2:
 	var dir := _aim if _aim.length() > 0.1 else facing
 	if not Controls.aims_with_mouse():
 		var target := horde.nearest(pos, ASSIST_RANGE) if horde else null
 		if target and absf(dir.angle_to(target.pos - pos)) < ASSIST_HALF_ARC:
 			dir = (target.pos - pos).normalized()
-	facing = dir.normalized()
+	return dir.normalized()
+
+
+func _on_move_started(node: ComboNode) -> void:
+	facing = _strike_dir()
 	if node.magick_cost > 0.0:
 		magick.spend(node.magick_cost)
 	_anim.speed_scale = 1.0

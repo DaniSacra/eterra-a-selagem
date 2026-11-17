@@ -104,6 +104,8 @@ var _combo_stroke: HudMark
 var _move: Label
 var _notice: Label
 var _slots: Array[ActionSlot] = []
+## The ultimate's diamond, after the four (hidden without an ultimate): its gold level rises with the charge.
+var _ult_slot: ActionSlot
 var _passives: HBoxContainer
 var _arrow: Label
 var _arrow_mark: HudMark
@@ -227,6 +229,10 @@ func _build_actions() -> void:
 		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i])
 		row.add_child(s)
 		_slots.append(s)
+	_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE)
+	row.add_child(_ult_slot)
+	# (the row is laid out for five; without an ultimate the four stay in the middle)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var width := row.get_combined_minimum_size().x
 	var height := ActionSlot.DIAMOND + ActionSlot.KEY_H * 0.5
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0, -MARGIN + 6), Vector2(width, height))
@@ -362,6 +368,11 @@ func _update_slots(p: Player) -> void:
 				s.locked = p.curse.ratio()
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
+	var ult := game.ults.def if game.ults else null
+	_ult_slot.visible = ult != null
+	if ult != null:
+		_ult_slot.glyph = BoonIcon.ULT_GLYPH + ult.kind
+		_ult_slot.refresh(null, 1.0 - game.ults.ratio())
 
 
 ## Magia the held (Omega) version of a slot's action costs; 0 when it has none.
@@ -508,6 +519,7 @@ func _update_veil(delta: float) -> void:
 	# the diamonds fade only their bodies: what they say (glyph, recharge, key) stays whole
 	for s in _slots:
 		s.veil = (1.0 - a) / (1.0 - VEIL_ALPHA)
+	_ult_slot.veil = (1.0 - a) / (1.0 - VEIL_ALPHA)
 
 
 ## The diamonds and the gifts beside them, on screen.
