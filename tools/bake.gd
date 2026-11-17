@@ -11,7 +11,8 @@ extends SceneTree
 ## under the atlas), "bend" (bone -> degrees added to its posed rotation, a stoop) and "anims" (name in the game ->
 ## [rig, clip, frames, loops, options]): the clips are made for other skeletons and carried to this one by Retarget,
 ## as tools/bake_hero.gd does for the hero. Options of a clip: "from" and "to" (seconds of the clip), "time"
-## (seconds it plays in, in the game), "lift" (the share of the hips' rise and fall that is kept) and "guard"
+## (seconds it plays in, in the game), "lift" (the share of the hips' rise and fall that is kept), "in_place" (the
+## hips never leave the figure's place on the floor: a clip with root motion that the game does not move) and "guard"
 ## ([rig, clip, bones], or a list of those: the bones, parents first, point where another clip has them, e.g. the
 ## sword arm kept in guard while the legs run) and "bend" (as the entry's, for this clip only, on top of it).
 ## "rigid" (pieces the model carries by itself and its rig tears between bones, e.g. the brute's tower shield, half
@@ -170,8 +171,10 @@ const STAFF_GUARD := {"guard": [&"ual", "Idle_Torch", LEFT_ARM]}
 ## The sorcerer's trot (E1b-A3): the staff upright and the free arm close to the body (the run's own swings it out
 ## 61 degrees, a scarecrow's), the feet locked on a short stride (_foot_lock).
 const MAGE_TROT := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", RIGHT_ARM]], "lock": true, "stride": 0.62, "lift": 0.5}
-## The crossbow kept level.
-const CROSSBOW_GUARD := {"guard": [&"ual", "Pistol_Idle", RIGHT_ARM]}
+## E1c (AUDIT.md P7): the crossbow carried low, in front of the hip, walking and standing (the pistol's arm held it
+## over the head like a hat); it rises to the shoulder only to aim ("aim", "attack": Pistol_Idle, Pistol_Shoot).
+const CROSSBOW_LOW := [&"ual", "Sword_Idle", RIGHT_ARM]
+const CROSSBOW_GUARD := {"guard": CROSSBOW_LOW}
 ## The shield arm up and the sword arm in guard (the shield clip lets it hang: the blade would drag in the floor).
 const SHIELD_GUARD := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]]}
 const SHIELD_IDLE := [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD]
@@ -179,10 +182,14 @@ const SHIELD_IDLE := [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD]
 ## takes the steps a minute of its weight at its speed in the game (tools/walk_probe.gd prints them):
 ## the crossbowman's trot like the sorcerer's (120 to 150); the brute's heavy walk, the one its KayKit figure had,
 ## on a longer step (110 to 140); the knight and Morvath on a long stride (90 to 120); the elder's solemn walk.
-const CROSSBOW_TROT := {"guard": [&"ual", "Pistol_Idle", RIGHT_ARM], "lock": true, "stride": 0.67, "lift": 0.5}
+const CROSSBOW_TROT := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.67, "lift": 0.5}
 const BRUTE_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.92}
 const KNIGHT_STRIDE := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 1.1}
-const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, "stride": 1.2}
+## E1c (AUDIT.md P6): the elder on a shorter stride, 91 steps a minute (1.2 gave 67, a slow motion).
+const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, "stride": 0.9}
+## E1c (AUDIT.md P6): the soldier's run with the feet locked as the sorcerer's, on a short stride with half the hop: 149
+## steps a minute at its 3.75 m/s (it ran 96, floating, with two feet in the air in 3 of 5 frames); the blade in guard.
+const SOLDIER_RUN := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.68, "lift": 0.5}
 const KING_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 1.3}
 ## The brute's own tower shield (MODELS.guard "hold"): degrees its arm and shield are swung from the model's rest
 ## toward the middle of the body, standing and walking, and braced for the charge.
@@ -192,7 +199,11 @@ const SHIELD_BRACE := -26.0
 const BOTH_ARMS: Array[StringName] = [&"LeftShoulder", &"LeftArm", &"LeftForeArm", &"LeftHand", &"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
 const OFFERING_GUARD := {"guard": [&"ual2", "Walk_Carry", BOTH_ARMS]}
 ## Morvath's blows in both hands (_both_hands) and his roar thrown back (VX-14).
-const TWO_HANDS := {"two_hands": true}
+## E1c (bug 3, "Morvath some e aparece em outro lugar para atacar"): his blows and his throw are the libraries' and
+## carry their root motion in the hips (Sword_Regular_C 3.2 m forward at size 1, 8 m on him; A and B 1.2 to 1.4,
+## OverhandThrow 0.7): drawn so, his body left the place the game keeps him (his warnings, his reach, his collision)
+## and came back when the clip ended. "in_place" keeps the hips over his place (tools/pose_drift.gd measures it).
+const TWO_HANDS := {"two_hands": true, "in_place": true}
 const ROAR_BEND := {"Spine01": Vector3(-10, 0, 0), "Head": Vector3(-18, 0, 0)}
 
 ## What every figure does the same way. The rise plays in the 0.9 s the horde gives it (Horde, State.RISE).
@@ -227,8 +238,11 @@ const MODELS := {
 		"palette": PALETTE + "skeleton.png",
 		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": CLEAVER_SCALE, "rot": EDGE_OUT, "paint": BLADE_PAINT}],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, SWORD_GUARD], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
-			"attack": SWORD_BLOW,
+			"walk": [&"kaykit", "Running_B", 20, true, SOLDIER_RUN], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
+			# E1c (AUDIT.md P3): the blow goes on from where the wind-up stops (0.3 s of the clip, the blade highest at
+			# 0.35), so the blade's fall (0.35 to 0.5) is drawn in the first frames of the lunge (Horde.ATTACK_PLAY);
+			# the rest, back to the guard, is its recovery (EnemyDef.recover_time, the end held)
+			"attack": [&"ual", "Sword_Attack", 14, false, {"from": 0.3, "to": 1.2}],
 			# the lunge is announced with the blade raised over the head (Horde plays "windup" for its 0.9 s)
 			"windup": [&"ual", "Sword_Attack", 8, false, {"from": 0.1, "to": 0.3, "time": 0.9}],
 		},
@@ -266,7 +280,7 @@ const MODELS := {
 		# its head)
 		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT}],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, CROSSBOW_TROT], "idle": [&"ual", "Pistol_Idle", 12, true],
+			"walk": [&"kaykit", "Running_B", 20, true, CROSSBOW_TROT], "idle": [&"ual", "Idle", 12, true, CROSSBOW_GUARD],
 			"attack": [&"ual", "Pistol_Shoot", 14, false], "aim": [&"ual", "Pistol_Idle", 8, true],
 		},
 	},
@@ -338,14 +352,14 @@ const MODELS := {
 			# Boss.SCYTHE_SWEEP after it, in the same 1.1 s (tools/clip_probe.gd: highest at 0.41, fastest at 0.46;
 			# the one-handed Sword_Attack it replaces had already struck at 0.28, inside the wind-up)
 			"slash1": [&"ual2", "Sword_Regular_A", 14, false, TWO_HANDS], "slash2": [&"ual2", "Sword_Regular_B", 14, false, TWO_HANDS],
-			"slash3": [&"ual2", "Sword_Regular_C", 16, false, {"from": 0.158, "to": 1.258, "two_hands": true}],
+			"slash3": [&"ual2", "Sword_Regular_C", 16, false, {"from": 0.158, "to": 1.258, "two_hands": true, "in_place": true}],
 			"dash_windup": [&"kaykit", "2H_Melee_Idle", 8, true, {"lift": 0.2}],
 			"dash": [&"ual2", "Sword_Dash_RM", 12, false, {"from": 0.12, "to": 0.72}],
 			# the KayKit figure is half his height and hops as it conjures: on him the hop would be a flight
 			"summon": [&"kaykit", "Spellcast_Summon", 20, false, {"lift": 0.2}], "rain": [&"kaykit", "Spellcast_Raise", 14, false, {"lift": 0.2}],
 			# the curse and each wave of the storm are thrown (Boss poses it as they leave): the library's overhand
 			# throw from the top of its swing, the release at the share the old cast had it, in the same 0.5 s
-			"volley": [&"ual2", "OverhandThrow", 14, false, {"from": 0.26, "to": 0.92, "time": 0.5}],
+			"volley": [&"ual2", "OverhandThrow", 14, false, {"from": 0.26, "to": 0.92, "time": 0.5, "in_place": true}],
 			# the roar: both arms flung up and out, chest open and head thrown back, in the same 1.03 s
 			"roar": [&"kaykit", "Taunt_Longer", 14, false, {"from": 1.38, "to": 2.4133, "lift": 0.2, "bend": ROAR_BEND}],
 			"stunned": [&"ual", "Crouch_Idle", 12, true],
@@ -705,8 +719,8 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		pose[first] = (parent.inverse() * swing * parent * Basis(pose[first] as Quaternion)).get_rotation_quaternion()
 	for b: int in pose:
 		skeleton.set_bone_pose_rotation(b, pose[b])
-	# clips that walk across the floor (_RM) stay in place: the game moves the figure
-	var hips := rt.hips_position(String(a[1]).ends_with("_RM"))
+	# clips that walk across the floor (_RM, or "in_place") stay in place: the game moves the figure
+	var hips := rt.hips_position(String(a[1]).ends_with("_RM") or opts.get("in_place", false))
 	var rest := skeleton.get_bone_rest(rt.hips_bone()).origin
 	hips.y = rest.y + (hips.y - rest.y) * float(opts.get("lift", 1.0))
 	skeleton.set_bone_pose_position(rt.hips_bone(), hips)

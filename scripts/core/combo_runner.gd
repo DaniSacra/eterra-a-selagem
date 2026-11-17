@@ -4,6 +4,12 @@ extends RefCounted
 ## press() records an input, step() advances time and emits what happened.
 
 enum Phase { IDLE, WINDUP, RECOVERY, WINDOW }
+## The blow as the player sees it (E1c; docs/design/warrior_spec.md, "Estados do golpe"), read from the phases above,
+## never a second state machine: IDLE (free: no move, or the chain window with the legs free), WINDUP (the
+## anticipation, glint included), STRIKE (the one step the blow lands), RECOVERY (the attack lock and the leg hold
+## after the blow: the clip's return or its held pose). IDLE -> WINDUP -> STRIKE -> RECOVERY -> IDLE; a press in
+## RECOVERY waits and starts the next WINDUP when the attack lock ends; the dodge cuts any of them back to IDLE.
+enum Stage { IDLE, WINDUP, STRIKE, RECOVERY }
 
 signal move_started(node: ComboNode)
 ## The windup is over and the move holds its glint for time seconds before it lands.
@@ -30,6 +36,10 @@ var _dodge_left := 0.0
 var _hold := 0.0
 ## Seconds more nothing may start (hold_for: the 8 frames after the circle of light, D-44); presses wait as when locked.
 var _held := 0.0
+## Seconds the legs stay held after the last blow landed (ComboNode.move_hold).
+var _legs := 0.0
+## The blow landed on this step (Stage.STRIKE).
+var _struck := false
 ## Seconds left before a move may start again, by id (ComboNode.cooldown).
 var _cooldowns: Dictionary[StringName, float] = {}
 
@@ -47,16 +57,40 @@ func is_attacking() -> bool:
 	return phase == Phase.WINDUP or phase == Phase.RECOVERY
 
 
-## Share of walking speed the paladin keeps right now: the move's own while the blade swings (Ember & Blade and
-## Hades II plant the feet: a swing moves only by its lunge), all of it once the blow has landed, when walking
-## cuts the follow-through short and runs (the chain still holds for the next press).
+## Share of walking speed the paladin keeps right now: the move's own while he stands planted (E1c: 0 for every
+## blow, struck standing still), all of it once he may walk again (the chain still holds for the next press).
 func move_scale(feel: Feel) -> float:
-	return node.move_scale_with(feel) if phase == Phase.WINDUP and node != null else 1.0
+	if not planted():
+		return 1.0
+	# (the legs may still be held after the chain has ended: no move left to ask)
+	return node.move_scale_with(feel) if node != null else 0.0
 
 
-## True while the blade swings (until the blow lands): the paladin stands planted and plays the swing.
+## True while the blade swings (until the blow lands).
 func is_swinging() -> bool:
 	return phase == Phase.WINDUP
+
+
+## True while the paladin stands planted: a move's windup and its leg hold after it lands (ComboNode.move_hold),
+## which outlasts its recovery and its chain window. Only the dodge cuts it. He never plays the run while planted.
+func planted() -> bool:
+	return phase == Phase.WINDUP or _legs > 0.0001
+
+
+## Seconds his legs stay held (ComboNode.move_hold).
+func legs_left() -> float:
+	return _legs
+
+
+## Where the blow stands (Stage).
+func stage() -> Stage:
+	if phase == Phase.WINDUP:
+		return Stage.WINDUP
+	if _struck:
+		return Stage.STRIKE
+	if phase == Phase.RECOVERY or _legs > 0.0001:
+		return Stage.RECOVERY
+	return Stage.IDLE
 
 
 ## A dodge may cut any move, its windup too (Hades II cuts the charge; GF-02): a blow cut before it lands deals nothing.
@@ -89,6 +123,7 @@ func charge_available(charge: ComboNode.In = ComboNode.In.CHARGE) -> bool:
 func on_dodge() -> void:
 	phase = Phase.IDLE
 	node = null
+	_legs = 0.0
 	locked = true
 	_buffered = NO_INPUT
 	_dodge_left = tree.dodge_window
@@ -110,6 +145,7 @@ func reset(clear_cooldowns: bool = true) -> void:
 	_buffered = NO_INPUT
 	_dodge_left = 0.0
 	_held = 0.0
+	_legs = 0.0
 	if had_chain:
 		combo_dropped.emit()
 
@@ -121,8 +157,10 @@ func step(dt: float) -> void:
 		_cooldowns[id] -= dt
 		if _cooldowns[id] <= 0.0:
 			_cooldowns.erase(id)
+	_struck = false
 	if locked:
 		return
+	_legs = maxf(0.0, _legs - dt)
 	# (checked before it counts down, with room for the sum of frames: a hold of 8 frames starts on the 8th after it)
 	var held := _held > 0.0001
 	_held = maxf(0.0, _held - dt)
@@ -141,6 +179,8 @@ func step(dt: float) -> void:
 				_t += node.recovery
 				if node.cooldown > 0.0:
 					_cooldowns[node.id] = node.cooldown
+				_legs = node.legs_held()
+				_struck = true
 				move_hit.emit(node)
 		Phase.RECOVERY:
 			_t -= dt

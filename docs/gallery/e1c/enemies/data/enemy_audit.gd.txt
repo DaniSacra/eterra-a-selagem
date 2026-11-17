@@ -1,0 +1,152 @@
+extends SceneTree
+## QA scratch probe (not part of the game): plays the real game and measures, per enemy kind, what the eye sees.
+
+var game: Node = null
+var horde: Object = null
+var last_frame := -1
+var prev := {}   # Enemy -> Dictionary
+var K := {}      # kind -> stats
+
+func _initialize() -> void:
+	change_scene_to_file("res://scenes/boot.tscn")
+
+func _k(id: StringName) -> Dictionary:
+	if not K.has(id):
+		K[id] = {"n": 0, "alive_s": 0.0, "walk_s": 0.0, "walk_ok": 0.0, "walk_inplace": 0.0, "walk_slow": 0.0, "walk_fast": 0.0,
+			"walk_side": 0.0, "walk_back": 0.0, "stun_s": 0.0, "flinch": 0, "chain": 0, "max_stun_streak": 0.0,
+			"windup": 0, "windup_cut": 0, "attack": 0, "attack_cut": 0, "reannounce": 0, "switch": 0, "hit_idle": 0,
+			"idle_walk": 0, "hit_walk": 0, "hit_restart": 0, "speed_sum": 0.0, "speed_n": 0, "push_s": 0.0,
+			"stun_streaks": [], "bind_s": 0.0, "near_s": 0.0, "near_attack": 0}
+	return K[id]
+
+func _in_bind(at: Vector2) -> bool:
+	var g: Object = game.get(&"ground")
+	for z: Object in g.get(&"zones"):
+		if int(z.kind) == 5 and z.pos.distance_to(at) < z.radius + 0.6:
+			return true
+	return false
+
+func _render_anim(e: Object) -> StringName:
+	var d: Object = e.def
+	match int(e.state):
+		1:
+			if e.hurt_t > 0.0 and (not d.heavy or e.hurt_t > 0.3 - 0.12):
+				return &"hit"
+			elif e.stun_t > 0.0:
+				return &"idle"
+			return e.anim
+		2:
+			return e.anim
+		3:
+			return e.anim
+	return e.anim
+
+func _process(_d: float) -> bool:
+	if game == null:
+		for n in root.find_children("*", "Node", true, false):
+			if "horde" in n and n.get(&"horde") != null and n.has_method(&"result"):
+				game = n
+				horde = n.get(&"horde")
+				break
+		return false
+	if not is_instance_valid(horde):
+		return false
+	var f: int = horde.get(&"_frame")
+	if f == last_frame:
+		return false
+	last_frame = f
+	var dt: float = horde.get(&"_dt")
+	if dt <= 0.0:
+		return false
+	var seen := {}
+	for e: Object in horde.get(&"list"):
+		seen[e] = true
+		var d: Object = e.def
+		if d.behavior == EnemyDef.Behavior.BOSS:
+			continue
+		var s := _k(d.id)
+		var p: Dictionary = prev.get(e, {})
+		if p.is_empty():
+			s.n += 1
+		s.alive_s += dt
+		var ra := _render_anim(e)
+		var st := int(e.state)
+		var bound := _in_bind(e.pos)
+		if not p.is_empty():
+			if p.ra != ra:
+				s.switch += 1
+				if p.ra == &"hit" and ra == &"idle": s.hit_idle += 1
+				if p.ra == &"idle" and ra == &"walk": s.idle_walk += 1
+				if p.ra == &"hit" and ra == &"walk": s.hit_walk += 1
+			elif ra == &"hit" and e.hurt_t > p.hurt_t + 0.01:
+				s.hit_restart += 1
+			if p.st != 2 and st == 2: s.windup += 1
+			if p.st == 2 and st == 1: s.windup_cut += 1
+			if p.st == 2 and st == 3: s.attack += 1
+			if p.st == 3 and st == 1 and e.stun_t > 0.0 and p.stun == 0.0: s.attack_cut += 1
+			if e.stun_t > p.stun + 0.001 and not bound:
+				s.flinch += 1
+				if p.stun > 0.0: s.chain += 1
+			if st == 2 and p.st != 2 and p.get("stun_end", 9.0) < 0.15: s.reannounce += 1
+		var stun_end: float = p.get("stun_end", 9.0)
+		var streak: float = p.get("streak", 0.0)
+		if bound:
+			s.bind_s += dt
+		if e.stun_t > 0.0 and st != 0 and not bound and e.frozen_t <= 0.0:
+			s.stun_s += dt
+			streak += dt
+			stun_end = 0.0
+		else:
+			if streak > 0.0:
+				s.stun_streaks.append(streak)
+				s.max_stun_streak = maxf(s.max_stun_streak, streak)
+			streak = 0.0
+			stun_end += dt
+		# walking feet: walk clip shown and not frozen
+		if ra == &"walk" and e.frozen_t <= 0.0 and st == 1 and e.alive:
+			var v: Vector2 = (e.pos - e.last_pos) / dt
+			var exp_speed: float = d.speed * (0.45 if e.slow_t > 0.0 else 1.0)
+			if e.push.length() > 0.3:
+				s.push_s += dt
+			elif exp_speed > 0.01 or true:
+				s.walk_s += dt
+				var spd := v.length()
+				s.speed_sum += spd
+				s.speed_n += 1
+				var ref := maxf(exp_speed, 0.6 * 2.3)  # speed 0 plays the walk at 0.6
+				if spd < 0.2 * ref:
+					s.walk_inplace += dt
+				else:
+					var ang := rad_to_deg(absf(v.angle_to(e.dir)))
+					if ang > 120.0: s.walk_back += dt
+					elif ang > 35.0: s.walk_side += dt
+					elif spd < 0.75 * ref: s.walk_slow += dt
+					elif spd > 1.3 * ref: s.walk_fast += dt
+					else: s.walk_ok += dt
+		prev[e] = {"ra": ra, "st": st, "stun": e.stun_t, "hurt_t": e.hurt_t, "stun_end": stun_end, "streak": streak}
+	for e in prev.keys():
+		if not seen.has(e):
+			var p: Dictionary = prev[e]
+			if p.streak > 0.0:
+				var s := _k(e.def.id)
+				s.stun_streaks.append(p.streak)
+			prev.erase(e)
+	return false
+
+func _finalize() -> void:
+	for id in K:
+		var s: Dictionary = K[id]
+		var w: float = maxf(s.walk_s, 0.001)
+		var streaks: Array = s.stun_streaks
+		streaks.sort()
+		var med: float = streaks[streaks.size() / 2] if not streaks.is_empty() else 0.0
+		var p90: float = streaks[int(streaks.size() * 0.9)] if not streaks.is_empty() else 0.0
+		print("AUDIT ", JSON.stringify({"id": id, "n": s.n, "alive_s": snappedf(s.alive_s, 0.1),
+			"bind_share": snappedf(s.bind_s / maxf(s.alive_s, 0.01), 0.01), "stun_share": snappedf(s.stun_s / maxf(s.alive_s, 0.01), 0.01), "flinch": s.flinch, "chain": s.chain,
+			"stun_streak_med": snappedf(med, 0.01), "stun_streak_p90": snappedf(p90, 0.01), "stun_streak_max": snappedf(s.max_stun_streak, 0.01),
+			"windup": s.windup, "windup_cut": s.windup_cut, "attack": s.attack, "attack_cut": s.attack_cut, "reannounce": s.reannounce,
+			"attacks_per_min": snappedf(s.attack / maxf(s.alive_s, 0.01) * 60.0, 0.1),
+			"anim_switch_per_s": snappedf(s.switch / maxf(s.alive_s, 0.01), 0.01), "hit_idle": s.hit_idle, "idle_walk": s.idle_walk, "hit_walk": s.hit_walk, "hit_restart": s.hit_restart,
+			"walk_s": snappedf(s.walk_s, 0.1), "walk_ok": snappedf(s.walk_ok / w, 0.01), "walk_inplace": snappedf(s.walk_inplace / w, 0.01),
+			"walk_slow": snappedf(s.walk_slow / w, 0.01), "walk_fast": snappedf(s.walk_fast / w, 0.01), "walk_side": snappedf(s.walk_side / w, 0.01),
+			"walk_back": snappedf(s.walk_back / w, 0.01), "walk_speed_avg": snappedf(s.speed_sum / maxf(s.speed_n, 1), 0.01), "pushed_s": snappedf(s.push_s, 0.1)}))

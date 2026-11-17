@@ -112,6 +112,27 @@ func pose(anim: StringName, frame: int) -> PackedVector3Array:
 	return out
 
 
+## Where a pose's body stands on the floor, at size 1: the mean of its vertices in x and z (every `step`-th vertex). A
+## clip whose poses leave the origin is drawn away from the place the game keeps the figure (E1c, bug 3: Morvath's
+## blows carried their library's root motion; tools/pose_drift.gd, tests/test_boss_body.gd).
+func pose_centre(anim: StringName, frame: int, step := 7) -> Vector2:
+	var sum := Vector2.ZERO
+	var n := 0
+	for v in range(0, vertices, step):
+		var p := position(anim, frame, v)
+		sum += Vector2(p.x, p.z)
+		n += 1
+	return sum / maxf(n, 1)
+
+
+## The farthest any pose of a clip stands from the origin (pose_centre), at size 1.
+func drift(anim: StringName) -> float:
+	var worst := 0.0
+	for f in frame_count(anim):
+		worst = maxf(worst, pose_centre(anim, f).length())
+	return worst
+
+
 func normal(anim: StringName, frame: int, v: int) -> Vector3:
 	var i := (int(first.get(anim, 0)) + frame) * vertices + v
 	var c := normals.get_pixel(i % WIDTH, i / WIDTH)

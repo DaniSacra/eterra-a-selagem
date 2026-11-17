@@ -28,6 +28,17 @@ const SCRIPTS := {
 		[3.8, "chase", 2.5], [4.8, "tap", "cast"], [6.2, "chase", 2.5], [7.0, "hold", "light_attack", 1.0],
 		[9.0, "chase", 4.0], [10.0, "hold", "heavy_attack", 0.8], [11.6, "chase", 2.5], [12.4, "hold", "cast", 0.9],
 		[14.5, "fight", "LLL"]],
+	# E1c (tools/movie.sh, docs/gallery/e1c/hero/): in an empty room (--start=shop), the aim up, A the 3-blow combo
+	# mashed standing (1.0 s), B the same with the direction held right all the time (3.4 s), C the special with the
+	# direction held left, then walking, twice (6.4 s and 8.6 s): every blow struck standing still, the run only after
+	# the legs are free
+	"planted": [[0.8, "aim", Vector2(0, -1)],
+		[1.0, "tap", "light_attack"], [1.15, "tap", "light_attack"], [1.3, "tap", "light_attack"],
+		[1.45, "tap", "light_attack"], [3.2, "move", Vector2(1, 0)], [3.4, "tap", "light_attack"],
+		[3.55, "tap", "light_attack"], [3.7, "tap", "light_attack"], [3.85, "tap", "light_attack"],
+		[5.8, "stop"], [6.2, "aim", Vector2(-1, 0)], [6.2, "move", Vector2(-1, 0)], [6.4, "tap", "heavy_attack"],
+		[7.8, "stop"], [8.2, "aim", Vector2(1, 0)], [8.4, "move", Vector2(1, 0)], [8.6, "tap", "heavy_attack"],
+		[10.0, "stop"]],
 }
 
 

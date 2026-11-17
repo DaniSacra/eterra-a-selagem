@@ -110,6 +110,8 @@ var _found: Array[Enemy] = []
 
 
 func _ready() -> void:
+	# the click or key that started the run (the title's Iniciar, "Descer de novo") is no swing (E1c, bug 1)
+	Controls.clear_presses()
 	Dev.seed_rng(_rng, 1)
 	fast = Dev.num("fast", 1.0)
 	_build_world()
@@ -380,7 +382,7 @@ func _process(delta: float) -> void:
 		if world_dt > 0.0:
 			_timed_step(minf(world_dt, 0.05))
 			stepped = true
-	horde.render()
+	horde.render(world_dt)
 	orbs.render()
 	if mode == Mode.PLAY and Controls.pressed(&"pause"):
 		_open_pause()
@@ -664,7 +666,7 @@ func _on_chosen(b: Boon) -> void:
 		player.heal(BoonChoice.REST_HEAL)
 	else:
 		_take(b)
-	mode = Mode.PLAY
+	_back_to_play()
 
 
 func _take(b: Boon) -> void:
@@ -975,7 +977,14 @@ func _open_pause() -> void:
 	pause.resumed.connect(func() -> void:
 		_close_screen()
 		apply_options()
-		mode = Mode.PLAY)
+		_back_to_play())
+
+
+## A screen over the run closed: the run goes on, and the press that closed it (a click on a card, Continuar, the
+## pause key) plays nothing (Controls.clear_presses; E1c, bug 1).
+func _back_to_play() -> void:
+	Controls.clear_presses()
+	mode = Mode.PLAY
 
 
 ## The comfort options of the save that the run reads (the pause's Options may change them): screen shake, the

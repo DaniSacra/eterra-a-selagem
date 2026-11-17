@@ -102,6 +102,10 @@ class Kind:
 	## Seconds of the attack clip, and whether the figure has a braced pose.
 	var attack_time := 0.0
 	var has_brace := false
+	## E1c: it has a wind-up clip of its own (its attack clip starts where that one stops: Horde.render), and the
+	## seconds of its hit pose (stretched over a stun).
+	var has_windup := false
+	var hit_time := 0.0
 	## Meters a second the floor runs under its planted foot when the walk plays at its own pace, at size 1
 	## (BakedModel.ground_speed; 0: not measured, Horde.walk_rate falls back to its old pace).
 	var ground := 0.0
@@ -197,6 +201,8 @@ func register(d: EnemyDef) -> void:
 	kind.material = mat
 	kind.attack_time = baked.duration(&"attack")
 	kind.has_brace = baked.frame_count(&"brace") > 0
+	kind.has_windup = baked.frame_count(&"windup") > 0
+	kind.hit_time = baked.duration(&"hit")
 	kind.ground = float(baked.ground_speed.get(&"walk", 0.0))
 	_kinds[d.id] = kind
 
@@ -253,13 +259,16 @@ func add(d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, stat
 
 
 ## add() with the kind already looked up (Horde.render: once per character, not once per question).
-func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0, lean := 0.0) -> void:
+## from_row and fade (E1c, a figure whose clip just changed): it is drawn from the pose row it showed last (from_row)
+## toward the new clip's pose by `fade` (0..1), not cut from one to the other. Returns the pose row it shows now (the
+## nearest of its blend), for the next change; -1 when nothing was drawn.
+func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, yaw: float, state: Color, squash := Vector3.ONE, tilt := 0.0, lean := 0.0, from_row := -1, fade := 1.0) -> int:
 	var c := _clip(k, anim)
 	# BakedModel.blend_at
 	var n := c.frames
 	if n == 0:
 		# a clip with no poses: draw nothing rather than `% 0`, which crashes an exported game
-		return
+		return -1
 	var p := t * c.rate
 	var a := 0
 	var next := 0
@@ -283,10 +292,16 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 	if lean != 0.0:
 		basis = basis * Basis(Vector3.BACK, lean)
 	basis = basis.scaled(squash * d.size)
-	_put(b, basis.x, basis.y, basis.z, pos, state, Color(c.first + a, c.first + next, p - a, 1.0))
+	var row := c.first + (a if p - a < 0.5 else next)
+	if from_row >= 0 and fade < 1.0:
+		_put(b, basis.x, basis.y, basis.z, pos, state, Color(from_row, row, clampf(fade, 0.0, 1.0), 1.0))
+		row = from_row if fade < 0.5 else row
+	else:
+		_put(b, basis.x, basis.y, basis.z, pos, state, Color(c.first + a, c.first + next, p - a, 1.0))
 	if state.a < 0.5:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
 		_put(_shadow, Vector3(r, 0, 0), Vector3.UP, Vector3(0, 0, r), Vector3(pos.x, 0.03, pos.z), Color())
+	return row
 
 
 ## A thin life bar over one enemy's head. top: the top of its head (world). life, armor: what is left (0..1).

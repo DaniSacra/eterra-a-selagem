@@ -3,7 +3,8 @@ extends RefCounted
 ## A light enemy record. No node, no physics body: Horde moves all of them in one loop and CrowdRenderer draws them.
 ## pos is (x, z) on the floor in meters; y is the height when thrown in the air.
 
-enum State { RISE, WALK, WINDUP, ATTACK, DEAD }
+## RECOVER (E1c): the window after its blow, standing still (EnemyDef.recover_time; last so the numbers of the others stay).
+enum State { RISE, WALK, WINDUP, ATTACK, DEAD, RECOVER }
 
 var def: EnemyDef
 var pos := Vector2.ZERO
@@ -43,6 +44,27 @@ var hurt_t := 0.0
 ## Only drawn (E1a-3): seconds since the last blow that wounded it (-1: none yet) and the way it pushed (HitRecoil).
 var recoil_t := -1.0
 var recoil_dir := Vector2.ZERO
+## Only drawn (E1c, a boss): the clip drawn last frame and its pose row, and the clip change being faded (the row it
+## left, the seconds since; Horde.CLIP_FADE).
+var drawn_anim: StringName = &""
+var drawn_row := -1
+var fade_row := -1
+var fade_t := 0.0
+## Only drawn (E1c, AUDIT.md P1: the drawing follows the body): its real speed on the floor, smoothed over
+## Horde.VEL_SMOOTH (pushes left out), the way the body faces (ZERO: dir; it turns toward where it walks when that is
+## far from dir, Horde._face), how far into its walk loop it is (seconds of the clip, at the pace of its real speed),
+## the seconds into its attack clip it has reached (held on into the recovery) and the stun its hit pose is stretched
+## over (Horde.flinch).
+var vel := Vector2.ZERO
+var face := Vector2.ZERO
+var walk_phase := 0.0
+var walking := false
+var blow_t := 0.0
+var stun_len := 0.0
+## The push applied this step (left out of vel).
+var pushed := Vector2.ZERO
+## A wind-up of its was cut: once the stun is over it waits Horde.REARM before another (AUDIT.md P5).
+var rearm := false
 var anim: StringName = &"walk"
 var anim_t := 0.0
 ## The direction a lunge or charge was aimed at when it was announced.
@@ -90,5 +112,7 @@ func height() -> float:
 	return sin(k * PI) * 3.2
 
 
+## Which way the body is drawn facing (radians round Y): `face`, else `dir`.
 func yaw() -> float:
-	return atan2(dir.x, dir.y)
+	var f := face if face != Vector2.ZERO else dir
+	return atan2(f.x, f.y)

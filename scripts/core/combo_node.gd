@@ -16,6 +16,9 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export var anim: StringName
 @export var anim_speed := 1.0
 @export var anim_from := 0.0
+## The clip that brings the blade back to the guard when the move's own clip ends and he stands (E1c: the return is
+## seen, never a cut to the guard). Walking cuts it. Empty: the move's clip already ends in the guard.
+@export var recover_anim: StringName
 ## Which way the blade crosses in the animation, so the cut of light follows the arm: 0 alternates, 1 from the
 ## paladin's right to his left, 2 from his left to his right (tools/bake_hero.gd measures it).
 @export_range(0, 2) var sweep := 0
@@ -31,11 +34,9 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export var width := 140.0
 ## Push given to what it hits, in meters per second.
 @export var knockback := 8.0
-## Meters the paladin steps forward during the windup.
+## Meters the paladin is carried forward during the windup. Only the dash attack (dash_cut, out of a dodge) has
+## one: every other blow is struck standing still (E1c, Daniel: "tem que atacar parado").
 @export var lunge := 0.0
-## How much farther a lunge may stretch to reach the enemy ahead: each blow carries the paladin to the next one,
-## as in Ember & Blade (and stops short of an enemy already within reach, so he does not run through it).
-const LUNGE_MAGNET := 2.5
 ## Line moves: also strike behind the paladin (the same length backwards).
 @export var both_ways := false
 ## Share of walking speed kept while this move plays. Below 0: the default of data/feel.tres for its kind
@@ -43,11 +44,22 @@ const LUNGE_MAGNET := 2.5
 @export_range(-1.0, 1.0, 0.01) var move_scale := -1.0
 
 @export_group("Timing")
+## A blow has three phases (E1c, Daniel; numbers of Hades II's staff, docs/design/hades2_feel_study.md): the windup
+## (the anticipation, plus the glint of a finisher; walking input ignored), the frame it lands, and the recovery (the
+## blade coming back, the rest of the clip, then its last pose held). The paladin stands still from the press until
+## move_hold after the blow; only the dodge cuts it. The combo slows as it goes: cut1 quick, cut2 a little slower, the
+## spin the slowest and heaviest.
 @export var windup := 0.07
 ## Seconds the move holds at the top of its swing, with a star of light on the blade, before it lands
 ## (the anticipation beat of a finisher). Scaled live by Feel.glint_scale.
 @export var glint := 0.0
+## Seconds after the blow lands before another blow may start (Hades II's attack lock: 8, 13, 18 frames for the
+## staff's three); a press before that waits for it. The next blow of the combo starts here (the cadence).
 @export var recovery := 0.17
+## Seconds after the blow lands that his legs stay held (Hades II's SwingNDisableMoveHold: 11, 19, 30 frames; the
+## special's 0.71 s), whatever the phase; only the dodge cuts it. Walking then cuts the rest of the clip. Below 0:
+## until the recovery ends.
+@export var move_hold := -1.0
 ## Seconds after the move ends in which the next input still continues the combo.
 @export var chain_window := 0.35
 ## The hit stop when it lands, as in Hades II (HitStop, GF-01): the world keeps its full speed for hit_stop_ms after
@@ -58,9 +70,6 @@ const LUNGE_MAGNET := 2.5
 @export_range(0.0, 1.0, 0.01) var hit_slow_scale := 0.06
 ## Seconds after this move lands before it may start again (the special's 0.7 s of Hades II; 0 = none).
 @export var cooldown := 0.0
-## Seconds after this move lands in which the paladin's legs stay planted (the special's 0.71 s of Hades II); only
-## the dodge cuts it.
-@export var root_time := 0.0
 ## Played when the move starts (the blade leaving, before it lands: GF-11). Audio.SOUNDS or an audio/ file.
 @export var sound: StringName = &"blade"
 ## Magia this move spends (the held Omega moves). A press without enough Magia plays the plain move instead.
@@ -105,6 +114,32 @@ func duration(glint_scale: float = 1.0) -> float:
 	return windup + glint * glint_scale + recovery
 
 
+## Seconds from the press to the frame the blow lands (the windup and the glint).
+func lead(glint_scale: float = 1.0) -> float:
+	return windup + glint * glint_scale
+
+
+## The slowest and fastest the rest of the clip may play in the recovery (a share of its own speed).
+const FOLLOW_MIN := 0.5
+const FOLLOW_MAX := 1.0
+
+
+## How fast (a share of the clip's own speed) the rest of the swing's clip plays after the blow, so the blade comes
+## back over the whole leg hold instead of snapping back (E1c: cut1's return played 3.7 times too fast). tail:
+## seconds of the clip left after the peak. A long tail plays at its own speed (walking cuts what is left once the
+## legs are free); a short one is slowed down to FOLLOW_MIN and its last pose held.
+func follow_speed(tail: float) -> float:
+	var hold := legs_held()
+	if hold <= 0.0:
+		return FOLLOW_MAX
+	return clampf(tail / hold, FOLLOW_MIN, FOLLOW_MAX)
+
+
+## Seconds the legs stay held after the blow lands (move_hold, or the recovery when it sets none).
+func legs_held() -> float:
+	return move_hold if move_hold >= 0.0 else recovery
+
+
 ## The share of walking speed this move keeps, with Feel's default for its kind when it sets none.
 func move_scale_with(feel: Feel) -> float:
 	return move_scale if move_scale >= 0.0 else feel.move_scale_for(tags)
@@ -114,12 +149,3 @@ func move_scale_with(feel: Feel) -> float:
 ## alternate: the flip to use when the move does not say.
 func sweep_flip(alternate: bool) -> bool:
 	return alternate if sweep == 0 else sweep == 2
-
-
-## Meters to step for this blow. gap: how far the enemy ahead stands beyond striking distance (INF: nobody ahead).
-func lunge_toward(gap: float) -> float:
-	if lunge <= 0.0:
-		return 0.0
-	if gap == INF:
-		return lunge
-	return clampf(gap, 0.15, lunge + LUNGE_MAGNET)

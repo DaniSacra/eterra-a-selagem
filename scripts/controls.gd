@@ -28,6 +28,10 @@ var _latched: Dictionary = {}
 ## The same for the virtual pad (the bot, touch): its taps last one frame, so a frame the game did not step keeps
 ## them here until it does (GF-06; Game calls latch_virtual).
 var _pad_latched: Dictionary = {}
+## Actions whose button was down when the presses were last cleared (clear_presses): they count again only once that
+## button has been let go, so a click or a key that closed a screen (the title's Iniciar, a gift card, the pause)
+## never reaches the run as a swing or a dodge (E1c, bug 1).
+var _swallowed: Dictionary = {}
 
 
 class VirtualPad:
@@ -130,9 +134,25 @@ func _event_from(entry: Dictionary) -> InputEvent:
 
 
 func _process(_delta: float) -> void:
+	for action: StringName in _swallowed.keys():
+		if not Input.is_action_pressed(action):
+			_swallowed.erase(action)
 	for action in ACTIONS:
-		if Input.is_action_just_pressed(action):
+		if Input.is_action_just_pressed(action) and not _swallowed.has(action):
 			_latched[action] = true
+
+
+## Forgets every press so far and swallows the buttons still down until they are let go: called when the run begins
+## and when a screen over it closes (the gift, the pause), so the press that got there plays nothing (E1c, bug 1:
+## the click on Iniciar was latched on the title, where nothing flushes, and the run opened on a swing). The virtual
+## pad (the bot, touch) only loses its kept taps: its held buttons are its own.
+func clear_presses() -> void:
+	_latched.clear()
+	_pad_latched.clear()
+	_swallowed.clear()
+	for action in ACTIONS:
+		if Input.is_action_pressed(action):
+			_swallowed[action] = true
 
 
 ## The game stepped: presses so far have been seen.
@@ -172,6 +192,8 @@ func move() -> Vector2:
 func pressed(action: StringName) -> bool:
 	if virtual:
 		return virtual.tapped.has(action) or _pad_latched.has(action)
+	if _swallowed.has(action):
+		return false
 	return _latched.has(action) or Input.is_action_just_pressed(action)
 
 
@@ -184,7 +206,7 @@ func released(action: StringName) -> bool:
 func held(action: StringName) -> bool:
 	if virtual:
 		return virtual.held.has(action)
-	return Input.is_action_pressed(action)
+	return Input.is_action_pressed(action) and not _swallowed.has(action)
 
 
 ## True when the aim comes from the mouse pointer (no soft lock then: the player points exactly).

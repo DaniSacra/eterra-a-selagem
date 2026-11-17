@@ -29,9 +29,18 @@ const PEAK := {
 const SWEEP := {
 	&"Slash_A": 1, &"Slash_B": 2, &"Slash_C": 1, &"Sword_Attack": 2,
 }
+## The clip that brings the blade back to the guard after each swing clip that ends away from it (ComboNode.recover_anim).
+const RECOVER := {&"Slash_A": &"Slash_A_Rec", &"Slash_B": &"Slash_B_Rec"}
 ## Seconds every finisher holds its glint on the blade before it lands (ComboNode.glint; the anticipation beat of the
 ## Ember & Blade, kept short so the timings of Hades II barely move: backlog BUG-003, 0.06 to 0.1 s).
 const FINISHER_GLINT := 0.08
+## Seconds the special and its Omega hold the legs after the dart leaves (ComboNode.move_hold; Hades II's
+## Special1DisableMoveHold, D-44 (3)); only the dodge cuts it.
+const SPECIAL_HOLD := 0.71
+## Push of cut1 and cut2 (m/s; Horde.KNOCKBACK_DECAY 7 makes it about a seventh of that in meters). E1c: with no lunge
+## to follow the enemy, 8 and 10 threw it 2.6 m back, out of the spin's 3 m; 2.5 and 3 keep the three blows on it
+## (0.8 m in all).
+const COMBO_PUSH := [2.5, 3.0]
 
 
 func _initialize() -> void:
@@ -60,6 +69,7 @@ func _move(id: StringName, input: ComboNode.In, anim: StringName, tags: Array[St
 		n.glint = FINISHER_GLINT
 	# start the clip a little before the swing so the blade lands exactly when the windup ends
 	n.sweep = SWEEP.get(anim, 0)
+	n.recover_anim = RECOVER.get(anim, &"")
 	var peak: float = PEAK.get(anim, 0.3)
 	# (a quick move squeezes the last 0.22 s of the lift into its windup; a slow one plays the clip at its own speed
 	# from windup seconds before the peak, so the blade never lands before the blow does)
@@ -76,34 +86,44 @@ const U := 80.0
 ## The paladin's moves, built on the timings, damage and reach of the first weapon of Hades II (study only:
 ## our own sword, animations, names and look). Frames are at 60 a second.
 func _combos() -> void:
-	# attack: three swings, the third a turn of the blade all around
+	# attack: three swings, the third a turn of the blade all around. E1c (Daniel's E1 test: "tem que atacar parado",
+	# "o primeiro ataque é muito rápido", "diferença de tempo entre os 3"; his Hades II video of 2026-11-16): every
+	# blow is struck standing still (no lunge), windup (+ the finisher's glint), the frame it lands, then the clip's
+	# return (ComboNode.follow_speed). Numbers of Hades II's staff (docs/design/hades2_feel_study.md, "O que aplicar"),
+	# seconds after the press / after the blow: windup, attack lock (recovery: the next blow of the combo starts there),
+	# legs held (move_hold, only the dodge cuts it): cut1 0.08 / 8 frames / 11 frames (press to walking 0.26 s),
+	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
-		{"damage": 60.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "lunge": 0.8, "windup": 0.28, "recovery": 18.0 / 60.0,
-		"chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin"}, [], &"move_spin")
+		{"damage": 60.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
+		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin"}, [], &"move_spin")
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
-		{"damage": 25.0, "reach": 430.0 / U, "width": 150.0, "knockback": 10.0, "lunge": 1.2, "windup": 0.11, "recovery": 13.0 / 60.0,
+		{"damage": 25.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
+		"move_hold": 19.0 / 60.0,
 		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0}, [cut3])
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
-		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": 8.0, "lunge": 1.0, "windup": 0.06, "recovery": 8.0 / 60.0,
+		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
+		"move_hold": 11.0 / 60.0,
 		"chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.6, "move_scale": 0.0}, [cut2])
 	# special: a bolt of light thrown ahead (strikes only with its bolt). Hades II's Special1: the attack is free again
-	# 18 frames after the dart, the special itself 0.7 s after it, and the legs stay planted 0.71 s (only the dodge
-	# cuts it; decision D-44 (3)); the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED)
+	# 18 frames after the dart, the special itself 0.7 s after it; the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED).
+	# The legs stay held 0.71 s after the dart (D-44 (3); Daniel liked it in Hades II), only the dodge cuts it. E1c
+	# (Daniel: "trava para andar e eu fico patinando"): while held he plays the throw and holds its pose, never the run.
 	var bolt := _move(&"bolt", H, &"Cast", [&"heavy", &"wave"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
-		"cooldown": 0.7, "root_time": 0.71, "sound": &"dart",
+		"cooldown": 0.7, "move_hold": SPECIAL_HOLD, "sound": &"dart",
 		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 40.0, "effect_radius": 880.0 / U,
 		"effect_size": 1.4, "wave_bolt": true}, [], &"move_bolt")
 	# Omega special (special held 0.65 s, 10 Magia): a wide bolt that bursts through the crowd
 	var burst := _move(&"burst", C, &"Cast", [&"heavy", &"wave", &"charge", &"omega"],
 		{"magick_cost": 10.0, "charge_time": 0.65, "damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.08,
-		"recovery": 0.45, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
+		"recovery": 0.45, "move_hold": SPECIAL_HOLD, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
 		"effect_radius": 880.0 / U, "effect_size": 330.0 / U * 2.0}, [], &"move_burst")
 	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back. Its windup and
-	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead)
+	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead). Hades II's Swing5:
+	# 0.78 s after it without walking or striking.
 	var lance := _move(&"lance", CL, &"Sword_Attack", [&"light", &"thrust", &"finisher", &"omega"],
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 160.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
-		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.6, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
+		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
 		"move_scale": 0.0, "sound": &"thrust"}, [], &"move_lance")
 	# out of a dash: a thrust along the way
 	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
@@ -146,7 +166,16 @@ func _enemy(props: Dictionary) -> void:
 ## Mage); the Brawler (our guard) plays its Default at 1.3 and its long one at 0.6; Radiator, Screamer and SiegeVine
 ## have only the Default. Elites flinch once their armor is broken (Hades: ImmuneToStun only while the HealthBuffer
 ## holds); guardians and Morvath never (ImmuneToStun).
-const STUN := 0.3
+## E1c (AUDIT.md P5, Game Director: Hades II faithfully): how long the stun lasts is the heroine's blow's, not the
+## pose's: OnHitStun 0.5 s on the light blows and OnHitStunHeavy 1.1 s on the strong ones (study 1.1 and 4.1), for
+## every common enemy; the hit pose is stretched over it (Horde.render).
+const STUN := 0.5
+const STUN_HEAVY := 1.1
+## E1c (AUDIT.md P2): Hades II's PostAttackDuration of each one's counterpart (study 4.2), the window it stands
+## still after its blow (EnemyDef.recover_time): Guard 2.1 (elite 1.5), Radiator 1.35 (elite 0.5), Brawler 1.1 after
+## the slam (and after our charge), Screamer 0.6 before it backs off, Mage 0.7 to 0.9. The SiegeVine's 3.25 is its
+## attack_cooldown already (it never moves: a recovery would only freeze the end of its cast).
+const ENEMY_RECOVER := {"skeleton": [2.1, 1.5], "runner": [1.35, 0.5], "guard": [1.1, 1.1], "archer": [0.6, 0.6], "mage": [0.8, 0.8]}
 
 
 func _enemies() -> void:
@@ -156,12 +185,15 @@ func _enemies() -> void:
 	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
 		"attack_damage": 3.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
 		"rating": 5.0, "role": &"pressure", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1,
-		"stun_time": STUN, "stun_heavy_time": STUN * 2.0}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0})
+		# at most 2 soldiers wind up at once (AUDIT.md P9: their red lines piled into one block)
+		"max_attackers": 2, "recover_time": ENEMY_RECOVER.skeleton[0],
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1]})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
 		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
-		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN}, {"armor": 85.0, "speed": 590.0 / U, "rating": 17.0})
+		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "recover_time": ENEMY_RECOVER.runner[0]},
+		{"armor": 85.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1]})
 	# Ranged enemies with the numbers of Hades II's ranged ones in its first region (study of 2026-11-16) and Daniel's
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
@@ -173,7 +205,8 @@ func _enemies() -> void:
 		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": Color(1.7, 1.25, 3.2),
 		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 40.0, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
-		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN * 2.0},
+		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
+		"recover_time": ENEMY_RECOVER.mage[0]},
 		{"armor": 155.0, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
 	# the crossbowman (Hades: the Screamer's life and rating; it has no shot there, a cone held on itself): a fast
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
@@ -181,14 +214,15 @@ func _enemies() -> void:
 	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 290.0 / U, "damage": 3.0, "radius": 0.55,
 		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
 		"shot_speed": 16.0, "shot_line": true, "keep_away": 0.65, "retreat_far": 700.0 / U, "retreat_time": Vector2(1.5, 1.75), "max_attackers": 2,
-		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42), "stun_time": STUN, "stun_heavy_time": STUN}, {"armor": 190.0, "rating": 34.0})
+		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
+		"recover_time": ENEMY_RECOVER.archer[0]}, {"armor": 190.0, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
 		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
 		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield",
 		# its charge in flight is not cut (Hades: the charging Brute, WeaponSetImmuneToStun while it runs)
-		"stun_time": STUN / 1.3, "stun_heavy_time": STUN / 0.6, "stun_immune_attacking": true}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "stun_immune_attacking": true, "recover_time": ENEMY_RECOVER.guard[0]}, {"armor": 330.0, "speed": 340.0 / U, "rating": 39.0})
 	# the one rooted in place (Hades: the SiegeVine's life, rating and attack): from up to 22.5 m, 0.8 s of warning,
 	# one shadow vine creeping along the floor after the paladin at 1.9 m/s, turning 90 degrees a second at first and
 	# 15 less each second, for 12 s, 6 damage; then 3.25 s (elite: 3 vines 0.7 s apart, then 2.25 s). Before
@@ -197,12 +231,14 @@ func _enemies() -> void:
 		"heavy": true, "attack_damage": 6.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": Color(1.9, 0.45, 3.0),
 		"shot_orb": true, "shot_speed": 150.0 / U, "shot_turn": 90.0, "shot_turn_decay": 15.0, "shot_range": 150.0 / U * 12.0, "shot_low": true,
 		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25,
-		"stun_time": STUN, "stun_heavy_time": STUN},
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY},
 		{"armor": 390.0, "shot_ticks": 3, "shot_interval": 0.7, "attack_cooldown": 2.25, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
 		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 12.0, "close_range": 3.2, "close_windup": 0.8,
+		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
+		"recover_time": 0.8,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
@@ -914,7 +950,6 @@ func _talents() -> void:
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
 ## life 30 and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
 ## (5.4 m, 3 s, Omega 20 of Magia held 0.6 s, bursts for 150). The passive gives 2 of Magia a finisher (D-56).
-## The lunge stops at 0.3 of the blow's reach (E1b, Game Director: it was 0.45, 2.4 m for cut1, and he hardly moved).
 func _hero() -> void:
 	var h := HeroDef.new()
 	h.id = &"warrior"
@@ -922,7 +957,7 @@ func _hero() -> void:
 	h.model = &"hero_explorer"
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
-		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "lunge_standoff": 0.3, "dodge_charges": 1, "dodge_recharge": 0.74,
+		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 0.74,
 		"magick_max": 50.0,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 0.2, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,

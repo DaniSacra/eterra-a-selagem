@@ -21,9 +21,6 @@ static var _warrior: HeroDef
 @export var max_hp := 30.0
 @export var hurt_time := 0.18
 @export var hurt_invuln := 1.3
-## A blow's lunge toward the enemy ahead stops when he stands this share of the blow's reach from its edge
-## (Player._gap_ahead; the Warrior's identity, warrior_spec 2 and 10.1: the lunge visibly carries him to the enemy).
-@export var lunge_standoff := 0.3
 ## Dodge charges and the seconds one takes to come back (the roll's speed, length and safety are Feel's).
 @export var dodge_charges := 1
 @export var dodge_recharge := 0.74

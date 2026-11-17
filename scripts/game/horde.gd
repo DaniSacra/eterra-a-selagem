@@ -71,6 +71,20 @@ const VIEW_EDGE := 0.05
 ## stuck; it should never happen).
 const STUCK_TIME := 3.0
 const STUCK_MOVE := 0.5
+## E1c (AUDIT.md P1): the drawing follows the body. Its real speed is smoothed over VEL_SMOOTH seconds; under
+## WALK_FROM m/s it stands (idle), from WALK_START it walks (between, it keeps what it showed: no flicker), at the pace
+## of that real speed. When where it walks is more than FACE_SPLIT degrees from where it looks, the body turns to
+## where it walks, at TURN_RATE degrees a second (Hades II's 1200 for every enemy); it looks at its aim again in its
+## wind-up. A stunned body does not turn (Hades: DisableRotate).
+const VEL_SMOOTH := 0.1
+const WALK_FROM := 0.3
+const WALK_START := 0.4
+const FACE_SPLIT := 60.0
+const TURN_RATE := 1200.0
+## E1c (AUDIT.md P5): seconds a body whose wind-up was cut waits, once its stun is over, before another (and its sound).
+const REARM := 0.5
+## How fast an attack clip plays from where the blow is loosed (and on into the recovery).
+const ATTACK_PLAY := 1.4
 
 var list: Array[Enemy] = []
 var dying: Array[Enemy] = []
@@ -195,18 +209,23 @@ func step(dt: float) -> void:
 			_watch_stuck(e, dt)
 		if (i + _frame) % 2 == 0:
 			_separate(e)
+		e.pushed = Vector2.ZERO
 		if e.push.length_squared() > 0.01:
-			e.pos += e.push * dt
+			e.pushed = e.push * dt
+			e.pos += e.pushed
 			e.push *= maxf(0.0, 1.0 - KNOCKBACK_DECAY * dt)
 	# after everyone moved and was kept apart (so the crowd's shoving cannot leave anyone inside him): nobody walks
 	# into the paladin, nor is pressed into him by the others (a lunge in flight goes through him)
 	for e in list:
 		var reach := e.def.radius + Player.RADIUS
-		if e.state != Enemy.State.ATTACK and e.pos.distance_squared_to(target) < reach * reach:
+		# (E1c, AUDIT.md P8: a soldier's lunge stops at his edge too; a charge goes through)
+		var through := e.state == Enemy.State.ATTACK and e.def.behavior != EnemyDef.Behavior.RUNNER
+		if not through and e.pos.distance_squared_to(target) < reach * reach:
 			keep_off_target(e, e.was_in_target, dt)
 		# swept from where it stood: a push or a lunge stops at the abyss's edge, never across a hole (D-28)
 		e.pos = arena.sweep(e.last_pos, e.pos, e.def.radius)
 		e.y = e.height()
+		_drawn_motion(e, dt)
 	_sweep()
 	for d in dying:
 		d.dead_t += dt
@@ -246,6 +265,45 @@ func _timers(e: Enemy, dt: float) -> void:
 			damage(e, e.burn_dps * BURN_TICK, Vector2.ZERO, 0.0, Color(1.0, 0.5, 0.2), true, false, false)
 	if e.state == Enemy.State.RISE and e.state_t > 0.9:
 		_set_state(e, Enemy.State.WALK, &"walk")
+	if e.rearm and not e.helpless():
+		# its cut wind-up waits REARM from the end of the stun (the cooldown gates every wind-up)
+		e.rearm = false
+		e.cooldown = maxf(e.cooldown, REARM)
+
+
+## Only drawn (E1c, AUDIT.md P1): its real speed on the floor (smoothed, pushes left out) and the way its body faces.
+func _drawn_motion(e: Enemy, dt: float) -> void:
+	if dt <= 0.0:
+		return
+	var moved := (e.pos - e.last_pos - e.pushed) / dt
+	e.vel = e.vel.lerp(moved, 1.0 - exp(-dt / VEL_SMOOTH))
+	if e.def.behavior == EnemyDef.Behavior.BOSS:
+		e.face = Vector2.ZERO  # Boss turns him itself
+		return
+	if e.frozen_t > 0.0 or e.stun_t > 0.0 or e.air_t > 0.0:
+		return
+	var want := e.dir
+	var speed := e.vel.length()
+	if e.state == Enemy.State.WALK and speed >= WALK_FROM and absf(rad_to_deg(e.dir.angle_to(e.vel))) > FACE_SPLIT:
+		want = e.vel / speed
+	e.face = turned(e.face if e.face != Vector2.ZERO else e.dir, want, deg_to_rad(TURN_RATE) * dt)
+
+
+## `from` turned toward `to` by at most `step` radians (both unit vectors).
+static func turned(from: Vector2, to: Vector2, step: float) -> Vector2:
+	if to == Vector2.ZERO:
+		return from
+	var a := from.angle_to(to)
+	return to if absf(a) <= step else from.rotated(signf(a) * step)
+
+
+## Ends its attack: the recovery window when it has one (EnemyDef.recover_time), else it walks at once. The clip of the
+## blow goes on (Horde.render holds its end).
+func _end_attack(e: Enemy) -> void:
+	if e.def.recover_time > 0.0:
+		_set_state(e, Enemy.State.RECOVER, e.anim, false)
+	else:
+		_set_state(e, Enemy.State.WALK, &"walk")
 
 
 ## How fast a walking enemy's clips play (its pace; a boss posing a clip divides by it: Boss._pose).
@@ -267,6 +325,11 @@ func _speed(e: Enemy) -> float:
 
 
 func _behave(e: Enemy, dt: float) -> void:
+	if e.state == Enemy.State.RECOVER:
+		# standing still at the end of its blow (the punish window); then it walks
+		if e.state_t >= e.def.recover_time:
+			_set_state(e, Enemy.State.WALK, &"walk")
+		return
 	var to := target - e.pos
 	var dist := to.length()
 	var toward := to / dist if dist > 0.01 else Vector2.DOWN
@@ -309,7 +372,7 @@ func _behave_melee(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.35:
 				e.cooldown = MELEE_COOLDOWN * _rng.randf_range(0.8, 1.2)
-				_set_state(e, Enemy.State.WALK, &"walk")
+				_end_attack(e)
 		_:
 			e.dir = e.dir.slerp(_walk if dist > reach else toward, minf(1.0, dt * 8.0))
 			if dist > reach * 0.8:
@@ -354,7 +417,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 			e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
 			if d.retreat_far > 0.0:
 				e.retreat_t = _rng.randf_range(d.retreat_time.x, d.retreat_time.y)
-			_set_state(e, Enemy.State.WALK, &"walk")
+			_end_attack(e)
 		return
 	e.dir = toward
 	var sp := _speed(e)
@@ -477,12 +540,12 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			e.pos += e.aim * d.lunge_speed * dt
 			if e.state_t >= d.lunge_time:
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.8, 1.3)
-				_set_state(e, Enemy.State.WALK, &"walk")
+				_end_attack(e)
 		_:
 			e.dir = toward
 			if dist > d.attack_range or not e.straight:
 				e.pos += _walk * _speed(e) * dt
-			elif e.cooldown <= 0.0 and target_alive:
+			elif e.cooldown <= 0.0 and target_alive and (d.max_attackers <= 0 or attackers(d) < d.max_attackers):
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"windup")
@@ -506,15 +569,15 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				if e.state_t >= 0.5:
 					e.memo = 0
 					e.cooldown = d.attack_cooldown * 0.6
-					_set_state(e, Enemy.State.WALK, &"walk")
+					_end_attack(e)
 				return
 			e.pos += e.aim * d.lunge_speed * dt
 			if _frame % 3 == 0:
 				fx.burst(&"dust", Vector3(e.pos.x, 0.2, e.pos.y), Vector3(-e.aim.x, 0, -e.aim.y))
 			if e.state_t >= d.lunge_time:
+				# it stands at the end of its charge (E1c: its recover_time; it was a stun of 0.8 s drawn idle)
 				e.cooldown = d.attack_cooldown
-				e.stun_t = 0.8
-				_set_state(e, Enemy.State.WALK, &"walk")
+				_end_attack(e)
 		_:
 			_behave_melee_walk(e, dt, toward, dist)
 			if d.close_damage > 0.0 and e.cooldown <= 0.0 and dist < d.close_range and target_alive:
@@ -566,7 +629,7 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		return
 	if e.state == Enemy.State.ATTACK:
 		if e.state_t >= 0.5:
-			_set_state(e, Enemy.State.WALK, &"walk")
+			_end_attack(e)
 		return
 	e.dir = toward
 	if dist > d.attack_range or not _can_fire(e):
@@ -589,7 +652,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.4:
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
-				_set_state(e, Enemy.State.WALK, &"walk")
+				_end_attack(e)
 		_:
 			e.dir = toward
 			if dist > d.attack_range:
@@ -614,7 +677,7 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.5:
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
-				_set_state(e, Enemy.State.WALK, &"walk")
+				_end_attack(e)
 		_:
 			e.dir = toward
 			if dist > d.attack_range * 0.8:
@@ -844,7 +907,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			# only drawn: the body jolts back from the blow and returns (HitRecoil)
 			e.recoil_t = 0.0
 			e.recoil_dir = from_dir.normalized()
-	if e.state == Enemy.State.WALK and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
+	if (e.state == Enemy.State.WALK or e.state == Enemy.State.RECOVER) and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if flash and from_dir != Vector2.ZERO and e.hp > 0.0:
 		# a blow, not a burn's tick or a zone's: a common body flinches (GF-12)
@@ -862,6 +925,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		e.anim = &"death"
 		if from_dir != Vector2.ZERO:
 			e.dir = -from_dir
+			e.face = Vector2.ZERO
 			if not e.def.heavy and e.def.behavior != EnemyDef.Behavior.BOSS:
 				var power := THROW + knockback * 0.8 + (5.0 if big else 0.0)
 				e.push = from_dir * power * _rng.randf_range(0.8, 1.2)
@@ -884,6 +948,8 @@ func flinch(e: Enemy, seconds: float) -> bool:
 	if e.state == Enemy.State.ATTACK and e.def.stun_immune_attacking:
 		return false
 	interrupt(e)
+	if seconds >= e.stun_t:
+		e.stun_len = seconds  # its hit pose is stretched over this stun (Horde.render)
 	e.stun_t = maxf(e.stun_t, seconds)
 	e.hurt_t = HURT_TIME
 	flinches += 1
@@ -898,6 +964,8 @@ func interrupt(e: Enemy) -> bool:
 		return false
 	if e.state == Enemy.State.ATTACK:
 		e.cooldown = maxf(e.cooldown, e.def.attack_cooldown)
+	else:
+		e.rearm = true  # a cut wind-up comes again in full, REARM after the stun (AUDIT.md P5)
 	if e.warning != null:
 		Ground.end_zone(e.warning as Ground.Zone)
 		e.warning = null
@@ -948,8 +1016,14 @@ const RECOIL_TILT := 0.2
 var bar_trails := BarTrails.new()
 
 
+## Seconds a change of clip fades over (E1c): the pose shown last fades into the new clip (CrowdRenderer.add_kind's
+## from_row and fade), never cut. A boss's a little longer (his blows are 0.4 to 1.1 s long; bug 3: each change jumped
+## his body up to 0.96 m in one frame); every other figure's 0.1 s (AUDIT.md P4).
+const CLIP_FADE := 0.1
+const BOSS_CLIP_FADE := 0.12
 ## Draws every living and dying enemy. Called every frame, also while the game is paused for hit stop.
-func render() -> void:
+## render_dt: the world's seconds since the last call (fades, the walk's pace and the held blow go with the world's time).
+func render(render_dt := 1.0 / 60.0) -> void:
 	renderer.begin()
 	var few := list.size() <= BARS_FOR_ALL
 	var crowded := not few
@@ -965,18 +1039,42 @@ func render() -> void:
 		var at := Vector3(e.pos.x, e.y, e.pos.y)
 		var lean := 0.0
 		var tell := 0.0
-		if e.state == Enemy.State.WALK:
-			if e.hurt_t > 0.0 and (not d.heavy or e.hurt_t > HURT_TIME - HEAVY_HURT):
+		var boss := d.behavior == EnemyDef.Behavior.BOSS
+		var still := e.frozen_t > 0.0
+		if e.state == Enemy.State.WALK or e.state == Enemy.State.RECOVER:
+			if not boss and e.stun_t > 0.0 and e.stun_len > 0.0 and e.stun_t <= e.stun_len + 0.001:
+				# stunned by a blow: the hit pose stretched over the whole stun (AUDIT.md P4; Hades plays its stun
+				# animation through it, the heavy one slower), no idle in between
+				anim = &"hit"
+				t = (1.0 - e.stun_t / e.stun_len) * kind.hit_time
+			elif e.hurt_t > 0.0 and (not d.heavy or e.hurt_t > HURT_TIME - HEAVY_HURT):
 				anim = &"hit"
 				t = HURT_TIME - e.hurt_t
-			elif e.stun_t > 0.0:
+			elif e.stun_t > 0.0 and not boss:
+				# (a boss plays his own stunned clip: Boss holds stun_t through it, and this drew him idle, E1c)
 				anim = &"idle"
+			elif e.state == Enemy.State.RECOVER:
+				# the window after its blow: the clip goes on from where the blow was and stays on its last pose
+				if not still:
+					e.blow_t += render_dt * ATTACK_PLAY
+				t = e.blow_t
+			elif not boss and anim == &"walk":
+				# the drawing follows the body (AUDIT.md P1): standing still it stands, walking at the pace of its real speed
+				var speed := e.vel.length()
+				if not still:
+					e.walking = speed >= (WALK_FROM if e.walking else WALK_START)
+				if e.walking:
+					if not still:
+						e.walk_phase += render_dt * walk_rate(speed, kind.ground, d.size)
+					t = e.walk_phase
+					if d.sway > 0.0 and not still:
+						# unsteady: the trunk rocks from side to side and the stride is uneven (the place does not change)
+						lean = deg_to_rad(d.sway) * sin(TAU * (SWAY_HZ * e.anim_t + e.look))
+						t = maxf(0.0, t + UNEVEN_STEP * sin(TAU * (1.7 * e.anim_t + e.look)))
+				else:
+					anim = &"idle"
 			else:
 				t = e.anim_t * (walk_rate(_speed(e), kind.ground, d.size) if anim == &"walk" else clip_rate(e))
-				if d.sway > 0.0 and e.frozen_t <= 0.0:
-					# unsteady: the trunk rocks from side to side and the stride is uneven (the place does not change)
-					lean = deg_to_rad(d.sway) * sin(TAU * (SWAY_HZ * e.anim_t + e.look))
-					t = maxf(0.0, t + UNEVEN_STEP * sin(TAU * (1.7 * e.anim_t + e.look)))
 		elif e.state == Enemy.State.WINDUP:
 			tell = clampf(e.state_t / maxf(_windup(e), 0.01), 0.0, 1.0)
 			tells.tell(e, tell)
@@ -992,7 +1090,10 @@ func render() -> void:
 		elif e.state == Enemy.State.ATTACK:
 			tells.loosed(e, e.state_t)
 			if anim == &"attack":
-				t = kind.attack_time * IMPACT_SHARE + e.state_t * 1.4
+				# from where the wind-up left it: the start of its own attack clip when it has a wind-up clip (the
+				# soldier's blade comes down in it, AUDIT.md P3), else the share of the swing the wind-up stretched
+				t = e.state_t * ATTACK_PLAY + (0.0 if kind.has_windup else kind.attack_time * IMPACT_SHARE)
+				e.blow_t = t
 		var k := clampf(e.flash_t / FLASH_TIME, 0.0, 1.0)
 		var state := CrowdRenderer.state(k * e.flash_power, e.frozen_t > 0.0, e.burn_t > 0.0, 0.0, e.absorbed, tell,
 			e.max_armor > 0.0 and e.armor <= 0.0)
@@ -1002,7 +1103,8 @@ func render() -> void:
 		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
 		var back := HitRecoil.offset(e.recoil_t, d.heavy)
 		at += Vector3(e.recoil_dir.x, 0.0, e.recoil_dir.y) * back
-		renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean)
+		var fade := _fade(e, anim, render_dt)
+		e.drawn_row = renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean, e.fade_row, fade)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
 		if d.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
@@ -1014,9 +1116,24 @@ func render() -> void:
 		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
 		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2
 		var tumble := -e.spin * sin(clampf(e.dead_t * 2.2, 0.0, 1.0) * PI) * 1.1
-		renderer.add(e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(), Color(death_flash(e), 0, 0, dissolve), Vector3.ONE, tumble)
+		var fall := _fade(e, &"death", render_dt)
+		renderer.add_kind(renderer.kind(e.def), e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(),
+			Color(death_flash(e), 0, 0, dissolve), Vector3.ONE, tumble, 0.0, e.fade_row, fall)
 	renderer.commit()
 	tells.commit()
+
+
+## How far a figure drawn as `anim` is from the pose it showed before its clip last changed (0..1; 1: all the new
+## clip): a change of clip starts a fade from the pose row it showed last (CLIP_FADE, BOSS_CLIP_FADE).
+func _fade(e: Enemy, anim: StringName, render_dt: float) -> float:
+	if anim != e.drawn_anim and e.drawn_row >= 0:
+		e.fade_row = e.drawn_row
+		e.fade_t = 0.0
+	e.drawn_anim = anim
+	if e.fade_row < 0:
+		return 1.0
+	e.fade_t += render_dt
+	return clampf(e.fade_t / (BOSS_CLIP_FADE if e.def.behavior == EnemyDef.Behavior.BOSS else CLIP_FADE), 0.0, 1.0)
 
 
 ## How white one of the fallen is drawn (crowd.gdshader's flash): a flash for an instant as it falls; a boss never

@@ -46,7 +46,7 @@ func test_the_special_keeps_its_numbers() -> void:
 	assert_almost_eq(bolt.effect_radius, 11.0, 0.001, "reach 11 m")
 	assert_almost_eq(bolt.effect_size, 1.4, 0.001, "1.4 m across")
 	assert_almost_eq(bolt.cooldown, 0.7, 0.001)
-	assert_almost_eq(bolt.root_time, 0.71, 0.001)
+	assert_almost_eq(bolt.move_hold, 0.71, 0.001, "legs held 0.71 s, only the dodge cuts it (D-44)")
 	assert_almost_eq(bolt.recovery, 18.0 / 60.0, 0.001)
 	assert_almost_eq(Projectiles.SPARK_SPEED, 62.5, 0.001, "Hades II's ProjectileStaffBall")
 	var burst := _move(&"burst")

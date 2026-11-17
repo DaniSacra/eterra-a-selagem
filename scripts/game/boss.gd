@@ -88,6 +88,11 @@ const SCYTHE_CLIP := &"slash3"
 const SCYTHE_LIFT := 0.42
 const SCYTHE_SWEEP := 0.16
 const SCYTHE_LIFE := 0.55
+## E1c (P1-5 of docs/design/combat_cadence.md): the share of a throwing clip where his hand moves fastest, the moment
+## of the release (tools/clip_probe.gd on the baked clips: Sword_Regular_B in both hands 0.49, OverhandThrow 0.18).
+## The throw starts that much before its shot leaves, so the release is on the shot's frame (it played from the shot
+## on, the hand's peak 10 frames after the blades had flown).
+const THROW_PEAK := {&"slash2": 0.49, &"volley": 0.18}
 const GATHER_EVERY := 0.07
 ## The dash: how long its lane of wake stays after he lands.
 const DASH_WAKE := 0.5
@@ -174,6 +179,8 @@ var _punished := false
 ## The storm: when each crescent of the wave leaves (seconds of _t; < 0 once gone), and the wave.
 var _due := PackedFloat32Array()
 var _wave := 0
+## The storm's wave whose throw has begun (-1: none yet).
+var _thrown := -1
 var _wave_at := 0.0
 var _gather := 0.0
 var _shield: BossShield
@@ -485,12 +492,12 @@ func _step_blades(dt: float) -> void:
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
 	elif _step == 1:
 		_gathering(dt, e.pos + e.dir * HAND.y, SPECTRAL)
+		_throw_by(&"slash2", windup)
 		if _t >= windup:
 			_step = 2
 			_fire_souls(_dirs, def.blade_damage)
 			moment.emit(&"blades_fire")
 			cue.emit(&"blades_release", e.pos, e.dir, def.blade_range, 0.0)
-			_pose(&"slash2", 0.0)
 			_recover(def.blade_recovery, &"slash2")
 
 
@@ -525,14 +532,19 @@ func _step_storm() -> void:
 		if _wave >= def.storm_waves:
 			_recover(def.storm_recovery, &"roar")
 		return
+	# he throws them (VX-14; only the pose, nothing is timed on it): the release on the wave's first soul
+	var first := INF
+	for d in _due:
+		if d >= 0.0:
+			first = minf(first, d)
+	if _thrown != _wave and _t >= first - _throw_lead(&"volley"):
+		_thrown = _wave
+		_pose(&"volley", 0.0)
 	var left := 0
 	for i in _due.size():
 		if _due[i] < 0.0:
 			continue
 		if _t >= _due[i]:
-			if not _due.has(-1.0):
-				# the first soul of the wave leaves: he throws them (VX-14; only the pose, nothing is timed on it)
-				_pose(&"volley", 0.0)
 			_due[i] = -1.0
 			_lanes[i] = null
 			_fire_soul(_dirs[i], def.storm_damage)
@@ -630,6 +642,7 @@ func _step_curse(dt: float) -> void:
 		cue.emit(&"curse_gather", e.pos + _dir * HAND.y, _dir, 2.4, windup)
 	elif _step == 1:
 		_gathering(dt, e.pos + _dir * HAND.y, CURSE_COLOR)
+		_throw_by(&"volley", windup)
 		if _t >= windup:
 			_step = 2
 			var aim := _aim(def.curse_speed)
@@ -641,7 +654,6 @@ func _step_curse(dt: float) -> void:
 			var at := e.pos + aim * 1.6
 			game.fx.chips(Vector3(at.x, HAND.x * 0.6, at.y), Vector3(aim.x, 0.1, aim.y), CURSE_COLOR, 8, 6.0, 0.14, 0.35, 0.25)
 			game.fx.burst(&"curse", Vector3(at.x, 1.4, at.y), Vector3(aim.x, 0, aim.y))
-			_pose(&"volley", 0.0)
 			Audio.play(&"curse_release")
 			cue.emit(&"curse_release", at, aim, def.curse_speed * def.curse_homing, 0.0)
 			_recover(def.curse_recovery, &"volley")
@@ -1207,6 +1219,7 @@ func _go(next: State) -> void:
 	_mark = 0.0
 	_due.clear()
 	_wave = 0
+	_thrown = -1
 	_wave_at = 0.0
 	_gather = 0.0
 	e.memo = 0
@@ -1234,6 +1247,19 @@ func _anim(anim: StringName) -> void:
 func _pose(anim: StringName, share: float) -> void:
 	e.anim = anim
 	e.anim_t = share * game.horde.renderer.model_of(e.def).duration(anim) / game.horde.clip_rate(e) if game.horde.renderer else 0.0
+
+
+## Seconds from the start of a throwing clip to its release (THROW_PEAK, at the pace the crowd plays it).
+func _throw_lead(anim: StringName) -> float:
+	if game.horde.renderer == null:
+		return 0.0
+	return float(THROW_PEAK.get(anim, 0.0)) * game.horde.renderer.model_of(e.def).duration(anim) / game.horde.clip_rate(e)
+
+
+## Starts the throw so its release falls at `release` seconds of the state (once; the clip then plays on by itself).
+func _throw_by(anim: StringName, release: float) -> void:
+	if e.anim != anim and _t >= release - _throw_lead(anim):
+		_anim(anim)
 
 
 ## Plays a clip on from a share of it at its own pace (the time since _mark).

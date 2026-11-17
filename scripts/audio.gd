@@ -6,12 +6,16 @@ const W := Synth.Wave
 const FILE_DIR := "res://audio/"
 ## Voices at once (C15-02: a blow now layers its material over the hit, and the enemies' wind-ups and shots sound).
 const VOICES := 16
-const REPEAT_GAP_MS := 45
+## A sound never starts twice this close (VoiceGate.DEFAULT_GAP_MS; the blade's family has its own gap and cap).
+const REPEAT_GAP_MS := VoiceGate.DEFAULT_GAP_MS
 ## name -> list of voices [wave, f0, f1, seconds, volume, curve, start]
 const SOUNDS := {
 	&"swing": [[W.NOISE, 3000, 900, 0.09, 0.22, 5.0, 0.0]],
-	# the paladin's moves as they start (ComboNode.sound, GF-11; provisional synthesis): the blade leaving, the spin's
-	# longer sweep, the Omega's thrust, the special's dart, and the Omega's charge rising while the button is held
+	# the paladin's moves as they start (ComboNode.sound, GF-11): the blade leaving, the spin's longer sweep, the
+	# Omega's thrust, the special's dart. E1c (bug 2, the rising synthesised chirp sounded "like pacman" when E was
+	# pressed over and over): each is played from recorded swishes in audio/ (blade_0..4, blade_spin_0..2, thrust_0..2,
+	# dart_0..2: qubodup's CC0 swooshes, audio/LICENSES.md), one at random with a little pitch play, at most two at
+	# once (VoiceGate); these recipes only stand in if the files are missing. The Omega's charge rises while held.
 	&"blade": [[W.NOISE, 1800, 5200, 0.09, 0.2, 4.0, 0.0]],
 	&"blade_spin": [[W.NOISE, 900, 4200, 0.32, 0.22, 2.0, 0.0], [W.TRIANGLE, 330, 660, 0.28, 0.08, 2.5, 0.0]],
 	&"thrust": [[W.NOISE, 2500, 6000, 0.1, 0.22, 4.0, 0.0], [W.TRIANGLE, 880, 1320, 0.12, 0.1, 3.0, 0.0]],
@@ -115,11 +119,19 @@ const LIMIT_RELEASE := 0.1
 var _streams: Dictionary = {}
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
-var _last_played: Dictionary = {}
+var _gate := VoiceGate.new()
+## What each voice last played (its VoiceGate family) and when it started (ms).
+var _voice_family: Array[StringName] = []
+var _voice_start := PackedInt64Array()
 var _music: AudioStreamPlayer
 var _track: StringName = &""
 var _threads: Dictionary = {}
 var silent := false
+## Tests: every sound let through the gate, as [name, ms] (only while record is on), and the clock the gate reads
+## (the real one unless a test steps the game faster than real time).
+var record := false
+var heard: Array = []
+var clock: Callable = Time.get_ticks_msec
 
 
 func _ready() -> void:
@@ -134,6 +146,8 @@ func _ready() -> void:
 		p.bus = &"SFX"
 		add_child(p)
 		_players.append(p)
+		_voice_family.append(&"")
+		_voice_start.append(0)
 	_music = AudioStreamPlayer.new()
 	_music.bus = &"Music"
 	add_child(_music)
@@ -163,15 +177,34 @@ func apply_volumes() -> void:
 		AudioServer.set_bus_volume_db(idx, linear_to_db(maxf(v, 0.001)))
 
 
+## Tests: start recording what is heard on the given clock, with the gate's memory cleared.
+func listen(on: bool, by: Callable = Time.get_ticks_msec) -> void:
+	record = on
+	heard.clear()
+	clock = by
+	_gate = VoiceGate.new()
+
+
 func play(sound: StringName, pitch: float = 1.0) -> void:
-	if silent or not SOUNDS.has(sound):
+	if not SOUNDS.has(sound) or (silent and not record):
 		return
-	var now := Time.get_ticks_msec()
-	if now - int(_last_played.get(sound, -1000)) < REPEAT_GAP_MS:
+	var now := int(clock.call())
+	if not _gate.admit(sound, now):
 		return
-	_last_played[sound] = now
-	var p := _players[_next]
-	_next = (_next + 1) % VOICES
+	if record:
+		heard.append([sound, now])
+	if silent:
+		return
+	var playing: Array[bool] = []
+	for v in _players:
+		playing.append(v.playing)
+	var i := VoiceGate.pick(sound, _voice_family, _voice_start, playing, _next)
+	if i == _next:
+		_next = (_next + 1) % VOICES
+	_voice_family[i] = VoiceGate.family(sound)
+	_voice_start[i] = now
+	var p := _players[i]
+	p.stop()
 	p.stream = stream(sound)
 	p.pitch_scale = pitch
 	p.play()

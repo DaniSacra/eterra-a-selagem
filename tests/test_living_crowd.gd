@@ -10,7 +10,8 @@ const LEAST := {&"walk": 20, &"hit": 8, &"idle": 12, &"death": 16, &"attack": 14
 ## Seconds of every clip before E1a (read from the baked files of 10944b1): the tells of the attacks are timed on them,
 ## so more poses never change how long a clip plays (the walk is timed by its stride, E1a-2).
 const BEFORE := {
-	&"archer": {&"aim": 1.667, &"attack": 0.633, &"death": 1.9, &"hit": 0.333, &"idle": 1.667, &"rise": 0.9},
+	# E1c (AUDIT.md P7): the crossbowman stands with the crossbow low (the Idle, 2.5 s; it was the pistol's 1.667)
+	&"archer": {&"aim": 1.667, &"attack": 0.633, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
 	&"guard": {&"attack": 1.1, &"brace": 1.15, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
 	&"knight": {&"attack": 1.1, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
 	&"mage": {&"aim": 2.1, &"attack": 0.5, &"cast": 2.1, &"death": 1.9, &"hit": 0.333, &"idle": 1.267, &"rise": 0.9},
@@ -19,7 +20,8 @@ const BEFORE := {
 	&"priest": {&"attack": 0.5, &"cast": 0.8, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
 	&"priest_elder": {&"attack": 0.5, &"cast": 2.1, &"death": 1.9, &"hit": 0.333, &"idle": 1.267, &"rise": 0.9},
 	&"runner": {&"attack": 1.0, &"death": 1.9, &"hit": 0.333, &"idle": 1.333, &"rise": 0.9, &"windup": 2.933},
-	&"skeleton": {&"attack": 1.1, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9, &"windup": 0.9},
+	# E1c (AUDIT.md P3): the soldier's blow starts where its wind-up stops, 0.3 to 1.2 s of the clip (it was 0.1 to 1.2)
+	&"skeleton": {&"attack": 0.9, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9, &"windup": 0.9},
 }
 ## E1b-A1: how far the planted foot may slide in a step, in the game's meters (the baked slide times EnemyDef.size):
 ## 5 cm for those who run, 8 cm for the big ones who walk. The priest never walks (speed 0).
@@ -29,7 +31,9 @@ const BIG_WALKERS: Array[StringName] = [&"guard", &"knight", &"morvath", &"pries
 ## E1b-A2 and A3: steps a minute in the game, at the enemy's speed and size (the walk's two steps a loop): the brute's
 ## heavy walk, the knight's and Morvath's long stride, the sorcerer's and the crossbowman's short trot.
 const CADENCE := {&"guard": Vector2(110, 140), &"knight": Vector2(90, 120), &"morvath": Vector2(90, 120),
-	&"mage": Vector2(120, 150), &"archer": Vector2(120, 150)}
+	&"mage": Vector2(120, 150), &"archer": Vector2(120, 150),
+	# E1c (AUDIT.md P6): the soldier runs about 150 a minute (it floated at 96), the elder walks about 90 (it was 67)
+	&"skeleton": Vector2(140, 165), &"priest_elder": Vector2(80, 100)}
 ## The ceiling of the baked figures on disk (E1a: 70 MB).
 const BAKED_MB := 70.0
 

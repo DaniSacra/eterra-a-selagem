@@ -88,6 +88,10 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var attack_cooldown := 2.5
 ## Warning time before the attack lands. Every attack is announced.
 @export var attack_windup := 0.6
+## E1c (Hades II's PostAttackDuration, the punish window): seconds it stands still after its attack, showing the
+## end of its blow (Enemy.State.RECOVER) before it walks again. A blow there stuns it but cuts nothing (the window is
+## already open). 0: it walks at once.
+@export var recover_time := 0.0
 ## RUNNER and KNIGHT: speed of the lunge or charge (m/s) and how long it lasts.
 @export var lunge_speed := 14.0
 @export var lunge_time := 0.45
@@ -115,7 +119,7 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## ARCHER: between attacks it goes behind the nearest pillar, cover_hug meters past it from the paladin (Hades
 ## HideAndPeekAI, CoverHugDistance; 0: no cover). After each attack it runs retreat_far meters from him for
 ## retreat_time seconds (RetreatAfterAttack; 0: it stays). At most max_attackers of its kind wind up or shoot at
-## once (MaxAttackers; 0: no limit).
+## once (MaxAttackers; 0: no limit; E1c: also the soldiers' lunges, RUNNER).
 @export var cover_hug := 0.0
 @export var retreat_far := 0.0
 @export var retreat_time := Vector2.ZERO

@@ -1,6 +1,6 @@
 # Equipe de agentes de A Selagem
 
-O Claude Code trabalha como um pequeno estúdio: a sessão principal é o **Game Director / Tech Lead**, e cinco
+O Claude Code trabalha como um pequeno estúdio: a sessão principal é o **Game Director / Tech Lead**, e sete
 subagentes especializados ficam em `.claude/agents/`. Cada subagente começa sem o contexto da conversa: o Game
 Director manda na tarefa tudo o que ele precisa (objetivo, arquivos, especificação, critério de pronto).
 
@@ -14,6 +14,7 @@ Director manda na tarefa tudo o que ele precisa (objetivo, arquivos, especifica�
 | Gameplay Engineer | `gameplay-engineer.md` | como o jogo funciona por dentro | movimento, combate, inimigos, chefe, salas, câmera de jogo, colisão, testes | direção artística, balanceamento sem pedido |
 | UI/UX Designer | `ui-ux-designer.md` | hierarquia e leitura da interface | HUD, menus, telas, feedback | regras de combate |
 | QA / Performance | `qa-performance.md` | se a entrega está pronta para o Daniel | testes, medições, capturas, `docs/qa/latest_report.md` | código de jogo e arte (relata ao dono) |
+| Combat Feel Director | `combat-feel-director.md` | se a cadência, o peso e a sincronia do combate estão bons; pode reprovar tecnicamente com evidência | auditorias, medições quadro a quadro, `docs/design/combat_cadence.md` | código de jogo, mudar escopo ou design (encaminha ao gameplay-engineer ou ao art-director pelo Game Director) |
 
 A aprovação artística final é sempre do Daniel. Commits e push são só do Game Director.
 

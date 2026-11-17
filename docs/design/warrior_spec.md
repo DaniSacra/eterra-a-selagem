@@ -38,15 +38,18 @@ são os de Hanokh e podem ser construídos já; o título é uma frase de histó
 ## 2. Identidade
 
 **Uma frase**: o Guerreiro **toma a iniciativa**: vai até o inimigo, abre o grupo com combos e não para de atacar. Ele
-se defende atacando e saindo pela esquiva, nunca esperando.
+se defende atacando e saindo pela esquiva, nunca esperando. **Ofensivo pela iniciativa e pela esquiva, com o golpe
+parado** (E1c, teste do Daniel: "tem que atacar parado"): ele corre até o inimigo, planta os pés, golpeia e só volta a
+correr quando o golpe termina; quem o leva até o inimigo são as pernas e a esquiva, nunca o golpe.
 
 - **Arquétipo**: guerreiro ofensivo de espada. **Arma**: a Emeth, sem troca (decisões 9 e 10).
 - **Sem bloqueio, sem aparo, sem ficar parado recebendo golpes.** Nenhuma ação, Dom ou ultimate do Guerreiro pede
   esperar o golpe do inimigo. Recompensas de defesa vêm de **entrar** (esquivar para dentro, matar, terminar combos).
-- **Percebido no primeiro ataque, sem Dom nem Bênção**: o golpe puxa o corpo até o inimigo (`ComboNode.lunge_toward`,
-  `LUNGE_MAGNET` 2,5 m), o giro final abre o grupo (60 em volta, meia-lua gigante), a esquiva corta qualquer golpe e
-  vira Corte Veloz. Isso já existe e passou na sonda do C12d (31/31). A E1 continua sendo a entrega que torna isso
-  excelente (inimigos que reagem, som, peso).
+- **Percebido no primeiro ataque, sem Dom nem Bênção**: os pés plantam com o golpe e cada golpe tem preparação, impacto
+  e retorno; o combo ganha peso a cada golpe (rápido, mais lento, o giro o mais pesado), o giro final abre o grupo (60
+  em volta, meia-lua gigante), a esquiva corta qualquer golpe e vira Corte Veloz (o único golpe que leva o corpo, pela
+  própria esquiva). O golpe **gira** o corpo para o inimigo mais perto (5 m, arco de 130 graus, sem andar), como o
+  Hades II. O avanço magnético da E1b (`lunge_toward`, `LUNGE_MAGNET`, `HeroDef.lunge_standoff`) saiu na E1c.
 - **Referências**: Hades II (fluidez, resposta, impacto, números pela D-39); Ravenswatch (herói único, Maestria,
   talentos que mudam as próprias ações); Ember & Blade (apresentação e sensação de poder).
 - **Leitura visual** (prancha): cabelo vermelho, cachecol e manto azul-petróleo, Emeth esmeralda, armadura escura com
@@ -57,11 +60,41 @@ Números do Hades II continuam (D-39). O que muda é a leitura e, em dois pontos
 
 | Ação | Hoje | Avaliação para o Guerreiro | Proposta |
 |---|---|---|---|
-| Ataque (3 golpes: 20, 25, giro 60) | plantado durante o corte, avanço até o inimigo | **centro da identidade**. "Plantado" era a leitura do Guardião; para o Guerreiro o que importa é o avanço magnético e o giro que abre | sem mudança de número. A E1b mede se o avanço puxa o bastante (sonda) |
-| Especial (seta de luz, 40) | dardo esmeralda a 62,5 m/s, pernas presas 0,71 s | ferramenta de alcance; para um guerreiro de espada lê melhor como **onda da lâmina** que como dardo | **W-1 (D-69)**: mesma regra e números, apresentação de **onda esmeralda curta saindo do corte** (molde `Fx.crescent` em pequeno), não dardo. Custo pequeno (só efeito) |
+| Ataque (3 golpes: 20, 25, giro 60) | **parado** do aperto ao fim da trava de pernas (E1c), tempos do cajado do Hades II, ver 2.2 | **centro da identidade**: o peso do golpe e o giro que abre | E1c: sem avanço; empurrão dos golpes 1 e 2 menor (2,5 e 3 m/s) para os três acertarem o mesmo alvo parado |
+| Especial (seta de luz, 40) | dardo esmeralda a 62,5 m/s, pernas presas 0,71 s (só a esquiva corta), na pose do disparo, nunca correndo | ferramenta de alcance; para um guerreiro de espada lê melhor como **onda da lâmina** que como dardo | **W-1 (D-69)**: mesma regra e números, apresentação de **onda esmeralda curta saindo do corte** (molde `Fx.crescent` em pequeno), não dardo. Custo pequeno (só efeito) |
 | Círculo de luz (prende 3 s) | zona de controle | serve ao Guerreiro se for **para combar quem está preso**, não para ficar dentro | sem mudança de número; o texto do Como Jogar e da Bênção falam em "prender para golpear". Os Dons de círculo saem do catálogo inicial (seção 4) |
 | Esquiva e Corte Veloz | 5,6 m, 19 quadros protegido, ataque na esquiva vira estocada de 30 | **segundo centro da identidade**: esquivar para dentro | os Dons de Combo e Fúria usam a esquiva para atacar, nunca para fugir |
 | Ômegas (lança 160, seta 80, círculo 150) | gastam Magia | o golpe grande que o combo paga | ligados à passiva e à ultimate |
+
+### 2.2 Estados do golpe e janelas (E1c)
+
+Estados (`ComboRunner.Stage`, lidos das fases do `ComboRunner`, sem segunda máquina): **IDLE** (livre) → **PREPARAÇÃO**
+(`WINDUP`: antecipação, com o brilho no giro; a direção é ignorada) → **ATAQUE** (`STRIKE`: o passo em que o golpe acerta)
+→ **RECUPERAÇÃO** (`RECOVERY`: trava de ataque e trava de pernas; o resto do clipe do golpe tocado ao longo da trava e,
+se ele ficar parado, o clipe de volta à guarda, `Slash_A_Rec` e `Slash_B_Rec`; nunca um corte direto para a guarda) →
+IDLE. Tempos do cajado do Hades II (`docs/design/hades2_feel_study.md`; dados em `tools/make_data.gd`):
+
+| Golpe | Preparação | Ataque livre depois do acerto (trava de ataque, `recovery`) | Pernas presas depois do acerto (`move_hold`) | Aperto até andar |
+|---|---|---|---|---|
+| Golpe 1 | 0,08 s | 8 quadros (0,13 s) | 11 quadros (0,18 s) | 0,26 s |
+| Golpe 2 | 0,13 s | 13 quadros (0,22 s) | 19 quadros (0,32 s) | 0,45 s |
+| Giro | 0,36 s (0,28 + 0,08 de brilho) | 18 quadros (0,30 s) | 30 quadros (0,50 s) | 0,86 s |
+| Especial | 0,1 s | 18 quadros (0,30 s) | 0,71 s | 0,81 s |
+| Ômega do especial | 0,08 s (depois de 0,65 s segurando) | 0,45 s | 0,71 s | |
+| Ômega do ataque | 0,06 s (dentro da carga de 0,8 s) | 0,78 s | 0,78 s | |
+| Corte Veloz | 0,06 s (avança 3,2 m) | 14 quadros | 14 quadros | 0,29 s |
+
+Janelas:
+- **Próximo golpe (buffer)**: o aperto em qualquer quadro da preparação ou da recuperação fica guardado e sai no fim da
+  trava de ataque (cadência: golpe 2 sai 13 quadros depois do 1, o giro 21 depois do 2); depois dela, a janela de
+  emendar é 0,4 s (golpes 1 e 2) e 0,6 s (antes do giro); fora dela o aperto começa um combo novo.
+- **Andar**: nunca corta o golpe. Só depois da trava de pernas a direção vale de novo; andar então corta o resto do
+  clipe de retorno, com mistura de 0,08 s para a corrida. Nenhum quadro de corrida enquanto preso.
+- **Esquiva**: corta qualquer estado (preparação, ataque, recuperação, trava de pernas) no quadro do aperto; um golpe
+  cortado na preparação não acerta. Ataque apertado na esquiva vira Corte Veloz no fim dela. As travas duras do Hades
+  (6, 3 e 9 quadros que nem a esquiva corta) ficaram de fora: a sonda do C12d pede a esquiva em qualquer quadro.
+- O giro lê como finalizador: preparação 4,5 vezes a do golpe 1, brilho na lâmina, parada de 70 ms, tranco e meia-lua.
+- Sonda: `tools/feel_probe.gd`, metas E1c-P1 a E1c-P6; testes em `tests/test_warrior_strike.gd`.
 
 ---
 

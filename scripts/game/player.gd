@@ -1,7 +1,8 @@
 class_name Player
 extends Node3D
 ## The paladin. Moves on the floor plane (pos is (x, z) in meters), rolls out of danger, and fights with the combo
-## tree: the ComboRunner decides which move comes next, this node plays it (animation, lunge) and reports when it lands.
+## tree: the ComboRunner decides which move comes next, this node plays it (animation; every blow is struck standing
+## still, only the dash attack carries him) and reports when it lands.
 
 signal struck(node: ComboNode, origin: Vector2, dir: Vector2)
 ## A finisher holds at the top of its swing for time seconds before it lands.
@@ -36,8 +37,10 @@ const SPRINT_CLIP_PACE := 13.0
 const DASH_CLIP_SPEED := 2.4
 ## How fast the swing animation creeps while a finisher holds its glint (it lands when the hold ends).
 const GLINT_ANIM_SPEED := 0.15
-## Soft lock: a swing without a clear aim turns to the closest enemy in front, within this distance.
-const ASSIST_RANGE := 6.0
+## Soft lock: a swing without a clear aim turns (never steps) to the closest enemy within this distance and
+## ASSIST_HALF_ARC of where he faces (Hades II's AutoLock: 4.9 to 6.1 m, an arc of 130 degrees).
+const ASSIST_RANGE := 5.0
+const ASSIST_HALF_ARC := deg_to_rad(65.0)
 const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
 const FLASH := preload("res://assets/shaders/flash.gdshader")
 const XRAY := preload("res://assets/shaders/xray.gdshader")
@@ -152,10 +155,9 @@ var _dodge_dir := Vector2.DOWN
 var _dodge_recharge := 0.0
 ## Seconds a dodge press still waits to be used (DODGE_BUFFER).
 var _dodge_want := 0.0
-## Seconds his legs stay planted after a move (ComboNode.root_time: the special's); the dodge cuts it.
-var rooted := 0.0
+## The dash attack's lunge (ComboNode.lunge; no other blow moves him). Its speed fades this fast (1/s): its distance
+## is speed / LUNGE_DECAY, mostly covered in 0.25 s.
 var _lunge := Vector2.ZERO
-## The lunge's speed fades this fast (1/s): its distance is speed / LUNGE_DECAY, mostly covered in 0.25 s.
 const LUNGE_DECAY := 9.0
 var _push := Vector2.ZERO
 var _shield_t := 0.0
@@ -176,6 +178,9 @@ var _ring_through: ShaderMaterial
 var _shown_fill := -1.0
 var _shown_edge := -1.0
 var _current_anim := &""
+## The last move's clip and the clip that brings it back to the guard when it ends (ComboNode.recover_anim).
+var _move_anim := &""
+var _recover_anim := &""
 var _light: OmniLight3D
 ## A point near the tip of the sword (moves with the swing).
 var blade_tip: Node3D
@@ -191,8 +196,7 @@ func _ready() -> void:
 	runner = ComboRunner.new(tree)
 	runner.move_started.connect(_on_move_started)
 	runner.move_hit.connect(func(node: ComboNode) -> void:
-		_anim.speed_scale = 1.0
-		rooted = maxf(rooted, node.root_time)
+		_follow_through(node)
 		struck.emit(node, pos, facing))
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
 		_anim.speed_scale = GLINT_ANIM_SPEED
@@ -396,7 +400,6 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 		if _dodge_recharge >= hero.dodge_recharge:
 			_dodge_recharge = 0.0
 			dodge_charges += 1
-	rooted = maxf(0.0, rooted - dt)
 	var ran := false
 	match state:
 		State.DEAD, State.REST:
@@ -434,12 +437,11 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 				sp *= Feel.live().sprint_scale
 			if _casting:
 				sp *= hero.cast_slow
-			if rooted > 0.0:
-				pos += _lunge * dt
-			elif runner.is_swinging():
+			if runner.planted():
+				# windup, blow and recovery: he stands still (E1c), only the dash attack's lunge carries him
 				pos += move * sp * runner.move_scale(Feel.live()) * dt + _lunge * dt
 			else:
-				# after the blow lands, walking cuts the follow-through short (the legs run, no sliding)
+				# free again (no move, the chain window, or past a special's walk_after): he walks and runs, no sliding
 				pos += move * sp * dt + _lunge * dt
 				if move.length() > 0.1:
 					facing = move.normalized()
@@ -562,7 +564,6 @@ func _start_dodge(move: Vector2) -> void:
 	state = State.DODGE
 	_state_t = 0.0
 	_dodge_want = 0.0
-	rooted = 0.0
 	dodge_charges -= 1
 	_dodge_dir = move.normalized() if move.length() > 0.2 else facing
 	facing = _dodge_dir
@@ -577,7 +578,7 @@ func _on_move_started(node: ComboNode) -> void:
 	var dir := _aim if _aim.length() > 0.1 else facing
 	if not Controls.aims_with_mouse():
 		var target := horde.nearest(pos, ASSIST_RANGE) if horde else null
-		if target and absf(dir.angle_to(target.pos - pos)) < 1.2:
+		if target and absf(dir.angle_to(target.pos - pos)) < ASSIST_HALF_ARC:
 			dir = (target.pos - pos).normalized()
 	facing = dir.normalized()
 	if node.magick_cost > 0.0:
@@ -585,21 +586,22 @@ func _on_move_started(node: ComboNode) -> void:
 	_anim.speed_scale = 1.0
 	if node.sound != &"":
 		Audio.play(node.sound)
-	_lunge = facing * node.lunge_toward(_gap_ahead(node)) * LUNGE_DECAY
+	_lunge = facing * node.lunge * LUNGE_DECAY
 	_play(node.anim, node.anim_speed, node.anim_from)
+	_move_anim = node.anim
+	_recover_anim = node.recover_anim
 	if node.title != &"":
 		move_shown.emit(node)
 
 
-## How far the enemy ahead stands beyond striking distance (INF: nobody within reach of a lunge).
-func _gap_ahead(node: ComboNode) -> float:
-	if horde == null or node.lunge <= 0.0:
-		return INF
-	var strike := node.reach * hero.lunge_standoff
-	var e := horde.nearest_ahead(pos, facing, strike + node.lunge + ComboNode.LUNGE_MAGNET, 0.6)
-	if e == null:
-		return INF
-	return pos.distance_to(e.pos) - e.def.radius - strike
+## The blow landed: the rest of its clip is the recovery, played over the recovery's length (ComboNode.follow_speed)
+## instead of at the windup's speed (cut1's came back 3.7 times too fast); a short clip then holds its last pose.
+func _follow_through(node: ComboNode) -> void:
+	_anim.speed_scale = 1.0
+	if _anim.current_animation == &"":
+		return
+	var tail := _anim.current_animation_length - _anim.current_animation_position
+	_anim.speed_scale = node.follow_speed(tail) / maxf(_anim.get_playing_speed(), 0.01)
 
 
 func heal(amount: float) -> void:
@@ -713,8 +715,8 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if fx:
 		fx.hero_head = position + Vector3(0, HeroBody.HEIGHT, 0)
-	if state != State.MOVE or runner.is_swinging():
-		return
+	if state != State.MOVE or runner.planted():
+		return  # planted in a blow: its own clip (or its held pose), never the run
 	if move.length() > 0.1:
 		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * (Feel.live().sprint_scale if sprinting else 1.0)
 		if sprinting:
@@ -723,6 +725,9 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 			_play(&"Run", pace / RUN_CLIP_PACE)
 	elif runner.is_attacking() or (_anim.is_playing() and not LOOPS.has(_current_anim)):
 		return  # let the follow-through of a swing finish
+	elif _current_anim == _move_anim and _recover_anim != &"":
+		_play(_recover_anim)  # the blade comes back to the guard (walking cuts it), never a cut to the idle
+		_move_anim = &""
 	else:
 		_play(&"Idle")
 
@@ -737,6 +742,7 @@ func _show_curse() -> void:
 
 
 func _play(anim: StringName, speed: float = 1.0, from: float = -1.0) -> void:
+	_anim.speed_scale = 1.0  # (a follow-through slows the clip it plays; never what comes after it)
 	if from >= 0.0:
 		_anim.play(anim, 0.05, speed)
 		_anim.seek(from, true)

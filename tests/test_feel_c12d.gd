@@ -248,18 +248,32 @@ func test_the_circle_gives_no_safety_and_holds_the_attack() -> void:
 	assert_true(started.is_empty(), "no blow on the next frame (8 frames of Hades II)")
 
 
-func test_the_special_plants_the_legs_until_a_dodge() -> void:
+func test_the_special_holds_the_legs_without_skating() -> void:
+	# D-44 (3) kept; E1c (Daniel: "trava para andar e eu fico patinando"): planted from the press until 0.71 s after
+	# the dart with the direction held, in the throw's clip and pose, never the run; then he walks; the dodge cuts it
 	var p := _room()
 	pad.move = Vector2.DOWN
 	var z := p.pos.y
+	var bolt := ComboTree.find(p.tree.neutral, ComboNode.In.HEAVY)
 	_frame(p, [&"heavy_attack"])
 	assert_almost_eq(p.pos.y, z, 0.001, "planted on the press frame (GF-09)")
-	for i in 30:
+	var free_at := -1
+	for i in 70:
 		_frame(p)
-	assert_almost_eq(p.pos.y, z, 0.05, "the legs held after the dart")
-	assert_gt(p.rooted, 0.0)
+		if p.runner.planted():
+			assert_ne(p.get(&"_current_anim"), &"Run", "no run while held (no skating)")
+			assert_almost_eq(p.pos.y, z, 0.001, "still while held")
+		elif free_at < 0 and p.pos.y > z + 0.01:
+			free_at = i + 1
+	var want := roundi((bolt.windup + bolt.move_hold) * 60.0)
+	assert_between(free_at, want - 1, want + 1, "walks again 0.71 s after the dart (frame %d)" % free_at)
+	p = _room()
+	_frame(p, [&"heavy_attack"])
+	for i in 20:
+		_frame(p)
+	assert_true(p.runner.planted())
 	_frame(p, [&"dodge"])
-	assert_eq(p.rooted, 0.0, "the dodge cuts it")
+	assert_false(p.runner.planted(), "the dodge cuts it")
 	assert_eq(p.state, Player.State.DODGE)
 
 

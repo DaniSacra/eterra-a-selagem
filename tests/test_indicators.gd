@@ -148,7 +148,8 @@ func test_a_blow_tips_the_body_back_away_from_where_it_faces() -> void:
 	e.flash_power = 1.0
 	var pos := e.pos
 	horde.render()
-	var clip: CrowdRenderer.Clip = horde.renderer._clip(horde.renderer.kind(e.def), &"walk")
+	# (E1c: standing still it is drawn idle, the drawing follows the body)
+	var clip: CrowdRenderer.Clip = horde.renderer._clip(horde.renderer.kind(e.def), e.drawn_anim)
 	var data := clip.batch.data
 	assert_lt(data[9], 0.0, "the body's up leans toward -z, away from its front")
 	assert_eq(e.pos, pos, "only drawn")

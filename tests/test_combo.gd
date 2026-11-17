@@ -69,9 +69,16 @@ func test_attack_damage_and_timing_follow_hades() -> void:
 	var cut2 := cut1.following()[0]
 	var cut3 := cut2.following()[0]
 	assert_eq([cut1.damage, cut2.damage, cut3.damage], [20.0, 25.0, 60.0])
-	assert_almost_eq(cut1.windup, 0.06, 0.001)
-	assert_almost_eq(cut2.windup, 0.11, 0.001)
-	assert_almost_eq(cut3.windup, 0.28, 0.001)  # Hades: 0.36; quicker at Daniel's ask (2026-11-14)
+	# E1c: Hades II's staff (docs/design/hades2_feel_study.md): windup + glint, attack lock, legs held
+	assert_almost_eq(cut1.lead(), 0.08, 0.001)
+	assert_almost_eq(cut2.lead(), 0.13, 0.001)
+	assert_almost_eq(cut3.lead(), 0.36, 0.001)
+	assert_almost_eq(cut1.recovery, 8.0 / 60.0, 0.001)
+	assert_almost_eq(cut2.recovery, 13.0 / 60.0, 0.001)
+	assert_almost_eq(cut3.recovery, 18.0 / 60.0, 0.001)
+	assert_almost_eq(cut1.move_hold, 11.0 / 60.0, 0.001)
+	assert_almost_eq(cut2.move_hold, 19.0 / 60.0, 0.001)
+	assert_almost_eq(cut3.move_hold, 30.0 / 60.0, 0.001)
 	assert_almost_eq(cut3.chain_window, 0.6, 0.001)
 
 
@@ -348,28 +355,75 @@ func test_sweep_follows_the_arm() -> void:
 	assert_true(n.sweep_flip(false), "left to right flips it")
 
 
-func test_feet_planted_while_swinging_free_after_the_blow() -> void:
+func test_feet_planted_from_the_press_to_the_end_of_the_leg_hold() -> void:
+	# E1c (Daniel: "tem que atacar parado"; Hades II's MoveHold): planted in the windup and move_hold after the blow,
+	# past the attack lock (the next blow may start before the legs are free)
 	var feel := Feel.new()
 	feel.move_scale_light = 0.0
 	runner.press(L)
 	runner.step(0.0)
+	var n := runner.node
+	assert_gt(n.move_hold, n.recovery, "the legs are held longer than the attack is")
 	assert_true(runner.is_swinging())
-	assert_eq(runner.move_scale(feel), 0.0, "planted during the swing")
-	run(runner.node.windup + 0.01)
+	assert_true(runner.planted())
+	assert_eq(runner.move_scale(feel), 0.0, "planted during the windup")
+	run(n.windup + 0.01)
 	assert_false(runner.is_swinging())
-	assert_true(runner.is_attacking(), "still in the follow-through")
-	assert_eq(runner.move_scale(feel), 1.0, "walking cuts the follow-through")
+	assert_true(runner.planted(), "held after the blow")
+	assert_eq(runner.move_scale(feel), 0.0, "no walking in the hold")
+	run(n.recovery)
+	assert_false(runner.is_attacking(), "the next blow may start")
+	assert_true(runner.planted(), "but the legs are still held")
+	run(n.move_hold - n.recovery)
+	assert_false(runner.planted(), "free once the hold ends")
+	assert_eq(runner.move_scale(feel), 1.0)
 
 
-func test_lunge_carries_to_the_enemy_ahead() -> void:
+func test_the_leg_hold_outlasts_the_chain_and_the_dodge_cuts_it() -> void:
+	runner.press(H)
+	run(0.2)
+	assert_eq(runner.node.id, &"bolt")
+	run(0.5)
+	assert_true(runner.planted(), "the special holds the legs 0.71 s after the dart")
+	assert_almost_eq(runner.legs_left(), 0.71 - 0.6, 0.02)
+	runner.on_dodge()
+	assert_false(runner.planted(), "the dodge cuts it")
+
+
+func test_no_blow_of_the_combo_moves_the_paladin() -> void:
+	var tree: ComboTree = load("res://data/combos/paladin.tres")
+	for node: ComboNode in tree.all_nodes():
+		if node.has_tag(&"dash"):
+			continue  # the dash attack carries him along the dodge's line
+		assert_eq(node.lunge, 0.0, "%s is struck standing still" % node.id)
+		assert_eq(node.move_scale, 0.0, "%s keeps no walking" % node.id)
+
+
+func test_the_combo_slows_as_it_goes() -> void:
+	# E1c (Daniel: "um mais rápido, o segundo um pouco mais lento e o último mais lento"): windup, recovery and the
+	# whole blow grow from cut1 to the spin
+	var tree: ComboTree = load("res://data/combos/paladin.tres")
+	var cut1: ComboNode = ComboTree.find(tree.neutral, L)
+	var cut2: ComboNode = cut1.following()[0]
+	var cut3: ComboNode = cut2.following()[0]
+	assert_lt(cut1.lead(), cut2.lead())
+	assert_lt(cut2.lead(), cut3.lead())
+	assert_lt(cut1.recovery, cut2.recovery)
+	assert_lt(cut2.recovery, cut3.recovery)
+	assert_lt(cut1.lead() + cut1.move_hold, cut2.lead() + cut2.move_hold)
+	assert_lt(cut2.lead() + cut2.move_hold, cut3.lead() + cut3.move_hold)
+	assert_lt(cut1.move_hold, cut2.move_hold)
+	assert_lt(cut2.move_hold, cut3.move_hold)
+
+
+func test_the_follow_through_fills_the_leg_hold() -> void:
 	var n := ComboNode.new()
-	n.lunge = 1.0
-	assert_eq(n.lunge_toward(INF), 1.0, "nobody ahead: the plain step")
-	assert_eq(n.lunge_toward(2.0), 2.0, "an enemy a little away: the step stretches to reach it")
-	assert_eq(n.lunge_toward(99.0), 1.0 + ComboNode.LUNGE_MAGNET, "but only so far")
-	assert_eq(n.lunge_toward(-0.5), 0.15, "an enemy already in reach: barely a step, no running through it")
-	n.lunge = 0.0
-	assert_eq(n.lunge_toward(2.0), 0.0, "moves without a step stay put")
+	n.recovery = 0.1
+	n.move_hold = 0.2
+	assert_almost_eq(n.follow_speed(0.2), 1.0, 0.001, "the clip's own speed when its tail fits")
+	assert_almost_eq(n.follow_speed(0.15), 0.75, 0.001, "slowed to fill the recovery")
+	assert_almost_eq(n.follow_speed(0.02), ComboNode.FOLLOW_MIN, 0.001, "never slower than FOLLOW_MIN, then held")
+	assert_almost_eq(n.follow_speed(1.3), ComboNode.FOLLOW_MAX, 0.001, "a long tail at its own speed, never sped up")
 
 
 func test_blade_lands_with_the_blow() -> void:

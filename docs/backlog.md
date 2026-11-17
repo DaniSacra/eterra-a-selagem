@@ -37,6 +37,34 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 
 ## 0. Feito (fechado com evidência)
 
+### E1c "Golpe parado" (2026-11-16, teste do Daniel da E1 e o vídeo dele do Hades II; sem commit ainda)
+
+| ID | Item | Prova |
+|---|---|---|
+| GF-16 | Golpe parado: sem avanço nos golpes (saíram `lunge_toward`, `LUNGE_MAGNET`, `HeroDef.lunge_standoff`; só o Corte Veloz avança, 3,2 m), andar nunca corta o golpe, trava de pernas com tempo fixo depois do acerto (`ComboNode.move_hold`, contada no `ComboRunner`, só a esquiva corta), nenhum quadro de corrida enquanto preso (`ComboRunner.planted`). Causa: o avanço magnético (`affd7bb`, encurtado em `73d0f89`) e o "depois do acerto, andar corta o fim do golpe" (`affd7bb`) | sonda E1c-P1 a P3: 0,000 m e 0 quadros de corrida em golpe 1, 2, giro, seta, onda e lança com a direção segurada; `tests/test_warrior_strike.gd` |
+| GF-17 | Tempos do cajado do Hades II (`docs/design/hades2_feel_study.md`): preparação 0,08 / 0,13 / 0,36 s, trava de ataque 8 / 13 / 18 quadros, pernas 11 / 19 / 30 quadros; especial e Ômega do especial com as pernas presas 0,71 s (D-44 mantida) mas na pose, sem patinar; lança 0,78 s | sonda E1c-P4 a P6 (preparação 5, 8, 22; pernas 11, 19, 30, 43, 43, 47; cadência 13 e 21 quadros) |
+| GF-18 | Retorno visível: o resto do clipe do golpe toca ao longo da trava de pernas (`ComboNode.follow_speed`; antes o golpe 1 voltava 3,7 vezes rápido demais, porque o clipe seguia na velocidade da preparação, `affd7bb`) e, parado, o clipe de volta à guarda (`recover_anim`: `Slash_A_Rec`, `Slash_B_Rec`) | `docs/gallery/e1c/hero/combo_*.mp4`, `combo_frames.jpg`; teste `test_the_return_clip_plays_when_he_stands` |
+| GF-19 | Estados verificáveis `ComboRunner.Stage` (IDLE, WINDUP, STRIKE, RECOVERY) e janelas documentadas (`warrior_spec.md` 2.2) | teste `test_the_stages_run_idle_windup_strike_recovery_idle` |
+| GF-20 | Empurrão dos golpes 1 e 2 de 8 e 10 para 2,5 e 3 m/s (`COMBO_PUSH`): sem avanço, o alvo saía do alcance do giro (3 m) e o giro errava | sonda GF-01c (o giro volta a acertar o boneco) |
+| BUG-E1c-1 | Golpe sozinho ao começar a partida: o clique em Iniciar (ataque) e o Espaço (esquiva) ficavam guardados no `Controls` (o título não chama `flush`) e saíam no primeiro quadro; o mesmo ao escolher dom e sair da pausa, e o Esc que fechava a pausa a reabria. `Controls.clear_presses` (esquece e engole o que está apertado até soltar) no `Game._ready` e no `_back_to_play` | `tests/test_input_leak.gd` (6 testes, todos falham sem a correção); `docs/gallery/e1c/bugs/inicio_*` |
+| BUG-E1c-2 | Sopro da lâmina sintetizado ("parece pacman" com E apertado sem parar): amostras CC0 sorteadas (3 a 5 por família), tom 12%, `VoiceGate` (70 ms, no máximo 2 vozes); impacto só com acerto | `tests/test_voice_gate.gd`; `docs/gallery/e1c/bugs/e_repetido_*` |
+| GF-21 | Inimigos "estranhos" (`docs/gallery/e1c/enemies/AUDIT.md`, P1 a P9; números do Hades II): o desenho segue o corpo (velocidade real suavizada em 0,1 s; abaixo de 0,3 m/s `idle`, acima o andar no ritmo dela; mais de 60 graus entre movimento e rosto vira o corpo a 1200 graus/s; sacerdote parado em `idle`), recuperação parada depois do golpe (`EnemyDef.recover_time`, `Enemy.State.RECOVER`: esqueleto 2,1 s, elite 1,5, corredor 1,35, elite 0,5, Escudo 1,1, besteiro 0,6, mago 0,8, Cavaleiro 0,8), golpe do esqueleto com a descida da lâmina (`attack` de 0,3 a 1,2 s do `Sword_Attack`), mistura de 0,1 s entre clipes para todos (a do chefe reaproveitada), golpe sofrido no atordoamento inteiro, atordoamento 0,5 e 1,1 s, 0,5 s antes de reanunciar uma preparação cortada, esqueleto com pé travado a 149 passos por minuto, ancião a 91, besteiro com a besta baixa, bote do esqueleto parando no contorno do herói, no máximo 2 esqueletos preparando | `tests/test_enemy_motion.gd` (9); sonda da auditoria nas sementes 5, 1, 2, 3 (antes e depois no relatório do gameplay-engineer); `docs/gallery/e1c/enemies/after/` |
+| BUG-E1c-3 | Morvath some e aparece em outro lugar: deslocamento de raiz dos clipes no desenho (foice 8 m desde `43229d9`, lâminas 3 m desde `faef8d6`, arremesso 1,8 m desde `43229d9`); `in_place` no assado. Mais: corte seco entre clipes (0,96 m num quadro) virou mistura de 0,12 s, atordoado desenhado parado (desde `02b968e`), soltura das lâminas e da maldição no quadro do tiro | `tests/test_boss_body.gd`; `tools/boss_probe.gd`, `tools/pose_drift.gd`; `docs/gallery/e1c/bugs/morvath_*` |
+
+Pendências da E1c: a carga dos Ômegas ainda deixa andar a toda (o Hades anda a 3% na carga da lança); travas duras do
+Hades (6, 3, 9 quadros que nem a esquiva corta) de fora; mistura para a corrida fixa em 0,08 s (Hades: 4 a 11 quadros);
+o giro do corpo para o inimigo mais perto só sem mouse (como antes; o Hades gira também com mouse?); DPS do combo cai
+(ciclo de 1,18 s para 1,34 s em três golpes encadeados); a luta com Morvath ficou mais longa para o robô (105 a 199 s).
+Pendências dos bugs da E1c: a mistura entre clipes de Morvath usa duas linhas de pose (a última mostrada e a pose mais
+perto do clipe novo), então no fim da mistura ou quando a pose nova avança no meio dela o corpo ainda anda até meio passo
+de pose num quadro (pior 0,6 m na invocação, cuja 1ª pose está 0,7 m da 2ª no assado); uma terceira linha no
+`crowd_pose.gdshaderinc` (do environment-artist) tiraria isso. As Lâminas preparam com o mesmo clipe da investida
+(`dash_windup`). Os inimigos comuns trocam de clipe com a mesma mistura desde o GF-21 (0,1 s; com as mesmas duas linhas).
+Pendências do GF-21: pose da besta baixa (guarda do `Sword_Idle`, a besta ao lado do quadril, apontando para fora) aguarda o
+art-director; a recuperação segura a última pose do clipe do golpe (o Hades toca uma animação de volta própria); o corredor
+quase nunca ataca (P10, papel vazio, decisão de design); esqueleto e mago andam de lado entre 35 e 60 graus parte do tempo
+(o limite pedido é 60).
+
 ### C12d "Game feel I: a mão" e o que veio depois (2026-11-16)
 
 | ID | Item | Commit | Prova |
@@ -435,7 +463,7 @@ GF-15, VX-13, VX-17, M-1.
 1. E1c-1 trote do mago e do besteiro sem meio pulo: pés na sombra em todos os quadros de apoio (`tools/bake.gd`).
 2. E1c-2 fio de ouro da onda do especial legível a 1080 (onda 30% maior ou fio mais largo).
 3. E1c-3 rastro deitado no fim da foice de Morvath (o arco vertical sobre a área em meia-lua).
-4. E1c-4 besteiro com a besta abaixada andando; mira só no preparo.
+4. E1c-4 besteiro com a besta abaixada andando; mira só no preparo (feito no GF-21; a pose aguarda o art-director).
 5. E1c-5 mão esquerda de Morvath a até 40 cm nos giros.
 6. E1c-6 conferir o clarão do golpe sofrido no herói (um quadro quase marfim em `scythe_after.mp4`; regra: clarear morno, `Player.HURT_*`).
 Esses entram junto com o que o Daniel apontar no teste da E1.

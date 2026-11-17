@@ -107,7 +107,7 @@ func _track_pinned(dt: float, game: Game) -> void:
 		# a hit stop or a menu: nobody moves, nothing is counted
 		return
 	var held := false
-	if pad.move.length() > 0.1 and game.player.alive() and game.player.state == Player.State.MOVE and not game.player.runner.is_swinging() \
+	if pad.move.length() > 0.1 and game.player.alive() and game.player.state == Player.State.MOVE and not game.player.runner.planted() \
 			and dt > 0.0 and moved < PIN_SPEED * dt:
 		var probe := p + pad.move.normalized() * PIN_PROBE
 		held = game.horde.body_at(probe, Player.RADIUS) or game.arena.resolve(probe, Player.RADIUS).distance_to(probe) > 0.02
@@ -170,7 +170,7 @@ func step(dt: float, game: Game) -> void:
 		_seen.clear()
 		pad.release(&"heavy_attack")
 		return
-	var walking := pad.move.length() > 0.1 and game.player.state == Player.State.MOVE and not game.player.runner.is_swinging()
+	var walking := pad.move.length() > 0.1 and game.player.state == Player.State.MOVE and not game.player.runner.planted()
 	_stuck = _stuck + dt if walking and p.distance_to(_last) < dt * 1.0 else 0.0
 	_last = p
 	var target := _nearest(game)

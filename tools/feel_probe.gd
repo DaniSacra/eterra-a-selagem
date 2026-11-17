@@ -29,7 +29,6 @@ extends Node
 ##   GF-07a bolt_attack_lock    special then attack every frame: cut1 starts on f25 (24..26; 18 after the dart at f7)
 ##   GF-07b bolt_recharge       special then special every frame: the second bolt starts on f48 (47..49; 0.7 s)
 ##   GF-07c bolt_speed          the dart flies at 62.5 m/s (61.5..63.5)
-##   GF-07d bolt_holds_legs     D-44 (3): after the special no walking on f1..f48 (0.71 s after the dart), walking by f53
 ##   GF-07e dodge_cuts_bolt     D-44 (3): a dodge tapped on f20 of the special starts on f20
 ##   GF-08  omega_when_full     holding attack: the lance lands on f48 (47..49; the charge is 0.8 s)
 ##   GF-09a turn_facing         facing within 5 degrees of the new direction by f1
@@ -45,9 +44,15 @@ extends Node
 ##   ALL    no_lost_press       no line of the run says LOST
 ##   GF-12  enemy_flinch       E1b (D-42): a skeleton struck in its wind-up goes back to walking on the hit frame and
 ##                              attacks no sooner than its stun plus a whole new wind-up after it (the cut blow never comes)
-##   E1b-L2 first_attack_lunge  E1b (Game Director, warrior_spec 2 and 10.1): first attack with a skeleton 2 m ahead
-##                              (already within cut1's reach): lands on f4, never into its body (BodyBlock)
-##   E1b-L35 first_attack_lunge with it 3.5 m ahead: 1.2 m or more and cut1 lands on f4, as before (HeroDef.lunge_standoff)
+##   E1c-P1 blows_planted      E1c (Daniel's E1 test and his Hades II video; docs/design/hades2_feel_study.md): direction
+##                              held all the time, every blow (cut1, cut2, spin, special, its Omega, the lance) walks
+##                              0 m from the press until its legs are free (the dash attack keeps its lunge)
+##   E1c-P2 no_run_while_planted no frame of the run clip while held (no skating)
+##   E1c-P3 strike_to_aim       the blow faces the aim, not the walking direction
+##   E1c-P4 windups             press to blow: cut1 5, cut2 8, spin 22, special 6, its Omega 5 frames (within 1)
+##   E1c-P5 leg_holds           blow to walking: cut1 11, cut2 19, spin 30, special and its Omega 43, lance 47 (within 1;
+##                              Hades II's MoveHold; replaces GF-07d, which measured the special's from the press)
+##   E1c-P6 combo_cadence       attack mashed: cut2 starts 13 frames after cut1, the spin 21 after cut2 (attack lock)
 ## Not in the probe: GF-11 (sound, a GUT test of Audio and a video), GF-13 (latency on the GPU), the omega special table
 ## of GF-09 (a document).
 
@@ -73,7 +78,7 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(game)
 	_queue = [_s_move, _s_turn, _s_attack_air, _s_attack_hit, _s_combo_mash, _s_combo_on_hit, _s_buffer, _s_dodge,
 		_s_dodge_cancel, _s_attack_in_dodge, _s_walk_cancel, _s_special, _s_omegas, _s_cast, _s_hitstop_buffer,
-		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_lunge]
+		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_planted]
 	var only := OS.get_environment("PROBE")
 	if only != "":
 		_queue = _queue.filter(func(c: Callable) -> bool: return only.split(",").has(c.get_method()))
@@ -625,17 +630,12 @@ func _s_walk_cancel() -> void:
 	var bolt: Array[float] = walked[&"bolt"]
 	meta("GF-09c", "plant_on_press", "0,00 m andados no quadro do aperto (golpe 1 e seta)", "golpe 1 %.2f, seta %.2f" % [cut1[0], bolt[0]],
 		cut1[0] < 0.005 and bolt[0] < 0.005)
-	var moved_in_hold := -1
-	for i in range(1, 49):
-		if bolt[i] > 0.005 and moved_in_hold < 0:
-			moved_in_hold = i
-	var walks_again := -1
-	for i in range(49, 54):
-		if bolt[i] > 0.005 and walks_again < 0:
-			walks_again = i
-	meta("GF-07d", "bolt_holds_legs", "D-44: parado de f1 a f48 depois da seta (0,71 s depois do dardo), anda de novo ate f53",
-		"%s, anda de novo %s" % [("anda em f%d" % moved_in_hold) if moved_in_hold >= 0 else "parado", ("f%d" % walks_again) if walks_again >= 0 else "depois de f53"],
-		moved_in_hold < 0 and walks_again >= 0)
+	# (GF-07d, the special's 0.71 s of held legs, is measured by E1c-P5 in _s_planted)
+	var walks := -1
+	for i in range(1, bolt.size()):
+		if bolt[i] > 0.005 and walks < 0:
+			walks = i
+	out("bolt walks again on f%d" % walks)
 
 
 func _s_special() -> void:
@@ -984,52 +984,110 @@ func _s_extra() -> void:
 	meta("GF-02c", "dodge_cuts_spin", "esquiva apertada todo quadro desde f1 do giro sai em f1", "f%d" % at[0], at[0] == 1)
 
 
-## E1b "o Guerreiro se reconhece no primeiro ataque" (only measured, no number changed): the first attack tapped from
-## rest with a skeleton `gap` meters ahead (centre to centre): how far the lunge (ComboNode.lunge_toward) carries him
-## in all and by the hit, in how many frames (90% of it), how far from the skeleton's edge he strikes, and whether
-## cut1 lands. (Player._gap_ahead stops the lunge at HeroDef.lunge_standoff of the blow's reach.)
-func _s_lunge() -> void:
-	for gap: float in [2.0, 3.5]:
-		out("== LUNGE: first attack with a skeleton %.1f m ahead" % gap)
-		await reset_hero(Vector2(-4, 4))
+## E1c (Daniel's E1 test: "tem que atacar parado", "diferença de tempo entre os 3 ataques"; his Hades II video of
+## 2026-11-16: "todos os ataques eu fiz sem parar de andar e mesmo assim parece que ela para e ataca"; numbers of
+## docs/design/hades2_feel_study.md, "O que aplicar"): the direction is held the whole time (right) and the aim points
+## elsewhere (up). Per case, for its last move: frames from its start to its blow, from the blow to the first frame
+## he walks (the leg hold), meters walked and frames of the run clip while planted, which way he strikes; and, with
+## the attack mashed, frames from one blow of the combo to the start of the next (the attack lock, the cadence).
+## Targets, frames at 60 (each within 1): windup cut1 5, cut2 8, spin 22 (0.08, 0.13, 0.36 s); legs held after the
+## blow 11, 19, 30, special and its Omega 43 (0.71 s), lance 47 (0.78 s); start to next start 13 and 21.
+const PLANTED_CASES := {
+	"c1": [&"cut1", 5, 11], "c2": [&"cut2", 8, 19], "c3": [&"cut3", 22, 30],
+	"bolt": [&"bolt", 6, 43], "burst": [&"burst", 5, 43], "lance": [&"lance", -1, 47],
+}
+
+
+func _s_planted() -> void:
+	var moved_bad: PackedStringArray = []
+	var run_bad: PackedStringArray = []
+	var aim_bad: PackedStringArray = []
+	var lead_bad: PackedStringArray = []
+	var hold_bad: PackedStringArray = []
+	var got: PackedStringArray = []
+	var cadence := [-1, -1]
+	for kind: String in PLANTED_CASES:
+		var want: Array = PLANTED_CASES[kind]
+		var id: StringName = want[0]
+		out("== PLANTED %s with the direction held all the time" % kind)
+		await reset_hero(Vector2(-6, 4))
+		pad.aim = Vector2.UP
 		var p := game.player
-		var e := dummy(p.pos + Vector2(gap, 0))
-		e.stun_t = 99.0  # it stands where it was put (no circling round him)
-		await step(2)
 		var seen := _combo_watch()
-		var start := p.pos
-		var trail: Array = []
-		var at_hit := {moved = -1.0, edge = -1.0}
-		var before := [e.pos]
-		var closest := [INF]
-		await run(40, func(i: int) -> void:
-			_cur = i
-			if i == 0:
-				tap(&"light_attack"),
+		var frames: Array = []  # [pos, planted, anim, facing]
+		await run(120, func(i: int) -> void: _planted_input(kind, i, seen),
 			func(_i: int, _s: bool) -> void:
-				trail.append(p.pos.distance_to(start))
-				if at_hit.moved < 0.0 and e.hp < e.max_hp:
-					# from where it stood before the blow pushed it
-					at_hit.moved = p.pos.distance_to(start)
-					at_hit.edge = (before[0] as Vector2).distance_to(p.pos) - e.def.radius
-				closest[0] = minf(closest[0], e.pos.distance_to(p.pos) - e.def.radius - Player.RADIUS)
-				before[0] = e.pos)
+				frames.append([p.pos, p.runner.planted(), p.get(&"_current_anim"), p.facing]))
 		_unwatch.call()
-		var total: float = trail[-1]
-		var near := -1
-		for i in trail.size():
-			if near < 0 and float(trail[i]) >= total * 0.9:
-				near = i
-		var hit := _first(seen, "hit", "cut1")
-		var line := "%.1f m: anda %.2f m (%.2f ate o acerto), 90%% em f%d, golpe 1 acerta em %s a %.2f m da borda do esqueleto" % [gap, total,
-			at_hit.moved, near, ("f%d" % hit) if hit >= 0 else "nunca", at_hit.edge]
-		out("LUNGE " + line)
-		line += ", folga minima entre os corpos %.2f m" % closest[0]
-		# Game Director (warrior_spec 2 and 10.1): the lunge visibly carries him to the enemy, never through its body
-		if gap < 3.0:
-			# already within cut1's reach: no lunge to speak of, it must land on the same frame and never go through it
-			meta("E1b-L2", "first_attack_lunge", "esqueleto a 2 m: acerta em f4 (o quadro de antes) sem atravessar o corpo", line,
-				hit == 4 and closest[0] >= -0.01)
-		else:
-			meta("E1b-L35", "first_attack_lunge", "esqueleto a 3,5 m: avanca 1,2 m ou mais e acerta em f4 (o quadro de antes)", line,
-				hit == 4 and total >= 1.2 and closest[0] >= -0.01)
+		let_go(&"heavy_attack")
+		let_go(&"light_attack")
+		out("events " + str(seen))
+		var first := _first(seen, "start", "cut1") if kind.begins_with("c") else _first(seen, "start", String(id))
+		var s0 := _first(seen, "start", String(id))
+		var h := _first(seen, "hit", String(id))
+		if first < 0 or s0 < 0 or h < 0:
+			moved_bad.append("%s:nunca" % id)
+			continue
+		var walk := -1
+		for k in range(h, frames.size()):
+			if (frames[k][0] as Vector2).x > (frames[k - 1][0] as Vector2).x + 0.001:
+				walk = k
+				break
+		var origin: Vector2 = frames[first - 1][0] if first > 0 else frames[0][0]
+		var last := walk - 1 if walk > 0 else frames.size() - 1
+		var walked: float = (frames[last][0] as Vector2).distance_to(origin)
+		var runs := 0
+		for k in range(first, last + 1):
+			if frames[k][2] == &"Run" or frames[k][2] == &"Sprint":
+				runs += 1
+		var f: Vector2 = frames[s0][3]
+		var line := "%s: lead %d, hold %d, walked %.3f m, run frames %d" % [id, h - s0, walk - h if walk >= 0 else -1, walked, runs]
+		if kind == "c3":
+			cadence = [_first(seen, "start", "cut2") - _first(seen, "start", "cut1"), s0 - _first(seen, "start", "cut2")]
+			line += ", start to start %d, %d" % cadence
+		out(line)
+		got.append(line)
+		if walked > 0.005:
+			moved_bad.append("%s:%.2fm" % [id, walked])
+		if runs > 0:
+			run_bad.append("%s:%d" % [id, runs])
+		if f.dot(Vector2.UP) < 0.95:
+			aim_bad.append(String(id))
+		if int(want[1]) >= 0 and absi(h - s0 - int(want[1])) > 1:
+			lead_bad.append("%s:%d" % [id, h - s0])
+		if walk < 0 or absi(walk - h - int(want[2])) > 1:
+			hold_bad.append("%s:%d" % [id, walk - h if walk >= 0 else -1])
+	meta("E1c-P1", "blows_planted", "0,00 m andados com a direcao segurada do aperto ate soltar as pernas (golpes 1, 2, giro, seta, onda, lanca)",
+		"todos parados" if moved_bad.is_empty() else "andou: " + " ".join(moved_bad), moved_bad.is_empty())
+	meta("E1c-P2", "no_run_while_planted", "0 quadros com o clipe de corrida enquanto preso",
+		"nenhum" if run_bad.is_empty() else " ".join(run_bad), run_bad.is_empty())
+	meta("E1c-P3", "strike_to_aim", "o golpe sai para a mira (cima), nao para onde anda (direita)",
+		"todos" if aim_bad.is_empty() else "fora: " + " ".join(aim_bad), aim_bad.is_empty())
+	meta("E1c-P4", "windups", "preparacao golpe 1 5, golpe 2 8, giro 22, seta 6, onda 5 quadros (1 de folga)",
+		"todos" if lead_bad.is_empty() else "fora: " + " ".join(lead_bad), lead_bad.is_empty())
+	meta("E1c-P5", "leg_holds", "pernas presas depois do golpe 11, 19, 30, seta e onda 43, lanca 47 quadros (1 de folga); anda no quadro seguinte",
+		"todos" if hold_bad.is_empty() else "fora: " + " ".join(hold_bad), hold_bad.is_empty())
+	meta("E1c-P6", "combo_cadence", "com o ataque apertado: golpe 2 sai 13 quadros depois do 1 e o giro 21 depois do 2 (1 de folga)",
+		"%d, %d" % cadence, absi(cadence[0] - 13) <= 1 and absi(cadence[1] - 21) <= 1)
+
+
+## The inputs of _s_planted's frame i: the direction and the aim always, the buttons by case (the combo's mashed until
+## its last move starts; the Omegas held until they start).
+func _planted_input(kind: String, i: int, seen: Array) -> void:
+	_cur = i
+	pad.move = Vector2.RIGHT
+	pad.aim = Vector2.UP
+	var started := func(id: String) -> bool: return seen.any(func(x: Array) -> bool: return x[0] == "start" and x[1] == id)
+	if kind.begins_with("c"):
+		var last := "cut" + kind.substr(1)
+		if not started.call(last):
+			tap(&"light_attack")
+	elif kind == "bolt":
+		if i == 0:
+			tap(&"heavy_attack")
+	else:
+		var action := &"heavy_attack" if kind == "burst" else &"light_attack"
+		if i == 0:
+			hold(action)
+		if started.call(kind):
+			let_go(action)

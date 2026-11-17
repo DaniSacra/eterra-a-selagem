@@ -30,7 +30,7 @@ A sessão principal é o Game Director / Tech Lead: planeja, delega, integra, va
 Subagentes em `.claude/agents/`: `art-director` (identidade visual, especificação e revisão), `environment-artist`
 (cenário, materiais, luz), `gameplay-engineer` (combate, inimigos, salas, câmera de jogo, colisão, testes),
 `ui-ux-designer` (HUD, menus, legibilidade), `qa-performance` (testes, medições, capturas reais, relatório em
-`docs/qa/latest_report.md`), `game-director` (lê todas as evidências e revisões e mantém o backlog em `docs/backlog.md`: bugs e quickwins
+`docs/qa/latest_report.md`), `combat-feel-director` (cadência, peso e sincronia do combate: preparação, impacto, recuperação e próxima ação do Guerreiro, dos inimigos e de Morvath; mede em capturas reais, mantém `docs/design/combat_cadence.md`, classifica P0/P1/P2 e pode reprovar tecnicamente uma entrega de combate com evidência; não implementa), `game-director` (lê todas as evidências e revisões e mantém o backlog em `docs/backlog.md`: bugs e quickwins
 primeiro, depois os próximos ciclos; roda ao fim de cada ciclo, não implementa). Cada arquivo tem um dono por tarefa; agentes em paralelo só com arquivos distintos (ou em
 worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/development/agent_workflow.md`.
 
@@ -333,12 +333,27 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Horde.armor_broken`; Morvath se rearma depois do atordoamento).
 - Entrada só por ações (`Controls`): `light_attack`, `heavy_attack`, `dodge`, `cast`, mira (`Controls.aim`). Nunca ler tecla direto.
   Toque e robô usam `Controls.VirtualPad`. Toques num quadro em que o jogo não andou ficam guardados (`Controls.flush`;
-  o controle virtual também, `Controls.latch_virtual`, GF-06).
-- Sonda de game feel (`tools/feel_probe.gd`) desde a E1b: 34 metas (as 31 do C12d, `GF-12` e `E1b-L2`/`E1b-L35`, o
-  primeiro ataque com um esqueleto a 2 m, já no alcance: acerta em f4 sem atravessar o corpo; a 3,5 m: avança pelo menos
-  1,2 m e acerta em f4). O avanço do golpe para a `HeroDef.lunge_standoff` do alcance do golpe (0,3 desde a E1b, decisão do Game
-  Director pela identidade do Guerreiro, `warrior_spec` 2 e 10.1; era 0,45, a constante `Player.LUNGE_STANDOFF`): com
-  0,3 ele anda 1,38 m a 3,5 m e 0,15 m a 2 m (o mínimo do `ComboNode.lunge_toward`: a 2 m o golpe 1 já alcança).
+  o controle virtual também, `Controls.latch_virtual`, GF-06). E1c (bug 1, "o herói solta um golpe sozinho ao começar"):
+  o título não anda o jogo, então o clique em Iniciar (botão esquerdo = ataque) e o Espaço (confirmar = esquiva) ficavam
+  guardados e saíam no primeiro quadro da partida; `Controls.clear_presses` esquece tudo e engole os botões ainda
+  apertados até serem soltos, chamado no `Game._ready` e ao fechar a escolha de dom e a pausa (`Game._back_to_play`; o Esc
+  que fechava a pausa também a reabria). Testes em `tests/test_input_leak.gd` (título por mouse, teclado e controle,
+  botão segurado, dom, pausa).
+- Sonda de game feel (`tools/feel_probe.gd`): 37 metas (as 30 do C12d que seguem, `GF-12` e as seis da E1c, `E1c-P1` a
+  `E1c-P6`; a `GF-07d` e as `E1b-L2`/`L35` do avanço saíram).
+- **Golpe parado (E1c; teste do Daniel da E1, "tem que atacar parado", e o vídeo dele do Hades II; números do cajado em
+  `docs/design/hades2_feel_study.md`; estados e janelas em `docs/design/warrior_spec.md` 2.2; testes em
+  `tests/test_warrior_strike.gd`)**: nenhum golpe leva o herói (sem avanço; só o Corte Veloz da esquiva anda, `lunge` 3,2 m);
+  com a direção segurada ele planta do aperto até o fim da trava de pernas (`ComboNode.move_hold`, contada no `ComboRunner`
+  mesmo depois da janela de emendar; `ComboRunner.planted`), que só a esquiva corta; andar nunca corta o golpe, só o clipe de
+  retorno depois da trava; nenhum quadro de corrida enquanto preso. Preparação 0,08 / 0,13 / 0,36 s (giro 0,28 + 0,08 de
+  brilho), próximo golpe livre 8 / 13 / 18 quadros depois do acerto (`recovery`, a cadência do combo), pernas 11 / 19 / 30;
+  especial e Ômega do especial com as pernas presas 0,71 s (D-44) na pose do disparo; lança 0,78 s. Estados
+  `ComboRunner.Stage` (IDLE, WINDUP, STRIKE, RECOVERY). O resto do clipe do golpe toca ao longo da trava
+  (`ComboNode.follow_speed`, `Player._follow_through`) e, parado, o clipe de volta à guarda (`recover_anim`: `Slash_A_Rec`,
+  `Slash_B_Rec`). O golpe gira para o inimigo mais perto até 5 m num arco de 130 graus sem mouse (`Player.ASSIST_*`).
+  Empurrão dos golpes 1 e 2 em 2,5 e 3 m/s (`COMBO_PUSH`): sem avanço o alvo saía do alcance do giro. Vídeos em
+  `docs/gallery/e1c/hero/` (roteiro `--feel=planted` do `tools/feel_driver.gd`).
 - **Game feel I, a mão (ciclo C12d; números do Hades II, D-39, D-43, D-44; aceite pela sonda `tools/feel_probe_run.gd`,
   `docs/gallery/c12d/PROBE.md`; testes em `tests/test_feel_c12d.gd`)**: hit stop no molde do Hades, nunca congelamento
   (`HitStop`, `core/hit_stop.gd`; `Fx.blow_stop`): o mundo segue `ComboNode.hit_stop_ms` (25, 65, 70, 50 ms) depois do
@@ -353,8 +368,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   carga, nada). Botões lidos e o golpe começado antes de andar: ele planta no quadro do aperto. Direção na hora, corpo a
   1340 graus/s (`Player.TURN_BODY`). Esquiva no quadro do aperto (nosso, D-44) com 19 quadros de proteção
   (`Feel.dodge_iframes` 0,3). Seta: ataque livre 18 quadros depois do dardo (`recovery`), especial 0,7 s
-  (`ComboNode.cooldown`, guardado pelo golpe sofrido), pernas presas 0,71 s que só a esquiva corta (`root_time`,
-  `Player.rooted`), dardo a 62,5 m/s (`Projectiles.SPARK_SPEED`). Ômega do ataque: preparação e brilho dentro da carga,
+  (`ComboNode.cooldown`, guardado pelo golpe sofrido), pernas presas 0,71 s que só a esquiva corta (`move_hold`, ver
+  Golpe parado), dardo a 62,5 m/s (`Projectiles.SPARK_SPEED`). Ômega do ataque: preparação e brilho dentro da carga,
   acerta quando ela enche (`Player._charge_lead`); apertar de novo recomeça a carga. Círculo sem proteção e 8 quadros
   sem golpe (`ComboRunner.hold_for`, `HeroDef.cast_attack_lock`). Impacto: tranco do golpe comum 0,09 m, finalizador
   0,32, Ômega 0,56 (`Combat.KICK_*`, `kick_of`); clarão do inimigo 0,05 s (`Horde.FLASH_TIME`). Som da lâmina no
@@ -389,7 +404,12 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Golpes, ossos, escudo e atordoamento usam o Kenney Impact Sounds (CC0).
   Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e CC-BY com crédito). Música desligada por enquanto.
   Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1 dB
-  (`Audio.LIMIT_DB`, `Audio.limit_master`, posto uma vez ao iniciar; ciclo C12c, GP-05).
+  (`Audio.LIMIT_DB`, `Audio.limit_master`, posto uma vez ao iniciar; ciclo C12c, GP-05). E1c (bug 2, "E apertado sem
+  parar parece pacman"): o sopro da lâmina (`blade`, `blade_spin`, `thrust`, `dart`, `ComboNode.sound`, só quando o golpe
+  sai de verdade) é gravado, sorteado entre 3 a 5 amostras CC0 do qubodup por família (`audio/blade_*.ogg`...), tom
+  variando 12%, e passa por `VoiceGate` (`core/voice_gate.gd`): a família não recomeça antes de 70 ms e soa no máximo em
+  2 vozes (a nova toma a mais velha). O impacto segue separado (`hit`/`hit_heavy` e o material, só com acerto).
+  `Audio.listen` grava o que passou para os testes (`tests/test_voice_gate.gd`).
   Som do combate (E1b, C15-02): a tabela é `CombatSounds` (`core/combat_sounds.gd`): `EVENTS` (golpe e golpe forte, dardo,
   escudo do ritual `ward`, ataque cortado `interrupt`, quebra de armadura `armor_break`, atordoamento, Ômega carregando e
   pronto, círculo, círculo Ômega e a explosão dele, esquiva, golpe sofrido, maldição, invocação); por cima do golpe, a
@@ -519,6 +539,19 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Raridade sorteada por carta, `Boon.RARITY_MULT` multiplica os números com `BoonMod.by_rarity`)
   (`BoonMod`: `stat`, `tag`, `values` por nível; as estatísticas que o jogo conhece estão em `scripts/game/combat.gd` e
   `game.gd` `_take`). Inimigos: `data/enemies/*.tres`. Ondas, elites, fonte e chefe: `data/waves/catacombs.tres`.
+- **E1c, Morvath sumia e aparecia em outro lugar para atacar (bug 3)**: a posição dele no jogo nunca saltou; o desenho
+  sim. Os golpes dele vêm de clipes das bibliotecas com deslocamento de raiz assado no quadril: a foice (`slash3`,
+  Sword_Regular_C, desde a E1b `43229d9`) punha o corpo até 8 m à frente (4 m já na primeira pose) e voltava de uma vez no
+  fim, longe dos avisos e da colisão; as Lâminas (`slash1`/`slash2`, Sword_Regular_A e B, desde `faef8d6`) 3 m e o
+  arremesso (`volley`, OverhandThrow, `43229d9`) 1,8 m. `tools/bake.gd` ganhou `in_place` (quadril fixo no lugar, como os
+  `_RM`) nesses clipes; `BakedModel.pose_centre`/`drift` e `tools/pose_drift.gd` medem (toda pose dele a no máximo 0,45 m
+  no tamanho 1, fora queda e levantar). Também: a troca de clipe dele é uma mistura de `Horde.CLIP_FADE` 0,12 s da última
+  pose para a nova (`CrowdRenderer.add_kind` com `from_row`/`fade`; antes o corpo pulava até 0,96 m num quadro), o
+  atordoamento dele desenhava `idle` (o `Horde.render` lia o `stun_t` que o `Boss` segura; desde o marco 5), e as Lâminas
+  e a maldição começam o arremesso antes do tiro para a soltura cair no quadro do tiro (`Boss.THROW_PEAK`, `_throw_by`; o
+  pico vinha 10 quadros depois). `tools/boss_probe.gd` acompanha a luta quadro a quadro. Testes em `tests/test_boss_body.gd`
+  (poses, as 4 fases até a queda, passo simulado e desenhado, clipe desenhado, avisos onde ele está, soltura). Vídeos em
+  `docs/gallery/e1c/bugs/`.
 - **Morvath, a luta em 4 fases** (pedido do Daniel de 2026-11-15; desenho em `docs/design/morvath_boss_fight.md`): todos os
   números em `data/bosses/morvath.tres` (`BossDef`, gerado por `_bosses` no `make_data.gd`, parte `bosses`); a escolha do
   ataque é do `BossDirector` (`core/boss_director.gd`: fase, distância, paladino parado, recargas, sem repetir, nunca vazio,
@@ -697,14 +730,34 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   atordoa (`Horde.flinch`): para de andar (`stun_t`, `Enemy.helpless`), a preparação ou o ataque em curso é cortado e não
   sai (`Horde.interrupt`: volta a `WALK`, o aviso no chão do ataque some na hora por `Ground.end_zone(Enemy.warning)`, o
   som `interrupt`), e mostra o golpe sofrido (o recuo do E1a, `HitRecoil`, continua). Duração por inimigo em
-  `EnemyDef.stun_time` e `stun_heavy_time` (finalizador e Ômega; `STUN` 0,3 s no `_enemies` do `make_data.gd`, a pose do
-  golpe sofrido: o Hades usa o comprimento das `StunAnimations`, que não está nos scripts; o Heavy é a mesma animação a
-  meia velocidade: esqueleto e mago 0,6, o Escudo 0,23 e 0,5 como o Brawler, os outros só o Default). Preparação cortada
-  fica pronta e se anuncia de novo inteira; ataque já solto cortado conta a recarga. Elites só depois que a armadura
+  `EnemyDef.stun_time` e `stun_heavy_time` (finalizador e Ômega; desde a E1c os do golpe da heroína do Hades, `OnHitStun`
+  0,5 s e `OnHitStunHeavy` 1,1 s, para todo comum: `STUN` e `STUN_HEAVY` no `_enemies` do `make_data.gd`; eram 0,3 e 0,6).
+  Preparação cortada se anuncia de novo inteira, mas só `Horde.REARM` 0,5 s depois do fim do atordoamento (`Enemy.rearm`,
+  a recarga segura toda preparação e o som dela); ataque já solto cortado conta a recarga. Elites só depois que a armadura
   quebra (a barra absorve antes); a quebra da armadura também corta o ataque (`Game._on_armor_broken`, o
   `ArmorBreakStun`). Investida do Escudo em voo não é cortada (`stun_immune_attacking`, a carga do Brute do Hades; a
   preparação é). Guardiões e Morvath nunca (`stun_time` 0, o `ImmuneToStun`). Queimadura e zonas não atordoam (só golpe
   com direção e clarão). `RESULT` traz `flinches` e `interrupts`. Testes em `tests/test_flinch.gd`; sonda `GF-12`.
+- **Inimigos comuns no molde do Hades II (E1c; auditoria `docs/gallery/e1c/enemies/AUDIT.md`, P1 a P9; testes em
+  `tests/test_enemy_motion.gd`)**: o desenho segue o corpo: velocidade real no chão suavizada em `Horde.VEL_SMOOTH` 0,1 s
+  (`Enemy.vel`, sem o empurrão; `Horde._drawn_motion`); abaixo de `WALK_FROM` 0,3 m/s toca `idle` (de `WALK_START` 0,4 para
+  cima volta a andar), acima o andar no ritmo dessa velocidade (`Enemy.walk_phase`, `walk_rate`); com mais de
+  `FACE_SPLIT` 60 graus entre o movimento e o rosto o corpo vira para onde anda a `TURN_RATE` 1200 graus/s e só volta a
+  olhar a mira (`dir`) quando anda para ela ou prepara (`Enemy.face`, `yaw()`; atordoado não gira). O sacerdote parado fica
+  em `idle`. Recuperação depois do golpe (o `PostAttackDuration`): `EnemyDef.recover_time` e o estado `Enemy.State.RECOVER`
+  (`Horde._end_attack`), parado, com o clipe do golpe seguindo até o fim e segurando a última pose (`Enemy.blow_t`): esqueleto
+  2,1 s (elite 1,5), corredor 1,35 (elite 0,5), Escudo 1,1 (também depois da investida, onde era um atordoamento de 0,8),
+  besteiro 0,6 antes de fugir, mago 0,8, Cavaleiro 0,8 (o de antes); golpe na recuperação atordoa mas não corta nada. O
+  golpe do esqueleto: `attack` assado de 0,3 a 1,2 s do `Sword_Attack`, tocado do começo quando o tipo tem clipe `windup`
+  próprio (`CrowdRenderer.Kind.has_windup`, `Horde.ATTACK_PLAY` 1,4): a lâmina desce nos primeiros 0,14 s do bote. Mistura
+  entre clipes para todos (a do chefe, `CrowdRenderer.add_kind(..., from_row, fade)`, por `Horde._fade`): `CLIP_FADE` 0,1 s
+  (o chefe `BOSS_CLIP_FADE` 0,12), também na queda; atordoado por golpe, todo corpo (pesado também) mostra o golpe sofrido
+  esticado no atordoamento inteiro (`Enemy.stun_len`, `Kind.hit_time`), sem `idle` no meio. Bote do esqueleto para no
+  contorno do herói (`keep_off_target` vale para o `RUNNER` em `ATTACK`; investidas de Escudo e Cavaleiro atravessam);
+  no máximo 2 esqueletos (com as elites) preparam ou dão o bote juntos (`max_attackers` 2). Assado: esqueleto com o pé
+  travado (`SOLDIER_RUN`: passada 0,68, meio pulo, 149 passos por minuto; corria a 96), ancião `ELDER_STRIDE` 0,9 (91 por
+  minuto; era 67), besteiro com a besta baixa ao lado do quadril andando e parado (`CROSSBOW_LOW`, guarda do `Sword_Idle`;
+  `idle` agora o `Idle`), subindo ao ombro só na mira (`aim`, `Pistol_Idle`) e no tiro.
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## Pendências conhecidas
@@ -717,8 +770,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   tem foice); meias-luas sem as caveiras da referência; maldição lida pelo brilho roxo e fumaça no herói. Diferenças do Hades
   que ficaram: Morvath tem ataques próprios (não os da chefe do Hades), só a vida (6050) e o dano seguem a escala; sem martelo, feitiço lunar ou dom de velocidade como recompensa; a loja compra ao pisar (não há botão de
   interagir); o bônus de dano por sequência de golpes (`DamageCalc.combo_bonus`) continua ligado; a seta especial não persegue.
-  Depois do 1º teste do Daniel (mais dinâmico, 2026-11-14): o paladino fica plantado enquanto a lâmina corta (como no Ember & Blade; só o avanço do golpe o move) e, depois que o golpe
-  acerta, andar corta o fim do golpe e ele corre (`ComboRunner.is_swinging`, `move_scale` 0); cada golpe leva o paladino até o inimigo à frente, como no Ember & Blade (`ComboNode.lunge_toward`, `LUNGE_MAGNET` 2,5 m, para antes de atravessar; `lunge` em metros); o corte de luz segue o lado do braço
+  Depois do 1º teste do Daniel (mais dinâmico, 2026-11-14; o avanço e o "andar corta o golpe" desta época saíram na E1c,
+  ver Golpe parado): o corte de luz segue o lado do braço
   (`ComboNode.sweep`, `SWEEP` em `make_data.gd`), golpes
   empurram mais, inimigos mais rápidos (esqueleto 3,75 m/s) e com menos espera entre ataques (avisos iguais); a câmera
   se adianta para onde ele anda, não para a mira.
