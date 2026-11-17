@@ -416,6 +416,12 @@ herói.
 
 ## 6. Próximas entregas (E1 a E6)
 
+**Estado em 2026-11-17: E2 a E6 feitas** (autorização do Daniel de 2026-11-16, sem perguntas; commit final 68ce0be). Falta o
+teste de gente (T5/T6, D-11) e a revisão do art-director (moldura do Salmo, looks da E5, ponto preto na qualidade Baixa,
+ouvir a mixagem). Decisões a validar: `docs/design/e3_blessings.md`, `e4_psalms.md`, `e6_balance.md` (E6-D1: Ainda de Pé
+não levanta na sala de Morvath), `e6_juramentos.md` (o nome "Juramentos" fica perto dos "Juramentados" do cânone),
+`docs/qa/e6_audio_perf.md` (música +9 dB, Baixa a 0,5 de escala). Próximo: C16 Steam.
+
 Ordem pela diretriz "um herói definitivo" (`roadmap_plan.md` seção 00): **E1 game feel e visual → E2 Maestria e Dons →
 E3 Bênçãos e combinações → E4 Salmos e descobertas → E5 eventos e exploração → E6 balanceamento da região → C16 Steam.**
 Cada entrega é uma versão MVP inteira para o Daniel testar de uma vez. A regra 0.1 do roteiro vale em todas: nenhuma
