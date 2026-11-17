@@ -221,9 +221,9 @@ func _codex(t: CodexScreen.Tab) -> CodexScreen:
 	return c
 
 
-func test_codex_has_four_tabs_in_order() -> void:
+func test_codex_tabs_in_order() -> void:
 	var c := _codex(CodexScreen.Tab.GIFTS)
-	assert_eq(c.tabs.size(), 4)
+	assert_eq(c.tabs.size(), CodexScreen.Tab.size(), "E4-05: eight")
 	assert_eq(c.tabs[CodexScreen.Tab.BOONS].text, T.t(&"codex_tab_boons"))
 	assert_eq(c.tabs[CodexScreen.Tab.ELOS].text, T.t(&"codex_tab_elos"))
 	assert_eq(c.tabs[CodexScreen.Tab.MOVES].text, T.t(&"codex_tab_moves"))

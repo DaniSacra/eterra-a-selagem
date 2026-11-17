@@ -66,6 +66,10 @@ var ultimate := ""
 ## Blessings offered on a card and Elos formed in this run (ids), for the Mastery's first times and the Codex.
 var seen_boons := {}
 var elos_formed := {}
+## E4-05, for the Codex at the end of the run: enemies defeated by kind (EnemyDef.id: count; Morvath apart) and the
+## arenas entered (RoomLayout.id, &"hall" for the hall: count).
+var defeated := {}
+var arenas_seen := {}
 var director: WaveDirector
 ## The descent room by room (null in the endless hall, --horde).
 var rooms: Rooms
@@ -608,6 +612,8 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	arena.build(layout, exits, seed_)
 	horde.arena = arena
 	player.arena = arena
+	var place := arena.id if arena.id != &"" else &"hall"
+	arenas_seen[place] = int(arenas_seen.get(place, 0)) + 1
 
 
 ## Gifts by a cleared room or the shop: three cards drawn with these rarity chances (Boon.RARITY_CHANCE; the stage's
@@ -1006,6 +1012,8 @@ func _on_armor_broken(e: Enemy) -> void:
 
 func _on_killed(e: Enemy) -> void:
 	kills += 1
+	if e.def.behavior != EnemyDef.Behavior.BOSS:
+		defeated[e.def.id] = int(defeated.get(e.def.id, 0)) + 1
 	if rooms == null:
 		player.magick.gain(MAGICK_PER_ELITE if e.def.elite else MAGICK_PER_KILL)
 	if rooms:
@@ -1556,11 +1564,30 @@ func award_mastery(gain: Dictionary, outcome: String, data: Dictionary) -> void:
 		SaveData.codex_add(data, "psalms", String(id), "seen")
 	for p in psalms.taken:
 		SaveData.codex_add(data, "psalms", String(p.id), "taken")
+	codex_run(outcome, data)
 	var guardians := rooms.won.count(RunMap.Kind.MINIBOSS) if rooms else 0
 	if guardians > 0:
 		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
 	if outcome == "victory":
 		block.firsts["victory"] = int(block.firsts.get("victory", 0)) + 1
+
+
+## E4-05: the enemies defeated (an elite counts for its common kind, and as an elite), Morvath met (the highest phase
+## reached, defeated on a victory) and the arenas entered, into save data's Codex.
+func codex_run(outcome: String, data: Dictionary) -> void:
+	for id: StringName in defeated:
+		var kind := String(id).trim_suffix("_elite")
+		SaveData.codex_add(data, "enemies", kind, "defeated", int(defeated[id]))
+		if kind != String(id):
+			SaveData.codex_add(data, "enemies", kind, "elite", int(defeated[id]))
+	if not boss_stats.is_empty():
+		var chief := String(rooms.stage.boss) if rooms else "morvath"
+		SaveData.codex_add(data, "enemies", chief, "met")
+		SaveData.codex_max(data, "enemies", chief, "phase", int(boss_stats.get("max_phase", 1)))
+		if outcome == "victory":
+			SaveData.codex_add(data, "enemies", chief, "defeated")
+	for id: StringName in arenas_seen:
+		SaveData.codex_add(data, "arenas", String(id), "entered", int(arenas_seen[id]))
 
 
 ## One step of the run, timed: step_ms (smoothed, read at any moment) and step_timer (only frames with enemies

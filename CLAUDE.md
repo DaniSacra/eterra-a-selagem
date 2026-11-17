@@ -301,7 +301,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Capturas: `--title --screen=hero` com `--hero-xp=N`, `--hero-equip=a,b`, `--hero-ult=id` (só na sessão, nada gravado,
   `Save._dev_hero`). Testes em `tests/test_hero_screen.gd`.
 - **Compêndio** (E2-11, `CodexScreen`): abas Dons (os do Guerreiro na ordem em que destravam; antes, "???" e "Maestria N")
-  e Golpes (a antiga `MovesScreen`, que saiu); aberto pelo Como Jogar e pela pausa; `--screen=codex|moves`.
+  e Golpes (a antiga `MovesScreen`, que saiu); aberto pelo Como Jogar e pela pausa; `--screen=codex|moves`. E4-05: oito
+  abas numa fileira (Dons, Bênçãos, Elos, Salmos, Inimigos, Morvath, Arenas, Golpes; `CodexScreen.TAB_WIDTH` 120,
+  cabe a 720): Salmos (descoberto: medalhão `PsalmIcon`, nome, efeito, vezes tomado; não: selo fechado, "???" e
+  "Pista:" com o `hint_key`), Inimigos (`CodexScreen.ENEMIES`, nome, papel `codex_role_<role>` e derrotados, elites à
+  parte; nunca derrotado "???"), Morvath (vezes enfrentado e selado, as 4 fases com nome e dica quando alcançadas,
+  `phase_text` corta o `boss_phase_N` no primeiro ponto), Arenas (salão, as três arenas e a Câmara do Selo, vezes).
+  Só texto de jogo (D-62 a). Dados no fim da partida por `Game.codex_run` (no `award_mastery`): `codex.enemies.<id>`
+  `defeated`/`elite` (de `Game.defeated`, a elite conta para o comum), `codex.enemies.morvath` `met`, `phase` (o maior,
+  `SaveData.codex_max`), `defeated`; seção nova `codex.arenas.<id>.entered` (`Game.arenas_seen`, `hall` para o salão).
+  Testes em `tests/test_e4_ui.gd`.
 - **Tela de fim com Maestria** (E2-04, `MasteryReport`): "+N XP" ao lado da barra que enche do XP de antes ao de depois,
   de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Novos Dons: ..." e "Nova ultimate: ..."; dados do
   `Game.mastery_report` (o `mastery_gain` e o XP antes, guardados no `log_run`, passados no `stats.mastery`).
@@ -583,8 +592,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   **Pastor** (abate reúne luz, até 3; o especial solta uma onda a mais por luz em leque de 14 graus, `Combat.throw_wave`),
   **Rocha** (o giro planta pedra de luz: 30 em 4 m, atordoa comuns 1 s, fica 3 s deixando lento, `Ground.Kind.STONE`).
   Carta: `BoonState.Card.psalm`; `Game.psalm_offered(psalm, first)` e `psalm_taken(psalm, first)`, `Game.choose_card`;
-  gente só recebe carta de Salmo quando a tela tiver `open_cards` (`Game.psalm_cards`, `screen_shows_psalms`; E4-03 é
-  do ui-ux-designer). Robô e `--autopick` pegam o Salmo; `--psalm=a,b` toma no começo. Compêndio `codex.psalms` (`seen`,
+  gente recebe carta de Salmo desde a E4-03 (`BoonChoice.open_cards`, sinal `card_chosen`, ver Tela de dons). Robô e `--autopick` pegam o Salmo; `--psalm=a,b` toma no começo. Compêndio `codex.psalms` (`seen`,
   `taken`) e Maestria (`new_psalms`) no fim da partida; `RESULT` e registro com `psalms`; dano em `dealt_by.psalm`.
   Testes em `tests/test_psalms.gd`.
 
@@ -609,6 +617,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   direto quando não há oferta (`Game._open_choice`). Capturas: `tools/ui_lab.gd -- --card-only [--offer=a,b,c]
   [--held=x,y] [--rarity=0,2,1] [--upgrade=0,1,0] [--trade] [--rest] [--focus-move]`; galeria em
   `docs/gallery/boon_cards/` e `docs/gallery/e3/ui/`; testes em `tests/test_boon_cards.gd` e `tests/test_e3_ui.gd`.
+  **Carta de Salmo (E4-03)**: `Game._open_choice` chama `BoonChoice.open_cards(cards, state, game)` quando um Salmo vem
+  na tiragem; a escolha sai por `card_chosen(card)` para `Game.choose_card` (Bênção ou Salmo). `BoonCard.setup_psalm`:
+  moldura própria, octógono de cantos cortados (`PSALM_CUT`) com linha dupla marfim (`PSALM_EDGE`), ouro velho por
+  dentro com losangos nos cortes, arco ogival de ouro velho sobre o medalhão e o brilho na cor do `PsalmDef.color`;
+  aba "Salmo" (ou "Salmo descoberto" na primeira vez da vida do save) com um arquinho; nome, "Transforma: ação",
+  descrição com os números do efeito e "Aberto por A · B · C" (as três coisas da mão que abriram, uma por grupo,
+  `Psalms.matching`, `BoonChoice.opened_by`; Dom pelo nome do Dom). Sem raridade, nível, número de salmo nem versículo
+  (teste lê toda etiqueta). Medalhão `PsalmIcon` (`scripts/ui/psalm_icon.gd`): selo de tinta, aro de ouro velho e
+  marfim, arco ogival na cor do Salmo e um glifo por efeito (aro com três marcas, cúpula com tiro partido, três luzes
+  que se juntam, pedra de pé com fenda); nunca sol nem cruz. **"Salmo descoberto" (E4-04)**: `EloBanner.show_psalm`
+  (em fila com Elo e Bênção nova), pedido pela HUD (`psalm_offered` com `first`, `psalm_taken`) e mostrado só quando a
+  tela de cartas fecha (`Hud._update_psalms`, modo PLAY): título, medalhão e nome, embaixo a frase do Salmo tomado
+  (`line_key`) ou "Anotado no Compêndio". **Luzes do Pastor**: losanguinhos na cor do Salmo sobre o losango do
+  especial (`ActionSlot.show_lights`, `LIGHT_*`), apagados os que faltam; só com o Pastor. Capturas:
+  `tools/ui_lab.gd -- --psalm-card=id`, `--psalm-banner=id`, `--codex=psalms|enemies|morvath|arenas`; galeria em
+  `docs/gallery/e4/ui/`.
   **E3 na interface**: uma moldura por raridade (comum no metal com rebites, rara uma linha azul, épica linha dupla
   violeta, lendária linha dupla de ouro velho com floreios nos cantos, `BoonCard.RARITY_LINES`, `FLOURISH`); a cor de
   cada raridade é uma só no jogo todo (`Boon.RARITY_COLOR`: rara `6f9be6`, épica `b07ae6`, lendária ouro velho
@@ -620,7 +644,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `Card.trade`); a tela lê com `BoonChoice.offer_of` (aceita também a raridade crua) e `_take` toma a própria carta
   (`BoonState.take_card`: raridade e nível da troca). "Bênção nova" (E3-04): a primeira vez que se toma uma Bênção na
   vida do save, saudação curta no alto sem pausar (`EloBanner`, em fila com "Elo formado", `fresh_boons` contra
-  `codex.boons`). Compêndio com 4 abas (`CodexScreen`: Dons, Bênçãos, Elos, Golpes; desconhecidos como "???", receita
+  `codex.boons`). Compêndio (`CodexScreen`; 8 abas desde a E4-05: Dons, Bênçãos, Elos, Salmos, Inimigos, Morvath, Arenas, Golpes; desconhecidos como "???", receita
   do Elo quando as duas Bênçãos já foram vistas). Loja: cada item com `DoorSign.shop(nome, preço, grupo)` (palavra do
   grupo em cinza frio por cima, `Rooms.SHOP_GROUP_KEY`, omitida quando é igual ao nome; preço em marfim) e
   `set_gold` sempre que o ouro muda (o `Rooms.gold` tem setter): sem ouro o preço fica rosa apagado com "faltam N".

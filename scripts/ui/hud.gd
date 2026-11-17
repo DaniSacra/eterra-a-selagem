@@ -127,6 +127,8 @@ var _elo_banner: EloBanner
 ## Elos and new Blessings already greeted (the ones owned when the run starts are not).
 var _elos_seen := {}
 var _elos_ready := false
+## E4-04: Psalms to greet once the choice screen closes (id: {psalm, discovered, taken}), in order.
+var _psalms_due := {}
 
 
 func _ready() -> void:
@@ -149,6 +151,9 @@ func _ready() -> void:
 	_elo_banner = EloBanner.new()
 	add_child(_elo_banner)
 	_place(_elo_banner, Control.PRESET_CENTER_TOP, Vector2(0, 92), Vector2(420, 100))
+	if game != null:
+		game.psalm_offered.connect(_on_psalm.bind(false))
+		game.psalm_taken.connect(_on_psalm.bind(true))
 
 
 ## Top: experience (horde mode only, a thin gold line across the top), room or level, clock, gold or kills, boss.
@@ -316,6 +321,7 @@ func _process(delta: float) -> void:
 	_update_slots(p)
 	_update_passives()
 	_update_elos()
+	_update_psalms()
 	# the boss (or the guardian) once a frame: finding a guardian walks the whole crowd
 	var chief := game.boss_enemy()
 	_update_boss(chief)
@@ -366,6 +372,9 @@ func _update_slots(p: Player) -> void:
 				# a boss's curse locks the special: the diamond shows the lock running out, then a ring when it lifts
 				s.refresh(b, 0.0, 0, 0, starved and not p.curse.active())
 				s.locked = p.curse.ratio()
+				# the Pastor (E4): the lights gathered, over the special's diamond
+				var flock := game.psalms.holding(PsalmDef.Effect.FLOCK) if game.psalms else null
+				s.show_lights(game.psalms.lights if flock else 0, flock.count if flock else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
 	var ult := game.ults.def if game.ults else null
@@ -438,6 +447,33 @@ func _update_elos() -> void:
 			_elo_banner.show_boon(b)
 			_notice_t = 0.0
 	_elos_ready = true
+
+
+## A Psalm seen for the first time ever (offered, first) or taken: greeted once the choice screen is gone, so the
+## greeting is read over the fight and never under the cards (E4-04).
+func _on_psalm(p: PsalmDef, first: bool, taken: bool) -> void:
+	var due: Dictionary = _psalms_due.get(p.id, {"psalm": p, "discovered": false, "taken": false})
+	if taken:
+		due.taken = true
+	elif first:
+		due.discovered = true
+	else:
+		return
+	_psalms_due[p.id] = due
+
+
+func _update_psalms() -> void:
+	if _psalms_due.is_empty() or game.mode != Game.Mode.PLAY:
+		return
+	for due: Dictionary in _psalms_due.values():
+		_elo_banner.show_psalm(due.psalm, due.discovered, due.taken)
+	_psalms_due.clear()
+	_notice_t = 0.0
+
+
+## The greeting (the tests read it).
+func banner() -> EloBanner:
+	return _elo_banner
 
 
 func _update_boss(b: Enemy) -> void:

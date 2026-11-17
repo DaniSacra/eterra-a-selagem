@@ -58,7 +58,9 @@ sobre ouro velho, `STONE` em ouro velho) com um anel ao surgir; o tiro desfeito 
 são lascas de ouro velho que voam do abatido até ele. Todo dano de Salmo conta como `psalm` no `dealt_by`.
 
 ## 3. Pendências
-- Carta, moldura, aviso "Salmo descoberto", Compêndio com pista (E4-03 a E4-05: `ui-ux-designer`, `art-director`).
+- Feito pelo `ui-ux-designer` (2026-11-17): carta e moldura (E4-03, `BoonChoice.open_cards`, `BoonCard.setup_psalm`,
+  `PsalmIcon`), "Salmo descoberto" (E4-04, `EloBanner.show_psalm`), Compêndio com Salmos, Inimigos, Morvath e Arenas
+  (E4-05) e as luzes do Pastor no losango do especial (`ActionSlot.show_lights`). Falta a revisão do `art-director`
+  (moldura e glifos são provisórios na paleta que existe). Capturas em `docs/gallery/e4/ui/`.
 - Tema musical por Salmo (E4-06, D-59 (c)).
-- Contador das luzes do Pastor no HUD (`Game.psalms.lights`).
 - Balanceamento (E6): chance real de um Salmo numa partida de 7 salas (os grupos com Elo ou Dom são o portão).

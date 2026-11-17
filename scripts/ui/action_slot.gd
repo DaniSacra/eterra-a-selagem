@@ -11,6 +11,8 @@ extends Control
 ## Locked (a boss's curse): the gem veiled in the condition's violet, the glyph dimmed under a padlock, a violet line
 ## around the frame that shrinks as the lock runs out; the moment it lifts, a ring of light leaves the diamond
 ## (RELEASE seconds), stronger than the shine of a plain recharge.
+## The Psalm of the Pastor (E4) on the special: the lights gathered as small diamonds over the top of the frame, lit in
+## the Psalm's colour, dark sockets for the ones still to gather (lights_max 0: none drawn).
 
 const DIAMOND := 54.0
 const KEY_H := 17.0
@@ -40,6 +42,10 @@ const LOCK_VEIL := Color(0.16, 0.04, 0.24, 0.78)
 const LOCK_GLYPH := 0.3
 const RELEASE := 0.45
 const RELEASE_REACH := 16.0
+## The lights over the diamond: half width, the gap between them, how far above the top of the frame.
+const LIGHT := 3.5
+const LIGHT_GAP := 10.0
+const LIGHT_RISE := 7.0
 
 var action: StringName
 var slot: Boon.Slot
@@ -74,6 +80,10 @@ var glyph := -1:
 		if v != glyph:
 			glyph = v
 			queue_redraw()
+## Lights gathered (the Pastor) and how many it holds; their colour.
+var lights := 0
+var lights_max := 0
+var light_color := UiKit.OLD_GOLD
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
@@ -106,6 +116,16 @@ func refresh(b: Boon, wait_ratio: float, n: int = 0, n_max: int = 0, no_magick: 
 	charges_max = n_max
 	starved = no_magick
 	_key = key
+	queue_redraw()
+
+
+## The lights of the Pastor over the diamond (n_max 0 hides them).
+func show_lights(n: int, n_max: int, col: Color = UiKit.OLD_GOLD) -> void:
+	if n == lights and n_max == lights_max and col == light_color:
+		return
+	lights = n
+	lights_max = n_max
+	light_color = col
 	queue_redraw()
 
 
@@ -174,6 +194,10 @@ func _draw() -> void:
 		var bar := Rect2(c + Vector2(-STARVED_SIZE.x * 0.5, r * 0.46 - STARVED_SIZE.y * 0.5), STARVED_SIZE)
 		draw_rect(bar.grow(1.0), UiKit.INK)
 		draw_rect(bar, STARVED)
+	for i in lights_max:
+		var p := Vector2(c.x + (i - (lights_max - 1) * 0.5) * LIGHT_GAP, c.y - r - LIGHT_RISE)
+		draw_colored_polygon(_diamond(p, LIGHT + 1.5), UiKit.INK)
+		draw_colored_polygon(_diamond(p, LIGHT), light_color if i < lights else CHARGE_SPENT)
 	_draw_key(Vector2(c.x, DIAMOND))
 
 

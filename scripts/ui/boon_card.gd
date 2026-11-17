@@ -12,6 +12,10 @@ extends Button
 ## neither. An exchange (upgrade: the card replaces the Blessing on the same action one rarity up) wears a tab on top,
 ## "Sobe uma raridade", and says at the bottom what it trades and from which rarity to which.
 ## boon null: the rest card ("Fôlego").
+## E4-03, a Psalm (setup_psalm): no rarity, no level, no number. Its frame is its own: an ivory edge with the corners
+## cut (an octagon, no other card has one), old gold inside, a pointed arch of old gold over the medallion and the
+## Psalm's colour in the glow; a tab on top says "Salmo" (or "Salmo descoberto" the first time ever). The card says
+## the action it transforms and, at the bottom, the three held things that opened it.
 
 ## Card size at 720 lines (the screen scales with the window: canvas_items stretch).
 const SIZE := Vector2(320, 450)
@@ -51,6 +55,11 @@ const INK := Color(0.045, 0.035, 0.06, 0.97)
 const INK_LIT := Color(0.085, 0.065, 0.09, 0.98)
 const IVORY := Color(0.97, 0.93, 0.84)
 const WARN := Color(1.0, 0.62, 0.5)
+## A Psalm's frame: its ivory edge, the cut of its corners and the arch over the medallion (inset from the sides).
+const PSALM_EDGE := Color(0.9, 0.85, 0.74)
+const PSALM_CUT := 14.0
+const PSALM_ARCH_INSET := 34.0
+const PSALM_ICON := 112.0
 
 var boon: Boon
 var rarity: Boon.Rarity = Boon.Rarity.COMMON
@@ -58,6 +67,8 @@ var rarity: Boon.Rarity = Boon.Rarity.COMMON
 var elo := false
 ## An exchange one rarity up (E3-01): the tab on top and the trade at the bottom.
 var upgrade := false
+## A Psalm's card (E4-03): boon is null.
+var psalm: PsalmDef
 ## The control that shows the gift at the top: a TextureRect (painted), a BoonIcon or an EloLink.
 var crest: Control
 
@@ -137,11 +148,15 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 
 ## The colour of the outer edge: the rarity's (rarity_color), the chain's metal for an Elo. Never changed by focus.
 func edge_color() -> Color:
+	if psalm != null:
+		return PSALM_EDGE
 	return ELO_EDGE if elo else rarity_color(rarity)
 
 
 ## How many lines the outer edge has (an Elo: one, its corners carry the links).
 func edge_lines() -> int:
+	if psalm != null:
+		return 2
 	return 1 if elo else RARITY_LINES[rarity]
 
 
@@ -165,6 +180,13 @@ func _on_focus(on: bool, frame: Control) -> void:
 func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
 	var edge := edge_color()
+	if psalm != null:
+		# the cut corners: the ink fills the octagon, the Psalm's colour glows out of its edge
+		var glow := PsalmIcon.tint(psalm)
+		for k in 3:
+			draw_polyline(_octagon(r.grow(2.0 + k * 3.0), PSALM_CUT + k * 2.0), Color(glow, 0.16 - k * 0.045), 4.0, true)
+		draw_colored_polygon(_octagon(r, PSALM_CUT), INK_LIT if has_focus() else INK)
+		return
 	var bg := UiKit.box(INK_LIT if has_focus() else INK, Color(0, 0, 0, 0), 0, 0, 8)
 	if elo:
 		bg.shadow_color = Color(edge.r, edge.g, edge.b, 0.25)
@@ -180,6 +202,9 @@ func _draw() -> void:
 
 func _draw_frame(frame: Control) -> void:
 	var r := Rect2(Vector2.ZERO, frame.size)
+	if psalm != null:
+		_draw_psalm_frame(frame, r)
+		return
 	var edge := edge_color()
 	frame.draw_style_box(UiKit.box(Color(0, 0, 0, 0), edge, int(EDGE_W), 0, 8), r)
 	var doubled := edge_lines() > 1
@@ -202,6 +227,30 @@ func _draw_frame(frame: Control) -> void:
 		var f := r.grow(-FOCUS_INSET)
 		var s := UiKit.box(Color(0, 0, 0, 0), FOCUS_COLOR, int(FOCUS_W), 0, 5)
 		frame.draw_style_box(s, f)
+
+
+## A Psalm's frame: an ivory octagon doubled by a thinner one, the old gold line inside with diamonds on its cut
+## corners, a pointed arch of old gold over the medallion, and the focus line (an octagon too).
+func _draw_psalm_frame(frame: Control, r: Rect2) -> void:
+	frame.draw_polyline(_octagon(r.grow(-EDGE_W * 0.5), PSALM_CUT), PSALM_EDGE, EDGE_W, true)
+	frame.draw_polyline(_octagon(r.grow(-EDGE_W - DOUBLE_GAP), PSALM_CUT - 2.0), Color(PSALM_EDGE, 0.55), 1.0, true)
+	var metal := r.grow(-METAL_INSET - DOUBLE_GAP - 1.0)
+	var line := _octagon(metal, PSALM_CUT - 3.0)
+	frame.draw_polyline(line, Color(UiKit.OLD_GOLD, 0.8), 1.0, true)
+	for i in range(1, 8, 2):
+		_diamond(frame, line[i].lerp(line[i + 1], 0.5), 3.0, PsalmIcon.tint(psalm))
+	var a := PsalmIcon.arch(Vector2(r.size.x * 0.5, PAD * 0.5 + ART_H * 0.5 + 6.0), r.size.x * 0.5 - PSALM_ARCH_INSET, ART_H - 4.0)
+	frame.draw_polyline(a, Color(UiKit.OLD_GOLD, 0.7), 1.5, true)
+	if has_focus():
+		frame.draw_polyline(_octagon(r.grow(-FOCUS_INSET - 2.0), PSALM_CUT - 5.0), FOCUS_COLOR, FOCUS_W, true)
+
+
+## A rectangle with its four corners cut by cut pixels, closed (9 points, the last the first).
+static func _octagon(r: Rect2, cut: float) -> PackedVector2Array:
+	var p := r.position
+	var e := r.end
+	return PackedVector2Array([Vector2(p.x + cut, p.y), Vector2(e.x - cut, p.y), Vector2(e.x, p.y + cut), Vector2(e.x, e.y - cut),
+		Vector2(e.x - cut, e.y), Vector2(p.x + cut, e.y), Vector2(p.x, e.y - cut), Vector2(p.x, p.y + cut), Vector2(p.x + cut, p.y)])
 
 
 static func _diamond(ci: CanvasItem, c: Vector2, d: float, col: Color) -> void:
@@ -234,10 +283,24 @@ static func _draw_flourishes(ci: CanvasItem, r: Rect2, col: Color) -> void:
 ## new rarity's colour.
 func _upgrade_tab() -> Control:
 	var col := rarity_color(rarity).lightened(0.12)
-	var tab := PanelContainer.new()
+	var chev := Control.new()
+	chev.custom_minimum_size = Vector2(12, 18)
+	chev.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chev.draw.connect(func() -> void:
+		for i in 2:
+			var y := 6.0 + i * 6.0
+			chev.draw_polyline(PackedVector2Array([Vector2(1, y + 4), Vector2(6, y - 1), Vector2(11, y + 4)]), col, 2.0, true))
+	var tab := _tab(T.t(&"choice_upgrade"), col, rarity_color(rarity), chev)
 	tab.name = &"UpgradeTab"
+	(tab.get_child(0) as HBoxContainer).get_child(1).name = &"UpgradeLabel"
+	return tab
+
+
+## A plate on the top edge, rising above the card: an optional mark, then the text in col, framed in edge.
+func _tab(text: String, col: Color, edge: Color, mark: Control = null) -> PanelContainer:
+	var tab := PanelContainer.new()
 	tab.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var sb := UiKit.box(INK, rarity_color(rarity), int(EDGE_W), 0, 6)
+	var sb := UiKit.box(INK, edge, int(EDGE_W), 0, 6)
 	sb.content_margin_left = 12
 	sb.content_margin_right = 12
 	sb.content_margin_top = 1
@@ -248,17 +311,9 @@ func _upgrade_tab() -> Control:
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override(&"separation", 6)
 	tab.add_child(row)
-	var chev := Control.new()
-	chev.custom_minimum_size = Vector2(12, 18)
-	chev.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	chev.draw.connect(func() -> void:
-		for i in 2:
-			var y := 6.0 + i * 6.0
-			chev.draw_polyline(PackedVector2Array([Vector2(1, y + 4), Vector2(6, y - 1), Vector2(11, y + 4)]), col, 2.0, true))
-	row.add_child(chev)
-	var l := UiKit.label(T.t(&"choice_upgrade"), col, 15, UiKit.BOLD_FONT)
-	l.name = &"UpgradeLabel"
-	row.add_child(l)
+	if mark != null:
+		row.add_child(mark)
+	row.add_child(UiKit.label(text, col, 15, UiKit.BOLD_FONT))
 	tab.custom_minimum_size.y = TAB_H
 	tab.anchor_left = 0.5
 	tab.anchor_right = 0.5
@@ -266,6 +321,68 @@ func _upgrade_tab() -> Control:
 	tab.offset_top = -TAB_RISE
 	tab.offset_bottom = TAB_H - TAB_RISE
 	return tab
+
+
+## A Psalm's card (E4-03): the tab ("Salmo", or "Salmo descoberto" the first time ever), the medallion under the arch,
+## the name, the action it transforms, the description with its numbers and the three held things that opened it
+## (names: one per group, in order; Psalms.matching). No rarity, no level, never a number of its own.
+func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false) -> BoonCard:
+	psalm = p
+	custom_minimum_size = SIZE
+	focus_mode = Control.FOCUS_ALL
+	var empty := StyleBoxEmpty.new()
+	for st in [&"normal", &"hover", &"pressed", &"focus", &"disabled", &"hover_pressed"]:
+		add_theme_stylebox_override(st, empty)
+	var col := PsalmIcon.tint(p)
+	_add_glow(p.color)
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = PAD
+	box.offset_right = -PAD
+	box.offset_top = PAD * 0.5
+	box.offset_bottom = -PAD
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override(&"separation", 5)
+	add_child(box)
+	var art := CenterContainer.new()
+	art.custom_minimum_size.y = ART_H
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(art)
+	crest = PsalmIcon.new().setup(p, PSALM_ICON)
+	art.add_child(crest)
+	var title := _name(T.t(p.name_key))
+	title.name = &"Name"
+	box.add_child(title)
+	var does := _text(T.t(&"psalm_transforms", {"action": T.t(Boon.SLOT_KEY[p.slot])}), col, 17, UiKit.BOLD_FONT)
+	does.name = &"Transforms"
+	box.add_child(does)
+	box.add_child(_rule())
+	var desc := _text(T.t(p.desc_key, p.text_args()), UiKit.PALE, 18)
+	desc.name = &"Desc"
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(desc)
+	if not opened_by.is_empty():
+		var by := _text(T.t(&"psalm_opened_by", {"list": " · ".join(opened_by)}), EloLink.METAL_LIT, 15, UiKit.BOLD_FONT)
+		by.name = &"OpenedBy"
+		box.add_child(by)
+	var frame := Control.new()
+	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	frame.draw.connect(_draw_frame.bind(frame))
+	add_child(frame)
+	var mark := Control.new()
+	mark.custom_minimum_size = Vector2(10, 18)
+	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	mark.draw.connect(func() -> void: mark.draw_colored_polygon(PsalmIcon.arch(Vector2(5, 10), 4.5, 13.0), col))
+	var tab := _tab(T.t(&"psalm_discovered" if first else &"psalm_card"), IVORY, PSALM_EDGE, mark)
+	tab.name = &"PsalmTab"
+	add_child(tab)
+	mouse_entered.connect(func() -> void:
+		if not has_focus():
+			grab_focus())
+	focus_entered.connect(_on_focus.bind(true, frame))
+	focus_exited.connect(_on_focus.bind(false, frame))
+	return self
 
 
 func _add_glow(color: Color) -> void:

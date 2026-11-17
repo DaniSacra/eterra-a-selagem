@@ -5,6 +5,8 @@ extends Control
 ## offers rest instead.
 
 signal chosen(b: Boon)
+## open_cards (E4-03): the card picked, whatever it offers (a Blessing, an Elo, a trade or a Psalm).
+signal card_chosen(card: BoonState.Card)
 
 const REST_HEAL := 10.0
 ## A button still held from the fight must not pick a card: presses this soon after the screen opens are ignored.
@@ -14,6 +16,8 @@ var _cards: Array[BoonCard] = []
 var _opened_at := 0
 var _rarities: Dictionary = {}
 var _upgrades: Dictionary = {}
+## The draw open_cards shows, in the cards' order (empty with open).
+var _drawn: Array[BoonState.Card] = []
 
 
 ## rarities: each card's offer by gift id (offer_of): a Boon.Rarity, or a Dictionary {rarity, upgrade} for an
@@ -22,6 +26,58 @@ var _upgrades: Dictionary = {}
 func open(offers: Array[Boon], state: BoonState, rarities: Dictionary = {}, upgrades: Dictionary = {}) -> void:
 	_rarities = rarities
 	_upgrades = upgrades
+	var row := _page()
+	if offers.is_empty():
+		row.add_child(_card(null, state))
+	for b in offers:
+		row.add_child(_card(b, state))
+	_ready_cards()
+
+
+## E4-03: the rules' own draw (Game._open_choice with a Psalm among them): Blessing cards as open shows them, a Psalm's
+## card with its frame, the action it changes and the three held things that opened it. Picking emits card_chosen.
+## game (null in tests) gives the hero's equipped Gifts and their names.
+func open_cards(drawn: Array[BoonState.Card], state: BoonState, game: Game) -> void:
+	_drawn = drawn.duplicate()
+	_rarities = offers_of(drawn)
+	_upgrades = {}
+	var row := _page()
+	var gifts: Array[StringName] = game.talents if game != null else ([] as Array[StringName])
+	var held := Psalms.held_of(state, gifts)
+	var known: Dictionary = (Save.data.get("codex", {}) as Dictionary).get("psalms", {})
+	for c in drawn:
+		var card: BoonCard
+		if c.psalm != null:
+			card = BoonCard.new().setup_psalm(c.psalm, opened_by(c.psalm, held, game), not known.has(String(c.psalm.id)))
+			_cards.append(card)
+		else:
+			card = _card(c.boon, state)
+			card.pressed.disconnect(_pick.bind(c.boon))
+		card.pressed.connect(_pick_card.bind(c))
+		row.add_child(card)
+	_ready_cards()
+
+
+## The names of the held things that open a Psalm, one per group (a Blessing's or an Elo's name, a Gift's name).
+static func opened_by(p: PsalmDef, held: Dictionary, game: Game = null) -> PackedStringArray:
+	var out := PackedStringArray()
+	var book := game.hero.talents() if game != null else HeroDef.warrior().talents()
+	for entry in Psalms.matching(p, held):
+		if PsalmDef.is_gift(entry):
+			var t := book.find(PsalmDef.entry_id(entry))
+			out.append(T.t(t.name_key) if t != null else entry)
+		else:
+			out.append(T.t("boon_" + entry))
+	return out
+
+
+## The draw open_cards shows (the tests read it).
+func drawn() -> Array[BoonState.Card]:
+	return _drawn
+
+
+## The title, the row the cards go in, the hint under it.
+func _page() -> HBoxContainer:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
@@ -32,13 +88,13 @@ func open(offers: Array[Boon], state: BoonState, rarities: Dictionary = {}, upgr
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 30)
 	page.add_child(row)
-	if offers.is_empty():
-		row.add_child(_card(null, state))
-	for b in offers:
-		row.add_child(_card(b, state))
 	var hint := UiKit.shadow(UiKit.label(T.t(&"choice_hint"), UiKit.DIM, 20))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)
+	return row
+
+
+func _ready_cards() -> void:
 	Audio.play(&"level_up")
 	_cards[0].grab_focus.call_deferred()
 
@@ -110,6 +166,13 @@ func _pick(b: Boon) -> void:
 		return
 	Audio.play(&"boon")
 	chosen.emit(b)
+
+
+func _pick_card(c: BoonState.Card) -> void:
+	if Time.get_ticks_msec() - _opened_at < GUARD_MS:
+		return
+	Audio.play(&"boon")
+	card_chosen.emit(c)
 
 
 ## The gift's text with its numbers at a level: {a} {b} from its modifiers, {dmg} {count} {cd} {radius} from its skill.

@@ -4,6 +4,8 @@ extends VBoxContainer
 ## stops the game. Two kinds: the moment an Elo forms ("Elo formado", the chain closing between its two gifts, and the
 ## Elo's name) and a Blessing taken for the first time ever (E3-04: "Bênção nova", its medallion, its name and "No
 ## Compêndio"). A greeting asked for while another shows waits its turn (queue).
+## E4-04, a Psalm: "Salmo descoberto" (the first time it is ever seen) or "Salmo" over its medallion and name, then its
+## short line when it is taken or "Anotado no Compêndio" when it was only seen.
 
 const TIME := 2.6
 const FADE_IN := 0.15
@@ -20,9 +22,9 @@ const QUEUE_MAX := 3
 
 var _t := 0.0
 var _link: EloLink
-var _icon: BoonIcon
+var _icon: Control
 var _queue: Array[Callable] = []
-## What shows now: &"elo", &"boon" or &"" (the tests read it).
+## What shows now: &"elo", &"boon", &"psalm" or &"" (the tests read it).
 var showing := &""
 
 
@@ -51,6 +53,16 @@ func show_elo(b: Boon, from: Array[Boon]) -> void:
 ## E3-04: a Blessing taken for the first time ever.
 func show_boon(b: Boon) -> void:
 	_enqueue(_open_boon.bind(b))
+
+
+## E4-04: a Psalm seen on a card or taken. discovered: never seen before (the title says so); taken: its short line
+## under the name, else the note that the Compendium has it.
+## A Psalm is rare: it goes first in the queue and is never dropped by QUEUE_MAX.
+func show_psalm(p: PsalmDef, discovered: bool, taken: bool) -> void:
+	if visible:
+		_queue.push_front(_open_psalm.bind(p, discovered, taken))
+		return
+	_open_psalm(p, discovered, taken)
 
 
 ## How many greetings wait behind the one showing.
@@ -102,8 +114,32 @@ func _open_boon(b: Boon) -> void:
 	_start(&"boon")
 
 
+func _open_psalm(p: PsalmDef, discovered: bool, taken: bool) -> void:
+	_clear()
+	var title := UiKit.shadow(UiKit.title(T.t(&"psalm_discovered" if discovered else &"psalm_card"), TITLE_SIZE, PsalmIcon.IVORY))
+	title.name = &"Title"
+	add_child(title)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 8)
+	_icon = PsalmIcon.new().setup(p, MEDALLION + 4.0)
+	row.add_child(_icon)
+	row.add_child(_named(T.t(p.name_key), PsalmIcon.tint(p).lightened(0.25)))
+	add_child(row)
+	var note := UiKit.shadow(UiKit.label(T.t(p.line_key if taken else &"psalm_noted"), UiKit.PALE if taken else UiKit.DIM, NOTE_SIZE))
+	note.name = &"Note"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(note)
+	_start(&"psalm")
+
+
 func _name(b: Boon) -> Label:
-	var l := UiKit.shadow(UiKit.title(T.t("boon_" + String(b.id)), NAME_SIZE, UiKit.PALE))
+	return _named(T.t("boon_" + String(b.id)), UiKit.PALE)
+
+
+func _named(text: String, col: Color) -> Label:
+	var l := UiKit.shadow(UiKit.title(text, NAME_SIZE, col))
 	l.add_theme_constant_override(&"outline_size", 6)
 	return l
 

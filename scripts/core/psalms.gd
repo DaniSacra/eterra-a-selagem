@@ -86,6 +86,16 @@ static func met(p: PsalmDef, held: Dictionary) -> bool:
 	return _match(p.requires, 0, held, {})
 
 
+## The held things that open a Psalm, one per group in the groups' order (what its card shows, E4-03); empty when
+## it is not met.
+static func matching(p: PsalmDef, held: Dictionary) -> PackedStringArray:
+	var used := {}
+	if not _match(p.requires, 0, held, used):
+		return PackedStringArray()
+	# used keeps its insertion order: the entry chosen for group 0, then group 1...
+	return PackedStringArray(used.keys())
+
+
 static func _match(groups: Array[PackedStringArray], i: int, held: Dictionary, used: Dictionary) -> bool:
 	if i >= groups.size():
 		return true

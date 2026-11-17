@@ -11,8 +11,9 @@ const VERSION := 3
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
-## Codex sections: each maps an id to a dictionary of counts (seen, formed, defeated...).
-const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies"]
+## Codex sections: each maps an id to a dictionary of counts (seen, formed, defeated...). E4-05: enemies (defeated,
+## elite; Morvath: met, phase the highest reached, defeated) and arenas (entered).
+const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies", "arenas"]
 ## The lists of ids in a hero's block (only strings are kept).
 const HERO_LISTS: Array[String] = ["unlocked", "equipped"]
 
@@ -123,13 +124,31 @@ static func hero(data: Dictionary, id: String) -> Dictionary:
 
 
 ## Counts one more of what (seen, formed, defeated...) for an id in a Codex section. Returns true the first time.
-static func codex_add(data: Dictionary, section: String, id: String, what: String) -> bool:
-	var entries: Dictionary = data.codex[section]
+static func codex_add(data: Dictionary, section: String, id: String, what: String, amount: int = 1) -> bool:
+	var entries: Dictionary = _section(data, section)
 	var first := not entries.has(id)
 	var entry: Dictionary = entries.get(id, {})
-	entry[what] = int(entry.get(what, 0)) + 1
+	entry[what] = int(entry.get(what, 0)) + amount
 	entries[id] = entry
 	return first
+
+
+## Keeps the highest value of what for an id in a Codex section (Morvath's phase reached). Returns true the first time.
+static func codex_max(data: Dictionary, section: String, id: String, what: String, value: int) -> bool:
+	var entries: Dictionary = _section(data, section)
+	var first := not entries.has(id)
+	var entry: Dictionary = entries.get(id, {})
+	entry[what] = maxi(int(entry.get(what, 0)), value)
+	entries[id] = entry
+	return first
+
+
+static func _section(data: Dictionary, section: String) -> Dictionary:
+	if not data.get("codex") is Dictionary:
+		data["codex"] = {}
+	if not data.codex.get(section) is Dictionary:
+		data.codex[section] = {}
+	return data.codex[section]
 
 
 ## The loaded value in the type of the default (JSON turns every number into a float), or the default itself.

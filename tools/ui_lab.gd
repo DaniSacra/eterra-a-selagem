@@ -11,6 +11,9 @@ extends SceneTree
 ##   --codex=boons|elos opens the Compendium on that tab over sample save data (writes _codex.png, no run);
 ##   --shop [--gold=110] shows the run's own shop signs with that much gold (writes _shop.png;
 ##   start the run with --start=shop).
+## E4: --codex=psalms|enemies|morvath|arenas too (sample data with some found, some not);
+##   --psalm-card=id offers that Psalm between two Blessings in the run, holding what opens it (writes _psalm.png),
+##   then picks it and writes _psalm_banner.png with the "Salmo descoberto" greeting over the fight.
 
 const GAME := "res://scenes/game.tscn"
 ## Gifts held before the Elo is offered: both sources of Vapor and of Aurora Gelada, and a few more for the panel.
@@ -43,6 +46,10 @@ func _run() -> void:
 		quit()
 		return
 	var boons: Variant = game.get(&"boons")
+	if Dev.has("psalm-card"):
+		await _psalm_card(game, boons)
+		quit()
+		return
 	if Dev.has("new-boon"):
 		game.call(&"_take", boons.call(&"find", StringName(Dev.arg("new-boon"))))
 		await create_timer(0.6).timeout
@@ -127,10 +134,16 @@ func _codex() -> void:
 		data.codex.boons[id] = {"seen": seen[id]}
 	data.codex.elos["vapor"] = {"formed": 2}
 	data.codex.elos["aurora"] = {"formed": 1}
+	data.codex.psalms["sentinela"] = {"seen": 2, "taken": 1}
+	data.codex.psalms["pastor"] = {"seen": 1}
+	data.codex.enemies = {"skeleton": {"defeated": 64, "elite": 5}, "runner": {"defeated": 31, "elite": 2},
+		"mage": {"defeated": 18}, "archer": {"defeated": 12}, "guard": {"defeated": 7}, "knight": {"defeated": 1},
+		"morvath": {"met": 3, "phase": 3}}
+	data.codex.arenas = {"hall": {"entered": 9}, "crypt": {"entered": 3}, "garden": {"entered": 2}, "seal_chamber": {"entered": 3}}
 	var screen: Control = ClassDB.instantiate(&"Control")
 	screen.set_script(load("res://scripts/ui/codex_screen.gd"))
 	root.add_child(screen)
-	var tab := 2 if Dev.arg("codex") == "elos" else 1
+	var tab: int = {"boons": 1, "elos": 2, "psalms": 3, "enemies": 4, "morvath": 5, "arenas": 6}.get(Dev.arg("codex"), 1)
 	screen.call(&"open", tab, data)
 	await create_timer(0.5).timeout
 	await _shot("codex")
@@ -152,6 +165,49 @@ func _shop(game: Node) -> void:
 	rooms.set(&"gold", int(Dev.arg("gold", "110")))
 	await create_timer(0.6).timeout
 	await _shot("shop")
+
+
+## A Psalm card between two Blessings in the run (holding one thing of each of its groups), then picked: the card and
+## the greeting.
+func _psalm_card(game: Node, boons: Variant) -> void:
+	var psalms: Variant = game.get(&"psalms")
+	var p: Variant = psalms.call(&"find", StringName(Dev.arg("psalm-card")))
+	var levels: Dictionary = boons.get(&"levels")
+	for group: PackedStringArray in p.get(&"requires"):
+		for entry in group:
+			if not entry.begins_with("dom:"):
+				levels[StringName(entry)] = 1
+				break
+	var card_script: Variant = (load("res://scripts/core/boon_state.gd") as GDScript).get(&"Card")
+	var cards: Array = []
+	for id in [&"brasas", &"", &"onda_maior"]:
+		var c: Variant = card_script.new(boons.call(&"find", id) if id != &"" else null)
+		if id == &"":
+			c.set(&"psalm", p)
+		cards.append(c)
+	# the robot would take the Psalm at once (Game._open_choice): a person's screen, the robot back after the pick;
+	# first the greetings of what was just put in the hand (an Elo formed) run out
+	await create_timer(1.0).timeout
+	var bot: Variant = game.get(&"bot")
+	game.set(&"bot", null)
+	await _quiet(game)
+	game.call(&"_open_choice", cards)
+	await create_timer(0.9).timeout
+	await _shot("psalm")
+	await _quiet(game)
+	game.call(&"choose_card", cards[1])
+	game.set(&"bot", bot)
+	await create_timer(0.7).timeout
+	await _shot("psalm_banner")
+
+
+## The greetings of the hand put in by the lab (an Elo formed, Blessings new) go at once, so the Psalm's own shows.
+func _quiet(game: Node) -> void:
+	var banner: Node = (game.get(&"hud") as Node).call(&"banner")
+	(banner.get(&"_queue") as Array).clear()
+	banner.set(&"_t", 99.0)
+	await process_frame
+	await process_frame
 
 
 func _ids(key: String, fallback: Array[StringName]) -> Array[StringName]:
