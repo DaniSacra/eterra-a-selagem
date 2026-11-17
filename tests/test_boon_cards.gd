@@ -76,14 +76,15 @@ func test_a_gift_without_a_painting_keeps_its_drawn_icon() -> void:
 
 
 func test_the_rarity_edge_does_not_change_with_focus() -> void:
-	var choice := _open([&"vapor", &"aurora", &"redemoinho"], {&"vapor": Boon.Rarity.EPIC, &"redemoinho": Boon.Rarity.RARE})
+	# E3-06: the card's own rarity colours (BoonCard.RARITY_EDGE); an Elo has none (tests/test_e3_ui.gd)
+	var choice := _open([&"redemoinho", &"brasas", &"estilhaco"], {&"redemoinho": Boon.Rarity.EPIC, &"estilhaco": Boon.Rarity.RARE})
 	var cards := choice.cards()
 	var before: Array[Color] = []
 	for c in cards:
 		before.append(c.edge_color())
-	assert_eq(before[0], Boon.RARITY_COLOR[Boon.Rarity.EPIC])
-	assert_eq(before[1], BoonCard.COMMON_EDGE, "common keeps the old metal")
-	assert_eq(before[2], Boon.RARITY_COLOR[Boon.Rarity.RARE])
+	assert_eq(before[0], BoonCard.rarity_color(Boon.Rarity.EPIC))
+	assert_eq(before[1], BoonCard.COMMON_EDGE, "common keeps a quiet metal")
+	assert_eq(before[2], BoonCard.rarity_color(Boon.Rarity.RARE))
 	for i in cards.size():
 		cards[i].grab_focus()
 		for k in cards.size():

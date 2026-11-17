@@ -84,7 +84,7 @@ func _hero(screen: Node) -> void:
 	_check(moved != null and moved != owner_, "down walks the tree")
 
 
-## Como Jogar's Compêndio by keys: it opens on the Gifts tab, right shows Golpes, Esc goes back to Como Jogar.
+## Como Jogar's Compêndio by keys: it opens on the Gifts tab, right shows Bênçãos, Esc goes back to Como Jogar.
 func _codex(howto: Node) -> void:
 	var button := howto.find_child("moves", true, false) as Control
 	_check(button != null, "Como Jogar has the Compêndio")
@@ -98,7 +98,7 @@ func _codex(howto: Node) -> void:
 	if codex.is_empty():
 		return
 	await _key(&"ui_right")
-	_check(int(codex[0].get(&"tab")) == 1, "right shows Golpes")
+	_check(int(codex[0].get(&"tab")) == 1, "right shows Bênçãos")
 	await _key(&"ui_cancel")
 	await _wait(0.1)
 	_check(howto.find_children("*", "CodexScreen", true, false).is_empty() and howto.is_inside_tree(), "Esc goes back to Como Jogar")

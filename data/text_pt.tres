@@ -398,5 +398,19 @@ entries = {
 "codex_tab_gifts": "Dons",
 "codex_tab_moves": "Golpes",
 "codex_locked": "Maestria {n}",
-"codex_gifts_legend": "Os Dons do Guerreiro destravam com a Maestria e se equipam na tela do Guerreiro."
+"codex_gifts_legend": "Os Dons do Guerreiro destravam com a Maestria e se equipam na tela do Guerreiro.",
+"codex_tab_boons": "Bênçãos",
+"codex_tab_elos": "Elos",
+"codex_boons_legend": "{n} de {total} bênçãos encontradas. Toda bênção oferecida numa descida entra aqui.",
+"codex_elos_legend": "{n} de {total} Elos formados. Um Elo nasce de duas bênçãos tomadas na mesma descida.",
+"codex_times": "{n}x",
+"boon_new_title": "Bênção nova",
+"boon_new_note": "Anotada no Compêndio",
+"choice_upgrade": "Sobe uma raridade",
+"choice_upgrade_swap": "Troca {name}: de {from} para {to}",
+"shop_price": "{n} ouro",
+"shop_price_short": "{n} ouro, faltam {missing}",
+"shop_group_boon": "Bênção",
+"shop_group_care": "Cura e reforço",
+"shop_group_growth": "Crescimento"
 }

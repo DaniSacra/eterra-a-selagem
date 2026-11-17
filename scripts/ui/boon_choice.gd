@@ -13,11 +13,15 @@ const GUARD_MS := 350
 var _cards: Array[BoonCard] = []
 var _opened_at := 0
 var _rarities: Dictionary = {}
+var _upgrades: Dictionary = {}
 
 
-## rarities: Boon.Rarity of each card by gift id (common when missing).
-func open(offers: Array[Boon], state: BoonState, rarities: Dictionary = {}) -> void:
+## rarities: each card's offer by gift id (offer_of): a Boon.Rarity, or a Dictionary {rarity, upgrade} for an
+## exchange one rarity up (E3-01). upgrades: gift ids offered as exchanges (the same thing, when the run keeps the
+## rarities plain).
+func open(offers: Array[Boon], state: BoonState, rarities: Dictionary = {}, upgrades: Dictionary = {}) -> void:
 	_rarities = rarities
+	_upgrades = upgrades
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
@@ -44,12 +48,30 @@ func cards() -> Array[BoonCard]:
 	return _cards
 
 
-## The rarity a card shows: the one drawn for it, or the best the gift already has.
+## An offer read defensively: an int is the rarity; a Dictionary may carry "rarity" and "upgrade" (missing: common, no
+## exchange). Always {rarity: Boon.Rarity, upgrade: bool}.
+static func offer_of(entry: Variant) -> Dictionary:
+	if entry is Dictionary:
+		var d: Dictionary = entry
+		return {"rarity": clampi(int(d.get("rarity", Boon.Rarity.COMMON)), 0, Boon.Rarity.HEROIC), "upgrade": bool(d.get("upgrade", false))}
+	if entry is int or entry is float:
+		return {"rarity": clampi(int(entry), 0, Boon.Rarity.HEROIC), "upgrade": false}
+	return {"rarity": Boon.Rarity.COMMON, "upgrade": false}
+
+
+## The rarity a card shows: the one drawn for it, or the best the gift already has. An Elo has none (common, BUG-017).
 func card_rarity(b: Boon, state: BoonState) -> Boon.Rarity:
-	if b == null:
+	if b == null or b.is_duo():
 		return Boon.Rarity.COMMON
-	var r: Boon.Rarity = _rarities.get(b.id, Boon.Rarity.COMMON)
+	var r: int = offer_of(_rarities.get(b.id)).rarity
 	return maxi(r, state.rarity(b.id)) as Boon.Rarity
+
+
+## Whether a card is an exchange one rarity up (E3-01): in its offer or in the upgrades given.
+func card_upgrade(b: Boon) -> bool:
+	if b == null or b.is_duo():
+		return false
+	return bool(offer_of(_rarities.get(b.id)).upgrade) or bool(_upgrades.get(b.id, false))
 
 
 func _card(b: Boon, state: BoonState) -> BoonCard:
@@ -57,7 +79,15 @@ func _card(b: Boon, state: BoonState) -> BoonCard:
 	var rarity := card_rarity(b, state)
 	if b:
 		var lv := state.level(b.id)
-		card.setup(b, rarity, lv, state.sources(b), state.replaced_by(b), describe(b, lv + 1, Boon.RARITY_MULT[rarity]))
+		var replaces := state.replaced_by(b)
+		if card_upgrade(b) and replaces != null:
+			# the exchange keeps the level of the Blessing it replaces, one rarity up
+			var kept := maxi(state.level(replaces.id), 1)
+			card.setup(b, rarity, kept, state.sources(b), replaces, describe(b, kept, Boon.RARITY_MULT[rarity]), true,
+					state.rarity(replaces.id))
+		else:
+			card.setup(b, rarity, lv, state.sources(b), replaces, describe(b, lv + 1, Boon.RARITY_MULT[rarity]),
+					card_upgrade(b), state.rarity(b.id))
 	else:
 		card.setup(null, rarity, 0, [], null, T.t(&"boon_rest_desc", {"a": int(REST_HEAL)}))
 	card.pressed.connect(_pick.bind(b))
