@@ -28,7 +28,7 @@ func _initialize() -> void:
 		elif a.begins_with("--probe-ids="):
 			ids = a.trim_prefix("--probe-ids=").split(",")
 	out = FileAccess.open(path, FileAccess.WRITE)
-	out.store_line("f,id,uid,state,state_t,anim,drawn,pose,fade,x,z,vx,vz,speed,yaw,dist,cd,stun,hurt,warn_life,warn_total,walking,straight,blow_t,radius,reach")
+	out.store_line("f,id,uid,state,state_t,anim,drawn,pose,fade,x,z,vx,vz,speed,yaw,dist,cd,stun,hurt,warn_life,warn_total,walking,straight,blow_t,radius,reach,windup,hold")
 	change_scene_to_file("res://scenes/boot.tscn")
 
 
@@ -88,9 +88,9 @@ func _process(_d: float) -> bool:
 			wl = w.life
 			wt = w.total
 		var v: Vector2 = e.vel
-		out.store_line("%d,%s,%d,%d,%.3f,%s,%s,%s,%.2f,%.3f,%.3f,%.2f,%.2f,%.2f,%.1f,%.2f,%.2f,%.2f,%.2f,%.3f,%.3f,%d,%d,%.3f,%.2f,%.2f" % [f, d.id, uid[e], e.state, e.state_t, e.anim,
+		out.store_line("%d,%s,%d,%d,%.3f,%s,%s,%s,%.2f,%.3f,%.3f,%.2f,%.2f,%.2f,%.1f,%.2f,%.2f,%.2f,%.2f,%.3f,%.3f,%d,%d,%.3f,%.2f,%.2f,%.2f,%.2f" % [f, d.id, uid[e], e.state, e.state_t, e.anim,
 			e.drawn_anim, _decode(model, e.drawn_row), e.fade_t, e.pos.x, e.pos.y, v.x, v.y, v.length(), rad_to_deg(e.yaw()),
-			e.pos.distance_to(target), e.cooldown, e.stun_t, e.hurt_t, wl, wt, int(e.walking), int(e.straight), e.blow_t, d.radius, Horde.blade_reach(d)])
+			e.pos.distance_to(target), e.cooldown, e.stun_t, e.hurt_t, wl, wt, int(e.walking), int(e.straight), e.blow_t, d.radius, d.radius + d.strike_reach * d.size, d.attack_windup, d.windup_hold])
 	var boss: Object = game.get(&"boss")
 	if boss != null and is_instance_valid(boss):
 		var zs := ""

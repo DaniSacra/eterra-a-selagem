@@ -199,11 +199,13 @@ const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, 
 	"bend": {"Spine01": Vector3(-34, 0, 0)}}
 ## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
 ## blow uncoils it in its first 0.15 s ("bend_out").
-const SOLDIER_COIL := {"Spine01": Vector3(-10, 15, 0)}
+const SOLDIER_COIL := {"Spine01": Vector3(-18, 30, 0)}
 ## T5-03: the sorcerer and the elder draw their trunk back as the staff comes up.
 const STAFF_COIL := {"Spine01": Vector3(-8, 0, 0)}
 ## T5-15: Morvath leans into his charge.
-const CHARGE_LEAN := {"Spine01": Vector3(14, 0, 0)}
+const CHARGE_LEAN := {"Spine01": Vector3(32, 0, 0)}
+## T5-15: and draws back, turned to the blade, as he readies the Blades.
+const DRAW_BACK := {"Spine01": Vector3(-12, 20, 0)}
 ## The brute's own tower shield (MODELS.guard "hold"): degrees its arm and shield are swung from the model's rest
 ## toward the middle of the body, standing and walking, and braced for the charge.
 const SHIELD_FRONT := -14.0
@@ -241,7 +243,7 @@ const STAFF_CLIPS := {
 	# 0.17, Horde restarts it each tick), and the staff comes down (Spell_Simple_Exit) in the recovery.
 	"cast_rise": [&"ual", "Spell_Simple_Enter", 10, false, {"bend": STAFF_COIL, "bend_in": true}],
 	"cast_hold": [&"ual", "Spell_Simple_Idle", 12, true, {"bend": STAFF_COIL}],
-	"shot": [&"ual", "Spell_Simple_Shoot", 6, false, {"from": 0.0, "to": 0.3, "time": 0.17, "bend": STAFF_COIL, "bend_out": 0.3}],
+	"shot": [&"ual", "Spell_Simple_Shoot", 6, false, {"from": 0.0, "to": 0.5, "time": 0.17, "bend": STAFF_COIL, "bend_out": 0.3}],
 	"exit": [&"ual", "Spell_Simple_Exit", 8, false],
 }
 
@@ -341,7 +343,7 @@ const MODELS := {
 			# the ritual: both hands rise over the second its blow takes to fall
 			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 12, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
 			# T5-13: the elite's three vines, each its own thrust of the hands
-			"shot": [&"ual", "Spell_Simple_Shoot", 8, false, {"from": 0.0, "to": 0.35, "time": 0.3}],
+			"shot": [&"kaykit", "Spellcast_Shoot", 8, false, {"time": 0.3}],
 		},
 	},
 	# 7. the guardian knight: crowned helmet, heavy plate, red cape; blade and shield are KayKit's
@@ -396,7 +398,7 @@ const MODELS := {
 			# Blades' wind-up), leaning into it; the Blades draw the blade back over the shoulder in both hands
 			"dash_windup": [&"ual2", "Sword_Dash_RM", 8, false, {"from": 0.0, "to": 0.12, "bend": CHARGE_LEAN, "bend_in": true}],
 			"dash": [&"ual2", "Sword_Dash_RM", 12, false, {"from": 0.12, "to": 0.72, "bend": CHARGE_LEAN, "bend_out": 0.12}],
-			"blades_windup": [&"ual2", "Sword_Regular_B", 8, false, {"from": 0.0, "to": 0.2, "two_hands": true, "in_place": true}],
+			"blades_windup": [&"ual2", "Sword_Regular_B", 8, false, {"from": 0.0, "to": 0.2, "two_hands": true, "in_place": true, "bend": DRAW_BACK, "bend_in": true}],
 			# the KayKit figure is half his height and hops as it conjures: on him the hop would be a flight
 			"summon": [&"kaykit", "Spellcast_Summon", 20, false, {"lift": 0.2}], "rain": [&"kaykit", "Spellcast_Raise", 14, false, {"lift": 0.2}],
 			# the curse and each wave of the storm are thrown (Boss poses it as they leave): the library's overhand

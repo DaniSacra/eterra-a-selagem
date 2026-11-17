@@ -180,3 +180,103 @@ Números, clipes e critérios em `docs/design/combat_cadence.md` 6.3 a 6.6. Orde
 - O dano "à distância" foi medido com o herói parado; com o herói esquivando ele aparece menos, mas a regra é a mesma.
 - Rugido, ritual, troca de fase e a reação ao golpe (atordoamento) não foram refeitos nesta rodada (ver seções 1.3 e
   1.4 do `combat_cadence.md`).
+
+## 6. Depois (T5 implementado pelo gameplay-engineer, 2026-11-17)
+
+Mesmas medidas, mesmas sementes. Ferramentas que entraram no projeto: `tools/clip_motion.gd` (poses assadas: pico,
+pose armada, andar; saída em `docs/gallery/t5/motion/after/data/clip_motion.txt`), `tools/enemy_motion_probe.gd` (a
+sonda do diretor, agora com o canal de cada golpe no herói, raio, alcance da lâmina, preparação e `windup_hold`) e
+`tools/enemy_motion_probe.py` (lê os CSV e imprime tremor, golpes x corpo x aviso e a maior pose parada na preparação e
+na recuperação; relatórios em `after/data/`). Teste novo `tests/test_enemy_windup.gd` com os critérios do 6.1.
+Quadros: `docs/gallery/t5/motion/after/lab_*_side.jpg` (CPU, `tools/enemy_lab.gd`), comparação antes e depois por
+figura em `after/sheet_*.jpg` (para o art-director) e a corrida em `after/walk/` e `after/sheet_skeleton_walk.jpg`.
+
+### 6.1 Preparação (critério: pico 1,0 m/s ou mais desenhado, pose armada 0,30 m ou mais, tamanho 1)
+
+Pico do clipe assado / pico desenhado (o clipe tocado por `Horde.windup_arm` entre o fim do assentar e o começo do
+segurar, com a curva suave: comprimento do clipe / tempo de armar x 1,5) / pose armada:
+
+| Figura | Antes | Depois (clipe) | Pico do clipe | Pose armada |
+|---|---|---|---|---|
+| Esqueleto | 0,30, braço só | `Sword_Attack` 0 a 0,35 s com o tronco enrolando para trás e para a lâmina | 6,04 | 0,31 |
+| Corredor | 0,04, `Crouch_Idle` | `Jump_Start` 0,18 a 0,33 s (agacha, braços para trás) e o giro `2H_Melee_Attack_Spinning` no ataque | 5,07 | 0,34 |
+| Feiticeiro | 0,03, laço | `Spell_Simple_Enter` (o cajado sobe, tronco recua), segura em `Spell_Simple_Idle` | 1,56 | 0,33 |
+| Besteiro | 0,01 (sobe em 0,1 s) | a besta sobe ao ombro no assentar de 0,25 s (`windup_settle`) e segura | 0,30 m em 0,25 s = 1,2 | 0,30 |
+| Escudo | 0,62 | o mesmo `brace` (lia), agora armado em três tempos | 0,62 no clipe, 1,0 ou mais desenhado (teste) | 0,44 |
+| Sacerdote | 2,77 | igual (lia) | 2,77 | 0,44 |
+| Cavaleiro | 0,08, `idle` | `brace` próprio (`Shield_Dash_RM` 0 a 0,3 s) | 3,33 | 0,51 |
+| Ancião | 0,03 | `Spell_Simple_Enter`; ao erguer os mortos o `Spellcast_Summon` (`summon`) | 1,62 / 6,03 | 0,34 / 0,82 |
+| Morvath, Investida | 0,14 (igual às Lâminas) | `Sword_Dash_RM` 0 a 0,12 s, tronco para frente | 11,85 | 0,71 |
+| Morvath, Lâminas | 0,14 | `Sword_Regular_B` 0 a 0,2 s em duas mãos, tronco para trás | 4,92 | 0,71 |
+
+As duas preparações de Morvath ficam 0,30 m ou mais uma da outra (teste). Tremor (`windup_shake`) só no segurar.
+Maior pose parada na preparação antes do segurar (sonda, `play_s1-4` e robô `bot_s7`): 0,13 a 0,30 s em todas as
+figuras (critério 0,3).
+
+### 6.2 Dano x corpo e aviso x dano
+
+| Ataque | Antes | Depois |
+|---|---|---|
+| Bote do esqueleto | dano do aviso, até 2,4 m do corpo | lâmina do corpo no quadro em que ele chega (`strike_at` 0,1 s no bote): 1,00 a 2,00 m do centro, alcance 2,21; 100% dentro (110 golpes, sementes 1 a 4); aviso enche no quadro do golpe: 109 de 110 em 0 f, 1 em 1 f |
+| Investida do Escudo e do Cavaleiro | no fim da preparação, corpo a 3,5 m | contato varrido do corpo, uma vez por investida (teste: 1,20 m do centro, corpo 1,25; aviso termina no mesmo quadro ou 1 antes); robô: Cavaleiro a 1,60 m varrido no quadro (corpo 1,55), aviso -1 f |
+| Investida de Morvath | até 15,7 m antes do corpo | contato do corpo (`Ground.strike`, `last_source` dash): 1,81 m do centro, corpo 1,90; a faixa enche até o quadro do contato (0 f) |
+| Foice de Morvath | no alto, 10 f antes da descida | aviso + 0,07 s (`SCYTHE_HIT`): dano em `slash3:7` em 9 de 9 golpes |
+| Explosão do corredor | antes do soco | aviso até `strike_at` (0,1 s no giro, os braços abrindo) |
+
+### 6.3 Esqueleto que espera (sondas `--play --seed=1..4 --hero-hp=9999`, herói parado)
+
+| Medida (por esqueleto em WALK) | Antes (semente 2) | Depois (sementes 1, 2, 3, 4) | Critério |
+|---|---|---|---|
+| Quadros com mais de 8 graus de giro | 35 em 8,4 s (42 por 10 s) | 0 / 0 / 0 / 2,4 por 10 s | 1 por 10 s fora da troca de alvo |
+| Inversões de giro | 1,07/s | 0,00 / 0,03 / 0,00 / 0,21 | 0,3/s |
+| Trocas andar/parado | até 0,62/s | 0,15 / 0,14 / 0,18 / 0,14 | 0,5/s |
+| `idle` de 1 a 3 quadros | vários | 0 | nenhum |
+| Inversões de posição de 2 quadros | até 3,46/s | 0,00 / 0,07 / 0,00 / 0,03 | 0,2/s |
+
+Na semente 4 os giros restantes são o virar para o herói depois de outra coisa (troca de alvo), não pisca. Causas
+tratadas: separação todo quadro com metade da força (`Horde.SEPARATE`), histerese no rosto (`FACE_SPLIT` 70, `FACE_BACK`
+45, e quem tem passo lateral só vira acima de `FACE_SPEED` 1,2 m/s), troca andar/parado só depois de 0,15 s (`STAND_AFTER`)
+ou 0,10 s (`WALK_AFTER`), linha reta mantida até 3 m (`WAY_NEAR` 2,5, `WAY_FAR` 3), anel de espera a 0,75 do alcance
+com folga e passo lateral para o mesmo lado por 1,2 s no mínimo, a no máximo `RING_SPEED` 1 m/s (andava a 2,5 m/s para
+fora e virava de costas), passos laterais e de costas próprios (`strafe_l`, `strafe_r`, `back` do KayKit) olhando o
+herói, e o fim da recuperação virando para ele a 360 graus/s (`RECOVER_TURN`; antes um estalo de 20 graus por quadro).
+Fora do escopo do T5-10 e anotado: com o robô, besteiros, feiticeiros e o Cavaleiro giram ao fugir e voltar (giros
+legítimos de quem foge), o esqueleto elite pisca `idle` 11 vezes (ver 6.6).
+
+### 6.4 Corrida do esqueleto (`walk_metrics` em `clip_motion.txt`, tamanho 1; em jogo x 1,15)
+
+| Medida | Antes (`Running_B`, `SOLDIER_RUN`) | Depois (`Jog_Fwd`, `SOLDIER_JOG`) | Critério |
+|---|---|---|---|
+| Os dois pés no ar | 16 de 20 poses | 5 de 20 | 6 de 20 |
+| Pé levantado mais alto | 29 cm em jogo | 30 cm em jogo (0,26 m; medida nova, pernas separadas da lâmina) | 15 cm |
+| Sobe e desce | 13 cm em jogo | 10,6 cm em jogo (0,092 m) | 7 cm |
+| Tronco | 3 a 5 graus | 13 a 17 graus | 8 a 15 |
+| Passos por minuto | 149 | 161 | 160 a 170 |
+| Escorregamento | 0,5 cm | 3,0 cm | 5 cm |
+
+Três de seis no critério, os outros perto. O `Jog_Fwd` chuta o pé de trás alto por si; o assado ganhou a opção
+`"plant"` (o corpo desce, por pose, essa parte do caminho até o ponto mais baixo da própria pose: no voo ele fica perto do
+chão), que tirou os pés do ar (16 para 5) sem deixar escorregar. Testadas e piores: `Running_A`, `Running_B`, `Running_C`
+e `Sprint` com `plant` (pés no ar 12 a 18, tronco de -35 a 43 graus). O resto (pé e sobe e desce) pede um clipe de trote
+mais contido que as bibliotecas CC0 não têm, ou a decisão do Daniel na 6.4 do `combat_cadence.md` (andar a 2 m/s perto).
+Para o art-director aprovar: `after/sheet_skeleton_walk.jpg`.
+
+### 6.5 Recuperação e tiros
+
+- Maior pose igual desenhada em `RECOVER` (sondas e robô): 0,00 a 0,28 s em todas as figuras (antes 1,76 s no esqueleto,
+  1,1 no Escudo, 0,8 no Cavaleiro). O resto do golpe toca no ritmo do próprio clipe e depois a guarda (mistura de 0,3 s);
+  Escudo e Cavaleiro depois da investida: `Idle_Shield_Break` (o escudo baixando). Entre o fim da recuperação e a próxima
+  preparação, pelo menos 0,25 s (`AFTER_RECOVER`).
+- Tiro por orbe (T5-13): feiticeiro `shot` (o `Spell_Simple_Shoot` inteiro em 0,17 s, recomeçado a cada orbe) com pico
+  1,57 m/s (critério 1,5), sacerdote elite `Spellcast_Shoot` do KayKit em 0,3 s por trepadeira, 5,42 m/s; o cajado desce
+  (`Spell_Simple_Exit`) na recuperação.
+
+### 6.6 O que ficou
+
+- T5-11: pé levantado e sobe e desce acima do critério (ver 6.4).
+- P2 não feitos: gesto próprio da maldição (T5-17), trecho das mãos nas erupções (T5-18), recuo da besta (T5-19). O
+  corredor (T5-16) ganhou o giro.
+- O primeiro quadro da preparação do corredor (`Jump_Start` 0,18 s) tem um joelho erguido; o assentar mistura do
+  andar para ele em 0,12 s.
+- Esqueleto elite com 11 `idle` curtos sob golpes na armadura (fora do T5-10, que mede o comum).
+- Vídeo na GPU a 60 qps para o PO e o art-director: não feito (a GPU estava com outro agente).

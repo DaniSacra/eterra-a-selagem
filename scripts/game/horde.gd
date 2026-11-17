@@ -106,6 +106,8 @@ const REARM := 0.5
 const ATTACK_PLAY := 1.4
 ## T5-12: seconds at least between the end of a recovery and the next wind-up.
 const AFTER_RECOVER := 0.25
+## T5-10: degrees a second it turns back to the paladin at the end of its recovery.
+const RECOVER_TURN := 360.0
 
 var list: Array[Enemy] = []
 ## The damage dealt to enemies by where it came from (DT-016; RESULT dealt_by), and where the damage being dealt now
@@ -363,7 +365,11 @@ func _speed(e: Enemy) -> float:
 
 func _behave(e: Enemy, dt: float) -> void:
 	if e.state == Enemy.State.RECOVER:
-		# standing still at the end of its blow (the punish window); then it walks
+		# standing still at the end of its blow (the punish window); then it walks. T5-10: in its last RECOVER_FADE it
+		# turns to the paladin at RECOVER_TURN (it snapped to him 20 degrees a frame the frame it walked again)
+		var back := target - e.pos
+		if e.state_t >= e.def.recover_time - RECOVER_FADE and back.length() > 0.01:
+			e.dir = turned(e.dir, back.normalized(), deg_to_rad(RECOVER_TURN) * dt)
 		if e.state_t >= e.def.recover_time:
 			_set_state(e, Enemy.State.WALK, &"walk")
 			# T5-12: a moment in its guard or walking before the next wind-up, never the frame after its recovery
@@ -576,13 +582,13 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
 	match e.state:
 		Enemy.State.WINDUP:
-			if e.state_t >= d.attack_windup:
+			if e.state_t >= d.attack_windup - TICK_SLACK:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		Enemy.State.ATTACK:
 			var go := minf(e.travel, d.lunge_speed * dt)
 			e.pos += e.aim * go
 			e.travel -= go
-			if not e.landed and e.state_t >= e.strike_t:
+			if not e.landed and e.state_t >= e.strike_t - TICK_SLACK:
 				e.landed = true
 				_blade_lands(e)
 			if e.state_t >= maxf(d.lunge_time, e.strike_t + STRIKE_BITE):
@@ -600,11 +606,15 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.travel = clampf(dist - d.radius - Player.RADIUS, 0.0, d.lunge_speed * d.lunge_time)
 				e.strike_t = maxf(d.strike_at, e.travel / maxf(d.lunge_speed, 0.1))
 				e.landed = false
-				e.warning = ground.add_line_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t, 0.0)
+				e.warning = ground.add_line_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
 			else:
 				_wait_ring(e, dt, toward, dist)
 
 
+## T5-09: a warning made in the crowd's step already loses that frame in the floor's step (Game: horde, then ground),
+## so the crowd's own warnings get one frame more (+ dt); and its timers end a hair early (TICK_SLACK) so sixtieths
+## that add up a little short never cost a frame. The warning is full on the frame the blow lands.
+const TICK_SLACK := 0.0001
 ## Seconds a soldier's blade stays down where it bit before its recovery (T5-09).
 const STRIKE_BITE := 0.1
 ## T5-10: a soldier waiting its turn (or its cooldown) keeps to a ring round the paladin, RING_SHARE of its reach, and
@@ -617,6 +627,8 @@ const RING_SIDE := 1.2
 ## Once off its ring it walks back to it (at RING_STEP of its speed) until RING_SETTLED meters from it.
 const RING_STEP := 0.6
 const RING_SETTLED := 0.1
+## The fastest it moves while it waits (m/s; under FACE_SPEED and SIDE_STEP_BELOW).
+const RING_SPEED := 1.0
 
 
 ## How far a soldier's blade reaches from its middle when it lands (its body and EnemyDef.strike_reach at its size).
@@ -655,7 +667,9 @@ func _wait_ring(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		e.side = -e.side
 		e.side_t = 0.0
 	move += toward.rotated(e.side * PI * 0.5) * RING_STRAFE
-	e.pos += move * _speed(e) * dt
+	# never faster than RING_SPEED: under FACE_SPEED it steps sideways and back facing him (it turned its back to walk
+	# out to the ring at 2.5 m/s and turned round again, 20 degrees a frame)
+	e.pos += move.limit_length(1.0) * minf(_speed(e), RING_SPEED) * dt
 
 
 ## Elite: walks the paladin down, then braces behind its shield (a long line on the floor) and charges along it. The
@@ -781,7 +795,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				_set_state(e, Enemy.State.WINDUP, &"windup")
 				e.strike_t = d.strike_at
 				# it bursts as its arms open, strike_at into its attack (T5-09): the warning fills until then
-				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at, d.attack_damage * damage_scale, d.magic_color)
+				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * damage_scale, d.magic_color)
 			else:
 				e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
 
