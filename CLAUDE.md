@@ -1049,9 +1049,38 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   esticado no atordoamento inteiro (`Enemy.stun_len`, `Kind.hit_time`), sem `idle` no meio. Bote do esqueleto para no
   contorno do herói (`keep_off_target` vale para o `RUNNER` em `ATTACK`; investidas de Escudo e Cavaleiro atravessam);
   no máximo 2 esqueletos (com as elites) preparam ou dão o bote juntos (`max_attackers` 2). Assado: esqueleto com o pé
-  travado (`SOLDIER_RUN`: passada 0,68, meio pulo, 149 passos por minuto; corria a 96), ancião `ELDER_STRIDE` 0,9 (91 por
+  travado (`SOLDIER_RUN`, 149 passos por minuto; corria a 96; desde o T5 o `Jog_Fwd`, ver abaixo), ancião `ELDER_STRIDE` 0,9 (91 por
   minuto; era 67), besteiro com a besta baixa ao lado do quadril andando e parado (`CROSSBOW_LOW`, guarda do `Sword_Idle`;
   `idle` agora o `Idle`), subindo ao ombro só na mira (`aim`, `Pistol_Idle`) e no tiro.
+- **T5, o corpo prepara o golpe (especificação em `docs/design/combat_cadence.md` 6; antes e depois em
+  `docs/qa/t5_enemy_motion.md`; quadros em `docs/gallery/t5/motion/after/`; testes em `tests/test_enemy_windup.gd`)**: toda
+  preparação em três tempos desenhada pelo `Horde.render` (`Horde.windup_arm`): assentar `EnemyDef.windup_settle` (0,12;
+  besteiro 0,25, a besta subindo ao ombro), armar com o clipe próprio em curva suave até `1 - windup_hold` (0,3) e segurar
+  a pose (ou o laço `<clipe>_hold`) com o `windup_shake` só aí. Clipes próprios no assado (UAL e KayKit, `tools/bake.gd`,
+  opções novas `bend_in`/`bend_out` para o tronco enrolar no preparo e desenrolar no golpe, e `plant`): esqueleto a subida
+  inteira da lâmina (`Sword_Attack` 0 a 0,35 s, `SOLDIER_COIL`), corredor o agachar do `Jump_Start` e o giro
+  `2H_Melee_Attack_Spinning`, feiticeiro e ancião o cajado subindo (`cast` = `Spell_Simple_Enter`, `cast_hold`, `shot` por
+  orbe recomeçado a cada tiro da rajada, `exit` na recuperação), ancião `summon` ao erguer os mortos, sacerdote elite `shot`
+  por trepadeira, Escudo e Cavaleiro `brace`, `charge` (o empurrão do escudo) e `recover` (`Idle_Shield_Break`), Morvath
+  `dash_windup` (`Sword_Dash_RM` 0 a 0,12 s, `CHARGE_LEAN`) e `blades_windup` (`Sword_Regular_B` 0 a 0,2 s, `DRAW_BACK`),
+  armados pelo `Boss` com o mesmo `windup_arm` (`Boss.WINDUP_*`, tremor `Enemy.shake`, só desenho). **Dano do corpo**: as
+  investidas do Escudo, do Cavaleiro e de Morvath ferem no primeiro quadro em que o contorno do corpo, varrido de onde
+  estava, toca o herói (`BodyBlock.swept_touch`, `Ground.strike` para Morvath, uma vez por investida); a faixa no chão é
+  só desenho e enche até o quadro em que o corpo chegaria (`Boss.dash_contact`). O bote do esqueleto é um salto: o corpo
+  percorre a distância anunciada (até o contorno do herói), a lâmina desce `strike_at` 0,1 s depois e fere de onde o corpo
+  está, no arco de `strike_degrees` 120 e alcance `Horde.blade_reach` (raio + `strike_reach` 1,1 x tamanho); o corredor
+  explode `strike_at` 0,1 s no giro; os avisos da multidão ganham um quadro (`+ dt`, o chão anda depois da multidão no
+  mesmo passo) e os tempos `TICK_SLACK`, então o aviso enche no quadro do golpe. Foice de Morvath fere `Boss.SCYTHE_HIT`
+  0,07 s na descida (`slash3:7`). **Recuperação viva**: o resto do golpe no ritmo do clipe, ou o clipe `recover`, depois
+  a guarda com mistura de `RECOVER_FADE` 0,3 s, virando para o herói no fim a `RECOVER_TURN` 360 graus/s, e pelo menos
+  `AFTER_RECOVER` 0,25 s até a próxima preparação. **Esqueleto que espera** (T5-10): anel a `RING_SHARE` 0,75 do alcance
+  com folga, passo lateral para o mesmo lado por `RING_SIDE` 1,2 s, no máximo `RING_SPEED` 1 m/s, com os passos laterais
+  e de costas próprios (`strafe_l`, `strafe_r`, `back`, `Horde.walk_side`) olhando o herói; histerese no rosto
+  (`FACE_SPLIT` 70, `FACE_BACK` 45, `FACE_SPEED`), troca andar/parado só depois de `STAND_AFTER` 0,15 s ou `WALK_AFTER`
+  0,1 s, linha reta até `WAY_FAR` 3 m, separação todo quadro com `SEPARATE` 0,25. **Corrida** (T5-11): `Jog_Fwd` com
+  `SOLDIER_JOG` (`lock`, passada 0,83, `plant` 0,65, tronco inclinado), 161 passos por minuto, pés no ar em 5 de 20 poses.
+  Medir: `tools/clip_motion.gd` (pico, pose armada e andar de cada clipe assado) e a sonda `tools/enemy_motion_probe.gd`
+  com `tools/enemy_motion_probe.py` (tremor, golpe x corpo x aviso, pose parada).
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## Pendências conhecidas

@@ -10,6 +10,7 @@ model = &"knight"
 size = 2.07
 rim_color = Color(0.62, 0.46, 0.22, 1)
 rim = 0.3
+windup_shake = 0.03
 tell = 5
 tell_at = Vector3(0.5, 1.1, 0.35)
 behavior = 4

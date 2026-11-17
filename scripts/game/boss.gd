@@ -91,7 +91,17 @@ const SCYTHE_CLIP := &"slash3"
 const SCYTHE_LIFT := 0.42
 const SCYTHE_SWEEP := 0.16
 const SCYTHE_LIFE := 0.55
-## E1c (P1-5 of docs/design/combat_cadence.md): the share of a throwing clip where his hand moves fastest, the moment
+## T5-14: seconds into the sweep when the blade crosses his waist (slash3's poses 7 to 8 of the fall from 6 to 9): the
+## blow lands then.
+const SCYTHE_HIT := 0.07
+## T5-15: his wind-ups in three beats as the crowd's (Horde.windup_arm): seconds to settle, share of the end held,
+## and how much he trembles in that hold (m, only drawn).
+const WINDUP_SETTLE := 0.12
+const WINDUP_HOLD := 0.3
+const WINDUP_SHAKE := 0.04
+## T5-15: the Blades' throw starts from where its own wind-up (blades_windup: the first BLADES_ARMED seconds of
+## Sword_Regular_B) leaves the blade, not from the start of the clip.
+const BLADES_ARMED := 0.2## E1c (P1-5 of docs/design/combat_cadence.md): the share of a throwing clip where his hand moves fastest, the moment
 ## of the release (tools/clip_probe.gd on the baked clips: Sword_Regular_B in both hands 0.49, OverhandThrow 0.18).
 ## The throw starts that much before its shot leaves, so the release is on the shot's frame (it played from the shot
 ## on, the hand's peak 10 frames after the blades had flown).
@@ -139,6 +149,8 @@ var _middle := Vector2.ZERO
 var _floor: FloorShape
 ## How far the charge goes this time (cut at the floor's edge, never more than dash_length).
 var _dash_len := 0.0
+## His charge has struck the paladin (T5-08: once a charge).
+var _landed := false
 ## He keeps his place until the next attack (the opener of a phase begun from the middle).
 var _held := false
 ## The storm's lanes on the floor, by crescent (null once it left), for their order of leaving (Ground.storm_rank).
@@ -447,7 +459,8 @@ func _step_scythe(dt: float, to: Vector2, toward: Vector2) -> void:
 			_dir = toward
 			e.dir = _dir
 			var windup := _windup(def.scythe_windup)
-			_warn(game.ground.add_arc_warning(e.pos, _dir, def.scythe_reach, def.scythe_degrees, windup, def.scythe_damage))
+			# T5-14: it fills (and hurts) as the blade crosses his waist, SCYTHE_HIT into the sweep, not at its top
+			_warn(game.ground.add_arc_warning(e.pos, _dir, def.scythe_reach, def.scythe_degrees, windup + SCYTHE_HIT, def.scythe_damage))
 			moment.emit(&"scythe_warn")
 			cue.emit(&"scythe_raise", e.pos, _dir, def.scythe_reach, windup)
 			Audio.play(&"scythe_raise")
@@ -502,11 +515,20 @@ func _step_blades(dt: float) -> void:
 		e.dir = (_dirs[0] + _dirs[1]).normalized()
 		for d in _dirs:
 			_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0))
-		_anim(&"dash_windup")
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
-	elif _step == 1:
+	if _step == 1:
 		_gathering(dt, e.pos + e.dir * HAND.y, SPECTRAL)
-		_throw_by(&"slash2", windup)
+		# T5-15: the blade drawn back over his shoulder in both hands (blades_windup), then thrown from there so
+		# the release falls on the shot's frame
+		var throw := windup - _throw_lead(&"slash2", BLADES_ARMED)
+		if _t < throw:
+			_pose(&"blades_windup", Horde.windup_arm(_t, throw, WINDUP_SETTLE, WINDUP_HOLD))
+			e.shake = WINDUP_SHAKE * 0.5 if _t >= throw * (1.0 - WINDUP_HOLD) else 0.0
+		else:
+			e.shake = 0.0
+			if e.anim != &"slash2":
+				_mark = throw
+			_play_on(&"slash2", _share(&"slash2", BLADES_ARMED))
 		if _t >= windup:
 			_step = 2
 			_fire_souls(_dirs, def.blade_damage)
@@ -762,15 +784,20 @@ func _step_summon() -> void:
 ## The paladin keeps away: he crouches with the lane of the charge on the floor (the way shown by his magic
 ## streaming along it at his feet), charges, leaves a wake that covers that lane only, and lands spent.
 func _step_dash_warn(dt: float, toward: Vector2) -> void:
-	_anim(&"dash_windup")
 	var windup := _windup(def.dash_windup)
+	# T5-15: he crouches into the charge in three beats (settle, arm, hold with a tremble), his own pose
+	_pose(&"dash_windup", Horde.windup_arm(_t, windup, WINDUP_SETTLE, WINDUP_HOLD))
+	e.shake = WINDUP_SHAKE if _t >= windup * (1.0 - WINDUP_HOLD) else 0.0
 	if _step == 0:
 		_step = 1
 		_dir = toward
 		e.dir = _dir
-		# the charge stops where his body meets the floor's edge; its lane goes on to the edge (his body's front)
+		_landed = false
+		# the charge stops where his body meets the floor's edge; its lane goes on to the edge (his body's front).
+		# T5-08: the lane is only drawn, filling until his body would reach the paladin where he stands; the body hurts
 		_dash_len = maxf(_dash_room(_dir), 0.5)
-		_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, _dash_len + e.def.radius), def.dash_width, windup, def.dash_damage))
+		var reach := dash_contact(e.pos, _dir, _dash_len, game.player.pos, e.def.radius + Player.RADIUS) * def.dash_time
+		_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, _dash_len + e.def.radius), def.dash_width, windup + reach, 0.0))
 		cue.emit(&"dash_aim", e.pos, _dir, _dash_len, windup)
 		Audio.play(&"dash_aim")
 	_gather -= dt
@@ -780,6 +807,7 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 		game.fx.chips(Vector3(at.x, 0.25, at.y), Vector3(_dir.x, 0.0, _dir.y), VIOLET, 1, 7.0, 0.1, 0.35, 0.08)
 	if _t >= windup:
 		_from = e.pos
+		e.shake = 0.0
 		_go(State.DASH)
 		game.fx.boss_dash(_from, _dir, _dash_len, def.dash_width, def.dash_time, def.dash_time + DASH_WAKE, VIOLET, SPECTRAL)
 		Audio.play(&"boss_dash")
@@ -788,7 +816,12 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 
 func _step_dash() -> void:
 	_anim(&"dash")
+	var was := e.pos
 	e.pos = _from + _dir * _dash_len * minf(_t / def.dash_time, 1.0)
+	# T5-08: his body hurts, the first frame its edge (swept from where it was) touches the paladin, once a charge
+	if not _landed and game.player.alive() and BodyBlock.swept_touch(was, e.pos, game.player.pos, e.def.radius + Player.RADIUS):
+		_landed = true
+		game.ground.strike(def.dash_damage, was, &"dash", _windup(def.dash_windup) + _t, game.horde.screen_flag(e.pos))
 	if _t >= def.dash_time:
 		# the landing, inside the end of the lane
 		var end := e.pos - _dir * def.dash_width * 0.5
@@ -1305,6 +1338,7 @@ func _go(next: State) -> void:
 	_wave_at = 0.0
 	_gather = 0.0
 	e.memo = 0
+	e.shake = 0.0
 
 
 ## Back to walking; the next attack comes after the phase's rest (plus `extra`).
@@ -1332,11 +1366,31 @@ func _pose(anim: StringName, share: float) -> void:
 	e.anim_t = share * game.horde.renderer.model_of(e.def).duration(anim) / game.horde.clip_rate(e) if game.horde.renderer else 0.0
 
 
-## Seconds from the start of a throwing clip to its release (THROW_PEAK, at the pace the crowd plays it).
-func _throw_lead(anim: StringName) -> float:
+## Seconds from the start of a throwing clip (or from `from` seconds into it) to its release (THROW_PEAK, at the
+## pace the crowd plays it).
+func _throw_lead(anim: StringName, from := 0.0) -> float:
 	if game.horde.renderer == null:
 		return 0.0
-	return float(THROW_PEAK.get(anim, 0.0)) * game.horde.renderer.model_of(e.def).duration(anim) / game.horde.clip_rate(e)
+	var length := game.horde.renderer.model_of(e.def).duration(anim)
+	return maxf(0.0, float(THROW_PEAK.get(anim, 0.0)) * length - from) / game.horde.clip_rate(e)
+
+
+## The share of a clip `seconds` into it.
+func _share(anim: StringName, seconds: float) -> float:
+	if game.horde.renderer == null:
+		return 0.0
+	return seconds / maxf(game.horde.renderer.model_of(e.def).duration(anim), 0.001)
+
+
+## T5-08: the share of a charge from `from` along `dir` for `length` m at which a body of `reach` (both radii) first
+## touches `at`; 1 when it never does (it lands short or passes beside him).
+static func dash_contact(from: Vector2, dir: Vector2, length: float, at: Vector2, reach: float) -> float:
+	var d := at - from
+	var side := absf(d.cross(dir))
+	if side > reach or length <= 0.0:
+		return 1.0
+	var along := d.dot(dir) - sqrt(reach * reach - side * side)
+	return clampf(along / length, 0.0, 1.0)
 
 
 ## Starts the throw so its release falls at `release` seconds of the state (once; the clip then plays on by itself).

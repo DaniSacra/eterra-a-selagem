@@ -51,3 +51,9 @@ static func fits(pos: Vector2, centers: PackedVector2Array, reaches: PackedFloat
 		if depth(pos, centers[i], reaches[i]) > allowed[i] + SLACK:
 			return false
 	return true
+
+
+## T5-08: a body of `reach` (both radii) moved from `from` to `to` touched the point `at` somewhere on the way (the
+## charges hurt with the body: a fast one would step over him between two frames).
+static func swept_touch(from: Vector2, to: Vector2, at: Vector2, reach: float) -> bool:
+	return Geometry2D.get_closest_point_to_segment(at, from, to).distance_squared_to(at) <= reach * reach

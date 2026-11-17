@@ -5,7 +5,9 @@ extends GutTest
 
 const DT := 1.0 / 60.0
 ## A half turn at Horde.TURN_RATE (0.15 s), and the smoothing of the speed (VEL_SMOOTH) it starts behind.
-const TURN_FRAMES := 10
+## T5-10: a turn may take 12 frames (the facing turns once the walk is FACE_SPLIT off its aim and keeps to it until
+## FACE_BACK: the body no longer flicks between the two, so a turn begins a beat later).
+const TURN_FRAMES := 12
 
 var game: Game
 
@@ -43,7 +45,7 @@ func _frame() -> void:
 
 
 ## AUDIT.md P1: with every common kind on the floor and the paladin walking round, no figure is drawn walking under
-## WALK_FROM m/s, and the walk is drawn with more than FACE_SPLIT degrees between where it goes and where it faces
+## WALK_FROM m/s for longer than Horde.STAND_AFTER (T5-10: it changes to standing only once slow that long), and the walk is drawn with more than FACE_SPLIT degrees between where it goes and where it faces
 ## only while the body turns to it (at TURN_RATE: a half turn takes 0.15 s).
 func test_the_walk_is_drawn_only_where_the_body_walks() -> void:
 	_room()
@@ -56,6 +58,8 @@ func test_the_walk_is_drawn_only_where_the_body_walks() -> void:
 	var streak := {}
 	var longest := 0
 	var beyond := 0
+	var slow_run := {}
+	var slow_longest := 0
 	for f in 900:
 		# he walks a slow circle, so they chase, strafe, flee and come back
 		game.player.pos = game.arena.resolve(Vector2.from_angle(f * DT * 0.6) * 3.0, Player.RADIUS)
@@ -63,10 +67,13 @@ func test_the_walk_is_drawn_only_where_the_body_walks() -> void:
 		for e in game.horde.list:
 			if e.drawn_anim != &"walk" or e.frozen_t > 0.0:
 				streak[e] = 0
+				slow_run[e] = 0
 				continue
 			walk_frames += 1
 			var speed := e.vel.length()
-			if speed < Horde.WALK_FROM:
+			slow_run[e] = int(slow_run.get(e, 0)) + 1 if speed < Horde.WALK_FROM else 0
+			slow_longest = maxi(slow_longest, slow_run[e])
+			if slow_run[e] > ceili(Horde.STAND_AFTER / DT) + 1:
 				slow += 1
 			var f2 := Vector2(sin(e.yaw()), cos(e.yaw()))
 			if speed > 0.01 and absf(rad_to_deg(f2.angle_to(e.vel))) > Horde.FACE_SPLIT + 1.0:
@@ -79,7 +86,7 @@ func test_the_walk_is_drawn_only_where_the_body_walks() -> void:
 				streak[e] = 0
 	gut.p("walk frames %d, turning sideways %d, longest turn %d frames" % [walk_frames, split, longest])
 	assert_gt(walk_frames, 300, "they walked")
-	assert_eq(slow, 0, "never the walk under %.1f m/s" % Horde.WALK_FROM)
+	assert_eq(slow, 0, "never the walk under %.1f m/s past the delay (longest %d frames)" % [Horde.WALK_FROM, slow_longest])
 	assert_eq(beyond, 0, "sideways or backwards only while the body turns (longest %d frames)" % longest)
 	assert_lt(float(split) / walk_frames, 0.05, "and that is rare (%d of %d frames)" % [split, walk_frames])
 

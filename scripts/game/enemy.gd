@@ -70,12 +70,35 @@ var anim_t := 0.0
 ## The direction a lunge or charge was aimed at when it was announced.
 var aim := Vector2.DOWN
 var side := 1.0
+## Seconds it has kept to its side while waiting (Horde._wait_ring).
+var side_t := 0.0
+## Walking back to that ring (off it by more than Horde.RING_SLACK), until it is there.
+var to_ring := false
+## Only drawn (T5-10): its body turned to where it walks (Horde._drawn_motion), until that is near where it looks.
+var face_walk := false
 ## The warning on the floor of the attack it is winding up or loosing (null: none): a blow that cuts the attack ends
 ## it (Horde.interrupt, GF-12). A Ground.Zone, kept untyped: Enemy is read by pure scripts (tools/make_data.gd) that
 ## must not compile the game's nodes.
 var warning: RefCounted
 ## Free for the behaviour (attack counters, phase).
 var memo := 0
+## T5-08, T5-09 (docs/design/combat_cadence.md 6.3): the blow of its attack under way has landed (once an attack);
+## meters of its lunge still to cover (the soldier's pounce, announced with its warning); seconds into its attack at
+## which its blow lands (its warning fills until then).
+var landed := false
+var travel := 0.0
+var strike_t := 0.0
+## T5-12: the clip its recovery plays (&"": the rest of its blow), then its guard.
+var recover_anim: StringName = &""
+## Only drawn (T5-10): seconds its real speed has stayed on the other side of the walk's threshold (the drawing
+## changes between standing and walking only after Horde.STAND_AFTER, WALK_AFTER), and the seconds of the fade of
+## its clip change now (0: Horde.CLIP_FADE).
+var switch_t := 0.0
+var fade_len := 0.0
+## Only drawn (T5-13): the shot of its burst whose throw is drawn (each one starts its own).
+var drawn_tick := 0
+## Only drawn (T5-15): meters its body trembles from side to side now (a boss's hold; the crowd's is EnemyDef.windup_shake).
+var shake := 0.0
 ## Seconds a ranged enemy still runs from the paladin after its attack (EnemyDef.retreat_time).
 var retreat_t := 0.0
 ## Takes no damage (a boss behind its ritual's shield).

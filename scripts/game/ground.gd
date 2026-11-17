@@ -165,6 +165,16 @@ func add_warning(at: Vector2, radius: float, time: float, damage: float, burst :
 	return z
 
 
+## A blow dealt by a body, not by a warning landing (T5-08: Morvath's charge): counted as his attack `source`, with the
+## seconds its warning showed, for the log and "Derrotado por".
+func strike(amount: float, from: Vector2, source: StringName, warn_s: float, offscreen := -1) -> void:
+	last_source = source
+	last_by = &""
+	last_warn = warn_s
+	last_offscreen = offscreen
+	hit_player.emit(amount, from)
+
+
 func add_line_warning(from: Vector2, dir: Vector2, length: float, width: float, time: float, damage: float) -> Zone:
 	return _add(Kind.WARNING, Shape.LINE, from, dir, length, width, time, damage)
 

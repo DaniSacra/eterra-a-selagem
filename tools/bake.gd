@@ -14,7 +14,8 @@ extends SceneTree
 ## (seconds it plays in, in the game), "lift" (the share of the hips' rise and fall that is kept), "in_place" (the
 ## hips never leave the figure's place on the floor: a clip with root motion that the game does not move) and "guard"
 ## ([rig, clip, bones], or a list of those: the bones, parents first, point where another clip has them, e.g. the
-## sword arm kept in guard while the legs run) and "bend" (as the entry's, for this clip only, on top of it).
+## sword arm kept in guard while the legs run) and "bend" (as the entry's, for this clip only, on top of it), grown
+## over the clip with "bend_in" (a wind-up coiling) or easing off over the first "bend_out" seconds (the blow uncoiling).
 ## "rigid" (pieces the model carries by itself and its rig tears between bones, e.g. the brute's tower shield, half
 ## of it skinned to the leg it hangs beside: {"bone": the one bone it follows from now on, "seeds": the bones that
 ## hold its core, "plate" or "rod": a flat or a long piece, and how far from its plane or its line it still is the
@@ -191,6 +192,20 @@ const ELDER_STRIDE := {"guard": [&"ual", "Idle_Torch", LEFT_ARM], "lock": true, 
 ## steps a minute at its 3.75 m/s (it ran 96, floating, with two feet in the air in 3 of 5 frames); the blade in guard.
 const SOLDIER_RUN := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.68, "lift": 0.5}
 const KING_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 1.3}
+## T5-11 (docs/design/combat_cadence.md 6.4): the soldier's run read as a gazelle (Running_B on a short stride with half
+## its hop: both feet off the floor in 16 of 20 poses, the trunk upright, the back foot kicked to the hip). It jogs
+## instead (the library's Jog_Fwd), the feet locked, a third of the hop, the trunk leaning into the run.
+const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.83, "lift": 0.3, "plant": 0.65,
+	"bend": {"Spine01": Vector3(-34, 0, 0)}}
+## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
+## blow uncoils it in its first 0.15 s ("bend_out").
+const SOLDIER_COIL := {"Spine01": Vector3(-18, 30, 0)}
+## T5-03: the sorcerer and the elder draw their trunk back as the staff comes up.
+const STAFF_COIL := {"Spine01": Vector3(-8, 0, 0)}
+## T5-15: Morvath leans into his charge.
+const CHARGE_LEAN := {"Spine01": Vector3(32, 0, 0)}
+## T5-15: and draws back, turned to the blade, as he readies the Blades.
+const DRAW_BACK := {"Spine01": Vector3(-12, 20, 0)}
 ## The brute's own tower shield (MODELS.guard "hold"): degrees its arm and shield are swung from the model's rest
 ## toward the middle of the body, standing and walking, and braced for the charge.
 const SHIELD_FRONT := -14.0
@@ -221,8 +236,15 @@ const CASTER_CLIPS := {
 ## The same with a staff: the library casts with the left hand, which is the one that holds it.
 const STAFF_CLIPS := {
 	"idle": [&"ual", "Idle_Torch", 12, true],
-	"attack": [&"ual", "Spell_Simple_Shoot", 14, false],
+	"attack": [&"ual", "Spell_Simple_Shoot", 14, false, {"bend": STAFF_COIL, "bend_out": 0.2}],
 	"cast": [&"ual", "Spell_Simple_Idle", 12, true],
+	# T5-03: the staff comes up (Spell_Simple_Enter) as the wind-up arms, the trunk drawn back; it is held up
+	# (Spell_Simple_Idle) in the hold. T5-13: each bolt of a burst is its own thrust (the shot's first 0.3 s in
+	# 0.17, Horde restarts it each tick), and the staff comes down (Spell_Simple_Exit) in the recovery.
+	"cast_rise": [&"ual", "Spell_Simple_Enter", 10, false, {"bend": STAFF_COIL, "bend_in": true}],
+	"cast_hold": [&"ual", "Spell_Simple_Idle", 12, true, {"bend": STAFF_COIL}],
+	"shot": [&"ual", "Spell_Simple_Shoot", 6, false, {"from": 0.0, "to": 0.5, "time": 0.17, "bend": STAFF_COIL, "bend_out": 0.3}],
+	"exit": [&"ual", "Spell_Simple_Exit", 8, false],
 }
 
 const MODELS := {
@@ -238,13 +260,17 @@ const MODELS := {
 		"palette": PALETTE + "skeleton.png",
 		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": CLEAVER_SCALE, "rot": EDGE_OUT, "paint": BLADE_PAINT}],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, SOLDIER_RUN], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
-			# E1c (AUDIT.md P3): the blow goes on from where the wind-up stops (0.3 s of the clip, the blade highest at
-			# 0.35), so the blade's fall (0.35 to 0.5) is drawn in the first frames of the lunge (Horde.ATTACK_PLAY);
-			# the rest, back to the guard, is its recovery (EnemyDef.recover_time, the end held)
-			"attack": [&"ual", "Sword_Attack", 14, false, {"from": 0.3, "to": 1.2}],
-			# the lunge is announced with the blade raised over the head (Horde plays "windup" for its 0.9 s)
-			"windup": [&"ual", "Sword_Attack", 8, false, {"from": 0.1, "to": 0.3, "time": 0.9}],
+			"walk": [&"ual", "Jog_Fwd", 20, true, SOLDIER_JOG], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
+			# T5-02: the wind-up is the clip's whole rise, 0 to 0.35 s (the blade from the hip to its highest, over
+			# the head), the trunk coiling back and to the blade's side; Horde draws it in three beats (settle, arm,
+			# hold). The blow goes on from there: the blade's fall (0.35 to 0.5) as the body lands its pounce
+			# (Horde.ATTACK_PLAY, EnemyDef.strike_at), the rest is its recovery at the clip's own pace (T5-12)
+			"windup": [&"ual", "Sword_Attack", 10, false, {"from": 0.0, "to": 0.35, "bend": SOLDIER_COIL, "bend_in": true}],
+			"attack": [&"ual", "Sword_Attack", 14, false, {"from": 0.35, "to": 1.2, "bend": SOLDIER_COIL, "bend_out": 0.15}],
+			# T5-10: waiting round the paladin it steps sideways and back facing him (never the run turned aside)
+			"strafe_l": [&"kaykit", "Running_Strafe_Left", 12, true, SWORD_GUARD],
+			"strafe_r": [&"kaykit", "Running_Strafe_Right", 12, true, SWORD_GUARD],
+			"back": [&"kaykit", "Walking_Backwards", 12, true, SWORD_GUARD],
 		},
 	},
 	# 2. the runner: burnt bone and red rags, no weapon, stooped, an ember in the chest
@@ -253,7 +279,11 @@ const MODELS := {
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
 			"walk": [&"kaykit", "Running_B", 20, true], "idle": [&"ual2", "Zombie_Idle", 12, true],
-			"attack": [&"ual", "Punch_Cross", 14, false], "windup": [&"ual", "Crouch_Idle", 8, true],
+			# T5-04, T5-16: it gathers into a crouch, the arms drawn back (the coil of the library's jump), then bursts
+			# all around itself spinning with its arms out (its blast lands as they open, EnemyDef.strike_at); it
+			# was a still crouch and a punch ahead for a burst around it
+			"windup": [&"ual", "Jump_Start", 8, false, {"from": 0.18, "to": 0.33}],
+			"attack": [&"kaykit", "2H_Melee_Attack_Spinning", 14, false],
 		},
 	},
 	# 3. the sorcerer: dark hood and robe over the ribs, steel arms; the staff with the cold violet gem is KayKit's
@@ -267,9 +297,8 @@ const MODELS := {
 		],
 		"anims": {
 			"walk": [&"kaykit", "Running_B", 20, true, MAGE_TROT], "idle": STAFF_CLIPS.idle,
-			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
-			# its bolt is announced by "aim" (Horde): the conjuring pose, not the walk it fell back to
-			"aim": STAFF_CLIPS.cast,
+			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
+			"shot": STAFF_CLIPS.shot, "exit": STAFF_CLIPS.exit,
 		},
 	},
 	# 4. the crossbowman: dark hood, red scarf; the crossbow is KayKit's
@@ -300,6 +329,10 @@ const MODELS := {
 			"attack": SWORD_BLOW,
 			# the charge is announced braced behind the shield, brought further across the body
 			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			# T5-06: the charge is the shield's push that goes on from the brace (it was drawn with the middle of its
+			# sword blow), and after it the body sags, spent (T5-12, Idle_Shield_Break: the shield lowered)
+			"charge": [&"ual2", "Shield_Dash_RM", 10, false, {"from": 0.3, "to": 0.8, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
 	# 6. the priest of the dead: dark purple hood and robes, no weapon
@@ -309,6 +342,8 @@ const MODELS := {
 			"walk": [&"ual", "Walk", 20, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 12, true, OFFERING_GUARD],
 			# the ritual: both hands rise over the second its blow takes to fall
 			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 12, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
+			# T5-13: the elite's three vines, each its own thrust of the hands
+			"shot": [&"kaykit", "Spellcast_Shoot", 8, false, {"time": 0.3}],
 		},
 	},
 	# 7. the guardian knight: crowned helmet, heavy plate, red cape; blade and shield are KayKit's
@@ -322,6 +357,10 @@ const MODELS := {
 		"anims": {
 			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE,
 			"attack": SWORD_BLOW,
+			# T5-07: its charge braced behind the round shield and run with it (it stood idle with a line on the floor)
+			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			"charge": [&"ual2", "Shield_Dash_RM", 10, false, {"from": 0.3, "to": 0.8, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
 	# 8. the elder priest: crown over the hood, purple and gold robes; the staff with the purple orb is KayKit's
@@ -335,7 +374,9 @@ const MODELS := {
 		],
 		"anims": {
 			"walk": [&"ual", "Walk_Formal", 20, true, ELDER_STRIDE], "idle": STAFF_CLIPS.idle,
-			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast,
+			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
+			# T5-03: raising its dead is the priests' ritual gesture, not the staff's
+			"summon": [&"kaykit", "Spellcast_Summon", 12, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
 		},
 	},
 	# 9. Morvath, the king who betrayed the light: crown, long white hair, purple and gold robes, the purple gem on
@@ -353,8 +394,11 @@ const MODELS := {
 			# the one-handed Sword_Attack it replaces had already struck at 0.28, inside the wind-up)
 			"slash1": [&"ual2", "Sword_Regular_A", 14, false, TWO_HANDS], "slash2": [&"ual2", "Sword_Regular_B", 14, false, TWO_HANDS],
 			"slash3": [&"ual2", "Sword_Regular_C", 16, false, {"from": 0.158, "to": 1.258, "two_hands": true, "in_place": true}],
-			"dash_windup": [&"kaykit", "2H_Melee_Idle", 8, true, {"lift": 0.2}],
-			"dash": [&"ual2", "Sword_Dash_RM", 12, false, {"from": 0.12, "to": 0.72}],
+			# T5-15: the charge's own crouch, the start of the library's dash (it was the same still guard as the
+			# Blades' wind-up), leaning into it; the Blades draw the blade back over the shoulder in both hands
+			"dash_windup": [&"ual2", "Sword_Dash_RM", 8, false, {"from": 0.0, "to": 0.12, "bend": CHARGE_LEAN, "bend_in": true}],
+			"dash": [&"ual2", "Sword_Dash_RM", 12, false, {"from": 0.12, "to": 0.72, "bend": CHARGE_LEAN, "bend_out": 0.12}],
+			"blades_windup": [&"ual2", "Sword_Regular_B", 8, false, {"from": 0.0, "to": 0.2, "two_hands": true, "in_place": true, "bend": DRAW_BACK, "bend_in": true}],
 			# the KayKit figure is half his height and hops as it conjures: on him the hop would be a flight
 			"summon": [&"kaykit", "Spellcast_Summon", 20, false, {"lift": 0.2}], "rain": [&"kaykit", "Spellcast_Raise", 14, false, {"lift": 0.2}],
 			# the curse and each wave of the storm are thrown (Boss poses it as they leave): the library's overhand
@@ -638,7 +682,7 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 		for i in frames:
 			# loops sample [from, to); one-shots include the last pose
 			var t := from + (to - from) * i / (frames if loops else maxi(frames - 1, 1))
-			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), ground)
+			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), _planted(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), ground))
 			if not locked.is_empty():
 				_place_feet(skeleton, locked[i])
 			if anim == "walk":
@@ -724,9 +768,19 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 	var rest := skeleton.get_bone_rest(rt.hips_bone()).origin
 	hips.y = rest.y + (hips.y - rest.y) * float(opts.get("lift", 1.0))
 	skeleton.set_bone_pose_position(rt.hips_bone(), hips)
+	# the clip's own bend may grow over it ("bend_in") or ease off from its start ("bend_out" seconds): a wind-up
+	# that coils into the pose its blow uncoils from (T5-02)
+	var own: Dictionary = opts.get("bend", {})
+	var from: float = opts.get("from", 0.0)
+	var to: float = opts.get("to", from + 1.0)
+	var coil := 1.0
+	if opts.get("bend_in", false):
+		coil = smoothstep(from, to, t)
+	elif opts.has("bend_out"):
+		coil = 1.0 - smoothstep(from, from + float(opts.bend_out), t)
 	for bone: String in bend:
 		var i := skeleton.find_bone(bone)
-		var deg: Vector3 = bend[bone]
+		var deg: Vector3 = bend[bone] - (own.get(bone, Vector3.ZERO) as Vector3) * (1.0 - coil)
 		var q := Quaternion.from_euler(Vector3(deg_to_rad(deg.x), deg_to_rad(deg.y), deg_to_rad(deg.z)))
 		skeleton.set_bone_pose_rotation(i, skeleton.get_bone_pose_rotation(i) * q)
 	if _even_legs:
@@ -745,6 +799,16 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		low = ground
 	skeleton.set_bone_pose_position(rt.hips_bone(), hips - Vector3(0, low, 0))
 	return low
+
+
+## The walk's one floor for the whole loop (`ground`), or ("plant", T5-11) that share of the way to each pose's own
+## lowest point: the body sinks a little where both feet are off the floor, so a run's flight stays near the floor.
+func _planted(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: Array, t: float, bend: Dictionary, ground: float) -> float:
+	var opts: Dictionary = a[4] if a.size() > 4 else {}
+	if is_nan(ground) or not opts.has("plant"):
+		return ground
+	var own := _pose_meshy(skeleton, model, retargets, a, t, bend)
+	return lerpf(ground, own, float(opts.plant))
 
 
 ## The bones of each leg, hip to ankle.
@@ -849,7 +913,8 @@ func _foot_lock(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: A
 	var dt := float(opts.get("time", to - from)) / frames
 	var verts: Array = []
 	for i in frames:
-		_pose_meshy(skeleton, model, retargets, a, from + (to - from) * i / frames, bend, ground)
+		var at := from + (to - from) * i / frames
+		_pose_meshy(skeleton, model, retargets, a, at, bend, _planted(skeleton, model, retargets, a, at, bend, ground))
 		verts.append(PoseBaker.pose_arrays(model, skeleton)[Mesh.ARRAY_VERTEX])
 	var soles := _soles(body, skin, verts)
 	var floor_y := INF
