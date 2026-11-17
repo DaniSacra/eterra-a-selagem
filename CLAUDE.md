@@ -453,13 +453,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`DefeatCause`, `core/defeat_cause.gd`): `killer_<ataque>` para os ataques de Morvath (Foice Sepulcral, Lâminas das Almas,
   Tempestade das Seis Almas, Erupções Sepulcrais, Erupções do Ritual, Maldição de Morvath, Investida de Morvath), senão o
   `name_key` do inimigo, senão `killer_unknown`; rótulo `defeated_by` ("Derrotado por: {name}"). A tela é do ui-ux-designer.
-- Som: `scripts/audio.gd` (receitas sintetizadas, provisórias). Um arquivo `audio/<nome>.ogg` substitui a receita;
-  `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Golpes, ossos, escudo e atordoamento usam o Kenney Impact Sounds (CC0).
-  Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e CC-BY com crédito); no jogo, Como Jogar, Créditos
-  (`CreditsScreen`, textos `credits_*`; C15-05).
+- Som: `scripts/audio.gd` (nomes e receitas de reserva). Um arquivo `audio/<nome>.ogg` substitui a receita;
+  `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e
+  CC-BY com crédito); no jogo, Como Jogar, Créditos (`CreditsScreen`, textos `credits_*`; C15-05).
+  **T5 (relatos do PO "música da partida igual à do título" e "efeitos de fliperama"; `docs/design/t5_audio.md`)**: todo
+  nome de som tem arquivo gravado, montado por `tools/make_sfx.sh <pasta dos pacotes>` (fonte da verdade: uma linha por
+  arquivo com as camadas já mixadas, movimento da arma, contato, impacto e magia, tom, filtro e pico) a partir de CC0
+  (Kenney Impact Sounds e RPG Audio, qubodup, rubberduck) e CC BY 3.0 (Little Robot Sound Factory, nos créditos); golpe 2
+  `blade_heavy` e Ômega do especial `wave_omega` próprios (`ComboNode.sound` no `make_data.gd`, família da lâmina no
+  `VoiceGate`). Música do título, das salas e de Morvath gravada: Kevin MacLeod, CC BY 4.0 ("Tempting Secrets" no
+  título, `Music.play(&"title")` no `boot.gd`, abertura uma vez e laço de `loop_from` 16 s; "Oppressive Gloom" caminhada
+  e "The Descent" luta; "Clash Defiant" em 4 seções, uma por fase), laços de compassos inteiros por
+  `tools/make_music_loops.sh <pasta dos mp3>`; faixas `solo` (`MusicMix.Deck.solo`: o nível n ouve só a camada n, as
+  outras seguem mudas no tempo, troca em crossfade sem reiniciar). Os Salmos e a vitória seguem sintetizados.
   **Música (E4-06, C15-03)**: composta nota por nota e sintetizada pelo projeto em `tools/make_music.gd` (licença nossa;
   tabelas de onda, coro por formantes, corda Karplus-Strong, sinos, tambores, Freeverb; ré menor, a luz de Elun em maior),
-  rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- catacombs morvath psalms victory]` (cerca de
+  rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory]` (desde o T5 `catacombs` e `morvath` só se pedidos pelo nome, e sobrescrevem os gravados) (cerca de
   3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`, 6,1 MB).
   Faixas: `catacombs` (96 s, 80 BPM, laço sem emenda: a reverberação do fim aquece o começo) em 2 camadas, caminhada e luta;
   `morvath` (64 s, 120 BPM) em 4 camadas, uma por fase; temas dos Salmos `psalm_sentinel`, `psalm_shelter`,

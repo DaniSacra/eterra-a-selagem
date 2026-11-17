@@ -1,10 +1,12 @@
 extends Node
-## Autoload "Music" (E4-06, C15-03): the game's music, our own synthesis (tools/make_music.gd renders it to
-## audio/music/*.ogg; licence in audio/LICENSES.md). The rules (decks, levels, crossfades, the duck under a sting)
+## Autoload "Music" (E4-06, C15-03, T5): the game's music. T5: the title, the rooms and Morvath are recorded pieces by
+## Kevin MacLeod (CC BY 4.0, cut into loops by tools/make_music_loops.sh); the Psalms' themes and the victory are
+## still our own synthesis (tools/make_music.gd). Licences and credits in audio/LICENSES.md. The rules (decks, levels, crossfades, the duck under a sting)
 ## are MusicMix; this node only turns them into players on the Music bus, which runs into Master before its limiter
 ## (Audio.limit_master). The volume is the save's "music" option (Audio.apply_volumes).
-##   Music.play(&"catacombs", level)  the rooms: level 1 the walk, 2 the fight's drums over it
-##   Music.boss_phase(n)              Morvath: phase n hears the first n layers (starts his track if needed)
+##   Music.play(&"title")             the title screen (its own piece; the first room crossfades from it)
+##   Music.play(&"catacombs", level)  the rooms: level 1 the walk, 2 the fight (one heard at a time, T5)
+##   Music.boss_phase(n)              Morvath: phase n hears its own section (starts his track if needed)
 ##   Music.sting(&"sentinel")         a Psalm's theme over the bed (psalm_<id>; the Psalms' front calls it)
 ##   Music.play(&"victory")           the end, which hands over to the walk
 ##   Music.ambience(&"crypt")         E6 (C15-04): the room's air (Ambience), crossfaded, on the Ambience bus
@@ -14,9 +16,12 @@ const DIR := "res://audio/music/"
 ## Under every track, so the music sits below the blows (tests/test_music.gd measures it).
 const MUSIC_DB := -3.0
 ## Bed tracks: layers (files <id>_1.ogg...; one layer is <id>.ogg), loop, and what a one-shot hands over to.
+## "solo": level n hears only layer n (MusicMix, T5); "loop_from": seconds the loop goes back to (the title's opening
+## hit plays once; tools/make_music_loops.sh LOOP_FROM).
 const TRACKS := {
-	&"catacombs": {"layers": 2, "loop": true},
-	&"morvath": {"layers": 4, "loop": true},
+	&"title": {"layers": 1, "loop": true, "loop_from": 16.0},
+	&"catacombs": {"layers": 2, "loop": true, "solo": true},
+	&"morvath": {"layers": 4, "loop": true, "solo": true},
 	&"victory": {"layers": 1, "loop": false, "then": &"catacombs"},
 }
 ## Stings: one-shots over the bed (a Psalm discovered).
@@ -70,7 +75,9 @@ static func stream_of(id: StringName, layer: int, layers: int) -> AudioStream:
 		return null
 	var s: AudioStream = load(path)
 	if s is AudioStreamOggVorbis:
-		(s as AudioStreamOggVorbis).loop = (TRACKS.get(id, {}) as Dictionary).get("loop", false)
+		var spec: Dictionary = TRACKS.get(id, {})
+		(s as AudioStreamOggVorbis).loop = spec.get("loop", false)
+		(s as AudioStreamOggVorbis).loop_offset = spec.get("loop_from", 0.0)
 	return s
 
 

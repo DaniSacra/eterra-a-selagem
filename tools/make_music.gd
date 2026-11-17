@@ -1,7 +1,10 @@
 extends SceneTree
 ## The game's music (E4-06, C15-03): composed here, note by note, and rendered by our own synthesis, so the licence
 ## is the project's (D-12b). Nothing sampled, nothing taken from another game.
-##   ~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- catacombs morvath psalms victory] [--work=dir]
+##   ~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory] [--work=dir]
+## T5: the title, the rooms and Morvath are recorded music now (Kevin MacLeod, CC BY 4.0, tools/make_music_loops.sh);
+## the old synthesised catacombs and morvath are still here, rendered only when asked by name, and they overwrite
+## the recorded ones (audio/music/catacombs_*.ogg, morvath_*.ogg).
 ## Needs ffmpeg with libvorbis on the PATH. The .wav of each layer stays in the work folder (default
 ## ~/tools/e4/music); only the .ogg goes in audio/music/ (Music, scripts/music.gd, plays them). Deterministic.
 ##
@@ -42,7 +45,7 @@ func _init() -> void:
 		else:
 			asked.append(a)
 	if asked.is_empty():
-		asked = ["catacombs", "morvath", "psalms", "victory"]
+		asked = ["psalms", "victory"]
 	DirAccess.make_dir_recursive_absolute(_work)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	_sin.resize(TAB)

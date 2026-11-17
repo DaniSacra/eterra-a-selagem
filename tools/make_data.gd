@@ -102,7 +102,7 @@ func _tree(fourth: bool) -> ComboTree:
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 25.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
 		"move_hold": 19.0 / 60.0,
-		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0}, after_cut2)
+		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0, "sound": &"blade_heavy"}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0,
@@ -119,7 +119,7 @@ func _tree(fourth: bool) -> ComboTree:
 	# Omega special (special held 0.65 s, 10 Magia): a wide bolt that bursts through the crowd
 	var burst := _move(&"burst", C, &"Cast", [&"heavy", &"wave", &"charge", &"omega"],
 		{"magick_cost": 10.0, "charge_time": 0.65, "damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.08,
-		"recovery": 0.45, "move_hold": SPECIAL_HOLD, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
+		"recovery": 0.45, "move_hold": SPECIAL_HOLD, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
 		"effect_radius": 880.0 / U, "effect_size": 330.0 / U * 2.0}, [], &"move_burst")
 	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back. Its windup and
 	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead). Hades II's Swing5:

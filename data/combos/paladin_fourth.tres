@@ -89,6 +89,7 @@ recovery = 0.21666666666666667
 move_hold = 0.31666666666666665
 chain_window = 0.4
 hit_stop_ms = 65.0
+sound = &"blade_heavy"
 shake = 0.8
 next = Array[Resource]([SubResource("Resource_14ox4")])
 
@@ -157,7 +158,7 @@ windup = 0.08
 recovery = 0.45
 move_hold = 0.71
 hit_stop_ms = 0.0
-sound = &"dart"
+sound = &"wave_omega"
 magick_cost = 10.0
 charge_time = 0.65
 shake = 1.5

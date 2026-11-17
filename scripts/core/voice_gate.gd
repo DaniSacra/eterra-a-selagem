@@ -8,7 +8,10 @@ extends RefCounted
 ##   swing is always heard and the swishes never pile up into a buzz.
 ## Sounds outside FAMILY are their own family with DEFAULT_GAP_MS and no cap (Audio's round robin as before).
 
-const FAMILY := {&"blade": &"blade", &"blade_spin": &"blade", &"thrust": &"blade", &"dart": &"blade"}
+const FAMILY := {
+	&"blade": &"blade", &"blade_heavy": &"blade", &"blade_spin": &"blade", &"thrust": &"blade", &"dart": &"blade",
+	&"wave_omega": &"blade",
+}
 const GAP_MS := {&"blade": 70}
 const CAP := {&"blade": 2}
 const DEFAULT_GAP_MS := 45

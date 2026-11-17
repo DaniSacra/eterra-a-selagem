@@ -101,7 +101,9 @@ func _scaled(x: PackedVector2Array, db: float) -> PackedVector2Array:
 
 func test_every_track_is_there_in_time_and_small() -> void:
 	var cat := Music.catalog()
-	var bounds := {&"catacombs": Vector2(60, 120), &"morvath": Vector2(45, 120), &"victory": Vector2(6, 15)}
+	# T5: the rooms' pieces are long loops (40 and 70 bars, about 2 min 45 s: "um laço longo que não cansa"), the
+	# title's whole piece, Morvath's four sections of 48 bars
+	var bounds := {&"title": Vector2(60, 200), &"catacombs": Vector2(60, 200), &"morvath": Vector2(45, 120), &"victory": Vector2(6, 15)}
 	for id: StringName in Music.TRACKS:
 		assert_true(cat.has(id), "track %s" % id)
 		var spec: Dictionary = Music.TRACKS[id]
@@ -114,7 +116,10 @@ func test_every_track_is_there_in_time_and_small() -> void:
 			assert_eq((s as AudioStreamOggVorbis).loop, bool(spec.loop), "%s loops: %s" % [id, spec.loop])
 			if first < 0.0:
 				first = s.get_length()
-			assert_almost_eq(s.get_length(), first, 0.005, "%s layer %d in time with layer 1" % [id, i + 1])
+			# a solo track (T5) hears one layer at a time: each piece loops on its own bars, the walk and the fight
+			# need not be the same length; layers that sound together must
+			if not spec.get("solo", false):
+				assert_almost_eq(s.get_length(), first, 0.005, "%s layer %d in time with layer 1" % [id, i + 1])
 		var b: Vector2 = bounds[id]
 		assert_between(first, b.x, b.y, "%s length" % id)
 	for id in Music.STINGS:
@@ -132,9 +137,12 @@ func test_no_track_has_two_seconds_of_silence() -> void:
 	# the layer always heard under each track (the walk, Morvath's first phase), the stings and the victory up to
 	# the moment it hands over (MusicMix.HANDOVER)
 	var cat := Music.catalog()
-	for id: StringName in [&"catacombs", &"morvath"]:
-		var x := decode(Music.stream_of(id, 0, Music.TRACKS[id].layers))
-		assert_lt(longest_quiet(x), SILENCE_S, "%s: quiet stretch" % id)
+	# T5: every layer of a solo track is heard alone (the walk, the fight, each of Morvath's phases), and the title
+	for id: StringName in [&"title", &"catacombs", &"morvath"]:
+		var spec: Dictionary = Music.TRACKS[id]
+		for i in (int(spec.layers) if spec.get("solo", false) else 1):
+			var x := decode(Music.stream_of(id, i, spec.layers))
+			assert_lt(longest_quiet(x), SILENCE_S, "%s layer %d: quiet stretch" % [id, i + 1])
 	var victory := decode(Music.stream_of(&"victory", 0, 1), float(cat[&"victory"].length) - MusicMix.HANDOVER)
 	assert_lt(longest_quiet(victory), SILENCE_S, "victory: quiet stretch")
 	for id in Music.STINGS:
@@ -196,6 +204,36 @@ func test_a_new_track_crossfades_and_the_victory_hands_over() -> void:
 	assert_between(t, float(mix.catalog[&"victory"].length) - MusicMix.HANDOVER - 0.1, float(mix.catalog[&"victory"].length))
 
 
+## T5: the title has its own piece; the rooms and Morvath hear one layer at a time, crossfaded, never restarted.
+func test_the_title_and_the_solo_tracks() -> void:
+	var mix := MusicMix.new(Music.catalog())
+	mix.play(&"title")
+	for i in 40:
+		mix.step(0.05)
+	assert_eq(mix.current_id(), &"title")
+	var title := mix.current()
+	mix.play(&"catacombs", Music.FIGHT)
+	assert_eq(mix.current_id(), &"catacombs", "the first room crossfades from the title")
+	assert_gt(title.fade, 0.0, "the title still fading out")
+	var d := mix.current()
+	assert_eq(Array(d.targets), [0.0, 1.0], "the fight alone")
+	for i in 60:
+		mix.step(0.05)
+	var t := d.time
+	mix.set_level(Music.WALK)
+	assert_eq(Array(d.targets), [1.0, 0.0], "the walk alone")
+	mix.step(1.0)
+	assert_gt(d.gains[0], 0.0)
+	assert_gt(d.gains[1], 0.0, "a crossfade, not a cut")
+	assert_almost_eq(d.time, t + 1.0, 0.001, "the same deck goes on: nothing restarts")
+	mix.play(&"morvath", 3)
+	assert_eq(Array(mix.current().targets), [0.0, 0.0, 1.0, 0.0], "phase 3 hears its own section")
+	assert_eq(mix.level(), 3)
+	var s := Music.stream_of(&"title", 0, 1) as AudioStreamOggVorbis
+	assert_true(s.loop)
+	assert_almost_eq(s.loop_offset, float(Music.TRACKS[&"title"].loop_from), 0.001, "the opening hit plays once")
+
+
 func test_the_api_levels_phases_and_stings() -> void:
 	Music.play(&"catacombs", Music.FIGHT)
 	assert_eq(Music.current(), &"catacombs")
@@ -252,12 +290,14 @@ func test_music_sits_under_the_blows() -> void:
 	var opts: Dictionary = SaveData.defaults().options
 	var music_db := Music.MUSIC_DB + linear_to_db(opts.music) + linear_to_db(opts.master) + float(Audio.BUSES[&"Music"].trim)
 	var sfx_db := linear_to_db(opts.sfx) + linear_to_db(opts.master) + float(Audio.BUSES[&"SFX"].trim)
-	var layers := []
+	# T5: Morvath's track is solo (one section of the recorded piece per phase), so the loudest music is the loudest
+	# single layer, not their sum
+	var peak := -100.0
+	var loud := -100.0
 	for i in 4:
-		layers.append(decode(Music.stream_of(&"morvath", i, 4)))
-	var boss := _scaled(_sum(layers), music_db)
-	var peak := true_peak(boss)
-	var loud := loudest_rms(boss, 0.4)
+		var boss := _scaled(decode(Music.stream_of(&"morvath", i, 4)), music_db)
+		peak = maxf(peak, true_peak(boss))
+		loud = maxf(loud, loudest_rms(boss, 0.4))
 	var blows := -100.0
 	for pair: Array in [["hit_0", &"hit"], ["hit_1", &"hit"], ["hit_heavy_0", &"hit_heavy"]]:
 		var db := sfx_db + float(Audio.GAIN_DB.get(pair[1], 0.0))
