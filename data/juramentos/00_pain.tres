@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="JuramentoDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/juramento_def.gd" id="1_q0u2y"]
+
+[resource]
+script = ExtResource("1_q0u2y")
+id = &"pain"
+name_key = &"jur_pain"
+desc_key = &"jur_pain_desc"
+stat = &"enemy_damage_pct"
+values = PackedFloat32Array(0.2, 0.6, 1)
+weights = PackedInt32Array(1, 2, 2)

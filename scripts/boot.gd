@@ -3,7 +3,8 @@ extends Node
 ## the painted one (TitleMenu). Iniciar starts the run; O Guerreiro (HeroScreen), Como Jogar and Configurações open
 ## their panels over the art.
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
-## --title --screen=options|moves|howto|hero|codex opens a panel at once (--hero-xp=N and --hero-equip=a,b set the
+## Once Morvath was sealed once, Iniciar first shows the Juramentos (JuramentoScreen, E6) with "Descer".
+## --title --screen=options|moves|howto|hero|codex|juramentos opens a panel at once (--hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data; Save.gd).
 
 const GAME := "res://scenes/game.tscn"
@@ -18,6 +19,8 @@ var _sub: Control
 ## The button that opened the panel on screen, to give the focus back to it.
 var _opener: TitleButton
 var _leaving := false
+## The Juramentos were seen on the way down (Iniciar goes on from there).
+var _sworn := false
 
 
 func _ready() -> void:
@@ -41,6 +44,8 @@ func _ready() -> void:
 			_open(HeroScreen.new(), TitleButton.Kind.HERO)
 		"howto":
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
+		"juramentos":
+			_open_juramentos(Juramentos.unlocked(Save.data))
 	if Dev.has("shot"):
 		_shot.call_deferred()
 
@@ -79,11 +84,24 @@ func _build() -> void:
 func _start() -> void:
 	if _leaving:
 		return
+	if not _sworn and Juramentos.unlocked(Save.data):
+		_open_juramentos(true)
+		return
 	_leaving = true
 	_menu.set_enabled(false)
 	create_tween().tween_property(_menu, ^"modulate:a", 0.0, START_FADE)
 	await _backdrop.fade_out(START_FADE)
 	get_tree().change_scene_to_file(GAME)
+
+
+## The Juramentos before going down (E6): "Descer" goes on into the run, Voltar (or Esc) back to the title.
+func _open_juramentos(with_descend: bool) -> void:
+	var screen := JuramentoScreen.new()
+	_open(screen, TitleButton.Kind.START, [with_descend])
+	screen.descend.connect(func() -> void:
+		_sworn = true
+		_close_sub()
+		_start())
 
 
 func _quit() -> void:

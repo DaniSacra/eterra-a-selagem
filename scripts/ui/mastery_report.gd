@@ -7,7 +7,7 @@ extends VBoxContainer
 ## are Game.log_run's (mastery_gain); the rule is MasteryCurve's.
 
 ## The order the sources are told in (the keys of MasteryCurve.run_xp; text "mastery_src_<key>").
-const SOURCES: Array[String] = ["rooms", "guardians", "phases", "victory", "first_boons", "first_elos", "first_psalms",
+const SOURCES: Array[String] = ["rooms", "guardians", "phases", "victory", "juramentos", "first_boons", "first_elos", "first_psalms",
 	"first_guardian", "first_victory"]
 const WIDTH := 420.0
 ## Seconds before the bar starts, and its run.

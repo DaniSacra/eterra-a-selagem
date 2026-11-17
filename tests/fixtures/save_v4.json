@@ -1,0 +1,20 @@
+{
+  "version": 4,
+  "options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "bindings": {}},
+  "best_times": [540.0],
+  "moves": ["cut1", "dash_cut"],
+  "wins": 2.0,
+  "runs": 5.0,
+  "heroes": {
+    "warrior": {"mastery_xp": 512.0, "unlocked": ["quarto_corte", "impeto"], "equipped": ["quarto_corte", "impeto"], "ultimate": "cleave", "firsts": {"guardian": 2.0, "victory": 2.0}}
+  },
+  "codex": {
+    "boons": {"brasas": {"seen": 3.0}},
+    "elos": {},
+    "psalms": {},
+    "talents": {},
+    "enemies": {},
+    "arenas": {}
+  },
+  "juramentos": {"ranks": {"pain": 2.0, "hordes": 1.0, "unknown": 3.0, "grit": "x"}, "best": 7.0}
+}

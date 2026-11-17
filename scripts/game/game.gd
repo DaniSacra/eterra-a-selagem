@@ -64,6 +64,9 @@ var boons: BoonState
 var hero: HeroDef = HeroDef.warrior()
 var talents: Array[StringName] = []
 var ultimate := ""
+## The Juramentos sworn for this descent (E6, D-63): the save's once unlocked, or --juramentos=id:rank,... (the robot
+## swears only those).
+var juramentos: Juramentos
 ## Blessings offered on a card and Elos formed in this run (ids), for the Mastery's first times and the Codex.
 var seen_boons := {}
 var elos_formed := {}
@@ -219,6 +222,7 @@ func _ready() -> void:
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
 	hero_gifts = HeroGifts.new(self)
+	_swear_juramentos()
 	psalms = Psalms.new(Psalms.load_catalog())
 	psalm_play = PsalmPlay.new(self, psalms)
 	psalm_cards = bot != null or Dev.has("autopick") or screen_shows_psalms()
@@ -670,6 +674,21 @@ func choose_card(c: BoonState.Card) -> void:
 		_on_chosen(c.boon if c != null else null)
 
 
+## Juramento Escolhas Perdidas (E6, Hades II's Denial): after a Blessing is chosen from a draw, some of the others
+## offered leave the descent (BoonState.banned). Never from a pomegranate's choice (those are held already).
+func _deny_others(chosen: Boon) -> void:
+	if juramentos == null:
+		return
+	var offered: Array[StringName] = []
+	for c in offer_cards:
+		if c.boon != null and c.psalm == null and not c.grow:
+			offered.append(c.boon.id)
+	if not offered.has(chosen.id):
+		return
+	for id in juramentos.denial(offered, chosen.id):
+		boons.banned[id] = true
+
+
 ## A level more for a gift already owned (the paladin picks which).
 func open_grow_choice() -> void:
 	_open_choice(boons.grow_cards(_rng))
@@ -825,6 +844,7 @@ func _take(b: Boon) -> void:
 		boons.take_card(card)
 	else:
 		boons.take(b, BoonChoice.offer_of(_offer_rarity.get(b.id)).rarity)
+	_deny_others(b)
 	offer_cards.clear()
 	gifts_taken.append(b.id)
 	if b.is_duo():
@@ -1531,6 +1551,19 @@ func _equip_talents() -> void:
 		_apply_talents(ids)
 
 
+## The Juramentos of this descent (E6): --juramentos=id:rank,... (any, for tests and the robot), else a person's
+## saved choice once Morvath was sealed once (never without a save: --nosave, the tests); none for the robot. Their numbers on the enemies' life go to the horde
+## now; the rest is read where it acts (Rooms, Boss, _take).
+func _swear_juramentos() -> void:
+	var chosen := {}
+	if Dev.has("juramentos"):
+		chosen = Juramentos.parse(Dev.arg("juramentos"))
+	elif bot == null and Save.enabled and Juramentos.unlocked(Save.data):
+		chosen = Juramentos.block(Save.data).get("ranks", {})
+	juramentos = Juramentos.new(Juramentos.load_catalog(), chosen)
+	horde.vow_hp = juramentos.scale(&"enemy_hp_pct")
+
+
 ## Equips these Gifts now, as if the descent began with them (tests): their numbers and their rules (HeroGifts).
 func equip_talents(ids: Array[StringName]) -> void:
 	talents = ids
@@ -1567,6 +1600,7 @@ func mastery_gain(outcome: String, data: Dictionary) -> Dictionary:
 		"new_psalms": psalms.seen.keys().filter(func(id: StringName) -> bool: return not known.has(String(id))).size(),
 		"first_guardian": guardians > 0 and int(firsts.get("guardian", 0)) == 0,
 		"first_victory": victory and int(firsts.get("victory", 0)) == 0,
+		"weight": juramentos.weight() if juramentos else 0,
 	})
 
 
@@ -1592,6 +1626,8 @@ func award_mastery(gain: Dictionary, outcome: String, data: Dictionary) -> void:
 		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
 	if outcome == "victory":
 		block.firsts["victory"] = int(block.firsts.get("victory", 0)) + 1
+		if juramentos:
+			Juramentos.record_win(data, juramentos.weight())
 
 
 ## E4-05: the enemies defeated (an elite counts for its common kind, and as an elite), Morvath met (the highest phase
@@ -1657,7 +1693,8 @@ func result() -> Dictionary:
 		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
 		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true),
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
-			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0}}
+			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},
+		"juramentos": juramentos.to_dict() if juramentos else {}, "weight": juramentos.weight() if juramentos else 0}
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

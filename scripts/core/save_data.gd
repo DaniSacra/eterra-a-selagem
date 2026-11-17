@@ -7,7 +7,9 @@ extends RefCounted
 ## 3 (DT-012, E2a): heroes (heroes.<id>: mastery_xp, unlocked, equipped, ultimate, firsts) and codex (boons, elos,
 ## psalms, talents, enemies: id to a small dictionary of counts). An older file gets the Warrior's Mastery for what it
 ## already played, once (MasteryCurve.retro_xp).
-const VERSION := 3
+## 4 (E6, D-63): juramentos (ranks: the Juramentos chosen for the next descent, id to rank; best: the highest Peso
+## won). An older file opens with none chosen and nothing won; nothing else changes.
+const VERSION := 4
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -31,7 +33,14 @@ static func defaults() -> Dictionary:
 		"runs": 0,
 		"heroes": {FIRST_HERO: hero_defaults()},
 		"codex": codex,
+		"juramentos": juramentos_defaults(),
 	}
+
+
+## The Juramentos block (E6): the ranks chosen for the next descent (id: rank; read through Juramentos.set_all) and the
+## highest Peso a victory was won with.
+static func juramentos_defaults() -> Dictionary:
+	return {"ranks": {}, "best": 0}
 
 
 ## One hero's block: the Mastery XP (the level comes out of it), the Gifts unlocked (ids, what the screens have shown),

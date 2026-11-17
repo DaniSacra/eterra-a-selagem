@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="JuramentoDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/juramento_def.gd" id="1_b4fwu"]
+
+[resource]
+script = ExtResource("1_b4fwu")
+id = &"menace"
+name_key = &"jur_menace"
+desc_key = &"jur_menace_desc"
+stat = &"elite_pct"
+values = PackedFloat32Array(0.1, 0.25)
+weights = PackedInt32Array(1, 2)
+order = 4

@@ -104,6 +104,33 @@ func _codex(howto: Node) -> void:
 	_check(howto.find_children("*", "CodexScreen", true, false).is_empty() and howto.is_inside_tree(), "Esc goes back to Como Jogar")
 
 
+## The Juramentos (E6) by keys, once Morvath was sealed (wins 1, in memory only): Iniciar opens them with Descer in
+## focus, up reaches a Juramento, right raises its rank and left lowers it (saved in Save.data), Esc goes back to the
+## title with the focus on Iniciar; then Iniciar shows them again and Enter on Descer starts the run.
+func _juramentos(boot: Node, menu: Variant) -> void:
+	var save := root.get_node("Save")
+	var data: Dictionary = save.get(&"data")
+	data.wins = 1
+	await _key(&"ui_accept")
+	await _wait(0.3)
+	_check(_sub_is(boot, "juramento_screen.gd"), "after a victory Iniciar opens the Juramentos")
+	var owner_ := root.gui_get_focus_owner()
+	_check(owner_ != null and owner_.name == "descend", "the focus starts on Descer")
+	await _key(&"ui_up")
+	var row := root.gui_get_focus_owner()
+	var id := String(row.name) if row else ""
+	_check(id == "rivals", "up reaches the last Juramento (%s)" % id)
+	await _key(&"ui_right")
+	_check(int((data.juramentos.ranks as Dictionary).get(id, 0)) == 1, "right raises %s to 1" % id)
+	_check(root.gui_get_focus_owner() == row, "the focus stays on the row")
+	await _key(&"ui_left")
+	_check(int((data.juramentos.ranks as Dictionary).get(id, 0)) == 0, "left takes it off")
+	await _key(&"ui_cancel")
+	await _wait(0.3)
+	_check(boot.get(&"_sub") == null and menu.visible, "Esc closes the Juramentos")
+	_check(menu.button(0).has_focus(), "focus back on Iniciar")
+
+
 func _run() -> void:
 	change_scene_to_file("res://scenes/boot.tscn")
 	await _wait(1.5)
@@ -146,9 +173,13 @@ func _run() -> void:
 	await _key(&"ui_up")
 	await _key(&"ui_up")
 	_check(menu.button(0).has_focus(), "up returns to Iniciar")
+	await _juramentos(boot, menu)
+	await _key(&"ui_accept")
+	await _wait(0.3)
+	_check(_sub_is(boot, "juramento_screen.gd"), "Iniciar shows the Juramentos again")
 	await _key(&"ui_accept")
 	await _wait(2.0)
-	_check(current_scene != null and current_scene.scene_file_path == "res://scenes/game.tscn", "Iniciar starts the run")
+	_check(current_scene != null and current_scene.scene_file_path == "res://scenes/game.tscn", "Descer starts the run")
 	change_scene_to_file("res://scenes/boot.tscn")
 	await _wait(1.5)
 	_check(current_scene != null and current_scene.name == "Boot" and current_scene.get(&"_menu") != null, "back to the title from the run")
