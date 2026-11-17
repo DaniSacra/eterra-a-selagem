@@ -66,10 +66,38 @@ func test_the_trial_card_shows_the_blessing_and_the_curse() -> void:
 		assert_not_null(card.find_child("CurseBand", true, false), "the curse on its own band")
 		assert_eq((card.find_child("CurseName", true, false) as Label).text, T.t(c.curse.name_key))
 		assert_eq((card.find_child("Curse", true, false) as Label).text, TrialSeal.curse_text(c))
-		assert_eq((card.find_child("Encounters", true, false) as Label).text, T.t(&"trial_card_for", {"n": c.encounters}))
+		assert_eq((card.find_child("Encounters", true, false) as Label).text, T.t(&"trial_card_for", {"n": c.encounters}).to_upper())
+		# T5: when each half comes, said on the card (the blessing only after the fights, then to the end)
+		assert_eq((card.find_child("GainWhen", true, false) as Label).text, T.t(&"trial_gain_when", {"n": c.encounters}).to_upper())
+		assert_true((card.find_child("GainWhen", true, false) as Label).text.contains(str(c.encounters)), "after how many fights")
+		assert_eq((card.find_child("Keep", true, false) as Label).text, T.t(&"trial_gain_keep"))
+		assert_eq(card.custom_minimum_size, BoonCard.TRIAL_SIZE)
 	for text in _labels(screen):
 		assert_false(text.contains("{"), "no key left unfilled: %s" % text)
 		assert_false(text.contains("—"), "no dash in %s" % text)
+	var lead := screen.find_child("Lead", true, false) as Label
+	assert_not_null(lead, "a line under the title says the deal")
+	assert_eq(lead.text, T.t(&"trial_hint"))
+	assert_true(T.t(&"trial_pick_hint") in _labels(screen), "and under the cards that a card opens the doors")
+
+
+func test_the_trial_card_tells_the_truth_about_when() -> void:
+	# the blessing is not given when the card is taken: only when its fights are won (Rooms._fight_won)
+	_run(RunMap.Kind.TRIAL)
+	var rooms := game.rooms
+	var before := game.boons.stat(&"max_hp")
+	var i := -1
+	for k in rooms.trial_cards.size():
+		if rooms.trial_cards[k].blessing.id == &"trial_vigor":
+			i = k
+	if i < 0:
+		pass_test("no Vigor in this draw")
+		return
+	rooms.take_trial(i)
+	assert_eq(game.boons.stat(&"max_hp"), before, "nothing yet, as the card says")
+	for f in rooms.trials.left:
+		rooms._fight_won()
+	assert_gt(game.boons.stat(&"max_hp"), before, "after the fights it is his")
 
 
 func test_a_number_reads_as_the_player_reads_it() -> void:
@@ -166,13 +194,54 @@ func test_the_altar_screen_has_a_way_out_and_dims_what_is_out_of_reach() -> void
 	var candles := cards[Altar.Option.CANDLES]
 	assert_true(candles.disabled, "no gold: the candles cannot be lit")
 	assert_eq(candles.focus_mode, Control.FOCUS_NONE)
-	assert_not_null(candles.find_child("Cannot", true, false), "and it says why")
+	var why := candles.find_child("Cannot", true, false) as Label
+	assert_not_null(why, "and it says why")
+	assert_eq(why.text, T.t(&"altar_why_gold", {"n": stage.altar_gold_cost}), "how much gold is missing")
 	for c in cards:
 		assert_eq(c.custom_minimum_size, BoonCard.ALTAR_SIZE, "smaller than a Blessing's card")
+		assert_lt(c.custom_minimum_size.y, BoonCard.SIZE.y)
+	assert_eq((screen.find_child("Lead", true, false) as Label).text, T.t(&"altar_lead"))
 	watch_signals(screen)
 	screen._opened_at -= BoonChoice.GUARD_MS * 2
 	cards.back().pressed.emit()
 	assert_signal_emitted_with_parameters(screen, "picked", [EventChoice.NONE])
+
+
+func test_the_altar_cards_say_what_is_given_and_got() -> void:
+	var stage: StageDef = load(Rooms.STAGE)
+	var screen := EventChoice.new()
+	add_child_autofree(screen)
+	screen.open_altar(Altar.options(stage, 120, 30.0, true, 50.0))
+	var cards := screen.cards()
+	var life := cards[Altar.Option.LIFE]
+	assert_eq((life.find_child("GiveHead", true, false) as Label).text, T.t(&"altar_give").to_upper())
+	assert_eq((life.find_child("GetHead", true, false) as Label).text, T.t(&"altar_get").to_upper())
+	assert_eq((life.find_child("Give", true, false) as Label).text, T.t(&"altar_life_give", {"n": "10"}))
+	assert_eq((life.find_child("GiveDetail", true, false) as Label).text,
+		T.t(&"altar_life_give_detail", {"from": "30", "to": "20"}), "the most life now and after")
+	assert_eq((life.find_child("Get", true, false) as Label).text, T.t(&"altar_life_get"))
+	var candles := cards[Altar.Option.CANDLES]
+	assert_eq((candles.find_child("GiveDetail", true, false) as Label).text,
+		T.t(&"altar_candles_give_detail", {"from": "120", "to": "45"}))
+	assert_eq((candles.find_child("GetDetail", true, false) as Label).text,
+		T.t(&"altar_candles_get_detail", {"from": "50", "to": "75"}))
+	var none: BoonCard = cards.back()
+	assert_eq((none.find_child("Give", true, false) as Label).text, T.t(&"altar_nothing"), "walking on gives nothing")
+	assert_eq((none.find_child("Get", true, false) as Label).text, T.t(&"altar_nothing"))
+	for text in _labels(screen):
+		assert_false(text.contains("{"), "no key left unfilled: %s" % text)
+		assert_false(text.contains("—"), "no dash in %s" % text)
+
+
+func test_the_altar_says_why_a_trade_is_out_of_reach() -> void:
+	var stage: StageDef = load(Rooms.STAGE)
+	assert_eq(Altar.options(stage, 0, 30.0, false)[Altar.Option.LIFE].why, &"altar_why_grow")
+	assert_eq(Altar.options(stage, 0, Altar.MIN_LIFE + stage.altar_life_cost - 1, true)[Altar.Option.LIFE].why, &"altar_why_life")
+	assert_eq(Altar.options(stage, 500, 30.0, true)[Altar.Option.LIFE].why, &"")
+	assert_eq(Altar.options(stage, 500, 30.0, true)[Altar.Option.CANDLES].why, &"")
+	assert_eq(Altar.options(stage, 30, 30.0, true)[Altar.Option.CANDLES].short, stage.altar_gold_cost - 30)
+	assert_eq(BoonCard.num(22.5), "22,5")
+	assert_eq(BoonCard.num(30.0), "30")
 
 
 func test_the_altar_in_a_real_room() -> void:
@@ -229,8 +298,33 @@ func test_the_sign_carries_the_pictogram_and_a_warning() -> void:
 	assert_eq(sign.detail.get_theme_color(&"font_color"), DoorSign.SHORT_COLOR)
 	sign.set_short(false, T.t(&"trial_short"), T.t(&"trial_cost", {"n": 12}))
 	assert_eq(sign.detail.text, T.t(&"trial_cost", {"n": 12}))
-	for c: Color in [DoorGlyph.IVORY, DoorGlyph.CHEVRON_GOLD, TrialSeal.LILAC]:
+	for c: Color in [DoorGlyph.IVORY, DoorGlyph.CHEVRON_GOLD, TrialSeal.LILAC, DoorSign.GROUP_COLOR]:
 		assert_gt(DoorSign.contrast(c, DoorSign.OUTLINE_COLOR), DoorSign.MIN_CONTRAST, "the pictogram reads on its outline")
+	sign.add_note("a")
+	sign.add_note("b")
+	assert_eq(sign.note.text, "b", "one note, rewritten")
+	assert_eq(sign.note.get_parent(), sign.detail.get_parent())
+
+
+func test_the_slab_says_what_it_is_and_how_to_refuse() -> void:
+	_run(RunMap.Kind.FOUNTAIN)
+	var rooms := game.rooms
+	rooms.stage = rooms.stage.duplicate()  # never the loaded stage the other tests read
+	rooms.stage.trial_chance = 1.0
+	rooms.trials.last_shown = -1000
+	rooms.map.depth = 3
+	rooms._roll_slab()
+	assert_not_null(rooms.slab)
+	var sign := rooms._slab_sign
+	assert_eq(sign.detail.text, T.t(&"trial_cost", {"n": int(rooms.slab.cost)}))
+	assert_not_null(sign.note)
+	assert_true(sign.note.text.contains(T.t(&"trial_slab_offer")))
+	assert_true(sign.note.text.contains(T.t(&"trial_slab_refuse")), "not stepping on it is refusing")
+
+
+func test_the_altar_door_says_it_is_a_trade() -> void:
+	var r := RunMap.Room.new(RunMap.Kind.ALTAR, RunMap.Reward.NONE, 3, -1)
+	assert_eq(Rooms.door_text(r), T.t(&"room_altar") + "\n" + T.t(&"door_altar"))
 
 
 func test_the_doors_wear_their_pictograms_in_a_run() -> void:
@@ -252,6 +346,10 @@ func test_the_doors_wear_their_pictograms_in_a_run() -> void:
 
 func test_the_new_words_are_in_the_text() -> void:
 	for k in [&"trial_card_for", &"trial_title", &"trial_hint", &"trial_step", &"altar_none", &"altar_none_desc",
-			&"altar_hint", &"altar_step"]:
+			&"altar_hint", &"altar_step", &"trial_slab_offer", &"trial_slab_refuse", &"trial_gain_when", &"trial_gain_keep",
+			&"trial_pick_hint", &"trial_blessing_word", &"altar_lead", &"altar_give", &"altar_get", &"altar_nothing",
+			&"altar_life_give", &"altar_life_give_detail", &"altar_life_get", &"altar_life_get_detail",
+			&"altar_candles_give", &"altar_candles_give_detail", &"altar_candles_get", &"altar_candles_get_detail",
+			&"altar_why_grow", &"altar_why_life", &"altar_why_gold", &"door_altar"]:
 		assert_ne(T.t(k), String(k), "%s has its text" % k)
 		assert_false(T.t(k).contains("—"), "no dash in %s" % k)

@@ -35,6 +35,8 @@ const DETAIL_COLOR := UiKit.PALE
 ## The shop group's word over the name, smaller, and the price without gold enough for it.
 const GROUP_SIZE := 16
 const GROUP_COLOR := Color(0.74, 0.72, 0.8)
+## The note's size (add_note), under the detail.
+const NOTE_SIZE := 15
 const SHORT_COLOR := Color(0.92, 0.62, 0.58)
 const OUTLINE_COLOR := Color(0.035, 0.027, 0.04)
 ## WCAG contrast ratio each colour keeps against the outline.
@@ -48,6 +50,8 @@ var detail: Label
 var mark: DoorGlyph
 ## The shop group's word (null: not a shop sign).
 var group: Label
+## The explanation under the detail (null: none; add_note).
+var note: Label
 ## The shop price (-1: not a shop sign) and the gold still missing for it (0: enough).
 var price := -1
 var missing := 0
@@ -118,6 +122,17 @@ func set_gold(gold: int) -> void:
 	else:
 		detail.text = price_text(price)
 		detail.add_theme_color_override(&"font_color", DETAIL_COLOR)
+
+
+## A short explanation under everything (T5, the Provação's slab: what it is and how to refuse it), smaller and in the
+## shop group's cool grey so the name and the price stay first. Lines split by "\n".
+func add_note(text: String) -> Label:
+	if note == null:
+		note = _label(text, GROUP_COLOR, NOTE_SIZE)
+		note.name = "note"
+		_box.add_child(note)
+	note.text = text
+	return note
 
 
 ## The detail line as a warning (the slab without life enough: "Vida insuficiente" in SHORT_COLOR) or back to its own

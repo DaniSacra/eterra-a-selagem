@@ -11,6 +11,8 @@ signal card_chosen(card: BoonState.Card)
 const REST_HEAL := 10.0
 ## A button still held from the fight must not pick a card: presses this soon after the screen opens are ignored.
 const GUARD_MS := 350
+## The lead line under the title (_page, the events' screens).
+const LEAD_SIZE := 20
 
 var _cards: Array[BoonCard] = []
 var _opened_at := 0
@@ -76,14 +78,23 @@ func drawn() -> Array[BoonState.Card]:
 	return _drawn
 
 
-## The title, the row the cards go in, the hint under it (the gift screen's words unless given: EventChoice).
-func _page(title_text: String = "", hint_text: String = "") -> HBoxContainer:
+## The title, the row the cards go in, the hint under it (the gift screen's words unless given: EventChoice). lead: one
+## line right under the title saying what the screen is about (T5, the events; empty: none).
+func _page(title_text: String = "", hint_text: String = "", lead_text: String = "") -> HBoxContainer:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
 	var page := UiKit.column(self, 1100.0, 0.74)
 	page.add_theme_constant_override(&"separation", 20)
-	page.add_child(UiKit.shadow(UiKit.title(title_text if title_text != "" else T.t(&"choice_title"), 40)))
+	var head := VBoxContainer.new()
+	head.add_theme_constant_override(&"separation", 2)
+	head.add_child(UiKit.shadow(UiKit.title(title_text if title_text != "" else T.t(&"choice_title"), 40)))
+	if lead_text != "":
+		var lead := UiKit.shadow(UiKit.label(lead_text, UiKit.PALE, LEAD_SIZE))
+		lead.name = &"Lead"
+		lead.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		head.add_child(lead)
+	page.add_child(head)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 30)
