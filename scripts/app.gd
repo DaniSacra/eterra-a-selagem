@@ -1,6 +1,6 @@
 class_name App
 extends RefCounted
-## Applies the saved options to the window and the audio buses.
+## Applies the saved options to the window, the graphics quality and the audio buses.
 
 const WINDOW_SIZES: Array[Vector2i] = [Vector2i(1280, 720), Vector2i(1600, 900), Vector2i(1920, 1080)]
 
@@ -22,4 +22,6 @@ static func apply_options() -> void:
 			if win.size != size and not Dev.has("shot") and not Dev.has("frames"):
 				win.size = size
 				win.move_to_center()
+	# the graphics quality (E6, DT-003): resolution scale, MSAA, shadow maps; the run puts the screen effects
+	GraphicsQuality.apply_viewport(Engine.get_main_loop().root, GraphicsQuality.current(int(Save.option("quality"))))
 	Audio.apply_volumes()

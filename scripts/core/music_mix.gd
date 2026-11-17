@@ -14,6 +14,11 @@ const LAYER_FADE := 2.0
 ## The bed under a sting, linear (about -7 dB), and how fast it goes down and comes back.
 const DUCK := 0.45
 const DUCK_FADE := 0.6
+## E6 (C15-01): the bed under one of Morvath's warnings (Audio.WARN_CUES), linear (about -6 dB): down fast, held for
+## the warning, back slowly, so his tell is heard over the drums.
+const WARN_DUCK := 0.5
+const WARN_ATTACK := 0.06
+const WARN_RELEASE := 0.5
 ## A one-shot track calls its `then` this long before it ends, so the next one is in before it is gone.
 const HANDOVER := 2.0
 
@@ -48,6 +53,9 @@ var catalog: Dictionary = {}
 var decks: Array[Deck] = []
 var stings: Array[Deck] = []
 var duck := 1.0
+## The warning's duck (1 = none) and how long it still holds.
+var warn_duck := 1.0
+var warn_hold := 0.0
 ## Decks started and dropped since the last call to take_changes (Music makes and frees their players).
 var started: Array[Deck] = []
 var dropped: Array[Deck] = []
@@ -157,11 +165,21 @@ func step(dt: float) -> void:
 			stings.erase(s)
 			dropped.append(s)
 	duck = move_toward(duck, DUCK if not stings.is_empty() else 1.0, dt / DUCK_FADE)
+	warn_hold = maxf(warn_hold - dt, 0.0)
+	if warn_hold > 0.0:
+		warn_duck = move_toward(warn_duck, WARN_DUCK, dt * (1.0 - WARN_DUCK) / WARN_ATTACK)
+	else:
+		warn_duck = move_toward(warn_duck, 1.0, dt * (1.0 - WARN_DUCK) / WARN_RELEASE)
+
+
+## One of Morvath's warnings: the bed ducks under it for `seconds` (a longer one already holding is kept).
+func warn(seconds: float) -> void:
+	warn_hold = maxf(warn_hold, seconds)
 
 
 ## What a layer of a bed deck is heard at (the duck included).
 func heard(d: Deck, layer: int) -> float:
-	return d.gain(layer) * (1.0 if d.sting else duck)
+	return d.gain(layer) * (1.0 if d.sting else duck * warn_duck)
 
 
 ## The loudest thing playing, linear: 0 is silence.

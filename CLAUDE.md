@@ -476,6 +476,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   também nenhum silêncio de 2 s nas faixas nem numa descida inteira no relógio do `MusicMix`); a mistura inteira (Morvath na
   fase 4 com os golpes mais fortes juntos a cada 0,25 s) antes e depois de um modelo do limitador: `tools/mix_probe.gd` (medido: música sozinha -29 dBFS RMS e -13 dBTP;
   com os golpes, +4,2 dBTP antes do limitador e -1,4 dBTP depois). A outra frente (Salmos) só chama `Music.sting`.
+  **Mixagem por barramentos (E6, C15-01, B-3; números em `docs/qa/e6_audio_perf.md`)**: `Music`, `SFX`, `UI` e `Ambience`
+  vão ao `Master` (limitador por último); `Audio.BUSES` dá a opção de volume e o ajuste de cada um (Music +9, SFX +2,
+  UI -6; UI e Ambience seguem a opção `sfx`), `Audio.GAIN_DB` baixa os sons que empilhavam no limitador (golpe, osso,
+  escudo, queda de elite, rugido...), `Audio.UI_SOUNDS` vão ao `UI`. Ducking: os avisos de Morvath (`Audio.WARN_CUES`:
+  foice erguida, investida, erupção, maldição, rugido, invocação) chamam `Music.warn(s)` e a música e o ar descem a
+  `MusicMix.WARN_DUCK` 0,5 (-6 dB) em 0,06 s, seguram e voltam em 0,5 s. Medida de verdade: `--sound-log=arquivo` grava
+  todo som, música e ar de uma partida no relógio do jogo (`Audio.log_event`) e `tools/mix_probe.gd -- --log=arquivo
+  [--before] [--why] [--parts=music,air,sfx] [--wav=x]` refaz a mistura pelos barramentos (`tools/mix_replay.gd`) e mede
+  LUFS integrado (BS.1770, `Loudness`, `core/loudness.gd`, conferido com o `ebur128` do ffmpeg), pico real e as janelas de
+  0,1 s em que o limitador trabalha: descida -17,7 LUFS, Morvath -17,3, -1,4 dBTP depois do limitador, limitador em 0,3 a
+  0,5% das janelas (antes da E6: -19,5 a -20 LUFS e até 3 janelas fundas). **Ambiência por arena (C15-04)**: um laço
+  de 24 s por arena sintetizado em `tools/make_ambience.gd` (`audio/ambience/amb_*.ogg`), tabela `Ambience.BY_ARENA`
+  (`core/ambience.gd`; arena nova com ar que já existe é uma linha), tocada por `Music.ambience(id)` no `Rooms._enter` com o
+  crossfade do `MusicMix` (`Music.air`), `Ambience.AMBIENCE_DB` -6, cerca de 10 LU abaixo da música; sair da partida
+  (`Rooms._exit_tree`) apaga. Testes em `tests/test_mix.gd` (medidor, barramentos, ducking, laços sem emenda, crossfade e a
+  luta de Morvath gravada em `tests/fixtures/sound_log_boss.json` dentro das metas).
   Limitador `AudioEffectHardLimiter` no fim do barramento `Master` com teto de -1,5 dB nas amostras (E4: assim o pico real entre elas fica abaixo de -1 dBTP)
   (`Audio.LIMIT_DB`, `Audio.limit_master`, posto uma vez ao iniciar; ciclo C12c, GP-05). E1c (bug 2, "E apertado sem
   parar parece pacman"): o sopro da lâmina (`blade`, `blade_spin`, `thrust`, `dart`, `ComboNode.sound`, só quando o golpe
@@ -1019,4 +1035,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   menor (VX-12: `Hud.FONT_COMBO` 30, `COMBO_POP` 0,15, algarismos abaixo de 48 px a 1080 no pico, nome do golpe com alfa
   `MOVE_ALPHA` 0,7).
 - Toque (celular) ainda não tem botões na tela.
-- Desempenho: cerca de 1 ms por passo com 150 inimigos no PC; não medido em celular nem em placa de vídeo fraca.
+- Desempenho: cerca de 1 ms por passo com 150 inimigos no PC; não medido em celular. **Qualidade gráfica (E6, DT-003)**:
+  opção "Qualidade gráfica" Alta/Média/Baixa nas Configurações (`GraphicsQuality`, `core/graphics_quality.gd`; chave
+  `quality` do save, Alta por padrão; escala 3D 1/0,85/0,5 com FSR, MSAA, névoa no ar, SSAO, SSR e tamanho das sombras;
+  o glow fica sempre; `App.apply_options` e `Game.apply_options`; `--quality=alta|media|baixa`, `--gfx-<chave>=valor`).
+  Medido na iGPU do notebook do Daniel (Intel RaptorLake-S, `tools/gpu.sh run ... --gpu-index 1`) a 1280 x 720: Alta 15 a
+  17 qps, Baixa 62 a 81 qps no salão, Fendas, Jardim, Cripta e fase 4 de Morvath (`docs/qa/e6_audio_perf.md`).

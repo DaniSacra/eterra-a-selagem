@@ -1,3 +1,32 @@
+# Relatório de QA e desempenho: E6 (mixagem por barramentos, ambiência por arena, máquina fraca)
+
+- **Data**: 2026-11-17. **Testado**: base `arpg-3d` `224782a` com as mudanças da E6 na worktree do `qa-performance`
+  (commit da branch `worktree-agent-ae4dd307cb86b7a0d`). Relatório completo: `docs/qa/e6_audio_perf.md`.
+- **Ambiente**: WSL2 sem tela e sem som ouvido; GPU real pela Godot de Windows: RTX 5060 Laptop (Forward+ e
+  Compatibility) e a placa integrada Intel RaptorLake-S do mesmo notebook (`--gpu-index 1`); máquina carregada por
+  outros agentes durante as medidas (afeta o quadro limitado pela CPU, não o tempo de GPU). Sem controle, sem celular,
+  nenhum teste com gente.
+
+## Veredito
+
+**Pronto para o Daniel testar** no que é da E6: metas da mixagem atingidas por medida (não de ouvido), ambiência nas dez
+arenas, opção de qualidade que leva a placa integrada de 15 a 60+ qps. Dois P2 para o `art-director`: ouvir a mixagem e
+a ambiência, e os pontos pretos nas juntas do chão na qualidade Baixa.
+
+| Item | Resultado |
+|---|---|
+| `tools/check.gd` / importação | `CHECK ok`, 0 `SCRIPT ERROR`, 0 `Parse Error` |
+| `tools/test.sh` | 886 passando, 0 falhando |
+| `tools/title_flow_check.gd` | `FLOW ok` |
+| Robô `smoke.sh 600 --seed=5` / `180 --start=boss --boons=25 --seed=5` | vitória aos 371,3 s (Morvath aos 260,7) / vitória aos 83,8 s |
+| Mixagem (C15-01), 4 partidas gravadas e refeitas | -17,3 a -17,9 LUFS (antes -17,9 a -20,1), pico real -1,31 a -1,44 dBTP depois do limitador; conferido com o `ebur128` do ffmpeg |
+| Limitador (B-3) | trabalha em 0,1 a 0,7% das janelas de 0,1 s, nunca mais de 3 dB (antes até 2 janelas fundas por descida) |
+| Ducking nos avisos de Morvath | música e ambiência -6 dB em 0,06 s, voltam em 0,5 s (`tests/test_mix.gd`) |
+| Ambiência (C15-04) | 10 laços sintetizados, tabela `Ambience.BY_ARENA`, crossfade na troca de sala; 15 LU abaixo da música |
+| iGPU 1280 x 720, Baixa | luta 15,2 ms (66 qps), Fendas 14,7, Jardim 15,9, Cripta 12,1, Morvath fase 4 16,2 ms; Alta 59 a 68 ms |
+| RTX 1920 x 1080, `--stress=150` | GPU 5,5 a 5,8 ms (Alta), 3,9 (Média), 1,6 (Baixa); quadro 7 a 8 ms limitado pela CPU |
+| Capturas | `docs/gallery/e6/` (Alta, Média, Baixa, iGPU Baixa, opções a 720), abertas e olhadas |
+
 # Relatório de QA e desempenho: E3 e E4 (Bênçãos, Elos, loja, Salmos, carta de Salmo, Compêndio, música)
 
 - **Data**: 2026-11-17. **Testado**: `arpg-3d` no `5316e9f` (E3, E4-01 a E4-06 e as regras da E5), na worktree do QA.

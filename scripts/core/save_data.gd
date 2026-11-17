@@ -24,7 +24,7 @@ static func defaults() -> Dictionary:
 		codex[section] = {}
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "bindings": {}},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "bindings": {}},
 		"best_times": [],
 		"moves": [],
 		"wins": 0,
