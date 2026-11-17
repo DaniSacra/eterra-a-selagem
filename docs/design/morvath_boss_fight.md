@@ -9,6 +9,18 @@
 
 > **CICLO 9, FRENTE A (gameplay-engineer, 2026-11-15): refinamento da luta, sem reconstruir.** Detalhes na seção 0.
 
+> **E2 (2026-11-16, pedido do Daniel no teste da E1: "Morvath está fácil demais").** Fases 3 e 4 com padrões
+> sobrepostos e coordenados: camadas (`BossAttack.layers`, `layer_from_phase`, `layer_chance`, `layer_share`) postas por
+> cima de um ataque enquanto ele corre (`Boss._step_layers`; `BossDirector.layers_for`): maldição + erupções + mortos
+> (fase 3 em diante, quando o projétil sai), foice + erupções (fase 3 em diante, com o aviso), lâminas + mortos (fase 3),
+> tempestade + erupções + mortos (fase 4, com a primeira onda). As erupções de camada (2 círculos, `layer_eruption_count`)
+> deixam a faixa livre para onde o ataque de baixo não cobre (`BossRules.free_way`, `clearance`); os mortos de camada
+> (`layer_raise`: esqueleto e feiticeiro) passam pelos mesmos tetos (4 de pé, 20 na luta) e nascem a 4 m ou mais do
+> paladino. Tempestade em 3 ondas, descansos 0,6 e 0,4 s nas fases 3 e 4, combinações da fase 4 mais frequentes. Nenhum
+> dano, preparo, vida ou limiar mudou. Toda combinação nova tem saída testada (`tests/test_boss_exits.gd`); medição
+> antes e depois (robô com reação 0,25 e 5 dons: 8 de 8 vitórias antes, 4 de 8 depois) em `docs/qa/e2_morvath.md`,
+> tempos de cada ataque em `docs/design/combat_cadence.md` 1.4. `RESULT` "boss" ganhou `layers`.
+
 ## 0. Ciclo 9: o que mudou na luta (frente A)
 
 Identidade pedida pelo Daniel: o Rei que Traiu a Luz, autoridade, corrupção, necromancia, solene. Paleta do chefe em
