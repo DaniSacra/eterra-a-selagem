@@ -203,3 +203,190 @@ para a corrida [H]; clipes longos (Slash_C, Sword_Attack) terminando no retorno,
 
 - 2026-11-16: matriz criada com o ANTES (18b0785). Aguarda o DEPOIS das correções da E1c.
 - 2026-11-16 (E2): seção 1.4, Morvath medido depois da E1c e com as camadas da E2 (`tools/boss_cadence.gd`).
+- 2026-11-17 (T5): seção 6, preparação física, tremor no andar e corrida dos esqueletos, sincronia do dano com o corpo
+  (inimigos e Morvath), medidos em `5dfe97f`; relatório `docs/qa/t5_enemy_motion.md`. Aguarda as correções T5-01 a T5-19.
+
+## 6. T5: o corpo prepara o golpe (ANTES em `5dfe97f`, especificação)
+
+Relatos do PO: (1) P0 "mostram o aviso vermelho, mas não parecem preparar fisicamente o ataque"; (2) P1 "o esqueleto
+da primeira sala anda tremendo"; (3) P1 "os esqueletos invocados correm como uma gazela". Medição, causas e números
+por figura: `docs/qa/t5_enemy_motion.md`; quadros e dados: `docs/gallery/t5/motion/before/`.
+
+### 6.1 Padrão obrigatório (PO) e como medir
+
+Toda ação inimiga é **APROXIMAÇÃO, PREPARAÇÃO, ATAQUE, RECUPERAÇÃO**:
+
+- **Aproximação**: o andar no ritmo da velocidade real (já feito na E1c); para ou muda o andar ao entrar na preparação.
+- **Preparação em três tempos**, todos medidos a partir do primeiro quadro do estado `WINDUP`:
+  1. *assentar* (0,10 a 0,15 s): o corpo para, os pés plantam, mistura do andar para a guarda de combate;
+  2. *armar* (até 70% da preparação): o corpo carrega o golpe com o clipe da antecipação, acelerando e desacelerando
+     (o braço sobe, o tronco gira ou recua, o quadril baixa; o pesado mais lento e mais fundo);
+  3. *segurar* (os últimos 30%, no máximo 0,5 s, como o "vai bater" do Hades [H]): a pose no alto, com o tremor do
+     `windup_shake` e o pico do `EnemyFx.ramp`; nunca uma pose de `idle`.
+  O aviso no chão começa no primeiro quadro da preparação e enche até o **quadro do dano** (não até o fim da
+  preparação, quando o dano sai depois).
+- **Ataque**: o golpe sai no quadro em que a preparação termina; o **dano sai do corpo** (lâmina, escudo, explosão) no
+  quadro em que o desenho bate, com o som de impacto nesse quadro (o sopro no começo do ataque, como hoje).
+- **Recuperação**: a janela parada do Hades, mas **viva**: o resto do golpe e a volta à guarda, nunca a última pose
+  segurada mais de 0,3 s.
+
+Medidas e critérios (mesma sonda e mesmo índice da medição do ANTES; propostos como teste GUT
+`tests/test_enemy_windup.gd` e ferramenta `tools/enemy_motion_probe.gd`, a partir de
+`docs/gallery/t5/motion/before/data/t5_probe.gd.txt` e `pose_metrics.gd.txt`):
+
+| Medida | Como | Critério |
+|---|---|---|
+| Movimento da preparação | pico da velocidade média dos vértices do clipe desenhado na preparação, tamanho 1 (`pose_metrics`) | **1,0 m/s ou mais** em todo inimigo e elite (hoje 0,01 a 0,30, menos Escudo 0,62 e sacerdote 2,77) |
+| Pose armada | distância média dos vértices entre a pose final da preparação e a da guarda | 0,30 m ou mais (tamanho 1) |
+| Pose parada na preparação | maior trecho com pico abaixo de 0,1 m/s, sem contar o *segurar* com tremor | 0,3 s no máximo |
+| Recuperação | maior trecho com a mesma pose desenhada em `RECOVER` | 0,3 s no máximo (hoje 1,76 s no esqueleto) |
+| Dano x corpo | no quadro do dano, distância do herói ao contorno do corpo (investida) ou ao alcance da lâmina (golpe) | dentro do alcance em 100% dos casos (hoje até 2,4 m no esqueleto, 3,5 m no Escudo, 15,7 m em Morvath) |
+| Aviso x dano | quadro em que o aviso termina de encher x quadro do dano | 0 a 1 f |
+| Vídeo | `tools/movie.sh` a 60 qps, 0,25x, um de cada tipo; o PO reconhece o golpe pela pose sem olhar o chão | aprovação do art-director e do PO |
+
+### 6.2 Problemas T5 (classificação)
+
+| Id | Classe | Problema | Causa | Confirmada? |
+|---|---|---|---|---|
+| T5-P1 | **P0** | Preparação sem corpo: corredor, feiticeiro, besteiro, ancião, investida do Cavaleiro e preparação de Lâminas e Investida de Morvath com laços quase parados (pico 0,01 a 0,14 m/s); esqueleto só com o braço (0,30) | clipes `windup`/`cast`/`aim`/`dash_windup` em `tools/bake.gd` `MODELS` são `idle` de outra coisa; Cavaleiro pede `idle` (`horde.gd` `_behave_knight`) e não tem `brace` | **Confirmada** (poses assadas e quadros `lab_*_side.jpg`, `sheet_windups_*.jpg`) |
+| T5-P2 | **P0** | Dano antes do corpo chegar nas investidas: Escudo e Cavaleiro no último quadro da preparação (corpo a 3,5 m, chega 13 f depois); Morvath com o corpo a até 15,7 m | o dano é o `power` do aviso em linha (`ground.add_line_warning(..., dano)`) que aterra no fim da preparação | **Confirmada** (`st_guard.csv.gz` f130 a 145, `morvath_dash2.txt` f723) |
+| T5-P3 | P1 | Bote do esqueleto fere a até 2,4 m do corpo (alcance da lâmina cerca de 1,4 m em jogo) | aviso em linha de 4,1 m que aterra 0,15 s dentro do bote | Confirmada (`cycles.txt`, `dland 2.43`) |
+| T5-P4 | P1 | Esqueleto que espera treme (gira 20 graus por quadro, vai e volta, pisca andar/parado) | espera em círculo para fora abaixo de 2,2 m; `straight` alternando em `WAY_NEAR` 1,2 m (campo de fluxo para dentro); `FACE_SPLIT` sem histerese a 1200 graus/s; `idle` de 1 quadro; `_separate` a cada 2 quadros | **Confirmada** (`jitter_r1i_s2.txt`, f600 a 642) |
+| T5-P5 | P1 | Corrida "gazela" do esqueleto (comum, elite, invocados) | `Running_B` com `SOLDIER_RUN` (`stride` 0,68, `lift` 0,5): pés no ar em 16 de 20 poses, tronco a 3 a 5 graus, pé de trás até 29 cm | **Confirmada** (`walk_metrics`, `skeleton_run_side_24f.jpg`) |
+| T5-P6 | P1 | Recuperação congelada: esqueleto 1,76 s (elite 1,16), Escudo 1,1 s, Cavaleiro 0,8 s na última pose | `RECOVER` segura `blow_t` no fim do clipe (`Horde.render`); o clipe acaba 0,34 s depois | Confirmada |
+| T5-P7 | P1 | Tiro sem gesto: o feiticeiro elite solta 7 orbes parado na última pose do tiro por 1,4 s; tiros com pico 0,3 a 0,7 m/s | `Spell_Simple_Shoot` tocado uma vez por rajada | Confirmada |
+| T5-P8 | P1 | Foice de Morvath fere no quadro do alto, 10 f antes de a lâmina descer | o aviso aterra em `_t - _mark >= windup` e a descida (`SCYTHE_SWEEP`) vem depois | Confirmada (`morvath_scythe.txt`) |
+| T5-P9 | P1 | Lâminas e Investida de Morvath com a mesma preparação, parada | os dois tocam `dash_windup` (`2H_Melee_Idle`) | Confirmada |
+| T5-P10 | P1 | Investida do Escudo desenhada com o golpe de espada do meio do clipe `attack` | `Horde.render` toca `attack` desde `IMPACT_SHARE` quando o tipo não tem `windup` | Confirmada (`st_guard` f131 a 155: `attack:9` a `:15`) |
+| T5-P11 | P2 | Corredor: preparação agachada parada e golpe de soco para frente para uma explosão em volta; dano antes do soco | clipes `Crouch_Idle` e `Punch_Cross` | Confirmada |
+| T5-P12 | P2 | Maldição de Morvath usa o mesmo gesto do invocar; 2ª leva das erupções parada 1,1 s | `summon` na maldição; `rain` acaba na 1ª leva | Confirmada |
+| T5-P13 | P2 | Besta sobe ao ombro em 0,1 s (a mistura) e o disparo quase não recua | `aim` sem subida; `Pistol_Shoot` 0,48 m/s | Confirmada |
+| T5-P14 | P2 | Posição alterna 3 cm quadro a quadro com corpos encostados | `_separate` em quadros alternados | Confirmada |
+
+### 6.3 Especificação P0
+
+**T5-01 Preparação em três tempos no desenho (todas as figuras, `horde.gd` `render`, dados no `EnemyDef`).**
+Campo novo `windup_hold` (parte do fim que segura, padrão 0,3) e o tempo de assentar `windup_settle` (padrão 0,12 s);
+no `WINDUP` com clipe próprio de preparação (assado só até o alto do golpe), desenhar
+`t = duração_do_clipe * suave((state_t - assentar) / (prep * (1 - hold) - assentar))` com `suave` = subida e descida
+(smoothstep), 0 durante o assentar (a mistura de `CLIP_FADE` faz o andar virar guarda) e 1 no segurar. O tremor
+`windup_shake` só no segurar (hoje dura a preparação toda): esqueleto 0,025 m, corredor 0,04, Escudo e Cavaleiro 0,03,
+atiradores 0. Conteúdo é dado: tudo no `_enemies` do `make_data.gd`.
+
+**T5-02 Esqueleto (e elite e invocados).** `windup`: `ual:Sword_Attack` de **0,00 a 0,35 s** (a mão sobe de 1,14 a
+1,79 m em tamanho 1, o alto em 0,35 s; `clip_probe`), 10 poses, com `bend` do tronco: coluna para trás e girada para o
+lado da espada (valor inicial `Spine01` -10 graus em X e 15 em Y, quadril baixando uns 5 cm; ajustar no
+`tools/pose_lab.gd` e o art-director aprova). Tempos na preparação de 0,9 s: assentar 0 a 0,12, armar 0,12 a 0,63,
+segurar 0,63 a 0,90. `attack`: `Sword_Attack` de 0,35 a 1,20 s, a 1,4x (a descida de 0,35 a 0,50 s cai em 0,00 a
+0,11 s do ataque). Alternativa para o art-director comparar: `kaykit:1H_Melee_Attack_Chop` (antecipação própria até
+0,49 s, o alto em 46% do clipe, o golpe em 56%). Aceite: pico de movimento da preparação 1,0 m/s ou mais, pose
+armada com a lâmina acima da cabeça (alto da figura 2,1 m ou mais em tamanho 1; hoje 2,07 só no fim).
+
+**T5-03 Feiticeiro, ancião (e elite).** `windup` próprio: `ual:Spell_Simple_Enter` (0,53 s, o cajado subindo) no
+armar, `Spell_Simple_Idle` só no segurar (com o orbe crescendo pelo `EnemyFx`). Ancião: o mesmo para o leque; para
+erguer os mortos o `Spellcast_Summon` do sacerdote (`cast` do `priest`), outro gesto. Aceite: 6.1.
+
+**T5-04 Corredor (e elite).** Preparação que encolhe e carrega: tronco descendo e braços puxados ao peito (queda do
+centro do corpo de 15 cm ou mais em tamanho 1 até o fim do armar). Candidatos no rig KayKit que temos:
+`Spellcast_Raise` (primeira metade, juntando) ou `Crouch_Fwd` da UAL cortado no agachar; o engenheiro mede com
+`tools/clip_probe.gd` e `pose_metrics`, o art-director escolhe no `tools/enemy_lab.gd`. Golpe: um gesto que abre em
+volta (braços e tronco abrindo, ou o giro `kaykit:2H_Melee_Attack_Spinning`, 0,67 s), nunca o soco para frente; o
+dano (explosão) no quadro em que os braços abrem (T5-09).
+
+**T5-05 Besteiro (e elite).** Subida da besta ao ombro em 0,25 s no assentar (hoje 0,1 s): `CLIP_FADE` por tipo
+(`EnemyDef.windup_fade` 0,25) ou clipe `aim_raise` de `ual:Pistol_Aim_Down` para `Pistol_Aim_Neutral`; a mira parada é
+aceitável (o Hades também segura a mira) desde que com o fio no chão já existente. P2: recuo do tiro (T5-19).
+
+**T5-06 Escudo (e elite).** Investida: `brace` com assentar 0,15 s, armar até 0,80 s e segurar 0,35 s com tremor
+0,03 m (hoje o clipe estica uniforme em 1,15 s); a **corrida** com clipe próprio `charge` = `ual2:Shield_Dash_RM` de
+0,30 a 0,80 s com `in_place` (o empurrão de escudo que continua o `brace`), no lugar do golpe de espada (T5-P10).
+Golpe curto: já lê; manter.
+
+**T5-07 Cavaleiro.** Ganha `brace` e `charge` como o Escudo (o escudo do KayKit na mão esquerda), preparação de
+1,0 s em três tempos (assentar 0,12, armar até 0,70, segurar 0,30 com tremor 0,03 m) e `_behave_knight` pede
+`brace` (hoje `idle`). Elites herdam todos os clipes da figura comum (só a velocidade e a armadura mudam).
+
+**T5-08 Dano no corpo nas investidas (Escudo, Cavaleiro, Morvath).** O aviso em linha passa a ser só desenho
+(`power` 0) e dura até o corpo passar (vida = preparação + tempo da corrida, apagando atrás dele). O dano sai no
+primeiro quadro em que o contorno do corpo, varrido do lugar de antes ao de agora, toca o herói (`Player.RADIUS`),
+uma vez por investida, com o som de impacto nesse quadro. Morvath: o mesmo na `DASH` (`boss.gd` `_step_dash`),
+mantendo `hurt_ctx.warn_s` igual ao tempo de aviso que o herói teve. Aceite: no quadro do dano, distância do herói ao
+contorno de 0 a 0,3 m em 100% (sonda); esquiva atravessando continua sem dano.
+
+**T5-09 Bote do esqueleto e explosão do corredor no quadro do golpe.** Esqueleto: dano no quadro em que a lâmina chega
+embaixo (0,10 s dentro do ataque com T5-02), num arco de 120 graus à frente com alcance de `radius + 1,1 * size`
+(cerca de 1,8 m) a partir de onde o corpo está nesse quadro; o aviso em linha com vida = preparação + 0,10 e
+comprimento = o bote que o corpo vai fazer de fato (para no contorno do herói) + alcance. Corredor: aviso com vida =
+preparação + o quadro em que os braços abrem (cerca de 0,1 s). Aceite: tabela 6.1 (dano x corpo e aviso x dano).
+
+### 6.4 Especificação P1
+
+**T5-10 Esqueleto esperando sem tremor (`horde.gd`).**
+1. Anel de espera: pronto mas sem vez (`max_attackers`) ou com recarga, a menos de `attack_range`, ele mira um anel a
+   `0,75 * attack_range` (2,7 m) e só anda se estiver a mais de 0,5 m dele (histerese de 1 m); de lado a 0,35 da
+   velocidade, sempre para o mesmo lado (`side`) por pelo menos 1,2 s; olhando o herói.
+2. Nada de campo de fluxo a menos de 2,5 m (`WAY_NEAR` 1,2 para 2,5, e volta a `straight = false` só acima de 3,0).
+3. Rosto: virar para onde anda só acima de 1,0 m/s e com mais de 70 graus; voltar ao herói abaixo de 45 graus
+   (histerese no `FACE_SPLIT`).
+4. Andar e parado: trocar para `idle` só depois de 0,15 s abaixo de `WALK_FROM`, e para o andar só depois de 0,10 s
+   acima de `WALK_START`.
+5. Separação todo quadro com metade da força (`_separate`), ou o desenho seguindo a posição com 0,05 s (só desenho).
+6. Andando de lado devagar (abaixo de 1,2 m/s, mais de 60 graus do rosto) toca os `Running_Strafe_Left`/`Right` do
+   KayKit (rig que já temos), ou o andar a passo, nunca a corrida para frente de lado.
+Aceite (sonda nos roteiros `--play --seed=1..4 --hero-hp=9999`, herói parado, e no robô): por esqueleto em `WALK`,
+no máximo 1 quadro com mais de 8 graus de giro por 10 s fora da troca de alvo, inversões de giro até 0,3 por segundo,
+trocas andar/parado até 0,5 por segundo, nenhum `idle` de 1 a 3 quadros, inversões de posição de 2 quadros até 0,2 por
+segundo (hoje 35 quadros, 1,07, até 2,8, vários, 3,5).
+
+**T5-11 Corrida do esqueleto sem "gazela" (`tools/bake.gd`, art-director aprova).** Trocar o `SOLDIER_RUN`: clipe
+`ual:Jog_Fwd` (0,93 s) ou `kaykit:Running_A` (0,80 s), com `lock`, `stride` para 160 a 170 passos por minuto a 3,75
+m/s, `lift` 0,25 e tronco inclinado para frente (`bend` na coluna até a inclinação medida ficar entre 8 e 15 graus); o
+braço da espada na guarda com o antebraço balançando um pouco. Aceite (`walk_metrics` e `tools/walk_strip.gd`): os dois
+pés no ar em no máximo 6 de 20 poses (hoje 16), pé de trás até 15 cm em jogo (hoje 29), sobe e desce até 7 cm em jogo
+(hoje 13), escorregamento até 5 cm (`test_living_crowd.gd`). Decisão para o Daniel, se ainda parecer leve: o Guard do
+Hades anda a 1,6 m/s; o esqueleto poderia correr a 3,75 m/s só longe (mais de 6 m) e andar a 2,0 m/s com
+`kaykit:Walking_D_Skeletons` ao chegar perto.
+
+**T5-12 Recuperações vivas.** `RECOVER` toca, em ordem, o resto do golpe à velocidade própria do clipe (não 1,4x) e
+a volta à guarda (esqueleto: `Sword_Attack` 0,50 a 1,20 s em 0,7 s, depois `kaykit:2H_Melee_Idle` ou a guarda
+respirando até o fim dos 2,1 s, com os últimos 0,3 s misturando para a guarda); Escudo e Cavaleiro depois da investida:
+`ual2:Idle_Shield_Break` (1,07 s, o escudo baixando, cansado) esticado nos 1,1 e 0,8 s. E a próxima preparação nunca
+no quadro seguinte ao fim da recuperação: pelo menos 0,25 s na guarda ou andando (`cooldown` mínimo = recuperação +
+0,25; hoje 1 quadro). Aceite: nenhuma pose igual por mais de 0,3 s em `RECOVER`.
+
+**T5-13 Tiro com gesto por tiro (feiticeiro, ancião, sacerdote).** Cada orbe da rajada reinicia o trecho do disparo do
+`Spell_Simple_Shoot` (o pedaço em volta da soltura, a 1,5x, para caber nos 0,17 s entre orbes) com um recuo pequeno do
+tronco; depois do último, `ual:Spell_Simple_Exit` (0,43 s) dentro da recuperação. Aceite: pico de movimento de 1,5 m/s
+ou mais a cada orbe.
+
+**T5-14 Foice de Morvath com o dano na descida.** O aviso enche até o quadro em que a lâmina cruza a cintura: vida do
+aviso = preparação + 0,07 s (4 f; a descida de `slash3:6` a `:9` leva 10 f) e o golpe (`step 2`, o `boss_scythe`, o
+som `scythe`) começa na preparação, como hoje; `hurt` 4 f depois do sopro. Aceite: dano entre `slash3:7` e `:8`.
+
+**T5-15 Lâminas e Investida de Morvath com preparação própria.** Lâminas: `blades_windup` = o recuo do arremesso,
+`ual2:Sword_Regular_B` de 0 a 0,20 s em duas mãos (`TWO_HANDS`) esticado no armar, depois o `slash2` que já solta no
+quadro do tiro. Investida: `dash_windup` = `ual2:Sword_Dash_RM` de 0,00 a 0,12 s (o agachar antes do `dash`, que começa
+em 0,12) com `in_place` e o tronco para frente, assentar 0,12, armar até 0,56, segurar 0,24 com tremor de 0,04 m.
+Aceite: 6.1 e as duas preparações com poses diferentes (distância média dos vértices entre as poses armadas de 0,3 m
+ou mais).
+
+### 6.5 Especificação P2
+
+- **T5-16 Corredor**: ver T5-04 (gesto em volta); hoje o dano sai antes do soco.
+- **T5-17 Maldição de Morvath**: gesto próprio (o recuo do `volley`, `OverhandThrow` 0 a 0,26 s esticado) em vez do
+  começo do `summon`.
+- **T5-18 Erupções de Morvath**: cada leva com o trecho do `rain` que ergue as mãos (0,6 a 1,4 s do clipe), nada de
+  `rain:13` parado na 2ª leva.
+- **T5-19 Besteiro**: recuo do disparo (tronco 5 graus para trás em 0,06 s e volta em 0,2 s, por `bend` no assado).
+- **T5-P14**: coberta pelo T5-10 item 5.
+
+### 6.6 Ordem para o gameplay-engineer e quem aprova
+
+1. T5-08 e T5-09 (dano no corpo): só `horde.gd`, `boss.gd`, `ground.gd`; teste GUT de distância no quadro do dano.
+2. T5-10 (tremor): só `horde.gd`; a sonda como teste de regressão.
+3. T5-01, T5-02, T5-06, T5-07, T5-03, T5-04 (assado e desenho): `tools/bake.gd`, `horde.gd` `render`,
+   `make_data.gd`; reassar (`tools/bake.gd -- skeleton runner mage archer guard knight priest_elder morvath`); o
+   art-director aprova as poses em `tools/enemy_lab.gd` antes do vídeo.
+4. T5-11, T5-12, T5-13, T5-14, T5-15; depois os P2.
+Depois de cada lote o combat-feel-director refaz a sonda (mesmos roteiros e sementes) e a tabela 6.1 e registra o
+DEPOIS aqui; vídeo na GPU a 0,25x de cada tipo quando ela estiver livre.

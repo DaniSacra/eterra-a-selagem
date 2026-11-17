@@ -1,0 +1,45 @@
+extends SceneTree
+## T5 scratch (combat-feel-director): per baked clip, per pose: top (max y), forward reach (max z), hips height proxy
+## (centroid y), centre xz, mean distance from idle pose 0 and mean vertex speed to the next pose (m/s of game time
+## at size 1). Args: ids...
+
+func _initialize() -> void:
+	var ids := OS.get_cmdline_user_args()
+	for id in ids:
+		var m := load("res://assets/baked/%s.res" % id) as BakedModel
+		print("=== ", id, " verts ", m.vertices, " height ", m.height)
+		var step := 3
+		var idle := m.pose(&"idle", 0) if m.frames.has(&"idle") else PackedVector3Array()
+		var anims: Array = m.frames.keys()
+		anims.sort()
+		for anim: StringName in anims:
+			var n := m.frame_count(anim)
+			var rate := m.pose_rate(anim)
+			print("-- %s frames %d fps %.2f loops %s dur %.3f ground %.3f" % [anim, n, float(m.fps.get(anim, 0.0)), str(m.loops.get(anim, false)), m.duration(anim), float(m.ground_speed.get(anim, 0.0))])
+			var prev := PackedVector3Array()
+			for f in n:
+				var p := m.pose(anim, f)
+				var top := -INF
+				var fwd := -INF
+				var back := INF
+				var cy := 0.0
+				var c := Vector2.ZERO
+				var cnt := 0
+				var dif := 0.0
+				var spd := 0.0
+				var low := INF
+				for v in range(0, m.vertices, step):
+					var q := p[v]
+					top = maxf(top, q.y)
+					fwd = maxf(fwd, q.z)
+					back = minf(back, q.z)
+					cy += q.y
+					c += Vector2(q.x, q.z)
+					cnt += 1
+					if not idle.is_empty():
+						dif += q.distance_to(idle[v])
+					if not prev.is_empty():
+						spd += q.distance_to(prev[v])
+				print("  f%02d t%.3f top %.2f fwd %.2f back %.2f cy %.2f c(%.2f,%.2f) dIdle %.3f v %.2f" % [f, f / rate, top, fwd, back, cy / cnt, c.x / cnt, c.y / cnt, dif / cnt, (spd / cnt) * rate if not prev.is_empty() else 0.0])
+				prev = p
+	quit()

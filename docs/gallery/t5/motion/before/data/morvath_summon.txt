@@ -1,0 +1,40 @@
+f218 SUMMON    summon    step0 t0.00 drawn walk:0 pos(-0.409,4.077) dist 6.34 zones {}  
+f219 SUMMON    summon    step1 t0.02 drawn walk:0 pos(-0.409,4.077) dist 6.34 zones {'adds': '1.08/1.10'}  summon
+f222 SUMMON    summon    step1 t0.07 drawn summon:0 pos(-0.409,4.077) dist 6.34 zones {'adds': '1.03/1.10'}  
+f285 SUMMON    summon    step1 t1.12 drawn summon:8 pos(-0.409,4.077) dist 6.34 zones {'adds': '0.43/1.55'} LAND:adds 
+f286 SUMMON    summon    step1 t1.13 drawn summon:8 pos(-0.409,4.077) dist 6.34 zones {'adds': '0.42/1.55'}  rise
+f311 SUMMON    summon    step1 t1.55 drawn summon:11 pos(-0.409,4.077) dist 6.34 zones {} LAND:adds 
+f312 RECOVER   summon    step0 t0.00 drawn summon:11 pos(-0.409,4.077) dist 6.34 zones {}  
+f344 RECOVER   summon    step0 t0.53 drawn idle:0 pos(-0.409,4.077) dist 6.34 zones {}  
+f397 SUMMON    summon    step0 t0.00 drawn walk:10 pos(-0.617,6.751) dist 3.66 zones {'': '0.97/1.05'}  
+f398 SUMMON    summon    step1 t0.02 drawn walk:10 pos(-0.617,6.751) dist 3.66 zones {'': '0.95/1.05', 'adds': '1.08/1.10'}  summon
+f401 SUMMON    summon    step1 t0.07 drawn summon:0 pos(-0.617,6.751) dist 3.66 zones {'': '0.90/1.05', 'adds': '1.03/1.10'}  
+f446 SUMMON    summon    step1 t0.82 drawn summon:6 pos(-0.617,6.751) dist 3.66 zones {'': '0.15/1.05', 'adds': '0.28/1.10'}  tell_blade
+f447 SUMMON    summon    step1 t0.83 drawn summon:6 pos(-0.617,6.751) dist 3.66 zones {'': '0.13/1.05', 'adds': '0.27/1.10'}  enemy_swing
+f455 SUMMON    summon    step1 t0.97 drawn summon:7 pos(-0.617,6.751) dist 3.66 zones {'adds': '0.13/1.10', '': '0.88/1.05'} LAND: hurt
+f464 SUMMON    summon    step1 t1.12 drawn summon:8 pos(-0.617,6.751) dist 4.16 zones {'adds': '0.43/1.55', '': '0.73/1.05'} LAND:adds 
+f465 SUMMON    summon    step1 t1.13 drawn summon:8 pos(-0.617,6.751) dist 4.19 zones {'adds': '0.42/1.55', '': '0.72/1.05'}  rise
+f490 SUMMON    summon    step1 t1.55 drawn summon:11 pos(-0.617,6.751) dist 4.20 zones {'': '0.30/1.05'} LAND:adds 
+f491 RECOVER   summon    step0 t0.00 drawn summon:11 pos(-0.617,6.751) dist 4.20 zones {'': '0.28/1.05'}  
+f500 RECOVER   summon    step0 t0.15 drawn summon:12 pos(-0.617,6.751) dist 4.20 zones {'': '0.13/1.05'}  enemy_swing
+f508 RECOVER   summon    step0 t0.28 drawn summon:13 pos(-0.617,6.751) dist 4.20 zones {} LAND: 
+f523 RECOVER   summon    step0 t0.53 drawn idle:0 pos(-0.617,6.751) dist 4.20 zones {}  
+f576 SCYTHE    scythe    step0 t0.00 drawn idle:3 pos(-0.775,7.459) dist 3.48 zones {'': '0.52/1.05'}  
+f580 SCYTHE    scythe    step0 t0.07 drawn walk:1 pos(-0.843,7.764) dist 3.17 zones {'': '0.45/1.05'}  
+f587 SCYTHE    scythe    step1 t0.18 drawn walk:3 pos(-0.945,8.221) dist 2.70 zones {'': '0.33/1.05', 'scythe': '0.74/0.76', 'eruptions': '1.12/1.14'}  scythe_raise eruption
+f591 SCYTHE    scythe    step1 t0.25 drawn slash3:1 pos(-0.945,8.221) dist 2.70 zones {'': '0.27/1.05', 'scythe': '0.68/0.76', 'eruptions': '1.06/1.14'}  
+f593 SCYTHE    scythe    step1 t0.28 drawn slash3:2 pos(-0.945,8.221) dist 2.70 zones {'': '0.23/1.05', 'scythe': '0.64/0.76', 'eruptions': '1.02/1.14'}  tell_blade
+f599 SCYTHE    scythe    step1 t0.38 drawn slash3:3 pos(-0.945,8.221) dist 2.70 zones {'': '0.13/1.05', 'scythe': '0.54/0.76', 'eruptions': '0.92/1.14'}  enemy_swing
+f607 SCYTHE    scythe    step1 t0.52 drawn slash3:4 pos(-0.945,8.221) dist 2.70 zones {'scythe': '0.41/0.76', 'eruptions': '0.79/1.14', '': '0.80/1.05'} LAND: hurt
+f632 SCYTHE    scythe    step1 t0.93 drawn slash3:6 pos(-0.945,8.221) dist 2.93 zones {'eruptions': '0.37/1.14', '': '0.38/1.05'} LAND:scythe 
+f633 SCYTHE    scythe    step2 t0.95 drawn slash3:6 pos(-0.945,8.221) dist 2.93 zones {'eruptions': '0.36/1.14', '': '0.37/1.05'}  scythe
+f643 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.945,8.221) dist 2.93 zones {'eruptions': '0.19/1.14', '': '0.20/1.05'}  scythe_land
+f647 RECOVER   scythe    step0 t0.07 drawn slash3:9 pos(-0.945,8.221) dist 2.93 zones {'eruptions': '0.12/1.14', '': '0.13/1.05'}  enemy_swing
+f655 RECOVER   scythe    step0 t0.20 drawn slash3:11 pos(-0.945,8.221) dist 2.93 zones {'': '0.42/1.05'} LAND:eruptions, 
+f666 RECOVER   scythe    step0 t0.38 drawn slash3:14 pos(-0.945,8.221) dist 2.93 zones {'': '0.23/1.05'}  tell_blade
+f680 RECOVER   scythe    step0 t0.62 drawn slash3:15 pos(-0.945,8.221) dist 2.93 zones {'': '0.80/1.05'} LAND: 
+f731 CURSE     curse     step0 t0.00 drawn idle:5 pos(-0.945,8.221) dist 3.20 zones {}  
+f732 CURSE     curse     step1 t0.02 drawn idle:5 pos(-0.945,8.221) dist 3.26 zones {'curse': '0.74/0.76'}  curse
+f735 CURSE     curse     step1 t0.07 drawn summon:0 pos(-0.945,8.221) dist 3.40 zones {'curse': '0.69/0.76'}  
+f745 CURSE     curse     step1 t0.23 drawn summon:2 pos(-0.945,8.221) dist 3.51 zones {'curse': '0.53/0.76', '': '1.03/1.05'}  tell_blade
+f777 RECOVER   curse     step0 t0.00 drawn volley:2 pos(-0.945,8.221) dist 3.51 zones {'': '0.50/1.05'} LAND:curse curse_release

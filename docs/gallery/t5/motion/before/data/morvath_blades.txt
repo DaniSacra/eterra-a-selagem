@@ -1,0 +1,40 @@
+f248 BLADES    blades    step0 t0.00 drawn walk:9 pos(-0.498,5.218) dist 5.20 zones {}  
+f249 BLADES    blades    step1 t0.02 drawn walk:9 pos(-0.498,5.218) dist 5.20 zones {'blades': '0.68/0.70'}  
+f252 BLADES    blades    step1 t0.07 drawn dash_windup:1 pos(-0.498,5.218) dist 5.20 zones {'blades': '0.63/0.70'}  
+f284 BLADES    blades    step1 t0.60 drawn slash2:2 pos(-0.498,5.218) dist 5.20 zones {'blades': '0.10/0.70'}  
+f290 RECOVER   blades    step0 t0.00 drawn slash2:6 pos(-0.498,5.218) dist 5.20 zones {} LAND:blades souls
+f308 RECOVER   blades    step0 t0.30 drawn slash2:13 pos(-0.498,5.218) dist 5.20 zones {}  hurt
+f322 RECOVER   blades    step0 t0.53 drawn idle:0 pos(-0.498,5.218) dist 5.98 zones {}  
+f405 BLADES    blades    step0 t0.00 drawn idle:3 pos(-0.691,7.711) dist 3.48 zones {}  
+f406 BLADES    blades    step1 t0.02 drawn idle:3 pos(-0.691,7.711) dist 3.48 zones {'blades': '0.68/0.70'}  
+f409 BLADES    blades    step1 t0.07 drawn dash_windup:1 pos(-0.691,7.711) dist 3.48 zones {'blades': '0.63/0.70'}  
+f441 BLADES    blades    step1 t0.60 drawn slash2:2 pos(-0.691,7.711) dist 3.48 zones {'blades': '0.10/0.70'}  
+f447 RECOVER   blades    step0 t0.00 drawn slash2:6 pos(-0.691,7.711) dist 3.48 zones {} LAND:blades souls
+f456 RECOVER   blades    step0 t0.15 drawn slash2:12 pos(-0.691,7.711) dist 3.48 zones {}  hurt
+f479 RECOVER   blades    step0 t0.53 drawn idle:0 pos(-0.691,7.711) dist 4.26 zones {}  
+f562 BLADES    blades    step0 t0.00 drawn idle:7 pos(-0.754,8.521) dist 3.44 zones {}  
+f563 BLADES    blades    step1 t0.02 drawn idle:7 pos(-0.754,8.521) dist 3.44 zones {'blades': '0.68/0.70'}  
+f566 BLADES    blades    step1 t0.07 drawn dash_windup:1 pos(-0.754,8.521) dist 3.44 zones {'blades': '0.63/0.70'}  
+f598 BLADES    blades    step1 t0.60 drawn slash2:2 pos(-0.754,8.521) dist 3.44 zones {'blades': '0.10/0.70'}  
+f604 RECOVER   blades    step0 t0.00 drawn slash2:6 pos(-0.754,8.521) dist 3.44 zones {} LAND:blades souls
+f613 RECOVER   blades    step0 t0.15 drawn slash2:12 pos(-0.754,8.521) dist 3.44 zones {}  hurt
+f636 RECOVER   blades    step0 t0.53 drawn idle:0 pos(-0.754,8.521) dist 3.45 zones {}  
+f719 BLADES    blades    step0 t0.00 drawn idle:11 pos(-0.754,8.521) dist 3.45 zones {}  
+f720 BLADES    blades    step1 t0.02 drawn idle:11 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.68/0.70'}  
+f723 BLADES    blades    step1 t0.07 drawn dash_windup:1 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.63/0.70'}  
+f755 BLADES    blades    step1 t0.60 drawn slash2:2 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.10/0.70'}  
+f761 RECOVER   blades    step0 t0.00 drawn slash2:6 pos(-0.754,8.521) dist 3.45 zones {} LAND:blades souls
+f770 RECOVER   blades    step0 t0.15 drawn slash2:12 pos(-0.754,8.521) dist 3.45 zones {}  hurt
+f793 RECOVER   blades    step0 t0.53 drawn idle:0 pos(-0.754,8.521) dist 3.45 zones {}  
+f876 BLADES    blades    step0 t0.00 drawn idle:11 pos(-0.754,8.521) dist 3.45 zones {}  
+f877 BLADES    blades    step1 t0.02 drawn idle:11 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.68/0.70'}  
+f880 BLADES    blades    step1 t0.07 drawn dash_windup:1 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.63/0.70'}  
+f912 BLADES    blades    step1 t0.60 drawn slash2:2 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.10/0.70'}  
+f918 RECOVER   blades    step0 t0.00 drawn slash2:6 pos(-0.754,8.521) dist 3.45 zones {} LAND:blades souls
+f927 RECOVER   blades    step0 t0.15 drawn slash2:12 pos(-0.754,8.521) dist 3.45 zones {}  hurt
+f950 RECOVER   blades    step0 t0.53 drawn idle:0 pos(-0.754,8.521) dist 3.45 zones {}  
+f1033 BLADES    blades    step0 t0.00 drawn idle:11 pos(-0.754,8.521) dist 3.45 zones {}  
+f1034 BLADES    blades    step1 t0.02 drawn idle:11 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.68/0.70'}  
+f1037 BLADES    blades    step1 t0.07 drawn dash_windup:1 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.63/0.70'}  
+f1069 BLADES    blades    step1 t0.60 drawn slash2:2 pos(-0.754,8.521) dist 3.45 zones {'blades': '0.10/0.70'}  
+f1075 RECOVER   blades    step0 t0.00 drawn slash2:6 pos(-0.754,8.521) dist 3.45 zones {} LAND:blades souls

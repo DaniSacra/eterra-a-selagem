@@ -1,0 +1,40 @@
+f206 STORM     storm     step0 t0.00 drawn walk:17 pos(-0.366,3.513) dist 6.91 zones {}  
+f207 STORM     storm     step0 t0.02 drawn walk:17 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.79/0.81', 'eruptions': '1.06/1.08', 'adds': '1.08/1.10'}  eruption summon
+f210 STORM     storm     step0 t0.07 drawn rain:0 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.74/0.81', 'eruptions': '1.01/1.08', 'adds': '1.03/1.10'}  
+f255 STORM     storm     step0 t0.82 drawn rain:7 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.07/0.89', 'eruptions': '0.26/1.08', 'adds': '0.28/1.10'} LAND:storm 
+f256 STORM     storm     step0 t0.83 drawn volley:2 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.06/0.89', 'eruptions': '0.25/1.08', 'adds': '0.27/1.10'}  souls
+f260 STORM     storm     step0 t0.90 drawn volley:5 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.07/0.97', 'eruptions': '0.18/1.08', 'adds': '0.20/1.10'} LAND:storm 
+f265 STORM     storm     step0 t0.98 drawn volley:8 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.07/1.05', 'eruptions': '0.10/1.08', 'adds': '0.12/1.10'} LAND:storm 
+f269 STORM     storm     step0 t1.05 drawn volley:11 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.08/1.13', 'eruptions': '0.03/1.08', 'adds': '0.05/1.10'} LAND:storm 
+f271 STORM     storm     step0 t1.08 drawn volley:12 pos(-0.366,3.513) dist 6.91 zones {'storm': '0.05/1.13', 'adds': '0.02/1.10'} LAND:eruptions hurt
+f273 STORM     storm     step0 t1.12 drawn volley:13 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.01/1.13', 'adds': '0.43/1.55'} LAND:adds 
+f274 STORM     storm     step0 t1.13 drawn volley:13 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.08/1.21', 'adds': '0.42/1.55'} LAND:storm rise
+f279 STORM     storm     step0 t1.22 drawn volley:13 pos(-0.366,3.513) dist 6.89 zones {'adds': '0.33/1.55'} LAND:storm 
+f283 STORM     storm     step0 t1.28 drawn roar:1 pos(-0.366,3.513) dist 6.89 zones {'adds': '0.27/1.55'}  
+f299 STORM     storm     step0 t1.55 drawn roar:6 pos(-0.366,3.513) dist 6.89 zones {} LAND:adds 
+f344 STORM     storm     step0 t2.30 drawn rain:0 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.74/0.81'}  
+f359 STORM     storm     step0 t2.55 drawn rain:3 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.49/0.81', '': '1.03/1.05'}  tell_blade
+f377 STORM     storm     step0 t2.85 drawn rain:6 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.19/0.81', '': '0.73/1.05'}  tell_orb
+f389 STORM     storm     step0 t3.05 drawn rain:7 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.07/0.89', '': '0.53/1.05'} LAND:storm 
+f390 STORM     storm     step0 t3.07 drawn volley:2 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.06/0.89', '': '0.52/1.05'}  souls
+f394 STORM     storm     step0 t3.13 drawn volley:5 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.07/0.97', '': '0.45/1.05'} LAND:storm 
+f399 STORM     storm     step0 t3.22 drawn volley:8 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.07/1.05', '': '0.37/1.05'} LAND:storm 
+f403 STORM     storm     step0 t3.28 drawn volley:11 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.08/1.13', '': '0.30/1.05'} LAND:storm 
+f408 STORM     storm     step0 t3.37 drawn volley:13 pos(-0.366,3.513) dist 6.89 zones {'storm': '0.08/1.21', '': '0.22/1.05'} LAND:storm 
+f413 STORM     storm     step0 t3.45 drawn volley:13 pos(-0.366,3.513) dist 6.89 zones {'': '0.13/1.05'} LAND:storm enemy_swing
+f417 STORM     storm     step0 t3.52 drawn roar:1 pos(-0.366,3.513) dist 6.89 zones {'': '0.07/1.05'}  
+f421 STORM     storm     step0 t3.58 drawn roar:2 pos(-0.366,3.513) dist 6.89 zones {} LAND: hurt
+f438 STORM     storm     step0 t3.87 drawn roar:8 pos(-0.366,3.513) dist 7.45 zones {}  shot_orb
+f478 STORM     storm     step0 t4.53 drawn rain:0 pos(-0.366,3.513) dist 7.45 zones {'storm': '0.74/0.81'}  
+f517 STORM     storm     step0 t5.18 drawn rain:7 pos(-0.366,3.513) dist 7.45 zones {'storm': '0.09/0.81'}  hurt
+f523 STORM     storm     step0 t5.28 drawn rain:7 pos(-0.366,3.513) dist 8.00 zones {'storm': '0.07/0.89'} LAND:storm 
+f524 STORM     storm     step0 t5.30 drawn volley:2 pos(-0.366,3.513) dist 8.05 zones {'storm': '0.06/0.89'}  souls
+f528 STORM     storm     step0 t5.37 drawn volley:5 pos(-0.366,3.513) dist 8.17 zones {'storm': '0.07/0.97'} LAND:storm 
+f533 STORM     storm     step0 t5.45 drawn volley:8 pos(-0.366,3.513) dist 8.17 zones {'storm': '0.07/1.05'} LAND:storm 
+f537 STORM     storm     step0 t5.52 drawn volley:11 pos(-0.366,3.513) dist 8.17 zones {'storm': '0.08/1.13'} LAND:storm 
+f542 STORM     storm     step0 t5.60 drawn volley:13 pos(-0.366,3.513) dist 8.17 zones {'storm': '0.08/1.21'} LAND:storm 
+f547 STORM     storm     step0 t5.68 drawn volley:13 pos(-0.366,3.513) dist 8.17 zones {} LAND:storm 
+f549 RECOVER   storm     step0 t0.00 drawn volley:13 pos(-0.366,3.513) dist 8.17 zones {}  
+f551 RECOVER   storm     step0 t0.03 drawn roar:1 pos(-0.366,3.513) dist 8.17 zones {}  
+f559 RECOVER   storm     step0 t0.17 drawn roar:4 pos(-0.366,3.513) dist 8.17 zones {'': '1.03/1.05'}  tell_blade
+f596 RECOVER   storm     step0 t0.78 drawn idle:0 pos(-0.366,3.513) dist 8.17 zones {'': '0.42/1.05'}  

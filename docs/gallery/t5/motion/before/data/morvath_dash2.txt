@@ -1,0 +1,40 @@
+f252 DASH_WARN dash      step0 t0.00 drawn idle:0 pos(-0.524,0.957) dist 3.48 zones {}  
+f253 DASH_WARN dash      step1 t0.02 drawn idle:0 pos(-0.523,0.954) dist 3.48 zones {'dash': '0.78/0.80'}  dash_aim
+f256 DASH_WARN dash      step1 t0.07 drawn dash_windup:0 pos(-0.521,0.948) dist 3.49 zones {'dash': '0.73/0.80'}  
+f258 DASH_WARN dash      step1 t0.10 drawn dash_windup:0 pos(-0.515,0.930) dist 3.51 zones {'dash': '0.70/0.80'}  hit mat_spectral
+f273 DASH_WARN dash      step1 t0.32 drawn dash_windup:2 pos(-0.483,0.829) dist 3.61 zones {'dash': '0.48/0.80'}  blade_spin
+f304 DASH      dash      step0 t0.00 drawn dash_windup:4 pos(-0.318,0.314) dist 4.15 zones {} LAND:dash boss_dash hurt
+f308 DASH      dash      step0 t0.07 drawn dash:1 pos(-0.804,1.830) dist 2.10 zones {}  
+f315 DASH      dash      step0 t0.18 drawn dash:2 pos(-1.656,4.483) dist 0.79 zones {}  dodge
+f330 RECOVER   dash      step0 t0.00 drawn dash:6 pos(-3.384,9.864) dist 8.79 zones {}  dash_land
+f373 RECOVER   dash      step0 t0.72 drawn idle:0 pos(-3.384,9.864) dist 6.07 zones {}  
+f379 RECOVER   dash      step0 t0.82 drawn idle:1 pos(-3.384,9.864) dist 5.51 zones {}  blade
+f384 RECOVER   dash      step0 t0.90 drawn idle:2 pos(-3.397,9.870) dist 5.52 zones {}  hit mat_spectral
+f387 RECOVER   dash      step0 t0.92 drawn idle:2 pos(-3.413,9.877) dist 5.54 zones {}  charge_up
+f466 DASH_WARN dash      step0 t0.00 drawn idle:1 pos(-1.724,9.339) dist 3.44 zones {}  
+f467 DASH_WARN dash      step1 t0.02 drawn idle:1 pos(-1.724,9.339) dist 3.44 zones {'dash': '0.78/0.80'}  dash_aim
+f470 DASH_WARN dash      step1 t0.07 drawn dash_windup:1 pos(-1.724,9.339) dist 3.44 zones {'dash': '0.73/0.80'}  
+f477 DASH_WARN dash      step1 t0.18 drawn dash_windup:2 pos(-1.724,9.339) dist 3.44 zones {'dash': '0.62/0.80'}  blade
+f482 DASH_WARN dash      step1 t0.27 drawn dash_windup:3 pos(-1.738,9.343) dist 3.46 zones {'dash': '0.53/0.80'}  hit mat_spectral
+f516 DASH      dash      step0 t0.00 drawn dash_windup:1 pos(-2.201,9.486) dist 3.94 zones {} LAND:dash boss_dash hurt
+f520 DASH      dash      step0 t0.07 drawn dash:1 pos(-0.434,8.938) dist 1.63 zones {}  
+f527 DASH      dash      step0 t0.18 drawn dash:5 pos(2.659,7.979) dist 1.70 zones {}  dodge
+f542 RECOVER   dash      step0 t0.00 drawn dash:11 pos(8.934,6.033) dist 10.21 zones {}  dash_land
+f585 RECOVER   dash      step0 t0.72 drawn idle:0 pos(8.934,6.033) dist 7.19 zones {}  
+f601 RECOVER   dash      step0 t0.98 drawn idle:2 pos(8.934,6.033) dist 5.50 zones {}  dart
+f675 DASH_WARN dash      step0 t0.00 drawn walk:19 pos(5.539,4.561) dist 15.74 zones {}  
+f676 DASH_WARN dash      step1 t0.02 drawn walk:19 pos(5.539,4.561) dist 15.74 zones {'dash': '0.78/0.80'}  dash_aim
+f679 DASH_WARN dash      step1 t0.07 drawn dash_windup:1 pos(5.539,4.561) dist 15.74 zones {'dash': '0.73/0.80'}  dart
+f723 DASH      dash      step0 t0.00 drawn dash_windup:1 pos(5.539,4.561) dist 15.74 zones {} LAND:dash boss_dash hurt
+f727 DASH      dash      step0 t0.07 drawn dash:1 pos(3.208,3.551) dist 13.67 zones {}  
+f734 DASH      dash      step0 t0.18 drawn dash:5 pos(-0.869,1.783) dist 9.54 zones {}  dodge
+f749 RECOVER   dash      step0 t0.00 drawn dash:11 pos(-9.141,-1.803) dist 5.73 zones {}  dash_land
+f789 RECOVER   dash      step0 t0.67 drawn dash:11 pos(-9.141,-1.803) dist 11.06 zones {}  dart
+f792 RECOVER   dash      step0 t0.72 drawn idle:0 pos(-9.141,-1.803) dist 11.06 zones {}  
+f803 RECOVER   dash      step0 t0.90 drawn idle:2 pos(-9.141,-1.803) dist 11.06 zones {}  hit mat_spectral
+f882 DASH_WARN dash      step0 t0.00 drawn walk:19 pos(-7.375,1.432) dist 11.12 zones {}  
+f883 DASH_WARN dash      step1 t0.02 drawn walk:19 pos(-7.375,1.432) dist 11.12 zones {'dash': '0.78/0.80'}  dash_aim
+f886 DASH_WARN dash      step1 t0.07 drawn dash_windup:1 pos(-7.375,1.432) dist 11.12 zones {'dash': '0.73/0.80'}  
+f887 DASH_WARN dash      step1 t0.08 drawn dash_windup:1 pos(-7.375,1.432) dist 11.12 zones {'dash': '0.72/0.80'}  dart
+f901 DASH_WARN dash      step1 t0.32 drawn dash_windup:4 pos(-7.375,1.432) dist 11.12 zones {'dash': '0.48/0.80'}  hit mat_spectral
+f930 DASH      dash      step0 t0.00 drawn dash_windup:1 pos(-7.625,1.014) dist 11.61 zones {} LAND:dash boss_dash hurt

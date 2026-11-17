@@ -1,0 +1,40 @@
+f218 ERUPTIONS eruptions step0 t0.00 drawn walk:0 pos(-0.409,4.077) dist 6.34 zones {}  
+f219 ERUPTIONS eruptions step1 t0.02 drawn walk:0 pos(-0.409,4.077) dist 6.34 zones {'eruptions': '1.12/1.14'}  eruption
+f222 ERUPTIONS eruptions step1 t0.07 drawn rain:0 pos(-0.409,4.077) dist 6.34 zones {'eruptions': '1.07/1.14'}  
+f287 ERUPTIONS eruptions step1 t1.15 drawn rain:11 pos(-0.409,4.077) dist 6.34 zones {} LAND:eruptions hurt
+f347 ERUPTIONS eruptions step2 t2.15 drawn rain:13 pos(-0.409,4.077) dist 5.56 zones {'eruptions': '1.12/1.14'}  eruption
+f415 RECOVER   eruptions step0 t0.00 drawn rain:13 pos(-0.409,4.077) dist 5.56 zones {} LAND:eruptions hurt
+f419 RECOVER   eruptions step0 t0.07 drawn idle:0 pos(-0.409,4.077) dist 5.10 zones {}  
+f500 ERUPTIONS eruptions step0 t0.00 drawn idle:2 pos(-0.507,5.378) dist 3.48 zones {}  
+f501 ERUPTIONS eruptions step1 t0.02 drawn idle:2 pos(-0.507,5.378) dist 3.48 zones {'eruptions': '1.12/1.14'}  eruption
+f504 ERUPTIONS eruptions step1 t0.07 drawn rain:0 pos(-0.507,5.378) dist 3.48 zones {'eruptions': '1.07/1.14'}  
+f569 ERUPTIONS eruptions step1 t1.15 drawn rain:11 pos(-0.507,5.378) dist 3.48 zones {} LAND:eruptions hurt
+f629 ERUPTIONS eruptions step2 t2.15 drawn rain:13 pos(-0.507,5.378) dist 2.70 zones {'eruptions': '1.12/1.14'}  eruption
+f697 RECOVER   eruptions step0 t0.00 drawn rain:13 pos(-0.507,5.378) dist 2.70 zones {} LAND:eruptions hurt
+f701 RECOVER   eruptions step0 t0.07 drawn idle:0 pos(-0.507,5.378) dist 2.23 zones {}  
+f782 ERUPTIONS eruptions step0 t0.00 drawn idle:11 pos(-0.507,5.378) dist 1.92 zones {}  
+f783 ERUPTIONS eruptions step1 t0.02 drawn idle:11 pos(-0.507,5.378) dist 1.92 zones {'eruptions': '1.12/1.14'}  eruption
+f786 ERUPTIONS eruptions step1 t0.07 drawn rain:0 pos(-0.507,5.378) dist 1.92 zones {'eruptions': '1.07/1.14'}  
+f851 ERUPTIONS eruptions step1 t1.15 drawn rain:11 pos(-0.507,5.378) dist 1.92 zones {} LAND:eruptions hurt
+f911 ERUPTIONS eruptions step2 t2.15 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.12/1.14'}  eruption
+f979 RECOVER   eruptions step0 t0.00 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {} LAND:eruptions hurt
+f983 RECOVER   eruptions step0 t0.07 drawn idle:0 pos(-0.507,5.378) dist 1.90 zones {}  
+f1064 ERUPTIONS eruptions step0 t0.00 drawn idle:11 pos(-0.507,5.378) dist 1.90 zones {}  
+f1065 ERUPTIONS eruptions step1 t0.02 drawn idle:11 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.12/1.14'}  eruption
+f1068 ERUPTIONS eruptions step1 t0.07 drawn rain:0 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.07/1.14'}  
+f1133 ERUPTIONS eruptions step1 t1.15 drawn rain:11 pos(-0.507,5.378) dist 1.90 zones {} LAND:eruptions hurt
+f1193 ERUPTIONS eruptions step2 t2.15 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.12/1.14'}  eruption
+f1261 RECOVER   eruptions step0 t0.00 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {} LAND:eruptions hurt
+f1265 RECOVER   eruptions step0 t0.07 drawn idle:0 pos(-0.507,5.378) dist 2.37 zones {}  
+f1346 ERUPTIONS eruptions step0 t0.00 drawn idle:11 pos(-0.507,5.378) dist 2.68 zones {}  
+f1347 ERUPTIONS eruptions step1 t0.02 drawn idle:11 pos(-0.507,5.378) dist 2.68 zones {'eruptions': '1.12/1.14'}  eruption
+f1350 ERUPTIONS eruptions step1 t0.07 drawn rain:0 pos(-0.507,5.378) dist 2.68 zones {'eruptions': '1.07/1.14'}  
+f1415 ERUPTIONS eruptions step1 t1.15 drawn rain:11 pos(-0.507,5.378) dist 2.68 zones {} LAND:eruptions hurt
+f1475 ERUPTIONS eruptions step2 t2.15 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.12/1.14'}  eruption
+f1543 RECOVER   eruptions step0 t0.00 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {} LAND:eruptions hurt
+f1547 RECOVER   eruptions step0 t0.07 drawn idle:0 pos(-0.507,5.378) dist 1.90 zones {}  
+f1628 ERUPTIONS eruptions step0 t0.00 drawn idle:11 pos(-0.507,5.378) dist 1.90 zones {}  
+f1629 ERUPTIONS eruptions step1 t0.02 drawn idle:11 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.12/1.14'}  eruption
+f1632 ERUPTIONS eruptions step1 t0.07 drawn rain:0 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.07/1.14'}  
+f1697 ERUPTIONS eruptions step1 t1.15 drawn rain:11 pos(-0.507,5.378) dist 1.90 zones {} LAND:eruptions hurt
+f1757 ERUPTIONS eruptions step2 t2.15 drawn rain:13 pos(-0.507,5.378) dist 1.90 zones {'eruptions': '1.12/1.14'}  eruption

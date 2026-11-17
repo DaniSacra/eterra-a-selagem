@@ -1,0 +1,6 @@
+== jitter while state WALK (per enemy) ==
+who frames walkfr idlefr walk<->idle_switches/s yaw|d|>8deg/fr yaw_reversals/s pos_reversals/s mean_speed mean|dyaw| max|dyaw|
+skeleton#0 97 86 11 0.62 0 0.00 0.00 2.90 0.03 0.9
+skeleton#1 359 351 8 0.00 0 0.00 0.00 3.58 0.08 1.8
+skeleton#2 503 494 9 0.48 35 1.07 3.46 3.27 1.48 20.0
+skeleton#3 417 408 9 0.00 0 0.00 1.44 3.52 0.13 2.4

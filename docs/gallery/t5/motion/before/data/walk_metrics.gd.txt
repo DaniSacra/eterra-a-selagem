@@ -1,0 +1,28 @@
+extends SceneTree
+func _initialize() -> void:
+	for id in OS.get_cmdline_user_args():
+		var m := load("res://assets/baked/%s.res" % id) as BakedModel
+		var n := m.frame_count(&"walk")
+		var air := 0
+		var lows := []
+		var leans := []
+		var cys := []
+		for f in n:
+			var p := m.pose(&"walk", f)
+			var low := INF
+			var top := -INF
+			for v in range(0, m.vertices, 2):
+				low = minf(low, p[v].y); top = maxf(top, p[v].y)
+			var hz := 0.0; var hn := 0; var lz := 0.0; var ln := 0; var cy := 0.0
+			for v in range(0, m.vertices, 2):
+				var q := p[v]
+				cy += q.y
+				if q.y > top - 0.25: hz += q.z; hn += 1
+				elif q.y > top * 0.45 and q.y < top * 0.55: lz += q.z; ln += 1
+			lows.append(snappedf(low, 0.01))
+			if low > 0.03: air += 1
+			leans.append(snappedf(rad_to_deg(atan2(hz / hn - lz / ln, top * 0.45)), 1))
+			cys.append(cy / (m.vertices / 2))
+		var mn: float = cys.min(); var mx: float = cys.max()
+		print("%s walk poses %d air(min y>3cm) %d bob %.3f m(size1) lean deg %s lows %s" % [id, n, air, mx - mn, str(leans), str(lows)])
+	quit()

@@ -1,0 +1,40 @@
+f248 SCYTHE    scythe    step0 t0.00 drawn walk:9 pos(-0.498,5.218) dist 5.20 zones {}  
+f281 SCYTHE    scythe    step1 t0.55 drawn walk:18 pos(-0.691,7.711) dist 2.70 zones {'scythe': '0.78/0.80'}  scythe_raise
+f285 SCYTHE    scythe    step1 t0.62 drawn slash3:1 pos(-0.691,7.711) dist 2.70 zones {'scythe': '0.72/0.80'}  
+f328 SCYTHE    scythe    step1 t1.33 drawn slash3:6 pos(-0.691,7.711) dist 2.70 zones {} LAND:scythe hurt
+f329 SCYTHE    scythe    step2 t1.35 drawn slash3:6 pos(-0.691,7.711) dist 2.85 zones {}  scythe
+f339 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.691,7.711) dist 3.48 zones {}  scythe_land
+f457 SCYTHE    scythe    step0 t0.00 drawn idle:8 pos(-0.691,7.711) dist 3.48 zones {}  
+f461 SCYTHE    scythe    step0 t0.07 drawn walk:1 pos(-0.716,8.022) dist 3.16 zones {}  
+f468 SCYTHE    scythe    step1 t0.18 drawn walk:3 pos(-0.752,8.490) dist 2.69 zones {'scythe': '0.78/0.80'}  scythe_raise
+f472 SCYTHE    scythe    step1 t0.25 drawn slash3:1 pos(-0.752,8.490) dist 2.69 zones {'scythe': '0.72/0.80'}  
+f515 SCYTHE    scythe    step1 t0.97 drawn slash3:6 pos(-0.752,8.490) dist 2.69 zones {} LAND:scythe hurt
+f516 SCYTHE    scythe    step2 t0.98 drawn slash3:6 pos(-0.752,8.490) dist 2.84 zones {}  scythe
+f526 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.752,8.490) dist 3.47 zones {}  scythe_land
+f644 SCYTHE    scythe    step0 t0.00 drawn idle:8 pos(-0.752,8.490) dist 3.47 zones {}  
+f648 SCYTHE    scythe    step0 t0.07 drawn walk:1 pos(-0.776,8.801) dist 3.16 zones {}  
+f655 SCYTHE    scythe    step1 t0.18 drawn walk:3 pos(-0.812,9.269) dist 2.69 zones {'scythe': '0.78/0.80'}  scythe_raise
+f659 SCYTHE    scythe    step1 t0.25 drawn slash3:1 pos(-0.812,9.269) dist 2.69 zones {'scythe': '0.72/0.80'}  
+f702 SCYTHE    scythe    step1 t0.97 drawn slash3:6 pos(-0.812,9.269) dist 2.69 zones {} LAND:scythe hurt
+f703 SCYTHE    scythe    step2 t0.98 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {}  scythe
+f713 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.812,9.269) dist 2.70 zones {}  scythe_land
+f831 SCYTHE    scythe    step0 t0.00 drawn idle:8 pos(-0.812,9.269) dist 2.70 zones {}  
+f832 SCYTHE    scythe    step1 t0.02 drawn idle:9 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.78/0.80'}  scythe_raise
+f836 SCYTHE    scythe    step1 t0.08 drawn slash3:1 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.72/0.80'}  
+f879 SCYTHE    scythe    step1 t0.80 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {} LAND:scythe hurt
+f880 SCYTHE    scythe    step2 t0.82 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {}  scythe
+f890 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.812,9.269) dist 2.70 zones {}  scythe_land
+f1008 SCYTHE    scythe    step0 t0.00 drawn idle:8 pos(-0.812,9.269) dist 2.70 zones {}  
+f1009 SCYTHE    scythe    step1 t0.02 drawn idle:9 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.78/0.80'}  scythe_raise
+f1013 SCYTHE    scythe    step1 t0.08 drawn slash3:1 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.72/0.80'}  
+f1056 SCYTHE    scythe    step1 t0.80 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {} LAND:scythe hurt
+f1057 SCYTHE    scythe    step2 t0.82 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {}  scythe
+f1067 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.812,9.269) dist 2.70 zones {}  scythe_land
+f1185 SCYTHE    scythe    step0 t0.00 drawn idle:8 pos(-0.812,9.269) dist 2.70 zones {}  
+f1186 SCYTHE    scythe    step1 t0.02 drawn idle:9 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.78/0.80'}  scythe_raise
+f1190 SCYTHE    scythe    step1 t0.08 drawn slash3:1 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.72/0.80'}  
+f1233 SCYTHE    scythe    step1 t0.80 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {} LAND:scythe hurt
+f1234 SCYTHE    scythe    step2 t0.82 drawn slash3:6 pos(-0.812,9.269) dist 2.70 zones {}  scythe
+f1244 RECOVER   scythe    step0 t0.00 drawn slash3:9 pos(-0.812,9.269) dist 2.70 zones {}  scythe_land
+f1362 SCYTHE    scythe    step0 t0.00 drawn idle:8 pos(-0.812,9.269) dist 2.70 zones {}  
+f1363 SCYTHE    scythe    step1 t0.02 drawn idle:9 pos(-0.812,9.269) dist 2.70 zones {'scythe': '0.78/0.80'}  scythe_raise

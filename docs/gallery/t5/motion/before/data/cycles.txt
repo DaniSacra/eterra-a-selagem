@@ -1,0 +1,60 @@
+== archer: cycles 71 cut 5
+  W 48f [walk/aim] A 26f [aim/attack] R 38f [attack] warn 0.80s lands f+47 d0 13.2 dland 11.95 dminA 12.02
+  W 48f [walk/aim] A 26f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 13.9 dland 15.21 dminA 11.46
+  W 48f [walk/aim] A 25f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 13.9 dland 15.23 dminA 12.84
+  W 48f [idle/aim] A 25f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 10.7 dland 11.92 dminA 9.32
+== archer_elite: cycles 21 cut 0
+  W 48f [walk/aim] A 25f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 7.8 dland 8.55 dminA 8.55
+  W 48f [walk/aim] A 25f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 8.8 dland 8.8 dminA 8.8
+  W 48f [idle/aim] A 25f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 8.8 dland 8.82 dminA 8.82
+  W 48f [idle/aim] A 25f [aim/attack] R 36f [attack] warn 0.80s lands f+47 d0 8.8 dland 8.82 dminA 8.82
+== guard: cycles 30 cut 0
+  W 69f [walk/brace] A 25f [brace/attack] R 66f [attack] warn 1.15s lands f+68 d0 3.5 dland 3.54 dminA 0.56
+  W 39f [idle/attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.2 dland 1.25 dminA 1.25
+  W 39f [idle/attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.2 dland 1.87 dminA 1.87
+  W 39f [attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.7 dland 1.2 dminA 1.16
+== guard_elite: cycles 28 cut 0
+  W 39f [idle/attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.2 dland 1.25 dminA 1.4
+  W 39f [attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.8 dland 1.32 dminA 1.32
+  W 39f [idle/attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.3 dland 1.32 dminA 1.47
+  W 39f [attack] A 31f [attack] R 66f [attack] warn 0.65s lands f+38 d0 1.8 dland 1.81 dminA 1.94
+== knight: cycles 7 cut 0
+  W 48f [idle/attack] A 31f [attack] R 48f [attack] warn 0.80s lands f+47 d0 2.1 dland 2.08 dminA 2.23
+  W 48f [idle/attack] A 31f [attack] R 48f [attack] warn 0.80s lands f+47 d0 2.1 dland 2.07 dminA 2.17
+  W 48f [idle/attack] A 31f [attack] R 48f [attack] warn 0.80s lands f+47 d0 2.1 dland 2.1 dminA 2.17
+  W 48f [idle/attack] A 31f [attack] R 48f [attack] warn 0.80s lands f+47 d0 2.1 dland 2.1 dminA 2.18
+== mage_elite: cycles 6 cut 0
+  W 60f [walk/cast] A 86f [cast/attack] R 48f [attack] warn -1.00s lands f+None d0 11.4 dland None dminA 11.43
+  W 60f [walk/cast] A 86f [cast/attack] R 48f [attack] warn -1.00s lands f+None d0 15.8 dland None dminA 15.85
+  W 60f [walk/cast] A 86f [cast/attack] R 48f [attack] warn -1.00s lands f+None d0 15.8 dland None dminA 15.77
+  W 60f [walk/cast] A 86f [cast/attack] R 48f [attack] warn -1.00s lands f+None d0 15.8 dland None dminA 15.76
+== priest: cycles 5 cut 0
+  W 48f [idle/cast] A 25f [cast/attack] R 0f [] warn -1.00s lands f+None d0 17.8 dland None dminA 17.83
+  W 48f [idle/cast] A 25f [cast/attack] R 0f [] warn -1.00s lands f+None d0 17.8 dland None dminA 17.83
+  W 48f [idle/cast] A 25f [cast/attack] R 0f [] warn -1.00s lands f+None d0 17.8 dland None dminA 18.48
+  W 48f [idle/cast] A 25f [cast/attack] R 0f [] warn -1.00s lands f+None d0 18.5 dland None dminA 18.53
+== priest_elder: cycles 6 cut 0
+  W 60f [walk/cast] A 31f [cast/attack] R 0f [] warn -1.00s lands f+None d0 9.0 dland None dminA 8.97
+  W 60f [idle/cast] A 31f [cast/attack] R 0f [] warn -1.00s lands f+None d0 9.0 dland None dminA 9.53
+  W 60f [walk/cast] A 31f [cast/attack] R 0f [] warn -1.00s lands f+None d0 8.3 dland None dminA 8.35
+  W 60f [walk/cast] A 31f [cast/attack] R 0f [] warn -1.00s lands f+None d0 7.6 dland None dminA 7.54
+== runner: cycles 31 cut 1
+  W 42f [walk/windup] A 25f [windup/attack] R 81f [attack] warn 0.70s lands f+41 d0 1.5 dland 0.95 dminA 0.95
+  W 42f [walk/windup] A 25f [windup/attack] R 81f [attack] warn 0.70s lands f+41 d0 1.0 dland 0.95 dminA 0.95
+  W 42f [walk/windup] A 25f [windup/attack] R 81f [attack] warn 0.70s lands f+41 d0 1.0 dland 0.95 dminA 0.95
+  W 42f [walk/windup] A 25f [windup/attack] R 81f [attack] warn 0.70s lands f+41 d0 1.0 dland 1.0 dminA 1.0
+== runner_elite: cycles 30 cut 0
+  W 42f [walk/windup] A 25f [windup/attack] R 31f [attack] warn 0.70s lands f+41 d0 0.9 dland 1.11 dminA 1.16
+  W 42f [walk/windup] A 25f [windup/attack] R 31f [attack] warn 0.70s lands f+41 d0 0.6 dland 0.76 dminA 0.88
+  W 42f [walk/windup] A 25f [windup/attack] R 31f [attack] warn 0.70s lands f+41 d0 0.9 dland 0.95 dminA 1.09
+  W 42f [walk/windup] A 25f [windup/attack] R 31f [attack] warn 0.70s lands f+41 d0 1.5 dland 1.54 dminA 1.69
+== skeleton: cycles 200 cut 7
+  W 54f [walk/windup] A 18f [windup/attack] R 127f [attack] warn 1.05s lands f+62 d0 1.1 dland 1.0 dminA 1.0
+  W 54f [walk/windup] A 18f [windup/attack] R 127f [attack] warn 1.05s lands f+62 d0 1.8 dland 1.79 dminA 1.49
+  W 54f [walk/windup] A 18f [windup/attack] R 127f [attack] warn 1.05s lands f+62 d0 3.6 dland 2.43 dminA 1.84
+  W 54f [walk/windup] A 18f [windup/attack] R 127f [attack] warn 1.05s lands f+62 d0 1.0 dland 1.0 dminA 0.99
+== skeleton_elite: cycles 25 cut 0
+  W 54f [walk/windup] A 18f [windup/attack] R 91f [attack] warn 1.05s lands f+62 d0 1.0 dland 0.99 dminA 0.8
+  W 54f [idle/windup] A 18f [windup/attack] R 91f [attack] warn 1.05s lands f+62 d0 1.0 dland 1.0 dminA 1.0
+  W 54f [attack/windup] A 18f [windup/attack] R 91f [attack] warn 1.05s lands f+62 d0 1.0 dland 1.0 dminA 1.0
+  W 54f [attack/windup] A 18f [windup/attack] R 91f [attack] warn 1.05s lands f+62 d0 1.0 dland 1.0 dminA 1.0
