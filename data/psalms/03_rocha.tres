@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="PsalmDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/psalm_def.gd" id="1_y3bnx"]
+
+[resource]
+script = ExtResource("1_y3bnx")
+id = &"rocha"
+theme = &"rock"
+name_key = &"psalm_rocha"
+desc_key = &"psalm_rocha_desc"
+hint_key = &"psalm_rocha_hint"
+line_key = &"psalm_rocha_line"
+slot = 1
+requires = Array[PackedStringArray]([PackedStringArray("golpe_brasa", "golpe_geada", "golpe_radiante", "golpe_firme"), PackedStringArray("firmeza", "escudo", "pesado_firme", "estilhaco", "peso_inverno"), PackedStringArray("vapor", "bastiao", "dom:quarto_corte", "dom:golpe_sem_fim", "dom:furia_plena", "dom:fio_longo")])
+effect = 3
+damage = 30.0
+radius = 4.0
+duration = 3.0
+stun = 1.0

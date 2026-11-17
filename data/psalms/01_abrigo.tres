@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="PsalmDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/psalm_def.gd" id="1_igq5j"]
+
+[resource]
+script = ExtResource("1_igq5j")
+id = &"abrigo"
+theme = &"shelter"
+name_key = &"psalm_abrigo"
+desc_key = &"psalm_abrigo_desc"
+hint_key = &"psalm_abrigo_hint"
+line_key = &"psalm_abrigo_line"
+slot = 4
+requires = Array[PackedStringArray]([PackedStringArray("passos", "passo_brasa", "passo_geada", "passo_radiante"), PackedStringArray("escudo", "firmeza", "consolo", "circulo_firme"), PackedStringArray("rastro", "passo_frio", "bastiao", "dom:passo_encadeado", "dom:fio_do_passo", "dom:investida")])
+effect = 1
+radius = 2.6
+duration = 3.0
+count = 2

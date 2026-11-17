@@ -355,7 +355,8 @@ func _give(reward: RunMap.Reward, guardian: bool = false) -> void:
 	var p := game.player
 	match reward:
 		RunMap.Reward.BOON:
-			game.open_boon_choice(stage.guardian_rarity_chance if guardian else stage.rarity_chance)
+			game.open_boon_choice(stage.guardian_rarity_chance if guardian else stage.rarity_chance,
+					stage.guardian_psalm_chance if guardian else stage.psalm_chance)
 		RunMap.Reward.POM:
 			game.open_grow_choice()
 		RunMap.Reward.POM_SLICE:

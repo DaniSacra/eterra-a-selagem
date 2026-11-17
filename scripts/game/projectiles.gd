@@ -130,6 +130,9 @@ var last_offscreen := -1
 var horde: Horde
 var player: Player
 var fx: Fx
+## The Abrigo's shelters (E4, Psalms.bars): called with (where, radius), true where an enemy shot is undone (never a
+## boss's crescent, which the stone does not stop either). Unset: none.
+var shelter: Callable
 var _pools: Dictionary = {}
 var _orb_mats: Dictionary = {}
 var _found: Array[Enemy] = []
@@ -256,6 +259,7 @@ func step(dt: float) -> void:
 		var arena := horde.arena if horde else null
 		# the room's cover stops every shot but a boss's crescents (cycle C12, BUG-015): it dies on the stone with a spark
 		var stop := arena.shot_hit(s.pos, to, SHOT_EDGE, s.low) if arena != null and s.kind != Kind.SOUL and not s.through else -1.0
+		var sheltered: bool = stop < 0.0 and shelter.is_valid() and s.kind != Kind.SOUL and hostile(s) and shelter.call(to, s.radius)
 		if stop >= 0.0:
 			to = s.pos.lerp(to, stop)
 		s.pos = to
@@ -263,13 +267,14 @@ func step(dt: float) -> void:
 		s.age += dt
 		s.flown += s.vel.length() * dt
 		var gone := s.life <= 0.0 or (arena != null and not arena.bounds().grow(SHOT_MARGIN).has_point(s.pos))
-		if stop >= 0.0:
+		if stop >= 0.0 or sheltered:
 			gone = true
 			blocked += 1
 			# a shot dying on stone rings like a blow on a ward (E1b)
 			Audio.play(&"ward")
 			if hostile(s):
-				shot_logged.emit(shooter(s), RoomTally.SHOT_BLOCKED, String(arena.last_cover.piece) if arena.last_cover else "")
+				var piece := "shelter" if sheltered else String(arena.last_cover.piece) if arena.last_cover else ""
+				shot_logged.emit(shooter(s), RoomTally.SHOT_BLOCKED, piece)
 			fx.burst(&"spark", Vector3(s.pos.x, LOW_HEIGHT if s.low else HEIGHT, s.pos.y), Vector3(-s.vel.x, 0, -s.vel.y).normalized())
 		elif not gone:
 			if s.kind == Kind.SOUL:

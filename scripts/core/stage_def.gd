@@ -85,6 +85,9 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## Chance a card is an Elo (when one can be formed) and chance it is a trade (E3-01).
 @export var elo_chance := Boon.ELO_CHANCE
 @export var trade_chance := Boon.TRADE_CHANCE
+## Chance a card is a Psalm when one can be offered (E4, Psalms.fill): a room's and the guardian's.
+@export var psalm_chance := Psalms.CHANCE
+@export var guardian_psalm_chance := Psalms.CHANCE_GUARDIAN
 
 @export_group("Shop")
 ## The shop shows one item of each group (C13-04, Hades II's WorldShop: a Blessing; healing or life; growth).

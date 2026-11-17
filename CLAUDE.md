@@ -571,6 +571,23 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 
 - **Ultimates (E2-08, E2-10)**: ação `ultimate` (R, LB no controle), carga `UltCharge` (`core/ult_charge.gd`) pela Magia gasta (`Magick.spent`; U-1 60, U-2 70; `ult_charge_pct` do Coração da Emeth acelera), gesto `Player` estado `ULT` 0,3 s protegido que corta o golpe como a esquiva; efeitos em `scripts/game/ultimates.gd`: U-1 Corte do Juízo (faixa 12 x 4 m, 300 no miolo e 200, armadura em dobro, atordoa 1 s, `ult_rift.gdshader`), U-2 Voragem (6 m a 4 m à frente ou no cursor até 8, 4 s, tiques de 8, implosão 120, espiral por `Arena.sweep`; elites 50%, guardiões 25%, Morvath só lento; `ult_vortex.gdshader`: véu esmeralda até 0,3, três braços marfim, aro de ouro velho que se fecha na implosão, tetos em `Ultimates.vortex_peaks`). Golpes com tag `ultimate` nunca são finalizador nem Ômega. 5º losango no HUD. `--ultimate=cleave|vortex`, `--ult-full`, `--shot-on=ult`. Testes em `tests/test_ultimate.gd`; sonda 40 metas (E2-U1 a U3).
 
+## Salmos (E4-01 e E4-02; regras, números e escolhas em `docs/design/e4_psalms.md`)
+- `PsalmDef` (`core/psalm_def.gd`, `data/psalms/`, parte `psalms` do `make_data.gd`): nome só por tema, sem número nem
+  texto bíblico (D-59 (a); teste nas chaves `psalm_*`), `theme`, `slot` (a ação que transforma), três grupos `requires`
+  (id de Bênção ou Elo, ou `dom:` + id de Dom equipado), `effect` (SENTINEL, SHELTER, FLOCK, STONE) e os números.
+  Regras puras em `Psalms` (`core/psalms.gd`): uma coisa por grupo e nunca a mesma para dois (`met`), 10% por carta e 5%
+  no guardião (`StageDef.psalm_chance`, `guardian_psalm_chance`, `Psalms.fill`; o dado só é lido quando algum pode vir),
+  um por tema, dois por partida (`MAX_PER_RUN`). Efeitos em `PsalmPlay` (`game/psalm_play.gd`): **Sentinela** (o círculo
+  anda com ele e golpeia com 30 quem entra, `Ground.Zone.follow`/`strike`), **Abrigo** (onde a esquiva termina, abrigo de
+  2,6 m por 3 s, até 2, que desfaz tiros inimigos menos as meias-luas, `Ground.Kind.SHELTER`, `Projectiles.shelter`),
+  **Pastor** (abate reúne luz, até 3; o especial solta uma onda a mais por luz em leque de 14 graus, `Combat.throw_wave`),
+  **Rocha** (o giro planta pedra de luz: 30 em 4 m, atordoa comuns 1 s, fica 3 s deixando lento, `Ground.Kind.STONE`).
+  Carta: `BoonState.Card.psalm`; `Game.psalm_offered(psalm, first)` e `psalm_taken(psalm, first)`, `Game.choose_card`;
+  gente só recebe carta de Salmo quando a tela tiver `open_cards` (`Game.psalm_cards`, `screen_shows_psalms`; E4-03 é
+  do ui-ux-designer). Robô e `--autopick` pegam o Salmo; `--psalm=a,b` toma no começo. Compêndio `codex.psalms` (`seen`,
+  `taken`) e Maestria (`new_psalms`) no fim da partida; `RESULT` e registro com `psalms`; dano em `dealt_by.psalm`.
+  Testes em `tests/test_psalms.gd`.
+
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
   `requires_sets` (E3-02: uma lista por família, uma Bênção de cada forma o Elo; `BoonState.forged`), 12% por carta,

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="PsalmDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/psalm_def.gd" id="1_k02pf"]
+
+[resource]
+script = ExtResource("1_k02pf")
+id = &"sentinela"
+theme = &"watch"
+name_key = &"psalm_sentinela"
+desc_key = &"psalm_sentinela_desc"
+hint_key = &"psalm_sentinela_hint"
+line_key = &"psalm_sentinela_line"
+slot = 3
+requires = Array[PackedStringArray]([PackedStringArray("circulo_brasa", "circulo_geada", "circulo_radiante", "circulo_firme"), PackedStringArray("escudo", "passos", "firmeza", "golpe_firme", "pesado_firme"), PackedStringArray("bastiao", "rastro", "passo_frio", "dom:reserva", "dom:lamina_faminta", "dom:coracao_da_emeth")])
+damage = 30.0

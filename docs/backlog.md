@@ -550,6 +550,13 @@ Depois do T4: o lote do Meshy para as armas (D-46, orçamento do `art-director` 
   chaves `psalm_*`); cada Salmo com captura e vídeo da transformação aprovados pelo `art-director`; música sem silêncio de
   2 s com ela ligada.
 - **Responsáveis**: `gameplay-engineer`, `ui-ux-designer`, `art-director`, `environment-artist`.
+- **Feito (E4-01, E4-02, 2026-11-17, `gameplay-engineer`; `docs/design/e4_psalms.md`)**: regras e os quatro Salmos.
+  Decisões tomadas pelas recomendações (autorização de E2 a E6), a validar no teste do Daniel: Sentinela no círculo
+  (anda com ele e golpeia quem entra) e não na esquiva através do aviso (pedia esperar o golpe); Abrigo na esquiva (o
+  Refúgio da spec, mesmo tema); Pastor no especial (luzes dos abates viram ondas) no lugar da cura por abate; Rocha no
+  giro (pedra que atordoa os comuns); uma coisa nunca responde por dois grupos; o dado do Salmo só é lido quando algum
+  pode vir (partidas sem Salmo iguais às de antes); gente só recebe carta de Salmo quando a tela da E4-03 existir;
+  `psalms` no `RESULT` sem mudar a versão do registro.
 - **Riscos**: tom (alegoria respeitosa, sem sermão); fonte da música.
 
 ### E5 "Eventos e exploração" (5 a 8 dias)
