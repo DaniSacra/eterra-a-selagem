@@ -156,7 +156,7 @@ func test_the_run_keeps_each_blow_in_context_up_to_sixty() -> void:
 
 func test_the_run_keeps_the_gifts_at_morvath_the_shop_and_the_fountain() -> void:
 	var t := RoomTally.new()
-	assert_eq(t.run_fields(), {"boons_at_boss": -1, "shop": {}, "fountain_used": false, "hurt_ctx": []})
+	assert_eq(t.run_fields(), {"boons_at_boss": -1, "shop": {}, "fountain_used": false, "hurt_ctx": [], "events": []})
 	t.enter(4, "hall", 20.0, 0.0)
 	t.fountain()
 	t.enter(6, "hall", 30.0, 50.0)
@@ -272,7 +272,8 @@ func test_the_master_bus_ends_in_a_limiter_at_minus_one_db() -> void:
 			found += 1
 			assert_true(AudioServer.is_bus_effect_enabled(bus, i))
 	assert_eq(found, 1, "one limiter, put there as Audio starts")
-	assert_almost_eq(limiter.ceiling_db, -1.0, 0.001)
+	assert_almost_eq(limiter.ceiling_db, Audio.LIMIT_DB, 0.001)
+	assert_lte(Audio.LIMIT_DB, -1.0, "the ceiling stays at -1 dB or under (-1.5 since the music, E4-06)")
 	assert_eq(Audio.limit_master(), limiter, "never twice")
 
 

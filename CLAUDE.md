@@ -557,6 +557,42 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `tools/arena_lab.gd` (comando no topo; `--top` vista de cima). Testes: `test_arenas.gd`, `test_descent.gd`,
   `test_killing_blow.gd`.
 
+## E5, eventos e exploração (spec de arte `docs/art/e5_spec.md`; métricas em `docs/qa/e5_metrics.md`)
+- **Três arenas novas** no `_stage` do `make_data.gd` (`_sanctuary`, `_bridge`, `_runes`, duas variantes cada, dificuldade 2):
+  Santuário Desmoronado (casa do guardião: `RoomLayout.guardian_home`, `RunMap._layout` manda o MINIBOSS para ela em qualquer
+  profundidade se não foi a sala anterior; ele nasce em `boss_spawn` diante da grade; variante B com a nave afundada),
+  Ponte dos Condenados (comprida, três plataformas e duas pontes de 5 m, portas só na plataforma leste, sem sacerdote,
+  ninguém nasce numa ponte; B com a ponte longa e o patamar) e Câmara das Runas Instáveis (4 a 6 inimigos, no máximo 2
+  atiradores, câmera fixa). Partes do chão com nome (`RoomLayout.areas`, `area_names`, `area_at`): o tempo do herói em
+  cada uma vai para `rooms[].zones` do `RESULT` (`RoomTally.zone_time`). Visual provisório: `PlainLook` (luz de cima) para
+  os looks `sanctuary`, `bridge`, `runes`, `trial`, `altar` (`Arena.look_for`, `PROVISIONAL_LOOKS`) até o environment-artist
+  entregar os seus em `ArenaRoom.LOOKS`. Opções: `--arena=sanctuary|bridge|runes`, `--start=trial|altar`.
+- **Runas** (`HazardDef` no `RoomLayout.hazard`, lógica pura `ArenaHazard`, no jogo `RuneFloor`): grade de 10 x 8 ladrilhos
+  de 3 m; padrões só em faixas e ladrilhos (A: `sweep`, `comb`, `cut`; B: `checker`, `frame`, `islands` e a pedra quieta no
+  meio); aviso 1,2 s, golpe 0,25 s, descanso 2,4 s, nada nos 3 s do começo, nas portas nem em ladrilho cortado pela borda;
+  no máximo 35% aceso (os densos, 50%, só com até 3 inimigos de pé) e todo ladrilho aceso tem um vizinho apagado. Fere o
+  herói 4 (como aviso, `Ground.add_hazard`) e todo inimigo comum em cima 35 (`Ground.hazard_landed`); "Derrotado por: Runas
+  Instáveis" (`killer_runes`). Desenho: estilo `GroundLook.Style.HAZARD` (âmbar `HAZARD_COLOR`, moldura por ladrilho
+  `tile_m`, preenchimento fraco, `render_priority` -1, abaixo dos avisos vermelhos). `rooms[].hazard` no `RESULT`.
+- **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
+  numa sala de luta vencida (20%, profundidades 2 a 7, intervalo de 10 salas, nunca com maldição em curso), custo
+  `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3
+  cartas (Bênção forte com raridade sorteada, maldição por 3 a 5 encontros) e as portas da sala de antes (fechadas até
+  pegar uma). A maldição age em `Horde.speed_scale`, `Player.heal_scale`, `Player.hurt_scale`, ondas (`wave_extra`) e
+  ouro (`gold_pct`); depois do último encontro vira a Bênção (`BoonState.grant`, "Provação vencida"). Provisório: as
+  cartas são pedestais no chão (`Rooms.TRIAL_SPOTS`). Para a UI: `Rooms.trials` (`active`, `left`, `won`), `trial_cards`
+  (`Trials.Card.view()`), `take_trial(i)`, sinais `trial_slab_shown`, `trial_entered`, `trial_offered`, `trial_taken`,
+  `trial_turned`. Robô: paga se sobrar 60% da vida (`Trials.bot_accepts`) e pega a primeira carta.
+- **Altar Esquecido** (`Altar`, `stage.altar_layout`): porta uma vez por descida (profundidades 2 a 8, 20%), sem luta,
+  uma troca ou nenhuma: 10 de vida máxima por uma romã (`Game.open_grow_choice`) ou 75 de ouro por 25 de Magia máxima.
+  `Rooms.altar_options`, `take_altar(option)`, sinal `altar_used`. Robô: `Altar.bot_choice`.
+- **Portas que mostram o caminho**: a luta atrás de cada porta é sorteada ao abrir a sala de antes (`Rooms._prepare`,
+  `RunMap.Room.fight`) e entra igual; a placa diz "Difícil" para luta com elite e "Guardião" (`Rooms.door_text`);
+  `Rooms.door_info(i)` dá `kind`, `reward`, `depth`, `tier`, `guardian`, `hard`, `elites`, `arena`, chaves de texto.
+- **Registro**: `events` no `RESULT` e no registro (`RoomTally.event`: `door`, `trial_shown`, `trial_paid`,
+  `trial_refused`, `trial_offered`, `trial_taken`, `trial_turned`, `altar`), mais `trial` (`active`, `left`, `won`).
+  Testes: `test_hazard.gd`, `test_trial.gd`, `test_altar.gd`, `test_arenas.gd`, `test_descent.gd`.
+
 ## Guerreiro: HeroDef, Maestria, Dons (E2a, fundação; especificação em `docs/design/warrior_spec.md`)
 - **`HeroDef`** (`core/hero_def.gd`, `data/heroes/warrior.tres`, parte `hero` do `make_data.gd`; DT-013): id técnico `warrior`,
   modelo `hero_explorer`, combos, vida 30, `hurt_time`, proteção 1,3 s, 1 carga de esquiva em 0,74 s (saíram do `Feel`), Magia

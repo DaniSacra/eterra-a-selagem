@@ -56,6 +56,15 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## Which rooms may be held in it besides fights: the guardian's, the fountain's.
 @export var guardian := true
 @export var fountain := false
+## The guardian's own room (E5, the Santuário Desmoronado): the guardian's fight is held here whenever it may be (any
+## depth, the arena just left aside), and he rises at boss_spawn facing hero_spawn.
+@export var guardian_home := false
+## A floor that strikes on its own (E5, the runes: HazardDef; null: none).
+@export var hazard: HazardDef
+## Named parts of the floor (E5, the decision each arena asks; RoomTally.zone_time): seconds the paladin spends in
+## each are counted in a fight (the first rectangle holding him; none: "other"). area_names[i] names areas[i].
+@export var areas: Array[Rect2] = []
+@export var area_names: PackedStringArray = PackedStringArray()
 ## What stands on the floor (columns, sarcophagi, the trunk, roots).
 @export var obstacles: Array[ArenaObstacle] = []
 ## Where enemies may rise (rectangles of floor; empty: anywhere on it). Every one is reached from the way in.
@@ -87,6 +96,11 @@ func variant(n: int) -> RoomLayout:
 		out.late_spawns = v.late_spawns.duplicate()
 	if v.floor != null:
 		out.floor = v.floor
+	if v.hazard != null:
+		out.hazard = v.hazard
+	if not v.areas.is_empty():
+		out.areas = v.areas.duplicate()
+		out.area_names = v.area_names.duplicate()
 	if v.mirror:
 		out._mirror()
 	return out
@@ -145,3 +159,11 @@ static func _mirror_polys(list: Array[PackedVector2Array]) -> Array[PackedVector
 			m.append(Vector2(-q[i].x, q[i].y))
 		out.append(m)
 	return out
+
+
+## The name of the part of the floor p stands in (areas, area_names; "other" in none).
+func area_at(p: Vector2) -> String:
+	for i in mini(areas.size(), area_names.size()):
+		if areas[i].has_point(p):
+			return area_names[i]
+	return "other"

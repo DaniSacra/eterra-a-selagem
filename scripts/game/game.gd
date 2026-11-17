@@ -25,7 +25,8 @@ const FOUNTAIN_HEAL := 0.4
 ## Each new level, the gift arrives with a little of the companions' strength.
 const LEVEL_HEAL := 0.15
 ## --start= in the room mode: which room to begin in.
-const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN}
+const ROOM_STARTS := {"boss": RunMap.Kind.BOSS, "miniboss": RunMap.Kind.MINIBOSS, "shop": RunMap.Kind.SHOP, "fountain": RunMap.Kind.FOUNTAIN,
+	"trial": RunMap.Kind.TRIAL, "altar": RunMap.Kind.ALTAR}
 const SPAWN_MIN := 19.0
 const SPAWN_MAX := 25.0
 ## How far the point the camera looks at stays from the side walls and from the north and south ends (meters), with
@@ -650,6 +651,7 @@ func take_psalm(p: PsalmDef) -> bool:
 	column(player.pos, p.color, 1.4, 9.0, 0.8)
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 	fx.word(Vector3(player.pos.x, 3.2, player.pos.y), T.t(p.name_key), p.color)
+	Music.sting(p.id)  # the Psalm's theme over the bed (E4-06)
 	psalm_taken.emit(p, first)
 	return true
 
@@ -1638,7 +1640,9 @@ func result() -> Dictionary:
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
 		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
 		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
-		"psalms": psalms.ids()}
+		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true),
+		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
+			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0}}
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

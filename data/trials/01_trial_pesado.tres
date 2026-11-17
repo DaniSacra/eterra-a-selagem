@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="TrialDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_e4qhg"]
+[ext_resource type="Script" path="res://scripts/core/trial_def.gd" id="2_u601h"]
+
+[sub_resource type="Resource" id="Resource_fhgrt"]
+script = ExtResource("1_e4qhg")
+stat = &"damage_pct"
+tag = &"heavy"
+base = 0.4
+per_level = PackedFloat32Array()
+
+[resource]
+script = ExtResource("2_u601h")
+id = &"trial_pesado"
+name_key = &"trial_pesado"
+desc_key = &"trial_pesado_desc"
+mods = Array[ExtResource("1_e4qhg")]([SubResource("Resource_fhgrt")])

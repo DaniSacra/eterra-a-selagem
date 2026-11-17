@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="TrialDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_853gs"]
+[ext_resource type="Script" path="res://scripts/core/trial_def.gd" id="2_c8ocg"]
+
+[sub_resource type="Resource" id="Resource_78a2y"]
+script = ExtResource("1_853gs")
+stat = &"magick_max"
+base = 20.0
+per_level = PackedFloat32Array()
+
+[resource]
+script = ExtResource("2_c8ocg")
+id = &"trial_reserva"
+name_key = &"trial_reserva"
+desc_key = &"trial_reserva_desc"
+mods = Array[ExtResource("1_853gs")]([SubResource("Resource_78a2y")])

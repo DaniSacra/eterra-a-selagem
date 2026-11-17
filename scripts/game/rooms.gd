@@ -4,7 +4,19 @@ extends Node3D
 ## closed until its waves are beaten, leaves its reward, then its doors light up showing what lies behind each.
 ## Owned and stepped by Game; RunMap draws the rooms, EncounterGen the fights.
 
-enum Phase { FIGHT, REWARD, OPEN, LEAVING, BOSS }
+## EVENT: the Provação's chamber before its card is taken (its doors stay shut).
+enum Phase { FIGHT, REWARD, OPEN, LEAVING, BOSS, EVENT }
+
+## E5, for the screens and the scenery (docs/art/e5_spec.md 5 and 6): the Provação's slab appeared (where, the life it
+## asks), was paid (he walks into its chamber), its cards are on offer (Array of Trials.Card; take_trial(i) takes one),
+## one was taken, and its curse turned into the blessing (the "Provação vencida" banner, the seal's turn). The altar's
+## trade (Altar.IDS, or &"" for none) as he leaves it or takes one.
+signal trial_slab_shown(at: Vector2, cost: int)
+signal trial_entered(cost: int)
+signal trial_offered(cards: Array)
+signal trial_taken(card: Trials.Card)
+signal trial_turned(card: Trials.Card)
+signal altar_used(option: StringName)
 
 const STAGE := "res://data/stages/catacombs.tres"
 ## Seconds after walking in before the first wave rises (Hades II starts a fight as you step into the room).
@@ -46,6 +58,20 @@ var _door_labels: Array[Node3D] = []
 var _defs: Dictionary = {}
 ## The arena of this room as it is dressed (its variant), or null.
 var _layout: RoomLayout
+## E5: the Provação of this run (its curse carried now: trials.active, trials.left; for the HUD's seal).
+var trials: Trials
+## The Provação's slab in the room just won (null: none): {at, cost, armed (seconds until it may be stepped on)}.
+var slab: Variant = null
+## The cards of the Provação on offer in its chamber, and the altar's trades (Altar.options) in its room.
+var trial_cards: Array[Trials.Card] = []
+var altar_options: Array[Dictionary] = []
+## The floor of the runes in a fight there (null: none).
+var runes: RuneFloor
+var _slab_node: Node3D
+## The spots of the trial's cards and of the altar's trades: {at, index, node}.
+var _spots: Array[Dictionary] = []
+## The robot's mind on the slab of this room (decided once when it shows).
+var _bot_trial := false
 var _rng: RandomNumberGenerator
 var _fade: ColorRect
 ## The floating signs turn slowly.
@@ -61,6 +87,7 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	elif Dev.has("medium"):
 		stage = short_stage(stage, 6)
 	map = RunMap.new(stage, _rng)
+	trials = Trials.new(Trials.load_catalog())
 	if Dev.has("arena"):
 		# dev: --arena=id makes the opening room that arena (--variant=n dresses it)
 		for i in stage.layouts.size():
@@ -93,6 +120,9 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 		st.fountain_depth_max = rooms_ - 2
 		st.miniboss_depth_min = rooms_ - 1
 		st.miniboss_depth_max = rooms_ - 1
+	# the events (E5) inside the shorter descent: the altar before the shop, the slab with a fight left after it
+	st.altar_depth_max = mini(st.altar_depth_max, rooms_ - 1)
+	st.trial_depth_max = mini(st.trial_depth_max, rooms_ - 2)
 	return st
 
 
@@ -112,6 +142,20 @@ func start_at(kind: RunMap.Kind) -> void:
 		RunMap.Kind.FOUNTAIN:
 			map.depth = stage.fountain_depth_max - 1
 			map.miniboss_depth = 0
+		RunMap.Kind.TRIAL:
+			# --start=trial: its chamber as if a room of depth 3 had shown its slab (the doors after it drawn as there)
+			map.depth = 3
+			map.miniboss_depth = 0
+			next_rooms = map.options(true)
+			_prepare(next_rooms)
+			_enter(map.trial(map.depth))
+			return
+		RunMap.Kind.ALTAR:
+			map.depth = stage.altar_depth_min
+			map.miniboss_depth = 0
+			map.altar_seen = true
+			_enter(RunMap.Room.new(RunMap.Kind.ALTAR, RunMap.Reward.NONE, map.depth + 1, -1))
+			return
 	for r in map.options(true):
 		if r.kind == kind:
 			_enter(r)
@@ -138,9 +182,13 @@ func step(dt: float) -> void:
 				_collect()
 		Phase.OPEN:
 			_step_shop()
+			_step_slab(dt)
+			_step_spots()
 			var door := game.arena.exit_at(game.player.pos)
 			if door >= 0 and door < next_rooms.size():
 				_leave(next_rooms[door])
+		Phase.EVENT:
+			_step_spots()
 
 
 # ---------- entering ----------
@@ -148,13 +196,20 @@ func step(dt: float) -> void:
 func _enter(next: RunMap.Room) -> void:
 	room = next
 	map.enter(room)
-	next_rooms = map.options(game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
-	var layout: RoomLayout = stage.layouts[room.layout] if not stage.layouts.is_empty() else null
+	if room.kind != RunMap.Kind.TRIAL:
+		# (the Provação's chamber keeps the doors of the room its slab was in)
+		next_rooms = map.options(game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
+		_prepare(next_rooms)
+	var layout: RoomLayout = stage.layouts[room.layout] if not stage.layouts.is_empty() and room.layout >= 0 else null
 	match room.kind:
 		RunMap.Kind.BOSS:
 			layout = stage.boss_layout
 		RunMap.Kind.SHOP:
 			layout = stage.shop_layout
+		RunMap.Kind.TRIAL:
+			layout = stage.trial_layout
+		RunMap.Kind.ALTAR:
+			layout = stage.altar_layout
 	var variant := room.variant
 	if layout != null:
 		if Dev.has("variant") and room.depth == 1:
@@ -185,12 +240,19 @@ func _enter(next: RunMap.Room) -> void:
 	purse = null
 	# the rooms' music (E4-06): the fight's layer comes in for a fight and goes when it is won; Morvath has his own
 	if room.kind != RunMap.Kind.BOSS:
-		var fighting := room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS
+		var fighting := room.kind in [RunMap.Kind.COMBAT, RunMap.Kind.MINIBOSS, RunMap.Kind.TRIAL]
 		Music.play(&"catacombs", Music.FIGHT if fighting else Music.WALK)
+	_stop_runes()
+	slab = null
+	_slab_node = null
+	_spots.clear()
+	trial_cards.clear()
+	altar_options.clear()
+	_apply_curse()
 	match room.kind:
 		RunMap.Kind.COMBAT:
-			var fight := EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
-			_waves = fight.waves
+			var fight := room.fight if room.fight != null else EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
+			_waves = _cursed_waves(fight.waves)
 			var rating := 0.0
 			for w: Array in fight.waves:
 				for id: StringName in w:
@@ -199,8 +261,11 @@ func _enter(next: RunMap.Room) -> void:
 			_cap = fight.cap
 			game.horde.alive_cap = fight.ceiling
 			phase = Phase.FIGHT
+			if layout != null and layout.hazard != null:
+				runes = RuneFloor.new(game, layout.hazard, _rng)
 		RunMap.Kind.MINIBOSS:
-			var guardian: Array[StringName] = [stage.minibosses[_rng.randi() % stage.minibosses.size()]]
+			var guardian: Array[StringName] = [room.fight.kinds[0] if room.fight != null and not room.fight.kinds.is_empty()
+				else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 			_waves = [guardian]
 			var alive := EncounterGen.in_room(EncounterGen.alive_range(stage, stage.miniboss_tier), layout)
 			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
@@ -211,6 +276,11 @@ func _enter(next: RunMap.Room) -> void:
 			_open_doors()
 		RunMap.Kind.SHOP:
 			_build_shop()
+			_open_doors()
+		RunMap.Kind.TRIAL:
+			_build_trial()
+		RunMap.Kind.ALTAR:
+			_build_altar()
 			_open_doors()
 		RunMap.Kind.BOSS:
 			phase = Phase.BOSS
@@ -228,6 +298,10 @@ func _enter(next: RunMap.Room) -> void:
 # ---------- the fight ----------
 
 func _step_fight(dt: float) -> void:
+	if _layout != null and not _layout.areas.is_empty():
+		game.room_tally.zone_time(_layout.area_at(game.player.pos), dt)
+	if runes != null:
+		runes.step(dt)
 	if _wave_wait > 0.0:
 		_wave_wait -= dt
 		if _wave_wait <= 0.0:
@@ -257,6 +331,10 @@ func _next_wave() -> void:
 func _spawn(id: StringName) -> void:
 	var d := game.horde.def(id)
 	var at := _spawn_point()
+	if room.kind == RunMap.Kind.MINIBOSS and _layout != null and _layout.guardian_home and _layout.boss_spawn != Vector2.ZERO \
+			and _wave == 0 and game.horde.count() == 0:
+		# the guardian rises in his own house, before the presbytery's grille (E5, spec 1.4)
+		at = game.arena.resolve(_layout.boss_spawn, d.radius)
 	game.horde.spawn(d, at, true)
 	game.fx.burst(&"shadow", Vector3(at.x, 0.6, at.y))
 	if d.elite:
@@ -319,6 +397,8 @@ func _room_cleared() -> void:
 	phase = Phase.REWARD
 	Music.set_level(Music.WALK)
 	won.append(room.kind)
+	_stop_runes()
+	_fight_won()
 	game.hero_gifts.room_won()  # Respiro
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
@@ -340,7 +420,7 @@ func _room_cleared() -> void:
 func _on_killed(e: Enemy) -> void:
 	if purse == null or phase != Phase.FIGHT:
 		return
-	var found := purse.drop(e.def.rating, _rng)
+	var found := floori(purse.drop(e.def.rating, _rng) * maxf(0.0, 1.0 + trials.curse(&"gold_pct")))
 	if found <= 0:
 		return
 	gold += found
@@ -385,16 +465,30 @@ func _give(reward: RunMap.Reward, guardian: bool = false) -> void:
 
 func _open_doors() -> void:
 	phase = Phase.OPEN
+	if room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS:
+		_roll_slab()
 	for i in next_rooms.size():
 		var r := next_rooms[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
-		var text := T.t(RunMap.REWARD_KEY[r.reward]) if r.kind == RunMap.Kind.COMBAT else T.t(RunMap.KIND_KEY[r.kind])
-		_door_labels.append(_marker(game.arena.door_label(i), r.reward, text, r.kind))
+		_door_labels.append(_marker(game.arena.door_label(i), r.reward, door_text(r), r.kind))
 	if not next_rooms.is_empty():
 		Audio.play(&"door")
 
 
+## A door's sign (E5-D8, docs/art/e5_spec.md 7.1): the reward of a fight, under it "Difícil" for one with an elite
+## and "Guardião" for the guardian's; the room's kind for the others (the pictograms are the UI's, DoorSign).
+static func door_text(r: RunMap.Room) -> String:
+	match r.kind:
+		RunMap.Kind.COMBAT:
+			var hard := bool(r.sign().hard)
+			return T.t(RunMap.REWARD_KEY[r.reward]) + ("\n" + T.t(&"door_hard") if hard else "")
+		RunMap.Kind.MINIBOSS:
+			return T.t(RunMap.REWARD_KEY[r.reward]) + "\n" + T.t(RunMap.KIND_KEY[r.kind])
+	return T.t(RunMap.KIND_KEY[r.kind])
+
+
 func _leave(next: RunMap.Room) -> void:
+	_log_leaving(next)
 	phase = Phase.LEAVING
 	var t := create_tween()
 	t.tween_property(_fade, "color:a", 1.0, FADE)
@@ -404,6 +498,353 @@ func _leave(next: RunMap.Room) -> void:
 func _fade_in() -> void:
 	_fade.color.a = 1.0
 	create_tween().tween_property(_fade, "color:a", 0.0, FADE)
+
+
+# ---------- E5: the doors that show the way ----------
+
+## Draws the fights behind the doors before they open (E5-D8: the sign can say "Difícil" or "Guardião"), with the
+## run's dice, in the arena (and its variant) each door leads to; the guardian's is drawn among the stage's.
+func _prepare(doors: Array[RunMap.Room]) -> void:
+	for r in doors:
+		if r.fight != null:
+			continue
+		match r.kind:
+			RunMap.Kind.COMBAT:
+				var l: RoomLayout = stage.layouts[r.layout].variant(r.variant) if r.layout >= 0 and r.layout < stage.layouts.size() else null
+				r.fight = EncounterGen.generate(stage, r.depth, _defs, _rng, 1.0, l)
+			RunMap.Kind.MINIBOSS:
+				var f := EncounterGen.Fight.new()
+				f.kinds = [stage.minibosses[_rng.randi() % stage.minibosses.size()]]
+				f.tier = stage.miniboss_tier
+				f.waves = [f.kinds.duplicate()]
+				r.fight = f
+
+
+## What door i tells (for the sign, the scenery of its doorway and the log): RunMap.Room.sign() and the arena it leads
+## to (&"" for none: the boss, a room of its own) and its name keys (kind_key, reward_key). {} when there is no such door.
+func door_info(i: int) -> Dictionary:
+	if i < 0 or i >= next_rooms.size():
+		return {}
+	var r := next_rooms[i]
+	var info := r.sign()
+	var arena: StringName = &""
+	match r.kind:
+		RunMap.Kind.BOSS:
+			arena = stage.boss_layout.id if stage.boss_layout else &""
+		RunMap.Kind.ALTAR:
+			arena = stage.altar_layout.id if stage.altar_layout else &""
+		RunMap.Kind.SHOP:
+			arena = stage.shop_layout.id if stage.shop_layout else &""
+		_:
+			arena = stage.layouts[r.layout].id if r.layout >= 0 and r.layout < stage.layouts.size() else &""
+	info.merge({"arena": arena, "kind_key": RunMap.KIND_KEY[r.kind], "reward_key": RunMap.REWARD_KEY[r.reward]})
+	return info
+
+
+## A door in a word for the run's log: kind, reward and "hard" (combat/boon/hard, altar, miniboss/boon).
+static func door_word(r: RunMap.Room) -> String:
+	var info := r.sign()
+	var w := (RunMap.Kind.keys()[r.kind] as String).to_lower()
+	if r.reward != RunMap.Reward.NONE:
+		w += "/" + (RunMap.Reward.keys()[r.reward] as String).to_lower()
+	if info.hard:
+		w += "/hard"
+	return w
+
+
+## The log of a room left by a door: the doors there were and the one taken; a slab not stepped on is refused; an
+## altar left without a trade.
+func _log_leaving(next: RunMap.Room) -> void:
+	var t := game.room_tally
+	if slab != null:
+		t.event("trial_refused", game.time, {"cost": slab.cost, "hp": snappedf(game.player.hp, 0.1)})
+		slab = null
+	if room.kind == RunMap.Kind.ALTAR and not _spots.is_empty():
+		t.event("altar", game.time, {"choice": "none", "max_hp": game.player.max_hp, "gold": gold})
+		altar_used.emit(&"")
+	if next_rooms.size() > 1:
+		t.event("door", game.time, {"chosen": next_rooms.find(next), "doors": next_rooms.map(door_word)})
+
+
+# ---------- E5: the Provação ----------
+
+## The curse carried now on the fight's numbers (heal_pct, hurt_pct, enemy_speed_pct; the others where they act).
+func _apply_curse() -> void:
+	game.horde.speed_scale = maxf(0.1, 1.0 + trials.curse(&"enemy_speed_pct"))
+	game.player.heal_scale = maxf(0.0, 1.0 + trials.curse(&"heal_pct"))
+	game.player.hurt_scale = maxf(0.0, 1.0 + trials.curse(&"hurt_pct"))
+
+
+## The waves of a fight with the curse carried now: wave_extra more of each wave's first kind.
+func _cursed_waves(waves: Array[Array]) -> Array[Array]:
+	var extra := roundi(trials.curse(&"wave_extra"))
+	var out: Array[Array] = []
+	for w in waves:
+		var copy: Array = w.duplicate()
+		for i in extra:
+			if not w.is_empty():
+				copy.append(w[0])
+		out.append(copy)
+	return out
+
+
+## A fight was won: one less to carry; when the curse turns, its blessing is his for the rest of the run.
+func _fight_won() -> void:
+	var done := trials.fight_won()
+	if done == null:
+		return
+	var p := game.player
+	var old_hp := game.boons.stat(&"max_hp")
+	var old_magick := game.boons.stat(&"magick_max")
+	game.boons.grant(Trials.blessing_mods(done))
+	var more_hp := game.boons.stat(&"max_hp") - old_hp
+	p.max_hp += more_hp
+	p.heal(more_hp)
+	var more_magick := game.boons.stat(&"magick_max") - old_magick
+	p.magick.max_value += more_magick
+	p.magick.gain(more_magick)
+	_apply_curse()
+	game.fx.hero_burst(&"light", Vector3(p.pos.x, 1.2, p.pos.y))
+	game.hud.show_notice(T.t(&"notice_trial_won"), 3.0)
+	game.room_tally.event("trial_turned", game.time, {"blessing": String(done.blessing.id), "rarity": done.rarity})
+	trial_turned.emit(done)
+
+
+## After the reward of a fight: maybe the slab (Trials.roll), on free floor away from the doors, the pieces, the edges
+## and the paladin (_free_spot); it may be stepped on SLAB_ARM seconds later.
+const SLAB_HALF := 1.2
+const SLAB_ARM := 1.2
+const SLAB_CLEAR := 4.0
+const TRIAL_COLOR := Color(0.52, 0.36, 0.78)
+
+
+func _roll_slab() -> void:
+	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng):
+		return
+	var at: Variant = _free_spot(SLAB_CLEAR)
+	if at == null:
+		at = _free_spot(SLAB_CLEAR * 0.6)
+	if at == null:
+		return
+	var cost := Trials.cost(stage, map.depth)
+	slab = {"at": at, "cost": cost, "armed": SLAB_ARM}
+	_slab_node = _slab_marker(at, cost)
+	_bot_trial = Trials.bot_accepts(stage, map.depth, game.player.hp, game.player.max_hp)
+	game.room_tally.event("trial_shown", game.time, {"cost": cost, "hp": snappedf(game.player.hp, 0.1),
+		"max_hp": game.player.max_hp})
+	trial_slab_shown.emit(at, cost)
+
+
+## A spot of floor at least `clear` meters from the edges, the pieces, the doors and the paladin, reached from where he
+## stands, the nearest to the middle of the room (null: none).
+func _free_spot(clear: float) -> Variant:
+	var a := game.arena
+	var f := a.shape()
+	var box := f.bounds()
+	var best: Variant = null
+	var best_d := INF
+	for x in range(ceili(box.position.x), floori(box.end.x) + 1):
+		for z in range(ceili(box.position.y), floori(box.end.y) + 1):
+			var p := Vector2(x, z)
+			if f.edge_distance(p) < clear or a.overlaps(p, clear) or p.distance_to(game.player.pos) < clear:
+				continue
+			var near_door := false
+			for e in a.exits:
+				if e.distance_to(p) < clear + 2.0:
+					near_door = true
+			for zr in a.exit_zones:
+				if zr.grow(clear).has_point(p):
+					near_door = true
+			if near_door or not a.nav.walkable(p) or not a.nav.reachable(p, game.player.pos):
+				continue
+			var d := p.distance_to(a.middle)
+			if d < best_d:
+				best_d = d
+				best = p
+	return best
+
+
+## Stepping on the slab: with more life than it asks, he pays and goes down into the Provação's chamber; without, a
+## word once.
+func _step_slab(dt: float) -> void:
+	if slab == null:
+		return
+	slab.armed = maxf(0.0, float(slab.armed) - dt)
+	var d: Vector2 = game.player.pos - (slab.at as Vector2)
+	if slab.armed > 0.0 or absf(d.x) > SLAB_HALF or absf(d.y) > SLAB_HALF:
+		return
+	var cost := int(slab.cost)
+	if not Trials.can_pay(stage, map.depth, game.player.hp):
+		if not slab.get("warned", false):
+			slab.warned = true
+			game.hud.show_notice(T.t(&"trial_short"), 1.5)
+		return
+	var p := game.player
+	p.hp -= cost
+	game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "-%d" % cost, Color(0.82, 0.76, 0.92))
+	game.room_tally.event("trial_paid", game.time, {"cost": cost, "hp": snappedf(p.hp, 0.1)})
+	slab = null
+	trial_entered.emit(cost)
+	phase = Phase.LEAVING
+	var t := create_tween()
+	t.tween_property(_fade, "color:a", 1.0, FADE)
+	t.tween_callback(func() -> void: _enter(map.trial(map.depth)))
+
+
+## The slab on the floor (provisional, until the environment artist's cracked slab): a flat square, a lilac light and
+## its sign ("Provação", "Custa n de vida").
+func _slab_marker(at: Vector2, cost: int) -> Node3D:
+	var root := Node3D.new()
+	root.position = Vector3(at.x, 0, at.y)
+	add_child(root)
+	var stone := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(SLAB_HALF * 2.0, 0.04, SLAB_HALF * 2.0)
+	stone.mesh = box
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(0.2, 0.18, 0.24)
+	m.emission_enabled = true
+	m.emission = TRIAL_COLOR * 0.3
+	stone.material_override = m
+	stone.position.y = 0.02
+	root.add_child(stone)
+	var light := OmniLight3D.new()
+	light.position.y = 1.2
+	light.light_color = TRIAL_COLOR
+	light.light_energy = 1.5
+	light.omni_range = 4.0
+	light.light_cull_mask = ~Arena.CROWD_LAYER
+	root.add_child(light)
+	var sign := DoorSign.make(T.t(&"room_trial"), T.t(&"trial_cost", {"n": cost}))
+	sign.position.y = MARK_SIGN_Y
+	root.add_child(sign)
+	return root
+
+
+## The Provação's chamber: its cards on the floor in front of the block (provisional, until the split card's screen:
+## take_trial), its doors shut until one is taken.
+const TRIAL_SPOTS: Array[Vector2] = [Vector2(-4.0, -3.0), Vector2(0.0, -3.5), Vector2(4.0, -3.0)]
+
+
+func _build_trial() -> void:
+	phase = Phase.EVENT
+	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance)
+	for i in trial_cards.size():
+		var c := trial_cards[i]
+		var v := c.view()
+		var line1 := T.t(c.blessing.name_key) + " " + T.t(c.blessing.desc_key, {"value": _shown(c.blessing, c.rarity)})
+		var line2 := T.t(c.curse.desc_key, {"value": _shown(c.curse, 0)}) + ", " + T.t(&"trial_for", {"n": v.encounters})
+		var at := TRIAL_SPOTS[i % TRIAL_SPOTS.size()]
+		_spots.append({"at": at, "index": i, "node": _marker(at, RunMap.Reward.NONE, line1 + "\n" + line2, RunMap.Kind.TRIAL)})
+	game.room_tally.event("trial_offered", game.time, {"cards": trial_cards.map(func(c: Trials.Card) -> Dictionary:
+		return {"blessing": String(c.blessing.id), "rarity": c.rarity, "curse": String(c.curse.id), "encounters": c.encounters})})
+	trial_offered.emit(trial_cards)
+
+
+## A number of a trial's half as the player reads it (25%, 15).
+static func _shown(d: TrialDef, rarity: int) -> String:
+	if d.mods.is_empty():
+		return ""
+	return BoonMod.format(d.mods[0].stat, absf(d.value(rarity)))
+
+
+## Takes card i of the Provação (what the split card's screen calls; stepping on its spot does too): its curse is
+## carried from the next fight on, the doors open.
+func take_trial(i: int) -> void:
+	if room == null or room.kind != RunMap.Kind.TRIAL or phase != Phase.EVENT or i < 0 or i >= trial_cards.size():
+		return
+	var c := trial_cards[i]
+	trials.take(c)
+	_apply_curse()
+	_clear_spots()
+	var p := game.player
+	game.fx.ring(p.pos, 3.0, TRIAL_COLOR, 0.5)
+	game.room_tally.event("trial_taken", game.time, {"blessing": String(c.blessing.id), "rarity": c.rarity,
+		"curse": String(c.curse.id), "encounters": c.encounters, "card": i})
+	_to_look(&"trial_chosen")
+	trial_taken.emit(c)
+	_open_doors()
+
+
+# ---------- E5: the Altar Esquecido ----------
+
+const ALTAR_SPOTS: Array[Vector2] = [Vector2(-2.0, -3.6), Vector2(2.0, -3.6)]
+const ALTAR_COLOR := Color(0.95, 0.85, 0.65)
+
+
+## The altar's two trades on the worn slabs before its step (Altar.options), with what each asks.
+func _build_altar() -> void:
+	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
+	for o in altar_options:
+		var id: StringName = o.id
+		var detail := T.t(StringName("altar_%s_cost" % id), {"n": int(o.cost), "m": int(o.gain)})
+		var at := ALTAR_SPOTS[int(o.option) % ALTAR_SPOTS.size()]
+		_spots.append({"at": at, "index": int(o.option), "node": _marker(at, RunMap.Reward.NONE,
+			T.t(StringName("altar_" + String(id))) + "\n" + detail, RunMap.Kind.ALTAR)})
+
+
+## Takes the altar's trade (Altar.Option): pays and gives; false when it cannot be taken now.
+func take_altar(option: int) -> bool:
+	if room == null or room.kind != RunMap.Kind.ALTAR or _spots.is_empty():
+		return false
+	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
+	if option < 0 or option >= altar_options.size() or not altar_options[option].ok:
+		return false
+	var p := game.player
+	match option:
+		Altar.Option.LIFE:
+			game.life_bonus -= stage.altar_life_cost
+			p.max_hp -= stage.altar_life_cost
+			p.hp = minf(p.hp, p.max_hp)
+			game.open_grow_choice()
+		Altar.Option.CANDLES:
+			gold -= stage.altar_gold_cost
+			p.magick.max_value += stage.altar_magick
+			p.magick.gain(stage.altar_magick)
+			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(stage.altar_magick), T.t(&"hud_magick")], Color(0.5, 0.75, 1.0))
+	game.room_tally.event("altar", game.time, {"choice": String(Altar.IDS[option]), "max_hp": p.max_hp, "gold": gold})
+	_clear_spots()
+	_to_look(&"altar_lit")
+	Audio.play(&"heal")
+	altar_used.emit(Altar.IDS[option])
+	return true
+
+
+# ---------- E5: spots on the floor (cards of the trial, trades of the altar) ----------
+
+func _step_spots() -> void:
+	for s in _spots.duplicate():
+		if game.player.pos.distance_to(s.at) >= TOUCH:
+			continue
+		if room.kind == RunMap.Kind.TRIAL:
+			take_trial(int(s.index))
+		elif room.kind == RunMap.Kind.ALTAR:
+			if not take_altar(int(s.index)) and not s.get("warned", false):
+				s.warned = true
+				game.hud.show_notice(T.t(&"altar_cannot"), 1.5)
+		return
+
+
+func _clear_spots() -> void:
+	for s in _spots:
+		if is_instance_valid(s.node):
+			(s.node as Node3D).queue_free()
+	_spots.clear()
+
+
+## Tells the arena's look (the environment artist's) a moment of an event, if it listens (trial_chosen, altar_lit).
+func _to_look(what: StringName) -> void:
+	var look := game.arena.look
+	if look != null and look.has_method(what):
+		look.call(what)
+
+
+func _stop_runes() -> void:
+	if runes == null:
+		return
+	runes.stop()
+	game.room_tally.hazard(runes.enemy_damage, runes.kills, runes.hazard.fired)
+	runes = null
 
 
 # ---------- the shop ----------
@@ -481,13 +922,21 @@ func _step_shop() -> void:
 const BOT_PREFERENCE: Array[RunMap.Reward] = [RunMap.Reward.BOON, RunMap.Reward.POM, RunMap.Reward.HEART, RunMap.Reward.GOLD, RunMap.Reward.MAGICK]
 
 
+## Where the altar's door stands in that order (E5): after a Blessing and a pomegranate (its trade grows a Blessing).
+const BOT_ALTAR_RANK := 1.5
+
+
 ## The door the bot walks through (index in doors).
 static func bot_door(doors: Array[RunMap.Room]) -> int:
 	var best := 0
-	var rank := 1 << 20
+	var rank := INF
 	for i in doors.size():
-		var r := -1 if doors[i].kind == RunMap.Kind.FOUNTAIN else BOT_PREFERENCE.find(doors[i].reward)
-		if r < 0 and doors[i].kind != RunMap.Kind.FOUNTAIN:
+		var r := float(BOT_PREFERENCE.find(doors[i].reward))
+		if doors[i].kind == RunMap.Kind.FOUNTAIN:
+			r = -1.0
+		elif doors[i].kind == RunMap.Kind.ALTAR:
+			r = BOT_ALTAR_RANK
+		elif r < 0.0:
 			r = BOT_PREFERENCE.size()
 		if r < rank:
 			rank = r
@@ -499,10 +948,20 @@ static func bot_door(doors: Array[RunMap.Room]) -> int:
 func bot_goal() -> Variant:
 	if phase == Phase.REWARD and _reward_node != null:
 		return _reward_at
+	if phase == Phase.EVENT and not _spots.is_empty():
+		# the Provação's chamber: the first card (its blessing and curse are drawn; the robot takes what comes)
+		return _spots[0].at
 	if phase == Phase.OPEN:
 		for p in _pedestals:
 			if gold >= p.price:
 				return p.at
+		if slab != null and _bot_trial and float(slab.armed) <= 0.0:
+			return slab.at
+		if room.kind == RunMap.Kind.ALTAR and not _spots.is_empty():
+			var pick := Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow()), game.player.max_hp)
+			for sp in _spots:
+				if int(sp.index) == pick:
+					return sp.at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
 			return game.arena.door_goal(clampi(bot_door(next_rooms), 0, game.arena.exits.size() - 1))
@@ -602,4 +1061,8 @@ static func _kind_color(k: RunMap.Kind) -> Color:
 			return GOLD_COLOR
 		RunMap.Kind.BOSS:
 			return Color(0.7, 0.3, 1.0)
+		RunMap.Kind.TRIAL:
+			return TRIAL_COLOR
+		RunMap.Kind.ALTAR:
+			return ALTAR_COLOR
 	return Color.WHITE

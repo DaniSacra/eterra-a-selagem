@@ -145,6 +145,9 @@ var dodge_max := 2
 var dodge_charges := 2
 var speed_bonus := 0.0
 var damage_reduction := 0.0
+## A Provação's curse (E5, Rooms): life healed and life lost are times these (1: as they are).
+var heal_scale := 1.0
+var hurt_scale := 1.0
 var shield_cooldown := 0.0
 var shield_ready := false
 var runner: ComboRunner
@@ -743,7 +746,7 @@ func _follow_through(node: ComboNode) -> void:
 func heal(amount: float) -> void:
 	if amount <= 0.0 or not alive():
 		return
-	hp = minf(max_hp, hp + amount)
+	hp = minf(max_hp, hp + amount * heal_scale)
 
 
 ## A blow lands on the paladin. Rolls, the shield and the moments after a hit ignore it.
@@ -758,7 +761,7 @@ func hurt(amount: float, from: Vector2) -> void:
 		Audio.play(&"shield")
 		shield_broke.emit()
 		return
-	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction)))
+	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction) * hurt_scale))
 	hp -= amount
 	invuln = hero.hurt_invuln
 	_blink = hero.hurt_invuln

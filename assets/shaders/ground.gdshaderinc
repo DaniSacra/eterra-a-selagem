@@ -81,6 +81,10 @@ uniform float light_cap = 64.0;
 uniform float fill_max = 0.35;
 uniform float fill_early = 0.1;
 uniform float fill_late = 0.3;
+// E5 (the runes, style 3, lines only): the floor that strikes on its own. Every tile of the band (tile_m long) gets a
+// frame on its four sides that warms with the wind-up (from 35% of its light), and the band a faint fill (fill_early)
+// coming up to fill_max over the last fill_late; amber (its colour), never a circle (D-29).
+uniform float tile_m = 0.0;
 
 global uniform vec3 floor_round;
 
@@ -199,6 +203,13 @@ void fragment() {
 				filled = warning_fill(step(tip, front));
 			}
 			a = max(max(edge, far) * 0.9 * rim_light * mix(root_rim, 1.0, root_k), near * 0.3) + fill + head * 0.6 + marks * 0.16 + base;
+		} else if (style == 3) {
+			float along_m = along * length_m;
+			float cell = tile_m > 0.0 ? tile_m : length_m;
+			float seam = min(mod(along_m, cell), cell - mod(along_m, cell));
+			float frame = max(edge, smoothstep(rim_m, rim_m * 0.3, seam));
+			float level = mix(fill_early, fill_max, smoothstep(1.0 - fill_late, 1.0, progress));
+			a = frame * (0.35 + 0.65 * progress) + level;
 		} else {
 			a = (1.0 - side * side) * (0.5 + 0.5 * noise(vec2(uv.x * 3.0, along * 8.0 - TIME * 2.0)));
 		}

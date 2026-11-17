@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TrialDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_5u18f"]
+[ext_resource type="Script" path="res://scripts/core/trial_def.gd" id="2_chav8"]
+
+[sub_resource type="Resource" id="Resource_mr76r"]
+script = ExtResource("1_5u18f")
+stat = &"wave_extra"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_chav8")
+id = &"trial_horda"
+kind = 0
+name_key = &"trial_horda"
+desc_key = &"trial_horda_desc"
+mods = Array[ExtResource("1_5u18f")]([SubResource("Resource_mr76r")])

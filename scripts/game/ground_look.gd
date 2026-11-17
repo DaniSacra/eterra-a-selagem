@@ -9,7 +9,7 @@ const SHADER := preload("res://assets/shaders/ground.gdshader")
 const FILL_SHADER := preload("res://assets/shaders/ground_fill.gdshader")
 ## ground.gdshader's styles, and its shapes (the same order as Ground.Shape; this file does not name Ground, which
 ## needs the game's autoloads).
-enum Style { WARNING, AREA, CIRCLE }
+enum Style { WARNING, AREA, CIRCLE, HAZARD }
 enum Shape { CIRCLE, LINE, ARC }
 ## An enemy's warning: its red, how strongly it is drawn (bright enough to read on the dark floor) and the meters of
 ## its bright rim (its size is always the attack's).
@@ -48,6 +48,20 @@ const STORM_RIM := 0.75
 const STORM_CAP := 0.95
 ## The storm's rim by its place in the order of leaving (the next to leave first): its share of the light.
 const ORDER_LEVELS: Array[float] = [1.0, 0.7, 0.55, 0.45, 0.38, 0.32]
+## The floor that strikes on its own (E5, the runes; docs/art/e5_spec.md 3.4): amber, never the enemies' red nor
+## Morvath's violet; a frame round every tile (HAZARD_TILE m) that warms with the wind-up, a faint fill (alpha 0.08)
+## coming up to 0.3 over the last 30% (the warnings' own fill_late, the hand learns it once); its strongest channel
+## stays under 1.0 (HAZARD_STRENGTH). Drawn before the enemies' warnings (render priority HAZARD_PRIORITY).
+const HAZARD_COLOR := Color(1.0, 0.62, 0.25)
+const HAZARD_STRENGTH := 0.75
+const HAZARD_RIM := 0.12
+const HAZARD_TILE := 3.0
+const HAZARD_FILL_EARLY := 0.08
+const HAZARD_FILL_MAX := 0.3
+const HAZARD_PRIORITY := -1
+## Every other area's fill (ground.gdshaderinc's defaults).
+const FILL_EARLY := 0.1
+const FILL_MAX := 0.35
 
 
 static func new_node() -> MeshInstance3D:
@@ -86,6 +100,10 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"rim_scale", 1.0)
 	put(m, &"light_cap", NO_CAP)
 	put(m, &"color", color)
+	put(m, &"tile_m", 0.0)
+	put(m, &"fill_early", FILL_EARLY)
+	put(m, &"fill_max", FILL_MAX)
+	_priority(m, HAZARD_PRIORITY if style == Style.HAZARD else 0)
 	put(m, &"progress", 0.0)
 	put(m, &"style", style)
 	put(m, &"shape", shape)
@@ -119,6 +137,22 @@ static func put(m: ShaderMaterial, uniform: StringName, value: Variant) -> void:
 	var fill := m.next_pass as ShaderMaterial
 	if fill != null:
 		fill.set_shader_parameter(uniform, value)
+
+
+## A band of the floor that strikes on its own (E5, the runes), as Ground draws it: a line `length` long, `width`
+## across, framed tile by tile.
+static func hazard(node: MeshInstance3D, at: Vector2, dir: Vector2, length: float, width: float, y: float) -> void:
+	dress(node, Style.HAZARD, Shape.LINE, HAZARD_COLOR, HAZARD_STRENGTH, HAZARD_RIM, at, dir, length, width, y)
+	var m := node.material_override as ShaderMaterial
+	put(m, &"tile_m", HAZARD_TILE)
+	put(m, &"fill_early", HAZARD_FILL_EARLY)
+	put(m, &"fill_max", HAZARD_FILL_MAX)
+
+
+static func _priority(m: ShaderMaterial, p: int) -> void:
+	m.render_priority = p
+	if m.next_pass != null:
+		m.next_pass.render_priority = p
 
 
 ## An enemy's warning, as Ground draws it.

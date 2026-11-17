@@ -46,7 +46,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -564,8 +564,31 @@ func _stage() -> void:
 	hall.platform = true
 	_arena(hall, &"hall", RoomLayout.Size.MEDIUM, 0, Vector2(0.0, 0.0))
 	hall.fountain = true
-	st.layouts = [hall, _crypt(), _rift(), _garden()]
+	# E5 (docs/art/e5_spec.md): the Santuário (the guardian's house, high, from 40% of the descent), the Ponte and the
+	# Câmara das Runas (high, from half of it); the rooms of the two events
+	st.layouts = [hall, _crypt(), _rift(), _garden(), _sanctuary(), _bridge(), _runes()]
 	st.shop_layout = hall
+	st.trial_layout = _trial_room()
+	st.altar_layout = _altar_room()
+	# The Provação (Hades II's Chaos, hades2_sistemas.md 7): 20% a room won, from the 2nd room to the 7th (a curse of 3
+	# to 5 fights must have fights to be carried in before the shop), once in 10 rooms (once in a descent), at
+	# ceil(10 + 0.5 x depth) life; three cards, the blessing's rarity as the Chaos's (rare 40%, epic 10%).
+	st.trial_chance = 0.2
+	st.trial_depth_min = 2
+	st.trial_depth_max = 7
+	st.trial_cooldown = 10
+	st.trial_cost_base = 10.0
+	st.trial_cost_per_depth = 0.5
+	st.trial_cards = 3
+	st.trial_rarity_chance = [0.4, 0.1, 0.0] as Array[float]
+	# The Altar Esquecido (ours): a door to it once, 20% a room from the 2nd to the 8th; 10 of the most life for a
+	# pomegranate, or 75 gold (half a Blessing in the shop) for 25 more Magia
+	st.altar_depth_min = 2
+	st.altar_depth_max = 8
+	st.altar_chance = 0.2
+	st.altar_life_cost = 10.0
+	st.altar_gold_cost = 75
+	st.altar_magick = 25.0
 	# Morvath fights in his own round chamber (cycle C11, the Seal Chamber: docs/design/boss_arena.md for the radius,
 	# docs/art/boss_chamber_spec.md for the plan): a circle of 12.5 m to the balustrade's inner face, so the paladin's
 	# middle walks up to 12 m from the seal; he comes in at the mouth of the south stairs facing north, Morvath stands
@@ -1153,3 +1176,253 @@ func _psalms() -> void:
 		["firmeza", "escudo", "pesado_firme", "estilhaco", "peso_inverno"],
 		["vapor", "bastiao", G + "quarto_corte", G + "golpe_sem_fim", G + "furia_plena", G + "fio_longo"]],
 		{"damage": 30.0, "radius": 4.0, "stun": 1.0, "duration": 3.0})
+
+
+# ---------- E5: the Provação ----------
+
+const TRIAL_DIR := "res://data/trials/"
+
+
+func _trial(n: int, id: StringName, kind: TrialDef.Kind, mods: Array[BoonMod], encounters := Vector2i(3, 5)) -> void:
+	var t := TrialDef.new()
+	t.id = id
+	t.kind = kind
+	t.name_key = id
+	t.desc_key = StringName("%s_desc" % id)
+	t.mods = mods
+	t.encounters = encounters
+	_save(t, TRIAL_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The Provação's cards (E5; Hades II's Chaos, docs/design/hades2_sistemas.md section 7, without a god: E5-D6). A
+## blessing is a strong number the game already reads, scaled by its rarity like a Blessing (Hades II's Chaos: attack
+## +20% to +50% at common, life +26 to +35); a curse is carried for 3 to 5 fights (Hades II's RemainingUses 3 to 5)
+## and never scales. Our numbers, starting points for E6.
+func _trials() -> void:
+	DirAccess.make_dir_recursive_absolute(TRIAL_DIR)
+	for f in DirAccess.get_files_at(TRIAL_DIR):
+		DirAccess.remove_absolute(TRIAL_DIR + f)
+	var B := TrialDef.Kind.BLESSING
+	var C := TrialDef.Kind.CURSE
+	_trial(0, &"trial_golpe", B, [_mod(&"damage_pct", 0.3, [], &"light")])
+	_trial(1, &"trial_pesado", B, [_mod(&"damage_pct", 0.4, [], &"heavy")])
+	_trial(2, &"trial_circulo", B, [_mod(&"damage_pct", 0.5, [], &"cast")])
+	_trial(3, &"trial_vigor", B, [_mod(&"max_hp", 15.0)])
+	_trial(4, &"trial_reserva", B, [_mod(&"magick_max", 20.0)])
+	# the curses: the dead walk faster, healing is halved, one more enemy a wave, blows hurt more, no gold falls
+	_trial(10, &"trial_pressa", C, [_fixed(&"enemy_speed_pct", 0.25)])
+	_trial(11, &"trial_ferida", C, [_fixed(&"heal_pct", -0.5)])
+	_trial(12, &"trial_horda", C, [_fixed(&"wave_extra", 1.0)])
+	_trial(13, &"trial_fragil", C, [_fixed(&"hurt_pct", 0.25)])
+	_trial(14, &"trial_pobreza", C, [_fixed(&"gold_pct", -1.0)])
+
+
+# ---------- E5: three arenas and the two rooms of the events (docs/art/e5_spec.md) ----------
+
+## A piece of the spec's tables standing along x (or z), w x d, of its height (a bench, an altar, a pillar).
+func _piece(x: float, z: float, w: float, d: float, top: float, piece: StringName, see := false) -> ArenaObstacle:
+	return _sarcophagus(x, z, w, d, top, piece, see)
+
+
+## Named parts of the floor (RoomLayout.areas, ArenaVariant.areas): pairs of a name and a rectangle.
+func _areas(l: Resource, pairs: Array) -> void:
+	var rects: Array[Rect2] = []
+	var names := PackedStringArray()
+	for i in range(0, pairs.size(), 2):
+		names.append(pairs[i])
+		rects.append(pairs[i + 1])
+	l.set(&"areas", rects)
+	l.set(&"area_names", names)
+
+
+## Santuário Desmoronado (spec section 1, C14-A4): the guardian's house. A nave of a church under the earth, two rows of
+## columns that stop shots, the nave 10.7 m free between them (the knight's charge), the side aisles 7.35 m; the
+## guardian rises before the presbytery's grille (west). Variant B: the floor of the nave fell in (a hole of 8.4 x 7 m),
+## the four columns over it with it.
+func _sanctuary() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"sanctuary", RoomLayout.Size.LARGE, 2, Vector2(0.4, 1.0))
+	var outline := _poly([-22, -14, 14, -14, 22, -6, 22, 14, -18, 14, -22, 10])
+	l.floor = FloorShape.poly([outline])
+	l.half = l.floor.extent()
+	l.max_alive = Vector2i(6, 8)
+	l.max_ranged = 3
+	l.guardian = true
+	l.guardian_home = true
+	# fire bowls of the north door's recesses and of the grille's pillars (off the floor: drawn, never blocking)
+	var bowls: Array[ArenaObstacle] = [_bowl(4.3, -14.6), _bowl(8.7, -14.6), _bowl(-22.8, -6.6), _bowl(-22.8, 6.6)]
+	var walls: Array[ArenaObstacle] = [_sarcophagus(-12.0, -13.4, 2.5, 1.2), _sarcophagus(-4.0, -13.4, 2.5, 1.2),
+		_piece(-12.0, 10.2, 2.0, 0.6, 0.9, &"bench"), _piece(6.0, 10.2, 2.0, 0.6, 0.9, &"bench")]
+	var a: Array[ArenaObstacle] = []
+	for x: float in [-15.0, -9.0, -3.0, 9.0]:
+		a.append(_column(x, -6.0, 5.2, 0.65))
+	for x: float in [-15.0, -3.0, 3.0, 9.0, 15.0]:
+		a.append(_column(x, 6.0, 5.2, 0.65))
+	a.append_array([_column(15.0, -6.0, 3.4, 0.65), _column(-9.0, 6.0, 3.0, 0.65),
+		_column(3.0, -6.0, 0.6, 0.65), _capsule(Vector2(3.0, -6.9), Vector2(3.0, -9.8), 1.1, 1.0, &"drum")])
+	a.append_array(walls)
+	a.append_array(bowls)
+	l.obstacles = a
+	# B, "Nave partida": the nave's floor fell (a hole), the columns of x 3 and 9 with it; the north (-9) one broken
+	var b: Array[ArenaObstacle] = [_column(-15.0, -6.0, 5.2, 0.65), _column(-9.0, -6.0, 3.2, 0.65),
+		_column(-3.0, -6.0, 5.2, 0.65), _column(15.0, -6.0, 3.4, 0.65), _column(-15.0, 6.0, 5.2, 0.65),
+		_column(-9.0, 6.0, 3.0, 0.65), _column(-3.0, 6.0, 5.2, 0.65), _column(15.0, 6.0, 5.2, 0.65)]
+	b.append_array(walls)
+	b.append_array(bowls)
+	var fallen := FloorShape.poly([outline], [_poly([1, -3.2, 4.5, -3.5, 9, -3.1, 9.4, 0, 9, 3.1, 4.5, 3.5, 1, 3.2, 0.6, 0])])
+	l.variants = [_variant(b, fallen)]
+	l.hero_spawn = Vector2(19.5, 2.0)
+	l.hero_facing = Vector2(-1, 0)
+	l.boss_spawn = Vector2(-17.0, 0.0)
+	l.exits = [ArenaExit.at_edge(Vector2(6.5, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(-6, 14), Vector2(0, -1)),
+		ArenaExit.at_edge(Vector2(-22, -10.5), Vector2(1, 0))]
+	l.spawns = [_rect(-20, -14, -3, 3), _rect(-19, -15, 8, 11), _rect(-8, -2, -12, -8.5)]
+	l.late_spawns = [_rect(10, 16, 8, 12)]
+	l.cam_bounds = _rect(-10, 10, -2, 2)
+	# the question of the room (spec 0.2): the open nave or the aisles behind the columns
+	_areas(l, ["nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+	return l
+
+
+## Ponte dos Condenados (spec section 2, C14-A5): three platforms over the abyss joined by bridges of 5 m (A), or two
+## and a long bridge of 24 m with a landing in its middle (B); every door on the far platform (E5-D5), nobody rises on
+## a bridge, the shooters on the far side. The ruin in the middle stands east of it: the cover against them.
+func _bridge() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"bridge", RoomLayout.Size.LONG, 2, Vector2(0.5, 1.0))
+	var west := _poly([-28, -6, -25, -9, -15, -9, -14, -7, -14, 7, -16, 9, -26, 9, -28, 7])
+	var middle := _poly([-7, -6, -5, -8, 5, -8, 7, -6, 7, 6, 5, 8, -5, 8, -7, 6])
+	var east := _poly([14, -7, 15, -9, 25, -9, 28, -6, 28, 7, 26, 9, 16, 9, 14, 7])
+	# the bridges reach 0.05 m into the platforms, so the union never opens a crack at a seam
+	l.floor = FloorShape.poly([west, FloorShape.box(_rect(-14.05, -6.95, -2.5, 2.5)), middle,
+		FloorShape.box(_rect(6.95, 14.05, -2.5, 2.5)), east])
+	l.half = l.floor.extent()
+	l.max_alive = Vector2i(6, 8)
+	l.max_ranged = 3
+	l.banned_roles = [&"area"]
+	l.guardian = false
+	var ends: Array[ArenaObstacle] = [_column(-21.0, -4.0, 3.0), _sarcophagus(21.0, -4.8, 2.5, 1.2), _column(20.0, 4.5, 3.6)]
+	var a: Array[ArenaObstacle] = ends.duplicate()
+	a.append_array([_piece(0.0, -7.2, 2.8, 1.6, 6.0, &"pylon", true), _piece(2.5, 2.5, 1.0, 3.2, 2.2, &"block", true),
+		_column(-2.5, 3.5, 3.4)])
+	l.obstacles = a
+	var west_b := _poly([-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7])
+	var east_b := _poly([12, -7, 13, -9, 25, -9, 28, -6, 28, 7, 26, 9, 14, 9, 12, 7])
+	var long_bridge := FloorShape.poly([west_b, FloorShape.box(_rect(-12.05, 12.05, -2.5, 2.5)),
+		FloorShape.box(_rect(-3, 3, -4.5, 4.5)), east_b])
+	var b := _variant(ends.duplicate(), long_bridge)
+	b.spawns = [_rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
+	_areas(b, ["west", _rect(-28, -12, -9, 9), "landing", _rect(-3, 3, -4.5, 4.5), "bridge", _rect(-12, 12, -3, 3),
+		"east", _rect(12, 28, -9, 9)])
+	l.variants = [b]
+	l.hero_spawn = Vector2(-24.5, 0.0)
+	l.hero_facing = Vector2(1, 0)
+	l.exits = [ArenaExit.at_edge(Vector2(21, -9), Vector2(0, 1)), ArenaExit.at_edge(Vector2(28, 0.5), Vector2(-1, 0)),
+		ArenaExit.at_edge(Vector2(21, 9), Vector2(0, -1))]
+	l.spawns = [_rect(-4, 4, -5.5, -3), _rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
+	# the second wave closes behind the one who crossed
+	l.late_spawns = [_rect(-26, -20, -7, -4)]
+	l.cam_bounds = _rect(-14, 14, -1, 1)
+	# the question of the room: hold the island or cross
+	_areas(l, ["west", _rect(-28, -14, -9, 9), "bridge1", _rect(-14, -7, -3, 3), "middle", _rect(-7, 7, -8, 8),
+		"bridge2", _rect(7, 14, -3, 3), "east", _rect(14, 28, -9, 9)])
+	return l
+
+
+## The runes' floor (spec 3.4): tiles of 3 m, 1.2 s warming up, 0.25 s striking, 2.4 s of rest, never in the first
+## 3 s; at most 35% of the tiles lit (50% for the dense patterns, with 3 enemies or fewer). It hurts everyone: 4 to the
+## paladin (a common blow's worth), 35 to an enemy (half a soldier): drawing them onto the band that will light is the
+## room's play.
+func _hazard(patterns: Array[StringName], quiet: Array[Rect2] = []) -> HazardDef:
+	var h := HazardDef.new()
+	h.origin = Vector2(-15, -12)
+	h.tile = 3.0
+	h.cols = 10
+	h.rows = 8
+	h.warn = 1.2
+	h.fire = 0.25
+	h.rest = 2.4
+	h.start_delay = 3.0
+	h.max_share = 0.35
+	h.dense_share = 0.5
+	h.dense_standing = 3
+	h.patterns = patterns
+	h.islands = 4
+	h.quiet = quiet
+	h.hero_damage = 4.0
+	h.enemy_damage = 35.0
+	return h
+
+
+## Câmara das Runas Instáveis (spec section 3, C14-A6; name D-33): square, the floor of tiles is the room. A: bands
+## (sweep, comb, cut) and four rune pillars at the grid's nodes; B: tiles (checker, frame, islands), two pillars and the
+## quiet stone in the middle that never lights. The camera keeps the whole room in view.
+func _runes() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"runes", RoomLayout.Size.MEDIUM, 2, Vector2(0.5, 1.0))
+	l.floor = FloorShape.poly([_poly([-15, -9, -12, -12, 12, -12, 15, -9, 15, 9, 12, 12, -12, 12, -15, 9])])
+	l.half = l.floor.extent()
+	l.max_alive = Vector2i(4, 6)
+	l.max_ranged = 2
+	l.banned_roles = [&"area"]
+	l.guardian = false
+	var bowls: Array[ArenaObstacle] = [_bowl(3.8, -12.6), _bowl(8.2, -12.6)]
+	var a: Array[ArenaObstacle] = []
+	for p: Vector2 in [Vector2(-6, -6), Vector2(6, -6), Vector2(-6, 6), Vector2(6, 6)]:
+		a.append(_piece(p.x, p.y, 1.2, 1.2, 4.0, &"rune_pillar", true))
+	a.append_array(bowls)
+	l.obstacles = a
+	l.hazard = _hazard([&"sweep", &"comb", &"cut"])
+	var b: Array[ArenaObstacle] = [_piece(-9, -6, 1.2, 1.2, 4.0, &"rune_pillar", true), _piece(9, 6, 1.2, 1.2, 4.0, &"rune_pillar", true)]
+	b.append_array(bowls)
+	var vb := _variant(b)
+	vb.hazard = _hazard([&"checker", &"frame", &"islands"], [_rect(-3, 3, -3, 3)])
+	_areas(vb, ["quiet", _rect(-3, 3, -3, 3)])
+	l.variants = [vb]
+	l.hero_spawn = Vector2(-12.5, 3.5)
+	l.hero_facing = Vector2(1, 0)
+	l.exits = [ArenaExit.at_edge(Vector2(6, -12), Vector2(0, 1)), ArenaExit.at_edge(Vector2(15, 0), Vector2(-1, 0)),
+		ArenaExit.at_edge(Vector2(-4.5, 12), Vector2(0, -1))]
+	l.spawns = [_rect(-4, 3, -11, -8), _rect(10, 13.5, -4, 4), _rect(0, 9, 8, 11)]
+	l.late_spawns = [_rect(-13, -9, -9.5, -6)]
+	l.cam_target = Vector2(0.5, 1.0)
+	l.cam_reach = 3.5
+	return l
+
+
+## The Provação's chamber (spec 5.2): small, no fight, the square block in the middle under the light that holds the
+## corruption; the cards are taken in front of it, then its doors open (the doors of the room the slab was in: 0 north,
+## 1 west, 2 east).
+func _trial_room() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"trial", RoomLayout.Size.SMALL, 0, Vector2(0.0, 0.0))
+	l.floor = FloorShape.poly([_poly([-8, -5.5, -6.5, -7, 6.5, -7, 8, -5.5, 8, 5.5, 6.5, 7, -6.5, 7, -8, 5.5])])
+	l.half = l.floor.extent()
+	l.guardian = false
+	l.obstacles = [_piece(0.0, 0.0, 1.2, 1.2, 1.1, &"trial_block")]
+	l.hero_spawn = Vector2(-5.5, 4.5)
+	l.hero_facing = Vector2(1, -1).normalized()
+	l.exits = [ArenaExit.at_edge(Vector2(0, -7), Vector2(0, 1)), ArenaExit.at_edge(Vector2(-8, -2), Vector2(1, 0)),
+		ArenaExit.at_edge(Vector2(8, -2), Vector2(-1, 0))]
+	l.cam_target = Vector2(0.0, 0.5)
+	l.cam_reach = 1.5
+	return l
+
+
+## The Altar Esquecido (spec 6.3): a chapel, the altar against the north wall, two stone benches facing it; its two
+## trades stand on the worn slabs before the step; its doors open on the east (and the south front).
+func _altar_room() -> RoomLayout:
+	var l := RoomLayout.new()
+	_arena(l, &"altar", RoomLayout.Size.SMALL, 0, Vector2(0.0, 0.0))
+	l.floor = FloorShape.poly([FloorShape.box(_rect(-9, 9, -7, 7))])
+	l.half = l.floor.extent()
+	l.guardian = false
+	l.obstacles = [_piece(0.0, -6.2, 3.6, 1.6, 1.3, &"altar"), _piece(-3.0, -1.0, 2.0, 0.6, 0.9, &"bench"),
+		_piece(3.0, -1.5, 2.0, 0.6, 0.9, &"bench")]
+	l.hero_spawn = Vector2(-6.5, 4.5)
+	l.hero_facing = Vector2(1, -1).normalized()
+	l.exits = [ArenaExit.at_edge(Vector2(9, 2), Vector2(-1, 0)), ArenaExit.at_edge(Vector2(9, -3.5), Vector2(-1, 0)),
+		ArenaExit.at_edge(Vector2(4.5, 7), Vector2(0, -1))]
+	l.cam_target = Vector2.ZERO
+	l.cam_reach = 1.5
+	return l

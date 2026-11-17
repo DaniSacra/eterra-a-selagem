@@ -35,6 +35,8 @@ var rarities: Dictionary = {}
 ## The hero's Gifts equipped for this descent (TalentDef): their mods add up with the Blessings' in stat (at level 1,
 ## never scaled by rarity), so every blow reads Gift and Blessing in the same sum.
 var talents: Array[TalentDef] = []
+## Numbers won outside the Blessings (E5: a Provação's blessing, Trials.blessing_mods), fixed, added to stat.
+var granted: Array[BoonMod] = []
 var _cache: Dictionary = {}
 
 
@@ -195,6 +197,12 @@ func equip_talents(defs: Array[TalentDef]) -> void:
 	_cache.clear()
 
 
+## Adds numbers won outside the Blessings (E5, the Provação): they count in stat from now on.
+func grant(mods: Array[BoonMod]) -> void:
+	granted.append_array(mods)
+	_cache.clear()
+
+
 ## Sum of a stat over every owned gift and equipped Gift. With tags, only modifiers that are untagged or match one of
 ## them count.
 func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
@@ -202,6 +210,9 @@ func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 	if use_cache and _cache.has(stat_name):
 		return _cache[stat_name]
 	var total := 0.0
+	for m in granted:
+		if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
+			total += m.value(1)
 	for t in talents:
 		for m in t.mods:
 			if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):

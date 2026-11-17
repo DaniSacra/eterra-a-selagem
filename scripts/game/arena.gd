@@ -128,7 +128,7 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 		hall.build(exit_count)
 		_kit = hall.kit
 		return
-	if layout != null and ArenaRoom.LOOKS.has(layout.look):
+	if layout != null and (ArenaRoom.LOOKS.has(layout.look) or PROVISIONAL_LOOKS.has(layout.look)):
 		_build_arena(layout, exit_count, seed_)
 		return
 	_floor()
@@ -628,9 +628,22 @@ func _build_arena(l: RoomLayout, exit_count: int, seed_: int) -> void:
 	door_pos = mid
 	middle = resolve(mid, 1.0)
 	showcase = Vector3(mid.x, 0.0, mid.y)
-	look = ArenaRoom.make(l.look)
+	look = look_for(l.look)
 	add_child(look)
 	look.build(self, l, exit_count, seed_)
+
+
+## The arenas and rooms of E5 whose look the environment artist is building (SanctuaryLook, BridgeLook, RunesLook, the
+## Provação's and the altar's rooms): until ArenaRoom.LOOKS has their id, they are drawn by PlainLook (the common look
+## and a key light).
+const PROVISIONAL_LOOKS: Array[StringName] = [&"sanctuary", &"bridge", &"runes", &"trial", &"altar"]
+
+
+## The look of an arena by its id: its own (ArenaRoom.make) once ArenaRoom.LOOKS knows it, else PlainLook.
+static func look_for(id: StringName) -> ArenaRoom:
+	if ArenaRoom.LOOKS.has(id):
+		return ArenaRoom.make(id)
+	return PlainLook.new()
 
 
 ## The chamber's look: the Seal Chamber's scenery (BossChamber, cycle C11), built on the layout's circle; the fight's
