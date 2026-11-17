@@ -5,6 +5,17 @@ extends GutTest
 var game: Game
 
 
+## Every game here plays the same dice (QA E2-12): without --seed each system's generator is randomize()d
+## (Dev.seed_rng), so the cooldowns (attack_cooldown x 0.85 to 1.2) and the retreats differed run to run.
+func before_each() -> void:
+	Dev.has("seed")
+	Dev._args["seed"] = "1"
+
+
+func after_each() -> void:
+	Dev._args.erase("seed")
+
+
 ## One enemy of this kind, 14 m east of the paladin, in a room with nobody else (the fountain room).
 func _alone(id: StringName, offset := Vector2(14, 0)) -> Enemy:
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
@@ -121,8 +132,11 @@ func test_ranged_enemies_never_walk_up_to_him() -> void:
 
 func test_the_crossbowman_marks_its_aim_and_shoots_a_bolt() -> void:
 	var e := _alone(&"archer")
-	var r := _run(e, 6.0)
-	assert_gt(r.shots, 1)
+	# 8 s, not 6 (QA E2-12): a bolt, then 0.4 s, recover_time 0.6, the retreat (1.5 to 1.75 s) and the cooldown
+	# (1.8 x 0.85 to 1.2) before the next aim: over 40 seeds the 2nd bolt left at 5.1 to 6.5 s (first at 1.7 to 3.0),
+	# so a 6 s window lost it about one run in three. Not noise: the window was shorter than the crossbowman's cycle.
+	var r := _run(e, 8.0)
+	assert_gt(r.shots, 1, "a second bolt after its retreat")
 	assert_gt(r.lines, 0, "its aim is marked on the floor")
 	assert_eq(r.circles, 0)
 	for s in game.projectiles.shots:
