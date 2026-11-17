@@ -13,6 +13,9 @@ extends Control
 ## boss's notice for it goes there instead of the middle of the screen). While his ritual's shield stands, the bar
 ## carries a seal for each of its dead (HudBar.show_ritual) and, once the phase's name is gone, "Derrube os mortos"
 ## stays under it.
+## E5, the Provação: while its curse is carried, a grey-lilac cracked diamond above the medallion with the fights left
+## inside and the curse's name beside it (TrialSeal; nothing on the hero, E5-D7); when it turns, the crack fills with
+## gold and "Provação vencida" greets from the top (EloBanner.show_trial).
 ## Sizes are in pixels at 720 lines; the window stretches the whole canvas (project.godot), so the layout holds at
 ## any resolution.
 
@@ -51,6 +54,9 @@ const PLACE_TIME := 2.0
 const PHASE_FADE := 0.4
 const PHASE_NAME_SIZE := 18
 const PHASE_TIP_SIZE := 15
+## The Provação's seal: its diamond (33 px at 1080 lines, spec 5.3 asks about 30) and how far above the medallion.
+const TRIAL_SEAL := 22.0
+const TRIAL_SEAL_GAP := 6.0
 ## The curse's colour on the HUD (the same violet as the runes around the paladin) and on the medallion's ring.
 const CURSE_COLOR := CurseAura.COLOR
 const CURSE_TINT := 0.85
@@ -95,6 +101,8 @@ var _phase_t := 0.0
 var _phase_len := PHASE_TIME
 var _place_shown := false
 var _curse_badge: ConditionBadge
+## E5: the Provação's seal above the medallion.
+var _trial_seal: TrialSeal
 var _shield_t := 0.0
 ## The ritual's shield stands: its hint stays under the bar once the phase's name has gone.
 var _ritual_hint := false
@@ -221,6 +229,10 @@ func _build_life() -> void:
 	_curse_badge = ConditionBadge.new().setup(CURSE_COLOR, T.t(&"hud_cursed"), T.t(&"hud_cursed_effects"))
 	add_child(_curse_badge)
 	_place(_curse_badge, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 4, -mid - LIFE.y - 2.0 * UiKit.FRAME - 6), _curse_badge.size)
+	# the Provação's seal: above the medallion, clear of Morvath's curse badge (which sits on the life bar's end)
+	_trial_seal = TrialSeal.new().setup(TRIAL_SEAL, true)
+	add_child(_trial_seal)
+	_place(_trial_seal, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + (CREST - TRIAL_SEAL) * 0.5, -MARGIN - CREST - TRIAL_SEAL_GAP), Vector2(TRIAL_SEAL, TRIAL_SEAL))
 
 
 ## Bottom centre: the four action diamonds; the gifts that act alone sit in a row to their right.
@@ -318,6 +330,9 @@ func _process(delta: float) -> void:
 		_gold.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
 		_crest.seal = str(game.level)
 	_update_life(p)
+	if game.rooms and game.rooms.trials:
+		_trial_seal.carry(game.rooms.trials.active, game.rooms.trials.left)
+		_trial_seal.hide_name = _curse_badge.shown() > 0.0
 	_update_slots(p)
 	_update_passives()
 	_update_elos()
@@ -472,6 +487,17 @@ func _update_psalms() -> void:
 
 
 ## The greeting (the tests read it).
+## E5: the Provação's curse turned (Rooms._fight_won): the seal fills with gold, the greeting from the top.
+func show_trial_won(card: Trials.Card) -> void:
+	_trial_seal.turn(card)
+	_elo_banner.show_trial(card)
+
+
+## The Provação's seal (the tests read it).
+func trial_seal() -> TrialSeal:
+	return _trial_seal
+
+
 func banner() -> EloBanner:
 	return _elo_banner
 

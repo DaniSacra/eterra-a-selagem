@@ -68,7 +68,9 @@ var altar_options: Array[Dictionary] = []
 ## The floor of the runes in a fight there (null: none).
 var runes: RuneFloor
 var _slab_node: Node3D
-## The spots of the trial's cards and of the altar's trades: {at, index, node}.
+var _slab_sign: DoorSign
+## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
+## has stepped off since it last opened)}; empty once the choice is made.
 var _spots: Array[Dictionary] = []
 ## The robot's mind on the slab of this room (decided once when it shows).
 var _bot_trial := false
@@ -245,6 +247,7 @@ func _enter(next: RunMap.Room) -> void:
 	_stop_runes()
 	slab = null
 	_slab_node = null
+	_slab_sign = null
 	_spots.clear()
 	trial_cards.clear()
 	altar_options.clear()
@@ -470,13 +473,13 @@ func _open_doors() -> void:
 	for i in next_rooms.size():
 		var r := next_rooms[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
-		_door_labels.append(_marker(game.arena.door_label(i), r.reward, door_text(r), r.kind))
+		_door_labels.append(_marker(game.arena.door_label(i), r.reward, door_text(r), r.kind, DoorGlyph.of(door_info(i))))
 	if not next_rooms.is_empty():
 		Audio.play(&"door")
 
 
 ## A door's sign (E5-D8, docs/art/e5_spec.md 7.1): the reward of a fight, under it "Difícil" for one with an elite
-## and "Guardião" for the guardian's; the room's kind for the others (the pictograms are the UI's, DoorSign).
+## and "Guardião" for the guardian's; the room's kind for the others (the pictogram beside it: DoorGlyph.of(door_info)).
 static func door_text(r: RunMap.Room) -> String:
 	match r.kind:
 		RunMap.Kind.COMBAT:
@@ -605,7 +608,7 @@ func _fight_won() -> void:
 	p.magick.gain(more_magick)
 	_apply_curse()
 	game.fx.hero_burst(&"light", Vector3(p.pos.x, 1.2, p.pos.y))
-	game.hud.show_notice(T.t(&"notice_trial_won"), 3.0)
+	game.hud.show_trial_won(done)
 	game.room_tally.event("trial_turned", game.time, {"blessing": String(done.blessing.id), "rarity": done.rarity})
 	trial_turned.emit(done)
 
@@ -671,9 +674,12 @@ func _step_slab(dt: float) -> void:
 		return
 	slab.armed = maxf(0.0, float(slab.armed) - dt)
 	var d: Vector2 = game.player.pos - (slab.at as Vector2)
+	var cost := int(slab.cost)
+	if _slab_sign != null:
+		# the price, or "Vida insuficiente" while he has not life enough (spec 5.1)
+		_slab_sign.set_short(not Trials.can_pay(stage, map.depth, game.player.hp), T.t(&"trial_short"), T.t(&"trial_cost", {"n": cost}))
 	if slab.armed > 0.0 or absf(d.x) > SLAB_HALF or absf(d.y) > SLAB_HALF:
 		return
-	var cost := int(slab.cost)
 	if not Trials.can_pay(stage, map.depth, game.player.hp):
 		if not slab.get("warned", false):
 			slab.warned = true
@@ -715,41 +721,30 @@ func _slab_marker(at: Vector2, cost: int) -> Node3D:
 	light.omni_range = 4.0
 	light.light_cull_mask = ~Arena.CROWD_LAYER
 	root.add_child(light)
-	var sign := DoorSign.make(T.t(&"room_trial"), T.t(&"trial_cost", {"n": cost}))
+	var sign := DoorSign.make(T.t(&"room_trial"), T.t(&"trial_cost", {"n": cost}), DoorGlyph.Kind.TRIAL)
 	sign.position.y = MARK_SIGN_Y
 	root.add_child(sign)
+	_slab_sign = sign
 	return root
 
 
-## The Provação's chamber: its cards on the floor in front of the block (provisional, until the split card's screen:
-## take_trial), its doors shut until one is taken.
-const TRIAL_SPOTS: Array[Vector2] = [Vector2(-4.0, -3.0), Vector2(0.0, -3.5), Vector2(4.0, -3.0)]
+## The Provação's chamber: stepping before the block (TRIAL_SPOT, on his way from the stairs of the south west) opens
+## its cards (EventChoice.open_trial, spec 5.2), its doors shut until one is taken.
+const TRIAL_SPOT := Vector2(-1.5, 1.5)
 
 
 func _build_trial() -> void:
 	phase = Phase.EVENT
 	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance)
-	for i in trial_cards.size():
-		var c := trial_cards[i]
-		var v := c.view()
-		var line1 := T.t(c.blessing.name_key) + " " + T.t(c.blessing.desc_key, {"value": _shown(c.blessing, c.rarity)})
-		var line2 := T.t(c.curse.desc_key, {"value": _shown(c.curse, 0)}) + ", " + T.t(&"trial_for", {"n": v.encounters})
-		var at := TRIAL_SPOTS[i % TRIAL_SPOTS.size()]
-		_spots.append({"at": at, "index": i, "node": _marker(at, RunMap.Reward.NONE, line1 + "\n" + line2, RunMap.Kind.TRIAL)})
+	_spots.append({"at": TRIAL_SPOT, "away": true, "node": _marker(TRIAL_SPOT, RunMap.Reward.NONE,
+		T.t(&"room_trial") + "\n" + T.t(&"trial_step"), RunMap.Kind.TRIAL, DoorGlyph.Kind.TRIAL)})
 	game.room_tally.event("trial_offered", game.time, {"cards": trial_cards.map(func(c: Trials.Card) -> Dictionary:
 		return {"blessing": String(c.blessing.id), "rarity": c.rarity, "curse": String(c.curse.id), "encounters": c.encounters})})
 	trial_offered.emit(trial_cards)
 
 
-## A number of a trial's half as the player reads it (25%, 15).
-static func _shown(d: TrialDef, rarity: int) -> String:
-	if d.mods.is_empty():
-		return ""
-	return BoonMod.format(d.mods[0].stat, absf(d.value(rarity)))
-
-
-## Takes card i of the Provação (what the split card's screen calls; stepping on its spot does too): its curse is
-## carried from the next fight on, the doors open.
+## Takes card i of the Provação (what its card screen calls, EventChoice.picked; the robot and --autopick take the
+## first): its curse is carried from the next fight on, the doors open.
 func take_trial(i: int) -> void:
 	if room == null or room.kind != RunMap.Kind.TRIAL or phase != Phase.EVENT or i < 0 or i >= trial_cards.size():
 		return
@@ -768,19 +763,16 @@ func take_trial(i: int) -> void:
 
 # ---------- E5: the Altar Esquecido ----------
 
-const ALTAR_SPOTS: Array[Vector2] = [Vector2(-2.0, -3.6), Vector2(2.0, -3.6)]
+## The worn slab before the altar's step (spec 6.3), where its choice opens.
+const ALTAR_SPOT := Vector2(0.0, -3.8)
 const ALTAR_COLOR := Color(0.95, 0.85, 0.65)
 
 
-## The altar's two trades on the worn slabs before its step (Altar.options), with what each asks.
+## The altar's trades (Altar.options) open from the worn slab before its step (EventChoice.open_altar).
 func _build_altar() -> void:
 	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
-	for o in altar_options:
-		var id: StringName = o.id
-		var detail := T.t(StringName("altar_%s_cost" % id), {"n": int(o.cost), "m": int(o.gain)})
-		var at := ALTAR_SPOTS[int(o.option) % ALTAR_SPOTS.size()]
-		_spots.append({"at": at, "index": int(o.option), "node": _marker(at, RunMap.Reward.NONE,
-			T.t(StringName("altar_" + String(id))) + "\n" + detail, RunMap.Kind.ALTAR)})
+	_spots.append({"at": ALTAR_SPOT, "away": true, "node": _marker(ALTAR_SPOT, RunMap.Reward.NONE,
+		T.t(&"room_altar") + "\n" + T.t(&"altar_step"), RunMap.Kind.ALTAR, DoorGlyph.Kind.ALTAR)})
 
 
 ## Takes the altar's trade (Altar.Option): pays and gives; false when it cannot be taken now.
@@ -810,19 +802,58 @@ func take_altar(option: int) -> bool:
 	return true
 
 
-# ---------- E5: spots on the floor (cards of the trial, trades of the altar) ----------
+# ---------- E5: the spot that opens the choice (the trial's cards, the altar's trades) ----------
 
+## Stepping on the spot opens its choice once; stepping off and on again opens it again (the altar left untouched).
 func _step_spots() -> void:
-	for s in _spots.duplicate():
-		if game.player.pos.distance_to(s.at) >= TOUCH:
-			continue
-		if room.kind == RunMap.Kind.TRIAL:
-			take_trial(int(s.index))
-		elif room.kind == RunMap.Kind.ALTAR:
-			if not take_altar(int(s.index)) and not s.get("warned", false):
-				s.warned = true
-				game.hud.show_notice(T.t(&"altar_cannot"), 1.5)
+	if _spots.is_empty():
 		return
+	var s: Dictionary = _spots[0]
+	if game.player.pos.distance_to(s.at) >= TOUCH:
+		s.away = true
+		return
+	if not s.away:
+		return
+	s.away = false
+	if room.kind == RunMap.Kind.TRIAL:
+		_choose_trial()
+	elif room.kind == RunMap.Kind.ALTAR:
+		_choose_altar()
+
+
+## Whether the choices are made with no screen: the robot and the captures (--autopick).
+func _no_screen() -> bool:
+	return game.bot != null or Dev.has("autopick")
+
+
+## The Provação's cards on their screen; the robot and --autopick take the first.
+func _choose_trial() -> void:
+	if _no_screen():
+		take_trial(0)
+		return
+	var screen := EventChoice.new()
+	game.open_screen(screen)
+	screen.open_trial(trial_cards)
+	screen.picked.connect(func(i: int) -> void:
+		game.close_screen()
+		take_trial(i))
+
+
+## The altar's trades on their screen (a last card takes nothing); the robot and --autopick take Altar.bot_choice.
+func _choose_altar() -> void:
+	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
+	if _no_screen():
+		var pick := Altar.bot_choice(altar_options, game.player.max_hp)
+		if pick >= 0:
+			take_altar(pick)
+		return
+	var screen := EventChoice.new()
+	game.open_screen(screen)
+	screen.open_altar(altar_options)
+	screen.picked.connect(func(option: int) -> void:
+		game.close_screen()
+		if option != EventChoice.NONE:
+			take_altar(option))
 
 
 func _clear_spots() -> void:
@@ -949,7 +980,7 @@ func bot_goal() -> Variant:
 	if phase == Phase.REWARD and _reward_node != null:
 		return _reward_at
 	if phase == Phase.EVENT and not _spots.is_empty():
-		# the Provação's chamber: the first card (its blessing and curse are drawn; the robot takes what comes)
+		# the Provação's chamber: the spot before the block (the robot takes the first card: what comes)
 		return _spots[0].at
 	if phase == Phase.OPEN:
 		for p in _pedestals:
@@ -959,9 +990,8 @@ func bot_goal() -> Variant:
 			return slab.at
 		if room.kind == RunMap.Kind.ALTAR and not _spots.is_empty():
 			var pick := Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow()), game.player.max_hp)
-			for sp in _spots:
-				if int(sp.index) == pick:
-					return sp.at
+			if pick >= 0 and _spots[0].away:
+				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
 			return game.arena.door_goal(clampi(bot_door(next_rooms), 0, game.arena.exits.size() - 1))
@@ -989,7 +1019,9 @@ static func gem_color(c: Color) -> Color:
 
 
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).
-func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind = RunMap.Kind.COMBAT) -> Node3D:
+## glyph: the pictogram left of the sign's name (E5, DoorGlyph).
+func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind = RunMap.Kind.COMBAT,
+		glyph: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> Node3D:
 	var root := Node3D.new()
 	root.position = Vector3(at.x, 0, at.y)
 	add_child(root)
@@ -1019,7 +1051,7 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	if text != "":
 		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
 		var lines := text.split("\n", true, 1)
-		var sign := DoorSign.make(lines[0], lines[1] if lines.size() > 1 else "")
+		var sign := DoorSign.make(lines[0], lines[1] if lines.size() > 1 else "", glyph)
 		sign.position.y = MARK_SIGN_Y
 		root.add_child(sign)
 	return root

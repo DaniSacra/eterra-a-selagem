@@ -579,16 +579,31 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3
   cartas (Bênção forte com raridade sorteada, maldição por 3 a 5 encontros) e as portas da sala de antes (fechadas até
   pegar uma). A maldição age em `Horde.speed_scale`, `Player.heal_scale`, `Player.hurt_scale`, ondas (`wave_extra`) e
-  ouro (`gold_pct`); depois do último encontro vira a Bênção (`BoonState.grant`, "Provação vencida"). Provisório: as
-  cartas são pedestais no chão (`Rooms.TRIAL_SPOTS`). Para a UI: `Rooms.trials` (`active`, `left`, `won`), `trial_cards`
+  ouro (`gold_pct`); depois do último encontro vira a Bênção (`BoonState.grant`, "Provação vencida"). Para a UI: `Rooms.trials` (`active`, `left`, `won`), `trial_cards`
   (`Trials.Card.view()`), `take_trial(i)`, sinais `trial_slab_shown`, `trial_entered`, `trial_offered`, `trial_taken`,
   `trial_turned`. Robô: paga se sobrar 60% da vida (`Trials.bot_accepts`) e pega a primeira carta.
+  **Interface (spec 5.3)**: pisar diante do bloco (`Rooms.TRIAL_SPOT`) abre as cartas numa tela (`EventChoice.open_trial`,
+  `scripts/ui/event_choice.gd`, filha da `BoonChoice`; `Game.open_screen`/`close_screen`; escolher chama `take_trial`):
+  `BoonCard.setup_trial` com a Bênção em cima (nome, "Provação" e a raridade, que também é a borda) e a maldição numa
+  faixa de tinta lilás-escura com "Por N encontros"; o ícone é o losango rachado (`TrialSeal`). Robô e `--autopick` pegam
+  a primeira sem tela. No HUD, acima do medalhão, o selo `TrialSeal` (losango lilás acinzentado de 33 px a 1080, encontros
+  que faltam dentro, nome da maldição ao lado, escondido enquanto o selo da maldição de Morvath está de pé; nada no herói,
+  E5-D7); na virada a rachadura enche de ouro velho em 0,4 s e o `EloBanner.show_trial` diz "Provação vencida" com o nome e
+  o efeito da Bênção (`Hud.show_trial_won`, no lugar do aviso). A laje mostra o losango e troca "Custa N de vida" por "Vida
+  insuficiente" no rosa apagado enquanto falta vida (`DoorSign.set_short`).
 - **Altar Esquecido** (`Altar`, `stage.altar_layout`): porta uma vez por descida (profundidades 2 a 8, 20%), sem luta,
   uma troca ou nenhuma: 10 de vida máxima por uma romã (`Game.open_grow_choice`) ou 75 de ouro por 25 de Magia máxima.
-  `Rooms.altar_options`, `take_altar(option)`, sinal `altar_used`. Robô: `Altar.bot_choice`.
+  `Rooms.altar_options`, `take_altar(option)`, sinal `altar_used`. Robô: `Altar.bot_choice`. Pisar na laje gasta diante
+  do degrau (`Rooms.ALTAR_SPOT`) abre uma tela pequena (`EventChoice.open_altar`, `BoonCard.setup_altar`, 270 x 330 a
+  720): as duas trocas com medalhão desenhado (coração, chama) e o que pedem, a que não cabe agora apagada com o porquê,
+  e "Seguir em frente" (nada); sair da laje e voltar abre de novo.
 - **Portas que mostram o caminho**: a luta atrás de cada porta é sorteada ao abrir a sala de antes (`Rooms._prepare`,
   `RunMap.Room.fight`) e entra igual; a placa diz "Difícil" para luta com elite e "Guardião" (`Rooms.door_text`);
   `Rooms.door_info(i)` dá `kind`, `reward`, `depth`, `tier`, `guardian`, `hard`, `elites`, `arena`, chaves de texto.
+  Pictograma à esquerda do nome na placa (`DoorGlyph`, `DoorGlyph.of(door_info)`, `DoorSign.make(..., glyph)`; spec 7.1):
+  uma divisa de ouro velho para "Difícil", duas para o guardião, três para Morvath, gota na fonte, moeda na loja, chama no
+  altar, losango rachado na laje da Provação; luta comum sem nada. Testes em `tests/test_e5_ui.gd`; capturas
+  `tools/ui_lab.gd -- --trial|--altar|--slab` (comando no topo), galeria `docs/gallery/e5/ui/`.
 - **Registro**: `events` no `RESULT` e no registro (`RoomTally.event`: `door`, `trial_shown`, `trial_paid`,
   `trial_refused`, `trial_offered`, `trial_taken`, `trial_turned`, `altar`), mais `trial` (`active`, `left`, `won`).
   Testes: `test_hazard.gd`, `test_trial.gd`, `test_altar.gd`, `test_arenas.gd`, `test_descent.gd`.
