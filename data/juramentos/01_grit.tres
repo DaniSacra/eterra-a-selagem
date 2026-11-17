@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="JuramentoDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/juramento_def.gd" id="1_l75pf"]
+
+[resource]
+script = ExtResource("1_l75pf")
+id = &"grit"
+name_key = &"jur_grit"
+desc_key = &"jur_grit_desc"
+stat = &"enemy_hp_pct"
+values = PackedFloat32Array(0.1, 0.2, 0.3)
+weights = PackedInt32Array(1, 1, 1)
+order = 1

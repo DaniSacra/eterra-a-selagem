@@ -37,6 +37,8 @@ var rarities: Dictionary = {}
 var talents: Array[TalentDef] = []
 ## Numbers won outside the Blessings (E5: a Provação's blessing, Trials.blessing_mods), fixed, added to stat.
 var granted: Array[BoonMod] = []
+## Blessings that left the descent (id: true; E6, the Juramento Escolhas Perdidas): never offered again.
+var banned: Dictionary = {}
 var _cache: Dictionary = {}
 
 
@@ -164,7 +166,7 @@ func owned() -> Array[Boon]:
 
 
 func can_offer(b: Boon) -> bool:
-	return b.can_grow(level(b.id)) and forged(b)
+	return b.can_grow(level(b.id)) and forged(b) and not banned.has(b.id)
 
 
 ## Raises a gift by one level (or to at_level when it is higher: a trade keeps the replaced one's level), at least at

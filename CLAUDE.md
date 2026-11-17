@@ -707,6 +707,20 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `taken`) e Maestria (`new_psalms`) no fim da partida; `RESULT` e registro com `psalms`; dano em `dealt_by.psalm`.
   Testes em `tests/test_psalms.gd`.
 
+## Juramentos (E6, D-63; regras, números e escolhas em `docs/design/e6_juramentos.md`)
+- Os votos do Juramento do Hades II, abertos depois da primeira vitória (`Juramentos.unlocked`: `wins > 0`), Medo vira
+  **Peso**. Nove em `data/juramentos/` (`JuramentoDef`, parte `juramentos` do `make_data.gd`: `stat`, `values` e
+  `weights` por nível): Golpes Duros (dano), Mortos Resistentes (vida de todos, Morvath também), Passo Ligeiro (andar),
+  Mais Mortos (ondas maiores), Mais Elites, Feridas Abertas (cura), Preço Alto (loja), Escolhas Perdidas (2 Bênçãos não
+  escolhidas saem da descida, `BoonState.banned`), Morvath Implacável (descansa menos, ergue mais); Peso máximo 30.
+  Regras puras em `Juramentos` (`core/juramentos.gd`: Peso, `scale`, `stage_for`, `boss_for`, `more_waves`, `denial`);
+  ganchos em `Game._swear_juramentos` (`Horde.vow_hp`), `Rooms.setup`/`_apply_curse`/ondas, `Boss.setup`, `Game._take`.
+  Save versão 4 (`juramentos`: `ranks`, `best`); `RESULT` e registro com `juramentos` e `weight`; vitória dá
+  `MasteryCurve.weight_xp` 3 por Peso (fonte `juramentos`). Tela `JuramentoScreen`: depois da primeira vitória o Iniciar
+  abre os Juramentos com "Descer" em foco. Sem save (testes, `--nosave`) e para o robô, nenhum. Opções:
+  `--juramentos=pain:2,grit:1`, `--wins=N` (abre só na sessão), `--title --screen=juramentos`. Testes em
+  `tests/test_juramentos.gd`.
+
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
   `requires_sets` (E3-02: uma lista por família, uma Bênção de cada forma o Elo; `BoonState.forged`), 12% por carta,

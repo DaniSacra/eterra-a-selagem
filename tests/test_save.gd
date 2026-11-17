@@ -67,7 +67,7 @@ func _round_trip(data: Dictionary) -> Dictionary:
 
 
 func test_every_older_version_opens_as_the_current_one() -> void:
-	for v in [1, 2, 3]:
+	for v in [1, 2, 3, 4]:
 		assert_true(_fixture(v) is Dictionary, "fixture %d reads" % v)
 		var out := SaveData.merged(_fixture(v))
 		assert_eq(out.version, SaveData.VERSION, "version %d opens as %d" % [v, SaveData.VERSION])

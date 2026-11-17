@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="JuramentoDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/juramento_def.gd" id="1_txvdd"]
+
+[resource]
+script = ExtResource("1_txvdd")
+id = &"frenzy"
+name_key = &"jur_frenzy"
+desc_key = &"jur_frenzy_desc"
+stat = &"enemy_speed_pct"
+values = PackedFloat32Array(0.2, 0.4)
+weights = PackedInt32Array(3, 3)
+order = 2

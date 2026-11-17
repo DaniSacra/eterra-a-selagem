@@ -208,6 +208,8 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 	Dev.seed_rng(_rng, 3)
 	var path := DEFS_DIR + String(enemy_def.id) + ".tres"
 	def = load(path) as BossDef if ResourceLoader.exists(path) else BossDef.new()
+	if g.juramentos:
+		def = g.juramentos.boss_for(def)  # E6: the Juramento Morvath Implacável
 	director = BossDirector.new(def)
 	_floor = g.arena.shape()
 	_middle = g.arena.resolve(_floor.center, enemy_def.radius)

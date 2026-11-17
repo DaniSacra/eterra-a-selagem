@@ -88,6 +88,8 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 		stage = short_stage(stage, 4)
 	elif Dev.has("medium"):
 		stage = short_stage(stage, 6)
+	if g.juramentos:
+		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
 	map = RunMap.new(stage, _rng)
 	trials = Trials.new(Trials.load_catalog())
 	if Dev.has("arena"):
@@ -255,7 +257,7 @@ func _enter(next: RunMap.Room) -> void:
 	match room.kind:
 		RunMap.Kind.COMBAT:
 			var fight := room.fight if room.fight != null else EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
-			_waves = _cursed_waves(fight.waves)
+			_waves = _cursed_waves(game.juramentos.more_waves(fight.waves) if game.juramentos else fight.waves)
 			var rating := 0.0
 			for w: Array in fight.waves:
 				for id: StringName in w:
@@ -582,10 +584,12 @@ func _log_leaving(next: RunMap.Room) -> void:
 # ---------- E5: the Provação ----------
 
 ## The curse carried now on the fight's numbers (heal_pct, hurt_pct, enemy_speed_pct; the others where they act).
+## The Juramentos (E6) multiply in: enemy speed, healing and the enemies' damage.
 func _apply_curse() -> void:
-	game.horde.speed_scale = maxf(0.1, 1.0 + trials.curse(&"enemy_speed_pct"))
-	game.player.heal_scale = maxf(0.0, 1.0 + trials.curse(&"heal_pct"))
-	game.player.hurt_scale = maxf(0.0, 1.0 + trials.curse(&"hurt_pct"))
+	var vows := game.juramentos if game.juramentos else Juramentos.new()
+	game.horde.speed_scale = maxf(0.1, 1.0 + trials.curse(&"enemy_speed_pct")) * vows.scale(&"enemy_speed_pct")
+	game.player.heal_scale = maxf(0.0, 1.0 + trials.curse(&"heal_pct")) * vows.scale(&"heal_pct")
+	game.player.hurt_scale = maxf(0.0, 1.0 + trials.curse(&"hurt_pct")) * vows.scale(&"enemy_damage_pct")
 
 
 ## The waves of a fight with the curse carried now: wave_extra more of each wave's first kind.

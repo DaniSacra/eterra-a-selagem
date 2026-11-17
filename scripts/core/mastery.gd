@@ -18,6 +18,8 @@ extends Resource
 @export var phase_xp := 10
 @export var phase_max := 4
 @export var victory_xp := 50
+## E6 (D-63): a victory with Juramentos gives this much more for each point of Peso (Juramentos.weight).
+@export var weight_xp := 3
 
 @export_group("First times")
 @export var first_boon_xp := 2
@@ -68,13 +70,15 @@ func devotion(level: int) -> int:
 
 ## The XP one run gives, by source, and its total. run: rooms (fight rooms won), guardians (guardian rooms won),
 ## phase (Morvath's highest phase reached, 0 when not met), victory (bool) and the first times of this run:
-## new_boons (Blessings seen for the first time), new_elos, new_psalms, first_guardian, first_victory (bools).
+## new_boons (Blessings seen for the first time), new_elos, new_psalms, first_guardian, first_victory (bools); weight
+## (the Peso of the Juramentos sworn, E6: weight_xp each, only on a victory).
 func run_xp(run: Dictionary) -> Dictionary:
 	var out := {
 		"rooms": room_xp * int(run.get("rooms", 0)),
 		"guardians": guardian_xp * int(run.get("guardians", 0)),
 		"phases": phase_xp * clampi(int(run.get("phase", 0)), 0, phase_max),
 		"victory": victory_xp if run.get("victory", false) else 0,
+		"juramentos": weight_xp * maxi(int(run.get("weight", 0)), 0) if run.get("victory", false) else 0,
 		"first_boons": first_boon_xp * int(run.get("new_boons", 0)),
 		"first_elos": first_elo_xp * int(run.get("new_elos", 0)),
 		"first_psalms": first_psalm_xp * int(run.get("new_psalms", 0)),

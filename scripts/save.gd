@@ -13,6 +13,7 @@ func _ready() -> void:
 	elif FileAccess.file_exists(PATH):
 		data = SaveData.merged(JSON.parse_string(FileAccess.get_file_as_string(PATH)))
 	_dev_hero()
+	_dev_juramentos()
 
 
 ## Captures and checks (E2-06): --hero-xp=N and --hero-equip=a,b set the Warrior's Mastery XP and Gifts for this
@@ -28,6 +29,18 @@ func _dev_hero() -> void:
 		block.equipped = Array(Dev.arg("hero-equip").split(",", false))
 	if Dev.has("hero-ult"):
 		block.ultimate = Dev.arg("hero-ult")
+
+
+## Captures and checks (E6): --wins=N (Morvath sealed N times: the Juramentos open) and, on the title,
+## --juramentos=id:rank,... as the ranks chosen; for this session only (nothing is written afterwards).
+func _dev_juramentos() -> void:
+	if not Dev.has("wins") and not (Dev.has("juramentos") and Dev.has("title")):
+		return
+	enabled = false
+	if Dev.has("wins"):
+		data.wins = int(Dev.num("wins", 0))
+	if Dev.has("juramentos"):
+		Juramentos.block(data)["ranks"] = Juramentos.parse(Dev.arg("juramentos"))
 
 
 func write() -> void:

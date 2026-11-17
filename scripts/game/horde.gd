@@ -102,6 +102,8 @@ var renderer: CrowdRenderer
 ## The lights of the wind-ups and of the armor (never red: the warnings on the floor are Ground's).
 var tells: EnemyFx
 var hp_scale := 1.0
+## Every enemy's life times this, elites, guardians and Morvath too (E6: the Juramento Mortos Resistentes).
+var vow_hp := 1.0
 ## Summons never raise anyone past this many standing (EncounterGen.Fight.ceiling, set by Rooms for each fight;
 ## 0: no ceiling, the endless hall --horde).
 var alive_cap := 0
@@ -166,7 +168,7 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true) -> Enemy:
 	e.def = d
 	e.pos = at
 	var scaled := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
-	e.max_hp = d.hp * (hp_scale if scaled else 1.0)
+	e.max_hp = d.hp * (hp_scale if scaled else 1.0) * vow_hp
 	e.hp = e.max_hp
 	e.max_armor = d.armor
 	e.armor = d.armor

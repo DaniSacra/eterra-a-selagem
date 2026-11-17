@@ -2,7 +2,7 @@ extends SceneTree
 ## One-off generator of the content files in data/ (combos, enemies, gifts, waves) for the 3D version.
 ## The .tres files it writes are the source of truth afterwards: tune them in the editor or by hand.
 ## ~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [bosses] [feel]
-##   [talents] [ultimates] [mastery] [hero] [psalms]
+##   [talents] [ultimates] [mastery] [hero] [psalms] [trials] [juramentos]
 
 ## Elites wear a faint old-gold edge (the rim of crowd.gdshader; cycle 5: the gilded halo is gone, the elite reads by
 ## its gold trims, its armor bar and a thin dark outline, CrowdRenderer.OUTLINE_COLOR).
@@ -46,7 +46,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -1434,3 +1434,40 @@ func _altar_room() -> RoomLayout:
 	l.cam_target = Vector2.ZERO
 	l.cam_reach = 1.5
 	return l
+
+
+# ---------- E6: the Juramentos (D-63; docs/design/e6_juramentos.md) ----------
+
+const JURAMENTO_DIR := "res://data/juramentos/"
+
+
+func _juramento(order: int, id: StringName, stat: StringName, values: Array, weights: Array, shown := JuramentoDef.Shown.MORE) -> void:
+	var j := JuramentoDef.new()
+	j.id = id
+	j.order = order
+	j.name_key = StringName("jur_%s" % id)
+	j.desc_key = StringName("jur_%s_desc" % id)
+	j.stat = stat
+	j.values = PackedFloat32Array(values)
+	j.weights = PackedInt32Array(weights)
+	j.shown = shown
+	_save(j, JURAMENTO_DIR + "%02d_%s.tres" % [order, id])
+
+
+## The vows of Hades II's Oath of the Unseen that map to what the run already has, with its numbers and its Fear per
+## rank (the Peso; docs/design/hades2_sistemas.md, Votos da Noite e Medo). Pain, Grit, Frenzy, Hordes, Scars, Debt and
+## Denial as there; Menace (foes of the next region) as more elites; Rivals (new moves) as a Morvath who rests less and
+## raises more. Left out: Wards, Return, Fangs, Shadow, Forfeit, Time, Void, Hubris (docs/design/e6_juramentos.md).
+func _juramentos() -> void:
+	DirAccess.make_dir_recursive_absolute(JURAMENTO_DIR)
+	for f in DirAccess.get_files_at(JURAMENTO_DIR):
+		DirAccess.remove_absolute(JURAMENTO_DIR + f)
+	_juramento(0, &"pain", &"enemy_damage_pct", [0.2, 0.6, 1.0], [1, 2, 2])
+	_juramento(1, &"grit", &"enemy_hp_pct", [0.1, 0.2, 0.3], [1, 1, 1])
+	_juramento(2, &"frenzy", &"enemy_speed_pct", [0.2, 0.4], [3, 3])
+	_juramento(3, &"hordes", &"enemy_count_pct", [0.2, 0.4, 0.6], [1, 1, 1])
+	_juramento(4, &"menace", &"elite_pct", [0.1, 0.25], [1, 2])
+	_juramento(5, &"scars", &"heal_pct", [-0.25, -0.5, -1.0], [1, 1, 2], JuramentoDef.Shown.LEFT)
+	_juramento(6, &"debt", &"price_pct", [0.4, 0.8], [1, 1])
+	_juramento(7, &"denial", &"boon_denial", [2.0], [2], JuramentoDef.Shown.COUNT)
+	_juramento(8, &"rivals", &"boss_rival", [0.25], [2])

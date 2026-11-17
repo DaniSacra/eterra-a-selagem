@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="JuramentoDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/juramento_def.gd" id="1_ja2bm"]
+
+[resource]
+script = ExtResource("1_ja2bm")
+id = &"rivals"
+name_key = &"jur_rivals"
+desc_key = &"jur_rivals_desc"
+stat = &"boss_rival"
+values = PackedFloat32Array(0.25)
+weights = PackedInt32Array(2)
+order = 8

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="JuramentoDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/juramento_def.gd" id="1_7cckf"]
+
+[resource]
+script = ExtResource("1_7cckf")
+id = &"denial"
+name_key = &"jur_denial"
+desc_key = &"jur_denial_desc"
+stat = &"boon_denial"
+values = PackedFloat32Array(2)
+weights = PackedInt32Array(2)
+shown = 2
+order = 7
