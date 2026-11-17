@@ -29,7 +29,7 @@ func test_the_options_ask_and_give() -> void:
 
 func test_the_robot_chooses() -> void:
 	assert_eq(Altar.bot_choice(Altar.options(stage, 0, 50, true), 50), Altar.Option.LIFE)
-	assert_eq(Altar.bot_choice(Altar.options(stage, 100, 40, true), 40), Altar.Option.CANDLES, "40 - 10 < 35")
+	assert_eq(Altar.bot_choice(Altar.options(stage, 125, 40, true), 40, 125), Altar.Option.CANDLES, "40 - 10 < 35; 125 - 75 keeps 50 for the shop")
 	assert_eq(Altar.bot_choice(Altar.options(stage, 0, 40, true), 40), -1)
 
 

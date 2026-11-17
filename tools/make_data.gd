@@ -1075,7 +1075,8 @@ func _talents() -> void:
 	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", 1, [], &"omega")] as Array[BoonMod]})
 	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"charge", 16.0, 6.0, 3.0)})
 	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
-	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life
+	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life, but never in Morvath's
+	# room (E6: no rise_boss_share; with the rise there the Mastery 20 robot won 72 of 72, docs/design/e6_balance.md)
 	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 16, {"mods": [_fixed(&"max_hp", 10), _fixed(&"magick_max", 10)] as Array[BoonMod]})
 	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17, {"mods": [_fixed(&"room_heal", 2)] as Array[BoonMod]})
 	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19, {"mods": [_fixed(&"rise_share", 0.5)] as Array[BoonMod]})

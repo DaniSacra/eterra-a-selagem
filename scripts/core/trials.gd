@@ -140,6 +140,31 @@ static func bot_accepts(stage: StageDef, depth: int, hp: float, max_hp: float) -
 	return can_pay(stage, depth, hp) and hp - cost(stage, depth) >= max_hp * BOT_KEEP
 
 
+## What each curse costs the robot's plan (E6, item 6: it took the first card, Pobreza included, and reached the shop
+## with no gold): a fight that hurts more costs most, no gold costs most only while the shop is still ahead.
+const BOT_CURSE_COST := {&"trial_fragil": 3.0, &"trial_horda": 2.0, &"trial_pressa": 2.0, &"trial_ferida": 1.0,
+	&"trial_pobreza": 5.0}
+## What a rarity step of the blessing is worth against that.
+const BOT_RARITY_WORTH := 1.0
+
+
+## The card the robot takes (E6): the best blessing rarity for the least harm to its plan (shop_ahead: the shop is
+## still to come, so Pobreza hurts). Ties go to the first card.
+static func bot_card(cards: Array[Card], shop_ahead: bool) -> int:
+	var best := 0
+	var best_score := -INF
+	for i in cards.size():
+		var c := cards[i]
+		var harm: float = BOT_CURSE_COST.get(c.curse.id, 2.0)
+		if c.curse.id == &"trial_pobreza" and not shop_ahead:
+			harm = 0.0
+		var score := c.rarity * BOT_RARITY_WORTH - harm
+		if score > best_score:
+			best_score = score
+			best = i
+	return best
+
+
 func _of(kind: TrialDef.Kind) -> Array[TrialDef]:
 	var out: Array[TrialDef] = []
 	for d in catalog:

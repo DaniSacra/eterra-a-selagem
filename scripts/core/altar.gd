@@ -23,14 +23,17 @@ static func options(stage: StageDef, gold: int, max_hp: float, can_grow: bool) -
 
 
 ## The robot's choice (E5): the pomegranate when it has life to spare (BOT_LIFE of the most after the trade), else the
-## candles when there is gold, else nothing (-1).
+## candles when the gold left still buys the shop's healing (BOT_GOLD_KEEP; E6: the altar comes before the shop), else
+## nothing (-1).
 const BOT_LIFE := 35.0
+const BOT_GOLD_KEEP := 50
 
 
-static func bot_choice(opts: Array[Dictionary], max_hp: float) -> int:
+static func bot_choice(opts: Array[Dictionary], max_hp: float, gold: int = 0) -> int:
 	var life: Dictionary = opts[Option.LIFE]
 	if life.ok and max_hp - float(life.cost) >= BOT_LIFE:
 		return Option.LIFE
-	if opts[Option.CANDLES].ok:
+	var candles: Dictionary = opts[Option.CANDLES]
+	if candles.ok and gold - int(candles.cost) >= BOT_GOLD_KEEP:
 		return Option.CANDLES
 	return -1

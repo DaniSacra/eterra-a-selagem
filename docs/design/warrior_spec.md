@@ -187,7 +187,7 @@ ficam fora do conjunto inicial (identidade ofensiva primeiro); continuam no cat�
 | Emeth | Corte Crescente | **Fio Longo**: golpes leves alcançam 15% mais | **Onda Atravessante**: a onda do especial atravessa até 3 (pede uma Magia) |
 | Magia | Lâmina Faminta | **Reserva**: +20 de Magia máxima | **Coração da Emeth**: a ultimate carrega 25% mais rápido e a passiva devolve 3 (pede uma Emeth) |
 | Pontes | Combo e Fúria: **Investida**, o Corte Veloz que mata não gasta a esquiva · Fúria e Magia: **Sangue Quente**, abate com Ômega dá 2 cargas · Magia e Emeth: **Onda Carregada**, Ômega do especial solta a onda do giro · Emeth e Combo: **Fio do Passo**, Corte Veloz solta uma onda curta | | |
-| Fora dos ramos (sustento, no centro) | **Firmeza** (+10 de vida e de Magia), **Ainda de Pé** (levanta uma vez com metade da vida), **Respiro** (sala vencida cura 2) | | |
+| Fora dos ramos (sustento, no centro) | **Firmeza** (+10 de vida e de Magia), **Ainda de Pé** (levanta uma vez com metade da vida, antes de Morvath), **Respiro** (sala vencida cura 2) | | |
 
 Os Dons do Guardião que eram de defesa parada (Postura, Círculo que Segue, Círculo Largo como Dom) **saem** (seção 12).
 
@@ -219,7 +219,7 @@ números que já existem não pede código. Testes: `tests/test_warrior_talents.
 | Onda Carregada | onda do giro (charge) | só o Ômega do especial tem a tag `charge` |
 | Fio do Passo | `blow_wave` 12, 9,6 m, 1,6 m (dash) | "curta" = a onda pequena da seta, até pouco além dos 8 m do corte |
 | Respiro | `room_heal` 2 | toda sala de luta vencida (guardião também) |
-| Ainda de Pé | `rise_share` 0,5 | uma vez por descida, depois o atordoamento do golpe e a proteção de sempre; palavra "De pé!" |
+| Ainda de Pé | `rise_share` 0,5, `rise_boss_share` 0 (E6) | uma vez por descida, nunca na Câmara do Selo (E6, `docs/design/e6_balance.md`), depois o atordoamento do golpe e a proteção de sempre; palavra "De pé!" |
 
 ---
 

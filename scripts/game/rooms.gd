@@ -827,7 +827,8 @@ func _no_screen() -> bool:
 ## The Provação's cards on their screen; the robot and --autopick take the first.
 func _choose_trial() -> void:
 	if _no_screen():
-		take_trial(0)
+		# the robot weighs the curses against its plan (E6); --autopick takes the first, for captures
+		take_trial(Trials.bot_card(trial_cards, map.depth < stage.rooms) if game.bot != null else 0)
 		return
 	var screen := EventChoice.new()
 	game.open_screen(screen)
@@ -841,7 +842,7 @@ func _choose_trial() -> void:
 func _choose_altar() -> void:
 	altar_options = Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow())
 	if _no_screen():
-		var pick := Altar.bot_choice(altar_options, game.player.max_hp)
+		var pick := Altar.bot_choice(altar_options, game.player.max_hp, gold)
 		if pick >= 0:
 			take_altar(pick)
 		return
@@ -956,8 +957,9 @@ const BOT_PREFERENCE: Array[RunMap.Reward] = [RunMap.Reward.BOON, RunMap.Reward.
 const BOT_ALTAR_RANK := 1.5
 
 
-## The door the bot walks through (index in doors).
-static func bot_door(doors: Array[RunMap.Room]) -> int:
+## The door the bot walks through (index in doors). altar_useful: it would trade something there (E6: before it walked
+## into the altar with nothing to trade, a room lost); otherwise the altar comes last.
+static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true) -> int:
 	var best := 0
 	var rank := INF
 	for i in doors.size():
@@ -965,7 +967,7 @@ static func bot_door(doors: Array[RunMap.Room]) -> int:
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
 			r = -1.0
 		elif doors[i].kind == RunMap.Kind.ALTAR:
-			r = BOT_ALTAR_RANK
+			r = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
 		elif r < 0.0:
 			r = BOT_PREFERENCE.size()
 		if r < rank:
@@ -974,12 +976,17 @@ static func bot_door(doors: Array[RunMap.Room]) -> int:
 	return best
 
 
+## The altar's trade the robot would make now (Altar.bot_choice; -1: none).
+func _bot_altar_pick() -> int:
+	return Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow()), game.player.max_hp, gold)
+
+
 ## Where the bot should walk when the room has no fight left (null: stay).
 func bot_goal() -> Variant:
 	if phase == Phase.REWARD and _reward_node != null:
 		return _reward_at
 	if phase == Phase.EVENT and not _spots.is_empty():
-		# the Provação's chamber: the spot before the block (the robot takes the first card: what comes)
+		# the Provação's chamber: the spot before the block (the robot takes Trials.bot_card)
 		return _spots[0].at
 	if phase == Phase.OPEN:
 		for p in _pedestals:
@@ -988,12 +995,12 @@ func bot_goal() -> Variant:
 		if slab != null and _bot_trial and float(slab.armed) <= 0.0:
 			return slab.at
 		if room.kind == RunMap.Kind.ALTAR and not _spots.is_empty():
-			var pick := Altar.bot_choice(Altar.options(stage, gold, game.player.max_hp, game.boons.can_grow()), game.player.max_hp)
+			var pick := _bot_altar_pick()
 			if pick >= 0 and _spots[0].away:
 				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(clampi(bot_door(next_rooms), 0, game.arena.exits.size() - 1))
+			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0), 0, game.arena.exits.size() - 1))
 	return null
 
 

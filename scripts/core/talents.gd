@@ -152,5 +152,26 @@ func sanitized(ids: Array, level: int, devotion: int) -> Array[StringName]:
 	return out
 
 
+## Why each Gift asked for did not stay in kept (sanitized's answer): id -> Problem (E6: --hero-equip and --talents
+## dropped Gifts in silence, e.g. Reserva without Lâmina Faminta, the entry of its branch, or a Gift still locked).
+func why_dropped(asked: Array, kept: Array, level: int, devotion: int) -> Dictionary:
+	var out := {}
+	for id: Variant in asked:
+		var sid := StringName(id)
+		if kept.has(sid) or out.has(sid):
+			continue
+		var t := find(sid)
+		if t == null:
+			out[sid] = Problem.UNKNOWN
+		elif t.unlock_level > level:
+			out[sid] = Problem.LOCKED
+		else:
+			var more := kept.duplicate()
+			more.append(sid)
+			var p: Problem = check(more, level, devotion).problem
+			out[sid] = p if p != Problem.OK else Problem.NEEDS
+	return out
+
+
 static func _fail(problem: Problem, id: StringName) -> Dictionary:
 	return {"problem": problem, "id": id}
