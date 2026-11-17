@@ -14,6 +14,10 @@ extends SceneTree
 ## E4: --codex=psalms|enemies|morvath|arenas too (sample data with some found, some not);
 ##   --psalm-card=id offers that Psalm between two Blessings in the run, holding what opens it (writes _psalm.png),
 ##   then picks it and writes _psalm_banner.png with the "Salmo descoberto" greeting over the fight.
+## E5: --trial (start with --start=trial) opens the Provação's cards (_trial.png), takes the first (--pick=n) and shows
+##   the seal in the HUD (_trial_seal.png), then wins its fights (_trial_won.png, the gold seal and the greeting);
+##   --altar [--gold=N] (start with --start=altar) opens the altar's trades (_altar.png);
+##   --slab (start with --start=fountain --hero-hp=N) shows the Provação's slab and its sign there (_slab.png).
 
 const GAME := "res://scenes/game.tscn"
 ## Gifts held before the Elo is offered: both sources of Vapor and of Aurora Gelada, and a few more for the panel.
@@ -43,6 +47,10 @@ func _run() -> void:
 	await create_timer(START).timeout
 	if Dev.has("shop"):
 		await _shop(game)
+		quit()
+		return
+	if Dev.has("trial") or Dev.has("altar") or Dev.has("slab"):
+		await _events(game)
 		quit()
 		return
 	var boons: Variant = game.get(&"boons")
@@ -199,6 +207,39 @@ func _psalm_card(game: Node, boons: Variant) -> void:
 	game.set(&"bot", bot)
 	await create_timer(0.7).timeout
 	await _shot("psalm_banner")
+
+
+## E5: the Provação's cards, its seal and its turn; the altar's trades; the slab and its sign.
+func _events(game: Node) -> void:
+	var rooms: Node = game.get(&"rooms")
+	game.set(&"bot", null)
+	if Dev.has("slab"):
+		var stage: Variant = rooms.get(&"stage")
+		stage.set(&"trial_chance", 1.0)
+		(rooms.get(&"trials") as Variant).set(&"last_shown", -1000)
+		(rooms.get(&"map") as Variant).set(&"depth", 3)
+		rooms.call(&"_roll_slab")
+		await create_timer(0.8).timeout
+		await _shot("slab")
+		return
+	if Dev.has("altar"):
+		rooms.set(&"gold", int(Dev.arg("gold", "40")))
+		rooms.call(&"_choose_altar")
+		await create_timer(0.9).timeout
+		await _shot("altar")
+		return
+	rooms.call(&"_choose_trial")
+	await create_timer(0.9).timeout
+	await _shot("trial")
+	game.call(&"close_screen")
+	rooms.call(&"take_trial", int(Dev.arg("pick", "0")))
+	await create_timer(0.8).timeout
+	await _shot("trial_seal")
+	var left: int = (rooms.get(&"trials") as Variant).get(&"left")
+	for i in left:
+		rooms.call(&"_fight_won")
+	await create_timer(0.6).timeout
+	await _shot("trial_won")
 
 
 ## The greetings of the hand put in by the lab (an Elo formed, Blessings new) go at once, so the Psalm's own shows.

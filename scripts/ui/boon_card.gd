@@ -16,6 +16,12 @@ extends Button
 ## cut (an octagon, no other card has one), old gold inside, a pointed arch of old gold over the medallion and the
 ## Psalm's colour in the glow; a tab on top says "Salmo" (or "Salmo descoberto" the first time ever). The card says
 ## the action it transforms and, at the bottom, the three held things that opened it.
+## E5, the Provação's card (setup_trial, docs/art/e5_spec.md 5.3): the body split in two. On top the blessing to be won
+## (its name in ivory, "Provação" and its rarity on one line, the rarity on the edge as any card), under it the curse on
+## a band of dark lilac ink with its words in pale lilac and how many fights it lasts. The crest is the cracked diamond
+## (TrialSeal), no painted medallion. The altar's card (setup_altar, smaller): what the trade gives and what it asks,
+## a drawn medallion (heart, candle flame) and, when it cannot be taken now, dimmed with why; "Seguir em frente" takes
+## nothing.
 
 ## Card size at 720 lines (the screen scales with the window: canvas_items stretch).
 const SIZE := Vector2(320, 450)
@@ -60,6 +66,17 @@ const PSALM_EDGE := Color(0.9, 0.85, 0.74)
 const PSALM_CUT := 14.0
 const PSALM_ARCH_INSET := 34.0
 const PSALM_ICON := 112.0
+## The Provação's card: the crest, the curse's band (spec 5.3: ink (0.16; 0.12; 0.22), words (0.82; 0.76; 0.92)).
+const TRIAL_ICON := 104.0
+const TRIAL_BAND := TrialSeal.INK
+const TRIAL_WORDS := TrialSeal.PALE
+## The altar's cards: smaller, a shorter art band, the altar's warm ivory (Rooms.ALTAR_COLOR) in the glow.
+const ALTAR_SIZE := Vector2(270, 330)
+const ALTAR_ART_H := 120.0
+const ALTAR_ICON := 92.0
+const ALTAR_GLOW := Color(0.95, 0.85, 0.65)
+## The altar's medallion of each trade: its colour and BoonIcon.glyph (-1: an empty seal, "take nothing").
+const ALTAR_LOOK := {&"life": [Color(0.9, 0.36, 0.4), 6], &"candles": [Color(0.98, 0.78, 0.45), 0], &"none": [Color(0.62, 0.6, 0.66), -1]}
 
 var boon: Boon
 var rarity: Boon.Rarity = Boon.Rarity.COMMON
@@ -69,6 +86,9 @@ var elo := false
 var upgrade := false
 ## A Psalm's card (E4-03): boon is null.
 var psalm: PsalmDef
+## The Provação's card shown (E5; boon is null), and the altar's trade (E5: &"life", &"candles", &"none"; &"" otherwise).
+var trial: Trials.Card
+var altar := &""
 ## The control that shows the gift at the top: a TextureRect (painted), a BoonIcon or an EloLink.
 var crest: Control
 
@@ -83,25 +103,8 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 	elo = b != null and (b.is_duo() or not from.is_empty())
 	upgrade = upgrade_ and b != null and not elo
 	rarity = Boon.Rarity.COMMON if elo else rarity_
-	custom_minimum_size = SIZE
-	focus_mode = Control.FOCUS_ALL
-	var empty := StyleBoxEmpty.new()
-	for st in [&"normal", &"hover", &"pressed", &"focus", &"disabled", &"hover_pressed"]:
-		add_theme_stylebox_override(st, empty)
-	_add_glow(b.color() if b else Color(0.55, 0.85, 0.6))
-	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = PAD
-	box.offset_right = -PAD
-	box.offset_top = PAD * 0.5
-	box.offset_bottom = -PAD
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override(&"separation", 5)
-	add_child(box)
-	var art := CenterContainer.new()
-	art.custom_minimum_size.y = ART_H
-	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(art)
+	var box := _shell(b.color() if b else Color(0.55, 0.85, 0.6))
+	var art := _art(box)
 	crest = _crest(b, from)
 	art.add_child(crest)
 	if b == null:
@@ -131,19 +134,54 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 				warn = _text(T.t(&"choice_replaces", {"name": replaced_name}), WARN, 16, UiKit.BOLD_FONT)
 			warn.name = &"Replaces"
 			box.add_child(warn)
+	_finish()
+	if upgrade:
+		add_child(_upgrade_tab())
+	return self
+
+
+## The start every card shares: its size, no theme boxes (the card draws itself), the glow of its colour behind the
+## art and the column its parts go in.
+func _shell(glow: Color, size_px: Vector2 = SIZE, art_h: float = ART_H) -> VBoxContainer:
+	custom_minimum_size = size_px
+	focus_mode = Control.FOCUS_ALL
+	var empty := StyleBoxEmpty.new()
+	for st in [&"normal", &"hover", &"pressed", &"focus", &"disabled", &"hover_pressed"]:
+		add_theme_stylebox_override(st, empty)
+	_add_glow(glow, art_h)
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = PAD
+	box.offset_right = -PAD
+	box.offset_top = PAD * 0.5
+	box.offset_bottom = -PAD
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_theme_constant_override(&"separation", 5)
+	add_child(box)
+	return box
+
+
+## The band at the top of the column the crest stands in.
+func _art(box: VBoxContainer, art_h: float = ART_H) -> CenterContainer:
+	var art := CenterContainer.new()
+	art.custom_minimum_size.y = art_h
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(art)
+	return art
+
+
+## The end every card shares: the frame drawn over its parts, and focus that follows the mouse.
+func _finish() -> void:
 	var frame := Control.new()
 	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	frame.draw.connect(_draw_frame.bind(frame))
 	add_child(frame)
-	if upgrade:
-		add_child(_upgrade_tab())
 	mouse_entered.connect(func() -> void:
-		if not has_focus():
+		if not has_focus() and focus_mode != Control.FOCUS_NONE:
 			grab_focus())
 	focus_entered.connect(_on_focus.bind(true, frame))
 	focus_exited.connect(_on_focus.bind(false, frame))
-	return self
 
 
 ## The colour of the outer edge: the rarity's (rarity_color), the chain's metal for an Elo. Never changed by focus.
@@ -328,26 +366,9 @@ func _tab(text: String, col: Color, edge: Color, mark: Control = null) -> PanelC
 ## (names: one per group, in order; Psalms.matching). No rarity, no level, never a number of its own.
 func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false) -> BoonCard:
 	psalm = p
-	custom_minimum_size = SIZE
-	focus_mode = Control.FOCUS_ALL
-	var empty := StyleBoxEmpty.new()
-	for st in [&"normal", &"hover", &"pressed", &"focus", &"disabled", &"hover_pressed"]:
-		add_theme_stylebox_override(st, empty)
 	var col := PsalmIcon.tint(p)
-	_add_glow(p.color)
-	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = PAD
-	box.offset_right = -PAD
-	box.offset_top = PAD * 0.5
-	box.offset_bottom = -PAD
-	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override(&"separation", 5)
-	add_child(box)
-	var art := CenterContainer.new()
-	art.custom_minimum_size.y = ART_H
-	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	box.add_child(art)
+	var box := _shell(p.color)
+	var art := _art(box)
 	crest = PsalmIcon.new().setup(p, PSALM_ICON)
 	art.add_child(crest)
 	var title := _name(T.t(p.name_key))
@@ -365,11 +386,7 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 		var by := _text(T.t(&"psalm_opened_by", {"list": " · ".join(opened_by)}), EloLink.METAL_LIT, 15, UiKit.BOLD_FONT)
 		by.name = &"OpenedBy"
 		box.add_child(by)
-	var frame := Control.new()
-	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	frame.draw.connect(_draw_frame.bind(frame))
-	add_child(frame)
+	_finish()
 	var mark := Control.new()
 	mark.custom_minimum_size = Vector2(10, 18)
 	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -377,15 +394,95 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 	var tab := _tab(T.t(&"psalm_discovered" if first else &"psalm_card"), IVORY, PSALM_EDGE, mark)
 	tab.name = &"PsalmTab"
 	add_child(tab)
-	mouse_entered.connect(func() -> void:
-		if not has_focus():
-			grab_focus())
-	focus_entered.connect(_on_focus.bind(true, frame))
-	focus_exited.connect(_on_focus.bind(false, frame))
 	return self
 
 
-func _add_glow(color: Color) -> void:
+## The Provação's card (E5, spec 5.3): the blessing on top, the curse on a band of dark lilac below it with its length.
+func setup_trial(c: Trials.Card) -> BoonCard:
+	trial = c
+	rarity = clampi(c.rarity, Boon.Rarity.COMMON, Boon.Rarity.LEGENDARY) as Boon.Rarity
+	var box := _shell(TrialSeal.GLOW)
+	crest = TrialSeal.new().setup(TRIAL_ICON)
+	_art(box).add_child(crest)
+	var title := _name(T.t(c.blessing.name_key))
+	title.name = &"Name"
+	box.add_child(title)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 8)
+	row.add_child(UiKit.label(T.t(&"room_trial"), TrialSeal.PALE, 16, UiKit.BOLD_FONT))
+	row.add_child(UiKit.label("·", UiKit.DIM, 16))
+	var rar := UiKit.label(T.t(Boon.RARITY_KEY[rarity]), rarity_color(rarity).lightened(0.12), 16, UiKit.BOLD_FONT)
+	rar.name = &"Rarity"
+	row.add_child(rar)
+	box.add_child(row)
+	box.add_child(_rule())
+	var gain := _text(TrialSeal.blessing_text(c), UiKit.PALE, 18)
+	gain.name = &"Blessing"
+	gain.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(gain)
+	var band := PanelContainer.new()
+	band.name = &"CurseBand"
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	band.add_theme_stylebox_override(&"panel", UiKit.box(Color(TRIAL_BAND, 0.96), Color(TrialSeal.LILAC, 0.55), 1, 8, 4))
+	var inner := VBoxContainer.new()
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_theme_constant_override(&"separation", 1)
+	band.add_child(inner)
+	var width := SIZE.x - PAD * 2.0 - 18.0
+	var curse := _text(T.t(c.curse.name_key), TRIAL_WORDS.lightened(0.2), 16, UiKit.BOLD_FONT)
+	curse.name = &"CurseName"
+	var does := _text(TrialSeal.curse_text(c), TRIAL_WORDS, 16)
+	does.name = &"Curse"
+	var lasts := _text(T.t(&"trial_card_for", {"n": c.encounters}), TrialSeal.LILAC.lightened(0.1), 15, UiKit.BOLD_FONT)
+	lasts.name = &"Encounters"
+	for l: Label in [curse, does, lasts]:
+		l.custom_minimum_size.x = width
+		inner.add_child(l)
+	box.add_child(band)
+	_finish()
+	return self
+
+
+## One of the altar's trades (E5, Altar.options: {option, id, cost, gain, ok}), or {id: &"none"} to take nothing. A
+## trade that cannot be taken now is dimmed, cannot be focused or pressed and says why.
+func setup_altar(o: Dictionary) -> BoonCard:
+	altar = StringName(o.get("id", &"none"))
+	var look: Array = ALTAR_LOOK.get(altar, ALTAR_LOOK[&"none"])
+	var box := _shell(ALTAR_GLOW, ALTAR_SIZE, ALTAR_ART_H)
+	var medal := Control.new()
+	medal.custom_minimum_size = Vector2(ALTAR_ICON, ALTAR_ICON)
+	medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	medal.draw.connect(func() -> void: _draw_medallion(medal, look[0], look[1]))
+	crest = medal
+	_art(box, ALTAR_ART_H).add_child(medal)
+	var title := _name(T.t(StringName("altar_" + String(altar))))
+	title.name = &"Name"
+	box.add_child(title)
+	box.add_child(_rule())
+	var words := T.t(&"altar_none_desc")
+	if altar != &"none":
+		words = T.t(StringName("altar_%s_cost" % altar), {"n": int(o.get("cost", 0)), "m": int(o.get("gain", 0))})
+	var desc := _text(words, UiKit.PALE, 17)
+	desc.name = &"Desc"
+	desc.custom_minimum_size.x = ALTAR_SIZE.x - PAD * 2.0
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(desc)
+	if not bool(o.get("ok", true)):
+		var why := _text(T.t(&"altar_cannot"), WARN, 15, UiKit.BOLD_FONT)
+		why.name = &"Cannot"
+		why.custom_minimum_size.x = desc.custom_minimum_size.x
+		box.add_child(why)
+		disabled = true
+		focus_mode = Control.FOCUS_NONE
+		# dimmed, never see-through (the signs of the room would show through it)
+		modulate = Color(0.58, 0.56, 0.6)
+	_finish()
+	return self
+
+
+func _add_glow(color: Color, art_h: float = ART_H) -> void:
 	if _glow == null:
 		var g := Gradient.new()
 		g.set_color(0, Color(1, 1, 1, 1))
@@ -408,7 +505,7 @@ func _add_glow(color: Color) -> void:
 	t.offset_left = METAL_INSET + 2.0
 	t.offset_right = -METAL_INSET - 2.0
 	t.offset_top = -10.0
-	t.offset_bottom = ART_H + 10.0
+	t.offset_bottom = art_h + 10.0
 	add_child(t)
 
 
@@ -417,7 +514,7 @@ func _crest(b: Boon, from: Array[Boon]) -> Control:
 		var rest := Control.new()
 		rest.custom_minimum_size = Vector2(DRAWN, DRAWN)
 		rest.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		rest.draw.connect(func() -> void: _draw_rest(rest))
+		rest.draw.connect(func() -> void: _draw_medallion(rest, Color(0.55, 0.85, 0.6), 6))
 		return rest
 	var art := BoonArt.medallion(b.id)
 	if not from.is_empty():
@@ -429,15 +526,18 @@ func _crest(b: Boon, from: Array[Boon]) -> Control:
 	return BoonIcon.new().setup(b, DRAWN)
 
 
-## The rest card's medallion: the drawn medallion's rim around a heart.
-func _draw_rest(ci: Control) -> void:
+## A drawn medallion (the rest card's heart, the altar's trades): the rim around a glyph of BoonIcon (-1: a small
+## empty diamond).
+static func _draw_medallion(ci: Control, col: Color, glyph: int) -> void:
 	var c := ci.size * 0.5
 	var r := minf(ci.size.x, ci.size.y) * 0.46
-	var col := Color(0.55, 0.85, 0.6)
 	ci.draw_circle(c, r + 4.0, Color(0.85, 0.68, 0.36))
 	ci.draw_circle(c, r, col.darkened(0.72))
 	ci.draw_circle(c + Vector2(-r * 0.15, -r * 0.18), r * 0.8, col.darkened(0.5))
-	BoonIcon.glyph(ci, 6, c, r * 0.6, Color(1.0, 0.98, 0.9), col.darkened(0.5))
+	if glyph >= 0:
+		BoonIcon.glyph(ci, glyph, c, r * 0.6, Color(1.0, 0.98, 0.9), col.darkened(0.5))
+	else:
+		_diamond(ci, c, r * 0.28, Color(col.lightened(0.3), 0.8))
 	ci.draw_arc(c, r, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8), 2.0, true)
 
 

@@ -12,6 +12,11 @@ extends Node3D
 ## and, when not, turns it a muted rose with what is missing ("150 ouro, faltam 40"): the word, not only the colour.
 ##   var sign := DoorSign.shop(T.t(&"reward_heal"), 50, T.t(&"shop_group_care"))
 ##   sign.set_gold(rooms.gold)
+## E5 (docs/art/e5_spec.md 7.1): a door's sign may carry a pictogram left of its name (DoorGlyph: chevrons for a hard
+## fight, the guardian and Morvath, a drop, a coin, a flame, the cracked diamond) and, for a room that is not a common
+## fight, the kind in pale under it ("Difícil", "Guardião"). The Provação's slab says its price in life, or "Vida
+## insuficiente" in SHORT_COLOR when he has not enough (set_short).
+##   var sign := DoorSign.make(T.t(&"reward_boon"), T.t(&"door_hard"), DoorGlyph.Kind.HARD)
 
 ## Height of the capitals at a screen 1080 lines tall (the backlog asks for 16 at least).
 const CAP_PX := 19.0
@@ -39,6 +44,8 @@ const LAYER := 2
 
 var title: Label
 var detail: Label
+## The pictogram left of the name (null: none).
+var mark: DoorGlyph
 ## The shop group's word (null: not a shop sign).
 var group: Label
 ## The shop price (-1: not a shop sign) and the gold still missing for it (0: enough).
@@ -48,8 +55,8 @@ var _layer: CanvasLayer
 var _box: VBoxContainer
 
 
-## A sign with a name and, optionally, a detail line under it (empty: none).
-static func make(name_text: String, detail_text: String = "") -> DoorSign:
+## A sign with a name and, optionally, a detail line under it (empty: none) and a pictogram left of the name.
+static func make(name_text: String, detail_text: String = "", glyph: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> DoorSign:
 	var s := DoorSign.new()
 	s.name = "DoorSign"
 	s._layer = CanvasLayer.new()
@@ -62,7 +69,20 @@ static func make(name_text: String, detail_text: String = "") -> DoorSign:
 	s._layer.add_child(s._box)
 	s.title = _label(name_text, TITLE_COLOR, FONT_SIZE)
 	s.title.name = "title"
-	s._box.add_child(s.title)
+	if glyph == DoorGlyph.Kind.NONE:
+		s._box.add_child(s.title)
+	else:
+		var row := HBoxContainer.new()
+		row.name = "row"
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		row.add_theme_constant_override(&"separation", 5)
+		s.mark = DoorGlyph.new().setup(glyph)
+		s.mark.name = "mark"
+		row.add_child(s.mark)
+		row.add_child(s.title)
+		s._box.add_child(row)
 	if detail_text != "":
 		s.detail = _label(detail_text, DETAIL_COLOR, DETAIL_SIZE)
 		s.detail.name = "detail"
@@ -98,6 +118,15 @@ func set_gold(gold: int) -> void:
 	else:
 		detail.text = price_text(price)
 		detail.add_theme_color_override(&"font_color", DETAIL_COLOR)
+
+
+## The detail line as a warning (the slab without life enough: "Vida insuficiente" in SHORT_COLOR) or back to its own
+## text in the detail colour.
+func set_short(short: bool, short_text: String, normal_text: String) -> void:
+	if detail == null:
+		return
+	detail.text = short_text if short else normal_text
+	detail.add_theme_color_override(&"font_color", SHORT_COLOR if short else DETAIL_COLOR)
 
 
 ## Whether the gold given last (set_gold) is enough for this sign's price (true for a sign without price).

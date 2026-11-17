@@ -76,19 +76,19 @@ func drawn() -> Array[BoonState.Card]:
 	return _drawn
 
 
-## The title, the row the cards go in, the hint under it.
-func _page() -> HBoxContainer:
+## The title, the row the cards go in, the hint under it (the gift screen's words unless given: EventChoice).
+func _page(title_text: String = "", hint_text: String = "") -> HBoxContainer:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
 	var page := UiKit.column(self, 1100.0, 0.74)
 	page.add_theme_constant_override(&"separation", 20)
-	page.add_child(UiKit.shadow(UiKit.title(T.t(&"choice_title"), 40)))
+	page.add_child(UiKit.shadow(UiKit.title(title_text if title_text != "" else T.t(&"choice_title"), 40)))
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 30)
 	page.add_child(row)
-	var hint := UiKit.shadow(UiKit.label(T.t(&"choice_hint"), UiKit.DIM, 20))
+	var hint := UiKit.shadow(UiKit.label(hint_text if hint_text != "" else T.t(&"choice_hint"), UiKit.DIM, 20))
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)
 	return row
@@ -96,7 +96,11 @@ func _page() -> HBoxContainer:
 
 func _ready_cards() -> void:
 	Audio.play(&"level_up")
-	_cards[0].grab_focus.call_deferred()
+	# the first card that can be taken (an altar's trade out of reach cannot be focused)
+	for c in _cards:
+		if c.focus_mode != Control.FOCUS_NONE:
+			c.grab_focus.call_deferred()
+			return
 
 
 ## The cards, in order (the tests read them).

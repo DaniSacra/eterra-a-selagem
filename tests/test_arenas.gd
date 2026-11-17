@@ -402,11 +402,9 @@ func test_the_event_rooms_walk_to_every_door() -> void:
 			for i in a.exits.size():
 				assert_true(a.nav.reachable(a.start, a.exits[i]), "%s %d doors: door %d is reached" % [l.id, n, i])
 				assert_eq(a.exit_at(a.resolve(a.door_goal(i), Player.RADIUS)), i, "%s: door %d leaves by its zone" % [l.id, i])
-	for p in Rooms.TRIAL_SPOTS:
-		var a := _arena(stage.trial_layout, 3)
-		assert_true(a.nav.reachable(a.start, p), "the trial's card at %s is reached" % p)
-		assert_true(a.free_at(p, Player.RADIUS), "and stands on free floor")
-	for p in Rooms.ALTAR_SPOTS:
-		var a := _arena(stage.altar_layout, 3)
-		assert_true(a.nav.reachable(a.start, p), "the altar's trade at %s is reached" % p)
-		assert_true(a.free_at(p, Player.RADIUS))
+	var t := _arena(stage.trial_layout, 3)
+	assert_true(t.nav.reachable(t.start, Rooms.TRIAL_SPOT), "the spot before the trial's block is reached")
+	assert_true(t.free_at(Rooms.TRIAL_SPOT, Player.RADIUS), "and stands on free floor")
+	var a := _arena(stage.altar_layout, 3)
+	assert_true(a.nav.reachable(a.start, Rooms.ALTAR_SPOT), "the slab before the altar's step is reached")
+	assert_true(a.free_at(Rooms.ALTAR_SPOT, Player.RADIUS))

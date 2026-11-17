@@ -6,6 +6,8 @@ extends VBoxContainer
 ## Compêndio"). A greeting asked for while another shows waits its turn (queue).
 ## E4-04, a Psalm: "Salmo descoberto" (the first time it is ever seen) or "Salmo" over its medallion and name, then its
 ## short line when it is taken or "Anotado no Compêndio" when it was only seen.
+## E5, the Provação turned (show_trial): "Provação vencida" over the gold seal (TrialSeal) and the blessing's name, then
+## what it gives for the rest of the run.
 
 const TIME := 2.6
 const FADE_IN := 0.15
@@ -24,7 +26,7 @@ var _t := 0.0
 var _link: EloLink
 var _icon: Control
 var _queue: Array[Callable] = []
-## What shows now: &"elo", &"boon", &"psalm" or &"" (the tests read it).
+## What shows now: &"elo", &"boon", &"psalm", &"trial" or &"" (the tests read it).
 var showing := &""
 
 
@@ -63,6 +65,14 @@ func show_psalm(p: PsalmDef, discovered: bool, taken: bool) -> void:
 		_queue.push_front(_open_psalm.bind(p, discovered, taken))
 		return
 	_open_psalm(p, discovered, taken)
+
+
+## E5: the Provação's curse turned into its blessing (Rooms.trial_turned). Never dropped by QUEUE_MAX either.
+func show_trial(card: Trials.Card) -> void:
+	if visible:
+		_queue.push_front(_open_trial.bind(card))
+		return
+	_open_trial(card)
 
 
 ## How many greetings wait behind the one showing.
@@ -132,6 +142,26 @@ func _open_psalm(p: PsalmDef, discovered: bool, taken: bool) -> void:
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	add_child(note)
 	_start(&"psalm")
+
+
+func _open_trial(card: Trials.Card) -> void:
+	_clear()
+	var title := UiKit.shadow(UiKit.title(T.t(&"notice_trial_won"), TITLE_SIZE, UiKit.GOLD))
+	title.name = &"Title"
+	add_child(title)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 8)
+	_icon = TrialSeal.new().setup(MEDALLION * 0.8, false, 1.0)
+	row.add_child(_icon)
+	row.add_child(_named(T.t(card.blessing.name_key), UiKit.PALE))
+	add_child(row)
+	var note := UiKit.shadow(UiKit.label(TrialSeal.blessing_text(card), UiKit.PALE, NOTE_SIZE))
+	note.name = &"Note"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(note)
+	_start(&"trial")
 
 
 func _name(b: Boon) -> Label:
