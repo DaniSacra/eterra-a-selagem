@@ -473,6 +473,9 @@ func _open_doors() -> void:
 	for i in next_rooms.size():
 		var r := next_rooms[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
+		if game.arena.look != null:
+			# the air of the room behind it breathes out of the doorway (ArenaRoom.breath)
+			game.arena.look.breath(i, door_look(i))
 		_door_labels.append(_marker(game.arena.door_label(i), r.reward, door_text(r), r.kind, DoorGlyph.of(door_info(i))))
 	if not next_rooms.is_empty():
 		Audio.play(&"door")
@@ -542,6 +545,13 @@ func door_info(i: int) -> Dictionary:
 			arena = stage.layouts[r.layout].id if r.layout >= 0 and r.layout < stage.layouts.size() else &""
 	info.merge({"arena": arena, "kind_key": RunMap.KIND_KEY[r.kind], "reward_key": RunMap.REWARD_KEY[r.reward]})
 	return info
+
+
+## The look of the room behind door i (ArenaRoom.BREATH's keys: the arena's id, &"chamber" for Morvath's).
+func door_look(i: int) -> StringName:
+	if i >= 0 and i < next_rooms.size() and next_rooms[i].kind == RunMap.Kind.BOSS:
+		return &"chamber"
+	return door_info(i).get("arena", &"")
 
 
 ## A door in a word for the run's log: kind, reward and "hard" (combat/boon/hard, altar, miniboss/boon).
@@ -697,32 +707,20 @@ func _step_slab(dt: float) -> void:
 	t.tween_callback(func() -> void: _enter(map.trial(map.depth)))
 
 
-## The slab on the floor (provisional, until the environment artist's cracked slab): a flat square, a lilac light and
-## its sign ("Provação", "Custa n de vida").
+## The slab on the floor: the cracked slab of the Provação's look (TrialLook.entry_slab, spec 5.1), the ivory thread
+## of light that holds it as it rises, and its sign ("Provação", "Custa n de vida").
+const SLAB_THREAD := Color(0.95, 0.92, 0.85)
+const SLAB_THREAD_RADIUS := 0.125
+const SLAB_THREAD_HEIGHT := 14.0
+
+
 func _slab_marker(at: Vector2, cost: int) -> Node3D:
 	var root := Node3D.new()
-	root.position = Vector3(at.x, 0, at.y)
 	add_child(root)
-	var stone := MeshInstance3D.new()
-	var box := BoxMesh.new()
-	box.size = Vector3(SLAB_HALF * 2.0, 0.04, SLAB_HALF * 2.0)
-	stone.mesh = box
-	var m := StandardMaterial3D.new()
-	m.albedo_color = Color(0.2, 0.18, 0.24)
-	m.emission_enabled = true
-	m.emission = TRIAL_COLOR * 0.3
-	stone.material_override = m
-	stone.position.y = 0.02
-	root.add_child(stone)
-	var light := OmniLight3D.new()
-	light.position.y = 1.2
-	light.light_color = TRIAL_COLOR
-	light.light_energy = 1.5
-	light.omni_range = 4.0
-	light.light_cull_mask = ~Arena.CROWD_LAYER
-	root.add_child(light)
+	TrialLook.entry_slab(root, at)
+	game.column(at, SLAB_THREAD, SLAB_THREAD_RADIUS, SLAB_THREAD_HEIGHT, SLAB_ARM)
 	var sign := DoorSign.make(T.t(&"room_trial"), T.t(&"trial_cost", {"n": cost}), DoorGlyph.Kind.TRIAL)
-	sign.position.y = MARK_SIGN_Y
+	sign.position = Vector3(at.x, MARK_SIGN_Y, at.y)
 	root.add_child(sign)
 	_slab_sign = sign
 	return root
@@ -756,7 +754,7 @@ func take_trial(i: int) -> void:
 	game.fx.ring(p.pos, 3.0, TRIAL_COLOR, 0.5)
 	game.room_tally.event("trial_taken", game.time, {"blessing": String(c.blessing.id), "rarity": c.rarity,
 		"curse": String(c.curse.id), "encounters": c.encounters, "card": i})
-	_to_look(&"trial_chosen")
+	_to_look(&"settle")
 	trial_taken.emit(c)
 	_open_doors()
 
@@ -796,7 +794,7 @@ func take_altar(option: int) -> bool:
 			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(stage.altar_magick), T.t(&"hud_magick")], Color(0.5, 0.75, 1.0))
 	game.room_tally.event("altar", game.time, {"choice": String(Altar.IDS[option]), "max_hp": p.max_hp, "gold": gold})
 	_clear_spots()
-	_to_look(&"altar_lit")
+	_to_look(&"kindle")
 	Audio.play(&"heal")
 	altar_used.emit(Altar.IDS[option])
 	return true
@@ -863,7 +861,8 @@ func _clear_spots() -> void:
 	_spots.clear()
 
 
-## Tells the arena's look (the environment artist's) a moment of an event, if it listens (trial_chosen, altar_lit).
+## Tells the arena's look (the environment artist's) a moment of an event, if it listens: settle (TrialLook, the
+## veins dim after the choice), kindle (AltarLook, the candles light after the trade).
 func _to_look(what: StringName) -> void:
 	var look := game.arena.look
 	if look != null and look.has_method(what):

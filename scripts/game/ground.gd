@@ -171,8 +171,9 @@ func add_line_warning(from: Vector2, dir: Vector2, length: float, width: float, 
 
 ## A band of the floor that strikes on its own (E5, the runes; ArenaHazard): the rectangle `r` warms up for `time`
 ## seconds in amber (GroundLook.Style.HAZARD, drawn under the enemies' warnings) and strikes everyone in it as it ends:
-## hero_damage to the paladin (as any warning), enemy_damage to each enemy (hazard_landed).
-func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float) -> Zone:
+## hero_damage to the paladin (as any warning), enemy_damage to each enemy (hazard_landed). drawn false: it strikes the
+## same but shows nothing (the Runes' own floor, RunesLook, draws the tiles warming up: nothing drawn twice).
+func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float, drawn := true) -> Zone:
 	var from := Vector2(r.position.x, r.get_center().y)
 	var z := _add(Kind.WARNING, Shape.LINE, from, Vector2.RIGHT, r.size.x, r.size.y, time, hero_damage)
 	z.hazard = enemy_damage
@@ -180,6 +181,7 @@ func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float) 
 	z.by = &""
 	z.offscreen = 0
 	GroundLook.hazard(z.node, from, Vector2.RIGHT, r.size.x, r.size.y, z.node.position.y)
+	z.node.visible = drawn
 	return z
 
 
