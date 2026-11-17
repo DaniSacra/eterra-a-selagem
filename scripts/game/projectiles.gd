@@ -96,6 +96,11 @@ class Shot:
 	var warned := 0.0
 	## Its shooter was off the screen as it fired (1), on it (0), unknown (-1) (Horde.screen_flag).
 	var offscreen := -1
+	## The paladin's wave already counted as its blow landing (Combat.landed: once a shot; a Gift's wave from a blow
+	## that counted itself).
+	var counted := false
+	## The paladin's wave goes through stone (Onda Atravessante, the stat wave_through).
+	var through := false
 
 ## How far a shot is from the stone when it dies on it (meters; its ball is about this round).
 const SHOT_EDGE := 0.15
@@ -224,7 +229,7 @@ func step(dt: float) -> void:
 		var to := s.pos + s.vel * dt
 		var arena := horde.arena if horde else null
 		# the room's cover stops every shot but a boss's crescents (cycle C12, BUG-015): it dies on the stone with a spark
-		var stop := arena.shot_hit(s.pos, to, SHOT_EDGE, s.low) if arena != null and s.kind != Kind.SOUL else -1.0
+		var stop := arena.shot_hit(s.pos, to, SHOT_EDGE, s.low) if arena != null and s.kind != Kind.SOUL and not s.through else -1.0
 		if stop >= 0.0:
 			to = s.pos.lerp(to, stop)
 		s.pos = to

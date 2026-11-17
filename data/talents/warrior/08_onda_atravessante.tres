@@ -3,6 +3,13 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_bt5vd"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_yl5c7"]
 
+[sub_resource type="Resource" id="Resource_umise"]
+script = ExtResource("1_bt5vd")
+stat = &"wave_through"
+tag = &"wave"
+values = PackedFloat32Array(1)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_yl5c7")
 id = &"onda_atravessante"
@@ -13,3 +20,4 @@ tier = 2
 cost = 4
 unlock_level = 20
 partner = 3
+mods = Array[ExtResource("1_bt5vd")]([SubResource("Resource_umise")])

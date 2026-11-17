@@ -85,7 +85,7 @@ const U := 80.0
 
 ## The paladin's moves, built on the timings, damage and reach of the first weapon of Hades II (study only:
 ## our own sword, animations, names and look). Frames are at 60 a second.
-func _combos() -> void:
+func _tree(fourth: bool) -> ComboTree:
 	# attack: three swings, the third a turn of the blade all around. E1c (Daniel's E1 test: "tem que atacar parado",
 	# "o primeiro ataque é muito rápido", "diferença de tempo entre os 3"; his Hades II video of 2026-11-16): every
 	# blow is struck standing still (no lunge), windup (+ the finisher's glint), the frame it lands, then the clip's
@@ -96,10 +96,13 @@ func _combos() -> void:
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 60.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
 		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin"}, [], &"move_spin")
+	var after_cut2: Array[ComboNode] = [cut3]
+	if fourth:
+		after_cut2 = [_fourth(cut3)]
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 25.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
 		"move_hold": 19.0 / 60.0,
-		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0}, [cut3])
+		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0,
@@ -133,7 +136,31 @@ func _combos() -> void:
 	tree.neutral = [cut1, bolt, burst, lance]
 	tree.dodge = [dash_cut]
 	tree.dodge_window = 23.0 / 60.0
-	_save(tree, "res://data/combos/paladin.tres")
+	return tree
+
+
+## The tree Quarto Corte equips (TalentDef.combos): the same moves with the thrust between cut2 and the spin.
+const FOURTH_TREE := "res://data/combos/paladin_fourth.tres"
+
+
+func _combos() -> void:
+	_save(_tree(false), "res://data/combos/paladin.tres")
+	_save(_tree(true), FOURTH_TREE)
+
+
+## Quarto Corte (warrior_spec.md 4.2): a thrust of 30 between cut2 and the spin, a trade and not a gain. The three
+## cuts deal 105 in 1.22 s from press to press (windups, the spin's glint, attack locks): 86 a second; the thrust adds
+## 30 and 0.34 s (0.14 of windup, 12 frames of lock): 135 in 1.56 s, 86.5 a second (tests/test_warrior_talents.gd
+## keeps it within 10%). A pale thrust of the blade (emeth_thrust), the push of cut2 so the spin still reaches; its
+## tags are the attack's (light), so every Blessing of the attack counts on it.
+const FOURTH := {"damage": 30.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_hold": 18.0 / 60.0}
+
+
+func _fourth(spin: ComboNode) -> ComboNode:
+	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
+		{"damage": FOURTH.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
+		"windup": FOURTH.windup, "recovery": FOURTH.recovery, "move_hold": FOURTH.move_hold, "chain_window": 0.4,
+		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust"}, [spin])
 
 
 # ---------- enemies ----------
@@ -911,8 +938,8 @@ func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.T
 ## The Warrior's tree of Gifts (warrior_spec.md 4): four branches (Combo, Furia, Emeth, Magia), each an entry, a middle
 ## and an apex; four bridges; three sustain Gifts. Costs of the six first Gifts from 4.2, the rest proposals; unlock
 ## levels in the order of 4.4 (transforming Gifts first; levels 2 and 6 are the ultimates; 20 unlocks two apexes).
-## Only Fio Longo, Reserva and Firmeza are plain numbers (mods, already applied); the effects of the others come in
-## another task.
+## Every number is a stat of its mods (BoonState.stat, read by GiftState and Combat; a tag limits it to the moves that
+## carry it); Quarto Corte is a combo tree (TalentDef.combos). Choices of E2-07/E2-09: warrior_spec.md 4.5.
 func _talents() -> void:
 	DirAccess.make_dir_recursive_absolute(TALENT_DIR)
 	for f in DirAccess.get_files_at(TALENT_DIR):
@@ -920,31 +947,43 @@ func _talents() -> void:
 	var B := TalentDef.Branch
 	var T := TalentDef.Tier
 	var S := Boon.Slot
-	# Combo
-	_talent(0, &"quarto_corte", B.COMBO, T.ENTRY, 3, 1, {"slot": S.ATTACK})
-	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 7, {"slot": S.DASH})
-	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 15, {"partner": B.FURIA})
-	# Furia (charges that fade in 3 s, no new bar: D-70)
-	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 3)
-	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 8)
-	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO})
-	# Emeth
-	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 4)
+	# Combo: a 4th blow (a thrust of 30 before the spin, FOURTH); the Corte Veloz counts as the 1st blow (the next press
+	# is cut2); the spin that lands on 3 or more starts the combo over at cut2
+	_talent(0, &"quarto_corte", B.COMBO, T.ENTRY, 3, 1, {"slot": S.ATTACK, "combos": FOURTH_TREE})
+	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 7, {"slot": S.DASH, "mods": [_fixed(&"dash_chain", [1], &"dash")] as Array[BoonMod]})
+	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 15, {"partner": B.FURIA, "mods": [_fixed(&"spin_loop_hits", [3], &"spin")] as Array[BoonMod]})
+	# Furia (charges that fade in 3 s, no new bar: D-70): a charge a kill, up to 3, all gone 3 s after the last kill, 6%
+	# more speed of every blow a charge; a kill by a finisher gives the dodge's charge back; with 3 charges a finisher
+	# stuns 0.5 s longer, those with armor too
+	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 3, {"mods": [_fixed(&"fury_per_kill", [1]), _fixed(&"fury_max", [3]),
+		_fixed(&"fury_time", [3.0]), _fixed(&"fury_speed", [0.06])] as Array[BoonMod]})
+	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 8, {"mods": [_fixed(&"dash_back_on_kill", [1], &"finisher")] as Array[BoonMod]})
+	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO, "mods": [_fixed(&"fury_stun", [0.5], &"finisher")] as Array[BoonMod]})
+	# Emeth: the spin throws an emerald wave 6 m ahead for 16 (3 m across); the special's wave goes through stone
+	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 4, {"mods": _wave(&"spin", 16.0, 6.0, 3.0)})
 	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 9, {"mods": [_fixed(&"reach_pct", [0.15], &"light")] as Array[BoonMod]})
-	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA})
-	# Magia
-	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 5)
+	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA, "mods": [_fixed(&"wave_through", [1], &"wave")] as Array[BoonMod]})
+	# Magia: an Omega begun within 1 s of a finisher that landed costs half (the glint stays on the tip that long); the
+	# ultimate charges 25% faster (ult_charge_pct, read by the ultimate) and the passive gives 1 more
+	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 5, {"mods": [_fixed(&"hungry_time", [1.0], &"finisher"), _fixed(&"omega_discount", [0.5])] as Array[BoonMod]})
 	_talent(10, &"reserva", B.MAGIA, T.MIDDLE, 3, 10, {"mods": [_fixed(&"magick_max", [20])] as Array[BoonMod]})
-	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH})
-	# bridges between neighbouring branches
-	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch]})
-	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch]})
-	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL})
-	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH})
-	# sustain, off the branches
+	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH, "mods": [_fixed(&"ult_charge_pct", [0.25]), _fixed(&"finisher_magick", [1])] as Array[BoonMod]})
+	# bridges between neighbouring branches: the Corte Veloz that kills gives the dodge back; a kill by an Omega gives 2
+	# charges; the special's Omega throws the spin's wave; the Corte Veloz throws a short wave (the special's look, 12,
+	# 9.6 m: just past the cut's 8 m)
+	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"dash_back_on_kill", [1], &"dash")] as Array[BoonMod]})
+	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", [1], &"omega")] as Array[BoonMod]})
+	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"charge", 16.0, 6.0, 3.0)})
+	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
+	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life
 	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 16, {"mods": [_fixed(&"max_hp", [10]), _fixed(&"magick_max", [10])] as Array[BoonMod]})
-	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17)
-	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19)
+	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17, {"mods": [_fixed(&"room_heal", [2])] as Array[BoonMod]})
+	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19, {"mods": [_fixed(&"rise_share", [0.5])] as Array[BoonMod]})
+
+
+## A wave a blow throws (Combat._gift_wave) on the moves with this tag: damage, meters it runs, meters across.
+func _wave(tag: StringName, damage: float, reach: float, width: float) -> Array[BoonMod]:
+	return [_fixed(&"blow_wave", [damage], tag), _fixed(&"blow_wave_m", [reach], tag), _fixed(&"blow_wave_w", [width], tag)]
 
 
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
@@ -965,6 +1004,9 @@ func _hero() -> void:
 	}
 	for k: String in numbers:
 		h.set(k, numbers[k])
+	# the passive's finishers (warrior_spec.md 3.1): the spin, the Corte Veloz that lands, the Omegas; never the ultimate
+	h.passive_tags = [&"finisher", &"dash", &"omega"] as Array[StringName]
+	h.passive_never = [&"ultimate"] as Array[StringName]
 	var ults: Array[UltDef] = []
 	var files := DirAccess.get_files_at(ULT_DIR)
 	files.sort()

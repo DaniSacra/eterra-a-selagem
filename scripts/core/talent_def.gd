@@ -35,8 +35,14 @@ const NEIGHBOURS := {
 @export var partner: Branch = Branch.COMBO
 ## A bridge: the two branches whose entries it needs.
 @export var joins: Array[Branch] = []
-## Gifts of pure numbers the fight already reads: summed with the Blessings in BoonState.stat (level 1, no rarity).
+## The Gift's numbers, summed with the Blessings in BoonState.stat (level 1, no rarity). Plain stats the fight already
+## read (reach_pct, magick_max, max_hp) and the stats of the Gifts' rules (GiftState: fury_*, dash_back_on_kill,
+## blow_wave*, hungry_time, omega_discount, spin_loop_hits, dash_chain, fury_stun, wave_through, finisher_magick,
+## ult_charge_pct, room_heal, rise_share); a tag limits a number to the moves carrying it.
 @export var mods: Array[BoonMod] = []
+## A Gift that changes the attack's chain: the combo tree the hero plays instead of HeroDef.combos (Quarto Corte).
+## Same tags on every move, so the Blessings keep counting.
+@export_file("*.tres") var combos := ""
 
 
 static func neighbours(a: Branch, b: Branch) -> bool:

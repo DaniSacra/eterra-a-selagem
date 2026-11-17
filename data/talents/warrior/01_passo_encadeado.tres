@@ -3,6 +3,13 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_rmr5e"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_kyg8g"]
 
+[sub_resource type="Resource" id="Resource_0u3eq"]
+script = ExtResource("1_rmr5e")
+stat = &"dash_chain"
+tag = &"dash"
+values = PackedFloat32Array(1)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_kyg8g")
 id = &"passo_encadeado"
@@ -12,3 +19,4 @@ tier = 1
 cost = 2
 unlock_level = 7
 slot = 4
+mods = Array[ExtResource("1_rmr5e")]([SubResource("Resource_0u3eq")])

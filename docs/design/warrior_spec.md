@@ -177,6 +177,31 @@ Nível 1: centro (passiva) e **Quarto Corte**. 2: U-1. 3: **Ímpeto**. 4: **Cort
 U-2. 7: **Passo Encadeado**. 8: **Avanço Feroz**. 9 em diante: os meios e as pontes, depois os ápices (15, 18, 20) e o
 sustento entre eles. Nas primeiras cinco partidas o jogador vê quatro Dons que mudam o combate e as duas ultimates.
 
+### 4.5 Como foi feito (E2-07, E2-09; escolhas sem o Daniel, autorizadas, a validar no teste)
+Todo número é uma estatística dos `mods` do Dom (`BoonState.stat`, com a tag do golpe), lida pelas regras puras
+`GiftState` (`core/gift_state.gd`) e feita por `HeroGifts` (`game/hero_gifts.gd`), `Combat` e `Player`. Um Dom novo com
+números que já existem não pede código. Testes: `tests/test_warrior_talents.gd` (um ou mais por Dom e a passiva).
+
+| Dom | Estatística (tag) | Escolha tomada |
+|---|---|---|
+| Passiva | `HeroDef.magick_on_finisher` 2, `passive_tags` (finisher, dash, omega), `passive_never` (ultimate) | conta uma vez por golpe que acerta alguém de verdade (escudo do ritual não conta); o Ômega do especial conta no primeiro inimigo que a onda acerta; `--no-passive` desliga para comparar partidas |
+| Quarto Corte | `TalentDef.combos` = `data/combos/paladin_fourth.tres` | estocada de 30 (linha de 5,4 m por 1,6, preparo 0,14, trava 12 quadros, pernas 18): 86,5 de dano por segundo contra 86,1 sem ela; sem título próprio (elo da corrente) |
+| Passo Encadeado | `dash_chain` 1 (dash) | o Corte Veloz conta como golpe 1 acertando ou não; o aperto feito na recuperação dele vale |
+| Golpe sem Fim | `spin_loop_hits` 3 (spin) | volta ao 2º golpe (com Quarto Corte, a estocada vem de novo) |
+| Ímpeto | `fury_per_kill` 1, `fury_max` 3, `fury_time` 3, `fury_speed` 0,06 | todo abate conta (queimadura também); as cargas somem juntas 3 s depois do último abate; a velocidade vale para preparo, brilho, trava e pernas de todo golpe e para o clipe; brasas: três pontos esmeralda na lâmina, maior canal 1,0, misturados (nunca somados) |
+| Avanço Feroz | `dash_back_on_kill` 1 (finisher) | uma carga por golpe, por mais que derrube; anel fino de 1,1 m nos pés |
+| Fúria Plena | `fury_stun` 0,5 (finisher) | todo finalizador já atordoa os comuns 1,1 s (E1c, o Hades); com 3 cargas o atordoamento dura 0,5 s mais e passa a armadura das elites; guardiões e Morvath nunca. Texto revisto |
+| Corte Crescente | `blow_wave` 16, `blow_wave_m` 6, `blow_wave_w` 3 (spin) | a onda larga do Ômega do especial em esmeralda (abaixo do glow), sai acertando ou não, leva as tags do giro (Bênçãos de finalizador valem) sem `omega` e não conta de novo para a passiva |
+| Onda Atravessante | `wave_through` 1 (wave) | a onda do especial **já atravessava todos os inimigos** no código (não para no primeiro); "atravessa até 3" não mudaria nada. Escolha: atravessa a pedra (colunas e coberturas, onde o mago se esconde). Texto revisto |
+| Lâmina Faminta | `hungry_time` 1 (finisher), `omega_discount` 0,5 | "começado" = o aperto que inicia a carga (ou o círculo); vale para os três Ômegas; o brilho do finalizador fica 1 s na ponta |
+| Coração da Emeth | `ult_charge_pct` 0,25, `finisher_magick` 1 | a ultimate lê `ult_charge_pct` (outra frente) |
+| Investida | `dash_back_on_kill` 1 (dash) | |
+| Sangue Quente | `fury_per_kill` 1 (omega) | soma à de Ímpeto: 2 por abate de Ômega |
+| Onda Carregada | onda do giro (charge) | só o Ômega do especial tem a tag `charge` |
+| Fio do Passo | `blow_wave` 12, 9,6 m, 1,6 m (dash) | "curta" = a onda pequena da seta, até pouco além dos 8 m do corte |
+| Respiro | `room_heal` 2 | toda sala de luta vencida (guardião também) |
+| Ainda de Pé | `rise_share` 0,5 | uma vez por descida, depois o atordoamento do golpe e a proteção de sempre; palavra "De pé!" |
+
 ---
 
 ## 5. Bênçãos (as três cartas; D-50 só texto)

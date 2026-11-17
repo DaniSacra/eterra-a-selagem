@@ -10,3 +10,4 @@ name_key = &"talent_quarto_corte"
 desc_key = &"talent_quarto_corte_desc"
 cost = 3
 slot = 1
+combos = "res://data/combos/paladin_fourth.tres"

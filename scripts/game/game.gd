@@ -43,6 +43,8 @@ var player: Player
 var horde: Horde
 var projectiles: Projectiles
 var combat: Combat
+## The passive and the Gifts at play (E2-07, E2-09).
+var hero_gifts: HeroGifts
 var skills: Skills
 var boons: BoonState
 ## The hero played (DT-013) and, for this descent, the Gifts equipped (ids) and the ultimate chosen (id or "").
@@ -187,6 +189,7 @@ func _ready() -> void:
 		Controls.virtual = bot.pad
 	# the Gifts before the first room: it records the life he walks in with
 	_equip_talents()
+	hero_gifts = HeroGifts.new(self)
 	if not Dev.has("horde"):
 		rooms = Rooms.new()
 		add_child(rooms)
@@ -438,6 +441,7 @@ func _step(dt: float) -> void:
 	ground.step(dt)
 	_lap(&"ground")
 	combat.step(dt)
+	hero_gifts.step(dt)
 	_lap(&"combat")
 	if mode == Mode.PLAY:
 		skills.step(dt)
@@ -1166,8 +1170,8 @@ func _cam_offset() -> Vector3:
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits. With --shot-on=swing|hit|
-## special|omega|boss:<moment> it then waits for the next such swing of the paladin (hit: one that reaches someone;
-## special: the special's wave) and saves --shot-after seconds of real time later, so the swing's effects are on
+## special|omega|spin|boss:<moment> it then waits for the next such swing of the paladin (hit: one that reaches someone;
+## special: the special's wave; spin: the combo's spin) and saves --shot-after seconds of real time later, so the swing's effects are on
 ## screen. Also ritual-left:<n> (n of the ritual's dead standing), hurt, hurt-cursed (a blow taken) and end (the end
 ## screen).
 func _shot() -> void:
@@ -1209,7 +1213,7 @@ func _shot() -> void:
 			var got: Array = await combat.swung
 			var node: ComboNode = got[0]
 			if want == "swing" or (want == "hit" and got[1] > 0) or (want == "special" and node.has_tag(&"wave") and not node.has_tag(&"omega")) \
-					or (want == "omega" and node.has_tag(&"omega")):
+					or (want == "omega" and node.has_tag(&"omega")) or (want == "spin" and node.has_tag(&"spin")):
 				break
 		# real time: hit stop and slow motion must not stretch the wait
 		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
@@ -1338,9 +1342,19 @@ func _equip_talents() -> void:
 		var ult := hero.ultimate(StringName(block.ultimate))
 		ultimate = String(ult.id) if ult != null and ult.mastery_level <= level else ""
 	talents = ids
-	if ids.is_empty():
-		return
-	boons.equip_talents(book.defs(ids))
+	if not ids.is_empty():
+		_apply_talents(ids)
+
+
+## Equips these Gifts now, as if the descent began with them (tests): their numbers and their rules (HeroGifts).
+func equip_talents(ids: Array[StringName]) -> void:
+	talents = ids
+	_apply_talents(ids)
+	hero_gifts.equip()
+
+
+func _apply_talents(ids: Array[StringName]) -> void:
+	boons.equip_talents(hero.talents().defs(ids))
 	player.max_hp = hero.max_hp + boons.stat(&"max_hp") + life_bonus
 	player.hp = player.max_hp
 	player.magick.max_value = hero.magick_max + boons.stat(&"magick_max")

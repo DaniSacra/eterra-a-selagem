@@ -3,6 +3,18 @@
 [ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_yew0c"]
 [ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_25p0l"]
 
+[sub_resource type="Resource" id="Resource_n253y"]
+script = ExtResource("1_yew0c")
+stat = &"ult_charge_pct"
+values = PackedFloat32Array(0.25)
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_8bh5o"]
+script = ExtResource("1_yew0c")
+stat = &"finisher_magick"
+values = PackedFloat32Array(1)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_25p0l")
 id = &"coracao_da_emeth"
@@ -13,3 +25,4 @@ tier = 2
 cost = 4
 unlock_level = 20
 partner = 2
+mods = Array[ExtResource("1_yew0c")]([SubResource("Resource_n253y"), SubResource("Resource_8bh5o")])

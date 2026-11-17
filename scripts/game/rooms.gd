@@ -285,6 +285,7 @@ static func spawn_point(arena: Arena, hero: Vector2, rng: RandomNumberGenerator,
 func _room_cleared() -> void:
 	phase = Phase.REWARD
 	won.append(room.kind)
+	game.hero_gifts.room_won()  # Respiro
 	# the last blow of a fight: the world slows to a third, the camera closes in, the screen streaks (Hades II)
 	game.fx.slow_mo(LAST_KILL_SLOW, LAST_KILL_HOLD, LAST_KILL_OUT, 1.1, 0.85)
 	game.projectiles.clear_hostile()
