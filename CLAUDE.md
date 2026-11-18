@@ -650,7 +650,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   **Interface (spec 5.3)**: pisar diante do bloco (`Rooms.TRIAL_SPOT`) abre as cartas numa tela (`EventChoice.open_trial`,
   `scripts/ui/event_choice.gd`, filha da `BoonChoice`; `Game.open_screen`/`close_screen`; escolher chama `take_trial`):
   `BoonCard.setup_trial` com a Bênção em cima (nome, "Bênção" e a raridade, que também é a borda) e a maldição numa
-  faixa de tinta lilás-escura com por quantas lutas; o ícone é o losango rachado (`TrialSeal`). Robô e `--autopick` pegam
+  faixa de tinta lilás-escura com por quantas lutas; o medalhão é o da Bênção (`BoonIcon.setup_glyph`, `TrialSeal.blessing_look`) com o losango rachado pequeno como selo. Robô e `--autopick` pegam
   a primeira sem tela. No HUD, acima do medalhão, o selo `TrialSeal` (losango lilás acinzentado de 33 px a 1080, encontros
   que faltam dentro, nome da maldição ao lado, escondido enquanto o selo da maldição de Morvath está de pé; nada no herói,
   E5-D7); na virada a rachadura enche de ouro velho em 0,4 s e o `EloBanner.show_trial` diz "Provação vencida" com o nome e
@@ -661,7 +661,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   "A vida já foi paga. Escolha uma carta para abrir as portas."; a carta da Provação (`TRIAL_SIZE` 320 x 404) diz
   "Bênção · Rara", "VOCÊ RECEBE DEPOIS DE N LUTAS", o número e "e fica até o fim da descida" e, na faixa,
   "VOCÊ CARREGA NAS PRÓXIMAS N LUTAS" (a Bênção só vem na virada, `Rooms._fight_won`; testado). A laje ganha uma nota
-  (`DoorSign.add_note`): "Uma Bênção forte, com uma maldição" e "Para recusar, não pise". Altar: "Uma troca só, ou
+  (`DoorSign.add_note`, uma linha por rótulo, entrelinha `LINE_PITCH` 1,15, véu escuro atrás): "Uma Bênção forte, com uma maldição" e "Para recusar, não pise". Altar: "Uma troca só, ou
   nenhuma. O que mudar vale até o fim desta descida."; cada carta com VOCÊ ENTREGA e VOCÊ RECEBE, os números e o antes e
   depois (vida máxima, ouro, Magia máxima: `Altar.options` devolve `give_from`/`give_to`/`get_from`/`get_to`, `why` e
   `short`, só informação), o porquê exato ("Faltam N de ouro", "Nenhuma Bênção sua pode subir de nível", "Vida máxima
@@ -671,7 +671,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   uma troca ou nenhuma: 10 de vida máxima por uma romã (`Game.open_grow_choice`) ou 75 de ouro por 25 de Magia máxima.
   `Rooms.altar_options`, `take_altar(option)`, sinal `altar_used`. Robô: `Altar.bot_choice`. Pisar na laje gasta diante
   do degrau (`Rooms.ALTAR_SPOT`) abre uma tela pequena (`EventChoice.open_altar`, `BoonCard.setup_altar`, 290 x 392 a
-  720): as duas trocas com medalhão desenhado (coração, chama) e o que pedem, a que não cabe agora apagada com o porquê,
+  720): as duas trocas com medalhão de selo (`SealMedal`: romã, chama de vela; arco aberto em "Seguir em frente") e o que pedem, a que não cabe agora apagada com o porquê,
   e "Seguir em frente" (nada); sair da laje e voltar abre de novo.
 - **Portas que mostram o caminho**: a luta atrás de cada porta é sorteada ao abrir a sala de antes (`Rooms._prepare`,
   `RunMap.Room.fight`) e entra igual; a placa diz "Difícil" para luta com elite e "Guardião" (`Rooms.door_text`);

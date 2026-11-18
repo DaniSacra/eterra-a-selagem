@@ -304,7 +304,7 @@ entries = {
 "altar_why_life": "Vida máxima baixa demais",
 "altar_why_gold": "Faltam {n} de ouro",
 "altar_lead": "Uma troca só, ou nenhuma. O que mudar vale até o fim desta descida.",
-"altar_hint": "Seguir em frente não custa nada",
+"altar_hint": "Escolha uma carta ou siga por uma das portas",
 "altar_step": "Pise aqui para ver as trocas",
 "door_altar": "Uma troca, sem luta",
 "notice_room_clear": "Sala vencida",
