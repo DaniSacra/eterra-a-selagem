@@ -122,11 +122,35 @@ func why(t: TalentDef) -> Dictionary:
 			var holder := _slot_holder(t.slot)
 			return {"key": &"hero_why_slot", "args": {"name": _name(holder)}}
 		Talents.Problem.NEEDS:
-			return _needs(t)
+			return needs(t)
 	return {}
 
 
-func _needs(t: TalentDef) -> Dictionary:
+## What a Gift needs equipped before it, as {key, args} for T.t, whatever is on now (stage 2 of the art pack: the
+## panel's "Pré-requisito"): nothing for an entry or a sustain Gift (hero_needs_none).
+func needs_text(t: TalentDef) -> Dictionary:
+	var n := needs(t)
+	return n if not n.is_empty() else {"key": &"hero_needs_none", "args": {}}
+
+
+## The next thing to do for a Gift that is not on, as {key, args} for T.t ({} when it is on or can go on now): reach
+## its Mastery level (with the XP that is missing), or what a rule asks (why).
+func next_step(t: TalentDef) -> Dictionary:
+	match state(t):
+		State.LOCKED:
+			return {"key": &"hero_step_mastery", "args": {"n": t.unlock_level, "xp": xp_missing(t.unlock_level)}}
+		State.BLOCKED:
+			return why(t)
+	return {}
+
+
+## The XP still missing to reach a Mastery level (0 when reached).
+func xp_missing(n: int) -> int:
+	return maxi(hero.mastery.total_to(n) - xp(), 0)
+
+
+## What a Gift needs by its place in the tree ({} for an entry or a sustain Gift).
+func needs(t: TalentDef) -> Dictionary:
 	match t.tier:
 		TalentDef.Tier.MIDDLE:
 			return {"key": &"hero_why_needs", "args": {"what": _name(of(t.branch, TalentDef.Tier.ENTRY))}}

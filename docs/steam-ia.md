@@ -25,6 +25,13 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   outras pranchas do pacote (cartas, eventos e as demais) não vão no jogo: guiaram a composição das telas, feitas com
   componentes da Godot e com os textos e números do jogo. Os glifos pequenos do HUD com o mesmo motivo são desenhados em
   código (`BoonIcon.glyph`, `DoorGlyph`).
+- **Retrato do Guerreiro no Livro de Ahk (vai no jogo, 2026-11-18, etapa 2)**: `assets/ui/hero/warrior_page.png`
+  (330 x 400), o Guerreiro pintado em aguada sobre pergaminho, recortado com o ffmpeg da página esquerda da prancha
+  "Livro de Akh" (`docs/art/ref/direcao_2026-11-17/pranchas/04-livro-akh.png`, só local), feita por IA pelo diretor de
+  arte do PO no ChatGPT. Aparece no capítulo "O Guerreiro" da tela do herói (`HeroScreen`), com as bordas esfumadas no
+  papel por shader. O resto da prancha (Ahk e o anotador, o livro, o esqueleto do Compêndio) e as pranchas 05 e 09 não
+  vão no jogo: guiaram o livro (`BookSpread`, `book_page.gdshader`), a árvore e os glifos dos Dons (`TalentGlyph`),
+  feitos em código com os textos e números do jogo.
 - **Modelos 3D do Meshy** (lista completa e ids em `tools/meshy/tasks.json`):
   - no jogo: o herói Explorador (`assets/models/meshy/hero_explorer/`, 2026-11-15, gerado a partir da folha do Explorador,
     também feita por IA), com o esqueleto do Meshy; os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das

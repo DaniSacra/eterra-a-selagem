@@ -332,18 +332,23 @@ func _draw_mouse(at: Vector2) -> void:
 ## The action's mark outside the HUD (stage 1A: the cards say the action with the HUD's own symbol): a small diamond
 ## of ink with the old gold rim and the action's glyph, side pixels tall.
 static func mark(action_slot: Boon.Slot, side: float) -> Control:
+	return glyph_mark(BoonIcon.ACTION_GLYPH + action_slot, side)
+
+
+## The same mark for any glyph of BoonIcon (the ultimates: BoonIcon.ULT_GLYPH + UltDef.Kind, on the hero page).
+static func glyph_mark(glyph_id: int, side: float) -> Control:
 	var m := Control.new()
 	m.name = &"ActionMark"
 	m.custom_minimum_size = Vector2(side, side)
 	m.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	m.set_meta(&"glyph", BoonIcon.ACTION_GLYPH + action_slot)
+	m.set_meta(&"glyph", glyph_id)
 	m.draw.connect(func() -> void:
 		var c := m.size * 0.5
 		var r := side * 0.5
 		m.draw_colored_polygon(_diamond(c, r), UiKit.OLD_GOLD)
 		m.draw_colored_polygon(_diamond(c, r - 1.5), UiKit.INK)
-		BoonIcon.glyph(m, BoonIcon.ACTION_GLYPH + action_slot, c, r * 0.5, IVORY, UiKit.INK))
+		BoonIcon.glyph(m, glyph_id, c, r * 0.5, IVORY, UiKit.INK))
 	return m
 
 

@@ -29,6 +29,8 @@ var xp := 0.0:
 			level_changed.emit(now)
 		queue_redraw()
 var _level := 1
+## On the parchment of the Livro de Ahk (HeroScreen): the words in ink, no shadow.
+var paper := false
 
 
 func setup(p_curve: MasteryCurve, p_xp: int, width: float = 360.0) -> MasteryBar:
@@ -94,14 +96,16 @@ func _draw() -> void:
 	var text_font := UiKit.BOLD_FONT
 	var label := T.t(&"hero_mastery")
 	var base := cy - 4.0
-	UiKit.draw_shadow(self, text_font, Vector2(x0, base), label, LABEL_SIZE)
-	draw_string(text_font, Vector2(x0, base), label, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, UiKit.PARCHMENT)
+	if not paper:
+		UiKit.draw_shadow(self, text_font, Vector2(x0, base), label, LABEL_SIZE)
+	draw_string(text_font, Vector2(x0, base), label, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, Book.INK if paper else UiKit.PARCHMENT)
 	var right := xp_text()
 	var num := UiKit.number_font()
 	var rw := num.get_string_size(right, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE).x
 	var rat := Vector2(bar.end.x - rw, base)
-	UiKit.draw_shadow(self, num, rat, right, LABEL_SIZE)
-	draw_string(num, rat, right, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, UiKit.DIM.lightened(0.2))
+	if not paper:
+		UiKit.draw_shadow(self, num, rat, right, LABEL_SIZE)
+	draw_string(num, rat, right, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, Book.FADED if paper else UiKit.DIM.lightened(0.2))
 
 
 static func _closed(poly: PackedVector2Array) -> PackedVector2Array:

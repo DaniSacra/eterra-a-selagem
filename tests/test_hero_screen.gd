@@ -25,7 +25,7 @@ func _loadout(xp: int, equipped: Array = []) -> HeroLoadout:
 func _screen(data: Dictionary) -> HeroScreen:
 	var s := HeroScreen.new()
 	add_child_autofree(s)
-	s.open(data)
+	s.open(data, HeroScreen.Chapter.GIFTS)
 	return s
 
 
@@ -174,7 +174,7 @@ func test_worn_and_open_gifts_look_apart() -> void:
 	assert_eq(open.state, HeroLoadout.State.OPEN)
 	assert_eq(worn.line_color(), TalentNode.EQUIPPED_LINE)
 	assert_eq(open.line_color(), UiKit.OLD_GOLD)
-	assert_eq(open.ink_color(), UiKit.INK, "only an outline")
+	assert_lt(open.ink_color().get_luminance(), 0.12, "open is dark felt: the frame and the glyph carry the branch")
 	assert_gt(absf(worn.ink_color().get_luminance() - open.ink_color().get_luminance()) + absf(worn.ink_color().s - open.ink_color().s), 0.1)
 	var combo := TalentNode.BRANCH_COLOR[TalentDef.Branch.COMBO]
 	assert_gt(combo.s, 0.4, "Combo is a colour, not a grey")
@@ -295,10 +295,10 @@ func test_codex_shows_reached_gifts_and_hides_the_rest() -> void:
 	add_child_autofree(c)
 	c.open(CodexScreen.Tab.GIFTS, _data(XP_3))
 	var open_row := c.find_child("impeto", true, false)
-	assert_eq((open_row.get_child(0) as Label).text, T.t(&"talent_impeto"))
+	assert_eq((open_row.find_child("Name", false, false) as Label).text, T.t(&"talent_impeto"))
 	var closed_row := c.find_child("corte_crescente", true, false)
-	assert_eq((closed_row.get_child(0) as Label).text, "???")
-	assert_eq((closed_row.get_child(1) as Label).text, T.t(&"codex_locked", {"n": 4}))
+	assert_eq((closed_row.find_child("Name", false, false) as Label).text, "???")
+	assert_eq((closed_row.find_child("Desc", false, false) as Label).text, T.t(&"codex_locked", {"n": 4}))
 
 
 func test_codex_tabs_switch_by_focus() -> void:
