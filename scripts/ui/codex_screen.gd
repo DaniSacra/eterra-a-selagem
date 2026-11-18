@@ -45,7 +45,7 @@ const NAME_WIDTH := 170.0
 const GIFT_MARK := 22.0
 const KEYS_WIDTH := 240.0
 ## The HUD marks of a move's inputs (Golpes).
-const MOVE_MARK := 24.0
+const MOVE_MARK := 28.0
 ## Blessings: two columns of one line each (icon, name, family, count), so the 26 fit a 720 screen.
 const BOON_COLUMNS := 2
 const BOON_ICON := 24.0
@@ -605,7 +605,7 @@ static func move_marks(path: Array, from_dodge: bool, lit: bool = true) -> HBoxC
 		if input == ComboNode.In.CHARGE or input == ComboNode.In.CHARGE_LIGHT:
 			h.add_child(_word(T.t(&"moves_hold"), ink))
 	if not lit:
-		h.modulate.a = 0.5
+		h.modulate.a = 0.75
 	return h
 
 

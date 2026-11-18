@@ -143,6 +143,8 @@ var _dash_charges := -1
 var _dash_from := 0.0
 var _last_hp := -1.0
 var _combo_pop := 0.0
+## The hit count shown (on_combo); the count and the move's name hide under a screen.
+var _combo_count := 0
 var _move_t := 0.0
 var _notice_t := 0.0
 var _passive_count := -1
@@ -338,6 +340,9 @@ func _process(delta: float) -> void:
 	# a screen over the run (cards, pause, an event): the gifts' row and the greetings wait under it (BUG-107)
 	var over := game.mode != Game.Mode.PLAY
 	_passives.visible = not over
+	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
+		c.visible = _combo_count >= 3 and not over
+	_move.visible = not over
 	_elo_banner.held = over
 	_clock.text = SaveData.format_time(game.time)
 	_coin.visible = game.rooms != null
@@ -721,6 +726,7 @@ static func body_rect(feet: Vector2, tall: float) -> Rect2:
 
 
 func on_combo(count: int) -> void:
+	_combo_count = count
 	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
 		c.visible = count >= 3
 	if count == 0:
