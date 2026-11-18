@@ -49,6 +49,10 @@ func _run() -> void:
 	for l in stage.layouts:
 		if l.id == want:
 			layout = l
+	# the event chambers (AP-1): --arena=trial|altar
+	for l: RoomLayout in [stage.trial_layout, stage.altar_layout]:
+		if l != null and l.id == want:
+			layout = l
 	if layout == null:
 		push_error("no arena %s" % want)
 		quit(1)
