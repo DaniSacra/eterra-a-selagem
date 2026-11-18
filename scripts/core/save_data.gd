@@ -9,7 +9,7 @@ extends RefCounted
 ## already played, once (MasteryCurve.retro_xp).
 ## 4 (E6, D-63): juramentos (ranks: the Juramentos chosen for the next descent, id to rank; best: the highest Peso
 ## won). An older file opens with none chosen and nothing won; nothing else changes.
-const VERSION := 4
+const VERSION := 5
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -90,6 +90,16 @@ static func merged(loaded: Variant) -> Dictionary:
 		if int(out.wins) > 0:
 			# a player who already won has met the guardian and the sealing: no first-time XP for them again
 			hero_block.firsts = {"guardian": int(out.wins), "victory": int(out.wins)}
+	# files before version 5 hold the music defaults of the T5 (MUS-1 made new defaults): a place still on its old
+	# default moves to the new one once; a piece the player picked stays
+	if version < 5:
+		var old_defaults := {"music_title": "classic_catacombs", "music_dungeon": "classic_catacombs",
+				"music_morvath": "classic_morvath"}
+		var places := {"music_title": MusicCatalog.TITLE, "music_dungeon": MusicCatalog.DUNGEON,
+				"music_morvath": MusicCatalog.MORVATH}
+		for key: String in old_defaults:
+			if String(out.options.get(key, "")) == old_defaults[key]:
+				out.options[key] = String(MusicCatalog.DEFAULT[places[key]])
 	out.version = VERSION
 	return out
 

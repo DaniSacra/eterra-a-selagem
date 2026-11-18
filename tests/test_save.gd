@@ -158,3 +158,12 @@ func test_codex_counts_and_says_the_first_time() -> void:
 	assert_eq(d.codex.boons.brasas.seen, 2)
 	assert_eq(SaveData.hero(d, "warrior"), d.heroes.warrior)
 	assert_eq(SaveData.hero(d, "new").mastery_xp, 0, "a missing hero block is made")
+
+
+func test_old_music_defaults_move_to_the_new_ones_once() -> void:
+	var loaded := {"version": 4, "options": {"music_title": "classic_catacombs", "music_dungeon": "classic_catacombs",
+			"music_morvath": "deep_drums"}}
+	var data := SaveData.merged(loaded)
+	assert_eq(String(data.options.music_dungeon), String(MusicCatalog.DEFAULT[MusicCatalog.DUNGEON]))
+	assert_eq(String(data.options.music_title), String(MusicCatalog.DEFAULT[MusicCatalog.TITLE]))
+	assert_eq(String(data.options.music_morvath), "deep_drums", "a piece the player chose stays")
