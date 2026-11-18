@@ -928,7 +928,7 @@ func _build_shop() -> void:
 		# the group's word over the name, the price under it (C13-04); a group named as its only item says it once
 		var name_text := T.t(RunMap.REWARD_KEY[p.item])
 		var group_text := T.t(SHOP_GROUP_KEY[p.group]) if p.group < SHOP_GROUP_KEY.size() else ""
-		var sign := DoorSign.shop(name_text, p.price, "" if group_text == name_text else group_text)
+		var sign := DoorSign.shop(name_text, p.price, "" if group_text == name_text else group_text, DoorGlyph.of_reward(p.item))
 		sign.position.y = MARK_SIGN_Y
 		sign.set_gold(gold)
 		(p.node as Node3D).add_child(sign)
@@ -1039,7 +1039,8 @@ static func gem_color(c: Color) -> Color:
 
 
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).
-## glyph: the pictogram left of the sign's name (E5, DoorGlyph).
+## glyph: the pictogram left of the sign's name (E5, DoorGlyph); a reward's sign also carries the reward's own mark
+## (stage 1A, DoorGlyph.of_reward), the glyph then going by the line under the name.
 func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind = RunMap.Kind.COMBAT,
 		glyph: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> Node3D:
 	var root := Node3D.new()
@@ -1071,7 +1072,7 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	if text != "":
 		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
 		var lines := text.split("\n", true, 1)
-		var sign := DoorSign.make(lines[0], lines[1] if lines.size() > 1 else "", glyph)
+		var sign := DoorSign.make(lines[0], lines[1] if lines.size() > 1 else "", glyph, DoorGlyph.of_reward(reward))
 		sign.position.y = MARK_SIGN_Y
 		root.add_child(sign)
 	return root

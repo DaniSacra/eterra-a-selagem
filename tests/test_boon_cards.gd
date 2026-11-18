@@ -29,8 +29,9 @@ func _art(card: BoonCard) -> Texture2D:
 	return null
 
 
-func test_the_three_painted_gifts_have_their_medallion() -> void:
-	for id in [&"vapor", &"aurora", &"redemoinho"]:
+func test_the_painted_gifts_have_their_medallion() -> void:
+	# the first three (2026-11-16) and stage 1A's four (Brasas, Toque da Geada, Maré de Luz, Escudo da Vigília)
+	for id in [&"vapor", &"aurora", &"redemoinho", &"brasas", &"toque_geada", &"onda_maior", &"escudo"]:
 		var tex := BoonArt.medallion(id)
 		assert_not_null(tex, String(id))
 		assert_eq(tex.get_width(), tex.get_height(), "square")
@@ -65,14 +66,23 @@ func test_an_elo_hangs_between_its_two_sources() -> void:
 
 
 func test_a_gift_without_a_painting_keeps_its_drawn_icon() -> void:
-	assert_null(BoonArt.medallion(&"brasas"))
-	var cards := _open([&"brasas", &"chama_viva", &"golpe_brasa"]).cards()
+	assert_null(BoonArt.medallion(&"lamina_ardente"))
+	var cards := _open([&"lamina_ardente", &"chama_viva", &"golpe_brasa"]).cards()
 	assert_true(cards[0].crest is BoonIcon)
-	assert_eq((cards[0].crest as BoonIcon).boon.id, &"brasas")
+	assert_eq((cards[0].crest as BoonIcon).boon.id, &"lamina_ardente")
 	assert_true(cards[1].crest is EloLink, "an Elo without a painting: the drawn Elo")
 	assert_not_null((cards[1].crest as EloLink).main_icon())
 	assert_eq((cards[1].crest as EloLink).source_icons().size(), 2)
 	assert_true(cards[2].crest is BoonIcon)
+
+
+## Stage 1A: the screen's title is the art pack's "Escolha uma bênção" and the painted four follow their gifts.
+func test_the_title_and_the_new_paintings() -> void:
+	assert_eq(T.t(&"choice_title"), "Escolha uma bênção")
+	var cards := _open([&"onda_maior", &"brasas", &"escudo"]).cards()
+	for c in cards:
+		assert_true(c.crest is TextureRect, String(c.boon.id))
+		assert_eq(_art(c), BoonArt.medallion(c.boon.id))
 
 
 func test_the_rarity_edge_does_not_change_with_focus() -> void:
@@ -122,3 +132,13 @@ func test_a_press_right_after_opening_picks_nothing() -> void:
 	choice._opened_at -= BoonChoice.GUARD_MS + 100
 	choice.cards()[1].pressed.emit()
 	assert_signal_emitted_with_parameters(choice, "chosen", [state.find(&"aurora")])
+
+
+## Stage 1A: a card says its action with the HUD's own symbol (ActionSlot.mark, the glyph of the bare action).
+func test_the_action_is_said_with_the_huds_symbol() -> void:
+	var cards := _open([&"toque_geada", &"brasas", &"golpe_brasa"]).cards()
+	var mark := cards[0].find_child("ActionMark", true, false)
+	assert_not_null(mark, "Toque da Geada changes the special")
+	assert_eq(int(mark.get_meta(&"glyph")), BoonIcon.ACTION_GLYPH + Boon.Slot.SPECIAL)
+	assert_null(cards[1].find_child("ActionMark", true, false), "Brasas acts on its own: no action")
+	assert_eq(int(cards[2].find_child("ActionMark", true, false).get_meta(&"glyph")), BoonIcon.ACTION_GLYPH + Boon.Slot.ATTACK)

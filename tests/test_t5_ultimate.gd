@@ -106,10 +106,13 @@ func test_mastery_2_without_a_choice_plays_the_cleave_and_the_r_key_lets_it_go()
 	await get_tree().process_frame
 	assert_true(game.player.ult_ready)
 	assert_true(slot.pulse, "full: the diamond pulses")
+	assert_true(slot.ready_ring(), "stage 1A: and wears the closed ring of light")
 	assert_eq(slot.caption, "Pronta")
 	await _tap_r()
 	assert_eq(game.ults.uses, 1, "the real R key (InputMap action ultimate) lets it go")
 	assert_eq(game.ults.charge.value, 0.0)
+	await get_tree().process_frame
+	assert_false(slot.ready_ring(), "spent: the ring goes with the charge")
 
 
 func test_a_locked_choice_falls_back_to_the_unlocked_one() -> void:

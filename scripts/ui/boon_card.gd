@@ -24,6 +24,11 @@ extends Button
 ## The altar's card (setup_altar, smaller): what the trade gives and what it asks, a medallion in the house's seal
 ## (SealMedal, A-T5-6: a pomegranate, a candle's flame, an open arch) and, when it cannot be taken now, dimmed with
 ## why; "Seguir em frente" takes nothing.
+## Stage 1A of the art pack (2026-11-17, docs/gallery/artpack/stage1a/): an exchange names what goes out and what comes
+## in, in that order, each with its glyph, name and rarity ("Sai", "Entra"); the altar's crests are the painted
+## pomegranate, candles and open passage (BoonArt.event; the drawn SealMedal stays as their small glyph), what is given
+## and got carries the reward's mark (DoorGlyph: heart, coin, pomegranate, gem) and walking on says "Sem custo"; the
+## Provação's crest is the blessing's medallion alone and the curse's band carries the painted cracked seal.
 
 ## Card size at 720 lines (the screen scales with the window: canvas_items stretch).
 const SIZE := Vector2(320, 450)
@@ -71,9 +76,6 @@ const PSALM_ICON := 112.0
 ## The Provação's card: the crest, the curse's band (spec 5.3: ink (0.16; 0.12; 0.22), words (0.82; 0.76; 0.92)).
 ## T5: a shorter art band and card than a Blessing's, so the screen's lead line and the card's own heads fit at 720.
 const TRIAL_ICON := 100.0
-## The cracked diamond's stamp on the medallion: its share of the medallion's width, and how far it hangs out of it.
-const TRIAL_STAMP := 0.32
-const TRIAL_STAMP_OUT := 0.06
 ## The room between the blessing's words and the curse's band (A-T5-5: at most 40 px at 1080).
 const TRIAL_BAND_GAP := 8.0
 const TRIAL_SIZE := Vector2(320, 384)
@@ -87,13 +89,27 @@ const DEAL_GAP := 22.0
 ## The altar's cards: smaller than a Blessing's, a shorter art band, the altar's warm ivory (Rooms.ALTAR_COLOR) in the
 ## glow (T5: taller than at E5, for what is given and what is got).
 const ALTAR_SIZE := Vector2(290, 392)
-const ALTAR_ART_H := 100.0
-const ALTAR_ICON := 80.0
+const ALTAR_ART_H := 112.0
+const ALTAR_ICON := 104.0
+## The reward's mark beside what an altar's trade gives and gets (DoorGlyph), and its gap.
+const DEAL_MARK := 19.0
+## The curse band's painted cracked seal (BoonArt.event "trial_seal") and the room beside it.
+const CURSE_SEAL := 36.0
+const CURSE_SEAL_GAP := 8.0
+## An exchange's rows ("Sai", "Entra"): the glyphs' size and the words'.
+const SWAP_ICON := 26.0
+const SWAP_SIZE := 15
+## The action's mark beside its name (ActionSlot.mark, the HUD's symbol).
+const ACTION_MARK := 20.0
 const ALTAR_GLOW := Color(0.95, 0.85, 0.65)
-## The altar's medallion of each trade (SealMedal): its colour and glyph. Life buys a pomegranate (never a heart: the
-## trade takes life), gold lights the candles, walking on is an open arch.
-const ALTAR_LOOK := {&"life": [Color(0.78, 0.26, 0.32), SealMedal.Glyph.POMEGRANATE],
-	&"candles": [Color(0.98, 0.78, 0.45), SealMedal.Glyph.CANDLE], &"none": [Color(0.62, 0.6, 0.66), SealMedal.Glyph.OPEN_ARCH]}
+## The altar's medallion of each trade: its colour, its drawn glyph (SealMedal, when the painting is missing) and its
+## painting (BoonArt.event). Life buys a pomegranate (never a heart: the trade takes life), gold lights the candles,
+## walking on is the open passage.
+const ALTAR_LOOK := {&"life": [Color(0.78, 0.26, 0.32), SealMedal.Glyph.POMEGRANATE, &"pomegranate"],
+	&"candles": [Color(0.98, 0.78, 0.45), SealMedal.Glyph.CANDLE, &"candles"],
+	&"none": [Color(0.62, 0.6, 0.66), SealMedal.Glyph.OPEN_ARCH, &"passage"]}
+## What an altar's trade gives and gets, as reward marks (DoorGlyph.Kind): give, get.
+const ALTAR_MARKS := {&"life": [DoorGlyph.Kind.HEART, DoorGlyph.Kind.POMEGRANATE], &"candles": [DoorGlyph.Kind.GOLD, DoorGlyph.Kind.MAGICK]}
 
 var boon: Boon
 var rarity: Boon.Rarity = Boon.Rarity.COMMON
@@ -143,14 +159,12 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 		box.add_child(desc)
 		if replaces != null:
 			var replaced_name := T.t("boon_" + String(replaces.id))
-			var warn: Label
 			if upgrade:
-				warn = _text(T.t(&"choice_upgrade_swap", {"name": replaced_name, "from": T.t(Boon.RARITY_KEY[replaced_rarity]),
-						"to": T.t(Boon.RARITY_KEY[rarity])}), rarity_color(rarity).lightened(0.12), 16, UiKit.BOLD_FONT)
+				box.add_child(_swap(replaces, replaced_rarity, b, rarity))
 			else:
-				warn = _text(T.t(&"choice_replaces", {"name": replaced_name}), WARN, 16, UiKit.BOLD_FONT)
-			warn.name = &"Replaces"
-			box.add_child(warn)
+				var warn := _text(T.t(&"choice_replaces", {"name": replaced_name}), WARN, 16, UiKit.BOLD_FONT)
+				warn.name = &"Replaces"
+				box.add_child(warn)
 	_finish()
 	if upgrade:
 		add_child(_upgrade_tab())
@@ -378,6 +392,41 @@ func _tab(text: String, col: Color, edge: Color, mark: Control = null) -> PanelC
 	return tab
 
 
+## An exchange's trade, in the order it happens: "Sai" with the glyph, name and rarity of the Blessing that goes, then
+## "Entra" with those of the one that comes (named Replaces; rows TradeOut and TradeIn, their names OutName, InName).
+func _swap(out_b: Boon, out_r: Boon.Rarity, in_b: Boon, in_r: Boon.Rarity) -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.name = &"Replaces"
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override(&"separation", 2)
+	col.add_child(_swap_row(&"Out", T.t(&"choice_trade_out"), out_b, out_r))
+	col.add_child(_swap_row(&"In", T.t(&"choice_trade_in"), in_b, in_r))
+	return col
+
+
+func _swap_row(id: StringName, head: String, b: Boon, r: Boon.Rarity) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = StringName("Trade" + String(id))
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 6)
+	var h := UiKit.label(head.to_upper(), DEAL_HEAD, HEAD_SIZE, UiKit.BOLD_FONT)
+	h.custom_minimum_size.x = 42.0
+	h.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(h)
+	var icon := BoonIcon.new().setup(b, SWAP_ICON)
+	icon.name = StringName(String(id) + "Icon")
+	row.add_child(icon)
+	var n := UiKit.label(T.t("boon_" + String(b.id)), UiKit.PALE if id == &"In" else UiKit.DIM, SWAP_SIZE, UiKit.BOLD_FONT)
+	n.name = StringName(String(id) + "Name")
+	row.add_child(n)
+	row.add_child(UiKit.label("·", UiKit.DIM, SWAP_SIZE))
+	var rar := UiKit.label(T.t(Boon.RARITY_KEY[r]), rarity_color(r).lightened(0.12), SWAP_SIZE, UiKit.BOLD_FONT)
+	rar.name = StringName(String(id) + "Rarity")
+	row.add_child(rar)
+	return row
+
+
 ## A Psalm's card (E4-03): the tab ("Salmo", or "Salmo descoberto" the first time ever), the medallion under the arch,
 ## the name, the action it transforms, the description with its numbers and the three held things that opened it
 ## (names: one per group, in order; Psalms.matching). No rarity, no level, never a number of its own.
@@ -391,9 +440,15 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 	var title := _name(T.t(p.name_key))
 	title.name = &"Name"
 	box.add_child(title)
-	var does := _text(T.t(&"psalm_transforms", {"action": T.t(Boon.SLOT_KEY[p.slot])}), col, 17, UiKit.BOLD_FONT)
+	var does := UiKit.label(T.t(&"psalm_transforms", {"action": T.t(Boon.SLOT_KEY[p.slot])}), col, 17, UiKit.BOLD_FONT)
 	does.name = &"Transforms"
-	box.add_child(does)
+	var line := HBoxContainer.new()
+	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_theme_constant_override(&"separation", 7)
+	line.add_child(ActionSlot.mark(p.slot, ACTION_MARK + 2.0))
+	line.add_child(does)
+	box.add_child(line)
 	box.add_child(_rule())
 	var desc := _text(T.t(p.desc_key, p.text_args()), UiKit.PALE, 18)
 	desc.name = &"Desc"
@@ -456,11 +511,16 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 	band.name = &"CurseBand"
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	band.add_theme_stylebox_override(&"panel", UiKit.box(Color(TRIAL_BAND, 0.96), Color(TrialSeal.LILAC, 0.55), 1, 8, 4))
+	var side := HBoxContainer.new()
+	side.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	side.add_theme_constant_override(&"separation", int(CURSE_SEAL_GAP))
+	band.add_child(side)
+	side.add_child(_curse_seal())
 	var inner := VBoxContainer.new()
 	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	inner.add_theme_constant_override(&"separation", 1)
-	band.add_child(inner)
-	var width := TRIAL_SIZE.x - PAD * 2.0 - 18.0
+	side.add_child(inner)
+	var width := TRIAL_SIZE.x - PAD * 2.0 - 18.0 - CURSE_SEAL - CURSE_SEAL_GAP
 	var lasts := _head(T.t(&"trial_card_for", {"n": c.encounters}), TrialSeal.LILAC.lightened(0.25))
 	lasts.name = &"Encounters"
 	var curse := _text(T.t(c.curse.name_key), TRIAL_WORDS.lightened(0.2), 16, UiKit.BOLD_FONT)
@@ -480,23 +540,26 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 	return self
 
 
-## The Provação card's crest: the blessing's medallion (look: [glyph, colour]) with the cracked diamond small on its
-## lower right, hanging a little out of it, as a stamp.
+## The Provação card's crest: the blessing's own medallion (look: [glyph, colour]); the cracked seal is the curse's,
+## on its band (stage 1A: the prancha's "selo rachado para a maldição").
 func _trial_crest(look: Array) -> Control:
-	var holder := Control.new()
+	var holder := CenterContainer.new()
 	holder.name = &"TrialCrest"
 	holder.custom_minimum_size = Vector2(TRIAL_ICON, TRIAL_ICON)
 	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var medal := BoonIcon.new().setup_glyph(int(look[0]), look[1], TRIAL_ICON)
 	medal.name = &"Medal"
-	medal.size = medal.custom_minimum_size
 	holder.add_child(medal)
-	var side := TRIAL_ICON * TRIAL_STAMP
-	var stamp := TrialSeal.new().setup(side)
-	stamp.name = &"Stamp"
-	stamp.position = Vector2.ONE * (TRIAL_ICON * (1.0 + TRIAL_STAMP_OUT) - side)
-	holder.add_child(stamp)
 	return holder
+
+
+## The curse's mark on its band: the painted cracked seal (BoonArt.event), or the drawn diamond without it.
+func _curse_seal() -> Control:
+	var tex := BoonArt.event(&"trial_seal")
+	var seal: Control = BoonArt.rect(tex, CURSE_SEAL) if tex != null else TrialSeal.new().setup(CURSE_SEAL * 0.8)
+	seal.name = &"CurseSeal"
+	seal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return seal
 
 
 ## One of the altar's trades (E5, Altar.options: {option, id, cost, gain, ok, why, give_from...}), or {id: &"none"} to
@@ -507,7 +570,8 @@ func setup_altar(o: Dictionary) -> BoonCard:
 	altar = StringName(o.get("id", &"none"))
 	var look: Array = ALTAR_LOOK.get(altar, ALTAR_LOOK[&"none"])
 	var box := _shell(ALTAR_GLOW, ALTAR_SIZE, ALTAR_ART_H)
-	var medal := SealMedal.new().setup(look[1], look[0], ALTAR_ICON)
+	var painted := BoonArt.event(look[2])
+	var medal: Control = BoonArt.rect(painted, ALTAR_ICON) if painted != null else SealMedal.new().setup(look[1], look[0], ALTAR_ICON)
 	medal.name = &"Medal"
 	crest = medal
 	_art(box, ALTAR_ART_H).add_child(medal)
@@ -516,11 +580,22 @@ func setup_altar(o: Dictionary) -> BoonCard:
 	box.add_child(title)
 	box.add_child(_rule())
 	var ok := bool(o.get("ok", true))
+	if altar == &"none":
+		# walking on: no cost, no gain (the prancha's "Sem custo"), and where to go
+		box.add_child(_free_tag())
+		var where := _text(T.t(&"altar_none_desc"), UiKit.DIM, 15)
+		where.name = &"Where"
+		where.custom_minimum_size.x = ALTAR_SIZE.x - PAD * 2.0
+		where.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		box.add_child(where)
+		_finish()
+		return self
+	var marks: Array = ALTAR_MARKS[altar]
 	var n := {"n": num(float(o.get("cost", 0)))}
-	var give := T.t(&"altar_nothing")
+	var give := ""
 	var give_detail := ""
-	var got := T.t(&"altar_nothing")
-	var got_detail := T.t(&"altar_none_desc")
+	var got := ""
+	var got_detail := ""
 	match altar:
 		&"life":
 			give = T.t(&"altar_life_give", n)
@@ -532,8 +607,8 @@ func setup_altar(o: Dictionary) -> BoonCard:
 			give_detail = T.t(&"altar_candles_give_detail", _from_to(o, "give")) if ok else ""
 			got = T.t(&"altar_candles_get", {"n": num(float(o.get("gain", 0)))})
 			got_detail = T.t(&"altar_candles_get_detail", _from_to(o, "get")) if float(o.get("get_from", 0.0)) > 0.0 else ""
-	_deal(box, &"Give", T.t(&"altar_give"), give, give_detail)
-	var last := _deal(box, &"Get", T.t(&"altar_get"), got, got_detail)
+	_deal(box, &"Give", T.t(&"altar_give"), give, give_detail, marks[0])
+	var last := _deal(box, &"Get", T.t(&"altar_get"), got, got_detail, marks[1])
 	last.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if not ok:
 		var why_key := StringName(o.get("why", &""))
@@ -620,22 +695,58 @@ func _head(text: String, color: Color) -> Label:
 	return _text(text.to_upper(), color, HEAD_SIZE, UiKit.BOLD_FONT)
 
 
-## One half of an altar's trade: the head, what (bold) and, under it, the detail (dim; empty: none). Returns the last
-## label added (the caller may let it fill the card).
-func _deal(box: VBoxContainer, id: StringName, head: String, what: String, detail: String) -> Label:
+## One half of an altar's trade: the head, what (bold, after the reward's mark) and, under it, the detail (dim; empty:
+## none). Returns the last control added (the caller may let it fill the card).
+func _deal(box: VBoxContainer, id: StringName, head: String, what: String, detail: String,
+		mark: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> Control:
 	var width := custom_minimum_size.x - PAD * 2.0
-	var parts: Array[Label] = [_head(head, DEAL_HEAD), _text(what, UiKit.PALE, 17, UiKit.BOLD_FONT)]
-	parts[0].name = StringName(String(id) + "Head")
-	parts[1].name = id
+	var h := _head(head, DEAL_HEAD)
+	h.name = StringName(String(id) + "Head")
+	h.custom_minimum_size = Vector2(width, DEAL_GAP)
+	h.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	box.add_child(h)
+	var what_l := UiKit.label(what, UiKit.PALE, 17, UiKit.BOLD_FONT)
+	what_l.name = id
+	var row := HBoxContainer.new()
+	row.name = StringName(String(id) + "Row")
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 6)
+	if mark != DoorGlyph.Kind.NONE:
+		var m := DoorGlyph.new().setup(mark, DEAL_MARK)
+		m.name = StringName(String(id) + "Mark")
+		row.add_child(m)
+	row.add_child(what_l)
+	box.add_child(row)
+	var last: Control = row
 	if detail != "":
-		parts.append(_text(detail, UiKit.DIM, 15))
-		parts[2].name = StringName(String(id) + "Detail")
-	for l in parts:
-		l.custom_minimum_size.x = width
-		box.add_child(l)
-	parts[0].custom_minimum_size.y = DEAL_GAP
-	parts[0].vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
-	return parts.back()
+		var d := _text(detail, UiKit.DIM, 15)
+		d.name = StringName(String(id) + "Detail")
+		d.custom_minimum_size.x = width
+		box.add_child(d)
+		last = d
+	return last
+
+
+## The plate "Sem custo" of walking on (a plate of ink with an old gold line and two short rules, as the prancha).
+func _free_tag() -> Control:
+	var holder := CenterContainer.new()
+	holder.name = &"FreeTag"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.custom_minimum_size.y = 58.0
+	var tag := PanelContainer.new()
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := UiKit.box(INK, UiKit.OLD_GOLD, 1, 0, 6)
+	sb.content_margin_left = 18
+	sb.content_margin_right = 18
+	sb.content_margin_top = 3
+	sb.content_margin_bottom = 4
+	tag.add_theme_stylebox_override(&"panel", sb)
+	var l := UiKit.label(T.t(&"altar_free").to_upper(), IVORY, 15, UiKit.BOLD_FONT)
+	l.name = &"Free"
+	tag.add_child(l)
+	holder.add_child(tag)
+	return holder
 
 
 ## A number as the player reads it: no ".0", a comma for the decimal (22,5).
@@ -685,6 +796,10 @@ func _meta(b: Boon, level: int) -> HBoxContainer:
 		if i > 0:
 			row.add_child(UiKit.label("·", UiKit.DIM, 16))
 		row.add_child(parts[i])
+	if b.slot != Boon.Slot.NONE:
+		# the action said with the HUD's own symbol (stage 1A)
+		row.add_child(ActionSlot.mark(b.slot, ACTION_MARK))
+		row.move_child(row.get_child(-1), 0)
 	return row
 
 

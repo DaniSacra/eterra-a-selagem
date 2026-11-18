@@ -16,6 +16,9 @@ extends Control
 ## The ultimate's diamond (T5): sealed while the Mastery has not unlocked it (dark gem, dimmed glyph, an old gold
 ## padlock), a short caption over it that says what is missing ("Maestria 2", "Carga 40%") or "Pronta", and, full, a
 ## slow pale pulse around the frame so a ready ultimate never looks like any idle action.
+## Stage 1A of the art pack (2026-11-17): ready, the diamond wears a closed ring of light around its frame (READY_*),
+## a brief pulse runs out of it once when it fills (READY_PULSE), then the ring only breathes a little. Tied to the
+## real state: pulse is the charge being full (Hud._update_ult), the ring goes with it.
 
 const DIAMOND := 54.0
 const KEY_H := 17.0
@@ -52,8 +55,15 @@ const LIGHT_RISE := 7.0
 ## The caption over the diamond (T5): its size, how far over the frame, and the ready pulse's period and reach.
 const CAPTION_FONT := 12
 const CAPTION_RISE := 6.0
-const PULSE_PERIOD := 1.2
-const PULSE_REACH := 5.0
+## The ready ring: its gap from the frame, width, colour (Emeth's pale emerald, lit under the glow), how much it
+## breathes and how fast; the pulse when it fills: seconds and reach.
+const READY_GAP := 3.0
+const READY_W := 2.0
+const READY_COLOR := Color(0.72, 1.0, 0.86)
+const READY_BREATH := 0.2
+const PULSE_PERIOD := 1.6
+const READY_PULSE := 0.55
+const PULSE_REACH := 12.0
 const SEAL_VEIL := Color(0.02, 0.016, 0.03, 0.7)
 const SEAL_GLYPH := 0.35
 
@@ -111,15 +121,18 @@ var caption_color := UiKit.DIM:
 		if v != caption_color:
 			caption_color = v
 			queue_redraw()
-## Full and ready (the ultimate): a slow pale pulse around the frame.
+## Full and ready (the ultimate): the closed ring of light, and the brief pulse when it turns on.
 var pulse := false:
 	set(v):
 		if v != pulse:
 			pulse = v
 			_pulse_t = 0.0
+			_ready_pulse = 1.0 if v else 0.0
 			set_process(true)
 			queue_redraw()
 var _pulse_t := 0.0
+## 1 -> 0 over READY_PULSE seconds after it fills.
+var _ready_pulse := 0.0
 var _key := ""
 var _mouse := 0
 var _flash := 0.0
@@ -174,6 +187,7 @@ func _process(delta: float) -> void:
 	_flash = maxf(0.0, _flash - delta / READY_FLASH)
 	_release = maxf(0.0, _release - delta / RELEASE)
 	_pulse_t = fmod(_pulse_t + delta, PULSE_PERIOD)
+	_ready_pulse = maxf(0.0, _ready_pulse - delta / READY_PULSE)
 	if _flash == 0.0 and _release == 0.0 and not pulse:
 		set_process(false)
 	queue_redraw()
@@ -218,8 +232,7 @@ func _draw() -> void:
 	if sealed:
 		padlock(self, c + Vector2(0, r * 0.08), r * 0.34, UiKit.OLD_GOLD.lightened(0.35))
 	if pulse and not busy():
-		var k := _pulse_t / PULSE_PERIOD
-		draw_polyline(_closed(_diamond(c, r + 2.0 + PULSE_REACH * k)), Color(UiKit.PALE, 0.7 * (1.0 - k)), 1.5, true)
+		_draw_ready(c, r)
 	if _release > 0.0:
 		var k := 1.0 - _release
 		draw_polyline(_closed(_diamond(c, r + 2.0 + RELEASE_REACH * ease(k, 0.4))), Color(UiKit.PALE, _release * 0.9), 2.0, true)
@@ -246,6 +259,24 @@ func _draw() -> void:
 	_draw_key(Vector2(c.x, DIAMOND))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
+
+
+## The ready ultimate: the closed ring of light around the frame (over a dark line so it holds on a lit floor),
+## breathing a little, and, just after it fills, one pulse running out of it.
+func _draw_ready(c: Vector2, r: float) -> void:
+	var ring := _closed(_diamond(c, r + 2.0 + READY_GAP))
+	var breath := 1.0 - READY_BREATH * (0.5 + 0.5 * cos(TAU * _pulse_t / PULSE_PERIOD))
+	draw_polyline(ring, Color(UiKit.INK, 0.8), READY_W + 2.0, true)
+	draw_polyline(ring, Color(READY_COLOR, breath), READY_W, true)
+	if _ready_pulse > 0.0:
+		var k := 1.0 - _ready_pulse
+		draw_polyline(_closed(_diamond(c, r + 2.0 + READY_GAP + PULSE_REACH * ease(k, 0.4))), Color(READY_COLOR, 0.9 * _ready_pulse), 2.0, true)
+		draw_colored_polygon(_diamond(c, r - UiKit.FRAME - 0.5), Color(READY_COLOR, 0.25 * _ready_pulse * _ready_pulse))
+
+
+## Whether the ready ring is drawn now (the tests read it).
+func ready_ring() -> bool:
+	return pulse and not busy()
 
 
 ## The caption centred over the frame, with the HUD's dark shadow so it holds over a lit floor.
@@ -296,6 +327,24 @@ func _draw_mouse(at: Vector2) -> void:
 		draw_colored_polygon(part, UiKit.PALE)
 	draw_line(Vector2(at.x, inside.position.y), Vector2(at.x, split), UiKit.OLD_GOLD, 1.0)
 	draw_line(Vector2(inside.position.x, split), Vector2(inside.end.x, split), UiKit.OLD_GOLD, 1.0)
+
+
+## The action's mark outside the HUD (stage 1A: the cards say the action with the HUD's own symbol): a small diamond
+## of ink with the old gold rim and the action's glyph, side pixels tall.
+static func mark(action_slot: Boon.Slot, side: float) -> Control:
+	var m := Control.new()
+	m.name = &"ActionMark"
+	m.custom_minimum_size = Vector2(side, side)
+	m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	m.set_meta(&"glyph", BoonIcon.ACTION_GLYPH + action_slot)
+	m.draw.connect(func() -> void:
+		var c := m.size * 0.5
+		var r := side * 0.5
+		m.draw_colored_polygon(_diamond(c, r), UiKit.OLD_GOLD)
+		m.draw_colored_polygon(_diamond(c, r - 1.5), UiKit.INK)
+		BoonIcon.glyph(m, BoonIcon.ACTION_GLYPH + action_slot, c, r * 0.5, IVORY, UiKit.INK))
+	return m
 
 
 ## A rectangle with round ends (as wide as it is), as a polygon.

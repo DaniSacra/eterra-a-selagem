@@ -807,6 +807,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   direto quando não há oferta (`Game._open_choice`). Capturas: `tools/ui_lab.gd -- --card-only [--offer=a,b,c]
   [--held=x,y] [--rarity=0,2,1] [--upgrade=0,1,0] [--trade] [--rest] [--focus-move]`; galeria em
   `docs/gallery/boon_cards/` e `docs/gallery/e3/ui/`; testes em `tests/test_boon_cards.gd` e `tests/test_e3_ui.gd`.
+  **Pacote de direção de arte, etapa 1A (2026-11-17; pranchas só locais em `docs/art/ref/direcao_2026-11-17/`, antes e
+  depois em `docs/gallery/artpack/stage1a/`)**: título "Escolha uma bênção" (`choice_title`; a dica embaixo diz que a
+  Bênção fica até o fim da descida). Medalhões pintados também de `brasas`, `toque_geada`, `onda_maior` e `escudo`
+  (`tools/cut_medallions.gd -- --board=... --grid=4x3 --names=...`, modo grade, 384 px, máscara pelo aro redondo) e
+  das trocas do altar e do selo da Provação em `assets/ui/events/` (`BoonArt.event`: `pomegranate`, `candles`,
+  `passage`, `trial_seal`); o Salmo do atlas (livro com cruz) não entrou. Glifos pequenos com o mesmo motivo
+  (`BoonIcon.glyph`: Brasas três brasas caindo, escudo com estrela de quatro pontas, nunca cruz). A ação da carta e o
+  "Transforma" do Salmo levam o símbolo do HUD (`ActionSlot.mark`). Troca: "Sai" e "Entra", cada uma com glifo, nome e
+  raridade, nessa ordem (`BoonCard._swap`, nó `Replaces` com `TradeOut` e `TradeIn`; textos `choice_trade_out`/`_in`).
+  Altar: medalhão pintado, a marca da recompensa ao lado do que se entrega e recebe (`BoonCard.ALTAR_MARKS`) e "Sem
+  custo" em Seguir em frente (`altar_free`). Provação: só o medalhão da Bênção no topo; o selo rachado pintado fica na
+  faixa da maldição (`CurseSeal`). Marcas das recompensas (`DoorGlyph.of_reward`: Bênção um aro com o losango do filete
+  das cartas, romã, coração, gema da Magia, moeda, gota) nas placas das portas, ao lado do nome (o pictograma da sala
+  vai para a linha de baixo, `DoorSign.make(..., glyph, reward_mark)`), na loja e nas cartas do altar. Ultimate pronta:
+  anel fechado de luz esmeralda em volta do losango, um pulso breve quando enche e depois só respira
+  (`ActionSlot.READY_*`, `ready_ring`, ligado ao `pulse` do `Hud._update_ult`).
   **Carta de Salmo (E4-03)**: `Game._open_choice` chama `BoonChoice.open_cards(cards, state, game)` quando um Salmo vem
   na tiragem; a escolha sai por `card_chosen(card)` para `Game.choose_card` (Bênção ou Salmo). `BoonCard.setup_psalm`:
   moldura própria, octógono de cantos cortados (`PSALM_CUT`) com linha dupla marfim (`PSALM_EDGE`), ouro velho por

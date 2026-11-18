@@ -72,7 +72,14 @@ func _draw() -> void:
 static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent: Color) -> void:
 	var th := maxf(2.0, r * 0.14)
 	match i:
-		0, 14:  # flame
+		0:  # Brasas: three embers falling, small to large, each a bead of fire with its tail (the painted medallion's)
+			var fall := Vector2(0.45, 0.89)
+			for e: Vector3 in [Vector3(-0.5, -0.6, 0.13), Vector3(-0.45, 0.02, 0.17), Vector3(0.22, 0.3, 0.27)]:
+				var p := c + Vector2(e.x, e.y) * r
+				var side := fall.orthogonal() * e.z * r
+				ci.draw_colored_polygon(PackedVector2Array([p + side, p - fall * e.z * r * 3.2, p - side]), w)
+				ci.draw_circle(p, e.z * r, w)
+		14:  # flame
 			flame(ci, c, r, w)
 		1:  # whirl of fire: three arcs
 			for k in 3:
@@ -107,10 +114,12 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 4:
 				var a := -PI * 0.5 + (k - 1.5) * 0.5
 				ci.draw_line(c + Vector2(0, r * 0.6), c + Vector2(0, r * 0.6) + Vector2(cos(a), sin(a)) * r * 0.9, w, th * 0.6, true)
-		9, 15:  # shield
+		9, 15:  # shield with a four-pointed star of light on it (the painted Escudo da Vigília's; never a cross)
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.75, -r * 0.8), c + Vector2(r * 0.75, -r * 0.8), c + Vector2(r * 0.7, 0.1 * r), c + Vector2(0, r), c + Vector2(-r * 0.7, 0.1 * r)]), w)
-			ci.draw_line(c + Vector2(0, -r * 0.6), c + Vector2(0, r * 0.6), accent, th, true)
-			ci.draw_line(c + Vector2(-r * 0.45, -r * 0.2), c + Vector2(r * 0.45, -r * 0.2), accent, th, true)
+			var s := c + Vector2(0, -r * 0.12)
+			var t := r * 0.09
+			ci.draw_colored_polygon(PackedVector2Array([s + Vector2(0, -r * 0.55), s + Vector2(t, -t), s + Vector2(r * 0.4, 0), s + Vector2(t, t),
+				s + Vector2(0, r * 0.62), s + Vector2(-t, t), s + Vector2(-r * 0.4, 0), s + Vector2(-t, -t)]), accent)
 		10, 16, 17:  # wing (light steps)
 			for k in 4:
 				var y := -r * 0.6 + k * r * 0.38

@@ -59,13 +59,14 @@ func test_the_trial_card_shows_the_blessing_and_the_curse() -> void:
 		assert_eq(card.trial, c)
 		assert_eq(card.rarity, c.rarity as Boon.Rarity, "the blessing's rarity on the card")
 		assert_eq(card.edge_color(), BoonCard.rarity_color(card.rarity), "and on its edge, as any card")
-		# T5 (A-T5-5): the blessing's own medallion, the cracked diamond a small stamp on it
+		# T5 (A-T5-5): the blessing's own medallion; stage 1A: the cracked seal is the curse's, painted on its band
 		var medal := card.crest.get_node(^"Medal") as BoonIcon
 		assert_not_null(medal, "the blessing's medallion on top")
 		assert_eq(medal.icon, int(TrialSeal.blessing_look(c.blessing)[0]))
-		var stamp := card.crest.get_node(^"Stamp") as TrialSeal
-		assert_not_null(stamp, "the cracked diamond as a stamp")
-		assert_lt(stamp.side, medal.custom_minimum_size.x * 0.4, "small against the medallion")
+		var seal := card.find_child("CurseSeal", true, false) as TextureRect
+		assert_not_null(seal, "the painted cracked seal")
+		assert_eq(seal.texture, BoonArt.event(&"trial_seal"))
+		assert_true(card.find_child("CurseBand", true, false).is_ancestor_of(seal), "on the curse's band")
 		assert_eq((card.find_child("Name", true, false) as Label).text, T.t(c.blessing.name_key))
 		assert_eq((card.find_child("Rarity", true, false) as Label).text, T.t(Boon.RARITY_KEY[c.rarity]))
 		assert_eq((card.find_child("Blessing", true, false) as Label).text, TrialSeal.blessing_text(c))
@@ -230,11 +231,13 @@ func test_the_altar_screen_has_a_way_out_and_dims_what_is_out_of_reach() -> void
 	assert_eq(why.text, T.t(&"altar_why_gold", {"n": stage.altar_gold_cost}), "how much gold is missing")
 	for c in cards:
 		assert_eq(c.custom_minimum_size, BoonCard.ALTAR_SIZE, "smaller than a Blessing's card")
-		assert_true(c.crest is SealMedal, "a medallion in the house's seal")
-	# A-T5-6: life buys a pomegranate (never a heart: the trade takes life), the candles a flame, walking on an arch
-	assert_eq((cards[Altar.Option.LIFE].crest as SealMedal).glyph, SealMedal.Glyph.POMEGRANATE)
-	assert_eq((cards[Altar.Option.CANDLES].crest as SealMedal).glyph, SealMedal.Glyph.CANDLE)
-	assert_eq((cards.back().crest as SealMedal).glyph, SealMedal.Glyph.OPEN_ARCH)
+		assert_true(c.crest is TextureRect, "a painted medallion (stage 1A)")
+	# A-T5-6: life buys a pomegranate (never a heart: the trade takes life), the candles, walking on the open passage
+	assert_eq((cards[Altar.Option.LIFE].crest as TextureRect).texture, BoonArt.event(&"pomegranate"))
+	assert_eq((cards[Altar.Option.CANDLES].crest as TextureRect).texture, BoonArt.event(&"candles"))
+	assert_eq((cards.back().crest as TextureRect).texture, BoonArt.event(&"passage"))
+	for n: StringName in [&"pomegranate", &"candles", &"passage", &"trial_seal"]:
+		assert_not_null(BoonArt.event(n), String(n))
 	assert_lt(cards[0].custom_minimum_size.y, BoonCard.SIZE.y)
 	assert_eq((screen.find_child("Lead", true, false) as Label).text, T.t(&"altar_lead"))
 	watch_signals(screen)
@@ -262,8 +265,15 @@ func test_the_altar_cards_say_what_is_given_and_got() -> void:
 	assert_eq((candles.find_child("GetDetail", true, false) as Label).text,
 		T.t(&"altar_candles_get_detail", {"from": "50", "to": "75"}))
 	var none: BoonCard = cards.back()
-	assert_eq((none.find_child("Give", true, false) as Label).text, T.t(&"altar_nothing"), "walking on gives nothing")
-	assert_eq((none.find_child("Get", true, false) as Label).text, T.t(&"altar_nothing"))
+	assert_eq((none.find_child("Free", true, false) as Label).text, T.t(&"altar_free").to_upper(), "walking on costs nothing")
+	assert_null(none.find_child("Give", true, false))
+	# stage 1A: what is given and got carries the reward's mark, the same as on the doors and in the shop
+	assert_eq((life.find_child("GiveMark", true, false) as DoorGlyph).kind, DoorGlyph.Kind.HEART)
+	assert_eq((life.find_child("GetMark", true, false) as DoorGlyph).kind, DoorGlyph.Kind.POMEGRANATE)
+	assert_eq((candles.find_child("GiveMark", true, false) as DoorGlyph).kind, DoorGlyph.Kind.GOLD)
+	assert_eq((candles.find_child("GetMark", true, false) as DoorGlyph).kind, DoorGlyph.Kind.MAGICK)
+	assert_eq(DoorGlyph.of_reward(RunMap.Reward.POM), DoorGlyph.Kind.POMEGRANATE)
+	assert_eq(DoorGlyph.of_reward(RunMap.Reward.MAGICK), DoorGlyph.Kind.MAGICK)
 	for text in _labels(screen):
 		assert_false(text.contains("{"), "no key left unfilled: %s" % text)
 		assert_false(text.contains("—"), "no dash in %s" % text)
@@ -393,13 +403,22 @@ func test_the_doors_wear_their_pictograms_in_a_run() -> void:
 		else:
 			found += 1
 			assert_eq(sign.mark.kind, want)
+		# stage 1A: a reward's door carries the reward's mark by its name, the room's pictogram by the line under it
+		var reward := DoorGlyph.of_reward(rooms.next_rooms[i].reward)
+		if reward == DoorGlyph.Kind.NONE:
+			assert_null(sign.reward)
+		else:
+			assert_eq(sign.reward.kind, reward)
+			assert_eq(sign.reward.get_parent(), sign.title.get_parent(), "the reward's mark by its name")
+			if sign.mark != null and sign.detail != null:
+				assert_eq(sign.mark.get_parent(), sign.detail.get_parent(), "the room's pictogram by the line under it")
 	assert_gt(rooms.next_rooms.size(), 0)
 
 
 func test_the_new_words_are_in_the_text() -> void:
 	for k in [&"trial_card_for", &"trial_title", &"trial_hint", &"trial_step", &"altar_none", &"altar_none_desc",
 			&"altar_hint", &"altar_step", &"trial_slab_offer", &"trial_slab_refuse", &"trial_gain_when", &"trial_gain_keep",
-			&"trial_pick_hint", &"trial_blessing_word", &"altar_lead", &"altar_give", &"altar_get", &"altar_nothing",
+			&"trial_pick_hint", &"trial_blessing_word", &"altar_lead", &"altar_give", &"altar_get", &"altar_free",
 			&"altar_life_give", &"altar_life_give_detail", &"altar_life_get", &"altar_life_get_detail",
 			&"altar_candles_give", &"altar_candles_give_detail", &"altar_candles_get", &"altar_candles_get_detail",
 			&"altar_why_grow", &"altar_why_life", &"altar_why_gold", &"door_altar"]:

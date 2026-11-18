@@ -6,12 +6,23 @@ extends SceneTree
 ## outer links and the bronze rim (Redemoinho) keep their real contour; the dark metal inside the links stays. The edge is eroded one
 ## pixel (no dark fringe) and feathered over about two.
 ##   ~/tools/godot/godot --headless --path . -s tools/cut_medallions.gd   then: ~/tools/godot/godot --headless --path . --import
+## Any other board laid out in a grid (stage 1A of the art pack of 2026-11-17, docs/art/ref/direcao_2026-11-17/
+## pranchas/02-atlas-icones.png, local only, made by AI: four by three medallions on a dark blue ground):
+##   ... -s tools/cut_medallions.gd -- --board=/abs/atlas.png --grid=4x3 --names=boons/brasas,boons/toque_geada,,,...
+## names: one per cell, row by row, a path under assets/ui/ without ".png" (empty: the cell is skipped);
+## --out=/abs/dir writes there instead (to look first). The blue ground has no grey shadow: the mask also stops at the
+## round rim (the circle inside the cell's square), so no halo of the board is kept.
 
 const BOARD := "res://docs/art/ref/boon_cards/02_medalhoes.png"
 const OUT_DIR := "res://assets/ui/boons/"
 const IDS: Array[String] = ["vapor", "aurora", "redemoinho"]
 ## Output side in pixels: the card shows the medallion at up to about 200 px at 1080 lines.
 const SIDE := 512
+## The grid board's medallions are about 280 px across: 384 keeps them sharp without inventing detail.
+const GRID_SIDE := 384
+## On the blue board a faint glow surrounds some medallions (Maré de Luz, Passagem): only the rim and what is inside
+## it are this far from the ground.
+const GRID_FAR := 0.16
 ## A pixel reached from outside is background while its largest channel difference from the grey stays under this.
 const NEAR := 0.06
 ## A pixel no lighter than the background and this close to grey is the board's drop shadow.
@@ -21,6 +32,11 @@ const FAR := 0.075
 
 
 func _initialize() -> void:
+	var args := _args()
+	if args.has("board"):
+		_cut_grid(args)
+		quit()
+		return
 	var board := Image.load_from_file(ProjectSettings.globalize_path(BOARD))
 	board.convert(Image.FORMAT_RGBA8)
 	var bg := _average(board, Rect2i(4, 4, 24, 24))
@@ -35,6 +51,49 @@ func _initialize() -> void:
 		out.save_png(path)
 		print("MEDALLION %s box=%s -> %s" % [IDS[i], box, path])
 	quit()
+
+
+func _args() -> Dictionary:
+	var out := {}
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--") and a.contains("="):
+			out[a.substr(2, a.find("=") - 2)] = a.substr(a.find("=") + 1)
+	return out
+
+
+## The grid board: each named cell's medallion, masked by the flood from outside and by its round rim.
+func _cut_grid(args: Dictionary) -> void:
+	var board := Image.load_from_file(String(args.board))
+	board.convert(Image.FORMAT_RGBA8)
+	var grid := String(args.get("grid", "4x3")).split("x")
+	var cols := int(grid[0])
+	var rows := int(grid[1])
+	var names := String(args.get("names", "")).split(",")
+	var out_dir := String(args.get("out", ProjectSettings.globalize_path("res://assets/ui/")))
+	var bg := _average(board, Rect2i(4, 4, 24, 24))
+	var cw := board.get_width() / cols
+	var ch := board.get_height() / rows
+	for i in mini(names.size(), cols * rows):
+		if names[i] == "":
+			continue
+		var region := Rect2i((i % cols) * cw, (i / cols) * ch, cw, ch)
+		var box := _bounds(board, region, bg, GRID_FAR)
+		var img := _tight(_cut(board, box, bg, true))
+		img.resize(GRID_SIDE, GRID_SIDE, Image.INTERPOLATE_LANCZOS)
+		var path := out_dir.path_join(names[i] + ".png")
+		DirAccess.make_dir_recursive_absolute(path.get_base_dir())
+		img.save_png(path)
+		print("MEDALLION %s box=%s bg=%s -> %s" % [names[i], box, bg, path])
+
+
+## The square around what the mask kept (a glow on the board may have widened the first square), one pixel of air.
+func _tight(img: Image) -> Image:
+	var r := img.get_used_rect()
+	var side := maxi(r.size.x, r.size.y) + 2
+	var c := r.get_center()
+	var out := Image.create(side, side, false, Image.FORMAT_RGBA8)
+	out.blit_rect(img, r, Vector2i(side / 2 - (c.x - r.position.x), side / 2 - (c.y - r.position.y)))
+	return out
 
 
 func _average(img: Image, r: Rect2i) -> Color:
@@ -60,7 +119,7 @@ func _far(c: Color, bg: Color) -> float:
 
 ## The square around the medallion in a region: the extent of the pixels far from the background (a few stray ones
 ## do not count: a row or column needs several).
-func _bounds(img: Image, region: Rect2i, bg: Color) -> Rect2i:
+func _bounds(img: Image, region: Rect2i, bg: Color, far: float = FAR) -> Rect2i:
 	var x0 := region.end.x
 	var x1 := region.position.x
 	var y0 := region.end.y
@@ -70,7 +129,7 @@ func _bounds(img: Image, region: Rect2i, bg: Color) -> Rect2i:
 		var first := -1
 		var last := -1
 		for x in range(region.position.x, region.end.x):
-			if _far(img.get_pixel(x, y), bg) > FAR:
+			if _far(img.get_pixel(x, y), bg) > far:
 				n += 1
 				if first < 0:
 					first = x
@@ -85,7 +144,7 @@ func _bounds(img: Image, region: Rect2i, bg: Color) -> Rect2i:
 	return Rect2i(c - Vector2i(side, side) / 2, Vector2i(side, side))
 
 
-func _cut(img: Image, box: Rect2i, bg: Color) -> Image:
+func _cut(img: Image, box: Rect2i, bg: Color, round_rim: bool = false) -> Image:
 	var w := box.size.x
 	var r := w * 0.5
 	# everything is the medallion except the background reached from outside: a flood over near-grey pixels (the dark
@@ -98,7 +157,7 @@ func _cut(img: Image, box: Rect2i, bg: Color) -> Image:
 	for y in w:
 		for x in w:
 			var p := box.position + Vector2i(x, y)
-			var out_of := Vector2(x + 0.5 - r, y + 0.5 - r).length() > r * 1.01
+			var out_of := Vector2(x + 0.5 - r, y + 0.5 - r).length() > r * (0.995 if round_rim else 1.01)
 			var inside := p.x >= 0 and p.y >= 0 and p.x < img.get_width() and p.y < img.get_height()
 			near[y * w + x] = 1 if out_of or not inside or _background(img.get_pixel(p.x, p.y), bg) else 0
 	var todo: Array[Vector2i] = []
