@@ -5,6 +5,8 @@ extends RefCounted
 ## arches, plinths, clay pots. Everything goes under `root`; nothing here blocks the way (CatacombHall records that).
 
 const SHADER := preload("res://assets/shaders/masonry.gdshader")
+## Its twin in the stylized look (STY-04; ArenaKit.paint_look puts it through VisualProfile).
+const PAINT_SHADER := preload("res://assets/shaders/masonry_paint.gdshader")
 const DEPTH_SHADER := preload("res://assets/shaders/depth_stone.gdshader")
 ## Relief of real stone (Poly Haven "Rock Surface", CC0, docs/art/asset_credits.md) under the painted colour.
 const ROCK_NORMAL := preload("res://assets/textures/rock_surface/rock_surface_nor_gl_1k.jpg")
@@ -88,6 +90,11 @@ const CANDLE_FLAME := 0.34
 const CANDLE_FIRE := Color(2.3, 1.1, 0.35)
 const CANDLE_CORE := Color(2.6, 2.0, 1.1)
 const CANDLE_CORE_SIZE := 0.55
+## The stylized look (STY-04, stylized_spec 1.3 T6): the wax a share of its value (it burnt white under the warm air)
+## and the flame amber, never white (its core under the glow threshold: luma up to 200 on the screen).
+const STY_WAX := 0.7
+const STY_CANDLE_FIRE := Color(1.3, 0.6, 0.16)
+const STY_CANDLE_CORE := Color(1.1, 0.72, 0.28)
 ## Terracotta, dark in the shade (cycle 6: the pots were too orange).
 const CLAY := Color(0.45, 0.18, 0.1)
 const CLAY_RIM := 0.08
@@ -881,6 +888,9 @@ func _wax_ready() -> void:
 	var size := Vector2(CANDLE_FLAME * 0.6, CANDLE_FLAME * 1.3)
 	_flame = ArenaKit.tongue(size, CANDLE_FIRE)
 	_flame_core = ArenaKit.tongue(size * CANDLE_CORE_SIZE, CANDLE_CORE)
+	VisualProfile.vary(_wax, {&"albedo_color": WAX * STY_WAX})
+	VisualProfile.vary(_flame.material, {&"albedo_color": STY_CANDLE_FIRE})
+	VisualProfile.vary(_flame_core.material, {&"albedo_color": STY_CANDLE_CORE})
 
 
 const CANDLE_WAX_SEE := preload("res://assets/shaders/candle_wax_see.gdshader")
@@ -961,6 +971,11 @@ func _wood_mat(base_y: float, value: float) -> ShaderMaterial:
 		w.set_shader_parameter(&"rock_height", ROCK_HEIGHT)
 		_wood[key] = w
 	return _wood[key]
+
+
+## True for the crates' wood (it keeps its own colour in the stylized look).
+func is_wood(mat: Material) -> bool:
+	return _wood.values().has(mat)
 
 
 func _add(mi: GeometryInstance3D) -> void:

@@ -356,8 +356,20 @@ const LANTERN_BAR := 0.05
 const LANTERN_UPRIGHTS := 1
 const LANTERN_CROSSES := 1
 
+## The stylized look (STY-04; docs/art/stylized_spec.md 1.3, T4): the fires make short pools with a drawn edge (the
+## painted light's bands cut the falloff into rings): range of a fire bowl's and of a candle cluster's light, the
+## bowls' steeper falloff (the candles keep theirs: a steeper one burnt their own wax white), their energy as a share
+## of the classic one. The key light over the middle is off (the hall's light is the
+## warm ambient and the key from behind the camera, VisualProfile; an omni over the middle drew rings on the floor).
+const STY_BOWL_RANGE := 4.5
+const STY_CANDLE_RANGE := 3.5
+const STY_BOWL_ATTENUATION := 1.5
+const STY_BOWL_GAIN := 0.5
+const STY_CANDLE_GAIN := 0.6
+
 var arena: Arena
 var kit: ArenaKit
+var _key: OmniLight3D
 var m: Masonry
 var _rng := RandomNumberGenerator.new()
 
@@ -394,6 +406,25 @@ func build(exit_count: int) -> void:
 	m.merge()
 	a.pillars.append_array(kit.circles)
 	a.boxes.append_array(kit.boxes)
+	_stylize()
+
+
+## The stylized look's numbers (VisualProfile): the painted stone, floor and kit (ArenaKit.paint_look), the fires'
+## pools, the key off. Nothing here moves a piece or touches what blocks.
+func _stylize() -> void:
+	kit.paint_look()
+	for n in arena.find_children("*", "OmniLight3D", true, false):
+		var l := n as OmniLight3D
+		if l == _key:
+			VisualProfile.vary(l, {&"visible": false})
+		elif l.light_color.r - l.light_color.b >= RoomMood.FIRE_FROM and l.light_cull_mask != ArenaKit.DEPTH_LAYER:
+			# the bowls cast shadows, the candles do not
+			var bowl := l.shadow_enabled
+			VisualProfile.vary(l, {
+				&"omni_range": STY_BOWL_RANGE if bowl else STY_CANDLE_RANGE,
+				&"omni_attenuation": STY_BOWL_ATTENUATION if bowl else l.omni_attenuation,
+				&"light_energy": l.light_energy * (STY_BOWL_GAIN if bowl else STY_CANDLE_GAIN),
+			})
 
 
 # ---------- the floor, its lip and the cliffs under it ----------
@@ -404,6 +435,7 @@ func _floor() -> void:
 	kit.abyss(HALF, DEPTH, false)
 	_cliff(Rect2(-HALF, HALF * 2.0))
 	var key := OmniLight3D.new()
+	_key = key
 	key.position = Vector3(MEDALLION_AT.x, KEY_HEIGHT, MEDALLION_AT.y)
 	key.light_color = KEY_LIGHT
 	key.light_energy = KEY_ENERGY
