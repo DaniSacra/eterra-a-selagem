@@ -1404,6 +1404,31 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ele recua `blade_step` 2 m em `blade_step_time` 0,25 s e as faixas saem de onde ele termina. Fase 1 em 3 sementes:
   foice 91% para 62%, maior sequência igual 9 para 2 (`tools/boss_cadence.gd --cadence-log`).
 
+## Prova estilizada (STY-03 a STY-05, cenário; spec `docs/art/stylized_spec.md`, plano `docs/art/stylized_poc_plan.md`)
+- Perfil visual reversível (`VisualProfile`, `core/visual_profile.gd`): `Look.CLASSIC` (padrão) e `STYLIZED`, `--look=classic|stylized`,
+  **F7** troca ao vivo também no exe (ação `look_toggle`, lida no `Game._process`), global de shader `art_style` (0 ou 1).
+  Um look é uma lista de valores ao lado de cada peça: `VisualProfile.vary(objeto, {propriedade: valor estilizado})` guarda o
+  valor de agora como o clássico (referência fraca) e aplica o do look em curso; vale para material (`shader`,
+  `shader_parameter/x`, `albedo_color`), luz, `visible` e `Environment`. O clássico é a peça como foi montada: nenhum
+  shader clássico inclui a pintura, então o quadro clássico é o de antes (testado: `tests/test_visual_profile.gd` monta o
+  salão, troca duas vezes e compara todo material, luz, visibilidade e a colisão).
+- Pintura: `paint.gdshaderinc` (`light()` em três faixas 0,42 / 0,72 / 1,0 com cortes 0,3 e 0,65, sombra quase neutra fria,
+  poça das chamas com borda `paint_pool`, brilho só no chão molhado; pincelada em mundo de 0,6 e 0,15 m esticada 2:1 em três
+  degraus 0,88 a 1,12 e ±4 graus de matiz; `paint_recolor` leva qualquer pedra à pedra morna `paint_stone` mantendo o valor; aresta
+  clara `PAINT_RIM` nos props). Gêmeos com `#define PAINT`: `masonry_paint.gdshader` (corpo em `masonry.gdshaderinc`: valor e
+  matiz por bloco, oliva em 1 de 8, lábio claro no topo, juntas frias e escuras) e `catacomb_floor_paint.gdshader` (lajes
+  mornas, juntas frias, medalhão sem ouro nem brilho, S-Q6; chão escurece para a borda `edge_*`); `kaykit_paint.gdshader` e
+  `assets/models/kaykit_paint.tres` (paleta do KayKit pintada). `ArenaKit.paint_look()` troca o shader de toda pedra, chão
+  e peça do KayKit da sala (madeira com `paint_keep`); estandartes de leão ganham um gêmeo petróleo (`BANNER_PAINT_*`, um em
+  dois rasgado) mostrado só no estilizado. Ar (`VisualProfile.dress_world`, chamado no `_build_world`): ambiente morno
+  `AMBIENT` x `AMBIENT_GAIN` 1,2, névoa 0,4, saturação 0,77, lua vira luz de chave de trás da câmera (`KEY_*`, 1,6); no
+  Compatibility a chave a `COMPAT_KEY` 0,12 e a saturação 0,8 (lá a pedra pintada clareava demais). Salão
+  (`CatacombHall._stylize`): luz do meio apagada, braseiros 4,5 m e velas 3,5 m de alcance com metade da energia, velas
+  com cera mais escura e chama âmbar sob o glow (`Masonry.STY_*`). O salão não tem parede nem pilar do KayKit (já é cantaria):
+  STY-05 nele são os estandartes e os props. Nada muda colisão. Outras arenas recebem só o que passar pelo `ArenaKit` e podem
+  ficar incompletas. Medido (1920 x 1080 RTX, Alta, vitrine): 144 qps clássico, 141 estilizado; iGPU Baixa 1280 x 720: 58/54
+  contra 55/54; nenhuma textura nova.
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

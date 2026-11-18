@@ -24,15 +24,19 @@ const GLOBAL := &"art_style"
 ## middle of the floor reads light with no fire near (never a light washing a wall), the fog in the air down to 40%,
 ## the frame a little less saturated (the painting comes from value, not colour: the R1's p90 saturation is 15).
 const AMBIENT := Color(0.78, 0.74, 0.68)
-const AMBIENT_GAIN := 2.4
+const AMBIENT_GAIN := 1.2
 const FOG_IN_AIR := 0.4
-const SATURATION := 0.88
+const SATURATION := 0.77
 ## The key: one directional light from high behind the camera, a little to its right, with a sharp shadow
 ## (rotation in degrees: pitch, yaw; colour; energy; shadow blur).
 const KEY_ROTATION := Vector3(-60.0, 52.0, 0.0)
 const KEY_COLOR := Color(1.0, 0.94, 0.84)
-const KEY_ENERGY := 0.55
+const KEY_ENERGY := 1.6
 const KEY_BLUR := 0.7
+## The browser's renderer (Compatibility) lights the painted stone brighter and more saturated than the desktop's:
+## the key and the saturation a share there (as Game.COMPAT_* does for the classic look).
+const COMPAT_KEY := 0.12
+const COMPAT_SATURATION := 0.8
 
 static var _look := -1
 ## [WeakRef, classic values, stylized values]
@@ -139,17 +143,18 @@ static func release(object: Object) -> void:
 ## The world: the Environment and the key light (Game._build_world). Their classic values are as built (with the
 ## browser's compensation, Game.COMPAT_*), the stylized ones a share of them where they scale.
 static func dress_world(env: Environment, key: DirectionalLight3D) -> void:
+	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
 	if env != null:
 		vary(env, {
 			&"ambient_light_color": AMBIENT,
 			&"ambient_light_energy": env.ambient_light_energy * AMBIENT_GAIN,
 			&"volumetric_fog_density": env.volumetric_fog_density * FOG_IN_AIR,
-			&"adjustment_saturation": env.adjustment_saturation * SATURATION,
+			&"adjustment_saturation": env.adjustment_saturation * SATURATION * (COMPAT_SATURATION if compat else 1.0),
 		})
 	if key != null:
 		vary(key, {
-			&"rotation_degrees": KEY_ROTATION, &"light_color": KEY_COLOR, &"light_energy": KEY_ENERGY,
-			&"shadow_blur": KEY_BLUR,
+			&"rotation_degrees": KEY_ROTATION, &"light_color": KEY_COLOR,
+			&"light_energy": KEY_ENERGY * (COMPAT_KEY if compat else 1.0), &"shadow_blur": KEY_BLUR,
 		})
 	set_look(current())
 

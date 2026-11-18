@@ -113,6 +113,29 @@ uniform vec3 clearing_color : source_color = vec3(0.6, 0.58, 0.57);
 uniform float clearing_scale = 0.11;
 uniform vec2 clearing_cut = vec2(0.46, 0.7);
 
+#ifdef PAINT
+#include "res://assets/shaders/paint.gdshaderinc"
+// The stylized look (stylized_spec 1.3 and 4.3): the painted stone at the classic floor's mean value (floor_ref, its
+// luma), each slab's value range and hue swing (degrees), one slab in olive_share toward the olive; the rock relief
+// and its value as shares of the classic ones; joints, cracks and the medallion's lines at this share of the slab's
+// value, a little cold; the bevel's darkening by the joint; the floor's value toward the room's edge (from the calm
+// radius times edge_from to times edge_to); the pale clearings as a share of the classic ones; how much of the big
+// washes is left.
+uniform vec3 floor_stone : source_color = vec3(0.325, 0.315, 0.29);
+uniform float floor_ref = 0.33;
+uniform vec2 slab_paint = vec2(0.85, 1.12);
+uniform float slab_hue = 5.0;
+uniform float olive_share = 0.125;
+uniform float paint_rock = 0.3;
+uniform float joint_value = 0.4;
+uniform vec3 joint_cold : source_color = vec3(0.93, 0.96, 1.05);
+uniform float paint_bevel = 0.75;
+uniform float edge_value = 0.72;
+uniform vec2 edge_span = vec2(0.9, 1.7);
+uniform float paint_clearing = 0.4;
+uniform float paint_washes = 0.5;
+#endif
+
 varying vec3 world;
 
 float hash1(vec2 p) {
@@ -382,21 +405,45 @@ void fragment() {
 	float nick = max(0.0, noise(wp * 7.0 + id * 2.0) - 0.62) * 0.35;
 	edge -= nick;
 	float rnd = hash1(id);
-	vec3 c = mix(stone_a, stone_b, rnd);
+#ifdef PAINT
+	vec3 sa = floor_stone * (paint_luma(stone_a) / floor_ref);
+	vec3 sb = floor_stone * (paint_luma(stone_b) / floor_ref);
+	vec3 c = mix(sa, sb, rnd);
+	c *= mix(slab_paint.x, slab_paint.y, hash1(id + 9.0));
+	c = paint_hue(c, (hash1(id + 13.0) - 0.5) * 2.0 * slab_hue);
+	if (hash1(id + 15.0) < olive_share) {
+		c = paint_olive(c);
+	}
+	float rock_value_ = rock_value * paint_rock;
+	float rock_relief_ = rock_relief * paint_rock;
+#else
+	vec3 sa = stone_a;
+	vec3 sb = stone_b;
+	vec3 c = mix(sa, sb, rnd);
 	c *= mix(slab_value.x, slab_value.y, hash1(id + 9.0));
 	float tint = hash1(id + 13.0);
 	if (tint < tinted * 0.5) { c *= vec3(0.92, 1.0, 1.08); } else if (tint < tinted) { c *= vec3(1.08, 1.0, 0.92); }
+	float rock_value_ = rock_value;
+	float rock_relief_ = rock_relief;
+#endif
 	// the real stone's relief, shifted on each slab so no two match
 	vec2 ruv = wp * rock_scale + id * 0.37;
 	float rh = texture(rock_height, ruv).r;
 	// the normal is stored in two channels (BC5, compress/normal_map): its z is rebuilt
 	vec2 rxy = texture(rock_normal, ruv).rg * 2.0 - 1.0;
 	vec3 rn = vec3(rxy, sqrt(max(1.0 - dot(rxy, rxy), 0.0)));
-	c *= mix(1.0 - rock_value, 1.0 + rock_value * 0.5, smoothstep(0.2, 0.8, rh));
+	c *= mix(1.0 - rock_value_, 1.0 + rock_value_ * 0.5, smoothstep(0.2, 0.8, rh));
 	// painted wash inside each slab
 	float wash = fbm(wp * 0.45 + id * 3.1);
+#ifdef PAINT
+	// the brush along the slab's long side; dry moss in olive, not teal
+	c = paint_brushed(c, wp + id * 1.3, rect.z >= rect.w ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
+	c = mix(c, paint_olive(c) * 0.9, smoothstep(0.62, 0.8, fbm(wp * 0.3 + 11.0)) * 0.3);
+	vec3 hollow_c = c * joint_value * joint_cold;
+#else
 	c *= 0.78 + 0.44 * wash;
 	c = mix(c, moss_color, smoothstep(0.62, 0.8, fbm(wp * 0.3 + 11.0)) * 0.3);
+#endif
 	// a corner missing on some slabs: gravel in a triangle
 	float gone = 0.0;
 	if (hash1(id + 21.0) < missing) {
@@ -409,19 +456,34 @@ void fragment() {
 	// cracks across a share of the slabs, thinner toward the slab's middle
 	float cn = fbm(wp * 1.3 + id * 5.0);
 	float thin = mix(0.008, 0.02, smoothstep(0.0, 0.6, min(half_size.x - abs(lp.x), half_size.y - abs(lp.y)) < 0.6 ? 0.0 : 0.6));
+#ifdef PAINT
+	float crack = (1.0 - smoothstep(0.0, mix(0.01, 0.004, smoothstep(0.1, 0.7, edge)), abs(cn - 0.5))) * step(hash1(id + 3.0), cracked);
+	c = mix(c, hollow_c, crack * 0.85);
+	// big washes, fainter (the painted value is per slab), and the floor darker toward the room's edge
+	float big = fbm(wp * 0.07 + 3.0);
+	c *= 1.0 - 0.3 * paint_washes + 0.6 * paint_washes * big;
+	c *= mix(1.0, edge_value, smoothstep(calm_radius * edge_span.x, calm_radius * edge_span.y, length(wp)));
+#else
 	float crack = (1.0 - smoothstep(0.0, mix(0.02, 0.008, smoothstep(0.1, 0.7, edge)), abs(cn - 0.5))) * step(hash1(id + 3.0), cracked);
 	c = mix(c, crack_color, crack * 0.85);
 	// big painted washes across the whole floor
 	float big = fbm(wp * 0.07 + 3.0);
 	c *= 0.7 + 0.6 * big;
 	c = mix(c, c * vec3(0.85, 1.0, 1.08), smoothstep(0.4, 0.7, fbm(wp * 0.12 + 20.0)));
+#endif
 	// the calm middle: less contrast where the fight is
 	float calm = 1.0 - smoothstep(calm_radius * 0.6, calm_radius, length(wp));
-	vec3 mean = (stone_a + stone_b) * 0.5;
+	vec3 mean = (sa + sb) * 0.5;
 	c = mix(c, mix(mean, c, calm_contrast), calm);
 	// the pale clearings over the slabs (each slab keeps its wash and relief under the dust)
+#ifdef PAINT
+	float cleared = smoothstep(clearing_cut.x, clearing_cut.y, fbm(wp * clearing_scale + 31.0)) * clearing * paint_clearing;
+	vec3 clear_c = clearing_color * vec3(1.02, 1.0, 0.92);
+#else
 	float cleared = smoothstep(clearing_cut.x, clearing_cut.y, fbm(wp * clearing_scale + 31.0)) * clearing;
-	c = mix(c, clearing_color * (0.8 + 0.3 * wash) * mix(1.0 - rock_value * 0.5, 1.0, smoothstep(0.2, 0.8, rh)), cleared);
+	vec3 clear_c = clearing_color;
+#endif
+	c = mix(c, clear_c * (0.8 + 0.3 * wash) * mix(1.0 - rock_value_ * 0.5, 1.0, smoothstep(0.2, 0.8, rh)), cleared);
 	// the medallion carved in the slabs (worked out only under it)
 	vec2 tilt_m = vec2(0.0);
 	vec4 rose = vec4(1.0, 0.0, 0.0, 0.0);
@@ -432,13 +494,22 @@ void fragment() {
 	}
 	// the band is its own stone: the slabs' values do not show through it
 	float on_band = step(0.5, rose.z) * step(rose.z, 1.5) * under;
-	c = mix(c, mean * mix(1.0 - rock_value, 1.0 + rock_value * 0.5, smoothstep(0.2, 0.8, rh)) * (0.85 + 0.3 * wash), on_band);
+	c = mix(c, mean * mix(1.0 - rock_value_, 1.0 + rock_value_ * 0.5, smoothstep(0.2, 0.8, rh)) * (0.85 + 0.3 * wash), on_band);
 	c *= rose.x;
 	// the bevel and the joint (faded under the medallion)
 	float joint_k = mix(1.0, rose.z > 1.5 ? point_joints : ring_joints, under * min(rose.z, 1.0));
 #ifdef CHAMBER
 	joint_k *= chamber_joints(wp);
 #endif
+#ifdef PAINT
+	// the joint drawn at a share of the slab's value, never black; the medallion's lines in the joint's value, no gold
+	c *= mix(1.0, mix(paint_bevel, 1.0, smoothstep(joint_width, joint_width + bevel, edge)), joint_k);
+	float joint = (1.0 - smoothstep(joint_width * 0.5, joint_width, edge)) * joint_k;
+	vec3 gravel = hollow_c * (0.85 + 0.3 * noise(wp * 30.0));
+	c = mix(c, gravel, max(joint, gone));
+	c = mix(c, hollow_c, clamp(rose.w, 0.0, 1.0) * groove_cover);
+	c = mix(c, hollow_c, rose.y * metal_cover);
+#else
 	c *= mix(1.0, mix(0.6, 1.0, smoothstep(joint_width, joint_width + bevel, edge)), joint_k);
 	float joint = (1.0 - smoothstep(joint_width * 0.5, joint_width, edge)) * joint_k;
 	vec3 gravel = joint_color * (0.7 + 0.9 * noise(wp * 30.0));
@@ -446,13 +517,16 @@ void fragment() {
 	// the grooves, runes and cracks, and the thread of dark bronze in them
 	c = mix(c, joint_color * groove_dark, clamp(rose.w, 0.0, 1.0) * groove_cover);
 	c = mix(c, mix(gold_dark, gold_light, noise(wp * 6.0)), rose.y * metal_cover);
+#endif
 	// red petals in rare clusters, near the slabs' edges
 	vec2 pc = floor(wp / 0.35);
 	vec2 pf = fract(wp / 0.35) - 0.5;
 	float cluster = smoothstep(0.78, 0.86, fbm(wp * 0.35 + 40.0));
 	float petal_r = mix(0.08, 0.2, hash1(pc + 2.0)) / 0.35 * 0.5;
 	float petal = step(length(pf - (vec2(hash1(pc), hash1(pc + 1.0)) - 0.5) * 0.5), petal_r) * step(hash1(pc + 4.0), 0.35);
+#ifndef PAINT
 	c = mix(c, petal_color, petal * cluster * (1.0 - smoothstep(0.15, 0.6, edge)) * (1.0 - joint) * (1.0 - under));
+#endif
 	// wet: in front of the portal and round the fire bowls only
 	vec2 wz = step(wet_zone.xy, wp) * step(wp, wet_zone.zw);
 	float wet = wz.x * wz.y * smoothstep(0.3, 0.6, fbm(wp * 0.5 + 5.0));
@@ -464,14 +538,19 @@ void fragment() {
 	}
 	wet *= 1.0 - joint * 0.5;
 	c *= mix(1.0, 0.8, wet);
+#ifdef PAINT
+	float rough = mix(mix(0.92, 0.97, hash1(id + 31.0)), wet_roughness, wet);
+	vec3 emit = vec3(0.0);
+#else
 	float rough = mix(mix(dry_roughness.x, dry_roughness.y, hash1(id + 31.0)), wet_roughness, wet);
 	vec3 emit = gold_light * rose.y * ring_glow;
+#endif
 	// the normal: the slab's own slight tilt, its bevel leaning out toward the joint, the medallion's relief
 	vec2 lean = (vec2(hash1(id + 41.0), hash1(id + 43.0)) - 0.5) * 2.0 * tan(radians(slab_tilt)) * (1.0 - on_band);
 	float b = (1.0 - smoothstep(bevel * 0.6, bevel, edge)) * (1.0 - joint) * joint_k;
 	lean += out_dir * b * bevel_tilt;
 	lean += tilt_m * under;
-	lean += vec2(rn.x, -rn.y) * rock_relief * (1.0 - joint);
+	lean += vec2(rn.x, -rn.y) * rock_relief_ * (1.0 - joint);
 #ifdef CHAMBER
 	chamber_floor(wp, id, rect, joint, c, emit, lean, rough);
 #endif
@@ -480,7 +559,11 @@ void fragment() {
 #endif
 	ALBEDO = c;
 	ROUGHNESS = rough;
+#ifdef PAINT
+	SPECULAR = 0.15;
+#else
 	SPECULAR = 0.2;
+#endif
 	EMISSION = emit;
 	vec3 nw = normalize(vec3(lean.x, 1.0, lean.y));
 	NORMAL = normalize((VIEW_MATRIX * vec4(nw, 0.0)).xyz);

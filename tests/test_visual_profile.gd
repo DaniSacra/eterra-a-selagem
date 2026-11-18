@@ -66,3 +66,95 @@ func test_freed_objects_are_dropped() -> void:
 	VisualProfile.toggle()
 	VisualProfile.toggle()
 	assert_eq(VisualProfile.count(), before)
+
+
+func _hall() -> Arena:
+	var stage: StageDef = load(STAGE)
+	for l in stage.layouts:
+		if l.id == &"hall":
+			var a := Arena.new()
+			add_child_autofree(a)
+			a.build(l, 3, 1406)
+			return a
+	return null
+
+
+## Every material, light and visibility of the hall as one text: shaders, their parameters, the material overrides,
+## the lights' range, falloff and energy, which nodes are shown.
+func _snapshot(root: Node) -> PackedStringArray:
+	var out := PackedStringArray()
+	for n in root.find_children("*", "Node3D", true, false):
+		var line := "%s v%s" % [root.get_path_to(n), n.visible]
+		if n is GeometryInstance3D:
+			var g := n as GeometryInstance3D
+			var mats: Array = [g.material_override]
+			if g is MeshInstance3D and (g as MeshInstance3D).mesh != null:
+				var mesh := (g as MeshInstance3D).mesh
+				for i in mesh.get_surface_count():
+					mats.append(mesh.surface_get_material(i))
+			for m: Material in mats:
+				line += " | " + _material(m)
+		elif n is Light3D:
+			var l := n as Light3D
+			line += " %s %s %s" % [l.light_energy, l.light_color, l.get_param(Light3D.PARAM_RANGE)]
+			if l is OmniLight3D:
+				line += " %s" % (l as OmniLight3D).omni_attenuation
+		out.append(line)
+	return out
+
+
+func _material(m: Material) -> String:
+	if m == null:
+		return "-"
+	if m is ShaderMaterial:
+		var s := m as ShaderMaterial
+		var t := str(s.shader.resource_path if s.shader != null else "")
+		if s.shader != null:
+			for u: Dictionary in s.shader.get_shader_uniform_list():
+				t += " %s=%s" % [u.name, s.get_shader_parameter(u.name)]
+		return t
+	if m is StandardMaterial3D:
+		var b := m as StandardMaterial3D
+		return "std %s %s" % [b.albedo_color, b.emission]
+	return str(m)
+
+
+func test_the_hall_classic_changes_nothing_and_the_switch_comes_back() -> void:
+	var a := _hall()
+	var before := _snapshot(a)
+	var pillars := a.pillars.duplicate()
+	var boxes := a.boxes.duplicate()
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var styled := _snapshot(a)
+	assert_ne(styled, before, "the stylized look changes the hall")
+	var painted := 0
+	for line in styled:
+		if line.contains("_paint.gdshader"):
+			painted += 1
+	assert_gt(painted, 10, "stone, floor and kit painted")
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	var back := _snapshot(a)
+	assert_eq(back.size(), before.size())
+	var differ := 0
+	for i in mini(back.size(), before.size()):
+		if back[i] != before[i]:
+			differ += 1
+			if differ < 4:
+				gut.p("differs: %s\n  was: %s" % [back[i], before[i]])
+	assert_eq(differ, 0, "classic is the hall as built")
+	assert_eq(a.pillars, pillars, "the same circles")
+	assert_eq(a.boxes, boxes, "the same boxes")
+
+
+func test_the_hall_built_while_stylized_comes_back_to_classic() -> void:
+	var classic := _snapshot(_hall())
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var a := _hall()
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	var back := _snapshot(a)
+	var differ := 0
+	for i in mini(back.size(), classic.size()):
+		if back[i].get_slice(" ", 1) != classic[i].get_slice(" ", 1):
+			differ += 1
+	assert_eq(back.size(), classic.size())
+	assert_eq(differ, 0, "the same visibility either way")
