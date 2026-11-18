@@ -117,6 +117,15 @@ const REARM := 0.5
 const ATTACK_PLAY := 1.4
 ## T5-12: seconds at least between the end of a recovery and the next wind-up.
 const AFTER_RECOVER := 0.25
+## C17, QW-105 (CF-08): up to this many seconds more, drawn for each recovery, so two bodies (or one body twice) never
+## strike on the same beat (a soldier struck every 215 frames exactly, 15 times in a row).
+const AFTER_RECOVER_JITTER := 0.5
+## C17, QW-105 (CF-08, CF-11): after this many close slams in a row the knight (and the brute) backs off two steps
+## (KNIGHT_BACK_OFF seconds) and charges from there; it walks again toward the paladin only once he is
+## MELEE_WALK_BAND m past where it stopped (it changed between walking and standing 0.88 times a second).
+const KNIGHT_SLAMS := 3
+const KNIGHT_BACK_OFF := 0.6
+const MELEE_WALK_BAND := 0.8
 ## T5-10: degrees a second it turns back to the paladin at the end of its recovery.
 const RECOVER_TURN := 360.0
 ## T5b P1-5 (docs/qa/t5b_boss_fight.md): seconds a body that has just risen waits before its first wind-up (its cooldown
@@ -170,6 +179,10 @@ var stuck_by := {}
 ## Blows that stunned someone, and attacks those blows cut, this run (GF-12; RESULT flinches, interrupts).
 var flinches := 0
 var interrupts := 0
+## DT-102 (RESULT windups): by kind, the wind-ups started, those that reached their blow (or shot) and those cut (by a
+## stun, the armour breaking or death): id -> [started, struck, cut].
+var windups := {}
+var _cutting := false
 ## The way the enemy behaving now walks toward the paladin (_way).
 var _walk := Vector2.ZERO
 var _dt := 0.0
@@ -248,6 +261,7 @@ func step(dt: float) -> void:
 		e.last_pos = e.pos
 	for e in list:
 		_timers(e, dt)
+		e.facing_him = false
 		if e.alive and not e.helpless():
 			acting = e.def.id
 			acting_pos = e.pos
@@ -337,7 +351,7 @@ func _drawn_motion(e: Enemy, dt: float) -> void:
 	var speed := e.vel.length()
 	var steps := renderer != null and renderer.kind(e.def).model.frame_count(&"strafe_l") > 0
 	var wants := e.face_walk
-	if e.state != Enemy.State.WALK or speed < (WALK_FROM if not steps else FACE_SPEED_BACK if e.face_walk else FACE_SPEED):
+	if e.state != Enemy.State.WALK or e.facing_him or speed < (WALK_FROM if not steps else FACE_SPEED_BACK if e.face_walk else FACE_SPEED):
 		wants = false
 	else:
 		var split := absf(rad_to_deg(e.dir.angle_to(e.vel)))
@@ -410,7 +424,7 @@ func _behave(e: Enemy, dt: float) -> void:
 		if e.state_t >= e.def.recover_time:
 			_set_state(e, Enemy.State.WALK, &"walk")
 			# T5-12: a moment in its guard or walking before the next wind-up, never the frame after its recovery
-			e.cooldown = maxf(e.cooldown, AFTER_RECOVER)
+			e.cooldown = maxf(e.cooldown, AFTER_RECOVER + _rng.randf_range(0.0, AFTER_RECOVER_JITTER))
 		return
 	var to := target - e.pos
 	var dist := to.length()
@@ -554,7 +568,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
 		if d.shot_line and not caster:
 			# the line on the floor ends where the bolt will die on cover
-			e.warning = ground.add_line_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
+			e.warning = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
 				d.attack_windup, 0.0)
 
 
@@ -604,7 +618,7 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 		if d.shot_turn > 0.0:
 			s.turn = deg_to_rad(d.shot_turn)
 			s.turn_decay = deg_to_rad(d.shot_turn_decay)
-			s.homing = life
+			s.homing = d.shot_homing if d.shot_homing > 0.0 else life
 		if d.shot_low:
 			s.low = true
 			s.node.scale = LOW_SHOT_SCALE
@@ -669,7 +683,7 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.travel = clampf(dist - d.radius - Player.RADIUS, 0.0, d.lunge_speed * d.lunge_time)
 				e.strike_t = maxf(d.strike_at, e.travel / maxf(d.lunge_speed, 0.1))
 				e.landed = false
-				e.warning = ground.add_line_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
+				e.warning = ground.add_aim_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
 			else:
 				_wait_ring(e, dt, toward, dist)
 
@@ -730,6 +744,9 @@ func _wait_ring(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		e.side = -e.side
 		e.side_t = 0.0
 	move += toward.rotated(e.side * PI * 0.5) * RING_STRAFE
+	# (QW-105: with the drawn wait after a recovery it walks back out to its ring from his edge; the crowd's shoving
+	# took it past FACE_SPEED and it turned its back to him, 20 degrees a frame)
+	e.facing_him = true
 	# never faster than RING_SPEED: under FACE_SPEED it steps sideways and back facing him (it turned its back to walk
 	# out to the ring at 2.5 m/s and turned round again, 20 degrees a frame)
 	e.pos += move.limit_length(1.0) * minf(_speed(e), RING_SPEED) * dt
@@ -771,15 +788,31 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					e.warning = null
 				_end_attack(e, &"recover")
 		_:
+			if e.retreat_t > 0.0:
+				# backing off two steps, facing him, to charge from there (QW-105)
+				e.retreat_t -= dt
+				e.facing_him = true
+				e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
+				e.pos -= toward * _speed(e) * dt
+				return
 			_behave_melee_walk(e, dt, toward, dist)
-			if d.close_damage > 0.0 and e.cooldown <= 0.0 and dist < d.close_range and target_alive:
+			var backed := e.slams >= KNIGHT_SLAMS
+			if backed and e.cooldown <= 0.0 and dist < d.close_range and target_alive and d.lunge_time > 0.0:
+				e.slams = 0
+				e.retreat_t = KNIGHT_BACK_OFF
+				e.memo = 2  # charge next, from wherever the steps back leave it
+				return
+			if d.close_damage > 0.0 and e.cooldown <= 0.0 and dist < d.close_range and target_alive and (e.memo != 2 or not e.straight):
+				e.slams += 1
 				e.memo = 1
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"attack")
 				e.warning = ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * damage_scale)
 				e.state_t = d.attack_windup - d.close_windup
 				return
-			if e.cooldown <= 0.0 and dist < d.attack_range and dist > d.close_range and target_alive and e.straight:
+			if e.cooldown <= 0.0 and dist < d.attack_range and (dist > d.close_range or e.memo == 2) and target_alive and e.straight:
+				e.slams = 0
+				e.memo = 0
 				e.aim = toward
 				e.dir = toward
 				e.landed = false
@@ -792,7 +825,9 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 ## Between charges the knight still swings at whoever is close.
 func _behave_melee_walk(e: Enemy, dt: float, _toward: Vector2, dist: float) -> void:
 	e.dir = e.dir.slerp(_walk, minf(1.0, dt * 6.0))
-	if dist > e.def.radius + Player.RADIUS + 0.5:
+	var stop := e.def.radius + Player.RADIUS + 0.5
+	e.closing = dist > (stop if e.closing else stop + MELEE_WALK_BAND)
+	if e.closing:
 		e.pos += _walk * _speed(e) * dt
 
 
@@ -954,6 +989,10 @@ func stuck_count() -> int:
 
 
 func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = true) -> void:
+	if state == Enemy.State.WINDUP and e.state != Enemy.State.WINDUP:
+		_tally_windup(e, 0)
+	elif e.state == Enemy.State.WINDUP and state != Enemy.State.WINDUP:
+		_tally_windup(e, 2 if _cutting else 1)
 	if state == Enemy.State.WINDUP and e.state != Enemy.State.WINDUP:
 		Audio.play(CombatSounds.windup(e.def))  # (C15-02: every wind-up is heard, by what it shows)
 	elif state == Enemy.State.ATTACK:
@@ -1120,6 +1159,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if show_number:
 		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id())
 	if e.hp <= 0.0:
+		if e.state == Enemy.State.WINDUP:
+			_tally_windup(e, 2)
 		e.alive = false
 		e.state = Enemy.State.DEAD
 		if e.def.behavior == EnemyDef.Behavior.BOSS:
@@ -1174,7 +1215,9 @@ func interrupt(e: Enemy) -> bool:
 		e.warning = null
 	if e.def.behavior != EnemyDef.Behavior.PRIEST:
 		e.memo = 0  # (a knight's slam, a burst's ticks; the elder priest counts its casts there)
+	_cutting = true
 	_set_state(e, Enemy.State.WALK, &"walk")
+	_cutting = false
 	interrupts += 1
 	Audio.play(CombatSounds.EVENTS[&"interrupt"])
 	return true
@@ -1196,6 +1239,23 @@ func _sweep() -> void:
 		j -= 1
 	while dying.size() > MAX_DYING:
 		dying.pop_front()
+
+
+## DT-102: one wind-up of e's kind started (0), reached its blow (1) or was cut (2).
+func _tally_windup(e: Enemy, what: int) -> void:
+	var id := String(e.def.id)
+	if not windups.has(id):
+		windups[id] = [0, 0, 0]
+	windups[id][what] += 1
+
+
+## The wind-ups by kind for RESULT: {id: {started, struck, cut}}.
+func windup_report() -> Dictionary:
+	var out := {}
+	for id: String in windups:
+		var w: Array = windups[id]
+		out[id] = {"started": w[0], "struck": w[1], "cut": w[2]}
+	return out
 
 
 ## Removes the common crowd (the crypt doors opened): no experience, no drops. Elites and bosses stay.

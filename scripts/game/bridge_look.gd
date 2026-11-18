@@ -45,8 +45,8 @@ const FLOOR := {
 }
 ## The air (spec 2.5) and the moon (the light of the room, with shadow).
 const AIR := {
-	&"sky": Color(0.035, 0.045, 0.07), &"fog": Color(0.09, 0.11, 0.16), &"fog_depth": Vector2(55.0, 130.0),
-	&"ambient": Color(0.30, 0.34, 0.42), &"ambient_gain": 0.75 / 0.9, &"moon": Color(0.62, 0.72, 0.95), &"moon_energy": 0.55,
+	&"sky": Color(0.065, 0.07, 0.09), &"fog": Color(0.13, 0.14, 0.18), &"fog_depth": Vector2(55.0, 130.0),
+	&"ambient": Color(0.32, 0.34, 0.40), &"ambient_gain": 2.05, &"moon": Color(0.68, 0.72, 0.84), &"moon_energy": 1.1,
 	&"moon_shadow": true,
 }
 ## The abyss: its grey-blue mist, the cliffs' stone, the light far below (only the depths), the thread of violet (a
@@ -134,6 +134,16 @@ func _read_floor() -> void:
 			keep.append(joined)
 			_decks = keep
 			_long = true
+	# C18 (ENV P1-2, Q-10 (a)): a wide rect lying across one deck (the B's long bridge is one deck through its landing)
+	# is a landing too: the deck's parapets open along it and the landing's own go round its outer sides
+	for w in wide:
+		if w in _landings:
+			continue
+		for d in _decks:
+			if w.position.x >= d.position.x - 0.2 and w.end.x <= d.end.x + 0.2 and w.position.y < d.position.y and w.end.y > d.end.y:
+				_landings.append(w)
+				_long = true
+				break
 	_decks.sort_custom(func(a: Rect2, b: Rect2) -> bool: return a.position.x < b.position.x)
 
 
@@ -243,11 +253,12 @@ func _landing(w: Rect2) -> void:
 		var wing := Rect2(w.position.x, z.x, w.size.x, z.y - z.x)
 		deck(wing)
 		m.box(Vector3(wing.get_center().x, -DECK * 0.5 - 0.02, wing.get_center().y), Vector3(wing.size.x + 0.6, DECK, wing.size.y + DECK_OUT), 0.0, mat, false)
+	var mid := w.get_center()
 	for z: float in [w.position.y - PARAPET.z, w.end.y + PARAPET.z]:
-		parapet(Vector2(w.position.x - 0.1, z), Vector2(w.end.x + 0.1, z))
+		parapet(Vector2(w.position.x - 0.1, z), Vector2(w.end.x + 0.1, z), Vector2(0.0, signf(z - mid.y)))
 	for x: float in [w.position.x - PARAPET.z, w.end.x + PARAPET.z]:
 		for zz: Vector2 in [Vector2(w.position.y, -2.5 - PARAPET.z), Vector2(2.5 + PARAPET.z, w.end.y)]:
-			parapet(Vector2(x, zz.x), Vector2(x, zz.y))
+			parapet(Vector2(x, zz.x), Vector2(x, zz.y), Vector2(signf(x - mid.x), 0.0))
 	for c: Vector2 in [Vector2(w.position.x, w.position.y), Vector2(w.end.x, w.position.y), Vector2(w.position.x, w.end.y), Vector2(w.end.x, w.end.y)]:
 		var out := Vector2(signf(c.x - w.get_center().x), signf(c.y - w.get_center().y))
 		var at := c + out * 0.9

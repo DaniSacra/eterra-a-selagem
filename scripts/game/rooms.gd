@@ -167,12 +167,6 @@ func start_at(kind: RunMap.Kind) -> void:
 	_enter(map.options(true)[0])
 
 
-func _process(delta: float) -> void:
-	for g in _gems:
-		if is_instance_valid(g):
-			g.rotation.y += delta * TAU / 2.4
-
-
 func depth() -> int:
 	return map.depth
 
@@ -644,7 +638,7 @@ const TRIAL_COLOR := Color(0.52, 0.36, 0.78)
 
 
 func _roll_slab() -> void:
-	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng):
+	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng, map.fights_left()):
 		return
 	var at: Variant = _free_spot(SLAB_CLEAR)
 	if at == null:
@@ -747,7 +741,7 @@ const TRIAL_SPOT := Vector2(-1.5, 1.5)
 
 func _build_trial() -> void:
 	phase = Phase.EVENT
-	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance)
+	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance, map.fights_left())
 	_spots.append({"at": TRIAL_SPOT, "away": true, "node": _marker(TRIAL_SPOT, RunMap.Reward.NONE,
 		T.t(&"room_trial") + "\n" + T.t(&"trial_step"), RunMap.Kind.TRIAL, DoorGlyph.Kind.TRIAL)})
 	game.room_tally.event("trial_offered", game.time, {"cards": trial_cards.map(func(c: Trials.Card) -> Dictionary:
@@ -972,14 +966,19 @@ const BOT_ALTAR_RANK := 1.5
 
 
 ## The door the bot walks through (index in doors). altar_useful: it would trade something there (E6: before it walked
-## into the altar with nothing to trade, a room lost); otherwise the altar comes last.
-static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true) -> int:
+## into the altar with nothing to trade, a room lost); otherwise the altar comes last. life: its share of its most
+## life (C17, QW-112: it took the fountain with full life, a Blessing's door lost; now only below BOT_FOUNTAIN_BELOW,
+## otherwise the fountain comes after every reward).
+const BOT_FOUNTAIN_BELOW := 0.8
+
+
+static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0) -> int:
 	var best := 0
 	var rank := INF
 	for i in doors.size():
 		var r := float(BOT_PREFERENCE.find(doors[i].reward))
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
-			r = -1.0
+			r = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
 		elif doors[i].kind == RunMap.Kind.ALTAR:
 			r = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
 		elif r < 0.0:
@@ -1014,7 +1013,7 @@ func bot_goal() -> Variant:
 				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0), 0, game.arena.exits.size() - 1))
+			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0)), 0, game.arena.exits.size() - 1))
 	return null
 
 
@@ -1025,8 +1024,6 @@ func bot_goal() -> Variant:
 ## no channel past ScreenTone.SAFE on the screen (B-1: at 1.0 the exposure and the saturation still took it to 255).
 const GEM_LIFT := 2.2
 const GEM_CAP := 1.0
-## The gold reward's coin: radius and thickness (m).
-const GEM_COIN := Vector2(0.38, 0.1)
 
 
 ## The gem's colour: lifted by GEM_LIFT, then scaled down (hue kept) until its strongest channel is GEM_CAP and its
@@ -1040,32 +1037,6 @@ static func gem_color(c: Color) -> Color:
 	return ScreenTone.fit(lifted)
 
 
-## The shape of a reward's gem over a door or where it lies (art pack 2026-11-17: the symbol in the scenery is the one
-## the signs and cards use where they have one): gold a coin on its edge (the shop's coin, DoorGlyph), a Bênção the
-## prism, the romã a round fruit, the rest the plain stone.
-static func gem_mesh(reward: RunMap.Reward) -> PrimitiveMesh:
-	match reward:
-		RunMap.Reward.BOON:
-			var prism := PrismMesh.new()
-			prism.size = Vector3(0.6, 0.6, 0.6)
-			return prism
-		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
-			var fruit := SphereMesh.new()
-			fruit.radius = 0.35
-			fruit.height = 0.7
-			return fruit
-		RunMap.Reward.GOLD:
-			var coin := CylinderMesh.new()
-			coin.top_radius = GEM_COIN.x
-			coin.bottom_radius = GEM_COIN.x
-			coin.height = GEM_COIN.y
-			coin.radial_segments = 24
-			return coin
-	var box := BoxMesh.new()
-	box.size = Vector3(0.6, 0.6, 0.6)
-	return box
-
-
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).
 ## glyph: the pictogram left of the sign's name (E5, DoorGlyph); a reward's sign also carries the reward's own mark
 ## (stage 1A, DoorGlyph.of_reward), the glyph then going by the line under the name.
@@ -1075,25 +1046,8 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	root.position = Vector3(at.x, 0, at.y)
 	add_child(root)
 	var color := _reward_color(reward) if reward != RunMap.Reward.NONE else _kind_color(kind)
-	var gem := MeshInstance3D.new()
-	gem.mesh = gem_mesh(reward)
-	if reward == RunMap.Reward.GOLD:
-		# the coin stands on its edge, spinning (the shop's coin on the door signs, DoorGlyph)
-		gem.rotation.x = PI * 0.5
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = gem_color(color)
-	gem.material_override = m
-	gem.position.y = 1.6
-	root.add_child(gem)
-	_gems.append(gem)
-	var light := OmniLight3D.new()
-	light.position.y = 1.8
-	light.light_color = color
-	light.light_energy = 2.0
-	light.omni_range = 5.0
-	light.light_cull_mask = ~Arena.CROWD_LAYER
-	root.add_child(light)
+	# the reward's medallion over its pedestal (RewardGem, QW-106): it turns, the room's lights shade it
+	_gems.append(RewardGem.make(root, reward, kind, color))
 	if text != "":
 		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
 		var lines := text.split("\n", true, 1)

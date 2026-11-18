@@ -85,6 +85,13 @@ uniform float fill_late = 0.3;
 // frame on its four sides that warms with the wind-up (from 35% of its light), and the band a faint fill (fill_early)
 // coming up to fill_max over the last fill_late; amber (its colour), never a circle (D-29).
 uniform float tile_m = 0.0;
+// C17, QW-107 (ART P1-6: the crossbow's aim and the soldier's pounce read as an opaque red band end to end, the
+// strongest thing on the screen): aim_px > 0 draws an unsigned line warning as an aim instead: a thread aim_px pixels
+// wide down its middle at aim_light, brighter toward its far end (the last aim_tip of it, up to 1), a bar across that
+// end, the filling front on the thread, and the band's own fill (the second pass) only over the end of the wind-up.
+uniform float aim_px = 0.0;
+uniform float aim_light = 0.5;
+uniform float aim_tip = 0.15;
 
 global uniform vec3 floor_round;
 
@@ -203,6 +210,13 @@ void fragment() {
 				filled = warning_fill(step(tip, front));
 			}
 			a = max(max(edge, far) * 0.9 * rim_light * mix(root_rim, 1.0, root_k), near * 0.3) + fill + head * 0.6 + marks * 0.16 + base;
+			if (aim_px > 0.0 && !sign) {
+				float px = max(fwidth(x_m), 0.0005);
+				float half_w = aim_px * 0.5 * px;
+				float thread = 1.0 - smoothstep(half_w - px * 0.5, half_w + px * 0.5, x_m);
+				float toward_tip = smoothstep(1.0 - aim_tip, 1.0, along);
+				a = max(thread * mix(aim_light, 1.0, toward_tip), far * 0.9) + head * thread * (0.6 - aim_light);
+			}
 		} else if (style == 3) {
 			float along_m = along * length_m;
 			float cell = tile_m > 0.0 ? tile_m : length_m;

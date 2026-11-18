@@ -16,7 +16,10 @@ uniform vec2 rune_origin = vec2(-15.0, -12.0);
 uniform vec3 rune_amber : source_color = vec3(1.0, 0.62, 0.25);
 uniform vec3 rune_white : source_color = vec3(1.0, 0.88, 0.70);
 uniform vec3 rune_spark : source_color = vec3(0.55, 0.3, 1.0);
-uniform vec3 quiet_color : source_color = vec3(0.12, 0.125, 0.15);
+// C18 (ENV P1-4): the quiet stone reads as the room's safe place, not a pit: pale smooth stone a step over the tiles
+// round it, framed by a dim sunk thread of old gold (quiet_frame: its share of the gold).
+uniform vec3 quiet_color : source_color = vec3(0.46, 0.45, 0.44);
+uniform float quiet_frame = 0.45;
 // The frame: how far in from the tile's edge its groove starts, its width, how much it darkens, how much gold shows in
 // it, how hard its walls lean (the relief).
 uniform float frame_inset = 0.16;
@@ -27,12 +30,16 @@ uniform float frame_tilt = 1.2;
 // The marks inside (three a tile): half their stroke, their contrast at rest (spec: up to 15%), their glow when lit.
 uniform float mark_stroke = 0.035;
 uniform float mark_contrast = 0.15;
-uniform float mark_glow = 0.85;
-// The fill: at rest of the arming, from fill_late on, and how much light it gives.
-uniform float fill_low = 0.08;
-uniform float fill_high = 0.3;
+uniform float mark_glow = 0.6;
+// The fill: at rest of the arming, from fill_late on, and how much light it gives. C18 (QW-108, ART P1-3): in the tone
+// of the enemies' warnings, faint until the last 30% and never past 0.25, its amber half greyed (fill_grey) and the
+// frame's warmth a share (heat_glow): the armed tiles were a third of the floor in solid saturated amber.
+uniform float fill_low = 0.05;
+uniform float fill_high = 0.25;
 uniform float fill_late = 0.7;
-uniform float fill_glow = 0.45;
+uniform float fill_glow = 0.25;
+uniform float fill_grey = 0.45;
+uniform float heat_glow = 0.6;
 // Chevrons toward the next band: the way (zero: none), their spacing, width, speed, how sharp, their light.
 uniform vec2 chevron_dir = vec2(0.0);
 uniform float chevron_step = 0.9;
@@ -88,9 +95,13 @@ void rune_floor(vec2 wp, vec4 rect, float edge, float joint, inout vec3 c, inout
 	vec2 lp = wp - (rect.xy + rect.zw * 0.5) * unit;
 	float d_in = min(half_size.x - abs(lp.x), half_size.y - abs(lp.y));
 	if (st.a < 0.75) {
-		// the quiet stone: smooth dark basalt, no frame, no mark, never lit
-		c = mix(c, quiet_color * (0.85 + 0.3 * noise(wp * 0.8)), 0.85 * (1.0 - joint));
-		rough = 0.55;
+		// the quiet stone: smooth pale stone, a dim thread of old gold round it, no mark, never lit
+		c = mix(c, quiet_color * (0.88 + 0.24 * noise(wp * 0.8)), 0.9 * (1.0 - joint));
+		float q0 = frame_inset;
+		float q1 = frame_inset + frame_width * 0.6;
+		float thread = smoothstep(q0 - 0.012, q0 + 0.008, d_in) * (1.0 - smoothstep(q1 - 0.008, q1 + 0.012, d_in));
+		c = mix(c, mix(gold_dark, gold_light, noise(wp * 6.0)), thread * quiet_frame);
+		rough = 0.6;
 		return;
 	}
 	float arm = st.r;
@@ -120,12 +131,13 @@ void rune_floor(vec2 wp, vec4 rect, float edge, float joint, inout vec3 c, inout
 	// the frame warms from old gold to amber (spec 3.4), and keeps an ember in its corners after the strike
 	float heat = max(arm, ember * 0.5);
 	vec3 hot = mix(gold_light, rune_amber, smoothstep(0.0, 1.0, heat));
-	emit += hot * groove * heat;
+	emit += hot * groove * heat * heat_glow;
 	emit += rune_amber * lit * mark_glow * step(0.001, arm);
 	float inner = smoothstep(g1, g1 + 0.06, d_in);
 	float fill = arm <= 0.0 ? 0.0 : (arm < fill_late ? fill_low : mix(fill_low, fill_high, (arm - fill_late) / (1.0 - fill_late)));
-	c = mix(c, rune_amber * 0.45, fill * inner);
-	emit += rune_amber * fill * fill_glow * inner;
+	vec3 amber = mix(rune_amber, vec3(dot(rune_amber, vec3(0.3, 0.59, 0.11))), fill_grey);
+	c = mix(c, amber * 0.45, fill * inner);
+	emit += amber * fill * fill_glow * inner;
 	if (arm > 0.0 && dot(chevron_dir, chevron_dir) > 0.01) {
 		vec2 dir = normalize(chevron_dir);
 		float along = dot(lp, dir);

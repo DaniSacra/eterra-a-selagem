@@ -698,6 +698,35 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ponte 2 (B 1) mais a lua, runas 2 (B 3), provação 1, altar 2; no Compatibility os fachos `moon_shaft` não fazem sombra
   (`ArenaRoom.compat()`; listras). Quadro na GPU a 1080: 1,4 a 2,3 ms. Testes em `tests/test_e5_looks.gd`.
 
+- **C18, a tela de um jogo acabado (cenário; antes e depois e a tabela de luma e saturação em `docs/gallery/c18/`)**:
+  recompensas de verdade (QW-106): disco de ouro velho sobre pedestal da pedra do salão, o medalhão pintado
+  (`assets/ui/events`: romã, selo da Provação, velas) ou a marca da `DoorGlyph` cunhada em esmalte da cor da recompensa,
+  virado para a câmera e balançando devagar (`RewardGem`, `scripts/game/reward_gem.gd`, `reward_gem.gdshader`; halo
+  `reward_halo.gdshader` abaixo do glow; um material por tipo, nenhuma luz própria); no `rooms.gd` só a chamada mudou
+  (`Rooms.gem_mesh` saiu). Paleta num tom só: bruma, brilho e névoa do abismo e céu do salão menos saturados
+  (`ArenaKit.MIST`, `ABYSS_*`, `RUIN_EDGE`, `Game.SKY`/`FOG`, `CatacombHall.ABYSS_LIGHT`, `BossChamber.ABYSS_COLOR`,
+  `BLUE_COLOR`), metade das velas acesas que restavam no salão apagada, clareiras pálidas em todo chão
+  (`clearing*` no `catacomb_floor.gdshaderinc`) e o ar de cada arena mais claro (`ambient_gain` e lua no `air()` de cada
+  look), luz das portas acesas metade para um branco morno (`ArenaKit.DOOR_LIGHT_*`; o vermelho de Morvath fica inteiro),
+  preenchimento das paredes do fundo na Cripta e no Santuário (`ArenaRoom.wall_fill`, `WALL_FILL`), Fendas, câmara e o
+  ar da fase 4 (`RoomMood.LAST_BREATH`) violeta mas abaixo de 0,45 de saturação. Verdes de Morvath longe do herói: domo do ritual no matiz 165 (`BossShield.DOME_*`), erupções translúcidas com
+  miolo vermelho até 0,35 sobre o que está atrás (`eruption_color`, `danger_alpha` no `ritual_rune.gdshader`, que agora é
+  `blend_premul_alpha`; alfa até 0,24), runa de invocação no matiz 165 sem ciano (`color`, `spirit`), partículas espectrais até 0,12 m e nunca a menos de 1,5 m do herói (`Fx.CLEAR_OF_HERO`,
+  `HERO_CLEAR_M`). Leitura do chão: Ponte B com o parapeito contornando o patamar (Q-10 a, `BridgeLook._read_floor`),
+  Santuário B com `broken_lip` nos buracos, Runas B com a pedra quieta clara e um fio de ouro (`quiet_*` no
+  `rune_tiles.gdshaderinc`); parapeito das pontes virado para a câmera em pontilhado em volta do herói
+  (`ArenaRoom.faces_camera`). Runas (QW-108): preenchimento até 0,25 e âmbar acinzentado (`fill_*`, `fill_grey`,
+  `heat_glow`), sulcos dos pilares em `rune_groove.gdshader` (`RunesLook.GROOVE_HEAT`). Colunas inteiras com ábaco
+  quadrado, sem os arcos que liam como "Y"; no Santuário três silhuetas pelo lugar (capitel, capitel com imposta e anel,
+  quebrada; `ArenaRoom.column_kind`, `IMPOST`, `ANNULET`, `COLUMN_BROKEN`; colisão igual). Câmaras da Provação e do
+  Altar com ruínas em duas profundidades e bruma embaixo (`ArenaRoom.backdrop`, `BACKDROP_*`). Entulho do KayKit fora do
+  salão (`CatacombHall._rubble`, `RUBBLE*`; as velas da pedra leste bloqueiam como se leem, `EAST_CLUTTER`), e o
+  `tools/fit_probe.gd` conta também os círculos e caixas da própria sala (`Arena.overlaps`). Jardim: cristais escuros com brilho só na aresta
+  (`crystal_edge.gdshader`) e copa de cartões procedurais (Q-21 a, `GardenLook._canopy`, `canopy.gdshader`, `CANOPY_*`,
+  um MultiMesh, abre em volta do herói). Onda do especial 25% maior no desenho e rastro mais claro, acerto igual
+  (QW-111, `look_scale`, `wake_light` no `emeth_wave.gdshader`). Medir uma captura: `python3 -I tools/frame_stats.py
+  imagens... [--box=x,y,w,h]` (luma e saturação como o relatório de arte, violeta acima de 60%, verde e rosa na caixa).
+
 ## E5, eventos e exploração (spec de arte `docs/art/e5_spec.md`; métricas em `docs/qa/e5_metrics.md`)
 - **Três arenas novas** no `_stage` do `make_data.gd` (`_sanctuary`, `_bridge`, `_runes`, duas variantes cada, dificuldade 2):
   Santuário Desmoronado (casa do guardião: `RoomLayout.guardian_home`, `RunMap._layout` manda o MINIBOSS para ela em qualquer
@@ -1137,7 +1166,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `EnemyDef.keep_away` do alcance (nosso; contornando a parede, `Horde.flee_dir`; encurralados atiram de perto) e atiram de lá
   (`Horde.shoot`, campos `shot_*`). Mago = o "Mage" do Hades: 3,5 m/s, alcance 13,1 m (elite 16,25), mira 1 s, rajada de 3
   orbes a cada 0,17 s (elite 7, `shot_ticks`) que o empurram para trás a 5 m/s (`recoil`), orbes a 7 m/s por 20 m que viram
-  atrás dele (40 graus/s, nosso: o arquivo não diz), depois espera atrás da coluna mais próxima, 3,1 m além dela
+  atrás dele (20 graus/s só no primeiro 0,8 s do voo desde o C17, nosso: o arquivo não diz), depois espera atrás da coluna mais próxima, 3,1 m além dela
   (`cover_hug`, `Horde.cover_spot`), no máximo 6 atacando. Besteiro (vida do "Screamer", que no Hades não atira): virote
   rápido (16 m/s, 12 m) por uma linha marcada no chão onde a mira trava; do Hades, foge 8,75 m por 1,5 a 1,75 s depois de
   cada tiro (`retreat_far`, `retreat_time`) e no máximo 2 atiram ao mesmo tempo (`max_attackers`, `Horde.attackers`).
@@ -1234,6 +1263,46 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (erupções, invocação, tempestade) e na recuperação ele segue o herói (`FOLLOW_RATE` 2). Sonda do desenho:
   `tools/drawn_probe.gd` (lê o que o `CrowdRenderer` pôs nos MultiMesh), análise em `docs/gallery/t5b/boss/{data,after/data}/*.py`.
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
+
+## C17 "Justiça e peso", frente de gameplay (backlog `docs/backlog.md` seção C17; evidências em `docs/gallery/c17/`)
+- **Provação tardia (BUG-101, Q-08 a)**: a laje só aparece onde a maldição mais curta cabe nas lutas que restam antes de
+  Morvath (`RunMap.fights_left`: salas até a loja menos a fonte e o altar ainda não vistos; `Trials.may_show(...,
+  fights_left)`, `Trials.shortest_curse`) e nenhuma carta pede mais encontros que isso (`Trials.offers`). Teste em 500 mapas
+  com o pior caminho (`test_trial.gd`).
+- **Save atômico (BUG-102)**: `SaveFile` (`core/save_file.gd`): grava em `.tmp`, confere o JSON, copia o bom para `.bak` e
+  renomeia; leitura cai no `.bak` e o arquivo ilegível vai para `.broken` (nunca é gravado por cima). `tests/test_save_file.gd`.
+- **Loja na Câmara (BUG-103)**: artefato do `ui_lab --shop` com `--bot` (o robô já estava em Morvath quando a loja era
+  remontada); o `ui_lab` recusa fora da loja; partida real sem placa de loja na câmara (`test_economy.gd`).
+- **Morvath não desliza parado (BUG-104)**: sai do corpo do herói uma vez por quadro (`e.was_in_target`, a medida da
+  multidão) e mostra o andar quando é movido sob um clipe parado (`Boss._drawn_walk`, `SLIDE_*`); `tools/boss_slide.py`
+  sobre o `boss_probe`: 85 trechos em s1 a s5 para 0.
+- **Orbe e corredor (QW-101, QW-102)**: o orbe do feiticeiro vira a 20 graus/s (era 40) e só nos primeiros
+  `EnemyDef.shot_homing` 0,8 s do voo (depois reto); robô em 24 sementes: golpes do feiticeiro nas salas de 50% para 33%;
+  corredor com `attack_windup` 1,0 s (era 0,7).
+- **Sopro no quadro da lâmina (QW-103)**: `ComboNode.sound_at` (segundos depois do começo do golpe, divididos pela
+  velocidade do combo) e `sound_press` (som no aperto): o giro toca `spin_gather` no aperto e o sopro aos 0,30 s, as
+  estocadas aos 0,035 e 0,115 s (picos medidos das amostras, `SWISH_PEAK`, `THRUST_PEAK`); golpe cortado antes da lâmina
+  não sopra (`Player._step_move_sound`).
+- **Corpo que acende no "vai bater" (QW-104)**: no segurar do preparo (`windup_hold`) o corpo clareia morno até metade do
+  clarão de um golpe, sob o `flash_cap` (`tell_hold`, `tell_light` no `crowd.gdshader`, `CrowdRenderer.TELL_LIGHT`).
+  Falta a aprovação do art-director.
+- **Sem metrônomo (QW-105)**: espera sorteada de 0 a `Horde.AFTER_RECOVER_JITTER` 0,5 s depois de cada recuperação;
+  Cavaleiro e Escudo recuam `KNIGHT_BACK_OFF` e investem depois de `KNIGHT_SLAMS` 3 golpes de perto; voltam a andar só
+  `MELEE_WALK_BAND` 0,8 m além de onde pararam (`Enemy.closing`); quem espera no anel ou recua olha o herói
+  (`Enemy.facing_him`, lido no `_drawn_motion`).
+- **Mira em fio (QW-107)**: a mira do besteiro e o bote do esqueleto são `Ground.add_aim_warning` (`GroundLook.aim`,
+  `aim_px` no `ground.gdshaderinc`): fio de `AIM_PX` 6 px a `AIM_LIGHT` 0,5, ponta clara, a faixa enche até `AIM_FILL`
+  0,22 só nos últimos 30%. Os outros avisos não mudaram.
+- **Robô (QW-112)**: porta da fonte só abaixo de `Rooms.BOT_FOUNTAIN_BELOW` 0,8 da vida (`bot_door(..., life)`), e bebe
+  abaixo do mesmo (`Bot.DRINK_BELOW`, era 0,6); régua das métricas sempre com `--ultimate=cleave`.
+- **Vigia (BUG-110)**: `--watchdog` imprime `WATCH {...}` a cada `Watchdog.EVERY` 5 s reais (`frames`, `fps`, `mode`,
+  `rate`, `time_scale`, `time`) e guarda as amostras no registro (`watch`). `tests/test_watchdog.gd`.
+- **Instrumentação (DT-102)**: `RESULT` e registro com `windups` por tipo (`started`, `struck`, `cut`; `Horde.windup_report`),
+  `shot_flight` por atirador (`hits`, `avg`, `max` do voo do tiro que acertou; `Projectiles.flight_report`),
+  `omega_charges_started` (carga segurada além de `Player.CHARGE_SOUND_AT`) e `omega_charges_cancelled`.
+- **Lâminas das Almas de perto (Q-09 b)**: a qualquer distância; com o herói a menos de `BossDef.blade_step_within` 4 m
+  ele recua `blade_step` 2 m em `blade_step_time` 0,25 s e as faixas saem de onde ele termina. Fase 1 em 3 sementes:
+  foice 91% para 62%, maior sequência igual 9 para 2 (`tools/boss_cadence.gd --cadence-log`).
 
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath

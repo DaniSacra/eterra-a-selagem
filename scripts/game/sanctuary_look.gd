@@ -78,7 +78,7 @@ const FLOOR := {
 ## The air (spec 1.5).
 const AIR := {
 	&"sky": Color(0.05, 0.055, 0.07), &"fog": Color(0.10, 0.11, 0.14), &"fog_depth": Vector2(50.0, 110.0),
-	&"ambient": Color(0.34, 0.34, 0.36), &"ambient_gain": 0.75 / 0.9, &"moon": Color(0.70, 0.78, 0.92), &"moon_energy": 0.2,
+	&"ambient": Color(0.34, 0.34, 0.36), &"ambient_gain": 1.0, &"moon": Color(0.70, 0.78, 0.92), &"moon_energy": 0.4,
 	&"moon_shadow": false,
 }
 ## The moon's shafts (spec 1.5): colour, energy (A; B the one stronger), cone, height, where they fall (A: both; B: the
@@ -128,13 +128,15 @@ func in_wall(i: int) -> bool:
 	return layout.exits[i].inward.y > 0.5 or layout.exits[i].inward.x > 0.5
 
 
-## No cliffs round the room: its walls are drawn in dress. The hole of B keeps its broken edge, with the gold thread on
+## No cliffs round the room: its walls are drawn in dress. The hole of B has a sunk broken lip, with the gold thread on
 ## the faces turned to the camera.
 func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) -> void:
 	if kind == Edge.MOUTH:
 		cliff(a, b, out, faces, EXIT_STEPS * EXIT_RISE + 0.6)
 	elif kind == Edge.HOLE:
-		broken_edge(a, b, out, faces)
+		# C18 (ENV P1-3): the Rift's sunk lip (broken_lip, every chunk under the floor): the broken edge's slabs at the
+		# floor's height read as floor 0.4 m and more past where the paladin stops
+		broken_lip(a, b, out, faces)
 		var yaw := deg_to_rad(Feel.live().cam_yaw)
 		if out.dot(Vector2(sin(yaw), cos(yaw))) < -0.2:
 			filet(a, b, out)
@@ -153,12 +155,19 @@ func piece(o: ArenaObstacle) -> void:
 		kit.brazier(o.center, 0.0, false).shadow_enabled = false
 		return
 	if o.piece == &"column" and o.height >= WHOLE_COLUMN:
-		round_column(o)
+		# the nave's columns in three silhouettes, some snapped (C18, ART P1-5)
+		round_column(o, true)
 		return
 	super.piece(o)
 
 
+## The far walls' fill (ArenaRoom.wall_fill, C18): its colour and energy.
+const WALL_FILL_COLOR := Color(0.78, 0.8, 0.88)
+const WALL_FILL_ENERGY := 0.5
+
+
 func dress() -> void:
+	wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
 	var box := layout.floor.bounds()
 	_west = box.position.x
 	_east = box.end.x

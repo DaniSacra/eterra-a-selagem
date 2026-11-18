@@ -127,8 +127,9 @@ func on_died() -> void:
 	died_pinned = _pin_t >= PIN_TIME or _pin_since < PIN_TIME
 
 
-## Below this share of its life the bot walks to a fountain that still has light (B-2).
-const DRINK_BELOW := 0.6
+## Below this share of its life the bot walks to a fountain that still has light (B-2). C17 (QW-112): the share it
+## picks the fountain's door at (Rooms.BOT_FOUNTAIN_BELOW, was 0.6: it walked in at 63% and left without drinking).
+const DRINK_BELOW := Rooms.BOT_FOUNTAIN_BELOW
 
 
 ## Where the bot goes to drink: the fountain (`spring`, Game.fountain_target) when its life is under DRINK_BELOW of

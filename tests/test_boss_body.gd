@@ -205,3 +205,29 @@ func _centre(model: BakedModel, anim: StringName, f: int) -> Vector2:
 	if not _centres.has(key):
 		_centres[key] = model.pose_centre(anim, f)
 	return _centres[key]
+
+
+## C17, BUG-104 (CF-07): moved on the floor while a still clip shows (the paladin dashing through him, a push), he is
+## drawn walking within two frames, and standing again once he stops; his own walk is left alone.
+func test_he_never_slides_drawn_standing() -> void:
+	var boss := _start_fight()
+	var e := boss.e
+	e.anim = &"idle"
+	boss._drawn_walk(F)
+	var idle_moving := 0
+	for i in 12:
+		e.pos += Vector2(0.06, 0.0)  # 3.6 m/s, the push of a dash through him (it was 6 m/s, eased twice a frame)
+		boss._drawn_walk(F)
+		if e.anim == &"idle":
+			idle_moving += 1
+	assert_lte(idle_moving, 2, "at most two frames drawn standing while moving")
+	assert_eq(e.anim, &"walk")
+	assert_gt(e.anim_t, 0.1, "the walk plays on, not stuck on its first pose")
+	for i in 20:
+		boss._drawn_walk(F)
+	assert_eq(e.anim, &"idle", "standing again once he stops")
+	e.anim = &"slash3"
+	for i in 6:
+		e.pos += Vector2(0.06, 0.0)
+		boss._drawn_walk(F)
+	assert_eq(e.anim, &"slash3", "a blow is never turned into a walk")

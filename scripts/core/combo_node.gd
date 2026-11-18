@@ -72,6 +72,12 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export var cooldown := 0.0
 ## Played when the move starts (the blade leaving, before it lands: GF-11). Audio.SOUNDS or an audio/ file.
 @export var sound: StringName = &"blade"
+## C17, QW-103 (CF-03): seconds after the move starts (at its own pace: Ímpeto plays it sooner) when `sound` plays,
+## so the swish peaks on the blade's frame (the spin's played 0.27 to 0.33 s before its blade); 0: as it starts. A
+## move cut before then plays nothing.
+@export var sound_at := 0.0
+## Played as the move starts when `sound` waits (sound_at > 0): a short gathering, never the blade (&"": none).
+@export var sound_press: StringName = &""
 ## Magia this move spends (the held Omega moves). A press without enough Magia plays the plain move instead.
 @export var magick_cost := 0.0
 ## Held moves (CHARGE, CHARGE_LIGHT): seconds the button must be held. The move fires by itself when the charge

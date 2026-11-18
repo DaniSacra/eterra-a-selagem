@@ -199,3 +199,52 @@ func test_the_return_clip_plays_when_he_stands() -> void:
 		if played.is_empty() or played[-1] != c:
 			played.append(c)
 	assert_eq(played.slice(0, 2), [&"Slash_A", &"Slash_A_Rec"] as Array[StringName], "the blade comes back, never a cut to the guard")
+
+
+## C17, QW-103 (CF-03): the spin's swish starts so its peak (the samples peak 30 to 90 ms in, 60 on average) falls on
+## the blade's frame, within 2 frames; its press only gathers; cut1 and cut2 sound as they start, as before; a dodge
+## that cuts the spin's windup drops its swish.
+func test_the_spin_sounds_on_its_blade() -> void:
+	var p := _room()
+	var frame := [0]
+	var hit_ms := {}
+	var start_ms := {}
+	p.runner.move_started.connect(func(n: ComboNode) -> void: start_ms[n.id] = frame[0] * 1000.0 / 60.0)
+	p.runner.move_hit.connect(func(n: ComboNode) -> void: hit_ms[n.id] = frame[0] * 1000.0 / 60.0)
+	Audio.listen(true, func() -> int: return roundi(frame[0] * 1000.0 / 60.0))
+	_frame(p, [&"light_attack"])
+	for i in 80:
+		frame[0] += 1
+		_frame(p, [&"light_attack"] if not start_ms.has(&"cut3") else [])
+	var at := {}
+	for h: Array in Audio.heard:
+		if not at.has(h[0]):
+			at[h[0]] = float(h[1])
+	Audio.listen(false)
+	assert_true(hit_ms.has(&"cut3"), "the spin landed")
+	assert_true(at.has(&"blade_spin"), "its swish played")
+	assert_almost_eq(at[&"blade_spin"] + 60.0, float(hit_ms[&"cut3"]), 2000.0 / 60.0, "the swish peaks on the blade (2 frames)")
+	assert_almost_eq(float(at.get(&"spin_gather", -1.0)), float(start_ms[&"cut3"]), 17.0, "the press only gathers")
+	assert_almost_eq(float(at.get(&"blade", -1.0)), 0.0, 1.0, "cut1 sounds as it starts")
+	assert_almost_eq(float(at.get(&"blade_heavy", -1.0)), float(start_ms[&"cut2"]), 17.0, "cut2 too")
+
+
+func test_a_dodge_that_cuts_the_spin_drops_its_swish() -> void:
+	var p := _room()
+	var spun := [false]
+	p.runner.move_started.connect(func(n: ComboNode) -> void: spun[0] = spun[0] or n.id == &"cut3")
+	Audio.listen(true)
+	_frame(p, [&"light_attack"])
+	var i := 0
+	while not spun[0] and i < 80:
+		_frame(p, [&"light_attack"])
+		i += 1
+	_frame(p)
+	_frame(p, [&"dodge"])
+	for k in 40:
+		_frame(p)
+	var names := Audio.heard.map(func(h: Array) -> StringName: return h[0])
+	Audio.listen(false)
+	assert_true(spun[0])
+	assert_true(names.has(&"spin_gather"))
+	assert_false(names.has(&"blade_spin"), "a spin cut before its blade is never heard")

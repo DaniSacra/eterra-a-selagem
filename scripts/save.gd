@@ -10,8 +10,13 @@ var enabled := true
 func _ready() -> void:
 	if Dev.has("nosave"):
 		enabled = false
-	elif FileAccess.file_exists(PATH):
-		data = SaveData.merged(JSON.parse_string(FileAccess.get_file_as_string(PATH)))
+	else:
+		# C17, BUG-102: a damaged file falls back to its copy and is moved aside, never written over
+		var got := SaveFile.read(PATH)
+		if got.data != null:
+			data = SaveData.merged(got.data)
+		if got.from == "bak":
+			push_warning("save: %s could not be read; loaded its copy %s%s" % [PATH, PATH, SaveFile.BAK])
 	_dev_hero()
 	_dev_juramentos()
 
@@ -46,9 +51,8 @@ func _dev_juramentos() -> void:
 func write() -> void:
 	if not enabled:
 		return
-	var f := FileAccess.open(PATH, FileAccess.WRITE)
-	if f:
-		f.store_string(JSON.stringify(data, "  "))
+	if not SaveFile.write(PATH, JSON.stringify(data, "  ")):
+		push_warning("save: could not write %s (the file of before is kept)" % PATH)
 
 
 func option(key: String) -> Variant:

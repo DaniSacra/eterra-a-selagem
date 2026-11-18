@@ -104,11 +104,19 @@ func test_the_gems_drawn_in_a_room_stay_under_the_glow() -> void:
 	game.rooms._collect()
 	await wait_process_frames(2)
 	assert_false(game.rooms._gems.is_empty(), "doors with gems")
+	# QW-106 (C18): a lit medallion of old gold, no unlit primitive and no light of its own; its glow under 1
 	for gem in game.rooms._gems:
 		if not is_instance_valid(gem):
 			continue
-		var c := ((gem as MeshInstance3D).material_override as StandardMaterial3D).albedo_color
-		assert_lte(maxf(c.r, maxf(c.g, c.b)), 1.0)
+		var marker := gem.get_parent()
+		for n in marker.find_children("*", "", true, false):
+			assert_false(n is OmniLight3D, "no light per reward")
+			if n is MeshInstance3D:
+				var mesh := (n as MeshInstance3D).mesh
+				assert_false(mesh is BoxMesh or mesh is PrismMesh or mesh is SphereMesh, "no primitive gem")
+				var mat := (n as MeshInstance3D).material_override
+				if mat is ShaderMaterial and (mat as ShaderMaterial).shader == RewardGem.HALO_SHADER:
+					assert_lte(float(mat.get_shader_parameter(&"peak")), 1.0, "the halo under the glow")
 
 
 # ---------- GP-02: the run's log ----------

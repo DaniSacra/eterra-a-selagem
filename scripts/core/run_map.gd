@@ -132,6 +132,19 @@ func enter(room: Room) -> void:
 		seen_layouts.append(room.layout)
 
 
+## The fights still sure to come before the boss after a room of this depth (C17, BUG-101): the rooms up to the shop,
+## less one for the fountain and one for the altar while either may still take a room (he may choose their doors, so
+## they never count). A Provação carried from here never lasts more than this (Trials.offers).
+func fights_left(at_depth: int = -1) -> int:
+	var from := (depth if at_depth < 0 else at_depth) + 1
+	var n := maxi(0, stage.rooms - from)
+	if not fountain_seen and stage.fountain_depth_max >= from:
+		n -= 1
+	if not altar_seen and stage.altar_layout != null and stage.altar_depth_max >= from:
+		n -= 1
+	return maxi(0, n)
+
+
 ## The Provação's chamber, entered from a room of this depth by its slab: the depth stays (E5).
 func trial(at_depth: int) -> Room:
 	return Room.new(Kind.TRIAL, Reward.NONE, at_depth, -1)

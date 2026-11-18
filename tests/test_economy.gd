@@ -180,3 +180,25 @@ func test_the_result_reports_what_dealt_the_damage() -> void:
 	assert_eq(int(r.dealt_by.burn), 5)
 	var line := game.result_line()
 	assert_true(line.contains("\"dealt_by\""))
+
+
+## C17, BUG-103: going from the shop to Morvath, no sign of the shop stands in the Câmara do Selo (the capture that
+## showed them came from tools/ui_lab.gd --shop rebuilding the shop after the robot had already left it).
+func test_no_shop_sign_in_the_chamber() -> void:
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	game.rooms.start_at(RunMap.Kind.SHOP)
+	assert_gt(_signs(game), 0, "the shop has its signs")
+	game.rooms._enter(game.rooms.next_rooms[0])
+	await wait_frames(2)
+	assert_eq(game.rooms.room.kind, RunMap.Kind.BOSS)
+	assert_eq(_signs(game), 0, "no sign of the shop in Morvath's chamber")
+	assert_true(game.rooms.shop().is_empty())
+
+
+func _signs(game: Node) -> int:
+	var n := 0
+	for node in game.find_children("*", "", true, false):
+		if node is DoorSign and not node.is_queued_for_deletion():
+			n += 1
+	return n

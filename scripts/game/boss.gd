@@ -172,6 +172,8 @@ var _dir := Vector2.DOWN
 var _dirs := PackedVector2Array()
 var _spots := PackedVector2Array()
 var _from := Vector2.ZERO
+## Q-09 (b): where the Blades' step back ends (he goes from _from to it over def.blade_step_time).
+var _back_to := Vector2.ZERO
 var _stagger := 0
 var _stagger_t := 0.0
 var _stun_time := 0.0
@@ -295,7 +297,9 @@ func _advance(dt: float) -> void:
 		return
 	if e == null or not e.alive:
 		return
-	var was := game.horde.depth_in_target(e)
+	# how deep he stood in the paladin when the frame began, as the crowd measured it (BUG-104: measured again here,
+	# after the crowd had already eased him out once, he melted out twice a frame: 6 m/s as the paladin dashed through)
+	var was := e.was_in_target
 	stats.time = snappedf(_clock, 0.1)
 	_t += dt
 	_cooldown -= dt
@@ -392,8 +396,41 @@ func _advance(dt: float) -> void:
 	if state != State.DASH:
 		game.horde.keep_off_target(e, was, dt)
 	e.pos = game.arena.resolve(e.pos, e.def.radius)
+	_drawn_walk(dt)
 	# where he stands, for the scenery that opens around him (masonry.gdshader's see_through)
 	RenderingServer.global_shader_parameter_set(&"boss_pos", Vector3(e.pos.x, 0.0, e.pos.y))
+
+
+## BUG-104 (CF-07): his body never slides drawn standing. When something moves him while a still clip shows (the
+## paladin dashing through him, a push), his speed on the floor (smoothed over SLIDE_SMOOTH seconds) above SLIDE_FROM
+## m/s shows his walk until it falls under SLIDE_TO; then the still clip again.
+const SLIDE_FROM := 0.8
+const SLIDE_TO := 0.4
+const SLIDE_SMOOTH := 0.05
+var _slide_speed := 0.0
+var _sliding := false
+var _slide_t := 0.0
+var _slide_was := Vector2.INF
+
+
+func _drawn_walk(dt: float) -> void:
+	if dt <= 0.0:
+		return
+	var moved := 0.0 if _slide_was == Vector2.INF else e.pos.distance_to(_slide_was) / dt
+	_slide_was = e.pos
+	_slide_speed = lerpf(_slide_speed, moved, minf(1.0, dt / SLIDE_SMOOTH))
+	if e.anim != &"idle" and not (_sliding and e.anim == &"walk"):
+		_sliding = false
+		return
+	var was_sliding := _sliding
+	_sliding = _slide_speed > (SLIDE_TO if _sliding else SLIDE_FROM)
+	if _sliding:
+		_slide_t = _slide_t + dt if was_sliding else 0.0
+		e.anim = &"walk"
+		e.anim_t = _slide_t
+	elif was_sliding:
+		e.anim = &"idle"
+		e.anim_t = 0.0
 
 
 # ---------- choosing ----------
@@ -533,13 +570,23 @@ func _step_blades(dt: float) -> void:
 	var windup := _windup(def.blade_windup)
 	if _step == 0:
 		_step = 1
+		_from = e.pos
+		_back_to = e.pos
+		var close := game.player.pos - e.pos
+		if def.blade_step > 0.0 and close.length() < def.blade_step_within and close.length() > 0.01:
+			_back_to = game.arena.sweep(e.pos, e.pos - close.normalized() * def.blade_step, e.def.radius)
+			e.pos = _back_to  # (the lanes and the aim from there; drawn from _from below)
 		var aim := _aim(def.blade_speed)
 		_dirs = BossRules.soul_pair(aim, def.blade_spread, 1.0 if _rng.randf() < 0.5 else -1.0)
 		e.dir = (_dirs[0] + _dirs[1]).normalized()
 		for d in _dirs:
 			_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0))
+		e.pos = _from
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
 	if _step == 1:
+		# the step back (Q-09 b): eased out over blade_step_time, then held where the lanes start
+		var k := clampf(_t / maxf(def.blade_step_time, 0.01), 0.0, 1.0)
+		e.pos = _from.lerp(_back_to, 1.0 - (1.0 - k) * (1.0 - k))
 		_gathering(dt, e.pos + e.dir * HAND.y, SOUL_VIOLET)
 		# T5-15: the blade drawn back over his shoulder in both hands (blades_windup), then thrown from there so
 		# the release falls on the shot's frame

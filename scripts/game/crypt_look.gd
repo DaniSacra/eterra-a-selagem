@@ -71,8 +71,8 @@ const FLOOR := {
 }
 ## The air (spec 2.5): no sky, a dark brown-black, the ambient a little over half the hall's, no moon to speak of.
 const AIR := {
-	&"sky": Color(0.035, 0.03, 0.04), &"fog": Color(0.035, 0.03, 0.04), &"fog_depth": Vector2(40.0, 80.0),
-	&"ambient": Color(0.32, 0.30, 0.30), &"ambient_gain": 0.95, &"moon": Color(0.5, 0.55, 0.65), &"moon_energy": 0.1,
+	&"sky": Color(0.14, 0.13, 0.14), &"fog": Color(0.13, 0.125, 0.13), &"fog_depth": Vector2(40.0, 80.0),
+	&"ambient": Color(0.32, 0.30, 0.30), &"ambient_gain": 2.1, &"moon": Color(0.62, 0.64, 0.7), &"moon_energy": 0.6,
 	&"moon_shadow": false,
 }
 ## The cold shaft from the vault: colour, energy, cone, how high it starts, how far off the plumb (toward the back).
@@ -163,7 +163,13 @@ func _abyss() -> void:
 	pass
 
 
+## The far walls' fill (ArenaRoom.wall_fill, C18): its colour and energy.
+const WALL_FILL_COLOR := Color(0.78, 0.78, 0.84)
+const WALL_FILL_ENERGY := 1.6
+
+
 func dress() -> void:
+	wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
 	var b := layout.floor.polys[0]
 	var box := Rect2(b[0], Vector2.ZERO)
 	for p in b:

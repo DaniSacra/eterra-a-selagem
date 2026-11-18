@@ -24,19 +24,22 @@ const FIRE := Color(1.0, 0.58, 0.25)
 const PORTAL := Color(0.3, 1.0, 0.5)
 ## The portal's sheet of light: a deeper green than its light, so its bright heart stays green and not white.
 const PORTAL_SHEET := Color(0.22, 1.0, 0.34)
-const ABYSS := Color(0.34, 0.17, 0.52)
+const ABYSS := Color(0.4, 0.3, 0.52)
 ## The mist of the abyss (teal, lighter than the stone in it) and the violet glowing up from under it.
-const MIST := Color(0.03, 0.2, 0.25)
-const ABYSS_GLOW := Color(0.46, 0.27, 0.85)
+## C18 (ART P1-2, a scenery in one tone that lets the effects saturate): the mist and the violet glow at most 0.5
+## and 0.45 of saturation (they were 0.88 and 0.68: the abyss was the most saturated mass of the frame).
+const MIST := Color(0.11, 0.19, 0.22)
+const ABYSS_GLOW := Color(0.6, 0.52, 0.78)
 const ABYSS_GLOW_ENERGY := 1.6
 const ABYSS_GLOW_SHAPE := Vector3(0.7, 2.2, 0.45)
 ## The far ruins' stone (abyss_ruins.gdshader), the cold edge on the tops of their blocks, and the height of a course.
 const RUIN_STONE := Color(0.039, 0.11, 0.149)
-const RUIN_EDGE := Color(0.086, 0.47, 0.545)
+const RUIN_EDGE := Color(0.24, 0.42, 0.48)
 const RUIN_COURSE := 1.6
 ## Forward+ only: violet glowing fog filling the sides of the abyss (density, emission).
 const ABYSS_FOG_DENSITY := 0.04
-const ABYSS_FOG_EMISSION := Color(0.25, 0.12, 0.5)
+const ABYSS_FOG_EMISSION := Color(0.25, 0.22, 0.33)
+const ABYSS_FOG_ALBEDO := Color(0.36, 0.31, 0.46)
 const METAL := Color(0.16, 0.17, 0.2)
 const MORVATH := Color(1.0, 0.18, 0.15)
 ## A banner of the facade (cycle 6, plain: no emblem until Daniel names Eterra's): crimson cloth, its faint own
@@ -88,6 +91,9 @@ const BRAZIER_RIM := 0.06
 const BRAZIER_FIRE := Vector3(0.6, 22, 0.8)
 const BRAZIER_FIRE_LIFE := 0.8
 const BRAZIER_RADIUS := 0.6
+## The lights of a lit door take the reward's colour this far toward this warm white (light_portal).
+const DOOR_LIGHT_WHITE := Color(1.0, 0.86, 0.66)
+const DOOR_LIGHT_MIX := 0.55
 const BRONZE := Color(0.2, 0.13, 0.07)
 ## A fire's licks (cycle 6: crisp and blended, not added, so the body of the flame is one orange shape with a
 ## red edge and not a haze): the outer ones at their foot, the gold inner ones, and the red they cool to as they
@@ -722,6 +728,10 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 	portal_tints[i] = tint
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"power", PORTAL_OPEN if on else PORTAL_DIM)
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"color", PORTAL_SHEET if tint == PORTAL else tint)
+	# the light a reward's colour throws on the walls, half toward a warm white (C18, one tone for the scenery: a red
+	# heart's or a blue Magick's door washed the whole corner of the room in pure colour); Morvath's red stays whole
+	if tint != PORTAL and tint != MORVATH:
+		tint = tint.lerp(DOOR_LIGHT_WHITE, DOOR_LIGHT_MIX)
 	var l: OmniLight3D = portals[i][1]
 	l.light_color = tint
 	l.light_energy = PORTAL_LIGHT if on else PORTAL_LIGHT_DIM
@@ -859,7 +869,7 @@ func abyss_fog(center: Vector3, size: Vector3) -> void:
 	v.position = center
 	var fm := FogMaterial.new()
 	fm.density = ABYSS_FOG_DENSITY
-	fm.albedo = Color(0.3, 0.2, 0.5)
+	fm.albedo = ABYSS_FOG_ALBEDO
 	fm.emission = ABYSS_FOG_EMISSION
 	fm.edge_fade = 0.4
 	v.material = fm

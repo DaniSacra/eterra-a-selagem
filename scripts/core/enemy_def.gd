@@ -126,6 +126,10 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var recoil := 0.0
 @export var shot_turn := 0.0
 @export var shot_turn_decay := 0.0
+## Seconds of its flight a shot keeps turning after the paladin, then flies straight (0: its whole flight). C17, QW-101:
+## the caster's orb turns only in its first 0.8 s, so it catches him early or not at all (it caught him 2 to 3 s
+## into its flight, with the dash ready: 33% of the PO's blows taken).
+@export var shot_homing := 0.0
 @export var shot_range := 0.0
 @export var shot_low := false
 ## ARCHER: between attacks it goes behind the nearest pillar, cover_hug meters past it from the paladin (Hades
