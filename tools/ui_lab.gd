@@ -19,6 +19,8 @@ extends SceneTree
 ##   the seal in the HUD (_trial_seal.png), then wins its fights (_trial_won.png, the gold seal and the greeting);
 ##   --altar [--gold=N] [--held=a,b] (start with --start=altar) opens the altar's trades (_altar.png);
 ##   --slab (start with --start=fountain --hero-hp=N) shows the Provação's slab and its sign there (_slab.png).
+## DV-1: --map writes the HUD with its "Mapa [M]" button (_hud.png), then opens the descent's map over the stopped
+##   run (_map.png): the run's own map, or a fixed sample descent with --map-at=start|middle|doors (MapSample).
 
 const GAME := "res://scenes/game.tscn"
 ## Gifts held before the Elo is offered: both sources of Vapor and of Aurora Gelada, and a few more for the panel.
@@ -48,6 +50,10 @@ func _run() -> void:
 	await create_timer(START).timeout
 	if Dev.has("shop"):
 		await _shop(game)
+		quit()
+		return
+	if Dev.has("map"):
+		await _map(game)
 		quit()
 		return
 	if Dev.has("trial") or Dev.has("altar") or Dev.has("slab"):
@@ -283,3 +289,18 @@ func _shot(tag: String) -> void:
 	var path := "%s_%s.png" % [_out, tag]
 	root.get_texture().get_image().save_png(path)
 	print("LAB saved ", path)
+
+
+## The HUD with the map's button, then the map over the run (the HUD's own way in, Game.open_screen).
+func _map(game: Node) -> void:
+	await _shot("hud")
+	var hud: Node = game.get(&"hud")
+	if Dev.has("map-at"):
+		var screen: Control = (load("res://scripts/ui/map_screen.gd") as GDScript).new()
+		game.call(&"open_screen", screen)
+		var sample: Dictionary = (load("res://scripts/ui/map_sample.gd") as GDScript).call(&"at", Dev.arg("map-at"))
+		screen.call(&"open", (load("res://scripts/ui/descent_map.gd") as GDScript).call(&"from_dict", sample))
+	else:
+		hud.call(&"open_map")
+	await create_timer(0.4).timeout
+	await _shot("map")

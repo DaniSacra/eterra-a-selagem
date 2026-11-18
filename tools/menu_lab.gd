@@ -109,6 +109,9 @@ func _title() -> void:
 	boot.call(&"_open", howto, 2)
 	await create_timer(0.5).timeout
 	await _shot("howto")
+	howto.call(&"_show_tab", 1)
+	await create_timer(0.3).timeout
+	await _shot("howto_controls")
 	boot.call(&"_close_sub")
 	await create_timer(0.3).timeout
 	var options: Control = (load("res://scripts/ui/options_screen.gd") as GDScript).new()

@@ -82,6 +82,10 @@ const EDGE_INSET := Vector4(30.0, 96.0, 30.0, 128.0)
 ## The four actions in the order of the diamonds, with the gift slot that changes each.
 const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"dodge"]
 const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
+## The map's button beside the room's number: its gap, height and how bright its words are (quiet until hovered).
+const MAP_GAP := 10
+const MAP_BUTTON_HEIGHT := 26.0
+const MAP_ALPHA := 0.78
 ## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
 const ULT_HINT_TIME := 1.8
 
@@ -90,6 +94,9 @@ var _crest: HeroCrest
 var _life: HudBar
 var _magick: HudBar
 var _room: Label
+## DV-1, MAP-03: "Mapa [M]" beside the room's number (the real key or button), clicked or the map key opens the
+## descent's map (MapScreen) over the stopped run. Never takes the focus (Space and Enter stay the dodge).
+var map_button: Button
 var _clock: Label
 var _purse: HBoxContainer
 var _coin: HudMark
@@ -189,7 +196,36 @@ func _build_top() -> void:
 	_xp_back.offset_bottom = 4
 	_xp_fill = _rect(UiKit.GOLD, Control.PRESET_TOP_LEFT)
 	_xp_fill.size = Vector2(0, 4)
-	_room = _label("", UiKit.PALE, FONT_TEXT, UiKit.TITLE_FONT, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 12))
+	var top_left := HBoxContainer.new()
+	top_left.name = "top_left"
+	top_left.add_theme_constant_override(&"separation", MAP_GAP)
+	top_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(top_left)
+	_place(top_left, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 8), Vector2(300, 32))
+	_room = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.TITLE_FONT))
+	_room.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top_left.add_child(_room)
+	# the look of the menus' quiet links (UiKit.link), but never focused: hovering it takes nothing from the fight
+	map_button = Button.new()
+	map_button.name = "map_button"
+	map_button.focus_mode = Control.FOCUS_NONE
+	map_button.pressed.connect(func() -> void:
+		Audio.play(&"ui_ok")
+		open_map())
+	map_button.add_theme_stylebox_override(&"normal", UiKit.box(Color(0, 0, 0, 0), Color(UiKit.OLD_GOLD, 0.45), 1, 8))
+	map_button.add_theme_stylebox_override(&"hover", UiKit.box(Color(0.12, 0.09, 0.06, 0.6), UiKit.OLD_GOLD, 1, 8))
+	map_button.add_theme_stylebox_override(&"pressed", UiKit.box(Color(0.16, 0.11, 0.07, 0.8), UiKit.GOLD, 1, 8))
+	map_button.add_theme_color_override(&"font_hover_color", UiKit.GOLD)
+	map_button.add_theme_constant_override(&"outline_size", 4)
+	map_button.add_theme_color_override(&"font_outline_color", UiKit.SHADOW)
+	# opens on the press, before the run steps: the click (also the attack) never swings
+	map_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+	map_button.custom_minimum_size = Vector2(0, MAP_BUTTON_HEIGHT)
+	map_button.add_theme_font_size_override(&"font_size", FONT_SMALL)
+	map_button.add_theme_color_override(&"font_color", Color(UiKit.PALE, MAP_ALPHA))
+	map_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	map_button.visible = false
+	top_left.add_child(map_button)
 	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 8))
 	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_clock.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -351,11 +387,14 @@ func _process(delta: float) -> void:
 		_xp_back.visible = false
 		_xp_fill.size.x = 0.0
 		_room.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
+		map_button.visible = not over
+		map_button.text = T.t(&"hud_map", {"key": "[%s]" % UiKit.action_label(&"map")})
 		_gold.text = T.t(&"hud_gold_count", {"n": game.rooms.gold})
 		_crest.seal = ""
 	else:
 		_xp_fill.size.x = get_viewport_rect().size.x * game.xp_ratio()
 		_room.text = T.t(&"hud_level", {"n": game.level})
+		map_button.visible = false
 		_gold.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
 		_crest.seal = str(game.level)
 	_update_life(p)
@@ -740,6 +779,26 @@ func on_combo(count: int) -> void:
 func show_move(node: ComboNode, _color: Color) -> void:
 	_move.text = T.t(node.title)
 	_move_t = MOVE_TIME
+
+
+## The map key (M, Back on the gamepad) opens the map during play; the map itself takes the key that closes it.
+## Read from the event (as the pause reads its key): Game flushes the presses it stepped before the HUD's _process.
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed(&"map") and open_map() != null:
+		get_viewport().set_input_as_handled()
+
+
+## Opens the descent's map over the run (DV-1, MAP-03): the run stops under it (Game.open_screen) and goes on when it
+## closes, with the press that closed it swallowed (Game.close_screen, Controls.clear_presses). Only during play in a
+## descent by rooms. Returns the screen (null when it could not open).
+func open_map() -> MapScreen:
+	if game == null or game.rooms == null or game.mode != Game.Mode.PLAY:
+		return null
+	var screen := MapScreen.new()
+	game.open_screen(screen)
+	screen.open()
+	screen.closed.connect(game.close_screen)
+	return screen
 
 
 func show_notice(text: String, time: float = 2.5) -> void:

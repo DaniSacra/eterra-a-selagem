@@ -2,7 +2,7 @@ class_name PauseMenu
 extends Control
 ## Pause (art pack board 06): the run stays frozen behind, darkened only on the left, where a compact panel stands:
 ## "Pausa" over a gold rule, Continuar as the main action, then Bênçãos (the panel of the gifts held, BoonsScreen),
-## Compêndio (CodexScreen) and Configurações (OptionsScreen, with Músicas), the gifts of the descent in small
+## Mapa (MapScreen, the descent's map; only in a descent by rooms), Compêndio (CodexScreen) and Configurações (OptionsScreen, with Músicas), the gifts of the descent in small
 ## medallions, and the ways out at the foot in quiet links: Sair para o menu and, on the desktop, Sair do jogo.
 ## The focus walks that order with up and down and wraps at both ends; a page opened from here gives the focus back to
 ## the button that opened it.
@@ -26,6 +26,8 @@ var _sub: Control
 var _from: Control
 ## The panel's buttons in focus order.
 var buttons: Array[Button] = []
+## "Mapa" (null outside a descent by rooms); the map key opens it from here too.
+var map_button: Button
 
 
 func open() -> void:
@@ -51,6 +53,11 @@ func open() -> void:
 	v.add_child(UiKit.header(T.t(&"pause_title"), 40, WIDTH * 0.72))
 	var go_on := UiKit.primary(_button(v, "continue", T.t(&"pause_continue"), func() -> void: resumed.emit()))
 	go_on.add_theme_font_size_override(&"font_size", 24)
+	# the descent's map (DV-1, MAP-03), only in a descent by rooms
+	var game := _game()
+	if game != null and game.rooms != null:
+		map_button = _button(v, "map", T.t(&"pause_map"), Callable())
+		map_button.pressed.connect(func() -> void: _show(MapScreen.new(), map_button))
 	var boons := _button(v, "boons", T.t(&"pause_boons"), Callable())
 	boons.pressed.connect(func() -> void: _show(_boons_screen(), boons))
 	var codex := _button(v, "codex", T.t(&"pause_moves"), Callable())
@@ -173,6 +180,10 @@ func _show(screen: Control, from: Control = null) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if not _sub and map_button != null and event.is_action_pressed(&"map"):
+		get_viewport().set_input_as_handled()
+		map_button.pressed.emit()
+		return
 	if event.is_action_pressed(&"pause") or event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		if _sub:
