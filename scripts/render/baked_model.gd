@@ -42,6 +42,9 @@ const WIDTH := 2048
 @export var glow_from := Vector2(0.5, 0.75)
 ## Height of the model standing, in meters (for life bars and hit effects).
 @export var height := 2.0
+## Named pieces it carries (tools/bake.gd "name" of a rigid or a held piece: "shield", "sword") -> the indices of
+## their vertices, for the measures of a pose (T5, A-T5-1: guard_pose).
+@export var parts: Dictionary = {}
 
 var _pos_tex: ImageTexture
 var _normal_tex: ImageTexture
@@ -131,6 +134,65 @@ func drift(anim: StringName) -> float:
 	for f in frame_count(anim):
 		worst = maxf(worst, pose_centre(anim, f).length())
 	return worst
+
+
+## 1 for every vertex of a named part (what the figure carries), 0 for its body.
+func carried_mask() -> PackedByteArray:
+	var out := PackedByteArray()
+	out.resize(vertices)
+	for part: String in parts:
+		for v: int in parts[part]:
+			out[v] = 1
+	return out
+
+
+## The top of the body in a pose (pose()), what it carries left out (a blade raised over the head is not the head).
+func body_top(p: PackedVector3Array) -> float:
+	var carried := carried_mask()
+	var top := -INF
+	for v in vertices:
+		if carried[v] == 0:
+			top = maxf(top, p[v].y)
+	return top
+
+
+## How a pose carries its shield (T5, A-T5-1; size 1, the figure faces +z): "ahead" (m) the shield's centre in front
+## of the chest (the body's mean in its band at 60 to 80% of its top, parts left out), "lean" (degrees) the trunk
+## forward from upright (the head's mean, its top 0.25 m, over the hips', 40 to 50% of the top) and "head_behind" (m)
+## how far the head is behind the shield's top edge (its highest 0.1 m). Empty without a shield part.
+func guard_pose(anim: StringName, frame: int) -> Dictionary:
+	if not parts.has("shield"):
+		return {}
+	var p := pose(anim, frame)
+	var carried := carried_mask()
+	var top := body_top(p)
+	var head := Vector2.ZERO
+	var chest := Vector2.ZERO
+	var hips := Vector2.ZERO
+	for v in vertices:
+		if carried[v] == 1:
+			continue
+		var y := p[v].y
+		if y > top - 0.25:
+			head += Vector2(p[v].z, 1)
+		elif y > top * 0.6 and y < top * 0.8:
+			chest += Vector2(p[v].z, 1)
+		elif y > top * 0.4 and y < top * 0.5:
+			hips += Vector2(p[v].z, 1)
+	var shield: PackedInt32Array = parts.shield
+	var centre := Vector3.ZERO
+	var high := -INF
+	for v in shield:
+		centre += p[v]
+		high = maxf(high, p[v].y)
+	centre /= maxf(shield.size(), 1)
+	var edge := Vector2.ZERO
+	for v in shield:
+		if p[v].y > high - 0.1:
+			edge += Vector2(p[v].z, 1)
+	var hz := head.x / maxf(head.y, 1)
+	return {"ahead": centre.z - chest.x / maxf(chest.y, 1), "lean": rad_to_deg(atan2(hz - hips.x / maxf(hips.y, 1), top * 0.45)),
+		"head_behind": edge.x / maxf(edge.y, 1) - hz, "top": top}
 
 
 func normal(anim: StringName, frame: int, v: int) -> Vector3:

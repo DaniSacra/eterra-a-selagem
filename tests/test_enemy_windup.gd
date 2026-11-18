@@ -218,3 +218,71 @@ func test_morvath_charges_with_his_body() -> void:
 	assert_lte(float(hit.gap), reach + 0.05, "his body on him (%.2f m, reach %.2f)" % [hit.gap, reach])
 	assert_gte(lane_end, 0, "its lane ended")
 	assert_between(int(hit.frame) - lane_end, -1, 1, "the lane full on the frame his body strikes")
+
+
+## A-T5-1 (docs/gallery/t5/ART_REVIEW.md 1.6): the brute and the knight run their charge behind the shield: in every
+## pose its centre 0.3 m or more in front of the chest, the trunk leaning 12 degrees or more, the head behind its top
+## edge (size 1, BakedModel.guard_pose).
+func test_the_charge_is_run_behind_the_shield() -> void:
+	for id: StringName in [&"guard", &"knight"]:
+		var m := _model(id)
+		assert_true(m.parts.has("shield"), "%s: its shield is named" % id)
+		for f in m.frame_count(&"charge"):
+			var g := m.guard_pose(&"charge", f)
+			assert_gte(float(g.ahead), 0.3, "%s charge %d: the shield %.2f m in front of the chest" % [id, f, g.ahead])
+			assert_gte(float(g.lean), 12.0, "%s charge %d: the trunk leaning %.0f degrees" % [id, f, g.lean])
+			assert_gte(float(g.head_behind), 0.0, "%s charge %d: the head %.2f m behind the shield's top" % [id, f, g.head_behind])
+
+
+## A-T5-2 (1.10): the soldier's jog stands taller: the top of its head never under 90% of its idle's, both feet off the
+## floor in 6 of its 20 poses at most (the lowest vertex over 3 cm, as tools/clip_motion.gd).
+func test_the_soldier_jogs_upright() -> void:
+	var m := _model(&"skeleton")
+	var idle := m.body_top(m.pose(&"idle", 0))
+	var air := 0
+	for f in m.frame_count(&"walk"):
+		var p := m.pose(&"walk", f)
+		var head := m.body_top(p)
+		assert_gte(head / idle, 0.9, "walk %d: the head at %.0f%% of idle" % [f, 100.0 * head / idle])
+		var low := INF
+		for v in range(0, p.size(), 2):
+			low = minf(low, p[v].y)
+		if low > 0.03:
+			air += 1
+	assert_lte(air, 6, "both feet off the floor in %d poses" % air)
+
+
+## A-T5-3 (1.2): the runner gathers without the flamingo knee: in no pose of its wind-up is one foot more than 0.15 m
+## over the other (the lowest point of each leg, size 1).
+func test_the_runner_gathers_on_both_feet() -> void:
+	var m := _model(&"runner")
+	for f in m.frame_count(&"windup"):
+		var p := m.pose(&"windup", f)
+		var left := INF
+		var right := INF
+		for v in p.size():
+			if p[v].y < 0.6 and absf(p[v].x) < 0.3:
+				if p[v].x < 0.0:
+					left = minf(left, p[v].y)
+				else:
+					right = minf(right, p[v].y)
+		assert_lte(absf(left - right), 0.15, "windup %d: one foot %.2f m over the other" % [f, absf(left - right)])
+
+
+## A-T5-4 (1.3): each bolt of the sorcerer is a gesture: the top of its staff goes 0.25 m or more from where the hold
+## has it and back, the shot starting and ending in the hold's pose (no jump when Horde restarts it).
+func test_the_sorcerer_thrusts_each_bolt() -> void:
+	var m := _model(&"mage")
+	var staff: PackedInt32Array = m.parts.staff
+	var hold := m.pose(&"cast_hold", 0)
+	var tip := staff[0]
+	for v in staff:
+		if hold[v].y > hold[tip].y:
+			tip = v
+	var n := m.frame_count(&"shot")
+	var far := 0.0
+	for f in n:
+		far = maxf(far, m.position(&"shot", f, tip).distance_to(hold[tip]))
+	assert_gte(far, 0.25, "the staff's top goes %.2f m" % far)
+	assert_lt(m.position(&"shot", 0, tip).distance_to(hold[tip]), 0.03, "it starts in the hold")
+	assert_lt(m.position(&"shot", n - 1, tip).distance_to(hold[tip]), 0.03, "and ends in it")

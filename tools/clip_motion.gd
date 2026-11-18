@@ -91,6 +91,7 @@ func _walk(m: BakedModel) -> void:
 	var mids: Array[float] = []
 	var leans: Array[float] = []
 	var lift := 0.0
+	var head := INF
 	var lows: Array[float] = []
 	for f in n:
 		var p := m.pose(&"walk", f)
@@ -117,8 +118,9 @@ func _walk(m: BakedModel) -> void:
 		leans.append(rad_to_deg(atan2(hz / maxi(hn, 1) - lz / maxi(ln, 1), top * 0.45)))
 		mids.append(_middle(p))
 		lift = maxf(lift, _back_foot(p))
-	print("    walk: both feet off the floor in %d of %d poses, rise and fall %.3f m, lean %.0f to %.0f degrees, lifted foot up to %.2f m; lowest %s" % [
-		air, n, mids.max() - mids.min(), leans.min(), leans.max(), lift, str(lows)])
+		head = minf(head, m.body_top(p))
+	print("    walk: both feet off the floor in %d of %d poses, rise and fall %.3f m, lean %.0f to %.0f degrees, lifted foot up to %.2f m, head down to %.2f m (%.0f%% of idle); lowest %s" % [
+		air, n, mids.max() - mids.min(), leans.min(), leans.max(), lift, head, 100.0 * head / m.body_top(m.pose(&"idle", 0)), str(lows)])
 
 
 ## How high the lifted foot goes: of the two legs (vertices under 0.6 m near the middle, split by side) the lowest
