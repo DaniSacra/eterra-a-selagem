@@ -372,9 +372,11 @@ func test_the_slab_says_what_it_is_and_how_to_refuse() -> void:
 	_run(RunMap.Kind.FOUNTAIN)
 	var rooms := game.rooms
 	rooms.stage = rooms.stage.duplicate()  # never the loaded stage the other tests read
-	rooms.stage.trial_chance = 1.0
 	rooms.trials.last_shown = -1000
-	rooms.map.depth = 3
+	var here := rooms.map.layer(3)[0]
+	here.trial = true  # the graph's "?" (DV-1): the slab shows there
+	rooms.map.enter(here)
+	rooms.room = here
 	rooms._roll_slab()
 	assert_not_null(rooms.slab)
 	var sign := rooms._slab_sign

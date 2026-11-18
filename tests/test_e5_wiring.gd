@@ -177,9 +177,9 @@ func test_the_fight_in_the_runes_draws_once() -> void:
 func test_the_slab_is_the_trials_cracked_slab() -> void:
 	var game := _game()
 	var rooms := game.rooms
-	rooms.stage.trial_chance = 1.0
-	rooms.map.depth = 3
-	rooms._enter(RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 3, 1, 0))
+	var here := RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 3, 1, 0)
+	here.trial = true  # the graph put the Provação's "?" here (DV-1)
+	rooms._enter(here)
 	game.horde.clear_crowd()
 	rooms._open_doors()
 	assert_not_null(rooms.slab)

@@ -48,14 +48,14 @@ func test_elites_wear_hades_armor() -> void:
 
 
 func test_map_runs_opening_guardian_shop_boss() -> void:
-	var map := RunMap.new(stage, rng)
+	var map := RunMap.new(stage, 11)
 	var room := map.first()
 	assert_eq(room.reward, RunMap.Reward.BOON, "the opening always gives a gift")
 	map.enter(room)
 	var kinds := []
 	var fountains := 0
 	while true:
-		var doors := map.options(true)
+		var doors := map.doors()
 		assert_between(doors.size(), 1, 3)
 		var rewards := {}
 		for d in doors:
@@ -75,17 +75,18 @@ func test_map_runs_opening_guardian_shop_boss() -> void:
 	assert_eq(kinds.count(RunMap.Kind.MINIBOSS), 1)
 	assert_eq(kinds[kinds.size() - 2], RunMap.Kind.SHOP)
 	assert_eq(map.depth, stage.rooms + 1)
-	assert_eq(fountains, 1, "the fountain comes once (forced at its last depth)")
+	assert_lte(fountains, 1, "the fountain taken whenever its door shows (one on a way at most)")
 	var guardian := kinds.find(RunMap.Kind.MINIBOSS) + 2
 	assert_between(guardian, stage.miniboss_depth_min, stage.miniboss_depth_max)
 
 
 func test_pom_is_only_promised_when_a_gift_can_grow() -> void:
-	var map := RunMap.new(stage, rng)
-	map.enter(map.first())
-	for i in 30:
-		for d in map.options(false):
-			assert_ne(d.reward, RunMap.Reward.POM)
+	for s in 30:
+		var map := RunMap.new(stage, s)
+		for r in map.nodes:
+			map.settle(map.doors_of(r), false)
+		for r in map.nodes:
+			assert_ne(r.reward, RunMap.Reward.POM, "seed %d: settled with nothing to grow" % s)
 
 
 func test_nobody_stands_inside_a_solid_prop() -> void:

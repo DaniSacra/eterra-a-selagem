@@ -32,11 +32,12 @@ var fountain_used := false
 var events: Array[Dictionary] = []
 
 
-## A room is entered at play time `time` with `hp` life, `gold` and `boons` gifts held. The room before it is closed.
-func enter(depth: int, layout: String, hp: float, time: float, boss := false, variant := 0, gold := 0, boons := 0) -> void:
+## A room is entered at play time `time` with `hp` life, `gold` and `boons` gifts held; node: its id in the descent's
+## graph (DV-1, RunMap; -1: none). The room before it is closed.
+func enter(depth: int, layout: String, hp: float, time: float, boss := false, variant := 0, gold := 0, boons := 0, node := -1) -> void:
 	close(time)
 	_started = time
-	_rooms.append({"depth": depth, "layout": layout, "variant": variant, "hp_in": snappedf(hp, 0.1), "gold_in": gold,
+	_rooms.append({"depth": depth, "node": node, "layout": layout, "variant": variant, "hp_in": snappedf(hp, 0.1), "gold_in": gold,
 		"boons_in": boons, "hurt_by": {}, "hits": 0, "hits_by": {}, "dodges": 0, "shots": {}, "blocked_by": {},
 		"time": 0.0, "contact": -1.0, "zones": {}})
 	if boss:

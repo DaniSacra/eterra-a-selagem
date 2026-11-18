@@ -17,13 +17,11 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var miniboss_depth_max := 6
 ## Guardians that can stand in that room (one is drawn).
 @export var minibosses: Array[StringName] = []
-## The fountain room comes once, between these depths (forced at the last one).
+## The fountain room comes between these depths, at most once on a way (one or two in the graph; RunMap).
 @export var fountain_depth_min := 5
 @export var fountain_depth_max := 8
 @export var fountain_chance := 0.35
 @export var boss: StringName = &"morvath"
-## Chance that a cleared room shows three doors instead of two.
-@export var three_doors_chance := 0.25
 ## Room shapes the generator draws from (the boss and the shop have their own).
 @export var layouts: Array[RoomLayout] = []
 @export var boss_layout: RoomLayout
@@ -31,6 +29,17 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## The two rooms of the events (E5): the Provação's chamber and the Altar Esquecido.
 @export var trial_layout: RoomLayout
 @export var altar_layout: RoomLayout
+
+@export_group("Map")
+## The descent's graph (DV-1, RunMap): the chances that a layer between the hall and the shop holds 2, 3 or 4 rooms
+## (the guardian's holds 1 or 2), how likely a room shows 1, 2 or 3 doors when its layer is linked to the next (weights,
+## RunMap._link), the chance that the guardian's layer has two rooms (the Knight and the Elder side by side, Q-27 a), and the first
+## depth whose door may promise a pomegranate (Q-25 a: the hall gives a Blessing, the room after may still not have
+## one to grow).
+@export var map_widths := PackedFloat32Array([0.35, 0.45, 0.2])
+@export var map_doors := PackedFloat32Array([1.0, 5.0, 2.0])
+@export var guardian_pair_chance := 0.5
+@export var pom_from_depth := 3
 
 @export_group("Encounters")
 ## Enemies of the region, elite versions included (each listed once; an elite blocks its plain version).
