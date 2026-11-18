@@ -20,6 +20,10 @@
   `controls.gd`, `test_descent.gd`, o `_stage` do `make_data.gd`, `comparativo.md` e o `art_polish_backlog.md`. Nada
   rodado (só planejamento).
 
+- **Atualização de 2026-11-18 (game-director, commit lido `b279433`)**: diretriz do PO "Eterra Stylized Art" (só
+  planejamento). Entram o plano `docs/art/stylized_poc_plan.md`, a seção 7, a ordem nova na seção 5 e a regra do Meshy
+  (nenhum crédito sem o "pode" do PO e sempre com estimativa antes; a Q-18 antiga foi substituída). Nada rodado.
+
 ## Estado do jogo em 5 linhas
 
 1. **A mão está no molde do Hades II e estável**: sonda 40/40, 992 testes, nenhum P0 em nenhum dos 7 relatórios; robô vence
@@ -394,8 +398,10 @@ ao alcance na sala seguinte; a outra leva ao Altar e abre caminho para uma Loja.
 ## 4. Perguntas para o Daniel
 
 **Respondidas em 2026-11-18: o Daniel aceitou todas as recomendações** (Q-02 a Q-05, Q-07, Q-11 a Q-16, Q-18 a Q-20,
-Q-22 a Q-27 pela recomendação de cada linha; Q-06, Q-08, Q-09 b, Q-10 e Q-21 já feitas). Q-18: a estátua e as armas
-dos inimigos no Meshy ficam autorizadas depois do AP-3, até 135 créditos; as elites esperam a Q-11 medida. Q-24: os
+Q-22 a Q-27 pela recomendação de cada linha; Q-06, Q-08, Q-09 b, Q-10 e Q-21 já feitas). Q-18: ~~a estátua e as armas
+dos inimigos no Meshy ficam autorizadas depois do AP-3, até 135 créditos~~ **substituída pela regra do PO de
+2026-11-18: nenhum crédito do Meshy sem o "pode" explícito dele, sempre com estimativa antes; estátua, armas e elites
+ficam "aguardando estimativa e aprovação do PO"** (estimativas por lote em `docs/art/stylized_poc_plan.md` 1.5). Q-24: os
 medalhões dependem de uma prancha nova do Daniel (o AP-4 faz o resto sem ela). Seguem abertas só Q-01 (plano do Meshy,
 só da Steam) e Q-17 (nome nos créditos). Ciclos em série com commit e push entre um e outro: DV-1 com AP-1, C19,
 AP-2, DV-2, C20, AP-3, AP-4 (MUS-1 em paralelo).
@@ -421,7 +427,7 @@ Cada uma com as opções e a minha recomendação. As de número baixo bloqueiam
 | Q-15 | Loja e combinações: o robô chega com 60 a 89 de ouro (a Bênção custa 150) e Elo/Salmo quase não aparecem (1 Elo em 12 descidas com Maestria 1) | (a) ajustar a renda e as chances pela régua do Hades e medir 72 sementes; (b) como está | (a): a regra central (Salmo transforma) não chega ao jogador nas primeiras horas |
 | Q-16 | Nomes das ações: "Esquiva" ou "Avanço"? "Ultimate" fica em inglês? | Esquiva/Avanço; Ultimate ou um nome em português ("Golpe Supremo", "Juízo") | "Esquiva" (é o mais usado e "Avanço" já é parte de um Dom); "Ultimate" é decisão sua: eu manteria até você escolher um nome próprio |
 | Q-17 | Créditos: "Criação e direção: Daniel Sacramento" no `CREDITOS.txt` está como você quer? | (a) assim; (b) outro nome ou estúdio; (c) sem nome | o que você preferir; é o que vai para a Steam |
-| Q-18 | Créditos do Meshy (546): lote proposto pelo technical-artist | estátua encapuzada (15), armas próprias dos inimigos e o gancho de Morvath (cerca de 120), repintura das elites (60); até 195 | autorizar a estátua e as armas depois do C18 (D-46 já disse "lote com orçamento"); as elites esperam a Q-11 |
+| Q-18 | **Aguardando estimativa e aprovação do PO** (a autorização anterior foi substituída em 2026-11-18). Créditos do Meshy (hoje 500): lote proposto pelo technical-artist | estátua encapuzada (15), armas próprias dos inimigos e o gancho de Morvath (cerca de 120), repintura das elites (60); até 195 | autorizar a estátua e as armas depois do C18 (D-46 já disse "lote com orçamento"); as elites esperam a Q-11 |
 | Q-19 | `hero_sombra/` e `paladin_1/` (60 MB, sem uso) saem do repositório? | (a) sim, o histórico do git guarda; (b) ficam | (a) |
 | Q-20 | Música: tirar uma peça que ninguém escolhe ou reencodar para abrir folga (0,78 MB do teto de 18) | (a) reencodar um passo abaixo (sem diferença audível medida); (b) tirar uma peça | (a) |
 | Q-21 | Copa da árvore do Jardim (prancha 07) | (a) cartões de folhagem procedurais, sem créditos; (b) modelo do Meshy | (a) |
@@ -448,6 +454,25 @@ música e os efeitos agradam, e se o herói se acha nas fases 2 a 4.
 ---
 
 ## 5. Ordem sugerida
+
+**Revista em 2026-11-18 pela diretriz "Eterra Stylized Art"** (seção 7): o Daniel pediu para parar e planejar. Nada
+começa sem ele dizer o "pode" para a prova de conceito. A ordem nova:
+
+1. **Daniel responde S-Q1** (a imagem de referência que faltou) e aprova o plano `docs/art/stylized_poc_plan.md`.
+2. **Revisão do AP-1 pelo art-director no perfil clássico** (está pendente e vira a linha de base da prova) e o **T6**,
+   se ainda não foi jogado.
+3. **STY, prova de conceito no Salão das Catacumbas** (5 a 6 dias, STY-01 a STY-09). Pode correr junto com o **C19**
+   (só lógica e dados; não toca `crowd.gdshader`, raio-x, `masonry`, chão nem `CatacombHall`) se o Daniel liberar.
+4. **Daniel julga a prova** (lado a lado, vídeos, FPS, pareceres).
+5. **AP-2 "Combate que se lê"** logo depois, nos dois perfis (é leitura de combate, vale em qualquer estilo; espera a
+   prova só porque mexe no `crowd.gdshader` e no raio-x).
+6. **DV-2** e **C20** como antes.
+7. **AP-3 "Masmorras com alma"** vira a migração sala por sala no estilo aprovado (ou segue clássico se a prova for
+   recusada); **AP-4** em paralelo (interface 2D, arquivos distintos).
+8. **Meshy**: só estimativas por lote ao Daniel, depois do AP-3 ou quando uma revisão pedir forma esculpida.
+
+A lista abaixo (antes da diretriz) fica como histórico.
+
 
 Revista em 2026-11-18 com a Descida de Valmor. A lista anterior (BUG-101 a BUG-104, QW-101 a QW-112, C17 e C18) está
 feita (seção 0 e as marcas "Feito" nas tabelas).
@@ -482,3 +507,31 @@ cruzam. Próximo recomendado: **AP-1 "Nada de protótipo"** (recompensas lidas s
 câmaras de evento assentadas, portal do salão, braseiros, janelas da Câmara). Perguntas novas para o Daniel: Q-22 (cor
 dos estandartes), Q-23 (como Ahk aparece) e Q-24 (de onde vêm os medalhões pintados), na seção D daquele documento; ele
 reaproveita Q-03, Q-04, Q-05, Q-07, Q-13 e Q-18 daqui.
+
+---
+
+## 7. Eterra Stylized Art (diretriz do PO de 2026-11-18, só planejamento)
+
+Plano completo em **`docs/art/stylized_poc_plan.md`** (diagnóstico, prova de conceito, riscos, perguntas S-Q1 a S-Q4);
+texto do Daniel em `docs/art/po_directive_stylized_2026-11-18.md`. A referência que ele citou não chegou (S-Q1); a
+provisória é a prancha `docs/art/ref/direcao_2026-11-18/prancha_relicarios_cripta_livro_morvath.png`.
+
+- **Diagnóstico em uma linha**: cerca de 65% da estética só com shaders, luz e pós, 75 a 80% com geometria procedural;
+  Guerreiro, Emeth, os nove inimigos, Morvath, a pedra procedural e o KayKit miúdo ficam; o que falta é forma esculpida
+  e textura pintada à mão (estimativas do Meshy, nada autorizado).
+- **Prova (STY-01 a STY-09)**: Salão das Catacumbas num perfil `--look=stylized` reversível (`VisualProfile`, global
+  `art_style`, `paint.gdshaderinc`, pós `PaintPass` só no Forward+ e só sobre o opaco), câmera, layout, colisão e lógica
+  iguais; 5 a 6 dias; `art-director`, `environment-artist`, `technical-artist`, `qa-performance`,
+  `combat-feel-director`.
+- **Meshy**: regra do PO de 2026-11-18, nenhum crédito sem o "pode" explícito dele e sempre com estimativa antes; a Q-18
+  está "aguardando estimativa e aprovação do PO".
+
+**Art polish diante da nova estética (nada descartado)**:
+
+| Ciclo | Antes | Agora | Por quê |
+|---|---|---|---|
+| AP-1 | feito, aguarda revisão | revisão do art-director no clássico antes da prova | é a linha de base do lado a lado (relicários, portal e braseiros estão no salão) |
+| AP-2 Combate que se lê | depois do C19 | **logo depois da prova**, nos dois perfis | leitura de combate vale em qualquer estilo; espera só pelo conflito no `crowd.gdshader` e no raio-x |
+| AP-3 Masmorras com alma | depois do C20 | **vira a migração** sala por sala no estilo aprovado; os aceites dele (sem fundo liso, KayKit fora das paredes, luma 55 a 70, iGPU Baixa a 3 qps) continuam | é o ciclo que mais muda com a estética; fazer em clássico agora seria refazer |
+| AP-4 Livro, coleção e título | por último | **em paralelo ao AP-3**, sem mudança de escopo | interface 2D já em pintura digital (medalhões, Livro); não depende do 3D |
+
