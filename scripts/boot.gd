@@ -4,7 +4,7 @@ extends Node
 ## their panels over the art.
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
 ## Once Morvath was sealed once, Iniciar first shows the Juramentos (JuramentoScreen, E6) with "Descer".
-## --title --screen=options|moves|howto|hero|codex|juramentos opens a panel at once (--hero-xp=N and --hero-equip=a,b set the
+## --title --screen=options|music|moves|howto|hero|codex|juramentos opens a panel at once (--hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data; Save.gd).
 
 const GAME := "res://scenes/game.tscn"
@@ -36,6 +36,8 @@ func _ready() -> void:
 	match Dev.arg("screen"):
 		"options":
 			_open(OptionsScreen.new(), TitleButton.Kind.SETTINGS)
+		"music":
+			_open(MusicRoomScreen.new(), TitleButton.Kind.SETTINGS)
 		"moves":
 			_open(CodexScreen.new(), TitleButton.Kind.HOWTO, [CodexScreen.Tab.MOVES])
 		"codex":
@@ -66,7 +68,7 @@ func _build() -> void:
 	_menu.howto_pressed.connect(func() -> void: _open(HowToScreen.new(), TitleButton.Kind.HOWTO))
 	_menu.settings_pressed.connect(func() -> void: _open(OptionsScreen.new(), TitleButton.Kind.SETTINGS))
 	_menu.quit_pressed.connect(_quit)
-	# the title's own piece (T5); the first room crossfades into the rooms' music
+	# the title's piece as chosen in Músicas (T5; our rooms' walk by default, which the first room goes on with)
 	Music.play(&"title")
 	if Dev.has("shot"):
 		# captures show the screen settled, not halfway through its entrance

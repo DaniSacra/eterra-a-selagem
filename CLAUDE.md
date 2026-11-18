@@ -466,12 +466,31 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   e "The Descent" luta; "Clash Defiant" em 4 seções, uma por fase), laços de compassos inteiros por
   `tools/make_music_loops.sh <pasta dos mp3>`; faixas `solo` (`MusicMix.Deck.solo`: o nível n ouve só a camada n, as
   outras seguem mudas no tempo, troca em crossfade sem reiniciar). Os Salmos e a vitória seguem sintetizados.
+  **Músicas para escolher (T5, o PO não gostou da música nova da fase e gostava da antiga)**: as antigas voltaram com
+  nome próprio (`audio/music/classic_catacombs_1/2.ogg`, `classic_morvath_1..4.ogg`, do `5dfe97f`) e são o **padrão em
+  todo lugar** (o título toca a caminhada da "Catacumbas (original)", como antes do T5); as do MacLeod continuam no pacote
+  para escolher. Catálogo como dado em `MusicCatalog` (`core/music_catalog.gd`, `PIECES`: id, nome `music_<id>` no
+  `text_pt.tres`, arquivo, camadas, `solo` ou somadas, laço, `places`: `title`, `catacombs` = masmorra, que pede
+  caminhada e luta, `morvath` = 4 fases; peça de masmorra serve no título e toca só a caminhada; vitória e Salmos só para
+  ouvir). Escolha por lugar no save (`music_title`, `music_dungeon`, `music_morvath`; inválida ou ausente cai no
+  `MusicCatalog.DEFAULT`, `MusicCatalog.resolve`). Os decks do `MusicMix` são as peças; `Music.play(&"title"|&"catacombs"|
+  &"morvath")` e `Music.boss_phase` tocam a peça escolhida (`Music.piece_for`; o registro de som guarda o lugar e o
+  `tools/mix_replay.gd` resolve igual), a vitória passa à caminhada da masmorra escolhida (`Music.choose` religa).
+  Tela **Músicas** (`MusicRoomScreen`, botão "Músicas" nas Configurações, `--title --screen=music`): à esquerda
+  "Título", "Masmorra", "Morvath" com "< peça >" (grava na hora), à direita todas as peças com Ouvir/Parar
+  (`Music.listen`, `heard`, `quiet`; tema de Salmo sozinho, vitória sem passar à caminhada) e, nas de camadas, Caminhada
+  ou Luta, Fase 1 a 4 ou "Todas as fases" (20 s cada, `MusicRoomScreen.TOUR`); ao sair, `Music.resume()` volta à música
+  do jogo onde estava, já com a escolha nova. Loudness igual: as antigas medem -21,7 / -20,1 LUFS (caminhada / com a
+  luta) contra -21,1 / -20,1 das novas, Morvath na fase 4 -19,3 contra -19,0 (a fase 1 da original é mais baixa de
+  propósito); a luta gravada (`test_mix.gd`) com cada uma: -16,6 e -16,3 LUFS, -1,4 dBTP. Teto da música no pacote 18 MB
+  (16,6 hoje). Testes em `tests/test_music_room.gd`; fluxo Configurações, Músicas, voltar no `tools/title_flow_check.gd`;
+  capturas `docs/gallery/t5/ui/music_room_*.jpg`.
   **Música (E4-06, C15-03)**: composta nota por nota e sintetizada pelo projeto em `tools/make_music.gd` (licença nossa;
   tabelas de onda, coro por formantes, corda Karplus-Strong, sinos, tambores, Freeverb; ré menor, a luz de Elun em maior),
-  rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory]` (desde o T5 `catacombs` e `morvath` só se pedidos pelo nome, e sobrescrevem os gravados) (cerca de
+  rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory]` (`catacombs` e `morvath` só se pedidos pelo nome, gravando `classic_catacombs_*` e `classic_morvath_*`) (cerca de
   3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`, 6,1 MB).
-  Faixas: `catacombs` (96 s, 80 BPM, laço sem emenda: a reverberação do fim aquece o começo) em 2 camadas, caminhada e luta;
-  `morvath` (64 s, 120 BPM) em 4 camadas, uma por fase; temas dos Salmos `psalm_sentinel`, `psalm_shelter`,
+  Faixas: `classic_catacombs` (96 s, 80 BPM, laço sem emenda: a reverberação do fim aquece o começo) em 2 camadas, caminhada e luta;
+  `classic_morvath` (64 s, 120 BPM) em 4 camadas, uma por fase; temas dos Salmos `psalm_sentinel`, `psalm_shelter`,
   `psalm_shepherd`, `psalm_rock` (16 s); `victory` (12,6 s, bVI, bVII, I). Tocador: autoload `Music`
   (`scripts/music.gd`, regras puras em `MusicMix`, `core/music_mix.gd`): cada faixa é um deck com as camadas começando
   juntas; `Music.play(id, nível)` (o nível liga as primeiras camadas; a mesma faixa só troca o nível), troca de faixa em

@@ -41,12 +41,14 @@ static func render(events: Array, sounds: Node, music_node: Node, before: bool =
 			next_event += 1
 			match String(e[1]):
 				"music":
-					music.play(StringName(e[2]), int(e[3]))
+					# T5: the log keeps the place; the piece is the one chosen there (Music.piece_for)
+					music.play(music_node.call(&"piece_for", StringName(e[2])), int(e[3]))
 				"level":
 					music.set_level(int(e[2]))
 				"boss":
-					if music.current_id() != &"morvath":
-						music.play(&"morvath", int(e[2]))
+					var boss_piece: StringName = music_node.call(&"piece_for", &"morvath")
+					if music.current_id() != boss_piece:
+						music.play(boss_piece, int(e[2]))
 					else:
 						music.set_level(int(e[2]))
 				"sting":

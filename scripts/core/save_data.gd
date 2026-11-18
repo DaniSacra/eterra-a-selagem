@@ -26,7 +26,10 @@ static func defaults() -> Dictionary:
 		codex[section] = {}
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "bindings": {}},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "bindings": {},
+			# T5 (the PO's review): the piece chosen for each place (MusicCatalog; Music.piece_for falls back to the default)
+			"music_title": String(MusicCatalog.DEFAULT[MusicCatalog.TITLE]), "music_dungeon": String(MusicCatalog.DEFAULT[MusicCatalog.DUNGEON]),
+			"music_morvath": String(MusicCatalog.DEFAULT[MusicCatalog.MORVATH])},
 		"best_times": [],
 		"moves": [],
 		"wins": 0,
