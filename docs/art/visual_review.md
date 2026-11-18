@@ -303,3 +303,14 @@ pela câmera do jogo; especificação em `docs/art/boss_chamber_spec.md`.
   queimando, círculo de luz opaco, velas demais no salão, marcador `PALADIN_N` na carta de dom.
 - Pedidos e critérios: `docs/design/visual_review.md` (V-A1 a V-U3).
 - Veredito: não aprovado como excelência visual; V-E1, V-A1 e V-P1 primeiro, sem créditos.
+
+## 2026-11-17: T5, movimento dos inimigos e telas de evento (`24c298e`)
+
+- Capturas: `docs/gallery/t5/motion/before|after/` (CPU, vista de lado) e `docs/gallery/t5/ui/` (720 e 1080). Revisão completa:
+  `docs/gallery/t5/ART_REVIEW.md`.
+- Bate: preparações do esqueleto, Cavaleiro, ancião e Morvath (duas silhuetas opostas), recuperações vivas; corrida do esqueleto
+  não é mais gazela; telas da Provação e do Altar claras (entrega, recebe, por quanto tempo).
+- Difere: investida do Escudo e do Cavaleiro com o corpo a prumo e o escudo saindo da frente; corrida agachada demais;
+  medalhão igual nas três cartas da Provação; medalhões do Altar chapados e com sentido trocado; placa da laje apertada a 720.
+- Pedidos: A-T5-1 a A-T5-8 (gameplay-engineer, ui-ux-designer, qa-performance).
+- Veredito: aprovado para o teste do Daniel com ressalva; falta vídeo na GPU na câmera do jogo.
