@@ -3,8 +3,9 @@ extends SceneTree
 ## is the project's (D-12b). Nothing sampled, nothing taken from another game.
 ##   ~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory] [--work=dir]
 ## T5: the title, the rooms and Morvath are recorded music now (Kevin MacLeod, CC BY 4.0, tools/make_music_loops.sh);
-## the old synthesised catacombs and morvath are still here, rendered only when asked by name, and they overwrite
-## the recorded ones (audio/music/catacombs_*.ogg, morvath_*.ogg).
+## the old synthesised catacombs and morvath are still here, rendered only when asked by name, as the pieces
+## "Catacumbas (original)" and "Morvath (original)" (audio/music/classic_catacombs_*.ogg, classic_morvath_*.ogg; the
+## player picks them in the Músicas screen, MusicCatalog; they are the default everywhere since the PO's T5 review).
 ## Needs ffmpeg with libvorbis on the PATH. The .wav of each layer stays in the work folder (default
 ## ~/tools/e4/music); only the .ogg goes in audio/music/ (Music, scripts/music.gd, plays them). Deterministic.
 ##
@@ -55,9 +56,9 @@ func _init() -> void:
 		var t := Time.get_ticks_msec()
 		match piece:
 			"catacombs":
-				_publish(&"catacombs", _catacombs())
+				_publish(&"classic_catacombs", _catacombs())
 			"morvath":
-				_publish(&"morvath", _morvath())
+				_publish(&"classic_morvath", _morvath())
 			"psalms":
 				for id: StringName in [&"psalm_sentinel", &"psalm_shelter", &"psalm_shepherd", &"psalm_rock"]:
 					_publish(id, [call("_" + String(id))])

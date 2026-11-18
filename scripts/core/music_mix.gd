@@ -51,7 +51,8 @@ class Deck:
 		return gains[layer] * fade
 
 
-## id -> {"layers": int, "length": seconds, "loop": bool, "then": StringName (optional), "sting": bool}
+## id -> {"layers": int, "length": seconds, "loop": bool, "then": StringName (optional), "sting": bool, "solo": bool}
+## (T5: the ids are the pieces of MusicCatalog; Music resolves a place to its chosen piece before asking here)
 var catalog: Dictionary = {}
 ## The bed decks, the newest last (older ones are fading out); the stings over them.
 var decks: Array[Deck] = []
@@ -157,6 +158,13 @@ func sting(id: StringName) -> Deck:
 func stop() -> void:
 	for d in decks:
 		d.fade_to = 0.0
+
+
+## The themes playing stop at once (the Músicas screen, T5: another piece, or back to the game).
+func cut_stings() -> void:
+	for s in stings:
+		dropped.append(s)
+	stings.clear()
 
 
 func step(dt: float) -> void:

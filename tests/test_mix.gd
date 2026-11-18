@@ -177,15 +177,22 @@ func test_a_room_change_crossfades_the_air() -> void:
 
 func test_morvaths_fight_hits_the_loudness_targets() -> void:
 	var events: Array = (JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/sound_log_boss.json")) as Dictionary).events
-	var r := MixReplay.render(events, Audio, Music)
-	var mix: PackedVector2Array = r.mix
-	var lim: Array = Loudness.limit(mix, Audio.LIMIT_DB, Audio.LIMIT_RELEASE)
-	var out: PackedVector2Array = lim[0]
-	var lufs := Loudness.integrated(out)
-	var tp := Loudness.true_peak(out)
-	var working := Loudness.windows_over(lim[1], 0.5)
-	gut.p("Morvath's fight: %.1f LUFS, %.2f dBTP after the limiter, limiter working in %d of %d windows" % [lufs, tp, working, (lim[1] as PackedFloat32Array).size()])
-	assert_between(lufs, -18.0, -14.0, "integrated loudness (C15-01)")
-	assert_lte(tp, -1.0, "true peak (C15-01)")
-	assert_lt(float(working) / (lim[1] as PackedFloat32Array).size(), 0.02, "the limiter is a guard, not a compressor (B-3)")
-	assert_eq(Loudness.windows_over(lim[1], 3.0), 0, "and never digs deep")
+	# T5 (Músicas): with every piece the player may choose for the rooms and Morvath (ours, the default, and the
+	# recorded ones), in Save.data only and put back afterwards
+	var options: Dictionary = (Save.data.options as Dictionary).duplicate()
+	for pair: Array in [[&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
+		Save.data.options.music_dungeon = String(pair[0])
+		Save.data.options.music_morvath = String(pair[1])
+		var r := MixReplay.render(events, Audio, Music)
+		var mix: PackedVector2Array = r.mix
+		var lim: Array = Loudness.limit(mix, Audio.LIMIT_DB, Audio.LIMIT_RELEASE)
+		var out: PackedVector2Array = lim[0]
+		var lufs := Loudness.integrated(out)
+		var tp := Loudness.true_peak(out)
+		var working := Loudness.windows_over(lim[1], 0.5)
+		gut.p("Morvath's fight with %s: %.1f LUFS, %.2f dBTP after the limiter, limiter working in %d of %d windows" % [pair[1], lufs, tp, working, (lim[1] as PackedFloat32Array).size()])
+		assert_between(lufs, -18.0, -14.0, "%s: integrated loudness (C15-01)" % pair[1])
+		assert_lte(tp, -1.0, "%s: true peak (C15-01)" % pair[1])
+		assert_lt(float(working) / (lim[1] as PackedFloat32Array).size(), 0.02, "%s: the limiter is a guard, not a compressor (B-3)" % pair[1])
+		assert_eq(Loudness.windows_over(lim[1], 3.0), 0, "%s: and never digs deep" % pair[1])
+	Save.data.options = options

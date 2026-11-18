@@ -50,8 +50,11 @@ func _measure() -> void:
 	var n := int(seconds * RATE)
 	var mix := PackedVector2Array()
 	mix.resize(n)
-	for i in 4:
-		_add(mix, _decode(music_node.stream_of(&"morvath", i, 4), seconds), 0, music_db)
+	# Morvath's chosen piece at phase 4 (T5): ours stacks the four layers, a solo piece plays its 4th section alone
+	var boss_piece: StringName = music_node.call(&"piece_for", &"morvath")
+	var solo := bool(MusicCatalog.spec(boss_piece).get("solo", false))
+	for i in ([3] if solo else [0, 1, 2, 3]):
+		_add(mix, _decode(music_node.stream_of(boss_piece, i), seconds), 0, music_db)
 	var music_rms := _rms(mix, 0, int(MUSIC_ALONE * RATE))
 	var t := MUSIC_ALONE
 	while t < seconds:

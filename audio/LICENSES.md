@@ -13,6 +13,10 @@ pontos de laço): `docs/design/t5_audio.md`.
 | Salas, luta: "The Descent" (laço de 70 compassos) | `music/catacombs_2.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1200094 | CC BY 4.0 |
 | Morvath, uma seção por fase: "Clash Defiant" (4 laços de 48 compassos) | `music/morvath_1.ogg` a `morvath_4.ogg` | Kevin MacLeod, https://incompetech.com/music/royalty-free/index.html?isrc=USUAN1600003 | CC BY 4.0 |
 | Temas dos Salmos (`psalm_sentinel`, `psalm_shelter`, `psalm_shepherd`, `psalm_rock`) e vitória (`victory`), E4-06 | `music/psalm_*.ogg`, `music/victory.ogg` | compostos nota por nota e sintetizados pelo projeto em `tools/make_music.gd`; nada gravado | do projeto |
+| "Catacumbas (original)" (caminhada e luta) e "Morvath (original)" (uma camada por fase), E4-06; o padrão no título, nas salas e em Morvath desde a revisão do PO no T5 | `music/classic_catacombs_1.ogg`, `_2.ogg`, `music/classic_morvath_1.ogg` a `_4.ogg` (os mesmos arquivos de antes do T5, commit `5dfe97f`) | compostos nota por nota e sintetizados pelo projeto em `tools/make_music.gd` (`-- catacombs morvath`); nada gravado | do projeto |
+
+As peças do Kevin MacLeod continuam no pacote para o jogador escolher na tela Músicas (Configurações), então o
+crédito delas (`credits_music`) fica nos créditos mesmo quando não estão escolhidas.
 
 Crédito pedido pelo autor: "Título" Kevin MacLeod (incompetech.com), Licensed under Creative Commons: By Attribution
 4.0 License, http://creativecommons.org/licenses/by/4.0/. Os laços são cortes e emendas (mudança permitida pela

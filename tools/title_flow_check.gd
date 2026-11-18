@@ -2,7 +2,7 @@ extends SceneTree
 ## Drives the title like a player (keyboard): Iniciar starts the run, the pause's way back reaches the title again,
 ## O Guerreiro opens the hero screen (a Gift goes on and off with Enter, the arrows walk the tree), Como Jogar opens
 ## the Compêndio, Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
-## Enter and keep the focus. Prints FLOW ok or FLOW FAIL.
+## Enter and keep the focus, Configurações opens Músicas and Esc comes back from it. Prints FLOW ok or FLOW FAIL.
 ## ~/tools/godot/godot --headless --path . -s tools/title_flow_check.gd
 
 var _fail := 0
@@ -63,6 +63,31 @@ func _comfort(options: Node) -> void:
 		_check(save.call(&"option", key) == before, "Enter flips %s back" % key)
 		if key != "rumble":
 			await _key(&"ui_down")
+
+
+## Configurações → Músicas → back (T5): Enter on Músicas opens the list with the focus on the title's choice, Esc goes
+## back to the options (not to the title) with the focus on Músicas.
+func _music_room(options: Node) -> void:
+	var button := options.find_child("music_room", true, false) as Control
+	_check(button != null, "the options have Músicas")
+	if button == null:
+		return
+	button.grab_focus()
+	await process_frame
+	await _key(&"ui_accept")
+	var rooms := options.find_children("*", "MusicRoomScreen", true, false)
+	_check(rooms.size() == 1, "Músicas opens")
+	await process_frame
+	var owner_ := root.gui_get_focus_owner()
+	_check(owner_ != null and owner_.name == "place_title_1", "the focus starts on the title's music")
+	await _key(&"ui_down")
+	owner_ = root.gui_get_focus_owner()
+	_check(owner_ != null and owner_ != button and rooms[0].is_ancestor_of(owner_), "down moves inside Músicas")
+	await _key(&"ui_cancel")
+	await _wait(0.1)
+	_check(options.find_children("*", "MusicRoomScreen", true, false).is_empty() and options.is_inside_tree(), "Esc goes back to the options")
+	var back := options.find_child("music_room", true, false) as Control
+	_check(back != null and back.has_focus(), "focus back on Músicas")
 
 
 ## The hero screen by keys: the focus starts on a Gift, Enter puts it on and takes it off, right walks to another node.
@@ -163,6 +188,7 @@ func _run() -> void:
 	await _wait(0.3)
 	_check(_sub_is(boot, "options_screen.gd"), "Configurações opens the options")
 	await _comfort(boot.get(&"_sub"))
+	await _music_room(boot.get(&"_sub"))
 	await _key(&"ui_cancel")
 	await _wait(0.3)
 	_check(boot.get(&"_sub") == null, "Esc closes the options")

@@ -41,6 +41,40 @@ Temas dos Salmos e a vitória continuam os sintetizados da E4 (curtos, sobre o l
   limitador ficaram iguais.
 - Tamanho: a música toda 11 MB (teto do teste 15 MB).
 
+### Revisão do PO: escolher a música (Músicas)
+
+Relato depois de ouvir: "Não gostei das músicas. Não tem como colocar no menu um lugar onde eu possa ouvir as músicas
+que já temos e depois eu escolho as que eu gosto? A música de antigamente eu gostava, só não gostei da música da fase."
+
+- **As antigas voltaram e são o padrão.** Os arquivos da E4 (commit `5dfe97f`) estão de novo no pacote com nome próprio:
+  `music/classic_catacombs_1.ogg`, `_2.ogg` ("Catacumbas (original)", caminhada e luta somadas) e
+  `music/classic_morvath_1.ogg` a `_4.ogg` ("Morvath (original)", uma camada a mais por fase). Título, masmorra e
+  Morvath tocam as antigas por padrão; o título toca a caminhada da Catacumbas, como antes do T5, e a primeira sala
+  segue a mesma peça (a luta entra por cima, sem recomeçar). `tools/make_music.gd -- catacombs morvath` regrava esses
+  nomes, não mais os do MacLeod.
+- **As do MacLeod ficam para escolher**: "Tempting Secrets" (só título), "Oppressive Gloom e The Descent" (masmorra, ou
+  título com a caminhada) e "Clash Defiant" (Morvath). Crédito mantido (`credits_music`), pois estão no pacote.
+- **Catálogo como dado**: `MusicCatalog` (`scripts/core/music_catalog.gd`), uma linha por peça com nome do jogador
+  (`music_<id>` no `text_pt.tres`), arquivos, camadas, `solo` ou somadas, laço e lugares onde serve. Masmorra pede 2
+  camadas (caminhada e luta), Morvath 4 (fases); vitória e temas dos Salmos só para ouvir. Peça nova: uma linha e os
+  arquivos.
+- **Escolha no save**: opções `music_title`, `music_dungeon`, `music_morvath`; valor inválido, ausente ou que não serve
+  ali cai no padrão (`MusicCatalog.resolve`). `Music.play(&"title"|&"catacombs"|&"morvath")` e `Music.boss_phase`
+  tocam a peça escolhida (`Music.piece_for`); crossfades, camadas por nível ou fase, ducking dos avisos e barramentos
+  iguais. O registro de som guarda o lugar e o `tools/mix_replay.gd` resolve igual.
+- **Tela Músicas** (`MusicRoomScreen`, botão nas Configurações, também na pausa): "Onde toca" com "< peça >" para
+  Título, Masmorra e Morvath (grava na hora) e a lista de todas as peças com Ouvir/Parar, Caminhada ou Luta, Fase 1 a 4
+  ou "Todas as fases" (20 s cada). Ao sair, a música do jogo volta onde estava, já com a escolha nova (no título, a
+  música do título escolhida). Teclado, mouse e controle; cabe em 1280 x 720 (621 px de altura) e 1920 x 1080.
+  Capturas: `docs/gallery/t5/ui/music_room_720.jpg`, `music_room_1080.jpg`, `music_room_options_720.jpg`.
+- **Loudness** (ffmpeg `ebur128`): antigas -21,7 LUFS na caminhada e -20,1 com a luta (novas -21,1 e -20,1); Morvath
+  original -27,9 / -23,1 / -20,7 / -19,3 nas fases 1 a 4 (novas -22 a -19; a fase 1 original é só o ostinato, mais
+  baixa de propósito desde a E4). Nenhum ganho extra. A luta gravada (`tests/test_mix.gd`) dá -16,6 LUFS com a original
+  e -16,3 com "Clash Defiant", -1,4 dBTP depois do limitador, limitador em 2 e 3 de 953 janelas: dentro das metas.
+- **Testes**: `tests/test_music_room.gd` (catálogo, arquivos, padrão, escolha inválida, `Music` resolve, ouvir e
+  voltar, tela pelo teclado, cabe em 720); `tests/test_music.gd` e `test_mix.gd` passam por todas as peças escolhíveis
+  (teto do pacote de música 15 para 18 MB: 16,6 MB com as antigas de volta).
+
 ## B) Efeitos
 
 Todo nome de som do jogo (81 em `Audio.SOUNDS`) tem arquivo gravado agora; as receitas só tocam se um arquivo

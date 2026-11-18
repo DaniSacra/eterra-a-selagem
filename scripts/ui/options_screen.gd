@@ -1,7 +1,8 @@
 class_name OptionsScreen
 extends Control
 ## Options: volumes, window size, full screen, the comfort switches (screen shake, impact frames, slow motion,
-## colour split, gamepad vibration; all on by default, the run reads them in Game.apply_options) and key remapping. Everything is saved
+## colour split, gamepad vibration; all on by default, the run reads them in Game.apply_options), key remapping and the
+## Músicas page (MusicRoomScreen, T5: hear every piece, choose the title's, the rooms' and Morvath's). Everything is saved
 ## at once. Each row is a button: arrows, Enter, the gamepad's pad and A, and the mouse all work.
 
 signal closed
@@ -79,10 +80,25 @@ func _build() -> void:
 	bottom.add_child(UiKit.button(T.t(&"options_reset"), func() -> void:
 		Controls.reset_bindings()
 		_build(), 260))
+	# T5: the music to hear and to choose for the title, the rooms and Morvath (MusicRoomScreen)
+	var music := UiKit.button(T.t(&"options_music"), _open_music, 200)
+	music.name = "music_room"
+	bottom.add_child(music)
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 200)
 	back.name = "back"
 	bottom.add_child(back)
 	_restore_focus.call_deferred()
+
+
+## Músicas over this page; back here with the focus on its button (the room puts the game's music back itself).
+func _open_music() -> void:
+	_focus_key = "music_room"
+	for c in get_children():
+		(c as CanvasItem).visible = false
+	var room := MusicRoomScreen.new()
+	add_child(room)
+	room.open()
+	room.closed.connect(_build)
 
 
 func _restore_focus() -> void:
