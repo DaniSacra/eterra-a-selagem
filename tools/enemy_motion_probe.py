@@ -129,9 +129,10 @@ def blows(by, hits):
         warn = (last_warn + 1) if last_warn is not None else None
         reach = r["reach"] + HERO_R
         body = r["radius"] + HERO_R
+        # no warning of its own (Morvath's blows: Boss draws his, not the crowd): "-"
+        late = "-" if warn is None else f"{h['f'] - warn:+d}"
         print(f"  f{h['f']} {h['channel']} {r['id']}#{r['uid']} {STATES.get(r['st'], r['st'])} {h['amount']}: "
-              f"{gap:.2f} m from him (body {body:.2f}, blade {reach:.2f}), warning ends f{warn} "
-              f"({'-' if warn is None else h['f'] - warn:+} f)")
+              f"{gap:.2f} m from him (body {body:.2f}, blade {reach:.2f}), warning ends f{warn} ({late} f)")
 
 
 def poses(by):

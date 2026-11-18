@@ -92,6 +92,18 @@ const TURN_RATE := 1200.0
 const FACE_SPLIT := 70.0
 const FACE_BACK := 45.0
 const FACE_SPEED := 1.2
+## T5-10 (the combat-feel review 7.1, seed 4): a speed that crossed FACE_SPEED for three frames snapped the body round
+## and back. It turns back to its aim only under FACE_SPEED_BACK, and either change waits FACE_AFTER seconds.
+const FACE_SPEED_BACK := 0.9
+const FACE_AFTER := 0.1
+## T5-20: a way to run from the paladin (flee_dir) is kept at least FLEE_HOLD seconds while it stays open (the
+## crossbowman swapped straight away and 35 degrees off frame by frame by a wall, its body 20 degrees each way).
+const FLEE_HOLD := 0.4
+## Running away it keeps going FLEE_SLACK meters past where it would start to run (it stopped and went on at that
+## line, its body turning to him and away again); its body faces where it moves while it runs and RUN_FACE seconds
+## after (until it is down to WALK_FROM), never the raw direction of one frame.
+const FLEE_SLACK := 0.75
+const RUN_FACE := 0.3
 const STAND_AFTER := 0.15
 const WALK_AFTER := 0.1
 ## Its own sideways steps under SIDE_STEP_BELOW m/s, from SIDE_FROM degrees off its facing, backwards from BACK_FROM;
@@ -315,15 +327,23 @@ func _drawn_motion(e: Enemy, dt: float) -> void:
 		return
 	var speed := e.vel.length()
 	var steps := renderer != null and renderer.kind(e.def).model.frame_count(&"strafe_l") > 0
-	if e.state != Enemy.State.WALK or speed < (FACE_SPEED if steps else WALK_FROM):
-		e.face_walk = false
+	var wants := e.face_walk
+	if e.state != Enemy.State.WALK or speed < (WALK_FROM if not steps else FACE_SPEED_BACK if e.face_walk else FACE_SPEED):
+		wants = false
 	else:
 		var split := absf(rad_to_deg(e.dir.angle_to(e.vel)))
 		if split > FACE_SPLIT:
-			e.face_walk = true
+			wants = true
 		elif split < FACE_BACK:
-			e.face_walk = false
-	var want := e.vel / speed if e.face_walk else e.dir
+			wants = false
+	e.face_t = e.face_t + dt if wants != e.face_walk else 0.0
+	if e.face_t >= FACE_AFTER or (not wants and e.state != Enemy.State.WALK):
+		e.face_walk = wants
+		e.face_t = 0.0
+	# running on its own (T5-20) the body faces where it moves, smoothed; slowed down a moment (a stun's end, a step
+	# held) it keeps its facing until it runs again or run_t is over
+	var running := e.run_t > 0.0 and e.state == Enemy.State.WALK
+	var want := e.vel / speed if e.face_walk or (running and speed >= WALK_FROM) else e.face if running else e.dir
 	e.face = turned(e.face if e.face != Vector2.ZERO else e.dir, want, deg_to_rad(TURN_RATE) * dt)
 
 
@@ -466,19 +486,24 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 			_end_attack(e, &"exit")
 		return
 	e.dir = toward
+	# it ran from him a moment ago: the distances it keeps grow FLEE_SLACK (it stopped and went on at the line)
+	var fled := e.flee_hold > 0.0
+	e.flee_hold -= dt
+	e.run_t -= dt
 	var sp := _speed(e)
 	if sp <= 0.0:
 		pass
 	elif e.retreat_t > 0.0:
 		# after its attack it gets away from him (Hades: RetreatAfterAttack), then comes back to its reach
 		e.retreat_t -= dt
-		if dist < d.retreat_far:
-			var away := flee_dir(e.pos, -toward, d.radius, e.side)
+		if dist < d.retreat_far + (FLEE_SLACK if fled else 0.0):
+			var away := _flee(e, -toward)
 			e.pos += away * sp * dt
 			if away != Vector2.ZERO:
 				e.dir = away
+				e.run_t = RUN_FACE
 		return
-	var near := dist < d.attack_range * d.keep_away
+	var near := dist < d.attack_range * d.keep_away + (FLEE_SLACK if fled else 0.0)
 	var cornered := false
 	var cover: Variant = cover_spot(e.pos, d.cover_hug) if d.cover_hug > 0.0 and e.cooldown > 0.0 and not near else null
 	if sp <= 0.0:
@@ -489,16 +514,19 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		if to_cover.length() > 0.3:
 			e.pos += to_cover.normalized() * minf(sp * dt, to_cover.length())
 			e.dir = to_cover.normalized()
+			e.run_t = RUN_FACE
 	elif dist > d.attack_range or (e.cooldown <= 0.0 and not _can_fire(e)):
 		# out of reach, or ready with no line of fire or off the screen: it walks the way to him until it has one
 		e.pos += _walk * sp * dt
 		e.dir = _walk
+		e.run_t = RUN_FACE
 	elif near:
-		var away := flee_dir(e.pos, -toward, d.radius, e.side)
+		var away := _flee(e, -toward)
 		cornered = away == Vector2.ZERO
 		e.pos += away * sp * dt
 		if not cornered:
 			e.dir = away
+			e.run_t = RUN_FACE
 	else:
 		e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
 	var running := sp > 0.0 and dist < d.attack_range * d.keep_away * RANGED_SHOOT_WHILE_RUNNING and not cornered
@@ -565,14 +593,32 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 			s.node.scale = LOW_SHOT_SCALE
 
 
+## Its way from the paladin (flee_dir) held FLEE_HOLD seconds while it stays open (T5-20).
+func _flee(e: Enemy, away: Vector2) -> Vector2:
+	if e.flee_hold > 0.0:
+		var kept := away.rotated(e.flee_turn)
+		if _open_way(e.pos, kept, e.def.radius):
+			return kept
+	var dir := flee_dir(e.pos, away, e.def.radius, e.side)
+	if dir != Vector2.ZERO:
+		e.flee_turn = away.angle_to(dir)
+		e.flee_hold = FLEE_HOLD
+	return dir
+
+
 ## Where a ranged enemy runs to get away from the paladin: straight away, else turned along the wall (its own side
 ## first), never off the floor. ZERO: cornered, nowhere to go.
 func flee_dir(from: Vector2, away: Vector2, radius: float, side: float) -> Vector2:
 	for deg: float in [0.0, 35.0, -35.0, 70.0, -70.0, 105.0, -105.0]:
 		var dir := away.rotated(deg_to_rad(deg) * (side if side != 0.0 else 1.0))
-		if arena.inside(from + dir * RANGED_LOOK, radius + 0.3) and arena.free_at(from + dir * RANGED_LOOK, radius):
+		if _open_way(from, dir, radius):
 			return dir
 	return Vector2.ZERO
+
+
+## Floor and no stone RANGED_LOOK meters that way.
+func _open_way(from: Vector2, dir: Vector2, radius: float) -> bool:
+	return arena.inside(from + dir * RANGED_LOOK, radius + 0.3) and arena.free_at(from + dir * RANGED_LOOK, radius)
 
 
 ## Runs in, stops, raises its blade (the line on the floor) and pounces along it: its body covers the lunge it

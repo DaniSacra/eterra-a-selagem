@@ -54,8 +54,6 @@ func _process(_delta: float) -> bool:
 			rows.append("%.2f:%.2f/%.1f/%.2f" % [share, right.y, speed, right.distance_to(left)])
 			var chest := xf * skeleton.get_bone_global_pose(skeleton.find_bone("Spine")).origin
 			ahead.append("%.2f:%+.2f/%+.2f" % [from + dt * i, left.z - chest.z, right.z - chest.z])
-			if OS.has_environment("PROBE_XYZ"):
-				print("%.2f L %s R %s C %s" % [from + dt * i, left, right, chest])
 		print("CLIP %s:%s %.2f to %.2f (%.2f s): highest %.2f m at %.2f, fastest %.1f m/s at %.2f" % [rig, parts[1], from, to, to - from, top[0], top[1], fast[0], fast[1]])
 		print("  share:height/speed/hands apart  " + " ".join(rows))
 		print("  second:left/right hand ahead of the chest (m, +z the front)  " + " ".join(ahead))

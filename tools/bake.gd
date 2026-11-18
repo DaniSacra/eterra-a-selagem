@@ -302,8 +302,8 @@ const MODELS := {
 			# T5-04, T5-16: it gathers into a crouch, the arms drawn back (the coil of the library's jump), then bursts
 			# all around itself spinning with its arms out (its blast lands as they open, EnemyDef.strike_at); it
 			# was a still crouch and a punch ahead for a burst around it. A-T5-3: from 0.26 s, past the jump's raised knee
-			# (from 0.18 one foot was 0.22 m over the other), to 0.4 to keep its pace (1.0 m/s drawn)
-			"windup": [&"ual", "Jump_Start", 8, false, {"from": 0.26, "to": 0.4}],
+			# (from 0.18 one foot was 0.22 m over the other), to 0.4 to keep its pace (1.0 m/s drawn), in its 0.15 s
+			"windup": [&"ual", "Jump_Start", 8, false, {"from": 0.26, "to": 0.4, "time": 0.15}],
 			"attack": [&"kaykit", "2H_Melee_Attack_Spinning", 14, false],
 		},
 	},
