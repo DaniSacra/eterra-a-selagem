@@ -414,6 +414,34 @@ herói.
 
 ---
 
+## 5b. Ciclo T5/T6, correções do teste do PO (2026-11-17)
+
+**Feito** (pedido do PO depois do primeiro teste das E2 a E6; sem conteúdo novo, sem C16):
+- **P0, ultimate:** a carga agora vem também do dano causado e sofrido, a ultimate padrão é a primeira que a Maestria
+  abre, e o HUD mostra o que falta (`docs/design/t5_ultimate.md`).
+- **P0, preparação dos inimigos e de Morvath:** preparação com o corpo e dano só no contato
+  (`docs/qa/t5_enemy_motion.md`, `combat_cadence.md` seção 6).
+- **P1:** esqueleto parou de tremer; corrida trocada (`Jog_Fwd`); músicas próprias para título, masmorra e Morvath e
+  efeitos gravados (`docs/design/t5_audio.md`); Altar e Provação explicados na tela.
+- **Revisões:** art-director e combat-feel-director aprovaram com ressalvas (`docs/gallery/t5/ART_REVIEW.md`,
+  `t5_enemy_motion.md` seção 7). QA em `docs/qa/latest_report.md`.
+- **Evidências:** prints antes e depois em `docs/gallery/t5/before|after/`, vídeos em `docs/gallery/t5/videos/`.
+
+**Pendências:**
+- **Escuta e olho humanos:** música e efeitos (ninguém ouviu), a corrida do esqueleto (3 de 6 critérios: o pé ainda
+  sobe 26 cm), o tremor nos vídeos lentos, a ultimate e a dificuldade com gente jogando.
+- **Partidas do robô (Maestria 1):** 72% para 70% de vitórias; o dano levado antes de Morvath subiu 21%, por causa do
+  dano por contato (Q-T5-1).
+- **Besteiro fugindo:** de 0,48 a 1,24 inversões por segundo, contra o critério de 0,3 (T5-20); o que sobra são giros
+  inteiros.
+- **Tarefas abertas:**
+  - preparações de Morvath para maldição e erupções, e o recuo da besta (P2, T5-17 a T5-19);
+  - horde 47% mais caro com 300 inimigos (Q-T5-4);
+  - `test_descent` instável (Q-T5-5);
+  - globos laranja na vitória com 25 Bênçãos (Q-T5-6);
+  - `--shot-on` antes de `--shot-at` (Q-T5-7).
+- **Próximo:** o teste do PO. A C16 Steam só começa quando ele pedir.
+
 ## 6. Próximas entregas (E1 a E6)
 
 **Estado em 2026-11-17: E2 a E6 feitas** (autorização do Daniel de 2026-11-16, sem perguntas; commit final 68ce0be). Falta o

@@ -1,3 +1,126 @@
+# Relatório de QA e desempenho: T5 integrado (ultimate, áudio, movimento dos inimigos, Provação e Altar)
+
+- **Data**: 2026-11-17. **Testado**: `arpg-3d` no **`620a21e` com a correção do Q-T5-2**, hoje o commit `579fe89`
+  (a árvore e o espelho da GPU já tinham a mudança do `game.gd` quando rodei; conteúdo igual ao `579fe89`), e antes dele
+  no `24c298e`; base de comparação `5dfe97f` (o "antes" do T5, cópia por `git archive` em `/home/dani/tools/t5qa/base`).
+- **Ambiente**: WSL2 sem tela e sem som ouvido; GPU real (RTX 5060 do notebook) pela Godot 4.7.2 de Windows, Vulkan,
+  Forward+. O notebook ficou sem bateria e reiniciou no meio da sessão: tudo da GPU depois disso foi refeito. Máquina
+  carregada em parte das medidas (8 partidas em paralelo, Movie Maker). Sem controle, sem celular, nenhum teste com gente.
+- Saídas brutas fora do git: `/home/dani/tools/t5qa/` (`runs/<rótulo>/<semente>.log`, `reg/`, `reg2/`, `tests*.txt`,
+  `fps.out`, análise `analyze.py`).
+
+## Veredito
+
+**Pronto para o Daniel testar** (`579fe89`). Nenhum P0 nem P1; o XP sem save (Q-T5-2) já está corrigido e coberto por
+`tests/test_qa_t5_findings.gd`. O dano por contato deslocou parte da dificuldade para antes de Morvath
+(vitórias iguais, mais mortes nas salas 5 a 9; P2 para acompanhar). O que o T5 pede de olho e ouvido (tremor, trote,
+peso dos golpes, música e sons gravados) está nos vídeos e não foi julgado aqui.
+
+| Item | Resultado |
+|---|---|
+| Importação / `tools/check.gd` | 0 `SCRIPT ERROR`, 0 `Parse Error`, `CHECK ok` (no `24c298e` e no `620a21e`) |
+| `tools/test.sh` no `24c298e` | 90 scripts, **929/929**, 0 arriscados (o `test_only_finishers_glint` passou sem marca), 2 avisos `Float/Int` em `test_boss_exits.gd`, vazamento no fim (28 ObjectDB, 19 recursos): todos já conhecidos |
+| `tools/test.sh` no `579fe89` (conteúdo) | 91 scripts, 939 testes, **938 passando**; a falha é `test_descent.gd` `test_the_doors_know_their_rooms_before_they_open` ("mage comes as promised"), **instável e anterior ao T5** (1 de 6 execuções do arquivo também no `5dfe97f`; 0 de 8 isolado), Q-T5-5 |
+| `tools/title_flow_check.gd` | `FLOW ok` (foco em "Descer" ao abrir os Juramentos pelo Iniciar) |
+| Partidas do robô | 385 descidas de 900 s com reação 0,25, **0 linhas de erro** em todas; tabelas abaixo |
+| `smoke.sh 300 --seed=5` | chega em Morvath (sala 11) aos 251,8 s (E6: 260,7) |
+| `smoke.sh 600 --seed=5` / `180 --start=boss --boons=25` | vence aos 372,3 s / vence aos 75,1 s, fase 4 (E6: 371,3 / 83,8) |
+| Morvath, `--start=boss --boons=5 --bot-reaction=0.25`, sementes 1 a 8 | **7 de 8 vitórias, 8 de 8 chegam à fase 4**; a derrota na fase 4 (invocados 16, erupções 10, tempestade 10) |
+| Simulação, 300 inimigos (`smoke 120 --stress=300`, isolado, 3 x 3) | `step_ms_avg` **2,6 antes, 3,8 depois** (+47%, todo no `horde`); nas descidas reais (até 8 de pé) 0,4 ms antes e depois, pico até 25 ms. Q-T5-4 |
+| FPS na RTX, `--stress=300 --shot-at=8`, 1672 x 941, 3 x 3 alternado | antes 58 / 55 / 54, depois 55 / 55 / 52 qps (no ruído) |
+| Vídeos antes e depois | 12 cenas x 4 arquivos, `docs/gallery/t5/videos/` (37 MB, INDEX) |
+| Capturas de depois | 66 de 69 do antes refeitas mais 4 novas do HUD, `docs/gallery/t5/after/` (21 MB, INDEX); cópia em `C:\Users\danie\Downloads\ASelagem-prints\after\` |
+
+## 1. O robô joga a descida (reação 0,25, 900 s, `tools/smoke.sh`)
+
+Maestria 20 = `--talents=ainda_de_pe,firmeza,respiro,quarto_corte,impeto,lamina_faminta,reserva,corte_crescente,fio_longo`
+(a montagem de sustento da E6). V = vitória, Md = morte antes de Morvath, M4 = morte na fase 4.
+
+| Montagem | Código | Sementes | Vitórias | Mortes antes de Morvath | Chega em Morvath | Vida ao chegar | Luta (vitórias) |
+|---|---|---|---|---|---|---|---|
+| Maestria 1 | `5dfe97f` | 1 a 72 | **52 (72%)** (igual à E6) | 4 | 251,5 s | 42,5 | 105,4 s |
+| Maestria 1 | `620a21e` | 1 a 72 | **51 (70%)** | **10** (salas 5 a 9) | 256,4 s | 41,8 | 104,7 s |
+| Maestria 1 + Corte do Juízo | `620a21e` | 1 a 24 | 19 (79%) | 4 | 225,7 s | 42,8 | 87,7 s |
+| Maestria 1 + Voragem | `620a21e` | 1 a 24 | 18 (75%) | 3 | 236,0 s | 43,1 | 95,4 s |
+| Maestria 20 + Corte do Juízo | `5dfe97f` | 1 a 24 | 20 (83%) | 0 | 220,2 s | 55,7 | 94,3 s |
+| Maestria 20 + Corte do Juízo | `620a21e` | 1 a 24 | 20 (83%) | 0 | 213,2 s | 51,8 | 90,2 s |
+| Maestria 20 + Voragem | `620a21e` | 1 a 24 | 22 (91%) | 0 | 213,7 s | 51,7 | 87,6 s |
+| (no `24c298e`, 1 a 24) | | | M1 70%, M1+Corte 79%, M1+Voragem 66%, M20+Corte 95%, M20+Voragem 95% | | | | |
+
+Nas sementes 1 a 24 a Maestria 1 do `5dfe97f` vence 20 (83%, igual às mesmas sementes da E6) e a do `620a21e` 17 (70%).
+Diferença Maestria 20 (Corte) contra Maestria 1 nas mesmas 24: **13 pontos** (teto da E6: 25). Comparação com a E6
+(72% e 90%): sem desvio grande nas vitórias.
+
+**Onde morre** (Maestria 1, 72 sementes): antes 4 antes de Morvath, 14 na fase 4, 1 na 3 e 1 na 2; depois 10 antes de Morvath (4 na
+sala 5: Santuário com o Cavaleiro, Runas, Ponte; 3 na 7; 1 na 8; 2 na 9, Fendas com a elite do feiticeiro), 7 na fase 4,
+4 na fase 3. **Dano levado antes de Morvath** por partida: 19,3 antes, 23,3 depois (+21%): Ancião 364 para 522, elite do
+feiticeiro 136 para 250, Cavaleiro de quase nada para 179 (10 por contato da investida), feiticeiro igual (428 e 425).
+
+**Ultimate** (`ult` do `RESULT`, média por descida, `620a21e`):
+
+| Montagem | Usos (mín. a máx.) | Usos em Morvath | Dano nele | Carga por Magia / dano / vida perdida |
+|---|---|---|---|---|
+| M1 + Corte do Juízo | 9,0 (4 a 11) | 3,0 | 936 (15% da vida) | 274 / 255 / 34 |
+| M1 + Voragem | 8,3 (3 a 11) | 2,9 | 702 | 305 / 279 / 31 |
+| M20 + Corte do Juízo | 9,8 (8 a 12) | 3,8 | 1115 | 310 / 276 / 36 |
+| M20 + Voragem | 9,0 (8 a 10) | 3,3 | 808 | 334 / 299 / 34 |
+| M20 + Corte, `5dfe97f` (só Magia) | 5,8 (5 a 7) | 1,8 | 557 | 0 (sem o campo) |
+
+A regra nova quase dobra os usos (5,8 para 9,8) e o dano em Morvath. Sem a parte da Magia (o robô gasta muito mais que
+gente) sobram cerca de 290 de carga por descida, uns 5 Cortes do Juízo: bate com a conta do `t5_ultimate.md` (um a
+cada duas salas). Desempenho: `step_ms_avg` 0,4 ms e pico até 25 ms em todas as descidas do `620a21e` rodadas juntas.
+
+## 2. Vídeos antes e depois (`docs/gallery/t5/videos/INDEX.md`)
+
+Movie Maker na RTX a 120 qps com tempo fixo; normal a 60 qps com som e lento a 0,25x sem quadro inventado. Cenas:
+esqueleto andando na sala 1, invocados do Sacerdote correndo, esqueleto preparando e golpeando, Escudo (golpe curto e
+04b com a investida), besteiro, feiticeiro, Morvath (foice, investida, lâminas), Corte do Juízo e Voragem. Conferido
+quadro a quadro: esqueleto ergue a lâmina com o brilho durante o aviso e desce no golpe; Morvath ergue a lâmina por cima
+da cabeça no meio círculo e desce no acerto; na investida ele se abaixa durante a faixa e a cruza com o corpo. **Não
+julgado**: se o tremor e a "gazela" sumiram aos olhos (o `combat-feel-director` e o `art-director` devem assistir os
+`_lento`), e o som.
+
+## 3. Capturas de depois (`docs/gallery/t5/after/INDEX.md`)
+
+Mesma numeração do antes. HUD da ultimate em cada estado: **40a** trancada com cadeado e "Maestria 2" (sem robô; com
+o robô o losango não aparece, regra do T5), **40b** carregando aos 12 s, **40c** "Pronta" com o losango aceso, 41 e
+41b as duas ultimates. Provação (26, 49, 49b, 49c, 54) e Altar (27, 52) com os textos e medalhões novos; salas com
+inimigos preparando (10 a 23); título (01). Não refeitas: 05 e 44 (scripts temporários do antes) e 51 (o robô não morreu
+em 150 s em três tentativas; a 51b mostra a derrota).
+
+## 4. Os dois itens notados antes
+
+- **Foco dos Juramentos**: por teclado abre em "Descer" (`title_flow_check`, e a captura 07 de depois). Mas cada linha
+  toma o foco quando o mouse entra nela (`juramento_screen.gd` `_row`, `mouse_entered` -> `grab_focus`), e o botão
+  Iniciar do título (cerca de 1320, 512 a 1080) fica exatamente sobre a linha "Mais Mortos" da tela que abre. A 07 de
+  antes saiu com o foco em "Mais Elites" (cursor do Windows parado no meio da janela); a de depois em "Descer" (cursor em
+  outro lugar). Q-T5-3.
+- **"+XP" na vitória sem save**: confirmado no `24c298e` e no `620a21e` commitado (`Game.log_run` preenchia
+  `mastery_report` mesmo sem save; a 50 de antes mostra "+220 XP" e a barra de Maestria). Teste que falha:
+  `tests/test_qa_t5_findings.gd` (mostrava 95 de XP). Com a correção do Game Director (`579fe89`) o teste passa e a 50 de
+  depois sai sem XP. Q-T5-2.
+
+## Falhas e pendências por gravidade
+
+| Id | Grav. | O quê | Reproduzir | Dono |
+|---|---|---|---|---|
+| Q-T5-1 | P2 | Dificuldade deslocada para antes de Morvath: mortes antes dele 4 para 10 em 72 descidas, dano levado +21% (Cavaleiro por contato, elite do feiticeiro, Ancião); vitórias iguais (72% e 70%) | `tools/smoke.sh 900 --seed=N --bot-reaction=0.25`, N = 1 a 72, nos dois commits; `python3 /home/dani/tools/t5qa/analyze.py h_m1 base_m1` | `gameplay-engineer` (decidir com gente jogando) |
+| Q-T5-2 | P2 | Tela de vitória mostra "+N XP" e a barra de Maestria sem save | `--start=boss --boons=25 --boss-hp=0.02 --shot-on=end --nosave`; `tools/test.sh -gselect=test_qa_t5_findings` | corrigido no `579fe89` |
+| Q-T5-3 | P2 | Juramentos: a linha sob o cursor toma o foco; quem clica Iniciar com o mouse abre a tela com o cursor sobre "Mais Mortos" e o Enter sobe um Juramento em vez de descer (provável; visto na captura de antes, não testado com o mouse de verdade) | save com 1 vitória, clicar Iniciar sem mexer o mouse, apertar Enter | `ui-ux-designer` |
+| Q-T5-4 | P2 | `Horde.step` 47% mais caro com 300 de pé (2,6 para 3,8 ms); no jogo normal sem efeito (0,4 ms) e FPS na RTX no ruído | `tools/smoke.sh 120 --stress=300 --seed=5` nos dois commits; `--trace-steps` mostra o `horde` | `gameplay-engineer` |
+| Q-T5-5 | P3 | `test_descent.gd` instável (ordem dos testes muda o sorteio), também no `5dfe97f` | `tools/test.sh -gselect=test_descent` 6 vezes | `gameplay-engineer` (semear o teste) |
+| Q-T5-6 | P3 | Dois globos laranja estourados perto do herói na vitória com 25 Bênçãos (já no antes); pontinhos esverdeados no fim de duas linhas da placa da laje (54, perto de 1525, 290 e 320) | capturas 34, 50 e 54 | `art-director` |
+| Q-T5-7 | P3 | Ferramenta: `--shot-on=boss:<momento>` e `--shot-on=end` só escutam depois de `--shot-at` (2 s); momento anterior trava a captura | `--start=boss --boss-hp=0.02 --boons=25 --bot --shot-on=boss:victory` | `gameplay-engineer` |
+
+## Depende de olho e ouvido humanos
+
+Tremor do esqueleto e trote dos invocados a 60 qps reais, peso e sincronia dos golpes (vídeos `_lento`), a música
+nova (título, catacumbas, Morvath, Kevin MacLeod) e os sons gravados (ninguém ouviu: WSL sem saída de som), o
+Juramentos com mouse de verdade, a ultimate com gente (o robô gasta Magia demais para dizer quanto gente carrega), a
+dificuldade com gente. Não medido: celular, navegador (Compatibility), controle.
+
+---
+
 # Relatório de QA e desempenho: E6 (mixagem por barramentos, ambiência por arena, máquina fraca)
 
 - **Data**: 2026-11-17. **Testado**: base `arpg-3d` `224782a` com as mudanças da E6 na worktree do `qa-performance`

@@ -198,3 +198,14 @@ func test_a_run_without_juramentos_is_as_before() -> void:
 	assert_eq(game.horde.vow_hp, 1.0)
 	assert_eq(game.player.hurt_scale, 1.0)
 	assert_eq(game.result().juramentos, {})
+
+
+## QA T5 (Q-T5-3): the cursor left over a row by the title's Iniciar must not steal the focus from "Descer".
+func test_a_resting_cursor_does_not_take_the_focus() -> void:
+	var s := JuramentoScreen.new()
+	add_child_autofree(s)
+	s._open_mouse = Vector2(400, 300)
+	assert_false(s.hover_takes_focus(Vector2(402, 301)), "a twitch where Iniciar was clicked")
+	assert_true(s.hover_takes_focus(Vector2(440, 300)), "a real move")
+	s._open_mouse = Vector2.INF
+	assert_true(s.hover_takes_focus(Vector2(402, 301)), "after the first real move hover works as before")

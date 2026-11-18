@@ -47,7 +47,14 @@ class Pips:
 			draw_polyline(pts, ON if i < rank else OFF_LINE, UiKit.FRAME, true)
 
 
+## Where the cursor was when the screen opened: a row under it takes the focus only once the mouse really moved
+## (QA T5, Q-T5-3: the title's Iniciar sits over a row, and Enter then raised a Juramento instead of descending).
+var _open_mouse := Vector2.INF
+const HOVER_AFTER_PX := 12.0
+
+
 func open(with_descend: bool = false) -> void:
+	_open_mouse = get_viewport().get_mouse_position() if get_viewport() != null else Vector2.INF
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	locked = not Juramentos.unlocked(Save.data)
@@ -116,6 +123,11 @@ func open(with_descend: bool = false) -> void:
 		start.grab_focus.call_deferred()
 
 
+## Whether hovering may move the focus: not until the cursor left where it was when the screen opened.
+func hover_takes_focus(at: Vector2) -> bool:
+	return _open_mouse == Vector2.INF or at.distance_to(_open_mouse) >= HOVER_AFTER_PX
+
+
 ## One Juramento: a button the size of the row (focus, click), with its name, diamonds, line and Peso inside.
 func _row(d: JuramentoDef) -> Button:
 	var b := Button.new()
@@ -123,7 +135,8 @@ func _row(d: JuramentoDef) -> Button:
 	b.custom_minimum_size = Vector2(WIDTH, ROW_HEIGHT)
 	b.focus_mode = Control.FOCUS_ALL
 	b.mouse_entered.connect(func() -> void:
-		if not b.has_focus():
+		if not b.has_focus() and hover_takes_focus(get_viewport().get_mouse_position()):
+			_open_mouse = Vector2.INF
 			b.grab_focus())
 	b.focus_entered.connect(func() -> void: Audio.play(&"ui_move"))
 	b.pressed.connect(func() -> void: _step(d.id, 1))
