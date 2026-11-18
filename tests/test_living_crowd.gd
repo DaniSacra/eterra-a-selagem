@@ -48,7 +48,9 @@ const CADENCE := {&"guard": Vector2(110, 140), &"knight": Vector2(90, 120), &"mo
 	&"mage": Vector2(120, 150), &"archer": Vector2(120, 150),
 	# E1c (AUDIT.md P6): the soldier runs about 150 a minute (it floated at 96), the elder walks about 90 (it was 67);
 	# T5-11: the soldier jogs at 160 to 170 (Jog_Fwd, no longer the hop of a gazelle)
-	&"skeleton": Vector2(155, 170), &"priest_elder": Vector2(80, 100)}
+	&"skeleton": Vector2(155, 170), &"priest_elder": Vector2(80, 100),
+	# T5b Corredor: the runner, faster than the soldier, jogs at 165 to 180 (it hopped on Running_B at 131)
+	&"runner": Vector2(165, 180)}
 ## The ceiling of the baked figures on disk (E1a: 70 MB).
 const BAKED_MB := 70.0
 

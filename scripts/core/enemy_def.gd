@@ -40,7 +40,7 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var crest := 0.0
 ## How much more than the crowd the painting's eyes and gems shine (1: as everyone; CrowdRenderer.PAINT_GLOW).
 @export var shine := 1.0
-## Degrees its trunk sways from side to side as it runs, unsteady (drawn only: Horde.SWAY_HZ).
+## Degrees its trunk sways from side to side as it runs, unsteady, once to each side a stride (drawn only: Horde.stride_lean).
 @export var sway := 0.0
 ## Meters it trembles during its wind-up (drawn only: Horde.SHAKE_HZ).
 @export var windup_shake := 0.0

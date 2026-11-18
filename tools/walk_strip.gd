@@ -6,7 +6,7 @@ extends SceneTree
 ## tools/gpu.sh run --rendering-driver vulkan --resolution 640x640 -s tools/walk_strip.gd -- C:/out_dir [ids...]
 ## (or xvfb-run -a ~/tools/godot/godot --path . ... on the CPU). Writes <out_dir>/<id>_walk.png and <id>_walk_NN.png.
 
-const IDS: Array[String] = ["guard", "knight", "morvath", "mage", "archer"]
+const IDS: Array[String] = ["guard", "knight", "morvath", "mage", "archer", "runner"]
 const FRAMES := 24
 const COLS := 8
 const FPS := 30.0
@@ -75,7 +75,11 @@ func _run() -> void:
 			var look := Vector3(x, h * 0.4, 0)
 			cam.look_at_from_position(look + Vector3(0, dist * 0.5, dist * 0.866), look, Vector3.UP)
 			renderer.begin()
-			renderer.add(d, &"walk", k / FPS * rate, Vector3(x, 0, 0), PI * 0.5, CrowdRenderer.state(0.0, false, false))
+			# Horde.stride_lean: the unsteady runner's sway, once to each side a loop
+			var t := k / FPS * rate
+			var loop := m.duration(&"walk")
+			var lean := deg_to_rad(d.sway) * sin(TAU * t / loop) if loop > 0.0 else 0.0
+			renderer.add(d, &"walk", t, Vector3(x, 0, 0), PI * 0.5, CrowdRenderer.state(0.0, false, false), Vector3.ONE, 0.0, lean)
 			renderer.commit()
 			for f in 3:
 				await process_frame

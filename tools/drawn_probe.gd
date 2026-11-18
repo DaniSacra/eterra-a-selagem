@@ -24,7 +24,7 @@ func _initialize() -> void:
 		elif a.begins_with("--probe-out="):
 			path = a.trim_prefix("--probe-out=")
 	out = FileAccess.open(path, FileAccess.WRITE)
-	out.store_line("f,id,uid,state,state_t,anim,drawn,stun,hurt,px,pz,dx,dy,dz,miny,maxy,ax,az,yaw,hx,hz,boss_state,boss_attack,phase,rate,inst,ra,rb,frac")
+	out.store_line("f,id,uid,state,state_t,anim,drawn,stun,hurt,px,pz,dx,dy,dz,miny,maxy,ax,az,yaw,hx,hz,boss_state,boss_attack,phase,rate,inst,ra,rb,frac,tilt")
 	change_scene_to_file("res://scenes/boot.tscn")
 
 
@@ -134,9 +134,11 @@ func _process(_d: float) -> bool:
 		var lo: float = best[0].y + lerpf(a[1], b[1], fr) * sy
 		var hi: float = best[0].y + lerpf(a[2], b[2], fr) * sy
 		var yaw := rad_to_deg(atan2(basis.z.x, basis.z.z))
-		out.store_line("%d,%s,%d,%d,%.3f,%s,%s,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.2f,%.2f,%s,%.3f,%s,%s,%s,%.3f" % [
+		# how far the drawn body tips off the upright (degrees): a lean, a recoil, the runner's sway (T5b Corredor)
+		var tilt := rad_to_deg(basis.y.normalized().angle_to(Vector3.UP))
+		out.store_line("%d,%s,%d,%d,%.3f,%s,%s,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.2f,%.2f,%s,%.3f,%s,%s,%s,%.3f,%.2f" % [
 			f, id, uid[e], e.state, e.state_t, e.anim, _decode(m, best[2]), e.stun_t, e.hurt_t, e.pos.x, e.pos.y,
-			w.x, w.y, w.z, lo, hi, best[0].x, best[0].z, yaw, target.x, target.y, bs, Engine.time_scale, sqrt(bd), _decode(m, best[2]), _decode(m, best[3]), fr])
+			w.x, w.y, w.z, lo, hi, best[0].x, best[0].z, yaw, target.x, target.y, bs, Engine.time_scale, sqrt(bd), _decode(m, best[2]), _decode(m, best[3]), fr, tilt])
 	if f - t0 > secs * 60:
 		out.close()
 		quit()

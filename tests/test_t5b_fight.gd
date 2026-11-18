@@ -8,11 +8,13 @@ const DT := 1.0 / 60.0
 ## P1-1, at size 1: the whole body over AIR_OVER m in at most AIR_POSES of the walk's 20 poses, its lowest vertex never
 ## over LOWEST, the middle of the body (what it carries left out) rising and falling at most BOB. The review asked 7 cm;
 ## the jog keeps 7.3 to 7.4 (the soldier's, approved in T5, 8.6): the legs' own lift in the body's mean.
-const JOGGERS: Array[StringName] = [&"mage", &"archer", &"skeleton"]
+## The runner (PO, 2026-11-18: "ainda tem esqueleto que anda tremendo", the rust one) hopped on Running_B: the whole body
+## over 0.10 m in 14 of 20 poses, up to 0.34 m, rising and falling 0.23 m. It jogs too, on a long stride.
+const JOGGERS: Array[StringName] = [&"mage", &"archer", &"skeleton", &"runner"]
 const AIR_OVER := 0.10
 const AIR_POSES := 6
 const LOWEST := 0.15
-const BOB := {&"mage": 0.075, &"archer": 0.075, &"skeleton": 0.09}
+const BOB := {&"mage": 0.075, &"archer": 0.075, &"skeleton": 0.09, &"runner": 0.09}
 ## P1-3: the loops are this short at most, so the share of a fade into a loop's last pose keeps 1/32 or better on the
 ## Compatibility renderer's half floats (CrowdRenderer.fade_target).
 const LONGEST_LOOP := 30
@@ -217,3 +219,44 @@ func test_a_risen_body_arrives_before_it_strikes() -> void:
 		gut.p("%s: first wind-up %.2f s after standing" % [id, (wound - stood) * DT])
 		assert_gte((wound - stood) * DT, Horde.ARRIVE - DT, "%s: it arrives before it strikes" % id)
 		assert_lte(worst_turn, Horde.RISEN_TURN * DT + 0.5, "%s: it turns slowly as it stands (%.1f degrees a frame)" % [id, worst_turn])
+
+
+## Corredor (PO, 2026-11-18: "ainda tem esqueleto que anda tremendo", the rust one): its sway rocked the trunk 7 degrees
+## 9 times a second and an uneven stride played its walk from backwards to 2.4 times its pace. The sway now follows the
+## stride, once to each side a loop of two steps, and its walk plays on at the pace of its speed.
+func test_the_runners_sway_follows_its_stride() -> void:
+	var loop := _model(&"runner").duration(&"walk")
+	assert_almost_eq(Horde.stride_lean(7.0, loop * 0.25, loop), deg_to_rad(7.0), 0.0001, "the most to one side")
+	assert_almost_eq(Horde.stride_lean(7.0, loop * 0.75, loop), -deg_to_rad(7.0), 0.0001, "and to the other")
+	assert_almost_eq(Horde.stride_lean(7.0, loop * 1.25, loop), Horde.stride_lean(7.0, loop * 0.25, loop), 0.0001, "a loop")
+	assert_eq(Horde.stride_lean(7.0, 1.0, 0.0), 0.0)
+
+
+func test_the_runner_runs_on_at_its_pace() -> void:
+	_room()
+	var e := game.horde.spawn(game.horde.def(&"runner"), game.arena.resolve(Vector2(12.0, 0.0), 0.8), false)
+	var m := _model(&"runner")
+	var first := int(m.first[&"walk"])
+	var n := m.frame_count(&"walk")
+	var last := -1
+	var walked := 0
+	var back := 0
+	var leap := 0
+	for f in 90:
+		_frame()
+		var row := e.drawn_row
+		if e.drawn_anim == &"walk" and e.walking and row >= first and row < first + n:
+			if last >= 0:
+				var step := posmod(row - last, n)
+				walked += 1
+				if step > n / 2:
+					back += 1
+				elif step > 1:
+					leap += 1
+			last = row
+		else:
+			last = -1
+	gut.p("runner: %d frames running, %d backwards, %d over a pose a frame" % [walked, back, leap])
+	assert_gt(walked, 30, "it ran")
+	assert_eq(back, 0, "its walk never plays backwards")
+	assert_eq(leap, 0, "nor skips a pose (it plays %.2f a frame)" % (n / m.duration(&"walk") * Horde.walk_rate(e.def.speed, float(m.ground_speed[&"walk"]), e.def.size) * DT))

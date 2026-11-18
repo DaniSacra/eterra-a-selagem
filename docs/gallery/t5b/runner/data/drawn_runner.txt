@@ -1,0 +1,98 @@
+before_run_s5.csv runner: 13 enemies, 48.0 s present, 1199 walk frames
+  walk: centroid y p5..p95 1.335..1.559 (amp 0.224), step p95 0.0620 max 0.2970 m/frame
+  walk: feet p50 0.207 p95 0.360 max 0.429, whole body over 0.12 m in 64.6% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 0.4 max 110.6 deg, 4 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.62 deg/frame, turns back 32.0 times a second of running
+  drawn speed p50 2.58 p95 4.92 m/s, reversals 15 (0.31/s)
+before_stress_s1.csv runner: 5 enemies, 15.2 s present, 455 walk frames
+  walk: centroid y p5..p95 1.333..1.557 (amp 0.224), step p95 0.0650 max 0.3360 m/frame
+  walk: feet p50 0.133 p95 0.356 max 0.365, whole body over 0.12 m in 52.1% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 2.1 max 11.4 deg, 0 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.49 deg/frame, turns back 32.0 times a second of running
+  drawn speed p50 4.26 p95 5.79 m/s, reversals 1 (0.07/s)
+before_stress_s2.csv runner: 5 enemies, 13.4 s present, 478 walk frames
+  walk: centroid y p5..p95 1.339..1.556 (amp 0.217), step p95 0.0660 max 0.1240 m/frame
+  walk: feet p50 0.185 p95 0.357 max 0.385, whole body over 0.12 m in 61.7% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 2.2 max 20.0 deg, 5 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.29 deg/frame, turns back 31.5 times a second of running
+  drawn speed p50 4.84 p95 4.92 m/s, reversals 11 (0.82/s)
+before_stress_s3.csv runner: 5 enemies, 8.7 s present, 298 walk frames
+  walk: centroid y p5..p95 1.326..1.557 (amp 0.231), step p95 0.0550 max 0.0950 m/frame
+  walk: feet p50 0.126 p95 0.355 max 0.363, whole body over 0.12 m in 51.7% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 0.9 max 5.8 deg, 0 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.38 deg/frame, turns back 31.7 times a second of running
+  drawn speed p50 4.85 p95 4.91 m/s, reversals 2 (0.23/s)
+before_stress_s1.csv runner_elite: 5 enemies, 17.9 s present, 416 walk frames
+  walk: centroid y p5..p95 1.308..1.560 (amp 0.252), step p95 0.0640 max 0.1040 m/frame
+  walk: feet p50 0.181 p95 0.359 max 0.365, whole body over 0.12 m in 60.6% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 3.9 max 20.0 deg, 24 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.45 deg/frame, turns back 29.3 times a second of running
+  drawn speed p50 0.66 p95 7.40 m/s, reversals 9 (0.50/s)
+before_stress_s2.csv runner_elite: 5 enemies, 38.0 s present, 967 walk frames
+  walk: centroid y p5..p95 1.336..1.556 (amp 0.220), step p95 0.0670 max 0.3350 m/frame
+  walk: feet p50 0.184 p95 0.358 max 0.366, whole body over 0.12 m in 59.4% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 6.0 max 34.7 deg, 35 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.41 deg/frame, turns back 29.1 times a second of running
+  drawn speed p50 1.74 p95 7.40 m/s, reversals 63 (1.66/s)
+before_stress_s3.csv runner_elite: 5 enemies, 38.9 s present, 703 walk frames
+  walk: centroid y p5..p95 1.333..1.554 (amp 0.221), step p95 0.0670 max 0.3430 m/frame
+  walk: feet p50 0.197 p95 0.356 max 0.365, whole body over 0.12 m in 62.3% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 3.2 max 41.8 deg, 60 frames over 15
+  sway: tilt p95 7.0 deg, change p95 5.48 deg/frame, turns back 30.5 times a second of running
+  drawn speed p50 1.15 p95 7.39 m/s, reversals 160 (4.11/s)
+after_run_s5.csv runner: 13 enemies, 48.0 s present, 1199 walk frames
+  walk: centroid y p5..p95 1.317..1.405 (amp 0.088), step p95 0.0240 max 0.2610 m/frame
+  walk: feet p50 0.040 p95 0.105 max 0.243, whole body over 0.12 m in 1.8% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 0.4 max 110.6 deg, 4 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.03 deg/frame, turns back 5.9 times a second of running
+  drawn speed p50 2.58 p95 4.92 m/s, reversals 15 (0.31/s)
+after_stress_s1.csv runner: 5 enemies, 15.2 s present, 455 walk frames
+  walk: centroid y p5..p95 1.317..1.406 (amp 0.089), step p95 0.0230 max 0.2770 m/frame
+  walk: feet p50 0.040 p95 0.102 max 0.199, whole body over 0.12 m in 0.4% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 2.1 max 11.4 deg, 0 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.04 deg/frame, turns back 5.3 times a second of running
+  drawn speed p50 4.26 p95 5.79 m/s, reversals 1 (0.07/s)
+after_stress_s2.csv runner: 5 enemies, 13.4 s present, 478 walk frames
+  walk: centroid y p5..p95 1.318..1.406 (amp 0.088), step p95 0.0230 max 0.0710 m/frame
+  walk: feet p50 0.041 p95 0.102 max 0.198, whole body over 0.12 m in 0.6% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 2.2 max 20.0 deg, 5 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.03 deg/frame, turns back 5.4 times a second of running
+  drawn speed p50 4.84 p95 4.92 m/s, reversals 11 (0.82/s)
+after_stress_s3.csv runner: 5 enemies, 8.7 s present, 298 walk frames
+  walk: centroid y p5..p95 1.317..1.406 (amp 0.089), step p95 0.0230 max 0.0290 m/frame
+  walk: feet p50 0.040 p95 0.104 max 0.105, whole body over 0.12 m in 0.0% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 0.9 max 5.8 deg, 0 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.03 deg/frame, turns back 5.3 times a second of running
+  drawn speed p50 4.85 p95 4.91 m/s, reversals 2 (0.23/s)
+after_stress_s1.csv runner_elite: 5 enemies, 17.9 s present, 416 walk frames
+  walk: centroid y p5..p95 1.284..1.404 (amp 0.120), step p95 0.0310 max 0.0400 m/frame
+  walk: feet p50 0.039 p95 0.101 max 0.105, whole body over 0.12 m in 0.0% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 3.9 max 20.0 deg, 24 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.42 deg/frame, turns back 5.2 times a second of running
+  drawn speed p50 0.66 p95 7.40 m/s, reversals 9 (0.50/s)
+after_stress_s2.csv runner_elite: 5 enemies, 38.0 s present, 967 walk frames
+  walk: centroid y p5..p95 1.317..1.405 (amp 0.088), step p95 0.0370 max 0.2950 m/frame
+  walk: feet p50 0.038 p95 0.101 max 0.105, whole body over 0.12 m in 0.0% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 6.0 max 34.7 deg, 35 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.46 deg/frame, turns back 5.4 times a second of running
+  drawn speed p50 1.74 p95 7.40 m/s, reversals 63 (1.66/s)
+after_stress_s3.csv runner_elite: 5 enemies, 38.9 s present, 703 walk frames
+  walk: centroid y p5..p95 1.317..1.406 (amp 0.089), step p95 0.0370 max 0.2750 m/frame
+  walk: feet p50 0.040 p95 0.104 max 0.199, whole body over 0.12 m in 0.4% of frames
+  walk<->idle flips 0.00/s, back within 0.3 s 0 (0.00/s)
+  yaw per frame p95 3.2 max 41.8 deg, 60 frames over 15
+  sway: tilt p95 7.0 deg, change p95 1.52 deg/frame, turns back 7.0 times a second of running
+  drawn speed p50 1.15 p95 7.39 m/s, reversals 160 (4.11/s)

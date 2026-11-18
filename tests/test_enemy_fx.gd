@@ -228,7 +228,6 @@ func test_the_runner_is_unsteady_and_the_soldier_is_the_base_line() -> void:
 	var runner := _def(&"runner")
 	assert_between(runner.sway, 6.0, 8.0, "its trunk sways 6 to 8 degrees")
 	assert_almost_eq(runner.windup_shake, 0.04, 0.001)
-	assert_between(Horde.SWAY_HZ, 8.0, 10.0)
 	assert_between(Horde.SHAKE_HZ, 13.0, 15.0)
 	assert_true(runner.tint.r > runner.tint.g and runner.tint.g > runner.tint.b, "warmer, dirtier bone")
 	var skeleton := _def(&"skeleton")

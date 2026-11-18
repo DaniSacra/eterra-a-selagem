@@ -371,6 +371,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ar o pé vai suave de onde saiu para onde desce). O `"stride"` acerta a cadência sem mudar a velocidade da simulação: Escudo
   com o `Walking_A` do KayKit (o andar pesado do bruto) a 120 passos por minuto, Cavaleiro 96 e Morvath 102 no `Walk` da UAL
   em passada longa, mago 136 e besteiro 127 no `Jog_Fwd` com os pés no chão como o esqueleto (T5b P1-1: `MAGE_JOG`, `CROSSBOW_JOG`; o `Running_B` de antes com meio pulo deixava o feiticeiro no ar em 14 de 20 poses),
+  corredor 171 no `Jog_Fwd` de pés travados em passada longa (T5b Corredor: `RUNNER_JOG`, escorrega 3,2 cm; o `Running_B` o deixava no ar em 14 de 20 poses, subindo e descendo 23 cm; a elite, 7,4 m/s, dá 259 passos por minuto) e o balanço do corredor (`EnemyDef.sway`) segue a passada, um lado por passo (`Horde.stride_lean`; antes 9 vezes por segundo, mais um passo irregular que tocava o andar de trás para frente a 2,4 vezes: era o "esqueleto que anda tremendo"),
   ancião 67; todos escorregam até 1,6 cm em jogo (antes Escudo 16, Cavaleiro 21, Morvath 15, ancião 10). O braço livre do mago
   fica junto ao corpo (`MAGE_JOG`, guarda do `Idle`; o assado imprime o quanto cada braço abre). Medir clipes sem assar:
   `tools/walk_probe.gd` (andares; `id=rig:clip:stride`) e `tools/clip_probe.gd` (altura e velocidade da mão por clipe, para
