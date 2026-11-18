@@ -54,8 +54,8 @@ const FLOOR := {
 }
 ## The air (spec 3.6).
 const AIR := {
-	&"sky": Color(0.03, 0.03, 0.05), &"fog": Color(0.07, 0.07, 0.10), &"fog_depth": Vector2(45.0, 100.0),
-	&"ambient": Color(0.30, 0.31, 0.36), &"ambient_gain": 1.2, &"moon": Color(0.6, 0.65, 0.8), &"moon_energy": 0.4,
+	&"sky": Color(0.06, 0.06, 0.075), &"fog": Color(0.1, 0.1, 0.12), &"fog_depth": Vector2(45.0, 100.0),
+	&"ambient": Color(0.32, 0.32, 0.36), &"ambient_gain": 1.75, &"moon": Color(0.62, 0.66, 0.78), &"moon_energy": 0.7,
 	&"moon_shadow": false,
 }
 const MIST := Color(0.03, 0.03, 0.06)

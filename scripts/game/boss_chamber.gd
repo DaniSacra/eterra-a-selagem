@@ -93,10 +93,10 @@ const LANTERN_R := 13.0
 const LANTERN_POST := TombKit.LANTERN_POST
 const LANTERN_CAGE := TombKit.LANTERN_CAGE
 const LANTERN_ROOF := TombKit.LANTERN_ROOF
-const LANTERN_GLASS := Color(0.55, 0.25, 1.0)
+const LANTERN_GLASS := Color(0.62, 0.46, 0.95)
 const LANTERN_FLAME := Color(0.9, 0.4, 1.6)
 const LANTERN_FLAME_SIZE := TombKit.LANTERN_FLAME_SIZE
-const LANTERN_LIGHT := Color(0.6, 0.3, 1.0)
+const LANTERN_LIGHT := Color(0.66, 0.52, 1.0)
 const LANTERN_ENERGY := 1.5
 const LANTERN_RANGE := 4.5
 const LANTERN_ATTENUATION := 1.3
@@ -222,9 +222,9 @@ const SPIRE_TOP := 30.0
 ## block tops only a little lighter (abyss_ruins: stone, edge, mist). Art review P6: that went to near black (top of
 ## the frame R 0, G 7, B 36); the painting's top between the chains is a deep blue (about R 12, G 41, B 84), so the
 ## mist, the sky and the spires' edges go back up to it, the spires still darker than their mist.
-const SPIRE_STONE := Color(0.02, 0.04, 0.1)
-const SPIRE_EDGE := Color(0.08, 0.16, 0.36)
-const SPIRE_MIST := Color(0.04, 0.11, 0.22)
+const SPIRE_STONE := Color(0.03, 0.045, 0.08)
+const SPIRE_EDGE := Color(0.12, 0.16, 0.26)
+const SPIRE_MIST := Color(0.07, 0.1, 0.16)
 ## Two lighter patches of mist on the farthest card (ArenaKit.ruin_card: x, height, radii).
 const SPIRE_PATCHES: Array[Vector4] = [Vector4(-30.0, -6.0, 18.0, 8.0), Vector4(20.0, -10.0, 14.0, 6.0)]
 const NO_PATCHES: Array[Vector4] = []
@@ -247,22 +247,24 @@ const KEY_COLOR := Color(0.78, 0.76, 0.95)
 const KEY_ENERGY := 3.0
 const KEY_RANGE := 17.0
 const ABYSS_BEARINGS: Array[float] = [250.0, 80.0]
+## C18 (ART P1-2, one tone for the scenery: the frame was a fifth saturated violet and blue): the abyss's light, the
+## sky, fog, mist, ambient, moon and lanterns keep their hue under 0.45 of saturation.
 const ABYSS_LIGHT := Vector4(22.0, -12.0, 5.0, 26.0)
 const ABYSS_COLOR := Color(0.66, 0.52, 1.0)
 const BLUE_AT := Vector3(330.0, 45.0, 4.0)
-const BLUE_COLOR := Color(0.5, 0.64, 1.0)
+const BLUE_COLOR := Color(0.6, 0.68, 0.92)
 const BLUE_ENERGY := 1.2
 const BLUE_RANGE := 70.0
-const SKY := Color(0.035, 0.1, 0.2)
+const SKY := Color(0.05, 0.1, 0.17)
 ## The depths' stone (depth_stone.gdshader: body and lit edge), violet grey.
 const DEEP_STONE := Color(0.07, 0.065, 0.11)
-const DEEP_EDGE := Color(0.17, 0.14, 0.28)
-const FOG := Color(0.022, 0.05, 0.13)
-const MIST := Color(0.03, 0.055, 0.14)
+const DEEP_EDGE := Color(0.17, 0.15, 0.24)
+const FOG := Color(0.04, 0.06, 0.11)
+const MIST := Color(0.05, 0.065, 0.12)
 const FOG_DEPTH := Vector2(64.0, 130.0)
-const AMBIENT := Color(0.30, 0.33, 0.50)
+const AMBIENT := Color(0.32, 0.34, 0.44)
 const AMBIENT_ENERGY := 0.5
-const MOON_COLOR := Color(0.45, 0.55, 0.85)
+const MOON_COLOR := Color(0.52, 0.58, 0.8)
 const MOON_ENERGY := 0.35
 const MOON_ROTATION := Vector3(-50, 150, 0)
 ## Violet glow cards rising from the abyss at the frame's sides (bearing, r, foot height, width, height, energy share).

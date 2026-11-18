@@ -25,7 +25,7 @@ const CLIFF := {&"stone_color": Color(0.06, 0.055, 0.085), &"edge_color": Color(
 ## The air: cold grey, the moon cold and weak (ambient energy 0.7 where the game's is 0.9).
 const AIR := {
 	&"sky": Color(0.05, 0.06, 0.09), &"fog": Color(0.07, 0.08, 0.12), &"ambient": Color(0.30, 0.33, 0.38),
-	&"ambient_gain": 1.05, &"moon": Color(0.6, 0.68, 0.85), &"moon_energy": 0.35, &"moon_shadow": true,
+	&"ambient_gain": 1.25, &"moon": Color(0.6, 0.68, 0.85), &"moon_energy": 0.45, &"moon_shadow": true,
 }
 ## The soft key over the middle (no shadow), cold grey.
 const KEY := Color(0.78, 0.8, 0.9)
@@ -169,11 +169,12 @@ const BEAM_ENERGY := Vector2(3.0, 1.8)
 const BEAM_CONE := 30.0
 const BEAM_REACH := 40.0
 const BEAM_SHADOW := 0.4
-## The violet that comes in by each window and lights only the walls' stone (FACADE_LAYER), and the mist behind.
-const WINDOW_LIGHT := Color(0.55, 0.3, 0.95)
+## The violet that comes in by each window and lights only the walls' stone (FACADE_LAYER), and the mist behind (C18:
+## under 0.45 of saturation, the scenery in one tone).
+const WINDOW_LIGHT := Color(0.62, 0.48, 0.9)
 const WINDOW_ENERGY := 2.2
 const WINDOW_REACH := 6.0
-const WINDOW_MIST := Color(0.42, 0.22, 0.7)
+const WINDOW_MIST := Color(0.44, 0.36, 0.6)
 const WINDOW_MIST_ALPHA := 0.75
 
 ## The tree that was grown (StoneTree), for the lab and the tests.

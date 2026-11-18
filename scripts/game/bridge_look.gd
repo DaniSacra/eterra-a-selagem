@@ -45,8 +45,8 @@ const FLOOR := {
 }
 ## The air (spec 2.5) and the moon (the light of the room, with shadow).
 const AIR := {
-	&"sky": Color(0.035, 0.045, 0.07), &"fog": Color(0.09, 0.11, 0.16), &"fog_depth": Vector2(55.0, 130.0),
-	&"ambient": Color(0.30, 0.34, 0.42), &"ambient_gain": 1.2, &"moon": Color(0.66, 0.72, 0.88), &"moon_energy": 0.7,
+	&"sky": Color(0.065, 0.07, 0.09), &"fog": Color(0.13, 0.14, 0.18), &"fog_depth": Vector2(55.0, 130.0),
+	&"ambient": Color(0.32, 0.34, 0.40), &"ambient_gain": 2.05, &"moon": Color(0.68, 0.72, 0.84), &"moon_energy": 1.1,
 	&"moon_shadow": true,
 }
 ## The abyss: its grey-blue mist, the cliffs' stone, the light far below (only the depths), the thread of violet (a

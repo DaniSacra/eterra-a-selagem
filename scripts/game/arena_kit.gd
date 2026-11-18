@@ -29,7 +29,7 @@ const ABYSS := Color(0.4, 0.3, 0.52)
 ## C18 (ART P1-2, a scenery in one tone that lets the effects saturate): the mist and the violet glow at most 0.5
 ## and 0.45 of saturation (they were 0.88 and 0.68: the abyss was the most saturated mass of the frame).
 const MIST := Color(0.11, 0.19, 0.22)
-const ABYSS_GLOW := Color(0.6, 0.47, 0.85)
+const ABYSS_GLOW := Color(0.6, 0.52, 0.78)
 const ABYSS_GLOW_ENERGY := 1.6
 const ABYSS_GLOW_SHAPE := Vector3(0.7, 2.2, 0.45)
 ## The far ruins' stone (abyss_ruins.gdshader), the cold edge on the tops of their blocks, and the height of a course.
@@ -38,7 +38,7 @@ const RUIN_EDGE := Color(0.24, 0.42, 0.48)
 const RUIN_COURSE := 1.6
 ## Forward+ only: violet glowing fog filling the sides of the abyss (density, emission).
 const ABYSS_FOG_DENSITY := 0.04
-const ABYSS_FOG_EMISSION := Color(0.27, 0.21, 0.4)
+const ABYSS_FOG_EMISSION := Color(0.25, 0.22, 0.33)
 const ABYSS_FOG_ALBEDO := Color(0.36, 0.31, 0.46)
 const METAL := Color(0.16, 0.17, 0.2)
 const MORVATH := Color(1.0, 0.18, 0.15)
@@ -729,8 +729,8 @@ func light_portal(i: int, on: bool, tint: Color = PORTAL) -> void:
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"power", PORTAL_OPEN if on else PORTAL_DIM)
 	(portals[i][0] as ShaderMaterial).set_shader_parameter(&"color", PORTAL_SHEET if tint == PORTAL else tint)
 	# the light a reward's colour throws on the walls, half toward a warm white (C18, one tone for the scenery: a red
-	# heart's or a blue Magick's door washed the whole corner of the room in pure colour)
-	if tint != PORTAL:
+	# heart's or a blue Magick's door washed the whole corner of the room in pure colour); Morvath's red stays whole
+	if tint != PORTAL and tint != MORVATH:
 		tint = tint.lerp(DOOR_LIGHT_WHITE, DOOR_LIGHT_MIX)
 	var l: OmniLight3D = portals[i][1]
 	l.light_color = tint

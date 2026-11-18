@@ -35,7 +35,7 @@ const ENTRY := Vector2(4.5, 8.5)
 const ENTRY_STEPS := 6
 ## The violet from below (spec 3.5): lights deep in the rift and the hole (colour, energy, depth), the glow cards along
 ## the rift, and the light that comes up over the lips and paints the slabs near them (energy, its reach, height).
-const DEEP := Color(0.55, 0.25, 1.0)
+const DEEP := Color(0.62, 0.45, 1.0)
 const DEEP_ENERGY := 5.0
 const DEEP_Y := -10.0
 const DEEP_SPOTS: Array[float] = [-9.0, -2.0, 5.0]
@@ -48,7 +48,7 @@ const LIP_GLOW_ALPHA := 0.32
 ## heights (colour, alpha each), patchy and drifting, past the rift's north mouth fading out over the abyss
 ## (HAZE_NORTH: how far beyond the floor's north edge).
 const HAZE_Y: Array[float] = [-1.5, -2.7, -4.4]
-const HAZE_COLOR: Array[Color] = [Color(0.08, 0.022, 0.24), Color(0.13, 0.035, 0.4), Color(0.2, 0.055, 0.58)]
+const HAZE_COLOR: Array[Color] = [Color(0.1, 0.06, 0.2), Color(0.15, 0.09, 0.3), Color(0.23, 0.14, 0.42)]
 const HAZE_ALPHA: Array[float] = [0.4, 0.6, 1.0]
 const HAZE_PATCHY: Array[float] = [0.9, 0.75, 0.35]
 const HAZE_NORTH := 6.0
@@ -83,9 +83,9 @@ const RUIN_TOPS: Array[Vector2] = [Vector2(-2.0, 5.0), Vector2(-6.0, 6.0)]
 const RUIN_SINK: Array[Vector2] = [Vector2(-10.0, -24.0), Vector2(-14.0, -30.0)]
 const RUIN_SIZE := Vector2(300.0, 110.0)
 const RUIN_TOP := 22.0
-const RUIN_STONE := Color(0.05, 0.03, 0.09)
-const RUIN_EDGE := Color(0.2, 0.12, 0.36)
-const RUIN_MIST := Color(0.09, 0.05, 0.18)
+const RUIN_STONE := Color(0.05, 0.045, 0.07)
+const RUIN_EDGE := Color(0.2, 0.17, 0.28)
+const RUIN_MIST := Color(0.11, 0.095, 0.15)
 ## The cut stone, colder (spec 3.5); fallen blocks on the hole's lip nearest the camera.
 const STONE := Color(0.92, 0.96, 1.06)
 ## The floor (spec 3.5): big slabs, bluer, cracked; the gold of the thread.
@@ -96,9 +96,11 @@ const FLOOR := {
 }
 ## The air (spec 3.5): blue-violet, the moon cold from behind. F-4: the moon is the hall's key (no omni over the
 ## middle: its falloff left the far corners of the platforms at half the middle's value), a little more ambient.
+## C18 (one tone for the scenery): sky, fog, far ruins, mist and haze kept violet but under 0.45 of saturation (the
+## frame was a fifth saturated violet).
 const AIR := {
-	&"sky": Color(0.04, 0.03, 0.10), &"fog": Color(0.10, 0.05, 0.20), &"fog_depth": Vector2(60.0, 140.0),
-	&"ambient": Color(0.32, 0.30, 0.48), &"ambient_gain": 1.45, &"moon": Color(0.72, 0.74, 0.86), &"moon_energy": 0.95,
+	&"sky": Color(0.06, 0.05, 0.09), &"fog": Color(0.11, 0.09, 0.15), &"fog_depth": Vector2(60.0, 140.0),
+	&"ambient": Color(0.34, 0.33, 0.42), &"ambient_gain": 2.25, &"moon": Color(0.72, 0.74, 0.86), &"moon_energy": 0.95,
 	&"moon_shadow": true,
 }
 ## G-1: the browser's renderer (Compatibility, no contact shadows, lighting in other space) turns this air bluer and
@@ -109,7 +111,7 @@ const HAZE_COMPAT := 1.6
 ## The abyss's mist, violet (the hall's is teal), and the cliffs' stone going down into it (F-1, F-5): the depths'
 ## dark stone, nearly black 1.5 m under the brink (sink), the violet only further down (glow), no cold edge that
 ## would read as a lit wall.
-const MIST := Color(0.1, 0.05, 0.2)
+const MIST := Color(0.11, 0.085, 0.17)
 const CLIFF := {
 	&"stone_color": Color(0.035, 0.026, 0.065), &"edge_color": Color(0.07, 0.045, 0.13), &"mist_color": Color(0.012, 0.006, 0.03),
 	&"sink_top": -0.2, &"sink_bottom": -1.4, &"glow_color": Color(0.5, 0.24, 1.0), &"glow_energy": 0.06,

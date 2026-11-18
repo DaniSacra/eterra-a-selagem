@@ -46,13 +46,14 @@ class Look:
 ## Morvath's last breath: the hall's teal air goes to a deep violet dusk, the abyss under it fills with violet fog,
 ## the moon turns to his cold spectral light and the fires gutter low and cold. The middle of the hall keeps its
 ## light (the paladin's own light, the crowd's painted light and the warnings are untouched).
+## C18 (one tone for the scenery): still violet, but under 0.45 of saturation (the frame was a third saturated violet).
 static var LAST_BREATH := Look.new({
-	"ambient": Color(0.36, 0.3, 0.52), "ambient_gain": 0.95,
-	"sky": Color(0.1, 0.05, 0.2), "fog": Color(0.16, 0.07, 0.3), "fog_height_gain": 1.5,
-	"key": Color(0.42, 0.85, 0.82), "key_gain": 1.8,
-	"fires_gain": 0.6, "chill": Color(0.75, 0.6, 1.0), "chill_share": 0.45, "deep_gain": 1.5,
-	"shadow_lift": Color(0.04, -0.02, 0.09), "shadow_reach": 0.6,
-	"air": Color(0.5, 0.3, 1.0), "air_share": 0.8,
+	"ambient": Color(0.36, 0.32, 0.46), "ambient_gain": 0.95,
+	"sky": Color(0.1, 0.075, 0.15), "fog": Color(0.16, 0.115, 0.23), "fog_height_gain": 1.5,
+	"key": Color(0.5, 0.8, 0.78), "key_gain": 1.8,
+	"fires_gain": 0.6, "chill": Color(0.78, 0.7, 0.95), "chill_share": 0.45, "deep_gain": 1.0,
+	"shadow_lift": Color(0.03, 0.01, 0.05), "shadow_reach": 0.6,
+	"air": Color(0.56, 0.48, 0.8), "air_share": 0.4,
 	"breath_rate": 0.25, "breath": 0.12,
 })
 

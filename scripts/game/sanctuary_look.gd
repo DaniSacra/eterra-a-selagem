@@ -163,7 +163,7 @@ func piece(o: ArenaObstacle) -> void:
 
 ## The far walls' fill (ArenaRoom.wall_fill, C18): its colour and energy.
 const WALL_FILL_COLOR := Color(0.78, 0.8, 0.88)
-const WALL_FILL_ENERGY := 1.0
+const WALL_FILL_ENERGY := 0.5
 
 
 func dress() -> void:

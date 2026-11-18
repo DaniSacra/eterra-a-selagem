@@ -3,7 +3,7 @@
 and measured by ffmpeg's signalstats (YAVG luma mean, SATAVG saturation mean, SATHIGH its 90th percentile, the
 numbers of the art report's table); also the share of the frame that is violet (hue 250 to 320 degrees) with HSV
 saturation above 60% (the "no violet area above 60% bigger than 5% of the screen" rule), and, with --box=x,y,w,h in
-the full image's pixels, the same for a box (the hero's: green-cyan share and pink share inside it).
+the full image's pixels, the same for a box (the hero's: green-cyan share, hue 130 to 200, and pink share, magenta to rose, hue 300 to 345, red left out).
   python3 -I tools/frame_stats.py a.jpg b.jpg [--box=x,y,w,h]"""
 import colorsys
 import subprocess
@@ -42,7 +42,7 @@ def shares(px):
             violet += 1
         if s > 0.45 and v > 0.3 and 130 <= h <= 200:
             green += 1
-        if s > 0.35 and v > 0.3 and (h >= 300 or h <= 345 and h >= 300):
+        if s > 0.35 and v > 0.3 and 300 <= h <= 345:
             pink += 1
     return 100.0 * violet / n, 100.0 * green / n, 100.0 * pink / n
 
