@@ -24,6 +24,8 @@ const SOUNDS := {
 	&"blade_heavy": [[W.NOISE, 1200, 4200, 0.14, 0.22, 3.5, 0.0]],
 	&"wave_omega": [[W.NOISE, 700, 3600, 0.4, 0.22, 2.0, 0.0], [W.SINE, 147, 98, 0.4, 0.2, 2.5, 0.0]],
 	&"blade_spin": [[W.NOISE, 900, 4200, 0.32, 0.22, 2.0, 0.0], [W.TRIANGLE, 330, 660, 0.28, 0.08, 2.5, 0.0]],
+	# C17, QW-103: the press of the spin gathers (soft, low air, 0.1 s); its swish waits for the blade (sound_at)
+	&"spin_gather": [[W.NOISE, 400, 1300, 0.1, 0.08, 3.0, 0.0]],
 	&"thrust": [[W.NOISE, 2500, 6000, 0.1, 0.22, 4.0, 0.0], [W.TRIANGLE, 880, 1320, 0.12, 0.1, 3.0, 0.0]],
 	&"dart": [[W.NOISE, 4000, 7000, 0.07, 0.16, 5.0, 0.0], [W.TRIANGLE, 1320, 1760, 0.08, 0.1, 4.0, 0.0]],
 	&"charge_up": [[W.TRIANGLE, 220, 660, 0.6, 0.12, 1.2, 0.0], [W.NOISE, 600, 2400, 0.6, 0.06, 1.5, 0.0]],

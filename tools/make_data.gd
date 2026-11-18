@@ -78,6 +78,12 @@ func _move(id: StringName, input: ComboNode.In, anim: StringName, tags: Array[St
 	return n
 
 
+## C17, QW-103: when the recorded swishes peak after they start (audio/blade_spin_*.ogg 30 to 90 ms, thrust_* 20 to
+## 30 ms, measured on their envelope): a delayed sound starts this much before its blade's frame.
+const SWISH_PEAK := 0.06
+const THRUST_PEAK := 0.025
+
+
 ## Hades II measures distances in its own units: its heroine walks 540 a second and stands 200 tall. 80 of them make
 ## a meter here (6.75 m/s, a 2.5 m tall paladin), so every distance below is written as Hades units / U.
 const U := 80.0
@@ -95,7 +101,10 @@ func _tree(fourth: bool) -> ComboTree:
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 60.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
-		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin"}, [], &"move_spin")
+		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin",
+		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
+		# press only gathers
+		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather"}, [], &"move_spin")
 	var after_cut2: Array[ComboNode] = [cut3]
 	if fourth:
 		after_cut2 = [_fourth(cut3)]
@@ -127,7 +136,7 @@ func _tree(fourth: bool) -> ComboTree:
 	var lance := _move(&"lance", CL, &"Sword_Attack", [&"light", &"thrust", &"finisher", &"omega"],
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 160.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
-		"move_scale": 0.0, "sound": &"thrust"}, [], &"move_lance")
+		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK}, [], &"move_lance")
 	# out of a dash: a thrust along the way
 	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
 		{"damage": 30.0, "shape": ComboNode.Shape.LINE, "reach": 640.0 / U, "width": 1.6, "knockback": 10.0, "lunge": 3.2, "windup": 0.06,
@@ -160,7 +169,7 @@ func _fourth(spin: ComboNode) -> ComboNode:
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
 		{"damage": FOURTH.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
 		"windup": FOURTH.windup, "recovery": FOURTH.recovery, "move_hold": FOURTH.move_hold, "chain_window": 0.4,
-		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust"}, [spin])
+		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": FOURTH.windup - THRUST_PEAK}, [spin])
 
 
 # ---------- enemies ----------

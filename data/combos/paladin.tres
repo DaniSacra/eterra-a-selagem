@@ -45,6 +45,8 @@ move_hold = 0.5
 chain_window = 0.6
 hit_stop_ms = 70.0
 sound = &"blade_spin"
+sound_at = 0.3
+sound_press = &"spin_gather"
 shake = 1.6
 
 [sub_resource type="Resource" id="Resource_ku8mk"]
@@ -168,6 +170,7 @@ move_hold = 0.78
 chain_window = 0.4
 hit_stop_ms = 50.0
 sound = &"thrust"
+sound_at = 0.034999999999999996
 magick_cost = 20.0
 charge_time = 0.8
 shake = 2.0

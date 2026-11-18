@@ -493,6 +493,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	if not ran:
 		runner.glint_scale = Feel.live().glint_scale
 		runner.step(dt)
+	_step_move_sound(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
 	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
 	pos = arena.sweep(start, pos, RADIUS)
@@ -722,12 +723,38 @@ func _strike_dir() -> Vector2:
 	return dir.normalized()
 
 
+## The move whose swish still waits for its blade (ComboNode.sound_at) and the seconds left (null: none).
+var _sound_node: ComboNode
+var _sound_t := 0.0
+
+
+## QW-103: plays the waiting swish on its time, only while that move still swings (a dodge that cut it drops it).
+func _step_move_sound(dt: float) -> void:
+	if _sound_node == null:
+		return
+	if runner.node != _sound_node or not runner.is_swinging():
+		_sound_node = null
+		return
+	_sound_t -= dt
+	if _sound_t <= 0.0:
+		if _sound_node.sound != &"":
+			Audio.play(_sound_node.sound)
+		_sound_node = null
+
+
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0:
 		magick.spend(omega_cost(node.magick_cost, _charge_discount))
 	_anim.speed_scale = 1.0
-	if node.sound != &"":
+	_sound_node = null
+	if node.sound_at > 0.0:
+		# QW-103: the swish waits for the blade (_step_move_sound); the press only gathers
+		_sound_node = node
+		_sound_t = node.sound_at / maxf(0.01, runner.speed)
+		if node.sound_press != &"":
+			Audio.play(node.sound_press)
+	elif node.sound != &"":
 		Audio.play(node.sound)
 	_lunge = facing * node.lunge * LUNGE_DECAY
 	# (Ímpeto plays every blow faster: runner.speed)
