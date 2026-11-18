@@ -350,6 +350,8 @@ func _build_world() -> void:
 	moon.directional_shadow_max_distance = 90.0
 	moon.light_volumetric_fog_energy = 0.3
 	add_child(moon)
+	# the visual profile (--look, F7): the stylized proof's numbers for the air and the key (VisualProfile)
+	VisualProfile.dress_world(e, moon)
 
 	arena = Arena.new()
 	add_child(arena)
@@ -440,6 +442,8 @@ func _process(delta: float) -> void:
 		_open_pause()
 	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
 		_toggle_feel_panel()
+	if Controls.pressed(&"look_toggle"):
+		VisualProfile.toggle()
 	_hurt_tint.step(fx.real_dt, Feel.live())
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
 	if mode != Mode.PLAY and mode != Mode.ENDING and not Dev.has("lab"):

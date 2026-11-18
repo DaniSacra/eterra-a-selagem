@@ -77,6 +77,19 @@ const BANNER_LION_GRID := 8
 ## The lion's gold (a step over the trim, as the sword's) and its dark edge (field pixels).
 const BANNER_LION_GOLD := Color(0.66, 0.48, 0.2)
 const BANNER_LION_EDGE := 5.0
+## The stylized look (STY-05, docs/art/stylized_spec.md 1.3 T14): the hall's and the arenas' lion banners in a dark
+## petrol cloth (the reliquary's hue, RewardGem.CLOTH_COLOR, at half its value: the facade's cold fill lights it to
+## the spec's value of 0.25 at most), a faint glow of their own in the same hue, the trim in old
+## gold; every second one torn at its foot: the foot this share of the length up, notches down to this share of it.
+const BANNER_PAINT_CLOTH := Color(0.035, 0.085, 0.095)
+const BANNER_PAINT_GLOW := Color(0.012, 0.032, 0.036)
+const BANNER_PAINT_TRIM := Color(0.42, 0.31, 0.13)
+const BANNER_TORN := Vector2(0.86, 0.12)
+## The stylized twins of the scenery's shaders and of the kit's material (VisualProfile, paint_look).
+const FLOOR_SHADER := preload("res://assets/shaders/catacomb_floor.gdshader")
+const FLOOR_PAINT := preload("res://assets/shaders/catacomb_floor_paint.gdshader")
+const KAYKIT_MATERIAL := preload("res://assets/models/kaykit_material.tres")
+const KAYKIT_PAINT := preload("res://assets/models/kaykit_paint.tres")
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
 const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "barrier_half", "floor_foundation_allsides",
 	"floor_foundation_corner", "floor_foundation_front", "floor_foundation_front_and_sides", "stairs_wide", "stairs_walled",
@@ -189,6 +202,8 @@ var _bronze_mat: StandardMaterial3D
 var _rim_mat: StandardMaterial3D
 var _iron: StandardMaterial3D
 var _banner_mat: StandardMaterial3D
+var _banner_paint_mat: StandardMaterial3D
+var _banners := 0
 var _core_mesh: QuadMesh
 var _coals_mat: StandardMaterial3D
 ## A rectangle of floor (x, z) the floor plates keep wet (in front of the portal).
@@ -254,60 +269,30 @@ func crate(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE, solid := 0.0) ->
 ## emblem (Emblem): the raised sword of Eterra's canon in old gold on it (BANNER_SWORD; the Chamber of the Seal's banners)
 ## or the standing lion (BANNER_LION; the arenas' and the hall's).
 func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emblem := Emblem.NONE) -> void:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var half := size.x * 0.5
-	var point := half
-	var n := BANNER_FOLDS * 4
-	var trim := BANNER_TRIM_WIDTH
-	# the foot of the cloth at x: a point in the middle
-	var foot := func(x: float) -> float:
-		return -size.y + point * absf(x) / half
-	for i in n:
-		var x0 := -half + size.x * i / n
-		var x1 := -half + size.x * (i + 1) / n
-		var quad: Array[Vector3] = []
-		var shade: Array[float] = []
-		for x: float in [x0, x1]:
-			var wave := cos((x + half) / size.x * TAU * BANNER_FOLDS)
-			quad.append(Vector3(x, 0.0, wave * 0.05))
-			quad.append(Vector3(x, float(foot.call(x)), wave * 0.08))
-			shade.append(lerpf(BANNER_FOLD, 1.0, wave * 0.5 + 0.5))
-		_banner_quad(st, quad[0], quad[2], quad[3], quad[1], BANNER_CLOTH * shade[0], BANNER_CLOTH * shade[1])
-		# the trim round the point
-		var lift := Vector3(0, 0, 0.012)
-		_banner_quad(st, quad[1] + Vector3(0, trim * 1.4, 0) + lift, quad[3] + Vector3(0, trim * 1.4, 0) + lift, quad[3] + lift, quad[1] + lift,
-			BANNER_TRIM * shade[0], BANNER_TRIM * shade[1])
-	# the trim down the sides, the bar and the tassel
-	for sd: float in [-1.0, 1.0]:
-		var a := Vector3(sd * half, 0.0, 0.07)
-		var b := Vector3(sd * (half - trim), 0.0, 0.07)
-		var drop := Vector3(0, -size.y + point, 0)
-		_banner_quad(st, a, b, b + drop + Vector3(0, -trim, 0), a + drop, BANNER_TRIM, BANNER_TRIM)
-	var bar := Vector3(half + 0.18, 0.07, 0.09)
-	_banner_quad(st, Vector3(-bar.x, bar.y, bar.z), Vector3(bar.x, bar.y, bar.z), Vector3(bar.x, -bar.y, bar.z), Vector3(-bar.x, -bar.y, bar.z),
-		BANNER_BAR, BANNER_BAR)
-	if emblem == Emblem.SWORD:
-		_banner_sword(st, size)
-	var tip := Vector3(0, -size.y, 0.09)
-	_banner_quad(st, tip + Vector3(0, 0.05, 0), tip + Vector3(0.09, -0.16, 0), tip + Vector3(0, -0.42, 0), tip + Vector3(-0.09, -0.16, 0),
-		BANNER_TRIM, BANNER_TRIM * 0.7)
-	st.generate_normals()
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = _banner_mesh(size, emblem, BANNER_CLOTH, BANNER_TRIM, false)
 	if _banner_mat == null:
-		_banner_mat = StandardMaterial3D.new()
-		_banner_mat.vertex_color_use_as_albedo = true
-		_banner_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-		_banner_mat.roughness = 1.0
-		_banner_mat.emission_enabled = true
-		_banner_mat.emission = BANNER_GLOW
+		_banner_mat = _cloth_material(BANNER_GLOW)
 	mi.material_override = _banner_mat
 	mi.transform = Transform3D(Basis(Vector3.UP, yaw), top)
 	mi.layers = layers
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	root.add_child(mi)
 	if emblem == Emblem.LION:
+		# the stylized look's twin: petrol cloth, every second one torn (only one of the two is drawn)
+		var twin := MeshInstance3D.new()
+		twin.mesh = _banner_mesh(size, emblem, BANNER_PAINT_CLOTH, BANNER_PAINT_TRIM, _banners % 2 == 1)
+		_banners += 1
+		if _banner_paint_mat == null:
+			_banner_paint_mat = _cloth_material(BANNER_PAINT_GLOW)
+		twin.material_override = _banner_paint_mat
+		twin.transform = mi.transform
+		twin.layers = layers
+		twin.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		twin.visible = false
+		root.add_child(twin)
+		VisualProfile.vary(mi, {&"visible": false})
+		VisualProfile.vary(twin, {&"visible": true})
 		var lion := MeshInstance3D.new()
 		lion.mesh = _banner_lion(size)
 		lion.material_override = _lion_material()
@@ -315,6 +300,114 @@ func banner(top: Vector3, yaw: float, size: Vector2, layers := FACADE_LAYER, emb
 		lion.layers = layers
 		lion.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		root.add_child(lion)
+
+
+## A banner's cloth: folds as darker upright bands of `cloth`, `trim` down its sides and round the pointed foot, the
+## bar, the sword (emblem) and the tassel; torn: the foot a ragged edge with no trim nor tassel.
+func _banner_mesh(size: Vector2, emblem: Emblem, cloth: Color, trim_color: Color, torn: bool) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var half := size.x * 0.5
+	var point := half
+	var n := BANNER_FOLDS * 4
+	var trim := BANNER_TRIM_WIDTH
+	# the torn edge's notches (its own generator: the kit's draws stay those of the classic look)
+	var notches := PackedFloat32Array()
+	if torn:
+		var r := RandomNumberGenerator.new()
+		r.seed = hash(size) + _banners
+		for i in n + 1:
+			notches.append(r.randf() * BANNER_TORN.y * size.y)
+	# the foot of the cloth at column i (x): a point in the middle, or the torn edge
+	var foot := func(x: float, i: int) -> float:
+		if torn:
+			return -size.y * BANNER_TORN.x + notches[i]
+		return -size.y + point * absf(x) / half
+	for i in n:
+		var x0 := -half + size.x * i / n
+		var x1 := -half + size.x * (i + 1) / n
+		var quad: Array[Vector3] = []
+		var shade: Array[float] = []
+		for k in 2:
+			var x: float = [x0, x1][k]
+			var wave := cos((x + half) / size.x * TAU * BANNER_FOLDS)
+			quad.append(Vector3(x, 0.0, wave * 0.05))
+			quad.append(Vector3(x, float(foot.call(x, i + k)), wave * 0.08))
+			shade.append(lerpf(BANNER_FOLD, 1.0, wave * 0.5 + 0.5))
+		_banner_quad(st, quad[0], quad[2], quad[3], quad[1], cloth * shade[0], cloth * shade[1])
+		if torn:
+			continue
+		# the trim round the point
+		var lift := Vector3(0, 0, 0.012)
+		_banner_quad(st, quad[1] + Vector3(0, trim * 1.4, 0) + lift, quad[3] + Vector3(0, trim * 1.4, 0) + lift, quad[3] + lift, quad[1] + lift,
+			trim_color * shade[0], trim_color * shade[1])
+	# the trim down the sides, the bar and the tassel
+	for sd: float in [-1.0, 1.0]:
+		var a := Vector3(sd * half, 0.0, 0.07)
+		var b := Vector3(sd * (half - trim), 0.0, 0.07)
+		var drop := Vector3(0, float(foot.call(sd * half, 0 if sd < 0.0 else n)), 0)
+		_banner_quad(st, a, b, b + drop + Vector3(0, -trim, 0), a + drop, trim_color, trim_color)
+	var bar := Vector3(half + 0.18, 0.07, 0.09)
+	_banner_quad(st, Vector3(-bar.x, bar.y, bar.z), Vector3(bar.x, bar.y, bar.z), Vector3(bar.x, -bar.y, bar.z), Vector3(-bar.x, -bar.y, bar.z),
+		BANNER_BAR, BANNER_BAR)
+	if emblem == Emblem.SWORD:
+		_banner_sword(st, size)
+	if not torn:
+		var tip := Vector3(0, -size.y, 0.09)
+		_banner_quad(st, tip + Vector3(0, 0.05, 0), tip + Vector3(0.09, -0.16, 0), tip + Vector3(0, -0.42, 0), tip + Vector3(-0.09, -0.16, 0),
+			trim_color, trim_color * 0.7)
+	st.generate_normals()
+	return st.commit()
+
+
+## The cloth's material: its vertex colours, both faces, matte, a faint glow of its own so it is never black.
+func _cloth_material(glow: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.vertex_color_use_as_albedo = true
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	m.roughness = 1.0
+	m.emission_enabled = true
+	m.emission = glow
+	return m
+
+
+## The stylized look of everything built under the kit's root (STY-04, STY-05; VisualProfile): the dressed stone and
+## the floors take their painted twins (masonry_paint, catacomb_floor_paint; the wood keeps its own colour), the kit's
+## pieces the painted kit material. Call once the room is built (after Masonry.merge). Materials made while the look
+## was stylized are put back to their classic shader first, so the classic one is always the one registered.
+func paint_look() -> void:
+	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT}
+	var seen := {}
+	for n in root.find_children("*", "GeometryInstance3D", true, false):
+		var g := n as GeometryInstance3D
+		_paint_material(g.material_override, swaps, seen)
+		if not g is MeshInstance3D:
+			continue
+		var mi := g as MeshInstance3D
+		var kit := false
+		for i in mi.get_surface_override_material_count():
+			var over := mi.get_surface_override_material(i)
+			_paint_material(over, swaps, seen)
+			if over == null and mi.mesh != null and mi.mesh.surface_get_material(i) == KAYKIT_MATERIAL:
+				kit = true
+		if kit and mi.material_override == null:
+			VisualProfile.vary(mi, {&"material_override": KAYKIT_PAINT})
+
+
+func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary) -> void:
+	var sm := mat as ShaderMaterial
+	if sm == null or seen.has(sm):
+		return
+	seen[sm] = true
+	for classic: Shader in swaps:
+		if sm.shader == swaps[classic]:
+			sm.shader = classic
+	if not swaps.has(sm.shader):
+		return
+	var values := {&"shader": swaps[sm.shader]}
+	if masonry.is_wood(sm):
+		values[&"shader_parameter/paint_keep"] = 1.0
+	VisualProfile.vary(sm, values)
 
 
 ## The lion's patch on a banner: a square grid of quads just in front of the folds (so it bends with them), UV 0..1
@@ -966,7 +1059,7 @@ func floor_plate(center: Vector3, size: Vector2, ring_radius: float = 0.0, ring_
 ## round the fire bowls (brazier). ring_radius: the medallion's (0: none); calm_radius: the calm middle's.
 func floor_material(ring_radius := 0.0, ring_center := Vector2.ZERO, calm_radius := 9.0, shader: Shader = null) -> ShaderMaterial:
 	var m := ShaderMaterial.new()
-	m.shader = shader if shader else preload("res://assets/shaders/catacomb_floor.gdshader")
+	m.shader = shader if shader else FLOOR_SHADER
 	m.set_shader_parameter(&"ring_radius", ring_radius)
 	m.set_shader_parameter(&"ring_glow", MEDALLION_GLOW)
 	m.set_shader_parameter(&"ring_center", ring_center)
