@@ -218,9 +218,11 @@ func _enemies() -> void:
 		# 1.1 m (at its size) past its body in an arc of 120 degrees ahead, as its body lands
 		"windup_shake": 0.025, "strike_at": 0.1, "strike_reach": 1.1, "strike_degrees": 120.0,
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1]})
-	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
+	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest); C17,
+	# QW-102: 1.0 s of wind-up, its last 0.3 s held trembling (0.7 was the shortest warning of the game: the PO took 9
+	# blows with 0.70 to 0.82 s; Hades' Radiator winds up 1.5 s)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
-		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
+		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 1.0,
 		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
 		"strike_at": 0.1,
@@ -230,12 +232,13 @@ func _enemies() -> void:
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
 	# 1 s of aim following the paladin, a burst of 3 orbs 0.17 s apart (elite 7), each pushing it back at 5 m/s; orbs at
-	# 7 m/s for 20 m that turn after him (how fast the files do not say: 40 degrees a second is ours), 4 damage; then
+	# 7 m/s for 20 m that turn after him (how fast the files do not say: 40 degrees a second is ours) only in their
+	# first 0.8 s, then straight (C17, QW-101: they caught him late in their flight, the PO's most unfair blow), 4 damage; then
 	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 6 at once.
 	# Cold violet: Daniel, 2026-11-14.
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 280.0 / U, "damage": 4.0, "radius": 0.5,
 		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": Color(1.7, 1.25, 3.2),
-		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 40.0, "shot_ticks": 3, "shot_interval": 0.17,
+		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 40.0, "shot_homing": 0.8, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.mage[0]},

@@ -604,7 +604,7 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 		if d.shot_turn > 0.0:
 			s.turn = deg_to_rad(d.shot_turn)
 			s.turn_decay = deg_to_rad(d.shot_turn_decay)
-			s.homing = life
+			s.homing = d.shot_homing if d.shot_homing > 0.0 else life
 		if d.shot_low:
 			s.low = true
 			s.node.scale = LOW_SHOT_SCALE

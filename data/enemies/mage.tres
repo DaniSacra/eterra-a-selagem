@@ -28,6 +28,7 @@ shot_orb = true
 shot_ticks = 3
 recoil = 5.0
 shot_turn = 40.0
+shot_homing = 0.8
 shot_range = 20.0
 cover_hug = 3.125
 max_attackers = 6

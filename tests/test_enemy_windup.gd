@@ -286,3 +286,20 @@ func test_the_sorcerer_thrusts_each_bolt() -> void:
 	assert_gte(far, 0.25, "the staff's top goes %.2f m" % far)
 	assert_lt(m.position(&"shot", 0, tip).distance_to(hold[tip]), 0.03, "it starts in the hold")
 	assert_lt(m.position(&"shot", n - 1, tip).distance_to(hold[tip]), 0.03, "and ends in it")
+
+
+## C17, QW-102 (CF-02): the runner warns 1.0 s before it bursts (it was 0.7, the shortest warning of the game), its
+## warning full on the blow's frame; no blow of a common enemy warns less than 0.9 s but the brute's short slam.
+func test_the_runner_warns_a_full_second() -> void:
+	var hit := _first_blow(&"runner", Vector2(1.2, 0.0))
+	assert_false(hit.is_empty(), "the runner burst")
+	if hit.is_empty():
+		return
+	assert_between(int(hit.frame) - int(hit.warn_end), -1, 1, "its warning full on the blow's frame")
+	var d: EnemyDef = hit.e.def
+	assert_almost_eq(d.attack_windup, 1.0, 0.001)
+	assert_almost_eq(d.attack_windup * d.windup_hold, 0.3, 0.001, "the last 0.3 s held trembling")
+	assert_gt(d.windup_shake, 0.0)
+	for id in [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"guard", &"guard_elite", &"knight"]:
+		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
+		assert_gte(def.attack_windup, 0.9, "%s warns at least 0.9 s" % id)
