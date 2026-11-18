@@ -1,0 +1,54 @@
+  4459 vertices, 24 poses, pose images 2048x53
+== guard idle
+  00 shield ahead +0.47 m, lean +8 deg, head behind the shield's top +0.09 m, top 2.03
+  01 shield ahead +0.47 m, lean +8 deg, head behind the shield's top +0.09 m, top 2.03
+  02 shield ahead +0.47 m, lean +8 deg, head behind the shield's top +0.09 m, top 2.02
+  03 shield ahead +0.47 m, lean +9 deg, head behind the shield's top +0.09 m, top 2.02
+  04 shield ahead +0.48 m, lean +9 deg, head behind the shield's top +0.10 m, top 2.02
+  05 shield ahead +0.48 m, lean +9 deg, head behind the shield's top +0.09 m, top 2.03
+  06 shield ahead +0.46 m, lean +8 deg, head behind the shield's top +0.09 m, top 2.03
+  07 shield ahead +0.46 m, lean +8 deg, head behind the shield's top +0.09 m, top 2.03
+  08 shield ahead +0.47 m, lean +8 deg, head behind the shield's top +0.09 m, top 2.02
+  09 shield ahead +0.48 m, lean +9 deg, head behind the shield's top +0.09 m, top 2.02
+  10 shield ahead +0.48 m, lean +9 deg, head behind the shield's top +0.10 m, top 2.02
+  11 shield ahead +0.47 m, lean +9 deg, head behind the shield's top +0.10 m, top 2.03
+== guard charge
+  00 shield ahead +0.54 m, lean +25 deg, head behind the shield's top +0.05 m, top 1.82
+  01 shield ahead +0.52 m, lean +25 deg, head behind the shield's top +0.05 m, top 1.77
+  02 shield ahead +0.53 m, lean +25 deg, head behind the shield's top +0.05 m, top 1.77
+  03 shield ahead +0.54 m, lean +23 deg, head behind the shield's top +0.05 m, top 1.78
+  04 shield ahead +0.47 m, lean +29 deg, head behind the shield's top +0.05 m, top 1.60
+  05 shield ahead +0.51 m, lean +29 deg, head behind the shield's top +0.06 m, top 1.69
+  06 shield ahead +0.53 m, lean +29 deg, head behind the shield's top +0.05 m, top 1.77
+  07 shield ahead +0.50 m, lean +25 deg, head behind the shield's top +0.05 m, top 1.69
+  08 shield ahead +0.50 m, lean +19 deg, head behind the shield's top +0.05 m, top 1.76
+  09 shield ahead +0.51 m, lean +25 deg, head behind the shield's top +0.05 m, top 1.78
+  10 shield ahead +0.50 m, lean +27 deg, head behind the shield's top +0.05 m, top 1.72
+  11 shield ahead +0.52 m, lean +27 deg, head behind the shield's top +0.05 m, top 1.78
+  6109 vertices, 24 poses, pose images 2048x72
+== knight idle
+  00 shield ahead +0.50 m, lean +2 deg, head behind the shield's top +0.49 m, top 2.03
+  01 shield ahead +0.51 m, lean +1 deg, head behind the shield's top +0.49 m, top 2.03
+  02 shield ahead +0.50 m, lean +2 deg, head behind the shield's top +0.49 m, top 2.03
+  03 shield ahead +0.50 m, lean +3 deg, head behind the shield's top +0.50 m, top 2.03
+  04 shield ahead +0.50 m, lean +3 deg, head behind the shield's top +0.50 m, top 2.02
+  05 shield ahead +0.50 m, lean +3 deg, head behind the shield's top +0.49 m, top 2.02
+  06 shield ahead +0.50 m, lean +2 deg, head behind the shield's top +0.49 m, top 2.03
+  07 shield ahead +0.51 m, lean +1 deg, head behind the shield's top +0.49 m, top 2.03
+  08 shield ahead +0.50 m, lean +2 deg, head behind the shield's top +0.49 m, top 2.03
+  09 shield ahead +0.50 m, lean +3 deg, head behind the shield's top +0.50 m, top 2.03
+  10 shield ahead +0.50 m, lean +3 deg, head behind the shield's top +0.50 m, top 2.02
+  11 shield ahead +0.50 m, lean +3 deg, head behind the shield's top +0.49 m, top 2.02
+== knight charge
+  00 shield ahead +0.53 m, lean +29 deg, head behind the shield's top +0.59 m, top 1.80
+  01 shield ahead +0.51 m, lean +23 deg, head behind the shield's top +0.59 m, top 1.75
+  02 shield ahead +0.52 m, lean +21 deg, head behind the shield's top +0.59 m, top 1.79
+  03 shield ahead +0.51 m, lean +22 deg, head behind the shield's top +0.59 m, top 1.78
+  04 shield ahead +0.51 m, lean +28 deg, head behind the shield's top +0.59 m, top 1.63
+  05 shield ahead +0.51 m, lean +32 deg, head behind the shield's top +0.59 m, top 1.70
+  06 shield ahead +0.52 m, lean +31 deg, head behind the shield's top +0.59 m, top 1.78
+  07 shield ahead +0.51 m, lean +24 deg, head behind the shield's top +0.59 m, top 1.70
+  08 shield ahead +0.50 m, lean +13 deg, head behind the shield's top +0.59 m, top 1.77
+  09 shield ahead +0.52 m, lean +21 deg, head behind the shield's top +0.59 m, top 1.79
+  10 shield ahead +0.52 m, lean +31 deg, head behind the shield's top +0.59 m, top 1.69
+  11 shield ahead +0.53 m, lean +33 deg, head behind the shield's top +0.59 m, top 1.76

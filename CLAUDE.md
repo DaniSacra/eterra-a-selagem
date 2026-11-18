@@ -1061,7 +1061,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   inteira da lâmina (`Sword_Attack` 0 a 0,35 s, `SOLDIER_COIL`), corredor o agachar do `Jump_Start` e o giro
   `2H_Melee_Attack_Spinning`, feiticeiro e ancião o cajado subindo (`cast` = `Spell_Simple_Enter`, `cast_hold`, `shot` por
   orbe recomeçado a cada tiro da rajada, `exit` na recuperação), ancião `summon` ao erguer os mortos, sacerdote elite `shot`
-  por trepadeira, Escudo e Cavaleiro `brace`, `charge` (o empurrão do escudo) e `recover` (`Idle_Shield_Break`), Morvath
+  por trepadeira, Escudo e Cavaleiro `brace`, `charge` e `recover` (`Idle_Shield_Break`), Morvath
   `dash_windup` (`Sword_Dash_RM` 0 a 0,12 s, `CHARGE_LEAN`) e `blades_windup` (`Sword_Regular_B` 0 a 0,2 s, `DRAW_BACK`),
   armados pelo `Boss` com o mesmo `windup_arm` (`Boss.WINDUP_*`, tremor `Enemy.shake`, só desenho). **Dano do corpo**: as
   investidas do Escudo, do Cavaleiro e de Morvath ferem no primeiro quadro em que o contorno do corpo, varrido de onde
@@ -1077,10 +1077,21 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   com folga, passo lateral para o mesmo lado por `RING_SIDE` 1,2 s, no máximo `RING_SPEED` 1 m/s, com os passos laterais
   e de costas próprios (`strafe_l`, `strafe_r`, `back`, `Horde.walk_side`) olhando o herói; histerese no rosto
   (`FACE_SPLIT` 70, `FACE_BACK` 45, `FACE_SPEED`), troca andar/parado só depois de `STAND_AFTER` 0,15 s ou `WALK_AFTER`
-  0,1 s, linha reta até `WAY_FAR` 3 m, separação todo quadro com `SEPARATE` 0,25. **Corrida** (T5-11): `Jog_Fwd` com
-  `SOLDIER_JOG` (`lock`, passada 0,83, `plant` 0,65, tronco inclinado), 161 passos por minuto, pés no ar em 5 de 20 poses.
-  Medir: `tools/clip_motion.gd` (pico, pose armada e andar de cada clipe assado) e a sonda `tools/enemy_motion_probe.gd`
-  com `tools/enemy_motion_probe.py` (tremor, golpe x corpo x aviso, pose parada).
+  0,1 s, linha reta até `WAY_FAR` 3 m, separação todo quadro com `SEPARATE` 0,25; desde a revisão (7.1) a troca do rosto
+  espera `FACE_AFTER` 0,1 s e só volta à mira abaixo de `FACE_SPEED_BACK` 0,9 m/s. **Corrida** (T5-11, A-T5-2): `Jog_Fwd`
+  com `SOLDIER_JOG` (`lock`, passada 0,74, `plant` 0,5, `stand` 0,15: o quadril 15 cm mais alto sobre as mesmas pegadas,
+  joelho menos dobrado), 161 passos por minuto, pés no ar em 6 de 20 poses, cabeça a 100% da parada.
+  **Revisão de arte (A-T5-1 a 4, `docs/gallery/t5/motion/after2/`)**: a investida do Escudo e do Cavaleiro corre com as
+  pernas do `Sprint` e o tronco (e o braço do escudo do Cavaleiro) presos no fim do `brace` (`BRUTE_RUSH`, `KNIGHT_RUSH`,
+  "guard" com segundo fixo, `RUSH_AT` 0,33 do `Shield_Dash_RM`): escudo 0,47 m ou mais à frente do peito e tronco 13 a
+  33 graus em toda pose (`BakedModel.guard_pose`, partes com nome no assado em `BakedModel.parts`: `shield`, `sword`,
+  `staff`; `tools/charge_probe.gd`); corredor prepara do `Jump_Start` 0,26 a 0,4 s (sem joelho erguido); cada orbe do
+  feiticeiro é o cajado recuando pela subida e voltando (`Spell_Simple_Enter` 0,53 a 0,22 s, `there_and_back`, começa e
+  termina na pose de segurar). **Fuga** (T5-20): o atirador guarda a direção de fuga `FLEE_HOLD` 0,4 s enquanto ela está
+  livre (`Horde._flee`), foge com folga `FLEE_SLACK` 0,75 m além de onde começa e, correndo por conta própria, o corpo
+  olha a velocidade suavizada por `RUN_FACE` 0,3 s (`Enemy.run_t`), nunca a direção crua do quadro.
+  Medir: `tools/clip_motion.gd` (pico, pose armada e andar de cada clipe assado, cabeça no andar) e a sonda
+  `tools/enemy_motion_probe.gd` com `tools/enemy_motion_probe.py` (tremor, golpe x corpo x aviso, pose parada).
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## Pendências conhecidas

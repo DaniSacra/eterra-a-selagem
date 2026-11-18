@@ -222,3 +222,71 @@ func test_at_most_two_soldiers_attack_at_once() -> void:
 		_frame()
 		most = maxi(most, game.horde.attackers(game.horde.def(&"skeleton")))
 	assert_eq(most, 2)
+
+
+## T5-20 (docs/qa/t5_enemy_motion.md 7.2): a way from the paladin is kept FLEE_HOLD seconds while it stays open (the
+## crossbowman swapped straight away and 35 degrees off frame by frame), then chosen again.
+func test_a_flight_keeps_its_way() -> void:
+	_room()
+	var e := _spawn(&"archer", Vector2(0, 4))
+	var h := game.horde
+	assert_eq(h._flee(e, Vector2.RIGHT), Vector2.RIGHT, "straight away in the open")
+	e.flee_turn = deg_to_rad(35.0)
+	e.flee_hold = Horde.FLEE_HOLD
+	assert_almost_eq(Vector2.RIGHT.angle_to(h._flee(e, Vector2.RIGHT)), deg_to_rad(35.0), 0.001, "the way it took is kept")
+	e.flee_hold = 0.0
+	assert_eq(h._flee(e, Vector2.RIGHT), Vector2.RIGHT, "and chosen again after FLEE_HOLD")
+
+
+## T5-20: running on its own the body faces where it really moves (smoothed), never the raw direction of one frame:
+## running straight with its direction swapping 35 degrees each frame, it never turns more than 8 degrees a frame,
+## and slowed a moment (a stun's end) it keeps its facing.
+func test_a_running_body_faces_where_it_goes() -> void:
+	_room()
+	var e := _spawn(&"archer", Vector2(0, 4))
+	var h := game.horde
+	e.state = Enemy.State.WALK
+	e.face = Vector2.RIGHT
+	e.vel = Vector2.RIGHT * 3.5
+	var worst := 0.0
+	for f in 60:
+		e.last_pos = e.pos
+		e.pushed = Vector2.ZERO
+		e.pos += Vector2.RIGHT * 3.5 * DT
+		e.dir = Vector2.RIGHT.rotated(deg_to_rad(35.0 if f % 2 == 0 else 0.0))
+		e.run_t = Horde.RUN_FACE
+		var before := e.face
+		h._drawn_motion(e, DT)
+		worst = maxf(worst, absf(rad_to_deg(before.angle_to(e.face))))
+	assert_lt(worst, 8.0, "turned %.1f degrees in a frame" % worst)
+	# stopped a moment: the facing stays while run_t lasts
+	e.dir = Vector2.LEFT
+	e.last_pos = e.pos
+	e.vel = Vector2.ZERO
+	var held := e.face
+	h._drawn_motion(e, DT)
+	assert_almost_eq(e.face.angle_to(held), 0.0, 0.001, "slowed, it keeps its facing")
+
+
+## T5-10 residual (7.1, seed 4): a speed that crosses FACE_SPEED for a few frames does not snap the body round and
+## back: a change of facing waits FACE_AFTER and turns back only under FACE_SPEED_BACK.
+func test_a_short_burst_of_speed_does_not_snap_the_body() -> void:
+	_room()
+	var e := _spawn(&"skeleton", Vector2(0, 4))
+	var h := game.horde
+	e.state = Enemy.State.WALK
+	e.dir = Vector2.UP
+	e.face = Vector2.UP
+	e.run_t = 0.0
+	var worst := 0.0
+	# sideways (90 degrees off its aim) at 1.3 m/s for 3 frames, then 1.1
+	for f in 20:
+		var speed := 1.3 if f < 3 else 1.1
+		e.last_pos = e.pos
+		e.pushed = Vector2.ZERO
+		e.vel = Vector2.RIGHT * speed
+		e.pos = e.last_pos + Vector2.RIGHT * speed * DT
+		var before := e.face
+		h._drawn_motion(e, DT)
+		worst = maxf(worst, absf(rad_to_deg(before.angle_to(e.face))))
+	assert_lt(worst, 8.0, "the body turned %.1f degrees in a frame" % worst)

@@ -22,7 +22,11 @@ extends SceneTree
 ## piece, in the model's meters, "worn": true to lift its painting off the dark, turn its rim to worn light steel
 ## and scratch its faces, _worn}) and "hold" ({"bones": parents first, "swing": degrees}: those bones stay as the
 ## model rests, whatever the clip, the first one swung around the figure's upright axis; a clip's own "hold" is
-## its swing: the shield arm stays behind the shield, and the shield comes in front of the body).
+## its swing: the shield arm stays behind the shield, and the shield comes in front of the body), "there_and_back" (a
+## one-shot goes from `from` to `to` and back over its poses: a thrust out of a held pose and back to it). A "guard"
+## entry may end with a second of its clip ([rig, clip, bones, second]): those bones held as that pose has them. A
+## locked walk's "stand" (m): its hips that much higher over the same footprints, the knees bent less. A rigid or held
+## piece's "name" ("shield", "sword", "staff") keeps its vertices in BakedModel.parts, for measures (guard_pose).
 ## A held piece: "hand" (Right or Left), then "file" (assets/models/weapons) or "shape" (see _prop), "scale",
 ## "at" (meters) and "rot" (degrees) in the hand's grip (+Y along the fist toward the pinky, which is where the
 ## libraries' sword clips carry the blade; +Z out of the knuckles, along the forearm) and "paint" (KayKit palette
@@ -194,8 +198,10 @@ const SOLDIER_RUN := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, 
 const KING_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 1.3}
 ## T5-11 (docs/design/combat_cadence.md 6.4): the soldier's run read as a gazelle (Running_B on a short stride with half
 ## its hop: both feet off the floor in 16 of 20 poses, the trunk upright, the back foot kicked to the hip). It jogs
-## instead (the library's Jog_Fwd), the feet locked, a third of the hop, the trunk leaning into the run.
-const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.83, "lift": 0.3, "plant": 0.65,
+## instead (the library's Jog_Fwd), the feet locked, a third of the hop, the trunk leaning into the run. A-T5-2: it
+## crouched (knees near square, the body 22 cm down): the body sinks half the way to each pose's own floor ("plant" 0.5,
+## was 0.65) and stands 0.15 m taller over the same footprints ("stand"), its head at 99% of its idle's; 161 steps a minute.
+const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.74, "lift": 0.3, "plant": 0.5, "stand": 0.15,
 	"bend": {"Spine01": Vector3(-34, 0, 0)}}
 ## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
 ## blow uncoils it in its first 0.15 s ("bend_out").
@@ -210,6 +216,17 @@ const DRAW_BACK := {"Spine01": Vector3(-12, 20, 0)}
 ## toward the middle of the body, standing and walking, and braced for the charge.
 const SHIELD_FRONT := -14.0
 const SHIELD_BRACE := -26.0
+## The trunk, hips up to the head (a "guard" of these keeps the body's lean of another clip over the legs of this one).
+const TRUNK: Array[StringName] = [&"Spine02", &"Spine01", &"Spine", &"neck", &"Head"]
+## A-T5-1 (docs/gallery/t5/ART_REVIEW.md 1.6): the charge is run, not walked up out of the brace. The legs sprint
+## (the library's Sprint, quicker), the trunk (and the knight's shield arm) stay as the brace ends, low and leaning
+## behind the shield ("guard" at a fixed second of Shield_Dash_RM: its 0.3 to 0.8 s stood the body up and took the
+## shield aside), the brute's tower shield swung across as in the brace; the sword arm in guard.
+const RUSH_AT := 0.33
+const BRUTE_RUSH := {"time": 0.45, "hold": SHIELD_BRACE,
+	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
+const KNIGHT_RUSH := {"time": 0.45, "bend": {"Spine02": Vector3(14, 0, 0)},
+	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK + LEFT_ARM, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
 ## Both hands held out, palms up, as one who carries an offering (the priest: no object, no symbol).
 const BOTH_ARMS: Array[StringName] = [&"LeftShoulder", &"LeftArm", &"LeftForeArm", &"LeftHand", &"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
 const OFFERING_GUARD := {"guard": [&"ual2", "Walk_Carry", BOTH_ARMS]}
@@ -241,9 +258,12 @@ const STAFF_CLIPS := {
 	# T5-03: the staff comes up (Spell_Simple_Enter) as the wind-up arms, the trunk drawn back; it is held up
 	# (Spell_Simple_Idle) in the hold. T5-13: each bolt of a burst is its own thrust (the shot's first 0.3 s in
 	# 0.17, Horde restarts it each tick), and the staff comes down (Spell_Simple_Exit) in the recovery.
+	# A-T5-4: the library's shot hardly moves the staff hand (5 cm: the hold already has it at arm's length), so each
+	# bolt is the staff drawn back down the rise (Spell_Simple_Enter 0.53 to 0.22 s, the hand 0.27 m back) and thrust
+	# out again, there and back in the 0.17 s: the bolt leaves with the staff at arm's length.
 	"cast_rise": [&"ual", "Spell_Simple_Enter", 10, false, {"bend": STAFF_COIL, "bend_in": true}],
 	"cast_hold": [&"ual", "Spell_Simple_Idle", 12, true, {"bend": STAFF_COIL}],
-	"shot": [&"ual", "Spell_Simple_Shoot", 6, false, {"from": 0.0, "to": 0.5, "time": 0.17, "bend": STAFF_COIL, "bend_out": 0.3}],
+	"shot": [&"ual", "Spell_Simple_Enter", 7, false, {"from": 0.53, "to": 0.22, "there_and_back": true, "time": 0.17, "bend": STAFF_COIL}],
 	"exit": [&"ual", "Spell_Simple_Exit", 8, false],
 }
 
@@ -258,7 +278,7 @@ const MODELS := {
 	"skeleton": {
 		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "skeleton.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": CLEAVER_SCALE, "rot": EDGE_OUT, "paint": BLADE_PAINT}],
+		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": CLEAVER_SCALE, "rot": EDGE_OUT, "paint": BLADE_PAINT, "name": "sword"}],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, SOLDIER_JOG], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
 			# T5-02: the wind-up is the clip's whole rise, 0 to 0.35 s (the blade from the hip to its highest, over
@@ -281,8 +301,9 @@ const MODELS := {
 			"walk": [&"kaykit", "Running_B", 20, true], "idle": [&"ual2", "Zombie_Idle", 12, true],
 			# T5-04, T5-16: it gathers into a crouch, the arms drawn back (the coil of the library's jump), then bursts
 			# all around itself spinning with its arms out (its blast lands as they open, EnemyDef.strike_at); it
-			# was a still crouch and a punch ahead for a burst around it
-			"windup": [&"ual", "Jump_Start", 8, false, {"from": 0.18, "to": 0.33}],
+			# was a still crouch and a punch ahead for a burst around it. A-T5-3: from 0.26 s, past the jump's raised knee
+			# (from 0.18 one foot was 0.22 m over the other), to 0.4 to keep its pace (1.0 m/s drawn), in its 0.15 s
+			"windup": [&"ual", "Jump_Start", 8, false, {"from": 0.26, "to": 0.4, "time": 0.15}],
 			"attack": [&"kaykit", "2H_Melee_Attack_Spinning", 14, false],
 		},
 	},
@@ -291,7 +312,7 @@ const MODELS := {
 		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
-			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT},
+			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT, "name": "staff"},
 			# the cold violet orb in the top of the staff: always lit, it swells as the bolt is conjured
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD},
 		],
@@ -319,8 +340,8 @@ const MODELS := {
 		# the tower shield follows the shoulder in one piece, the arm behind it as the model rests, swung in front of
 		# the body; charcoal on a dark floor, it takes a rim of worn light steel and scratches. The sword is one piece too.
 		"rigid": [
-			{"bone": "LeftShoulder", "seeds": ["LeftHand", "LeftForeArm"], "plate": 0.09, "worn": true},
-			{"bone": "RightHand", "seeds": ["RightHand"], "rod": 0.07},
+			{"bone": "LeftShoulder", "seeds": ["LeftHand", "LeftForeArm"], "plate": 0.09, "worn": true, "name": "shield"},
+			{"bone": "RightHand", "seeds": ["RightHand"], "rod": 0.07, "name": "sword"},
 		],
 		"hold": {"bones": LEFT_ARM, "swing": SHIELD_FRONT},
 		"even_legs": true,
@@ -330,8 +351,9 @@ const MODELS := {
 			# the charge is announced braced behind the shield, brought further across the body
 			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 			# T5-06: the charge is the shield's push that goes on from the brace (it was drawn with the middle of its
-			# sword blow), and after it the body sags, spent (T5-12, Idle_Shield_Break: the shield lowered)
-			"charge": [&"ual2", "Shield_Dash_RM", 10, false, {"from": 0.3, "to": 0.8, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			# sword blow), run behind the shield (A-T5-1, BRUTE_RUSH), and after it the body sags, spent (T5-12,
+			# Idle_Shield_Break: the shield lowered)
+			"charge": [&"ual", "Sprint", 12, true, BRUTE_RUSH],
 			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
@@ -351,15 +373,16 @@ const MODELS := {
 		"meshy": "knight", "height": 2.03, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "knight.png",
 		"held": [
-			{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.95, "rot": EDGE_OUT, "paint": KNIGHT_BLADE_PAINT},
-			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0), "paint": SHIELD_PAINT},
+			{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.95, "rot": EDGE_OUT, "paint": KNIGHT_BLADE_PAINT, "name": "sword"},
+			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0), "paint": SHIELD_PAINT, "name": "shield"},
 		],
 		"anims": {
 			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE,
 			"attack": SWORD_BLOW,
-			# T5-07: its charge braced behind the round shield and run with it (it stood idle with a line on the floor)
+			# T5-07: its charge braced behind the round shield and run with it (it stood idle with a line on the floor);
+			# A-T5-1: run low behind it (KNIGHT_RUSH)
 			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
-			"charge": [&"ual2", "Shield_Dash_RM", 10, false, {"from": 0.3, "to": 0.8, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
+			"charge": [&"ual", "Sprint", 12, true, KNIGHT_RUSH],
 			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
@@ -609,10 +632,17 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	var slim := MeshSlim.slim(mi.mesh.surface_get_arrays(0), PoseBaker.find_albedo(mi).get_image(), spec.triangles, ATLAS)
 	var arrays: Array = slim[0]
 	var atlas: Image = slim[1]
+	var parts := {}
 	for r: Dictionary in spec.get("rigid", []):
 		var piece := _rigid(arrays, mi, r)
 		if r.get("worn", false):
 			_worn(arrays, atlas, piece)
+		if r.has("name"):
+			var mine := PackedInt32Array()
+			for v in piece.size():
+				if piece[v] == 1:
+					mine.append(v)
+			parts[r["name"]] = mine
 	var held: Array = spec.get("held", [])
 	if not held.is_empty():
 		atlas = _with_strip(atlas, load(spec.palette))
@@ -638,10 +668,22 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	print("  trunk (hips to the head bone) %.2f m, hips to the top of the head %.2f m" % [trunk,
 		float(spec.height) - (armature.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("Hips")).origin).y])
 	var extra: Array[Dictionary] = []
+	# the held pieces' vertices come after the body's, in this order (PoseBaker.pose_arrays)
+	var held_at := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
 	for h: Dictionary in held:
-		extra.append_array(_held(h, _retarget(&"ual", retargets, skeleton, model), model))
+		var pieces := _held(h, _retarget(&"ual", retargets, skeleton, model), model)
+		var mine := PackedInt32Array()
+		for p: Dictionary in pieces:
+			var n := ((p.mesh as Mesh).surface_get_arrays(0)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			for v in n:
+				mine.append(held_at + v)
+			held_at += n
+		if h.has("name"):
+			parts[h["name"]] = mine
+		extra.append_array(pieces)
 	var out := BakedModel.new()
 	out.painted = true
+	out.parts = parts
 	# the glowing cells of the palette strip (the staffs' gems); none without a strip
 	out.glow_from = Vector2(0.5, BODY + 0.75 * (1.0 - BODY)) if not held.is_empty() else Vector2(2, 2)
 	# kept inside the baked file, compressed for the video card (where it is not supported the engine unpacks it)
@@ -680,11 +722,18 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 			if opts.get("lock", false):
 				locked = _foot_lock(skeleton, model, retargets, a, ground, arrays, mi.skin, _bends(bend, opts.get("bend", {})))
 		for i in frames:
-			# loops sample [from, to); one-shots include the last pose
-			var t := from + (to - from) * i / (frames if loops else maxi(frames - 1, 1))
+			# loops sample [from, to); one-shots include the last pose; "there_and_back" goes to `to` and back to `from`
+			var share := float(i) / (frames if loops else maxi(frames - 1, 1))
+			if opts.get("there_and_back", false):
+				share = 1.0 - absf(2.0 * share - 1.0)
+			var t := from + (to - from) * share
 			_pose_meshy(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), _planted(skeleton, model, retargets, a, t, _bends(bend, opts.get("bend", {})), ground))
 			if not locked.is_empty():
-				_place_feet(skeleton, locked[i])
+				# "stand" (m, A-T5-2): the hips that much higher over feet that stay where they were, the knees less bent
+				var stand := Vector3(0.0, float(opts.get("stand", 0.0)) / PoseBaker.local_to(model, skeleton).basis.get_scale().y, 0.0)
+				var hips_bone := skeleton.find_bone("Hips")
+				skeleton.set_bone_pose_position(hips_bone, skeleton.get_bone_pose_position(hips_bone) + stand)
+				_place_feet(skeleton, locked[i], -stand)
 			if anim == "walk":
 				for side in 2:
 					arm_out[side] = maxf(arm_out[side], _arm_out(skeleton, model, "Left" if side == 0 else "Right"))
@@ -744,7 +793,7 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		guards = [guards]
 	var held: Array[Dictionary] = []
 	for g: Array in guards:
-		held.append(_solve(g[0], g[1], t, true, retargets, skeleton, model))
+		held.append(_solve(g[0], g[1], float(g[3]) if g.size() > 3 else t, true, retargets, skeleton, model))
 	var pose := _solve(a[0], a[1], t, false, retargets, skeleton, model)
 	var rt: Retarget = retargets[a[0]]
 	for i in guards.size():
@@ -1006,7 +1055,7 @@ func _foot_lock(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: A
 
 ## The feet of a posed skeleton moved by _foot_lock's offsets for the pose (per leg, skeleton space), each leg bent
 ## to reach (_bend_limb), the knee keeping the side it bends to.
-func _place_feet(skeleton: Skeleton3D, offsets: Array) -> void:
+func _place_feet(skeleton: Skeleton3D, offsets: Array, drop := Vector3.ZERO) -> void:
 	var hips := skeleton.find_bone("Hips")
 	var front := skeleton.get_bone_global_pose(hips).basis * skeleton.get_bone_global_rest(hips).basis.inverse() * Vector3(0, 0, 1)
 	for l in LEGS.size():
@@ -1022,7 +1071,7 @@ func _place_feet(skeleton: Skeleton3D, offsets: Array) -> void:
 		var line := (ankle - hip).normalized()
 		var bent := (knee - hip) - line * (knee - hip).dot(line)
 		var pole := front if bent.length() < 0.02 * (thigh + shin) else bent.normalized() + front * 0.2
-		_bend_limb(skeleton, leg, ankle + (offsets[l] as Vector3), pole, thigh, shin)
+		_bend_limb(skeleton, leg, ankle + (offsets[l] as Vector3) + drop, pole, thigh, shin)
 
 
 ## The bones of each foot (left, then right): their vertices are the feet whose stride is measured.

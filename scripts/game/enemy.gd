@@ -101,6 +101,14 @@ var drawn_tick := 0
 var shake := 0.0
 ## Seconds a ranged enemy still runs from the paladin after its attack (EnemyDef.retreat_time).
 var retreat_t := 0.0
+## T5-20: the way it runs from the paladin, turned this many radians from straight away (Horde.flee_dir's candidate),
+## kept for flee_hold more seconds unless it gets blocked; and, only drawn, for run_t more seconds its body faces where
+## it really moves (smoothed, Horde._drawn_motion: it runs on its own), never the raw direction of this frame.
+var flee_turn := 0.0
+var flee_hold := 0.0
+var run_t := 0.0
+## Only drawn (T5-10): seconds its body has wanted to change between facing its aim and facing where it walks.
+var face_t := 0.0
 ## Takes no damage (a boss behind its ritual's shield).
 var invulnerable := false
 ## Life it cannot drop under (a boss stops at the threshold of its next phase; 0: none).

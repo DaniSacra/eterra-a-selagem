@@ -346,3 +346,69 @@ linha 134): formatar o número antes. Morvath foi medido à mão nos CSV.
 **Veredito geral**: o T5 está **aprovado com ressalvas**. Os dois P0 (preparação sem corpo, dano antes do corpo) estão
 resolvidos e medidos; não reprovo a entrega. Ficam o T5-11 fora do critério (decisão de arte e do Daniel), o T5-20 novo
 (P1, para o próximo lote), os estalos do T5-10 e o aviso curto do Escudo (P2), os P2 T5-17 a T5-19 e o vídeo.
+
+## 8. Depois da revisão de arte (gameplay-engineer, 2026-11-17)
+
+Pedidos A-T5-1 a A-T5-4 de `docs/gallery/t5/ART_REVIEW.md` e T5-20, o resto do T5-10 e a ferramenta da seção 7. Só
+clipes CC0 que já tínhamos. Quadros na CPU em `docs/gallery/t5/motion/after2/` (`sheet_*.jpg`: em cima o `after/`, embaixo
+o novo; `lab_*_side.jpg`; `walk/skeleton_walk.jpg` e `sheet_skeleton_walk.jpg`), medidas em `after2/data/`
+(`clip_motion.txt`, `charge_probe.txt`). Testes novos em `tests/test_enemy_windup.gd` (os quatro critérios de arte) e
+`tests/test_enemy_motion.gd` (fuga e rosto).
+
+### 8.1 Movimento (tamanho 1)
+
+| Pedido | Antes | Depois | Critério |
+|---|---|---|---|
+| A-T5-1 investida do Escudo | `Shield_Dash_RM` 0,3 a 0,8 s: tronco 27 graus caindo a 9 a 12 no fim, corpo de pé | pernas do `Sprint` (12 poses em 0,45 s, em laço) com o tronco preso no fim do `brace` (`BRUTE_RUSH`): escudo 0,47 a 0,54 m à frente do peito, tronco 19 a 29 graus, cabeça 5 cm atrás da borda de cima | 0,3 m, 12 graus, atrás |
+| A-T5-1 investida do Cavaleiro | o mesmo trecho: escudo indo para trás e para fora | `KNIGHT_RUSH` (tronco e braço do escudo presos, mais 14 graus no `Spine02`): escudo 0,50 a 0,53 m, tronco 13 a 33 graus, cabeça 0,6 m atrás da borda | idem |
+| A-T5-2 corrida do esqueleto | `plant` 0,65: meio do corpo -0,227 m, cabeça 92% da parada (medida nova, sem a lâmina) | `plant` 0,5 e `stand` 0,15 (o quadril mais alto sobre as mesmas pegadas, joelho menos dobrado), passada 0,74: meio do corpo -0,083, cabeça 100% | 90% |
+| ... pés no ar | 5 de 20 | 6 de 20 | 6 de 20 |
+| ... passos por minuto, escorregamento | 161, 3,0 cm | 161, 3,8 cm | 160 a 170, 5 cm |
+| ... sobe e desce, tronco | 9,2 cm, 13 a 17 graus | 8,4 cm, 12 a 16 graus | 7 cm, 8 a 17 |
+| ... pé levantado | 0,26 m | 0,26 m (não melhorou: é o chute do `Jog_Fwd`) | 0,15 m |
+| A-T5-3 preparação do corredor | `Jump_Start` 0,18 a 0,33 s: um pé 0,22 m acima do outro nas primeiras poses (0,24 ainda dava 0,22 e 0,17) | 0,26 a 0,4 s: no máximo 0,08 m; desenhado 1,0 m/s ou mais (teste), pose armada 0,33 m | 0,15 m |
+| A-T5-4 tiro do feiticeiro | o `Spell_Simple_Shoot` move a mão 5 cm (o segurar já está com o braço esticado), pico 1,57 m/s | o cajado recua pela subida e volta (`Spell_Simple_Enter` 0,53 a 0,22 s e de volta, opção `there_and_back`, 0,17 s): mão de +0,70 para +0,43 m à frente do peito e de volta (0,27 m), ponta do cajado até 0,77 m da pose de segurar, pico 5,40 m/s; começa e termina na pose de segurar (sem salto a cada orbe) | 0,25 m |
+
+Ferramentas: `"stand"` (andar travado) e `"there_and_back"` no assado, `"guard"` com segundo fixo, `"name"` nas peças
+(`BakedModel.parts`, `guard_pose`, `body_top`), `tools/charge_probe.gd`, `tools/clip_probe.gd` imprime as mãos à frente do
+peito, `tools/clip_motion.gd` a cabeça no andar.
+
+### 8.2 T5-20, atirador fugindo (robô `--bot-reaction=0.25`, 50 s, sementes 1, 2, 3, 7)
+
+Causa confirmada: a direção de fuga trocava entre 0 e 35 graus perto de borda ou pedra e o rosto seguia a direção crua; e,
+na linha do `retreat_far`, ele parava e voltava a fugir (corpo virando para o herói e de volta). Correção: a direção
+escolhida fica `FLEE_HOLD` 0,4 s enquanto livre (`Horde._flee`), a fuga segue `FLEE_SLACK` 0,75 m além da linha onde
+começa, e correndo por conta própria (fuga, recuo, coluna, caminho até ele) o corpo olha a velocidade suavizada por
+`RUN_FACE` 0,3 s depois (`Enemy.run_t`; mais lento que `WALK_FROM` nesse tempo, como no fim de um atordoamento, ele mantém
+o rosto).
+
+| Besteiros (todas as sementes) | Antes | Depois |
+|---|---|---|
+| Vai e volta de mais de 8 graus em até 5 quadros | 1 / 29 / 7 / 9 | 0 / 4 / 2 / 0 |
+| Inversões por segundo | 0,83 / 6,71 / 0,82 / 1,93 | 0,48 / 1,24 / 0,62 / 0,82 |
+| Quadros acima de 8 graus por 10 s | 70 / 148 / 75 / 106 | 42 / 99 / 43 / 55 |
+
+O que ficou acima de 0,3 inversões/s não é tremor: são giros inteiros e separados (vira de costas para fugir depois do
+tiro e volta para mirar, dois por ciclo de uns 3 s), e os 6 vai e volta restantes são o corpo seguindo uma velocidade
+que faz curva (besteiro encurralado a 3,5 m do herói). O critério do T5-10 (feito para quem espera) não serve para quem
+atira e foge; proposta: medir só vai e volta em até 5 quadros (0 nas sementes 1 e 7). Feiticeiro e Cavaleiro (loja,
+`--stress`, semente 1, 25 s): feiticeiro 0,23 para 0,21 inversões/s, nenhum vai e volta; Cavaleiro 1,12 para 0,75/s, 3
+para 6 vai e volta, todos encostado no herói (o rosto segue a direção até ele, que gira em volta): não é fuga.
+
+### 8.3 T5-10, o estalo da semente 4
+
+A troca entre olhar a mira e olhar para onde anda espera `FACE_AFTER` 0,1 s, e quem tem passo lateral só volta à mira
+abaixo de `FACE_SPEED_BACK` 0,9 m/s (entra acima de `FACE_SPEED` 1,2). `--play --seed=4`: esqueleto #1 de 9,6 para 0
+quadros acima de 8 graus por 10 s, o conjunto de 2,4 para 0; inversões 0,34 para 0,31/s (o que sobra são ajustes de 1 a 4
+graus encostado no herói). Sementes 1 a 3 sem mudança (0 acima de 8 graus).
+
+### 8.4 Ferramenta
+
+`tools/enemy_motion_probe.py` não quebra mais nos golpes de Morvath (sem aviso próprio, imprime `-`).
+
+### 8.5 Verificação
+
+`tools/check.gd` ok; `tools/test.sh` 936 testes (a tabela de durações de `test_living_crowd.gd` passou a investida para
+o laço de 0,45 s, de propósito); `tools/smoke.sh 600 --seed=5` termina em `ENDING` (Morvath aos 251,8 s com 65 de vida,
+113 abates, pico 8 de pé, passo médio 0,35 ms, robô nunca preso) e `tools/smoke.sh 180 --start=boss --boons=25 --seed=5`
+em `ENDING` aos 75,1 s. Sem vídeo na GPU (pedido para não usar): falta o olho na câmera do jogo (A-T5-8).

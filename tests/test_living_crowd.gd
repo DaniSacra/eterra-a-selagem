@@ -15,9 +15,10 @@ const BEFORE := {
 	# T5-06, T5-07 (combat_cadence.md 6.3): the charge of the brute and the knight is its own clip (the shield's push,
 	# 0.5 s, drawn from the start of the charge), the spent recovery after it Idle_Shield_Break (1.07 s, played at its
 	# pace and faded to the guard; Horde.render), the knight braces as the brute does (its brace a one-shot of 0.3 s
-	# drawn by Horde.windup_arm over the wind-up)
-	&"guard": {&"attack": 1.1, &"brace": 1.15, &"charge": 0.5, &"recover": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
-	&"knight": {&"attack": 1.1, &"brace": 0.3, &"charge": 0.5, &"recover": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
+	# drawn by Horde.windup_arm over the wind-up). A-T5-1: the charge is run (a loop of 0.45 s, the Sprint quickened, the
+	# trunk held behind the shield) and loops for the whole charge (it was the 0.5 s push once, its last pose held)
+	&"guard": {&"attack": 1.1, &"brace": 1.15, &"charge": 0.45, &"recover": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
+	&"knight": {&"attack": 1.1, &"brace": 0.3, &"charge": 0.45, &"recover": 1.067, &"death": 1.9, &"hit": 0.333, &"idle": 2.5, &"rise": 0.9},
 	# T5-03, T5-13: the staff rises (cast, Spell_Simple_Enter 0.53 s) over the arm of the wind-up (Horde.windup_arm, no
 	# longer a loop played as long as the wind-up), is held (cast_hold, the loop that was cast), each orb its own
 	# thrust (shot, 0.17 s: the bursts' interval) and comes down in the recovery (exit); the "aim" it never used is gone
