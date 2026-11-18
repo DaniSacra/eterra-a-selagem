@@ -429,3 +429,12 @@ poses no ar, 65% dos quadros de corrida com os pés acima de 12 cm (até 38 cm),
 correr 27% mais (fuga). Outros achados: mistura de clipe em degraus (alvo sem interpolação, saltos de até 0,55 m em
 Morvath), Morvath estalando 100 a 137 graus num quadro no começo da foice e da maldição, invocados atacando 0,02 s
 depois de levantar. Ordem: P1-1 trote, P1-2 erguer, P1-3 mistura, P1-4 giro de Morvath, P1-5 chegada dos invocados.
+
+
+### 6.9 Prova estilizada (STY-09, `03fc59b`, 2026-11-18)
+
+Parecer em `docs/design/stylized_combat_review.md`. O perfil não muda tempo nem estado (sonda 40/40 nos dois). Avisos
+dos inimigos no salão passam (aro 51 a 79 acima da laje); reprovado para adoção pelo **P1-1**: na fase 4 de Morvath o
+chão da câmara vai de luma 63 para 120 a 132 (ciano) e a tempestade perde o vermelho (saturação 0,48 para 0,24).
+P2: avisos alaranjados no chão morno, Morvath sem violeta, corte mais véu que lâmina, herói perto do chão em matiz,
+"vai bater" a 85%.
