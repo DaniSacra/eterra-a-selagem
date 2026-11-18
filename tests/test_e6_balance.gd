@@ -109,3 +109,16 @@ func test_in_a_real_run_the_fall_before_morvath_is_final() -> void:
 	p.invuln = 0.0
 	p.hurt(p.hp + 5.0, p.pos + Vector2.RIGHT)
 	assert_false(p.alive(), "Ainda de Pé does not stand him up in Morvath's room")
+
+
+## C17, QW-112 (GP P2-7): the robot takes the fountain only below 80% of its life; with more, any reward first.
+func test_the_robot_drinks_only_when_hurt() -> void:
+	var fountain := RunMap.Room.new(RunMap.Kind.FOUNTAIN, RunMap.Reward.NONE, 5, 0)
+	var boon := RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.BOON, 5, 0)
+	var doors: Array[RunMap.Room] = [fountain, boon]
+	assert_eq(Rooms.bot_door(doors, true, 0.5), 0, "hurt: the fountain")
+	assert_eq(Rooms.bot_door(doors, true, 0.79), 0)
+	assert_eq(Rooms.bot_door(doors, true, 0.8), 1, "80% and more: the Blessing")
+	assert_eq(Rooms.bot_door(doors, true, 1.0), 1)
+	var only: Array[RunMap.Room] = [fountain]
+	assert_eq(Rooms.bot_door(only, true, 1.0), 0, "the only door is still taken")
