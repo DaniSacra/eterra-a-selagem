@@ -1520,9 +1520,11 @@ func log_run(outcome: String) -> void:
 	_logged = true
 	var gain := mastery_gain(outcome, Save.data)
 	var e := run_entry(outcome, gain)
-	mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)}
-	# the Mastery is kept by a death too (D-57); never for the test robot (unless --mastery) nor without a save
-	if Save.enabled and (bot == null or Dev.has("mastery")):
+	# the Mastery is kept by a death too (D-57); never for the test robot (unless --mastery) nor without a save,
+	# and the end screen only shows XP that is really kept (QA T5, Q-T5-2)
+	var kept := Save.enabled and (bot == null or Dev.has("mastery"))
+	mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)} if kept else {}
+	if kept:
 		award_mastery(gain, outcome, Save.data)
 		Save.write()
 	if Dev.has("runlog"):
