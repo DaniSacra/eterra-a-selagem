@@ -5,7 +5,11 @@ shader_type spatial;
 // filling): a faint rune, its light growing, the veil spreading from the middle, a short double pulse just before the
 // blow; then `after` (0 to 1 once it lands) dissolves it glyph by glyph. kind 2 is the steady circle under the
 // ritual's shield (no veil, no pulse). Added light; only the pulse goes past the glow threshold.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled, depth_prepass_alpha;
+// C18 (ART P1-11): an eruption no longer adds a violet veil and a red fill into a magenta disc that tinted whoever stood
+// in it: its fill is the warning red laid over the floor (premultiplied, alpha at most danger_alpha), its rim and
+// glyphs a pale violet grey (eruption_color, no cyan), its cracks and front in that grey too. Summons and the shield's
+// circle keep the corrupted emerald and the veil (no harm). Light is still added (alpha 0) where it is not the fill.
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled;
 
 // Corrupted emerald (rim and glyphs, colder and dirtier than Emeth's crystal), the violet veil, the spectral blue of
 // the cracks and the filling front. Cycle 10 (ART-006): a cold, dark teal green far from the Emeth's mint (hue about
@@ -40,6 +44,10 @@ uniform float pulse = 0.6;
 uniform vec3 danger : source_color = vec3(1.0, 0.18, 0.12);
 uniform float danger_fill = 0.35;
 uniform float danger_strength = 1.4;
+// C18: an eruption's rim, glyphs and cracks (a pale violet grey, Morvath's family away from the hero's greens) and the
+// most of the floor its red fill covers.
+uniform vec3 eruption_color : source_color = vec3(0.62, 0.52, 0.78);
+uniform float danger_alpha = 0.35;
 
 const float TAU_ = 6.2831853;
 #include "res://assets/shaders/rune_glyph.gdshaderinc"
@@ -111,11 +119,17 @@ void fragment() {
 	float shown = steady ? 1.0 : smoothstep(0.0, 0.06, p);
 	float gone = 1.0 - after;
 	float crumble = step(after * 1.15, hash(vec2(ci, 9.0)) * 0.85 + 0.15);
-	vec3 c = color * (rim * (0.95 + beat) + diamond * 0.8 + inner * 0.55 + g * (0.9 + beat * 0.6) * crumble + mid * 0.45);
-	c += spirit * (cracks * 0.5 + front * front_light);
-	c += deep * fill * (1.0 + beat * 0.5);
+	bool hurts = kind == 0;
+	vec3 ink = hurts ? eruption_color : color;
+	vec3 glow = hurts ? eruption_color : spirit;
+	vec3 c = ink * (rim * (0.95 + beat) + diamond * 0.8 + inner * 0.55 + g * (0.9 + beat * 0.6) * crumble + mid * 0.45);
+	c += glow * (cracks * 0.5 + front * front_light);
+	c += hurts ? vec3(0.0) : deep * fill * (1.0 + beat * 0.5);
 	// once landed: a last flare at the middle that fades with it
-	c += spirit * (1.0 - smoothstep(0.0, 0.7, d)) * (after > 0.0 ? (1.0 - smoothstep(0.0, 0.35, after)) * 0.2 : 0.0);
-	float harm = kind == 0 ? step(d, p) * danger_fill * danger_strength : 0.0;
-	ALBEDO = (c * lvl * strength + danger * harm) * shown * gone * gone;
+	c += glow * (1.0 - smoothstep(0.0, 0.7, d)) * (after > 0.0 ? (1.0 - smoothstep(0.0, 0.35, after)) * 0.2 : 0.0);
+	// the red fill of an eruption, brighter toward its front as the veil was, laid over the floor
+	float harm = hurts ? step(d, p) * (0.6 + 0.4 * smoothstep(p - 0.35, p, d)) : 0.0;
+	float a = clamp(harm * danger_alpha * (1.0 + beat * 0.3), 0.0, danger_alpha) * shown * gone * gone;
+	ALBEDO = c * lvl * strength * shown * gone * gone + danger * danger_strength * a;
+	ALPHA = a;
 }

@@ -105,6 +105,13 @@ uniform float rock_scale = 0.4;
 uniform float rock_relief = 0.5;
 uniform float rock_value = 0.45;
 uniform vec2 dry_roughness = vec2(0.75, 0.9);
+// C18 (ART P1-2): pale clearings, where the stone is worn smooth and dusty, so the eye rests on a lighter floor (the
+// Ember & Blade's floors): how much of their colour they take at their heart (0 none), their colour (a pale warm
+// grey, never saturated), how big (noise scale, per meter: lower is bigger) and where the noise starts and is full.
+uniform float clearing = 0.4;
+uniform vec3 clearing_color : source_color = vec3(0.6, 0.58, 0.57);
+uniform float clearing_scale = 0.11;
+uniform vec2 clearing_cut = vec2(0.46, 0.7);
 
 varying vec3 world;
 
@@ -412,6 +419,9 @@ void fragment() {
 	float calm = 1.0 - smoothstep(calm_radius * 0.6, calm_radius, length(wp));
 	vec3 mean = (stone_a + stone_b) * 0.5;
 	c = mix(c, mix(mean, c, calm_contrast), calm);
+	// the pale clearings over the slabs (each slab keeps its wash and relief under the dust)
+	float cleared = smoothstep(clearing_cut.x, clearing_cut.y, fbm(wp * clearing_scale + 31.0)) * clearing;
+	c = mix(c, clearing_color * (0.8 + 0.3 * wash) * mix(1.0 - rock_value * 0.5, 1.0, smoothstep(0.2, 0.8, rh)), cleared);
 	// the medallion carved in the slabs (worked out only under it)
 	vec2 tilt_m = vec2(0.0);
 	vec4 rose = vec4(1.0, 0.0, 0.0, 0.0);

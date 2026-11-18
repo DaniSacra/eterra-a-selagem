@@ -98,7 +98,7 @@ const FLOOR := {
 ## middle: its falloff left the far corners of the platforms at half the middle's value), a little more ambient.
 const AIR := {
 	&"sky": Color(0.04, 0.03, 0.10), &"fog": Color(0.10, 0.05, 0.20), &"fog_depth": Vector2(60.0, 140.0),
-	&"ambient": Color(0.32, 0.30, 0.48), &"ambient_gain": 1.15, &"moon": Color(0.72, 0.74, 0.86), &"moon_energy": 0.8,
+	&"ambient": Color(0.32, 0.30, 0.48), &"ambient_gain": 1.45, &"moon": Color(0.72, 0.74, 0.86), &"moon_energy": 0.95,
 	&"moon_shadow": true,
 }
 ## G-1: the browser's renderer (Compatibility, no contact shadows, lighting in other space) turns this air bluer and

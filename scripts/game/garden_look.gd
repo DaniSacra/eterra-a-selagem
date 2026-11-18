@@ -25,7 +25,7 @@ const CLIFF := {&"stone_color": Color(0.06, 0.055, 0.085), &"edge_color": Color(
 ## The air: cold grey, the moon cold and weak (ambient energy 0.7 where the game's is 0.9).
 const AIR := {
 	&"sky": Color(0.05, 0.06, 0.09), &"fog": Color(0.07, 0.08, 0.12), &"ambient": Color(0.30, 0.33, 0.38),
-	&"ambient_gain": 0.7 / 0.9, &"moon": Color(0.6, 0.68, 0.85), &"moon_energy": 0.25, &"moon_shadow": true,
+	&"ambient_gain": 1.05, &"moon": Color(0.6, 0.68, 0.85), &"moon_energy": 0.35, &"moon_shadow": true,
 }
 ## The soft key over the middle (no shadow), cold grey.
 const KEY := Color(0.78, 0.8, 0.9)
@@ -50,7 +50,17 @@ const CROWN_BOUNDS := Rect2(-16.4, -13.4, 33.0, 27.0)
 ## The crystals' largest channel of emission in each variant (dark corrupted emerald, ART_REVIEW J-1: was 0.8 and 0.9,
 ## near white on screen), their light (StoneTree.CRYSTAL_GLOW's hue, no shadow: energy, reach, height).
 const CRYSTAL_GLOW := Vector2(0.12, 0.15)
-const CRYSTAL_LIGHT := Vector3(0.35, 2.6, 0.7)
+const CRYSTAL_LIGHT := Vector3(0.2, 2.6, 0.7)
+## C18 (ART P1-7, Q-21 (a)): the crown of leaves, procedural cards (canopy.gdshader) on the crown's spines above
+## CANOPY_FROM m: one card every CANOPY_EVERY points, sizes, how far each is pushed off its branch, the leaves' two
+## tones (muted violet, saturation under 0.45). One MultiMesh, one material.
+const CANOPY_FROM := 6.2
+const CANOPY_EVERY := 3
+const CANOPY_SIZE := Vector2(1.6, 2.8)
+const CANOPY_JITTER := 0.6
+const CANOPY_LEAF_A := Color(0.22, 0.17, 0.27)
+const CANOPY_LEAF_B := Color(0.42, 0.34, 0.48)
+const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
 ## A soft fill on the tree alone (StoneTree.LAYER, no shadow) from the camera's side (bearing), so the trunk's face
 ## reads 10 to 20% lighter than the floor beside it (ART_REVIEW J-2): colour, energy, reach, how far out and how high.
 const TREE_FILL := Color(0.78, 0.8, 0.88)
@@ -402,12 +412,52 @@ func _moss_band(st: SurfaceTool, line: PackedVector2Array, reach: float, left: b
 
 # ---------- the tree ----------
 
+## The crown's leaves: cards on the crown's high points, each facing the camera (turned round its own axis a little),
+## kept to the crown's bounds.
+func _canopy() -> void:
+	var spots: Array[Vector3] = []
+	for k in tree.crown.size():
+		var p := tree.crown[k]
+		if p.y >= CANOPY_FROM and k % CANOPY_EVERY == 0 and (not CROWN_BOUNDS.has_area() or CROWN_BOUNDS.has_point(Vector2(p.x, p.z))):
+			spots.append(p)
+	if spots.is_empty():
+		return
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_custom_data = true
+	mm.mesh = q
+	mm.instance_count = spots.size()
+	var r := RandomNumberGenerator.new()
+	r.seed = 4177
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	for i in spots.size():
+		var size := r.randf_range(CANOPY_SIZE.x, CANOPY_SIZE.y)
+		var basis := Basis(Vector3.UP, yaw + r.randf_range(-0.5, 0.5)) * Basis(Vector3.BACK, r.randf() * TAU) * Basis.from_scale(Vector3(size, size, 1.0))
+		var off := Vector3(r.randf_range(-1.0, 1.0), r.randf_range(-0.3, 1.0), r.randf_range(-1.0, 1.0)) * CANOPY_JITTER
+		mm.set_instance_transform(i, Transform3D(basis, spots[i] + off))
+		mm.set_instance_custom_data(i, Color(r.randf(), 0, 0, 0))
+	var mat := ShaderMaterial.new()
+	mat.shader = CANOPY_SHADER
+	mat.set_shader_parameter(&"leaf_a", CANOPY_LEAF_A)
+	mat.set_shader_parameter(&"leaf_b", CANOPY_LEAF_B)
+	var mi := MultiMeshInstance3D.new()
+	mi.name = "Canopy"
+	mi.multimesh = mm
+	mi.material_override = mat
+	mi.layers = StoneTree.LAYER
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+
+
 func _tree() -> void:
 	if _trunk_o == null:
 		return
 	tree = StoneTree.new()
 	tree.bounds = CROWN_BOUNDS
 	tree.build(self, _trunk_o.center, root_paths(layout, _trunk_o), CRYSTAL_GLOW.y if variant_b else CRYSTAL_GLOW.x)
+	_canopy()
 	for i in mini(LANTERNS.y if variant_b else LANTERNS.x, tree.hangs.size()):
 		_hanging_lantern(tree.hangs[i])
 	var fill := OmniLight3D.new()

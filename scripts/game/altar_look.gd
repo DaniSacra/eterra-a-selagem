@@ -50,7 +50,7 @@ const SHAFT_CONE := 16.0
 const SHAFT_HEIGHT := 12.0
 ## The hall's floor without its medallion, the room a step darker (spec 6.3).
 const FLOOR := {&"calm_radius": 0.0}
-const AIR := {&"ambient_gain": 0.9, &"sky": Color(0.02, 0.025, 0.03)}
+const AIR := {&"ambient_gain": 1.35, &"sky": Color(0.02, 0.025, 0.03)}
 ## A dim cold fill so the floor reads between the shaft and the door.
 const FILL := Color(0.62, 0.66, 0.78)
 const FILL_ENERGY := 1.0
@@ -110,6 +110,7 @@ func dress() -> void:
 	_banners(north)
 	moon_shaft(altar, SHAFT, SHAFT_ENERGY, SHAFT_CONE, SHAFT_HEIGHT, true, true)
 	key_light(FILL, FILL_ENERGY, 10.0)
+	backdrop(MIST * 2.0, Color(0.035, 0.045, 0.06), Color(0.14, 0.2, 0.24))
 
 
 ## True once the candles burn.

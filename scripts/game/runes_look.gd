@@ -39,8 +39,11 @@ const PILLAR_CAP := Vector2(0.3, 0.16)
 const PILLAR_GROOVES := 2
 const PILLAR_GROOVE := 0.06
 const PILLAR_GROOVE_SPAN := Vector2(0.6, 0.6)
-## The pillars' grooves: old gold at rest, amber (to this light) while any tile arms.
-const GROOVE_HEAT := 1.0
+## The pillars' grooves: old gold at rest, amber (to this light) while any tile arms. C18 (QW-108): a third of what it
+## was (1.0 lit them as orange stripes brighter than the tiles), and opening round the paladin with the pillar
+## (rune_groove.gdshader).
+const GROOVE_HEAT := 0.35
+const GROOVE_SHADER := preload("res://assets/shaders/rune_groove.gdshader")
 ## The stone (spec 3.6): blue-black basalt, the floor a cold neutral stone, a slab a tile.
 const STONE := Color(0.72, 0.74, 0.82)
 const FLOOR := {
@@ -52,7 +55,7 @@ const FLOOR := {
 ## The air (spec 3.6).
 const AIR := {
 	&"sky": Color(0.03, 0.03, 0.05), &"fog": Color(0.07, 0.07, 0.10), &"fog_depth": Vector2(45.0, 100.0),
-	&"ambient": Color(0.30, 0.31, 0.36), &"ambient_gain": 0.7 / 0.9, &"moon": Color(0.6, 0.65, 0.8), &"moon_energy": 0.15,
+	&"ambient": Color(0.30, 0.31, 0.36), &"ambient_gain": 1.2, &"moon": Color(0.6, 0.65, 0.8), &"moon_energy": 0.4,
 	&"moon_shadow": false,
 }
 const MIST := Color(0.03, 0.03, 0.06)
@@ -87,7 +90,7 @@ var _image: Image
 var _texture: ImageTexture
 var _flash: ShaderMaterial
 var _flash_mesh: MeshInstance3D
-var _groove: StandardMaterial3D
+var _groove: ShaderMaterial
 var _lights: Array[OmniLight3D] = []
 var _heat := 0.0
 var _quiet := false
@@ -234,8 +237,9 @@ func apply() -> void:
 			if c.r > 0.02:
 				var mid := tile_rect(Vector2i(x, y)).get_center()
 				armed.append(Vector3(mid.x, mid.y, c.r))
-	_groove.emission_energy_multiplier = _heat * GROOVE_HEAT
-	_groove.albedo_color = TombKit.GOLD.lerp(ArenaKit.FIRE, _heat * 0.5)
+	if _groove != null:
+		_groove.set_shader_parameter(&"glow", ArenaKit.FIRE * (_heat * GROOVE_HEAT))
+		_groove.set_shader_parameter(&"gold", TombKit.GOLD.lerp(ArenaKit.FIRE, _heat * 0.5))
 	_place_lights(armed)
 
 
@@ -445,13 +449,10 @@ func _pillar(o: ArenaObstacle) -> void:
 	m.block(foot, Vector3(w, o.height - PILLAR_CAP.x, w), yaw, mat)
 	m.block(foot + Vector3(0, o.height - PILLAR_CAP.x, 0), Vector3(w + PILLAR_CAP.y, PILLAR_CAP.x, w + PILLAR_CAP.y), yaw, mat)
 	if _groove == null:
-		_groove = StandardMaterial3D.new()
-		_groove.albedo_color = TombKit.GOLD
-		_groove.metallic = 0.6
-		_groove.roughness = 0.5
-		_groove.emission_enabled = true
-		_groove.emission = ArenaKit.FIRE
-		_groove.emission_energy_multiplier = 0.0
+		_groove = ShaderMaterial.new()
+		_groove.shader = GROOVE_SHADER
+		_groove.set_shader_parameter(&"gold", TombKit.GOLD)
+		_groove.set_shader_parameter(&"see_through", 1.0 if o.see_through else 0.0)
 	var span := o.height - PILLAR_GROOVE_SPAN.x - PILLAR_GROOVE_SPAN.y
 	for f in 4:
 		var face := Basis(Vector3.UP, yaw + PI * 0.5 * f)
