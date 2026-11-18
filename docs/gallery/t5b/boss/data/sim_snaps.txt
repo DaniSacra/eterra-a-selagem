@@ -1,0 +1,80 @@
+== head/bot_s1.csv
+   mage WALK hurt/stun                                       12  max 0.17 m/frame
+   skeleton WALK hurt/stun                                    9  max 0.17 m/frame
+   skeleton RISE hurt/stun                                    3  max 0.17 m/frame
+   skeleton WALK nearHero hurt/stun                           3  max 0.17 m/frame
+   mage RECOVER hurt/stun                                     3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               3  max 0.17 m/frame
+   skeleton RISE                                              3  max 0.17 m/frame
+   mage RISE                                                  3  max 0.17 m/frame
+== head/bot_s1b.csv
+   mage WALK hurt/stun                                       12  max 0.17 m/frame
+   skeleton WALK hurt/stun                                    9  max 0.17 m/frame
+   skeleton RISE hurt/stun                                    3  max 0.17 m/frame
+   skeleton WALK nearHero hurt/stun                           3  max 0.17 m/frame
+   mage RECOVER hurt/stun                                     3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               3  max 0.17 m/frame
+   skeleton RISE                                              3  max 0.17 m/frame
+   mage RISE                                                  3  max 0.17 m/frame
+== head/bot_s2.csv
+   skeleton WALK hurt/stun                                   11  max 0.17 m/frame
+   skeleton RISE                                              9  max 0.17 m/frame
+   skeleton WALK nearHero hurt/stun                           7  max 0.17 m/frame
+   mage WALK hurt/stun                                        6  max 0.17 m/frame
+   mage RISE hurt/stun                                        3  max 0.17 m/frame
+   skeleton WALK nearMorvath hurt/stun                        3  max 0.22 m/frame
+   mage RECOVER nearHero hurt/stun                            3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               3  max 0.17 m/frame
+== head/bot_s3.csv
+   mage WALK hurt/stun                                       15  max 0.17 m/frame
+   skeleton WALK hurt/stun                                   12  max 0.17 m/frame
+   skeleton RISE hurt/stun                                    3  max 0.17 m/frame
+   mage RECOVER hurt/stun                                     3  max 0.17 m/frame
+   skeleton RECOVER nearMorvath hurt/stun                     3  max 0.17 m/frame
+   skeleton WALK nearMorvath hurt/stun                        3  max 0.17 m/frame
+   skeleton RECOVER hurt/stun                                 3  max 0.17 m/frame
+   skeleton RISE                                              3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               2  max 0.17 m/frame
+== head/bot_s4.csv
+   mage WALK hurt/stun                                       12  max 0.17 m/frame
+   skeleton WALK hurt/stun                                   11  max 0.17 m/frame
+   skeleton RISE nearHero                                     3  max 0.17 m/frame
+   skeleton WALK nearHero hurt/stun                           1  max 0.17 m/frame
+# BASE
+== base/bot_s1.csv
+   mage WALK hurt/stun                                       12  max 0.17 m/frame
+   skeleton WALK hurt/stun                                    6  max 0.17 m/frame
+   skeleton RISE hurt/stun                                    3  max 0.17 m/frame
+   mage RECOVER hurt/stun                                     3  max 0.17 m/frame
+   skeleton RISE                                              3  max 0.17 m/frame
+   skeleton WALK nearMorvath nearHero hurt/stun               3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               3  max 0.17 m/frame
+   skeleton RISE nearHero                                     3  max 0.17 m/frame
+   mage WALK nearMorvath                                      3  max 0.70 m/frame
+== base/bot_s2.csv
+   skeleton WALK hurt/stun                                   12  max 0.17 m/frame
+   skeleton WALK nearMorvath                                  5  max 0.17 m/frame
+   skeleton WINDUP nearMorvath                                4  max 0.17 m/frame
+   mage RISE hurt/stun                                        3  max 0.17 m/frame
+   skeleton RECOVER nearMorvath                               3  max 0.15 m/frame
+   mage RECOVER hurt/stun                                     3  max 0.17 m/frame
+   skeleton WALK nearMorvath hurt/stun                        3  max 0.17 m/frame
+   skeleton RISE                                              3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               3  max 0.17 m/frame
+   skeleton WALK nearMorvath nearHero hurt/stun               3  max 0.17 m/frame
+   mage WALK hurt/stun                                        3  max 0.17 m/frame
+== base/bot_s3.csv
+   skeleton WALK hurt/stun                                    9  max 0.17 m/frame
+   skeleton WALK nearMorvath                                  9  max 0.26 m/frame
+   mage WALK hurt/stun                                        6  max 0.17 m/frame
+   skeleton RISE                                              3  max 0.17 m/frame
+   mage RECOVER hurt/stun                                     3  max 0.17 m/frame
+   mage WALK nearHero hurt/stun                               3  max 0.17 m/frame
+   skeleton WALK nearHero hurt/stun                           3  max 0.17 m/frame
+   skeleton WINDUP nearMorvath                                2  max 0.23 m/frame
+   skeleton RECOVER                                           1  max 0.15 m/frame
+== base/bot_s4.csv
+   mage WALK hurt/stun                                       12  max 0.17 m/frame
+   skeleton WALK nearMorvath hurt/stun                        8  max 0.16 m/frame
+   skeleton WALK hurt/stun                                    6  max 0.17 m/frame
+   skeleton WALK nearMorvath nearHero hurt/stun               3  max 0.17 m/frame

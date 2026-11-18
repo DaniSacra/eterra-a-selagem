@@ -1,0 +1,39 @@
+head/bot_p3_s1.csv       spawned 8, dist to hero at spawn min 2.23 p10 2.23 p50 7.98; <3 m: 1; <2 m: 0; rise->first windup s p10 0.30 min 0.30
+      ('mage', '6') f2018 dist 2.23 boss=storm/4
+head/bot_p3_s2.csv       spawned 15, dist to hero at spawn min 2.11 p10 3.18 p50 8.16; <3 m: 1; <2 m: 0; rise->first windup s p10 0.10 min 0.05
+      ('skeleton', '7') f2256 dist 2.11 boss=storm/4
+head/bot_p4_s1.csv       spawned 2, dist to hero at spawn min 3.33 p10 3.33 p50 13.58; <3 m: 0; <2 m: 0; rise->first windup s p10 1.37 min 1.37
+head/bot_p4_s2.csv       spawned 2, dist to hero at spawn min 3.63 p10 3.63 p50 12.28; <3 m: 0; <2 m: 0; rise->first windup s p10 -1.00 min -1.00
+head/bot_s1.csv          spawned 20, dist to hero at spawn min 2.05 p10 3.50 p50 6.88; <3 m: 2; <2 m: 0; rise->first windup s p10 0.45 min 0.40
+      ('mage', '20') f9297 dist 2.05 boss=storm/4
+      ('skeleton', '15') f7713 dist 2.84 boss=blades/3
+head/bot_s1b.csv         spawned 20, dist to hero at spawn min 2.05 p10 3.50 p50 6.88; <3 m: 2; <2 m: 0; rise->first windup s p10 0.45 min 0.40
+      ('mage', '20') f9297 dist 2.05 boss=storm/4
+      ('skeleton', '15') f7713 dist 2.84 boss=blades/3
+head/bot_s2.csv          spawned 20, dist to hero at spawn min 3.92 p10 4.00 p50 9.58; <3 m: 0; <2 m: 0; rise->first windup s p10 0.22 min 0.02
+head/bot_s3.csv          spawned 20, dist to hero at spawn min 1.82 p10 3.15 p50 9.29; <3 m: 2; <2 m: 1; rise->first windup s p10 0.38 min 0.28
+      ('skeleton', '20') f9088 dist 1.82 boss=storm/4
+      ('skeleton', '15') f7470 dist 2.99 boss=/3
+head/bot_s4.csv          spawned 20, dist to hero at spawn min 0.98 p10 4.36 p50 7.92; <3 m: 1; <2 m: 1; rise->first windup s p10 0.12 min -0.55
+      ('skeleton', '9') f4586 dist 0.98 boss=summon/2
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-home-dani-games-eterra-a-selagem/7ab54e34-fa02-47d3-a2c5-733947e2d22a/scratchpad/spawn.py", line 15, in <module>
+    print("%-24s spawned %d, dist to hero at spawn min %.2f p10 %.2f p50 %.2f; <3 m: %d; <2 m: %d; rise->first windup s p10 %.2f min %.2f"%(path.split('/')[-2]+'/'+path.split('/')[-1],len(d),d[0],d[len(d)//10],d[len(d)//2],len(near),sum(1 for x in d if x<2),sorted(ttа)[len(ttа)//10] if ttа else -1,min(ttа) if ttа else -1))
+                                                                                                                                                                                               ~^^^
+IndexError: list index out of range
+# BASE
+base/bot_p3_s1.csv       spawned 17, dist to hero at spawn min 3.44 p10 3.97 p50 9.79; <3 m: 0; <2 m: 0; rise->first windup s p10 0.38 min 0.27
+base/bot_p3_s2.csv       spawned 11, dist to hero at spawn min 1.99 p10 3.82 p50 8.32; <3 m: 1; <2 m: 1; rise->first windup s p10 0.35 min 0.35
+      ('skeleton', '7') f2155 dist 1.99 boss=storm/4
+base/bot_p4_s1.csv       spawned 2, dist to hero at spawn min 2.99 p10 2.99 p50 12.87; <3 m: 1; <2 m: 0; rise->first windup s p10 -1.00 min -1.00
+      ('mage', '2') f933 dist 2.99 boss=storm/4
+base/bot_p4_s2.csv       spawned 2, dist to hero at spawn min 3.62 p10 3.62 p50 12.34; <3 m: 0; <2 m: 0; rise->first windup s p10 -1.00 min -1.00
+base/bot_s1.csv          spawned 20, dist to hero at spawn min 3.64 p10 4.83 p50 9.50; <3 m: 0; <2 m: 0; rise->first windup s p10 0.43 min -0.73
+base/bot_s2.csv          spawned 20, dist to hero at spawn min 3.25 p10 4.00 p50 9.65; <3 m: 0; <2 m: 0; rise->first windup s p10 0.82 min 0.35
+base/bot_s3.csv          spawned 20, dist to hero at spawn min 1.13 p10 4.03 p50 7.58; <3 m: 1; <2 m: 1; rise->first windup s p10 0.57 min 0.47
+      ('mage', '14') f7018 dist 1.13 boss=blades/3
+base/bot_s4.csv          spawned 20, dist to hero at spawn min 2.93 p10 3.96 p50 9.30; <3 m: 1; <2 m: 0; rise->first windup s p10 0.23 min -1.03
+      ('mage', '6') f3370 dist 2.93 boss=ritual/2
+base/idle_p2_s1.csv      spawned 6, dist to hero at spawn min 5.52 p10 5.52 p50 14.71; <3 m: 0; <2 m: 0; rise->first windup s p10 0.82 min 0.82
+base/idle_p2_s2.csv      spawned 6, dist to hero at spawn min 4.78 p10 4.78 p50 13.77; <3 m: 0; <2 m: 0; rise->first windup s p10 0.43 min 0.43
+base/idle_p2_s3.csv      spawned 6, dist to hero at spawn min 6.79 p10 6.79 p50 15.68; <3 m: 0; <2 m: 0; rise->first windup s p10 0.85 min 0.85

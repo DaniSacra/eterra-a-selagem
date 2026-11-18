@@ -418,3 +418,14 @@ cru. Correção: candidato de fuga guardado 0,3 s ou mais e rosto pela velocidad
 T5-10. Pendentes: T5-17 a T5-19 (P2), histerese de velocidade no `FACE_SPEED` (P2), aviso da investida do Escudo até o
 contato real (P2), olho humano na seção 7.4 do relatório.
 
+
+### 6.8 T5b, luta de Morvath depois do T5 (`fe07159`, 2026-11-17)
+
+Relato do PO: "tem uns esqueletos pulando novamente". Medido no desenho real (sonda que lê os MultiMesh do
+`CrowdRenderer`), CPU, 60 f/s; relatório e especificação em `docs/qa/t5b_boss_fight.md`, evidências em
+`docs/gallery/t5b/boss/`. Quem pula é o **Esqueleto feiticeiro**: trote `Running_B` com meio pulo (`MAGE_TROT`), 14 de 20
+poses no ar, 65% dos quadros de corrida com os pés acima de 12 cm (até 38 cm), mais um pulo de 0,5 m ao terminar o
+`rise` (o clipe acaba curvado). Igual em `5dfe97f`; o T5 tirou o pulo do esqueleto (59% para 1%) e fez o feiticeiro
+correr 27% mais (fuga). Outros achados: mistura de clipe em degraus (alvo sem interpolação, saltos de até 0,55 m em
+Morvath), Morvath estalando 100 a 137 graus num quadro no começo da foice e da maldição, invocados atacando 0,02 s
+depois de levantar. Ordem: P1-1 trote, P1-2 erguer, P1-3 mistura, P1-4 giro de Morvath, P1-5 chegada dos invocados.

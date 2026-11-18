@@ -1,0 +1,46 @@
+== head/bot_s1.csv frames 11696
+  yaw snaps >25 deg in 1 frame: SCYTHE 2 (max 137), CURSE 1 (max 100), BLADES 1 (max 32)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 26%/2636, SCYTHE 31%/2022, RECOVER 29%/2318, BLADES 0%/128, ROAR 33%/318, TO_CENTER 27%/218, RITUAL 70%/487, STUNNED 0%/409, ERUPTIONS 28%/1418, SUMMON 34%/287, CURSE 0%/96, STORM 29%/1212
+  facing away from hero %: ENTER 0%, CHASE 3%, SCYTHE 8%, RECOVER 21%, BLADES 0%, ROAR 0%, TO_CENTER 56%, RITUAL 2%, STUNNED 9%, ERUPTIONS 20%, SUMMON 0%, CURSE 0%, STORM 20%
+  sim steps >0.3 m/frame: [] max 0
+== head/bot_s1b.csv frames 11696
+  yaw snaps >25 deg in 1 frame: SCYTHE 2 (max 137), CURSE 1 (max 100), BLADES 1 (max 32)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 26%/2636, SCYTHE 31%/2022, RECOVER 29%/2318, BLADES 0%/128, ROAR 33%/318, TO_CENTER 27%/218, RITUAL 70%/487, STUNNED 0%/409, ERUPTIONS 28%/1418, SUMMON 34%/287, CURSE 0%/96, STORM 29%/1212
+  facing away from hero %: ENTER 0%, CHASE 3%, SCYTHE 8%, RECOVER 21%, BLADES 0%, ROAR 0%, TO_CENTER 56%, RITUAL 2%, STUNNED 9%, ERUPTIONS 20%, SUMMON 0%, CURSE 0%, STORM 20%
+  sim steps >0.3 m/frame: [] max 0
+== head/bot_s2.csv frames 11087
+  yaw snaps >25 deg in 1 frame: SCYTHE 2 (max 137)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 26%/2962, SCYTHE 37%/1825, RECOVER 35%/2207, BLADES 38%/208, ROAR 34%/312, TO_CENTER 1%/210, RITUAL 80%/570, STUNNED 44%/289, ERUPTIONS 29%/1430, SUMMON 25%/392, CURSE 24%/188, STORM 100%/347
+  facing away from hero %: ENTER 0%, CHASE 2%, SCYTHE 5%, RECOVER 19%, BLADES 0%, ROAR 0%, TO_CENTER 57%, RITUAL 4%, STUNNED 37%, ERUPTIONS 45%, SUMMON 40%, CURSE 0%, STORM 22%
+  sim steps >0.3 m/frame: [] max 0
+== head/bot_s3.csv frames 10444
+  yaw snaps >25 deg in 1 frame: SCYTHE 4 (max 137), BLADES 1 (max 33)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 34%/2544, SCYTHE 29%/1638, RECOVER 39%/1985, BLADES 37%/158, ROAR 34%/316, TO_CENTER 1%/236, RITUAL 51%/665, STUNNED 0%/287, ERUPTIONS 45%/1395, SUMMON 50%/381, CURSE 34%/142, STORM 63%/550
+  facing away from hero %: ENTER 0%, CHASE 4%, SCYTHE 6%, RECOVER 34%, BLADES 0%, ROAR 0%, TO_CENTER 37%, RITUAL 2%, STUNNED 18%, ERUPTIONS 31%, SUMMON 25%, CURSE 6%, STORM 36%
+  sim steps >0.3 m/frame: [] max 0
+== head/bot_s4.csv frames 11541
+  yaw snaps >25 deg in 1 frame: SCYTHE 3 (max 137), BLADES 1 (max 34)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 17%/2963, SCYTHE 28%/1968, RECOVER 26%/2285, BLADES 0%/143, ROAR 34%/310, TO_CENTER 60%/197, RITUAL 46%/443, STUNNED 0%/284, SUMMON 0%/385, ERUPTIONS 53%/1522, CURSE 0%/187, STORM 49%/707
+  facing away from hero %: ENTER 0%, CHASE 3%, SCYTHE 1%, RECOVER 19%, BLADES 0%, ROAR 0%, TO_CENTER 73%, RITUAL 2%, STUNNED 90%, SUMMON 54%, ERUPTIONS 40%, CURSE 0%, STORM 37%
+  sim steps >0.3 m/frame: [] max 0
+# BASE
+== base/bot_s1.csv frames 12002
+  yaw snaps >25 deg in 1 frame: SCYTHE 2 (max 101), BLADES 1 (max 44), CURSE 1 (max 67)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 24%/2850, SCYTHE 18%/2015, RECOVER 17%/2253, BLADES 0%/126, ROAR 66%/316, TO_CENTER 63%/212, RITUAL 56%/1123, STUNNED 0%/285, ERUPTIONS 2%/1474, SUMMON 0%/194, CURSE 38%/234, STORM 50%/698, DASH_WARN 0%/45
+  facing away from hero %: ENTER 0%, CHASE 3%, SCYTHE 0%, RECOVER 19%, BLADES 0%, ROAR 0%, TO_CENTER 65%, RITUAL 1%, STUNNED 52%, ERUPTIONS 46%, SUMMON 42%, CURSE 0%, STORM 62%, DASH_WARN 0%
+  sim steps >0.3 m/frame: [('DASH', 25)] max 0.39
+== base/bot_s2.csv frames 11263
+  yaw snaps >25 deg in 1 frame: SCYTHE 3 (max 101), BLADES 2 (max 59)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 27%/2935, SCYTHE 24%/1976, RECOVER 28%/2393, BLADES 32%/252, ROAR 66%/319, TO_CENTER 46%/182, RITUAL 61%/428, STUNNED 100%/124, ERUPTIONS 40%/1015, SUMMON 100%/196, CURSE 25%/182, STORM 0%/1044, DASH_WARN 100%/44
+  facing away from hero %: ENTER 0%, CHASE 3%, SCYTHE 3%, RECOVER 9%, BLADES 0%, ROAR 25%, TO_CENTER 78%, RITUAL 3%, STUNNED 0%, ERUPTIONS 15%, SUMMON 0%, CURSE 0%, STORM 7%, DASH_WARN 0%
+  sim steps >0.3 m/frame: [('DASH', 25)] max 0.34
+== base/bot_s3.csv frames 11554
+  yaw snaps >25 deg in 1 frame: BLADES 2 (max 30), SCYTHE 1 (max 100), CURSE 1 (max 36)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 23%/2819, SCYTHE 25%/1811, RECOVER 29%/2331, BLADES 52%/269, ROAR 0%/311, TO_CENTER 18%/225, RITUAL 28%/666, STUNNED 0%/127, ERUPTIONS 34%/1233, SUMMON 0%/382, CURSE 23%/192, STORM 33%/1041
+  facing away from hero %: ENTER 0%, CHASE 4%, SCYTHE 11%, RECOVER 28%, BLADES 10%, ROAR 0%, TO_CENTER 79%, RITUAL 2%, STUNNED 0%, ERUPTIONS 13%, SUMMON 9%, CURSE 0%, STORM 30%
+  sim steps >0.3 m/frame: [] max 0
+== base/bot_s4.csv frames 11565
+  yaw snaps >25 deg in 1 frame: SCYTHE 3 (max 101), BLADES 1 (max 35)
+  back to camera (facing within 60 deg of camera forward) %: ENTER 0%/146, CHASE 31%/2648, SCYTHE 23%/2071, RECOVER 24%/2289, BLADES 23%/171, ROAR 66%/314, TO_CENTER 34%/182, RITUAL 23%/852, STUNNED 43%/287, SUMMON 51%/380, ERUPTIONS 36%/1153, CURSE 50%/92, DASH_WARN 0%/46, STORM 0%/906
+  facing away from hero %: ENTER 0%, CHASE 3%, SCYTHE 2%, RECOVER 13%, BLADES 0%, ROAR 32%, TO_CENTER 81%, RITUAL 2%, STUNNED 6%, SUMMON 0%, ERUPTIONS 26%, CURSE 0%, DASH_WARN 0%, STORM 24%
+  sim steps >0.3 m/frame: [('DASH', 24), ('RECOVER', 1)] max 0.57

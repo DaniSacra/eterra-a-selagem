@@ -1,0 +1,27 @@
+# HEAD fe07159
+head/bot_p3_s1.csv skeleton: 7/1176 frames off floor (1%), walk 471 mage: 191/879 frames off floor (22%), walk 284
+head/bot_p3_s2.csv skeleton: 15/1672 frames off floor (1%), walk 450 mage: 1400/5150 frames off floor (27%), walk 1993
+head/bot_p4_s1.csv skeleton: 0/57 frames off floor (0%), walk 0 mage: 72/353 frames off floor (20%), walk 122
+head/bot_p4_s2.csv skeleton: 2/67 frames off floor (3%), walk 0 mage: 8/82 frames off floor (10%), walk 13
+head/bot_s1.csv    skeleton: 19/2799 frames off floor (1%), walk 859 mage: 2791/9656 frames off floor (29%), walk 3921
+head/bot_s1b.csv   skeleton: 19/2799 frames off floor (1%), walk 859 mage: 2791/9656 frames off floor (29%), walk 3921
+head/bot_s2.csv    skeleton: 27/4719 frames off floor (1%), walk 1509 mage: 1632/6506 frames off floor (25%), walk 2355
+head/bot_s3.csv    skeleton: 21/4012 frames off floor (1%), walk 1162 mage: 1122/4406 frames off floor (25%), walk 1586
+head/bot_s4.csv    skeleton: 25/3974 frames off floor (1%), walk 876 mage: 1740/6712 frames off floor (26%), walk 2523
+head/idle_p1_s1.csv skeleton: 0/0 frames off floor (0%), walk 0 mage: 0/0 frames off floor (0%), walk 0
+head/idle_p2_s1.csv skeleton: 0/8014 frames off floor (0%), walk 335 mage: 2517/7879 frames off floor (32%), walk 3700
+head/idle_p2_s1b.csv skeleton: 0/8014 frames off floor (0%), walk 335 mage: 2517/7879 frames off floor (32%), walk 3700
+head/idle_p2_s2.csv skeleton: 0/8014 frames off floor (0%), walk 374 mage: 2552/7879 frames off floor (32%), walk 3586
+head/idle_p2_s3.csv skeleton: 0/8014 frames off floor (0%), walk 464 mage: 2527/7879 frames off floor (32%), walk 3585
+# BASE 5dfe97f
+base/bot_p3_s1.csv skeleton: 797/2611 frames off floor (31%), walk 1257 mage: 1550/6344 frames off floor (24%), walk 2168
+base/bot_p3_s2.csv skeleton: 436/1695 frames off floor (26%), walk 727 mage: 843/3397 frames off floor (25%), walk 1250
+base/bot_p4_s1.csv skeleton: 0/33 frames off floor (0%), walk 0 mage: 0/6 frames off floor (0%), walk 0
+base/bot_p4_s2.csv skeleton: 4/67 frames off floor (6%), walk 6 mage: 10/83 frames off floor (12%), walk 20
+base/bot_s1.csv    skeleton: 525/2308 frames off floor (23%), walk 812 mage: 2032/7600 frames off floor (27%), walk 2889
+base/bot_s2.csv    skeleton: 1045/4453 frames off floor (23%), walk 1630 mage: 1502/6001 frames off floor (25%), walk 2128
+base/bot_s3.csv    skeleton: 667/3451 frames off floor (19%), walk 1045 mage: 2243/8408 frames off floor (27%), walk 3246
+base/bot_s4.csv    skeleton: 655/2822 frames off floor (23%), walk 1010 mage: 1193/4846 frames off floor (25%), walk 1673
+base/idle_p2_s1.csv skeleton: 229/8014 frames off floor (3%), walk 353 mage: 2047/7879 frames off floor (26%), walk 2908
+base/idle_p2_s2.csv skeleton: 231/8014 frames off floor (3%), walk 363 mage: 2069/7879 frames off floor (26%), walk 2890
+base/idle_p2_s3.csv skeleton: 316/8014 frames off floor (4%), walk 497 mage: 1955/7879 frames off floor (25%), walk 2726

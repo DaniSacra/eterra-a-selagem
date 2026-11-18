@@ -1,0 +1,18 @@
+head/bot_p3_s2.csv           attacks=  2 travel p50 2.60 p90 2.60 max 2.60 m; >1.5 m: 1; frames p50 24
+head/bot_s1.csv              attacks=  1 travel p50 2.56 p90 2.56 max 2.56 m; >1.5 m: 1; frames p50 24
+head/bot_s1b.csv             attacks=  1 travel p50 2.56 p90 2.56 max 2.56 m; >1.5 m: 1; frames p50 24
+head/bot_s2.csv              attacks=  3 travel p50 2.48 p90 2.59 max 2.59 m; >1.5 m: 3; frames p50 23
+head/bot_s3.csv              attacks=  6 travel p50 2.52 p90 2.62 max 2.62 m; >1.5 m: 5; frames p50 24
+head/bot_s4.csv              attacks=  6 travel p50 2.58 p90 2.61 max 2.61 m; >1.5 m: 6; frames p50 24
+head/idle_p2_s1.csv          attacks= 35 travel p50 0.26 p90 1.52 max 2.57 m; >1.5 m: 4; frames p50 18
+head/idle_p2_s1b.csv         attacks= 35 travel p50 0.26 p90 1.52 max 2.57 m; >1.5 m: 4; frames p50 18
+head/idle_p2_s2.csv          attacks= 35 travel p50 0.24 p90 1.30 max 2.59 m; >1.5 m: 3; frames p50 18
+head/idle_p2_s3.csv          attacks= 34 travel p50 0.31 p90 1.91 max 2.53 m; >1.5 m: 4; frames p50 18
+# BASE
+base/bot_p3_s1.csv           attacks=  2 travel p50 2.48 p90 2.48 max 2.48 m; >1.5 m: 1; frames p50 18
+base/bot_s2.csv              attacks=  3 travel p50 2.48 p90 2.48 max 2.48 m; >1.5 m: 3; frames p50 18
+base/bot_s3.csv              attacks=  3 travel p50 2.04 p90 2.48 max 2.48 m; >1.5 m: 2; frames p50 18
+base/bot_s4.csv              attacks=  2 travel p50 0.73 p90 0.73 max 0.73 m; >1.5 m: 0; frames p50 6
+base/idle_p2_s1.csv          attacks= 38 travel p50 0.13 p90 1.99 max 2.48 m; >1.5 m: 5; frames p50 18
+base/idle_p2_s2.csv          attacks= 38 travel p50 0.54 p90 2.02 max 2.48 m; >1.5 m: 12; frames p50 18
+base/idle_p2_s3.csv          attacks= 37 travel p50 0.09 p90 2.39 max 2.48 m; >1.5 m: 5; frames p50 18

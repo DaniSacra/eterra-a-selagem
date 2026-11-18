@@ -1,0 +1,137 @@
+extends SceneTree
+## T5b: plays the real game and, every rendered frame, reads what the CrowdRenderer actually put in its MultiMeshes
+## (transform + pose rows + blend) and turns it into the drawn body of every enemy: world centroid (x, y, z), lowest
+## vertex (feet) and highest. Joined to the sim (state, anim, pos) per enemy by the nearest instance of its kind.
+## godot --headless --path . --fixed-fps 60 -s <this> -- --start=boss ... --probe-secs=60 --probe-out=x.csv
+
+var game: Node = null
+var horde: Object = null
+var secs := 60.0
+var out: FileAccess
+var t0 := -1
+var uid := {}
+var cache := {}  # model -> {row: [cx, cy, cz, miny, maxy]}
+var last_frame := -1
+
+
+func _initialize() -> void:
+	var path := "drawn.csv"
+	for a in OS.get_cmdline_user_args():
+		if a.begins_with("--probe-secs="):
+			secs = float(a.trim_prefix("--probe-secs="))
+		elif a.begins_with("--probe-out="):
+			path = a.trim_prefix("--probe-out=")
+	out = FileAccess.open(path, FileAccess.WRITE)
+	out.store_line("f,id,uid,state,state_t,anim,drawn,stun,hurt,px,pz,dx,dy,dz,miny,maxy,ax,az,yaw,hx,hz,boss_state,boss_attack,phase,rate,inst,ra,rb,frac")
+	change_scene_to_file("res://scenes/boot.tscn")
+
+
+func _row_stats(model: BakedModel, row: int) -> Array:
+	var c: Dictionary = cache.get(model, {})
+	if c.is_empty():
+		cache[model] = c
+	if c.has(row):
+		return c[row]
+	var sum := Vector3.ZERO
+	var lo := INF
+	var hi := -INF
+	var n := 0
+	var img: Image = model.positions
+	for v in range(0, model.vertices, 5):
+		var i := row * model.vertices + v
+		var p := img.get_pixel(i % BakedModel.WIDTH, i / BakedModel.WIDTH)
+		sum += Vector3(p.r, p.g, p.b)
+		lo = minf(lo, p.g)
+		hi = maxf(hi, p.g)
+		n += 1
+	var s := sum / maxf(n, 1)
+	var r := [s, lo, hi]
+	c[row] = r
+	return r
+
+
+func _decode(model: BakedModel, row: int) -> String:
+	for anim: StringName in model.first:
+		var f0 := int(model.first[anim])
+		if row >= f0 and row < f0 + model.frame_count(anim):
+			return "%s:%d" % [anim, row - f0]
+	return "?"
+
+
+func _process(_d: float) -> bool:
+	if game == null:
+		for n in root.find_children("*", "Node", true, false):
+			if "horde" in n and n.get(&"horde") != null and n.has_method(&"result"):
+				game = n
+				horde = n.get(&"horde")
+				for src: Object in [horde, n.get(&"ground"), n.get(&"projectiles")]:
+					var ch: String = "horde" if src == horde else ("ground" if src == n.get(&"ground") else "shots")
+					src.hit_player.connect(func(amount: float, from: Vector2) -> void:
+						out.store_line("%d,HIT,%.1f,%.2f,%.2f,%s,%s" % [Engine.get_process_frames(), amount, from.x, from.y, ch, String(src.get(&"last_by"))]))
+				break
+		return false
+	if not is_instance_valid(horde):
+		out.close()
+		return true
+	var f := Engine.get_process_frames()
+	if t0 < 0:
+		t0 = f
+	var renderer: CrowdRenderer = horde.get(&"renderer")
+	if renderer == null:
+		return false
+	# every instance drawn this frame, per kind id
+	var drawn := {}  # kind id -> Array of [at Vector3, basis Basis, row_a, row_b, frac, model]
+	for id: StringName in renderer._kinds:
+		var k: CrowdRenderer.Kind = renderer._kinds[id]
+		var list := []
+		for anim: StringName in k.clips:
+			var c: CrowdRenderer.Clip = k.clips[anim]
+			if c.batch == null or c.batch.count == 0 or not c.batch in renderer._used:
+				continue
+			var d := c.batch.data
+			var per := c.batch.per
+			for i in c.batch.count:
+				var o := i * per
+				var bx := Vector3(d[o], d[o + 4], d[o + 8])
+				var by := Vector3(d[o + 1], d[o + 5], d[o + 9])
+				var bz := Vector3(d[o + 2], d[o + 6], d[o + 10])
+				var at := Vector3(d[o + 3], d[o + 7], d[o + 11])
+				list.append([at, Basis(bx, by, bz), int(round(d[o + 12])), int(round(d[o + 13])), d[o + 14], k.model])
+		drawn[id] = list
+	var target: Vector2 = horde.get(&"target")
+	var boss: Object = game.get(&"boss")
+	var bs := "-,-,-"
+	if boss != null and is_instance_valid(boss):
+		bs = "%d,%s,%d" % [boss.state, boss.get(&"_attack"), boss.phase]
+	for e: Enemy in horde.get(&"list"):
+		var id := e.def.id
+		if not uid.has(e):
+			uid[e] = uid.size()
+		var best: Array = []
+		var bd := INF
+		for it: Array in drawn.get(id, []):
+			var dd := Vector2(it[0].x, it[0].z).distance_squared_to(e.pos)
+			if dd < bd:
+				bd = dd
+				best = it
+		if best.is_empty():
+			continue
+		var m: BakedModel = best[5]
+		var a := _row_stats(m, best[2])
+		var b := _row_stats(m, best[3])
+		var fr: float = best[4]
+		var cl: Vector3 = (a[0] as Vector3).lerp(b[0], fr)
+		var basis: Basis = best[1]
+		var w: Vector3 = best[0] + basis * cl
+		var sy := basis.get_scale().y
+		var lo: float = best[0].y + lerpf(a[1], b[1], fr) * sy
+		var hi: float = best[0].y + lerpf(a[2], b[2], fr) * sy
+		var yaw := rad_to_deg(atan2(basis.z.x, basis.z.z))
+		out.store_line("%d,%s,%d,%d,%.3f,%s,%s,%.2f,%.2f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f,%.1f,%.2f,%.2f,%s,%.3f,%s,%s,%s,%.3f" % [
+			f, id, uid[e], e.state, e.state_t, e.anim, _decode(m, best[2]), e.stun_t, e.hurt_t, e.pos.x, e.pos.y,
+			w.x, w.y, w.z, lo, hi, best[0].x, best[0].z, yaw, target.x, target.y, bs, Engine.time_scale, sqrt(bd), _decode(m, best[2]), _decode(m, best[3]), fr])
+	if f - t0 > secs * 60:
+		out.close()
+		quit()
+		return true
+	return false
