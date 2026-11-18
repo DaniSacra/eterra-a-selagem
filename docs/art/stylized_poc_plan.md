@@ -3,9 +3,18 @@
 - **Data**: 2026-11-18. **Autor**: game-director. **Commit lido**: `b279433` (HEAD de `arpg-3d`, AP-1 integrado).
 - **Pedido**: diretriz do PO `docs/art/po_directive_stylized_2026-11-18.md` (texto dele na íntegra). **Só planejamento**:
   nada aqui foi implementado, nenhum crédito do Meshy, nenhuma ferramenta paga, nada voltado à Steam.
-- **Referência**: a imagem que o Daniel citou **não chegou** (pergunta S-Q1). Até ela chegar, a referência provisória é a
-  prancha `docs/art/ref/direcao_2026-11-18/prancha_relicarios_cripta_livro_morvath.png` (IA, só local), quadros
-  "Cripta" e "Morvath". Tudo o que este plano diz sobre o alvo visual vale só até a imagem dele chegar.
+- **Referências (complemento do PO de 2026-11-18, que aprovou a estrutura deste plano)**, imagens de IA, só locais,
+  nunca asset nem evidência:
+  - **Principal (R1)**: `docs/art/ref/stylized_2026-11-18/01_referencia_principal_gameplay_stylized.png`, o gameplay
+    estilizado que motivou a mudança: pedra pintada à mão, tochas quentes e profundidade fria, estátuas encapuzadas,
+    nichos com potes, estandartes rasgados, ponte em arcos sobre o abismo, meia-lua esmeralda, aviso vermelho claro,
+    personagens de silhueta forte.
+  - **Secundária (R2)**: `docs/art/ref/stylized_2026-11-18/02_prancha_conceitual_relicarios_cripta_livro_morvath.png`, só
+    apoio conceitual. As duas **não se misturam**: o alvo do salão é a R1.
+  - Análise medida, valores e matriz: **`docs/art/stylized_spec.md`** (STY-01). O que a R1 tem e Eterra recusa (estrela
+    de quatro pontas, cruz, estandarte vermelho, círculo no chão, HUD, personagens, layout) está na seção 7 dela.
+- **Critério de aprovação**: visual, do PO, no lado a lado. **Nenhuma porcentagem de semelhança é critério** (as
+  estimativas da 1.2 antiga saíram). A estética tem de funcionar sem depender de filtro de pós-processamento.
 - **Lido**: `CLAUDE.md` (renderizador, shaders, assados, C18, AP-1), `docs/arte/estetica.md`, `docs/art/art_direction.md`,
   `docs/art/art_polish_backlog.md`, `docs/art/asset_inventory.md`, `docs/qa/asset_report.md`, `docs/art/meshy_asset_plan.md`,
   `docs/qa/e6_audio_perf.md` (iGPU), `docs/gallery/ap1/README.md`; código: `Game._build_world`, `GraphicsQuality`,
@@ -13,8 +22,13 @@
   `ground.gdshader`, `catacomb_floor.gdshader`, `project.godot` (`shader_globals`).
 - **Capturas abertas por mim**: a prancha; `docs/gallery/ap1/after/vitrine_1080.jpg`, `ap1/after/boss_1080.jpg`,
   `c18/after/jogo.jpg`.
-- O que é opinião minha está dito. As porcentagens e os custos de GPU abaixo são **estimativas**: a prova de conceito
-  existe para medi-los.
+- O que é opinião minha está dito. Os custos de GPU abaixo são **estimativas**: a prova de conceito existe para medi-los.
+- **Atualização do art-director (STY-01, 2026-11-18)**: a 1.1 foi escrita contra a prancha (hoje R2) e fica como
+  histórico; o diagnóstico contra a R1 está na seção 0 da `stylized_spec.md`. Resumo: a R1 tem a **mesma câmera** que a
+  nossa (giro e inclinação batem pelas bordas das lajes) mas mais perto (herói cerca de 174 px a 1080 contra 105);
+  é **mais clara** (luma 67 contra 54) e **menos saturada** (p90 15 contra 23); a pedra é **morna** (umbra-oliva, matiz
+  28 a 40) com o frio só no abismo e nos vãos (o nosso chão sai lilás, matiz 244 a 252); os personagens são **mais
+  escuros que o chão**, separados por borda de luz morna e contorno fino.
 
 ---
 
@@ -40,21 +54,21 @@ família de cor (ardósia azulada, velas quentes, ouro velho, violeta de Morvath
    herói de cerca de 130 px a 1080). Opinião minha: parte grande da sensação de "pintura" da prancha vem desse zoom, e
    a diretriz manda manter a câmera. A prova vai mostrar a estética **na câmera do jogo**, que é o que importa.
 
-### 1.2 Quanto se alcança só com o Godot
+### 1.2 O que se alcança só com o Godot
 
-| Camada | Quanto da estética ela carrega (opinião) | Só Godot? |
-|---|---|---|
-| Luz em faixas, sombra colorida, borda de luz, gradação (LUT) | 30% | sim: `light()` nos shaders, ambiente, `adjustment_color_correction` |
-| Pedra e chão pintados (pincelada, aresta clara, variação por bloco) | 20% | sim: ruído e faixas no `masonry` e no `catacomb_floor`, triplanar, sem UV novo |
-| Personagens coerentes com o cenário (faixas, rim, menos detalhe fotográfico) | 10% | sim: `crowd.gdshader` e um shader do herói; os modelos não mudam |
-| Acabamento pictórico na tela (filtro de pintura, contorno suave) | 10% | sim no Forward+ (`CompositorEffect`); no Compatibility só uma parte |
-| Vida no cenário (hera, musgo, entulho, fachos de lua) | 10% | quase: cartões procedurais já existem (`canopy`, `root_moss`, `moon_shaft`) |
-| Esculpido pintado (estátuas, moldura do portal, ornamento, armas próprias) e texturas pintadas à mão nos personagens | 20% | não: pede modelo novo ou repintura (Meshy ou artista) |
+(Revisado no STY-01: as porcentagens de antes saíram; o PO avalia visualmente.)
 
-**Estimativa: cerca de 65% da estética só com shaders, luz e pós, e até cerca de 75 a 80% somando geometria procedural
-(sem Meshy).** Os 20 a 25% que faltam são forma esculpida e textura pintada à mão, que shader não cria. Por quê: o nosso
-jogo já está na paleta e na composição da prancha (o salão foi construído de uma pintura, `arena_reference.md`); o que
-falta é a maneira de sombrear, e isso é exatamente o que um shader troca sem tocar em modelo.
+| Camada | Só Godot? |
+|---|---|
+| Valor da sala (chão claro e morno no meio, profundidade fria), luz em faixas, poças das tochas, sombra projetada nítida | sim: `light()` nos shaders, ambiente, luzes do salão (só números) |
+| Pedra e chão pintados (pincelada em duas escalas, aresta clara, junta desenhada, valor por bloco, menos relevo fotográfico) | sim: ruído e faixas no `masonry` e no `catacomb_floor`, triplanar, sem UV novo |
+| Personagens coerentes com o cenário (faixas, corpo mais escuro que o chão, rim morno, contorno de casca, menos detalhe fotográfico) | sim: `crowd.gdshader`, `crowd_outline.gdshader` e um shader do herói; os modelos não mudam |
+| Acabamento pictórico na tela (Kuwahara, contorno de tela) | **opcional**, só Forward+; descartado se borrar, perder detalhe ou custar demais (`stylized_spec.md` 5.2) |
+| Vida no cenário (paredes em cantaria, estandartes petróleo, nichos, facho de lua) | quase: `Masonry`, `ArenaKit.banner`, `moon_shaft` já existem |
+| Esculpido pintado (estátuas, moldura do portal, ornamento, armas próprias) e texturas pintadas à mão nos personagens | não: pede modelo novo ou repintura (Meshy ou artista); só estimativa |
+
+Por que a aposta é boa (opinião): a R1 tem a nossa câmera e a nossa família de peças; o que muda é a maneira de
+sombrear e o valor da sala, e isso um shader troca sem tocar em modelo.
 
 ### 1.3 Modelos que ficam
 
@@ -89,7 +103,8 @@ linha diz o modelo, os créditos de cada um, o total e por que o Godot sozinho n
 decide.
 
 Custos do `tools/meshy/meshy.mjs` e do `meshy_asset_plan.md`: modelo parado com textura 15, repintura da mesma malha
-(`retexture`, mesma malha e UV) 10. Saldo 500; gasto autorizado nesta etapa 0.
+(`retexture`, mesma malha e UV) 10. **Saldo 500; gasto autorizado: ZERO** (complemento do PO de 2026-11-18). Estimativas
+de repintura ou substituição são permitidas; nenhuma operação paga sem autorização explícita dele.
 
 | Lote (estimativa, aguarda estimativa formal e aprovação do PO) | Modelos | Créditos cada | Total | Por que o Godot sozinho não basta |
 |---|---|---|---|---|
@@ -140,7 +155,13 @@ perfil visual estilizado, com os modelos que existem, comparável lado a lado co
 - **Garantia do clássico**: com `art_style` 0 o quadro tem de ser o mesmo de hoje (captura do `--showcase --seed=5` e do
   combate antes e depois da mudança: diferença máxima de 2 níveis por canal, `tools/frame_stats.py` igual a uma casa).
 
-### 2.2 O que muda em cada camada (o art-director fixa os números na especificação)
+### 2.2 O que muda em cada camada (os números estão na `stylized_spec.md`, que prevalece onde diferir desta tabela)
+
+Ajustes do STY-01 sobre a tabela abaixo: a pedra no perfil estilizado é **morna** (umbra-oliva) com o frio só na
+profundidade, e a sombra dentro da sala é quase neutra, não petróleo e violeta (a R1 é assim; pergunta S-Q5); a
+saturação p90 do quadro **desce** para 14 a 22 (a R1 mede 15); os personagens ficam **mais escuros que o chão** com rim
+morno e contorno de casca em todos (`crowd_outline.gdshader`), em vez da multidão clara sobre chão escuro; hera e musgo
+saem do salão (a R1 não tem) e entram estandartes petróleo, cantaria, nichos opcionais e um facho de lua opcional.
 
 | Camada | Arquivos | No perfil estilizado |
 |---|---|---|
@@ -149,7 +170,7 @@ perfil visual estilizado, com os modelos que existem, comparável lado a lado co
 | **Paleta** | `VisualProfile` (LUT), `art_direction.md` 2 | as cores reservadas não mudam (Emeth, petróleo do herói, vermelho do perigo, âmbar, verdes e violetas de Morvath); muda o cenário: menos cinza neutro, mais petróleo nas sombras e ouro velho morno nas luzes; saturação p90 do quadro na faixa de hoje (24 a 28) ou até 32 com aprovação do art-director |
 | **Personagens** | `crowd.gdshader` (inimigos e Morvath), shader novo do herói (`hero_paint.gdshader`), `HeroBody` | as mesmas faixas e a sombra colorida do cenário (coerência); rim de luz fino da cor do ar da sala; menos detalhe da textura do Meshy (mistura para a cor média por região, `paint_flat`); o pisca do golpe, o "vai bater" (`tell_light`), a queimadura e o ouro das elites continuam iguais e abaixo do `flash_cap` |
 | **Emeth** | `emeth.gdshader`, `emeth_wave.gdshader`, `slash.gdshader` (só números) | lâmina com duas faixas de esmeralda e o fio central marfim pintado (sem luz nova); a onda e o corte com a borda de ataque em pincelada (ruído na borda, não no meio); nada acima do limiar do glow, nada sobre o rosto do herói |
-| **Acabamento pictórico** | `PaintPass` (novo, Forward+), `screen.gdshader` (uma uniforme) | filtro Kuwahara de 4 setores, raio de 2 a 3 px a 1080, **só sobre o opaco** (antes dos transparentes: avisos no chão, fitas, partículas, raio-x e números ficam nítidos); contorno suave por profundidade e normal, colorido (petróleo escuro), nunca linha preta de quadrinho; no `screen.gdshader` só um tom dividido leve (sombras frias, luzes mornas) |
+| **Acabamento pictórico (opcional)** | `PaintPass` (novo, Forward+), `screen.gdshader` (uma uniforme) | **opcional e descartável** (critério na `stylized_spec.md` 5.2: borrão, perda de detalhe, custo acima de 1,0 ms na Alta, ou ganho nulo); a prova é julgada com ele desligado. Se ficar: filtro Kuwahara de 4 setores, raio de 2 a 3 px a 1080, **só sobre o opaco** (antes dos transparentes: avisos no chão, fitas, partículas, raio-x e números ficam nítidos); contorno suave por profundidade e normal, colorido (petróleo escuro), nunca linha preta de quadrinho; no `screen.gdshader` só um tom dividido leve (sombras frias, luzes mornas) |
 | **Coerência herói e cenário** | tudo acima | o herói usa a mesma luz pintada que a pedra; o rim dele é o mais claro da tela; o anel, o raio-x e a fita do corte não mudam |
 
 ### 2.3 O que fica igual
@@ -163,13 +184,13 @@ passa a suíte e a sonda de game feel sem mudar uma linha de lógica.
 
 | ID | Entrega | Responsável | Arquivos (donos distintos) | Pronto quando |
 |---|---|---|---|---|
-| STY-01 | **Especificação da prova**: alvo em valores (faixas, cores de sombra, rim, pincelada, filtro), o que não fazer (branco, amarelo, partícula sobre o herói, vermelho fora de aviso), quadros de referência marcados na prancha (provisória) | `art-director` | `docs/art/stylized_spec.md` | números para cada linha da 2.2; aprovado pela sessão principal antes do STY-03 |
+| STY-01 | **Especificação da prova**: alvo em valores (faixas, cores de sombra, rim, pincelada, filtro), o que não fazer (branco, amarelo, partícula sobre o herói, vermelho fora de aviso), análise medida da R1, matriz de correspondência, critérios do parecer | `art-director` | `docs/art/stylized_spec.md` | **entregue em 2026-11-18**; aprovado pela sessão principal antes do STY-03 |
 | STY-02 | **Linha de base clássica**: capturas e vídeos do clássico (2.5), FPS e memória, inventário "reaproveita / substitui" inicial | `qa-performance` (capturas, FPS), `technical-artist` (memória, inventário) | `docs/gallery/stylized_poc/classic/` | tudo da 2.5 no clássico, no mesmo commit |
 | STY-03 | **Perfil**: `VisualProfile`, `--look`, global `art_style`, `paint.gdshaderinc` vazio, teste GUT, prova de que o clássico não mudou | `environment-artist` (sessão principal liga no `Game._build_world` e no `project.godot`) | `scripts/core/visual_profile.gd`, `tests/test_visual_profile.gd` | GUT verde; captura do clássico igual à linha de base |
 | STY-04 | **Pedra, chão e luz do salão** pintados | `environment-artist` | `masonry.gdshader`, `catacomb_floor.gdshaderinc`, `paint.gdshaderinc`, números no `CatacombHall` | captura aprovada pelo art-director na 2.6 |
-| STY-05 | **Vida no salão**: hera e musgo em cartões, facho de lua, paredes do KayKit trocadas pela cantaria **só no perfil estilizado** | `environment-artist` | `catacomb_hall.gd` (ramo pelo perfil) | `fit_probe` do salão sem fantasma novo; colisão igual (`test_arenas.gd`) |
+| STY-05 | **Vida no salão**: paredes do KayKit trocadas pela cantaria, estandartes petróleo com o leão, props KayKit com material pintado; opcionais nichos com potes, arcos sob a borda sul e um facho de lua (hera e musgo saíram: a R1 não tem) **só no perfil estilizado** | `environment-artist` | `catacomb_hall.gd` (ramo pelo perfil) | `fit_probe` do salão sem fantasma novo; colisão igual (`test_arenas.gd`) |
 | STY-06 | **Personagens e Emeth**: `crowd.gdshader` no include, `hero_paint.gdshader`, `emeth.gdshader` | `environment-artist`; `combat-feel-director` revisa leitura | `crowd.gdshader`, `hero_paint.gdshader`, `hero_body.gd` (só a troca de material pelo perfil), `emeth.gdshader` | testes do raio-x e do pisca verdes (`test_burn_flash.gd`, `test_hero_look.gd`); captura `--shot-on=hit` e `swing` |
-| STY-07 | **Pós de pintura** (`PaintPass`: Kuwahara e contorno, só opaco, só Forward+, raio pela escala 3D) e medida de custo isolada | `technical-artist` | `scripts/render/paint_pass.gd`, `assets/shaders/paint_pass.glsl` | custo medido por conta própria na RTX e na iGPU (2.7); liga e desliga por `--paint-pass=0` |
+| STY-07 | **Pós de pintura, opcional** (`PaintPass`: Kuwahara e contorno, só opaco, só Forward+, raio pela escala 3D) e medida de custo isolada; descartado pelo critério da `stylized_spec.md` 5.2 | `technical-artist` | `scripts/render/paint_pass.gd`, `assets/shaders/paint_pass.glsl` | custo medido por conta própria na RTX e na iGPU (2.7); liga e desliga por `--paint-pass=0` |
 | STY-08 | **Evidências e medidas** (2.5, 2.7) | `qa-performance` | `docs/gallery/stylized_poc/` | tudo da 2.5 nas duas versões |
 | STY-09 | **Revisões**: art-director (estética, paleta, hierarquia), technical-artist (orçamento, lista final reaproveita / substitui, o que pediria Meshy), combat-feel-director (avisos, golpes, herói legível; pode reprovar) | os três | `docs/gallery/stylized_poc/ART_REVIEW.md`, `TECH_REVIEW.md`, `FEEL_REVIEW.md` | três pareceres com captura citada e veredito |
 
@@ -185,7 +206,13 @@ Pasta `docs/gallery/stylized_poc/` com `classic/` e `stylized/`, todas na RTX 50
 semente, mesmo commit, só `--look` diferente:
 
 1. **Mesmo quadro**: vitrine `--showcase --seed=5` (o enquadramento da pintura) e combate `--bot --autopick --seed=5
-   --shot-at=9` (o quadro do `c18/after/jogo.jpg`), a 1080 e 720; os pares juntos numa imagem lado a lado.
+   --shot-at=9` (o quadro do `c18/after/jogo.jpg`), a 1080 e 720; os pares juntos numa imagem lado a lado. **Câmera do
+   jogo, sem mudança**: é nela que a prova é julgada.
+1b. **Captura de estudo mais perto, só para avaliação artística** (pedido do PO): a mesma câmera com `--cam-dist=33` (o
+   herói fica do tamanho da R1, cerca de 160 a 175 px a 1080), combate e vitrine, nas duas versões, rotulada "estudo,
+   câmera fora do jogo". A câmera de gameplay não muda sem aprovação.
+1c. **Com e sem o pós** (se o STY-07 existir): os mesmos quadros com `--paint-pass=0`, para provar que a estética vale
+   sem filtro.
 2. **Momentos de combate**: `--shot-on=swing`, `hit`, `special` e um aviso de inimigo no chão, nas duas versões.
 3. **Vídeo curto de combate**, 8 a 10 s em cada versão, mesma semente (`--frames` com `--count` e `--every`, montado com
    ffmpeg), com golpe, esquiva, especial e um abate.
@@ -210,9 +237,12 @@ semente, mesmo commit, só `--look` diferente:
   muda, mas a sonda roda).
 - **Paleta**: nenhum pixel acima de 235 sobre o herói; vermelho saturado só nos avisos; cores reservadas no mesmo matiz
   (`art_direction.md` 2.1).
-- **Decisão**: só o Daniel aprova a direção. Recomendação do game-director pela regra: aprovar se ele preferir o
-  estilizado no lado a lado **e** o orçamento e a leitura passarem; se o pós falhar no orçamento, aprovar a direção só
-  com as camadas de material e luz (que carregam a maior parte) e o pós só na Alta.
+- **Sem filtro**: a estética tem de aparecer com o `PaintPass` desligado (material e luz); o filtro é opcional e sai
+  pelo critério da `stylized_spec.md` 5.2.
+- **Arte**: o parecer do art-director segue os 12 critérios da `stylized_spec.md` 8; sem porcentagem de semelhança.
+- **Decisão**: **o PO avalia visualmente**, no lado a lado, e só ele aprova a direção. Recomendação do game-director pela
+  regra: aprovar se ele preferir o estilizado **e** o orçamento e a leitura passarem; se o pós falhar no orçamento,
+  aprovar a direção só com as camadas de material e luz e descartar o pós.
 
 ### 2.7 Riscos
 
@@ -227,7 +257,8 @@ semente, mesmo commit, só `--look` diferente:
 | **Conflito de arquivos** com AP-2 (`crowd.gdshader`, raio-x) e C19 | alta se correrem juntos | nada de AP-2 enquanto a prova estiver aberta; C19 não toca esses arquivos |
 | **Clássico mudar sem querer** (o include entra em shaders compartilhados) | média | captura de base e diferença de 2 por canal no aceite |
 | **Tentação de migrar tudo** | alta | a prova só é julgada no salão; as outras salas recebem uma captura cada só para provar que não quebram |
-| **Referência errada**: a imagem do Daniel pode pedir outra coisa que a prancha | média | S-Q1 antes do STY-01; o STY-01 espera a imagem por 1 dia, depois segue com a prancha e diz isso |
+| **Misturar as duas referências** | média | resolvido no STY-01: a R1 manda no salão; da R2 só o pano petróleo dos estandartes e o facho frio |
+| **Pedra morna contra a regra "cenário frio"** | certa (decisão) | S-Q5; a especificação segue a R1 e diz como voltar à pedra fria |
 
 ---
 
@@ -235,10 +266,12 @@ semente, mesmo commit, só `--look` diferente:
 
 | ID | Pergunta | Opções | Recomendação |
 |---|---|---|---|
-| **S-Q1** | **A imagem de referência que você citou não chegou.** Pode mandar (e dizer o que nela é o alvo: a luz, a pedra, os personagens, o enquadramento)? | (a) manda a imagem; (b) usar a prancha "Relicários, Cripta, Livro, Morvath" como referência | (a); sem ela o art-director segue com a (b) e diz o que pode mudar |
-| S-Q2 | O enquadramento da referência é mais perto que a nossa câmera. A prova mantém a câmera (como você pediu); quer também **uma captura extra** com a câmera mais perto, só para comparar, sem mudar o jogo? | (a) só a câmera do jogo; (b) também uma captura de vitrine mais perto | (b): mostra quanto da pintura é zoom e quanto é estilo, custo zero |
-| S-Q3 | Filtro de pintura na tela (o "borrado de pincel"): pode ser só no PC com placa de vídeo (Alta e Média), e o navegador e a Baixa ficam só com material e luz? | (a) sim; (b) quer em tudo | (a): na iGPU e no navegador o custo e a leitura dos avisos não compensam |
+| ~~S-Q1~~ | Referência que não tinha chegado | | **Respondida (2026-11-18)**: a R1 é a principal, a prancha é a R2 |
+| ~~S-Q2~~ | Captura extra mais perto | | **Respondida**: sim, só para avaliação, câmera do jogo intacta (2.5, item 1b) |
+| ~~S-Q3~~ | Filtro de pintura | | **Respondida**: opcional, descartado se borrar, perder detalhe ou custar demais (`stylized_spec.md` 5.2) |
 | S-Q4 | Se a prova mostrar que a textura dos personagens do Meshy destoa, quer receber a **estimativa** da repintura na mesma malha (lote A da 1.5: `retexture`, 10 créditos cada, 120 no todo) para decidir? | (a) sim, só a estimativa, nada gasto; (b) não, personagens só por shader | (a): é só um documento; o gasto e a cara do herói continuam sendo decisão sua |
+| **S-Q5** | A R1 tem pedra **morna** (umbra-oliva) com o frio só no abismo; o nosso guia diz "cenário frio" e o chão do salão hoje sai lilás. No perfil estilizado, a pedra segue a R1? | (a) sim, pedra morna, frio só na profundidade; (b) pedra fria, só pintada | (a): é a imagem que você escolheu e o calor faz o herói e a Emeth saltarem; a especificação está escrita para (a) e diz como fazer (b) |
+| **S-Q6** | O medalhão gravado do salão (da pintura aprovada de 2026-11-14) tem quatro pontas longas, que leem como estrela de quatro pontas, símbolo proibido. | (a) fica na prova, sem ouro nem brilho; (b) as pontas mudam ou somem numa entrega própria | (b) depois da prova; nela, (a) |
 
 Registrado sem pergunta (regra do PO de 2026-11-18): todo uso futuro do Meshy é estimativa até o "pode" explícito dele,
 e a Q-18 antiga (estátua e armas depois do AP-3, até 135) foi substituída: "aguardando estimativa e aprovação do PO".
