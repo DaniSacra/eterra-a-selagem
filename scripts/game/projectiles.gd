@@ -64,7 +64,7 @@ const SPARK_SPEED := 5000.0 / 80.0
 const LOOK := {
 	Kind.BOLT: [Color(3.0, 0.5, 0.3), 0.18, 0.6], Kind.ORB: [Color(1.6, 0.4, 2.8), 0.45, 0.45],
 	Kind.WAVE: [Color(3.0, 2.4, 1.2), 0.0, 0.0], Kind.BLADE: [Color(2.8, 2.4, 1.4), 0.0, 0.0],
-	Kind.SPARK: [Color(0.3, 1.0, 0.45), 0.0, 0.0], Kind.SOUL: [Color(0.38, 1.55, 1.1), 0.0, 0.0],
+	Kind.SPARK: [Color(0.3, 1.0, 0.45), 0.0, 0.0], Kind.SOUL: [Boss.SOUL_VIOLET, 0.0, 0.0],
 	Kind.CURSE: [Color(1.0, 0.22, 1.5), 0.42, 0.42],
 }
 
@@ -474,7 +474,7 @@ func _soul_trail() -> MeshInstance3D:
 	mat.shader = Fx.WAKE
 	mat.set_shader_parameter(&"trail_mode", true)
 	mat.set_shader_parameter(&"body", Boss.VIOLET)
-	mat.set_shader_parameter(&"edge", LOOK[Kind.SOUL][0])
+	mat.set_shader_parameter(&"edge", Boss.SOUL_VIOLET)
 	mat.set_shader_parameter(&"edge_light", 0.35)
 	mat.set_shader_parameter(&"body_light", 0.45)
 	trail.material_override = mat

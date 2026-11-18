@@ -1025,6 +1025,8 @@ func bot_goal() -> Variant:
 ## no channel past ScreenTone.SAFE on the screen (B-1: at 1.0 the exposure and the saturation still took it to 255).
 const GEM_LIFT := 2.2
 const GEM_CAP := 1.0
+## The gold reward's coin: radius and thickness (m).
+const GEM_COIN := Vector2(0.38, 0.1)
 
 
 ## The gem's colour: lifted by GEM_LIFT, then scaled down (hue kept) until its strongest channel is GEM_CAP and its
@@ -1038,6 +1040,32 @@ static func gem_color(c: Color) -> Color:
 	return ScreenTone.fit(lifted)
 
 
+## The shape of a reward's gem over a door or where it lies (art pack 2026-11-17: the symbol in the scenery is the one
+## the signs and cards use where they have one): gold a coin on its edge (the shop's coin, DoorGlyph), a Bênção the
+## prism, the romã a round fruit, the rest the plain stone.
+static func gem_mesh(reward: RunMap.Reward) -> PrimitiveMesh:
+	match reward:
+		RunMap.Reward.BOON:
+			var prism := PrismMesh.new()
+			prism.size = Vector3(0.6, 0.6, 0.6)
+			return prism
+		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
+			var fruit := SphereMesh.new()
+			fruit.radius = 0.35
+			fruit.height = 0.7
+			return fruit
+		RunMap.Reward.GOLD:
+			var coin := CylinderMesh.new()
+			coin.top_radius = GEM_COIN.x
+			coin.bottom_radius = GEM_COIN.x
+			coin.height = GEM_COIN.y
+			coin.radial_segments = 24
+			return coin
+	var box := BoxMesh.new()
+	box.size = Vector3(0.6, 0.6, 0.6)
+	return box
+
+
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).
 ## glyph: the pictogram left of the sign's name (E5, DoorGlyph).
 func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind = RunMap.Kind.COMBAT,
@@ -1047,13 +1075,10 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	add_child(root)
 	var color := _reward_color(reward) if reward != RunMap.Reward.NONE else _kind_color(kind)
 	var gem := MeshInstance3D.new()
-	var shape: PrimitiveMesh = PrismMesh.new() if reward == RunMap.Reward.BOON else SphereMesh.new() if reward == RunMap.Reward.POM or reward == RunMap.Reward.POM_SLICE else BoxMesh.new()
-	if shape is SphereMesh:
-		(shape as SphereMesh).radius = 0.35
-		(shape as SphereMesh).height = 0.7
-	else:
-		shape.set(&"size", Vector3(0.6, 0.6, 0.6))
-	gem.mesh = shape
+	gem.mesh = gem_mesh(reward)
+	if reward == RunMap.Reward.GOLD:
+		# the coin stands on its edge, spinning (the shop's coin on the door signs, DoorGlyph)
+		gem.rotation.x = PI * 0.5
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_color = gem_color(color)

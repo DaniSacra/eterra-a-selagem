@@ -574,6 +574,28 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   baías do oeste: `KEY_ENERGY` 1,8, `KEY_HEIGHT` 11, `KEY_FALLOFF` 0,5, `KEY_REACH` 26, `KEY_SHIFT`; sem luz nova, paredes
   continuam escuras); fraturas da árvore no marfim velho, nunca brancas (`fracture_color` 0,5 no `stone_tree.gdshader`);
   no Compatibility a lua do Jardim não faz sombra (`GardenLook.COMPAT_MOON_SHADOW`, menos 270 chamadas de desenho).
+- **Pacote de direção de arte, etapa 4, cenário (2026-11-17, prancha `07-salas-combate.png`, só local em
+  `docs/art/ref/direcao_2026-11-17/`; antes e depois na GPU em `docs/gallery/artpack/stage4/`)**: o desenho fica onde a
+  colisão para. `tools/fit_probe.gd -- --arena=garden|rift [--variant=n] [--png=x]` mede numa grade de 0,1 m vista de cima
+  o que está desenhado acima do joelho no chão livre (`phantom`), peça que bloqueia sem desenho (`bare`), chão sem
+  superfície (`void`) e superfície de chão fora do chão (`ledge`). Jardim: o peitoril das janelas sai só `SILL_OUT`
+  0,12 m da parede, o contraforte do canto noroeste corre ao longo do corte e a mureta quebrada fica `CUT_WALL_OUT` 0,8 m
+  fora; as raízes desenham os lombos do tronco até o último ponto (`StoneTree.ROOT_BODY` 0,8 do perfil) e mergulham no
+  chão nos `ROOT_PAST` 0,75 m depois (acima de 0,15 m até o fim quadrado da cápsula; o mergulho invisível não conta no
+  `footprint`, `FOOT_SEEN`); musgo no chão ao longo das raízes, em volta do tronco e no pé das paredes norte e oeste
+  (`GardenLook._moss`, `MOSS_*`, `root_moss.gdshader`: uma malha, um material, verde-cinza abaixo do valor das lajes;
+  no Compatibility menos dele, `MOSS_COMPAT_COVER` 0,55).
+  Fendas: lascas dos lábios um degrau abaixo do chão (`ArenaRoom.LIP_SINK` 0,2 a 0,42 m; eram 3 a 16 cm e liam como
+  chão), balaustrada quebrada longe das pontas da borda (`BALUSTRADE_END`: passava por cima da cabeceira da ponte). Toda
+  arena: os pilaretes da boca da porta ficam fora do chão, sobre as bochechas (`DOOR_POST_OUT`). Medido (m²,
+  antes e depois): Jardim A fantasma 8,8 para 2,0, peça sem desenho 3,0 para 1,6; Fendas A fantasma 3,7 para 1,5, borda falsa 11,1
+  para 5,1 (o que sobra fica nas bocas das portas e longe da borda). Placa de ouro da porta: a gema é uma moeda de pé
+  girando (`Rooms.gem_mesh`, `GEM_COIN`; Bênção prisma, romã fruta). Câmara do Selo: meias-luas de Morvath em violeta
+  frio com núcleo marfim-lilás (`Boss.SOUL_VIOLET`, `core_color` e `edge_pale` no `soul_crescent.gdshader`; o rastro e o
+  ajuntar das almas também; eram o verde espectral) e a rachadura e os veios do selo descem a `SealLook.HUSH` 0,45 da luz
+  enquanto ele prepara e lança um ataque (`hush_for`, chamado pelo `BossChamber.on_cue` nos avisos de foice, lâminas,
+  tempestade, maldição, investida e runas; nunca na quebra do escudo nem na vitória). Testes em
+  `tests/test_artpack_env.gd`.
 - `RESULT` e o registro trazem `rooms` (por sala: profundidade, arena, vida ao entrar, dano por fonte, tempo e primeiro
   contato), `hp_at_boss`, `arena`, `stuck`/`stuck_by` (inimigo que queria andar e ficou 3 s parado) e `shots_blocked`;
   desde o C12c também os campos do GP-02 por sala e `boons_at_boss`, `shop`, `fountain_used` (ver Registro das partidas).

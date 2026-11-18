@@ -103,7 +103,15 @@ const ROOT_TOP: Array[Vector2] = [Vector2(-0.25, 1.25), Vector2(0.0, 0.85), Vect
 	Vector2(0.46, 0.3), Vector2(0.64, 0.76), Vector2(0.8, 0.28), Vector2(0.92, 0.12), Vector2(1.0, -0.04)]
 ## Its width toward the tip (share along, share of ROOT_WIDTH): it dives into the floor there, a little narrower.
 const ROOT_TIP_WIDTH := Vector2(0.86, 0.8)
-const ROOT_PAST := 0.45
+## Art pack 2026-11-17 (section 4, the drawing on the collision): the humps of ROOT_TOP up to ROOT_BODY of it are laid
+## from the trunk to the root's last point and the dive into the floor (the rest) on the ROOT_PAST meters past it, so the
+## root stands over the knee until its collision's square end (half its width past the last point) and is under it past
+## that end (tools/fit_probe.gd: the tips' last meter of collision was drawn under 0.15 m, an unseen wall).
+const ROOT_BODY := 0.8
+const ROOT_PAST := 0.75
+## A ring of a solid tube counts in the footprint only while its top stands this far over the floor: past a root's
+## collision the dive into the floor runs on under it, unseen, and is no foot on the floor.
+const FOOT_SEEN := 0.05
 const ROOT_LOBES := 5
 const ROOT_GROOVE := 0.2
 ## How light a root's cords are between its hollows (top ROOT_SHADE_TOP.x and lower) and its humps (ROOT_SHADE_TOP.y
@@ -316,6 +324,7 @@ func _root(pts: PackedVector2Array) -> void:
 		total += line[i].distance_to(line[i - 1])
 		at_s.append(total)
 	var surface := 3.5 - ROOT_FROM
+	var last := total - ROOT_PAST
 	var t := Tube.new()
 	t.flat = true
 	t.lobes = ROOT_LOBES
@@ -329,7 +338,9 @@ func _root(pts: PackedVector2Array) -> void:
 	t.bulge_from = -0.7
 	t.wander = ROOT_WANDER
 	for i in line.size():
-		var share := (at_s[i] - surface) / maxf(total - surface, 0.01)
+		var share := (at_s[i] - surface) / maxf(last - surface, 0.01) * ROOT_BODY
+		if at_s[i] > last:
+			share = ROOT_BODY + (1.0 - ROOT_BODY) * (at_s[i] - last) / ROOT_PAST
 		var top := _along(ROOT_TOP, share)
 		# the upper half of an ellipse whose middle is under the floor: as wide as the collision where it meets it
 		var hh := top + ROOT_SINK
@@ -682,7 +693,7 @@ func _sweep(t: Tube, fracture := 0.0) -> void:
 				vein = 1.0 - smoothstep(VEIN_TOP * 0.75, VEIN_TOP, t.spine[i].y - at.y)
 			var lit := t.shade * (t.ring_shade[i] if t.ring_shade.size() == n else 1.0)
 			ring_c.append(Color(cord * lit, t.lichen[i], fracture, vein))
-			if t.solid and p.y <= at.y + 0.05:
+			if t.solid and p.y <= at.y + 0.05 and t.spine[i].y + t.ry[i] > at.y + FOOT_SEEN:
 				footprint.append(p)
 		grid.append(ring)
 		cols.append(ring_c)

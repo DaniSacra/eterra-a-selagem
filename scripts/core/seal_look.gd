@@ -74,6 +74,14 @@ const LION_TIME := 0.4
 const CALM_GOLD := 0.12
 ## At rest the inlaid gold keeps a faint light of its own (spec 3: the stroke between #6a5844 and #8e7444 on screen).
 const REST_GOLD := 0.08
+## Art pack 2026-11-17 (section 4): while Morvath winds up or throws an attack the crack's light and the veins of the
+## last phase go down to HUSH of their light (eased in over HUSH_IN seconds and out over HUSH_OUT), so the seal never
+## competes with his warnings and crescents; held HUSH_HOLD seconds past the wind-up (the blow and its flight).
+## Never in the ritual's breaking nor the victory (their own light is the story there).
+const HUSH := 0.45
+const HUSH_IN := 0.15
+const HUSH_OUT := 0.6
+const HUSH_HOLD := 0.8
 
 var state := State.NORMAL
 ## Seconds in the state.
@@ -94,6 +102,14 @@ var victory_time := VICTORY_TIME
 var clock := 0.0
 var _spin := Vector2.ZERO
 var _veins := 0.0
+## Seconds the hush still holds (an attack under way), and how far it has eased in (0 none, 1 all of HUSH).
+var _hush_left := 0.0
+var hushed := 0.0
+
+
+## An attack of Morvath starts (its wind-up `seconds` long): the crack and the veins go quiet until it has flown.
+func hush_for(seconds: float) -> void:
+	_hush_left = maxf(_hush_left, maxf(seconds, 0.0) + HUSH_HOLD)
 
 
 ## Enters a state, as if `at` seconds had passed in it already (the labs show the middle of a state).
@@ -133,6 +149,9 @@ func step(dt: float) -> void:
 func _advance(h: float) -> void:
 	t += h
 	clock += h
+	_hush_left = maxf(0.0, _hush_left - h)
+	var quiet := _hush_left > 0.0 and state != State.BREAK and state != State.VICTORY
+	hushed = move_toward(hushed, 1.0 if quiet else 0.0, h / (HUSH_IN if quiet else HUSH_OUT))
 	if state == State.BREAK and t >= BREAK_TIME:
 		state = State.NORMAL
 		t -= BREAK_TIME
@@ -223,6 +242,10 @@ func values() -> Dictionary:
 			_victory_values(v)
 	if state != State.VICTORY and corruption >= 0.0 and state != State.FINAL:
 		v[&"vein_light"] = VEIN_LIGHT.x
+	if hushed > 0.0 and state != State.VICTORY:
+		var keep := lerpf(1.0, HUSH, hushed)
+		v[&"crack_core"] = float(v[&"crack_core"]) * keep
+		v[&"vein_light"] = float(v[&"vein_light"]) * keep
 	return v
 
 

@@ -496,7 +496,7 @@ func set_veil(on: bool, at_once := false) -> void:
 
 
 ## Boss.cue: the seal follows the fight (phase shifts, the ritual's shield, the victory).
-func on_cue(name_: StringName, at: Vector2, dir: Vector2, size: float, _seconds: float) -> void:
+func on_cue(name_: StringName, at: Vector2, dir: Vector2, size: float, seconds: float) -> void:
 	match name_:
 		&"phase_shift":
 			var phase := int(size)
@@ -512,8 +512,13 @@ func on_cue(name_: StringName, at: Vector2, dir: Vector2, size: float, _seconds:
 			seal.enter(SealLook.State.BREAK)
 		&"storm_wave":
 			_storm_left += int(size)
+			seal.hush_for(seconds)
 		&"storm_blade":
 			_storm_left = maxi(0, _storm_left - 1)
+			seal.hush_for(0.0)
+		&"scythe_raise", &"blades_gather", &"curse_gather", &"dash_aim", &"rune":
+			# his warnings and crescents are the brightest thing on the floor: the seal goes quiet under them
+			seal.hush_for(seconds)
 		&"victory_blow":
 			_storm_left = 0
 			seal_restore()
