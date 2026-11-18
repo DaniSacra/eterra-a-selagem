@@ -10,7 +10,9 @@
 
 // The three bands: the value each takes (a share of the lit value), where N.L (times the shadow and the falloff)
 // passes from one to the next, and the width of the passage (never a hard step).
-uniform vec3 paint_values = vec3(0.42, 0.72, 1.0);
+// STY-09 (art-director): the shadow band was 0.42, so a cast shadow kept 42% of the key and, under the strong ambient,
+// vanished on the floor (criterion 3, the reference's shadow is 53% of the slab); 0.25 draws it.
+uniform vec3 paint_values = vec3(0.25, 0.72, 1.0);
 uniform vec2 paint_cuts = vec2(0.3, 0.65);
 uniform float paint_soft = 0.1;
 // A fire's (any light but the key's) pool: where its light starts (N.L times its falloff), so the pool has an edge.

@@ -95,6 +95,9 @@ const CANDLE_CORE_SIZE := 0.55
 const STY_WAX := 0.7
 const STY_CANDLE_FIRE := Color(1.3, 0.6, 0.16)
 const STY_CANDLE_CORE := Color(1.1, 0.72, 0.28)
+## STY-09 (art-director): the clay of the pots in the stylized look, an umber terracotta (CLAY read on the screen at
+## saturation 0.69 and luma 120 under the stylized key, the brightest colour of the hall after the fires).
+const STY_CLAY := Color(0.3, 0.21, 0.16)
 ## Terracotta, dark in the shade (cycle 6: the pots were too orange).
 const CLAY := Color(0.45, 0.18, 0.1)
 const CLAY_RIM := 0.08
@@ -769,6 +772,7 @@ func pot(at: Vector3, size: float = 0.9) -> void:
 		_clay.rim = CLAY_RIM
 		_mouth = StandardMaterial3D.new()
 		_mouth.albedo_color = CLAY_DARK * 0.2
+		VisualProfile.vary(_clay, {&"albedo_color": STY_CLAY})
 	var body := MeshInstance3D.new()
 	var s := SphereMesh.new()
 	s.radius = size * POT_BELLY

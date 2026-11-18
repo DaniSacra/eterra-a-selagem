@@ -7,4 +7,4 @@
 resource_name = "kaykit_paint"
 shader = ExtResource("1_sh")
 shader_parameter/albedo_texture = ExtResource("2_pal")
-shader_parameter/value = 1.0
+shader_parameter/value = 0.85

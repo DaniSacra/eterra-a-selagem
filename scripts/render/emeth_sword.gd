@@ -37,7 +37,9 @@ const CORE_WIDTH := 0.022
 const CORE_DEPTH := 0.076
 const CORE_SPAN := Vector2(0.08, 0.86)
 ## Eterra Stylized (STY-06, T22): the pale edge in that look, ivory-mint with no channel past 1.0 (nothing blooms).
-const STYLE_CORE := Color(0.72, 0.95, 0.8)
+## STY-09: (0.72, 0.95, 0.8) still reached 255 on the screen (exposure 1.25), white pixels down the raised blade; now
+## under the screen's ceiling (ScreenTone.SAFE) with the stylized look's saturation.
+const STYLE_CORE := Color(0.56, 0.76, 0.63)
 
 
 ## The sword: an empty holder at the grip with the model under it (HeroBody places the holder in the hand).

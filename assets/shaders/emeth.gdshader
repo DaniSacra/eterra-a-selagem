@@ -35,7 +35,10 @@ uniform vec3 style_back : source_color = vec3(0.11, 0.45, 0.23);
 uniform vec3 style_face : source_color = vec3(0.23, 0.75, 0.34);
 uniform vec3 style_key = vec3(-0.45, 0.75, 0.5);
 uniform float style_split = 0.12;
-uniform float style_cap = 0.98;
+uniform float style_cap = 0.6; // STY-09: 0.98 still clipped to white on the screen (exposure 1.25)
+// STY-09: under the stylized key (1.6, the classic moon is 0.35) the crystal's own lit albedo clipped to white on the
+// screen: the blade takes only this share of it there (its colour is the two painted bands of the emission).
+uniform float style_lit = 0.25;
 
 varying float along;
 varying vec3 local;
@@ -57,6 +60,7 @@ void fragment() {
 	if (styled) {
 		float face = smoothstep(-style_split, style_split, dot(NORMAL, normalize(style_key)));
 		lit = mix(style_back, style_face, face);
+		ALBEDO *= 1.0 - (1.0 - style_lit) * blade;
 	}
 	if (corrupt > 0.0) {
 		// how far up the blade this point is (0 at the guard, 1 at the tip), with a ragged front that drifts

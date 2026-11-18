@@ -9,10 +9,15 @@ render_mode diffuse_lambert;
 #include "res://assets/shaders/paint.gdshaderinc"
 
 uniform sampler2D albedo_texture : source_color, filter_linear_mipmap;
-uniform float value = 1.0;
+uniform float value = 0.85;
+// STY-09 (art-director): the kit's palette is toy-bright under the stylized key (terracotta pots at saturation 0.69,
+// luma 120, the most saturated thing of the hall): its colours pulled toward their grey, like the reference's pots.
+uniform float saturation = 0.55;
 
 void fragment() {
-	ALBEDO = texture(albedo_texture, UV).rgb * value;
+	vec3 c = texture(albedo_texture, UV).rgb;
+	float grey = dot(c, vec3(0.2126, 0.7152, 0.0722));
+	ALBEDO = mix(vec3(grey), c, saturation) * value;
 	ROUGHNESS = 0.95;
 	SPECULAR = 0.1;
 }

@@ -29,7 +29,10 @@ const FOG_IN_AIR := 0.4
 const SATURATION := 0.77
 ## The key: one directional light from high behind the camera, a little to its right, with a sharp shadow
 ## (rotation in degrees: pitch, yaw; colour; energy; shadow blur).
-const KEY_ROTATION := Vector3(-60.0, 52.0, 0.0)
+## STY-09 (art-director): from (-60, 52), 17 degrees off the camera's own line, every figure's shadow fell behind
+## the figure and was hidden by it (criterion 3); now from the camera's right and a little behind it, lower, so the
+## shadow falls beside the figure, to the left on the screen, as in the reference.
+const KEY_ROTATION := Vector3(-52.0, 100.0, 0.0)
 const KEY_COLOR := Color(1.0, 0.94, 0.84)
 const KEY_ENERGY := 1.6
 const KEY_BLUR := 0.7
