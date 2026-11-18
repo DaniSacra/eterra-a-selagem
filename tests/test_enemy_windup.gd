@@ -303,3 +303,25 @@ func test_the_runner_warns_a_full_second() -> void:
 	for id in [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"guard", &"guard_elite", &"knight"]:
 		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
 		assert_gte(def.attack_windup, 0.9, "%s warns at least 0.9 s" % id)
+
+
+## C17, QW-104 (CF-06): the body clears in the hold of its wind-up only (its last windup_hold), all of it as the blow
+## comes, under the flash's cap; every crowd material carries its own hold.
+func test_the_body_clears_in_the_hold() -> void:
+	for id in [&"skeleton", &"guard", &"mage", &"runner"]:
+		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
+		var hold := d.windup_hold
+		assert_eq(CrowdRenderer.tell_ready(1.0 - hold - 0.01, hold), 0.0, "%s: nothing before the hold" % id)
+		assert_gt(CrowdRenderer.tell_ready(1.0 - hold * 0.5, hold), 0.0, "%s: clearing in the hold" % id)
+		assert_almost_eq(CrowdRenderer.tell_ready(1.0, hold), 1.0, 0.001, "%s: all of it as the blow comes" % id)
+	# the most the clearing adds (a white painting, fully lit, at the end) stays under the flash's cap
+	var shader: Shader = load("res://assets/shaders/crowd.gdshader")
+	var code := shader.code
+	assert_true(code.contains("min(warmer, max(vec3(flash_cap) - EMISSION"), "capped like the flash")
+	assert_lte(CrowdRenderer.TELL_LIGHT, 0.6, "half a blow's flash at most")
+	_room()
+	var e := game.horde.spawn(game.horde.def(&"guard"), Vector2(5, 0), false)
+	game.horde.render(DT)
+	var mat := game.horde.renderer.kind(e.def).material as ShaderMaterial
+	assert_almost_eq(float(mat.get_shader_parameter(&"tell_hold")), e.def.windup_hold, 0.001, "its own hold")
+	assert_almost_eq(float(mat.get_shader_parameter(&"tell_light")), CrowdRenderer.TELL_LIGHT, 0.001)
