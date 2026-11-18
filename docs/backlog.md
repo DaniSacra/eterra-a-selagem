@@ -381,6 +381,13 @@ ao alcance na sala seguinte; a outra leva ao Altar e abre caminho para uma Loja.
 
 ## 4. Perguntas para o Daniel
 
+**Respondidas em 2026-11-18: o Daniel aceitou todas as recomendações** (Q-02 a Q-05, Q-07, Q-11 a Q-16, Q-18 a Q-20,
+Q-22 a Q-27 pela recomendação de cada linha; Q-06, Q-08, Q-09 b, Q-10 e Q-21 já feitas). Q-18: a estátua e as armas
+dos inimigos no Meshy ficam autorizadas depois do AP-3, até 135 créditos; as elites esperam a Q-11 medida. Q-24: os
+medalhões dependem de uma prancha nova do Daniel (o AP-4 faz o resto sem ela). Seguem abertas só Q-01 (plano do Meshy,
+só da Steam) e Q-17 (nome nos créditos). Ciclos em série com commit e push entre um e outro: DV-1 com AP-1, C19,
+AP-2, DV-2, C20, AP-3, AP-4 (MUS-1 em paralelo).
+
 Cada uma com as opções e a minha recomendação. As de número baixo bloqueiam mais.
 
 | ID | Pergunta | Opções | Recomendação |
