@@ -4,7 +4,11 @@ shader_type spatial;
 // dark enamel of the reward's colour (DoorGlyph's marks: the cards' ring and diamond for a Blessing, a coin, a heart,
 // the Magia's cut gem, a drop, chevrons for the guardian and Morvath). A rim of gold bevelled outward catches the light.
 // It glows a little by itself so it reads in the dark rooms, never past the glow threshold (glow).
-render_mode cull_back;
+// AP-1 (ART-01.2): the enamel is its family's (RewardGem.ENAMEL_*, under saturation 0.5 and value 0.45), the mark is
+// struck at mark_size of the face (each mark scaled to it), in ivory on the Blessing's petrol (mark_metal); gold's face
+// is the coin itself (all_gold: the field in a darker old gold, the mark raised in the plain gold, milled edge).
+// It takes no shadows: lit from the side its own rim shadowed half of its face along a straight line (AP-1).
+render_mode cull_back, shadows_disabled;
 
 uniform sampler2D medallion : source_color, filter_linear_mipmap, repeat_disable;
 uniform bool has_medallion = false;
@@ -12,12 +16,22 @@ uniform bool has_medallion = false;
 uniform int mark = 0;
 uniform vec3 enamel : source_color = vec3(0.3, 0.1, 0.1);
 uniform vec3 gold : source_color = vec3(0.66, 0.5, 0.26);
+// The struck mark's metal (gold, or ivory on the Blessing) and gold's own face (the whole face the coin).
+uniform vec3 mark_metal : source_color = vec3(0.66, 0.5, 0.26);
+uniform bool all_gold = false;
+uniform float coin_field = 0.62;
+// How far across the face the mark reaches (its half-width as a share of the face's radius).
+uniform float mark_size = 0.6;
 // Where the gold rim starts (share of the disc's radius) and how wide its bevel is.
 uniform float face_r = 0.84;
 uniform float bevel = 0.1;
 // How much of its own colour it gives back unlit (the painting and the enamel; the gold a little less).
 uniform float glow = 0.32;
 uniform float gold_glow = 0.12;
+// The enamel takes less of the room's light and gives more of its own colour back (a warm lamp by a door washed the
+// Blessing's petrol to cream): its share of the light and what it adds of its own.
+uniform float enamel_diffuse = 0.5;
+uniform float enamel_own = 0.3;
 // How deep the struck mark looks (normal tilt at its edges) and how wide its edge is (share of the radius).
 uniform float relief = 0.7;
 uniform float edge = 0.05;
@@ -43,6 +57,19 @@ float sd_chevron(vec2 p, float w) {
 	return length(pa - ba * h) - w;
 }
 
+// Each mark's own half extent as drawn below (to scale it to mark_size).
+float mark_extent() {
+	if (mark == 1) return 0.69;
+	if (mark == 2) return 0.56;
+	if (mark == 3) return 0.5;
+	if (mark == 4) return 0.42;
+	if (mark == 5) return 0.46;
+	if (mark == 6) return 0.45;
+	if (mark == 7) return 0.45;
+	if (mark == 8) return 0.48;
+	return 1.0;
+}
+
 // The mark's field: negative inside the struck gold, positive on the enamel.
 float mark_sd(vec2 p) {
 	if (mark == 1) {
@@ -52,10 +79,10 @@ float mark_sd(vec2 p) {
 		float coin = abs(length(p) - 0.5) - 0.06;
 		return min(coin, sd_box(p, vec2(0.08, 0.28)));
 	} else if (mark == 3) {
-		vec2 q = vec2(abs(p.x), -p.y + 0.12);
-		float lobes = length(q - vec2(0.22, 0.12)) - 0.24;
-		float tip = sd_diamond(vec2(p.x, p.y + 0.06) * vec2(1.0, 0.85), 0.42);
-		return min(lobes, max(tip, -p.y - 0.42));
+		// two lobes on top, the point down (y is up on the face)
+		float lobes = length(vec2(abs(p.x) - 0.2, p.y - 0.12)) - 0.22;
+		float tip = sd_diamond(vec2(p.x, p.y + 0.04) * vec2(1.0, 0.85), 0.42);
+		return min(lobes, max(tip, p.y - 0.1));
 	} else if (mark == 4) {
 		float g = sd_diamond(p * vec2(1.25, 0.85), 0.5);
 		return min(g, max(abs(p.y - 0.1) - 0.025, g - 0.1));
@@ -88,6 +115,7 @@ void fragment() {
 	}
 	vec3 albedo;
 	float metal = 0.0;
+	float enamel_part = 0.0;
 	float rough = 0.6;
 	float self_light = glow;
 	vec3 n = vec3(0.0, 0.0, 1.0);
@@ -103,30 +131,40 @@ void fragment() {
 		self_light = gold_glow;
 	} else {
 		vec2 q = p / face_r;
+		float k = mark_extent() / mark_size;
 		if (has_medallion) {
 			vec4 tex = texture(medallion, q * vec2(0.5, -0.5) + 0.5);
 			albedo = mix(gold * 0.35, tex.rgb, tex.a);
 		} else {
-			float d = mark_sd(q);
-			// the enamel field, darker toward the rim; the struck mark in gold with a lit and a shaded edge
+			vec2 mq = q * k;
+			float d = mark_sd(mq) / k;
+			// the enamel field, darker toward the rim (gold's: the coin's darker gold, a milled ring inside the rim);
+			// the struck mark in its metal with a lit and a shaded edge
 			vec3 field = enamel * mix(1.0, 0.6, smoothstep(0.4, 1.0, length(q)));
+			float field_metal = 0.0;
+			if (all_gold) {
+				float mill = step(0.5, fract(atan(q.y, q.x) * 28.0 / 6.2831853)) * smoothstep(0.86, 0.9, length(q));
+				field = gold * coin_field * (1.0 - 0.25 * mill);
+				field_metal = 0.8;
+			}
 			float inside = 1.0 - smoothstep(-0.01, 0.01, d);
-			albedo = mix(field, gold, inside);
-			metal = mix(0.0, 0.85, inside);
-			rough = mix(0.7, 0.35, inside);
-			self_light = mix(glow, gold_glow, inside);
+			enamel_part = all_gold ? 0.0 : 1.0 - inside;
+			albedo = mix(field, mark_metal, inside);
+			metal = mix(field_metal, 0.85, inside);
+			rough = mix(all_gold ? 0.45 : 0.7, 0.35, inside);
+			self_light = mix(all_gold ? gold_glow : glow, gold_glow, inside);
 			// relief: the slope of the field across the mark's edge
 			float e = 0.01;
-			float dx = mark_sd(q + vec2(e, 0.0)) - mark_sd(q - vec2(e, 0.0));
-			float dy = mark_sd(q + vec2(0.0, e)) - mark_sd(q - vec2(0.0, e));
+			float dx = (mark_sd((q + vec2(e, 0.0)) * k) - mark_sd((q - vec2(e, 0.0)) * k)) / k;
+			float dy = (mark_sd((q + vec2(0.0, e)) * k) - mark_sd((q - vec2(0.0, e)) * k)) / k;
 			float slope = (1.0 - smoothstep(0.0, edge, abs(d))) * relief;
 			n = normalize(vec3(vec2(dx, dy) / (2.0 * e) * slope, 1.0));
 		}
 	}
 	// the face's relief in tangent space (OpenGL convention: +y is up on the face, as p)
 	NORMAL_MAP = n * 0.5 + 0.5;
-	ALBEDO = albedo;
+	ALBEDO = albedo * mix(1.0, enamel_diffuse, enamel_part);
 	METALLIC = metal;
 	ROUGHNESS = rough;
-	EMISSION = albedo * self_light;
+	EMISSION = albedo * (self_light + enamel_own * enamel_part);
 }

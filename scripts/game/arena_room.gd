@@ -1134,17 +1134,127 @@ func blind_window(foot: Vector3, facing: Vector2, width: float, height: float, m
 ## An outer edge of a closed room (E5: the Provação, the Altar Esquecido): the sides away from the camera (north, west
 ## and the cut between them) a wall `height` tall with the doors in it opened (in_wall), the others the low cut wall
 ## of the front (cut_wall) with the doors' gaps. Each run reaches CLOSE_REACH past its ends so the corners meet.
+## A closed room's edge (the Provação's and the altar's): a tall wall on the sides away from the camera (north and
+## west), the low cut wall in front. AP-1 (ART-04.2): the chamber no longer stands as a box in the dark. A tall wall's
+## end that meets the low front is broken down in steps (no clean section of the wall facing the camera, RUIN_END);
+## past the low front the floor goes on, broken, sinking into the dark (APRON), its slabs on rock that hangs down into
+## the mist; the low front's face only drops FRONT_DROP before the rock takes over. Nothing on the walkable floor.
+const RUIN_END := 2.2
+const RUIN_STEPS: Array[Vector2] = [Vector2(0.4, 0.5), Vector2(0.2, 0.28), Vector2(0.06, 0.12)]
+const RUIN_RUBBLE := 3
+const APRON_REACH := Vector2(0.9, 2.6)
+const APRON_RUN := Vector2(1.1, 2.6)
+const APRON_GAP := Vector2(0.15, 0.7)
+const APRON_SINK := Vector2(0.1, 0.55)
+const APRON_HANG := Vector2(1.6, 4.0)
+const APRON_DOOR := 1.2
+
+
 func closed_edge(a: Vector2, b: Vector2, out: Vector2, height: float, mat: Material = null) -> void:
 	var along := (b - a).normalized()
 	var a2 := a - along * CLOSE_REACH
 	var b2 := b + along * CLOSE_REACH
-	if out.y < -0.5 or out.x < -0.5:
+	if _tall(out):
+		# a broken end where the next (or the last) edge is the low front
+		var ruin_a := _low(_side_out(a, along))
+		var ruin_b := _low(_side_out(b, -along))
+		# (a short run, as a chamfer, breaks along most of its length)
+		var run := a2.distance_to(b2)
+		var end_len := minf(RUIN_END, run * (0.45 if ruin_a and ruin_b else 0.9))
+		var s0 := end_len if ruin_a else 0.0
+		var s1 := run - (end_len if ruin_b else 0.0)
 		var openings: Array[Vector4] = []
 		for g in door_gaps(a2, b2, out, JAMB):
-			openings.append(Vector4(g.x, g.y, 0.0, WALL_DOOR.y + 0.4))
-		wall(a2, b2, out, height, openings, mat)
+			openings.append(Vector4(g.x - s0, g.y - s0, 0.0, WALL_DOOR.y + 0.4))
+		if s1 - s0 > 0.05:
+			wall(a2 + along * s0, a2 + along * s1, out, height, openings, mat)
+		if ruin_a:
+			_ruin_end(a2 + along * s0, -along, out, height, end_len, mat)
+		if ruin_b:
+			_ruin_end(a2 + along * s1, along, out, height, end_len, mat)
 	else:
 		cut_wall(a2, b2, out, door_gaps(a2, b2, out), mat)
+		_apron(a2, b2, out)
+
+
+## True for an edge whose wall stands tall (facing north or west: away from the camera).
+static func _tall(out: Vector2) -> bool:
+	return out.y < -0.5 or out.x < -0.5
+
+
+## True for a corner's other edge that is the low front (ZERO: `p` is no corner of the floor, as where a door's mouth
+## splits an edge, and nothing is broken there).
+static func _low(out: Vector2) -> bool:
+	return out != Vector2.ZERO and not _tall(out)
+
+
+## The outward normal of the other edge of the floor at its corner `p` (not the one running from p along `own`).
+func _side_out(p: Vector2, own: Vector2) -> Vector2:
+	for poly in layout.floor.polys:
+		var n := poly.size()
+		for i in n:
+			if poly[i].distance_to(p) > 0.05:
+				continue
+			for j: int in [(i + 1) % n, (i - 1 + n) % n]:
+				var d := (poly[j] - p).normalized()
+				if d.dot(own) > 0.9:
+					continue
+				var perp := Vector2(d.y, -d.x)
+				var mid := (p + poly[j]) * 0.5
+				return perp if not Geometry2D.is_point_in_polygon(mid + perp * 0.05, poly) else -perp
+	return Vector2.ZERO
+
+
+## The broken end of a tall wall: from `start` along `dir` the wall steps down (RUIN_STEPS, shares of its height,
+## each a little uneven) over `length` to the corner and past it by CLOSE_REACH, a few fallen blocks on top and outside.
+func _ruin_end(start: Vector2, dir: Vector2, out: Vector2, height: float, length: float, mat: Material) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(Vector2i(start * 10.0))
+	var step := length / RUIN_STEPS.size()
+	for k in RUIN_STEPS.size():
+		var h := height * r.randf_range(RUIN_STEPS[k].x, RUIN_STEPS[k].y)
+		var s0 := step * k
+		var s1 := step * (k + 1)
+		var p0 := start + dir * s0
+		var p1 := start + dir * s1
+		# the wall's own course, ragged on top: two blocks of a little different heights
+		var mid := r.randf_range(0.35, 0.65)
+		wall_part(p0, p1, out, 0.0, step * mid, FACE_SET, FACE_SET + FACE_THICK, -0.6, h, mat)
+		wall_part(p0, p1, out, step * mid, step, FACE_SET, FACE_SET + FACE_THICK, -0.6, h * r.randf_range(0.82, 0.96), mat)
+		for i in RUIN_RUBBLE if k > 0 else 1:
+			var q := (p0 + p1) * 0.5 + dir * r.randf_range(-step * 0.4, step * 0.4) + out * (FACE_SET + FACE_THICK * r.randf_range(0.2, 0.8))
+			var size := r.randf_range(0.25, 0.55)
+			var blk := m.box(Vector3(q.x, h + size * 0.3, q.y), Vector3(size, size * 0.6, size * 0.8), r.randf() * TAU, mat)
+			blk.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.4, 0.4))
+
+
+## The broken floor past a low front (a to b, out): runs of the floor's slabs on rock, reaching APRON_REACH out and
+## sinking APRON_SINK, gaps between them, the door's stairs left clear.
+func _apron(a: Vector2, b: Vector2, out: Vector2) -> void:
+	var length := a.distance_to(b)
+	var along := (b - a) / maxf(length, 0.001)
+	var gaps := door_gaps(a, b, out, EXIT_CHEEK.y + APRON_DOOR)
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(Vector2i((a + b) * 10.0))
+	var base := CUT_WALL.y
+	var s := r.randf_range(0.0, APRON_GAP.y)
+	while s < length - 0.4:
+		var l := minf(r.randf_range(APRON_RUN.x, APRON_RUN.y), length - s)
+		var blocked := false
+		for g in gaps:
+			if s < g.y and s + l > g.x:
+				blocked = true
+				s = g.y
+		if blocked:
+			continue
+		var p0 := a + along * s + out * base
+		var p1 := a + along * (s + l) + out * base
+		var o0 := r.randf_range(APRON_REACH.x, APRON_REACH.y)
+		var o1 := r.randf_range(APRON_REACH.x, APRON_REACH.y)
+		var tip := (p0 + p1) * 0.5 + out * maxf(o0, o1) * r.randf_range(0.8, 1.1) + along * l * r.randf_range(-0.2, 0.2)
+		chunk(PackedVector2Array([p0, p1, p1 + out * o1, tip, p0 + out * o0]), -r.randf_range(APRON_SINK.x, APRON_SINK.y),
+			r.randf_range(APRON_HANG.x, APRON_HANG.y))
+		s += l + r.randf_range(APRON_GAP.x, APRON_GAP.y)
 
 
 ## C18 (ART P1-6, ENV P1-5): the event chambers floated as a box in an empty sky, their walls' cut ends against

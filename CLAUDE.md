@@ -801,6 +801,31 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   um MultiMesh, abre em volta do herói). Onda do especial 25% maior no desenho e rastro mais claro, acerto igual
   (QW-111, `look_scale`, `wake_light` no `emeth_wave.gdshader`). Medir uma captura: `python3 -I tools/frame_stats.py
   imagens... [--box=x,y,w,h]` (luma e saturação como o relatório de arte, violeta acima de 60%, verde e rosa na caixa).
+- **AP-1 "Nada de protótipo" (cenário; itens ART-01.2, 01.3, 01.4, 01.6, 02.3, 02.5, 03.7 e 04.2 do
+  `docs/art/art_polish_backlog.md`; antes e depois na GPU e as medidas em `docs/gallery/ap1/`)**: o medalhão de cada
+  recompensa tem o esmalte da família (`RewardGem.ENAMEL_*`: matiz, saturação e valor, teto `ENAMEL_MAX` 0,5 / 0,45;
+  Bênção petróleo com a marca em marfim, Ouro sem esmalte, a própria moeda com serrilha, `all_gold`), a marca a 60% da
+  face (`mark_size`, cada marca escalada pela própria extensão, `mark_extent`), disco de 2 m (`RADIUS` 1,0, cerca de 90 px
+  a 1080) com o topo abaixo do pé da placa (`Rooms.MARK_SIGN_Y` 2,7), o halo atrás do disco na linha da vista
+  (`HALO_BACK`; atravessando o disco ele velava meia face) e a face sem receber sombra. Onde se pega a recompensa ele
+  pousa num relicário de pedra (`RewardGem.Stand`, `_reliquary`: degrau de pisar à frente, `STEP`, sobre o ponto do
+  toque, que não mudou; corpo atrás, longe da câmera, `RELIQUARY` até 0,5 m; filete de ouro velho; pano petróleo com o
+  leão de ouro velho, Q-22, `reliquary_cloth.gdshader`; haste e berço de ouro velho); sobre a boca da porta ele continua
+  solto (`RewardGem.at_door`, pelo `Arena.door_label`). A chamada no `rooms.gd` não mudou (`Stand.AUTO`). Estela da
+  Provação no lugar do cubo com X (`TrialLook._block`, `STELE*`, `SEAL`: pedra em pé virada para a câmera, rachada do
+  ombro ao pé com a parte direita inclinada, o selo em relevo, a luz lilás só na fenda, `stele_crack.gdshader`; colisão
+  igual). Câmaras de evento assentadas (`ArenaRoom.closed_edge`): a ponta da parede alta que encontra a frente baixa cai
+  em degraus com entulho (`RUIN_END`, `RUIN_STEPS`, `_ruin_end`; só em canto de verdade, `_side_out`, `_low`) e além da
+  frente baixa o chão continua quebrado sobre rocha que desce para a bruma (`_apron`, `APRON_*`, portas livres);
+  Provação com luz só do chão (`TrialLook.FLOOR_FILL*`, `floor_layers`), céu, névoa, fundo e rocha mais claros
+  (`AIR`, `CLIFF`, `BACKDROP_*`): luma 43 para 56. `tools/fit_probe.gd -- --arena=trial|altar` mede as câmaras. Fonte de pedra (`ArenaKit.fountain`, chamada pelo
+  `Game._spawn_fountain`; bacia baixa em blocos, água escura com anéis e brilho pálido, `fountain_water.gdshader`, bica
+  com taça e o borbotão marfim-azulado baixo; `fountain_spent` apaga a água quando ele bebe). Portal do salão com
+  profundidade (`portal.gdshader`: oco escuro, anéis partidos que entram, veios, coração pálido pequeno, esmeralda
+  escuro `body_saturation`, `body_value`, `body_tint`, teto `cap`). Braseiros sem miolo branco (`ArenaKit.FLAME*`,
+  `FLAME_CORE` âmbar, chama um terço mais baixa, `BRAZIER_FIRE`; a luz igual). Janelas da Câmara do Selo em lanceta com
+  caixilho, montante e travessa e luz em degradê (`far_window.gdshader`, `BossChamber.FAR_WINDOW_*`, um par aceso e um
+  apagado; a janela da torre também).
 
 ## E5, eventos e exploração (spec de arte `docs/art/e5_spec.md`; métricas em `docs/qa/e5_metrics.md`)
 - **Três arenas novas** no `_stage` do `make_data.gd` (`_sanctuary`, `_bridge`, `_runes`, duas variantes cada, dificuldade 2):

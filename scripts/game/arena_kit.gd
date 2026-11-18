@@ -88,19 +88,22 @@ const STONY: Array[String] = ["barrier", "barrier_column", "barrier_corner", "ba
 const BRAZIER_PEDESTAL := 0.9
 const BRAZIER_BOWL := Vector3(0.85, 0.42, 0.5)
 const BRAZIER_RIM := 0.06
-const BRAZIER_FIRE := Vector3(0.6, 22, 0.8)
-const BRAZIER_FIRE_LIFE := 0.8
+## AP-1 (ART-02.3): the flame a third lower than it was (tongue 0.8, life 0.8: taller than the hero's head), its light
+## unchanged.
+const BRAZIER_FIRE := Vector3(0.6, 22, 0.56)
+const BRAZIER_FIRE_LIFE := 0.68
 const BRAZIER_RADIUS := 0.6
 ## The lights of a lit door take the reward's colour this far toward this warm white (light_portal).
 const DOOR_LIGHT_WHITE := Color(1.0, 0.86, 0.66)
 const DOOR_LIGHT_MIX := 0.55
 const BRONZE := Color(0.2, 0.13, 0.07)
 ## A fire's licks (cycle 6: crisp and blended, not added, so the body of the flame is one orange shape with a
-## red edge and not a haze): the outer ones at their foot, the gold inner ones, and the red they cool to as they
-## narrow. The near-white comes from the fixed core.
-const FLAME := Color(1.5, 0.42, 0.08)
-const FLAME_HEART := Color(1.9, 1.15, 0.35)
-const FLAME_EDGE := Color(0.95, 0.16, 0.04)
+## red edge and not a haze): the outer ones at their foot, the amber inner ones, and the red they cool to as they
+## narrow. AP-1 (ART-02.3): no white heart any more (it was (1.9, 1.15, 0.35) under a core of (2.6, 2.3, 1.4), past
+## 235 in all three channels on the screen); the heart is amber, its brightest channel under the glow threshold.
+const FLAME := Color(1.25, 0.52, 0.1)
+const FLAME_HEART := Color(1.2, 0.62, 0.14)
+const FLAME_EDGE := Color(0.85, 0.26, 0.05)
 ## A tongue's size (width, height) as shares of the fire's tongue size; the inner tongues' share of that, and the
 ## share of the fire's radius they rise from (a fuller white-gold heart, the outer tongues and the light unchanged).
 const TONGUE := Vector2(0.9, 2.0)
@@ -108,14 +111,16 @@ const HEART := 0.75
 const HEART_SPREAD := 0.5
 ## The share of the fire's radius the tongues rise from (close together: one body of flame, not a comb of spikes).
 const FLAME_SPREAD := 0.35
-## The fixed core of a fire (cycle 6: a card, not particles, so every frame has its near-white heart): its colour,
-## size (m), and its flicker (share of its size, slowest and fastest beat in Hz).
-const FLAME_CORE := Color(2.6, 2.3, 1.4)
-const FLAME_CORE_SIZE := Vector2(0.5, 0.95)
+## The fixed core of a fire (cycle 6: a card, not particles, so every frame has its heart; AP-1: amber, never white,
+## added over the licks so it stays low): its colour, size (m), and its flicker (share of its size, slowest and fastest
+## beat in Hz).
+const FLAME_CORE := Color(0.55, 0.3, 0.07)
+const FLAME_CORE_SIZE := Vector2(0.42, 0.66)
 const FLAME_CORE_FLICKER := Vector3(0.12, 9.0, 13.0)
 ## Embers over a fire: how many, how high over its foot they start.
 const EMBERS := 10
 const EMBERS_FROM := 0.7
+const EMBER := Color(1.25, 0.55, 0.18)
 ## The bed of ash in the bowl (dark, so the bowl does not read as an orange disc) and the share of the bowl's mouth
 ## the glowing coals take.
 const ASH := Color(0.05, 0.025, 0.015)
@@ -526,7 +531,7 @@ func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) 
 	e.initial_velocity_min = 0.7
 	e.initial_velocity_max = 1.4
 	e.gravity = Vector3(0.2, 0.3, 0)
-	e.mesh = Fx.quad(0.05, Color(1.8, 0.8, 0.3))
+	e.mesh = Fx.quad(0.05, EMBER)
 	e.color_ramp = Fx.fade_ramp(Color(1, 1, 1, 1))
 	root.add_child(e)
 
@@ -1059,3 +1064,101 @@ func _first_mesh(n: Node) -> MeshInstance3D:
 		if m:
 			return m
 	return null
+
+
+## The fountain's basin (AP-1, ART-01.6; Game.spawn_fountain puts it where the fountain springs): before, a disc of
+## yellow light on the floor, a spray of white sparks and a warm light, nothing of stone. Now a low round basin of the
+## hall's stone (a kerb in FOUNTAIN_SIDES blocks, outer radius, height, width: it covers the holy pool's disc under
+## it), still water in it (fountain_water.gdshader), a short spout in the middle with a small bowl the spring rises from,
+## the spring and the light in the Fonte's cold ivory-blue (art_direction 6.3) under the glow threshold. The basin is
+## low (under the knee: one walks up to it and drinks) and blocks nothing; the touch is Game's (2 m round its middle).
+const FOUNTAIN_BASIN := Vector3(1.95, 0.24, 0.3)
+const FOUNTAIN_SIDES := 14
+const FOUNTAIN_WATER_Y := 0.14
+## The spout: shaft radius and height, the bowl on top (radius, depth).
+const FOUNTAIN_SPOUT := Vector2(0.2, 0.62)
+const FOUNTAIN_BOWL := Vector2(0.5, 0.16)
+## The spring's drops (HDR colour under the glow threshold, size, how many, how fast they rise, how fast they fall
+## back: a low spring over the bowl, not a spray of sparks 6 m high) and the light (colour; its energy is Game's).
+const FOUNTAIN_SPRING := Color(0.78, 0.9, 1.0)
+const FOUNTAIN_SPRING_SIZE := 0.14
+const FOUNTAIN_SPRING_COUNT := 28
+const FOUNTAIN_SPRING_SPEED := Vector2(1.4, 2.2)
+const FOUNTAIN_SPRING_FALL := 4.5
+const FOUNTAIN_LIGHT := Color(0.82, 0.9, 1.0)
+## After he drinks: the water's glow goes out in this many seconds.
+const FOUNTAIN_SPENT_TIME := 1.2
+const FOUNTAIN_WATER_SHADER := preload("res://assets/shaders/fountain_water.gdshader")
+
+
+static func fountain(parent: Node3D) -> void:
+	var mason := Masonry.new(parent)
+	var stone := mason.stone(0.0)
+	var r := FOUNTAIN_BASIN.x - FOUNTAIN_BASIN.z * 0.5
+	var seg := TAU * r / FOUNTAIN_SIDES
+	for k in FOUNTAIN_SIDES:
+		var a := TAU * (k + 0.5) / FOUNTAIN_SIDES
+		var at := Vector3(cos(a), 0.0, sin(a)) * r
+		mason.box(at + Vector3(0, FOUNTAIN_BASIN.y * 0.5, 0), Vector3(seg * 1.02, FOUNTAIN_BASIN.y, FOUNTAIN_BASIN.z), -a + PI * 0.5, stone)
+	# the spout: a shaft with a ring at its foot, the bowl on top
+	mason.shaft(Vector3(0, FOUNTAIN_WATER_Y - 0.05, 0), FOUNTAIN_SPOUT.x, FOUNTAIN_SPOUT.y, stone)
+	var bowl := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = FOUNTAIN_BOWL.x
+	cyl.bottom_radius = FOUNTAIN_BOWL.x * 0.55
+	cyl.height = FOUNTAIN_BOWL.y
+	cyl.radial_segments = 16
+	cyl.rings = 1
+	bowl.mesh = cyl
+	bowl.material_override = stone
+	bowl.position = Vector3(0, FOUNTAIN_WATER_Y - 0.05 + FOUNTAIN_SPOUT.y + FOUNTAIN_BOWL.y * 0.5, 0)
+	parent.add_child(bowl)
+	var water := MeshInstance3D.new()
+	water.name = "Water"
+	var q := PlaneMesh.new()
+	q.size = Vector2.ONE * (FOUNTAIN_BASIN.x - FOUNTAIN_BASIN.z * 0.6) * 2.0
+	water.mesh = q
+	var wm := ShaderMaterial.new()
+	wm.shader = FOUNTAIN_WATER_SHADER
+	wm.set_shader_parameter(&"radius", FOUNTAIN_BASIN.x - FOUNTAIN_BASIN.z * 0.6)
+	water.material_override = wm
+	water.position.y = FOUNTAIN_WATER_Y
+	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(water)
+	var top := MeshInstance3D.new()
+	var disc := PlaneMesh.new()
+	disc.size = Vector2.ONE * FOUNTAIN_BOWL.x * 1.8
+	top.mesh = disc
+	top.material_override = wm
+	top.position.y = bowl.position.y + FOUNTAIN_BOWL.y * 0.5 - 0.02
+	top.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(top)
+	# the spring out of the bowl (Game._step_fountain stops it by its name)
+	var spring := CPUParticles3D.new()
+	spring.name = "Spring"
+	spring.position.y = top.position.y
+	spring.amount = FOUNTAIN_SPRING_COUNT
+	spring.lifetime = 1.0
+	spring.direction = Vector3.UP
+	spring.spread = 12.0
+	spring.initial_velocity_min = FOUNTAIN_SPRING_SPEED.x
+	spring.initial_velocity_max = FOUNTAIN_SPRING_SPEED.y
+	spring.gravity = Vector3(0, -FOUNTAIN_SPRING_FALL, 0)
+	spring.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	spring.emission_sphere_radius = FOUNTAIN_BOWL.x * 0.3
+	spring.mesh = Fx.quad(FOUNTAIN_SPRING_SIZE, FOUNTAIN_SPRING)
+	spring.color_ramp = Fx.fade_ramp(Color.WHITE)
+	parent.add_child(spring)
+	mason.merge()
+
+
+## After he drinks (Game._step_fountain): the water's glow goes out.
+static func fountain_spent(parent: Node3D) -> void:
+	var water := parent.get_node_or_null("Water") as MeshInstance3D
+	if water == null:
+		return
+	var wm := water.material_override as ShaderMaterial
+	if water.is_inside_tree():
+		water.create_tween().tween_method(func(v: float) -> void: wm.set_shader_parameter(&"spent", v), 0.0, 1.0, FOUNTAIN_SPENT_TIME)
+	else:
+		wm.set_shader_parameter(&"spent", 1.0)

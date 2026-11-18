@@ -910,28 +910,16 @@ func spawn_fountain(at: Vector2) -> void:
 	_fountain = Node3D.new()
 	_fountain.position = Vector3(_fountain_at.x, 0, _fountain_at.y)
 	add_child(_fountain)
+	# the basin, its water and its spring (AP-1, ART-01.6: ArenaKit.fountain), and its light in the Fonte's colour
+	ArenaKit.fountain(_fountain)
 	var l := OmniLight3D.new()
 	l.name = "Light"
 	l.position.y = 2.0
-	l.light_color = Color(1.0, 0.9, 0.6)
+	l.light_color = ArenaKit.FOUNTAIN_LIGHT
 	l.light_energy = 3.0
 	l.omni_range = 9.0
 	l.light_cull_mask = ~Arena.CROWD_LAYER
 	_fountain.add_child(l)
-	var spring := CPUParticles3D.new()
-	spring.name = "Spring"
-	spring.amount = 40
-	spring.lifetime = 1.4
-	spring.direction = Vector3.UP
-	spring.spread = 14.0
-	spring.initial_velocity_min = 2.5
-	spring.initial_velocity_max = 4.5
-	spring.gravity = Vector3(0, -1.0, 0)
-	spring.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	spring.emission_sphere_radius = 0.6
-	spring.mesh = Fx.quad(0.35, Color(3.0, 2.6, 1.4))
-	spring.color_ramp = Fx.fade_ramp(Color.WHITE)
-	_fountain.add_child(spring)
 	var pool := ground.add_zone(Ground.Kind.HOLY, _fountain_at, 1.8, 9999.0, 0.0)
 	pool.tags = []
 	column(_fountain_at, Combat.LIGHT, 1.4, 14.0, 1.2)
@@ -948,6 +936,7 @@ func _step_fountain() -> void:
 		player.heal(player.max_hp * FOUNTAIN_HEAL)
 		(_fountain.get_node("Light") as OmniLight3D).light_energy = 0.6
 		(_fountain.get_node("Spring") as CPUParticles3D).emitting = false
+		ArenaKit.fountain_spent(_fountain)
 		for z in ground.zones:
 			if z.kind == Ground.Kind.HOLY and z.pos == _fountain_at:
 				z.life = 0.3

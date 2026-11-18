@@ -3,9 +3,9 @@ extends ArenaRoom
 ## The look of the Provação (the trial, E5 spec docs/art/e5_spec.md section 5): a closed, low chamber of dark violet
 ## stone, quiet before the choice. Walls of 8 m on the sides away from the camera, the low cut wall in front; broken
 ## pillars engaged in the chamfered corners; a floor of small dark slabs with thin lilac veins running through them
-## (trial_veins.gdshader) that stop short of the block; the block of the layout (&"trial_block") in the middle with the
-## cross crack of lilac light on its top and front (x_crack.gdshader), lit from above by one ivory spot, the room's only
-## shadow; the way out north under its arch with cold ivory lanterns on the wall. After the choice (settle) the veins
+## (trial_veins.gdshader) that stop short of the block; on the block of the layout (&"trial_block") in the middle the
+## cracked stele with the Provação's seal and the lilac light in its fissure (AP-1, ART-01.4; _block), lit from above
+## by one ivory spot, the room's only shadow; the way out north under its arch with cold ivory lanterns on the wall. After the choice (settle) the veins
 ## and the crack lose 60% of their light. The entry slab with the same crack, in the room before the trial, is
 ## entry_slab (the gameplay places it where the door to the trial is offered).
 
@@ -26,12 +26,20 @@ const FLOOR := {
 	&"missing": 0.05, &"cracked": 0.6,
 }
 ## The air (spec 5.4).
+## AP-1 (ART-04.2): sky and fog a step lighter (the far ruins fade into them; the frame's luma from 43 into 50 to 60).
 const AIR := {
-	&"sky": Color(0.09, 0.085, 0.11), &"fog": Color(0.13, 0.12, 0.15), &"fog_depth": Vector2(40.0, 90.0),
+	&"sky": Color(0.15, 0.14, 0.18), &"fog": Color(0.2, 0.19, 0.235), &"fog_depth": Vector2(40.0, 90.0),
 	&"ambient": Color(0.24, 0.22, 0.28), &"ambient_gain": 2.0, &"moon": Color(0.6, 0.58, 0.7), &"moon_energy": 0.5,
 	&"moon_shadow": false,
 }
 const MIST := Color(0.065, 0.055, 0.085)
+## The rock under the broken floor round the chamber (ArenaRoom._apron's hanging stone; the hall's teal before).
+const CLIFF := {&"stone_color": Color(0.085, 0.078, 0.1), &"edge_color": Color(0.16, 0.15, 0.19),
+	&"mist_color": Color(0.12, 0.11, 0.145), &"glow_color": Color(0.3, 0.24, 0.42)}
+## The far ruins' mist, stone and edge behind the chamber (ArenaRoom.backdrop).
+const BACKDROP_MIST := Color(0.2, 0.19, 0.235)
+const BACKDROP_STONE := Color(0.08, 0.075, 0.095)
+const BACKDROP_EDGE := Color(0.24, 0.22, 0.3)
 ## The lilac of the cracks, the veins' and the crack's brightest channel.
 const LILAC := Color(0.52, 0.36, 0.78)
 const VEIN_GLOW := 0.5
@@ -45,12 +53,39 @@ const SPOT_HEIGHT := 10.0
 ## A soft fill from above so the floor reads (no shadow).
 const FILL := Color(0.6, 0.55, 0.75)
 const FILL_ENERGY := 5.0
+## AP-1 (ART-04.2): a light on the floor alone (FLOOR_LAYER, the Cripta's FLOOR_FILL): the chamber's luma from 43 into
+## 50 to 60 without washing the walls (colour, energy, height, reach, fall-off, where over the floor).
+const FLOOR_FILL := Color(0.78, 0.74, 0.86)
+const FLOOR_FILL_ENERGY := 1.6
+const FLOOR_FILL_HEIGHT := 6.0
+const FLOOR_FILL_REACH := 15.0
+const FLOOR_FILL_FALLOFF := 0.6
+const FLOOR_FILL_AT := Vector2(-1.5, 2.0)
 ## The cold ivory lanterns of the way out, hung on the wall beside the arch (height, bracket).
 const LANTERN_AT := 2.3
 const LANTERN_BRACKET := Vector3(0.24, 0.12, 0.24)
-## The block (spec 5.2): plinth and top lip, its crack quads.
-const BLOCK_PLINTH := Vector2(0.18, 0.15)
-const BLOCK_LIP := Vector2(0.1, 0.06)
+## The stele (AP-1, ART-01.4; it was a box with a lilac X on its top and front, read as a prototype's crate): on the
+## block's footprint (its collision, the layout's &"trial_block", did not change) a stepped plinth and an upright slab of
+## worn stone turned to the camera, gabled, split by a crack from its shoulder to its foot (the right part leaning
+## STELE_LEAN degrees off), the cracked seal of the Provação in relief on its face (the crystal diamond of trial_seal.png,
+## a low pyramid of four facets) and the lilac light only in the fissure (stele_crack.gdshader; settle dims it).
+## Its shape on the face (x across, y up, m): foot width and height, the shoulder's width share and height share.
+const STELE := Vector2(1.12, 2.3)
+const STELE_SHOULDER := Vector2(0.88, 0.8)
+const STELE_THICK := 0.4
+const STELE_PLINTH := Vector2(0.22, 0.1)
+const STELE_TINT := Color(1.45, 1.42, 1.5)
+const STELE_LEAN := 1.6
+## The crack on the face: points (m from the face's foot middle), past the outline at both ends; its gap.
+const STELE_CRACK: Array[Vector2] = [Vector2(0.62, 2.2), Vector2(0.3, 1.86), Vector2(0.34, 1.62), Vector2(0.06, 1.3),
+	Vector2(0.12, 1.02), Vector2(-0.1, 0.7), Vector2(-0.02, 0.42), Vector2(-0.2, 0.12), Vector2(-0.24, -0.2)]
+const STELE_GAP := 0.05
+## The seal: its middle's height (m), half width and half height, how far it stands out, its stone a little lighter.
+const SEAL := Vector4(1.25, 0.32, 0.44, 0.07)
+const SEAL_TINT := Color(1.75, 1.7, 1.8)
+const STELE_CRACK_SHADER := preload("res://assets/shaders/stele_crack.gdshader")
+## Prism (Masonry.prism: footprint x, z, extruded along y) to the stele's face (x across, y up, z out of the face).
+const FACE_AXES := Basis(Vector3(1, 0, 0), Vector3(0, 0, 1), Vector3(0, -1, 0))
 ## The entry slab (spec 5.1): side, frame, the wisps over it (size, alpha, height).
 const SLAB_SIDE := 2.4
 const SLAB_FRAME := 0.15
@@ -72,6 +107,10 @@ func floor_look() -> Dictionary:
 	return FLOOR
 
 
+func floor_layers() -> int:
+	return 1 | FLOOR_LAYER
+
+
 func stone_tint() -> Color:
 	return STONE
 
@@ -82,6 +121,10 @@ func air() -> Dictionary:
 
 func mist() -> Color:
 	return MIST
+
+
+func cliff_look() -> Dictionary:
+	return CLIFF
 
 
 func in_wall(i: int) -> bool:
@@ -124,8 +167,16 @@ func dress() -> void:
 	moon_shaft(block, SPOT, SPOT_ENERGY, SPOT_CONE, SPOT_HEIGHT, true, true)
 	var fill := key_light(FILL, FILL_ENERGY, 9.0)
 	fill.shadow_enabled = false
+	var floor_fill := OmniLight3D.new()
+	floor_fill.position = Vector3(FLOOR_FILL_AT.x, FLOOR_FILL_HEIGHT, FLOOR_FILL_AT.y)
+	floor_fill.light_color = FLOOR_FILL
+	floor_fill.light_energy = FLOOR_FILL_ENERGY
+	floor_fill.omni_range = FLOOR_FILL_REACH
+	floor_fill.omni_attenuation = FLOOR_FILL_FALLOFF
+	floor_fill.light_cull_mask = FLOOR_LAYER
+	add_child(floor_fill)
 	_lanterns()
-	backdrop(Color(0.13, 0.12, 0.155), Color(0.06, 0.055, 0.075), Color(0.2, 0.18, 0.26))
+	backdrop(BACKDROP_MIST, BACKDROP_STONE, BACKDROP_EDGE)
 
 
 ## The light of the veins and the cracks (1 before the choice, SETTLED after it).
@@ -200,22 +251,76 @@ func _vein_sheet() -> void:
 	add_child(mi)
 
 
-## The block on its footprint (spec 5.2): a plinth, the body, a lip round its top; the cross crack on its top and on the
-## face the camera sees.
+## The stele on the block's footprint (STELE*; the collision is the block's, unchanged).
 func _block(o: ArenaObstacle) -> void:
 	var foot := Vector3(o.center.x, 0.0, o.center.y)
-	var size := Vector3(o.half.x * 2.0, o.height, o.half.y * 2.0)
 	var mat := ashlar()
-	m.block(foot, Vector3(size.x + BLOCK_PLINTH.y * 2.0, BLOCK_PLINTH.x, size.z + BLOCK_PLINTH.y * 2.0), -o.yaw, mat)
-	m.block(foot, Vector3(size.x, size.y - BLOCK_LIP.x, size.z), -o.yaw, mat)
-	m.block(foot + Vector3(0, size.y - BLOCK_LIP.x, 0), Vector3(size.x + BLOCK_LIP.y * 2.0, BLOCK_LIP.x, size.z + BLOCK_LIP.y * 2.0), -o.yaw, mat)
-	var basis := Basis(Vector3.UP, -o.yaw)
-	_cracks.append(crack(self, foot + Vector3(0, size.y + 0.006, 0), basis * Basis(Vector3.RIGHT, -PI * 0.5), Vector2(size.x, size.z)))
-	for face: Vector3 in [Vector3(0, 0, 1), Vector3(1, 0, 0)]:
-		var f := basis * face
-		var w := size.x if face.z != 0.0 else size.z
-		var b := Basis.looking_at(-f, Vector3.UP)
-		_cracks.append(crack(self, foot + f * (w * 0.5 + 0.006) + Vector3(0, (size.y - BLOCK_LIP.x) * 0.55, 0), b, Vector2(w * 0.9, (size.y - BLOCK_LIP.x) * 0.8)))
+	var step := STELE_PLINTH.y * 0.6
+	m.block(foot, Vector3(o.half.x * 2.0, STELE_PLINTH.x, o.half.y * 2.0), -o.yaw, mat)
+	m.block(foot + Vector3(0, STELE_PLINTH.x, 0), Vector3(o.half.x * 2.0 - step * 2.0, STELE_PLINTH.y, o.half.y * 2.0 - step * 2.0), -o.yaw, mat)
+	var base := foot + Vector3(0, STELE_PLINTH.x + STELE_PLINTH.y, 0)
+	var face := Transform3D(Basis(Vector3.UP, deg_to_rad(Feel.live().cam_yaw)), base)
+	var w := STELE.x * 0.5
+	var ws := w * STELE_SHOULDER.x
+	var hs := STELE.y * STELE_SHOULDER.y
+	var outline := PackedVector2Array([Vector2(-w, 0), Vector2(w, 0), Vector2(ws, hs), Vector2(ws * 0.45, STELE.y - 0.1),
+		Vector2(0, STELE.y), Vector2(-ws * 0.45, STELE.y - 0.1), Vector2(-ws, hs)])
+	var path := PackedVector2Array(STELE_CRACK)
+	var band: PackedVector2Array = Geometry2D.offset_polyline(path, STELE_GAP * 0.5)[0]
+	var glow_band: PackedVector2Array = Geometry2D.offset_polyline(path, STELE_GAP * 0.5 + STELE_LEAN * 0.03)[0]
+	var stone := m.stone(base.y, STONE * STELE_TINT)
+	var seal := m.stone(base.y, STONE * SEAL_TINT)
+	var lean := deg_to_rad(STELE_LEAN)
+	var tilt := Transform3D(Basis(Vector3.BACK, -lean), Vector3(w, 0, 0) - Basis(Vector3.BACK, -lean) * Vector3(w, 0, 0))
+	var half_t := STELE_THICK * 0.5
+	# the slab in two parts either side of the crack, the right one leaning off
+	for piece in Geometry2D.clip_polygons(outline, band):
+		_face_slab(piece, -half_t, half_t, stone, face * (tilt if _right_of(piece, path) else Transform3D.IDENTITY))
+	# the seal in two tiers, cut by the same crack
+	var tiers: Array[PackedVector2Array] = []
+	for k in 2:
+		var s := 1.0 - 0.34 * k
+		var mid := Vector2(0, SEAL.x)
+		tiers.append(PackedVector2Array([mid + Vector2(0, SEAL.z * s), mid + Vector2(SEAL.y * s, 0), mid - Vector2(0, SEAL.z * s), mid - Vector2(SEAL.y * s, 0)]))
+		for piece in Geometry2D.clip_polygons(tiers[k], band):
+			_face_slab(piece, half_t - 0.01, half_t + SEAL.w * (k + 1) * 0.5, seal, face * (tilt if _right_of(piece, path) else Transform3D.IDENTITY))
+	# the lilac light, only inside the fissure (behind the faces, through the gap, in each tier of the seal)
+	var light := ShaderMaterial.new()
+	light.shader = STELE_CRACK_SHADER
+	light.set_shader_parameter(&"color", LILAC)
+	light.set_shader_parameter(&"glow", CRACK_GLOW)
+	light.set_shader_parameter(&"foot_y", base.y)
+	light.set_shader_parameter(&"height", STELE.y)
+	_cracks.append(light)
+	for g in Geometry2D.intersect_polygons(outline, glow_band):
+		_face_slab(g, -half_t + 0.02, half_t - 0.004, light, face).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for k in 2:
+		for g in Geometry2D.intersect_polygons(tiers[k], glow_band):
+			_face_slab(g, half_t - 0.012, half_t + SEAL.w * (k + 1) * 0.5 - 0.004, light, face).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+
+
+## A slab of the stele: `outline` on its face (x across, y up) from z0 to z1 out of the face, placed by `xf`.
+func _face_slab(outline: PackedVector2Array, z0: float, z1: float, mat: Material, xf: Transform3D) -> MeshInstance3D:
+	var pts := PackedVector2Array()
+	for p in outline:
+		pts.append(Vector2(p.x, -p.y))
+	var mi := m.prism(pts, z0, z1, mat)
+	mi.transform = xf * Transform3D(FACE_AXES, Vector3.ZERO)
+	return mi
+
+
+## True when the piece's middle lies right of the crack at its height.
+static func _right_of(piece: PackedVector2Array, path: PackedVector2Array) -> bool:
+	var c := Vector2.ZERO
+	for p in piece:
+		c += p
+	c /= piece.size()
+	for i in path.size() - 1:
+		var a := path[i]
+		var b := path[i + 1]
+		if (c.y - a.y) * (c.y - b.y) <= 0.0 and absf(a.y - b.y) > 0.001:
+			return c.x > lerpf(a.x, b.x, (c.y - a.y) / (b.y - a.y))
+	return c.x > 0.0
 
 
 ## A quad of the cross crack under `parent`, its face along basis.z, `size` across.

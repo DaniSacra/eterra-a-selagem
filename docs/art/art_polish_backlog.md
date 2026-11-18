@@ -93,7 +93,9 @@ ART-01.2).
   dois esmaltes com matiz a 40 graus ou mais, ou valor a 0,2 ou mais; maior canal na tela até 226 (`ScreenTone`);
   pergunta no próximo teste do PO.
 - Riscos: esmalte saturado demais volta a competir com o perigo (vermelho fica fora: Romã e Coração em valor baixo).
-- Status: ABERTO.
+- Status: FEITO no AP-1, aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Esmalte por família (`RewardGem.ENAMEL_*`), Ouro sem esmalte (a própria moeda),
+  marca a 60% da face, disco de 2 m (cerca de 90 px a 1080), halo atrás do disco; recorte 720 sem placa em
+  `detail/rewards_720_no_sign.jpg` e Ouro ao lado da Bênção em `detail/altar_gold_blessing_720.jpg`.
 
 **ART-01.3 Relicário: o objeto pousa em algo que se lê.**
 - Problema: o pedestal baixo (0,16 m) some na câmera; o disco parece ficha no ar. A prancha mostra relicário de pedra
@@ -109,7 +111,9 @@ ART-01.2).
   círculo de pisar); `fit_probe` sem área fantasma nova; na captura 720 o relicário é lido como objeto (art-director).
 - Riscos: peça visual onde o herói pisa vira "fantasma" (regra do `fit_probe`); por isso o corpo do relicário fica atrás
   da zona, do lado oposto à câmera.
-- Status: ABERTO. Decisão: Q-13, Q-22.
+- Status: FEITO no AP-1 (pano petróleo com o leão em ouro velho, Q-22), aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Relicário de 0,5 m atrás do ponto,
+  degrau de 8 cm sobre o ponto do toque (`Rooms` não mudou: a chamada do `RewardGem.make` é a mesma), fora da colisão;
+  sobre a boca das portas o disco continua solto (ART-01.5).
 
 **ART-01.4 Bloco da Provação: de caixa com X para estela rachada.**
 - Problema: o `trial_block` é um cubo com a rachadura em X lilás (`x_crack.gdshader`); lê como caixa de protótipo.
@@ -118,7 +122,8 @@ ART-01.2).
 - Solução: estela de pedra gasta com o selo rachado em relevo (o mesmo desenho do `trial_seal.png`), a rachadura lilás
   só na fenda, mesma caixa de colisão do dado.
 - Aceite: colisão igual (`test_trial.gd`); nenhuma face lisa de cubo visível a 1080; a laje e a placa leem iguais.
-- Status: ABERTO. Questiono a coroa de louros violeta da prancha para a Provação: o selo rachado já é o símbolo do evento
+- Status: FEITO no AP-1, aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Estela rachada com o selo em relevo, a luz lilás só na fenda, colisão igual.
+  Mantive o selo, sem louros.
   no HUD, nas cartas e na laje; louro diz "vitória", não "maldição com prêmio". Mantenho o selo.
 
 **ART-01.5 Marca de recompensa sobre as portas.**
@@ -130,7 +135,9 @@ ART-01.2).
 - Aceite: captura 1080 e 720 de uma sala vencida com três portas, aprovada pelo art-director.
 - Status: ABERTO (depois da ART-01.2).
 
-**ART-01.6 Fonte sem evidência.** A sala da fonte nunca foi capturada a 1080 em Forward+ (auditoria, "O que não foi
+**ART-01.6 Fonte sem evidência.** FEITO no AP-1: capturada (`docs/gallery/ap1/before/fountain_1080.jpg`), era um disco de
+luz amarela e um jorro de faíscas brancas; agora bacia de pedra com água, bica e borbotão marfim-azulado (`ArenaKit.fountain`).
+Antes: a sala da fonte nunca foi capturada a 1080 em Forward+ (auditoria, "O que não foi
 avaliado"). EVIDÊNCIA: `qa-performance` captura `--start=fountain` antes de qualquer tarefa. P1, esforço P.
 
 ### ART-02 Paleta, iluminação e hierarquia de leitura (P1)
@@ -152,7 +159,8 @@ art-director (fecha DT-109 quando revisado).
   que a chama projeta fica igual.
 - Aceite: na caixa de cada braseiro nenhum pixel com os três canais acima de 235; matiz mediano da chama entre 20 e 35
   graus; luma do chão em volta igual (mais ou menos 2).
-- Status: ABERTO.
+- Status: FEITO no AP-1, aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Nenhum pixel acima de 235 nas caixas dos braseiros (antes 112 a 276); matiz
+  mediano 16 a 25 (a borda vermelha da bacia puxa para baixo dos 20 em dois deles); a luz igual.
 
 **ART-02.4 Estandartes vermelhos competem com o vermelho do perigo.**
 - Problema: o vermelho é reservado ao perigo (e ao golpe sofrido); os estandartes do leão são vermelho saturado em quase
@@ -171,7 +179,8 @@ art-director (fecha DT-109 quando revisado).
 - Solução: caixilho em arco com montante, luz em degradê de baixo para cima, metade delas apagadas, matiz âmbar mais frio.
 - Responsável: `environment-artist` (`boss_chamber.gd`, `FAR_WINDOW*`).
 - Aceite: nenhuma janela de cor única; saturação p90 da faixa de cima da tela (y abaixo de 300 a 1080) abaixo de 35.
-- Status: ABERTO.
+- Status: FEITO no AP-1, aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Lanceta com caixilho, montante e travessa, degradê, metade apagada (a da torre
+  também); saturação p90 da faixa de cima 36 para 24.
 
 **ART-02.6 Barras de vida dos inimigos mais vivas que o herói.** ABERTO, P2, `ui-ux-designer` (`life_bar.gdshader`):
 barras dos comuns 15% mais escuras e mais finas, elites com moldura. Evidência: `docs/gallery/t5b/runner/runners_gpu_after.jpg`
@@ -225,7 +234,8 @@ pilares aparecem com listras acesas em `c18/after/runes.jpg`; saber se era prepa
   escuro com núcleo pálido; continua o ponto focal.
 - Aceite: dentro do recorte do portal, desvio padrão da luma pelo menos o dobro do de hoje; maior canal até 226; verde
   saturado do quadro entre 1 e 2%.
-- Status: ABERTO (o C18 deixou como opcional).
+- Status: FEITO no AP-1, aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Desvio da luma no miolo 15,2 para 26,5 (1,7 vez, abaixo do dobro pedido),
+  maior canal 255 para 239 (acima de 226 na borda acesa), verde saturado do quadro 2,3 para 2,1%.
 
 **ART-03.8 Salão, estátuas e moldura do portal provisórias.** BLOQUEADO (Q-18, créditos do Meshy). Nenhum crédito será
 gasto sem o Daniel.
@@ -246,7 +256,8 @@ gasto sem o Daniel.
   nenhuma face de corte para a câmera; Provação com luz de preenchimento só do chão (o `FLOOR_FILL` da Cripta).
 - Aceite: nenhuma face de corte visível a 1080 nas duas; luma da Provação entre 50 e 60; as escolhas (laje, placas, carta)
   iguais (`test_trial.gd`, `test_altar.gd`).
-- Status: ABERTO.
+- Status: FEITO no AP-1, aguarda a revisão do art-director; evidências e números em `docs/gallery/ap1/README.md`. Ponta da parede alta em degraus de ruína, chão quebrado sobre rocha além da
+  frente baixa, Provação com luz só do chão: luma 43 para 56.
 
 **ART-04.3 Altar novo demais.** P2 (ENV P2-8): pó, quinas gastas, estandartes desbotados. `environment-artist`.
 

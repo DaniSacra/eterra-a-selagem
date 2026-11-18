@@ -196,7 +196,6 @@ const ARCH_STEP := 15.0
 const UNDER_ARCH := Vector4(2.4, 5.5, -1.6, 0.8)
 const TOWER := Vector4(286.0, 16.0, 3.2, 30.0)
 const TOWER_WINDOW := Vector3(3.5, 0.5, 0.9)
-const WARM_GLASS := Color(0.8, 0.45, 0.2)
 const FAR_RING := Vector3(38.0, -4.0, -30.0)
 const FAR_SPAN := Vector2(200.0, 470.0)
 const FAR_STEP := 10.0
@@ -205,7 +204,14 @@ const WINDOW_EVERY := 1
 ## ring now spans from the west-south-west round the north to the east (FAR_SPAN), a window in every pier, small
 ## and hot enough to read warm through the blue air (size, colour: past the glow threshold, a small point of glow each).
 const FAR_WINDOW := Vector2(0.55, 0.95)
-const FAR_WINDOW_GLASS := Color(2.4, 1.2, 0.45)
+## AP-1 (ART-02.5): each lancet is drawn by far_window.gdshader (a pointed head, a frame of the far stone, a mullion
+## and a transom, the glass lit warm from below and fading upward, a cooler amber under the glow threshold); every
+## other pair is dark (FAR_WINDOW_DARK_EVERY). Before: flat rectangles of one hot orange (2.4, 1.2, 0.45).
+const FAR_WINDOW_LOW := Color(1.05, 0.7, 0.4)
+const FAR_WINDOW_HIGH := Color(0.3, 0.18, 0.12)
+const FAR_WINDOW_FRAME := Color(0.06, 0.055, 0.08)
+const FAR_WINDOW_DARK_EVERY := 2
+const FAR_WINDOW_SHADER := preload("res://assets/shaders/far_window.gdshader")
 ## C12a QW-006 (8 windows in the game camera, and the two in the west mist floated over it as cards with no wall
 ## behind): each pier carries a pair of lancets this far apart (m) on its face, and none where the violet columns
 ## (COLUMNS) hide the ring's wall (bearings, FAR_WINDOW_HIDDEN).
@@ -938,6 +944,22 @@ func _lantern(bearing: float, mat: Material) -> void:
 func _unlit(c: Color) -> StandardMaterial3D:
 	return tomb.unlit(c)
 
+
+var _windows := {}
+
+
+## The far ring's lancet (far_window.gdshader), lit or dark: one material each.
+func _far_window(lit: bool) -> ShaderMaterial:
+	if not _windows.has(lit):
+		var w := ShaderMaterial.new()
+		w.shader = FAR_WINDOW_SHADER
+		w.set_shader_parameter(&"glass_low", FAR_WINDOW_LOW)
+		w.set_shader_parameter(&"glass_high", FAR_WINDOW_HIGH)
+		w.set_shader_parameter(&"frame_color", FAR_WINDOW_FRAME)
+		w.set_shader_parameter(&"lit", 1.0 if lit else 0.0)
+		_windows[lit] = w
+	return _windows[lit]
+
 ## A gothic pinnacle at a bearing: a base, a tall body, a spire; on its face to the middle (and on the one to the
 ## camera, if another) a pointed panel with the raised sword in relief and a thread of gold.
 func _pinnacle(bearing: float, mat: Material) -> void:
@@ -1265,7 +1287,7 @@ func _far() -> void:
 	var wq := QuadMesh.new()
 	wq.size = Vector2(TOWER_WINDOW.y, TOWER_WINDOW.z)
 	win.mesh = wq
-	win.material_override = _unlit(WARM_GLASS)
+	win.material_override = _far_window(true)
 	win.transform = Transform3D(Basis(Vector3.UP, tyaw), wpos + Vector3(0, TOWER_WINDOW.z * 0.5, 0))
 	add_child(win)
 	m.layers = ArenaKit.DEPTH_LAYER
@@ -1290,10 +1312,11 @@ func _far() -> void:
 			var wp := _v3(at_bearing(wb, FAR_RING.x - 1.05), FAR_RING.y - 3.0)
 			var lq := QuadMesh.new()
 			lq.size = FAR_WINDOW
+			var glass := _far_window(i % FAR_WINDOW_DARK_EVERY == 0)
 			for sd: float in [-0.5, 0.5]:
 				var lw := MeshInstance3D.new()
 				lw.mesh = lq
-				lw.material_override = _unlit(FAR_WINDOW_GLASS)
+				lw.material_override = glass
 				lw.transform = Transform3D(wbasis, wp + wbasis * Vector3(sd * FAR_WINDOW_PAIR, 0, 0))
 				add_child(lw)
 		b += FAR_STEP
