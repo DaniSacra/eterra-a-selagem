@@ -204,10 +204,10 @@ func _room(id: int) -> void:
 		var r := rad + (9.0 if st == DescentMap.State.CURRENT else 6.0)
 		var col := Book.RUBRIC if has_focus() else Color(Book.RUBRIC, 0.6)
 		draw_arc(c, r, 0.0, TAU, 44, col, 2.2, true)
-		for s: float in [-1.0, 1.0]:
-			var p := c + Vector2(s * (r + 5.0), 0)
-			draw_colored_polygon(PackedVector2Array([p + Vector2(0, -4), p + Vector2(4 * s, 0), p + Vector2(0, 4),
-				p + Vector2(-4 * s, 0)]), col)
+		# a small diamond on its left (the right side carries the chevrons and the guardian's name)
+		var p := c - Vector2(r + 6.0, 0)
+		draw_colored_polygon(PackedVector2Array([p + Vector2(0, -4.5), p + Vector2(4.5, 0), p + Vector2(0, 4.5),
+			p + Vector2(-4.5, 0)]), col)
 
 
 func _gui_input(event: InputEvent) -> void:
