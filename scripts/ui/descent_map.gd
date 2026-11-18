@@ -5,7 +5,8 @@ extends RefCounted
 ## the map screen (MapScreen) reads the same shape from the run (RunMap.view(), when it has one), from the test graphs
 ## (MapSample) and from the tests.
 ##
-## The dictionary (every key but "layers" optional):
+## The dictionary (every key but "layers" optional; RunMap.view() gives it, "here" for "current" and "slot" for the
+## order in a layer):
 ##   "layers":  Array of layers, the first is depth 1 (the hall), the last Morvath's; each layer an Array of nodes:
 ##     {"id": int (unique in the map), "kind": RunMap.Kind, "reward": RunMap.Reward, "guardian": enemy id
 ##      (&"knight", &"priest_elder"; "" when none), "hidden": bool (the Provação's room before its slab shows: only
@@ -62,12 +63,18 @@ static func from_dict(d: Dictionary) -> DescentMap:
 			r.hard = bool(n.get("hard", false))
 			for id: Variant in n.get("next", []):
 				r.next.append(int(id))
+			r.index = int(n.get("slot", row.size()))
 			row.append(r)
 			m.rooms[r.id] = r
+		# left to right by their slot in the layer (RunMap.Room.slot), then numbered again from 0
+		row.sort_custom(func(a: Room, b: Room) -> bool: return a.index < b.index)
+		for i in row.size():
+			row[i].index = i
 		m.layers.append(row)
 	for id: Variant in d.get("path", []):
 		m.path.append(int(id))
-	m.current = int(d.get("current", m.path[-1] if not m.path.is_empty() else (m.first_id())))
+	# RunMap.view() names the room stood in "here" (-1 before the first)
+	m.current = int(d.get("current", d.get("here", m.path[-1] if not m.path.is_empty() else m.first_id())))
 	if d.has("doors"):
 		for id: Variant in d.doors:
 			m.doors.append(int(id))
@@ -79,69 +86,19 @@ static func from_dict(d: Dictionary) -> DescentMap:
 	return m
 
 
-## The map of the run in progress: RunMap.view() once the descent is a graph (MAP-01), else the line of rooms of today
-## read from the run (the past rooms, the room stood in, the doors, the guardian's depth, the shop and Morvath).
+## The map of the run in progress: the descent's graph (RunMap.view(), MAP-01) held by the run's Rooms, with the open
+## doors' hard fights read from their signs (Rooms.door_info: a fight is drawn when its door opens).
 static func from_game(game: Node) -> DescentMap:
 	var rooms_: Variant = game.get(&"rooms") if game != null else null
-	if rooms_ == null:
+	if rooms_ == null or (rooms_ as Object).get(&"map") == null:
 		return DescentMap.new()
-	var run_map: Variant = (rooms_ as Object).get(&"map")
-	if run_map != null and (run_map as Object).has_method(&"view"):
-		return from_dict((run_map as Object).call(&"view"))
-	return from_dict(line_of(rooms_ as Object))
-
-
-## Today's descent (one room per depth) in the map's shape: every room links to every room of the next depth.
-static func line_of(rooms_: Object) -> Dictionary:
-	var stage: StageDef = rooms_.get(&"stage")
-	var run_map: RunMap = rooms_.get(&"map")
-	var here: RunMap.Room = rooms_.get(&"room")
-	var at: int = rooms_.call(&"depth")
-	var total := stage.rooms + 1
-	var layers: Array = []
-	var path: Array = []
-	var next_id := 0
-	var doors: Array = []
-	for d in range(1, total + 1):
-		var layer: Array = []
-		if d == at + 1 and not (rooms_.get(&"next_rooms") as Array).is_empty():
-			var i := 0
-			for r: RunMap.Room in rooms_.get(&"next_rooms"):
-				var info: Dictionary = rooms_.call(&"door_info", i)
-				layer.append({"id": next_id, "kind": r.kind, "reward": r.reward, "hard": info.get("hard", false),
-					"arena": info.get("arena", ""), "guardian": _guardian_of(r)})
-				doors.append(next_id)
-				next_id += 1
-				i += 1
-		else:
-			var node := {"id": next_id, "kind": RunMap.Kind.COMBAT, "reward": RunMap.Reward.NONE}
-			if d == at and here != null:
-				node.kind = here.kind
-				node.reward = here.reward
-				node.guardian = _guardian_of(here)
-			elif d == total:
-				node.kind = RunMap.Kind.BOSS
-			elif d == stage.rooms:
-				node.kind = RunMap.Kind.SHOP
-			elif d == run_map.miniboss_depth and d > at:
-				node.kind = RunMap.Kind.MINIBOSS
-			layer.append(node)
-			if d <= at:
-				path.append(next_id)
-			next_id += 1
-		layers.append(layer)
-	# every room of a depth links to every room of the next one
-	for i in layers.size() - 1:
-		var ids: Array = (layers[i + 1] as Array).map(func(n: Dictionary) -> int: return n.id)
-		for n: Dictionary in layers[i]:
-			n.next = ids
-	return {"layers": layers, "path": path, "current": path[-1] if not path.is_empty() else 0, "doors": doors}
-
-
-static func _guardian_of(r: RunMap.Room) -> StringName:
-	if r.kind != RunMap.Kind.MINIBOSS or r.fight == null or r.fight.kinds.is_empty():
-		return &""
-	return r.fight.kinds[0]
+	var m := from_dict(((rooms_ as Object).get(&"map") as RunMap).view())
+	for i in m.doors.size():
+		var info: Dictionary = (rooms_ as Object).call(&"door_info", i)
+		var r := m.room(int(info.get("node", m.doors[i])))
+		if r != null:
+			r.hard = bool(info.get("hard", false))
+	return m
 
 
 func first_id() -> int:

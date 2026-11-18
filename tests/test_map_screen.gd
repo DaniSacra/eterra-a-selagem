@@ -157,12 +157,24 @@ func _run() -> Game:
 	return game
 
 
-func test_the_map_of_a_run_reads_the_descent() -> void:
+func test_the_map_of_a_run_is_the_runs_graph() -> void:
 	var game := _run()
 	await get_tree().process_frame
+	var rm: RunMap = game.rooms.map
 	var m := DescentMap.from_game(game)
-	assert_eq(m.depths(), game.rooms.stage.rooms + 1)
+	assert_eq(m.depths(), rm.last_depth())
+	assert_eq(m.rooms.size(), rm.nodes.size(), "every room of the graph")
+	assert_eq(m.current, rm.here.id)
 	assert_eq(m.room(m.current).depth, game.rooms.depth())
+	assert_eq(m.doors, rm.here.next, "the doors are the room's links, door i = next[i]")
+	assert_eq(m.path, rm.path)
+	for r: RunMap.Room in rm.nodes:
+		var mr := m.room(r.id)
+		assert_eq(mr.depth, r.depth)
+		assert_eq(mr.kind, r.kind)
+		assert_eq(mr.next, r.next)
+		assert_eq(m.mark(r.id) == DoorGlyph.Kind.UNKNOWN, r.hidden, "\"?\" exactly where the graph hides one")
+		assert_eq((m.layers[r.depth - 1][mr.index] as DescentMap.Room).id, r.id, "drawn in its slot")
 	assert_eq(m.room(m.layers[-1][0].id).kind, RunMap.Kind.BOSS)
 
 
@@ -173,7 +185,7 @@ func test_opening_from_the_hud_stops_the_run_and_closing_goes_on() -> void:
 	assert_eq(game.mode, Game.Mode.PLAY)
 	assert_true(game.hud.map_button.visible, "the button beside the room's number")
 	assert_string_contains(game.hud.map_button.text, Controls.label(&"map"))
-	var before := DescentMap.line_of(game.rooms)
+	var before := game.rooms.map.view()
 	for k in 20:
 		var s := game.hud.open_map()
 		assert_not_null(s)
@@ -188,7 +200,7 @@ func test_opening_from_the_hud_stops_the_run_and_closing_goes_on() -> void:
 		s.close()
 		await get_tree().process_frame
 		assert_eq(game.mode, Game.Mode.PLAY)
-	assert_eq(DescentMap.line_of(game.rooms), before, "opening and closing changes nothing")
+	assert_eq(game.rooms.map.view(), before, "opening and closing changes nothing")
 
 
 func test_the_pause_has_the_map() -> void:
