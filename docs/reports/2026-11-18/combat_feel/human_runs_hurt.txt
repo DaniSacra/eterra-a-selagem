@@ -1,0 +1,16 @@
+user://runs.jsonl do PO (12 partidas de 2026-11-16 a 2026-11-18, teclado), hurt_ctx agregado por quem bateu
+golpes levados: 67
+mage          n=13 (19%) aviso s: mediana 2.21 min 1.24 max 3.77  fora da tela 0  esquiva pronta 11
+runner        n= 9 (13%) aviso s: mediana 0.82 min 0.70 max 0.82  fora da tela 0  esquiva pronta 9
+mage_elite    n= 9 (13%) aviso s: mediana 2.63 min 1.20 max 3.80  fora da tela 0  esquiva pronta 8
+skeleton      n= 7 (10%) aviso s: mediana 1.05 min 1.05 max 1.20  fora da tela 0  esquiva pronta 7
+archer        n= 6 ( 9%) aviso s: mediana 1.25 min 0.83 max 1.35  fora da tela 0  esquiva pronta 4
+scythe        n= 4 ( 6%) aviso s: mediana 0.87 min 0.80 max 1.09  fora da tela 0  esquiva pronta 4
+knight        n= 3 ( 4%) aviso s: mediana 1.00 min 0.80 max 1.00  fora da tela 0  esquiva pronta 3
+priest_elder  n= 3 ( 4%) aviso s: mediana 1.23 min 1.20 max 1.83  fora da tela 0  esquiva pronta 3
+eruptions     n= 3 ( 4%) aviso s: mediana 1.08 min 1.08 max 1.14  fora da tela 0  esquiva pronta 3
+runes         n= 3 ( 4%) aviso s: mediana 1.20 min 1.20 max 1.20  fora da tela 0  esquiva pronta 3
+blades        n= 2 ( 3%) aviso s: mediana 0.82 min 0.80 max 0.82  fora da tela 0  esquiva pronta 2
+priest        n= 2 ( 3%) aviso s: mediana 3.63 min 2.12 max 3.63  fora da tela 0  esquiva pronta 1
+curse         n= 2 ( 3%) aviso s: mediana 1.15 min 1.09 max 1.15  fora da tela 0  esquiva pronta 1
+guard         n= 1 ( 1%) aviso s: mediana 0.65 min 0.65 max 0.65  fora da tela 0  esquiva pronta 1

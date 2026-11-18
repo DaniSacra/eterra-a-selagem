@@ -1,0 +1,29 @@
+## emp_1.csv frames 3602 (60 s)
+  archer           windups  34  reached attack  33 (97%)  cut   0
+  skeleton         windups  30  reached attack  30 (100%)  cut   0
+  hits on hero by: {'archer': 32, 'skeleton': 30}
+## emp_2.csv frames 3602 (60 s)
+  skeleton         windups  61  reached attack  59 (97%)  cut   0
+  hits on hero by: {'skeleton': 59}
+## bot2.csv frames 11446 (191 s)
+  archer           windups  12  reached attack   9 (75%)  cut   2
+  guard            windups   8  reached attack   4 (50%)  cut   3
+  priest           windups   5  reached attack   2 (40%)  cut   3
+  priest_elder     windups  12  reached attack  11 (92%)  cut   1
+  runner           windups   2  reached attack   1 (50%)  cut   0
+  skeleton         windups  26  reached attack   4 (15%)  cut  20
+  hits on hero by: {'priest_elder': 4, 'priest': 1}
+## bot3.csv frames 11862 (198 s)
+  archer           windups  20  reached attack  17 (85%)  cut   3
+  guard            windups  12  reached attack   6 (50%)  cut   6
+  mage             windups   4  reached attack   4 (100%)  cut   0
+  priest           windups   9  reached attack   4 (44%)  cut   5
+  priest_elder     windups   7  reached attack   7 (100%)  cut   0
+  skeleton         windups  14  reached attack   0 ( 0%)  cut   8
+  hits on hero by: {'mage': 1, 'priest_elder': 9}
+## mb_1.csv frames 2702 (45 s)
+  knight           windups  10  reached attack  10 (100%)  cut   0
+  hits on hero by: {'knight': 10}
+## mb_2.csv frames 2702 (45 s)
+  knight           windups  10  reached attack  10 (100%)  cut   0
+  hits on hero by: {'knight': 10}

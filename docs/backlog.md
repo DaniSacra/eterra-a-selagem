@@ -1,759 +1,313 @@
 # Backlog de A Selagem
 
-- **Data**: 2026-11-16 (noite, mais tarde). **Autor**: game-director (sétima revisão: a diretriz "um herói definitivo").
-  **Commit lido**: `19af96b` (HEAD de `arpg-3d`); desde a revisão anterior (`71cb8cc`): `1e25f21` (D-42 a D-47 decididas),
-  `3fc721b` (GF-14), `6f9bbc7` (A-1, B-1), `aaaacfc`, `4c560eb`, `491c6d4`, `1d06613` (C12d), `2b5647d` (Ravenswatch),
-  `efa5cf4` (QA do C12d), `262f99b` (carta nova), `19af96b` (tela cheia, "Sair do jogo").
-- **Diretrizes do Daniel**: `docs/design/game_feel_directive.md` (game feel e excelência visual, prioridade máxima) e
-  `docs/design/one_hero_directive.md` (nova: um herói só, Maestria, Dons, Bênçãos, Salmos; decisões 1 a 12).
-  **Especificação nova**: `docs/design/guardian_spec.md`. **Roteiro**: `docs/design/roadmap_plan.md` seção 00 (manda sobre
-  a 0.3).
-- **Terminologia nova**: para o jogador, "Bênção" é a carta da descida (no código continua `Boon`) e "Dom" é o talento
-  permanente do herói (no código `Talent`, ainda não existe). Nos itens antigos deste backlog, "dom" quer dizer Bênção.
-- **Fontes lidas**: `docs/qa/latest_report.md` (QA do C12d, `efa5cf4`), `docs/gallery/boon_cards/ill_1080.jpg` (olhada),
-  o código de Bênçãos, save, registro, combos e herói, o cânone (`../dungeon-rpg/docs/mundo/canone.md`, 12/11).
-- **Rodado por mim**: `tools/test.sh` no `19af96b`: **541 de 541** (104071 asserções, 112 s). Nada do jogo foi mudado.
+- **Data**: 2026-11-18 (fim do ciclo). **Autor**: game-director (oitava revisão, reescrita; substitui a de 2026-11-16/17).
+  **Commit lido**: `dd1f5ba` (HEAD de `arpg-3d`), com `git log --since=2026-11-17` (43 commits: T5, T5b, sala de música,
+  pacote de arte 1A, 1B, 2 e 4, Créditos fora do jogo, auditoria e C1 de assets, corredor no chão).
+- **Pedido do Daniel**: "passa todos os agentes para gerar backlog para o diretor do jogo, vamos refinar mais ainda o
+  jogo"; meta: "uma mecânica perfeita e gostosa de jogar como no Hades 2", arte no molde do Ember & Blade, identidade de
+  Eterra.
+- **Fontes lidas**: os 7 relatórios de `docs/reports/2026-11-18/` (`combat_feel.md`, `gameplay.md`, `art.md`,
+  `environment.md`, `ui.md`, `qa.md`, `assets.md`, com as capturas), a auditoria de arte em montagem
+  `docs/gallery/audit_2026-11-18/AUDITORIA.md` (seções de Morvath, identidade e inimigos ainda vazias), `docs/qa/t5b_boss_fight.md`,
+  `docs/qa/asset_report.md`, o backlog anterior e o `CLAUDE.md`. Capturas abertas por mim: `art/shop.jpg`, `art/boss3.jpg`,
+  `ui/shop_720_shop.jpg`.
+- **Rodado pelos agentes nesta rodada** (não por mim): `tools/check.gd` ok; `tools/test.sh` **992/992** em 4 rodadas;
+  `title_flow_check` ok; sonda de game feel **40/40**; 24 descidas do robô (reação 0,25) sem erro e sem ninguém preso.
 
 ## Estado do jogo em 5 linhas
 
-1. **C12d fechado** (QA `efa5cf4`): sonda de game feel 31/31 (antes 4/31), nenhum aperto perdido, hit stop no molde do
-   Hades II, latência 14 ms sem vsync e 35 a 42 ms com, 8 descidas com 4 vitórias e ninguém preso. Falta o tempo de quadro
-   na placa com o notebook na tomada (M-a).
-2. Depois dele: carta de escolha nova (`BoonCard`, três medalhões pintados por IA, declarados em `steam-ia.md`), tela cheia
-   por padrão e "Sair do jogo" na pausa. A versão do **T3** está pronta e ainda não foi jogada por gente.
-3. **Diretriz nova**: só o Explorador/Guardião até a qualidade desejada; Maestria e Dons permanentes do herói; as cartas
-   viram Bênçãos (comum, rara, épica, lendária); Salmos transformam; Compêndio. Nada disso existe no código; a auditoria
-   achou um bug latente no save (DT-012) que tem de sair antes.
-4. Visual: a mão está boa; a multidão animada aos saltos, as armas do KayKit e Morvath genérico (C12e, C12f) continuam
-   sendo o que mais fica abaixo do Ember & Blade.
-5. Ordem: **T3, C12e, C12f, T4 (E1)**, depois **E2 Maestria e Dons**, **E3 Bênçãos e combinações** (o C13 antigo, com a
-   descida de 10 salas), **E4 Salmos e Compêndio**, **E5 eventos e exploração**, **E6 balanceamento**, C16 Steam.
+1. **A mão está no molde do Hades II e estável**: sonda 40/40, 992 testes, nenhum P0 em nenhum dos 7 relatórios; robô vence
+   7 de 8 com Maestria 1, chega a Morvath aos 200 a 320 s com 5 a 8 Bênçãos.
+2. **O T5 e o T5b se sustentam**: aviso enche no quadro do dano em 160 golpes medidos, ninguém pula mais (feiticeiro,
+   besteiro e corredor com pés no chão), Morvath sem estalos de giro.
+3. **O que tira o "gostoso" agora é justiça e variedade, não a mão**: orbes do feiticeiro são 33% dos golpes que o PO levou,
+   o corredor bate com 0,7 s de aviso (Hades 1,5), a fase 1 de Morvath é a foice em laço, elites só ganham armadura, e uma
+   regra está quebrada (Provação tardia nunca paga a Bênção).
+4. **Arte**: linguagem própria e coerente (ardósia, ouro velho, Emeth, leão; cartas, menus 1B e Livro de Ahk na mesma
+   língua), mas toda sala vencida mostra recompensas em cubos e prismas chapados (P0 de arte) e o cenário satura três
+   cores ao mesmo tempo onde o Ember & Blade só satura o efeito.
+5. **Steam**: falta o mínimo de robustez (save atômico, pausa ao perder o foco, menus testados por controle) e a licença do
+   Meshy, que só o Daniel responde. Nada de C16 até ele pedir.
 
-Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade** P0 (antes de tudo), P1 (nesta entrega), P2
-(próxima), P3 (depois). **Estado**: aberto, em andamento, proposta (espera o Daniel), aprovado, feito. Responsáveis:
-`gameplay-engineer`, `environment-artist`, `ui-ux-designer`, `art-director`, `qa-performance`; "Daniel" quando a decisão é dele.
-
----
-
-## 0. Feito (fechado com evidência)
-
-### E1c "Golpe parado" (2026-11-16, teste do Daniel da E1 e o vídeo dele do Hades II; sem commit ainda)
-
-| ID | Item | Prova |
-|---|---|---|
-| GF-16 | Golpe parado: sem avanço nos golpes (saíram `lunge_toward`, `LUNGE_MAGNET`, `HeroDef.lunge_standoff`; só o Corte Veloz avança, 3,2 m), andar nunca corta o golpe, trava de pernas com tempo fixo depois do acerto (`ComboNode.move_hold`, contada no `ComboRunner`, só a esquiva corta), nenhum quadro de corrida enquanto preso (`ComboRunner.planted`). Causa: o avanço magnético (`affd7bb`, encurtado em `73d0f89`) e o "depois do acerto, andar corta o fim do golpe" (`affd7bb`) | sonda E1c-P1 a P3: 0,000 m e 0 quadros de corrida em golpe 1, 2, giro, seta, onda e lança com a direção segurada; `tests/test_warrior_strike.gd` |
-| GF-17 | Tempos do cajado do Hades II (`docs/design/hades2_feel_study.md`): preparação 0,08 / 0,13 / 0,36 s, trava de ataque 8 / 13 / 18 quadros, pernas 11 / 19 / 30 quadros; especial e Ômega do especial com as pernas presas 0,71 s (D-44 mantida) mas na pose, sem patinar; lança 0,78 s | sonda E1c-P4 a P6 (preparação 5, 8, 22; pernas 11, 19, 30, 43, 43, 47; cadência 13 e 21 quadros) |
-| GF-18 | Retorno visível: o resto do clipe do golpe toca ao longo da trava de pernas (`ComboNode.follow_speed`; antes o golpe 1 voltava 3,7 vezes rápido demais, porque o clipe seguia na velocidade da preparação, `affd7bb`) e, parado, o clipe de volta à guarda (`recover_anim`: `Slash_A_Rec`, `Slash_B_Rec`) | `docs/gallery/e1c/hero/combo_*.mp4`, `combo_frames.jpg`; teste `test_the_return_clip_plays_when_he_stands` |
-| GF-19 | Estados verificáveis `ComboRunner.Stage` (IDLE, WINDUP, STRIKE, RECOVERY) e janelas documentadas (`warrior_spec.md` 2.2) | teste `test_the_stages_run_idle_windup_strike_recovery_idle` |
-| GF-20 | Empurrão dos golpes 1 e 2 de 8 e 10 para 2,5 e 3 m/s (`COMBO_PUSH`): sem avanço, o alvo saía do alcance do giro (3 m) e o giro errava | sonda GF-01c (o giro volta a acertar o boneco) |
-| BUG-E1c-1 | Golpe sozinho ao começar a partida: o clique em Iniciar (ataque) e o Espaço (esquiva) ficavam guardados no `Controls` (o título não chama `flush`) e saíam no primeiro quadro; o mesmo ao escolher dom e sair da pausa, e o Esc que fechava a pausa a reabria. `Controls.clear_presses` (esquece e engole o que está apertado até soltar) no `Game._ready` e no `_back_to_play` | `tests/test_input_leak.gd` (6 testes, todos falham sem a correção); `docs/gallery/e1c/bugs/inicio_*` |
-| BUG-E1c-2 | Sopro da lâmina sintetizado ("parece pacman" com E apertado sem parar): amostras CC0 sorteadas (3 a 5 por família), tom 12%, `VoiceGate` (70 ms, no máximo 2 vozes); impacto só com acerto | `tests/test_voice_gate.gd`; `docs/gallery/e1c/bugs/e_repetido_*` |
-| GF-21 | Inimigos "estranhos" (`docs/gallery/e1c/enemies/AUDIT.md`, P1 a P9; números do Hades II): o desenho segue o corpo (velocidade real suavizada em 0,1 s; abaixo de 0,3 m/s `idle`, acima o andar no ritmo dela; mais de 60 graus entre movimento e rosto vira o corpo a 1200 graus/s; sacerdote parado em `idle`), recuperação parada depois do golpe (`EnemyDef.recover_time`, `Enemy.State.RECOVER`: esqueleto 2,1 s, elite 1,5, corredor 1,35, elite 0,5, Escudo 1,1, besteiro 0,6, mago 0,8, Cavaleiro 0,8), golpe do esqueleto com a descida da lâmina (`attack` de 0,3 a 1,2 s do `Sword_Attack`), mistura de 0,1 s entre clipes para todos (a do chefe reaproveitada), golpe sofrido no atordoamento inteiro, atordoamento 0,5 e 1,1 s, 0,5 s antes de reanunciar uma preparação cortada, esqueleto com pé travado a 149 passos por minuto, ancião a 91, besteiro com a besta baixa, bote do esqueleto parando no contorno do herói, no máximo 2 esqueletos preparando | `tests/test_enemy_motion.gd` (9); sonda da auditoria nas sementes 5, 1, 2, 3 (antes e depois no relatório do gameplay-engineer); `docs/gallery/e1c/enemies/after/` |
-| BUG-E1c-3 | Morvath some e aparece em outro lugar: deslocamento de raiz dos clipes no desenho (foice 8 m desde `43229d9`, lâminas 3 m desde `faef8d6`, arremesso 1,8 m desde `43229d9`); `in_place` no assado. Mais: corte seco entre clipes (0,96 m num quadro) virou mistura de 0,12 s, atordoado desenhado parado (desde `02b968e`), soltura das lâminas e da maldição no quadro do tiro | `tests/test_boss_body.gd`; `tools/boss_probe.gd`, `tools/pose_drift.gd`; `docs/gallery/e1c/bugs/morvath_*` |
-
-Pendências da E1c: a carga dos Ômegas ainda deixa andar a toda (o Hades anda a 3% na carga da lança); travas duras do
-Hades (6, 3, 9 quadros que nem a esquiva corta) de fora; mistura para a corrida fixa em 0,08 s (Hades: 4 a 11 quadros);
-o giro do corpo para o inimigo mais perto só sem mouse (como antes; o Hades gira também com mouse?); DPS do combo cai
-(ciclo de 1,18 s para 1,34 s em três golpes encadeados); a luta com Morvath ficou mais longa para o robô (105 a 199 s).
-Pendências dos bugs da E1c: a mistura entre clipes de Morvath usa duas linhas de pose (a última mostrada e a pose mais
-perto do clipe novo), então no fim da mistura ou quando a pose nova avança no meio dela o corpo ainda anda até meio passo
-de pose num quadro (pior 0,6 m na invocação, cuja 1ª pose está 0,7 m da 2ª no assado); uma terceira linha no
-`crowd_pose.gdshaderinc` (do environment-artist) tiraria isso. As Lâminas preparam com o mesmo clipe da investida
-(`dash_windup`). Os inimigos comuns trocam de clipe com a mesma mistura desde o GF-21 (0,1 s; com as mesmas duas linhas).
-Pendências do GF-21: pose da besta baixa (guarda do `Sword_Idle`, a besta ao lado do quadril, apontando para fora) aguarda o
-art-director; a recuperação segura a última pose do clipe do golpe (o Hades toca uma animação de volta própria); o corredor
-quase nunca ataca (P10, papel vazio, decisão de design); esqueleto e mago andam de lado entre 35 e 60 graus parte do tempo
-(o limite pedido é 60).
-
-### C12d "Game feel I: a mão" e o que veio depois (2026-11-16)
-
-| ID | Item | Commit | Prova |
-|---|---|---|---|
-| GF-14 | Sonda com metas (`FEEL ok/falha`, `FEEL_SUMMARY`) | `3fc721b` | antes 4/31 |
-| A-1, B-1 | Colunas da recompensa e da fonte e gemas das portas até 235 na tela (`ScreenTone`, `beam.gdshader` pré-multiplicado) | `6f9bbc7` | `tone_probe`; **sem captura do QA neste ciclo** (o QA do C12d não remediu) |
-| VX-11, VX-12, GF-11 (opção) | Nenhum `PALADIN_n` para o jogador; contador menor; opção de vibração | `aaaacfc` | testes; 508 no commit |
-| GF-01 a GF-10, GF-13 | Hit stop do Hades II (`HitStop`), esquiva corta a preparação, ataque guardado na esquiva e no golpe sofrido, buffer contado do golpe aberto, controle virtual guarda o toque, seta 18 quadros e 0,7 s com pernas presas 0,71 s (D-44), Ômega acerta ao encher, círculo sem proteção (D-44), virada na hora, tranco 0,087 m (D-43), clarão 0,05 s, sons de disparo, vibração; latência medida | `4c560eb`, QA `efa5cf4` | sonda **31/31**, 0 `LOST` (`docs/gallery/c12d/after/feel_probe.txt`); latência 14 ms sem vsync, 35 a 42 com |
-| VX-01 a VX-03, VX-08 a VX-10 | Fio marfim na ponta da Emeth sobre tinta translúcida, brilho do finalizador fraco sobre o herói, avisos com preenchimento só nos últimos 30% e uma vez onde se cruzam, queimadura mantém o violeta, aro do círculo mais fino, lascas alongadas | `491c6d4`, `1d06613` | `docs/gallery/c12d/work/vx01_corte_antes_depois.jpg`; vídeos `comparacao_*_0_25x.mp4` |
-| QW-016 | Galeria de game feel antes e depois | `efa5cf4` | `docs/gallery/c12d/after/`, `AFTER.md` |
-| Ravenswatch | Terceira referência (só princípios) | `2b5647d` | `benchmark_ravenswatch.md` |
-| UI-03 | Carta de escolha nova (`BoonCard`, arte em cima, nome marfim, família ou origens do Elo, ação, nível, raridade, regra de ouro velho, descrição); medalhões pintados de `vapor`, `aurora`, `redemoinho` (`BoonArt`) | `262f99b` | `docs/gallery/boon_cards/` (olhei `ill_1080.jpg`: lê bem; ver BUG-017) |
-| UI-04 | Tela cheia por padrão (saves antigos mudam uma vez), "Sair do jogo" na pausa no desktop | `19af96b` | `test_save.gd` |
-
-Aceite do C12d (backlog anterior, seção 6): itens 1 a 4 e 6 passam pelo QA; o 5 passa nas capturas; **o quadro a 1080 sem
-piora acima de 0,3 ms segue sem medida válida** (M-a). O plano do C12d está no histórico (`1e25f21:docs/backlog.md`).
-### C12c "Qualidade da experiência" (`beb6c27`, medido no QA-02 `71cb8cc`)
-
-| ID | Item | Estado | Prova |
-|---|---|---|---|
-| GP-01 | Colunas e gemas abaixo do glow; Morvath entra sem coluna | **em parte**: entrada de Morvath passa (corpo 45 aos 0,5 s, sem coluna); gemas com cor de volta mas canal dominante 255; colunas da recompensa e da fonte **255 na tela** (A-1, em correção) | `cycle12c/AFTER.md` GP-01; `after/coluna_recompensa_criptaA.jpg`, `coluna_fonte.jpg`, `morvath_entrada_0_5s.jpg` |
-| GP-02 | Registro v2 (`source`, `boons_at_boss`, `shop`, `fountain_used`, `hurt_ctx` com `warn_s`, `dash_ready`, `offscreen`; por sala `variant`, ouro, dons, esquivas, golpes, tiros, `blocked_by`) | feito | QA-02 item 6; `after/descida_run.jsonl` |
-| GP-03, GP-04 | `resolve` acha o lugar livre mais perto; cercado nos corredores mais estreitos, 16 de 16 esquivas saem | feito | `beb6c27`; testes |
-| GP-05 | Limitador -1 dB no `Master` | feito | pico -2,94 dBFS na descida com som (QA-02 item 5) |
-| GP-06 | `--trace-cam`; alvo da câmera a no máximo 24 m/s | feito | maior salto 0,400 m em 46 salas (antes 2,9 m) |
-| (QA-01) | Aviso no chão não fere depois da sala vencida | feito | `after/sem_dano_apos_sala_vencida.jpg` |
-| UI-01, UI-02 | `DoorSign` (18 px a 1080, contraste 12:1); derrota com sala, arena e dons | feito | `work/ui_after_doors_1080.jpg`, `ui_after_end_1080.jpg`, `tests/test_end_screen_run.gd` |
-| ENV-01 | Chão da Cripta na luta 45 a 60 | **em parte**: mediana 30 para 43,5, 4 de 8 recortes no alvo; oeste e norte 19 a 34 (M-1) | `after/crypt_vA_c_recortes.jpg`, `crypt_vB_c_recortes.jpg` |
-| ENV-02 | Fraturas da árvore até 200 | feito (máximo 198) | `AFTER.md` ENV-02 |
-| ENV-03 | Jardim no Compatibility (sem sombra da lua) | feito pelo `environment-artist`, não remedido pelo QA | `work/env_garden_compat_antes_depois.jpg` |
-| ART-R1 | Fendas reconferidas (F-1 a F-3, F-5, F-6, G-1 passam; F-4 dois pontos abaixo) | feito; D-38 sem objeto | `4d281bc` |
-| QA-01, QA-02 | Linha de base e medidas depois, vídeo de descida com som a 1080 (DT-004), 11 vídeos de game feel | feito | `c5798a8`, `71cb8cc`; `docs/gallery/cycle12c/`, `docs/gallery/game_feel/` |
-| GF-R | Game Feel Review: medidas (`74af372`), revisão visual (`f07549f`), vídeos (`71cb8cc`), revisão oficial | feito | `docs/design/game_feel_review.md` |
-
-Aceite do C12c (roadmap D): itens 1, 2, 4, 5, 6, 7, 8, 9 passam; **3 não passa** (colunas, A-1) e o 3b passa em parte
-(M-1). O C12c fecha quando o A-1 entrar com captura na GPU; o M-1 pode fechar por aceite do `art-director` (cantos
-escuros de propósito, aceite só no terço central) ou por correção.
-
-### C12b "Fecho das Fendas" (2026-11-16)
-
-| ID | Item | Commit | Prova |
-|---|---|---|---|
-| F-1 a F-5 | Paredes da fenda escuras com bruma violeta abaixo (`rift_haze.gdshader`), bordas quebradas com pedras caídas, pontes com lajes próprias, meio-fio, parapeito vazado, pilares de canto e pegões, lua como luz principal | `87ba686` | `work/fix_rift_vA_antes_depois_cenario.jpg` (olhado: a fenda lê como rasgo com pontes); medidas de aceite a reconferir pelo `art-director` (ART-R1) |
-| F-6 | Inscrições fracas entre a fenda e o buraco | `87ba686` | idem |
-| G-1b | Ar do Compatibility nas Fendas | `87ba686` | `work/fix_rift_vA_compat_vs_forward.jpg` |
-| D-39 | O Daniel confirmou: mecânicas e números do Hades II fielmente, nomes, personagens, UI e arte de Eterra | conversa de 2026-11-16 | `docs/design/roadmap_plan.md` |
-
-### C12a2 "Medir certo" e C12 "Arenas I" (2026-11-16)
-
-| ID | Item | Commit | Prova |
-|---|---|---|---|
-| BUG-014 | "Derrotado por" e `boss.hurt_by` com o golpe que matou (`Player.was_hurt` antes de `died`) | `f25ae5f` | `tests/test_killing_blow.gd` |
-| QW-011 | `RESULT` e `runs.jsonl` com `rooms` (`depth`, `layout`, `hp_in`, `hurt_by`, `time`, `contact`), `hp_at_boss`, `arena`, `stuck`, `stuck_by`, `shots_blocked` | `f25ae5f` | `core/room_tally.gd`; `METRICAS.md` seção 1 |
-| QW-013 | Vida ao entrar no chefe na métrica do robô | `fd72101` | `METRICAS.md` seção 2: `hp_at_boss` 12 a 53, mediana 24, 8 descidas |
-| DT-008 | Momento do pico do passo: `--trace-steps`; os picos de 5 a 12 ms caem num sistema diferente a cada vez, fora de custo próprio (interrupção da máquina) | `f25ae5f` | `METRICAS.md` seção 3; o que sobrou virou QA B-1 |
-| BUG-015 | Tiros param em pedra acima de 1,25 m, com faísca; ramo rasteiro do sacerdote para em tudo que barra corpo | `f25ae5f` (C12-F4) | testes em `test_arenas.gd`; 1,1 a 1,3 tiros barrados por luta na Cripta |
-| BUG-016 | Nascimento por zonas com caminho; limite dos tiros pela sala real | `f25ae5f` (C12-F5) | `test_arenas.gd`; 0 preso em 192 lutas |
-| C12-F1 a F9 | `RoomLayout` estendido, `FloorShape.POLY` com buracos, `Arena.sweep`, `NavGrid` e `FlowField`, linha de tiro, nascimento e saídas, `cam_bounds`, robô com caminho, escolha da arena sem repetir, `--arena`, `--variant`, `tools/arena_lab.gd` | `f25ae5f` | 455 testes no commit; QA seções 2 e 3 |
-| C12-A0 | Salão das Catacumbas como arena (abertura, fonte, loja; `--arena=hall`) | `f25ae5f` | `METRICAS.md` seção 5 (5,09 ms) |
-| C12-A1 | Cripta dos Esquecidos, 2 variantes | `e2297ee`, `95c29c6` | `cycle12_maps/crypt/`; aprovada na `ART_REVIEW.md` |
-| C12-A2 | Salão das Fendas, 2 variantes | `e2297ee` | `cycle12_maps/rift/`; arte corrigida no `87ba686` (C12b acima) |
-| C12-A3 | Jardim das Raízes Mortas com a árvore petrificada (D-30) | `91cc656`, `95c29c6` | `cycle12_maps/garden/`, `work/garden_grid_a`; aprovado |
-| D-27 | Descida de teste de 7 salas (`--short` volta à de 5) | `f25ae5f` | `test_descent.gd` |
-| D-28 | Golpe empurra até a borda, ninguém cai | `f25ae5f` | `Arena.sweep`; 0 corpo fora do chão |
-| D-33 | Nome da arena por 2 s ao entrar (`Hud.show_place`, chaves `arena_*`) | `f25ae5f` | `vX_b_explorador.jpg` |
-| D-34 | Estandartes com o leão no salão e nas arenas (a câmara segue com a espada) | `501f3d8` (spec), `e2297ee` | `ArenaKit.Emblem.LION`, `banner_lion.gdshader` |
-| C-1 a C-4 | Tampa do túmulo no valor da pedra sob facho 1,6; capitéis e aduelas; degraus no valor da cantaria; lápides | `95c29c6` | `work/fix_crypt_antes`/`_depois` |
-| J-1 a J-4 | Cristais esmeralda corrompido escuro; casca torcida com grão, líquen e fraturas, tronco 1,16 a 1,22 do chão; raízes com dois lombos e pontas abertas; capim | `95c29c6` | `work/fix_garden_arvore_antes_depois` (olhado: os cristais deixaram de competir com a Emeth) |
-| G-1 (Cripta e Jardim) | Compensação do Compatibility por sala (`COMPAT_*`) | `95c29c6` | `work/fix_crypt_compat`, `fix_garden_compat`; **as Fendas ficaram de fora** (G-1b abaixo) |
-| DT-004 (parte) | Vídeo de travessia por arena (20 s, 1280 x 720, sem som) | `fd72101`, `95c29c6` | `cycle12_maps/*/travessia.mp4`; o vídeo da luta com som segue aberto |
-
-### Antes (histórico)
-- C12a da madrugada (BOSS-001 a 003, QW-006 a 008, BUG-010 a 012, DT-007, D-24), atiradores do Hades II (`da35721`,
-  `c666f4a`), teste T1 do Daniel: ver `752ceee:docs/backlog.md`.
-- C10 e C11 (BUG-001 a 009, QW-001 a 005, ART-001, ART-003 a 009, Câmara do Selo): `fa30024:docs/backlog.md`.
+Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade** P0 (antes de tudo), P1 (neste ciclo), P2
+(próximo), P3 (depois). Origem: CF = `combat_feel.md`, GP = `gameplay.md`, ART = `art.md`, ENV = `environment.md`, UI =
+`ui.md`, QA = `qa.md`, AS = `assets.md`, AUD = `AUDITORIA.md`, T5b = `t5b_boss_fight.md`. Responsáveis:
+`gameplay-engineer`, `environment-artist`, `ui-ux-designer`, `art-director`, `qa-performance`, `combat-feel-director`,
+`technical-artist`; "Daniel" quando a decisão é dele. O que é opinião minha está dito.
 
 ---
 
+## 0. Feito em 17 e 18/11 (fechado com evidência)
+
+| Entrega | Commits | O que entrou | Evidência |
+|---|---|---|---|
+| **T5** (correções do teste do PO) | `c81d00c`, `37faec0`, `6338417`, `0c1207e`, `c7df16d`, `da41133`, `2374577`, `496b1d4`, `579fe89`, `8778f8b`, QA `fe07159` | ultimate carrega por dano causado e sofrido, primeira aberta sem escolha, HUD diz o que falta; preparação dos inimigos em três tempos com dano do corpo; esqueleto sem tremor e com trote; música gravada e efeitos em camadas; Provação e Altar se explicam na tela; investida atrás do escudo; fuga dos atiradores estável | `docs/design/t5_ultimate.md`, `docs/qa/t5_enemy_motion.md`, `docs/design/t5_audio.md`, `docs/gallery/t5/`, `docs/qa/latest_report.md` |
+| **Sala de música** | `5337385` | música original de volta como padrão; tela Músicas para ouvir e escolher por lugar (título, masmorra, Morvath) | `tests/test_music_room.gd`, `docs/gallery/t5/ui/music_room_*.jpg` |
+| **T5b** ("esqueletos pulando" na luta de Morvath) | diagnóstico `b79459e`, correção `5aeee46` | feiticeiro e besteiro trotam no chão (0% no ar, era 25 a 32%), erguer termina na guarda, mistura de clipe sem degraus, Morvath gira até 12 graus por quadro (era 137), invocado espera 0,6 s antes do primeiro golpe | `docs/qa/t5b_boss_fight.md` seção 6, `docs/gallery/t5b/` |
+| **Corredor no chão** ("esqueleto cor de ferrugem tremendo") | `40d6618` | `Jog_Fwd` com pés travados (171 passos/min, 3,2 cm), balanço pela passada (`Horde.stride_lean`), saíram `SWAY_HZ` e `UNEVEN_STEP` | `t5b_boss_fight.md` seção 7, `docs/gallery/t5b/runner/`; aprovado pelo art-director (ART, "a corrida nova") |
+| **Pacote de arte 1A** (cartas, HUD, eventos) | `2001359` | 7 medalhões pintados, selos do altar e da Provação, "Sai/Entra" na troca, marcas de recompensa nas placas, anel da ultimate pronta, "Escolha uma bênção" | `docs/gallery/artpack/stage1a/` |
+| **Pacote de arte 1B** (menus) | `9d583d0` | pausa, Suas Bênçãos, vitória, derrota, Configurações em abas e Como Jogar numa língua de página só | `docs/gallery/artpack/stage1b/after/` |
+| **Livro de Ahk** (etapa 2) | `4fab502` | Abertura, O Guerreiro (retrato pintado), árvore de Dons com glifo por efeito e caminhos acesos, Compêndio como índice do livro | `docs/gallery/artpack/stage2/after/`, `tests/test_book.gd` |
+| **Etapa 4** (salas) | `4e63298` | raízes e musgo do Jardim e lábios das Fendas no chão andável, postes das portas, moeda de ouro na porta, meias-luas de Morvath em violeta frio, selo que se aquieta sob os ataques | `docs/gallery/artpack/stage4/` |
+| **Créditos fora do jogo** (pedido do PO) | `099a486` | sem tela de Créditos; toda atribuição em `CREDITOS.txt` ao lado do exe | `CREDITOS.txt` |
+| **Assets: auditoria e C1** | `d458633`, `28fd0a9`, `010ef90` | agente `technical-artist`; inventário; fontes de assado fora do pacote, paleta única do KayKit, BC7/BC5/BC4: exe de 219,7 para 197,2 MB, texturas 3D de 161 para 10 MB de VRAM | `docs/qa/asset_report.md`, `docs/art/asset_inventory.md` |
+
+Saíram deste backlog por estarem feitos (prova nos commits citados no backlog anterior e no `CLAUDE.md`): E1a a E1c, E2 a
+E6, C12c a C12d, C13 inteiro, C15-01 a C15-05, BUG-017, B-c, B-2, DT-001, DT-003 (iGPU medida na E6), DT-012 a DT-016,
+VX-04 a VX-07, VX-13, VX-14, QW-014, QW-018 e o roteiro do T3.
+
 ---
 
-## 1. Bugs
+## 1. Bugs e quickwins (primeiro)
 
-Nenhum crítico, nenhum alto aberto (QA do C12d). O que pesa agora é um bug latente que só morde quando a progressão
-permanente entrar (DT-012, seção 3) e uma cópia errada do Hades II no Elo.
+Ordenados por prioridade. Duplicados entre relatórios foram juntados (coluna Origem).
 
-### Médio
+### 1.1 Bugs
 
-| ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
+| ID | P | Título | Evidência | Impacto | Esforço | Responsável | Origem | Pronto quando |
+|---|---|---|---|---|---|---|---|---|
+| **BUG-101** | **P1 (alto)** | **Provação tomada tarde nunca vira Bênção**: paga vida, carrega a maldição até Morvath e a carta prometeu "VOCÊ RECEBE DEPOIS DE N LUTAS" | 4 de 9 Provações do robô terminaram com `trial.left` 1 a 3 (sementes 4, 11, 12, 13 do GP; semente 4 do QA: `trial_ferida` por 4, sobrava 1 luta); `trial_depth_max` 7 (`make_data.gd:589`), encontros 3 a 5 (`make_data.gd:1205`), Morvath não conta (`Rooms._fight_won`) | regra quebrada que custa vida e mente na carta | P | `gameplay-engineer` (regra), decisão de desenho na pergunta Q-08 | GP P1-1, QA P1-1 | `test_trial.gd`: para toda profundidade 2 a 7 e 500 mapas, encontros oferecidos <= lutas que restam antes de Morvath; laje não aparece se não cabem 3; 24 descidas do robô sem `trial.left > 0` no fim |
+| **BUG-102** | **P1 (alto)** | **Save pode se perder inteiro**: `Save.write` trunca no lugar; JSON quebrado vira o padrão e a próxima gravação o torna definitivo | `scripts/save.gd:46-50`, `core/save_data.gd:59-62`; o notebook do Daniel já desligou sem bateria no QA do T5 | perder Maestria, Dons, Compêndio e Juramentos sem aviso: o pior relato possível na Steam | P | `gameplay-engineer` | GP P1-2 | grava em `.tmp` e renomeia; `.bak` antes; leitura cai no `.bak`; nunca grava por cima de arquivo ilegível; teste GUT com `save.json` truncado |
+| **BUG-103** | P1 (confirmar) | Placas da loja aparecem na Câmara do Selo com Morvath de pé | `ui/shop_720_shop.jpg` ("Sala 11 de 11", barra de Morvath, 5 placas); mas `art/shop.jpg` com `--start=shop` mostra a loja certa no salão ("Sala 10 de 11"). Hipótese minha: artefato do `ui_lab --shop` com o robô andando | se acontecer numa partida real é P0 | P | `gameplay-engineer` | UI-P1-07 | uma descida do robô passando da loja a Morvath sem nenhuma placa da loja na câmara (captura ou contagem de nós `DoorSign`); se for só o laboratório, `ui_lab --shop` corrigido e comentado |
+| **BUG-104** | P1 | Morvath desliza parado: lógica andando a 5 a 6 m/s com o desenho em `idle` | `boss_probe --probe-log` s5: 77 trechos, 158 quadros, piores 1,04 e 1,10 m em 12 quadros (f599, f5124) | o chefe "patina" quando o herói esquiva por dentro dele | P | `gameplay-engineer` | CF-07 | `boss_probe` s1 a s5: 0 trechos de 3 quadros ou mais em `idle` com o corpo acima de 1 m/s |
+| **BUG-105** | P1 | Fileira de Bênçãos do HUD sem limite: 16 ícones chegam a x 1916 de 1920 | `Hud._update_passives`; `ui/menu_1080_pause_many.jpg`, `menu_720_pause_many.jpg` | sai da tela em partida boa | P | `ui-ux-designer` | UI-P1-04 | com `--boons=25`, nada passa de 96% da largura a 720 e 1080, "+N" no fim |
+| **BUG-106** | P1 | Como Jogar ensina a ultimate errado ("escolhido antes da descida", "carrega com a Magia gasta") | `howto_ultimate_desc` no `text_pt.tres`; regra da T5 em `t5_ultimate.md` | o jogador aprende a regra velha | P | `ui-ux-designer` | UI-P1-02 | cada frase do Como Jogar conferida com a regra atual; linha nova para Provação e Altar |
+| BUG-107 | P2 | Saudação "Bênção nova"/"Elo formado" por cima da pausa e atrás do título da escolha; e sobre inimigos no topo da arena | `ui/menu_1080_pause_many.jpg`, `elo_720_card.jpg`, `psalm_720_psalm_banner.jpg`; ART P2-4 | ruído sobre telas e luta | P | `ui-ux-designer` | UI-P2-01, UI-P2-02, ART P2-4, AUD (pausa) | com escolha ou pausa aberta nenhuma saudação visível (mostra depois, como o "Salmo descoberto"); fileira do HUD escondida na pausa; na luta, véu atrás ou acima de 12% da altura |
+| BUG-108 | P2 | Vazamento no fim da suíte (28 ObjectDB, 19 recursos) vem só do `test_boss_body.gd` `test_the_whole_fight` | `tests_verbose.txt` do QA; não acontece no jogo | esconde um vazamento real futuro | P | `gameplay-engineer` | QA P2-1, UI (verificação), DT-005 antigo | `tools/test.sh` termina sem as duas linhas |
+| BUG-109 | P2 | Testes que dependem do relógio de parede (número de asserções muda entre rodadas); `test_descent` instável (Q-T5-5) | QA P2-2: 239 232, 236 970, 238 520 asserções com os mesmos testes | "falhou depois do merge" sem reprodução | P | `gameplay-engineer` | QA P2-2, GP P2-10 | número de asserções igual em 3 rodadas; `wait_frames` trocado (`test_e5_ui.gd:108`); avisos `Float/Int` do `test_boss_exits.gd` resolvidos |
+| BUG-110 | P2 | Exe parado aos 2,2 s na 1ª sala com o robô (registro de gente) sem causa no código | GP seção 2 (pausa descartada; hipótese: quadros raros por saída padrão bloqueada, janela fora de vista ou GPU disputada) | qualquer travamento de gente fica sem diagnóstico | P | `gameplay-engineer` (vigia), `qa-performance` (rodar o exe) | GP seção 2 | `--watchdog`: linha `WATCH` a cada 5 s reais (`frames`, `fps`, `mode`, `Fx.rate`, `time_scale`, `time`) no console e no registro; exe rodado 10 min com saída em arquivo |
+| BUG-111 | P2 | Divisa de fora da tela desenha sobre a legenda "Maestria 2" do 5º losango | `ui/trial_720_trial_seal.jpg`; `EDGE_INSET` 116 | sobreposição no HUD | P | `ui-ux-designer` | UI-P2-10 | captura com divisa embaixo e legenda separadas |
+| BUG-112 | P2 | Nome do golpe ("Giro da Alvorada") fica no canto depois que o contador some | `ui/shop_720_shop.jpg`, `menu_720_defeat.jpg` | texto órfão | P | `ui-ux-designer` | UI-P2-09 | os dois somem juntos |
+| BUG-113 | P2 | Números com ",5" para o jogador ("22,5 de vida máxima") | `ui/trial_720_trial.jpg`; AUD (Provação) | inconsistente com o HUD inteiro | P | `ui-ux-designer` | UI-P2-06, AUD | teste: números exibidos arredondados onde o HUD mostra inteiro |
+
+### 1.2 Quickwins (grande ganho em poucas horas)
+
+Combate primeiro (pela regra do ciclo), depois leitura e arte, depois texto.
+
+| ID | P | Título | Evidência | Impacto | Esforço | Responsável | Origem | Pronto quando |
+|---|---|---|---|---|---|---|---|---|
+| **QW-101** | **P1** | **Orbe do feiticeiro que pega cedo ou não pega**: curva só nos primeiros 0,8 s do voo (depois reto) ou `shot_turn` 40 para 20 | PO: feiticeiro 22 de 67 golpes (33%), aviso mediano 2,2 a 2,6 s, 19 de 22 com a esquiva pronta, 2 mortes; robô 60% dos golpes nas salas; o 40 é nosso (o arquivo do Hades não diz) | o golpe mais "injusto" do jogo para gente | P | `gameplay-engineer` | CF-01 | GUT: herói correndo de lado a 6,75 m/s depois de 1,2 s de voo nunca é atingido; robô s1 a s4: feiticeiro abaixo de 35% dos golpes nas salas; próxima sessão do PO: abaixo de 20% |
+| **QW-102** | **P1** | **Corredor com aviso legível**: `attack_windup` 0,7 para 1,0 s (0,3 s de segurar com tremor) | PO: 9 golpes (13%) com 0,70 a 0,82 s de aviso; Radiator do Hades 1,5 s | o menor aviso do jogo | P | `gameplay-engineer` (dado) | CF-02 | `enemy_motion_probe`: aviso x dano 0 a 1 quadro mantido; nenhum golpe com aviso abaixo de 0,9 s fora o golpe curto do Escudo. Opinião minha: se o PO ainda apanhar, ir ao 1,5 do Hades pela D-39 |
+| **QW-103** | P1 | **Sopro do giro e da lança no quadro da lâmina** (campo `sound_at` no `ComboNode`; no aperto do giro, só um som curto de carga) | `blade_spin_*.ogg` pico 30 a 90 ms depois do aperto, giro acerta aos 0,36 s: sopro 0,27 a 0,33 s adiantado (`player.gd:730`) | o golpe mais forte soa antes de acontecer | P | `gameplay-engineer` | CF-03 | `Audio.listen`: pico do sopro do giro e da lança a no máximo 2 quadros do acerto; golpes 1 e 2 iguais; sonda 40/40 |
+| **QW-104** | P1 | **Corpo do inimigo acende no "vai bater"**: rampa mais clara e morna nos últimos 30% do preparo, abaixo do `flash_cap` | `crowd.gdshader:158` só acende orbe e lâmina; Hades clareia o corpo até 0,95 no último 0,5 s | ler o perigo pelo corpo, sem olhar o chão | P | `gameplay-engineer` (`crowd.gdshader`, `Horde.render`), `art-director` (números) | CF-06 | captura GPU 1080 de esqueleto, Escudo e feiticeiro no segurar aprovada pelo art-director; nenhum canal acima de 1,0; teste em `test_enemy_windup.gd` |
+| QW-105 | P1 | Espera sorteada entre golpes (0 a 0,4 s somados ao `AFTER_RECOVER` por inimigo) e Cavaleiro que investe também de perto; histerese do Cavaleiro | esqueleto bate a cada 215 quadros exatos 15 vezes; Cavaleiro 9 golpes curtos idênticos e troca andar/parado 0,88 vez/s | metrônomo previsível | P | `gameplay-engineer` | CF-08, CF-11 | `--play` s1 e s2: desvio padrão do intervalo de 0,1 s ou mais; Cavaleiro investe 1 vez a cada 4 golpes ou menos; troca andar/parado abaixo de 0,5/s |
+| **QW-106** | **P1** | **Recompensas de verdade**: trocar os primitivos chapados (`Rooms.gem_mesh`, `SHADING_MODE_UNSHADED`) por disco de ouro velho com o medalhão pintado que já existe (`assets/ui/boons`, `assets/ui/events`), sombreado, girando devagar sobre pedestal baixo, halo abaixo do glow; um material por tipo e luz só na porta escolhida | `art/shop.jpg` (olhei: cubos amarelo, vermelho, verde, azul), `art/altar.jpg`, `art/trial.jpg`, `env/fwd_shop.jpg`; uma omni e um material por gema | a peça mais "protótipo" do jogo, em toda sala vencida | P a M | `environment-artist` (peça e material, em arquivo próprio `reward_gem.gd` para não brigar com o BUG-101 no `rooms.gd`), `ui-ux-designer` (medalhão por recompensa) | ART P0-1, ENV P1-1, AUD P0 | nenhuma `BoxMesh`/`PrismMesh`/`SphereMesh` sem luz em loja, altar, Provação e fim de luta; cada recompensa reconhecida pelo símbolo a 720 sem ler a placa; maior canal na tela até 226; no máximo uma omni de recompensa acesa |
+| QW-107 | P1 | Mira do besteiro e bote do esqueleto em degradê: fio até 10 px a 1080, ponta clara, corpo até alfa 0,45 enchendo só nos últimos 30% | `art/bridge.jpg`, `art/runes.jpg`, `videos/v2_combo.mp4` 0:05 a 0:09 da AUD: faixa vermelha opaca de ponta a ponta | a coisa mais forte da tela é um aviso | P | `gameplay-engineer` (`GroundLook`), `combat-feel-director` aprova | ART P1-6, AUD (avisos) | largura até 10 px; nenhum trecho com alfa acima de 0,6 fora da ponta; aviso x dano 0 a 1 quadro mantido |
+| QW-108 | P1 | Lajes das Runas no tom dos avisos (preenchimento até 0,25 até os últimos 30%), pilares sem listra acesa em repouso e sem chuvisco âmbar no pontilhado | `art/runes.jpg`, `env/fwd_runes_0.jpg` | "piso de discoteca" que esconde a mira | P | `environment-artist` (`rune_floor.gdshader`, `rune_pillar`) | ART P1-3, ENV P2-1, AUD | captura em preparo: âmbar saturado abaixo de 12% da tela; mira legível por cima; nenhum ponto âmbar isolado em volta do herói atrás do pilar |
+| **QW-109** | **P1** | **Um nome só para o especial: "Onda de Luz"** (D-69); `move_bolt` vira `move_wave` no `make_data.gd`, `howto_heavy_attack_desc` reescrito | HUD e Compêndio "Seta de Luz", Como Jogar "seta de luz", Livro "onda de luz"; `move_wave` existe sem uso | o golpe característico com três nomes, visto em toda luta | P | `ui-ux-designer` (texto), sessão principal regera `combos` | UI-P1-01, AUD (especial) | teste de texto: nenhum "seta" no texto do jogador; captura do HUD com "Onda de Luz". Nome final na Q-06 |
+| QW-110 | P1 | Vocabulário único das ações: Ataque, Especial, Círculo, Esquiva, Ultimate; símbolo do HUD no lugar de E/D; "Descer de novo" nos dois finais | "Leve (E)"/"Pesado (D)" nos Controles (o D colide com a tecla D), "Golpes leves/pesados" nas cartas, "E E E" no Compêndio, "Avanço" x "Esquiva", "Tentar de novo" x "Descer de novo" | confusão em toda tela de texto | P | `ui-ux-designer` | UI-P1-03, UI-P2-04, UI-P2-05 | teste que procura "Leve", "Pesado", "(E)", "(D)" nas chaves do jogador; nomes na Q-16 |
+| QW-111 | P2 | Onda do especial mais legível: +25% de comprimento visual e rastro mais claro, mesmo acerto | `audit/3_gameplay/12_especial_onda_da_lamina_1080.jpg`: a meia-lua de 1,6 m mal aparece a 1080; E1c-2 já pedia | o golpe do herói não se lê | P | `environment-artist` (`emeth_wave.gdshader`, `Projectiles.WAVE_*`), `combat-feel-director` mede | AUD (especial) | `test_special_wave.gd` com os mesmos números de jogo; captura 1080 aprovada pelo art-director |
+| QW-112 | P2 | Robô medindo o jogo que se joga: fonte só abaixo de 80% da vida e régua sempre com `--ultimate=cleave` | robô escolhe a fonte com vida cheia (`Rooms.bot_door` rank -1); Maestria 1 sem ultimate em todas as métricas | métricas da E6 distorcidas | P | `gameplay-engineer` | GP P2-7, P2-8 | 24 sementes: `ult.uses > 0` em todas; fonte só abaixo de 80% (`events`) |
+| QW-113 | P2 | Juramentos e Músicas no painel 1B (sem o logotipo fantasma atrás) | `ui/juramentos_720.jpg`, `menu_720_music.jpg`; AUD | fecha o pacote de menus | P | `ui-ux-designer` | UI-P1-05, AUD | capturas 720 e 1080 com o painel das Configurações; `title_flow_check` ok |
+| QW-114 | P2 | Texto legível a 720 no Livro e no Compêndio (corpo mínimo 14 px, descrição inteira no foco), legenda da ultimate e tecla acima de 12 px | `ui/book_720_hero.jpg` (12 px cinza), `book_720_codex_0.jpg` (corte com "...") | leitura em tela pequena (Steam Deck) | P | `ui-ux-designer` | UI-P1-06, UI-P2-11 | nenhuma reticência de corte; menor corpo 14 px a 720 |
+| QW-115 | P2 | Acabamento da vitória e dos números: véu atrás da legenda da selagem, halo do selo em degradê (sem disco amarelo), ouro sobe ao lado do número e menor | `art/victory.jpg`, `stage1b/after/1080_victory_seal.jpg`, `art/jogo.jpg` ("60" sobre "+1 ouro") | o momento de maior emoção e ruído sobre o grupo | P | `ui-ux-designer` | ART P2-2, P2-3, P2-6, AUD (vitória) | capturas aprovadas pelo art-director |
+| QW-116 | P2 | Feiticeiro: cajado 15 graus para trás junto ao ombro e `lift` 0,5 para 0,3; reassar Morvath (dois commits atrás do `bake.gd`) | `t5b/boss/mage_trot_side_24f.jpg`; AS P2-1 | trote ainda rígido; assado atrasado | P | `gameplay-engineer` (`tools/bake.gd`), `technical-artist` (Morvath) | ART (feiticeiro), AS P2-1 | tira de lado aprovada pelo art-director; `pose_drift` de Morvath até 0,45 m; `test_boss_body.gd` verde |
+| QW-117 | P2 | Glifos pequenos sem leitura de cruz (Corte do Juízo no losango R, escudo da Vigília, ícone "†" azul) | `ui/ult_720.jpg`, `menu_720_pause_many.jpg` | regra "nunca cruz" | P | `art-director` (desenho), `ui-ux-designer` | UI-P2-08 | revisão a 720 e 1080 sem cruz |
+| QW-118 | P2 | Uma regra de maiúsculas (nomes de Bênção em Title Case, "Bênção" sempre maiúscula) | "Escolha uma bênção" x "Fortalecer bênção" x "Magia ampla" | polimento | P | `ui-ux-designer` | UI-P2-03 | teste dos nomes |
+
+---
+
+## 2. Dívidas que vão atrapalhar logo
+
+| ID | P | Título | Evidência | Esforço | Responsável | Pronto quando |
 |---|---|---|---|---|---|---|
-| M-a | Tempo de quadro do C12d na placa sem medida válida (notebook na bateria; 2º passe dos avisos e shaders novos do corte) | QA `efa5cf4` seção 4 e 6 | P | `qa-performance` | aberto | base `6f9bbc7` e HEAD alternados na tomada, 5 arenas a 1080, diferença até 0,3 ms ou causa apontada |
-| BUG-017 | O Elo tem raridade e nível (a carta mostra "Vapor, Novo, Épico"); no Hades II o duplo não sobe com romã e não tem multiplicador de raridade (cópia errada pela D-39) | `docs/gallery/boon_cards/ill_1080.jpg`; `BoonState.take` dá raridade a qualquer Bênção; `hades2_sistemas.md` seção 3 | P | `gameplay-engineer` | aberto, vai para a E3 (muda número: Elos ficam mais fracos) | Elo sempre com o número do nível 1 e sem raridade; carta sem "Novo, Épico" no Elo; teste |
-| M-1 | Cantos oeste e norte da Cripta com chão 19 a 34 na luta | QA-02 M-1; `cycle12c/after/crypt_vA_c_recortes.jpg` | P | `environment-artist` ou aceite do `art-director` | aberto (C12e) | recortes com 45 ou mais, ou aceite escrito só para o terço central |
-| A-1, B-1 (prova) | O `6f9bbc7` diz que corrigiu as colunas e gemas; nenhuma captura do QA depois | QA `efa5cf4` "abertos de antes" | P | `qa-performance` | aberto | recorte (915, 120, 90 x 330) até 235 na captura da placa |
-| QA M-1 (antigo) | Referência `04` em tamanho cheio no histórico | backlog anterior | P | Daniel (D-37) | aberto | D-37 tomada |
+| DT-101 | P1 | **Licença e créditos incompletos**: plano do Meshy não registrado (CC BY 4.0 no gratuito exige crédito); `asset_credits.md` só cita "Kenney Impact Sounds"; `CREDITOS.txt` sem os medalhões dos eventos nem o retrato do Livro; `steam-ia.md` sem ambiência nem `title_fill.png` | AS P1-3, P2-8 | P (depois da Q-01) | `technical-artist` | cada modelo do Meshy com plano e licença escritos; todo CC BY nos dois arquivos de crédito; toda arte de IA no `steam-ia.md`; grep cruzado pacote x créditos sem sobra |
+| DT-102 | P1 | **Robô não mede inimigos de perto** (0 golpes de perto em 4 descidas contra 19 do PO); balanço de inimigos só com gente | CF-12; antigo DT-002 | P (instrumentação) | `gameplay-engineer`, `qa-performance` | `RESULT` e registro com preparações começadas, que chegaram ao golpe e cortadas por tipo; tempo de voo do tiro que acertou; `omega_charges_started` e `cancelled` (CF-13) |
+| DT-103 | P2 | Menus sem teste por controle e mouse; abas só pelo foco (sem LB/RB); remapear só no teclado | UI-P2-12 | M | `ui-ux-designer` | `title_flow_check` com uma volta por `InputEventJoypadButton` (A, B, cruz, LB/RB) e uma por clique |
+| DT-104 | P2 | Auditoria de assets no fluxo: teste GUT que falha com assado mais velho que o `bake.gd`, assados acima de 70 MB, música acima de 18 MB no PCK, figura acima do teto de triângulos | AS #4 (caso de Morvath, música a 0,78 MB do teto) | P | `technical-artist` | falha no estado de hoje, passa depois do QW-116; menos de 2 s |
+| DT-105 | P2 | `fit_probe` sem `Arena.walk` nem salas de evento (39 m² de "beira falsa" no salão por medida errada) | ENV P2-7 | P | `environment-artist` | mede salão, Provação, Altar e Câmara; entra como teste de regressão com os limites de hoje |
+| DT-106 | P2 | Arquivos grandes: `game.gd` 1741 linhas, `horde.gd` 1504, `boss.gd` 1431, `rooms.gd` 1146 | GP P2-9 | M | `gameplay-engineer` | `RunReport` (RESULT e registro) e `RunAward` (Maestria e Compêndio do fim) fora do `game.gd`, mesma semente com o mesmo `RESULT` |
+| DT-107 | P2 | Pacote e repositório: `.gutconfig.json` e `lion.svg` no PCK, `.uid` órfão, KayKit sem uso (8 de 26 em `dungeon/`, 40 de 43 em `dungeon_r/`, 18 duplicadas), armas `held` acima do orçamento (feiticeiro 5 530 triângulos), `hero_sombra/` e `paladin_1/` (60 MB) guardados | AS P2-2, P2-5, P2-9 | P a M | `technical-artist` (remoção das pastas pede a Q-19) | `pck_sizes.py --files` sem os arquivos de fora; toda figura até 4 100 triângulos; capturas iguais |
+| DT-108 | P2 | Documentos desatualizados: pacote web "61 MB" (é 88 MB de pck + 39,5 de wasm), música "16,6 MB" (17,2 no PCK), saldo do Meshy "6" no `meshy_asset_plan.md` (546), linha do corredor no inventário | QA P2-3, AS | P | sessão principal, `technical-artist` | números corrigidos no `CLAUDE.md` e nos documentos |
+| DT-109 | P2 | Não existe `docs/art/art_direction.md` (paleta com valores e regras de leitura); o guia é só o `docs/arte/estetica.md` | AUD resumo 6 | P | `art-director` | documento com paleta numérica (incluindo o teto de saturação do cenário do C18) e regras de leitura |
+| DT-110 | P2 | Fila da GPU entre agentes suja as medidas de FPS (até 8 `gpu.sh` esperando; partidas sem tela na mesma CPU) | QA #8, CF (vídeo não gravado) | P | `qa-performance` | modo "medir" que espera CPU calma ou horário reservado; documentado no `agent_workflow.md` |
+| DT-111 | P3 | Mundo em câmera lenta abaixo de 20 qps (teto de 0,05 s por passo); estresse de 300 preso na CPU (13 ms no Windows) | GP P2-11, QA #7 | P | `gameplay-engineer` | documentado; subdividir o passo só se a máquina fraca pedir |
 
-### Baixo
-
-| ID | Título | Evidência | Esforço | Responsável | Estado | Pronto quando |
-|---|---|---|---|---|---|---|
-| B-b | Com vsync a esquiva aparece um quadro composto (7 ms) depois do andar e do golpe | QA `efa5cf4` B-b; `after/latencia/` | P | `gameplay-engineer` | aberto | primeiro quadro da esquiva desenhado no quadro do aperto, ou razão escrita |
-| B-c | A linha `RESULT` não é JSON válido (`boss.attacks` com chaves `&"scythe"`) | QA `efa5cf4` B-c | P | `gameplay-engineer` | aberto | `JSON.parse` do `RESULT` de `--start=boss` sem erro; teste |
-| B-2 | O robô nunca usa a fonte | QA-02 e QA do C12d (0 de 8) | P | `gameplay-engineer` | **feito (E1b)**: `Bot.drink_at` também entre as lutas (a fonte fica numa sala sem luta, o robô só olhava para ela lutando); 4 de 4 descidas que entraram na fonte abaixo de 60% beberam (sementes 4, 11, 18, 22 de 1 a 24, `--bot-reaction=0.25`; antes 0 de 1); teste em `test_bot_kite.gd` que falha no código antigo | `fountain_used: true` em 6 de 8 descidas que entram com menos de 60% |
-| B-3 | Limitador no teto em 67 janelas de 0,1 s | QA-02 B-3 | P | `gameplay-engineer` | aberto, mixagem (E6) | pico e LUFS da mixagem |
-| B-d | `tools/boon_card_view.gd.uid` fora do commit | `git status` no `19af96b` | P | sessão principal | aberto | no próximo commit |
-| B-1 (antigo) | Pico do passo acima de 2 ms em poucos quadros | backlog anterior | P | `gameplay-engineer` | aberto | p99 abaixo de 2 ms |
-| BUG-013 | Comando da investida na spec da câmara | backlog anterior | P | `art-director` | aberto | spec com `--bot-kite=1` |
-
----
-## 1a. Game Feel e Excelência Visual (GF, VX)
-
-Estado em `19af96b`: os itens do C12d estão feitos (marcados abaixo, prova na seção 0). Abertos: GF-12, GF-15 e VX-04 a
-VX-07, VX-13 a VX-17, todos na E1 (C12e e C12f).
-
-Origem: `docs/design/game_feel_review.md` (área e evidência de cada item), `game_feel_measures.md` (propostas A a L),
-`visual_review.md` (V-*). Campos: ID, ciclo, prioridade, descrição, problema, valor para o jogador, aceite, dependências,
-responsável, estado, evidência. "Sonda" = `~/tools/godot/godot --headless --path . --fixed-fps 60 -s
-tools/feel_probe_run.gd -- --nosave --start=fountain` (`PROBE=_s_x` roda um cenário). Tipo: **cópia** (errada ou que
-faltou do Hades II, corrige sem perguntar), **bug**, **arte** (direção já aprovada), **Daniel** (decisão aberta).
-
-### Game feel (GF)
-
-| ID | Ciclo | P | Descrição | Problema | Valor para o jogador | Aceite | Dependências | Responsável | Estado | Evidência |
-|---|---|---|---|---|---|---|---|---|---|---|
-| GF-14 | C12d | P0 | Sonda com metas: a `feel_probe` imprime uma linha `FEEL <meta> ok/falha` por meta deste ciclo e um `FEEL_SUMMARY n/m` | hoje a sonda imprime quadros, não diz se passou | aceite do ciclo verificável por qualquer agente | rodada no HEAD antes das mudanças mostra as falhas esperadas (GF-01 a GF-08); a mesma rodada no fim mostra todas ok | nenhuma (roda primeiro) | `qa-performance` | **feito** (`3fc721b`) | `tools/feel_probe.gd` |
-| GF-02 | C12d | P0 | Esquiva corta a preparação (`ComboRunner.can_cancel` também no WINDUP) e o aperto da esquiva entra no buffer | aperto some (cópia: o Hades corta a carga) | "apertei e esquivou", sempre | `_s_dodge_cancel`: nenhum `LOST`; golpe cortado não dá dano; teste GUT | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | medidas tabela 3 e 5, problema 2 |
-| GF-03 | C12d | P0 | Ler ataque e especial durante a esquiva e o golpe sofrido; soltar o golpe da esquiva no fim dela; aperto no último quadro vale | ataque some nos quadros 1 a 13 (cópia: `DashAttackQueue`) | ataque e esquiva encadeiam como no Hades | `_s_attack_in_dodge` e `_s_extra`: aperto nos quadros 1 a 13 vira golpe da esquiva no 13 ou 14; `_s_hurt`: aperto guardado sai no 11 | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | problema 3, tabela 4 |
-| GF-04 | C12d | P0 | Buffer contado do momento em que o golpe pode sair (trava de gatilho), não do aperto | apertos nos quadros 1 a 3 do golpe 1 e nos 32 primeiros do giro somem | combo sem aperto perdido | `_s_buffer`: o 2º aperto vale em qualquer quadro do golpe 1 e do giro; `tests/test_combo.gd` estendido | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | tabela 4 |
-| GF-01 | C12d | P0 | Hit stop no molde do Hades: por golpe a espera (25, 65, 70, 50 ms), a fração (6%) e a lentidão (10 ms; +40 com abate), volta em 20 ms; em tempo real, por `Engine.time_scale`; dados no `ComboNode` gerados pelo `make_data.gd` | congelamento inteiro a partir do quadro seguinte | o golpe morde sem grudar; o clarão e o empurrão aparecem | `_s_attack_hit`, `_s_combo_on_hit`, `_s_kill`: 0 quadros `stepped=false` por hit stop; 1 a 3 quadros a 6% depois da espera; teste GUT da agenda | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | problema 1, tabela 7 |
-| GF-05 | C12d | P0 | `Fx.tick` desconta o hit stop em tempo real; a câmera lenta de vários abates só começa quando o hit stop acaba | 0,28 s de tela congelada | a câmera lenta se vê | `_s_kill` (3 abates): no máximo 3 quadros parados, depois `time_scale` 0,2 com `stepped=true` | GF-01 | `gameplay-engineer` | **feito** (`4c560eb`) | problema 5 |
-| GF-06 | C12d | P1 | `VirtualPad` guarda os toques até o jogo andar (como o `_latched` do teclado) | o robô e o toque perdem apertos | métricas do robô sem esse viés; toque futuro | `_s_hitstop_buffer`: `pad` sai como `keyboard` | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | problema 9 |
-| GF-07 | C12d | P1 | Seta: trava de ataque 18 quadros após o disparo, recarga própria 0,7 s, dardo 62,5 m/s (a parada das pernas de 0,71 s espera a D-44) | trava 35 quadros, dardo a 30 m/s | especial deixa de travar o combo | `_s_special`: golpe no quadro 25, especial no 48 | D-44 só para a parada | `gameplay-engineer` | **feito** (`4c560eb`) | problema 7, tabela 5 |
-| GF-08 | C12d | P1 | Ômega do ataque acerta ao encher (brilho dentro da carga) | acerta 0,14 s depois | o Ômega sai quando a barra enche | `_s_omegas`: acerto no quadro 48 | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | problema 10 |
-| GF-09 | C12d | P2 | Pequenos fiéis: direção instantânea e corpo a 1340 graus/s; botões lidos antes de andar (planta no quadro do aperto); proteção da esquiva 19 quadros desde o aperto; Ômega do especial conferido contra `ProjectileStaffBallCharged` | divergências sem razão escrita | virada e golpe mais limpos | `_s_turn`: direção a 180 no quadro 1, corpo em até 8 quadros; `_s_walk_cancel`: `walked 0:0.00`; `_s_dodge`: `inv` até o quadro 18; tabela do Ômega do especial no `game_feel_measures.md` preenchida | nenhuma | `gameplay-engineer` | **feito** (`4c560eb`) | problemas 13, tabela 10 |
-| GF-10 | C12d | P1 | Impacto seco: tranco e tremor dos golpes comuns na escala do Hades (0,05 a 0,1 m); clarão do inimigo 0,05 s com o 1º quadro visível; o que fica maior nos finalizadores e no Ômega o `art-director` fixa pelo vídeo | tranco 6 a 11 vezes o do Hades; clarão 0,14 s | golpe legível, avisos não tremem | sonda `_s_attack_hit`: `kick` até 0,1 m no golpe 1, `flash_t` 0,05; vídeo (c) antes e depois aprovado pelo `art-director` | GF-01 | `gameplay-engineer`, `art-director` | **feito** (`4c560eb`) | problemas 8 e 12 |
-| GF-11 | C12d | P1 | Som de lâmina no disparo de cada golpe (não só se erra), som de carga no giro e nos Ômegas; vibração por golpe no controle (`Input.start_joy_vibration`), com opção no Conforto | 0,37 s mudos no giro; sem vibração | o golpe se ouve antes de acertar | teste do `Audio`: todo `ComboNode` tem som de disparo; vídeo (b) com som mostra o som no quadro do disparo; opção de vibração salva | nenhuma | `gameplay-engineer` (sons provisórios CC0 ou síntese), `ui-ux-designer` (opção) | **feito** (`4c560eb`, `aaaacfc`) | problema 11 |
-| GF-13 | C12d | P1 | Latência de ponta a ponta na placa (vsync ligado e desligado): aperto marcado e quadros até o primeiro pixel mudar | só a lógica foi medida | saber se o vsync atrasa | número em ms por ação (andar, golpe, esquiva) no relatório do QA | nenhuma | `qa-performance` | **feito** (QA `efa5cf4`) | medidas, "Como foi medido" |
-| GF-12 | C12f | P1 | Reação ao golpe dos comuns sem armadura no molde do Hades: atordoamento curto, para de andar, interrompe a preparação, por inimigo (`EnemyDef`, imune no próprio ataque como no Hades) | o golpe não muda o comportamento de ninguém | acertar faz diferença; leitura de controle da luta | teste GUT: esqueleto acertado na preparação não ataca; robô 0,25 em 8 descidas antes e depois | **D-42** | `gameplay-engineer` | **feito (E1b)**: `Horde.flinch`/`interrupt`, `EnemyDef.stun_time`, `stun_heavy_time`, `stun_immune_attacking`; `tests/test_flinch.gd` (10), sonda `GF-12` ok; 8 descidas a 0,25 antes e depois: 6/8 e 6/8 vitórias, dano levado antes do chefe 6,1 e 5,9 por descida, salas iguais (cerca de 66 atordoamentos e 21 ataques cortados por descida); o robô não ficou mais forte, gente deve sentir mais (T4) | tabela 8, problema 6 |
-| GF-15 | C12e | P2 | Arranque e parada animados (clipes curtos só no desenho) | sem peso visual ao arrancar e parar | corpo com peso sem atraso | sonda `_s_move` igual (velocidade cheia no quadro 0); vídeo (a) antes e depois | nenhuma | `gameplay-engineer` (`tools/bake_hero.gd`) | aberto | tabela 2 |
-
-### Excelência visual (VX)
-
-| ID | Ciclo | P | Descrição | Problema | Valor para o jogador | Aceite | Dependências | Responsável | Estado | Evidência |
-|---|---|---|---|---|---|---|---|---|---|---|
-| VX-01 | C12d | P0 | Fita do corte comum presa à lâmina: corpo em tinta escura translúcida (alfa até 0,6), borda de ataque fina marfim-menta, verde pálido (saturação até 0,45); começa na ponta da Emeth no quadro do golpe e varre com ela 2 a 3 quadros | folha verde opaca a 2 ou 3 m da lâmina | o corte lê como luz da espada | `--shot-on=hit --shot-after=0.033`: menos de 15% dos pixels da fita com saturação acima de 0,6; ponta a menos de 0,5 m da ponta da Emeth; vídeo (g) antes e depois | nenhuma | `environment-artist` (`slash.gdshader`, `slash_ink.gdshader`), `gameplay-engineer` (o encaixe na lâmina em `fx.gd`/`combat.gd`) | **feito** (`491c6d4`, `1d06613`) | V-E1; `g_combo_finalizador_0_25x.mp4` 4,5 a 6,5 s |
-| VX-02 | C12d | P0 | Brilho do finalizador fora do corpo: anel até 0,6 da altura do herói, centro na ponta da espada, cruz com miolo transparente | o anel cobre o herói 5 a 6 quadros | herói sempre legível | no quadro do brilho, nenhum pixel do anel com alfa acima de 0,5 sobre a caixa do corpo do herói | nenhuma | `environment-artist` (`glint.gdshader`), `gameplay-engineer` (`Fx.GLINT_SIZE` e a posição) | **feito** (`491c6d4`) | V-E2; `g_acertos_reacao_0_25x.mp4` 7,4 a 8,4 s |
-| VX-03 | C12d | P0 | Avisos em linha e retângulo: preenchimento até 0,35 que sobe só nos últimos 30% do preparo; sobreposição pelo máximo, não pela soma; borda e divisa como estão; tempo, área e assinatura de Morvath iguais | massa vermelha sob o herói em grupo | escolher a saída dentro de três avisos | três avisos sobrepostos não passam do alfa de um cheio; anel do herói visível dentro deles; `test_storm_wedge.gd` e testes de aviso passando | nenhuma | `environment-artist` (`ground.gdshader`, `ground_look.gd`) | **feito** (`491c6d4`) | V-L1; `d_especial_circulo_omegas.mp4` 0:01 a 0:02 e 0:10 a 0:15 |
-| VX-08 | C12d | P1 | Morvath e guardiões mantêm a cor queimando: borda de fogo até 0,25, brasas pela metade | manto violeta vira laranja | o chefe sempre lê como ele | no meio da fase 3 queimando, mediana do manto com matiz 260 a 300 | nenhuma | `environment-artist` (`crowd.gdshader`, só o ramo da queimadura) | **feito** (`491c6d4`) | V-M2; `f1_morvath_despertar.mp4` por volta de 0:07 |
-| VX-09 | C12d | P1 | Aro do círculo de luz com alfa até 0,45, metade da espessura, traços finos | lê como marca de interface por cima dos corpos | zona clara sem cobrir os inimigos | esqueleto em pé sobre o aro com os pés legíveis na captura | nenhuma | `environment-artist` (`ground.gdshader` estilo CIRCLE) | **feito** (`491c6d4`) | V-M1 |
-| VX-10 | C12d | P2 | Lascas alongadas na direção do corte (2:1 a 4:1), marfim a cinza, vida até 0,25 s | pontos brancos redondos 10 ou mais quadros no ar | impacto sem sujeira | nenhuma lasca visível 8 quadros depois do golpe | nenhuma | `environment-artist` (`impact.gdshader`), `gameplay-engineer` (vida das lascas em `fx.gd`) | **feito** (`1d06613`) | V-E3 |
-| VX-11 | C12d | P0 | Sem marcador `PALADIN_n` para o jogador: a linha "dom de X" some até o Daniel dar os nomes (sem inventar nome) | bug visível na carta | texto limpo | teste que monta cada carta e não acha "PALADIN" | nenhuma | `ui-ux-designer` | **feito** (`aaaacfc`) | V-U1 |
-| VX-12 | C12d | P2 | Contador de golpes até 48 px a 1080, nome do golpe com alfa 0,7 | compete com a luta | olho na luta | captura a 1080 medida | nenhuma | `ui-ux-designer` | **feito** (`aaaacfc`) | V-U3 |
-| VX-04 | C12e | P0 | Multidão e Morvath sem saltos: mais poses (andar 20 a 24, ataque 14 a 16, golpe sofrido 8, parado 12, morte 16) e mistura entre a pose atual e a seguinte no vértice; medir memória e quadro | 10 poses por ciclo sem mistura, stop motion ao lado do herói | inimigos vivos | vídeo a 30 qps: nenhum inimigo andando repete a pose em 2 quadros seguidos; pacote dos assados medido; quadro sem piora acima de 0,3 ms | nenhuma | `environment-artist` (`tools/bake.gd`), `gameplay-engineer` (`crowd_renderer.gd`, `crowd.gdshader`), `qa-performance` | aberto | V-A1; `crowd_renderer.gd:242` |
-| VX-05 | C12e | P1 | Passo do andar medido por clipe no assado e guardado no `BakedModel` | `clip_rate` genérico, pé deslizando | pés no chão | pé de apoio desliza menos de 5 cm por passo no `enemy_lab` | VX-04 | `environment-artist`, `gameplay-engineer` | aberto | V-A2 |
-| VX-06 | C12e | P1 | Recuo visível: golpe sofrido com 8 poses e deslocamento de 0,15 a 0,3 m que se vê em 3 quadros | recuo invisível | o golpe se vê no corpo | `--shot-on=hit` + 6 quadros: o alvo se desloca e volta | VX-04; GF-12 se a D-42 aprovar | `gameplay-engineer` | aberto | V-A3 |
-| VX-07 | C12e | P1 | Armas do KayKit, paliativo no assado: ferro escuro e osso sem listras, cutelo até 0,6 do tronco, gancho de Morvath em ouro velho (matiz 35 a 45, saturação até 0,5) | outro estilo colado em figuras pintadas | inimigos coerentes | `enemy_lab`: nenhuma arma em faixas de duas cores; gancho medido | nenhuma (o final é D-46) | `environment-artist` (`tools/bake.gd` `held`) | aberto | V-P1 |
-| VX-13 | C12e | P2 | Metade dos grupos de velas da borda leste e sul do salão apagados | quente por toda a borda | quente como acento | fração de pixels quentes saturados na vitrine pela metade, chão acima de 45 | nenhuma | `environment-artist` | aberto | V-C1 |
-| VX-17 | C12e | P2 | Pose final do finalizador como carga (o corpo recua 5 a 10 cm, o brilho cresce desde o começo) | lê como parada | antecipação clara | `g_combo` antes e depois aprovado pelo `art-director` | VX-02, GF-01 | `gameplay-engineer` | aberto | V-A4 |
-| VX-14 | C12f | P1 | Clipes de Morvath mais pesados (UAL CC0: golpe de duas mãos para a foice, lançamento para a tempestade) | ataques são golpes genéricos | o chefe tem presença | vídeo por fase antes e depois aprovado pelo `art-director`; `test_boss*.gd` com os mesmos tempos de aviso | VX-04 | `gameplay-engineer` (`tools/bake.gd` bloco de Morvath, tempos) | feito na E1b, aguarda o `art-director` (golpes com as duas mãos, foice `Sword_Regular_C` com a lâmina no alto em `SCYTHE_LIFT`, arremesso `OverhandThrow` na maldição e em cada onda da tempestade, rugido de braços abertos; mesmas durações; vídeos em `docs/gallery/e1b/morvath/`) | V-A5 |
-| VX-15 | depois | P3 | Peças próprias de cenário (velas, balaustradas, sarcófagos), ícones de dom por família, retrato do medalhão a partir do Explorador | KayKit ao lado de pintura; ícones genéricos; retrato de outro estilo | identidade | spec do `art-director` por família | D-46 (Meshy), arte 2D | `art-director`, `environment-artist`, `ui-ux-designer` | proposta | V-C2, V-M3, V-U2 |
-| VX-16 | depois | P3 | Gema do cajado do mago até 235 | estoura branco | | `enemy_lab` | nenhuma | `environment-artist` | aberto | V-P2 |
-
-
-## 1b. Itens priorizados do C12c em diante (formato completo)
-
-Campos: ID, ciclo, prioridade (P0 a P3), descrição, problema, valor para o jogador, aceite, dependências, responsável,
-estado, evidência. Planejamento e justificativas em `docs/design/roadmap_plan.md`. Nada do C12c muda número de combate.
-
-### C12c "Qualidade da experiência"
-
-Fechado na seção 0 (estado de cada item com a prova do QA-02). Abertos que ficaram: A-1 (em correção), M-1, B-1 a B-3
-(seção 1). As hipóteses A, B, D e F seguem pedindo teste humano; o registro v2 (GP-02) já as mede.
-
-### C13 "Progressão e rejogabilidade": **movido inteiro para a E3 "Bênçãos e combinações"** (seção 6; números do Hades II pela D-39; "dom" aqui é Bênção)
-
-| ID | P | Descrição | Problema | Valor | Aceite | Dependências | Responsável | Estado | Evidência |
-|---|---|---|---|---|---|---|---|---|---|
-| C13-01 | P1 | Descida de 10 salas e Morvath na 11 por padrão; a de 7 e a de 5 por opção; arenas sem repetir seguidas, nenhuma mais de 3 vezes | 3 dons em Morvath | partida de 10 a 13 min com curva | robô 0,25 chega com 5 a 8 dons em 6 de 8; `test_descent.gd` | teste final do C12c | `gameplay-engineer` | aberto | DT-001; `runs_antes_ciclo12.jsonl` |
-| C13-02 | P1 | Baralho de recompensas do Hades II no lugar dos pesos | variedade sem repetir | portas mais interessantes | teste do baralho (sem reposição, reabastece) | C13-01 | `gameplay-engineer` | aberto | `hades2_sistemas.md` "achado" |
-| C13-03 | P1 | Raridade em sequência; guardião sem heroica | `RARITY_WEIGHT_GUARDIAN` diferente do Hades | fidelidade (D-39) | teste com 10 mil sorteios dentro de 1 ponto das chances | | `gameplay-engineer` | aberto | idem |
-| C13-04 | P1 | Ouro por inimigo (70%, teto 10 a 15 + 0,5 por profundidade), recompensa 100, loja em 3 grupos, cura 50 | loja inútil (37 de ouro, mínimo 60) | a loja vira escolha | robô compra na loja em 6 de 8 | C13-01 | `gameplay-engineer`, `ui-ux-designer` (loja) | aberto | vídeo 2:02; `_stage` `shop_prices` |
-| C13-05 | P1 | Romã com ganho fixo por nível (`base`, `per_level`), 32 dons migrados | | dons que crescem | testes por dom | | `gameplay-engineer` | aberto | `hades2_sistemas.md` seção 1 |
-| C13-06 | P2 | Elo com 12% por carta | | | teste de sorteio | C13-02 | `gameplay-engineer` | aberto | seção 3 |
-| C13-07 | P2 | Bônus de sequência de golpes fora (D-10) | não existe no Hades II | fidelidade | `DamageCalc.combo_bonus` desligado e testado | D-10 | `gameplay-engineer` | proposta | comparativo, Dons |
-| C13-08 | P1 | Métricas do C13: dons e ouro por sala no registro, 8 descidas longas | | | `METRICAS.md` do ciclo | GP-02 | `qa-performance` | aberto | |
-
-### C15 "Som e polimento" e C14 "Arenas II": C15-03 e C15-05 vão para a E4 (música dos Salmos), C15-01 e C15-04 para a E6, C14 para a E5 (seção 6)
-
-| ID | Ciclo | P | Descrição | Aceite | Responsável | Estado |
-|---|---|---|---|---|---|---|
-| C15-01 | C15 | P2 | Mixagem por barramentos, ducking nos avisos de Morvath | pico até -1 dBTP; integrado -18 a -14 LUFS | `gameplay-engineer` | aberto |
-| C15-02 | C15 | P2 | Som em toda ação, aviso e ataque de Morvath | teste que acusa evento sem som | `gameplay-engineer`, `art-director` | **combate feito na E1b** (`CombatSounds`, material do golpe, preparação por papel, tiros, queda, corte, quebra, círculo; `tests/test_combat_sounds.gd`; só síntese, `audio/LICENSES.md`); faltam projétil barrado na pedra (`projectiles.gd`), revisão de ouvido do `art-director` e gravação da mixagem de uma luta |
-| C15-03 | C15 | P2 | Música de combate e de Morvath por fase (CC0, CC-BY ou síntese, D-12b) | nenhum silêncio de 2 s com música ligada | `art-director`, Daniel (fonte) | **feito na E4** (síntese própria, `tools/make_music.gd`; salas em 2 camadas, Morvath em 4 por fase, temas dos 4 Salmos, vitória; `Music`, `MusicMix`; `tests/test_music.gd`); falta ouvir com o Daniel |
-| C15-04 | C15 | P2 | Ambiência por arena | idem | `environment-artist` | aberto |
-| C15-05 | C15 | P2 | `audio/LICENSES.md` e créditos | toda fonte listada | `ui-ux-designer` | **feito na E4** (`audio/LICENSES.md` com a música; Como Jogar, Créditos, `CreditsScreen`) |
-| C14-A4 a A6 | C14 | P2 | Santuário, Ponte, Runas (D-29), cada uma com uma decisão de combate própria | testes do C12 e decisão medida | `environment-artist`, `gameplay-engineer`, `art-director` | aberto |
+**Herdados ainda abertos** (sem mudança de dono): GF-15 (arranque e parada animados), VX-17 (pose final do finalizador),
+CF-09 (golpe 1 a 2,75x e corte da esquiva a 3,67x, meta 1,5x), CF-10 (segunda camada de som no golpe), T5-17 a T5-19
+(preparação de Morvath para maldição e erupções, recuo da besta), Q-T5-6 (globos laranja na vitória com 25 Bênçãos),
+Q-T5-7 (`--shot-on` antes de `--shot-at`), T5b P2-2 (erguer do esqueleto ainda anda 0,23 m), corredor elite a 259
+passos/min, besteiro sem tira de lado nova, B-b (esquiva com vsync um quadro composto depois), F-6 e J-5 das Fendas e do
+Jardim, UI-P2-13 (espaço morto no Como Jogar e nas cartas; Abertura repete o Como Jogar), UI-P2-14 (Voragem sem estado no
+Livro), UI-P2-15 (`ui_lab --trial` vazio com `--bot`; `howto_lab` sem a aba Controles).
 
 ---
 
+## 3. Próximos ciclos
+
+Regra de entrega: cada ciclo vira um exe para o Daniel testar de uma vez; nada de pedir teste a cada ajuste. Nenhum ciclo
+começa a C16 Steam (o Daniel não pediu).
+
+### C17 "Justiça e peso" (2 a 3 dias, o próximo)
+
+- **Objetivo**: nenhum golpe que o jogador sente como injusto e todo golpe do herói soando e acendendo no tempo certo.
+- **Por que agora**: os dados de gente (12 partidas do PO, `hurt_ctx`) apontam três fontes que somam 46% dos golpes levados
+  (orbe, corredor) e uma regra quebrada; tudo é dado ou uma função, e muda a sensação mais que qualquer conteúdo novo.
+- **Itens**: BUG-101, BUG-102, BUG-103, BUG-104, QW-101, QW-102, QW-103, QW-104, QW-105, QW-107, QW-112, BUG-110
+  (vigia), DT-102 (instrumentação); em paralelo a frente de texto e HUD: QW-109, QW-110, BUG-105, BUG-106, BUG-107,
+  BUG-111, BUG-112, BUG-113.
+- **Aceite**: os de cada item; sonda 40/40; 992+ testes; 8 descidas do robô 0,25 com `--ultimate=cleave` sem queda de
+  vitórias acima de 1 de 8 (o aviso maior do corredor e o orbe facilitam: anotar); feiticeiro abaixo de 35% dos golpes
+  do robô nas salas; nenhuma Provação aberta no fim de 24 descidas; save truncado recuperado por teste.
+- **Evidências**: `docs/gallery/c17/` com antes e depois (corpo acendendo, mira em degradê, HUD com 25 Bênçãos, Como Jogar);
+  vídeo 60 qps do giro com som (pendência do CF); saída da sonda e das descidas no `docs/qa/latest_report.md`.
+- **Responsáveis e paralelismo sem conflito de arquivo**:
+  - `gameplay-engineer` (uma frente, em série): `make_data.gd` (feiticeiro, corredor, `sound_at`), `projectiles.gd`,
+    `player.gd`, `horde.gd`, `crowd.gdshader`, `ground_look.gd`, `trials.gd`, `rooms.gd` (Provação, robô), `save.gd`,
+    `save_data.gd`, `boss.gd`, `game.gd` (vigia).
+  - `ui-ux-designer` (paralelo): `text_pt.tres`, `hud.gd`, `elo_banner.gd`, `action_slot.gd`, telas. O título do nó
+    `move_wave` vai no `make_data.gd`: entregar a linha para a sessão principal aplicar junto com o lote do gameplay.
+  - `combat-feel-director`: mede antes e depois (sonda, `enemy_motion_probe`, `boss_probe`) e pode reprovar.
+  - `qa-performance`: integra, exe, relatório.
+- **Riscos**: o aviso maior e o orbe mais fraco deixam as salas fáceis (medir com gente antes de compensar com vida, que
+  é proibido); o corpo acendendo pode passar do glow com elites douradas (o art-director fixa o teto).
+
+### T6, teste do PO depois do C17
+
+Exe nas duas pastas. Perguntas (uma linha cada): (1) algum golpe pareceu sem aviso, de quem? (2) os orbes ainda
+pegam do nada? (3) o giro soa no tempo do golpe? (4) dá para ver quem vai bater pelo corpo? (5) a Provação pagou a Bênção?
+(6) Morvath fase 1 enjoa? (7) onde o herói se perdeu na tela? Mandar o `runs.jsonl` inteiro. As respostas a Q-08, Q-09 e
+Q-11 a Q-14 entram no C19.
+
+### C18 "A tela de um jogo acabado" (3 a 4 dias; pode começar junto com o C17, outros arquivos)
+
+- **Objetivo**: cenário num tom só que deixa o efeito saturar, chão com valor para o olho descansar, e nenhuma peça de
+  protótipo à vista.
+- **Por que agora**: é o que mais separa a primeira impressão do Ember & Blade (p90 de saturação 35 a 51 contra 24 a 25;
+  Cripta com luma 37 contra 67 a 75) e nada depende de créditos nem de IA.
+- **Itens**: QW-106 (se não coube no C17), QW-108, QW-111; paleta do cenário (bruma do abismo e nuvens da câmara com
+  saturação até 0,45, portal como único verde do salão, metade das velas que restam apagadas ou mais frias, ART P1-2, AUD);
+  portal do salão com profundidade (AUD); clareiras pálidas no `catacomb_floor.gdshader` e nos chãos das arenas, luz de
+  preenchimento das paredes na Cripta e no Santuário (ART P1-2, ENV P1-5); família de verdes separada do herói: erupções
+  da fase 3 com miolo vermelho translúcido até 0,35 (não magenta), aro sem ciano, partículas espectrais até 0,12 m e
+  nunca a menos de 1,5 m do herói, domo do ritual no matiz 165 longe do petróleo do anel (ART P1-4, P1-11; capturei
+  `art/boss3.jpg`: o herói some dentro do disco rosa); capitéis com ábaco e três silhuetas de coluna no Santuário (ART
+  P1-5, ENV P1-6); fundo com bruma e ruínas nas câmaras da Provação e do Altar, sem corte de parede (ART P1-8, ENV P2-8);
+  leitura do chão: Ponte B (parapeito contorna o patamar, depende da Q-10), Santuário B (`broken_lip` afundado), Runas B
+  (pedra quieta clara com moldura) (ENV P1-2 a P1-4); parapeito baixo das pontes abrindo em volta do herói (ENV P2-2);
+  entulho e velas do KayKit fora do salão (ENV P2-6); Jardim: cristais escuros com brilho só na aresta e copa por cartões
+  procedurais (ART P1-7, depende da Q-21); barras de vida dos comuns 15% mais escuras (ART P2-5).
+- **Aceite**: luma média do quadro de luta entre 55 e 70 em toda arena; p90 de saturação do cenário sem efeitos até 32
+  no salão e na câmara; nenhuma área violeta acima de 60% de saturação maior que 5% da tela; herói dentro de uma erupção
+  com as cores próprias (sem tinta rosa) e nenhuma bolha verde ou ciano na caixa de 300 x 300 px em volta dele; `fit_probe`:
+  fantasma da Ponte B cerca de 4 m², beira falsa do Santuário B cerca de 9 m²; nenhuma face de corte nas câmaras de evento;
+  nenhuma peça do `dungeon/` na vitrine; quadro na iGPU Baixa sem cair abaixo de 57 qps (Fendas hoje).
+- **Evidências**: `docs/gallery/c18/` antes e depois de cada arena e fase de Morvath na GPU a 1080 com a tabela de luma e
+  saturação do ART; aprovação do `art-director`.
+- **Responsáveis e paralelismo**: `environment-artist` (cenário, luz, shaders das salas e dos efeitos de Morvath:
+  `*_look.gd`, `catacomb_hall.gd`, `boss_chamber.gd`, `ritual_rune.gdshader`, `boss_shield.gdshader`, `rune_floor.gdshader`,
+  `reward_gem.gd` novo); `ui-ux-designer` (barras, `life_bar.gdshader`); `art-director` (spec numérica no DT-109 primeiro,
+  revisão); `technical-artist` (DT-104, DT-107). Conflito a evitar: `crowd.gdshader` é do gameplay no C17 (QW-104); as
+  partículas espectrais ficam no `BossShield`/`Ground`, não no shader da multidão.
+- **Riscos**: escurecer o violeta pode apagar a leitura do abismo como queda; clarear o chão pode baixar o contraste do
+  herói (medir na caixa dele, ART melhoria 3); sombras novas na iGPU.
+
+### C19 "Variedade do combate e da descida" (4 a 5 dias, depois do T6)
+
+- **Objetivo**: inimigos e Morvath que pedem respostas diferentes, e escolhas da descida (loja, Elo, Salmo) que acontecem
+  para quem joga.
+- **Por que agora**: depois que a justiça está provada com gente (T6); muda dificuldade e números, então pede as respostas
+  do Daniel.
+- **Itens**: fase 1 de Morvath variada perto (CF-04, Q-09); elites com golpe próprio, esqueleto elite com dois golpes a
+  0,2 s e corredor elite com explosão dupla, como dado (`strikes`, `strike_gap`) (CF-05, Q-11); Ômega carregando devagar
+  com o número do Hades por ação (GP P2-1, Q-12); botão de usar para loja, recompensa e porta (GP P2-2, Q-13); aviso curto
+  no chão para o orbe e o leque do Ancião ou a regra corrigida (GP P2-6, Q-14); economia da loja pela renda do Érebo (GP
+  P2-5, Q-15); Elos e Salmos ao alcance (GP P2-4, Q-15); Ancião, 49% do dano antes de Morvath no robô (QA #4), e a
+  tempestade, 51% do dano de Morvath (QA #3), conferidos pelo `warn_s` do registro antes de mexer.
+- **Aceite**: `boss_cadence` em 3 sementes: na fase 1 nenhum ataque acima de 50% e nunca 3 iguais seguidos; elites com
+  aviso cobrindo os dois golpes (aviso x dano 0 a 1 quadro), um elite novo sem código; loja com ouro mediano entre 150 e
+  220 e 1/3 das descidas comprando além da cura (24 sementes); 72 sementes Maestria 1: Elo em 35% das descidas e Salmo
+  visto em 15%, Maestria 20 até 25 pontos acima; encostar sem apertar não compra nem sai; todo tiro inimigo com `warn_s`
+  a partir de 0,4.
+- **Responsáveis**: `gameplay-engineer` (regras e dados), `combat-feel-director` (aceite de cadência), `art-director`
+  (pose do segundo golpe da elite), `ui-ux-designer` (placa com a tecla de usar, remapear), `qa-performance` (72 sementes).
+  Paralelismo: o gameplay é o dono do `make_data.gd`, `horde.gd`, `boss.gd`, `rooms.gd`; a UI trabalha só nas placas
+  (`door_sign.gd`) e nas Configurações.
+- **Riscos**: elites e Morvath mais variados podem endurecer a região (a D-11 pede primeira vitória em até 3 tentativas
+  para quem jogou Hades); botão de usar muda o ritmo de saída das salas.
+
+### C20 "Livro, título e prontidão técnica" (3 a 4 dias; depende de respostas do Daniel)
+
+- **Objetivo**: a primeira imagem do jogo e o Livro com a identidade fechada, e a base técnica que a Steam vai exigir,
+  sem começar a C16.
+- **Itens**: título da prancha 08 com a maga aprovada e a decisão das cruzes (Q-07); etapa 3 do pacote (motivos pintados
+  da prancha 09 nos 19 Dons, ART P1-10); ilustrações do Livro (cena de Ahk se aprovada, esboço em traço de cada inimigo
+  no Compêndio pelo nosso próprio modelo assado, sem IA; ART P1-9, AUD); moldura de couro da árvore e abas como fitas
+  (AUD); medalhões pintados das 25 Bênçãos e 6 Elos que faltam (AS #9, AUD; IA declarada); pausa ao perder o foco e ao
+  desconectar o controle (GP P2-3); DT-103 (menus por controle); DT-101 fechado; DT-106.
+- **Aceite**: `title_flow_check` passa com a arte nova e com controle; nenhuma cruz se o Daniel decidir pelo leão; cada
+  nó da árvore com o motivo do próprio efeito legível a 720; página de cada inimigo descoberto com o desenho; foco perdido
+  em PLAY abre a pausa (robô e `--smoke` nunca); `steam-ia.md` e `CREDITOS.txt` em dia.
+- **Responsáveis**: `ui-ux-designer` (título, Livro, menus), `art-director` (spec e revisão), `technical-artist` (recortes,
+  render em traço, licenças), `gameplay-engineer` (foco e controle).
+- **Riscos**: depende de arte de IA do PO; o retrato do Guerreiro diverge da Emeth do modelo (Q-04).
 
 ---
 
-## 2. Quickwins
+## 4. Perguntas para o Daniel
 
-| ID | Título | Evidência | Impacto | Esforço | Responsável | Prioridade | Pronto quando |
-|---|---|---|---|---|---|---|---|
-| QW-014 | **Entregar o T3 agora** (a versão do C12d com a carta nova e a tela cheia) | QA `efa5cf4`: "pronto para o Daniel testar"; D-45 | o único dado de gente sobre a mão nova antes do C12e | P | sessão principal | P0 | `ASelagem.exe` do `19af96b` (ou do commit desta revisão) em `Downloads\ASelagem-3D` e `ASelagem-teste`; `runs.jsonl` antigo guardado com outro nome; roteiro da seção 5 |
-| QW-018 | "Bênção" no texto (opção (a) da D-50): cerca de 15 valores em `text_pt.tres`, gênero das raridades ("Rara, Épica"), sem mexer em chave, classe nem registro | `guardian_spec.md` 1.1; chaves `choice_title`, `choice_hint`, `reward_boon`, `reward_pom`, `end_boons`, `end_gifts`, `pause_boons`, `boons_title`, `boons_none`, `boon_rest_desc`, `boon_aurora_desc`, `boon_chama_viva_desc`, `howto_pause_desc`, `rarity_*` | o Daniel já testa com o termo novo | P | `ui-ux-designer` | P0 se a D-50 vier antes do T3; senão primeira tarefa da E2 | teste que procura " dom"/"Dom" nas chaves de tela e só acha as de Dom; `title_flow_check` ok |
-| QW-019 | M-a: remedir o quadro na tomada | QA `efa5cf4` | fecha o aceite do C12d | P | `qa-performance` | P0 | ver M-a |
-| QW-020 | B-c: `RESULT` em JSON válido | QA B-c | o QA e o diretor leem por script | P | `gameplay-engineer` | P1 | ver B-c |
-| QW-015 | Ler o T3 por roteiro fixo (registro v2) | GP-02 | separar "injusto" de "não reagiu" | P | `qa-performance` | P0 depois do T3 | tabela por sala do T3 ao lado da do robô 0,25 |
-| QW-012 | Teste humano dos atiradores | nunca jogado por gente | | P | Daniel | dentro do T3 | 3 partidas no registro |
+Cada uma com as opções e a minha recomendação. As de número baixo bloqueiam mais.
 
----
-
-## 3. Dívidas
-
-### DT-012 O save perde dicionários de chaves livres (feito)
-- **Evidência**: `scripts/core/save_data.gd` linhas 24 a 31: `merged` só copia as subchaves que existem em `defaults()`.
-  Maestria (`heroes.explorer.mastery_xp`) e Compêndio (`codex.boons.<id>`) seriam apagados a cada leitura. O `moves`
-  sobrevive porque é lista. **Responsável**: `gameplay-engineer`. **Esforço**: P. **Pronto quando**: `merged` preserva
-  dicionários de chaves livres com tipo conferido; `test_save.gd` com arquivos fixos das versões 1, 2 e 3; `VERSION` 3.
-   **Feito (E2a, fundação, 2026-11-16, worktree do `gameplay-engineer`)**: `SaveData.VERSION` 3 com `heroes.<id>` (`mastery_xp`, `unlocked`, `equipped`,
-  `ultimate`, `firsts`) e `codex` (`boons`, `elos`, `psalms`, `talents`, `enemies`); heróis e entradas do Compêndio com chaves
-  livres e tipo conferido; Maestria retroativa uma vez nas versões 1 e 2; `tests/fixtures/save_v1.json` a `save_v3.json`.
-
-### DT-013 O herói é um conjunto de constantes (feito)
-- **Evidência**: `player.gd` linhas 19 a 118 (`COMBOS`, `MAX_HP`, `MAGICK_MAX`, `CAST_*`), `combat.gd` 36 a 39
-  (`CAST_RADIUS`, `CAST_TIME`, `CAST_BURST`). O próximo herói viraria `if`. **Responsável**: `gameplay-engineer`.
-  **Esforço**: M. **Pronto quando**: `HeroDef` gerado por `_hero` no `make_data.gd` com os mesmos números; mesma semente dá
-  o mesmo `RESULT` antes e depois (`tools/smoke.sh 300 --seed=5`, `120 --start=boss --boons=25 --seed=5`).
-   **Feito (E2a, fundação, 2026-11-16, worktree do `gameplay-engineer`)**: `HeroDef` `warrior` (`data/heroes/warrior.tres`, `_hero`) com vida, proteção,
-  esquiva (cargas e recarga, que saíram do `Feel`), Magia, círculo, passiva e ultimates; `Player`, `Combat`, `Game` e a HUD
-  leem dele. Os dois `RESULT` iguais aos de antes, fora os campos de tempo (`step_ms*`, `fps`). `Player.RADIUS` ficou
-  constante (lido em expressões constantes de vários sistemas).
-
-### DT-014 Raridade e Elo fora do Hades II
-- **Evidência**: `boon.gd` (pesos 85/10/5/0, `HEROIC`, guardião 0/90/7/5 com o 5 em heroica), `boon_state.gd`
-  (`DUO_WEIGHT` 3, `requires` exato, Elo sobe de nível). **Responsável**: `gameplay-engineer` na E3 (C13-03, C13-05,
-  C13-06, BUG-017). **Pronto quando**: os testes de `guardian_spec.md` seção 16 (`test_rarity`, `test_elo`).
-
-### DT-015 Registro sem o herói (feito)
-- **Evidência**: `run_log.gd` `FIELDS` (versão 2). **Responsável**: `gameplay-engineer` na E2a. **Pronto quando**:
-  versão 3 com `hero`, `mastery_level`, `talents`, `ultimate`, `psalms`, `discoveries`; `gifts` continua (Bênçãos);
-  linhas da versão 2 lidas.
-   **Feito (E2a, fundação, 2026-11-16, worktree do `gameplay-engineer`)**: `RunLog.VERSION` 3 com `hero`, `xp`, `xp_by`, `mastery_level`, `talents`,
-  `ultimate`; linhas antigas lidas por `RunLog.normalized`. `psalms` e `discoveries` entram quando houver Salmos (E4).
-
-### DT-016 Dano feito por fonte não é medido
-- **Evidência**: o `RESULT` tem `hurt_by` (o que feriu o herói) e `damage` total, mas não o dano por ação, Bênção, Dom ou
-  ultimate. Sem isso não se balanceia a E2 nem a E3. **Responsável**: `gameplay-engineer`. **Esforço**: P. **Pronto
-  quando**: `RESULT` e registro com `dealt_by` (ataque, especial, círculo, esquiva, Ômegas, cada Bênção que age sozinha,
-  ultimate).
-
-### DT-001 A descida ainda é de teste
-- **Evidência**: 7 salas (D-27), Morvath aos 95 a 120 s com 3 a 4 dons pelo robô; Morvath tem 6050 de vida pensados para 6 a
-  8 dons. **Responsável**: `gameplay-engineer` na **E3** (C13-01). **Pronto quando**: descida inteira (10 salas e Morvath na 11) com
-  as arenas distribuídas; `--short` e a de 7 continuam por opção.
-
-### DT-002 O robô não mede dificuldade
-- Melhorou: agora anda pelo campo de fluxo e não fica preso (F7). Continua vencendo com reação 0 e sem usar cobertura de
-  propósito; métrica de robô é simulação, não diversão. **Responsável**: `qa-performance`. Fica até o T2 dar números de gente.
-
-### DT-003 Desempenho em máquina fraca nunca medido
-- O Compatibility foi medido **na RTX 5060** (3,2 a 5,4 ms); placa fraca e iGPU, nunca. Para a Steam é obrigatório antes do
-  C16. **Responsável**: `qa-performance`. **Pronto quando**: salão, Fendas e Jardim medidos a 1280 x 720 numa iGPU (a placa
-  integrada do próprio notebook do Daniel, se ele permitir forçar) ou registrado por que não dá.
-
-### DT-004 Vídeo da luta com som (feito)
-- Feito no QA-02 (`71cb8cc`): `docs/gallery/cycle12c/after/descida_com_som.mp4` (7 salas e Morvath, 1080, com som) e os
-  vídeos de game feel `f1` a `f4`. `tools/movie.sh` grava a 1080.
-
-### DT-010 A sonda de game feel não é teste
-- **Evidência**: `tools/feel_probe.gd` mede, mas nada falha quando um aperto volta a sumir. **Responsável**:
-  `qa-performance` (GF-14) e depois `gameplay-engineer` (um teste GUT por regra de entrada, ver GF-02 a GF-04). **Pronto
-  quando**: as regras de entrada do C12d têm teste GUT que quebra se voltarem.
-
-### DT-011 Vídeos de game feel com roteiro fixo e vida alta
-- **Evidência**: `VIDEOS.md`, limitações: roteiro com mira automática, herói com 200 ou 999 de vida, fase 4 curta. Não
-  mostram pressão real. **Responsável**: `qa-performance`. **Pronto quando**: o QA do C12d regrava (a) a (g) com os
-  mesmos comandos (antes e depois comparáveis) e acrescenta a fase 4 inteira com `--bot-kite`.
-
-### DT-005 "Resources still in use at exit"
-- Igual. **Pronto quando**: `tools/test.sh` e `tools/smoke.sh` sem a linha.
-
-### DT-006 Vídeo dirigido do bloqueio de corpo
-- O roteiro à mão do QA (`METRICAS.md` seção 4) cobriu a mecânica em números; falta o vídeo. Baixa prioridade.
-
-### DT-009 Medidas de câmera da F6 nunca em número (feito: GP-06, 0,400 m)
-- **Evidência**: QA, limitações: o salto do alvo entre quadros (meta abaixo de 0,5 m a 60 FPS) só foi visto nos vídeos.
-- **Responsável**: `qa-performance`. **Esforço**: P. **Pronto quando**: `--trace-cam` ou sonda que imprime o maior salto
-  do alvo numa travessia de cada arena.
-
----
-
-
----
-
-## 4. Arenas: pendências que ficaram e o que vem
-
-### Correções da revisão de arte que ficaram (depois de F-1 a F-5)
-
-| # | Arena | Pendência | Prioridade depois da D-36 | Responsável |
-|---|---|---|---|---|
-| F-6 | Fendas | Inscrições de ouro entre a fenda e o buraco não aparecem | P3 (fidelidade) | `environment-artist` |
-| G-1b | Fendas | Compatibility (ver quickwins) | P2 | `environment-artist` |
-| G-2 | Fendas, Jardim | Marcos da vitrine não medidos contra a spec 6.1 | P3 (fidelidade) | `qa-performance` |
-| G-3 | todas | Peças procedurais provisórias (sarcófagos, estátuas, árvore) | P3, ART-010 com Meshy se o Daniel autorizar | Daniel |
-| J-5 | Jardim | Opinião minha, na `fix_garden_arvore_antes_depois`: as duas fraturas claras dos galhos quebrados saem quase brancas, o ponto mais claro da árvore; conferir que ficam abaixo do glow e no valor do marfim, não do branco | P3 | `environment-artist` |
-| Densidade | Cripta, Jardim | A `05` e a `04` são muito mais cheias; aqui o chão da luta é quase vazio | P3 (fidelidade, depois do T2) | `art-director` |
-
-### Arenas das entregas seguintes (sem mudança)
-
-| ID | Arena | Entrega | Decisão |
+| ID | Pergunta | Opções | Recomendação |
 |---|---|---|---|
-| C14-A4 | Santuário Desmoronado (grande, casa do guardião) | 2 | |
-| C14-A5 | Ponte dos Condenados (comprida, plataformas e ponte) | 2 | |
-| C14-A6 | Câmara das Runas Instáveis (faixas e ladrilhos, nunca círculo) | 2 | D-29 |
-| C16-A7 | Biblioteca Sepultada (estantes destrutíveis) | 3 | D-32 depois do T2 |
-| C16-A8 | Reservatório das Almas (água rasa) | 3 | D-31 depois do T2 |
+| Q-01 | **Meshy: em que plano foram gerados o herói, a Emeth e os nove inimigos (2026-11-15) e qual a licença?** | (a) plano pago: o modelo é seu, basta registrar; (b) gratuito: CC BY 4.0, precisa de crédito ao Meshy no `CREDITOS.txt` e na página da Steam | responder qual; com (b) eu ponho o crédito. **Bloqueia a Steam** (AS P1-3) |
+| Q-02 | Livro de Ahk: o nome fica "Livro de Ahk"? | (a) "Livro de Ahk"; (b) "Crônica de Ahk"; (c) outro nome seu | (a): o cânone traz "Ahk, o Escriba" e o nome diz quem narra |
+| Q-03 | Ahk narra o jogo ou aparece só como epígrafe? E a cena dele (prancha 04)? | (a) só epígrafe no começo de cada capítulo; (b) narrador com frases curtas nas telas do Livro; (c) também na partida | (b) no Livro, com frases suas ou do cânone; a cena de Ahk em silhueta até você aprovar o visual dele |
+| Q-04 | O retrato do Guerreiro no Livro é o definitivo? (a Emeth dele é curta e reta, sem a guarda de chifres nem o punho vermelho) | (a) fica; (b) nova imagem com a Emeth certa (IA, declarada) | (b) quando houver a arte; até lá (a) |
+| Q-05 | Textos das páginas do Livro: a Abertura repete o Como Jogar palavra por palavra | (a) Abertura narrativa (cânone, sua revisão) e o Como Jogar ensina; (b) como está | (a), sem inventar lore: eu proponho a partir do cânone e você aprova |
+| Q-06 | Nome do especial: "Onda de Luz" (D-69, onda da lâmina)? | (a) Onda de Luz; (b) Onda da Emeth; (c) outro | (a) já existe no texto (`move_wave`); se você quiser outro, é uma linha |
+| Q-07 | Arte do título: as cruzes (clérigo, peito dele, estandarte da fortaleza) viram leão? E entra a maga aprovada da prancha 08 (capa marfim, Cometa)? | (a) leão/espada no lugar das cruzes e a maga nova (arte nova de IA); (b) cruz fica só na arte do título; (c) espera o elenco | (a): o jogo inteiro já trocou cruz por leão e espada (D-16, D-17, D-66); a capa da Steam deve dizer o mesmo |
+| Q-08 | Regra da Provação tardia (BUG-101) | (a) encontros limitados às lutas que restam e laje só onde cabem 3; (b) a luta de Morvath conta como encontro (a Bênção chega na vitória, inútil); (c) laje só até a profundidade 4 | (a): mantém a decisão de risco e não mente na carta |
+| Q-09 | Fase 1 de Morvath vira foice em laço com o herói perto (80% foice) | (a) segundo golpe de perto no par da Hécate (rápido e depois lento com janela longa, clipe novo); (b) Lâminas das Almas a qualquer distância com um passo atrás (dado); (c) como está | (b) já no C17 se couber (só dado) e (a) no C19, junto com as elites |
+| Q-10 | Ponte dos Condenados B: o patamar do meio é para andar? O parapeito hoje o atravessa | (a) sim, o parapeito contorna o patamar; (b) não, o patamar sai da planta | (a): o chão já é andável e os inimigos andam nele |
+| Q-11 | Elites com golpe próprio como no Hades II (esqueleto elite com dois golpes, corredor elite com explosão dupla) | (a) copiar (D-39); (b) só armadura e velocidade, como hoje | (a), medido com gente |
+| Q-12 | Ômega carregando devagar como no Hades (hoje anda a toda) | (a) número do Hades por ação; (b) meio-termo; (c) como está | (a): a carga ganha risco e peso; a esquiva corta |
+| Q-13 | Botão de usar para loja, recompensa e porta (hoje encostar compra e sai) | (a) botão, como no Hades; (b) encostar | (a): evita comprar cura com a vida cheia e sair sem querer desviando de um golpe |
+| Q-14 | "Todo ataque tem aviso no chão": o orbe do feiticeiro, o leque do Ancião e a trepadeira não têm (o Hades também não marca o orbe) | (a) linha curta da mira no preparo, como o besteiro; (b) mudar a regra para "todo ataque tem aviso, no chão ou no corpo" | (a) para o orbe e o leque; (b) para a trepadeira, que é lenta |
+| Q-15 | Loja e combinações: o robô chega com 60 a 89 de ouro (a Bênção custa 150) e Elo/Salmo quase não aparecem (1 Elo em 12 descidas com Maestria 1) | (a) ajustar a renda e as chances pela régua do Hades e medir 72 sementes; (b) como está | (a): a regra central (Salmo transforma) não chega ao jogador nas primeiras horas |
+| Q-16 | Nomes das ações: "Esquiva" ou "Avanço"? "Ultimate" fica em inglês? | Esquiva/Avanço; Ultimate ou um nome em português ("Golpe Supremo", "Juízo") | "Esquiva" (é o mais usado e "Avanço" já é parte de um Dom); "Ultimate" é decisão sua: eu manteria até você escolher um nome próprio |
+| Q-17 | Créditos: "Criação e direção: Daniel Sacramento" no `CREDITOS.txt` está como você quer? | (a) assim; (b) outro nome ou estúdio; (c) sem nome | o que você preferir; é o que vai para a Steam |
+| Q-18 | Créditos do Meshy (546): lote proposto pelo technical-artist | estátua encapuzada (15), armas próprias dos inimigos e o gancho de Morvath (cerca de 120), repintura das elites (60); até 195 | autorizar a estátua e as armas depois do C18 (D-46 já disse "lote com orçamento"); as elites esperam a Q-11 |
+| Q-19 | `hero_sombra/` e `paladin_1/` (60 MB, sem uso) saem do repositório? | (a) sim, o histórico do git guarda; (b) ficam | (a) |
+| Q-20 | Música: tirar uma peça que ninguém escolhe ou reencodar para abrir folga (0,78 MB do teto de 18) | (a) reencodar um passo abaixo (sem diferença audível medida); (b) tirar uma peça | (a) |
+| Q-21 | Copa da árvore do Jardim (prancha 07) | (a) cartões de folhagem procedurais, sem créditos; (b) modelo do Meshy | (a) |
+
+**Decisões antigas que ainda valem e esperam confirmação** (tomadas pela recomendação e implementadas; o Daniel não
+respondeu): D-51 (quem concede as Bênçãos: os três companheiros e o voto do herói, texto quando os nomes existirem),
+D-52 e D-53 (quatro raridades, lendária só pela troca, multiplicador fixo), D-55 (nomes das ultimates: hoje Corte do
+Juízo e Voragem), D-62 (Compêndio só com texto de jogo), D-63 e E6-D1 (Juramentos; o nome fica perto dos "Juramentados" do
+cânone; Ainda de Pé não levanta na sala de Morvath), D-08, D-14, D-16, D-17, D-18, D-20, D-21, D-22 (câmara e quadro P&B).
+**Abertas de antes, sem mudança**: D-01 (título de Morvath; hoje "o Rei que Traiu a Luz"), D-02 e D-04 (quem sela
+Morvath, nomes dos paladinos), D-09 (Magia na luta do chefe), D-11 (meta da primeira vitória: até 3 tentativas para quem
+jogou Hades), D-23 (porta selada e véu de runas, sem texto até o cânone ter), D-31 e D-32 (água e destrutíveis, arenas
+futuras), D-37 (referência 04 no histórico do git), D-41 (nomes de Eterra para romã e loja), D-07, D-12, D-13.
+**Fechadas**: D-03, D-05 (substituída pela Q-18), D-06, D-15, D-38, D-40, D-48 e D-49 (o herói é "O Guerreiro", D-64;
+"guardião" fica na sala), D-10, D-12b, D-39, D-42 a D-47, D-50, D-54, D-56 a D-61, D-64 a D-71.
+
+**O que só o Daniel jogando responde** (o robô não mede): se os orbes e o corredor ficaram justos, se Morvath dura 2 a 4
+minutos para gente (robô: 68 a 146 s), se o Ômega é usado (PO: mediana 1 por partida), se a ultimate se sente, se a
+música e os efeitos agradam, e se o herói se acha nas fases 2 a 4.
 
 ---
 
+## 5. Ordem sugerida
 
----
-
-## 5. T3: teste do Daniel depois do C12d
-
-**Quando**: depois do commit do C12d e do QW-014. **Quanto**: 3 partidas do título ao fim, teclado e mouse ou controle.
-Substitui o "teste final do C12c" (o roteiro de 7 perguntas do `roadmap_plan.md` E continua valendo e entra junto).
-
-### Perguntas de game feel (uma linha cada)
-1. Alguma vez apertou a esquiva ou o ataque e nada saiu? Onde (no meio do combo, logo depois da esquiva, ao levar golpe)?
-2. O golpe pesa? Gruda ou fica fraco? O finalizador (o giro) está no tempo certo?
-3. A seta de luz e o Ômega: dá vontade de usar? Algum ficou rígido?
-4. No meio de um grupo, os avisos vermelhos deixaram escolher a saída?
-5. Os inimigos parecem sentir o golpe? (antes da D-42, a resposta esperada é "não": serve de linha de base)
-6. Morvath: alguma coisa da foice ou da tempestade pareceu sem aviso?
-7. Qualquer coisa que tenha coberto o herói.
-8. A carta nova de escolha lê bem? E o nome: "dom" ou "Bênção" para a carta (D-50)?
-
-### O que mandar
-O `%APPDATA%\EterraASelagem\runs.jsonl` inteiro e as respostas. Se puder, o tempo do vídeo ou um print do que escondeu o
-herói.
-
----
-
-
----
-
-## 5b. Ciclo T5/T6, correções do teste do PO (2026-11-17)
-
-**Feito** (pedido do PO depois do primeiro teste das E2 a E6; sem conteúdo novo, sem C16):
-- **P0, ultimate:** a carga agora vem também do dano causado e sofrido, a ultimate padrão é a primeira que a Maestria
-  abre, e o HUD mostra o que falta (`docs/design/t5_ultimate.md`).
-- **P0, preparação dos inimigos e de Morvath:** preparação com o corpo e dano só no contato
-  (`docs/qa/t5_enemy_motion.md`, `combat_cadence.md` seção 6).
-- **P1:** esqueleto parou de tremer; corrida trocada (`Jog_Fwd`); músicas próprias para título, masmorra e Morvath e
-  efeitos gravados (`docs/design/t5_audio.md`); Altar e Provação explicados na tela.
-- **Revisões:** art-director e combat-feel-director aprovaram com ressalvas (`docs/gallery/t5/ART_REVIEW.md`,
-  `t5_enemy_motion.md` seção 7). QA em `docs/qa/latest_report.md`.
-- **Evidências:** prints antes e depois em `docs/gallery/t5/before|after/`, vídeos em `docs/gallery/t5/videos/`.
-
-**Pendências:**
-- **Escuta e olho humanos:** música e efeitos (ninguém ouviu), a corrida do esqueleto (3 de 6 critérios: o pé ainda
-  sobe 26 cm), o tremor nos vídeos lentos, a ultimate e a dificuldade com gente jogando.
-- **Partidas do robô (Maestria 1):** 72% para 70% de vitórias; o dano levado antes de Morvath subiu 21%, por causa do
-  dano por contato (Q-T5-1).
-- **Besteiro fugindo:** de 0,48 a 1,24 inversões por segundo, contra o critério de 0,3 (T5-20); o que sobra são giros
-  inteiros.
-- **Tarefas abertas:**
-  - preparações de Morvath para maldição e erupções, e o recuo da besta (P2, T5-17 a T5-19);
-  - horde 47% mais caro com 300 inimigos (Q-T5-4);
-  - `test_descent` instável (Q-T5-5);
-  - globos laranja na vitória com 25 Bênçãos (Q-T5-6);
-  - `--shot-on` antes de `--shot-at` (Q-T5-7).
-- **Próximo:** o teste do PO. A C16 Steam só começa quando ele pedir.
-
-## 6. Próximas entregas (E1 a E6)
-
-**Estado em 2026-11-17: E2 a E6 feitas** (autorização do Daniel de 2026-11-16, sem perguntas; commit final 68ce0be). Falta o
-teste de gente (T5/T6, D-11) e a revisão do art-director (moldura do Salmo, looks da E5, ponto preto na qualidade Baixa,
-ouvir a mixagem). Decisões a validar: `docs/design/e3_blessings.md`, `e4_psalms.md`, `e6_balance.md` (E6-D1: Ainda de Pé
-não levanta na sala de Morvath), `e6_juramentos.md` (o nome "Juramentos" fica perto dos "Juramentados" do cânone),
-`docs/qa/e6_audio_perf.md` (música +9 dB, Baixa a 0,5 de escala). Próximo: C16 Steam.
-
-Ordem pela diretriz "um herói definitivo" (`roadmap_plan.md` seção 00): **E1 game feel e visual → E2 Maestria e Dons →
-E3 Bênçãos e combinações → E4 Salmos e descobertas → E5 eventos e exploração → E6 balanceamento da região → C16 Steam.**
-Cada entrega é uma versão MVP inteira para o Daniel testar de uma vez. A regra 0.1 do roteiro vale em todas: nenhuma
-progressão nova entra antes do T4; nenhum conteúdo para esconder falta de acabamento.
-
-### E1a "Inimigos vivos" (feita em 2026-11-16; QA em `docs/qa/latest_report.md`, arte em `docs/gallery/e1a/ART_REVIEW.md`; pendente: pé de apoio do Escudo, Cavaleiro e Morvath e GPU +0,30 ms no limite, ambos na E1b)
-
-**Auditoria das lacunas (feita no `10944b1`)**: a mão do herói passou no C12d (sonda 31/31, latência medida) e não é
-refeita. O que segue demonstravelmente abaixo do padrão:
-1. **Multidão e Morvath em stop motion** (VX-04): andar com 8 a 10 poses por ciclo, golpe sofrido 4, parado 4, morte 8,
-   sem mistura entre poses (`crowd_renderer.gd:242`, `int(t * c.fps)`; `tools/bake.gd` `SOLDIER_ANIMS` e `MODELS`).
-   Ao lado do herói (animação esquelética contínua) é o maior contraste visual da tela.
-2. **Pés deslizando** (VX-05): passo genérico por `clip_rate`.
-3. **Golpe sofrido invisível no corpo** (VX-06): 4 poses e nenhum deslocamento que se veja.
-4. **Armas do KayKit** em faixas de duas cores sobre figuras pintadas (VX-07).
-5. `RESULT` não é JSON válido (B-c): atrapalha toda medida automática das próximas entregas.
-
-**Por que esta e não o atordoamento (GF-12)**: o T3 ainda não aconteceu; a E1a não muda a mão nem a dificuldade, então a
-versão dela vai para o T3 medindo a mão do C12d **com** inimigos vivos (um teste só, regra do MVP). O GF-12 muda a
-dificuldade e entra na E1b com o resultado do T3. Também fica para a E1b: o W-1 (especial lido como onda, D-69), a medida do avanço magnético na sonda ("o Guerreiro se reconhece no primeiro ataque", `warrior_spec.md` seção 10), VX-14 (clipes de Morvath), som do combate,
-GF-15, VX-13, VX-17, M-1.
-
-| ID | Item | Aceite verificável | Responsável | Arquivos |
-|---|---|---|---|---|
-| E1a-1 (VX-04) | Mais poses e mistura entre a pose atual e a seguinte no vértice (todos os inimigos e Morvath), Forward+ e Compatibility | quadros seguidos a 30 qps de um esqueleto andando nunca repetem a pose; andar 20 ou mais poses por ciclo (ou mistura equivalente), golpe sofrido 8, parado 12, morte 16; assados com teto de **70 MB** medido; `step_ms` do smoke sem piora; tempo de quadro na GPU sem piora acima de 0,3 ms com `--stress=150` | `gameplay-engineer` | `tools/bake.gd` (clipes), `scripts/render/baked_model.gd`, `crowd_renderer.gd`, `crowd.gdshader`, `crowd_outline.gdshader`, `assets/baked/` |
-| E1a-2 (VX-05) | Passo do andar medido por clipe no assado, guardado no `BakedModel`, usado na velocidade da animação | pé de apoio desliza menos de 5 cm por passo (medido no assado, teste) | `gameplay-engineer` | idem, `horde.gd` |
-| E1a-3 (VX-06, só a apresentação) | Golpe sofrido com 8 poses e recuo do corpo de 0,15 a 0,3 m visível em 3 quadros, que volta; sem mudar o comportamento (o atordoamento é a E1b) | `--shot-on=hit` e quadros seguintes: o alvo se desloca e volta; nenhum número de combate muda (smoke com a mesma semente: mesmos abates e dano) | `gameplay-engineer` | `horde.gd`, `crowd_renderer.gd` |
-| E1a-4 (VX-07) | Armas no estilo dos modelos, paliativo no assado: ferro escuro e osso sem listras, cutelo até 0,6 do tronco, gancho de Morvath em ouro velho (matiz 35 a 45, saturação até 0,5) | `enemy_lab`: nenhuma arma em faixas de duas cores; gancho medido; aprovação do `art-director` | `environment-artist` (depois do E1a-1, mesmo arquivo) | `tools/bake.gd` (`held`, `remap`) |
-| E1a-5 (B-c) | `RESULT` em JSON válido | `JSON.parse` do `RESULT` de `--start=boss` sem erro; teste | `gameplay-engineer` | `game.gd` |
-| E1a-7 | Texto do jogador: "o paladino" do Como Jogar vira "o Guerreiro" (`howto_move_desc`, `howto_cast_desc`); premissa e título ficam (D-02, D-64) | nenhum "paladino" para o herói no Como Jogar; testes passando | sessão principal | `data/text_pt.tres` |
-| E1a-6 (D-54) | Duas propostas de U-2 ofensiva com controle (impacto visual, sinergias, custo), só documento | arquivo com as duas, números de partida e a recomendação | `gameplay-engineer` | `docs/design/ultimate_u2_proposals.md` |
-| E1a-QA | Antes e depois: vídeos a 30 qps de esqueletos, mago, Escudo e Morvath andando, levando golpe e morrendo (1x e 0,25x), sonda 31/31 sem regressão, 541+ testes, 8 descidas do robô, tamanho dos assados, quadro na GPU, avaliação nas perguntas da diretriz | `docs/qa/latest_report.md`, `docs/gallery/e1a/` | `qa-performance`, `art-director` (revisão) | |
-
-**Herdado da revisão de arte da E1a para a E1b** (`docs/gallery/e1a/ART_REVIEW.md`):
-- E1b-A1: o passo medido em **metros do jogo** (vezes o tamanho do inimigo; hoje o teste mede no tamanho 1): meta 5 cm para
-  quem corre e 8 cm para os grandes que andam. Hoje em jogo: Escudo cerca de 20 cm, Cavaleiro 21, Morvath 15, ancião 10.
-- E1b-A2: passada pesada do Escudo, 110 a 140 passos por minuto (hoje cerca de 195, o andar a 2,15x); Morvath e Cavaleiro
-  com passada longa, 90 a 120; pé preso ao chão no assado (IK de perna) se nenhum clipe servir; senão dependência de
-  animação própria (VX-14).
-- E1b-A3: mago e besteiro com trote de passada curta, 120 a 150 passos por minuto (hoje 82 e 90, trote em câmera lenta);
-  o braço livre do mago sem ficar esticado de lado. **Feito na E1b (gameplay-engineer, aguarda revisão do `art-director`)**: A1 a A3 com o pé travado no assado (`_foot_lock`, `stride`): passos por minuto e escorregamento em jogo: Escudo 120 / 1,6 cm (`Walking_A` do KayKit), Cavaleiro 96 / 0,4, Morvath 102 / 1,3, ancião 67 / 1,1, mago 130 / 0,0 (braço livre a 14 graus do corpo, era 61), besteiro 126 / 0,5, esqueleto 96 / 2,8, corredor 131 / 1,1; `STRIDE_PENDING` saiu do teste; tiras em `docs/gallery/e1b/walk/`.
-- Gancho de Morvath: se o Daniel achar esverdeado sob o violeta, subir o vermelho da tinta `gold` de 0,33 para 0,36.
-
-**Herdado da revisão de arte da E1b** (`docs/gallery/e1b/ART_REVIEW.md`; aprovada, nada bloqueia o teste do Daniel):
-1. E1c-1 trote do mago e do besteiro sem meio pulo: pés na sombra em todos os quadros de apoio (`tools/bake.gd`).
-2. E1c-2 fio de ouro da onda do especial legível a 1080 (onda 30% maior ou fio mais largo).
-3. E1c-3 rastro deitado no fim da foice de Morvath (o arco vertical sobre a área em meia-lua).
-4. E1c-4 besteiro com a besta abaixada andando; mira só no preparo (feito no GF-21; a pose aguarda o art-director).
-5. E1c-5 mão esquerda de Morvath a até 40 cm nos giros.
-6. E1c-6 conferir o clarão do golpe sofrido no herói (um quadro quase marfim em `scythe_after.mp4`; regra: clarear morno, `Player.HURT_*`).
-Esses entram junto com o que o Daniel apontar no teste da E1.
-
-### E1 "Game feel e qualidade visual": E1a e E1b feitas (2026-11-16, `ec5d757`, `18b0785`; QA e arte aprovam, nada bloqueia); agora o teste do Daniel
-- **Objetivo**: inimigos e Morvath que se movem e reagem tão bem quanto o herói, armas no estilo, combate que se ouve.
-- **Por que agora**: prioridade 1 e 3 da diretriz; a mão já passou (C12d), o resto do quadro não.
-- **T3 primeiro** (QW-014, seção 5). O C12e não espera a resposta do T3 para começar (não mexe na mão); o C12f espera,
-  porque o atordoamento (D-42) muda a dificuldade que o T3 mede.
-
-#### C12e "Excelência visual I: movimento e coerência" (2 a 3 dias)
-- **Objetivo**: inimigos e Morvath que se movem tão bem quanto o herói e armas no estilo dos modelos.
-- **Por que agora**: o maior déficit visual depois da mão (V-A1 alta: stop motion ao lado do herói); sem créditos.
-- **Entregas**: VX-04, VX-05, VX-06 (o atordoamento entra no C12f), VX-07, VX-13, VX-17, GF-15, M-1, B-1 (gemas).
-- **Aceite**: os de cada item; pacote dos assados medido (hoje cerca de 44 MB) e com teto escrito; quadro sem piora acima
-  de 0,3 ms; vídeos (b), (c), (e), (f1) antes e depois aprovados pelo `art-director`.
-- **Responsáveis**: `environment-artist` (`tools/bake.gd`), `gameplay-engineer` (`crowd_renderer.gd`, `crowd.gdshader`,
-  `bake_hero.gd`), `qa-performance`, `art-director`. **Riscos**: memória e tempo de assado; mistura de pose no vértice no
-  Compatibility.
-
-#### C12f "Game feel II: inimigos, Morvath e som do combate" (2 dias)
-- **Objetivo**: o golpe mudar o comportamento dos inimigos e o combate se ouvir.
-- **Entregas**: GF-12 (D-42 aprovada), VX-06 completo, VX-14 (clipes de Morvath), C15-02 subido (som por ação, aviso e
-  inimigo, impacto por material), B-2 (robô usa a fonte), correção do que o GF-13 e o T3 apontarem.
-- **Aceite**: teste GUT do atordoamento por inimigo; 8 descidas antes e depois; teste que acusa evento de combate sem som;
-  vídeos por fase de Morvath aprovados. **Riscos**: dificuldade cai com o atordoamento; medir antes de mexer em vida.
-
-#### T4, depois do C12f: o Daniel diz se o combate está aprovado para a Fase 1 (critério 1 da definição, `roadmap_plan.md` 0).
-Depois do T4: o lote do Meshy para as armas (D-46, orçamento do `art-director` por peça antes de gastar).
-
-### E2 "O Guardião: Maestria e Dons" (depois do T4; 5 a 7 dias em três partes)
-- **Objetivo**: o Guardião como herói definitivo, com progressão permanente que se sente (critério 2 da Fase 1) e uma
-  arquitetura que o próximo herói reusa.
-- **Por que agora**: prioridade 2 da diretriz; muda o kit, então vem antes de balancear as Bênçãos.
-- **Especificação**: `docs/design/guardian_spec.md` seções 3 a 8, 12 a 14 e 16.
-- **Dependências**: T4 aprovado; DT-012; D-48 (nome), D-50 (texto), D-56 (passiva), D-54 (ultimate), D-57 (Maestria),
-  D-58 (Dons). Sem resposta: vale a recomendação de cada uma, com o nome "Explorador" (o do modelo) e os nomes da 1ª opção.
-
-| ID | Parte | P | Descrição | Aceite (medível) | Responsável | Arquivos |
-|---|---|---|---|---|---|---|
-| E2-01 | E2a | P0 | **feito** DT-012 (save 3) e DT-015 (registro 3) | testes de `guardian_spec.md` 16 (`test_save`, `test_run_log`) | `gameplay-engineer` | `core/save_data.gd`, `core/run_log.gd`, `game.gd` (`run_entry`) |
-| E2-02 | E2a | P0 | **feito** DT-013 `HeroDef` do Guerreiro (`warrior`) com os números de hoje | mesma semente, mesmo `RESULT` (smoke 300 e chefe com 25 Bênçãos) | `gameplay-engineer` | `core/hero_def.gd`, `player.gd`, `combat.gd`, `make_data.gd` `_hero` |
-| E2-03 | E2a | P0 | QW-018 Bênção no texto (se não entrou no T3) | ver QW-018 | `ui-ux-designer` | `text_pt.tres` |
-| E2-04 | E2a | P1 | **regras feitas** (falta a tela de fim, `ui-ux-designer`) Maestria: `MasteryCurve` pura (40 + 10 por nível), XP por fonte (seção 7.2), retroativo uma vez (D-57), XP e nível novo na tela de fim | `test_mastery`; uma partida do robô com `--runlog` grava XP certo; morte guarda XP | `gameplay-engineer` (regras), `ui-ux-designer` (tela de fim) | `core/mastery.gd`, `game.gd`, `end_screen.gd` |
-| E2-05 | E2a | P1 | **dados e regras feitos** (árvore da `warrior_spec.md` 4 em `data/talents/warrior/`, 19 Dons; Fio Longo, Reserva e Firmeza já agem; os efeitos dos seis iniciais são outra tarefa) Dons de dado (níveis 1 a 7, 9 e 10 do catálogo), Devoção (5 + nível), um por ação, soma com Bênção em `BoonState.stat` | `test_talents`: custo, um por ação, soma, tags mantidas; partida com Maestria 1 e sem Dom igual à de hoje | `gameplay-engineer` | `core/talent_def.gd`, `core/boon_state.gd`, `make_data.gd` `_talents`, `data/talents/explorer/` |
-| E2-06 | E2a | P1 | Tela do herói no título: nível, barra de XP, Dons (destravados, custo, Devoção livre), escolha da ultimate; teclado, mouse e controle | `title_flow_check` passa pela tela; capturas a 720 e 1080 | `ui-ux-designer` | `scripts/ui/hero_screen.gd` (nova), `title_menu.gd`, `boot.gd` |
-| E2-07 | E2b | P0 | Passiva (D-56; P-A recomendada: 2 de Magia por finalizador que acerta) | teste; a Magia nunca passa do máximo; robô 0,25 em 8 descidas | `gameplay-engineer` | `combat.gd`, `player.gd`, `make_data.gd` |
-| E2-08 | E2b | P0 | Ultimate U-1 (D-54): ação `ultimate` remapeável, carga pela Magia gasta (60), 5º losango com o nível de carga, gesto protegido 0,35 s, área de 6 m, 240 de dano, atordoa 1 s, som e efeito sem clarão branco | `test_ultimate`; sonda com metas novas (sai no quadro do aperto, aperto guardado no hit stop, não cobre o herói: nenhum pixel acima de 235 na caixa do corpo); não atravessa menus nem a vitória | `gameplay-engineer` (regra, entrada), `environment-artist` (efeito), `ui-ux-designer` (losango, remapear), `art-director` (aprovação) | `controls.gd`, `player.gd`, `skills.gd`, `fx.gd`, `action_slot.gd`, `hud.gd`, shaders novos |
-| E2-09 | E2c | P1 | Dons de código (níveis 8 e 11 a 20) | um teste por Dom; vídeo de cada Dom de ação | `gameplay-engineer` | `combat.gd`, `player.gd`, `make_data.gd` |
-| E2-10 | E2c | P2 | Ultimate U-2 (Maestria 10) | `test_ultimate` estendido; vídeo | `gameplay-engineer`, `environment-artist` | `ground.gd`, `projectiles.gd` |
-| E2-11 | E2c | P2 | Compêndio pequeno: Dons e Golpes (a `MovesScreen` vira uma aba) | `test_codex` (parte); captura | `ui-ux-designer` | `scripts/ui/codex_screen.gd` |
-| E2-12 | todas | P0 | QA: sonda 31/31 mais as metas novas, 8 descidas com Maestria 1 e com Maestria 20 (mesmas sementes), vídeos da ultimate e do herói, relatório | o aceite acima, com a diferença de vitórias entre Maestria 1 e 20 escrita (meta da E6: até 25 pontos) | `qa-performance` | `docs/qa/`, `docs/gallery/e2/` |
-
-- **Riscos**: a ultimate é a peça que mais pode piorar a leitura (efeito grande no meio do grupo): o `art-director`
-  especifica antes; a Maestria deixa o jogo fácil para quem joga muito (meta da E6 e Juramentos depois); a tela do herói é
-  a primeira tela de meta do jogo e pede o mesmo nível da carta nova.
-- **Evidências**: `docs/gallery/e2/` (tela do herói, tela de fim com XP, ultimate a 1x e 0,25x, Dom de ação antes e
-  depois), saída da sonda, `METRICAS.md` com Maestria 1 e 20.
-
-### E3 "Bênçãos e combinações" (o C13 antigo; 4 a 6 dias)
-- **Objetivo**: chegar a Morvath com 5 a 8 Bênçãos que combinam, com as regras e os números do Hades II.
-- **Por que agora**: prioridade 3; hoje 2 a 3 Bênçãos em Morvath (QA do C12d), quase nenhum Elo se forma.
-- **Dependências**: E2 (Dom e Bênção somam na mesma `stat`); D-52, D-53, D-61; D-41 (nomes).
-- **Itens**: C13-01 a C13-08 (seção 1b, sem mudança de aceite; C13-03 com as raridades da D-52), BUG-017 (Elo sem nível e
-  sem raridade), E3-01 troca com +1 de raridade (10% por carta numa ação ocupada, a lendária), E3-02 `requires_sets` nos
-  Elos, E3-03 Compêndio de Bênçãos e Elos, E3-04 aviso "Bênção nova" (`EloBanner`), E3-05 `dealt_by` (DT-016) usado no
-  balanço, E3-06 carta com a moldura de cada raridade (a lendária em ouro velho, nunca amarelo vivo).
-- **Aceite**: o da seção D do roteiro para o C13 (robô chega com 5 a 8 em 6 de 8, compra na loja em 6 de 8, vence 3 a 6 de
-  8; economia com a fonte de cada número), mais `test_rarity` (10 mil sorteios dentro de 1 ponto), `test_elo`, e nenhum
-  Elo com raridade na carta.
-- **Responsáveis**: `gameplay-engineer`, `ui-ux-designer` (loja, carta, Compêndio), `qa-performance`.
-- **Riscos**: a partida dobra de tamanho e muda toda a curva; as arenas repetem (4 salas para 10 lutas). Medir antes de
-  mexer em vida.
-
-### E4 "Salmos e descobertas" (4 a 5 dias)
-- **Objetivo**: descobertas raras que transformam o jogo de uma partida, registradas no Compêndio, com música própria.
-- **Dependências**: E3; D-59 (texto e música), D-60 (temas aprovados).
-- **Itens**: E4-01 `PsalmDef` e regras (três grupos com Dom, Bênção ou Elo; 10% por carta; 5% no guardião; um por tema;
-  dois por partida), E4-02 os 4 primeiros Salmos aprovados, E4-03 carta e moldura do Salmo (`art-director` especifica),
-  E4-04 "Salmo descoberto" sem pausar e entrada no Compêndio com pista, E4-05 Compêndio completo (inimigos, Morvath,
-  arenas; só texto de jogo, D-62), E4-06 tema musical por Salmo e a música de combate de base (C15-03, licença pela
-  D-12b), E4-07 `audio/LICENSES.md` e créditos (C15-05).
-- **Aceite**: `test_psalms`, `test_codex`; nenhum texto bíblico citado e nenhum número de salmo na tela (teste que lê as
-  chaves `psalm_*`); cada Salmo com captura e vídeo da transformação aprovados pelo `art-director`; música sem silêncio de
-  2 s com ela ligada.
-- **Responsáveis**: `gameplay-engineer`, `ui-ux-designer`, `art-director`, `environment-artist`.
-- **Feito (E4-01, E4-02, 2026-11-17, `gameplay-engineer`; `docs/design/e4_psalms.md`)**: regras e os quatro Salmos.
-  Decisões tomadas pelas recomendações (autorização de E2 a E6), a validar no teste do Daniel: Sentinela no círculo
-  (anda com ele e golpeia quem entra) e não na esquiva através do aviso (pedia esperar o golpe); Abrigo na esquiva (o
-  Refúgio da spec, mesmo tema); Pastor no especial (luzes dos abates viram ondas) no lugar da cura por abate; Rocha no
-  giro (pedra que atordoa os comuns); uma coisa nunca responde por dois grupos; o dado do Salmo só é lido quando algum
-  pode vir (partidas sem Salmo iguais às de antes); gente só recebe carta de Salmo quando a tela da E4-03 existir;
-  `psalms` no `RESULT` sem mudar a versão do registro.
-- **Riscos**: tom (alegoria respeitosa, sem sermão); fonte da música.
-
-### E5 "Eventos e exploração" (5 a 8 dias)
-- **Objetivo**: decisões fora do combate e a sensação de descer por lugares ligados (hipótese A).
-- **Dependências**: E3 (baralho de recompensas, economia); D-31, D-32, D-29 (arenas).
-- **Itens**: Provação (o Caos do Hades II: porta com custo de vida `teto(10 + 0,5 x profundidade)`, maldição de 3 a 5
-  encontros que vira recompensa; `hades2_sistemas.md` seção 7; tema sem dono até o Daniel dizer), salas de evento
-  (inscrição, altar, fonte: só com cânone), C14-A4 a A6 (Santuário, Ponte, Runas), portas que mostram o caminho.
-- **Aceite**: cada evento com uma decisão própria medida no registro; arenas com os testes do C12; aprovação do
-  `art-director`; quadro até 6 ms a 1080.
-
-### E6 "Balanceamento da primeira região" (contínuo, com testes T5 e T6)
-- **Objetivo**: a região inteira justa e com curva, para gente, do Maestria 1 ao 20.
-- **Itens**: dificuldade por sala e de Morvath pelo registro de gente; curva de Maestria (D-57) pelo tempo real; meta
-  D-11; diferença Maestria 1 e 20; Juramentos (D-63); mixagem e ambiência (C15-01, C15-04, B-3); máquina fraca (DT-003).
-- **Aceite**: primeira vitória em até 3 tentativas para quem jogou Hades (D-11, pede teste humano); robô 0,25 com Maestria
-  20 até 25 pontos acima da Maestria 1; iGPU medida; pico até -1 dBTP e -18 a -14 LUFS.
-
-### Itens de arte que seguem abertos
-
-| ID | Título | Esforço | Responsável | Quando |
-|---|---|---|---|---|
-| ART-002 | Música (agora com os temas dos Salmos) | G | `art-director`, Daniel (fonte) | E4 |
-| ART-010 | Peças definitivas (estátuas, sarcófagos, porta, foice de Morvath, árvore) | M | `art-director`, `environment-artist`; Daniel autoriza créditos | depois do C12f (D-46) |
-| ART-011 | Gancho de Morvath e ouro das elites por repintura | P | Daniel | paliativo no VX-07; repintura com D-46 |
-| ART-012 | Medalhões pintados das outras 29 Bênçãos e dos Salmos (hoje só 3, feitos por IA) | M | `art-director`, Daniel (fonte e IA, `steam-ia.md`) | E3 e E4 |
-| QW-009, QW-010 | Coroa da fachada; medir a `02` contra a planta | P | `art-director` | quando sobrar |
-
----
-## 7. Decisões do Daniel
-
-### Tomadas por ele (2026-11-16, noite): diretriz "um herói definitivo"
-Decisões 1 a 12 em `docs/design/one_hero_directive.md`: um herói só (Explorador/Guardião) até a qualidade desejada; os
-outros três não agora; game feel e visual primeiro; Maestria por herói; Dons pela Maestria; Bênçãos com quatro raridades;
-Salmos transformam; Salmos com temas bíblicos e música e efeitos originais; sem equipamento; Emeth é a arma; Câmara do Selo
-e Morvath fecham a região; Fase 2 não agora.
-
-### Correção do PO: o primeiro herói é o Guerreiro (2026-11-16, `docs/design/warrior_spec.md`)
-O herói é **o Guerreiro** (guerreiro ofensivo de espada, sem bloqueio nem aparo), não o Explorador nem o Guardião. Nos itens
-deste backlog, "Guardião" como herói passa a ser o Guerreiro; "guardião" como sala e inimigos de minichefe fica. Conferência
-no cânone: "Punho de Elun" é o título de **Hanokh** (discípulo mais próximo de Elun, origem da linhagem do leão), então o
-título no herói é decisão de história. Novas decisões D-64 a D-71: **decididas pelo Daniel em 2026-11-16, seguem a recomendação** (abaixo):
-
-| ID | Pergunta | Recomendação |
-|---|---|---|
-| D-64 | Como o Guerreiro se liga ao título "Punho de Elun" de Hanokh: é Hanokh, é do sangue dele, título de uma ordem, ou não usar | não usar no jogo por enquanto, mostrar "O Guerreiro"; o Daniel decide com a história |
-| D-65 | "Consagrado a Elun" (prancha) ou "à Yah" (Voto de Nazar no cânone) | a do cânone |
-| D-66 | Símbolo do herói: sol de oito raios (prancha) ou leão (cânone: sinal de Hanokh e Elun) | leão; o sol só como ornamento sem dizer Elun |
-| D-67 | "Aliança", "Espada da Aliança", "Convênio" (o cânone tem a Aliança Negra) | não usar |
-| D-68 | Nomes de poder com Elun ("Fúria de Elun", "Julgamento de Elun") | nenhum |
-| D-69 | Especial lido como onda da lâmina, mesmos números | sim, na E1b |
-| D-70 | Fúria como barra nova ou cargas curtas sem barra | cargas |
-| D-71 | Primeiro Salmo | Sentinela |
-
-Substituído (histórico em `warrior_spec.md` seção 12): U-1 vira faixa de 12 x 4 m à frente; U-2 é a Voragem
-(`ultimate_u2_proposals.md`), destravada na Maestria 6; Dons em árvore (centro, Combo, Fúria, Emeth, Magia, pontes,
-ápices) com seis iniciais; Dons de defesa parada saem; primeiro Salmo revisto para o ataque.
-
-### Tomadas pelo Daniel como Product Owner (2026-11-16, depois do `10944b1`; `docs/design/po_directive_guardian.md`)
-
-| ID | Decisão | Consequência |
-|---|---|---|
-| D-50 | Opção A: só o texto do jogador vira "Bênção"; `Boon`, ids, cartas, dados e registro ficam | E2-03 só em `text_pt.tres` |
-| D-54 | Carga pela Magia gasta aprovada; duas ultimates, uma escolhida antes da partida. **As duas ofensivas**: a U-2 defensiva (Muralha de Luz) sai; a nova U-2 controla área **e** fere, e deixa o Guardião seguir atacando | `gameplay-engineer` entrega duas propostas em `docs/design/ultimate_u2_proposals.md` (E1a, só documento); nomes pendentes (D-55) |
-| D-56 | P-A, Brilho da Emeth, provisória | os 2 de Magia por finalizador se validam em teste |
-| D-57 | 20 níveis; 25 a 30 partidas é hipótese; muitos desbloqueios interessantes no começo, priorizar os que transformam a jogabilidade; XP guardado na derrota; saves antigos compatíveis | E2: reordenar o catálogo com Dons de ação cedo |
-| D-58 | Catálogo com Devoção, **começando por cerca de 6 Dons excelentes** (efeito claro, impacto perceptível, sinergia com Bênçãos, retorno visual, critério de teste e de balanço); os 20 seguem como planejamento | E2-05 e E2-09 viram "conjunto inicial de 6" |
-| D-59, D-60 | Temas bíblicos com música e efeitos originais; Sentinela, Abrigo, Pastor, Rocha como proposta a validar. **Um Salmo completo** como prova de conceito, só depois de Dons e Bênçãos funcionarem juntos | E4-02 vira "1 Salmo" |
-| D-61 | Planejar a descida de 10 salas; as salas novas com variedade, eventos, escolhas e evolução; modos curtos preservados | E3 com aceite de variedade |
-| Outras | Sem equipamento, sem troca de arma, Emeth é a identidade, Elo fica (adaptado às Bênçãos), outros heróis e Fase 2 fora, sem cânone novo, sem Meshy nem serviço pago, nada de todos os sistemas de uma vez | |
-
-**Continuam pendentes** (o Daniel disse que não ficam aprovadas por tabela): D-48, D-49, D-51, D-52, D-53, D-55, D-62,
-D-63, os nomes de Dons, Devoção e Salmos e todo ponto de cânone. A tabela abaixo segue valendo para elas.
-
-### Abertas desta especificação (D-48 a D-63; detalhes em `docs/design/guardian_spec.md`; D-50, D-54, D-56 a D-61 decididas acima)
-
-| ID | Pergunta | Opções | Minha recomendação |
-|---|---|---|---|
-| D-48 | Nome do herói | (a) Explorador (nome do modelo, sem peso de cânone); (b) Guardião (no cânone de 12/11 os guardiões são os quatro Juramentados sem o sangue do leão que seguram o selo, sinal da espada erguida; "os quatro de Valmor" são eles); (c) o nome próprio do `PALADIN_1` quando existir | **(b) se** o herói é um dos quatro de Valmor na história (então o nome diz quem ele é); senão (a). No código fica `explorer` de qualquer jeito |
-| D-49 | Se for Guardião: o que vira a sala e os inimigos "Guardião" de hoje (Cavaleiro, Ancião) | (a) Sentinela; (b) Carcereiro; (c) Campeão dos Mortos | **(b) Carcereiro**: diz que eles prendem o caminho, sem disputar sentido com os guardiões do selo (opinião) |
-| D-50 | Como renomear "dom" para "Bênção" | (a) só o texto (P); (b) texto e classes (M); (c) tudo, com chaves e registro (G) | **(a)**: nenhum ganho para o jogador em (b) ou (c), e (c) quebra o `runs.jsonl` |
-| D-51 | Quem concede as Bênçãos (Chama, Geada, Luz, Vigília) com um herói só | (a) os três companheiros e o voto do próprio herói, como hoje (o texto aparece quando os nomes existirem); (b) a luz de Elun em quatro formas, sem pessoa; (c) outra origem do cânone (as fontes de luz, os guardiões de Valmor) que só você pode dar | **(a)**: mantém a premissa ("quatro paladinos descem"), dá presença aos outros três antes de serem jogáveis e não inventa nada; (b) põe Elun como fonte de geada e fogo, o que pede cuidado teológico |
-| D-52 | As quatro raridades | (a) comum 1, rara 1,5, épica 2, **lendária 2,5 só pela troca** (a heroica do Hades II), e o lendário do Hades II vira o Salmo; (b) cinco raridades (comum, rara, épica, heroica e lendária única); (c) lendária no sorteio com 1 ou 2% | **(a)**: os quatro nomes que você pediu, cada regra do Hades II no seu lugar (D-39), e o Salmo ganha a regra do lendário |
-| D-53 | Multiplicador da raridade | (a) fixo 1,5, 2, 2,5; (b) faixa sorteada do Hades II (rara 1,3 a 1,5, épica 1,8 a 2, lendária 2,3 a 2,5) | **(a)** agora (KISS e carta mais clara); (b) se você quiser a fidelidade total |
-| D-54 | Ultimate: como carrega e qual vem primeiro | carga: (a) Magia gasta, o Hex do Hades II; (b) barra por dano, o Chamado do Hades I (números a confirmar); (c) recarga por tempo. Efeitos: U-1 ofensiva (6 m, 240, atordoa) e U-2 defensiva (anel de 7 m por 5 s) | **(a)**, U-1 na Maestria 2 e U-2 na 10; escolhida antes de descer, uma por partida como o feitiço do Hades II |
-| D-55 | Nome da ultimate e se ela fala da luz de Elun | nomes: Lâmina Erguida, Juízo da Emeth, Clarão da Emeth (U-1); Muralha de Luz, Cerco de Luz, Bastião (U-2) | **Juízo da Emeth** e **Muralha de Luz** se o herói não for guardião; **Lâmina Erguida** só se for (é o sinal deles); nenhum nome com Elun ou Yah sem você |
-| D-56 | Passiva | P-A Brilho da Emeth (2 de Magia por finalizador que acerta); P-B Postura do Guardião (20% menos dano pela frente parado); P-C Vigília (primeiro golpe da sala anulado) | **P-A**: muda o jeito de jogar sem mexer direto na dificuldade e liga combo, Ômega e ultimate; a P-C repete a Bênção Escudo da Vigília |
-| D-57 | Maestria: ritmo, perda e saves antigos | ritmo: 20 níveis em cerca de 25 a 30 partidas (40 + 10 por nível) ou mais rápido/lento; morrer guarda o XP (sim/não); saves antigos ganham 40 por partida e 60 por vitória até o nível 5 (sim/não) | **sim aos três**: um Dom novo por partida no começo, nada se perde ao morrer (como o Hades II), quem já jogou não recomeça |
-| D-58 | Dons: o que entra e como se equipa | (a) catálogo de 20 com Devoção (custo de 1 a 5, capacidade 5 + nível, como as Arcana); (b) tudo destravado fica ativo (como o espelho do Hades I, sem escolha); (c) só Dons de ação, sem os de vida e desafio à morte | **(a)** com os Dons de sustento (vida, levantar uma vez): com um herói só eles são dele; quando vier o 2º herói, os genéricos podem virar uma camada comum |
-| D-59 | Salmos: texto e música | texto: (a) nome por tema, sem número e sem citar texto bíblico (o cânone diz "ninguém cita versículo"); (b) com número ("Salmo 23"); música: (c) síntese e CC0 ou CC-BY (D-12b); (d) compositor contratado (pago, pede sua autorização) | **(a)** e **(c)** agora; (d) depois, com orçamento |
-| D-60 | Quais temas de Salmo aprovar (8 propostos: Sentinela, Abrigo, Pastor, Rocha, Cântico Novo, Purificação, Luz, Árvore junto às águas) e os dois cuidados de cânone | aprovar a lista, cortar, trocar; o "da Árvore" mexe na fonte de luz (sinal do Sopro); nenhum "da Lâmpada" (termo do cânone) | **aprovar Sentinela, Abrigo, Pastor e Rocha para a E4** (os mais ligados ao herói que segura o chão); o da Árvore só com o seu sim |
-| D-61 | Descida de 10 salas (C13 antigo) | (a) na E3, junto com as Bênçãos; (b) só na E6, testando combinações com `--boons` | **(a)**: com 2 a 3 Bênçãos em Morvath as combinações não aparecem para quem joga |
-| D-62 | Texto do Compêndio | (a) só descrição de jogo até você escrever o resto; (b) o diretor propõe frases a partir do cânone para você aprovar | **(a)** na E2 a E4; (b) quando você quiser |
-| D-63 | Juramentos (os votos do Hades II, dificuldade por escolha) | (a) na E6, depois da primeira vitória, como lá; (b) depois da Steam | **(a)**: dá vida longa à região única e equilibra a Maestria |
-### Antes desta revisão
-
-#### Novas, tomadas por ele (2026-11-16)
-
-| ID | Decisão | Onde |
-|---|---|---|
-| D-34 | Estandartes com o leão no salão e nas arenas; a Câmara do Selo segue com a espada | `501f3d8`, `e2297ee` |
-| D-35 | Estátuas encapuzadas de mãos vazias; nenhuma porta verde (nem braseiros pedidos na imagem) nas arenas | `501f3d8` |
-| D-36 | "Não precisa de fidelidade nesta entrega, o importante é ter as arenas salas diferentes, depois eu testo": fidelidade às imagens conceituais fica para depois, talvez com Meshy que ele autorize | registrado no `CLAUDE.md` (`95c29c6`) |
-
-#### Decidida pelo Daniel nesta tarde
-
-| ID | Decisão | Onde |
-|---|---|---|
-| D-39 | "Vale copiar do Hades, nomes nossos": mecânicas e números do Hades II fielmente; nomes, personagens, UI e arte de Eterra. Resolve o conflito com a frase "não copiar mecanicamente" do pedido de hoje | `roadmap_plan.md`; C13 planejado com isso |
-
-#### Abertas da Game Feel Review (novas)
-
-| ID | Pergunta | Opções | Minha recomendação |
-|---|---|---|---|
-| D-42 | Os inimigos comuns sem armadura atordoam ao levar golpe, como no Hades II (param de andar, a preparação é interrompida; elites imunes até a armadura quebrar; alguns imunes só durante o próprio ataque)? Muda muito a dificuldade | (a) copiar o Hades por inimigo; (b) só parar de andar no recuo, sem interromper o ataque; (c) como está | **(a)**, pela D-39 e porque hoje acertar não muda nada; entra no C12f, medido no robô e no T4 antes de mexer em vida **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-43 | O que fica nosso no impacto (apresentação, não dificuldade): câmera lenta rara por vários abates (o Hades só tem no último abate e no chefe), tranco de câmera maior só nos finalizadores e no Ômega, clarão morno em vez do vermelho do Hades | (a) manter os três, corrigidos (GF-05, GF-10); (b) tirar e ficar só com o Hades | **(a)**: é a sensação do Ember & Blade, rara e corrigida; o `art-director` fixa os valores pelo vídeo **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-44 | Três diferenças que mexem na dificuldade: (1) esquiva sai no quadro 0 (o Hades espera 3 quadros protegido); (2) o círculo dá 0,2 s de proteção e deixa atacar na hora (o Hades não protege e trava 8 quadros); (3) depois da seta o herói anda na hora (o Hades segura as pernas 0,71 s, só a esquiva corta) | para cada uma: copiar o Hades ou manter | **(1) manter** (só ganha resposta); **(2) copiar** (é erro de cópia que facilita); **(3) copiar**, porque o especial é o golpe de maior dano por aperto, mas contraria o "mais dinâmico" do 1º teste: até a resposta, fica como está **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-45 | Quando o Daniel testa | (a) a versão do C12c agora; (b) depois do C12d (1 a 2 dias), um teste só | **(b)**: o C12d muda a mão (esquiva, buffer, hit stop); um teste antes mediria a mão que vamos trocar **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-46 | Créditos do Meshy (546) para armas próprias dos inimigos e de Morvath (hoje do KayKit) | (a) nada agora, paliativo no assado (VX-07); (b) autorizar um lote depois do C12e, com orçamento do `art-director` por peça antes de gastar | **(b)** depois do paliativo: as armas são o que mais destoa nos modelos, e o custo por peça precisa ser orçado (não sei o preço de geração; a repintura é 10 créditos) **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-47 | Nova ordem dos ciclos (seção 6): C12d, T3, C12e, C12f, T4, C13, C15, C14, C16 | (a) a nova; (b) a anterior (C13 logo depois do teste) | **(a)**: é a regra da sua diretriz; o C13 alonga a partida sobre uma mão que ainda perde aperto **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-
-#### Abertas de antes
-
-| ID | Pergunta | Opções | Minha recomendação |
-|---|---|---|---|
-| D-41 | Nomes de Eterra para romã, raridades e loja no C13 | os nomes provisórios do `hades2_sistemas.md` ou os seus | mandar só os que quiser trocar |
-| D-12b | Licença do som e da música (C12f e C15) | (a) só CC0 e síntese; (b) CC0 e CC-BY com créditos | **(b)** **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-37 | A referência `04` (feita por IA) em tamanho cheio está no histórico do git e no GitHub (`91cc656`) | (a) deixar; (b) reescrever o histórico (só com ordem expressa); (c) deixar e só proibir de novo | **(a) com (c)** se o repositório for privado; **(b)** numa única vez se for ficar público |
-| D-31, D-32 | Água que desacelera; destrutíveis que abrem passagem | decidir depois do T4 | como antes |
-
-Fechadas sem objeto: **D-38** (o ART-R1 aprovou as Fendas, `4d281bc`); **D-40** (o C15 foi partido: sons do combate no
-C12f, música no C15; a ordem é a D-47).
-
-#### Tomadas pela sessão na noite de 2026-11-16 (a confirmar; o Daniel ainda não respondeu)
-
-| ID | Decisão tomada | Onde está | Recomendação |
-|---|---|---|---|
-| D-08 | Quadro P&B só em Ômega acertado e quebra de fase, 1 a cada 10 s, com opção | `dcf6632`, `196f33c` | Confirmar |
-| D-14 | Na luta, a porta selada no lugar do portal vermelho | `482eb6f` | Confirmar |
-| D-16 | Selo com o leão de pé (patas de trás) | `482eb6f` | Confirmar |
-| D-17 | Espada erguida no lugar da cruz | `482eb6f`, `00dd13b` | Confirmar |
-| D-18 | Raio de 12,5 m | `boss_arena.md` | Confirmar |
-| D-20 | Morvath vai ao centro nas fases 3 e 4 | `6b16045` | Confirmar |
-| D-21, D-22 | "A Câmara do Selo"; tela de fim sem nível | `6801e87` | Confirmar |
-| C12a | O miolo do selo escurece com as faixas da tempestade | `b7f5f4d` | Confirmar no T3 |
-
-D-15 (salas comuns no salão) e D-06 (descida curta) foram superadas pelas arenas e pela D-27.
-
-#### Decididas pelo Daniel antes (arenas)
-D-25 (3 arenas), D-26 (salão como arena), D-27 (7 salas), D-28 (para na borda), D-29 (runas em faixas), D-30 (árvore
-petrificada), D-33 (nome por 2 s): todas seguiram a recomendação e estão entregues, menos D-29 (C14).
-
-#### Abertas de antes
-
-| ID | Pergunta | Recomendação |
-|---|---|---|
-| D-23 | O que é a porta selada e o véu de runas | Pendente na história; sem texto até o cânone ter |
-| D-11 | Meta de dificuldade da primeira vitória | Até 3 tentativas para quem jogou Hades, com a descida inteira |
-| D-09 | Magia na luta do chefe | Decidir no C13 com o registro |
-| D-10 | Bônus de sequência (não existe no Hades II) | Tirar no C13 (C13-07), coerente com a D-39 **Decidido pelo Daniel em 2026-11-16: segue a recomendação.** |
-| D-01 | Título de Morvath | "o Rei que Traiu a Luz" ou "o Lich-Rei do Sul" (cânone) |
-| D-02, D-04 | Quem sela Morvath; nomes dos paladinos (os marcadores `PALADIN_n` apareciam na carta de dom; o VX-11 esconde a linha até os nomes existirem) | Seguir o cânone de 12/11; nomes depois |
-| D-05 | Créditos do Meshy (546) | Nada até você pedir; fidelidade das arenas é candidata (D-36) |
-| D-07, D-12, D-13 | Entre partidas; origem do som; executável para testadores | Como antes |
-| D-03 | Imagens da Hécate | Desistir |
-
+1. **BUG-101** Provação tardia (regra, P) com a Q-08 (a) como padrão até ele responder.
+2. **BUG-102** Save atômico com cópia (P).
+3. **BUG-103** Conferir a loja na Câmara do Selo (P; vira P0 se for real).
+4. **QW-101** Orbe do feiticeiro que pega cedo ou não pega (P).
+5. **QW-102** Corredor com 1,0 s de aviso (P, dado).
+6. **QW-106** Recompensas de verdade (P a M, `environment-artist`, em paralelo desde o primeiro dia).
+7. **QW-109 + QW-110 + BUG-106** Onda de Luz, vocabulário único e Como Jogar certo (P, `ui-ux-designer`, em paralelo).
+8. **QW-103** Sopro do giro e da lança no quadro da lâmina (P).
+9. **QW-104** Corpo do inimigo acende no "vai bater" (P).
+10. **BUG-104** Morvath não desliza parado (P).
+11. QW-105 espera sorteada e Cavaleiro; QW-107 mira em degradê; BUG-105 HUD com "+N"; BUG-107 saudações.
+12. BUG-110 vigia, DT-102 instrumentação, QW-112 régua do robô; BUG-108 e BUG-109 (suíte limpa).
+13. Fecho do C17: QA integrado, exe nas duas pastas, **T6 com o PO** e o `runs.jsonl`.
+14. **C18** (pode ter começado em paralelo com o item 6): spec numérica do art-director (DT-109), paleta, chão, verdes de
+    Morvath, Runas, câmaras de evento, Ponte B, Santuário B, Runas B, KayKit fora.
+15. Respostas do Daniel às Q-09 a Q-16 e **C19** (variedade: Morvath fase 1, elites, Ômega, botão de usar, loja, Elos e
+    Salmos).
+16. Respostas Q-01 a Q-07 e Q-17 e **C20** (título, Livro, medalhões, pausa no foco, menus por controle, licenças).
+17. Só então, se o Daniel pedir: C16 Steam.

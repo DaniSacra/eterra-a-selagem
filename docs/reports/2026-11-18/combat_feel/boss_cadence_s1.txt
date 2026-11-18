@@ -1,0 +1,15 @@
+
+CADENCE attack phase: n, attack s (min/median/max), recovery s, rest s, punished n, life lost per window
+  blades p1      n= 3 attack 0.70/0.70/0.72 recover 0.80/0.81/0.81 rest 0.15/1.11/1.11 punished 2/3 lost/window 23
+  blades p3      n= 2 attack 0.67/0.67/0.67 recover 0.80/0.80/0.80 rest 0.61/0.62/0.62 punished 0/2 lost/window 0
+  curse p3       n= 3 attack 0.77/0.77/0.77 recover 0.60/0.60/0.60 rest 0.61/0.62/0.62 punished 0/3 lost/window 0
+  curse p4       n= 1 attack 0.73/0.73/0.73 recover 0.60/0.60/0.60 rest 3.22/3.22/3.22 punished 0/1 lost/window 0
+  eruptions p2   n= 5 attack 3.40/3.41/3.42 recover 0.80/0.81/0.81 rest 1.00/1.00/1.01 punished 2/5 lost/window 16
+  eruptions p3   n= 2 attack 3.28/3.28/3.28 recover 0.80/0.80/0.80 rest 0.61/0.62/0.62 punished 0/2 lost/window 0
+  eruptions p4   n= 1 attack 3.17/3.17/3.17 recover 0.80/0.80/0.80 rest 0.30/0.30/0.30 punished 1/1 lost/window 40
+  scythe p1      n=12 attack 0.98/1.17/1.29 recover 0.84/0.85/0.85 rest 1.10/1.11/1.12 punished 6/12 lost/window 17
+  scythe p2      n= 6 attack 1.05/1.15/2.17 recover 0.84/0.85/0.86 rest 1.00/1.00/1.01 punished 3/6 lost/window 17
+  scythe p3      n= 6 attack 1.10/1.28/2.47 recover 0.85/0.85/0.85 rest 0.61/0.62/0.62 punished 0/6 lost/window 0
+  scythe p4      n= 1 attack 1.36/1.36/1.36 recover 0.85/0.85/0.85 rest 0.41/0.41/0.41 punished 0/1 lost/window 0
+  storm p4       n= 2 attack 5.70/5.71/5.71 recover 1.20/1.20/1.20 rest 0.36/0.41/0.41 punished 0/2 lost/window 0
+  summon p2      n= 3 attack 1.56/1.56/1.57 recover 0.81/0.81/0.81 rest 1.00/1.00/1.01 punished 3/3 lost/window 37

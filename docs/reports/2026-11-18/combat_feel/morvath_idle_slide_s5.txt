@@ -1,0 +1,19 @@
+boss_probe.gd --probe-log, --start=boss --bot --seed=5 --bot-reaction=0.25 --boons=5; Morvath desenhado em idle com a posicao logica andando mais de 1 m/s
+  595 t=  9.70 CHASE/walk             anim_t= 0.43 pos=(-1.71,3.10) hero=4.59 m hurt=-9.70 stun=0.00 
+  599 t=  9.77 CHASE/idle             anim_t= 0.03 pos=(-1.70,3.08) hero=2.37 m hurt=-9.77 stun=0.00 
+  603 t=  9.84 CHASE/idle             anim_t= 0.10 pos=(-1.54,2.80) hero=0.87 m hurt=-9.84 stun=0.00 
+  607 t=  9.90 CHASE/idle             anim_t= 0.17 pos=(-1.54,2.80) hero=0.53 m hurt=-9.90 stun=0.00 
+  611 t=  9.97 CHASE/idle             anim_t= 0.23 pos=(-1.69,3.06) hero=2.17 m hurt=-9.97 stun=0.00 
+
+ 2987 t= 48.43 ERUPTIONS/rain         anim_t= 3.34 pos=(2.61,-4.22) hero=0.82 m hurt=-48.43 stun=0.00 
+ 2991 t= 48.50 RECOVER/idle           anim_t= 0.00 pos=(2.82,-4.56) hero=1.22 m hurt=-48.50 stun=0.00 
+ 2995 t= 48.57 RECOVER/idle           anim_t= 0.07 pos=(3.02,-4.91) hero=1.62 m hurt=-48.57 stun=0.00 
+ 2999 t= 48.63 RECOVER/idle           anim_t= 0.13 pos=(3.16,-5.15) hero=1.90 m hurt=-48.63 stun=0.00 
+ 3003 t= 48.70 RECOVER/idle           anim_t= 0.20 pos=(3.16,-5.15) hero=1.90 m hurt=-48.70 stun=0.00 
+
+ 5120 t= 82.85 CHASE/walk             anim_t= 0.12 pos=(-0.44,4.62) hero=3.59 m hurt=-82.85 stun=0.00 
+ 5124 t= 82.92 CHASE/idle             anim_t= 0.05 pos=(-0.55,4.67) hero=1.90 m hurt=-82.92 stun=0.00 
+ 5128 t= 82.98 CHASE/idle             anim_t= 0.12 pos=(-0.75,5.01) hero=1.26 m hurt=-82.98 stun=0.00 
+ 5132 t= 83.05 CHASE/idle             anim_t= 0.18 pos=(-0.70,5.41) hero=1.60 m hurt=-83.05 stun=0.00 
+ 5136 t= 83.12 CHASE/idle             anim_t= 0.25 pos=(-0.70,5.65) hero=1.90 m hurt=-83.12 stun=0.00 
+

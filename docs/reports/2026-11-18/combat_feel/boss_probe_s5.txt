@@ -1,0 +1,46 @@
+
+ 6411 t=103.85 DYING/death            anim_t= 0.20 pos=(3.01,0.91) hero=4.36 m hurt=-103.85 stun=0.00 horde state 4
+PROBE frames=6411 bad=1 max_step=0.150 at TO_CENTER/walk t=85.20 total_poses=230
+  BLADES/blades_windup 41
+  BLADES/slash2 2
+  BLADES/walk 1
+  CHASE/idle 845
+  CHASE/slash3 12
+  CHASE/stunned 1
+  CHASE/walk 738
+  CURSE/idle 1
+  CURSE/summon 42
+  CURSE/volley 3
+  DYING/death 1
+  ENTER/idle 147
+  ERUPTIONS/idle 3
+  ERUPTIONS/rain 810
+  ERUPTIONS/walk 1
+  RECOVER/idle 304
+  RECOVER/rain 4
+  RECOVER/roar 45
+  RECOVER/slash2 29
+  RECOVER/slash3 622
+  RECOVER/summon 58
+  RECOVER/volley 22
+  RITUAL/rain 526
+  RITUAL/summon 71
+  RITUAL/walk 1
+  ROAR/idle 1
+  ROAR/roar 309
+  ROAR/slash3 2
+  SCYTHE/idle 16
+  SCYTHE/slash3 717
+  SCYTHE/walk 169
+  STORM/idle 1
+  STORM/rain 149
+  STORM/roar 124
+  STORM/volley 86
+  STORM/walk 1
+  STUNNED/rain 1
+  STUNNED/stunned 129
+  SUMMON/idle 2
+  SUMMON/summon 187
+  TO_CENTER/roar 3
+  TO_CENTER/walk 184
+CLIPS { "hit": 8, "death": 16, "rise": 12, "walk": 20, "idle": 12, "attack": 16, "slash1": 14, "slash2": 14, "slash3": 16, "dash_windup": 8, "dash": 12, "blades_windup": 8, "summon": 20, "rain": 14, "volley": 14, "roar": 14, "stunned": 12 }

@@ -1,0 +1,5 @@
+tools/smoke.sh 900 --seed=N --bot-reaction=0.25 (HEAD dd1f5ba, 60 f/s fixos, sem tela)
+1 time 283 s boss_at 202 flinches 138 interrupts 24 hits_by {'archer': 1} boss phase_time [22.2, 30.3, 13.0, 12.6] boss hurt_by {} windows 16 punished 16
+2 time 446 s boss_at 321 flinches 176 interrupts 41 hits_by {'priest_elder': 2, 'mage': 4, 'curse': 1, 'storm': 3} boss phase_time [25.1, 42.8, 22.3, 31.6] boss hurt_by {'adds': 4, 'curse': 6, 'storm': 30} windows 25 punished 20
+3 time 444 s boss_at 295 flinches 193 interrupts 33 hits_by {'mage': 2, 'priest_elder': 4, 'mage_elite': 3, 'curse': 1, 'storm': 2} boss phase_time [30.9, 55.0, 33.2, 26.4] boss hurt_by {'curse': 6, 'storm': 20} windows 31 punished 12
+4 time 368 s boss_at 241 flinches 151 interrupts 31 hits_by {'archer': 1, 'priest_elder': 2, 'mage': 6, 'eruptions': 1, 'storm': 2} boss phase_time [28.8, 43.4, 15.5, 35.7] boss hurt_by {'adds': 12, 'eruptions': 10, 'storm': 20} windows 24 punished 16
