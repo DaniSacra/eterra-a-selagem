@@ -157,7 +157,8 @@ var runner: ComboRunner
 var tree: ComboTree
 var invuln := 0.0
 var charging := false
-## DT-102 (RESULT omega_charges_started, omega_charges_cancelled): Omega charges begun and those that filled.
+## DT-102 (RESULT omega_charges_started, omega_charges_cancelled): Omega charges held past CHARGE_SOUND_AT (a tap is
+## no charge) and those that filled.
 var charges_started := 0
 var charges_filled := 0
 var charge_t := 0.0
@@ -529,12 +530,15 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		charge_t += dt
 		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
 			Audio.play(&"charge_up")
+			charges_started += 1
 		if not Controls.held(_charge_action):
 			charging = false  # let go before the charge filled: nothing more comes
 		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
 			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
 			charging = false
 			charges_filled += 1
+			if charge_t < CHARGE_SOUND_AT:
+				charges_started += 1
 			runner.press(_charge_held)
 			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 			Audio.play(&"charged")
@@ -564,7 +568,6 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 		charge_t = 0.0  # pressed again: it was let go in between, the charge starts over
 	elif not charging and _affordable(held):
 		charging = true
-		charges_started += 1
 		charge_t = 0.0
 		_charge_action = action
 		_charge_tap = tap
@@ -574,7 +577,7 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 
 ## Omega charges let go, cut (dodge, blow, curse) or out of Magia before they filled; one still under way is not counted.
 func charges_cancelled() -> int:
-	return charges_started - charges_filled - (1 if charging else 0)
+	return charges_started - charges_filled - (1 if charging and charge_t >= CHARGE_SOUND_AT else 0)
 
 
 func _affordable(held: ComboNode.In) -> bool:

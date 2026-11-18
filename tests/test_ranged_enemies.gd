@@ -221,9 +221,11 @@ func test_the_mage_orb_catches_early_or_never() -> void:
 	for from in [1.2, 1.5]:
 		for side in [1.0, -1.0]:
 			assert_eq(_sidestep_hits(def, from, side), 0, "running sideways from %.1f s of flight: never hit" % from)
-	# the orb of before (turning its whole flight)
+	assert_almost_eq(def.shot_turn, 20.0, 0.001, "and half as fast (was 40)")
+	# the orb of before (turning 40 degrees a second its whole flight)
 	var old: EnemyDef = def.duplicate()
 	old.shot_homing = 0.0
+	old.shot_turn = 40.0
 	# the PO's blow: he ran sideways as the burst left, then planted to strike; the old orbs curved back onto him
 	# 2 s into their flight (all three, measured), the new ones fly on past where he was at 0.8 s
 	for until in [1.5, 1.8, 2.1]:
