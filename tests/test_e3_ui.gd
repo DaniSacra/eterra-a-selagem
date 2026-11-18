@@ -93,8 +93,17 @@ func test_an_exchange_wears_the_tab_and_names_the_trade() -> void:
 	var tab := swap.find_child("UpgradeTab", true, false)
 	assert_not_null(tab)
 	assert_eq((tab.find_child("UpgradeLabel", true, false) as Label).text, T.t(&"choice_upgrade"))
-	var line := swap.find_child("Replaces", true, false) as Label
-	assert_eq(line.text, T.t(&"choice_upgrade_swap", {"name": T.t(&"boon_golpe_brasa"), "from": T.t(&"rarity_rare"), "to": T.t(&"rarity_epic")}))
+	# stage 1A: what goes out, then what comes in, each with its glyph, name and rarity
+	var trade := swap.find_child("Replaces", true, false)
+	assert_not_null(trade)
+	assert_eq(trade.get_child(0).name, &"TradeOut", "out first")
+	assert_eq(trade.get_child(1).name, &"TradeIn", "then in")
+	assert_eq((trade.find_child("OutName", true, false) as Label).text, T.t(&"boon_golpe_brasa"))
+	assert_eq((trade.find_child("OutRarity", true, false) as Label).text, T.t(&"rarity_rare"))
+	assert_eq((trade.find_child("OutIcon", true, false) as BoonIcon).boon.id, &"golpe_brasa")
+	assert_eq((trade.find_child("InName", true, false) as Label).text, T.t(&"boon_golpe_geada"))
+	assert_eq((trade.find_child("InRarity", true, false) as Label).text, T.t(&"rarity_epic"))
+	assert_eq((trade.find_child("InIcon", true, false) as BoonIcon).boon.id, &"golpe_geada")
 	assert_eq((swap.find_child("Level", true, false) as Label).text, T.t(&"choice_level", {"n": 1, "max": swap.boon.max_level}), "keeps the level")
 	assert_false(cards[1].upgrade)
 	assert_null(cards[1].find_child("UpgradeTab", true, false))
@@ -307,7 +316,7 @@ func test_a_plain_sign_has_no_group() -> void:
 
 func test_new_texts_in_portuguese_without_dash() -> void:
 	for key in [&"codex_tab_boons", &"codex_tab_elos", &"codex_boons_legend", &"codex_elos_legend", &"codex_times",
-			&"boon_new_title", &"boon_new_note", &"choice_upgrade", &"choice_upgrade_swap", &"shop_price",
+			&"boon_new_title", &"boon_new_note", &"choice_upgrade", &"choice_trade_out", &"choice_trade_in", &"shop_price",
 			&"shop_price_short", &"shop_group_boon", &"shop_group_care", &"shop_group_growth"]:
 		var text := String(T.table.entries.get(String(key), ""))
 		assert_ne(text, "", String(key))

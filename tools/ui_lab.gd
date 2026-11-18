@@ -5,6 +5,7 @@ extends SceneTree
 ## Writes <lab-out>_card.png, _formed.png and _panel.png. Calls the run's own methods; nothing here ships.
 ## Gift card only (writes <lab-out>_card.png and, with --focus-move, <lab-out>_card_focus.png after one ui_right):
 ##   --card-only [--offer=a,b,c] [--held=x,y] [--rarity=0,2,1] [--upgrade=0,1,0] [--rest]
+##   [--held-rarity=2,0] (the rarity of each held Blessing, in --held order; the rest as the run gives them)
 ##   (--upgrade marks cards as exchanges one rarity up, E3-01: the offer is read as {rarity, upgrade})
 ##   --trade: the first offer comes as the rules' trade (BoonState.trade_card) through Game._open_choice, as in a run
 ## E3: --new-boon=id takes one Blessing never seen (writes _newboon.png with the "Bênção nova" greeting);
@@ -16,7 +17,7 @@ extends SceneTree
 ##   then picks it and writes _psalm_banner.png with the "Salmo descoberto" greeting over the fight.
 ## E5: --trial (start with --start=trial) opens the Provação's cards (_trial.png), takes the first (--pick=n) and shows
 ##   the seal in the HUD (_trial_seal.png), then wins its fights (_trial_won.png, the gold seal and the greeting);
-##   --altar [--gold=N] (start with --start=altar) opens the altar's trades (_altar.png);
+##   --altar [--gold=N] [--held=a,b] (start with --start=altar) opens the altar's trades (_altar.png);
 ##   --slab (start with --start=fountain --hero-hp=N) shows the Provação's slab and its sign there (_slab.png).
 
 const GAME := "res://scenes/game.tscn"
@@ -64,8 +65,14 @@ func _run() -> void:
 		await _shot("newboon")
 		quit()
 		return
-	for id in _ids("held", HELD):
-		game.call(&"_take", boons.call(&"find", id))
+	var held_rarity := Dev.arg("held-rarity", "").split(",", false)
+	var held := _ids("held", HELD)
+	for i in held.size():
+		if i < held_rarity.size():
+			# a held Blessing at a given rarity (the legendary trade needs an epic one on its action)
+			boons.call(&"take", boons.call(&"find", held[i]), int(held_rarity[i]))
+		else:
+			game.call(&"_take", boons.call(&"find", held[i]))
 	# a typed Array[Boon] from the run itself, refilled with the cards to show
 	var offers: Array = boons.call(&"offers", RandomNumberGenerator.new(), 1)
 	offers.clear()
@@ -224,6 +231,10 @@ func _events(game: Node) -> void:
 		return
 	if Dev.has("altar"):
 		rooms.set(&"gold", int(Dev.arg("gold", "40")))
+		# --held=a,b: Blessings in hand first (the pomegranate's trade needs one that can grow)
+		var boons: Variant = game.get(&"boons")
+		for id in _ids("held", [] as Array[StringName]):
+			game.call(&"_take", boons.call(&"find", id))
 		rooms.call(&"_choose_altar")
 		await create_timer(0.9).timeout
 		await _shot("altar")

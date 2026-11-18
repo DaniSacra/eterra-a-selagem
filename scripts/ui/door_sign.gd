@@ -17,6 +17,10 @@ extends Node3D
 ## fight, the kind in pale under it ("Difícil", "Guardião"). The Provação's slab says its price in life, or "Vida
 ## insuficiente" in SHORT_COLOR when he has not enough (set_short).
 ##   var sign := DoorSign.make(T.t(&"reward_boon"), T.t(&"door_hard"), DoorGlyph.Kind.HARD)
+## Stage 1A of the art pack (2026-11-17): a reward's sign carries the reward's own mark left of its name (reward,
+## DoorGlyph.of_reward: the same mark the altar's cards and the shop use); the room's pictogram then stands left of the
+## line under it ("Difícil", "Guardião"), so each mark sits by the words it explains.
+##   var sign := DoorSign.make(T.t(&"reward_gold"), T.t(&"door_hard"), DoorGlyph.Kind.HARD, DoorGlyph.Kind.GOLD)
 
 ## Height of the capitals at a screen 1080 lines tall (the backlog asks for 16 at least).
 const CAP_PX := 19.0
@@ -57,8 +61,10 @@ const LAYER := 2
 
 var title: Label
 var detail: Label
-## The pictogram left of the name (null: none).
+## The room's pictogram (null: none): left of the name, or of the detail when the reward's mark stands by the name.
 var mark: DoorGlyph
+## The reward's mark left of the name (null: none).
+var reward: DoorGlyph
 ## The shop group's word (null: not a shop sign).
 var group: Label
 ## The explanation under the detail (null: none; add_note): its first line, and all its lines.
@@ -74,8 +80,10 @@ var _layer: CanvasLayer
 var _box: VBoxContainer
 
 
-## A sign with a name and, optionally, a detail line under it (empty: none) and a pictogram left of the name.
-static func make(name_text: String, detail_text: String = "", glyph: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> DoorSign:
+## A sign with a name and, optionally, a detail line under it (empty: none), a pictogram left of the name and the
+## reward's mark (with both, the pictogram goes left of the detail).
+static func make(name_text: String, detail_text: String = "", glyph: DoorGlyph.Kind = DoorGlyph.Kind.NONE,
+		reward_mark: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> DoorSign:
 	var s := DoorSign.new()
 	s.name = "DoorSign"
 	s._layer = CanvasLayer.new()
@@ -88,30 +96,44 @@ static func make(name_text: String, detail_text: String = "", glyph: DoorGlyph.K
 	s._layer.add_child(s._box)
 	s.title = _label(name_text, TITLE_COLOR, FONT_SIZE)
 	s.title.name = "title"
-	if glyph == DoorGlyph.Kind.NONE:
-		s._box.add_child(s.title)
-	else:
-		var row := HBoxContainer.new()
-		row.name = "row"
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.alignment = BoxContainer.ALIGNMENT_CENTER
-		row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		row.add_theme_constant_override(&"separation", 5)
+	if glyph != DoorGlyph.Kind.NONE:
 		s.mark = DoorGlyph.new().setup(glyph)
 		s.mark.name = "mark"
-		row.add_child(s.mark)
-		row.add_child(s.title)
-		s._box.add_child(row)
+	if reward_mark != DoorGlyph.Kind.NONE:
+		s.reward = DoorGlyph.new().setup(reward_mark)
+		s.reward.name = "reward"
+	var by_detail := s.reward != null and detail_text != ""
+	s._box.add_child(_row(s.title, s.reward if s.reward != null else s.mark, "row"))
 	if detail_text != "":
 		s.detail = _label(detail_text, DETAIL_COLOR, DETAIL_SIZE)
 		s.detail.name = "detail"
-		s._box.add_child(s.detail)
+		s._box.add_child(_row(s.detail, s.mark if by_detail else null, "detail_row"))
+	if s.mark != null and s.mark.get_parent() == null:
+		# a reward and a pictogram without a detail line: both by the name, the room's first
+		s.title.get_parent().add_child(s.mark)
+		s.title.get_parent().move_child(s.mark, 0)
 	return s
 
 
+## A line of the sign: the label alone, or a row with the mark left of it.
+static func _row(l: Label, mark_: DoorGlyph, row_name: String) -> Control:
+	if mark_ == null:
+		return l
+	var row := HBoxContainer.new()
+	row.name = row_name
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	row.add_theme_constant_override(&"separation", 5)
+	row.add_child(mark_)
+	row.add_child(l)
+	return row
+
+
 ## A shop item's sign: the group's word over the name (empty: none), the name and its price in ivory.
-static func shop(name_text: String, price_: int, group_text: String = "") -> DoorSign:
-	var s := make(name_text, price_text(price_))
+static func shop(name_text: String, price_: int, group_text: String = "",
+		reward_mark: DoorGlyph.Kind = DoorGlyph.Kind.NONE) -> DoorSign:
+	var s := make(name_text, price_text(price_), DoorGlyph.Kind.NONE, reward_mark)
 	s.price = price_
 	if group_text != "":
 		s.group = _label(group_text, GROUP_COLOR, GROUP_SIZE)
