@@ -8,11 +8,16 @@ extends Control
 const ACTION_GLYPH := 100
 ## Glyph ids of the ultimates: ULT_GLYPH + UltDef.Kind (the cleave, the Voragem).
 const ULT_GLYPH := 110
+## Glyph of the most Magia (T5, the Provação's Reserva): a cut crystal with a light down its middle.
+const MAGICK_GLYPH := 105
 
 var boon: Boon
 var cooldown := 0.0
 var level := 0
 var max_level := 0
+## Without a Boon (T5, the Provação's blessing, setup_glyph): the glyph and the gem's colour to draw.
+var icon := -1
+var tint := Color.WHITE
 
 
 func setup(b: Boon, size_px: float) -> BoonIcon:
@@ -22,18 +27,25 @@ func setup(b: Boon, size_px: float) -> BoonIcon:
 	return self
 
 
+## The same medallion for something that is not a Boon (a glyph and a colour): no levels, no Elo rim.
+func setup_glyph(glyph_id: int, color: Color, size_px: float) -> BoonIcon:
+	icon = glyph_id
+	tint = color
+	return setup(null, size_px)
+
+
 func _draw() -> void:
-	if boon == null:
+	if boon == null and icon < 0:
 		return
 	var s := minf(size.x, size.y)
 	var c := Vector2(size.x * 0.5, s * 0.5)
 	var r := s * 0.46
-	var col := boon.color()
+	var col := boon.color() if boon != null else tint
 	draw_circle(c, r + s * 0.035, Color(0.85, 0.68, 0.36))
 	draw_circle(c, r, col.darkened(0.72))
 	draw_circle(c + Vector2(-r * 0.15, -r * 0.18), r * 0.8, col.darkened(0.45))
 	draw_circle(c + Vector2(-r * 0.25, -r * 0.3), r * 0.45, col.darkened(0.15))
-	glyph(self, boon.icon, c, r * 0.62, Color(1.0, 0.98, 0.9), col.darkened(0.5))
+	glyph(self, boon.icon if boon != null else icon, c, r * 0.62, Color(1.0, 0.98, 0.9), col.darkened(0.5))
 	if cooldown > 0.0:
 		var pts := PackedVector2Array([c])
 		var steps := 24
@@ -43,6 +55,8 @@ func _draw() -> void:
 		if pts.size() >= 3:
 			draw_colored_polygon(pts, Color(0, 0, 0, 0.6))
 	draw_arc(c, r, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8), maxf(1.5, s * 0.02), true)
+	if boon == null:
+		return
 	if boon.is_duo():
 		# an Elo wears a rim of chain links (see EloLink)
 		EloLink.ring(self, c, r + s * 0.02, maxf(6.0, s * 0.15))
@@ -129,6 +143,13 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 3:
 				var y := (k - 1) * r * 0.4
 				ci.draw_line(c + Vector2(-r * (0.95 - absf(k - 1) * 0.2), y), c + Vector2(-r * 0.45, y), w, th * 0.8, true)
+		MAGICK_GLYPH:  # the most Magia: a cut gem (table, girdle, a point below), its facets in a V; never a cross
+			var gem := PackedVector2Array([c + Vector2(-r * 0.42, -r * 0.6), c + Vector2(r * 0.42, -r * 0.6), c + Vector2(r * 0.85, -r * 0.15),
+				c + Vector2(0, r * 0.9), c + Vector2(-r * 0.85, -r * 0.15)])
+			ci.draw_colored_polygon(gem, w)
+			for x in [-0.42, 0.42]:
+				ci.draw_line(c + Vector2(r * x, -r * 0.6), c + Vector2(0, r * 0.9), accent, th * 0.7, true)
+				ci.draw_line(c + Vector2(r * x, -r * 0.6), c + Vector2(r * x * 2.0, -r * 0.15), accent, th * 0.6, true)
 		110:  # the cleave: the blade coming straight down onto a split in the floor
 			ci.draw_line(c + Vector2(0, -r * 0.95), c + Vector2(0, r * 0.35), w, th * 1.5, true)
 			ci.draw_line(c + Vector2(-r * 0.4, -r * 0.45), c + Vector2(r * 0.4, -r * 0.45), w, th, true)

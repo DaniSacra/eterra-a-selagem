@@ -30,13 +30,9 @@ static func tint(p: PsalmDef) -> Color:
 func _draw() -> void:
 	var c := size * 0.5
 	var r := minf(size.x, size.y) * 0.46
-	var w := maxf(1.0, r * 0.06)
-	draw_circle(c, r + w, Color(0.03, 0.025, 0.04))
-	draw_circle(c, r, Color(0.07, 0.055, 0.075))
 	var col := tint(psalm)
-	draw_colored_polygon(arch(c + Vector2(0, r * 0.08), r * ARCH_W, r * ARCH_H), Color(col.darkened(ARCH_DARK), 0.75) if psalm else Color(UiKit.DIM, 0.25))
-	draw_arc(c, r, 0.0, TAU, 48, UiKit.OLD_GOLD if psalm else Color(UiKit.OLD_GOLD, 0.55), w * 1.6, true)
-	draw_arc(c, r - w * 2.2, 0.0, TAU, 48, Color(IVORY, 0.55 if psalm else 0.18), maxf(1.0, w * 0.6), true)
+	SealMedal.draw_seal(self, c, r, psalm != null, func() -> void:
+		draw_colored_polygon(arch(c + Vector2(0, r * 0.08), r * ARCH_W, r * ARCH_H), Color(col.darkened(ARCH_DARK), 0.75) if psalm else Color(UiKit.DIM, 0.25)))
 	if psalm != null:
 		glyph(self, psalm.effect, c + Vector2(0, r * 0.08), r * 0.5, IVORY, col)
 
