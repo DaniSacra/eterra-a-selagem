@@ -4,7 +4,7 @@ extends Node
 ## their panels over the art.
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
 ## Once Morvath was sealed once, Iniciar first shows the Juramentos (JuramentoScreen, E6) with "Descer".
-## --title --screen=options|music|moves|howto|hero|gifts|book|codex|juramentos opens a panel at once (hero, gifts and
+## --title --screen=options|music|moves|howto|hero|gifts|book|codex|juramentos|map opens a panel at once (hero, gifts and
 ## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
 
@@ -53,6 +53,9 @@ func _ready() -> void:
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"juramentos":
 			_open_juramentos(Juramentos.unlocked(Save.data))
+		"map":
+			# the descent's map over a fixed sample descent (MapSample; --map-at=start|middle|doors)
+			_open(MapScreen.new(), TitleButton.Kind.HOWTO, [DescentMap.from_dict(MapSample.at(Dev.arg("map-at", "doors")))])
 	if Dev.has("shot"):
 		_shot.call_deferred()
 

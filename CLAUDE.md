@@ -334,6 +334,24 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   achado (`progress`, `codex_count`), cima e baixo andam no índice, direita vai ao Voltar; a lista na página direita em
   tinta, os Dons com o nó da árvore (`TalentGlyph.mark`). Capturas: `--title --screen=hero|gifts|book|codex` e
   `tools/book_lab.gd` (comando no topo). Testes em `tests/test_book.gd`.
+- **Mapa da descida** (DV-1, MAP-03; interface pronta, falta ligar ao grafo do MAP-01): ação `map` em `Controls` (M, Back
+  no controle; remapeável no teclado nas Configurações, linha "Mapa" no Como Jogar), botão discreto "Mapa [M]" ao lado do
+  "Sala N de 11" no HUD (`Hud.map_button`: nunca toma o foco, abre no aperto para o clique, que também é o ataque, não
+  golpear; tecla real) e "Mapa" na pausa logo abaixo de Continuar (M também abre de lá). `Hud.open_map` abre por
+  `Game.open_screen` (a partida para) e fecha por `Game.close_screen` (`Controls.clear_presses`); a tecla é lida no
+  `Hud._unhandled_input`, como a pausa lê a dela. Página do Livro (`MapScreen`, `scripts/ui/map_screen.gd`, `BookSpread`
+  com `SPINE` 0,37): à direita o desenho (`MapGraph`: entrada no topo, Morvath embaixo, número da sala na margem,
+  medalhão de tinta com a marca do `DoorGlyph` de cada nó, divisas de difícil e guardião ao lado, nome curto do guardião
+  "Cavaleiro"/"Ancião" (`map_guardian_<id>`), caminho feito em rubrica, sala atual com aro duplo petróleo, portas abertas
+  com aro e ligação de ouro, o que ainda alcança em tinta, ramos deixados apagados a 0,3); à esquerda a sala em foco
+  (nome, "Sala N de 11", recompensa, difícil, arena, estado) e a legenda. Foco começa na primeira porta; setas, direcional
+  e o ponteiro andam pelos nós (`DescentMap.step`); M, Back, Esc, Start ou Voltar fecham. `DoorGlyph.Kind.UNKNOWN` é o
+  "?" do nó escondido (Q-25 a). Dados por `DescentMap` (`scripts/ui/descent_map.gd`, puro): `from_dict` lê
+  `{layers: [[{id, kind, reward, guardian, hidden, arena, next, hard}]], path, current, doors}`; `from_game` usa
+  `RunMap.view()` quando existir, senão a linha de salas de hoje (`line_of`). Grafo fixo de teste `MapSample`
+  (`--title --screen=map --map-at=start|middle|doors`, `tools/ui_lab.gd -- --map [--map-at=...]`). Testes em
+  `tests/test_map_screen.gd` e `tests/test_input_leak.gd`; fluxo por teclado, controle e mouse em
+  `tools/map_flow_check.gd`; capturas em `docs/gallery/dv1/ui/`.
 - **Tela de fim com Maestria** (E2-04, `MasteryReport`): "+N XP" ao lado da barra que enche do XP de antes ao de depois,
   de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Novos Dons: ..." e "Nova ultimate: ..."; dados do
   `Game.mastery_report` (o `mastery_gain` e o XP antes, guardados no `log_run`, passados no `stats.mastery`).

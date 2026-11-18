@@ -12,7 +12,9 @@ extends Control
 ## Magia's (the Provação's Magia ampla), a coin the gold, a drop the healing. setup(kind, height) draws any of them at
 ## any height (the cards use 18 to 20 px).
 
-enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL }
+## UNKNOWN (DV-1, MAP-03): a room of the descent's map whose content stays hidden until its slab shows (Q-25 a: the
+## Provação's room only), a question mark in the same ivory stroke.
+enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN }
 
 ## Height of the glyph on the sign's canvas (the name's capitals are about 13; a little taller reads better).
 const HEIGHT := 17.0
@@ -151,6 +153,17 @@ func _draw() -> void:
 		Kind.MAGICK:
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.52, OUTLINE_COLOR, OUTLINE_COLOR)
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.44, MAGICK_BLUE, MAGICK_BLUE.darkened(0.45))
+		Kind.UNKNOWN:
+			# a question mark drawn in the signs' stroke: a hook over a short stem, and a dot
+			var hook := PackedVector2Array()
+			for j in 11:
+				var a := PI * 1.05 + j / 10.0 * PI * 1.35
+				hook.append(c + Vector2(cos(a) * h * 0.22, sin(a) * h * 0.2 - h * 0.18))
+			hook.append(c + Vector2(0, h * 0.04))
+			hook.append(c + Vector2(0, h * 0.16))
+			_stroke(hook, IVORY, stroke * 1.15)
+			draw_circle(c + Vector2(0, h * 0.36), stroke * 1.9 + (OUTLINE - STROKE) * k * 0.5, OUTLINE_COLOR)
+			draw_circle(c + Vector2(0, h * 0.36), stroke * 1.2, IVORY)
 
 
 func _stroke(pts: PackedVector2Array, col: Color, width: float) -> void:

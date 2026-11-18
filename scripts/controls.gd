@@ -5,17 +5,17 @@ extends Node
 ## The player went from keys and mouse to a gamepad (pad true) or back.
 signal device_changed(pad: bool)
 
-const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"pause", &"feel_panel"]
-## Actions the player may rebind in Options.
-const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate"]
+const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"pause", &"feel_panel"]
+## Actions the player may rebind in Options. map (DV-1, MAP-03): the descent's map in the Livro de Ahk (MapScreen).
+const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map"]
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],
-	&"dodge": [KEY_SPACE], &"cast": [KEY_Q, KEY_SHIFT], &"ultimate": [KEY_R], &"pause": [KEY_ESCAPE, KEY_P],
+	&"dodge": [KEY_SPACE], &"cast": [KEY_Q, KEY_SHIFT], &"ultimate": [KEY_R], &"map": [KEY_M], &"pause": [KEY_ESCAPE, KEY_P],
 	# debug builds only: the live tuning panel (scripts/ui/feel_panel.gd)
 	&"feel_panel": [KEY_F1],
 }
 const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOUSE_BUTTON_RIGHT}
-const DEFAULT_PAD := {&"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"cast": JOY_BUTTON_RIGHT_SHOULDER, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"pause": JOY_BUTTON_START}
+const DEFAULT_PAD := {&"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"cast": JOY_BUTTON_RIGHT_SHOULDER, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"map": JOY_BUTTON_BACK, &"pause": JOY_BUTTON_START}
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
 ## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs
