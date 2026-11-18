@@ -35,6 +35,13 @@ static func arg(key: String, fallback: String = "") -> String:
 	return _args.get(key, fallback)
 
 
+## Sets a switch as if it came on the command line (the tests' hook seeds every run: tests/hooks/pre_run.gd).
+static func put(key: String, value: String = "1") -> void:
+	if not _parsed:
+		_parse()
+	_args[key] = value
+
+
 static func num(key: String, fallback: float) -> float:
 	return float(arg(key)) if has(key) else fallback
 

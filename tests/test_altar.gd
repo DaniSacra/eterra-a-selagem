@@ -33,27 +33,18 @@ func test_the_robot_chooses() -> void:
 	assert_eq(Altar.bot_choice(Altar.options(stage, 0, 40, true), 40), -1)
 
 
+## DV-1: at most one altar in the graph, within its depths.
 func test_once_per_descent_within_its_depths() -> void:
-	var rng := RandomNumberGenerator.new()
 	var runs_with := 0
 	for run in 400:
-		rng.seed = 300 + run
-		var map := RunMap.new(stage, rng)
-		var r := map.first()
-		var altars := 0
-		while r.kind != RunMap.Kind.BOSS:
-			map.enter(r)
-			var opts := map.options(true)
-			for o in opts:
-				if o.kind == RunMap.Kind.ALTAR:
-					assert_between(o.depth, stage.altar_depth_min, stage.altar_depth_max)
-			r = opts[rng.randi() % opts.size()]
-			if r.kind == RunMap.Kind.ALTAR:
-				altars += 1
-		assert_lte(altars, 1)
-		if altars > 0:
+		var map := RunMap.new(stage, 300 + run)
+		var altars := map.nodes.filter(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.ALTAR)
+		assert_lte(altars.size(), 1)
+		for o: RunMap.Room in altars:
+			assert_between(o.depth, stage.altar_depth_min, stage.altar_depth_max)
+		if not altars.is_empty():
 			runs_with += 1
-	assert_gt(runs_with, 20, "the altar comes up (%d of 400)" % runs_with)
+	assert_gt(runs_with, 120, "the altar comes up (%d of 400)" % runs_with)
 
 
 func test_the_trade_in_a_real_room() -> void:

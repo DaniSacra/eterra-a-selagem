@@ -9,7 +9,9 @@ const PATH := "user://runs.jsonl"
 ## (RoomTally: variant, dodges, hits, hits_by, shots, blocked_by, gold_in, boons_in).
 ## 3 (DT-015, E2a): the hero (hero: warrior), the Mastery XP the run gave (xp, by source in xp_by) and the level after
 ## it (mastery_level), the Gifts equipped (talents) and the ultimate chosen. gifts stays the list of Blessings.
-const VERSION := 3
+## 4 (DV-1, MAP-02): the descent's graph (map: seed, nodes, edges, the way walked), the node of each room
+## (rooms[].node) and, in each door's event, the node chosen and those offered.
+const VERSION := 4
 ## What an entry adds to the RESULT: outcome (victory, death, quit), when (local date and time), the gifts taken (in
 ## order: id, level and rarity), the device used (keyboard, gamepad, both, none; bot for the test robot), how many
 ## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key. Since
@@ -20,6 +22,8 @@ const FIELDS: Array[String] = ["version", "outcome", "when", "gifts", "device", 
 	"source", "boons_at_boss", "shop", "fountain_used", "hurt_ctx", "hero", "xp", "xp_by", "mastery_level", "talents", "ultimate"]
 ## The fields of version 3 and what an older line (version 1 or 2, all played by the first hero) reads as.
 const HERO_FIELDS := {"hero": "warrior", "xp": 0, "xp_by": {}, "mastery_level": 0, "talents": [], "ultimate": ""}
+## The field of version 4 and what an older line (one straight line of rooms, no graph) reads as.
+const MAP_FIELDS := {"map": {}}
 ## Who played a run (source).
 const HUMAN := "human"
 const BOT := "bot"
@@ -63,14 +67,19 @@ static func read(path: String) -> Array[Dictionary]:
 
 
 ## An entry of any version with the fields of this one: an older line (version 1 or 2, or none) gets HERO_FIELDS
-## (the first hero, no XP, no Gifts) and keeps its own version number, so a reader still knows what it was.
+## (the first hero, no XP, no Gifts), one before version 4 an empty map (MAP_FIELDS) and each room the node -1, and it
+## keeps its own version number, so a reader still knows what it was.
 static func normalized(e: Dictionary) -> Dictionary:
 	if int(e.get("version", 1)) >= VERSION:
 		return e
 	var out := e.duplicate(true)
-	for k: String in HERO_FIELDS:
-		if not out.has(k):
-			out[k] = HERO_FIELDS[k].duplicate() if HERO_FIELDS[k] is Array or HERO_FIELDS[k] is Dictionary else HERO_FIELDS[k]
+	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS]:
+		for k: String in fields:
+			if not out.has(k):
+				out[k] = fields[k].duplicate() if fields[k] is Array or fields[k] is Dictionary else fields[k]
+	for r: Variant in out.get("rooms", []):
+		if r is Dictionary and not (r as Dictionary).has("node"):
+			r["node"] = -1
 	return out
 
 

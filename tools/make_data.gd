@@ -516,7 +516,18 @@ func _stage() -> void:
 	st.fountain_depth_min = 5
 	st.fountain_depth_max = 8
 	st.fountain_chance = 0.35
+	# DV-1: a second fountain at the last of its depths on another branch whenever no way passes two (the line of rooms
+	# before the map offered the fountain again until its last depth; the robot drank there in 10 of 19 descents)
+	st.fountain_more_chance = 1.0
 	st.boss = &"morvath"
+	# The descent's graph (DV-1, the Descida de Valmor; RunMap): 2 to 4 rooms a layer between the hall and the shop
+	# (35%, 45%, 20%), a room linked to 2 of the next five times as likely as to 1 and to 3 twice (most rooms show two
+	# doors, as the doors of the line before the map), the Knight and the Elder side by
+	# side in the guardian's layer half the time (Q-27 a), a pomegranate behind a door from room 3 (Q-25 a)
+	st.map_widths = PackedFloat32Array([0.35, 0.45, 0.2])
+	st.map_doors = PackedFloat32Array([1.0, 5.0, 2.0])
+	st.guardian_pair_chance = 0.5
+	st.pom_from_depth = 3
 	st.enemies = [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite",
 		&"guard", &"guard_elite", &"priest", &"priest_elite"]
 	# Few enemies at once, each with its part, a fight won by skill as in Hades II (Daniel, 2026-11-15: not a horde

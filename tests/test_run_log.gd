@@ -151,6 +151,9 @@ func test_version_2_lines_are_still_read() -> void:
 	var now := back[1]
 	assert_eq(int(now.version), 3)
 	assert_eq(float(now.xp), 175.0, "a version 3 line is read as written")
+	assert_eq(now.map, {}, "a line before the graph reads with an empty map (version 4)")
+	for r: Dictionary in now.get("rooms", []):
+		assert_eq(int(r.node), -1)
 	assert_eq(now.talents, ["quarto_corte"])
 
 
@@ -163,7 +166,9 @@ func test_a_run_logs_the_hero_its_mastery_and_gifts() -> void:
 	game.rooms.won.assign([RunMap.Kind.COMBAT, RunMap.Kind.COMBAT, RunMap.Kind.MINIBOSS])
 	game.log_run("quit")
 	var e: Dictionary = heard[0]
-	assert_eq(int(e.version), 3)
+	assert_eq(int(e.version), RunLog.VERSION)
+	assert_eq(int(e.map.seed), game.rooms.map.map_seed, "the log carries the graph (version 4)")
+	assert_false((e.map.edges as Array).is_empty())
 	assert_eq(e.hero, "warrior")
 	assert_eq(e.talents, ["quarto_corte"])
 	assert_eq(e.ultimate, "cleave")

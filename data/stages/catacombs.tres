@@ -1543,11 +1543,14 @@ exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_pullg"), SubResourc
 [resource]
 script = ExtResource("8_gcpwj")
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
+fountain_more_chance = 1.0
 layouts = Array[ExtResource("4_8ur2y")]([SubResource("Resource_tk2fo"), SubResource("Resource_6gi8n"), SubResource("Resource_q6hi7"), SubResource("Resource_7l6y2"), SubResource("Resource_3dn1a"), SubResource("Resource_e3brq"), SubResource("Resource_s817t")])
 boss_layout = SubResource("Resource_m1xgu")
 shop_layout = SubResource("Resource_tk2fo")
 trial_layout = SubResource("Resource_jamgb")
 altar_layout = SubResource("Resource_hw7j7")
+map_widths = PackedFloat32Array(0.35, 0.45, 0.2)
+map_doors = PackedFloat32Array(1, 5, 2)
 enemies = Array[StringName]([&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite", &"guard", &"guard_elite", &"priest", &"priest_elite"])
 wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
 pools = Array[ExtResource("7_0uifc")]([SubResource("Resource_dd3xu"), SubResource("Resource_g2yqu"), SubResource("Resource_gkxnl"), SubResource("Resource_vnfky"), SubResource("Resource_4e216"), SubResource("Resource_utid5"), SubResource("Resource_mtqcf"), SubResource("Resource_7vtqb"), SubResource("Resource_2vdal"), SubResource("Resource_hc1of"), SubResource("Resource_dthxe"), SubResource("Resource_oyqot")])

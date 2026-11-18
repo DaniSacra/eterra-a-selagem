@@ -132,13 +132,15 @@ func _game() -> Game:
 func test_the_way_through_the_provacao() -> void:
 	var game := _game()
 	var rooms := game.rooms
-	rooms.stage.trial_chance = 1.0
-	rooms.map.depth = 3
-	rooms._enter(RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 3, 1, 0))
+	var here := RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 3, 1, 0)
+	here.trial = true  # the graph put the Provação's "?" here (DV-1)
+	here.hidden = true
+	rooms._enter(here)
 	var doors := rooms.next_rooms.duplicate()
 	game.horde.clear_crowd()
 	rooms._open_doors()
 	assert_not_null(rooms.slab, "the slab shows")
+	assert_false(here.hidden, "its \"?\" turns into the room it is")
 	var at: Vector2 = rooms.slab.at
 	assert_gt(game.arena.shape().edge_distance(at), 2.0, "on open floor")
 	var hp := game.player.hp
@@ -206,9 +208,9 @@ func test_every_curse_acts() -> void:
 func test_refused_and_too_poor() -> void:
 	var game := _game()
 	var rooms := game.rooms
-	rooms.stage.trial_chance = 1.0
-	rooms.map.depth = 4
-	rooms._enter(RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 4, 2, 0))
+	var here := RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 4, 2, 0)
+	here.trial = true
+	rooms._enter(here)
 	game.horde.clear_crowd()
 	rooms._open_doors()
 	assert_not_null(rooms.slab)
@@ -224,9 +226,9 @@ func test_refused_and_too_poor() -> void:
 	assert_true(types.has("trial_refused"))
 
 
-## C17, BUG-101: a Provação taken late always turns. For 500 maps of the stage and every depth of the slab, the slab
-## shows only where the shortest curse fits, and no card asks more fights than are left before Morvath, even when he
-## takes the fountain and the altar whenever their doors show (the worst case: those rooms hold no fight).
+## C17, BUG-101, on the graph (DV-1): a Provação taken late always turns. For 500 graphs, the "?" only goes where the
+## shortest curse fits on the worst way after it (the fewest fights on any way to the shop: the fountain and the altar
+## hold none), and no card asks more fights than that.
 func test_a_late_provacao_always_turns() -> void:
 	var rng := _rng(17)
 	var t := Trials.new(Trials.load_catalog())
@@ -234,46 +236,30 @@ func test_a_late_provacao_always_turns() -> void:
 	assert_eq(shortest, 3, "the shortest curse lasts 3 fights")
 	var shown := {}
 	for k in 500:
-		var map := RunMap.new(stage, rng)
-		var room := map.first()
-		while room.kind != RunMap.Kind.BOSS:
-			map.enter(room)
-			var fight := room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS
-			if fight and room.depth >= stage.trial_depth_min and room.depth <= stage.trial_depth_max:
-				var left := map.fights_left()
-				var tt := Trials.new(t.catalog)
-				if tt.may_show(stage, room.depth, left):
-					shown[room.depth] = true
-					var real := _fights_after(map, rng)
-					assert_gte(real, shortest, "depth %d: the slab only where 3 fit" % room.depth)
-					for card in tt.offers(rng, 3, stage.trial_rarity_chance, left):
-						assert_lte(card.encounters, real, "depth %d: the card never asks more than is left" % room.depth)
-						assert_gte(card.encounters, 1)
-			var doors := map.options(true)
-			room = doors[rng.randi() % doors.size()]
+		var map := RunMap.new(stage, 17000 + k, -1, shortest)
+		for r in map.nodes:
+			if not r.trial:
+				continue
+			shown[r.depth] = true
+			var real := _worst_way(map, r)
+			assert_gte(real, shortest, "depth %d: the slab only where 3 fit" % r.depth)
+			assert_eq(map.fights_left(r), real, "the map counts the worst way")
+			var tt := Trials.new(t.catalog)
+			assert_true(tt.open_at(stage, r.depth, map.fights_left(r)), "its slab shows")
+			for card in tt.offers(rng, 3, stage.trial_rarity_chance, map.fights_left(r)):
+				assert_lte(card.encounters, real, "depth %d: the card never asks more than is left" % r.depth)
+				assert_gte(card.encounters, 1)
 	assert_true(shown.has(2) and shown.has(4), "it still shows early and in the middle: %s" % [shown.keys()])
 	assert_false(shown.has(stage.trial_depth_max), "never where 3 cannot fit")
 
 
-## The fights he meets from here to Morvath on a copy of the map, choosing the fountain and the altar whenever shown.
-func _fights_after(map: RunMap, rng: RandomNumberGenerator) -> int:
-	var copy := RunMap.new(stage, rng)
-	copy.depth = map.depth
-	copy.miniboss_depth = map.miniboss_depth
-	copy.fountain_seen = map.fountain_seen
-	copy.altar_seen = map.altar_seen
-	copy.current_layout = map.current_layout
-	copy.uses = map.uses.duplicate()
-	var n := 0
-	while true:
-		var doors := copy.options(true)
-		var pick: RunMap.Room = doors[0]
-		for d in doors:
-			if d.kind == RunMap.Kind.FOUNTAIN or d.kind == RunMap.Kind.ALTAR:
-				pick = d
-		if pick.kind == RunMap.Kind.BOSS:
-			return n
-		copy.enter(pick)
-		if pick.kind == RunMap.Kind.COMBAT or pick.kind == RunMap.Kind.MINIBOSS:
-			n += 1
-	return n
+## The fewest fights on any way from r (r left out) to Morvath, walked room by room.
+func _worst_way(map: RunMap, r: RunMap.Room) -> int:
+	if r.next.is_empty():
+		return 0
+	var low := 1 << 20
+	for id in r.next:
+		var n := map.at(id)
+		var fight := n.kind == RunMap.Kind.COMBAT or n.kind == RunMap.Kind.MINIBOSS
+		low = mini(low, (1 if fight else 0) + _worst_way(map, n))
+	return low

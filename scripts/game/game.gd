@@ -1729,7 +1729,7 @@ func result() -> Dictionary:
 		"windups": horde.windup_report(), "shot_flight": projectiles.flight_report(),
 		"omega_charges_started": player.charges_started, "omega_charges_cancelled": player.charges_cancelled(), "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
 		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
-		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true),
+		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true), "map": rooms.map.summary() if rooms else {},
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
 			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},
 		"juramentos": juramentos.to_dict() if juramentos else {}, "weight": juramentos.weight() if juramentos else 0}
