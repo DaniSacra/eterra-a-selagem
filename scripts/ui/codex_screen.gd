@@ -40,10 +40,12 @@ const PSALM_NAME_WIDTH := 220.0
 const ENEMY_NAME_WIDTH := 240.0
 const ROLE_WIDTH := 300.0
 const ROW_SIZE := 17
-const NAME_WIDTH := 190.0
+const NAME_WIDTH := 170.0
 ## The Gifts' rows carry the tree's own node (TalentGlyph.mark), this wide.
 const GIFT_MARK := 22.0
-const KEYS_WIDTH := 220.0
+const KEYS_WIDTH := 240.0
+## The HUD marks of a move's inputs (Golpes).
+const MOVE_MARK := 24.0
 ## Blessings: two columns of one line each (icon, name, family, count), so the 26 fit a 720 screen.
 const BOON_COLUMNS := 2
 const BOON_ICON := 24.0
@@ -59,6 +61,10 @@ const UNKNOWN := "???"
 var tab := Tab.GIFTS
 var tabs: Array[Button] = []
 var _list: VBoxContainer
+## The list scrolls when it is taller than the page (QW-114: every line whole, no "..." cut, at 720 too): the wheel,
+## or right from the index and then up and down (left goes back to the index, down past the end to Voltar).
+var _scroll: ScrollContainer
+var _back: Button
 var _legend: Label
 ## The right page's heading (the chapter on show).
 var _chapter: VBoxContainer
@@ -114,8 +120,18 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 	_list = VBoxContainer.new()
 	_list.name = "list"
 	_list.add_theme_constant_override(&"separation", 3)
-	_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	page.add_child(_list)
+	_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_scroll = ScrollContainer.new()
+	_scroll.name = "scroll"
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.focus_mode = Control.FOCUS_ALL
+	_scroll.add_theme_stylebox_override(&"panel", StyleBoxEmpty.new())
+	_scroll.add_theme_stylebox_override(&"focus", UiKit.box(Color(0, 0, 0, 0), Book.GILT, 1, 4))
+	_scroll.focus_entered.connect(_scroll_focused)
+	_scroll.gui_input.connect(_scroll_keys)
+	_scroll.add_child(_list)
+	page.add_child(_scroll)
 	_legend = Book.text("", Book.FADED, 16)
 	page.add_child(_legend)
 	var foot := HBoxContainer.new()
@@ -124,12 +140,52 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 200)
 	back.name = "back"
 	foot.add_child(back)
+	_back = back
 	for b in tabs:
-		b.focus_neighbor_right = b.get_path_to(back)
+		b.focus_neighbor_right = b.get_path_to(_scroll)
 	back.focus_neighbor_left = back.get_path_to(tabs[0])
 	back.focus_neighbor_top = back.get_path_to(tabs[0])
 	_show(start)
 	tabs[start].grab_focus.call_deferred()
+
+
+## LB and RB (PageUp, PageDown) walk the index (DT-103).
+func _unhandled_input(event: InputEvent) -> void:
+	if UiKit.step_tabs(event, tabs, tab):
+		get_viewport().set_input_as_handled()
+
+
+## Whether the list on show is taller than its page.
+func scrolls() -> bool:
+	var bar := _scroll.get_v_scroll_bar()
+	return bar.max_value > bar.page + 0.5
+
+
+## Right from the index: into the list when it scrolls, else straight on to Voltar.
+func _scroll_focused() -> void:
+	if not scrolls():
+		_back.grab_focus.call_deferred()
+
+
+const SCROLL_STEP := 60
+
+
+func _scroll_keys(event: InputEvent) -> void:
+	var bar := _scroll.get_v_scroll_bar()
+	if event.is_action_pressed(&"ui_down"):
+		if _scroll.scroll_vertical >= int(bar.max_value - bar.page) - 1:
+			_back.grab_focus()
+		else:
+			_scroll.scroll_vertical += SCROLL_STEP
+	elif event.is_action_pressed(&"ui_up"):
+		_scroll.scroll_vertical -= SCROLL_STEP
+	elif event.is_action_pressed(&"ui_left"):
+		tabs[tab].grab_focus()
+	elif event.is_action_pressed(&"ui_right"):
+		_back.grab_focus()
+	else:
+		return
+	_scroll.accept_event()
 
 
 func _show(t: Tab) -> void:
@@ -148,6 +204,8 @@ func _show(t: Tab) -> void:
 	(_chapter.get_node("text") as Label).text = T.t(TAB_KEY[t])
 	for child in _list.get_children():
 		child.free()
+	if _scroll:
+		_scroll.scroll_vertical = 0
 	var p := progress(t)
 	var counts := {"n": p.x, "total": p.y}
 	match t:
@@ -229,8 +287,7 @@ func _gifts() -> void:
 		var desc := UiKit.label(T.t(t.desc_key) if open else T.t(&"codex_locked", {"n": t.unlock_level}), Book.INK if open else Book.FADED, ROW_SIZE - 1)
 		desc.name = &"Desc"
 		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		desc.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		desc.clip_text = true
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(desc)
 		_list.add_child(row)
 
@@ -281,13 +338,11 @@ func _boons() -> void:
 		var name := UiKit.label(T.t("boon_" + String(b.id)) if n > 0 else UNKNOWN, Book.ink(b.color()) if n > 0 else Book.FADED, ROW_SIZE, UiKit.BOLD_FONT)
 		name.name = &"Name"
 		name.custom_minimum_size.x = BOON_NAME_WIDTH
-		name.clip_text = true
-		name.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(name)
 		var fam := UiKit.label(T.t(Boon.FAMILY_KEY[b.family]) if n > 0 else "", Book.FADED, ROW_SIZE - 2)
 		fam.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		fam.clip_text = true
-		fam.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		fam.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(fam)
 		row.add_child(_times(n))
 		cols.get_child(cols.get_child_count() - 1).add_child(row)
@@ -321,8 +376,7 @@ func _elos() -> void:
 		var recipe := UiKit.label(EloLink.caption(from) if n > 0 or known else UNKNOWN, Book.INK if n > 0 else Book.FADED, ROW_SIZE - 1)
 		recipe.name = &"Recipe"
 		recipe.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		recipe.clip_text = true
-		recipe.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		recipe.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		row.add_child(recipe)
 		row.add_child(_times(n))
 		_list.add_child(row)
@@ -513,20 +567,52 @@ func _times(n: int) -> Label:
 	return l
 
 
-## The combos found so far (the old Golpes screen).
+## The combos found so far (the old Golpes screen): each move's inputs as the HUD's own marks (QW-110: never the
+## letters E and D, which read as keys), "segurado" after a held one, the dodge's mark first for the Corte Veloz.
 func _moves() -> void:
 	var tree: ComboTree = load(HeroDef.warrior().combos)
-	var words := {"dodge": T.t(&"moves_dodge"), "charge": T.t(&"moves_charge"), "charge_light": T.t(&"moves_charge_light")}
 	var known: Array = _data.get("moves", [])
 	for m in tree.named_moves():
 		var node: ComboNode = m.node
 		var found := known.has(String(node.id))
 		var row := HBoxContainer.new()
-		var keys := UiKit.label(ComboTree.notation(m.path, m.from_dodge, words), Book.GILT if found else Book.FADED, 21, UiKit.BOLD_FONT)
+		row.name = String(node.id)
+		row.add_theme_constant_override(&"separation", 12)
+		var keys := move_marks(m.path, m.from_dodge, found)
 		keys.custom_minimum_size.x = KEYS_WIDTH
 		row.add_child(keys)
-		row.add_child(UiKit.label(T.t(node.title) if found else UNKNOWN, Book.INK if found else Book.FADED, 21))
+		var name := UiKit.label(T.t(node.title) if found else UNKNOWN, Book.INK if found else Book.FADED, ROW_SIZE + 2, UiKit.BOLD_FONT)
+		name.name = &"Name"
+		name.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(name)
 		_list.add_child(row)
+
+
+## A move's inputs as a row of the HUD's action marks (ActionSlot.mark): the attack's or the special's per press,
+## "segurado" after a held one (the Omega), the dodge's and a "+" before a move that comes out of the dodge.
+## Dimmed while the move was never landed.
+static func move_marks(path: Array, from_dodge: bool, lit: bool = true) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.name = &"Keys"
+	h.add_theme_constant_override(&"separation", 4)
+	var ink := Book.GILT if lit else Book.FADED
+	if from_dodge:
+		h.add_child(ActionSlot.mark(Boon.Slot.DASH, MOVE_MARK))
+		h.add_child(_word("+", ink))
+	for input: ComboNode.In in path:
+		var light := input == ComboNode.In.LIGHT or input == ComboNode.In.CHARGE_LIGHT
+		h.add_child(ActionSlot.mark(Boon.Slot.ATTACK if light else Boon.Slot.SPECIAL, MOVE_MARK))
+		if input == ComboNode.In.CHARGE or input == ComboNode.In.CHARGE_LIGHT:
+			h.add_child(_word(T.t(&"moves_hold"), ink))
+	if not lit:
+		h.modulate.a = 0.5
+	return h
+
+
+static func _word(text: String, color: Color) -> Label:
+	var l := UiKit.label(text, color, ROW_SIZE, UiKit.BOLD_FONT)
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	return l
 
 
 ## The ink mark of a chapter in the index (board 04: small drawings in the margin): Dons a node of the tree, Bênçãos a

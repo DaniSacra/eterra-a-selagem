@@ -22,7 +22,7 @@ extends Control
 
 const DIAMOND := 54.0
 const KEY_H := 17.0
-const KEY_FONT := 13
+const KEY_FONT := 14
 ## How long the frame shines after the recharge ends.
 const READY_FLASH := 0.25
 const IVORY := Color(1.0, 0.97, 0.88)
@@ -53,7 +53,7 @@ const LIGHT := 3.5
 const LIGHT_GAP := 10.0
 const LIGHT_RISE := 7.0
 ## The caption over the diamond (T5): its size, how far over the frame, and the ready pulse's period and reach.
-const CAPTION_FONT := 12
+const CAPTION_FONT := 14
 const CAPTION_RISE := 6.0
 ## The ready ring: its gap from the frame, width, colour (Emeth's pale emerald, lit under the glow), how much it
 ## breathes and how fast; the pulse when it fills: seconds and reach.

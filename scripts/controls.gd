@@ -18,6 +18,9 @@ const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOU
 const DEFAULT_PAD := {&"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"cast": JOY_BUTTON_RIGHT_SHOULDER, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"pause": JOY_BUTTON_START}
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
+## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs
+## (Configurações, Como Jogar, the Livro's chapters, the Compendium's index; DT-103, UiKit.step_tabs).
+const MENU_KEYS := {&"tab_prev": [JOY_BUTTON_LEFT_SHOULDER, KEY_PAGEUP], &"tab_next": [JOY_BUTTON_RIGHT_SHOULDER, KEY_PAGEDOWN]}
 
 ## The last device touched was a gamepad (device_changed when it flips, for hints that name the keys live).
 var using_pad := false:
@@ -96,6 +99,16 @@ func apply_bindings() -> void:
 			jm.axis = PAD_AXES[action][0]
 			jm.axis_value = PAD_AXES[action][1]
 			InputMap.action_add_event(action, jm)
+	for action: StringName in MENU_KEYS:
+		if InputMap.has_action(action):
+			InputMap.erase_action(action)
+		InputMap.add_action(action)
+		var jb := InputEventJoypadButton.new()
+		jb.button_index = MENU_KEYS[action][0]
+		InputMap.action_add_event(action, jb)
+		var key := InputEventKey.new()
+		key.physical_keycode = MENU_KEYS[action][1]
+		InputMap.action_add_event(action, key)
 
 
 ## Stores a key or mouse button as the binding of an action. Returns false for events that cannot be bound.

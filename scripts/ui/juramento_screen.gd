@@ -11,7 +11,7 @@ signal closed
 signal descend
 
 const WIDTH := 1060.0
-const ROW_HEIGHT := 44.0
+const ROW_HEIGHT := 40.0
 const NAME_WIDTH := 230.0
 const PIPS_WIDTH := 92.0
 const WEIGHT_WIDTH := 86.0
@@ -59,9 +59,9 @@ func open(with_descend: bool = false) -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	locked = not Juramentos.unlocked(Save.data)
 	vows = Juramentos.new(Juramentos.load_catalog(), Juramentos.block(Save.data).get("ranks", {}))
-	var page := UiKit.column(self, WIDTH, 0.82)
+	# the menus' framed page (QW-113: the same panel, title and rule as Configurações; the title art stays behind it)
+	var page := UiKit.page(self, T.t(&"jur_title"), WIDTH, 0.82, 36)
 	page.add_theme_constant_override(&"separation", 6)
-	page.add_child(UiKit.title(T.t(&"jur_title"), 40))
 	if locked:
 		var why := UiKit.shadow(UiKit.label(T.t(&"jur_locked"), UiKit.PALE, 24))
 		why.name = "locked"
@@ -132,7 +132,7 @@ func hover_takes_focus(at: Vector2) -> bool:
 func _row(d: JuramentoDef) -> Button:
 	var b := Button.new()
 	b.name = String(d.id)
-	b.custom_minimum_size = Vector2(WIDTH, ROW_HEIGHT)
+	b.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 	b.focus_mode = Control.FOCUS_ALL
 	b.mouse_entered.connect(func() -> void:
 		if not b.has_focus() and hover_takes_focus(get_viewport().get_mouse_position()):

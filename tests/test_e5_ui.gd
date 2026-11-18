@@ -286,7 +286,8 @@ func test_the_altar_says_why_a_trade_is_out_of_reach() -> void:
 	assert_eq(Altar.options(stage, 500, 30.0, true)[Altar.Option.LIFE].why, &"")
 	assert_eq(Altar.options(stage, 500, 30.0, true)[Altar.Option.CANDLES].why, &"")
 	assert_eq(Altar.options(stage, 30, 30.0, true)[Altar.Option.CANDLES].short, stage.altar_gold_cost - 30)
-	assert_eq(BoonCard.num(22.5), "22,5")
+	# BUG-113: life, gold and Magia read whole, as on the HUD
+	assert_eq(BoonCard.num(22.5), "23")
 	assert_eq(BoonCard.num(30.0), "30")
 
 

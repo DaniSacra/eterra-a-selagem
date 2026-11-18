@@ -175,6 +175,15 @@ func _show_tab(t: int) -> void:
 		pages[i].visible = i == t
 
 
+## LB and RB (PageUp, PageDown) go to the tab before or after (DT-103); not while a key waits to be bound, nor under
+## Músicas.
+func _unhandled_input(event: InputEvent) -> void:
+	if _waiting != &"" or not find_children("*", "MusicRoomScreen", false, false).is_empty():
+		return
+	if UiKit.step_tabs(event, tabs, tab):
+		get_viewport().set_input_as_handled()
+
+
 ## The page a control is on (the open tab when it is on none).
 func _page_of(c: Control) -> int:
 	for i in pages.size():

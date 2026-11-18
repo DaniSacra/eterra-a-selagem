@@ -140,10 +140,30 @@ static func column(parent: Control, width: float, dim: float = 0.6) -> VBoxConta
 	return box_
 
 
+## A number as the player reads it: a whole one plain, else one decimal with a comma (seconds, metres: "1,5 s").
 static func format_number(v: float) -> String:
 	if is_equal_approx(v, roundf(v)):
 		return str(roundi(v))
 	return ("%.1f" % v).replace(".", ",")
+
+
+## A count the HUD shows whole (life, Magia, gold, damage; BUG-113): rounded, and never 0 for something above 0.
+static func whole(v: float) -> String:
+	return str(maxi(roundi(v), 1) if v > 0.0 else roundi(v))
+
+
+## LB and RB (PageUp and PageDown; Controls.MENU_KEYS) step through a screen's tabs (DT-103): the next or the previous
+## tab takes the focus, which shows its page, wrapping round. True when the event was one of them (the caller marks it
+## handled).
+static func step_tabs(event: InputEvent, buttons: Array, current: int) -> bool:
+	if buttons.is_empty() or event.is_echo():
+		return false
+	var step := 1 if event.is_action_pressed(&"tab_next") else (-1 if event.is_action_pressed(&"tab_prev") else 0)
+	if step == 0:
+		return false
+	var to := buttons[posmod(current + step, buttons.size())] as BaseButton
+	to.grab_focus()
+	return true
 
 
 ## Label of the key or button of an action, with every gamepad button named (Controls.label names only A, B, X, Y).

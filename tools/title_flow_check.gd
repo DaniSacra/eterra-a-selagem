@@ -2,7 +2,9 @@ extends SceneTree
 ## Drives the title like a player (keyboard): Iniciar starts the run, the pause's way back reaches the title again,
 ## O Guerreiro opens the hero screen (a Gift goes on and off with Enter, the arrows walk the tree), Como Jogar opens
 ## the Compêndio, Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
-## Enter and keep the focus, Configurações opens Músicas and Esc comes back from it. Prints FLOW ok or FLOW FAIL.
+## Enter and keep the focus, Configurações opens Músicas and Esc comes back from it. The gamepad's RB and LB (real
+## joypad button events) turn the Livro's chapters, Como Jogar's tabs, the Compendium's index and the options' tabs
+## (DT-103). Prints FLOW ok or FLOW FAIL.
 ## ~/tools/godot/godot --headless --path . -s tools/title_flow_check.gd
 
 var _fail := 0
@@ -31,6 +33,17 @@ func _key(action: StringName) -> void:
 	r.pressed = false
 	Input.parse_input_event(r)
 	await process_frame
+	await process_frame
+
+
+## A press and release of a gamepad button (LB, RB), as the pad sends it.
+func _pad(button: JoyButton) -> void:
+	for down: bool in [true, false]:
+		var e := InputEventJoypadButton.new()
+		e.button_index = button
+		e.pressed = down
+		Input.parse_input_event(e)
+		await process_frame
 	await process_frame
 
 
@@ -111,10 +124,19 @@ func _hero(screen: Node) -> void:
 	await _key(&"ui_down")
 	var moved := root.gui_get_focus_owner()
 	_check(moved != null and moved != owner_, "down walks the tree")
+	var at := int(screen.get(&"chapter"))
+	await _pad(JOY_BUTTON_RIGHT_SHOULDER)
+	_check(int(screen.get(&"chapter")) == (at + 1) % 3, "RB turns to the next chapter")
+	await _pad(JOY_BUTTON_LEFT_SHOULDER)
+	_check(int(screen.get(&"chapter")) == at, "LB turns back")
 
 
 ## Como Jogar's Compêndio by keys: it opens on the Gifts tab, down the index shows Bênçãos, Esc goes back to Como Jogar.
 func _codex(howto: Node) -> void:
+	await _pad(JOY_BUTTON_RIGHT_SHOULDER)
+	_check(int(howto.get(&"tab")) == 1, "RB shows Como Jogar's Controles")
+	await _pad(JOY_BUTTON_LEFT_SHOULDER)
+	_check(int(howto.get(&"tab")) == 0, "LB back to A descida")
 	var button := howto.find_child("moves", true, false) as Control
 	_check(button != null, "Como Jogar has the Compêndio")
 	if button == null:
@@ -128,6 +150,10 @@ func _codex(howto: Node) -> void:
 		return
 	await _key(&"ui_down")
 	_check(int(codex[0].get(&"tab")) == 1, "down shows Bênçãos")
+	await _pad(JOY_BUTTON_RIGHT_SHOULDER)
+	_check(int(codex[0].get(&"tab")) == 2, "RB shows Elos")
+	await _pad(JOY_BUTTON_LEFT_SHOULDER)
+	_check(int(codex[0].get(&"tab")) == 1, "LB back to Bênçãos")
 	await _key(&"ui_cancel")
 	await _wait(0.1)
 	_check(howto.find_children("*", "CodexScreen", true, false).is_empty() and howto.is_inside_tree(), "Esc goes back to Como Jogar")
@@ -191,6 +217,12 @@ func _run() -> void:
 	await _key(&"ui_accept")
 	await _wait(0.3)
 	_check(_sub_is(boot, "options_screen.gd"), "Configurações opens the options")
+	var options = boot.get(&"_sub")
+	var tab_at := int(options.get(&"tab"))
+	await _pad(JOY_BUTTON_RIGHT_SHOULDER)
+	_check(int(options.get(&"tab")) == tab_at + 1, "RB shows the next tab of Configurações")
+	await _pad(JOY_BUTTON_LEFT_SHOULDER)
+	_check(int(options.get(&"tab")) == tab_at, "LB back")
 	await _comfort(boot.get(&"_sub"))
 	await _music_room(boot.get(&"_sub"))
 	await _key(&"ui_cancel")

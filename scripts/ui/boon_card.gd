@@ -749,12 +749,9 @@ func _free_tag() -> Control:
 	return holder
 
 
-## A number as the player reads it: no ".0", a comma for the decimal (22,5).
+## A number of the altar as the player reads it: life, gold and Magia are whole, as on the HUD (BUG-113).
 static func num(v: float) -> String:
-	var r := snappedf(v, 0.1)
-	if is_equal_approx(r, roundf(r)):
-		return str(roundi(r))
-	return String.num(r, 1).replace(".", ",")
+	return UiKit.whole(v)
 
 
 ## {from, to} of an altar's option for "give" or "get" (Altar.options: give_from, give_to, get_from, get_to).

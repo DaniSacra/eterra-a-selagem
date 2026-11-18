@@ -339,7 +339,7 @@ func _skill(grid: GridContainer, mark: Control, title: String, line: String) -> 
 	words.add_theme_constant_override(&"separation", -3)
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.add_child(Book.label(title, Book.INK, 16, UiKit.BOLD_FONT))
-	var l := Book.text(line, Book.FADED, 14)
+	var l := Book.text(line, Book.INK, 15)
 	words.add_child(l)
 	row.add_child(words)
 	grid.add_child(row)
@@ -403,7 +403,7 @@ func _gifts_right() -> Control:
 
 ## A part of the panel: its head ("◆ EFEITO") and its words; the pair hides together (part_visible).
 func _part(v: VBoxContainer, id: StringName, key: StringName, size: int, font: Font = null) -> Label:
-	var head := Book.section(T.t(key), 14)
+	var head := Book.section(T.t(key), 15)
 	head.name = "head_" + String(id)
 	v.add_child(head)
 	var l := Book.text("", Book.INK, size)
@@ -435,6 +435,12 @@ func _footer() -> Control:
 
 
 # ---- chapters and focus ----
+
+## LB and RB (PageUp, PageDown) turn to the chapter before or after (DT-103).
+func _unhandled_input(event: InputEvent) -> void:
+	if UiKit.step_tabs(event, chapters, chapter):
+		get_viewport().set_input_as_handled()
+
 
 func _show(c: int) -> void:
 	chapter = c as Chapter

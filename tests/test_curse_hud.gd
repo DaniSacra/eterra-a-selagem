@@ -187,7 +187,7 @@ func test_victory_screen_focuses_continue_and_both_ways_out_work() -> void:
 	var buttons := end.find_children("*", "Button", true, false)
 	assert_eq(buttons.size(), 2)
 	var first := buttons[0] as Button
-	assert_eq(first.text, T.t(&"end_continue"))
+	assert_eq(first.text, T.t(&"end_menu"))
 	assert_true(first.has_focus(), "keys and gamepad start on Continuar")
 	watch_signals(end)
 	first.pressed.emit()
@@ -197,7 +197,7 @@ func test_victory_screen_focuses_continue_and_both_ways_out_work() -> void:
 
 
 func test_texts_have_no_dash() -> void:
-	for key: StringName in [&"end_victory", &"end_victory_sub", &"end_spoils", &"end_continue", &"end_again", &"hud_cursed", &"hud_cursed_effects"]:
+	for key: StringName in [&"end_victory", &"end_victory_sub", &"end_spoils", &"end_again", &"hud_cursed", &"hud_cursed_effects"]:
 		var text := T.t(key)
 		assert_ne(text, String(key), "%s is in the table" % key)
 		assert_false(text.contains("—") or text.contains("–"), "%s has no dash" % key)

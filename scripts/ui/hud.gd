@@ -35,6 +35,10 @@ const LIFE_FONT := 16
 const MAGICK_FONT := 15
 const BOSS := Vector2(480, 12)
 const PASSIVE_ICON := 30
+const PASSIVE_GAP := 4
+## The row of gifts that act alone ends at this share of the screen's width; past it the last place says "+N" (BUG-105).
+## Those with a recharge go first: their timer is what is worth a glance in a fight.
+const PASSIVE_EDGE := 0.96
 const SLOT_GAP := 8
 const FONT_SMALL := 15
 const FONT_TEXT := 19
@@ -73,7 +77,8 @@ const BODY_HEIGHT := 2.4
 const POINTERS := 3
 const POINTER_SIZE := 18.0
 const VIEW_INSET := 16.0
-const EDGE_INSET := Vector4(30.0, 96.0, 30.0, 116.0)
+## (The bottom clears the caption over the ultimate's diamond, "Maestria 2", BUG-111.)
+const EDGE_INSET := Vector4(30.0, 96.0, 30.0, 128.0)
 ## The four actions in the order of the diamonds, with the gift slot that changes each.
 const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"dodge"]
 const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
@@ -141,6 +146,8 @@ var _combo_pop := 0.0
 var _move_t := 0.0
 var _notice_t := 0.0
 var _passive_count := -1
+## How many medallions the row had room for when it was last laid out (a new window size lays it out again).
+var _passive_fit := -1
 var _elo_banner: EloBanner
 ## Elos and new Blessings already greeted (the ones owned when the run starts are not).
 var _elos_seen := {}
@@ -264,7 +271,8 @@ func _build_actions() -> void:
 	var height := ActionSlot.DIAMOND + ActionSlot.KEY_H * 0.5
 	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0, -MARGIN + 6), Vector2(width, height))
 	_passives = HBoxContainer.new()
-	_passives.add_theme_constant_override(&"separation", 4)
+	_passives.name = &"Passives"
+	_passives.add_theme_constant_override(&"separation", PASSIVE_GAP)
 	_passives.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_passives)
 	var room := 300.0
@@ -324,7 +332,13 @@ func _label(text: String, color: Color, size: int, font: Font, preset: Control.L
 func _process(delta: float) -> void:
 	if game == null or game.player == null:
 		return
+	# the HUD's own fades run in real time: slow motion and the hit stop scale delta (Engine.time_scale)
+	delta = game.fx.real_dt if game.fx and game.fx.real_dt > 0.0 else delta
 	var p := game.player
+	# a screen over the run (cards, pause, an event): the gifts' row and the greetings wait under it (BUG-107)
+	var over := game.mode != Game.Mode.PLAY
+	_passives.visible = not over
+	_elo_banner.held = over
 	_clock.text = SaveData.format_time(game.time)
 	_coin.visible = game.rooms != null
 	if game.rooms:
@@ -480,26 +494,58 @@ func _dash_wait(p: Player) -> float:
 	return 1.0 - clampf((game.time - _dash_from) / maxf(p.hero.dodge_recharge, 0.01), 0.0, 1.0)
 
 
-## The gifts with no action of their own: small medallions with their recharge.
+## The gifts with no action of their own: small medallions with their recharge, as many as fit before PASSIVE_EDGE
+## and then "+N" for the rest (BUG-105; the pause's Bênçãos list them all).
 func _update_passives() -> void:
 	var owned: Array[Boon] = []
 	owned.assign(game.boons.owned().filter(func(b: Boon) -> bool: return b.slot == Boon.Slot.NONE))
-	if owned.size() != _passive_count:
+	var fit := passive_fit(get_viewport_rect().size.x * PASSIVE_EDGE - _passives.position.x)
+	if owned.size() != _passive_count or fit != _passive_fit:
 		_passive_count = owned.size()
+		_passive_fit = fit
 		for c in _passives.get_children():
+			_passives.remove_child(c)
 			c.queue_free()
-		for b in owned:
+		var shown := passives_shown(owned, fit)
+		for b in shown:
 			_passives.add_child(BoonIcon.new().setup(b, PASSIVE_ICON))
+		if shown.size() < owned.size():
+			var more := UiKit.shadow(UiKit.label(T.t(&"hud_more", {"n": owned.size() - shown.size()}), UiKit.PALE, FONT_SMALL + 1, UiKit.BOLD_FONT))
+			more.name = &"More"
+			more.custom_minimum_size = Vector2(PASSIVE_ICON, PASSIVE_ICON)
+			more.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			_passives.add_child(more)
 	for c in _passives.get_children():
-		if c.is_queued_for_deletion():
-			continue
 		var icon := c as BoonIcon
+		if icon == null:
+			continue
 		icon.level = game.boons.level(icon.boon.id)
 		icon.max_level = icon.boon.max_level
 		if icon.boon.skill and icon.boon.skill.kind != SkillDef.Kind.ORBIT:
 			var t := game.skills.timer(icon.boon)
 			icon.cooldown = clampf(t.x / maxf(t.y, 0.01), 0.0, 1.0)
 		icon.queue_redraw()
+
+
+## How many places of PASSIVE_ICON (with their gaps) a row this wide holds.
+static func passive_fit(room: float) -> int:
+	return maxi(1, floori((room + PASSIVE_GAP) / float(PASSIVE_ICON + PASSIVE_GAP)))
+
+
+## The medallions the row shows out of owned when it holds fit places: all when they fit, else fit - 1 of them (the
+## last place says "+N"), those with a recharge first, in the order they were taken.
+static func passives_shown(owned: Array[Boon], fit: int) -> Array[Boon]:
+	if owned.size() <= fit:
+		return owned
+	var timed: Array[Boon] = []
+	var rest: Array[Boon] = []
+	for b in owned:
+		if b.skill and b.skill.kind != SkillDef.Kind.ORBIT:
+			timed.append(b)
+		else:
+			rest.append(b)
+	timed.append_array(rest)
+	return timed.slice(0, maxi(0, fit - 1))
 
 
 ## Greets each Elo once, when it is taken, and each Blessing taken for the first time ever (E3-04: not yet in the
@@ -619,6 +665,8 @@ func _point(mark: HudMark, edge: Variant, frame: Rect2) -> void:
 	mark.visible = edge != null
 	if edge != null:
 		mark.position = (edge as Vector2) - mark.size * 0.5
+		# about its middle (BUG-111: about its corner a chevron at the bottom hung 9 px lower, on the ult's caption)
+		mark.pivot_offset = mark.size * 0.5
 		mark.rotation = ((edge as Vector2) - frame.get_center()).angle()
 
 
@@ -675,6 +723,9 @@ static func body_rect(feet: Vector2, tall: float) -> Rect2:
 func on_combo(count: int) -> void:
 	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
 		c.visible = count >= 3
+	if count == 0:
+		# the count ran out: the move's name goes with it (BUG-112), a short fade and never alone in the corner
+		_move_t = minf(_move_t, MOVE_FADE)
 	_combo.text = str(count)
 	_combo_pop = 1.0
 
