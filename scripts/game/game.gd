@@ -1197,6 +1197,8 @@ func apply_options() -> void:
 	for n in get_children():
 		if n is WorldEnvironment:
 			GraphicsQuality.apply_environment((n as WorldEnvironment).environment, GraphicsQuality.current(int(Save.option("quality"))))
+	# Eterra Stylized (STY-07): the optional painting filter, only stylized, Forward+ and Alta (PaintPass.wanted)
+	PaintPass.attach(camera, GraphicsQuality.current(int(Save.option("quality"))))
 
 
 func _close_screen() -> void:

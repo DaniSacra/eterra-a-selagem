@@ -36,6 +36,8 @@ const CORE_GLOW := 1.25
 const CORE_WIDTH := 0.022
 const CORE_DEPTH := 0.076
 const CORE_SPAN := Vector2(0.08, 0.86)
+## Eterra Stylized (STY-06, T22): the pale edge in that look, ivory-mint with no channel past 1.0 (nothing blooms).
+const STYLE_CORE := Color(0.72, 0.95, 0.8)
 
 
 ## The sword: an empty holder at the grip with the model under it (HeroBody places the holder in the hand).
@@ -68,7 +70,7 @@ static func make() -> MeshInstance3D:
 	core.position.y = MODEL_BLADE_FROM + length * (CORE_SPAN.x + CORE_SPAN.y) * 0.5
 	var light := StandardMaterial3D.new()
 	light.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	light.albedo_color = CORE * CORE_GLOW
+	light.albedo_color = STYLE_CORE if CrowdRenderer.stylized() else CORE * CORE_GLOW
 	core.material_override = light
 	blade.add_child(core)
 	return root

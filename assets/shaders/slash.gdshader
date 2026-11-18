@@ -35,6 +35,18 @@ uniform float core_sat = 0.4;
 // The edge vanishes over this share of the tail (the head keeps the light).
 uniform float edge_tail = 0.85;
 
+// Eterra Stylized (STY-06, T23): with the global art_style at 1 the core reaches style_core_depth inward and keeps more
+// of its depth down the tail (style_core_thin), cut into broken strokes over the back half (slash_strokes.gdshaderinc);
+// the leading edge stays whole; nothing the arc adds passes style_cap a channel (the core reads under 235 on the
+// screen). art_style 0: the classic arc, unchanged.
+global uniform float art_style;
+uniform float style_core_depth = 0.75;
+uniform float style_core_thin = 0.5;
+uniform float style_core_light = 0.3;
+uniform float style_cap = 0.62;
+
+#include "res://assets/shaders/slash_strokes.gdshaderinc"
+
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -81,13 +93,26 @@ void fragment() {
 	float wire = (1.0 - smoothstep(px * edge_px * 0.5, px * (edge_px * 0.5 + 1.0), abs(y - e))) * nose;
 	wire *= 1.0 - smoothstep(edge_tail * 0.4, edge_tail, k);
 	// the core: light just inside the edge, thinner toward the end of the tail
+	bool styled = art_style > 0.5;
 	float depth = core_depth * e * pow(1.0 - k, 1.2) * nose;
+	if (styled) {
+		depth = style_core_depth * e * pow(1.0 - k, style_core_thin) * nose;
+	}
 	float inside = (e - y) / max(depth, 0.001);
 	float core = (y < e && inside < 1.0) ? pow(1.0 - inside, 2.0) : 0.0;
+	if (styled) {
+		// a flatter body of paint, broken into strokes in the back half
+		core = (y < e && inside < 1.0) ? pow(1.0 - inside, 0.8) : 0.0;
+		float band_m = reach_m > 0.0 ? (1.0 - band_from) * reach_m : 1.0;
+		core *= slash_strokes(y * band_m, k, rest, fwidth(y * band_m));
+	}
 	float glow = pow(1.0 - k, 1.6);
 	float life = pow(1.0 - rest, 1.5);
 	vec3 edge_c = mix(color.rgb, vec3(1.0), edge_pale);
 	vec3 core_c = pale_to(color.rgb, core_sat);
 	if (wire + core <= 0.002) discard;
 	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow) * life * intensity;
+	if (styled) {
+		ALBEDO = min((edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * style_core_light * glow) * life * intensity, vec3(style_cap));
+	}
 }

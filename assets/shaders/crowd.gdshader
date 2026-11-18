@@ -127,11 +127,27 @@ uniform float hero_range = 11.0;
 // How much of that warm light the figure takes (Morvath, always beside the hero, read grey and brown under it).
 uniform float hero_light = 1.0;
 
+// Eterra Stylized (STY-06, docs/art/stylized_spec.md 2.3; T18, T19, T21): with the global art_style at 1 the figure is
+// painted like the stone of the hall: its key light in three bands (figure_bands), a body darker than the light floor
+// (style_light of the classic key, style_scene of the scene's light), a warm rim from the torches (style_rim_*) on every
+// figure in place of the dark ink edge (the outline shell draws the contour, crowd_outline.gdshader), and the texture
+// pulled toward its own average (style_flat at mip style_flat_lod: the photographic noise goes). The flash, the tell, the
+// burn, the elites' gold and the dissolve are the same as in the classic look. art_style 0: the classic frame, unchanged.
+global uniform float art_style;
+uniform float style_light = 0.62;
+uniform float style_scene = 0.7;
+uniform vec3 style_rim_color : source_color = vec3(1.0, 0.82, 0.62);
+uniform float style_rim_power = 3.5;
+uniform float style_rim = 0.32;
+uniform float style_flat = 0.35;
+uniform float style_flat_lod = 3.0;
+
 varying vec4 state;
 varying vec3 world_pos;
 varying float height;
 
 #include "res://assets/shaders/crowd_pose.gdshaderinc"
+#include "res://assets/shaders/figure_paint.gdshaderinc"
 
 void vertex() {
 	vec3 at;
@@ -161,9 +177,14 @@ void fragment() {
 	float armored = 1.0 - clamp((state.g - frost) * 2.0, 0.0, 1.0);
 	float burn = step(0.75, state.b);
 	float tell = clamp((state.b - burn) * 2.0, 0.0, 1.0);
+	bool styled = art_style > 0.5;
 	vec3 raw = texture(albedo, UV).rgb;
 	float top = max(raw.r, max(raw.g, raw.b));
 	float colourful = top - min(raw.r, min(raw.g, raw.b));
+	// stylized: the body's colours without the painting's fine noise (the glowing spots above were read sharp)
+	if (styled) {
+		raw = figure_flatten(raw, textureLod(albedo, UV, style_flat_lod).rgb, style_flat);
+	}
 	float steel = (1.0 - smoothstep(0.1, 0.22, colourful / max(top, 0.001))) * (1.0 - smoothstep(0.0, 0.06, raw.r - raw.b))
 		* smoothstep(0.1, 0.2, top);
 	raw = mix(raw, gild_color * top * gild_light, max(steel, gild_rest) * gild);
@@ -180,10 +201,14 @@ void fragment() {
 	vec3 lamp_color = pow(magic, vec3(orb_depth));
 	float facing = clamp(dot(NORMAL, VIEW), 0.0, 1.0);
 	float shade = mix(foot_shade, 1.0, smoothstep(0.0, foot_height, height))
-		* (1.0 - ink * smoothstep(ink_from, 1.0, 1.0 - facing));
-	ALBEDO = c * scene_light * shade;
+		* (1.0 - (styled ? 0.0 : ink) * smoothstep(ink_from, 1.0, 1.0 - facing));
+	ALBEDO = c * scene_light * shade * (styled ? style_scene : 1.0);
 	float near = 1.0 - clamp(distance(world_pos.xz, hero_pos.xz) / hero_range, 0.0, 1.0);
 	float lit = key_fill + key * max(dot(NORMAL, normalize(key_dir)), 0.0);
+	if (styled) {
+		// three bands of the same key, darker than the floor; the far side keeps the lowest band, not the fill
+		lit = key * figure_bands(dot(NORMAL, normalize(key_dir))) * style_light;
+	}
 	float rim = pow(1.0 - facing, 3.0);
 	// a crisp edge for elites (rim_power > 0): sharper than the soft rim, so it reads as an outline
 	float edge = smoothstep(0.35, 0.6, pow(1.0 - facing, 1.5));
@@ -205,6 +230,10 @@ void fragment() {
 		+ raw * glow * cell * (1.0 - has_magic)
 		+ lamp_color * mix(orb, orb_tell, tell) * mix(orb_edge, 1.0, facing * facing) * lamp
 		+ spot * paint_glow * smoothstep(paint_glow_from, paint_glow_full, colourful) * (1.0 - lamp);
+	if (styled) {
+		// the torches' warm rim on every figure (the fire's own rim takes its place while it burns)
+		EMISSION += style_rim_color * figure_rim(NORMAL, VIEW, style_rim_power) * style_rim * (1.0 - burn) * shade;
+	}
 	float ready = smoothstep(1.0 - tell_hold, 1.0, tell) * tell_light;
 	if (ready > 0.0) {
 		vec3 warmer = (c * shade * (0.45 + lit) * flash_light + vec3(flash_floor)) * flash_warm * ready;

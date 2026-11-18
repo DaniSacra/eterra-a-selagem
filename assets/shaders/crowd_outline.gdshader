@@ -18,6 +18,12 @@ uniform float absorb_light = 2.0;
 // The stroke at the peak of a blow's flash: a warm dark, under the body's own flash (crowd.gdshader flash_cap).
 uniform vec3 flash_color : source_color = vec3(0.3, 0.22, 0.14);
 
+// Eterra Stylized (STY-06, T20): with the global art_style at 1 every figure of the crowd has this shell (CrowdRenderer
+// gives the common ones one too), style_width meters wide in style_color; the classic look keeps width and color.
+global uniform float art_style;
+uniform float style_width = 0.04;
+uniform vec3 style_color : source_color = vec3(0.07, 0.06, 0.06);
+
 varying vec4 state;
 
 #include "res://assets/shaders/crowd_pose.gdshaderinc"
@@ -28,12 +34,14 @@ void vertex() {
 	crowd_pose(VERTEX_ID, COLOR, at, facing);
 	NORMAL = facing;
 	state = INSTANCE_CUSTOM;
-	VERTEX = at + facing * width / max(length(MODEL_MATRIX[0].xyz), 0.001);
+	float w = art_style > 0.5 ? style_width : width;
+	VERTEX = at + facing * w / max(length(MODEL_MATRIX[0].xyz), 0.001);
 }
 
 void fragment() {
 	if (state.a > 0.0) {
 		discard;
 	}
-	ALBEDO = mix(mix(color * intensity, flash_color, clamp(state.r, 0.0, 1.0)), absorb_color * absorb_light, clamp(-state.r, 0.0, 1.0));
+	vec3 ink = art_style > 0.5 ? style_color : color * intensity;
+	ALBEDO = mix(mix(ink, flash_color, clamp(state.r, 0.0, 1.0)), absorb_color * absorb_light, clamp(-state.r, 0.0, 1.0));
 }

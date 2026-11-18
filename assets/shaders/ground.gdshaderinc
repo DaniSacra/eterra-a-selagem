@@ -94,6 +94,14 @@ uniform float aim_light = 0.5;
 uniform float aim_tip = 0.15;
 
 global uniform vec3 floor_round;
+// Eterra Stylized (STY-06, T25; docs/art/stylized_spec.md 3.3): the stylized floor is lighter and warmer, and light
+// added to it reads less. With the global art_style at 1 a warning (style 0: rims, fronts, chevrons, the aim's thread)
+// adds style_rim_gain times its light and its fill (the second pass) style_fill_gain times, so its rim stays 40 or
+// more of luma above the slab and its fill 20 or more at the end of the wind-up. Shape, timing and colour do not
+// change. art_style 0: as before.
+global uniform float art_style;
+uniform float style_rim_gain = 1.6;
+uniform float style_fill_gain = 1.5;
 
 varying vec3 world;
 
@@ -277,10 +285,17 @@ void fragment() {
 			a = (0.25 + 0.55 * n) * (1.0 - smoothstep(0.9, 1.0, d)) + edge * 0.35 * (1.0 - smoothstep(0.97, 1.0, d));
 		}
 	}
+	float gain = 1.0;
 #ifdef FILL_PASS
 	if (filled <= 0.0) discard;
-	ALBEDO = color.rgb * filled * fade;
+	if (art_style > 0.5) {
+		gain = style_fill_gain;
+	}
+	ALBEDO = color.rgb * filled * gain * fade;
 #else
-	ALBEDO = min(color.rgb * a * strength, vec3(light_cap)) * fade + extra * fade;
+	if (art_style > 0.5 && style == 0) {
+		gain = style_rim_gain;
+	}
+	ALBEDO = min(color.rgb * a * strength * gain, vec3(light_cap)) * fade + extra * fade;
 #endif
 }

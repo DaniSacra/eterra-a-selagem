@@ -213,7 +213,7 @@ var _overlay: ShaderMaterial
 var _xrays: Array[ShaderMaterial] = []
 var _xray_edge: ShaderMaterial
 ## His body's own materials (HeroBody), lightened while he blinks after a hit.
-var _fills: Array[StandardMaterial3D] = []
+var _fills: Array[Material] = []
 var _ring_look: ShaderMaterial
 var _ring_through: ShaderMaterial
 ## What the materials were last told (they are only told again when it changes).
@@ -337,9 +337,8 @@ func _prepare(n: Node) -> void:
 		if c is MeshInstance3D:
 			var mesh := c as MeshInstance3D
 			mesh.material_overlay = _xray_of(mesh)
-			var own := mesh.material_override as StandardMaterial3D
-			if own and own.emission_enabled and own.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED:
-				_fills.append(own)
+			if HeroBody.fills(mesh.material_override):
+				_fills.append(mesh.material_override)
 		_prepare(c)
 
 
@@ -889,7 +888,7 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	if fill != _shown_fill:
 		_shown_fill = fill
 		for own in _fills:
-			own.emission_energy_multiplier = fill
+			HeroBody.set_fill(own, fill)
 		for x in _xrays:
 			x.set_shader_parameter(&"lighten", fill - HeroBody.FILL)
 	_overlay.set_shader_parameter(&"glow", glow)
