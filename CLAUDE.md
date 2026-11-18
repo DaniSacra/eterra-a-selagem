@@ -1456,6 +1456,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   spec 5.2 (as runas do medalhão e as rachaduras finas viram borrão, pontos escuros nos corpos) e não convive com o MSAA
   da Alta (o quadro é resolvido de novo depois dos transparentes; ligado, ele desliga o MSAA). Custo medido na RTX a
   1080: 0,14 ms de GPU, mais 7,5 MB de memória de vídeo.
+- Medido depois do STY-04/05 (bot, semente 5, sala de abertura): RTX 1080 Alta GPU 2,80 ms clássico, 2,63 estilizado (756 e 818
+  chamadas, 330 e 332 MB); iGPU Baixa 1280 x 720 15,05 e 15,75 ms; fio da mira dos avisos 130 a 138 de luma sobre a laje de
+  72 a 86 (+50). Sonda de sensação 40/40 nos dois looks; o Compatibility abre sem erro.
 - Medir o quadro do jogo: `tools/sty_probe.gd` (comando no topo; `PROBE` com quadro, CPU, GPU, chamadas e memória de vídeo).
 
 ## Pendências conhecidas
