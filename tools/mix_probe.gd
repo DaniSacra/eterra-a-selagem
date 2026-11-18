@@ -13,7 +13,7 @@ extends SceneTree
 ## replayed by MusicMix on the log's clock (crossfades, layers, stings, Morvath's warning duck), every sound with
 ## its pitch and at most Audio.VOICES at once (the oldest cut). Prints the integrated loudness (LUFS, BS.1770), the
 ## loudest 3 s, the true peak before and after the limiter model, and in how many 100 ms windows the limiter works.
-##   ... -s tools/mix_probe.gd -- --log=/tmp/boss.json [--wav=/tmp/mix.wav] [--before]
+##   ... -s tools/mix_probe.gd -- --log=/tmp/boss.json [--wav=/tmp/mix.wav] [--before] [--music-dungeon=id] [--music-morvath=id]
 ## --before: the mix as it was before E6 (no bus trims, no air, no warning duck), for the comparison.
 
 const RATE := 44100.0
@@ -151,6 +151,11 @@ func _replay(path: String) -> void:
 		elif a.begins_with("--parts="):
 			# --parts=music,air: only those (the loudness of each part alone)
 			parts = Array(a.substr(8).split(","))
+		elif a.begins_with("--music-"):
+			# MUS-1: --music-title=id, --music-dungeon=id, --music-morvath=id replay the log with that piece there (the
+			# save's option in memory only, never written)
+			var kv := a.substr(2).split("=")
+			root.get_node("Save").data.options[kv[0].replace("-", "_")] = kv[1]
 	var events: Array = (JSON.parse_string(FileAccess.get_file_as_string(path)) as Dictionary).events
 	var music_node := root.get_node("Music")
 	var sounds := root.get_node("Audio")

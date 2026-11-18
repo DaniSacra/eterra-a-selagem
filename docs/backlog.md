@@ -378,6 +378,18 @@ ao alcance na sala seguinte; a outra leva ao Altar e abre caminho para uma Loja.
 - **Aceite**: loudness igual às de hoje (cerca de -21 LUFS caminhada, -20 com a luta) e pico abaixo de -1 dBTP; laço sem
   emenda e sem silêncio de 2 s (`test_music.gd`, `test_mix.gd`); teto da música no pacote (18 MB) respeitado ou peça
   antiga reencodada (Q-20); gravação de 60 s de cada peça com a luta (`--sound-log` e `mix_probe --wav`) para o PO ouvir.
+- **Feito (2026-11-18, technical-artist; falta o PO ouvir)**: MUS-01 "Marcha das Lâminas" (orquestral e épica, ré
+  menor a ré maior, 144 BPM, 66,7 s), "Tambores do Fundo" (folk e tribal, mi dórico a mi maior, 150 BPM, 64 s) e "Pulso
+  de Ferro" (pulsante, lá menor harmônico a lá maior, 138 BPM, 62,6 s); MUS-02 "Morvath, a Batalha" (dó menor
+  harmônico a dó maior, 150 BPM, 64 s, 4 camadas); MUS-03 padrão: Marcha das Lâminas no título e nas salas, Morvath, a
+  Batalha em Morvath (`MusicCatalog.DEFAULT`). Caminhada -21,9 a -22,0 LUFS e com a luta -20,0 a -20,1 (ffmpeg
+  `ebur128`), pico -3,3 a -4,5 dBTP; Morvath -22,6 / -21,4 / -20,5 / -19,4 LUFS, -4,9 dBTP com as 4. Na luta gravada
+  pelo robô: salas -16,8 a -16,9 LUFS, Morvath -16,2 (C15-01: -18 a -14), -1,0 a -1,45 dBTP depois do limitador.
+  Música toda 16,69 MB no disco e 17,73 MB no pacote (teto 18): Kevin MacLeod reencodado em qualidade 0 (Q-20 a), as
+  originais, os Salmos e a vitória do .wav em qualidade 1, as novas em 2. Tela Músicas com linhas mais baixas (14 peças cabem em 720). Gravações em
+  `docs/gallery/mus1/` e `C:\Users\danie\Downloads\ASelagem-musicas\`. **Pendente**: um save que já gravou
+  `classic_catacombs` (todo save desde o T5 grava o padrão) continua tocando a antiga; para o PO ouvir as novas sem
+  escolher, uma migração de save (versão nova que troca o padrão antigo pelo novo) ou ele escolhe em Configurações, Músicas.
 
 ## 4. Perguntas para o Daniel
 
