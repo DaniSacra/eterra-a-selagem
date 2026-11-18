@@ -208,3 +208,4 @@ func test_the_pause_has_the_map() -> void:
 	assert_null(pause.find_child("map_screen", false, false))
 	assert_true(pause.map_button.has_focus(), "the focus goes back to Mapa")
 	assert_eq(game.mode, Game.Mode.PAUSE)
+

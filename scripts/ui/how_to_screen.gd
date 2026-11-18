@@ -170,7 +170,7 @@ func _controls() -> Control:
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.add_theme_constant_override(&"h_separation", 18)
-	grid.add_theme_constant_override(&"v_separation", 7)
+	grid.add_theme_constant_override(&"v_separation", 5)
 	page.add_child(grid)
 	for head: StringName in [&"howto_col_action", &"howto_col_keys", &"howto_col_pad", &""]:
 		grid.add_child(UiKit.label(T.t(head) if head != &"" else "", UiKit.OLD_GOLD.lightened(0.35), 17, UiKit.BOLD_FONT))

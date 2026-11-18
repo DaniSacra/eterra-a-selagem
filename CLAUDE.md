@@ -351,7 +351,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `RunMap.view()` quando existir, senão a linha de salas de hoje (`line_of`). Grafo fixo de teste `MapSample`
   (`--title --screen=map --map-at=start|middle|doors`, `tools/ui_lab.gd -- --map [--map-at=...]`). Testes em
   `tests/test_map_screen.gd` e `tests/test_input_leak.gd`; fluxo por teclado, controle e mouse em
-  `tools/map_flow_check.gd`; capturas em `docs/gallery/dv1/ui/`.
+  `tools/map_flow_check.gd`; capturas em `docs/gallery/dv1/ui/` (mapa no começo, no meio e diante das portas a 720 e 1080, sobre a partida, a linha de hoje numa partida real, HUD com o botão, horda de 300, Controles).
 - **Tela de fim com Maestria** (E2-04, `MasteryReport`): "+N XP" ao lado da barra que enche do XP de antes ao de depois,
   de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Novos Dons: ..." e "Nova ultimate: ..."; dados do
   `Game.mastery_report` (o `mastery_gain` e o XP antes, guardados no `log_run`, passados no `stats.mastery`).

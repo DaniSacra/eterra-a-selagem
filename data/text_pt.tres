@@ -243,7 +243,7 @@ entries = {
 "action_ultimate": "Ultimate",
 "action_map": "Mapa",
 "howto_map": "Mapa",
-"howto_map_desc": "Abre o mapa da descida no Livro de Ahk: o caminho feito, a sala onde você está, o que há atrás de cada porta e até onde cada uma leva. A partida para enquanto ele está aberto.",
+"howto_map_desc": "O mapa da descida no Livro de Ahk: o caminho feito e aonde cada porta leva.",
 "pause_map": "Mapa",
 "hud_map": "Mapa {key}",
 "map_title": "Mapa da descida",
