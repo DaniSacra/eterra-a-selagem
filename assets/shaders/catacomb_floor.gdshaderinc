@@ -382,7 +382,9 @@ void fragment() {
 	// the real stone's relief, shifted on each slab so no two match
 	vec2 ruv = wp * rock_scale + id * 0.37;
 	float rh = texture(rock_height, ruv).r;
-	vec3 rn = texture(rock_normal, ruv).rgb * 2.0 - 1.0;
+	// the normal is stored in two channels (BC5, compress/normal_map): its z is rebuilt
+	vec2 rxy = texture(rock_normal, ruv).rg * 2.0 - 1.0;
+	vec3 rn = vec3(rxy, sqrt(max(1.0 - dot(rxy, rxy), 0.0)));
 	c *= mix(1.0 - rock_value, 1.0 + rock_value * 0.5, smoothstep(0.2, 0.8, rh));
 	// painted wash inside each slab
 	float wash = fbm(wp * 0.45 + id * 3.1);

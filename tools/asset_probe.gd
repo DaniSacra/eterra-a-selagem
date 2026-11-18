@@ -57,16 +57,18 @@ func _init() -> void:
 
 
 func _vram() -> void:
-	await process_frame
+	await _settle()
 	for path: String in VRAM_TEXTURES:
 		var before := _tex_mem()
-		_keep.append(load(path))
-		await process_frame
-		print("VRAM %s %.2f MB" % [path.trim_prefix("res://"), (_tex_mem() - before) / 1048576.0])
+		var tex := load(path) as Texture2D
+		_keep.append(tex)
+		await _settle()
+		print("VRAM %s %.2f MB (%dx%d %s)" % [path.trim_prefix("res://"), (_tex_mem() - before) / 1048576.0,
+			tex.get_width(), tex.get_height(), ClassDB.class_get_enum_constants("Image", "Format")[tex.get_image().get_format()]])
 	var before_kit := _tex_mem()
 	for piece: String in KIT_LOADED:
 		_keep.append(load("res://assets/models/%s.glb" % piece))
-	await process_frame
+	await _settle()
 	print("VRAM kaykit_pieces=%d %.2f MB" % [KIT_LOADED.size(), (_tex_mem() - before_kit) / 1048576.0])
 	var before_baked := _tex_mem()
 	for f in DirAccess.get_files_at(BAKED_DIR):
@@ -74,9 +76,15 @@ func _vram() -> void:
 			var m := load(BAKED_DIR + f) as BakedModel
 			_keep.append(m)
 			_keep.append_array(m.pose_textures())
-	await process_frame
+	await _settle()
 	print("VRAM baked (albedo and pose images) %.2f MB" % [(_tex_mem() - before_baked) / 1048576.0])
 	quit()
+
+
+## A few frames, so what was loaded is on the card and what was let go is gone before the monitor is read.
+func _settle() -> void:
+	for i in 4:
+		await process_frame
 
 
 func _tex_mem() -> float:
