@@ -444,6 +444,9 @@ Ciclos de arte em série, um por vez, cada um com exe para o Daniel. Eles podem 
 O AP-4 absorve a parte de arte do C20 do backlog principal; o C20 fica com o técnico (pausa ao perder o foco, menus por
 controle, licenças, arquivos grandes).
 
+Referência cruzada (2026-11-18): o AP-4 recebe também o MAP-06 do `docs/backlog.md` (arte completa da página do mapa da
+Descida de Valmor no Livro de Ahk); a página funcional do mapa (MAP-03) entra antes, no ciclo DV-1.
+
 ---
 
 ## D. Decisões do PO

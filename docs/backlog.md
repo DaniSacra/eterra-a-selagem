@@ -13,6 +13,12 @@
   `ui/shop_720_shop.jpg`.
 - **Rodado pelos agentes nesta rodada** (não por mim): `tools/check.gd` ok; `tools/test.sh` **992/992** em 4 rodadas;
   `title_flow_check` ok; sonda de game feel **40/40**; 24 descidas do robô (reação 0,25) sem erro e sem ninguém preso.
+- **Atualização de 2026-11-18 (game-director, commit lido `2057516`)**: pedido do PO "Descida de Valmor" (mapa ramificado
+  gerado por semente no começo da descida, consultado no Livro de Ahk com `M`). Entram as entregas MAP-01 a MAP-09, o
+  ciclo **DV-1** (seção 3), as perguntas Q-25 a Q-27 (seção 4) e a ordem nova (seção 5). O PO escreveu "Akh"; a grafia
+  do cânone é **Ahk**. Lidos para isto: `run_map.gd`, `rooms.gd`, `stage_def.gd`, `trials.gd`, `door_glyph.gd`, `hud.gd`,
+  `controls.gd`, `test_descent.gd`, o `_stage` do `make_data.gd`, `comparativo.md` e o `art_polish_backlog.md`. Nada
+  rodado (só planejamento).
 
 ## Estado do jogo em 5 linhas
 
@@ -208,7 +214,112 @@ Q-11 a Q-14 entram no C19.
 - **Riscos**: escurecer o violeta pode apagar a leitura do abismo como queda; clarear o chão pode baixar o contraste do
   herói (medir na caixa dele, ART melhoria 3); sombras novas na iGPU.
 
+### Descida de Valmor (pedido do PO de 2026-11-18): ciclos DV-1 e DV-2
+
+**A experiência pedida**: nas Catacumbas de Valmor o jogador olha adiante, escolhe uma porta e muda de plano depois de
+uma sala difícil (referência: o mapa ramificado de Darkest Dungeon II, escolha uma passagem por vez). O ritmo de combate e
+a travessia pelas portas físicas da arena continuam. Exemplo do PO: com pouca vida, uma porta dá Bênção e deixa a Fonte
+ao alcance na sala seguinte; a outra leva ao Altar e abre caminho para uma Loja.
+
+**O que o código faz hoje (lido em `2057516`)**:
+- `RunMap.options(can_pom)` sorteia as portas **na hora de entrar em cada sala** (`Rooms._enter`), com o dado da partida;
+  não existe estrutura do que vem depois da próxima porta. A luta atrás de cada porta é sorteada quando as portas abrem
+  (`Rooms._prepare`, mesmo dado), então depende de como se jogou.
+- A ordem é fixa por profundidade: guardião numa profundidade sorteada de 4 a 6 (sala única, o guardião sorteado entre
+  `knight` e `priest_elder` só no `_prepare`), fonte uma vez de 5 a 8 (forçada na 8), altar 20% de 2 a 8, **loja sempre na
+  10** (`next == stage.rooms`, 5 itens, "a última antes do chefe"), Morvath na 11. Duas portas, três com 25%; as arenas têm
+  2 a 3 saídas (`ArenaExit`), o que limita o número de portas por nó.
+- A romã só entra quando alguma Bênção pode subir (`can_pom`, lido na entrada da sala).
+- A Provação é uma laje sorteada numa sala de luta vencida (`Rooms._roll_slab`), que leva à câmara **na mesma
+  profundidade** e devolve as portas da sala de antes; o BUG-101 limita a maldição por `RunMap.fights_left`, que hoje
+  supõe a linha única de salas.
+- Não existe retomar uma descida no meio (o save guarda Maestria, Compêndio e Juramentos, não a partida): "manter o mapa
+  ao retomar" hoje é só manter ao abrir e fechar a consulta.
+- O Hades II não tem mapa (as portas mostram a recompensa; `comparativo.md` linha "Salas"): isto é uma evolução nossa
+  sobre a base do Hades, pedida pelo PO, e entra no `comparativo.md` como diferença.
+
+**Desenho proposto (opinião minha, a confirmar nas Q-25 a Q-27)**:
+- **Grafo em camadas gerado no começo da descida** (`RunMap` passa a guardar `nodes` e `edges`; o grafo é a fonte única
+  das portas, das placas e do mapa). Profundidade 1 = o salão (um nó); profundidades 2 a 9 com 2 a 4 nós cada; 10 = a loja
+  (um nó, todas as rotas passam, Q-26 a); 11 = Morvath. **Toda rota tem o mesmo comprimento** (11 salas), então "Sala N
+  de 11" no HUD, a Maestria por sala, o `RESULT` e a régua da E6 continuam valendo.
+- Cada nó liga a 1 a 3 nós da camada seguinte (nunca mais que as saídas da arena dele), sem arestas cruzadas no desenho,
+  todo nó alcançável e todo nó chegando à loja. Uma **camada de guardião** (profundidade sorteada de 4 a 6, como hoje)
+  só com nós de guardião, para toda rota passar por um; com 2 nós nela, um é o Cavaleiro e o outro o Ancião (Q-27 a).
+- Fonte em alguns ramos (no máximo uma por rota, ao menos uma rota com ela), altar em no máximo um nó (uma vez por
+  descida, como hoje), arenas com as regras de hoje valendo **em toda rota** (nunca a mesma arena em duas salas
+  seguidas, nenhuma mais de 3 vezes, Santuário como casa do guardião), conferidas por enumeração das rotas (o grafo tem
+  poucas dezenas de nós; gerar e validar, com novas tentativas na mesma semente).
+- **Recompensas sorteadas no gerador**, camada por camada, do mesmo baralho (`RewardDeck`), nenhuma porta da mesma sala
+  com a mesma recompensa. A romã só a partir da profundidade 3 (a sala 1 sempre dá Bênção e a 2 já a tem para subir); se,
+  na hora de abrir as portas, nada puder subir, aquela romã vira Bênção **antes** de a placa aparecer e o mapa se
+  atualiza (esperado nunca acontecer; medido). Assim o que a placa e o mapa mostram é o que a sala dá.
+- **Dado separado para o mapa** (semente da partida mais um sal) e **luta por nó com semente própria**: o mesmo nó dá a
+  mesma luta seja qual for o caminho e o jeito de jogar; a mesma semente dá o mesmo mapa.
+- **Provação**: continua laje (o Caos do Hades II é escondido numa sala), mas sorteada no gerador num nó de luta, e o nó
+  mostra **"?"** no mapa até a laje aparecer (Q-25 a). O `fights_left` passa a ser o **pior caminho** do grafo a partir do
+  nó: o menor número de lutas (comum e guardião) entre ele e a loja em todas as rotas; a laje só vai a um nó onde a
+  maldição mais curta cabe nesse pior caminho.
+- **Mapa no Livro de Ahk**: ação nova `map` em `Controls` (tecla `M`, botão Back/View do controle, que está livre;
+  remapeável), botão discreto "Mapa [M]" ao lado do "Sala N de 11" no HUD (clicável, mostra a tecla real ou o botão do
+  controle) e uma entrada "Mapa" na pausa. Abre como página do livro (`BookSpread`), pausa a luta pelo `Game.open_screen`
+  (a câmera lenta corta como nos menus) e, ao fechar, `Controls.clear_presses` (o mesmo cuidado do bug 1 da E1c). A entrada
+  no topo, Morvath embaixo; caminho feito em tinta cheia, sala atual marcada, próximas portas em destaque, ramos que
+  ficaram para trás apagados; cada nó com a marca do `DoorGlyph` (marca da recompensa e as divisas de dificuldade, gota,
+  moeda, vela, selo, "?"), legenda na página da esquerda. A escolha continua sendo atravessar a porta na arena.
+- **Q-13 (botão de usar)**: não muda o mapa nem a ação `map`; se vier (a), atravessar a porta passa a pedir o botão, e o
+  mapa só ganha a dica "Usar diante da porta". O botão de usar não deve ser o Back do controle.
+
+| ID | P | Título | Evidência | Impacto | Esforço | Responsável | Depende de | Ciclo | Pronto quando |
+|---|---|---|---|---|---|---|---|---|---|
+| **MAP-01** | **P1** | **Grafo da descida por semente** (`RunMap` com nós, arestas, recompensas, arenas, guardiões, fonte, altar e "?" gerados no começo; `fights_left` no pior caminho) | `run_map.gd` `options()` sorteia sala a sala; `test_descent.gd` supõe uma linha | base de toda a Descida de Valmor; muda a decisão entre quase todas as lutas | M | `gameplay-engineer` | BUG-109 junto (o `test_descent` instável é reescrito aqui) | DV-1 | GUT em 1000 sementes: toda rota tem 11 salas, começa no salão, passa por exatamente um guardião, pela loja na 10 e termina em Morvath; todo nó alcançável e com saída; até 3 arestas por nó e nunca mais que as saídas da arena; regras de arena em toda rota; fonte no máximo uma por rota; altar no máximo um; mesma semente, mesmo grafo; 100 sementes dão pelo menos 95 grafos diferentes (estrutura e conteúdo); em toda semente, ao menos uma sala com duas portas cujos conjuntos de salas alcançáveis são diferentes; Cavaleiro e Ancião como alternativas em pelo menos 30% das sementes; `--short`, `--medium`, `--arena`, `--start=` e Juramentos seguem funcionando; `test_trial.gd`: 500 grafos, nenhuma carta pede mais encontros que o pior caminho |
+| **MAP-02** | **P1** | **Portas da arena = arestas do grafo** (o `Rooms` lê as portas do nó atual; placa, `door_info`, `DoorGlyph`, luta e recompensa vêm do nó; registro com o caminho) | `rooms.gd` `_enter`, `_prepare`, `door_info`, `door_text`, `_roll_slab`, `bot_door` | o que a placa e o mapa prometem é o que a sala dá | M | `gameplay-engineer` | MAP-01 | DV-1 | GUT: em 200 descidas do robô, para toda porta atravessada a recompensa dada, o tipo de sala, a dificuldade e o guardião são os da placa e os do nó; a romã nunca chega sem Bênção que possa subir; a mesma semente e o mesmo nó dão a mesma luta por caminhos diferentes; Maestria por sala igual à de hoje; `RESULT` e registro com `map` (semente, nós, arestas) e `rooms[].node`, `events` de porta com o nó escolhido e os oferecidos (`RunLog.VERSION` 4, linhas antigas lidas por `normalized`); `test_descent`, `test_e5_wiring`, `test_economy`, `test_trial` verdes |
+| **MAP-03** | **P1** | **Mapa consultável (página funcional do Livro)**: ação `map` (`M`, Back no controle), botão "Mapa [M]" no HUD, entrada na pausa, caminho, sala atual, próximas portas, ramos deixados, marcas do `DoorGlyph` e "?" (`DoorGlyph.Kind.UNKNOWN` novo), legenda | `controls.gd` `ACTIONS` sem mapa; `hud.gd` `_room` no alto à esquerda; `door_glyph.gd` sem "?" | o jogador planeja a rota | M | `ui-ux-designer` (tela, HUD, texto), `gameplay-engineer` (ação `map`, pausa pelo `Game.open_screen`) | MAP-01 (lê o grafo; pode começar com um grafo fixo de teste) | DV-1 | abrir e fechar 20 vezes não muda o mapa; aberto, o relógio da partida não anda e nenhum inimigo age; ao fechar nenhum golpe escapa (`test_input_leak.gd` estendido); fluxo inteiro por teclado, controle e mouse num `tools/map_flow_check.gd`; legível a 720 e 1080 (marcas de pelo menos 18 px a 720, texto 14 px); o botão do HUD não cobre nada a 720; tecla real no botão; texto só no `text_pt.tres`, sem travessão; `M` e Back remapeáveis nas Configurações |
+| **MAP-04** | P1 | **Robô e régua no grafo**: `bot_door` com o mesmo gosto de hoje e um passo à frente (com menos de 80% da vida prefere a porta que deixa a fonte ao alcance); régua da E6 refeita | `Rooms.bot_door` olha só a porta; `docs/qa/e6_metrics.md` medido na linha única | as métricas de balanceamento deixam de valer quando o mapa muda | P a M | `gameplay-engineer` (robô), `qa-performance` (régua) | MAP-02 | DV-1 | 24 descidas (reação 0,25, `--ultimate=cleave`): nenhum erro, ninguém preso, vitórias a no máximo 2 de 24 da base do C17 (23 de 24); 72 sementes Maestria 1 e 20 com a diferença ainda até 25 pontos; Bênçãos ao chegar a Morvath e ouro na loja anotados no `docs/qa/latest_report.md` |
+| **MAP-05** | P1 | **Prova do aceite do PO** (vídeo e capturas) | pedido do PO | o PO vê a mudança sem precisar achar o caso | P | `qa-performance` | MAP-01 a MAP-03 | DV-1 | em `docs/gallery/dv1/`: vídeo na GPU de uma descida em que a sala mostra duas portas com consequências diferentes (o mapa aberto antes mostra o que cada uma alcança), o herói escolhe pela arena e `M` mostra o caminho feito; capturas do mapa de duas sementes com salas e ligações diferentes, todas as rotas chegando a Morvath; o `comparativo.md` e o `CLAUDE.md` atualizados |
+| MAP-06 | P2 | Arte completa da página do mapa (tinta e ouro gravado no papel, nós pintados, vinheta da descida, Morvath no fim como selo) | depende da linguagem do Livro (ART-07) | o mapa fica com a cara do Livro | M | `art-director` (spec), `ui-ux-designer` | MAP-03; Q-23 se Ahk aparecer | AP-4 (junto do Livro) | capturas 720 e 1080 aprovadas pelo art-director; nenhuma marca diferente das placas |
+| MAP-07 | P2 | Destaque da porta ao inspecionar um nó (foco num dos próximos nós acende a porta correspondente na arena e uma seta na borda da tela se ela estiver fora) | pedido do PO ("se couber") | liga o mapa à arena sem ler a placa | P a M | `ui-ux-designer`, `environment-artist` (luz da porta, `ArenaRoom`) | MAP-03 | DV-2 | foco em cada próximo nó acende só a porta dele; captura com o mapa aberto e a porta acesa atrás do véu |
+| MAP-08 | P3 | Transições: página que vira ao abrir e fechar, caminho se desenhando a tinta ao entrar numa sala nova | pedido do PO (incremento) | acabamento | P | `ui-ux-designer` | MAP-03, MAP-06 | DV-2 | abrir e fechar em até 0,3 s; nada anima com o jogo pausado além da página |
+| MAP-09 | P2 | Loja de rota no meio da descida (3 itens, em alguns ramos de 6 a 8), além da loja final | pedido do PO (Loja como escolha de rota) | escolha de rota pela economia | M | `gameplay-engineer` (dado no `_stage`), `ui-ux-designer` (placas) | Q-26 (b), Q-15 e a economia do C19 | DV-2 | 72 sementes: quem passa pela loja de rota chega a ela com ouro para ao menos um item em 2 de 3 descidas; ouro mediano na loja final dentro da meta do C19 |
+
+#### DV-1 "Descida de Valmor I" (3 a 4 dias; em paralelo com o AP-1, arquivos distintos)
+
+- **Objetivo**: a descida é um mapa gerado por semente no começo, as portas da arena são as ligações dele e o jogador
+  consulta o caminho com `M` no Livro de Ahk.
+- **Por que agora**: muda a decisão do jogador entre quase todas as lutas (o PO pediu como melhoria importante da Fase
+  1); não depende das respostas do T6 (não mexe em números do combate); não há bug aberto que quebre o combate (os de
+  C17 estão feitos, sobram BUG-108 e BUG-109, P2, e o 109 entra aqui); e precisa vir **antes do C19**, que vai mexer no
+  mesmo `rooms.gd` (botão de usar da Q-13 e economia da loja da Q-15): é melhor o C19 construir sobre o grafo do que o
+  grafo desfazer o C19. A leitura dos ataques, a animação e a explicação de Altar e Provação, que o PO pediu para pesar,
+  foram feitas no T5 e no C17 e esperam o teste de gente (T6) e as aprovações do art-director e do combat-feel-director.
+- **Entregas**: MAP-01, MAP-02, MAP-03, MAP-04, MAP-05, mais BUG-109 (e BUG-108 se couber).
+- **Aceite central (do PO)**: numa descida, uma sala com duas portas de consequências diferentes para as salas
+  seguintes; a escolha feita atravessando a porta na arena; o caminho confirmado no mapa com `M`; outra semente com outra
+  combinação de salas e ligações, todas as rotas chegando a Morvath. Mais os aceites de cada item; `tools/test.sh` verde
+  com contagem de asserções estável em 3 rodadas; sonda 40/40 (prova de que o combate não mudou).
+- **Evidências**: `docs/gallery/dv1/` (MAP-05), saída dos testes de 1000 sementes, régua do MAP-04 no
+  `docs/qa/latest_report.md`.
+- **Agentes e arquivos**: `gameplay-engineer` (`run_map.gd`, `rooms.gd`, `trials.gd`, `stage_def.gd` e o `_stage` do
+  `make_data.gd` para os números do grafo, `run_log.gd`, `bot.gd`, `controls.gd`, os testes); `ui-ux-designer` (tela nova
+  `map_screen.gd`, `hud.gd`, `pause_menu.gd`, `door_glyph.gd`, `text_pt.tres`); `qa-performance` (MAP-05, régua);
+  `combat-feel-director` não entra. O AP-1 (`environment-artist`) não toca nesses arquivos.
+- **Riscos**: (1) régua da E6 e as métricas do robô deixam de ser comparáveis com as de antes (por isso o MAP-04 no mesmo
+  ciclo); (2) grafo pequeno demais para as regras de arena em toda rota (6 arenas, até 3 usos, guardião no Santuário):
+  gerar e validar com tentativas e contar falhas no teste; (3) mapa todo à vista tira a surpresa (por isso a Q-25 e o "?");
+  (4) pausa pelo mapa no meio de um hit stop ou câmera lenta: usar o mesmo caminho da pausa; (5) `rooms.gd` tem 1100
+  linhas (DT-106): o grafo fica no `RunMap`, puro e testado, e o `Rooms` só lê.
+
+#### DV-2 "Descida de Valmor II" (2 a 3 dias, depois do C19)
+
+- **Objetivo**: o mapa e a arena conversam (MAP-07), a loja vira escolha de rota (MAP-09) e o mapa ganha transições
+  (MAP-08). A arte completa da página (MAP-06) vai junto com o AP-4, que já cuida do Livro.
+- **Por que depois do C19**: a loja de rota depende da economia da Q-15, medida no C19.
+- **Aceite**: os dos itens; robô de 72 sementes com a loja de rota.
+
 ### C19 "Variedade do combate e da descida" (4 a 5 dias, depois do T6)
+
+- **Nota de 2026-11-18**: vem depois do DV-1 e trabalha sobre o grafo: o botão de usar (Q-13) vale para atravessar a
+  porta escolhida no mapa, e a economia da loja (Q-15) é medida na régua refeita pelo MAP-04.
 
 - **Objetivo**: inimigos e Morvath que pedem respostas diferentes, e escolhas da descida (loja, Elo, Salmo) que acontecem
   para quem joga.
@@ -281,6 +392,9 @@ Cada uma com as opções e a minha recomendação. As de número baixo bloqueiam
 | Q-19 | `hero_sombra/` e `paladin_1/` (60 MB, sem uso) saem do repositório? | (a) sim, o histórico do git guarda; (b) ficam | (a) |
 | Q-20 | Música: tirar uma peça que ninguém escolhe ou reencodar para abrir folga (0,78 MB do teto de 18) | (a) reencodar um passo abaixo (sem diferença audível medida); (b) tirar uma peça | (a) |
 | Q-21 | Copa da árvore do Jardim (prancha 07) | (a) cartões de folhagem procedurais, sem créditos; (b) modelo do Meshy | (a) |
+| Q-25 | **Descida de Valmor: o que o "?" esconde e quanto o mapa mostra** | (a) o mapa mostra o tipo de sala e de recompensa de todos os nós desde o começo; "?" só no nó onde a laje da Provação vai aparecer; (b) como (a), e o "?" também esconde às vezes a Fonte ou o Altar, revelados ao entrar; (c) o mapa mostra recompensas só das próximas portas e do passo seguinte; o resto só o tipo de sala | (a): é o que deixa planejar como no Darkest Dungeon II, a Provação continua com mistério e nada prometido muda (a romã que não pudesse subir vira Bênção antes da placa aparecer, o que na prática não acontece) |
+| Q-26 | **Loja: a "última loja antes do chefe" continua?** Hoje ela é sempre a sala 10, com 5 itens | (a) fica fixa na 10, todas as rotas passam por ela, como no Hades II; a escolha de rota fica entre Fonte, Altar, guardião e recompensas; (b) fica a final e entra uma loja de rota menor (3 itens) em alguns ramos de 6 a 8; (c) só lojas de rota, sem a final (quem não passou por uma enfrenta Morvath sem gastar) | (a) no DV-1 e (b) no DV-2, depois de acertar a renda (Q-15): hoje o robô chega à loja com 60 a 89 de ouro e uma loja no meio quase nunca teria o que comprar. (c) eu não recomendo: o ouro perde sentido em metade das rotas |
+| Q-27 | **Guardião como escolha de rota** | (a) quando a camada do guardião tem dois nós, um é o Cavaleiro e o outro o Ancião, com o nome no mapa (a placa segue dizendo "Guardião"); (b) um guardião sorteado e escondido, como hoje | (a): são lutas muito diferentes (o Ancião deu 49% do dano antes de Morvath no robô) e escolher contra quem lutar é uma decisão boa de rota |
 
 **Decisões antigas que ainda valem e esperam confirmação** (tomadas pela recomendação e implementadas; o Daniel não
 respondeu): D-51 (quem concede as Bênçãos: os três companheiros e o voto do herói, texto quando os nomes existirem),
@@ -302,25 +416,26 @@ música e os efeitos agradam, e se o herói se acha nas fases 2 a 4.
 
 ## 5. Ordem sugerida
 
-1. **BUG-101** Provação tardia (regra, P) com a Q-08 (a) como padrão até ele responder.
-2. **BUG-102** Save atômico com cópia (P).
-3. **BUG-103** Conferir a loja na Câmara do Selo (P; vira P0 se for real).
-4. **QW-101** Orbe do feiticeiro que pega cedo ou não pega (P).
-5. **QW-102** Corredor com 1,0 s de aviso (P, dado).
-6. **QW-106** Recompensas de verdade (P a M, `environment-artist`, em paralelo desde o primeiro dia).
-7. **QW-109 + QW-110 + BUG-106** Onda de Luz, vocabulário único e Como Jogar certo (P, `ui-ux-designer`, em paralelo).
-8. **QW-103** Sopro do giro e da lança no quadro da lâmina (P).
-9. **QW-104** Corpo do inimigo acende no "vai bater" (P).
-10. **BUG-104** Morvath não desliza parado (P).
-11. QW-105 espera sorteada e Cavaleiro; QW-107 mira em degradê; BUG-105 HUD com "+N"; BUG-107 saudações.
-12. BUG-110 vigia, DT-102 instrumentação, QW-112 régua do robô; BUG-108 e BUG-109 (suíte limpa).
-13. Fecho do C17: QA integrado, exe nas duas pastas, **T6 com o PO** e o `runs.jsonl`.
-14. **C18** (pode ter começado em paralelo com o item 6): spec numérica do art-director (DT-109), paleta, chão, verdes de
-    Morvath, Runas, câmaras de evento, Ponte B, Santuário B, Runas B, KayKit fora.
-15. Respostas do Daniel às Q-09 a Q-16 e **C19** (variedade: Morvath fase 1, elites, Ômega, botão de usar, loja, Elos e
-    Salmos).
-16. Respostas Q-01 a Q-07 e Q-17 e **C20** (título, Livro, medalhões, pausa no foco, menus por controle, licenças).
-17. Só então, se o Daniel pedir: C16 Steam.
+Revista em 2026-11-18 com a Descida de Valmor. A lista anterior (BUG-101 a BUG-104, QW-101 a QW-112, C17 e C18) está
+feita (seção 0 e as marcas "Feito" nas tabelas).
+
+1. **T6**: o exe do C17 com o C18 nas duas pastas e o PO joga (já pronto; as respostas destravam o C19 e o AP-2). Junto,
+   as aprovações que faltam: QW-104 e QW-106 (art-director), QW-107 e QW-111 (combat-feel-director).
+2. **MAP-01** grafo da descida por semente, com **BUG-109** (o `test_descent` instável é reescrito aqui) e BUG-108 se
+   couber (`gameplay-engineer`).
+3. **AP-1 "Nada de protótipo"** em paralelo com o DV-1 inteiro (`environment-artist`; arquivos distintos).
+4. **MAP-02** portas da arena = arestas do grafo, recompensa prometida igual à dada, registro com o caminho.
+5. **MAP-03** mapa consultável com `M`, botão no HUD e na pausa (`ui-ux-designer`; pode começar com um grafo fixo de
+   teste junto com o item 2).
+6. **MAP-04** robô e régua da E6 refeitos no grafo; **MAP-05** prova do aceite do PO; exe do DV-1 com o AP-1 (T7, um
+   teste só para as duas entregas).
+7. **C19** variedade (Morvath fase 1, elites, Ômega, botão de usar, economia da loja, Elos e Salmos), com as respostas
+   do T6 e sobre o grafo.
+8. **AP-2 "Combate que se lê"** (depende do T6; ao lado do C19 se os arquivos não se cruzarem, como diz o
+   `art_polish_backlog.md`).
+9. **DV-2**: MAP-07 destaque da porta, MAP-09 loja de rota (Q-26 b e Q-15), MAP-08 transições.
+10. **C20** técnico (pausa ao perder o foco, DT-103, DT-101, DT-106), **AP-3** e **AP-4** (com o MAP-06, arte da página
+    do mapa no Livro), conforme as respostas Q-01 a Q-07, Q-22 a Q-24.
 
 ---
 
