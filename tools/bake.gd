@@ -173,9 +173,6 @@ const THUMB_UP := Vector3(0, 0, 180)
 const SWORD_GUARD := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}
 ## The staff held upright, in the left hand (the library holds its torch there; the right hand casts).
 const STAFF_GUARD := {"guard": [&"ual", "Idle_Torch", LEFT_ARM]}
-## The sorcerer's trot (E1b-A3): the staff upright and the free arm close to the body (the run's own swings it out
-## 61 degrees, a scarecrow's), the feet locked on a short stride (_foot_lock).
-const MAGE_TROT := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", RIGHT_ARM]], "lock": true, "stride": 0.62, "lift": 0.5}
 ## E1c (AUDIT.md P7): the crossbow carried low, in front of the hip, walking and standing (the pistol's arm held it
 ## over the head like a hat); it rises to the shoulder only to aim ("aim", "attack": Pistol_Idle, Pistol_Shoot).
 const CROSSBOW_LOW := [&"ual", "Sword_Idle", RIGHT_ARM]
@@ -185,9 +182,8 @@ const SHIELD_GUARD := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "S
 const SHIELD_IDLE := [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD]
 ## The walks with the feet locked on the floor (_foot_lock, E1b-A1 and A2) and their stride, set so each figure
 ## takes the steps a minute of its weight at its speed in the game (tools/walk_probe.gd prints them):
-## the crossbowman's trot like the sorcerer's (120 to 150); the brute's heavy walk, the one its KayKit figure had,
-## on a longer step (110 to 140); the knight and Morvath on a long stride (90 to 120); the elder's solemn walk.
-const CROSSBOW_TROT := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.67, "lift": 0.5}
+## the brute's heavy walk, the one its KayKit figure had, on a longer step (110 to 140); the knight and Morvath on a
+## long stride (90 to 120); the elder's solemn walk.
 const BRUTE_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.92}
 const KNIGHT_STRIDE := {"guard": [[&"ual2", "Idle_Shield", LEFT_ARM], [&"ual", "Sword_Idle", RIGHT_ARM]], "lock": true, "stride": 1.1}
 ## E1c (AUDIT.md P6): the elder on a shorter stride, 91 steps a minute (1.2 gave 67, a slow motion).
@@ -202,6 +198,15 @@ const KING_STRIDE := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, 
 ## crouched (knees near square, the body 22 cm down): the body sinks half the way to each pose's own floor ("plant" 0.5,
 ## was 0.65) and stands 0.15 m taller over the same footprints ("stand"), its head at 99% of its idle's; 161 steps a minute.
 const SOLDIER_JOG := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.74, "lift": 0.3, "plant": 0.5, "stand": 0.15,
+	"bend": {"Spine01": Vector3(-34, 0, 0)}}
+## T5b P1-1 (docs/qa/t5b_boss_fight.md): the sorcerer and the crossbowman trotted as the soldier did before T5-11
+## (Running_B with half its hop: 14 and 12 of 20 poses with the whole body over 0.1 m, up to 0.3 m), and the sorcerer
+## runs the most (it flees to keep its range, in front of the camera). They jog as the soldier does now: the library's
+## Jog_Fwd, the feet locked, a third of the hop, the body planted and standing taller; the staff upright and the free
+## arm close to the body (the guard of its old trot), the crossbow low beside the hip (CROSSBOW_LOW).
+const MAGE_JOG := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", RIGHT_ARM]], "lock": true, "stride": 0.76,
+	"lift": 0.15, "plant": 0.35, "stand": 0.15, "bend": {"Spine01": Vector3(-22, 0, 0)}}
+const CROSSBOW_JOG := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.79, "lift": 0.2, "plant": 0.4, "stand": 0.15,
 	"bend": {"Spine01": Vector3(-34, 0, 0)}}
 ## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
 ## blow uncoils it in its first 0.15 s ("bend_out").
@@ -242,8 +247,13 @@ const ROAR_BEND := {"Spine01": Vector3(-10, 0, 0), "Head": Vector3(-18, 0, 0)}
 const COMMON_ANIMS := {
 	"hit": [&"ual", "Hit_Chest", 8, false],
 	"death": [&"ual", "Death01", 16, false, {"to": 1.9}],
-	"rise": [&"ual2", "LayToIdle", 12, false, {"time": 0.9}],
+	"rise": [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true}],
 }
+## T5b P1-2 (docs/qa/t5b_boss_fight.md): LayToIdle ends stooped; with a staff (the sorcerer, the elder) or the round
+## shield (the knight) the figure ended 0.3 to 0.4 m from its guard, the sorcerer's staff lying (the top of the figure
+## at 1.88 m, its idle 2.65) and its walk after it threw the body up 0.5 m. Their last 0.45 s ease into their guard.
+const STAFF_RISE := [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "settle": [&"ual", "Idle_Torch", 0.45]}]
+const SHIELD_RISE := [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "settle": [&"ual2", "Idle_Shield", 0.45]}]
 ## Horde.IMPACT_SHARE of the swing is the windup: the clips are cut so the blade comes down there.
 const SWORD_BLOW := [&"ual", "Sword_Attack", 16, false, {"from": 0.1, "to": 1.2}]
 const CASTER_CLIPS := {
@@ -317,7 +327,8 @@ const MODELS := {
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD},
 		],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, MAGE_TROT], "idle": STAFF_CLIPS.idle,
+			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG], "idle": STAFF_CLIPS.idle,
+			"rise": STAFF_RISE,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
 			"shot": STAFF_CLIPS.shot, "exit": STAFF_CLIPS.exit,
 		},
@@ -330,7 +341,7 @@ const MODELS := {
 		# its head)
 		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT}],
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true, CROSSBOW_TROT], "idle": [&"ual", "Idle", 12, true, CROSSBOW_GUARD],
+			"walk": [&"ual", "Jog_Fwd", 20, true, CROSSBOW_JOG], "idle": [&"ual", "Idle", 12, true, CROSSBOW_GUARD],
 			"attack": [&"ual", "Pistol_Shoot", 14, false], "aim": [&"ual", "Pistol_Idle", 8, true],
 		},
 	},
@@ -377,7 +388,7 @@ const MODELS := {
 			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0), "paint": SHIELD_PAINT, "name": "shield"},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE,
+			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE, "rise": SHIELD_RISE,
 			"attack": SWORD_BLOW,
 			# T5-07: its charge braced behind the round shield and run with it (it stood idle with a line on the floor);
 			# A-T5-1: run low behind it (KNIGHT_RUSH)
@@ -396,7 +407,7 @@ const MODELS := {
 			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.38 * 0.9, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_PURPLE},
 		],
 		"anims": {
-			"walk": [&"ual", "Walk_Formal", 20, true, ELDER_STRIDE], "idle": STAFF_CLIPS.idle,
+			"walk": [&"ual", "Walk_Formal", 20, true, ELDER_STRIDE], "idle": STAFF_CLIPS.idle, "rise": STAFF_RISE,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
 			# T5-03: raising its dead is the priests' ritual gesture, not the staff's
 			"summon": [&"kaykit", "Spellcast_Summon", 12, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
@@ -794,8 +805,24 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 	var held: Array[Dictionary] = []
 	for g: Array in guards:
 		held.append(_solve(g[0], g[1], float(g[3]) if g.size() > 3 else t, true, retargets, skeleton, model))
+	# "settle" ([rig, clip, seconds], T5b P1-2): over the clip's last seconds every bone eases into that clip's first
+	# pose (a rise that ends in the figure's own guard, standing, the staff upright)
+	var settle: Array = opts.get("settle", [])
+	var settled := {}
+	var settled_hips := Vector3.ZERO
+	var settle_w := 0.0
+	if not settle.is_empty():
+		var end: float = opts.get("to", (_rig(a[0])[1] as AnimationPlayer).get_animation(a[1]).length)
+		var span: float = float(settle[2]) * (end - float(opts.get("from", 0.0))) / float(opts.get("time", end - float(opts.get("from", 0.0))))
+		settle_w = smoothstep(end - span, end, t)
+		if settle_w > 0.0:
+			settled = _solve(settle[0], settle[1], 0.0, true, retargets, skeleton, model)
+			settled_hips = (retargets[settle[0]] as Retarget).hips_position(true)
 	var pose := _solve(a[0], a[1], t, false, retargets, skeleton, model)
 	var rt: Retarget = retargets[a[0]]
+	for b: int in settled:
+		if pose.has(b):
+			pose[b] = (pose[b] as Quaternion).slerp(settled[b], settle_w)
 	for i in guards.size():
 		# the guarded bones (parents first) point where the guard clip has them, whatever the trunk does in this one
 		for bone: StringName in guards[i][2]:
@@ -816,6 +843,8 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 	var hips := rt.hips_position(String(a[1]).ends_with("_RM") or opts.get("in_place", false))
 	var rest := skeleton.get_bone_rest(rt.hips_bone()).origin
 	hips.y = rest.y + (hips.y - rest.y) * float(opts.get("lift", 1.0))
+	if settle_w > 0.0:
+		hips = hips.lerp(settled_hips, settle_w)
 	skeleton.set_bone_pose_position(rt.hips_bone(), hips)
 	# the clip's own bend may grow over it ("bend_in") or ease off from its start ("bend_out" seconds): a wind-up
 	# that coils into the pose its blow uncoils from (T5-02)

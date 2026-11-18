@@ -1,0 +1,70 @@
+# BEFORE (HEAD fe07159, data/head_*.csv.gz)
+== bot_s1.csv: 3396 fade frames, 55 steps
+  morvath/slash3             26 worst 0.39 m (own 0.26) (4183, 'walk:10>slash3:2')
+  morvath/volley             14 worst 0.36 m (own 0.19) (9251, 'rain:7>volley:3')
+  morvath/slash2              6 worst 0.30 m (own 0.03) (6168, 'blades_windup:7>slash2:7')
+  morvath/summon              5 worst 0.55 m (own 0.31) (3941, 'walk:17>summon:1')
+  morvath/walk                4 worst 0.33 m (own 0.25) (4992, 'slash3:15>walk:1')
+== idle_p2_s1.csv: 2584 fade frames, 59 steps
+  morvath/idle               28 worst 0.13 m (own 0.03) (1730, 'slash3:15>idle:1')
+  morvath/rain                9 worst 0.23 m (own 0.04) (230, 'summon:8>rain:1')
+  morvath/stunned             7 worst 0.13 m (own 0.03) (1355, 'rain:13>stunned:0')
+  morvath/walk                7 worst 0.17 m (own 0.03) (1482, 'stunned:1>walk:2')
+  morvath/slash3              5 worst 0.39 m (own 0.17) (1622, 'walk:0>slash3:2')
+  skeleton/attack             2 worst 0.25 m (own 0.17) (659, 'windup:9>attack:1')
+  morvath/summon              1 worst 0.53 m (own 0.10) (160, 'walk:2>summon:1')
+# AFTER
+== bot_s1.csv: 3164 fade frames, 6 steps
+  morvath/dash                3 worst 0.24 m (own 0.09) (9073, 'dash_windup:7>dash:3')
+  morvath/walk                2 worst 0.29 m (own 0.25) (976, 'slash3:15>walk:0')
+  morvath/summon              1 worst 0.34 m (own 0.28) (10501, 'walk:5>summon:0')
+== bot_s2.csv: 3667 fade frames, 20 steps
+  morvath/volley             12 worst 0.19 m (own 0.14) (7517, 'summon:2>volley:1')
+  morvath/idle                4 worst 0.36 m (own 0.24) (3613, 'stunned:1>idle:0')
+  morvath/walk                3 worst 0.38 m (own 0.25) (9609, 'idle:1>walk:0')
+  morvath/slash2              1 worst 0.12 m (own 0.05) (5190, 'blades_windup:7>slash2:7')
+== bot_s3.csv: 2714 fade frames, 21 steps
+  morvath/volley             15 worst 0.19 m (own 0.12) (9419, 'summon:2>volley:1')
+  morvath/idle                3 worst 0.30 m (own 0.24) (8273, 'walk:1>idle:0')
+  morvath/walk                2 worst 0.29 m (own 0.25) (976, 'slash3:15>walk:0')
+  mage/walk                   1 worst 0.16 m (own 0.02) (3339, 'idle:7>walk:14')
+== bot_s4.csv: 3157 fade frames, 26 steps
+  morvath/volley             20 worst 0.20 m (own 0.14) (6910, 'summon:2>volley:1')
+  morvath/walk                2 worst 0.29 m (own 0.25) (976, 'slash3:15>walk:0')
+  morvath/slash2              1 worst 0.12 m (own 0.05) (4146, 'blades_windup:7>slash2:7')
+  skeleton/idle               1 worst 0.37 m (own 0.00) (5749, 'rise:11>idle:0')
+  morvath/blades_windup       1 worst 0.19 m (own 0.15) (7279, 'walk:10>blades_windup:0')
+  morvath/summon              1 worst 0.36 m (own 0.28) (7414, 'walk:9>summon:1')
+== idle_p2_s1.csv: 2635 fade frames, 0 steps
+== idle_p2_s2.csv: 2749 fade frames, 0 steps
+== idle_p2_s3.csv: 2665 fade frames, 0 steps
+
+# the old measure (data/fadepop.py), after
+== bot_s1.csv
+  morvath/clip/slash3                        99 worst 0.27 m/frame (8396, 'slash3:7>slash3:8', 'slash3:15>slash3:15')
+  morvath/fade/volley                        33 worst 0.19 m/frame (6839, 'summon:5>volley:1', 'summon:5>volley:2')
+  morvath/clip/walk                          32 worst 0.25 m/frame (2098, 'idle:2>walk:2', 'walk:2>walk:3')
+  morvath/fade/idle                          28 worst 0.27 m/frame (2135, 'walk:10>idle:0', 'idle:1>walk:0')
+  morvath/clip/idle                          26 worst 0.25 m/frame (10437, 'roar:13>idle:1', 'idle:1>idle:2')
+  morvath/clip/rain                          16 worst 0.32 m/frame (3095, 'rain:8>rain:9', 'rain:13>rain:13')
+  morvath/clip/summon                        14 worst 0.28 m/frame (5045, 'summon:1>summon:2', 'summon:1>summon:2')
+  mage/fade/hit                              12 worst 0.30 m/frame (8858, 'walk:13>hit:0', 'walk:13>hit:0')
+  morvath/fade/walk                          11 worst 0.29 m/frame (976, 'slash3:15>walk:0', 'slash3:15>walk:0')
+  morvath/fade/slash3                        11 worst 0.23 m/frame (1351, 'slash3:15>slash3:15', 'slash3:15>walk:0')
+  morvath/clip/roar                          10 worst 0.25 m/frame (11120, 'roar:7>roar:8', 'roar:8>roar:9')
+  mage/fade/walk                             10 worst 0.60 m/frame (3396, 'walk:10>walk:11', 'walk:11>death:10')
+  skeleton/fade/walk                          8 worst 0.51 m/frame (8095, 'walk:18>walk:19', 'walk:19>death:15')
+  skeleton/clip/rise                          7 worst 0.30 m/frame (7618, 'rise:8>rise:9', 'rise:8>rise:9')
+  morvath/clip/stunned                        5 worst 0.18 m/frame (3461, 'stunned:6>stunned:7', 'stunned:6>stunned:7')
+  skeleton/clip/hit                           5 worst 0.35 m/frame (7038, 'hit:4>hit:5', 'hit:0>hit:1')
+  morvath/clip/dash_windup                    5 worst 0.14 m/frame (9038, 'dash_windup:3>dash_windup:4', 'dash_windup:3>dash_windup:4')
+  morvath/clip/volley                         4 worst 0.30 m/frame (9645, 'volley:8>volley:9', 'volley:13>volley:13')
+  skeleton/fade/hit                           3 worst 0.53 m/frame (4115, 'hit:5>hit:6', 'hit:5>death:7')
+  morvath/fade/dash                           3 worst 0.24 m/frame (9073, 'dash_windup:7>dash:3', 'dash_windup:7>dash:3')
+  morvath/clip/blades_windup                  2 worst 0.15 m/frame (4878, 'blades_windup:4>blades_windup:5', 'blades_windup:5>blades_windup:6')
+  skeleton/fade/windup                        2 worst 0.31 m/frame (7795, 'windup:9>windup:9', 'windup:9>hit:0')
+  skeleton/fade/idle                          2 worst 0.33 m/frame (6419, 'idle:1>idle:2', 'idle:2>hit:0')
+  morvath/fade/rain                           2 worst 0.19 m/frame (9578, 'roar:9>rain:0', 'roar:9>rain:0')
+  skeleton/fade/back                          1 worst 0.35 m/frame (3179, 'back:6>back:7', 'back:7>hit:0')
+== idle_p2_s1.csv
+  morvath/clip/slash3                        15 worst 0.17 m/frame (1666, 'slash3:6>slash3:7', 'slash3:6>slash3:7')

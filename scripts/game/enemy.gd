@@ -109,6 +109,8 @@ var flee_hold := 0.0
 var run_t := 0.0
 ## Only drawn (T5-10): seconds its body has wanted to change between facing its aim and facing where it walks.
 var face_t := 0.0
+## T5b P1-2: seconds left of the slow turn of a body that has just risen (Horde.RISEN_TURN).
+var risen_t := 0.0
 ## Takes no damage (a boss behind its ritual's shield).
 var invulnerable := false
 ## Life it cannot drop under (a boss stops at the threshold of its next phase; 0: none).

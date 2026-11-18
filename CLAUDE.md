@@ -347,9 +347,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   só, a média do clipe vezes `"stride"`, e a perna se dobra até lá por IK de duas juntas, `_bend_limb`, o giro do pé mantido; no
   ar o pé vai suave de onde saiu para onde desce). O `"stride"` acerta a cadência sem mudar a velocidade da simulação: Escudo
   com o `Walking_A` do KayKit (o andar pesado do bruto) a 120 passos por minuto, Cavaleiro 96 e Morvath 102 no `Walk` da UAL
-  em passada longa, mago 130 e besteiro 126 num trote curto (o `Running_B` com passada 0,62 e 0,67 e meio pulo, `"lift"` 0,5),
+  em passada longa, mago 136 e besteiro 127 no `Jog_Fwd` com os pés no chão como o esqueleto (T5b P1-1: `MAGE_JOG`, `CROSSBOW_JOG`; o `Running_B` de antes com meio pulo deixava o feiticeiro no ar em 14 de 20 poses),
   ancião 67; todos escorregam até 1,6 cm em jogo (antes Escudo 16, Cavaleiro 21, Morvath 15, ancião 10). O braço livre do mago
-  fica junto ao corpo (`MAGE_TROT`, guarda do `Idle`; o assado imprime o quanto cada braço abre). Medir clipes sem assar:
+  fica junto ao corpo (`MAGE_JOG`, guarda do `Idle`; o assado imprime o quanto cada braço abre). Medir clipes sem assar:
   `tools/walk_probe.gd` (andares; `id=rig:clip:stride`) e `tools/clip_probe.gd` (altura e velocidade da mão por clipe, para
   acertar o tempo de um clipe novo no antigo). Tiras de andar: `tools/walk_strip.gd` (chão xadrez de 0,5 m, câmera seguindo;
   `docs/gallery/e1b/walk/`). VX-14: os golpes de Morvath são com as duas mãos (`"two_hands"`, `_both_hands`: a mão esquerda
@@ -857,7 +857,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   fim, longe dos avisos e da colisão; as Lâminas (`slash1`/`slash2`, Sword_Regular_A e B, desde `faef8d6`) 3 m e o
   arremesso (`volley`, OverhandThrow, `43229d9`) 1,8 m. `tools/bake.gd` ganhou `in_place` (quadril fixo no lugar, como os
   `_RM`) nesses clipes; `BakedModel.pose_centre`/`drift` e `tools/pose_drift.gd` medem (toda pose dele a no máximo 0,45 m
-  no tamanho 1, fora queda e levantar). Também: a troca de clipe dele é uma mistura de `Horde.CLIP_FADE` 0,12 s da última
+  no tamanho 1, fora queda e levantar). Também: a troca de clipe dele é uma mistura de `Horde.BOSS_CLIP_FADE` (0,12 s, 0,18 desde o T5b) da última
   pose para a nova (`CrowdRenderer.add_kind` com `from_row`/`fade`; antes o corpo pulava até 0,96 m num quadro), o
   atordoamento dele desenhava `idle` (o `Horde.render` lia o `stun_t` que o `Boss` segura; desde o marco 5), e as Lâminas
   e a maldição começam o arremesso antes do tiro para a soltura cair no quadro do tiro (`Boss.THROW_PEAK`, `_throw_by`; o
@@ -1064,7 +1064,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   golpe do esqueleto: `attack` assado de 0,3 a 1,2 s do `Sword_Attack`, tocado do começo quando o tipo tem clipe `windup`
   próprio (`CrowdRenderer.Kind.has_windup`, `Horde.ATTACK_PLAY` 1,4): a lâmina desce nos primeiros 0,14 s do bote. Mistura
   entre clipes para todos (a do chefe, `CrowdRenderer.add_kind(..., from_row, fade)`, por `Horde._fade`): `CLIP_FADE` 0,1 s
-  (o chefe `BOSS_CLIP_FADE` 0,12), também na queda; atordoado por golpe, todo corpo (pesado também) mostra o golpe sofrido
+  (o chefe `BOSS_CLIP_FADE` 0,18 desde o T5b), também na queda; o alvo da mistura é a pose interpolada do clipe novo, não a
+  mais perto (T5b P1-3: alfa negativo na cor da instância, `CrowdRenderer.fade_target`/`fade_pick`, lido no
+  `crowd_pose.gdshaderinc`; antes o alvo saltava de pose em pose, até 0,55 m num quadro em Morvath); atordoado por golpe, todo corpo (pesado também) mostra o golpe sofrido
   esticado no atordoamento inteiro (`Enemy.stun_len`, `Kind.hit_time`), sem `idle` no meio. Bote do esqueleto para no
   contorno do herói (`keep_off_target` vale para o `RUNNER` em `ATTACK`; investidas de Escudo e Cavaleiro atravessam);
   no máximo 2 esqueletos (com as elites) preparam ou dão o bote juntos (`max_attackers` 2). Assado: esqueleto com o pé
@@ -1111,6 +1113,17 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   olha a velocidade suavizada por `RUN_FACE` 0,3 s (`Enemy.run_t`), nunca a direção crua do quadro.
   Medir: `tools/clip_motion.gd` (pico, pose armada e andar de cada clipe assado, cabeça no andar) e a sonda
   `tools/enemy_motion_probe.gd` com `tools/enemy_motion_probe.py` (tremor, golpe x corpo x aviso, pose parada).
+- **T5b, a luta de Morvath sem "esqueletos pulando"** (diagnóstico e números antes e depois em `docs/qa/t5b_boss_fight.md`;
+  dados em `docs/gallery/t5b/boss/after/`; testes em `tests/test_t5b_fight.gd` e `tests/test_boss_body.gd`): quem pulava era o
+  feiticeiro (trote `Running_B` com meio pulo); ele e o besteiro correm no `Jog_Fwd` de pés travados (`MAGE_JOG`,
+  `CROSSBOW_JOG` no `tools/bake.gd`). O `rise` comum fica no lugar (`in_place`) e, com cajado ou escudo redondo, termina na
+  guarda (`STAFF_RISE`, `SHIELD_RISE`, opção `"settle"` do assado: os últimos 0,45 s vão para a primeira pose do clipe da
+  guarda); a saída do `RISE` mistura em `Horde.RISE_FADE` 0,25 s, o corpo vira no máximo `RISEN_TURN` 480 graus/s por
+  `RISEN_TIME` 0,3 s e espera `Horde.ARRIVE` 0,6 s antes da primeira preparação. Mistura de clipe para a pose interpolada do
+  clipe novo (`CrowdRenderer.fade_target`). Morvath: o corpo desenhado (`Enemy.face`, girado pelo `Boss._turn_body`) vira no
+  máximo `Boss.BODY_TURN` 720 graus/s para o rumo do ataque (que continua instantâneo, avisos iguais); conjurando
+  (erupções, invocação, tempestade) e na recuperação ele segue o herói (`FOLLOW_RATE` 2). Sonda do desenho:
+  `tools/drawn_probe.gd` (lê o que o `CrowdRenderer` pôs nos MultiMesh), análise em `docs/gallery/t5b/boss/{data,after/data}/*.py`.
 - Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## Pendências conhecidas

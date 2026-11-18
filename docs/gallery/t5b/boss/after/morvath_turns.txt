@@ -1,0 +1,20 @@
+# BEFORE
+== bot_s1.csv: worst turn 137.1 deg a frame; frames over 15: {'CHASE': 17, 'SCYTHE': 5, 'BLADES': 2, 'CURSE': 1}
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 3%, SCYTHE 8%, BLADES 0%, STORM 20%, ERUPTIONS 20%, CURSE 0%, SUMMON 0%, ROAR 0%, TO_CENTER 56%, RITUAL 2%, STUNNED 9%, RECOVER 21%
+== idle_p2_s1.csv: worst turn 0.5 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 0%, SCYTHE 0%, ERUPTIONS 0%, RITUAL 0%, STUNNED 0%, RECOVER 0%
+# AFTER
+== bot_s1.csv: worst turn 12.0 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 2%, SCYTHE 9%, BLADES 0%, STORM 0%, ERUPTIONS 0%, CURSE 23%, SUMMON 0%, DASH_WARN 0%, ROAR 0%, TO_CENTER 71%, RITUAL 2%, STUNNED 0%, RECOVER 4%
+== bot_s2.csv: worst turn 12.0 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 2%, SCYTHE 4%, BLADES 0%, STORM 0%, ERUPTIONS 4%, CURSE 0%, SUMMON 10%, ROAR 0%, TO_CENTER 65%, RITUAL 4%, STUNNED 14%, RECOVER 2%
+== bot_s3.csv: worst turn 12.0 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 1%, SCYTHE 0%, BLADES 0%, STORM 0%, ERUPTIONS 3%, CURSE 0%, SUMMON 7%, ROAR 0%, TO_CENTER 50%, RITUAL 2%, STUNNED 51%, RECOVER 1%
+== bot_s4.csv: worst turn 12.0 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 1%, SCYTHE 3%, BLADES 0%, STORM 3%, ERUPTIONS 1%, CURSE 0%, SUMMON 0%, ROAR 0%, TO_CENTER 21%, RITUAL 2%, STUNNED 90%, RECOVER 0%
+== idle_p2_s1.csv: worst turn 0.5 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 0%, SCYTHE 0%, ERUPTIONS 0%, RITUAL 0%, STUNNED 0%, RECOVER 0%
+== idle_p2_s2.csv: worst turn 3.5 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 0%, SCYTHE 0%, ERUPTIONS 0%, RITUAL 0%, STUNNED 0%, RECOVER 0%
+== idle_p2_s3.csv: worst turn 0.3 deg a frame; frames over 15: 0
+   facing away (>90 deg) from the paladin: ENTER 0%, CHASE 0%, SCYTHE 0%, ERUPTIONS 0%, RITUAL 0%, STUNNED 0%, RECOVER 0%

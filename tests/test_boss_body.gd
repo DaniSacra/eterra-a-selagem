@@ -10,12 +10,14 @@ const F := 1.0 / 60.0
 ## blade held out; the combat-feel review's acceptance, docs/design/combat_cadence.md P0-3), and his drawn body may
 ## move this far between two frames outside his charge (the mean of his vertices, blade included). The review asks
 ## 0.3 m: what is left above it is the fastest frame of a blow (the scythe and the throw, at 1.6 times the clips'
-## pace), a clip change (Horde.BOSS_CLIP_FADE fades into the new clip's nearest pose, two rows only: when that pose moves
+## pace), a clip change (Horde.BOSS_CLIP_FADE fades into the new clip's blend since T5b; before, its nearest pose: when that pose moved
 ## on during the fade, or its blend takes over at the end, up to half a pose) and the summon's own first pose (0.7 m
 ## from its second in the bake). Before E1c: 8 m (the scythe's root motion) and 0.96 m at every cut between clips.
 const POSE_OFF := 0.45
 ## 0.65: the honest worst sits at 0.60 to 0.604 m depending on the seedless frame timing (flaky at 0.6); the bug it guards was 0.96 m and up.
 const DRAWN_STEP := 0.65
+## T5b P1-4: degrees his drawn body may turn in one frame (Boss.BODY_TURN is 12 at 60 frames a second).
+const MAX_TURN := 15.0
 ## Frames a throw's release may fall off its shot (P1-5).
 const RELEASE_FRAMES := 3
 ## Clips that lie on the floor (his fall, a dead rising): not his place while he fights.
@@ -83,6 +85,8 @@ func test_the_whole_fight_four_phases_no_jump_always_drawn_warned_where_he_stand
 	var other_clip := 0
 	var worst_drawn_step := 0.0
 	var last_drawn := Vector2.INF
+	var worst_turn := 0.0
+	var last_yaw := INF
 	var releases: Array[float] = []
 	boss.cue.connect(func(n: StringName, _at: Vector2, _d: Vector2, _s: float, _sec: float) -> void:
 		if n == &"blades_release" or n == &"curse_release":
@@ -120,6 +124,10 @@ func test_the_whole_fight_four_phases_no_jump_always_drawn_warned_where_he_stand
 			var jump := drawn.distance_to(last_drawn)
 			worst_drawn_step = maxf(worst_drawn_step, jump)
 		last_drawn = drawn
+		# T5b P1-4: his body turns, never snaps (it swung 100 to 137 degrees in a frame as the scythe and the curse began)
+		if last_yaw != INF:
+			worst_turn = maxf(worst_turn, absf(rad_to_deg(angle_difference(last_yaw, e.yaw()))))
+		last_yaw = e.yaw()
 		# always drawn: in the crowd's list, with a clip of his own (never a missing one standing in for it)
 		if not game.horde.list.has(e) or model.frame_count(e.anim) == 0:
 			not_drawn += 1
@@ -151,6 +159,8 @@ func test_the_whole_fight_four_phases_no_jump_always_drawn_warned_where_he_stand
 	assert_lte(worst_dash, def.dash_length / def.dash_time * F * 1.05 + 0.05, "the charge runs, never teleports (worst %.2f m)" % worst_dash)
 	assert_lte(worst_off, POSE_OFF * e.def.size, "his body is drawn over his place (worst %.2f m)" % worst_off)
 	assert_lte(worst_drawn_step, DRAWN_STEP, "his drawn body never jumps between frames (worst %.2f m)" % worst_drawn_step)
+	gut.p("worst drawn step %.2f m, worst turn %.1f degrees a frame" % [worst_drawn_step, worst_turn])
+	assert_lte(worst_turn, MAX_TURN, "his body turns at most %.0f degrees a frame (worst %.1f)" % [MAX_TURN, worst_turn])
 	assert_gt(releases.size(), 0, "blades or curses thrown")
 	for r in releases:
 		assert_lte(r, float(RELEASE_FRAMES), "the hand's release falls on the shot's frame (%.1f frames off)" % r)
@@ -175,9 +185,8 @@ func _drawn_off(e: Enemy, model: BakedModel) -> Vector2:
 	var c := _centre(model, anim, int(b.x)).lerp(_centre(model, anim, int(b.y)), b.z)
 	var fade := clampf(e.fade_t / Horde.BOSS_CLIP_FADE, 0.0, 1.0)
 	if e.fade_row >= 0 and fade < 1.0:
-		# fading from the row he showed into the new clip's nearest pose (CrowdRenderer.add_kind)
-		var to := int(b.x) if b.z < 0.5 else int(b.y)
-		c = _row_centre(model, e.fade_row).lerp(_centre(model, anim, to), fade)
+		# fading from the row he showed into the new clip's own blend (CrowdRenderer.add_kind, T5b P1-3)
+		c = _row_centre(model, e.fade_row).lerp(c, fade)
 	c *= e.def.size
 	var w := Basis(Vector3.UP, e.yaw()) * Vector3(c.x, 0.0, c.y)
 	return Vector2(w.x, w.z)

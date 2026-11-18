@@ -294,7 +294,9 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 	basis = basis.scaled(squash * d.size)
 	var row := c.first + (a if p - a < 0.5 else next)
 	if from_row >= 0 and fade < 1.0:
-		_put(b, basis.x, basis.y, basis.z, pos, state, Color(from_row, row, clampf(fade, 0.0, 1.0), 1.0))
+		# T5b P1-3: toward the new clip's own blend (its pose a and the next by p - a), not its nearest pose, which
+		# stepped from pose to pose through the fade (up to 0.55 m in a frame on Morvath)
+		_put(b, basis.x, basis.y, basis.z, pos, state, Color(from_row, c.first + a, clampf(fade, 0.0, 1.0), fade_target(a, next, p - a, n)))
 		row = from_row if fade < 0.5 else row
 	else:
 		_put(b, basis.x, basis.y, basis.z, pos, state, Color(c.first + a, c.first + next, p - a, 1.0))
@@ -302,6 +304,27 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
 		_put(_shadow, Vector3(r, 0, 0), Vector3.UP, Vector3(0, 0, r), Vector3(pos.x, 0.03, pos.z), Color())
 	return row
+
+
+## T5b P1-3: the alpha of a fading instance's colour (crowd_pose.gdshaderinc reads it when negative): the new clip's
+## pose `a` blends toward `next` by `frac`. -(1 + frac): the next pose of the clip; -2: none (a one-shot's last pose);
+## -(2 + n + frac): a loop of n poses back to its first. On the Compatibility renderer the instance colour is a half
+## float (11 bits): frac stays a step of it under 1 (a multiple of it), so it never rounds up to the next code.
+static func fade_target(a: int, next: int, frac: float, n: int) -> float:
+	if next == a:
+		return -2.0
+	var whole := 1.0 if next == a + 1 else 2.0 + n
+	var quantum := pow(2.0, floorf(log(whole + 1.0) / log(2.0)) - 10.0)
+	return -(whole + clampf(frac, 0.0, 1.0 - quantum))
+
+
+## The inverse of fade_target as the shader reads it: [step to the next pose (1, 0 or 1 - n), frac].
+static func fade_pick(code: float) -> Array:
+	var x := -code
+	var whole := int(floorf(x))
+	var f := x - whole
+	var step := 1 if whole == 1 else 0 if whole == 2 else 3 - whole
+	return [step, f]
 
 
 ## A thin life bar over one enemy's head. top: the top of its head (world). life, armor: what is left (0..1).
