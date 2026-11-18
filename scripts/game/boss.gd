@@ -295,7 +295,9 @@ func _advance(dt: float) -> void:
 		return
 	if e == null or not e.alive:
 		return
-	var was := game.horde.depth_in_target(e)
+	# how deep he stood in the paladin when the frame began, as the crowd measured it (BUG-104: measured again here,
+	# after the crowd had already eased him out once, he melted out twice a frame: 6 m/s as the paladin dashed through)
+	var was := e.was_in_target
 	stats.time = snappedf(_clock, 0.1)
 	_t += dt
 	_cooldown -= dt
@@ -392,8 +394,41 @@ func _advance(dt: float) -> void:
 	if state != State.DASH:
 		game.horde.keep_off_target(e, was, dt)
 	e.pos = game.arena.resolve(e.pos, e.def.radius)
+	_drawn_walk(dt)
 	# where he stands, for the scenery that opens around him (masonry.gdshader's see_through)
 	RenderingServer.global_shader_parameter_set(&"boss_pos", Vector3(e.pos.x, 0.0, e.pos.y))
+
+
+## BUG-104 (CF-07): his body never slides drawn standing. When something moves him while a still clip shows (the
+## paladin dashing through him, a push), his speed on the floor (smoothed over SLIDE_SMOOTH seconds) above SLIDE_FROM
+## m/s shows his walk until it falls under SLIDE_TO; then the still clip again.
+const SLIDE_FROM := 0.8
+const SLIDE_TO := 0.4
+const SLIDE_SMOOTH := 0.05
+var _slide_speed := 0.0
+var _sliding := false
+var _slide_t := 0.0
+var _slide_was := Vector2.INF
+
+
+func _drawn_walk(dt: float) -> void:
+	if dt <= 0.0:
+		return
+	var moved := 0.0 if _slide_was == Vector2.INF else e.pos.distance_to(_slide_was) / dt
+	_slide_was = e.pos
+	_slide_speed = lerpf(_slide_speed, moved, minf(1.0, dt / SLIDE_SMOOTH))
+	if e.anim != &"idle" and not (_sliding and e.anim == &"walk"):
+		_sliding = false
+		return
+	var was_sliding := _sliding
+	_sliding = _slide_speed > (SLIDE_TO if _sliding else SLIDE_FROM)
+	if _sliding:
+		_slide_t = _slide_t + dt if was_sliding else 0.0
+		e.anim = &"walk"
+		e.anim_t = _slide_t
+	elif was_sliding:
+		e.anim = &"idle"
+		e.anim_t = 0.0
 
 
 # ---------- choosing ----------
