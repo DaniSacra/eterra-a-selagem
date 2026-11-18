@@ -141,7 +141,7 @@ func _panel() -> Control:
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_status.custom_minimum_size = Vector2(PANEL_WIDTH - 40.0, 48)
 	v.add_child(_status)
-	var o := EndScreen.Ornament.new()
+	var o := GoldRule.new()
 	o.custom_minimum_size = Vector2(PANEL_WIDTH * 0.7, 14)
 	o.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(o)

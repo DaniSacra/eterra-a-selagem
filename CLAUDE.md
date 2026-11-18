@@ -791,8 +791,33 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `requires_sets` (E3-02: uma lista por família, uma Bênção de cada forma o Elo; `BoonState.forged`), 12% por carta,
   sem raridade e sem nível (BUG-017; `Boon.has_rarity`, `max_level` 1) (6 hoje; nome "Elo" no texto desde 2026-11-15). A carta mostra os dois dons de origem
   numa corrente de ouro velho com o Elo no meio (`EloLink`, `BoonState.sources`), o medalhão do Elo tem aro de elos,
-  a HUD saúda cada Elo novo com "Elo formado" sem pausar (`EloBanner`) e a pausa tem o painel "Dons" (`BoonsScreen`).
+  a HUD saúda cada Elo novo com "Elo formado" sem pausar (`EloBanner`) e a pausa tem o painel "Suas bênçãos" (`BoonsScreen`).
   Capturas dessas telas numa partida real: `tools/ui_lab.gd` (comando no topo).
+- **Pacote de direção de arte, etapa 1B (menus, pranchas 06 e 10, só locais em `docs/art/ref/direcao_2026-11-17/`;
+  antes e depois a 720 e 1080 em `docs/gallery/artpack/stage1b/`)**: uma linguagem só para as páginas de menu em
+  `UiKit` (`page`: painel de tinta com fio de ouro velho e sombra, título Cinzel sobre o `GoldRule`, o antigo
+  `EndScreen.Ornament`; `primary` para a ação principal em bronze; `tab` com a aba à mostra em petróleo; `link` para as
+  saídas discretas; `section` "Nome ———"; `focus_row` para linhas que tomam foco dentro de rolagem; `gift_icons` e
+  `carried_of` para os medalhões levados). **Pausa** (`PauseMenu`): o quadro congelado fica, escurecido só à esquerda
+  (`SHADE_*`), painel compacto à esquerda com Continuar em destaque, Bênçãos, Compêndio, Configurações, os medalhões da
+  descida ("Bênçãos da descida: N", até 15 e "+N") e no rodapé Sair para o menu e Sair do jogo; cima e baixo dão a volta,
+  e a página aberta devolve o foco ao botão que a abriu. **Suas Bênçãos** (`BoonsScreen`): grupos Ações (pela ordem das
+  ações, `Boon.slot`), Efeitos automáticos (`Slot.NONE`) e Elos (`BoonsScreen.group_of`); à esquerda uma entrada por
+  grupo com a contagem, que leva o foco à primeira linha; à direita a lista rola com o foco. **Créditos**
+  (`CreditsScreen.BLOCKS`): Equipe, Áudio, Arte, Ferramentas, Licenças, cada bloco toma o foco (cima e baixo e a roda
+  rolam); todas as atribuições de antes ficam, mais `credits_ai_art`, `credits_ai_code` e o resumo de licenças.
+  **Vitória** (`EndScreen`): primeiro a selagem sozinha (`SealEmblem`: aro de ouro velho que se fecha em volta do leão do
+  selo da Câmara, `lion_sdf.res`, que acende; nunca sol nem cruz), depois o resumo sobe (`SUMMARY_AT` 2 s); apertar
+  durante a selagem mostra tudo (`finish_sealing`). **Derrota**: painel com o título, "Derrotado por", onde caiu, as
+  Bênçãos levadas, a Maestria, os números e Tentar de novo (`primary`, com foco) e Menu. **Configurações**
+  (`OptionsScreen`): abas Áudio (volumes em régua com losango, clicável, `Gauge`; Músicas), Vídeo, Conforto e Controles
+  (teclas com o valor à direita, Teclas padrão); andar sobre uma aba mostra a página dela, baixo entra nela; o foco
+  guardado num `_build` abre a página onde está. **Como Jogar** (`HowToScreen`): abas "A descida" (três passos:
+  portas, Bênçãos, Morvath na Câmara do Selo; `howto_step_*`) e Controles (a tabela de teclas de antes); Compêndio,
+  Créditos e Voltar no rodapé. A prancha 10 mostra escolha de capítulo: o jogo tem uma região, então não há. Tela do
+  herói: só o `GoldRule` (a árvore é da etapa 2). Capturas: `tools/menu_lab.gd` (comando no topo; pausa com poucas e
+  muitas Bênçãos, Suas Bênçãos no topo e rolada, derrota, vitória em três momentos e, com `--title-screens`, Como
+  Jogar, Créditos no topo e rolados, cada aba das Configurações e Músicas). Testes em `tests/test_menus_1b.gd`.
 - **Tela de dons "Um dom chega até você"** (2026-11-16, referências de IA só locais em `docs/art/ref/boon_cards/`):
   `BoonChoice` monta três `BoonCard` (`scripts/ui/boon_card.gd`, 320 x 450 a 720 linhas): arte no topo sobre um brilho
   da cor da família, nome em marfim, família ou "Elo de A e B", ação, nível e raridade numa linha, filete com losango,
