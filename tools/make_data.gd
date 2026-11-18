@@ -124,7 +124,7 @@ func _tree(fourth: bool) -> ComboTree:
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
 		"cooldown": 0.7, "move_hold": SPECIAL_HOLD, "sound": &"dart",
 		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 40.0, "effect_radius": 880.0 / U,
-		"effect_size": 1.4, "wave_bolt": true}, [], &"move_bolt")
+		"effect_size": 1.4, "wave_bolt": true}, [], &"move_wave")
 	# Omega special (special held 0.65 s, 10 Magia): a wide bolt that bursts through the crowd
 	var burst := _move(&"burst", C, &"Cast", [&"heavy", &"wave", &"charge", &"omega"],
 		{"magick_cost": 10.0, "charge_time": 0.65, "damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.08,
@@ -890,6 +890,9 @@ func _bosses() -> void:
 		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 12.0, "scythe_approach": 1.2,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
 		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 10.0,
+		# C17, Q-09 (b): phase 1 was the scythe in a loop with him close (91% scythe over 3 seeds): the Blades come at
+		# any distance, a step back first when he is within 4 m
+		"blade_step": 2.0, "blade_step_within": 4.0, "blade_step_time": 0.25,
 		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
 		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 3, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
 		"storm_recovery": 1.2, "storm_damage": 10.0, "storm_stagger": 0.08,
@@ -916,7 +919,7 @@ func _bosses() -> void:
 		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2, "then": &"storm", "then_chance": 0.6, "then_from_phase": 4,
 			"layers": [&"eruptions"] as Array[StringName], "layer_from_phase": 3, "layer_chance": 1.0, "layer_share": 0.0}),
 		# far: the blades (until the storm takes their place); E2: in the curse's phase his dead rise as they fly
-		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 3.5, "near_bias": 0.5, "far_bias": 2.2,
+		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 0.0, "near_bias": 1.0, "far_bias": 2.2,
 			"layers": [&"summon"] as Array[StringName], "layer_from_phase": 3, "layer_chance": 1.0, "layer_share": 0.0}),
 		# the paladin keeps away: the dash closes in
 		_attack(&"dash", {"weight": 1.0, "cooldown": 6.0, "min_dist": 9.0, "far_bias": 1.5}),

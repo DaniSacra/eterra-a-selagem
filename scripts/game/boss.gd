@@ -172,6 +172,8 @@ var _dir := Vector2.DOWN
 var _dirs := PackedVector2Array()
 var _spots := PackedVector2Array()
 var _from := Vector2.ZERO
+## Q-09 (b): where the Blades' step back ends (he goes from _from to it over def.blade_step_time).
+var _back_to := Vector2.ZERO
 var _stagger := 0
 var _stagger_t := 0.0
 var _stun_time := 0.0
@@ -568,13 +570,23 @@ func _step_blades(dt: float) -> void:
 	var windup := _windup(def.blade_windup)
 	if _step == 0:
 		_step = 1
+		_from = e.pos
+		_back_to = e.pos
+		var close := game.player.pos - e.pos
+		if def.blade_step > 0.0 and close.length() < def.blade_step_within and close.length() > 0.01:
+			_back_to = game.arena.sweep(e.pos, e.pos - close.normalized() * def.blade_step, e.def.radius)
+			e.pos = _back_to  # (the lanes and the aim from there; drawn from _from below)
 		var aim := _aim(def.blade_speed)
 		_dirs = BossRules.soul_pair(aim, def.blade_spread, 1.0 if _rng.randf() < 0.5 else -1.0)
 		e.dir = (_dirs[0] + _dirs[1]).normalized()
 		for d in _dirs:
 			_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0))
+		e.pos = _from
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
 	if _step == 1:
+		# the step back (Q-09 b): eased out over blade_step_time, then held where the lanes start
+		var k := clampf(_t / maxf(def.blade_step_time, 0.01), 0.0, 1.0)
+		e.pos = _from.lerp(_back_to, 1.0 - (1.0 - k) * (1.0 - k))
 		_gathering(dt, e.pos + e.dir * HAND.y, SOUL_VIOLET)
 		# T5-15: the blade drawn back over his shoulder in both hands (blades_windup), then thrown from there so
 		# the release falls on the shot's frame
