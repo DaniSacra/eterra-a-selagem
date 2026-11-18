@@ -205,6 +205,8 @@ para a corrida [H]; clipes longos (Slash_C, Sword_Attack) terminando no retorno,
 - 2026-11-16 (E2): seção 1.4, Morvath medido depois da E1c e com as camadas da E2 (`tools/boss_cadence.gd`).
 - 2026-11-17 (T5): seção 6, preparação física, tremor no andar e corrida dos esqueletos, sincronia do dano com o corpo
   (inimigos e Morvath), medidos em `5dfe97f`; relatório `docs/qa/t5_enemy_motion.md`. Aguarda as correções T5-01 a T5-19.
+- 2026-11-17 (T5, revisão): DEPOIS em `24c298e` medido na CPU com os mesmos roteiros e sementes (seção 6.7); T5
+  aprovado com ressalvas, T5-11 fora do critério, T5-20 novo (P1).
 
 ## 6. T5: o corpo prepara o golpe (ANTES em `5dfe97f`, especificação)
 
@@ -390,3 +392,29 @@ ou mais).
 4. T5-11, T5-12, T5-13, T5-14, T5-15; depois os P2.
 Depois de cada lote o combat-feel-director refaz a sonda (mesmos roteiros e sementes) e a tabela 6.1 e registra o
 DEPOIS aqui; vídeo na GPU a 0,25x de cada tipo quando ela estiver livre.
+
+### 6.7 DEPOIS (`24c298e`, revisão do combat-feel-director, 2026-11-17)
+
+Medido na CPU, 60 f/s fixos, mesmos roteiros e sementes; detalhes e evidência em `docs/qa/t5_enemy_motion.md` seção 7 e
+`docs/gallery/t5/motion/after/data/review/`.
+
+| Medida (6.1) | ANTES `5dfe97f` | DEPOIS `24c298e` | Critério | Situação |
+|---|---|---|---|---|
+| Movimento da preparação (pico, tamanho 1) | 0,01 a 0,30 (Escudo 0,62, sacerdote 2,77) | 1,56 a 11,85 no clipe; Escudo 0,62 no clipe e 1,0 ou mais desenhado | 1,0 | passa |
+| Pose armada | | 0,30 (besteiro) a 0,82 | 0,30 | passa (esqueleto 0,31 no limite; alto 1,85 m, pedido 2,1: não) |
+| Pose parada na preparação | até 0,9 s (laços) | 0,13 a 0,28 s | 0,3 | passa |
+| Recuperação parada | 1,76 s esqueleto | 0,00 a 0,28 s | 0,3 | passa |
+| Dano x corpo | até 2,4 / 3,5 / 15,7 m | 100% dentro (esqueleto 160 golpes; investidas a 0,08 a 0,16 m do contorno) | 100% | passa |
+| Aviso x dano | | 157 em 0 f, 1 em +1, 1 em -1, 1 em +7 (Escudo com o herói empurrado) | 0 a 1 f | passa com 1 caso fora (P2) |
+| Tremor do esqueleto esperando (sementes 1 a 4) | 42 giros/10 s, 1,07 inv/s | 0 / 0 / 0 / 2,4 giros/10 s; 0,34 inv/s na semente 4 (um estalo em `FACE_SPEED`) | 1/10 s, 0,3/s | passa em 3 de 4 (P2) |
+| Corrida do esqueleto | 16/20 no ar, pé 29 cm, 13 cm, tronco 3 a 5 | 5/20, pé 30 cm, 10,6 cm, tronco 13 a 17, 161 ppm, 3 cm; corpo 23 cm mais baixo | 6/20, 15 cm, 7 cm, 8 a 15 | 3 de 6 (decisão de arte e do Daniel) |
+| Tiro por orbe | 0,3 a 0,7 | 1,57 (mago), 5,42 (sacerdote elite) | 1,5 | passa |
+| Foice de Morvath | dano 10 f antes da descida | dano em `slash3:7`, 5 de 5 | `:7` a `:8` | passa |
+| Vídeo 0,25x, PO reconhece pela pose | | não feito (GPU ocupada) | | pendente |
+
+Problema novo **T5-20 (P1)**: besteiro (e quem foge) balança o corpo 20 graus a cada 3 a 5 quadros correndo reto
+(robô semente 2: 8,7 inversões/s); `Horde.flee_dir` alterna entre os candidatos 0 e 35 graus e o rosto segue o `e.dir`
+cru. Correção: candidato de fuga guardado 0,3 s ou mais e rosto pela velocidade suavizada; aceite com os números do
+T5-10. Pendentes: T5-17 a T5-19 (P2), histerese de velocidade no `FACE_SPEED` (P2), aviso da investida do Escudo até o
+contato real (P2), olho humano na seção 7.4 do relatório.
+

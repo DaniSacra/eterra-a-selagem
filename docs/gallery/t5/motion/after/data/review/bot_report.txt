@@ -1,0 +1,116 @@
+##### bot_s1.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#0: 452 f, turns>8 31.9/10s, reversals 0.13/s, walk<->idle 0.66/s, idle blips 0, place reversals 0.00/s
+  archer#1: 72 f, turns>8 66.7/10s, reversals 1.67/s, walk<->idle 0.83/s, idle blips 0, place reversals 0.00/s
+  archer#5: 348 f, turns>8 120.7/10s, reversals 1.55/s, walk<->idle 0.86/s, idle blips 0, place reversals 0.00/s
+  runner#13: 92 f, turns>8 0.0/10s, reversals 0.65/s, walk<->idle 0.65/s, idle blips 0, place reversals 0.00/s
+  runner#15: 79 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.76/s, idle blips 0, place reversals 0.00/s
+  runner#17: 37 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.62/s, idle blips 0, place reversals 0.00/s
+  runner#18: 49 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 2.45/s, idle blips 1, place reversals 2.45/s
+  skeleton#2: 117 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.51/s, idle blips 0, place reversals 0.00/s
+  skeleton#3: 66 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.91/s, idle blips 0, place reversals 0.00/s
+  skeleton#4: 54 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.11/s, idle blips 0, place reversals 0.00/s
+  skeleton#6: 55 f, turns>8 43.6/10s, reversals 0.00/s, walk<->idle 1.09/s, idle blips 0, place reversals 0.00/s
+  skeleton#7: 177 f, turns>8 10.2/10s, reversals 0.00/s, walk<->idle 0.34/s, idle blips 0, place reversals 0.00/s
+  skeleton#8: 36 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.67/s, idle blips 0, place reversals 0.00/s
+  skeleton#9: 241 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.25/s, idle blips 0, place reversals 0.00/s
+  skeleton#12: 90 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.67/s, idle blips 0, place reversals 0.00/s
+  skeleton#16: 68 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.76/s, idle blips 1, place reversals 0.00/s
+  skeleton#19: 39 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.54/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 872 f, turns>8 70.2/10s, reversals 0.83/s, walk<->idle 0.76/s, idle blips 0, place reversals 0.00/s
+  ALL runner: 257 f, turns>8 0.0/10s, reversals 0.23/s, walk<->idle 1.17/s, idle blips 1, place reversals 0.47/s
+  ALL skeleton: 943 f, turns>8 4.5/10s, reversals 0.00/s, walk<->idle 0.70/s, idle blips 1, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.28 s, RECOVER still 0.23 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.23 s
+##### bot_s2.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#4: 99 f, turns>8 133.3/10s, reversals 1.82/s, walk<->idle 0.61/s, idle blips 0, place reversals 0.00/s
+  archer#7: 241 f, turns>8 154.4/10s, reversals 8.71/s, walk<->idle 0.25/s, idle blips 0, place reversals 0.00/s
+  runner#15: 31 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.94/s, idle blips 0, place reversals 0.00/s
+  skeleton#0: 37 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.62/s, idle blips 0, place reversals 0.00/s
+  skeleton#1: 206 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.29/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 312 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.19/s, idle blips 0, place reversals 0.00/s
+  skeleton#3: 370 f, turns>8 4.9/10s, reversals 0.16/s, walk<->idle 0.16/s, idle blips 0, place reversals 0.00/s
+  skeleton#6: 134 f, turns>8 0.0/10s, reversals 0.45/s, walk<->idle 0.45/s, idle blips 0, place reversals 0.00/s
+  skeleton#8: 233 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.26/s, idle blips 0, place reversals 0.00/s
+  skeleton#9: 238 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.25/s, idle blips 0, place reversals 0.00/s
+  skeleton#10: 99 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.61/s, idle blips 0, place reversals 0.00/s
+  skeleton#11: 221 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.27/s, idle blips 0, place reversals 0.00/s
+  skeleton#12: 188 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.32/s, idle blips 0, place reversals 0.00/s
+  skeleton#13: 192 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.31/s, idle blips 0, place reversals 0.00/s
+  skeleton#14: 326 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.18/s, idle blips 0, place reversals 0.00/s
+  skeleton#17: 84 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.71/s, idle blips 0, place reversals 0.00/s
+  skeleton#18: 267 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.22/s, idle blips 0, place reversals 0.00/s
+  skeleton#19: 241 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.25/s, idle blips 0, place reversals 0.00/s
+  skeleton#20: 244 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.49/s, idle blips 1, place reversals 0.00/s
+  skeleton#21: 61 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.98/s, idle blips 0, place reversals 0.00/s
+  skeleton#22: 47 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.28/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 340 f, turns>8 148.2/10s, reversals 6.71/s, walk<->idle 0.35/s, idle blips 0, place reversals 0.00/s
+  ALL runner: 31 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.94/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 3500 f, turns>8 0.5/10s, reversals 0.03/s, walk<->idle 0.33/s, idle blips 1, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.27 s, RECOVER still 0.22 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.00 s
+##### bot_s3.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#1: 442 f, turns>8 61.1/10s, reversals 0.68/s, walk<->idle 0.68/s, idle blips 0, place reversals 0.00/s
+  archer#3: 413 f, turns>8 95.9/10s, reversals 0.73/s, walk<->idle 0.15/s, idle blips 0, place reversals 0.00/s
+  archer#5: 616 f, turns>8 72.1/10s, reversals 0.97/s, walk<->idle 0.68/s, idle blips 0, place reversals 0.00/s
+  runner#16: 234 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.26/s, idle blips 0, place reversals 0.00/s
+  runner#18: 196 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.31/s, idle blips 0, place reversals 0.00/s
+  skeleton#0: 62 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.97/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 81 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.74/s, idle blips 0, place reversals 0.00/s
+  skeleton#4: 299 f, turns>8 6.0/10s, reversals 0.40/s, walk<->idle 0.20/s, idle blips 0, place reversals 0.00/s
+  skeleton#6: 198 f, turns>8 3.0/10s, reversals 0.61/s, walk<->idle 0.30/s, idle blips 0, place reversals 0.00/s
+  skeleton#7: 185 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.32/s, idle blips 0, place reversals 0.00/s
+  skeleton#8: 169 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.36/s, idle blips 0, place reversals 0.71/s
+  skeleton#9: 122 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.49/s, idle blips 0, place reversals 0.00/s
+  skeleton#10: 338 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.18/s, idle blips 0, place reversals 0.00/s
+  skeleton#11: 392 f, turns>8 1.5/10s, reversals 0.15/s, walk<->idle 0.15/s, idle blips 0, place reversals 0.00/s
+  skeleton#12: 318 f, turns>8 5.7/10s, reversals 0.19/s, walk<->idle 0.19/s, idle blips 0, place reversals 0.00/s
+  skeleton#13: 341 f, turns>8 0.0/10s, reversals 0.35/s, walk<->idle 0.18/s, idle blips 0, place reversals 0.00/s
+  skeleton#14: 354 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.17/s, idle blips 0, place reversals 0.00/s
+  skeleton#17: 41 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.46/s, idle blips 0, place reversals 0.00/s
+  skeleton#19: 32 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.88/s, idle blips 0, place reversals 0.00/s
+  skeleton#20: 158 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.38/s, idle blips 0, place reversals 0.00/s
+  skeleton#21: 80 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.75/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 1471 f, turns>8 75.5/10s, reversals 0.82/s, walk<->idle 0.53/s, idle blips 0, place reversals 0.00/s
+  ALL runner: 430 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.28/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 3170 f, turns>8 1.5/10s, reversals 0.15/s, walk<->idle 0.30/s, idle blips 0, place reversals 0.04/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.23 s, RECOVER still 0.22 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.42 s
+##### bot_s7.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#1: 125 f, turns>8 139.2/10s, reversals 2.88/s, walk<->idle 0.48/s, idle blips 0, place reversals 0.00/s
+  archer#2: 238 f, turns>8 121.0/10s, reversals 2.02/s, walk<->idle 1.26/s, idle blips 0, place reversals 0.00/s
+  archer#3: 253 f, turns>8 73.5/10s, reversals 1.66/s, walk<->idle 0.47/s, idle blips 0, place reversals 0.00/s
+  archer#5: 36 f, turns>8 116.7/10s, reversals 0.00/s, walk<->idle 1.67/s, idle blips 0, place reversals 0.00/s
+  runner#16: 356 f, turns>8 16.9/10s, reversals 0.51/s, walk<->idle 0.17/s, idle blips 0, place reversals 0.00/s
+  runner#17: 359 f, turns>8 10.0/10s, reversals 0.33/s, walk<->idle 0.17/s, idle blips 0, place reversals 0.00/s
+  skeleton#0: 286 f, turns>8 2.1/10s, reversals 0.00/s, walk<->idle 0.21/s, idle blips 0, place reversals 0.00/s
+  skeleton#4: 129 f, turns>8 0.0/10s, reversals 0.47/s, walk<->idle 0.47/s, idle blips 0, place reversals 0.00/s
+  skeleton#6: 113 f, turns>8 47.8/10s, reversals 0.00/s, walk<->idle 0.53/s, idle blips 0, place reversals 0.00/s
+  skeleton#8: 272 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.22/s, idle blips 0, place reversals 0.00/s
+  skeleton#9: 203 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.30/s, idle blips 0, place reversals 0.00/s
+  skeleton#10: 105 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.57/s, idle blips 0, place reversals 0.00/s
+  skeleton#11: 143 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.42/s, idle blips 0, place reversals 0.00/s
+  skeleton#12: 158 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.38/s, idle blips 0, place reversals 0.00/s
+  skeleton#13: 202 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.30/s, idle blips 0, place reversals 0.00/s
+  skeleton#14: 68 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.88/s, idle blips 0, place reversals 0.00/s
+  skeleton#15: 172 f, turns>8 31.4/10s, reversals 0.00/s, walk<->idle 0.35/s, idle blips 0, place reversals 0.00/s
+  skeleton#19: 240 f, turns>8 20.0/10s, reversals 0.50/s, walk<->idle 0.25/s, idle blips 0, place reversals 0.00/s
+  skeleton#21: 288 f, turns>8 18.8/10s, reversals 0.42/s, walk<->idle 0.21/s, idle blips 0, place reversals 0.00/s
+  skeleton#22: 30 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 2.00/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 652 f, turns>8 105.8/10s, reversals 1.93/s, walk<->idle 0.83/s, idle blips 0, place reversals 0.00/s
+  ALL runner: 715 f, turns>8 13.4/10s, reversals 0.42/s, walk<->idle 0.17/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 2409 f, turns>8 9.0/10s, reversals 0.12/s, walk<->idle 0.35/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.27 s, RECOVER still 0.27 s
+  runner: WINDUP still 0.02 s, RECOVER still 0.00 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.07 s

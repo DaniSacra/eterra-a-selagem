@@ -1,0 +1,197 @@
+##### play_s1.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#0: 1130 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.42/s, idle blips 0, place reversals 0.00/s
+  archer#1: 1074 f, turns>8 1.7/10s, reversals 0.11/s, walk<->idle 0.22/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 405 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.15/s, idle blips 0, place reversals 0.00/s
+  skeleton#3: 416 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.14/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 2204 f, turns>8 0.8/10s, reversals 0.05/s, walk<->idle 0.33/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 821 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.15/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f303 shot archer 3.0
+  f327 shot archer 3.0
+  f476 horde skeleton#2 ATTACK 3.0: 0.93 m from him (body 0.95, blade 2.21), warning ends f476 (+0 f)
+  f502 horde skeleton#3 ATTACK 3.0: 1.27 m from him (body 0.95, blade 2.21), warning ends f502 (+0 f)
+  f515 shot archer 3.0
+  f538 shot archer 3.0
+  f689 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f689 (+0 f)
+  f714 horde skeleton#3 ATTACK 3.0: 1.50 m from him (body 0.95, blade 2.21), warning ends f714 (+0 f)
+  f718 shot archer 3.0
+  f756 shot archer 3.0
+  f905 horde skeleton#2 ATTACK 3.0: 0.99 m from him (body 0.95, blade 2.21), warning ends f905 (+0 f)
+  f922 shot archer 3.0
+  f929 horde skeleton#3 ATTACK 3.0: 1.69 m from him (body 0.95, blade 2.21), warning ends f929 (+0 f)
+  f977 shot archer 3.0
+  f1120 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1120 (+0 f)
+  f1127 shot archer 3.0
+  f1144 horde skeleton#3 ATTACK 3.0: 1.57 m from him (body 0.95, blade 2.21), warning ends f1144 (+0 f)
+  f1185 shot archer 3.0
+  f1333 shot archer 3.0
+  f1334 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1334 (+0 f)
+  f1359 horde skeleton#3 ATTACK 3.0: 1.09 m from him (body 0.95, blade 2.21), warning ends f1359 (+0 f)
+  f1404 shot archer 3.0
+  f1540 shot archer 3.0
+  f1549 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1549 (+0 f)
+  f1574 horde skeleton#3 ATTACK 3.0: 1.02 m from him (body 0.95, blade 2.21), warning ends f1574 (+0 f)
+  f1607 shot archer 3.0
+  f1755 shot archer 3.0
+  f1764 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1764 (+0 f)
+  f1789 horde skeleton#3 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f1789 (+0 f)
+  f1815 shot archer 3.0
+  f1959 shot archer 3.0
+  f1979 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1979 (+0 f)
+  f2004 horde skeleton#3 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f2004 (+0 f)
+  f2024 shot archer 3.0
+  f2167 shot archer 3.0
+  f2194 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2194 (+0 f)
+  f2219 horde skeleton#3 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f2219 (+0 f)
+  f2226 shot archer 3.0
+  f2374 shot archer 3.0
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.22 s, RECOVER still 0.22 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.22 s
+##### play_s2.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  skeleton#0: 238 f, turns>8 0.0/10s, reversals 0.25/s, walk<->idle 0.25/s, idle blips 0, place reversals 0.50/s
+  skeleton#1: 466 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.13/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 551 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.11/s, idle blips 0, place reversals 0.00/s
+  skeleton#3: 520 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.12/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 1775 f, turns>8 0.0/10s, reversals 0.03/s, walk<->idle 0.14/s, idle blips 0, place reversals 0.07/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f264 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f264 (+0 f)
+  f474 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f474 (+0 f)
+  f514 horde skeleton#1 ATTACK 3.0: 1.18 m from him (body 0.95, blade 2.21), warning ends f514 (+0 f)
+  f608 horde skeleton#3 ATTACK 3.0: 1.55 m from him (body 0.95, blade 2.21), warning ends f608 (+0 f)
+  f633 horde skeleton#2 ATTACK 3.0: 2.00 m from him (body 0.95, blade 2.21), warning ends f633 (+0 f)
+  f688 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f688 (+0 f)
+  f725 horde skeleton#1 ATTACK 3.0: 1.49 m from him (body 0.95, blade 2.21), warning ends f725 (+0 f)
+  f833 horde skeleton#3 ATTACK 3.0: 1.72 m from him (body 0.95, blade 2.21), warning ends f833 (+0 f)
+  f853 horde skeleton#2 ATTACK 3.0: 1.99 m from him (body 0.95, blade 2.21), warning ends f852 (+1 f)
+  f903 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f903 (+0 f)
+  f940 horde skeleton#1 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f940 (+0 f)
+  f1049 horde skeleton#3 ATTACK 3.0: 1.77 m from him (body 0.95, blade 2.21), warning ends f1049 (+0 f)
+  f1065 horde skeleton#2 ATTACK 3.0: 1.47 m from him (body 0.95, blade 2.21), warning ends f1065 (+0 f)
+  f1118 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1118 (+0 f)
+  f1155 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1155 (+0 f)
+  f1262 horde skeleton#3 ATTACK 3.0: 1.79 m from him (body 0.95, blade 2.21), warning ends f1262 (+0 f)
+  f1277 horde skeleton#2 ATTACK 3.0: 1.32 m from him (body 0.95, blade 2.21), warning ends f1277 (+0 f)
+  f1333 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1333 (+0 f)
+  f1370 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1370 (+0 f)
+  f1476 horde skeleton#3 ATTACK 3.0: 1.67 m from him (body 0.95, blade 2.21), warning ends f1476 (+0 f)
+  f1492 horde skeleton#2 ATTACK 3.0: 1.28 m from him (body 0.95, blade 2.21), warning ends f1492 (+0 f)
+  f1548 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1548 (+0 f)
+  f1585 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1585 (+0 f)
+  f1691 horde skeleton#3 ATTACK 3.0: 1.67 m from him (body 0.95, blade 2.21), warning ends f1691 (+0 f)
+  f1707 horde skeleton#2 ATTACK 3.0: 1.22 m from him (body 0.95, blade 2.21), warning ends f1707 (+0 f)
+  f1763 horde skeleton#0 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1763 (+0 f)
+  f1800 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1800 (+0 f)
+  f1907 horde skeleton#3 ATTACK 3.0: 1.79 m from him (body 0.95, blade 2.21), warning ends f1907 (+0 f)
+  f1922 horde skeleton#2 ATTACK 3.0: 1.22 m from him (body 0.95, blade 2.21), warning ends f1922 (+0 f)
+  f1978 horde skeleton#0 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1978 (+0 f)
+  f2015 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2015 (+0 f)
+  f2122 horde skeleton#3 ATTACK 3.0: 1.79 m from him (body 0.95, blade 2.21), warning ends f2122 (+0 f)
+  f2137 horde skeleton#2 ATTACK 3.0: 1.22 m from him (body 0.95, blade 2.21), warning ends f2137 (+0 f)
+  f2193 horde skeleton#0 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f2193 (+0 f)
+  f2230 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2230 (+0 f)
+  f2337 horde skeleton#3 ATTACK 3.0: 1.79 m from him (body 0.95, blade 2.21), warning ends f2337 (+0 f)
+  f2352 horde skeleton#2 ATTACK 3.0: 1.22 m from him (body 0.95, blade 2.21), warning ends f2352 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.22 s
+##### play_s3.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#1: 1193 f, turns>8 0.0/10s, reversals 0.10/s, walk<->idle 0.30/s, idle blips 0, place reversals 0.00/s
+  archer#3: 1070 f, turns>8 0.0/10s, reversals 0.06/s, walk<->idle 0.45/s, idle blips 0, place reversals 0.00/s
+  skeleton#0: 327 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.18/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 347 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.17/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 2263 f, turns>8 0.0/10s, reversals 0.08/s, walk<->idle 0.37/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 674 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.18/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f300 shot archer 3.0
+  f369 horde skeleton#0 ATTACK 3.0: 1.78 m from him (body 0.95, blade 2.21), warning ends f369 (+0 f)
+  f419 horde skeleton#2 ATTACK 3.0: 1.10 m from him (body 0.95, blade 2.21), warning ends f419 (+0 f)
+  f483 shot archer 3.0
+  f522 shot archer 3.0
+  f581 horde skeleton#0 ATTACK 3.0: 1.69 m from him (body 0.95, blade 2.21), warning ends f581 (+0 f)
+  f629 horde skeleton#2 ATTACK 3.0: 0.97 m from him (body 0.95, blade 2.21), warning ends f629 (+0 f)
+  f709 shot archer 3.0
+  f749 shot archer 3.0
+  f800 horde skeleton#0 ATTACK 3.0: 1.15 m from him (body 0.95, blade 2.21), warning ends f800 (+0 f)
+  f844 horde skeleton#2 ATTACK 3.0: 1.15 m from him (body 0.95, blade 2.21), warning ends f844 (+0 f)
+  f924 shot archer 3.0
+  f956 shot archer 3.0
+  f1009 horde skeleton#0 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1009 (+0 f)
+  f1058 horde skeleton#2 ATTACK 3.0: 1.11 m from him (body 0.95, blade 2.21), warning ends f1058 (+0 f)
+  f1137 shot archer 3.0
+  f1171 shot archer 3.0
+  f1224 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1224 (+0 f)
+  f1273 horde skeleton#2 ATTACK 3.0: 1.04 m from him (body 0.95, blade 2.21), warning ends f1273 (+0 f)
+  f1349 shot archer 3.0
+  f1375 shot archer 3.0
+  f1439 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1439 (+0 f)
+  f1488 horde skeleton#2 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f1488 (+0 f)
+  f1562 shot archer 3.0
+  f1586 shot archer 3.0
+  f1654 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1654 (+0 f)
+  f1703 horde skeleton#2 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f1703 (+0 f)
+  f1774 shot archer 3.0
+  f1796 shot archer 3.0
+  f1869 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1869 (+0 f)
+  f1918 horde skeleton#2 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f1918 (+0 f)
+  f1976 shot archer 3.0
+  f2008 shot archer 3.0
+  f2084 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2084 (+0 f)
+  f2133 horde skeleton#2 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f2133 (+0 f)
+  f2179 shot archer 3.0
+  f2212 shot archer 3.0
+  f2299 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2299 (+0 f)
+  f2348 horde skeleton#2 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f2348 (+0 f)
+  f2394 shot archer 3.0
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.22 s, RECOVER still 0.22 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.22 s
+##### play_s4.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  skeleton#0: 579 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.10/s, idle blips 0, place reversals 0.10/s
+  skeleton#1: 438 f, turns>8 9.6/10s, reversals 1.37/s, walk<->idle 0.14/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 470 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.13/s, idle blips 0, place reversals 0.00/s
+  skeleton#3: 256 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.23/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 1743 f, turns>8 2.4/10s, reversals 0.34/s, walk<->idle 0.14/s, idle blips 0, place reversals 0.03/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f355 horde skeleton#3 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f355 (+0 f)
+  f491 horde skeleton#1 ATTACK 3.0: 1.11 m from him (body 0.95, blade 2.21), warning ends f491 (+0 f)
+  f556 horde skeleton#2 ATTACK 3.0: 0.95 m from him (body 0.95, blade 2.21), warning ends f556 (+0 f)
+  f564 horde skeleton#3 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f564 (+0 f)
+  f629 horde skeleton#0 ATTACK 3.0: 1.49 m from him (body 0.95, blade 2.21), warning ends f629 (+0 f)
+  f703 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f703 (+0 f)
+  f767 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f767 (+0 f)
+  f779 horde skeleton#3 ATTACK 3.0: 1.21 m from him (body 0.95, blade 2.21), warning ends f779 (+0 f)
+  f844 horde skeleton#0 ATTACK 3.0: 1.65 m from him (body 0.95, blade 2.21), warning ends f844 (+0 f)
+  f918 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f918 (+0 f)
+  f982 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f982 (+0 f)
+  f994 horde skeleton#3 ATTACK 3.0: 1.02 m from him (body 0.95, blade 2.21), warning ends f994 (+0 f)
+  f1056 horde skeleton#0 ATTACK 3.0: 1.45 m from him (body 0.95, blade 2.21), warning ends f1056 (+0 f)
+  f1133 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1133 (+0 f)
+  f1197 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1197 (+0 f)
+  f1209 horde skeleton#3 ATTACK 3.0: 1.18 m from him (body 0.95, blade 2.21), warning ends f1209 (+0 f)
+  f1274 horde skeleton#0 ATTACK 3.0: 1.57 m from him (body 0.95, blade 2.21), warning ends f1274 (+0 f)
+  f1348 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1348 (+0 f)
+  f1412 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1412 (+0 f)
+  f1424 horde skeleton#3 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1424 (+0 f)
+  f1486 horde skeleton#0 ATTACK 3.0: 1.48 m from him (body 0.95, blade 2.21), warning ends f1486 (+0 f)
+  f1563 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1563 (+0 f)
+  f1627 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1627 (+0 f)
+  f1639 horde skeleton#3 ATTACK 3.0: 1.12 m from him (body 0.95, blade 2.21), warning ends f1639 (+0 f)
+  f1704 horde skeleton#0 ATTACK 3.0: 1.56 m from him (body 0.95, blade 2.21), warning ends f1704 (+0 f)
+  f1778 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1778 (+0 f)
+  f1842 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1842 (+0 f)
+  f1854 horde skeleton#3 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1854 (+0 f)
+  f1916 horde skeleton#0 ATTACK 3.0: 1.46 m from him (body 0.95, blade 2.21), warning ends f1916 (+0 f)
+  f1993 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1993 (+0 f)
+  f2057 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2057 (+0 f)
+  f2069 horde skeleton#3 ATTACK 3.0: 1.05 m from him (body 0.95, blade 2.21), warning ends f2069 (+0 f)
+  f2133 horde skeleton#0 ATTACK 3.0: 1.53 m from him (body 0.95, blade 2.21), warning ends f2133 (+0 f)
+  f2208 horde skeleton#1 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f2208 (+0 f)
+  f2272 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f2272 (+0 f)
+  f2284 horde skeleton#3 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f2284 (+0 f)
+  f2345 horde skeleton#0 ATTACK 3.0: 1.31 m from him (body 0.95, blade 2.21), warning ends f2345 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.22 s

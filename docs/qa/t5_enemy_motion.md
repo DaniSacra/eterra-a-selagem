@@ -280,3 +280,69 @@ Para o art-director aprovar: `after/sheet_skeleton_walk.jpg`.
   andar para ele em 0,12 s.
 - Esqueleto elite com 11 `idle` curtos sob golpes na armadura (fora do T5-10, que mede o comum).
 - Vídeo na GPU a 60 qps para o PO e o art-director: não feito (a GPU estava com outro agente).
+
+## 7. Revisão do combat-feel-director (2026-11-17, `24c298e`)
+
+Refeito na CPU, sem tela, com `--fixed-fps 60` (a GPU estava com o qa-performance), com os mesmos roteiros e sementes:
+`tools/enemy_motion_probe.gd` em `--play --seed=1..4 --hero-hp=9999` (40 s), robô `--bot --bot-reaction=0.25
+--seed=1,2,3,7` (50 s), loja `--start=shop --stress=3 --stress-ids=<id>` para esqueleto, corredor, mago, besteiro,
+Escudo, sacerdote, esqueleto elite e Escudo elite (`--stress=1` para Cavaleiro, ancião, mago elite e corredor elite;
+25 s), Morvath `--boss-only=scythe|blades` e a investida com `--bot --bot-kite=0.9 --bot-reaction=0.6`; poses por
+`tools/clip_motion.gd`; testes `test_enemy_windup` (7/7) e `test_enemy_motion` passam. Relatórios em
+`docs/gallery/t5/motion/after/data/review/` (`play_report.txt`, `bot_report.txt`, `st_report.txt`, `clip_motion.txt`,
+`archer_flee_bot_s2.txt`). Os números do implementador se repetem (as sementes 1 a 4 dão os mesmos golpes, agora todos
+com o aviso em 0 f). Legenda: [M] medido aqui, [O] observado nas imagens de `after/`, [I] inferência.
+
+### 7.1 Veredito por item
+
+| Item | Veredito | Evidência |
+|---|---|---|
+| T5-01 preparação em três tempos | **Aprovado** | [M] maior pose parada antes do segurar: 0,13 a 0,28 s em toda figura que atacou (critério 0,3); tremor só no segurar (teste) |
+| T5-02 esqueleto (comum, elite, invocado) | **Aprovado com ressalva** | [M] armar a 1,0 a 1,7 m/s por pose e 6,04 no último passo; pose armada 0,31 (no limite de 0,30). **Fora do critério**: alto da pose armada 1,85 m (tamanho 1; o `idle` tem 1,91; pedido 2,1): a lâmina vai para trás por cima do ombro, não acima da cabeça, e o tronco gira uns 90 graus no último décimo do clipe (pose 8 para 9) [O] `lab_skeleton_windup_side.jpg`. Lê como armado, mas pede olho humano |
+| T5-03 feiticeiro e ancião | **Aprovado** | [M] 1,56 e 1,62 m/s, 0,33 e 0,34 m; o erguer dos mortos 6,03 e 0,82. Mago elite e sacerdote não atiraram no roteiro da loja (sem linha de tiro ou fora da tela): medidos só pelo clipe e pelo teste |
+| T5-04 / T5-16 corredor | **Aprovado com ressalva** | [M] pico 5,07, agacha 21 cm (pedido 15), explosão no giro no quadro dos braços abrindo, 26 golpes com aviso em 0 f. [O] primeira pose com o joelho erguido (pose de cegonha por 0,12 s) e os braços não puxam ao peito |
+| T5-05 besteiro | **Aprovado** | [M] a besta sobe no assentar de 0,25 s; mira parada aceita pela spec |
+| T5-06 Escudo | **Aprovado com ressalva** | [M] corrida desenhada com `charge` (antes o golpe de espada); contato a 0,16 m do contorno. Um caso com o **aviso terminando 7 f (0,12 s) antes do contato** (`st_guard` f277 x f284: o herói foi empurrado 0,12 m por outro Escudo e a corrida desenhada anda 10 a 14 m/s, não 15). P2 |
+| T5-07 Cavaleiro | **Aprovado** | [M] `brace` 3,33 m/s, 0,51 m; contato a 0,08 m do contorno, aviso +1 f. [O] `sheet_knight_brace.jpg` lê como carga de escudo |
+| T5-08 dano no corpo (investidas) | **Aprovado** | [M] Escudo e Cavaleiro acima; Morvath varrido de 2,16 para 1,77 m cruzando o contorno de 1,85. Com o robô andando a faixa de Morvath termina 2 a 3 f antes (enche até onde o herói estava: comportamento pedido) |
+| T5-09 bote do esqueleto | **Aprovado** | [M] 160 golpes de corpo nas sondas: lâmina a 0,93 a 2,00 m do centro, alcance 2,21: 100% dentro; aviso x dano: 157 em 0 f, 1 em +1, 1 em -1 (golpe curto do Escudo), 1 em +7 (o caso do T5-06) |
+| T5-10 esqueleto esperando | **Aprovado com ressalva** | [M] sementes 1 a 3: 0 giros acima de 8 graus, 0 a 0,03 inversões/s, 0,14 a 0,18 trocas/s, nenhum `idle` curto. Semente 4, esqueleto #1: **um estalo de 7 quadros** (f628 a f634, 20 graus por quadro até -54 e volta em 3 quadros) quando a velocidade cruza `FACE_SPEED` 1,2 m/s (1,23, 1,38, 1,30, 1,19): 1,37 inversões/s nesse esqueleto, 0,34/s no conjunto (critério 0,3). Não é troca de alvo: falta histerese na velocidade. P2 |
+| T5-11 corrida do esqueleto | **Reprovado no critério (3 de 6), não bloqueante** | [M] pés no ar 5/20, tronco 13 a 17, 161 passos/min, escorregamento 3 cm passam; pé levantado 0,26 m (30 cm em jogo, pedido 15), sobe e desce 0,092 (10,6 cm, pedido 7) não. [M] novo: o `plant` baixa o corpo 23 cm (meio do corpo -0,227 contra a guarda): [O] `sheet_skeleton_walk.jpg` lê como trote agachado, de joelho dobrado. A gazela sumiu; o risco agora é parecer agachado. Decisão do art-director e do Daniel (6.4: andar a 2 m/s perto) |
+| T5-12 recuperações vivas | **Aprovado** | [M] 0,00 a 0,28 s em toda figura. O 0,42 s do esqueleto no robô semente 3 é a câmera lenta do último abate (o `state_t` anda 0,003 s por quadro em `idle`): falso positivo da sonda, que conta quadros reais |
+| T5-13 tiro com gesto | **Aprovado** | [M] mago `shot` 1,57 m/s (pedido 1,5), sacerdote elite 5,42. O `after/data/clip_motion.txt` do commit ficou velho (1,06 e 0,38); o que vale é o `review/clip_motion.txt` |
+| T5-14 foice de Morvath | **Aprovado** | [M] 5 de 5 golpes com o dano em `slash3:7`, aviso +1 f |
+| T5-15 Lâminas e Investida de Morvath | **Aprovado** | [M] 4,92 e 11,85 m/s, 0,71 m; poses diferentes (teste). [O] a investida agacha para frente, as Lâminas recuam a arma |
+| T5-17, T5-18, T5-19 (P2) | **Pendentes** | não feitos (maldição com o gesto do invocar, 2ª leva das erupções parada, recuo da besta) |
+
+### 7.2 Problema novo: T5-20 (P1) atirador fugindo balança o corpo
+
+[M] Robô semente 2, besteiro #7 (`review/archer_flee_bot_s2.txt`, f969 a f1067): correndo reto a 3,5 m/s, a velocidade
+desenhada estável (vx 3,48, vz perto de 0), o corpo desenhado vai de 80 a 100 graus e volta a cada 3 a 5 quadros, 20
+graus por quadro: 154 quadros com giro acima de 8 graus por 10 s e 8,7 inversões por segundo. Nos besteiros das 4
+sementes do robô: 70 a 148 quadros por 10 s, 0,8 a 6,7 inversões/s; corredores 0 a 13. É a "pendência dos que giram
+ao fugir", mas **não é giro legítimo**: é o mesmo sintoma "andando tremendo" do relato do PO, num atirador.
+Causa provável [I, lida no código]: `Horde.flee_dir` escolhe entre os candidatos 0 e 35 graus quadro a quadro (a sonda
+de `RANGED_LOOK` perto de borda ou pedra liga e desliga), `_behave_ranged` grava `e.dir = away` cru, e no
+`_drawn_motion` o rosto segue `e.dir` (o ângulo para a velocidade fica abaixo de `FACE_BACK`, `face_walk` falso) até
+`TURN_RATE` 1200 graus/s. A lógica de fuga é anterior ao T5 (não é regressão). Correção para o gameplay-engineer: guardar
+o candidato de fuga por pelo menos 0,3 s (só trocar se o atual ficar bloqueado) e, fugindo, o rosto pela velocidade
+suavizada (`e.vel`), não pela direção crua. Aceite: os critérios do T5-10 valendo para quem foge (inversões até 0,3/s,
+nenhum vai e volta de mais de 8 graus em até 5 quadros) no robô sementes 1, 2, 3, 7.
+
+### 7.3 Ferramenta
+
+`tools/enemy_motion_probe.py` quebra nos golpes de Morvath (`ValueError` no `:+` quando não há aviso do próprio corpo,
+linha 134): formatar o número antes. Morvath foi medido à mão nos CSV.
+
+### 7.4 O que precisa de olho humano (vídeo a 60 qps, 0,25x, quando a GPU estiver livre)
+
+1. Esqueleto: a pose armada com a lâmina atrás do ombro e o giro rápido do tronco no fim do armar lê como "vai bater"?
+2. Corredor: o joelho erguido no começo da preparação.
+3. Corrida do esqueleto: trote agachado (corpo 23 cm abaixo) contra a gazela de antes; decidir T5-11.
+4. Morvath: a investida agachada fica de costas para a câmera em parte das direções.
+5. Escudo: o `brace` de 1,15 s ainda é lento (o clipe tem 0,62 m/s; o desenho passa de 1,0 só pela curva).
+6. O PO reconhece cada golpe pela pose sem olhar o chão (critério de vídeo do 6.1, ainda não feito).
+
+**Veredito geral**: o T5 está **aprovado com ressalvas**. Os dois P0 (preparação sem corpo, dano antes do corpo) estão
+resolvidos e medidos; não reprovo a entrega. Ficam o T5-11 fora do critério (decisão de arte e do Daniel), o T5-20 novo
+(P1, para o próximo lote), os estalos do T5-10 e o aviso curto do Escudo (P2), os P2 T5-17 a T5-19 e o vídeo.

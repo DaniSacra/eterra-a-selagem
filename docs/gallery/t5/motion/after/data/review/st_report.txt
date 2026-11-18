@@ -1,0 +1,268 @@
+##### st_archer.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  archer#0: 739 f, turns>8 2.4/10s, reversals 0.00/s, walk<->idle 0.49/s, idle blips 0, place reversals 0.00/s
+  archer#1: 1165 f, turns>8 2.6/10s, reversals 0.00/s, walk<->idle 0.10/s, idle blips 0, place reversals 0.00/s
+  archer#2: 739 f, turns>8 8.9/10s, reversals 0.00/s, walk<->idle 0.32/s, idle blips 0, place reversals 0.00/s
+  ALL archer: 2643 f, turns>8 4.3/10s, reversals 0.00/s, walk<->idle 0.27/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  archer: WINDUP still 0.22 s, RECOVER still 0.22 s
+##### st_guard.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  guard#0: 208 f, turns>8 23.1/10s, reversals 0.87/s, walk<->idle 0.87/s, idle blips 0, place reversals 4.33/s
+  guard#1: 254 f, turns>8 18.9/10s, reversals 0.24/s, walk<->idle 1.42/s, idle blips 0, place reversals 0.00/s
+  guard#2: 226 f, turns>8 108.8/10s, reversals 9.03/s, walk<->idle 0.80/s, idle blips 0, place reversals 3.45/s
+  ALL guard: 688 f, turns>8 49.7/10s, reversals 3.31/s, walk<->idle 1.05/s, idle blips 0, place reversals 2.44/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f88 ground guard#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f89 (-1 f)
+  f103 ground guard#0 WINDUP 7.0: 1.55 m from him (body 1.20, blade 2.85), warning ends f103 (+0 f)
+  f255 ground guard#0 WINDUP 7.0: 1.64 m from him (body 1.20, blade 2.85), warning ends f255 (+0 f)
+  f284 horde guard#2 ATTACK 9.0: 1.36 m from him (body 1.20, blade 2.85), warning ends f277 (+7 f)
+  f327 ground guard#1 WINDUP 7.0: 1.73 m from him (body 1.20, blade 2.85), warning ends f327 (+0 f)
+  f407 ground guard#0 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f407 (+0 f)
+  f449 ground guard#2 WINDUP 7.0: 1.19 m from him (body 1.20, blade 2.85), warning ends f449 (+0 f)
+  f479 ground guard#1 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f479 (+0 f)
+  f559 ground guard#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f559 (+0 f)
+  f601 ground guard#2 WINDUP 7.0: 1.50 m from him (body 1.20, blade 2.85), warning ends f601 (+0 f)
+  f631 ground guard#1 WINDUP 7.0: 1.71 m from him (body 1.20, blade 2.85), warning ends f631 (+0 f)
+  f711 ground guard#0 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f711 (+0 f)
+  f753 ground guard#2 WINDUP 7.0: 1.84 m from him (body 1.20, blade 2.85), warning ends f753 (+0 f)
+  f783 ground guard#1 WINDUP 7.0: 1.59 m from him (body 1.20, blade 2.85), warning ends f783 (+0 f)
+  f863 ground guard#0 WINDUP 7.0: 1.73 m from him (body 1.20, blade 2.85), warning ends f863 (+0 f)
+  f905 ground guard#2 WINDUP 7.0: 1.93 m from him (body 1.20, blade 2.85), warning ends f905 (+0 f)
+  f935 ground guard#1 WINDUP 7.0: 1.57 m from him (body 1.20, blade 2.85), warning ends f935 (+0 f)
+  f1015 ground guard#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f1015 (+0 f)
+  f1057 ground guard#2 WINDUP 7.0: 2.03 m from him (body 1.20, blade 2.85), warning ends f1057 (+0 f)
+  f1087 ground guard#1 WINDUP 7.0: 1.58 m from him (body 1.20, blade 2.85), warning ends f1087 (+0 f)
+  f1167 ground guard#0 WINDUP 7.0: 1.71 m from him (body 1.20, blade 2.85), warning ends f1167 (+0 f)
+  f1209 ground guard#2 WINDUP 7.0: 2.07 m from him (body 1.20, blade 2.85), warning ends f1209 (+0 f)
+  f1239 ground guard#1 WINDUP 7.0: 1.64 m from him (body 1.20, blade 2.85), warning ends f1239 (+0 f)
+  f1319 ground guard#0 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f1319 (+0 f)
+  f1361 ground guard#2 WINDUP 7.0: 2.15 m from him (body 1.20, blade 2.85), warning ends f1361 (+0 f)
+  f1391 ground guard#1 WINDUP 7.0: 1.71 m from him (body 1.20, blade 2.85), warning ends f1391 (+0 f)
+  f1471 ground guard#0 WINDUP 7.0: 1.70 m from him (body 1.20, blade 2.85), warning ends f1471 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  guard: WINDUP still 0.20 s, RECOVER still 0.22 s
+##### st_guard_elite.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  guard_elite#0: 251 f, turns>8 4.8/10s, reversals 0.00/s, walk<->idle 0.24/s, idle blips 0, place reversals 0.72/s
+  guard_elite#1: 256 f, turns>8 49.2/10s, reversals 1.64/s, walk<->idle 0.94/s, idle blips 0, place reversals 0.00/s
+  guard_elite#2: 296 f, turns>8 2.0/10s, reversals 0.00/s, walk<->idle 0.81/s, idle blips 0, place reversals 0.00/s
+  ALL guard_elite: 803 f, turns>8 17.9/10s, reversals 0.52/s, walk<->idle 0.67/s, idle blips 0, place reversals 0.22/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f146 ground guard_elite#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f146 (+0 f)
+  f151 ground guard_elite#1 WINDUP 7.0: 1.69 m from him (body 1.20, blade 2.85), warning ends f151 (+0 f)
+  f298 ground guard_elite#0 WINDUP 7.0: 1.73 m from him (body 1.20, blade 2.85), warning ends f298 (+0 f)
+  f303 ground guard_elite#1 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f303 (+0 f)
+  f383 ground guard_elite#2 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f383 (+0 f)
+  f450 ground guard_elite#0 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f450 (+0 f)
+  f455 ground guard_elite#1 WINDUP 7.0: 1.37 m from him (body 1.20, blade 2.85), warning ends f455 (+0 f)
+  f535 ground guard_elite#2 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f535 (+0 f)
+  f602 ground guard_elite#0 WINDUP 7.0: 1.73 m from him (body 1.20, blade 2.85), warning ends f602 (+0 f)
+  f607 ground guard_elite#1 WINDUP 7.0: 1.27 m from him (body 1.20, blade 2.85), warning ends f607 (+0 f)
+  f687 ground guard_elite#2 WINDUP 7.0: 1.70 m from him (body 1.20, blade 2.85), warning ends f687 (+0 f)
+  f754 ground guard_elite#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f754 (+0 f)
+  f759 ground guard_elite#1 WINDUP 7.0: 1.26 m from him (body 1.20, blade 2.85), warning ends f759 (+0 f)
+  f839 ground guard_elite#2 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f839 (+0 f)
+  f906 ground guard_elite#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f906 (+0 f)
+  f911 ground guard_elite#1 WINDUP 7.0: 1.26 m from him (body 1.20, blade 2.85), warning ends f911 (+0 f)
+  f991 ground guard_elite#2 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f991 (+0 f)
+  f1058 ground guard_elite#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f1058 (+0 f)
+  f1063 ground guard_elite#1 WINDUP 7.0: 1.26 m from him (body 1.20, blade 2.85), warning ends f1063 (+0 f)
+  f1143 ground guard_elite#2 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f1143 (+0 f)
+  f1210 ground guard_elite#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f1210 (+0 f)
+  f1215 ground guard_elite#1 WINDUP 7.0: 1.26 m from him (body 1.20, blade 2.85), warning ends f1215 (+0 f)
+  f1295 ground guard_elite#2 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f1295 (+0 f)
+  f1362 ground guard_elite#0 WINDUP 7.0: 1.72 m from him (body 1.20, blade 2.85), warning ends f1362 (+0 f)
+  f1367 ground guard_elite#1 WINDUP 7.0: 1.26 m from him (body 1.20, blade 2.85), warning ends f1367 (+0 f)
+  f1447 ground guard_elite#2 WINDUP 7.0: 1.74 m from him (body 1.20, blade 2.85), warning ends f1447 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  guard_elite: WINDUP still 0.20 s, RECOVER still 0.22 s
+##### st_knight.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  knight#0: 657 f, turns>8 5.5/10s, reversals 0.18/s, walk<->idle 0.91/s, idle blips 0, place reversals 0.00/s
+  ALL knight: 657 f, turns>8 5.5/10s, reversals 0.18/s, walk<->idle 0.91/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f263 horde knight#0 ATTACK 12.0: 1.63 m from him (body 1.55, blade 3.83), warning ends f262 (+1 f)
+  f515 ground knight#0 WINDUP 12.0: 1.60 m from him (body 1.55, blade 3.83), warning ends f515 (+0 f)
+  f710 ground knight#0 WINDUP 12.0: 1.85 m from him (body 1.55, blade 3.83), warning ends f710 (+0 f)
+  f905 ground knight#0 WINDUP 12.0: 2.09 m from him (body 1.55, blade 3.83), warning ends f905 (+0 f)
+  f1100 ground knight#0 WINDUP 12.0: 2.07 m from him (body 1.55, blade 3.83), warning ends f1100 (+0 f)
+  f1295 ground knight#0 WINDUP 12.0: 2.06 m from him (body 1.55, blade 3.83), warning ends f1295 (+0 f)
+  f1490 ground knight#0 WINDUP 12.0: 2.09 m from him (body 1.55, blade 3.83), warning ends f1490 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  knight: WINDUP still 0.17 s, RECOVER still 0.22 s
+##### st_mage.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  mage#0: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  mage#1: 890 f, turns>8 19.6/10s, reversals 0.74/s, walk<->idle 0.13/s, idle blips 0, place reversals 0.00/s
+  mage#2: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  ALL mage: 3894 f, turns>8 4.5/10s, reversals 0.17/s, walk<->idle 0.03/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  mage: WINDUP still 0.17 s, RECOVER still 0.17 s
+##### st_mage_elite.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  mage_elite#0: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  ALL mage_elite: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+##### st_priest.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  priest#0: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.08/s, idle blips 0, place reversals 0.00/s
+  priest#1: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.08/s, idle blips 0, place reversals 0.00/s
+  priest#2: 1502 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.08/s, idle blips 0, place reversals 0.00/s
+  ALL priest: 4506 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.08/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+##### st_priest_elder.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  priest_elder#0: 1033 f, turns>8 37.8/10s, reversals 2.44/s, walk<->idle 0.87/s, idle blips 0, place reversals 17.89/s
+  skeleton#1: 178 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.67/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 154 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.78/s, idle blips 0, place reversals 0.78/s
+  skeleton#3: 221 f, turns>8 19.0/10s, reversals 1.09/s, walk<->idle 0.54/s, idle blips 0, place reversals 0.00/s
+  skeleton#4: 100 f, turns>8 72.0/10s, reversals 0.60/s, walk<->idle 0.60/s, idle blips 0, place reversals 0.60/s
+  skeleton#5: 298 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.40/s, idle blips 0, place reversals 3.42/s
+  skeleton#6: 178 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.34/s, idle blips 0, place reversals 0.00/s
+  skeleton#8: 166 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 1.08/s, idle blips 0, place reversals 24.58/s
+  skeleton#9: 166 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.36/s, idle blips 0, place reversals 0.72/s
+  ALL priest_elder: 1033 f, turns>8 37.8/10s, reversals 2.44/s, walk<->idle 0.87/s, idle blips 0, place reversals 17.89/s
+  ALL skeleton: 1461 f, turns>8 7.8/10s, reversals 0.21/s, walk<->idle 0.57/s, idle blips 0, place reversals 3.70/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f343 horde skeleton#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f343 (+0 f)
+  f355 horde skeleton#1 ATTACK 3.0: 1.24 m from him (body 0.95, blade 2.21), warning ends f355 (+0 f)
+  f450 horde skeleton#3 ATTACK 3.0: 1.60 m from him (body 0.95, blade 2.21), warning ends f450 (+0 f)
+  f555 horde skeleton#2 ATTACK 3.0: 1.05 m from him (body 0.95, blade 2.21), warning ends f555 (+0 f)
+  f564 horde skeleton#1 ATTACK 3.0: 1.51 m from him (body 0.95, blade 2.21), warning ends f564 (+0 f)
+  f663 horde skeleton#3 ATTACK 3.0: 1.18 m from him (body 0.95, blade 2.21), warning ends f663 (+0 f)
+  f770 horde skeleton#2 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f770 (+0 f)
+  f779 horde skeleton#1 ATTACK 3.0: 1.97 m from him (body 0.95, blade 2.21), warning ends f779 (+0 f)
+  f874 horde skeleton#3 ATTACK 3.0: 0.97 m from him (body 0.95, blade 2.21), warning ends f874 (+0 f)
+  f900 horde skeleton#4 ATTACK 3.0: 1.53 m from him (body 0.95, blade 2.21), warning ends f900 (+0 f)
+  f975 horde skeleton#6 ATTACK 3.0: 1.75 m from him (body 0.95, blade 2.21), warning ends f975 (+0 f)
+  f1046 horde skeleton#2 ATTACK 3.0: 1.50 m from him (body 0.95, blade 2.21), warning ends f1046 (+0 f)
+  f1092 horde skeleton#3 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1092 (+0 f)
+  f1117 horde skeleton#4 ATTACK 3.0: 1.46 m from him (body 0.95, blade 2.21), warning ends f1117 (+0 f)
+  f1199 horde skeleton#6 ATTACK 3.0: 1.68 m from him (body 0.95, blade 2.21), warning ends f1199 (+0 f)
+  f1269 horde skeleton#2 ATTACK 3.0: 1.14 m from him (body 0.95, blade 2.21), warning ends f1269 (+0 f)
+  f1289 horde skeleton#1 ATTACK 3.0: 1.63 m from him (body 0.95, blade 2.21), warning ends f1289 (+0 f)
+  f1341 horde skeleton#3 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f1341 (+0 f)
+  f1363 horde skeleton#4 ATTACK 3.0: 1.28 m from him (body 0.95, blade 2.21), warning ends f1363 (+0 f)
+  f1415 horde skeleton#7 ATTACK 3.0: 1.58 m from him (body 0.95, blade 2.21), warning ends f1415 (+0 f)
+  f1489 horde skeleton#2 ATTACK 3.0: 1.61 m from him (body 0.95, blade 2.21), warning ends f1489 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  priest_elder: WINDUP still 0.17 s, RECOVER still 0.00 s
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.22 s
+##### st_runner.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  runner#0: 195 f, turns>8 73.8/10s, reversals 3.08/s, walk<->idle 0.31/s, idle blips 0, place reversals 0.00/s
+  runner#1: 182 f, turns>8 128.6/10s, reversals 4.95/s, walk<->idle 0.33/s, idle blips 0, place reversals 0.00/s
+  runner#2: 326 f, turns>8 25.8/10s, reversals 1.66/s, walk<->idle 0.18/s, idle blips 0, place reversals 0.00/s
+  ALL runner: 703 f, turns>8 65.7/10s, reversals 2.90/s, walk<->idle 0.26/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f101 ground runner#1 ATTACK 5.0: 0.91 m from him (body 0.90, blade 2.04), warning ends f101 (+0 f)
+  f112 ground runner#0 ATTACK 5.0: 1.33 m from him (body 0.90, blade 2.04), warning ends f112 (+0 f)
+  f252 ground runner#2 ATTACK 5.0: 1.58 m from him (body 0.90, blade 2.04), warning ends f252 (+0 f)
+  f267 ground runner#1 ATTACK 5.0: 0.95 m from him (body 0.90, blade 2.04), warning ends f267 (+0 f)
+  f276 ground runner#0 ATTACK 5.0: 1.94 m from him (body 0.90, blade 2.04), warning ends f276 (+0 f)
+  f419 ground runner#2 ATTACK 5.0: 1.58 m from him (body 0.90, blade 2.04), warning ends f419 (+0 f)
+  f431 ground runner#1 ATTACK 5.0: 1.15 m from him (body 0.90, blade 2.04), warning ends f431 (+0 f)
+  f440 ground runner#0 ATTACK 5.0: 2.26 m from him (body 0.90, blade 2.04), warning ends f440 (+0 f)
+  f583 ground runner#2 ATTACK 5.0: 1.57 m from him (body 0.90, blade 2.04), warning ends f583 (+0 f)
+  f595 ground runner#1 ATTACK 5.0: 1.43 m from him (body 0.90, blade 2.04), warning ends f595 (+0 f)
+  f606 ground runner#0 ATTACK 5.0: 1.99 m from him (body 0.90, blade 2.04), warning ends f606 (+0 f)
+  f747 ground runner#2 ATTACK 5.0: 1.55 m from him (body 0.90, blade 2.04), warning ends f747 (+0 f)
+  f759 ground runner#1 ATTACK 5.0: 1.19 m from him (body 0.90, blade 2.04), warning ends f759 (+0 f)
+  f772 ground runner#0 ATTACK 5.0: 1.72 m from him (body 0.90, blade 2.04), warning ends f772 (+0 f)
+  f911 ground runner#2 ATTACK 5.0: 1.57 m from him (body 0.90, blade 2.04), warning ends f911 (+0 f)
+  f923 ground runner#1 ATTACK 5.0: 0.95 m from him (body 0.90, blade 2.04), warning ends f923 (+0 f)
+  f936 ground runner#0 ATTACK 5.0: 1.57 m from him (body 0.90, blade 2.04), warning ends f936 (+0 f)
+  f1075 ground runner#2 ATTACK 5.0: 1.57 m from him (body 0.90, blade 2.04), warning ends f1075 (+0 f)
+  f1087 ground runner#1 ATTACK 5.0: 1.08 m from him (body 0.90, blade 2.04), warning ends f1087 (+0 f)
+  f1100 ground runner#0 ATTACK 5.0: 1.43 m from him (body 0.90, blade 2.04), warning ends f1100 (+0 f)
+  f1239 ground runner#2 ATTACK 5.0: 1.58 m from him (body 0.90, blade 2.04), warning ends f1239 (+0 f)
+  f1251 ground runner#1 ATTACK 5.0: 1.46 m from him (body 0.90, blade 2.04), warning ends f1251 (+0 f)
+  f1264 ground runner#0 ATTACK 5.0: 1.74 m from him (body 0.90, blade 2.04), warning ends f1264 (+0 f)
+  f1411 ground runner#2 ATTACK 5.0: 1.57 m from him (body 0.90, blade 2.04), warning ends f1411 (+0 f)
+  f1415 ground runner#1 ATTACK 5.0: 1.36 m from him (body 0.90, blade 2.04), warning ends f1415 (+0 f)
+  f1428 ground runner#0 ATTACK 5.0: 2.05 m from him (body 0.90, blade 2.04), warning ends f1428 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  runner: WINDUP still 0.13 s, RECOVER still 0.17 s
+##### st_runner_elite.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  runner_elite#0: 622 f, turns>8 20.3/10s, reversals 0.77/s, walk<->idle 0.68/s, idle blips 0, place reversals 0.00/s
+  ALL runner_elite: 622 f, turns>8 20.3/10s, reversals 0.77/s, walk<->idle 0.68/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f188 ground runner_elite#0 ATTACK 5.0: 1.53 m from him (body 0.90, blade 2.04), warning ends f188 (+0 f)
+  f333 ground runner_elite#0 ATTACK 5.0: 1.50 m from him (body 0.90, blade 2.04), warning ends f333 (+0 f)
+  f490 ground runner_elite#0 ATTACK 5.0: 1.43 m from him (body 0.90, blade 2.04), warning ends f490 (+0 f)
+  f658 ground runner_elite#0 ATTACK 5.0: 1.39 m from him (body 0.90, blade 2.04), warning ends f658 (+0 f)
+  f800 ground runner_elite#0 ATTACK 5.0: 1.38 m from him (body 0.90, blade 2.04), warning ends f800 (+0 f)
+  f963 ground runner_elite#0 ATTACK 5.0: 1.02 m from him (body 0.90, blade 2.04), warning ends f963 (+0 f)
+  f1131 ground runner_elite#0 ATTACK 5.0: 0.92 m from him (body 0.90, blade 2.04), warning ends f1131 (+0 f)
+  f1295 ground runner_elite#0 ATTACK 5.0: 0.95 m from him (body 0.90, blade 2.04), warning ends f1295 (+0 f)
+  f1455 ground runner_elite#0 ATTACK 5.0: 1.56 m from him (body 0.90, blade 2.04), warning ends f1455 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  runner_elite: WINDUP still 0.13 s, RECOVER still 0.17 s
+##### st_skeleton.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  skeleton#0: 131 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  skeleton#1: 247 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.24/s, idle blips 0, place reversals 0.00/s
+  skeleton#2: 154 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton: 532 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.11/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f103 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f103 (+0 f)
+  f122 horde skeleton#2 ATTACK 3.0: 1.76 m from him (body 0.95, blade 2.21), warning ends f122 (+0 f)
+  f224 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f224 (+0 f)
+  f312 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f312 (+0 f)
+  f334 horde skeleton#2 ATTACK 3.0: 1.59 m from him (body 0.95, blade 2.21), warning ends f334 (+0 f)
+  f433 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f433 (+0 f)
+  f527 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f527 (+0 f)
+  f549 horde skeleton#2 ATTACK 3.0: 1.35 m from him (body 0.95, blade 2.21), warning ends f549 (+0 f)
+  f648 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f648 (+0 f)
+  f742 horde skeleton#0 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f742 (+0 f)
+  f764 horde skeleton#2 ATTACK 3.0: 1.28 m from him (body 0.95, blade 2.21), warning ends f764 (+0 f)
+  f863 horde skeleton#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f863 (+0 f)
+  f957 horde skeleton#0 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f957 (+0 f)
+  f979 horde skeleton#2 ATTACK 3.0: 1.26 m from him (body 0.95, blade 2.21), warning ends f979 (+0 f)
+  f1078 horde skeleton#1 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1078 (+0 f)
+  f1172 horde skeleton#0 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1172 (+0 f)
+  f1194 horde skeleton#2 ATTACK 3.0: 1.31 m from him (body 0.95, blade 2.21), warning ends f1194 (+0 f)
+  f1293 horde skeleton#1 ATTACK 3.0: 1.01 m from him (body 0.95, blade 2.21), warning ends f1293 (+0 f)
+  f1387 horde skeleton#0 ATTACK 3.0: 1.03 m from him (body 0.95, blade 2.21), warning ends f1387 (+0 f)
+  f1409 horde skeleton#2 ATTACK 3.0: 1.35 m from him (body 0.95, blade 2.21), warning ends f1409 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  skeleton: WINDUP still 0.15 s, RECOVER still 0.22 s
+##### st_skeleton_elite.csv
+== jitter while WALK (T5-10; per 10 s: turns >8 deg; per s: turn reversals, walk/idle switches, 2-frame place reversals)
+  skeleton_elite#0: 222 f, turns>8 64.9/10s, reversals 3.78/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  skeleton_elite#1: 164 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.00/s, idle blips 0, place reversals 0.00/s
+  skeleton_elite#2: 173 f, turns>8 0.0/10s, reversals 0.00/s, walk<->idle 0.35/s, idle blips 0, place reversals 0.00/s
+  ALL skeleton_elite: 559 f, turns>8 25.8/10s, reversals 1.50/s, walk<->idle 0.11/s, idle blips 0, place reversals 0.00/s
+== blows on the paladin (6.1: from the body, warning full on the blow's frame)
+  f97 horde skeleton_elite#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f97 (+0 f)
+  f117 horde skeleton_elite#2 ATTACK 3.0: 0.99 m from him (body 0.95, blade 2.21), warning ends f117 (+0 f)
+  f173 horde skeleton_elite#0 ATTACK 3.0: 1.45 m from him (body 0.95, blade 2.21), warning ends f173 (+0 f)
+  f277 horde skeleton_elite#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f277 (+0 f)
+  f290 horde skeleton_elite#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f290 (+0 f)
+  f350 horde skeleton_elite#0 ATTACK 3.0: 1.12 m from him (body 0.95, blade 2.21), warning ends f350 (+0 f)
+  f455 horde skeleton_elite#1 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f455 (+0 f)
+  f469 horde skeleton_elite#2 ATTACK 3.0: 1.00 m from him (body 0.95, blade 2.21), warning ends f469 (+0 f)
+  f529 horde skeleton_elite#0 ATTACK 3.0: 1.13 m from him (body 0.95, blade 2.21), warning ends f529 (+0 f)
+  f635 horde skeleton_elite#1 ATTACK 3.0: 1.05 m from him (body 0.95, blade 2.21), warning ends f635 (+0 f)
+  f648 horde skeleton_elite#2 ATTACK 3.0: 1.10 m from him (body 0.95, blade 2.21), warning ends f648 (+0 f)
+  f709 horde skeleton_elite#0 ATTACK 3.0: 1.19 m from him (body 0.95, blade 2.21), warning ends f709 (+0 f)
+  f815 horde skeleton_elite#1 ATTACK 3.0: 1.13 m from him (body 0.95, blade 2.21), warning ends f815 (+0 f)
+  f827 horde skeleton_elite#2 ATTACK 3.0: 1.20 m from him (body 0.95, blade 2.21), warning ends f827 (+0 f)
+  f888 horde skeleton_elite#0 ATTACK 3.0: 1.19 m from him (body 0.95, blade 2.21), warning ends f888 (+0 f)
+  f994 horde skeleton_elite#1 ATTACK 3.0: 1.15 m from him (body 0.95, blade 2.21), warning ends f994 (+0 f)
+  f1006 horde skeleton_elite#2 ATTACK 3.0: 1.25 m from him (body 0.95, blade 2.21), warning ends f1006 (+0 f)
+  f1067 horde skeleton_elite#0 ATTACK 3.0: 1.18 m from him (body 0.95, blade 2.21), warning ends f1067 (+0 f)
+  f1173 horde skeleton_elite#1 ATTACK 3.0: 1.17 m from him (body 0.95, blade 2.21), warning ends f1173 (+0 f)
+  f1185 horde skeleton_elite#2 ATTACK 3.0: 1.30 m from him (body 0.95, blade 2.21), warning ends f1185 (+0 f)
+  f1246 horde skeleton_elite#0 ATTACK 3.0: 1.15 m from him (body 0.95, blade 2.21), warning ends f1246 (+0 f)
+  f1352 horde skeleton_elite#1 ATTACK 3.0: 1.27 m from him (body 0.95, blade 2.21), warning ends f1352 (+0 f)
+  f1364 horde skeleton_elite#2 ATTACK 3.0: 1.44 m from him (body 0.95, blade 2.21), warning ends f1364 (+0 f)
+  f1425 horde skeleton_elite#0 ATTACK 3.0: 1.05 m from him (body 0.95, blade 2.21), warning ends f1425 (+0 f)
+== longest run of one pose drawn (6.1: RECOVER at most 0.3 s; WINDUP before its hold)
+  skeleton_elite: WINDUP still 0.15 s, RECOVER still 0.22 s

@@ -1,0 +1,106 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+=== skeleton (6048 vertices)
+  attack         14 poses 0.85 s once peak 6.83 m/s, armed 0.16 m from the guard, top 1.77, lowest middle -0.294
+  back           12 poses 1.07 s loop peak 1.47 m/s, armed 0.28 m from the guard, top 1.79, lowest middle -0.146
+  death          16 poses 1.90 s once peak 3.65 m/s, armed 1.39 m from the guard, top 0.51, lowest middle -1.019
+  hit             8 poses 0.33 s once peak 0.72 m/s, armed 0.06 m from the guard, top 1.92, lowest middle -0.061
+  idle           12 poses 2.50 s loop peak 0.06 m/s, armed 0.01 m from the guard, top 1.91, lowest middle -0.012
+  rise           12 poses 0.90 s once peak 3.07 m/s, armed 0.08 m from the guard, top 1.93, lowest middle -1.037
+  strafe_l       12 poses 0.80 s loop peak 4.18 m/s, armed 0.38 m from the guard, top 1.73, lowest middle -0.316
+  strafe_r       12 poses 0.80 s loop peak 4.08 m/s, armed 0.36 m from the guard, top 1.77, lowest middle -0.302
+  walk           20 poses 0.93 s loop peak 1.82 m/s, armed 0.26 m from the guard, top 1.83, lowest middle -0.227
+    walk: both feet off the floor in 5 of 20 poses, rise and fall 0.092 m, lean 13 to 17 degrees, lifted foot up to 0.26 m; lowest [0.03, 0.03, 0.02, 0.01, 0.01, -0.01, -0.01, -0.01, 0.05, 0.04, 0.03, 0.03, 0.03, 0.01, 0.01, -0.01, -0.01, -0.01, 0.04, 0.03]
+  windup         10 poses 0.35 s once peak 6.04 m/s, armed 0.31 m from the guard, top 1.85, lowest middle -0.104
+=== runner (5304 vertices)
+  attack         14 poses 0.67 s once peak 4.76 m/s, armed 0.44 m from the guard, top 1.99, lowest middle +0.000
+  death          16 poses 1.90 s once peak 3.78 m/s, armed 1.33 m from the guard, top 0.59, lowest middle -0.853
+  hit             8 poses 0.33 s once peak 0.53 m/s, armed 0.21 m from the guard, top 2.04, lowest middle +0.000
+  idle           12 poses 1.33 s loop peak 0.18 m/s, armed 0.01 m from the guard, top 1.66, lowest middle +0.000
+  rise           12 poses 0.90 s once peak 2.89 m/s, armed 0.22 m from the guard, top 2.04, lowest middle -0.800
+  walk           20 poses 1.07 s loop peak 2.40 m/s, armed 0.41 m from the guard, top 2.21, lowest middle +0.000
+    walk: both feet off the floor in 16 of 20 poses, rise and fall 0.229 m, lean 16 to 19 degrees, lifted foot up to 0.56 m; lowest [0.25, 0.15, 0.05, -0.01, -0.01, 0.07, 0.2, 0.33, 0.33, 0.27, 0.25, 0.14, 0.04, -0.02, -0.02, 0.05, 0.21, 0.34, 0.34, 0.27]
+  windup          8 poses 0.15 s once peak 5.07 m/s, armed 0.34 m from the guard, top 1.52, lowest middle -0.213
+=== mage (6660 vertices)
+  attack         14 poses 0.50 s once peak 0.69 m/s, armed 0.34 m from the guard, top 2.19, lowest middle -0.057
+  cast           10 poses 0.53 s once peak 1.56 m/s, armed 0.33 m from the guard, top 2.24, lowest middle -0.315
+  cast_hold      12 poses 2.10 s loop peak 0.03 m/s, armed 0.32 m from the guard, top 2.32, lowest middle -0.039
+  death          16 poses 1.90 s once peak 4.15 m/s, armed 1.70 m from the guard, top 0.69, lowest middle -1.134
+  exit            8 poses 0.43 s once peak 1.96 m/s, armed 0.40 m from the guard, top 1.90, lowest middle -0.315
+  hit             8 poses 0.33 s once peak 1.17 m/s, armed 0.39 m from the guard, top 1.92, lowest middle -0.309
+  idle           12 poses 1.27 s loop peak 0.19 m/s, armed 0.00 m from the guard, top 2.65, lowest middle -0.000
+  rise           12 poses 0.90 s once peak 3.79 m/s, armed 0.40 m from the guard, top 1.92, lowest middle -1.023
+  shot            6 poses 0.17 s once peak 1.57 m/s, armed 0.34 m from the guard, top 2.19, lowest middle -0.057
+  walk           20 poses 1.07 s loop peak 1.24 m/s, armed 0.18 m from the guard, top 2.70, lowest middle +0.000
+    walk: both feet off the floor in 17 of 20 poses, rise and fall 0.116 m, lean 23 to 25 degrees, lifted foot up to 0.36 m; lowest [0.17, 0.11, 0.05, 0.02, 0.05, 0.14, 0.18, 0.26, 0.27, 0.2, 0.18, 0.12, 0.03, -0.03, 0.0, 0.09, 0.24, 0.3, 0.29, 0.21]
+=== archer (6078 vertices)
+  aim             8 poses 1.67 s loop peak 0.01 m/s, armed 0.30 m from the guard, top 1.89, lowest middle +0.000
+  attack         14 poses 0.63 s once peak 0.48 m/s, armed 0.30 m from the guard, top 1.89, lowest middle +0.000
+  death          16 poses 1.90 s once peak 3.70 m/s, armed 1.33 m from the guard, top 0.45, lowest middle -0.962
+  hit             8 poses 0.33 s once peak 0.75 m/s, armed 0.10 m from the guard, top 1.90, lowest middle -0.052
+  idle           12 poses 2.50 s loop peak 0.07 m/s, armed 0.01 m from the guard, top 1.90, lowest middle -0.014
+  rise           12 poses 0.90 s once peak 3.62 m/s, armed 0.11 m from the guard, top 1.91, lowest middle -0.971
+  walk           20 poses 1.07 s loop peak 1.18 m/s, armed 0.23 m from the guard, top 1.91, lowest middle -0.071
+    walk: both feet off the floor in 16 of 20 poses, rise and fall 0.108 m, lean -2 to 1 degrees, lifted foot up to 0.46 m; lowest [0.24, 0.14, 0.04, -0.03, -0.02, 0.04, 0.18, 0.25, 0.23, 0.17, 0.16, 0.09, 0.02, 0.01, 0.04, 0.12, 0.15, 0.23, 0.28, 0.24]
+=== guard (4459 vertices)
+  attack         16 poses 1.10 s once peak 7.48 m/s, armed 0.17 m from the guard, top 1.92, lowest middle -0.352
+  brace           8 poses 1.15 s once peak 0.62 m/s, armed 0.44 m from the guard, top 1.58, lowest middle -0.401
+  charge         10 poses 0.50 s once peak 1.80 m/s, armed 0.10 m from the guard, top 2.01, lowest middle -0.308
+  death          16 poses 1.90 s once peak 3.46 m/s, armed 1.13 m from the guard, top 0.67, lowest middle -0.876
+  hit             8 poses 0.33 s once peak 0.66 m/s, armed 0.11 m from the guard, top 2.03, lowest middle -0.090
+  idle           12 poses 2.50 s loop peak 0.05 m/s, armed 0.01 m from the guard, top 2.03, lowest middle -0.008
+  recover        10 poses 1.07 s once peak 2.47 m/s, armed 0.00 m from the guard, top 2.03, lowest middle -0.114
+  rise           12 poses 0.90 s once peak 3.05 m/s, armed 0.10 m from the guard, top 2.03, lowest middle -0.880
+  walk           20 poses 1.07 s loop peak 3.00 m/s, armed 0.14 m from the guard, top 1.91, lowest middle -0.119
+    walk: both feet off the floor in 12 of 20 poses, rise and fall 0.135 m, lean -10 to -2 degrees, lifted foot up to 0.45 m; lowest [0.0, 0.0, 0.03, 0.06, 0.07, 0.07, 0.04, 0.04, 0.04, 0.08, 0.01, 0.02, 0.0, 0.0, 0.02, 0.03, 0.02, 0.05, 0.07, 0.1]
+=== priest (4513 vertices)
+  attack         14 poses 0.50 s once peak 0.32 m/s, armed 0.20 m from the guard, top 1.93, lowest middle +0.000
+  cast           12 poses 0.80 s once peak 2.77 m/s, armed 0.44 m from the guard, top 1.85, lowest middle -0.261
+  death          16 poses 1.90 s once peak 2.91 m/s, armed 1.08 m from the guard, top 0.49, lowest middle -0.800
+  hit             8 poses 0.33 s once peak 0.52 m/s, armed 0.08 m from the guard, top 1.93, lowest middle -0.053
+  idle           12 poses 2.50 s loop peak 0.09 m/s, armed 0.02 m from the guard, top 1.92, lowest middle -0.009
+  rise           12 poses 0.90 s once peak 2.31 m/s, armed 0.09 m from the guard, top 1.94, lowest middle -0.837
+  shot            8 poses 0.30 s once peak 5.42 m/s, armed 0.17 m from the guard, top 1.93, lowest middle -0.048
+  walk           20 poses 1.33 s loop peak 0.78 m/s, armed 0.12 m from the guard, top 1.93, lowest middle -0.001
+    walk: both feet off the floor in 5 of 20 poses, rise and fall 0.074 m, lean -2 to 2 degrees, lifted foot up to 0.16 m; lowest [-0.02, -0.02, -0.01, -0.01, -0.01, 0.0, 0.03, 0.05, 0.04, 0.03, -0.01, 0.0, 0.01, 0.02, 0.02, 0.03, 0.05, 0.06, 0.07, 0.01]
+=== knight (6109 vertices)
+  attack         16 poses 1.10 s once peak 10.29 m/s, armed 0.32 m from the guard, top 1.88, lowest middle -0.232
+  brace           8 poses 0.30 s once peak 3.33 m/s, armed 0.51 m from the guard, top 1.59, lowest middle -0.414
+  charge         10 poses 0.50 s once peak 2.56 m/s, armed 0.24 m from the guard, top 2.00, lowest middle -0.342
+  death          16 poses 1.90 s once peak 4.21 m/s, armed 1.66 m from the guard, top 0.52, lowest middle -1.139
+  hit             8 poses 0.33 s once peak 1.12 m/s, armed 0.32 m from the guard, top 2.02, lowest middle -0.189
+  idle           12 poses 2.50 s loop peak 0.08 m/s, armed 0.01 m from the guard, top 2.02, lowest middle -0.012
+  recover        10 poses 1.07 s once peak 3.83 m/s, armed 0.00 m from the guard, top 2.03, lowest middle -0.092
+  rise           12 poses 0.90 s once peak 3.16 m/s, armed 0.31 m from the guard, top 2.03, lowest middle -1.147
+  walk           20 poses 1.33 s loop peak 0.55 m/s, armed 0.10 m from the guard, top 2.02, lowest middle -0.018
+    walk: both feet off the floor in 0 of 20 poses, rise and fall 0.076 m, lean 27 to 30 degrees, lifted foot up to 0.11 m; lowest [-0.03, -0.03, -0.02, -0.02, -0.01, 0.0, 0.01, 0.01, 0.0, 0.0, -0.03, -0.03, -0.03, -0.01, -0.01, 0.0, 0.0, 0.0, -0.01, -0.01]
+=== priest_elder (6617 vertices)
+  attack         14 poses 0.50 s once peak 0.71 m/s, armed 0.34 m from the guard, top 2.43, lowest middle -0.055
+  cast           10 poses 0.53 s once peak 1.62 m/s, armed 0.34 m from the guard, top 2.49, lowest middle -0.324
+  cast_hold      12 poses 2.10 s loop peak 0.03 m/s, armed 0.32 m from the guard, top 2.56, lowest middle -0.032
+  death          16 poses 1.90 s once peak 4.46 m/s, armed 1.84 m from the guard, top 0.58, lowest middle -1.224
+  hit             8 poses 0.33 s once peak 1.15 m/s, armed 0.40 m from the guard, top 2.05, lowest middle -0.319
+  idle           12 poses 1.27 s loop peak 0.18 m/s, armed 0.00 m from the guard, top 2.96, lowest middle -0.000
+  rise           12 poses 0.90 s once peak 3.83 m/s, armed 0.41 m from the guard, top 2.06, lowest middle -1.119
+  summon         12 poses 0.80 s once peak 6.03 m/s, armed 0.82 m from the guard, top 3.01, lowest middle -0.366
+  walk           20 poses 1.33 s loop peak 0.61 m/s, armed 0.12 m from the guard, top 2.95, lowest middle -0.001
+    walk: both feet off the floor in 2 of 20 poses, rise and fall 0.090 m, lean 18 to 21 degrees, lifted foot up to 0.21 m; lowest [0.01, 0.01, 0.01, 0.01, 0.0, 0.0, 0.02, 0.05, 0.08, 0.02, -0.03, 0.0, -0.01, -0.02, -0.02, -0.02, -0.02, 0.0, 0.01, 0.03]
+=== morvath (5325 vertices)
+  attack         16 poses 1.10 s once peak 8.13 m/s, armed 0.18 m from the guard, top 1.86, lowest middle -0.245
+  blades_windup   8 poses 0.20 s once peak 4.92 m/s, armed 0.71 m from the guard, top 1.35, lowest middle -0.245
+  dash           12 poses 0.60 s once peak 7.40 m/s, armed 0.60 m from the guard, top 1.45, lowest middle -0.368
+  dash_windup     8 poses 0.12 s once peak 11.85 m/s, armed 0.71 m from the guard, top 1.36, lowest middle -0.368
+  death          16 poses 1.90 s once peak 3.48 m/s, armed 1.32 m from the guard, top 0.50, lowest middle -0.946
+  hit             8 poses 0.33 s once peak 0.75 m/s, armed 0.08 m from the guard, top 2.02, lowest middle -0.088
+  idle           12 poses 2.50 s loop peak 0.07 m/s, armed 0.01 m from the guard, top 2.01, lowest middle -0.010
+  rain           14 poses 2.10 s once peak 0.87 m/s, armed 0.34 m from the guard, top 2.02, lowest middle -0.065
+  rise           12 poses 0.90 s once peak 3.19 m/s, armed 0.09 m from the guard, top 2.02, lowest middle -0.983
+  roar           14 poses 1.03 s once peak 2.56 m/s, armed 0.48 m from the guard, top 1.36, lowest middle -0.279
+  slash1         14 poses 0.43 s once peak 9.15 m/s, armed 0.59 m from the guard, top 1.84, lowest middle -0.271
+  slash2         14 poses 0.53 s once peak 9.63 m/s, armed 0.58 m from the guard, top 1.54, lowest middle -0.293
+  slash3         16 poses 1.10 s once peak 7.33 m/s, armed 0.49 m from the guard, top 1.59, lowest middle -0.361
+  stunned        12 poses 2.93 s loop peak 0.05 m/s, armed 0.50 m from the guard, top 1.27, lowest middle -0.381
+  summon         20 poses 4.30 s once peak 1.42 m/s, armed 0.37 m from the guard, top 1.70, lowest middle -0.275
+  volley         14 poses 0.50 s once peak 9.28 m/s, armed 0.56 m from the guard, top 1.56, lowest middle -0.310
+  walk           20 poses 1.33 s loop peak 0.92 m/s, armed 0.14 m from the guard, top 2.02, lowest middle -0.004
+    walk: both feet off the floor in 3 of 20 poses, rise and fall 0.083 m, lean 26 to 31 degrees, lifted foot up to 0.15 m; lowest [-0.11, -0.05, -0.03, -0.02, -0.01, 0.0, 0.01, 0.0, -0.01, -0.13, -0.23, -0.16, -0.12, -0.08, -0.06, -0.03, 0.03, 0.05, 0.05, -0.08]
