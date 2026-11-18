@@ -325,3 +325,35 @@ func test_the_body_clears_in_the_hold() -> void:
 	var mat := game.horde.renderer.kind(e.def).material as ShaderMaterial
 	assert_almost_eq(float(mat.get_shader_parameter(&"tell_hold")), e.def.windup_hold, 0.001, "its own hold")
 	assert_almost_eq(float(mat.get_shader_parameter(&"tell_light")), CrowdRenderer.TELL_LIGHT, 0.001)
+
+
+## C17, QW-105 (CF-08, CF-11): next to a paladin who stands still the knight no longer slams forever: after
+## Horde.KNIGHT_SLAMS slams it backs off and charges (at least one charge in any four blows); a soldier's blows are
+## never on the same beat (the wait after its recovery is drawn).
+func test_no_metronome() -> void:
+	_room()
+	var k := game.horde.spawn(game.horde.def(&"knight"), Vector2(2.6, 0.0), false)
+	var blows: Array[StringName] = []
+	var was := Enemy.State.WALK
+	for f in 60 * 40:
+		_frame()
+		if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP:
+			blows.append(k.anim)
+		was = k.state
+	assert_gte(blows.size(), 6, "it kept striking: %s" % [blows])
+	for i in range(0, blows.size() - 3):
+		assert_true(blows.slice(i, i + 4).has(&"brace"), "a charge in every four blows: %s" % [blows])
+	game.horde.clear_crowd()
+	var s := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(2.0, 0.0), false)
+	var starts: Array[int] = []
+	was = Enemy.State.WALK
+	for f in 60 * 30:
+		_frame()
+		if s.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP:
+			starts.append(f)
+		was = s.state
+	var gaps := {}
+	for i in range(1, starts.size()):
+		gaps[starts[i] - starts[i - 1]] = true
+	assert_gte(starts.size(), 5)
+	assert_gt(gaps.size(), 2, "its blows fall on different beats: %s" % [starts])
