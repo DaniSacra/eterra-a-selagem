@@ -208,6 +208,12 @@ const MAGE_JOG := {"guard": [[&"ual", "Idle_Torch", LEFT_ARM], [&"ual", "Idle", 
 	"lift": 0.15, "plant": 0.35, "stand": 0.15, "bend": {"Spine01": Vector3(-22, 0, 0)}}
 const CROSSBOW_JOG := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.79, "lift": 0.2, "plant": 0.4, "stand": 0.15,
 	"bend": {"Spine01": Vector3(-34, 0, 0)}}
+## T5b Corredor (PO, 2026-11-18: "ainda tem esqueleto que anda tremendo", the rust one): the runner hopped on
+## KayKit's Running_B (the whole body over 0.1 m in 14 of 20 poses, up to 0.34 m, rising and falling 0.23 m, 131 steps
+## a minute). It jogs as the soldier does: the library's Jog_Fwd, the feet locked on a long stride (it is the fastest,
+## 4.9 m/s: 171 steps a minute, the foot sliding 3.2 cm), the body planted toward each pose's floor ("plant" 0.6: no
+## pose over 0.08 m), a sixth of the hop, standing taller. The Sprint slid 34 cm a step locked (its flight is too long).
+const RUNNER_JOG := {"lock": true, "stride": 1.2, "lift": 0.15, "plant": 0.6, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
 ## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
 ## blow uncoils it in its first 0.15 s ("bend_out").
 const SOLDIER_COIL := {"Spine01": Vector3(-18, 30, 0)}
@@ -308,7 +314,7 @@ const MODELS := {
 		"meshy": "runner", "height": 1.65, "triangles": BODY_TRIANGLES,
 		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
 		"anims": {
-			"walk": [&"kaykit", "Running_B", 20, true], "idle": [&"ual2", "Zombie_Idle", 12, true],
+			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
 			# T5-04, T5-16: it gathers into a crouch, the arms drawn back (the coil of the library's jump), then bursts
 			# all around itself spinning with its arms out (its blast lands as they open, EnemyDef.strike_at); it
 			# was a still crouch and a punch ahead for a burst around it. A-T5-3: from 0.26 s, past the jump's raised knee

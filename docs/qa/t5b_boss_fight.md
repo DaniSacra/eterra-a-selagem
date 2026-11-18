@@ -250,3 +250,65 @@ Pendências:
 - P1-5: dano por segundo dos invocados antes e depois não medido separadamente; o robô venceu as 4 lutas.
 - P1-1 precisa da aprovação de arte do clipe novo (art-director) e do vídeo 60 qps do ritual pedido na seção 5.
 - P2-3 (bote do esqueleto) sem mudança, como pedido.
+
+## 7. Corredor (gameplay-engineer, 2026-11-18)
+
+Relato do Daniel no exe de hoje: "Ainda tem esqueleto que anda tremendo, é aquele que tem uma cor meio de ferrugem". É o
+corredor (`runner`, e o `runner_elite`), que tinha ficado no `Running_B` do KayKit na seção 6.
+
+**Causa: três coisas somadas, duas delas fora do clipe.**
+1. O clipe: `Running_B` com o pulo inteiro e sem pés travados. No ar (corpo todo acima de 0,10 m) em 14 de 20 poses, o
+   vértice mais baixo até 0,34 m, o corpo sobe e desce 0,23 m, 131 passos por minuto (lento para quem corre 4,9 m/s).
+2. O balanço (`EnemyDef.sway` 7 graus, do ciclo 7) a `Horde.SWAY_HZ` 9 vezes por segundo: o tronco ia de um lado ao outro
+   em 0,055 s. Na sonda, a inclinação mudava 5,3 a 5,6 graus por quadro e virava de sentido 29 a 32 vezes por segundo (a
+   medida é o ângulo sem sinal, então cada ida e volta conta 4). Isso é o tremor.
+3. O passo irregular (`Horde.UNEVEN_STEP` 0,12 s a 1,7 Hz) somava ao tempo do andar uma derivada de até 1,28 segundo de
+   clipe por segundo, contra 1,16 da velocidade dele: o andar tocava de trás para frente e a até 2,4 vezes o ritmo, os pés
+   patinando.
+Não é a troca andar/parado (0 trocas por segundo em todas as corridas: ele nunca para), nem o rosto (giro p95 0,4 a 2,2
+graus por quadro, igual antes e depois), nem a velocidade suavizada (sem inversões no andar; as inversões que restam
+são o `windup_shake` 0,04 m do preparo, de propósito, e empurrões).
+
+**O que mudou**
+- `tools/bake.gd`: `RUNNER_JOG`, o `Jog_Fwd` da UAL com os pés travados como o esqueleto (`lock`, `stride` 1,2,
+  `lift` 0,15, `plant` 0,6, `stand` 0,15, tronco `Spine01` -20). Medidos com `tools/walk_probe.gd` e reassados:
+  `Jog_Fwd` 0,7 a 1,2 (236 a 170 passos, 2,2 a 4,9 cm), `plant` 0,35 a 0,6; `Sprint` travado escorrega 34 cm (o voo dele é
+  longo demais para travar) e solto a 1,1 e 1,3 escorrega 4,4 e 6,1 cm. Reassado só o corredor.
+- `Horde`: o balanço segue a passada, um lado por passo (`Horde.stride_lean`: `sway` graus, um ciclo por laço de dois
+  passos, 1,4 por segundo na velocidade dele); saíram `SWAY_HZ` e `UNEVEN_STEP`. A amplitude (7 graus) e o `windup_shake`
+  não mudaram.
+- `tools/drawn_probe.gd`: coluna nova `tilt` (graus do corpo desenhado fora do prumo). `tools/walk_strip.gd`: desenha o
+  balanço e inclui o corredor.
+
+**Números** (CPU sem tela, `--fixed-fps 60`, `tools/drawn_probe.gd`: `--bot --stress=10 --stress-ids=runner,runner_elite`
+sementes 1 a 3, 40 s, e a descida `--bot --bot-reaction=0.25 --seed=5`, 120 s; análise
+`docs/gallery/t5b/runner/data/runner.py`, saída inteira em `data/drawn_runner.txt`, a descida em `data/*_run_s5.csv.gz`.
+"Antes" = `Running_B` e o `Horde` do HEAD; "depois" = este commit.)
+
+| Item | Antes | Depois | Critério |
+|---|---|---|---|
+| Assado, tamanho 1: poses com o corpo todo acima de 0,10 m | 14 de 20, até 0,34 m | 0 de 20, até 0,08 m | 6, 0,15 m |
+| Assado: sobe e desce do corpo (medida do teste) | 0,23 m | 0,089 m (esqueleto aprovado 0,086) | 0,09 |
+| Passos por minuto em jogo / escorregamento por passo | 131 / 1,1 cm (no ar, sem apoio) | 171 / 3,2 cm | mais rápido que o esqueleto (161), menos de 5 cm |
+| Desenhado, correndo: centro do corpo p5 a p95 | 0,22 a 0,23 m | 0,088 a 0,089 m (esqueleto na mesma corrida 0,079) | |
+| Desenhado: pés p50 / p95 | 0,13 a 0,21 / 0,36 m | 0,04 / 0,10 m | |
+| Desenhado: quadros com o corpo todo acima de 0,12 m | 51 a 65% | 0 a 1,8% | |
+| Desenhado: degrau do centro por quadro, p95 | 0,055 a 0,066 m | 0,023 m | |
+| Balanço: mudança da inclinação por quadro, p95 | 5,3 a 5,6 graus | 1,03 graus | |
+| Balanço: viradas de sentido por segundo correndo | 29 a 32 | 5,2 a 5,9 | |
+| Andar tocando de trás para frente ou pulando pose (teste, 81 quadros) | possível (derivada 1,28 contra 1,16) | 0 e 0 | 0 |
+| Elite (`runner_elite`, 7,4 m/s), centro p5 a p95 / pés p95 | 0,25 / 0,36 m | 0,12 / 0,10 m | |
+
+Quadros: `docs/gallery/t5b/runner/runner_walk_before.jpg` e `runner_walk_after.jpg` (24 quadros a 30 qps, chão de 0,5 m,
+GPU; o antes é o clipe velho, sem o passo irregular) e `runners_gpu_after.jpg` (sala real com corredores, GPU).
+
+Testes: `tests/test_t5b_fight.gd` (o corredor entra no teste do trote no chão; o balanço segue a passada; numa sala real o
+andar dele nunca toca de trás para frente nem pula pose), `tests/test_living_crowd.gd` (cadência do corredor 165 a 180 e
+escorregamento abaixo de 5 cm), `tests/test_enemy_fx.gd` (saiu a faixa do `SWAY_HZ`).
+
+Pendências e riscos:
+- A elite corre a 7,4 m/s no mesmo assado: 259 passos por minuto (antes 198 no ar). Lê como corrida desesperada; uma
+  passada própria pediria um modelo assado só para ela.
+- Os braços: o `Running_B` levava os braços estendidos à frente (abriam até 175 graus); o `Jog_Fwd` balança os braços
+  como corrida (até 53). A silhueta curvada continua (o `bend` do modelo e a inclinação), mas a leitura "mãos de zumbi"
+  mudou: precisa do olhar do art-director, como o balanço que agora acompanha o passo.

@@ -34,11 +34,10 @@ const HURT_TIME := 0.3
 const HEAVY_HURT := 0.12
 ## How much of the squash of a blow a heavy body takes.
 const HEAVY_SQUASH := 0.4
-## Only drawn (EnemyDef.sway, windup_shake): the unsteady runner's trunk sways this many times a second as it
-## runs, and it trembles this fast while it winds up; its stride is uneven by this share.
-const SWAY_HZ := 9.0
+## Only drawn (EnemyDef.windup_shake): it trembles this fast while it winds up. The unsteady runner's sway
+## (EnemyDef.sway) follows its stride, stride_lean (T5b, Corredor: it rocked 9 times a second, a tremble, and an uneven
+## stride played its locked walk from 0 to 2.4 times its pace, the feet skating).
 const SHAKE_HZ := 14.0
-const UNEVEN_STEP := 0.12
 const DEATH_SHOW := 1.5
 const DISSOLVE_FROM := 0.85
 const MAX_DYING := 90
@@ -387,6 +386,14 @@ static func walk_rate(speed: float, ground: float, size: float) -> float:
 	if ground <= 0.0 or speed <= 0.0:
 		return clampf(speed / 2.3, 0.6, 1.6)
 	return speed / (ground * maxf(size, 0.01))
+
+
+## The unsteady runner's trunk tipped to its side (radians) at `t` seconds into its walk loop of `loop` seconds: `sway`
+## degrees, once to each side a loop (a loop is two steps), so it rocks onto each foot as it lands and never faster.
+static func stride_lean(sway: float, t: float, loop: float) -> float:
+	if loop <= 0.0:
+		return 0.0
+	return deg_to_rad(sway) * sin(TAU * t / loop)
 
 
 func _speed(e: Enemy) -> float:
@@ -1320,10 +1327,9 @@ func render(render_dt := 1.0 / 60.0) -> void:
 					if not still:
 						e.walk_phase += render_dt * step
 					t = e.walk_phase
-					if d.sway > 0.0 and not still:
-						# unsteady: the trunk rocks from side to side and the stride is uneven (the place does not change)
-						lean = deg_to_rad(d.sway) * sin(TAU * (SWAY_HZ * e.anim_t + e.look))
-						t = maxf(0.0, t + UNEVEN_STEP * sin(TAU * (1.7 * e.anim_t + e.look)))
+					if d.sway > 0.0:
+						# unsteady: the trunk rocks from side to side, toward the foot it lands on (the place does not change)
+						lean = stride_lean(d.sway, t, kind.model.duration(anim))
 				else:
 					anim = &"idle"
 			else:
