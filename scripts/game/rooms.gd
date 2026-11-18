@@ -644,7 +644,7 @@ const TRIAL_COLOR := Color(0.52, 0.36, 0.78)
 
 
 func _roll_slab() -> void:
-	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng):
+	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng, map.fights_left()):
 		return
 	var at: Variant = _free_spot(SLAB_CLEAR)
 	if at == null:
@@ -747,7 +747,7 @@ const TRIAL_SPOT := Vector2(-1.5, 1.5)
 
 func _build_trial() -> void:
 	phase = Phase.EVENT
-	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance)
+	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance, map.fights_left())
 	_spots.append({"at": TRIAL_SPOT, "away": true, "node": _marker(TRIAL_SPOT, RunMap.Reward.NONE,
 		T.t(&"room_trial") + "\n" + T.t(&"trial_step"), RunMap.Kind.TRIAL, DoorGlyph.Kind.TRIAL)})
 	game.room_tally.event("trial_offered", game.time, {"cards": trial_cards.map(func(c: Trials.Card) -> Dictionary:

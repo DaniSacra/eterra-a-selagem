@@ -222,3 +222,58 @@ func test_refused_and_too_poor() -> void:
 	rooms._leave(rooms.next_rooms[0])
 	var types := game.room_tally.events.map(func(e: Dictionary) -> String: return e.type)
 	assert_true(types.has("trial_refused"))
+
+
+## C17, BUG-101: a Provação taken late always turns. For 500 maps of the stage and every depth of the slab, the slab
+## shows only where the shortest curse fits, and no card asks more fights than are left before Morvath, even when he
+## takes the fountain and the altar whenever their doors show (the worst case: those rooms hold no fight).
+func test_a_late_provacao_always_turns() -> void:
+	var rng := _rng(17)
+	var t := Trials.new(Trials.load_catalog())
+	var shortest := t.shortest_curse()
+	assert_eq(shortest, 3, "the shortest curse lasts 3 fights")
+	var shown := {}
+	for k in 500:
+		var map := RunMap.new(stage, rng)
+		var room := map.first()
+		while room.kind != RunMap.Kind.BOSS:
+			map.enter(room)
+			var fight := room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS
+			if fight and room.depth >= stage.trial_depth_min and room.depth <= stage.trial_depth_max:
+				var left := map.fights_left()
+				var tt := Trials.new(t.catalog)
+				if tt.may_show(stage, room.depth, left):
+					shown[room.depth] = true
+					var real := _fights_after(map, rng)
+					assert_gte(real, shortest, "depth %d: the slab only where 3 fit" % room.depth)
+					for card in tt.offers(rng, 3, stage.trial_rarity_chance, left):
+						assert_lte(card.encounters, real, "depth %d: the card never asks more than is left" % room.depth)
+						assert_gte(card.encounters, 1)
+			var doors := map.options(true)
+			room = doors[rng.randi() % doors.size()]
+	assert_true(shown.has(2) and shown.has(4), "it still shows early and in the middle: %s" % [shown.keys()])
+	assert_false(shown.has(stage.trial_depth_max), "never where 3 cannot fit")
+
+
+## The fights he meets from here to Morvath on a copy of the map, choosing the fountain and the altar whenever shown.
+func _fights_after(map: RunMap, rng: RandomNumberGenerator) -> int:
+	var copy := RunMap.new(stage, rng)
+	copy.depth = map.depth
+	copy.miniboss_depth = map.miniboss_depth
+	copy.fountain_seen = map.fountain_seen
+	copy.altar_seen = map.altar_seen
+	copy.current_layout = map.current_layout
+	copy.uses = map.uses.duplicate()
+	var n := 0
+	while true:
+		var doors := copy.options(true)
+		var pick: RunMap.Room = doors[0]
+		for d in doors:
+			if d.kind == RunMap.Kind.FOUNTAIN or d.kind == RunMap.Kind.ALTAR:
+				pick = d
+		if pick.kind == RunMap.Kind.BOSS:
+			return n
+		copy.enter(pick)
+		if pick.kind == RunMap.Kind.COMBAT or pick.kind == RunMap.Kind.MINIBOSS:
+			n += 1
+	return n
