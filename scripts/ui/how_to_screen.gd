@@ -30,11 +30,12 @@ enum Tab { DESCENT, CONTROLS }
 
 const TAB_KEY: Array[StringName] = [&"howto_tab_descent", &"options_tab_controls"]
 const TAB_NAME: Array[String] = ["tab_descent", "tab_controls"]
-## The three steps of a descent (howto_step_<id>, howto_step_<id>_desc).
-const STEPS: Array[String] = ["rooms", "boons", "seal"]
+## The steps of a descent (howto_step_<id>, howto_step_<id>_desc): the rooms, the Blessings, the Provação and the
+## Altar (BUG-106: the events the PO did not understand in T5), Morvath.
+const STEPS: Array[String] = ["rooms", "boons", "events", "seal"]
 const WIDTH := 1100.0
 const TAB_WIDTH := 200.0
-const STEP_WIDTH := 300.0
+const STEP_WIDTH := 236.0
 const GLYPH := 76.0
 ## The page under the tabs is this tall (the controls fit it), so the tabs and the foot never move.
 const PAGE_HEIGHT := 420.0
@@ -102,14 +103,14 @@ func _show_tab(t: int) -> void:
 			b.focus_neighbor_top = b.get_path_to(tabs[t])
 
 
-## A descent in three steps, each with its sign: an open door (the rooms), a Blessing's medallion (what the rooms
-## give), the seal (Morvath at the end).
+## A descent in four steps, each with its sign: an open door (the rooms), a Blessing's medallion (what the rooms
+## give), the Provação's cracked seal (the events on the way), the seal (Morvath at the end).
 func _descent() -> Control:
 	var page := CenterContainer.new()
 	page.name = "page_descent"
 	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var steps := HBoxContainer.new()
-	steps.add_theme_constant_override(&"separation", 26)
+	steps.add_theme_constant_override(&"separation", 20)
 	page.add_child(steps)
 	for i in STEPS.size():
 		var id := STEPS[i]
@@ -135,8 +136,8 @@ func _descent() -> Control:
 	return page
 
 
-## The sign of a step of a descent (a door, a Blessing's medallion, the seal), side px across: here and on the
-## opening page of the Livro de Ahk (HeroScreen).
+## The sign of a step of a descent (a door, a Blessing's medallion, the Provação's painted seal, the seal), side px
+## across: here and on the opening page of the Livro de Ahk (HeroScreen).
 static func step_glyph(step: int, side: float = GLYPH) -> Control:
 	match step:
 		0:
@@ -150,6 +151,12 @@ static func step_glyph(step: int, side: float = GLYPH) -> Control:
 					var icon := BoonIcon.new().setup(b, side)
 					icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 					return icon
+		2:
+			var tex := BoonArt.event(&"trial_seal")
+			if tex != null:
+				var art := BoonArt.rect(tex, side)
+				art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+				return art
 	return SealEmblem.new().setup(side)
 
 
@@ -257,6 +264,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _moves != null and event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_close_moves()
+	elif _moves == null and UiKit.step_tabs(event, tabs, tab):
+		get_viewport().set_input_as_handled()
 
 
 ## An open door under a pointed arch, in old gold over ink: the rooms of a descent (Como Jogar).

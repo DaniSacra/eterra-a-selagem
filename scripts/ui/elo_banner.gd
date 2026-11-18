@@ -8,6 +8,9 @@ extends VBoxContainer
 ## short line when it is taken or "Anotado no Compêndio" when it was only seen.
 ## E5, the Provação turned (show_trial): "Provação vencida" over the gold seal (TrialSeal) and the blessing's name, then
 ## what it gives for the rest of the run.
+## C17 (BUG-107): while a screen is over the run (the cards, the pause, an event's choice: held) nothing shows and the
+## clock of the greeting stands still; it goes on, and the ones waiting follow, once the run is back. Over the fight
+## a soft dark veil sits behind the words, so they read over a lit floor and over enemies at the top of the room.
 
 const TIME := 2.6
 const FADE_IN := 0.15
@@ -21,6 +24,9 @@ const NOTE_SIZE := 15
 const MEDALLION := 34.0
 ## At most this many greetings wait (a burst of Blessings from a dev option never piles up for long).
 const QUEUE_MAX := 3
+## The veil behind the words: how far it reaches past them (px at 720 lines) and how dark its middle is.
+const VEIL_REACH := Vector2(70, 18)
+const VEIL_ALPHA := 0.62
 
 var _t := 0.0
 var _link: EloLink
@@ -28,10 +34,24 @@ var _icon: Control
 var _queue: Array[Callable] = []
 ## What shows now: &"elo", &"boon", &"psalm", &"trial" or &"" (the tests read it).
 var showing := &""
+## A screen is over the run: nothing shows and the greeting waits (Hud sets it every frame).
+var held := false:
+	set(v):
+		if v == held:
+			return
+		held = v
+		if held:
+			visible = false
+		elif showing != &"":
+			visible = true
+		elif not _queue.is_empty():
+			_queue.pop_front().call()
+static var _veil: GradientTexture2D
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	draw.connect(_draw_veil)
 	alignment = BoxContainer.ALIGNMENT_CENTER
 	add_theme_constant_override(&"separation", 4)
 	visible = false
@@ -61,7 +81,7 @@ func show_boon(b: Boon) -> void:
 ## under the name, else the note that the Compendium has it.
 ## A Psalm is rare: it goes first in the queue and is never dropped by QUEUE_MAX.
 func show_psalm(p: PsalmDef, discovered: bool, taken: bool) -> void:
-	if visible:
+	if _busy():
 		_queue.push_front(_open_psalm.bind(p, discovered, taken))
 		return
 	_open_psalm(p, discovered, taken)
@@ -69,7 +89,7 @@ func show_psalm(p: PsalmDef, discovered: bool, taken: bool) -> void:
 
 ## E5: the Provação's curse turned into its blessing (Rooms.trial_turned). Never dropped by QUEUE_MAX either.
 func show_trial(card: Trials.Card) -> void:
-	if visible:
+	if _busy():
 		_queue.push_front(_open_trial.bind(card))
 		return
 	_open_trial(card)
@@ -80,8 +100,13 @@ func waiting() -> int:
 	return _queue.size()
 
 
+## Something shows, or a screen holds the greetings back.
+func _busy() -> bool:
+	return showing != &"" or held
+
+
 func _enqueue(open_it: Callable) -> void:
-	if visible:
+	if _busy():
 		if _queue.size() < QUEUE_MAX:
 			_queue.append(open_it)
 		return
@@ -178,11 +203,34 @@ func _start(kind: StringName) -> void:
 	showing = kind
 	_t = 0.0
 	modulate.a = 0.0
-	visible = true
+	visible = not held
 	set_process(true)
+	queue_redraw()
+
+
+## The soft dark veil behind the words: an ellipse fading out from the middle, wider than the words.
+func _draw_veil() -> void:
+	if _veil == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(0.01, 0.0, 0.02, VEIL_ALPHA))
+		g.set_color(1, Color(0.01, 0.0, 0.02, 0.0))
+		g.add_point(0.55, Color(0.01, 0.0, 0.02, VEIL_ALPHA * 0.75))
+		_veil = GradientTexture2D.new()
+		_veil.gradient = g
+		_veil.fill = GradientTexture2D.FILL_RADIAL
+		_veil.fill_from = Vector2(0.5, 0.5)
+		_veil.fill_to = Vector2(1.0, 0.5)
+		_veil.width = 128
+		_veil.height = 64
+	var words := get_combined_minimum_size()
+	var w := maxf(words.x, 120.0) + VEIL_REACH.x * 2.0
+	var h := words.y + VEIL_REACH.y * 2.0
+	draw_texture_rect(_veil, Rect2(Vector2((size.x - w) * 0.5, (size.y - h) * 0.5), Vector2(w, h)), false)
 
 
 func _process(delta: float) -> void:
+	if held:
+		return
 	_t += delta
 	modulate.a = minf(clampf(_t / FADE_IN, 0.0, 1.0), clampf((TIME - _t) / FADE_OUT, 0.0, 1.0))
 	if _link:

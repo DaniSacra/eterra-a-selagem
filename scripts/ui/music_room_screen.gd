@@ -13,7 +13,7 @@ signal closed
 const TOUR := 20.0
 ## Level 0 of a piece with phases: all of them in turn.
 const ALL := 0
-const ROW := 42.0
+const ROW := 38.0
 const LEFT_WIDTH := 340.0
 const RIGHT_WIDTH := 780.0
 ## The name of a piece in the list (one line; the longest, the rooms' recorded pair, is about 410 px at 19).
@@ -45,9 +45,9 @@ func _build() -> void:
 		remove_child(c)
 		c.queue_free()
 	_listen.clear()
-	var page := UiKit.column(self, LEFT_WIDTH + RIGHT_WIDTH + 40.0, 0.85)
+	# the menus' framed page (QW-113), as Configurações, which opens it
+	var page := UiKit.page(self, T.t(&"music_room_title"), LEFT_WIDTH + RIGHT_WIDTH + 40.0, 0.85, 36)
 	page.add_theme_constant_override(&"separation", 8)
-	page.add_child(UiKit.title(T.t(&"music_room_title"), 40))
 	var hint := UiKit.label(T.t(&"music_room_hint"), UiKit.DIM, 18)
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)

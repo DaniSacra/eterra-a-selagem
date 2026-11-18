@@ -35,12 +35,20 @@ func gains(level: int) -> float:
 	return total
 
 
-## A value as the player reads it: percentages for *_pct and for the undead multiplier, decimal comma otherwise.
+## Stats the HUD shows as whole numbers (life, Magia, damage): their values read whole on every card too (BUG-113: the
+## rarity's 1.5 made "22,5 de vida máxima" beside a life bar of 53 / 53). Seconds and the like keep one decimal.
+const WHOLE: Array[StringName] = [&"max_hp", &"magick_max", &"shield_burst", &"burn_dps", &"cast_dps", &"dodge_ember_dps"]
+
+
+## A value as the player reads it: percentages for *_pct and for the undead multiplier, whole numbers for WHOLE,
+## decimal comma otherwise.
 static func format(stat_name: StringName, v: float) -> String:
 	if String(stat_name).ends_with("_pct"):
 		return "%d%%" % roundi(v * 100.0)
 	if stat_name == &"undead_mult":
 		return "%d%%" % roundi((v - 1.0) * 100.0)
+	if stat_name in WHOLE:
+		return str(maxi(roundi(v), 1) if v > 0.0 else roundi(v))
 	if is_equal_approx(v, roundf(v)):
 		return str(roundi(v))
 	return ("%.1f" % v).replace(".", ",")

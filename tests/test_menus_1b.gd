@@ -188,7 +188,7 @@ func test_defeat_has_its_main_action_and_the_real_labels() -> void:
 		"mastery": {"gain": gain, "xp_before": 0}}, false)
 	await wait_process_frames(2)
 	var retry := end.find_child("retry", true, false) as Button
-	assert_eq(retry.text, T.t(&"end_retry"))
+	assert_eq(retry.text, T.t(&"end_again"))
 	assert_true(retry.has_focus())
 	assert_eq(retry.get_theme_stylebox(&"normal").bg_color, UiKit.PRIMARY_FILL, "the main action stands out")
 	assert_eq((end.find_child("menu", true, false) as Button).text, T.t(&"end_menu"))

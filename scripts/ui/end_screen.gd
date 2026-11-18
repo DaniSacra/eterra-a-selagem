@@ -116,10 +116,10 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		v.add_child(nb)
 	var buttons := UiKit.foot(16)
 	v.add_child(buttons)
-	var again := UiKit.primary(UiKit.button(T.t(&"end_retry"), func() -> void: retry.emit(), 230))
+	var again := UiKit.primary(UiKit.button(T.t(&"end_again"), func() -> void: retry.emit(), 230))
 	again.name = "retry"
 	buttons.add_child(again)
-	var to_menu := UiKit.button(T.t(&"end_menu"), func() -> void: menu.emit(), 180)
+	var to_menu := UiKit.button(T.t(&"end_menu"), func() -> void: menu.emit(), 220)
 	to_menu.name = "menu"
 	buttons.add_child(to_menu)
 	again.grab_focus.call_deferred()
@@ -169,7 +169,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		s.add_child(nb)
 	var buttons := UiKit.foot(16)
 	s.add_child(buttons)
-	var go_on := UiKit.primary(UiKit.button(T.t(&"end_continue"), func() -> void: menu.emit(), 220))
+	var go_on := UiKit.primary(UiKit.button(T.t(&"end_menu"), func() -> void: menu.emit(), 220))
 	go_on.name = "continue"
 	buttons.add_child(go_on)
 	var again := UiKit.button(T.t(&"end_again"), func() -> void: retry.emit(), 220)

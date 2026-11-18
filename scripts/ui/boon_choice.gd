@@ -199,7 +199,7 @@ static func describe(b: Boon, level: int, mult: float = 1.0) -> String:
 		var m := b.mods[i]
 		args[letters[i]] = BoonMod.format(m.stat, m.at(level, mult))
 	if b.skill:
-		args["dmg"] = UiKit.format_number(b.skill.damage_at(level, mult))
+		args["dmg"] = UiKit.whole(b.skill.damage_at(level, mult))
 		args["count"] = b.skill.get_count(level)
 		args["cd"] = UiKit.format_number(b.skill.get_cooldown(level))
 		args["radius"] = UiKit.format_number(b.skill.get_radius(level))

@@ -76,9 +76,9 @@ func test_a_gift_without_a_painting_keeps_its_drawn_icon() -> void:
 	assert_true(cards[2].crest is BoonIcon)
 
 
-## Stage 1A: the screen's title is the art pack's "Escolha uma bênção" and the painted four follow their gifts.
+## Stage 1A: the screen's title is the art pack's "Escolha uma Bênção" (QW-118: Bênção always capital) and the painted four follow their gifts.
 func test_the_title_and_the_new_paintings() -> void:
-	assert_eq(T.t(&"choice_title"), "Escolha uma bênção")
+	assert_eq(T.t(&"choice_title"), "Escolha uma Bênção")
 	var cards := _open([&"onda_maior", &"brasas", &"escudo"]).cards()
 	for c in cards:
 		assert_true(c.crest is TextureRect, String(c.boon.id))
