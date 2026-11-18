@@ -90,8 +90,12 @@ func _music_room(options: Node) -> void:
 	_check(back != null and back.has_focus(), "focus back on Músicas")
 
 
-## The hero screen by keys: the focus starts on a Gift, Enter puts it on and takes it off, right walks to another node.
+## The hero screen (the Livro de Ahk) by keys: it opens on the Warrior with the focus on Dons; Enter opens the Gifts
+## with the focus on a Gift, Enter puts it on and takes it off, down walks to another node.
 func _hero(screen: Node) -> void:
+	var first := root.gui_get_focus_owner()
+	_check(first != null and first.name == "to_gifts", "the book opens on the Warrior, the focus on Dons")
+	await _key(&"ui_accept")
 	var owner_ := root.gui_get_focus_owner()
 	_check(owner_ != null and owner_.get_script() != null and String(owner_.get_script().resource_path).ends_with("talent_node.gd"),
 		"the focus starts on a Gift")
@@ -109,7 +113,7 @@ func _hero(screen: Node) -> void:
 	_check(moved != null and moved != owner_, "down walks the tree")
 
 
-## Como Jogar's Compêndio by keys: it opens on the Gifts tab, right shows Bênçãos, Esc goes back to Como Jogar.
+## Como Jogar's Compêndio by keys: it opens on the Gifts tab, down the index shows Bênçãos, Esc goes back to Como Jogar.
 func _codex(howto: Node) -> void:
 	var button := howto.find_child("moves", true, false) as Control
 	_check(button != null, "Como Jogar has the Compêndio")
@@ -122,8 +126,8 @@ func _codex(howto: Node) -> void:
 	_check(codex.size() == 1, "Compêndio opens")
 	if codex.is_empty():
 		return
-	await _key(&"ui_right")
-	_check(int(codex[0].get(&"tab")) == 1, "right shows Bênçãos")
+	await _key(&"ui_down")
+	_check(int(codex[0].get(&"tab")) == 1, "down shows Bênçãos")
 	await _key(&"ui_cancel")
 	await _wait(0.1)
 	_check(howto.find_children("*", "CodexScreen", true, false).is_empty() and howto.is_inside_tree(), "Esc goes back to Como Jogar")

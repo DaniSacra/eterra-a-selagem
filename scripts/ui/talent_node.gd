@@ -1,42 +1,49 @@
 class_name TalentNode
 extends BaseButton
-## One node of the Gift tree on the hero screen (E2-06): a diamond of ink with a line of old gold and the glyph of its
-## branch (Combo two crossed blades, Fúria a flame, Emeth a crystal, Magia a four-pointed star of light, never the sun;
-## a bridge two linked diamonds, sustain a drop; the centre the Emeth's blade). Locked: no glyph, a small lock and the
-## Mastery level that opens it. Equipped: the ink filled with the branch's colour, an emerald line and a glow; only open:
-## dark ink, the old gold line and the glyph in the branch's colour (an outline). The cost is a row
-## of small diamonds under it. Focus (mouse, keys or gamepad: the mouse takes the focus with it) is an ivory line.
+## One node of the Gift tree on the hero screen (E2-06; art pack stage 2, board 09): a diamond of felt in its branch's
+## colour inside a frame of old gold with small flares at its four tips, and the Gift's own glyph in ivory
+## (TalentGlyph: what the Gift does; the centre the Emeth's crystal). One frame, four states told apart by fill, line,
+## glyph and text, never by colour alone:
+## - equipped: the felt lit in the branch's colour, an emerald line and a glow round it;
+## - open (can go on now): dark felt with a hint of the branch, the old gold frame, the glyph in the branch's colour;
+## - blocked (reached, but a rule refuses it now): the same felt greyed, a dull frame cut at the tips, the glyph dim;
+## - locked (Mastery too low): slate, no glyph, a small lock and the Mastery level that opens it.
+## The cost is a row of small diamonds under it. Focus (mouse, keys or gamepad: the mouse takes the focus with it) is
+## an ivory line round the frame; on_path rings the Gifts the focused one needs (TalentTree lights their links).
 
 ## The branch's colour, muted (TalentDef.Branch; the centre is CENTRE).
 ## Combo is the crimson of the Emeth's hilt and the Warrior's hair (it was a grey that read as switched off).
 const BRANCH_COLOR: Array[Color] = [Color("c4404e"), Color("c8643c"), Color("3fae7c"), Color("4f9cc6"), Color("a88e5c"), Color("b8665a")]
 const CENTRE := Color("3fae7c")
-## A Gift worn: its ink takes this much of its branch's colour (darkened this much), the line is the Emeth's emerald
-## and a glow of GLOW_RINGS rings reaches GLOW_REACH px out. Only open: dark ink and the old gold line (an outline).
+## A Gift worn: its felt takes this much of its branch's colour (darkened this much), the line is the Emeth's emerald
+## and a glow of GLOW_RINGS rings reaches GLOW_REACH px out.
 const EQUIPPED_FILL := 0.85
 const EQUIPPED_DARKEN := 0.2
 const EQUIPPED_LINE := Color("6fe0a8")
 const GLOW_RINGS := 4
 const GLOW_REACH := 7.0
 const GLOW_ALPHA := 0.5
+## A Gift only open: dark felt with this much of its branch's colour (darkened), so the frame and glyph carry it.
+const OPEN_FILL := 0.28
+const OPEN_DARKEN := 0.55
 const LOCK_LINE := Color("4a4239")
 const LOCK_INK := Color(0.035, 0.03, 0.04, 0.96)
+const BLOCKED_LINE := Color("6b5a3f")
 const FOCUS := Color(1.0, 0.95, 0.84, 0.95)
+const PATH := Color(1.0, 0.95, 0.84, 0.55)
 const SIDE := 46.0
+## The flares at the tips of the frame: how far out and how wide.
+const FLARE := 5.0
+const FLARE_WIDE := 2.6
 ## The cost's diamonds under the node: their half size and step.
 const PIP := 3.2
 const PIP_STEP := 9.0
 const LEVEL_SIZE := 15
 
 ## Glyph outlines in units of the glyph's radius (convex enough to triangulate).
-const FLAME: Array[Vector2] = [Vector2(0.1, -1.15), Vector2(0.45, -0.45), Vector2(0.68, 0.15), Vector2(0.55, 0.65),
-	Vector2(0.2, 0.92), Vector2(-0.2, 0.92), Vector2(-0.55, 0.65), Vector2(-0.68, 0.15), Vector2(-0.4, -0.35),
-	Vector2(-0.2, -0.75)]
-const TONGUE: Array[Vector2] = [Vector2(0.05, -0.05), Vector2(0.28, 0.45), Vector2(0.15, 0.78), Vector2(-0.15, 0.78),
-	Vector2(-0.28, 0.45)]
-const DROP: Array[Vector2] = [Vector2(0.0, -1.0), Vector2(0.35, -0.4), Vector2(0.6, 0.15), Vector2(0.55, 0.55),
-	Vector2(0.3, 0.82), Vector2(0.0, 0.9), Vector2(-0.3, 0.82), Vector2(-0.55, 0.55), Vector2(-0.6, 0.15),
-	Vector2(-0.35, -0.4)]
+const FLAME := TalentGlyph.FLAME
+const TONGUE := TalentGlyph.TONGUE
+const DROP := TalentGlyph.DROP
 
 enum Glyph { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, CENTRE }
 
@@ -45,6 +52,11 @@ var glyph := Glyph.CENTRE
 var state := HeroLoadout.State.OPEN:
 	set(v):
 		state = v
+		queue_redraw()
+## A Gift the focused one needs (TalentTree.path_of): a faint ivory ring.
+var on_path := false:
+	set(v):
+		on_path = v
 		queue_redraw()
 var _flash := 0.0
 
@@ -90,30 +102,54 @@ func _draw() -> void:
 	var c := size * 0.5 + Vector2(sin(_flash * 40.0) * 3.0 * _flash, 0.0)
 	var h := size.x * 0.5
 	var locked := state == HeroLoadout.State.LOCKED
+	var blocked := state == HeroLoadout.State.BLOCKED and def != null
 	var on := equipped()
 	var line := line_color()
 	if _flash > 0.0:
 		line = line.lerp(Color(1.0, 0.62, 0.5), _flash)
-	var outer := _diamond(c, h)
 	if on:
-		# the glow of a Gift worn: soft emerald rings outside the line
+		# the glow of a Gift worn: soft emerald rings outside the frame
 		for i in GLOW_RINGS:
 			var k := float(i + 1) / GLOW_RINGS
 			draw_polyline(_closed(_diamond(c, h + 1.5 + k * GLOW_REACH)), Color(EQUIPPED_LINE, GLOW_ALPHA * (1.0 - k)), 2.0, true)
-	draw_colored_polygon(outer, ink_color())
-	draw_polyline(_closed(outer), line, UiKit.FRAME + (1.0 if on else 0.0), true)
-	draw_polyline(_closed(_diamond(c, h - 5.0)), Color(line, 0.25 if locked else 0.4), 1.0, true)
+	if on_path and not has_focus():
+		draw_polyline(_closed(_diamond(c, h + 4.0 + (GLOW_REACH * 0.5 if on else 0.0))), PATH, 1.2, true)
+	# the frame: a band of the line's colour, the felt inside, a thin inner line
+	draw_colored_polygon(_diamond(c, h), line.darkened(0.35))
+	draw_colored_polygon(_diamond(c, h - UiKit.FRAME - (1.0 if on else 0.0)), ink_color())
+	draw_polyline(_closed(_diamond(c, h)), line, 1.4, true)
+	draw_polyline(_closed(_diamond(c, h - 5.0)), Color(line, 0.25 if locked or blocked else 0.45), 1.0, true)
+	if not locked:
+		_flares(c, h, line.lightened(0.1) if not blocked else line)
+	if blocked:
+		# the frame cut at its four tips: reached, but not now
+		for d: Vector2 in [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]:
+			draw_line(c + d * (h - 6.0) + d.orthogonal() * 3.0, c + d * (h - 6.0) - d.orthogonal() * 3.0, ink_color(), 2.4)
 	if has_focus():
 		draw_polyline(_closed(_diamond(c, h + 4.0 + (GLOW_REACH * 0.5 if on else 0.0))), FOCUS, 1.6, true)
 	if locked:
 		_draw_lock(c, def.unlock_level if def else 1)
 	else:
-		_draw_glyph(c, h * 0.5, glyph_color())
+		var r := h * 0.5
+		var col := glyph_color()
+		if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
+			branch_glyph(self, glyph, c, r, col)
 	if def != null and def.cost > 0:
 		var pip := (EQUIPPED_LINE if on else UiKit.OLD_GOLD.lightened(0.3)) if not locked else LOCK_LINE.lightened(0.2)
+		if blocked:
+			pip = BLOCKED_LINE
 		var x0 := c.x - (def.cost - 1) * PIP_STEP * 0.5
 		for i in def.cost:
 			draw_colored_polygon(_diamond(Vector2(x0 + i * PIP_STEP, size.y + 7.0), PIP), pip)
+
+
+## The small flares of the frame (board 09): a thin spike out of each tip.
+func _flares(c: Vector2, h: float, col: Color) -> void:
+	for d: Vector2 in [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]:
+		var tip := c + d * (h + FLARE)
+		var base := c + d * (h - 1.0)
+		var n := d.orthogonal() * FLARE_WIDE
+		draw_colored_polygon(PackedVector2Array([base + n, tip, base - n]), col)
 
 
 ## Worn (the centre always is): filled in its branch's colour, an emerald line and a glow.
@@ -121,25 +157,36 @@ func equipped() -> bool:
 	return state == HeroLoadout.State.EQUIPPED or def == null
 
 
-## The diamond's ink: the branch's colour when worn, plain dark ink when only open (an outline), darker when locked.
+## The diamond's felt: the branch's colour when worn, dark felt with a hint of it when open, greyed when blocked,
+## slate when locked.
 func ink_color() -> Color:
 	if equipped():
 		return UiKit.INK.lerp(color().darkened(EQUIPPED_DARKEN), EQUIPPED_FILL)
-	return LOCK_INK if state == HeroLoadout.State.LOCKED else UiKit.INK
+	match state:
+		HeroLoadout.State.LOCKED:
+			return LOCK_INK
+		HeroLoadout.State.BLOCKED:
+			return UiKit.INK.lerp(Color(0.3, 0.29, 0.3), 0.25)
+	return UiKit.INK.lerp(color().darkened(OPEN_DARKEN), OPEN_FILL)
 
 
-## The outer line: emerald when worn, old gold when open, a dull line when locked.
+## The outer line: emerald when worn, old gold when open, a duller gold when blocked, a dull line when locked.
 func line_color() -> Color:
 	if equipped():
 		return EQUIPPED_LINE
-	return LOCK_LINE if state == HeroLoadout.State.LOCKED else UiKit.OLD_GOLD
+	match state:
+		HeroLoadout.State.LOCKED:
+			return LOCK_LINE
+		HeroLoadout.State.BLOCKED:
+			return BLOCKED_LINE
+	return UiKit.OLD_GOLD
 
 
-## The branch's glyph: lit ivory over the branch's fill when worn, the branch's colour on dark ink when only open.
+## The glyph: lit ivory over the branch's fill when worn, the branch's colour on dark felt when open, dim otherwise.
 func glyph_color() -> Color:
 	if equipped():
 		return color().lerp(Color.WHITE, 0.7)
-	return color().lightened(0.1) if state == HeroLoadout.State.OPEN else UiKit.DIM.darkened(0.15)
+	return color().lightened(0.15) if state == HeroLoadout.State.OPEN else UiKit.DIM.darkened(0.15)
 
 
 func _draw_lock(c: Vector2, level: int) -> void:
@@ -154,42 +201,39 @@ func _draw_lock(c: Vector2, level: int) -> void:
 	draw_string(font, c + Vector2(-w * 0.5, 11.0), n, HORIZONTAL_ALIGNMENT_LEFT, -1, LEVEL_SIZE, col)
 
 
-## The branch's glyph inside a radius r around c.
-func _draw_glyph(c: Vector2, r: float, col: Color) -> void:
-	match glyph:
+## A branch's glyph inside a radius r around c (the centre, and any Gift without a glyph of its own): Combo two crossed
+## blades, Fúria a flame, Emeth and the centre a crystal, Magia a four-pointed star of light (never the sun), a bridge
+## two linked diamonds, sustain a drop.
+static func branch_glyph(ci: CanvasItem, g: Glyph, c: Vector2, r: float, col: Color) -> void:
+	match g:
 		Glyph.COMBO:
-			# two crossed blades, each with a short guard
 			for s: float in [-1.0, 1.0]:
 				var a := c + Vector2(-r * s, r)
 				var b := c + Vector2(r * s, -r)
-				draw_line(a, b, col, 2.2, true)
-				var g := a.lerp(b, 0.22)
+				ci.draw_line(a, b, col, 2.2, true)
+				var gd := a.lerp(b, 0.22)
 				var across := (b - a).normalized().orthogonal() * r * 0.32
-				draw_line(g - across, g + across, col, 2.0, true)
+				ci.draw_line(gd - across, gd + across, col, 2.0, true)
 		Glyph.FURIA:
-			# a flame: a pointed tip leaning a little, a round foot, a dark tongue inside
-			draw_colored_polygon(_shape(c, r, FLAME), col)
-			draw_colored_polygon(_shape(c, r, TONGUE), UiKit.INK)
+			ci.draw_colored_polygon(_shape(c, r, FLAME), col)
+			ci.draw_colored_polygon(_shape(c, r, TONGUE), UiKit.INK)
 		Glyph.EMETH, Glyph.CENTRE:
-			# a crystal: a long diamond with its middle facet
 			var crystal := PackedVector2Array([c + Vector2(0, -r * 1.1), c + Vector2(r * 0.5, 0), c + Vector2(0, r * 1.1), c + Vector2(-r * 0.5, 0)])
-			draw_colored_polygon(crystal, col)
-			draw_line(c + Vector2(0, -r * 1.1), c + Vector2(0, r * 1.1), Color(UiKit.INK, 0.6), 1.2, true)
-			if glyph == Glyph.CENTRE:
-				draw_line(c + Vector2(-r * 0.7, r * 0.45), c + Vector2(r * 0.7, r * 0.45), col, 2.0, true)
+			ci.draw_colored_polygon(crystal, col)
+			ci.draw_line(c + Vector2(0, -r * 1.1), c + Vector2(0, r * 1.1), Color(UiKit.INK, 0.6), 1.2, true)
+			if g == Glyph.CENTRE:
+				ci.draw_line(c + Vector2(-r * 0.7, r * 0.45), c + Vector2(r * 0.7, r * 0.45), col, 2.0, true)
 		Glyph.MAGIA:
-			# a four-pointed star of light (never the sun)
 			var star := PackedVector2Array()
 			for i in 8:
 				var d := Vector2.from_angle(i * PI * 0.25 - PI * 0.5)
 				star.append(c + d * (r if i % 2 == 0 else r * 0.3))
-			draw_colored_polygon(star, col)
+			ci.draw_colored_polygon(star, col)
 		Glyph.BRIDGE:
-			draw_polyline(_closed(_diamond(c + Vector2(-r * 0.45, 0), r * 0.5)), col, 1.8, true)
-			draw_polyline(_closed(_diamond(c + Vector2(r * 0.45, 0), r * 0.5)), col, 1.8, true)
+			ci.draw_polyline(_closed(_diamond(c + Vector2(-r * 0.45, 0), r * 0.5)), col, 1.8, true)
+			ci.draw_polyline(_closed(_diamond(c + Vector2(r * 0.45, 0), r * 0.5)), col, 1.8, true)
 		Glyph.SUSTAIN:
-			# a drop
-			draw_colored_polygon(_shape(c, r, DROP), col)
+			ci.draw_colored_polygon(_shape(c, r, DROP), col)
 
 
 ## A shape given in units of r around c.

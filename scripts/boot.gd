@@ -4,8 +4,9 @@ extends Node
 ## their panels over the art.
 ## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
 ## Once Morvath was sealed once, Iniciar first shows the Juramentos (JuramentoScreen, E6) with "Descer".
-## --title --screen=options|music|moves|howto|hero|codex|juramentos opens a panel at once (--hero-xp=N and --hero-equip=a,b set the
-## Warrior's Mastery and Gifts for captures, in Save.data; Save.gd).
+## --title --screen=options|music|moves|howto|hero|gifts|book|codex|juramentos opens a panel at once (hero, gifts and
+## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
+## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
 
 const GAME := "res://scenes/game.tscn"
 ## Seconds to black before the run starts, and before quitting.
@@ -43,7 +44,11 @@ func _ready() -> void:
 		"codex":
 			_open(CodexScreen.new(), TitleButton.Kind.HOWTO)
 		"hero":
-			_open(HeroScreen.new(), TitleButton.Kind.HERO)
+			_open_hero(HeroScreen.Chapter.HERO)
+		"gifts":
+			_open_hero(HeroScreen.Chapter.GIFTS)
+		"book":
+			_open_hero(HeroScreen.Chapter.OPENING)
 		"howto":
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"juramentos":
@@ -64,7 +69,7 @@ func _build() -> void:
 	# a browser tab or a phone app cannot be closed from inside: no Sair there
 	_menu.set_quit_visible(not OS.has_feature("web") and not OS.has_feature("mobile"))
 	_menu.start_pressed.connect(_start)
-	_menu.hero_pressed.connect(func() -> void: _open(HeroScreen.new(), TitleButton.Kind.HERO))
+	_menu.hero_pressed.connect(_open_hero.bind(HeroScreen.Chapter.HERO))
 	_menu.howto_pressed.connect(func() -> void: _open(HowToScreen.new(), TitleButton.Kind.HOWTO))
 	_menu.settings_pressed.connect(func() -> void: _open(OptionsScreen.new(), TitleButton.Kind.SETTINGS))
 	_menu.quit_pressed.connect(_quit)
@@ -102,6 +107,15 @@ func _open_juramentos(with_descend: bool) -> void:
 	_open(screen, TitleButton.Kind.START, [with_descend])
 	screen.descend.connect(func() -> void:
 		_sworn = true
+		_close_sub()
+		_start())
+
+
+## The Livro de Ahk (O Guerreiro), open on a chapter; its way down starts the descent as Iniciar does.
+func _open_hero(chapter: HeroScreen.Chapter) -> void:
+	var screen := HeroScreen.new()
+	_open(screen, TitleButton.Kind.HERO, [{}, chapter])
+	screen.descend.connect(func() -> void:
 		_close_sub()
 		_start())
 

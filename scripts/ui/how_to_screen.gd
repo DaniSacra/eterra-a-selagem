@@ -118,7 +118,7 @@ func _descent() -> Control:
 		col.custom_minimum_size.x = STEP_WIDTH
 		col.add_theme_constant_override(&"separation", 10)
 		steps.add_child(col)
-		col.add_child(_glyph(i))
+		col.add_child(step_glyph(i))
 		var head := UiKit.shadow(UiKit.label(T.t("howto_step_" + id), UiKit.GOLD, 22, UiKit.TITLE_FONT))
 		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		head.add_theme_constant_override(&"outline_size", 6)
@@ -135,20 +135,22 @@ func _descent() -> Control:
 	return page
 
 
-func _glyph(step: int) -> Control:
+## The sign of a step of a descent (a door, a Blessing's medallion, the seal), side px across: here and on the
+## opening page of the Livro de Ahk (HeroScreen).
+static func step_glyph(step: int, side: float = GLYPH) -> Control:
 	match step:
 		0:
 			var door := DoorMark.new()
-			door.custom_minimum_size = Vector2(GLYPH, GLYPH)
+			door.custom_minimum_size = Vector2(side, side)
 			door.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 			return door
 		1:
 			for b in BoonState.load_catalog():
 				if not b.is_duo():
-					var icon := BoonIcon.new().setup(b, GLYPH)
+					var icon := BoonIcon.new().setup(b, side)
 					icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 					return icon
-	return SealEmblem.new().setup(GLYPH)
+	return SealEmblem.new().setup(side)
 
 
 ## Every action with its keys, its gamepad button and what it does, and the tip under them.
