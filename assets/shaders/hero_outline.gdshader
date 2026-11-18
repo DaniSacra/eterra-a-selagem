@@ -7,9 +7,17 @@ render_mode unshaded, cull_front, shadows_disabled, fog_disabled;
 
 uniform vec3 color : source_color = vec3(0.05, 0.07, 0.08);
 uniform float width = 0.045;
+// The shell is pushed this many meters away from the camera: on his open, two-sided cloth the inflated back faces
+// showed through the body as dark blots; pushed back, only the edge past the silhouette is left.
+uniform float push_back = 0.25;
 
 void vertex() {
-	VERTEX += NORMAL * width / max(length(MODEL_MATRIX[0].xyz), 0.001);
+	float scale = max(length(MODEL_MATRIX[0].xyz), 0.001);
+	VERTEX += NORMAL * width / scale;
+	// away from the camera, in the model's own space (uniform scale: the transpose undoes the turn)
+	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+	vec3 away = normalize(world - CAMERA_POSITION_WORLD) * push_back;
+	VERTEX += transpose(mat3(MODEL_MATRIX)) * away / (scale * scale);
 }
 
 void fragment() {

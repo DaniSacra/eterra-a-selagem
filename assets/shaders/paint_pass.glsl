@@ -8,8 +8,10 @@
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
+// Two dispatches (the frame's colour cannot be copied from): the filter from the frame into a scratch image, then
+// the scratch back into the frame (copy_only).
 layout(rgba16f, set = 0, binding = 0) uniform restrict writeonly image2D out_color;
-layout(set = 0, binding = 1) uniform sampler2D src_color;
+layout(rgba16f, set = 0, binding = 1) uniform restrict readonly image2D src_color;
 layout(set = 0, binding = 2) uniform sampler2D src_depth;
 
 layout(push_constant, std430) uniform Params {
@@ -19,7 +21,7 @@ layout(push_constant, std430) uniform Params {
 	vec4 edge_color; // rgb linear, a = strength
 	float edge_jump;
 	float kuwahara;
-	float pad0;
+	float copy_only;
 	float pad1;
 } p;
 
@@ -28,7 +30,7 @@ float luma(vec3 c) {
 }
 
 vec3 fetch(ivec2 at) {
-	return texelFetch(src_color, clamp(at, ivec2(0), ivec2(p.size) - 1), 0).rgb;
+	return imageLoad(src_color, clamp(at, ivec2(0), ivec2(p.size) - 1)).rgb;
 }
 
 float depth_at(ivec2 at) {
@@ -41,6 +43,10 @@ void main() {
 		return;
 	}
 	vec3 here = fetch(at);
+	if (p.copy_only > 0.5) {
+		imageStore(out_color, at, vec4(here, 1.0));
+		return;
+	}
 	vec3 result = here;
 	if (p.kuwahara > 0.5) {
 		int r = int(p.radius + 0.5);

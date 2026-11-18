@@ -23,6 +23,9 @@ uniform vec3 flash_color : source_color = vec3(0.3, 0.22, 0.14);
 global uniform float art_style;
 uniform float style_width = 0.04;
 uniform vec3 style_color : source_color = vec3(0.07, 0.06, 0.06);
+// In that look the shell is also pushed style_push meters away from the camera, so on open cloth (Morvath's cloak, a
+// robe's hem) its inflated back faces stay behind the body and only the edge past the silhouette shows.
+uniform float style_push = 0.25;
 
 varying vec4 state;
 
@@ -36,6 +39,12 @@ void vertex() {
 	state = INSTANCE_CUSTOM;
 	float w = art_style > 0.5 ? style_width : width;
 	VERTEX = at + facing * w / max(length(MODEL_MATRIX[0].xyz), 0.001);
+	if (art_style > 0.5) {
+		// away from the camera, in the model's own space (uniform scale: the transpose undoes the turn)
+		float scale = max(length(MODEL_MATRIX[0].xyz), 0.001);
+		vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		VERTEX += transpose(mat3(MODEL_MATRIX)) * (normalize(world - CAMERA_POSITION_WORLD) * style_push) / (scale * scale);
+	}
 }
 
 void fragment() {

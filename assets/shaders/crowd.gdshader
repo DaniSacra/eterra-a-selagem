@@ -134,11 +134,11 @@ uniform float hero_light = 1.0;
 // pulled toward its own average (style_flat at mip style_flat_lod: the photographic noise goes). The flash, the tell, the
 // burn, the elites' gold and the dissolve are the same as in the classic look. art_style 0: the classic frame, unchanged.
 global uniform float art_style;
-uniform float style_light = 0.62;
-uniform float style_scene = 0.7;
+uniform float style_light = 0.32;
+uniform float style_scene = 0.22;
 uniform vec3 style_rim_color : source_color = vec3(1.0, 0.82, 0.62);
 uniform float style_rim_power = 3.5;
-uniform float style_rim = 0.32;
+uniform float style_rim = 0.24;
 uniform float style_flat = 0.35;
 uniform float style_flat_lod = 3.0;
 

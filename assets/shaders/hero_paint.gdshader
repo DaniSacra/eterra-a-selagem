@@ -18,12 +18,12 @@ uniform float roughness = 0.92;
 uniform float metallic = 0.0;
 uniform float specular = 0.12;
 // How dark the body is drawn (1: as painted): under the floor's value, separated from it by the rim and the outline.
-uniform float value = 0.85;
+uniform float value = 0.34;
 uniform float flatten = 0.35;
 uniform float flat_lod = 3.0;
 uniform vec3 rim_color : source_color = vec3(1.0, 0.82, 0.62);
 uniform float rim_power = 3.2;
-uniform float rim = 0.55;
+uniform float rim = 0.5;
 // The rim is kept to the side the light comes from (the top of the head, the shoulders: view space, as the crowd's
 // key) at rim_lit, rim_dark of it on the other side.
 uniform vec3 rim_dir = vec3(-0.45, 0.75, 0.5);

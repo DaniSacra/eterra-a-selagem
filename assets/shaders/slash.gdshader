@@ -43,7 +43,7 @@ global uniform float art_style;
 uniform float style_core_depth = 0.75;
 uniform float style_core_thin = 0.5;
 uniform float style_core_light = 0.3;
-uniform float style_cap = 0.62;
+uniform float style_cap = 0.55;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 

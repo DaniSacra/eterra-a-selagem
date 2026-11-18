@@ -61,6 +61,9 @@ static func attach(camera: Camera3D, level: int) -> bool:
 		return false
 	if camera.compositor and camera.compositor.compositor_effects.size() > 0 and camera.compositor.compositor_effects[0] is PaintPass:
 		return true
+	# with MSAA the frame is resolved again after the transparent pass and the filter's work is lost (measured on the
+	# Alta's 2x): the filter runs without it
+	camera.get_viewport().msaa_3d = Viewport.MSAA_DISABLED
 	var effect := PaintPass.new()
 	effect.enabled = false
 	VisualProfile.vary(effect, {&"enabled": true})
@@ -94,37 +97,45 @@ func _render_callback(_type: int, data: RenderData) -> void:
 	if size.x == 0 or size.y == 0:
 		return
 	var scale := size.y / 1080.0
-	var usage := RenderingDevice.TEXTURE_USAGE_SAMPLING_BIT | RenderingDevice.TEXTURE_USAGE_CAN_COPY_TO_BIT
+	var usage := RenderingDevice.TEXTURE_USAGE_STORAGE_BIT
 	if not buffers.has_texture(&"paint_pass", &"copy"):
 		buffers.create_texture(&"paint_pass", &"copy", RenderingDevice.DATA_FORMAT_R16G16B16A16_SFLOAT, usage,
 			RenderingDevice.TEXTURE_SAMPLES_1, size, 1, 1, true, false)
 	var edge := Color(EDGE_COLOR.srgb_to_linear(), EDGE_ALPHA if contour else 0.0)
-	var push := PackedFloat32Array([size.x, size.y, maxf(1.0, roundf(RADIUS * scale)), maxf(1.0, EDGE_PX * scale),
-		edge.r, edge.g, edge.b, edge.a, EDGE_JUMP, 1.0 if kuwahara else 0.0, 0.0, 0.0]).to_byte_array()
+	var filter := _push(size, maxf(1.0, roundf(RADIUS * scale)), maxf(1.0, EDGE_PX * scale), edge, 1.0 if kuwahara else 0.0, 0.0)
+	var back := _push(size, 0.0, 0.0, Color(0, 0, 0, 0), 0.0, 1.0)
 	var groups := Vector2i(ceili(size.x / 8.0), ceili(size.y / 8.0))
 	for view in buffers.get_view_count():
 		var color := buffers.get_color_layer(view)
 		var depth := buffers.get_depth_layer(view)
 		var copy := buffers.get_texture(&"paint_pass", &"copy")
-		_rd.texture_copy(color, copy, Vector3.ZERO, Vector3.ZERO, Vector3(size.x, size.y, 1), 0, 0, 0, 0)
-		var out := RDUniform.new()
-		out.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
-		out.binding = 0
-		out.add_id(color)
-		var src := RDUniform.new()
-		src.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
-		src.binding = 1
-		src.add_id(_sampler)
-		src.add_id(copy)
-		var deep := RDUniform.new()
-		deep.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
-		deep.binding = 2
-		deep.add_id(_sampler)
-		deep.add_id(depth)
-		var uniforms := UniformSetCacheRD.get_cache(_shader, 0, [out, src, deep])
-		var list := _rd.compute_list_begin()
-		_rd.compute_list_bind_compute_pipeline(list, _pipeline)
-		_rd.compute_list_bind_uniform_set(list, uniforms, 0)
-		_rd.compute_list_set_push_constant(list, push, push.size())
-		_rd.compute_list_dispatch(list, groups.x, groups.y, 1)
-		_rd.compute_list_end()
+		_dispatch(color, copy, depth, filter, groups)
+		_dispatch(copy, color, depth, back, groups)
+
+
+static func _push(size: Vector2i, radius: float, edge_px: float, edge: Color, kuwahara: float, copy_only: float) -> PackedByteArray:
+	return PackedFloat32Array([size.x, size.y, radius, edge_px, edge.r, edge.g, edge.b, edge.a, EDGE_JUMP, kuwahara,
+		copy_only, 0.0]).to_byte_array()
+
+
+func _dispatch(from: RID, to: RID, depth: RID, push: PackedByteArray, groups: Vector2i) -> void:
+	var out := RDUniform.new()
+	out.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+	out.binding = 0
+	out.add_id(to)
+	var src := RDUniform.new()
+	src.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
+	src.binding = 1
+	src.add_id(from)
+	var deep := RDUniform.new()
+	deep.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
+	deep.binding = 2
+	deep.add_id(_sampler)
+	deep.add_id(depth)
+	var uniforms := UniformSetCacheRD.get_cache(_shader, 0, [out, src, deep])
+	var list := _rd.compute_list_begin()
+	_rd.compute_list_bind_compute_pipeline(list, _pipeline)
+	_rd.compute_list_bind_uniform_set(list, uniforms, 0)
+	_rd.compute_list_set_push_constant(list, push, push.size())
+	_rd.compute_list_dispatch(list, groups.x, groups.y, 1)
+	_rd.compute_list_end()
