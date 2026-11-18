@@ -19,6 +19,9 @@ signal trial_turned(card: Trials.Card)
 signal altar_used(option: StringName)
 
 const STAGE := "res://data/stages/catacombs.tres"
+## The descent's graph is drawn on dice of its own (DV-1): the run's seed with this salt (the same --seed, the same map
+## whatever else the run draws before it).
+const MAP_SALT := 7411
 ## Seconds after walking in before the first wave rises (Hades II starts a fight as you step into the room).
 const START_DELAY := 1.0
 ## Meters from the reward or a pedestal that count as touching it.
@@ -90,13 +93,14 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 		stage = short_stage(stage, 6)
 	if g.juramentos:
 		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
-	map = RunMap.new(stage, _rng)
 	trials = Trials.new(Trials.load_catalog())
+	var forced := -1
 	if Dev.has("arena"):
 		# dev: --arena=id makes the opening room that arena (--variant=n dresses it)
 		for i in stage.layouts.size():
 			if String(stage.layouts[i].id) == Dev.arg("arena"):
-				map.forced_layout = i
+				forced = i
+	map = new_map(stage, forced)
 	for id in stage.enemies:
 		_defs[id] = game.horde.def(id)
 	game.horde.killed.connect(_on_killed)
@@ -130,41 +134,35 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 	return st
 
 
+## The descent's graph of a run (DV-1), on its own dice: the run's seed and MAP_SALT.
+func new_map(st: StageDef, forced := -1) -> RunMap:
+	return RunMap.new(st, hash([_rng.seed, MAP_SALT]), forced, trials.shortest_curse())
+
+
 func start() -> void:
 	_enter(map.first())
 
 
-## Dev: jumps straight to a room kind at its depth (--start=boss|miniboss|shop|fountain).
+## Dev: jumps straight to a room kind (--start=boss|miniboss|shop|fountain|trial|altar): the first room of that kind
+## in the graph (the altar's graph is drawn again with the altar sure to come; the trial's chamber as if a fight of
+## depth 3 had shown its slab, its doors those of that room).
 func start_at(kind: RunMap.Kind) -> void:
-	match kind:
-		RunMap.Kind.BOSS:
-			map.depth = stage.rooms
-		RunMap.Kind.SHOP:
-			map.depth = stage.rooms - 1
-		RunMap.Kind.MINIBOSS:
-			map.depth = map.miniboss_depth - 1
-		RunMap.Kind.FOUNTAIN:
-			map.depth = stage.fountain_depth_max - 1
-			map.miniboss_depth = 0
-		RunMap.Kind.TRIAL:
-			# --start=trial: its chamber as if a room of depth 3 had shown its slab (the doors after it drawn as there)
-			map.depth = 3
-			map.miniboss_depth = 0
-			next_rooms = map.options(true)
-			_prepare(next_rooms)
-			_enter(map.trial(map.depth))
-			return
-		RunMap.Kind.ALTAR:
-			map.depth = stage.altar_depth_min
-			map.miniboss_depth = 0
-			map.altar_seen = true
-			_enter(RunMap.Room.new(RunMap.Kind.ALTAR, RunMap.Reward.NONE, map.depth + 1, -1))
-			return
-	for r in map.options(true):
+	if kind == RunMap.Kind.ALTAR and stage.altar_layout != null:
+		var st: StageDef = stage.duplicate()
+		st.altar_chance = 1.0
+		map = new_map(st, map.forced_layout)
+	if kind == RunMap.Kind.TRIAL:
+		var at := map.layer(3).filter(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.COMBAT)
+		map.enter(at[0] if not at.is_empty() else map.layer(3)[0])
+		next_rooms = map.doors()
+		_prepare(next_rooms)
+		_enter(map.trial(map.depth))
+		return
+	for r in map.nodes:
 		if r.kind == kind:
 			_enter(r)
 			return
-	_enter(map.options(true)[0])
+	_enter(map.first())
 
 
 func depth() -> int:
@@ -199,8 +197,8 @@ func _enter(next: RunMap.Room) -> void:
 	room = next
 	map.enter(room)
 	if room.kind != RunMap.Kind.TRIAL:
-		# (the Provação's chamber keeps the doors of the room its slab was in)
-		next_rooms = map.options(game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
+		# the rooms its links lead to (DV-1; the Provação's chamber keeps the doors of the room its slab was in)
+		next_rooms = map.doors()
 		_prepare(next_rooms)
 	var layout: RoomLayout = stage.layouts[room.layout] if not stage.layouts.is_empty() and room.layout >= 0 else null
 	match room.kind:
@@ -230,7 +228,7 @@ func _enter(next: RunMap.Room) -> void:
 			game.player.place(Vector2(float(xz[0]), float(xz[1])))
 	game.player.magick.gain(game.player.magick.max_value)  # Magia is full in every room (Hades II)
 	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS,
-		variant, gold, game.boons.owned().size())
+		variant, gold, game.boons.owned().size(), room.id)
 	if room.kind == RunMap.Kind.SHOP:
 		game.room_tally.shop_entered(gold)
 	_queue.clear()
@@ -269,7 +267,7 @@ func _enter(next: RunMap.Room) -> void:
 				runes = RuneFloor.new(game, layout.hazard, _rng)
 		RunMap.Kind.MINIBOSS:
 			var guardian: Array[StringName] = [room.fight.kinds[0] if room.fight != null and not room.fight.kinds.is_empty()
-				else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
+				else room.guardian if room.guardian != &"" else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 			_waves = [guardian]
 			var alive := EncounterGen.in_room(EncounterGen.alive_range(stage, stage.miniboss_tier), layout)
 			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
@@ -435,6 +433,8 @@ func _collect() -> void:
 	var reward := room.reward
 	_reward_node.queue_free()
 	_reward_node = null
+	# what the room gave, beside the door that promised it (DV-1, MAP-02: the log checks the promise)
+	game.room_tally.event("reward", game.time, {"node": room.id, "reward": (RunMap.Reward.keys()[reward] as String).to_lower()})
 	_give(reward, room.kind == RunMap.Kind.MINIBOSS)
 	_open_doors()
 
@@ -471,6 +471,9 @@ func _open_doors() -> void:
 	phase = Phase.OPEN
 	if room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS:
 		_roll_slab()
+	# a pomegranate behind a door when nothing can grow turns into a Blessing before its sign shows (Q-25 a); the
+	# Blessing of this room counts as one to grow
+	map.settle(next_rooms, game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
 	for i in next_rooms.size():
 		var r := next_rooms[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
@@ -512,8 +515,9 @@ func _fade_in() -> void:
 
 # ---------- E5: the doors that show the way ----------
 
-## Draws the fights behind the doors before they open (E5-D8: the sign can say "Difícil" or "Guardião"), with the
-## run's dice, in the arena (and its variant) each door leads to; the guardian's is drawn among the stage's.
+## Draws the fights behind the doors before they open (E5-D8: the sign can say "Difícil" or "Guardião"), in the arena
+## (and its variant) each door leads to, on the room's own seed (DV-1: the same room, the same fight, whatever the way
+## to it); the guardian's is the one the graph put there.
 func _prepare(doors: Array[RunMap.Room]) -> void:
 	for r in doors:
 		if r.fight != null:
@@ -521,17 +525,20 @@ func _prepare(doors: Array[RunMap.Room]) -> void:
 		match r.kind:
 			RunMap.Kind.COMBAT:
 				var l: RoomLayout = stage.layouts[r.layout].variant(r.variant) if r.layout >= 0 and r.layout < stage.layouts.size() else null
-				r.fight = EncounterGen.generate(stage, r.depth, _defs, _rng, 1.0, l)
+				var dice := RandomNumberGenerator.new()
+				dice.seed = r.fight_seed
+				r.fight = EncounterGen.generate(stage, r.depth, _defs, dice, 1.0, l)
 			RunMap.Kind.MINIBOSS:
 				var f := EncounterGen.Fight.new()
-				f.kinds = [stage.minibosses[_rng.randi() % stage.minibosses.size()]]
+				f.kinds = [r.guardian if r.guardian != &"" else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 				f.tier = stage.miniboss_tier
 				f.waves = [f.kinds.duplicate()]
 				r.fight = f
 
 
 ## What door i tells (for the sign, the scenery of its doorway and the log): RunMap.Room.sign() and the arena it leads
-## to (&"" for none: the boss, a room of its own) and its name keys (kind_key, reward_key). {} when there is no such door.
+## to (&"" for none: the boss, a room of its own) and its name keys (kind_key, reward_key; guardian_key, the name of
+## the guardian who waits there). {} when there is no such door.
 func door_info(i: int) -> Dictionary:
 	if i < 0 or i >= next_rooms.size():
 		return {}
@@ -548,6 +555,8 @@ func door_info(i: int) -> Dictionary:
 		_:
 			arena = stage.layouts[r.layout].id if r.layout >= 0 and r.layout < stage.layouts.size() else &""
 	info.merge({"arena": arena, "kind_key": RunMap.KIND_KEY[r.kind], "reward_key": RunMap.REWARD_KEY[r.reward]})
+	if r.guardian != &"":
+		info["guardian_key"] = game.horde.def(r.guardian).name_key  # who waits there, for the map (Q-27 a)
 	return info
 
 
@@ -558,7 +567,8 @@ func door_look(i: int) -> StringName:
 	return door_info(i).get("arena", &"")
 
 
-## A door in a word for the run's log: kind, reward and "hard" (combat/boon/hard, altar, miniboss/boon).
+## A door in a word for the run's log: kind, reward, "hard" and the guardian (combat/boon/hard, altar,
+## miniboss/boon/knight).
 static func door_word(r: RunMap.Room) -> String:
 	var info := r.sign()
 	var w := (RunMap.Kind.keys()[r.kind] as String).to_lower()
@@ -566,6 +576,8 @@ static func door_word(r: RunMap.Room) -> String:
 		w += "/" + (RunMap.Reward.keys()[r.reward] as String).to_lower()
 	if info.hard:
 		w += "/hard"
+	if r.guardian != &"":
+		w += "/" + String(r.guardian)
 	return w
 
 
@@ -580,7 +592,8 @@ func _log_leaving(next: RunMap.Room) -> void:
 		t.event("altar", game.time, {"choice": "none", "max_hp": game.player.max_hp, "gold": gold})
 		altar_used.emit(&"")
 	if next_rooms.size() > 1:
-		t.event("door", game.time, {"chosen": next_rooms.find(next), "doors": next_rooms.map(door_word)})
+		t.event("door", game.time, {"chosen": next_rooms.find(next), "doors": next_rooms.map(door_word), "node": next.id,
+			"offered": next_rooms.map(func(r: RunMap.Room) -> int: return r.id)})
 
 
 # ---------- E5: the Provação ----------
@@ -637,8 +650,10 @@ const SLAB_CLEAR := 4.0
 const TRIAL_COLOR := Color(0.52, 0.36, 0.78)
 
 
+## DV-1: the slab shows where the graph put the "?" (RunMap.Room.trial; its dice were thrown when the map was drawn),
+## when it still may (Trials.open_at), and the "?" turns into the room it is (RunMap.reveal).
 func _roll_slab() -> void:
-	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng, map.fights_left()):
+	if not room.trial or map.depth >= stage.rooms or not trials.open_at(stage, map.depth, map.fights_left()):
 		return
 	var at: Variant = _free_spot(SLAB_CLEAR)
 	if at == null:
@@ -648,6 +663,7 @@ func _roll_slab() -> void:
 	var cost := Trials.cost(stage, map.depth)
 	slab = {"at": at, "cost": cost, "armed": SLAB_ARM}
 	_slab_node = _slab_marker(at, cost)
+	map.reveal(room)
 	_bot_trial = Trials.bot_accepts(stage, map.depth, game.player.hp, game.player.max_hp)
 	game.room_tally.event("trial_shown", game.time, {"cost": cost, "hp": snappedf(game.player.hp, 0.1),
 		"max_hp": game.player.max_hp})
@@ -972,21 +988,61 @@ const BOT_ALTAR_RANK := 1.5
 const BOT_FOUNTAIN_BELOW := 0.8
 
 
-static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0) -> int:
+## DV-1 (MAP-04), the robot reads the map as a player would: the same taste for the door in front of it (its rank),
+## plus BOT_AHEAD of the best way on after that door (what the rooms on it give, in the same order; a fountain ahead
+## worth two Blessings, BOT_FOUNTAIN_AHEAD: it keeps one in reach for when it is hurt). The one-step rule first tried (a fountain kept in reach below 80% of life)
+## left the robot without a fountain in 12 of 24 descents (it drank in 19 of 24 before the map) and won 20 of 24.
+## map: the descent's graph; null: the doors alone, as before the map.
+const BOT_AHEAD := 1.0
+const BOT_FOUNTAIN_AHEAD := 12.0
+
+
+static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0, map: RunMap = null) -> int:
 	var best := 0
-	var rank := INF
+	var top := -INF
+	var memo := {}
 	for i in doors.size():
-		var r := float(BOT_PREFERENCE.find(doors[i].reward))
+		var rank := float(BOT_PREFERENCE.find(doors[i].reward))
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
-			r = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
+			rank = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
 		elif doors[i].kind == RunMap.Kind.ALTAR:
-			r = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
-		elif r < 0.0:
-			r = BOT_PREFERENCE.size()
-		if r < rank:
-			rank = r
+			rank = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
+		elif rank < 0.0:
+			rank = BOT_PREFERENCE.size()
+		var score := -rank
+		if map != null:
+			score += BOT_AHEAD * bot_way(map, doors[i], altar_useful, memo)
+		if score > top:
+			top = score
 			best = i
 	return best
+
+
+## The most the robot sees to gain on any way after room r (r left out): each room's worth by its taste (a Blessing
+## BOT_PREFERENCE.size(), down to 1 for Magia; a fountain BOT_FOUNTAIN_AHEAD; a useful altar between the pomegranate
+## and the heart; the shop and Morvath nothing).
+static func bot_way(map: RunMap, r: RunMap.Room, altar_useful: bool = true, memo: Dictionary = {}) -> float:
+	if memo.has(r.id) and r.id >= 0:
+		return memo[r.id]
+	var most := 0.0
+	for id in r.next:
+		var n := map.at(id)
+		most = maxf(most, _bot_worth(n, altar_useful) + bot_way(map, n, altar_useful, memo))
+	if r.id >= 0:
+		memo[r.id] = most
+	return most
+
+
+static func _bot_worth(r: RunMap.Room, altar_useful: bool) -> float:
+	match r.kind:
+		RunMap.Kind.FOUNTAIN:
+			return BOT_FOUNTAIN_AHEAD
+		RunMap.Kind.ALTAR:
+			return BOT_PREFERENCE.size() - BOT_ALTAR_RANK if altar_useful else 0.0
+		RunMap.Kind.SHOP, RunMap.Kind.BOSS:
+			return 0.0
+	var rank := BOT_PREFERENCE.find(r.reward)
+	return float(BOT_PREFERENCE.size() - rank) if rank >= 0 else 0.0
 
 
 ## The altar's trade the robot would make now (Altar.bot_choice; -1: none).
@@ -1013,7 +1069,8 @@ func bot_goal() -> Variant:
 				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0)), 0, game.arena.exits.size() - 1))
+			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0), map),
+				0, game.arena.exits.size() - 1))
 	return null
 
 

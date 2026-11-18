@@ -12,7 +12,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	Dev._args.erase("seed")
+	Dev.put("seed", "1")  # back to the seed of every test (tests/hooks/pre_run.gd, BUG-109)
 	Dev._args.erase("juramentos")
 
 
@@ -135,7 +135,7 @@ func test_denial_takes_two_of_the_ones_not_chosen() -> void:
 # ---------- the save and the Mastery ----------
 
 func test_save_version_4_keeps_the_juramentos() -> void:
-	assert_eq(SaveData.VERSION, 4)
+	assert_eq(SaveData.VERSION, 5)
 	assert_eq(SaveData.defaults().juramentos, {"ranks": {}, "best": 0})
 	var old := SaveData.merged(JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v3.json")))
 	assert_eq(old.juramentos, {"ranks": {}, "best": 0}, "a version 3 file opens with none chosen")

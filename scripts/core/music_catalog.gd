@@ -14,9 +14,10 @@ const MORVATH := &"morvath"
 const PLACES: Array[StringName] = [TITLE, DUNGEON, MORVATH]
 ## The save option of each place (SaveData.defaults).
 const OPTION := {TITLE: "music_title", DUNGEON: "music_dungeon", MORVATH: "music_morvath"}
-## The default of each place: our own music everywhere (the PO liked it; the title hears the walk of the rooms, as
-## before T5).
-const DEFAULT := {TITLE: &"classic_catacombs", DUNGEON: &"classic_catacombs", MORVATH: &"classic_morvath"}
+## The default of each place: our own music everywhere, the title hearing the walk of the rooms' piece. MUS-1 (the
+## PO, 2026-11-18: "músicas mais animadas, dinâmicas"): the fight music composed by the project (tools/make_music.gd)
+## is the default; the pieces of before stay in the list.
+const DEFAULT := {TITLE: &"blade_march", DUNGEON: &"blade_march", MORVATH: &"morvath_battle"}
 ## Where the music files are.
 const DIR := "res://audio/music/"
 
@@ -28,6 +29,10 @@ const DIR := "res://audio/music/"
 ##   places: where the player may choose it (a rooms' piece on the title plays its walk); empty: only to listen.
 ## The order is the order of the list on screen.
 const PIECES := {
+	&"blade_march": {"name": "music_blade_march", "file": "blade_march", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
+	&"deep_drums": {"name": "music_deep_drums", "file": "deep_drums", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
+	&"iron_pulse": {"name": "music_iron_pulse", "file": "iron_pulse", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
+	&"morvath_battle": {"name": "music_morvath_battle", "file": "morvath_battle", "layers": 4, "loop": true, "places": [MORVATH]},
 	&"classic_catacombs": {"name": "music_classic_catacombs", "file": "classic_catacombs", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
 	&"classic_morvath": {"name": "music_classic_morvath", "file": "classic_morvath", "layers": 4, "loop": true, "places": [MORVATH]},
 	&"tempting_secrets": {"name": "music_tempting_secrets", "file": "title", "layers": 1, "loop": true, "loop_from": 16.0, "places": [TITLE]},

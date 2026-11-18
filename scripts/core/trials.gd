@@ -92,6 +92,15 @@ func roll(stage: StageDef, depth: int, rng: RandomNumberGenerator, fights_left: 
 	return true
 
 
+## DV-1: the slab of a room the descent's graph marked with "?" (RunMap.Room.trial; the dice were thrown there):
+## true when it shows now (may_show), and the cooldown starts.
+func open_at(stage: StageDef, depth: int, fights_left: int = ANY_FIGHTS) -> bool:
+	if not may_show(stage, depth, fights_left):
+		return false
+	last_shown = depth
+	return true
+
+
 ## Up to n cards, each with a different blessing and a different curse (fewer when the catalog is short); no curse
 ## lasts more than the fights left before the boss (C17, BUG-101: the card's promise always comes true).
 func offers(rng: RandomNumberGenerator, n: int, chances: Array[float], fights_left: int = ANY_FIGHTS) -> Array[Card]:

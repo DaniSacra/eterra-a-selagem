@@ -14,10 +14,18 @@ correção técnica clara; **P2** limpeza, documentação ou ganho pequeno.
 | Exe do Windows | **219,7 MB** (modelo da Godot 109,3 + PCK 110,4); **197,2 MB** depois da C1 | | export `"Windows Desktop"` no worktree, `ls -l` |
 | PCK por família | assados 43,92; música 17,22; bonecos do KayKit 11,38; herói 8,27; Emeth 6,99; UI 6,19; texturas 3,91; ambiência 3,01; UAL 2,18; `dungeon_r` 2,17; `dungeon` 1,46; efeitos 1,30; scripts 1,24; fontes 0,35; shaders 0,28; armas 0,20 MB | | `python3 -I tools/pck_sizes.py build/windows/ASelagem.exe` |
 | Assados | **43,92 MB** | 70 MB (63%) | `du -cb assets/baked/*.res` |
-| Música no pacote | **17,22 MB** (16,57 no disco: o `.oggvorbisstr` soma 4%) | 18 MB (96%) | PCK |
+| Música no pacote | **17,22 MB** (16,57 no disco: o `.oggvorbisstr` soma 4%); **17,73 MB** depois do MUS-1, com 4 peças novas (16,69 no disco) | 18 MB (99%) | PCK; MUS-1 pelos `.oggvorbisstr` de `.godot/imported` |
 | VRAM das texturas carregadas | herói 28,5; Emeth 19,4; relevo da rocha 5,3 + 1,3; título 8,8; medalhão de 512 1,3; **21 peças do KayKit 112,0**; assados 79,0 MB | | `tools/gpu.sh run --rendering-driver vulkan -s tools/asset_probe.gd -- vram` (RTX 5060, `RENDER_TEXTURE_MEM_USED`) |
 
 ## Feito
+
+### MUS-1, 2026-11-18: música de luta (pedido do PO)
+Quatro peças novas sintetizadas pelo projeto (`tools/make_music.gd`): "Marcha das Lâminas", "Tambores do Fundo",
+"Pulso de Ferro" (salas, caminhada e luta) e "Morvath, a Batalha" (4 fases); padrão no título, nas salas e em Morvath.
+Detalhes, loudness e luta gravada em `docs/design/t5_audio.md` (MUS-1). Para caber: Kevin MacLeod reencodado em
+qualidade Vorbis 0 (Q-20 a; 10,2 para 5,6 MB, mesmas amostras e laços, loudness a 0,1 LU), originais, Salmos e vitória
+do .wav em qualidade 1. Música no disco 16,57 para 16,69 MB, no pacote 17,22 para 17,73 MB (teto 18). Sobra pouco:
+a próxima peça pede tirar "Tempting Secrets" (1,1 MB) ou subir o teto.
 
 ### C1, 2026-11-18: melhorias 1 a 4 (aprovadas pelo Daniel)
 Nenhuma mudança de aparência; capturas na GPU antes e depois em `docs/gallery/assets/c1/`.

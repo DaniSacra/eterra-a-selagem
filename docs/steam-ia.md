@@ -47,7 +47,9 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
 
 - **Música (vai no jogo, E4-06, 2026-11-17)**: `audio/music/*.ogg`, composta e escrita em código (notas, timbres e
   mixagem em `tools/make_music.gd`) por um assistente de IA (Claude), como o leão do selo: nenhum gerador de música ou
-  de áudio por IA, nenhuma amostra gravada; o som sai da síntese do próprio script.
+  de áudio por IA, nenhuma amostra gravada; o som sai da síntese do próprio script. MUS-1 (2026-11-18): as peças de
+  luta "Marcha das Lâminas", "Tambores do Fundo", "Pulso de Ferro" e "Morvath, a Batalha"
+  (`audio/music/blade_march_*`, `deep_drums_*`, `iron_pulse_*`, `morvath_battle_*`), do mesmo jeito.
 
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), sons Kenney (CC0), fontes Cinzel e Alegreya Sans (OFL).

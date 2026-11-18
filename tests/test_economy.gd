@@ -54,19 +54,26 @@ func test_the_deck_has_hades_shape() -> void:
 	assert_eq(cards.count(R.GOLD), 2)
 
 
+## DV-1: every fight of the graph took its card off the deck when the map was drawn (the deck filled again as it ran
+## out), and no two doors of a room promise the same.
 func test_doors_of_a_room_never_repeat_and_the_deck_runs_down() -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7
-	var map := RunMap.new(stage, rng)
-	map.enter(map.first())
-	var before := map.deck.left.size()
-	var doors := map.options(true)
-	var seen := {}
-	for d in doors:
-		if d.kind == RunMap.Kind.COMBAT:
-			assert_false(seen.has(d.reward))
-			seen[d.reward] = true
-	assert_eq(map.deck.left.size(), before - seen.size(), "every door took its card off the deck")
+	var big := 0
+	for s in 50:
+		var map := RunMap.new(stage, s)
+		var fights := 0
+		for r in map.nodes:
+			if r.kind == RunMap.Kind.COMBAT and r.depth > 1:
+				fights += 1
+			var seen := {}
+			for d in map.doors_of(r):
+				if d.kind == RunMap.Kind.COMBAT:
+					assert_false(seen.has(d.reward), "seed %d room %d: two doors promise the same" % [s, r.id])
+					seen[d.reward] = true
+		if fights > stage.reward_deck.size():
+			big += 1
+			assert_gte(map.deck.refills, 1, "seed %d: the deck ran down and was filled again" % s)
+		assert_lt(map.deck.left.size(), stage.reward_deck.size(), "seed %d: the cards drawn are off the deck" % s)
+	assert_gt(big, 10, "graphs with more fights than cards in the deck")
 
 
 func test_the_gold_of_a_fight() -> void:

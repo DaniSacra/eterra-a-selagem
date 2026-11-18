@@ -48,32 +48,41 @@ func test_the_catalog_is_valid_and_every_file_is_there() -> void:
 
 
 func test_the_default_is_our_own_music_everywhere() -> void:
+	# MUS-1: the fight music composed by the project is the default; the title hears the walk of the rooms' piece
 	var opts: Dictionary = SaveData.defaults().options
-	assert_eq(opts.music_title, "classic_catacombs", "the title hears the walk of our rooms' music, as before T5")
-	assert_eq(opts.music_dungeon, "classic_catacombs")
-	assert_eq(opts.music_morvath, "classic_morvath")
+	assert_eq(opts.music_title, "blade_march", "the title hears the walk of our rooms' music")
+	assert_eq(opts.music_dungeon, "blade_march")
+	assert_eq(opts.music_morvath, "morvath_battle")
+	assert_eq(T.t(MusicCatalog.spec(&"blade_march").name), "Marcha das Lâminas")
+	assert_eq(T.t(MusicCatalog.spec(&"morvath_battle").name), "Morvath, a Batalha")
+	# the pieces of before stay in the list
+	for id: StringName in [&"classic_catacombs", &"gloom_descent"]:
+		assert_true(MusicCatalog.choices(MusicCatalog.DUNGEON).has(id), "%s may still be chosen" % id)
+	for id: StringName in [&"deep_drums", &"iron_pulse"]:
+		assert_true(MusicCatalog.choices(MusicCatalog.DUNGEON).has(id), "%s is a rooms' piece" % id)
+	for id: StringName in [&"classic_morvath", &"clash_defiant"]:
+		assert_true(MusicCatalog.choices(MusicCatalog.MORVATH).has(id), "%s may still be chosen" % id)
 	assert_eq(T.t(MusicCatalog.spec(&"classic_catacombs").name), "Catacumbas (original)")
-	assert_eq(T.t(MusicCatalog.spec(&"classic_morvath").name), "Morvath (original)")
 	# an older save (no option) reads the default
 	var old := SaveData.merged({"version": 4, "options": {"music": 0.5}})
-	assert_eq(old.options.music_morvath, "classic_morvath")
+	assert_eq(old.options.music_morvath, "morvath_battle")
 
 
 func test_a_wrong_choice_falls_back_to_the_default() -> void:
 	for place in MusicCatalog.PLACES:
 		for bad: Variant in [null, "", "nothing", 3, "victory", "psalm_rock"]:
 			assert_eq(MusicCatalog.resolve(place, bad), MusicCatalog.DEFAULT[place], "%s with %s" % [place, bad])
-	assert_eq(MusicCatalog.resolve(MusicCatalog.MORVATH, "gloom_descent"), &"classic_morvath", "a rooms' piece is not Morvath's")
-	assert_eq(MusicCatalog.resolve(MusicCatalog.DUNGEON, "tempting_secrets"), &"classic_catacombs", "the title's piece has no fight")
+	assert_eq(MusicCatalog.resolve(MusicCatalog.MORVATH, "gloom_descent"), &"morvath_battle", "a rooms' piece is not Morvath's")
+	assert_eq(MusicCatalog.resolve(MusicCatalog.DUNGEON, "tempting_secrets"), &"blade_march", "the title's piece has no fight")
 	assert_eq(MusicCatalog.resolve(MusicCatalog.TITLE, "gloom_descent"), &"gloom_descent", "a rooms' piece may play on the title")
 	var merged := SaveData.merged({"options": {"music_dungeon": 7}})
-	assert_eq(merged.options.music_dungeon, "classic_catacombs", "a damaged option")
+	assert_eq(merged.options.music_dungeon, "blade_march", "a damaged option")
 	Save.data.options.music_morvath = "nothing"
-	assert_eq(Music.piece_for(&"morvath"), &"classic_morvath")
+	assert_eq(Music.piece_for(&"morvath"), &"morvath_battle")
 
 
 func test_music_plays_the_chosen_piece() -> void:
-	assert_eq(Music.piece_for(&"catacombs"), &"classic_catacombs")
+	assert_eq(Music.piece_for(&"catacombs"), &"blade_march")
 	assert_eq(Music.piece_for(&"victory"), &"victory", "not a place: itself")
 	Music.choose(&"catacombs", &"gloom_descent")
 	assert_eq(Save.data.options.music_dungeon, "gloom_descent", "the choice is saved")
@@ -81,13 +90,14 @@ func test_music_plays_the_chosen_piece() -> void:
 	Music.play(&"catacombs", Music.FIGHT)
 	assert_eq(Music.current(), &"gloom_descent")
 	Music.choose(&"morvath", &"gloom_descent")
-	assert_eq(Save.data.options.music_morvath, "classic_morvath", "a piece that does not serve there is refused")
+	assert_eq(Save.data.options.music_morvath, "morvath_battle", "a piece that does not serve there is refused")
 	Music.choose(&"morvath", &"clash_defiant")
 	Music.boss_phase(2)
 	assert_eq(Music.current(), &"clash_defiant")
 	assert_eq(Array(Music.mix.current().targets), [0.0, 1.0, 0.0, 0.0])
 	assert_eq(MusicCatalog.step(&"title", &"classic_catacombs", 1), &"tempting_secrets")
-	assert_eq(MusicCatalog.step(&"title", &"classic_catacombs", -1), &"gloom_descent", "wraps around")
+	assert_eq(MusicCatalog.step(&"title", &"blade_march", 1), &"deep_drums")
+	assert_eq(MusicCatalog.step(&"title", &"blade_march", -1), &"gloom_descent", "wraps around")
 
 
 func test_listening_and_back_to_the_game() -> void:
@@ -104,7 +114,7 @@ func test_listening_and_back_to_the_game() -> void:
 	Music.quiet()
 	assert_eq(Music.heard(), &"")
 	Music.resume()
-	assert_eq(Music.current(), &"classic_catacombs", "back to the rooms")
+	assert_eq(Music.current(), &"blade_march", "back to the rooms")
 	assert_eq(Music.mix.level(), Music.FIGHT, "at the level they were")
 
 
@@ -144,9 +154,9 @@ func test_the_screen_opens_chooses_and_closes_by_keys() -> void:
 	for id: StringName in MusicCatalog.PIECES:
 		assert_not_null(room.find_child("listen_" + id, true, false), "%s is listed" % id)
 	await _press(&"ui_accept")
-	assert_eq(Save.data.options.music_title, "tempting_secrets", "right steps the title's piece and saves it")
+	assert_eq(Save.data.options.music_title, "deep_drums", "right steps the title's piece and saves it")
 	var shown := room.find_child("place_title", true, false) as Label
-	assert_eq(shown.text, T.t(&"music_tempting_secrets"), "and shows it")
+	assert_eq(shown.text, T.t(&"music_deep_drums"), "and shows it")
 	focus = get_viewport().gui_get_focus_owner()
 	assert_true(focus != null and String(focus.name) == "place_title_1", "the focus stays on it")
 	var listen := room.find_child("listen_classic_morvath", true, false) as Button
@@ -161,7 +171,7 @@ func test_the_screen_opens_chooses_and_closes_by_keys() -> void:
 	await get_tree().process_frame
 	assert_eq(options.find_children("*", "MusicRoomScreen", true, false).size(), 0, "Esc closes Músicas")
 	assert_true(options.is_inside_tree(), "and only Músicas")
-	assert_eq(Music.current(), &"tempting_secrets", "the title's new choice plays")
+	assert_eq(Music.current(), &"deep_drums", "the title's new choice plays")
 	focus = get_viewport().gui_get_focus_owner()
 	assert_true(focus != null and String(focus.name) == "music_room", "focus back on Músicas")
 

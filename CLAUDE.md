@@ -208,7 +208,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - A partida é por salas, com a estrutura e os números da primeira região do Hades II (estudo dos dados do jogo do
   Daniel; nada de arte, nome, história ou som copiado). Notas do estudo: fora do repositório (scratchpad da sessão).
 - Escala: 80 unidades do Hades = 1 m (andar 540 = 6,75 m/s; heroína de 200 de altura = paladino de 2,5 m). `U` em `make_data.gd`.
-- Salas: `RunMap` (`core/run_map.gd`: abertura com dom, portas que mostram a recompensa, guardião entre as salas 4 e 6,
+- Salas: `RunMap` (`core/run_map.gd`; desde o DV-1 um grafo gerado no começo, ver Descida de Valmor: abertura com dom, portas que mostram a recompensa, guardião entre as salas 4 e 6,
   uma fonte entre 5 e 8, loja na 10, Morvath na 11: **a descida padrão desde a E3** (C13-01, D-61; `--medium` é a de 7 do
   ciclo C12, fonte na 4, guardião na 5, loja na 6, e `--short` a de 5, as duas com elites desde a sala 2,
   `Rooms.short_stage`), elites desde a profundidade 3 (`elite_from_depth`), nenhuma arena mais de 3 vezes
@@ -494,7 +494,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `charge_up` segurando o Ômega; vibração por golpe e ao ser ferido (`Fx.buzz`, `Combat.RUMBLE_*`), só com controle
   em uso e a opção `rumble` do save ligada (`Fx.rumble`, `Game.apply_options`).
 - O jogo abre em tela cheia (padrão desde 2026-11-16, `SaveData.VERSION` 2 passa os saves antigos para tela cheia uma vez; capturas, vídeos e `--nosave` ficam em janela, `App.apply_options`); a pausa tem "Sair do jogo" no desktop (`pause_exit_game`).
-- Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio). Sem save (`--nosave`) não há recorde
+- Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio; versão 5 passa uma vez as músicas que estavam no padrão antigo para o padrão novo do MUS-1). Sem save (`--nosave`) não há recorde
   (`SaveData.record_win_time`). Os testes nunca gravam o save nem o registro (`tests/hooks/pre_run.gd`, `pre_run_script` no
   `.gutconfig.json`; `tools/title_flow_check.gd` também desliga).
 - Registro das partidas de gente (ciclo 10, QW-001): `user://runs.jsonl`, uma linha JSON por partida (vitória, morte ou saída,
@@ -531,9 +531,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `tools/make_music_loops.sh <pasta dos mp3>`; faixas `solo` (`MusicMix.Deck.solo`: o nível n ouve só a camada n, as
   outras seguem mudas no tempo, troca em crossfade sem reiniciar). Os Salmos e a vitória seguem sintetizados.
   **Músicas para escolher (T5, o PO não gostou da música nova da fase e gostava da antiga)**: as antigas voltaram com
-  nome próprio (`audio/music/classic_catacombs_1/2.ogg`, `classic_morvath_1..4.ogg`, do `5dfe97f`) e são o **padrão em
-  todo lugar** (o título toca a caminhada da "Catacumbas (original)", como antes do T5); as do MacLeod continuam no pacote
-  para escolher. Catálogo como dado em `MusicCatalog` (`core/music_catalog.gd`, `PIECES`: id, nome `music_<id>` no
+  nome próprio (`audio/music/classic_catacombs_1/2.ogg`, `classic_morvath_1..4.ogg`, do `5dfe97f`) e foram o padrão até o
+  MUS-1; as do MacLeod continuam no pacote para escolher.
+  **MUS-1, música de luta (o PO, 2026-11-18: "músicas mais animadas, dinâmicas", as de antes "um pouco depressivas")**:
+  quatro peças novas compostas e sintetizadas pelo projeto (`tools/make_music.gd`, `-- blade_march deep_drums iron_pulse
+  morvath_battle`), cada uma com riff, melodia com contraponto, progressões que sobem e cadência para o maior no pico:
+  "Marcha das Lâminas" (`blade_march`, orquestral e épica, ré menor a ré maior, 144 BPM, 40 compassos, 66,7 s),
+  "Tambores do Fundo" (`deep_drums`, folk e tribal, rabeca e flauta, mi dórico a mi maior, 150 BPM, 64 s), "Pulso de
+  Ferro" (`iron_pulse`, baixo em semicolcheias, lá menor harmônico a lá maior, 138 BPM, 36 compassos, 62,6 s), as três em
+  caminhada e luta somadas; "Morvath, a Batalha" (`morvath_battle`, dó menor harmônico a dó maior, 150 BPM, 64 s, uma
+  camada por fase: cordas e tambor, coro do ritual, trêmulo e caixa da maldição, metais do herói). **Padrão**: Marcha das
+  Lâminas no título (a caminhada) e nas salas, Morvath, a Batalha em Morvath (`MusicCatalog.DEFAULT`); as antigas e as do
+  MacLeod ficam na lista. Niveladas por loudness, não por pico (`_publish_levelled`: ganho por camada até a meta da soma,
+  `ROOMS_LUFS` -21,8 / -20,0, `MORVATH_LUFS` -22,6 a -19,4, limitador com antecipação só acima de `ROOMS_CEILING` -2 e
+  `MORVATH_CEILING` -5,2 dBFS); bateria nova no script (`_kick`, `_snare`, `_tom`, `_hat`, `_clap`, `_crash`, `_fill`,
+  padrões de 16 passos em `_hits`), baixo, spiccato, metais em `_stab`, linhas por `_line` e contracanto por `_counter`.
+  Medido: caminhada -21,9 a -22,0 LUFS, com a luta -20,0 a -20,1, pico -3,3 a -4,5 dBTP; luta gravada do robô (salas,
+  `--sound-log` e `tools/mix_probe.gd --music-dungeon=id`) -16,8 a -16,9 LUFS, Morvath -16,2. Para caber no teto o
+  MacLeod foi reencodado em qualidade Vorbis 0 (Q-20 a) e as originais, os Salmos e a vitória saem do .wav em qualidade 1 (`QUALITY` no script;
+  as novas em 2). Gravações para ouvir em `docs/gallery/mus1/`. Catálogo como dado em `MusicCatalog` (`core/music_catalog.gd`, `PIECES`: id, nome `music_<id>` no
   `text_pt.tres`, arquivo, camadas, `solo` ou somadas, laço, `places`: `title`, `catacombs` = masmorra, que pede
   caminhada e luta, `morvath` = 4 fases; peça de masmorra serve no título e toca só a caminhada; vitória e Salmos só para
   ouvir). Escolha por lugar no save (`music_title`, `music_dungeon`, `music_morvath`; inválida ou ausente cai no
@@ -546,13 +562,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ou Luta, Fase 1 a 4 ou "Todas as fases" (20 s cada, `MusicRoomScreen.TOUR`); ao sair, `Music.resume()` volta à música
   do jogo onde estava, já com a escolha nova. Loudness igual: as antigas medem -21,7 / -20,1 LUFS (caminhada / com a
   luta) contra -21,1 / -20,1 das novas, Morvath na fase 4 -19,3 contra -19,0 (a fase 1 da original é mais baixa de
-  propósito); a luta gravada (`test_mix.gd`) com cada uma: -16,6 e -16,3 LUFS, -1,4 dBTP. Teto da música no pacote 18 MB
-  (16,6 hoje). Testes em `tests/test_music_room.gd`; fluxo Configurações, Músicas, voltar no `tools/title_flow_check.gd`;
+  propósito); a luta gravada (`test_mix.gd`) com cada uma: -16,6 e -16,3 LUFS, -1,4 dBTP (com "Morvath, a Batalha"
+  -16,4). Teto da música no pacote 18 MB (desde o MUS-1: 16,69 MB de .ogg, 17,73 MB importados no pacote;
+  `test_music.gd` confere os .ogg abaixo de 18 MiB). A tela
+  Músicas tem linhas de 30 px (`MusicRoomScreen.ROW`, `_compact`) para as 14 peças caberem em 720. Testes em `tests/test_music_room.gd`; fluxo Configurações, Músicas, voltar no `tools/title_flow_check.gd`;
   capturas `docs/gallery/t5/ui/music_room_*.jpg`.
   **Música (E4-06, C15-03)**: composta nota por nota e sintetizada pelo projeto em `tools/make_music.gd` (licença nossa;
   tabelas de onda, coro por formantes, corda Karplus-Strong, sinos, tambores, Freeverb; ré menor, a luz de Elun em maior),
   rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory]` (`catacombs` e `morvath` só se pedidos pelo nome, gravando `classic_catacombs_*` e `classic_morvath_*`) (cerca de
-  3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`, 6,1 MB).
+  3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`; as
+  peças do MUS-1 também só pelo nome, cerca de 1,5 a 3 min cada, dá para rodar em paralelo).
   Faixas: `classic_catacombs` (96 s, 80 BPM, laço sem emenda: a reverberação do fim aquece o começo) em 2 camadas, caminhada e luta;
   `classic_morvath` (64 s, 120 BPM) em 4 camadas, uma por fase; temas dos Salmos `psalm_sentinel`, `psalm_shelter`,
   `psalm_shepherd`, `psalm_rock` (16 s); `victory` (12,6 s, bVI, bVII, I). Tocador: autoload `Music`
@@ -601,6 +620,43 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   inimigo novo com `tell`, comportamento e `material` que já existem soa sem código. 16 vozes (`Audio.VOICES`).
   Teste: `tests/test_combat_sounds.gd` (todo evento, material, inimigo e golpe do herói com receita; nenhuma receita
   passa de 0,95 sozinha; limitador a -1,5 dB). Projéteis barrados pela pedra ainda sem som (`projectiles.gd`).
+
+## Descida de Valmor (DV-1, frente de gameplay: MAP-01, MAP-02, MAP-04; backlog seção "Descida de Valmor")
+- **Grafo da descida** (`RunMap`, `core/run_map.gd`, puro; a API que o mapa e o HUD leem está descrita no topo do
+  arquivo): gerado no começo da descida num dado próprio (`Rooms.new_map`: `hash([semente da partida, Rooms.MAP_SALT])`;
+  a mesma `--seed` dá o mesmo mapa, seja o que for que a partida sorteie antes). Camadas: 1 o salão (Bênção), 2 a 9 com 2
+  a 4 salas (`StageDef.map_widths` 35/45/20%), a camada do guardião inteira (4 a 6; 1 ou 2 salas, `guardian_pair_chance`
+  0,5: com duas, Cavaleiro e Ancião, Q-27 a, `Room.guardian`), a loja na 10 (Q-26 a), Morvath na 11: toda rota tem 11
+  salas. Ligações sem cruzar (`_link`: cada sala liga a uma faixa de 1 a 3 salas lado a lado embaixo, a faixa seguinte
+  começa onde a anterior acabou ou logo depois; todas as formas listadas e uma sorteada com o peso `map_doors` 1/5/2 pelo
+  número de portas). Fonte numa camada de 5 a 8 (35% por camada, senão a 8) e uma segunda na 8 em outro ramo quando
+  nenhuma rota passa pelas duas (`fountain_more_chance` 1,0, `_one_fountain`; cerca de metade das rotas tem fonte), altar em no máximo
+  um nó (2 a 8, 20% por camada), Provação num nó de luta marcado `trial` e `hidden` ("?" no mapa até a laje aparecer,
+  Q-25 a; `trial_chance` por nó, só onde a maldição mais curta cabe no pior caminho, nunca dois na mesma rota). Recompensas
+  do baralho no gerador, camada por camada, nenhuma repetida na camada (então nunca em duas portas da mesma sala), romã só
+  desde a sala 3 (`pom_from_depth`); ao abrir as portas, a romã que não puder subir vira Bênção antes da placa
+  (`RunMap.settle`, `pom_turned`). Cada nó tem `fight_seed` (a mesma luta por qualquer caminho, `Rooms._prepare`). Arena
+  por nó com as regras de antes valendo em toda rota (nunca a da luta anterior, o altar passa adiante a de antes dele;
+  nenhuma mais de 3 vezes numa rota, contado por programação dinâmica; a menos usada primeiro; salas da mesma camada em
+  arenas diferentes quando dá; a camada antes do guardião deixa o Santuário livre); o grafo é conferido
+  (`_keeps_rules`) e gerado de novo se quebrar alguma (`failures`: 369 tentativas a mais em 1000 sementes, no máximo 5).
+  `fights_left` (BUG-101) é o pior caminho: o menor número de lutas em qualquer rota até a loja. `--arena`, `--short`,
+  `--medium`, `--start=` (o primeiro nó daquele tipo; `altar` gera o mapa de novo com o altar certo) e Juramentos seguem.
+- **Portas = ligações** (MAP-02): `Rooms._enter` toma as portas do nó (`map.doors()`, porta i = `next[i]`); sala fora do
+  grafo (testes) pega as portas do primeiro nó da profundidade. `door_info` ganhou `node`, `hidden`, `guardian_id` e
+  `guardian_key`; `door_word` leva o guardião. A laje só aparece no nó `trial` (`Trials.open_at`) e revela o "?"
+  (`RunMap.reveal`). `RESULT` e registro (`RunLog.VERSION` 4, `normalized` lê as versões antigas com `map` vazio e
+  `node` -1): `map` (semente, nós `[profundidade, tipo, recompensa, arena, guardião?, "trial"?]`, arestas, caminho,
+  `failures`, `pom_turned`), `rooms[].node`, evento `door` com `node` e `offered` e evento novo `reward` (o que a sala
+  deu, ao lado do que a porta prometeu).
+- **Robô** (MAP-04): `Rooms.bot_door(doors, altar_useful, life, map)` lê o mapa: o gosto de antes pela porta da frente
+  mais `BOT_AHEAD` 1,0 do melhor caminho depois dela (`bot_way`: cada sala vale pela mesma ordem, Bênção 5 a Magia 1, a
+  fonte `BOT_FOUNTAIN_AHEAD` 12, o altar útil 3,5). Régua refeita em `docs/qa/dv1_metrics.md`.
+- Testes: `tests/test_descent.gd` reescrito (BUG-109: só sementes fixas, contagem de asserções igual em toda rodada):
+  1000 grafos com todas as regras, 100 sementes com pelo menos 95 grafos diferentes, pior caminho conferido por todas
+  as rotas, 200 descidas do robô em que a sala é a que a placa disse, a recompensa dada numa sala real; mais
+  `test_trial.gd` (500 grafos), `test_rooms.gd`, `test_economy.gd`, `test_altar.gd`, `test_e5_wiring.gd`,
+  `test_run_log.gd`.
 
 ## Arenas (ciclo C12, Arenas I; plano em `docs/design/cycle12_arenas_plan.md`, plantas em `docs/art/cycle12_arenas_spec.md`)
 - A descida tem 10 salas e Morvath na 11 desde a E3 (era a de teste de 7, D-27, hoje `--medium`): abertura no Salão das
@@ -808,7 +864,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   720): as duas trocas com medalhão de selo (`SealMedal`: romã, chama de vela; arco aberto em "Seguir em frente") e o que pedem, a que não cabe agora apagada com o porquê,
   e "Seguir em frente" (nada); sair da laje e voltar abre de novo.
 - **Portas que mostram o caminho**: a luta atrás de cada porta é sorteada ao abrir a sala de antes (`Rooms._prepare`,
-  `RunMap.Room.fight`) e entra igual; a placa diz "Difícil" para luta com elite e "Guardião" (`Rooms.door_text`);
+  `RunMap.Room.fight`, na semente do nó desde o DV-1) e entra igual; a placa diz "Difícil" para luta com elite e "Guardião" (`Rooms.door_text`);
   `Rooms.door_info(i)` dá `kind`, `reward`, `depth`, `tier`, `guardian`, `hard`, `elites`, `arena`, chaves de texto.
   Pictograma à esquerda do nome na placa (`DoorGlyph`, `DoorGlyph.of(door_info)`, `DoorSign.make(..., glyph)`; spec 7.1):
   uma divisa de ouro velho para "Difícil", duas para o guardião, três para Morvath, gota na fonte, moeda na loja, chama no
