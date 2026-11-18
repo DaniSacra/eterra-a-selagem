@@ -11,7 +11,7 @@ extends SceneTree
 ## E3: --new-boon=id takes one Blessing never seen (writes _newboon.png with the "Bênção nova" greeting);
 ##   --codex=boons|elos opens the Compendium on that tab over sample save data (writes _codex.png, no run);
 ##   --shop [--gold=110] shows the run's own shop signs with that much gold (writes _shop.png;
-##   start the run with --start=shop).
+##   start the run with --start=shop and without --bot: the robot walks on to Morvath before the capture).
 ## E4: --codex=psalms|enemies|morvath|arenas too (sample data with some found, some not);
 ##   --psalm-card=id offers that Psalm between two Blessings in the run, holding what opens it (writes _psalm.png),
 ##   then picks it and writes _psalm_banner.png with the "Salmo descoberto" greeting over the fight.
@@ -170,6 +170,12 @@ func _shop(game: Node) -> void:
 	# Blessing held the growth items can show too: the shelf is set again after taking one (five items)
 	var rooms: Node = game.get(&"rooms")
 	var boons: Variant = game.get(&"boons")
+	# C17, BUG-103: with --bot the robot leaves the shop for Morvath before START, and rebuilding the shelf there put
+	# the shop's signs in the Câmara do Selo (ui/shop_720_shop.jpg); only in the shop itself, and without --bot
+	var here: Variant = rooms.get(&"room")
+	if here == null or int(here.get(&"kind")) != 3:  # RunMap.Kind.SHOP
+		push_error("ui_lab --shop: not in the shop (start with --start=shop and without --bot)")
+		return
 	if not boons.call(&"can_grow"):
 		game.call(&"_take", boons.call(&"find", &"brasas"))
 		var pedestals: Array = rooms.get(&"_pedestals")

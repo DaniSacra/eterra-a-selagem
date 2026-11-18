@@ -82,6 +82,12 @@ extends Resource
 @export var blade_windup := 0.7
 @export var blade_recovery := 0.8
 @export var blade_damage := 10.0
+## C17, Q-09 (b): the Blades come at any distance; with the paladin closer than blade_step_within he first steps
+## blade_step meters back from him (over blade_step_time at the start of the wind-up, swept along the floor), and the
+## lanes are laid from where he will stand, so they never start behind him nor under the paladin's feet.
+@export var blade_step := 0.0
+@export var blade_step_within := 0.0
+@export var blade_step_time := 0.25
 ## A crescent comes undone this many meters past the floor's edge (it never flies on over the abyss).
 @export var soul_overrun := 0.3
 

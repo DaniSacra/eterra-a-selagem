@@ -78,6 +78,12 @@ func _move(id: StringName, input: ComboNode.In, anim: StringName, tags: Array[St
 	return n
 
 
+## C17, QW-103: when the recorded swishes peak after they start (audio/blade_spin_*.ogg 30 to 90 ms, thrust_* 20 to
+## 30 ms, measured on their envelope): a delayed sound starts this much before its blade's frame.
+const SWISH_PEAK := 0.06
+const THRUST_PEAK := 0.025
+
+
 ## Hades II measures distances in its own units: its heroine walks 540 a second and stands 200 tall. 80 of them make
 ## a meter here (6.75 m/s, a 2.5 m tall paladin), so every distance below is written as Hades units / U.
 const U := 80.0
@@ -95,7 +101,10 @@ func _tree(fourth: bool) -> ComboTree:
 	# cut2 0.13 / 13 / 19 (0.45 s), the spin 0.28 + 0.08 of glint = 0.36 / 18 / 30 (0.86 s).
 	var cut3 := _move(&"cut3", L, &"Slash_C", [&"light", &"spin", &"finisher"],
 		{"damage": 60.0, "shape": ComboNode.Shape.CIRCLE, "reach": 240.0 / U, "knockback": 16.0, "windup": 0.36 - FINISHER_GLINT,
-		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin"}, [], &"move_spin")
+		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin",
+		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
+		# press only gathers
+		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather"}, [], &"move_spin")
 	var after_cut2: Array[ComboNode] = [cut3]
 	if fourth:
 		after_cut2 = [_fourth(cut3)]
@@ -115,7 +124,7 @@ func _tree(fourth: bool) -> ComboTree:
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
 		"cooldown": 0.7, "move_hold": SPECIAL_HOLD, "sound": &"dart",
 		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 40.0, "effect_radius": 880.0 / U,
-		"effect_size": 1.4, "wave_bolt": true}, [], &"move_bolt")
+		"effect_size": 1.4, "wave_bolt": true}, [], &"move_wave")
 	# Omega special (special held 0.65 s, 10 Magia): a wide bolt that bursts through the crowd
 	var burst := _move(&"burst", C, &"Cast", [&"heavy", &"wave", &"charge", &"omega"],
 		{"magick_cost": 10.0, "charge_time": 0.65, "damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.08,
@@ -127,7 +136,7 @@ func _tree(fourth: bool) -> ComboTree:
 	var lance := _move(&"lance", CL, &"Sword_Attack", [&"light", &"thrust", &"finisher", &"omega"],
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 160.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
-		"move_scale": 0.0, "sound": &"thrust"}, [], &"move_lance")
+		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK}, [], &"move_lance")
 	# out of a dash: a thrust along the way
 	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
 		{"damage": 30.0, "shape": ComboNode.Shape.LINE, "reach": 640.0 / U, "width": 1.6, "knockback": 10.0, "lunge": 3.2, "windup": 0.06,
@@ -160,7 +169,7 @@ func _fourth(spin: ComboNode) -> ComboNode:
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
 		{"damage": FOURTH.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],
 		"windup": FOURTH.windup, "recovery": FOURTH.recovery, "move_hold": FOURTH.move_hold, "chain_window": 0.4,
-		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust"}, [spin])
+		"hit_stop_ms": 50.0, "shake": 0.8, "move_scale": 0.0, "sound": &"thrust", "sound_at": FOURTH.windup - THRUST_PEAK}, [spin])
 
 
 # ---------- enemies ----------
@@ -218,9 +227,11 @@ func _enemies() -> void:
 		# 1.1 m (at its size) past its body in an arc of 120 degrees ahead, as its body lands
 		"windup_shake": 0.025, "strike_at": 0.1, "strike_reach": 1.1, "strike_degrees": 120.0,
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1]})
-	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest)
+	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest); C17,
+	# QW-102: 1.0 s of wind-up, its last 0.3 s held trembling (0.7 was the shortest warning of the game: the PO took 9
+	# blows with 0.70 to 0.82 s; Hades' Radiator winds up 1.5 s)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
-		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.7,
+		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 1.0,
 		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
 		"strike_at": 0.1,
@@ -230,12 +241,14 @@ func _enemies() -> void:
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
 	# 1 s of aim following the paladin, a burst of 3 orbs 0.17 s apart (elite 7), each pushing it back at 5 m/s; orbs at
-	# 7 m/s for 20 m that turn after him (how fast the files do not say: 40 degrees a second is ours), 4 damage; then
+	# 7 m/s for 20 m that turn after him (how fast the files do not say: 20 degrees a second is ours, was 40) only in their
+	# first 0.8 s, then straight (C17, QW-101: they caught him late in their flight, the PO's most unfair blow; the robot
+	# took 46% of its blows in the rooms from them, 35% with both), 4 damage; then
 	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 6 at once.
 	# Cold violet: Daniel, 2026-11-14.
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 280.0 / U, "damage": 4.0, "radius": 0.5,
 		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": Color(1.7, 1.25, 3.2),
-		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 40.0, "shot_ticks": 3, "shot_interval": 0.17,
+		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 20.0, "shot_homing": 0.8, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.mage[0]},
@@ -878,6 +891,9 @@ func _bosses() -> void:
 		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 12.0, "scythe_approach": 1.2,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
 		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 10.0,
+		# C17, Q-09 (b): phase 1 was the scythe in a loop with him close (91% scythe over 3 seeds): the Blades come at
+		# any distance, a step back first when he is within 4 m
+		"blade_step": 2.0, "blade_step_within": 4.0, "blade_step_time": 0.25,
 		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
 		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 3, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
 		"storm_recovery": 1.2, "storm_damage": 10.0, "storm_stagger": 0.08,
@@ -904,7 +920,7 @@ func _bosses() -> void:
 		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2, "then": &"storm", "then_chance": 0.6, "then_from_phase": 4,
 			"layers": [&"eruptions"] as Array[StringName], "layer_from_phase": 3, "layer_chance": 1.0, "layer_share": 0.0}),
 		# far: the blades (until the storm takes their place); E2: in the curse's phase his dead rise as they fly
-		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 3.5, "near_bias": 0.5, "far_bias": 2.2,
+		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 0.0, "near_bias": 1.0, "far_bias": 2.2,
 			"layers": [&"summon"] as Array[StringName], "layer_from_phase": 3, "layer_chance": 1.0, "layer_share": 0.0}),
 		# the paladin keeps away: the dash closes in
 		_attack(&"dash", {"weight": 1.0, "cooldown": 6.0, "min_dist": 9.0, "far_bias": 1.5}),

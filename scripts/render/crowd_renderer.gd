@@ -48,6 +48,15 @@ const GILD_REST := 0.0
 const BOSS_HERO_LIGHT := 0.25
 const ORB_GLOW := 1.2
 const ORB_TELL := 1.8
+## C17, QW-104: at the end of a wind-up's hold the body clears to this share of a blow's flash (crowd.gdshader
+## `tell_light`), warm, never past `flash_cap` (under the glow's threshold).
+const TELL_LIGHT := 0.5
+
+
+## How far the body has cleared at this point of its wind-up (0..1 of `tell`), the crowd.gdshader `ready` without
+## TELL_LIGHT: nothing before the hold (the last `hold` share), all of it as the blow comes.
+static func tell_ready(tell: float, hold: float) -> float:
+	return smoothstep(1.0 - clampf(hold, 0.05, 1.0), 1.0, clampf(tell, 0.0, 1.0))
 ## With many enemies on the floor (more than Horde.BARS_FOR_ALL) the life bars thin out: opacity and height.
 const BAR_CROWD_FADE := 0.7
 const BAR_CROWD_HEIGHT := 0.75
@@ -171,6 +180,9 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"orb", ORB_GLOW)
 	mat.set_shader_parameter(&"orb_tell", ORB_TELL)
 	mat.set_shader_parameter(&"crest", d.crest)
+	# QW-104: the body clears in the hold of its own wind-up (its windup_hold share), to TELL_LIGHT of the flash
+	mat.set_shader_parameter(&"tell_hold", clampf(d.windup_hold, 0.05, 1.0))
+	mat.set_shader_parameter(&"tell_light", TELL_LIGHT)
 	mat.set_shader_parameter(&"hero_light", BOSS_HERO_LIGHT if d.behavior == EnemyDef.Behavior.BOSS else 1.0)
 	mat.set_shader_parameter(&"crest_from", baked.height * 0.8)
 	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline

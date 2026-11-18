@@ -187,3 +187,48 @@ func test_flee_dir_turns_along_the_wall_and_never_off_the_floor() -> void:
 func test_morvaths_eruptions_are_twice_as_wide() -> void:
 	var def := load("res://data/bosses/morvath.tres") as BossDef
 	assert_eq(def.eruption_radius, 4.0)
+
+
+## C17, QW-101 (CF-01): the caster's orbs turn after him only in their first shot_homing seconds, then fly straight:
+## they catch him early or not at all. A paladin who stands until the orbs have flown `from` seconds, then runs
+## sideways at 6.75 m/s, is never hit (the burst of three, either side). Returns the hits.
+func _sidestep_hits(def: EnemyDef, from: float, side: float, until := INF) -> int:
+	var e := _alone(&"mage")
+	e.def = def
+	var hits := [0]
+	game.projectiles.hit_player.connect(func(_dmg: float, _at: Vector2) -> void: hits[0] += 1)
+	var aim := (game.player.pos - e.pos).normalized()
+	var run := aim.orthogonal() * side
+	var t := 0.0
+	for k in def.shot_ticks:
+		game.horde.shoot(e, aim)
+		for i in int(def.shot_interval * 60.0):
+			game.projectiles.step(1.0 / 60.0)
+			t += 1.0 / 60.0
+	while t < 4.0:
+		game.player.invuln = 0.0
+		if t >= from and t < until:
+			game.player.pos += run * 6.75 / 60.0
+		game.projectiles.step(1.0 / 60.0)
+		t += 1.0 / 60.0
+	return hits[0]
+
+
+func test_the_mage_orb_catches_early_or_never() -> void:
+	var def: EnemyDef = load("res://data/enemies/mage.tres")
+	assert_almost_eq(def.shot_homing, 0.8, 0.001, "it turns in its first 0.8 s")
+	assert_almost_eq((load("res://data/enemies/mage_elite.tres") as EnemyDef).shot_homing, 0.8, 0.001)
+	for from in [1.2, 1.5]:
+		for side in [1.0, -1.0]:
+			assert_eq(_sidestep_hits(def, from, side), 0, "running sideways from %.1f s of flight: never hit" % from)
+	assert_almost_eq(def.shot_turn, 20.0, 0.001, "and half as fast (was 40)")
+	# the orb of before (turning 40 degrees a second its whole flight)
+	var old: EnemyDef = def.duplicate()
+	old.shot_homing = 0.0
+	old.shot_turn = 40.0
+	# the PO's blow: he ran sideways as the burst left, then planted to strike; the old orbs curved back onto him
+	# 2 s into their flight (all three, measured), the new ones fly on past where he was at 0.8 s
+	for until in [1.5, 1.8, 2.1]:
+		assert_eq(_sidestep_hits(old, 0.0, 1.0, until), 3, "the old orbs caught him after %.1f s of running" % until)
+		assert_eq(_sidestep_hits(def, 0.0, 1.0, until), 0, "the new ones never do")
+	assert_eq(_sidestep_hits(def, 9.0, 1.0), 3, "standing still they still hit")

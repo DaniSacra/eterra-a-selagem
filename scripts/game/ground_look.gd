@@ -62,6 +62,14 @@ const HAZARD_PRIORITY := -1
 ## Every other area's fill (ground.gdshaderinc's defaults).
 const FILL_EARLY := 0.1
 const FILL_MAX := 0.35
+## C17, QW-107 (ART P1-6): a crossbow's aim and a soldier's pounce drawn as an aim (ground.gdshaderinc aim_px): a
+## thread AIM_PX pixels wide at AIM_LIGHT, its far end up to 1, and the band filling to AIM_FILL only over the last
+## AIM_FILL_LATE of the wind-up (nothing before; no faint floor). Strength 1: those are the light itself, so nothing
+## but the tip passes 0.6.
+const AIM_PX := 6.0
+const AIM_LIGHT := 0.5
+const AIM_FILL := 0.22
+const AIM_FILL_LATE := 0.3
 
 
 static func new_node() -> MeshInstance3D:
@@ -101,6 +109,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"light_cap", NO_CAP)
 	put(m, &"color", color)
 	put(m, &"tile_m", 0.0)
+	put(m, &"aim_px", 0.0)
 	put(m, &"fill_early", FILL_EARLY)
 	put(m, &"fill_max", FILL_MAX)
 	_priority(m, HAZARD_PRIORITY if style == Style.HAZARD else 0)
@@ -158,6 +167,23 @@ static func _priority(m: ShaderMaterial, p: int) -> void:
 ## An enemy's warning, as Ground draws it.
 static func warning(node: MeshInstance3D, shape: int, at: Vector2, dir: Vector2, radius: float, width: float, y: float) -> void:
 	dress(node, Style.WARNING, shape, WARNING_COLOR, WARNING_STRENGTH, RIM_METERS, at, dir, radius, width, y)
+
+
+## An enemy's line warning drawn as an aim (QW-107): the thread, the bright tip, the late fill.
+static func aim_warning(node: MeshInstance3D, at: Vector2, dir: Vector2, length: float, width: float, y: float) -> void:
+	dress(node, Style.WARNING, Shape.LINE, WARNING_COLOR, 1.0, RIM_METERS, at, dir, length, width, y)
+	aim(node.material_override as ShaderMaterial)
+
+
+## Turns a line warning's material into an aim (QW-107).
+static func aim(m: ShaderMaterial) -> void:
+	put(m, &"strength", 1.0)
+	put(m, &"aim_px", AIM_PX)
+	put(m, &"aim_light", AIM_LIGHT)
+	put(m, &"fill_early", 0.0)
+	put(m, &"fill_max", AIM_FILL)
+	put(m, &"fill_late", AIM_FILL_LATE)
+	put(m, &"base_fill", 0.0)
 
 
 ## One of Morvath's warnings, with his signature (ART-001).

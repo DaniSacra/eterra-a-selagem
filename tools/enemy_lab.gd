@@ -157,7 +157,11 @@ func _warn(parent: Node3D, d: EnemyDef, at: Vector2, progress: float) -> void:
 	var y := 0.06 + parent.get_child_count() * 0.0005
 	match d.behavior:
 		B.RUNNER:
-			GroundLook.warning(node, S.LINE, at, aim, d.lunge_speed * d.lunge_time + d.radius + 1.0, 1.3, y)
+			# the pounce, drawn as an aim (QW-107)
+			GroundLook.aim_warning(node, at, aim, d.lunge_speed * d.lunge_time + d.radius + 1.0, 1.3, y)
+		B.ARCHER when d.shot_line:
+			# the crossbow's aim (QW-107)
+			GroundLook.aim_warning(node, at, aim, d.attack_range, 0.5, y)
 		B.KNIGHT:
 			GroundLook.warning(node, S.LINE, at, aim, d.lunge_speed * d.lunge_time + d.radius, 2.4, y)
 		B.CONE:
@@ -166,4 +170,4 @@ func _warn(parent: Node3D, d: EnemyDef, at: Vector2, progress: float) -> void:
 			GroundLook.warning(node, S.CIRCLE, at, aim, d.attack_width, 0.0, y)
 		_:
 			GroundLook.warning(node, S.CIRCLE, at + aim * 3.0, aim, 2.3, 0.0, y)
-	(node.material_override as ShaderMaterial).set_shader_parameter(&"progress", progress)
+	GroundLook.put(node.material_override as ShaderMaterial, &"progress", progress)

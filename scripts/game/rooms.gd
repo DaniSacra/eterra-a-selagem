@@ -644,7 +644,7 @@ const TRIAL_COLOR := Color(0.52, 0.36, 0.78)
 
 
 func _roll_slab() -> void:
-	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng):
+	if map.depth >= stage.rooms or not trials.roll(stage, map.depth, _rng, map.fights_left()):
 		return
 	var at: Variant = _free_spot(SLAB_CLEAR)
 	if at == null:
@@ -747,7 +747,7 @@ const TRIAL_SPOT := Vector2(-1.5, 1.5)
 
 func _build_trial() -> void:
 	phase = Phase.EVENT
-	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance)
+	trial_cards = trials.offers(_rng, stage.trial_cards, stage.trial_rarity_chance, map.fights_left())
 	_spots.append({"at": TRIAL_SPOT, "away": true, "node": _marker(TRIAL_SPOT, RunMap.Reward.NONE,
 		T.t(&"room_trial") + "\n" + T.t(&"trial_step"), RunMap.Kind.TRIAL, DoorGlyph.Kind.TRIAL)})
 	game.room_tally.event("trial_offered", game.time, {"cards": trial_cards.map(func(c: Trials.Card) -> Dictionary:
@@ -972,14 +972,19 @@ const BOT_ALTAR_RANK := 1.5
 
 
 ## The door the bot walks through (index in doors). altar_useful: it would trade something there (E6: before it walked
-## into the altar with nothing to trade, a room lost); otherwise the altar comes last.
-static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true) -> int:
+## into the altar with nothing to trade, a room lost); otherwise the altar comes last. life: its share of its most
+## life (C17, QW-112: it took the fountain with full life, a Blessing's door lost; now only below BOT_FOUNTAIN_BELOW,
+## otherwise the fountain comes after every reward).
+const BOT_FOUNTAIN_BELOW := 0.8
+
+
+static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0) -> int:
 	var best := 0
 	var rank := INF
 	for i in doors.size():
 		var r := float(BOT_PREFERENCE.find(doors[i].reward))
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
-			r = -1.0
+			r = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
 		elif doors[i].kind == RunMap.Kind.ALTAR:
 			r = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
 		elif r < 0.0:
@@ -1014,7 +1019,7 @@ func bot_goal() -> Variant:
 				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0), 0, game.arena.exits.size() - 1))
+			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0)), 0, game.arena.exits.size() - 1))
 	return null
 
 

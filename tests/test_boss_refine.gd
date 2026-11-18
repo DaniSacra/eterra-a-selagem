@@ -542,3 +542,28 @@ func test_fire_on_the_ground_does_not_take_hold_through_his_ward() -> void:
 	game.combat.on_zone_hit(boss.e, z)
 	game.combat.skill_hit(boss.e, 10.0, [] as Array[StringName], Vector2.DOWN, 0.0, &"burn", 6.0)
 	assert_eq(boss.e.burn_t, 0.0, "embers and burning skills do not set him alight under the ward")
+
+
+## C17, Q-09 (b): the Blades come close too: with the paladin within blade_step_within he steps back first, and both
+## lanes start where he ends (never behind him), the crescents leaving from there.
+func test_the_blades_step_back_when_he_is_close() -> void:
+	var boss := _start_fight()
+	_run(3.0)
+	assert_eq(boss.def.attacks.filter(func(a: BossAttack) -> bool: return a.id == &"blades")[0].min_dist, 0.0)
+	var at := boss.e.pos
+	game.player.place(at + Vector2(0.0, 2.6))
+	boss._attack = &"blades"
+	boss._go(Boss.State.BLADES)
+	_run(1.0 / 60.0)
+	var lanes := game.ground.zones.filter(func(z: Ground.Zone) -> bool: return z.shape == Ground.Shape.LINE)
+	assert_eq(lanes.size(), 2)
+	_run(def.blade_step_time + 0.05)
+	var back := boss.e.pos
+	assert_almost_eq(back.distance_to(at), def.blade_step, 0.3, "a step back")
+	assert_gt(back.distance_to(game.player.pos), at.distance_to(game.player.pos))
+	for z: Ground.Zone in lanes:
+		assert_lt(Vector2(z.node.position.x, z.node.position.z).distance_to(back + z.dir * z.radius * 0.5), 0.05,
+			"each lane starts where he stands")
+	var before := game.projectiles.shots.size()
+	_run(def.blade_windup)
+	assert_gt(game.projectiles.shots.size(), before, "the crescents left")

@@ -69,7 +69,7 @@ func _process(dt: float) -> bool:
 	if not horde.list.has(e) and e.alive:
 		problems.append("not in the horde's list")
 	if _log or not problems.is_empty():
-		print("%5d t=%6.2f %-22s anim_t=%5.2f pos=(%.2f,%.2f) hero=%.2f m hurt=%.2f stun=%.2f %s" % [_frames, g.time, key, e.anim_t, e.pos.x, e.pos.y, e.pos.distance_to(g.player.pos), e.hurt_t, e.stun_t, " | ".join(problems)])
+		print("%5d t=%6.3f %-22s anim_t=%5.2f pos=(%.3f,%.3f) hero=%.2f m hurt=%.2f stun=%.2f push=%.2f %s" % [_frames, g.time, key, e.anim_t, e.pos.x, e.pos.y, e.pos.distance_to(g.player.pos), e.hurt_t, e.stun_t, e.push.length(), " | ".join(problems)])
 	if not problems.is_empty():
 		_bad += 1
 	_last = e.pos

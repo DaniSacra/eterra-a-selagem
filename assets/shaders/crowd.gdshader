@@ -93,6 +93,11 @@ uniform float white_from = 0.85;
 uniform float flash_white = 0.35;
 uniform vec3 flash_ivory : source_color = vec3(0.95, 0.9, 0.8);
 uniform float flash_cap = 1.0;
+// C17, QW-104 (CF-06; Hades II clears the body toward white in the last 0.5 s of a wind-up): in the hold of its wind-up
+// (the last tell_hold of it, EnemyDef.windup_hold) the body itself grows lighter and warmer, the flash's light at
+// tell_light of its strength at the end, under flash_cap like the flash: "it is about to strike", read on the body.
+uniform float tell_hold = 0.3;
+uniform float tell_light = 0.5;
 // Burning (a fire gift; cycle 10, N4 of the cycle 9 review: the old burn lit the whole body gold and orange, which hid
 // the figure and read like an elite's gild): the painting keeps its colours, only embers live on it. A rim of fire
 // where the body turns away (burn_rim at most, on the silhouette), and small coals crawling up the body, each one
@@ -200,6 +205,11 @@ void fragment() {
 		+ raw * glow * cell * (1.0 - has_magic)
 		+ lamp_color * mix(orb, orb_tell, tell) * mix(orb_edge, 1.0, facing * facing) * lamp
 		+ spot * paint_glow * smoothstep(paint_glow_from, paint_glow_full, colourful) * (1.0 - lamp);
+	float ready = smoothstep(1.0 - tell_hold, 1.0, tell) * tell_light;
+	if (ready > 0.0) {
+		vec3 warmer = (c * shade * (0.45 + lit) * flash_light + vec3(flash_floor)) * flash_warm * ready;
+		EMISSION += min(warmer, max(vec3(flash_cap) - EMISSION, vec3(0.0)));
+	}
 	if (flash > 0.0) {
 		// the body itself, lighter and warmer: its painting as light, more where it is already lit; what it adds
 		// stops at flash_cap (the figure's own lights, an orb winding up, keep theirs)

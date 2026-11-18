@@ -64,22 +64,37 @@ static func can_pay(stage: StageDef, depth: int, hp: float) -> bool:
 
 
 ## True when the slab may appear in a room of this depth just won (before the dice): within the stage's depths, none
-## carried now, and the last one at least trial_cooldown rooms ago.
-func may_show(stage: StageDef, depth: int) -> bool:
+## carried now, the last one at least trial_cooldown rooms ago, and (C17, BUG-101) the shortest curse still fits in
+## the fights sure to come before the boss (RunMap.fights_left): a curse that cannot turn is never offered.
+func may_show(stage: StageDef, depth: int, fights_left: int = ANY_FIGHTS) -> bool:
 	return depth >= stage.trial_depth_min and depth <= stage.trial_depth_max and active == null \
-		and depth - last_shown >= stage.trial_cooldown and not catalog.is_empty()
+		and depth - last_shown >= stage.trial_cooldown and not catalog.is_empty() \
+		and fights_left >= shortest_curse()
+
+
+## No limit from the fights left (the old callers and the tests of the slab's dice).
+const ANY_FIGHTS := 1 << 20
+
+
+## The fewest fights any curse of the catalog may last (its encounters.x; 0 with no curse).
+func shortest_curse() -> int:
+	var low := 1 << 20
+	for d in _of(TrialDef.Kind.CURSE):
+		low = mini(low, d.encounters.x)
+	return low if low < (1 << 20) else 0
 
 
 ## Rolls the slab for a room of this depth just won; true when it shows (and the cooldown starts).
-func roll(stage: StageDef, depth: int, rng: RandomNumberGenerator) -> bool:
-	if not may_show(stage, depth) or rng.randf() >= stage.trial_chance:
+func roll(stage: StageDef, depth: int, rng: RandomNumberGenerator, fights_left: int = ANY_FIGHTS) -> bool:
+	if not may_show(stage, depth, fights_left) or rng.randf() >= stage.trial_chance:
 		return false
 	last_shown = depth
 	return true
 
 
-## Up to n cards, each with a different blessing and a different curse (fewer when the catalog is short).
-func offers(rng: RandomNumberGenerator, n: int, chances: Array[float]) -> Array[Card]:
+## Up to n cards, each with a different blessing and a different curse (fewer when the catalog is short); no curse
+## lasts more than the fights left before the boss (C17, BUG-101: the card's promise always comes true).
+func offers(rng: RandomNumberGenerator, n: int, chances: Array[float], fights_left: int = ANY_FIGHTS) -> Array[Card]:
 	var blessings := _of(TrialDef.Kind.BLESSING)
 	var curses := _of(TrialDef.Kind.CURSE)
 	var out: Array[Card] = []
@@ -88,7 +103,7 @@ func offers(rng: RandomNumberGenerator, n: int, chances: Array[float]) -> Array[
 		c.blessing = _take_weighted(blessings, rng)
 		c.curse = _take_weighted(curses, rng)
 		c.rarity = BoonState.roll_rarity(rng, chances)
-		c.encounters = rng.randi_range(c.curse.encounters.x, c.curse.encounters.y)
+		c.encounters = mini(rng.randi_range(c.curse.encounters.x, c.curse.encounters.y), maxi(1, fights_left))
 		out.append(c)
 	return out
 

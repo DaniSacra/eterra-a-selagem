@@ -157,6 +157,10 @@ var runner: ComboRunner
 var tree: ComboTree
 var invuln := 0.0
 var charging := false
+## DT-102 (RESULT omega_charges_started, omega_charges_cancelled): Omega charges held past CHARGE_SOUND_AT (a tap is
+## no charge) and those that filled.
+var charges_started := 0
+var charges_filled := 0
 var charge_t := 0.0
 ## The button being held for an Omega move, and what it plays when let go early or late.
 var _charge_action := &""
@@ -493,6 +497,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	if not ran:
 		runner.glint_scale = Feel.live().glint_scale
 		runner.step(dt)
+	_step_move_sound(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
 	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
 	pos = arena.sweep(start, pos, RADIUS)
@@ -525,11 +530,15 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		charge_t += dt
 		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
 			Audio.play(&"charge_up")
+			charges_started += 1
 		if not Controls.held(_charge_action):
 			charging = false  # let go before the charge filled: nothing more comes
 		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
 			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
 			charging = false
+			charges_filled += 1
+			if charge_t < CHARGE_SOUND_AT:
+				charges_started += 1
 			runner.press(_charge_held)
 			fx.hero_burst(&"light", Vector3(pos.x, 1.4, pos.y))
 			Audio.play(&"charged")
@@ -564,6 +573,11 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 		_charge_tap = tap
 		_charge_held = held
 		_charge_discount = omega_discount
+
+
+## Omega charges let go, cut (dodge, blow, curse) or out of Magia before they filled; one still under way is not counted.
+func charges_cancelled() -> int:
+	return charges_started - charges_filled - (1 if charging and charge_t >= CHARGE_SOUND_AT else 0)
 
 
 func _affordable(held: ComboNode.In) -> bool:
@@ -722,12 +736,38 @@ func _strike_dir() -> Vector2:
 	return dir.normalized()
 
 
+## The move whose swish still waits for its blade (ComboNode.sound_at) and the seconds left (null: none).
+var _sound_node: ComboNode
+var _sound_t := 0.0
+
+
+## QW-103: plays the waiting swish on its time, only while that move still swings (a dodge that cut it drops it).
+func _step_move_sound(dt: float) -> void:
+	if _sound_node == null:
+		return
+	if runner.node != _sound_node or not runner.is_swinging():
+		_sound_node = null
+		return
+	_sound_t -= dt
+	if _sound_t <= 0.0:
+		if _sound_node.sound != &"":
+			Audio.play(_sound_node.sound)
+		_sound_node = null
+
+
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0:
 		magick.spend(omega_cost(node.magick_cost, _charge_discount))
 	_anim.speed_scale = 1.0
-	if node.sound != &"":
+	_sound_node = null
+	if node.sound_at > 0.0:
+		# QW-103: the swish waits for the blade (_step_move_sound); the press only gathers
+		_sound_node = node
+		_sound_t = node.sound_at / maxf(0.01, runner.speed)
+		if node.sound_press != &"":
+			Audio.play(node.sound_press)
+	elif node.sound != &"":
 		Audio.play(node.sound)
 	_lunge = facing * node.lunge * LUNGE_DECAY
 	# (Ímpeto plays every blow faster: runner.speed)

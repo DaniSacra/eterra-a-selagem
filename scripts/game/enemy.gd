@@ -82,6 +82,13 @@ var face_walk := false
 var warning: RefCounted
 ## Free for the behaviour (attack counters, phase).
 var memo := 0
+## C17, QW-105: close slams the knight (and the brute) struck in a row since its last charge; and whether it is closing
+## in on the paladin (it stops at his edge and walks again only past MELEE_WALK_BAND more: no flicker).
+var slams := 0
+var closing := true
+## Set by the behaviour each step it faces the paladin whatever way it moves (a soldier waiting on its ring, the knight
+## backing off): its body never turns to where it walks then (Horde._drawn_motion).
+var facing_him := false
 ## T5-08, T5-09 (docs/design/combat_cadence.md 6.3): the blow of its attack under way has landed (once an attack);
 ## meters of its lunge still to cover (the soldier's pounce, announced with its warning); seconds into its attack at
 ## which its blow lands (its warning fills until then).

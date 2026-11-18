@@ -286,3 +286,129 @@ func test_the_sorcerer_thrusts_each_bolt() -> void:
 	assert_gte(far, 0.25, "the staff's top goes %.2f m" % far)
 	assert_lt(m.position(&"shot", 0, tip).distance_to(hold[tip]), 0.03, "it starts in the hold")
 	assert_lt(m.position(&"shot", n - 1, tip).distance_to(hold[tip]), 0.03, "and ends in it")
+
+
+## C17, QW-102 (CF-02): the runner warns 1.0 s before it bursts (it was 0.7, the shortest warning of the game), its
+## warning full on the blow's frame; no blow of a common enemy warns less than 0.9 s but the brute's short slam.
+func test_the_runner_warns_a_full_second() -> void:
+	var hit := _first_blow(&"runner", Vector2(1.2, 0.0))
+	assert_false(hit.is_empty(), "the runner burst")
+	if hit.is_empty():
+		return
+	assert_between(int(hit.frame) - int(hit.warn_end), -1, 1, "its warning full on the blow's frame")
+	var d: EnemyDef = hit.e.def
+	assert_almost_eq(d.attack_windup, 1.0, 0.001)
+	assert_almost_eq(d.attack_windup * d.windup_hold, 0.3, 0.001, "the last 0.3 s held trembling")
+	assert_gt(d.windup_shake, 0.0)
+	for id in [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"guard", &"guard_elite", &"knight"]:
+		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
+		assert_gte(def.attack_windup, 0.9, "%s warns at least 0.9 s" % id)
+
+
+## C17, QW-104 (CF-06): the body clears in the hold of its wind-up only (its last windup_hold), all of it as the blow
+## comes, under the flash's cap; every crowd material carries its own hold.
+func test_the_body_clears_in_the_hold() -> void:
+	for id in [&"skeleton", &"guard", &"mage", &"runner"]:
+		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
+		var hold := d.windup_hold
+		assert_eq(CrowdRenderer.tell_ready(1.0 - hold - 0.01, hold), 0.0, "%s: nothing before the hold" % id)
+		assert_gt(CrowdRenderer.tell_ready(1.0 - hold * 0.5, hold), 0.0, "%s: clearing in the hold" % id)
+		assert_almost_eq(CrowdRenderer.tell_ready(1.0, hold), 1.0, 0.001, "%s: all of it as the blow comes" % id)
+	# the most the clearing adds (a white painting, fully lit, at the end) stays under the flash's cap
+	var shader: Shader = load("res://assets/shaders/crowd.gdshader")
+	var code := shader.code
+	assert_true(code.contains("min(warmer, max(vec3(flash_cap) - EMISSION"), "capped like the flash")
+	assert_lte(CrowdRenderer.TELL_LIGHT, 0.6, "half a blow's flash at most")
+	_room()
+	var e := game.horde.spawn(game.horde.def(&"guard"), Vector2(5, 0), false)
+	game.horde.render(DT)
+	var mat := game.horde.renderer.kind(e.def).material as ShaderMaterial
+	assert_almost_eq(float(mat.get_shader_parameter(&"tell_hold")), e.def.windup_hold, 0.001, "its own hold")
+	assert_almost_eq(float(mat.get_shader_parameter(&"tell_light")), CrowdRenderer.TELL_LIGHT, 0.001)
+
+
+## C17, QW-105 (CF-08, CF-11): next to a paladin who stands still the knight no longer slams forever: after
+## Horde.KNIGHT_SLAMS slams it backs off and charges (at least one charge in any four blows); a soldier's blows are
+## never on the same beat (the wait after its recovery is drawn).
+func test_no_metronome() -> void:
+	_room()
+	var k := game.horde.spawn(game.horde.def(&"knight"), Vector2(2.6, 0.0), false)
+	var blows: Array[StringName] = []
+	var was := Enemy.State.WALK
+	for f in 60 * 40:
+		_frame()
+		if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP:
+			blows.append(k.anim)
+		was = k.state
+	assert_gte(blows.size(), 6, "it kept striking: %s" % [blows])
+	for i in range(0, blows.size() - 3):
+		assert_true(blows.slice(i, i + 4).has(&"brace"), "a charge in every four blows: %s" % [blows])
+	game.horde.clear_crowd()
+	var s := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(2.0, 0.0), false)
+	var starts: Array[int] = []
+	was = Enemy.State.WALK
+	for f in 60 * 30:
+		_frame()
+		if s.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP:
+			starts.append(f)
+		was = s.state
+	var gaps := {}
+	for i in range(1, starts.size()):
+		gaps[starts[i] - starts[i - 1]] = true
+	assert_gte(starts.size(), 5)
+	assert_gt(gaps.size(), 2, "its blows fall on different beats: %s" % [starts])
+
+
+## C17, QW-107 (ART P1-6): the crossbow's aim and the soldier's pounce are drawn as an aim (a thread, a bright tip, the
+## band filling only over the end of the wind-up), never the opaque band: nothing but the tip above 0.6 of light.
+func test_the_aims_are_threads() -> void:
+	assert_lte(GroundLook.AIM_PX, 10.0, "a thread of 10 px at most")
+	assert_lte(GroundLook.AIM_LIGHT, 0.6)
+	assert_lte(GroundLook.AIM_FILL, 0.45)
+	for id in [&"skeleton", &"archer"]:
+		_room()
+		var e := game.horde.spawn(game.horde.def(id), Vector2(4.0 if id == &"skeleton" else 9.0, 0.0), false)
+		e.cooldown = 0.0
+		var z: Ground.Zone = null
+		for f in 400:
+			_frame()
+			if e.warning != null:
+				z = e.warning
+				break
+		assert_not_null(z, "%s warned" % id)
+		if z == null:
+			continue
+		var m := z.mat as ShaderMaterial
+		assert_eq(float(m.get_shader_parameter(&"aim_px")), GroundLook.AIM_PX, "%s: an aim" % id)
+		assert_eq(float(m.get_shader_parameter(&"strength")), 1.0)
+		assert_eq(float((m.next_pass as ShaderMaterial).get_shader_parameter(&"fill_early")), 0.0, "%s: no fill early" % id)
+		assert_eq(float((m.next_pass as ShaderMaterial).get_shader_parameter(&"base_fill")), 0.0)
+	# a pooled node dressed again as another warning is no aim
+	var other := game.ground.add_arc_warning(Vector2.ZERO, Vector2.UP, 3.0, 90.0, 1.0, 0.0)
+	assert_eq(float(other.mat.get_shader_parameter(&"aim_px")), 0.0)
+
+
+## C17, DT-102: every wind-up is counted by kind (started, reached its blow, cut), the flight of a shot that hurt him
+## and the Omega charges begun and let go, for RESULT.
+func test_the_windups_are_counted() -> void:
+	_room()
+	var e := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(2.0, 0.0), false)
+	e.cooldown = 0.0
+	for f in 120:
+		_frame()
+		if e.state == Enemy.State.ATTACK:
+			break
+	var w: Dictionary = game.horde.windup_report().get("skeleton", {})
+	assert_eq(int(w.get("started", 0)), 1)
+	assert_eq(int(w.get("struck", 0)), 1)
+	var c := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(-2.0, 0.0), false)
+	c.cooldown = 0.0
+	for f in 120:
+		_frame()
+		if c.state == Enemy.State.WINDUP:
+			break
+	game.horde.interrupt(c)
+	w = game.horde.windup_report()["skeleton"]
+	assert_eq(int(w.cut), 1, "a cut wind-up")
+	assert_true(game.result().has("windups") and game.result().has("shot_flight"))
+	assert_eq(game.result().omega_charges_cancelled, 0)

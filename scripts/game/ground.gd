@@ -179,6 +179,14 @@ func add_line_warning(from: Vector2, dir: Vector2, length: float, width: float, 
 	return _add(Kind.WARNING, Shape.LINE, from, dir, length, width, time, damage)
 
 
+## A line warning drawn as an aim (C17, QW-107: the crossbow's aim, the soldier's pounce): a thread with a bright tip,
+## its band filling only over the end of the wind-up (GroundLook.aim). It warns and lands as any line warning.
+func add_aim_warning(from: Vector2, dir: Vector2, length: float, width: float, time: float, damage: float) -> Zone:
+	var z := add_line_warning(from, dir, length, width, time, damage)
+	GroundLook.aim(z.node.material_override as ShaderMaterial)
+	return z
+
+
 ## A band of the floor that strikes on its own (E5, the runes; ArenaHazard): the rectangle `r` warms up for `time`
 ## seconds in amber (GroundLook.Style.HAZARD, drawn under the enemies' warnings) and strikes everyone in it as it ends:
 ## hero_damage to the paladin (as any warning), enemy_damage to each enemy (hazard_landed). drawn false: it strikes the
