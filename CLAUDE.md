@@ -455,7 +455,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `name_key` do inimigo, senão `killer_unknown`; rótulo `defeated_by` ("Derrotado por: {name}"). A tela é do ui-ux-designer.
 - Som: `scripts/audio.gd` (nomes e receitas de reserva). Um arquivo `audio/<nome>.ogg` substitui a receita;
   `audio/<nome>_0.ogg`, `_1.ogg`... sorteia entre eles. Licenças e créditos em `audio/LICENSES.md` (D-12b: síntese, CC0 e
-  CC-BY com crédito); no jogo, Como Jogar, Créditos (`CreditsScreen`, textos `credits_*`; C15-05).
+  CC-BY com crédito); fora do jogo, em `CREDITOS.txt` ao lado do exe (a tela de Créditos saiu em 2026-11-18).
   **T5 (relatos do PO "música da partida igual à do título" e "efeitos de fliperama"; `docs/design/t5_audio.md`)**: todo
   nome de som tem arquivo gravado, montado por `tools/make_sfx.sh <pasta dos pacotes>` (fonte da verdade: uma linha por
   arquivo com as camadas já mixadas, movimento da arma, contato, impacto e magia, tom, filtro e pico) a partir de CC0
@@ -826,8 +826,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   e a página aberta devolve o foco ao botão que a abriu. **Suas Bênçãos** (`BoonsScreen`): grupos Ações (pela ordem das
   ações, `Boon.slot`), Efeitos automáticos (`Slot.NONE`) e Elos (`BoonsScreen.group_of`); à esquerda uma entrada por
   grupo com a contagem, que leva o foco à primeira linha; à direita a lista rola com o foco. **Créditos**
-  (`CreditsScreen.BLOCKS`): Equipe, Áudio, Arte, Ferramentas, Licenças, cada bloco toma o foco (cima e baixo e a roda
-  rolam); todas as atribuições de antes ficam, mais `credits_ai_art`, `credits_ai_code` e o resumo de licenças.
+  não são tela (o Daniel, 2026-11-18: "não tem nada"): `CREDITOS.txt` na raiz, copiado ao lado do exe e depois na página
+  da Steam, com todas as atribuições (CC BY de Kevin MacLeod e Little Robot Sound Factory exigem crédito).
   **Vitória** (`EndScreen`): primeiro a selagem sozinha (`SealEmblem`: aro de ouro velho que se fecha em volta do leão do
   selo da Câmara, `lion_sdf.res`, que acende; nunca sol nem cruz), depois o resumo sobe (`SUMMARY_AT` 2 s); apertar
   durante a selagem mostra tudo (`finish_sealing`). **Derrota**: painel com o título, "Derrotado por", onde caiu, as
@@ -835,11 +835,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`OptionsScreen`): abas Áudio (volumes em régua com losango, clicável, `Gauge`; Músicas), Vídeo, Conforto e Controles
   (teclas com o valor à direita, Teclas padrão); andar sobre uma aba mostra a página dela, baixo entra nela; o foco
   guardado num `_build` abre a página onde está. **Como Jogar** (`HowToScreen`): abas "A descida" (três passos:
-  portas, Bênçãos, Morvath na Câmara do Selo; `howto_step_*`) e Controles (a tabela de teclas de antes); Compêndio,
-  Créditos e Voltar no rodapé. A prancha 10 mostra escolha de capítulo: o jogo tem uma região, então não há. Tela do
+  portas, Bênçãos, Morvath na Câmara do Selo; `howto_step_*`) e Controles (a tabela de teclas de antes); Compêndio
+  e Voltar no rodapé. A prancha 10 mostra escolha de capítulo: o jogo tem uma região, então não há. Tela do
   herói: só o `GoldRule` (a árvore é da etapa 2). Capturas: `tools/menu_lab.gd` (comando no topo; pausa com poucas e
   muitas Bênçãos, Suas Bênçãos no topo e rolada, derrota, vitória em três momentos e, com `--title-screens`, Como
-  Jogar, Créditos no topo e rolados, cada aba das Configurações e Músicas). Testes em `tests/test_menus_1b.gd`.
+  Jogar, cada aba das Configurações e Músicas). Testes em `tests/test_menus_1b.gd`.
 - **Tela de dons "Um dom chega até você"** (2026-11-16, referências de IA só locais em `docs/art/ref/boon_cards/`):
   `BoonChoice` monta três `BoonCard` (`scripts/ui/boon_card.gd`, 320 x 450 a 720 linhas): arte no topo sobre um brilho
   da cor da família, nome em marfim, família ou "Elo de A e B", ação, nível e raridade numa linha, filete com losango,

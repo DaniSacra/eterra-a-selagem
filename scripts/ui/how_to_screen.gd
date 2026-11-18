@@ -4,7 +4,7 @@ extends Control
 ## their doors, the Blessings they give, Morvath sealed at the end) and "Controles" (every action of the game with what
 ## is bound to it right now on the keyboard and mouse, remapped keys shown as remapped, and on the gamepad, read from
 ## the InputMap, and what it does). The game has one region, so there is no chapter to choose here. "Compêndio" opens the Codex
-## (CodexScreen: Dons and Golpes); "Créditos" the sources and licences (CreditsScreen).
+## (CodexScreen: Dons and Golpes). The credits are a text file next to the game (CREDITOS.txt), not a screen.
 ## The caller closes this screen on ui_cancel, like the others; while the combo list is open this screen takes
 ## ui_cancel itself and goes back to its own page.
 
@@ -43,7 +43,7 @@ var tab := Tab.DESCENT
 var tabs: Array[Button] = []
 var pages: Array[Control] = []
 var _page: Control
-## The page open over this one (the Codex or the credits) and the button that opened it.
+## The page open over this one (the Codex) and the button that opened it.
 var _moves: Control
 var _moves_button: Button
 var _from: Button
@@ -81,18 +81,12 @@ func open() -> void:
 	_moves_button = UiKit.button(T.t(&"howto_moves"), _open_moves, 220)
 	_moves_button.name = "moves"
 	bottom.add_child(_moves_button)
-	var credits := UiKit.button(T.t(&"howto_credits"), Callable(), 220)
-	credits.name = "credits"
-	credits.pressed.connect(func() -> void:
-		Audio.play(&"ui_ok")
-		_open_sub(CreditsScreen.new(), credits))
-	bottom.add_child(credits)
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
 	back.name = "back"
 	bottom.add_child(back)
 	for b in tabs:
 		b.focus_neighbor_bottom = b.get_path_to(back)
-	for b: Button in [_moves_button, credits, back]:
+	for b: Button in [_moves_button, back]:
 		b.focus_neighbor_top = b.get_path_to(tabs[0])
 	_show_tab(Tab.DESCENT)
 	tabs[0].grab_focus.call_deferred()
@@ -103,7 +97,7 @@ func _show_tab(t: int) -> void:
 	for i in tabs.size():
 		tabs[i].set_pressed_no_signal(i == t)
 		pages[i].visible = i == t
-	for b: Button in [_moves_button, find_child("credits", true, false), find_child("back", true, false)]:
+	for b: Button in [_moves_button, find_child("back", true, false)]:
 		if b:
 			b.focus_neighbor_top = b.get_path_to(tabs[t])
 

@@ -279,7 +279,7 @@ static func foot(gap: int = 14) -> HBoxContainer:
 
 
 ## A row that takes the focus (mouse, keys, gamepad) and lights its frame with it, for lists inside a scroll that
-## follows the focus (Suas Bênçãos, Créditos).
+## follows the focus (Suas Bênçãos).
 static func focus_row(margin: int = 10) -> PanelContainer:
 	var panel := PanelContainer.new()
 	panel.focus_mode = Control.FOCUS_ALL

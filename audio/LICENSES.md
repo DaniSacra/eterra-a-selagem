@@ -1,7 +1,7 @@
 # Licenças do som
 
 Regra (D-12b): só síntese, CC0 e CC-BY com crédito aqui; nada pago. Todo CC-BY também está nos créditos do jogo
-(Como Jogar, Créditos: `CreditsScreen`, textos `credits_*`). Detalhes do T5 (o que cada arquivo leva, de onde veio,
+(`CREDITOS.txt` na raiz, copiado ao lado do exe; a tela de Créditos saiu em 2026-11-18). Detalhes do T5 (o que cada arquivo leva, de onde veio,
 pontos de laço): `docs/design/t5_audio.md`.
 
 ## Música

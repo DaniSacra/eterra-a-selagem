@@ -1,7 +1,7 @@
 extends SceneTree
 ## Captures of the menus around the run for UI review (stage 1B of the art pack): the pause over the frozen fight (with
 ## few and with many Blessings), Suas Bênçãos (top and scrolled), the defeat and the victory (the sealing, then the
-## summary); and, on the title, Como Jogar, Créditos (top and scrolled), Configurações (each tab) and Músicas.
+## summary); and, on the title, Como Jogar, Configurações (each tab) and Músicas.
 ## tools/gpu.sh run --rendering-driver vulkan --resolution 1280x720 -s tools/menu_lab.gd -- --nosave --lab-out=C:/x/m --bot --hold --seed=5
 ## tools/gpu.sh run ... -s tools/menu_lab.gd -- --nosave --lab-out=C:/x/m --title-screens
 ## Writes <lab-out>_<name>.png. Calls the screens' own methods; nothing here ships.
@@ -109,17 +109,6 @@ func _title() -> void:
 	boot.call(&"_open", howto, 2)
 	await create_timer(0.5).timeout
 	await _shot("howto")
-	var credits := howto.find_child("credits", true, false) as Button
-	credits.grab_focus()
-	credits.pressed.emit()
-	await create_timer(0.5).timeout
-	await _shot("credits")
-	for i in 40:
-		_press(&"ui_down")
-		await process_frame
-		await process_frame
-	await create_timer(0.4).timeout
-	await _shot("credits_end")
 	boot.call(&"_close_sub")
 	await create_timer(0.3).timeout
 	var options: Control = (load("res://scripts/ui/options_screen.gd") as GDScript).new()

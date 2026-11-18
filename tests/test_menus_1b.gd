@@ -148,45 +148,6 @@ func test_blessings_are_grouped_and_a_full_hand_scrolls() -> void:
 	_on_screen(panel)
 
 
-# ---------- the credits ----------
-
-func test_credits_keep_every_attribution_in_blocks() -> void:
-	var seen := {}
-	for block: Dictionary in CreditsScreen.BLOCKS:
-		assert_ne(T.t("credits_head_" + String(block.id)), "credits_head_" + String(block.id), "block %s named" % block.id)
-		for id: String in block.lines:
-			assert_false(seen.has(id), "%s in one block only" % id)
-			seen[id] = true
-	for id in CreditsScreen.LINES:
-		assert_true(seen.has(id), "%s is in a block" % id)
-	assert_eq(seen.size(), CreditsScreen.LINES.size())
-	var all := ""
-	for id in CreditsScreen.LINES:
-		all += T.t("credits_" + id) + "\n"
-	for who: String in ["Kevin MacLeod", "Atribuição 4.0", "Little Robot Sound Factory", "Atribuição 3.0", "Kenney", "qubodup",
-			"rubberduck", "Quaternius", "KayKit", "Kay Lousberg", "Poly Haven", "Cinzel", "Alegreya Sans", "Open Font License",
-			"Meshy", "IA", "Godot"]:
-		assert_true(all.contains(who), "credits name %s" % who)
-	assert_false(all.contains("—") or all.contains("–"), "no dash")
-
-
-func test_credits_scroll_with_the_keys() -> void:
-	var c := CreditsScreen.new()
-	_holder().add_child(c)
-	c.open()
-	await wait_process_frames(3)
-	assert_true(c.blocks[0].has_focus(), "the first block has the focus")
-	var scroll := c.find_child("list", true, false) as ScrollContainer
-	assert_eq(scroll.scroll_vertical, 0)
-	for i in c.blocks.size() - 1:
-		await _press(&"ui_down")
-	assert_true(c.blocks[-1].has_focus(), "down walks the blocks to the last")
-	assert_gt(scroll.scroll_vertical, 0, "and the list follows")
-	await _press(&"ui_down")
-	assert_eq(_focus().name, &"back", "then Voltar")
-	_on_screen(c)
-
-
 # ---------- the end screen ----------
 
 func test_victory_shows_the_sealing_first_and_a_press_ends_it() -> void:
