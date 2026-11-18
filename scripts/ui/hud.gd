@@ -795,7 +795,7 @@ func open_map() -> MapScreen:
 	if game == null or game.rooms == null or game.mode != Game.Mode.PLAY:
 		return null
 	var screen := MapScreen.new()
-	game.open_screen(screen)
+	game.open_screen(screen, false)
 	screen.open()
 	screen.closed.connect(game.close_screen)
 	return screen

@@ -1161,11 +1161,13 @@ func _toggle_feel_panel() -> void:
 
 ## A choice screen over the run that stops it (E5: the Provação's cards, the altar's trades; EventChoice). The one
 ## who opens it closes it with close_screen when its choice is made.
-func open_screen(screen: Control) -> void:
+## burst false for a screen that only shows (the descent's map): no light on the hero.
+func open_screen(screen: Control, burst: bool = true) -> void:
 	mode = Mode.CHOICE
 	_screen = screen
 	ui.add_child(screen)
-	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
+	if burst:
+		fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 
 
 ## Closes the screen opened by open_screen; the run goes on (the press that closed it plays nothing).
