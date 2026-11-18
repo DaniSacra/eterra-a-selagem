@@ -163,3 +163,157 @@ static func action_mouse_button(action: StringName) -> int:
 		if ev is InputEventMouseButton:
 			return (ev as InputEventMouseButton).button_index
 	return 0
+
+
+# ---- Stage 1B of the art pack (boards 06 and 10): one language for every menu page ----
+
+## The panel of a menu page: ink under a line of old gold.
+const PAGE := Color(0.035, 0.03, 0.045, 0.95)
+## The action that matters on a screen (Continuar, Tentar de novo): warm bronze under a lit gold line.
+const PRIMARY_FILL := Color(0.25, 0.16, 0.07, 0.97)
+const PRIMARY_LIT := Color(0.37, 0.24, 0.09, 1.0)
+## The tab on show: deep petrol under the gold line (the scene's teal).
+const TAB_ON := Color(0.04, 0.17, 0.16, 0.97)
+
+
+## A title over a gold rule (GoldRule), centred: the head of every menu page.
+static func header(text: String, size: int = 38, width: float = 420.0) -> VBoxContainer:
+	var v := VBoxContainer.new()
+	v.name = "header"
+	v.add_theme_constant_override(&"separation", 0)
+	v.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(shadow(title(text, size)))
+	var r := GoldRule.new()
+	r.custom_minimum_size = Vector2(width, 14)
+	r.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(r)
+	return v
+
+
+## The page's frame: ink, a line of old gold and a soft shadow round it.
+static func frame_box(margin: int = 22) -> StyleBoxFlat:
+	var s := box(PAGE, OLD_GOLD, 1, margin, 3)
+	s.shadow_color = Color(0.0, 0.0, 0.0, 0.45)
+	s.shadow_size = 14
+	return s
+
+
+## A menu page: the screen dimmed, a framed panel this wide in the middle with its title on top; returns the panel's
+## column (the caller adds the content and the foot).
+static func page(parent: Control, text: String, width: float, dim: float = 0.8, title_size: int = 36) -> VBoxContainer:
+	var outer := column(parent, width, dim)
+	var panel := PanelContainer.new()
+	panel.name = "page"
+	panel.add_theme_stylebox_override(&"panel", frame_box())
+	outer.add_child(panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override(&"separation", 10)
+	panel.add_child(v)
+	v.add_child(header(text, title_size, width * 0.55))
+	return v
+
+
+## Makes a button the screen's main action: bronze fill and a lit gold line even without the focus.
+static func primary(b: Button) -> Button:
+	b.add_theme_stylebox_override(&"normal", box(PRIMARY_FILL, EDGE.lightened(0.2), 2, 10))
+	b.add_theme_stylebox_override(&"hover", box(PRIMARY_LIT, GOLD, 2, 10))
+	b.add_theme_stylebox_override(&"pressed", box(PRIMARY_LIT, GOLD, 2, 10))
+	b.add_theme_stylebox_override(&"focus", box(PRIMARY_LIT, GOLD, 3, 10))
+	b.add_theme_color_override(&"font_color", GOLD.lightened(0.15))
+	return b
+
+
+## A tab (Configurações, Como Jogar): pressed is the page on show (petrol), the focus a gold line over it.
+static func tab(text: String, width: float) -> Button:
+	var b := button(text, Callable(), width)
+	b.toggle_mode = true
+	b.custom_minimum_size.y = 44
+	b.add_theme_font_override(&"font", TITLE_FONT)
+	b.add_theme_font_size_override(&"font_size", 19)
+	b.add_theme_stylebox_override(&"pressed", box(TAB_ON, OLD_GOLD.lightened(0.2), 2, 10))
+	b.add_theme_stylebox_override(&"hover_pressed", box(TAB_ON.lightened(0.05), GOLD, 2, 10))
+	b.add_theme_stylebox_override(&"focus", box(Color(0, 0, 0, 0), GOLD, 2, 10))
+	b.add_theme_color_override(&"font_pressed_color", PALE)
+	b.add_theme_color_override(&"font_hover_pressed_color", GOLD)
+	return b
+
+
+## A quiet way out at the foot of a panel (Sair para o menu, Sair do jogo): small text, a box only with the focus.
+static func link(text: String, on_press: Callable = Callable(), width: float = 0.0) -> Button:
+	var b := button(text, on_press, width)
+	b.custom_minimum_size.y = 36
+	b.add_theme_font_size_override(&"font_size", 17)
+	b.add_theme_stylebox_override(&"normal", box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 1, 8))
+	b.add_theme_stylebox_override(&"hover", box(Color(0.12, 0.09, 0.06, 0.6), OLD_GOLD, 1, 8))
+	b.add_theme_stylebox_override(&"pressed", box(Color(0.16, 0.11, 0.07, 0.8), GOLD, 1, 8))
+	b.add_theme_stylebox_override(&"focus", box(Color(0.14, 0.1, 0.06, 0.75), GOLD, 1, 8))
+	b.add_theme_color_override(&"font_color", DIM.lightened(0.25))
+	return b
+
+
+## A section's name with a rule running on after it ("Ações ————").
+static func section(text: String, color: Color = OLD_GOLD.lightened(0.35), size: int = 17) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override(&"separation", 10)
+	h.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var l := shadow(label(text, color, size, TITLE_FONT))
+	l.add_theme_constant_override(&"outline_size", 4)
+	h.add_child(l)
+	var line := ColorRect.new()
+	line.color = Color(OLD_GOLD, 0.55)
+	line.custom_minimum_size.y = 1
+	line.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	line.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	h.add_child(line)
+	return h
+
+
+## A centred row for the buttons at the foot of a page.
+static func foot(gap: int = 14) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.name = "foot"
+	h.alignment = BoxContainer.ALIGNMENT_CENTER
+	h.add_theme_constant_override(&"separation", gap)
+	return h
+
+
+## A row that takes the focus (mouse, keys, gamepad) and lights its frame with it, for lists inside a scroll that
+## follows the focus (Suas Bênçãos, Créditos).
+static func focus_row(margin: int = 10) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.focus_mode = Control.FOCUS_ALL
+	var plain := box(Color(0.07, 0.05, 0.09, 0.9), EDGE.darkened(0.35), 1, margin)
+	var lit := box(Color(0.12, 0.08, 0.1, 0.95), GOLD, 2, margin)
+	panel.add_theme_stylebox_override(&"panel", plain)
+	panel.focus_entered.connect(func() -> void:
+		panel.add_theme_stylebox_override(&"panel", lit)
+		Audio.play(&"ui_move"))
+	panel.focus_exited.connect(func() -> void: panel.add_theme_stylebox_override(&"panel", plain))
+	panel.mouse_entered.connect(func() -> void: panel.grab_focus())
+	return panel
+
+
+## The gifts carried, as medallions in a row or a flow (the end screen, the pause): carried is [{boon, level}], at
+## most max_shown of them, the rest summed in "+N".
+static func gift_icons(parent: Container, carried: Array, icon_px: float, max_shown: int) -> void:
+	for i in mini(carried.size(), max_shown):
+		var b: Boon = carried[i].boon
+		var icon := BoonIcon.new().setup(b, icon_px)
+		icon.level = int(carried[i].get("level", 1))
+		icon.max_level = b.max_level
+		parent.add_child(icon)
+	if carried.size() > max_shown:
+		var more := label("+%d" % (carried.size() - max_shown), PALE, roundi(icon_px * 0.55), BOLD_FONT)
+		more.name = "more"
+		more.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		parent.add_child(more)
+
+
+## The gifts a BoonState holds, as gift_icons wants them.
+static func carried_of(state: BoonState) -> Array:
+	var out := []
+	if state != null:
+		for b: Boon in state.owned():
+			out.append({"boon": b, "level": state.level(b.id)})
+	return out

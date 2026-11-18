@@ -1,7 +1,9 @@
 class_name HowToScreen
 extends Control
-## "Como Jogar": every action of the game with what is bound to it right now on the keyboard and mouse (remapped keys
-## show as remapped) and on the gamepad (read from the InputMap), and what it does. "Compêndio" opens the Codex
+## "Como Jogar" (art pack board 10), one framed page with two tabs: "A descida" (a descent in three steps: the rooms and
+## their doors, the Blessings they give, Morvath sealed at the end) and "Controles" (every action of the game with what
+## is bound to it right now on the keyboard and mouse, remapped keys shown as remapped, and on the gamepad, read from
+## the InputMap, and what it does). The game has one region, so there is no chapter to choose here. "Compêndio" opens the Codex
 ## (CodexScreen: Dons and Golpes); "Créditos" the sources and licences (CreditsScreen).
 ## The caller closes this screen on ui_cancel, like the others; while the combo list is open this screen takes
 ## ui_cancel itself and goes back to its own page.
@@ -23,6 +25,23 @@ const ROWS: Array[Dictionary] = [
 ## Controls actions that are not for the player (the live tuning panel of debug builds).
 const HIDDEN: Array[StringName] = [&"feel_panel"]
 
+## The tabs: what a descent is (three steps) and the controls.
+enum Tab { DESCENT, CONTROLS }
+
+const TAB_KEY: Array[StringName] = [&"howto_tab_descent", &"options_tab_controls"]
+const TAB_NAME: Array[String] = ["tab_descent", "tab_controls"]
+## The three steps of a descent (howto_step_<id>, howto_step_<id>_desc).
+const STEPS: Array[String] = ["rooms", "boons", "seal"]
+const WIDTH := 1100.0
+const TAB_WIDTH := 200.0
+const STEP_WIDTH := 300.0
+const GLYPH := 76.0
+## The page under the tabs is this tall (the controls fit it), so the tabs and the foot never move.
+const PAGE_HEIGHT := 420.0
+
+var tab := Tab.DESCENT
+var tabs: Array[Button] = []
+var pages: Array[Control] = []
 var _page: Control
 ## The page open over this one (the Codex or the credits) and the button that opened it.
 var _moves: Control
@@ -36,37 +55,28 @@ func open() -> void:
 	_page = Control.new()
 	_page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(_page)
-	var v := UiKit.column(_page, 1100.0, 0.8)
-	v.add_child(UiKit.title(T.t(&"howto_title"), 40))
-	var panel := PanelContainer.new()
-	v.add_child(panel)
-	var grid := GridContainer.new()
-	grid.columns = 4
-	grid.add_theme_constant_override(&"h_separation", 22)
-	grid.add_theme_constant_override(&"v_separation", 10)
-	panel.add_child(grid)
-	for head: StringName in [&"howto_col_action", &"howto_col_keys", &"howto_col_pad", &""]:
-		grid.add_child(UiKit.label(T.t(head) if head != &"" else "", UiKit.DIM, 18, UiKit.BOLD_FONT))
-	for row in ROWS:
-		var id: String = row.id
-		var actions: Array = row.actions
-		grid.add_child(_cell(T.t("howto_" + id), UiKit.PALE, 21, UiKit.BOLD_FONT, 170.0))
-		var keys := _cell(keys_label(actions) if not actions.is_empty() else T.t(&"mouse_aim"), UiKit.GOLD, 21, UiKit.BOLD_FONT, 170.0)
-		keys.name = "keys_" + id
-		grid.add_child(keys)
-		var pad := _cell(pad_label(actions) if not actions.is_empty() else T.t(&"pad_stick_right"), UiKit.GOLD, 21, UiKit.BOLD_FONT, 170.0)
-		pad.name = "pad_" + id
-		grid.add_child(pad)
-		var desc := _cell(T.t("howto_%s_desc" % id), UiKit.PALE, 19, null, 520.0)
-		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		grid.add_child(desc)
-	var tip := UiKit.label(T.t(&"howto_tip"), UiKit.DIM, 19)
-	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(tip)
-	var bottom := HBoxContainer.new()
-	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
+	var v := UiKit.page(_page, T.t(&"howto_title"), WIDTH, 0.8, 36)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override(&"separation", 6)
+	v.add_child(row)
+	var holder := Control.new()
+	holder.custom_minimum_size.y = PAGE_HEIGHT
+	v.add_child(holder)
+	for t: int in Tab.values():
+		var b := UiKit.tab(T.t(TAB_KEY[t]), TAB_WIDTH)
+		b.name = TAB_NAME[t]
+		b.focus_entered.connect(_show_tab.bind(t))
+		b.pressed.connect(_show_tab.bind(t))
+		row.add_child(b)
+		tabs.append(b)
+	var descent := _descent()
+	holder.add_child(descent)
+	pages.append(descent)
+	var controls := _controls()
+	holder.add_child(controls)
+	pages.append(controls)
+	var bottom := UiKit.foot()
 	v.add_child(bottom)
 	_moves_button = UiKit.button(T.t(&"howto_moves"), _open_moves, 220)
 	_moves_button.name = "moves"
@@ -80,7 +90,105 @@ func open() -> void:
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
 	back.name = "back"
 	bottom.add_child(back)
-	back.grab_focus.call_deferred()
+	for b in tabs:
+		b.focus_neighbor_bottom = b.get_path_to(back)
+	for b: Button in [_moves_button, credits, back]:
+		b.focus_neighbor_top = b.get_path_to(tabs[0])
+	_show_tab(Tab.DESCENT)
+	tabs[0].grab_focus.call_deferred()
+
+
+func _show_tab(t: int) -> void:
+	tab = t as Tab
+	for i in tabs.size():
+		tabs[i].set_pressed_no_signal(i == t)
+		pages[i].visible = i == t
+	for b: Button in [_moves_button, find_child("credits", true, false), find_child("back", true, false)]:
+		if b:
+			b.focus_neighbor_top = b.get_path_to(tabs[t])
+
+
+## A descent in three steps, each with its sign: an open door (the rooms), a Blessing's medallion (what the rooms
+## give), the seal (Morvath at the end).
+func _descent() -> Control:
+	var page := CenterContainer.new()
+	page.name = "page_descent"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var steps := HBoxContainer.new()
+	steps.add_theme_constant_override(&"separation", 26)
+	page.add_child(steps)
+	for i in STEPS.size():
+		var id := STEPS[i]
+		var col := VBoxContainer.new()
+		col.name = "step_" + id
+		col.custom_minimum_size.x = STEP_WIDTH
+		col.add_theme_constant_override(&"separation", 10)
+		steps.add_child(col)
+		col.add_child(_glyph(i))
+		var head := UiKit.shadow(UiKit.label(T.t("howto_step_" + id), UiKit.GOLD, 22, UiKit.TITLE_FONT))
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		head.add_theme_constant_override(&"outline_size", 6)
+		col.add_child(head)
+		var rule := GoldRule.new()
+		rule.custom_minimum_size = Vector2(STEP_WIDTH * 0.6, 12)
+		rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		col.add_child(rule)
+		var desc := UiKit.label(T.t("howto_step_%s_desc" % id), UiKit.PALE, 18)
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc.custom_minimum_size.x = STEP_WIDTH
+		col.add_child(desc)
+	return page
+
+
+func _glyph(step: int) -> Control:
+	match step:
+		0:
+			var door := DoorMark.new()
+			door.custom_minimum_size = Vector2(GLYPH, GLYPH)
+			door.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			return door
+		1:
+			for b in BoonState.load_catalog():
+				if not b.is_duo():
+					var icon := BoonIcon.new().setup(b, GLYPH)
+					icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+					return icon
+	return SealEmblem.new().setup(GLYPH)
+
+
+## Every action with its keys, its gamepad button and what it does, and the tip under them.
+func _controls() -> Control:
+	var page := VBoxContainer.new()
+	page.name = "page_controls"
+	page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	page.add_theme_constant_override(&"separation", 8)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override(&"h_separation", 18)
+	grid.add_theme_constant_override(&"v_separation", 7)
+	page.add_child(grid)
+	for head: StringName in [&"howto_col_action", &"howto_col_keys", &"howto_col_pad", &""]:
+		grid.add_child(UiKit.label(T.t(head) if head != &"" else "", UiKit.OLD_GOLD.lightened(0.35), 17, UiKit.BOLD_FONT))
+	for row in ROWS:
+		var id: String = row.id
+		var actions: Array = row.actions
+		grid.add_child(_cell(T.t("howto_" + id), UiKit.PALE, 19, UiKit.BOLD_FONT, 150.0))
+		var keys := _cell(keys_label(actions) if not actions.is_empty() else T.t(&"mouse_aim"), UiKit.GOLD, 19, UiKit.BOLD_FONT, 150.0)
+		keys.name = "keys_" + id
+		grid.add_child(keys)
+		var pad := _cell(pad_label(actions) if not actions.is_empty() else T.t(&"pad_stick_right"), UiKit.GOLD, 19, UiKit.BOLD_FONT, 160.0)
+		pad.name = "pad_" + id
+		grid.add_child(pad)
+		var desc := _cell(T.t("howto_%s_desc" % id), UiKit.PALE, 17, null, 540.0)
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		grid.add_child(desc)
+	var tip := UiKit.label(T.t(&"howto_tip"), UiKit.DIM.lightened(0.1), 17)
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	page.add_child(tip)
+	return page
 
 
 func _cell(text: String, color: Color, size: int, font: Font, width: float) -> Label:
@@ -153,3 +261,41 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _moves != null and event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_close_moves()
+
+
+## An open door under a pointed arch, in old gold over ink: the rooms of a descent (Como Jogar).
+class DoorMark:
+	extends Control
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _arch(c: Vector2, w: float, h: float, spring: float) -> PackedVector2Array:
+		# a pointed arch: two straight jambs up to the spring, two arcs meeting at the top
+		var pts := PackedVector2Array()
+		pts.append(c + Vector2(-w, h))
+		pts.append(c + Vector2(-w, spring))
+		for i in 9:
+			var a := float(i) / 8.0
+			pts.append(c + Vector2(-w + w * a, spring - (h * 0.95 + spring) * sin(a * PI * 0.5)))
+		for i in range(1, 9):
+			var a := 1.0 - float(i) / 8.0
+			pts.append(c + Vector2(w - w * a, spring - (h * 0.95 + spring) * sin(a * PI * 0.5)))
+		pts.append(c + Vector2(w, spring))
+		pts.append(c + Vector2(w, h))
+		return pts
+
+	func _draw() -> void:
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.5
+		draw_circle(c, r - 1.0, SealEmblem.INK)
+		draw_arc(c, r - 3.0, 0.0, TAU, 96, UiKit.OLD_GOLD, maxf(2.0, r * 0.07), true)
+		var outer := _arch(c + Vector2(0, r * 0.08), r * 0.42, r * 0.5, -r * 0.05)
+		draw_colored_polygon(outer, UiKit.OLD_GOLD.lerp(UiKit.GOLD, 0.3))
+		# the doorway open on a warm light
+		var inner := _arch(c + Vector2(0, r * 0.14), r * 0.3, r * 0.44, 0.0)
+		draw_colored_polygon(inner, Color(0.98, 0.8, 0.5))
+		var deep := _arch(c + Vector2(0, r * 0.3), r * 0.18, r * 0.28, 0.0)
+		draw_colored_polygon(deep, Color(1.0, 0.93, 0.78))
+		# the step under the door
+		draw_rect(Rect2(c + Vector2(-r * 0.55, r * 0.56), Vector2(r * 1.1, r * 0.08)), UiKit.OLD_GOLD)
