@@ -24,6 +24,8 @@ const CAP_PX := 19.0
 const BASE_LINES := 720.0
 ## Cap height of Alegreya Sans Bold over its em (OS/2 sCapHeight 644 of 1000).
 const CAP_RATIO := 0.644
+## Height of a tall lowercase letter ("l", "d") over the em, as the review measures lowercase (about 0,72 drawn).
+const ASCENDER := 0.72
 ## The name's font size on the base canvas (capitals CAP_PX at 1080).
 const FONT_SIZE := 20
 ## The detail line against the name.
@@ -35,8 +37,17 @@ const DETAIL_COLOR := UiKit.PALE
 ## The shop group's word over the name, smaller, and the price without gold enough for it.
 const GROUP_SIZE := 16
 const GROUP_COLOR := Color(0.74, 0.72, 0.8)
-## The note's size (add_note), under the detail.
-const NOTE_SIZE := 15
+## The note (add_note, T5, A-T5-7): its first line as big as the detail (lowercase at least 11 px at 720 lines), the
+## lines after it (the instruction) in the regular face and the shop group's cool grey; every line of the body
+## (detail and note) on a fixed pitch of LINE_PITCH times the font size, on a veil of dark ink with cut corners so
+## no light of the room (the slab's glow, the thread of light) runs through the letters.
+const NOTE_SIZE := 16
+const NOTE_COLOR := DETAIL_COLOR
+const HINT_COLOR := GROUP_COLOR
+const LINE_PITCH := 1.15
+const VEIL := Color(0.035, 0.027, 0.04, 0.6)
+const VEIL_CUT := 6
+const VEIL_PAD := Vector2(10, 2)
 const SHORT_COLOR := Color(0.92, 0.62, 0.58)
 const OUTLINE_COLOR := Color(0.035, 0.027, 0.04)
 ## WCAG contrast ratio each colour keeps against the outline.
@@ -50,8 +61,12 @@ var detail: Label
 var mark: DoorGlyph
 ## The shop group's word (null: not a shop sign).
 var group: Label
-## The explanation under the detail (null: none; add_note).
+## The explanation under the detail (null: none; add_note): its first line, and all its lines.
 var note: Label
+var notes: Array[Label] = []
+## The veil behind the body (detail and note; null until a note is added) and the column the body's lines stand in.
+var veil: PanelContainer
+var _body: VBoxContainer
 ## The shop price (-1: not a shop sign) and the gold still missing for it (0: enough).
 var price := -1
 var missing := 0
@@ -124,15 +139,55 @@ func set_gold(gold: int) -> void:
 		detail.add_theme_color_override(&"font_color", DETAIL_COLOR)
 
 
-## A short explanation under everything (T5, the Provação's slab: what it is and how to refuse it), smaller and in the
-## shop group's cool grey so the name and the price stay first. Lines split by "\n".
+## A short explanation under everything (T5, the Provação's slab: what it is and how to refuse it). Lines split by
+## "\n": the first as the detail, the rest (the instruction) in the regular face and a cool grey, so the name and the
+## price stay first. The detail and the note move onto the veil, on a fixed pitch. Called again, it rewrites the note.
 func add_note(text: String) -> Label:
-	if note == null:
-		note = _label(text, GROUP_COLOR, NOTE_SIZE)
-		note.name = "note"
-		_box.add_child(note)
-	note.text = text
+	if veil == null:
+		_make_veil()
+	for l in notes:
+		l.free()
+	notes.clear()
+	var lines := text.split("\n")
+	for i in lines.size():
+		var l := _label(lines[i], NOTE_COLOR if i == 0 else HINT_COLOR, NOTE_SIZE, UiKit.BOLD_FONT if i == 0 else UiKit.TEXT_FONT)
+		l.name = "note" if i == 0 else "note_%d" % i
+		_body.add_child(l)
+		notes.append(l)
+	note = notes[0]
 	return note
+
+
+## The veil of dark ink with cut corners and, in it, the column on a fixed pitch; the name and the detail move into it.
+func _make_veil() -> void:
+	veil = PanelContainer.new()
+	veil.name = "veil"
+	veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	veil.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = VEIL
+	sb.set_corner_radius_all(VEIL_CUT)
+	sb.corner_detail = 1
+	sb.content_margin_left = VEIL_PAD.x
+	sb.content_margin_right = VEIL_PAD.x
+	sb.content_margin_top = VEIL_PAD.y
+	sb.content_margin_bottom = VEIL_PAD.y
+	veil.add_theme_stylebox_override(&"panel", sb)
+	_body = VBoxContainer.new()
+	_body.name = "body"
+	_body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_body.add_theme_constant_override(&"separation", line_gap(NOTE_SIZE))
+	veil.add_child(_body)
+	# the name too: a thread of light behind the sign never runs through any of its letters
+	for n in _box.get_children():
+		n.reparent(_body, false)
+	_box.add_child(veil)
+
+
+## The separation between two lines of this size for a pitch of LINE_PITCH times the size (negative: the font's own
+## line is taller than the pitch).
+static func line_gap(font_size: int) -> int:
+	return roundi(font_size * LINE_PITCH - UiKit.BOLD_FONT.get_height(font_size))
 
 
 ## The detail line as a warning (the slab without life enough: "Vida insuficiente" in SHORT_COLOR) or back to its own
@@ -182,8 +237,8 @@ static func _linear(v: float) -> float:
 	return v / 12.92 if v <= 0.04045 else pow((v + 0.055) / 1.055, 2.4)
 
 
-static func _label(text: String, color: Color, size: int) -> Label:
-	var l := UiKit.shadow(UiKit.label(text, color, size, UiKit.BOLD_FONT))
+static func _label(text: String, color: Color, size: int, font: Font = UiKit.BOLD_FONT) -> Label:
+	var l := UiKit.shadow(UiKit.label(text, color, size, font))
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	l.add_theme_constant_override(&"outline_size", OUTLINE)

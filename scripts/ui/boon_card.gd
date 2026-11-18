@@ -18,10 +18,12 @@ extends Button
 ## the action it transforms and, at the bottom, the three held things that opened it.
 ## E5, the Provação's card (setup_trial, docs/art/e5_spec.md 5.3): the body split in two. On top the blessing to be won
 ## (its name in ivory, "Provação" and its rarity on one line, the rarity on the edge as any card), under it the curse on
-## a band of dark lilac ink with its words in pale lilac and how many fights it lasts. The crest is the cracked diamond
-## (TrialSeal), no painted medallion. The altar's card (setup_altar, smaller): what the trade gives and what it asks,
-## a drawn medallion (heart, candle flame) and, when it cannot be taken now, dimmed with why; "Seguir em frente" takes
-## nothing.
+## a band of dark lilac ink with its words in pale lilac and how many fights it lasts. T5 (A-T5-5): the crest is the
+## blessing's own medallion (BoonIcon, TrialSeal.blessing_look), so the three cards differ at a glance, with the cracked
+## diamond (TrialSeal) small on its lower right as a stamp; the curse's band sits right under the blessing's words.
+## The altar's card (setup_altar, smaller): what the trade gives and what it asks, a medallion in the house's seal
+## (SealMedal, A-T5-6: a pomegranate, a candle's flame, an open arch) and, when it cannot be taken now, dimmed with
+## why; "Seguir em frente" takes nothing.
 
 ## Card size at 720 lines (the screen scales with the window: canvas_items stretch).
 const SIZE := Vector2(320, 450)
@@ -68,8 +70,13 @@ const PSALM_ARCH_INSET := 34.0
 const PSALM_ICON := 112.0
 ## The Provação's card: the crest, the curse's band (spec 5.3: ink (0.16; 0.12; 0.22), words (0.82; 0.76; 0.92)).
 ## T5: a shorter art band and card than a Blessing's, so the screen's lead line and the card's own heads fit at 720.
-const TRIAL_ICON := 92.0
-const TRIAL_SIZE := Vector2(320, 404)
+const TRIAL_ICON := 100.0
+## The cracked diamond's stamp on the medallion: its share of the medallion's width, and how far it hangs out of it.
+const TRIAL_STAMP := 0.32
+const TRIAL_STAMP_OUT := 0.06
+## The room between the blessing's words and the curse's band (A-T5-5: at most 40 px at 1080).
+const TRIAL_BAND_GAP := 8.0
+const TRIAL_SIZE := Vector2(320, 384)
 const TRIAL_ART_H := 118.0
 const TRIAL_BAND := TrialSeal.INK
 const TRIAL_WORDS := TrialSeal.PALE
@@ -83,8 +90,10 @@ const ALTAR_SIZE := Vector2(290, 392)
 const ALTAR_ART_H := 100.0
 const ALTAR_ICON := 80.0
 const ALTAR_GLOW := Color(0.95, 0.85, 0.65)
-## The altar's medallion of each trade: its colour and BoonIcon.glyph (-1: an empty seal, "take nothing").
-const ALTAR_LOOK := {&"life": [Color(0.9, 0.36, 0.4), 6], &"candles": [Color(0.98, 0.78, 0.45), 0], &"none": [Color(0.62, 0.6, 0.66), -1]}
+## The altar's medallion of each trade (SealMedal): its colour and glyph. Life buys a pomegranate (never a heart: the
+## trade takes life), gold lights the candles, walking on is an open arch.
+const ALTAR_LOOK := {&"life": [Color(0.78, 0.26, 0.32), SealMedal.Glyph.POMEGRANATE],
+	&"candles": [Color(0.98, 0.78, 0.45), SealMedal.Glyph.CANDLE], &"none": [Color(0.62, 0.6, 0.66), SealMedal.Glyph.OPEN_ARCH]}
 
 var boon: Boon
 var rarity: Boon.Rarity = Boon.Rarity.COMMON
@@ -412,8 +421,9 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 func setup_trial(c: Trials.Card) -> BoonCard:
 	trial = c
 	rarity = clampi(c.rarity, Boon.Rarity.COMMON, Boon.Rarity.LEGENDARY) as Boon.Rarity
-	var box := _shell(TrialSeal.GLOW, TRIAL_SIZE, TRIAL_ART_H)
-	crest = TrialSeal.new().setup(TRIAL_ICON)
+	var look := TrialSeal.blessing_look(c.blessing)
+	var box := _shell(look[1], TRIAL_SIZE, TRIAL_ART_H)
+	crest = _trial_crest(look)
 	_art(box, TRIAL_ART_H).add_child(crest)
 	var title := _name(T.t(c.blessing.name_key))
 	title.name = &"Name"
@@ -437,8 +447,11 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 	box.add_child(gain)
 	var keep := _text(T.t(&"trial_gain_keep"), UiKit.DIM, 15)
 	keep.name = &"Keep"
-	keep.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(keep)
+	var gap := Control.new()
+	gap.custom_minimum_size.y = TRIAL_BAND_GAP
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(gap)
 	var band := PanelContainer.new()
 	band.name = &"CurseBand"
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -458,8 +471,32 @@ func setup_trial(c: Trials.Card) -> BoonCard:
 		l.custom_minimum_size.x = width
 		inner.add_child(l)
 	box.add_child(band)
+	# what is left of the card's height goes under the band, never between the two halves
+	var rest := Control.new()
+	rest.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	rest.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(rest)
 	_finish()
 	return self
+
+
+## The Provação card's crest: the blessing's medallion (look: [glyph, colour]) with the cracked diamond small on its
+## lower right, hanging a little out of it, as a stamp.
+func _trial_crest(look: Array) -> Control:
+	var holder := Control.new()
+	holder.name = &"TrialCrest"
+	holder.custom_minimum_size = Vector2(TRIAL_ICON, TRIAL_ICON)
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var medal := BoonIcon.new().setup_glyph(int(look[0]), look[1], TRIAL_ICON)
+	medal.name = &"Medal"
+	medal.size = medal.custom_minimum_size
+	holder.add_child(medal)
+	var side := TRIAL_ICON * TRIAL_STAMP
+	var stamp := TrialSeal.new().setup(side)
+	stamp.name = &"Stamp"
+	stamp.position = Vector2.ONE * (TRIAL_ICON * (1.0 + TRIAL_STAMP_OUT) - side)
+	holder.add_child(stamp)
+	return holder
 
 
 ## One of the altar's trades (E5, Altar.options: {option, id, cost, gain, ok, why, give_from...}), or {id: &"none"} to
@@ -470,10 +507,8 @@ func setup_altar(o: Dictionary) -> BoonCard:
 	altar = StringName(o.get("id", &"none"))
 	var look: Array = ALTAR_LOOK.get(altar, ALTAR_LOOK[&"none"])
 	var box := _shell(ALTAR_GLOW, ALTAR_SIZE, ALTAR_ART_H)
-	var medal := Control.new()
-	medal.custom_minimum_size = Vector2(ALTAR_ICON, ALTAR_ICON)
-	medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	medal.draw.connect(func() -> void: _draw_medallion(medal, look[0], look[1]))
+	var medal := SealMedal.new().setup(look[1], look[0], ALTAR_ICON)
+	medal.name = &"Medal"
 	crest = medal
 	_art(box, ALTAR_ART_H).add_child(medal)
 	var title := _name(T.t(StringName("altar_" + String(altar))))
@@ -558,7 +593,7 @@ func _crest(b: Boon, from: Array[Boon]) -> Control:
 	return BoonIcon.new().setup(b, DRAWN)
 
 
-## A drawn medallion (the rest card's heart, the altar's trades): the rim around a glyph of BoonIcon (-1: a small
+## A drawn medallion (the rest card's heart): the rim around a glyph of BoonIcon (-1: a small
 ## empty diamond).
 static func _draw_medallion(ci: Control, col: Color, glyph: int) -> void:
 	var c := ci.size * 0.5

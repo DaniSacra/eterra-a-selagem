@@ -181,6 +181,28 @@ static func blessing_text(card: Trials.Card) -> String:
 	return T.t(card.blessing.desc_key, {"value": value_text(card.blessing, card.rarity)})
 
 
+## T5 (A-T5-5): the medallion of a blessing of the Provação, read from its first modifier (its tag: the action it
+## strengthens; else its stat), so a new blessing with words that exist gets one with no code: [BoonIcon glyph, colour].
+const BLESSING_LOOK := {
+	&"light": [BoonIcon.ACTION_GLYPH + 1, Color(0.88, 0.54, 0.34)],
+	&"heavy": [BoonIcon.ACTION_GLYPH + 2, Color(0.36, 0.76, 0.58)],
+	&"cast": [BoonIcon.ACTION_GLYPH + 3, Color(0.86, 0.72, 0.42)],
+	&"dash": [BoonIcon.ACTION_GLYPH + 4, Color(0.5, 0.72, 0.86)],
+	&"max_hp": [6, Color(0.84, 0.36, 0.4)],
+	&"magick_max": [BoonIcon.MAGICK_GLYPH, Color(0.25, 0.6, 0.78)],
+}
+## An unknown word: the plain gem (BoonIcon's default glyph) in old gold.
+const BLESSING_PLAIN := [999, Color(0.83, 0.68, 0.4)]
+
+
+## [glyph, colour] of a blessing's medallion.
+static func blessing_look(d: TrialDef) -> Array:
+	if d == null or d.mods.is_empty():
+		return BLESSING_PLAIN
+	var m: BoonMod = d.mods[0]
+	return BLESSING_LOOK.get(m.tag if m.tag != &"" else m.stat, BLESSING_LOOK.get(m.stat, BLESSING_PLAIN))
+
+
 ## What the curse of a card does, with its number.
 static func curse_text(card: Trials.Card) -> String:
 	return T.t(card.curse.desc_key, {"value": value_text(card.curse)})

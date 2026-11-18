@@ -59,7 +59,13 @@ func test_the_trial_card_shows_the_blessing_and_the_curse() -> void:
 		assert_eq(card.trial, c)
 		assert_eq(card.rarity, c.rarity as Boon.Rarity, "the blessing's rarity on the card")
 		assert_eq(card.edge_color(), BoonCard.rarity_color(card.rarity), "and on its edge, as any card")
-		assert_true(card.crest is TrialSeal, "the cracked diamond, no painted medallion")
+		# T5 (A-T5-5): the blessing's own medallion, the cracked diamond a small stamp on it
+		var medal := card.crest.get_node(^"Medal") as BoonIcon
+		assert_not_null(medal, "the blessing's medallion on top")
+		assert_eq(medal.icon, int(TrialSeal.blessing_look(c.blessing)[0]))
+		var stamp := card.crest.get_node(^"Stamp") as TrialSeal
+		assert_not_null(stamp, "the cracked diamond as a stamp")
+		assert_lt(stamp.side, medal.custom_minimum_size.x * 0.4, "small against the medallion")
 		assert_eq((card.find_child("Name", true, false) as Label).text, T.t(c.blessing.name_key))
 		assert_eq((card.find_child("Rarity", true, false) as Label).text, T.t(Boon.RARITY_KEY[c.rarity]))
 		assert_eq((card.find_child("Blessing", true, false) as Label).text, TrialSeal.blessing_text(c))
@@ -79,6 +85,31 @@ func test_the_trial_card_shows_the_blessing_and_the_curse() -> void:
 	assert_not_null(lead, "a line under the title says the deal")
 	assert_eq(lead.text, T.t(&"trial_hint"))
 	assert_true(T.t(&"trial_pick_hint") in _labels(screen), "and under the cards that a card opens the doors")
+
+
+func test_each_blessing_has_its_own_medallion() -> void:
+	var seen := {}
+	for d in Trials.load_catalog():
+		if d.kind != TrialDef.Kind.BLESSING:
+			continue
+		var look := TrialSeal.blessing_look(d)
+		assert_ne(look, TrialSeal.BLESSING_PLAIN, "%s has a medallion of its own" % d.id)
+		assert_false(seen.has(look[0]), "%s does not share its glyph" % d.id)
+		seen[look[0]] = true
+	assert_gt(seen.size(), 2)
+
+
+func test_the_blessing_sits_close_to_the_curse() -> void:
+	# A-T5-5: at most 40 px at 1080 (26,7 at 720) between the blessing's last words and the curse's band
+	var screen := EventChoice.new()
+	add_child_autofree(screen)
+	screen.open_trial(_cards())
+	await wait_frames(3)
+	for card in screen.cards():
+		var keep := card.find_child("Keep", true, false) as Control
+		var band := card.find_child("CurseBand", true, false) as Control
+		var gap := band.get_global_rect().position.y - keep.get_global_rect().end.y
+		assert_lt(gap / card.get_global_transform().get_scale().y, 40.0 * 720.0 / 1080.0, "no dead room between the halves")
 
 
 func test_the_trial_card_tells_the_truth_about_when() -> void:
@@ -199,7 +230,12 @@ func test_the_altar_screen_has_a_way_out_and_dims_what_is_out_of_reach() -> void
 	assert_eq(why.text, T.t(&"altar_why_gold", {"n": stage.altar_gold_cost}), "how much gold is missing")
 	for c in cards:
 		assert_eq(c.custom_minimum_size, BoonCard.ALTAR_SIZE, "smaller than a Blessing's card")
-		assert_lt(c.custom_minimum_size.y, BoonCard.SIZE.y)
+		assert_true(c.crest is SealMedal, "a medallion in the house's seal")
+	# A-T5-6: life buys a pomegranate (never a heart: the trade takes life), the candles a flame, walking on an arch
+	assert_eq((cards[Altar.Option.LIFE].crest as SealMedal).glyph, SealMedal.Glyph.POMEGRANATE)
+	assert_eq((cards[Altar.Option.CANDLES].crest as SealMedal).glyph, SealMedal.Glyph.CANDLE)
+	assert_eq((cards.back().crest as SealMedal).glyph, SealMedal.Glyph.OPEN_ARCH)
+	assert_lt(cards[0].custom_minimum_size.y, BoonCard.SIZE.y)
 	assert_eq((screen.find_child("Lead", true, false) as Label).text, T.t(&"altar_lead"))
 	watch_signals(screen)
 	screen._opened_at -= BoonChoice.GUARD_MS * 2
@@ -301,9 +337,24 @@ func test_the_sign_carries_the_pictogram_and_a_warning() -> void:
 	for c: Color in [DoorGlyph.IVORY, DoorGlyph.CHEVRON_GOLD, TrialSeal.LILAC, DoorSign.GROUP_COLOR]:
 		assert_gt(DoorSign.contrast(c, DoorSign.OUTLINE_COLOR), DoorSign.MIN_CONTRAST, "the pictogram reads on its outline")
 	sign.add_note("a")
-	sign.add_note("b")
+	sign.add_note("b\nc")
 	assert_eq(sign.note.text, "b", "one note, rewritten")
+	assert_eq(sign.notes.size(), 2, "a label per line")
 	assert_eq(sign.note.get_parent(), sign.detail.get_parent())
+	# A-T5-7: the body (price and note) on a veil of dark ink, every line on the same pitch, lowercase 11 px at 720
+	assert_not_null(sign.veil)
+	assert_true(sign.veil.is_ancestor_of(sign.detail), "the price on the veil too")
+	assert_true(sign.veil.is_ancestor_of(sign.title), "and the name: no light through any letter")
+	var sb := sign.veil.get_theme_stylebox(&"panel") as StyleBoxFlat
+	assert_almost_eq(sb.bg_color.a, DoorSign.VEIL.a, 0.01)
+	assert_gte(sb.bg_color.a, 0.45, "dark enough over the slab's glow")
+	assert_eq(sb.corner_detail, 1, "cut corners, as the card's band")
+	assert_eq(sign.notes[1].get_theme_color(&"font_color"), DoorSign.GROUP_COLOR, "the instruction in the cool grey")
+	for l: Label in [sign.detail, sign.notes[0], sign.notes[1]]:
+		assert_gte(l.get_theme_font_size(&"font_size") * DoorSign.ASCENDER, 11.0, "lowercase of %s readable at 720" % l.text)
+		assert_gt(DoorSign.contrast(l.get_theme_color(&"font_color"), DoorSign.OUTLINE_COLOR), DoorSign.MIN_CONTRAST)
+	var pitch: float = sign.notes[0].get_combined_minimum_size().y + sign.note.get_parent().get_theme_constant(&"separation")
+	assert_almost_eq(pitch, DoorSign.NOTE_SIZE * DoorSign.LINE_PITCH, 1.0, "a fixed pitch of 1,15 the font")
 
 
 func test_the_slab_says_what_it_is_and_how_to_refuse() -> void:
@@ -318,8 +369,9 @@ func test_the_slab_says_what_it_is_and_how_to_refuse() -> void:
 	var sign := rooms._slab_sign
 	assert_eq(sign.detail.text, T.t(&"trial_cost", {"n": int(rooms.slab.cost)}))
 	assert_not_null(sign.note)
-	assert_true(sign.note.text.contains(T.t(&"trial_slab_offer")))
-	assert_true(sign.note.text.contains(T.t(&"trial_slab_refuse")), "not stepping on it is refusing")
+	assert_eq(sign.note.text, T.t(&"trial_slab_offer"))
+	assert_eq(sign.notes.back().text, T.t(&"trial_slab_refuse"), "not stepping on it is refusing")
+	assert_not_null(sign.veil, "on its veil, over the slab's glow and the thread of light")
 
 
 func test_the_altar_door_says_it_is_a_trade() -> void:
