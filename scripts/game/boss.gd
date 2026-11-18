@@ -45,6 +45,12 @@ signal ritual_changed(left: int, total: int)
 
 enum State { ENTER, CHASE, SCYTHE, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER }
 
+## T5b P1-4 (docs/qa/t5b_boss_fight.md): his body turns at most BODY_TURN degrees a second toward where he faces (e.dir,
+## which his attacks still set at once: the warnings and the blows do not move); it snapped 100 to 137 degrees in one
+## frame as the scythe and the curse began. P2-1: casting (eruptions, summons, the storm) and in his recoveries he keeps
+## turning to the paladin at FOLLOW_RATE (he stood aside or with his back to him 20 to 45% of the time).
+const BODY_TURN := 720.0
+const FOLLOW_RATE := 2.0
 ## The states the director's attack ids stand for.
 const ATTACKS := {
 	&"scythe": State.SCYTHE, &"blades": State.BLADES, &"storm": State.STORM, &"eruptions": State.ERUPTIONS,
@@ -267,6 +273,18 @@ func _init_stats() -> void:
 
 
 func step(dt: float) -> void:
+	_advance(dt)
+	_turn_body(dt)
+
+
+## His drawn body (Enemy.face; Horde leaves his to him) turned toward e.dir at BODY_TURN at most.
+func _turn_body(dt: float) -> void:
+	if e == null:
+		return
+	e.face = Horde.turned(e.face if e.face != Vector2.ZERO else e.dir, e.dir, deg_to_rad(BODY_TURN) * dt)
+
+
+func _advance(dt: float) -> void:
 	_clock += dt
 	_step_shield(dt)
 	if state == State.DYING:
@@ -295,6 +313,8 @@ func step(dt: float) -> void:
 			return
 	if phase >= def.final_light_phase:
 		_step_final(dt)
+	if state == State.ERUPTIONS or state == State.SUMMON or state == State.STORM or state == State.RECOVER:
+		e.dir = e.dir.slerp(toward, minf(1.0, dt * FOLLOW_RATE))
 	match state:
 		State.ENTER:
 			# in a hall he walks down from the door; in his chamber he already stands on the seal

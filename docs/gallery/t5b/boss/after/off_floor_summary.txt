@@ -1,0 +1,8 @@
+# T5b after (worktree, bakes and code of this delivery); same runs as data/off_floor_summary.txt
+after/bot_s1.csv   skeleton: 21/2457 frames off floor (1%), walk 626 mage: 13/3739 frames off floor (0%), walk 1437
+after/bot_s2.csv   skeleton: 25/4094 frames off floor (1%), walk 1245 mage: 6/6917 frames off floor (0%), walk 2561
+after/bot_s3.csv   skeleton: 16/2812 frames off floor (1%), walk 933 mage: 13/3071 frames off floor (0%), walk 882
+after/bot_s4.csv   skeleton: 26/3147 frames off floor (1%), walk 603 mage: 8/4946 frames off floor (0%), walk 1687
+after/idle_p2_s1.csv skeleton: 0/8014 frames off floor (0%), walk 335 mage: 0/7879 frames off floor (0%), walk 3700
+after/idle_p2_s2.csv skeleton: 0/8014 frames off floor (0%), walk 374 mage: 0/7879 frames off floor (0%), walk 3586
+after/idle_p2_s3.csv skeleton: 0/8014 frames off floor (0%), walk 464 mage: 0/7879 frames off floor (0%), walk 3585

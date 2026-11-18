@@ -196,3 +196,57 @@ encurtar a distância (o aviso mostra até onde ele vai).
 Depois: rodar a mesma sonda (comandos na seção 3) e anexar os números aqui; vídeo 60 qps de um ritual (`--start=boss
 --boss-hp=0.6 --hero-hp=9999`, 20 s) quando a GPU estiver livre, para o PO e o art-director (P1-1 precisa da aprovação
 de arte do clipe novo).
+
+## 6. Depois (gameplay-engineer, 2026-11-18)
+
+Mesmas corridas da seção 3 (CPU sem tela, `--fixed-fps 60`, `--start=boss --nosave --hero-hp=9999`; ritual parado
+`--boss-hp=0.6` sementes 1 a 3, 50 s; robô `--bot --bot-reaction=0.25` sementes 1 a 4 até a vitória) com
+`tools/drawn_probe.gd` (a sonda da seção 3, agora no repositório, que lê a mistura nova como o shader). Números em
+`docs/gallery/t5b/boss/after/` (`off_floor_summary.txt`, `fade_steps.txt`, `risen.txt`, `morvath_turns.txt`,
+`baked_poses_size1.txt`; scripts novos em `after/data/`, duas corridas gravadas em `after/data/*.csv.gz`). O "antes" dos
+scripts novos é a corrida `head_*` da seção 3. Quadro na GPU: `after/ritual_gpu.jpg`.
+
+| Item | Antes | Depois | Critério |
+|---|---|---|---|
+| P1-1 trote do feiticeiro, assado (tamanho 1) | 14 de 20 poses acima de 0,10 m, vértice mais baixo até 0,30 m | 0 de 20, até 0,09 m; sobe e desce 7,4 cm; 136 passos por minuto, escorrega 2,9 cm | 6 de 20, 0,15 m, 7 cm (aceito 7,5: o do esqueleto aprovado é 8,6) |
+| P1-1 besteiro, assado | 12 de 20, até 0,28 m | 2 de 20, até 0,12 m; 7,3 cm; 127 passos por minuto | o mesmo |
+| P1-1 feiticeiro fora do chão na luta | 25 a 32% dos quadros | 0% (6 a 13 quadros por luta, golpes e quedas) | 3% |
+| P1-2 saída do `RISE` do feiticeiro | sobe 0,077 m/quadro, 0,52 m no todo, alto da figura 1,03 m, 20 graus por quadro | 0,022 m/quadro, 0,11 m, 0,19 a 0,20 m, 8 graus | 0,05 / 0,15 / 0,2 / 8 |
+| P1-2 o `rise` termina na guarda (todos) | feiticeiro a 0,40 m da guarda, cajado deitado | 0,04 m (todos entre 0,04 e 0,22), alto da figura igual ao do `idle` | |
+| P1-3 saltos dentro das misturas (`fadestep.py`: acima de 0,12 m e do próprio clipe + 0,02) | robô s1: 55 quadros, pior 0,55 m (invocação); ritual s1: 59, pior 0,53 m | robô s1 a s4: 6, 20, 21, 26 quadros, pior 0,38 m (Morvath voltando ao andar, o clipe sozinho faz 0,25); ritual: 0 | nenhum acima do clipe |
+| P1-4 giro de Morvath | até 137 graus num quadro, 25 quadros acima de 15 (robô s1) | 12 graus por quadro no máximo, nenhum acima de 15, nas 7 corridas | 15 |
+| P1-5 do fim do `RISE` à primeira preparação | mínimo 0,02 s, p10 0,10 a 0,45 | mínimo 0,60 s, p10 0,62 a 0,67 | 0,6 s |
+| P2-1 Morvath de costas para o herói (mais de 90 graus) | erupções 20 a 45%, invocação 0 a 54%, tempestade 20 a 37%, recuperação 19 a 34% | erupções 0 a 4%, invocação 0 a 10%, tempestade 0 a 3%, recuperação 0 a 4% | 10% |
+| P2-2 deriva do erguer do esqueleto | 0,46 m | 0,23 m (`BakedModel.drift`) | 0,15 (não alcançado, ver abaixo) |
+
+O que mudou:
+- `tools/bake.gd`: feiticeiro e besteiro no `Jog_Fwd` com os pés travados (`MAGE_JOG`, `CROSSBOW_JOG`; saíram `MAGE_TROT`
+  e `CROSSBOW_TROT`; o corredor continua no `Running_B`, é o papel dele). `rise` comum com `in_place`; feiticeiro e
+  ancião (`STAFF_RISE`) e Cavaleiro (`SHIELD_RISE`) com a opção nova `"settle"`: os últimos 0,45 s do clipe vão para a
+  primeira pose do clipe da guarda (cajado de pé, escudo à frente). Reassados os oito comuns (Morvath não mudou).
+- `CrowdRenderer.add_kind` e `crowd_pose.gdshaderinc`: na mistura, o alvo é a pose interpolada do clipe novo, pela cor
+  da instância com alfa negativo (`CrowdRenderer.fade_target` / `fade_pick`; o código cabe na meia precisão do
+  Compatibility, testado). Fora da mistura nada muda. `Horde.BOSS_CLIP_FADE` 0,12 para 0,18 (do fim da foice, da
+  tempestade e do atordoamento para a guarda o corpo cruzava 0,13 a 0,16 m por quadro).
+- `Horde`: no fim do `RISE`, `cooldown = max(cooldown, ARRIVE)` (0,6 s), a mistura de saída do `rise` em `RISE_FADE`
+  0,25 s e o giro do corpo limitado a `RISEN_TURN` 480 graus/s por `RISEN_TIME` 0,3 s.
+- `Boss`: o corpo desenhado (`Enemy.face`) vira até `BODY_TURN` 720 graus/s para `e.dir` (o rumo do ataque e os avisos
+  continuam instantâneos; a foice acerta em `slash3:7` como antes); em erupções, invocação, tempestade e recuperação
+  `e.dir` segue o herói a `FOLLOW_RATE` 2.
+
+Testes: `tests/test_t5b_fight.gd` (trote no chão de feiticeiro, besteiro e esqueleto; todo `rise` termina de pé na
+guarda; erguer do esqueleto no lugar; código da mistura, também em meia precisão; o corpo na mistura anda com o clipe
+novo; o invocado espera `ARRIVE`, mistura em `RISE_FADE` e vira devagar) e `tests/test_boss_body.gd` (nenhum giro de
+Morvath acima de 15 graus por quadro na luta inteira).
+
+Pendências:
+- P2-2: o erguer do esqueleto ainda anda 0,23 m (o `in_place` prende o quadril, o resto é o corpo deitado se dobrando
+  para ficar de pé); meta 0,15 não alcançada, sem efeito visível nas sondas (sobe 0,02 m depois do `RISE`).
+- Restam degraus pequenos em Morvath ao entrar no arremesso depois da invocação (`summon:2 > volley`, 0,19 a 0,20 m
+  contra 0,14 do próprio clipe, 12 a 20 quadros por luta) e ao voltar ao andar (0,29 a 0,38 contra 0,25): são as
+  poses de partida longe da guarda, não o alvo da mistura.
+- Maldição: com o corpo virando (P1-4), em uma luta (semente 1) ele ficou de costas 23% dos quadros da maldição
+  (a maldição dura pouco; o arremesso sai na direção certa, só o corpo atrasa até 0,25 s).
+- P1-5: dano por segundo dos invocados antes e depois não medido separadamente; o robô venceu as 4 lutas.
+- P1-1 precisa da aprovação de arte do clipe novo (art-director) e do vídeo 60 qps do ritual pedido na seção 5.
+- P2-3 (bote do esqueleto) sem mudança, como pedido.

@@ -120,6 +120,14 @@ const ATTACK_PLAY := 1.4
 const AFTER_RECOVER := 0.25
 ## T5-10: degrees a second it turns back to the paladin at the end of its recovery.
 const RECOVER_TURN := 360.0
+## T5b P1-5 (docs/qa/t5b_boss_fight.md): seconds a body that has just risen waits before its first wind-up (its cooldown
+## ran down while it rose: 40% of the summoned soldiers armed 0.02 to 0.45 s after standing, "born and already coming").
+const ARRIVE := 0.6
+## T5b P1-2: a risen body fades from its rise into what it does over RISE_FADE (its last pose and the walk differ), and
+## for its first RISEN_TIME seconds turns at RISEN_TURN degrees a second at most (8 a frame; it swung 60 degrees in 3).
+const RISE_FADE := 0.25
+const RISEN_TIME := 0.3
+const RISEN_TURN := 480.0
 
 var list: Array[Enemy] = []
 ## The damage dealt to enemies by where it came from (DT-016; RESULT dealt_by), and where the damage being dealt now
@@ -306,8 +314,11 @@ func _timers(e: Enemy, dt: float) -> void:
 			dealing = &"burn"
 			damage(e, e.burn_dps * BURN_TICK, Vector2.ZERO, 0.0, Color(1.0, 0.5, 0.2), true, false, false)
 			dealing = &""
+	e.risen_t = maxf(0.0, e.risen_t - dt)
 	if e.state == Enemy.State.RISE and e.state_t > 0.9:
 		_set_state(e, Enemy.State.WALK, &"walk")
+		e.cooldown = maxf(e.cooldown, ARRIVE)
+		e.risen_t = RISEN_TIME
 	if e.rearm and not e.helpless():
 		# its cut wind-up waits REARM from the end of the stun (the cooldown gates every wind-up)
 		e.rearm = false
@@ -321,8 +332,7 @@ func _drawn_motion(e: Enemy, dt: float) -> void:
 	var moved := (e.pos - e.last_pos - e.pushed) / dt
 	e.vel = e.vel.lerp(moved, 1.0 - exp(-dt / VEL_SMOOTH))
 	if e.def.behavior == EnemyDef.Behavior.BOSS:
-		e.face = Vector2.ZERO  # Boss turns him itself
-		return
+		return  # Boss turns his body itself (Boss._turn_body)
 	if e.frozen_t > 0.0 or e.stun_t > 0.0 or e.air_t > 0.0:
 		return
 	var speed := e.vel.length()
@@ -344,7 +354,7 @@ func _drawn_motion(e: Enemy, dt: float) -> void:
 	# held) it keeps its facing until it runs again or run_t is over
 	var running := e.run_t > 0.0 and e.state == Enemy.State.WALK
 	var want := e.vel / speed if e.face_walk or (running and speed >= WALK_FROM) else e.face if running else e.dir
-	e.face = turned(e.face if e.face != Vector2.ZERO else e.dir, want, deg_to_rad(TURN_RATE) * dt)
+	e.face = turned(e.face if e.face != Vector2.ZERO else e.dir, want, deg_to_rad(RISEN_TURN if e.risen_t > 0.0 else TURN_RATE) * dt)
 
 
 ## `from` turned toward `to` by at most `step` radians (both unit vectors).
@@ -1204,9 +1214,11 @@ var bar_trails := BarTrails.new()
 
 ## Seconds a change of clip fades over (E1c): the pose shown last fades into the new clip (CrowdRenderer.add_kind's
 ## from_row and fade), never cut. A boss's a little longer (his blows are 0.4 to 1.1 s long; bug 3: each change jumped
-## his body up to 0.96 m in one frame); every other figure's 0.1 s (AUDIT.md P4).
+## his body up to 0.96 m in one frame); every other figure's 0.1 s (AUDIT.md P4). T5b P1-3: his 0.18 s (it was 0.12): from
+## the end of the scythe, the rain or his stun into the guard the body crossed 0.13 to 0.16 m a frame, more than the clips
+## move on their own (0.03 to 0.04).
 const CLIP_FADE := 0.1
-const BOSS_CLIP_FADE := 0.12
+const BOSS_CLIP_FADE := 0.18
 ## T5-12: a recovery fades into the guard over this long once its clip has played.
 const RECOVER_FADE := 0.3
 ## T5-13: each shot of a burst starts its throw from the pose of the one before over this long.
@@ -1378,6 +1390,8 @@ func render(render_dt := 1.0 / 60.0) -> void:
 		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
 		var back := HitRecoil.offset(e.recoil_t, d.heavy)
 		at += Vector3(e.recoil_dir.x, 0.0, e.recoil_dir.y) * back
+		if e.drawn_anim == &"rise" and anim != &"rise":
+			fade_len = RISE_FADE
 		var fade := _fade(e, anim, render_dt, fade_len)
 		e.drawn_row = renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean, e.fade_row, fade)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only

@@ -1,0 +1,13 @@
+
+=== mage (6660 vertices)
+  rise           12 poses 0.90 s once peak 4.73 m/s, armed 0.04 m from the guard, top 2.65, lowest middle -1.023
+  walk           20 poses 0.93 s loop peak 2.32 m/s, armed 0.25 m from the guard, top 2.86, lowest middle +0.000
+    walk: both feet off the floor in 11 of 20 poses, rise and fall 0.077 m, lean 2 to 6 degrees, lifted foot up to 0.22 m, head down to 2.75 m (104% of idle); lowest [0.02, 0.05, 0.06, 0.03, 0.04, 0.02, 0.07, 0.09, 0.05, 0.06, 0.05, 0.03, 0.05, 0.03, 0.01, -0.02, 0.0, 0.05, 0.03, 0.02]
+=== archer (6078 vertices)
+  rise           12 poses 0.90 s once peak 3.54 m/s, armed 0.14 m from the guard, top 1.91, lowest middle -0.971
+  walk           20 poses 0.93 s loop peak 1.78 m/s, armed 0.21 m from the guard, top 1.91, lowest middle -0.071
+    walk: both feet off the floor in 10 of 20 poses, rise and fall 0.073 m, lean 8 to 11 degrees, lifted foot up to 0.24 m, head down to 1.86 m (97% of idle); lowest [0.11, 0.03, 0.03, 0.0, -0.01, -0.06, -0.03, 0.03, 0.04, 0.05, 0.05, 0.03, 0.04, 0.01, 0.01, 0.02, 0.04, 0.04, 0.09, 0.12]
+=== skeleton (6048 vertices)
+  rise           12 poses 0.90 s once peak 2.98 m/s, armed 0.11 m from the guard, top 1.93, lowest middle -1.038
+  walk           20 poses 0.93 s loop peak 1.70 m/s, armed 0.19 m from the guard, top 1.99, lowest middle -0.083
+    walk: both feet off the floor in 6 of 20 poses, rise and fall 0.084 m, lean 12 to 16 degrees, lifted foot up to 0.26 m, head down to 1.92 m (100% of idle); lowest [0.01, 0.03, 0.03, 0.01, 0.02, 0.01, 0.01, 0.01, 0.08, 0.03, 0.02, 0.03, 0.03, 0.01, 0.01, 0.0, 0.01, 0.02, 0.05, 0.02]

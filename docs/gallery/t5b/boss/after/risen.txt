@@ -1,0 +1,40 @@
+# BEFORE
+== bot_s1.csv
+  mage           risen   7, within the limits   0; worst: 0.077 m a frame, 0.52 m in all, top 1.03 m, 20.0 deg a frame; first wind-up after min 0.42 p10 0.42 (7) s
+  skeleton       risen  13, within the limits  10; worst: 0.043 m a frame, 0.04 m in all, top 0.13 m, 20.0 deg a frame; first wind-up after min 0.47 p10 0.47 (6) s
+== idle_p2_s1.csv
+  mage           risen   3, within the limits   0; worst: 0.077 m a frame, 0.50 m in all, top 1.02 m, 20.0 deg a frame; first wind-up after min 0.98 p10 0.98 (3) s
+  skeleton       risen   3, within the limits   3; worst: 0.018 m a frame, 0.04 m in all, top 0.07 m, 0.0 deg a frame; first wind-up after min 0.83 p10 0.83 (3) s
+# AFTER
+== bot_s1.csv
+  mage           risen   6, within the limits   6; worst: 0.022 m a frame, 0.11 m in all, top 0.19 m, 8.0 deg a frame; first wind-up after min 0.65 p10 0.65 (6) s
+  skeleton       risen  14, within the limits  14; worst: 0.034 m a frame, 0.03 m in all, top 0.12 m, 8.0 deg a frame; first wind-up after min 0.62 p10 0.62 (4) s
+== bot_s2.csv
+  mage           risen   6, within the limits   6; worst: 0.022 m a frame, 0.11 m in all, top 0.20 m, 8.0 deg a frame; first wind-up after min 0.68 p10 0.68 (6) s
+  skeleton       risen  14, within the limits  14; worst: 0.017 m a frame, 0.02 m in all, top 0.08 m, 8.0 deg a frame; first wind-up after min 0.62 p10 0.62 (8) s
+== bot_s3.csv
+  mage           risen   7, within the limits   7; worst: 0.022 m a frame, 0.11 m in all, top 0.19 m, 8.0 deg a frame; first wind-up after min 0.62 p10 0.62 (7) s
+  skeleton       risen  12, within the limits  12; worst: 0.036 m a frame, 0.02 m in all, top 0.12 m, 8.0 deg a frame; first wind-up after min 0.65 p10 0.65 (8) s
+== bot_s4.csv
+  mage           risen   6, within the limits   6; worst: 0.022 m a frame, 0.11 m in all, top 0.19 m, 8.0 deg a frame; first wind-up after min 0.68 p10 0.68 (6) s
+  skeleton       risen  14, within the limits  13; worst: 0.043 m a frame, 0.03 m in all, top 0.13 m, 17.4 deg a frame; first wind-up after min 0.67 p10 0.67 (8) s
+== idle_p2_s1.csv
+  mage           risen   3, within the limits   3; worst: 0.017 m a frame, 0.11 m in all, top 0.19 m, 8.0 deg a frame; first wind-up after min 0.98 p10 0.98 (3) s
+  skeleton       risen   3, within the limits   3; worst: 0.015 m a frame, 0.02 m in all, top 0.07 m, 0.0 deg a frame; first wind-up after min 0.83 p10 0.83 (3) s
+== idle_p2_s2.csv
+  mage           risen   3, within the limits   3; worst: 0.017 m a frame, 0.11 m in all, top 0.19 m, 8.0 deg a frame; first wind-up after min 1.08 p10 1.08 (3) s
+  skeleton       risen   3, within the limits   3; worst: 0.015 m a frame, 0.02 m in all, top 0.07 m, 0.0 deg a frame; first wind-up after min 0.95 p10 0.95 (3) s
+== idle_p2_s3.csv
+  mage           risen   3, within the limits   3; worst: 0.017 m a frame, 0.11 m in all, top 0.19 m, 8.0 deg a frame; first wind-up after min 0.87 p10 0.87 (3) s
+  skeleton       risen   3, within the limits   3; worst: 0.015 m a frame, 0.02 m in all, top 0.07 m, 0.7 deg a frame; first wind-up after min 1.33 p10 1.33 (3) s
+
+# data/spawn.py after
+after/bot_s1.csv         spawned 20, dist to hero at spawn min 4.06 p10 4.42 p50 7.47; <3 m: 0; <2 m: 0; rise->first windup s p10 0.63 min 0.60
+after/bot_s2.csv         spawned 20, dist to hero at spawn min 3.57 p10 4.13 p50 8.44; <3 m: 0; <2 m: 0; rise->first windup s p10 0.63 min 0.60
+after/bot_s3.csv         spawned 20, dist to hero at spawn min 2.29 p10 3.73 p50 6.82; <3 m: 2; <2 m: 0; rise->first windup s p10 0.63 min 0.60
+      ('mage', '12') f6962 dist 2.29 boss=scythe/3
+      ('mage', '16') f8759 dist 2.55 boss=storm/4
+after/bot_s4.csv         spawned 20, dist to hero at spawn min 3.22 p10 4.40 p50 7.70; <3 m: 0; <2 m: 0; rise->first windup s p10 0.67 min 0.65
+after/idle_p2_s1.csv     spawned 6, dist to hero at spawn min 5.52 p10 5.52 p50 14.71; <3 m: 0; <2 m: 0; rise->first windup s p10 0.82 min 0.82
+after/idle_p2_s2.csv     spawned 6, dist to hero at spawn min 4.78 p10 4.78 p50 13.77; <3 m: 0; <2 m: 0; rise->first windup s p10 0.93 min 0.93
+after/idle_p2_s3.csv     spawned 6, dist to hero at spawn min 6.17 p10 6.17 p50 15.68; <3 m: 0; <2 m: 0; rise->first windup s p10 0.85 min 0.85
