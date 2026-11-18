@@ -365,6 +365,20 @@ ao alcance na sala seguinte; a outra leva ao Altar e abre caminho para uma Loja.
 
 ---
 
+### MUS-1 "Música de luta" (pedido do PO de 2026-11-18; em paralelo, arquivos próprios)
+
+- **Pedido**: "eu não gosto das músicas... criasse mais duas ou três músicas para as fases do jogo, por se tratar de um jogo
+  de hack slash acho que tem que ser músicas mais animadas, dinâmicas. As que foram criadas são um pouco depressivas."
+- **Itens**: MUS-01 duas ou três peças novas para a masmorra (caminhada e luta, laço sem emenda, 130 a 160 BPM,
+  percussão que empurra, tom de aventura e não de terror), compostas e sintetizadas pelo projeto em `tools/make_music.gd`
+  (licença nossa, nada de pacote pago); MUS-02 uma peça nova de Morvath nas 4 fases no mesmo espírito, se couber;
+  MUS-03 entram no `MusicCatalog` (escolha na tela Músicas) e a melhor da masmorra vira o padrão (`DEFAULT`); as antigas
+  ficam para escolher.
+- **Responsável**: `technical-artist` (síntese, loudness, laços, pacote); `combat-feel-director` ouve contra a luta.
+- **Aceite**: loudness igual às de hoje (cerca de -21 LUFS caminhada, -20 com a luta) e pico abaixo de -1 dBTP; laço sem
+  emenda e sem silêncio de 2 s (`test_music.gd`, `test_mix.gd`); teto da música no pacote (18 MB) respeitado ou peça
+  antiga reencodada (Q-20); gravação de 60 s de cada peça com a luta (`--sound-log` e `mix_probe --wav`) para o PO ouvir.
+
 ## 4. Perguntas para o Daniel
 
 Cada uma com as opções e a minha recomendação. As de número baixo bloqueiam mais.
