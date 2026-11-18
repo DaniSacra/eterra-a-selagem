@@ -300,10 +300,11 @@ func _build() -> bool:
 	var last := stage.rooms + 1
 	miniboss_depth = _rng.randi_range(stage.miniboss_depth_min, stage.miniboss_depth_max)
 	var fountains := _event_depths(stage.fountain_depth_min, stage.fountain_depth_max, stage.fountain_chance, true, [])
-	if not fountains.is_empty() and _rng.randf() < stage.fountain_chance:
-		# a second fountain on another layer, kept only where no way passes both (_one_fountain)
-		var more := _event_depths(stage.fountain_depth_min, stage.fountain_depth_max, 1.0, false, fountains)
-		fountains.append_array(more)
+	if not fountains.is_empty() and _rng.randf() < stage.fountain_more_chance:
+		# a second fountain at the last of its depths (another branch of the same layer when the first is there too),
+		# kept only where no way passes both (_one_fountain): a late fountain for who passed the first one healthy, as
+		# the line of rooms before the map offered it again until its last depth
+		fountains.append_array(_event_depths(stage.fountain_depth_min, stage.fountain_depth_max, 0.0, true, []))
 	var altar: Array[int] = []
 	if stage.altar_layout != null:
 		altar = _event_depths(stage.altar_depth_min, stage.altar_depth_max, stage.altar_chance, false, fountains)
@@ -333,8 +334,11 @@ func _build() -> bool:
 			_uses.append({})
 			_before.append(PackedInt32Array())
 		layers.append(ids)
-		if d in fountains:
-			nodes[ids[_rng.randi() % ids.size()]].kind = Kind.FOUNTAIN
+		for k in fountains.count(d):
+			# a layer keeps a fight beside its fountains
+			var plain := Array(ids).filter(func(id: int) -> bool: return nodes[id].kind == Kind.COMBAT)
+			if plain.size() > 1 or (k == 0 and not plain.is_empty()):
+				nodes[plain[_rng.randi() % plain.size()]].kind = Kind.FOUNTAIN
 		if d in altar and ids.size() > 1:
 			var plain := Array(ids).filter(func(id: int) -> bool: return nodes[id].kind == Kind.COMBAT)
 			if not plain.is_empty():

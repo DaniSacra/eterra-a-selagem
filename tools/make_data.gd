@@ -516,6 +516,9 @@ func _stage() -> void:
 	st.fountain_depth_min = 5
 	st.fountain_depth_max = 8
 	st.fountain_chance = 0.35
+	# DV-1: a second fountain at the last of its depths on another branch whenever no way passes two (the line of rooms
+	# before the map offered the fountain again until its last depth; the robot drank there in 10 of 19 descents)
+	st.fountain_more_chance = 1.0
 	st.boss = &"morvath"
 	# The descent's graph (DV-1, the Descida de Valmor; RunMap): 2 to 4 rooms a layer between the hall and the shop
 	# (35%, 45%, 20%), a room linked to 2 of the next five times as likely as to 1 and to 3 twice (most rooms show two

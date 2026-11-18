@@ -988,28 +988,61 @@ const BOT_ALTAR_RANK := 1.5
 const BOT_FOUNTAIN_BELOW := 0.8
 
 
-## DV-1 (MAP-04), a step ahead on the graph: below BOT_FOUNTAIN_BELOW with no fountain's door here, the doors that keep
-## a fountain ahead come first (map: the descent's graph; null: the doors alone).
+## DV-1 (MAP-04), the robot reads the map as a player would: the same taste for the door in front of it (its rank),
+## plus BOT_AHEAD of the best way on after that door (what the rooms on it give, in the same order; a fountain ahead
+## worth two Blessings, BOT_FOUNTAIN_AHEAD: it keeps one in reach for when it is hurt). The one-step rule first tried (a fountain kept in reach below 80% of life)
+## left the robot without a fountain in 12 of 24 descents (it drank in 19 of 24 before the map) and won 20 of 24.
+## map: the descent's graph; null: the doors alone, as before the map.
+const BOT_AHEAD := 1.0
+const BOT_FOUNTAIN_AHEAD := 12.0
+
+
 static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0, map: RunMap = null) -> int:
 	var best := 0
-	var rank := INF
-	var toward_fountain := map != null and life < BOT_FOUNTAIN_BELOW \
-		and not doors.any(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.FOUNTAIN) \
-		and doors.any(func(r: RunMap.Room) -> bool: return map.reaches(r, RunMap.Kind.FOUNTAIN))
+	var top := -INF
+	var memo := {}
 	for i in doors.size():
-		var r := float(BOT_PREFERENCE.find(doors[i].reward))
+		var rank := float(BOT_PREFERENCE.find(doors[i].reward))
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
-			r = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
+			rank = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
 		elif doors[i].kind == RunMap.Kind.ALTAR:
-			r = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
-		elif r < 0.0:
-			r = BOT_PREFERENCE.size()
-		if toward_fountain and not map.reaches(doors[i], RunMap.Kind.FOUNTAIN):
-			r += BOT_PREFERENCE.size() + 2.0
-		if r < rank:
-			rank = r
+			rank = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
+		elif rank < 0.0:
+			rank = BOT_PREFERENCE.size()
+		var score := -rank
+		if map != null:
+			score += BOT_AHEAD * bot_way(map, doors[i], altar_useful, memo)
+		if score > top:
+			top = score
 			best = i
 	return best
+
+
+## The most the robot sees to gain on any way after room r (r left out): each room's worth by its taste (a Blessing
+## BOT_PREFERENCE.size(), down to 1 for Magia; a fountain BOT_FOUNTAIN_AHEAD; a useful altar between the pomegranate
+## and the heart; the shop and Morvath nothing).
+static func bot_way(map: RunMap, r: RunMap.Room, altar_useful: bool = true, memo: Dictionary = {}) -> float:
+	if memo.has(r.id) and r.id >= 0:
+		return memo[r.id]
+	var most := 0.0
+	for id in r.next:
+		var n := map.at(id)
+		most = maxf(most, _bot_worth(n, altar_useful) + bot_way(map, n, altar_useful, memo))
+	if r.id >= 0:
+		memo[r.id] = most
+	return most
+
+
+static func _bot_worth(r: RunMap.Room, altar_useful: bool) -> float:
+	match r.kind:
+		RunMap.Kind.FOUNTAIN:
+			return BOT_FOUNTAIN_AHEAD
+		RunMap.Kind.ALTAR:
+			return BOT_PREFERENCE.size() - BOT_ALTAR_RANK if altar_useful else 0.0
+		RunMap.Kind.SHOP, RunMap.Kind.BOSS:
+			return 0.0
+	var rank := BOT_PREFERENCE.find(r.reward)
+	return float(BOT_PREFERENCE.size() - rank) if rank >= 0 else 0.0
 
 
 ## The altar's trade the robot would make now (Altar.bot_choice; -1: none).

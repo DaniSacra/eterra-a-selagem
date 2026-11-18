@@ -542,26 +542,48 @@ func test_two_hundred_descents_keep_the_promise() -> void:
 	assert_gt(turned, 0, "a pomegranate turned when nothing could grow")
 
 
-## The robot a step ahead (MAP-04): below 80% of its life with no fountain's door, it takes a door that keeps a
-## fountain ahead; with its life, the doors' rewards as before.
-func test_the_robot_keeps_the_fountain_in_reach() -> void:
-	var map: RunMap = null
-	var room: RunMap.Room = null
-	for s in 200:
-		map = RunMap.new(stage, 700 + s)
+## The robot reads the map (MAP-04): its taste for the door in front of it plus half of the best way on after it,
+## checked against every way of the graph; without the map, the doors' rewards as before.
+func test_the_robot_reads_the_map() -> void:
+	var off := 0
+	var detours := 0
+	for s in 100:
+		var map := RunMap.new(stage, 700 + s)
 		for r in map.nodes:
 			var doors := map.doors_of(r)
-			var some := doors.filter(func(d: RunMap.Room) -> bool: return map.reaches(d, RunMap.Kind.FOUNTAIN))
-			if doors.size() > 1 and some.size() < doors.size() and not some.is_empty() \
-					and not doors.any(func(d: RunMap.Room) -> bool: return d.kind == RunMap.Kind.FOUNTAIN):
-				room = r
-				break
-		if room != null:
-			break
-	assert_not_null(room, "a room where only some doors keep the fountain ahead")
-	var doors := map.doors_of(room)
-	assert_true(map.reaches(doors[Rooms.bot_door(doors, true, 0.5, map)], RunMap.Kind.FOUNTAIN), "hurt: toward the fountain")
-	assert_eq(Rooms.bot_door(doors, true, 1.0, map), Rooms.bot_door(doors, true, 1.0), "whole: the doors' rewards as before")
+			if doors.size() < 2:
+				continue
+			var pick := Rooms.bot_door(doors, true, 0.5, map)
+			var plain := Rooms.bot_door(doors, true, 0.5)
+			if pick != plain:
+				detours += 1
+			var scores: Array[float] = []
+			for d in doors:
+				var best := 0.0
+				for way: Array in _ways_from(map, d):
+					var worth := 0.0
+					for n: RunMap.Room in way:
+						worth += Rooms._bot_worth(n, true)
+					best = maxf(best, worth)
+				scores.append(best)
+			for i in doors.size():
+				# the door taken is never worse than another by more than its own taste can pay back
+				if Rooms.BOT_AHEAD * (scores[i] - scores[pick]) > Rooms.BOT_PREFERENCE.size() + 2.0:
+					off += 1
+	assert_eq(off, 0, "the robot never leaves a much better way")
+	assert_gt(detours, 0, "the map changes some of its choices")
+
+
+## Every way from r on (r left out).
+func _ways_from(map: RunMap, r: RunMap.Room) -> Array:
+	if r.next.is_empty():
+		return [[]]
+	var out: Array = []
+	for id in r.next:
+		var n := map.at(id)
+		for rest: Array in _ways_from(map, n):
+			out.append([n] + rest)
+	return out
 
 
 ## In a real room: the reward the room gives is the one its door promised, and the log says both (RESULT events).
@@ -592,3 +614,37 @@ func test_the_reward_given_is_the_one_promised() -> void:
 	assert_eq(given[0].reward, (RunMap.Reward.keys()[door.reward] as String).to_lower(), "what the door promised")
 	if door.reward == RunMap.Reward.GOLD:
 		assert_eq(rooms.gold - gold, rooms.stage.gold_reward)
+
+
+## MAP-05, the PO's acceptance as far as a test goes: in a real descent a room shows two doors that lead on to
+## different rooms; walking into one door's mouth in the arena takes him to that room, and the map's path says so;
+## another seed draws another graph, every way of both reaching Morvath.
+func test_map05_the_door_walked_through_is_the_way_on_the_map() -> void:
+	var game := _game()
+	var rooms := game.rooms
+	rooms.map = RunMap.new(rooms.stage, 41)
+	var map := rooms.map
+	rooms._enter(map.first())
+	var doors := map.doors()
+	var pick := -1
+	for i in doors.size():
+		for k in doors.size():
+			if k != i and _after(map, doors[i]) != _after(map, doors[k]):
+				pick = i
+	assert_gt(pick, -1, "two doors of the hall lead on to different rooms")
+	game.horde.clear_crowd()
+	rooms._wave = rooms._waves.size()
+	rooms.phase = Rooms.Phase.REWARD
+	rooms._open_doors()
+	assert_eq(game.arena.exit_zones.size(), doors.size(), "a doorway for every link")
+	game.player.place(game.arena.exit_zones[pick].get_center())
+	rooms.step(1.0 / 60.0)
+	await wait_seconds(Rooms.FADE + 0.3)
+	assert_eq(rooms.room, doors[pick], "he walked into the room behind that door")
+	assert_eq(map.path, [map.first().id, doors[pick].id] as Array[int], "and the map's path says so")
+	assert_eq(int(map.view().here), doors[pick].id)
+	var other := RunMap.new(rooms.stage, 42)
+	assert_ne(_shape(other), _shape(map), "another seed, another graph")
+	for m: RunMap in [map, other]:
+		for way: Array in _ways(m):
+			assert_eq((way[-1] as RunMap.Room).kind, RunMap.Kind.BOSS, "every way reaches Morvath")

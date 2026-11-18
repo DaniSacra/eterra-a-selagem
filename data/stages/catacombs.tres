@@ -1543,6 +1543,7 @@ exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_pullg"), SubResourc
 [resource]
 script = ExtResource("8_gcpwj")
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
+fountain_more_chance = 1.0
 layouts = Array[ExtResource("4_8ur2y")]([SubResource("Resource_tk2fo"), SubResource("Resource_6gi8n"), SubResource("Resource_q6hi7"), SubResource("Resource_7l6y2"), SubResource("Resource_3dn1a"), SubResource("Resource_e3brq"), SubResource("Resource_s817t")])
 boss_layout = SubResource("Resource_m1xgu")
 shop_layout = SubResource("Resource_tk2fo")

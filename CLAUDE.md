@@ -592,7 +592,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   0,5: com duas, Cavaleiro e Ancião, Q-27 a, `Room.guardian`), a loja na 10 (Q-26 a), Morvath na 11: toda rota tem 11
   salas. Ligações sem cruzar (`_link`: cada sala liga a uma faixa de 1 a 3 salas lado a lado embaixo, a faixa seguinte
   começa onde a anterior acabou ou logo depois; todas as formas listadas e uma sorteada com o peso `map_doors` 1/5/2 pelo
-  número de portas). Fonte em uma ou duas camadas de 5 a 8 (no máximo uma por rota, `_one_fountain`), altar em no máximo
+  número de portas). Fonte numa camada de 5 a 8 (35% por camada, senão a 8) e uma segunda na 8 em outro ramo quando
+  nenhuma rota passa pelas duas (`fountain_more_chance` 1,0, `_one_fountain`; cerca de metade das rotas tem fonte), altar em no máximo
   um nó (2 a 8, 20% por camada), Provação num nó de luta marcado `trial` e `hidden` ("?" no mapa até a laje aparecer,
   Q-25 a; `trial_chance` por nó, só onde a maldição mais curta cabe no pior caminho, nunca dois na mesma rota). Recompensas
   do baralho no gerador, camada por camada, nenhuma repetida na camada (então nunca em duas portas da mesma sala), romã só
@@ -611,8 +612,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `node` -1): `map` (semente, nós `[profundidade, tipo, recompensa, arena, guardião?, "trial"?]`, arestas, caminho,
   `failures`, `pom_turned`), `rooms[].node`, evento `door` com `node` e `offered` e evento novo `reward` (o que a sala
   deu, ao lado do que a porta prometeu).
-- **Robô** (MAP-04): `Rooms.bot_door(doors, altar_useful, life, map)`: o gosto de antes e, abaixo de 80% da vida sem
-  porta de fonte, as portas que ainda levam a uma fonte primeiro. Régua refeita em `docs/qa/dv1_metrics.md`.
+- **Robô** (MAP-04): `Rooms.bot_door(doors, altar_useful, life, map)` lê o mapa: o gosto de antes pela porta da frente
+  mais `BOT_AHEAD` 1,0 do melhor caminho depois dela (`bot_way`: cada sala vale pela mesma ordem, Bênção 5 a Magia 1, a
+  fonte `BOT_FOUNTAIN_AHEAD` 12, o altar útil 3,5). Régua refeita em `docs/qa/dv1_metrics.md`.
 - Testes: `tests/test_descent.gd` reescrito (BUG-109: só sementes fixas, contagem de asserções igual em toda rodada):
   1000 grafos com todas as regras, 100 sementes com pelo menos 95 grafos diferentes, pior caminho conferido por todas
   as rotas, 200 descidas do robô em que a sala é a que a placa disse, a recompensa dada numa sala real; mais

@@ -21,6 +21,8 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var fountain_depth_min := 5
 @export var fountain_depth_max := 8
 @export var fountain_chance := 0.35
+## DV-1: the chance the graph has a second fountain, on another branch (no way passes two; RunMap).
+@export var fountain_more_chance := 0.35
 @export var boss: StringName = &"morvath"
 ## Room shapes the generator draws from (the boss and the shop have their own).
 @export var layouts: Array[RoomLayout] = []
