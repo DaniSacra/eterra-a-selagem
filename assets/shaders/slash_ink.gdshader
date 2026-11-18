@@ -24,6 +24,12 @@ uniform float body_depth = 0.75;
 // The veil past the edge out to the reach: its share of the body's ink.
 uniform float reach_veil = 0.2;
 
+// Eterra Stylized (STY-06, T23): with the global art_style at 1 the ink's tail breaks into the same strokes as the
+// light's (slash_strokes.gdshaderinc). art_style 0: the classic ink, unchanged.
+global uniform float art_style;
+
+#include "res://assets/shaders/slash_strokes.gdshaderinc"
+
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
@@ -68,6 +74,10 @@ void fragment() {
 	float cut = smoothstep(0.35, 1.0, t) * 1.15 + smoothstep(0.75, 1.0, behind) * 0.4;
 	band *= smoothstep(cut, cut + 0.18, noise(vec2(along * 14.0, y * 4.0) + 3.0));
 	band *= 1.0 - smoothstep(0.1, 1.0, behind) * 0.55;
+	if (art_style > 0.5) {
+		float band_m = reach_m > 0.0 ? (1.0 - band_from) * reach_m : 1.0;
+		band *= slash_strokes(y * band_m, clamp(behind / max(head, 0.001), 0.0, 1.0), smoothstep(0.35, 1.0, t), fwidth(y * band_m));
+	}
 	if (band <= 0.01) discard;
 	ALBEDO = color.rgb;
 	ALPHA = min(clamp(band * density, 0.0, 1.0) * opacity, max_alpha);

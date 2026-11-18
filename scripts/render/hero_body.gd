@@ -18,6 +18,12 @@ const GAME_HEIGHT := 2.5
 const HEIGHT := 2.75
 ## The sword at this many times the Knight's own sword at GAME_HEIGHT; it grows with the model.
 const SWORD_SCALE := 1.0
+## Eterra Stylized (STY-06; docs/art/stylized_spec.md 2.3): his shader in that look and its outline pass.
+const PAINT := preload("res://assets/shaders/hero_paint.gdshader")
+const PAINT_OUTLINE := preload("res://assets/shaders/hero_outline.gdshader")
+## The outline: meters of the world, colour (T20: 0.045 m, cold dark ink).
+const OUTLINE_WIDTH := 0.045
+const OUTLINE_COLOR := Color(0.05, 0.07, 0.08)
 
 
 ## The model at the game's size, playing his own clips. Returns [model, AnimationPlayer, sword].
@@ -54,11 +60,13 @@ static func _arm(model: Node3D, clips: AnimationLibrary) -> MeshInstance3D:
 
 
 ## His own painted texture, also a little as light (FILL), so he keeps his colours where the room's light does not
-## reach.
+## reach. In the stylized look (VisualProfile, F7 flips it live) his own shader instead (painted(), with the same FILL)
+## and the outline shell after it.
 static func _fill(model: Node3D) -> void:
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		var mat := (mi.get_active_material(0) as StandardMaterial3D).duplicate() as StandardMaterial3D
+		var paint := painted(mat)
 		mat.emission_enabled = true
 		mat.emission = Color.WHITE
 		# multiply: the colour times the texture (the default, add, puts the full white on top of it)
@@ -66,3 +74,46 @@ static func _fill(model: Node3D) -> void:
 		mat.emission_texture = mat.albedo_texture
 		mat.emission_energy_multiplier = FILL
 		mi.material_override = mat
+		VisualProfile.vary(mi, {&"material_override": paint})
+
+
+## His stylized material from the model's own (StandardMaterial3D): the painting, its colour, FILL; the outline after.
+static func painted(own: StandardMaterial3D) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = PAINT
+	mat.set_shader_parameter(&"albedo", own.albedo_texture)
+	mat.set_shader_parameter(&"tint", own.albedo_color)
+	mat.set_shader_parameter(&"fill", FILL)
+	var edge := ShaderMaterial.new()
+	edge.shader = PAINT_OUTLINE
+	edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
+	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
+	mat.next_pass = edge
+	return mat
+
+
+## Both looks' materials of a mesh of his body (the classic one and, if it has one, the stylized one).
+static func materials(mi: MeshInstance3D) -> Array[Material]:
+	var out: Array[Material] = []
+	var classic: Variant = VisualProfile.classic_of(mi, &"material_override", mi.material_override)
+	var styled: Variant = VisualProfile.styled(mi, &"material_override")
+	for m: Variant in [classic, styled]:
+		if m is Material and not out.has(m):
+			out.append(m)
+	return out
+
+
+## Whether a material of his body takes the fill (the painting as light; Player lightens it in the blink after a hit).
+static func fills(mat: Material) -> bool:
+	if mat is ShaderMaterial:
+		return (mat as ShaderMaterial).shader == PAINT
+	var own := mat as StandardMaterial3D
+	return own != null and own.emission_enabled and own.shading_mode != BaseMaterial3D.SHADING_MODE_UNSHADED
+
+
+## The fill of a material of his body (fills() true): the classic one's emission energy, the stylized one's `fill`.
+static func set_fill(mat: Material, fill: float) -> void:
+	if mat is ShaderMaterial:
+		(mat as ShaderMaterial).set_shader_parameter(&"fill", fill)
+	elif mat is StandardMaterial3D:
+		(mat as StandardMaterial3D).emission_energy_multiplier = fill

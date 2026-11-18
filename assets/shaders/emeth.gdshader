@@ -25,6 +25,18 @@ uniform float blade_paint = 0.35;
 uniform float roughness = 0.4;
 uniform float metallic = 0.3;
 
+// Eterra Stylized (STY-06, T22; docs/art/stylized_spec.md 3.3): with the global art_style at 1 the crystal is painted in
+// two bands of emerald, the deep one (hue 140, value 0.45) on the side away from the key (view space, the crowd's) and
+// the face (hue 133, value 0.75) toward it, split over style_split; the gold veins keep blade_paint of the painting; no
+// channel of the sword passes style_cap (no light past 1.0, the pulse of a swing included). The pale edge down the
+// middle is EmethSword's (EmethSword.STYLE_CORE). art_style 0: the classic blade, unchanged.
+global uniform float art_style;
+uniform vec3 style_back : source_color = vec3(0.11, 0.45, 0.23);
+uniform vec3 style_face : source_color = vec3(0.23, 0.75, 0.34);
+uniform vec3 style_key = vec3(-0.45, 0.75, 0.5);
+uniform float style_split = 0.12;
+uniform float style_cap = 0.98;
+
 varying float along;
 varying vec3 local;
 
@@ -41,6 +53,11 @@ void fragment() {
 	ROUGHNESS = roughness;
 	METALLIC = metallic * (1.0 - blade);
 	vec3 lit = blade_color * value;
+	bool styled = art_style > 0.5;
+	if (styled) {
+		float face = smoothstep(-style_split, style_split, dot(NORMAL, normalize(style_key)));
+		lit = mix(style_back, style_face, face);
+	}
 	if (corrupt > 0.0) {
 		// how far up the blade this point is (0 at the guard, 1 at the tip), with a ragged front that drifts
 		float up = clamp((along - blade_from) / (0.95 - blade_from), 0.0, 1.0);
@@ -53,4 +70,7 @@ void fragment() {
 		ALBEDO = mix(ALBEDO, corrupt_color * 0.25, k * blade);
 	}
 	EMISSION = c * fill + mix(lit, c, blade_paint) * (blade_glow + pulse) * blade;
+	if (styled) {
+		EMISSION = min(EMISSION, vec3(style_cap));
+	}
 }

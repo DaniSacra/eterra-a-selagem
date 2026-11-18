@@ -30,6 +30,10 @@ const INK := 0.65
 const OUTLINE_COLOR := Color(0.1, 0.08, 0.06)
 const OUTLINE_WIDTH := 0.022
 const OUTLINE_INTENSITY := 1.0
+## Eterra Stylized (STY-06, T20, docs/art/stylized_spec.md 2.3): every figure gets the shell, 0.04 m of near-black warm
+## ink (1.6 px at 1080 at the game's camera); the classic look keeps the numbers above, and no shell on the commons.
+const STYLE_OUTLINE_WIDTH := 0.04
+const STYLE_OUTLINE_COLOR := Color(0.07, 0.06, 0.06)
 ## Painted figures (the Meshy models): how much the bright saturated spots of the painting (eyes, gems, orbs, embers)
 ## shine by themselves, and the old gold the steel of an elite turns to (EnemyDef.gild says how much).
 const PAINT_GLOW := 2.2
@@ -199,14 +203,19 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"rim_color", d.rim_color)
 	mat.set_shader_parameter(&"rim_power", d.rim * (PAINT_RIM if baked.painted else 1.0))
 	_set_poses(mat, baked)
+	var edge := ShaderMaterial.new()
+	edge.shader = OUTLINE
+	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
+	edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
+	edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
+	edge.set_shader_parameter(&"style_width", STYLE_OUTLINE_WIDTH)
+	edge.set_shader_parameter(&"style_color", STYLE_OUTLINE_COLOR)
+	_set_poses(edge, baked)
+	# elites and the boss always have the shell; every figure has it in the stylized look (F7 flips it live)
 	if d.rim > 0.0:
-		var edge := ShaderMaterial.new()
-		edge.shader = OUTLINE
-		edge.set_shader_parameter(&"color", OUTLINE_COLOR)
-		edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
-		edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
-		_set_poses(edge, baked)
 		mat.next_pass = edge
+	else:
+		VisualProfile.vary(mat, {&"next_pass": edge})
 	_materials[d.id] = mat
 	var kind := Kind.new()
 	kind.model = baked

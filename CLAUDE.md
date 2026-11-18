@@ -1429,6 +1429,38 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ficar incompletas. Medido (1920 x 1080 RTX, Alta, vitrine): 144 qps clássico, 141 estilizado; iGPU Baixa 1280 x 720: 58/54
   contra 55/54; nenhuma textura nova.
 
+## Prova estilizada, personagens e pós (STY-06, STY-07)
+- **Personagens, Emeth e combate (STY-06, technical-artist)**: tudo pelo global `art_style` (0 clássico, 1 estilizado,
+  `VisualProfile`; `--look`, F7); com 0 o quadro é o de antes (captura da RTX igual fora das chamas, que mexem sozinhas) e
+  nenhum parâmetro muda (`tests/test_stylized_figures.gd`, também depois de ir e voltar pelo F7). Multidão
+  (`crowd.gdshader`, `style_*`): chave do corpo em três faixas (`figure_bands` em `figure_paint.gdshaderinc`, as do
+  `paint.gdshaderinc` do cenário: 0,42 / 0,72 / 1,0 em N·L 0,3 e 0,65, rampa 0,10), corpo mais escuro (`style_light`
+  0,32 da chave, `style_scene` 0,22 do ambiente), borda morna (1,0; 0,82; 0,62) de fresnel 3,5 no lugar da tinta escura
+  da borda, textura puxada 0,35 para a média do mip 3 (`style_flat`); pisca, "vai bater", queimadura, ouro e dissolver
+  iguais. Contorno de casca em todos (`crowd_outline.gdshader`, `style_width` 0,04 m, `style_color` (0,07; 0,06; 0,06),
+  empurrado `style_push` 0,25 m para longe da câmera: sem manchas por dentro do pano aberto); os comuns só ganham o
+  passe no estilizado (`VisualProfile.vary` no `next_pass`, `CrowdRenderer.STYLE_OUTLINE_*`). Herói: `hero_paint.gdshader`
+  (duas faces como o modelo, luz das salas em três faixas por `light()`, `value` 0,34, mesma borda morna mais forte e
+  maior no lado da luz, `flatten` 0,35, fosco) e `hero_outline.gdshader` (0,045 m, (0,05; 0,07; 0,08), empurrado 0,25 m),
+  postos por `HeroBody.painted` e trocados pelo F7 (`VisualProfile.vary` no `material_override`); os três passes do raio-x,
+  o anel, o pisca (`HeroBody.set_fill` nos dois materiais, `HeroBody.materials`) e a maldição continuam. Emeth: cristal em
+  duas faixas (fundo matiz 140 valor 0,45, face matiz 133 valor 0,75, `style_back`/`style_face`), nada acima de 0,98
+  (`style_cap`), fio do meio marfim-menta sem brilho (`EmethSword.STYLE_CORE`). Corte: miolo mais fundo e chapado, metade
+  de trás em pinceladas partidas de 0,08 a 0,18 m que somem da cauda (`slash_strokes.gdshaderinc`, no `slash` e no
+  `slash_ink`), nada acima de `style_cap` 0,55 por canal. Lascas esmeralda do golpe com metade da largura e abaixo de 0,9
+  (`chip.gdshader`; as cinza do acerto e as de ouro iguais). Avisos (`ground.gdshaderinc`): `style_rim_gain` 1,6 no aro,
+  frente, divisas e fio da mira, `style_fill_gain` 1,5 no preenchimento; forma, tempo e cor iguais.
+- **Pós de pintura (STY-07, `PaintPass`, `scripts/render/paint_pass.gd`, `assets/shaders/paint_pass.glsl`)**: Kuwahara de 4
+  setores de 2 px a 1080 e contorno por salto de profundidade, `CompositorEffect` depois do opaco, só Forward+, só Alta,
+  só estilizado. **Desligado** (`PaintPass.DEFAULT_ON` false; `--paint-pass=1` liga para ver): cai nos critérios 1 e 2 da
+  spec 5.2 (as runas do medalhão e as rachaduras finas viram borrão, pontos escuros nos corpos) e não convive com o MSAA
+  da Alta (o quadro é resolvido de novo depois dos transparentes; ligado, ele desliga o MSAA). Custo medido na RTX a
+  1080: 0,14 ms de GPU, mais 7,5 MB de memória de vídeo.
+- Medido depois do STY-04/05 (bot, semente 5, sala de abertura): RTX 1080 Alta GPU 2,80 ms clássico, 2,63 estilizado (756 e 818
+  chamadas, 330 e 332 MB); iGPU Baixa 1280 x 720 15,05 e 15,75 ms; fio da mira dos avisos 130 a 138 de luma sobre a laje de
+  72 a 86 (+50). Sonda de sensação 40/40 nos dois looks; o Compatibility abre sem erro.
+- Medir o quadro do jogo: `tools/sty_probe.gd` (comando no topo; `PROBE` com quadro, CPU, GPU, chamadas e memória de vídeo).
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).
