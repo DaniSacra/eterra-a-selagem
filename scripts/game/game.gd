@@ -88,6 +88,8 @@ var ui: CanvasLayer
 var _feel_panel: FeelPanel
 var camera: Camera3D
 var bot: Bot
+## --watchdog (C17, BUG-110): a WATCH line every Watchdog.EVERY real seconds, kept in the run's log (null: off).
+var watchdog: Watchdog = Watchdog.new() if Dev.has("watchdog") else null
 var mode := Mode.PLAY
 var time := 0.0
 var level := 1
@@ -416,6 +418,11 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
 	var shake := fx.tick(delta)
+	if watchdog:
+		var sample := watchdog.tick(Time.get_ticks_msec() / 1000.0, Engine.get_frames_drawn(), Mode.keys()[mode], fx.rate,
+			Engine.time_scale, time)
+		if not sample.is_empty():
+			print(Watchdog.line(sample))
 	# the world's own seconds this frame: real time times the slow motion and the hit stop (Fx.rate, GF-01: a hit
 	# stop slows the world to a few percent, it never stops it)
 	var world_dt := fx.real_dt * fx.rate
@@ -1508,6 +1515,8 @@ func run_entry(outcome: String, gain: Dictionary) -> Dictionary:
 		"mastery_level": hero.mastery.level_of(xp_now + int(gain.get("total", 0))),
 		"talents": talents.map(func(id: StringName) -> String: return String(id)), "ultimate": ultimate})
 	extra.merge(room_tally.run_fields())
+	if watchdog:
+		extra["watch"] = watchdog.samples
 	return RunLog.entry(result(), extra)
 
 
@@ -1716,7 +1725,9 @@ func result() -> Dictionary:
 		"step_ms_avg": snappedf(step_timer.average(), 0.01), "step_ms_peak": snappedf(step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
 		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
-		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts, "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
+		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts,
+		"windups": horde.windup_report(), "shot_flight": projectiles.flight_report(),
+		"omega_charges_started": player.charges_started, "omega_charges_cancelled": player.charges_cancelled(), "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
 		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
 		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true),
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",

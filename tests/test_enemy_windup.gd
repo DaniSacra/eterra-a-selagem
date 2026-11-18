@@ -357,3 +357,58 @@ func test_no_metronome() -> void:
 		gaps[starts[i] - starts[i - 1]] = true
 	assert_gte(starts.size(), 5)
 	assert_gt(gaps.size(), 2, "its blows fall on different beats: %s" % [starts])
+
+
+## C17, QW-107 (ART P1-6): the crossbow's aim and the soldier's pounce are drawn as an aim (a thread, a bright tip, the
+## band filling only over the end of the wind-up), never the opaque band: nothing but the tip above 0.6 of light.
+func test_the_aims_are_threads() -> void:
+	assert_lte(GroundLook.AIM_PX, 10.0, "a thread of 10 px at most")
+	assert_lte(GroundLook.AIM_LIGHT, 0.6)
+	assert_lte(GroundLook.AIM_FILL, 0.45)
+	for id in [&"skeleton", &"archer"]:
+		_room()
+		var e := game.horde.spawn(game.horde.def(id), Vector2(4.0 if id == &"skeleton" else 9.0, 0.0), false)
+		e.cooldown = 0.0
+		var z: Ground.Zone = null
+		for f in 400:
+			_frame()
+			if e.warning != null:
+				z = e.warning
+				break
+		assert_not_null(z, "%s warned" % id)
+		if z == null:
+			continue
+		var m := z.mat as ShaderMaterial
+		assert_eq(float(m.get_shader_parameter(&"aim_px")), GroundLook.AIM_PX, "%s: an aim" % id)
+		assert_eq(float(m.get_shader_parameter(&"strength")), 1.0)
+		assert_eq(float((m.next_pass as ShaderMaterial).get_shader_parameter(&"fill_early")), 0.0, "%s: no fill early" % id)
+		assert_eq(float((m.next_pass as ShaderMaterial).get_shader_parameter(&"base_fill")), 0.0)
+	# a pooled node dressed again as another warning is no aim
+	var other := game.ground.add_arc_warning(Vector2.ZERO, Vector2.UP, 3.0, 90.0, 1.0, 0.0)
+	assert_eq(float(other.mat.get_shader_parameter(&"aim_px")), 0.0)
+
+
+## C17, DT-102: every wind-up is counted by kind (started, reached its blow, cut), the flight of a shot that hurt him
+## and the Omega charges begun and let go, for RESULT.
+func test_the_windups_are_counted() -> void:
+	_room()
+	var e := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(2.0, 0.0), false)
+	e.cooldown = 0.0
+	for f in 120:
+		_frame()
+		if e.state == Enemy.State.ATTACK:
+			break
+	var w: Dictionary = game.horde.windup_report().get("skeleton", {})
+	assert_eq(int(w.get("started", 0)), 1)
+	assert_eq(int(w.get("struck", 0)), 1)
+	var c := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(-2.0, 0.0), false)
+	c.cooldown = 0.0
+	for f in 120:
+		_frame()
+		if c.state == Enemy.State.WINDUP:
+			break
+	game.horde.interrupt(c)
+	w = game.horde.windup_report()["skeleton"]
+	assert_eq(int(w.cut), 1, "a cut wind-up")
+	assert_true(game.result().has("windups") and game.result().has("shot_flight"))
+	assert_eq(game.result().omega_charges_cancelled, 0)

@@ -127,6 +127,9 @@ var last_by: StringName = &""
 ## That shot's warning in seconds (its shooter's aim and its flight) and Shot.offscreen, for the run's log.
 var last_warn := -1.0
 var last_offscreen := -1
+## DT-102 (RESULT shot_flight): by shooter (shooter_of), the seconds each shot that reached the paladin flew:
+## id -> [hits, total seconds, longest].
+var flights := {}
 var horde: Horde
 var player: Player
 var fx: Fx
@@ -284,6 +287,7 @@ func step(dt: float) -> void:
 					last_by = s.by
 					last_warn = s.warned + s.age
 					last_offscreen = s.offscreen
+					_flew(s)
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					fx.burst(&"soul", Vector3(player.pos.x, HEIGHT, player.pos.y))
 			elif hostile(s):
@@ -293,6 +297,7 @@ func step(dt: float) -> void:
 					last_by = s.by
 					last_warn = s.warned + s.age
 					last_offscreen = s.offscreen
+					_flew(s)
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					if s.status != &"" and not safe:
 						status_player.emit(s.status)
@@ -314,6 +319,25 @@ func step(dt: float) -> void:
 
 
 ## Who fired a shot, for the run's log: its kind (EnemyDef.id), or "morvath" for the boss's own.
+func _flew(s: Shot) -> void:
+	var id := shooter(s)
+	if not flights.has(id):
+		flights[id] = [0, 0.0, 0.0]
+	var f: Array = flights[id]
+	f[0] += 1
+	f[1] += s.age
+	f[2] = maxf(f[2], s.age)
+
+
+## The flights for RESULT: {shooter: {hits, avg, max}} in seconds.
+func flight_report() -> Dictionary:
+	var out := {}
+	for id: String in flights:
+		var f: Array = flights[id]
+		out[id] = {"hits": f[0], "avg": snappedf(f[1] / maxf(f[0], 1), 0.01), "max": snappedf(f[2], 0.01)}
+	return out
+
+
 static func shooter(s: Shot) -> String:
 	return shooter_of(s.by)
 

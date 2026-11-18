@@ -179,6 +179,10 @@ var stuck_by := {}
 ## Blows that stunned someone, and attacks those blows cut, this run (GF-12; RESULT flinches, interrupts).
 var flinches := 0
 var interrupts := 0
+## DT-102 (RESULT windups): by kind, the wind-ups started, those that reached their blow (or shot) and those cut (by a
+## stun, the armour breaking or death): id -> [started, struck, cut].
+var windups := {}
+var _cutting := false
 ## The way the enemy behaving now walks toward the paladin (_way).
 var _walk := Vector2.ZERO
 var _dt := 0.0
@@ -564,7 +568,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
 		if d.shot_line and not caster:
 			# the line on the floor ends where the bolt will die on cover
-			e.warning = ground.add_line_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
+			e.warning = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
 				d.attack_windup, 0.0)
 
 
@@ -679,7 +683,7 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.travel = clampf(dist - d.radius - Player.RADIUS, 0.0, d.lunge_speed * d.lunge_time)
 				e.strike_t = maxf(d.strike_at, e.travel / maxf(d.lunge_speed, 0.1))
 				e.landed = false
-				e.warning = ground.add_line_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
+				e.warning = ground.add_aim_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
 			else:
 				_wait_ring(e, dt, toward, dist)
 
@@ -986,6 +990,10 @@ func stuck_count() -> int:
 
 func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = true) -> void:
 	if state == Enemy.State.WINDUP and e.state != Enemy.State.WINDUP:
+		_tally_windup(e, 0)
+	elif e.state == Enemy.State.WINDUP and state != Enemy.State.WINDUP:
+		_tally_windup(e, 2 if _cutting else 1)
+	if state == Enemy.State.WINDUP and e.state != Enemy.State.WINDUP:
 		Audio.play(CombatSounds.windup(e.def))  # (C15-02: every wind-up is heard, by what it shows)
 	elif state == Enemy.State.ATTACK:
 		var loosed := CombatSounds.strike(e.def)
@@ -1151,6 +1159,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if show_number:
 		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id())
 	if e.hp <= 0.0:
+		if e.state == Enemy.State.WINDUP:
+			_tally_windup(e, 2)
 		e.alive = false
 		e.state = Enemy.State.DEAD
 		if e.def.behavior == EnemyDef.Behavior.BOSS:
@@ -1205,7 +1215,9 @@ func interrupt(e: Enemy) -> bool:
 		e.warning = null
 	if e.def.behavior != EnemyDef.Behavior.PRIEST:
 		e.memo = 0  # (a knight's slam, a burst's ticks; the elder priest counts its casts there)
+	_cutting = true
 	_set_state(e, Enemy.State.WALK, &"walk")
+	_cutting = false
 	interrupts += 1
 	Audio.play(CombatSounds.EVENTS[&"interrupt"])
 	return true
@@ -1227,6 +1239,23 @@ func _sweep() -> void:
 		j -= 1
 	while dying.size() > MAX_DYING:
 		dying.pop_front()
+
+
+## DT-102: one wind-up of e's kind started (0), reached its blow (1) or was cut (2).
+func _tally_windup(e: Enemy, what: int) -> void:
+	var id := String(e.def.id)
+	if not windups.has(id):
+		windups[id] = [0, 0, 0]
+	windups[id][what] += 1
+
+
+## The wind-ups by kind for RESULT: {id: {started, struck, cut}}.
+func windup_report() -> Dictionary:
+	var out := {}
+	for id: String in windups:
+		var w: Array = windups[id]
+		out[id] = {"started": w[0], "struck": w[1], "cut": w[2]}
+	return out
 
 
 ## Removes the common crowd (the crypt doors opened): no experience, no drops. Elites and bosses stay.
