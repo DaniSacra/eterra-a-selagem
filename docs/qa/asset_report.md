@@ -11,11 +11,78 @@ correção técnica clara; **P2** limpeza, documentação ou ganho pequeno.
 
 | Medida | Valor | Teto | Como |
 |---|---|---|---|
-| Exe do Windows | **219,7 MB** (modelo da Godot 109,3 + PCK 110,4) | | export `"Windows Desktop"` no worktree, `ls -l` |
+| Exe do Windows | **219,7 MB** (modelo da Godot 109,3 + PCK 110,4); **197,2 MB** depois da C1 | | export `"Windows Desktop"` no worktree, `ls -l` |
 | PCK por família | assados 43,92; música 17,22; bonecos do KayKit 11,38; herói 8,27; Emeth 6,99; UI 6,19; texturas 3,91; ambiência 3,01; UAL 2,18; `dungeon_r` 2,17; `dungeon` 1,46; efeitos 1,30; scripts 1,24; fontes 0,35; shaders 0,28; armas 0,20 MB | | `python3 -I tools/pck_sizes.py build/windows/ASelagem.exe` |
 | Assados | **43,92 MB** | 70 MB (63%) | `du -cb assets/baked/*.res` |
 | Música no pacote | **17,22 MB** (16,57 no disco: o `.oggvorbisstr` soma 4%) | 18 MB (96%) | PCK |
 | VRAM das texturas carregadas | herói 28,5; Emeth 19,4; relevo da rocha 5,3 + 1,3; título 8,8; medalhão de 512 1,3; **21 peças do KayKit 112,0**; assados 79,0 MB | | `tools/gpu.sh run --rendering-driver vulkan -s tools/asset_probe.gd -- vram` (RTX 5060, `RENDER_TEXTURE_MEM_USED`) |
+
+## Feito
+
+### C1, 2026-11-18: melhorias 1 a 4 (aprovadas pelo Daniel)
+Nenhuma mudança de aparência; capturas na GPU antes e depois em `docs/gallery/assets/c1/`.
+
+1. **Fontes dos assados fora do pacote** (P1-2): `assets/models/characters/*`, `assets/models/anim/*`,
+   `assets/models/weapons/*` e `assets/baked/statue.res` no `exclude_filter` dos presets Windows, Linux e Web. Os
+   arquivos ficam no repositório para o `tools/bake.gd` e o `tools/bake_hero.gd`.
+2. **Uma paleta do KayKit só** (P1-1): `assets/models/kaykit_material.tres` (StandardMaterial3D igual ao que o
+   importador fazia: a paleta e rugosidade 0,45) com `assets/models/kaykit_palette.png` em BC7 com mipmaps; cada
+   `.glb.import` de `dungeon/` e `dungeon_r/` aponta para ele (`_subresources` > `materials` > `texture` >
+   `use_external`) e não extrai mais imagem (`gltf/embedded_image_handling=0`). As 69 cópias da paleta (mesmo md5
+   `1fa0d4f3...`) e os seus `.import` foram apagados; nenhum script, dado ou cena as citava (grep de
+   `dungeon_texture`), só os próprios `.glb` importados. `Arena._tinted` e `ArenaKit._stone` agora fazem uma cópia só.
+3. **Herói e Emeth em VRAM**: `compress/mode=2` com `compress/high_quality=true` (BC7, da família S3TC/BPTC que o
+   preset exporta); a Emeth importada em 1024 (`process/size_limit=1024`).
+4. **Rocha**: normal em BC5 (`compress/normal_map=1`, formato RGTC_RG); o `masonry.gdshader` e o
+   `catacomb_floor.gdshaderinc` liam o z do texel (`.rgb * 2 - 1`) e agora o refazem de x e y (o `stone_tree.gdshader`
+   usa `NORMAL_MAP`, que a Godot já refaz). Altura em BC4 (RGTC_R: verde e azul em "zero" no `channel_remap` e
+   `compress/channel_pack=1`; sem isso a imagem cinza vira DXT1).
+
+**A causa e a trava**: o `detect_3d/compress_to` só troca uma textura para VRAM quando o editor com tela a vê num
+material 3D; o projeto é importado sem tela, então nunca trocou. Os cinco `.import` agora dizem `compress/mode=2` eles
+mesmos e `detect_3d/compress_to=0` (nada fica para o editor decidir). A importação sem tela comprime de verdade
+(Linux e a Godot de Windows do espelho: `.s3tc.ctex`, `imported_formats=["s3tc_bptc"]`). `tests/test_asset_import.gd`
+falha se algum desses `.import` voltar a sem perda, se a textura carregada não for BC7/BC5/BC4 com mipmaps, se uma
+peça do KayKit deixar o material comum ou se uma cópia da paleta reaparecer.
+
+**Navegador**: o preset Web tem `vram_texture_compression/for_desktop=true` (S3TC/BPTC, o mesmo dos assados, que já
+eram DXT1); exporta sem erro nem aviso (`index.pck` 88,0 MB). Captura no Compatibility pela placa
+(`--rendering-driver opengl3`): `after_compat_hero.jpg`, herói, Emeth e relevo da pedra certos. Onde o navegador não
+tiver BPTC ou RGTC, a Godot descomprime ao carregar (custa memória, não quebra).
+
+| Medida | Antes | Depois |
+|---|---|---|
+| Exe do Windows | 219,72 MB | **197,24 MB** (-22,5) |
+| PCK | 110,32 MB, 1 331 entradas | **87,86 MB**, 1 148 |
+| PCK: bonecos do KayKit / UAL / armas | 11,38 / 2,18 / 0,20 MB | 0 / 0 / 0 |
+| PCK: assados | 43,92 MB | 43,75 (sem a estátua) |
+| PCK: herói (pasta) / textura dele | 8,27 / 6,45 MB | 7,41 / 5,59 |
+| PCK: Emeth (pasta) | 6,99 MB | 1,68 |
+| PCK: `assets/textures` (rocha e leão) | 3,91 MB | 2,81 (normal 2,63 para 1,40; altura 0,57 para 0,70) |
+| PCK: peças do KayKit + paleta | 3,63 MB | 0,97 + 1,40 |
+| VRAM herói | 21,33 MB (2048 RGB8) | **5,34** (2048 BC7) |
+| VRAM Emeth | 21,33 MB (2048 RGB8) | **1,34** (1024 BC7) |
+| VRAM normal / altura da rocha | 5,33 / 1,34 MB (RGB8 / L8) | **1,34 / 0,67** (BC5 / BC4) |
+| VRAM 21 peças do KayKit de uma descida | 112,03 MB | **1,34** |
+| Soma dessas texturas | 161,4 MB | **10,0 MB** |
+
+VRAM medida pela `tools/asset_probe.gd -- vram` na RTX 5060 (Vulkan, espelho `eterra-gpu`), antes e depois com a
+mesma sonda. A sonda agora espera 4 quadros depois de cada carga e imprime tamanho e formato: na auditoria inicial ela
+lia o monitor um quadro só depois, e o herói (28,5) e a Emeth (19,4) saíram trocados por atraso; o certo, medido de
+novo no estado antigo, é 21,33 cada.
+
+**Fidelidade** (textura decodificada contra a fonte, mip 0, PSNR nos canais usados): paleta BC7 56,4 dB (erro máximo
+3 de 255; o BC1 dava 36,7 dB e 13); herói BC7 45,0 dB (o BC1 dava 33,2 dB, erro máximo 97 e 11% dos texels acima de 8:
+manchas de bloco no rosto e na capa de perto, por isso BC7, que custa o dobro do BC1, 5,3 contra 2,7 MB); Emeth em
+1024 BC7 35,7 dB contra a fonte reduzida por Lanczos (boa parte é o filtro da redução); normal BC5 41,2 dB; altura BC4
+46,8 dB. **Capturas a 1920 x 1080 na GPU, antes contra depois** (PSNR das PNG, diferença ampliada 6 a 8 vezes):
+herói de perto na vitrine 38,2 dB, luta do robô (`--seed=5`, 9 s) 43,9, salão inteiro na vitrine 29,7, salão antigo
+do `--horde` (pilares, velas e paredes do KayKit) 42,1; em todas a diferença está só no que se move (inimigos,
+chamas, partículas), nada no herói parado, na Emeth, nas peças do KayKit ou na pedra. Recorte lado a lado:
+`hero_crop_before_after.jpg`. Nada foi revertido.
+
+Ficou de fora: o BC1 no herói (ver acima; pode-se voltar a pensar se a memória da iGPU apertar); P2-1 a P2-9 e as
+melhorias 5 a 7 (não estavam no pedido).
 
 ## P0
 
@@ -25,7 +92,7 @@ uso, e não há `.import` órfão.
 
 ## P1
 
-**P1-1. As texturas 3D vão sem compressão de vídeo; 21 cópias da mesma paleta ocupam 112 MB de VRAM.**
+**P1-1. As texturas 3D vão sem compressão de vídeo; 21 cópias da mesma paleta ocupam 112 MB de VRAM.** Feito na C1.
 Todo `.import` de imagem do projeto está em `compress/mode=0` (sem perda) com `detect_3d/compress_to=1`; a troca
 automática para VRAM só acontece quando o editor com tela vê a textura num material 3D, o que nunca aconteceu (o projeto
 é importado sem tela). Os `.ctex` confirmam: `hero_explorer-rigged_Image_0.jpg` 2048 x 2048 `store=webp fmt=RGB8`,
@@ -41,7 +108,7 @@ de 48 MB para cerca de 6 MB de VRAM (DXT1 com mipmaps) e de 13,2 para cerca de 5
 5,6 MB (uma cópia) ou 0,7 MB (uma cópia DXT1). A paleta é de cores chapadas: conferir na captura que o DXT não suja as
 bordas das células (se sujar, uma cópia sem perda já resolve 95%).
 
-**P1-2. Fontes dos assados entram no pacote: 13,8 MB que o jogo nunca carrega.**
+**P1-2. Fontes dos assados entram no pacote: 13,8 MB que o jogo nunca carrega.** Feito na C1.
 `export_presets.cfg` exclui `enemy_*`, `hero_sombra`, `paladin_1` e `palettes`, mas não `assets/models/characters/*`
 (11,38 MB no PCK: 7 bonecos do KayKit e texturas), `assets/models/anim/*` (2,18 MB: UAL 1 e 2) nem
 `assets/models/weapons/*` (0,20 MB). Prova de que não têm uso em jogo: nenhum `grep` em `scripts/`, `data/` ou

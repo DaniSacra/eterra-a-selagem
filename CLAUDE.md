@@ -82,7 +82,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   fielmente** (base para evoluir; o Daniel, 2026-11-15); do Ember & Blade, a sensação visual. Nomes, personagens, UI e
   arte são de Eterra. Terceira referência (2026-11-16): Ravenswatch, só em princípios (heróis com kit próprio, sem troca
   de arma, talentos por herói; `docs/design/benchmark_ravenswatch.md`). Comparação sistema por sistema e o que falta: `docs/design/comparativo.md` (manter em dia). A versão 2D em pixel art está na tag `v1-pixel-2d`.
-- Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens, masmorra, armas).
+- Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens e armas só para o assado; masmorra em `dungeon/` e `dungeon_r/`, todas com a paleta única `kaykit_palette.png`).
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), só no assado dos bonecos do KayKit guardados (os modelos do Meshy já têm a proporção certa).
@@ -1228,7 +1228,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`ComboNode.sweep`, `SWEEP` em `make_data.gd`), golpes
   empurram mais, inimigos mais rápidos (esqueleto 3,75 m/s) e com menos espera entre ataques (avisos iguais); a câmera
   se adianta para onde ele anda, não para a mira.
-- Cenário do KayKit, fontes e áudio sintetizado são provisórios. Assados somam cerca de 44 MB (16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`, textura S3TC de 1024 dentro de cada um; os `enemy_*` de origem não vão no pacote, ver `export_presets.cfg`) (o pacote web tem 61 MB).
+- Cenário do KayKit, fontes e áudio sintetizado são provisórios. Assados somam 43,9 MB (43,75 no pacote; 16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`, textura S3TC de 1024 dentro de cada um). Fora do pacote (`exclude_filter` dos três presets): os `enemy_*` de origem, os bonecos do KayKit (`assets/models/characters`), a UAL (`assets/models/anim`), as armas (`assets/models/weapons`) e a `statue.res` sem uso; ficam no repositório para o `tools/bake.gd` e o `tools/bake_hero.gd`. Pacote (C1 do artista técnico, `docs/qa/asset_report.md`): exe do Windows 197,2 MB (PCK 87,9; era 219,7 / 110,3), `index.pck` da Web 88,0 MB. **Texturas 3D comprimidas para a placa em todo `.import`** (`compress/mode=2`, `detect_3d/compress_to=0`: o projeto é importado sem tela e a detecção do editor nunca trocava): herói 2048 e Emeth 1024 (`process/size_limit`) em BC7, normal da rocha em BC5 (o z refeito no `masonry.gdshader` e no `catacomb_floor.gdshaderinc`), altura em BC4; as peças do KayKit usam um material só, `assets/models/kaykit_material.tres` com a paleta `kaykit_palette.png` em BC7 (`use_external` no `_subresources` de cada `.glb.import`, sem imagem extraída). VRAM dessas texturas de 161 para 10 MB. Travado por `tests/test_asset_import.gd`; medir com `tools/asset_probe.gd -- vram` e `tools/pck_sizes.py`.
 - O lobo de geada do spec virou o esqueleto corredor. Vigília aparece como voto do PALADIN_1 (provisório).
 - O spec fala em quatro paladinos; o cânone de 12/11 fala em um paladino do leão e quatro guardiões. Vale o que o Daniel decidir.
 - Nomes dos paladinos: enquanto `PALADIN_n` for o próprio marcador, a oração entre colchetes que o cita some do texto

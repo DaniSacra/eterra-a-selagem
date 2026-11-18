@@ -151,7 +151,9 @@ void fragment() {
 	vec3 tv = n.y > 0.7 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
 	vec2 ruv = wp * rock_scale + s.yz * 0.31;
 	float rh = texture(rock_height, ruv).r;
-	vec3 rn = texture(rock_normal, ruv).rgb * 2.0 - 1.0;
+	// the normal is stored in two channels (BC5, compress/normal_map): its z is rebuilt
+	vec2 rxy = texture(rock_normal, ruv).rg * 2.0 - 1.0;
+	vec3 rn = vec3(rxy, sqrt(max(1.0 - dot(rxy, rxy), 0.0)));
 	c *= mix(1.0 - rock_value, 1.0 + rock_value * 0.5, smoothstep(0.2, 0.8, rh));
 	float wash = fbm(wp * 0.9 + s.yz * 2.3);
 	c *= 0.72 + 0.56 * wash;
