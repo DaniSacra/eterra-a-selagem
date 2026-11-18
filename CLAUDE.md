@@ -513,9 +513,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `tools/make_music_loops.sh <pasta dos mp3>`; faixas `solo` (`MusicMix.Deck.solo`: o nível n ouve só a camada n, as
   outras seguem mudas no tempo, troca em crossfade sem reiniciar). Os Salmos e a vitória seguem sintetizados.
   **Músicas para escolher (T5, o PO não gostou da música nova da fase e gostava da antiga)**: as antigas voltaram com
-  nome próprio (`audio/music/classic_catacombs_1/2.ogg`, `classic_morvath_1..4.ogg`, do `5dfe97f`) e são o **padrão em
-  todo lugar** (o título toca a caminhada da "Catacumbas (original)", como antes do T5); as do MacLeod continuam no pacote
-  para escolher. Catálogo como dado em `MusicCatalog` (`core/music_catalog.gd`, `PIECES`: id, nome `music_<id>` no
+  nome próprio (`audio/music/classic_catacombs_1/2.ogg`, `classic_morvath_1..4.ogg`, do `5dfe97f`) e foram o padrão até o
+  MUS-1; as do MacLeod continuam no pacote para escolher.
+  **MUS-1, música de luta (o PO, 2026-11-18: "músicas mais animadas, dinâmicas", as de antes "um pouco depressivas")**:
+  quatro peças novas compostas e sintetizadas pelo projeto (`tools/make_music.gd`, `-- blade_march deep_drums iron_pulse
+  morvath_battle`), cada uma com riff, melodia com contraponto, progressões que sobem e cadência para o maior no pico:
+  "Marcha das Lâminas" (`blade_march`, orquestral e épica, ré menor a ré maior, 144 BPM, 40 compassos, 66,7 s),
+  "Tambores do Fundo" (`deep_drums`, folk e tribal, rabeca e flauta, mi dórico a mi maior, 150 BPM, 64 s), "Pulso de
+  Ferro" (`iron_pulse`, baixo em semicolcheias, lá menor harmônico a lá maior, 138 BPM, 36 compassos, 62,6 s), as três em
+  caminhada e luta somadas; "Morvath, a Batalha" (`morvath_battle`, dó menor harmônico a dó maior, 150 BPM, 64 s, uma
+  camada por fase: cordas e tambor, coro do ritual, trêmulo e caixa da maldição, metais do herói). **Padrão**: Marcha das
+  Lâminas no título (a caminhada) e nas salas, Morvath, a Batalha em Morvath (`MusicCatalog.DEFAULT`); as antigas e as do
+  MacLeod ficam na lista. Niveladas por loudness, não por pico (`_publish_levelled`: ganho por camada até a meta da soma,
+  `ROOMS_LUFS` -21,8 / -20,0, `MORVATH_LUFS` -22,6 a -19,4, limitador com antecipação só acima de `ROOMS_CEILING` -2 e
+  `MORVATH_CEILING` -5,2 dBFS); bateria nova no script (`_kick`, `_snare`, `_tom`, `_hat`, `_clap`, `_crash`, `_fill`,
+  padrões de 16 passos em `_hits`), baixo, spiccato, metais em `_stab`, linhas por `_line` e contracanto por `_counter`.
+  Medido: caminhada -21,9 a -22,0 LUFS, com a luta -20,0 a -20,1, pico -3,3 a -4,5 dBTP; luta gravada do robô (salas,
+  `--sound-log` e `tools/mix_probe.gd --music-dungeon=id`) -16,8 a -16,9 LUFS, Morvath -16,2. Para caber no teto o
+  MacLeod foi reencodado em qualidade Vorbis 0 (Q-20 a) e as originais, os Salmos e a vitória saem do .wav em qualidade 1 (`QUALITY` no script;
+  as novas em 2). Gravações para ouvir em `docs/gallery/mus1/`. Catálogo como dado em `MusicCatalog` (`core/music_catalog.gd`, `PIECES`: id, nome `music_<id>` no
   `text_pt.tres`, arquivo, camadas, `solo` ou somadas, laço, `places`: `title`, `catacombs` = masmorra, que pede
   caminhada e luta, `morvath` = 4 fases; peça de masmorra serve no título e toca só a caminhada; vitória e Salmos só para
   ouvir). Escolha por lugar no save (`music_title`, `music_dungeon`, `music_morvath`; inválida ou ausente cai no
@@ -528,13 +544,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ou Luta, Fase 1 a 4 ou "Todas as fases" (20 s cada, `MusicRoomScreen.TOUR`); ao sair, `Music.resume()` volta à música
   do jogo onde estava, já com a escolha nova. Loudness igual: as antigas medem -21,7 / -20,1 LUFS (caminhada / com a
   luta) contra -21,1 / -20,1 das novas, Morvath na fase 4 -19,3 contra -19,0 (a fase 1 da original é mais baixa de
-  propósito); a luta gravada (`test_mix.gd`) com cada uma: -16,6 e -16,3 LUFS, -1,4 dBTP. Teto da música no pacote 18 MB
-  (16,6 hoje). Testes em `tests/test_music_room.gd`; fluxo Configurações, Músicas, voltar no `tools/title_flow_check.gd`;
+  propósito); a luta gravada (`test_mix.gd`) com cada uma: -16,6 e -16,3 LUFS, -1,4 dBTP (com "Morvath, a Batalha"
+  -16,4). Teto da música no pacote 18 MB (desde o MUS-1: 16,69 MB de .ogg, 17,73 MB importados no pacote;
+  `test_music.gd` confere os .ogg abaixo de 18 MiB). A tela
+  Músicas tem linhas de 30 px (`MusicRoomScreen.ROW`, `_compact`) para as 14 peças caberem em 720. Testes em `tests/test_music_room.gd`; fluxo Configurações, Músicas, voltar no `tools/title_flow_check.gd`;
   capturas `docs/gallery/t5/ui/music_room_*.jpg`.
   **Música (E4-06, C15-03)**: composta nota por nota e sintetizada pelo projeto em `tools/make_music.gd` (licença nossa;
   tabelas de onda, coro por formantes, corda Karplus-Strong, sinos, tambores, Freeverb; ré menor, a luz de Elun em maior),
   rodar `~/tools/godot/godot --headless --path . -s tools/make_music.gd [-- psalms victory]` (`catacombs` e `morvath` só se pedidos pelo nome, gravando `classic_catacombs_*` e `classic_morvath_*`) (cerca de
-  3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`, 6,1 MB).
+  3 min, precisa do ffmpeg com libvorbis; .wav de trabalho em `~/tools/e4/music`, só os .ogg em `audio/music/`; as
+  peças do MUS-1 também só pelo nome, cerca de 1,5 a 3 min cada, dá para rodar em paralelo).
   Faixas: `classic_catacombs` (96 s, 80 BPM, laço sem emenda: a reverberação do fim aquece o começo) em 2 camadas, caminhada e luta;
   `classic_morvath` (64 s, 120 BPM) em 4 camadas, uma por fase; temas dos Salmos `psalm_sentinel`, `psalm_shelter`,
   `psalm_shepherd`, `psalm_rock` (16 s); `victory` (12,6 s, bVI, bVII, I). Tocador: autoload `Music`

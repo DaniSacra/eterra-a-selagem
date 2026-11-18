@@ -180,7 +180,7 @@ func test_morvaths_fight_hits_the_loudness_targets() -> void:
 	# T5 (Músicas): with every piece the player may choose for the rooms and Morvath (ours, the default, and the
 	# recorded ones), in Save.data only and put back afterwards
 	var options: Dictionary = (Save.data.options as Dictionary).duplicate()
-	for pair: Array in [[&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
+	for pair: Array in [[&"blade_march", &"morvath_battle"], [&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
 		Save.data.options.music_dungeon = String(pair[0])
 		Save.data.options.music_morvath = String(pair[1])
 		var r := MixReplay.render(events, Audio, Music)

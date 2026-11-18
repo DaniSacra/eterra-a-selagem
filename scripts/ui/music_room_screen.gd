@@ -13,7 +13,7 @@ signal closed
 const TOUR := 20.0
 ## Level 0 of a piece with phases: all of them in turn.
 const ALL := 0
-const ROW := 38.0
+const ROW := 30.0  # MUS-1: 14 pieces in the list (was 38 with 10), still inside 1280 x 720
 const LEFT_WIDTH := 340.0
 const RIGHT_WIDTH := 780.0
 ## The name of a piece in the list (one line; the longest, the rooms' recorded pair, is about 410 px at 19).
@@ -70,7 +70,7 @@ func _build() -> void:
 			Music.choose(place, MusicCatalog.step(place, Music.piece_for(place), dir))))
 	var right := VBoxContainer.new()
 	right.custom_minimum_size.x = RIGHT_WIDTH
-	right.add_theme_constant_override(&"separation", 2)
+	right.add_theme_constant_override(&"separation", 1)
 	cols.add_child(right)
 	right.add_child(UiKit.label(T.t(&"music_room_list"), UiKit.GOLD, 24, UiKit.BOLD_FONT))
 	for id: StringName in MusicCatalog.PIECES:
@@ -114,7 +114,22 @@ func _piece_row(id: StringName) -> HBoxContainer:
 	b.custom_minimum_size.y = ROW
 	_listen[id] = b
 	row.add_child(b)
+	for c: Button in row.find_children("*", "Button", true, false):
+		_compact(c)
 	return row
+
+
+## MUS-1 (14 pieces in the list): a list button with the theme's look but a thin padding and the list's font, so a
+## row is ROW high and the whole page stays inside 1280 x 720.
+static func _compact(b: Button) -> void:
+	b.add_theme_font_size_override(&"font_size", NAME_SIZE)
+	for look: Array in [[&"normal", Color(0.08, 0.06, 0.1, 0.9), Color(0.4, 0.32, 0.22), 1],
+			[&"hover", Color(0.16, 0.11, 0.08, 0.95), UiKit.GOLD, 2], [&"pressed", Color(0.22, 0.15, 0.08, 0.95), UiKit.GOLD, 2],
+			[&"focus", Color(0.16, 0.11, 0.08, 0.95), UiKit.GOLD, 2]]:
+		var s := UiKit.box(look[1], look[2], look[3], 10)
+		s.content_margin_top = 2.0
+		s.content_margin_bottom = 2.0
+		b.add_theme_stylebox_override(look[0], s)
 
 
 ## The level heard now for a piece (all phases: the one the tour is on).

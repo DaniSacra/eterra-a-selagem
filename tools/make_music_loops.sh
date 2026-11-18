@@ -16,7 +16,7 @@ SRC="${1:?folder with the downloaded mp3s}"
 OUT="$(cd "$(dirname "$0")/.." && pwd)/audio/music"
 WORK="${TMPDIR:-/tmp}/eterra_music_loops"
 mkdir -p "$WORK"
-Q=3  # vorbis quality (about 112 kbps)
+Q=0  # vorbis quality (about 64 kbps; MUS-1, Q-20 a: was 3, down for the 18 MB of music with the new pieces)
 
 # loop <source> <start s> <length s> <crossfade s> <wav out>: the seam fades the bars after the loop into its head
 loop() {

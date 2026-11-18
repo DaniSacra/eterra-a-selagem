@@ -116,7 +116,9 @@ func test_every_track_is_there_in_time_and_small() -> void:
 	# T5: the recorded rooms' pieces are long loops (40 and 70 bars, about 2 min 45 s), the title's whole piece,
 	# Morvath's four sections of 48 bars; ours (E4, back in Músicas) 96 s for the rooms and 64 s for Morvath
 	var bounds := {&"classic_catacombs": Vector2(60, 200), &"classic_morvath": Vector2(45, 120), &"tempting_secrets": Vector2(60, 200),
-		&"gloom_descent": Vector2(60, 200), &"clash_defiant": Vector2(45, 120), &"victory": Vector2(6, 15)}
+		&"gloom_descent": Vector2(60, 200), &"clash_defiant": Vector2(45, 120), &"victory": Vector2(6, 15),
+		# MUS-1: the fight music, 60 to 100 s in whole bars
+		&"blade_march": Vector2(60, 100), &"deep_drums": Vector2(60, 100), &"iron_pulse": Vector2(60, 100), &"morvath_battle": Vector2(60, 100)}
 	for id: StringName in MusicCatalog.PIECES:
 		assert_true(cat.has(id), "piece %s" % id)
 		var spec := MusicCatalog.spec(id)
@@ -145,6 +147,30 @@ func test_every_track_is_there_in_time_and_small() -> void:
 			total += FileAccess.get_file_as_bytes(Music.DIR + f).size()
 	# T5 (Músicas): our own rooms' and Morvath's music came back next to the recorded pieces (5.5 MB more)
 	assert_lt(total, 18 * 1024 * 1024, "the music stays small in the package")
+
+
+## MUS-1: a loop of ours (all its layers summed, as the fight hears them) meets itself: the jump from its last
+## sample to its first is no larger than the jumps inside it, and its last and first quarter second are about as loud
+## (no fade out, no gap, no restart heard).
+func test_our_layered_loops_meet_themselves() -> void:
+	for id: StringName in MusicCatalog.PIECES:
+		var spec := MusicCatalog.spec(id)
+		if not spec.get("loop", false) or spec.get("solo", false) or int(spec.layers) < 2:
+			continue
+		var layers := []
+		for i in int(spec.layers):
+			layers.append(decode(Music.stream_of(id, i)))
+		var x := _sum(layers)
+		var n := x.size()
+		var step := 0.0
+		for i in range(1, n):
+			step = maxf(step, maxf(absf(x[i].x - x[i - 1].x), absf(x[i].y - x[i - 1].y)))
+		var seam := maxf(absf(x[0].x - x[n - 1].x), absf(x[0].y - x[n - 1].y))
+		assert_lt(seam, step, "%s: the seam (%.4f) is no jump (largest inside %.4f)" % [id, seam, step])
+		var q := int(0.25 * RATE)
+		var head := loudest_rms(x.slice(0, q), 0.25)
+		var tail := loudest_rms(x.slice(n - q), 0.25)
+		assert_lt(absf(head - tail), 6.0, "%s: as loud before the seam as after (%.1f, %.1f dBFS)" % [id, tail, head])
 
 
 func test_no_track_has_two_seconds_of_silence() -> void:
@@ -176,7 +202,8 @@ func _choose(dungeon: StringName, boss: StringName) -> void:
 ## the end screen; then a death in the fight. The music is never gone for 2 s, with our pieces (the default, layers
 ## added) and with the recorded ones (one section at a time).
 func test_a_run_never_leaves_two_seconds_of_silence() -> void:
-	for pair: Array in [[&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
+	for pair: Array in [[&"blade_march", &"morvath_battle"], [&"deep_drums", &"classic_morvath"], [&"iron_pulse", &"morvath_battle"],
+			[&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
 		_choose(pair[0], pair[1])
 		var rooms := Music.piece_for(&"catacombs")
 		var boss := Music.piece_for(&"morvath")
@@ -212,7 +239,8 @@ func test_a_run_never_leaves_two_seconds_of_silence() -> void:
 
 
 func test_a_new_track_crossfades_and_the_victory_hands_over() -> void:
-	for pair: Array in [[&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
+	for pair: Array in [[&"blade_march", &"morvath_battle"], [&"deep_drums", &"classic_morvath"], [&"iron_pulse", &"morvath_battle"],
+			[&"classic_catacombs", &"classic_morvath"], [&"gloom_descent", &"clash_defiant"]]:
 		_choose(pair[0], pair[1])
 		var mix := MusicMix.new(Music.catalog())
 		mix.play(pair[0], 2)
@@ -240,14 +268,14 @@ func test_a_new_track_crossfades_and_the_victory_hands_over() -> void:
 ## fight comes in over the walk, as before T5); Morvath adds a layer a phase.
 func test_the_default_title_is_the_walk_and_the_rooms_go_on() -> void:
 	Music.play(&"title")
-	assert_eq(Music.current(), &"classic_catacombs", "the title hears our rooms' music")
+	assert_eq(Music.current(), &"blade_march", "the title hears our rooms' music")
 	assert_eq(Music.mix.level(), 1, "the walk")
 	var d := Music.mix.current()
 	Music.play(&"catacombs", Music.FIGHT)
 	assert_eq(Music.mix.current(), d, "the first room does not restart the piece")
 	assert_eq(Array(d.targets), [1.0, 1.0], "the fight over the walk")
 	Music.boss_phase(3)
-	assert_eq(Music.current(), &"classic_morvath")
+	assert_eq(Music.current(), &"morvath_battle")
 	assert_eq(Array(Music.mix.current().targets), [1.0, 1.0, 1.0, 0.0], "phase 3 over the first two")
 
 

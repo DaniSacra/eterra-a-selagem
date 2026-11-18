@@ -129,19 +129,23 @@ rune_tiles (inc), screen, see_through (inc), slash, slash_ink, soul_crescent, sp
 stone_tree, title_art, title_mist, trial_veins, ult_rift, ult_vortex, x_crack, xray, xray_behind, xray_body (inc),
 xray_depth, xray_edge.
 
-## 9. Música (`audio/music/`, teto no pacote 18 MB; hoje 16,57 MB no disco e **17,22 MB no pacote**)
+## 9. Música (`audio/music/`, teto no pacote 18 MB; MUS-1: 16,69 MB no disco e **17,73 MB importados**)
 
 Ogg Vorbis 44,1 kHz estéreo. Escolha por lugar em `MusicCatalog` (`core/music_catalog.gd`).
 
 | Peça | Arquivos | Origem e licença | Disco | Pacote | Duração | LUFS / dBTP por camada | Estado |
 |---|---|---|---|---|---|---|---|
-| Catacumbas (original), padrão no título e nas salas | `classic_catacombs_1.ogg`, `_2.ogg` | síntese do projeto (`tools/make_music.gd`, código escrito por IA) | 2,38 MB | 2,50 MB | 96 s | -21,7 / -10,5; -25,1 / -6,6 | definitivo |
-| Morvath (original), padrão na luta | `classic_morvath_1..4.ogg` | síntese do projeto | 3,14 MB | 3,27 MB | 64 s | -27,9 a -24,4 / -13,1 a -8,8 | definitivo |
-| Salmos | `psalm_{sentinel,shelter,shepherd,rock}.ogg` | síntese do projeto | 0,73 MB | 0,76 MB | 16 a 16,7 s | -20,4 a -14,8 / -4,6 a -4,3 | definitivo |
-| Vitória | `victory.ogg` | síntese do projeto | 0,13 MB | 0,14 MB | 12,6 s | -22,8 / -4,3 | definitivo |
-| "Tempting Secrets" (título, para escolher) | `title.ogg` | Kevin MacLeod, CC BY 4.0 | 2,27 MB | 2,32 MB | 172 s | -22,0 / -4,3 | definitivo (opcional) |
-| "Oppressive Gloom" e "The Descent" | `catacombs_1.ogg`, `catacombs_2.ogg` | Kevin MacLeod, CC BY 4.0 | 4,23 MB | 4,37 MB | 165 e 163 s | -21,1 / -5,1; -20,1 / -6,3 | definitivo (opcional) |
-| "Clash Defiant" (4 seções) | `morvath_1..4.ogg` | Kevin MacLeod, CC BY 4.0 | 3,70 MB | 3,87 MB | 67,8 s | -22,0 a -19,0 / -9,8 a -7,6 | definitivo (opcional) |
+| Marcha das Lâminas (MUS-1), **padrão no título e nas salas** | `blade_march_1.ogg`, `_2.ogg` (qualidade 2) | síntese do projeto (`tools/make_music.gd`, código escrito por IA) | 1,36 MB | ~1,44 MB | 66,7 s | caminhada -21,9 / -9,1; com a luta -20,1 / -3,9 | provisório até o PO ouvir |
+| Tambores do Fundo (MUS-1) | `deep_drums_1.ogg`, `_2.ogg` (2) | síntese do projeto | 1,43 MB | ~1,52 MB | 64 s | -21,9 / -8,7; -20,0 / -4,5 | provisório até o PO ouvir |
+| Pulso de Ferro (MUS-1) | `iron_pulse_1.ogg`, `_2.ogg` (2) | síntese do projeto | 1,34 MB | ~1,42 MB | 62,6 s | -22,0 / -6,4; -20,1 / -3,3 | provisório até o PO ouvir |
+| Morvath, a Batalha (MUS-1), **padrão na luta** | `morvath_battle_1..4.ogg` (2) | síntese do projeto | 2,58 MB | ~2,73 MB | 64 s | fases 1 a 4: -22,6 / -21,4 / -20,5 / -19,4, -6,4 a -4,9 dBTP | provisório até o PO ouvir |
+| Catacumbas (original), para escolher | `classic_catacombs_1.ogg`, `_2.ogg` (1, do .wav) | síntese do projeto | 1,60 MB | ~1,69 MB | 96 s | -21,7 / -10,7; com a luta -20,1 / -4,8 | definitivo (opcional) |
+| Morvath (original), para escolher | `classic_morvath_1..4.ogg` (1, do .wav) | síntese do projeto | 2,22 MB | ~2,35 MB | 64 s | fases -27,9 / -23,1 / -20,7 / -19,3 | definitivo (opcional) |
+| Salmos | `psalm_{sentinel,shelter,shepherd,rock}.ogg` (1, do .wav) | síntese do projeto | 0,49 MB | ~0,52 MB | 16 a 16,7 s | -20,4 a -14,8 / -4,6 a -4,3 | definitivo |
+| Vitória | `victory.ogg` (1, do .wav) | síntese do projeto | 0,09 MB | ~0,10 MB | 12,6 s | -22,8 / -4,5 | definitivo |
+| "Tempting Secrets" (título, para escolher) | `title.ogg` (0, reencodado do q3) | Kevin MacLeod, CC BY 4.0 | 1,11 MB | ~1,18 MB | 172 s | -22,1 / -4,4 | definitivo (opcional) |
+| "Oppressive Gloom" e "The Descent" | `catacombs_1.ogg`, `catacombs_2.ogg` (0) | Kevin MacLeod, CC BY 4.0 | 2,31 MB | ~2,45 MB | 165 e 163 s | -21,2 / -4,9 | definitivo (opcional) |
+| "Clash Defiant" (4 seções) | `morvath_1..4.ogg` (0) | Kevin MacLeod, CC BY 4.0 | 2,17 MB | ~2,30 MB | 67,8 s | -22,0 a -19,0 | definitivo (opcional) |
 
 Laços feitos no tocador (`MusicMix`, `loop_from`), não no `.import` (`loop=false` em todos, de propósito). Laços sem
 emenda testados em `tests/test_music.gd` e `tests/test_mix.gd`.
