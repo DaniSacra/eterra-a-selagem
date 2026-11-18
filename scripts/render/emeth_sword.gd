@@ -70,7 +70,8 @@ static func make() -> MeshInstance3D:
 	core.position.y = MODEL_BLADE_FROM + length * (CORE_SPAN.x + CORE_SPAN.y) * 0.5
 	var light := StandardMaterial3D.new()
 	light.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	light.albedo_color = STYLE_CORE if CrowdRenderer.stylized() else CORE * CORE_GLOW
+	light.albedo_color = CORE * CORE_GLOW
+	VisualProfile.vary(light, {&"albedo_color": STYLE_CORE})
 	core.material_override = light
 	blade.add_child(core)
 	return root

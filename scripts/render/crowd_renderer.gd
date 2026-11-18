@@ -127,8 +127,6 @@ class Kind:
 var layers := 1
 var _models: Dictionary = {}  # model id -> BakedModel
 var _materials: Dictionary = {}  # enemy id -> ShaderMaterial
-var _edges: Dictionary = {}  # enemy id -> its outline shell (ShaderMaterial), shown by _put_edge
-var _rims: Dictionary = {}  # enemy id -> whether it has a rim of its own (elites, the boss: always outlined)
 var _kinds: Dictionary = {}  # enemy id -> Kind
 ## Batches with something to draw this frame, and the ones shown last frame (hidden when they go unused).
 var _used: Array[Batch] = []
@@ -213,10 +211,12 @@ func register(d: EnemyDef) -> void:
 	edge.set_shader_parameter(&"style_width", STYLE_OUTLINE_WIDTH)
 	edge.set_shader_parameter(&"style_color", STYLE_OUTLINE_COLOR)
 	_set_poses(edge, baked)
-	_edges[d.id] = edge
-	_rims[d.id] = d.rim > 0.0
+	# elites and the boss always have the shell; every figure has it in the stylized look (F7 flips it live)
+	if d.rim > 0.0:
+		mat.next_pass = edge
+	else:
+		VisualProfile.vary(mat, {&"next_pass": edge})
 	_materials[d.id] = mat
-	_put_edge(d.id)
 	var kind := Kind.new()
 	kind.model = baked
 	kind.material = mat
@@ -226,28 +226,6 @@ func register(d: EnemyDef) -> void:
 	kind.hit_time = baked.duration(&"hit")
 	kind.ground = float(baked.ground_speed.get(&"walk", 0.0))
 	_kinds[d.id] = kind
-
-
-## The outline shell on a kind's material: elites and the boss always (their rim says so), every figure in the
-## stylized look (T20). The classic common crowd draws no shell (no pass and no cost added to it).
-func _put_edge(id: StringName) -> void:
-	var mat := _materials.get(id, null) as ShaderMaterial
-	if mat == null:
-		return
-	mat.next_pass = _edges[id] if _rims[id] or stylized() else null
-
-
-## Whether the stylized look is on (the global art_style, set by VisualProfile): read once a kind is registered, and
-## again by restyle().
-static func stylized() -> bool:
-	var style: Variant = RenderingServer.global_shader_parameter_get(&"art_style")
-	return style != null and float(style) > 0.5
-
-
-## The look changed (VisualProfile.set_look): the outline shells follow it. The shaders read art_style themselves.
-func restyle() -> void:
-	for id: StringName in _materials:
-		_put_edge(id)
 
 
 ## The model's poses on a material of the crowd (crowd_pose.gdshaderinc).

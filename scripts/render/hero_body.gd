@@ -60,16 +60,13 @@ static func _arm(model: Node3D, clips: AnimationLibrary) -> MeshInstance3D:
 
 
 ## His own painted texture, also a little as light (FILL), so he keeps his colours where the room's light does not
-## reach. In the stylized look (CrowdRenderer.stylized, the global art_style) his own shader instead (PAINT, with the
-## same FILL) and the outline shell after it.
+## reach. In the stylized look (VisualProfile, F7 flips it live) his own shader instead (painted(), with the same FILL)
+## and the outline shell after it.
 static func _fill(model: Node3D) -> void:
-	var styled := CrowdRenderer.stylized()
 	for n in model.find_children("*", "MeshInstance3D", true, false):
 		var mi := n as MeshInstance3D
 		var mat := (mi.get_active_material(0) as StandardMaterial3D).duplicate() as StandardMaterial3D
-		if styled:
-			mi.material_override = painted(mat)
-			continue
+		var paint := painted(mat)
 		mat.emission_enabled = true
 		mat.emission = Color.WHITE
 		# multiply: the colour times the texture (the default, add, puts the full white on top of it)
@@ -77,6 +74,7 @@ static func _fill(model: Node3D) -> void:
 		mat.emission_texture = mat.albedo_texture
 		mat.emission_energy_multiplier = FILL
 		mi.material_override = mat
+		VisualProfile.vary(mi, {&"material_override": paint})
 
 
 ## His stylized material from the model's own (StandardMaterial3D): the painting, its colour, FILL; the outline after.
@@ -92,6 +90,17 @@ static func painted(own: StandardMaterial3D) -> ShaderMaterial:
 	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
 	mat.next_pass = edge
 	return mat
+
+
+## Both looks' materials of a mesh of his body (the classic one and, if it has one, the stylized one).
+static func materials(mi: MeshInstance3D) -> Array[Material]:
+	var out: Array[Material] = []
+	var classic: Variant = VisualProfile.classic_of(mi, &"material_override", mi.material_override)
+	var styled: Variant = VisualProfile.styled(mi, &"material_override")
+	for m: Variant in [classic, styled]:
+		if m is Material and not out.has(m):
+			out.append(m)
+	return out
 
 
 ## Whether a material of his body takes the fill (the painting as light; Player lightens it in the blink after a hit).

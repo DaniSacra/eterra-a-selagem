@@ -337,8 +337,9 @@ func _prepare(n: Node) -> void:
 		if c is MeshInstance3D:
 			var mesh := c as MeshInstance3D
 			mesh.material_overlay = _xray_of(mesh)
-			if HeroBody.fills(mesh.material_override):
-				_fills.append(mesh.material_override)
+			for own in HeroBody.materials(mesh):
+				if HeroBody.fills(own):
+					_fills.append(own)
 		_prepare(c)
 
 

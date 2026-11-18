@@ -3,8 +3,8 @@ extends CompositorEffect
 ## Eterra Stylized, the painting filter (STY-07; docs/art/stylized_spec.md 5.2, T26): a 4-sector Kuwahara of RADIUS
 ## pixels at 1080 (scaled by the 3D resolution) and a coloured contour where the depth jumps, run on the camera's
 ## compositor after the opaque pass (avisos, arcs, particles, the x-ray and the numbers are drawn after it, sharp).
-## Optional and off unless wanted: only in the stylized look, only on the Forward+, only at the "Alta" quality, and
-## `--paint-pass=0|1` decides for a run (attach()). Decision and measures in docs/art/stylized_poc_plan.md (STY-07).
+## Optional: only in the stylized look, only on the Forward+, only at the "Alta" quality; `--paint-pass=0|1` decides
+## for a run, else DEFAULT_ON (attach()). Decision and measures in docs/art/stylized_poc_plan.md (STY-07).
 
 const SHADER := preload("res://assets/shaders/paint_pass.glsl")
 ## Kuwahara radius in pixels at 1080 lines (2; 3 at most), the contour's width in pixels at 1080, its colour (sRGB, as
@@ -41,27 +41,31 @@ func _notification(what: int) -> void:
 				_rd.free_rid(rid)
 
 
-## Whether it would run here: the stylized look (the global art_style), the Forward+ and the given quality level.
+## Whether it may run here: the Forward+, the given quality level (Alta only) and `--paint-pass` (else DEFAULT_ON).
+## The look is not asked here: the effect is on only in the stylized one (attach registers it, F7 flips it live).
 static func wanted(level: int) -> bool:
 	if RenderingServer.get_current_rendering_method() != "forward_plus" or level != GraphicsQuality.HIGH:
-		return false
-	if not CrowdRenderer.stylized():
 		return false
 	if Dev.has("paint-pass"):
 		return Dev.arg("paint-pass") != "0"
 	return DEFAULT_ON
 
 
-## Puts the filter on the camera when wanted() (and takes it off when not). Returns whether it is on.
+## Puts the filter on the camera when wanted() (and takes it off when not), enabled only in the stylized look
+## (VisualProfile). Returns whether it is on the camera.
 static func attach(camera: Camera3D, level: int) -> bool:
 	if camera == null:
 		return false
 	if not wanted(level):
-		if camera.compositor:
-			camera.compositor = null
+		camera.compositor = null
 		return false
+	if camera.compositor and camera.compositor.compositor_effects.size() > 0 and camera.compositor.compositor_effects[0] is PaintPass:
+		return true
+	var effect := PaintPass.new()
+	effect.enabled = false
+	VisualProfile.vary(effect, {&"enabled": true})
 	var comp := Compositor.new()
-	var effects: Array[CompositorEffect] = [PaintPass.new()]
+	var effects: Array[CompositorEffect] = [effect]
 	comp.compositor_effects = effects
 	camera.compositor = comp
 	return true
