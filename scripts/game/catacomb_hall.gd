@@ -85,7 +85,9 @@ const SHOWCASE := Vector3(-2.0, 0, 0)
 ## Candles: their height and radius ranges (m), the warm halo over a cluster, one warm light per cluster. VX-13 (visual
 ## review V-C1): warm is an accent, not the whole edge: half the clusters of the edge are burnt out, the east and south
 ## ones (by the east stone, the north-east corner, the south stone, the landing) and one of the west balustrade; the
-## dais's, the west balustrade's other four, the north corner's and the fire bowls stay.
+## dais's, the west balustrade's other four, the north corner's and the fire bowls stay. C18 (ART P1-2, one tone for
+## the scenery): half of those left are burnt out too, the west balustrade's northmost and southmost and the west
+## nook's; the dais's, the landing foot's, two of the west balustrade's and the fire bowls stay lit.
 const CANDLE_HEIGHT := Vector2(0.3, 1.1)
 const CANDLE_RADIUS := Vector2(0.12, 0.22)
 ## A cluster has 3 to CANDLE_MAX candles (one tall and thick, one or two of middle height, the rest stubs); those
@@ -93,10 +95,18 @@ const CANDLE_RADIUS := Vector2(0.12, 0.22)
 const CANDLE_MAX := 5
 const CANDLE_ON_TOP := 0.6
 const CANDLE_HALO := 0.5
+## A heap of fallen stones (_rubble): how many blocks, their width range and height range (m, under the knee), how far
+## from the heap's middle.
+const RUBBLE := 4
+## The candles by the east stone: the circle that blocks round them (m).
+const EAST_CLUTTER := 0.7
+const RUBBLE_SIZE := Vector2(0.3, 0.6)
+const RUBBLE_HEIGHT := Vector2(0.14, 0.26)
+const RUBBLE_SPREAD := 0.55
 const CANDLE_HALO_ALPHA := 0.35
 const CANDLE_LIGHT := 1.5
 const CANDLE_RANGE := 2.8
-const ABYSS_LIGHT := Color(0.55, 0.25, 1.0)
+const ABYSS_LIGHT := Color(0.66, 0.52, 1.0)
 const ABYSS_LIGHT_ENERGY := 5.0
 ## The violet lights stand this low, so only the foot of the cliffs and piers turns violet.
 const ABYSS_LIGHT_Y := -12.0
@@ -657,7 +667,7 @@ func _north_west() -> void:
 	kit.crate(nook + Vector3(0.35, 0, -0.1), 0.4, Vector3(0.9, 0.55, 0.9))
 	kit.crate(nook + Vector3(-0.55, 0, 0.35), -0.15, Vector3(0.75, 0.45, 0.75))
 	m.pot(nook + Vector3(0.5, 0, 0.75), 0.75)
-	_candles(nook + Vector3(-0.3, 0, 1.0), 3, false)
+	_candles(nook + Vector3(-0.3, 0, 1.0), 3, false, false, true)
 
 
 # ---------- west: the long balustrade and the giant in the abyss ----------
@@ -690,7 +700,7 @@ func _west() -> void:
 	# candles and clay pots along the balustrade (the picture's groups; VX-13: the one at z 2.2 burnt out), a small altar
 	# of a crate with candles and two pots on it
 	kit.crate(Vector3(x + 1.0, 0, -10.4), 0.2, Vector3(1.3, 0.8, 1.3))
-	_candles(Vector3(x + 1.0, 0.8, -10.4), 4, false)
+	_candles(Vector3(x + 1.0, 0.8, -10.4), 4, false, false, true)
 	m.pot(Vector3(x + 1.0, 0, -11.9), 1.0)
 	m.pot(Vector3(x + 1.6, 0, -12.5), 0.8)
 	_candles(Vector3(x + 1.2, 0, -6.3), 5)
@@ -699,7 +709,7 @@ func _west() -> void:
 	_candles(Vector3(x + 1.3, 0, 2.2), 4, false, false, true)
 	_candles(Vector3(x + 1.2, 0, 7.1), 6)
 	m.pot(Vector3(x + 0.9, 0, 9.4), 0.9)
-	_candles(Vector3(x + 0.9, 0, 12.4), 3)
+	_candles(Vector3(x + 0.9, 0, 12.4), 3, true, false, true)
 
 
 # ---------- south-west: the landing and the way in ----------
@@ -742,10 +752,13 @@ func _east(stairs_down: bool) -> void:
 	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
-	kit.crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 0.7)
+	kit.crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 1.0)
 	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4, false, false, true)
-	kit.piece("rubble_half", Vector3(x - 2.4, 0, EAST_STONE.y + 4.2), 1.1, Vector3.ONE * 0.55)
-	kit.piece("rubble_large", Vector3(x - 1.3, 0, EAST_STONE.y + 4.8), 0.3, Vector3.ONE * 0.5)
+	# the clutter by the stone stops the way as it reads (C18, ENV P2-6: a phantom of 2.5 m² at x 13 to 15)
+	kit.circles.append(Vector3(x - 2.4, EAST_STONE.y + 1.8, EAST_CLUTTER))
+	# fallen stones of the hall's own masonry (C18, ENV P2-6: the KayKit rubble was the one kit piece left in sight)
+	_rubble(Vector2(x - 2.4, EAST_STONE.y + 4.2))
+	_rubble(Vector2(x - 1.3, EAST_STONE.y + 4.8))
 	# north of the stone: the stairs down out of the hall (or a plain balustrade), a fire bowl on a pier past them
 	if stairs_down:
 		m.balustrade(Vector3(x, 0, EAST_STONE.y - 1.0), Vector3(x, 0, EAST_GAP.y))
@@ -1095,6 +1108,19 @@ func _doors(count: int) -> void:
 
 
 # ---------- candles ----------
+
+## A heap of fallen stones of the hall's masonry round `at` on the floor: RUBBLE blocks (size range, all under the
+## knee so none reads as a barrier), each askew, the same heap at the same place.
+func _rubble(at: Vector2) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(Vector2i(at * 10.0))
+	for k in RUBBLE:
+		var size := Vector3(r.randf_range(RUBBLE_SIZE.x, RUBBLE_SIZE.y), r.randf_range(RUBBLE_HEIGHT.x, RUBBLE_HEIGHT.y),
+			r.randf_range(RUBBLE_SIZE.x, RUBBLE_SIZE.y))
+		var p := at + Vector2.from_angle(r.randf() * TAU) * r.randf_range(0.0, RUBBLE_SPREAD)
+		var b := m.box(Vector3(p.x, size.y * 0.5 - 0.03, p.y), size, r.randf() * TAU)
+		b.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.2, 0.2))
+
 
 ## A cluster of thick candles on the floor (or on top of something at `at`: then smaller), a warm halo over them and
 ## one warm light unless light is false: one tall thick candle in the middle, one or two of middle height and stubs

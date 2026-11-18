@@ -141,15 +141,15 @@ const LIP_FALLEN := Vector2(0.35, 0.7)
 const LIP_FALLEN_DEPTH := Vector2(0.3, 1.1)
 
 ## A whole column's head (the crypt's; E5: every arena's whole column that wants it) (ART_REVIEW C-2, spec 1.3: no askew cubes over it): the round capital (necking ring height,
-## bell height, how far the bell flares and the abacus reaches as shares of the shaft's radius, abacus height) and two
-## arches springing from it as curved voussoirs, across the camera's view so their curve shows (their bearings; span
-## of their arch, ring width, the share of the arch each keeps).
+## bell height, how far the bell flares and the abacus reaches as shares of the shaft's radius, abacus height).
 const CAPITAL := Vector4(0.09, 0.3, 1.38, 1.55)
 const ABACUS := 0.12
-const SPRING_BEARINGS: Array[float] = [55.0, 235.0]
-const SPRING_ARCH := Vector3(2.2, 0.34, 0.36)
-## The springers' depth (a share of the shaft's radius) and the round pieces' sides (smoother than a plain shaft).
-const SPRING_DEEP := 1.2
+## C18: the impost block over the abacus of the second silhouette (its width as a share of the abacus', its height),
+## the annulet round its shaft (where along the shaft, radius as a share of the shaft's, height), and where a broken
+## column snaps (share of its height). The round pieces' sides (smoother than a plain shaft).
+const IMPOST := Vector2(0.86, 0.42)
+const ANNULET := Vector3(0.55, 1.12, 0.1)
+const COLUMN_BROKEN := 0.66
 const CAPITAL_SIDES := 18
 ## The blind window's tracery: mullion width, how deep the panel is set back, the dark of the panel, the broken share.
 const WINDOW_MULLION := 0.14
@@ -832,12 +832,13 @@ func bridge(r: Rect2, shadow_nw: bool, shadow_se: bool, arches := 1, open: Vecto
 	m.layers = 1
 	deck(r)
 	for z: float in [r.position.y - PARAPET.z, r.end.y + PARAPET.z]:
+		var side := Vector2(0.0, signf(z - cz))
 		if open == Vector2.ZERO:
-			parapet(Vector2(r.position.x + ABUTMENT.x * 0.5, z), Vector2(r.end.x - ABUTMENT.x * 0.5, z))
+			parapet(Vector2(r.position.x + ABUTMENT.x * 0.5, z), Vector2(r.end.x - ABUTMENT.x * 0.5, z), side)
 			continue
 		# a landing breaks the parapet (open: from, to along x): it has its own
-		parapet(Vector2(r.position.x + ABUTMENT.x * 0.5, z), Vector2(open.x - PARAPET.z, z))
-		parapet(Vector2(open.y + PARAPET.z, z), Vector2(r.end.x - ABUTMENT.x * 0.5, z))
+		parapet(Vector2(r.position.x + ABUTMENT.x * 0.5, z), Vector2(open.x - PARAPET.z, z), side)
+		parapet(Vector2(open.y + PARAPET.z, z), Vector2(r.end.x - ABUTMENT.x * 0.5, z), side)
 	# the four heads: north-west and south-east with lanterns (the first of the pair casting shadows), the others candles
 	for k in 4:
 		var west := k == 0 or k == 3
@@ -909,14 +910,22 @@ func deck(r: Rect2) -> void:
 			x += l
 
 
+## True when an edge facing `out` (on the floor) is one the camera looks across (its outside toward the camera).
+static func faces_camera(out: Vector2) -> bool:
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	return out.dot(Vector2(sin(yaw), cos(yaw))) > 0.2
+
+
 func rect_poly(x0: float, x1: float, z0: float, z1: float) -> PackedVector2Array:
 	return PackedVector2Array([Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z1)])
 
 
-## The open parapet of a bridge from a to b (spec 1.3: 0.9 m, never see-through): a curb, a rail, posts every
-## PARAPET_POST meters and bellied balusters between them, the abyss seen through it.
-func parapet(a: Vector2, b: Vector2) -> void:
-	var mat := stone()
+## The open parapet of a bridge from a to b (spec 1.3: 0.9 m): a curb, a rail, posts every PARAPET_POST meters and
+## bellied balusters between them, the abyss seen through it. out: the side it faces (away from the deck); C18 (ENV
+## P2-2): one on the side the camera looks across opens round the paladin behind it (see_through, as the balustrades:
+## at 0.9 m it hid him from the waist down on the near kerb).
+func parapet(a: Vector2, b: Vector2, out := Vector2.ZERO) -> void:
+	var mat := see(stone()) if faces_camera(out) else stone()
 	var length := a.distance_to(b)
 	var along := (b - a) / maxf(length, 0.001)
 	var yaw := atan2(-along.y, along.x)
@@ -941,31 +950,51 @@ func parapet(a: Vector2, b: Vector2) -> void:
 
 
 ## A whole column (TombKit.column's foot and shaft, which the Seal Chamber keeps): plinth, base, shaft, then a necking
-## ring, a round bell flaring to a round abacus, and the arch springing from it as one curved voussoir toward the back.
-func round_column(o: ArenaObstacle) -> void:
+## ring, a round bell (the echinus) and a square abacus. C18 (ART P1-5, ENV P1-6): the two arches springing from the
+## abacus read as a fork ("Y") from the fight's camera, the same on every column; now each column is one of three
+## silhouettes by where it stands (column_kind): the capital with its abacus, the capital with a tall impost block and
+## a ring round the shaft, or (broken, where the room allows it) the shaft snapped at COLUMN_BROKEN of its height.
+func round_column(o: ArenaObstacle, broken := false) -> void:
 	var mat := see(stone()) if o.see_through else stone()
+	var kind := column_kind(o.center, broken)
+	if kind == ColumnKind.BROKEN:
+		tomb.column(o.center, o.radius, o.height * COLUMN_BROKEN, mat, true)
+		return
 	var foot := Vector3(o.center.x, 0.0, o.center.y)
 	var r := o.radius
 	var shaft_r := r * TombKit.COLUMN_SHAFT
 	m.block(foot, Vector3(r * 1.41, TombKit.COLUMN_PLINTH, r * 1.41), PI * 0.25, mat, false)
 	m.shaft(foot + Vector3(0, TombKit.COLUMN_PLINTH, 0), r * 0.98, TombKit.COLUMN_BASE - TombKit.COLUMN_PLINTH, mat)
 	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r * 1.12, 0.12, mat)
-	var head := CAPITAL.x + CAPITAL.y + ABACUS
-	var cap_y := o.height - TombKit.COLUMN_SPRING.x - head
+	var impost := IMPOST.y if kind == ColumnKind.IMPOST else 0.0
+	var head := CAPITAL.x + CAPITAL.y + ABACUS + impost
+	var cap_y := o.height - head
 	m.shaft(foot + Vector3(0, TombKit.COLUMN_BASE, 0), shaft_r, cap_y - TombKit.COLUMN_BASE, mat)
 	var ring := m.shaft(foot + Vector3(0, cap_y, 0), shaft_r * 1.1, CAPITAL.x, mat)
 	var bell := m.shaft(foot + Vector3(0, cap_y + CAPITAL.x, 0), shaft_r * CAPITAL.z, CAPITAL.y, mat)
 	(bell.mesh as CylinderMesh).bottom_radius = shaft_r
-	var top := cap_y + CAPITAL.x + CAPITAL.y
-	var abacus := m.shaft(foot + Vector3(0, top, 0), shaft_r * CAPITAL.w, ABACUS, mat)
-	for piece_mi: MeshInstance3D in [ring, bell, abacus]:
+	for piece_mi: MeshInstance3D in [ring, bell]:
 		(piece_mi.mesh as CylinderMesh).radial_segments = CAPITAL_SIDES
-	# the springers: the first part of a round arch whose left foot sits on the abacus (centred on it), rising away
-	for b in SPRING_BEARINGS:
-		var way := Vector2(sin(deg_to_rad(b)), -cos(deg_to_rad(b)))
-		var yaw := atan2(-way.y, way.x)
-		var mid := foot + Vector3(way.x, 0.0, way.y) * (SPRING_ARCH.x + SPRING_ARCH.y) * 0.5 + Vector3(0, top + ABACUS, 0)
-		m.arch_ring(mid, Vector2(sin(yaw), cos(yaw)), SPRING_ARCH.x, SPRING_ARCH.y, shaft_r * SPRING_DEEP, mat, 0.5, 0.0, SPRING_ARCH.z)
+	var top := cap_y + CAPITAL.x + CAPITAL.y
+	# the square abacus, turned to the room's grid, a little wider than the bell
+	var side := shaft_r * CAPITAL.w * 2.0
+	m.block(foot + Vector3(0, top, 0), Vector3(side, ABACUS, side), 0.0, mat, false)
+	if kind == ColumnKind.IMPOST:
+		# a tall impost block on the abacus (where an arch would spring), and an annulet round the shaft's middle
+		m.block(foot + Vector3(0, top + ABACUS, 0), Vector3(side * IMPOST.x, impost, side * IMPOST.x), 0.0, mat, false)
+		var band := m.shaft(foot + Vector3(0, lerpf(TombKit.COLUMN_BASE, cap_y, ANNULET.x), 0), shaft_r * ANNULET.y, ANNULET.z, mat)
+		(band.mesh as CylinderMesh).radial_segments = CAPITAL_SIDES
+
+
+enum ColumnKind { CAPITAL, IMPOST, BROKEN }
+
+
+## Which of the three silhouettes the column standing at `at` takes (the same at the same place); BROKEN only where
+## `broken` is allowed.
+static func column_kind(at: Vector2, broken := false) -> ColumnKind:
+	var h := posmod(hash(Vector2i(at * 10.0)), 1000)
+	var n := 3 if broken else 2
+	return (h % n) as ColumnKind
 
 
 # ---------- walls, benches, light from above (E5) ----------
@@ -1116,6 +1145,37 @@ func closed_edge(a: Vector2, b: Vector2, out: Vector2, height: float, mat: Mater
 		wall(a2, b2, out, height, openings, mat)
 	else:
 		cut_wall(a2, b2, out, door_gaps(a2, b2, out), mat)
+
+
+## C18 (ART P1-6, ENV P1-5): the event chambers floated as a box in an empty sky, their walls' cut ends against
+## nothing. Behind them now: two cards of far ruins at two depths (BACKDROP_DIST from the camera, the nearer less hazed)
+## fading into `mist`, and a bank of the same mist below the floor's lip, so the walls end in a place.
+const BACKDROP_DIST: Array[float] = [88.0, 108.0]
+const BACKDROP_HAZE: Array[float] = [0.55, 0.75]
+const BACKDROP_COLUMN: Array[float] = [6.0, 4.5]
+const BACKDROP_TOPS: Array[Vector2] = [Vector2(-1.0, 4.0), Vector2(-5.0, 5.0)]
+const BACKDROP_SINK: Array[Vector2] = [Vector2(-6.0, -18.0), Vector2(-10.0, -24.0)]
+const BACKDROP_SIZE := Vector2(220.0, 80.0)
+const BACKDROP_TOP := 16.0
+const BACKDROP_BANK := Vector3(-4.0, 8.0, 0.55)
+
+
+func backdrop(mist: Color, stone: Color, edge_color: Color) -> void:
+	var feel := Feel.live()
+	var yaw := deg_to_rad(feel.cam_yaw)
+	var c := arena.shape().bounds().get_center()
+	var eye := Vector3(c.x, 0, c.y) + Feel.cam_offset_of(feel.cam_distance, feel.cam_pitch, feel.cam_yaw)
+	var ahead := Vector3(-sin(yaw), 0, -cos(yaw))
+	for k in BACKDROP_DIST.size():
+		var at := Vector3(eye.x, BACKDROP_TOP - BACKDROP_SIZE.y * 0.5, eye.z) + ahead * BACKDROP_DIST[k]
+		kit.ruin_card(at, BACKDROP_SIZE, yaw, mist, BACKDROP_HAZE[k], BACKDROP_COLUMN[k], 5.0 + k * 13.0, BACKDROP_TOPS[k],
+			BACKDROP_SINK[k])
+		var cm := (kit.root.get_child(kit.root.get_child_count() - 1) as MeshInstance3D).material_override as ShaderMaterial
+		cm.set_shader_parameter(&"stone_color", stone)
+		cm.set_shader_parameter(&"edge_color", edge_color)
+	var b := arena.shape().bounds()
+	kit.mist_bank(Vector3(c.x, BACKDROP_BANK.x, c.y), b.size.length() * Vector2(1.6, 0.0) + Vector2(0.0, BACKDROP_BANK.y),
+		mist * 2.0, BACKDROP_BANK.z, 0.3, 0.4)
 
 
 ## True on the browser's and the phone's renderer (Compatibility).
@@ -1292,6 +1352,28 @@ func key_light(color: Color, energy: float, height := CatacombHall.KEY_HEIGHT) -
 	key.light_cull_mask = ArenaKit.WARM_MASK
 	add_child(key)
 	return key
+
+
+## C18 (ART P1-2, ENV P1-5): a soft fill from the camera's side, high and without shadow, so the far walls (north
+## and west) read in the fight's frame instead of a black band: WALL_FILL.x of the room's diagonal out toward the camera,
+## WALL_FILL.y up, its reach WALL_FILL.z diagonals. Never on the crowd.
+const WALL_FILL := Vector3(0.45, 9.0, 1.1)
+
+
+func wall_fill(color: Color, energy: float) -> OmniLight3D:
+	var b := arena.shape().bounds()
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var out := Vector2(sin(yaw), cos(yaw)) * b.size.length() * WALL_FILL.x
+	var l := OmniLight3D.new()
+	l.position = Vector3(b.get_center().x + out.x, WALL_FILL.y, b.get_center().y + out.y)
+	l.light_color = color
+	l.light_energy = energy
+	l.omni_range = b.size.length() * WALL_FILL.z
+	l.omni_attenuation = 0.6
+	l.shadow_enabled = false
+	l.light_cull_mask = ~Arena.CROWD_LAYER
+	add_child(l)
+	return l
 
 
 ## How many lights cast shadows (spec 0.5: at most 8 an arena; arena_lab prints it).

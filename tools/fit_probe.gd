@@ -164,7 +164,8 @@ static func measure(arena: Variant, layout: RoomLayout) -> Dictionary:
 					else:
 						bare += area
 						col = Color(0.2, 0.5, 1.0)
-			elif deep_on and not near_piece:
+			elif deep_on and not near_piece and not arena.overlaps(p, SLACK):
+				# (the arena's own colliders too: the hall's pieces are the kit's circles and boxes, not the layout's)
 				if t > KNEE:
 					phantom += area
 					sources[who[i]] = sources.get(who[i], 0.0) + area

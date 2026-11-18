@@ -154,7 +154,9 @@ const CRYSTAL_HEIGHT := Vector2(0.4, 1.4)
 const CRYSTAL_TILT := Vector2(10.0, 35.0)
 ## Corrupted emerald, dark (Boss.CORRUPT's hue, about 165): far from Emeth's bright crystal green (Combat.EMETH, hue
 ## about 135) and never summing to white with its own light (ART_REVIEW J-1: the largest channel on screen up to 160).
-const CRYSTAL_ALBEDO := Color(0.04, 0.12, 0.1)
+## C18 (ART P1-7): darker, and lit only along the edges (crystal_edge.gdshader): flat lit faces read as mint plastic.
+const CRYSTAL_ALBEDO := Color(0.03, 0.08, 0.07)
+const CRYSTAL_SHADER := preload("res://assets/shaders/crystal_edge.gdshader")
 const CRYSTAL_GLOW := Color(0.315, 0.7, 0.604)
 ## A dull, glassy face: rough enough that the cold beam leaves no white highlight on it.
 const CRYSTAL_ROUGHNESS := 0.45
@@ -210,7 +212,7 @@ var footprint := PackedVector3Array()
 var triangles := 0
 var branches := 0
 var stone_material: ShaderMaterial
-var crystal_material: StandardMaterial3D
+var crystal_material: ShaderMaterial
 
 var _v := PackedVector3Array()
 var _n := PackedVector3Array()
@@ -831,14 +833,14 @@ func _crystals(root_bearings: Array[float], glow: float) -> void:
 			count += 1
 	if count == 0:
 		return
-	crystal_material = StandardMaterial3D.new()
-	crystal_material.albedo_color = CRYSTAL_ALBEDO
-	crystal_material.roughness = CRYSTAL_ROUGHNESS
-	crystal_material.metallic_specular = CRYSTAL_SPECULAR
-	crystal_material.emission_enabled = true
-	crystal_material.emission = CRYSTAL_GLOW
-	# the largest channel of the light, far under the glow's threshold (GardenLook.CRYSTAL_GLOW)
-	crystal_material.emission_energy_multiplier = glow / maxf(CRYSTAL_GLOW.r, maxf(CRYSTAL_GLOW.g, CRYSTAL_GLOW.b))
+	crystal_material = ShaderMaterial.new()
+	crystal_material.shader = CRYSTAL_SHADER
+	crystal_material.set_shader_parameter(&"albedo", CRYSTAL_ALBEDO)
+	crystal_material.set_shader_parameter(&"roughness", CRYSTAL_ROUGHNESS)
+	crystal_material.set_shader_parameter(&"specular", CRYSTAL_SPECULAR)
+	crystal_material.set_shader_parameter(&"glow", CRYSTAL_GLOW)
+	# the largest channel of the light at the edges, far under the glow's threshold (GardenLook.CRYSTAL_GLOW)
+	crystal_material.set_shader_parameter(&"peak", glow)
 	var mi := MeshInstance3D.new()
 	mi.name = "StoneTreeCrystals"
 	mi.mesh = st.commit()

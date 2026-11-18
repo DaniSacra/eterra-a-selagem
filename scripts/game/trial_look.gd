@@ -27,11 +27,11 @@ const FLOOR := {
 }
 ## The air (spec 5.4).
 const AIR := {
-	&"sky": Color(0.03, 0.02, 0.05), &"fog": Color(0.08, 0.05, 0.12), &"fog_depth": Vector2(40.0, 90.0),
-	&"ambient": Color(0.22, 0.20, 0.28), &"ambient_gain": 0.5 / 0.9, &"moon": Color(0.55, 0.5, 0.7), &"moon_energy": 0.1,
+	&"sky": Color(0.09, 0.085, 0.11), &"fog": Color(0.13, 0.12, 0.15), &"fog_depth": Vector2(40.0, 90.0),
+	&"ambient": Color(0.24, 0.22, 0.28), &"ambient_gain": 2.0, &"moon": Color(0.6, 0.58, 0.7), &"moon_energy": 0.5,
 	&"moon_shadow": false,
 }
-const MIST := Color(0.05, 0.03, 0.08)
+const MIST := Color(0.065, 0.055, 0.085)
 ## The lilac of the cracks, the veins' and the crack's brightest channel.
 const LILAC := Color(0.52, 0.36, 0.78)
 const VEIN_GLOW := 0.5
@@ -44,7 +44,7 @@ const SPOT_CONE := 20.0
 const SPOT_HEIGHT := 10.0
 ## A soft fill from above so the floor reads (no shadow).
 const FILL := Color(0.6, 0.55, 0.75)
-const FILL_ENERGY := 2.6
+const FILL_ENERGY := 5.0
 ## The cold ivory lanterns of the way out, hung on the wall beside the arch (height, bracket).
 const LANTERN_AT := 2.3
 const LANTERN_BRACKET := Vector3(0.24, 0.12, 0.24)
@@ -125,6 +125,7 @@ func dress() -> void:
 	var fill := key_light(FILL, FILL_ENERGY, 9.0)
 	fill.shadow_enabled = false
 	_lanterns()
+	backdrop(Color(0.13, 0.12, 0.155), Color(0.06, 0.055, 0.075), Color(0.2, 0.18, 0.26))
 
 
 ## The light of the veins and the cracks (1 before the choice, SETTLED after it).

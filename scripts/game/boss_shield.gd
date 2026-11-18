@@ -13,6 +13,12 @@ const SHADER := preload("res://assets/shaders/boss_shield.gdshader")
 ## (ART-006): colder and darker than the Emeth's living green (hue 165, saturation 0.55, value 0.7), so the two never
 ## read as one; the same as spectral_column.gdshader and ritual_rune.gdshader.
 const COLOR := Color(0.315, 0.7, 0.604)
+## C18 (ART P1-4): the dome itself is a step darker and greyer than its circle and motes (the corrupted emerald at
+## saturation 0.42, value 0.56, hue 165: on the screen it read cyan, the hero's ring's petrol), and more translucent:
+## its rim and veins at these shares (the shader's defaults 0.95 and 0.32).
+const DOME_COLOR := Color(0.325, 0.56, 0.5)
+const DOME_RIM := 0.62
+const DOME_VEINS := 0.22
 const SEGMENTS := 40
 const RINGS := 20
 ## The circle on the floor: its radius (share of the shield's), how strongly it is drawn, its height over the floor.
@@ -60,7 +66,9 @@ static func create(r: float) -> BossShield:
 	s.mesh = sphere
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
-	mat.set_shader_parameter(&"color", COLOR)
+	mat.set_shader_parameter(&"color", DOME_COLOR)
+	mat.set_shader_parameter(&"rim_strength", DOME_RIM)
+	mat.set_shader_parameter(&"veins", DOME_VEINS)
 	mat.set_shader_parameter(&"power", 0.0)
 	s.material_override = mat
 	s.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

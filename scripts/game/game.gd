@@ -1251,11 +1251,11 @@ const COMPAT_EXPOSURE := 1.25
 const COMPAT_AMBIENT := 0.4
 ## The air of the hall (the reference image): cold teal behind and below, a low teal ambient, no violet in the air
 ## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
-const SKY := Color(0.06, 0.22, 0.27)
+const SKY := Color(0.11, 0.2, 0.24)
 const AMBIENT := Color(0.3, 0.4, 0.46)
 const AMBIENT_ENERGY := 0.9
 const EXPOSURE := 1.25
-const FOG := Color(0.06, 0.22, 0.27)
+const FOG := Color(0.11, 0.2, 0.24)
 const FOG_BEGIN := 64.0
 const FOG_END := 170.0
 const FOG_HEIGHT := -3.0

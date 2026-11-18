@@ -122,8 +122,10 @@ const BURSTS := {
 	&"shadow": [Color(0.75, 0.52, 1.3), 16, 3.0, 1.5, 0.55, 0.8, 90.0],
 	&"dust": [Color(0.5, 0.45, 0.42), 10, 2.5, 0.5, 0.6, 0.6, 70.0],
 	&"heal": [Color(0.8, 2.6, 1.2), 16, 2.5, 2.5, 0.3, 0.8, 90.0],
-	# a boss's souls and necromancy: a cold, pale green smoke that rises slowly (never Emeth's crystal green)
-	&"soul": [Color(0.38, 1.55, 1.1), 14, 2.2, 2.2, 0.5, 0.9, 80.0],
+	# a boss's souls and necromancy: a cold, pale smoke that rises slowly (never Emeth's crystal green). C18 (ART P1-4):
+	# specks of 0.12 m at most (0.17 x BURST_SCALE), hue pulled to the blue (about 181), brightest channel 0.9 (under
+	# the glow): at 0.35 m and 1.55 they were the green-cyan bubbles round the hero in the storm
+	&"soul": [Color(0.45, 0.88, 0.9), 14, 2.2, 2.2, 0.17, 0.9, 80.0],
 	# a curse: dark purple wisps
 	&"curse": [Color(0.55, 0.15, 0.8), 10, 1.6, 1.2, 0.35, 0.7, 90.0],
 }
@@ -400,9 +402,32 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 	var i: int = _next[kind]
 	_next[kind] = (i + 1) % list.size()
 	var p: CPUParticles3D = list[i]
+	if kind in CLEAR_OF_HERO:
+		pos = clear_of_hero(pos)
 	p.global_position = pos
 	p.direction = (dir + Vector3.UP * 0.6).normalized() if dir != Vector3.ZERO else Vector3.UP
 	p.restart()
+
+
+## C18 (ART P1-4): Morvath's spectral bursts never start nearer the paladin than this (on the floor): a soul landing
+## on him bursts at that distance, on its own side, so the green family of the necromancy never covers his.
+const CLEAR_OF_HERO: Array[StringName] = [&"soul"]
+const HERO_CLEAR_M := 1.5
+
+
+## pos moved out on the floor to HERO_CLEAR_M from the paladin (hero_head) when nearer (away from the camera when
+## it is right on him).
+func clear_of_hero(pos: Vector3) -> Vector3:
+	if not hero_head.is_finite():
+		return pos
+	var off := Vector2(pos.x - hero_head.x, pos.z - hero_head.z)
+	if off.length() >= HERO_CLEAR_M:
+		return pos
+	if off.length_squared() < 0.0001:
+		var back := behind(Vector3(hero_head.x, 0.0, hero_head.z), 1.0)
+		off = Vector2(back.x, back.z) if back != Vector3.ZERO else Vector2(0.0, -1.0)
+	off = off.normalized() * HERO_CLEAR_M
+	return Vector3(hero_head.x + off.x, pos.y, hero_head.z + off.y)
 
 
 ## Meters behind the paladin (away from the camera, on the floor) where his own bursts are centred (hero_burst).

@@ -167,12 +167,6 @@ func start_at(kind: RunMap.Kind) -> void:
 	_enter(map.options(true)[0])
 
 
-func _process(delta: float) -> void:
-	for g in _gems:
-		if is_instance_valid(g):
-			g.rotation.y += delta * TAU / 2.4
-
-
 func depth() -> int:
 	return map.depth
 
@@ -1030,8 +1024,6 @@ func bot_goal() -> Variant:
 ## no channel past ScreenTone.SAFE on the screen (B-1: at 1.0 the exposure and the saturation still took it to 255).
 const GEM_LIFT := 2.2
 const GEM_CAP := 1.0
-## The gold reward's coin: radius and thickness (m).
-const GEM_COIN := Vector2(0.38, 0.1)
 
 
 ## The gem's colour: lifted by GEM_LIFT, then scaled down (hue kept) until its strongest channel is GEM_CAP and its
@@ -1045,32 +1037,6 @@ static func gem_color(c: Color) -> Color:
 	return ScreenTone.fit(lifted)
 
 
-## The shape of a reward's gem over a door or where it lies (art pack 2026-11-17: the symbol in the scenery is the one
-## the signs and cards use where they have one): gold a coin on its edge (the shop's coin, DoorGlyph), a Bênção the
-## prism, the romã a round fruit, the rest the plain stone.
-static func gem_mesh(reward: RunMap.Reward) -> PrimitiveMesh:
-	match reward:
-		RunMap.Reward.BOON:
-			var prism := PrismMesh.new()
-			prism.size = Vector3(0.6, 0.6, 0.6)
-			return prism
-		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
-			var fruit := SphereMesh.new()
-			fruit.radius = 0.35
-			fruit.height = 0.7
-			return fruit
-		RunMap.Reward.GOLD:
-			var coin := CylinderMesh.new()
-			coin.top_radius = GEM_COIN.x
-			coin.bottom_radius = GEM_COIN.x
-			coin.height = GEM_COIN.y
-			coin.radial_segments = 24
-			return coin
-	var box := BoxMesh.new()
-	box.size = Vector3(0.6, 0.6, 0.6)
-	return box
-
-
 ## A floating sign over the floor: a ring of light and a word (what a door leads to, or a reward to take).
 ## glyph: the pictogram left of the sign's name (E5, DoorGlyph); a reward's sign also carries the reward's own mark
 ## (stage 1A, DoorGlyph.of_reward), the glyph then going by the line under the name.
@@ -1080,25 +1046,8 @@ func _marker(at: Vector2, reward: RunMap.Reward, text: String, kind: RunMap.Kind
 	root.position = Vector3(at.x, 0, at.y)
 	add_child(root)
 	var color := _reward_color(reward) if reward != RunMap.Reward.NONE else _kind_color(kind)
-	var gem := MeshInstance3D.new()
-	gem.mesh = gem_mesh(reward)
-	if reward == RunMap.Reward.GOLD:
-		# the coin stands on its edge, spinning (the shop's coin on the door signs, DoorGlyph)
-		gem.rotation.x = PI * 0.5
-	var m := StandardMaterial3D.new()
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.albedo_color = gem_color(color)
-	gem.material_override = m
-	gem.position.y = 1.6
-	root.add_child(gem)
-	_gems.append(gem)
-	var light := OmniLight3D.new()
-	light.position.y = 1.8
-	light.light_color = color
-	light.light_energy = 2.0
-	light.omni_range = 5.0
-	light.light_cull_mask = ~Arena.CROWD_LAYER
-	root.add_child(light)
+	# the reward's medallion over its pedestal (RewardGem, QW-106): it turns, the room's lights shade it
+	_gems.append(RewardGem.make(root, reward, kind, color))
 	if text != "":
 		# the reward's name in gold, a second line (the shop's price) in pale under it (UI-01)
 		var lines := text.split("\n", true, 1)
