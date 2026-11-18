@@ -78,6 +78,8 @@ const BANNER := Vector3(5.6, 1.25, 3.4)
 ## A window: opening width and height, its sill, the ring of its arch, the arch's radius (share of the span).
 const WINDOW := Vector2(2.4, 6.0)
 const WINDOW_SILL := 0.9
+## How far the sill stands out of the wall's face over the floor (m; within the fit probe's slack).
+const SILL_OUT := 0.12
 const WINDOW_RING := 0.32
 const WINDOW_RADIUS := 0.8
 ## The wall is built in upright slices this wide (narrower round the windows), its top broken by up to RUIN m.
@@ -97,6 +99,9 @@ const DOOR_BACK := 2.05
 const STOOP := 0.2
 ## The north-west corner: a broken pier and its buttress.
 const NW_PIER := Vector3(-15.6, -12.6, 5.4)
+## The low broken wall along the north-west cut: its middle this far out of the floor's edge (its blocks turned
+## across the cut reach 0.7 m: off the walkable floor).
+const CUT_WALL_OUT := 0.8
 ## The north-east corner: a tower pier.
 const NE_PIER := Vector3(17.7, -14.7, 8.2)
 
@@ -132,6 +137,17 @@ const LIFTED_OUT := 0.78
 const LIFTED_TILT := Vector2(9.0, 18.0)
 ## Candles on each sarcophagus's lid.
 const LID_CANDLES := 2
+## Moss on the floor (root_moss.gdshader; art pack 2026-11-17, section 4: the bark, the moss and the masonry meet):
+## how far it reaches out of each root's middle line, round the trunk (from its radius, m) and out of the walls' feet;
+## a point every MOSS_STEP meters along a band; its height over the floor (under the inscription's).
+const MOSS_ROOT := 1.35
+const MOSS_TRUNK := 1.8
+const MOSS_WALL := 1.1
+const MOSS_STEP := 0.4
+const MOSS_Y := 0.004
+const MOSS_SHADER := preload("res://assets/shaders/root_moss.gdshader")
+## In the Compatibility renderer the floor's light is lifted (COMPAT_*) and the moss read as a lawn: less of it there.
+const MOSS_COMPAT_COVER := 0.55
 
 # ---------- light (spec 4.6) ----------
 ## The cold beam on the tree: from where (x, y, z), its colour, energy (A, B), cone (degrees) and reach; the shadows of
@@ -201,6 +217,7 @@ func dress() -> void:
 		_inscription()
 	_tree()
 	_walls()
+	_moss()
 	_entry()
 	_statues()
 	_grass()
@@ -312,6 +329,75 @@ func _arc_strip(c: Vector2, bearings: Array[float], mat: ShaderMaterial) -> void
 	mi.material_override = own
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
+
+
+# ---------- the moss ----------
+
+## Moss bands on the floor: along each root from the trunk out past its tip, round the trunk's foot and along the
+## feet of the north and west walls. Drawn only, flat, in one mesh with one material.
+func _moss() -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	if _trunk_o != null:
+		var c := _trunk_o.center
+		var ring := PackedVector2Array()
+		for k in 49:
+			ring.append(c + StoneTree.toward(k * 7.5) * (_trunk_o.radius - 0.3))
+		_moss_band(st, ring, MOSS_TRUNK + 0.3, false)
+		for path in root_paths(layout, _trunk_o):
+			var from := c + (path[0] - c).normalized() * _trunk_o.radius
+			var line := PackedVector2Array([from])
+			line.append_array(path)
+			var tip := (path[path.size() - 1] - line[line.size() - 2]).normalized()
+			line.append(path[path.size() - 1] + tip * StoneTree.ROOT_PAST)
+			_moss_band(st, line, MOSS_ROOT, false)
+			_moss_band(st, line, MOSS_ROOT, true)
+	var b := arena.shape().bounds()
+	_moss_band(st, PackedVector2Array([Vector2(b.position.x + 4.0, NORTH_Z), Vector2(RECESS.x, NORTH_Z)]), MOSS_WALL, true)
+	_moss_band(st, PackedVector2Array([Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x, NORTH_Z)]), MOSS_WALL, true)
+	_moss_band(st, PackedVector2Array([Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0)]), MOSS_WALL, false)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := ShaderMaterial.new()
+	mat.shader = MOSS_SHADER
+	mat.render_priority = -2
+	if _compat():
+		mat.set_shader_parameter(&"cover", MOSS_COMPAT_COVER)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+
+
+## One side of a moss band along a line (to its left when `left`, as seen from above going along it), `reach` wide:
+## the vertex colour's alpha 1 on the line, 0 at its border; cut to the floor.
+func _moss_band(st: SurfaceTool, line: PackedVector2Array, reach: float, left: bool) -> void:
+	var pts := PackedVector2Array()
+	for i in range(1, line.size()):
+		var n := maxi(1, ceili(line[i - 1].distance_to(line[i]) / MOSS_STEP))
+		for k in n:
+			pts.append(line[i - 1].lerp(line[i], float(k) / n))
+	pts.append(line[line.size() - 1])
+	# each point's way out of the line (the mean of its two legs'), so the band runs on without gaps round a bend
+	var sides := PackedVector2Array()
+	for i in pts.size():
+		var a := pts[maxi(i - 1, 0)]
+		var c := pts[mini(i + 1, pts.size() - 1)]
+		var along := (c - a).normalized()
+		sides.append(Vector2(-along.y, along.x) * (1.0 if left else -1.0))
+	var shape := arena.shape()
+	for i in range(1, pts.size()):
+		var a := pts[i - 1]
+		var c := pts[i]
+		var quad: Array[Vector2] = [a, c, c + sides[i] * reach, a + sides[i - 1] * reach]
+		var mid := (a + c) * 0.5 + (sides[i] + sides[i - 1]) * reach * 0.25
+		if not shape.contains(mid, 0.0) and not shape.contains(a, 0.0):
+			continue
+		# the vertex colour's alpha: 1 on the line (the root, the wall), 0 at the band's border
+		var near: Array[float] = [1.0, 1.0, 0.0, 0.0]
+		for k: int in [0, 1, 2, 0, 2, 3]:
+			st.set_color(Color(1.0, 1.0, 1.0, near[k]))
+			st.add_vertex(Vector3(quad[k].x, MOSS_Y, quad[k].y))
 
 
 # ---------- the tree ----------
@@ -579,7 +665,10 @@ func _window(c: Vector2, inward: Vector2) -> void:
 		m.box(face + side * sd * (half + WINDOW_RING * 0.5) + Vector3(0, (WINDOW_SILL + spring) * 0.5, 0),
 			Vector3(WINDOW_RING, spring - WINDOW_SILL, 0.35), yaw, _wall_mat, false)
 	m.arch_ring(face + Vector3(0, spring, 0), inward, WINDOW.x, WINDOW_RING, 0.35, _wall_mat, WINDOW_RADIUS)
-	m.box(face + Vector3(0, WINDOW_SILL - 0.06, 0) + Vector3(inward.x, 0, inward.y) * 0.1, Vector3(WINDOW.x + 0.5, 0.14, WALL_THICK + 0.3), yaw, _wall_mat, false)
+	# the sill stands SILL_OUT out of the wall's face, never over the walkable floor (art pack 2026-11-17: it reached
+	# 0.7 m over it at knee height and the paladin walked through it)
+	m.box(face + Vector3(0, WINDOW_SILL - 0.06, 0) + Vector3(inward.x, 0, inward.y) * (SILL_OUT - (WALL_THICK + 0.3) * 0.5),
+		Vector3(WINDOW.x + 0.5, 0.14, WALL_THICK + 0.3), yaw, _wall_mat, false)
 	# the tracery: a mullion broken at two thirds, one small lancet arch left of the two
 	var back := face - Vector3(inward.x, 0, inward.y) * WALL_THICK * 0.5
 	m.box(back + Vector3(0, WINDOW_SILL + (spring - WINDOW_SILL) * 0.33, 0), Vector3(0.16, (spring - WINDOW_SILL) * 0.66, 0.2), yaw, _wall_mat, false)
@@ -630,16 +719,18 @@ func _corners() -> void:
 	# its broken top: two blocks left askew, one fallen against it
 	m.box(nw + Vector3(0.3, y + 0.3, -0.2), Vector3(0.9, 0.6, 0.8), 0.5, _wall_mat).rotate_object_local(Vector3.FORWARD, 0.25)
 	m.box(nw + Vector3(-1.4, 0.35, -0.9), Vector3(1.0, 0.7, 0.8), 0.9, _wall_mat).rotate_object_local(Vector3.RIGHT, 0.2)
-	# the buttress: steps leaning on the west wall's end
+	# the buttress: steps leaning on the pier along the cut, outside it (art pack 2026-11-17: they ran south over the
+	# walkable floor, stone the paladin walked through; tools/fit_probe.gd)
+	var down_cut := Vector3(-1.0, 0.0, 1.0).normalized()
 	for k in 4:
-		var p := nw + Vector3(-0.2, 0, 1.6 + k * 0.7)
-		m.block(p, Vector3(1.0, 4.4 - k * 1.0, 0.75), 0.0, _wall_mat)
+		var p := nw + down_cut * (1.6 + k * 0.7)
+		m.block(p, Vector3(0.75, 4.4 - k * 1.0, 1.0), PI * 0.25, _wall_mat)
 	# the low wall along the cut, broken
 	var a := Vector2(-17.0, -10.0)
 	var b := Vector2(-13.0, -14.0)
 	var out := Vector2(-1, -1).normalized()
 	for k in 4:
-		var p := a.lerp(b, (k + 0.5) / 4.0) + out * 0.5
+		var p := a.lerp(b, (k + 0.5) / 4.0) + out * CUT_WALL_OUT
 		m.block(Vector3(p.x, 0, p.y), Vector3(1.4, r.randf_range(1.2, 2.8), 0.9), PI * 0.25, _wall_mat)
 	var ne := Vector3(NE_PIER.x, 0, NE_PIER.y)
 	m.block(ne, Vector3(1.9, NE_PIER.z, 1.9), 0.0, _wall_mat)

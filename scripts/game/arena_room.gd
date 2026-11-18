@@ -47,6 +47,8 @@ const SHARD := Vector2(0.15, 0.4)
 const BALUSTRADE_OUT := 0.55
 const BALUSTRADE_RUN := Vector2(2.0, 4.0)
 const BALUSTRADE_GAP := Vector2(1.0, 2.0)
+## A broken balustrade's runs start and end this far in from its edge's ends (its offset out and half a post).
+const BALUSTRADE_END := BALUSTRADE_OUT + Masonry.POST.x * 0.5
 ## The thread of old gold inlaid along a bare edge (spec 3.1): its width and how far in from the drop.
 const FILET := Vector2(0.05, 0.22)
 ## The stairs of a door going down out of the room: steps, rise and run of each; the low cheeks beside them.
@@ -54,6 +56,9 @@ const EXIT_STEPS := 7
 const EXIT_RISE := 0.24
 const EXIT_RUN := 0.42
 const EXIT_CHEEK := Vector2(0.55, 0.9)
+## How far out of the edge and of the mouth's side the pillars beside a door's mouth stand (their middle: half a post
+## and its plinth's lip), so neither the floor nor the mouth has stone over it.
+const DOOR_POST_OUT := Masonry.POST.x * 0.5 + 0.06
 ## A door in a wall: the pointed arch over its mouth (opening a little wider than the mouth, height).
 const WALL_DOOR := Vector2(4.0, 5.2)
 const JAMB := 0.3
@@ -119,12 +124,14 @@ const ABUTMENT_FOOT := -5.0
 const BRIDGE_LAMP_ENERGY := 1.5
 const BRIDGE_LAMP_RANGE := 4.5
 ## The rift's broken lips (spec 1.3, F-3): chunks of the brink's slabs standing out past the drop (length along the
-## lip, how far out at each end, their top sunk under the floor), a stretch with none between them (a missing stone),
+## lip, how far out at each end, their top sunk under the floor: art pack 2026-11-17, a step down of 0.2 m and more, so
+## the walkable floor ends at the drop and no chunk reads as floor one can stand on; they were 3 to 16 cm, the same
+## paving at nearly the floor's height past the edge, tools/fit_probe.gd's "ledge"), a stretch with none between them (a missing stone),
 ## each chunk's cut stone under its paving and the depths' stone hanging lower (heights); the ledge under the west
 ## lip's balustrade (out of the drop); stones hanging in a gap (share, size, depth).
 const LIP_TOOTH := Vector2(0.4, 1.2)
 const LIP_OUT := Vector2(0.3, 1.0)
-const LIP_SINK := Vector2(0.03, 0.16)
+const LIP_SINK := Vector2(0.2, 0.42)
 const LIP_GAP := Vector2(0.3, 0.9)
 const LIP_STONE := 0.45
 const LIP_HANG := Vector2(1.2, 2.6)
@@ -473,14 +480,17 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 		return
 	var r := RandomNumberGenerator.new()
 	r.seed = hash(Vector2i((a - b) * 10.0))
-	var s := 0.0
-	while s < length - 0.5:
-		var run := minf(r.randf_range(BALUSTRADE_RUN.x, BALUSTRADE_RUN.y), length - s)
+	# a broken one (a lip's) keeps clear of its ends: past a bend of the lip (where a bridge's deck meets it) its
+	# offset run went on over the walkable floor (art pack 2026-11-17, tools/fit_probe.gd)
+	var s := BALUSTRADE_END
+	var stop := length - BALUSTRADE_END
+	while s < stop - 0.5:
+		var run := minf(r.randf_range(BALUSTRADE_RUN.x, BALUSTRADE_RUN.y), stop - s)
 		var p0 := a + along * s + off
 		var p1 := a + along * (s + run) + off
 		m.balustrade(Vector3(p0.x, 0.0, p0.y), Vector3(p1.x, 0.0, p1.y), true, mat)
 		s += run
-		var gap := minf(r.randf_range(BALUSTRADE_GAP.x, BALUSTRADE_GAP.y), length - s)
+		var gap := minf(r.randf_range(BALUSTRADE_GAP.x, BALUSTRADE_GAP.y), stop - s)
 		if gap > 0.6:
 			# the stump of a broken post in the gap, and the curb running on under it
 			var g := a + along * (s + gap * 0.5) + off
@@ -1218,8 +1228,12 @@ func _doors() -> void:
 				var along := depth + EXIT_RUN * steps
 				var yaw := atan2(u.x, u.y)
 				m.block(Vector3(c.x, -EXIT_RISE * steps, c.y), Vector3(EXIT_CHEEK.x, EXIT_CHEEK.y + EXIT_RISE * steps, along), yaw, mat)
-			m.post(Vector3(edge_mid.x + side.x * (width * 0.5 + EXIT_CHEEK.x * 0.5), 0.0, edge_mid.y + side.y * (width * 0.5 + EXIT_CHEEK.x * 0.5)), 0.0, 0.9, mat)
-			var lamp_side := edge_mid - side * (width * 0.5 + EXIT_CHEEK.x * 0.5)
+			# the pillars beside the mouth stand off the floor, on the cheeks (art pack 2026-11-17: half of each stood
+			# on the walkable floor, stone the paladin walked into; tools/fit_probe.gd)
+			var off := edge_mid - u * DOOR_POST_OUT
+			var post_side := off + side * (width * 0.5 + DOOR_POST_OUT)
+			m.post(Vector3(post_side.x, 0.0, post_side.y), 0.0, 0.9, mat)
+			var lamp_side := off - side * (width * 0.5 + DOOR_POST_OUT)
 			if used and not _bowl_near(edge_mid, 3.0):
 				tomb.lantern(Vector3(lamp_side.x, 0.0, lamp_side.y), atan2(u.x, u.y), mat, door_lamp(), ~Arena.CROWD_LAYER)
 			else:

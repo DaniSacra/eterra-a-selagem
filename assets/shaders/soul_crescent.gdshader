@@ -1,16 +1,21 @@
 shader_type spatial;
 // A boss's spectral crescent (Morvath's Blades of the Souls and the Storm of the Six Souls): a half-moon of cold
-// blue-green fire flying flat over the floor. A bright leading edge (the side it flies to), a luminous core running
-// along the middle of its body, a smoky body that turns deep violet toward its trailing side and thins to the tips,
+// violet fire flying flat over the floor (art pack 2026-11-17: cold violet with a pale core; it was blue-green). A pale
+// leading edge (the side it flies to), a pale core running along the middle of its body (`core_color`, the brightest
+// part), a smoky body in the cold violet that turns deep violet toward its trailing side and thins to the tips,
 // the smoke streaming backwards (its way reads in a still frame). It flares for an instant when it leaves and
 // fades as it ends (`fade`). Its size is its collision (Projectiles.touches_soul): only the look changed (cycle 9).
 // Drawn on Projectiles' crescent mesh: UV.x 0.3 at the tips to 0.7 in the middle, UV.y 0 on the inner (trailing)
 // side to 1 on the outer (leading) edge.
 render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
 
-uniform vec4 color : source_color = vec4(0.38, 1.55, 1.1, 1.0);
+uniform vec4 color : source_color = vec4(0.62, 0.44, 1.3, 1.0);
 // The violet of the smoke on its trailing side.
-uniform vec4 smoke_color : source_color = vec4(0.62, 0.22, 1.2, 1.0);
+uniform vec4 smoke_color : source_color = vec4(0.36, 0.12, 0.8, 1.0);
+// The pale core and leading edge (a lilac white).
+uniform vec4 core_color : source_color = vec4(0.94, 0.9, 1.0, 1.0);
+// How far the leading edge goes from the body's violet to the pale core colour.
+uniform float edge_pale = 0.6;
 uniform float intensity = 1.0;
 // How bright the leading edge is (above 1: it glows), the core line and the smoky body (under the glow).
 uniform float edge = 1.6;
@@ -55,7 +60,7 @@ void fragment() {
 	vec3 soft = color.rgb / max(max(color.r, max(color.g, color.b)), 1.0);
 	vec3 dusk = smoke_color.rgb / max(max(smoke_color.r, max(smoke_color.g, smoke_color.b)), 1.0);
 	vec3 cloth = mix(dusk, soft, smoothstep(0.2, 0.85, across));
-	vec3 rim = mix(color.rgb, vec3(1.0, 1.15, 1.05), 0.3);
-	vec3 heart = mix(soft, vec3(1.0), 0.25);
+	vec3 rim = mix(soft, core_color.rgb, edge_pale);
+	vec3 heart = core_color.rgb;
 	ALBEDO = (cloth * fumes * body * tips + heart * thread * core + rim * line * edge) * intensity * fade * (1.0 + 0.6 * flare);
 }

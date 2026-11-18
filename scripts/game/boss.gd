@@ -64,6 +64,9 @@ const SPECTRAL := Color(0.38, 1.55, 1.1)
 const ENTRANCE_RING := 4.5
 const ENTRANCE_SOULS := 0.3
 const VIOLET := Color(0.62, 0.22, 1.2)
+## His crescents (the Blades of the Souls, the Storm) and the souls he gathers for them: a cold violet, their core pale
+## (soul_crescent.gdshader; art pack 2026-11-17, section 4: they were the spectral green).
+const SOUL_VIOLET := Color(0.62, 0.44, 1.3)
 const CORRUPT := Color(0.315, 0.7, 0.604)
 ## The curse: dark purple.
 const CURSE_COLOR := Color(1.0, 0.22, 1.5)
@@ -537,7 +540,7 @@ func _step_blades(dt: float) -> void:
 			_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0))
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
 	if _step == 1:
-		_gathering(dt, e.pos + e.dir * HAND.y, SPECTRAL)
+		_gathering(dt, e.pos + e.dir * HAND.y, SOUL_VIOLET)
 		# T5-15: the blade drawn back over his shoulder in both hands (blades_windup), then thrown from there so
 		# the release falls on the shot's frame
 		var throw := windup - _throw_lead(&"slash2", BLADES_ARMED)
@@ -702,7 +705,7 @@ func _storm_queue() -> Array[int]:
 func _fire_soul(d: Vector2, damage: float) -> void:
 	var from := e.pos + d * 0.8
 	var reach := maxf(_floor.cut(from, d, def.blade_range, -def.soul_overrun), 1.0)
-	var s := game.projectiles.fire_soul(from, d, def.blade_speed, damage, def.blade_width, reach, SPECTRAL)
+	var s := game.projectiles.fire_soul(from, d, def.blade_speed, damage, def.blade_width, reach, SOUL_VIOLET)
 	s.source = _attack
 	_shots.append(s)
 	var at := e.pos + d * 1.2
