@@ -753,3 +753,22 @@ Também para o Daniel, de manhã: os perigos H-1 a H-7 (8.5) e se o estilizado v
 **O que só o Daniel jogando responde**: se cada bioma se lê como um lugar diferente descendo a masmorra (o robô não
 vê), se o estilizado cansa ou ajuda a ler a luta em salas escuras como a Cripta e a Câmara, se o F7 lado a lado basta
 para comparar, e se a Loja e a Fonte vestidas pedem câmaras próprias (P-10).
+
+## 9. Ciclo LC, leitura do combate no STYLIZED (parecer da direção artística, 2026-11-19)
+
+Base: `ed5a980` (= `0c17740` mais a correção da loja no exe). Evidências de antes: pacote
+`Eterra-Evidencias-Direcao-Artistica-a1beec9.zip` (`03_personagens`, `02_comparativos/06_*`). Aprovado e fechado: ouro
+velho nas elites e guardiões (`a1beec9`, galeria `0c17740`); violeta continua de Morvath. Meshy zero. Pergunta da
+revisão: durante a luta, dá para perceber quem é elite, quem vai atacar e onde o golpe vai acertar?
+
+| Id | Tarefa | Aceite | Dono | Depende |
+|---|---|---|---|---|
+| **LC-1** | Preparação do Besteiro: a besta e a pose de mira legíveis na câmera normal (malha, clipe e efeitos existentes) | em velocidade real, com 2 ou mais tipos em quadro, dá para dizer que é o besteiro que mira e por onde o virote passa antes do tiro | `technical-artist` (assado, `EnemyFx`) | |
+| **LC-2** | Preparação do Feiticeiro: cajado e orbe como foco | idem, o orbe crescendo no cajado lido de longe e separado do Sacerdote | `technical-artist` | |
+| **LC-3** | Preparação do Sacerdote: gesto de conjuração reconhecível pela silhueta, também ao lado do Feiticeiro | idem | `technical-artist` | |
+| **LC-4** | Figuras no Compatibility: torso, arma e escudo com volume dentro do contorno (Guerreiro, Escudo, todos) | armas e posturas reconhecíveis no Compatibility estilizado; Forward+ e clássico iguais | `technical-artist` (`crowd.gdshader`, `hero_paint.gdshader`) | |
+| **LC-5** | Tempestade das Seis Almas no Compatibility, fase 4 | faixas distintas do piso desde a preparação, do aviso ao impacto, comparadas com o Forward+ na mesma tomada | `technical-artist` (`ground*.gdshader`) | |
+| **LC-6** | Entrega: build integrada, clipes antes e depois (câmera normal, HUD, velocidade real), combate com os três atiradores juntos, fase 4 nos dois renderizadores, SHA e o que passou | pacote revisado pelo Game Director | `qa-performance` | LC-1 a LC-5 |
+| LC-P1 | (proposta, muda tempo ou mecânica: não neste ciclo) preparo mais longo ou com pausa marcada para algum atirador, se o LC-1 a LC-3 não bastarem | decisão do Daniel e do `combat-feel-director` | `combat-feel-director` | LC-6 |
+| LC-P2 | (proposta, só com Meshy ou modelo novo) besta maior, cajado do Sacerdote com forma própria | estimativa de créditos antes | `technical-artist` | LC-6 |
+| **RS-C1** | Criptas A e B: um elemento funerário dominante por variante, com luz e composição (referências internas: a árvore do Jardim, a travessia da Ponte B) | na câmera do jogo, A e B se distinguem de relance; depois da leitura do combate | `art-director` (spec), `environment-artist` | LC-6 |
