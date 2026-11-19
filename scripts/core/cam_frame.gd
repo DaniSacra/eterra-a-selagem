@@ -56,11 +56,31 @@ static func keep(target: Vector2, hero: Vector2, distance: float, pitch_deg: flo
 ## The point a fixed camera looks at (a boss chamber, cycle C11): `target`, moved toward `want` and as much as the
 ## paladin's safe frame needs (keep), but never more than `reach` meters from `target`. follow false: only `want`
 ## (a scene of its own, the paladin may leave the frame).
-static func hold(target: Vector2, want: Vector2, reach: float, hero: Vector2, distance: float, pitch_deg: float, yaw_deg: float, fov_deg: float, aspect: float, follow := true) -> Vector2:
-	var at := target + (want - target).limit_length(reach)
+## slack (the near camera, see slack()): beyond `reach`, how far more it may go across and up the screen.
+static func hold(target: Vector2, want: Vector2, reach: float, hero: Vector2, distance: float, pitch_deg: float, yaw_deg: float, fov_deg: float, aspect: float, follow := true, slack := Vector2.ZERO) -> Vector2:
+	var at := widen(target + (want - target).limit_length(reach), want, slack, yaw_deg)
 	if follow:
 		at = keep(at, hero, distance, pitch_deg, yaw_deg, fov_deg, aspect)
-	return target + (at - target).limit_length(reach)
+	return widen(target + (at - target).limit_length(reach), at, slack, yaw_deg)
+
+
+## The near camera of the options (CamRig.near): how much farther (meters, across the screen and up it) the point
+## it looks at may go past a fixed frame made for the camera at `far` (a room's cam_bounds, a fixed point's
+## cam_reach), so that what the near one sees at its farthest is what the far one saw: half the floor seen in the
+## middle of the screen, at `far` less at `distance`. Zero when the camera is not nearer.
+static func slack(distance: float, far: float, pitch_deg: float, fov_deg: float, aspect: float) -> Vector2:
+	var closer := maxf(far - distance, 0.0) * tan(deg_to_rad(fov_deg) * 0.5)
+	return Vector2(closer * aspect, closer / maxf(sin(deg_to_rad(pitch_deg)), 0.1))
+
+
+## `base` moved toward `want` by at most `slack` across the screen (x) and up it (y), for a camera turned `yaw_deg`.
+static func widen(base: Vector2, want: Vector2, slack: Vector2, yaw_deg: float) -> Vector2:
+	if slack == Vector2.ZERO:
+		return base
+	var right := Feel.screen_to_floor(Vector2.RIGHT, yaw_deg)
+	var forward := Feel.screen_to_floor(Vector2.UP, yaw_deg)
+	var d := want - base
+	return base + right * clampf(d.dot(right), -slack.x, slack.x) + forward * clampf(d.dot(forward), -slack.y, slack.y)
 
 
 ## The point the camera looks at never moves faster than this (m/s; GP-06 of cycle C12c): the safe frame (keep,

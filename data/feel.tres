@@ -11,6 +11,7 @@ move_scale_light = 0.0
 move_scale_heavy = 0.0
 move_scale_finisher = 0.0
 cam_distance = 54.0
+cam_distance_near = 37.0
 cam_pitch = 30.0
 cam_fov = 24.0
 cam_yaw = 35.0

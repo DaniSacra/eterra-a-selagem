@@ -180,7 +180,7 @@ func _ready() -> void:
 	# camera settles on for the paladin where he stands (the simulation's own, not the drawn camera's lag)
 	horde.view = func(p: Vector2) -> Vector2:
 		var fov := Feel.live().cam_fov
-		var distance := Dev.num("cam-dist", Feel.live().cam_distance)
+		var distance := CamRig.distance()
 		var size := get_viewport().get_visible_rect().size
 		return CamFrame.screen_of(p, 1.0, cam_look_at(player.pos, distance, fov), distance, Dev.num("cam-pitch", Feel.live().cam_pitch),
 			cam_yaw(), fov, size.x / maxf(size.y, 1.0))

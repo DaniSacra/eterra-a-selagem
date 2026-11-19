@@ -24,6 +24,8 @@ const OVERRIDE := "user://feel_override.tres"
 @export_group("Camera")
 ## Meters from the point the camera looks at.
 @export_range(8.0, 70.0, 0.5) var cam_distance := 44.0
+## Meters from the point the camera looks at with the near camera of the options (the save's "camera" "near"; CamRig.near).
+@export_range(8.0, 70.0, 0.5) var cam_distance_near := 30.0
 ## Degrees above the floor.
 @export_range(15.0, 85.0, 0.5) var cam_pitch := 50.0
 @export_range(15.0, 70.0, 0.5) var cam_fov := 32.0

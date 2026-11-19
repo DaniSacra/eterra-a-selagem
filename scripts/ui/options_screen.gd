@@ -104,6 +104,9 @@ func _build() -> void:
 	_stepper("opt_quality", T.t(GraphicsQuality.TEXT[GraphicsQuality.clamp_level(int(Save.option("quality")))]), func(dir: int) -> void:
 		Save.set_option("quality", GraphicsQuality.clamp_level(int(Save.option("quality")) + dir))
 		App.apply_options())
+	# the near camera (Daniel, 2026-11-19; CamRig.near, read every frame: the run behind the pause moves at once)
+	_stepper("opt_camera", T.t("opt_camera_near" if String(Save.option("camera")) == "near" else "opt_camera_far"), func(_dir: int) -> void:
+		Save.set_option("camera", "far" if String(Save.option("camera")) == "near" else "near"))
 	_list = pages[Tab.COMFORT]
 	for option in COMFORT:
 		_toggle("opt_" + option, option)

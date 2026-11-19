@@ -987,6 +987,10 @@ func _feel() -> void:
 	# as a diamond from its south-east corner (docs/art/arena_reference.md); cycle 5 brings it 10% closer (60 to 54,
 	# Daniel's "discreet camera adjustments") so the figures read the size of the painting's; --showcase keeps 60
 	f.cam_distance = 54.0
+	# the near camera of the options (Daniel, 2026-11-19): Hades II's Erebus rooms are as big as ours in meters, but its
+	# ZoomFraction about 0.85 shows about 28 m across (ours 41 at 54) and the room is bigger than the screen; 37 m shows
+	# the same 28 m (CamRig.near, the save's "camera"; the far 54 stays the default)
+	f.cam_distance_near = 37.0
 	f.cam_pitch = 30.0
 	f.cam_yaw = 35.0
 	f.cam_fov = 24.0
