@@ -708,7 +708,7 @@ saturação, pedra até 0,2); o Salão sai da umbra aprovada no STY-09 (reversí
 | ID | Objetivo | Aceite medível | Dono | Depende de |
 |---|---|---|---|---|
 | **RS-F1** | Volta completa e galeria final | `tools/smoke.sh 900 --seed=5 --look=stylized` sem erro de shader no log; as 18 vistas na linha da galeria em `docs/gallery/redesign/final/`; correções pendentes das revisões A a E feitas; `art-director` fecha em `docs/art/visual_review.md` | `qa-performance`, `art-director` | RS-A a RS-E |
-| **RS-F2** | Estilizado como padrão do exe (decisão da noite), F7 volta ao clássico | só se o RS-F1 passar; senão o exe sai clássico e o Daniel vê o estilizado pelo F7. Clássico intacto nas 18 vistas. `CLAUDE.md` e `docs/arte/estetica.md` atualizados | Game Director (`VisualProfile`) | RS-F1 |
+| **RS-F2** | **Feito 2026-11-19** (`VisualProfile.default_look`, só no exe exportado; volta da descida e Câmara no estilizado sem erro). Estilizado como padrão do exe (decisão da noite), F7 volta ao clássico | só se o RS-F1 passar; senão o exe sai clássico e o Daniel vê o estilizado pelo F7. Clássico intacto nas 18 vistas. `CLAUDE.md` e `docs/arte/estetica.md` atualizados | Game Director (`VisualProfile`) | RS-F1 |
 
 ### 8.4 Dívidas do redesenho
 

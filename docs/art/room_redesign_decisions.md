@@ -45,3 +45,7 @@ ficam como proposta para ele). Meshy: zero.
 
 Se todas as salas ficarem prontas, o perfil estilizado vira o padrão do exe para o Daniel sentir a diferença descendo a
 masmorra; F7 volta ao clássico a qualquer momento, e o clássico continua intacto.
+
+Feito (2026-11-19): os cinco lotes entraram (A `d153434` e `081a82d`, B `b0ebc78`, C `ecc6c3d`, D `f3ef650`, E
+`b2a7e20`) e o exe exportado abre no estilizado (`VisualProfile.default_look`); a Godot do editor, os testes e as
+capturas seguem no clássico. Volta da descida (`--seed=5`, reação 0,25) e Câmara do Selo no estilizado sem erro de shader.

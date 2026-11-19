@@ -1405,7 +1405,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   foice 91% para 62%, maior sequência igual 9 para 2 (`tools/boss_cadence.gd --cadence-log`).
 
 ## Prova estilizada (STY-03 a STY-05, cenário; spec `docs/art/stylized_spec.md`, plano `docs/art/stylized_poc_plan.md`)
-- Perfil visual reversível (`VisualProfile`, `core/visual_profile.gd`): `Look.CLASSIC` (padrão) e `STYLIZED`, `--look=classic|stylized`,
+- Perfil visual reversível (`VisualProfile`, `core/visual_profile.gd`): `Look.CLASSIC` e `STYLIZED`; **no exe exportado o padrão é o
+  STYLIZED** (RS-F2, 2026-11-19, `VisualProfile.default_look`: `OS.has_feature("template")`), na Godot do editor (testes, capturas,
+  ferramentas) continua o CLASSIC; `--look=classic|stylized`,
   **F7** troca ao vivo também no exe (ação `look_toggle`, lida no `Game._process`), global de shader `art_style` (0 ou 1).
   Um look é uma lista de valores ao lado de cada peça: `VisualProfile.vary(objeto, {propriedade: valor estilizado})` guarda o
   valor de agora como o clássico (referência fraca) e aplica o do look em curso; vale para material (`shader`,

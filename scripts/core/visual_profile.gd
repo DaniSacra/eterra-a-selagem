@@ -49,11 +49,17 @@ static var _look := -1
 static var _entries: Array[Array] = []
 
 
-## The look in use: set_look's, else the command line's (--look=classic|stylized), else CLASSIC.
+## The look in use: set_look's, else the command line's (--look=classic|stylized), else the default: STYLIZED in an
+## exported build (room redesign RS-F2, 2026-11-19: the PO plays the redesigned rooms; F7 goes back to classic),
+## CLASSIC from the editor binary (tests, captures and tools keep the frame they always had).
 static func current() -> Look:
 	if _look < 0:
-		_look = parse(Dev.arg("look", NAMES[Look.CLASSIC]))
+		_look = parse(Dev.arg("look", NAMES[default_look()]))
 	return _look as Look
+
+
+static func default_look() -> Look:
+	return Look.STYLIZED if OS.has_feature("template") else Look.CLASSIC
 
 
 static func stylized() -> bool:
