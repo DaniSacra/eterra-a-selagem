@@ -25,8 +25,10 @@ uniform float body_depth = 0.75;
 uniform float reach_veil = 0.2;
 
 // Eterra Stylized (STY-06, T23): with the global art_style at 1 the ink's tail breaks into the same strokes as the
-// light's (slash_strokes.gdshaderinc). art_style 0: the classic ink, unchanged.
+// light's (slash_strokes.gdshaderinc), and the whole ink is style_veil of its alpha (STY-10, P2-3: the stroke covered
+// the struck figures more than the classic one). art_style 0: the classic ink, unchanged.
 global uniform float art_style;
+uniform float style_veil = 0.72;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 
@@ -80,5 +82,5 @@ void fragment() {
 	}
 	if (band <= 0.01) discard;
 	ALBEDO = color.rgb;
-	ALPHA = min(clamp(band * density, 0.0, 1.0) * opacity, max_alpha);
+	ALPHA = min(clamp(band * density, 0.0, 1.0) * opacity, max_alpha) * (art_style > 0.5 ? style_veil : 1.0);
 }

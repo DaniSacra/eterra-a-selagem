@@ -100,8 +100,16 @@ global uniform vec3 floor_round;
 // more of luma above the slab and its fill 20 or more at the end of the wind-up. Shape, timing and colour do not
 // change. art_style 0: as before.
 global uniform float art_style;
-uniform float style_rim_gain = 1.6;
+uniform float style_rim_gain = 2.0;
 uniform float style_fill_gain = 1.5;
+// STY-10 (P2-1 of the STY-09 combat review): added to the warm floor the warning red read orange on the screen (hue 8,
+// the aim's thread at a saturation of 0.46). With art_style 1 an enemy's own red warning (unsigned, style 0, its colour
+// red over its green and blue) adds style_warn_color instead (less green, a little blue: on the warm slab the sum lands
+// at hue 350 to 360), and its second pass (ground_fill.gdshader, premultiplied) lays the floor under the whole shape,
+// and under the aim's thread, at 1 - style_under (the spec's 3.3: the slab times 0.8), the first pass's light with it,
+// which style_rim_gain makes up. Shape and timing as before; art_style 0 draws the fill with no darkening at all.
+uniform vec3 style_warn_color : source_color = vec3(1.0, 0.09, 0.21);
+uniform float style_under = 0.2;
 
 varying vec3 world;
 
@@ -146,6 +154,16 @@ float warning_fill(float swept) {
 	return max(swept * level, base_fill * strength);
 }
 
+// The colour a warning adds: its own, or in the stylized look an enemy's red warning turned to style_warn_color.
+vec3 warning_color(bool sign) {
+	vec3 c = color.rgb;
+	if (art_style > 0.5 && style == 0 && !sign) {
+		float red = smoothstep(0.5, 0.75, (c.r - max(c.g, c.b)) / max(c.r, 0.001));
+		c = mix(c, style_warn_color * c.r, red);
+	}
+	return c;
+}
+
 void fragment() {
 	if (floor_round.z > 0.0 && length(world.xz - floor_round.xy) > floor_round.z) {
 		discard;
@@ -161,6 +179,8 @@ void fragment() {
 	float a = 0.0;
 	// light of the fill pass (already times strength)
 	float filled = 0.0;
+	// how much of the floor the aim's own drawing covers (its thread and the bar at its end; STY-10 darkens under it)
+	float aim_cover = 0.0;
 	float rim_light = 1.0;
 	vec3 extra = vec3(0.0);
 	float root_k = 1.0;
@@ -224,6 +244,7 @@ void fragment() {
 				float thread = 1.0 - smoothstep(half_w - px * 0.5, half_w + px * 0.5, x_m);
 				float toward_tip = smoothstep(1.0 - aim_tip, 1.0, along);
 				a = max(thread * mix(aim_light, 1.0, toward_tip), far * 0.9) + head * thread * (0.6 - aim_light);
+				aim_cover = max(thread, far);
 			}
 		} else if (style == 3) {
 			float along_m = along * length_m;
@@ -287,15 +308,20 @@ void fragment() {
 	}
 	float gain = 1.0;
 #ifdef FILL_PASS
-	if (filled <= 0.0) discard;
+	float under = 0.0;
+	if (art_style > 0.5 && style == 0 && !sign) {
+		under = style_under * (aim_px > 0.0 ? max(step(0.0001, filled), aim_cover) : 1.0);
+	}
+	if (filled <= 0.0 && under <= 0.0) discard;
 	if (art_style > 0.5) {
 		gain = style_fill_gain;
 	}
-	ALBEDO = color.rgb * filled * gain * fade;
+	ALBEDO = warning_color(sign) * filled * gain * fade;
+	ALPHA = under * fade;
 #else
 	if (art_style > 0.5 && style == 0) {
 		gain = style_rim_gain;
 	}
-	ALBEDO = min(color.rgb * a * strength * gain, vec3(light_cap)) * fade + extra * fade;
+	ALBEDO = min(warning_color(sign) * a * strength * gain, vec3(light_cap)) * fade + extra * fade;
 #endif
 }
