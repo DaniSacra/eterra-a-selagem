@@ -163,8 +163,9 @@ polígono andável.
 
 **Câmara do Selo**
 - Já cumpre o princípio de 222700 (meio vazio, adereços só no anel, chão quieto para os avisos). Nada dentro do
-  círculo. SW-K1 (opcional): gaiolas de ferro vazias penduradas nas correntes de fora, longe de Morvath na tela. Pedir ao
-  Daniel antes: puxa para o sombrio e o tom é de aventura. P, P3.
+  círculo. SW-K1 (opcional): gaiolas de ferro vazias penduradas nas correntes de fora, longe de Morvath na tela. **Aprovado
+  pelo Daniel em 2026-11-19**; entra no lote da prioridade 1 (fora do círculo, longe de Morvath na tela, só no
+  estilizado como o Lote E). P.
 
 ### 3.3 Salas novas (forma e cenário; a regra de jogo é do room-designer)
 
