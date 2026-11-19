@@ -24,7 +24,8 @@ const GLOBAL := &"art_style"
 ## middle of the floor reads light with no fire near (never a light washing a wall), the fog in the air down to 40%,
 ## the frame a little less saturated (the painting comes from value, not colour: the R1's p90 saturation is 15).
 const AMBIENT := Color(0.78, 0.74, 0.68)
-const AMBIENT_GAIN := 1.2
+## STY-10: 1.2 to 1.0, the fires' pools carry the light near them and the middle stays under 80.
+const AMBIENT_GAIN := 1.0
 const FOG_IN_AIR := 0.4
 const SATURATION := 0.77
 ## The key: one directional light from high behind the camera, a little to its right, with a sharp shadow

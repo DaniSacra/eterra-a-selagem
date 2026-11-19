@@ -361,11 +361,19 @@ const LANTERN_CROSSES := 1
 ## bowls' steeper falloff (the candles keep theirs: a steeper one burnt their own wax white), their energy as a share
 ## of the classic one. The key light over the middle is off (the hall's light is the
 ## warm ambient and the key from behind the camera, VisualProfile; an omni over the middle drew rings on the floor).
+## STY-10 (art review, criterion 3: no pools): a fire paints a flat pool inside a drawn edge, brighter than its light
+## (paint.gdshaderinc, paint_pool_gain), so its falloff only sets how far the edge reaches: the bowls' gentler (their
+## light stands 2.8 m up, on the pedestal); the candles' energy up again; the bowls cast no shadow in this look (the
+## bowl's own rim shadowed the floor out to 2.3 m round the pedestal: the pool was a thin ring outside a dark disc; the
+## key from behind the camera draws the figures' shadows).
 const STY_BOWL_RANGE := 4.5
 const STY_CANDLE_RANGE := 3.5
-const STY_BOWL_ATTENUATION := 1.5
-const STY_BOWL_GAIN := 0.5
-const STY_CANDLE_GAIN := 0.6
+const STY_BOWL_ATTENUATION := 0.5
+const STY_BOWL_GAIN := 1.1
+const STY_CANDLE_GAIN := 1.2
+## The browser's renderer (Compatibility) paints the pools near white at those energies (laje 217 beside the east bowl):
+## the fires a share of them there (as VisualProfile.COMPAT_KEY does for the key).
+const STY_COMPAT_FIRE := 0.4
 
 var arena: Arena
 var kit: ArenaKit
@@ -413,6 +421,7 @@ func build(exit_count: int) -> void:
 ## pools, the key off. Nothing here moves a piece or touches what blocks.
 func _stylize() -> void:
 	kit.paint_look()
+	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
 	for n in arena.find_children("*", "OmniLight3D", true, false):
 		var l := n as OmniLight3D
 		if l == _key:
@@ -423,7 +432,8 @@ func _stylize() -> void:
 			VisualProfile.vary(l, {
 				&"omni_range": STY_BOWL_RANGE if bowl else STY_CANDLE_RANGE,
 				&"omni_attenuation": STY_BOWL_ATTENUATION if bowl else l.omni_attenuation,
-				&"light_energy": l.light_energy * (STY_BOWL_GAIN if bowl else STY_CANDLE_GAIN),
+				&"light_energy": l.light_energy * (STY_BOWL_GAIN if bowl else STY_CANDLE_GAIN) * (STY_COMPAT_FIRE if compat else 1.0),
+				&"shadow_enabled": false,
 			})
 
 

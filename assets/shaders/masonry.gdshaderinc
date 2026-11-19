@@ -74,6 +74,11 @@ uniform float lip_hue = 4.0;
 uniform float joint_value = 0.35;
 uniform vec3 joint_cold : source_color = vec3(0.93, 0.96, 1.05);
 uniform float paint_keep = 0.0;
+// STY-10 (art review: the crates read as toys): the wood that keeps its colour, pulled toward its grey and a step
+// darker, and its planks' light lip at a share of the stone's.
+uniform float wood_saturation = 0.5;
+uniform float wood_value = 0.8;
+uniform float wood_lip = 0.35;
 #endif
 
 varying vec3 world;
@@ -173,6 +178,8 @@ void fragment() {
 	vec3 c = mix(stone_a, stone_b, rnd);
 	if (paint_keep < 0.5) {
 		c = paint_recolor(c);
+	} else {
+		c = mix(vec3(paint_luma(c)), c, wood_saturation) * wood_value;
 	}
 	// each block its own value and hue, one in eight toward the olive
 	c *= mix(block_value.x, block_value.y, hash1(s.yz + 41.0));
@@ -234,6 +241,7 @@ void fragment() {
 #ifdef PAINT
 	// the light lip along the top of each block on the upright faces, chipped where the block is
 	float lip = (1.0 - smoothstep(lip_width * 0.75, lip_width, to_top)) * step(n.y, 0.5) * (1.0 - hollow);
+	lip *= mix(1.0, wood_lip, step(0.5, paint_keep));
 	c = mix(c, paint_hue(c * lip_value, lip_hue), lip);
 	c = mix(c, hollow_c, hollow);
 #else

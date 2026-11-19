@@ -134,6 +134,35 @@ uniform float edge_value = 0.72;
 uniform vec2 edge_span = vec2(0.9, 1.7);
 uniform float paint_clearing = 0.4;
 uniform float paint_washes = 0.5;
+// STY-10 (art review, request 3: the runes read as smudges, the ring as a soft double edge): the medallion's band as
+// one stone a little lighter than the slabs, cut by a single groove on each rim; its runes longer and thinner, cut
+// crisp in the joint's value (stroke in m: 0.12 is 5.6 px at 1080 from the game's camera across the view and 3 px
+// along it, where the floor is foreshortened most), with no lit lip; the
+// bevels' painted relief down to a share of the classic one (their dark half beside the groove drew the second edge).
+uniform float paint_band = 1.08;
+uniform float paint_rune_stroke = 0.12;
+uniform float paint_rune_size = 0.4;
+uniform float paint_rune_edge = 0.25;
+uniform float paint_band_bevel = 0.25;
+uniform float paint_band_groove = 0.11;
+// STY-10 (fire pools, art review criterion 3): round the fire bowls (the wet spots, within their outer radius) the
+// floor keeps the middle's value, not the room edge's darker one (the east bowl's pool fell on slabs at 0.58 of the
+// middle's and stayed under 100 where the others reached 110 to 150); the wet floor no darker (it reads by
+// its shine; 1 keeps its value).
+uniform float paint_wet_dark = 1.0;
+// The quatrefoil in the middle cut as wide as the runes, crisp, with no lit lip (m).
+uniform float paint_rosette = 0.12;
+#define RUNE_STROKE paint_rune_stroke
+#define RUNE_SIZE paint_rune_size
+#define RUNE_EDGE paint_rune_edge
+#define BAND_GROOVE paint_band_groove
+#define ROSETTE_W paint_rosette
+#else
+#define RUNE_STROKE rune_stroke
+#define RUNE_SIZE rune_size
+#define RUNE_EDGE 0.4
+#define BAND_GROOVE band_groove
+#define ROSETTE_W rosette_cut.x
 #endif
 
 varying vec3 world;
@@ -207,6 +236,11 @@ float line_at(float d, float half_width) {
 	return 1.0 - smoothstep(half_width * 0.6, half_width, abs(d));
 }
 
+// A line with a sharper edge: solid to `hard` of its half width.
+float line_hard(float d, float half_width, float hard) {
+	return 1.0 - smoothstep(half_width * hard, half_width, abs(d));
+}
+
 // Distance from p to the segment a-b.
 float seg(vec2 p, vec2 a, vec2 b) {
 	vec2 ab = b - a;
@@ -224,7 +258,7 @@ float rune_at(vec2 q, float inner, float outer, out float core, out float cell) 
 	float a = (k + 0.5) * turn;
 	vec2 ax = vec2(cos(a), sin(a));
 	vec2 l = vec2(dot(q, ax) - (outer + inner) * 0.5, dot(q, vec2(-ax.y, ax.x)));
-	float h = (outer - inner) * rune_size;
+	float h = (outer - inner) * RUNE_SIZE;
 	float w = h * rune_wide;
 	float hs = hash1(vec2(k, 3.0));
 	float pick = hash1(vec2(k, 5.0));
@@ -241,9 +275,9 @@ float rune_at(vec2 q, float inner, float outer, out float core, out float cell) 
 		dist = min(dist, seg(l, vec2(u0 - h * 0.5, 0.0), vec2(u0 - h * 0.15, w * side * 0.6)));
 	}
 	float worn = smoothstep(rune_worn - 0.08, rune_worn + 0.08, noise(q * 6.0 + k));
-	core = line_at(dist, rune_stroke * 0.2) * worn;
+	core = line_at(dist, RUNE_STROKE * 0.2) * worn;
 	cell = k;
-	return line_at(dist, rune_stroke * 0.5) * worn;
+	return line_hard(dist, RUNE_STROKE * 0.5, 1.0 - RUNE_EDGE) * worn;
 }
 
 // The medallion carved in the floor (a compass rose of eight points on a ring of sixteen stones). Returns x = how much
@@ -288,7 +322,12 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 		float in_b = 1.0 - smoothstep(inner + band_bevel - 0.01, inner + band_bevel + 0.01, d);
 		float face = out_b * dot(radial, lit) - in_b * dot(radial, lit);
 		float bev = mix(bevel_value.y, bevel_value.x, smoothstep(-0.55, 0.55, face));
+#ifdef PAINT
+		bev = mix(1.0, bev, paint_band_bevel);
+		float v = mix(band_value * paint_band, bev * paint_band, max(out_b, in_b));
+#else
 		float v = mix(band_value, bev, max(out_b, in_b));
+#endif
 		// the runes, the lit lip on the far wall of each cut (so it reads as carved) and the bronze left in some
 		float rune_core;
 		float rune_cell;
@@ -296,19 +335,21 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 		float lip_core;
 		float lip_cell;
 		float lip = clamp(rune_at(q + lit * rune_lip, inner, outer, lip_core, lip_cell) - rune, 0.0, 1.0);
+#ifndef PAINT
 		v *= mix(1.0, rune_light, lip);
+#endif
 		metal = max(metal, rune_core * step(hash1(vec2(rune_cell, 17.0)), rune_bronze) * rune_bronze_left);
 		groove = max(groove, max(joint, rune * rune_dark));
 		shade = mix(shade, v * stone_v, band);
 		raised = band;
 	}
 	// the groove round the band, with the bronze thread inlaid in it, worn away in places
-	float g_out = step(outer, d) * step(d, outer + band_groove);
-	float g_in = step(inner - band_groove, d) * step(d, inner);
+	float g_out = step(outer, d) * step(d, outer + BAND_GROOVE);
+	float g_in = step(inner - BAND_GROOVE, d) * step(d, inner);
 	float in_groove = max(g_out, g_in) * (1.0 - chip);
 	float wear = step(1.0 - metal_left, noise(vec2(ang * d * 1.6, d)));
-	metal = max(metal, line_at(d - outer - band_groove * 0.5, metal_width * 0.5) * wear);
-	metal = max(metal, line_at(d - inner + band_groove * 0.5, metal_width * 0.5) * wear);
+	metal = max(metal, line_at(d - outer - BAND_GROOVE * 0.5, metal_width * 0.5) * wear);
+	metal = max(metal, line_at(d - inner + BAND_GROOVE * 0.5, metal_width * 0.5) * wear);
 	// the eight points: each a long diamond's outer half, born on the outer ring: a light half and a dark half, a
 	// groove round them, some with their tip broken off
 	float step8 = 0.7853982;
@@ -324,7 +365,7 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	float edge = (half_base * (tip - u) / (tip - outer) - abs(v)) / sqrt(1.0 + slope * slope);
 	float broken = hash1(vec2(k, 11.0)) < 0.5 ? tip - mix(0.2, 0.4, hash1(vec2(k, 13.0))) + (noise(q * 8.0) - 0.5) * 0.12 : tip + 1.0;
 	edge = min(edge, broken - u);
-	float past = step(outer + band_groove, u);
+	float past = step(outer + BAND_GROOVE, u);
 	float inside = step(0.0, edge) * past;
 	float pg = past * line_at(edge, point_groove * 0.5 + 0.02) * step(-point_groove, edge);
 	groove = max(groove, pg);
@@ -360,10 +401,12 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	groove = max(groove, in_groove);
 	// the soft rosette of eight petals in the middle
 	float petal = d - 1.2 * (0.55 + 0.45 * abs(cos(ang * 4.0)));
-	float cut = line_at(petal, rosette_cut.x * 0.5) * step(d, 1.3);
+	float cut = line_hard(petal, ROSETTE_W * 0.5, 1.0 - RUNE_EDGE) * step(d, 1.3);
 	vec2 ql = q + lit * rune_lip;
 	float petal_l = length(ql) - 1.2 * (0.55 + 0.45 * abs(cos(atan(ql.y, ql.x) * 4.0)));
+#ifndef PAINT
 	shade *= mix(1.0, rosette_cut.z, clamp(line_at(petal_l, rosette_cut.x * 0.5) - cut, 0.0, 1.0) * step(d, 1.3));
+#endif
 	groove = max(groove, cut * rosette_cut.y);
 	groove = max(groove, crack * 1.2);
 	// back to floor space
@@ -462,7 +505,12 @@ void fragment() {
 	// big washes, fainter (the painted value is per slab), and the floor darker toward the room's edge
 	float big = fbm(wp * 0.07 + 3.0);
 	c *= 1.0 - 0.3 * paint_washes + 0.6 * paint_washes * big;
-	c *= mix(1.0, edge_value, smoothstep(calm_radius * edge_span.x, calm_radius * edge_span.y, length(wp)));
+	float fire_near = 0.0;
+	for (int i = 0; i < 8; i++) {
+		if (i >= wet_spot_count) { break; }
+		fire_near = max(fire_near, 1.0 - smoothstep(wet_spots[i].z, wet_spots[i].w, length(wp - wet_spots[i].xy)));
+	}
+	c *= mix(mix(1.0, edge_value, smoothstep(calm_radius * edge_span.x, calm_radius * edge_span.y, length(wp))), 1.0, fire_near);
 #else
 	float crack = (1.0 - smoothstep(0.0, mix(0.02, 0.008, smoothstep(0.1, 0.7, edge)), abs(cn - 0.5))) * step(hash1(id + 3.0), cracked);
 	c = mix(c, crack_color, crack * 0.85);
@@ -507,8 +555,9 @@ void fragment() {
 	float joint = (1.0 - smoothstep(joint_width * 0.5, joint_width, edge)) * joint_k;
 	vec3 gravel = hollow_c * (0.85 + 0.3 * noise(wp * 30.0));
 	c = mix(c, gravel, max(joint, gone));
-	c = mix(c, hollow_c, clamp(rose.w, 0.0, 1.0) * groove_cover);
-	c = mix(c, hollow_c, rose.y * metal_cover);
+	vec3 cut_c = mix(hollow_c, c * joint_value * joint_cold, on_band);
+	c = mix(c, cut_c, clamp(rose.w, 0.0, 1.0) * groove_cover);
+	c = mix(c, cut_c, rose.y * metal_cover);
 #else
 	c *= mix(1.0, mix(0.6, 1.0, smoothstep(joint_width, joint_width + bevel, edge)), joint_k);
 	float joint = (1.0 - smoothstep(joint_width * 0.5, joint_width, edge)) * joint_k;
@@ -537,7 +586,11 @@ void fragment() {
 		wet = max(wet, 1.0 - smoothstep(s.z, s.w, d));
 	}
 	wet *= 1.0 - joint * 0.5;
+#ifdef PAINT
+	c *= mix(1.0, paint_wet_dark, wet);
+#else
 	c *= mix(1.0, 0.8, wet);
+#endif
 #ifdef PAINT
 	float rough = mix(mix(0.92, 0.97, hash1(id + 31.0)), wet_roughness, wet);
 	vec3 emit = vec3(0.0);
