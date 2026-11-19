@@ -414,6 +414,9 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	return vec4(shade, metal * (1.0 - chip), raised, clamp(groove, 0.0, 1.2));
 }
 
+#ifdef PAINT
+#include "res://assets/shaders/floor_biome.gdshaderinc"
+#endif
 #ifdef CHAMBER
 #include "res://assets/shaders/chamber_seal.gdshaderinc"
 #endif
@@ -532,6 +535,11 @@ void fragment() {
 	vec3 clear_c = clearing_color;
 #endif
 	c = mix(c, clear_c * (0.8 + 0.3 * wash) * mix(1.0 - rock_value_ * 0.5, 1.0, smoothstep(0.2, 0.8, rh)), cleared);
+#ifdef PAINT
+	// the biome's second colour in patches (SW-G1, floor_biome.gdshaderinc)
+	float edge_m = floor_edge_m(wp, COLOR);
+	c = floor_patches(c, wp, edge_m, floor_stone);
+#endif
 	// the medallion carved in the slabs (worked out only under it)
 	vec2 tilt_m = vec2(0.0);
 	vec4 rose = vec4(1.0, 0.0, 0.0, 0.0);
@@ -609,6 +617,10 @@ void fragment() {
 #endif
 #ifdef RUNES
 	rune_floor(wp, rect, edge, joint, c, emit, lean, rough);
+#endif
+#ifdef PAINT
+	// the mottled shade of what hangs over the floor (SW-G2), clear in the fires' pools
+	c = floor_gobo(c, wp, fire_near, TIME);
 #endif
 	ALBEDO = c;
 	ROUGHNESS = rough;

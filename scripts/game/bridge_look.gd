@@ -79,6 +79,10 @@ const STYLE := {
 	&"air": {&"sky": Color(0.05, 0.055, 0.065), &"fog": Color(0.12, 0.13, 0.15), &"ambient": Color(0.68, 0.70, 0.74),
 		&"ambient_gain": 1.8, &"moon": Color(0.82, 0.86, 0.95), &"moon_energy": 1.0, &"moon_shadow": true},
 }
+## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
+## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
+## Pale grey lichen on the slate, 1.5 times the slab's value (the floor between them at patch_rest).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.46, 0.497, 0.491), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5}
 const STY_FLOOR := Color(0.31, 0.325, 0.345)
 ## The platforms are narrow: the floor keeps its value to the edge (the spec's luma 55 to 70 on them; as the Rift).
 const STY_EDGE_VALUE := 1.0
@@ -390,6 +394,7 @@ func _far() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
+	st[&"floor"] = STY_FLOOR_BIOME
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

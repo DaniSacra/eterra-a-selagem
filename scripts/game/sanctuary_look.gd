@@ -116,6 +116,16 @@ const STYLE := {
 ## The floor's limestone in the stylized look (room redesign fixes: it read neutral grey, nave luma 71 to 83 flat): a
 ## warmer stone, the slabs further apart in value and a little more in hue, fewer olive slabs.
 const STY_FLOOR := Color(0.356, 0.343, 0.326)
+## SW-G1 and SW-G2 (docs/art/sworn_reference_ideas.md 3.1; floor_biome.gdshaderinc, ArenaKit.paint_look's `floor`,
+## put by style()): the painted floor's second colour of the biome in patches of 3 to 8 m, stronger near the edge, and
+## the shadow of the vault's broken ribs (SW-S1) in the shafts: a quadripartite bay of gobo_scale m, stretched along
+## STY_SHAFT_LEAN, on each shaft's floor (STY_GOBO_SHAFT: radius, weight; the guardian's smaller, STY_GOBO_GUARD).
+## Pale dust, 1.5 times the limestone's value.
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.544, 0.514, 0.464), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5,
+	&"gobo_kind": 2, &"gobo_strength": 0.25, &"gobo_width": 0.1, &"gobo_base": 0.0, &"gobo_scale": 2.6, &"gobo_stretch": 1.5,
+	&"gobo_along": -STY_SHAFT_LEAN, &"gobo_sway": 0.04, &"gobo_soft": 0.05, &"gobo_cover": 0.5}
+const STY_GOBO_SHAFT := Vector2(9.0, 1.0)
+const STY_GOBO_GUARD := Vector2(5.0, 0.8)
 const STY_SLAB_PAINT := Vector2(0.78, 1.2)
 const STY_SLAB_HUE := 7.0
 ## The stylized air in the browser's renderer (as the crypt's: there the painted stone lit grey-white).
@@ -578,6 +588,12 @@ func _under(h: PackedVector2Array) -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
+	var lit: Array[Vector4] = []
+	for k in _shafts.size():
+		var to: Vector2 = MOON_AT[k] if _hole.is_empty() else _middle(_hole)
+		lit.append(Vector4(to.x, to.y, STY_GOBO_SHAFT.x, STY_GOBO_SHAFT.y))
+	lit.append(Vector4(layout.boss_spawn.x, layout.boss_spawn.y, STY_GOBO_GUARD.x, STY_GOBO_GUARD.y))
+	st[&"floor"] = ArenaKit.gobo(STY_FLOOR_BIOME, lit)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

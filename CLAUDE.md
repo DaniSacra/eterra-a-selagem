@@ -30,7 +30,7 @@ A sessão principal é o Game Director / Tech Lead: planeja, delega, integra, va
 Subagentes em `.claude/agents/`: `art-director` (identidade visual, especificação e revisão), `environment-artist`
 (cenário, materiais, luz), `gameplay-engineer` (combate, inimigos, salas, câmera de jogo, colisão, testes),
 `ui-ux-designer` (HUD, menus, legibilidade), `qa-performance` (testes, medições, capturas reais, relatório em
-`docs/qa/latest_report.md`), `combat-feel-director` (cadência, peso e sincronia do combate: preparação, impacto, recuperação e próxima ação do Guerreiro, dos inimigos e de Morvath; mede em capturas reais, mantém `docs/design/combat_cadence.md`, classifica P0/P1/P2 e pode reprovar tecnicamente uma entrega de combate com evidência; não implementa), `technical-artist` (valida, mantém e evolui todo asset: modelos, assados, texturas, arte de UI, sons e músicas; orçamento, importação, licenças, declaração de IA, assets sem uso; inventário em `docs/art/asset_inventory.md`, relatório em `docs/qa/asset_report.md`; Meshy só com autorização), `room-designer` (evolução e progressão das salas: tamanho, forma, perigos de sala que pedem pensar, como armadilhas, árvore que ataca, buracos e raios, sempre avisados e ferindo inimigos também; plano em `docs/design/rooms_progression.md`), `game-director` (lê todas as evidências e revisões e mantém o backlog em `docs/backlog.md`: bugs e quickwins
+`docs/qa/latest_report.md`), `combat-feel-director` (cadência, peso e sincronia do combate: preparação, impacto, recuperação e próxima ação do Guerreiro, dos inimigos e de Morvath; mede em capturas reais, mantém `docs/design/combat_cadence.md`, classifica P0/P1/P2 e pode reprovar tecnicamente uma entrega de combate com evidência; não implementa), `technical-artist` (valida, mantém e evolui todo asset: modelos, assados, texturas, arte de UI, sons e músicas; orçamento, importação, licenças, declaração de IA, assets sem uso; inventário em `docs/art/asset_inventory.md`, relatório em `docs/qa/asset_report.md`; Meshy só com autorização), `room-designer` (evolução e progressão das salas: tamanho, forma, perigos de sala que pedem pensar, como armadilhas, árvore que ataca, buracos e raios, sempre avisados e ferindo inimigos também; plano em `docs/design/rooms_progression.md`), `balance-designer` (equilíbrio: curva entre descidas, a primeira muito difícil e melhorando aos poucos com Maestria, Dons e hub, e curva dentro da descida; mede com o robô em muitas sementes e Maestrias, metas em `docs/design/balance.md`; propõe números, não implementa), `game-director` (lê todas as evidências e revisões e mantém o backlog em `docs/backlog.md`: bugs e quickwins
 primeiro, depois os próximos ciclos; roda ao fim de cada ciclo, não implementa). Cada arquivo tem um dono por tarefa; agentes em paralelo só com arquivos distintos (ou em
 worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/development/agent_workflow.md`.
 
@@ -97,6 +97,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   dele por até 0,8 m, uns 2% da tela) e cada sala nova começa enquadrada nele (`Game.snap_camera` no `Rooms._enter`; antes a
   câmera voava da sala anterior, até 2,9 m por quadro atrás do escurecimento). `--trace-cam` imprime por sala o maior salto
   do alvo entre quadros e onde (`CAM_TRACE`, `CamFrame.JumpTrace`), e o da partida no fim.
+  **Câmera Perto (opção, 2026-11-19)**: Configurações > Vídeo > Câmera, "Longe" (padrão, a de sempre, 54 m) ou "Perto"
+  (`Feel.cam_distance_near` 37 m, o ZoomFraction 0,85 das salas de Érebo do Hades II: uns 28 m de largura na tela contra 41,
+  a sala maior que a tela); chave `camera` do save (`"far"`/`"near"`), lida a cada quadro (`CamRig.near`, `CamRig.distance`:
+  muda ao vivo, também no hub), `--cam=near|far` para capturas e testes (`--cam-dist` continua por cima). Perto, as margens da
+  sala escalam como sempre (`CamFrame.margin`) e as salas de quadro fixo deixam de segurar: nas de `cam_target`/`cam_reach`
+  (Runas, Provação, Altar, Câmara do Selo, hub) a câmera segue o herói (`CamRig.holds` só longe) e o alcance cresce, como a
+  caixa `cam_bounds`, pelo que a câmera longe via a mais (`CamFrame.slack`, metade do chão visto no meio da tela a 54 menos a
+  37, na largura e na altura da tela; `CamFrame.widen`); `hold` e `keep` iguais com folga zero, então Longe dá o mesmo
+  `RESULT` com a mesma semente. Os atiradores seguem preparando só dentro de 5 a 95% da tela (`Horde._can_fire` pela câmera
+  em uso). Testes em `tests/test_camera_near.gd`; capturas em `docs/gallery/camera_near/`.
 - Herói no meio da multidão: onde algo o cobre ele aparece como o próprio corpo iluminado, nas cores dele (ciclo 7: nada de
   silhueta chapada), com fio marfim fino em pixels da tela e a Emeth por cima, em três passes desenhados por último
   (`xray_depth`, `xray`, `xray_edge`; `Player.XRAY_*`), mais um anel fino petróleo no chão com uma cunha para onde ele olha
@@ -622,6 +632,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   inimigo novo com `tell`, comportamento e `material` que já existem soa sem código. 16 vozes (`Audio.VOICES`).
   Teste: `tests/test_combat_sounds.gd` (todo evento, material, inimigo e golpe do herói com receita; nenhuma receita
   passa de 0,95 sozinha; limitador a -1,5 dB). Projéteis barrados pela pedra ainda sem som (`projectiles.gd`).
+  Runas Instáveis (parecer de cadência 7, P1): um som por padrão ao armar (`rune_arm`: pedra raspando e um sopro morno
+  que cresce) e um estalo de pedra no quadro do golpe (`rune_fire` toca `rune_crack`), nunca um por ladrilho
+  (`RuneFloor.step`, eventos `ARMED` e `FIRED` do `ArenaHazard`); abaixo dos avisos de Morvath (fora de
+  `Audio.WARN_CUES`, sem ducking). Gravados de CC0 do rubberduck (`tools/make_sfx.sh`, `audio/LICENSES.md`); teste em
+  `tests/test_rune_sounds.gd`.
 
 ## Descida de Valmor (DV-1, frente de gameplay: MAP-01, MAP-02, MAP-04; backlog seção "Descida de Valmor")
 - **Grafo da descida** (`RunMap`, `core/run_map.gd`, puro; a API que o mapa e o HUD leem está descrita no topo do
@@ -860,7 +875,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `ArenaHazard.state` = preparo, golpe e brasa de 0,4 s, `ArenaHazard.EMBER`; divisas da varredura por `ArenaHazard.chevron`
   só no preparo; um `apply`, nada quando em repouso) e os avisos do `Ground` ficam invisíveis (`add_hazard(..., drawn)`,
   nada desenhado duas vezes; continuam ferindo). Grade conferida contra o look (`RuneFloor.fits`, 10 x 8 de 3 m desde
-  (-15; -12)); em outro look o âmbar volta. `rooms[].hazard` no `RESULT`.
+  (-15; -12)); em outro look o âmbar volta. `rooms[].hazard` no `RESULT`. Som: `rune_arm` ao armar e `rune_crack` no
+  golpe, um por padrão (ver o som do combate).
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
   numa sala de luta vencida (20%, profundidades 2 a 7, intervalo de 10 salas, nunca com maldição em curso), custo
   `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3
@@ -1706,7 +1722,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   para oeste, da parede da plataforma para nordeste; nunca sobre Morvath na tela); E3 24 cacos de pedra parados no abismo
   nas laterais do quadro (`STY_SHARDS`, `STY_SHARD_SPANS`, pedra da torre, sem brilho); E4 céu a `STY_SKY` 0,9 no
   `BossChamber.dress`, borda das agulhas `STY_SPIRE_EDGE` 1,15 e o anel distante um degrau mais claro (`STY_FAR_TINT`
-  1,4, bruma em que afunda `STY_FAR_MIST`) pelo `VisualProfile.vary`. F7 na câmara: `Arena.restyle` chama
+  1,4, bruma em que afunda `STY_FAR_MIST`) pelo `VisualProfile.vary`. SW-K1 (aprovado 2026-11-19): quatro gaiolas de ferro vazias penduradas por correntinhas nas correntes de fora, duas a oeste e duas a leste, uma com a porta aberta e uma com barra torta (`STY_CAGES`, `STY_CAGE*`, `Masonry.cage_mesh`, `cage_hook`), ferro `ArenaKit.STY_IRON` com a borda das correntes, sem luz nem sombra, balançando devagar no `_process` (`_swing_cages`, só visíveis); caixa de Morvath igual (`docs/gallery/redesign/sworn_p1/k1_*`). F7 na câmara: `Arena.restyle` chama
   `BossChamber.restyle` (veste o ar da câmara de novo no look em uso); na fase 4 o `RoomMood` segue mandando no ar.
   Gêmeos das velas que abrem em volta do herói (`Masonry.see_open`) pegam a cor clássica do material e a estilizada
   pelo `VisualProfile` (antes, montados no estilizado, ficavam com a chama estilizada no clássico). `tools/chamber_lab.gd
@@ -1756,16 +1772,61 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Herói em paz (`Player.peaceful`): só anda e corre (segurar a esquiva); nenhum golpe, especial, círculo, ultimate nem
   esquiva; empurrado no meio de uma peça redonda desliza em volta (`RoundSlide`, só no hub). Sem HUD de combate.
 - Planta (`HubPlan`, `core/hub_plan.gd`, fora do `StageDef`: chão, chegada, cinco pontos de uso, âncoras, obstáculos, eixo
-  (u, v) girado pelo `cam_yaw`); foco por distância com histerese (`HubFocus`: entra a 2,2 m, sai a 2,8, troca por
-  0,4 m mais perto; sinal `Hub.focus_changed`) e placa provisória `DoorSign` com a tecla real. Cenário provisório
-  (`HubLook` sobre `ArenaRoom`, look `hub`: paredes, escada, arco e véu do portal; o resto é do HUB-B2). Árvore de Dons e
-  Livro abrem o `HeroScreen` (Dons, O Guerreiro); Vendedor e Forjador dizem "A definir".
+  (u, v) girado pelo `cam_yaw`). **Chão de 50 x 33 m** (o PO achou o primeiro, 25 x 16,5, pequeno: a Encruzilhada do Hades II
+  espalha os NPCs por uns 80 x 35 m; `HALF_U`, `NORTH`, `SOUTH`, `CUT`), fonte no meio (origem), portal ao norte, Vendedor
+  em cima à esquerda, Forjador embaixo à esquerda, Árvore em cima à direita, Livro embaixo à direita, de 3 a 5 s de
+  caminhada entre eles; peças em constantes (`FOUNTAIN`, `COUNTER`, `ANVIL`, `SMITH_SPOT`, `DAIS`, `LECTERN`, `LAMPS`,
+  `BENCHES`, `BEDS`, `URNS`), todas fora das linhas retas da chegada às estações. Câmera: ponto `CAM_TARGET` com
+  `CAM_REACH` 16 m (`CamFrame.hold`: anda só o que a margem de 18% do herói pede, então chega a qualquer estação e na
+  borda mostra o hub, não o penhasco; uma caixa `cam_bounds` no mundo não serve, o hub está a 35 graus dos eixos); a
+  câmera Perto segue o herói (`CamRig.near`). Foco por distância com histerese (`HubFocus`: entra a 2,2 m, sai a 2,8, troca por
+  0,4 m mais perto; sinal `Hub.focus_changed`).
+- **Cenário (HUB-B2, `HubLook`, `scripts/game/hub_look.gd`, look `hub` sobre `ArenaRoom`; capturas em `docs/gallery/hub/b2/`)**:
+  pátio aberto ao entardecer, montado no eixo do hub dentro de um nó girado pelo `cam_yaw` (`HubLook.frame`, `at(u, y, v)`,
+  `world(u, y, v)`; kit e `Masonry` próprios, `fk`/`fm`). Bordas só penhasco (`edge`), peças `hub_*` desenhadas pelo
+  `dress` sobre a pegada do `HubPlan.layout()` (a mesma que colide; `piece` pula as `hub_*`). Fachada em duas camadas
+  com vãos cortados por `_wall` (blocos inteiros entre os vãos, fatias de `BAND` só sobre cada arco), portal com três
+  ordens de aduelas e a aduela do leão (nunca estrela), escada de 6 degraus que **não** é chão (o portal é usado ao pé
+  dela, `HubPlan` sem mudança), terraço com duas estelas do leão em relevo (`altar_lion.gdshader`), braseiros sem
+  sombra, floreiras; arcadas de quatro arcos de cada lado abertas para as ruínas e a cascata; paredes laterais com o forno (oeste,
+  única luz de fogo com sombra, `KEEP_SHADOW`) e a estante de rolos (leste), um nicho com figura encapuzada em cada
+  uma e um degrau de 1 m entre o chão e a parede com urnas, caixotes e velas (`_ledge`); nichos com figuras na fachada;
+  na praça anel de ouro em volta da fonte com fios para as estações, bancos, urnas grandes em plintos e canteiros; mureta baixa com balaústres (abaixo de
+  0,72 m), escada de chegada com grade e dois postes com lanterna. Praça: leão do medalhão em ouro velho embutido
+  (`INLAY_GOLD`) com dois anéis e o fio de ouro no eixo, lajes de losangos sulcados nos cinco pontos de uso, fonte do
+  leão só decorativa (bacia em blocos, água escura `dark_water`, estela com o leão e o fio d'água, musgo com flores
+  ocre e terra). Estações: toldo listrado terra e ocre com o leão sobre o balcão do Vendedor, mercadorias em âmbar,
+  marfim e azul-ardósia, duas lanternas; forno, bigorna e cavalete com três lâminas de ponta para cima e o escudo do
+  leão; Árvore de Dons = `StoneTree` a 0,65 em ouro velho (sem cristais, veios de ouro, folhas de ouro pálido no
+  `canopy.gdshader`) sobre o estrado octogonal, luz quente sem sombra; Livro de Ahk aberto no atril
+  (`hub_page.gdshader`: pergaminho com linhas de tinta e rubrica, nada legível), fita petróleo, velas, tapete. Luz por
+  estação em `HubLook.station_lights` (`station_light(id)`, para o HUB-B3). Ar e pintura próprios (`AIR`, `STYLE`:
+  calcário morno, sombra petróleo; ambiente e lua um pouco mais neutros que a spec para a saturação ficar na meta) e
+  no Compatibility `STY_COMPAT_*`; no clássico (F7) o chão é o calcário `CLASSIC_FLOOR`, não a laje rosada do salão. `tools/fit_probe.gd -- --arena=hub`. Pendente: a cantaria e as lajes são mapeadas no
+  mundo (a 35 graus das paredes até o `frame_yaw` do technical-artist), os anéis de lajes em volta do medalhão
+  dependem desse shader, os NPCs são do HUB-D.
+- **Placa e páginas (HUB-B3 e a interface do HUB-C; testes em `tests/test_hub_ui.gd`, capturas em `docs/gallery/hub/ui/`)**:
+  uma placa só, da estação em foco (`StationSign`, `scripts/ui/station_sign.gd`, na língua da `DoorSign`: nome em ouro
+  claro, linha curta em marfim, véu escuro de cantos cortados, e embaixo a tecla real na plaqueta do HUD,
+  `ActionSlot.key_plate`, redonda num botão do controle, e "Interagir", `hub_use`); a tecla troca ao vivo por
+  `Controls.device_changed` e relê o mapa quando uma tela fecha (`refresh`). Presa à âncora do `HubPlan`, dentro da tela
+  e nunca sobre o herói (`StationSign.place`: sobe acima da cabeça, `HERO_GAP`), aparece em 0,15 s, some com tela aberta;
+  clique nela usa a estação (`pressed`). Portal: "Descer às catacumbas?" numa folha do Livro (`HubPanel`: `BookSpread`
+  com `single`, uma página com as duas bordas tostadas e sem dobra, `single` no `book_page.gdshader`, do tamanho do
+  conteúdo; marca da porta do Como Jogar, título Cinzel em rubrica, filete, uma linha do que fica e do que não fica,
+  `hub_descend_line`, Descer em destaque e com foco, Ficar). Vendedor e Forjador: a mesma folha com o medalhão trancado
+  (`SealedMark`), "◆ A DEFINIR", "Ainda não há nada para comprar/forjar aqui nesta versão." e só Voltar (nada de compra
+  falsa). Livro de Ahk: ao lado do medalhão do Guerreiro, três lugares selados (`HeroScreen.SEALED`, `SealedMark` com
+  silhueta encapuzada sem rosto e cadeado; sem nome, texto, foco nem clique, D-H3) e "Compêndio" no rodapé (abre o
+  `CodexScreen` sobre o livro; Esc ou B volta com o foco no botão). Menu do hub (`PauseMenu.hub`) com Como Jogar.
+  Música: lugar próprio `MusicCatalog.HUB` ("{HUB}" na tela Músicas, opção `music_hub` do save), toda peça do título,
+  padrão a do título (do título ao hub a música segue sem emenda). Capturas: `--hub --hero-at=x,z`,
+  `--hub --hero-at=<estação>` (no ponto de uso dela), `--hub-use=portal|vendor|tree|smith|book`, `--hub-menu`, `--pad`.
 - Peças comuns tiradas do `Game` (mesmo RESULT, `smoke 300` e `--start=boss --boons=25`, semente 5): câmera `CamRig`
   (`game/cam_rig.gd`: segue, segura o ponto fixo, trace; `Game.cam`), ar do mundo `WorldAir` (`game/world_air.gd`;
   `Game.air`), anfitrião de telas `ScreenHost` (`ui/screen_host.gd`, do título e do hub: Esc/B fecha,
   `Controls.clear_presses`, nada vaza). `--hub` entra direto no hub (`--hero-at`, `--shot`); `--bot`, `--smoke`,
-  `--start`, `--stress`, `--play` e `--shot` sem `--title` seguem pulando título e hub (`boot.route`). Música do hub: a
-  do título por enquanto. Testes em `tests/test_hub.gd`; fluxo por teclado em `tools/title_flow_check.gd`.
+  `--start`, `--stress`, `--play` e `--shot` sem `--title` seguem pulando título e hub (`boot.route`). Testes em `tests/test_hub.gd`; fluxo por teclado em `tools/title_flow_check.gd`.
 
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
@@ -1861,3 +1922,33 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   24,8 / 23,9 depois, Tempestade 34,4 / 32,9 e 31,0 / 34,2 (nada perdido). Pendências: o chão pintado do Compatibility
   segue mais claro que o do Forward+ em todas as salas (Cripta, Santuário: é do `paint.gdshaderinc` e do ar das salas, do
   environment-artist); as erupções (`ritual_rune.gdshader`) e a Emeth seguem mais pálidas no Compatibility.
+
+## Sworn P1, chão (SW-G1, SW-G2; só no estilizado; ideias em `docs/art/sworn_reference_ideas.md` 3.1, antes e depois em `docs/gallery/redesign/sworn_p1/`)
+- Camadas do chão pintado em `assets/shaders/floor_biome.gdshaderinc` (incluído pelo `catacomb_floor.gdshaderinc` só
+  com `PAINT`; tudo 0 por padrão, então a câmara das Runas e a Câmara do Selo não mudam; o SW-G3 e outras camadas do
+  chão entram ali, cada uma com função e uniforms próprios). Distância até a borda do chão andável na cor do vértice
+  (vermelho = metros / `ArenaRoom.FLOOR_EDGE_NORM` 8, escrito pelo `ArenaRoom._floor`; o salão, sem cor, passa
+  `floor_box`), lida por `floor_edge_m`. Números por sala na chave `floor` do `style()` de cada look
+  (`ArenaKit.paint_look`: nome do uniform para valor; `ArenaKit.gobo(look, pontos)` acrescenta até 4 pontos `x, z, raio,
+  peso`).
+- **SW-G1, manchas do bioma** (`floor_patches`): segunda cor em manchas de 3 a 8 m (`patch_scale` 3,5, ruído baixo com
+  borda quebrada), 0,8 da força no meio e cheia a até `patch_reach` 3 m da borda; a mancha guarda o valor de cada laje
+  (cor vezes o valor da laje / `floor_stone`, cerca de 1,4 a 1,5 vezes mais clara) e o chão entre elas desce a
+  `patch_rest` 0,9 a 0,95. Salão sal azul-pálido, Cripta umidade fria, Fendas pó lilás, Ponte líquen cinza, Provação pó
+  lilás, Altar pó morno, Jardim musgo seco oliva, Santuário pó de calcário (`STY_FLOOR_BIOME` em cada look).
+- **SW-G2, sombra recortada** (`floor_gobo`, no albedo, então igual no Compatibility; sem `light_projector`): o chão
+  escurece até `gobo_strength` 0,25 e se mexe devagar (`TIME`), limpo nas poças de fogo. Jardim: folhas da copa
+  (`gobo_kind` 1, peso 0,85 em toda a sala e cheio debaixo da árvore, `STY_GOBO_TREE`). Santuário: nervuras quebradas da
+  abóbada (`gobo_kind` 2, abóbada de 4 partes de 2,6 m esticada 1,5 vezes ao longo da inclinação da luz, algumas sem
+  as diagonais, poucas sem nada, falhas ao longo das nervuras) só nos fachos (`MOOT_AT`, o buraco da B) e no do guardião.
+- Medido (RTX 1080, semente 5, vitrine 5 s e luta 9 s, `tools/frame_stats.py --hue`; faixa luma p10 a p90 do chão do meio,
+  antes e depois): Salão 68 para 78 e 62 para 75; Cripta A 84 para 98 (chão leste 38 para 60), B 72 para 82 (leste 38 para
+  63); Santuário A 65 para 81, B 93 para 117; Fendas A 90 para 101 (chão 68 para 94), B 76 para 96; Jardim A campo leste
+  37 para 57 (a caixa do meio, tomada pelo tronco, só +5), B 36 para 47 a 50 e oeste 59 para 69; Ponte A plataformas 61
+  para 77 e 74 para 86, B plataforma oeste 48 para 65; Provação 50 para 62 e Altar 45 para 56 (laboratório). Saturação
+  p90 da tela 6 a 17 (teto 32). Fio da mira menos o chão em volta: Cripta 44 / 37 / 44 para 41 / 35 / 39, Santuário
+  28 / 57 / 37 para 33 / 53 / 39, Jardim 31 / 38 para 42 / 44, Ponte 37 / 61 / 41 para 38 / 59 / 50 (figuras e avisos sem
+  mudança de shader). Clássico: menos de 0,08% dos pixels mudam mais de 12 (chamas). iGPU 720 Baixa (GPU, duas rodadas):
+  Jardim 16,23 / 16,25 para 16,45 / 16,20 ms, Cripta 13,11 / 13,21 para 13,27 / 13,27, Salão 14,95 / 14,96 para 15,19 /
+  15,20, Santuário (com e sem a chave `floor`, mesma hora) 15,42 / 15,34 para 16,04 / 15,82 / 15,86 / 15,63
+  (média +0,46, no limite de +0,5).

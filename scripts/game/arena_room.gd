@@ -23,6 +23,10 @@ const LIP := Vector2(0.35, 0.18)
 const EDGE_STEP := 0.5
 const FILL_STEP := 2.0
 const FLOOR_CELL := 8.0
+## The floor's vertices carry their distance to the floor's edge in their colour's red, over this many m (the painted
+## floor's biome patches grow toward the edge, SW-G1; FLOOR_EDGE_NORM in floor_biome.gdshaderinc). The classic floor
+## never reads it.
+const FLOOR_EDGE_NORM := 8.0
 ## The violet light under each hole (the abyss's).
 const ABYSS_LIGHT_ENERGY := 4.0
 const ABYSS_LIGHT_Y := -9.0
@@ -554,20 +558,24 @@ func _floor() -> void:
 			x += FILL_STEP
 		y += FILL_STEP
 	var tris := Geometry2D.triangulate_delaunay(pts)
+	var to_edge := PackedFloat32Array()
+	to_edge.resize(pts.size())
+	for i in pts.size():
+		to_edge[i] = clampf(f.edge_distance(pts[i]) / FLOOR_EDGE_NORM, 0.0, 1.0)
 	var cells := {}
 	for i in range(0, tris.size(), 3):
-		var p0 := pts[tris[i]]
-		var p1 := pts[tris[i + 1]]
-		var p2 := pts[tris[i + 2]]
-		var mid := (p0 + p1 + p2) / 3.0
+		var i0 := tris[i]
+		var i1 := tris[i + 1]
+		var i2 := tris[i + 2]
+		var mid := (pts[i0] + pts[i1] + pts[i2]) / 3.0
 		if not f.covers(mid):
 			continue
 		# wound so the face looks up (Godot's front faces turn clockwise as seen; seen from above, x right and z down,
 		# that is a positive cross on the floor plane)
-		if (p1 - p0).cross(p2 - p0) < 0.0:
-			var t := p1
-			p1 = p2
-			p2 = t
+		if (pts[i1] - pts[i0]).cross(pts[i2] - pts[i0]) < 0.0:
+			var t := i1
+			i1 = i2
+			i2 = t
 		var key := Vector2i(floori(mid.x / FLOOR_CELL), floori(mid.y / FLOOR_CELL))
 		if not cells.has(key):
 			var st := SurfaceTool.new()
@@ -575,7 +583,9 @@ func _floor() -> void:
 			st.set_normal(Vector3.UP)
 			cells[key] = st
 		var s: SurfaceTool = cells[key]
-		for p in [p0, p1, p2]:
+		for k in [i0, i1, i2]:
+			var p := pts[k]
+			s.set_color(Color(to_edge[k], 0.0, 0.0))
 			s.set_uv(p)
 			s.add_vertex(Vector3(p.x, 0.0, p.y))
 	var mat := kit.floor_material(0.0, Vector2.ZERO, minf(b.size.x, b.size.y) * 0.3, floor_shader())

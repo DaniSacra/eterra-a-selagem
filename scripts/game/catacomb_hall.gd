@@ -388,7 +388,13 @@ const STYLE := {
 	&"joint_cold": Color(0.88, 0.91, 1.0), &"olive_share": 0.06, &"abyss_glow": STY_ABYSS_GLOW, &"pool_saturation": STY_POOL_SATURATION,
 	&"fire": {&"bowl_range": STY_BOWL_RANGE, &"candle_range": STY_CANDLE_RANGE, &"bowl_attenuation": STY_BOWL_ATTENUATION,
 		&"bowl_gain": STY_BOWL_GAIN, &"candle_gain": STY_CANDLE_GAIN, &"compat": STY_COMPAT_FIRE},
+	&"floor": STY_FLOOR_BIOME,
 }
+## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
+## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`).
+## The hall: pale worn dust on the blue slate; its plate carries no edge distance, so its walkable box is given.
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.421, 0.436, 0.473), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5,
+	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y)}
 ## The decals of the stylized look (floor_decal.gdshader: the shop's rugs, the fountain's moss), a centimetre over the
 ## slabs.
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")

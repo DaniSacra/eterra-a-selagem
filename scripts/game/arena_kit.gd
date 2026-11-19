@@ -389,7 +389,8 @@ func _cloth_material(glow: Color) -> StandardMaterial3D:
 ## abyss's glow cards, abyss_glow), pool_saturation (stone and floor, the
 ## pools' share of the fire's colour), shadow (paint_shadow, also the kit's
 ## painted pieces, on a copy of the shared material), floor_stone, slab_hue, edge_value (the floor's), joint_cold and
-## olive_share (stone and floor); a material with the meta PAINT_OWN takes those values on top (bone that must not
+## olive_share (stone and floor), floor (a dictionary of the painted floor's own uniforms, shader parameter name to
+## value: the biome patches and the mottled shade of floor_biome.gdshaderinc, SW-G1 and SW-G2); a material with the meta PAINT_OWN takes those values on top (bone that must not
 ## turn to stone: OWN_KEEP).
 func paint_look(style := {}) -> void:
 	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT, MOSS_SHADER: MOSS_PAINT,
@@ -423,6 +424,21 @@ const MOSS_KEYS := {&"shadow": &"paint_shadow", &"moss": &"paint_moss"}
 const FLOOR_KEYS := {&"floor_stone": &"floor_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold",
 	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"slab_paint": &"slab_paint", &"edge_value": &"edge_value",
 	&"pool_saturation": &"paint_pool_saturation"}
+## The painted floor's mottled shade (SW-G2, floor_biome.gdshaderinc): its uniforms with up to GOBO_SPOTS places where
+## it is stronger (each Vector4: x, z, radius, weight), merged over the room's `floor` dictionary of its style().
+const GOBO_SPOTS := 4
+
+
+static func gobo(look: Dictionary, spots: Array[Vector4]) -> Dictionary:
+	var out := look.duplicate()
+	var padded: Array[Vector4] = spots.slice(0, GOBO_SPOTS)
+	var n := padded.size()
+	padded.resize(GOBO_SPOTS)
+	out[&"gobo_spots"] = padded
+	out[&"gobo_spot_count"] = n
+	return out
+
+
 ## A material's own stylized numbers (meta: shader parameter name to value), over the room's (paint_look).
 const PAINT_OWN := &"paint_own"
 ## Stone that keeps its own colour in the stylized look (bone, wood): paint_keep with its saturation and value whole.
@@ -444,6 +460,10 @@ func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary, style :
 	for k: StringName in keys:
 		if style.has(k):
 			values[StringName("shader_parameter/" + keys[k])] = style[k]
+	if keys == FLOOR_KEYS and style.has(&"floor"):
+		var floor_: Dictionary = style[&"floor"]
+		for k: StringName in floor_:
+			values[StringName("shader_parameter/" + k)] = floor_[k]
 	if masonry.is_wood(sm):
 		values[&"shader_parameter/paint_keep"] = 1.0
 	var own: Dictionary = sm.get_meta(PAINT_OWN, {})

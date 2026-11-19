@@ -128,6 +128,10 @@ const STYLE := {
 		&"moon_shadow": true},
 	&"backdrop": {&"mist": Color(0.10, 0.15, 0.18), &"stone": Color(0.05, 0.07, 0.08), &"edge": Color(0.16, 0.22, 0.26)},
 }
+## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
+## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
+## Cold damp: a pale cold bloom of salts on the slate, 1.4 times its value (the floor between them at patch_rest).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.382, 0.417, 0.449), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
 ## The small sarcophagi in the stylized look: their lighter stone painted at the plain stone's value (paint_ref of the
 ## painted stone, paint.gdshaderinc, times their tint) and their candles' pools softer.
 const STY_PAINT_REF := 0.36
@@ -773,6 +777,7 @@ func _cold_shaft() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
+	st[&"floor"] = STY_FLOOR_BIOME
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

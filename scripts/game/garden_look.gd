@@ -187,6 +187,14 @@ const STYLE := {
 		&"ambient_gain": 1.8, &"moon": Color(0.88, 0.88, 0.86), &"moon_energy": 0.75, &"moon_shadow": true},
 }
 const STY_FLOOR := Color(0.30, 0.31, 0.275)
+## SW-G1 and SW-G2 (docs/art/sworn_reference_ideas.md 3.1; floor_biome.gdshaderinc, ArenaKit.paint_look's `floor`,
+## put by style()): the painted floor's second colour of the biome in patches of 3 to 8 m, stronger near the edge, and
+## the canopy's dappled shade (SW-J1) on the whole floor, denser under the crown (STY_GOBO_TREE: radius, weight round
+## the trunk), drifting and swaying slowly. Moss: a dry olive green, 1.5 times the slab's value (the dapples darken).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.428, 0.479, 0.338), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5,
+	&"gobo_kind": 1, &"gobo_strength": 0.25, &"gobo_base": 0.85, &"gobo_scale": 1.4, &"gobo_drift": Vector2(0.03, 0.012),
+	&"gobo_sway": 0.12, &"gobo_soft": 0.05, &"gobo_cover": 0.7}
+const STY_GOBO_TREE := Vector2(10.0, 1.0)
 ## The painted moss (lot C 1: grey green, never past 0.3 of saturation in the hues of the Emeth).
 const STY_MOSS := Color(0.20, 0.24, 0.17)
 ## The abyss in the stylized look: a dark grey green mist (no violet), its glow cards and its light cold and grey.
@@ -1014,6 +1022,10 @@ func _west_apart(build: Callable) -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
+	var under: Array[Vector4] = []
+	if tree != null:
+		under.append(Vector4(tree.at.x, tree.at.z, STY_GOBO_TREE.x, STY_GOBO_TREE.y))
+	st[&"floor"] = ArenaKit.gobo(STY_FLOOR_BIOME, under)
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

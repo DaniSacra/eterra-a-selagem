@@ -65,6 +65,10 @@ const STYLE := {
 	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.68, 0.66, 0.62),
 		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.88, 0.84), &"moon_energy": 0.8, &"moon_shadow": false},
 }
+## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
+## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
+## Pale warm dust and old wax, 1.4 times the slab's value (the floor between them at patch_rest).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.475, 0.445, 0.386), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
 ## The far ruins in the stylized look: a warm grey haze, their stone and edge (style_backdrop).
 const STY_BACKDROP := [Color(0.17, 0.16, 0.145), Color(0.075, 0.07, 0.065), Color(0.21, 0.19, 0.16)]
 ## The browser's renderer: the stylized air's share there (the painted stone lights grey-white).
@@ -288,6 +292,7 @@ func _banners(north: float) -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
+	st[&"floor"] = STY_FLOOR_BIOME
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
