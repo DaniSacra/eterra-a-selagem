@@ -7,7 +7,8 @@ extends Node3D
 ## the device live (Controls.device_changed: E on the keyboard, A on the gamepad, whatever was remapped) and refresh()
 ## reads the binding again (after the Configurações). Drawn as interface text over its anchor (a CanvasLayer above
 ## the world, like the DoorSign): the text's bottom centre on the anchor, always inside the screen and never over the
-## hero (hero_at: it rises above his head when the anchor would put it on him). It comes up in APPEAR seconds.
+## hero (hero_at: it rises above his head when the anchor would put it on him, and goes under his feet when the
+## anchor is cut by the top of the screen). It comes up in APPEAR seconds.
 ## A click on it uses the station (pressed), so the mouse alone can use what the hero stands by.
 ##   var sign := StationSign.make(&"book", T.t(&"hub_book"), T.t(&"hub_book_desc"))
 ##   sign.position = HubPlan.anchor(&"book")
@@ -24,6 +25,9 @@ const RISE := 6.0
 ## Px between the sign and the hero's head, and from the screen's edges.
 const HERO_GAP := 10.0
 const EDGE := 8.0
+## A sign whose top would come within this share of the screen's height from the top goes under the hero instead:
+## its station stands at the top of the screen (the Portal seen from its foot) and the sign would cover it.
+const TOP_BAND := 0.06
 ## The hero's drawn height (HeroBody.HEIGHT) and his half width on screen against his height.
 const HERO_HEIGHT := 2.75
 const HERO_HALF := 0.3
@@ -130,17 +134,29 @@ static func _veil() -> StyleBoxFlat:
 
 
 ## Where the plate goes on the screen (its top left): bottom centre on the anchor, inside the screen, above the hero.
+## When the anchor stands too high for the sign to fit above it below TOP_BAND (the station at the top of the screen,
+## like the Portal seen from its foot), or the hero leaves no room above him, it goes under his feet instead: pushed down to
+## the edge it would lie over the station itself.
 static func place(anchor: Vector2, s: Vector2, screen: Vector2, head: Vector2 = Vector2.INF,
 		feet: Vector2 = Vector2.INF) -> Vector2:
 	var at := anchor - Vector2(s.x * 0.5, s.y)
-	at.x = clampf(at.x, EDGE, maxf(EDGE, screen.x - EDGE - s.x))
-	at.y = clampf(at.y, EDGE, maxf(EDGE, screen.y - EDGE - s.y))
-	if head != Vector2.INF:
-		var half := absf(feet.y - head.y) * HERO_HALF
-		var hero := Rect2(head.x - half, head.y, half * 2.0, absf(feet.y - head.y)).grow(HERO_GAP)
-		if Rect2(at, s).intersects(hero):
-			at.y = maxf(EDGE, hero.position.y - s.y)
-	return at.round()
+	var too_high := at.y < maxf(EDGE, screen.y * TOP_BAND)
+	at = _inside(at, s, screen)
+	if head == Vector2.INF:
+		return at.round()
+	var half := absf(feet.y - head.y) * HERO_HALF
+	var hero := Rect2(head.x - half, head.y, half * 2.0, absf(feet.y - head.y)).grow(HERO_GAP)
+	if not too_high and not Rect2(at, s).intersects(hero):
+		return at.round()
+	if not too_high and hero.position.y - s.y >= EDGE:
+		at.y = hero.position.y - s.y
+		return at.round()
+	return _inside(Vector2(feet.x - s.x * 0.5, hero.end.y), s, screen).round()
+
+
+static func _inside(at: Vector2, s: Vector2, screen: Vector2) -> Vector2:
+	return Vector2(clampf(at.x, EDGE, maxf(EDGE, screen.x - EDGE - s.x)),
+			clampf(at.y, EDGE, maxf(EDGE, screen.y - EDGE - s.y)))
 
 
 ## Follows its anchor; hidden behind the camera or with the sign hidden.

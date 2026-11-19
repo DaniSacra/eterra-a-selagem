@@ -122,6 +122,18 @@ func test_the_sign_stands_inside_the_screen_and_never_over_the_hero() -> void:
 	assert_gte(at.y, StationSign.EDGE)
 	at = StationSign.place(Vector2(1275, 700), s, screen)
 	assert_lte(at.x + s.x, screen.x - StationSign.EDGE)
+	# the anchor above the screen (the Portal seen from its foot): under the hero, not over the station
+	head = Vector2(640, 120)
+	feet = Vector2(640, 180)
+	at = StationSign.place(Vector2(640, -40), s, screen, head, feet)
+	assert_gte(at.y, feet.y + StationSign.HERO_GAP - 0.5, "under his feet")
+	assert_almost_eq(at.x + s.x * 0.5, 640.0, 1.0, "centred on him")
+	# the anchor just under the top: the sign would press against the edge over the station, so under him too
+	at = StationSign.place(Vector2(640, 85), s, screen, head, feet)
+	assert_gte(at.y, feet.y + StationSign.HERO_GAP - 0.5, "under him when the station is at the top")
+	# no room above the hero: under him too
+	at = StationSign.place(Vector2(640, 110), s, screen, Vector2(640, 40), Vector2(640, 150))
+	assert_gte(at.y, 150.0 + StationSign.HERO_GAP - 0.5, "under him when he stands at the top")
 
 
 func test_the_sign_on_screen_is_clear_of_the_hero_at_every_station() -> void:
