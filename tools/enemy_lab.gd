@@ -118,7 +118,8 @@ func _run() -> void:
 			if opts.has("warn") and view == "game":
 				_warn(warnings, defs[i], Vector2(pos.x, pos.z), float(opts.warn))
 			var state := CrowdRenderer.state(0.6 if opts.has("absorbed") else 0.0, false, false, 0.0, opts.has("absorbed"), tell, opts.has("broken"))
-			renderer.add(defs[i], anim, lerpf(at_t, to_t, k / maxf(row.size() - 1, 1.0)) if back_row == 0 else at_t, pos, yaw, state)
+			var clip_t := lerpf(at_t, to_t, k / maxf(row.size() - 1, 1.0)) if back_row == 0 else at_t
+			renderer.add(defs[i], anim, clip_t, pos, yaw, state)
 			if opts.has("tell") or opts.has("loosed"):
 				var foe := Enemy.new()
 				foe.def = defs[i]
@@ -127,9 +128,10 @@ func _run() -> void:
 				foe.aim = foe.dir
 				foe.look = fposmod(i * 0.618034, 1.0)
 				if opts.has("loosed"):
-					tells.loosed(foe, float(opts.loosed))
+					tells.loosed(foe, float(opts.loosed), renderer.model_of(defs[i]), anim, clip_t)
 				else:
-					tells.tell(foe, tell)
+					# the lights where the pose drawn holds the crossbow, the orb or the hands (LC-1 to LC-3)
+					tells.tell(foe, tell, renderer.model_of(defs[i]), anim, clip_t)
 		renderer.commit()
 		tells.commit()
 		if view != "game":

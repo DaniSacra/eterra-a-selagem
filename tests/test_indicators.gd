@@ -173,14 +173,17 @@ func test_the_bolt_is_drawn_back_along_its_aim() -> void:
 	var e := _enemy(&"archer", Vector2(2, 3))
 	e.aim = Vector2.RIGHT
 	fx.begin()
-	fx.tell(e, EnemyFx.BOLT_FROM * 0.5)
+	fx.tell(e, EnemyFx.BOW_FROM * 0.5)
 	assert_eq(fx.count, 0, "nothing at first")
 	fx.begin()
 	fx.tell(e, 0.9)
 	var streaks := fx.put().filter(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.STREAK)
-	assert_eq(streaks.size(), 1)
+	# LC-1: the crossbow drawn in light (its bow across and its bolt) and the sight ahead of its tip
+	assert_eq(streaks.size(), 3)
 	var tip := EnemyFx.anchor(e.pos, e.y, e.yaw(), e.def.size, e.def.tell_at)
-	assert_gt((streaks[0][1] as Vector3).x, tip.x, "ahead of the bolt's tip, the way it flies")
+	var sight: Array = streaks[2]
+	assert_gt((sight[1] as Vector3).x, tip.x + 1.0, "ahead of the bolt's tip, the way it flies")
+	assert_almost_eq((sight[1] as Vector3).z, tip.z, EnemyFx.BOW_TIP * e.def.size + 0.01, "along its aim, from the tip of the crossbow")
 
 
 func test_the_shield_reads_early_in_a_long_charge() -> void:

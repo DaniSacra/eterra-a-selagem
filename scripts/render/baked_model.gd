@@ -45,8 +45,14 @@ const WIDTH := 2048
 ## Named pieces it carries (tools/bake.gd "name" of a rigid or a held piece: "shield", "sword") -> the indices of
 ## their vertices, for the measures of a pose (T5, A-T5-1: guard_pose).
 @export var parts: Dictionary = {}
+## Named places that are not carried parts (tools/bake.gd "marks": the vertices bound to some bones, the priest's "hands";
+## a held piece with "mark": the staffs' "orb")
+## -> their vertices; not carried, so they count in body_top.
+@export var marks: Dictionary = {}
 
 var _pos_tex: ImageTexture
+## LC-1 to LC-3: point() measured once per (part, animation): the mean of the part in each pose of the clip.
+var _tracks := {}
 var _normal_tex: ImageTexture
 
 
@@ -113,6 +119,33 @@ func pose(anim: StringName, frame: int) -> PackedVector3Array:
 	for v in vertices:
 		out[v] = position(anim, frame, v)
 	return out
+
+
+## Whether it has a named part (parts) or mark (marks).
+func has_point(name: String) -> bool:
+	return parts.has(name) or marks.has(name)
+
+
+## LC-1 to LC-3: where a named part or mark is t seconds into an animation, as drawn (the same blend of two poses as
+## the crowd's), at size 1, the figure facing +z (CrowdRenderer turns and scales it: EnemyFx.anchor). Each clip's
+## track is read from the pose image once (a few hundred texels), then it is a lerp.
+func point(name: String, anim: StringName, t: float) -> Vector3:
+	var key := name + ":" + String(anim)
+	var track: PackedVector3Array = _tracks.get(key, PackedVector3Array())
+	if track.is_empty():
+		var vs: PackedInt32Array = parts.get(name, marks.get(name, PackedInt32Array()))
+		var n := frame_count(anim)
+		if vs.is_empty() or n == 0:
+			return Vector3.ZERO
+		track.resize(n)
+		for f in n:
+			var sum := Vector3.ZERO
+			for v in vs:
+				sum += position(anim, f, v)
+			track[f] = sum / vs.size()
+		_tracks[key] = track
+	var b := blend_at(anim, t)
+	return track[int(b.x)].lerp(track[int(b.y)], b.z)
 
 
 ## Where a pose's body stands on the floor, at size 1: the mean of its vertices in x and z (every `step`-th vertex). A

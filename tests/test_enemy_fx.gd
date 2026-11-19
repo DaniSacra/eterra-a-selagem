@@ -95,7 +95,69 @@ func test_the_ritual_ring_is_faint_and_lies_around_the_priest() -> void:
 	assert_almost_eq((rings[0][1] as Vector3).z, -2.0, 0.001)
 	assert_lt((rings[0][1] as Vector3).y, 0.2, "on the floor")
 	assert_lte((rings[0][2] as Color).a, 0.3 + 0.001, "never as strong as a warning")
-	assert_eq(fx.put().size() - 1, EnemyFx.RITUAL_MOTES, "and the motes between its hands")
+	# LC-3: the flame over its hands, the motes round it and the thread down to the ring (no model: no palms)
+	assert_eq(fx.put().size() - 1, EnemyFx.RITUAL_MOTES + 2, "and the motes, the flame and the thread")
+
+
+## LC-1 to LC-3 (docs/backlog.md 9): each one's wind-up light sits where the drawn pose holds its crossbow, its orb or
+## its hands (BakedModel.point: the mean of the part in the blend of two poses), turned and scaled with the figure.
+func test_the_wind_up_lights_sit_on_the_part_drawn() -> void:
+	var fx := _fx()
+	var cases := {&"archer": [&"aim", "crossbow"], &"mage": [&"cast_hold", "orb"], &"priest": [&"cast", "hands"], &"priest_elder": [&"cast_hold", "orb"]}
+	for id: StringName in cases:
+		var m: BakedModel = load("res://assets/baked/%s.res" % _def(id).model)
+		var anim: StringName = cases[id][0]
+		var part: String = cases[id][1]
+		assert_true(m.has_point(part), "%s has its %s" % [id, part])
+		# the point is the mean of the part's vertices in the pose shown
+		var vs: PackedInt32Array = m.parts.get(part, m.marks.get(part, PackedInt32Array()))
+		var sum := Vector3.ZERO
+		for v in vs:
+			sum += m.position(anim, 1, v)
+		var t := 1.0 / m.pose_rate(anim)
+		assert_almost_eq(m.point(part, anim, t), sum / vs.size(), Vector3.ONE * 0.002, "%s: pose 1 of %s" % [id, anim])
+		var e := _enemy(id, Vector2(4, -3))
+		e.dir = Vector2.RIGHT
+		var want := EnemyFx.anchor(e.pos, 0.0, e.yaw(), e.def.size, m.point(part, anim, t))
+		assert_almost_eq(EnemyFx.spot(e, m, anim, t), want, Vector3.ONE * 0.001)
+		fx.begin()
+		fx.tell(e, 0.8, m, anim, t)
+		var near := 0
+		for q: Array in fx.put():
+			if (q[1] as Vector3).distance_to(want) < 0.6 * e.def.size:
+				near += 1
+		assert_gt(near, 0, "%s: its lights on its %s" % [id, part])
+
+
+## LC-1: the crossbow is drawn in light over the crossbowman's own body (aiming away it hid it); nothing else is.
+func test_only_the_crossbow_is_drawn_over() -> void:
+	var fx := _fx()
+	for id: StringName in SHEET:
+		if _def(id).tell == EnemyDef.Tell.NONE:
+			continue
+		fx.begin()
+		fx.tell(_enemy(id), 0.8)
+		var over := fx._over.slice(0, fx.count).count(1)
+		if id == &"archer":
+			assert_gte(over, 3, "the bow, the bolt, the tip and the sight")
+		else:
+			assert_eq(over, 0, "%s: under what is in front" % id)
+	fx.begin()
+	fx.tell(_enemy(&"archer"), 0.8)
+	fx.tell(_enemy(&"mage", Vector2(3, 0)), 0.8)
+	fx.commit()
+	assert_true(fx._over_mmi.visible and fx._mmi.visible)
+	assert_eq(fx._over_mmi.multimesh.visible_instance_count + fx._mmi.multimesh.visible_instance_count, fx.count)
+	# the priest's palms: one light in each raised hand
+	var priest: BakedModel = load("res://assets/baked/priest.res")
+	var e := _enemy(&"priest")
+	var t := priest.duration(&"cast")
+	fx.begin()
+	fx.tell(e, 0.8, priest, &"cast", t)
+	for hand: String in ["hand_l", "hand_r"]:
+		var palm := EnemyFx.anchor(e.pos, 0.0, e.yaw(), e.def.size, priest.point(hand, &"cast", t))
+		assert_true(fx.put().any(func(q: Array) -> bool: return (q[1] as Vector3).distance_to(palm) < 0.001), "a light in %s" % hand)
+		assert_gt(palm.y, 0.7 * priest.height * e.def.size, "%s raised to the head" % hand)
 
 
 func test_the_lights_follow_the_figure() -> void:

@@ -256,7 +256,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   assado (E1a-4, VX-07, paliativo até o Meshy): `paint` de cada `held` troca as células da paleta por amostras pintadas no tom das
   figuras (`SWATCHES`: ferro escuro, ferro gasto, osso, madeira escura, metal velho, ouro velho, couro, vermelho; primeira linha da
   faixa da paleta, projetadas ao longo da arma, `_repainted`, `_paint_swatches`), sem faixas de duas cores; cutelo a `CLEAVER_SCALE`
-  0,58 (aço 0,52 m = 0,6 do tronco), besta a `CROSSBOW_SCALE` 0,5 em madeira e ferro, cajados em madeira escura com anéis de metal
+  0,58 (aço 0,52 m = 0,6 do tronco), besta a `CROSSBOW_SCALE` 0,62 em madeira com o arco no ferro gasto da lâmina (ciclo LC; era 0,5 em ferro escuro), cajados em madeira escura com anéis de metal
   velho, gancho de Morvath em ouro velho (na tela matiz 37, saturação 0,44). O Escudo tem a rótula esquerda do rig fora do lugar:
   `even_legs` encurta a perna ao alcance que ela tem em repouso (`_even_leg`) e o pé direito, que flutuava 20 cm, pisa no chão.
   Testes em `tests/test_held_weapons.gd`; antes e depois em `docs/gallery/e1a/after/weapons/`. A textura vai dentro do `.res`
@@ -1740,3 +1740,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   o glow fica sempre; `App.apply_options` e `Game.apply_options`; `--quality=alta|media|baixa`, `--gfx-<chave>=valor`).
   Medido na iGPU do notebook do Daniel (Intel RaptorLake-S, `tools/gpu.sh run ... --gpu-index 1`) a 1280 x 720: Alta 15 a
   17 qps, Baixa 62 a 81 qps no salão, Fendas, Jardim, Cripta e fase 4 de Morvath (`docs/qa/e6_audio_perf.md`).
+
+## Ciclo LC, preparação dos atiradores (LC-1 a LC-3; evidências em `docs/gallery/lc/windup/`)
+- Só desenho, sem mudar tempo, alcance, dano nem duração de clipe. As luzes da preparação (`EnemyFx`) ficam onde a
+  pose desenhada tem a peça: `BakedModel.point(nome, clipe, t)` (média dos vértices da peça na mistura de duas poses,
+  lida uma vez por clipe), com os nomes do assado em `parts` (`crossbow`) ou em `marks` (`orb` dos cajados, `hands`,
+  `hand_l`, `hand_r` do sacerdote, por `"marks"` do `tools/bake.gd`, vértices presos àqueles ossos); `Horde.render`
+  passa o modelo, o clipe e o tempo para `EnemyFx.tell` e `loosed` (`EnemyFx.spot`; sem modelo cai no `tell_at`).
+- **Besteiro**: besta a 0,62 com o arco claro (`CROSSBOW_PAINT`, ferro gasto `blade`); na mira a besta desenhada em luz
+  pálida deitada (arco atravessado `BOW_WIDTH` 0,95 m e o virote), a ponta que brilha antes do tiro (`TIP_GLINT`) e a
+  linha de mira de `SIGHT` 3,4 m a partir da ponta, por cima do próprio corpo (`enemy_tell_over.gdshader`, segunda
+  MultiMesh sem teste de profundidade: de costas para a câmera o corpo escondia a besta).
+- **Feiticeiro**: no topo do cajado um miolo que cresce de `ORB_CORE` 0,16 a `ORB_CORE_FULL` 0,42 m e anéis que se fecham
+  nele (`ORB_GATHER` 1,1 m, `ORB_RINGS` 2), as centelhas entrando; nada acima do limiar do glow.
+- **Sacerdote**: o rito é os dois braços abertos para cima em V (`cast` = `Cheer` do KayKit de 0 a 0,84 s em 0,8 s,
+  `RITE_BEND`: o tronco e a cabeça jogados para trás), uma luz em cada palma (`RITUAL_PALM`), a chama sobre as mãos (`RITUAL_FLAME`,
+  `RITUAL_LIFT`), o anel no chão como antes e um fio da chama ao anel na espera (`RITUAL_THREAD`).
+- Testes em `tests/test_enemy_fx.gd` e `tests/test_indicators.gd`. Pendência conhecida do assado: dobra (`bend`) em osso
+  que o rig do KayKit não move (`Spine01`, `neck`) se acumula pose após pose; o rugido de Morvath (`ROAR_BEND` no
+  `Taunt_Longer`) provavelmente tem isso (medir antes de reassar Morvath).

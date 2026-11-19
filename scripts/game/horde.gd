@@ -1397,7 +1397,6 @@ func render(render_dt := 1.0 / 60.0) -> void:
 		elif e.state == Enemy.State.WINDUP:
 			var w := _windup(e)
 			tell = clampf(e.state_t / maxf(w, 0.01), 0.0, 1.0)
-			tells.tell(e, tell)
 			var holding := false
 			if anim == &"attack":
 				# stretch the swing so the blade comes down when the windup ends (the close slam: it reads)
@@ -1417,12 +1416,14 @@ func render(render_dt := 1.0 / 60.0) -> void:
 				t = e.anim_t
 				holding = e.state_t >= w * (1.0 - d.windup_hold)
 				fade_len = d.windup_settle
+			# LC-1 to LC-3: its lights where the drawn pose has the crossbow, the orb or the hands
+			tells.tell(e, tell, kind.model, anim, t)
 			if d.windup_shake > 0.0 and holding and e.frozen_t <= 0.0:
 				# the tremble of "it is about to strike", only in the hold (it shook the whole wind-up)
 				var side := Vector2(e.dir.y, -e.dir.x) * d.windup_shake * sin(TAU * SHAKE_HZ * e.state_t)
 				at += Vector3(side.x, 0, side.y)
 		elif e.state == Enemy.State.ATTACK:
-			tells.loosed(e, e.state_t)
+			tells.loosed(e, e.state_t, kind.model, anim, e.state_t)
 			if anim == &"attack" and d.shot_ticks > 1 and kind.model.frame_count(&"shot") > 0:
 				# T5-13: every shot of a burst its own throw of the hand (the stretch round the release), not one gesture
 				var tick := maxi(0, e.memo - 1)

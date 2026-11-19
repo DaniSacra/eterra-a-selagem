@@ -13,6 +13,8 @@ extends Node3D
 enum Shape { DOT, RING, STREAK, SHARD }
 
 const SHADER := preload("res://assets/shaders/enemy_tell.gdshader")
+## LC-1: the quads put with `over` are drawn by a second MultiMesh over what is in front of them (no depth test).
+const OVER_SHADER := preload("res://assets/shaders/enemy_tell_over.gdshader")
 ## Quads on the screen at once; past it the rest is not drawn.
 const POOL := 320
 const FLOATS := 20
@@ -31,6 +33,20 @@ const GLINT_SIZE := 0.7
 ## this share of the wind-up.
 const BOLT_FROM := 0.35
 const BOLT_DRAW := 0.9
+## LC-1 (docs/backlog.md 9): the crossbow itself drawn in light where the pose holds it (BakedModel.point "crossbow"):
+## its bow a pale bar across the aim (meters at size 1, lying flat, so the high camera sees the shape of a crossbow
+## from above) from BOW_FROM of the wind-up, as it comes up to the shoulder; and the sight, a thin line in the bolt's
+## steel from its tip along the aim (never the bolt's orange: red is the floor's danger), growing to SIGHT meters by the shot: the figure that aims and the way the bolt
+## will fly, tied to the wire on the floor. Its tip that far ahead of the crossbow's middle.
+const BOW_FROM := 0.15
+const BOW_WIDTH := 0.95
+const BOW_THICK := 0.1
+const BOW_TIP := 0.28
+const SIGHT := 3.4
+const SIGHT_LIGHT := 0.7
+## The steel of the tip gleams as the shot comes (the soldier's blade does the same): its size at size 1, fullest at
+## GLINT_PEAK of the wind-up.
+const TIP_GLINT := 0.5
 ## The shield's edge catches the light from this share of the wind-up (the long charge reads early), dust kicked up
 ## at its feet in the last part.
 const SHIELD_FROM := 0.3
@@ -40,6 +56,15 @@ const ORB_SPARKS := 4
 const ORB_RADIUS := 0.2
 const ORB_RISE := 0.75
 const ORB_HALO := 0.55
+## LC-2: the orb is the sorcerer's wind-up, where its staff holds it (BakedModel.point "orb"): a core that swells
+## from ORB_CORE to ORB_CORE_FULL (meters at size 1), and rings that close on it from ORB_GATHER, ORB_RINGS of them
+## over the wind-up (thin, turned to the camera): its magic gathered into the staff's top, a point and not a cloud.
+## The sparks come in to it instead of rising from it.
+const ORB_CORE := 0.16
+const ORB_CORE_FULL := 0.42
+const ORB_GATHER := 1.1
+const ORB_RINGS := 2.0
+const ORB_RING_WIDTH := 0.22
 ## The light of the magic's sparks round a staff's orb and a priest's rite: the magic's hue (largest channel 1) times
 ## this, under the glow threshold (cycle 10, BUG-006: at 1.6 a few sorcerers winding up together bloomed white).
 const MAGIC_SPARK := 1.2
@@ -48,6 +73,14 @@ const RITUAL_RING := 1.2
 const RITUAL_RING_ALPHA := 0.3
 const RITUAL_MOTES := 3
 const RITUAL_ORBIT := 0.24
+## LC-3: the rite's light rides its raised hands (BakedModel.point "hand_l", "hand_r"): a glow in each palm
+## (meters at size 1), and over the middle of the two, RITUAL_LIFT higher, a soft flame that grows as the arms come
+## up, the motes turning round it. Lit palms at the ends of a V over the head: the gesture reads by its shape. A thread
+## goes from the flame down to the ring on the floor in the hold: from the rite to the ground it will reach.
+const RITUAL_PALM := 0.32
+const RITUAL_FLAME := 0.38
+const RITUAL_LIFT := 0.3
+const RITUAL_THREAD := 0.5
 ## Seconds the loosed attack still shows (the spark of the bolt, the stroke on the shield).
 const LOOSE_TIME := 0.14
 ## A lunge leaves two pale streaks behind the body (meters) and dust where it started.
@@ -76,6 +109,9 @@ var layers := 1
 var count := 0
 var _mmi: MultiMeshInstance3D
 var _data := PackedFloat32Array()
+## Which quads of _data are drawn over (1), and the second MultiMesh that draws them.
+var _over := PackedByteArray()
+var _over_mmi: MultiMeshInstance3D
 var _sparks: Array[Spark] = []
 ## Only for the scatter of the armor's sparks: never the simulation's generator.
 var _rng := RandomNumberGenerator.new()
@@ -85,9 +121,16 @@ func _ready() -> void:
 	_rng.seed = 7
 	var quad := QuadMesh.new()
 	quad.size = Vector2(1, 1)
+	_data.resize(POOL * FLOATS)
+	_over.resize(POOL)
+	_mmi = _batch(quad, SHADER, 5)
+	_over_mmi = _batch(quad, OVER_SHADER, 6)
+
+
+func _batch(quad: QuadMesh, shader: Shader, priority: int) -> MultiMeshInstance3D:
 	var mat := ShaderMaterial.new()
-	mat.shader = SHADER
-	mat.render_priority = 5
+	mat.shader = shader
+	mat.render_priority = priority
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
@@ -95,15 +138,15 @@ func _ready() -> void:
 	mm.mesh = quad
 	mm.instance_count = POOL
 	mm.visible_instance_count = 0
-	_data.resize(POOL * FLOATS)
-	_mmi = MultiMeshInstance3D.new()
-	_mmi.multimesh = mm
-	_mmi.material_override = mat
-	_mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_mmi.layers = layers
-	_mmi.custom_aabb = AABB(Vector3(-200, -10, -200), Vector3(400, 60, 400))
-	_mmi.visible = false
-	add_child(_mmi)
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.material_override = mat
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mmi.layers = layers
+	mmi.custom_aabb = AABB(Vector3(-200, -10, -200), Vector3(400, 60, 400))
+	mmi.visible = false
+	add_child(mmi)
+	return mmi
 
 
 func _process(delta: float) -> void:
@@ -141,12 +184,30 @@ static func ramp(k: float, from: float, peak: float) -> float:
 	return smoothstep(from, peak, k) * (1.0 - smoothstep(0.92, 1.0, k))
 
 
-## The wind-up of one enemy, k from 0 (it just started) to 1 (the attack is loosed).
-func tell(e: Enemy, k: float) -> void:
+## LC-1 to LC-3: the named part of the drawn figure each wind-up sits on (BakedModel.point), when the model has it.
+const PART := {EnemyDef.Tell.BOLT: "crossbow", EnemyDef.Tell.ORB: "orb", EnemyDef.Tell.RITUAL: "hands"}
+
+
+## Where its wind-up's light sits: the part of the pose drawn (model, anim, t as the crowd draws it) or, without
+## them, its EnemyDef.tell_at.
+static func spot(e: Enemy, model: BakedModel, anim: StringName, t: float) -> Vector3:
+	var d := e.def
+	var part: String = PART.get(d.tell, "")
+	if model != null and part != "" and model.has_point(part) and model.frame_count(anim) > 0:
+		return anchor(e.pos, e.y, e.yaw(), d.size, model.point(part, anim, t))
+	return anchor(e.pos, e.y, e.yaw(), d.size, d.tell_at)
+
+
+## The wind-up of one enemy, k from 0 (it just started) to 1 (the attack is loosed). model, anim, t: the pose drawn
+## (Horde.render), so the light sits on the crossbow, the orb or the hands where they are.
+func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -> void:
 	var d := e.def
 	if d.tell == EnemyDef.Tell.NONE:
 		return
-	var at := anchor(e.pos, e.y, e.yaw(), d.size, d.tell_at)
+	var at := spot(e, model, anim, t)
+	if d.tell == EnemyDef.Tell.RITUAL:
+		_rite(e, k, at, model, anim, t)
+		return
 	match d.tell:
 		EnemyDef.Tell.GLINT:
 			var g := ramp(k, GLINT_FROM, GLINT_PEAK)
@@ -164,21 +225,40 @@ func tell(e: Enemy, k: float) -> void:
 					Vector2.ONE * (0.5 + 0.5 * k) * d.size, DUST, 0.45 * sin(k * PI))
 		EnemyDef.Tell.ORB:
 			var c := magic_of(d)
-			_put(Shape.DOT, at, Vector2.ONE * ORB_HALO * d.size * (0.6 + 0.4 * k), c, 0.5 * k)
+			var gone := 1.0 - smoothstep(0.94, 1.0, k)
+			_put(Shape.DOT, at, Vector2.ONE * ORB_HALO * d.size * (0.6 + 0.4 * k), c, 0.5 * k * gone)
+			# the core swells as the staff comes up and is held
+			var core := lerpf(ORB_CORE, ORB_CORE_FULL, smoothstep(0.1, 0.85, k)) * d.size
+			_put(Shape.DOT, at, Vector2.ONE * core, c, minf(1.0, k * 2.5) * 0.6 * gone)
+			# rings closing on it: the magic gathered from round it into the staff's top
+			var wave := k * ORB_RINGS
+			var r_k := 1.0 - fposmod(wave, 1.0)
+			if wave < ORB_RINGS:
+				var ring := lerpf(core * 1.1, ORB_GATHER * d.size, r_k)
+				_put(Shape.RING, at, Vector2.ONE * ring, c * MAGIC_SPARK, sin((1.0 - r_k) * PI) * minf(1.0, k * 3.0) * 0.6 * gone, 0.0, ORB_RING_WIDTH)
 			for i in ORB_SPARKS:
 				var phase := fposmod(k * 1.6 + float(i) / ORB_SPARKS, 1.0)
 				var a := phase * TAU * 1.5 + TAU * i / ORB_SPARKS
-				var r := ORB_RADIUS * d.size * (1.0 - 0.5 * phase)
-				_put(Shape.DOT, at + Vector3(cos(a) * r, phase * ORB_RISE * d.size, sin(a) * r), Vector2.ONE * 0.16 * d.size, c * MAGIC_SPARK,
-					sin(phase * PI) * minf(1.0, k * 3.0))
+				var r := ORB_RADIUS * 2.2 * d.size * (1.0 - phase)
+				_put(Shape.DOT, at + Vector3(cos(a) * r, (1.0 - phase) * ORB_RISE * 0.4 * d.size, sin(a) * r), Vector2.ONE * 0.16 * d.size, c * MAGIC_SPARK,
+					sin(phase * PI) * minf(1.0, k * 3.0) * gone)
 		EnemyDef.Tell.BOLT:
+			var face := Vector2.from_angle(PI * 0.5 - e.yaw())
+			var bow := ramp(k, BOW_FROM, BOLT_FROM)
+			if bow > 0.0:
+				# the crossbow in light where the pose holds it: its bow across, the bolt along it
+				# (over its own body: aiming away from the camera, the body hid the crossbow)
+				_floor(Shape.STREAK, at, Vector2(-face.y, face.x), Vector2(BOW_WIDTH * d.size, BOW_THICK * d.size), PALE, 0.85 * bow, 0.0, true)
+				_floor(Shape.STREAK, at, face, Vector2(BOW_TIP * 2.4 * d.size, BOW_THICK * 0.8 * d.size), PALE, 0.7 * bow, 0.0, true)
 			var b := ramp(k, BOLT_FROM, 1.0)
 			if b > 0.0:
-				# the bolt drawn back: its tip lights and a pale streak grows along the aim, the way it will fly
-				_put(Shape.DOT, at, Vector2.ONE * 0.32 * d.size, PALE, 0.65 * b)
-				var length := BOLT_DRAW * d.size * b
-				var mid := Vector2(at.x, at.z) + e.aim * length * 0.5
-				_floor(Shape.STREAK, Vector3(mid.x, at.y, mid.y), e.aim, Vector2(length, 0.07 * d.size), PALE, 0.55 * b)
+				# the bolt drawn back: its tip lights and the sight grows from it along the aim, the way it will fly
+				var tip := at + Vector3(face.x, 0.0, face.y) * BOW_TIP * d.size
+				var glint := ramp(k, GLINT_FROM, GLINT_PEAK)
+				_put(Shape.DOT, tip, Vector2.ONE * lerpf(0.32, TIP_GLINT, glint) * d.size, PALE, 0.65 * b + 0.25 * glint, 0.0, 0.0, true)
+				var length := SIGHT * d.size * b
+				var mid := Vector2(tip.x, tip.z) + e.aim * length * 0.5
+				_floor(Shape.STREAK, Vector3(mid.x, tip.y, mid.y), e.aim, Vector2(length, 0.07 * d.size), PALE, SIGHT_LIGHT * b, 0.0, true)
 		EnemyDef.Tell.SHIELD:
 			var s := ramp(k, SHIELD_FROM, 1.0)
 			if s > 0.0:
@@ -190,26 +270,49 @@ func tell(e: Enemy, k: float) -> void:
 					var a := TAU * (i / 2.0) + e.look * TAU
 					var foot := e.pos - e.aim * 0.3 * d.size + Vector2(cos(a), sin(a)) * 0.35 * d.size
 					_put(Shape.DOT, Vector3(foot.x, 0.15 + 0.2 * dust, foot.y), Vector2.ONE * 0.6 * d.size, DUST, 0.5 * sin(dust * PI))
-		EnemyDef.Tell.RITUAL:
-			var c := magic_of(d)
-			var rise := smoothstep(0.0, 0.3, k)
-			_floor(Shape.RING, Vector3(e.pos.x, 0.06, e.pos.y), Vector2.RIGHT, Vector2.ONE * 2.0 * RITUAL_RING, c, RITUAL_RING_ALPHA * rise, 0.05)
-			for i in RITUAL_MOTES:
-				var a := k * TAU * 2.0 + TAU * i / RITUAL_MOTES
-				_put(Shape.DOT, at + Vector3(cos(a), 0.35 * sin(a * 0.5), sin(a)) * RITUAL_ORBIT * d.size, Vector2.ONE * 0.2 * d.size, c * MAGIC_SPARK, rise)
 
 
-## One enemy whose attack was just loosed, t seconds ago.
-func loosed(e: Enemy, t: float) -> void:
+## LC-3: the priest's rite (see RITUAL_*). at: the middle of its hands (or its tell_at without them).
+func _rite(e: Enemy, k: float, at: Vector3, model: BakedModel, anim: StringName, t: float) -> void:
+	var d := e.def
+	var c := magic_of(d)
+	var rise := smoothstep(0.0, 0.3, k)
+	var gone := 1.0 - smoothstep(0.94, 1.0, k)
+	_floor(Shape.RING, Vector3(e.pos.x, 0.06, e.pos.y), Vector2.RIGHT, Vector2.ONE * 2.0 * RITUAL_RING, c, RITUAL_RING_ALPHA * rise, 0.05)
+	# the flame over the raised hands, grown with them
+	var flame := smoothstep(0.15, 0.7, k)
+	var top := at + Vector3(0, RITUAL_LIFT * d.size * flame, 0)
+	_put(Shape.DOT, top, Vector2(0.8, 1.15) * RITUAL_FLAME * d.size * (0.5 + 0.5 * flame), c, 0.7 * flame * gone)
+	for i in RITUAL_MOTES:
+		var a := k * TAU * 2.0 + TAU * i / RITUAL_MOTES
+		_put(Shape.DOT, top + Vector3(cos(a), 0.35 * sin(a * 0.5), sin(a)) * RITUAL_ORBIT * d.size, Vector2.ONE * 0.2 * d.size, c * MAGIC_SPARK, rise * gone)
+	# a glow in each palm
+	if model != null and model.has_point("hand_l") and model.frame_count(anim) > 0:
+		for hand: String in ["hand_l", "hand_r"]:
+			var palm := anchor(e.pos, e.y, e.yaw(), d.size, model.point(hand, anim, t))
+			_put(Shape.DOT, palm, Vector2.ONE * RITUAL_PALM * d.size, c * MAGIC_SPARK, 0.8 * flame * gone)
+	# in the hold, a thread from the flame down to the ring: from the rite to the ground
+	var thread := ramp(k, 0.6, 0.85)
+	if thread > 0.0:
+		var low := Vector3(e.pos.x, 0.1, e.pos.y)
+		# turned to the camera and upright on the screen (the game's camera sees a standing meter as 0.87)
+		_put(Shape.STREAK, (top + low) * 0.5, Vector2((top.y - low.y) * 0.87, 0.05 * d.size), c, RITUAL_THREAD * thread, PI * 0.5)
+
+
+## One enemy whose attack was just loosed, t seconds ago (model, anim, clip_t: the pose drawn, as for tell()).
+func loosed(e: Enemy, t: float, model: BakedModel = null, anim := &"", clip_t := 0.0) -> void:
 	var d := e.def
 	if d.behavior == EnemyDef.Behavior.RUNNER:
 		_lunge(e, t)
 	if t >= LOOSE_TIME:
 		return
 	var k := 1.0 - t / LOOSE_TIME
-	var at := anchor(e.pos, e.y, e.yaw(), d.size, d.tell_at)
+	var at := spot(e, model, anim, clip_t)
 	match d.tell:
 		EnemyDef.Tell.BOLT:
+			# the release at the crossbow's tip
+			var face := Vector2.from_angle(PI * 0.5 - e.yaw())
+			at += Vector3(face.x, 0.0, face.y) * BOW_TIP * d.size
 			_put(Shape.DOT, at, Vector2.ONE * 0.55 * d.size * k, PALE, k)
 			_put(Shape.STREAK, at, Vector2(0.9 * d.size, 0.08 * d.size), PALE, k)
 		EnemyDef.Tell.SHIELD:
@@ -263,28 +366,49 @@ func commit() -> void:
 	for s in _sparks:
 		var k := s.life / s.total
 		_put(s.shape, s.pos, Vector2(s.size, s.size * (1.8 if s.shape == Shape.SHARD else 1.0)), OLD_GOLD, k, s.turn)
-	var mm := _mmi.multimesh
-	_mmi.visible = count > 0
-	if count > 0:
-		mm.buffer = _data
-		mm.visible_instance_count = count
+	var over := _over.slice(0, count).count(1)
+	if over == 0:
+		_show(_mmi, _data, count)
+		_show(_over_mmi, _data, 0)
+		return
+	# the quads drawn over go to their own MultiMesh, the rest stay in order
+	var under := PackedFloat32Array()
+	var above := PackedFloat32Array()
+	for i in count:
+		if _over[i] == 1:
+			above.append_array(_data.slice(i * FLOATS, (i + 1) * FLOATS))
+		else:
+			under.append_array(_data.slice(i * FLOATS, (i + 1) * FLOATS))
+	_show(_mmi, under, count - over)
+	_show(_over_mmi, above, over)
+
+
+func _show(mmi: MultiMeshInstance3D, data: PackedFloat32Array, n: int) -> void:
+	mmi.visible = n > 0
+	if n > 0:
+		data.resize(POOL * FLOATS)
+		mmi.multimesh.buffer = data
+		mmi.multimesh.visible_instance_count = n
 
 
 ## A quad turned to the camera. turn: radians in the screen's plane.
-func _put(shape: Shape, at: Vector3, size: Vector2, color: Color, alpha: float, turn := 0.0) -> void:
-	_write(Basis(Vector3(size.x, 0, 0), Vector3(0, size.y, 0), Vector3(0, 0, 1)), at, shape, color, alpha, 1.0, 0.0, turn)
+## param: a ring's thickness (share of its radius).
+## over: drawn over what is in front of it (LC-1).
+func _put(shape: Shape, at: Vector3, size: Vector2, color: Color, alpha: float, turn := 0.0, param := 0.0, over := false) -> void:
+	_write(Basis(Vector3(size.x, 0, 0), Vector3(0, size.y, 0), Vector3(0, 0, 1)), at, shape, color, alpha, 1.0, param, turn, over)
 
 
 ## A quad lying flat, its x along a direction of the floor. param: the ring's thickness.
-func _floor(shape: Shape, at: Vector3, dir: Vector2, size: Vector2, color: Color, alpha: float, param := 0.0) -> void:
+func _floor(shape: Shape, at: Vector3, dir: Vector2, size: Vector2, color: Color, alpha: float, param := 0.0, over := false) -> void:
 	var x := Vector3(dir.x, 0, dir.y)
 	var y := Vector3(-dir.y, 0, dir.x)
-	_write(Basis(x * size.x, y * size.y, Vector3.UP), at, shape, color, alpha, 0.0, param, 0.0)
+	_write(Basis(x * size.x, y * size.y, Vector3.UP), at, shape, color, alpha, 0.0, param, 0.0, over)
 
 
-func _write(basis: Basis, at: Vector3, shape: Shape, color: Color, alpha: float, billboard: float, param: float, turn: float) -> void:
+func _write(basis: Basis, at: Vector3, shape: Shape, color: Color, alpha: float, billboard: float, param: float, turn: float, over := false) -> void:
 	if count >= POOL or alpha <= 0.003:
 		return
+	_over[count] = 1 if over else 0
 	var o := count * FLOATS
 	var d := _data
 	d[o] = basis.x.x; d[o + 1] = basis.y.x; d[o + 2] = basis.z.x; d[o + 3] = at.x

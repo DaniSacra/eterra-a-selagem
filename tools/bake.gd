@@ -26,7 +26,9 @@ extends SceneTree
 ## one-shot goes from `from` to `to` and back over its poses: a thrust out of a held pose and back to it). A "guard"
 ## entry may end with a second of its clip ([rig, clip, bones, second]): those bones held as that pose has them. A
 ## locked walk's "stand" (m): its hips that much higher over the same footprints, the knees bent less. A rigid or held
-## piece's "name" ("shield", "sword", "staff") keeps its vertices in BakedModel.parts, for measures (guard_pose).
+## piece's "name" ("shield", "sword", "staff", "orb", "crossbow") keeps its vertices in BakedModel.parts, for measures
+## (guard_pose) and for where the lights of a wind-up sit (EnemyFx, BakedModel.point). An entry's "marks" (name -> bone
+## names) keeps the body's vertices bound to those bones in BakedModel.marks (LC-3: the priest's hands).
 ## A held piece: "hand" (Right or Left), then "file" (assets/models/weapons) or "shape" (see _prop), "scale",
 ## "at" (meters) and "rot" (degrees) in the hand's grip (+Y along the fist toward the pinky, which is where the
 ## libraries' sword clips carry the blade; +Z out of the knuckles, along the forearm) and "paint" (KayKit palette
@@ -133,8 +135,10 @@ const MORVATH_BLADE_PAINT := {C_BLADE: "iron", C_WRAP: "iron", C_ARMOR: "iron", 
 ## The staff: shaft (22) and its knots (9) dark wood, the rings (17), the band (19) and the claws at the top (13)
 ## old metal.
 const STAFF_PAINT := {C_WOOD: "wood", C_BONE: "wood", 17: "metal", 19: "metal", 13: "metal"}
-## The crossbow: bow (3) in iron, stock (22) in dark wood, the lock (14) old metal.
-const CROSSBOW_PAINT := {C_ARMOR: "iron", C_WOOD: "wood", 14: "metal"}
+## The crossbow: stock (22) in dark wood, the lock (14) old metal. LC-1 (docs/backlog.md 9): the bow (3) in the
+## worn iron of the soldier's blade, lighter than the figure: in the dark iron the bow was lost against the dark robe
+## and the crossbow did not read in the game's camera, not even raised to aim.
+const CROSSBOW_PAINT := {C_ARMOR: "blade", C_WOOD: "wood", 14: "metal"}
 ## The knight's round shield: rim and skull (3) worn iron, the boards (7) dark wood, the straps (6) leather.
 const SHIELD_PAINT := {C_ARMOR: "iron_worn", 7: "wood", C_WRAP: "leather"}
 ## The soldier's cleaver: the KayKit blade is 1.5 m long with its hilt, the steel 0.89 m, longer than the trunk
@@ -142,8 +146,9 @@ const SHIELD_PAINT := {C_ARMOR: "iron_worn", 7: "wood", C_WRAP: "leather"}
 ## size, printed by the bake): 0.59 m of steel, 0.99 m with the hilt (ART_REVIEW 4b: the thin figure's weapon is
 ## its role, 0.6 did not read in the game's camera).
 const CLEAVER_SCALE := 0.66
-## The crossbow (1.1 m wide in KayKit's units): a hand crossbow beside a 1.9 m figure.
-const CROSSBOW_SCALE := 0.5
+## The crossbow (1.1 m wide in KayKit's units): a hand crossbow beside a 1.9 m figure. LC-1: 0.62 (was 0.5, 0.55 m
+## wide): at 0.5 its bow was 9 px wide at 1080 in the game's camera, smaller than the figure's hand and arm.
+const CROSSBOW_SCALE := 0.62
 
 const SOLDIER_ANIMS := {"walk": ["Walking_D_Skeletons", 10, true], "attack": ["1H_Melee_Attack_Chop", 7, false], "hit": ["Hit_A", 4, false],
 	"rise": ["Spawn_Ground_Skeletons", 8, false], "death": ["Death_C_Skeletons", 8, false], "idle": ["Idle_Combat", 4, true]}
@@ -238,6 +243,12 @@ const BRUTE_RUSH := {"time": 0.45, "hold": SHIELD_BRACE,
 	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
 const KNIGHT_RUSH := {"time": 0.45, "bend": {"Spine02": Vector3(14, 0, 0)},
 	"guard": [[&"ual2", "Shield_Dash_RM", TRUNK + LEFT_ARM, RUSH_AT], [&"ual", "Sword_Idle", RIGHT_ARM]]}
+## LC-3 (docs/backlog.md 9): the priest's ritual is both arms raised open over the head, a V a little wider than the
+## head, the chest thrown back and the skull lifted to them (KayKit's Cheer up to its arms' highest, 0 to 0.84 s, in
+## the 0.8 s the cast took before; bent back on Spine02, Spine and Head (also so its armed pose stands 0.31 m from its guard, T5 6.1), which the KayKit rig drives every pose: a bend on Spine01,
+## which it does not, piles up pose after pose): it read as arms held out to the sides (Spellcast_Summon 1.0 to 3.05 s), the same
+## width as the sorcerer's staff held out, and the two hooded figures were told apart only by their colour.
+const RITE_BEND := {"Spine02": Vector3(-20, 0, 0), "Spine": Vector3(-26, 0, 0), "Head": Vector3(-8, 0, 0)}
 ## Both hands held out, palms up, as one who carries an offering (the priest: no object, no symbol).
 const BOTH_ARMS: Array[StringName] = [&"LeftShoulder", &"LeftArm", &"LeftForeArm", &"LeftHand", &"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
 const OFFERING_GUARD := {"guard": [&"ual2", "Walk_Carry", BOTH_ARMS]}
@@ -330,7 +341,7 @@ const MODELS := {
 		"held": [
 			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT, "name": "staff"},
 			# the cold violet orb in the top of the staff: always lit, it swells as the bolt is conjured
-			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD},
+			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
 		],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG], "idle": STAFF_CLIPS.idle,
@@ -345,7 +356,7 @@ const MODELS := {
 		"palette": PALETTE + "archer.png",
 		# the crossbow in dark wood and iron, the size of a hand crossbow beside the figure (it was a white piece over
 		# its head)
-		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT}],
+		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT, "name": "crossbow"}],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, CROSSBOW_JOG], "idle": [&"ual", "Idle", 12, true, CROSSBOW_GUARD],
 			"attack": [&"ual", "Pistol_Shoot", 14, false], "aim": [&"ual", "Pistol_Idle", 8, true],
@@ -377,10 +388,12 @@ const MODELS := {
 	# 6. the priest of the dead: dark purple hood and robes, no weapon
 	"priest": {
 		"meshy": "priest", "height": 1.93, "triangles": BODY_TRIANGLES,
+		# LC-3: where its hands are in every pose (BakedModel.marks), for the light of the rite between them (EnemyFx)
+		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
 		"anims": {
 			"walk": [&"ual", "Walk", 20, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 12, true, OFFERING_GUARD],
 			# the ritual: both hands rise over the second its blow takes to fall
-			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Spellcast_Summon", 12, false, {"from": 1.0, "to": 3.05, "lift": 0.2, "time": 0.8}],
+			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Cheer", 12, false, {"from": 0.0, "to": 0.84, "lift": 0.2, "time": 0.8, "bend": RITE_BEND, "bend_in": true}],
 			# T5-13: the elite's three vines, each its own thrust of the hands
 			"shot": [&"kaykit", "Spellcast_Shoot", 8, false, {"time": 0.3}],
 		},
@@ -410,7 +423,7 @@ const MODELS := {
 		"held": [
 			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT},
 			# the purple orb held in the top of the staff (the sheet's block 8)
-			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.38 * 0.9, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_PURPLE},
+			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.38 * 0.9, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_PURPLE, "name": "orb", "mark": true},
 		],
 		"anims": {
 			"walk": [&"ual", "Walk_Formal", 20, true, ELDER_STRIDE], "idle": STAFF_CLIPS.idle, "rise": STAFF_RISE,
@@ -660,6 +673,9 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 				if piece[v] == 1:
 					mine.append(v)
 			parts[r["name"]] = mine
+	var marks := {}
+	for mark: String in spec.get("marks", {}):
+		marks[mark] = _marked(arrays, mi.skin, spec.marks[mark])
 	var held: Array = spec.get("held", [])
 	if not held.is_empty():
 		atlas = _with_strip(atlas, load(spec.palette))
@@ -696,11 +712,17 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 				mine.append(held_at + v)
 			held_at += n
 		if h.has("name"):
-			parts[h["name"]] = mine
+			# "mark": a place kept in BakedModel.marks, not a part it carries (the staffs' orbs: the measures of the body
+			# that leave the carried parts out stay what they were)
+			if h.get("mark", false):
+				marks[h["name"]] = mine
+			else:
+				parts[h["name"]] = mine
 		extra.append_array(pieces)
 	var out := BakedModel.new()
 	out.painted = true
 	out.parts = parts
+	out.marks = marks
 	# the glowing cells of the palette strip (the staffs' gems); none without a strip
 	out.glow_from = Vector2(0.5, BODY + 0.75 * (1.0 - BODY)) if not held.is_empty() else Vector2(2, 2)
 	# kept inside the baked file, compressed for the video card (where it is not supported the engine unpacks it)
@@ -1117,6 +1139,28 @@ const SOLE := 0.08
 ## The soles of the feet through the poses of a loop (BakedModel.feet): per foot, per pose, the vertices of the foot
 ## (half their skin or more on its bones) that come within SOLE meters of the floor in some pose of the loop. body: the figure's own mesh
 ## arrays (the first vertices of every pose), skin: its binds.
+## LC-3: the body's vertices bound at least half to these bones (a mark: where its hands are, BakedModel.marks).
+func _marked(body: Array, skin: Skin, names: Array) -> PackedInt32Array:
+	var bones: PackedInt32Array = body[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = body[Mesh.ARRAY_WEIGHTS]
+	var count := (body[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	var per := bones.size() / count
+	var binds: Array[int] = []
+	for i in skin.get_bind_count():
+		if names.has(String(skin.get_bind_name(i))):
+			binds.append(i)
+	var out := PackedInt32Array()
+	for v in count:
+		var share := 0.0
+		for k in per:
+			if binds.has(bones[v * per + k]):
+				share += weights[v * per + k]
+		if share >= 0.5:
+			out.append(v)
+	print("  mark %s: %d vertices" % [names, out.size()])
+	return out
+
+
 func _soles(body: Array, skin: Skin, poses: Array) -> Array:
 	var bones: PackedInt32Array = body[Mesh.ARRAY_BONES]
 	var weights: PackedFloat32Array = body[Mesh.ARRAY_WEIGHTS]

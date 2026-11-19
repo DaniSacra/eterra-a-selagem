@@ -48,12 +48,12 @@ fica fora desde a C1).
 |---|---|---|---|---|---|---|---|---|---|
 | esqueleto | `skeleton.res` | 5,23 MB | 6 048 | 4 311 | 128 (10) | 2048 x 378 | 1,92 | -0,007 | `5aeee46` |
 | corredor | `runner.res` | 3,65 MB | 5 304 | 3 866 | 90 (7) | 2048 x 234 | 1,65 | +0,012 | `5aeee46` |
-| feiticeiro | `mage.res` | 5,44 MB | 6 660 | 5 530 | 119 (10) | 2048 x 387 | 1,92 | +0,004 | `5aeee46` |
-| besteiro | `archer.res` | 3,94 MB | 6 078 | 4 435 | 90 (7) | 2048 x 268 | 1,92 | -0,015 | `5aeee46` |
+| feiticeiro | `mage.res` | 5,44 MB | 6 660 | 5 530 | 119 (10) | 2048 x 387 | 1,92 | +0,004 | ciclo LC (marca `orb`, malha e clipes iguais) |
+| besteiro | `archer.res` | 3,95 MB | 6 078 | 4 435 | 90 (7) | 2048 x 268 | 1,92 | -0,015 | ciclo LC (besta 0,62 e arco em ferro gasto, peça `crossbow`) |
 | Escudo | `guard.res` | 3,90 MB | 4 459 | 3 877 | 114 (9) | 2048 x 249 | 2,03 | -0,013 | `5aeee46` |
-| sacerdote | `priest.res` | 3,51 MB | 4 513 | 3 846 | 102 (8) | 2048 x 225 | 1,93 | -0,021 | `5aeee46` |
+| sacerdote | `priest.res` | 3,52 MB | 4 513 | 3 846 | 102 (8) | 2048 x 225 | 1,93 | -0,021 | ciclo LC (`cast` = Cheer do KayKit, marcas `hands`, `hand_l`, `hand_r`) |
 | Cavaleiro (guardião) | `knight.res` | 4,80 MB | 6 109 | 4 956 | 114 (9) | 2048 x 341 | 2,03 | -0,025 | `5aeee46` |
-| sacerdote ancião (guardião) | `priest_elder.res` | 5,30 MB | 6 617 | 5 557 | 116 (9) | 2048 x 375 | 2,07 | **-0,081** | `5aeee46` |
+| sacerdote ancião (guardião) | `priest_elder.res` | 5,30 MB | 6 617 | 5 557 | 116 (9) | 2048 x 375 | 2,07 | **-0,081** | ciclo LC (marca `orb`, malha e clipes iguais) |
 | Morvath | `morvath.res` | 7,96 MB | 5 325 | 4 281 | 230 (17) | 2048 x 599 | 2,02 | -0,012 | `6338417` (um commit de `bake.gd` atrás) |
 | estátua encapuzada | `statue.res` | 0,17 MB | 5 586 | 6 035 | 1 | 2048 x 3 | 2,47 | | `ec5d757`, **sem uso** (a estátua é feita em código por `Masonry._build_statue`); fora do pacote desde a C1 |
 
