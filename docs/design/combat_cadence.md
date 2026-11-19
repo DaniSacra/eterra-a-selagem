@@ -438,3 +438,32 @@ dos inimigos no salão passam (aro 51 a 79 acima da laje); reprovado para adoç�
 chão da câmara vai de luma 63 para 120 a 132 (ciano) e a tempestade perde o vermelho (saturação 0,48 para 0,24).
 P2: avisos alaranjados no chão morno, Morvath sem violeta, corte mais véu que lâmina, herói perto do chão em matiz,
 "vai bater" a 85%.
+
+
+## 7. Runas Instáveis com peso (RP-02 e RP-03, `6762dbc`, 2026-11-19)
+
+Revisão do dano novo no herói (4 para 7 de 30; inimigos 35 para 60; aviso 1,2 s, golpe 0,25 s, descanso 2,4 s iguais).
+Evidência em `docs/gallery/rooms_rp/cadence/` (armado aos 3,9 s, 0,9 s do aviso, semente 5, Runas A, estilizado).
+
+- **Medido (robô, reação 0,25, `--ultimate=cleave`, CPU 60 f/s fixos)**: 120 salas de abertura nas Runas (60 por
+  variante, `--arena=runes --smoke=45`): runas 9 (A) e 12 (B) acertos, 0,15 a 0,2 por sala, nenhuma morte. Descida
+  inteira, sementes 1 a 48 com `--runlog`: 39 vitórias, 44 salas de Runas, runas 6 acertos e 42 de dano (maior fonte
+  nelas; mago 32 + 4), nenhuma morte nas Runas (as 9 mortes: 3 pelo mago nas salas, 6 em Morvath). Os 6 acertos vieram
+  todos com a esquiva gasta (`hurt_ctx.dash_ready` false, `warn_s` 1,2); só 1 golpe de outro inimigo a menos de 3 s de um
+  acerto das runas (mago, 2,1 s depois, fora da proteção de 1,3 s). Sem soma no mesmo instante: o acerto dá 1,3 s de
+  proteção e só fere no quadro em que o aviso enche.
+- **Tempo de reação (inferência pelos números)**: com a regra do vizinho apagado, sair de uma laje de 3 m pede no máximo
+  1,5 m, 0,22 s andando. Pior caso: pernas presas do especial (0,71 s) com a esquiva gasta: 1,2 - 0,71 - 0,22 = 0,27 s
+  para reagir; finalizador (30 quadros) deixa 0,48 s. Justo para 7; apertado para 10.
+- **Leitura no Forward+ estilizado**: laje armada luma p50 113 a 115 contra 74 das vizinhas, saturação 0,21 a 0,29,
+  âmbar (matiz 12 a 15) separado do vermelho da mira do besteiro. Passa.
+- **P1 Compatibility**: a mesma laje armada lê só pela moldura e pelas marcas: p50 101 a 104 contra 91 a 100 das
+  vizinhas (+4 a +13, era +40), saturação 0,04. Aceite: armada a 0,75 do aviso com pelo menos +25 de luma p50 e
+  saturação 0,15 sobre as vizinhas no Compatibility estilizado (dono: environment-artist, `rune_floor_paint` /
+  `rune_tiles.gdshaderinc`, como o LC-5 fez para os avisos do `Ground`).
+- **P1 som**: as runas não têm som ao armar nem ao golpear (`RuneFloor` e `RunesLook` não chamam `Audio`); o jogador que
+  olha o mago não tem aviso que não seja o chão. Aceite: um som curto ao armar (no `ARMED`) e o estalo no quadro do golpe
+  (`FIRED`), por `CombatSounds`, abaixo dos avisos de Morvath (dono: gameplay-engineer).
+- **Veredito**: 7 aprovado com ressalva (as duas P1 antes da exportação para o Daniel, ou ele joga sabendo). Passo 2
+  (10) espera o teste do Daniel e as duas P1: o robô lê o âmbar perfeitamente, então a média dele (0,14 acerto por sala)
+  não é a de gente, e com 10 o pior caso deixa 0,27 s com 33% da vida em jogo.
