@@ -11,17 +11,120 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 | Salão das Catacumbas | 32 x 30 m, cerca de 900 m² | abertura no claro; também fonte e loja | 1, 5 a 8 (fonte), 10 | 4 a 8 | nenhum |
 | Cripta A | 24 x 21 m, 498 m² | cobertura: contornar o sarcófago do meio contra até 2 atiradores | 0,1 a 1,0 | 4 a 6, sem sacerdote | nenhum |
 | Cripta B (Ossuário) | igual | de que lado do muro divisor | igual | igual | nenhum |
-| Fendas A | 42 x 30 m, cerca de 1060 m² | em que ponte cruzar, ou dar a volta pelo sul | 0,1 a 1,0 | 6 a 8 | nenhum |
+| Fendas A | 42 x 30 m, cerca de 1060 m² | em que ponte cruzar, ou dar a volta pelo sul; três tocos de apoio (RP-05) | 0,1 a 1,0 | 6 a 8 | nenhum |
 | Fendas B | igual, ponte norte caída | uma ponte só e a volta sul | igual | igual | nenhum |
 | Jardim A / B | 34 x 28 m, 875 m² | o tronco como escudo, raízes que cortam o passo | 0,1 a 1,0 | 6 a 8 | nenhum |
 | Santuário A | 44 x 28 m, 1192 m² | nave aberta ou naves laterais (casa do guardião) | 0,4 a 1,0; guardião em qualquer uma | 6 a 8 | nenhum |
 | Santuário B | igual, buraco na nave | o buraco entre o herói e o guardião | igual | igual | nenhum |
-| Ponte A | 56 x 18 m, 771 m² | segurar a ilha do meio ou atravessar | 0,5 a 1,0 | 6 a 8, sem sacerdote | nenhum |
+| Ponte A | 56 x 18 m, 771 m² | atravessar sob fogo: todos nascem no leste, bloco no fim da ponte 2 (RP-04) | 0,5 a 1,0 | 6 a 8, sem sacerdote | nenhum |
 | Ponte B | 56 x 18 m, 701 m² | a ponte longa com patamar | igual | igual | nenhum |
-| Runas A | 30 x 24 m, 702 m² | atrair os inimigos para a faixa que vai acender | 0,5 a 1,0 | 4 a 6 | faixas (sweep, comb, cut) |
-| Runas B | igual | ilhas e a pedra quieta | igual | igual | ladrilhos (checker, frame, islands) |
+| Runas A | 30 x 24 m, 702 m² | atrair os inimigos para a faixa que vai acender | 0,5 a 1,0 | 4 a 6 | faixas (sweep, comb, cut); herói 7, inimigos 60, nada a 6 m da entrada (RP-02, RP-03) |
+| Runas B | igual | ilhas e a pedra quieta | igual | igual | ladrilhos (checker, frame, islands); idem |
 | Provação, Altar | 16 x 14, 18 x 14 m | escolha sem luta | 2 a 7, 2 a 8 | sem luta | nenhum |
 | Câmara do Selo | círculo de 12,5 m | Morvath | 11 | Morvath + até 6 | os ataques dele |
+
+---
+
+## Feito em 2026-11-19: RP-01 a RP-05 (quickwins aprovados pelo Daniel)
+
+Só dado no `_stage` do `tools/make_data.gd` (regerado com `-- stage`) e um teste novo; nenhuma peça nova (as que o look
+já desenha), nenhum texto novo. RP-17 e RP-19 ficaram para depois (ver o fim desta seção).
+
+**Como medi.** `tools/smoke.sh 900 --seed=N --bot-reaction=0.25 --ultimate=cleave`, sementes 1 a 48, na mesma base
+(código `47d06a7`, que dá exatamente os números de `a0d9bb9` da seção Sugestões), cada configuração numa cópia isolada
+do projeto (outra frente mexia no repositório ao mesmo tempo). Configurações: **base**, **RP-03 sozinho** (só os dois
+números das Runas) e **final** (RP-01 a RP-05). As partidas só se separam na primeira sala mudada, então cada sala tem
+duas leituras: todas as salas da descida (n de 20 a 37 por vista) e a **pareada**, a primeira sala mudada de cada
+semente, igual até ali. Ruído: nas salas que não mudaram (Cripta, Jardim, Santuário) as médias andam até 0,6 de dano e
+10 pontos de tiro barrado só porque a partida chegou lá por outro caminho; diferença menor que isso não é efeito. Para
+as Runas também 40 sementes de cada variante começando nelas (`--arena=runes --variant=v --smoke=40`, só a primeira
+sala). Saídas e scripts fora do repositório:
+`/tmp/claude-1000/-home-dani-games-eterra-a-selagem/78898d24-f62f-43d1-9d7c-e7eaa36af8bf/scratchpad/rp/`.
+
+**Descida inteira (48 sementes).** Vitórias 37 (base), 39 (RP-03 sozinho), 39 (final); `stuck` 0 e `bot.stuck` 0 nas
+três; Morvath alcançado aos 236 s, 233 s e 237 s (mediana).
+
+**RP-01, zonas em toda sala de luta.** Feito: Cripta A (`north` z < -3, `middle`, `south` z > 3), Cripta B
+(`west_of_wall`, `east_of_wall`, `south_open` z > -3), Fendas (`bridge_n`, `bridge_s`, `south_way` ao sul do buraco sul,
+`west`, `east`; a B herda, sem a ponte norte), Jardim (`tree_shade` 12 x 12 m em volta do tronco, `east_field` x > 2,
+`rest`), Runas A (`pillars` os quatro ladrilhos em volta de cada pilar, `middle` a cruz entre eles, `edge`) e Runas B
+(`quiet`, `middle`, `edge`). Zona dominante (final, % do tempo):
+
+| Vista | Zonas | Dominante | Aceite 35 a 75% |
+|---|---|---|---|
+| Cripta A | north 42, middle 31, south 26 | 42 | sim |
+| Cripta B | south_open 75,1, east_of_wall 16, west_of_wall 7 | 75,1 | **no limite**: a luta é no sul aberto, o muro quase não divide |
+| Fendas A | east 58, south_way 17, west 15, bridge_s 7, bridge_n 3 | 58 | sim |
+| Fendas B | east 63, west 15, south_way 14, bridge_s 7 | 63 | sim |
+| Jardim A | east_field 54, rest 43, **tree_shade 2** | 54 | sim, mas o tronco como escudo não é usado |
+| Jardim B | rest 48, east_field 46, tree_shade 5 | 48 | sim |
+| Runas A | edge 38, middle 31, pillars 30 | 38 | sim |
+| Runas B | middle 58, edge 32, quiet 10 | 58 | sim (a pedra quieta 7 para 10%) |
+
+Leitura nova: o Jardim e a Cripta B não fazem a pergunta deles para o robô (tronco 2 a 5% do tempo; lado do muro 23%).
+Pode ser o robô, que não procura cobertura (risco 7.1); é a primeira coisa a olhar com gente.
+
+**RP-02, nada aceso a menos de 6 m da entrada.** Feito: `RUNES_ENTRY` (colunas 0 e 1 das linhas 3 a 7, coluna 2 das 3
+a 6: todo ladrilho com algum chão a menos de 6 m de (-12,5; 3,5)) somado ao `HazardDef.quiet` das duas variantes. O
+`RunesLook` pinta a pedra quieta pela peça `quiet`, não pelo campo, então esses ladrilhos continuam com a cara de runa
+(só não acendem). GUT `test_nothing_lights_within_6_m_of_the_way_in` (`tests/test_hazard.gd`): 2000 padrões por variante,
+herói em qualquer lugar e 0 a 8 de pé; nenhum ladrilho aceso a menos de 6 m e "vizinho apagado" em todos. Na base o
+mesmo teste acha 6933 (A) e 8333 (B) ladrilhos acesos perto da entrada.
+
+**RP-03, runas com peso (medido sozinho antes dos outros).** Herói 4 para 7, inimigos 35 para 60.
+
+| Medida (por sala de Runas) | Base | RP-03 sozinho | Final (com RP-02) | Aceite |
+|---|---|---|---|---|
+| Dano das runas no herói, descida (A / B / as duas) | 0,67 / 0,80 / 0,73 | 1,17 / 2,10 / 1,59 | 1,46 / 0,35 / 0,95 | 1,5 a 3,5 |
+| Dano das runas no herói, 40 começando nelas (A / B) | 0,40 / 0,70 | 0,53 / 1,57 | 1,23 / 1,23 | |
+| Abates das runas, descida (A / B) | 0,79 / 0,50 | 2,00 / 1,25 | 2,38 / 1,45 | 1,5 ou mais |
+| Dano nos inimigos, descida (A / B) | 121 / 97 | 196 / 114 | 208 / 138 | 25 vezes o do herói |
+| Inimigos / herói (A / B) | 181 / 121 | 167 / 54 | 142 / 394 | |
+| Vitórias (48) | 37 | 39 | 39 | no máximo 3 abaixo |
+
+Leitura: os inimigos sentem (abates 2 a 3 vezes); o herói é tocado 0,1 a 0,3 vez por sala (3 a 9 golpes em 40 salas):
+o robô lê bem o âmbar de 1,2 s, então o dano no herói por sala oscila em volta de 1 (0,35 a 2,1 conforme a amostra) e
+fica abaixo da faixa de 1,5 a 3,5 na média. Não subo o número por isso: o passo 2 (10, o do Hades) fica para a sessão
+do Daniel, como o RP-03 previa. O `combat-feel-director` ainda precisa revisar (dano novo no herói).
+
+**RP-04, Ponte A: atravessar sob fogo.** Feito: `spawns` só na plataforma leste (saiu o retângulo do meio; a 2ª onda
+continua fechando a oeste pelo `late_spawns`) e um `block` de 1,0 x 2,4 m, topo 2,2 m, em (16; 0), 1,5 m depois do fim
+da ponte 2 (o herói desce da ponte atrás dele; corredores de 1,5 m e mais em volta).
+
+| Medida | Base | Final | Aceite |
+|---|---|---|---|
+| Zona leste | 6% | 27% | 20% ou mais |
+| Pontes (1 + 2) | 13 + 6 = 19% | 6 + 15 = 21% | 10 a 25% |
+| Meio | 56% | 41% | abaixo de 45% |
+| Dano por sala | 2,00 | 1,60 | 1,5 a 3,5 |
+| Primeiro contato | 4,3 s | 6,1 s | |
+| Tiros barrados | 21% | 16% | |
+| `stuck` | 0 | 0 | 0 |
+
+**RP-05, Fendas A: apoio dos dois lados.** Feito, com uma mudança: um toco de coluna de 1,5 m (raio 0,6, barra tiro)
+de cada lado da fenda entre as cabeceiras, (-10,5; -4) e (5,5; -4), **e um terceiro na luta do leste**, (12,5; 1),
+porque a luta é no leste (58% do tempo). Medido na pareada (23 salas): só os dois tocos 6,0% de tiros barrados;
+oeste e leste da luta 7,4%; os três 10,7%.
+
+| Medida | Base | Final | Aceite |
+|---|---|---|---|
+| Tiros barrados, pareada (23 salas) | 4,1% | 10,7% | 10 a 18% |
+| Tiros barrados, descida (27 salas) | 4,4% | 9,5% | |
+| Tempo (mediana) | 24,2 s | 24,7 s | dentro de 20% |
+| Dano por sala (descida) | 1,30 | 1,26 | dentro de 20% |
+| `fit_probe` (os dois looks) | fantasma 1,49, sem desenho 0 | fantasma 1,49, sem desenho 0, os três tocos 0% | igual |
+
+A B (18% barrado na base, 16% no final) não mudou. A sala continua a mais aberta do jogo.
+
+**Conferido.** `tools/check.gd` e `tools/test.sh` inteiro (numa cópia do código-base com só estas mudanças; ver o
+relatório ao Game Director); `test_arenas.gd` (centro livre, 400 pontos nas peças, "cercado") verde;
+`tools/fit_probe.gd` Fendas A e Ponte A iguais à base nos dois looks, toda peça nova desenhada (0% sem desenho);
+`tools/arena_lab.gd --top` na GPU das duas salas (bloco e tocos no chão, `NavGrid` sem ilha cortada).
+
+**Ficou para depois.** RP-17 (mureta): o que a medida pede é o Jardim (tronco 2 a 5%) e a Cripta B (sul aberto 75%), mas
+nos dois o problema lido é o robô não buscar cobertura; uma mureta não o leva lá e muda a cara das salas do começo,
+que hoje jogam bem. Fica para depois da sessão do Daniel. RP-19 (saídas no fundo): nenhuma medida do robô aponta
+problema nas portas; é leitura de placa, pede captura e o `ui-ux-designer`.
 
 ---
 
@@ -130,7 +233,7 @@ piorar). Vitórias nunca mais que 3 abaixo da base de 37 de 48 sem decisão do G
 
 #### Quickwins (só dado, ou quase)
 
-**RP-01 (P1) Zonas nomeadas em todas as salas de luta.**
+**[Feito 2026-11-19, ver "Feito em 2026-11-19"] RP-01 (P1) Zonas nomeadas em todas as salas de luta.**
 - Problema: 2.2 e 2.4.9; sem zonas não se prova que Cripta, Fendas, Jardim e Runas A jogam diferente.
 - Proposta: `_areas` em `_crypt` (fileira norte z < -3, centro em volta do sarcófago, fileira sul z > 3; na B "oeste do
   muro", "leste do muro", "sul aberto"), `_rift` ("oeste", "leste", "ponte norte", "ponte sul", "volta sul" z > 4),
@@ -141,7 +244,7 @@ piorar). Vitórias nunca mais que 3 abaixo da base de 37 de 48 sem decisão do G
   diz que a sala tem um lugar só).
 - Dono: `room-designer`. Custo: P.
 
-**RP-02 (P1) Runas: nenhum ladrilho perto da entrada.**
+**[Feito 2026-11-19, ver "Feito em 2026-11-19"] RP-02 (P1) Runas: nenhum ladrilho perto da entrada.**
 - Problema: 2.4.10.
 - Proposta: a área de 6 m em volta do `hero_spawn` nunca acende.
 - Dado: `HazardDef.quiet` aceita retângulos; somar `_rect(-15, -9, 0.5, 6.5)` nas duas variantes (os ladrilhos (0..1, 4..6)).
@@ -152,7 +255,7 @@ piorar). Vitórias nunca mais que 3 abaixo da base de 37 de 48 sem decisão do G
   `max_share` e "vizinho apagado" continuam.
 - Dono: `room-designer` (dado), `gameplay-engineer` se for o caminho do código. Custo: P.
 
-**RP-03 (P1) Runas com o peso do Hades: o herói sente, os inimigos caem.**
+**[Feito 2026-11-19, ver "Feito em 2026-11-19"] RP-03 (P1) Runas com o peso do Hades: o herói sente, os inimigos caem.**
 - Problema: 2.4.4.
 - Proposta, em dois passos medidos: passo 1 `hero_damage` 4 para 7 e `enemy_damage` 35 para 60 (um esqueleto inteiro,
   três quartos de um mago); passo 2, se a sessão do Daniel achar justo, 10 (o do Hades) no herói. Aviso fica 1,2 s.
@@ -161,7 +264,7 @@ piorar). Vitórias nunca mais que 3 abaixo da base de 37 de 48 sem decisão do G
   dano nos inimigos pelo menos 25 vezes o do herói; vitórias dentro da regra acima.
 - Dono: `room-designer`; `combat-feel-director` revisa (é dano novo no herói). Custo: P.
 
-**RP-04 (P1) Ponte A: atravessar sob fogo.**
+**[Feito 2026-11-19, ver "Feito em 2026-11-19"] RP-04 (P1) Ponte A: atravessar sob fogo.**
 - Problema: 2.4.6 (leste 6%).
 - Proposta: a primeira onda só na plataforma leste (os atiradores já ficam lá por `max_ranged` 3) e um bloco de cobertura
   de 1,0 x 2,4 m, topo 2,2 m, na cabeceira leste da ponte 2, fora do tabuleiro (o herói chega ao fim da ponte coberto);
@@ -172,7 +275,7 @@ piorar). Vitórias nunca mais que 3 abaixo da base de 37 de 48 sem decisão do G
   3,5; `test_arenas` "cercado" verde.
 - Dono: `room-designer`; `environment-artist` desenha o bloco (peça que já existe). Custo: P.
 
-**RP-05 (P2) Fendas A: uma meia cobertura em cada lado da fenda.**
+**[Feito 2026-11-19, ver "Feito em 2026-11-19"] RP-05 (P2) Fendas A: uma meia cobertura em cada lado da fenda.**
 - Problema: 2.4.8 (4% barrados, sacerdote a maior fonte).
 - Proposta: um toco de coluna baixo (topo 1,5 m, barra tiro) em cada plataforma, a 3 m da cabeceira de cada ponte, fora
   da linha da ponte; a sala segue a mais aberta do jogo, mas cruzar tem um ponto de apoio.

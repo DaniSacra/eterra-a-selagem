@@ -736,6 +736,11 @@ func _crypt() -> RoomLayout:
 	# the whole crypt fits the screen: the camera keeps to one point, as in the Seal Chamber
 	l.cam_target = Vector2(1.0, 1.5)
 	l.cam_reach = 2.5
+	# RP-01: the rows of the crypt (the north one behind the columns, the middle round the great tomb, the south one
+	# of the way in); B: either side of the dividing wall, and the open south
+	_areas(l, ["north", _rect(-12, 12, -10.5, -3), "middle", _rect(-12, 12, -3, 3), "south", _rect(-12, 12, 3, 10.5)])
+	_areas(l.variants[0], ["west_of_wall", _rect(-12, 0.5, -10.5, -3), "east_of_wall", _rect(0.5, 12, -10.5, -3),
+		"south_open", _rect(-12, 12, -3, 10.5)])
 	return l
 
 
@@ -761,6 +766,10 @@ func _rift() -> RoomLayout:
 	var a: Array[ArenaObstacle] = [
 		_sarcophagus(14.0, 7.0, 3.6, 1.0, 2.6, &"block", true), _column(7.5, 3.0, 3.8),
 		_sarcophagus(-14.0, -5.5, 1.2, 2.5), _column(-13.0, 3.0, 3.2),
+		# RP-05: low stumps (1.5 m, they stop shots): one each side of the rift between the two bridge heads, off their
+		# line (a foothold for the crossing), and one in the east fight, where he spends half the room (one each side
+		# blocked 6% of the shots (4% before), the three 11%; the open hall stays the most open room)
+		_column(-10.5, -4.0, 1.5, 0.6), _column(5.5, -4.0, 1.5, 0.6), _column(12.5, 1.0, 1.5, 0.6),
 	]
 	a.append_array(bowls)
 	l.obstacles = a
@@ -780,6 +789,9 @@ func _rift() -> RoomLayout:
 	l.spawns = [_rect(5, 11, -13.5, -10.5), _rect(16, 19.5, -8, -2), _rect(5, 11, 7, 12)]
 	l.late_spawns = [_rect(-17, -11, -13, -9)]
 	l.cam_bounds = _rect(-6, 7, -4, 5)
+	# RP-01: which bridge, or the way round the south
+	_areas(l, ["bridge_n", _rect(-7, 2, -12, -7), "bridge_s", _rect(-7, 2, -1, 4), "south_way", _rect(-8, 3, 9, 15),
+		"west", _rect(-21, -7, -15, 15), "east", _rect(2, 21, -15, 15)])
 	return l
 
 
@@ -822,6 +834,9 @@ func _garden() -> RoomLayout:
 	l.spawns = [_rect(6, 12, -12.5, -9.5), _rect(13, 16, -4, 3), _rect(-6, 0, -13.2, -10.5), _rect(-2, 6, 9, 12.5)]
 	l.late_spawns = [_rect(-15, -13, -6, -3.5)]
 	l.cam_bounds = _rect(-3, 4, -2, 3)
+	# RP-01: the tree as a shield (12 m round the trunk), the open field east, the rest
+	_areas(l, ["tree_shade", _rect(TRUNK.x - 6, TRUNK.x + 6, TRUNK.y - 6, TRUNK.y + 6), "east_field", _rect(2, 17, -14, 14),
+		"rest", _rect(-17, 2, -14, 14)])
 	return l
 
 
@@ -1353,6 +1368,8 @@ func _bridge() -> RoomLayout:
 	var a: Array[ArenaObstacle] = ends.duplicate()
 	a.append_array([_piece(0.0, -7.2, 2.8, 1.6, 6.0, &"pylon", true), _piece(2.5, 2.5, 1.0, 3.2, 2.2, &"block", true),
 		_column(-2.5, 3.5, 3.4)])
+	# RP-04: a block of ruin before the east end of bridge 2, 1.5 m off the deck: the one who crosses lands in cover
+	a.append(_piece(16.0, 0.0, 1.0, 2.4, 2.2, &"block", true))
 	l.obstacles = a
 	var west_b := _poly([-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7])
 	var east_b := _poly([12, -7, 13, -9, 25, -9, 28, -6, 28, 7, 26, 9, 14, 9, 12, 7])
@@ -1367,7 +1384,8 @@ func _bridge() -> RoomLayout:
 	l.hero_facing = Vector2(1, 0)
 	l.exits = [ArenaExit.at_edge(Vector2(21, -9), Vector2(0, 1)), ArenaExit.at_edge(Vector2(28, 0.5), Vector2(-1, 0)),
 		ArenaExit.at_edge(Vector2(21, 9), Vector2(0, -1))]
-	l.spawns = [_rect(-4, 4, -5.5, -3), _rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
+	# RP-04: everybody rises on the east platform (the middle no more): the room asks to cross under fire
+	l.spawns = [_rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
 	# the second wave closes behind the one who crossed
 	l.late_spawns = [_rect(-26, -20, -7, -4)]
 	l.cam_bounds = _rect(-14, 14, -1, 1)
@@ -1377,10 +1395,15 @@ func _bridge() -> RoomLayout:
 	return l
 
 
+## RP-02: the tiles any part of which lies within 6 m of the way in (hero_spawn (-12.5, 3.5)) never light: columns 0
+## and 1 from row 3 to 7, column 2 from row 3 to 6 (the rule of every hazard: never near the door he came in by).
+const RUNES_ENTRY: Array[Rect2] = [Rect2(-15, -3, 6, 15), Rect2(-9, -3, 3, 12)]
+
+
 ## The runes' floor (spec 3.4): tiles of 3 m, 1.2 s warming up, 0.25 s striking, 2.4 s of rest, never in the first
-## 3 s; at most 35% of the tiles lit (50% for the dense patterns, with 3 enemies or fewer). It hurts everyone: 4 to the
-## paladin (a common blow's worth), 35 to an enemy (half a soldier): drawing them onto the band that will light is the
-## room's play.
+## 3 s; at most 35% of the tiles lit (50% for the dense patterns, with 3 enemies or fewer). It hurts everyone: 7 to the
+## paladin (RP-03 step 1, was 4; the Hades hurts 10 on the same 30 of life), 60 to an enemy (a
+## whole soldier; was 35): drawing them onto the band that will light is the room's play.
 func _hazard(patterns: Array[StringName], quiet: Array[Rect2] = []) -> HazardDef:
 	var h := HazardDef.new()
 	h.origin = Vector2(-15, -12)
@@ -1397,8 +1420,8 @@ func _hazard(patterns: Array[StringName], quiet: Array[Rect2] = []) -> HazardDef
 	h.patterns = patterns
 	h.islands = 4
 	h.quiet = quiet
-	h.hero_damage = 4.0
-	h.enemy_damage = 35.0
+	h.hero_damage = 7.0
+	h.enemy_damage = 60.0
 	return h
 
 
@@ -1421,7 +1444,7 @@ func _runes() -> RoomLayout:
 		a.append(_piece(p.x, p.y, 1.2, 1.2, 4.0, &"rune_pillar", true))
 	a.append_array(bowls)
 	l.obstacles = a
-	l.hazard = _hazard([&"sweep", &"comb", &"cut"])
+	l.hazard = _hazard([&"sweep", &"comb", &"cut"], RUNES_ENTRY.duplicate())
 	var b: Array[ArenaObstacle] = [_piece(-9, -6, 1.2, 1.2, 4.0, &"rune_pillar", true), _piece(9, 6, 1.2, 1.2, 4.0, &"rune_pillar", true)]
 	# the quiet stone in the middle (its four tiles never light, HazardDef.quiet): drawn smooth, it stops nothing
 	var quiet := ArenaObstacle.box(Vector2.ZERO, Vector2(3, 3), 0.0, &"quiet", 0.0, false)
@@ -1429,8 +1452,11 @@ func _runes() -> RoomLayout:
 	b.append(quiet)
 	b.append_array(bowls)
 	var vb := _variant(b)
-	vb.hazard = _hazard([&"checker", &"frame", &"islands"], [_rect(-3, 3, -3, 3)])
-	_areas(vb, ["quiet", _rect(-3, 3, -3, 3)])
+	var quiet_b: Array[Rect2] = [_rect(-3, 3, -3, 3)]
+	quiet_b.append_array(RUNES_ENTRY)
+	vb.hazard = _hazard([&"checker", &"frame", &"islands"], quiet_b)
+	# RP-01: the quiet stone, the cross round it, the edge (B's two pillars stand on the edge)
+	_areas(vb, ["quiet", _rect(-3, 3, -3, 3), "middle", _rect(-9, 9, -9, 9), "edge", _rect(-15, 15, -12, 12)])
 	l.variants = [vb]
 	l.hero_spawn = Vector2(-12.5, 3.5)
 	l.hero_facing = Vector2(1, 0)
@@ -1440,6 +1466,9 @@ func _runes() -> RoomLayout:
 	l.late_spawns = [_rect(-13, -9, -9.5, -6)]
 	l.cam_target = Vector2(0.5, 1.0)
 	l.cam_reach = 3.5
+	# RP-01: the four tiles round each pillar, the cross between them, the edge
+	_areas(l, ["pillars", _rect(-9, -3, -9, -3), "pillars", _rect(3, 9, -9, -3), "pillars", _rect(-9, -3, 3, 9),
+		"pillars", _rect(3, 9, 3, 9), "middle", _rect(-9, 9, -9, 9), "edge", _rect(-15, 15, -12, 12)])
 	return l
 
 

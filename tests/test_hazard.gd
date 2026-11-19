@@ -113,6 +113,41 @@ func test_every_pattern_keeps_the_rules() -> void:
 			assert_true(seen.has(p), "variant %d draws %s" % [v, p])
 
 
+## RP-02: 2000 patterns of each variant, the paladin anywhere and 0 to 8 standing: no lit tile has any of its floor
+## within 6 m of the way in (the hero_spawn), the rule of every hazard; the reading rules still hold.
+func test_nothing_lights_within_6_m_of_the_way_in() -> void:
+	var l := _runes()
+	for v in 2:
+		var a := _hazard(v, 70 + v)
+		var spawn := l.variant(v).hero_spawn
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 400 + v
+		var armed := 0
+		var near := 0
+		var nearest := INF
+		while armed < 2000:
+			var ev := a.step(0.05, Vector2(rng.randf_range(-14, 14), rng.randf_range(-11, 11)), rng.randi_range(0, 8))
+			if ev != ArenaHazard.Event.ARMED:
+				continue
+			armed += 1
+			for r in a.def.rows:
+				for c in a.def.cols:
+					if a.lit[r * a.def.cols + c] != 1:
+						continue
+					var box := a.tile_rect(c, r)
+					var d := spawn.distance_to(spawn.clamp(box.position, box.end))
+					nearest = minf(nearest, d)
+					if d < 6.0:
+						near += 1
+			if not a.safe_everywhere():
+				near += 1000
+		assert_eq(near, 0, "variant %d: nothing lit within 6 m of the way in, every lit tile beside an unlit one" % v)
+		assert_gte(nearest, 6.0, "variant %d: the nearest lit tile is %.1f m from the way in" % [v, nearest])
+	assert_almost_eq(l.hazard.hero_damage, 7.0, 0.001, "RP-03 step 1: the paladin loses 7 (was 4; the Hades 10)")
+	assert_almost_eq(l.hazard.enemy_damage, 60.0, 0.001, "RP-03: an enemy 60 (a whole soldier)")
+	assert_almost_eq(l.variant(1).hazard.hero_damage, 7.0, 0.001)
+
+
 func test_the_rhythm_warn_strike_rest() -> void:
 	var a := _hazard(0, 3)
 	var events: Array = []

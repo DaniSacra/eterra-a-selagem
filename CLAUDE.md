@@ -835,7 +835,12 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Ponte dos Condenados (comprida, três plataformas e duas pontes de 5 m, portas só na plataforma leste, sem sacerdote,
   ninguém nasce numa ponte; B com a ponte longa e o patamar) e Câmara das Runas Instáveis (4 a 6 inimigos, no máximo 2
   atiradores, câmera fixa). Partes do chão com nome (`RoomLayout.areas`, `area_names`, `area_at`): o tempo do herói em
-  cada uma vai para `rooms[].zones` do `RESULT` (`RoomTally.zone_time`). Desenhadas pelos looks do E5 (ver a seção de
+  cada uma vai para `rooms[].zones` do `RESULT` (`RoomTally.zone_time`); desde o RP-01 em toda sala de luta (Cripta
+  `north`/`middle`/`south`, B `west_of_wall`/`east_of_wall`/`south_open`; Fendas `bridge_n`/`bridge_s`/`south_way`/`west`/
+  `east`; Jardim `tree_shade`/`east_field`/`rest`; Runas A `pillars`/`middle`/`edge`, B `quiet`/`middle`/`edge`; números
+  e leitura em `docs/design/rooms_progression.md`). Ponte A (RP-04): a luta nasce toda na plataforma leste e um bloco de
+  ruína (`block` 1,0 x 2,4 m, 2,2 m) fica 1,5 m depois do fim da ponte 2; Fendas A (RP-05): três tocos de coluna de 1,5 m
+  (barram tiro), um de cada lado da fenda entre as cabeceiras e um na luta do leste. Desenhadas pelos looks do E5 (ver a seção de
   cenário acima; o `PlainLook` provisório saiu). Peças do dado com o nome que o look desenha: `column` (5 m ou mais ganha
   capitel), `column_base` (toco, para corpo e não tiro), `drums`, `bench`/`bench_broken`, `pylon`, `rune_pillar`, `quiet`
   (a pedra quieta da B das Runas, caixa que não barra nada), `trial_block`, `altar`; braseiros de parede (`brazier`) a 0,9 m
@@ -844,8 +849,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - **Runas** (`HazardDef` no `RoomLayout.hazard`, lógica pura `ArenaHazard`, no jogo `RuneFloor`): grade de 10 x 8 ladrilhos
   de 3 m; padrões só em faixas e ladrilhos (A: `sweep`, `comb`, `cut`; B: `checker`, `frame`, `islands` e a pedra quieta no
   meio); aviso 1,2 s, golpe 0,25 s, descanso 2,4 s, nada nos 3 s do começo, nas portas nem em ladrilho cortado pela borda;
+  nem em ladrilho com chão a menos de 6 m da entrada (RP-02: `RUNES_ENTRY` no `make_data.gd`, somado ao `HazardDef.quiet`
+  das duas variantes, só regra, o `RunesLook` não pinta; GUT com 2000 padrões por variante em `test_hazard.gd`);
   no máximo 35% aceso (os densos, 50%, só com até 3 inimigos de pé) e todo ladrilho aceso tem um vizinho apagado. Fere o
-  herói 4 (como aviso, `Ground.add_hazard`) e todo inimigo comum em cima 35 (`Ground.hazard_landed`); "Derrotado por: Runas
+  herói 7 (RP-03 passo 1, era 4; o Hades fere 10 sobre os mesmos 30 de vida; como aviso, `Ground.add_hazard`) e todo inimigo
+  comum em cima 60 (era 35; `Ground.hazard_landed`); "Derrotado por: Runas
   Instáveis" (`killer_runes`). Desenho: estilo `GroundLook.Style.HAZARD` (âmbar `HAZARD_COLOR`, moldura por ladrilho
   `tile_m`, preenchimento fraco, `render_priority` -1, abaixo dos avisos vermelhos), mas na sala de verdade quem desenha é o
   próprio chão: o `RuneFloor` escreve a cada quadro o estado de cada ladrilho no `RunesLook` (`RuneFloor.paint`:
