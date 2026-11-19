@@ -88,6 +88,9 @@ const BANNER_TORN := Vector2(0.86, 0.12)
 ## The stylized twins of the scenery's shaders and of the kit's material (VisualProfile, paint_look).
 const FLOOR_SHADER := preload("res://assets/shaders/catacomb_floor.gdshader")
 const FLOOR_PAINT := preload("res://assets/shaders/catacomb_floor_paint.gdshader")
+## The garden's floor moss and its painted twin (room redesign lot C: one grey green in three steps).
+const MOSS_SHADER := preload("res://assets/shaders/root_moss.gdshader")
+const MOSS_PAINT := preload("res://assets/shaders/root_moss_paint.gdshader")
 const KAYKIT_MATERIAL := preload("res://assets/models/kaykit_material.tres")
 const KAYKIT_PAINT := preload("res://assets/models/kaykit_paint.tres")
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
@@ -372,8 +375,8 @@ func _cloth_material(glow: Color) -> StandardMaterial3D:
 
 
 ## The stylized look of everything built under the kit's root (STY-04, STY-05; VisualProfile): the dressed stone and
-## the floors take their painted twins (masonry_paint, catacomb_floor_paint; the wood keeps its own colour), the kit's
-## pieces the painted kit material. Call once the room is built (after Masonry.merge). Materials made while the look
+## the floors take their painted twins (masonry_paint, catacomb_floor_paint; the wood keeps its own colour), the moss
+## its painted twin (root_moss_paint, lot C: style keys shadow and moss), the kit's pieces the painted kit material. Call once the room is built (after Masonry.merge). Materials made while the look
 ## was stylized are put back to their classic shader first, so the classic one is always the one registered.
 ## Room redesign (biome preset, docs/art/room_redesign_lotA_spec.md 1.1): `style` (the room's style(), every key
 ## optional) adds its numbers to every material it paints: stone (paint_stone), pool_gain (the stone's fire pools,
@@ -384,7 +387,7 @@ func _cloth_material(glow: Color) -> StandardMaterial3D:
 ## olive_share (stone and floor); a material with the meta PAINT_OWN takes those values on top (bone that must not
 ## turn to stone: OWN_KEEP).
 func paint_look(style := {}) -> void:
-	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT}
+	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT, MOSS_SHADER: MOSS_PAINT}
 	var seen := {}
 	var kit_paint: Material = KAYKIT_PAINT
 	if style.has(&"shadow"):
@@ -409,6 +412,8 @@ func paint_look(style := {}) -> void:
 ## Which keys of a room's style go to which painted shader (paint_look).
 const STONE_KEYS := {&"stone": &"paint_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold", &"olive_share": &"olive_share",
 	&"pool_gain": &"paint_pool_gain", &"pool_saturation": &"paint_pool_saturation"}
+## The moss (lot C): the shadow's colour and its own grey green (style key moss).
+const MOSS_KEYS := {&"shadow": &"paint_shadow", &"moss": &"paint_moss"}
 const FLOOR_KEYS := {&"floor_stone": &"floor_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold",
 	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"slab_paint": &"slab_paint", &"edge_value": &"edge_value",
 	&"pool_saturation": &"paint_pool_saturation"}
@@ -429,7 +434,7 @@ func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary, style :
 	if not swaps.has(sm.shader):
 		return
 	var values := {&"shader": swaps[sm.shader]}
-	var keys: Dictionary = STONE_KEYS if sm.shader == Masonry.SHADER else FLOOR_KEYS
+	var keys: Dictionary = STONE_KEYS if sm.shader == Masonry.SHADER else (MOSS_KEYS if sm.shader == MOSS_SHADER else FLOOR_KEYS)
 	for k: StringName in keys:
 		if style.has(k):
 			values[StringName("shader_parameter/" + keys[k])] = style[k]

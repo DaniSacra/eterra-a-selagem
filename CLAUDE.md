@@ -1589,6 +1589,45 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   a 34, saturação 0,13 a 0,19, luma 74 a 90 (p10 a p90 de 53 a 115, antes chapado), cena 61; B 59; Fendas A caixa da
   frente `1500,850,192,162` 51 e `1600,700` 56 (eram 39 e 46), o meio oeste 71.
 
+## Redesenho das salas, Lote C (só no estilizado; spec `docs/art/room_redesign_lotC_spec.md`, capturas em `docs/gallery/redesign/lotC/`)
+- **Biblioteca nova**: musgo pintado (`root_moss.gdshaderinc` com o corpo; `root_moss.gdshader` igual, gêmeo
+  `root_moss_paint.gdshader` trocado pelo `ArenaKit.paint_look`, chaves `shadow` e `moss` do `style()`, `MOSS_KEYS`:
+  verde-cinza em três degraus de valor `paint_moss_steps`); folha caída (`floor_decal.gdshader` `kind` 3: folhas ovais
+  pontudas em células, `litter_*`, cobertura até 30%, ao longo de uma borda ou num anel `litter_ring`); fungo pálido
+  (`Masonry.fungus(at, count, reach, seed)`, cacho de chapéus achatados, `fungus.gdshader`: marfim-cinza, brilho só na
+  borda do chapéu, maior canal até 0,6); água escura (`dark_water.gdshader`, da família do `fountain_water` mas à parte
+  para a fonte clássica não mudar: `form` 0 lâmina com ondas lentas e espuma quebrada na borda, `foam_at` onde cai a
+  cascata; `form` 1 cascata em cartão com veios descendo e névoa no pé; matiz 200 a 210, espuma abaixo de `peak` 0,9).
+  Em `ArenaRoom`: `added_since(from)`, `style_abyss(nós, mist, cor, luz)` (apaga partículas, recolore as luzes da camada
+  funda e a bruma), `style_depths(valores)` (todo material da pedra funda da sala, inclusive a das bordas) e
+  `hanging_lantern(from, ring_y, size, luz, styled)` (a lanterna do Jardim, agora comum; `styled` monta no `kit.styled()`).
+- **Jardim** (`GardenLook.STYLE`, cinza-musgo, oliva 0,25): ar próprio (ambiente neutro 1,8, lua 0,75 com sombra), luz
+  do meio e facho difusos (`light_specular` 0, `STY_KEY`, `STY_BEAM`), cristais sem luz (só a aresta), janelas e bruma
+  frias apagadas (`STY_WINDOW_*`), abismo e penhascos mais escuros e neutros (`STY_MIST`, `STY_CLIFF`); árvore de pedra
+  em casca cinza-musgo com preenchimento morno (`STY_BARK`, `STY_CORD`, `STY_LICHEN`, `STY_TREE_FILL`); J1 copa em
+  ferrugem (`STY_LEAF_A`/`B`); J2 folha caída a até 1,2 m das paredes norte e oeste e em volta do tronco (`LEAVES_*`,
+  `LEAF_*`); J3 fungos nas tampas, no pé das colunas, nos peitoris e no pé das paredes (`FUNGI*`); J4 cascatas atrás das
+  janelas cegas e além do corte noroeste com poça escura no pé, fora do chão (`FALL_*`, `POOL_*`); J5 na B a parede
+  oeste (nó `WestWall`, com os estandartes e a estátua) some e dá lugar a um peitoril baixo quebrado e ao lago escuro a
+  y -0,6 com blocos caídos e a cascata do fundo (`PARAPET_*`, `LAKE_*`); J6 musgo no gêmeo pintado.
+- **Ponte** (`BridgeLook.STYLE`, azul-ardósia): ar próprio (ambiente 1,8, lua 1,0 com sombra), bruma do abismo menos
+  saturada (`STY_MIST_SAT` 0,6) e cartões de ruína com ela, pedra funda `STY_CLIFF`; P1 pilar com braseiro na quina sem
+  estátua de cada cabeceira, fora do polígono, luz sem sombra e poça mais forte (`HEAD_BOWL_*`, `pool_saturation` 1,0);
+  P2 um segundo anel de aduelas 4 m sob cada ponte (`LOW_ARCH_*`, na pedra funda); P3 corrente de cada pilar para o
+  abismo; P4 três cascatas ao norte a 26 m da borda (`FALLS*`); P5 na B duas pontes quebradas ao fundo em pedra funda
+  (`FAR_*`); P6 na B lanternas suspensas sobre o patamar com o pé acima de 3 m (`LANDING_LANTERN*`, luz 0,6).
+- Teste: `tests/test_room_style.gd` com as quatro vistas (ida e volta, ar próprio, sombras iguais, nada do estilizado
+  sobre o chão entre 0,3 e 2,6 m, o lago da B fora do chão). Robô: 8 sementes por arena e variante, nenhum `stuck`.
+  fit_probe igual (Jardim 1,99 / 1,62 e 1,64; Ponte 4,12 e 2,76).
+- Medido (RTX 1080, semente 5, `--shot-at=5`; `tools/frame_stats.py --hue --scene`): Jardim cena matiz 88 / 81 (era 234
+  / 240), saturação 0,20 / 0,19, chão a leste da árvore matiz 86 / 93, luma 63 / 61, saturação 0,14; ciano 6,4 / 6,1%
+  (era 32 / 24%); ferrugem só 0,5 / 1,2% (abaixo dos 2 a 6% da spec: a copa fica no alto do quadro e a folha caída no
+  teto de 30% e 1,2 m). Ponte cena matiz 221 / 223, saturação 0,26 / 0,27 (era 0,39 / 0,40), ciano 49 / 56%, chão das
+  plataformas luma 68 / 47 a 54 (B ainda abaixo de 55), parte quente 3,2%. Quadro na GPU: RTX 1080 Alta Jardim 2,26 para
+  1,95 / 1,99 ms, Ponte 3,4 para 1,6 a 3,5 ms (instável nas duas); iGPU 720 Baixa Jardim 16,8 / 17,0 para 15,9 / 15,8 ms,
+  Ponte 13,1 / 13,1 para 13,6 / 13,7 ms de quadro (cerca de 3 qps a menos; as aduelas de baixo e as pontes do fundo na
+  pedra funda, mais barata que a cantaria pintada). Compatibility sem erro (o Jardim mais claro e mais verde lá).
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

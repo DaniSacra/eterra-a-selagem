@@ -316,6 +316,81 @@ func _stylize() -> void:
 		_dress_air()
 
 
+## Room redesign lot C: the nodes added under the room since child `from` (the abyss's planes, lights and wisps), to
+## turn in style() (collect them as they are built: merge() moves children afterwards).
+func added_since(from: int) -> Array[Node]:
+	var out: Array[Node] = []
+	for i in range(from, get_child_count()):
+		out.append(get_child(i))
+	return out
+
+
+## The abyss of the stylized look (lot C) over what kit.abyss and _abyss built (`nodes`): each mist plane's colour
+## from the classic `was` to `mist` (keeping its own lift over it), the depths' lights `light`, the violet wisps gone.
+func style_abyss(nodes: Array[Node], was: Color, mist: Color, light: Color) -> void:
+	var base := maxf(was.r + was.g + was.b, 1e-4)
+	for n in nodes:
+		if n is CPUParticles3D:
+			VisualProfile.vary(n, {&"visible": false})
+		elif n is OmniLight3D and (n as OmniLight3D).light_cull_mask == ArenaKit.DEPTH_LAYER:
+			VisualProfile.vary(n, {&"light_color": light})
+		elif n is GeometryInstance3D and (n as GeometryInstance3D).material_override is ShaderMaterial:
+			var sm := (n as GeometryInstance3D).material_override as ShaderMaterial
+			var c: Variant = sm.get_shader_parameter(&"color")
+			if c is Color:
+				var lift := ((c as Color).r + (c as Color).g + (c as Color).b) / base
+				VisualProfile.vary(sm, {&"shader_parameter/color": mist * lift})
+
+
+## The depths' stone of the stylized look (lot C): every depth_stone material under the room (the cliffs, the arches
+## and piers under the floor) takes `values` (its uniforms: stone_color, edge_color, mist_color, glow_color...).
+func style_depths(values: Dictionary) -> void:
+	var seen := {}
+	var set_ := {}
+	for k: StringName in values:
+		set_[StringName("shader_parameter/" + k)] = values[k]
+	for n in find_children("*", "GeometryInstance3D", true, false):
+		var sm := (n as GeometryInstance3D).material_override as ShaderMaterial
+		if sm != null and sm.shader == Masonry.DEPTH_SHADER and not seen.has(sm):
+			seen[sm] = true
+			VisualProfile.vary(sm, set_)
+
+
+## An iron lantern hanging by a chain from `from`, its ring at `ring_y` (the garden's tree; room redesign lot C: the
+## bridge's landing in the stylized look): cap, four posts, the warm glass of TombKit.WARM, a foot, its light (energy,
+## reach; no shadow). styled: built only for the stylized look (on kit.styled()).
+func hanging_lantern(from: Vector3, ring_y: float, size: Vector3, light: Vector2, styled := false) -> OmniLight3D:
+	var at := Vector3(from.x, ring_y, from.z)
+	if styled:
+		kit.styled_build(func() -> void: kit.chain(from, at, 0.0, 0.7))
+	else:
+		kit.chain(from, at, 0.0, 0.7)
+	var mason := kit.styled() if styled else m
+	var mid := at - Vector3(0, size.y * 0.5 + 0.06, 0)
+	var ir := tomb.iron()
+	var glass := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(size.x * 0.78, size.y * 0.72, size.z * 0.78)
+	glass.mesh = bm
+	glass.material_override = tomb.unlit(TombKit.WARM.glass)
+	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	glass.position = mid
+	mason.root.add_child(glass)
+	for cx: float in [-1.0, 1.0]:
+		for cz: float in [-1.0, 1.0]:
+			mason.box(mid + Vector3(cx * size.x * 0.45, 0, cz * size.z * 0.45), Vector3(0.04, size.y * 0.8, 0.04), 0.0, ir, false)
+	mason.box(mid + Vector3(0, -size.y * 0.42, 0), Vector3(size.x, 0.06, size.z), 0.0, ir, false)
+	mason.point(mid + Vector3(0, size.y * 0.38, 0), size.x * 1.05, size.y * 0.35, 0.0, 0.0, ir)
+	var l := OmniLight3D.new()
+	l.position = mid
+	l.light_color = TombKit.WARM.light
+	l.light_energy = light.x
+	l.omni_range = light.y
+	l.light_cull_mask = ~Arena.CROWD_LAYER
+	mason.root.add_child(l)
+	return l
+
+
 ## The cliffs' stone (depth_stone.gdshader uniforms: stone_color, edge_color...), if not the hall's teal.
 func cliff_look() -> Dictionary:
 	return {}

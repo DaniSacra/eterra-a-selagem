@@ -70,9 +70,68 @@ const RUIN_TOP := 20.0
 const RUIN_STONE := Color(0.035, 0.045, 0.07)
 const RUIN_EDGE := Color(0.12, 0.16, 0.24)
 
+# ---------- the stylized look (room redesign, lot C section 3: docs/art/room_redesign_lotC_spec.md) ----------
+## The bridge's biome: worn blue-grey stone (hue 212), little olive, the hall's fires, its own air.
+const STYLE := {
+	&"stone": Color(0.318, 0.335, 0.354), &"shadow": Color(0.833, 0.906, 0.98), &"floor_stone": STY_FLOOR, &"edge_value": STY_EDGE_VALUE,
+	&"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.05, &"slab_paint": Vector2(0.86, 1.12), &"metal": true,
+	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"pool_saturation": 1.0,
+	&"air": {&"sky": Color(0.05, 0.055, 0.065), &"fog": Color(0.12, 0.13, 0.15), &"ambient": Color(0.68, 0.70, 0.74),
+		&"ambient_gain": 1.8, &"moon": Color(0.82, 0.86, 0.95), &"moon_energy": 1.0, &"moon_shadow": true},
+}
+const STY_FLOOR := Color(0.31, 0.325, 0.345)
+## The platforms are narrow: the floor keeps its value to the edge (the spec's luma 55 to 70 on them; as the Rift).
+const STY_EDGE_VALUE := 1.0
+## The browser's renderer: the stylized ambient and key lower (as the other rooms').
+const STY_COMPAT_AMBIENT := 0.55
+const STY_COMPAT_MOON := 0.6
+## The abyss: its mist, banks and depths' light at this share of their saturation and value (spec 3.2: 0.85), the
+## thread of violet's glow cards a cold grey blue, the cliffs and piers in a grey blue depth stone.
+const STY_MIST_SAT := 0.6
+const STY_MIST_VALUE := 0.85
+const STY_GLOW := Color(0.36, 0.42, 0.52)
+const STY_CLIFF := {&"stone_color": Color(0.05, 0.058, 0.07), &"edge_color": Color(0.13, 0.15, 0.18),
+	&"glow_color": Color(0.3, 0.36, 0.46)}
+## P1: a fire bowl on a pillar at each bridge end, over the gap beside the deck (the corner without the statue): the
+## pillar's side and top (the HEAD that the heads have), the bowl's scale, its light; its pier down into the haze.
+const HEAD_BOWL_PILLAR := 0.62
+const HEAD_BOWL_SCALE := 0.5
+const HEAD_BOWL_LIGHT := 2.6
+## ... their pools stronger than the hall's bowls (spec 3.1: the warm part 3 to 7% of the frame), in the fire's
+## whole saturation (style pool_saturation).
+const HEAD_BOWL_SHARE := 1.6
+## P2: a second ring of voussoirs under each arch, this far under the deck, its ring (in the depths' stone).
+const LOW_ARCH_DROP := 4.0
+const LOW_ARCH_RING := 0.9
+## P3: a chain from each bowl's pillar out and down into the abyss (its far end, sag; one up over the floor crossed
+## the fight in the camera's view).
+const BOWL_CHAIN_DOWN := Vector3(0.0, -12.0, 5.0)
+const BOWL_CHAIN_SAG := 1.6
+## P4: falls far to the north (this far past the floor's north edge; their x, width; top and foot), pale, under the
+## glow (dark_water.gdshader form 1).
+const FALLS: Array[Vector2] = [Vector2(-22.0, 5.0), Vector2(-4.0, 7.0), Vector2(15.0, 4.0)]
+const FALLS_PAST := 26.0
+const FALLS_Y := Vector2(16.0, -24.0)
+const FALLS_LIGHT := 0.42
+const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
+## P5 (B): far broken bridges and a walkway in the haze, north and south (z past the floor, height of the deck, the
+## span, the missing stretch).
+const FAR_BRIDGES: Array[Vector4] = [Vector4(-17.0, -2.5, 22.0, 6.0), Vector4(19.0, -4.0, 26.0, -5.0)]
+const FAR_SPRING := 5.0
+const FAR_DECK := -2.6
+## P6 (B): lanterns hung over the landing from chains out of the frame (their ring's height, from the landing's
+## corners in, the chain's top), weak.
+const LANDING_LANTERN_Y := 3.8
+const LANDING_LANTERN_IN := 1.4
+const LANDING_LANTERN_TOP := 18.0
+const LANDING_LANTERN := Vector2(0.6, 3.5)
+const LANDING_LANTERN_SIZE := Vector3(0.34, 0.5, 0.34)
+
 var _decks: Array[Rect2] = []
 var _landings: Array[Rect2] = []
 var _long := false
+var _abyss_nodes: Array[Node] = []
+var _ruin_mats: Array[ShaderMaterial] = []
 
 
 func floor_look() -> Dictionary:
@@ -178,6 +237,12 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 ## The abyss (spec 2.5): grey-blue mist, a cold light far below on the depths alone, a weak thread of violet in the
 ## gaps, banks of mist running sideways between the platforms and along the sides.
 func _abyss() -> void:
+	var from := get_child_count()
+	_abyss_build()
+	_abyss_nodes = added_since(from)
+
+
+func _abyss_build() -> void:
 	var b := arena.shape().bounds()
 	kit.abyss(b.size * 0.5 + Vector2(10, 10), DEPTH, false, mist())
 	var yaw := deg_to_rad(Feel.live().cam_yaw)
@@ -222,6 +287,7 @@ func dress() -> void:
 		_landing(w)
 	_entry()
 	_far()
+	_dress_styled()
 
 
 # ---------- the bridges' ends, the landing ----------
@@ -317,3 +383,128 @@ func _far() -> void:
 		var cm := card.material_override as ShaderMaterial
 		cm.set_shader_parameter(&"stone_color", RUIN_STONE)
 		cm.set_shader_parameter(&"edge_color", RUIN_EDGE)
+		_ruin_mats.append(cm)
+
+
+# ---------- the stylized look (room redesign, lot C section 3) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	var mist := _muted(MIST)
+	style_abyss(_abyss_nodes, MIST, mist, _muted(DEEP))
+	style_depths(STY_CLIFF)
+	for rm in _ruin_mats:
+		VisualProfile.vary(rm, {&"shader_parameter/mist_color": mist,
+			&"shader_parameter/edge_color": _muted(RUIN_EDGE), &"shader_parameter/stone_color": _muted(RUIN_STONE)})
+	return st
+
+
+## A colour at STY_MIST_SAT of its saturation and STY_MIST_VALUE of its value.
+static func _muted(c: Color) -> Color:
+	return Color.from_hsv(c.h, c.s * STY_MIST_SAT, c.v * STY_MIST_VALUE)
+
+
+## The pieces only the stylized look shows (spec 3.3), on kit.styled() (never the room's random numbers), all off the
+## decks and the platforms: a fire bowl on a pillar at each bridge end with its chains (P1, P3), a second ring of
+## voussoirs under the arches (P2), falls far to the north (P4); in B far broken bridges (P5) and lanterns hung over
+## the landing (P6).
+func _dress_styled() -> void:
+	var sm := kit.styled()
+	for r in _decks:
+		_low_arches(sm, r)
+		for end in 2:
+			var west := end == 0
+			# the corner without the statue (_head_statues: west end south, east end north)
+			var lip := r.position.x if west else r.end.x
+			var side := r.position.y if west else r.end.y
+			var away := -1.0 if west else 1.0
+			var into := 1.0 if west else -1.0
+			_head_bowl(sm, Vector2(lip + into * HEAD_OUT.y, side + away * HEAD_OUT.x), away)
+	_falls(sm)
+	if _long:
+		_far_bridges(sm)
+		for w in _landings:
+			for c: Vector2 in [Vector2(w.position.x + LANDING_LANTERN_IN, w.position.y + LANDING_LANTERN_IN),
+					Vector2(w.end.x - LANDING_LANTERN_IN, w.end.y - LANDING_LANTERN_IN)]:
+				hanging_lantern(Vector3(c.x, LANDING_LANTERN_TOP, c.y), LANDING_LANTERN_Y, LANDING_LANTERN_SIZE, LANDING_LANTERN, true)
+
+
+## P1, P3: a pillar of the room's stone (HEAD tall) on a pier of the depths' stone, the kit's brazier at half size on
+## it (a pool of light, no shadow), a chain down into the abyss and one up out of the frame.
+func _head_bowl(sm: Masonry, at: Vector2, away: float) -> void:
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	sm.box(Vector3(at.x, (HEAD_PIER - 0.4) * 0.5, at.y), Vector3(HEAD_BOWL_PILLAR + 0.1, -0.4 - HEAD_PIER, HEAD_BOWL_PILLAR + 0.1), 0.0, deep(), false)
+	sm.layers = 1
+	sm.block(Vector3(at.x, -0.4, at.y), Vector3(HEAD_BOWL_PILLAR + 0.16, 0.6, HEAD_BOWL_PILLAR + 0.16), 0.0, ashlar())
+	sm.block(Vector3(at.x, 0.2, at.y), Vector3(HEAD_BOWL_PILLAR, HEAD.y - 0.2 - HEAD.z, HEAD_BOWL_PILLAR), 0.0, ashlar())
+	sm.block(Vector3(at.x, HEAD.y - HEAD.z, at.y), Vector3(HEAD_BOWL_PILLAR + 0.14, HEAD.z, HEAD_BOWL_PILLAR + 0.14), 0.0, ashlar())
+	var foot := Vector3(at.x, HEAD.y, at.y)
+	kit.styled_build(func() -> void:
+		var l := kit.brazier(at, HEAD.y, false, HEAD_BOWL_LIGHT)
+		l.set_meta(ArenaKit.FIRE_SHARE, HEAD_BOWL_SHARE), foot, HEAD_BOWL_SCALE)
+	var hook := Vector3(at.x, HEAD.y - HEAD.z * 0.5, at.y)
+	kit.styled_build(func() -> void:
+		kit.chain(hook, hook + Vector3(BOWL_CHAIN_DOWN.x, BOWL_CHAIN_DOWN.y, BOWL_CHAIN_DOWN.z * away), BOWL_CHAIN_SAG, 1.0))
+
+
+## P2: under each arch of the bridge, a second ring of voussoirs LOW_ARCH_DROP further down, a step darker.
+func _low_arches(sm: Masonry, r: Rect2) -> void:
+	var n := maxi(1, roundi(r.size.x / BAY))
+	var bay := r.size.x / n
+	var rr := bay * ARCH_RADIUS
+	var hx := rr - bay * 0.5
+	var rise := sqrt((rr + ARCH_RING) * (rr + ARCH_RING) - hx * hx)
+	var spring := -ARCH_CROWN - rise - LOW_ARCH_DROP
+	# the depths' stone (one step darker than the room's, fading into the haze 4 m down; cheaper than the painted ashlar)
+	var mat := deep()
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	for j in n:
+		var ax := r.position.x + bay * (j + 0.5)
+		sm.voussoir_arch(Vector3(ax, spring, r.get_center().y), Vector2(0, 1), bay, 0.0, LOW_ARCH_RING, r.size.y * 0.8, mat, ARCH_RADIUS)
+	sm.layers = 1
+
+
+## P4: pale falls far to the north, dropping into the haze (the enemies stand dark against them).
+func _falls(sm: Masonry) -> void:
+	var north := layout.floor.bounds().position.y - FALLS_PAST
+	for f in FALLS:
+		var mi := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = Vector2(f.y, FALLS_Y.x - FALLS_Y.y)
+		mi.mesh = q
+		var mat := ShaderMaterial.new()
+		mat.shader = WATER_SHADER
+		mat.set_shader_parameter(&"form", 1)
+		mat.set_shader_parameter(&"size", q.size)
+		mat.set_shader_parameter(&"fall_light", FALLS_LIGHT)
+		mat.set_shader_parameter(&"foot", 10.0)
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.position = Vector3(f.x, (FALLS_Y.x + FALLS_Y.y) * 0.5, north)
+		sm.root.add_child(mi)
+
+
+## P5 (B): broken bridges far in the haze to the north and south (x, z of their middle; span; the missing stretch's
+## middle offset): a deck on two broken arches each, under the floor's height.
+func _far_bridges(sm: Masonry) -> void:
+	# the depths' stone: they fade into the haze as the cliffs do (and cost less than the painted ashlar)
+	var mat := deep()
+	var b := layout.floor.bounds()
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	for f in FAR_BRIDGES:
+		var z := b.position.y - 15.0 + f.y if f.w > 0.0 else b.end.y + 15.0 - f.y
+		var half := f.z * 0.5
+		for sd: float in [-1.0, 1.0]:
+			var foot := Vector3(f.x + sd * half * 0.5, FAR_DECK - FAR_SPRING - half * 0.5, z)
+			var gap := Vector2(-1.0, 1.0) * absf(f.w) * 0.5 + Vector2(f.w * 0.3 * sd, f.w * 0.3 * sd)
+			sm.broken_arch(foot, Vector2(0, 1), half, FAR_SPRING, 0.8, 3.0, mat, gap if sd > 0.0 else Vector2(99.0, 99.0))
+		# its deck, broken where the arch is
+		sm.box(Vector3(f.x - half * 0.45, FAR_DECK, z), Vector3(half * 1.1, 0.7, 3.2), 0.0, mat, false)
+		sm.box(Vector3(f.x + half * 0.75, FAR_DECK, z), Vector3(half * 0.5, 0.7, 3.2), 0.0, mat, false)
+		# its piers down into the haze
+		for px: float in [f.x - half, f.x, f.x + half]:
+			sm.box(Vector3(px, FAR_DECK - 12.0, z), Vector3(1.4, 22.0, 2.8), 0.0, mat, false)
+	sm.layers = 1

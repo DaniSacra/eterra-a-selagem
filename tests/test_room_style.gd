@@ -303,3 +303,95 @@ func test_lot_b_style_only_pieces_are_off_the_floor_or_low() -> void:
 								gut.p("%s %d: %s %s under %s at %s" % [id, v, mi.name, mi.mesh, mi.get_parent().name, w])
 			assert_eq(bad, 0, "%s %d: nothing new over the floor between 0.3 and 2.6 m" % [id, v])
 			assert_gt(n_meshes, 5, "%s %d: its pieces" % [id, v])
+
+
+# ---------- lot C: the garden and the bridge (docs/art/room_redesign_lotC_spec.md) ----------
+
+func test_garden_a_comes_back() -> void:
+	_round_trip(&"garden", 0)
+
+
+func test_garden_b_comes_back() -> void:
+	_round_trip(&"garden", 1)
+
+
+func test_bridge_a_comes_back() -> void:
+	_round_trip(&"bridge", 0)
+
+
+func test_bridge_b_comes_back() -> void:
+	_round_trip(&"bridge", 1)
+
+
+func test_the_garden_wears_its_own_stylized_air() -> void:
+	_wears_own_air(&"garden", GardenLook.STYLE)
+
+
+func test_the_bridge_wears_its_own_stylized_air() -> void:
+	_wears_own_air(&"bridge", BridgeLook.STYLE)
+
+
+## Nothing built for the stylized look casts a shadow; the classic rooms keep their shadowed lights.
+func test_lot_c_shadowed_lights_unchanged() -> void:
+	for id: StringName in [&"garden", &"bridge"]:
+		for v in 2:
+			var classic := _arena(id, v).look.shadowed
+			var a := _arena(id, v)
+			assert_eq(a.look.shadowed, classic, "%s %d: shadowed lights" % [id, v])
+			for l in a.find_child("Styled", true, false).find_children("*", "Light3D", true, false):
+				assert_false((l as Light3D).shadow_enabled, "%s %d: a stylized light without shadow" % [id, v])
+
+
+func test_lot_c_style_only_pieces_are_off_the_floor_or_low() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for id: StringName in [&"garden", &"bridge"]:
+		for v in 2:
+			var a := _arena(id, v)
+			var styled := a.find_child("Styled", true, false) as Node3D
+			assert_not_null(styled, "%s %d has stylized-only pieces" % [id, v])
+			var n_meshes := 0
+			var bad := 0
+			for n in styled.find_children("*", "GeometryInstance3D", true, false):
+				var mi := n as MeshInstance3D
+				if mi == null or mi.mesh == null:
+					continue
+				n_meshes += 1
+				var xf := mi.global_transform
+				for sf in mi.mesh.get_surface_count():
+					var verts: PackedVector3Array = mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX]
+					for vert in verts:
+						var w := xf * vert
+						var p := Vector2(w.x, w.z)
+						if w.y > 0.3 and w.y < 2.6 and a.shape().contains(p, 0.05) and not a.overlaps(p, 0.0):
+							bad += 1
+							if bad < 4:
+								gut.p("%s %d: %s under %s at %s" % [id, v, mi.name, mi.get_parent().name, w])
+			assert_eq(bad, 0, "%s %d: nothing new over the floor between 0.3 and 2.6 m" % [id, v])
+			assert_gt(n_meshes, 5, "%s %d: its pieces" % [id, v])
+
+
+## J5 (B): the stylized garden B hides the west wall for the lake; A keeps it; the water never lies on the floor.
+func test_garden_b_trades_the_west_wall_for_a_lake() -> void:
+	for v in 2:
+		var a := _arena(&"garden", v)
+		var west := a.find_child("WestWall", true, false) as Node3D
+		assert_not_null(west, "garden %d: the west wall in a node of its own" % v)
+		assert_true(west.visible, "garden %d: classic, the west wall stands" % v)
+		_flip(a)
+		assert_eq(west.visible, v == 0, "garden %d: stylized, the wall stands only in A" % v)
+		var water := 0
+		for n in a.find_child("Styled", true, false).find_children("*", "MeshInstance3D", true, false):
+			var mi := n as MeshInstance3D
+			var sm := mi.material_override as ShaderMaterial
+			if sm == null or sm.shader != GardenLook.WATER_SHADER:
+				continue
+			water += 1
+			var c := mi.global_position
+			if int(sm.get_shader_parameter(&"form")) == 0:
+				assert_lt(c.y, 0.0, "garden %d: water under the floor's height" % v)
+				var box := mi.global_transform * mi.get_aabb()
+				for k in 4:
+					var p := Vector2(box.position.x + box.size.x * 0.5, box.position.z + box.size.z * 0.5)
+					assert_false(a.shape().contains(p, 0.0), "garden %d: a pool's middle off the floor" % v)
+		assert_gt(water, 2, "garden %d: falls and pools" % v)
+		_flip(a)

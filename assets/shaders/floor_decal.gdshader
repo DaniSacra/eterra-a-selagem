@@ -9,6 +9,9 @@ shader_type spatial;
 //   2 moss and ivy on a wall (room redesign lot B, the sanctuary's S5): a card on the stone, dense along its top edge
 //     (UV.y 0) and hanging down in ragged tongues, a few darker leaves in it (UV 0..1 over the card, `rug_size` its
 //     size in m).
+//   3 fallen leaves (room redesign lot C, the garden's J2): dead leaves in rust, each a small pointed oval in its own
+//     cell, at most `litter_cover` of the card, densest along one side (UV.y 0: the wall's foot) and thinning to none
+//     at the other; with `litter_ring.y` > 0 instead between two radii round the card's middle (m: the trunk's foot).
 render_mode blend_mix, depth_draw_never, cull_disabled, diffuse_lambert, specular_disabled;
 
 uniform int kind = 0;
@@ -36,6 +39,14 @@ uniform float flower_share = 0.32;
 uniform vec2 flower_size = vec2(0.09, 0.14);
 uniform float tuft_reach = 0.28;
 uniform float alpha = 0.92;
+// the fallen leaves: their two rusts (hue 15 to 25, value up to 0.4), the cell (m), a leaf's length range (m), the
+// share of cells with a leaf where it is densest, the ring (inner, outer radius m; y 0: the band along UV.y 0)
+uniform vec3 leaf_dark : source_color = vec3(0.24, 0.14, 0.09);
+uniform vec3 leaf_light : source_color = vec3(0.36, 0.22, 0.14);
+uniform float litter_cell = 0.16;
+uniform vec2 litter_size = vec2(0.09, 0.15);
+uniform float litter_cover = 0.3;
+uniform vec2 litter_ring = vec2(0.0, 0.0);
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -77,6 +88,40 @@ void fragment() {
 		cover *= smoothstep(0.32, 0.5, fbm(m * 4.0) + 0.25 * (1.0 - UV.y));
 		c = moss * mix(0.7, 1.15, fbm(m * 9.0));
 		a = alpha * cover;
+	} else if (kind == 3) {
+		vec2 m = UV * rug_size;
+		float dense;
+		if (litter_ring.y > 0.0) {
+			float r = length(m - rug_size * 0.5);
+			dense = smoothstep(litter_ring.x - 0.05, litter_ring.x + 0.1, r) * (1.0 - smoothstep(litter_ring.y - 0.4, litter_ring.y, r));
+		} else {
+			dense = 1.0 - smoothstep(0.1, 1.0, UV.y);
+		}
+		// clumps: the noise thins the cells out in drifts
+		dense *= smoothstep(0.3, 0.6, fbm(m * 1.4));
+		float leaf = 0.0;
+		float tone = 0.0;
+		vec2 home = floor(m / litter_cell);
+		for (int i = -1; i <= 1; i++) {
+			for (int j = -1; j <= 1; j++) {
+				vec2 cell = home + vec2(float(i), float(j));
+				if (hash(cell + 2.3) > litter_cover * 2.0 * dense) {
+					continue;
+				}
+				vec2 mid = (cell + 0.5 + (vec2(hash(cell + 5.1), hash(cell + 7.7)) - 0.5) * 0.8) * litter_cell;
+				float turn = hash(cell + 1.1) * 6.2832;
+				vec2 d = mat2(vec2(cos(turn), sin(turn)), vec2(-sin(turn), cos(turn))) * (m - mid);
+				float len = mix(litter_size.x, litter_size.y, hash(cell + 3.3)) * 0.5;
+				// a pointed oval: narrower toward both tips
+				float wide = len * 0.45 * (1.0 - pow(clamp(abs(d.x) / len, 0.0, 1.0), 2.0));
+				if (abs(d.x) < len && abs(d.y) < wide) {
+					leaf = 1.0;
+					tone = hash(cell + 9.9);
+				}
+			}
+		}
+		c = mix(leaf_dark, leaf_light, tone) * mix(0.85, 1.1, noise(m * 9.0));
+		a = alpha * leaf;
 	} else {
 		float reach = ring.y + north_reach + ragged + 0.1;
 		vec2 m = (UV - 0.5) * 2.0 * reach;

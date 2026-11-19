@@ -719,6 +719,79 @@ func urn(at: Vector3, height: float, mat: Material, lid := true) -> void:
 	_add(mi)
 
 
+## A cluster of pale fungus (room redesign lot C 1: on lids, column feet, sills; never on the open floor): `count`
+## flat six-sided caps on short stems round `at` (its middle, on the surface they grow on), within `reach` m, each cap
+## FUNGUS_CAP (smallest, largest) m across, leaning out; one mesh (fungus.gdshader: the rim's own faint glow).
+const FUNGUS_CAP := Vector2(0.06, 0.14)
+const FUNGUS_SHADER := preload("res://assets/shaders/fungus.gdshader")
+var _fungus: ShaderMaterial
+
+
+func fungus(at: Vector3, count: int, reach: float, seed_: int) -> MeshInstance3D:
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for k in count:
+		var a := r.randf() * TAU
+		var d := reach * sqrt(r.randf())
+		var rad := r.randf_range(FUNGUS_CAP.x, FUNGUS_CAP.y) * 0.5
+		var stem := rad * r.randf_range(0.6, 1.3)
+		var foot := Vector3(cos(a) * d, 0.0, sin(a) * d)
+		var lean := Basis(Vector3(-sin(a), 0, cos(a)), r.randf_range(0.0, 0.35))
+		var top := foot + lean * Vector3(0, stem, 0)
+		# the stem: a thin square post
+		var s := rad * 0.25
+		var base: Array[Vector3] = [Vector3(-s, 0, -s), Vector3(s, 0, -s), Vector3(s, 0, s), Vector3(-s, 0, s)]
+		for i in 4:
+			var p0 := foot + base[i]
+			var p1 := foot + base[(i + 1) % 4]
+			var q0 := top + base[i]
+			var q1 := top + base[(i + 1) % 4]
+			_fungus_quad(st, p0, p1, q1, q0, Color(0, 1, 0))
+		# the cap: a flat hexagonal prism, its rim (the sides and the top's outer ring) lit by its own glow
+		var thick := rad * 0.35
+		var ring: Array[Vector3] = []
+		for i in 6:
+			var b := TAU * i / 6.0 + r.randf() * 0.3
+			ring.append(lean * Vector3(cos(b) * rad, 0, sin(b) * rad))
+		var under_y := top
+		var over := top + lean * Vector3(0, thick, 0)
+		var crown := over + lean * Vector3(0, thick * 0.6, 0)
+		for i in 6:
+			var a0 := ring[i]
+			var a1 := ring[(i + 1) % 6]
+			_fungus_quad(st, under_y + a0, under_y + a1, over + a1, over + a0, Color(1, 0, 0))
+			_fungus_tri(st, over + a0, over + a1, crown, [Color(1, 0, 0), Color(1, 0, 0), Color(0, 0, 0)])
+			_fungus_tri(st, under_y + a1, under_y + a0, top, [Color(0, 1, 0), Color(0, 1, 0), Color(0, 1, 0)])
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	if _fungus == null:
+		_fungus = ShaderMaterial.new()
+		_fungus.shader = FUNGUS_SHADER
+	mi.material_override = _fungus
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = at
+	_add(mi)
+	return mi
+
+
+func _fungus_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
+	_fungus_tri(st, a, b, c, [col, col, col])
+	_fungus_tri(st, a, c, d, [col, col, col])
+
+
+func _fungus_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, cols: Array) -> void:
+	# both faces (a cap seen from under and over)
+	for tri: Array in [[a, b, c, 0, 1, 2], [a, c, b, 0, 2, 1]]:
+		var p0: Vector3 = tri[0]
+		var n: Vector3 = ((tri[1] as Vector3) - p0).cross(tri[2] - p0).normalized()
+		for k in 3:
+			st.set_normal(n)
+			st.set_color(cols[tri[3 + k]])
+			st.add_vertex(tri[k])
+
+
 ## The statue of height 1, looking along +Z: lathed robe with deep pleats, belt, shoulders, the hood with its brim
 ## and sunken face and its point behind, arms in wide sleeves, hands. Vertex colour: the stone's value there
 ## (ROBE_VALUE = plain stone), which the material multiplies in: the folds, the foot, under the arms and the face.

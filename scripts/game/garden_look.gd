@@ -177,6 +177,84 @@ const WINDOW_REACH := 6.0
 const WINDOW_MIST := Color(0.44, 0.36, 0.6)
 const WINDOW_MIST_ALPHA := 0.75
 
+# ---------- the stylized look (room redesign, lot C section 2: docs/art/room_redesign_lotC_spec.md) ----------
+## The garden's biome: moss grey stone (hue 85), the oldest olive, the hall's fires, its own air.
+const STYLE := {
+	&"stone": Color(0.32, 0.325, 0.28), &"shadow": Color(0.9, 0.93, 0.96), &"floor_stone": STY_FLOOR,
+	&"joint_cold": Color(0.92, 0.95, 1.0), &"olive_share": 0.25, &"slab_paint": Vector2(0.86, 1.12), &"slab_hue": 5.0,
+	&"metal": true, &"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"moss": STY_MOSS,
+	&"air": {&"sky": Color(0.04, 0.05, 0.05), &"fog": Color(0.07, 0.09, 0.09), &"ambient": Color(0.68, 0.70, 0.68),
+		&"ambient_gain": 1.8, &"moon": Color(0.88, 0.88, 0.86), &"moon_energy": 0.75, &"moon_shadow": true},
+}
+const STY_FLOOR := Color(0.30, 0.31, 0.275)
+## The painted moss (lot C 1: grey green, never past 0.3 of saturation in the hues of the Emeth).
+const STY_MOSS := Color(0.20, 0.24, 0.17)
+## The abyss in the stylized look: a dark grey green mist (no violet), its glow cards and its light cold and grey.
+const STY_MIST := Color(0.075, 0.085, 0.085)
+const STY_GLOW := Color(0.34, 0.42, 0.44)
+const STY_ABYSS_LIGHT := Color(0.42, 0.5, 0.52)
+## The cliffs and the arches under the front in the depths' stone of the stylized look (no violet in their glow).
+const STY_CLIFF := {&"stone_color": Color(0.055, 0.062, 0.06), &"edge_color": Color(0.14, 0.16, 0.15),
+	&"mist_color": STY_MIST, &"glow_color": Color(0.3, 0.38, 0.4)}
+## The stylized air in the browser's renderer (its ambient and key lower, as the other rooms').
+const STY_COMPAT_AMBIENT := 0.55
+const STY_COMPAT_MOON := 0.6
+## The soft key over the middle and the cold beam on the tree in the stylized look: diffuse (no drawn ring on the
+## floor, P-4), this share of their energy.
+const STY_KEY := 1.0
+const STY_BEAM := 0.9
+## The tree's bark in the moss grey (hue 70 to 90, the trunk at 0.9 of the stone's value): base, cords, lichen.
+const STY_BARK := Color(0.21, 0.205, 0.17)
+const STY_CORD := Color(0.31, 0.305, 0.25)
+const STY_LICHEN := Color(0.30, 0.31, 0.24)
+## The fill on the tree a neutral warm (the cold one turned the moss grey bark mint).
+const STY_TREE_FILL := Color(0.86, 0.84, 0.78)
+## J1: the crown in dead rust (hue 15 to 25, saturation up to 0.45, value up to 0.4; never the warnings' red).
+const STY_LEAF_A := Color(0.26, 0.17, 0.12)
+const STY_LEAF_B := Color(0.40, 0.27, 0.19)
+## The dry grass a little more straw than lilac (dry_grass.gdshader's tint, if it has one).
+## The windows: the violet behind them turns to the cold of falling water (light on the walls' stone, the mist).
+const STY_WINDOW_LIGHT := Color(0.62, 0.72, 0.78)
+const STY_WINDOW_ENERGY := 1.4
+const STY_WINDOW_MIST := Color(0.20, 0.25, 0.27)
+const STY_WINDOW_MIST_ALPHA := 0.45
+## J2: fallen leaves on the floor, only along the north and west walls' feet (this deep) and round the trunk's foot
+## (from its radius out this far); the cover's most (share of a band).
+const LEAVES_WALL := 1.2
+const LEAVES_TRUNK := 0.5
+const LEAVES_COVER := 0.3
+const LEAF_DARK := Color(0.26, 0.17, 0.12)
+const LEAF_LIGHT := Color(0.38, 0.25, 0.17)
+const LEAF_CELL := 0.22
+const LEAF_SIZE := Vector2(0.14, 0.24)
+## J3: pale fungus: clusters (caps, reach m) on the lids, the column feet, the window sills and along the walls'
+## plinth (every this many m).
+const FUNGI := Vector2i(5, 9)
+const FUNGI_REACH := 0.18
+const FUNGI_WALL_EVERY := 5.5
+## J4: falls behind the windows (this far behind the wall's inner face, width, top) and beyond the north-west cut (its
+## foot, size); a dark pool at each foot.
+const FALL_BACK := 2.6
+const FALL_WIDTH := 2.0
+const FALL_TOP := 9.0
+const FALL_NW := Vector3(-19.5, -1.0, -16.5)
+const FALL_NW_SIZE := Vector2(3.4, 16.0)
+const POOL_SIZE := Vector2(3.6, 2.4)
+const POOL_Y := -0.25
+const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
+## J5 (B): the west wall gives way to a low broken parapet (its top's range, m, its blocks' length) and a dark lake
+## past it, under the floor (its surface's y, how far west, how far north and south past the floor), a fall at its
+## back (x, width, top).
+const PARAPET_TOP := Vector2(0.35, 0.9)
+const PARAPET_BLOCK := Vector2(0.8, 1.6)
+const LAKE_Y := -0.6
+const LAKE_WEST := 15.0
+const LAKE_PAST := 3.0
+const LAKE_FALL := Vector3(-30.0, 7.0, 14.0)
+const LAKE_SHORE := 6
+## The lake's fall a step dimmer than the windows' (it stands high in the frame's corner, behind the HUD).
+const LAKE_FALL_LIGHT := 0.32
+
 ## The tree that was grown (StoneTree), for the lab and the tests.
 var tree: StoneTree
 ## Variant B (three roots): the cold beam weaker, the crystals a step brighter, two lanterns.
@@ -186,6 +264,20 @@ var _wall_mat: ShaderMaterial
 ## The cliff's stone of the arches under the front (the depth stone in the garden's colours).
 var _deep: ShaderMaterial
 var _tufts: Array[Transform3D] = []
+## What the stylized look turns (style()): the key, the windows' lights and mists, the crystals' lights, the abyss's
+## mists and lights, the lids' tops, the west wall's node (B: hidden there).
+var _key: OmniLight3D
+var _beam_light: SpotLight3D
+var _window_lights: Array[OmniLight3D] = []
+var _window_mists: Array[ShaderMaterial] = []
+var _crystal_lights: Array[OmniLight3D] = []
+var _abyss_mats: Array[ShaderMaterial] = []
+var _abyss_lights: Array[OmniLight3D] = []
+var _canopy_mat: ShaderMaterial
+var _moss_mat: ShaderMaterial
+var _lids: Array[Vector3] = []
+var _west: Node3D
+var _tree_fill: OmniLight3D
 
 
 func floor_look() -> Dictionary:
@@ -234,9 +326,10 @@ func dress() -> void:
 	_grass()
 	_beam()
 	if _compat():
-		key_light(COMPAT_KEY, KEY_ENERGY * COMPAT_LIGHT)
+		_key = key_light(COMPAT_KEY, KEY_ENERGY * COMPAT_LIGHT)
 	else:
-		key_light(KEY, KEY_ENERGY)
+		_key = key_light(KEY, KEY_ENERGY)
+	_dress_styled()
 
 
 ## True in the browser's renderer (Compatibility).
@@ -253,6 +346,7 @@ func piece(o: ArenaObstacle) -> void:
 		&"sarcophagus":
 			var top := sarcophagus(o)
 			candles(top, LID_CANDLES)
+			_lids.append(top)
 		_:
 			super.piece(o)
 
@@ -376,6 +470,7 @@ func _moss() -> void:
 	if _compat():
 		mat.set_shader_parameter(&"cover", MOSS_COMPAT_COVER)
 	mi.material_override = mat
+	_moss_mat = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 
@@ -443,6 +538,7 @@ func _canopy() -> void:
 	mat.shader = CANOPY_SHADER
 	mat.set_shader_parameter(&"leaf_a", CANOPY_LEAF_A)
 	mat.set_shader_parameter(&"leaf_b", CANOPY_LEAF_B)
+	_canopy_mat = mat
 	var mi := MultiMeshInstance3D.new()
 	mi.name = "Canopy"
 	mi.multimesh = mm
@@ -470,6 +566,7 @@ func _tree() -> void:
 	fill.omni_attenuation = 0.6
 	fill.light_cull_mask = StoneTree.LAYER
 	add_child(fill)
+	_tree_fill = fill
 	for spot in tree.crystal_spots:
 		var out := (spot - tree.at).normalized()
 		var l := OmniLight3D.new()
@@ -479,6 +576,7 @@ func _tree() -> void:
 		l.omni_range = CRYSTAL_LIGHT.y
 		l.light_cull_mask = ~Arena.CROWD_LAYER
 		add_child(l)
+		_crystal_lights.append(l)
 	# dry grass round the trunk's foot and along the roots
 	var r := RandomNumberGenerator.new()
 	r.seed = 911
@@ -555,36 +653,7 @@ static func root_paths(l: RoomLayout, trunk: ArenaObstacle) -> Array[PackedVecto
 
 ## An iron lantern hanging by a chain from a point under a limb, its ring at LANTERN_AT.
 func _hanging_lantern(from: Vector3) -> void:
-	var at := Vector3(from.x, LANTERN_AT, from.z)
-	kit.chain(from, at, 0.0, 0.7)
-	_lantern(at - Vector3(0, LANTERN_SIZE.y * 0.5 + 0.06, 0))
-
-
-## A small iron lantern (cap, four posts, the warm glass of TombKit.WARM, a foot) with its light (no shadow), its
-## middle at `at`.
-func _lantern(at: Vector3) -> void:
-	var s := LANTERN_SIZE
-	var ir := tomb.iron()
-	var glass := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(s.x * 0.78, s.y * 0.72, s.z * 0.78)
-	glass.mesh = bm
-	glass.material_override = tomb.unlit(TombKit.WARM.glass)
-	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	glass.position = at
-	add_child(glass)
-	for cx: float in [-1.0, 1.0]:
-		for cz: float in [-1.0, 1.0]:
-			m.box(at + Vector3(cx * s.x * 0.45, 0, cz * s.z * 0.45), Vector3(0.04, s.y * 0.8, 0.04), 0.0, ir, false)
-	m.box(at + Vector3(0, -s.y * 0.42, 0), Vector3(s.x, 0.06, s.z), 0.0, ir, false)
-	m.point(at + Vector3(0, s.y * 0.38, 0), s.x * 1.05, s.y * 0.35, 0.0, 0.0, ir)
-	var l := OmniLight3D.new()
-	l.position = at
-	l.light_color = TombKit.WARM.light
-	l.light_energy = LANTERN_LIGHT.x
-	l.omni_range = LANTERN_LIGHT.y
-	l.light_cull_mask = ~Arena.CROWD_LAYER
-	add_child(l)
+	hanging_lantern(from, LANTERN_AT, LANTERN_SIZE, LANTERN_LIGHT)
 
 
 # ---------- the walls ----------
@@ -597,10 +666,11 @@ func _walls() -> void:
 	_wall(Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, NORTH_WINDOWS, 11)
 	_wall(Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x + 0.9, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, [], 12)
 	_door_recess()
-	# west: from the north-west cut to the way in
-	_wall(Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0), WEST_HEIGHT, WEST_WINDOWS, 13)
-	for z in WEST_BANNERS:
-		kit.banner(Vector3(WEST_X + 0.06, BANNER.x, z), PI * 0.5, Vector2(BANNER.y, BANNER.z), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION)
+	# west: from the north-west cut to the way in (in a node of its own: in B the stylized look puts a lake there)
+	_west_apart(func() -> void:
+		_wall(Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0), WEST_HEIGHT, WEST_WINDOWS, 13)
+		for z in WEST_BANNERS:
+			kit.banner(Vector3(WEST_X + 0.06, BANNER.x, z), PI * 0.5, Vector2(BANNER.y, BANNER.z), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION))
 	_corners()
 	m.layers = 1
 
@@ -728,6 +798,9 @@ func _window(c: Vector2, inward: Vector2) -> void:
 	# the violet behind it
 	var far := Vector3(c.x, 0.0, c.y) - Vector3(inward.x, 0, inward.y) * 4.0
 	kit.mist_bank(far + Vector3(0, WINDOW_SILL + WINDOW.y * 0.4, 0), Vector2(WINDOW.x * 2.6, WINDOW.y * 0.9), WINDOW_MIST, WINDOW_MIST_ALPHA, 0.3, 0.2)
+	var bank := kit.root.get_child(kit.root.get_child_count() - 1) as GeometryInstance3D
+	if bank != null and bank.material_override is ShaderMaterial:
+		_window_mists.append(bank.material_override)
 	kit.abyss_glow(far - Vector3(inward.x, 0, inward.y) * 2.0 + Vector3(0, -1.0, 0), Vector2(WINDOW.x * 3.0, WINDOW.y + 3.0),
 		deg_to_rad(Feel.live().cam_yaw))
 	var l := OmniLight3D.new()
@@ -737,6 +810,7 @@ func _window(c: Vector2, inward: Vector2) -> void:
 	l.omni_range = WINDOW_REACH
 	l.light_cull_mask = ArenaKit.FACADE_LAYER
 	add_child(l)
+	_window_lights.append(l)
 
 
 ## The recess of the door X1: its sides, the back wall with the door's opening (ArenaRoom draws the arch in it), the
@@ -822,13 +896,21 @@ func _entry() -> void:
 
 func _statues() -> void:
 	for s in STATUES:
-		var face := Vector2(sin(deg_to_rad(s.z)), cos(deg_to_rad(s.z)))
-		kit.statue(Vector2(s.x, s.y), deg_to_rad(s.z), s.w, 0.0, ArenaKit.STATUE_VALUE, false)
-		# its niche is cut in the wall (_wall); a pointed arch frames it on the wall's face
-		var edge := Vector2(s.x, s.y) + face * 0.85
-		m.layers = 1 | ArenaKit.FACADE_LAYER
-		m.pointed_arch(Vector3(edge.x, 0, edge.y), face, NICHE.x, s.w * 1.45, 0.35, 0.6, _wall_mat)
-		m.layers = 1
+		if s.x < WEST_X:
+			_west_apart(_statue.bind(s))
+		else:
+			_statue(s)
+
+
+## A hooded statue in its niche (x, z, facing in degrees, height).
+func _statue(s: Vector4) -> void:
+	var face := Vector2(sin(deg_to_rad(s.z)), cos(deg_to_rad(s.z)))
+	kit.statue(Vector2(s.x, s.y), deg_to_rad(s.z), s.w, 0.0, ArenaKit.STATUE_VALUE, false)
+	# its niche is cut in the wall (_wall); a pointed arch frames it on the wall's face
+	var edge := Vector2(s.x, s.y) + face * 0.85
+	m.layers = 1 | ArenaKit.FACADE_LAYER
+	m.pointed_arch(Vector3(edge.x, 0, edge.y), face, NICHE.x, s.w * 1.45, 0.35, 0.6, _wall_mat)
+	m.layers = 1
 
 
 ## A tuft of dry grass at p (its turn and size by r).
@@ -892,4 +974,253 @@ func _beam() -> void:
 	s.shadow_enabled = true
 	s.shadow_opacity = BEAM_SHADOW
 	s.light_cull_mask = ~Arena.CROWD_LAYER
+	_beam_light = s
 
+
+
+# ---------- the stylized look (room redesign, lot C section 2) ----------
+
+## The abyss as ArenaRoom builds it, its pieces kept for the stylized look.
+func _abyss() -> void:
+	var from := get_child_count()
+	super._abyss()
+	_abyss_nodes = added_since(from)
+
+
+var _abyss_nodes: Array[Node] = []
+
+
+## Builds `build` (the west wall and what stands on it) into a node of its own, with a Masonry of its own (the same
+## materials, merged apart): in B the stylized look hides it for the lake (J5). The classic frame is the same.
+func _west_apart(build: Callable) -> void:
+	if _west == null:
+		_west = Node3D.new()
+		_west.name = "WestWall"
+		add_child(_west)
+	var own := m
+	var own_kit := kit.masonry
+	var wm := Masonry.new(_west)
+	wm.layers = m.layers
+	m = wm
+	kit.masonry = wm
+	var from := get_child_count()
+	build.call()
+	m = own
+	kit.masonry = own_kit
+	for n in added_since(from):
+		n.reparent(_west, true)
+	wm.merge()
+
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if _compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	# the key and the beam diffuse: their fall on the painted floor fades out, never a ring (P-4)
+	if _key != null:
+		VisualProfile.vary(_key, {&"light_specular": 0.0, &"light_energy": _key.light_energy * STY_KEY})
+	if _beam_light != null:
+		VisualProfile.vary(_beam_light, {&"light_specular": 0.0, &"light_energy": _beam_light.light_energy * STY_BEAM})
+	# the crystals glow on their edges only: their lights would paint green pools on the floor (reserved colour)
+	for l in _crystal_lights:
+		VisualProfile.vary(l, {&"visible": false})
+	for l in _window_lights:
+		VisualProfile.vary(l, {&"light_color": STY_WINDOW_LIGHT, &"light_energy": STY_WINDOW_ENERGY, &"light_specular": 0.0})
+	for mat in _window_mists:
+		VisualProfile.vary(mat, {&"shader_parameter/color": STY_WINDOW_MIST, &"shader_parameter/alpha": STY_WINDOW_MIST_ALPHA})
+	style_abyss(_abyss_nodes, MIST, STY_MIST, STY_ABYSS_LIGHT)
+	style_depths(STY_CLIFF)
+	if tree != null and tree.stone_material != null:
+		VisualProfile.vary(tree.stone_material, {&"shader_parameter/base_color": STY_BARK, &"shader_parameter/cord_color": STY_CORD,
+			&"shader_parameter/lichen_color": STY_LICHEN})
+	if _tree_fill != null:
+		VisualProfile.vary(_tree_fill, {&"light_color": STY_TREE_FILL})
+	if _canopy_mat != null:
+		VisualProfile.vary(_canopy_mat, {&"shader_parameter/leaf_a": STY_LEAF_A, &"shader_parameter/leaf_b": STY_LEAF_B})
+	if variant_b and _west != null:
+		VisualProfile.vary(_west, {&"visible": false})
+	return st
+
+
+## The pieces only the stylized look shows (spec 2.3), on kit.styled() (never the room's random numbers), none over
+## the walkable floor but a decal: fallen leaves along the north and west walls and round the trunk (J2), pale fungus
+## on the lids, the column feet, the sills and the walls' plinth (J3), falls of dark water behind the windows and past
+## the north-west cut (J4); in B the west wall's place a low broken parapet over a dark lake with a fall (J5).
+func _dress_styled() -> void:
+	var sm := kit.styled()
+	var b := layout.floor.bounds()
+	var north_from := b.position.x + 4.0
+	_leaves(sm, Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1))
+	_leaves(sm, Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x, NORTH_Z), Vector2(0, 1))
+	_leaves(sm, Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0))
+	if _trunk_o != null:
+		_leaves_round(sm, _trunk_o.center, _trunk_o.radius)
+	_fungi(sm)
+	for x in NORTH_WINDOWS:
+		_fall(sm, Vector3(x, 0.0, NORTH_Z - FALL_BACK), 0.0, FALL_WIDTH, FALL_TOP, true)
+	if not variant_b:
+		for z in WEST_WINDOWS:
+			_fall(sm, Vector3(WEST_X - FALL_BACK, 0.0, z), PI * 0.5, FALL_WIDTH, FALL_TOP, true)
+	# past the north-west cut, into the abyss
+	var nw := FALL_NW
+	_fall(sm, Vector3(nw.x, nw.y - FALL_NW_SIZE.y + FALL_TOP, nw.z), PI * 0.25, FALL_NW_SIZE.x, FALL_NW_SIZE.y, false)
+	if variant_b:
+		_lake(sm, b)
+
+
+## J2: a card of fallen leaves along a wall's foot from a to b (inward: toward the floor), LEAVES_WALL deep.
+func _leaves(sm: Masonry, a: Vector2, b: Vector2, inward: Vector2) -> void:
+	if a.distance_to(b) < 1.0:
+		return
+	var size := Vector2(a.distance_to(b), LEAVES_WALL)
+	var mid := (a + b) * 0.5 + inward * LEAVES_WALL * 0.5
+	var mat := _leaf_mat(size)
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	q.size = size
+	mi.mesh = q
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# the plane's x along the wall, its UV.y 0 at the wall's foot (its -z side)
+	var along := (b - a).normalized()
+	var yaw := atan2(-along.y, along.x)
+	var basis := Basis(Vector3.UP, yaw)
+	if (basis * Vector3(0, 0, -1)).dot(Vector3(inward.x, 0, inward.y)) > 0.0:
+		basis = basis * Basis(Vector3.UP, PI)
+	mi.transform = Transform3D(basis, Vector3(mid.x, 0.009, mid.y))
+	sm.root.add_child(mi)
+
+
+## J2: the leaves round the trunk's foot, between its radius and LEAVES_TRUNK past it.
+func _leaves_round(sm: Masonry, c: Vector2, radius: float) -> void:
+	var side := (radius + LEAVES_TRUNK + 0.2) * 2.0
+	var mat := _leaf_mat(Vector2(side, side))
+	mat.set_shader_parameter(&"litter_ring", Vector2(radius - 0.3, radius + LEAVES_TRUNK))
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	q.size = Vector2(side, side)
+	mi.mesh = q
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(c.x, 0.009, c.y)
+	sm.root.add_child(mi)
+
+
+func _leaf_mat(size: Vector2) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = CatacombHall.DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 3)
+	mat.set_shader_parameter(&"rug_size", size)
+	mat.set_shader_parameter(&"leaf_dark", LEAF_DARK)
+	mat.set_shader_parameter(&"leaf_light", LEAF_LIGHT)
+	mat.set_shader_parameter(&"litter_cover", LEAVES_COVER)
+	mat.set_shader_parameter(&"litter_cell", LEAF_CELL)
+	mat.set_shader_parameter(&"litter_size", LEAF_SIZE)
+	mat.set_shader_parameter(&"alpha", 1.0)
+	mat.render_priority = -1
+	return mat
+
+
+## J3: pale fungus on each lid (beside its candles), at the feet of the columns (on their plinth, inside their circle),
+## on the windows' sills and along the walls' plinth (off the floor).
+func _fungi(sm: Masonry) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = 6151
+	for o in layout.obstacles:
+		match o.piece:
+			&"sarcophagus":
+				var along := Vector2.from_angle(o.yaw) * (o.half.x if o.half.x > o.half.y else 0.0)
+				if along == Vector2.ZERO:
+					along = Vector2.from_angle(o.yaw + PI * 0.5) * o.half.y
+				for top in _lids:
+					if Vector2(top.x, top.z).distance_to(o.center) < 0.5:
+						var at := o.center + along * 0.62
+						sm.fungus(Vector3(at.x, top.y, at.y), r.randi_range(FUNGI.x, FUNGI.y), FUNGI_REACH, r.randi())
+			&"column":
+				var a := r.randf() * TAU
+				var d := (o.radius * TombKit.COLUMN_SHAFT + o.radius - 0.1) * 0.5
+				var at := o.center + Vector2.from_angle(a) * d
+				sm.fungus(Vector3(at.x, TombKit.COLUMN_PLINTH, at.y), r.randi_range(FUNGI.x, FUNGI.y),
+					minf(FUNGI_REACH, o.radius - 0.15 - d), r.randi())
+	for x in NORTH_WINDOWS:
+		sm.fungus(Vector3(x + 0.7, WINDOW_SILL + 0.02, NORTH_Z - 0.35), r.randi_range(FUNGI.x, FUNGI.y), FUNGI_REACH, r.randi())
+	var b := arena.shape().bounds()
+	var x0 := b.position.x + 5.0
+	while x0 < b.end.x - 1.0:
+		if x0 < RECESS.x - 0.5 or x0 > RECESS.y + 0.5:
+			sm.fungus(Vector3(x0 + r.randf_range(-1.0, 1.0), 0.4, NORTH_Z - 0.3), r.randi_range(FUNGI.x, FUNGI.y), FUNGI_REACH, r.randi())
+		x0 += FUNGI_WALL_EVERY
+	if not variant_b:
+		var z0 := b.position.y + 5.0
+		while z0 < 8.0:
+			sm.fungus(Vector3(WEST_X - 0.3, 0.4, z0 + r.randf_range(-1.0, 1.0)), r.randi_range(FUNGI.x, FUNGI.y), FUNGI_REACH, r.randi())
+			z0 += FUNGI_WALL_EVERY
+
+
+## J4: a fall of dark water (dark_water.gdshader, a vertical card) with its foot at `foot` (its middle), turned `yaw`
+## (0: facing south, the room), `width` wide and `height` tall; a dark pool under it when `pool`.
+func _fall(sm: Masonry, foot: Vector3, yaw: float, width: float, height: float, pool: bool) -> ShaderMaterial:
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(width, height)
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = WATER_SHADER
+	mat.set_shader_parameter(&"form", 1)
+	mat.set_shader_parameter(&"size", q.size)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.transform = Transform3D(Basis(Vector3.UP, yaw), foot + Vector3(0, height * 0.5, 0))
+	sm.root.add_child(mi)
+	if pool:
+		_sheet(sm, foot + Vector3(0, POOL_Y, 0), yaw, POOL_SIZE, Vector2(0.5, 0.3))
+	return mat
+
+
+## A sheet of dark water (dark_water.gdshader form 0), its middle at `at`, turned `yaw`, foam where a fall lands (UV).
+func _sheet(sm: Masonry, at: Vector3, yaw: float, size: Vector2, foam: Vector2) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	q.size = size
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = WATER_SHADER
+	mat.set_shader_parameter(&"form", 0)
+	mat.set_shader_parameter(&"size", size)
+	mat.set_shader_parameter(&"foam_at", foam)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.transform = Transform3D(Basis(Vector3.UP, yaw), at)
+	sm.root.add_child(mi)
+	return mi
+
+
+## J5 (B): the west wall's place: a low broken parapet just off the floor's west edge, a dark lake past it under the
+## floor, stones along its shore, a fall at its back.
+func _lake(sm: Masonry, b: Rect2) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = 4421
+	var mat := _wall_mat
+	var z := b.position.y + 4.0
+	var x := WEST_X - 0.5
+	while z < 9.0:
+		var l := minf(r.randf_range(PARAPET_BLOCK.x, PARAPET_BLOCK.y), 9.0 - z)
+		if r.randf() < 0.8:
+			sm.block(Vector3(x, 0.0, z + l * 0.5), Vector3(0.8, r.randf_range(PARAPET_TOP.x, PARAPET_TOP.y), l - 0.06), 0.0, mat)
+		else:
+			# a fallen block lying out on the lip
+			sm.box(Vector3(x - 0.6, -0.45, z + l * 0.5), Vector3(0.7, 0.5, l * 0.6), r.randf_range(-0.4, 0.4), mat)
+		z += l
+	var lake := Rect2(WEST_X - 0.9 - LAKE_WEST, b.position.y - LAKE_PAST, LAKE_WEST, b.size.y + LAKE_PAST * 2.0)
+	var fall_u := (LAKE_FALL.x - lake.position.x) / lake.size.x
+	_sheet(sm, Vector3(lake.get_center().x, LAKE_Y, lake.get_center().y), 0.0, lake.size, Vector2(fall_u, 0.4))
+	# blocks of the fallen wall half sunk in the lake along the parapet
+	for k in LAKE_SHORE:
+		var p := Vector2(r.randf_range(WEST_X - 4.0, WEST_X - 1.6), r.randf_range(lake.position.y + 3.0, lake.end.y - 3.0))
+		var s := r.randf_range(0.8, 1.5)
+		var blk := sm.box(Vector3(p.x, LAKE_Y - s * 0.12, p.y), Vector3(s, s * 0.55, s * r.randf_range(0.6, 1.0)), r.randf() * TAU, mat)
+		blk.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.3, 0.3))
+	var fall := _fall(sm, Vector3(LAKE_FALL.x, LAKE_Y, lake.get_center().y + 0.4 * lake.size.y - lake.size.y * 0.5), PI * 0.5,
+		LAKE_FALL.y, LAKE_FALL.z, false)
+	fall.set_shader_parameter(&"fall_light", LAKE_FALL_LIGHT)
