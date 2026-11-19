@@ -6,6 +6,8 @@ extends Control
 ## medallions, and the ways out at the foot in quiet links: Sair para o menu and, on the desktop, Sair do jogo.
 ## The focus walks that order with up and down and wraps at both ends; a page opened from here gives the focus back to
 ## the button that opened it.
+## HUB-B1: Sair para o menu goes to the hub (scenes/hub.tscn); in the hub (hub true) the same panel is its Esc menu,
+## titled with the place's name, without the descent's Bênçãos, map and medallions, its way out Voltar ao título.
 
 signal resumed
 
@@ -28,6 +30,8 @@ var _from: Control
 var buttons: Array[Button] = []
 ## "Mapa" (null outside a descent by rooms); the map key opens it from here too.
 var map_button: Button
+## The hub's Esc menu (set before open).
+var hub := false
 
 
 func open() -> void:
@@ -50,7 +54,7 @@ func open() -> void:
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override(&"separation", 9)
 	panel.add_child(v)
-	v.add_child(UiKit.header(T.t(&"pause_title"), 40, WIDTH * 0.72))
+	v.add_child(UiKit.header(T.t(&"hub_name" if hub else &"pause_title"), 40, WIDTH * 0.72))
 	var go_on := UiKit.primary(_button(v, "continue", T.t(&"pause_continue"), func() -> void: resumed.emit()))
 	go_on.add_theme_font_size_override(&"font_size", 24)
 	# the descent's map (DV-1, MAP-03), only in a descent by rooms
@@ -58,8 +62,9 @@ func open() -> void:
 	if game != null and game.rooms != null:
 		map_button = _button(v, "map", T.t(&"pause_map"), Callable())
 		map_button.pressed.connect(func() -> void: _show(MapScreen.new(), map_button))
-	var boons := _button(v, "boons", T.t(&"pause_boons"), Callable())
-	boons.pressed.connect(func() -> void: _show(_boons_screen(), boons))
+	if not hub:
+		var boons := _button(v, "boons", T.t(&"pause_boons"), Callable())
+		boons.pressed.connect(func() -> void: _show(_boons_screen(), boons))
 	var codex := _button(v, "codex", T.t(&"pause_moves"), Callable())
 	codex.pressed.connect(func() -> void: _show(CodexScreen.new(), codex))
 	var options := _button(v, "options", T.t(&"pause_options"), Callable())
@@ -71,7 +76,8 @@ func open() -> void:
 	v.add_child(rule)
 	var foot := UiKit.foot(6)
 	v.add_child(foot)
-	var quit := UiKit.link(T.t(&"pause_quit"), func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn"))
+	var quit := UiKit.link(T.t(&"hub_to_title" if hub else &"pause_quit"), func() -> void:
+		SceneGo.to(get_tree(), SceneGo.TITLE if hub else SceneGo.HUB))
 	quit.name = "quit"
 	foot.add_child(quit)
 	buttons.append(quit)
@@ -114,6 +120,8 @@ func _chain() -> void:
 
 ## The gifts of the descent under the buttons (none held: nothing).
 func _carried(parent: Control) -> void:
+	if hub:
+		return
 	var game := _game()
 	var carried := UiKit.carried_of(game.boons if game else null)
 	if carried.is_empty():

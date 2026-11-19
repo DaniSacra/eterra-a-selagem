@@ -87,6 +87,9 @@ var hud: Hud
 var ui: CanvasLayer
 var _feel_panel: FeelPanel
 var camera: Camera3D
+## The game camera and the world's air (shared with the hub, HUB-B1).
+var cam: CamRig
+var air: WorldAir
 var bot: Bot
 ## --watchdog (C17, BUG-110): a WATCH line every Watchdog.EVERY real seconds, kept in the run's log (null: off).
 var watchdog: Watchdog = Watchdog.new() if Dev.has("watchdog") else null
@@ -134,7 +137,6 @@ var _hurt_tint := HurtTint.new()
 var _fountain: Node3D
 var _fountain_at := Vector2.ZERO
 var _fountain_used := false
-var _cam_target := Vector3.ZERO
 var _rng := RandomNumberGenerator.new()
 var _found: Array[Enemy] = []
 
@@ -283,76 +285,8 @@ func _ready() -> void:
 
 
 func _build_world() -> void:
-	var env := WorldEnvironment.new()
-	var e := Environment.new()
-	# the catacomb hall of the reference image (2026-11-14): a cold, dark teal air; the warmth comes only from fire
-	# and candles, the green from the portal, the violet from the depths
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = SKY
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = AMBIENT
-	e.ambient_light_energy = AMBIENT_ENERGY
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	e.tonemap_exposure = EXPOSURE
-	e.glow_enabled = true
-	e.glow_intensity = GLOW_INTENSITY
-	e.glow_strength = 1.0
-	e.glow_bloom = 0.03
-	e.glow_hdr_threshold = GLOW_THRESHOLD
-	e.glow_blend_mode = Environment.GLOW_BLEND_MODE_ADDITIVE
-	# the fires and the portal keep their shape: the widest level only a little, so no big halo washes the stone
-	for i in 7:
-		e.set_glow_level(i, GLOW_LEVELS[i])
-	# haze only past the hall (by depth from the camera), and a height fog filling the abyss below the floor: the
-	# depths turn to teal mist, the hall itself stays clear
-	e.fog_enabled = true
-	e.fog_mode = Environment.FOG_MODE_DEPTH
-	e.fog_light_color = FOG
-	e.fog_depth_begin = FOG_BEGIN
-	e.fog_depth_end = FOG_END
-	e.fog_depth_curve = 1.0
-	e.fog_height = FOG_HEIGHT
-	e.fog_height_density = FOG_HEIGHT_DENSITY
-	e.fog_aerial_perspective = 0.2
-	# desktop (Forward+) only, ignored by the browser's renderer: a little light in the air around the fires and the
-	# portal (no ambient in it: it would lift every black), contact shadows, the wet floor mirroring the light (fog in
-	# the air and reflections only switched on there: the browser's renderer warns in the log for each, BUG-011)
-	var forward := RenderingServer.get_current_rendering_method() != "gl_compatibility"
-	e.volumetric_fog_enabled = forward
-	e.volumetric_fog_density = VOLUMETRIC_DENSITY
-	e.volumetric_fog_albedo = Color(0.7, 0.72, 0.78)
-	e.volumetric_fog_emission = Color.BLACK
-	e.volumetric_fog_gi_inject = 0.0
-	e.volumetric_fog_length = 90.0
-	e.volumetric_fog_ambient_inject = 0.0
-	e.ssao_enabled = true
-	e.ssao_radius = SSAO_RADIUS
-	e.ssao_intensity = SSAO_INTENSITY
-	e.ssao_light_affect = SSAO_LIGHT_AFFECT
-	e.ssr_enabled = forward
-	e.ssr_max_steps = 48
-	e.adjustment_enabled = true
-	e.adjustment_contrast = ADJUST_CONTRAST
-	e.adjustment_saturation = ADJUST_SATURATION
-	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
-		# the browser's renderer has no fog in the air nor contact shadows and lights the stone brighter: darker
-		# exposure and ambient so it keeps the desktop's mood
-		e.tonemap_exposure = COMPAT_EXPOSURE
-		e.ambient_light_energy = COMPAT_AMBIENT
-	env.environment = e
-	add_child(env)
-	var moon := DirectionalLight3D.new()
-	# a cold light from high behind the hall (north-west), rimming the stone and the fighters
-	moon.rotation_degrees = Vector3(-50, 150, 0)
-	moon.light_color = Color(0.5, 0.75, 0.85)
-	moon.light_energy = 0.35
-	moon.shadow_enabled = true
-	moon.directional_shadow_max_distance = 90.0
-	moon.light_volumetric_fog_energy = 0.3
-	add_child(moon)
-	# the visual profile (--look, F7): the stylized proof's numbers for the air and the key (VisualProfile)
-	VisualProfile.dress_world(e, moon)
-
+	# the world's air (WorldAir, shared with the hub: HUB-B1), then the room
+	air = WorldAir.build(self)
 	arena = Arena.new()
 	add_child(arena)
 	arena.build()
@@ -374,12 +308,12 @@ func _build_world() -> void:
 	player.pos = Vector2(0, 8)
 	add_child(player)
 	camera = Camera3D.new()
-	camera.fov = Dev.num("cam-fov", Feel.live().cam_fov)
-	camera.far = 160.0
 	add_child(camera)
 	camera.make_current()
-	_cam_target = Vector3(player.pos.x, 0, player.pos.y)
-	_place_camera(Vector3.ZERO, 1.0)
+	# the game camera (CamRig, shared with the hub: HUB-B1)
+	cam = CamRig.new(camera, arena, player)
+	cam.on_placed = _cam_placed
+	cam.place(Vector3.ZERO, 1.0)
 
 
 func _build_ui() -> void:
@@ -629,6 +563,7 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	arena.build(layout, exits, seed_)
 	horde.arena = arena
 	player.arena = arena
+	cam.arena = arena
 	var place := arena.id if arena.id != &"" else &"hall"
 	arenas_seen[place] = int(arenas_seen.get(place, 0)) + 1
 
@@ -1139,8 +1074,9 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	ui.add_child(end)
 	end.open(victory, {"time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
 		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report}, new_best)
-	end.retry.connect(func() -> void: get_tree().reload_current_scene())
-	end.menu.connect(func() -> void: get_tree().change_scene_to_file("res://scenes/boot.tscn"))
+	end.retry.connect(func() -> void: SceneGo.to(get_tree(), SceneGo.GAME))
+	# Voltar ao Santuário (HUB-01, D-H6): to the hub; everything lasting was saved before the end screen opened
+	end.menu.connect(func() -> void: SceneGo.to(get_tree(), SceneGo.HUB))
 
 
 ## F1 (debug builds): the live tuning panel for data/feel.tres. The run keeps going behind it.
@@ -1240,137 +1176,53 @@ func column(at: Vector2, color: Color, radius: float, height: float, time: float
 	fx.beam(at, color, radius, height, time, Fx.BEAM_INTENSITY * (Skills.BEAM_OVER_BOSS if faint else 1.0))
 
 
-## How much closer the camera gets at the end of an Omega's charge.
-const OMEGA_ZOOM := 0.08
+## How much closer the camera gets at the end of an Omega's charge (CamRig).
+const OMEGA_ZOOM := CamRig.OMEGA_ZOOM
 ## How far the fixed showcase camera (--showcase) stands from the hall's middle, to frame all of it like the reference.
-const SHOWCASE_DISTANCE := 60.0
-## The browser's renderer (GL Compatibility) lights brighter than the desktop's (Forward+): its exposure and ambient.
-const COMPAT_EXPOSURE := 1.25
-const COMPAT_AMBIENT := 0.4
-## The air of the hall (the reference image): cold teal behind and below, a low teal ambient, no violet in the air
-## (the violet comes from the abyss lights). Fog by depth starts past the hall; height fog fills the abyss.
-const SKY := Color(0.11, 0.2, 0.24)
-const AMBIENT := Color(0.3, 0.4, 0.46)
-const AMBIENT_ENERGY := 0.9
-const EXPOSURE := 1.25
-const FOG := Color(0.11, 0.2, 0.24)
-const FOG_BEGIN := 64.0
-const FOG_END := 170.0
-const FOG_HEIGHT := -3.0
-const FOG_HEIGHT_DENSITY := 0.6
-const VOLUMETRIC_DENSITY := 0.0
-## Glow: only colours over the threshold bloom (blades and slashes go past 2, fire tongues stay under 2), weight of
-## each glow level (the widest, 4, kept low so fires and the portal have no big halo).
-const GLOW_INTENSITY := 0.45
-const GLOW_THRESHOLD := 1.3
-const GLOW_LEVELS: Array[float] = [0.0, 1.0, 1.0, 1.0, 0.3, 0.0, 0.0]
-## Contact shadows (desktop): corners and the feet of every piece dark, also where light falls.
-const SSAO_RADIUS := 1.0
-const SSAO_INTENSITY := 3.0
-const SSAO_LIGHT_AFFECT := 0.2
-## Colour adjustment after the tone map. Contrast over 1 cuts every value under 0.5 - 0.5 / contrast to black (1.12
-## crushed the darkest teal to pure black and so to full saturation): kept low, the shadows keep their colour.
-const ADJUST_CONTRAST := 1.05
-const ADJUST_SATURATION := 1.3
-var _charge_zoom := 0.0
-## Where the paladin stood last frame and how fast he walks, smoothed (the camera leads by it).
-var _cam_last := Vector2.ZERO
-var _cam_vel := Vector2.ZERO
-## The point the camera looked at last frame (INF: place it anew).
-var _cam_at := Vector2.INF
+const SHOWCASE_DISTANCE := CamRig.SHOWCASE_DISTANCE
+## The world's air (WorldAir, HUB-B1); these names stay for the tests and the scenery that read them.
+const COMPAT_EXPOSURE := WorldAir.COMPAT_EXPOSURE
+const COMPAT_AMBIENT := WorldAir.COMPAT_AMBIENT
+const SKY := WorldAir.SKY
+const AMBIENT := WorldAir.AMBIENT
+const AMBIENT_ENERGY := WorldAir.AMBIENT_ENERGY
+const EXPOSURE := WorldAir.EXPOSURE
+const FOG := WorldAir.FOG
+const GLOW_THRESHOLD := WorldAir.GLOW_THRESHOLD
+const ADJUST_CONTRAST := WorldAir.ADJUST_CONTRAST
+const ADJUST_SATURATION := WorldAir.ADJUST_SATURATION
 
 
 ## A new room: the camera starts framed on the paladin where he walks in, not flying over from where it looked in
-## the room before (GP-06: that flight, behind the fade in, moved its target up to 2.9 m a frame).
+## the room before (GP-06; CamRig.snap).
 func snap_camera() -> void:
-	var at := arena.cam_target if arena.cam_reach > 0.0 else player.pos
-	_cam_target = Vector3(at.x, 0, at.y)
-	_cam_last = player.pos
-	_cam_vel = Vector2.ZERO
-	_cam_at = Vector2.INF
+	cam.snap()
 	if _cam_trace != null:
 		_cam_trace.cut()
 
 
-func _follow(delta: float, shake: Vector3) -> void:
-	var look: Vector3
-	if focus != null:
-		look = focus
-	elif arena.cam_reach > 0.0:
-		# a boss chamber: the camera keeps to its point (cam_look_at moves it only for the paladin's safe frame)
-		look = Vector3(arena.cam_target.x, 0, arena.cam_target.y)
-	else:
-		# a little ahead of where the paladin walks (never where he aims: standing still, he stays in the middle)
-		var walked := (player.pos - _cam_last) / maxf(delta, 0.001)
-		_cam_last = player.pos
-		_cam_vel = _cam_vel.lerp(walked, 1.0 - exp(-delta * 5.0))
-		var lead := (_cam_vel / maxf(Feel.live().speed, 0.1)).limit_length(1.0) * Feel.live().cam_lead
-		look = Vector3(player.pos.x + lead.x, 0, player.pos.y + lead.y)
-	_cam_target = _cam_target.lerp(look, 1.0 - exp(-delta * (2.5 if focus != null else Feel.live().cam_smooth)))
-	_place_camera(shake, delta)
-
-
-func _place_camera(shake: Vector3, delta: float) -> void:
-	if Dev.has("showcase"):
-		# the fixed frame of the whole hall, to set side by side with the reference image
-		var c := arena.showcase
-		if Dev.has("cam-at"):
-			# --cam-at=x,z: the fixed camera looks at this floor point instead (close-ups of the hall)
-			var xz := Dev.arg("cam-at").split(",")
-			c = Vector3(float(xz[0]), 0.0, float(xz[1]))
-		var off := Feel.cam_offset_of(Dev.num("cam-dist", SHOWCASE_DISTANCE), Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw())
-		camera.fov = Dev.num("cam-fov", Feel.live().cam_fov)
-		camera.look_at_from_position(c + off, c, Vector3.UP)
-		return
-	var off := _cam_offset()
-	var at := cam_look_at(Vector2(_cam_target.x, _cam_target.z), Dev.num("cam-dist", Feel.live().cam_distance), camera.fov)
-	# never faster than CamFrame.MAX_SPEED (GP-06): the safe frame follows a dash or a push without a jump
-	if _cam_at.is_finite():
-		at = CamFrame.follow(_cam_at, at, delta)
-	_cam_at = at
+## --trace-cam: every point the camera looks at, with where and when (GP-06).
+func _cam_placed(p: Vector2) -> void:
 	if _cam_trace != null:
-		_cam_trace.add(at, {"t": snappedf(time, 0.01), "room": rooms.depth() if rooms else 0, "arena": String(arena.id),
+		_cam_trace.add(p, {"t": snappedf(time, 0.01), "room": rooms.depth() if rooms else 0, "arena": String(arena.id),
 			"hero": player.pos, "mode": Mode.keys()[mode]})
-	var t := Vector3(at.x, 0, at.y)
-	camera.look_at_from_position(t + off + shake, t + shake * 0.5, Vector3.UP)
 
 
-## The floor point the camera looks at, for the point it follows: inside the room's margins, unless the paladin
-## would stand near an edge of the screen (the landing by the way in lies outside the room's rectangle).
+func _follow(delta: float, shake: Vector3) -> void:
+	cam.focus = focus
+	cam.follow(delta, shake, fx.zoom)
+
+
+## The floor point the camera looks at, for the point it follows (CamRig.look_at).
 func cam_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
-	if arena.cam_reach > 0.0:
-		return chamber_look_at(want, distance, fov)
-	var h := arena.half
-	var side := maxf(0.0, h.x - CamFrame.margin(CAM_MARGIN.x, distance))
-	var at := Vector2(clampf(want.x, -side, side), clampf(want.y,
-		minf(0.0, -h.y + CamFrame.margin(CAM_MARGIN.y, distance) - arena.view_north), maxf(0.0, h.y - CamFrame.margin(CAM_SOUTH, distance))))
-	if arena.cam_bounds.has_area():
-		# an arena's own box for the point the camera looks at (cycle C12; the same spring follows it, no zoom)
-		at = want.clamp(arena.cam_bounds.position, arena.cam_bounds.end)
-	if focus != null:
-		# a scene of its own (the fall of Morvath): the camera looks at it, wherever the paladin stands
-		return at
-	var view := get_viewport().get_visible_rect().size
-	return CamFrame.keep(at, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw(), fov, view.x / maxf(view.y, 1.0))
+	cam.focus = focus
+	return cam.look_at(want, distance, fov)
 
 
-## The floor point the camera looks at in a boss chamber (cycle C11, docs/art/boss_chamber_spec.md section 4): its
-## fixed point (Arena.cam_target), moved only as much as the paladin's safe frame needs (CamFrame.keep, 18% of the
-## screen), and never more than Arena.cam_reach meters from it.
+## The floor point the camera looks at in a boss chamber (CamRig.hold_at).
 func chamber_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
-	var view := get_viewport().get_visible_rect().size
-	return CamFrame.hold(arena.cam_target, want, arena.cam_reach, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), cam_yaw(),
-		fov, view.x / maxf(view.y, 1.0), focus == null)
-
-
-## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.
-func _cam_offset() -> Vector3:
-	var feel := Feel.live()
-	# the camera closes in during slow motion and while an Omega charges (Hades II: 8% over the charge)
-	var charge := player.charge_progress() * OMEGA_ZOOM
-	_charge_zoom = charge if charge > _charge_zoom else lerpf(_charge_zoom, charge, 1.0 - exp(-get_process_delta_time() / maxf(Engine.time_scale, 0.001) * 6.0))
-	camera.fov = Dev.num("cam-fov", feel.cam_fov) / (fx.zoom * (1.0 + _charge_zoom))
-	return Feel.cam_offset_of(Dev.num("cam-dist", feel.cam_distance), Dev.num("cam-pitch", feel.cam_pitch), cam_yaw())
+	cam.focus = focus
+	return cam.hold_at(want, distance, fov)
 
 
 ## --shot=file.png: saves what the player would see after --shot-at seconds, then quits. With --shot-on=swing|hit|

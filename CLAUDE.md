@@ -1735,6 +1735,30 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   41 da parede, cabeça acima da cornija 60, lanterna p90 149 (matiz 208), braseiros sem quente (p90 82 e 96), cena 1,2%.
   Chamadas de desenho +8 a +12 na A, +2 na B; quadro igual (RTX 1080 Alta 1,65 a 1,69 ms, iGPU 720 Baixa 13,2 a 13,5).
 
+## Hub (HUB-01; HUB-B1 fundação, plano em `docs/design/hub_spec.md`, espaço em `hub_spec_art.md`, auditoria em `hub_audit.md`)
+- Fluxo: título, Iniciar, **hub** (`scenes/hub.tscn`, `Hub`, `scripts/game/hub.gd`), Portal (interagir e "Descer às
+  catacumbas?" Descer/Ficar, `HubPanel`; Juramentos antes depois da primeira vitória, como era o Iniciar), partida. Tela de
+  fim "Voltar ao {HUB}" e pausa "Sair para o {HUB}" voltam ao hub; "Descer de novo" segue direto. No hub, Esc abre o
+  `PauseMenu` com `hub = true` (Compêndio, Configurações, Voltar ao título). Toda troca de cena por `SceneGo.to`
+  (`TITLE`, `HUB`, `GAME`; `SceneGo.catch` nos testes). Nome do lugar só na chave `hub_name` ("Santuário", provisório,
+  D-H4): `TextTable` troca `{HUB}` por ele em qualquer texto.
+- Ação `interact` (E, A no controle; remapeável; linha no Como Jogar). Save que já usava o E em outra ação: `interact`
+  vai para a primeira livre de `Controls.SPARE_KEYS` (F, G, T, C, V; `keys_for`); remapear para uma tecla usada troca
+  as duas (`rebind`).
+- Herói em paz (`Player.peaceful`): só anda e corre (segurar a esquiva); nenhum golpe, especial, círculo, ultimate nem
+  esquiva; empurrado no meio de uma peça redonda desliza em volta (`RoundSlide`, só no hub). Sem HUD de combate.
+- Planta (`HubPlan`, `core/hub_plan.gd`, fora do `StageDef`: chão, chegada, cinco pontos de uso, âncoras, obstáculos, eixo
+  (u, v) girado pelo `cam_yaw`); foco por distância com histerese (`HubFocus`: entra a 2,2 m, sai a 2,8, troca por
+  0,4 m mais perto; sinal `Hub.focus_changed`) e placa provisória `DoorSign` com a tecla real. Cenário provisório
+  (`HubLook` sobre `ArenaRoom`, look `hub`: paredes, escada, arco e véu do portal; o resto é do HUB-B2). Árvore de Dons e
+  Livro abrem o `HeroScreen` (Dons, O Guerreiro); Vendedor e Forjador dizem "A definir".
+- Peças comuns tiradas do `Game` (mesmo RESULT, `smoke 300` e `--start=boss --boons=25`, semente 5): câmera `CamRig`
+  (`game/cam_rig.gd`: segue, segura o ponto fixo, trace; `Game.cam`), ar do mundo `WorldAir` (`game/world_air.gd`;
+  `Game.air`), anfitrião de telas `ScreenHost` (`ui/screen_host.gd`, do título e do hub: Esc/B fecha,
+  `Controls.clear_presses`, nada vaza). `--hub` entra direto no hub (`--hero-at`, `--shot`); `--bot`, `--smoke`,
+  `--start`, `--stress`, `--play` e `--shot` sem `--title` seguem pulando título e hub (`boot.route`). Música do hub: a
+  do título por enquanto. Testes em `tests/test_hub.gd`; fluxo por teclado em `tools/title_flow_check.gd`.
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

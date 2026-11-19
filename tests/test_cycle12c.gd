@@ -312,8 +312,8 @@ func test_a_new_room_frames_the_paladin_at_once() -> void:
 	_start()
 	game.player.pos = Vector2(5, 3)
 	game.snap_camera()
-	assert_eq(Vector2(game._cam_target.x, game._cam_target.z), Vector2(5, 3))
-	assert_false(game._cam_at.is_finite(), "the next frame places it anew")
+	assert_eq(Vector2(game.cam.target.x, game.cam.target.z), Vector2(5, 3))
+	assert_false(game.cam.at.is_finite(), "the next frame places it anew")
 
 
 func test_in_game_walking_and_dashing_the_target_moves_under_half_a_meter_a_frame() -> void:

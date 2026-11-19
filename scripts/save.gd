@@ -5,6 +5,8 @@ const PATH := "user://save.json"
 
 var data: Dictionary = SaveData.defaults()
 var enabled := true
+## Where it is written (PATH; a test writing a save of its own points it elsewhere, never at the player's).
+var path := PATH
 
 
 func _ready() -> void:
@@ -51,8 +53,8 @@ func _dev_juramentos() -> void:
 func write() -> void:
 	if not enabled:
 		return
-	if not SaveFile.write(PATH, JSON.stringify(data, "  ")):
-		push_warning("save: could not write %s (the file of before is kept)" % PATH)
+	if not SaveFile.write(path, JSON.stringify(data, "  ")):
+		push_warning("save: could not write %s (the file of before is kept)" % path)
 
 
 func option(key: String) -> Variant:

@@ -1,5 +1,7 @@
 extends SceneTree
-## Drives the title like a player (keyboard): Iniciar starts the run, the pause's way back reaches the title again,
+## Drives the title like a player (keyboard): Iniciar goes to the hub (its menu and a station open and close with Esc;
+## the Portal, with the Juramentos after a victory, starts the run), the pause's way back reaches the hub and the hub's
+## menu the title again,
 ## O Guerreiro opens the hero screen (a Gift goes on and off with Enter, the arrows walk the tree), Como Jogar opens
 ## the Compêndio, Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
 ## Enter and keep the focus, Configurações opens Músicas and Esc comes back from it. The gamepad's RB and LB (real
@@ -159,16 +161,15 @@ func _codex(howto: Node) -> void:
 	_check(howto.find_children("*", "CodexScreen", true, false).is_empty() and howto.is_inside_tree(), "Esc goes back to Como Jogar")
 
 
-## The Juramentos (E6) by keys, once Morvath was sealed (wins 1, in memory only): Iniciar opens them with Descer in
-## focus, up reaches a Juramento, right raises its rank and left lowers it (saved in Save.data), Esc goes back to the
-## title with the focus on Iniciar; then Iniciar shows them again and Enter on Descer starts the run.
-func _juramentos(boot: Node, menu: Variant) -> void:
+## The Juramentos (E6) by keys at the hub's Portal, once Morvath was sealed (wins 1, in memory only): interact on the
+## Portal and Enter on Descer open them with Descer in focus, up reaches a Juramento, right raises its rank and left
+## lowers it (saved in Save.data), Esc goes back to the hub; then the Portal shows them again.
+func _juramentos(hub: Node) -> void:
 	var save := root.get_node("Save")
 	var data: Dictionary = save.get(&"data")
 	data.wins = 1
-	await _key(&"ui_accept")
-	await _wait(0.3)
-	_check(_sub_is(boot, "juramento_screen.gd"), "after a victory Iniciar opens the Juramentos")
+	await _portal(hub)
+	_check(_shown_is(hub, "juramento_screen.gd"), "after a victory the Portal opens the Juramentos")
 	var owner_ := root.gui_get_focus_owner()
 	_check(owner_ != null and owner_.name == "descend", "the focus starts on Descer")
 	await _key(&"ui_up")
@@ -182,8 +183,51 @@ func _juramentos(boot: Node, menu: Variant) -> void:
 	_check(int((data.juramentos.ranks as Dictionary).get(id, 0)) == 0, "left takes it off")
 	await _key(&"ui_cancel")
 	await _wait(0.3)
-	_check(boot.get(&"_sub") == null and menu.visible, "Esc closes the Juramentos")
-	_check(menu.button(0).has_focus(), "focus back on Iniciar")
+	_check(not hub.get(&"host").call(&"is_open"), "Esc closes the Juramentos, back in the hub")
+
+
+func _shown_is(hub: Node, file: String) -> bool:
+	var s = hub.get(&"host").get(&"screen")
+	return s != null and is_instance_valid(s) and String(s.get_script().resource_path).ends_with(file)
+
+
+## Stands at the Portal, interact (the real key's action) and Enter on Descer (in focus).
+func _portal(hub: Node) -> void:
+	var player = hub.get(&"player")
+	player.set(&"pos", _use_point(&"portal"))
+	await _wait(0.2)
+	await _key(&"interact")
+	await _wait(0.2)
+	_check(_shown_is(hub, "hub_panel.gd"), "interact on the Portal asks to go down")
+	var focus := root.gui_get_focus_owner()
+	_check(focus != null and focus.name == "go", "the focus on Descer")
+	await _key(&"ui_accept")
+	await _wait(0.3)
+
+
+func _use_point(id: StringName) -> Vector2:
+	return load("res://scripts/core/hub_plan.gd").call(&"use_point", id)
+
+
+## The hub by keys: it opens with nothing on screen; Esc opens its menu (Configurações, Voltar ao título), Esc closes
+## it; the Forjador's page opens with interact and closes with Esc.
+func _hub(hub: Node) -> void:
+	var host = hub.get(&"host")
+	_check(not host.call(&"is_open"), "the hub opens with nothing on screen")
+	hub.get(&"player").set(&"pos", _use_point(&"smith"))
+	await _wait(0.2)
+	await _key(&"interact")
+	_check(_shown_is(hub, "hub_panel.gd"), "interact on the Forjador opens its page")
+	await _key(&"ui_cancel")
+	await _wait(0.1)
+	_check(not host.call(&"is_open"), "Esc closes it")
+	hub.get(&"player").set(&"pos", hub.get(&"arena").get(&"start"))
+	await _wait(0.2)
+	await _key(&"pause")
+	_check(_shown_is(hub, "pause_menu.gd"), "Esc opens the hub's menu")
+	await _key(&"ui_cancel")
+	await _wait(0.1)
+	_check(not host.call(&"is_open"), "Esc closes the hub's menu")
 
 
 func _run() -> void:
@@ -235,15 +279,36 @@ func _run() -> void:
 	await _key(&"ui_up")
 	await _key(&"ui_up")
 	_check(menu.button(0).has_focus(), "up returns to Iniciar")
-	await _juramentos(boot, menu)
 	await _key(&"ui_accept")
-	await _wait(0.3)
-	_check(_sub_is(boot, "juramento_screen.gd"), "Iniciar shows the Juramentos again")
+	await _wait(1.5)
+	var hub := current_scene
+	_check(hub != null and hub.scene_file_path == "res://scenes/hub.tscn", "Iniciar goes to the hub")
+	await _hub(hub)
+	await _juramentos(hub)
+	await _portal(hub)
+	_check(_shown_is(hub, "juramento_screen.gd"), "the Portal shows the Juramentos again")
 	await _key(&"ui_accept")
 	await _wait(2.0)
 	_check(current_scene != null and current_scene.scene_file_path == "res://scenes/game.tscn", "Descer starts the run")
-	change_scene_to_file("res://scenes/boot.tscn")
+	await _wait(0.5)
+	await _key(&"pause")
+	await _wait(0.3)
+	var way := current_scene.find_child("quit", true, false) as Button
+	_check(way != null and way.is_visible_in_tree(), "the pause has the way back to the hub")
+	if way:
+		way.grab_focus()
+		await _key(&"ui_accept")
 	await _wait(1.5)
-	_check(current_scene != null and current_scene.name == "Boot" and current_scene.get(&"_menu") != null, "back to the title from the run")
+	hub = current_scene
+	_check(hub != null and hub.scene_file_path == "res://scenes/hub.tscn", "the pause goes back to the hub")
+	await _key(&"pause")
+	await _wait(0.2)
+	way = hub.find_child("quit", true, false) as Button
+	_check(way != null, "the hub's menu has Voltar ao título")
+	if way:
+		way.grab_focus()
+		await _key(&"ui_accept")
+	await _wait(1.5)
+	_check(current_scene != null and current_scene.name == "Boot" and current_scene.get(&"_menu") != null, "back to the title from the hub")
 	print("FLOW ok" if _fail == 0 else "FLOW FAIL %d" % _fail)
 	quit(_fail)

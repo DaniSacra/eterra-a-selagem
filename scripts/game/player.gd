@@ -187,6 +187,8 @@ var ult_ready := false
 var _ult_want := 0.0
 ## Holding the dodge button after the roll keeps running fast.
 var sprinting := false
+## At peace (the hub, HUB-B1; _step_peace): he only walks and runs.
+var peaceful := false
 var cast_cooldown := 0.0
 ## A circle of light is standing (no second one until it ends).
 var cast_active := false
@@ -423,6 +425,9 @@ func invulnerable() -> bool:
 
 ## Every frame of play. move: stick or keys. aim: where the paladin wants to strike (unit vector, or zero).
 func step(dt: float, move: Vector2, aim: Vector2) -> void:
+	if peaceful:
+		_step_peace(dt, move)
+		return
 	var start := pos
 	# the dash goes through bodies (Hades II: the BLINK), even on the frame it ends
 	var dashing := state == State.DODGE
@@ -504,6 +509,21 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	if horde and not dashing:
 		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
 		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)
+	_show(dt, move)
+
+
+## At peace (the hub, HUB-B1): he walks, and runs while the dodge is held (no roll), and nothing else: no blow, special,
+## circle, ultimate nor roll is read, so no press there ever becomes one. Pushed straight at a round piece (the hub's
+## fountain) he slides round it (RoundSlide) instead of standing against it.
+func _step_peace(dt: float, move: Vector2) -> void:
+	var start := pos
+	state = State.MOVE
+	sprinting = move.length() > 0.1 and Controls.held(&"dodge")
+	var sp := Feel.live().speed * (1.0 + speed_bonus) * (Feel.live().sprint_scale if sprinting else 1.0)
+	if move.length() > 0.1:
+		move = RoundSlide.steer(pos, move, sp * dt, RADIUS, arena.pillars)
+		facing = move.normalized()
+	pos = arena.sweep(start, pos + move * sp * dt, RADIUS)
 	_show(dt, move)
 
 

@@ -50,7 +50,7 @@ func _run() -> void:
 		game.horde.alive_cap = 0
 		game.horde.clear_crowd()
 		game.player.place(p)
-		game.set(&"_cam_target", Vector3(p.x, 0, p.y))
+		game.get(&"cam").set(&"target", Vector3(p.x, 0, p.y))
 		await _wait(SETTLE)
 		var img := root.get_viewport().get_texture().get_image()
 		var at: Vector2 = game.camera.unproject_position(Vector3(p.x, 1.3, p.y)) * Vector2(img.get_size()) / root.get_visible_rect().size

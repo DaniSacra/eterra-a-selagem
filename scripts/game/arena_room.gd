@@ -10,7 +10,7 @@ extends Node3D
 ## docs/art/cycle12_arenas_spec.md. Collision never comes from here (Arena._build_arena reads the layout).
 
 ## The looks an arena may have (RoomLayout.look) and the script of each.
-const LOOKS: Array[StringName] = [&"crypt", &"rift", &"garden", &"sanctuary", &"bridge", &"runes", &"trial", &"altar"]
+const LOOKS: Array[StringName] = [&"crypt", &"rift", &"garden", &"sanctuary", &"bridge", &"runes", &"trial", &"altar", &"hub"]
 ## How deep the cliffs under the floor's edges drop, and the abyss under them.
 const DEPTH := 22.0
 ## A render layer only an arena's floor is on (with 1), for a fill light of the floor alone (floor_layers; M-1, the
@@ -223,6 +223,8 @@ static func make(look: StringName) -> ArenaRoom:
 			return TrialLook.new()
 		&"altar":
 			return AltarLook.new()
+		&"hub":
+			return HubLook.new()
 	return ArenaRoom.new()
 
 

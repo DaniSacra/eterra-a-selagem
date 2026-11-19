@@ -1,14 +1,16 @@
 extends Node
 ## Title screen: Daniel's cinematic art (TitleBackdrop: the painting contained, mist, motes) with the real menu over
-## the painted one (TitleMenu). Iniciar starts the run; O Guerreiro (HeroScreen), Como Jogar and Configurações open
-## their panels over the art.
-## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress) skip straight to it;
-## Once Morvath was sealed once, Iniciar first shows the Juramentos (JuramentoScreen, E6) with "Descer".
+## the painted one (TitleMenu). Iniciar goes to the hub (HUB-01, D-H5; scenes/hub.tscn, where the Portal starts the
+## descent, with the Juramentos first once Morvath was sealed); O Guerreiro (HeroScreen), Como Jogar and Configurações
+## open their panels over the art, hosted by a ScreenHost (shared with the hub).
+## Test switches that ask for a run (--bot, --shot, --smoke, --start, --stress, --play) skip straight to it, past the
+## title and the hub; --hub goes straight to the hub (with --shot too).
 ## --title --screen=options|music|moves|howto|hero|gifts|book|codex|juramentos|map opens a panel at once (hero, gifts and
 ## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
 
-const GAME := "res://scenes/game.tscn"
+const GAME := SceneGo.GAME
+const HUB := SceneGo.HUB
 ## Seconds to black before the run starts, and before quitting.
 const START_FADE := 0.45
 const QUIT_FADE := 0.25
@@ -16,22 +18,21 @@ const MENU_FADE := 0.2
 
 var _backdrop: TitleBackdrop
 var _menu: TitleMenu
-var _sub: Control
+var _host: ScreenHost
+## The panel on show (null: none; the ScreenHost's).
+var _sub: Control:
+	get:
+		return _host.screen if _host != null and _host.is_open() else null
 ## The button that opened the panel on screen, to give the focus back to it.
 var _opener: TitleButton
 var _leaving := false
-## The Juramentos were seen on the way down (Iniciar goes on from there).
-var _sworn := false
 
 
 func _ready() -> void:
 	App.apply_options()
-	for key: String in ["bot", "smoke", "start", "stress", "play"]:
-		if Dev.has(key):
-			get_tree().change_scene_to_file.call_deferred(GAME)
-			return
-	if Dev.has("shot") and not Dev.has("title"):
-		get_tree().change_scene_to_file.call_deferred(GAME)
+	var skip := route()
+	if skip != "":
+		(func() -> void: SceneGo.to(get_tree(), skip)).call_deferred()
 		return
 	_build()
 	match Dev.arg("screen"):
@@ -60,9 +61,27 @@ func _ready() -> void:
 		_shot.call_deferred()
 
 
+## Where the command line sends the game past the title ("": the title): a run for the test switches (--bot,
+## --smoke, --start, --stress, --play, and --shot without --title), past the hub too; the hub for --hub.
+static func route() -> String:
+	for key: String in ["bot", "smoke", "start", "stress", "play"]:
+		if Dev.has(key):
+			return GAME
+	if Dev.has("title"):
+		return ""
+	if Dev.has("hub"):
+		return HUB
+	return GAME if Dev.has("shot") else ""
+
+
 func _build() -> void:
+	# the host first: a panel's own pages (later in the tree) see Esc before it does
+	_host = ScreenHost.new()
+	add_child(_host)
 	var layer := CanvasLayer.new()
 	add_child(layer)
+	_host.layer = layer
+	_host.closed.connect(func(_s: Control) -> void: _closed_sub())
 	_backdrop = TitleBackdrop.new()
 	layer.add_child(_backdrop)
 	_menu = TitleMenu.new()
@@ -91,30 +110,32 @@ func _build() -> void:
 			_menu.set_enabled(true))
 
 
+## Iniciar: to the hub (HUB-01, D-H5), where the Portal starts the descent.
 func _start() -> void:
+	_leave_to(HUB)
+
+
+func _leave_to(scene: String) -> void:
 	if _leaving:
-		return
-	if not _sworn and Juramentos.unlocked(Save.data):
-		_open_juramentos(true)
 		return
 	_leaving = true
 	_menu.set_enabled(false)
 	create_tween().tween_property(_menu, ^"modulate:a", 0.0, START_FADE)
 	await _backdrop.fade_out(START_FADE)
-	get_tree().change_scene_to_file(GAME)
+	SceneGo.to(get_tree(), scene)
 
 
-## The Juramentos before going down (E6): "Descer" goes on into the run, Voltar (or Esc) back to the title.
+## The Juramentos over the title (only --title --screen=juramentos since HUB-B1: the hub's Portal opens them before a
+## descent): "Descer" goes into the run, Voltar (or Esc) back to the title.
 func _open_juramentos(with_descend: bool) -> void:
 	var screen := JuramentoScreen.new()
 	_open(screen, TitleButton.Kind.START, [with_descend])
 	screen.descend.connect(func() -> void:
-		_sworn = true
 		_close_sub()
-		_start())
+		_leave_to(GAME))
 
 
-## The Livro de Ahk (O Guerreiro), open on a chapter; its way down starts the descent as Iniciar does.
+## The Livro de Ahk (O Guerreiro), open on a chapter; its way down goes where Iniciar goes (the hub).
 func _open_hero(chapter: HeroScreen.Chapter) -> void:
 	var screen := HeroScreen.new()
 	_open(screen, TitleButton.Kind.HERO, [{}, chapter])
@@ -135,22 +156,22 @@ func _quit() -> void:
 
 func _open(screen: Control, opener: TitleButton.Kind, args: Array = []) -> void:
 	if _sub:
+		screen.queue_free()
 		return
 	_menu.finish_intro()
 	_menu.set_enabled(true)
 	_opener = _menu.button(opener)
 	_menu.visible = false
 	_backdrop.dim(true)
-	_sub = screen
-	_menu.get_parent().add_child(screen)
-	screen.callv(&"open", args)
-	screen.connect(&"closed", _close_sub)
+	_host.open(screen, args)
 
 
+## Closes the panel on show (the host gives the menu back: _closed_sub).
 func _close_sub() -> void:
-	if _sub:
-		_sub.queue_free()
-		_sub = null
+	_host.close()
+
+
+func _closed_sub() -> void:
 	_backdrop.dim(false)
 	_menu.visible = true
 	if _opener:
@@ -163,10 +184,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _menu == null:
 		# a test switch is on its way to the run: there is no menu
 		return
-	if _sub and event.is_action_pressed(&"ui_cancel"):
-		get_viewport().set_input_as_handled()
-		_close_sub()
-	elif not _sub and not _leaving and event.is_pressed() and not event.is_echo():
+	if not _sub and not _leaving and event.is_pressed() and not event.is_echo():
 		# any key during the entrance finishes it
 		_menu.finish_intro()
 		_menu.set_enabled(true)

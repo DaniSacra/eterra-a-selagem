@@ -13,6 +13,8 @@ func text(key: StringName, args: Dictionary = {}) -> String:
 	var out := _clauses(entries[String(key)])
 	for i in range(1, 5):
 		out = out.replace("{P%d}" % i, paladin(i))
+	# the hub's name (HUB-01; provisional until Daniel names the place, D-H4): one key, every text that says it
+	out = out.replace("{HUB}", entries.get("hub_name", "{HUB}"))
 	for k: String in args:
 		out = out.replace("{%s}" % k, str(args[k]))
 	return out

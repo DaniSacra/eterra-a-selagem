@@ -42,6 +42,13 @@ static func put(key: String, value: String = "1") -> void:
 	_args[key] = value
 
 
+## Takes a switch away again (a test that put one).
+static func drop(key: String) -> void:
+	if not _parsed:
+		_parse()
+	_args.erase(key)
+
+
 static func num(key: String, fallback: float) -> float:
 	return float(arg(key)) if has(key) else fallback
 

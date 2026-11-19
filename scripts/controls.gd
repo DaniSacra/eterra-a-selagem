@@ -5,17 +5,21 @@ extends Node
 ## The player went from keys and mouse to a gamepad (pad true) or back.
 signal device_changed(pad: bool)
 
-const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"pause", &"feel_panel"]
+const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"interact", &"pause", &"feel_panel"]
 ## Actions the player may rebind in Options. map (DV-1, MAP-03): the descent's map in the Livro de Ahk (MapScreen).
-const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map"]
+## interact (HUB-B1): use the station in focus in the hub (E, A on the gamepad; nothing in a descent).
+const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"interact"]
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],
-	&"dodge": [KEY_SPACE], &"cast": [KEY_Q, KEY_SHIFT], &"ultimate": [KEY_R], &"map": [KEY_M], &"pause": [KEY_ESCAPE, KEY_P],
+	&"dodge": [KEY_SPACE], &"cast": [KEY_Q, KEY_SHIFT], &"ultimate": [KEY_R], &"map": [KEY_M], &"interact": [KEY_E], &"pause": [KEY_ESCAPE, KEY_P],
 	# debug builds only: the live tuning panel (scripts/ui/feel_panel.gd)
 	&"feel_panel": [KEY_F1],
 }
 const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOUSE_BUTTON_RIGHT}
-const DEFAULT_PAD := {&"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"cast": JOY_BUTTON_RIGHT_SHOULDER, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"map": JOY_BUTTON_BACK, &"pause": JOY_BUTTON_START}
+## A save from before an action may have given its default key to another one (HUB-B1: E was free before interact and
+## could be a blow's): an action listed here then takes the first of these no saved binding holds (keys_for).
+const SPARE_KEYS := {&"interact": [KEY_F, KEY_G, KEY_T, KEY_C, KEY_V]}
+const DEFAULT_PAD := {&"interact": JOY_BUTTON_A, &"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"cast": JOY_BUTTON_RIGHT_SHOULDER, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"map": JOY_BUTTON_BACK, &"pause": JOY_BUTTON_START}
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
 ## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs
@@ -82,7 +86,7 @@ func apply_bindings() -> void:
 		if saved.has(String(action)):
 			InputMap.action_add_event(action, _event_from(saved[String(action)]))
 		else:
-			for key: Key in DEFAULT_KEYS.get(action, []):
+			for key: Key in keys_for(action, saved):
 				var ev := InputEventKey.new()
 				ev.physical_keycode = key
 				InputMap.action_add_event(action, ev)
@@ -111,20 +115,70 @@ func apply_bindings() -> void:
 		InputMap.action_add_event(action, key)
 
 
-## Stores a key or mouse button as the binding of an action. Returns false for events that cannot be bound.
-func rebind(action: StringName, event: InputEvent) -> bool:
-	var entry := {}
+## The default keys of an action not rebound, given the saved bindings: its own (DEFAULT_KEYS), or, when a saved
+## binding of another action holds all of them and it has spares (SPARE_KEYS), the first spare no saved binding holds.
+static func keys_for(action: StringName, saved: Dictionary) -> Array:
+	var own: Array = DEFAULT_KEYS.get(action, [])
+	if not SPARE_KEYS.has(action):
+		return own
+	var taken := {}
+	for other: String in saved:
+		var entry: Dictionary = saved[other]
+		if other != String(action) and entry.get("type", "key") == "key":
+			taken[int(entry.get("code", 0))] = true
+	var free := own.filter(func(k: Key) -> bool: return not taken.has(int(k)))
+	if not free.is_empty():
+		return free
+	for k: Key in SPARE_KEYS[action]:
+		if not taken.has(int(k)):
+			return [k]
+	return own
+
+
+## A binding as the save keeps it ({type: key or mouse, code}), or empty for an event that cannot be bound.
+static func entry_of(event: InputEvent) -> Dictionary:
 	if event is InputEventKey:
-		entry = {"type": "key", "code": (event as InputEventKey).physical_keycode}
-	elif event is InputEventMouseButton:
-		entry = {"type": "mouse", "code": (event as InputEventMouseButton).button_index}
-	else:
+		return {"type": "key", "code": int((event as InputEventKey).physical_keycode)}
+	if event is InputEventMouseButton:
+		return {"type": "mouse", "code": int((event as InputEventMouseButton).button_index)}
+	return {}
+
+
+## Stores a key or mouse button as the binding of an action. Returns false for events that cannot be bound.
+## A key (or button) another rebindable action already uses is swapped: that action takes this one's old key, so no
+## two actions share one (HUB-B1: interact and the blows or the dodge never fight over E or Space).
+func rebind(action: StringName, event: InputEvent) -> bool:
+	var entry := entry_of(event)
+	if entry.is_empty():
 		return false
 	var saved: Dictionary = Save.option("bindings")
+	var was := _first_bound(action)
+	for other in REMAPPABLE:
+		if other != action and _bound_to(other).has(entry):
+			if was.is_empty():
+				saved.erase(String(other))
+			else:
+				saved[String(other)] = was
 	saved[String(action)] = entry
 	Save.set_option("bindings", saved)
 	apply_bindings()
 	return true
+
+
+## Every key and mouse button an action has now (as save entries).
+func _bound_to(action: StringName) -> Array:
+	var out: Array = []
+	for ev in InputMap.action_get_events(action):
+		var entry := entry_of(ev)
+		if not entry.is_empty():
+			out.append(entry)
+	return out
+
+
+## The first key or mouse button an action has now (empty: none).
+func _first_bound(action: StringName) -> Dictionary:
+	var all := _bound_to(action)
+	return all[0] if not all.is_empty() else {}
 
 
 func reset_bindings() -> void:
