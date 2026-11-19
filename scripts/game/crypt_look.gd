@@ -119,12 +119,12 @@ const STATUE_GLOW := Vector3(1.4, 5.0, 40.0)
 ## stone, cold shadow, dry floor (one slab in 33 to the olive), the candles' pools, a cold air, the key and the
 ## floor's fill off (in the painted light an omni with no fire draws rings on the floor), the backdrop in mist.
 const STYLE := {
-	&"stone": Color(0.285, 0.32, 0.347), &"shadow": Color(0.88, 0.94, 0.98), &"floor_stone": Color(0.278, 0.296, 0.312),
-	&"joint_cold": Color(0.85, 0.938, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.1, &"pool_saturation": 1.0,
-	&"fire": {&"candle_range": 3.4, &"candle_gain": 1.3, &"bowl_range": 3.5, &"bowl_attenuation": 0.7, &"bowl_gain": 1.0,
+	&"stone": Color(0.315, 0.325, 0.335), &"shadow": Color(0.90, 0.94, 0.97), &"floor_stone": Color(0.285, 0.296, 0.306),
+	&"joint_cold": Color(0.85, 0.938, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.4, &"pool_saturation": 1.0,
+	&"fire": {&"candle_range": 3.4, &"candle_gain": 1.8, &"bowl_range": 4.5, &"bowl_attenuation": 0.7, &"bowl_gain": 1.5,
 		&"compat": 0.4},
 	&"air": {&"sky": Color(0.045, 0.065, 0.08), &"fog": Color(0.10, 0.125, 0.14), &"fog_depth": Vector2(40.0, 85.0),
-		&"ambient": Color(0.72, 0.75, 0.78), &"ambient_gain": 2.1, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
+		&"ambient": Color(0.74, 0.76, 0.78), &"ambient_gain": 2.1, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
 		&"moon_shadow": true},
 	&"backdrop": {&"mist": Color(0.10, 0.15, 0.18), &"stone": Color(0.05, 0.07, 0.08), &"edge": Color(0.16, 0.22, 0.26)},
 }
@@ -136,15 +136,18 @@ const STY_PAINT_REF := 0.36
 const STY_COMPAT_AMBIENT := 0.7
 const STY_COMPAT_MOON := 0.5
 const STY_LIGHT_STONE := 1.35
-const STY_LID_POOL := 0.7
+const STY_LID_POOL := 0.45
+## B: the light of the small sarcophagi's lit candles, a share of the room's stylized candles (lot A review item 7:
+## with the candles at 1.8 the west floor beside the lid burnt to luma 92).
+const STY_LID_LIGHT := 0.6
 ## The cold shaft in the stylized look (hue 200, saturation 0.28).
 const STY_COLD := Color(0.66, 0.82, 0.92)
 ## The cold glow far behind the north door (spec 2.3): how far behind the wall's face (and at least 0.3 m past the
 ## door's mouth), its foot and top (y), its colour
 ## at the foot (A; B: the distant light of the concept), at the top.
 const DOOR_GLOW := Vector3(1.0, -0.5, 3.5)
-const DOOR_GLOW_FOOT := Color(0.1, 0.17, 0.21)
-const DOOR_GLOW_FOOT_B := Color(0.16, 0.24, 0.28)
+const DOOR_GLOW_FOOT := Color(0.32, 0.40, 0.44)
+const DOOR_GLOW_FOOT_B := Color(0.38, 0.46, 0.50)
 const DOOR_GLOW_TOP := Color(0.02, 0.03, 0.04)
 const COLD_GLOW_SHADER := preload("res://assets/shaders/cold_glow.gdshader")
 ## The mist beyond the cut front walls (spec 2.3): how far out of the outer face, its middle's height, height, colour
@@ -180,7 +183,9 @@ const INSCRIPTION_LIFT := 0.006
 ## south of the figure).
 const VEILED := Vector2(3.0, 0.9)
 const WALL_URNS: Array[Vector2] = [Vector2(-8.5, 0.42), Vector2(-7.0, 0.36), Vector2(-5.5, 0.5), Vector2(-4.5, 0.38)]
-const VEILED_GLOW := Vector3(1.2, 6.0, 35.0)
+const VEILED_GLOW := Vector3(3.2, 7.0, 30.0)
+## The veiled figure's stone this much lighter than the walls' statues (it read as the wall behind it).
+const VEILED_VALUE := 1.35
 const VEILED_GLOW_FROM := Vector2(4.0, 3.5)
 
 var _key: OmniLight3D
@@ -567,7 +572,9 @@ func _candles() -> void:
 				candle_line(end - Vector3(axis.z, 0, axis.x) * 0.25, end + Vector3(axis.z, 0, axis.x) * 0.25, 3, lit)
 				if lit:
 					var shadow := (o.center.y < 0.0 and not against) if not ossuary else o.center.y > 0.0
-					_light_at(end + Vector3(0, 0.5, 0), shadow)
+					var l := _light_at(end + Vector3(0, 0.5, 0), shadow)
+					if ossuary and l != null:
+						l.set_meta(ArenaKit.FIRE_SHARE, STY_LID_LIGHT)
 			&"column":
 				var ring := o.radius * 0.86
 				var foot := Vector3(o.center.x, TombKit.COLUMN_BASE, o.center.y)
@@ -589,12 +596,13 @@ func _candles() -> void:
 
 
 ## A warm light over candles: with shadow (counted) or plain (at most CANDLE_PLAIN).
-func _light_at(at: Vector3, shadow: bool) -> void:
+func _light_at(at: Vector3, shadow: bool) -> OmniLight3D:
 	if shadow:
-		warm_light(at, CANDLE_SHADOW_ENERGY, true)
-	elif _plain_lights < CANDLE_PLAIN:
+		return warm_light(at, CANDLE_SHADOW_ENERGY, true)
+	if _plain_lights < CANDLE_PLAIN:
 		_plain_lights += 1
-		warm_light(at)
+		return warm_light(at)
+	return null
 
 
 ## The dividing wall of the ossuary (variant B), if any: a tall wall-like block.
@@ -833,7 +841,7 @@ func _ossuary_crown(sm: Masonry, o: ArenaObstacle) -> void:
 	var north := o.center.y - maxf(o.half.x, o.half.y)
 	var at := Vector3(o.center.x, top, north + VEILED.y)
 	sm.layers = ArenaKit.STATUE_LAYER
-	var fig := sm.hooded_statue(at, 0.0, VEILED.x, ArenaKit.STATUE_VALUE)
+	var fig := sm.hooded_statue(at, 0.0, VEILED.x, ArenaKit.STATUE_VALUE * VEILED_VALUE)
 	fig.material_override = see(fig.material_override as ShaderMaterial)
 	sm.layers = 1
 	var urn := see(sm.carved(top, STONE))

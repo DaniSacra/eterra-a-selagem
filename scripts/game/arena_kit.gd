@@ -410,7 +410,8 @@ func paint_look(style := {}) -> void:
 const STONE_KEYS := {&"stone": &"paint_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold", &"olive_share": &"olive_share",
 	&"pool_gain": &"paint_pool_gain", &"pool_saturation": &"paint_pool_saturation"}
 const FLOOR_KEYS := {&"floor_stone": &"floor_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold",
-	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"edge_value": &"edge_value", &"pool_saturation": &"paint_pool_saturation"}
+	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"slab_paint": &"slab_paint", &"edge_value": &"edge_value",
+	&"pool_saturation": &"paint_pool_saturation"}
 ## A material's own stylized numbers (meta: shader parameter name to value), over the room's (paint_look).
 const PAINT_OWN := &"paint_own"
 ## Stone that keeps its own colour in the stylized look (bone, wood): paint_keep with its saturation and value whole.
@@ -457,7 +458,8 @@ func stylize_fires(at: Node, fire: Dictionary, off: Array = []) -> void:
 			VisualProfile.vary(l, {
 				&"omni_range": fire.get(&"bowl_range" if bowl else &"candle_range", l.omni_range),
 				&"omni_attenuation": fire.get(&"bowl_attenuation", l.omni_attenuation) if bowl else l.omni_attenuation,
-				&"light_energy": l.light_energy * float(fire.get(&"bowl_gain" if bowl else &"candle_gain", 1.0)) * share,
+				&"light_energy": l.light_energy * float(fire.get(&"bowl_gain" if bowl else &"candle_gain", 1.0)) * share
+					* float(l.get_meta(FIRE_SHARE, 1.0)),
 				&"shadow_enabled": false,
 			})
 	for l: Node in off:
@@ -467,6 +469,8 @@ func stylize_fires(at: Node, fire: Dictionary, off: Array = []) -> void:
 
 ## The meta of a fire bowl's light (brazier; stylize_fires).
 const BOWL := &"bowl"
+## The meta of a fire's own share of its stylized energy (stylize_fires; a room's few fires that burnt the floor).
+const FIRE_SHARE := &"fire_share"
 ## The metals in the stylized look (spec 1.2): matte, a little metallic, old gold, iron and bronze.
 const STY_METAL := Vector2(0.75, 0.35)
 const STY_GOLD := Color(0.42, 0.31, 0.13)

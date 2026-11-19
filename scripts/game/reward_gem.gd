@@ -73,6 +73,9 @@ const CLOTH_COLOR := Color(0.07, 0.17, 0.19)
 const CLOTH_LION := 0.5
 ## The reliquary's stone a little darker than the floor's (the room's lights fall on its cap first).
 const RELIQUARY_TINT := Color(0.78, 0.78, 0.8)
+## The reliquary in the stylized look (room redesign lot A review, item 4: it stood raw and pale, luma 121 against the
+## slabs' 69): painted as the hall's stone (CatacombHall.STYLE, the one material for every room's rewards), darker.
+const STY_RELIQUARY_TINT := Color(0.62, 0.63, 0.66)
 
 const SHADER := preload("res://assets/shaders/reward_gem.gdshader")
 const HALO_SHADER := preload("res://assets/shaders/reward_halo.gdshader")
@@ -303,6 +306,12 @@ static func _ready() -> void:
 ## stands (its middle over the reliquary).
 static func _reliquary(frame: Node3D) -> Vector3:
 	var stone := _mason.stone(0.0, RELIQUARY_TINT)
+	var darker := STY_RELIQUARY_TINT / RELIQUARY_TINT
+	VisualProfile.vary(stone, {&"shader": Masonry.PAINT_SHADER,
+		&"shader_parameter/stone_a": VisualProfile.classic_of(stone, &"shader_parameter/stone_a", stone.get_shader_parameter(&"stone_a")) * darker,
+		&"shader_parameter/stone_b": VisualProfile.classic_of(stone, &"shader_parameter/stone_b", stone.get_shader_parameter(&"stone_b")) * darker,
+		&"shader_parameter/paint_stone": CatacombHall.STYLE[&"stone"],
+		&"shader_parameter/paint_shadow": CatacombHall.STYLE[&"shadow"]})
 	var body_z := -RELIQUARY_BACK
 	var step := _stone_box(Vector3(STEP.x, STEP.y, STEP.z), Masonry.CHAMFER * 0.6, stone)
 	step.position = Vector3(0, STEP.y * 0.5 - 0.01, STEP_AHEAD)

@@ -31,6 +31,11 @@ uniform float paint_fire_from = 0.35;
 uniform float paint_pool_gain = 2.5;
 // The pool's colour a share of the fire's saturation (a warm light on the stone, not orange paint).
 uniform float paint_pool_saturation = 0.65;
+// A diffuse light (a shaft of moon or day from the vault, room redesign fixes): a light with its specular at 0
+// (SPECULAR_AMOUNT, set only in the stylized look) skips the bands and the pool's drawn edge and lights the stone
+// by N.L times its falloff, so the spot's cone fades out wide and soft (no "circle on the floor", decision P-4);
+// this much of it (its energy sets the rest).
+uniform float paint_diffuse = 1.0;
 // The colour the shadow band takes (stylized_spec 1.3: hue 220, saturation up to 0.1).
 uniform vec3 paint_shadow : source_color = vec3(0.92, 0.93, 0.98);
 // The little shine left (matte stone): its share and the most it narrows on the wet floor.
@@ -124,6 +129,9 @@ void light() {
 		float core = smoothstep(paint_pool_core - paint_pool_soft, paint_pool_core + paint_pool_soft, x);
 		lit = mix(lit * edge, ring * mix(paint_values.y, paint_values.z, core) * paint_pool_gain, fire);
 		light_c = mix(LIGHT_COLOR, mix(vec3(paint_luma(LIGHT_COLOR)), LIGHT_COLOR, paint_pool_saturation), fire);
+		float diffuse = 1.0 - step(0.01, SPECULAR_AMOUNT);
+		lit = mix(lit, x * paint_diffuse, diffuse);
+		light_c = mix(light_c, LIGHT_COLOR, diffuse);
 	}
 	vec3 tint = mix(paint_shadow, vec3(1.0), smoothstep(paint_values.x, paint_values.z, lit));
 	DIFFUSE_LIGHT += light_c * lit * tint / PI;

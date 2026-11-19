@@ -1535,6 +1535,22 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Medido (RTX 1080, vitrine do jogo, semente 5): Cripta chão 66 e 69, parede norte 34, fora 25, quadro 56, matiz 206;
   Salão chão 74 (matiz 229, saturação 0,12), norte 65, abismo matiz 211, quadro 68. Quadro: Cripta RTX 2,08 para 1,97 ms,
   iGPU 720 Baixa 14,3 para 13,3; Salão 2,55 para 2,42 e 17,3 para 15,2. O clássico igual à galeria nas cinco vistas.
+- **Correções da revisão** (`docs/art/room_redesign_lotA_review.md`, itens 1 a 10; capturas da galeria substituídas):
+  Cripta com velas 1,8, poça 1,4, braseiros 1,5 e 4,5 m; pedra (0,315; 0,325; 0,335), chão (0,285; 0,296; 0,306),
+  sombra (0,90; 0,94; 0,97), ambiente (0,74; 0,76; 0,78); figura velada da B mais clara (`VEILED_VALUE` 1,35,
+  `VEILED_GLOW` 3,2) e brilho da porta norte mais claro e menos saturado (`DOOR_GLOW_FOOT`, `_B`); na B as velas das
+  tampas a 0,6 da luz das outras (`STY_LID_LIGHT`, pela meta `ArenaKit.FIRE_SHARE` que o `stylize_fires` lê) e a tampa
+  a `STY_LID_POOL` 0,45. Loja: lanterna em todo vão entre itens, luz âmbar própria (`SHOP_LAMP_LIGHT`, energia 7,
+  alcance 4,5), vidro e chama pelo `ScreenTone.fit`. Salão: velas 1,5 e poças com a saturação inteira do fogo
+  (`STY_POOL_SATURATION` 1,0, só o Salão, a loja e a fonte). Relicário de toda recompensa pintado no estilizado
+  (`RewardGem.STY_RELIQUARY_TINT`, pedra e sombra do `CatacombHall.STYLE`). Musgo da fonte com borda quebrada
+  (`ragged` 0,5 m, `north_reach` 0,3, raio médio 3,0, `FOUNTAIN_MOSS_*`) e flores de 9 a 14 cm em tufos de 3 a 6.
+  Compatibility: o ambiente não muda as figuras (chão 106 a 111, figuras 33 a 39 com 0,7 ou 0,85): fica 0,7 e as
+  figuras são do technical-artist (`crowd.gdshader`). Medido (RTX 1080, semente 5): Cripta A / B parte quente 3,1 /
+  2,6%, chão leste 68 / 67 (saturação 0,18, matiz 208), parede norte 34 (saturação 0,27), ciano 0,3%, figura velada
+  55 (p90 78), porta norte p90 81 / 84 (saturação 0,33 / 0,31); Salão quente 3,2%, meio 72 (matiz 235); Loja quente
+  7,8%; o chão oeste da B segue 90 porque a caixa pega o herói e o círculo na captura. iGPU 720 Baixa: Cripta 13,4 ms,
+  Salão 15,3 (iguais). O clássico mede igual.
 
 ## Redesenho das salas, Lote B (só no estilizado; spec `docs/art/room_redesign_lotB_spec.md`, capturas em `docs/gallery/redesign/lotB/`)
 - **Biblioteca nova**: `ArenaKit.styled_build(build, at, scale)` monta qualquer peça do kit (estátua, estandarte,
@@ -1562,8 +1578,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Fendas matiz 255 a 257, saturação 0,21 a 0,23, chão 42 a 54, violeta na cena 0,7 (A) e 1,8% (B). Quadro RTX 1080 Alta
   (GPU) Santuário 2,33 / 2,15 para 2,18 / 2,26 ms, Fendas 2,22 / 2,19 para 1,92 / 1,96; iGPU 720 Baixa 14,6 / 14,6 para
   14,8 / 15,3 e 14,3 / 15,6 para 14,0 / 14,5. Compatibility sem erro (`STY_COMPAT_*` de cada look). O clássico igual.
-  Cena (luma p50): Santuário 63 / 58, Fendas 49 / 53. Fora da faixa: os fachos do Santuário ainda desenham discos de
-  borda dura no chão (a luz pintada) e o chão das Fendas A na caixa da frente fica em 42 (meta 50 a 65).
+  Cena (luma p50): Santuário 63 / 58, Fendas 49 / 53.
+- **Correções**: luz difusa na pintura: uma luz com `light_specular` 0 (`SPECULAR_AMOUNT` no `paint.gdshaderinc`) pula
+  as faixas e a borda de poça e acende por N·L vezes a queda (`paint_diffuse`), então o cone some largo e macio (nada
+  de círculo no chão, P-4). Os fachos do Santuário no estilizado são assim, mais quentes (`STY_SHAFT_WARM`), a 0,75 da
+  energia, cone de 30 graus e mais inclinados (`STY_SHAFT_LEAN`, `_leaning`: a mancha alonga na direção da luz); o da
+  B no buraco continua frio. Chão do Santuário mais quente e com mais variação por laje (`STY_FLOOR`,
+  `STY_SLAB_PAINT` 0,78 a 1,2, `STY_SLAB_HUE` 7, chave nova `slab_paint` do `ArenaKit.FLOOR_KEYS`, oliva 0,04). Fendas:
+  chão mais claro e sem escurecer para a borda (`STY_FLOOR`, `STY_EDGE_VALUE` 1,0). Medido: Santuário A nave matiz 30
+  a 34, saturação 0,13 a 0,19, luma 74 a 90 (p10 a p90 de 53 a 115, antes chapado), cena 61; B 59; Fendas A caixa da
+  frente `1500,850,192,162` 51 e `1600,700` 56 (eram 39 e 46), o meio oeste 71.
 
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath

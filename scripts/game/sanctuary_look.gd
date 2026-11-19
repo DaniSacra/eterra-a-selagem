@@ -107,12 +107,17 @@ const UNDER_FLOOR := Color(0.55, 0.55, 0.55)
 ## warm limestone (the one fighting room in warm stone), cold shadows, the hall's fires, its own air, the soft key over
 ## the nave at STY_KEY of its energy.
 const STYLE := {
-	&"stone": Color(0.38, 0.368, 0.35), &"shadow": Color(0.86, 0.9, 0.98), &"floor_stone": Color(0.35, 0.343, 0.333),
-	&"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.08, &"metal": true,
+	&"stone": Color(0.38, 0.368, 0.35), &"shadow": Color(0.86, 0.9, 0.98), &"floor_stone": STY_FLOOR,
+	&"slab_paint": STY_SLAB_PAINT, &"slab_hue": STY_SLAB_HUE, &"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"],
 	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.74, 0.73, 0.72),
 		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.85, &"moon_shadow": true},
 }
+## The floor's limestone in the stylized look (room redesign fixes: it read neutral grey, nave luma 71 to 83 flat): a
+## warmer stone, the slabs further apart in value and a little more in hue, fewer olive slabs.
+const STY_FLOOR := Color(0.356, 0.343, 0.326)
+const STY_SLAB_PAINT := Vector2(0.78, 1.2)
+const STY_SLAB_HUE := 7.0
 ## The stylized air in the browser's renderer (as the crypt's: there the painted stone lit grey-white).
 const STY_COMPAT_AMBIENT := 0.45
 const STY_COMPAT_MOON := 0.35
@@ -121,6 +126,14 @@ const STY_KEY := 0.6
 ## The shafts in ivory gold (spec 1.3: under the painted light's fire threshold, a lit edge and no flat pool), the new
 ## one over the guardian's spawn (energy, cone, height; no shadow, no dust of its own).
 const STY_SHAFT := Color(0.96, 0.88, 0.70)
+## Room redesign fixes (P-4: no circle on the floor): in the stylized look every shaft is a diffuse light (no specular:
+## paint.gdshaderinc skips the bands and the pool's edge), warmer, weaker, its cone wider so it fades out over metres,
+## leaning further so its fall on the floor is long along the light: colour, share of its energy, cone (degrees), lean
+## (x, z m at the vault's height).
+const STY_SHAFT_WARM := Color(1.0, 0.86, 0.66)
+const STY_SHAFT_GAIN := 0.75
+const STY_SHAFT_CONE := 30.0
+const STY_SHAFT_LEAN := Vector2(-5.5, -7.0)
 const STY_GUARD_SHAFT := Vector3(1.6, 18.0, 16.0)
 ## S1: the chancel's offerings behind the grille: three groups of four candles (two lit) with urns (z off the chancel's
 ## middle; x in from the grille), the urns' heights.
@@ -566,18 +579,28 @@ func style() -> Dictionary:
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
 	VisualProfile.vary(_key, {&"light_energy": KEY_ENERGY * STY_KEY})
-	for sp in _shafts:
-		VisualProfile.vary(sp, {&"light_color": STY_SHAFT})
-	if not _hole.is_empty() and not _shafts.is_empty():
-		# B: the shaft falls through the tear of the vault into the hole (S6), the dust there denser
-		var to := _middle(_hole)
-		var probe := Node3D.new()
-		probe.look_at_from_position(Vector3(to.x + SHAFT_LEAN.x, MOON_HEIGHT, to.y + SHAFT_LEAN.y), Vector3(to.x, 0.0, to.y))
-		VisualProfile.vary(_shafts[0], {&"transform": probe.transform, &"light_color": STY_TEAR_SHAFT})
-		probe.free()
+	for k in _shafts.size():
+		var to: Vector2 = MOON_AT[k]
+		var warm := STY_SHAFT_WARM
+		if not _hole.is_empty():
+			# B: the shaft falls through the tear of the vault into the hole (S6), cold, the dust there denser
+			to = _middle(_hole)
+			warm = STY_TEAR_SHAFT
+		VisualProfile.vary(_shafts[k], {&"transform": _leaning(to, MOON_HEIGHT), &"light_color": warm,
+			&"light_energy": (MOON_ENERGY if _hole.is_empty() else MOON_ENERGY_B) * STY_SHAFT_GAIN, &"spot_angle": STY_SHAFT_CONE, &"light_specular": 0.0})
+	if not _hole.is_empty():
 		if _hole_dust != null:
 			VisualProfile.vary(_hole_dust, {&"amount": STY_DUST})
 	return st
+
+
+## A shaft's place in the stylized look: from `height` m up, leaning STY_SHAFT_LEAN, onto `to`.
+func _leaning(to: Vector2, height: float) -> Transform3D:
+	var probe := Node3D.new()
+	probe.look_at_from_position(Vector3(to.x + STY_SHAFT_LEAN.x, height, to.y + STY_SHAFT_LEAN.y), Vector3(to.x, 0.0, to.y))
+	var t := probe.transform
+	probe.free()
+	return t
 
 
 ## The pieces only the stylized look shows (spec 1.4), on kit.styled() (never the room's random numbers): the shaft
@@ -585,7 +608,10 @@ func style() -> Dictionary:
 ## windows and the banners on the pilasters, the moss on the walls; in B the torn vault.
 func _dress_styled() -> void:
 	var sm := kit.styled()
-	var guard := moon_shaft(layout.boss_spawn, STY_SHAFT, STY_GUARD_SHAFT.x, STY_GUARD_SHAFT.y, STY_GUARD_SHAFT.z, false, false)
+	var guard := moon_shaft(layout.boss_spawn, STY_SHAFT_WARM, STY_GUARD_SHAFT.x * STY_SHAFT_GAIN, STY_GUARD_SHAFT.y,
+		STY_GUARD_SHAFT.z, false, false)
+	guard.transform = _leaning(layout.boss_spawn, STY_GUARD_SHAFT.z)
+	guard.light_specular = 0.0
 	ArenaKit.style_only(guard)
 	_offerings(sm)
 	_shards(sm)

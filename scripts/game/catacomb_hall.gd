@@ -374,7 +374,10 @@ const STY_BOWL_RANGE := 4.5
 const STY_CANDLE_RANGE := 3.5
 const STY_BOWL_ATTENUATION := 0.5
 const STY_BOWL_GAIN := 1.1
-const STY_CANDLE_GAIN := 1.2
+const STY_CANDLE_GAIN := 1.5
+## The fires' pools on the hall's blue slate keep more of their warm (lot A review item 8: the hall had lost its heat,
+## warm share of the scene 6.5% to 1.8%; paint_pool_saturation, 0.65 elsewhere).
+const STY_POOL_SATURATION := 1.0
 ## The browser's renderer (Compatibility) paints the pools near white at those energies (laje 217 beside the east bowl):
 ## the fires a share of them there (as VisualProfile.COMPAT_KEY does for the key).
 const STY_COMPAT_FIRE := 0.4
@@ -382,7 +385,7 @@ const STY_COMPAT_FIRE := 0.4
 ## umber (docs/art/room_redesign_lotA_spec.md 3.2; ArenaKit.paint_look, stylize_fires). The fires are STY-10's.
 const STYLE := {
 	&"stone": Color(0.325, 0.341, 0.386), &"shadow": Color(0.833, 0.877, 0.98), &"floor_stone": Color(0.292, 0.312, 0.36),
-	&"joint_cold": Color(0.88, 0.91, 1.0), &"olive_share": 0.06, &"abyss_glow": STY_ABYSS_GLOW,
+	&"joint_cold": Color(0.88, 0.91, 1.0), &"olive_share": 0.06, &"abyss_glow": STY_ABYSS_GLOW, &"pool_saturation": STY_POOL_SATURATION,
 	&"fire": {&"bowl_range": STY_BOWL_RANGE, &"candle_range": STY_CANDLE_RANGE, &"bowl_attenuation": STY_BOWL_ATTENUATION,
 		&"bowl_gain": STY_BOWL_GAIN, &"candle_gain": STY_CANDLE_GAIN, &"compat": STY_COMPAT_FIRE},
 }
@@ -393,22 +396,29 @@ const SHOP_RUG := Vector2(2.6, 1.8)
 const SHOP_RUG_Y := 0.012
 ## The shop's lanterns: from the item's point, how far back (away from the camera) and to the right the bracket's rod
 ## stands on the reliquary's side, how far the arm reaches on into the gap; the arm's height, where the lantern's
-## foot hangs, its little post (none to speak of), its lamp (warm, a candle's reach: STY_CANDLE_RANGE, energy 1.0 of a
-## candle's light).
+## foot hangs, its little post (none to speak of), its lamp (warm, a little past a candle's reach, SHOP_LAMP_RANGE, and
+## brighter: a pool of amber on every rug, lot A review item 3; glass and flame no brighter than the screen's ceiling).
 const SHOP_LANTERN := Vector3(0.8, 0.8, 0.9)
 const SHOP_ARM := 2.3
 const SHOP_LANTERN_FOOT := 1.0
 const SHOP_LANTERN_POST := Vector3(0.05, 0.02, 0.05)
-static var SHOP_LAMP := TombKit.Lamp.new(Color(1.0, 0.62, 0.3), Color(1.9, 1.0, 0.35), Color(1.0, 0.66, 0.38), 1.2,
-	STY_CANDLE_RANGE, 1.3)
+const SHOP_LAMP_RANGE := 4.5
+const SHOP_LAMP_ENERGY := 7.0
+## ... amber, deeper than a candle's (its pool is painted at a share of a fire's saturation).
+const SHOP_LAMP_LIGHT := Color(1.0, 0.7, 0.25)
+static var SHOP_LAMP := TombKit.Lamp.new(ScreenTone.fit(Color(1.0, 0.62, 0.3)), ScreenTone.fit(Color(1.9, 1.0, 0.35)),
+	SHOP_LAMP_LIGHT, SHOP_LAMP_ENERGY, SHOP_LAMP_RANGE, 1.3)
 ## The provisions' cloth (umber, folded over the crates: x, z, size, y of its top) and its colour (times the stone's),
 ## and their two urns (x, z, height, y).
 const SHOP_CLOTH := Color(0.55, 0.38, 0.28)
 const SHOP_CLOTHS: Array[Vector4] = [Vector4(7.3, -14.0, 0.75, 1.46), Vector4(-5.35, -14.2, 0.85, 0.56)]
 const SHOP_URNS: Array[Vector4] = [Vector4(8.3, -13.8, 0.3, 0.8), Vector4(-6.25, -13.75, 0.26, 0.45)]
-## The fountain's moss (inner, outer radius from the basin's middle), its candles on the rim (angles; the first
-## FOUNTAIN_LIT burn).
-const FOUNTAIN_MOSS := Vector2(1.95, 3.2)
+## The fountain's moss (inner, mean outer radius from the basin's middle; how far its edge breaks either way, how far
+## it swings out to the north and in to the south: lot A review item 9, 2.6 to 3.4 m), its candles on the rim
+## (angles; the first FOUNTAIN_LIT burn).
+const FOUNTAIN_MOSS := Vector2(1.95, 3.0)
+const FOUNTAIN_MOSS_RAGGED := 0.5
+const FOUNTAIN_MOSS_NORTH := 0.3
 const FOUNTAIN_CANDLES: Array[float] = [-2.2, -1.95, -0.9, 0.7, 2.4, 2.65]
 const FOUNTAIN_LIT := 4
 ## The stylized look's urns (x, z, height, y of what they stand on): by the west balustrade's two pot groups, between
@@ -479,8 +489,8 @@ func _urns() -> void:
 
 
 ## The shop's dressing in the stylized look (room redesign lot A 3.3; Arena.dress_shop, after Rooms lays out the row of
-## items at `points`): a painted rug under each item along the row, an iron lantern hung from the side of every second
-## reliquary into the gap toward the next item (under the signs, never over them), and the provisions (the crates and
+## items at `points`): a painted rug under each item along the row, an iron lantern hung from the side of every
+## reliquary but the last into the gap toward the next item (under the signs, never over them), and the provisions (the crates and
 ## pots at the dais' east foot and in the west nook) under a folded umber cloth with two urns. Nothing blocks.
 func dress_shop(points: Array[Vector2]) -> void:
 	if points.is_empty():
@@ -507,7 +517,7 @@ func dress_shop(points: Array[Vector2]) -> void:
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.transform = Transform3D(Basis(Vector3.UP, atan2(-right.y, right.x)), Vector3(p.x, SHOP_RUG_Y, p.y))
 		node.add_child(mi)
-		if k % 2 != 0:
+		if k == points.size() - 1:
 			continue
 		# the bracket: an iron rod up from the reliquary's side, an arm out into the gap, the lantern hanging from it
 		var side := p + away * SHOP_LANTERN.x + right * SHOP_LANTERN.y
@@ -539,12 +549,14 @@ static func dress_fountain(parent: Node3D) -> void:
 	ArenaKit.style_only(node)
 	var mi := MeshInstance3D.new()
 	var q := PlaneMesh.new()
-	q.size = Vector2.ONE * FOUNTAIN_MOSS.y * 2.0
+	q.size = Vector2.ONE * (FOUNTAIN_MOSS.y + FOUNTAIN_MOSS_NORTH + FOUNTAIN_MOSS_RAGGED + 0.1) * 2.0
 	mi.mesh = q
 	var mat := ShaderMaterial.new()
 	mat.shader = DECAL_SHADER
 	mat.set_shader_parameter(&"kind", 1)
 	mat.set_shader_parameter(&"ring", FOUNTAIN_MOSS)
+	mat.set_shader_parameter(&"ragged", FOUNTAIN_MOSS_RAGGED)
+	mat.set_shader_parameter(&"north_reach", FOUNTAIN_MOSS_NORTH)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.position.y = SHOP_RUG_Y

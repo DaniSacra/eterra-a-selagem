@@ -137,12 +137,16 @@ const OLD_ARCH := Vector3(-9.5, 3.2, 0.5)
 ## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 2): the rift's biome in the stylized look, indigo
 ## slate, the hall's fires, its own air; the violet only under the brink and far off.
 const STYLE := {
-	&"stone": Color(0.327, 0.319, 0.363), &"shadow": Color(0.87, 0.833, 0.98), &"floor_stone": Color(0.30, 0.297, 0.32),
-	&"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
+	&"stone": Color(0.327, 0.319, 0.363), &"shadow": Color(0.87, 0.833, 0.98), &"floor_stone": STY_FLOOR,
+	&"edge_value": STY_EDGE_VALUE, &"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
 	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.70, 0.70, 0.74),
 		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 1.4, &"moon_shadow": true},
 }
+## The floor's slate and how dark it falls toward the room's edge (room redesign fixes: the east platform's front read
+## at luma 42, meta 50 to 65; the floor's middle stays near).
+const STY_FLOOR := Color(0.345, 0.34, 0.366)
+const STY_EDGE_VALUE := 1.0
 ## The stylized air in the browser's renderer (its ambient and moon lower, as the crypt's).
 const STY_COMPAT_AMBIENT := 0.5
 const STY_COMPAT_MOON := 0.6

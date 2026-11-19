@@ -4,7 +4,8 @@ shader_type spatial;
 //   0 the shop's rug: an umber cloth with an ochre border and a worn diamond of old gold in its middle (UV: 0..1 over
 //     the rug; nothing round, no red);
 //   1 the fountain's moss: a ragged ring of grey-green moss round the basin, denser to the north (-z), with pale ivory
-//     and faint lilac flowers in it (UV: -1..1 over a square of side 2 * ring.y);
+//     and faint lilac flowers in tufts in it (UV: 0..1 over a square of side 2 * (ring.y + north_reach + ragged + 0.1),
+//     CatacombHall.dress_fountain);
 //   2 moss and ivy on a wall (room redesign lot B, the sanctuary's S5): a card on the stone, dense along its top edge
 //     (UV.y 0) and hanging down in ragged tongues, a few darker leaves in it (UV 0..1 over the card, `rug_size` its
 //     size in m).
@@ -20,13 +21,20 @@ uniform float border_width = 0.12;
 uniform float diamond = 0.22;
 uniform float wear = 0.35;
 // the moss: its ring (inner, outer radius in m), colour, flower colours, how many flowers a square meter, their size
-uniform vec2 ring = vec2(1.95, 3.2);
-uniform vec3 moss : source_color = vec3(0.205, 0.22, 0.19);
+// (lot A review item 9: the outer radius is the mean one, broken by `ragged` m of noise along the edge and swung
+// `north_reach` m out to the north and in to the south, so no stretch of the edge reads as a regular arc; the flowers
+// in tufts of 3 to 6 in cells of `flower_cell` m, `flower_share` of the cells, each flower `flower_size` m across, at
+// most `tuft_reach` m from its tuft's middle)
+uniform vec2 ring = vec2(1.95, 3.0);
+uniform float ragged = 0.5;
+uniform float north_reach = 0.3;
+uniform vec3 moss : source_color = vec3(0.17, 0.20, 0.15);
 uniform vec3 flower_pale : source_color = vec3(0.72, 0.7, 0.62);
 uniform vec3 flower_lilac : source_color = vec3(0.55, 0.52, 0.6);
-uniform float flower_cell = 0.42;
-uniform float flower_share = 0.18;
-uniform float flower_size = 0.03;
+uniform float flower_cell = 0.95;
+uniform float flower_share = 0.32;
+uniform vec2 flower_size = vec2(0.09, 0.14);
+uniform float tuft_reach = 0.28;
 uniform float alpha = 0.92;
 
 float hash(vec2 p) {
@@ -70,19 +78,46 @@ void fragment() {
 		c = moss * mix(0.7, 1.15, fbm(m * 9.0));
 		a = alpha * cover;
 	} else {
-		vec2 m = (UV - 0.5) * 2.0 * ring.y;
+		float reach = ring.y + north_reach + ragged + 0.1;
+		vec2 m = (UV - 0.5) * 2.0 * reach;
 		float r = length(m);
-		float north = smoothstep(ring.y, -ring.y, m.y);
-		float n = fbm(m * 1.4 + 7.0);
-		float outer = mix(ring.x + 0.35, ring.y, mix(0.25, 1.0, north)) + (n - 0.5) * 0.9;
-		float cover = smoothstep(ring.x - 0.02, ring.x + 0.06, r) * (1.0 - smoothstep(outer - 0.12, outer, r));
-		cover *= smoothstep(0.3, 0.55, fbm(m * 3.3) + north * 0.25);
+		vec2 dir = m / max(r, 1e-4);
+		float north = clamp(-dir.y, -1.0, 1.0);
+		// the edge: two scales of noise round the ring (cells of about 0.7 and 0.3 m along it) and a little in 2D
+		float n = noise(dir * ring.y / 0.7 + 7.0) * 0.6 + noise(dir * ring.y / 0.3 + 3.0) * 0.25 + noise(m * 1.7) * 0.15;
+		float outer = ring.y + north * north_reach + (n - 0.5) * 2.0 * ragged;
+		float cover = smoothstep(ring.x - 0.02, ring.x + 0.06, r) * (1.0 - smoothstep(outer - 0.1, outer, r));
+		cover *= smoothstep(0.3, 0.55, fbm(m * 3.3) + (north * 0.5 + 0.5) * 0.25);
 		c = moss * mix(0.8, 1.15, fbm(m * 6.0));
-		vec2 cell = floor(m / flower_cell);
-		vec2 at = (cell + vec2(hash(cell), hash(cell + 3.1)) * 0.8 + 0.1) * flower_cell;
-		float f = step(hash(cell + 9.7), flower_share) * (1.0 - step(flower_size, length(m - at)));
-		c = mix(c, hash(cell + 5.3) < 0.7 ? flower_pale : flower_lilac, f);
-		a = alpha * max(cover, f * step(ring.x, r) * step(r, outer));
+		// the flowers, in tufts: the 3 x 3 cells round this one, 3 to 6 flowers in each tuft
+		float f = 0.0;
+		bool lilac = false;
+		vec2 home = floor(m / flower_cell);
+		for (int i = -1; i <= 1; i++) {
+			for (int j = -1; j <= 1; j++) {
+				vec2 cell = home + vec2(float(i), float(j));
+				if (hash(cell + 9.7) > flower_share) {
+					continue;
+				}
+				vec2 mid = (cell + 0.5 + (vec2(hash(cell), hash(cell + 3.1)) - 0.5) * 0.5) * flower_cell;
+				int count = 3 + int(hash(cell + 1.9) * 3.99);
+				for (int k = 0; k < 6; k++) {
+					if (k >= count) {
+						break;
+					}
+					vec2 key = cell + vec2(float(k) * 1.37, float(k) * 2.11);
+					vec2 at = mid + (vec2(hash(key + 4.4), hash(key + 6.6)) - 0.5) * 2.0 * tuft_reach;
+					float size = mix(flower_size.x, flower_size.y, hash(key + 8.8)) * 0.5;
+					if (length(m - at) < size) {
+						f = 1.0;
+						lilac = hash(key + 5.3) > 0.7;
+					}
+				}
+			}
+		}
+		f *= step(ring.x, r) * step(r, outer);
+		c = mix(c, lilac ? flower_lilac : flower_pale, f);
+		a = alpha * max(cover, f);
 	}
 	ALBEDO = c;
 	ROUGHNESS = 1.0;
