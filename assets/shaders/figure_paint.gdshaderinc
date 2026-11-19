@@ -3,7 +3,9 @@
 // STYLIZED); with art_style 0 nothing here is called and the classic frame is the same as before.
 // The bands are the same three as the stone's (paint.gdshaderinc, environment front): one hand for the hero, the crowd
 // and the hall. They live here too because the two fronts were built in parallel; folding them into one include is
-// a later clean-up, the numbers are the spec's.
+// a later clean-up, the numbers are the spec's. STY-10 left it so on purpose: paint.gdshaderinc is the environment
+// front's file and changed in the same round (fire pools, chamber); fold the two only once both are settled, and only
+// if the stone's bands stay these three (the art-director's STY-09 lowered the stone's shadow band to 0.25, not ours).
 
 // Light in three tones (spec 1.3, T3 and T18): N.L from 0 to 0.3 is 0.42 of the lit value, 0.3 to 0.65 is 0.72,
 // above that 1.0; each step FIGURE_BAND_SOFT wide (0.10: a short ramp, never a hard step).

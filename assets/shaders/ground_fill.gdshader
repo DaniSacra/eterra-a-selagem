@@ -3,7 +3,9 @@ shader_type spatial;
 // enemy's own (unsigned) warning's red fill. Where one fill is already on the floor this frame (the stencil holds
 // FILL_STENCIL there), no other is drawn: three warnings over the same floor show the fill of one, never their sum
 // (C12d, VX-03). Its rims, fronts and chevrons stay in the first pass and all of them show.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
+// Premultiplied (STY-10): ALBEDO is added and ALPHA darkens what is under it; ALPHA is 0 but in the stylized look (the
+// floor under an enemy's warning at 0.8, ground.gdshaderinc style_under), so the classic fill adds exactly as before.
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled;
 // FILL_STENCIL = 2 (the crowd writes 1, CROWD_STENCIL; the floor under a figure never takes a fill: the figure is in front).
 stencil_mode read, write, compare_not_equal, 2;
 
