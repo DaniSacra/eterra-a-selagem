@@ -138,6 +138,9 @@ var _mmi: MultiMeshInstance3D
 var _data := PackedFloat32Array()
 ## Which quads of _data are drawn over (1), and the second MultiMesh that draws them.
 var _over := PackedByteArray()
+## The over pass draws after the life bars (CrowdRenderer, render_priority 10): in a crowd the bars of the ones in
+## front covered the priest's V and the crossbow (LC, 2026-11-19). The tells are short; the bars read again after.
+const OVER_PRIORITY := 11
 var _over_mmi: MultiMeshInstance3D
 var _sparks: Array[Spark] = []
 ## Each hue's stroke light (lit()), computed once.
@@ -157,7 +160,7 @@ func _ready() -> void:
 	_data.resize(POOL * FLOATS)
 	_over.resize(POOL)
 	_mmi = _batch(quad, SHADER, 5)
-	_over_mmi = _batch(quad, OVER_SHADER, 6)
+	_over_mmi = _batch(quad, OVER_SHADER, OVER_PRIORITY)
 
 
 func _batch(quad: QuadMesh, shader: Shader, priority: int) -> MultiMeshInstance3D:

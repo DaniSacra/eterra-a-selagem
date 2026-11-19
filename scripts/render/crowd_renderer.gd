@@ -85,6 +85,8 @@ const FLOATS := 16  # 12 for the transform, 4 for the custom state
 ## A posed figure's instance: 12 for the transform, 4 for the colour (which poses, how far between), 4 for the state.
 const POSED := 20
 const SHADER := preload("res://assets/shaders/crowd.gdshader")
+## Life bars draw over the scene, under the over pass of the wind-up tells (EnemyFx.OVER_PRIORITY).
+const BAR_PRIORITY := 10
 const BAR := preload("res://assets/shaders/life_bar.gdshader")
 ## The thin life bar over enemies' heads (Hades II): meters wide per meter of the enemy's radius, meters tall,
 ## and how far above the head (its middle). Cycle 8 (4 to 20 enemies a room, each one read on its own): a little
@@ -166,7 +168,7 @@ func _ready() -> void:
 	quad.size = Vector2(1, 1)
 	var bar_mat := ShaderMaterial.new()
 	bar_mat.shader = BAR
-	bar_mat.render_priority = 10
+	bar_mat.render_priority = BAR_PRIORITY
 	bar_mat.set_shader_parameter(&"elite_frame", BAR_ELITE_FRAME)
 	_bars = _new_batch(quad, bar_mat, true)
 

@@ -1771,6 +1771,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   violeta na caixa da cabeça de 1708 para 2085; o quadro inteiro igual (luma p50 57, matiz 216 a 218). Ferramenta:
   `tools/enemy_lab.gd ... --spin` (a fileira gira, cada figura vista de um lado). Evidências em
   `docs/gallery/lc/windup/after2/` (tiras antes e depois, vídeos em velocidade real lado a lado, clássico e Compatibility).
+- O que é desenhado por cima (`EnemyFx.OVER_PRIORITY` 11) sai depois das barras de vida (`CrowdRenderer.BAR_PRIORITY`
+  10): na multidão as barras de quem está na frente cobriam o V do Sacerdote e a besta.
 - Testes em `tests/test_enemy_fx.gd` e `tests/test_indicators.gd`. Pendência conhecida do assado: dobra (`bend`) em osso
   que o rig do KayKit não move (`Spine01`, `neck`) se acumula pose após pose; o rugido de Morvath (`ROAR_BEND` no
   `Taunt_Longer`) provavelmente tem isso (medir antes de reassar Morvath).

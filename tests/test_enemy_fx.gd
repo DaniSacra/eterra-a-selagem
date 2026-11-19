@@ -439,3 +439,12 @@ func test_a_character_is_placed_as_its_transform_says() -> void:
 	assert_almost_eq(renderer._shadow.data[0], r, 0.00001, "its shadow under it")
 	assert_almost_eq(renderer._shadow.data[10], r, 0.00001)
 	assert_almost_eq(renderer._shadow.data[7], 0.03, 0.00001)
+
+
+func test_the_tells_drawn_over_are_not_covered_by_the_life_bars() -> void:
+	# In a crowd the bars of the ones in front covered the priest's V and the crossbow: the over pass draws after them.
+	var fx := EnemyFx.new()
+	add_child_autofree(fx)
+	var mat := fx._over_mmi.material_override as ShaderMaterial
+	assert_gt(mat.render_priority, CrowdRenderer.BAR_PRIORITY, "the over pass draws after the life bars")
+	assert_lte(mat.render_priority, RenderingServer.MATERIAL_RENDER_PRIORITY_MAX)
