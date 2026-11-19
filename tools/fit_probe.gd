@@ -54,6 +54,9 @@ func _run() -> void:
 	for l: RoomLayout in [stage.trial_layout, stage.altar_layout]:
 		if l != null and l.id == want:
 			layout = l
+	# the hub (HUB-B2): --arena=hub, its plan in HubPlan
+	if want == &"hub":
+		layout = load("res://scripts/core/hub_plan.gd").layout()
 	if layout == null:
 		push_error("no arena %s" % want)
 		quit(1)
