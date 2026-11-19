@@ -17,6 +17,7 @@ extends SceneTree
 ##   --cam-at=x,z     the game's camera looks at this floor point (default: the arena's camera point or box middle)
 ##   --bare           the arena alone, without the overlays
 ##   --wait=seconds   before the capture (default 1.0)
+##   --look=classic|stylized   the visual profile (VisualProfile; room redesign lot D): the room and the world's air in it
 
 const STAGE := "res://data/stages/catacombs.tres"
 const E5 := preload("res://tools/e5_layouts.gd")
@@ -52,6 +53,9 @@ func _run() -> void:
 	if not found and E5.IDS.has(want):
 		layout = E5.layout(want)
 	layout = layout.variant(int(opts.get("variant", "0")))
+	var vp: Variant = load("res://scripts/core/visual_profile.gd")
+	if opts.has("look"):
+		vp.set_look(vp.parse(str(opts["look"])))
 	var world := Node3D.new()
 	root.add_child(world)
 	var env := WorldEnvironment.new()
@@ -63,6 +67,7 @@ func _run() -> void:
 	moon.light_energy = 0.35
 	moon.shadow_enabled = true
 	world.add_child(moon)
+	vp.dress_world(env.environment, moon)
 	var arena: Variant = load("res://scripts/game/arena.gd").new()
 	world.add_child(arena)
 	arena.build(layout, int(opts.get("doors", "3")), 1406)

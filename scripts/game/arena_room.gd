@@ -391,6 +391,112 @@ func hanging_lantern(from: Vector3, ring_y: float, size: Vector3, light: Vector2
 	return l
 
 
+## Room redesign lot D: every light of the room that is no fire (its red not over its blue by RoomMood.FIRE_FROM; the
+## directional moon left out) lit diffuse in the stylized look (light_specular 0: paint.gdshaderinc's paint_diffuse, no
+## drawn ring nor disc on the floor, decision P-4), and the ones in `no_shadow` without their shadow there. Call in
+## style(), before the colours change.
+func diffuse_lights(no_shadow: Array = []) -> void:
+	for n in find_children("*", "Light3D", true, false):
+		var l := n as Light3D
+		if l is DirectionalLight3D or l.light_color.r - l.light_color.b >= RoomMood.FIRE_FROM:
+			continue
+		var values := {&"light_specular": 0.0}
+		if no_shadow.has(l):
+			values[&"shadow_enabled"] = false
+		VisualProfile.vary(l, values)
+
+
+## Lot D: the stylized look of a backdrop() built by the room (its nodes, ArenaRoom.added_since): the ruin cards' mist,
+## stone and edge, and the bank of mist (twice the mist, as backdrop() makes it).
+func style_backdrop(nodes: Array[Node], mist: Color, stone_c: Color, edge_c: Color) -> void:
+	for n in nodes:
+		var g := n as GeometryInstance3D
+		if g == null or not g.material_override is ShaderMaterial:
+			continue
+		var sm := g.material_override as ShaderMaterial
+		if sm.get_shader_parameter(&"stone_color") != null:
+			VisualProfile.vary(sm, {&"shader_parameter/mist_color": mist, &"shader_parameter/stone_color": stone_c,
+				&"shader_parameter/edge_color": edge_c})
+		elif sm.get_shader_parameter(&"color") != null:
+			VisualProfile.vary(sm, {&"shader_parameter/color": mist * 2.0})
+
+
+## The faded banners (the altar's, lot D the trial's): every cloth and lion among `nodes` (a banner's meshes, ArenaKit
+## .banner) on a twin of its material `fade` of its light, a little toward grey; one twin a material for the room.
+func fade_banners(nodes: Array[Node], fade: float) -> void:
+	for n in nodes:
+		var mi := n as MeshInstance3D
+		if mi == null or mi.material_override == null:
+			continue
+		var was := mi.material_override
+		if not _faded.has(was):
+			var f := was.duplicate() as Material
+			if f is StandardMaterial3D:
+				var sf := f as StandardMaterial3D
+				sf.albedo_color = sf.albedo_color.darkened(1.0 - fade).lerp(BANNER_FADE_GREY, 0.3)
+				if sf.emission_enabled:
+					sf.emission_energy_multiplier *= fade
+			elif f is ShaderMaterial:
+				var sm := f as ShaderMaterial
+				var g: Variant = sm.get_shader_parameter(&"gold")
+				var gold: Color = g if g is Color else BANNER_LION_GOLD
+				sm.set_shader_parameter(&"gold", gold.darkened(1.0 - fade))
+				sm.set_shader_parameter(&"glow", BANNER_LION_GLOW * fade)
+			_faded[was] = f
+		mi.material_override = _faded[was]
+
+
+## The grey a faded banner's cloth goes toward, the lion's gold when its material does not say (banner_lion.gdshader's
+## default) and its glow.
+const BANNER_FADE_GREY := Color(0.3, 0.28, 0.27)
+const BANNER_LION_GOLD := Color(0.65, 0.47, 0.18)
+const BANNER_LION_GLOW := 0.35
+var _faded := {}
+
+
+## Moss and ivy hanging on a wall (the sanctuary's S5, lot D the altar's A2): a card of `card` m on the wall's face for
+## each top middle in `tops` (x, y, z: a hair in front of the face), facing along `yaw`, in `moss` (floor_decal kind 2),
+## on the stylized Masonry `sm`.
+func wall_moss(sm: Masonry, tops: Array[Vector3], card: Vector2, moss: Color, yaw := 0.0) -> void:
+	var mat := ShaderMaterial.new()
+	mat.shader = CatacombHall.DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 2)
+	mat.set_shader_parameter(&"rug_size", card)
+	mat.set_shader_parameter(&"moss", moss)
+	for t in tops:
+		var mi := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = card
+		mi.mesh = q
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.transform = Transform3D(Basis(Vector3.UP, yaw), t - Vector3(0, card.y * 0.5, 0))
+		sm.root.add_child(mi)
+
+
+## Lot D: a stone shelf on a wall's foot, off the floor (between the floor's edge at a to b, out along `out`, and the
+## wall's face FACE_SET behind it), its top `height` up, for the stylized look's offerings (on `sm`). Returns where
+## along it things stand: the shelf's middle line on its top (from, to).
+func wall_ledge(sm: Masonry, a: Vector2, b: Vector2, out: Vector2, height: float, mat: Material) -> Array[Vector3]:
+	var mid := (a + b) * 0.5 + out * (LEDGE_GAP + FACE_SET) * 0.5
+	var along := (b - a).normalized()
+	var deep := FACE_SET - LEDGE_GAP
+	sm.box(Vector3(mid.x, height - LEDGE_SLAB * 0.5, mid.y), Vector3(a.distance_to(b), LEDGE_SLAB, deep), atan2(-along.y, along.x), mat, false)
+	# corbels under it
+	for t: float in [0.15, 0.85]:
+		var c := a.lerp(b, t) + out * (LEDGE_GAP + FACE_SET) * 0.5
+		sm.box(Vector3(c.x, height - LEDGE_SLAB - LEDGE_CORBEL * 0.5, c.y), Vector3(0.18, LEDGE_CORBEL, deep * 0.8),
+			atan2(-along.y, along.x), mat, false)
+	var line := out * (LEDGE_GAP + FACE_SET) * 0.5
+	return [Vector3(a.x + line.x, height, a.y + line.y), Vector3(b.x + line.x, height, b.y + line.y)]
+
+
+## The shelf (wall_ledge): how far it stays off the floor's edge, its slab's and its corbels' height.
+const LEDGE_GAP := 0.04
+const LEDGE_SLAB := 0.1
+const LEDGE_CORBEL := 0.22
+
+
 ## The cliffs' stone (depth_stone.gdshader uniforms: stone_color, edge_color...), if not the hall's teal.
 func cliff_look() -> Dictionary:
 	return {}
@@ -1669,6 +1775,10 @@ func redress_air() -> void:
 		# what this room's air leaves alone comes back to the world's (the moon's energy of the look, its shadow)
 		if _air_moon != null and is_instance_valid(_air_moon) and _saved.has(&"moon"):
 			_air_moon.shadow_enabled = (_saved[&"moon"] as Array)[3]
+		# and the world's sky and fog, which no look varies (lot D: the altar's classic air leaves its fog alone)
+		if _air_env != null:
+			for k: StringName in [&"background_color", &"fog_light_color", &"fog_depth_begin", &"fog_depth_end"]:
+				_air_env.set(k, _saved[k])
 		_dress_air()
 
 

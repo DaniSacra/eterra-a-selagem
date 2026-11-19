@@ -43,6 +43,10 @@ func _world() -> void:
 
 func _layout(id: StringName, variant := 0) -> RoomLayout:
 	var stage: StageDef = load(STAGE)
+	if id == &"trial":
+		return stage.trial_layout
+	if id == &"altar":
+		return stage.altar_layout
 	for l in stage.layouts:
 		if l.id == id:
 			return l.variant(variant) if variant > 0 else l
@@ -395,3 +399,161 @@ func test_garden_b_trades_the_west_wall_for_a_lake() -> void:
 					assert_false(a.shape().contains(p, 0.0), "garden %d: a pool's middle off the floor" % v)
 		assert_gt(water, 2, "garden %d: falls and pools" % v)
 		_flip(a)
+
+
+# ---------- lot D: the runes, the trial and the altar (docs/art/room_redesign_lotD_spec.md) ----------
+
+func test_runes_a_comes_back() -> void:
+	_round_trip(&"runes", 0)
+
+
+func test_runes_b_comes_back() -> void:
+	_round_trip(&"runes", 1)
+
+
+func test_trial_comes_back() -> void:
+	_round_trip(&"trial", 0)
+
+
+func test_altar_comes_back() -> void:
+	_round_trip(&"altar", 0)
+
+
+func test_the_runes_wear_their_own_stylized_air() -> void:
+	_wears_own_air(&"runes", RunesLook.STYLE)
+
+
+func test_the_trial_wears_its_own_stylized_air() -> void:
+	_wears_own_air(&"trial", TrialLook.STYLE)
+
+
+func test_the_altar_wears_its_own_stylized_air() -> void:
+	_wears_own_air(&"altar", AltarLook.STYLE)
+
+
+## The classic rooms keep their shadowed lights; nothing built for the stylized look casts a shadow; in the stylized
+## altar the candles' light keeps its shadow, the shaft loses its own (spec 3.2: the candles' is the only one).
+func test_lot_d_shadowed_lights() -> void:
+	for id: StringName in [&"runes", &"trial", &"altar"]:
+		for v in (2 if id == &"runes" else 1):
+			var classic := _arena(id, v).look.shadowed
+			var a := _arena(id, v)
+			assert_eq(a.look.shadowed, classic, "%s %d: shadowed lights" % [id, v])
+			for l in a.find_child("Styled", true, false).find_children("*", "Light3D", true, false):
+				assert_false((l as Light3D).shadow_enabled, "%s %d: a stylized light without shadow" % [id, v])
+	var altar := _arena(&"altar")
+	var look := altar.look as AltarLook
+	_flip(altar)
+	look.kindle(0.0)
+	var shadowed: Array[Light3D] = []
+	for l in altar.find_children("*", "Light3D", true, false):
+		if (l as Light3D).visible and (l as Light3D).shadow_enabled:
+			shadowed.append(l)
+	assert_eq(shadowed.size(), 1, "stylized altar lit: one light with shadow")
+	assert_eq(shadowed[0].light_color, ArenaRoom.CANDLE_COLOR, "the candles' light")
+	_flip(altar)
+
+
+func test_lot_d_style_only_pieces_are_off_the_floor_or_low() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for id: StringName in [&"runes", &"trial", &"altar"]:
+		for v in (2 if id == &"runes" else 1):
+			var a := _arena(id, v)
+			var styled := a.find_child("Styled", true, false) as Node3D
+			assert_not_null(styled, "%s %d has stylized-only pieces" % [id, v])
+			var n_meshes := 0
+			var bad := 0
+			for n in styled.find_children("*", "GeometryInstance3D", true, false):
+				var mi := n as MeshInstance3D
+				if mi == null or mi.mesh == null:
+					continue
+				n_meshes += 1
+				var xf := mi.global_transform
+				for sf in mi.mesh.get_surface_count():
+					var verts: PackedVector3Array = mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX]
+					for vert in verts:
+						var w := xf * vert
+						var p := Vector2(w.x, w.z)
+						if w.y > 0.3 and w.y < 2.6 and a.shape().contains(p, 0.05) and not a.overlaps(p, 0.0):
+							bad += 1
+							if bad < 4:
+								gut.p("%s %d: %s under %s at %s" % [id, v, mi.name, mi.get_parent().name, w])
+			assert_eq(bad, 0, "%s %d: nothing new over the floor between 0.3 and 2.6 m" % [id, v])
+			assert_gt(n_meshes, 5, "%s %d: its pieces" % [id, v])
+
+
+## RS-D1: the painted rune floor is the same material on its twin shader: every uniform of the classic one is read by
+## the painted one, set_tile writes the same state texture in both looks, and F7 with a tile lit neither clears nor
+## doubles the state.
+func test_the_painted_rune_floor_keeps_the_tiles_state() -> void:
+	var classic_names := {}
+	for u: Dictionary in ArenaKit.RUNE_FLOOR.get_shader_uniform_list():
+		classic_names[u.name] = true
+	var paint_names := {}
+	for u: Dictionary in ArenaKit.RUNE_FLOOR_PAINT.get_shader_uniform_list():
+		paint_names[u.name] = true
+	for k: String in classic_names:
+		assert_true(paint_names.has(k), "the painted rune floor reads %s" % k)
+	_world()
+	var a := _arena(&"runes")
+	var look := a.look as RunesLook
+	var mat := look.floor_mat
+	var tex: Variant = mat.get_shader_parameter(&"rune_state")
+	look.set_tile(Vector2i(3, 2), 0.8, 0.0, 0.0)
+	look.set_chevrons(Vector2(0, 1))
+	look.apply()
+	var before := look.state_image().get_data()
+	_flip(a)
+	assert_eq(look.floor_mat, mat, "the same material")
+	assert_eq(mat.shader, ArenaKit.RUNE_FLOOR_PAINT, "painted in the stylized look")
+	assert_eq(mat.get_shader_parameter(&"rune_state"), tex, "the same state texture")
+	assert_eq(look.state_image().get_data(), before, "F7 keeps the lit tile, nothing more")
+	assert_eq(mat.get_shader_parameter(&"chevron_dir"), Vector2(0, 1), "and the chevrons")
+	look.set_tile(Vector2i(4, 2), 0.5, 0.0, 0.0)
+	look.apply()
+	assert_almost_eq(look.state_image().get_pixel(4, 2).r, 0.5, 0.01, "set_tile writes the same state stylized")
+	assert_eq(mat.get_shader_parameter(&"rune_state"), tex, "on the same texture")
+	_flip(a)
+	assert_eq(mat.shader, ArenaKit.RUNE_FLOOR, "classic again")
+	assert_almost_eq(look.state_image().get_pixel(4, 2).r, 0.5, 0.01, "and keeps it")
+	var lit := 0
+	for y in look.grid().y:
+		for x in look.grid().x:
+			if look.state_image().get_pixel(x, y).r > 0.01:
+				lit += 1
+	assert_eq(lit, 2, "two tiles lit, none doubled")
+
+
+## RS-D1: a real fight's rune floor in each look: the same tiles' state frame by frame, the same chevrons, the same
+## damage to the paladin and to an enemy on it.
+func test_the_runes_strike_the_same_in_both_looks() -> void:
+	var runs: Array = []
+	for look in [VisualProfile.Look.CLASSIC, VisualProfile.Look.STYLIZED]:
+		VisualProfile.set_look(look)
+		var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+		add_child_autofree(game)
+		game.rebuild_room(_layout(&"runes"), 2, 1406)
+		game.horde.clear_crowd()
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 77
+		var rf := RuneFloor.new(game, _layout(&"runes").hazard, rng)
+		assert_not_null(rf.look, "the room draws its own tiles")
+		var e := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(-4.5, -4.5), false)
+		game.player.place(Vector2(4.5, 1.5))
+		var frames := PackedStringArray()
+		for i in 600:
+			game.player.invuln = 0.0
+			rf.step(1.0 / 60.0)
+			game.ground.step(1.0 / 60.0)
+			frames.append("%s %s %.2f %.2f" % [hash(rf.look.state_image().get_data()),
+				rf.look.floor_mat.get_shader_parameter(&"chevron_dir"), game.player.hp, e.hp])
+		runs.append([frames, rf.enemy_damage])
+		rf.stop()
+		ArenaRoom.leave_air()
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	assert_eq(runs[0][0], runs[1][0], "the same tiles, chevrons and damage every frame")
+	assert_eq(runs[0][1], runs[1][1], "the same damage to the enemies")
+	var states := {}
+	for f: String in runs[0][0]:
+		states[f.get_slice(" ", 0)] = true
+	assert_gt(states.size(), 3, "the floor armed and struck in the run")

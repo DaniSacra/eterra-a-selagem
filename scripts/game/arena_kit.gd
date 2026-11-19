@@ -91,6 +91,9 @@ const FLOOR_PAINT := preload("res://assets/shaders/catacomb_floor_paint.gdshader
 ## The garden's floor moss and its painted twin (room redesign lot C: one grey green in three steps).
 const MOSS_SHADER := preload("res://assets/shaders/root_moss.gdshader")
 const MOSS_PAINT := preload("res://assets/shaders/root_moss_paint.gdshader")
+## The runes' floor (RunesLook) and its painted twin (room redesign lot D: the same material, the same tiles' state).
+const RUNE_FLOOR := preload("res://assets/shaders/rune_floor.gdshader")
+const RUNE_FLOOR_PAINT := preload("res://assets/shaders/rune_floor_paint.gdshader")
 const KAYKIT_MATERIAL := preload("res://assets/models/kaykit_material.tres")
 const KAYKIT_PAINT := preload("res://assets/models/kaykit_paint.tres")
 ## Pieces that take the dressed-stone material (the rest keep the kit's colours: red banners, candles, flames).
@@ -140,6 +143,8 @@ const EMBER := Color(1.25, 0.55, 0.18)
 ## The bed of ash in the bowl (dark, so the bowl does not read as an orange disc) and the share of the bowl's mouth
 ## the glowing coals take.
 const ASH := Color(0.05, 0.025, 0.015)
+## A cold bowl's ash (brazier(..., lit = false)): grey, never glowing.
+const COLD_ASH := Color(0.2, 0.195, 0.2)
 const COALS_SHARE := 0.78
 ## The coals in the bowl and the rim of bronze lit from inside by them (so it reads against the flame).
 const COALS := Color(1.1, 0.3, 0.05)
@@ -387,7 +392,8 @@ func _cloth_material(glow: Color) -> StandardMaterial3D:
 ## olive_share (stone and floor); a material with the meta PAINT_OWN takes those values on top (bone that must not
 ## turn to stone: OWN_KEEP).
 func paint_look(style := {}) -> void:
-	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT, MOSS_SHADER: MOSS_PAINT}
+	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT, MOSS_SHADER: MOSS_PAINT,
+		RUNE_FLOOR: RUNE_FLOOR_PAINT}
 	var seen := {}
 	var kit_paint: Material = KAYKIT_PAINT
 	if style.has(&"shadow"):
@@ -456,6 +462,8 @@ func stylize_fires(at: Node, fire: Dictionary, off: Array = []) -> void:
 	var share: float = fire.get(&"compat", 1.0) if compat else 1.0
 	for n in at.find_children("*", "OmniLight3D", true, false):
 		var l := n as OmniLight3D
+		if l.has_meta(NOT_FIRE):
+			continue
 		if off.has(l):
 			VisualProfile.vary(l, {&"visible": false})
 		elif not fire.is_empty() and l.light_color.r - l.light_color.b >= RoomMood.FIRE_FROM and l.light_cull_mask != DEPTH_LAYER:
@@ -465,7 +473,7 @@ func stylize_fires(at: Node, fire: Dictionary, off: Array = []) -> void:
 				&"omni_attenuation": fire.get(&"bowl_attenuation", l.omni_attenuation) if bowl else l.omni_attenuation,
 				&"light_energy": l.light_energy * float(fire.get(&"bowl_gain" if bowl else &"candle_gain", 1.0)) * share
 					* float(l.get_meta(FIRE_SHARE, 1.0)),
-				&"shadow_enabled": false,
+				&"shadow_enabled": l.shadow_enabled and l.has_meta(KEEP_SHADOW),
 			})
 	for l: Node in off:
 		if l is Light3D and not l is OmniLight3D:
@@ -474,6 +482,11 @@ func stylize_fires(at: Node, fire: Dictionary, off: Array = []) -> void:
 
 ## The meta of a fire bowl's light (brazier; stylize_fires).
 const BOWL := &"bowl"
+## The meta of a warm light that is no fire (room redesign lot D: the runes' lights over the armed tiles, the danger's
+## own, set every frame): stylize_fires leaves it as it is.
+const NOT_FIRE := &"not_fire"
+## The meta of a fire that keeps its shadow in the stylized look (lot D: the altar's candles once lit, its one shadow).
+const KEEP_SHADOW := &"keep_shadow"
 ## The meta of a fire's own share of its stylized energy (stylize_fires; a room's few fires that burnt the floor).
 const FIRE_SHARE := &"fire_share"
 ## The metals in the stylized look (spec 1.2): matte, a little metallic, old gold, iron and bronze.
@@ -695,8 +708,9 @@ func row(name_: String, a: Vector3, b: Vector3, step: float, yaw_offset: float =
 
 
 ## A deep bronze fire bowl on a capped stone pedestal: the warm light of the room. y: the ground it stands on; solid:
-## it blocks the way (a circle of BRAZIER_RADIUS). Returns its light.
-func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT) -> OmniLight3D:
+## it blocks the way (a circle of BRAZIER_RADIUS). Returns its light. lit false: a cold bowl of grey ash, no fire nor
+## light (returns null).
+func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT, lit := true) -> OmniLight3D:
 	var base := Vector3(at.x, y, at.y)
 	masonry.post(base, 0.0, BRAZIER_PEDESTAL)
 	var foot := BRAZIER_PEDESTAL + Masonry.POST_STEP.y + Masonry.POST_CAP.y
@@ -707,7 +721,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	cyl.height = BRAZIER_BOWL.z
 	cyl.radial_segments = 14
 	bowl.mesh = cyl
-	bowl.material_override = _bronze()
+	bowl.material_override = _bronze() if lit else _cold_metal()
 	bowl.position = base + Vector3(0, foot + BRAZIER_BOWL.z * 0.5, 0)
 	root.add_child(bowl)
 	var rim := MeshInstance3D.new()
@@ -717,7 +731,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	torus.rings = 16
 	torus.ring_segments = 6
 	rim.mesh = torus
-	rim.material_override = _rim()
+	rim.material_override = _rim() if lit else _cold_metal()
 	rim.position = base + Vector3(0, foot + BRAZIER_BOWL.z, 0)
 	root.add_child(rim)
 	# a bed of dark ash in the bowl and the coals glowing in its middle (brightest at the heart, out before the rim)
@@ -728,9 +742,19 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	disc.height = 0.03
 	disc.radial_segments = 14
 	ash.mesh = disc
-	ash.material_override = _glow(ASH)
+	if lit:
+		ash.material_override = _glow(ASH)
+	else:
+		var cold := _plain(COLD_ASH, 0.95)
+		cold.metallic = 0.0
+		ash.material_override = cold
 	ash.position = base + Vector3(0, foot + BRAZIER_BOWL.z + 0.015, 0)
 	root.add_child(ash)
+	if not lit:
+		# a cold bowl (room redesign lot D, the trial's T3): grey ash, no coals, no fire, no light
+		if solid:
+			circles.append(Vector3(at.x, at.y, BRAZIER_RADIUS))
+		return null
 	var coals := MeshInstance3D.new()
 	var bed := PlaneMesh.new()
 	bed.size = Vector2.ONE * BRAZIER_BOWL.x * 2.0 * COALS_SHARE
@@ -1282,6 +1306,17 @@ func _rim() -> StandardMaterial3D:
 		_rim_mat.emission = RIM_GLOW
 		_rim_mat.emission_energy_multiplier = RIM_GLOW_ENERGY
 	return _rim_mat
+
+
+## A cold bowl's metal (brazier(..., lit = false)): dark iron, no glow on its rim.
+func _cold_metal() -> StandardMaterial3D:
+	if _cold_mat == null:
+		_cold_mat = _plain(STY_IRON, STY_METAL.x)
+		_cold_mat.metallic = STY_METAL.y
+	return _cold_mat
+
+
+var _cold_mat: StandardMaterial3D
 
 
 func _bronze() -> StandardMaterial3D:

@@ -95,12 +95,53 @@ const WISP_Y := 0.6
 const VEIN_SHADER := preload("res://assets/shaders/trial_veins.gdshader")
 const CRACK_SHADER := preload("res://assets/shaders/x_crack.gdshader")
 
+## The stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md 2.2): greyed lilac stone, no fire, the
+## only lilac light the stele's crack and the veins; every other light diffuse (no disc on the floor).
+const STYLE := {
+	&"stone": Color(0.338, 0.317, 0.352), &"shadow": Color(0.923, 0.843, 0.98), &"floor_stone": Color(0.31, 0.295, 0.325),
+	&"olive_share": 0.0, &"metal": true,
+	&"air": {&"sky": Color(0.17, 0.15, 0.21), &"fog": Color(0.23, 0.2, 0.27), &"ambient": Color(0.64, 0.58, 0.72),
+		&"ambient_gain": 2.3, &"moon": Color(0.74, 0.68, 0.86), &"moon_energy": 0.6, &"moon_shadow": false},
+}
+## The far ruins in the stylized look: a lilac haze, their stone and edge (style_backdrop).
+const STY_BACKDROP := [Color(0.26, 0.22, 0.31), Color(0.12, 0.105, 0.14), Color(0.32, 0.27, 0.38)]
+const STY_COMPAT_AMBIENT := 0.7
+const STY_COMPAT_MOON := 0.6
+## T1: three squares turned 45 degrees round the stele, painted on the floor (their sides, m), grooves of this width in
+## the joints' value, a little worn; nothing round (the stele's cracked seal is the symbol).
+const LOZENGES := Vector3(4.0, 7.0, 10.0)
+const LOZENGE_GROOVE := 0.08
+const LOZENGE_COLOR := Color(0.115, 0.108, 0.125)
+const LOZENGE_WORN := 0.18
+const LOZENGE_Y := 0.005
+## T2: faded petrol banners with the lion, torn (the altar's fade): on the north wall (x) and the west wall (z), top,
+## size.
+const BANNER_NORTH := -3.6
+const BANNER_WEST := 2.6
+const BANNER_TOP := 5.6
+const BANNER_SIZE := Vector2(1.2, 2.8)
+## T3: cold fire bowls high on corbels at the north wall's ends (x), the corbel's top, the bowl's scale; never lit.
+const COLD_BOWLS: Array[float] = [-5.4, 5.4]
+const CORBEL := Vector3(0.8, 0.22, 0.62)
+const CORBEL_TOP := 3.25
+const COLD_BOWL_SCALE := 0.5
+## T4: broken urns on shelves at the foot of the back walls (north: from, to x; west: from, to z), the shelf's height,
+## the urns' height range, the room between two.
+const SHELF_NORTH := Vector2(2.9, 6.1)
+const SHELF_WEST := Vector2(1.2, 4.6)
+const SHELF_HEIGHT := 0.95
+const SHELF_URN := Vector2(0.2, 0.3)
+const SHELF_STEP := 0.6
+const STY_SEED := 5303
+
 static var _cold: TombKit.Lamp
 
 var _level := 1.0
 var _veins: ShaderMaterial
 var _cracks: Array[ShaderMaterial] = []
 var _tween: Tween
+var _spot: SpotLight3D
+var _far: Array[Node] = []
 
 
 func floor_look() -> Dictionary:
@@ -164,7 +205,7 @@ func dress() -> void:
 	for o in layout.obstacles:
 		if o.piece == &"trial_block":
 			block = o.center
-	moon_shaft(block, SPOT, SPOT_ENERGY, SPOT_CONE, SPOT_HEIGHT, true, true)
+	_spot = moon_shaft(block, SPOT, SPOT_ENERGY, SPOT_CONE, SPOT_HEIGHT, true, true)
 	var fill := key_light(FILL, FILL_ENERGY, 9.0)
 	fill.shadow_enabled = false
 	var floor_fill := OmniLight3D.new()
@@ -176,7 +217,10 @@ func dress() -> void:
 	floor_fill.light_cull_mask = FLOOR_LAYER
 	add_child(floor_fill)
 	_lanterns()
+	var from := get_child_count()
 	backdrop(BACKDROP_MIST, BACKDROP_STONE, BACKDROP_EDGE)
+	_far = added_since(from)
+	_dress_styled(block)
 
 
 ## The light of the veins and the cracks (1 before the choice, SETTLED after it).
@@ -373,3 +417,77 @@ static func entry_slab(parent: Node3D, at: Vector2, yaw := 0.0) -> Node3D:
 	crack(root, Vector3(at.x, 0.012, at.y), Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -PI * 0.5), Vector2(inner, inner))
 	kit.mist_bank(Vector3(at.x, WISP_Y, at.y), WISP, LILAC * 0.6, WISP_ALPHA, 0.5, 0.0)
 	return root
+
+
+# ---------- the stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md section 2) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	diffuse_lights()
+	style_backdrop(_far, STY_BACKDROP[0], STY_BACKDROP[1], STY_BACKDROP[2])
+	return st
+
+
+## The pieces only the stylized look shows (spec 2.3), on kit.styled(), never the room's random numbers.
+func _dress_styled(block: Vector2) -> void:
+	var sm := kit.styled()
+	var box := layout.floor.bounds()
+	var north := box.position.y
+	var west := box.position.x
+	_lozenges(sm, block, box)
+	var nodes: Array[Node] = []
+	var face_n := north - FACE_SET + 0.06
+	var face_w := west - FACE_SET + 0.06
+	nodes.append(kit.styled_build(func() -> void:
+		kit.banner(Vector3(BANNER_NORTH, BANNER_TOP, face_n), 0.0, BANNER_SIZE, ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION)))
+	nodes.append(kit.styled_build(func() -> void:
+		kit.banner(Vector3(face_w, BANNER_TOP, BANNER_WEST), PI * 0.5, BANNER_SIZE, ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION)))
+	for n in nodes:
+		fade_banners(n.get_children(), AltarLook.BANNER_FADE)
+	var face := north - FACE_SET
+	for x in COLD_BOWLS:
+		sm.box(Vector3(x, CORBEL_TOP - CORBEL.y * 0.5, face + CORBEL.z * 0.5), CORBEL, 0.0, ashlar(), false)
+		var at := Vector3(x, CORBEL_TOP, face + CORBEL.z * 0.5)
+		kit.styled_build(func() -> void: kit.brazier(Vector2(at.x, at.z), at.y, false, 0.0, false), at, COLD_BOWL_SCALE)
+	var r := RandomNumberGenerator.new()
+	r.seed = STY_SEED
+	var urn := sm.carved(0.0, STONE)
+	var shelves: Array = [
+		wall_ledge(sm, Vector2(SHELF_NORTH.x, north), Vector2(SHELF_NORTH.y, north), Vector2(0, -1), SHELF_HEIGHT, ashlar()),
+		wall_ledge(sm, Vector2(west, SHELF_WEST.x), Vector2(west, SHELF_WEST.y), Vector2(-1, 0), SHELF_HEIGHT, ashlar())]
+	for line: Array[Vector3] in shelves:
+		var n := int(line[0].distance_to(line[1]) / SHELF_STEP)
+		for i in n:
+			var p := line[0].lerp(line[1], (i + 0.5) / n)
+			if r.randf() < 0.3:
+				continue
+			sm.urn(p, r.randf_range(SHELF_URN.x, SHELF_URN.y), urn, false)
+			# the broken lip: a shard fallen beside it
+			var side := (line[1] - line[0]).normalized() * r.randf_range(0.12, 0.18) * (1.0 if r.randf() < 0.5 else -1.0)
+			var shard := sm.box(p + side + Vector3(0, 0.015, 0), Vector3(0.07, 0.03, 0.05), r.randf() * TAU, urn, false)
+			shard.rotate_object_local(Vector3.BACK, r.randf_range(-0.4, 0.4))
+
+
+## T1: the lozenges round the stele (floor_decal kind 4), one card over the floor's box.
+func _lozenges(sm: Masonry, at: Vector2, box: Rect2) -> void:
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	# centred on the stele, as large as reaches the floor's far sides
+	var half := Vector2(maxf(at.x - box.position.x, box.end.x - at.x), maxf(at.y - box.position.y, box.end.y - at.y))
+	q.size = half * 2.0
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = CatacombHall.DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 4)
+	mat.set_shader_parameter(&"rug_size", q.size)
+	mat.set_shader_parameter(&"lozenges", LOZENGES)
+	mat.set_shader_parameter(&"groove_width", LOZENGE_GROOVE)
+	mat.set_shader_parameter(&"groove_color", LOZENGE_COLOR)
+	mat.set_shader_parameter(&"groove_worn", LOZENGE_WORN)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(at.x, LOZENGE_Y, at.y)
+	sm.root.add_child(mi)

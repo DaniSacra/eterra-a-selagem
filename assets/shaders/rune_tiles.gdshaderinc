@@ -59,6 +59,16 @@ uniform float ember_reach = 0.7;
 uniform float ember_glow = 0.75;
 // Nothing on the floor past this channel of light (the glow's threshold is 1.3 after the exposure).
 uniform float rune_cap = 1.0;
+#ifdef PAINT
+// Room redesign lot D (spec 1.1): in the stylized look the frames and marks at rest are a pale dim trace of ivory cut in
+// the stone (never gold that reads as warmth: the amber is the armed tile's alone), the quiet stone's thread half of it.
+// The arming, the strike and the ember are the classic ones.
+uniform vec3 paint_trace : source_color = vec3(0.55, 0.52, 0.46);
+uniform float paint_trace_share = 0.45;
+uniform float paint_quiet_trace = 0.5;
+// the quiet stone's pale smooth stone at this share of its classic colour (painted, it lit near white)
+uniform float paint_quiet_value = 0.5;
+#endif
 
 // The tile under wp: its min corner and size in units (one unit a tile), its id the tile's column and row.
 void rune_slab(vec2 wp, out vec4 rect, out vec2 id) {
@@ -96,11 +106,19 @@ void rune_floor(vec2 wp, vec4 rect, float edge, float joint, inout vec3 c, inout
 	float d_in = min(half_size.x - abs(lp.x), half_size.y - abs(lp.y));
 	if (st.a < 0.75) {
 		// the quiet stone: smooth pale stone, a dim thread of old gold round it, no mark, never lit
-		c = mix(c, quiet_color * (0.88 + 0.24 * noise(wp * 0.8)), 0.9 * (1.0 - joint));
+		vec3 quiet_c = quiet_color;
+#ifdef PAINT
+		quiet_c *= paint_quiet_value;
+#endif
+		c = mix(c, quiet_c * (0.88 + 0.24 * noise(wp * 0.8)), 0.9 * (1.0 - joint));
 		float q0 = frame_inset;
 		float q1 = frame_inset + frame_width * 0.6;
 		float thread = smoothstep(q0 - 0.012, q0 + 0.008, d_in) * (1.0 - smoothstep(q1 - 0.008, q1 + 0.012, d_in));
-		c = mix(c, mix(gold_dark, gold_light, noise(wp * 6.0)), thread * quiet_frame);
+		vec3 thread_c = mix(gold_dark, gold_light, noise(wp * 6.0));
+#ifdef PAINT
+		thread_c = mix(thread_c, paint_trace, paint_quiet_trace);
+#endif
+		c = mix(c, thread_c, thread * quiet_frame);
 		rough = 0.6;
 		return;
 	}
@@ -116,6 +134,9 @@ void rune_floor(vec2 wp, vec4 rect, float edge, float joint, inout vec3 c, inout
 	float wall_in = smoothstep(g1 - 0.025, g1, d_in) * (1.0 - smoothstep(g1, g1 + 0.02, d_in));
 	lean += out_dir * (wall_in - wall_out) * frame_tilt;
 	vec3 gold = mix(gold_dark, gold_light, noise(wp * 6.0));
+#ifdef PAINT
+	gold = mix(c, paint_trace * (0.9 + 0.2 * noise(wp * 6.0)), paint_trace_share);
+#endif
 	float worn = 0.7 + 0.3 * noise(wp * 5.0 + cell);
 	c = mix(c, joint_color * 0.8, groove * frame_dark);
 	c = mix(c, gold, groove * frame_gold * worn);

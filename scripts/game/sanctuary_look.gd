@@ -689,26 +689,12 @@ func _shards(sm: Masonry) -> void:
 
 ## S5: moss and ivy hanging on the north wall's face: over each blind window's head and along its top.
 func _moss(sm: Masonry, face: float) -> void:
-	var mat := ShaderMaterial.new()
-	mat.shader = CatacombHall.DECAL_SHADER
-	mat.set_shader_parameter(&"kind", 2)
-	mat.set_shader_parameter(&"rug_size", MOSS_CARD)
-	mat.set_shader_parameter(&"moss", MOSS)
-	var spots: Array[Vector2] = []
+	var tops: Array[Vector3] = []
 	for x in WINDOWS:
-		spots.append(Vector2(x, WINDOW.z + WINDOW.y + 0.5))
+		tops.append(Vector3(x, WINDOW.z + WINDOW.y + 0.5, face + 0.03))
 	for x in WALL_TOP_MOSS:
-		spots.append(Vector2(x, WALL_HEIGHT - 0.05))
-	for s in spots:
-		var mi := MeshInstance3D.new()
-		var q := QuadMesh.new()
-		q.size = MOSS_CARD
-		mi.mesh = q
-		mi.material_override = mat
-		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		# its top edge at s.y, a hair off the wall's face
-		mi.position = Vector3(s.x, s.y - MOSS_CARD.y * 0.5, face + 0.03)
-		sm.root.add_child(mi)
+		tops.append(Vector3(x, WALL_HEIGHT - 0.05, face + 0.03))
+	wall_moss(sm, tops, MOSS_CARD, MOSS)
 
 
 ## S6 (B): the vault torn over the hole: two ribs across the nave over the hole's lips, their middles fallen, stones

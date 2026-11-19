@@ -12,6 +12,9 @@ shader_type spatial;
 //   3 fallen leaves (room redesign lot C, the garden's J2): dead leaves in rust, each a small pointed oval in its own
 //     cell, at most `litter_cover` of the card, densest along one side (UV.y 0: the wall's foot) and thinning to none
 //     at the other; with `litter_ring.y` > 0 instead between two radii round the card's middle (m: the trunk's foot).
+//   4 the trial's lozenges (room redesign lot D, T1): grooves of `groove_width` m in `groove_color` along squares turned
+//     45 degrees, all round the card's middle (their sides `lozenges` m; 0: none), worn away in stretches (`groove_worn`);
+//     nothing round (UV 0..1 over the card, `rug_size` its size in m).
 render_mode blend_mix, depth_draw_never, cull_disabled, diffuse_lambert, specular_disabled;
 
 uniform int kind = 0;
@@ -47,6 +50,14 @@ uniform float litter_cell = 0.16;
 uniform vec2 litter_size = vec2(0.09, 0.15);
 uniform float litter_cover = 0.3;
 uniform vec2 litter_ring = vec2(0.0, 0.0);
+// the lozenges: their sides (m), the groove's width (m, across it), its colour and the share of it worn away
+uniform vec3 lozenges = vec3(4.0, 7.0, 10.0);
+uniform float groove_width = 0.08;
+uniform vec3 groove_color : source_color = vec3(0.12, 0.115, 0.13);
+uniform float groove_worn = 0.2;
+// the lit lip along each groove's outer side (its colour, its width as a share of the groove's), so it reads cut
+uniform vec3 groove_lip : source_color = vec3(0.3, 0.29, 0.32);
+uniform float groove_lip_width = 0.7;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -122,6 +133,23 @@ void fragment() {
 		}
 		c = mix(leaf_dark, leaf_light, tone) * mix(0.85, 1.1, noise(m * 9.0));
 		a = alpha * leaf;
+	} else if (kind == 4) {
+		vec2 m = (UV - 0.5) * rug_size;
+		// a square of side s turned 45 degrees: |x| + |y| = s / sqrt(2); across its side the distance is that / sqrt(2)
+		float k = abs(m.x) + abs(m.y);
+		float line = 0.0;
+		float lip = 0.0;
+		for (int i = 0; i < 3; i++) {
+			float s = lozenges[i];
+			if (s <= 0.0) { continue; }
+			float off = (k - s * 0.7071) * 0.7071;
+			line = max(line, 1.0 - smoothstep(groove_width * 0.4, groove_width * 0.5 + 0.004, abs(off)));
+			float lw = groove_width * groove_lip_width;
+			lip = max(lip, 1.0 - smoothstep(lw * 0.4, lw * 0.5 + 0.004, abs(off - groove_width * 0.5 - lw * 0.5)));
+		}
+		float kept = step(groove_worn, noise(m * 1.3 + 4.0) * 0.7 + noise(m * 5.0) * 0.3);
+		c = mix(groove_lip, groove_color, line) * mix(0.85, 1.1, noise(m * 20.0));
+		a = alpha * max(line, lip * 0.35) * kept;
 	} else {
 		float reach = ring.y + north_reach + ragged + 0.1;
 		vec2 m = (UV - 0.5) * 2.0 * reach;

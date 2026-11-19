@@ -11,6 +11,7 @@ extends SceneTree
 ##             nothing over it: looks walkable and is the abyss
 ## Each in m², the pieces' bare share, and the meshes the phantoms come from.
 ##   ~/tools/godot/godot --headless --path . -s tools/fit_probe.gd -- --arena=garden --variant=1 [--png=out.png]
+## --look=classic|stylized builds the room in that visual profile.
 ## --png draws the four kinds over the floor seen from above (1 px a cell), for a look.
 
 const STAGE := "res://data/stages/catacombs.tres"
@@ -58,6 +59,10 @@ func _run() -> void:
 		quit(1)
 		return
 	layout = layout.variant(int(opts.get("variant", "0")))
+	# --look=classic|stylized: the visual profile the room is built in (room redesign lot D)
+	if opts.has("look"):
+		var vp: Variant = load("res://scripts/core/visual_profile.gd")
+		vp.set_look(vp.parse(str(opts["look"])))
 	var world := Node3D.new()
 	root.add_child(world)
 	var arena: Variant = load("res://scripts/game/arena.gd").new()

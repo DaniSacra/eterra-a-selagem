@@ -1628,6 +1628,49 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Ponte 13,1 / 13,1 para 13,6 / 13,7 ms de quadro (cerca de 3 qps a menos; as aduelas de baixo e as pontes do fundo na
   pedra funda, mais barata que a cantaria pintada). Compatibility sem erro (o Jardim mais claro e mais verde lá).
 
+## Redesenho das salas, Lote D (só no estilizado; spec `docs/art/room_redesign_lotD_spec.md`, capturas em `docs/gallery/redesign/lotD/`)
+- **Biblioteca nova** (`ArenaRoom`): `diffuse_lights(sem_sombra)` (toda luz que não é fogo vira difusa, `light_specular` 0,
+  sem disco de borda dura), `fade_banners(nós, fade)` (estandarte desbotado, um material por fonte, do Altar, agora comum),
+  `wall_moss(sm, topos, cartão, cor)` (musgo de parede do Santuário, agora comum), `wall_ledge(sm, a, b, fora, altura,
+  mat)` (prateleira de pedra com duas mísulas na folga entre a borda e a face da parede, `LEDGE_*`) e
+  `style_backdrop(nós, bruma, pedra, borda)` (as ruínas do `backdrop()` no estilizado). `ArenaKit`: chão de runas
+  pintado (`RUNE_FLOOR` / `RUNE_FLOOR_PAINT`, `rune_floor_paint.gdshader` com `#define PAINT` e `RUNES`, trocado pelo
+  `paint_look`), metas `NOT_FIRE` (luz quente que o `stylize_fires` não mexe: a do perigo) e `KEEP_SHADOW` (fogo que
+  fica com sombra no estilizado), `brazier(..., lit = false)` braseiro frio (ferro escuro, cinza, sem luz).
+  `floor_decal.gdshader` `kind` 4: losangos concêntricos sulcados (`lozenges`, `groove_*`, lábio claro `groove_lip`).
+- **Runas** (`RunesLook.STYLE`, cinza-ardósia frio): o estado das lajes é o mesmo material e a mesma textura nos dois
+  looks; no pintado o traço das marcas e da moldura em repouso é marfim apagado (`paint_trace`, `paint_trace_share`
+  0,45), nada âmbar fora do perigo, a pedra quieta da B mais escura (`paint_quiet_value` 0,5); armar, golpe e brasa
+  iguais. Sulcos dos pilares e barras das estelas em marfim (`STY_IVORY`; o sulco volta ao âmbar com o calor, `heat`);
+  luz de cima neutra e difusa (`STY_KEY`), luzes do perigo e fogos difusos (nada redondo, D-29). R2 mecanismo de
+  quadrados de ouro velho na face norte (`MECH*`, foco frio sem sombra); R4 prateleira de estudo no corte noroeste
+  (`STUDY*`); R5 na B cristais de prisma encostados na parede norte, só imagem (`CRYSTAL*`, `crystal_edge`, fora do
+  chão e longe da pedra quieta).
+- **Provação** (`TrialLook.STYLE`, lilás): ar e ruínas do fundo lilás (`STY_BACKDROP`), luzes difusas (o foco fica com a
+  sombra); T1 losangos sulcados em volta da estela (`LOZENGE*`, sem círculo novo); T2 dois estandartes desbotados nas
+  paredes norte e oeste; T3 mísulas com braseiros frios acima de 3 m (`COLD_BOWLS`, `CORBEL_TOP` 3,25); T4 prateleiras
+  com urnas abertas e cacos (`SHELF_*`). `settle` apaga as veias igual nos dois looks.
+- **Altar** (`AltarLook.STYLE`, calcário morno): ar e ruínas mornos, facho frio difuso e sem sombra (`STY_SHAFT*`); a
+  luz das velas acesas é a única com sombra (`KEEP_SHADOW`) e pinta a poça de um braseiro (`BOWL`, `bowl_range` 7,5,
+  `bowl_gain` 2,2); oferendas no topo do altar e em duas prateleiras na parede norte (`OFFERINGS`, `SHELVES`, urnas, pano
+  dobrado petróleo e terra, tigela de ouro velho), pétalas pálidas diante do degrau (`PETALS`, decalque `kind` 3), hera
+  pela `wall_moss` (`IVY`). Nada de figura alada, auréola, raio, sol ou cruz.
+- Ferramentas: `tools/arena_lab.gd --look=classic|stylized` e `tools/fit_probe.gd --look=...`. Teste:
+  `tests/test_room_style.gd` (ida e volta das quatro vistas, ar próprio, sombras iguais e nenhuma no que é só do
+  estilizado, a vela acesa do Altar a única com sombra, nada do estilizado sobre o chão entre 0,3 e 2,6 m, o chão de
+  runas pintado lê todo uniform do clássico e guarda o estado com F7, e 600 quadros de `RuneFloor` com o mesmo estado,
+  divisas e dano no herói e no inimigo nos dois looks). Robô: 8 sementes nas Runas A e B, `--start=trial` e
+  `--start=altar`, nenhum `stuck`. fit_probe igual nos dois looks (Runas 2,61 / borda falsa 0,45; Provação 1,12; Altar 3,36).
+- Medido (RTX 1080, semente 5; `tools/frame_stats.py --hue --scene`): Runas chão da luta matiz 227 a 231, luma 68 a 77,
+  saturação 0,09 a 0,11 (clássico 0,38 a 0,52); armado, laje acesa luma 171 contra 73 do chão vizinho, matiz 31 (clássico
+  29); em repouso 0,3% de âmbar (os braseiros). Provação quadro matiz 266 a 268, luma p50 47, vermelho só o do HUD; veias
+  de 94 para 69 depois do `settle` (clássico 100 para 76). Altar chão matiz 36 a 37, luma 51 antes do `kindle`; parte
+  quente do quadro do jogo 4,2% antes de acender (portas e placas), no laboratório só a sala 0,6% para 2,7% acesa (abaixo
+  dos 4 a 10% da spec contados só na sala). Quadro: RTX 1080 Alta Runas 1,85 / 1,90 para 1,75 / 1,80 ms, Provação 2,20
+  para 2,17, Altar 2,23 para 2,26; iGPU 720 Baixa Runas 12,9 / 12,8 para 12,6 / 12,8, Provação 15,2 para 14,1, Altar
+  16,3 para 16,2 ms (nada perdido). Compatibility sem erro. O clássico é o mesmo (diferença só nas partículas e nas divisas
+  que andam).
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

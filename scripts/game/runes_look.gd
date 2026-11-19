@@ -79,10 +79,66 @@ const ARM_ENERGY := 1.0
 const ARM_HEIGHT := 1.6
 const ARM_RANGE := 5.0
 const FLASH_SHADER := preload("res://assets/shaders/rune_flash.gdshader")
-const FLOOR_SHADER := preload("res://assets/shaders/rune_floor.gdshader")
+const FLOOR_SHADER := ArenaKit.RUNE_FLOOR
 ## The sheet of the strike: its colour (ivory-amber, spec 3.4) and how far inside the frame it starts.
 const FLASH := Color(1.0, 0.88, 0.70)
 const FLASH_INSET := 0.1
+
+## The stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md 1.3): pale cold stone, almost grey, so
+## the amber of an armed tile reads alone; the north door's bowls with the hall's fire numbers (the lights over the armed
+## tiles are the danger's: ArenaKit.NOT_FIRE, as they are, only diffuse, nothing round on the floor).
+const STYLE := {
+	&"stone": Color(0.344, 0.349, 0.366), &"shadow": Color(0.95, 0.955, 0.98), &"floor_stone": Color(0.331, 0.336, 0.346),
+	&"joint_cold": Color(1.0, 1.0, 1.02), &"olive_share": 0.0, &"slab_hue": 2.0, &"edge_value": 1.0, &"metal": true, &"fire": CatacombHall.STYLE[&"fire"],
+	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.10, 0.10, 0.12), &"ambient": Color(0.72, 0.725, 0.75),
+		&"ambient_gain": 1.55, &"moon": Color(0.9, 0.9, 0.93), &"moon_energy": 0.8, &"moon_shadow": false},
+}
+## The browser's renderer: the stylized air's share there.
+const STY_COMPAT_AMBIENT := 0.7
+const STY_COMPAT_MOON := 0.6
+## R1 and R3: the glyphs of the pillars at rest and the marks of the stelae, dim carved ivory (never green); the
+## pillars' grooves matte stone there (metallic, roughness).
+const STY_IVORY := Color(0.55, 0.52, 0.46)
+## The light from above in the stylized look: near neutral (the floor's saturation stays low) and diffuse.
+const STY_KEY := Color(0.86, 0.87, 0.9)
+const STY_GROOVE := Vector2(0.05, 0.85)
+## R2: the mechanism on the north wall between the first two stelae (x, its middle's height, the side of its outer
+## lozenge: a square turned 45 degrees), its rings (sides as shares of the outer one), a bar's width and depth, the
+## counterweights (size), the dark backing (its side over the outer ring's, its stone), its old gold (colour; metallic,
+## roughness), and the faint cold spot that parts it from the wall (colour, energy, cone, where from: up, out).
+const MECH := Vector3(-4.75, 3.5, 4.9)
+const MECH_RINGS: Array[float] = [1.0, 0.7, 0.4]
+const MECH_BAR := Vector2(0.14, 0.08)
+const MECH_WEIGHT := Vector3(0.36, 0.5, 0.1)
+const MECH_BACK := 1.06
+const MECH_BACK_STONE := Color(0.55, 0.56, 0.6)
+const MECH_GOLD := Color(0.42, 0.31, 0.13)
+const MECH_METAL := Vector2(0.35, 0.75)
+const MECH_SPOT := Color(0.78, 0.82, 0.95)
+const MECH_SPOT_ENERGY := 1.2
+const MECH_SPOT_CONE := 24.0
+const MECH_SPOT_FROM := Vector2(9.5, 4.5)
+## R4: the study's things on a shelf along the north-west cut, off the floor (its top's height; what stands along it,
+## in order: 0 crate, 1 urn, 2 burnt candle, 3 folded cloth), the crates' side, the urns' height range, the cloth.
+const STUDY_HEIGHT := 0.95
+const STUDY: Array[int] = [0, 1, 2, 2, 3, 0, 1, 2, 1, 0]
+const STUDY_CRATE := 0.24
+const STUDY_URN := Vector2(0.22, 0.32)
+const STUDY_CLOTH := Color(0.06, 0.13, 0.14)
+const STY_SEED := 3917
+## R5 (B): the crystal against the north wall's foot, off the floor, before the quiet stone's axis: its middle (x),
+## how many prisms, their height and radius ranges, how far they lean back and aside (degrees), its colour (albedo
+## share, the edge's glow peak: the brightest channel twice that, under 0.8).
+const CRYSTAL_X := 1.5
+const CRYSTAL_SPREAD := 1.1
+const CRYSTALS := 6
+const CRYSTAL_HEIGHT := Vector2(1.2, 3.0)
+const CRYSTAL_RADIUS := Vector2(0.12, 0.28)
+const CRYSTAL_LEAN := Vector2(4.0, 14.0)
+const CRYSTAL_COLOR := Color(0.62, 0.68, 0.75)
+const CRYSTAL_ALBEDO := 0.45
+const CRYSTAL_PEAK := 0.35
+const CRYSTAL_SHADER := preload("res://assets/shaders/crystal_edge.gdshader")
 
 var _origin := Vector2.ZERO
 var _grid := Vector2i.ZERO
@@ -94,6 +150,8 @@ var _groove: ShaderMaterial
 var _lights: Array[OmniLight3D] = []
 var _heat := 0.0
 var _quiet := false
+var _marks: Array[MeshInstance3D] = []
+var _key: OmniLight3D
 
 
 func floor_shader() -> Shader:
@@ -165,6 +223,7 @@ func dress() -> void:
 	_walls(box)
 	_flash_sheet()
 	var key := key_light(KEY_B if _quiet else KEY, KEY_ENERGY, KEY_HEIGHT)
+	_key = key
 	key.omni_range = KEY_REACH
 	key.omni_attenuation = KEY_FALLOFF
 	if not compat():
@@ -175,8 +234,10 @@ func dress() -> void:
 			l.omni_range = ARM_RANGE
 			l.visible = false
 			l.light_cull_mask = ~Arena.CROWD_LAYER
+			l.set_meta(ArenaKit.NOT_FIRE, true)
 			add_child(l)
 			_lights.append(l)
+	_dress_styled(box)
 
 
 # ---------- the tiles' state (the gameplay writes it) ----------
@@ -240,6 +301,7 @@ func apply() -> void:
 	if _groove != null:
 		_groove.set_shader_parameter(&"glow", ArenaKit.FIRE * (_heat * GROOVE_HEAT))
 		_groove.set_shader_parameter(&"gold", TombKit.GOLD.lerp(ArenaKit.FIRE, _heat * 0.5))
+		_groove.set_shader_parameter(&"heat", _heat)
 	_place_lights(armed)
 
 
@@ -429,6 +491,7 @@ func _stele(at: Vector2, mat: Material) -> void:
 			var turn := float(r.randi_range(0, 3)) * PI * 0.25
 			var bar := tomb.bar(Vector3(x, y, face + 0.006), Vector3(r.randf_range(MARK_LENGTH.x, MARK_LENGTH.y), MARK_WIDTH, 0.012), 0.0, gold)
 			bar.rotate_object_local(Vector3.BACK, turn)
+			_marks.append(bar)
 	# the ledge at its foot, out of the floor (between the wall's face and the edge)
 	var ledge := Vector3(at.x, LEDGE.x, at.y - LEDGE.y * 0.5 - 0.04)
 	m.box(ledge - Vector3(0, 0.06, 0), Vector3(STELE.x + 0.4, 0.12, LEDGE.y), 0.0, mat, false)
@@ -467,3 +530,176 @@ func _pillar(o: ArenaObstacle) -> void:
 			bar.transform = Transform3D(face, p)
 			bar.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			add_child(bar)
+
+
+# ---------- the stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md section 1) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	diffuse_lights()
+	VisualProfile.vary(_key, {&"light_color": STY_KEY})
+	# the fires and the danger's lights: as they are, but diffuse (a fire's drawn pool is a ring on the floor, D-29)
+	for n in find_children("*", "OmniLight3D", true, false):
+		VisualProfile.vary(n, {&"light_specular": 0.0})
+	if _groove != null:
+		VisualProfile.vary(_groove, {&"shader_parameter/ivory": STY_IVORY, &"shader_parameter/ivory_share": 1.0,
+			&"shader_parameter/metallic": STY_GROOVE.x, &"shader_parameter/roughness": STY_GROOVE.y})
+	var ivory := StandardMaterial3D.new()
+	ivory.albedo_color = STY_IVORY
+	ivory.roughness = 0.9
+	for bar in _marks:
+		VisualProfile.vary(bar, {&"material_override": ivory})
+	return st
+
+
+## The pieces only the stylized look shows (spec 1.4), on kit.styled(), never the room's random numbers: R2 the
+## mechanism on the north wall, R4 the study's things on the north-west cut, R5 (B) the crystal at the north wall's foot.
+func _dress_styled(box: Rect2) -> void:
+	var sm := kit.styled()
+	var north := box.position.y
+	_mechanism(sm, north - FACE_SET)
+	var poly := layout.floor.polys[0]
+	# the north-west cut: the edge between the west side's top and the north side's west end
+	var a := Vector2(box.position.x, box.end.y)
+	var b := Vector2(box.end.x, north)
+	for p in poly:
+		if is_equal_approx(p.x, box.position.x):
+			a.y = minf(a.y, p.y)
+		if is_equal_approx(p.y, north):
+			b.x = minf(b.x, p.x)
+	if a.distance_to(b) > 1.0:
+		_study(sm, a, b)
+	if _quiet:
+		_crystal(sm, north)
+
+
+## R2: a lozenge of square rings of old gold on a dark backing, four bars from the hub to the outer ring and four
+## counterweights on the middle ring's corners; nothing round (D-29). A faint cold spot from above parts it from the wall.
+func _mechanism(sm: Masonry, face: float) -> void:
+	var gold := StandardMaterial3D.new()
+	gold.albedo_color = MECH_GOLD
+	gold.metallic = MECH_METAL.x
+	gold.roughness = MECH_METAL.y
+	var mid := Vector3(MECH.x, MECH.y, face)
+	var turn := Basis(Vector3.BACK, PI * 0.25)
+	var back_side := MECH.z * MECH_BACK
+	var back := sm.box(mid + Vector3(0, 0, 0.02), Vector3(back_side, back_side, 0.04), 0.0, sm.stone(0.0, STONE * MECH_BACK_STONE), false)
+	back.basis = turn
+	for share in MECH_RINGS:
+		var side := MECH.z * share
+		for k in 4:
+			# the four sides of a square turned 45 degrees: each side's middle at side/2 along a diagonal
+			var dir := Vector2.from_angle(PI * 0.25 + PI * 0.5 * k)
+			var at := mid + Vector3(dir.x, dir.y, 0) * side * 0.5 + Vector3(0, 0, 0.04 + MECH_BAR.y * 0.5)
+			var bar := sm.box(at, Vector3(side + MECH_BAR.x, MECH_BAR.x, MECH_BAR.y), 0.0, gold, false)
+			bar.basis = Basis(Vector3.BACK, dir.angle() + PI * 0.5)
+	var reach := MECH.z * 0.7071
+	for k in 4:
+		var dir := Vector2.from_angle(PI * 0.5 * k)
+		var at := mid + Vector3(dir.x, dir.y, 0) * reach * 0.5 + Vector3(0, 0, 0.04 + MECH_BAR.y * 1.5)
+		var bar := sm.box(at, Vector3(reach, MECH_BAR.x, MECH_BAR.y), 0.0, gold, false)
+		bar.basis = Basis(Vector3.BACK, dir.angle())
+		var w := mid + Vector3(dir.x, dir.y, 0) * reach * MECH_RINGS[1] + Vector3(0, 0, 0.04 + MECH_BAR.y * 2.0 + MECH_WEIGHT.z * 0.5)
+		var weight := sm.box(w, MECH_WEIGHT, 0.0, gold, false)
+		weight.basis = Basis(Vector3.BACK, dir.angle() + PI * 0.5)
+	var hub := sm.box(mid + Vector3(0, 0, 0.04 + MECH_BAR.y * 2.0 + MECH_WEIGHT.z * 0.5), Vector3(0.5, 0.5, MECH_WEIGHT.z), 0.0, gold, false)
+	hub.basis = turn
+	var spot := SpotLight3D.new()
+	sm.root.add_child(spot)
+	spot.look_at_from_position(Vector3(MECH.x, MECH_SPOT_FROM.x, face + MECH_SPOT_FROM.y), mid)
+	spot.light_color = MECH_SPOT
+	spot.light_energy = MECH_SPOT_ENERGY
+	spot.spot_angle = MECH_SPOT_CONE
+	spot.spot_range = MECH_SPOT_FROM.x * 2.0
+	spot.light_specular = 0.0
+	spot.light_cull_mask = ~Arena.CROWD_LAYER
+
+
+## R4: the study left on a shelf along the north-west cut (a to b on the floor's edge): crates, urns, burnt candles, a
+## folded cloth; off the floor.
+func _study(sm: Masonry, a: Vector2, b: Vector2) -> void:
+	var out := (b - a).orthogonal().normalized()
+	if layout.floor.covers((a + b) * 0.5 + out * 0.3):
+		out = -out
+	var line := wall_ledge(sm, a, b, out, STUDY_HEIGHT, ashlar())
+	var along := (b - a).normalized()
+	var yaw := atan2(-along.y, along.x)
+	var r := RandomNumberGenerator.new()
+	r.seed = STY_SEED
+	var urn := sm.carved(0.0, STONE)
+	var cloth := StandardMaterial3D.new()
+	cloth.albedo_color = STUDY_CLOTH
+	cloth.roughness = 0.95
+	for i in STUDY.size():
+		var p := line[0].lerp(line[1], (i + 0.5) / STUDY.size())
+		match STUDY[i]:
+			0:
+				var s := STUDY_CRATE * r.randf_range(0.85, 1.0)
+				sm.crate(p, Vector3(s, s * r.randf_range(0.8, 1.1), s), yaw + r.randf_range(-0.15, 0.15))
+			1:
+				sm.urn(p, r.randf_range(STUDY_URN.x, STUDY_URN.y), urn, r.randf() < 0.5)
+			2:
+				sm.candle_out(p + Vector3(along.x, 0, along.y) * r.randf_range(-0.08, 0.08), r.randf_range(0.08, 0.2), 0.05)
+			3:
+				sm.box(p + Vector3(0, 0.02, 0), Vector3(0.22, 0.04, 0.18), yaw, cloth, false)
+				sm.box(p + Vector3(0, 0.055, 0), Vector3(0.2, 0.03, 0.1), yaw + 0.2, cloth, false)
+
+
+## R5 (B): a cluster of six-sided prisms of cold ivory-blue glass at the north wall's foot, off the floor, leaning back
+## into the wall, the light only along their edges (crystal_edge.gdshader); no light of its own.
+func _crystal(sm: Masonry, north: float) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = STY_SEED + 5
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for k in CRYSTALS:
+		var t := (k + 0.5) / CRYSTALS
+		var h := lerpf(CRYSTAL_HEIGHT.x, CRYSTAL_HEIGHT.y, 1.0 - absf(t - 0.5) * 2.0 * r.randf_range(0.3, 0.8))
+		var rad := r.randf_range(CRYSTAL_RADIUS.x, CRYSTAL_RADIUS.y)
+		var foot := Vector3(CRYSTAL_X + (t - 0.5) * 2.0 * CRYSTAL_SPREAD, 0.0, north - rad - 0.04)
+		var back := deg_to_rad(r.randf_range(CRYSTAL_LEAN.x, CRYSTAL_LEAN.y))
+		var aside := deg_to_rad((t - 0.5) * 2.0 * CRYSTAL_LEAN.y)
+		var basis := Basis(Vector3.BACK, -aside) * Basis(Vector3.RIGHT, -back) * Basis(Vector3.UP, r.randf() * PI)
+		_prism(st, Transform3D(basis, foot), rad, h)
+	st.generate_normals()
+	var mat := ShaderMaterial.new()
+	mat.shader = CRYSTAL_SHADER
+	mat.set_shader_parameter(&"albedo", CRYSTAL_COLOR * CRYSTAL_ALBEDO)
+	mat.set_shader_parameter(&"glow", CRYSTAL_COLOR)
+	mat.set_shader_parameter(&"peak", CRYSTAL_PEAK)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	sm.root.add_child(mi)
+
+
+## One six-sided prism of `rad` from its foot up `h`, its last fifth a point (flat facets).
+func _prism(st: SurfaceTool, xf: Transform3D, rad: float, h: float) -> void:
+	var cap := h * 0.8
+	var ring_lo: Array[Vector3] = []
+	var ring_hi: Array[Vector3] = []
+	for i in 6:
+		var a := TAU * i / 6.0
+		ring_lo.append(xf * Vector3(cos(a) * rad, -0.2, sin(a) * rad))
+		ring_hi.append(xf * Vector3(cos(a) * rad, cap, sin(a) * rad))
+	var tip := xf * Vector3(0, h, 0)
+	var axis := xf * Vector3(0, h * 0.5, 0)
+	for i in 6:
+		var j := (i + 1) % 6
+		_facet(st, ring_lo[i], ring_hi[i], ring_hi[j], axis)
+		_facet(st, ring_lo[i], ring_hi[j], ring_lo[j], axis)
+		_facet(st, ring_hi[i], tip, ring_hi[j], axis)
+
+
+## A triangle turned to face away from `inside` (Godot's front faces wind clockwise).
+static func _facet(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, inside: Vector3) -> void:
+	if (c - a).cross(b - a).dot((a + b + c) / 3.0 - inside) < 0.0:
+		var t := b
+		b = c
+		c = t
+	st.add_vertex(a)
+	st.add_vertex(b)
+	st.add_vertex(c)

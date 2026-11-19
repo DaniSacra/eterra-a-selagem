@@ -41,8 +41,6 @@ const BANNER_TOP := 5.6
 const BANNER_SIZE := Vector2(1.3, 3.4)
 const BANNER_TORN := 0.62
 const BANNER_FADE := 0.4
-## The lion's gold on a banner (banner_lion.gdshader's default), faded from it.
-const LION_GOLD := Color(0.65, 0.47, 0.18)
 ## The cold shaft on the altar (spec 6.2): colour, energy, cone, height.
 const SHAFT := Color(0.70, 0.78, 0.92)
 const SHAFT_ENERGY := 2.0
@@ -58,6 +56,55 @@ const FILL_ENERGY := 1.0
 const MIST := Color(0.03, 0.035, 0.045)
 const CLIFF := {&"stone_color": Color(0.08, 0.08, 0.09), &"edge_color": Color(0.14, 0.14, 0.16), &"mist_color": Color(0.03, 0.035, 0.045)}
 
+## The stylized look (spec 3.2): warm calm stone, the altar's candles lit at 3 m and 1.2 of the light (their light
+## keeps its shadow, the room's only one: ArenaKit.KEEP_SHADOW), a dark still air.
+const STYLE := {
+	&"stone": Color(0.354, 0.339, 0.319), &"shadow": Color(0.88, 0.9, 0.98), &"floor_stone": Color(0.33, 0.318, 0.3),
+	&"olive_share": 0.06, &"edge_value": 1.0, &"metal": true,
+	&"fire": {&"candle_range": 3.0, &"candle_gain": 1.2, &"bowl_range": 7.5, &"bowl_gain": 2.2},
+	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.68, 0.66, 0.62),
+		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.88, 0.84), &"moon_energy": 0.8, &"moon_shadow": false},
+}
+## The far ruins in the stylized look: a warm grey haze, their stone and edge (style_backdrop).
+const STY_BACKDROP := [Color(0.17, 0.16, 0.145), Color(0.075, 0.07, 0.065), Color(0.21, 0.19, 0.16)]
+## The browser's renderer: the stylized air's share there (the painted stone lights grey-white).
+const STY_COMPAT_AMBIENT := 0.7
+const STY_COMPAT_MOON := 0.6
+## The shaft in the stylized look: pale old gold, weaker, diffuse and without its shadow (the candles keep theirs).
+const STY_SHAFT := Color(0.96, 0.88, 0.70)
+const STY_SHAFT_ENERGY := 1.6
+## A1: the offerings before the candles on the altar's top: (x along it, kind (see _offering), z back from the top's
+## front), how far in from its front they stand, the urns' height range; the shelves at the north wall's foot (from, to
+## x), their top's height and the room between two offerings; the bowl (top, foot radius, height); the cloths.
+const OFFERINGS: Array[Vector3] = [Vector3(-1.45, 0, 0.12), Vector3(-1.1, 2, 0.1), Vector3(-0.6, 1, 0.16),
+	Vector3(0.0, 3, 0.12), Vector3(0.55, 2, 0.12), Vector3(1.05, 0, 0.14), Vector3(1.45, 1, 0.1)]
+const OFFERING_IN := 0.12
+const OFFERING_URN := Vector2(0.22, 0.33)
+const SHELVES: Array[Vector2] = [Vector2(-8.6, -3.6), Vector2(3.6, 7.6)]
+const SHELF_HEIGHT := 0.95
+const SHELF_STEP := 0.55
+const BOWL := Vector3(0.15, 0.09, 0.07)
+const CLOTH_THICK := 0.035
+const STY_CLOTH_PETROL := Color(0.06, 0.13, 0.14)
+const STY_CLOTH_UMBER := Color(0.2, 0.14, 0.1)
+const STY_URN := Color(0.95, 0.9, 0.84)
+const STY_SEED := 7151
+## A2: moss and ivy cards on the arch and the band (x from the altar's middle, the top's height, out of the wall's face).
+const IVY: Array[Vector3] = [Vector3(-2.35, 4.4, 0.48), Vector3(2.2, 4.4, 0.48), Vector3(-1.7, 3.2, 0.15), Vector3(1.4, 3.15, 0.15)]
+const IVY_CARD := Vector2(1.3, 1.6)
+const STY_MOSS := Color(0.20, 0.24, 0.17)
+## A3: the petals (card size, cell, a petal's length range, cover, height over the floor, colours).
+const PETALS := Vector2(5.0, 1.6)
+const PETAL_CELL := 0.12
+const PETAL_SIZE := Vector2(0.05, 0.08)
+const PETAL_COVER := 0.22
+const PETAL_Y := 0.008
+const PETAL_PALE := Color(0.66, 0.63, 0.56)
+const PETAL_LILAC := Color(0.44, 0.40, 0.47)
+
+var _shaft: SpotLight3D
+var _far: Array[Node] = []
+var _altar_o: ArenaObstacle
 var _out: Node3D
 var _lit: Node3D
 var _candle_light: OmniLight3D
@@ -108,9 +155,12 @@ func dress() -> void:
 			altar = o.center
 	_arch(Vector2(altar.x, north))
 	_banners(north)
-	moon_shaft(altar, SHAFT, SHAFT_ENERGY, SHAFT_CONE, SHAFT_HEIGHT, true, true)
+	_shaft = moon_shaft(altar, SHAFT, SHAFT_ENERGY, SHAFT_CONE, SHAFT_HEIGHT, true, true)
 	key_light(FILL, FILL_ENERGY, 10.0)
+	var from := get_child_count()
 	backdrop(MIST * 2.0, Color(0.035, 0.045, 0.06), Color(0.14, 0.2, 0.24))
+	_far = added_since(from)
+	_dress_styled(north, _altar_o)
 
 
 ## True once the candles burn.
@@ -128,11 +178,11 @@ func kindle(seconds := KINDLE_TIME) -> void:
 	if _tween != null:
 		_tween.kill()
 	if seconds <= 0.0 or not is_inside_tree():
-		_candle_light.light_energy = CANDLE_ENERGY
+		_candle_light.light_energy = _kindled_energy()
 		return
 	_candle_light.light_energy = 0.0
 	_tween = create_tween()
-	_tween.tween_property(_candle_light, "light_energy", CANDLE_ENERGY, seconds)
+	_tween.tween_property(_candle_light, "light_energy", _kindled_energy(), seconds)
 
 
 ## The lab's states: "after" the candles lit.
@@ -144,6 +194,7 @@ func demo(state: String) -> void:
 ## The altar on its footprint (spec 6.2): plinth, body, the top slab with a lip, the lion raised on the face toward the
 ## room, the candles on top (burnt out; the lit ones hidden until kindle).
 func _altar(o: ArenaObstacle) -> void:
+	_altar_o = o
 	var foot := Vector3(o.center.x, 0.0, o.center.y)
 	var size := Vector3(o.half.x * 2.0, o.height, o.half.y * 2.0)
 	var yaw := -o.yaw
@@ -185,6 +236,9 @@ func _altar(o: ArenaObstacle) -> void:
 	lit_m.merge()
 	_candle_light = warm_light(foot + Vector3(0, size.y + 0.8, 0) + basis * Vector3(0, 0, size.z * 0.5 + 0.4), CANDLE_ENERGY, true, CANDLE_REACH)
 	_candle_light.visible = false
+	_candle_light.set_meta(ArenaKit.KEEP_SHADOW, true)
+	# painted as a bowl's pool (STYLE fire bowl_*): the altar's candles together light the room, not one candle's reach
+	_candle_light.set_meta(ArenaKit.BOWL, true)
 
 
 ## The blind arch over the altar (spec 6.2): a dark panel sunk in the north wall under a pointed frame, the worn band
@@ -216,34 +270,131 @@ func _arch(foot: Vector2) -> void:
 			bar.rotate_object_local(Vector3.BACK, float(r.randi_range(-1, 1)) * PI * 0.25)
 
 
-## Faded banners with the lion on the north wall (spec 6.2), the east one torn short; one faded twin of the cloth's
-## and the lion's materials for both.
+## Faded banners with the lion on the north wall (spec 6.2), the east one torn short (ArenaRoom.fade_banners: one faded
+## twin of the cloth's and the lion's materials for both).
 func _banners(north: float) -> void:
-	var faded: Material
-	var lion: Material
 	for k in BANNERS.size():
 		var torn := k == BANNERS.size() - 1
 		var size := Vector2(BANNER_SIZE.x, BANNER_SIZE.y * (BANNER_TORN if torn else 1.0))
 		var before := get_child_count()
 		kit.banner(Vector3(BANNERS[k], BANNER_TOP, north - FACE_SET + 0.06), 0.0, size, 1, ArenaKit.Emblem.LION)
+		var added: Array[Node] = []
 		for i in range(before, get_child_count()):
-			var mi := get_child(i) as MeshInstance3D
-			if mi == null or mi.material_override == null:
-				continue
-			if mi.material_override is StandardMaterial3D:
-				if faded == null:
-					var f := (mi.material_override as StandardMaterial3D).duplicate() as StandardMaterial3D
-					f.albedo_color = f.albedo_color.darkened(1.0 - BANNER_FADE).lerp(Color(0.3, 0.28, 0.27), 0.3)
-					if f.emission_enabled:
-						f.emission_energy_multiplier *= BANNER_FADE
-					faded = f
-				mi.material_override = faded
-			elif mi.material_override is ShaderMaterial:
-				if lion == null:
-					var l := (mi.material_override as ShaderMaterial).duplicate() as ShaderMaterial
-					var g: Variant = l.get_shader_parameter(&"gold")
-					var gold: Color = g if g is Color else LION_GOLD
-					l.set_shader_parameter(&"gold", gold.darkened(1.0 - BANNER_FADE))
-					l.set_shader_parameter(&"glow", 0.35 * BANNER_FADE)
-					lion = l
-				mi.material_override = lion
+			added.append(get_child(i))
+		fade_banners(added, BANNER_FADE)
+
+
+# ---------- the stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md section 3) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	diffuse_lights([_shaft])
+	VisualProfile.vary(_shaft, {&"light_color": STY_SHAFT, &"light_energy": STY_SHAFT_ENERGY})
+	style_backdrop(_far, STY_BACKDROP[0], STY_BACKDROP[1], STY_BACKDROP[2])
+	return st
+
+
+## The candles' light once lit: the look's (the stylized look's energy is stylize_fires').
+func _kindled_energy() -> float:
+	if VisualProfile.stylized():
+		return float(VisualProfile.styled(_candle_light, &"light_energy", CANDLE_ENERGY))
+	return CANDLE_ENERGY
+
+
+## The pieces only the stylized look shows (spec 3.3), on kit.styled(), never the room's random numbers: A1 offerings
+## on the altar's top before its candles and on shelves at the north wall's foot, A2 moss and ivy on the blind arch and
+## the worn band, A3 pale petals on the floor before the altar's step.
+func _dress_styled(north: float, altar: ArenaObstacle) -> void:
+	var sm := kit.styled()
+	var r := RandomNumberGenerator.new()
+	r.seed = STY_SEED
+	var urn := sm.carved(0.0, STY_URN)
+	if altar != null:
+		var foot := Vector3(altar.center.x, altar.height, altar.center.y)
+		var basis := Basis(Vector3.UP, -altar.yaw)
+		var front := altar.half.y - OFFERING_IN
+		for k in OFFERINGS.size():
+			var o: Vector3 = OFFERINGS[k]
+			var p := foot + basis * Vector3(o.x, 0.0, front - o.z)
+			_offering(sm, p, int(o.y), urn, r, -altar.yaw)
+		_petals(sm, Vector2(altar.center.x, altar.center.y + altar.half.y + ALTAR_PLINTH.y))
+	for span: Vector2 in SHELVES:
+		var line := wall_ledge(sm, Vector2(span.x, north), Vector2(span.y, north), Vector2(0, -1), SHELF_HEIGHT, ashlar())
+		var n := int(absf(span.y - span.x) / SHELF_STEP)
+		for i in n:
+			var p := line[0].lerp(line[1], (i + 0.5) / n)
+			_offering(sm, p, i % 4, urn, r, 0.0)
+	var face := north - FACE_SET
+	var tops: Array[Vector3] = []
+	for t: Vector3 in IVY:
+		tops.append(Vector3(altar.center.x + t.x if altar != null else t.x, t.y, face + t.z))
+	wall_moss(sm, tops, IVY_CARD, STY_MOSS)
+
+
+## One offering at `p` (on a top): 0 an urn, 1 an open urn, 2 a folded cloth (petrol or umber), 3 the old gold bowl.
+func _offering(sm: Masonry, p: Vector3, kind: int, urn: Material, r: RandomNumberGenerator, yaw: float) -> void:
+	match kind:
+		0:
+			sm.urn(p, r.randf_range(OFFERING_URN.x, OFFERING_URN.y), urn)
+		1:
+			sm.urn(p, r.randf_range(OFFERING_URN.x, OFFERING_URN.y) * 0.8, urn, false)
+		2:
+			var cloth := _cloth(STY_CLOTH_PETROL if r.randf() < 0.5 else STY_CLOTH_UMBER)
+			var size := Vector3(r.randf_range(0.16, 0.22), CLOTH_THICK, r.randf_range(0.14, 0.18))
+			sm.box(p + Vector3(0, size.y * 0.5, 0), size, yaw + r.randf_range(-0.3, 0.3), cloth, false)
+			sm.box(p + Vector3(0, size.y * 1.5, 0), size * Vector3(0.9, 1.0, 0.5), yaw + r.randf_range(-0.3, 0.3), cloth, false)
+		3:
+			if _bowl_mat == null:
+				_bowl_mat = StandardMaterial3D.new()
+				_bowl_mat.albedo_color = ArenaKit.STY_GOLD
+				_bowl_mat.roughness = ArenaKit.STY_METAL.x
+				_bowl_mat.metallic = ArenaKit.STY_METAL.y
+			var bowl := MeshInstance3D.new()
+			var cyl := CylinderMesh.new()
+			cyl.top_radius = BOWL.x
+			cyl.bottom_radius = BOWL.y
+			cyl.height = BOWL.z
+			cyl.radial_segments = 12
+			cyl.rings = 1
+			bowl.mesh = cyl
+			bowl.material_override = _bowl_mat
+			bowl.position = p + Vector3(0, BOWL.z * 0.5, 0)
+			sm.root.add_child(bowl)
+
+
+var _bowl_mat: StandardMaterial3D
+var _cloths := {}
+
+
+func _cloth(c: Color) -> StandardMaterial3D:
+	if not _cloths.has(c):
+		var m_ := StandardMaterial3D.new()
+		m_.albedo_color = c
+		m_.roughness = 0.95
+		_cloths[c] = m_
+	return _cloths[c]
+
+
+## A3: pale ivory and dim lilac petals on the floor before the step (floor_decal kind 3, as the fountain's flowers),
+## densest at the step (`at`: the step's front middle).
+func _petals(sm: Masonry, at: Vector2) -> void:
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	q.size = PETALS
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = CatacombHall.DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 3)
+	mat.set_shader_parameter(&"rug_size", PETALS)
+	mat.set_shader_parameter(&"leaf_dark", PETAL_LILAC)
+	mat.set_shader_parameter(&"leaf_light", PETAL_PALE)
+	mat.set_shader_parameter(&"litter_cell", PETAL_CELL)
+	mat.set_shader_parameter(&"litter_size", PETAL_SIZE)
+	mat.set_shader_parameter(&"litter_cover", PETAL_COVER)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(at.x, PETAL_Y, at.y + PETALS.y * 0.5)
+	sm.root.add_child(mi)
