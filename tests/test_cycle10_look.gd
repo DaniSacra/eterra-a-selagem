@@ -167,3 +167,27 @@ func test_a_room_that_leaves_in_its_mood_gives_the_world_back() -> void:
 	remove_child(mood)
 	mood.free()
 	assert_true(env.background_color.is_equal_approx(Color(0.06, 0.22, 0.27)), "a new room starts in its own air")
+
+
+func test_a_mood_reads_the_air_the_room_was_dressed_in_after_it_was_asked() -> void:
+	# STY-10 (P1-1 of the stylized combat review): the Chamber of the Seal dresses the world a frame late and a boss
+	# under a phase turns the mood on in the frame it is built; the mood must hold the chamber's air, not the hall's
+	var env := Environment.new()
+	env.ambient_light_color = Color(0.78, 0.74, 0.68)
+	env.ambient_light_energy = 1.08
+	var mood := RoomMood.new(null, env)
+	add_child_autofree(mood)
+	mood.blend(RoomMood.LAST_BREATH, true, 0.5)
+	# the room's own dress, after the mood was asked and before the next frame
+	env.ambient_light_color = Color(0.32, 0.34, 0.44)
+	env.ambient_light_energy = 0.5
+	for i in 20:
+		mood._process(0.05)
+	assert_almost_eq(mood.weight(), 1.0, 0.001)
+	var look := RoomMood.LAST_BREATH
+	assert_lte(env.ambient_light_energy, 0.5 * look.ambient_gain * (1.0 + look.breath) + 0.001, "the chamber's air, not the hall's")
+	mood.blend(look, false, 0.5)
+	for i in 20:
+		mood._process(0.05)
+	assert_true(env.ambient_light_color.is_equal_approx(Color(0.32, 0.34, 0.44)), "back to the chamber's air")
+	assert_almost_eq(env.ambient_light_energy, 0.5, 0.0001)

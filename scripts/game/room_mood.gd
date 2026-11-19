@@ -85,6 +85,11 @@ var _weight := 0.0
 var _want := 0.0
 var _ramp := RAMP
 var _clock := 0.0
+## The room's air is read on the next frame, not when asked (STY-10, P1-1 of the stylized combat review): a room that
+## dresses the world a frame late (BossChamber._dress_world is deferred) and a boss that turns the mood on in the
+## frame it is built (`--boss-hp` under a phase) left the mood holding the room before as its base: the stylized
+## hall's key from behind the camera (1.6) times the last breath's 1.8 washed the chamber's floor cyan.
+var _take_due := false
 
 
 ## where: the scenery whose fires it turns; env: the environment to turn (by default the world's, read when first asked).
@@ -100,8 +105,9 @@ func blend(look: Look, on: bool, seconds: float = RAMP) -> void:
 		_look = look
 	_want = 1.0 if on else 0.0
 	_ramp = maxf(seconds, 0.01)
-	if on and _base.is_empty():
-		_take()
+	# from rest the room's air is read again (it may have been dressed since), on the next frame
+	if on and _weight == 0.0:
+		_take_due = true
 
 
 ## How far the room is turned toward its mood (0..1; tests).
@@ -110,6 +116,10 @@ func weight() -> float:
 
 
 func _take() -> void:
+	_base = {}
+	_lights.clear()
+	_light_base.clear()
+	_light_fire.clear()
 	if _env == null:
 		var world := get_viewport().find_world_3d() if is_inside_tree() else null
 		_env = world.environment if world != null else null
@@ -138,6 +148,9 @@ func _take() -> void:
 
 
 func _process(delta: float) -> void:
+	if _take_due:
+		_take_due = false
+		_take()
 	if _env == null or _base.is_empty() or (_weight == 0.0 and _want == 0.0):
 		return
 	_clock += delta

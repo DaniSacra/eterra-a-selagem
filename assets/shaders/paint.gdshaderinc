@@ -16,7 +16,21 @@ uniform vec3 paint_values = vec3(0.25, 0.72, 1.0);
 uniform vec2 paint_cuts = vec2(0.3, 0.65);
 uniform float paint_soft = 0.1;
 // A fire's (any light but the key's) pool: where its light starts (N.L times its falloff), so the pool has an edge.
-uniform float paint_pool = 0.06;
+// STY-10: a warm light (a fire: its red well over its blue, paint_fire_from of its red; a fire
+// chilled by a mood passes softly back to the bands) paints a flat pool instead of
+// the bands: N.L times the falloff of a fire high on a pillar never left the shadow band, so the slab beside a
+// brazier stayed as dark as the rest (art review, criterion 3). Inside the edge (paint_pool) the pool takes the
+// middle band's value, inside paint_pool_core the lit one: two drawn rings, the energy sets how bright; the edge's
+// width (in N.L times falloff).
+uniform float paint_pool = 0.1;
+uniform float paint_pool_core = 0.3;
+uniform float paint_pool_soft = 0.02;
+uniform float paint_fire_from = 0.35;
+// How much brighter a fire's pool is painted than its light (only on the painted scenery: the candles' own wax and
+// the figures keep the light's energy, which would burn them white at the pool's brightness).
+uniform float paint_pool_gain = 2.5;
+// The pool's colour a share of the fire's saturation (a warm light on the stone, not orange paint).
+uniform float paint_pool_saturation = 0.65;
 // The colour the shadow band takes (stylized_spec 1.3: hue 220, saturation up to 0.1).
 uniform vec3 paint_shadow : source_color = vec3(0.92, 0.93, 0.98);
 // The little shine left (matte stone): its share and the most it narrows on the wet floor.
@@ -99,13 +113,20 @@ float paint_bands(float x) {
 void light() {
 	float x = clamp(dot(NORMAL, LIGHT), 0.0, 1.0) * ATTENUATION;
 	float lit = paint_bands(x);
+	vec3 light_c = LIGHT_COLOR;
 	if (!LIGHT_IS_DIRECTIONAL) {
-		// a fire's pool ends on a drawn edge, not in a long soft falloff
+		// a light's pool ends on a drawn edge, not in a long soft falloff
 		float w = paint_soft * 0.5;
-		lit *= smoothstep(paint_pool - w * 0.5, paint_pool + w * 0.5, x);
+		float edge = smoothstep(paint_pool - w * 0.5, paint_pool + w * 0.5, x);
+		// a fire's pool is flat inside its edge, a little lighter in its core, and a less saturated warm
+		float fire = smoothstep(paint_fire_from * 0.6, paint_fire_from, (LIGHT_COLOR.r - LIGHT_COLOR.b) / max(LIGHT_COLOR.r, 1e-4));
+		float ring = smoothstep(paint_pool - paint_pool_soft, paint_pool + paint_pool_soft, x);
+		float core = smoothstep(paint_pool_core - paint_pool_soft, paint_pool_core + paint_pool_soft, x);
+		lit = mix(lit * edge, ring * mix(paint_values.y, paint_values.z, core) * paint_pool_gain, fire);
+		light_c = mix(LIGHT_COLOR, mix(vec3(paint_luma(LIGHT_COLOR)), LIGHT_COLOR, paint_pool_saturation), fire);
 	}
 	vec3 tint = mix(paint_shadow, vec3(1.0), smoothstep(paint_values.x, paint_values.z, lit));
-	DIFFUSE_LIGHT += LIGHT_COLOR * lit * tint / PI;
+	DIFFUSE_LIGHT += light_c * lit * tint / PI;
 #ifdef PAINT_RIM
 	// a faint warm rim on the edges turned from the eye, on the side the light reaches
 	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), paint_rim_power) * paint_rim;
