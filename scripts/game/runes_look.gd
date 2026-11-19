@@ -96,6 +96,17 @@ const STYLE := {
 ## The browser's renderer: the stylized air's share there.
 const STY_COMPAT_AMBIENT := 0.7
 const STY_COMPAT_MOON := 0.6
+## Cadence review 7 (P1): in the browser's renderer an armed tile has no light over it (ARM_LIGHTS are Forward+ only)
+## and its own light comes out without the linear to sRGB step: there the tile's light is COMPAT_GAIN times its own, its
+## stone goes COMPAT_FILL of the way toward the amber at COMPAT_TONE, and it glows COMPAT_GLOW of the amber, both times
+## the arming; the strike and its ember lay it toward the ivory-amber and glow COMPAT_STRIKE (the desktop's strike reads
+## cream over the whole tile, here it was a pale grey gone in 0.1 s) (rune_tiles.gdshaderinc paint_compat_*; stylized
+## only, the desktop untouched).
+const COMPAT_GAIN := 1.6
+const COMPAT_FILL := 0.4
+const COMPAT_TONE := 0.6
+const COMPAT_GLOW := 0.45
+const COMPAT_STRIKE := 0.4
 ## R1 and R3: the glyphs of the pillars at rest and the marks of the stelae, dim carved ivory (never green); the
 ## pillars' grooves matte stone there (metallic, roughness).
 const STY_IVORY := Color(0.55, 0.52, 0.46)
@@ -226,7 +237,13 @@ func dress() -> void:
 	_key = key
 	key.omni_range = KEY_REACH
 	key.omni_attenuation = KEY_FALLOFF
-	if not compat():
+	if compat():
+		floor_mat.set_shader_parameter(&"paint_compat_gain", COMPAT_GAIN)
+		floor_mat.set_shader_parameter(&"paint_compat_fill", COMPAT_FILL)
+		floor_mat.set_shader_parameter(&"paint_compat_tone", COMPAT_TONE)
+		floor_mat.set_shader_parameter(&"paint_compat_glow", COMPAT_GLOW)
+		floor_mat.set_shader_parameter(&"paint_compat_strike", COMPAT_STRIKE)
+	else:
 		for k in ARM_LIGHTS:
 			var l := OmniLight3D.new()
 			l.light_color = ArenaKit.FIRE

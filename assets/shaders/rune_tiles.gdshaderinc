@@ -68,6 +68,20 @@ uniform float paint_trace_share = 0.45;
 uniform float paint_quiet_trace = 0.5;
 // the quiet stone's pale smooth stone at this share of its classic colour (painted, it lit near white)
 uniform float paint_quiet_value = 0.5;
+// Cadence review 7 (P1, Compatibility): the browser's renderer has no lights over the armed bands (RunesLook lights them
+// on the desktop only) and its light reaches the screen without the linear to sRGB step, so an armed tile read only by
+// its frame (+4 to +13 of luma over its neighbours, saturation 0.04). There RunesLook sets these: the tile's own light
+// (frame, marks, fill, chevrons, sparks, flash, ember) times paint_compat_gain, and an armed tile's stone laid toward the
+// ungreyed amber (paint_compat_tone of it) by paint_compat_fill times the arming, lit by its own light paint_compat_glow
+// times the arming; the strike and its ember (paint_compat_ember of it) lay the same stone toward the ivory-amber and
+// glow paint_compat_strike of it (the desktop's sheet of light reads cream over the whole tile there, a pale grey here).
+// The defaults change nothing: the desktop and the classic look stay as they are.
+uniform float paint_compat_gain = 1.0;
+uniform float paint_compat_fill = 0.0;
+uniform float paint_compat_tone = 0.6;
+uniform float paint_compat_glow = 0.0;
+uniform float paint_compat_strike = 0.0;
+uniform float paint_compat_ember = 0.6;
 #endif
 
 // The tile under wp: its min corner and size in units (one unit a tile), its id the tile's column and row.
@@ -125,6 +139,7 @@ void rune_floor(vec2 wp, vec4 rect, float edge, float joint, inout vec3 c, inout
 	float arm = st.r;
 	float fire = st.g;
 	float ember = st.b;
+	vec3 emit_before = emit;
 	// the frame's groove
 	float g0 = frame_inset;
 	float g1 = frame_inset + frame_width;
@@ -178,6 +193,15 @@ void rune_floor(vec2 wp, vec4 rect, float edge, float joint, inout vec3 c, inout
 	emit += rune_white * fire * flash_glow * inner;
 	float corner = 1.0 - smoothstep(0.0, ember_reach, length(half_size - abs(lp)) - frame_inset);
 	emit += rune_amber * ember * corner * ember_glow * max(groove, 0.4);
+#ifdef PAINT
+	float own = arm * inner * (1.0 - fire);
+	float struck = max(fire, ember * paint_compat_ember) * inner;
+	vec3 struck_c = mix(rune_amber, rune_white, fire);
+	c = mix(c, rune_amber * paint_compat_tone, paint_compat_fill * own);
+	c = mix(c, struck_c * paint_compat_tone, paint_compat_fill * struck);
+	emit = emit_before + (emit - emit_before) * paint_compat_gain + rune_amber * paint_compat_glow * own
+		+ struck_c * paint_compat_strike * struck;
+#endif
 	float peak = max(emit.r, max(emit.g, emit.b));
 	if (peak > rune_cap) {
 		emit *= rune_cap / peak;
