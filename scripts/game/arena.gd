@@ -638,10 +638,13 @@ func _build_arena(l: RoomLayout, exit_count: int, seed_: int) -> void:
 
 
 ## After the look changed (F7, VisualProfile.toggle): the room dressed with its own air puts it back for the look in
-## use (the profile had put the world's on it). The hall has no air of its own (the profile's is its).
+## use (the profile had put the world's on it); so does the Seal Chamber (BossChamber.restyle). The hall has no air of
+## its own (the profile's is its).
 func restyle() -> void:
 	if look != null and is_instance_valid(look):
 		look.redress_air()
+	if chamber != null and is_instance_valid(chamber) and chamber.has_method(&"restyle"):
+		chamber.call(&"restyle")
 
 
 ## The stylized look of the shop (room redesign lot A 3.3): the hall dresses the row of items at `points` (Rooms).

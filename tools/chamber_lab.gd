@@ -16,6 +16,7 @@ extends SceneTree
 ##   --wait=seconds    before the capture (default 1.5); --measure=seconds: frame times over that long after it,
 ##                     printed as "FRAMES n=.. mean_ms=.. p50=.. p90=.. fps=.." (vsync off)
 ##   --compat          the browser's exposure and ambient (Game.COMPAT_*), with --rendering-driver opengl3
+##   --look=classic|stylized  the visual profile (VisualProfile; room redesign lot E: the stylized background and air)
 
 var opts := {}
 # untyped on purpose: a -s script compiles before the autoloads exist, so it cannot name the classes that use them
@@ -37,6 +38,8 @@ func _run() -> void:
 			out = a
 	G = load("res://scripts/game/game.gd")
 	CH = load("res://scripts/game/boss_chamber.gd")
+	var vp: Variant = load("res://scripts/core/visual_profile.gd")
+	vp.set_look(vp.parse(str(opts.get("look", "classic"))))
 	var world := Node3D.new()
 	root.add_child(world)
 	var env := WorldEnvironment.new()
@@ -63,6 +66,8 @@ func _run() -> void:
 	else:
 		chamber = CH.new()
 		world.add_child(chamber)
+		if opts.has("look"):
+			vp.dress_world(e, moon)
 		chamber.build()
 		CH.dress(e, moon)
 		if opts.has("compat"):

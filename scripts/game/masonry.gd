@@ -1047,19 +1047,30 @@ static func see_open(mat: Material) -> ShaderMaterial:
 		return _see_twins[mat]
 	var base := mat as StandardMaterial3D
 	var twin := ShaderMaterial.new()
+	# the base's classic colours whatever the look it is built in, and its stylized ones through the visual profile
+	# (lot E: a chamber built in the stylized look kept the stylized flames in the classic one)
+	var albedo: Color = VisualProfile.classic_of(base, &"albedo_color", base.albedo_color)
+	var styled := {}
 	if base.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED:
 		twin.shader = FLAME_SEE
-		twin.set_shader_parameter(&"color", base.albedo_color)
+		twin.set_shader_parameter(&"color", albedo)
 		twin.set_shader_parameter(&"shape", base.albedo_texture)
 		twin.set_shader_parameter(&"facing", 1 if base.billboard_mode == BaseMaterial3D.BILLBOARD_PARTICLES else 0)
 		twin.render_priority = base.render_priority
+		if VisualProfile.styled(base, &"albedo_color") != null:
+			styled[&"shader_parameter/color"] = VisualProfile.styled(base, &"albedo_color")
 	else:
 		twin.shader = CANDLE_WAX_SEE
-		twin.set_shader_parameter(&"wax", base.albedo_color)
+		twin.set_shader_parameter(&"wax", albedo)
 		twin.set_shader_parameter(&"roughness", base.roughness)
-		twin.set_shader_parameter(&"rim", base.rim)
+		twin.set_shader_parameter(&"rim", VisualProfile.classic_of(base, &"rim", base.rim))
 		twin.set_shader_parameter(&"glow", base.emission)
 		twin.set_shader_parameter(&"glow_share", base.emission_texture)
+		if VisualProfile.styled(base, &"albedo_color") != null:
+			styled[&"shader_parameter/wax"] = VisualProfile.styled(base, &"albedo_color")
+		if VisualProfile.styled(base, &"rim") != null:
+			styled[&"shader_parameter/rim"] = VisualProfile.styled(base, &"rim")
+	VisualProfile.vary(twin, styled)
 	_see_twins[mat] = twin
 	return twin
 

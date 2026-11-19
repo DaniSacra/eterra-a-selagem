@@ -1671,6 +1671,27 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   16,3 para 16,2 ms (nada perdido). Compatibility sem erro. O clássico é o mesmo (diferença só nas partículas e nas divisas
   que andam).
 
+## Redesenho das salas, Lote E (só no estilizado; spec `docs/art/room_redesign_lotE_spec.md`, capturas em `docs/gallery/redesign/lotE/`)
+- **Câmara do Selo, só fundo e ar**: nada dentro do círculo nem a menos de `BossChamber.STY_CLEAR` (12,5 + 6 m) do meio
+  além do anel distante; chão, selo, `SealLook`, balaustrada, fachada, escada, avisos, colisão e câmera iguais; nenhum
+  preset de pedra. Peças no `kit.styled()` da câmara (`BossChamber._stylize`, no `build` antes do `merge`, dado próprio
+  `STY_SEED`, nunca o `_rng`): E1 cinco arcos partidos a meia altura nos vãos oeste do anel distante (`STY_ARCHES`,
+  `STY_ARCH`, `STY_ARCH_GAPS`, `Masonry.broken_arch`; pedra do anel que afunda na bruma mais embaixo, `STY_ARCH_SINK`)
+  com uma aduela pendurada numa corrente (`STY_ARCH_HANGS`, `STY_HANG`); E2 duas correntes de lado (`STY_CHAINS`: da torre
+  para oeste, da parede da plataforma para nordeste; nunca sobre Morvath na tela); E3 24 cacos de pedra parados no abismo
+  nas laterais do quadro (`STY_SHARDS`, `STY_SHARD_SPANS`, pedra da torre, sem brilho); E4 céu a `STY_SKY` 0,9 no
+  `BossChamber.dress`, borda das agulhas `STY_SPIRE_EDGE` 1,15 e o anel distante um degrau mais claro (`STY_FAR_TINT`
+  1,4, bruma em que afunda `STY_FAR_MIST`) pelo `VisualProfile.vary`. F7 na câmara: `Arena.restyle` chama
+  `BossChamber.restyle` (veste o ar da câmara de novo no look em uso); na fase 4 o `RoomMood` segue mandando no ar.
+  Gêmeos das velas que abrem em volta do herói (`Masonry.see_open`) pegam a cor clássica do material e a estilizada
+  pelo `VisualProfile` (antes, montados no estilizado, ficavam com a chama estilizada no clássico). `tools/chamber_lab.gd
+  --look=classic|stylized`. Testes em `tests/test_room_style.gd` (ida e volta, montada no estilizado igual no clássico,
+  peças longe e correntes fora de Morvath).
+- Medido (RTX 1080, semente 5, `--hue --scene`): quadro matiz 256, luma p50 35 a 36 (antes 36), violeta 1,6% na fase 1
+  e 1,9% na fase 4; fundo p90 menos p10: alto à esquerda 44, abismo oeste 129, leste 150 (alto à esquerda p50 24 para
+  29); chão e avisos iguais; o clássico igual nas três vistas. Quadro na fase 4: RTX 1080 Alta 2,38 / 2,20 para 2,44 /
+  2,22 ms, iGPU 720 Baixa 15,4 / 15,3 para 15,1 / 15,3 ms; Compatibility sem erro.
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

@@ -557,3 +557,92 @@ func test_the_runes_strike_the_same_in_both_looks() -> void:
 	for f: String in runs[0][0]:
 		states[f.get_slice(" ", 0)] = true
 	assert_gt(states.size(), 3, "the floor armed and struck in the run")
+
+
+# ---------- lot E: the Seal Chamber, background and air only (docs/art/room_redesign_lotE_spec.md) ----------
+
+func _chamber() -> Arena:
+	var stage: StageDef = load(STAGE)
+	var a := Arena.new()
+	add_child_autofree(a)
+	a.build(stage.boss_layout, 0, 1406)
+	return a
+
+
+func test_the_chamber_comes_back() -> void:
+	_world()
+	var a := _chamber()
+	# the chamber dresses the world's air a frame after it is built
+	await wait_process_frames(2)
+	assert_eq(_env.background_color, BossChamber.SKY, "classic: the chamber's sky")
+	var before := _snapshot(a)
+	var shape := a.shape()
+	var circles := (a.chamber as BossChamber).circles.duplicate()
+	_flip(a)
+	var styled := _snapshot(a)
+	assert_ne(styled, before, "the stylized look changes the chamber")
+	assert_eq(_env.ambient_light_color, BossChamber.AMBIENT, "stylized: the chamber's own ambient, not the world's")
+	assert_almost_eq(_env.background_color.b, BossChamber.SKY.b * BossChamber.STY_SKY, 0.0001, "stylized: the sky deeper")
+	assert_almost_eq(_moon.light_energy, BossChamber.MOON_ENERGY, 0.0001, "the chamber's moon in either look")
+	_flip(a)
+	assert_eq(_differ(_snapshot(a), before, "chamber"), 0, "chamber: classic again as built")
+	_flip(a)
+	assert_eq(_differ(_snapshot(a), styled, "chamber stylized"), 0, "chamber: stylized again the same")
+	_flip(a)
+	assert_eq(_differ(_snapshot(a), before, "chamber"), 0, "chamber: and back")
+	assert_eq(a.shape(), shape, "the same floor")
+	assert_eq((a.chamber as BossChamber).circles, circles, "the same footprints")
+
+
+func test_the_chamber_built_while_stylized_is_the_same_classic() -> void:
+	_world()
+	var classic := _unnamed(_snapshot(_chamber()))
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var a := _chamber()
+	_flip(a)
+	assert_eq(_differ(_unnamed(_snapshot(a)), classic, "chamber built stylized"), 0, "the classic chamber whatever the look it was built in")
+
+
+## A snapshot without the nodes' paths nor the objects' ids (two builds give their unnamed nodes other names and make
+## their own textures).
+func _unnamed(lines: PackedStringArray) -> PackedStringArray:
+	var ids := RegEx.create_from_string("#-?[0-9]+")
+	var out := PackedStringArray()
+	for line in lines:
+		out.append(ids.sub(line.substr(line.find(" ")), "#", true))
+	return out
+
+
+func test_the_chamber_stylized_pieces_stay_far() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var a := _chamber()
+	var c := a.chamber as BossChamber
+	var styled := c.find_child("Styled", false, false) as Node3D
+	assert_not_null(styled, "the chamber has stylized-only pieces")
+	assert_false(VisualProfile.classic_of(styled, &"visible", true), "hidden in the classic look")
+	var meshes := 0
+	for n in styled.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		meshes += 1
+		var near := INF
+		for s in mi.mesh.get_surface_count():
+			for v: Vector3 in mi.mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX]:
+				var g := mi.global_transform * v
+				near = minf(near, Vector2(g.x, g.z).length())
+		assert_gt(near, BossChamber.STY_CLEAR, "%s: past the floor and 6 m (%.1f m)" % [mi.name, near])
+	assert_gt(meshes, 0, "arches and blocks built")
+	# the chains: off the platform (from its wall under the floor or the tower out), never over Morvath on the screen
+	var feel := Feel.live()
+	var target := Vector3(c.cam_target.x, 0, c.cam_target.y)
+	var eye := target + Feel.cam_offset_of(feel.cam_distance, feel.cam_pitch, feel.cam_yaw)
+	var boss := Vector3(c.boss_spawn.x, 2.0, c.boss_spawn.y)
+	assert_eq(styled.find_children("*", "MultiMeshInstance3D", true, false).size(), BossChamber.STY_CHAINS.size() + BossChamber.STY_ARCH_HANGS.size(),
+		"the chains are there")
+	# (the headless renderer keeps no MultiMesh transforms: the chains' curve as ArenaKit.chain lays it)
+	for ch: Array in BossChamber.STY_CHAINS:
+		for k in 41:
+			var t := k / 40.0
+			var p: Vector3 = (ch[0] as Vector3).lerp(ch[1], t) + Vector3.DOWN * float(ch[2]) * 4.0 * t * (1.0 - t)
+			assert_gt(Vector2(p.x, p.z).length(), BossChamber.LIP_RADIUS, "a chain off the platform")
+			var off := rad_to_deg((p - eye).angle_to(boss - eye))
+			assert_gt(off, 8.0, "a chain clear of Morvath on the screen (%.1f degrees)" % off)

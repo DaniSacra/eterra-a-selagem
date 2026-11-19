@@ -245,6 +245,50 @@ const CHAINS: Array[Array] = [
 ]
 const CHAIN_SIZE := 3.4
 
+## ---- room redesign lot E (docs/art/room_redesign_lotE_spec.md; the stylized look only, the classic as built):
+## only the background and the air, nothing inside the circle nor within STY_CLEAR of its middle but the far ring's
+## own stones. Nothing here takes the room's _rng (STY_SEED: the classic chamber stays the same).
+const STY_SEED := 7_1406
+## Nothing of the stylized look nearer the middle than the floor plus 6 m (spec 3).
+const STY_CLEAR := FLOOR_RADIUS + 6.0
+## E1, broken arches at mid height in the far ring's bays (bearings: each on a bay of FAR_RING, where the ring is seen
+## past the platform at the west side, against the violet mist; the east side's ring is black there); a lower tier of the ring
+## (spring line height, span, ring width, depth) with the stones of `gap` (m across the opening) gone; one stone hangs
+## from a short chain under the gap of the arches listed in STY_ARCH_HANGS (how far under the spring line, its tilt).
+const STY_ARCHES: Array[float] = [250.0, 260.0, 270.0, 280.0, 290.0]
+const STY_ARCH := Vector4(-12.5, 3.8, 0.65, 1.6)
+## Their stone is the far ring's (fade, tint) sinking into the mist lower down (sink from, to: m), so they stand dark
+## against the violet mist at the west side of the frame (the ring's own sinks from -3 m: under its arches it is mist).
+const STY_ARCH_STONE := Vector2(0.8, STY_FAR_TINT)
+const STY_ARCH_SINK := Vector2(-11.0, -34.0)
+const STY_ARCH_GAPS: Array[Vector2] = [Vector2(-0.4, 1.4), Vector2(-1.5, 0.2), Vector2(-0.2, 1.6), Vector2(-1.2, 0.6), Vector2(0.1, 2.0)]
+const STY_ARCH_HANGS: Array[int] = [3]
+const STY_HANG := Vector2(3.4, 0.5)
+## E2, two chains across the abyss at the sides (from, to, sag; links CHAIN_SIZE): under the game camera's top band and
+## over the sarcophagi's height on the screen, never across Morvath (west from the tower, east from the platform's
+## wall out to the far ring).
+const STY_CHAINS: Array[Array] = [
+	[Vector3(-15.4, 4.0, -4.4), Vector3(-34.0, 1.0, 14.0), 3.0],
+	[Vector3(12.2, -1.5, -6.6), Vector3(31.0, 1.0, -21.0), 2.5],
+]
+## E3, stone blocks hanging still in the abyss: how many, where (two spans, the sides of the frame, never toward the
+## camera nor behind the facade or the stairs: bearings from, to, how far out from, to, in m, their middles, so no
+## corner comes nearer than STY_CLEAR), how high (m), their size (m, the
+## smallest and largest side) and how far from the tower's middle they keep (m). Unlit far stone, no glow.
+const STY_SHARDS := 24
+const STY_SHARD_SPANS: Array[Vector4] = [Vector4(200.0, 280.0, STY_CLEAR + 2.0, 30.0), Vector4(22.0, 55.0, STY_CLEAR + 2.0, 25.0)]
+const STY_SHARD_HEIGHT := Vector2(-12.0, -2.0)
+const STY_SHARD_SIZE := Vector2(0.5, 2.4)
+const STY_SHARD_TOWER := 5.0
+## E4, the far air: the sky a step deeper in value, the spires' lit edges a step lighter.
+const STY_SKY := 0.9
+const STY_SPIRE_EDGE := 1.15
+## and the far ring a step lighter, the middle depth between the near tower and platform and the spires: its stone
+## (tint) and the mist it sinks into (the right side of the frame was black: the ring sunk into the dark FOG), a
+## navy a step over the spires' mist.
+const STY_FAR_TINT := 1.4
+const STY_FAR_MIST := Color(0.09, 0.125, 0.2)
+
 ## ---- light and air (spec 5.2): the light over the middle (place, colour, energy, range), the violet of the abyss
 ## (bearings, r, height, colour, energy, range), the blue light on the far stone (bearing, r, height, colour, energy,
 ## range), the air (background, fog, ambient), the moon.
@@ -373,6 +417,9 @@ var _storm_left := 0
 var _storm_dark := 0.0
 var _air_env: Environment
 var _air_moon: DirectionalLight3D
+## The spires' cards' materials (lot E: their edges in the stylized look) and the broken arches' stone.
+var _spire_mats: Array[ShaderMaterial] = []
+var _sty_arch: ShaderMaterial
 
 
 ## Builds the chamber (call once, in the tree or not). In the fight (Arena._chamber_look) it takes the room's layout
@@ -401,6 +448,7 @@ func build(_arena: Node3D = null, layout: RoomLayout = null, seed_: int = 1406) 
 	_entry()
 	_far()
 	_light()
+	_stylize()
 	m.merge()
 	_apply_seal()
 	if layout != null:
@@ -425,6 +473,13 @@ func _dress_world() -> void:
 	_air_moon = moon
 	_air = air_of(e, moon)
 	dress(e, moon)
+
+
+## After the look changed (F7: VisualProfile.toggle put the world's air of the look on the environment and moon,
+## Arena.restyle): the chamber's own air again, in the look in use (dress). Its stylized pieces follow by themselves.
+func restyle() -> void:
+	if _air_env != null:
+		dress(_air_env, _air_moon if is_instance_valid(_air_moon) else null)
 
 
 ## The chamber leaves (a common room after it, without a new scene): the world's air goes back exactly as it was.
@@ -1335,6 +1390,7 @@ func _far() -> void:
 		var cm := card.material_override as ShaderMaterial
 		cm.set_shader_parameter(&"stone_color", SPIRE_STONE)
 		cm.set_shader_parameter(&"edge_color", SPIRE_EDGE)
+		_spire_mats.append(cm)
 	# the chains
 	for ch in CHAINS:
 		kit.chain(ch[0], ch[1], ch[2], CHAIN_SIZE)
@@ -1348,6 +1404,81 @@ func _far() -> void:
 	for f in FOG_BOXES:
 		var p := at_bearing(f.x, f.y)
 		kit.abyss_fog(Vector3(p.x, -12.0, p.y), Vector3(f.z, 10.0, f.w))
+
+
+# ---------- the stylized look (room redesign lot E) ----------
+
+## The background and the air of the stylized look (spec 3, E1 to E4): the pieces on the kit's stylized Masonry,
+## hidden in the classic look; the spires' edges through VisualProfile; the sky in dress. Its own random numbers
+## (STY_SEED), never the room's.
+func _stylize() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = STY_SEED
+	var sm := kit.styled()
+	sm.layers = ArenaKit.DEPTH_LAYER
+	for i in STY_ARCHES.size():
+		_broken_arch(sm, i)
+	_shards(sm, rng)
+	sm.layers = 1
+	for ch: Array in STY_CHAINS:
+		kit.styled_build(func() -> void: kit.chain(ch[0], ch[1], ch[2], CHAIN_SIZE))
+	var edge := Color(SPIRE_EDGE.r * STY_SPIRE_EDGE, SPIRE_EDGE.g * STY_SPIRE_EDGE, SPIRE_EDGE.b * STY_SPIRE_EDGE)
+	for cm in _spire_mats:
+		VisualProfile.vary(cm, {&"shader_parameter/edge_color": edge})
+	VisualProfile.vary(_deep(0.8), {&"shader_parameter/tint": STY_FAR_TINT, &"shader_parameter/mist_color": STY_FAR_MIST})
+	sm.merge()
+
+
+## E1: a broken arch at mid height in the far ring's bay at STY_ARCHES[i], in the ring's own stone; one stone of the
+## listed ones hangs from a short chain under its gap.
+func _broken_arch(sm: Masonry, i: int) -> void:
+	var b := STY_ARCHES[i]
+	var at := at_bearing(b, FAR_RING.x)
+	var facing := at_bearing(b, 1.0)
+	var spring := 2.0
+	var foot := _v3(at, STY_ARCH.x - spring)
+	var gap := STY_ARCH_GAPS[i]
+	var mat := _arch_stone()
+	sm.broken_arch(foot, facing, STY_ARCH.y, spring, STY_ARCH.z, STY_ARCH.w, mat, gap)
+	if not STY_ARCH_HANGS.has(i):
+		return
+	var right := Basis(Vector3.UP, atan2(facing.x, facing.y)) * Vector3.RIGHT
+	var top := foot + right * (gap.x + gap.y) * 0.5 + Vector3.UP * (spring + STY_ARCH.y * 0.75)
+	var stone := top + Vector3.DOWN * STY_HANG.x
+	var mi := sm.box(stone, Vector3(STY_ARCH.z, STY_ARCH.z * 1.3, STY_ARCH.w * 0.8), 0.0, mat, false)
+	mi.basis = Basis(Vector3.UP, atan2(facing.x, facing.y)) * Basis(Vector3.BACK, STY_HANG.y)
+	kit.styled_build(func() -> void: kit.chain(top, stone + Vector3.UP * STY_ARCH.z * 0.6, 0.05, CHAIN_SIZE * 0.3))
+
+
+## The broken arches' stone (STY_ARCH_STONE, STY_ARCH_SINK): the far ring's, its own material (only the stylized
+## look uses it), sinking lower.
+func _arch_stone() -> ShaderMaterial:
+	if _sty_arch == null:
+		_sty_arch = (_deep(STY_ARCH_STONE.x)).duplicate() as ShaderMaterial
+		_sty_arch.set_shader_parameter(&"tint", STY_ARCH_STONE.y)
+		_sty_arch.set_shader_parameter(&"mist_color", STY_FAR_MIST)
+		_sty_arch.set_shader_parameter(&"sink_top", STY_ARCH_SINK.x)
+		_sty_arch.set_shader_parameter(&"sink_bottom", STY_ARCH_SINK.y)
+	return _sty_arch
+
+
+## E3: stone blocks hanging still in the abyss at the frame's sides, turned every way, in the tower's unlit stone.
+func _shards(sm: Masonry, rng: RandomNumberGenerator) -> void:
+	var tower := at_bearing(TOWER.x, TOWER.y)
+	var mat := _deep(0.5, 1.6)
+	var made := 0
+	var tries := 0
+	while made < STY_SHARDS and tries < STY_SHARDS * 20:
+		tries += 1
+		var span := STY_SHARD_SPANS[made % STY_SHARD_SPANS.size()]
+		var p := at_bearing(rng.randf_range(span.x, span.y), rng.randf_range(span.z, span.w))
+		if p.distance_to(tower) < STY_SHARD_TOWER:
+			continue
+		var size := Vector3(rng.randf_range(STY_SHARD_SIZE.x, STY_SHARD_SIZE.y), rng.randf_range(STY_SHARD_SIZE.x, STY_SHARD_SIZE.y),
+			rng.randf_range(STY_SHARD_SIZE.x, STY_SHARD_SIZE.y))
+		var mi := sm.box(_v3(p, rng.randf_range(STY_SHARD_HEIGHT.x, STY_SHARD_HEIGHT.y)), size, 0.0, mat, false)
+		mi.basis = Basis.from_euler(Vector3(rng.randf() * TAU, rng.randf() * TAU, rng.randf() * TAU))
+		made += 1
 
 
 # ---------- light ----------
@@ -1410,7 +1541,8 @@ static func restore_air(e: Environment, moon: DirectionalLight3D, d: Dictionary)
 
 static func dress(e: Environment, moon: DirectionalLight3D = null) -> void:
 	e.background_mode = Environment.BG_COLOR
-	e.background_color = SKY
+	# lot E 3 (E4): in the stylized look the sky a step deeper, so the lighter spires' edges stand off it
+	e.background_color = Color(SKY.r * STY_SKY, SKY.g * STY_SKY, SKY.b * STY_SKY) if VisualProfile.stylized() else SKY
 	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	e.ambient_light_color = AMBIENT
 	e.ambient_light_energy = AMBIENT_ENERGY
