@@ -3,7 +3,7 @@ extends Node3D
 ## The hub (HUB-01, HUB-B1; plan in docs/design/hub_spec.md, space in hub_spec_art.md, the code audit in
 ## hub_audit.md): the safe place between descents, its name provisional ({HUB}, the text hub_name, D-H4). The hero
 ## walks and runs at peace (Player.peaceful: no blow, special, circle, ultimate nor roll is ever read here), the camera
-## holds on the plan's point (CamRig with RoomLayout.cam_target, CamFrame.hold, reach 3 m), and one of the five
+## holds on the plan's point (CamRig with RoomLayout.cam_target, CamFrame.hold, reach HubPlan.CAM_REACH; Near follows the hero), and one of the five
 ## stations comes into focus by distance (HubFocus) and shows its one sign (StationSign, HUB-B3: name, a short line,
 ## the real key that follows the device, never over the hero; hidden while a screen is open). interact (E, A), or a
 ## click on the sign, uses it: the Portal asks a short confirmation on a leaf of the Livro (HubPanel: "Descer às
