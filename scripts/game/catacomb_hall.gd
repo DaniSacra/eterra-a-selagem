@@ -108,6 +108,10 @@ const CANDLE_LIGHT := 1.5
 const CANDLE_RANGE := 2.8
 const ABYSS_LIGHT := Color(0.66, 0.52, 1.0)
 const ABYSS_LIGHT_ENERGY := 5.0
+## The abyss in the stylized look (lot A spec 3.2): the slate's blue, not violet (a colour kept for Morvath), on the
+## lights from below and on the glow cards (STYLE.abyss_glow).
+const STY_ABYSS_LIGHT := Color(0.5, 0.66, 0.9)
+const STY_ABYSS_GLOW := Color(0.5, 0.6, 0.76)
 ## The violet lights stand this low, so only the foot of the cliffs and piers turns violet.
 const ABYSS_LIGHT_Y := -12.0
 ## Width of the two standing stones (thick and blunt, as in the picture).
@@ -374,6 +378,45 @@ const STY_CANDLE_GAIN := 1.2
 ## The browser's renderer (Compatibility) paints the pools near white at those energies (laje 217 beside the east bowl):
 ## the fires a share of them there (as VisualProfile.COMPAT_KEY does for the key).
 const STY_COMPAT_FIRE := 0.4
+## Room redesign (lot A 3.2, decision L-1): the hall's biome in the stylized look, blue slate instead of the STY's warm
+## umber (docs/art/room_redesign_lotA_spec.md 3.2; ArenaKit.paint_look, stylize_fires). The fires are STY-10's.
+const STYLE := {
+	&"stone": Color(0.325, 0.341, 0.386), &"shadow": Color(0.833, 0.877, 0.98), &"floor_stone": Color(0.292, 0.312, 0.36),
+	&"joint_cold": Color(0.88, 0.91, 1.0), &"olive_share": 0.06, &"abyss_glow": STY_ABYSS_GLOW,
+	&"fire": {&"bowl_range": STY_BOWL_RANGE, &"candle_range": STY_CANDLE_RANGE, &"bowl_attenuation": STY_BOWL_ATTENUATION,
+		&"bowl_gain": STY_BOWL_GAIN, &"candle_gain": STY_CANDLE_GAIN, &"compat": STY_COMPAT_FIRE},
+}
+## The decals of the stylized look (floor_decal.gdshader: the shop's rugs, the fountain's moss), a centimetre over the
+## slabs.
+const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
+const SHOP_RUG := Vector2(2.6, 1.8)
+const SHOP_RUG_Y := 0.012
+## The shop's lanterns: from the item's point, how far back (away from the camera) and to the right the bracket's rod
+## stands on the reliquary's side, how far the arm reaches on into the gap; the arm's height, where the lantern's
+## foot hangs, its little post (none to speak of), its lamp (warm, a candle's reach: STY_CANDLE_RANGE, energy 1.0 of a
+## candle's light).
+const SHOP_LANTERN := Vector3(0.8, 0.8, 0.9)
+const SHOP_ARM := 2.3
+const SHOP_LANTERN_FOOT := 1.0
+const SHOP_LANTERN_POST := Vector3(0.05, 0.02, 0.05)
+static var SHOP_LAMP := TombKit.Lamp.new(Color(1.0, 0.62, 0.3), Color(1.9, 1.0, 0.35), Color(1.0, 0.66, 0.38), 1.2,
+	STY_CANDLE_RANGE, 1.3)
+## The provisions' cloth (umber, folded over the crates: x, z, size, y of its top) and its colour (times the stone's),
+## and their two urns (x, z, height, y).
+const SHOP_CLOTH := Color(0.55, 0.38, 0.28)
+const SHOP_CLOTHS: Array[Vector4] = [Vector4(7.3, -14.0, 0.75, 1.46), Vector4(-5.35, -14.2, 0.85, 0.56)]
+const SHOP_URNS: Array[Vector4] = [Vector4(8.3, -13.8, 0.3, 0.8), Vector4(-6.25, -13.75, 0.26, 0.45)]
+## The fountain's moss (inner, outer radius from the basin's middle), its candles on the rim (angles; the first
+## FOUNTAIN_LIT burn).
+const FOUNTAIN_MOSS := Vector2(1.95, 3.2)
+const FOUNTAIN_CANDLES: Array[float] = [-2.2, -1.95, -0.9, 0.7, 2.4, 2.65]
+const FOUNTAIN_LIT := 4
+## The stylized look's urns (x, z, height, y of what they stand on): by the west balustrade's two pot groups, between
+## the pots and the balustrade (its posts fill the lip over the abyss), never over 0.28 m (nothing new above 0.3 m on
+## the walkable floor), and on the lower step of the portal statues' plinths (in front, toward the steps).
+const URNS: Array[Vector4] = [Vector4(-15.3, -12.2, 0.28, 0.0), Vector4(-15.35, -11.5, 0.22, 0.0),
+	Vector4(-15.3, 0.95, 0.28, 0.0), Vector4(-15.35, 1.75, 0.22, 0.0),
+	Vector4(-1.51, -17.58, 0.48, DAIS_Y + 0.3), Vector4(7.31, -17.58, 0.48, DAIS_Y + 0.3)]
 
 var arena: Arena
 var kit: ArenaKit
@@ -417,24 +460,107 @@ func build(exit_count: int) -> void:
 	_stylize()
 
 
-## The stylized look's numbers (VisualProfile): the painted stone, floor and kit (ArenaKit.paint_look), the fires'
-## pools, the key off. Nothing here moves a piece or touches what blocks.
+## The stylized look's numbers (VisualProfile): the painted stone, floor and kit (ArenaKit.stylize with STYLE), the
+## fires' pools, the key off, the stylized-only urns. Nothing here moves a piece or touches what blocks.
 func _stylize() -> void:
-	kit.paint_look()
-	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
-	for n in arena.find_children("*", "OmniLight3D", true, false):
-		var l := n as OmniLight3D
-		if l == _key:
-			VisualProfile.vary(l, {&"visible": false})
-		elif l.light_color.r - l.light_color.b >= RoomMood.FIRE_FROM and l.light_cull_mask != ArenaKit.DEPTH_LAYER:
-			# the bowls cast shadows, the candles do not
-			var bowl := l.shadow_enabled
-			VisualProfile.vary(l, {
-				&"omni_range": STY_BOWL_RANGE if bowl else STY_CANDLE_RANGE,
-				&"omni_attenuation": STY_BOWL_ATTENUATION if bowl else l.omni_attenuation,
-				&"light_energy": l.light_energy * (STY_BOWL_GAIN if bowl else STY_CANDLE_GAIN) * (STY_COMPAT_FIRE if compat else 1.0),
-				&"shadow_enabled": false,
-			})
+	_urns()
+	var style := STYLE.duplicate()
+	style[&"off"] = [_key]
+	kit.stylize(style, arena)
+
+
+## The urns of the stylized look (room redesign, lot A 3.2): beside the two groups of pots on the west balustrade, on
+## the abyss's side of it, and at the foot of the portal's two statues, on their plinths. Nothing on the floor.
+func _urns() -> void:
+	var sm := kit.styled()
+	var mat := sm.carved(0.0, Color.WHITE)
+	for u: Vector4 in URNS:
+		sm.urn(Vector3(u.x, u.w, u.y), u.z, mat)
+
+
+## The shop's dressing in the stylized look (room redesign lot A 3.3; Arena.dress_shop, after Rooms lays out the row of
+## items at `points`): a painted rug under each item along the row, an iron lantern hung from the side of every second
+## reliquary into the gap toward the next item (under the signs, never over them), and the provisions (the crates and
+## pots at the dais' east foot and in the west nook) under a folded umber cloth with two urns. Nothing blocks.
+func dress_shop(points: Array[Vector2]) -> void:
+	if points.is_empty():
+		return
+	var node := Node3D.new()
+	node.name = "ShopDress"
+	arena.add_child(node)
+	ArenaKit.style_only(node)
+	var mason := Masonry.new(node)
+	var tomb := TombKit.new(mason)
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
+	var away := Vector2(-sin(yaw), -cos(yaw))
+	var rug := ShaderMaterial.new()
+	rug.shader = DECAL_SHADER
+	rug.set_shader_parameter(&"rug_size", SHOP_RUG)
+	for k in points.size():
+		var p := points[k]
+		var mi := MeshInstance3D.new()
+		var q := PlaneMesh.new()
+		q.size = SHOP_RUG
+		mi.mesh = q
+		mi.material_override = rug
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.transform = Transform3D(Basis(Vector3.UP, atan2(-right.y, right.x)), Vector3(p.x, SHOP_RUG_Y, p.y))
+		node.add_child(mi)
+		if k % 2 != 0:
+			continue
+		# the bracket: an iron rod up from the reliquary's side, an arm out into the gap, the lantern hanging from it
+		var side := p + away * SHOP_LANTERN.x + right * SHOP_LANTERN.y
+		var hang := side + right * SHOP_LANTERN.z
+		var ir := tomb.iron()
+		tomb.bar(Vector3(side.x, SHOP_ARM * 0.5 + RewardGem.RELIQUARY.y * 0.5, side.y), Vector3(0.04, SHOP_ARM - RewardGem.RELIQUARY.y, 0.04), 0.0, ir)
+		var mid := (side + hang) * 0.5
+		tomb.bar(Vector3(mid.x, SHOP_ARM, mid.y), Vector3(SHOP_LANTERN.z + 0.04, 0.04, 0.04), atan2(-right.y, right.x), ir)
+		var l := tomb.lantern(Vector3(hang.x, SHOP_LANTERN_FOOT, hang.y), yaw, ir, SHOP_LAMP, ~Arena.CROWD_LAYER, SHOP_LANTERN_POST)
+		l.shadow_enabled = false
+	# the provisions under their cloth
+	for c: Vector4 in SHOP_CLOTHS:
+		mason.box(Vector3(c.x, c.w, c.y), Vector3(c.z, 0.04, c.z * 0.7), 0.4, mason.stone(0.0, SHOP_CLOTH), false)
+	var urn := mason.carved(0.0, Color.WHITE)
+	for u: Vector4 in SHOP_URNS:
+		mason.urn(Vector3(u.x, u.w, u.y), u.z, urn)
+	mason.merge()
+	var k2 := ArenaKit.new(node, 0)
+	k2.paint_look(STYLE)
+
+
+## The fountain's dressing in the stylized look (room redesign lot A 3.4; ArenaKit.fountain): its stone painted as the
+## hall's, a ragged ring of moss with pale flowers painted on the floor round the basin (denser to the north), four
+## candles burning on the basin's rim and two burnt out. No new light (the fountain's own lights them).
+static func dress_fountain(parent: Node3D) -> void:
+	var node := Node3D.new()
+	node.name = "FountainDress"
+	parent.add_child(node)
+	ArenaKit.style_only(node)
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	q.size = Vector2.ONE * FOUNTAIN_MOSS.y * 2.0
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 1)
+	mat.set_shader_parameter(&"ring", FOUNTAIN_MOSS)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position.y = SHOP_RUG_Y
+	node.add_child(mi)
+	var mason := Masonry.new(node)
+	var r := ArenaKit.FOUNTAIN_BASIN.x - ArenaKit.FOUNTAIN_BASIN.z * 0.5
+	for k in FOUNTAIN_CANDLES.size():
+		var a: float = FOUNTAIN_CANDLES[k]
+		var at := Vector3(cos(a) * r, ArenaKit.FOUNTAIN_BASIN.y, sin(a) * r)
+		if k < FOUNTAIN_LIT:
+			mason.candle(at, 0.16 + 0.05 * (k % 2), 0.05)
+		else:
+			mason.candle_out(at, 0.1, 0.05)
+	mason.merge()
+	var kit := ArenaKit.new(parent, 0)
+	kit.paint_look(STYLE)
 
 
 # ---------- the floor, its lip and the cliffs under it ----------
@@ -899,6 +1025,7 @@ func _depths() -> void:
 		l.omni_range = 22.0
 		l.omni_attenuation = 1.1
 		l.light_cull_mask = ArenaKit.DEPTH_LAYER
+		VisualProfile.vary(l, {&"light_color": STY_ABYSS_LIGHT})
 		arena.add_child(l)
 	# the glow itself: inside the gate's arches, under the bridge and low at the west side (the masses stand dark
 	# against it), and at the east side; on desktop a violet fog filling the sides low down

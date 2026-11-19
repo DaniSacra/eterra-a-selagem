@@ -115,6 +115,77 @@ const CANDLE_PLAIN := 6
 ## A hooded statue's own light (energy, reach, cone).
 const STATUE_GLOW := Vector3(1.4, 5.0, 40.0)
 
+## Room redesign, lot A (docs/art/room_redesign_lotA_spec.md part 2): the crypt's biome in the stylized look, petrol
+## stone, cold shadow, dry floor (one slab in 33 to the olive), the candles' pools, a cold air, the key and the
+## floor's fill off (in the painted light an omni with no fire draws rings on the floor), the backdrop in mist.
+const STYLE := {
+	&"stone": Color(0.285, 0.32, 0.347), &"shadow": Color(0.88, 0.94, 0.98), &"floor_stone": Color(0.278, 0.296, 0.312),
+	&"joint_cold": Color(0.85, 0.938, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.1, &"pool_saturation": 1.0,
+	&"fire": {&"candle_range": 3.4, &"candle_gain": 1.3, &"bowl_range": 3.5, &"bowl_attenuation": 0.7, &"bowl_gain": 1.0,
+		&"compat": 0.4},
+	&"air": {&"sky": Color(0.045, 0.065, 0.08), &"fog": Color(0.10, 0.125, 0.14), &"fog_depth": Vector2(40.0, 85.0),
+		&"ambient": Color(0.72, 0.75, 0.78), &"ambient_gain": 2.1, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
+		&"moon_shadow": true},
+	&"backdrop": {&"mist": Color(0.10, 0.15, 0.18), &"stone": Color(0.05, 0.07, 0.08), &"edge": Color(0.16, 0.22, 0.26)},
+}
+## The small sarcophagi in the stylized look: their lighter stone painted at the plain stone's value (paint_ref of the
+## painted stone, paint.gdshaderinc, times their tint) and their candles' pools softer.
+const STY_PAINT_REF := 0.36
+## The stylized air in the Compatibility renderer (the browser): its ambient and key lower, where the painted stone lit
+## grey-white at the desktop's numbers (frame luma 79 against 56 on desktop).
+const STY_COMPAT_AMBIENT := 0.7
+const STY_COMPAT_MOON := 0.5
+const STY_LIGHT_STONE := 1.35
+const STY_LID_POOL := 0.7
+## The cold shaft in the stylized look (hue 200, saturation 0.28).
+const STY_COLD := Color(0.66, 0.82, 0.92)
+## The cold glow far behind the north door (spec 2.3): how far behind the wall's face (and at least 0.3 m past the
+## door's mouth), its foot and top (y), its colour
+## at the foot (A; B: the distant light of the concept), at the top.
+const DOOR_GLOW := Vector3(1.0, -0.5, 3.5)
+const DOOR_GLOW_FOOT := Color(0.1, 0.17, 0.21)
+const DOOR_GLOW_FOOT_B := Color(0.16, 0.24, 0.28)
+const DOOR_GLOW_TOP := Color(0.02, 0.03, 0.04)
+const COLD_GLOW_SHADER := preload("res://assets/shaders/cold_glow.gdshader")
+## The mist beyond the cut front walls (spec 2.3): how far out of the outer face, its middle's height, height, colour
+## (times 2 on the card), alpha.
+const FRONT_MIST := Vector4(2.5, -2.5, 5.0, 0.5)
+const FRONT_MIST_COLOR := Color(0.10, 0.15, 0.18)
+## The shrouded effigy on the great tomb (A1): its length, the share of the tomb's length its middle stands off west
+## (from x -0.6 to 1.6 on the tomb at 0.5), how much lighter its stone is.
+const EFFIGY := Vector2(2.2, 0.0)
+const EFFIGY_LIGHT := 1.05
+## Urns on the ledges (A2, A3; x or z along the north or west ledge, height). Places that a blocking piece stands within
+## URN_CLEAR of are left out (variant B's low wall).
+const NORTH_URNS: Array[Vector2] = [Vector2(-10.75, 0.42), Vector2(-10.45, 0.3), Vector2(-1.2, 0.5)]
+const WEST_URNS: Array[Vector2] = [Vector2(-2.55, 0.48), Vector2(-2.25, 0.32), Vector2(0.9, 0.4), Vector2(-0.75, 0.36), Vector2(-0.45, 0.5)]
+const URN_CLEAR := 0.25
+## A burnt-out stub beside the north urn at x -1.2 (A2).
+const NORTH_STUB := Vector2(-0.95, 0.12)
+## Candles at the statues' feet (A4): how many lit on the sill in front of each statue niche, how far out of the
+## wall's face; their light (one for each niche).
+const STATUE_CANDLES := 5
+const SILL_OUT := 0.12
+## The shelved niches' sill (A5): two urns and three burnt-out candles.
+const SHELF_URNS: Array[float] = [0.36, 0.44]
+## Burnt-out candles at the other end of the small sarcophagi's lids that burn (A6).
+const LID_STUBS := 3
+## The grave slabs' worn inscription (A7): a frame inset this far, its line, three strokes (share of the inside's
+## width), the stone's value, how far over the slab.
+const INSCRIPTION := Vector3(0.16, 0.03, 0.6)
+const INSCRIPTION_TINT := 0.5
+const INSCRIPTION_LIFT := 0.006
+## Variant B: the veiled figure on the ossuary wall's north end (B1: height, how far in from the north end), the urns
+## along its top (B2: z, height), its cold light (B3: energy, reach, cone; from this high over the wall and this far
+## south of the figure).
+const VEILED := Vector2(3.0, 0.9)
+const WALL_URNS: Array[Vector2] = [Vector2(-8.5, 0.42), Vector2(-7.0, 0.36), Vector2(-5.5, 0.5), Vector2(-4.5, 0.38)]
+const VEILED_GLOW := Vector3(1.2, 6.0, 35.0)
+const VEILED_GLOW_FROM := Vector2(4.0, 3.5)
+
+var _key: OmniLight3D
+var _fill: OmniLight3D
+var _shaft: SpotLight3D
 var _north := 0.0
 var _west := 0.0
 var _south := 0.0
@@ -186,6 +257,7 @@ func dress() -> void:
 	_candles()
 	_cold_shaft()
 	var key := key_light(KEY, KEY_ENERGY * (COMPAT_KEY if _compat() else 1.0), KEY_HEIGHT)
+	_key = key
 	key.omni_attenuation = KEY_FALLOFF
 	key.omni_range = KEY_REACH
 	key.position += Vector3(KEY_SHIFT.x, 0.0, KEY_SHIFT.y)
@@ -197,11 +269,13 @@ func dress() -> void:
 	fill.omni_attenuation = FLOOR_FILL_FALLOFF
 	fill.light_cull_mask = FLOOR_LAYER
 	add_child(fill)
+	_fill = fill
 	# the doors' stairs (ArenaRoom._doors) take Masonry's plain stone at their foot: this room's is darker
 	var plain := m.stone(-EXIT_RISE * EXIT_STEPS)
 	var dark := _stair_stone(-EXIT_RISE * EXIT_STEPS)
 	for k: StringName in [&"stone_a", &"stone_b"]:
 		plain.set_shader_parameter(k, dark.get_shader_parameter(k))
+	_dress_styled()
 
 
 ## The stone of the steps: Masonry's plain stone at their foot in the value of the walls (STAIR_TINT).
@@ -215,7 +289,9 @@ func sarcophagus(o: ArenaObstacle) -> Vector3:
 	var long_x := o.half.x >= o.half.y
 	var half := o.half if long_x else Vector2(o.half.y, o.half.x)
 	if half.x * 2.0 < TOMB_FROM:
-		return super.sarcophagus(o)
+		var top := super.sarcophagus(o)
+		_bone()
+		return top
 	var yaw := -o.yaw + (0.0 if long_x else PI * 0.5)
 	var lid := m.stone(0.0, stone_tint() * TOMB_LID_LIGHT)
 	var st := stone()
@@ -274,7 +350,7 @@ func _back_walls() -> void:
 	# the niches themselves, their shelves or statues
 	var mat := ashlar()
 	var hollow := m.stone(0.0, HOLLOW)
-	var bone := m.stone(0.0, BONE)
+	var bone := _bone()
 	var k := 0
 	for x in NORTH_NICHES:
 		_niche(Vector2(x, _north), Vector2(0, 1), STATUE_NICHES.has(k), mat, hollow, bone)
@@ -545,7 +621,7 @@ func ruin_wall(o: ArenaObstacle) -> void:
 	var pillar := width
 	m.block(foot - basis * Vector3(pillar * 0.5, 0, 0) * (1.0 if long_x else -1.0), Vector3(length - pillar, o.height, width), yaw, mat, false)
 	var hollow := see(m.stone(0.0, HOLLOW))
-	var bone := see(m.stone(0.0, BONE))
+	var bone := see(_bone())
 	# the shallow niches: three rows of dark arched panels, a bundle of bones in each
 	for sd: float in [-1.0, 1.0]:
 		for row in 3:
@@ -590,4 +666,181 @@ func _cold_shaft() -> void:
 	spot.spot_attenuation = 0.0
 	spot.shadow_enabled = true
 	spot.light_cull_mask = ~Arena.CROWD_LAYER
+	_shaft = spot
 	arena._dust(to)
+
+
+# ---------- the stylized look (room redesign, lot A part 2) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if _compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	st[&"off"] = [_key, _fill]
+	if _shaft != null:
+		VisualProfile.vary(_shaft, {&"light_color": STY_COLD})
+	return st
+
+
+## The bones' stone. Masonry keys its materials by the tint's html, which clamps at 1: BONE, the small sarcophagi's
+## body (SARC_TINT) and lid (SARC_LID_LIGHT) are one material, whichever made it first (the classic look as it always
+## was). In the stylized look that light stone is painted at the plain stone's value and its candles' pools soft (the
+## warm pool over the cold air burnt the lids cream); the bones stay a light stone, not ivory (ArenaKit.PAINT_OWN; the
+## see-through twins copy the meta).
+func _bone() -> ShaderMaterial:
+	var b := m.stone(0.0, BONE)
+	b.set_meta(ArenaKit.PAINT_OWN, {&"paint_ref": STY_PAINT_REF * STY_LIGHT_STONE, &"paint_pool_gain": STY_LID_POOL})
+	return b
+
+
+## The pieces only the stylized look shows (spec 2.3 to 2.5), all on kit.styled() (never the room's random numbers:
+## the classic pieces stay where they were): the effigy, urns, candles, the slabs' inscriptions, the cold glow behind
+## the north door, the mist beyond the cut walls; in B the veiled figure and the urns on the ossuary wall.
+func _dress_styled() -> void:
+	var sm := kit.styled()
+	var st := TombKit.new(sm)
+	var urn := sm.carved(LEDGE, STONE)
+	var divider := _divider()
+	# A1: the effigy on the great tomb
+	for o in layout.obstacles:
+		if o.piece == &"sarcophagus" and maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM:
+			var long_x := o.half.x >= o.half.y
+			st.effigy(Vector3(o.center.x + EFFIGY.y, o.height, o.center.y), EFFIGY.x, 0.0 if long_x else PI * 0.5,
+				sm.carved(o.height, STONE * EFFIGY_LIGHT))
+	# A2, A3: urns on the ledges
+	var ny := _north - WALL_SET * 0.5
+	for u in NORTH_URNS:
+		if _clear(Vector2(u.x, _north), URN_CLEAR):
+			sm.urn(Vector3(u.x, LEDGE, ny), u.y, urn)
+	sm.candle_out(Vector3(NORTH_STUB.x, LEDGE, ny), NORTH_STUB.y, 0.06)
+	var wx := _west - WALL_SET * 0.5
+	var placed := 0
+	for u in WEST_URNS:
+		if placed < 3 and _clear(Vector2(_west, u.x), URN_CLEAR) and absf(u.x - (ENTRY.x + ENTRY.y) * 0.5) > 2.6:
+			sm.urn(Vector3(wx, LEDGE, u.x), u.y, urn)
+			placed += 1
+	# A4, A5: the niches' sills
+	var k := 0
+	for x in NORTH_NICHES:
+		_sill(sm, Vector2(x, _north), Vector2(0, 1), STATUE_NICHES.has(k), urn)
+		k += 1
+	for z in WEST_NICHES:
+		_sill(sm, Vector2(_west, z), Vector2(1, 0), STATUE_NICHES.has(k), urn)
+		k += 1
+	# A6: burnt-out candles at the other end of the lit small sarcophagi's lids
+	for o in layout.obstacles:
+		if o.piece != &"sarcophagus" or maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM or o.shape != ArenaObstacle.Shape.BOX:
+			continue
+		var long_x := o.half.x >= o.half.y
+		var half := o.half if long_x else Vector2(o.half.y, o.half.x)
+		if arena.shape().edge_distance(o.center) < half.y + 0.4 or o.height > 2.0:
+			continue
+		var axis := Vector3(1, 0, 0) if long_x else Vector3(0, 0, 1)
+		var across := Vector3(axis.z, 0, axis.x)
+		var end := Vector3(o.center.x, o.height, o.center.y) - axis * (half.x - 0.35) * (1.0 if o.center.x > 0.0 else -1.0)
+		for i in LID_STUBS:
+			sm.candle_out(end + across * (i - 1) * 0.2, 0.08 + 0.04 * (i % 2), 0.055)
+	# A7: the grave slabs' worn inscriptions
+	var ink := sm.stone(0.0, STONE * INSCRIPTION_TINT)
+	for sl in SLAB_ROWS:
+		var at := Vector2(sl.x, sl.y)
+		if _clear(at, SLAB.length() * 0.5):
+			_inscription(sm, at, ink)
+	# the cold glow behind the north door, the mist beyond the cut walls
+	for i in layout.exits.size():
+		if in_wall(i):
+			_door_glow(layout.exits[i], divider != null)
+	var mist := FRONT_MIST_COLOR * 2.0
+	var c := Vector2((_west + _east) * 0.5, (_north + _south) * 0.5)
+	var before := kit.root.get_child_count()
+	kit.mist_bank(Vector3(c.x, FRONT_MIST.y, _south + FRONT.y + FRONT_MIST.x), Vector2(_east - _west + 8.0, FRONT_MIST.z), mist, FRONT_MIST.w)
+	kit.mist_bank(Vector3(_east + FRONT.y + FRONT_MIST.x, FRONT_MIST.y, c.y), Vector2(_south - _north + 8.0, FRONT_MIST.z), mist, FRONT_MIST.w)
+	for i in range(before, kit.root.get_child_count()):
+		ArenaKit.style_only(kit.root.get_child(i) as Node3D)
+	if divider != null:
+		_ossuary_crown(sm, divider)
+
+
+## The sill in front of a niche: five lit candles at a statue's feet (and their light), or two urns and three burnt-out
+## candles before the shelves.
+func _sill(sm: Masonry, at: Vector2, facing: Vector2, statue: bool, urn: Material) -> void:
+	var face := at - facing * WALL_SET
+	var y := LEDGE + 0.16
+	var across := Vector2(-facing.y, facing.x)
+	var base := face + facing * SILL_OUT
+	if statue:
+		for i in STATUE_CANDLES:
+			var t := (i - (STATUE_CANDLES - 1) * 0.5) * 0.22
+			var p := base + across * t
+			sm.candle(Vector3(p.x, y, p.y), 0.1 + 0.2 * absf(sin(float(i) * 2.3)), 0.045 + 0.02 * float(i % 2))
+		var l := OmniLight3D.new()
+		l.position = Vector3(base.x, y + 0.6, base.y) + Vector3(facing.x, 0, facing.y) * 0.4
+		l.light_color = CANDLE_COLOR
+		l.light_energy = CANDLE_LIGHT
+		l.omni_range = CANDLE_RANGE
+		l.light_cull_mask = ~Arena.CROWD_LAYER
+		sm.root.add_child(l)
+		return
+	for i in SHELF_URNS.size():
+		var p := base + across * (-0.55 + 1.1 * i)
+		sm.urn(Vector3(p.x, y, p.y), SHELF_URNS[i], urn)
+	for i in 3:
+		var p := base + across * (-0.2 + 0.16 * i)
+		sm.candle_out(Vector3(p.x, y, p.y), 0.07 + 0.05 * (i % 2), 0.05)
+
+
+## A grave slab's worn inscription: an inset frame and three strokes, no letters (spec 2.4 A7).
+func _inscription(sm: Masonry, at: Vector2, ink: Material) -> void:
+	var h := SLAB * 0.5 - Vector2.ONE * INSCRIPTION.x
+	var w := INSCRIPTION.y
+	var y0 := TombKit.SLAB_LIFT * 1.6
+	var y1 := y0 + INSCRIPTION_LIFT
+	var rect := func(c: Vector2, half: Vector2) -> PackedVector2Array:
+		return PackedVector2Array([c - half, c + Vector2(half.x, -half.y), c + half, c + Vector2(-half.x, half.y)])
+	for sd: float in [-1.0, 1.0]:
+		sm.prism(rect.call(at + Vector2(sd * h.x, 0), Vector2(w * 0.5, h.y)), y0, y1, ink)
+		sm.prism(rect.call(at + Vector2(0, sd * h.y), Vector2(h.x, w * 0.5)), y0, y1, ink)
+	for i in 3:
+		var z := at.y - h.y * 0.45 + h.y * 0.3 * i
+		var len_ := h.x * INSCRIPTION.z * (1.0 - 0.25 * (i % 2))
+		sm.prism(rect.call(Vector2(at.x, z), Vector2(len_, w * 0.4)), y0, y1, ink)
+
+
+## The cold glow far behind a door in the north wall: a card in the arch, a metre behind the wall's face, never on
+## the floor (spec 2.3).
+func _door_glow(e: ArenaExit, ossuary: bool) -> void:
+	var card := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(absf(e.mouth.size.x), DOOR_GLOW.z - DOOR_GLOW.y)
+	card.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = COLD_GLOW_SHADER
+	mat.set_shader_parameter(&"bottom", DOOR_GLOW_FOOT_B if ossuary else DOOR_GLOW_FOOT)
+	mat.set_shader_parameter(&"top", DOOR_GLOW_TOP)
+	card.material_override = mat
+	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# beyond the door's mouth (it turns to floor when the door is taken), never across the way out
+	var z := minf(_north - WALL_SET - DOOR_GLOW.x, minf(e.mouth.position.y, e.mouth.end.y) - DOOR_GLOW.x * 0.3)
+	card.position = Vector3(e.mouth.get_center().x, (DOOR_GLOW.y + DOOR_GLOW.z) * 0.5, z)
+	kit.styled().root.add_child(card)
+
+
+## Variant B: the veiled figure standing on the ossuary wall's north end, facing the camera's side, the urns along its
+## top, its cold light; all opening round the paladin behind the wall, as the wall does.
+func _ossuary_crown(sm: Masonry, o: ArenaObstacle) -> void:
+	var top := o.height
+	var north := o.center.y - maxf(o.half.x, o.half.y)
+	var at := Vector3(o.center.x, top, north + VEILED.y)
+	sm.layers = ArenaKit.STATUE_LAYER
+	var fig := sm.hooded_statue(at, 0.0, VEILED.x, ArenaKit.STATUE_VALUE)
+	fig.material_override = see(fig.material_override as ShaderMaterial)
+	sm.layers = 1
+	var urn := see(sm.carved(top, STONE))
+	for u in WALL_URNS:
+		sm.urn(Vector3(o.center.x, top, u.x), u.y, urn)
+	var before := kit.root.get_child_count()
+	kit.statue_glow(at + Vector3(0, VEILED_GLOW_FROM.x, VEILED_GLOW_FROM.y), at + Vector3(0, VEILED.x * 0.6, 0), VEILED_GLOW.x,
+		VEILED_GLOW.y, VEILED_GLOW.z, STY_COLD)
+	for i in range(before, kit.root.get_child_count()):
+		ArenaKit.style_only(kit.root.get_child(i) as Node3D)

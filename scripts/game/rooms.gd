@@ -944,6 +944,11 @@ func _build_shop() -> void:
 		(p.node as Node3D).add_child(sign)
 		p.sign = sign
 		_pedestals.append(p)
+	# the stylized look dresses the row (room redesign lot A 3.3; nothing of it blocks)
+	var points: Array[Vector2] = []
+	for p in picks:
+		points.append(p.at)
+	game.arena.dress_shop(points)
 
 
 ## What the shop shows now, for a screen (one entry per item left: item (RunMap.Reward), price, group (index in

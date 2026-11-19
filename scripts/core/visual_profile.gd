@@ -23,7 +23,9 @@ const GLOBAL := &"art_style"
 ## The world in the stylized look (stylized_spec.md 1.3, T1, T5, T7): a warm-neutral ambient strong enough that the
 ## middle of the floor reads light with no fire near (never a light washing a wall), the fog in the air down to 40%,
 ## the frame a little less saturated (the painting comes from value, not colour: the R1's p90 saturation is 15).
-const AMBIENT := Color(0.78, 0.74, 0.68)
+## Room redesign (lot A 3.2, L-1): cooler, the hall's slate blue under it (was (0.78, 0.74, 0.68)); the arenas' own
+## air (ArenaRoom.style) rules in them.
+const AMBIENT := Color(0.70, 0.74, 0.80)
 ## STY-10: 1.2 to 1.0, the fires' pools carry the light near them and the middle stays under 80.
 const AMBIENT_GAIN := 1.0
 const FOG_IN_AIR := 0.4

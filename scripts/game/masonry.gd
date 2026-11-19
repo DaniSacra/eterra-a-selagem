@@ -87,6 +87,11 @@ const WAX_OUT := 0.4
 const WICK := Color(0.05, 0.045, 0.04)
 ## A candle's flame: its size (m), the orange tongue, the near-white core inside it and the core's share of the size.
 const CANDLE_FLAME := 0.34
+## Urns (urn): the belly's radius as a share of the height, at most URN_RADIUS m (they stand on 0.3 m ledges); the
+## carved stone's grime height for small pieces.
+const URN_BELLY := 0.26
+const URN_RADIUS := 0.14
+const CARVED_GRIME := 0.3
 const CANDLE_FIRE := Color(2.3, 1.1, 0.35)
 const CANDLE_CORE := Color(2.6, 2.0, 1.1)
 const CANDLE_CORE_SIZE := 0.55
@@ -633,10 +638,20 @@ func pendant(top: Vector3, length: float, root: float, mat: Material) -> void:
 func hooded_statue(foot: Vector3, yaw: float, height: float, value: float) -> MeshInstance3D:
 	if _statue_mesh == null:
 		_statue_mesh = _build_statue()
-	var key := "%.2f|%.1f|%.1f" % [value, foot.y, height]
+	var mi := MeshInstance3D.new()
+	mi.mesh = _statue_mesh
+	mi.material_override = _carved(foot.y, STATUE_STONE * value, height * STATUE_GRIME)
+	mi.transform = Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * height), foot)
+	_add(mi)
+	return mi
+
+
+## Carved stone (the statues', the urns', the effigies'): one piece, no courses, no blocks, no chipped corners, shaded
+## by the mesh's vertex value (_lathe's colours); its grime up to grime_height over base_y.
+func _carved(base_y: float, tint: Color, grime_height: float) -> ShaderMaterial:
+	var key := "%.2f|%s|%.2f" % [base_y, tint.to_html(), grime_height]
 	if not _statue_mats.has(key):
-		var mat := stone(foot.y, STATUE_STONE * value).duplicate() as ShaderMaterial
-		# one piece of stone: no courses, no blocks, no chipped corners; shaded by the mesh's vertex value
+		var mat := stone(base_y, tint).duplicate() as ShaderMaterial
 		mat.set_shader_parameter(&"course", 10000.0)
 		mat.set_shader_parameter(&"block_len", 10000.0)
 		mat.set_shader_parameter(&"block_var", 0.0)
@@ -646,15 +661,39 @@ func hooded_statue(foot: Vector3, yaw: float, height: float, value: float) -> Me
 		mat.set_shader_parameter(&"cracks", STATUE_CRACKS)
 		mat.set_shader_parameter(&"top_light", STATUE_TOP_LIGHT)
 		mat.set_shader_parameter(&"rock_value", STATUE_ROCK)
-		mat.set_shader_parameter(&"grime_height", height * STATUE_GRIME)
+		mat.set_shader_parameter(&"grime_height", grime_height)
 		mat.set_shader_parameter(&"vertex_shade", 1.0 / ROBE_VALUE)
 		_statue_mats[key] = mat
+	return _statue_mats[key]
+
+
+## Carved stone for small pieces (urns, effigies; room redesign lot A 1.6), of the room's stone times tint.
+func carved(base_y: float, tint := Color.WHITE) -> ShaderMaterial:
+	return _carved(base_y, STATUE_STONE * tint, CARVED_GRIME)
+
+
+## An urn (room redesign lot A 1.6): a turned body, a narrow mouth, a lid; `height` 0.2 to 0.55 m, the belly's radius
+## URN_BELLY of it (at most URN_RADIUS), standing at `at` (the middle of its foot). mat: carved stone (carved) or metal.
+func urn(at: Vector3, height: float, mat: Material, lid := true) -> void:
+	var r := minf(height * URN_BELLY, URN_RADIUS) / height
+	var outline: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(r * 0.62, 0.0), Vector2(r * 0.55, 0.06), Vector2(r * 0.86, 0.22),
+		Vector2(r, 0.45), Vector2(r * 0.9, 0.66), Vector2(r * 0.5, 0.8), Vector2(r * 0.42, 0.86), Vector2(r * 0.55, 0.9)]
+	var shade := PackedFloat32Array([0.6, 0.6, 0.7, 0.9, 1.05, 1.1, 0.9, 0.8, 1.0])
+	if lid:
+		outline.append_array([Vector2(r * 0.55, 0.93), Vector2(r * 0.3, 0.97), Vector2(r * 0.12, 1.0), Vector2(0.0, 1.02)])
+		shade.append_array([1.05, 1.1, 1.1, 1.1])
+	else:
+		outline.append_array([Vector2(r * 0.38, 0.9), Vector2(0.0, 0.84)])
+		shade.append_array([0.4, 0.2])
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	_lathe(st, outline, Transform3D(Basis.from_scale(Vector3.ONE * height), Vector3.ZERO), shade)
+	st.generate_normals()
 	var mi := MeshInstance3D.new()
-	mi.mesh = _statue_mesh
-	mi.material_override = _statue_mats[key]
-	mi.transform = Transform3D(Basis(Vector3.UP, yaw).scaled(Vector3.ONE * height), foot)
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.position = at
 	_add(mi)
-	return mi
 
 
 ## The statue of height 1, looking along +Z: lathed robe with deep pleats, belt, shoulders, the hood with its brim

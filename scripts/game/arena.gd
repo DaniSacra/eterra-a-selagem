@@ -92,6 +92,7 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	_rng.seed = seed_
 	# an arena's air (ArenaRoom.air) goes back before the next room is built (the old room leaves after it)
 	ArenaRoom.leave_air()
+	hall_look = null
 	_hall = layout == null
 	self.layout = layout
 	if layout != null:
@@ -127,6 +128,7 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 		var hall := CatacombHall.new(self, seed_)
 		hall.build(exit_count)
 		_kit = hall.kit
+		hall_look = hall
 		return
 	if layout != null and ArenaRoom.LOOKS.has(layout.look):
 		_build_arena(layout, exit_count, seed_)
@@ -175,6 +177,8 @@ var flow: FlowField
 const SWEEP_STEP := 0.2
 ## The look of an arena (ArenaRoom and its kind), when one is built.
 var look: ArenaRoom
+## The catacomb hall's builder when the room is the hall (dress_shop).
+var hall_look: CatacombHall
 ## A spot in the middle of its floor (where a cleared room's reward rises; the hall's middle is the origin).
 var middle := Vector2.ZERO
 
@@ -631,6 +635,19 @@ func _build_arena(l: RoomLayout, exit_count: int, seed_: int) -> void:
 	look = look_for(l.look)
 	add_child(look)
 	look.build(self, l, exit_count, seed_)
+
+
+## After the look changed (F7, VisualProfile.toggle): the room dressed with its own air puts it back for the look in
+## use (the profile had put the world's on it). The hall has no air of its own (the profile's is its).
+func restyle() -> void:
+	if look != null and is_instance_valid(look):
+		look.redress_air()
+
+
+## The stylized look of the shop (room redesign lot A 3.3): the hall dresses the row of items at `points` (Rooms).
+func dress_shop(points: Array[Vector2]) -> void:
+	if hall_look != null:
+		hall_look.dress_shop(points)
 
 
 ## The look of an arena by its id (ArenaRoom.LOOKS; ArenaRoom.make).

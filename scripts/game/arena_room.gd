@@ -246,6 +246,7 @@ func build(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> void:
 	dress()
 	m.merge()
 	_dress_air()
+	_stylize()
 	shadowed = _count_shadows()
 
 
@@ -281,6 +282,38 @@ func stone_tint() -> Color:
 ## moon_energy, moon_shadow.
 func air() -> Dictionary:
 	return {}
+
+
+## The room's biome in the stylized look (room redesign, docs/art/room_redesign_lotA_spec.md 1.1; empty: the room as
+## it is, the stylized look only reaching what passes through it anyway). Keys, all optional: stone, shadow,
+## floor_stone, joint_cold, olive_share, slab_hue, edge_value (ArenaKit.paint_look), fire (ArenaKit.stylize_fires),
+## air (the keys of air(), the stylized air; those it lacks are air()'s), off (lights hidden in the stylized look),
+## backdrop ({mist, stone, edge}: backdrop() shown only in the stylized look), metal (true: ArenaKit.stylize_metal).
+## Called once, after dress() (it may name the lights dress() made).
+func style() -> Dictionary:
+	return {}
+
+
+var _style := {}
+
+
+## The stylized look of the room (style()): its own pieces (dressed in dress() on kit.styled()), the backdrop, the
+## painted stone, floor and kit, the fires, the metals; all through VisualProfile, so the classic look is as built.
+func _stylize() -> void:
+	_style = style()
+	if _style.is_empty():
+		return
+	if _style.has(&"backdrop"):
+		var b: Dictionary = _style[&"backdrop"]
+		var before := kit.root.get_child_count()
+		backdrop(b[&"mist"], b[&"stone"], b[&"edge"])
+		for i in range(before, kit.root.get_child_count()):
+			var n := kit.root.get_child(i) as Node3D
+			if n != null:
+				ArenaKit.style_only(n)
+	kit.stylize(_style, self, tomb)
+	if _style.has(&"air"):
+		_dress_air()
 
 
 ## The cliffs' stone (depth_stone.gdshader uniforms: stone_color, edge_color...), if not the hall's teal.
@@ -1510,12 +1543,16 @@ static var _dresser: ArenaRoom
 static func leave_air() -> void:
 	if _air_env != null and not _saved.is_empty():
 		BossChamber.restore_air(_air_env, _air_moon if is_instance_valid(_air_moon) else null, _saved)
+		# the air was saved in the look of that moment: what the visual profile holds goes back to the look in use
+		VisualProfile.refresh()
 	_saved = {}
 	_dresser = null
 
 
 func _dress_air() -> void:
 	var want := air()
+	if VisualProfile.stylized() and _style.has(&"air"):
+		want = want.merged(_style[&"air"], true)
 	if want.is_empty() or not is_inside_tree():
 		return
 	var e := get_world_3d().environment
@@ -1532,7 +1569,8 @@ func _dress_air() -> void:
 		_air_moon = moon
 		_saved = BossChamber.air_of(e, moon)
 	_dresser = self
-	var base_energy: float = _saved[&"ambient_light_energy"]
+	# the world's own energy, the classic one whatever the look it was taken in (VisualProfile scales it for the hall)
+	var base_energy: float = VisualProfile.classic_of(e, &"ambient_light_energy", _saved[&"ambient_light_energy"])
 	e.background_mode = Environment.BG_COLOR
 	e.background_color = want.get(&"sky", e.background_color)
 	e.fog_light_color = want.get(&"fog", e.fog_light_color)
@@ -1547,6 +1585,16 @@ func _dress_air() -> void:
 		moon.light_color = want.get(&"moon", moon.light_color)
 		moon.light_energy = want.get(&"moon_energy", moon.light_energy)
 		moon.shadow_enabled = want.get(&"moon_shadow", moon.shadow_enabled)
+
+
+## The room's air again for the look in use, after the look changed (F7: VisualProfile put the world's values of the
+## new look on the environment and the moon; Arena.restyle). Only the room that dressed the air does it.
+func redress_air() -> void:
+	if _dresser == self:
+		# what this room's air leaves alone comes back to the world's (the moon's energy of the look, its shadow)
+		if _air_moon != null and is_instance_valid(_air_moon) and _saved.has(&"moon"):
+			_air_moon.shadow_enabled = (_saved[&"moon"] as Array)[3]
+		_dress_air()
 
 
 func _exit_tree() -> void:

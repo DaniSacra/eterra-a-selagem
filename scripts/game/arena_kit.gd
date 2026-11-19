@@ -375,26 +375,49 @@ func _cloth_material(glow: Color) -> StandardMaterial3D:
 ## the floors take their painted twins (masonry_paint, catacomb_floor_paint; the wood keeps its own colour), the kit's
 ## pieces the painted kit material. Call once the room is built (after Masonry.merge). Materials made while the look
 ## was stylized are put back to their classic shader first, so the classic one is always the one registered.
-func paint_look() -> void:
+## Room redesign (biome preset, docs/art/room_redesign_lotA_spec.md 1.1): `style` (the room's style(), every key
+## optional) adds its numbers to every material it paints: stone (paint_stone), pool_gain (the stone's fire pools,
+## paint_pool_gain: candles standing on a lid burn it white at the floor's gain), abyss_glow (the colour of the
+## abyss's glow cards, abyss_glow), pool_saturation (stone and floor, the
+## pools' share of the fire's colour), shadow (paint_shadow, also the kit's
+## painted pieces, on a copy of the shared material), floor_stone, slab_hue, edge_value (the floor's), joint_cold and
+## olive_share (stone and floor); a material with the meta PAINT_OWN takes those values on top (bone that must not
+## turn to stone: OWN_KEEP).
+func paint_look(style := {}) -> void:
 	var swaps := {Masonry.SHADER: Masonry.PAINT_SHADER, FLOOR_SHADER: FLOOR_PAINT}
 	var seen := {}
+	var kit_paint: Material = KAYKIT_PAINT
+	if style.has(&"shadow"):
+		kit_paint = KAYKIT_PAINT.duplicate()
+		(kit_paint as ShaderMaterial).set_shader_parameter(&"paint_shadow", style[&"shadow"])
 	for n in root.find_children("*", "GeometryInstance3D", true, false):
 		var g := n as GeometryInstance3D
-		_paint_material(g.material_override, swaps, seen)
+		_paint_material(g.material_override, swaps, seen, style)
 		if not g is MeshInstance3D:
 			continue
 		var mi := g as MeshInstance3D
 		var kit := false
 		for i in mi.get_surface_override_material_count():
 			var over := mi.get_surface_override_material(i)
-			_paint_material(over, swaps, seen)
+			_paint_material(over, swaps, seen, style)
 			if over == null and mi.mesh != null and mi.mesh.surface_get_material(i) == KAYKIT_MATERIAL:
 				kit = true
 		if kit and mi.material_override == null:
-			VisualProfile.vary(mi, {&"material_override": KAYKIT_PAINT})
+			VisualProfile.vary(mi, {&"material_override": kit_paint})
 
 
-func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary) -> void:
+## Which keys of a room's style go to which painted shader (paint_look).
+const STONE_KEYS := {&"stone": &"paint_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold", &"olive_share": &"olive_share",
+	&"pool_gain": &"paint_pool_gain", &"pool_saturation": &"paint_pool_saturation"}
+const FLOOR_KEYS := {&"floor_stone": &"floor_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold",
+	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"edge_value": &"edge_value", &"pool_saturation": &"paint_pool_saturation"}
+## A material's own stylized numbers (meta: shader parameter name to value), over the room's (paint_look).
+const PAINT_OWN := &"paint_own"
+## Stone that keeps its own colour in the stylized look (bone, wood): paint_keep with its saturation and value whole.
+const OWN_KEEP := {&"paint_keep": 1.0, &"wood_saturation": 1.0, &"wood_value": 1.0}
+
+
+func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary, style := {}) -> void:
 	var sm := mat as ShaderMaterial
 	if sm == null or seen.has(sm):
 		return
@@ -405,9 +428,97 @@ func _paint_material(mat: Material, swaps: Dictionary, seen: Dictionary) -> void
 	if not swaps.has(sm.shader):
 		return
 	var values := {&"shader": swaps[sm.shader]}
+	var keys: Dictionary = STONE_KEYS if sm.shader == Masonry.SHADER else FLOOR_KEYS
+	for k: StringName in keys:
+		if style.has(k):
+			values[StringName("shader_parameter/" + keys[k])] = style[k]
 	if masonry.is_wood(sm):
 		values[&"shader_parameter/paint_keep"] = 1.0
+	var own: Dictionary = sm.get_meta(PAINT_OWN, {})
+	for k: StringName in own:
+		values[StringName("shader_parameter/" + k)] = own[k]
 	VisualProfile.vary(sm, values)
+
+
+## The fires of the stylized look (STY-04, STY-10; the hall's loop, shared by every room since the room redesign, spec
+## 1.3): every warm light under `at` (its red over its blue by RoomMood.FIRE_FROM) not on the depths' layer paints a
+## pool: a fire bowl's (brazier, meta BOWL) and a candle's reach, the bowls' falloff, their energy as a share of the
+## classic one (times `compat` in the browser's renderer), never a shadow. The lights in `off` are hidden.
+## fire: {bowl_range, candle_range, bowl_attenuation, bowl_gain, candle_gain, compat}.
+func stylize_fires(at: Node, fire: Dictionary, off: Array = []) -> void:
+	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
+	var share: float = fire.get(&"compat", 1.0) if compat else 1.0
+	for n in at.find_children("*", "OmniLight3D", true, false):
+		var l := n as OmniLight3D
+		if off.has(l):
+			VisualProfile.vary(l, {&"visible": false})
+		elif not fire.is_empty() and l.light_color.r - l.light_color.b >= RoomMood.FIRE_FROM and l.light_cull_mask != DEPTH_LAYER:
+			var bowl := l.has_meta(BOWL)
+			VisualProfile.vary(l, {
+				&"omni_range": fire.get(&"bowl_range" if bowl else &"candle_range", l.omni_range),
+				&"omni_attenuation": fire.get(&"bowl_attenuation", l.omni_attenuation) if bowl else l.omni_attenuation,
+				&"light_energy": l.light_energy * float(fire.get(&"bowl_gain" if bowl else &"candle_gain", 1.0)) * share,
+				&"shadow_enabled": false,
+			})
+	for l: Node in off:
+		if l is Light3D and not l is OmniLight3D:
+			VisualProfile.vary(l, {&"visible": false})
+
+
+## The meta of a fire bowl's light (brazier; stylize_fires).
+const BOWL := &"bowl"
+## The metals in the stylized look (spec 1.2): matte, a little metallic, old gold, iron and bronze.
+const STY_METAL := Vector2(0.75, 0.35)
+const STY_GOLD := Color(0.42, 0.31, 0.13)
+const STY_IRON := Color(0.16, 0.16, 0.17)
+const STY_BRONZE := Color(0.32, 0.22, 0.12)
+
+
+## The kit's and a tomb kit's metals in the stylized look (spec 1.2).
+func stylize_metal(tomb: TombKit = null) -> void:
+	var pairs: Array = [[_bronze_mat, STY_BRONZE]]
+	if tomb != null:
+		pairs.append([tomb._gold_mat, STY_GOLD])
+		pairs.append([tomb._iron_mat, STY_IRON])
+	for p: Array in pairs:
+		if p[0] != null:
+			VisualProfile.vary(p[0], {&"albedo_color": p[1], &"roughness": STY_METAL.x, &"metallic": STY_METAL.y})
+
+
+## What is built only for the stylized look (room redesign): a Masonry of its own under a node hidden in the classic
+## look (so the classic frame never changes and nothing of it merges with the classic stone). Call stylize (or
+## styled_done) once it is all built.
+func styled() -> Masonry:
+	if _styled == null:
+		var node := Node3D.new()
+		node.name = "Styled"
+		root.add_child(node)
+		style_only(node)
+		_styled = Masonry.new(node)
+	return _styled
+
+
+var _styled: Masonry
+
+
+## A node shown only in the stylized look.
+static func style_only(node: Node3D) -> void:
+	node.visible = false
+	VisualProfile.vary(node, {&"visible": true})
+
+
+## The whole stylized look of a room (spec 1.1): the stylized pieces joined, the stone, floor and kit painted with the
+## preset, the fires (their lights under `lights`), the metals.
+func stylize(style: Dictionary, lights: Node, tomb: TombKit = null) -> void:
+	if _styled != null:
+		_styled.merge()
+	paint_look(style)
+	stylize_fires(lights, style.get(&"fire", {}), style.get(&"off", []))
+	if style.has(&"abyss_glow"):
+		for m: ShaderMaterial in _glow_mats.values():
+			VisualProfile.vary(m, {&"shader_parameter/color": style[&"abyss_glow"]})
+	if style.get(&"metal", false):
+		stylize_metal(tomb)
 
 
 ## The lion's patch on a banner: a square grid of quads just in front of the folds (so it bends with them), UV 0..1
@@ -582,6 +693,7 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT)
 	l.omni_attenuation = BRAZIER_ATTENUATION
 	l.shadow_enabled = true
 	l.light_cull_mask = WARM_MASK
+	l.set_meta(BOWL, true)
 	root.add_child(l)
 	if solid:
 		circles.append(Vector3(at.x, at.y, BRAZIER_RADIUS))
@@ -1243,6 +1355,8 @@ static func fountain(parent: Node3D) -> void:
 	spring.color_ramp = Fx.fade_ramp(Color.WHITE)
 	parent.add_child(spring)
 	mason.merge()
+	# the stylized look's moss, candles and painted stone (room redesign lot A 3.4)
+	CatacombHall.dress_fountain(parent)
 
 
 ## After he drinks (Game._step_fountain): the water's glow goes out.

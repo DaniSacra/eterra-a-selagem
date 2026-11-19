@@ -472,3 +472,79 @@ func bench(at: Vector2, half: Vector2, yaw: float, mat: Material, broken := fals
 			Vector3(BENCH_FALLEN.x, BENCH_FALLEN.y, BENCH_FALLEN.z), yaw + 0.15, mat)
 		fallen.rotate_object_local(Vector3.RIGHT, 0.12)
 
+
+
+## The shrouded effigy (room redesign lot A 1.6): a figure lying under its shroud on a lid, the head at `at` - along *
+## length / 2 (along: the turn `yaw`, 0 = the head west), its middle at `at` (the top of what it lies on). A turned
+## section along its length: its width (EFFIGY_WIDTH, the head, neck, shoulders, the feet) and height (EFFIGY_HEIGHT)
+## at shares of the length; the shroud's folds three to five shallow diagonal grooves in the vertex value (the carved
+## stone multiplies it in). No face, no hands, nothing laid on it. mat: carved stone (Masonry.carved).
+func effigy(at: Vector3, length: float, yaw: float, mat: Material) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rings: Array[PackedVector3Array] = []
+	var shades: Array[PackedFloat32Array] = []
+	var around := EFFIGY_AROUND
+	for i in EFFIGY_RINGS + 1:
+		var t := float(i) / EFFIGY_RINGS
+		var w := _profile(EFFIGY_WIDTH, t) * 0.5
+		var h := _profile(EFFIGY_HEIGHT, t)
+		var ring := PackedVector3Array()
+		var vals := PackedFloat32Array()
+		for j in around + 1:
+			var a := PI * j / around
+			var x := (t - 0.5) * length
+			var p := Vector3(x, sin(a) * h, -cos(a) * w)
+			ring.append(p)
+			# the folds: grooves across the body, leaning from the shoulders toward the feet
+			var fold := sin((x * EFFIGY_FOLD_FREQ + p.z * EFFIGY_FOLD_LEAN) * TAU)
+			var groove := smoothstep(0.55, 0.95, fold) * smoothstep(0.2, 0.32, t) * (1.0 - smoothstep(0.9, 1.0, t))
+			vals.append(lerpf(1.0, EFFIGY_FOLD_SHADE, groove) * lerpf(EFFIGY_UNDER, 1.0, sin(a)))
+		rings.append(ring)
+		shades.append(vals)
+	var xf := Transform3D(Basis(Vector3.UP, yaw), at)
+	for i in EFFIGY_RINGS:
+		for j in around:
+			for q: Vector2i in [Vector2i(i, j), Vector2i(i + 1, j), Vector2i(i, j + 1), Vector2i(i, j + 1), Vector2i(i + 1, j), Vector2i(i + 1, j + 1)]:
+				st.set_color(Color.WHITE * minf(shades[q.x][q.y] * Masonry.ROBE_VALUE, 1.0))
+				st.add_vertex(xf * rings[q.x][q.y])
+	# the ends closed (head and feet): fans to their middle
+	for e: int in [0, EFFIGY_RINGS]:
+		var mid := Vector3((float(e) / EFFIGY_RINGS - 0.5) * length, 0.0, 0.0)
+		for j in around:
+			var tri: Array[Vector3] = [mid, rings[e][j], rings[e][j + 1]]
+			if e != 0:
+				tri = [mid, rings[e][j + 1], rings[e][j]]
+			for v in tri:
+				st.set_color(Color.WHITE * Masonry.ROBE_VALUE * 0.9)
+				st.add_vertex(xf * v)
+	st.generate_normals()
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	root.add_child(mi)
+	m._built.append(mi)
+
+
+## A value along a profile of (share of the length, value) points, smooth between them.
+static func _profile(points: Array[Vector2], t: float) -> float:
+	for i in range(1, points.size()):
+		if t <= points[i].x:
+			return lerpf(points[i - 1].y, points[i].y, smoothstep(points[i - 1].x, points[i].x, t))
+	return points[points.size() - 1].y
+
+
+## The effigy's section (effigy): width and height in meters at shares of its length from the head (the head 0.26
+## wide and 0.3 high, the neck, the shoulders 0.6, the chest 0.22 high, narrowing to the feet 0.32 wide and 0.26 high,
+## the toes raising the shroud), rings along it, points round half its section, the folds (per meter along, lean
+## across, value in a groove) and the value under its sides.
+const EFFIGY_WIDTH: Array[Vector2] = [Vector2(0.0, 0.12), Vector2(0.05, 0.24), Vector2(0.11, 0.26), Vector2(0.16, 0.2),
+	Vector2(0.24, 0.6), Vector2(0.45, 0.52), Vector2(0.7, 0.4), Vector2(0.92, 0.32), Vector2(1.0, 0.2)]
+const EFFIGY_HEIGHT: Array[Vector2] = [Vector2(0.0, 0.08), Vector2(0.05, 0.26), Vector2(0.11, 0.3), Vector2(0.16, 0.16),
+	Vector2(0.24, 0.2), Vector2(0.4, 0.22), Vector2(0.62, 0.16), Vector2(0.85, 0.15), Vector2(0.95, 0.26), Vector2(1.0, 0.1)]
+const EFFIGY_RINGS := 40
+const EFFIGY_AROUND := 12
+const EFFIGY_FOLD_FREQ := 1.8
+const EFFIGY_FOLD_LEAN := 1.2
+const EFFIGY_FOLD_SHADE := 0.62
+const EFFIGY_UNDER := 0.7

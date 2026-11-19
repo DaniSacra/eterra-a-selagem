@@ -1505,6 +1505,37 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   72 a 86 (+50). Sonda de sensação 40/40 nos dois looks; o Compatibility abre sem erro.
 - Medir o quadro do jogo: `tools/sty_probe.gd` (comando no topo; `PROBE` com quadro, CPU, GPU, chamadas e memória de vídeo).
 
+## Redesenho das salas, Lote A (só no estilizado; spec `docs/art/room_redesign_lotA_spec.md`, antes e depois em `docs/gallery/redesign/lotA/`)
+- **Biblioteca** (para os lotes B a E): cada look devolve o bioma em `ArenaRoom.style()` (dicionário; o Salão usa
+  `CatacombHall.STYLE`), aplicado por `ArenaRoom._stylize` no fim do `build` e por `ArenaKit.stylize(style, luzes, tomb)`:
+  `paint_look(style)` (chaves `stone`, `shadow`, `floor_stone`, `joint_cold`, `olive_share`, `slab_hue`, `edge_value`,
+  `pool_gain`, `pool_saturation`; um material pode trazer os próprios números na meta `ArenaKit.PAINT_OWN`),
+  `stylize_fires` (`fire`: alcance, queda e ganho de velas e braseiros, braseiros marcados com a meta `ArenaKit.BOWL`,
+  sem sombra; `off`: luzes apagadas no estilizado), `abyss_glow` (cor dos cartões de brilho do abismo), `metal`
+  (`stylize_metal`: bronze, ouro e ferro mais apagados), `air` (o ar estilizado da sala, por cima do `air()`) e
+  `backdrop` (ruínas e bruma ao fundo só no estilizado). Peças só do estilizado: `ArenaKit.styled()` (um `Masonry`
+  próprio sob o nó "Styled", escondido no clássico, `ArenaKit.style_only`); nunca o `_rng` da sala (o clássico não
+  muda). Peças novas: `Masonry.urn`, `Masonry.carved`, `TombKit.effigy`, `floor_decal.gdshader` (tapete da loja,
+  musgo da fonte), `cold_glow.gdshader` (brilho frio além da porta).
+- **F7 e o ar**: o `Environment` tinha dois donos; agora `Game` chama `Arena.restyle()` depois do `VisualProfile.toggle()`
+  e a sala refaz o próprio ar (`ArenaRoom.redress_air`, base clássica por `VisualProfile.classic_of`); `leave_air`
+  devolve o ar do look em uso. `VisualProfile.AMBIENT` frio (0,70; 0,74; 0,80). Teste: `tests/test_room_style.gd`
+  (Cripta A e B e Salão trocados duas vezes voltam idênticos, colisão igual, peça nova sobre o chão abaixo de 0,3 m).
+- **Cripta** (`CryptLook.STYLE`, petróleo frio): ar próprio (ambiente 2,1, lua de chave 0,9 com sombra, névoa clara
+  longe; no Compatibility `STY_COMPAT_AMBIENT` 0,7 e `STY_COMPAT_MOON` 0,5), chave e preenchimento apagados, velas 3,4 m;
+  efígie no túmulo grande, urnas nas saliências, velas nos nichos, inscrições, brilho frio além da porta norte, bancos
+  de bruma ao sul e leste; na B uma figura encapuzada de 3 m sobre o Ossuário. Os sarcófagos pequenos e os ossos dividem
+  um material (o `Masonry` guarda por cor e a cor passa de 1): no estilizado ele vai ao valor da pedra
+  (`STY_PAINT_REF`, `STY_LIGHT_STONE`) com poça mais fraca (`STY_LID_POOL`), senão as tampas com velas viravam creme.
+- **Salão** (`CatacombHall.STYLE`, ardósia azul, L-1): pedra e chão azulados, abismo azul no lugar do violeta
+  (`STY_ABYSS_LIGHT`, `STY_ABYSS_GLOW`), urnas baixas nos potes oeste e nos plintos do portal. Loja (`Arena.dress_shop`,
+  chamado no fim do `Rooms._build_shop`; `CatacombHall.dress_shop`): tapete sob cada relicário, lanternas de ferro
+  baixas entre as placas (nunca na frente delas), panos e urnas. Fonte (`CatacombHall.dress_fountain`, pelo
+  `ArenaKit.fountain`): musgo cinza-verde com flores e velas na borda. Poças e figuras do STY-10 iguais.
+- Medido (RTX 1080, vitrine do jogo, semente 5): Cripta chão 66 e 69, parede norte 34, fora 25, quadro 56, matiz 206;
+  Salão chão 74 (matiz 229, saturação 0,12), norte 65, abismo matiz 211, quadro 68. Quadro: Cripta RTX 2,08 para 1,97 ms,
+  iGPU 720 Baixa 14,3 para 13,3; Salão 2,55 para 2,42 e 17,3 para 15,2. O clássico igual à galeria nas cinco vistas.
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

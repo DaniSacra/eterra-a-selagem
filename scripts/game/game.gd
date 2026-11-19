@@ -444,6 +444,7 @@ func _process(delta: float) -> void:
 		_toggle_feel_panel()
 	if Controls.pressed(&"look_toggle"):
 		VisualProfile.toggle()
+		arena.restyle()
 	_hurt_tint.step(fx.real_dt, Feel.live())
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
 	if mode != Mode.PLAY and mode != Mode.ENDING and not Dev.has("lab"):
