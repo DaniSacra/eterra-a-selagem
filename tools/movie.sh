@@ -14,7 +14,7 @@ GODOT_WIN=${GODOT_WIN:-/mnt/c/Users/danie/tools/godot/Godot_v4.7.2-stable_win64_
 RES=${RES:-1920x1080}
 out=$1; frames=$2; shift 2
 MIRROR="$MIRROR" "$ROOT/tools/gpu.sh" sync
-exec 9>/tmp/eterra-gpu.lock
+exec 9>/tmp/eterra-gpu.0.lock
 flock 9
 printf '[display]\n\nwindow/size/window_width_override=%s\nwindow/size/window_height_override=%s\n' "${RES%x*}" "${RES#*x}" \
 	> "$MIRROR/override.cfg"

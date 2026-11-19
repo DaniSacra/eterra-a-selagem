@@ -40,8 +40,8 @@ Maestria, Salmos, Juramentos, Balanceamento da região E6, Morvath, Hub), `docs/
   `--start=`, `--arena=`, `--hero-hp=`, `--bot-kite=`). Leia o `RESULT` em JSON (`rooms[]`, `dealt_by`, `hurt_by`,
   `boss`, `ult`, `windups`, `shot_flight`) e grave com `--runlog=arquivo` quando precisar de `hurt_ctx`.
 - Rode em paralelo sem tela à vontade (`xargs -P`), mas numa cópia isolada do projeto se outros agentes estiverem
-  mexendo no repositório, e nunca mais de uma captura na GPU por vez (`flock /tmp/claude-1000/gpu.lock tools/gpu.sh`;
-  o PC do Daniel deu tela azul com capturas em paralelo).
+  mexendo no repositório, e na GPU só pelo `tools/gpu.sh` (no máximo 2 capturas ao mesmo tempo, o próprio script controla;
+  o PC do Daniel deu tela azul com mais capturas em paralelo).
 - **O robô não é gente**: lê os avisos melhor, não procura cobertura, não usa o chão a favor. Use-o para comparar
   versões, não como a taxa de vitória real; diga isso nas metas e peça a sessão do Daniel para calibrar
   (o registro `user://runs.jsonl` das partidas dele, `RunLog`, é a fonte humana quando existir).

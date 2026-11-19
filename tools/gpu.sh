@@ -5,16 +5,26 @@
 #   tools/gpu.sh shot out.png [game options...]      one capture (Forward+, 1672x941 unless RES=WxH), about 15 s
 #   tools/gpu.sh run [godot args...]                 anything else, e.g. tools/gpu.sh run -s tools/enemy_lab.gd -- C:/x
 #   tools/gpu.sh sync                                mirror and reimport only
-# One run at a time (a lock: others wait). A game window shows on the desktop while it runs. Paths given to the game are Windows paths (C:/...): `shot` turns
+# At most GPU_SLOTS runs at a time (default 2, Daniel 2026-11-19; slot 1 uses its own mirror, eterra-gpu2), others wait. A game window shows on the desktop while it runs. Paths given to the game are Windows paths (C:/...): `shot` turns
 # out.png into one and copies the result back. GODOT_WIN and MIRROR override the defaults below.
 set -e
 GODOT_WIN=${GODOT_WIN:-/mnt/c/Users/danie/tools/godot/Godot_v4.7.2-stable_win64_console.exe}
-MIRROR=${MIRROR:-/mnt/c/Users/danie/tools/eterra-gpu}
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 win() { wslpath -w "$1"; }
-# one run at a time: agents share the mirror and the GPU (the next one waits its turn)
-exec 9>/tmp/eterra-gpu.lock
-flock 9
+# GPU_SLOTS runs at a time, each slot with its own mirror (two runs on one mirror would sync under each other); the
+# PC rebooted with a display-driver crash (0x116) with more at once, so keep it small
+SLOTS=${GPU_SLOTS:-2}
+slot=""
+while [ -z "$slot" ]; do
+	for i in $(seq 0 $((SLOTS - 1))); do
+		exec 9>"/tmp/eterra-gpu.$i.lock"
+		if flock -n 9; then slot=$i; break; fi
+		exec 9>&-
+	done
+	[ -z "$slot" ] && sleep 2
+done
+if [ "$slot" = 0 ]; then MIRROR=${MIRROR:-/mnt/c/Users/danie/tools/eterra-gpu}; else MIRROR=${MIRROR:-/mnt/c/Users/danie/tools/eterra-gpu$((slot + 1))}; fi
+mkdir -p "$MIRROR"
 
 sync() {
 	rsync -a --delete --exclude .git --exclude .godot --exclude build --exclude 'assets/models/meshy/*/*-v[0-9]*' "$ROOT/" "$MIRROR/"
