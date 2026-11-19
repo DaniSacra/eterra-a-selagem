@@ -24,7 +24,30 @@
   planejamento). Entram o plano `docs/art/stylized_poc_plan.md`, a seção 7, a ordem nova na seção 5 e a regra do Meshy
   (nenhum crédito sem o "pode" do PO e sempre com estimativa antes; a Q-18 antiga foi substituída). Nada rodado.
 
-## Estado do jogo em 5 linhas
+- **Atualização de 2026-11-18, noite (game-director, commit lido `deea6e5`)**: diretriz do PO de redesenho artístico das
+  18 vistas (`docs/art/po_directive_room_redesign_2026-11-18.md`); o Daniel foi dormir e pediu que tudo fosse feito pela
+  decisão do Game Director, para ele testar de manhã. Entram a **seção 8 "Redesenho das salas (RS)"** (bugs e quickwins
+  que as medidas revelaram, itens RS-A a RS-E por lote, RS-F de fechamento, perigos H-1 a H-7 aguardando o PO, perguntas
+  pendentes com a decisão provisória), a seção 0 com DV-1, MUS-1, AP-1 e STY e a ordem nova na seção 5. Lidos: a
+  diretriz, `docs/design/room_redesign_level_review.md`, `docs/art/room_redesign_matrix.md`, as specs dos lotes A a E,
+  `docs/art/room_redesign_decisions.md`, `docs/gallery/rooms_2026-11-18/LEIAME.md`, `arena_room.gd`, `arena_kit.gd`,
+  `catacomb_hall.gd`, `visual_profile.gd`, `game.gd` (F7). Rodado por mim: `tools/fit_probe.gd -- --arena=hall` com
+  `--look=classic` e `--look=stylized` (honra o perfil, ver RS-0.4). Nada implementado.
+
+## Estado do jogo em 5 linhas (noite de 18/11)
+
+1. **Combate e descida estáveis e completos para a primeira região**: C17, DV-1 (grafo da descida e mapa no Livro), MUS-1
+   e AP-1 feitos; nenhum P0 aberto de gameplay.
+2. **O perfil estilizado (STY-01 a STY-10) está pronto só no Salão**: figuras, Emeth, cortes e avisos pintados em todo
+   lugar, mas a pedra e o ar das arenas continuam os do clássico (RS-0.1, RS-0.2): as 18 vistas medem matiz 223 a 259,
+   uma sala só em cor.
+3. **O redesenho das salas começou** (Lote A com o environment-artist): cada bioma com paleta, fundo e marcos próprios,
+   só no estilizado, clássico intacto, nada novo no chão andável, Meshy zero.
+4. **O que falta medir é gente**: dificuldade de Morvath para humano, se o estilizado agrada jogando e se o F7 serve de
+   comparação; o robô mede ritmo e regressão, não beleza.
+5. **Steam continua fora** (pedido do Daniel); Q-01 (licença do Meshy) e Q-17 seguem abertas.
+
+## Estado do jogo em 5 linhas (manhã de 18/11, histórico)
 
 1. **A mão está no molde do Hades II e estável**: sonda 40/40, 992 testes, nenhum P0 em nenhum dos 7 relatórios; robô vence
    7 de 8 com Maestria 1, chega a Morvath aos 200 a 320 s com 5 a 8 Bênçãos.
@@ -62,6 +85,11 @@ Legenda: **Esforço** P (horas), M (1 a 2 dias), G (vários dias). **Prioridade*
 | **C17, frente de gameplay** | `e401151`, `881ce58`, `5a535fe`, `90a728d`, `e7e933a`, `3eded80`, `5a0dde9`, `0c13d4e`, `707894e`, `1957bb3`, `af5be1c`, `a6dd2fd` | BUG-101 a BUG-104, BUG-110, QW-101 a QW-105, QW-107, QW-112, DT-102 e a Q-09 (b) (Lâminas das Almas de perto com passo atrás: fase 1 de 91% foice para 62%, nunca mais de 2 iguais em 3 sementes) | `docs/gallery/c17/`, `CLAUDE.md` seção C17; 1012 testes, sonda 40/40; régua de 24 descidas (reação 0,25, `--ultimate=cleave`): 23 de 24 vitórias (base 14 de 16 nas sementes 1 a 16, agora 16 de 16) |
 | **Créditos fora do jogo** (pedido do PO) | `099a486` | sem tela de Créditos; toda atribuição em `CREDITOS.txt` ao lado do exe | `CREDITOS.txt` |
 | **Assets: auditoria e C1** | `d458633`, `28fd0a9`, `010ef90` | agente `technical-artist`; inventário; fontes de assado fora do pacote, paleta única do KayKit, BC7/BC5/BC4: exe de 219,7 para 197,2 MB, texturas 3D de 161 para 10 MB de VRAM | `docs/qa/asset_report.md`, `docs/art/asset_inventory.md` |
+| **DV-1 "Descida de Valmor I"** | `286c9a7`, `859a2b3`, `c831399`, mapa `3ab128a`, `6d8a1ce`, `615e5ab`, `2c34e38` | MAP-01 a MAP-05: grafo da descida pela semente, portas = ligações, robô lendo o mapa, mapa no Livro de Ahk com M | `docs/gallery/dv1/`, `docs/qa/dv1_metrics.md`, `tests/test_descent.gd` |
+| **MUS-1** (música de luta) | `9ba1a09`, `470937c`, `ee1fac7` | quatro peças compostas pelo projeto, novas como padrão, save 5 | `docs/gallery/mus1/`, `tests/test_music.gd` |
+| **AP-1 "Nada de protótipo"** | `4231da7`, `b279433` | esmalte e relicário das recompensas, estela da Provação, câmaras assentadas, fonte de pedra, portal fundo, braseiros, janelas da Câmara | `docs/gallery/ap1/` |
+| **STY-01 a STY-10** (prova estilizada) | `3e63692` a `1e0ea78` | `VisualProfile` reversível (F7, `--look`), Salão pintado, figuras, Emeth, cortes e avisos pintados, poças de fogo, correções das revisões STY-09 | `docs/art/stylized_review.md`, `tests/test_visual_profile.gd`, `tests/test_stylized_figures.gd` |
+| **Galeria das 18 vistas e agente room-designer** | `af5fd02`, `ca9b8da`, `4fe9bd9`, `deea6e5` | capturas clássico e estilizado de todas as salas; estudo de level design, matriz e specs do redesenho | `docs/gallery/rooms_2026-11-18/`, seção 8 |
 
 Saíram deste backlog por estarem feitos (prova nos commits citados no backlog anterior e no `CLAUDE.md`): E1a a E1c, E2 a
 E6, C12c a C12d, C13 inteiro, C15-01 a C15-05, BUG-017, B-c, B-2, DT-001, DT-003 (iGPU medida na E6), DT-012 a DT-016,
@@ -70,6 +98,10 @@ VX-04 a VX-07, VX-13, VX-14, QW-014, QW-018 e o roteiro do T3.
 ---
 
 ## 1. Bugs e quickwins (primeiro)
+
+**Noite de 18/11: os mais urgentes estão na seção 8.2** (RS-0.1 `paint_look` só no Salão e RS-0.2 `_dress_air()` por
+cima do ar estilizado, os dois altos; RS-0.3 F7 sem refazer o ar; RS-0.4 a RS-0.7 ferramentas e linha de base). As
+tabelas abaixo são da manhã; o que nelas não tem "Feito" segue valendo depois do RS.
 
 Ordenados por prioridade. Duplicados entre relatórios foram juntados (coluna Origem).
 
@@ -455,7 +487,27 @@ música e os efeitos agradam, e se o herói se acha nas fases 2 a 4.
 
 ## 5. Ordem sugerida
 
-**Revista em 2026-11-18 pela diretriz "Eterra Stylized Art"** (seção 7): o Daniel pediu para parar e planejar. Nada
+**Revista na noite de 2026-11-18 pela diretriz do redesenho das salas** (seção 8). A prova estilizada (STY-01 a
+STY-10), o DV-1, o AP-1 e o MUS-1 estão feitos; o redesenho é a migração sala por sala que o AP-3 previa, então o **AP-3
+vira o RS** (os aceites dele continuam dentro do RS: nada de fundo liso, KayKit fora das paredes, luma de luta 55 a 70,
+iGPU Baixa a no máximo 3 qps abaixo).
+
+1. **Esta noite, em série, sem parada entre lotes** (pedido do Daniel): RS-0 (bugs e ferramentas: RS-0.1 a RS-0.3 dentro
+   do RS-A1; RS-0.4 a RS-0.7 em paralelo pelo `qa-performance` e pelo `technical-artist`, arquivos distintos), depois
+   RS-A, RS-B, RS-C, RS-D, RS-E e o fechamento RS-F. Revisões de cada lote não bloqueiam o seguinte; as correções entram
+   antes do RS-F.
+2. **Manhã de 19/11, o Daniel testa** o exe (estilizado como padrão só se o RS-F passar; F7 volta ao clássico) e
+   responde a lista curta da seção 8.6 e os perigos H-1 a H-7.
+3. **AP-2 "Combate que se lê"** no perfil que o Daniel escolher (estilizado se ele aprovar o RS; o clássico continua
+   intacto e testado).
+4. **C19** variedade, **DV-2**, **C20** e **AP-4**, como antes. Perigos de sala aprovados (minha ordem: H-2, depois
+   H-3) entram como itens de gameplay depois do C19, com o `room-designer` fixando os números pelo Hades II antes.
+5. **Meshy**: só estimativas, nada gasto sem o "pode" do Daniel.
+
+Opinião minha: não abrir o C19 em paralelo esta noite. Ele não cruza arquivos com o RS, mas o teste de manhã é para
+julgar as salas; mudar o combate ao mesmo tempo mistura as respostas.
+
+**Revista em 2026-11-18 pela diretriz "Eterra Stylized Art"** (histórico) (seção 7): o Daniel pediu para parar e planejar. Nada
 começa sem ele dizer o "pode" para a prova de conceito. A ordem nova:
 
 1. **Daniel responde S-Q1** (a imagem de referência que faltou) e aprova o plano `docs/art/stylized_poc_plan.md`.
@@ -512,6 +564,9 @@ reaproveita Q-03, Q-04, Q-05, Q-07, Q-13 e Q-18 daqui.
 
 ## 7. Eterra Stylized Art (diretriz do PO de 2026-11-18, só planejamento)
 
+**Estado na noite de 2026-11-18**: STY-01 a STY-10 feitos (seção 0); `PaintPass` desligado por padrão; S-Q6 (pontas do
+medalhão) segue aberta e foi para a seção 8.6. O AP-3 virou o redesenho das salas (seção 8).
+
 Plano completo em **`docs/art/stylized_poc_plan.md`** (diagnóstico, prova de conceito, riscos, perguntas S-Q1 a S-Q4);
 texto do Daniel em `docs/art/po_directive_stylized_2026-11-18.md`. A referência que ele citou não chegou (S-Q1); a
 provisória é a prancha `docs/art/ref/direcao_2026-11-18/prancha_relicarios_cripta_livro_morvath.png`.
@@ -535,3 +590,166 @@ provisória é a prancha `docs/art/ref/direcao_2026-11-18/prancha_relicarios_cri
 | AP-3 Masmorras com alma | depois do C20 | **vira a migração** sala por sala no estilo aprovado; os aceites dele (sem fundo liso, KayKit fora das paredes, luma 55 a 70, iGPU Baixa a 3 qps) continuam | é o ciclo que mais muda com a estética; fazer em clássico agora seria refazer |
 | AP-4 Livro, coleção e título | por último | **em paralelo ao AP-3**, sem mudança de escopo | interface 2D já em pintura digital (medalhões, Livro); não depende do 3D |
 
+
+---
+
+## 8. Redesenho das salas (RS)
+
+Diretriz do PO de 2026-11-18 (`docs/art/po_directive_room_redesign_2026-11-18.md`), estudo do `room-designer`
+(`docs/design/room_redesign_level_review.md`), matriz e specs do `art-director` (`docs/art/room_redesign_matrix.md`,
+`room_redesign_lot{A,B,C,D,E}_spec.md`) e decisões da noite (`docs/art/room_redesign_decisions.md`, mais L-1 ardósia
+azul no Salão, L-11 loja sem personagem, L-12 cristal só como imagem). Os números de cada item são os das specs; aqui
+está só o alvo que decide o aceite.
+
+**Regras de todos os itens**: só o perfil STYLIZED muda (tudo novo por `VisualProfile.vary`; peça nova `visible` falso
+no clássico); câmera, colisão, `RoomLayout`, portas, nascimentos, avisos, raio-x e combate não mudam; nada novo acima de
+0,3 m no chão andável nem acima de 0,9 m a 2 m da borda sul; nenhum círculo no chão fora do Salão e da Câmara; cores
+reservadas (Emeth 133, Morvath 157 a 165 e 253 a 270, aviso 4, âmbar 30 só nas Runas, petróleo saturado só no herói);
+nada de figura alada, auréola, sol, cruz ou estrela; Meshy zero.
+
+### 8.1 Aceite comum (AC-RS), vale para todo item de sala
+
+1. **Clássico intacto**: capturas clássicas das salas tocadas iguais às de `docs/gallery/rooms_2026-11-18/atual/` (até 2
+   por canal fora das chamas); `tools/test.sh -gselect=test_visual_profile` e `-gselect=test_room_style` passam.
+2. **F7 dentro da sala** troca e volta exato, ar incluído (`test_room_style.gd`: monta a sala, troca duas vezes, compara
+   materiais, luzes, visibilidade, `Environment`, lua e colisão).
+3. **Jogo**: `tools/fit_probe.gd -- --arena=<id> --variant=<n> --look=stylized` sem subir fantasma nem peça sem desenho
+   mais de 0,1 m² sobre a linha de base (tabela 0.2 do estudo); `tools/test.sh -gselect=test_arenas`; 8 sementes do robô
+   por sala e variante tocadas (`tools/smoke.sh 120 --arena=<id> --variant=<n> --seed=1..8 --look=stylized`) com
+   `stuck` 0 no `RESULT`; `tools/test.sh` inteiro e `tools/check.gd` sem erro.
+4. **Leitura** (pelo `tools/frame_stats.py` com o `--hue` do RS-0.5): quadro de luta luma média 52 a 70, `SATHIGH` até 26;
+   caixa de 300 x 300 px do herói com verde e ciano até 2%; aro do aviso 40 ou mais acima da laje; alvos de matiz, sat
+   HSV p50 e luma p50 do chão de cada bioma (matriz 0.4).
+5. **Desempenho**: no máximo 6 luzes com sombra (`tools/arena_lab.gd` imprime `SHADOWED LIGHTS`); `tools/sty_probe.gd`
+   na RTX 1920 x 1080 Alta e na iGPU 1280 x 720 Baixa (`--gpu-index 1 --quality=baixa`) a no máximo 3 qps abaixo da
+   linha de base do RS-0.6.
+6. **Compatibility**: `DRIVER=opengl3 tools/shot.sh` uma captura por sala, sem erro de shader no log.
+7. **Evidência**: antes e depois a 1080 e 720 e uma em luta com aviso (`--shot-at=9`) em `docs/gallery/redesign/<lote>/`,
+   na linha de comando da galeria (`RES=1920x1080 tools/gpu.sh shot <saída> --look=stylized --arena=<id> --variant=<n>
+   --bot --autopick --seed=5 --shot-at=5`).
+8. **Revisão**: `art-director` em `docs/art/visual_review.md`; `combat-feel-director` uma captura de luta por bioma
+   (avisos, corte, herói achado em 1 s). Revisão não bloqueia o lote seguinte esta noite; correção entra antes do RS-F.
+
+### 8.2 RS-0: bugs e quickwins que as medidas revelaram (primeiro)
+
+| ID | Gravidade | Título | Evidência | Impacto | Esforço | Responsável | Pronto quando |
+|---|---|---|---|---|---|---|---|
+| **RS-0.1** | **alto** | **`paint_look` só no Salão**: a pedra, o chão e o KayKit das arenas nunca passam pelo gêmeo pintado | `ArenaKit.paint_look()` (`scripts/game/arena_kit.gd:378`) só é chamado por `CatacombHall._stylize` (`catacomb_hall.gd:423`); matriz 0.2 item 1: Cripta estilizada igual à clássica por caixa (1 a 2 níveis) | no estilizado toda arena mistura figuras e estandartes pintados com pedra clássica, contra a regra 0.3.6; o "uma sala só em cor" das 18 vistas | P a M | `environment-artist` | fechado pelo RS-A1: `ArenaRoom._stylize()` chama `paint_look(style)` em toda sala; materiais da Cripta no estilizado com `masonry_paint`/`catacomb_floor_paint` (conferido no `test_room_style`) |
+| **RS-0.2** | **alto** | **`_dress_air()` grava o ar clássico por cima do estilizado** | `ArenaRoom._dress_air()` (`arena_room.gd:1517`) aplica `air()` sem olhar o perfil, depois do `VisualProfile.dress_world`; lote A 1.4 | em toda arena o estilizado perde a chave de trás da câmera e o ambiente: sem isso nenhum preset de bioma chega à tela | P | `environment-artist` | `_dress_air()` usa `style().air` no estilizado (chaves que faltam caem no `air()`); `test_room_style` confere ambiente e lua da Cripta estilizada iguais ao preset e `leave_air()` devolvendo o ar de antes nos dois perfis |
+| **RS-0.3** | médio | **F7 não refaz o ar da sala vestida** | `Game._process` (`game.gd:445-446`) só chama `VisualProfile.toggle()` | o Daniel vai comparar com F7 de manhã: sem isto a troca ao vivo mostra o ar do outro perfil e o juízo dele sai errado | P | `environment-artist` (função na sala); a linha no `game.gd` passa pelo Game Director | `test_room_style`: dentro da Cripta A, B e do Salão, duas trocas deixam `Environment` e lua exatamente nos valores de cada perfil |
+| **RS-0.4** | médio | **Ferramentas e `--look`**: suspeita de que `fit_probe`/`arena_lab` não honram o perfil | **conferido em parte**: rodei `fit_probe -- --arena=hall --look=stylized` e as malhas saem com `masonry_paint` e `catacomb_floor_paint` (`VisualProfile.current` lê `Dev.arg("look")`); os números iguais nas arenas vêm do RS-0.1, não da ferramenta. A galeria não tem Provação e Altar estilizados (só laboratório clássico) | sem a vista 14 e 15 estilizadas não há "antes" para o Lote D | P | `qa-performance` | uma captura estilizada de Provação, Altar e Câmara pelo `arena_lab`/`chamber_lab` na RTX em `docs/gallery/rooms_2026-11-18/estilizado/` (14, 15); se o laboratório não pintar, corrigir a ordem de leitura do perfil e registrar |
+| **RS-0.5** | médio | **`frame_stats.py` sem matiz** | a matriz mediu o matiz com um script do scratchpad (matriz 0.2); `tools/frame_stats.py` só dá luma, `SATHIGH`, violeta e verde/rosa | todo aceite do RS é matiz e sat HSV p50 por caixa: sem a ferramenta no repositório o aceite não se reproduz | P | `technical-artist` | `--hue` imprime por caixa a média circular ponderada pela saturação HSV, sat HSV p50 e luma p50; reproduz a tabela 0.2 da matriz nas capturas da galeria com até 3 graus e 0,02 de diferença |
+| **RS-0.6** | médio | **Linha de base do estilizado por sala** | o aceite pede "3 qps abaixo da base" e "fit_probe sem subir", e a base estilizada não existe por sala | sem base, o desempenho do RS não tem régua | P | `qa-performance` | `docs/qa/rs_baseline.md` com, para as 18 vistas no estilizado e no clássico: qps e ms de GPU na RTX Alta 1080 e na iGPU Baixa 720 (`sty_probe`), luzes com sombra, `fit_probe` (fantasma, peça sem desenho, borda falsa); feito antes de fechar o RS-A |
+| **RS-0.7** | baixo | LEIAME da galeria diz que nas arenas o estilo pega "pedra, chão, props" | `docs/gallery/rooms_2026-11-18/LEIAME.md` contra a matriz 0.2 e o RS-0.1 | engana a leitura do Daniel sobre o que o estilizado é hoje | P | `qa-performance` | LEIAME diz que nas arenas só figuras, estandartes, golpes e saturação global mudam |
+
+### 8.3 Lotes (ordem P-13; sem parada entre lotes esta noite)
+
+Esforço em sessões do `environment-artist` (S). Cada lote fecha com um item de QA e revisão.
+
+#### Lote A: biblioteca, Cripta A e B, Salão com Loja e Fonte (5 a 6 S; `docs/art/room_redesign_lotA_spec.md`)
+
+| ID | Objetivo | Aceite medível (além do AC-RS) | Dono | Depende de | Esforço |
+|---|---|---|---|---|---|
+| **RS-A1** | Biblioteca: gancho `style()` no `ArenaRoom` e `STYLE` no `CatacombHall`, `paint_look(style)`, `ArenaKit.stylize_fires(fire)`, `ArenaRoom._stylize()`, ar estilizado e F7, `backdrop` só no estilizado, teste `tests/test_room_style.gd` | fecha RS-0.1 a RS-0.3; `test_room_style` e `test_visual_profile` passam; poças do Salão iguais ao STY-10 (braseiro leste 100 a 150 de luma, matiz 26 a 34, laje a 1,5 m) | `environment-artist` (+ Game Director: linha do F7 no `game.gd`) | nada | 1 a 1,5 S |
+| **RS-A2** | Peças da biblioteca: metal fosco (ouro velho, ferro, bronze), osso com `paint_keep`, urna, efígie amortalhada | ouro na tela matiz 34 a 42, sat até 0,6, nada acima de 200; osso matiz 35 a 45, luma 110 a 150 nos feixes; urna até 0,55 m e raio até 0,14; efígie sem rosto, mão, cruz nem espada | `environment-artist` | RS-A1 | parte do Lote A |
+| **RS-A3** | Cripta A em petróleo frio: preset, facho frio, brilho frio da porta norte, bruma além da frente, fundo em camadas, peças A1 a A7 | chão leste matiz 198 a 215, sat 0,10 a 0,20, luma p50 60 a 75; chão oeste 60 a 78 longe das velas; parede norte luma 32 a 48, matiz 200 a 225; fora da sala luma 12 a 30, p90 menos p10 6 ou mais; quadro YAVG 50 a 62, `SATHIGH` 12 a 24; parte quente 2,5 a 7%; 2 luzes com sombra; `fit_probe` A até 0,42 / 0,14 (base 0,32 / 0,04); efígie visível sem cobrir inimigos; nenhum ciano na caixa do herói acima de 2% | `environment-artist` | RS-A1, RS-A2 | 1 S |
+| **RS-A4** | Cripta B: figura velada sobre o Ossuário, urnas no muro, luz fria da figura, mesmos números da A | os da RS-A3; `fit_probe` B até 0,41 / 0,14; figura e urnas abrem em pontilhado em volta do herói (`see_through`) | `environment-artist` | RS-A3 | 1 S |
+| **RS-A5** | Salão em ardósia azul (L-1): `STYLE` da tabela 3.2, urnas junto aos potes e no plinto das estátuas do portal | chão do meio matiz 215 a 235, sat 0,08 a 0,16, luma 65 a 78; chão norte 55 a 70; abismo 205 a 225, sat 0,30 a 0,50; quadro YAVG 58 a 70, `SATHIGH` 14 a 22; poças iguais ao STY-10; `fit_probe` hall fantasma até 3,14, borda falsa até 39,16 | `environment-artist` | RS-A1 | 0,5 a 1 S |
+| **RS-A6** | Loja vestida, sem personagem (L-11): tapetes umbra e ocre, lanternas de ferro, posto de provisões | `DoorSign` com contraste 4,5:1 ou mais nas capturas `--start=shop` a 720 e 1080, "faltam N" igual ao de hoje; nenhuma lanterna cobre placa; parte quente até 10%; nenhum vermelho em pano; nada barra | `environment-artist` (+ Game Director: uma linha `arena.dress_shop(pontos)` no `rooms.gd`) | RS-A5 | 0,5 S |
+| **RS-A7** | Fonte vestida, bica de pedra simples (P-11): musgo, flores pálidas, velas na borda | água 40 ou mais de luma acima da laje vizinha; nenhuma luz nova; musgo nunca matiz 120 a 170 com sat acima de 0,3; fonte achada em 1 s na captura `--start=fountain` (juízo do art-director) | `environment-artist` | RS-A5 | 0,5 S |
+| **RS-A8** | QA do lote | AC-RS 1 a 7 para Cripta A e B, Salão, Loja e Fonte; 8 sementes do robô na Cripta A e B; galeria `docs/gallery/redesign/lotA/` | `qa-performance` | RS-A3 a RS-A7, RS-0.5, RS-0.6 | 1 S |
+| **RS-A9** | Revisões | `art-director` (Cripta e Salão lidos como lugares diferentes, nenhum dos dois umbra; marcos visíveis); `combat-feel-director` (captura de luta com aviso na Cripta e no Salão) | `art-director`, `combat-feel-director` | RS-A8 | P |
+
+Riscos do lote: o `Environment` tem dois donos (ver DT-RS1); apagar a chave e o preenchimento da Cripta pode escurecer
+o chão demais (compensar no ambiente, nunca com omni nova); pedra petróleo vizinha do cachecol do herói (separar pela
+saturação, pedra até 0,2); o Salão sai da umbra aprovada no STY-09 (reversível só pelo preset, L-1).
+
+#### Lote B: Santuário A e B, Fendas A e B (4 a 5 S; `room_redesign_lotB_spec.md`)
+
+| ID | Objetivo | Aceite medível | Dono | Depende de | Esforço |
+|---|---|---|---|---|---|
+| **RS-B1** | Santuário em calcário morno: preset, fachos marfim-dourados, facho novo sobre o `boss_spawn` do guardião | chão de luta matiz 30 a 45, sat 0,06 a 0,14, luma 70 a 85; quadro luma 58 a 70; parte quente 6 a 12%; aro do aviso do guardião dentro do facho 40 ou mais acima da laje (`--start=miniboss --arena=sanctuary --shot-at=9`); luzes com sombra 5 (A) e 4 (B) | `environment-artist` | Lote A (biblioteca) | 1 S |
+| **RS-B2** | Santuário, peças S1 a S6 (S6 só na B: abóbada rasgada, sem céu de poente) | `fit_probe` A até 1,3 / 0,3 e B até 1,3 / 0,1; borda falsa até 9,3 (A) e 9,6 (B); nada no chão andável | `environment-artist` | RS-B1 | 1 S |
+| **RS-B3** | Fendas em ardósia-índigo: preset, bruma a 0,8 da saturação, `DEEP` a 4 se preciso | chão matiz 235 a 255, sat 0,06 a 0,14, luma 50 a 65; sat HSV p50 do quadro 0,25 a 0,40; violeta até 3% (até 5% com orbes em voo) | `environment-artist` | Lote A | 1 S |
+| **RS-B4** | Fendas, peças F1 a F5 (F4 a ponte caída como marco da B, P-6; F5 vórtice só distante) | orbe do feiticeiro com maior canal 40 ou mais acima do fundo da fenda atrás dele (`--shot-at=9`); `fit_probe` fantasma até 1,6, borda falsa até 5,2 (A) e 5,1 (B); nenhum fogo verde | `environment-artist` | RS-B3 | 1 S |
+| **RS-B5** | QA e revisões do lote | AC-RS nas quatro vistas; 8 sementes por sala e variante; `docs/gallery/redesign/lotB/` | `qa-performance`, `art-director`, `combat-feel-director` | RS-B1 a RS-B4 | 1 S |
+
+#### Lote C: Jardim A e B, Ponte A e B (5 a 6 S; `room_redesign_lotC_spec.md`)
+
+| ID | Objetivo | Aceite medível | Dono | Depende de | Esforço |
+|---|---|---|---|---|---|
+| **RS-C1** | Biblioteca do lote: musgo pintado (`root_moss_paint`), folha morta, fungo pálido, água escura | musgo nunca matiz 120 a 170 com sat acima de 0,3; folha matiz 15 a 25, sat até 0,45, valor até 0,4; fungo maior canal até 0,6; água matiz 200 a 210, espuma maior canal até 0,9, nada entre 170 e 190 de matiz | `environment-artist` | Lote A | 1,5 S |
+| **RS-C2** | Jardim em cinza-musgo: preset, árvore de pedra no cinza-musgo, cristais com aresta até 1,0 | chão matiz 70 a 100, luma 55 a 70, sat 0,08 a 0,18; ciano no quadro até 12% (hoje 32 / 24%); folha ferrugem 2 a 6% só na copa e nas bordas | `environment-artist` | RS-C1 | 1 S |
+| **RS-C3** | Jardim, peças J1 a J6 (J5 só na B: lago fora da borda oeste, polígono igual) | aviso perto da parede 40 ou mais acima e folha 100 ou mais de luma abaixo do aviso; `fit_probe` fantasma até 2,0 e peça sem desenho até 1,6; nenhuma água no chão andável | `environment-artist` | RS-C2 | 1 S |
+| **RS-C4** | Ponte em cinza-azulado gasto: preset, bruma a 0,85 da saturação | chão das plataformas matiz 205 a 220, luma 55 a 70; ciano 40 a 65% com sat HSV p50 do quadro 0,25 a 0,35; parte quente 3 a 7% | `environment-artist` | RS-C1 | 0,5 S |
+| **RS-C5** | Ponte, peças P1 a P6 (braseiros de cabeceira fora do tabuleiro, arcos, correntes, cascatas ao norte; P5 e P6 só na B) | atiradores da plataforma leste com 30 ou mais de luma de diferença do fundo; nenhum decalque dourado no tabuleiro; `fit_probe` A até 4,1, B até 2,8 | `environment-artist` | RS-C4 | 1 S |
+| **RS-C6** | QA e revisões do lote | AC-RS nas quatro vistas; `docs/gallery/redesign/lotC/` | `qa-performance`, `art-director`, `combat-feel-director` | RS-C1 a RS-C5 | 1 S |
+| **RS-C7** | Fantasma da Ponte A abaixo de 2 m² (meta do estudo) | `fit_probe` Ponte A fantasma abaixo de 2,0 sem mudar o polígono do chão | `room-designer` (diagnóstico) e `environment-artist` | RS-C5 | desejável, não bloqueia o lote |
+
+#### Lote D: Runas A e B, Provação, Altar (5 a 6 S; `room_redesign_lotD_spec.md`)
+
+| ID | Objetivo | Aceite medível | Dono | Depende de | Esforço |
+|---|---|---|---|---|---|
+| **RS-D1** | Gêmeo pintado do chão de runas (`rune_floor_paint.gdshader`) com o estado das lajes intocado | `test_e5_looks.gd` estendido: `set_tile` muda o mesmo parâmetro nos dois perfis e o F7 com uma laje acesa não apaga nem duplica o estado; `test_hazard.gd` passa; moldura acesa 40 ou mais acima da laje apagada vizinha e matiz da laje acesa 26 a 36 nos dois perfis (`arena_lab -- --arena=runes --state=arm|fire --look=...`) | `environment-artist`; `technical-artist` revisa o shader | Lote A | 1,5 S |
+| **RS-D2** | Runas em pedra clara fria e peças R1 a R5 (R5: cristal fora do chão ao norte, só imagem, L-12) | chão matiz 220 a 235, sat 0,03 a 0,10, luma 62 a 75; âmbar em repouso (`--state=after`) 0% fora dos braseiros de parede (até 1%); nada redondo (D-29); nenhuma marca luminosa no chão que não seja estado de laje; `fit_probe` fantasma até 2,7, borda falsa até 0,6; `sty_probe` com as luzes do disparo | `environment-artist` | RS-D1 | 1,5 S |
+| **RS-D3** | Provação lilás acinzentada: preset, losangos concêntricos pintados, estandartes desbotados, braseiros apagados, urnas quebradas | quadro matiz 265 a 285, luma p50 45 a 60; vermelho (matiz 345 a 15, sat acima de 0,4) 0%; nenhum círculo; `settle` continua apagando 60% das veias nos dois perfis; `fit_probe` até 1,2 | `environment-artist` | RS-0.4, Lote A | 1 S |
+| **RS-D4** | Altar em pedra morna calma: preset, facho ouro velho pálido, oferendas, hera, pétalas | chão matiz 28 a 42, luma p50 45 a 58 antes do `kindle`; parte quente 4 a 10% depois; a luz do `kindle` continua a única com sombra; nada de figura alada, auréola, sol, cruz; `fit_probe` até 3,5 | `environment-artist` | RS-0.4, Lote A | 1 S |
+| **RS-D5** | QA e revisões do lote | AC-RS nas quatro vistas; 8 sementes do robô nas Runas A e B; `docs/gallery/redesign/lotD/` | `qa-performance`, `art-director`, `combat-feel-director` | RS-D1 a RS-D4 | 1 S |
+
+#### Lote E: Câmara do Selo, só fundo e atmosfera (1 a 2 S; `room_redesign_lotE_spec.md`)
+
+| ID | Objetivo | Aceite medível | Dono | Depende de | Esforço |
+|---|---|---|---|---|---|
+| **RS-E1** | Fundo e ar distante: arcos partidos no anel distante, correntes de lado, cacos parados, céu e agulhas um degrau mais lidos; nada dentro do círculo de 12,5 m mais 6 m | quadro matiz 250 a 265, luma p50 37 a 46; fundo p90 menos p10 15 ou mais; violeta até 5% na fase 1 e até 8% na fase 4; `test_chamber_look`, `test_boss_chamber`, `test_seal_victory` passam iguais; correntes nunca na frente de Morvath (captura da fase 1 com ele no selo) | `environment-artist` | Lote A (ar e F7) | 1 a 2 S |
+| **RS-E2** | QA e revisão da luta | em cada fase, Morvath e o herói achados em 1 s; aro dos avisos 40 ou mais acima do chão; meias-luas violeta com maior canal 40 ou mais acima do fundo; `sty_probe` na fase 4 (RTX Alta e iGPU Baixa, até 3 qps abaixo); `docs/gallery/redesign/lotE/`; **revisão do `combat-feel-director` obrigatória** (é a luta do chefe) | `qa-performance`, `combat-feel-director`, `art-director` | RS-E1 | 0,5 S |
+
+#### RS-F: fechamento
+
+| ID | Objetivo | Aceite medível | Dono | Depende de |
+|---|---|---|---|---|
+| **RS-F1** | Volta completa e galeria final | `tools/smoke.sh 900 --seed=5 --look=stylized` sem erro de shader no log; as 18 vistas na linha da galeria em `docs/gallery/redesign/final/`; correções pendentes das revisões A a E feitas; `art-director` fecha em `docs/art/visual_review.md` | `qa-performance`, `art-director` | RS-A a RS-E |
+| **RS-F2** | Estilizado como padrão do exe (decisão da noite), F7 volta ao clássico | só se o RS-F1 passar; senão o exe sai clássico e o Daniel vê o estilizado pelo F7. Clássico intacto nas 18 vistas. `CLAUDE.md` e `docs/arte/estetica.md` atualizados | Game Director (`VisualProfile`) | RS-F1 |
+
+### 8.4 Dívidas do redesenho
+
+| ID | Título | Evidência | Impacto | Esforço | Responsável | Pronto quando |
+|---|---|---|---|---|---|---|
+| **DT-RS1** | O `Environment` tem quatro donos: `VisualProfile.dress_world`, `ArenaRoom._dress_air`/`leave_air`, `BossChamber.restore_air` e `RoomMood` | risco 1 do lote A; STY-10 já teve um bug assim (ar da câmara lido antes de ela se vestir) | cada sala nova ou troca de perfil pode devolver o ar errado; o `test_room_style` cobre, não resolve | M | `technical-artist` com o `environment-artist` | depois do RS-F: um dono só (proposta minha: `RoomMood` recebe o ar da sala por perfil e é o único que escreve), testes de ida e volta de todas as salas |
+| **DT-RS2** | O perfil visual não tem opção no menu nem no save | só F7 e `--look`; F7 não aparece nos Controles | se o Daniel adotar o estilizado, o jogador não acha o clássico; F7 hoje é tecla de desenvolvimento | P | `ui-ux-designer` | depois da decisão do Daniel: linha "Estilo visual" em Configurações > Vídeo, chave no save, ou F7 sai do exe |
+| **DT-RS3** | Gêmeos de shader dobram as variantes (`masonry_paint`, `catacomb_floor_paint`, `rune_floor_paint`, `root_moss_paint`) | cada sala nova compila o gêmeo na primeira entrada | **opinião minha, não medido**: engasgo na primeira entrada de cada bioma no estilizado, pior na iGPU e no Compatibility | P para medir | `qa-performance` | `--trace-steps` na primeira entrada de cada sala, nos dois perfis, iGPU Baixa: nenhum quadro acima de 50 ms; se houver, aquecer os materiais no carregamento |
+
+### 8.5 Perigos de sala H-1 a H-7: **aguardam aprovação do PO**
+
+Nenhum entra no redesenho (decisão da noite, regra 0.3.9 da matriz). Regras comuns do estudo: aviso de 1,0 s ou mais,
+fere inimigos também, chave "Derrotado por", nunca a menos de 6 m da porta de entrada nem nos 3 primeiros segundos,
+sempre uma saída livre (teste no molde do `test_boss_exits.gd`); números no molde das Runas (herói 4, inimigo comum 35)
+até o `room-designer` fixar os do Hades II. Donos quando aprovados: `room-designer` (números, lugar, progressão) e
+`gameplay-engineer` (código e testes); `combat-feel-director` aprova o aviso.
+
+| ID | Perigo | Sala | Custo de código | Risco principal | Minha recomendação |
+|---|---|---|---|---|---|
+| **H-1** | Raiz que golpeia | Jardim, salas 4 a 9 | comportamento novo (linha com gatilho de proximidade) | a raiz do centro dispararia sempre: só as de fora | depois do H-2 e do H-3 |
+| **H-2** | Laje de pisar | Cripta (cantos) e Santuário (naves laterais), desde a sala 4 | pouco: `ArenaHazard` com padrão "gatilho" | pôr nas rotas de 4 m da Cripta | **o primeiro**, depois do C19 |
+| **H-3** | Corrente que varre | Ponte A e B, da metade em diante | comportamento novo (faixa em movimento) | pegar as duas pontes ao mesmo tempo | o segundo |
+| **H-4** | Fenda que respira | Fendas, desde a sala 3 | comportamento novo (empurrão em área) | empurrar o herói para dentro de um grupo | só se o H-2 agradar |
+| **H-5** | Cristal que se descarrega | Runas B, da metade em diante | pouco: fileira do `ArenaHazard` com gatilho por golpe | o robô precisa aprender a ignorá-lo | junto do H-3 se o Daniel quiser um perigo que o jogador usa |
+| **H-6** | Chão que cede | Santuário B e Ponte B, no fim | muito: `NavGrid`, `FlowField`, `Arena.walk` e robô com chão que some | técnico alto | **não** |
+| **H-7** | Água rasa | Jardim B (o lago do RS-C3 ficaria fora do chão) | pouco (zona lenta permanente) | lentidão no herói irrita | não por agora |
+
+### 8.6 Perguntas pendentes para o Daniel (decisão provisória tomada esta noite)
+
+| ID | Pergunta | Decisão provisória | Minha recomendação |
+|---|---|---|---|
+| **P-1** | Gerar os 18 conceitos em 1920 x 1080 na câmera do jogo? | seguimos com os recortes de 548 x 146 só como clima | sim, se for refinar depois do teste; não muda o que foi feito |
+| **P-10** | Fonte e Loja como câmaras próprias ou o Salão vestido? | Salão vestido (RS-A6, RS-A7) | o vestido agora; câmaras próprias só se o Salão repetido 2,5 vezes por descida cansar no teste (custo de mapa e de gameplay) |
+| **P-11** | Bica de leão na fonte? | bica de pedra simples | simples: as fontes são o sinal do Sopro, o leão é outro sinal (L-4) |
+| **L-1** | Salão estilizado: umbra morna (STY S-Q5 a, aprovada no STY-09) ou ardósia azul da diretriz? | ardósia azul (RS-A5) | ardósia azul com poças âmbar; volta à umbra trocando só o preset |
+| **S-Q6** | As quatro pontas longas do medalhão do Salão leem como estrela de quatro pontas? | ficam, sem ouro nem brilho, no valor da junta | mudar ou tirar as pontas numa entrega própria depois do RS, com uma imagem sua |
+| **L-11** | A Loja tem um mercador? Quem vende? | posto sem ninguém: caixotes, panos, lanternas | sem personagem até o cânone dizer quem vende (pergunta junto da D-41) |
+| **L-12** | O cristal da Runas B explica por que a pedra quieta não acende? | só imagem, fora do chão, sem texto | fica imagem; vira mecânica só se o H-5 for aprovado |
+
+Também para o Daniel, de manhã: os perigos H-1 a H-7 (8.5) e se o estilizado vira o padrão (RS-F2).
+
+**O que só o Daniel jogando responde**: se cada bioma se lê como um lugar diferente descendo a masmorra (o robô não
+vê), se o estilizado cansa ou ajuda a ler a luta em salas escuras como a Cripta e a Câmara, se o F7 lado a lado basta
+para comparar, e se a Loja e a Fonte vestidas pedem câmaras próprias (P-10).
