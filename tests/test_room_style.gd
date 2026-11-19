@@ -220,3 +220,86 @@ func test_style_only_pieces_are_off_the_floor_or_low() -> void:
 				var p := Vector2(c.x, c.z)
 				if a.shape().contains(p) and box.position.y < 0.3 and box.end.y > 0.3:
 					assert_true(a.overlaps(p, 0.0), "crypt %d: %s over the floor at %s" % [v, mi.name, p])
+
+
+# ---------- lot B: the sanctuary and the rift (docs/art/room_redesign_lotB_spec.md) ----------
+
+func test_sanctuary_a_comes_back() -> void:
+	_round_trip(&"sanctuary", 0)
+
+
+func test_sanctuary_b_comes_back() -> void:
+	_round_trip(&"sanctuary", 1)
+
+
+func test_rift_a_comes_back() -> void:
+	_round_trip(&"rift", 0)
+
+
+func test_rift_b_comes_back() -> void:
+	_round_trip(&"rift", 1)
+
+
+func _wears_own_air(id: StringName, style: Dictionary) -> void:
+	_world()
+	var a := _arena(id)
+	var classic_ambient := _env.ambient_light_color
+	_flip(a)
+	var air: Dictionary = style[&"air"]
+	assert_eq(_env.ambient_light_color, air[&"ambient"], "%s: the stylized ambient is the room's" % id)
+	assert_eq(_env.background_color, air[&"sky"], "%s: its sky" % id)
+	assert_almost_eq(_moon.light_energy, float(air[&"moon_energy"]), 0.0001, "%s: its key" % id)
+	_flip(a)
+	assert_eq(_env.ambient_light_color, classic_ambient, "%s: classic again" % id)
+
+
+func test_the_sanctuary_wears_its_own_stylized_air() -> void:
+	_wears_own_air(&"sanctuary", SanctuaryLook.STYLE)
+
+
+func test_the_rift_wears_its_own_stylized_air() -> void:
+	_wears_own_air(&"rift", RiftLook.STYLE)
+
+
+## The classic room keeps its shadowed lights (spec 1.3: 5 in A, 4 in B for the sanctuary): nothing built for the
+## stylized look casts a shadow.
+func test_lot_b_shadowed_lights_unchanged() -> void:
+	for v in 2:
+		var a := _arena(&"sanctuary", v)
+		assert_eq(a.look.shadowed, 5 if v == 0 else 4, "sanctuary %d: shadowed lights" % v)
+		var styled := a.find_child("Styled", true, false)
+		for l in styled.find_children("*", "Light3D", true, false):
+			assert_false((l as Light3D).shadow_enabled, "sanctuary %d: a stylized light without shadow" % v)
+	for v in 2:
+		var a := _arena(&"rift", v)
+		for l in a.find_child("Styled", true, false).find_children("*", "Light3D", true, false):
+			assert_false((l as Light3D).shadow_enabled, "rift %d: a stylized light without shadow" % v)
+
+
+func test_lot_b_style_only_pieces_are_off_the_floor_or_low() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for id: StringName in [&"sanctuary", &"rift"]:
+		for v in 2:
+			var a := _arena(id, v)
+			var styled := a.find_child("Styled", true, false) as Node3D
+			assert_not_null(styled, "%s %d has stylized-only pieces" % [id, v])
+			var n_meshes := 0
+			var bad := 0
+			for n in styled.find_children("*", "MeshInstance3D", true, false):
+				var mi := n as MeshInstance3D
+				if mi.mesh == null:
+					continue
+				n_meshes += 1
+				# every vertex over the walkable floor stays under 0.3 m or over 2.6 m unless it stands on a blocking piece
+				var xf := mi.global_transform
+				for sf in mi.mesh.get_surface_count():
+					var verts: PackedVector3Array = mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX]
+					for vert in verts:
+						var w := xf * vert
+						var p := Vector2(w.x, w.z)
+						if w.y > 0.3 and w.y < 2.6 and a.shape().contains(p, 0.05) and not a.overlaps(p, 0.0):
+							bad += 1
+							if bad < 4:
+								gut.p("%s %d: %s %s under %s at %s" % [id, v, mi.name, mi.mesh, mi.get_parent().name, w])
+			assert_eq(bad, 0, "%s %d: nothing new over the floor between 0.3 and 2.6 m" % [id, v])
+			assert_gt(n_meshes, 5, "%s %d: its pieces" % [id, v])

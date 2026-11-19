@@ -1536,6 +1536,35 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Salão chão 74 (matiz 229, saturação 0,12), norte 65, abismo matiz 211, quadro 68. Quadro: Cripta RTX 2,08 para 1,97 ms,
   iGPU 720 Baixa 14,3 para 13,3; Salão 2,55 para 2,42 e 17,3 para 15,2. O clássico igual à galeria nas cinco vistas.
 
+## Redesenho das salas, Lote B (só no estilizado; spec `docs/art/room_redesign_lotB_spec.md`, capturas em `docs/gallery/redesign/lotB/`)
+- **Biblioteca nova**: `ArenaKit.styled_build(build, at, scale)` monta qualquer peça do kit (estátua, estandarte,
+  braseiro) dentro do `Masonry` só do estilizado (luzes sem sombra, escala em volta de `at`, poças de chão do kit
+  devolvidas); `Masonry.broken_arch` (arco de aduelas sem as do meio, `gap` em m do meio); `floor_decal.gdshader`
+  `kind` 2 (musgo e hera pendurados numa parede); `far_vortex.gdshader` (cartão de espiral violeta apagada, maior canal
+  0,45, gira devagar, sem luz).
+- **Santuário** (`SanctuaryLook.STYLE`, calcário morno, a única sala de luta em pedra morna): ar próprio (ambiente
+  neutro 1,6, lua de chave 0,85 com sombra), luz da nave a `STY_KEY` 0,6, fachos marfim-ouro (`STY_SHAFT`) e um facho
+  só do estilizado sobre o `boss_spawn` (`STY_GUARD_SHAFT`, sem sombra); oferendas no presbitério (velas, urnas,
+  passadeira petróleo apagada, `OFFERINGS`, `RUNNER_*`), lascas encostadas nas colunas quebradas (`DRUM_SHARD*`),
+  estátuas encapuzadas nas janelas cegas sobre mísulas (`NICHE_STATUES`, `NICHE_CORBEL`: o corpo só passa sobre o chão
+  acima de 3 m), estandartes do leão nos pilastras, musgo na parede norte (`MOSS*`); na B o facho do buraco frio
+  (`STY_TEAR_SHAFT`) mirando o buraco, mais poeira e a abóbada rasgada (`VAULT_*`, acima de 9 m, contra a parede norte;
+  sem céu de pôr do sol, P-6). Sombras iguais (A 5, B 4).
+- **Fendas** (`RiftLook.STYLE`, índigo-cinza): ar próprio (ambiente 2,8, lua 1,4), bruma e abismo 40% para o cinza
+  (`STY_HAZE_GREY`, também os planos do `abyss`), névoa da fenda mais cinza (`STY_RIFT_FOG`), luzes do fundo mais
+  pálidas (`STY_DEEP`), brilho dos lábios 0,14; braseiro baixo na cabeceira norte de cada ponte de pé (`HEAD_BOWL*`),
+  lascas penduradas na fenda (`SHARDS_HUNG`), arco quebrado com correntes na boca norte (`MOUTH_ARCH*`); na B o arco
+  caído da ponte com um pedaço do tabuleiro em correntes (`FALLEN_*`, lê-se pela ponte que caiu, P-6), bruma do vão
+  apagada (`STY_FALLEN_MIST*`) e o vórtice distante no alto do quadro (`VORTEX*`).
+- Teste: `tests/test_room_style.gd` cobre as quatro vistas (ida e volta idênticas, ar próprio, sombras iguais, nada novo
+  sobre o chão entre 0,3 e 2,6 m). Robô: 8 sementes por arena e variante, nenhum `stuck`. fit_probe igual ou melhor.
+- Medido (RTX 1080, semente 5, `--shot-at=5`): Santuário matiz 33 a 34, saturação 0,12 a 0,13, chão da nave 71 a 83;
+  Fendas matiz 255 a 257, saturação 0,21 a 0,23, chão 42 a 54, violeta na cena 0,7 (A) e 1,8% (B). Quadro RTX 1080 Alta
+  (GPU) Santuário 2,33 / 2,15 para 2,18 / 2,26 ms, Fendas 2,22 / 2,19 para 1,92 / 1,96; iGPU 720 Baixa 14,6 / 14,6 para
+  14,8 / 15,3 e 14,3 / 15,6 para 14,0 / 14,5. Compatibility sem erro (`STY_COMPAT_*` de cada look). O clássico igual.
+  Cena (luma p50): Santuário 63 / 58, Fendas 49 / 53. Fora da faixa: os fachos do Santuário ainda desenham discos de
+  borda dura no chão (a luz pintada) e o chão das Fendas A na caixa da frente fica em 42 (meta 50 a 65).
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

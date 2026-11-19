@@ -134,7 +134,78 @@ const INSCRIPTION_SHADER := preload("res://assets/shaders/garden_inscription.gds
 const OLD_ARCHES: Array[float] = [-14.0, -4.0, 7.0]
 const OLD_ARCH := Vector3(-9.5, 3.2, 0.5)
 
+## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 2): the rift's biome in the stylized look, indigo
+## slate, the hall's fires, its own air; the violet only under the brink and far off.
+const STYLE := {
+	&"stone": Color(0.327, 0.319, 0.363), &"shadow": Color(0.87, 0.833, 0.98), &"floor_stone": Color(0.30, 0.297, 0.32),
+	&"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
+	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
+	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.70, 0.70, 0.74),
+		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 1.4, &"moon_shadow": true},
+}
+## The stylized air in the browser's renderer (its ambient and moon lower, as the crypt's).
+const STY_COMPAT_AMBIENT := 0.5
+const STY_COMPAT_MOON := 0.6
+## The haze and the lips' violet in the stylized look: this share of the way to their own grey (the haze's lightest
+## (0.23, 0.14, 0.42) to about (0.24, 0.17, 0.38); the abyss's mist cards too); the lips' sheet on the slabs fainter (the violet under the brink).
+const STY_HAZE_GREY := 0.4
+const STY_LIP_GLOW_ALPHA := 0.14
+## B: the violet mist bank where the bridge was, in the stylized look (it lit the gap's middle at saturation 0.67).
+const STY_FALLEN_MIST := Color(0.34, 0.26, 0.5)
+const STY_FALLEN_MIST_ALPHA := 0.16
+## The rift's height fog (Forward+) in the stylized look: albedo and emission nearer grey.
+const STY_RIFT_FOG: Array[Color] = [Color(0.34, 0.32, 0.4), Color(0.17, 0.16, 0.21)]
+## The violet lights deep in the rift (spec 2.2: 4 if the violet passes 3% of the frame).
+const STY_DEEP_ENERGY := 4.0
+## ... and paler (the piers and cliffs it lights read as columns of violet in the abyss of B at 0.8 saturation).
+const STY_DEEP := Color(0.6, 0.5, 0.85)
+## F1: fire bowls on small pillars on the bridges' north heads, out of the deck, over the rift (along the lip from
+## the deck's side; out into the rift); the pillar's top, the bowl's scale, its light.
+const HEAD_BOWL := Vector2(1.45, 0.42)
+const HEAD_BOWL_TOP := 0.45
+const HEAD_BOWL_SCALE := 0.5
+const HEAD_BOWL_LIGHT := 2.6
+const HEAD_BOWL_PILLAR := 0.5
+## F2: shards of the room's stone hanging still in the rift, under the floor (count over the rift's holes, their
+## size, height range of their middles, how far in from a hole's outline, how far from a bridge).
+const SHARDS_HUNG := 16
+const SHARD_SIZE := Vector2(0.4, 1.8)
+const SHARD_Y := Vector2(-6.0, -1.6)
+const SHARD_IN := 0.6
+const SHARD_OFF_BRIDGE := 1.2
+## F3: the broken arch over the rift's north mouth, past the floor's north edge (z, springing height, span, ring,
+## depth, the missing stretch), and its chains (from the facade's corner; one hanging from the broken end).
+const MOUTH_ARCH := Vector3(-19.0, -4.0, 11.5)
+const MOUTH_ARCH_RING := Vector2(0.75, 0.9)
+const MOUTH_ARCH_GAP := Vector2(0.6, 7.0)
+const MOUTH_CHAIN_FROM := Vector3(2.6, 9.0, -16.8)
+const MOUTH_CHAIN_HANG := 3.5
+## F4 (B): the great arch of the fallen bridge behind its stumps (z, springing height; its radius share of the span 9 m
+## (6 m), ring 0.8 m, depth, the missing half), a piece of the deck hung on two chains (its middle, size; the chains
+## from the stumps' broken ends, this far north of their middles).
+const FALLEN_ARCH := Vector2(-12.9, -7.3)
+const FALLEN_ARCH_RADIUS := 0.667
+const FALLEN_ARCH_RING := Vector2(0.8, 1.0)
+const FALLEN_ARCH_GAP := Vector2(-1.0, 6.0)
+const FALLEN_DECK := Vector3(-2.5, -3.2, -11.3)
+const FALLEN_DECK_SIZE := Vector3(2.8, 0.55, 1.8)
+const FALLEN_CHAIN_Z := -11.4
+## F5 (B): the far vortex, an accent only: distance ahead of the camera (from the middle of its bounds), how far over
+## the ray of the frame's top edge its middle stands (so only its lower part shows, in the top band of the frame, over
+## where the north's enemies rise), its offset to the left of the view (m), size, colour (brightest channel 0.45), turn
+## (turns a second).
+const VORTEX := Vector3(80.0, 1.5, 6.0)
+const VORTEX_SIZE := 10.0
+const VORTEX_COLOR := Color(0.28, 0.2, 0.42)
+const VORTEX_TURN := 0.02
+const VORTEX_SHADER := preload("res://assets/shaders/far_vortex.gdshader")
+
 var _fallen := false
+var _haze_mats: Array[ShaderMaterial] = []
+var _lip_mat: ShaderMaterial
+var _deep_lights: Array[OmniLight3D] = []
+var _fallen_mist: ShaderMaterial
+var _rift_fog: FogMaterial
 
 
 func floor_look() -> Dictionary:
@@ -235,6 +306,7 @@ func _commit_glow() -> void:
 	var mi := MeshInstance3D.new()
 	mi.mesh = _glow.commit()
 	mi.material_override = _haze_material(LIP_GLOW, LIP_GLOW_ALPHA, LIP_GLOW_FADE, Vector2.ZERO, 1.0)
+	_lip_mat = mi.material_override
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(mi)
 	_glow = null
@@ -255,7 +327,12 @@ func _haze_material(color: Color, alpha: float, fade_u: float, fade_v: Vector2, 
 ## depths' layer), the glow along the rift, the haze filling the rift and the holes a few meters down (F-1).
 func _abyss() -> void:
 	var b := arena.shape().bounds()
+	var from := kit.root.get_child_count()
 	kit.abyss(b.size * 0.5 + Vector2(8, 8), DEPTH, false, mist())
+	for i in range(from, kit.root.get_child_count()):
+		var gi := kit.root.get_child(i) as GeometryInstance3D
+		if gi != null and gi.material_override is ShaderMaterial and (gi.material_override as ShaderMaterial).get_shader_parameter(&"color") is Color:
+			_haze_mats.append(gi.material_override)
 	_fallen = not layout.floor.covers(BRIDGES[0].get_center())
 	var gain := FALLEN_GAIN if _fallen else 1.0
 	var rift_mid := (RIFT_X.x + RIFT_X.y) * 0.5 + 0.5
@@ -284,6 +361,7 @@ func _abyss() -> void:
 		l.omni_range = 16.0
 		l.light_cull_mask = ArenaKit.DEPTH_LAYER
 		add_child(l)
+		_deep_lights.append(l)
 	# the rift's haze runs out of its north mouth over the abyss and fades there
 	var south := rift.end.y
 	rift.position.y = b.position.y - HAZE_NORTH
@@ -296,9 +374,14 @@ func _abyss() -> void:
 		kit.abyss_glow(Vector3(s.x, GLOW_FOOT, s.y), GLOW_SIZE * 0.75, yaw, ArenaKit.ABYSS_GLOW_ENERGY * gain)
 	kit.abyss_fog(Vector3(rift_mid, (RIFT_FOG.x + RIFT_FOG.y) * 0.5, rift.get_center().y),
 		Vector3(RIFT_X.y - RIFT_X.x + 2.0, RIFT_FOG.x - RIFT_FOG.y, rift.size.y))
+	var fog := kit.root.get_child(kit.root.get_child_count() - 1) as FogVolume
+	if fog != null:
+		_rift_fog = fog.material as FogMaterial
 	if _fallen:
 		var r := BRIDGES[0]
 		kit.mist_bank(Vector3(r.get_center().x, -3.0, r.get_center().y), Vector2(r.size.x + 2.0, 7.0), FALLEN_MIST, FALLEN_MIST_ALPHA)
+		var bank := kit.root.get_child(kit.root.get_child_count() - 1) as MeshInstance3D
+		_fallen_mist = bank.material_override as ShaderMaterial
 
 
 ## The violet haze sheets over the floor rect `area` (one per HAZE_Y), fading out at its edges (north: that share of
@@ -313,6 +396,7 @@ func _haze(area: Rect2, north: float) -> void:
 		var mat := _haze_material(colour, HAZE_ALPHA[k], HAZE_FADE, Vector2(maxf(north, HAZE_FADE), HAZE_FADE))
 		mat.set_shader_parameter(&"patchy", HAZE_PATCHY[k])
 		mi.material_override = mat
+		_haze_mats.append(mat)
 		mi.position = Vector3(area.get_center().x, HAZE_Y[k], area.get_center().y)
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.extra_cull_margin = 4.0
@@ -332,6 +416,7 @@ func dress() -> void:
 	_far()
 	_inscriptions()
 	_commit_glow()
+	_dress_styled()
 
 
 # ---------- the bridges ----------
@@ -488,6 +573,187 @@ func _far() -> void:
 		var cm := card.material_override as ShaderMaterial
 		cm.set_shader_parameter(&"stone_color", RUIN_STONE)
 		cm.set_shader_parameter(&"edge_color", RUIN_EDGE)
+
+
+# ---------- the stylized look (room redesign, lot B section 2) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if _compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	for m_ in _haze_mats:
+		var c: Color = m_.get_shader_parameter(&"color")
+		var grey := (c.r + c.g + c.b) / 3.0
+		VisualProfile.vary(m_, {&"shader_parameter/color": c.lerp(Color(grey, grey, grey), STY_HAZE_GREY)})
+	if _lip_mat != null:
+		VisualProfile.vary(_lip_mat, {&"shader_parameter/alpha": STY_LIP_GLOW_ALPHA})
+	if _rift_fog != null:
+		VisualProfile.vary(_rift_fog, {&"albedo": STY_RIFT_FOG[0], &"emission": STY_RIFT_FOG[1]})
+	if _fallen_mist != null:
+		# where the bridge was (B): the violet under the brink, as faint and grey as the haze
+		VisualProfile.vary(_fallen_mist, {&"shader_parameter/color": STY_FALLEN_MIST, &"shader_parameter/alpha": STY_FALLEN_MIST_ALPHA})
+	for l in _deep_lights:
+		VisualProfile.vary(l, {&"light_energy": l.light_energy * STY_DEEP_ENERGY / DEEP_ENERGY, &"light_color": STY_DEEP})
+	return st
+
+
+## The pieces only the stylized look shows (spec 2.3), on kit.styled() (never the room's random numbers), all off the
+## floor: fire bowls on the bridges' north heads, shards hanging in the rift, the broken arch and chains at its north
+## mouth; in B the fallen bridge's great broken arch with a piece of deck on chains, and the far vortex.
+func _dress_styled() -> void:
+	var sm := kit.styled()
+	for r in BRIDGES:
+		if layout.floor.covers(r.get_center()):
+			for lip: float in [r.position.x, r.end.x]:
+				var into := 1.0 if lip < (RIFT_X.x + RIFT_X.y) * 0.5 else -1.0
+				var at := _into_rift(Vector2(lip + into * HEAD_BOWL.y, r.position.y - HEAD_BOWL.x), into)
+				if at != Vector2.INF:
+					_head_bowl(sm, at)
+	_hung_shards(sm)
+	_mouth_arch(sm)
+	if _fallen:
+		_fallen_arch(sm)
+		_vortex()
+
+
+## F1: a small fire bowl on a pillar standing out of the rift's wall at `at` (off the floor): a corbel of the depths'
+## stone under it, the pillar, the kit's brazier at half its size on top (its light a pool, no shadow).
+func _head_bowl(sm: Masonry, at: Vector2) -> void:
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	sm.block(Vector3(at.x, ABUTMENT_FOOT * 0.5, at.y), Vector3(HEAD_BOWL_PILLAR + 0.2, -ABUTMENT_FOOT * 0.5 - 0.6, HEAD_BOWL_PILLAR + 0.2), 0.0, deep())
+	sm.layers = 1
+	sm.block(Vector3(at.x, -0.6, at.y), Vector3(HEAD_BOWL_PILLAR, HEAD_BOWL_TOP + 0.6, HEAD_BOWL_PILLAR), 0.0, stone())
+	var foot := Vector3(at.x, HEAD_BOWL_TOP, at.y)
+	kit.styled_build(func() -> void: kit.brazier(at, HEAD_BOWL_TOP, false, HEAD_BOWL_LIGHT), foot, HEAD_BOWL_SCALE)
+
+
+## The first point from p going `into` the rift (x) that stands in a rift hole HEAD_BOWL_PILLAR from its outline (the
+## lips are jagged), or INF.
+func _into_rift(p: Vector2, into: float) -> Vector2:
+	for k in 40:
+		var q := p + Vector2(into * k * 0.05, 0.0)
+		for h in layout.floor.holes:
+			if Geometry2D.is_point_in_polygon(q, h) and _off_outline(q, h, HEAD_BOWL_PILLAR):
+				return q
+	return Vector2.INF
+
+
+## F2: blocks of the room's stone hanging still in the rift's holes, under the floor, turned every way.
+func _hung_shards(sm: Masonry) -> void:
+	var holes: Array[PackedVector2Array] = []
+	for h in layout.floor.holes:
+		var c := Vector2.ZERO
+		for v in h:
+			c += v
+		if _in_rift(c / maxf(1.0, h.size())):
+			holes.append(h)
+	if holes.is_empty():
+		return
+	var r := RandomNumberGenerator.new()
+	r.seed = 2207
+	var mat := ashlar()
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	var placed := 0
+	var tries := 0
+	while placed < SHARDS_HUNG and tries < SHARDS_HUNG * 40:
+		tries += 1
+		var p := Vector2(r.randf_range(RIFT_X.x, RIFT_X.y), r.randf_range(-16.0, 10.0))
+		var inside := false
+		for h in holes:
+			if Geometry2D.is_point_in_polygon(p, h) and _off_outline(p, h, SHARD_IN):
+				inside = true
+		var near_bridge := false
+		for b in BRIDGES:
+			if b.grow(SHARD_OFF_BRIDGE).has_point(p) and layout.floor.covers(b.get_center()):
+				near_bridge = true
+		if not inside or near_bridge:
+			continue
+		var size := r.randf_range(SHARD_SIZE.x, SHARD_SIZE.y)
+		var mi := sm.box(Vector3(p.x, r.randf_range(SHARD_Y.x, SHARD_Y.y), p.y), Vector3(size, size * r.randf_range(0.4, 0.8), size * r.randf_range(0.5, 0.9)), r.randf() * TAU, mat)
+		mi.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.7, 0.7))
+		mi.rotate_object_local(Vector3.BACK, r.randf_range(-0.7, 0.7))
+		placed += 1
+	sm.layers = 1
+
+
+## True when p is at least d from every edge of the polygon.
+static func _off_outline(p: Vector2, poly: PackedVector2Array, d: float) -> bool:
+	for i in poly.size():
+		var q := Geometry2D.get_closest_point_to_segment(p, poly[i], poly[(i + 1) % poly.size()])
+		if p.distance_to(q) < d:
+			return false
+	return true
+
+
+## F3: an arch of an older bridge broken over the rift's north mouth, past the floor's north edge, its east half gone,
+## a chain from the facade's corner to its broken end and one hanging from it.
+func _mouth_arch(sm: Masonry) -> void:
+	var foot := Vector3((RIFT_X.x + RIFT_X.y) * 0.5, 0.0, MOUTH_ARCH.x)
+	var kept := sm.broken_arch(foot, Vector2(0, 1), MOUTH_ARCH.z, MOUTH_ARCH.y, MOUTH_ARCH_RING.x, MOUTH_ARCH_RING.y,
+		ashlar(), MOUTH_ARCH_GAP)
+	var end := _broken_end(kept, foot, MOUTH_ARCH_GAP.x)
+	if end == Vector3.INF:
+		return
+	kit.styled_build(func() -> void:
+		kit.chain(MOUTH_CHAIN_FROM, end + Vector3(0, 0.3, 0), 1.6, 1.0)
+		kit.chain(end, end + Vector3(0.4, -MOUTH_CHAIN_HANG, 0.2), 0.05, 0.8))
+
+
+## The position of the kept stone nearest a gap's edge (local x across the arch from foot), or INF.
+static func _broken_end(kept: Array[MeshInstance3D], foot: Vector3, edge: float) -> Vector3:
+	var best := INF
+	var at := Vector3.INF
+	for mi in kept:
+		var d := absf(mi.position.x - foot.x - edge)
+		if d < best:
+			best = d
+			at = mi.position
+	return at
+
+
+## F4 (B): the fallen bridge's great arch behind its stumps, half of it gone, under the brink; a piece of its deck
+## hung on two chains from the stumps' broken ends.
+func _fallen_arch(sm: Masonry) -> void:
+	var r := BRIDGES[0]
+	var foot := Vector3(r.get_center().x, 0.0, FALLEN_ARCH.x)
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	sm.broken_arch(foot, Vector2(0, 1), r.size.x, FALLEN_ARCH.y, FALLEN_ARCH_RING.x, FALLEN_ARCH_RING.y, ashlar(),
+		FALLEN_ARCH_GAP, FALLEN_ARCH_RADIUS)
+	var piece_ := sm.box(FALLEN_DECK, FALLEN_DECK_SIZE, 0.15, ashlar())
+	piece_.rotate_object_local(Vector3.BACK, 0.35)
+	sm.layers = 1
+	var half := FALLEN_DECK_SIZE.x * 0.5
+	var west := Vector3(r.position.x + STUMP, -0.3, FALLEN_CHAIN_Z)
+	var east := Vector3(r.end.x - STUMP, -0.3, FALLEN_CHAIN_Z)
+	kit.styled_build(func() -> void:
+		kit.chain(west, FALLEN_DECK + Vector3(-half, 0.25 + half * 0.35, 0), 0.3, 1.0)
+		kit.chain(east, FALLEN_DECK + Vector3(half, 0.25 - half * 0.35, 0), 0.3, 1.0))
+
+
+## F5 (B): the far vortex, a turning card of desaturated violet far behind the rift's north mouth, high in the frame
+## (over the facade's top on the screen, never where the north's enemies rise), no light.
+func _vortex() -> void:
+	var feel := Feel.live()
+	var yaw := deg_to_rad(feel.cam_yaw)
+	var c := layout.cam_bounds.get_center()
+	var eye := Vector3(c.x, 0, c.y) + Feel.cam_offset_of(feel.cam_distance, feel.cam_pitch, feel.cam_yaw)
+	var ahead := Vector3(-sin(yaw), 0, -cos(yaw))
+	var left := Vector3(-cos(yaw), 0, sin(yaw))
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE * VORTEX_SIZE
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = VORTEX_SHADER
+	mat.set_shader_parameter(&"color", VORTEX_COLOR)
+	mat.set_shader_parameter(&"turn", VORTEX_TURN)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# the frame's top edge at that distance: the camera's pitch less half its field of view
+	var top := eye.y - VORTEX.x * tan(deg_to_rad(feel.cam_pitch - feel.cam_fov * 0.5))
+	mi.transform = Transform3D(Basis(Vector3.UP, yaw), Vector3(eye.x, top + VORTEX.y, eye.z) + ahead * VORTEX.x + left * VORTEX.z)
+	kit.styled().root.add_child(mi)
 
 
 # ---------- the floor ----------

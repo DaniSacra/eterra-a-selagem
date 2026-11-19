@@ -103,6 +103,75 @@ const UNDER := 6.0
 const UNDER_LIGHT := Vector2(1.2, 8.0)
 const UNDER_FLOOR := Color(0.55, 0.55, 0.55)
 
+## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 1): the sanctuary's biome in the stylized look,
+## warm limestone (the one fighting room in warm stone), cold shadows, the hall's fires, its own air, the soft key over
+## the nave at STY_KEY of its energy.
+const STYLE := {
+	&"stone": Color(0.38, 0.368, 0.35), &"shadow": Color(0.86, 0.9, 0.98), &"floor_stone": Color(0.35, 0.343, 0.333),
+	&"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.08, &"metal": true,
+	&"fire": CatacombHall.STYLE[&"fire"],
+	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.74, 0.73, 0.72),
+		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.85, &"moon_shadow": true},
+}
+## The stylized air in the browser's renderer (as the crypt's: there the painted stone lit grey-white).
+const STY_COMPAT_AMBIENT := 0.45
+const STY_COMPAT_MOON := 0.35
+## The soft key over the nave in the stylized look (spec 1.2: 0.6 of its energy when it draws no ring).
+const STY_KEY := 0.6
+## The shafts in ivory gold (spec 1.3: under the painted light's fire threshold, a lit edge and no flat pool), the new
+## one over the guardian's spawn (energy, cone, height; no shadow, no dust of its own).
+const STY_SHAFT := Color(0.96, 0.88, 0.70)
+const STY_GUARD_SHAFT := Vector3(1.6, 18.0, 16.0)
+## S1: the chancel's offerings behind the grille: three groups of four candles (two lit) with urns (z off the chancel's
+## middle; x in from the grille), the urns' heights.
+const OFFERINGS: Array[Vector2] = [Vector2(1.3, -4.4), Vector2(1.3, 4.4), Vector2(3.4, -1.6)]
+const OFFERING_URNS: Array[float] = [0.42, 0.3]
+## S2: the runner of faded petrol cloth from the grille to the altar (width; cloth, border; how much of the way).
+const RUNNER_WIDTH := 1.4
+const RUNNER_CLOTH := Color(0.11, 0.17, 0.18)
+const RUNNER_BORDER := Color(0.30, 0.25, 0.15)
+const RUNNER_Y := 0.012
+## How far off the back wall's face the runner stops.
+const RUNNER_BACK := 0.6
+## S3: shards of the fallen drums leaning on a broken column's shaft, all inside its circle less 0.1 m (count; size:
+## width, thickness; heights).
+const DRUM_SHARDS := 3
+const DRUM_SHARD := Vector2(0.34, 0.09)
+const DRUM_SHARD_HEIGHT := Vector2(0.55, 1.15)
+const DRUM_SHARD_IN := 0.1
+## S4: hooded statues in the blind windows (x) on their sills, height; petrol banners on the pilasters (x), top, size.
+const NICHE_STATUES: Array[float] = [-17.5, -1.0]
+const NICHE_STATUE := 2.6
+## ... each on a corbel over the sill (its height, width, how far out of the wall's face), so its body leans out over
+## the floor only above the hero (OVERHEAD in tests/test_e5_looks.gd).
+const NICHE_CORBEL := Vector3(0.5, 1.1, 0.5)
+const PILASTER_BANNERS: Array[float] = [-14.0, 2.0]
+const PILASTER_BANNER_TOP := 7.2
+const PILASTER_BANNER := Vector2(1.0, 2.6)
+## S5: moss and ivy cards on the walls (never the floor): its colour; a card's size (one for all: one material); over
+## each blind window's head and along the north wall's top (x).
+const MOSS := Color(0.20, 0.24, 0.17)
+const MOSS_CARD := Vector2(2.6, 2.2)
+const WALL_TOP_MOSS: Array[float] = [-19.5, -10.5, -4.0, 6.5, 10.0]
+## S6 (B): the torn vault over the hole: broken ribs across the nave over its north and south lips (z, springing
+## height), their span, ring, depth, the missing middle (m from the rib's middle), stones hanging from the broken ends
+## (count, drop under them). All of it over 9 m and drawn against the north wall in the fight's camera.
+const VAULT_RIBS: Array[Vector2] = [Vector2(-3.4, 9.0), Vector2(1.6, 9.8)]
+const VAULT_SPAN := 13.0
+const VAULT_RING := 0.62
+const VAULT_DEEP := 0.75
+const VAULT_GAP := Vector2(-2.8, 3.6)
+const VAULT_HANG := 3
+const VAULT_DROP := 0.9
+## B: the shaft through the tear is cold (the room-designer's "cold light from above on the hole"; the shafts of A and
+## the guardian's stay ivory gold).
+const STY_TEAR_SHAFT := Color(0.84, 0.9, 0.98)
+## B: the dust falling through the tear, denser (particles).
+const STY_DUST := 48
+
+var _key: OmniLight3D
+var _shafts: Array[SpotLight3D] = []
+var _hole_dust: CPUParticles3D
 var _west := 0.0
 var _east := 0.0
 var _north := 0.0
@@ -186,13 +255,16 @@ func dress() -> void:
 	var key := key_light(KEY, KEY_ENERGY, KEY_HEIGHT)
 	key.omni_range = KEY_REACH
 	key.omni_attenuation = KEY_FALLOFF
+	_key = key
 	if _hole.is_empty():
 		for p in MOON_AT:
-			moon_shaft(p, MOON, MOON_ENERGY, MOON_CONE, MOON_HEIGHT)
+			_shafts.append(moon_shaft(p, MOON, MOON_ENERGY, MOON_CONE, MOON_HEIGHT))
 	else:
-		moon_shaft(MOON_AT[0], MOON, MOON_ENERGY_B, MOON_CONE, MOON_HEIGHT)
+		_shafts.append(moon_shaft(MOON_AT[0], MOON, MOON_ENERGY_B, MOON_CONE, MOON_HEIGHT))
 		var c := _middle(_hole)
 		arena._dust(Vector3(c.x, 0.0, c.y))
+		_hole_dust = arena.get_child(arena.get_child_count() - 1) as CPUParticles3D
+	_dress_styled()
 
 
 # ---------- the walls ----------
@@ -484,6 +556,162 @@ func _under(h: PackedVector2Array) -> void:
 	l.omni_range = UNDER_LIGHT.y
 	l.light_cull_mask = ArenaKit.DEPTH_LAYER
 	add_child(l)
+
+
+# ---------- the stylized look (room redesign, lot B section 1) ----------
+
+func style() -> Dictionary:
+	var st := STYLE.duplicate(true)
+	if compat():
+		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
+		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
+	VisualProfile.vary(_key, {&"light_energy": KEY_ENERGY * STY_KEY})
+	for sp in _shafts:
+		VisualProfile.vary(sp, {&"light_color": STY_SHAFT})
+	if not _hole.is_empty() and not _shafts.is_empty():
+		# B: the shaft falls through the tear of the vault into the hole (S6), the dust there denser
+		var to := _middle(_hole)
+		var probe := Node3D.new()
+		probe.look_at_from_position(Vector3(to.x + SHAFT_LEAN.x, MOON_HEIGHT, to.y + SHAFT_LEAN.y), Vector3(to.x, 0.0, to.y))
+		VisualProfile.vary(_shafts[0], {&"transform": probe.transform, &"light_color": STY_TEAR_SHAFT})
+		probe.free()
+		if _hole_dust != null:
+			VisualProfile.vary(_hole_dust, {&"amount": STY_DUST})
+	return st
+
+
+## The pieces only the stylized look shows (spec 1.4), on kit.styled() (never the room's random numbers): the shaft
+## over the guardian, the chancel's offerings and runner, the shards at the broken columns, the statues in the blind
+## windows and the banners on the pilasters, the moss on the walls; in B the torn vault.
+func _dress_styled() -> void:
+	var sm := kit.styled()
+	var guard := moon_shaft(layout.boss_spawn, STY_SHAFT, STY_GUARD_SHAFT.x, STY_GUARD_SHAFT.y, STY_GUARD_SHAFT.z, false, false)
+	ArenaKit.style_only(guard)
+	_offerings(sm)
+	_shards(sm)
+	var face := _north - FACE_SET
+	for x in NICHE_STATUES:
+		var at := Vector2(x, face - 0.05)
+		sm.box(Vector3(x, WINDOW.z + 0.02 + NICHE_CORBEL.x * 0.5, face + NICHE_CORBEL.z * 0.5),
+			Vector3(NICHE_CORBEL.y, NICHE_CORBEL.x, NICHE_CORBEL.z), 0.0, ashlar())
+		kit.styled_build(func() -> void: kit.statue(at, 0.0, NICHE_STATUE, WINDOW.z + 0.02 + NICHE_CORBEL.x, ArenaKit.STATUE_VALUE, false))
+	for x in PILASTER_BANNERS:
+		var top := Vector3(x, PILASTER_BANNER_TOP, face + PILASTER.y + 0.06)
+		kit.styled_build(func() -> void: kit.banner(top, 0.0, PILASTER_BANNER, ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION))
+	_moss(sm, face)
+	if not _hole.is_empty():
+		_torn_vault(sm)
+
+
+## S1, S2: candles and urns on the chancel's floor behind the grille, and the faded petrol runner from the grille to
+## the altar (a painted decal on its floor).
+func _offerings(sm: Masonry) -> void:
+	var y := CHANCEL_RISE
+	var x0 := _west - BALUSTRADE_OUT - 0.25
+	var urn := sm.carved(y, STONE)
+	for g in OFFERINGS:
+		var c := Vector2(x0 - g.x, _chancel.y + g.y)
+		for i in 4:
+			var p := c + Vector2(-0.18 + 0.12 * (i % 2), -0.27 + 0.18 * i)
+			if i == 1 or i == 2:
+				sm.candle(Vector3(p.x, y, p.y), 0.14 + 0.07 * i, 0.05)
+			else:
+				sm.candle_out(Vector3(p.x, y, p.y), 0.08 + 0.05 * (i % 3), 0.05)
+		for k in OFFERING_URNS.size():
+			sm.urn(Vector3(c.x - 0.45, y, c.y + (k - 0.5) * 0.42), OFFERING_URNS[k], urn)
+	# from the grille to the back wall's foot (where the altar stands)
+	var altar_front := _west - CHANCEL_DEEP - 0.2 - FACE_SET + RUNNER_BACK
+	var length := x0 - 0.2 - altar_front
+	var mi := MeshInstance3D.new()
+	var q := PlaneMesh.new()
+	q.size = Vector2(length, RUNNER_WIDTH)
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = CatacombHall.DECAL_SHADER
+	mat.set_shader_parameter(&"rug_size", q.size)
+	mat.set_shader_parameter(&"cloth", RUNNER_CLOTH)
+	mat.set_shader_parameter(&"border", RUNNER_BORDER)
+	mat.set_shader_parameter(&"gold", RUNNER_BORDER)
+	mat.set_shader_parameter(&"diamond", 0.0)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3(altar_front + length * 0.5, y + RUNNER_Y, _chancel.y)
+	sm.root.add_child(mi)
+
+
+## S3: shards of the fallen drums standing against the shaft of each broken column, inside its circle (less DRUM_SHARD_IN).
+func _shards(sm: Masonry) -> void:
+	var mat := stone()
+	for o in layout.obstacles:
+		if o.piece != &"column" or o.height >= WHOLE_COLUMN:
+			continue
+		var shaft_r := o.radius * TombKit.COLUMN_SHAFT
+		var r := RandomNumberGenerator.new()
+		r.seed = hash(Vector2i(o.center * 10.0)) + 11
+		var turn := r.randf() * TAU
+		for k in DRUM_SHARDS:
+			var a := turn + TAU * k / DRUM_SHARDS + r.randf_range(-0.4, 0.4)
+			var h := r.randf_range(DRUM_SHARD_HEIGHT.x, DRUM_SHARD_HEIGHT.y)
+			var out := Vector2.from_angle(a)
+			# the shard's outer face at the circle less DRUM_SHARD_IN, its corners inside it
+			var d := minf(shaft_r + DRUM_SHARD.y * 0.5, o.radius - DRUM_SHARD_IN - DRUM_SHARD.y * 0.5) - 0.02
+			var c := o.center + out * d
+			var lean := r.randf_range(0.05, 0.14)
+			var mi := sm.box(Vector3(c.x, TombKit.COLUMN_PLINTH + h * 0.5, c.y), Vector3(DRUM_SHARD.y, h, DRUM_SHARD.x), -a, mat)
+			mi.rotate_object_local(Vector3.BACK, lean)
+
+
+## S5: moss and ivy hanging on the north wall's face: over each blind window's head and along its top.
+func _moss(sm: Masonry, face: float) -> void:
+	var mat := ShaderMaterial.new()
+	mat.shader = CatacombHall.DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 2)
+	mat.set_shader_parameter(&"rug_size", MOSS_CARD)
+	mat.set_shader_parameter(&"moss", MOSS)
+	var spots: Array[Vector2] = []
+	for x in WINDOWS:
+		spots.append(Vector2(x, WINDOW.z + WINDOW.y + 0.5))
+	for x in WALL_TOP_MOSS:
+		spots.append(Vector2(x, WALL_HEIGHT - 0.05))
+	for s in spots:
+		var mi := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = MOSS_CARD
+		mi.mesh = q
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# its top edge at s.y, a hair off the wall's face
+		mi.position = Vector3(s.x, s.y - MOSS_CARD.y * 0.5, face + 0.03)
+		sm.root.add_child(mi)
+
+
+## S6 (B): the vault torn over the hole: two ribs across the nave over the hole's lips, their middles fallen, stones
+## hanging from the broken ends; all over 9 m (no sky, no sunset: the light is the shaft's).
+func _torn_vault(sm: Masonry) -> void:
+	var c := _middle(_hole)
+	var mat := ashlar()
+	var r := RandomNumberGenerator.new()
+	r.seed = 9127
+	for rib in VAULT_RIBS:
+		var foot := Vector3(c.x, 0.0, rib.x)
+		var kept := sm.broken_arch(foot, Vector2(0, 1), VAULT_SPAN, rib.y, VAULT_RING, VAULT_DEEP, mat, VAULT_GAP, 0.75)
+		# the stones at the broken ends (nearest the gap on each side): a few hang from them, turned
+		var ends: Array[MeshInstance3D] = [null, null]
+		var best := [INF, INF]
+		for mi in kept:
+			var x := mi.position.x - foot.x
+			var sd := 0 if x < 0.0 else 1
+			var d := absf(x - (VAULT_GAP.x if sd == 0 else VAULT_GAP.y))
+			if d < best[sd]:
+				best[sd] = d
+				ends[sd] = mi
+		for k in VAULT_HANG:
+			var end := ends[k % 2]
+			if end == null:
+				continue
+			var p := end.position + Vector3(r.randf_range(-0.3, 0.3), -VAULT_DROP * (1.0 + floorf(k * 0.5)), r.randf_range(-0.2, 0.2))
+			var piece_ := sm.box(p, Vector3(VAULT_RING, 0.55, VAULT_DEEP), r.randf_range(-0.3, 0.3), mat)
+			piece_.rotate_object_local(Vector3.BACK, r.randf_range(-0.9, 0.9))
 
 
 # ---------- reading the layout ----------

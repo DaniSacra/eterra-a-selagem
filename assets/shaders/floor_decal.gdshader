@@ -4,7 +4,10 @@ shader_type spatial;
 //   0 the shop's rug: an umber cloth with an ochre border and a worn diamond of old gold in its middle (UV: 0..1 over
 //     the rug; nothing round, no red);
 //   1 the fountain's moss: a ragged ring of grey-green moss round the basin, denser to the north (-z), with pale ivory
-//     and faint lilac flowers in it (UV: -1..1 over a square of side 2 * ring.y).
+//     and faint lilac flowers in it (UV: -1..1 over a square of side 2 * ring.y);
+//   2 moss and ivy on a wall (room redesign lot B, the sanctuary's S5): a card on the stone, dense along its top edge
+//     (UV.y 0) and hanging down in ragged tongues, a few darker leaves in it (UV 0..1 over the card, `rug_size` its
+//     size in m).
 render_mode blend_mix, depth_draw_never, cull_disabled, diffuse_lambert, specular_disabled;
 
 uniform int kind = 0;
@@ -56,6 +59,16 @@ void fragment() {
 		c = mix(c, gold, dia * (1.0 - wear * n));
 		// frayed ends: the short sides a little ragged
 		a *= step(0.0, d.x - noise(vec2(m.y * 9.0, 3.0)) * 0.05);
+	} else if (kind == 2) {
+		vec2 m = UV * rug_size;
+		float n = fbm(vec2(m.x * 2.2, 1.7));
+		// how far down the tongue at this x hangs (m), and a ragged edge at its foot
+		float reach = rug_size.y * mix(0.12, 1.0, pow(n, 1.6)) * (0.8 + 0.4 * noise(vec2(m.x * 7.0, 4.0)));
+		float cover = 1.0 - smoothstep(reach - 0.12, reach, m.y + (fbm(m * 6.0) - 0.5) * 0.25);
+		cover *= smoothstep(0.0, 0.06, min(m.x, rug_size.x - m.x));
+		cover *= smoothstep(0.32, 0.5, fbm(m * 4.0) + 0.25 * (1.0 - UV.y));
+		c = moss * mix(0.7, 1.15, fbm(m * 9.0));
+		a = alpha * cover;
 	} else {
 		vec2 m = (UV - 0.5) * 2.0 * ring.y;
 		float r = length(m);

@@ -501,6 +501,52 @@ func styled() -> Masonry:
 var _styled: Masonry
 
 
+## Any of the kit's pieces built for the stylized look only (room redesign lot B: braziers, banners, statues): `build`
+## runs with the stylized Masonry in place of the room's, and what it added to the kit's root goes under the hidden
+## "Styled" node, its lights without shadow; the floor's wet rings (a brazier's) stay the classic ones. scale (round `at`, on the ground): the
+## piece smaller (its stone not merged then), its lights left unscaled at their scaled place (their reach is the
+## light's own). Returns the node holding the piece.
+func styled_build(build: Callable, at := Vector3.ZERO, scale := 1.0) -> Node3D:
+	var sm := styled()
+	var own := masonry
+	var wet := _wet_spots.duplicate()
+	var from_root := root.get_child_count()
+	var from_sm := sm.root.get_child_count()
+	var from_built := sm._built.size()
+	masonry = sm
+	build.call()
+	masonry = own
+	if _wet_spots.size() != wet.size():
+		_wet_spots = wet
+		for f in _floors:
+			_wet(f)
+	var holder := Node3D.new()
+	holder.name = "StyledPiece"
+	var added: Array[Node] = []
+	for i in range(from_root, root.get_child_count()):
+		added.append(root.get_child(i))
+	if not is_equal_approx(scale, 1.0):
+		for i in range(from_sm, sm.root.get_child_count()):
+			added.append(sm.root.get_child(i))
+		sm._built.resize(from_built)
+	sm.root.add_child(holder)
+	holder.transform = Transform3D(Basis.from_scale(Vector3.ONE * scale), at)
+	var to_local := Transform3D(Basis(), -at)
+	for n in added:
+		n.get_parent().remove_child(n)
+		if n is Light3D:
+			# nothing of the stylized look casts a shadow (the classic room's count of shadowed lights stays its own)
+			var l := n as Light3D
+			l.shadow_enabled = false
+			l.position = at + (l.position - at) * scale
+			sm.root.add_child(l)
+		else:
+			holder.add_child(n)
+			if n is Node3D:
+				(n as Node3D).transform = to_local * (n as Node3D).transform
+	return holder
+
+
 ## A node shown only in the stylized look.
 static func style_only(node: Node3D) -> void:
 	node.visible = false

@@ -569,6 +569,29 @@ func voussoir_arch(foot: Vector3, facing: Vector2, span: float, spring: float, r
 	return apex
 
 
+## A broken arch (room redesign lot B: the sanctuary's torn vault, the rift's fallen bridge and the arches at its
+## mouth): voussoir_arch with the stones whose middle lies in `gap` (from, to: meters across the opening from its
+## middle, along the facing's right) gone, and the keystone with them when the gap holds the middle. Returns the
+## stones left (the broken ends' last stones are the first and last of each side's run).
+func broken_arch(foot: Vector3, facing: Vector2, span: float, spring: float, ring: float, deep: float, mat: Material,
+		gap: Vector2, radius := 0.8) -> Array[MeshInstance3D]:
+	var from_built := _built.size()
+	voussoir_arch(foot, facing, span, spring, ring, deep, mat, radius)
+	var to_local := Basis(Vector3.UP, atan2(facing.x, facing.y)).inverse()
+	var kept: Array[MeshInstance3D] = []
+	for i in range(from_built, _built.size()):
+		var mi := _built[i]
+		var x := (to_local * (mi.position - foot)).x
+		if x > gap.x and x < gap.y:
+			root.remove_child(mi)
+			mi.free()
+		else:
+			kept.append(mi)
+	_built.resize(from_built)
+	_built.append_array(kept)
+	return kept
+
+
 ## A gothic pinnacle on top of something: a square shaft `width` wide and as tall, a spire `height` tall with CROCKETS
 ## blocks up each of its edges, a finial on its tip.
 func pinnacle(base: Vector3, width: float, height: float, mat: Material = null) -> void:
