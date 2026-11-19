@@ -147,8 +147,9 @@ uniform float paint_band_bevel = 0.25;
 uniform float paint_band_groove = 0.11;
 // STY-10 (fire pools, art review criterion 3): round the fire bowls (the wet spots, within their outer radius) the
 // floor keeps the middle's value, not the room edge's darker one (the east bowl's pool fell on slabs at 0.58 of the
-// middle's and stayed under 100 where the others reached 110 to 150); the wet floor a little darker only.
-uniform float paint_wet_dark = 0.92;
+// middle's and stayed under 100 where the others reached 110 to 150); the wet floor no darker (it reads by
+// its shine; 1 keeps its value).
+uniform float paint_wet_dark = 1.0;
 // The quatrefoil in the middle cut as wide as the runes, crisp, with no lit lip (m).
 uniform float paint_rosette = 0.12;
 #define RUNE_STROKE paint_rune_stroke

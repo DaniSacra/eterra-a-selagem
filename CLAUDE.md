@@ -1473,6 +1473,33 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (com 265 pixels acima de 235) para 222 sem nenhum acima de 235, véu 29% menor; área do corte 0,76 da do clássico. Sobre o osso
   claro da multidão o fio somado ainda vai ao branco, como no clássico. Faixas das figuras seguem em
   `figure_paint.gdshaderinc` (a pedra baixou a faixa de sombra para 0,25; juntar só quando as duas frentes fecharem).
+- **Correções depois do STY-09 (STY-10, environment-artist; só no estilizado, o clássico igual)**: **poças de fogo**
+  (`paint.gdshaderinc`): a luz quente (vermelho bem acima do azul, `paint_fire_from`) não passa mais pelas três faixas
+  (N·L vezes a queda de um fogo a 2,8 m nunca saía da faixa de sombra): pinta uma poça chapada com borda desenhada
+  (`paint_pool` 0,1, núcleo `paint_pool_core` 0,3, borda `paint_pool_soft` 0,02), mais clara que a luz (`paint_pool_gain`
+  2,5: a cera das velas e as figuras ficam na energia da luz) e menos saturada (`paint_pool_saturation` 0,65). Braseiros
+  sem sombra no estilizado (a borda da tigela sombreava o chão até 2,3 m: a poça era um anel fino em volta de um disco
+  escuro), queda 0,5, energia 1,1 da clássica (`CatacombHall.STY_BOWL_*`); velas 1,2 (`STY_CANDLE_GAIN`); ambiente
+  `VisualProfile.AMBIENT_GAIN` 1,0. No chão, em volta dos braseiros (os `wet_spots`), a laje fica no valor do meio e não
+  no escurecido da borda da sala, e o molhado não escurece (`paint_wet_dark` 1,0). Medido na vitrine (RTX, 720, laje a
+  1,5 m): braseiro leste 30 para 106 a 109 (p90 120), matiz 27; velas 107 a 150, matiz 29 a 32; braseiro norte 103 a 175;
+  meio do chão 72 a 77 (era 74 a 80); quadro p50 56. **Fase 4 na Câmara do Selo (P1-1)**: o `RoomMood` lia o ar da
+  sala no `blend` e a câmara se veste um quadro depois (`BossChamber._dress_world` diferido); com o chefe já na fase 4
+  (`--boss-hp`) ele guardava o ar do salão, e no estilizado a chave de trás da câmera (1,6) vezes 1,8 lavava o chão de
+  ciano. Agora o ar é lido no quadro seguinte e de novo a cada vez que o clima liga do zero (`RoomMood._take_due`; teste
+  em `test_cycle10_look.gd`). Medido com as correções do technical-artist juntas (`--start=boss --boss-hp=0.14
+  --boss-only=storm`, 0,6 s, com e sem o `Ground`): chão sob o aviso 129 para 73, caixa ao sul do selo 125 a 142 para 63 a
+  75 (matiz 190 para 215), faixas saturação 0,27 para 0,50, aro 73 para 122 acima do chão; clássico 70 / 121 / 0,55 (o
+  atalho do clássico também lia o ar do salão: chão 75 para 70, a partida de verdade já era assim). Fases 1 a 3 e o
+  ritual iguais ao clássico. **Medalhão** (`catacomb_floor.gdshaderinc`, `PAINT`): faixa de pedra única um pouco mais
+  clara (`paint_band` 1,08), um sulco só em cada borda (`paint_band_groove` 0,11, relevo dos chanfros a 0,25), runas mais
+  longas e finas com borda dura no valor da junta da própria faixa (`paint_rune_stroke` 0,12 m: 5,6 px a 1080 de través e
+  3 px no sentido mais encurtado; `paint_rune_size` 0,4, sem o lábio claro), quadrifólio no mesmo traço
+  (`paint_rosette`). **Velas e caixotes**: cera velha `Masonry.STY_WAX` (0,52; 0,45; 0,36), sem borda de luz; madeira
+  dos caixotes (`paint_keep`) a 0,5 da saturação e 0,8 do valor, lábio claro das tábuas a 0,35 (`wood_*` no
+  `masonry.gdshaderinc`). No Compatibility os fogos a `STY_COMPAT_FIRE` 0,4 (sem isso a poça ia a 217; com, 107 a 181,
+  sem erro no log). iGPU Baixa 1280 x 720 (duas rodadas): clássico 16,8 e 17,1 ms (59,5 e 58,5 qps), estilizado 16,3 e
+  17,8 ms (61,3 e 56,2 qps), 616 chamadas contra 822 a 926 (braseiros sem sombra).
 - Medido depois do STY-04/05 (bot, semente 5, sala de abertura): RTX 1080 Alta GPU 2,80 ms clássico, 2,63 estilizado (756 e 818
   chamadas, 330 e 332 MB); iGPU Baixa 1280 x 720 15,05 e 15,75 ms; fio da mira dos avisos 130 a 138 de luma sobre a laje de
   72 a 86 (+50). Sonda de sensação 40/40 nos dois looks; o Compatibility abre sem erro.

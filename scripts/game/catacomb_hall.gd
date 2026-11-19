@@ -371,6 +371,9 @@ const STY_CANDLE_RANGE := 3.5
 const STY_BOWL_ATTENUATION := 0.5
 const STY_BOWL_GAIN := 1.1
 const STY_CANDLE_GAIN := 1.2
+## The browser's renderer (Compatibility) paints the pools near white at those energies (laje 217 beside the east bowl):
+## the fires a share of them there (as VisualProfile.COMPAT_KEY does for the key).
+const STY_COMPAT_FIRE := 0.4
 
 var arena: Arena
 var kit: ArenaKit
@@ -418,6 +421,7 @@ func build(exit_count: int) -> void:
 ## pools, the key off. Nothing here moves a piece or touches what blocks.
 func _stylize() -> void:
 	kit.paint_look()
+	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
 	for n in arena.find_children("*", "OmniLight3D", true, false):
 		var l := n as OmniLight3D
 		if l == _key:
@@ -428,7 +432,7 @@ func _stylize() -> void:
 			VisualProfile.vary(l, {
 				&"omni_range": STY_BOWL_RANGE if bowl else STY_CANDLE_RANGE,
 				&"omni_attenuation": STY_BOWL_ATTENUATION if bowl else l.omni_attenuation,
-				&"light_energy": l.light_energy * (STY_BOWL_GAIN if bowl else STY_CANDLE_GAIN),
+				&"light_energy": l.light_energy * (STY_BOWL_GAIN if bowl else STY_CANDLE_GAIN) * (STY_COMPAT_FIRE if compat else 1.0),
 				&"shadow_enabled": false,
 			})
 
