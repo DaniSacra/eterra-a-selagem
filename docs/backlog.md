@@ -772,3 +772,9 @@ revisão: durante a luta, dá para perceber quem é elite, quem vai atacar e ond
 | LC-P1 | (proposta, muda tempo ou mecânica: não neste ciclo) preparo mais longo ou com pausa marcada para algum atirador, se o LC-1 a LC-3 não bastarem | decisão do Daniel e do `combat-feel-director` | `combat-feel-director` | LC-6 |
 | LC-P2 | (proposta, só com Meshy ou modelo novo) besta maior, cajado do Sacerdote com forma própria | estimativa de créditos antes | `technical-artist` | LC-6 |
 | **RS-C1** | Criptas A e B: um elemento funerário dominante por variante, com luz e composição (referências internas: a árvore do Jardim, a travessia da Ponte B) | na câmera do jogo, A e B se distinguem de relance; depois da leitura do combate | `art-director` (spec), `environment-artist` | LC-6 |
+
+**Estado do ciclo LC (2026-11-19, build `4354550`, pacote `Eterra-Revisao-LC-4354550.zip`):** LC-2 passou (orbe lê na
+tela inteira); LC-4 passou na medida (herói luma p50 31 para 103, Forward+ 88), falta o olhar do diretor; LC-5 lê no
+olho desde a preparação, com o vermelho em carmim mais escuro no Compatibility (matiz 335 contra 348); LC-1 e LC-3
+parciais (besta de luz com 30 a 40 px a 1080; o V do Sacerdote lê de frente, não de costas). Aguardando o parecer:
+LC-P1 (tempo) e LC-P2 (Meshy) só com decisão dele e do Daniel.
