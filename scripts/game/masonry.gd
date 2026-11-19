@@ -625,6 +625,85 @@ func shaft(foot: Vector3, radius: float, height: float, mat: Material = null) ->
 	return mi
 
 
+## SW-K1: an empty iron cage (a gibbet) hanging from its hook at the origin, one mesh: a dome of four straps from the
+## hook to the top ring, `bars` upright bars down to the bottom ring, a band round its middle and two straps across its
+## floor. size: radius, height of the bars, height of the dome, the bars' width (m). door: degrees its door (the two
+## bars after bar 0, with their own rails) stands open on its hinge at bar 0 (0 shut); bent: the bar bowed out (-1 none).
+static func cage_mesh(size: Vector4, bars: int, door := 0.0, bent := -1) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var r := size.x
+	var top := -size.z
+	var low := top - size.y
+	var band := top - size.y * CAGE_BAND
+	var w := size.w
+	var ring := func(i: int, y: float) -> Vector3: return Vector3(r * sin(TAU * i / bars), y, r * cos(TAU * i / bars))
+	# the dome, the floor
+	for k in 4:
+		var a := TAU * k / 4.0
+		var out := Vector3(sin(a), 0, cos(a))
+		for s in CAGE_DOME_STEPS:
+			var t0 := PI * 0.5 * s / CAGE_DOME_STEPS
+			var t1 := PI * 0.5 * (s + 1) / CAGE_DOME_STEPS
+			_bar(st, out * r * sin(t0) + Vector3.UP * -size.z * (1.0 - cos(t0)), out * r * sin(t1) + Vector3.UP * -size.z * (1.0 - cos(t1)), w)
+		if k < 2:
+			_bar(st, Vector3(0, low, 0) + out * r, Vector3(0, low, 0) - out * r, w)
+	var shut := door <= 0.0
+	for i in bars:
+		var j := (i + 1) % bars
+		_bar(st, ring.call(i, top), ring.call(j, top), w * CAGE_RING)
+		_bar(st, ring.call(i, low), ring.call(j, low), w * CAGE_RING)
+		if shut or i >= CAGE_DOOR_BARS:
+			_bar(st, ring.call(i, band), ring.call(j, band), w)
+		if not shut and i >= 1 and i <= CAGE_DOOR_BARS:
+			continue
+		if i == bent:
+			var mid: Vector3 = ring.call(i, lerpf(top, low, 0.55))
+			var bow := Vector3(mid.x, 0, mid.z).normalized() * CAGE_BOW
+			_bar(st, ring.call(i, top), mid + bow, w)
+			_bar(st, mid + bow, ring.call(i, low), w)
+		else:
+			_bar(st, ring.call(i, top), ring.call(i, low), w)
+	if not shut:
+		# the door: its bars and rails, turned out round the hinge (bar 0)
+		var hinge: Vector3 = ring.call(0, 0.0)
+		var turn := Basis(Vector3.UP, deg_to_rad(door))
+		var swing := func(p: Vector3) -> Vector3: return hinge + turn * (p - hinge)
+		for i in range(1, CAGE_DOOR_BARS + 1):
+			_bar(st, swing.call(ring.call(i, top - w)), swing.call(ring.call(i, low + w)), w)
+		for y: float in [top - w, band, low + w]:
+			_bar(st, swing.call(ring.call(0, y)), swing.call(ring.call(CAGE_DOOR_BARS, y)), w)
+	return st.commit()
+
+
+## The cage's band (share of the bars' height down), its dome's steps, how much thinner its rings are than its bars,
+## how many bars its door takes and how far its bent bar bows out (m).
+const CAGE_BAND := 0.45
+const CAGE_DOME_STEPS := 4
+const CAGE_RING := 1.3
+const CAGE_DOOR_BARS := 2
+const CAGE_BOW := 0.2
+
+
+## A square iron bar from a to b, w wide: its four sides with flat normals (its ends open: too small to see).
+static func _bar(st: SurfaceTool, a: Vector3, b: Vector3, w: float) -> void:
+	var along := (b - a).normalized()
+	var u := along.cross(Vector3.UP if absf(along.y) < 0.9 else Vector3.RIGHT).normalized() * w * 0.5
+	var v := along.cross(u).normalized() * w * 0.5
+	var c: Array[Vector3] = [u + v, -u + v, -u - v, u - v]
+	for k in 4:
+		var p := c[k]
+		var q := c[(k + 1) % 4]
+		var n := (p + q).normalized()
+		st.set_normal(n)
+		st.add_vertex(a + p)
+		st.add_vertex(b + p)
+		st.add_vertex(b + q)
+		st.add_vertex(a + p)
+		st.add_vertex(b + q)
+		st.add_vertex(a + q)
+
+
 ## A jagged tooth of stone hanging from `top`: a tapering prism `length` long, `root` wide at the top, with two
 ## smaller teeth growing off its sides (the portal's pendants, dark against the light).
 func pendant(top: Vector3, length: float, root: float, mat: Material) -> void:

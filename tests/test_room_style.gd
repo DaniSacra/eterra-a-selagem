@@ -679,8 +679,8 @@ func test_the_chamber_stylized_pieces_stay_far() -> void:
 	var target := Vector3(c.cam_target.x, 0, c.cam_target.y)
 	var eye := target + Feel.cam_offset_of(feel.cam_distance, feel.cam_pitch, feel.cam_yaw)
 	var boss := Vector3(c.boss_spawn.x, 2.0, c.boss_spawn.y)
-	assert_eq(styled.find_children("*", "MultiMeshInstance3D", true, false).size(), BossChamber.STY_CHAINS.size() + BossChamber.STY_ARCH_HANGS.size(),
-		"the chains are there")
+	assert_eq(styled.find_children("*", "MultiMeshInstance3D", true, false).size(), BossChamber.STY_CHAINS.size() + BossChamber.STY_ARCH_HANGS.size()
+		+ BossChamber.STY_CAGES.size(), "the chains are there (the cages' own too)")
 	# (the headless renderer keeps no MultiMesh transforms: the chains' curve as ArenaKit.chain lays it)
 	for ch: Array in BossChamber.STY_CHAINS:
 		for k in 41:
@@ -689,3 +689,43 @@ func test_the_chamber_stylized_pieces_stay_far() -> void:
 			assert_gt(Vector2(p.x, p.z).length(), BossChamber.LIP_RADIUS, "a chain off the platform")
 			var off := rad_to_deg((p - eye).angle_to(boss - eye))
 			assert_gt(off, 8.0, "a chain clear of Morvath on the screen (%.1f degrees)" % off)
+
+
+## SW-K1: the empty cages hang from the chains over the abyss, in the stylized look only, far from Morvath on the screen,
+## no light of their own; F7 there and back is test_the_chamber_comes_back (the cages are under the Styled node).
+func test_the_chamber_cages() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var a := _chamber()
+	var c := a.chamber as BossChamber
+	var styled := c.find_child("Styled", false, false) as Node3D
+	var n := BossChamber.STY_CAGES.size()
+	assert_between(n, 2, 4, "two to four cages")
+	var feel := Feel.live()
+	var target := Vector3(c.cam_target.x, 0, c.cam_target.y)
+	var eye := target + Feel.cam_offset_of(feel.cam_distance, feel.cam_pitch, feel.cam_yaw)
+	var boss := Vector3(c.boss_spawn.x, 2.0, c.boss_spawn.y)
+	var opened := 0
+	for k in n:
+		var cage := styled.find_child("Cage%d" % k, true, false) as Node3D
+		assert_not_null(cage, "cage %d built under the stylized-only node" % k)
+		if cage == null:
+			continue
+		assert_eq(cage.find_children("*", "Light3D", true, false).size(), 0, "no light of its own")
+		assert_almost_eq(cage.position.distance_to(BossChamber.cage_hook(k)), 0.0, 0.001, "hung from its chain")
+		for mi: MeshInstance3D in cage.find_children("*", "MeshInstance3D", true, false):
+			assert_eq(mi.cast_shadow, GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "no shadow")
+			for v: Vector3 in mi.mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+				var g := mi.global_transform * v
+				assert_gt(Vector2(g.x, g.z).length(), BossChamber.STY_CLEAR, "cage %d past the floor and 6 m" % k)
+				var off := rad_to_deg((g - eye).angle_to(boss - eye))
+				if off < 10.0:
+					assert_gt(off, 10.0, "cage %d clear of Morvath on the screen (%.1f degrees)" % [k, off])
+					break
+		if float(BossChamber.STY_CAGES[k][4]) > 0.0 or int(BossChamber.STY_CAGES[k][5]) >= 0:
+			opened += 1
+	assert_between(opened, 1, 2, "one or two with the door open or a bar bent")
+	# they swing
+	var before := (styled.find_child("Cage0", true, false) as Node3D).transform
+	await wait_process_frames(10)
+	assert_ne((styled.find_child("Cage0", true, false) as Node3D).transform, before, "swinging slowly")
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)

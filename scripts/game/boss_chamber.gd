@@ -280,6 +280,21 @@ const STY_SHARD_SPANS: Array[Vector4] = [Vector4(200.0, 280.0, STY_CLEAR + 2.0, 
 const STY_SHARD_HEIGHT := Vector2(-12.0, -2.0)
 const STY_SHARD_SIZE := Vector2(0.5, 2.4)
 const STY_SHARD_TOWER := 5.0
+## SW-K1 (docs/art/sworn_reference_ideas.md), empty iron cages hanging from the chains over the abyss at the frame's
+## sides, never near Morvath on the screen: each [chain (an index into CHAINS then STY_CHAINS), where along it (0 to 1),
+## how far under it on its own chain (m), its yaw (degrees), its door open (degrees, 0 shut), its bent bar (-1 none)].
+const STY_CAGES: Array[Array] = [
+	[0, 0.4, 1.4, 20.0, 0.0, -1],
+	[4, 0.24, 0.9, 200.0, 65.0, -1],
+	[2, 0.45, 1.8, 120.0, 0.0, 6],
+	[5, 0.24, 3.6, 300.0, 0.0, -1],
+]
+## The cage (radius, height of the bars, of the dome, the bars' width: m; Masonry.cage_mesh), its bars, its chain's
+## links (ArenaKit.chain size), its swing (degrees, seconds a swing; each cage a little slower than the one before).
+const STY_CAGE := Vector4(0.55, 1.6, 0.4, 0.07)
+const STY_CAGE_BARS := 10
+const STY_CAGE_LINKS := 1.2
+const STY_CAGE_SWING := Vector2(3.0, 7.0)
 ## E4, the far air: the sky a step deeper in value, the spires' lit edges a step lighter.
 const STY_SKY := 0.9
 const STY_SPIRE_EDGE := 1.15
@@ -420,6 +435,9 @@ var _air_moon: DirectionalLight3D
 ## The spires' cards' materials (lot E: their edges in the stylized look) and the broken arches' stone.
 var _spire_mats: Array[ShaderMaterial] = []
 var _sty_arch: ShaderMaterial
+## SW-K1: the cages' pivots (each at its hook on the chain), swung in _process, and the clock of their swing.
+var _cages: Array[Node3D] = []
+var _cage_clock := 0.0
 
 
 ## Builds the chamber (call once, in the tree or not). In the fight (Arena._chamber_look) it takes the room's layout
@@ -609,6 +627,7 @@ func _process(delta: float) -> void:
 	seal.step(delta)
 	_storm_dark = move_toward(_storm_dark, STORM_DARK if _storm_left > 0 else 0.0, delta * STORM_DARK / STORM_DARK_FADE)
 	_veil = move_toward(_veil, _veil_want, delta / VEIL_FADE)
+	_swing_cages(delta)
 	if _sealing:
 		_door_seal += delta
 	_apply_seal()
@@ -1422,6 +1441,8 @@ func _stylize() -> void:
 	sm.layers = 1
 	for ch: Array in STY_CHAINS:
 		kit.styled_build(func() -> void: kit.chain(ch[0], ch[1], ch[2], CHAIN_SIZE))
+	for c in STY_CAGES.size():
+		_cage(sm, c)
 	var edge := Color(SPIRE_EDGE.r * STY_SPIRE_EDGE, SPIRE_EDGE.g * STY_SPIRE_EDGE, SPIRE_EDGE.b * STY_SPIRE_EDGE)
 	for cm in _spire_mats:
 		VisualProfile.vary(cm, {&"shader_parameter/edge_color": edge})
@@ -1448,6 +1469,67 @@ func _broken_arch(sm: Masonry, i: int) -> void:
 	var mi := sm.box(stone, Vector3(STY_ARCH.z, STY_ARCH.z * 1.3, STY_ARCH.w * 0.8), 0.0, mat, false)
 	mi.basis = Basis(Vector3.UP, atan2(facing.x, facing.y)) * Basis(Vector3.BACK, STY_HANG.y)
 	kit.styled_build(func() -> void: kit.chain(top, stone + Vector3.UP * STY_ARCH.z * 0.6, 0.05, CHAIN_SIZE * 0.3))
+
+
+## SW-K1: the cage STY_CAGES[c] on its short chain under its hook on the big chain, both under a pivot at the hook
+## that _process swings; dark iron (ArenaKit.STY_IRON) with the chains' rim, no light, no shadow.
+func _cage(sm: Masonry, c: int) -> void:
+	var spec: Array = STY_CAGES[c]
+	var hook := cage_hook(c)
+	var drop := float(spec[2])
+	var pivot := Node3D.new()
+	pivot.name = "Cage%d" % c
+	sm.root.add_child(pivot)
+	pivot.position = hook
+	var links := kit.styled_build(func() -> void: kit.chain(hook, hook + Vector3.DOWN * drop, 0.0, STY_CAGE_LINKS), hook)
+	links.get_parent().remove_child(links)
+	pivot.add_child(links)
+	links.transform = Transform3D()
+	var mi := MeshInstance3D.new()
+	mi.mesh = Masonry.cage_mesh(STY_CAGE, STY_CAGE_BARS, float(spec[4]), int(spec[5]))
+	mi.material_override = _cage_iron()
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.layers = sm.layers
+	mi.transform = Transform3D(Basis(Vector3.UP, deg_to_rad(float(spec[3]))), Vector3.DOWN * drop)
+	pivot.add_child(mi)
+	_cages.append(pivot)
+
+
+## Where the cage STY_CAGES[c] hangs from its chain (ArenaKit.chain's curve).
+static func cage_hook(c: int) -> Vector3:
+	var spec: Array = STY_CAGES[c]
+	var i := int(spec[0])
+	var ch: Array = CHAINS[i] if i < CHAINS.size() else STY_CHAINS[i - CHAINS.size()]
+	var t := float(spec[1])
+	return (ch[0] as Vector3).lerp(ch[1], t) + Vector3.DOWN * float(ch[2]) * 4.0 * t * (1.0 - t)
+
+
+func _cage_iron() -> StandardMaterial3D:
+	if _sty_iron == null:
+		_sty_iron = StandardMaterial3D.new()
+		_sty_iron.albedo_color = ArenaKit.STY_IRON
+		_sty_iron.roughness = ArenaKit.STY_METAL.x
+		_sty_iron.metallic = ArenaKit.STY_METAL.y
+		_sty_iron.rim_enabled = true
+		_sty_iron.rim = ArenaKit.CHAIN_RIM
+		_sty_iron.rim_tint = 0.2
+		_sty_iron.cull_mode = BaseMaterial3D.CULL_DISABLED
+	return _sty_iron
+
+
+var _sty_iron: StandardMaterial3D
+
+
+## The cages swinging slowly round their hooks (only while they are seen: the stylized look).
+func _swing_cages(delta: float) -> void:
+	if _cages.is_empty() or not _cages[0].is_visible_in_tree():
+		return
+	_cage_clock += delta
+	var amp := deg_to_rad(STY_CAGE_SWING.x)
+	for k in _cages.size():
+		var w := TAU / (STY_CAGE_SWING.y * (1.0 + 0.13 * k))
+		var ph := k * 1.7
+		_cages[k].rotation = Vector3(sin(_cage_clock * w + ph) * amp, 0.0, sin(_cage_clock * w * 0.71 + ph * 2.0) * amp * 0.6)
 
 
 ## The broken arches' stone (STY_ARCH_STONE, STY_ARCH_SINK): the far ring's, its own material (only the stylized
