@@ -284,3 +284,10 @@ Medidas com as mesmas sementes. As três primeiras formam um pacote: juntas faze
 - Calibrar a régua 0,45 contra gente (hoje 50% contra 27% do Daniel na mesma faixa).
 - Depois do pacote B-1 a B-3: as duas réguas, 48 sementes, Maestria 1, 5, 10, 15 e 20 com as montagens que cada nível
   permite; aceite = tabela de 4 dentro da faixa.
+
+## Nota do Game Director (2026-11-19, depois desta medição)
+As 17 partidas do registro do Daniel (16/11 a 19/11 08:38) são todas de exes anteriores à correção `ed5a980`
+(19/11 10:40): a exportação convertia os recursos e esvaziava o baralho das portas, então **a loja aparecia vazia** e
+toda porta dava Bênção (sem portas de ouro, romã, coração ou Magia). "Nunca comprou na loja" não é preferência nem
+leitura da tela, e o ouro (37 a 84 ao chegar à loja) e a vida ao chegar em Morvath dessas partidas também não valem
+como régua da economia de hoje. Recalibrar a régua 0,45 só com partidas do exe novo.
