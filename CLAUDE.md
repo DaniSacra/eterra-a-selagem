@@ -800,7 +800,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`crystal_edge.gdshader`) e copa de cartões procedurais (Q-21 a, `GardenLook._canopy`, `canopy.gdshader`, `CANOPY_*`,
   um MultiMesh, abre em volta do herói). Onda do especial 25% maior no desenho e rastro mais claro, acerto igual
   (QW-111, `look_scale`, `wake_light` no `emeth_wave.gdshader`). Medir uma captura: `python3 -I tools/frame_stats.py
-  imagens... [--box=x,y,w,h]` (luma e saturação como o relatório de arte, violeta acima de 60%, verde e rosa na caixa).
+  imagens... [--box=x,y,w,h]` (luma e saturação como o relatório de arte, violeta acima de 60%, verde e rosa na caixa). Com `--hue` (RS-0.5) sai uma tabela por região (quadro, `--scene` = sem HUD, x 5 a 95% e y 8 a 85%, e cada `--box`, que se repete): matiz médio circular pesado pela saturação HSV (o da matriz do redesenho), matiz p10/p50/p90 dos pixels acima de `--sat-min` (0,1), saturação HSV p50, luma p10/p50/p90 e as faixas quente, vermelho, verde, ciano, verde+ciano e violeta em % dos pixels (só biblioteca padrão e ffmpeg).
 - **AP-1 "Nada de protótipo" (cenário; itens ART-01.2, 01.3, 01.4, 01.6, 02.3, 02.5, 03.7 e 04.2 do
   `docs/art/art_polish_backlog.md`; antes e depois na GPU e as medidas em `docs/gallery/ap1/`)**: o medalhão de cada
   recompensa tem o esmalte da família (`RewardGem.ENAMEL_*`: matiz, saturação e valor, teto `ENAMEL_MAX` 0,5 / 0,45;
