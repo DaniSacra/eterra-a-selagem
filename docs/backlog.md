@@ -864,3 +864,9 @@ Director com o equivalente do Hades II:**
   elites, guardião e Morvath, e gasto na Forja, nos Dons e no hub (no Hades, os reagentes e os Encantamentos do
   Caldeirão que fazem a Encruzilhada crescer: candidato para o Vendedor e o hub, a propor na RJ-1).
 - "Eu gosto desta profundidade, que deixa o jogo muito rejogável." → critério de sucesso da seção 10.
+
+**Aprovação do Daniel (2026-11-19, noite):** seguir todas as recomendações do `docs/design/rejogabilidade/sistemas.md`
+(Q-RJ1 a Q-RJ11: Fatia 1 inteira, três moedas sem a Brasa, os quatro anjos Sarael, Nivael, Lumael e Shomael com auréola
+fina sem raios, asas fechadas e rosto encoberto, dois anjos em toda sala de Bênção, primeira melhoria da Forja cedo e
+pequena, crédito retroativo de Prata, e o resto como recomendado). **Segurado**: a Fatia 1 só começa depois que ele
+testar o exe com o Santuário.
