@@ -1138,24 +1138,62 @@ func _add(mi: GeometryInstance3D) -> void:
 		_built.append(mi)
 
 
+## RS-C1: the billboards added under root since child `from` (open candles' flames, which merge() leaves alone: a
+## joined mesh loses each one's own upright) joined into one MultiMesh per mesh and material, so a crown of candles is
+## two draw calls, not two a candle. flame_see.gdshader turns each instance round its own upright.
+func gather_billboards(from: int) -> void:
+	var groups := {}
+	for i in range(from, root.get_child_count()):
+		var mi := root.get_child(i) as MeshInstance3D
+		if mi == null or not mi.mesh is QuadMesh or mi.material_override == null:
+			continue
+		var key := [mi.mesh, mi.material_override, mi.layers]
+		if not groups.has(key):
+			groups[key] = []
+		groups[key].append(mi)
+	for key: Array in groups:
+		var list: Array = groups[key]
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		mm.mesh = key[0]
+		mm.instance_count = list.size()
+		for k in list.size():
+			mm.set_instance_transform(k, (list[k] as MeshInstance3D).transform)
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.material_override = key[1]
+		mmi.layers = key[2]
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(mmi)
+		for mi: MeshInstance3D in list:
+			root.remove_child(mi)
+			mi.free()
+
+
 ## Joins the stone built so far into one mesh per material, visual layer and MERGE_CELL square of floor (so each
 ## piece still only takes the lights near it, which the browser's renderer needs): a few hundred draw calls instead
 ## of over a thousand. Call once the room is built; nothing built before it may be moved afterwards.
-func merge() -> void:
+## RS-C1: from (an index in what was built, built_count()): only what was built since, cells false: all of it in one
+## mesh per material whatever the square (a small piece hanging high, the crypt's crown). Returns the meshes it leaves
+## (joined or alone).
+func merge(from := 0, cells := true) -> Array[MeshInstance3D]:
 	var groups := {}
-	for mi in _built:
+	for i in range(from, _built.size()):
+		var mi := _built[i]
 		if not is_instance_valid(mi) or mi.material_override == null or mi.mesh == null or mi.mesh.get_surface_count() != 1:
 			continue
-		var cell := Vector2i(floori(mi.position.x / MERGE_CELL), floori(mi.position.z / MERGE_CELL))
+		var cell := Vector2i(floori(mi.position.x / MERGE_CELL), floori(mi.position.z / MERGE_CELL)) if cells else Vector2i.ZERO
 		# meshes of one kind of vertex data per group (bevelled boxes, statues, primitives)
 		var fmt := (mi.mesh as ArrayMesh).surface_get_format(0) if mi.mesh is ArrayMesh else -1
 		var key := [mi.material_override, mi.layers, mi.cast_shadow, cell, fmt]
 		if not groups.has(key):
 			groups[key] = []
 		groups[key].append(mi)
+	var left: Array[MeshInstance3D] = []
 	for key: Array in groups:
 		var list: Array = groups[key]
 		if list.size() < 2:
+			left.append(list[0])
 			continue
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -1167,7 +1205,14 @@ func merge() -> void:
 		joined.layers = key[1]
 		joined.cast_shadow = key[2]
 		root.add_child(joined)
+		left.append(joined)
 		for mi: MeshInstance3D in list:
 			root.remove_child(mi)
 			mi.free()
-	_built.clear()
+	_built.resize(from)
+	return left
+
+
+## How many pieces were built and not merged yet (merge's `from`).
+func built_count() -> int:
+	return _built.size()

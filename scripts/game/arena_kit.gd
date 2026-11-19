@@ -930,7 +930,17 @@ func statue_glow(from: Vector3, to: Vector3, energy: float, reach: float, cone: 
 
 ## A chain hanging between two points, sagging `sag` meters at its middle.
 func chain(a: Vector3, b: Vector3, sag: float, size: float = 1.0) -> void:
-	var n := maxi(2, ceili(a.distance_to(b) / (LINK_GAP * size)))
+	chains([[a, b]], sag, size)
+
+
+## Chains hanging between pairs of points ([a, b] each), all of one size and sag, in one MultiMesh (one draw call; RS-C1:
+## the crypt's crown hangs from four).
+func chains(pairs: Array, sag: float, size: float = 1.0) -> void:
+	var counts: Array[int] = []
+	var total := 0
+	for pair: Array in pairs:
+		counts.append(maxi(2, ceili((pair[0] as Vector3).distance_to(pair[1]) / (LINK_GAP * size))))
+		total += counts[-1]
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	var torus := TorusMesh.new()
@@ -939,20 +949,26 @@ func chain(a: Vector3, b: Vector3, sag: float, size: float = 1.0) -> void:
 	torus.rings = 8
 	torus.ring_segments = 6
 	mm.mesh = torus
-	mm.instance_count = n
-	for i in n:
-		var t := (i + 0.5) / n
-		var p := a.lerp(b, t) + Vector3.DOWN * sag * 4.0 * t * (1.0 - t)
-		var q := a.lerp(b, t + 0.01) + Vector3.DOWN * sag * 4.0 * (t + 0.01) * (1.0 - t - 0.01)
-		var along := (q - p).normalized()
-		var side := along.cross(Vector3.UP).normalized()
-		if side.length() < 0.1:
-			side = Vector3.RIGHT
-		var up := side.cross(along)
-		# each link lies along the chain (the ring's hole across it), stretched, every other one turned a quarter
-		var hole := side if i % 2 == 0 else up
-		var basis := Basis(along * LINK_STRETCH, hole, along.cross(hole))
-		mm.set_instance_transform(i, Transform3D(basis, p))
+	mm.instance_count = total
+	var k := 0
+	for c in pairs.size():
+		var a: Vector3 = pairs[c][0]
+		var b: Vector3 = pairs[c][1]
+		var n := counts[c]
+		for i in n:
+			var t := (i + 0.5) / n
+			var p := a.lerp(b, t) + Vector3.DOWN * sag * 4.0 * t * (1.0 - t)
+			var q := a.lerp(b, t + 0.01) + Vector3.DOWN * sag * 4.0 * (t + 0.01) * (1.0 - t - 0.01)
+			var along := (q - p).normalized()
+			var side := along.cross(Vector3.UP).normalized()
+			if side.length() < 0.1:
+				side = Vector3.RIGHT
+			var up := side.cross(along)
+			# each link lies along the chain (the ring's hole across it), stretched, every other one turned a quarter
+			var hole := side if i % 2 == 0 else up
+			var basis := Basis(along * LINK_STRETCH, hole, along.cross(hole))
+			mm.set_instance_transform(k, Transform3D(basis, p))
+			k += 1
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = mm
 	if _iron == null:
@@ -1317,6 +1333,35 @@ func _cold_metal() -> StandardMaterial3D:
 
 
 var _cold_mat: StandardMaterial3D
+
+
+## RS-C1: a lit brazier (built by brazier() at `at`) gone cold in the stylized look only (VisualProfile): its bowl and
+## rim in the cold iron, its ash grey, its coals, fire, core and light hidden; the classic look keeps it lit. Its
+## pedestal (merged stone) and its collision do not change. Call once the room is merged.
+func quench(at: Vector2, reach := BRAZIER_RADIUS) -> void:
+	if _cold_ash == null:
+		_cold_ash = _plain(COLD_ASH, 0.95)
+		_cold_ash.metallic = 0.0
+	for n in root.get_children():
+		var g := n as Node3D
+		if g == null or Vector2(g.position.x, g.position.z).distance_to(at) > reach:
+			continue
+		if g is CPUParticles3D or (g is OmniLight3D and g.has_meta(BOWL)):
+			VisualProfile.vary(g, {&"visible": false})
+		elif g is MeshInstance3D:
+			var mi := g as MeshInstance3D
+			var mat := mi.material_override as StandardMaterial3D
+			if mi.mesh == _core_mesh or (mat != null and mat == _coals_mat):
+				VisualProfile.vary(mi, {&"visible": false})
+			elif mat == null:
+				continue
+			elif mat == _bronze_mat or mat == _rim_mat:
+				VisualProfile.vary(mi, {&"material_override": _cold_metal()})
+			elif mat.shading_mode == BaseMaterial3D.SHADING_MODE_UNSHADED and mat.albedo_color == ASH:
+				VisualProfile.vary(mi, {&"material_override": _cold_ash})
+
+
+var _cold_ash: StandardMaterial3D
 
 
 func _bronze() -> StandardMaterial3D:

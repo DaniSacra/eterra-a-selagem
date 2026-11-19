@@ -94,6 +94,10 @@ cruzando no túmulo. O anel é fino e vazado: o chão atrás dele (em volta de (
 O leão no pano diria que o túmulo é de alguém do leão: isso é lore. **Pergunta ao Daniel (via Game Director)**: o pano
 pode levar o leão? Até a resposta, losango sem emblema.
 
+**Decidido pelo Daniel (PO), 2026-11-19**: o pano pode levar o leão. O pano sul leva o leão de ouro velho do pano do
+relicário (`reliquary_cloth.gdshader`, campo `lion_sdf.res`, nada novo) no lugar do losango; o pano leste fica sem
+emblema.
+
 ### A: o que calar (só estilizado, só na A)
 
 | Peça | Hoje | Pedido |
@@ -184,7 +188,7 @@ Saldo de luzes da B no estilizado: mais 1 (a lanterna), menos 2 (braseiros), men
 | Coluna do meio `860,60,260,480` | quente | **8% ou mais** |
 | Poça noroeste do túmulo `895,395,80,45` e sudeste `1000,575,80,45` | luma p50, matiz | luma p50 **90 a 120**, matiz 25 a 40 |
 | Chão leste do Lote A `1152,432,192,162` | luma p50, saturação, matiz | luma p50 até **80**, saturação 0,12 a 0,19, matiz 200 a 215 (a poça não lava a sala) |
-| Pano sul do túmulo (dentro de `900,470,110,40`) | luma p50, matiz | luma p50 25 a 50, matiz 180 a 200; o losango visível (p90 da caixa 80 ou mais) |
+| Pano sul do túmulo (dentro de `900,470,110,40`) | luma p50, matiz | luma p50 25 a 50, matiz 180 a 200; o leão (antes o losango) visível (p90 da caixa 80 ou mais) |
 | Tampa do túmulo sob o facho | luma | até 200 (nunca branca) |
 | Cena (`--scene`) | quente | **4 a 9%** |
 | Relógio `900,0,120,60` | diferença contra o antes | nenhum pixel novo (corrente para em y 64) |
@@ -246,7 +250,7 @@ Saldo de luzes da B no estilizado: mais 1 (a lanterna), menos 2 (braseiros), men
    trás (6,5). É de propósito (é o marco), mas se no teste parecer gigante, 4,0 m com o topo a 7,6 ainda passa a cornija.
 4. **B escura demais sem braseiros**: o chão da B continua no alvo do Lote A (60 a 78) pela lanterna, o ambiente e as
    velas das tampas; se cair, subir a lanterna, não reacender os braseiros.
-5. **Pano com leão**: depende do Daniel (seção A-D2). Sem resposta, losango.
+5. **Pano com leão**: decidido pelo Daniel em 2026-11-19 (seção A-D2): leva o leão.
 
 ## 7. Esforço
 

@@ -1709,6 +1709,32 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   29); chão e avisos iguais; o clássico igual nas três vistas. Quadro na fase 4: RTX 1080 Alta 2,38 / 2,20 para 2,44 /
   2,22 ms, iGPU 720 Baixa 15,4 / 15,3 para 15,1 / 15,3 ms; Compatibility sem erro.
 
+## RS-C1, Criptas (só no estilizado; spec `docs/art/rs_c1_crypt_spec.md`, antes e depois em `docs/gallery/redesign/rs_c1/`)
+- Cada variante da Cripta ganha uma peça funerária que manda no quadro, tudo em `kit.styled()` ou por `VisualProfile.vary`
+  (o clássico igual: diferença só em chamas e partículas). **A, o túmulo coroado**: coroa de velas pendurada a 6 m sobre o
+  túmulo grande (`CryptLook._crown`, `CROWN_*`: aro de ferro de 1,5 m com aro interno e raios, 16 velas, 5 apagadas, halo
+  morno em cada acesa; ferro, cera, chamas e halos abrem em pontilhado em volta do herói, ferro no `candle_wax_see`
+  com `ArenaKit.STY_IRON`; três correntes até o gancho e uma até 10 m, abaixo do relógio, num MultiMesh só,
+  `ArenaKit.chains`; tudo sem sombra, um mesh por material, `Masonry.merge(from, false)`, chamas e halos em MultiMesh,
+  `Masonry.gather_billboards`; numa camada própria `CROWN_LAYER` 128 que a luz dela não acende, senão queimava a cera de
+  branco), luz própria `NOT_FIRE` (`CROWN_COLOR` um pouco mais amarela que a vela, 1,25, alcance 9,5,
+  atenuação 0,4: com 1,0 a 5,7 m a poça pintada não abria) e o pano petróleo nas faces sul e leste do túmulo com o leão
+  de ouro velho no sul (decisão do Daniel, 2026-11-19; `_pall`, `reliquary_cloth.gdshader`, `PALL_*`, franja de ouro).
+  Calam na A: a luz do degrau oeste do túmulo (apagada), a vela do sarcófago norte a 0,6, as velas das estátuas a 0,5, os
+  braseiros da porta a 0,75 (`ArenaKit.FIRE_SHARE`), o facho frio a 1,1. **B, a velada do ossuário**: plinto com mísulas
+  sobre a ponta norte do muro e a figura encapuzada de 4,4 m (topo a 8 m, acima da cornija; `VEILED_RS_VALUE` 1,75, brilho
+  próprio 4,0) com a lanterna fria pendurada das mãos (`ArenaRoom.hanging_lantern(..., lamp)` aceita outra cor; luz difusa
+  `STY_COLD` sem sombra, `NOT_FIRE`, `LANTERN_*`), o facho frio reapontado para o peito dela (`STY_SHAFT_*`) e a poeira dele
+  escondida; calam os dois braseiros da porta (apagados só no estilizado, `ArenaKit.quench`: tigela e aro no ferro frio,
+  cinza fria, chama, brasas e luz escondidos, colisão igual), o estandarte ao lado da figura e as velas da estátua do nicho
+  norte (apagadas, sem luz). Luzes acesas no estilizado: A 18 (igual), B 16 (eram 18); com sombra, iguais
+  (`tests/test_room_style.gd`, `test_rs_c1_*`).
+- Medido (laboratório, RTX 1920 x 1080, `--bare`, alvo (1,0; 1,5); o laboratório não desenha chamas de vela, antes e
+  depois; no jogo a coroa tem quente 17% e p90 146): A, coroa quente 17,1% e p90 107, poças em volta do túmulo luma 111 e 118 (matiz 32 e 30), chão leste 79
+  (matiz 208), pano luma 47 (matiz 191, leão p90 110), coluna do meio quente 3,7% e cena 3,0%; B, figura luma 76 contra
+  41 da parede, cabeça acima da cornija 60, lanterna p90 149 (matiz 208), braseiros sem quente (p90 82 e 96), cena 1,2%.
+  Chamadas de desenho +8 a +12 na A, +2 na B; quadro igual (RTX 1080 Alta 1,65 a 1,69 ms, iGPU 720 Baixa 13,2 a 13,5).
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).

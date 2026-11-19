@@ -188,6 +188,83 @@ const VEILED_GLOW := Vector3(3.2, 7.0, 30.0)
 const VEILED_VALUE := 1.35
 const VEILED_GLOW_FROM := Vector2(4.0, 3.5)
 
+## RS-C1 (docs/art/rs_c1_crypt_spec.md), only in the stylized look: one funerary piece rules each variant. A, the
+## crowned tomb: a crown of candles hanging over the great tomb, its middle CROWN_Y high; the outer ring (radius,
+## section), the inner ring (radius, rise over the outer, section), its segments and spokes; candles on dishes (size,
+## thickness) round the outer ring, the burnt-out ones by index (never two together), their height and radius ranges.
+const CROWN_Y := 6.0
+const CROWN_RING := Vector2(1.5, 0.07)
+const CROWN_INNER := Vector3(1.2, 0.06, 0.04)
+const CROWN_SEGMENTS := 24
+const CROWN_SPOKES := 8
+const CROWN_CANDLES := 16
+const CROWN_OUT: Array[int] = [1, 5, 8, 12, 14]
+const CROWN_CANDLE := Vector4(0.12, 0.22, 0.04, 0.05)
+const CROWN_DISH := Vector2(0.1, 0.02)
+## Three chains from the ring (at these turns) to the hook, one from the hook up to CROWN_TOP where it ends (screen y 64,
+## under the HUD's clock); the links' size.
+const CROWN_CHAIN_AT: Array[float] = [0.0, 120.0, 240.0]
+const CROWN_HOOK := 9.2
+const CROWN_TOP := 10.0
+const CROWN_CHAIN := 0.5
+## The crown's own light, CROWN_LIGHT_DROP under the ring: energy (times the style's compat share in the browser's
+## renderer), reach, attenuation; no shadow. A fire (its pool painted), its numbers its own (ArenaKit.NOT_FIRE).
+## (Its attenuation under the spec's 1.0: at 5.7 m over the floor a fall-off of 1/d left N.L times it under the painted
+## pool's edge, paint_pool 0.1, and the floor round the tomb took no warm at all.)
+const CROWN_LIGHT_DROP := 0.3
+const CROWN_ENERGY := 1.25
+## Its colour: the room's candle warm a little yellower (CANDLE_COLOR painted the pool at hue 19 to 23 on the petrol
+## stone, the aim 25 to 40).
+const CROWN_COLOR := Color(1.0, 0.76, 0.42)
+const CROWN_LIGHT := Vector2(9.5, 0.4)
+## A warm halo round each lit crown candle (size, alpha of CROWN_HALO_COLOR), added on what is behind, under the glow.
+const CROWN_HALO := Vector2(0.65, 0.55)
+const CROWN_HALO_COLOR := Color(0.8, 0.45, 0.18)
+## The crown's pieces stand on a render layer of their own that its light leaves out (a hand's breadth from the wax,
+## it burnt the candles white: 1.5% of the crown over 235 on screen).
+const CROWN_LAYER := 128
+## A: the pall on the great tomb, hung on the body's south face and its east end, from under the lid (PALL_TOP under
+## the lid's foot) down to PALL_FOOT over the floor, PALL_OUT past the frieze; widths (south, east); its petrol, gold,
+## the gold thread (in from the sides, width; shares of the width), the fringe's depth and teeth; the old gold lion
+## (decided by Daniel, 2026-11-19) on the south one between these shares of its height.
+const PALL_WIDTH := Vector2(2.0, 1.2)
+const PALL_TOP := 0.02
+const PALL_FOOT := 0.45
+const PALL_OUT := 0.012
+const PALL_CLOTH := Color(0.06, 0.14, 0.15)
+## The cloth's faint glow of its own (the reliquary's is 0.12: under the cold shaft the pall read 65, the aim 25 to 50).
+const PALL_GLOW := 0.04
+const PALL_THREAD := Vector2(0.035, 0.012)
+const PALL_FRINGE := Vector2(0.05, 0.05)
+const PALL_LION_V := Vector2(0.16, 0.97)
+const PALL_SHADER := preload("res://assets/shaders/reliquary_cloth.gdshader")
+## A, what falls quiet in the stylized look (shares of each fire's stylized energy, ArenaKit.FIRE_SHARE): the north
+## sarcophagus's candles, the candles at the statues' feet, the north door's fire bowls; the cold shaft's energy. The
+## light of the tomb's west step goes out (the crown lights there).
+const STY_NORTH_LID := 0.6
+const STY_STATUE_CANDLES := 0.5
+const STY_BOWLS := 0.75
+const STY_TOMB_SHAFT := 1.1
+## B, the veiled one of the ossuary: a plinth (size) on the wall's north end with two stepped corbels under its flaps
+## (their two steps: top, middle, foot heights; widths), the figure on it VEILED_RS high; its cold lantern hanging
+## from its hands (the lantern's size, its middle under the hands and out in front of the robe, its light: energy,
+## reach, attenuation); the cold shaft re-aimed from (STY_SHAFT_FROM) at the figure's chest (height over its foot):
+## cone, energy; the figure's own light.
+const PLINTH := Vector3(1.3, 0.4, 1.1)
+const CORBEL := Vector4(3.2, 3.0, 2.75, 0.25)
+const CORBEL_DEPTH := 0.6
+const VEILED_RS := 4.4
+const VEILED_RS_VALUE := 1.75
+const LANTERN := Vector3(0.32, 0.42, 0.32)
+const LANTERN_UNDER := 0.62
+const LANTERN_OUT := 0.3
+const LANTERN_GLASS := Color(0.70, 0.86, 0.95)
+const LANTERN_LIGHT := Vector3(1.5, 9.0, 1.2)
+const STY_SHAFT_FROM := Vector3(2.5, 14.0, -3.0)
+const STY_SHAFT_AIM := 2.8
+const STY_SHAFT := Vector2(14.0, 1.6)
+const STY_VEILED_GLOW := 4.0
+
 var _key: OmniLight3D
 var _fill: OmniLight3D
 var _shaft: SpotLight3D
@@ -196,6 +273,12 @@ var _west := 0.0
 var _south := 0.0
 var _east := 0.0
 var _plain_lights := 0
+## RS-C1: the light of the great tomb's west step, the lit small sarcophagi's lights (their middle), the banners over
+## the fire bowls (their x, their nodes), the cold shaft's dust.
+var _tomb_light: OmniLight3D
+var _lid_lights: Array = []
+var _banners: Array = []
+var _shaft_dust: Node3D
 
 
 func floor_look() -> Dictionary:
@@ -370,7 +453,12 @@ func _back_walls() -> void:
 			door_arch(Vector2(e.mouth.get_center().x, _north), Vector2(0, 1), absf(e.mouth.size.x), WALL_SET + 0.45)
 	for o in layout.obstacles:
 		if o.piece == &"brazier" and o.center.y < _north:
+			var from := kit.root.get_child_count()
 			kit.banner(Vector3(o.center.x, BANNER_TOP, _north - WALL_SET + 0.06), 0.0, BANNER_SIZE, 1, ArenaKit.Emblem.LION)
+			var nodes: Array[Node] = []
+			for i in range(from, kit.root.get_child_count()):
+				nodes.append(kit.root.get_child(i))
+			_banners.append([o.center.x, nodes])
 
 
 func _niche(at: Vector2, facing: Vector2, statue: bool, mat: Material, hollow: Material, bone: Material) -> void:
@@ -561,7 +649,7 @@ func _candles() -> void:
 					west.y = TombKit.TOMB_STEP * 2.0
 					var side := Vector3(axis.z, 0, axis.x) * (half.y - 0.35)
 					candle_line(west - side, west + side, 4)
-					_light_at(west + Vector3(0, 0.6, 0), true)
+					_tomb_light = _light_at(west + Vector3(0, 0.6, 0), true)
 					var east := c + axis * (half.x - 0.45)
 					east.y = TombKit.TOMB_STEP * 2.0
 					candle_line(east - side * 0.6, east + side * 0.6, 3)
@@ -575,6 +663,8 @@ func _candles() -> void:
 					var l := _light_at(end + Vector3(0, 0.5, 0), shadow)
 					if ossuary and l != null:
 						l.set_meta(ArenaKit.FIRE_SHARE, STY_LID_LIGHT)
+					if l != null:
+						_lid_lights.append([o.center, l])
 			&"column":
 				var ring := o.radius * 0.86
 				var foot := Vector3(o.center.x, TombKit.COLUMN_BASE, o.center.y)
@@ -676,6 +766,7 @@ func _cold_shaft() -> void:
 	spot.light_cull_mask = ~Arena.CROWD_LAYER
 	_shaft = spot
 	arena._dust(to)
+	_shaft_dust = arena.get_child(arena.get_child_count() - 1) as Node3D
 
 
 # ---------- the stylized look (room redesign, lot A part 2) ----------
@@ -688,7 +779,63 @@ func style() -> Dictionary:
 	st[&"off"] = [_key, _fill]
 	if _shaft != null:
 		VisualProfile.vary(_shaft, {&"light_color": STY_COLD})
+	var divider := _divider()
+	if divider == null:
+		_quiet_a(st)
+	else:
+		_quiet_b(divider)
 	return st
+
+
+## RS-C1, A in the stylized look: the crown makes the light of the tomb's west step (out), the north sarcophagus's
+## candles, the statues' (on their light, _sill) and the fire bowls a step under it, the cold shaft softer.
+func _quiet_a(st: Dictionary) -> void:
+	if _tomb_light != null:
+		(st[&"off"] as Array).append(_tomb_light)
+	var tomb_at := _great_tomb().center if _great_tomb() != null else Vector2.ZERO
+	var north: OmniLight3D
+	var near := INF
+	for e: Array in _lid_lights:
+		var c: Vector2 = e[0]
+		if c.y < tomb_at.y and c.distance_to(tomb_at) < near:
+			near = c.distance_to(tomb_at)
+			north = e[1]
+	if north != null:
+		north.set_meta(ArenaKit.FIRE_SHARE, STY_NORTH_LID)
+	for n in find_children("*", "OmniLight3D", true, false):
+		if n.has_meta(ArenaKit.BOWL):
+			n.set_meta(ArenaKit.FIRE_SHARE, STY_BOWLS)
+	if _shaft != null:
+		VisualProfile.vary(_shaft, {&"light_energy": STY_TOMB_SHAFT})
+
+
+## RS-C1, B in the stylized look: the north door's fire bowls cold, the banner beside the veiled figure gone, the cold
+## shaft on the figure (its dust hidden: it fell on the floor where no light is now).
+func _quiet_b(divider: ArenaObstacle) -> void:
+	for o in layout.obstacles:
+		if o.piece == &"brazier" and o.center.y < _north:
+			kit.quench(o.center)
+	var nearest: Array = []
+	for b: Array in _banners:
+		if nearest.is_empty() or absf(float(b[0]) - divider.center.x) < absf(float(nearest[0]) - divider.center.x):
+			nearest = b
+	if not nearest.is_empty():
+		for n: Node in nearest[1]:
+			VisualProfile.vary(n, {&"visible": false})
+	if _shaft != null:
+		var foot := _veiled_foot(divider)
+		var aimed := Transform3D.IDENTITY.translated(STY_SHAFT_FROM).looking_at(foot + Vector3(0, STY_SHAFT_AIM, 0))
+		VisualProfile.vary(_shaft, {&"transform": aimed, &"spot_angle": STY_SHAFT.x, &"light_energy": STY_SHAFT.y})
+	if _shaft_dust != null:
+		VisualProfile.vary(_shaft_dust, {&"visible": false})
+
+
+## The great tomb of variant A (null in B).
+func _great_tomb() -> ArenaObstacle:
+	for o in layout.obstacles:
+		if o.piece == &"sarcophagus" and maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM:
+			return o
+	return null
 
 
 ## The bones' stone. Masonry keys its materials by the tint's html, which clamps at 1: BONE, the small sarcophagi's
@@ -716,6 +863,8 @@ func _dress_styled() -> void:
 			var long_x := o.half.x >= o.half.y
 			st.effigy(Vector3(o.center.x + EFFIGY.y, o.height, o.center.y), EFFIGY.x, 0.0 if long_x else PI * 0.5,
 				sm.carved(o.height, STONE * EFFIGY_LIGHT))
+			_crown(sm, o)
+			_pall(sm, o)
 	# A2, A3: urns on the ledges
 	var ny := _north - WALL_SET * 0.5
 	for u in NORTH_URNS:
@@ -731,7 +880,7 @@ func _dress_styled() -> void:
 	# A4, A5: the niches' sills
 	var k := 0
 	for x in NORTH_NICHES:
-		_sill(sm, Vector2(x, _north), Vector2(0, 1), STATUE_NICHES.has(k), urn)
+		_sill(sm, Vector2(x, _north), Vector2(0, 1), STATUE_NICHES.has(k), urn, divider != null)
 		k += 1
 	for z in WEST_NICHES:
 		_sill(sm, Vector2(_west, z), Vector2(1, 0), STATUE_NICHES.has(k), urn)
@@ -771,8 +920,9 @@ func _dress_styled() -> void:
 
 
 ## The sill in front of a niche: five lit candles at a statue's feet (and their light), or two urns and three burnt-out
-## candles before the shelves.
-func _sill(sm: Masonry, at: Vector2, facing: Vector2, statue: bool, urn: Material) -> void:
+## candles before the shelves. out: the statue's candles burnt out and no light (RS-C1, B's north statue beside the
+## veiled figure); in A (no ossuary) their light a step under the crown (STY_STATUE_CANDLES).
+func _sill(sm: Masonry, at: Vector2, facing: Vector2, statue: bool, urn: Material, out := false) -> void:
 	var face := at - facing * WALL_SET
 	var y := LEDGE + 0.16
 	var across := Vector2(-facing.y, facing.x)
@@ -781,8 +931,17 @@ func _sill(sm: Masonry, at: Vector2, facing: Vector2, statue: bool, urn: Materia
 		for i in STATUE_CANDLES:
 			var t := (i - (STATUE_CANDLES - 1) * 0.5) * 0.22
 			var p := base + across * t
-			sm.candle(Vector3(p.x, y, p.y), 0.1 + 0.2 * absf(sin(float(i) * 2.3)), 0.045 + 0.02 * float(i % 2))
+			var h := 0.1 + 0.2 * absf(sin(float(i) * 2.3))
+			var r := 0.045 + 0.02 * float(i % 2)
+			if out:
+				sm.candle_out(Vector3(p.x, y, p.y), h * 0.7, r)
+			else:
+				sm.candle(Vector3(p.x, y, p.y), h, r)
+		if out:
+			return
 		var l := OmniLight3D.new()
+		if _divider() == null:
+			l.set_meta(ArenaKit.FIRE_SHARE, STY_STATUE_CANDLES)
 		l.position = Vector3(base.x, y + 0.6, base.y) + Vector3(facing.x, 0, facing.y) * 0.4
 		l.light_color = CANDLE_COLOR
 		l.light_energy = CANDLE_LIGHT
@@ -835,20 +994,201 @@ func _door_glow(e: ArenaExit, ossuary: bool) -> void:
 
 
 ## Variant B: the veiled figure standing on the ossuary wall's north end, facing the camera's side, the urns along its
-## top, its cold light; all opening round the paladin behind the wall, as the wall does.
+## top, its cold light; all opening round the paladin behind the wall, as the wall does. RS-C1: raised on a plinth
+## over the wall's top (corbels under its flaps), VEILED_RS high so its hood passes the north wall's cornice, a cold
+## lantern hanging from its hands.
 func _ossuary_crown(sm: Masonry, o: ArenaObstacle) -> void:
 	var top := o.height
-	var north := o.center.y - maxf(o.half.x, o.half.y)
-	var at := Vector3(o.center.x, top, north + VEILED.y)
+	var at := _veiled_foot(o)
+	var wall := see(ashlar())
+	sm.box(Vector3(at.x, top + PLINTH.y * 0.5, at.z), PLINTH, 0.0, wall, false)
+	var flap := (PLINTH.x - minf(o.half.x, o.half.y) * 2.0) * 0.5
+	for sd: float in [-1.0, 1.0]:
+		var x := at.x + sd * (PLINTH.x * 0.5 - flap * 0.5)
+		sm.box(Vector3(x, (CORBEL.x + CORBEL.y) * 0.5, at.z), Vector3(flap, CORBEL.x - CORBEL.y, CORBEL_DEPTH), 0.0, wall, false)
+		var inner := at.x + sd * (PLINTH.x * 0.5 - flap + CORBEL.w * flap * 0.5)
+		sm.box(Vector3(inner, (CORBEL.y + CORBEL.z) * 0.5, at.z), Vector3(CORBEL.w * flap, CORBEL.y - CORBEL.z, CORBEL_DEPTH * 0.7), 0.0, wall, false)
 	sm.layers = ArenaKit.STATUE_LAYER
-	var fig := sm.hooded_statue(at, 0.0, VEILED.x, ArenaKit.STATUE_VALUE * VEILED_VALUE)
+	var fig := sm.hooded_statue(at, 0.0, VEILED_RS, ArenaKit.STATUE_VALUE * VEILED_RS_VALUE)
 	fig.material_override = see(fig.material_override as ShaderMaterial)
 	sm.layers = 1
 	var urn := see(sm.carved(top, STONE))
 	for u in WALL_URNS:
-		sm.urn(Vector3(o.center.x, top, u.x), u.y, urn)
+		if u.x > at.z + PLINTH.z * 0.5 + 0.3:
+			sm.urn(Vector3(o.center.x, top, u.x), u.y, urn)
+	# the lantern hanging under the hands, out in front of the robe
+	var hands := at + Vector3(0, Masonry.HANDS_AT * VEILED_RS, (Masonry.ROBE_CHEST + 0.02) * VEILED_RS)
+	var hang := Vector3(hands.x, hands.y, at.z + (Masonry.ROBE_CHEST + 0.02) * VEILED_RS + LANTERN_OUT)
+	var lamp := TombKit.Lamp.new(ScreenTone.fit(LANTERN_GLASS), ScreenTone.fit(LANTERN_GLASS), STY_COLD)
+	var ring_y := hands.y - LANTERN_UNDER + LANTERN.y * 0.5 + 0.06
+	var l := hanging_lantern(hang, ring_y, LANTERN, Vector2(LANTERN_LIGHT.x, LANTERN_LIGHT.y), true, lamp)
+	l.omni_attenuation = LANTERN_LIGHT.z
+	l.light_specular = 0.0
+	l.shadow_enabled = false
+	l.set_meta(ArenaKit.NOT_FIRE, true)
 	var before := kit.root.get_child_count()
-	kit.statue_glow(at + Vector3(0, VEILED_GLOW_FROM.x, VEILED_GLOW_FROM.y), at + Vector3(0, VEILED.x * 0.6, 0), VEILED_GLOW.x,
+	kit.statue_glow(at + Vector3(0, VEILED_GLOW_FROM.x, VEILED_GLOW_FROM.y), at + Vector3(0, VEILED_RS * 0.6, 0), STY_VEILED_GLOW,
 		VEILED_GLOW.y, VEILED_GLOW.z, STY_COLD)
 	for i in range(before, kit.root.get_child_count()):
 		ArenaKit.style_only(kit.root.get_child(i) as Node3D)
+
+
+## Where the veiled figure stands: on the plinth over the ossuary wall's north end.
+func _veiled_foot(o: ArenaObstacle) -> Vector3:
+	var north := o.center.y - maxf(o.half.x, o.half.y)
+	return Vector3(o.center.x, o.height + PLINTH.y, north + VEILED.y)
+
+
+## RS-C1, A: the crown of candles hanging over the great tomb (spec A-D1): iron rings, spokes and dishes, sixteen
+## candles (five burnt out), all opening round the paladin under it (the stippled see-through of the chamber's front
+## candles), four chains in one MultiMesh up to CROWN_TOP, its own warm light. Nothing casts a shadow. One mesh per
+## material, the flames and halos in MultiMeshes: iron, wax, burnt wax, flames, cores, halos, chains.
+func _crown(sm: Masonry, o: ArenaObstacle) -> void:
+	var mid := Vector3(o.center.x, CROWN_Y, o.center.y)
+	var built := sm.built_count()
+	sm.layers = CROWN_LAYER
+	var iron := _see_iron()
+	var r := CROWN_RING.x - CROWN_RING.y * 0.5
+	var step := TAU / CROWN_SEGMENTS
+	for i in CROWN_SEGMENTS:
+		var a := step * (i + 0.5)
+		var yaw := -a - PI * 0.5
+		var seg := 2.0 * PI / CROWN_SEGMENTS * 1.04
+		sm.box(mid + Vector3(cos(a), 0, sin(a)) * r, Vector3(seg * r, CROWN_RING.y, CROWN_RING.y), yaw, iron, false)
+		sm.box(mid + Vector3(cos(a) * CROWN_INNER.x, CROWN_INNER.y, sin(a) * CROWN_INNER.x),
+			Vector3(seg * CROWN_INNER.x, CROWN_INNER.z, CROWN_INNER.z), yaw, iron, false)
+	for i in CROWN_SPOKES:
+		var a := TAU / CROWN_SPOKES * i
+		var rm := (CROWN_INNER.x + r) * 0.5
+		sm.box(mid + Vector3(cos(a) * rm, CROWN_INNER.y * 0.5, sin(a) * rm),
+			Vector3(r - CROWN_INNER.x, CROWN_INNER.y + CROWN_INNER.z, CROWN_INNER.z), -a, iron, false)
+	var from := sm.root.get_child_count()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(mid)
+	var dish_y := CROWN_Y + CROWN_RING.y * 0.5
+	var halo: QuadMesh
+	for i in CROWN_CANDLES:
+		var a := TAU / CROWN_CANDLES * (i + 0.25)
+		var p := mid + Vector3(cos(a), 0, sin(a)) * r
+		p.y = dish_y
+		sm.box(p + Vector3(0, CROWN_DISH.y * 0.5, 0), Vector3(CROWN_DISH.x, CROWN_DISH.y, CROWN_DISH.x), -a, iron, false)
+		var h := rng.randf_range(CROWN_CANDLE.x, CROWN_CANDLE.y)
+		var cr := rng.randf_range(CROWN_CANDLE.z, CROWN_CANDLE.w)
+		var foot := p + Vector3(0, CROWN_DISH.y, 0)
+		if CROWN_OUT.has(i):
+			sm.candle_out(foot, h * 0.6, cr)
+			continue
+		sm.candle(foot, h, cr, true)
+		# the warm halo round its flame (Fx.quad, opening round the paladin as the flame does)
+		if halo == null:
+			halo = Fx.quad(CROWN_HALO.x, CROWN_HALO_COLOR * CROWN_HALO.y)
+		var g := MeshInstance3D.new()
+		g.mesh = halo
+		g.material_override = Masonry.see_open(halo.material)
+		g.position = foot + Vector3(0, h + Masonry.CANDLE_FLAME * 0.3, 0)
+		g.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		g.layers = CROWN_LAYER
+		sm.root.add_child(g)
+	sm.gather_billboards(from)
+	var hook := Vector3(mid.x, CROWN_HOOK, mid.z)
+	var pairs: Array = [[hook, Vector3(mid.x, CROWN_TOP, mid.z)]]
+	for deg in CROWN_CHAIN_AT:
+		var a := deg_to_rad(deg)
+		pairs.append([mid + Vector3(cos(a), 0, sin(a)) * r, hook])
+	kit.styled_build(func() -> void: kit.chains(pairs, 0.0, CROWN_CHAIN))
+	sm.box(hook, Vector3.ONE * CROWN_CHAIN * 0.12, 0.0, iron, false)
+	# one mesh per material for the whole crown (it spans four of the merge's squares), casting no shadow
+	for mi in sm.merge(built, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sm.layers = 1
+	var l := OmniLight3D.new()
+	l.position = mid - Vector3(0, CROWN_LIGHT_DROP, 0)
+	l.light_color = CROWN_COLOR
+	var compat: float = (STYLE[&"fire"] as Dictionary)[&"compat"] if _compat() else 1.0
+	l.light_energy = CROWN_ENERGY * compat
+	l.omni_range = CROWN_LIGHT.x
+	l.omni_attenuation = CROWN_LIGHT.y
+	l.light_cull_mask = ~(Arena.CROWD_LAYER | CROWN_LAYER)
+	l.set_meta(ArenaKit.NOT_FIRE, true)
+	sm.root.add_child(l)
+
+
+## The crown's iron, opening round the paladin under it (the candles' see-through wax shader in the stylized iron).
+func _see_iron() -> ShaderMaterial:
+	if _crown_iron == null:
+		_crown_iron = ShaderMaterial.new()
+		_crown_iron.shader = Masonry.CANDLE_WAX_SEE
+		_crown_iron.set_shader_parameter(&"wax", ArenaKit.STY_IRON)
+		_crown_iron.set_shader_parameter(&"roughness", ArenaKit.STY_METAL.x)
+		_crown_iron.set_shader_parameter(&"rim", 0.0)
+		_crown_iron.set_shader_parameter(&"glow", Color.BLACK)
+	return _crown_iron
+
+
+var _crown_iron: ShaderMaterial
+
+
+## RS-C1, A: the pall on the great tomb (spec A-D2): two cloths hung flat on the upper body's south face and east end,
+## petrol with the gold thread and a short gold fringe, the old gold lion on the south one (reliquary_cloth.gdshader,
+## the reward reliquary's cloth); one mesh, one material, no shadow, never past the tomb's outline.
+func _pall(sm: Masonry, o: ArenaObstacle) -> void:
+	var long_x := o.half.x >= o.half.y
+	var half := o.half if long_x else Vector2(o.half.y, o.half.x)
+	var axis := Vector3(1, 0, 0) if long_x else Vector3(0, 0, 1)
+	var across := Vector3(axis.z, 0, axis.x)
+	# the tomb's upper body (TombKit.tomb): its half length and depth, past the frieze
+	var body := Vector2(half.x - 0.5, half.y - 0.45) + Vector2.ONE * (TombKit.SARC_FRIEZE.y + PALL_OUT)
+	var top := o.height - TombKit.SARC_LID.x * 0.9 - PALL_TOP
+	var c := Vector3(o.center.x, 0.0, o.center.y)
+	var hang := top - PALL_FOOT
+	var span := PALL_LION_V.y - PALL_LION_V.x
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	# south: across the long side, facing +across; east: across the end, facing +axis (its v short of the lion)
+	var south := c + across * body.y
+	_cloth_quad(st, south - axis * PALL_WIDTH.x * 0.5, axis * PALL_WIDTH.x, top, hang, 1.0)
+	var east := c + axis * body.x
+	_cloth_quad(st, east + across * PALL_WIDTH.y * 0.5, -across * PALL_WIDTH.y, top, hang, PALL_LION_V.x - 0.02)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	var mat := ShaderMaterial.new()
+	mat.shader = PALL_SHADER
+	mat.set_shader_parameter(&"cloth", PALL_CLOTH)
+	mat.set_shader_parameter(&"gold", ArenaKit.STY_GOLD)
+	mat.set_shader_parameter(&"lion", ArenaKit.LION_FIELD)
+	mat.set_shader_parameter(&"lion_v", PALL_LION_V)
+	# the lion square on the cloth: its height on v (0.82 of the span, the shader's) over the south cloth's width
+	mat.set_shader_parameter(&"lion_size", 0.82 * span * hang / PALL_WIDTH.x)
+	mat.set_shader_parameter(&"thread_in", PALL_THREAD.x)
+	mat.set_shader_parameter(&"thread_w", PALL_THREAD.y)
+	mat.set_shader_parameter(&"glow", PALL_GLOW)
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sm.root.add_child(mi)
+
+
+## One hanging cloth into st: from `a` along `along` (its width), from `top` down `hang` metres, its v from 0 to
+## `v_end` (1: the whole, with the lion and the foot's thread); a fringe of PALL_FRINGE teeth under it in the gold
+## thread's colour (the shader's foot thread at its v). Its normal along x up: `along` runs so that is out of the tomb.
+func _cloth_quad(st: SurfaceTool, a: Vector3, along: Vector3, top: float, hang: float, v_end: float) -> void:
+	var b := a + along
+	var up := Vector3.UP
+	var n := along.normalized().cross(up)
+	var p := [Vector3(a.x, top, a.z), Vector3(b.x, top, b.z), Vector3(b.x, top - hang, b.z), Vector3(a.x, top - hang, a.z)]
+	var uv := [Vector2(0, 0), Vector2(1, 0), Vector2(1, v_end), Vector2(0, v_end)]
+	for k: int in [0, 1, 2, 0, 2, 3]:
+		st.set_normal(n)
+		st.set_uv(uv[k])
+		st.add_vertex(p[k])
+	# the fringe: a row of teeth hanging under the cloth
+	var foot := 1.0 - PALL_THREAD.x * 0.7
+	var teeth := maxi(4, roundi(along.length() / PALL_FRINGE.y))
+	var y := top - hang
+	for i in teeth:
+		var t0 := a + along * (float(i) / teeth)
+		var t1 := a + along * (float(i + 1) / teeth)
+		var tip := (t0 + t1) * 0.5
+		for q: Vector3 in [Vector3(t0.x, y + 0.005, t0.z), Vector3(t1.x, y + 0.005, t1.z), Vector3(tip.x, y - PALL_FRINGE.x, tip.z)]:
+			st.set_normal(n)
+			st.set_uv(Vector2(0.5, foot))
+			st.add_vertex(q)

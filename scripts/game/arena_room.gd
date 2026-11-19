@@ -358,8 +358,11 @@ func style_depths(values: Dictionary) -> void:
 
 ## An iron lantern hanging by a chain from `from`, its ring at `ring_y` (the garden's tree; room redesign lot C: the
 ## bridge's landing in the stylized look): cap, four posts, the warm glass of TombKit.WARM, a foot, its light (energy,
-## reach; no shadow). styled: built only for the stylized look (on kit.styled()).
-func hanging_lantern(from: Vector3, ring_y: float, size: Vector3, light: Vector2, styled := false) -> OmniLight3D:
+## reach; no shadow). styled: built only for the stylized look (on kit.styled()). lamp: another glass and light colour
+## (RS-C1: the crypt's veiled figure holds a cold one).
+func hanging_lantern(from: Vector3, ring_y: float, size: Vector3, light: Vector2, styled := false, lamp: TombKit.Lamp = null) -> OmniLight3D:
+	if lamp == null:
+		lamp = TombKit.WARM
 	var at := Vector3(from.x, ring_y, from.z)
 	if styled:
 		kit.styled_build(func() -> void: kit.chain(from, at, 0.0, 0.7))
@@ -372,7 +375,7 @@ func hanging_lantern(from: Vector3, ring_y: float, size: Vector3, light: Vector2
 	var bm := BoxMesh.new()
 	bm.size = Vector3(size.x * 0.78, size.y * 0.72, size.z * 0.78)
 	glass.mesh = bm
-	glass.material_override = tomb.unlit(TombKit.WARM.glass)
+	glass.material_override = tomb.unlit(lamp.glass)
 	glass.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	glass.position = mid
 	mason.root.add_child(glass)
@@ -383,7 +386,7 @@ func hanging_lantern(from: Vector3, ring_y: float, size: Vector3, light: Vector2
 	mason.point(mid + Vector3(0, size.y * 0.38, 0), size.x * 1.05, size.y * 0.35, 0.0, 0.0, ir)
 	var l := OmniLight3D.new()
 	l.position = mid
-	l.light_color = TombKit.WARM.light
+	l.light_color = lamp.light
 	l.light_energy = light.x
 	l.omni_range = light.y
 	l.light_cull_mask = ~Arena.CROWD_LAYER

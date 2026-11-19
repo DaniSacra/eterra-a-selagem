@@ -226,6 +226,49 @@ func test_style_only_pieces_are_off_the_floor_or_low() -> void:
 					assert_true(a.overlaps(p, 0.0), "crypt %d: %s over the floor at %s" % [v, mi.name, p])
 
 
+# ---------- RS-C1: one funerary piece rules each crypt (docs/art/rs_c1_crypt_spec.md) ----------
+
+## Lights that light (visible in the tree, energy over 0) and of those the shadowed ones.
+func _lit(a: Arena) -> Vector2i:
+	var n := Vector2i.ZERO
+	for l in a.find_children("*", "Light3D", true, false):
+		var light := l as Light3D
+		if light.is_visible_in_tree() and light.light_energy > 0.0:
+			n.x += 1
+			n.y += 1 if light.shadow_enabled else 0
+	return n
+
+
+func test_rs_c1_lights() -> void:
+	# before RS-C1: 18 lit (6 shadowed) in the classic crypt A, 17 (6) in B; 18 (1) in the stylized A and B
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(18, 6), "crypt A classic: as before")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 6), "crypt B classic: as before")
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(18, 1), "crypt A stylized: the crown's light in, the west step's out")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(16, 1), "crypt B stylized: the lantern in, two bowls and the statue's candles out")
+
+
+func test_rs_c1_pieces_only_in_the_stylized_look() -> void:
+	for v in 2:
+		var a := _arena(&"crypt", v)
+		var styled := a.find_child("Styled", true, false) as Node3D
+		assert_false(styled.visible, "crypt %d: the stylized pieces hidden in the classic look" % v)
+		var crown := 0
+		var lantern := 0
+		for n in styled.find_children("*", "", true, false):
+			if n is MultiMeshInstance3D and (n as MultiMeshInstance3D).multimesh.mesh is QuadMesh:
+				crown += (n as MultiMeshInstance3D).multimesh.instance_count
+			if n is OmniLight3D and n.has_meta(ArenaKit.NOT_FIRE):
+				lantern += 1 if (n as OmniLight3D).light_color.b > (n as OmniLight3D).light_color.r else 0
+		if v == 0:
+			assert_eq(crown, (CryptLook.CROWN_CANDLES - CryptLook.CROWN_OUT.size()) * 3, "A: the crown's flame, core and halo for each lit candle")
+		else:
+			assert_eq(lantern, 1, "B: the veiled figure's cold lantern")
+		_flip(a)
+		assert_true(styled.visible, "crypt %d: shown in the stylized look" % v)
+		_flip(a)
+
+
 # ---------- lot B: the sanctuary and the rift (docs/art/room_redesign_lotB_spec.md) ----------
 
 func test_sanctuary_a_comes_back() -> void:
