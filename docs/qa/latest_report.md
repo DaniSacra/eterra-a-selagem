@@ -1,450 +1,179 @@
-# Relatório de QA e desempenho: T5 integrado (ultimate, áudio, movimento dos inimigos, Provação e Altar)
+# Relatório de QA e desempenho: o exe que o Daniel testou (hub de 50 x 33 m, Santuário, descida, Morvath)
 
-- **Data**: 2026-11-17. **Testado**: `arpg-3d` no **`620a21e` com a correção do Q-T5-2**, hoje o commit `579fe89`
-  (a árvore e o espelho da GPU já tinham a mudança do `game.gd` quando rodei; conteúdo igual ao `579fe89`), e antes dele
-  no `24c298e`; base de comparação `5dfe97f` (o "antes" do T5, cópia por `git archive` em `/home/dani/tools/t5qa/base`).
-- **Ambiente**: WSL2 sem tela e sem som ouvido; GPU real (RTX 5060 do notebook) pela Godot 4.7.2 de Windows, Vulkan,
-  Forward+. O notebook ficou sem bateria e reiniciou no meio da sessão: tudo da GPU depois disso foi refeito. Máquina
-  carregada em parte das medidas (8 partidas em paralelo, Movie Maker). Sem controle, sem celular, nenhum teste com gente.
-- Saídas brutas fora do git: `/home/dani/tools/t5qa/` (`runs/<rótulo>/<semente>.log`, `reg/`, `reg2/`, `tests*.txt`,
-  `fps.out`, análise `analyze.py`).
+- **Data**: 2026-11-19. **Testado**: `arpg-3d` no **`d2ff05d`** ("Hub sign: goes under the hero..."), numa worktree
+  isolada (`/home/dani/games/qa-d2ff05d`, apagada no fim) e o **próprio exe exportado** `build/windows/ASelagem.exe`
+  (gerado às 18:14, depois do commit das 18:08), copiado para `C:\Users\danie\tools\qa-exe\` e rodado na RTX com
+  `--nosave` (o save do Daniel não foi tocado). O exe do Linux `build/linux/ASelagem.x86_64` deu o mesmo `RESULT` que o
+  editor (`--fixed-fps 60 --smoke=30 --seed=5`: só `fps` e `step_ms*` diferem).
+- **Pedido do Daniel**: "ainda precisa de muitas melhorias", sem detalhe. Foco deste relatório: layout (o que está fora do
+  lugar, cortado, sobreposto, pequeno, ilegível ou vazio).
+- **Capturas**: `docs/qa/shots_d2ff05d/` (107 arquivos; JPG das telas inteiras, `crop_*.png` recortes em tamanho real,
+  `sheet_*.jpg` folhas 2 x 2 só para ver junto). As do exe estão no estilizado (padrão do exe); `--look=classic` onde dito.
+  Telas de laboratório (`m720_*`, `t720_*`, `u_*`) vêm do editor no mesmo commit pelo `tools/gpu.sh` (espelho próprio),
+  com `--look=stylized`.
 
 ## Veredito
 
-**Pronto para o Daniel testar** (`579fe89`). Nenhum P0 nem P1; o XP sem save (Q-T5-2) já está corrigido e coberto por
-`tests/test_qa_t5_findings.gd`. O dano por contato deslocou parte da dificuldade para antes de Morvath
-(vitórias iguais, mais mortes nas salas 5 a 9; P2 para acompanhar). O que o T5 pede de olho e ouvido (tremor, trote,
-peso dos golpes, música e sons gravados) está nos vídeos e não foi julgado aqui.
+**Jogável e estável, mas não está pronto como "versão para avaliar a qualidade"**: nenhum P0 (nada trava, nenhum erro de
+script na importação, 1159/1159 testes, o robô vence em 4 de 4 sementes de 600 s), porém o **Santuário (hub) tem
+problemas de enquadramento que o Daniel vê nos primeiros segundos** (P1-1 a P1-4): na chegada duas das cinco estações
+estão fora da tela e duas cortadas na borda, o Portal (a estação principal) fica cortado no topo, a Câmera Perto mostra
+quase metade da tela de parede escura, e as estações são pequenas demais para a praça de 50 x 33 m. É provável que seja
+boa parte do "muitas melhorias". O resto são P2 de legibilidade e de painéis com área vazia.
 
 | Item | Resultado |
 |---|---|
-| Importação / `tools/check.gd` | 0 `SCRIPT ERROR`, 0 `Parse Error`, `CHECK ok` (no `24c298e` e no `620a21e`) |
-| `tools/test.sh` no `24c298e` | 90 scripts, **929/929**, 0 arriscados (o `test_only_finishers_glint` passou sem marca), 2 avisos `Float/Int` em `test_boss_exits.gd`, vazamento no fim (28 ObjectDB, 19 recursos): todos já conhecidos |
-| `tools/test.sh` no `579fe89` (conteúdo) | 91 scripts, 939 testes, **938 passando**; a falha é `test_descent.gd` `test_the_doors_know_their_rooms_before_they_open` ("mage comes as promised"), **instável e anterior ao T5** (1 de 6 execuções do arquivo também no `5dfe97f`; 0 de 8 isolado), Q-T5-5 |
-| `tools/title_flow_check.gd` | `FLOW ok` (foco em "Descer" ao abrir os Juramentos pelo Iniciar) |
-| Partidas do robô | 385 descidas de 900 s com reação 0,25, **0 linhas de erro** em todas; tabelas abaixo |
-| `smoke.sh 300 --seed=5` | chega em Morvath (sala 11) aos 251,8 s (E6: 260,7) |
-| `smoke.sh 600 --seed=5` / `180 --start=boss --boons=25` | vence aos 372,3 s / vence aos 75,1 s, fase 4 (E6: 371,3 / 83,8) |
-| Morvath, `--start=boss --boons=5 --bot-reaction=0.25`, sementes 1 a 8 | **7 de 8 vitórias, 8 de 8 chegam à fase 4**; a derrota na fase 4 (invocados 16, erupções 10, tempestade 10) |
-| Simulação, 300 inimigos (`smoke 120 --stress=300`, isolado, 3 x 3) | `step_ms_avg` **2,6 antes, 3,8 depois** (+47%, todo no `horde`); nas descidas reais (até 8 de pé) 0,4 ms antes e depois, pico até 25 ms. Q-T5-4 |
-| FPS na RTX, `--stress=300 --shot-at=8`, 1672 x 941, 3 x 3 alternado | antes 58 / 55 / 54, depois 55 / 55 / 52 qps (no ruído) |
-| Vídeos antes e depois | 12 cenas x 4 arquivos, `docs/gallery/t5/videos/` (37 MB, INDEX) |
-| Capturas de depois | 66 de 69 do antes refeitas mais 4 novas do HUD, `docs/gallery/t5/after/` (21 MB, INDEX); cópia em `C:\Users\danie\Downloads\ASelagem-prints\after\` |
+| Importação (`--import`) | 0 `SCRIPT ERROR`, 0 `Parse Error`; 4 linhas `ERROR` da fonte AlegreyaSans na 1ª importação de uma cópia limpa (a fonte é lida antes de importada; some na 2ª; benigno) |
+| `tools/check.gd` | `CHECK ok`, 0 erros |
+| `tools/test.sh` | 110 scripts, **1159/1159**, 0 arriscados (o `test_only_finishers_glint` não ficou arriscado), 2 avisos `Float/Int`, 2 `DEPRECATED` (`wait_frames`), vazamento no fim (29 ObjectDB, 19 recursos, 1 RID de Environment): conhecidos. **1 `SCRIPT ERROR` dentro de teste que passa**, ver P2-12 |
+| `tools/title_flow_check.gd` / `map_flow_check.gd` | `FLOW ok` (título, hub, Portal, pausa, voltar ao hub e ao título, RB/LB do controle) / `MAP_FLOW ok` |
+| `smoke.sh 300 --seed=5` | **sala 11 (Morvath) aos 272,0 s**, 6 Bênçãos, `max_alive` 8, `step_ms_avg` 0,31 |
+| `smoke.sh 120 --start=boss --boons=25 --seed=5` | **vence aos 71,5 s** (fase 4 alcançada), vida 50/50 |
+| `smoke.sh 600`, sementes 1, 2, 3, 7 | **4 vitórias**; Morvath aos 269, 267, 332, 219 s; 5 a 7 Bênçãos; `stuck` 0 em todas |
+| `smoke.sh 120 --stress=300 --seed=5` | `step_ms_avg` 2,73, pico 21,9 (T5: 3,8 depois / 2,6 antes) |
+| Capturas no exe na RTX | 60 (título, hub e as 5 estações, painéis, menu, Perto/Longe, clássico, todas as arenas, loja, Provação, Altar, Morvath fases 1 e 4, vitória, derrota, Configurações, Livro, Compêndio, mapa, Músicas, Compatibility) + 22 do laboratório |
 
-## 1. O robô joga a descida (reação 0,25, 900 s, `tools/smoke.sh`)
+## 1. Achados por gravidade
 
-Maestria 20 = `--talents=ainda_de_pe,firmeza,respiro,quarto_corte,impeto,lamina_faminta,reserva,corte_crescente,fio_longo`
-(a montagem de sustento da E6). V = vitória, Md = morte antes de Morvath, M4 = morte na fase 4.
+Dono sugerido entre parênteses. "720" = 1280 x 720, "1080" = 1920 x 1080.
 
-| Montagem | Código | Sementes | Vitórias | Mortes antes de Morvath | Chega em Morvath | Vida ao chegar | Luta (vitórias) |
-|---|---|---|---|---|---|---|---|
-| Maestria 1 | `5dfe97f` | 1 a 72 | **52 (72%)** (igual à E6) | 4 | 251,5 s | 42,5 | 105,4 s |
-| Maestria 1 | `620a21e` | 1 a 72 | **51 (70%)** | **10** (salas 5 a 9) | 256,4 s | 41,8 | 104,7 s |
-| Maestria 1 + Corte do Juízo | `620a21e` | 1 a 24 | 19 (79%) | 4 | 225,7 s | 42,8 | 87,7 s |
-| Maestria 1 + Voragem | `620a21e` | 1 a 24 | 18 (75%) | 3 | 236,0 s | 43,1 | 95,4 s |
-| Maestria 20 + Corte do Juízo | `5dfe97f` | 1 a 24 | 20 (83%) | 0 | 220,2 s | 55,7 | 94,3 s |
-| Maestria 20 + Corte do Juízo | `620a21e` | 1 a 24 | 20 (83%) | 0 | 213,2 s | 51,8 | 90,2 s |
-| Maestria 20 + Voragem | `620a21e` | 1 a 24 | 22 (91%) | 0 | 213,7 s | 51,7 | 87,6 s |
-| (no `24c298e`, 1 a 24) | | | M1 70%, M1+Corte 79%, M1+Voragem 66%, M20+Corte 95%, M20+Voragem 95% | | | | |
+### P0
+Nenhum.
 
-Nas sementes 1 a 24 a Maestria 1 do `5dfe97f` vence 20 (83%, igual às mesmas sementes da E6) e a do `620a21e` 17 (70%).
-Diferença Maestria 20 (Corte) contra Maestria 1 nas mesmas 24: **13 pontos** (teto da E6: 25). Comparação com a E6
-(72% e 90%): sem desvio grande nas vitórias.
+### P1 (layout do Santuário; o Daniel vê logo ao entrar)
 
-**Onde morre** (Maestria 1, 72 sementes): antes 4 antes de Morvath, 14 na fase 4, 1 na 3 e 1 na 2; depois 10 antes de Morvath (4 na
-sala 5: Santuário com o Cavaleiro, Runas, Ponte; 3 na 7; 1 na 8; 2 na 9, Fendas com a elite do feiticeiro), 7 na fase 4,
-4 na fase 3. **Dano levado antes de Morvath** por partida: 19,3 antes, 23,3 depois (+21%): Ancião 364 para 522, elite do
-feiticeiro 136 para 250, Cavaleiro de quase nada para 179 (10 por contato da investida), feiticeiro igual (428 e 425).
+**P1-1. Chegada ao Santuário: estações fora da tela ou cortadas, praça vazia.** Na chegada (câmera Longe, padrão) só se
+vê o Portal e a fonte inteiros: o Vendedor aparece cortado na borda esquerda (só o toldo), a Árvore de Dons cortada na
+borda direita, e o **Forjador e o Livro de Ahk nem aparecem**. O meio da tela é piso vazio com o herói pequeno embaixo; nada
+diz para onde ir. Nas estações, as peças são minúsculas para a praça: a bigorna tem ~25 px de altura a 720, o atril do
+Livro ~30 px, o balcão do Vendedor ~60 px (`hub_vendor_720`, `hub_book_720`).
+- Capturas: `hub_arrive_1080.jpg`, `hub_arrive_720.jpg`, `sheet_hub_st.jpg`.
+- Reproduzir: `ASelagem.exe -- --hub` (ou Iniciar no título), olhar a tela sem andar.
+- Dono: environment-artist (escala das estações, peças que leem de longe) com gameplay-engineer (`HubPlan`: distância
+  das estações ao centro, `CAM_TARGET`/`CAM_REACH`); critério do art-director.
 
-**Ultimate** (`ult` do `RESULT`, média por descida, `620a21e`):
+**P1-2. Forjador: a estação não aparece quando se está nela.** Parado no ponto de uso do Forjador, a placa aparece mas
+o forno (na parede oeste) fica fora da tela à esquerda; só a bigorna pequena se vê, e o herói fica a ~18% da borda.
+- Captura: `hub_smith_720.jpg`.
+- Reproduzir: `--hub --hero-at=smith` a 1280 x 720.
+- Dono: gameplay-engineer (alcance da câmera do hub para o oeste, `CamFrame.hold` com `CAM_REACH` 13 m) ou
+  environment-artist (trazer o forno para perto do ponto de uso).
 
-| Montagem | Usos (mín. a máx.) | Usos em Morvath | Dano nele | Carga por Magia / dano / vida perdida |
-|---|---|---|---|---|
-| M1 + Corte do Juízo | 9,0 (4 a 11) | 3,0 | 936 (15% da vida) | 274 / 255 / 34 |
-| M1 + Voragem | 8,3 (3 a 11) | 2,9 | 702 | 305 / 279 / 31 |
-| M20 + Corte do Juízo | 9,8 (8 a 12) | 3,8 | 1115 | 310 / 276 / 36 |
-| M20 + Voragem | 9,0 (8 a 10) | 3,3 | 808 | 334 / 299 / 34 |
-| M20 + Corte, `5dfe97f` (só Magia) | 5,8 (5 a 7) | 1,8 | 557 | 0 (sem o campo) |
+**P1-3. Portal: a estação principal sai cortada no topo da tela.** Com o herói no Portal, o arco verde fica preso na borda
+de cima nas duas câmeras: na Longe só a metade de baixo do portal aparece e o herói fica a ~20% do topo; na Perto a
+placa "Portal da Descida" é desenhada **por cima do próprio arco do portal** (`hub_near_portal_720`).
+- Capturas: `hub_portal_720.jpg`, `hub_portal_1080.jpg`, `hub_near_portal_720.jpg`, `hubuse_portal_720.jpg`.
+- Reproduzir: `--hub --hero-at=portal` (e com `--cam=near`).
+- Dono: gameplay-engineer (a câmera deveria subir para mostrar o portal: o ponto fixo segura mais do que a margem de
+  18% pede no norte) e ui-ux-designer (placa do Portal por cima do arco na Perto).
 
-A regra nova quase dobra os usos (5,8 para 9,8) e o dano em Morvath. Sem a parte da Magia (o robô gasta muito mais que
-gente) sobram cerca de 290 de carga por descida, uns 5 Cortes do Juízo: bate com a conta do `t5_ultimate.md` (um a
-cada duas salas). Desempenho: `step_ms_avg` 0,4 ms e pico até 25 ms em todas as descidas do `620a21e` rodadas juntas.
+**P1-4. Câmera Perto no Santuário: quase metade da tela é parede escura.** Na chegada com a câmera Perto, os ~45% de baixo
+da tela são o muro de arrimo escuro sob a praça, e a escada de chegada desce para dentro dele (não leva a lugar nenhum).
+- Captura: `hub_near_1080.jpg` (quadro de cima à esquerda de `sheet_hub2.jpg`).
+- Reproduzir: Configurações > Vídeo > Câmera "Perto", entrar no Santuário (ou `--hub --cam=near`).
+- Dono: gameplay-engineer (`CamRig.near` segue o herói sem limite ao sul no hub) e environment-artist (o que fica abaixo
+  da praça e a escada de chegada).
 
-## 2. Vídeos antes e depois (`docs/gallery/t5/videos/INDEX.md`)
+### P2
 
-Movie Maker na RTX a 120 qps com tempo fixo; normal a 60 qps com som e lento a 0,25x sem quadro inventado. Cenas:
-esqueleto andando na sala 1, invocados do Sacerdote correndo, esqueleto preparando e golpeando, Escudo (golpe curto e
-04b com a investida), besteiro, feiticeiro, Morvath (foice, investida, lâminas), Corte do Juízo e Voragem. Conferido
-quadro a quadro: esqueleto ergue a lâmina com o brilho durante o aviso e desce no golpe; Morvath ergue a lâmina por cima
-da cabeça no meio círculo e desce no acerto; na investida ele se abaixa durante a faixa e a cruza com o corpo. **Não
-julgado**: se o tremor e a "gazela" sumiram aos olhos (o `combat-feel-director` e o `art-director` devem assistir os
-`_lento`), e o som.
+**P2-1. Fios de ouro do piso do Santuário parecem linhas soltas.** Os fios que ligam a fonte às estações são riscos finos
+que começam e terminam no meio do piso, longe das estações; leem como linhas de depuração. Também há uma linha reta
+cruzando o piso de borda a borda na altura do terraço (oeste do terraço até o Vendedor).
+Captura: `hub_arrive_1080.jpg`. Dono: environment-artist (`HubLook`, anel e fios).
 
-## 3. Capturas de depois (`docs/gallery/t5/after/INDEX.md`)
+**P2-2. Painéis com metade vazia.** Configurações Áudio (3 linhas e "Músicas") e Vídeo (4 linhas) num painel de altura
+fixa com ~45% vazio; Como Jogar com faixa vazia acima e abaixo dos quatro passos; cartas de Elo com a metade de baixo vazia.
+Capturas: `opt_720.jpg`, `t720_options_tab_video.jpg`, `howto_720.jpg`, `u_card_card.jpg`. Dono: ui-ux-designer.
 
-Mesma numeração do antes. HUD da ultimate em cada estado: **40a** trancada com cadeado e "Maestria 2" (sem robô; com
-o robô o losango não aparece, regra do T5), **40b** carregando aos 12 s, **40c** "Pronta" com o losango aceso, 41 e
-41b as duas ultimates. Provação (26, 49, 49b, 49c, 54) e Altar (27, 52) com os textos e medalhões novos; salas com
-inimigos preparando (10 a 23); título (01). Não refeitas: 05 e 44 (scripts temporários do antes) e 51 (o robô não morreu
-em 150 s em três tentativas; a 51b mostra a derrota).
+**P2-3. Textos pequenos a 720.** Legenda "Maestria 2" sobre o 5º losango (~9 px), dica do rodapé da árvore de Dons
+("Enter ou clique: equipar ou tirar. Esc: voltar.", ~9 px), legenda do mapa (~10 px) e "M fecha o mapa", "VOCÊ RECEBE
+DEPOIS DE 3 LUTAS" nas cartas da Provação, preços da loja em rosa ("150 ouro, faltam 150", ~11 px), "Bênçãos da descida:
+20" na pausa. Capturas: `play_hud_720.jpg`, `hubuse_tree_720.jpg`, `map_720.jpg`, `u_trial_trial.jpg`, `crop_shop_c720.png`,
+`m720_pause_many.jpg`. Dono: ui-ux-designer.
 
-## 4. Os dois itens notados antes
+**P2-4. Loja: a saída para Morvath parece um quinto item.** "A Câmara do Selo" usa disco dourado parecido com os da loja e
+fica logo acima da fileira dos 4 itens. Capturas: `shop_720.jpg`, `crop_shop_c.png`. Reproduzir: `--start=shop`. Dono:
+ui-ux-designer (placa) / gameplay-engineer (posição da saída em relação a `SHOP_SHIFT`). Obs.: na loja sem Bênçãos
+aparecem 4 itens (sem romã), não 5; não conferi a regra.
 
-- **Foco dos Juramentos**: por teclado abre em "Descer" (`title_flow_check`, e a captura 07 de depois). Mas cada linha
-  toma o foco quando o mouse entra nela (`juramento_screen.gd` `_row`, `mouse_entered` -> `grab_focus`), e o botão
-  Iniciar do título (cerca de 1320, 512 a 1080) fica exatamente sobre a linha "Mais Mortos" da tela que abre. A 07 de
-  antes saiu com o foco em "Mais Elites" (cursor do Windows parado no meio da janela); a de depois em "Descer" (cursor em
-  outro lugar). Q-T5-3.
-- **"+XP" na vitória sem save**: confirmado no `24c298e` e no `620a21e` commitado (`Game.log_run` preenchia
-  `mastery_report` mesmo sem save; a 50 de antes mostra "+220 XP" e a barra de Maestria). Teste que falha:
-  `tests/test_qa_t5_findings.gd` (mostrava 95 de XP). Com a correção do Game Director (`579fe89`) o teste passa e a 50 de
-  depois sai sem XP. Q-T5-2.
+**P2-5. Barras de vida e números de dano empilhados na multidão.** Na Ponte, quatro esqueletos juntos: barras se
+sobrepõem e os números "50 50 20" ficam por cima das barras. Captura: `crop_bridge_r.png` (`bridge_1080.jpg`). Dono:
+ui-ux-designer (`NumberTally`, barras).
 
-## Falhas e pendências por gravidade
+**P2-6. Herói some sob as zonas de Bênção em Morvath com muitas Bênçãos.** Com 25 Bênçãos (só no teste
+`--boons=25`), discos amarelo-claros grandes e um anel branco cobrem o herói na borda oeste. Numa partida normal (5 a 7
+Bênçãos) não medi. Capturas: `boss_p4_720.jpg`, `boss_1080.jpg`. Dono: art-director (avaliar com uma partida real).
 
-| Id | Grav. | O quê | Reproduzir | Dono |
-|---|---|---|---|---|
-| Q-T5-1 | P2 | Dificuldade deslocada para antes de Morvath: mortes antes dele 4 para 10 em 72 descidas, dano levado +21% (Cavaleiro por contato, elite do feiticeiro, Ancião); vitórias iguais (72% e 70%) | `tools/smoke.sh 900 --seed=N --bot-reaction=0.25`, N = 1 a 72, nos dois commits; `python3 /home/dani/tools/t5qa/analyze.py h_m1 base_m1` | `gameplay-engineer` (decidir com gente jogando) |
-| Q-T5-2 | P2 | Tela de vitória mostra "+N XP" e a barra de Maestria sem save | `--start=boss --boons=25 --boss-hp=0.02 --shot-on=end --nosave`; `tools/test.sh -gselect=test_qa_t5_findings` | corrigido no `579fe89` |
-| Q-T5-3 | P2 | Juramentos: a linha sob o cursor toma o foco; quem clica Iniciar com o mouse abre a tela com o cursor sobre "Mais Mortos" e o Enter sobe um Juramento em vez de descer (provável; visto na captura de antes, não testado com o mouse de verdade) | save com 1 vitória, clicar Iniciar sem mexer o mouse, apertar Enter | `ui-ux-designer` |
-| Q-T5-4 | P2 | `Horde.step` 47% mais caro com 300 de pé (2,6 para 3,8 ms); no jogo normal sem efeito (0,4 ms) e FPS na RTX no ruído | `tools/smoke.sh 120 --stress=300 --seed=5` nos dois commits; `--trace-steps` mostra o `horde` | `gameplay-engineer` |
-| Q-T5-5 | P3 | `test_descent.gd` instável (ordem dos testes muda o sorteio), também no `5dfe97f` | `tools/test.sh -gselect=test_descent` 6 vezes | `gameplay-engineer` (semear o teste) |
-| Q-T5-6 | P3 | Dois globos laranja estourados perto do herói na vitória com 25 Bênçãos (já no antes); pontinhos esverdeados no fim de duas linhas da placa da laje (54, perto de 1525, 290 e 320) | capturas 34, 50 e 54 | `art-director` |
-| Q-T5-7 | P3 | Ferramenta: `--shot-on=boss:<momento>` e `--shot-on=end` só escutam depois de `--shot-at` (2 s); momento anterior trava a captura | `--start=boss --boss-hp=0.02 --boons=25 --bot --shot-on=boss:victory` | `gameplay-engineer` |
+**P2-7. "Provação vencida" encosta na placa da porta.** A saudação no alto e a placa "Bênção / Guardião" ficam a ~10 px uma
+da outra. Captura: `crop_trial_won.png` (`u_trial_trial_won.jpg`). Dono: ui-ux-designer.
 
-## Depende de olho e ouvido humanos
+**P2-8. Texto do HUD no alto sobre fundo claro.** "Sala 1 de 11 / Mapa [M]" sobre a cascata clara do Jardim: lê, mas com
+pouco contraste. Captura: `crop_garden_top.png`. Dono: ui-ux-designer.
 
-Tremor do esqueleto e trote dos invocados a 60 qps reais, peso e sincronia dos golpes (vídeos `_lento`), a música
-nova (título, catacumbas, Morvath, Kevin MacLeod) e os sons gravados (ninguém ouviu: WSL sem saída de som), o
-Juramentos com mouse de verdade, a ultimate com gente (o robô gasta Magia demais para dizer quanto gente carrega), a
-dificuldade com gente. Não medido: celular, navegador (Compatibility), controle.
+**P2-9. Compatibility: água da fonte do Santuário preta.** No OpenGL a água vira um disco preto (no Forward+ é azul e
+clara). Capturas: `crop_compat_fount.png` contra `crop_sty_fount.png`; `compat_hub_1080.jpg`. Reproduzir:
+`ASelagem.exe --rendering-driver opengl3 -- --hub`. Dono: environment-artist (`dark_water.gdshader` no Compatibility).
 
----
+**P2-10. Nome do hub igual ao de uma arena.** O hub é "Santuário" e a arena é "Santuário Desmoronado"; o menu do hub diz
+"SANTUÁRIO" e a tela de fim "Voltar ao Santuário". Provisório (D-H4), anotado para o Daniel decidir. Capturas:
+`hubmenu_720.jpg`, `defeat_720.jpg`. Dono: Game Director.
 
-# Relatório de QA e desempenho: E6 (mixagem por barramentos, ambiência por arena, máquina fraca)
+**P2-11. O Livro aberto no Santuário tem "Descer às catacumbas"**, que desce direto sem a pergunta do Portal
+(`hub.gd` 198 a 204). Duas portas de saída no hub, uma com confirmação e outra sem. Captura: `hubuse_book_720.jpg`. Dono:
+ui-ux-designer.
 
-- **Data**: 2026-11-17. **Testado**: base `arpg-3d` `224782a` com as mudanças da E6 na worktree do `qa-performance`
-  (commit da branch `worktree-agent-ae4dd307cb86b7a0d`). Relatório completo: `docs/qa/e6_audio_perf.md`.
-- **Ambiente**: WSL2 sem tela e sem som ouvido; GPU real pela Godot de Windows: RTX 5060 Laptop (Forward+ e
-  Compatibility) e a placa integrada Intel RaptorLake-S do mesmo notebook (`--gpu-index 1`); máquina carregada por
-  outros agentes durante as medidas (afeta o quadro limitado pela CPU, não o tempo de GPU). Sem controle, sem celular,
-  nenhum teste com gente.
+**P2-12. `SCRIPT ERROR` dentro de um teste que passa.** `test_room_style.gd` `test_the_chamber_comes_back`:
+`Invalid type in function 'restore_air' ... argument 2 (previously freed)` em `BossChamber._exit_tree`
+(`boss_chamber.gd:506`): passa `_air_moon` já liberado a um parâmetro tipado. No jogo a cena inteira sai junta e não vi o
+erro, mas o mesmo caminho existe. Reproduzir: `tools/test.sh -gselect=test_room_style`. Dono: environment-artist (checar
+`is_instance_valid` antes da chamada).
 
-## Veredito
+**P2-13. Vendedor e Forjador sem conteúdo** ("A definir", só Voltar): conhecido (HUB-C/HUB-D), registrado porque o Daniel
+encontra duas estações vazias de cinco. Captura: `hubuse_vendor_720.jpg`.
 
-**Pronto para o Daniel testar** no que é da E6: metas da mixagem atingidas por medida (não de ouvido), ambiência nas dez
-arenas, opção de qualidade que leva a placa integrada de 15 a 60+ qps. Dois P2 para o `art-director`: ouvir a mixagem e
-a ambiência, e os pontos pretos nas juntas do chão na qualidade Baixa.
+## 2. O que está bem (com evidência)
+- Título a 720 e 1080 sem corte (`title_*.jpg`, `compat_title_720.jpg`).
+- Placas das estações legíveis, com tecla real; com controle a tecla vira o botão A (`hub_book_pad_1080.jpg`).
+- Painel do Portal, menu do hub (Continuar, Como Jogar, Compêndio, Configurações, Voltar ao título, Sair), Livro com os
+  três lugares selados e o botão Compêndio (`hubuse_*`, `hubmenu_*`).
+- Tela de vitória e de derrota com "Voltar ao Santuário" e "Descer de novo" (`boss_win_1080.jpg`, `defeat_*.jpg`); fluxo
+  de volta ao hub coberto pelo `title_flow_check` e por `test_hub.gd`.
+- Configurações > Vídeo com "Câmera: Longe/Perto" (`t720_options_tab_video.jpg`); Controles com Interagir em E
+  (`t720_options_tab_controls.jpg`).
+- Todas as arenas no estilizado sem nada fora do lugar nas capturas (Salão, Criptas, Fendas, Jardim A e B, Santuário,
+  Ponte A e B, Runas A e B, Provação, Altar, loja, Câmara do Selo): `sheet_d1.jpg` a `sheet_d4.jpg`.
+- F7 / clássico: hub, Cripta e Morvath no clássico sem problema de layout (`hub_classic_1080.jpg`, `classic_*`).
+- Compatibility: Salão, Morvath e hub abrem e leem (fora a água, P2-9).
 
-| Item | Resultado |
-|---|---|
-| `tools/check.gd` / importação | `CHECK ok`, 0 `SCRIPT ERROR`, 0 `Parse Error` |
-| `tools/test.sh` | 886 passando, 0 falhando |
-| `tools/title_flow_check.gd` | `FLOW ok` |
-| Robô `smoke.sh 600 --seed=5` / `180 --start=boss --boons=25 --seed=5` | vitória aos 371,3 s (Morvath aos 260,7) / vitória aos 83,8 s |
-| Mixagem (C15-01), 4 partidas gravadas e refeitas | -17,3 a -17,9 LUFS (antes -17,9 a -20,1), pico real -1,31 a -1,44 dBTP depois do limitador; conferido com o `ebur128` do ffmpeg |
-| Limitador (B-3) | trabalha em 0,1 a 0,7% das janelas de 0,1 s, nunca mais de 3 dB (antes até 2 janelas fundas por descida) |
-| Ducking nos avisos de Morvath | música e ambiência -6 dB em 0,06 s, voltam em 0,5 s (`tests/test_mix.gd`) |
-| Ambiência (C15-04) | 10 laços sintetizados, tabela `Ambience.BY_ARENA`, crossfade na troca de sala; 15 LU abaixo da música |
-| iGPU 1280 x 720, Baixa | luta 15,2 ms (66 qps), Fendas 14,7, Jardim 15,9, Cripta 12,1, Morvath fase 4 16,2 ms; Alta 59 a 68 ms |
-| RTX 1920 x 1080, `--stress=150` | GPU 5,5 a 5,8 ms (Alta), 3,9 (Média), 1,6 (Baixa); quadro 7 a 8 ms limitado pela CPU |
-| Capturas | `docs/gallery/e6/` (Alta, Média, Baixa, iGPU Baixa, opções a 720), abertas e olhadas |
+## 3. Desempenho (`tools/sty_probe.gd`, estilizado, 6 s medidos depois de 5 a 8 s, `--disable-vsync`)
 
-# Relatório de QA e desempenho: E3 e E4 (Bênçãos, Elos, loja, Salmos, carta de Salmo, Compêndio, música)
-
-- **Data**: 2026-11-17. **Testado**: `arpg-3d` no `5316e9f` (E3, E4-01 a E4-06 e as regras da E5), na worktree do QA.
-  Relatório completo: `docs/qa/e4_report.md`. Logs: `/home/dani/tools/e4/qa/logs/`. Base de desempenho: `ec8529c` (E2).
-- **Ambiente**: WSL2 sem tela, sem som ouvido, sem GPU nesta rodada, sem controle, sem celular, nenhum teste com gente.
-
-## Veredito
-
-**Pronto para seguir, com um P1 a corrigir antes do teste do Daniel**: o tema do Salmo nunca toca (`Music.sting(p.id)`
-recebe `sentinela`, `abrigo`, `pastor`, `rocha`; os temas são `psalm_sentinel`...). Teste que falha entregue:
-`tests/test_music.gd`, `test_every_real_psalm_finds_its_sting` (dono: `gameplay-engineer`).
-
-| Item | Resultado |
-|---|---|
-| `tools/check.gd` / importação | `CHECK ok`, 0 `SCRIPT ERROR`, 0 `Parse Error` |
-| `tools/test.sh` (3 rodadas) | 838/838 antes das mudanças do QA; 839 com 838 passando depois (a falha é o teste novo do P1); 0 arriscados |
-| `tools/title_flow_check.gd` | `FLOW ok` |
-| Teste instável de Morvath (`test_boss_body.gd`, "dash was played") | semeado com `--seed=1` no `before_each`, mesmos `assert`; 6 de 6 |
-| Robô `smoke.sh 600 --bot-reaction=0.25`, sementes 1 a 8 | Morvath 8/8 (aos 196 a 289 s), vence 5/8, 5 a 8 Bênçãos 7/8, compra 6/8 (as 2 sem compra pegaram "Pobreza" na Provação), Salmo 2/8, `step_ms_avg` 0,21 a 0,23 |
-| `smoke.sh 180 --start=boss --boons=25 --seed=5` | vitória aos 83,8 s |
-| `smoke.sh 120 --stress=300 --seed=5` | avg 2,81 a 2,87 ms (outra arena que a da E2); mesma arena +6 a +9% contra a E2, com ruído de carga |
-| Música | cama, luta, fases de Morvath e vitória ligadas; limitador -1,5 dB; sonda: -1,40 dBTP depois do limitador; tema do Salmo **mudo** (P1) |
-| Capturas da E4 | já em `docs/gallery/e4/ui/` (720 e 1080), abertas e olhadas; nada novo capturado |
-
-P2 (detalhes e passos no `e4_report.md`): robô aceita a Provação sem olhar a maldição; semente 8 chega com 3 Bênçãos sem
-o `RESULT` dizer por quê; vazamentos no fim de toda execução (28 ObjectDB, 19 recursos); `CLAUDE.md` com limitador -1 dB
-e `-gtest` que não filtra (usar `-gselect`); avisos `Float/Int` em `test_boss_exits.gd`.
-
-## Relatório de QA e desempenho: E2 (Dons do Guerreiro, ultimates, tela do herói, Morvath mais difícil)
-
-- **Data**: 2026-11-17. Tarefa E2-12 do backlog.
-- **Testado**: `arpg-3d` no `ec8529c` (E2 integrada: passiva P-A, os 19 Dons, U-1 Corte do Juízo e U-2 Voragem, tela do
-  herói, Compêndio, XP na tela de fim, camadas de Morvath nas fases 3 e 4), na worktree do QA, mais a correção de dois
-  testes instáveis feita aqui (só `tests/`, seção 1.1). **Base de comparação**: `3d82202` (E1c aprovada), copiada por
-  `git archive` para `/home/dani/tools/e2/qa/base_3d82202` (robô sem tela) e espelhada em
-  `C:/Users/danie/tools/eterra-gpu-head` (GPU).
-- **Ambiente**: WSL2 (Godot 4.7.2 Linux, sem tela) para importação, testes, sonda, fluxo do título e robô. GPU real pela
-  Godot 4.7.2 de Windows (Vulkan 1.4.357, Forward+, RTX 5060 Laptop GPU, linha `Using Device` de cada captura). Sem som
-  ouvido, sem controle físico, sem celular, nenhum teste com gente. O Daniel não testa agora (testa no fim da E6).
-- Métricas completas e tabela por semente: `docs/gallery/e2/METRICAS.md`. Logs: `docs/gallery/e2/qa/logs/`.
-
-## Veredito
-
-**A E2 está pronta para seguir** (o Daniel só testa no fim da E6). Nada quebra a partida: 723/723 testes nas duas rodadas
-depois da correção, sonda **40/40**, `FLOW ok`, `CHECK ok`, 0 `SCRIPT ERROR` em 40 execuções do robô, o robô chega em
-Morvath e vence com `--seed=5`, desempenho igual ao da base. Pontos para o Game Director:
-1. **Maestria 20 contra Maestria 1: +25 pontos** de vitória (12 de 16 contra 8 de 16, com `--bot-reaction=0.25`),
-   exatamente no limite da meta da E6 (até 25). Não estoura, mas não sobra folga para os Dons que ainda faltam agir.
-2. **Um teste falhava em toda rodada completa** (`test_the_crossbowman_marks_its_aim_and_shoots_a_bolt`, 3 de 3) e o
-   `test_the_walk_is_drawn_only_where_the_body_walks` oscilava: causa achada e corrigida nos testes (seção 1.1).
-3. A luta de regressão `--start=boss --boons=25 --seed=5` **não termina mais em 120 s** (vence aos 124 s; na base, 103 s):
-   efeito esperado do Morvath mais difícil; o comando do `CLAUDE.md` precisa de 180 s.
-
-## 1. Checagem e testes
-
-| Comando | Resultado | Evidência |
+| Cena | RTX 5060, 1920 x 1080, Alta: quadro / GPU (pior) / chamadas | Intel RaptorLake-S iGPU, 1280 x 720, Baixa: quadro / GPU (pior) |
 |---|---|---|
-| `godot --headless --path . --import` | 0 `SCRIPT ERROR`, 0 `Parse Error`; 4 linhas `ERROR` da fonte `AlegreyaSans-Regular.ttf` só na primeira importação da worktree nova (cache `.godot` vazio), somem depois | saída do comando |
-| `godot --headless --path . -s tools/check.gd` | `CHECK ok` | saída do comando |
-| `tools/test.sh`, rodadas 1 a 3 (código do `ec8529c`) | 72 scripts, **723 testes, 722 passando, 1 falhando nas três** (`test_the_crossbowman_marks_its_aim_and_shoots_a_bolt`, linha 125: `[1] expected to be > than [1]`), 0 arriscados, 171,7 / 176,0 / 179,2 s | `qa/logs/test_run1_summary.log` a `3` |
-| `tools/test.sh`, rodadas 4 e 5 (com a correção) | **723 testes, 723 passando**, 0 falhando, 0 arriscados, 171,5 / 178,1 s; o teste da caminhada deu os mesmos números nas duas (1315 quadros, 42 de lado, 3,2%) | `qa/logs/test_run4_summary.log`, `5` |
-| `godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain` | **`FEEL_SUMMARY 40/40 ok`**, 0 `LOST` (inclui `E2-U3`: ultimate apertada no hit stop sai no quadro 8 no teclado e no controle virtual) | `qa/logs/feel_probe.log` |
-| `godot --headless --path . -s tools/title_flow_check.gd` | **`FLOW ok`**, 37 checagens `ok`, 0 `FAIL` (tela do herói por teclado, Compêndio, Dom equipado e tirado) | `qa/logs/title_flow.log` |
+| Santuário, Longe | 2,18 ms / 2,14 (6,66) / 500 | 14,80 ms / 14,50 (19,70) → ~68 qps |
+| Santuário, Perto | 1,68 / 1,57 (6,73) / 511 | 11,79 / 11,51 (13,84) → ~85 qps |
+| Salão (robô, semente 5) | 2,92 / 2,51 (7,51) / 652 | 17,63 / 17,16 (22,28) → ~57 qps |
+| Criptas | 2,48 / 1,99 (6,97) / 591 | 14,24 / 13,79 (16,21) |
+| Santuário Desmoronado | 3,07 / 2,61 (7,89) / 742 | 17,14 / 16,75 (18,97) |
+| Fendas | 3,42 / 2,09 (7,03) / 638 | 15,36 / 14,98 (16,44) |
+| `--stress=300` | **26,67** / 5,02 (13,12) / 805 | 56,75 / 56,12 (56,64) |
 
-O arriscado conhecido `test_only_finishers_glint` não apareceu como arriscado em nenhuma das cinco rodadas.
+Memória de vídeo: 254 MB no hub, até 318 MB nas arenas (RTX); 107 a 174 MB na iGPU. O hub é a cena mais barata das duas
+placas. No `--stress=300` da RTX o quadro (26,7 ms) é bem maior que GPU + CPU de desenho (5,0 + 1,4): o tempo vai na
+simulação de 300 inimigos ou na outra captura que rodava ao mesmo tempo na mesma placa (dois espaços do `gpu.sh`
+ocupados por outros agentes); só modo de teste, sem tetos de inimigos. Não comparei com um commit base (nada mudou
+no desempenho neste pedido).
 
-### 1.1 Testes instáveis: causa e correção (feita pelo QA, só em `tests/`)
-
-**Causa comum**: sem `--seed`, `Dev.seed_rng` chama `randomize()` em todo gerador do jogo (multidão, salas, chefe, efeitos).
-Nos testes ninguém passa `--seed`, então cada rodada sorteava outras recargas (`attack_cooldown` x 0,8 a 1,3), lados,
-recuos e variantes de sala. Não é ordem dos testes nem tempo real: o único relógio real na simulação é o rastro das barras
-(`Horde.render`, só desenho). Medido com uma sonda temporária (apagada) sobre 40 sementes do gerador da multidão:
-
-- **Besteiro**: o 2º virote sai entre **5,10 e 6,47 s** (o 1º entre 1,73 e 2,95 s); o teste olhava só 6 s e perdia o 2º
-  tiro em 13 das 40 sementes (cerca de um em três). Não é ruído: a janela era mais curta que o ciclo do besteiro (tiro,
-  0,4 s, `recover_time` 0,6, fuga de 1,5 a 1,75 s, recarga 1,53 a 2,16 s). Correção: janela de **8 s**, com a conta no
-  comentário, e a mensagem do `assert`.
-- **Caminhada**: a fração "andando de lado" foi de 1,7% a 3,8% em 30 sementes (o limite é 5%); a falha de 5,46% relatada é
-  uma cauda rara do sorteio. Limite **não** alterado.
-- Os dois arquivos (`tests/test_enemy_motion.gd`, `tests/test_ranged_enemies.gd`) ganharam `before_each`/`after_each` que
-  ligam `--seed=1` (`Dev._args["seed"]`) só durante cada teste deles: cada jogo criado ali sorteia sempre igual, desde o
-  `_ready`, seja o que for que rodou antes. Rodando os dois arquivos duas vezes: 12/12 e 9/9 com números idênticos.
-
-## 2. Robô (sem tela, `--fixed-fps 60`)
-
-| Comando | Base `3d82202` | E2 |
-|---|---|---|
-| `tools/smoke.sh 300 --seed=5` | vence, 254,7 s, Morvath (sala 7) aos 131,5 s, hp 50 | **vence, 261,2 s, Morvath (sala 7) aos 131,5 s**, hp 40, 49 abates, avg 0,18 ms |
-| `tools/smoke.sh 120 --start=boss --boons=25 --seed=5` | | **não termina**: aos 120 s Morvath tem 21 de vida (fase 4), hp 27 |
-| `tools/smoke.sh 240 --start=boss --boons=25 --seed=5` | vence, 103,1 s de luta, hp 24 | **vence, 124,0 s**, hp 28 |
-| `tools/smoke.sh 120 --start=boss --boons=25 --seed=5 --ultimate=vortex --talents=<os nove>` | | vence, 91,6 s de luta, hp 29, Voragem 1 uso, 268 de dano |
-
-### 2.1 Maestria 1 contra Maestria 20 (`tools/smoke.sh 400 --seed=N --bot-reaction=0.25`, sementes 1 a 16)
-
-Maestria 20 simulada = `--talents=quarto_corte,passo_encadeado,impeto,avanco_feroz,corte_crescente,lamina_faminta,fio_longo,reserva,firmeza --ultimate=cleave`
-(Devoção 21 de 25; conferido pelo `--runlog` que os nove ficam equipados). Maestria 1 = sem Dons e sem ultimate.
-
-| | Sementes 1 a 8 | Sementes 9 a 16 | Total | Vida ao chegar (média) | Dano antes de Morvath (soma) | Luta média |
-|---|---|---|---|---|---|---|
-| Maestria 1 | 4 vitórias | 4 vitórias | **8 de 16 (50%)** | 34,9 | 76 | 116,5 s |
-| Maestria 20 | 6 vitórias | 6 vitórias | **12 de 16 (75%)** | 40,3 | 123 | 101,9 s |
-
-**Diferença: +25 pontos** (meta da E6: até 25). Todas as derrotas da Maestria 20 foram na fase 4; a U-1 tirou 491 a 1842
-de vida de Morvath por descida (3 a 5 usos). Com os Dons o robô levou **mais** dano antes de Morvath (123 contra 76),
-causa não medida. Tabela por semente em `docs/gallery/e2/METRICAS.md` e `qa/logs/descents_table.md`.
-
-## 3. Desempenho
-
-| Medida | Base `3d82202` | E2 |
-|---|---|---|
-| `tools/smoke.sh 120 --stress=300 --seed=5` (sem tela, sozinho) | avg 2,37 ms, pico 20,28 | avg **2,41** ms, pico 20,22 (mesmos 312 abates) |
-| `tools/gpu.sh shot ... --stress=300 --seed=5 --shot-at=8` (1672x941, Forward+, RTX 5060), intercalado | `fps` 52 / 52 | `fps` **52 / 53** |
-| `step_ms_peak` em `smoke.sh 300 --seed=5` | 7,64 | 5,70 |
-
-Sem diferença. O `gpu.sh` roda com `--fixed-fps 30`; não medi tempo de quadro separado de GPU e CPU desta vez (só o `fps`
-da linha `RESULT`). Não medido: placa fraca, celular, Compatibility em tempo de quadro, a ultimate sob 300 inimigos.
-
-## 4. Capturas na GPU (1920x1080, abertas e olhadas)
-
-Em `docs/gallery/e2/qa/` (PNG originais em `/home/dani/tools/e2/qa/`; comandos em `docs/gallery/e2/METRICAS.md` 4):
-`u1_cleave_gesture_1080.jpg` (faixa da U-1 marcada), `u1_cleave_1080.jpg` (o golpe, 300 / 300 / 200),
-`u2_vortex_1080.jpg` (aro da Voragem, tiques de 9), `spin_corte_crescente_1080.jpg` e `spin_corte_crescente_wave_1080.jpg`
-(giro com a onda, 0,12 e 0,3 s), `hero_screen_1080.jpg` (Maestria 20, Devoção 21 de 25), `stress300_head_941.jpg`.
-Leitura de QA (o critério visual é do `art-director`): tudo desenha, nada preto, nenhuma mancha branca, HUD com o losango
-R da ultimate. Pontos para o `art-director` olhar: a faixa da U-1 é um verde chapado e forte que passa por cima do
-sarcófago do meio; a Voragem a 0,6 s lê só como um aro fino no chão; a onda do Corte Crescente quase não aparece (some
-antes de 0,3 s); na tela do herói, Dom equipado e Dom só destravado se distinguem pouco a 1080 (o ramo Combo é cinza).
-
-## 5. Falhas e regressões, por gravidade
-
-| Gravidade | O que | Reproduzir | Responsável sugerido | Estado |
-|---|---|---|---|---|
-| P1 (teste) | `test_the_crossbowman_marks_its_aim_and_shoots_a_bolt` falhava em toda rodada completa: janela de 6 s mais curta que o ciclo do besteiro | `tools/test.sh` no `ec8529c` (3 de 3) | QA (só teste) | **corrigido** (seção 1.1) |
-| P2 (teste) | `test_the_walk_is_drawn_only_where_the_body_walks` dependia do sorteio | idem, raro | QA (só teste) | **corrigido** (semente fixa) |
-| P2 (balanço) | Maestria 20 vence 25 pontos a mais que a Maestria 1, no limite da meta, antes dos Dons que faltam agir | seção 2.1 | `gameplay-engineer` (E6), decisão do Game Director | aberto |
-| P2 (balanço) | com os Dons o robô leva mais dano antes de Morvath (123 contra 76 em 16 descidas) | seção 2.1, comparar `rooms[].hurt_by` | `combat-feel-director` mede, `gameplay-engineer` | aberto, causa não medida |
-| P2 (doc) | `tools/smoke.sh 120 --start=boss --boons=25 --seed=5` não chega ao fim (Morvath vence aos 124 s) | seção 2 | Game Director (`CLAUDE.md`: usar 180) | aberto |
-| P2 (visual) | leitura da U-1, da U-2, da onda do giro e de Dom equipado na tela do herói | capturas da seção 4 | `art-director`, depois `ui-ux-designer` | para revisão |
-
-Nenhuma falha P0. Nenhuma regressão de desempenho.
-
-## 6. Limitações
-
-- WSL sem Vulkan da placa: toda tela foi pela Godot de Windows; robô, testes e sonda rodam sem tela no WSL.
-- As 32 descidas rodaram 3 por vez: os `step_ms` delas não valem como medida (o estresse da seção 3 rodou sozinho).
-- Robô não é gente: ele pune 70 a 90% das janelas de Morvath; a diferença de 25 pontos é do robô com 0,25 s de reação.
-- Som não ouvido; exportação Windows e Web não pedida, não feita; celular, placa fraca e controle físico não testados.
-- A "Maestria 20" foi simulada por `--talents` e `--ultimate` (o robô não lê o save); a escolha dos nove Dons é do QA.
-
----
-
-# Relatório anterior
-
-## Relatório de QA e desempenho: E1b (atordoamento, som do combate, pés travados)
-
-- **Data**: 2026-11-16.
-- **Testado**: `arpg-3d` no `18b0785` (E1b inteira commitada; árvore limpa). **Base de comparação**: `ec5d757` (HEAD da
-  E1a), copiado por `git archive` para o scratchpad (robô sem tela) e espelhado em `C:/Users/danie/tools/eterra-gpu-head`
-  (GPU). Atenção: entre os dois também entrou a fundação da E2a (`d9943c9`); o que muda abaixo não é só da E1b.
-- **Ambiente**: WSL2 (Godot 4.7.2 Linux, sem tela) para importação, testes, sonda e robô. GPU real pela Godot 4.7.2 de
-  Windows (Vulkan 1.4.357, Forward+, RTX 5060 Laptop) no espelho `C:/Users/danie/tools/eterra-gpu-e1b-qa`; Compatibility
-  pelo OpenGL 3.3 da mesma placa. **Na tomada** durante as medidas (`PowerLineStatus Online`, carga 99%, lido antes e
-  depois; `docs/gallery/e1b/qa/logs/power.txt`). O som foi **medido** no arquivo do Movie Maker (ffmpeg), **não ouvido**:
-  o QA não tem ouvidos. Sem controle, sem celular, nenhum teste com gente.
-- O QA não mudou código, arte nem testes. Evidências em `docs/gallery/e1b/qa/` (logs em `logs/`).
-
-### Veredito
-
-**Pronto para o Daniel testar.** Nada quebra a partida: 617/617 testes, sonda 34/34, `check.gd` limpo, 0 `SCRIPT ERROR`,
-o robô chega em Morvath e vence (`--seed=5`), 0 preso em 11 partidas, sem clipping no som, custo de GPU igual ao da E1a.
-Três coisas para ele saber (nenhuma bloqueia):
-1. **Com reação humana o robô perde um pouco mais**: 5 de 8 vitórias (base 6 de 8), chega em Morvath com menos vida (média
-   24,9 contra 36,4) e leva mais dano antes dele (91 contra 49 somados nas 8). Amostra pequena e as partidas divergem
-   (o atordoamento muda tudo depois do primeiro golpe); é o ponto que o teste do Daniel deve confirmar ou não.
-2. **A fonte nunca foi usada pelo robô** nas 11 partidas (`fountain_used: false` em todas): ele só bebe abaixo de 60% da
-   vida (`Bot.DRINK_BELOW`) e nunca chegou na sala 4 tão ferido. A regra tem teste (`test_bot_kite.gd`), mas não foi vista
-   acontecer numa partida.
-3. **Silêncio total entre as salas**: 9 s de 60 no vídeo são silêncio digital (`-inf`), sempre na caminhada até a porta e
-   na troca de sala (música desligada, sem ambiente). Não é defeito da E1b, mas vai se notar agora que o combate tem som.
-
-### 1. Checagem e testes
-
-| Comando | Resultado | Evidência |
-|---|---|---|
-| `godot --headless --path . --import` | 0 `SCRIPT ERROR`, 0 `Parse Error` | (log no scratchpad) |
-| `godot --headless --path . -s tools/check.gd` | `CHECK ok` | `logs/check.log` |
-| `tools/test.sh` | **64 scripts, 617 testes, 617 passando, 0 falhando, 0 arriscados**, 105 624 asserções, 140,8 s (E1a: 557) | `logs/test_summary.log` |
-| `godot --headless --path . --fixed-fps 60 -s tools/feel_probe_run.gd -- --nosave --start=fountain` | **`FEEL_SUMMARY 34/34 ok`**, 0 `LOST` | `logs/feel_probe.log` |
-
-Exportação de Windows e Web: não pedida, não feita.
-
-### 2. Robô (sem tela, `--fixed-fps 60`), E1b contra a base `ec5d757`
-
-| Comando | Base `ec5d757` | E1b `18b0785` |
-|---|---|---|
-| `tools/smoke.sh 300 --seed=5` | vence, 282,5 s, Morvath (sala 7) aos 122,9 s, hp 45 | **vence, 242,1 s, Morvath (sala 7) aos 118,9 s**, hp 55, 51 abates, `flinches` 66, `interrupts` 18, avg 0,18 |
-| `tools/smoke.sh 120 --start=boss --boons=25 --seed=5` | vence em 88,9 s, hp 20 | **vence em 88,5 s**, hp 30, avg 0,17 |
-| `tools/smoke.sh 120 --stress=150 --seed=5` | avg **1,12**, 160 abates, dano 19 692 | avg **0,79**, 176 abates, dano 21 973, `flinches` 389 |
-
-`flinches` e `interrupts` são campos novos (não existem na base). Os números de jogo mudaram com a mesma semente: era o
-esperado (atordoamento e avanço do golpe mudam a luta).
-
-#### 2.1 Oito descidas com reação humana (`tools/smoke.sh 300 --seed=N --bot-reaction=0.25`)
-
-| Semente | E1b: resultado, tempo, hp final | hp ao chegar em Morvath | dano antes de Morvath | dons no chefe | flinches / interrupts | dano em Morvath por | Base: resultado, hp em Morvath, dano antes |
-|---|---|---|---|---|---|---|---|
-| 1 | vence, 273,8 s, 26 | 30 | 0 | 3 | 54 / 24 | invocados 4 | vence, 30, 0 |
-| 2 | **perde** (fase 4), 233,8 s | 30 | 0 | 2 | 66 / 26 | tempestade 30 | vence, 30, 0 |
-| 3 | **perde** (fase 4), 210,0 s | 12 | 18 | 3 | 82 / 30 | invocados 4, maldição 6, tempestade 2 | perde (fase 2), 12, 18 |
-| 4 | vence, 239,7 s, 24 | 28 | 27 | 2 | 70 / 24 | invocados 4 | vence, 52, 3 |
-| 5 | vence, 238,7 s, **1** | 23 | 32 | 2 | 57 / 14 | maldição 12, tempestade 10 | vence, 46, 9 |
-| 6 | vence, 244,5 s, 3 | 27 | 3 | 2 | 61 / 24 | invocados 8, maldição 6, tempestade 10 | vence, 55, 0 |
-| 7 | **perde** (fase 3), 217,9 s | 19 | 11 | 2 | 62 / 20 | maldição 9, ritual 10 | vence, 51, 4 |
-| 8 | vence, 180,5 s, 16 | 30 | 0 | 3 | 58 / 14 | invocados 4, tempestade 10 | perde (fase 3), 15, 15 |
-| **Total** | **5 de 8** | média **24,9** | **91** | | 54 a 82 / 14 a 30 | | **6 de 8**, média 36,4, **49** |
-
-- `stuck` 0 e `bot.stuck` 0 em todas (E1b e base); `max_alive` 7 em todas; `fountain_used` falso em todas (as duas versões).
-- Mesma semente, mesmo resultado: `--seed=1` rodado de novo com `--trace-steps` deu o mesmo `RESULT` (273,8 s, hp 26, 44
-  abates, dano 12 528; `logs/trace1.log`).
-- Todos os `RESULT`: `logs/results_e1b.jsonl` e `logs/results_base_ec5d757.jsonl`.
-
-### 3. Desempenho
-
-| Medida | Base `ec5d757` | E1b |
-|---|---|---|
-| `step_ms_avg` nas 8 descidas (4 processos ao mesmo tempo) | 0,19 a 0,22 | 0,21 a 0,23 |
-| `step_ms_peak` nas 8 descidas (4 ao mesmo tempo, ruidoso) | 5,1 a 9,1 | 7,5 a 12,1 |
-| `--seed=1` sozinho, `--trace-steps` | | avg 0,17, pico **7,55** (só 3 passos acima de 4 ms: `horde` 7,48 e 4,43, `skills` 5,03) |
-| `step_ms_avg` estresse 150 | 1,12 | **0,79** |
-| **Quadro na GPU, 150 inimigos, 1920x1080 sem vsync, `gpuperf9`, intercalado (E, B, E, B, E, B)** | frame 8,40 / 8,52 / 8,55 (**8,49**); gpu 8,27 / 8,38 / 8,48 (**8,38**); cpu_render 1,10 / 1,00 / 1,08; 994 a 995 chamadas | frame 8,50 / 8,32 / 8,58 (**8,47**); gpu 8,39 / 8,27 / 8,44 (**8,37**); cpu_render 0,91 / 0,96 / 1,12; **985 chamadas** |
-
-Leitura: **sem diferença de GPU** (-0,01 ms, dentro do ruído), 10 chamadas a menos (velas apagadas). Os valores absolutos
-não se comparam com a tabela da E1a (7,3 ms): nesta sessão a sonda relata o render a 2880x1620 (`render (2880.0, 1620.0)`
-no `logs/gpu_perf_interleaved.log`), mais pixels que antes; por isso a base foi rodada de novo, intercalada. Os picos de
-`step_ms` com 4 processos em paralelo não valem como medida; o pico isolado (7,55 ms, um passo da multidão) fica abaixo de
-um quadro de 60 Hz. Não medido: placa fraca, celular, Compatibility em tempo de quadro.
-
-### 4. Som (Movie Maker, 60 s, `--bot --seed=5`, 1920x1080, 48 kHz estéreo)
-
-Comando: `MIRROR=/mnt/c/Users/danie/tools/eterra-gpu-e1b-qa RES=1920x1080 FPS=30 tools/movie.sh C:/Users/danie/tools/e1b_out/qa_movie.avi 1800 --bot --seed=5`;
-medido com `ffmpeg -af astats,ebur128=peak=true` e `silencedetect=n=-50dB:d=0.7` (`logs/audio_stats.log`, `logs/silence.txt`,
-`logs/audio_peak_per_second.txt`). Vídeo: `docs/gallery/e1b/qa/partida_60s_som_1080.mp4` (10,4 MB, H.264 + AAC).
-
-| Medida | Valor | Leitura |
-|---|---|---|
-| Pico de amostra | **-2,94 dBFS** (maior amostra 23 365 de 32 767) | **sem clipping**; abaixo do teto do limitador (-1 dB) |
-| Pico verdadeiro (ebur128) | -2,9 dBFS | sem estouro entre amostras |
-| Sonoridade integrada | -20,0 LUFS, faixa 5,0 LU | normal para jogo de ação; sem música |
-| RMS | -23,0 dB | |
-| Silêncio digital | 0 a 2,2 s (carregando), **18,2 a 23,1 s** e **40,5 a 44,6 s** | os dois do meio são as trocas de sala (quadros 540 a 660 e 1230 a 1335: "Sala vencida", caminhada até a porta, nome da arena); nenhum silêncio no meio de luta |
-| Pico por segundo | -2,9 dBFS em 16 dos 60 segundos, sempre o mesmo valor | o mais alto é sempre o mesmo som na mesma altura (provavelmente a mesma amostra de golpe, sem variar volume). **Não medi** quais sons repetem: o Movie Maker grava só a mistura e o jogo não registra os `Audio.play`. Se o Daniel achar repetitivo, pedir registro por som ao dono do áudio |
-
-### 5. Capturas na GPU (abertas e olhadas)
-
-- `docs/gallery/e1b/qa/fight_forward_1080.jpg`: `RES=1920x1080 tools/gpu.sh shot ... --bot --autopick --seed=5 --shot-at=9`
-  (Forward+). Salão com metade das velas da borda, Guerreiro em luta com o Escudo, onda verde do especial à direita dele,
-  número 43, contador "8 Golpes / Seta de Luz". Herói e inimigos legíveis.
-- `docs/gallery/e1b/qa/fight_compat_1080.jpg`: o mesmo quadro no **Compatibility** (`--rendering-driver opengl3`,
-  `OpenGL API 3.3.0 NVIDIA 621.01`). Sem erro; mesma cena, chão mais contrastado e portal menos aceso, como antes.
-- `docs/gallery/e1b/qa/boss_forward_1080.jpg`: `--start=boss --boons=5 --seed=5 --shot-at=20`. Morvath no meio da foice,
-  aviso em meio círculo vermelho com o fio violeta, herói dentro do arco do próprio golpe de fogo, barra com as marcas de
-  fase. Morvath aparece acima do chão nesse quadro (corpo inclinado sobre o aviso); não sei dizer de um quadro só se é o
-  clipe novo da foice de cima ou se ele flutua. Fica para o `art-director` olhar no vídeo `morvath/scythe_after.mp4`.
-- Quadros do vídeo nas trocas de sala: `/tmp/claude-1000/-home-dani-games-eterra-a-selagem/ef535818-db08-4d33-9659-643b5faf66d3/scratchpad/silence_frames.jpg` (não versionado).
-
-### 6. Falhas e regressões, por gravidade
-
-Nenhuma crítica nem alta.
-
-| Gravidade | Item | Como reproduzir | Responsável sugerido |
-|---|---|---|---|
-| Média (observar no teste) | Robô com reação humana chega em Morvath mais ferido e vence 5 de 8 (base 6 de 8); dano antes de Morvath 91 contra 49 | seção 2.1, `tools/smoke.sh 300 --seed=5 --bot-reaction=0.25` (hp 1 no fim, 32 de dano antes do chefe) | `gameplay-engineer` (avanço do golpe a 0,3 do alcance deixa o herói mais perto; conferir com o teste do Daniel antes de mexer) |
-| Baixa | A fonte não é usada pelo robô em nenhuma partida medida | `fountain_used` em `logs/results_e1b.jsonl` | `gameplay-engineer` (se a métrica importa, um `--hero-hp` que só baixe a vida atual, ou limiar maior) |
-| Baixa | Silêncio digital entre salas (cerca de 4 a 5 s por troca) | `logs/silence.txt` | dono do áudio (ambiente de sala) |
-| Baixa | O nome do golpe no contador ainda diz "Seta de Luz" com o especial desenhado como onda | `fight_forward_1080.jpg` | `ui-ux-designer` / Game Director (texto) |
-| Baixa | Morvath parece acima do chão num quadro da foice | `boss_forward_1080.jpg` | `art-director` |
-
-### 7. Avaliação pelas perguntas da diretriz (`docs/design/po_directive_guardian.md`)
-
-Sem teste humano não há como dizer se é divertido; abaixo só o que as medidas e imagens mostram.
-
-- **Comandos respondem na hora?** A sonda passa 34/34 (inclui toques em hit stop pelo teclado e pelo controle virtual,
-  0 `LOST`). Medido pela máquina, não pela mão.
-- **Ataques têm impacto?** Agora cada golpe tem som (pico chega a -2,9 dBFS em 16 de 60 s sem estourar) e os comuns param
-  no golpe: 54 a 82 atordoamentos e 14 a 30 preparos cortados por descida. Se isso "pesa" na mão é pergunta para o Daniel.
-- **Dá para encadear?** O contador mostra 8 a 11 golpes seguidos nas capturas (`best_combo` 8 a 11 nos `RESULT`).
-- **Alguma pausa atrapalha?** No som, a pausa perceptível é o silêncio de troca de sala (seção 4). Nada travou.
-- **Visual: legível?** Sim nas três capturas (herói, Escudo, esqueleto, Morvath e avisos distinguíveis a 1080, nos dois
-  renderizadores). A onda do especial é pequena a 1080 (mesma ressalva do `docs/gallery/e1b/ART_REVIEW.md`).
-- **Parece jogo comercial acabado?** Não cabe ao QA; o critério é do `art-director` e do Daniel.
-
-### 8. Limitações
-
-- WSL sem Vulkan da placa: tudo que é tela foi pela Godot de Windows; o robô e os testes rodam sem tela no WSL.
-- Robô em 4 processos simultâneos: `step_ms_peak` desses runs é ruidoso (o isolado está na seção 3).
-- O som foi medido, não ouvido; o Movie Maker grava a mistura final, sem saber qual som tocou.
-- Base inclui diferença da fundação E2a; não separei E1b de E2a.
-- Exportação, celular, placa fraca e controle físico: não testados.
+## 4. Limitações
+- O exe de Windows é de janela (sem console): o log dele sai vazio, então `SCRIPT ERROR` em tempo de execução só foi
+  procurado nas execuções do editor (laboratórios, testes, robô): nenhum, fora o P2-12.
+- Capturas com `--bot` escondem o 5º losango (ultimate) de propósito (`hud.gd:475`); conferido sem o robô em
+  `play_hud_720.jpg`. `--pad` só existe no hub: o HUD da partida com glifos de controle não foi capturado (coberto pelos
+  testes de troca de dispositivo e pelo `title_flow_check` com eventos reais de controle). Nenhum controle físico, nenhum
+  teste com gente, sem som ouvido.
+- Máquina carregada: outros agentes rodavam dezenas de partidas do robô e capturas na GPU ao mesmo tempo. Os picos de
+  `step_ms_peak` de 550 a 1595 ms nas sementes 1 e 3 foram disputa de CPU: a semente 1 sozinha com `--trace-steps` deu
+  pico de 10,9 ms (`horde`).
+- Capturas a 1920 x 1080 e 1280 x 720 em janela (`--resolution`), não em tela cheia; a GPU é a RTX 5060 do notebook do
+  Daniel e a iGPU Intel dele; celular não medido.
+- A Provação e o Altar (cartas) e a carta de Bênção vêm do `tools/ui_lab.gd` no editor, não do exe (o exe não abre essas
+  telas por opção); o código é o mesmo commit.
