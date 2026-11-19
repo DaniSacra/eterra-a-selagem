@@ -52,6 +52,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Partida sem tela com o robô (rápida, para ritmo e regressão): `tools/smoke.sh 300` (partida inteira) ou `tools/smoke.sh 180 --start=boss --boons=25`.
   Outras opções: `--boons=N` (N dons sorteados), `--boss-hp=0.2`, `--hero-hp=N` (vida do paladino), `--stress=300`, `--title --screen=options|moves|howto`, `--hold`,
   `--autopick` (pega o primeiro dom sem abrir a tela, bom para capturas).
+- **Exportação sem converter recursos para binário** (`editor/export/convert_text_resources_to_binary=false` no `project.godot`, 2026-11-19): com a conversão o exe lia o `reward_deck` do estágio vazio (todas as portas com Bênção, loja vazia); `tests/test_export_settings.gd` trava. Conferir o exe com `build/linux/ASelagem.x86_64 --headless -- --smoke=30 --seed=5 --nosave` contra o editor.
 - Build: `~/tools/godot/godot --headless --path . --export-release "Windows Desktop" build/windows/ASelagem.exe`
   (e `"Linux"` em `build/linux/ASelagem.x86_64`). Web para ver no navegador: `tools/web.sh` e abrir `http://localhost:8070`.
   Android fica para depois (sem preset ainda).
