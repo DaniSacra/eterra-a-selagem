@@ -829,3 +829,16 @@ reescrever o mapa; cruz e sol nos ícones.
 **Para o Daniel decidir antes da RJ-0 começar:** (a) a ordem em relação ao que já está na fila (equilíbrio B-1 a B-5,
 HUB-D, salas H-1 a H-7); (b) D-51, quem concede as Bênçãos, antes do RJ-4; (c) se o progresso permanente da Forja
 cabe na curva nova (a primeira descida muito difícil) ou se a Forja só muda o jeito da Emeth sem somar força (D-H2).
+
+**Respostas do Daniel (2026-11-19, depois do pacote):**
+1. **Ordem: mecânicas primeiro, equilíbrio depois.** As mecânicas da seção 10 entram antes do pacote B-1 a B-5 do
+   `docs/design/balance.md`, e precisam conversar entre si: os recursos que alimentam Forja, Encantos e o resto vêm das
+   descidas, então a descida tem de dar o que buscar. O equilíbrio de tudo junto vem depois (o `balance-designer`
+   remede com os sistemas novos).
+2. **As Bênçãos são oferecidas por anjos**, e os anjos e todas as Bênçãos são para inventar, com o Hades II como
+   benchmark (os deuses do Olimpo e suas Bênçãos). Isso resolve a D-51 e muda a regra "nunca inventar lore" para os
+   anjos: o projeto propõe nomes, aparência, temperamento e família de cada anjo e as Bênçãos de cada um, e o Daniel
+   aprova; sempre servos de Yah, nunca deuses, a luz vem de Elun (cânone). A forma visual (auréola, asas) e os símbolos
+   (a regra de nunca sol nem cruz) entram na proposta para o Daniel decidir.
+3. **A Forja deixa o herói mais forte** (altera a arma): progresso permanente que soma força. A curva nova (primeira
+   descida muito difícil) passa a contar com ela no equilíbrio.
