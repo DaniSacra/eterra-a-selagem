@@ -1456,6 +1456,23 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   spec 5.2 (as runas do medalhão e as rachaduras finas viram borrão, pontos escuros nos corpos) e não convive com o MSAA
   da Alta (o quadro é resolvido de novo depois dos transparentes; ligado, ele desliga o MSAA). Custo medido na RTX a
   1080: 0,14 ms de GPU, mais 7,5 MB de memória de vídeo.
+- **Correções depois do STY-09 (STY-10, technical-artist; só no estilizado, o clássico igual)**, valendo sobre os números
+  acima: multidão mais escura que a laje (`crowd.gdshader`: `style_light` 0,2, `style_scene` 0,1, `style_rim` 0,18 e
+  `style_hero` 0,2 da luz morna do herói, que era o que mais clareava o osso perto dele): esqueleto ao lado do herói de
+  luma p50 103 para 65 na mesma captura (-37%; na medida do art-director, 86 para cerca de 55). "Vai bater" reforçado
+  (`style_tell`, `CrowdRenderer.STYLE_TELL` 1,6): subida média 29 contra 19 no clássico; pisca igual (p90 +143 contra
+  +142). Morvath com o violeta (`style_vivid`, `CrowdRenderer.STYLE_BOSS_VIVID` 1,0: a pintura dele mais saturada e a
+  borda na cor dele em vez da morna): saturação do corpo 0,19 para 0,32, matiz 313 para 275 (clássico 0,36 e 280). Herói
+  `value` 0,28, `rim` 0,7 e `top` 0,3 (`hero_paint.gdshader`: o claro da pintura, o forro creme da capa, para em 0,3 de
+  luma): p90 do tronco 189 para 181. Avisos dos inimigos (`ground.gdshaderinc`): o vermelho vira `style_warn_color`
+  (1; 0,09; 0,21) e a segunda passada (`ground_fill.gdshader`, agora `blend_premul_alpha` com `ALPHA` 0 no clássico)
+  escurece a laje sob a forma e sob o fio da mira a 0,8 (`style_under` 0,2), com `style_rim_gain` 2,0: matiz na tela de 4
+  a 13 para 349 a 2 (aro 348 a 352), saturação do fio da mira 0,42 para 0,56, aro 54 a 72 acima do chão. Corte
+  (`slash.gdshader`, `slash_ink.gdshader`): miolo 28% mais fraco e mais raso (`style_core_light` 0,216, `style_core_depth`
+  0,6), tinta com alfa vezes `style_veil` 0,72, fio com teto próprio `style_edge_cap` 0,38: no chão, fio top 15% de 243
+  (com 265 pixels acima de 235) para 222 sem nenhum acima de 235, véu 29% menor; área do corte 0,76 da do clássico. Sobre o osso
+  claro da multidão o fio somado ainda vai ao branco, como no clássico. Faixas das figuras seguem em
+  `figure_paint.gdshaderinc` (a pedra baixou a faixa de sombra para 0,25; juntar só quando as duas frentes fecharem).
 - Medido depois do STY-04/05 (bot, semente 5, sala de abertura): RTX 1080 Alta GPU 2,80 ms clássico, 2,63 estilizado (756 e 818
   chamadas, 330 e 332 MB); iGPU Baixa 1280 x 720 15,05 e 15,75 ms; fio da mira dos avisos 130 a 138 de luma sobre a laje de
   72 a 86 (+50). Sonda de sensação 40/40 nos dois looks; o Compatibility abre sem erro.

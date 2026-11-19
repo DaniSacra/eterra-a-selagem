@@ -39,11 +39,16 @@ uniform float edge_tail = 0.85;
 // of its depth down the tail (style_core_thin), cut into broken strokes over the back half (slash_strokes.gdshaderinc);
 // the leading edge stays whole; nothing the arc adds passes style_cap a channel (the core reads under 235 on the
 // screen). art_style 0: the classic arc, unchanged.
+// STY-10 (P2-3 of the STY-09 combat review: more veil than blade): the core 28% dimmer and less deep (style_core_light,
+// style_core_depth), and the leading edge its own light under its own cap style_edge_cap (on the floor, its top 15% at
+// about 220 of luma and nothing past 235; the core about 150), so the edge that cuts is the light of the arc. Over the
+// light bone of a crowd the added edge still reaches white, as in the classic look.
 global uniform float art_style;
-uniform float style_core_depth = 0.75;
+uniform float style_core_depth = 0.6;
 uniform float style_core_thin = 0.5;
-uniform float style_core_light = 0.3;
+uniform float style_core_light = 0.216;
 uniform float style_cap = 0.55;
+uniform float style_edge_cap = 0.38;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 
@@ -113,6 +118,8 @@ void fragment() {
 	if (wire + core <= 0.002) discard;
 	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow) * life * intensity;
 	if (styled) {
-		ALBEDO = min((edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * style_core_light * glow) * life * intensity, vec3(style_cap));
+		vec3 edge_part = min(edge_c * wire * edge_light * (0.55 + 0.45 * glow) * life * intensity, vec3(style_edge_cap));
+		vec3 core_part = min(core_c * core * style_core_light * glow * life * intensity, vec3(style_cap));
+		ALBEDO = min(edge_part + core_part, vec3(mix(style_cap, style_edge_cap, clamp(wire, 0.0, 1.0))));
 	}
 }

@@ -34,6 +34,12 @@ const OUTLINE_INTENSITY := 1.0
 ## ink (1.6 px at 1080 at the game's camera); the classic look keeps the numbers above, and no shell on the commons.
 const STYLE_OUTLINE_WIDTH := 0.04
 const STYLE_OUTLINE_COLOR := Color(0.07, 0.06, 0.06)
+## STY-10 (P2-5 of the STY-09 combat review): the body is darker in the stylized look (crowd.gdshader `style_light`), so
+## the "about to strike" clearing (`tell_light`) is raised this many times there to lift the body as much as the classic.
+const STYLE_TELL := 1.6
+## STY-10 (P2-2): Morvath keeps his violet in the stylized look (crowd.gdshader `style_vivid`: his painting this much
+## more saturated and his own rim colour in place of the warm one; the others 0).
+const STYLE_BOSS_VIVID := 1.0
 ## Painted figures (the Meshy models): how much the bright saturated spots of the painting (eyes, gems, orbs, embers)
 ## shine by themselves, and the old gold the steel of an elite turns to (EnemyDef.gild says how much).
 const PAINT_GLOW := 2.2
@@ -187,6 +193,8 @@ func register(d: EnemyDef) -> void:
 	# QW-104: the body clears in the hold of its own wind-up (its windup_hold share), to TELL_LIGHT of the flash
 	mat.set_shader_parameter(&"tell_hold", clampf(d.windup_hold, 0.05, 1.0))
 	mat.set_shader_parameter(&"tell_light", TELL_LIGHT)
+	mat.set_shader_parameter(&"style_tell", STYLE_TELL)
+	mat.set_shader_parameter(&"style_vivid", STYLE_BOSS_VIVID if d.behavior == EnemyDef.Behavior.BOSS else 0.0)
 	mat.set_shader_parameter(&"hero_light", BOSS_HERO_LIGHT if d.behavior == EnemyDef.Behavior.BOSS else 1.0)
 	mat.set_shader_parameter(&"crest_from", baked.height * 0.8)
 	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline
