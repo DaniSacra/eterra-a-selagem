@@ -1759,3 +1759,30 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Testes em `tests/test_enemy_fx.gd` e `tests/test_indicators.gd`. Pendência conhecida do assado: dobra (`bend`) em osso
   que o rig do KayKit não move (`Spine01`, `neck`) se acumula pose após pose; o rugido de Morvath (`ROAR_BEND` no
   `Taunt_Longer`) provavelmente tem isso (medir antes de reassar Morvath).
+
+## Ciclo LC, Compatibility (LC-4 e LC-5, só no estilizado do Compatibility; antes e depois em `docs/gallery/lc/compat/`)
+- Causa: no Compatibility a luz chega à tela sem o passo de linear para sRGB do desktop (uma rampa de emissão v sai como
+  cerca de v^2,2 da do Forward+). O corpo estilizado é feito de luz bem abaixo de 1 (`style_light`, `style_scene`) e ia ao
+  preto dentro do contorno; um vermelho somado ao chão pintado (que lá é mais claro e frio) lia rosa pálido.
+- **Figuras (LC-4)**: só nesse renderizador a luz da figura estilizada sobe a `CrowdRenderer.COMPAT_GAMMA` 0,55 pela
+  luminância, mantendo matiz e saturação (`style_gamma` no `crowd.gdshader`, `figure_gamma` no
+  `figure_paint.gdshaderinc`); o herói igual (`HeroBody.COMPAT_GAMMA`, `gamma` no `hero_paint.gdshader`: albedo, cada luz
+  e a luz própria). O contorno fica como estava (subido, virava halo cinza). 0,55 casa a luma das figuras do
+  `tools/enemy_lab.gd` com a do Forward+ (1/2,2 passava um terço). Santuário: fachos e chave da nave a
+  `SanctuaryLook.STY_COMPAT_SHAFT` 0,25 no Compatibility.
+- **Avisos (LC-5)**: só nesse renderizador, no estilizado, todo aviso (style 0) soma `GroundLook.COMPAT_GAIN` 1,1 da luz e
+  a segunda passada escurece o chão sob a área a 1 - `COMPAT_UNDER` 0,3, também nos avisos assinados de Morvath (a
+  Tempestade), devolvendo o vermelho da primeira passada por cima; os assinados somam `style_compat_warn` (1; 0,13; 0,1)
+  (`ground.gdshaderinc`: `style_compat_gain`, `style_compat_under`, `style_compat_warn`; a mira do besteiro e o bote não
+  escurecem). Padrões neutros: Forward+ e todo o clássico iguais (capturas Forward+ antes e depois diferem só em chamas e
+  partículas; teste em `tests/test_stylized_figures.gd`).
+- Medido (1920 x 1080, RTX; `tools/frame_stats.py --hue`): Tempestade aos 6,25 s, caixa 1300,470,150,40: vermelho na faixa
+  69,5% para 100% (Forward+ 99,8%), saturação 0,42 para 0,64 (0,63), matiz 354 para 359 (358), luma 112 para 119 (117);
+  na preparação (4,0 s, caixa 900,690,60,60) 43% para 97% (92%), saturação 0,33 para 0,57 (0,57); no começo do aviso
+  (3,5 s) 11% para 22% (40%), a faixa já mais escura que o chão (luma 87 contra 106 fora). Santuário A aos 9 s: laje no
+  facho 145 para 116 (Forward+ 88), cena p50 77 para 66 (63); esqueleto ao lado do herói p10 1 para 21 e p50 42 para 82
+  (Forward+ 33 e 87). iGPU Intel pelo D3D12 do WSL (`MESA_D3D12_DEFAULT_ADAPTER_NAME=Intel GALLIUM_DRIVER=d3d12`,
+  `xvfb-run`, opengl3, 1280 x 720 Baixa; o OpenGL do Windows escolhe a NVIDIA): Santuário 27,7 / 25,8 ms antes e
+  24,8 / 23,9 depois, Tempestade 34,4 / 32,9 e 31,0 / 34,2 (nada perdido). Pendências: o chão pintado do Compatibility
+  segue mais claro que o do Forward+ em todas as salas (Cripta, Santuário: é do `paint.gdshaderinc` e do ar das salas, do
+  environment-artist); as erupções (`ritual_rune.gdshader`) e a Emeth seguem mais pálidas no Compatibility.

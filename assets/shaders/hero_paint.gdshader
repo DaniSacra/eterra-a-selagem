@@ -32,6 +32,11 @@ uniform float rim = 0.7;
 // key) at rim_lit, rim_dark of it on the other side.
 uniform vec3 rim_dir = vec3(-0.45, 0.75, 0.5);
 uniform float rim_dark = 0.35;
+// LC-4 (Compatibility renderer): there light reaches the screen without the desktop's linear-to-sRGB step (a value v
+// shows as about v^2.2 of the desktop's), and his body, painted at value 0.28, went black inside the outline. gamma
+// (HeroBody.COMPAT_GAMMA 0.55, only in that renderer) raises his albedo, each light and his own light to it by their
+// luminance (figure_gamma), so he reads as on the desktop. 1 (Forward+): untouched.
+uniform float gamma = 1.0;
 
 #include "res://assets/shaders/figure_paint.gdshaderinc"
 
@@ -46,6 +51,10 @@ void fragment() {
 	SPECULAR = specular;
 	float side = mix(rim_dark, 1.0, smoothstep(-0.2, 0.5, dot(NORMAL, normalize(rim_dir))));
 	EMISSION = c * fill + rim_color * figure_rim(NORMAL, VIEW, rim_power) * rim * side;
+	if (gamma != 1.0) {
+		ALBEDO = figure_gamma(ALBEDO, gamma);
+		EMISSION = figure_gamma(EMISSION, gamma);
+	}
 }
 
 void light() {
@@ -53,5 +62,6 @@ void light() {
 	// does not light his front)
 	float ndl = dot(NORMAL, LIGHT);
 	float band = figure_bands(ndl) * clamp(1.0 + ndl / 0.3, 0.0, 1.0);
-	DIFFUSE_LIGHT += LIGHT_COLOR * ATTENUATION * band / PI;
+	vec3 lit = LIGHT_COLOR * ATTENUATION * band / PI;
+	DIFFUSE_LIGHT += gamma != 1.0 ? figure_gamma(lit, gamma) : lit;
 }

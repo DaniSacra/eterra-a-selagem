@@ -45,6 +45,11 @@ const STYLE_BOSS_VIVID := 1.0
 ## Every figure with an edge of its own (EnemyDef.rim > 0) but the boss; the commons and Morvath keep the dark ink.
 const STYLE_ELITE_OUTLINE := Color(0.36, 0.27, 0.12)
 const STYLE_ELITE_WIDTH := 0.05
+## LC-4: in the Compatibility renderer (browser, phone) the stylized figure's light is raised to this by its luminance
+## at the end (crowd.gdshader `style_gamma`): there it reaches the screen without the desktop's linear-to-sRGB step, and
+## the body, made of light well under 1, went black inside its outline. 0.55 matches the Forward+ figure's luma in
+## tools/enemy_lab.gd (1/2.2 overshot by a third). The shell stays as it was (raised, it turned into a grey halo).
+const COMPAT_GAMMA := 0.55
 ## Painted figures (the Meshy models): how much the bright saturated spots of the painting (eyes, gems, orbs, embers)
 ## shine by themselves, and the old gold the steel of an elite turns to (EnemyDef.gild says how much).
 const PAINT_GLOW := 2.2
@@ -228,6 +233,8 @@ func register(d: EnemyDef) -> void:
 	edge.set_shader_parameter(&"style_elite", gilded)
 	edge.set_shader_parameter(&"style_elite_width", STYLE_ELITE_WIDTH)
 	edge.set_shader_parameter(&"style_elite_color", STYLE_ELITE_OUTLINE)
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		mat.set_shader_parameter(&"style_gamma", COMPAT_GAMMA)
 	_set_poses(edge, baked)
 	# elites and the boss always have the shell; every figure has it in the stylized look (F7 flips it live)
 	if d.rim > 0.0:

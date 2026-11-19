@@ -149,3 +149,46 @@ func test_the_painting_filter_is_optional_and_off_by_default() -> void:
 	assert_false(PaintPass.DEFAULT_ON, "STY-07 discarded by the spec's 5.2 (see the plan): off unless --paint-pass=1")
 	assert_false(PaintPass.wanted(GraphicsQuality.LOW), "never at the Baixa")
 	assert_false(PaintPass.wanted(GraphicsQuality.HIGH), "headless or off by default")
+
+
+## LC-4 and LC-5 (the Compatibility renderer's stylized look): the compensations are uniforms that only that renderer
+## sets; their defaults are neutral, so Forward+ (and the classic look everywhere) draw exactly as before, and the
+## shaders only use them in their stylized branch.
+func test_the_compatibility_compensation_is_neutral_off_that_renderer() -> void:
+	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
+	var renderer := CrowdRenderer.new()
+	add_child_autofree(renderer)
+	renderer.register(_def(&"guard_elite"))
+	var mat := renderer._materials[&"guard_elite"] as ShaderMaterial
+	var hero := HeroBody.painted(StandardMaterial3D.new())
+	var ground := GroundLook.new_node()
+	var floor_mat := ground.material_override as ShaderMaterial
+	if compat:
+		assert_almost_eq(float(mat.get_shader_parameter(&"style_gamma")), CrowdRenderer.COMPAT_GAMMA, 0.0001)
+		assert_almost_eq(float(hero.get_shader_parameter(&"gamma")), HeroBody.COMPAT_GAMMA, 0.0001)
+		assert_almost_eq(float(floor_mat.get_shader_parameter(&"style_compat_under")), GroundLook.COMPAT_UNDER, 0.0001)
+	else:
+		for m: ShaderMaterial in [mat, mat.next_pass as ShaderMaterial]:
+			var g: Variant = m.get_shader_parameter(&"style_gamma")
+			assert_true(g == null or is_equal_approx(float(g), 1.0), "the crowd's light is not raised off Compatibility")
+		var hg: Variant = hero.get_shader_parameter(&"gamma")
+		assert_true(hg == null or is_equal_approx(float(hg), 1.0), "nor the hero's")
+		for m: ShaderMaterial in [floor_mat, floor_mat.next_pass as ShaderMaterial]:
+			var gain: Variant = m.get_shader_parameter(&"style_compat_gain")
+			var under: Variant = m.get_shader_parameter(&"style_compat_under")
+			assert_true(gain == null or is_equal_approx(float(gain), 1.0), "the warnings' light is as before")
+			assert_true(under == null or is_zero_approx(float(under)), "and nothing darkens the floor under Morvath's")
+	ground.free()
+	# the defaults in the shaders are the neutral ones, and the uniforms are read only where the look is stylized
+	var crowd := (load("res://assets/shaders/crowd.gdshader") as Shader).code
+	assert_true(crowd.contains("uniform float style_gamma = 1.0;"))
+	assert_true(crowd.contains("if (styled && style_gamma != 1.0)"))
+	var paint := (HeroBody.PAINT as Shader).code
+	assert_true(paint.contains("uniform float gamma = 1.0;"))
+	var inc := (load("res://assets/shaders/ground.gdshaderinc") as ShaderInclude).code
+	assert_true(inc.contains("uniform float style_compat_gain = 1.0;"))
+	assert_true(inc.contains("uniform float style_compat_under = 0.0;"))
+	assert_true(inc.contains("art_style > 0.5 && style == 0 ? style_compat_gain : 1.0"))
+	# the figure's light is raised by its luminance (hue and saturation kept), between the identity and 1/2.2
+	assert_true(CrowdRenderer.COMPAT_GAMMA > 1.0 / 2.2 and CrowdRenderer.COMPAT_GAMMA < 1.0)
+	assert_eq(HeroBody.COMPAT_GAMMA, CrowdRenderer.COMPAT_GAMMA)

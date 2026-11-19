@@ -121,6 +121,9 @@ const STY_SLAB_HUE := 7.0
 ## The stylized air in the browser's renderer (as the crypt's: there the painted stone lit grey-white).
 const STY_COMPAT_AMBIENT := 0.45
 const STY_COMPAT_MOON := 0.35
+## LC-4: and the shafts and the nave's key a share there: the slab inside a shaft read luma 152 against 89 on the desktop
+## (the same take) and the fighters in it went to silhouettes.
+const STY_COMPAT_SHAFT := 0.25
 ## The soft key over the nave in the stylized look (spec 1.2: 0.6 of its energy when it draws no ring).
 const STY_KEY := 0.6
 ## The shafts in ivory gold (spec 1.3: under the painted light's fire threshold, a lit edge and no flat pool), the new
@@ -578,7 +581,8 @@ func style() -> Dictionary:
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
-	VisualProfile.vary(_key, {&"light_energy": KEY_ENERGY * STY_KEY})
+	var shaft := STY_COMPAT_SHAFT if compat() else 1.0
+	VisualProfile.vary(_key, {&"light_energy": KEY_ENERGY * STY_KEY * shaft})
 	for k in _shafts.size():
 		var to: Vector2 = MOON_AT[k]
 		var warm := STY_SHAFT_WARM
@@ -587,7 +591,7 @@ func style() -> Dictionary:
 			to = _middle(_hole)
 			warm = STY_TEAR_SHAFT
 		VisualProfile.vary(_shafts[k], {&"transform": _leaning(to, MOON_HEIGHT), &"light_color": warm,
-			&"light_energy": (MOON_ENERGY if _hole.is_empty() else MOON_ENERGY_B) * STY_SHAFT_GAIN, &"spot_angle": STY_SHAFT_CONE, &"light_specular": 0.0})
+			&"light_energy": (MOON_ENERGY if _hole.is_empty() else MOON_ENERGY_B) * STY_SHAFT_GAIN * shaft, &"spot_angle": STY_SHAFT_CONE, &"light_specular": 0.0})
 	if not _hole.is_empty():
 		if _hole_dust != null:
 			VisualProfile.vary(_hole_dust, {&"amount": STY_DUST})
@@ -608,7 +612,8 @@ func _leaning(to: Vector2, height: float) -> Transform3D:
 ## windows and the banners on the pilasters, the moss on the walls; in B the torn vault.
 func _dress_styled() -> void:
 	var sm := kit.styled()
-	var guard := moon_shaft(layout.boss_spawn, STY_SHAFT_WARM, STY_GUARD_SHAFT.x * STY_SHAFT_GAIN, STY_GUARD_SHAFT.y,
+	var share := STY_SHAFT_GAIN * (STY_COMPAT_SHAFT if compat() else 1.0)
+	var guard := moon_shaft(layout.boss_spawn, STY_SHAFT_WARM, STY_GUARD_SHAFT.x * share, STY_GUARD_SHAFT.y,
 		STY_GUARD_SHAFT.z, false, false)
 	guard.transform = _leaning(layout.boss_spawn, STY_GUARD_SHAFT.z)
 	guard.light_specular = 0.0

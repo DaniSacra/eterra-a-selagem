@@ -163,6 +163,12 @@ uniform float style_gild_sat = 1.15;
 uniform float style_gild_rest = 0.12;
 uniform float style_elite_rim = 1.0;
 uniform float style_elite_rim_power = 3.5;
+// LC-4 (the Compatibility renderer, browser and phone): there the figure's light reaches the screen without the
+// desktop's linear-to-sRGB step (an emission ramp v showed as about v^2.2 of the desktop's), so the stylized body, made
+// of light well under 1 (style_light, style_scene), went black inside its outline. style_gamma (CrowdRenderer.COMPAT_GAMMA
+// 0.55, set only in that renderer; measured against the Forward+ figures in tools/enemy_lab.gd) raises the stylized
+// figure's light to it by its luminance at the end (figure_gamma). 1 (Forward+, and always in the classic look): untouched.
+uniform float style_gamma = 1.0;
 
 varying vec4 state;
 varying vec3 world_pos;
@@ -280,5 +286,8 @@ void fragment() {
 		float white = step(white_from, flash) * flash_white;
 		EMISSION = mix(EMISSION, min(flash_ivory * shade * (0.75 + 0.25 * facing), vec3(flash_cap)), white);
 		ALBEDO *= 1.0 - white;
+	}
+	if (styled && style_gamma != 1.0) {
+		EMISSION = figure_gamma(EMISSION, style_gamma);
 	}
 }

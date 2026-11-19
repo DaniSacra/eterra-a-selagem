@@ -24,6 +24,10 @@ const PAINT_OUTLINE := preload("res://assets/shaders/hero_outline.gdshader")
 ## The outline: meters of the world, colour (T20: 0.045 m, cold dark ink).
 const OUTLINE_WIDTH := 0.045
 const OUTLINE_COLOR := Color(0.05, 0.07, 0.08)
+## LC-4: in the Compatibility renderer (browser, phone) his stylized light is raised to this (hero_paint.gdshader `gamma`):
+## there it reaches the screen without the desktop's linear-to-sRGB step and he went black inside the outline (the
+## same number as CrowdRenderer.COMPAT_GAMMA; the outline keeps its ink).
+const COMPAT_GAMMA := 0.55
 
 
 ## The model at the game's size, playing his own clips. Returns [model, AnimationPlayer, sword].
@@ -88,6 +92,8 @@ static func painted(own: StandardMaterial3D) -> ShaderMaterial:
 	edge.shader = PAINT_OUTLINE
 	edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
 	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		mat.set_shader_parameter(&"gamma", COMPAT_GAMMA)
 	mat.next_pass = edge
 	return mat
 

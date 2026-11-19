@@ -26,3 +26,11 @@ vec3 figure_flatten(vec3 raw, vec3 mean, float amount) {
 float figure_rim(vec3 normal, vec3 view, float power) {
 	return pow(1.0 - clamp(dot(normal, view), 0.0, 1.0), power);
 }
+
+// LC-4 (the Compatibility renderer): light raised to `g` by its luminance, the colour's own proportions kept (raising
+// each channel greyed the painting: the bone and the leathers went to a cold grey).
+vec3 figure_gamma(vec3 light, float g) {
+	vec3 l = max(light, vec3(0.0));
+	float y = dot(l, vec3(0.2126, 0.7152, 0.0722));
+	return y > 0.0 ? l * (pow(y, g) / y) : l;
+}

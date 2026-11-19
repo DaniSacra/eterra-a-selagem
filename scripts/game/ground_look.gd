@@ -70,6 +70,12 @@ const AIM_PX := 6.0
 const AIM_LIGHT := 0.5
 const AIM_FILL := 0.22
 const AIM_FILL_LATE := 0.3
+## LC-5: in the Compatibility renderer's stylized look (browser, phone) the painted floor is lighter and colder and a red
+## added to it read pale pink (Morvath's storm lanes, 13% red against 77% on the desktop): a warning adds COMPAT_GAIN
+## times its light there and lays the floor under its area at 1 - COMPAT_UNDER (ground.gdshaderinc style_compat_*).
+## Set only in that renderer; nothing changes on the desktop nor in the classic look.
+const COMPAT_GAIN := 1.1
+const COMPAT_UNDER := 0.3
 
 
 static func new_node() -> MeshInstance3D:
@@ -82,6 +88,9 @@ static func new_node() -> MeshInstance3D:
 	var fill := ShaderMaterial.new()
 	fill.shader = FILL_SHADER
 	mat.next_pass = fill
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
+		put(mat, &"style_compat_gain", COMPAT_GAIN)
+		put(mat, &"style_compat_under", COMPAT_UNDER)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	return mi

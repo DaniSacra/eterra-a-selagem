@@ -110,6 +110,15 @@ uniform float style_fill_gain = 1.5;
 // which style_rim_gain makes up. Shape and timing as before; art_style 0 draws the fill with no darkening at all.
 uniform vec3 style_warn_color : source_color = vec3(1.0, 0.09, 0.21);
 uniform float style_under = 0.2;
+// LC-5 (the Compatibility renderer, browser and phone, stylized look): there the painted floor is lighter and colder and
+// a red added to it read pale pink (Morvath's storm: 13% of a lane's pixels red against 77% on the desktop). Set only
+// in that renderer (GroundLook.COMPAT_*): a warning (style 0) adds style_compat_gain times its light, and its second pass
+// lays the floor under the whole area at 1 - style_compat_under (Morvath's own signed warnings too: on the desktop they
+// only add), the first pass's red given back on top; the signed ones add style_compat_warn there (their red read orange
+// added raw, and style_warn_color, made for the warm slab, magenta on the chamber's cold floor). 1 and 0 (Forward+, and always in the classic look): untouched.
+uniform float style_compat_gain = 1.0;
+uniform float style_compat_under = 0.0;
+uniform vec3 style_compat_warn : source_color = vec3(1.0, 0.13, 0.1);
 
 varying vec3 world;
 
@@ -157,9 +166,9 @@ float warning_fill(float swept) {
 // The colour a warning adds: its own, or in the stylized look an enemy's red warning turned to style_warn_color.
 vec3 warning_color(bool sign) {
 	vec3 c = color.rgb;
-	if (art_style > 0.5 && style == 0 && !sign) {
+	if (art_style > 0.5 && style == 0 && (!sign || style_compat_under > 0.0)) {
 		float red = smoothstep(0.5, 0.75, (c.r - max(c.g, c.b)) / max(c.r, 0.001));
-		c = mix(c, style_warn_color * c.r, red);
+		c = mix(c, (sign ? style_compat_warn : style_warn_color) * c.r, red);
 	}
 	return c;
 }
@@ -170,8 +179,8 @@ void fragment() {
 	}
 	bool sign = signed > 0.5;
 #ifdef FILL_PASS
-	// only an enemy's own warning has a fill of its own here
-	if (sign || style != 0) {
+	// only an enemy's own warning has a fill of its own here (and, LC-5, a signed one's darkened floor)
+	if (style != 0 || (sign && !(art_style > 0.5 && style_compat_under > 0.0))) {
 		discard;
 	}
 #endif
@@ -184,6 +193,8 @@ void fragment() {
 	float rim_light = 1.0;
 	vec3 extra = vec3(0.0);
 	float root_k = 1.0;
+	// inside the area itself (not the signature past it): where LC-5's darkening goes
+	float inside = 0.0;
 	if (shape == 1) {
 		float along = UV.y;
 		if (wedge.x > 0.0 || root_clear_m > 0.0) {
@@ -203,6 +214,7 @@ void fragment() {
 			vec2 sg = signature(side_m - size_m, along * length_m);
 			extra = (thread_color * sg.x * thread_light + rune_color * sg.y) * root_k;
 		} else if (style == 0) {
+			inside = root_k;
 			// which way the blow goes (cycle 8): the far end is the bright one, the near end only a faint line, the
 			// filling front is a chevron pointing ahead, and faint chevrons wait in the part still to fill
 			float far = smoothstep(0.96, 0.995, along);
@@ -268,6 +280,7 @@ void fragment() {
 			vec2 sg = signature(dm - size_m, atan(uv.x, -uv.y) * size_m);
 			extra = thread_color * sg.x * thread_light + rune_color * sg.y;
 		} else if (style == 0) {
+			inside = 1.0;
 			float rim = clamp(rim_m / size_m, 0.025, 0.14);
 			float ring = smoothstep(1.0 - rim, 1.0 - rim * 0.3, d) * (1.0 - smoothstep(0.985, 1.0, d));
 			// the filling front: a bright band where the fill has reached
@@ -307,21 +320,29 @@ void fragment() {
 		}
 	}
 	float gain = 1.0;
+	// LC-5: only the Compatibility renderer's stylized look sets these
+	float compat_gain = art_style > 0.5 && style == 0 ? style_compat_gain : 1.0;
+	float compat_under = art_style > 0.5 && style == 0 && aim_px <= 0.0 ? style_compat_under * inside : 0.0;
 #ifdef FILL_PASS
 	float under = 0.0;
 	if (art_style > 0.5 && style == 0 && !sign) {
 		under = style_under * (aim_px > 0.0 ? max(step(0.0001, filled), aim_cover) : 1.0);
 	}
+	under = max(under, compat_under);
 	if (filled <= 0.0 && under <= 0.0) discard;
 	if (art_style > 0.5) {
 		gain = style_fill_gain;
 	}
-	ALBEDO = warning_color(sign) * filled * gain * fade;
+	ALBEDO = warning_color(sign) * filled * gain * compat_gain * fade;
+	if (sign) {
+		// the first pass's light, darkened with the floor under it, given back
+		ALBEDO += min(warning_color(sign) * a * strength * style_rim_gain * compat_gain, vec3(light_cap)) * under * fade;
+	}
 	ALPHA = under * fade;
 #else
 	if (art_style > 0.5 && style == 0) {
 		gain = style_rim_gain;
 	}
-	ALBEDO = min(warning_color(sign) * a * strength * gain, vec3(light_cap)) * fade + extra * fade;
+	ALBEDO = min(warning_color(sign) * a * strength * gain * compat_gain, vec3(light_cap)) * fade + extra * fade;
 #endif
 }
