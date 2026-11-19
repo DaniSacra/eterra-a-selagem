@@ -172,18 +172,22 @@ func test_the_bolt_is_drawn_back_along_its_aim() -> void:
 	add_child_autofree(fx)
 	var e := _enemy(&"archer", Vector2(2, 3))
 	e.aim = Vector2.RIGHT
+	e.dir = Vector2.RIGHT
 	fx.begin()
 	fx.tell(e, EnemyFx.BOW_FROM * 0.5)
 	assert_eq(fx.count, 0, "nothing at first")
 	fx.begin()
 	fx.tell(e, 0.9)
-	var streaks := fx.put().filter(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.STREAK)
-	# LC-1: the crossbow drawn in light (its bow across and its bolt) and the sight ahead of its tip
-	assert_eq(streaks.size(), 3)
+	var bars := fx.put().filter(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.BAR)
+	# LC-1b: the crossbow in hard strokes (stock, two arms, string), each outlined in ink, and the sight from its tip
+	# down to the aim's wire on the floor, last
+	assert_eq(bars.size(), 5)
+	assert_eq(fx.put().filter(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.INK).size(), 5, "every stroke outlined")
 	var tip := EnemyFx.anchor(e.pos, e.y, e.yaw(), e.def.size, e.def.tell_at)
-	var sight: Array = streaks[2]
+	var sight: Array = bars[4]
 	assert_gt((sight[1] as Vector3).x, tip.x + 1.0, "ahead of the bolt's tip, the way it flies")
 	assert_almost_eq((sight[1] as Vector3).z, tip.z, EnemyFx.BOW_TIP * e.def.size + 0.01, "along its aim, from the tip of the crossbow")
+	assert_lt((sight[1] as Vector3).y, tip.y, "going down to the wire on the floor")
 
 
 func test_the_shield_reads_early_in_a_long_charge() -> void:

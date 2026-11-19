@@ -1,4 +1,5 @@
 // The body of the enemies' wind-up lights (enemy_tell.gdshader, enemy_tell_over.gdshader): see enemy_tell.gdshader.
+// Shapes 4 (BAR, a hard stroke) and 5 (INK, the same stroke in dark ink, which only the over pass draws: PREMUL).
 
 varying vec4 tint;
 varying vec4 look;
@@ -29,9 +30,21 @@ void fragment() {
 	} else if (look.x < 2.5) {
 		float across = clamp(1.0 - abs(p.y), 0.0, 1.0);
 		a = across * across * clamp((1.0 - abs(p.x)) * 2.5, 0.0, 1.0);
-	} else {
+	} else if (look.x < 3.5) {
 		a = step(abs(p.x) + abs(p.y), 1.0);
+	} else {
+		// 4 BAR, 5 INK (LC-1b): a stroke with hard edges, one pixel of smoothing
+		vec2 w = max(fwidth(p), vec2(1e-4));
+		vec2 e = clamp((1.0 - abs(p)) / w, 0.0, 1.0);
+		a = e.x * e.y;
 	}
+#ifdef PREMUL
+	// premultiplied: the lights add (as blend_add), the ink darkens what is behind
+	bool ink = look.x > 4.5;
+	ALBEDO = ink ? vec3(0.0) : tint.rgb * a * tint.a;
+	ALPHA = ink ? a * tint.a : 0.0;
+#else
 	ALBEDO = tint.rgb;
-	ALPHA = a * tint.a;
+	ALPHA = look.x > 4.5 ? 0.0 : a * tint.a;
+#endif
 }

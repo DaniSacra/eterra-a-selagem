@@ -10,11 +10,14 @@ extends Node3D
 ## Rules (docs/art/cycle7_spec.md, 1 and 4.2): born of a real event, gone when the attack is loosed, never red (red
 ## is danger on the floor), violet is the enemy's magic, old gold is armor, pale is steel.
 
-enum Shape { DOT, RING, STREAK, SHARD }
+enum Shape { DOT, RING, STREAK, SHARD, BAR, INK }
 
 const SHADER := preload("res://assets/shaders/enemy_tell.gdshader")
 ## LC-1: the quads put with `over` are drawn by a second MultiMesh over what is in front of them (no depth test).
 const OVER_SHADER := preload("res://assets/shaders/enemy_tell_over.gdshader")
+## LC-1b/LC-3b: BAR is a stroke with hard edges (a drawn object, not a glow); INK the same stroke in dark ink, which
+## only the quads drawn over darken (enemy_tell_over.gdshader, premultiplied): put under a BAR it outlines it, so the
+## shape reads on the pale floor and on the bone of the figures alike.
 ## Quads on the screen at once; past it the rest is not drawn.
 const POOL := 320
 const FLOATS := 20
@@ -33,17 +36,33 @@ const GLINT_SIZE := 0.7
 ## this share of the wind-up.
 const BOLT_FROM := 0.35
 const BOLT_DRAW := 0.9
-## LC-1 (docs/backlog.md 9): the crossbow itself drawn in light where the pose holds it (BakedModel.point "crossbow"):
-## its bow a pale bar across the aim (meters at size 1, lying flat, so the high camera sees the shape of a crossbow
-## from above) from BOW_FROM of the wind-up, as it comes up to the shoulder; and the sight, a thin line in the bolt's
-## steel from its tip along the aim (never the bolt's orange: red is the floor's danger), growing to SIGHT meters by the shot: the figure that aims and the way the bolt
-## will fly, tied to the wire on the floor. Its tip that far ahead of the crossbow's middle.
+## LC-1 (docs/backlog.md 9): the crossbow itself drawn in light where the pose holds it (BakedModel.point "crossbow"),
+## from BOW_FROM of the wind-up, as it comes up to the shoulder. LC-1b: drawn in the screen's plane (never shortened by
+## the camera's tilt, whichever way it aims) and pointing where the aim points on the screen, in hard pale strokes
+## outlined in ink (BAR over INK), all in meters at size 1: the stock CROSSBOW_STOCK long, the bow's two arms
+## CROSSBOW_ARM long at its front, swept back CROSSBOW_SWEEP, the string straight across their ends, about 70 px across
+## at 1080 in the game's camera (it was a 30 to 40 px cross of thin streaks). The sight goes from the bolt's tip down to
+## the aim's wire on the floor, SIGHT meters ahead of its feet: the figure that aims tied to the way the bolt will fly
+## (the wire on the floor, Ground.add_aim_warning, from the same frame). The bolt's steel, never the bolt's orange: red
+## is the floor's danger.
 const BOW_FROM := 0.15
-const BOW_WIDTH := 0.95
-const BOW_THICK := 0.1
-const BOW_TIP := 0.28
+const CROSSBOW_STOCK := 1.0
+const CROSSBOW_ARM := 0.62
+const CROSSBOW_SWEEP := 0.3
+const CROSSBOW_STROKE := 0.075
+const STRING_STROKE := 0.035
+## The ink round each stroke: this much wider than it (meters at size 1, each side).
+const INK_EDGE := 0.065
+const INK_ALPHA := 0.6
+## The strokes (BAR) are lit to this share of the brightest their hue may be and stay under ScreenTone.SAFE on the
+## screen (ScreenTone.fit, linear): the rest is the room for what shows through the ink under them.
+const STROKE_ROOM := 0.9
+## The bow sits this far ahead of the crossbow's middle, the bolt's tip that far (meters at size 1).
+const BOW_AHEAD := 0.3
+const BOW_TIP := 0.5
 const SIGHT := 3.4
 const SIGHT_LIGHT := 0.7
+const SIGHT_STROKE := 0.05
 ## The steel of the tip gleams as the shot comes (the soldier's blade does the same): its size at size 1, fullest at
 ## GLINT_PEAK of the wind-up.
 const TIP_GLINT := 0.5
@@ -81,6 +100,14 @@ const RITUAL_PALM := 0.32
 const RITUAL_FLAME := 0.38
 const RITUAL_LIFT := 0.3
 const RITUAL_THREAD := 0.5
+## LC-3b: the rite reads from every side, its back to the camera too (the body hid the V of its arms): the two arms
+## drawn as strokes of the magic's light outlined in ink, from the chest (RITUAL_NECK of its height) to each lit palm,
+## over the body (as the crossbow), with the palms and the flame; in the magic's hue, under ScreenTone.SAFE (lit()).
+const RITUAL_NECK := 0.6
+const RITUAL_ARM := 0.07
+## The V never narrower than this across, nor its palms lower than this over the chest, on the screen (meters at size 1).
+const RITUAL_SPREAD := 0.8
+const RITUAL_RAISE := 0.45
 ## Seconds the loosed attack still shows (the spark of the bolt, the stroke on the shield).
 const LOOSE_TIME := 0.14
 ## A lunge leaves two pale streaks behind the body (meters) and dust where it started.
@@ -113,6 +140,12 @@ var _data := PackedFloat32Array()
 var _over := PackedByteArray()
 var _over_mmi: MultiMeshInstance3D
 var _sparks: Array[Spark] = []
+## Each hue's stroke light (lit()), computed once.
+var _lit := {}
+## The camera's right and up in the world (read in begin(); without a camera, the game's: 30 degrees over the floor,
+## looking north), for the strokes drawn in the screen's plane (LC-1b).
+var _right := Vector3.RIGHT
+var _up := Vector3(0, 0.866, -0.5)
 ## Only for the scatter of the armor's sparks: never the simulation's generator.
 var _rng := RandomNumberGenerator.new()
 
@@ -164,6 +197,10 @@ func _process(delta: float) -> void:
 
 func begin() -> void:
 	count = 0
+	var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
+	if cam != null:
+		_right = cam.global_basis.x
+		_up = cam.global_basis.y
 
 
 ## Where a point of the figure (EnemyDef.tell_at) is in the world: x to its right, y up, z ahead, scaled by its size.
@@ -243,22 +280,7 @@ func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -
 				_put(Shape.DOT, at + Vector3(cos(a) * r, (1.0 - phase) * ORB_RISE * 0.4 * d.size, sin(a) * r), Vector2.ONE * 0.16 * d.size, c * MAGIC_SPARK,
 					sin(phase * PI) * minf(1.0, k * 3.0) * gone)
 		EnemyDef.Tell.BOLT:
-			var face := Vector2.from_angle(PI * 0.5 - e.yaw())
-			var bow := ramp(k, BOW_FROM, BOLT_FROM)
-			if bow > 0.0:
-				# the crossbow in light where the pose holds it: its bow across, the bolt along it
-				# (over its own body: aiming away from the camera, the body hid the crossbow)
-				_floor(Shape.STREAK, at, Vector2(-face.y, face.x), Vector2(BOW_WIDTH * d.size, BOW_THICK * d.size), PALE, 0.85 * bow, 0.0, true)
-				_floor(Shape.STREAK, at, face, Vector2(BOW_TIP * 2.4 * d.size, BOW_THICK * 0.8 * d.size), PALE, 0.7 * bow, 0.0, true)
-			var b := ramp(k, BOLT_FROM, 1.0)
-			if b > 0.0:
-				# the bolt drawn back: its tip lights and the sight grows from it along the aim, the way it will fly
-				var tip := at + Vector3(face.x, 0.0, face.y) * BOW_TIP * d.size
-				var glint := ramp(k, GLINT_FROM, GLINT_PEAK)
-				_put(Shape.DOT, tip, Vector2.ONE * lerpf(0.32, TIP_GLINT, glint) * d.size, PALE, 0.65 * b + 0.25 * glint, 0.0, 0.0, true)
-				var length := SIGHT * d.size * b
-				var mid := Vector2(tip.x, tip.z) + e.aim * length * 0.5
-				_floor(Shape.STREAK, Vector3(mid.x, tip.y, mid.y), e.aim, Vector2(length, 0.07 * d.size), PALE, SIGHT_LIGHT * b, 0.0, true)
+			_crossbow(e, k, at)
 		EnemyDef.Tell.SHIELD:
 			var s := ramp(k, SHIELD_FROM, 1.0)
 			if s > 0.0:
@@ -279,24 +301,121 @@ func _rite(e: Enemy, k: float, at: Vector3, model: BakedModel, anim: StringName,
 	var rise := smoothstep(0.0, 0.3, k)
 	var gone := 1.0 - smoothstep(0.94, 1.0, k)
 	_floor(Shape.RING, Vector3(e.pos.x, 0.06, e.pos.y), Vector2.RIGHT, Vector2.ONE * 2.0 * RITUAL_RING, c, RITUAL_RING_ALPHA * rise, 0.05)
-	# the flame over the raised hands, grown with them
+	# the flame over the raised hands, grown with them; it and the palms over the body (LC-3b: the back too)
 	var flame := smoothstep(0.15, 0.7, k)
 	var top := at + Vector3(0, RITUAL_LIFT * d.size * flame, 0)
-	_put(Shape.DOT, top, Vector2(0.8, 1.15) * RITUAL_FLAME * d.size * (0.5 + 0.5 * flame), c, 0.7 * flame * gone)
+	if model != null and model.has_point("hand_l") and model.frame_count(anim) > 0:
+		# the two raised arms: a V of light from its chest to each palm, outlined in ink, in the screen's plane; seen
+		# from the side (the palms one behind the other) the V opens to RITUAL_SPREAD across and RITUAL_RAISE up, so
+		# it reads the same from every side
+		var chest := anchor(e.pos, e.y, e.yaw(), d.size, Vector3(0, RITUAL_NECK * model.height, 0))
+		var ends: Array[Vector2] = []
+		for hand: String in ["hand_l", "hand_r"]:
+			var off := anchor(e.pos, e.y, e.yaw(), d.size, model.point(hand, anim, t)) - chest
+			ends.append(Vector2(off.dot(_right), off.dot(_up)))
+		if ends[0].x > ends[1].x:
+			ends.reverse()
+		var spread := RITUAL_SPREAD * d.size
+		var mid_x := (ends[0].x + ends[1].x) * 0.5
+		if ends[1].x - ends[0].x < spread:
+			ends[0].x = mid_x - spread * 0.5
+			ends[1].x = mid_x + spread * 0.5
+		for i in 2:
+			ends[i].y = maxf(ends[i].y, RITUAL_RAISE * d.size)
+		var arm_alpha := 0.9 * flame * gone
+		for end in ends:
+			_flat_bar(Shape.INK, chest, Vector2.ZERO, end, (RITUAL_ARM + INK_EDGE * 2.0) * d.size, INK_EDGE * d.size, Color.BLACK, INK_ALPHA * minf(arm_alpha / 0.9, 1.0))
+		for end in ends:
+			_flat_bar(Shape.BAR, chest, Vector2.ZERO, end, RITUAL_ARM * d.size, 0.0, lit(c), arm_alpha)
+		# a glow in each palm, at the V's ends
+		for end in ends:
+			_put(Shape.DOT, chest + _right * end.x + _up * end.y, Vector2.ONE * RITUAL_PALM * d.size, c * MAGIC_SPARK, 0.8 * flame * gone, 0.0, 0.0, true)
+	_put(Shape.DOT, top, Vector2(0.8, 1.15) * RITUAL_FLAME * d.size * (0.5 + 0.5 * flame), c, 0.7 * flame * gone, 0.0, 0.0, true)
 	for i in RITUAL_MOTES:
 		var a := k * TAU * 2.0 + TAU * i / RITUAL_MOTES
 		_put(Shape.DOT, top + Vector3(cos(a), 0.35 * sin(a * 0.5), sin(a)) * RITUAL_ORBIT * d.size, Vector2.ONE * 0.2 * d.size, c * MAGIC_SPARK, rise * gone)
-	# a glow in each palm
-	if model != null and model.has_point("hand_l") and model.frame_count(anim) > 0:
-		for hand: String in ["hand_l", "hand_r"]:
-			var palm := anchor(e.pos, e.y, e.yaw(), d.size, model.point(hand, anim, t))
-			_put(Shape.DOT, palm, Vector2.ONE * RITUAL_PALM * d.size, c * MAGIC_SPARK, 0.8 * flame * gone)
 	# in the hold, a thread from the flame down to the ring: from the rite to the ground
 	var thread := ramp(k, 0.6, 0.85)
 	if thread > 0.0:
 		var low := Vector3(e.pos.x, 0.1, e.pos.y)
 		# turned to the camera and upright on the screen (the game's camera sees a standing meter as 0.87)
 		_put(Shape.STREAK, (top + low) * 0.5, Vector2((top.y - low.y) * 0.87, 0.05 * d.size), c, RITUAL_THREAD * thread, PI * 0.5)
+
+
+## A stroke's light in the hue of c: as bright as it may be and stay under ScreenTone.SAFE on the screen, times
+## STROKE_ROOM (the strokes are opaque light over ink: the old streaks of 1.0 and more went to 255).
+func lit(c: Color) -> Color:
+	if not _lit.has(c):
+		# the quads' colour is linear (unshaded, no sRGB decoding)
+		var f := ScreenTone.fit(Color(c.r * 8.0, c.g * 8.0, c.b * 8.0), ScreenTone.SAFE, false)
+		_lit[c] = Color(f.r * STROKE_ROOM, f.g * STROKE_ROOM, f.b * STROKE_ROOM)
+	return _lit[c]
+
+
+## LC-1b: the crossbow in light where the pose holds it (at), in the screen's plane, pointing where it aims, and the
+## sight from its tip down to the aim's wire on the floor (see CROSSBOW_*).
+func _crossbow(e: Enemy, k: float, at: Vector3) -> void:
+	var d := e.def
+	var bow := ramp(k, BOW_FROM, BOLT_FROM)
+	if bow <= 0.0:
+		return
+	var aim := e.aim if e.aim.length_squared() > 0.01 else Vector2.from_angle(PI * 0.5 - e.yaw())
+	var aim3 := Vector3(aim.x, 0.0, aim.y)
+	# the aim on the screen (right, up), and across it
+	var on := Vector2(aim3.dot(_right), aim3.dot(_up))
+	on = on.normalized() if on.length_squared() > 1e-4 else Vector2.RIGHT
+	var across := Vector2(-on.y, on.x)
+	var z := d.size
+	var pale := lit(PALE)
+	var front := on * BOW_AHEAD * z
+	var strokes: Array = [[-on * CROSSBOW_STOCK * 0.6 * z, on * CROSSBOW_STOCK * 0.4 * z, CROSSBOW_STROKE]]
+	var ends: Array[Vector2] = []
+	for side: float in [-1.0, 1.0]:
+		var arm_end: Vector2 = front + (across * side * cos(CROSSBOW_SWEEP) - on * sin(CROSSBOW_SWEEP)) * CROSSBOW_ARM * z
+		strokes.append([front, arm_end, CROSSBOW_STROKE])
+		ends.append(arm_end)
+	# the string straight across the bow's ends
+	strokes.append([ends[0], ends[1], STRING_STROKE])
+	for s: Array in strokes:
+		_flat_bar(Shape.INK, at, s[0], s[1], (s[2] + INK_EDGE * 2.0) * z, INK_EDGE * z, Color.BLACK, INK_ALPHA * bow)
+	for s: Array in strokes:
+		_flat_bar(Shape.BAR, at, s[0], s[1], s[2] * z, 0.0, pale, bow)
+	var b := ramp(k, BOLT_FROM, 1.0)
+	if b <= 0.0:
+		return
+	# the bolt drawn back: its tip lights, and the sight comes from it down to the wire on the floor
+	var tip := at + aim3 * BOW_TIP * z
+	var glint := ramp(k, GLINT_FROM, GLINT_PEAK)
+	_put(Shape.DOT, tip, Vector2.ONE * lerpf(0.32, TIP_GLINT, glint) * z, PALE, 0.65 * b + 0.25 * glint, 0.0, 0.0, true)
+	var ground := Vector3(e.pos.x, 0.08, e.pos.y) + aim3 * SIGHT * z
+	_stroke(tip, tip.lerp(ground, b), SIGHT_STROKE * z, pale, SIGHT_LIGHT * b)
+
+
+## A stroke in the screen's plane round `at`: from a to b (right, up on the screen, meters), width wide, past its
+## ends by `past` (the ink's edge), drawn over.
+func _flat_bar(shape: Shape, at: Vector3, a: Vector2, b: Vector2, width: float, past: float, color: Color, alpha: float) -> void:
+	var along := b - a
+	var mid := (a + b) * 0.5
+	_put(shape, at + _right * mid.x + _up * mid.y, Vector2(along.length() + past * 2.0, width), color, alpha, along.angle(), 0.0, true)
+
+
+## A stroke from a to b in the world, facing the camera, width wide, outlined in ink, drawn over. part: 0 both, 1 only
+## the ink, 2 only the light (strokes that meet put all their ink first).
+func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, part := 0) -> void:
+	var along := b - a
+	if along.length_squared() < 1e-6 or alpha <= 0.003:
+		return
+	var facing := _right.cross(_up)
+	var side := along.cross(facing)
+	side = side.normalized() if side.length_squared() > 1e-8 else _right
+	var dir := along.normalized()
+	for ink: bool in [true, false]:
+		if (ink and part == 2) or (not ink and part == 1):
+			continue
+		var w := width + (INK_EDGE * 2.0 if ink else 0.0)
+		var x := along + (dir * INK_EDGE * 2.0 if ink else Vector3.ZERO)
+		_write(Basis(x, side * w, facing), (a + b) * 0.5, Shape.INK if ink else Shape.BAR, Color.BLACK if ink else color,
+			(INK_ALPHA * minf(alpha / 0.9, 1.0)) if ink else alpha, 0.0, 0.0, 0.0, true)
 
 
 ## One enemy whose attack was just loosed, t seconds ago (model, anim, clip_t: the pose drawn, as for tell()).

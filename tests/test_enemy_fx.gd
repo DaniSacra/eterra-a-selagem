@@ -129,7 +129,8 @@ func test_the_wind_up_lights_sit_on_the_part_drawn() -> void:
 		assert_gt(near, 0, "%s: its lights on its %s" % [id, part])
 
 
-## LC-1: the crossbow is drawn in light over the crossbowman's own body (aiming away it hid it); nothing else is.
+## LC-1: the crossbow is drawn in light over the crossbowman's own body (aiming away it hid it); LC-3b: the priest's
+## rite too (its back to the camera hid its arms); nothing else is.
 func test_only_the_crossbow_is_drawn_over() -> void:
 	var fx := _fx()
 	for id: StringName in SHEET:
@@ -140,6 +141,8 @@ func test_only_the_crossbow_is_drawn_over() -> void:
 		var over := fx._over.slice(0, fx.count).count(1)
 		if id == &"archer":
 			assert_gte(over, 3, "the bow, the bolt, the tip and the sight")
+		elif id == &"priest":
+			assert_gte(over, 1, "the flame of the rite")
 		else:
 			assert_eq(over, 0, "%s: under what is in front" % id)
 	fx.begin()
@@ -148,7 +151,7 @@ func test_only_the_crossbow_is_drawn_over() -> void:
 	fx.commit()
 	assert_true(fx._over_mmi.visible and fx._mmi.visible)
 	assert_eq(fx._over_mmi.multimesh.visible_instance_count + fx._mmi.multimesh.visible_instance_count, fx.count)
-	# the priest's palms: one light in each raised hand
+	# the priest's palms: one light at each raised hand (LC-3b: the V opened on the screen when seen from the side)
 	var priest: BakedModel = load("res://assets/baked/priest.res")
 	var e := _enemy(&"priest")
 	var t := priest.duration(&"cast")
@@ -156,8 +159,16 @@ func test_only_the_crossbow_is_drawn_over() -> void:
 	fx.tell(e, 0.8, priest, &"cast", t)
 	for hand: String in ["hand_l", "hand_r"]:
 		var palm := EnemyFx.anchor(e.pos, 0.0, e.yaw(), e.def.size, priest.point(hand, &"cast", t))
-		assert_true(fx.put().any(func(q: Array) -> bool: return (q[1] as Vector3).distance_to(palm) < 0.001), "a light in %s" % hand)
+		assert_true(fx.put().any(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.DOT and (q[1] as Vector3).distance_to(palm) < EnemyFx.RITUAL_SPREAD * e.def.size), "a light at %s" % hand)
 		assert_gt(palm.y, 0.7 * priest.height * e.def.size, "%s raised to the head" % hand)
+	# the V of its arms: two strokes outlined in ink, drawn over, whichever way it faces
+	for yaw_dir: Vector2 in [Vector2.RIGHT, Vector2.UP, Vector2.DOWN, Vector2.LEFT]:
+		e.dir = yaw_dir
+		fx.begin()
+		fx.tell(e, 0.8, priest, &"cast", t)
+		var arms := fx.put().filter(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.BAR)
+		assert_eq(arms.size(), 2, "two arms facing %s" % yaw_dir)
+		assert_eq(fx.put().filter(func(q: Array) -> bool: return q[0] == EnemyFx.Shape.INK).size(), 2, "outlined facing %s" % yaw_dir)
 
 
 func test_the_lights_follow_the_figure() -> void:

@@ -1747,15 +1747,30 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   lida uma vez por clipe), com os nomes do assado em `parts` (`crossbow`) ou em `marks` (`orb` dos cajados, `hands`,
   `hand_l`, `hand_r` do sacerdote, por `"marks"` do `tools/bake.gd`, vértices presos àqueles ossos); `Horde.render`
   passa o modelo, o clipe e o tempo para `EnemyFx.tell` e `loosed` (`EnemyFx.spot`; sem modelo cai no `tell_at`).
-- **Besteiro**: besta a 0,62 com o arco claro (`CROSSBOW_PAINT`, ferro gasto `blade`); na mira a besta desenhada em luz
-  pálida deitada (arco atravessado `BOW_WIDTH` 0,95 m e o virote), a ponta que brilha antes do tiro (`TIP_GLINT`) e a
-  linha de mira de `SIGHT` 3,4 m a partir da ponta, por cima do próprio corpo (`enemy_tell_over.gdshader`, segunda
-  MultiMesh sem teste de profundidade: de costas para a câmera o corpo escondia a besta).
+- **Besteiro**: besta a 0,62 com o arco claro (`CROSSBOW_PAINT`, ferro gasto `blade`); na mira (LC-1b) a besta é um ícone
+  desenhado no plano da tela, apontando para onde a mira aponta na tela (nunca encurtado pela inclinação da câmera):
+  coronha `CROSSBOW_STOCK` 1,0 m, os dois braços do arco `CROSSBOW_ARM` 0,62 m varridos `CROSSBOW_SWEEP` 0,3 rad e a corda
+  reta entre as pontas, em traços duros (`Shape.BAR`) com tinta escura em volta (`Shape.INK`, `INK_EDGE`, `INK_ALPHA`
+  0,6), cerca de 70 px a 1080 (eram 30 a 40); a ponta que brilha antes do tiro (`TIP_GLINT`) e a linha de mira que desce
+  da ponta até o fio do aviso no chão, `SIGHT` 3,4 m à frente dos pés (`_stroke`): quem mira ligado a por onde o virote
+  passa. Tudo por cima do próprio corpo (`enemy_tell_over.gdshader`, agora `blend_premul_alpha` com `#define PREMUL`:
+  as luzes somam como antes, a tinta escurece); traços no teto da tela (`EnemyFx.lit`: `ScreenTone.fit` linear vezes
+  `STROKE_ROOM` 0,9, cerca de 220 de 255).
 - **Feiticeiro**: no topo do cajado um miolo que cresce de `ORB_CORE` 0,16 a `ORB_CORE_FULL` 0,42 m e anéis que se fecham
   nele (`ORB_GATHER` 1,1 m, `ORB_RINGS` 2), as centelhas entrando; nada acima do limiar do glow.
 - **Sacerdote**: o rito é os dois braços abertos para cima em V (`cast` = `Cheer` do KayKit de 0 a 0,84 s em 0,8 s,
-  `RITE_BEND`: o tronco e a cabeça jogados para trás), uma luz em cada palma (`RITUAL_PALM`), a chama sobre as mãos (`RITUAL_FLAME`,
-  `RITUAL_LIFT`), o anel no chão como antes e um fio da chama ao anel na espera (`RITUAL_THREAD`).
+  `RITE_BEND`: o tronco e a cabeça jogados para trás), a chama sobre as mãos (`RITUAL_FLAME`, `RITUAL_LIFT`), o anel no
+  chão como antes e um fio da chama ao anel na espera (`RITUAL_THREAD`). LC-3b: o V dos braços desenhado em luz da magia
+  com tinta em volta, do peito (`RITUAL_NECK` 0,6 da altura) às palmas, no plano da tela e por cima do corpo; visto de
+  lado ou de costas ele abre até `RITUAL_SPREAD` 0,8 m de largura e `RITUAL_RAISE` 0,45 m acima do peito, então lê igual
+  de qualquer lado; a luz de cada palma (`RITUAL_PALM`) e a chama também por cima.
+- Medido (LC-1b e LC-3b, RTX a 1920 x 1080, estilizado, câmera do jogo, `--stress=6 --stress-ids=archer,mage,priest
+  --seed=5 --hero-at=0,0`, quadros a cada 0,1 s): besta de luz do besteiro de 35 x 18 px (a cruz fina) para 64 a 70 x 67 a
+  69 px, traços em luma p50 217 a 219 (antes 228 a 241, até 255); sacerdote de costas no meio de outros
+  (`--seed=7 --hero-at=0,-6`): antes só uma palma à vista, depois o V inteiro com cerca de 80 px de largura e pixels
+  violeta na caixa da cabeça de 1708 para 2085; o quadro inteiro igual (luma p50 57, matiz 216 a 218). Ferramenta:
+  `tools/enemy_lab.gd ... --spin` (a fileira gira, cada figura vista de um lado). Evidências em
+  `docs/gallery/lc/windup/after2/` (tiras antes e depois, vídeos em velocidade real lado a lado, clássico e Compatibility).
 - Testes em `tests/test_enemy_fx.gd` e `tests/test_indicators.gd`. Pendência conhecida do assado: dobra (`bend`) em osso
   que o rig do KayKit não move (`Spine01`, `neck`) se acumula pose após pose; o rugido de Morvath (`ROAR_BEND` no
   `Taunt_Longer`) provavelmente tem isso (medir antes de reassar Morvath).

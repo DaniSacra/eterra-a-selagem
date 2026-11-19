@@ -7,7 +7,8 @@ extends SceneTree
 ## spreads that row over the clip (the same id many times shows the clip as a strip); "clip" spreads it over the whole clip.
 ## Options anywhere after the prefix: --zoom=2 (the camera that much closer), --tell=0.8 (every figure as if that far
 ## into its wind-up: the swollen orb and the lights of EnemyFx), --loosed=0.03 (as if its attack was loosed that many
-## seconds ago), --absorbed (a blow just landed on its armor), --broken (its armor is gone), --look=stylized.
+## seconds ago), --absorbed (a blow just landed on its armor), --broken (its armor is gone), --look=stylized,
+## --spin (the game's view with the row turning round: the same id many times, seen from every side).
 ## Cycle 8: --bars (each one's life bar as the game draws it: 60% life with a pale trail to 85%, an elite with 70% of
 ## its armor, or none with --broken) and --warn=0.6 (the warning of its attack on the floor, that far filled, aimed
 ## down and to the right of the screen).
@@ -104,9 +105,17 @@ func _run() -> void:
 	world.add_child(cam)
 	for view: String in ["game", "front", "back", "side"]:
 		renderer.begin()
-		tells.begin()
 		# side: turned to show the right hand
 		var yaw := PI if view == "back" else (PI * 0.5 if view == "side" else 0.0)
+		# the camera first: the lights turned to the screen (EnemyFx) read it
+		if view == "game":
+			# the game's camera: 30 degrees over the floor, a narrow lens
+			cam.fov = 24.0
+			cam.look_at_from_position(Vector3(-gap * 0.5, 1.0 + 29.0 * zoom, (-2.5 if elites.size() > 0 else 0.0) + 54.5 * zoom), Vector3(-gap * 0.5, 1.0, -2.5 if elites.size() > 0 else 0.0), Vector3.UP)
+		else:
+			cam.fov = 22.0
+			cam.look_at_from_position(Vector3(-gap * 0.5, 2.4 + 1.6 * zoom, 72.0 * zoom), Vector3(-gap * 0.5, 2.4 if elites.size() > 0 else 1.6, 0), Vector3.UP)
+		tells.begin()
 		for i in defs.size():
 			var back_row := 0 if i < row.size() else 1
 			var k := i if back_row == 0 else i - row.size()
@@ -119,12 +128,15 @@ func _run() -> void:
 				_warn(warnings, defs[i], Vector2(pos.x, pos.z), float(opts.warn))
 			var state := CrowdRenderer.state(0.6 if opts.has("absorbed") else 0.0, false, false, 0.0, opts.has("absorbed"), tell, opts.has("broken"))
 			var clip_t := lerpf(at_t, to_t, k / maxf(row.size() - 1, 1.0)) if back_row == 0 else at_t
-			renderer.add(defs[i], anim, clip_t, pos, yaw, state)
+			# --spin: in the game's view the row turns round, figure k at k/n of a turn (k 0 faces the camera; the
+			# middle one has its back to it), to judge a wind-up from every side
+			var turn := yaw + (TAU * k / row.size() if opts.has("spin") and view == "game" and back_row == 0 else 0.0)
+			renderer.add(defs[i], anim, clip_t, pos, turn, state)
 			if opts.has("tell") or opts.has("loosed"):
 				var foe := Enemy.new()
 				foe.def = defs[i]
 				foe.pos = Vector2(pos.x, pos.z)
-				foe.dir = Vector2(sin(yaw), cos(yaw))
+				foe.dir = Vector2(sin(turn), cos(turn))
 				foe.aim = foe.dir
 				foe.look = fposmod(i * 0.618034, 1.0)
 				if opts.has("loosed"):
@@ -138,13 +150,6 @@ func _run() -> void:
 			for w in warnings.get_children():
 				w.queue_free()
 		hero.rotation.y = yaw
-		if view == "game":
-			# the game's camera: 30 degrees over the floor, a narrow lens
-			cam.fov = 24.0
-			cam.look_at_from_position(Vector3(-gap * 0.5, 1.0 + 29.0 * zoom, (-2.5 if elites.size() > 0 else 0.0) + 54.5 * zoom), Vector3(-gap * 0.5, 1.0, -2.5 if elites.size() > 0 else 0.0), Vector3.UP)
-		else:
-			cam.fov = 22.0
-			cam.look_at_from_position(Vector3(-gap * 0.5, 2.4 + 1.6 * zoom, 72.0 * zoom), Vector3(-gap * 0.5, 2.4 if elites.size() > 0 else 1.6, 0), Vector3.UP)
 		for f in 4:
 			await process_frame
 		root.get_viewport().get_texture().get_image().save_png("%s_%s.png" % [out, view])
