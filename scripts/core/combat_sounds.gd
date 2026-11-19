@@ -29,6 +29,10 @@ const EVENTS := {
 	&"ult_cleave": &"ult_cleave",
 	&"ult_vortex": &"vortex",
 	&"ult_implode": &"ult_implode",
+	# the floor of the Câmara das Runas Instáveis (RuneFloor): one sound per pattern as it arms and one as it strikes,
+	# never one per tile; soft, under Morvath's warnings (not in Audio.WARN_CUES: no ducking)
+	&"rune_arm": &"rune_arm",
+	&"rune_fire": &"rune_crack",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
 const MATERIALS: Array[StringName] = [&"spectral", &"armor", &"shield", &"bone"]

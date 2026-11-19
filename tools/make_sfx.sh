@@ -152,6 +152,10 @@ mk enemy_burst 0.6 -7 "$R/spell_fire_06.ogg|0|0.8|0|lowpass=f=5000" "$B/bfh1_roc
 mk shot_orb 0.3 -14 "$R/spell_02.ogg|0|1|0|lowpass=f=3500|0|0.3"
 mk shot_vine 0.45 -14 "$R/creature_slime_02.ogg|0|0.7|0|lowpass=f=4000" "$K/creak1.ogg|-6|0.6|0|lowpass=f=4000"
 mk bolt 0.3 -12 "$B/bfh1_wood_hit_01.ogg|0|1.5|0|-" "$O/thrust_0.ogg|-2|1.15|0|-"
+# the Câmara das Runas Instáveis (RuneFloor, cadence P1): a pattern arming (stone grinding, a low warm breath that
+# swells) and the tiles striking (a dry crack of stone); soft, under Morvath's warnings
+mk rune_arm 0.6 -14 "$R/stones_02.ogg|0|0.7|0|lowpass=f=2500" "$R/spell_fire_02.ogg|-6|0.7|0|lowpass=f=2200,afade=t=in:d=0.25|0|0.6"
+mk rune_crack 0.45 -8 "$B/bfh1_rock_hit_01.ogg|0|0.9|0|lowpass=f=6000" "$B/bfh1_rock_breaking_02.ogg|-5|1|0.02|lowpass=f=5000|0|0.4"
 # the Dons' own effects (Skills): the swing of a strike, the rain of light, a shield
 mk swing 0.3 -12 "$O/blade_1.ogg|0|0.95|0|-"
 mk rain 0.45 -12 "$R/spell_01.ogg|0|1.1|0|lowpass=f=5000|0|0.45"

@@ -33,8 +33,8 @@ licença), feitos por `tools/make_music_loops.sh` a partir dos .mp3 do site.
 | Kenney Impact Sounds: base dos golpes (`hit_*`, `hit_heavy_*`), escudo do herói (`shield_*`), atordoamento (`stagger_*`) | Kenney (kenney.nl) | CC0 1.0 (`LICENSE-kenney-impact-sounds.txt`) |
 | "50 RPG sound effects" (RPG Audio): panos, couro, passos, lâmina sacada, corte de faca, trinco, porta | Kenney, https://opengameart.org/content/50-rpg-sound-effects | CC0 1.0 |
 | "Swish - bamboo stick weapon swhoshes": sopro da lâmina (`blade_*`, `blade_spin_*`, `thrust_*`, e por baixo de `dart_*`, `blade_heavy_*`, `wave_omega_*`, esquiva, golpes inimigos e de Morvath) | Iwan Gabovitch (qubodup), https://opengameart.org/content/swish-bamboo-stick-weapon-swhoshes | CC0 1.0 (crédito opcional, dado aqui) |
-| "80 CC0 RPG SFX": magias, correntes, metal, criaturas, rugidos, gemas, madeira | rubberduck, https://opengameart.org/content/80-cc0-rpg-sfx | CC0 1.0 |
-| "75 CC0 breaking/falling/hit sfx": pedra, metal, madeira e vidro batendo, quebrando e caindo | rubberduck, https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx | CC0 1.0 |
+| "80 CC0 RPG SFX": magias, correntes, metal, criaturas, rugidos, gemas, madeira, pedras (por baixo de `rune_arm`) | rubberduck, https://opengameart.org/content/80-cc0-rpg-sfx | CC0 1.0 |
+| "75 CC0 breaking/falling/hit sfx": pedra, metal, madeira e vidro batendo, quebrando e caindo (o estalo das Runas, `rune_crack`) | rubberduck, https://opengameart.org/content/75-cc0-breaking-falling-hit-sfx | CC0 1.0 |
 | "100 CC0 SFX": gongo, sino, respingo | rubberduck, https://opengameart.org/content/100-cc0-sfx | CC0 1.0 |
 | "Fantasy Sound Effects Library": magias (`Spell_00` a `Spell_04`) e rugido de dragão | Little Robot Sound Factory, www.littlerobotsoundfactory.com, https://opengameart.org/content/fantasy-sound-effects-library | CC BY 3.0 (https://creativecommons.org/licenses/by/3.0/), crédito no jogo |
 | Ambiência por arena (E6, C15-04): `ambience/amb_*.ogg` | sintetizada pelo projeto em `tools/make_ambience.gd`; nada gravado | do projeto |

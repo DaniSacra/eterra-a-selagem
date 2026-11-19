@@ -111,6 +111,10 @@ const SOUNDS := {
 	&"ult_cleave": [[W.NOISE, 2200, 180, 0.45, 0.34, 3.0, 0.0], [W.SINE, 110, 40, 0.5, 0.36, 3.0, 0.0], [W.TRIANGLE, 660, 330, 0.3, 0.1, 3.0, 0.02]],
 	&"vortex": [[W.NOISE, 400, 1600, 0.9, 0.16, 1.2, 0.0], [W.SINE, 147, 196, 0.9, 0.14, 1.5, 0.0], [W.TRIANGLE, 587, 880, 0.6, 0.06, 2.0, 0.1]],
 	&"ult_implode": [[W.NOISE, 3000, 250, 0.35, 0.32, 3.0, 0.0], [W.SINE, 165, 55, 0.4, 0.34, 3.0, 0.0], [W.TRIANGLE, 988, 494, 0.3, 0.1, 3.0, 0.0]],
+	# the Runas Instáveis (CombatSounds rune_*): a pattern arming (a low grinding swell) and its tiles striking (a dry
+	# crack of stone); recorded in audio/rune_arm.ogg and rune_crack.ogg, these only stand in
+	&"rune_arm": [[W.NOISE, 200, 700, 0.5, 0.12, 1.6, 0.0], [W.SAW, 82, 98, 0.5, 0.06, 2.0, 0.0]],
+	&"rune_crack": [[W.NOISE, 3600, 500, 0.12, 0.3, 6.0, 0.0], [W.SINE, 120, 50, 0.15, 0.22, 5.0, 0.0]],
 	&"ui_move": [[W.SQUARE, 660, 660, 0.03, 0.12, 6.0, 0.0]],
 	&"ui_ok": [[W.SQUARE, 660, 990, 0.07, 0.18, 4.0, 0.0]],
 }

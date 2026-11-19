@@ -48,6 +48,9 @@ func step(dt: float) -> void:
 			for r in hazard.rects():
 				zones.append(game.ground.add_hazard(r, hazard.def.warn, hazard.def.hero_damage, hazard.def.enemy_damage,
 					look == null))
+			Audio.play(CombatSounds.EVENTS[&"rune_arm"])  # one per pattern, however many tiles it lights
+		ArenaHazard.Event.FIRED:
+			Audio.play(CombatSounds.EVENTS[&"rune_fire"])
 		ArenaHazard.Event.ENDED:
 			# (its warnings landed with the strike, in the Ground's step of the same frame or the next)
 			zones.clear()
