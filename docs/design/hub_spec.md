@@ -12,6 +12,9 @@ Opções de teste (`--bot`, `--smoke`, `--start`, `--stress`, `--play`, `--shot`
 `--hub` entra direto no hub para capturas.
 
 ## Decisões do PO (recomendação em negrito)
+**2026-11-19: o Daniel mandou seguir todas as recomendações; o nome do lugar (D-H4) e dos NPCs (Q-H3) ele decide
+depois (até lá, nome de trabalho e só função). Q-H2 fica céu aberto ao entardecer, como as referências; Q-H5 sim.**
+
 - D-H1 Vendedor: **personagem com loja "a definir" no MVP**; economia persistente decidida à parte.
 - D-H2 Forjador: **"a definir" no MVP**; proposta futura de aspectos da Emeth sem somar dano (molde do Hades).
 - D-H3 Livro: **Guerreiro mais três silhuetas seladas sem nome e sem seleção** (pedido novo do PO) ou só o Guerreiro.
