@@ -1,5 +1,127 @@
 # Backlog de A Selagem
 
+## Ordem de execução de 2026-11-19 noite (game-director, commit lido `d2ff05d`)
+
+Pedido do Daniel: seguir com **todo** o backlog aberto sem parar para perguntar; ele volta à noite para testar um exe.
+Regra dos lotes: dentro de um lote as frentes rodam em paralelo porque não dividem arquivo; um lote começa por agente,
+assim que o agente sai do lote anterior. Toda frente fecha com `tools/test.sh` verde, `tools/check.gd` sem erro, sonda
+40/40 quando tocar combate, e o aceite escrito no item de origem (o ID leva à tabela). Integração, commit e push só pela
+sessão principal. Meshy zero.
+
+**Exe desta noite**: o que estiver integrado quando a Fatia 1, o HUB-D e o Lote 1 fecharem, com o HUB-E (QA do hub) e
+o RS-F1 rodados antes. O que passar disso entra no exe seguinte.
+
+### Feito desde 2026-11-18 (marcar, não repetir)
+
+| Item | Commit |
+|---|---|
+| RS-0.1 a RS-0.3, RS-A1 a RS-A9, RS-B1 a RS-B5, RS-C1 a RS-C6 (lotes), RS-D1 a RS-D5, RS-E1 e RS-E2, correções da revisão do Lote A | `d153434`, `081a82d`, `b0ebc78`, `ecc6c3d`, `f3ef650`, `b2a7e20` |
+| RS-F2 (exe abre no estilizado, F7 volta ao clássico) | `b7dfa15` |
+| RS-0.5 (`frame_stats.py --hue`) | `2f0ad73` |
+| Ouro das elites no estilizado (bug do PO) | `a1beec9`, `0c17740` |
+| P0 da exportação (baralho vazio, loja vazia no exe) | `ed5a980` |
+| LC-1 a LC-5 e LC-1b, LC-3b; LC-6 (pacote de revisão `4354550`) | `ae67a7d`, `4354550`, `0ac8909`, `21f2305`, `a0d9bb9` |
+| RS-C1 do ciclo LC (Criptas A e B com peça dominante, pano com o leão) | `47d06a7` |
+| RP-01 a RP-05 (zonas, entrada das Runas, peso das Runas, Ponte A, Fendas A) | `6762dbc` |
+| Runas: som ao armar e no golpe; leitura no Compatibility (P1 da cadência) | `c79802f`, `c6d6aab` |
+| Sworn P1: SW-G1, SW-G2 (com SW-J1 e SW-S1), SW-G3, SW-C1, SW-F1, SW-K1 | `41f8b91`, `bbe3872`, `e950142` |
+| Câmera Perto (opção Longe/Perto) | `29039f1` |
+| Hub HUB-B1, HUB-B2 (50 x 33 m), HUB-B3 e a interface do HUB-C, placa sob o herói | `2a2fbf8`, `8f85051`, `6d4defb`, `d2ff05d` |
+| RJ-0 e RJ-1 (auditoria e `sistemas.md`), aprovação do Daniel (Q-RJ1 a Q-RJ11) | `5b27581`, `ecfd9ee` |
+| Auditoria de equilíbrio (propostas B-1 a B-5) | `6c09fdf`, `1492ecd` |
+| QW-109 (título do nó `move_wave`) | `1957bb3` |
+| AP-3 "Masmorras com alma": absorvido pelo RS (lotes A a E); sobra só o que o RS-F1 apontar | |
+
+**Em execução agora (não repetir)**: Fatia 1 da rejogabilidade (`gameplay-engineer`: `MaterialPurse`, Prata e Memória,
+portas novas, Forja Temperar I e II, Dons com Memória, encontro de dois anjos, save 6, registro 5); HUB-D NPCs,
+`frame_yaw` da cantaria e Emeth (`technical-artist`); HUB-D cenário e correções (`environment-artist`); relatórios de QA,
+arte, salas e interface. Arquivos que nenhum lote abaixo toca até eles fecharem: `run_map.gd`, `rooms.gd`, `stage_def.gd`,
+`make_data.gd`, `save_data.gd`, `boon_state.gd`, `game.gd`, `hub*.gd`, `hub_look.gd`, `emeth.gdshader`,
+`masonry*.gdshader`, `catacomb_floor*`, `paint.gdshaderinc`. Os achados dos relatórios em curso entram como bugs no
+lote do dono do arquivo, na frente do resto.
+
+### Lote 1 (já, com os agentes livres; nada nos arquivos acima)
+
+Prioridade dentro do lote para `ui-ux-designer`, `environment-artist`, `technical-artist` e `art-director`: **as partes
+deles na Fatia 1** (`sistemas.md` 3.4: página da Forja, passo "Abrir" na árvore, tela do encontro, marcas das portas,
+medalhão em prata e pergaminho, Emeth por posto de Temperar, selos vetoriais dos anjos, revisão), assim que os dados
+existirem. O resto do lote preenche a espera.
+
+| Frente | Dono | Itens | Aceite | Arquivos |
+|---|---|---|---|---|
+| 1A Interface | `ui-ux-designer` | DT-103 resto (volta por controle e por clique, remapear no controle); QW-115 (vitória: véu, halo em degradê, ouro ao lado do número); QW-117 (glifos sem cruz, com o desenho do art-director); ART-02.6 (barras de vida dos comuns 15% mais escuras); UI-P2-13, UI-P2-14, UI-P2-15 | os de cada item; `title_flow_check` e `map_flow_check` verdes; capturas 720 e 1080 | `options_screen.gd`, `end_screen.gd`, `seal_emblem.gd`, `boon_icon.gd`, `action_slot.gd`, `life_bar.gdshader`, `howto_screen.gd`, `tools/*_flow_check.gd`, `text_pt.tres` (só chaves novas). Não tocar `boon_choice.gd`, `boon_card.gd`, `hero_screen.gd`, `talent_*` (Fatia 1) |
+| 1B QA e medida | `qa-performance` (depois do relatório em curso) | HUB-E (GUT, saves antigos, controle, F7, Compatibility, desempenho, vídeo das cinco estações); BUG-110 (exe 10 min com `--watchdog`); RS-0.4 (Provação, Altar e Câmara estilizadas na galeria); RS-0.6 (`docs/qa/rs_baseline.md`); RS-0.7 (LEIAME); DT-RS3 (primeira entrada de cada bioma na iGPU, nenhum quadro acima de 50 ms); DT-110 (modo medir); MAP-05 (vídeo e capturas do mapa); RS-F1 (smoke 900 estilizado sem erro de shader, 18 vistas em `docs/gallery/redesign/final/`) | os de cada item; GPU no máximo 2 capturas por vez (`GPU_SLOTS`) | `docs/qa/`, `docs/gallery/`, `tools/` de medida |
+| 1C Sensação | `combat-feel-director` | aprovações pendentes: QW-104, QW-107, QW-111, RP-03 (dano novo das Runas); parecer do LC-P1 (preparo mais longo de algum atirador, só tempo, sem Meshy); critérios de cadência do C19 escritos antes do Lote 2 | parecer em `combat_cadence.md` com P0/P1/P2 | só documentos |
+| 1D Direção de arte | `art-director` | revisão do `art_direction.md` (DT-109); desenho dos glifos do QW-117; spec SW-G7 (gramática do perigo, pedida pelo RP-06); spec do MAP-06 (página do mapa) e do AP-4; revisão de QW-104 e QW-106; fecho do RS-F1 em `visual_review.md` | documentos e pareceres com capturas | só documentos |
+| 1E Salas | `room-designer` | números pelo Hades II e lugares de RP-06 (H-2), RP-07, RP-11 (H-3) e RP-16, para o gameplay não esperar; plantas de SW-N1 a SW-N4 em papel | números escritos em `rooms_progression.md` com a regra comum (aviso 1,0 s ou mais, fere inimigos, nunca a 6 m da entrada nem nos 3 s do começo, saída livre) | só documentos |
+
+### Lote 2 (depois da Fatia 1 e do HUB-D)
+
+| Frente | Dono | Itens | Aceite | Arquivos |
+|---|---|---|---|---|
+| 2A **C19 "Variedade do combate e da descida"** (caminho crítico, em série) | `gameplay-engineer` | Q-11 elites com golpe próprio (esqueleto elite dois golpes a 0,2 s, corredor elite explosão dupla, como dado); Q-09 (a) segundo golpe de perto de Morvath; Q-12 Ômega carregando no número do Hades; Q-13 botão de usar para loja, recompensa e porta (reusar a ação `interact` do hub); Q-14 (a) linha da mira no orbe e no leque do Ancião, (b) regra para a trepadeira; Q-15 renda do ouro e chances de Elo e Salmo (por cima do baralho da Fatia 1); Ancião e tempestade conferidos pelo `warn_s`; LC-P1 se o 1C pedir; BUG-108; BUG-109 resto (`wait_frames` do `test_e5_ui.gd:108`, avisos do `test_boss_exits.gd`, testes de tempo real) | aceite do C19 na seção 3 (fase 1 de Morvath nenhum ataque acima de 50% e nunca 3 iguais; elites com aviso nos dois golpes; ouro mediano na loja 150 a 220; Elo em 35% e Salmo em 15% das descidas em 72 sementes; encostar não compra; todo tiro com `warn_s` 0,4 ou mais); suíte sem as linhas de vazamento e com asserções iguais em 3 rodadas | `make_data.gd`, `horde.gd`, `boss.gd`, `rooms.gd`, `player.gd`, `combo_runner.gd`, `projectiles.gd`, `ground*.gd`, testes |
+| 2B Sensação herdada (junto do C19, em série com ele) | `gameplay-engineer` e `technical-artist` (assado) | GF-15 (arranque e parada animados), VX-17 (pose final do finalizador), CF-09 (golpe 1 e corte da esquiva a 1,5x), CF-10 (segunda camada de som no golpe), T5-17 a T5-19 (preparo de Morvath para maldição e erupções, recuo da besta), T5b P2-2 (erguer do esqueleto parado), corredor elite a 259 passos/min, tira de lado do besteiro, Q-T5-6, Q-T5-7, B-b | sonda 40/40 mais as metas novas; `boss_probe` e `enemy_motion_probe` sem regressão | `player.gd` (gameplay), `tools/bake.gd`, `tools/bake_hero.gd` (technical-artist) |
+| 2C Assets e assado | `technical-artist` | QW-116 (cajado do feiticeiro e Morvath reassado, incluindo o clipe novo da Q-09 a); DT-104 (teste de assado velho, tetos); DT-107 (Q-19 aprovada: saem `hero_sombra/` e `paladin_1/`, arquivos fora do PCK, figuras até 4 100 triângulos); DT-108; DT-101 na parte que não pede a Q-01 (CC BY e IA no `CREDITOS.txt`, `asset_credits.md`, `steam-ia.md`) | os de cada item; `pose_drift` de Morvath até 0,45 m | `tools/bake.gd`, `assets/baked/`, `docs/art/asset_*`, `CREDITOS.txt`, `docs/steam-ia.md` |
+| 2D Cenário Sworn P2 | `environment-artist` | SW-G4, SW-G5 (portão que abre; o sinal já existe onde se chama `ArenaRoom.breath`), SW-G6, SW-H1 a SW-H3, SW-C2 (só fêmures, crânio é Meshy), SW-C3, SW-F2, SW-F3, SW-J2, SW-J3, SW-S2, SW-S3, SW-P1 a SW-P3, SW-R1, SW-T1, SW-A-1; RS-C7 (fantasma da Ponte A abaixo de 2 m²); F-6 e J-5 herdados | ordem 5.2 do `sworn_reference_ideas.md`; AC-RS da seção 8.1 (clássico igual, F7 exato, `fit_probe` sem subir, robô sem `stuck`, iGPU 720 Baixa até 0,5 ms) | `*_look.gd`, `catacomb_hall.gd`, `arena_room.gd`, `arena_kit.gd`, `tomb_kit.gd`, `masonry.gd` |
+| 2E Estilo no menu | `ui-ux-designer` (tela), `gameplay-engineer` (chave `look` no save, na versão da Fatia 1) | DT-RS2: "Estilo visual" em Configurações > Vídeo; F7 sai do exe ou vira tecla documentada | trocar no menu dá o mesmo quadro que o F7; save antigo abre no estilizado | `options_screen.gd`, `save_data.gd` (uma linha, pelo gameplay) |
+
+### Lote 3 (depois do C19)
+
+| Frente | Dono | Itens | Aceite | Arquivos |
+|---|---|---|---|---|
+| 3A DT-106 (antes de crescer mais) | `gameplay-engineer` | `RunReport` e `RunAward` fora do `game.gd` | mesma semente, mesmo `RESULT` (`smoke 600` e `--start=boss --boons=25`, semente 5) | `game.gd`, arquivos novos |
+| 3B **Fatia 2 "a escolha do caminho"** | `gameplay-engineer` (dados e regras), `ui-ux-designer` (telas), `combat-feel-director` (Encantos), `balance-designer` (medida) | Esmeralda; 1ª ferramenta do Forjador no 1º guardião (abre o Refinar); Temperar III; Encantos 1 a 3 sobre a Lapidação (RJ-7) com carta ENCANTO e loja; porta com um anjo à mostra e o encontro de dois como carta rara; porta de Salmo; bifurcações contrastantes (RJ-2, RJ-3); porta Difícil com Prata a mais; 2 a 3 Bênçãos novas por família | aceite do `sistemas.md` 3.6 (bifurcações contrastantes medidas, cada Encanto escolhido 20 a 45%, nenhum anjo abaixo de 3 ofertas válidas em 95% dos encontros) | dono por arquivo como na Fatia 1 |
+| 3C **AP-2 "Combate que se lê"** (paralelo ao 3B: shaders, não lógica) | `technical-artist` (`crowd.gdshader`, raio-x), `environment-artist` (`ritual_rune.gdshader`, `boss_shield.gdshader`, foice), `ui-ux-designer` (entrada de Morvath no HUD) | ART-05.2, 05.3, 05.4, 05.5, 05.8, 09.1 (elites medidas em luta) | vermelho saturado abaixo de 1,5% no quadro da fase 3; herói achado atrás de Morvath; sonda 40/40; clássico e Compatibility conferidos | shaders citados, `xray*.gdshader`, `hud.gd` |
+| 3D DV-2 "Descida de Valmor II" | `gameplay-engineer` (MAP-09, depois do 3B porque o baralho muda), `ui-ux-designer` (MAP-07 no mapa, MAP-08 transições), `environment-artist` (luz da porta do MAP-07) | MAP-07, MAP-08, MAP-09 (Q-26 b) | os da seção 3 (72 sementes com a loja de rota) | `map_screen.gd`, `map_graph.gd`, `arena_room.gd` (luz da porta), `run_map.gd` e `_stage` |
+| 3E DT-RS1 | `technical-artist` com o `environment-artist` | `Environment` com um dono só (`RoomMood`) | ida e volta de todas as salas nos dois perfis, fase 4 e câmara iguais | `room_mood.gd`, `world_air.gd`, `arena_room.gd`, `boss_chamber.gd`, `visual_profile.gd` (combinar com o 2D) |
+
+### Lote 4 (perigos de sala; `gameplay-engineer` em série, `room-designer` fixa números antes, `combat-feel-director` aprova o aviso, `environment-artist` faz a peça com a SW-G7)
+
+Um comportamento por entrega, nesta ordem: **RP-06 (H-2, laje de pisar)** → RP-07 (variante e intensidade pela
+profundidade) → **RP-11 (H-3, corrente e raio que varrem)** → RP-16 (seteira ligada à laje) → RP-08 (H-4, fenda que
+respira) → RP-09 (coluna que tomba) → RP-10 (H-1, raiz que golpeia) → RP-14 (H-5, cristal) → RP-12 (urna de óleo) →
+RP-13 (borda que desmorona, no lugar do H-6: o H-6 com chão que some fica de fora, custo técnico alto, recomendação
+"não") → H-7 (água rasa, só se o Jardim B pedir) → RP-17 (mureta), RP-18 (colunata), RP-19 (saídas no fundo) → salas
+novas SW-N1 a SW-N4 com RP-15 (Fonte e Loja em câmaras próprias, P-10). Aceite de cada um no `rooms_progression.md`;
+`test_boss_exits` no molde para a saída livre; "Derrotado por" com chave própria; 8 sementes do robô por sala sem
+`stuck`. Opção para ganhar tempo (opinião minha): um segundo `gameplay-engineer` em worktree só para os perigos
+(`arena_hazard.gd`, arquivos novos de perigo e só as funções da sala no `make_data.gd`), com a sessão principal juntando.
+
+### Lote 5 (depois do Lote 3)
+
+| Frente | Dono | Itens | Aceite |
+|---|---|---|---|
+| 5A **Fatia 3 "o fim de jogo"** | `gameplay-engineer`, `ui-ux-designer`, `balance-designer` | ferramentas 2 e 3 (Despertar, Inscrever), Encantos 4 a 6 (RJ-8), Discernimento I e II (RJ-10), Obras e troca no Vendedor, Esmeralda por recorde de Peso, aba Anjos no Compêndio, RJ-11 (Memória como as Cinzas) se não estiver coberta pela Fatia 1 | diferença Maestria 1 para 20 entre 40 e 60 pontos (`sistemas.md` 3.6) |
+| 5B **AP-4 "Livro, coleção e título"** sem o que pede arte do Daniel | `ui-ux-designer`, `art-director`, `technical-artist` (esboço em traço dos inimigos pelo modelo assado, sem IA) | ART-06.2, 06.3, 07.1 a 07.5, 10.2 a 10.4, 01.5; MAP-06; motivos pintados vetoriais dos 19 Dons (ART P1-10); moldura de couro e abas como fitas | cada tela aprovada a 720 e 1080 pelo art-director |
+| 5C **C20 técnico** | `gameplay-engineer` (pausa ao perder o foco e ao desconectar o controle, GP P2-3; nunca no robô nem `--smoke`), `ui-ux-designer` (o que sobrar do DT-103) | itens do C20 na seção 3 menos a arte | `title_flow_check` com controle; foco perdido em PLAY abre a pausa |
+| 5D DT-111 | `gameplay-engineer` | documentar; subdividir o passo só se a máquina fraca pedir | nota no `CLAUDE.md` |
+
+### Lote 6 (por último, decisão do Daniel: mecânicas primeiro)
+
+**Equilíbrio B-1 a B-5** (`docs/design/balance.md`): o `balance-designer` remede com Forja, materiais, encontros,
+Encantos e perigos já no jogo (48 sementes, Maestria 1, 5, 10, 15, 20, réguas 0,25 e 0,45) e reescreve os números; o
+`gameplay-engineer` aplica (B-1 dano dos inimigos, B-2 Maestria da ultimate, B-3 sustento na escada, B-4 primeiras salas,
+B-5 Ancião e Cavaleiro). Proibido vida inflada. Aceite: metas do `balance.md` com os sistemas novos somados.
+
+### Fora da fila: dependem do Daniel (nomes, lore, Meshy, arte dele)
+
+- **Meshy** (nenhum crédito): LC-P2 (besta e cajado novos), Q-18 (estátua, armas, gancho, repintura das elites), SW-A1 a
+  SW-A4 (crânios, portão, arco, bacia com o leão), crânios do SW-C2.
+- **Licença e créditos**: Q-01 (plano do Meshy; fecha o DT-101), Q-17 (nome nos créditos).
+- **Nomes**: `PALADIN_1` a `PALADIN_4` (D-02, D-04), título de Morvath (D-01), romã e loja em Eterra (D-41), nome do hub
+  (`hub_name` "Santuário", D-H4), Vendedor e Forjador e quem vende (L-11), as ferramentas do Forjador (RJ-9), nomes finais
+  dos Encantos e dos anjos (Sarael, Nivael, Lumael, Shomael aprovados como proposta; ficam em chaves próprias).
+- **Lore e texto**: Abertura narrativa do Livro (Q-05, proposta a partir do cânone para ele aprovar), Ahk narrador e a
+  cena dele (Q-03, Q-23), texto da porta selada e do véu (D-23).
+- **Arte que só ele traz**: título com a maga nova e sem cruzes (Q-07, ART-08), retrato do Guerreiro com a Emeth certa
+  (Q-04), medalhões das 25 Bênçãos e 6 Elos (Q-24), retratos ou figuras dos anjos, os 18 conceitos em 1920 x 1080 (P-1),
+  pontas do medalhão do Salão (S-Q6).
+- **Números que ele segura**: passo do dano das Runas de 7 para 10 no herói (parecer da cadência de 2026-11-19).
+- **Só jogando**: tudo o que a seção 4 lista em "O que só o Daniel jogando responde", mais se a porta de Prata compete
+  com a Bênção, se escolher o anjo é decisão e se a Câmera Perto fica como padrão.
+
+---
+
 - **Data**: 2026-11-18 (fim do ciclo). **Autor**: game-director (oitava revisão, reescrita; substitui a de 2026-11-16/17).
   **Commit lido**: `dd1f5ba` (HEAD de `arpg-3d`), com `git log --since=2026-11-17` (43 commits: T5, T5b, sala de música,
   pacote de arte 1A, 1B, 2 e 4, Créditos fora do jogo, auditoria e C1 de assets, corredor no chão).
