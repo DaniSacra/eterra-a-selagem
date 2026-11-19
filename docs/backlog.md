@@ -842,3 +842,25 @@ cabe na curva nova (a primeira descida muito difícil) ou se a Forja só muda o 
    (a regra de nunca sol nem cruz) entram na proposta para o Daniel decidir.
 3. **A Forja deixa o herói mais forte** (altera a arma): progresso permanente que soma força. A curva nova (primeira
    descida muito difícil) passa a contar com ela no equilíbrio.
+
+**Intenção do PO, nas palavras dele (pedido ao ChatGPT que gerou o pacote, colado em 2026-11-19), e a leitura do Game
+Director com o equivalente do Hades II:**
+- "No nosso jogo as cartas de tarô são os Dons, só que mais sofisticados, com progressão; o baralho da Mel precisa de
+  cinzas, outro recurso além do dinheiro." → os Dons são o nosso Arcana; hoje eles custam só Devoção e abrem pela
+  Maestria; a ideia é que equipar ou abrir Dons também peça um recurso trazido das descidas (as Cinzas do Hades; o
+  Fragmento de Memória do pacote é o candidato). Entra na RJ-0 e na RJ-11, que deixa de ser opcional.
+- "Forja com custos de prata, brasa, ouro... como as Armas Noturnas do Hades 2; lá a gente melhora a Emeth." → a Forja
+  é o nosso aprimoramento de arma (aspectos e melhorias das Armas Noturnas, pagas com materiais).
+- "Escolher entre dois deuses, como no Sworn; no nosso caso anjos, e depois a Bênção. O RNG pode diminuir no futuro."
+  → RJ-4 (encontro em duas etapas) e RJ-10 (Discernimento).
+- "O caminho até o chefe não faz sentido escolher: as salas têm recompensas parecidas. Lojas, coisas de forja, vida
+  extra, mana extra, ver o anjo da sala, aleatório, ter um Salmo." → RJ-2: recompensas novas nas portas (material de
+  Forja, Encanto, Salmo, o anjo da sala à mostra, porta "?" aleatória) e bifurcações que trocam uma coisa por outra.
+- "O que poderiam ser os Encantos pensando no Hades 2?" → os Martelos de Dédalo (melhorias da arma só na descida):
+  RJ-7 e RJ-8 sobre a Lapidação.
+- "Ir atrás das armas do Forjador" → as ferramentas perdidas (RJ-9), achadas nas descidas, abrem funções da Forja
+  (a Emeth continua a arma única: nada de arma equipável nova).
+- "Mais coisas que não só ouro: materiais para algum tipo de craft." → os materiais da RJ-5, com fonte nas salas,
+  elites, guardião e Morvath, e gasto na Forja, nos Dons e no hub (no Hades, os reagentes e os Encantamentos do
+  Caldeirão que fazem a Encruzilhada crescer: candidato para o Vendedor e o hub, a propor na RJ-1).
+- "Eu gosto desta profundidade, que deixa o jogo muito rejogável." → critério de sucesso da seção 10.
