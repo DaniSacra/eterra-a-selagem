@@ -5,6 +5,10 @@ extends Control
 ## brackets of old gold in their outer corners and a petrol ribbon hanging from the foot. The spine sits at `spine`
 ## (share of the width): the Compendium's index page is narrower than its list. Content goes into the two pages,
 ## margin containers that follow the spine (left, right); everything is laid out by anchors, so it fills any screen.
+## A single leaf (HUB-B3, the hub's small pages, HubPanel): setup(spine, true) shows one page (left) on the whole
+## paper, browned on both sides and without fold, and the book is as big as that page's content (minimum size), so a
+## container centres it.
+##   var leaf := BookSpread.new().setup(0.5, true)    # leaf.left takes the content
 
 const PAGE_SHADER := preload("res://assets/shaders/book_page.gdshader")
 ## The cover past the pages and the leaves' edges under them, px at 720 lines.
@@ -18,6 +22,8 @@ const RIBBON_WIDTH := 16.0
 const RIBBON_DROP := 22.0
 
 var spine := 0.5
+## One leaf alone (left on the whole paper; right stays empty and hidden).
+var single := false
 var left: MarginContainer
 var right: MarginContainer
 var _paper: ColorRect
@@ -25,8 +31,9 @@ var _trim: Control
 var _queued := false
 
 
-func setup(p_spine: float = 0.5) -> BookSpread:
+func setup(p_spine: float = 0.5, p_single: bool = false) -> BookSpread:
 	spine = p_spine
+	single = p_single
 	name = "book"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_paper = ColorRect.new()
@@ -34,6 +41,7 @@ func setup(p_spine: float = 0.5) -> BookSpread:
 	_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var m := ShaderMaterial.new()
 	m.shader = PAGE_SHADER
+	m.set_shader_parameter(&"single", single)
 	_paper.material = m
 	add_child(_paper)
 	_trim = Control.new()
@@ -41,8 +49,9 @@ func setup(p_spine: float = 0.5) -> BookSpread:
 	_trim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_trim.draw.connect(_draw_trim)
 	add_child(_trim)
-	left = _page("left_page", MARGIN.x, SPINE_MARGIN)
+	left = _page("left_page", MARGIN.x, MARGIN.x if single else SPINE_MARGIN)
 	right = _page("right_page", SPINE_MARGIN, MARGIN.x)
+	right.visible = not single
 	resized.connect(_layout)
 	_layout()
 	return self
@@ -59,7 +68,16 @@ func _page(id: String, from_left: float, from_right: float) -> MarginContainer:
 	# a page grown by its content for a moment (a label wrapping before it had its width) keeps that size unless it
 	# is laid out again when its content shrinks back
 	p.minimum_size_changed.connect(_relayout)
+	if single:
+		p.minimum_size_changed.connect(update_minimum_size)
 	return p
+
+
+## A single leaf is as big as its page's content with the cover round it (the open book fills what it is given).
+func _get_minimum_size() -> Vector2:
+	if not single or left == null:
+		return Vector2.ZERO
+	return left.get_combined_minimum_size() + Vector2(COVER * 2.0, COVER * 2.0 + LEAVES)
 
 
 func _relayout() -> void:
@@ -83,7 +101,7 @@ func _layout() -> void:
 	var m := _paper.material as ShaderMaterial
 	m.set_shader_parameter(&"size_px", r.size)
 	m.set_shader_parameter(&"spine", spine)
-	var sx := r.size.x * spine
+	var sx := r.size.x if single else r.size.x * spine
 	left.position = r.position
 	left.size = Vector2(sx, r.size.y)
 	right.position = r.position + Vector2(sx, 0)

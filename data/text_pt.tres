@@ -152,6 +152,9 @@ entries = {
 "opt_quality_high": "Alta",
 "opt_quality_medium": "Média",
 "opt_quality_low": "Baixa",
+"opt_camera": "Câmera",
+"opt_camera_near": "Perto",
+"opt_camera_far": "Longe",
 "options_comfort": "Conforto",
 "options_music": "Músicas",
 "music_room_title": "Músicas",
@@ -672,7 +675,7 @@ entries = {
 "action_interact": "Interagir",
 "howto_interact": "Interagir",
 "howto_interact_desc": "Usa o que está à sua frente no {HUB}: o Portal, a Árvore de Dons, o Livro de Ahk.",
-"hub_interact": "{key} Interagir",
+"hub_use": "Interagir",
 "hub_portal": "Portal da Descida",
 "hub_portal_desc": "Descer às catacumbas",
 "hub_vendor": "Vendedor",
@@ -682,8 +685,11 @@ entries = {
 "hub_book": "Livro de Ahk",
 "hub_book_desc": "O Guerreiro e o Compêndio",
 "hub_soon": "A definir",
-"hub_soon_desc": "Ainda não há nada aqui nesta versão.",
+"hub_vendor_soon": "Ainda não há nada para comprar aqui nesta versão.",
+"hub_smith_soon": "Ainda não há nada para forjar aqui nesta versão.",
 "hub_descend_title": "Descer às catacumbas?",
 "hub_descend_go": "Descer",
-"hub_descend_stay": "Ficar"
+"hub_descend_stay": "Ficar",
+"hub_descend_line": "As Bênçãos valem só nesta descida. A Maestria e os Dons ficam com você.",
+"music_place_hub": "{HUB}"
 }

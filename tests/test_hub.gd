@@ -77,9 +77,9 @@ func _frames(n: int) -> void:
 func test_the_plan_turns_into_the_world_and_back() -> void:
 	# the spec's own table (2.3, 2.4): local (u, v) and world (x, z)
 	assert_almost_eq(HubPlan.to_world(Vector2(0.0, 1.0), 35.0), Vector2(-0.574, -0.819), Vector2(0.01, 0.01), "the camera's point")
-	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-2.6, -3.8), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(9.2, -1.8), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(3.1, 8.6), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-8.6, -12.29), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(19.66, -6.44), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(5.92, 13.68), Vector2(0.06, 0.06))
 	for p: Vector2 in [Vector2(3, -7), Vector2(-12, 4), Vector2(0.5, 0.25)]:
 		assert_almost_eq(HubPlan.to_local(HubPlan.to_world(p, 35.0), 35.0), p, Vector2(0.0001, 0.0001))
 
@@ -99,7 +99,12 @@ func test_the_layout_is_its_own_and_stands_on_the_plan() -> void:
 				assert_gt(HubPlan.use_point(id).distance_to(HubPlan.use_point(other)), HubPlan.FOCUS_OUT * 2.0,
 					"two stations never both in reach (%s, %s)" % [id, other])
 	assert_eq(l.cam_reach, HubPlan.CAM_REACH)
-	assert_almost_eq(l.cam_target, Vector2(-0.6, -0.8), Vector2(0.05, 0.05), "the camera's fixed point (spec 2.1)")
+	assert_gt(l.cam_reach, 10.0, "the camera goes wherever he walks in the hub, not 3 m off its point")
+	# the floor about twice the first plan's each way (the PO, HUB-B2): 50 x 33 m
+	var area := 0.0
+	for i in HubPlan.FLOOR.size():
+		area += HubPlan.FLOOR[i].cross(HubPlan.FLOOR[(i + 1) % HubPlan.FLOOR.size()]) * 0.5
+	assert_between(absf(area), 1500.0, 1800.0, "about 48 to 52 by 30 to 34 m")
 
 
 # ---------- focus ----------
@@ -164,7 +169,7 @@ func test_every_station_is_reached_from_the_arrival() -> void:
 	for id in HubPlan.STATIONS:
 		hub.player.pos = hub.arena.start
 		var target := HubPlan.use_point(id)
-		for i in 300:
+		for i in 900:
 			var to := target - hub.player.pos
 			if to.length() < 0.3:
 				break
@@ -277,12 +282,12 @@ func test_the_station_in_focus_shows_one_sign_with_the_key() -> void:
 	assert_eq(hub.focus.current, HubPlan.BOOK)
 	assert_not_null(hub.station_sign)
 	assert_eq(hub.station_sign.title.text, T.t(&"hub_book"))
-	assert_true(hub.station_sign.note.text.begins_with("E "), "the real key: " + hub.station_sign.note.text)
-	assert_eq(hub.find_children("*", "DoorSign", true, false).size(), 1, "one sign")
+	assert_eq(hub.station_sign.key_text(), "E", "the real key")
+	assert_eq(hub.find_children("*", "StationSign", true, false).size(), 1, "one sign")
 	hub.player.pos = hub.arena.start
 	await _frames(3)
 	assert_eq(seen, [HubPlan.BOOK, &""] as Array[StringName])
-	assert_eq(hub.find_children("*", "DoorSign", true, false).filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size(), 0)
+	assert_eq(hub.find_children("*", "StationSign", true, false).filter(func(n: Node) -> bool: return not n.is_queued_for_deletion()).size(), 0)
 
 
 func test_interact_opens_a_station_and_esc_closes_it_without_leaking() -> void:

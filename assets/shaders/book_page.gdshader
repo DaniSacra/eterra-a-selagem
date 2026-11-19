@@ -12,6 +12,8 @@ uniform float edge_px = 46.0;
 uniform float fold_px = 64.0;
 uniform float fold_dark = 0.5;
 uniform float seed = 3.0;
+// One leaf alone (the hub's small pages, HubPanel): no spine, both sides are outer edges, no fold.
+uniform bool single = false;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7)) + seed) * 43758.5453);
@@ -46,11 +48,14 @@ void fragment() {
 	float left = UV.x < spine ? p.x : p.x - sx;
 	float right = UV.x < spine ? sx - p.x : size_px.x - p.x;
 	float outer = UV.x < spine ? left : right;
+	if (single) {
+		outer = min(p.x, size_px.x - p.x);
+	}
 	float e = min(outer, min(p.y, size_px.y - p.y));
 	float browned = 1.0 - smoothstep(0.0, edge_px, e + (blot - 0.5) * edge_px * 0.8);
 	col = mix(col, aged * (0.85 + 0.2 * blot), browned * 0.75);
 	// the fold: a soft shadow on both sides of the spine and a thin dark crease
-	float g = abs(p.x - sx);
+	float g = single ? 1e6 : abs(p.x - sx);
 	col *= mix(fold_dark, 1.0, smoothstep(0.0, fold_px, g));
 	col *= mix(0.7, 1.0, smoothstep(0.0, 2.5, g));
 	COLOR = vec4(col, 1.0);

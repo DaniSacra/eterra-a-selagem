@@ -303,12 +303,21 @@ func _draw_key(at: Vector2) -> void:
 	if _mouse in [MOUSE_BUTTON_LEFT, MOUSE_BUTTON_RIGHT, MOUSE_BUTTON_MIDDLE]:
 		_draw_mouse(at)
 		return
+	key_plate(self, at, _key, KEY_FONT, KEY_H)
+
+
+## A key's name on a small dark plate with the old gold line, centred at `at` (the HUD's diamonds, the hub's sign);
+## round when it is a gamepad's face button (one letter, rounded: true). Returns the plate's width.
+static func key_plate(ci: CanvasItem, at: Vector2, text: String, font_size: int, h: float, rounded: bool = false,
+		line: Color = UiKit.OLD_GOLD) -> float:
 	var font := UiKit.BOLD_FONT
-	var w := maxf(KEY_H, font.get_string_size(_key, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FONT).x + 8.0)
-	var plate := Rect2(at - Vector2(w * 0.5, KEY_H * 0.5), Vector2(w, KEY_H))
-	draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), UiKit.OLD_GOLD, int(UiKit.FRAME), 0, 3), plate)
-	var base := Vector2(plate.position.x + 4.0 + (w - 8.0 - font.get_string_size(_key, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FONT).x) * 0.5, at.y + (font.get_ascent(KEY_FONT) - font.get_descent(KEY_FONT)) * 0.5)
-	draw_string(font, base, _key, HORIZONTAL_ALIGNMENT_LEFT, -1, KEY_FONT, UiKit.PALE)
+	var tw := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var w := maxf(h, tw + 8.0)
+	var plate := Rect2(at - Vector2(w * 0.5, h * 0.5), Vector2(w, h))
+	ci.draw_style_box(UiKit.box(Color(0.04, 0.03, 0.05, 0.95), line, int(UiKit.FRAME), 0, int(h * 0.5) if rounded else 3), plate)
+	var base := Vector2(at.x - tw * 0.5, at.y + (font.get_ascent(font_size) - font.get_descent(font_size)) * 0.5)
+	ci.draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.PALE)
+	return w
 
 
 ## A mouse seen from above with the bound button lit.

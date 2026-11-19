@@ -36,6 +36,9 @@ const DESC_SIZE := 18
 const META_SIZE := 16
 const STEP_GLYPH := 52.0
 const MARK := 26.0
+## The places beside the Warrior's in the book's head: how many are sealed, and their size.
+const SEALED := 3
+const SEAT := 40.0
 ## The Como Jogar row that names each action (howto_<id>).
 const SKILL_ROW := {Boon.Slot.ATTACK: "light_attack", Boon.Slot.SPECIAL: "heavy_attack", Boon.Slot.CAST: "cast",
 	Boon.Slot.DASH: "dodge"}
@@ -78,6 +81,9 @@ var _hint: Label
 var _to_gifts: Button
 var _down: Button
 var _down_hero: Button
+## The Compêndio opened from the book (null: none).
+var _codex: CodexScreen
+var _codex_button: Button
 ## What the panel tells now (a TalentDef, an UltDef or null for the centre).
 var _shown: Variant = null
 
@@ -171,7 +177,23 @@ func _head_left() -> Control:
 	_next.name = "next"
 	names.add_child(_next)
 	row.add_child(names)
+	row.add_child(_sealed_seats())
 	return row
+
+
+## The Warrior's crest is the first of four places; the other three are sealed silhouettes (HUB-C, D-H3): no name, no
+## text, nothing to choose (no focus, no click), pushed to the page's outer edge.
+func _sealed_seats() -> Control:
+	var seats := HBoxContainer.new()
+	seats.name = "sealed"
+	seats.alignment = BoxContainer.ALIGNMENT_END
+	seats.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	seats.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	seats.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	seats.add_theme_constant_override(&"separation", 6)
+	for i in SEALED:
+		seats.add_child(SealedMark.new().setup(SEAT, true))
+	return seats
 
 
 func _head_right() -> Control:
@@ -428,16 +450,51 @@ func _footer() -> Control:
 	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(_hint)
-	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 170)
+	_codex_button = UiKit.button(T.t(&"pause_moves"), _open_codex, 150)
+	_codex_button.name = "codex"
+	row.add_child(_codex_button)
+	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 150)
 	back.name = "back"
 	row.add_child(back)
 	return row
+
+
+## The Compêndio over the book (HUB-C: the Livro de Ahk holds the Warrior and the Compêndio); closing it gives the
+## focus back to its button.
+func _open_codex() -> void:
+	if is_instance_valid(_codex):
+		return
+	_codex = CodexScreen.new()
+	_codex.name = "codex_page"
+	# the book hides under it (nothing of it takes the focus meanwhile)
+	for c in get_children():
+		(c as CanvasItem).visible = false
+	add_child(_codex)
+	_codex.open()
+	_codex.closed.connect(_close_codex)
+
+
+func _close_codex() -> void:
+	if not is_instance_valid(_codex):
+		return
+	_codex.queue_free()
+	_codex = null
+	for c in get_children():
+		if not c.is_queued_for_deletion():
+			(c as CanvasItem).visible = true
+	_codex_button.grab_focus.call_deferred()
 
 
 # ---- chapters and focus ----
 
 ## LB and RB (PageUp, PageDown) turn to the chapter before or after (DT-103).
 func _unhandled_input(event: InputEvent) -> void:
+	if is_instance_valid(_codex):
+		# the Compêndio is on show: Esc and B close it (its own tabs read LB and RB)
+		if event.is_action_pressed(&"ui_cancel"):
+			get_viewport().set_input_as_handled()
+			_close_codex()
+		return
 	if UiKit.step_tabs(event, chapters, chapter):
 		get_viewport().set_input_as_handled()
 

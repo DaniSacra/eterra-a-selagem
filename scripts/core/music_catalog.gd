@@ -6,18 +6,20 @@ extends RefCounted
 ## and music_morvath; Music.play(place) plays the chosen one. A new piece is one entry here and its files in
 ## audio/music/ (and its name in data/text_pt.tres).
 
-## The places: the title, the rooms (walk and fight) and Morvath (four phases). The ids are the ones the game always
-## asked Music for (Music.play(&"catacombs")...).
+## The places: the title, the hub (HUB-C: any piece the title may play, the title's by default, so going from one
+## to the other never changes the music until the player chooses), the rooms (walk and fight) and Morvath (four
+## phases). The ids are the ones the game always asked Music for (Music.play(&"catacombs")...).
 const TITLE := &"title"
+const HUB := &"hub"
 const DUNGEON := &"catacombs"
 const MORVATH := &"morvath"
-const PLACES: Array[StringName] = [TITLE, DUNGEON, MORVATH]
+const PLACES: Array[StringName] = [TITLE, HUB, DUNGEON, MORVATH]
 ## The save option of each place (SaveData.defaults).
-const OPTION := {TITLE: "music_title", DUNGEON: "music_dungeon", MORVATH: "music_morvath"}
+const OPTION := {TITLE: "music_title", HUB: "music_hub", DUNGEON: "music_dungeon", MORVATH: "music_morvath"}
 ## The default of each place: our own music everywhere, the title hearing the walk of the rooms' piece. MUS-1 (the
 ## PO, 2026-11-18: "músicas mais animadas, dinâmicas"): the fight music composed by the project (tools/make_music.gd)
 ## is the default; the pieces of before stay in the list.
-const DEFAULT := {TITLE: &"blade_march", DUNGEON: &"blade_march", MORVATH: &"morvath_battle"}
+const DEFAULT := {TITLE: &"blade_march", HUB: &"blade_march", DUNGEON: &"blade_march", MORVATH: &"morvath_battle"}
 ## Where the music files are.
 const DIR := "res://audio/music/"
 
@@ -29,14 +31,14 @@ const DIR := "res://audio/music/"
 ##   places: where the player may choose it (a rooms' piece on the title plays its walk); empty: only to listen.
 ## The order is the order of the list on screen.
 const PIECES := {
-	&"blade_march": {"name": "music_blade_march", "file": "blade_march", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
-	&"deep_drums": {"name": "music_deep_drums", "file": "deep_drums", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
-	&"iron_pulse": {"name": "music_iron_pulse", "file": "iron_pulse", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
+	&"blade_march": {"name": "music_blade_march", "file": "blade_march", "layers": 2, "loop": true, "places": [TITLE, HUB, DUNGEON]},
+	&"deep_drums": {"name": "music_deep_drums", "file": "deep_drums", "layers": 2, "loop": true, "places": [TITLE, HUB, DUNGEON]},
+	&"iron_pulse": {"name": "music_iron_pulse", "file": "iron_pulse", "layers": 2, "loop": true, "places": [TITLE, HUB, DUNGEON]},
 	&"morvath_battle": {"name": "music_morvath_battle", "file": "morvath_battle", "layers": 4, "loop": true, "places": [MORVATH]},
-	&"classic_catacombs": {"name": "music_classic_catacombs", "file": "classic_catacombs", "layers": 2, "loop": true, "places": [TITLE, DUNGEON]},
+	&"classic_catacombs": {"name": "music_classic_catacombs", "file": "classic_catacombs", "layers": 2, "loop": true, "places": [TITLE, HUB, DUNGEON]},
 	&"classic_morvath": {"name": "music_classic_morvath", "file": "classic_morvath", "layers": 4, "loop": true, "places": [MORVATH]},
-	&"tempting_secrets": {"name": "music_tempting_secrets", "file": "title", "layers": 1, "loop": true, "loop_from": 16.0, "places": [TITLE]},
-	&"gloom_descent": {"name": "music_gloom_descent", "file": "catacombs", "layers": 2, "loop": true, "solo": true, "places": [TITLE, DUNGEON]},
+	&"tempting_secrets": {"name": "music_tempting_secrets", "file": "title", "layers": 1, "loop": true, "loop_from": 16.0, "places": [TITLE, HUB]},
+	&"gloom_descent": {"name": "music_gloom_descent", "file": "catacombs", "layers": 2, "loop": true, "solo": true, "places": [TITLE, HUB, DUNGEON]},
 	&"clash_defiant": {"name": "music_clash_defiant", "file": "morvath", "layers": 4, "loop": true, "solo": true, "places": [MORVATH]},
 	&"victory": {"name": "music_victory", "file": "victory", "layers": 1, "loop": false, "then": DUNGEON, "places": []},
 	&"psalm_sentinel": {"name": "music_psalm_sentinel", "file": "psalm_sentinel", "layers": 1, "loop": false, "sting": true, "places": []},
@@ -44,8 +46,8 @@ const PIECES := {
 	&"psalm_shepherd": {"name": "music_psalm_shepherd", "file": "psalm_shepherd", "layers": 1, "loop": false, "sting": true, "places": []},
 	&"psalm_rock": {"name": "music_psalm_rock", "file": "psalm_rock", "layers": 1, "loop": false, "sting": true, "places": []},
 }
-## How many layers a place needs: the rooms a walk and a fight, Morvath one per phase; the title any piece.
-const NEEDS := {TITLE: 1, DUNGEON: 2, MORVATH: 4}
+## How many layers a place needs: the rooms a walk and a fight, Morvath one per phase; the title and the hub any piece.
+const NEEDS := {TITLE: 1, HUB: 1, DUNGEON: 2, MORVATH: 4}
 
 
 static func has(id: StringName) -> bool:

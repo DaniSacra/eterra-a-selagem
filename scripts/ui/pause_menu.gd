@@ -7,7 +7,8 @@ extends Control
 ## The focus walks that order with up and down and wraps at both ends; a page opened from here gives the focus back to
 ## the button that opened it.
 ## HUB-B1: Sair para o menu goes to the hub (scenes/hub.tscn); in the hub (hub true) the same panel is its Esc menu,
-## titled with the place's name, without the descent's Bênçãos, map and medallions, its way out Voltar ao título.
+## titled with the place's name, without the descent's Bênçãos, map and medallions, with Como Jogar (the title's, as
+## the hub stands between descents), its way out Voltar ao título.
 
 signal resumed
 
@@ -65,6 +66,10 @@ func open() -> void:
 	if not hub:
 		var boons := _button(v, "boons", T.t(&"pause_boons"), Callable())
 		boons.pressed.connect(func() -> void: _show(_boons_screen(), boons))
+	else:
+		# the hub took the title's place between descents: its Como Jogar too (HUB-C)
+		var howto := _button(v, "howto", T.t(&"title_howto"), Callable())
+		howto.pressed.connect(func() -> void: _show(HowToScreen.new(), howto))
 	var codex := _button(v, "codex", T.t(&"pause_moves"), Callable())
 	codex.pressed.connect(func() -> void: _show(CodexScreen.new(), codex))
 	var options := _button(v, "options", T.t(&"pause_options"), Callable())
