@@ -778,3 +778,54 @@ tela inteira); LC-4 passou na medida (herói luma p50 31 para 103, Forward+ 88),
 olho desde a preparação, com o vermelho em carmim mais escuro no Compatibility (matiz 335 contra 348); LC-1 e LC-3
 parciais (besta de luz com 30 a 40 px a 1080; o V do Sacerdote lê de frente, não de costas). Aguardando o parecer:
 LC-P1 (tempo) e LC-P2 (Meshy) só com decisão dele e do Daniel.
+
+## 10. Rejogabilidade do Guerreiro (pacote do PO de 2026-11-19): **só planejamento, nada começa sem o Daniel**
+
+Base: pacote `Eterra_Pacote_Completo_Mecanicas_Rejogabilidade.zip`, copiado em `docs/design/rejogabilidade/` (diretriz
+`PROMPT_CLAUDE_CODE.md`, `DESIGN_MECANICAS.md`, `ECONOMIA_FORJA.md`, `BENCAOS_MAPA.md`, `BACKLOG_VALIDACAO.md`) e
+`docs/art/ref/rejogabilidade/` (5 imagens conceituais de IA, só locais como as outras referências; não vão no jogo). O próprio pacote pede
+**auditar primeiro, propor e parar para aprovação**. Regra-mãe preservada: Dom define o herói, Bênção define a partida,
+Salmo transforma o poder. Só o Guerreiro, só a Emeth, sem bloqueio nem aparo, golpes plantados, Meshy zero.
+
+**Leitura prévia do Game Director (antes da auditoria, para não duplicar):**
+- Mapa: o `RunMap` (DV-1) já é grafo com portas que mostram a recompensa por marca (`DoorGlyph.of_reward`), `Kind`
+  COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR e `Reward` BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE, com
+  regras por camada e semente própria (`MAP_SALT`). As bifurcações do pacote (Bênção contra cura, elite contra loja...)
+  são em boa parte regra de sorteio nova sobre o que existe, não sala nova. Nada de sala "Magia cheia" (ela já enche).
+- Encantos: sobrepõem a **Lapidação da Emeth** já estudada (`docs/design/hades2_sistemas.md`, `WeaponUpgrade` com
+  `mods` e `node_overrides`, máximo 2 por partida). Um sistema só, não dois.
+- Bênçãos: famílias, raridades (D-52, D-53), troca, Elos (E3-02) e Salmos existem. O encontro "2 entidades, depois 3
+  Bênçãos" esbarra na **D-51** (quem concede as Bênçãos, pendente) e no cânone: as imagens do pacote mostram anjos com
+  auréola e raios e cruzes nos ícones, o que contraria regras do jogo (nunca sol nem cruz; não inventar entidades).
+  Identidade mecânica por família (Chama pressão, Geada controle, Luz alcance, Vigília ritmo) pode ser estudada sem
+  nomear ninguém.
+- Forja e materiais: o Forjador do hub está "a definir" (D-H2: proposta de aspectos da Emeth sem somar dano). O
+  `balance-designer` propõe no máximo 5 a 10 pontos de vitória vindos de progresso permanente, e só depois da 5ª
+  descida (`docs/design/balance.md`): Temperar, Refinar e Despertar precisam caber nisso.
+- Dons: árvore, Maestria e Devoção existem (E2) e o Livro de Ahk também; "Livro dos Dons" é o mesmo. Fragmentos de
+  Memória só se não duplicarem a Maestria (o pacote diz o mesmo).
+- Ouro de partida já separado; nenhum recurso persistente existe ainda (save versão 5 recebe chaves novas pelo
+  `SaveData.defaults()`).
+
+| Id | Entrega (fatia) | Aceite | Dono | Depende |
+|---|---|---|---|---|
+| **RJ-0** | Auditoria: matriz JÁ EXISTE / PARCIAL / PROPOSTA / CONFLITO / DEPENDE DO CÂNONE para cada ideia, citando arquivos e D-xx; leitura do cânone (`../dungeon-rpg/docs/mundo/canone.md`); sobreposição Encantos x Lapidação, materiais x custos existentes; o que NÃO fazer | documento `docs/design/rejogabilidade/auditoria.md`, nenhuma linha de código | `game-director` (com `balance-designer` na economia) | aprovação do Daniel para começar |
+| RJ-1 | Especificação integrada: arquitetura dos sistemas e da economia (fonte, gasto exclusivo, frequência, teto, persistência e uso no fim de jogo de cada material), migração do save, catálogo de 6 Encantos, 4 identidades mecânicas de Bênção sem entidades, wireframes de Dons, Forja, encontro e mapa, simulação de distribuição de recompensas e custo de progressão | aprovação do Daniel item a item | `game-director`, `balance-designer`, `ui-ux-designer` (wireframes) | RJ-0 |
+| RJ-2 | Taxonomia de recompensas e bifurcações contrastantes no `RunMap` (sem refazer o grafo) | portas distintas, ícones claros, mesma semente = mesmo mapa; % de bifurcações contrastantes medida | `gameplay-engineer`, `room-designer` | RJ-1 |
+| RJ-3 | Distribuição do mapa em muitas sementes | nenhuma rota inviável, piso de oportunidades antes de Morvath, `--short` e `--medium` | `gameplay-engineer`, `balance-designer` | RJ-2 |
+| RJ-4 | Encontro em duas etapas (2 fontes, depois até 3 Bênçãos elegíveis) com fallback legível | raridade, troca, Elo e exclusões preservadas; tela e controle | `gameplay-engineer`, `ui-ux-designer` | RJ-1, **D-51** |
+| RJ-5 | Materiais e uma melhoria permanente | persistência, save antigo lido, teto | `gameplay-engineer` | RJ-1 |
+| RJ-6 | Forja da Emeth no Forjador do hub (Temperar, Refinar, Despertar) | melhoria completa com custo e retorno visível; dentro do teto de equilíbrio | `gameplay-engineer`, `ui-ux-designer`, `environment-artist` (estação) | RJ-5, HUB-D |
+| RJ-7 | 3 Encantos de partida (sobre a Lapidação) | exclusões por ação, tags light/heavy/dash/finisher/omega preservadas, cada um muda a sensação | `gameplay-engineer`, `combat-feel-director` (revisão) | RJ-1 |
+| RJ-8 | Mais 3 Encantos (6 no total) e equilíbrio | robô em muitas sementes, nenhum domina | `gameplay-engineer`, `balance-designer` | RJ-7 |
+| RJ-9 | Uma ferramenta perdida do Forjador (achado único que abre uma função) | missão e desbloqueio funcionam; nome só com o Daniel | `gameplay-engineer` | RJ-6 |
+| RJ-10 | Discernimento I (uma rolagem de novo por partida) | sem garantia de montagem perfeita; diversidade por semente medida | `gameplay-engineer` | RJ-4 |
+| RJ-11 | Fragmentos de Memória | só se aprovados depois da RJ-0 | | RJ-0 |
+
+**Não fazer (do pacote e do projeto):** outros heróis; mais armas equipáveis; escudo, aparo ou bloqueio; barra nova
+de Fúria; baralho de tarô; dezenas de moedas; anjos, títulos de Elun, símbolos sagrados ou Deus como NPC inventados;
+reescrever o mapa; cruz e sol nos ícones.
+
+**Para o Daniel decidir antes da RJ-0 começar:** (a) a ordem em relação ao que já está na fila (equilíbrio B-1 a B-5,
+HUB-D, salas H-1 a H-7); (b) D-51, quem concede as Bênçãos, antes do RJ-4; (c) se o progresso permanente da Forja
+cabe na curva nova (a primeira descida muito difícil) ou se a Forja só muda o jeito da Emeth sem somar força (D-H2).
