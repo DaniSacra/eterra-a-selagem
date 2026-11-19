@@ -11,7 +11,7 @@ Você é o engenheiro de gameplay de "Crônicas de Eterra: A Selagem" (Godot 4.7
 - Movimento, combate e combos (`scripts/game/player.gd`, `combat.gd`, `scripts/core/combo_*.gd`,
   `data/combos/`), esquiva, Magia e Ômegas, dons (`skills.gd`, `data/boons/`), hordas e inimigos (`horde.gd`,
   `data/enemies/`), Morvath (`boss.gd`, `core/boss_rules.gd`), salas e portas (`rooms.gd`, `core/run_map.gd`,
-  `core/encounter_gen.gd`), ondas, entrada (`controls.gd`), robô de teste (`bot.gd`).
+  `core/encounter_gen.gd`; plantas e perigos de sala são do `room-designer`), ondas, entrada (`controls.gd`), robô de teste (`bot.gd`).
 - Câmera de jogo (`game.gd` `_follow`, `_place_camera`; `Feel.cam_*`): mudanças de enquadramento são combinadas com
   o `art-director`.
 - Colisão com o cenário (`Arena.resolve`, `walk`, `pillars`, `boxes`, `exit_zones`) quando o `environment-artist`
