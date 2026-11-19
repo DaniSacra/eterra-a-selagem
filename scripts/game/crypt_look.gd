@@ -132,6 +132,22 @@ const STYLE := {
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Cold damp: a pale cold bloom of salts on the slate, 1.4 times its value (the floor between them at patch_rest).
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.382, 0.417, 0.449), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
+## SW-C1 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, GRAVE): grave slabs in the painted floor, the size
+## of the old ones (SLAB), filling their rows (SLAB_ROWS: z -8.3 and 8.3) between the sarcophagi; x of each, its lion
+## (z: 1, one in five counting the old ones). B leaves out the north-west one by its sarcophagus.
+const STY_GRAVES_NORTH: Array[Vector2] = [Vector2(-7.75, 0), Vector2(-4.45, 0), Vector2(-1.95, 1), Vector2(-0.7, 0),
+	Vector2(1.95, 0), Vector2(4.45, 1)]
+const STY_GRAVES_SOUTH: Array[Vector2] = [Vector2(-9.85, 0), Vector2(-7.35, 1), Vector2(-0.65, 0), Vector2(1.85, 1),
+	Vector2(3.1, 0), Vector2(5.95, 0), Vector2(8.45, 0)]
+const STY_GRAVES_B_SKIP := -4.45
+## The grave slabs' value (times the floor's).
+const STY_GRAVE_VALUE := 1.06
+## SW-G3: a pair of raised frames (RAISED) on the great tomb's axis in A, and between B's two south sarcophagi:
+## middles and side (m).
+const STY_FRAMES_A: Array[Vector2] = [Vector2(-3.4, 0.0), Vector2(4.4, 0.0)]
+const STY_FRAME_A := 2.2
+const STY_FRAMES_B: Array[Vector2] = [Vector2(-1.45, 3.0), Vector2(0.55, 3.0)]
+const STY_FRAME_B := 1.9
 ## The small sarcophagi in the stylized look: their lighter stone painted at the plain stone's value (paint_ref of the
 ## painted stone, paint.gdshaderinc, times their tint) and their candles' pools softer.
 const STY_PAINT_REF := 0.36
@@ -777,7 +793,7 @@ func _cold_shaft() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = STY_FLOOR_BIOME
+	st[&"floor"] = ArenaKit.framed(STY_FLOOR_BIOME, _graves(_divider() != null))
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
@@ -790,6 +806,25 @@ func style() -> Dictionary:
 	else:
 		_quiet_b(divider)
 	return st
+
+
+## SW-C1 and SW-G3: the grave slabs of the rows and the pair of raised frames (STY_GRAVES_*, STY_FRAMES_*).
+func _graves(ossuary: bool) -> Array:
+	var out := []
+	var k := 0
+	for row: Array in [[STY_GRAVES_NORTH, SLAB_ROWS[0].y], [STY_GRAVES_SOUTH, SLAB_ROWS[3].y]]:
+		for g: Vector2 in row[0]:
+			if ossuary and is_equal_approx(g.x, STY_GRAVES_B_SKIP):
+				continue
+			out.append(ArenaKit.framed_slab(Vector2(g.x, row[1]), SLAB,
+				ArenaKit.Framed.GRAVE, g.y > 0.5, STY_GRAVE_VALUE, k))
+			k += 1
+	var frames: Array[Vector2] = STY_FRAMES_B if ossuary else STY_FRAMES_A
+	var side := STY_FRAME_B if ossuary else STY_FRAME_A
+	for f in frames:
+		out.append(ArenaKit.framed_slab(f, Vector2.ONE * side, ArenaKit.Framed.RAISED, false, 1.0, k))
+		k += 1
+	return out
 
 
 ## RS-C1, A in the stylized look: the crown makes the light of the tomb's west step (out), the north sarcophagus's

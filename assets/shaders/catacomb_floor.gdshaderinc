@@ -437,10 +437,22 @@ void fragment() {
 #else
 	slab(wp / unit, rect, id);
 #endif
+#ifdef PAINT
+	// a slab laid by hand (SW-G3, SW-C1): the floor's slabs give way to the frame's one (floor_biome.gdshaderinc)
+	vec4 fr_rect;
+	vec4 fr_info;
+	float framed = framed_at(wp, fr_rect, fr_info);
+	if (framed > 0.5) {
+		rect = vec4((fr_rect.xy - fr_rect.zw) / unit, fr_rect.zw * 2.0 / unit);
+		id = vec2(211.0 + fr_info.w, 89.0 + fr_info.w * 3.0);
+	}
+#else
+	float framed = 0.0;
+#endif
 	// the slab in meters: its middle, half size, where we are in it (each slab's edge wobbles its own way)
 	vec2 half_size = rect.zw * unit * 0.5;
 	vec2 mid = (rect.xy + rect.zw * 0.5) * unit;
-	vec2 lp = wp - mid + (vec2(noise(wp * 1.7 + id * 3.1), noise(wp * 1.7 + id * 5.3 + 9.0)) - 0.5) * 2.0 * wobble;
+	vec2 lp = wp - mid + (vec2(noise(wp * 1.7 + id * 3.1), noise(wp * 1.7 + id * 5.3 + 9.0)) - 0.5) * 2.0 * wobble * (1.0 - 0.75 * framed);
 	// rounded rectangle: distance inside from its edge, and the way out of the nearest edge
 	vec2 q = abs(lp) - (half_size - corner_round);
 	float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner_round;
@@ -499,6 +511,7 @@ void fragment() {
 		float size = mix(missing_size.x, missing_size.y, hash1(id + 27.0));
 		gone = 1.0 - smoothstep(size - 0.02, size + 0.02, to.x + to.y + (noise(wp * 9.0) - 0.5) * 0.08);
 	}
+	gone *= 1.0 - framed;
 	// cracks across a share of the slabs, thinner toward the slab's middle
 	float cn = fbm(wp * 1.3 + id * 5.0);
 	float thin = mix(0.008, 0.02, smoothstep(0.0, 0.6, min(half_size.x - abs(lp.x), half_size.y - abs(lp.y)) < 0.6 ? 0.0 : 0.6));
@@ -607,7 +620,7 @@ void fragment() {
 	vec3 emit = gold_light * rose.y * ring_glow;
 #endif
 	// the normal: the slab's own slight tilt, its bevel leaning out toward the joint, the medallion's relief
-	vec2 lean = (vec2(hash1(id + 41.0), hash1(id + 43.0)) - 0.5) * 2.0 * tan(radians(slab_tilt)) * (1.0 - on_band);
+	vec2 lean = (vec2(hash1(id + 41.0), hash1(id + 43.0)) - 0.5) * 2.0 * tan(radians(slab_tilt)) * (1.0 - on_band) * (1.0 - framed);
 	float b = (1.0 - smoothstep(bevel * 0.6, bevel, edge)) * (1.0 - joint) * joint_k;
 	lean += out_dir * b * bevel_tilt;
 	lean += tilt_m * under;
@@ -619,6 +632,10 @@ void fragment() {
 	rune_floor(wp, rect, edge, joint, c, emit, lean, rough);
 #endif
 #ifdef PAINT
+	// the frame's relief (SW-G3: raised moulding round a worn slab; SW-C1: a grave slab's sunk groove, its lion)
+	if (framed > 0.5) {
+		floor_framed(c, lean, lp, half_size, edge, fr_info, hollow_c);
+	}
 	// the mottled shade of what hangs over the floor (SW-G2), clear in the fires' pools
 	c = floor_gobo(c, wp, fire_near, TIME);
 #endif

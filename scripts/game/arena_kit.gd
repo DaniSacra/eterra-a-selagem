@@ -439,6 +439,38 @@ static func gobo(look: Dictionary, spots: Array[Vector4]) -> Dictionary:
 	return out
 
 
+## SW-G3 and SW-C1 (docs/art/sworn_reference_ideas.md 3.1 and 3.2; floor_biome.gdshaderinc): slabs laid by hand in the
+## painted floor, in paint and normal only (nothing raised, nothing collides). RAISED: a raised moulding round a worn
+## slab (SW-G3, frames of 2 to 3 m in groups of 2 to 4); GRAVE: a grave slab with a sunk groove, never a word, `lion`
+## the seal's lion small in raised relief (SW-C1, one in five). At most FRAMED_MAX a room.
+enum Framed { RAISED, GRAVE }
+const FRAMED_MAX := 16
+
+
+## One slab: its middle (x, z) and size (m, along x and z), its kind, the lion, its value (times the floor's) and seed.
+static func framed_slab(at: Vector2, size: Vector2, kind := Framed.RAISED, lion := false, value := 1.0, seed_ := 0) -> Array[Vector4]:
+	var out: Array[Vector4] = [Vector4(at.x, at.y, size.x * 0.5, size.y * 0.5), Vector4(kind, 1.0 if lion else 0.0, value, seed_)]
+	return out
+
+
+## The slabs (each from framed_slab) merged over a room's `floor` dictionary (paint_look); the lion's field with them.
+static func framed(look: Dictionary, slabs: Array) -> Dictionary:
+	var out := look.duplicate()
+	var rects: Array[Vector4] = []
+	var infos: Array[Vector4] = []
+	for s: Array in slabs.slice(0, FRAMED_MAX):
+		rects.append(s[0])
+		infos.append(s[1])
+	var n := rects.size()
+	rects.resize(FRAMED_MAX)
+	infos.resize(FRAMED_MAX)
+	out[&"framed_rects"] = rects
+	out[&"framed_info"] = infos
+	out[&"framed_count"] = n
+	out[&"framed_lion"] = LION_FIELD
+	return out
+
+
 ## A material's own stylized numbers (meta: shader parameter name to value), over the room's (paint_look).
 const PAINT_OWN := &"paint_own"
 ## Stone that keeps its own colour in the stylized look (bone, wood): paint_keep with its saturation and value whole.

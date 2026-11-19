@@ -1922,8 +1922,21 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   24,8 / 23,9 depois, Tempestade 34,4 / 32,9 e 31,0 / 34,2 (nada perdido). Pendências: o chão pintado do Compatibility
   segue mais claro que o do Forward+ em todas as salas (Cripta, Santuário: é do `paint.gdshaderinc` e do ar das salas, do
   environment-artist); as erupções (`ritual_rune.gdshader`) e a Emeth seguem mais pálidas no Compatibility.
+- **Runas no Compatibility (parecer de cadência 7, P1; só no estilizado do Compatibility)**: lá a laje armada não tem as
+  luzes de cima (`RunesLook.ARM_LIGHTS` só no Forward+) e a luz própria sai sem o linear para sRGB: lia só pela moldura
+  (+4 a +13 de luma, saturação 0,04). O `RunesLook.dress` põe no chão de runas, só nesse renderizador, `paint_compat_*`
+  (`rune_tiles.gdshaderinc`, só no `PAINT`; padrões neutros, o chão clássico nem tem): a luz da laje vezes
+  `COMPAT_GAIN` 1,6, a pedra armada `COMPAT_FILL` 0,4 a caminho do âmbar sem cinza a `COMPAT_TONE` 0,6 e com luz própria
+  `COMPAT_GLOW` 0,45, as duas vezes o armar; no golpe e na brasa a mesma pedra vai ao marfim-âmbar com luz
+  `COMPAT_STRIKE` 0,4 (no Forward+ o golpe é a laje inteira creme; aqui era cinza pálido que sumia em 0,1 s). Medido
+  (Runas A, semente 5, estilizado, 1672 x 941, RTX; `docs/gallery/rooms_rp/cadence/*_after.png`): armada aos 3,9 s (0,75
+  do aviso) luma p50 103 a 104 para 143 a 145 contra 82 a 113 das vizinhas (+30 sobre a mais clara), saturação 0,04 para
+  0,40 a 0,41 (vizinhas 0,08), matiz 30; golpe (quadros a cada 33 ms, `runes_a_strike_*`) +27 para +126 sobre a vizinha
+  escura, +18 para +89 e +53 a 0,07 e 0,13 s (Forward+ +125, +108, +86). Forward+ igual (777 pixels de chama e partícula
+  de 1,57 milhão). iGPU Intel no Compatibility (D3D12 do WSL, 1280 x 720 Baixa): 34,8 / 35,0 ms antes, 34,0 a 36,2
+  depois (GPU 27,8 contra 27,5 a 28,1). Teste em `tests/test_runes_compat.gd`.
 
-## Sworn P1, chão (SW-G1, SW-G2; só no estilizado; ideias em `docs/art/sworn_reference_ideas.md` 3.1, antes e depois em `docs/gallery/redesign/sworn_p1/`)
+## Sworn P1, chão (SW-G1, SW-G2, SW-G3, SW-C1, SW-F1; só no estilizado; ideias em `docs/art/sworn_reference_ideas.md` 3.1, antes e depois em `docs/gallery/redesign/sworn_p1/`)
 - Camadas do chão pintado em `assets/shaders/floor_biome.gdshaderinc` (incluído pelo `catacomb_floor.gdshaderinc` só
   com `PAINT`; tudo 0 por padrão, então a câmara das Runas e a Câmara do Selo não mudam; o SW-G3 e outras camadas do
   chão entram ali, cada uma com função e uniforms próprios). Distância até a borda do chão andável na cor do vértice
@@ -1952,3 +1965,44 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Jardim 16,23 / 16,25 para 16,45 / 16,20 ms, Cripta 13,11 / 13,21 para 13,27 / 13,27, Salão 14,95 / 14,96 para 15,19 /
   15,20, Santuário (com e sem a chave `floor`, mesma hora) 15,42 / 15,34 para 16,04 / 15,82 / 15,86 / 15,63
   (média +0,46, no limite de +0,5).
+- **SW-G3, lajes emolduradas, e SW-C1, lajes tumulares** (`floor_framed` e `framed_at` no `floor_biome.gdshaderinc`): até
+  `ArenaKit.FRAMED_MAX` 16 lajes por sala, retângulos alinhados aos eixos (`framed_rects`: x, z, meia largura, meia
+  profundidade; `framed_info`: tipo, leão, valor, semente), postas pela chave `floor` do `style()` com
+  `ArenaKit.framed(look, lajes)` e `ArenaKit.framed_slab(meio, tamanho, ArenaKit.Framed.RAISED|GRAVE, leão, valor,
+  semente)`. Dentro de uma, as lajes e juntas do chão dão lugar a uma laje só do tamanho dela (a junta na borda dela,
+  `rect` e `id` trocados logo depois do `slab()`, sem canto faltando, sem inclinação própria, oscilação da borda a 0,25);
+  o relevo é só pintura e normal (nada sobe, nada colide; 0,04 a 0,08 m lidos pelo sombreado de `relief_light`):
+  RAISED, moldura saliente de `framed_rim` 0,2 m com topo `framed_lip` 1,22 mais claro, rampas de `framed_slope` 0,05 m
+  claras ou escuras pela face (`framed_face` 0,45), linha escura no pé de dentro (`framed_foot` 0,55) e a laje gasta
+  dentro (mais clara e lisa para o meio, `framed_worn` 0,16, `framed_smooth` 0,4); GRAVE, sulco rebaixado
+  (`framed_groove` a 0,1 m da borda, 0,08 de largura, `framed_groove_dark` 0,85 para a cor das juntas) e, com o leão, o
+  leão do selo (`lion_sdf.res`, `framed_lion`, posto pelo `ArenaKit.framed`) em relevo pequeno no meio, `framed_lion_span`
+  0,8 m de altura, cabeça ao norte, mais claro e com sombra do lado de lá da luz. Nunca disco, anel nem cruz. Salão
+  (SW-H1): dois pares de 2,4 m dos lados do eixo da escada do altar entre o medalhão e o altar (`CatacombHall.STY_FRAMES_*`,
+  `_frames`). Cripta: lajes tumulares do tamanho das antigas (`SLAB`) completando as fileiras de z -8,3 e 8,3
+  (`CryptLook.STY_GRAVES_NORTH`, `_SOUTH`; 13 na A, 12 na B, que deixa a do sarcófago noroeste), 4 com o leão (uma em
+  cada cinco contando as 6 antigas, que seguem iguais), valor `STY_GRAVE_VALUE` 1,06; e um par emoldurado: 2,2 m dos
+  lados do túmulo grande na A, 1,9 m entre os dois sarcófagos do sul na B (`STY_FRAMES_A`, `_B`; `_graves`). Santuário
+  (SW-S3): três de 2,4 m em fileira no chão da nave diante da grade (`SanctuaryLook.STY_FRAMES_*`). Ponte (losango) ficou
+  de fora: o shader só faz retângulos alinhados.
+- **SW-F1, coluna tombada nas Fendas** (`RiftLook._fallen_column`, `FALLEN_COLUMN_*`, A e B): três tambores por metade
+  atravessando o buraco do sul da fenda em z 6,2 (o do meio fica escondido atrás da ponte do sul na câmera do jogo), de
+  baixo do lábio oeste (x -8,4) a baixo do leste (3,4), quebrada no meio (x -2,3, vão de 0,9 m), cada metade descendo 7
+  graus do lábio para a quebra, topo a -0,3 m nos lábios; lascas da quebra caídas embaixo, corrente atravessando a
+  quebra e duas pendendo das pontas. Pedra da sala (`ashlar()`, como as lascas suspensas do F2; a pedra funda ficava preta
+  contra o escuro da fenda) na camada das profundezas, sem luz, nada colide, tudo no `kit.styled()`.
+- Testes em `tests/test_room_style.gd`: `test_sworn_framed_slabs_lie_on_free_floor` (Salão, Cripta A e B, Santuário A e B:
+  cada laje no chão, longe de toda peça e das outras, 2 a 3 m as emolduradas, o Salão com 4 longe do medalhão, a Cripta
+  com 2 emolduradas, mais de 10 tumulares e 15 a 25% de leões contando as antigas; nenhuma no chão clássico) e
+  `test_sworn_fallen_column_under_the_floor` (A e B: topo abaixo de -0,25 m, de baixo do lábio oeste a baixo do leste);
+  ida e volta do F7 e "nada do estilizado sobre o chão entre 0,3 e 2,6 m" nos testes de antes.
+- Medido (G3, C1, F1; RTX 1672 x 941, semente 5, vitrine 2 s e luta 9 s, `frame_stats.py --hue --scene`; capturas `g3_*`,
+  `c1_*`, `f1_*` com recortes `*_detail_*` e `*_compat_after`): o quadro igual (luma p50 da cena 67 / 44 / 43 / 63 no
+  Salão, Cripta A, B e Santuário, saturação igual), as lajes leem pelo relevo e não pela luz. Fio da mira de 4 besteiros
+  sobre o herói parado numa moldura do Salão: caixa do fio luma p50 104 para 105, vermelho 15% nos dois, chão em volta
+  igual. fit_probe igual antes e depois em todas (Salão 3,04 / borda 39,06; Cripta 0,32 e 0,31; Fendas 1,49; Santuário
+  1,20). Clássico: 0,27 a 0,42% dos pixels mudam mais de 12 (chamas e partículas). iGPU 720 Baixa (quadro, duas
+  rodadas; Cripta quatro): Salão 17,63 / 17,78 para 17,18 / 18,07 ms, Cripta A 16,31 / 16,46 para 16,22 / 16,22 / 15,70,
+  B 15,93 / 16,27 para 16,05 / 14,99 / 15,42 (uma rodada de 19,04 fora), Fendas A 17,98 / 16,64 para 17,09 / 16,68, B
+  17,00 / 17,63 para 17,36 / 17,20, Santuário 18,59 / 18,24 para 18,23 / 18,05: nada acima do ruído. Compatibility sem
+  erro no Salão, Cripta e Fendas.

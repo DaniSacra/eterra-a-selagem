@@ -395,6 +395,12 @@ const STYLE := {
 ## The hall: pale worn dust on the blue slate; its plate carries no edge distance, so its walkable box is given.
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.421, 0.436, 0.473), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5,
 	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y)}
+## SW-H1, SW-G3 (docs/art/sworn_reference_ideas.md 3.2): two pairs of raised frames (ArenaKit.framed, RAISED) flanking
+## the axis of the dais's flight (its middle, x) on the way from the medallion to the portal: their middles' x either
+## side of the axis, their rows' z, their side (m).
+const STY_FRAMES_X := 2.3
+const STY_FRAMES_Z := Vector2(-9.4, -12.2)
+const STY_FRAME_SIZE := 2.4
 ## The decals of the stylized look (floor_decal.gdshader: the shop's rugs, the fountain's moss), a centimetre over the
 ## slabs.
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
@@ -482,7 +488,21 @@ func _stylize() -> void:
 	_urns()
 	var style := STYLE.duplicate()
 	style[&"off"] = [_key]
+	style[&"floor"] = ArenaKit.framed(STY_FLOOR_BIOME, _frames())
 	kit.stylize(style, arena)
+
+
+## SW-H1: the four raised frames of the way to the portal (STY_FRAMES_*), a value of their own each.
+func _frames() -> Array:
+	var axis := (FLIGHT.x + FLIGHT.y) * 0.5
+	var out := []
+	var k := 0
+	for z: float in [STY_FRAMES_Z.x, STY_FRAMES_Z.y]:
+		for sd: float in [-1.0, 1.0]:
+			out.append(ArenaKit.framed_slab(Vector2(axis + sd * STY_FRAMES_X, z), Vector2.ONE * STY_FRAME_SIZE,
+				ArenaKit.Framed.RAISED, false, 1.0 + 0.04 * ((k * 3) % 4 - 1.5) / 1.5, k))
+			k += 1
+	return out
 
 
 ## The urns of the stylized look (room redesign, lot A 3.2): beside the two groups of pots on the west balustrade, on

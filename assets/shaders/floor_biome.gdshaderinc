@@ -129,3 +129,127 @@ vec3 floor_gobo(vec3 c, vec2 wp, float clear, float t) {
 	float shade = gobo_kind == 1 ? gobo_leaves(wp, w, t) * w : gobo_ribs(wp, t) * w;
 	return c * (1.0 - gobo_strength * shade * (1.0 - clear));
 }
+
+// ---------- SW-G3 and SW-C1: framed slabs and grave slabs ----------
+// A few slabs laid in the floor by hand (axis aligned, in world metres): framed_rects (x, z, half x, half z) and
+// framed_info (kind, lion, value, seed), framed_count of them (0: none). The fragment takes the frame for its slab
+// (framed_at: the floor's own slabs and joints give way to one slab the size of the frame, its joint at the frame's
+// edge) and then draws the relief (floor_framed) in the paint and the normal only, nothing raised: 0.04 to 0.08 m read
+// from the shading. kind 0, SW-G3: a raised moulding framed_rim wide (its outer slope lit or shaded by relief_light,
+// its top a step lighter, its inner foot dark) round a worn slab (lighter and smoother toward its middle). kind 1,
+// SW-C1, a grave slab: a sunk groove framed_groove (from, width) in from its edge, the slab inside flat and worn, never
+// a word; lion 1: the seal's lion (lion_sdf) small in raised relief in its middle, framed_lion_span m high, its head
+// to the north. Never a disc, a ring or a cross: the frames are rectangles.
+const int FRAMED_MAX = 16;
+uniform vec4 framed_rects[16];
+uniform vec4 framed_info[16];
+uniform int framed_count = 0;
+// the moulding (kind 0): its width, its slopes' width, its top's value, the dark at its inner foot, the slopes' tilt
+uniform float framed_rim = 0.2;
+uniform float framed_slope = 0.05;
+uniform float framed_lip = 1.22;
+uniform float framed_foot = 0.55;
+uniform float framed_tilt = 0.9;
+// how much a slope facing the light (relief_light) is lighter, one facing away darker (share of its value)
+uniform float framed_face = 0.45;
+// the worn slab inside: how much lighter its middle, how smooth (share of the rock relief left)
+uniform float framed_worn = 0.16;
+uniform float framed_smooth = 0.4;
+// the grave slab's groove (kind 1): from its edge (m), its width (m), its dark
+uniform vec2 framed_groove = vec2(0.1, 0.08);
+uniform float framed_groove_dark = 0.85;
+// the lion: its field (lion_sdf.res: red = signed distance to its outline, 0.5 on the edge, spread px to the full
+// swing on a px texture), its height on the slab (m), its value raised, the shade on its lee side
+uniform sampler2D framed_lion : filter_linear_mipmap, repeat_disable;
+uniform float framed_lion_span = 0.8;
+uniform float framed_lion_px = 512.0;
+uniform float framed_lion_spread = 24.0;
+uniform float framed_lion_value = 1.35;
+uniform float framed_lion_shade = 0.5;
+
+// The frame under wp: its rect and info, 1.0 when there is one.
+float framed_at(vec2 wp, out vec4 rect, out vec4 info) {
+	rect = vec4(0.0);
+	info = vec4(0.0);
+	for (int i = 0; i < FRAMED_MAX; i++) {
+		if (i >= framed_count) { break; }
+		vec4 r = framed_rects[i];
+		vec2 d = abs(wp - r.xy);
+		if (d.x <= r.z && d.y <= r.w) {
+			rect = r;
+			info = framed_info[i];
+			return 1.0;
+		}
+	}
+	return 0.0;
+}
+
+// The lion's signed distance (m, + inside) at local q (from the slab's middle), -1 off its field.
+float framed_lion_at(vec2 q) {
+	vec2 uv = q / framed_lion_span + 0.5;
+	if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) {
+		return -1.0;
+	}
+	float to_m = framed_lion_spread * 2.0 * framed_lion_span / framed_lion_px;
+	return (texture(framed_lion, uv).r - 0.5) * to_m;
+}
+
+// The relief of the frame (info from framed_at) at wp: local position from its middle (lp), how far in from its edge
+// (edge, m: the joint's own, wobble and nicks included), the cold hollow colour of the floor's cuts.
+void floor_framed(inout vec3 c, inout vec2 lean, vec2 lp, vec2 half_size, float edge, vec4 info, vec3 hollow) {
+	vec2 q = abs(lp) - half_size;
+	vec2 out_dir = (q.x > q.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0)) * sign(lp + 1e-5);
+	// the moulding and the groove follow the frame's own outline, clean of the joint's nicks (the joint keeps them)
+	vec2 qr = abs(lp) - (half_size - corner_round);
+	edge = corner_round - length(max(qr, 0.0)) - min(max(qr.x, qr.y), 0.0);
+	vec2 lit = normalize(relief_light);
+	// a slope facing out of the frame (+1) or in (-1) is lit by its facing on the light
+	float facing = dot(out_dir, lit);
+	c *= info.z;
+	// the worn middle: lighter and smoother away from the edge
+	float inner = smoothstep(0.0, min(half_size.x, half_size.y), edge);
+	c *= 1.0 + framed_worn * inner * inner;
+	lean *= mix(1.0, framed_smooth, inner);
+	if (info.x < 0.5) {
+		// SW-G3: the raised moulding
+		float j = joint_width;
+		float up = smoothstep(j, j + framed_slope, edge);
+		float down = smoothstep(framed_rim - framed_slope, framed_rim, edge);
+		float outer_slope = up * (1.0 - smoothstep(j + framed_slope, j + framed_slope * 1.2, edge));
+		float inner_slope = down * (1.0 - smoothstep(framed_rim, framed_rim + framed_slope * 0.6, edge));
+		float top = up * (1.0 - down);
+		c *= mix(1.0, framed_lip, top);
+		c *= 1.0 + framed_face * facing * (outer_slope - inner_slope);
+		// the slab sits lower: a dark line at the moulding's inner foot
+		float foot = smoothstep(framed_rim, framed_rim + 0.02, edge) * (1.0 - smoothstep(framed_rim + 0.02, framed_rim + 0.07, edge));
+		c *= mix(1.0, framed_foot, foot);
+		lean += out_dir * framed_tilt * (outer_slope - inner_slope);
+	} else {
+		// SW-C1: the grave slab's sunk groove
+		float g0 = framed_groove.x;
+		float g1 = g0 + framed_groove.y;
+		float groove = smoothstep(g0 - 0.01, g0 + 0.01, edge) * (1.0 - smoothstep(g1 - 0.01, g1 + 0.01, edge));
+		c = mix(c, mix(c, hollow, framed_groove_dark), groove);
+		// its outer wall faces in, its inner wall out: one lit, one in shade
+		float wall_out = smoothstep(g0 - 0.015, g0 + 0.015, edge) * (1.0 - smoothstep(g0 + 0.015, g0 + 0.03, edge));
+		float wall_in = smoothstep(g1 - 0.03, g1 - 0.015, edge) * (1.0 - smoothstep(g1 - 0.015, g1 + 0.015, edge));
+		c *= 1.0 + framed_face * facing * (wall_in - wall_out);
+		lean += out_dir * framed_tilt * (wall_in - wall_out);
+		if (info.y > 0.5) {
+			float d = framed_lion_at(lp);
+			if (d > -0.08) {
+				float body = smoothstep(-0.006, 0.006, d);
+				// the relief's lee: the outline shifted toward the light shades the stone beside it
+				float lee = smoothstep(-0.006, 0.006, framed_lion_at(lp + lit * 0.025)) * (1.0 - body);
+				c *= mix(1.0, framed_lion_value, body);
+				c *= mix(1.0, framed_lion_shade, lee);
+				vec2 e = vec2(0.012, 0.0);
+				vec2 grad = vec2(framed_lion_at(lp + e.xy) - framed_lion_at(lp - e.xy), framed_lion_at(lp + e.yx) - framed_lion_at(lp - e.yx));
+				float rim = body * (1.0 - smoothstep(0.0, 0.02, d));
+				if (length(grad) > 1e-5) {
+					lean += -normalize(grad) * rim * framed_tilt * 0.6;
+				}
+			}
+		}
+	}
+}

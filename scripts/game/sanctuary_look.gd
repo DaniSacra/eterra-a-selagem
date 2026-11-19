@@ -124,6 +124,12 @@ const STY_FLOOR := Color(0.356, 0.343, 0.326)
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.544, 0.514, 0.464), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5,
 	&"gobo_kind": 2, &"gobo_strength": 0.25, &"gobo_width": 0.1, &"gobo_base": 0.0, &"gobo_scale": 2.6, &"gobo_stretch": 1.5,
 	&"gobo_along": -STY_SHAFT_LEAN, &"gobo_sway": 0.04, &"gobo_soft": 0.05, &"gobo_cover": 0.5}
+## SW-S3 with SW-G3 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, RAISED): a row of raised frames on the
+## nave's floor in front of the chancel's grille, "noble floor": how far in from the west edge their middles stand,
+## their z, their side (m).
+const STY_FRAMES_IN := 1.6
+const STY_FRAMES_Z: Array[float] = [-2.6, 0.0, 2.6]
+const STY_FRAME_SIZE := 2.4
 const STY_GOBO_SHAFT := Vector2(9.0, 1.0)
 const STY_GOBO_GUARD := Vector2(5.0, 0.8)
 const STY_SLAB_PAINT := Vector2(0.78, 1.2)
@@ -593,7 +599,11 @@ func style() -> Dictionary:
 		var to: Vector2 = MOON_AT[k] if _hole.is_empty() else _middle(_hole)
 		lit.append(Vector4(to.x, to.y, STY_GOBO_SHAFT.x, STY_GOBO_SHAFT.y))
 	lit.append(Vector4(layout.boss_spawn.x, layout.boss_spawn.y, STY_GOBO_GUARD.x, STY_GOBO_GUARD.y))
-	st[&"floor"] = ArenaKit.gobo(STY_FLOOR_BIOME, lit)
+	var frames := []
+	for k in STY_FRAMES_Z.size():
+		frames.append(ArenaKit.framed_slab(Vector2(_west + STY_FRAMES_IN, STY_FRAMES_Z[k] + _chancel.y), Vector2.ONE * STY_FRAME_SIZE,
+			ArenaKit.Framed.RAISED, false, 1.0 + 0.03 * (k - 1), k))
+	st[&"floor"] = ArenaKit.framed(ArenaKit.gobo(STY_FLOOR_BIOME, lit), frames)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

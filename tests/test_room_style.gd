@@ -729,3 +729,107 @@ func test_the_chamber_cages() -> void:
 	await wait_process_frames(10)
 	assert_ne((styled.find_child("Cage0", true, false) as Node3D).transform, before, "swinging slowly")
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+
+
+# ---------- Sworn P1: framed and grave slabs (SW-G3, SW-C1), the fallen column (SW-F1) ----------
+
+## The painted floor's framed slabs of a room built in the stylized look (ArenaKit.framed): [rects, infos], read from
+## its floor materials (the same on every one), or [] when it has none.
+func _framed_of(a: Arena) -> Array:
+	for n in a.find_children("*", "GeometryInstance3D", true, false):
+		var g := n as GeometryInstance3D
+		var mats: Array[Material] = [g.material_override]
+		if g is MeshInstance3D and (g as MeshInstance3D).mesh != null:
+			for i in (g as MeshInstance3D).mesh.get_surface_count():
+				mats.append((g as MeshInstance3D).get_active_material(i))
+		for m in mats:
+			var sm := m as ShaderMaterial
+			if sm == null or sm.shader != ArenaKit.FLOOR_PAINT:
+				continue
+			var count: Variant = sm.get_shader_parameter(&"framed_count")
+			if count != null and int(count) > 0:
+				var rects: Array = sm.get_shader_parameter(&"framed_rects")
+				var infos: Array = sm.get_shader_parameter(&"framed_info")
+				return [rects.slice(0, int(count)), infos.slice(0, int(count))]
+	return []
+
+
+func test_sworn_framed_slabs_lie_on_free_floor() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for room: Array in [[&"hall", 0], [&"crypt", 0], [&"crypt", 1], [&"sanctuary", 0], [&"sanctuary", 1]]:
+		var a := _arena(room[0], room[1])
+		var what := "%s %d" % room
+		var framed := _framed_of(a)
+		assert_eq(framed.size(), 2, "%s: framed slabs on the painted floor" % what)
+		if framed.size() < 2:
+			continue
+		var rects: Array = framed[0]
+		var infos: Array = framed[1]
+		assert_between(rects.size(), 2, ArenaKit.FRAMED_MAX, what + ": a handful")
+		var raised := 0
+		var graves := 0
+		var lions := 0
+		for i in rects.size():
+			var r: Vector4 = rects[i]
+			var info: Vector4 = infos[i]
+			if int(info.x) == ArenaKit.Framed.RAISED:
+				raised += 1
+				assert_between(maxf(r.z, r.w) * 2.0, 1.8, 3.0, what + ": a frame of 2 to 3 m")
+			else:
+				graves += 1
+				lions += 1 if info.y > 0.5 else 0
+			# all of it on the floor, clear of every piece and of the other slabs
+			for u: float in [-1.0, 0.0, 1.0]:
+				for v: float in [-1.0, 0.0, 1.0]:
+					var p := Vector2(r.x + u * r.z, r.y + v * r.w)
+					assert_true(a.shape().contains(p, 0.2), "%s: slab %d on the floor at %s" % [what, i, p])
+					assert_false(a.overlaps(p, 0.0), "%s: slab %d clear of the pieces at %s" % [what, i, p])
+			for j in range(i + 1, rects.size()):
+				var o: Vector4 = rects[j]
+				var apart := absf(r.x - o.x) >= r.z + o.z or absf(r.y - o.y) >= r.w + o.w
+				assert_true(apart, "%s: slabs %d and %d apart" % [what, i, j])
+		match room[0]:
+			&"hall":
+				assert_eq(raised, 4, "SW-H1: two pairs either side of the flight's axis")
+				for r: Vector4 in rects:
+					var ring := Vector2(r.x, r.y).distance_to(CatacombHall.MEDALLION_AT)
+					assert_gt(ring - Vector2(r.z, r.w).length(), CatacombHall.MEDALLION, "clear of the medallion")
+			&"crypt":
+				assert_eq(raised, 2, "SW-G3: a pair in the crypt")
+				assert_gt(graves, 10, "SW-C1: rows of grave slabs")
+				# one in five with the lion, the old slabs (CryptLook.SLAB_ROWS, plain) counted
+				var all := graves + CryptLook.SLAB_ROWS.size()
+				assert_between(float(lions) / all, 0.15, 0.25, "about one grave in five with the lion")
+			&"sanctuary":
+				assert_eq(raised, 3, "SW-S3: a row in front of the grille")
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	var classic := _arena(&"crypt", 0)
+	assert_eq(_framed_of(classic).size(), 0, "the classic floor draws none")
+
+
+## SW-F1: the fallen column lies across the rift's south hole, all of it under the floor (its top 0.3 m down), in A
+## and B, only in the stylized look.
+func test_sworn_fallen_column_under_the_floor() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for v in 2:
+		var a := _arena(&"rift", v)
+		var styled := a.find_child("Styled", true, false) as Node3D
+		var top := -INF
+		var span := Vector2(INF, -INF)
+		for n in styled.find_children("*", "MeshInstance3D", true, false):
+			var mi := n as MeshInstance3D
+			if mi.mesh == null:
+				continue
+			for sf in mi.mesh.get_surface_count():
+				for vert: Vector3 in mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX]:
+					var w := mi.global_transform * vert
+					if absf(w.z - RiftLook.FALLEN_COLUMN.x) > RiftLook.FALLEN_COLUMN.z * 1.2:
+						continue
+					if w.x < RiftLook.FALLEN_COLUMN_SPAN.x - 0.5 or w.x > RiftLook.FALLEN_COLUMN_SPAN.y + 0.5 or w.y < -3.0:
+						continue
+					top = maxf(top, w.y)
+					span = Vector2(minf(span.x, w.x), maxf(span.y, w.x))
+		assert_lt(top, RiftLook.FALLEN_COLUMN.y + 0.05, "rift %d: the column's top under the floor" % v)
+		assert_gt(top, RiftLook.FALLEN_COLUMN.y - 0.3, "rift %d: and near it, seen" % v)
+		assert_lt(span.x, -6.5, "rift %d: from under the west lip" % v)
+		assert_gt(span.y, 1.5, "rift %d: to under the east lip" % v)

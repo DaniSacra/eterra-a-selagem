@@ -198,6 +198,22 @@ const FALLEN_ARCH_GAP := Vector2(-1.0, 6.0)
 const FALLEN_DECK := Vector3(-2.5, -3.2, -11.3)
 const FALLEN_DECK_SIZE := Vector3(2.8, 0.55, 1.8)
 const FALLEN_CHAIN_Z := -11.4
+## SW-F1 (docs/art/sworn_reference_ideas.md 3.2): a column fallen across the rift's south hole (A and B; the middle
+## one hides behind the south bridge from the game's camera), off the floor: its drums lying across the gap from under
+## the west lip to under the east one, broken in the middle, each half
+## sagging into the gap from its end (its top FALLEN_COLUMN.y under the floor at the lips), chips of the break fallen
+## below, chains across the break and down from the broken ends; the room's stone on the depths' layer (lit by the
+## rift's deep lights), no light of its own, nothing collides.
+## FALLEN_COLUMN: z, top at the lips (m), radius; FALLEN_COLUMN_SPAN: its west and east ends (x, under the lips' floor,
+## the rift's south hole runs from about -7.2 to 2.3 there); FALLEN_COLUMN_BREAK: the break's middle (x) and gap;
+## FALLEN_COLUMN_SAG: how far each half dips (degrees); FALLEN_COLUMN_DRUMS: drums a half; FALLEN_COLUMN_HANG: the
+## chains' drop from the west and east broken ends.
+const FALLEN_COLUMN := Vector3(6.2, -0.3, 0.55)
+const FALLEN_COLUMN_SPAN := Vector2(-8.4, 3.4)
+const FALLEN_COLUMN_BREAK := Vector2(-2.3, 0.9)
+const FALLEN_COLUMN_SAG := 7.0
+const FALLEN_COLUMN_DRUMS := 3
+const FALLEN_COLUMN_HANG := Vector2(3.2, 4.4)
 ## F5 (B): the far vortex, an accent only: distance ahead of the camera (from the middle of its bounds), how far over
 ## the ray of the frame's top edge its middle stands (so only its lower part shows, in the top band of the frame, over
 ## where the north's enemies rise), its offset to the left of the view (m), size, colour (brightest channel 0.45), turn
@@ -621,6 +637,7 @@ func _dress_styled() -> void:
 					_head_bowl(sm, at)
 	_hung_shards(sm)
 	_mouth_arch(sm)
+	_fallen_column(sm)
 	if _fallen:
 		_fallen_arch(sm)
 		_vortex()
@@ -707,6 +724,52 @@ func _mouth_arch(sm: Masonry) -> void:
 	kit.styled_build(func() -> void:
 		kit.chain(MOUTH_CHAIN_FROM, end + Vector3(0, 0.3, 0), 1.6, 1.0)
 		kit.chain(end, end + Vector3(0.4, -MOUTH_CHAIN_HANG, 0.2), 0.05, 0.8))
+
+
+## SW-F1: the fallen column across the rift's south hole (FALLEN_COLUMN_*), under the floor's level, its two halves
+## sagging from the lips to the break.
+func _fallen_column(sm: Masonry) -> void:
+	# the room's dressed stone, as the hanging shards (F2): the depths' own stone is black against the rift's dark
+	var mat := ashlar()
+	var r := FALLEN_COLUMN.z
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 4013
+	var ends: Array[Vector3] = []
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	var sag := deg_to_rad(FALLEN_COLUMN_SAG)
+	for side: float in [-1.0, 1.0]:
+		# from the lip's end (held under the floor) toward the break, dipping
+		var from_x := FALLEN_COLUMN_SPAN.x if side < 0.0 else FALLEN_COLUMN_SPAN.y
+		var to_x := FALLEN_COLUMN_BREAK.x + side * FALLEN_COLUMN_BREAK.y * 0.5
+		var run := absf(to_x - from_x)
+		var dir := Vector3(-side * cos(sag), -sin(sag), 0.0)
+		var length := run / cos(sag)
+		var start := Vector3(from_x, FALLEN_COLUMN.y - r, FALLEN_COLUMN.x)
+		var drum := length / FALLEN_COLUMN_DRUMS
+		var side_ax := dir.cross(Vector3.UP).normalized()
+		for k in FALLEN_COLUMN_DRUMS:
+			# the drum at the break shorter, snapped
+			var len_ := drum - 0.08 - (drum * 0.3 if k == FALLEN_COLUMN_DRUMS - 1 else 0.0)
+			var mid := start + dir * (drum * k + len_ * 0.5 + 0.04)
+			mid.z += rng.randf_range(-0.06, 0.06)
+			var mi := sm.shaft(Vector3.ZERO, r * rng.randf_range(0.9, 1.0), len_, mat)
+			# laid along dir (its own up), turned about it so no two drums match
+			mi.basis = Basis(side_ax, dir, side_ax.cross(dir)).orthonormalized() * Basis(Vector3.UP, rng.randf_range(0.0, TAU))
+			mi.position = mid
+		ends.append(start + dir * (length - drum * 0.3))
+	# chips of the break fallen below it
+	for k in 3:
+		var p := Vector3(FALLEN_COLUMN_BREAK.x + rng.randf_range(-0.6, 0.6), rng.randf_range(-3.5, -2.0), FALLEN_COLUMN.x + rng.randf_range(-0.5, 0.5))
+		var s := rng.randf_range(0.25, 0.45)
+		var chip := sm.box(p, Vector3(s, s * 0.6, s * 0.8), rng.randf() * TAU, mat)
+		chip.rotate_object_local(Vector3.RIGHT, rng.randf_range(-0.6, 0.6))
+	sm.layers = 1
+	var west := ends[0] + Vector3(0, r * 0.6, 0)
+	var east := ends[1] + Vector3(0, r * 0.6, 0)
+	kit.styled_build(func() -> void:
+		kit.chain(west, east, 0.6, 0.8)
+		kit.chain(ends[0], ends[0] + Vector3(0.3, -FALLEN_COLUMN_HANG.x, 0.2), 0.05, 0.8)
+		kit.chain(ends[1], ends[1] + Vector3(-0.2, -FALLEN_COLUMN_HANG.y, -0.3), 0.05, 0.8))
 
 
 ## The position of the kept stone nearest a gap's edge (local x across the arch from foot), or INF.
