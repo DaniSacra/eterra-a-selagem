@@ -26,6 +26,11 @@ uniform vec3 style_color : source_color = vec3(0.07, 0.06, 0.06);
 // In that look the shell is also pushed style_push meters away from the camera, so on open cloth (Morvath's cloak, a
 // robe's hem) its inflated back faces stay behind the body and only the edge past the silhouette shows.
 uniform float style_push = 0.25;
+// Elites and guardians (style_elite 1, never the boss): the shell is a dark old gold, style_elite_width meters wide, so
+// they read as elites at a glance in that look (the dark ink took the place of the classic's gold edge).
+uniform float style_elite = 0.0;
+uniform float style_elite_width = 0.05;
+uniform vec3 style_elite_color : source_color = vec3(0.36, 0.27, 0.12);
 
 varying vec4 state;
 
@@ -37,7 +42,7 @@ void vertex() {
 	crowd_pose(VERTEX_ID, COLOR, at, facing);
 	NORMAL = facing;
 	state = INSTANCE_CUSTOM;
-	float w = art_style > 0.5 ? style_width : width;
+	float w = art_style > 0.5 ? mix(style_width, style_elite_width, style_elite) : width;
 	VERTEX = at + facing * w / max(length(MODEL_MATRIX[0].xyz), 0.001);
 	if (art_style > 0.5) {
 		// away from the camera, in the model's own space (uniform scale: the transpose undoes the turn)
@@ -51,6 +56,6 @@ void fragment() {
 	if (state.a > 0.0) {
 		discard;
 	}
-	vec3 ink = art_style > 0.5 ? style_color : color * intensity;
+	vec3 ink = art_style > 0.5 ? mix(style_color, style_elite_color, style_elite) : color * intensity;
 	ALBEDO = mix(mix(ink, flash_color, clamp(state.r, 0.0, 1.0)), absorb_color * absorb_light, clamp(-state.r, 0.0, 1.0));
 }

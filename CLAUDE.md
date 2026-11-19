@@ -1475,6 +1475,20 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (com 265 pixels acima de 235) para 222 sem nenhum acima de 235, véu 29% menor; área do corte 0,76 da do clássico. Sobre o osso
   claro da multidão o fio somado ainda vai ao branco, como no clássico. Faixas das figuras seguem em
   `figure_paint.gdshaderinc` (a pedra baixou a faixa de sombra para 0,25; juntar só quando as duas frentes fecharem).
+  **Ouro das elites no estilizado** (bug do PO de 2026-11-19, elites iguais aos comuns no look padrão do exe): toda
+  figura com borda própria menos o chefe (`EnemyDef.rim` > 0: elites e guardiões; `style_elite` 1, posto pelo
+  `CrowdRenderer.register`) tem no estilizado o aço dourado aceso pela chave a `style_gild_light` 0,7 (não a 0,2 do
+  corpo), ouro velho mais saturado `style_gild_sat` 1,15 e um véu de ouro `style_gild_rest` 0,12 no resto; a borda morna
+  vira borda de ouro velho (`gild_color`, `style_elite_rim` 1,0 da morna, fresnel 3,5) e a casca escura vira ouro velho
+  escuro (`crowd_outline.gdshader` `style_elite_color`, `CrowdRenderer.STYLE_ELITE_OUTLINE` (0,36; 0,27; 0,12), 0,05 m,
+  `STYLE_ELITE_WIDTH`). Pisca, "vai bater", queimadura, dissolver, Morvath e os comuns iguais; o clássico igual (captura
+  na RTX idêntica fora das chamas). Medido no laboratório (`enemy_lab --look=stylized`, só os pixels da figura): antes
+  comum e elite iguais (matiz 21 a 30, saturação 0,32 a 0,46 contra 0,34 a 0,50, luma p50 23 a 47 contra 24 a 48), depois
+  a elite com matiz 28 a 35, saturação 0,51 a 0,67 e luma p50 45 a 89 (o comum fica 15 a 30, 0,29 a 0,46 e 23 a 47); no
+  jogo (`--stress=8 --stress-ids=guard_elite,skeleton_elite,skeleton,guard --seed=5 --hero-at=2,2 --shot-at=0.8`, contra
+  o quadro vazio) Escudo elite luma p50 43 para 79 e saturação 0,35 para 0,50 (Escudo comum 51 e 0,29), esqueleto elite
+  saturação 0,41 para 0,54 e pixels de ouro velho 36 para 59% (comum 13 a 37%). No Compatibility as figuras seguem
+  escuras e a casca de ouro lê. Antes e depois em `docs/gallery/redesign/elite_gold/`.
 - **Correções depois do STY-09 (STY-10, environment-artist; só no estilizado, o clássico igual)**: **poças de fogo**
   (`paint.gdshaderinc`): a luz quente (vermelho bem acima do azul, `paint_fire_from`) não passa mais pelas três faixas
   (N·L vezes a queda de um fogo a 2,8 m nunca saía da faixa de sombra): pinta uma poça chapada com borda desenhada

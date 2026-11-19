@@ -150,6 +150,19 @@ uniform float style_flat_lod = 3.0;
 uniform float style_tell = 1.0;
 uniform float style_vivid = 0.0;
 uniform float style_hero = 0.2;
+// Elite gold in the stylized look (the PO, 2026-11-19: elites read like the commons there). With the body at style_light
+// of the key, the classic's old gold on the steel (gild, mixed into the painting) went as dark as the rest and the warm
+// rim made every figure the same brown. A figure with style_elite 1 (elites and guardians: CrowdRenderer.STYLE_ELITE,
+// never the boss) gets back in that look: its gilded steel lit at style_gild_light of the key (not style_light) and
+// raised to style_gild_sat more saturation, the rest of it a style_gild_rest cast of old gold, and its rim in old gold
+// (gild_color, never a bright yellow) style_elite_rim times the warm one, at fresnel style_elite_rim_power. All under
+// flash_cap (the flash and the tell stop there as before); the commons (style_elite 0) are untouched.
+uniform float style_elite = 0.0;
+uniform float style_gild_light = 0.7;
+uniform float style_gild_sat = 1.15;
+uniform float style_gild_rest = 0.12;
+uniform float style_elite_rim = 1.0;
+uniform float style_elite_rim_power = 3.5;
 
 varying vec4 state;
 varying vec3 world_pos;
@@ -198,6 +211,8 @@ void fragment() {
 	float steel = (1.0 - smoothstep(0.1, 0.22, colourful / max(top, 0.001))) * (1.0 - smoothstep(0.0, 0.06, raw.r - raw.b))
 		* smoothstep(0.1, 0.2, top);
 	raw = mix(raw, gild_color * top * gild_light, max(steel, gild_rest) * gild);
+	// stylized elites: how much of the figure is old gold (its steel, and a faint cast on the rest)
+	float gold = styled ? clamp(max(steel, style_gild_rest) * gild * style_elite, 0.0, 1.0) : 0.0;
 	vec3 c = pow(raw, vec3(paint_gamma));
 	c = max(mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))), desaturate), vec3(0.0));
 	c *= tint.rgb;
@@ -244,7 +259,13 @@ void fragment() {
 		// the torches' warm rim on every figure (the fire's own rim takes its place while it burns)
 		vec3 warm = mix(style_rim_color, rim_color / max(max(rim_color.r, max(rim_color.g, rim_color.b)), 0.001),
 			clamp(style_vivid, 0.0, 1.0));
-		EMISSION += warm * figure_rim(NORMAL, VIEW, style_rim_power) * style_rim * (1.0 - burn) * shade;
+		EMISSION += warm * figure_rim(NORMAL, VIEW, style_rim_power) * style_rim * (1.0 - burn) * shade * (1.0 - style_elite);
+		// elites: the gilded steel catches the key (old gold, more saturated than the painting), and the rim is old gold
+		vec3 old_gold = max(mix(vec3(dot(gild_color, vec3(0.3, 0.55, 0.15))), gild_color, style_gild_sat), vec3(0.0));
+		EMISSION += old_gold * top * gold * shade * key * figure_bands(dot(NORMAL, normalize(key_dir))) * style_gild_light * (1.0 - frost);
+		vec3 gold_rim = gild_color / max(gild_color.r, max(gild_color.g, gild_color.b));
+		EMISSION += gold_rim * figure_rim(NORMAL, VIEW, style_elite_rim_power) * style_rim * style_elite_rim * style_elite
+			* (1.0 - burn * (1.0 - burn_keep_own)) * shade;
 	}
 	float ready = smoothstep(1.0 - tell_hold, 1.0, tell) * tell_light * (styled ? style_tell : 1.0);
 	if (ready > 0.0) {

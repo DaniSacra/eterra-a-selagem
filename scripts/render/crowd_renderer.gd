@@ -40,6 +40,11 @@ const STYLE_TELL := 1.6
 ## STY-10 (P2-2): Morvath keeps his violet in the stylized look (crowd.gdshader `style_vivid`: his painting this much
 ## more saturated and his own rim colour in place of the warm one; the others 0).
 const STYLE_BOSS_VIVID := 1.0
+## Elites and guardians in the stylized look (2026-11-19, the PO: their gold went away there): crowd.gdshader
+## `style_elite` (gilded steel lit by the key, old-gold rim) and a dark old-gold shell (crowd_outline.gdshader), wider.
+## Every figure with an edge of its own (EnemyDef.rim > 0) but the boss; the commons and Morvath keep the dark ink.
+const STYLE_ELITE_OUTLINE := Color(0.36, 0.27, 0.12)
+const STYLE_ELITE_WIDTH := 0.05
 ## Painted figures (the Meshy models): how much the bright saturated spots of the painting (eyes, gems, orbs, embers)
 ## shine by themselves, and the old gold the steel of an elite turns to (EnemyDef.gild says how much).
 const PAINT_GLOW := 2.2
@@ -195,6 +200,8 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"tell_light", TELL_LIGHT)
 	mat.set_shader_parameter(&"style_tell", STYLE_TELL)
 	mat.set_shader_parameter(&"style_vivid", STYLE_BOSS_VIVID if d.behavior == EnemyDef.Behavior.BOSS else 0.0)
+	var gilded := 1.0 if d.rim > 0.0 and d.behavior != EnemyDef.Behavior.BOSS else 0.0
+	mat.set_shader_parameter(&"style_elite", gilded)
 	mat.set_shader_parameter(&"hero_light", BOSS_HERO_LIGHT if d.behavior == EnemyDef.Behavior.BOSS else 1.0)
 	mat.set_shader_parameter(&"crest_from", baked.height * 0.8)
 	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline
@@ -218,6 +225,9 @@ func register(d: EnemyDef) -> void:
 	edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
 	edge.set_shader_parameter(&"style_width", STYLE_OUTLINE_WIDTH)
 	edge.set_shader_parameter(&"style_color", STYLE_OUTLINE_COLOR)
+	edge.set_shader_parameter(&"style_elite", gilded)
+	edge.set_shader_parameter(&"style_elite_width", STYLE_ELITE_WIDTH)
+	edge.set_shader_parameter(&"style_elite_color", STYLE_ELITE_OUTLINE)
 	_set_poses(edge, baked)
 	# elites and the boss always have the shell; every figure has it in the stylized look (F7 flips it live)
 	if d.rim > 0.0:
