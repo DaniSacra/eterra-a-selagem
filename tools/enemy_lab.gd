@@ -7,7 +7,7 @@ extends SceneTree
 ## spreads that row over the clip (the same id many times shows the clip as a strip); "clip" spreads it over the whole clip.
 ## Options anywhere after the prefix: --zoom=2 (the camera that much closer), --tell=0.8 (every figure as if that far
 ## into its wind-up: the swollen orb and the lights of EnemyFx), --loosed=0.03 (as if its attack was loosed that many
-## seconds ago), --absorbed (a blow just landed on its armor), --broken (its armor is gone).
+## seconds ago), --absorbed (a blow just landed on its armor), --broken (its armor is gone), --look=stylized.
 ## Cycle 8: --bars (each one's life bar as the game draws it: 60% life with a pale trail to 85%, an elite with 70% of
 ## its armor, or none with --broken) and --warn=0.6 (the warning of its attack on the floor, that far filled, aimed
 ## down and to the right of the screen).
@@ -33,6 +33,8 @@ func _run() -> void:
 		else:
 			args.append(a)
 	var out: String = args[0] if args.size() > 0 else "enemies"
+	# --look=classic|stylized (VisualProfile): the figures as each look draws them (classic by default)
+	VisualProfile.set_look(VisualProfile.parse(str(opts.get("look", "classic"))))
 	var anim := StringName(args[1]) if args.size() > 1 else &"idle"
 	# seconds into the clip; "a:b" spreads the row from a to b (the same id many times: the clip as a strip)
 	var whole := args.size() > 2 and args[2] == "clip"
