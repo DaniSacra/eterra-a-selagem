@@ -295,12 +295,6 @@ const STAFF_CLIPS := {
 }
 
 const MODELS := {
-	# not an enemy: the hooded figure of the catacomb statues, one still pose (drawn in stone by ArenaKit.statue)
-	"statue": {
-		"model": "Rogue_Hooded.glb",
-		"weapons": [],
-		"anims": {"idle": ["Unarmed_Idle", 1, true]},
-	},
 	# 1. the soldier: bare bone, steel pauldrons and greaves, a torn red loincloth; the blade is the KayKit one
 	"skeleton": {
 		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
@@ -608,6 +602,56 @@ const KAYKIT := {
 	},
 }
 
+## The hub's two people (HUB-D, docs/design/hub_spec_art.md 3.8; no Meshy): KayKit adventurers baked like the old
+## crowd, `-- npcs [ids]`, to assets/baked/npc_<id>.res, drawn by HubNpc (scripts/render/hub_npc.gd) through a
+## CrowdRenderer of their own. Each in a palette of its own (tools/make_palettes.gd -- npcs; "embed": kept compressed
+## inside the .res, the palettes folder is not exported): earth, leather, dark iron,
+## a dark petrol hood; no saturated petrol, emerald nor elite gold. On top of the KAYKIT entries: "height" (meters to
+## the top of the head standing idle, the poses scaled to it and its soles set on the floor), "head_shrink" (on top of Slender's; the skeletons'
+## HEAD_SHRINK when absent) and a clip's 4th field {"from", "to"} (seconds of the clip baked), "bend" (on top of the
+## entry's, as the Meshy clips' "bend"). A prop's "name" keeps its
+## vertices in BakedModel.parts (the smith's "hammer": where the head is when it lands, for the sparks).
+const NPC_HAMMER := [
+	# the handle along the fist (+Y of the hand slot), the head across it, its faces toward the swing
+	{"bone": "handslot.r", "shape": "cylinder", "at": Vector3(0, 0.22, 0), "size": Vector3(0.035, 0.62, 0.04), "cell": 22, "name": "handle"},
+	{"bone": "handslot.r", "shape": "box", "at": Vector3(0, 0.52, 0.02), "size": Vector3(0.13, 0.13, 0.3), "cell": 23, "name": "hammer"},
+]
+const NPCS := {
+	# the Vendedor: the hooded rogue, a dark petrol hood and cape, a mantle of muted earth, leather; empty hands (the
+	# counter hides his legs)
+	"npc_vendor": {
+		"model": "Rogue_Hooded.glb",
+		"texture": PALETTE + "npc_vendor.png",
+		"embed": true,
+		"weapons": [],
+		"hide": ["Knife_Offhand", "1H_Crossbow", "2H_Crossbow", "Knife", "Throwable"],
+		"height": 1.9,
+		"head_shrink": 0.9,
+		"bend": {"spine": Vector3(8, 0, 0), "head": Vector3(6, 0, 0)},
+		"anims": {"idle": ["Idle", 16, true], "gesture": ["Interact", 14, false]},
+	},
+	# the Forjador: the knight without helmet, shield, sword nor cape, a leather apron over dark wool, bare forearms,
+	# a hammer of dark iron on a wooden handle; the blow on the anvil and his breath between bouts
+	"npc_smith": {
+		"model": "Knight.glb",
+		"texture": PALETTE + "npc_smith.png",
+		"embed": true,
+		"weapons": [],
+		"hide": ["Knight_Helmet", "Knight_Cape", "1H_Sword_Offhand", "Badge_Shield", "Rectangle_Shield", "Round_Shield",
+			"Spike_Shield", "1H_Sword", "2H_Sword"],
+		# the arms' plate turns to skin (cell 20), the legs' to dark wool (cell 19), the body's to the apron (3)
+		"remap": {"Knight_ArmLeft": {3: 20}, "Knight_ArmRight": {3: 20}, "Knight_LegLeft": {3: 19}, "Knight_LegRight": {3: 19}},
+		"props": NPC_HAMMER,
+		"height": 1.95,
+		"head_shrink": 0.9,
+		"bend": {"spine": Vector3(6, 0, 0)},
+		# the chop from the hammer raised off the anvil to the moment its head lands (the library's swing ends there),
+		# the trunk leaning back 12 degrees on top of the entry's so the head lands on the anvil's face (0.9 m), not
+		# 15 cm into the iron
+		"anims": {"idle": ["Idle", 16, true], "gesture": ["1H_Melee_Attack_Chop", 12, false, {"from": 0.1, "to": 0.655, "bend": {"spine": Vector3(-12, 0, 0)}}]},
+	},
+}
+
 
 var _done := false
 ## rig -> [model, AnimationPlayer, Skeleton3D], loaded when a figure first asks for it.
@@ -618,6 +662,15 @@ var _hold := {}
 var _even_legs := false
 ## Only these clips are baked when not empty (tools/walk_probe.gd measures walks without baking the rest).
 var only_anims: Array = []
+
+## DT-104: what a figure was baked from, kept in its .res (meta "bake_stamp"): its entry (every option, clip and
+## piece, as text) and PIPELINE. tests/test_asset_budget.gd fails when a .res is stale. Raise PIPELINE when a change
+## to the code below changes what every figure bakes to (the entries' own changes are seen by themselves).
+const PIPELINE := 1
+
+
+static func stamp(spec: Dictionary) -> int:
+	return (var_to_str(spec) + "|%d" % PIPELINE).hash()
 
 
 func _process(_delta: float) -> bool:
@@ -630,12 +683,16 @@ func _process(_delta: float) -> bool:
 	if only.has("kaykit"):
 		only.erase("kaykit")
 		models = KAYKIT
+	if only.has("npcs"):
+		only.erase("npcs")
+		models = NPCS
 	for id: String in models:
 		if not only.is_empty() and not only.has(id):
 			continue
 		var t0 := Time.get_ticks_msec()
 		var spec: Dictionary = models[id]
 		var baked := _bake_meshy(spec) if spec.has("meshy") else _bake(spec)
+		baked.set_meta(&"bake_stamp", stamp(spec))
 		ResourceSaver.save(baked, "res://assets/baked/%s.res" % id, ResourceSaver.FLAG_COMPRESS)
 		print("baked %s: %d anims, %d triangles, %.2f m, in %d ms" % [id, baked.frames.size(),
 			(baked.mesh.surface_get_arrays(0)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3, baked.height, Time.get_ticks_msec() - t0])
@@ -1268,7 +1325,8 @@ func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 	if h.has("file"):
 		var scene: Node = (load(WEAPON + h.file) as PackedScene).instantiate()
 		var mi := _first_mesh(scene)
-		var mesh: Mesh = _repainted(mi.mesh, h.paint) if h.has("paint") else mi.mesh
+		var mesh: Mesh = _lod(mi.mesh, int(h.lod)) if int(h.get("lod", 0)) > 0 else mi.mesh
+		mesh = _repainted(mesh, h.paint) if h.has("paint") else mesh
 		pieces.append({"mesh": mesh, "bone": bone, "transform": hand * own * mi.transform})
 		print("  held %s: %.2f m long" % [h.file, mi.mesh.get_aabb().get_longest_axis_size() * float(h.get("scale", 1.0))])
 		scene.free()
@@ -1289,6 +1347,49 @@ func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 		strip.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		p.mesh = strip
 	return pieces
+
+
+## DT-107: a held piece's "lod" (1, 2...): that level of the engine's own chain of simpler meshes (generate_lods, as
+## MeshSlim does for the bodies), the vertices it no longer uses dropped; its UVs and normals kept (the palette's
+## cells stay where they were). The KayKit pieces end on their seams: blade 457 to 227 and 41, staff 1519 to 759
+## and 218, crossbow 584 to 292, shield 626 to 304 and 78 triangles. Level 1 keeps each piece's outline (the staff's
+## level 2 loses its head, 0.2 m of its length).
+func _lod(mesh: Mesh, level: int) -> Mesh:
+	var arrays := mesh.surface_get_arrays(0)
+	var chain := ImporterMesh.new()
+	chain.add_surface(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	chain.generate_lods(MeshSlim.SMOOTH_ANGLE, 0.0, [])
+	var count := chain.get_surface_lod_count(0)
+	if count == 0:
+		return mesh
+	var index := chain.get_surface_lod_indices(0, mini(level, count) - 1)
+	var keep := {}
+	var out := []
+	out.resize(Mesh.ARRAY_MAX)
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var uvs := PackedVector2Array()
+	var src_v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var src_n: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var src_uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]
+	var out_i := PackedInt32Array()
+	for i in index:
+		if not keep.has(i):
+			keep[i] = verts.size()
+			verts.append(src_v[i])
+			normals.append(src_n[i])
+			uvs.append(src_uv[i])
+		out_i.append(keep[i])
+	out[Mesh.ARRAY_VERTEX] = verts
+	out[Mesh.ARRAY_NORMAL] = normals
+	out[Mesh.ARRAY_TEX_UV] = uvs
+	out[Mesh.ARRAY_INDEX] = out_i
+	var lean := ArrayMesh.new()
+	lean.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, out)
+	lean.surface_set_material(0, mesh.surface_get_material(0))
+	print("  held lod %d: %d to %d triangles, size %s to %s" % [level, (arrays[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3,
+		out_i.size() / 3, mesh.get_aabb().size, lean.get_aabb().size])
+	return lean
 
 
 ## Worn light steel (the rim of a shield, a scratch), how much lighter the plate's painting gets, how many scratches
@@ -1566,11 +1667,25 @@ func _bake(spec: Dictionary) -> BakedModel:
 		var s: float = w[2] if w.size() > 2 else 1.0
 		extra.append({"mesh": mesh, "bone": w[1], "transform": mi.transform.scaled_local(Vector3.ONE * s)})
 		scene.free()
+	var named := {}
 	for p: Dictionary in spec.get("props", []):
-		extra.append_array(_prop(p))
+		var pieces := _prop(p)
+		if p.has("name"):
+			named[pieces[0]] = p["name"]
+		extra.append_array(pieces)
 	var out := BakedModel.new()
 	out.albedo = load(spec.texture) if spec.has("texture") else PoseBaker.find_albedo(root)
+	if spec.get("embed", false):
+		# kept inside the baked file, compressed for the video card (assets/models/palettes is not exported)
+		var pal := out.albedo.get_image()
+		if pal.is_compressed():
+			pal.decompress()
+		pal.convert(Image.FORMAT_RGB8)
+		pal.generate_mipmaps()
+		pal.compress(Image.COMPRESS_S3TC, Image.COMPRESS_SOURCE_SRGB)
+		out.albedo = ImageTexture.create_from_image(pal)
 	var bend: Dictionary = spec.get("bend", {})
+	var shrink: float = spec.get("head_shrink", HEAD_SHRINK)
 	var clips := {}
 	for anim: String in spec.anims:
 		var a: Array = spec.anims[anim]
@@ -1580,17 +1695,49 @@ func _bake(spec: Dictionary) -> BakedModel:
 			continue
 		var frames: int = a[1]
 		var loops: bool = a[2]
+		var opts: Dictionary = a[3] if a.size() > 3 else {}
+		var t0: float = opts.get("from", 0.0)
+		var t1: float = opts.get("to", clip.length)
+		var clip_bend := _bends(bend, opts.get("bend", {}))
 		var poses: Array = []
 		for i in frames:
 			# loops sample [0, length); one-shots include the last pose
-			var t := clip.length * i / (frames if loops else maxi(frames - 1, 1))
+			var t := t0 + (t1 - t0) * i / (frames if loops else maxi(frames - 1, 1))
 			player.play(a[0])
 			player.seek(t, true)
-			_pose(skeleton, bend)
+			_pose(skeleton, clip_bend, shrink)
 			poses.append(PoseBaker.pose_arrays(root, skeleton, extra))
 		clips[anim] = poses
-		out.fps[anim] = frames / clip.length
+		out.fps[anim] = frames / (t1 - t0)
 		out.loops[anim] = loops
+	if spec.has("height"):
+		# the poses scaled so the figure standing idle is "height" tall (the KayKit adventurers are 2.5 m slender)
+		var top := -INF
+		for v: Vector3 in (clips.idle[0] as Array)[Mesh.ARRAY_VERTEX]:
+			top = maxf(top, v.y)
+		# and set on the floor: the lowest vertex of the idle's first pose at 0 (Slender's stretch leaves the soles 8 cm
+		# under it); every clip moves with it
+		var low := INF
+		for v: Vector3 in (clips.idle[0] as Array)[Mesh.ARRAY_VERTEX]:
+			low = minf(low, v.y)
+		var k := float(spec.height) / (top - low)
+		for anim: String in clips:
+			for arrays: Array in clips[anim]:
+				var vs: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+				for i in vs.size():
+					vs[i] = Vector3(vs[i].x, vs[i].y - low, vs[i].z) * k
+				arrays[Mesh.ARRAY_VERTEX] = vs
+	if not named.is_empty():
+		# the props' vertices come last, in the order of `extra` (PoseBaker.pose_arrays)
+		var at := ((clips.idle[0] as Array)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+		for i in range(extra.size() - 1, -1, -1):
+			var n := (((extra[i].mesh as Mesh).surface_get_arrays(0))[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			at -= n
+			if named.has(extra[i]):
+				var mine := PackedInt32Array()
+				for v in n:
+					mine.append(at + v)
+				out.parts[named[extra[i]]] = mine
 	_pack(out, clips)
 	out.height = out.mesh.get_aabb().end.y
 	root.free()
@@ -1598,10 +1745,10 @@ func _bake(spec: Dictionary) -> BakedModel:
 
 
 ## The animated pose made slender, then stooped where the entry bends it.
-func _pose(skeleton: Skeleton3D, bend: Dictionary) -> void:
+func _pose(skeleton: Skeleton3D, bend: Dictionary, shrink := HEAD_SHRINK) -> void:
 	Slender.apply(skeleton)
 	var head := skeleton.find_bone("head")
-	skeleton.set_bone_pose_scale(head, skeleton.get_bone_pose_scale(head) * HEAD_SHRINK)
+	skeleton.set_bone_pose_scale(head, skeleton.get_bone_pose_scale(head) * shrink)
 	for bone: String in bend:
 		var i := skeleton.find_bone(bone)
 		var deg: Vector3 = bend[bone]
@@ -1658,8 +1805,8 @@ func _prop(p: Dictionary) -> Array[Dictionary]:
 					var sp := SphereMesh.new()
 					sp.radius = size.x
 					sp.height = size.y * (1.0 if p.has("cut") else 2.0)
-					sp.radial_segments = 12
-					sp.rings = 6
+					sp.radial_segments = int(p.get("segments", 12))
+					sp.rings = int(p.get("segments", 12)) / 2
 					if p.has("cut"):
 						# a dome: only the top share of the sphere
 						sp.is_hemisphere = true

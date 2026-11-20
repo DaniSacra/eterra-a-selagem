@@ -165,6 +165,7 @@ uniform float paint_rosette = 0.12;
 #define ROSETTE_W rosette_cut.x
 #endif
 
+#include "res://assets/shaders/frame_yaw.gdshaderinc"
 varying vec3 world;
 
 float hash1(vec2 p) {
@@ -432,10 +433,13 @@ void fragment() {
 	vec2 wp = world.xz;
 	vec4 rect;
 	vec2 id;
+	// the slabs laid along the room's own axes (frame_yaw.gdshaderinc: the hub is turned; elsewhere sp is wp)
+	vec2 sp = frame_in(wp);
 #ifdef RUNES
+	sp = wp;
 	rune_slab(wp, rect, id);
 #else
-	slab(wp / unit, rect, id);
+	slab(sp / unit, rect, id);
 #endif
 #ifdef PAINT
 	// a slab laid by hand (SW-G3, SW-C1): the floor's slabs give way to the frame's one (floor_biome.gdshaderinc)
@@ -445,6 +449,7 @@ void fragment() {
 	if (framed > 0.5) {
 		rect = vec4((fr_rect.xy - fr_rect.zw) / unit, fr_rect.zw * 2.0 / unit);
 		id = vec2(211.0 + fr_info.w, 89.0 + fr_info.w * 3.0);
+		sp = wp;
 	}
 #else
 	float framed = 0.0;
@@ -452,13 +457,15 @@ void fragment() {
 	// the slab in meters: its middle, half size, where we are in it (each slab's edge wobbles its own way)
 	vec2 half_size = rect.zw * unit * 0.5;
 	vec2 mid = (rect.xy + rect.zw * 0.5) * unit;
-	vec2 lp = wp - mid + (vec2(noise(wp * 1.7 + id * 3.1), noise(wp * 1.7 + id * 5.3 + 9.0)) - 0.5) * 2.0 * wobble * (1.0 - 0.75 * framed);
+	vec2 lp = sp - mid + (vec2(noise(wp * 1.7 + id * 3.1), noise(wp * 1.7 + id * 5.3 + 9.0)) - 0.5) * 2.0 * wobble * (1.0 - 0.75 * framed);
 	// rounded rectangle: distance inside from its edge, and the way out of the nearest edge
 	vec2 q = abs(lp) - (half_size - corner_round);
 	float outside = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - corner_round;
 	float edge = -outside;
 	vec2 out_dir = q.x > 0.0 && q.y > 0.0 ? normalize(q) : (q.x > q.y ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
 	out_dir *= sign(lp + 1e-5);
+	// back to the world's axes for the normal (a framed slab is laid in the world's)
+	out_dir = framed > 0.5 ? out_dir : frame_out(out_dir);
 	// nicks along the edges
 	float nick = max(0.0, noise(wp * 7.0 + id * 2.0) - 0.62) * 0.35;
 	edge -= nick;
@@ -495,7 +502,7 @@ void fragment() {
 	float wash = fbm(wp * 0.45 + id * 3.1);
 #ifdef PAINT
 	// the brush along the slab's long side; dry moss in olive, not teal
-	c = paint_brushed(c, wp + id * 1.3, rect.z >= rect.w ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
+	c = paint_brushed(c, sp + id * 1.3, rect.z >= rect.w ? vec2(1.0, 0.0) : vec2(0.0, 1.0));
 	c = mix(c, paint_olive(c) * 0.9, smoothstep(0.62, 0.8, fbm(wp * 0.3 + 11.0)) * 0.3);
 	vec3 hollow_c = c * joint_value * joint_cold;
 #else

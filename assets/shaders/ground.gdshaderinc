@@ -85,6 +85,12 @@ uniform float fill_late = 0.3;
 // frame on its four sides that warms with the wind-up (from 35% of its light), and the band a faint fill (fill_early)
 // coming up to fill_max over the last fill_late; amber (its colour), never a circle (D-29).
 uniform float tile_m = 0.0;
+// RP-06 (style 3, lines only): a slab that strikes when stepped on (PlateFloor). plate > 0 draws the band as one slab:
+// its frame on the four sides and two cracks across it (plate of their light, crack_m wide), seen at rest (progress
+// 0: 35% of the light); arming, the fill reaches from the frame to the middle (progress of the way in, a bright front
+// where it has got to), never a circle (D-29).
+uniform float plate = 0.0;
+uniform float crack_m = 0.06;
 // C17, QW-107 (ART P1-6: the crossbow's aim and the soldier's pounce read as an opaque red band end to end, the
 // strongest thing on the screen): aim_px > 0 draws an unsigned line warning as an aim instead: a thread aim_px pixels
 // wide down its middle at aim_light, brighter toward its far end (the last aim_tip of it, up to 1), a bar across that
@@ -258,6 +264,19 @@ void fragment() {
 				a = max(thread * mix(aim_light, 1.0, toward_tip), far * 0.9) + head * thread * (0.6 - aim_light);
 				aim_cover = max(thread, far);
 			}
+		} else if (style == 3 && plate > 0.0) {
+			vec2 p = vec2(uv.x * size_m, (along - 0.5) * length_m);
+			float half_l = length_m * 0.5;
+			float to_edge = min(size_m - abs(p.x), half_l - abs(p.y));
+			float frame = smoothstep(rim_m, rim_m * 0.3, to_edge);
+			float c1 = abs(p.y - 0.45 * p.x - 0.16 * sin(p.x * 4.3 + 1.0));
+			float c2 = abs(p.x + 0.35 * p.y - 0.3 - 0.12 * sin(p.y * 5.1)) + step(p.y, -0.1) * 9.0;
+			float crack = (1.0 - smoothstep(crack_m * 0.5, crack_m, min(c1, c2))) * plate;
+			float reach = progress * min(size_m, half_l);
+			float swept = step(to_edge, reach) * step(0.001, progress);
+			float front = (1.0 - smoothstep(0.0, rim_m, abs(to_edge - reach))) * step(0.02, progress) * step(progress, 0.999);
+			float level = mix(fill_early, fill_max, smoothstep(1.0 - fill_late, 1.0, progress));
+			a = max(frame, crack) * (0.35 + 0.65 * progress) + swept * level + front * 0.5;
 		} else if (style == 3) {
 			float along_m = along * length_m;
 			float cell = tile_m > 0.0 ? tile_m : length_m;

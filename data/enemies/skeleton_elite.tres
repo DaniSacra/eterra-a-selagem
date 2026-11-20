@@ -29,6 +29,7 @@ attack_cooldown = 1.4
 attack_windup = 0.9
 recover_time = 1.5
 strike_at = 0.1
+strikes = 2
 lunge_speed = 8.75
 lunge_time = 0.3
 max_attackers = 2

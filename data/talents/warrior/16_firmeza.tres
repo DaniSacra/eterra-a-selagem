@@ -26,4 +26,5 @@ branch = 5
 tier = 4
 cost = 2
 unlock_level = 16
+memory_cost = 2
 mods = Array[ExtResource("1_w3453")]([SubResource("Resource_hywx7"), SubResource("Resource_er2vq")])

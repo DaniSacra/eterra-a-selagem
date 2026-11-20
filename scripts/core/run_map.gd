@@ -33,10 +33,14 @@ enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR }
 ## What a room gives when it is cleared (or what the shop sells).
 ## BOON: a gift (three to choose). POM: one more level for a gift already owned. HEART: more life.
 ## MAGICK: more Magia. GOLD: gold for the shop. HEAL: life back (shop only). POM_SLICE: one level more for a gift
-## drawn among those held, no choice (shop only; Hades II's pom slice).
-enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE }
+## drawn among those held, no choice (shop only; Hades II's pom slice). Rejogabilidade, Fatia 1 (sistemas.md 3.1):
+## SILVER, Prata Antiga for the Forja, and MEMORY, Fragmentos de Memória to open the Gifts; both go home (MaterialPurse),
+## the doors that trade power now for power in the next descents.
+enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE, SILVER, MEMORY }
 
-const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal", &"reward_pom_slice"]
+const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal", &"reward_pom_slice", &"reward_silver", &"reward_memory"]
+## The rewards that are materials brought home (Rooms gives them to the run's MaterialPurse).
+const MATERIAL_REWARDS: Array[Reward] = [Reward.SILVER, Reward.MEMORY]
 const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar"]
 
 ## The most doors a room has (every arena has 3, the hall too: CatacombHall._doors).

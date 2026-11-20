@@ -608,6 +608,10 @@ func test_the_reward_given_is_the_one_promised() -> void:
 	rooms._room_cleared()
 	game.player.place(rooms._reward_at)
 	rooms.step(0.0)
+	assert_eq(game.room_tally.events.filter(func(e: Dictionary) -> bool: return e.type == "reward").size(), 0,
+		"standing at it gives nothing (C19, Q-13)")
+	rooms.use()
+	rooms.step(0.0)
 	var given := game.room_tally.events.filter(func(e: Dictionary) -> bool: return e.type == "reward")
 	assert_eq(given.size(), 1, "the room gave once")
 	assert_eq(int(given[0].node), door.id)
@@ -638,6 +642,7 @@ func test_map05_the_door_walked_through_is_the_way_on_the_map() -> void:
 	rooms._open_doors()
 	assert_eq(game.arena.exit_zones.size(), doors.size(), "a doorway for every link")
 	game.player.place(game.arena.exit_zones[pick].get_center())
+	rooms.use()  # (C19, Q-13: a door is used with interact)
 	rooms.step(1.0 / 60.0)
 	await wait_seconds(Rooms.FADE + 0.3)
 	assert_eq(rooms.room, doors[pick], "he walked into the room behind that door")

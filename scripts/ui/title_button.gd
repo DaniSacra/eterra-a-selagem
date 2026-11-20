@@ -342,7 +342,7 @@ func _draw_small() -> void:
 		Kind.SETTINGS:
 			_draw_gear(c, icon)
 		Kind.QUIT:
-			_draw_power(c, icon)
+			_draw_door(c, icon)
 
 
 ## An upright sword, 18 x 36: a blade with its point and middle line, the guard, the grip and the pommel.
@@ -382,11 +382,17 @@ func _draw_gear(c: Vector2, color: Color) -> void:
 			c + dir * 11.5 + side * 4.1]), color)
 
 
-## Power sign, 31 x 34: an arc of 300 degrees open at the top and a stroke from the middle up through the gap.
-func _draw_power(c: Vector2, color: Color) -> void:
-	var o := c + Vector2(0.0, 1.6)
-	draw_arc(o, 13.4, deg_to_rad(-90.0 + 30.0), deg_to_rad(270.0 - 30.0), 40, color, 4.2, true)
-	draw_line(c + Vector2(0.0, -17.0), c + Vector2(0.0, 0.5), color, 4.2, true)
+## An arched door standing open, 30 x 34 (the way out, in the world's own marks; UI review d2ff05d, P2-1: the power sign
+## of a device did not belong here): the arch's frame, its sill, and the leaf swung in on the right.
+func _draw_door(c: Vector2, color: Color) -> void:
+	var o := c + Vector2(0.0, -4.0)
+	var arch := PackedVector2Array([c + Vector2(-11.0, 16.0), c + Vector2(-11.0, -4.0)])
+	for i in 13:
+		arch.append(o + Vector2.from_angle(PI + PI * i / 12.0) * 11.0)
+	arch.append(c + Vector2(11.0, 16.0))
+	draw_polyline(arch, color, 3.6, true)
+	draw_line(c + Vector2(-15.0, 16.5), c + Vector2(15.0, 16.5), color, 3.0, true)
+	_fill(PackedVector2Array([c + Vector2(4.0, -9.0), c + Vector2(9.0, -12.5), c + Vector2(9.0, 14.5), c + Vector2(4.0, 12.0)]), color)
 
 
 func _draw_label(shift: Vector2) -> void:

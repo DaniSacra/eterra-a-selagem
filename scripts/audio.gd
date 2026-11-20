@@ -157,6 +157,9 @@ var _gate := VoiceGate.new()
 ## What each voice last played (its VoiceGate family) and when it started (ms).
 var _voice_family: Array[StringName] = []
 var _voice_start := PackedInt64Array()
+## The sound each voice plays now (Audio.fade_out finds it).
+var _voice_sound: Array[StringName] = []
+var _fades: Array[Tween] = []
 var silent := false
 ## Tests: every sound let through the gate, as [name, ms] (only while record is on), and the clock the gate reads
 ## (the real one unless a test steps the game faster than real time).
@@ -180,6 +183,8 @@ func _ready() -> void:
 		_players.append(p)
 		_voice_family.append(&"")
 		_voice_start.append(0)
+		_voice_sound.append(&"")
+		_fades.append(null)
 	limit_master()
 	apply_volumes()
 
@@ -268,13 +273,29 @@ func play(sound: StringName, pitch: float = 1.0) -> void:
 		_next = (_next + 1) % VOICES
 	_voice_family[i] = VoiceGate.family(sound)
 	_voice_start[i] = now
+	_voice_sound[i] = sound
 	var p := _players[i]
+	if _fades[i] != null:
+		_fades[i].kill()  # (a voice reused before its fade ended keeps its new sound)
+		_fades[i] = null
 	p.stop()
 	p.stream = stream(sound)
 	p.bus = &"UI" if sound in UI_SOUNDS else &"SFX"
 	p.pitch_scale = pitch
 	p.volume_db = GAIN_DB.get(sound, 0.0)
 	p.play()
+
+
+## Fades out every voice playing `sound` in `seconds`, then stops it (C19-4: the Omega's charge let go or cut).
+func fade_out(sound: StringName, seconds: float) -> void:
+	for i in _players.size():
+		var p := _players[i]
+		if not p.playing or i >= _voice_sound.size() or _voice_sound[i] != sound:
+			continue
+		_voice_sound[i] = &""
+		_fades[i] = p.create_tween().set_ignore_time_scale(true)
+		_fades[i].tween_property(p, ^"volume_db", -60.0, maxf(seconds, 0.01))
+		_fades[i].tween_callback(p.stop)
 
 
 func stream(sound: StringName) -> AudioStream:

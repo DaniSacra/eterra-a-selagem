@@ -29,6 +29,14 @@ static var _warrior: HeroDef
 ## Full at the start of every room; spent by the held Omegas (the attack's and the special's costs are in the combo).
 @export var magick_max := 50.0
 
+## C19-4 (Q-12, Hades II): walking while an Omega charges, times his speed. The attack's: 0.03 and the body turns at
+## most charge_turn_light degrees a second (Swing5SelfSlowCharge 0.03, RotationMultiplier 1e-8); the special's: 0.6
+## (an inference: the staff's special has no speed of its own while its Omega charges, the plain one's
+## WeaponStaffBoltInstantStop is 0.6). The circle's is cast_slow.
+@export var charge_move_light := 0.03
+@export var charge_turn_light := 0.0
+@export var charge_move_heavy := 0.6
+
 @export_group("Circle of light")
 ## Seconds to draw it (walking slowed to cast_slow), the cooldown, the seconds no blow may start after it is let go;
 ## held cast_omega_time with cast_omega_cost of Magia it bursts. Radius, seconds on the floor, the burst's damage.

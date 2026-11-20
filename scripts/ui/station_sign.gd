@@ -3,7 +3,8 @@ extends Node3D
 ## The sign of the hub's station in focus (HUB-B3; docs/design/hub_spec_art.md 2.4): one at a time, only while a
 ## station is in focus, in the DoorSign's language (the station's name in warm gold, Alegreya Sans Bold with the dark
 ## outline, CAP_PX 19 at 1080 lines; a short line in pale; the veil of dark ink with cut corners) and, under them, the
-## real key of the action on the HUD's key plate (round for a gamepad's face button) and "Interagir". The key follows
+## real key of the action on the HUD's key plate (round for a gamepad's face button) and the station's verb ("Descer",
+## "Ler", verb). The key follows
 ## the device live (Controls.device_changed: E on the keyboard, A on the gamepad, whatever was remapped) and refresh()
 ## reads the binding again (after the Configurações). Drawn as interface text over its anchor (a CanvasLayer above
 ## the world, like the DoorSign): the text's bottom centre on the anchor, always inside the screen and never over the
@@ -82,7 +83,7 @@ static func make(id: StringName, name_text: String, detail_text: String, p_actio
 	s.key = KeyCap.new()
 	s.key.name = "key"
 	row.add_child(s.key)
-	s.prompt = DoorSign._label(T.t(&"hub_use"), DoorSign.HINT_COLOR, DoorSign.NOTE_SIZE)
+	s.prompt = DoorSign._label(verb(id), DoorSign.HINT_COLOR, DoorSign.NOTE_SIZE)
 	s.prompt.name = "prompt"
 	row.add_child(s.prompt)
 	v.add_child(row)
@@ -91,6 +92,13 @@ static func make(id: StringName, name_text: String, detail_text: String, p_actio
 	s.plate.mouse_entered.connect(s._hover.bind(true))
 	s.plate.mouse_exited.connect(s._hover.bind(false))
 	return s
+
+
+## The word beside the key: the station's own verb (hub_use_<id>: "Descer", "Ler", "Ver os Dons"...; UI review
+## d2ff05d, P1-9), "Interagir" for a station without one.
+static func verb(id: StringName) -> String:
+	var key := "hub_use_%s" % id
+	return T.t(key) if T.table.entries.has(key) else T.t(&"hub_use")
 
 
 func _ready() -> void:

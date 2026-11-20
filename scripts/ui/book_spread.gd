@@ -122,8 +122,8 @@ func _draw() -> void:
 		var k := float(i + 1)
 		var tone := Color(0.72, 0.64, 0.5).darkened(0.12 * k)
 		draw_rect(Rect2(r.position + Vector2(-k * 0.6, r.size.y + k - 1.0), Vector2(r.size.x + k * 1.2, 1.2)), tone)
-	# the ribbon from the foot, by the spine of the right page
-	var x := r.position.x + r.size.x * (spine + (1.0 - spine) * 0.18)
+	# the ribbon from the foot, by the spine of the right page (a single leaf: from its middle, UI review P2-6)
+	var x := r.position.x + r.size.x * (0.5 if single else spine + (1.0 - spine) * 0.18)
 	var top := r.end.y - 6.0
 	var bottom := size.y + RIBBON_DROP
 	var w := RIBBON_WIDTH * 0.5

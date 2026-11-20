@@ -142,6 +142,12 @@ const STY_GRAVES_SOUTH: Array[Vector2] = [Vector2(-9.85, 0), Vector2(-7.35, 1), 
 const STY_GRAVES_B_SKIP := -4.45
 ## The grave slabs' value (times the floor's).
 const STY_GRAVE_VALUE := 1.06
+## C-1 of the Sworn P1 review: the old grave slabs (SLAB_ROWS, built in both looks) read as a trapdoor or a hole in the
+## stylized look (inside luma about 0.3 of the floor's beside them, a light frame round a black field): their stone
+## painted at their own paint_ref (the plain stone's is STY_PAINT_REF 0.36; lower is lighter): the slab at 0.9 to 1.0
+## of the floor's value, the frame a step lighter as the new ones' lip, the dark border a groove, not a pit; w: the
+## worn inscription's (A7) a step under the slab.
+const STY_OLD_SLAB := Vector4(0.22, 0.1, 0.03, 0.2)
 ## SW-G3: a pair of raised frames (RAISED) on the great tomb's axis in A, and between B's two south sarcophagi:
 ## middles and side (m).
 const STY_FRAMES_A: Array[Vector2] = [Vector2(-3.4, 0.0), Vector2(4.4, 0.0)]
@@ -265,6 +271,10 @@ const STY_NORTH_LID := 0.6
 const STY_STATUE_CANDLES := 0.5
 const STY_BOWLS := 0.75
 const STY_TOMB_SHAFT := 1.1
+## R-1 of the Sworn P1 review (the warm in a dozen spots competed with the crown): every other candle group on the small
+## sarcophagi's lids, the columns' feet and the back ledges goes out in the stylized look (its flames and its light; the
+## crown, the great tomb's and the statues' stay), as VX-13 did in the hall. Which of each two (0 or 1).
+const STY_GROUPS_OUT := 1
 ## B, the veiled one of the ossuary: a plinth (size) on the wall's north end with two stepped corbels under its flaps
 ## (their two steps: top, middle, foot heights; widths), the figure on it VEILED_RS high; its cold lantern hanging
 ## from its hands (the lantern's size, its middle under the hands and out in front of the robe, its light: energy,
@@ -297,6 +307,8 @@ var _plain_lights := 0
 ## the fire bowls (their x, their nodes), the cold shaft's dust.
 var _tomb_light: OmniLight3D
 var _lid_lights: Array = []
+## R-1: A's candle groups on the small sarcophagi's lids, the columns and the ledges, each [flames, its light or null].
+var _groups: Array = []
 var _banners: Array = []
 var _shaft_dust: Node3D
 
@@ -630,9 +642,9 @@ func _entry() -> void:
 # ---------- the floor's slabs, candles and light ----------
 
 func _slabs() -> void:
-	var st := m.stone(0.0, STONE * SLAB_STONE)
-	var fr := m.stone(0.0, STONE * SLAB_FRAME)
-	var border := m.stone(0.0, HOLLOW * SLAB_BORDER_TINT)
+	var st := _own_paint(m.stone(0.0, STONE * SLAB_STONE), STY_OLD_SLAB.x)
+	var fr := _own_paint(m.stone(0.0, STONE * SLAB_FRAME), STY_OLD_SLAB.y)
+	var border := _own_paint(m.stone(0.0, HOLLOW * SLAB_BORDER_TINT), STY_OLD_SLAB.z)
 	for s in SLAB_ROWS:
 		var at := Vector2(s.x, s.y)
 		if not _clear(at, SLAB.length() * 0.5):
@@ -640,6 +652,14 @@ func _slabs() -> void:
 		var h := SLAB * 0.5 + Vector2.ONE * SLAB_BORDER.x
 		m.prism(PackedVector2Array([at - h, at + Vector2(h.x, -h.y), at + h, at + Vector2(-h.x, h.y)]), 0.0, SLAB_BORDER.y, border)
 		tomb.slab(at, SLAB, 0.0, st, fr)
+
+
+## C-1 of the Sworn P1 review: the old grave slabs' own stone (a twin of `mat`, the classic the same; the slab's stone
+## is the stairs' too) painted at paint_ref `ref` in the stylized look (ArenaKit.PAINT_OWN).
+func _own_paint(mat: ShaderMaterial, ref: float) -> ShaderMaterial:
+	var own := mat.duplicate() as ShaderMaterial
+	own.set_meta(ArenaKit.PAINT_OWN, {&"paint_ref": ref})
+	return own
 
 
 ## True when nothing of the layout stands within `r` of p.
@@ -677,7 +697,11 @@ func _candles() -> void:
 				var against := arena.shape().edge_distance(o.center) < half.y + 0.4
 				var end := c + axis * (half.x - 0.35) * (1.0 if o.center.x > 0.0 else -1.0)
 				var lit := not (ossuary and against)
+				var from := m.root.get_child_count()
 				candle_line(end - Vector3(axis.z, 0, axis.x) * 0.25, end + Vector3(axis.z, 0, axis.x) * 0.25, 3, lit)
+				var group := [_flames_since(from), null]
+				if not ossuary:
+					_groups.append(group)
 				if lit:
 					var shadow := (o.center.y < 0.0 and not against) if not ossuary else o.center.y > 0.0
 					var l := _light_at(end + Vector3(0, 0.5, 0), shadow)
@@ -685,24 +709,45 @@ func _candles() -> void:
 						l.set_meta(ArenaKit.FIRE_SHARE, STY_LID_LIGHT)
 					if l != null:
 						_lid_lights.append([o.center, l])
+					group[1] = l
 			&"column":
 				var ring := o.radius * 0.86
 				var foot := Vector3(o.center.x, TombKit.COLUMN_BASE, o.center.y)
 				var toward := Vector3(0.57, 0, 0.82)
 				var a := foot + toward.rotated(Vector3.UP, 0.6) * ring
 				var b := foot + toward.rotated(Vector3.UP, -0.6) * ring
+				var from := m.root.get_child_count()
 				candle_line(a, b, 3)
+				var group := [_flames_since(from), null]
 				# the column nearest the camera lights its foot with shadows (A)
 				if not ossuary and o.center.y > 0.0:
-					_light_at(foot + toward * ring + Vector3(0, 0.5, 0), true)
+					group[1] = _light_at(foot + toward * ring + Vector3(0, 0.5, 0), true)
+				if not ossuary:
+					_groups.append(group)
 	if ossuary:
 		var tip := Vector3(divider.center.x, LEDGE * 0.5, divider.center.y + divider.half.y + 0.3)
 		_light_at(tip + Vector3(0, 0.6, 0), true)
 	# along the ledges of the back walls, plain
 	for x: float in [-5.6, 0.6]:
+		var from := m.root.get_child_count()
 		candle_line(Vector3(x - 0.3, LEDGE, _north - WALL_SET * 0.5), Vector3(x + 0.3, LEDGE, _north - WALL_SET * 0.5), 3, not ossuary or x > 0.5)
+		if not ossuary:
+			_groups.append([_flames_since(from), null])
 	for z: float in [-3.6, 1.8]:
+		var from := m.root.get_child_count()
 		candle_line(Vector3(_west - WALL_SET * 0.5, LEDGE, z - 0.3), Vector3(_west - WALL_SET * 0.5, LEDGE, z + 0.3), 3, not ossuary)
+		if not ossuary:
+			_groups.append([_flames_since(from), null])
+
+
+## The candle flames (and cores) built on m since child `from` (R-1: they are never merged, so they can be hidden).
+func _flames_since(from: int) -> Array:
+	var out := []
+	for i in range(from, m.root.get_child_count()):
+		var mi := m.root.get_child(i) as MeshInstance3D
+		if mi != null and mi.mesh is QuadMesh:
+			out.append(mi)
+	return out
 
 
 ## A warm light over candles: with shadow (counted) or plain (at most CANDLE_PLAIN).
@@ -816,12 +861,16 @@ func _graves(ossuary: bool) -> Array:
 		for g: Vector2 in row[0]:
 			if ossuary and is_equal_approx(g.x, STY_GRAVES_B_SKIP):
 				continue
+			if not clear_of_plates(Vector2(g.x, row[1]), SLAB):
+				continue  # never a grave slab on or by a slab that strikes (RP-06)
 			out.append(ArenaKit.framed_slab(Vector2(g.x, row[1]), SLAB,
 				ArenaKit.Framed.GRAVE, g.y > 0.5, STY_GRAVE_VALUE, k))
 			k += 1
 	var frames: Array[Vector2] = STY_FRAMES_B if ossuary else STY_FRAMES_A
 	var side := STY_FRAME_B if ossuary else STY_FRAME_A
 	for f in frames:
+		if not clear_of_plates(f, Vector2.ONE * side):
+			continue
 		out.append(ArenaKit.framed_slab(f, Vector2.ONE * side, ArenaKit.Framed.RAISED, false, 1.0, k))
 		k += 1
 	return out
@@ -847,6 +896,16 @@ func _quiet_a(st: Dictionary) -> void:
 			n.set_meta(ArenaKit.FIRE_SHARE, STY_BOWLS)
 	if _shaft != null:
 		VisualProfile.vary(_shaft, {&"light_energy": STY_TOMB_SHAFT})
+	# R-1: every other group of candles out
+	for i in _groups.size():
+		if i % 2 != STY_GROUPS_OUT:
+			continue
+		var group: Array = _groups[i]
+		for f: Node in group[0]:
+			if is_instance_valid(f):
+				VisualProfile.vary(f, {&"visible": false})
+		if group[1] != null:
+			(st[&"off"] as Array).append(group[1])
 
 
 ## RS-C1, B in the stylized look: the north door's fire bowls cold, the banner beside the veiled figure gone, the cold
@@ -939,7 +998,7 @@ func _dress_styled() -> void:
 		for i in LID_STUBS:
 			sm.candle_out(end + across * (i - 1) * 0.2, 0.08 + 0.04 * (i % 2), 0.055)
 	# A7: the grave slabs' worn inscriptions
-	var ink := sm.stone(0.0, STONE * INSCRIPTION_TINT)
+	var ink := _own_paint(sm.stone(0.0, STONE * INSCRIPTION_TINT), STY_OLD_SLAB.w)
 	for sl in SLAB_ROWS:
 		var at := Vector2(sl.x, sl.y)
 		if _clear(at, SLAB.length() * 0.5):

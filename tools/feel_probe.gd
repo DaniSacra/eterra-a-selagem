@@ -57,6 +57,8 @@ extends Node
 ##   E2-U2  ult_cuts_blow      the ultimate tapped on f3 of cut1 (in its windup) starts on f3 and cut1 never lands
 ##   E2-U3  ult_in_hit_stop    the ultimate pressed on f8 of a hit (a frame of the hit stop's slow): keyboard and virtual
 ##                             pad start it on f8, never LOST
+##   C19-4  omega_charge_walk  C19-4 (Hades II Swing5): holding the attack's Omega while walking, at most 0.2 m from the
+##                             press to its blow; a dodge pressed while it charges cuts it on that frame, no Magia spent
 ## Not in the probe: GF-11 (sound, a GUT test of Audio and a video), GF-13 (latency on the GPU), the omega special table
 ## of GF-09 (a document).
 
@@ -82,7 +84,7 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(game)
 	_queue = [_s_move, _s_turn, _s_attack_air, _s_attack_hit, _s_combo_mash, _s_combo_on_hit, _s_buffer, _s_dodge,
 		_s_dodge_cancel, _s_attack_in_dodge, _s_walk_cancel, _s_special, _s_omegas, _s_cast, _s_hitstop_buffer,
-		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_planted, _s_ultimate]
+		_s_enemy_interrupt, _s_kill, _s_hurt, _s_extra, _s_planted, _s_ultimate, _s_omega_walk]
 	var only := OS.get_environment("PROBE")
 	if only != "":
 		_queue = _queue.filter(func(c: Callable) -> bool: return only.split(",").has(c.get_method()))
@@ -1176,3 +1178,49 @@ func _s_ultimate() -> void:
 	var fmt := func(f: int) -> String: return ("f%d" % f) if f >= 0 else "LOST"
 	meta("E2-U3", "ult_in_hit_stop", "ultimate apertada em f8 de um acerto (no hit stop): teclado e controle virtual saem em f8, nenhum LOST",
 		"teclado %s, controle virtual %s" % [fmt.call(starts[true]), fmt.call(starts[false])], starts[true] == 8 and starts[false] == 8)
+
+
+func _s_omega_walk() -> void:
+	out("== OMEGA CHARGE: walking while the attack's Omega charges, then a charge cut by the dodge")
+	await reset_hero()
+	var p := game.player
+	await step(2)
+	# (lambdas capture locals by value: the measures live in a dictionary)
+	var m := {"start": p.pos, "filled": p.charges_filled, "moved": -1.0, "facing": p.facing, "turned": 0.0, "cut_on": -1}
+	await run(70, func(i: int) -> void:
+		_cur = i
+		if i == 0:
+			pad.move = Vector2.RIGHT
+			hold(&"light_attack")
+		if i == 20:
+			pad.move = Vector2.UP,
+		func(_i: int, _s: bool) -> void:
+			if p.charging:
+				m.turned = maxf(m.turned, absf(rad_to_deg((m.facing as Vector2).angle_to(p.facing))))
+			if m.moved < 0.0 and p.charges_filled > m.filled:
+				m.moved = (m.start as Vector2).distance_to(p.pos))
+	let_go(&"light_attack")
+	pad.move = Vector2.ZERO
+	await step(60)
+	# a second charge, cut by the dodge on f20
+	await reset_hero()
+	await step(2)
+	var magick := p.magick.value
+	await run(30, func(i: int) -> void:
+		_cur = i
+		if i == 0:
+			hold(&"light_attack")
+		if i == 20:
+			pad.move = Vector2.RIGHT
+			tap(&"dodge"),
+		func(i: int, _s: bool) -> void:
+			if m.cut_on < 0 and i >= 20 and not p.charging:
+				m.cut_on = i)
+	let_go(&"light_attack")
+	pad.move = Vector2.ZERO
+	await step(40)
+	var spent := magick - p.magick.value
+	out("walked %.3f m press to blow, turned %.1f deg while charging; dodge cut on f%d, Magia spent %.1f" % [m.moved, m.turned, m.cut_on, spent])
+	meta("C19-4", "omega_charge_walk", "andando com o Ômega do ataque carregando: no máximo 0,2 m do aperto ao golpe, sem virar; esquiva em f20 corta em f20 sem gastar Magia",
+		"%.3f m, virou %.1f graus; corte em f%d, Magia %.1f" % [m.moved, m.turned, m.cut_on, spent],
+		m.moved >= 0.0 and m.moved <= 0.2 and m.turned < 1.0 and m.cut_on == 20 and spent < 0.01)

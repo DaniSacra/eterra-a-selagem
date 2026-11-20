@@ -198,21 +198,38 @@ const FALLEN_ARCH_GAP := Vector2(-1.0, 6.0)
 const FALLEN_DECK := Vector3(-2.5, -3.2, -11.3)
 const FALLEN_DECK_SIZE := Vector3(2.8, 0.55, 1.8)
 const FALLEN_CHAIN_Z := -11.4
-## SW-F1 (docs/art/sworn_reference_ideas.md 3.2): a column fallen across the rift's south hole (A and B; the middle
-## one hides behind the south bridge from the game's camera), off the floor: its drums lying across the gap from under
-## the west lip to under the east one, broken in the middle, each half
-## sagging into the gap from its end (its top FALLEN_COLUMN.y under the floor at the lips), chips of the break fallen
-## below, chains across the break and down from the broken ends; the room's stone on the depths' layer (lit by the
-## rift's deep lights), no light of its own, nothing collides.
-## FALLEN_COLUMN: z, top at the lips (m), radius; FALLEN_COLUMN_SPAN: its west and east ends (x, under the lips' floor,
-## the rift's south hole runs from about -7.2 to 2.3 there); FALLEN_COLUMN_BREAK: the break's middle (x) and gap;
-## FALLEN_COLUMN_SAG: how far each half dips (degrees); FALLEN_COLUMN_DRUMS: drums a half; FALLEN_COLUMN_HANG: the
-## chains' drop from the west and east broken ends.
-const FALLEN_COLUMN := Vector3(6.2, -0.3, 0.55)
-const FALLEN_COLUMN_SPAN := Vector2(-8.4, 3.4)
+## SW-F1 (docs/art/sworn_reference_ideas.md 3.2): a column fallen across the rift's south hole (A and B), off the
+## floor: its fluted drums lying across the gap from the west lip (its base there) to under the east one, broken in the
+## middle, each half sagging into the gap from its end (its top FALLEN_COLUMN.y under the floor at the lips), the east
+## half turned in the plane (no straight beam from lip to lip: it must never read as a way across), its capital hung in
+## the break on the chain across it, chips of the break fallen below, chains down from the broken ends; the room's
+## stone a step darker (FALLEN_COLUMN_VALUE: under the floor's value, over the rift's dark) on the depths' layer (lit by
+## the rift's deep lights), no light of its own, nothing collides. F-1 and F-2 of the Sworn P1 review: a column, not a
+## pipe nor a walkable beam.
+## FALLEN_COLUMN: z, top at the lips (m), radius; FALLEN_COLUMN_SPAN: its west end (the base's plinth, under the lip)
+## and east end (x, the rift's south hole runs from about -7.3 to 2.3 there; z 5, its north side, just south of the
+## south bridge: from the game's camera the hole's near lip hides all but a metre or two below it further south);
+## FALLEN_COLUMN_BREAK: the break's middle (x) and gap; FALLEN_COLUMN_SAG: how far each half dips (degrees);
+## FALLEN_COLUMN_TWIST: the east half turned south about its end (degrees); FALLEN_COLUMN_DRUMS: drums a half, their radius a share of FALLEN_COLUMN's
+## (FALLEN_COLUMN_DRUM_R), each turned about its axis; FALLEN_COLUMN_FLUTES: flutes round a drum and their depth (m);
+## FALLEN_COLUMN_BASE: the base's plinth (along the axis, its side a share of the diameter) and torus (along the axis,
+## its radius a share); FALLEN_CAPITAL: the capital's abacus (side, height), echinus (height, top radius as a share of
+## the abacus's half side), the stump of shaft left on it (m); FALLEN_CAPITAL_AT: where it hangs from the break's middle
+## (x, y of its middle, z) and its tilt (degrees); FALLEN_COLUMN_HANG: the chains' drop from the west and east broken
+## ends.
+const FALLEN_COLUMN := Vector3(5.0, -0.6, 0.7)
+const FALLEN_COLUMN_SPAN := Vector2(-8.0, 3.4)
 const FALLEN_COLUMN_BREAK := Vector2(-2.3, 0.9)
-const FALLEN_COLUMN_SAG := 7.0
+const FALLEN_COLUMN_SAG := 12.0
+const FALLEN_COLUMN_TWIST := 15.0
 const FALLEN_COLUMN_DRUMS := 3
+const FALLEN_COLUMN_DRUM_R := Vector2(0.88, 1.0)
+const FALLEN_COLUMN_FLUTES := Vector2(14, 0.06)
+const FALLEN_COLUMN_VALUE := 0.7
+const FALLEN_COLUMN_BASE := Vector4(0.3, 1.0, 0.24, 1.14)
+const FALLEN_CAPITAL := Vector4(1.6, 0.3, 0.32, 0.95)
+const FALLEN_CAPITAL_STUMP := 0.45
+const FALLEN_CAPITAL_AT := Vector4(0.35, -1.9, 0.5, 34.0)
 const FALLEN_COLUMN_HANG := Vector2(3.2, 4.4)
 ## F5 (B): the far vortex, an accent only: distance ahead of the camera (from the middle of its bounds), how far over
 ## the ray of the frame's top edge its middle stands (so only its lower part shows, in the top band of the frame, over
@@ -727,36 +744,63 @@ func _mouth_arch(sm: Masonry) -> void:
 
 
 ## SW-F1: the fallen column across the rift's south hole (FALLEN_COLUMN_*), under the floor's level, its two halves
-## sagging from the lips to the break.
+## sagging from the lips to the break, the east one turned, its capital hung in the break.
 func _fallen_column(sm: Masonry) -> void:
-	# the room's dressed stone, as the hanging shards (F2): the depths' own stone is black against the rift's dark
-	var mat := ashlar()
+	# the room's dressed stone (as the hanging shards, F2; the depths' own stone is black against the rift's dark), a
+	# step darker than the floor
+	var mat := m.ashlar(0.0, stone_tint() * FALLEN_COLUMN_VALUE)
 	var r := FALLEN_COLUMN.z
+	var flutes := int(FALLEN_COLUMN_FLUTES.x)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 4013
 	var ends: Array[Vector3] = []
 	sm.layers = 1 | ArenaKit.DEPTH_LAYER
 	var sag := deg_to_rad(FALLEN_COLUMN_SAG)
 	for side: float in [-1.0, 1.0]:
-		# from the lip's end (held under the floor) toward the break, dipping
+		# from the lip's end (held under the floor) toward the break, dipping; the east half turned north
 		var from_x := FALLEN_COLUMN_SPAN.x if side < 0.0 else FALLEN_COLUMN_SPAN.y
 		var to_x := FALLEN_COLUMN_BREAK.x + side * FALLEN_COLUMN_BREAK.y * 0.5
 		var run := absf(to_x - from_x)
-		var dir := Vector3(-side * cos(sag), -sin(sag), 0.0)
+		var twist := deg_to_rad(FALLEN_COLUMN_TWIST) if side > 0.0 else 0.0
+		var flat := Vector3(-side * cos(twist), 0.0, sin(twist))
+		var dir := flat * cos(sag) + Vector3.DOWN * sin(sag)
 		var length := run / cos(sag)
 		var start := Vector3(from_x, FALLEN_COLUMN.y - r, FALLEN_COLUMN.x)
-		var drum := length / FALLEN_COLUMN_DRUMS
 		var side_ax := dir.cross(Vector3.UP).normalized()
+		var along := Basis(side_ax, dir, side_ax.cross(dir)).orthonormalized()
+		var at := 0.0
+		if side < 0.0:
+			# the base at the west end: a square plinth under the lip, then the torus
+			var plinth := sm.box(Vector3.ZERO, Vector3(r * 2.0 * FALLEN_COLUMN_BASE.y, FALLEN_COLUMN_BASE.x, r * 2.0 * FALLEN_COLUMN_BASE.y), 0.0, mat, false)
+			plinth.transform = Transform3D(along, start + dir * FALLEN_COLUMN_BASE.x * 0.5)
+			var torus := sm.shaft(Vector3.ZERO, r * FALLEN_COLUMN_BASE.w, FALLEN_COLUMN_BASE.z, mat)
+			torus.transform = Transform3D(along, start + dir * (FALLEN_COLUMN_BASE.x + FALLEN_COLUMN_BASE.z * 0.5))
+			at = FALLEN_COLUMN_BASE.x + FALLEN_COLUMN_BASE.z
+		var drum := (length - at) / FALLEN_COLUMN_DRUMS
 		for k in FALLEN_COLUMN_DRUMS:
-			# the drum at the break shorter, snapped
+			# the drum at the break shorter, snapped; each a little thinner or thicker and turned about its axis
 			var len_ := drum - 0.08 - (drum * 0.3 if k == FALLEN_COLUMN_DRUMS - 1 else 0.0)
-			var mid := start + dir * (drum * k + len_ * 0.5 + 0.04)
+			var mid := start + dir * (at + drum * k + len_ * 0.5 + 0.04)
 			mid.z += rng.randf_range(-0.06, 0.06)
-			var mi := sm.shaft(Vector3.ZERO, r * rng.randf_range(0.9, 1.0), len_, mat)
-			# laid along dir (its own up), turned about it so no two drums match
-			mi.basis = Basis(side_ax, dir, side_ax.cross(dir)).orthonormalized() * Basis(Vector3.UP, rng.randf_range(0.0, TAU))
-			mi.position = mid
+			var mi := sm.fluted(Vector3.ZERO, r * rng.randf_range(FALLEN_COLUMN_DRUM_R.x, FALLEN_COLUMN_DRUM_R.y), len_, flutes,
+				FALLEN_COLUMN_FLUTES.y, mat)
+			mi.transform = Transform3D(along * Basis(Vector3.UP, rng.randf_range(0.0, TAU)), mid)
 		ends.append(start + dir * (length - drum * 0.3))
+	# the capital, broken off the east half's top, hung in the break: abacus, echinus and a stump of the shaft
+	var cap := Vector3(FALLEN_COLUMN_BREAK.x + FALLEN_CAPITAL_AT.x, FALLEN_CAPITAL_AT.y, FALLEN_COLUMN.x + FALLEN_CAPITAL_AT.z)
+	var tilt := Basis(Vector3(0.6, 0, 0.8).normalized(), deg_to_rad(FALLEN_CAPITAL_AT.w)) * Basis(Vector3.UP, 0.4)
+	var parts: Array[MeshInstance3D] = []
+	var abacus := sm.box(Vector3.ZERO, Vector3(FALLEN_CAPITAL.x, FALLEN_CAPITAL.y, FALLEN_CAPITAL.x), 0.0, mat, false)
+	abacus.position = Vector3(0, FALLEN_CAPITAL.y * 0.5, 0)
+	var bell := sm.shaft(Vector3.ZERO, FALLEN_CAPITAL.x * 0.5 * FALLEN_CAPITAL.w, FALLEN_CAPITAL.z, mat)
+	var cyl := bell.mesh as CylinderMesh
+	cyl.bottom_radius = r * FALLEN_COLUMN_DRUM_R.x
+	bell.position = Vector3(0, -FALLEN_CAPITAL.z * 0.5, 0)
+	var stump := sm.fluted(Vector3.ZERO, r * FALLEN_COLUMN_DRUM_R.x, FALLEN_CAPITAL_STUMP, flutes, FALLEN_COLUMN_FLUTES.y, mat)
+	stump.position = Vector3(0, -FALLEN_CAPITAL.z - FALLEN_CAPITAL_STUMP * 0.5, 0)
+	parts.append_array([abacus, bell, stump])
+	for p: MeshInstance3D in parts:
+		p.transform = Transform3D(tilt, cap) * p.transform
 	# chips of the break fallen below it
 	for k in 3:
 		var p := Vector3(FALLEN_COLUMN_BREAK.x + rng.randf_range(-0.6, 0.6), rng.randf_range(-3.5, -2.0), FALLEN_COLUMN.x + rng.randf_range(-0.5, 0.5))
@@ -766,8 +810,10 @@ func _fallen_column(sm: Masonry) -> void:
 	sm.layers = 1
 	var west := ends[0] + Vector3(0, r * 0.6, 0)
 	var east := ends[1] + Vector3(0, r * 0.6, 0)
+	var hook := cap + tilt * Vector3(0, FALLEN_CAPITAL.y, 0)
 	kit.styled_build(func() -> void:
-		kit.chain(west, east, 0.6, 0.8)
+		kit.chain(west, hook, 0.3, 0.8)
+		kit.chain(hook, east, 0.3, 0.8)
 		kit.chain(ends[0], ends[0] + Vector3(0.3, -FALLEN_COLUMN_HANG.x, 0.2), 0.05, 0.8)
 		kit.chain(ends[1], ends[1] + Vector3(-0.2, -FALLEN_COLUMN_HANG.y, -0.3), 0.05, 0.8))
 

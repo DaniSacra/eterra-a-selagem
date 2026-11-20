@@ -90,6 +90,10 @@ const NUMBER_POOL := 32
 const NUMBER_SIZE := 17
 const NUMBER_BIG := 24
 const WORD_SIZE := 21
+## Gold picked up (gold): its size, its pale old gold, and how far apart two drops still join one word.
+const GOLD_SIZE := 15
+const GOLD_WORD := Color(0.84, 0.72, 0.47)
+const GOLD_JOIN := 6.0
 const NUMBER_OUTLINE := 5
 ## Meters across the crossed cuts of Fx.impact (times the size asked for).
 const IMPACT_SIZE := 1.0
@@ -205,6 +209,9 @@ var last_beam := {}
 ## One label per entry of the tally.
 var _labels: Array[Label] = []
 var _tally := NumberTally.new(NUMBER_POOL)
+## The gold word showing (its entry in the tally, -1: none) and the sum it says.
+var _gold_at := -1
+var _gold_sum := 0
 ## The paladin's head in the world (Player sets it each frame): no number stands within NumberTally.HERO_CLEAR of it.
 var hero_head := Vector3.INF
 var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS})
@@ -719,6 +726,32 @@ func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: i
 func word(pos: Vector3, text: String, color: Color) -> void:
 	var i := _tally.add_word(pos + _jitter(), color)
 	_show_label(i, text, color, WORD_SIZE)
+
+
+## Gold picked up (UI review d2ff05d, P1-3): "+N ouro" in a pale old gold, smaller than a damage number; gold that
+## follows within NumberTally.MERGE_TIME and GOLD_JOIN metres joins the "+N" still showing, as the hits on one target
+## join one number, so a horde's drops read "+3 ouro", never a pile of "+1 ouro".
+func gold(pos: Vector3, amount: int) -> void:
+	var text := "+%d %s" % [amount, T.t(&"hud_gold_short")]
+	if _gold_at >= 0:
+		var e := _tally.entries[_gold_at]
+		if e.shown and e.amount < 0.0 and e.color == GOLD_WORD and e.life <= NumberTally.MERGE_TIME \
+				and Vector2(e.pos.x - pos.x, e.pos.z - pos.z).length() <= GOLD_JOIN:
+			_gold_sum += amount
+			e.life = 0.0
+			_show_label(_gold_at, "+%d %s" % [_gold_sum, T.t(&"hud_gold_short")], GOLD_WORD, GOLD_SIZE)
+			return
+	_gold_sum = amount
+	_gold_at = _tally.add_word(pos + _jitter(), GOLD_WORD)
+	_show_label(_gold_at, text, GOLD_WORD, GOLD_SIZE)
+
+
+## The sum the gold word showing now says (0: none showing; the tests read it).
+func gold_shown() -> int:
+	if _gold_at < 0:
+		return 0
+	var e := _tally.entries[_gold_at]
+	return _gold_sum if e.shown and e.color == GOLD_WORD else 0
 
 
 ## The hit stop of a blow (Hades II, GF-01): wait_ms at full speed, slow_ms at fraction of the speed, back to full in

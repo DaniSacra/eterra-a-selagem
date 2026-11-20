@@ -33,6 +33,10 @@ const EVENTS := {
 	# never one per tile; soft, under Morvath's warnings (not in Audio.WARN_CUES: no ducking)
 	&"rune_arm": &"rune_arm",
 	&"rune_fire": &"rune_crack",
+	# the slabs that strike when stepped on (RP-06, PlateFloor): the same stone, one sound per slab as it arms and as
+	# it strikes (at most three slabs at once, PlateHazard.MOST_AT_ONCE)
+	&"plate_arm": &"rune_arm",
+	&"plate_fire": &"rune_crack",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
 const MATERIALS: Array[StringName] = [&"spectral", &"armor", &"shield", &"bone"]

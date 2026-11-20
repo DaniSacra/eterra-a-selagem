@@ -27,8 +27,12 @@ const NEIGHBOURS := {
 @export var tier: Tier = Tier.ENTRY
 ## Devotion it takes to equip (1 to 5).
 @export_range(0, 5) var cost := 1
-## The Mastery level that unlocks it.
+## The Mastery level that reveals it (Rejogabilidade, Fatia 1: the Mastery reveals, the Memória opens, the Devotion
+## equips; sistemas.md 1.4).
 @export_range(1, 20) var unlock_level := 1
+## Fragments of Memória it takes to open, once (0: open from the start, as Quarto Corte at Mastery 1, so the first
+## descent is no poorer than before). The others cost their Devotion (1 to 5).
+@export_range(0, 9) var memory_cost := 0
 ## The action it changes (Boon.Slot): one Gift per action; NONE when it only reinforces (any number of them).
 @export var slot: Boon.Slot = Boon.Slot.NONE
 ## An apex: the neighbouring branch one more Gift must come from.

@@ -39,4 +39,5 @@ desc_key = &"talent_impeto_desc"
 branch = 1
 cost = 2
 unlock_level = 3
+memory_cost = 2
 mods = Array[ExtResource("1_eytow")]([SubResource("Resource_uvhto"), SubResource("Resource_mycas"), SubResource("Resource_6my4w"), SubResource("Resource_abxk1")])

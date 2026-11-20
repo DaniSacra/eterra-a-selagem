@@ -19,6 +19,8 @@ extends SceneTree
 ##   the seal in the HUD (_trial_seal.png), then wins its fights (_trial_won.png, the gold seal and the greeting);
 ##   --altar [--gold=N] [--held=a,b] (start with --start=altar) opens the altar's trades (_altar.png);
 ##   --slab (start with --start=fountain --hero-hp=N) shows the Provação's slab and its sign there (_slab.png).
+## Rejogabilidade (Fatia 1): --meeting opens a room's Blessing by two angels (_meeting.png), then the cards of the
+##   first (_meeting_cards.png); start without --bot. --found greets a door's Prata and Memória (_found.png).
 ## DV-1: --map writes the HUD with its "Mapa [M]" button (_hud.png), then opens the descent's map over the stopped
 ##   run (_map.png): the run's own map, or a fixed sample descent with --map-at=start|middle|doors (MapSample).
 
@@ -54,6 +56,30 @@ func _run() -> void:
 		return
 	if Dev.has("map"):
 		await _map(game)
+		quit()
+		return
+	if Dev.has("found"):
+		# Rejogabilidade, Fatia 1: the greeting of a material found (a door of Prata, then Memória) over the fight
+		var rooms: Variant = game.get(&"rooms")
+		rooms.call(&"found", MaterialPurse.SILVER, &"door", 10)
+		rooms.call(&"found", MaterialPurse.MEMORY, &"door", 3)
+		await create_timer(0.35).timeout
+		await _shot("found")
+		quit()
+		return
+	if Dev.has("meeting"):
+		# Rejogabilidade, Fatia 1: a room's Blessing by two angels (the Encontro, EncounterScreen, _meeting.png), then
+		# the first angel's cards on the choice screen (_meeting_cards.png); start without --bot
+		var rooms: Variant = game.get(&"rooms")
+		game.call(&"open_boon_choice", rooms.get(&"stage").get(&"rarity_chance"), -1.0, true)
+		await create_timer(0.6).timeout
+		await _shot("meeting")
+		var enc: Variant = game.get(&"encounters")
+		var screen: Variant = game.get(&"_screen")
+		screen.set(&"_opened_at", 0)
+		(screen.get(&"buttons")[0] as Button).pressed.emit()
+		await create_timer(0.9).timeout
+		await _shot("meeting_cards")
 		quit()
 		return
 	if Dev.has("trial") or Dev.has("altar") or Dev.has("slab"):

@@ -71,6 +71,7 @@ func open() -> void:
 	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	list.add_theme_constant_override(&"separation", 6)
 	_scroll.add_child(list)
+	UiKit.scroll_fade(_scroll, UiKit.PAGE)
 	for g: int in Group.values():
 		var members: Array = groups[g]
 		if members.is_empty():

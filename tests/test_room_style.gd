@@ -244,7 +244,8 @@ func test_rs_c1_lights() -> void:
 	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(18, 6), "crypt A classic: as before")
 	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 6), "crypt B classic: as before")
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
-	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(18, 1), "crypt A stylized: the crown's light in, the west step's out")
+	# R-1 (Sworn P1 review): every other candle group of A out, two of them with a light
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(16, 1), "crypt A stylized: the crown's light in, the west step's and two groups' out")
 	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(16, 1), "crypt B stylized: the lantern in, two bowls and the statue's candles out")
 
 
@@ -778,6 +779,9 @@ func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 			else:
 				graves += 1
 				lions += 1 if info.y > 0.5 else 0
+			# never on or by a slab that strikes (RP-06)
+			assert_true(a.look.clear_of_plates(Vector2(r.x, r.y), Vector2(r.z, r.w) * 2.0) if a.look != null else true,
+				"%s: slab %d clear of the striking slabs" % [what, i])
 			# all of it on the floor, clear of every piece and of the other slabs
 			for u: float in [-1.0, 0.0, 1.0]:
 				for v: float in [-1.0, 0.0, 1.0]:
@@ -790,13 +794,20 @@ func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 				assert_true(apart, "%s: slabs %d and %d apart" % [what, i, j])
 		match room[0]:
 			&"hall":
-				assert_eq(raised, 4, "SW-H1: two pairs either side of the flight's axis")
+				# S-1: four slabs either side of the flight's axis, never four equal frames (pressure plates)
+				assert_eq(rects.size(), 4, "SW-H1: two pairs either side of the flight's axis")
+				assert_eq(graves, 1, "S-1: one of them a grave slab with the lion")
+				var sizes := {}
+				for i in rects.size():
+					sizes[Vector2((rects[i] as Vector4).z, (rects[i] as Vector4).w)] = true
+					assert_lte((infos[i] as Vector4).z, 1.0, "S-1: never lighter than the floor")
+				assert_gt(sizes.size(), 2, "S-1: of different sizes")
 				for r: Vector4 in rects:
 					var ring := Vector2(r.x, r.y).distance_to(CatacombHall.MEDALLION_AT)
 					assert_gt(ring - Vector2(r.z, r.w).length(), CatacombHall.MEDALLION, "clear of the medallion")
 			&"crypt":
 				assert_eq(raised, 2, "SW-G3: a pair in the crypt")
-				assert_gt(graves, 10, "SW-C1: rows of grave slabs")
+				assert_gt(graves, 7, "SW-C1: rows of grave slabs (off the striking slabs, RP-06)")
 				# one in five with the lion, the old slabs (CryptLook.SLAB_ROWS, plain) counted
 				var all := graves + CryptLook.SLAB_ROWS.size()
 				assert_between(float(lions) / all, 0.15, 0.25, "about one grave in five with the lion")
@@ -807,8 +818,9 @@ func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 	assert_eq(_framed_of(classic).size(), 0, "the classic floor draws none")
 
 
-## SW-F1: the fallen column lies across the rift's south hole, all of it under the floor (its top 0.3 m down), in A
-## and B, only in the stylized look.
+## SW-F1: the fallen column lies across the rift's south hole, all of it under the floor (its top 0.6 m down at the
+## lips, the base's torus a little higher), in A and B, only in the stylized look; its east half turned (F-2: no straight
+## beam from lip to lip).
 func test_sworn_fallen_column_under_the_floor() -> void:
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	for v in 2:
@@ -816,6 +828,7 @@ func test_sworn_fallen_column_under_the_floor() -> void:
 		var styled := a.find_child("Styled", true, false) as Node3D
 		var top := -INF
 		var span := Vector2(INF, -INF)
+		var east_z := Vector2(INF, -INF)
 		for n in styled.find_children("*", "MeshInstance3D", true, false):
 			var mi := n as MeshInstance3D
 			if mi.mesh == null:
@@ -823,13 +836,16 @@ func test_sworn_fallen_column_under_the_floor() -> void:
 			for sf in mi.mesh.get_surface_count():
 				for vert: Vector3 in mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX]:
 					var w := mi.global_transform * vert
-					if absf(w.z - RiftLook.FALLEN_COLUMN.x) > RiftLook.FALLEN_COLUMN.z * 1.2:
+					if absf(w.z - RiftLook.FALLEN_COLUMN.x) > 2.2:
 						continue
 					if w.x < RiftLook.FALLEN_COLUMN_SPAN.x - 0.5 or w.x > RiftLook.FALLEN_COLUMN_SPAN.y + 0.5 or w.y < -3.0:
 						continue
 					top = maxf(top, w.y)
 					span = Vector2(minf(span.x, w.x), maxf(span.y, w.x))
-		assert_lt(top, RiftLook.FALLEN_COLUMN.y + 0.05, "rift %d: the column's top under the floor" % v)
+					if w.x > RiftLook.FALLEN_COLUMN_BREAK.x + 1.0:
+						east_z = Vector2(minf(east_z.x, w.z), maxf(east_z.y, w.z))
+		assert_lt(top, RiftLook.FALLEN_COLUMN.y + 0.15, "rift %d: the column's top under the floor" % v)
 		assert_gt(top, RiftLook.FALLEN_COLUMN.y - 0.3, "rift %d: and near it, seen" % v)
+		assert_gt(east_z.y - east_z.x, RiftLook.FALLEN_COLUMN.z * 2.0 + 0.8, "rift %d: the east half turned, not a straight beam" % v)
 		assert_lt(span.x, -6.5, "rift %d: from under the west lip" % v)
 		assert_gt(span.y, 1.5, "rift %d: to under the east lip" % v)

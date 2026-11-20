@@ -24,6 +24,9 @@ var arena: Arena
 var player: Player
 ## A scene of its own (the fall of Morvath; null: none): the camera looks at it, wherever the paladin stands.
 var focus: Variant = null
+## A floor point the camera eases toward instead of its own (INF: none): the hub's station in focus (HubPlan.frame_for,
+## HUB-D). Unlike focus, the paladin's safe frame and the room's reach still hold.
+var lean := Vector2.INF
 ## The point the camera follows (eased) and the floor point it looked at last frame (INF: place it anew).
 var target := Vector3.ZERO
 var at := Vector2.INF
@@ -59,8 +62,8 @@ static func distance() -> float:
 
 
 ## The near camera's room past a fixed frame made for the far one (CamFrame.slack; zero with the far camera).
-func slack(distance: float, _fov: float) -> Vector2:
-	if not near():
+func slack(distance: float, _fov: float, as_far := false) -> Vector2:
+	if as_far or not near():
 		return Vector2.ZERO
 	var fov := Dev.num("cam-fov", Feel.live().cam_fov)
 	var view := camera.get_viewport().get_visible_rect().size
@@ -92,6 +95,9 @@ func follow(delta: float, shake: Vector3, zoom := 1.0) -> void:
 	var look: Vector3
 	if focus != null:
 		look = focus
+	elif lean.is_finite():
+		look = Vector3(lean.x, 0, lean.y)
+		_last = player.pos
 	elif holds():
 		# a boss chamber: the camera keeps to its point (look_at moves it only for the paladin's safe frame)
 		look = Vector3(arena.cam_target.x, 0, arena.cam_target.y)
@@ -132,9 +138,10 @@ func place(shake: Vector3, delta: float, zoom := 1.0) -> void:
 
 ## The floor point the camera looks at, for the point it follows: inside the room's margins, unless the paladin
 ## would stand near an edge of the screen (the landing by the way in lies outside the room's rectangle).
-func look_at(want: Vector2, distance: float, fov: float) -> Vector2:
+## as_far: where the far camera would look whatever the options say (the shooters' fair frame, LR-02: no slack).
+func look_at(want: Vector2, distance: float, fov: float, as_far := false) -> Vector2:
 	if arena.cam_reach > 0.0:
-		return hold_at(want, distance, fov)
+		return hold_at(want, distance, fov, as_far)
 	var h := arena.half
 	var side := maxf(0.0, h.x - CamFrame.margin(Game.CAM_MARGIN.x, distance))
 	var p := Vector2(clampf(want.x, -side, side), clampf(want.y,
@@ -143,7 +150,7 @@ func look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 		# an arena's own box for the point the camera looks at (cycle C12; the same spring follows it, no zoom)
 		p = want.clamp(arena.cam_bounds.position, arena.cam_bounds.end)
 		# the near camera may go past it by what the far one saw more (CamFrame.slack; zero far)
-		p = CamFrame.widen(p, want, slack(distance, fov), yaw())
+		p = CamFrame.widen(p, want, slack(distance, fov, as_far), yaw())
 	if focus != null:
 		# a scene of its own (the fall of Morvath): the camera looks at it, wherever the paladin stands
 		return p
@@ -154,10 +161,10 @@ func look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 ## The floor point the camera looks at in a room with a fixed point (cycle C11, docs/art/boss_chamber_spec.md section 4;
 ## the hub): its point (Arena.cam_target), moved only as much as the paladin's safe frame needs (CamFrame.keep, 18% of
 ## the screen), and never more than Arena.cam_reach meters from it.
-func hold_at(want: Vector2, distance: float, fov: float) -> Vector2:
+func hold_at(want: Vector2, distance: float, fov: float, as_far := false) -> Vector2:
 	var view := camera.get_viewport().get_visible_rect().size
 	return CamFrame.hold(arena.cam_target, want, arena.cam_reach, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), yaw(),
-		fov, view.x / maxf(view.y, 1.0), focus == null, slack(distance, fov))
+		fov, view.x / maxf(view.y, 1.0), focus == null, slack(distance, fov, as_far))
 
 
 ## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.

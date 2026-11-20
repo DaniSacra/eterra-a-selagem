@@ -104,6 +104,11 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## RUNNER (T5-09): its blade's reach from the edge of its body when it lands (meters at size 1) and the arc ahead.
 @export var strike_reach := 1.1
 @export var strike_degrees := 120.0
+## C19-1, C19-2 (Q-11; Hades II's elites, docs/design/combat_cadence.md 8.2): blows in one attack, strike_gap seconds
+## apart. RUNNER: the second blade aims where the paladin stood at the end of the wind-up (its thread shows from the
+## wind-up on); PULSE: a second burst where its body is, its ring born on the frame of the first. A stun cuts the rest.
+@export var strikes := 1
+@export var strike_gap := 0.2
 ## RUNNER and KNIGHT: speed of the lunge or charge (m/s) and how long it lasts.
 @export var lunge_speed := 14.0
 @export var lunge_time := 0.45

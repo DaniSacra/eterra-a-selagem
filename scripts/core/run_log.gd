@@ -11,7 +11,10 @@ const PATH := "user://runs.jsonl"
 ## it (mastery_level), the Gifts equipped (talents) and the ultimate chosen. gifts stays the list of Blessings.
 ## 4 (DV-1, MAP-02): the descent's graph (map: seed, nodes, edges, the way walked), the node of each room
 ## (rooms[].node) and, in each door's event, the node chosen and those offered.
-const VERSION := 4
+## 5 (Rejogabilidade, Fatia 1; sistemas.md 5.2): materials (by source and in total, MaterialPurse.report), forge (the
+## Forja's ranks carried: temper), talents_opened (Gifts open at the start) and angels (one entry a meeting: room, node,
+## offered, chose, cards, fallback; Encounters.log).
+const VERSION := 5
 ## What an entry adds to the RESULT: outcome (victory, death, quit), when (local date and time), the gifts taken (in
 ## order: id, level and rarity), the device used (keyboard, gamepad, both, none; bot for the test robot), how many
 ## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key. Since
@@ -24,6 +27,8 @@ const FIELDS: Array[String] = ["version", "outcome", "when", "gifts", "device", 
 const HERO_FIELDS := {"hero": "warrior", "xp": 0, "xp_by": {}, "mastery_level": 0, "talents": [], "ultimate": ""}
 ## The field of version 4 and what an older line (one straight line of rooms, no graph) reads as.
 const MAP_FIELDS := {"map": {}}
+## The fields of version 5 and what an older line (no materials, no angels) reads as.
+const KEEP_FIELDS := {"materials": {}, "forge": {}, "talents_opened": 0, "angels": []}
 ## Who played a run (source).
 const HUMAN := "human"
 const BOT := "bot"
@@ -67,13 +72,14 @@ static func read(path: String) -> Array[Dictionary]:
 
 
 ## An entry of any version with the fields of this one: an older line (version 1 or 2, or none) gets HERO_FIELDS
-## (the first hero, no XP, no Gifts), one before version 4 an empty map (MAP_FIELDS) and each room the node -1, and it
+## (the first hero, no XP, no Gifts), one before version 4 an empty map (MAP_FIELDS) and each room the node -1, one
+## before version 5 no materials and no angels (KEEP_FIELDS), and it
 ## keeps its own version number, so a reader still knows what it was.
 static func normalized(e: Dictionary) -> Dictionary:
 	if int(e.get("version", 1)) >= VERSION:
 		return e
 	var out := e.duplicate(true)
-	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS]:
+	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS]:
 		for k: String in fields:
 			if not out.has(k):
 				out[k] = fields[k].duplicate() if fields[k] is Array or fields[k] is Dictionary else fields[k]

@@ -131,13 +131,14 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 	_scroll.focus_entered.connect(_scroll_focused)
 	_scroll.gui_input.connect(_scroll_keys)
 	_scroll.add_child(_list)
+	UiKit.scroll_fade(_scroll, Book.PAPER)
 	page.add_child(_scroll)
 	_legend = Book.text("", Book.FADED, 16)
 	page.add_child(_legend)
 	var foot := HBoxContainer.new()
 	foot.alignment = BoxContainer.ALIGNMENT_END
 	page.add_child(foot)
-	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 200)
+	var back := Book.button(T.t(&"back"), func() -> void: closed.emit(), 200)
 	back.name = "back"
 	foot.add_child(back)
 	_back = back

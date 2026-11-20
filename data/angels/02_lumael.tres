@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="AngelDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/angel_def.gd" id="1_p63bg"]
+
+[resource]
+script = ExtResource("1_p63bg")
+id = &"lumael"
+name_key = &"angel_lumael"
+line_key = &"angel_lumael_line"
+color = Color(0.86, 0.78, 0.55, 1)
+symbol = 2

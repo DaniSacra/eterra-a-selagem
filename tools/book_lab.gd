@@ -9,6 +9,8 @@ const BOOT := "res://scenes/boot.tscn"
 ## Mastery 11 with 50 XP into it, Combo's entry and middle and Fúria's entry on (the "before" captures' hand).
 const XP := 900
 const EQUIPPED: Array = ["quarto_corte", "passo_encadeado", "impeto"]
+## Revealed but not opened with Memória (Rejogabilidade, Fatia 1): the gifts_sealed_* captures.
+const SEALED: Array = ["lamina_faminta", "investida"]
 
 var _out := ""
 
@@ -40,6 +42,17 @@ func _run() -> void:
 		(tree.call(&"node", StringName(id)) as Control).grab_focus()
 		await create_timer(0.3).timeout
 		await _shot("gifts_" + id)
+	# Abrir with Memória: the sealed Gift in focus, the question after one press, and one it cannot pay
+	(tree.call(&"node", &"lamina_faminta") as Control).grab_focus()
+	await create_timer(0.3).timeout
+	await _shot("gifts_sealed")
+	hero.call(&"_pick", hero.get(&"loadout").get(&"book").call(&"find", &"lamina_faminta"))
+	await create_timer(0.3).timeout
+	await _shot("gifts_sealed_ask")
+	(tree.call(&"node", &"investida") as Control).grab_focus()
+	hero.call(&"_pick", hero.get(&"loadout").get(&"book").call(&"find", &"investida"))
+	await create_timer(0.3).timeout
+	await _shot("gifts_sealed_short")
 	var ults: Array = hero.get(&"ults")
 	(ults[1] as Control).grab_focus()
 	await create_timer(0.3).timeout
@@ -61,6 +74,11 @@ func _sample() -> Dictionary:
 	var block: Dictionary = (load("res://scripts/core/save_data.gd") as GDScript).call(&"hero", data, "warrior")
 	block.mastery_xp = XP
 	block.equipped = EQUIPPED.duplicate()
+	# what this Mastery revealed is opened (the version 6 migration), but for SEALED: Abrir with Memória to show
+	(load("res://scripts/core/save_data.gd") as GDScript).call(&"open_revealed", block)
+	for id: String in SEALED:
+		block.opened.erase(id)
+	data.materials = {"silver": 23, "memory": 2}
 	var seen := {"brasas": 6, "toque_geada": 4, "onda_maior": 3, "escudo": 2, "passos": 1, "golpe_brasa": 5,
 		"estilhaco": 2, "consolo": 1, "lamina_ardente": 1, "circulo_radiante": 2, "passo_geada": 1}
 	for id: String in seen:

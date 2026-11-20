@@ -6,8 +6,10 @@ extends RefCounted
 
 ## The boss attacks with a name of their own (Boss: the source of their warnings and shots). "ritual" is an eruption
 ## of the ritual; "adds" (his dead) is not here: the kind of the dead names it.
-## E5: "runes" is the floor of the Câmara das Runas Instáveis (Ground.HAZARD_SOURCE), named the same way.
-const BOSS_ATTACKS: Array[StringName] = [&"scythe", &"blades", &"storm", &"eruptions", &"ritual", &"curse", &"dash", &"runes"]
+## E5: "runes" is the floor of the Câmara das Runas Instáveis (Ground.HAZARD_SOURCE), named the same way; RP-06:
+## "plates" the slabs that strike when stepped on (Ground.PLATE_SOURCE).
+const BOSS_ATTACKS: Array[StringName] = [&"scythe", &"reap", &"blades", &"storm", &"eruptions", &"ritual", &"curse", &"dash", &"runes",
+	&"plates"]
 const UNKNOWN := &"killer_unknown"
 
 

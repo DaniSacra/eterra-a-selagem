@@ -15,8 +15,8 @@ A ambiência de cada sala: sintetizada pelo próprio projeto.
 
 ARTE
 Herói, inimigos e a espada Emeth: modelos gerados com o Meshy e ajustados para o jogo.
-Arte da tela de título, retrato do herói e medalhões pintados das Bênçãos: imagens feitas com IA para o projeto.
-Cenário e peças provisórias: KayKit, de Kay Lousberg (kaylousberg.com), CC0.
+Arte da tela de título, retrato do herói, retrato do Guerreiro no Livro de Ahk e medalhões pintados das Bênçãos, do Altar Esquecido e da Provação: imagens feitas com IA para o projeto.
+Cenário, peças provisórias, armas dos inimigos e a gente do Santuário: KayKit, de Kay Lousberg (kaylousberg.com), CC0.
 Animações: Universal Animation Library 1 e 2, de Quaternius, CC0.
 Textura de rocha: Rock Surface, de Amal Kumar (Poly Haven), CC0.
 Fontes: Cinzel e Alegreya Sans, SIL Open Font License.

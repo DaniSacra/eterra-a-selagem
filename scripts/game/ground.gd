@@ -17,6 +17,8 @@ enum Shape { CIRCLE, LINE, ARC }
 const TICK := 0.25
 ## The source of the floor's own warnings (the runes, E5): "Derrotado por: Runas Instáveis" (DefeatCause).
 const HAZARD_SOURCE := &"runes"
+## The source of the slabs that strike when stepped on (RP-06, PlateFloor): "Derrotado por: Laje Rachada".
+const PLATE_SOURCE := &"plates"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -190,12 +192,13 @@ func add_aim_warning(from: Vector2, dir: Vector2, length: float, width: float, t
 ## A band of the floor that strikes on its own (E5, the runes; ArenaHazard): the rectangle `r` warms up for `time`
 ## seconds in amber (GroundLook.Style.HAZARD, drawn under the enemies' warnings) and strikes everyone in it as it ends:
 ## hero_damage to the paladin (as any warning), enemy_damage to each enemy (hazard_landed). drawn false: it strikes the
-## same but shows nothing (the Runes' own floor, RunesLook, draws the tiles warming up: nothing drawn twice).
-func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float, drawn := true) -> Zone:
+## same but shows nothing (the Runes' own floor, RunesLook, draws the tiles warming up: nothing drawn twice). source:
+## what names it (HAZARD_SOURCE the runes, PLATE_SOURCE the slabs of RP-06).
+func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float, drawn := true, source := HAZARD_SOURCE) -> Zone:
 	var from := Vector2(r.position.x, r.get_center().y)
 	var z := _add(Kind.WARNING, Shape.LINE, from, Vector2.RIGHT, r.size.x, r.size.y, time, hero_damage)
 	z.hazard = enemy_damage
-	z.source = HAZARD_SOURCE
+	z.source = source
 	z.by = &""
 	z.offscreen = 0
 	GroundLook.hazard(z.node, from, Vector2.RIGHT, r.size.x, r.size.y, z.node.position.y)
@@ -209,6 +212,19 @@ func add_arc_warning(at: Vector2, dir: Vector2, radius: float, degrees: float, t
 
 ## Ends one zone now (as clear_warnings does for all of them): it is released on the next step without landing (a
 ## ritual circle goes without its column).
+## Turns a line warning on the floor to start at `from` and run along `dir` (C19-1: a soldier elite's second blade
+## follows the paladin through its wind-up, then keeps where he stood); its length, width and time stay.
+static func point_line(z: Zone, from: Vector2, dir: Vector2) -> void:
+	if z == null or z.shape != Shape.LINE or dir.length_squared() < 0.0001:
+		return
+	z.pos = from
+	z.dir = dir.normalized()
+	if z.node != null:
+		var mid := from + z.dir * z.radius * 0.5
+		z.node.rotation = Vector3(0, atan2(z.dir.x, z.dir.y), 0)
+		z.node.position = Vector3(mid.x, z.node.position.y, mid.y)
+
+
 static func end_zone(z: Zone) -> void:
 	if z != null:
 		z.life = -1.0

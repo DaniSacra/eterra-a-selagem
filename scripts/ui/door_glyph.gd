@@ -14,7 +14,10 @@ extends Control
 
 ## UNKNOWN (DV-1, MAP-03): a room of the descent's map whose content stays hidden until its slab shows (Q-25 a: the
 ## Provação's room only), a question mark in the same ivory stroke.
-enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN }
+## SILVER and MEMORY (Rejogabilidade, Fatia 1): Prata Antiga an ingot of old silver, Fragmento de Memória a leaf of
+## parchment torn at its corner with lines of ink (the in-world medallion's own marks, RewardGem.Mark INGOT and LEAF);
+## the same wherever a material shows (doors, the map, the Forja, the Livro, the end screen, the hub: MaterialCount).
+enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN, SILVER, MEMORY }
 
 ## Height of the glyph on the sign's canvas (the name's capitals are about 13; a little taller reads better).
 const HEIGHT := 17.0
@@ -32,6 +35,10 @@ const LIFE_ROSE := Color(0.86, 0.3, 0.4)
 const MAGICK_BLUE := Color(0.42, 0.62, 0.95)
 const COIN_GOLD := Color(0.86, 0.68, 0.36)
 const HEAL_GREEN := Color(0.5, 0.86, 0.6)
+## The materials' fills: old silver (cool, greyed, never white) and parchment, with ink lines on the leaf.
+const SILVER_FILL := Color(0.62, 0.65, 0.7)
+const PARCHMENT_FILL := Color(0.84, 0.74, 0.55)
+const LEAF_INK := Color(0.2, 0.14, 0.09)
 
 var kind := Kind.NONE
 var height := HEIGHT
@@ -72,6 +79,20 @@ static func of_reward(r: RunMap.Reward) -> Kind:
 			return Kind.GOLD
 		RunMap.Reward.HEAL:
 			return Kind.HEAL
+		RunMap.Reward.SILVER:
+			return Kind.SILVER
+		RunMap.Reward.MEMORY:
+			return Kind.MEMORY
+	return Kind.NONE
+
+
+## The mark of a material (MaterialPurse.SILVER, MEMORY; NONE for the others).
+static func of_material(id: StringName) -> Kind:
+	match id:
+		MaterialPurse.SILVER:
+			return Kind.SILVER
+		MaterialPurse.MEMORY:
+			return Kind.MEMORY
 	return Kind.NONE
 
 
@@ -153,6 +174,8 @@ func _draw() -> void:
 		Kind.MAGICK:
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.52, OUTLINE_COLOR, OUTLINE_COLOR)
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.44, MAGICK_BLUE, MAGICK_BLUE.darkened(0.45))
+		Kind.SILVER, Kind.MEMORY:
+			material(self, kind, c, h)
 		Kind.UNKNOWN:
 			# a question mark drawn in the signs' stroke: a hook over a short stem, and a dot
 			var hook := PackedVector2Array()
@@ -164,6 +187,39 @@ func _draw() -> void:
 			_stroke(hook, IVORY, stroke * 1.15)
 			draw_circle(c + Vector2(0, h * 0.36), stroke * 1.9 + (OUTLINE - STROKE) * k * 0.5, OUTLINE_COLOR)
 			draw_circle(c + Vector2(0, h * 0.36), stroke * 1.2, IVORY)
+
+
+## A material's mark drawn on any canvas (the Gift tree's cost under a sealed Gift uses it), h tall around c.
+static func material(ci: CanvasItem, k: Kind, c: Vector2, h: float) -> void:
+	var o := maxf(1.0, h * 0.09)
+	if k == Kind.SILVER:
+		# an ingot seen from the front and a little above: the top narrower, a groove across it
+		var w := h * 0.46
+		var pts := PackedVector2Array([c + Vector2(-w * 0.62, -h * 0.24), c + Vector2(w * 0.62, -h * 0.24),
+			c + Vector2(w, h * 0.26), c + Vector2(-w, h * 0.26)])
+		ci.draw_colored_polygon(_grown(pts, c, o), OUTLINE_COLOR)
+		ci.draw_colored_polygon(pts, SILVER_FILL)
+		ci.draw_line(c + Vector2(-w * 0.72, -h * 0.08), c + Vector2(w * 0.72, -h * 0.08), SILVER_FILL.darkened(0.35), maxf(1.0, h * 0.06), true)
+		ci.draw_line(c + Vector2(-w * 0.5, -h * 0.2), c + Vector2(w * 0.3, -h * 0.2), SILVER_FILL.lightened(0.35), maxf(1.0, h * 0.05), true)
+		return
+	# a leaf a little askew, its lower right corner torn away, three lines written on it
+	var leaf := PackedVector2Array()
+	for p: Vector2 in [Vector2(-0.3, -0.42), Vector2(0.34, -0.38), Vector2(0.32, 0.12), Vector2(0.2, 0.2), Vector2(0.24, 0.3),
+			Vector2(0.06, 0.34), Vector2(0.0, 0.44), Vector2(-0.34, 0.4)]:
+		leaf.append(c + p * h)
+	ci.draw_colored_polygon(_grown(leaf, c, o), OUTLINE_COLOR)
+	ci.draw_colored_polygon(leaf, PARCHMENT_FILL)
+	for i in 3:
+		var y := -0.22 + i * 0.17
+		var reach := 0.22 if i < 2 else 0.04
+		ci.draw_line(c + Vector2(-0.2, y) * h, c + Vector2(reach, y - 0.02) * h, LEAF_INK, maxf(1.0, h * 0.06), true)
+
+
+static func _grown(pts: PackedVector2Array, c: Vector2, by: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in pts:
+		out.append(p + (p - c).normalized() * by)
+	return out
 
 
 func _stroke(pts: PackedVector2Array, col: Color, width: float) -> void:

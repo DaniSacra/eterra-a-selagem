@@ -1,6 +1,7 @@
 # Plano de modelos no Meshy para a Arena das Catacumbas
 
-Saldo em 2026-11-14: **6 créditos**. Custos: prévia 5, textura 10 (um modelo parado com textura custa 15), esqueleto 5,
+Saldo: **546 créditos** (o Daniel comprou 1000 em 2026-11-15 e pediu para segurar depois dos inimigos e da Emeth;
+em 2026-11-14 eram 6). Custos: prévia 5, textura 10 (um modelo parado com textura custa 15), esqueleto 5,
 animação 3 por ação. Nada aqui foi gerado: cada item espera o Daniel aprovar o gasto (CLAUDE.md). A arena já está
 montada sem eles (`CatacombHall`); cada modelo só troca uma peça provisória, no mesmo lugar.
 

@@ -291,10 +291,17 @@ const STY_CAGES: Array[Array] = [
 ]
 ## The cage (radius, height of the bars, of the dome, the bars' width: m; Masonry.cage_mesh), its bars, its chain's
 ## links (ArenaKit.chain size), its swing (degrees, seconds a swing; each cage a little slower than the one before).
-const STY_CAGE := Vector4(0.55, 1.6, 0.4, 0.07)
+## K-1 of the Sworn P1 review: a third larger than at first (0.55, 1.6, 0.4, 0.07; a link of the chains was almost the
+## cage's width: a ship's chain and a bird's cage), at least 2.5 links wide.
+const STY_CAGE := Vector4(0.73, 2.13, 0.53, 0.08)
 const STY_CAGE_BARS := 10
 const STY_CAGE_LINKS := 1.2
 const STY_CAGE_SWING := Vector2(3.0, 7.0)
+## K-1: an old bone lying on the floor of one cage (STY_CAGE_BONE_IN, the one with the door open; no lore): its length,
+## thickness, the knobs at its ends (a share of the length), its turn (degrees), its colour.
+const STY_CAGE_BONE_IN := 1
+const STY_CAGE_BONE := Vector4(0.55, 0.07, 0.16, 35.0)
+const STY_CAGE_BONE_COLOR := Color(0.42, 0.39, 0.33)
 ## E4, the far air: the sky a step deeper in value, the spires' lit edges a step lighter.
 const STY_SKY := 0.9
 const STY_SPIRE_EDGE := 1.15
@@ -503,7 +510,8 @@ func restyle() -> void:
 ## The chamber leaves (a common room after it, without a new scene): the world's air goes back exactly as it was.
 func _exit_tree() -> void:
 	if _air_env != null and not _air.is_empty():
-		restore_air(_air_env, _air_moon, _air)
+		# the moon can leave the tree first (the whole world freed at once): a freed light is not a DirectionalLight3D
+		restore_air(_air_env, _air_moon if is_instance_valid(_air_moon) else null, _air)
 		_air = {}
 
 
@@ -1492,7 +1500,33 @@ func _cage(sm: Masonry, c: int) -> void:
 	mi.layers = sm.layers
 	mi.transform = Transform3D(Basis(Vector3.UP, deg_to_rad(float(spec[3]))), Vector3.DOWN * drop)
 	pivot.add_child(mi)
+	if c == STY_CAGE_BONE_IN:
+		_cage_bone(mi)
 	_cages.append(pivot)
+
+
+## K-1: the bone on the cage's floor (STY_CAGE_BONE): a shaft and a knob at each end, one mesh, matte, no shadow.
+func _cage_bone(cage: MeshInstance3D) -> void:
+	var b := STY_CAGE_BONE
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var knob := b.x * b.z
+	for part: Array in [[Vector3.ZERO, Vector3(b.x, b.y, b.y)], [Vector3(b.x * 0.5, 0, 0), Vector3(knob, b.y * 1.8, b.y * 2.2)],
+			[Vector3(-b.x * 0.5, 0, 0), Vector3(knob, b.y * 1.8, b.y * 2.2)]]:
+		var box := BoxMesh.new()
+		box.size = part[1]
+		st.append_from(box, 0, Transform3D(Basis.IDENTITY, part[0]))
+	var bone := MeshInstance3D.new()
+	bone.mesh = st.commit()
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = STY_CAGE_BONE_COLOR
+	mat.roughness = 0.9
+	bone.material_override = mat
+	bone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	bone.layers = cage.layers
+	var floor_y := -STY_CAGE.z - STY_CAGE.y + b.y * 1.2
+	bone.transform = Transform3D(Basis(Vector3.UP, deg_to_rad(b.w)) * Basis(Vector3.BACK, 0.12), Vector3(0.1, floor_y, -0.05))
+	cage.add_child(bone)
 
 
 ## Where the cage STY_CAGES[c] hangs from its chain (ArenaKit.chain's curve).

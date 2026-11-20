@@ -11,6 +11,8 @@ extends VBoxContainer
 ## C17 (BUG-107): while a screen is over the run (the cards, the pause, an event's choice: held) nothing shows and the
 ## clock of the greeting stands still; it goes on, and the ones waiting follow, once the run is back. Over the fight
 ## a soft dark veil sits behind the words, so they read over a lit floor and over enemies at the top of the room.
+## Rejogabilidade, Fatia 1 (show_material): a material found, one short row (its mark and "+3 Prata Antiga"), shorter
+## than the others (MATERIAL_TIME); more of the same while it shows, or while it waits, adds to it.
 
 const TIME := 2.6
 const FADE_IN := 0.15
@@ -24,6 +26,8 @@ const NOTE_SIZE := 15
 const MEDALLION := 34.0
 ## At most this many greetings wait (a burst of Blessings from a dev option never piles up for long).
 const QUEUE_MAX := 3
+const MATERIAL_TIME := 1.8
+const MATERIAL_SIZE := 20
 ## The veil behind the words: how far it reaches past them (px at 720 lines) and how dark its middle is.
 const VEIL_REACH := Vector2(70, 18)
 const VEIL_ALPHA := 0.62
@@ -32,6 +36,12 @@ var _t := 0.0
 var _link: EloLink
 var _icon: Control
 var _queue: Array[Callable] = []
+## A material's greeting: the one showing (id and amount, its row) and the amounts waiting by id.
+var _material := &""
+var _material_n := 0
+var _material_row: MaterialCount
+var _material_waiting := {}
+var _time := TIME
 ## What shows now: &"elo", &"boon", &"psalm", &"trial" or &"" (the tests read it).
 var showing := &""
 ## A screen is over the run: nothing shows and the greeting waits (Hud sets it every frame).
@@ -93,6 +103,22 @@ func show_trial(card: Trials.Card) -> void:
 		_queue.push_front(_open_trial.bind(card))
 		return
 	_open_trial(card)
+
+
+## A material found (MaterialPurse.SILVER, MEMORY): n more of it.
+func show_material(id: StringName, n: int) -> void:
+	if n <= 0:
+		return
+	if showing == &"material" and _material == id:
+		_material_n += n
+		_material_row.set_amount(_material_n)
+		_t = minf(_t, FADE_IN)
+		return
+	if _material_waiting.has(id):
+		_material_waiting[id] = int(_material_waiting[id]) + n
+		return
+	_material_waiting[id] = n
+	_enqueue(_open_material.bind(id))
 
 
 ## How many greetings wait behind the one showing.
@@ -189,6 +215,21 @@ func _open_trial(card: Trials.Card) -> void:
 	_start(&"trial")
 
 
+func _open_material(id: StringName) -> void:
+	_clear()
+	_material = id
+	_material_n = int(_material_waiting.get(id, 0))
+	_material_waiting.erase(id)
+	_material_row = MaterialCount.new()
+	_material_row.plus = true
+	_material_row.setup(id, _material_n, UiKit.PALE, MATERIAL_SIZE, 24.0, true)
+	_material_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_material_row.number.add_theme_font_size_override(&"font_size", MATERIAL_SIZE)
+	UiKit.shadow(_material_row.number)
+	add_child(_material_row)
+	_start(&"material")
+
+
 func _name(b: Boon) -> Label:
 	return _named(T.t("boon_" + String(b.id)), UiKit.PALE)
 
@@ -201,11 +242,21 @@ func _named(text: String, col: Color) -> Label:
 
 func _start(kind: StringName) -> void:
 	showing = kind
+	_time = MATERIAL_TIME if kind == &"material" else TIME
 	_t = 0.0
 	modulate.a = 0.0
 	visible = not held
 	set_process(true)
 	queue_redraw()
+
+
+## The band of the screen the greeting takes while it shows (its box, with the veil's reach above and below).
+func band() -> Rect2:
+	return get_global_rect().grow_individual(0.0, VEIL_REACH.y * 0.5, 0.0, VEIL_REACH.y * 0.5)
+
+
+func _exit_tree() -> void:
+	DoorSign.keep_out = Rect2()
 
 
 ## The soft dark veil behind the words: an ellipse fading out from the middle, wider than the words.
@@ -230,17 +281,21 @@ func _draw_veil() -> void:
 
 func _process(delta: float) -> void:
 	if held:
+		DoorSign.keep_out = Rect2()
 		return
 	_t += delta
-	modulate.a = minf(clampf(_t / FADE_IN, 0.0, 1.0), clampf((TIME - _t) / FADE_OUT, 0.0, 1.0))
+	modulate.a = minf(clampf(_t / FADE_IN, 0.0, 1.0), clampf((_time - _t) / FADE_OUT, 0.0, 1.0))
+	# the signs of the world keep out of the band the greeting stands in, its veil's reach included (P1-1)
+	DoorSign.keep_out = band()
 	if _link:
 		_link.progress = ease(clampf((_t - FADE_IN * 0.5) / CLOSE, 0.0, 1.0), 0.5)
 	if _icon:
 		_icon.scale = Vector2.ONE * lerpf(0.7, 1.0, ease(clampf(_t / (FADE_IN * 2.0), 0.0, 1.0), 0.4))
 		_icon.pivot_offset = _icon.size * 0.5
-	if _t >= TIME:
+	if _t >= _time:
 		visible = false
 		showing = &""
+		DoorSign.keep_out = Rect2()
 		set_process(false)
 		if not _queue.is_empty():
 			_queue.pop_front().call()

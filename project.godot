@@ -76,6 +76,10 @@ art_style={
 "type": "float",
 "value": 0.0
 }
+frame_yaw={
+"type": "float",
+"value": 0.0
+}
 
 [debug]
 

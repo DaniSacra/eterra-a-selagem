@@ -3,7 +3,7 @@ extends RefCounted
 ## The hero's body: the Meshy model of the approved "Explorador" (docs/art/hero_explorer.md; scarf, mantle, straps
 ## and buckles are his own), his own clips (made from a CC0 animation library by tools/bake_hero.gd) and the sword
 ## in his right hand. Shared by the game (Player), the title screen and tools/pose_lab.gd. The provisional "Sombra"
-## body (hero_sombra/, repainted by tools/recolor_hero.gd and dressed by HeroGear) is kept, unused.
+## body and the first paladin left the repository (DT-107, Q-19; the git history keeps them).
 
 const MODEL := "res://assets/models/meshy/hero_explorer/hero_explorer-rigged.glb"
 const ANIMS := "res://assets/models/meshy/hero_explorer/hero_anims.res"

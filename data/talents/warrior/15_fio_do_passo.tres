@@ -36,6 +36,7 @@ branch = 4
 tier = 3
 cost = 3
 unlock_level = 14
+memory_cost = 3
 slot = 4
 joins = Array[int]([2, 0])
 mods = Array[ExtResource("1_fcmmy")]([SubResource("Resource_tnqdg"), SubResource("Resource_13833"), SubResource("Resource_4nh0p")])

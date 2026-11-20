@@ -2,10 +2,9 @@ class_name HubPanel
 extends Control
 ## A small page of the hub in the Livro de Ahk's language (HUB-B3, HUB-C): one leaf of parchment (BookSpread single,
 ## cover, browned edges, gilt brackets, the petrol ribbon) on a shade over the hub; on it, an optional mark, the title
-## in Cinzel rubric over a gilt rule, an optional state ("◆ A DEFINIR"), a line of ink and a row of buttons (the
-## menus' dark buttons, as on the book's boards), the first one the main action and in focus. Used for the Portal's
-## short confirmation ("Descer às catacumbas?", Descer, Ficar) and the honest pages of the Vendedor and the Forjador
-## (nothing to buy or forge yet, Voltar). Left and right walk the buttons, Enter, A or a click press one; Esc and B
+## in Cinzel rubric over a gilt rule, an optional state ("◆ FECHADO"), a line of ink and a row of the paper's buttons
+## (Book.button), the first one the main action (Book.primary) and in focus. Used for the Portal's short confirmation
+## ("Descer às catacumbas?", Descer, Ficar) and the Vendedor's closed counter (Voltar). Left and right walk the buttons, Enter, A or a click press one; Esc and B
 ## close it (its ScreenHost), and nothing pressed here reaches the hub (ScreenHost.close clears the presses).
 ##   var p := HubPanel.new()
 ##   host.open(p, [T.t(&"hub_descend_title"), T.t(&"hub_descend_line"),
@@ -86,12 +85,12 @@ func open(title: String, line: String, choices: Array, mark: Control = null, sta
 	v.add_child(foot)
 	for c: Array in choices:
 		var id: StringName = c[0]
-		var b := UiKit.button(String(c[1]), func() -> void:
+		var b := Book.button(String(c[1]), func() -> void:
 			chosen.emit(id)
 			closed.emit(), BUTTON_WIDTH)
 		b.name = String(id)
 		if buttons.is_empty():
-			UiKit.primary(b)
+			Book.primary(b)
 		foot.add_child(b)
 		buttons.append(b)
 	_chain()

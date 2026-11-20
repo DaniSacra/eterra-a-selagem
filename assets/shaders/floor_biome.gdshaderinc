@@ -148,6 +148,8 @@ uniform int framed_count = 0;
 uniform float framed_rim = 0.2;
 uniform float framed_slope = 0.05;
 uniform float framed_lip = 1.22;
+// S-1: how far from its corner a broken moulding is gone (m; framed_info.y on a raised slab)
+uniform float framed_broken = 0.55;
 uniform float framed_foot = 0.55;
 uniform float framed_tilt = 0.9;
 // how much a slope facing the light (relief_light) is lighter, one facing away darker (share of its value)
@@ -218,6 +220,18 @@ void floor_framed(inout vec3 c, inout vec2 lean, vec2 lp, vec2 half_size, float 
 		float outer_slope = up * (1.0 - smoothstep(j + framed_slope, j + framed_slope * 1.2, edge));
 		float inner_slope = down * (1.0 - smoothstep(framed_rim, framed_rim + framed_slope * 0.6, edge));
 		float top = up * (1.0 - down);
+		if (info.y > 0.5) {
+			// S-1: a corner of the moulding broken off (the corner by the seed), its broken end ragged and darker
+			float k = mod(info.w, 4.0);
+			vec2 corner = half_size * vec2(k < 2.0 ? -1.0 : 1.0, mod(k, 2.0) < 1.0 ? -1.0 : 1.0);
+			vec2 to = lp - corner;
+			float ragged = framed_broken + sin(atan(to.y, to.x) * 9.0 + info.w) * 0.05;
+			float gone = 1.0 - smoothstep(ragged - 0.02, ragged + 0.02, length(to));
+			outer_slope *= 1.0 - gone;
+			inner_slope *= 1.0 - gone;
+			c *= mix(1.0, framed_foot, gone * top * 0.6);
+			top *= 1.0 - gone;
+		}
 		c *= mix(1.0, framed_lip, top);
 		c *= 1.0 + framed_face * facing * (outer_slope - inner_slope);
 		// the slab sits lower: a dark line at the moulding's inner foot

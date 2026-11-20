@@ -62,7 +62,7 @@ func _game() -> void:
 		{"rooms": 5, "guardians": 1, "new_boons": 2})
 	var ui: Node = game.get(&"ui")
 	var stats := {"time": 412.0, "level": 0, "kills": 63, "best_combo": 17, "boons": 20, "defeated_by": &"enemy_skeleton",
-		"mastery": {"gain": gain, "xp_before": 120}}
+		"mastery": {"gain": gain, "xp_before": 120}, "materials": {"silver": 4, "memory": 0}}
 	var end: Node = (load("res://scripts/ui/end_screen.gd") as GDScript).new()
 	ui.add_child(end)
 	end.call(&"open", false, stats, false)
@@ -72,6 +72,7 @@ func _game() -> void:
 	await process_frame
 	var won := stats.duplicate()
 	won.erase("defeated_by")
+	won.materials = {"silver": 24, "memory": 7}
 	won.mastery = {"gain": load("res://scripts/core/hero_def.gd").call(&"warrior").get(&"mastery").call(&"run_xp",
 		{"rooms": 10, "guardians": 1, "phase": 4, "victory": true}), "xp_before": 120}
 	end = (load("res://scripts/ui/end_screen.gd") as GDScript).new()

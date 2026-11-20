@@ -12,13 +12,17 @@ render_mode cull_back, shadows_disabled;
 
 uniform sampler2D medallion : source_color, filter_linear_mipmap, repeat_disable;
 uniform bool has_medallion = false;
-// 0 none, 1 Blessing, 2 coin, 3 heart, 4 Magia's gem, 5 drop, 6 one chevron, 7 two, 8 three.
+// 0 none, 1 Blessing, 2 coin, 3 heart, 4 Magia's gem, 5 drop, 6 one chevron, 7 two, 8 three, 9 an ingot (Prata
+// Antiga), 10 a torn written leaf (Fragmento de Memória).
 uniform int mark = 0;
 uniform vec3 enamel : source_color = vec3(0.3, 0.1, 0.1);
 uniform vec3 gold : source_color = vec3(0.66, 0.5, 0.26);
 // The struck mark's metal (gold, or ivory on the Blessing) and gold's own face (the whole face the coin).
 uniform vec3 mark_metal : source_color = vec3(0.66, 0.5, 0.26);
 uniform bool all_gold = false;
+// Fatia 1: the Memória's face is a leaf of parchment (enamel holds its colour) written in ink (mark_metal): matt, no
+// relief, the ink not glowing. Prata Antiga is all_gold with gold the old silver.
+uniform bool parchment = false;
 uniform float coin_field = 0.62;
 // How far across the face the mark reaches (its half-width as a share of the face's radius).
 uniform float mark_size = 0.6;
@@ -67,6 +71,8 @@ float mark_extent() {
 	if (mark == 6) return 0.45;
 	if (mark == 7) return 0.45;
 	if (mark == 8) return 0.48;
+	if (mark == 9) return 0.48;
+	if (mark == 10) return 0.5;
 	return 1.0;
 }
 
@@ -91,7 +97,25 @@ float mark_sd(vec2 p) {
 		float bulb = length(q) - 0.32;
 		float point = sd_diamond(vec2(p.x * 1.3, p.y - 0.12), 0.42);
 		return min(bulb, max(point, -p.y - 0.05));
-	} else if (mark >= 6) {
+	} else if (mark == 9) {
+		// an ingot seen from the front and a little above: its sloped sides, the top's edge a groove across it
+		float w = 0.46 - (p.y + 0.22) * 0.45;
+		float ingot = max((abs(p.x) - w) * 0.91, abs(p.y) - 0.22);
+		return max(ingot, -(abs(p.y - 0.09) - 0.022));
+	} else if (mark == 10) {
+		// a leaf a little askew, its lower right corner torn away along a ragged line, three lines written on it
+		float a = 0.14;
+		vec2 q = vec2(cos(a) * p.x - sin(a) * p.y, sin(a) * p.x + cos(a) * p.y);
+		float tri = abs(fract((q.x + q.y) * 7.0) - 0.5) * 0.09;
+		float leaf = max(sd_box(q, vec2(0.32, 0.42)), (q.x - q.y) * 0.7071 - 0.36 + tri);
+		float frame = abs(leaf + 0.02) - 0.035;
+		float lines = 10.0;
+		for (int i = 0; i < 3; i++) {
+			float y = 0.2 - float(i) * 0.15;
+			lines = min(lines, sd_box(q - vec2(-0.04 - float(i) * 0.03, y), vec2(0.19 - float(i) * 0.03, 0.025)));
+		}
+		return min(frame, max(lines, leaf + 0.06));
+	} else if (mark >= 6 && mark <= 8) {
 		int n = mark - 5;
 		float d = 10.0;
 		for (int i = 0; i < 3; i++) {
@@ -147,17 +171,22 @@ void fragment() {
 				field = gold * coin_field * (1.0 - 0.25 * mill);
 				field_metal = 0.8;
 			}
+			if (parchment) {
+				// fibres along the leaf and a darker stain toward the rim
+				float fib = fract(sin(dot(floor(q * vec2(40.0, 9.0)), vec2(12.9898, 78.233))) * 43758.5453);
+				field = enamel * mix(0.92, 1.05, fib) * mix(1.0, 0.8, smoothstep(0.5, 1.0, length(q)));
+			}
 			float inside = 1.0 - smoothstep(-0.01, 0.01, d);
 			enamel_part = all_gold ? 0.0 : 1.0 - inside;
 			albedo = mix(field, mark_metal, inside);
-			metal = mix(field_metal, 0.85, inside);
-			rough = mix(all_gold ? 0.45 : 0.7, 0.35, inside);
-			self_light = mix(all_gold ? gold_glow : glow, gold_glow, inside);
+			metal = mix(field_metal, parchment ? 0.0 : 0.85, inside);
+			rough = mix(all_gold ? 0.45 : 0.7, parchment ? 0.9 : 0.35, inside);
+			self_light = mix(all_gold ? gold_glow : glow, parchment ? 0.0 : gold_glow, inside);
 			// relief: the slope of the field across the mark's edge
 			float e = 0.01;
 			float dx = (mark_sd((q + vec2(e, 0.0)) * k) - mark_sd((q - vec2(e, 0.0)) * k)) / k;
 			float dy = (mark_sd((q + vec2(0.0, e)) * k) - mark_sd((q - vec2(0.0, e)) * k)) / k;
-			float slope = (1.0 - smoothstep(0.0, edge, abs(d))) * relief;
+			float slope = (1.0 - smoothstep(0.0, edge, abs(d))) * (parchment ? 0.0 : relief);
 			n = normalize(vec3(vec2(dx, dy) / (2.0 * e) * slope, 1.0));
 		}
 	}

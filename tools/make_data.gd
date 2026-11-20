@@ -46,7 +46,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -226,7 +226,9 @@ func _enemies() -> void:
 		# T5-02, T5-09: it trembles in the hold of its wind-up; its blade comes down 0.1 s into its pounce, reaching
 		# 1.1 m (at its size) past its body in an arc of 120 degrees ahead, as its body lands
 		"windup_shake": 0.025, "strike_at": 0.1, "strike_reach": 1.1, "strike_degrees": 120.0,
-		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1]})
+		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY}, {"armor": 80.0, "speed": 380.0 / U, "rating": 12.0, "recover_time": ENEMY_RECOVER.skeleton[1],
+		# C19-1 (Q-11, Hades' Guard elite): two blades 0.2 s apart, the second where he stood at the end of the wind-up
+		"strikes": 2, "strike_gap": 0.2})
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest); C17,
 	# QW-102: 1.0 s of wind-up, its last 0.3 s held trembling (0.7 was the shortest warning of the game: the PO took 9
 	# blows with 0.70 to 0.82 s; Hades' Radiator winds up 1.5 s)
@@ -236,7 +238,9 @@ func _enemies() -> void:
 		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
 		"strike_at": 0.1,
 		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "recover_time": ENEMY_RECOVER.runner[0]},
-		{"armor": 85.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1]})
+		# C19-2 (Q-11): the elite bursts twice in one spin, 0.5 s apart (combat_cadence.md 8.2: a new ring needs that to
+		# be read), then Hades' 0.5 s of the Radiator elite
+		{"armor": 85.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1], "strikes": 2, "strike_gap": 0.5})
 	# Ranged enemies with the numbers of Hades II's ranged ones in its first region (study of 2026-11-16) and Daniel's
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
@@ -562,8 +566,22 @@ func _stage() -> void:
 	# The doors' deck (C13-02, Hades II's RunProgress: 4 Blessings, 2 hearts, 2 Magia tonics, 2 gold, 2 pomegranates,
 	# 2 hammers, Hermes, Selene, the star path and a room of two gods). What we do not have yet is left out (hammer,
 	# Selene, star path); Hermes and the two gods' room are Blessings here. Drawn without putting back, filled again.
+	# Rejogabilidade, Fatia 1 (sistemas.md 3.1): one door of Prata and one of Memória more, nothing taken (14 to 16).
 	st.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.POM, R.HEART, R.HEART,
-		R.MAGICK, R.MAGICK, R.GOLD, R.GOLD])
+		R.MAGICK, R.MAGICK, R.GOLD, R.GOLD, R.SILVER, R.MEMORY])
+	# What a descent brings home (sistemas.md 1.2, starting numbers for the balance-designer): Prata by an elite 1, a
+	# door 10, a guardian 6, Morvath 2 a phase reached (up to 8) and 10 at the sealing; Memória by a door 3, a guardian 2,
+	# a Provação won 2 and the sealing 3.
+	st.silver_elite = 1
+	st.silver_door = 10
+	st.silver_guardian = 6
+	st.silver_phase = 2
+	st.phase_max = 4
+	st.silver_victory = 10
+	st.memory_door = 3
+	st.memory_guardian = 2
+	st.memory_trial = 2
+	st.memory_victory = 3
 	# Gold (C13-04, Hades II): a fight's ceiling 10 to 15 plus 0.5 a room of depth, 70% that each enemy leaves its
 	# share; a gold reward 100.
 	st.gold_cap_min = 10
@@ -699,6 +717,29 @@ func _variant(obstacles: Array[ArenaObstacle], floor: FloorShape = null, late: A
 	return v
 
 
+## RP-06 (H-2, docs/design/rooms_progression.md): slabs of 3 x 3 m that anyone stepping on arms (the paladin or an enemy:
+## the steam trap of the Hades II), marked at rest; 1.0 s lighting from the edge to the middle (never under an enemy's
+## wind-up), a strike of 0.25 s on whoever stands on it with the runes' numbers (RP-03: 7 to him, 60 to an enemy), 5 s
+## before it may arm again, nothing in the first 3 s; asleep (drawn, never striking) before the descent reaches `from`.
+## Each slab at least 6 m from the way in and off the doors' mouths (test_plates.gd).
+func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
+	var h := HazardDef.new()
+	h.kind = HazardDef.Kind.PLATES
+	h.plates = rects
+	h.warn = 1.0
+	h.fire = 0.25
+	h.rearm = 5.0
+	h.start_delay = 3.0
+	h.from_progress = from
+	h.hero_damage = 7.0
+	h.enemy_damage = 60.0
+	return h
+
+
+## RP-06: the slabs wake from the 4th room (progress 0.34); in the 2nd and 3rd they lie at rest and teach.
+const PLATES_FROM := 0.34
+
+
 ## Cripta dos Esquecidos (spec section 2): small, closed, sarcophagi and columns as cover; 4 to 6 enemies, at most 2
 ## shooters, no priest.
 func _crypt() -> RoomLayout:
@@ -741,6 +782,12 @@ func _crypt() -> RoomLayout:
 	_areas(l, ["north", _rect(-12, 12, -10.5, -3), "middle", _rect(-12, 12, -3, 3), "south", _rect(-12, 12, 3, 10.5)])
 	_areas(l.variants[0], ["west_of_wall", _rect(-12, 0.5, -10.5, -3), "east_of_wall", _rect(0.5, 12, -10.5, -3),
 		"south_open", _rect(-12, 12, -3, 10.5)])
+	# RP-06: slabs by the walls, off the 4 m ways round the great tomb, off the spawns and 6 m or more from the way in
+	# (its south-west corner is the way in: three corners and the east side). B: at the foot of the dividing wall, one
+	# on each side of its end.
+	l.hazard = _plates([_rect(-7.2, -4.2, -10.3, -7.3), _rect(8.0, 11.0, -7.5, -4.5), _rect(2.0, 5.0, 7.3, 10.3),
+		_rect(8.0, 11.0, 1.3, 4.3)], PLATES_FROM)
+	l.variants[0].hazard = _plates([_rect(-3.4, -0.4, -6.3, -3.3), _rect(1.4, 4.4, -6.3, -3.3)], PLATES_FROM)
 	return l
 
 
@@ -915,6 +962,10 @@ func _bosses() -> void:
 		"chain_rest": 0.35,
 		# the Sepulchral Scythe: half a circle 5 m from his middle (3.6 m past his body), 0.8 s to read it, 1 s to punish
 		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 12.0, "scythe_approach": 1.2,
+		# C19-3, the Double Reap (Q-09 a; Hades II's Hecate: right 0.85 / 0.4 / 0.35, at once left 0.5 / 0.5 / 2.2): two
+		# sweeps of 150 degrees and 4.5 m close in, the second born where the paladin is as the first ends, then 2.2 s
+		"reap_reach": 4.5, "reap_degrees": 150.0, "reap_windup": 0.85, "reap_active": 0.4, "reap_pause": 0.35, "reap2_windup": 0.5,
+		"reap2_active": 0.5, "reap_recovery": 2.2, "reap_damage": 10.0,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
 		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 10.0,
 		# C17, Q-09 (b): phase 1 was the scythe in a loop with him close (91% scythe over 3 seeds): the Blades come at
@@ -945,6 +996,9 @@ func _bosses() -> void:
 		# E2: from the curse's phase, eruptions with its warning, their free lane away from his half circle
 		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2, "then": &"storm", "then_chance": 0.6, "then_from_phase": 4,
 			"layers": [&"eruptions"] as Array[StringName], "layer_from_phase": 3, "layer_chance": 1.0, "layer_share": 0.0}),
+		# C19-3: close in, the Double Reap shares the near choices with the scythe (phase 1 with him within 4 m: no
+		# attack over half, never three alike)
+		_attack(&"reap", {"weight": 3.5, "max_dist": 6.0, "near_bias": 2.2, "streak": 1}),
 		# far: the blades (until the storm takes their place); E2: in the curse's phase his dead rise as they fly
 		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 0.0, "near_bias": 1.0, "far_bias": 2.2,
 			"layers": [&"summon"] as Array[StringName], "layer_from_phase": 3, "layer_chance": 1.0, "layer_share": 0.0}),
@@ -989,7 +1043,7 @@ func _feel() -> void:
 	f.cam_distance = 54.0
 	# the near camera of the options (Daniel, 2026-11-19): Hades II's Erebus rooms are as big as ours in meters, but its
 	# ZoomFraction about 0.85 shows about 28 m across (ours 41 at 54) and the room is bigger than the screen; 37 m shows
-	# the same 28 m (CamRig.near, the save's "camera"; the far 54 stays the default)
+	# the same 28 m (CamRig.near, the save's "camera"; the default since LR-01; the far 54 stays in the options)
 	f.cam_distance_near = 37.0
 	f.cam_pitch = 30.0
 	f.cam_yaw = 35.0
@@ -1094,6 +1148,9 @@ func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.T
 	t.tier = tier
 	t.cost = cost
 	t.unlock_level = unlock
+	# Rejogabilidade, Fatia 1 (sistemas.md 1.4): opening costs its Devotion in Memória, the first Gift (Mastery 1) comes
+	# open so the first descent is no poorer than before
+	t.memory_cost = 0 if unlock <= 1 else cost
 	for k: String in props:
 		t.set(k, props[k])
 	_save(t, TALENT_DIR + "%02d_%s.tres" % [n, id])
@@ -1166,6 +1223,9 @@ func _hero() -> void:
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 0.2, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
 		"magick_on_finisher": 2.0,
+		# C19-4 (Q-12): Hades II's Swing5 charge walks at 3% with the body all but locked; the special's 60% is an
+		# inference (WeaponStaffBoltInstantStop; its Omega stage has no speed of its own)
+		"charge_move_light": 0.03, "charge_turn_light": 0.0, "charge_move_heavy": 0.6,
 	}
 	for k: String in numbers:
 		h.set(k, numbers[k])
@@ -1348,6 +1408,23 @@ func _sanctuary() -> RoomLayout:
 	l.cam_bounds = _rect(-10, 10, -2, 2)
 	# the question of the room (spec 0.2): the open nave or the aisles behind the columns
 	_areas(l, ["nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+	# RP-06: the aisles get a price (the nave has the knight's charge, the aisles the slabs): two in each, between the
+	# columns, off the spawns and the doors; B the same (its hole is in the nave)
+	var aisle_slabs: Array[Rect2] = [_rect(-13.5, -10.5, -11.0, -8.0), _rect(10.5, 13.5, -11.0, -8.0),
+		_rect(-7.5, -4.5, 8.0, 11.0), _rect(0.0, 3.0, 8.0, 11.0)]
+	l.hazard = _plates(aisle_slabs, PLATES_FROM)
+	# RP-13 (B): the edge that crumbles, the slabs at the two ends of the hole (the nave is 1.85 m wide along its long
+	# sides, no room for a slab there): 5 to him (not 7) and everyone on them thrown 2.5 m away from the hole, to the
+	# firm floor (nobody falls, D-28); the same hazard as the aisles' (one hazard that hurts per room)
+	var edge_slabs := aisle_slabs.duplicate()
+	edge_slabs.append_array([_rect(-2.6, 0.4, -1.5, 1.5), _rect(9.6, 12.6, -1.5, 1.5)])
+	var crumble := _plates(edge_slabs, PLATES_FROM)
+	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, 0, 5, 5])
+	crumble.plate_push = PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2(-2.5, 0),
+		Vector2(2.5, 0)])
+	l.variants[0].hazard = crumble
+	_areas(l.variants[0], ["hole_edge", _rect(-2.6, 0.4, -1.5, 1.5), "hole_edge", _rect(9.6, 12.6, -1.5, 1.5),
+		"nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
 	return l
 
 
@@ -1550,3 +1627,60 @@ func _juramentos() -> void:
 	_juramento(6, &"debt", &"price_pct", [0.4, 0.8], [1, 1])
 	_juramento(7, &"denial", &"boon_denial", [2.0], [2], JuramentoDef.Shown.COUNT)
 	_juramento(8, &"rivals", &"boss_rival", [0.25], [2])
+
+
+# ---------- Rejogabilidade, Fatia 1 ----------
+
+const FORGE_DIR := "res://data/forge/emeth/"
+
+
+func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonMod]) -> void:
+	var r := ForgeRank.new()
+	r.id = id
+	r.track = &"temper"
+	r.rank = rank
+	r.name_key = StringName("forge_" + id)
+	r.desc_key = StringName("forge_%s_desc" % id)
+	r.material = MaterialPurse.SILVER
+	r.cost = cost
+	r.mods = mods
+	_save(r, FORGE_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The Forja da Emeth (sistemas.md 1.5; Q-RJ7 a: the first rank early and small): Temperar I, the attack 10% more
+## damage (tag light: the three cuts, the Corte Veloz and the attack's Omega), 15 Prata; Temperar II, the special and
+## its Omega 10% more (tag heavy), 35 Prata. A blow sums each matching mod once, so no move gets both but the
+## lance (light) never counts II: "the Omegas" are the attack's by I and the special's by II.
+func _forge() -> void:
+	DirAccess.make_dir_recursive_absolute(FORGE_DIR)
+	for f in DirAccess.get_files_at(FORGE_DIR):
+		DirAccess.remove_absolute(FORGE_DIR + f)
+	_forge_rank(0, &"temper_1", 1, 15, [_fixed(&"damage_pct", 0.1, [], &"light")] as Array[BoonMod])
+	_forge_rank(1, &"temper_2", 2, 35, [_fixed(&"damage_pct", 0.1, [], &"heavy")] as Array[BoonMod])
+
+
+const ANGEL_DIR := "res://data/angels/"
+
+
+func _angel(n: int, id: StringName, family: Boon.Family, symbol: int, color: Color) -> void:
+	var a := AngelDef.new()
+	a.id = id
+	a.family = family
+	a.name_key = StringName("angel_" + id)
+	a.line_key = StringName("angel_%s_line" % id)
+	a.symbol = symbol
+	a.color = color
+	_save(a, ANGEL_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The four angels (sistemas.md 4, Q-RJ4 approved 2026-11-19, working names): one a family, the seal in the family's
+## colour (the seal's, AngelSeal.TINT: calmer than Boon.FAMILY_COLOR).
+func _angels() -> void:
+	DirAccess.make_dir_recursive_absolute(ANGEL_DIR)
+	for f in DirAccess.get_files_at(ANGEL_DIR):
+		DirAccess.remove_absolute(ANGEL_DIR + f)
+	var F := Boon.Family
+	_angel(0, &"sarael", F.CHAMA, 0, Color(0.8, 0.42, 0.24))
+	_angel(1, &"nivael", F.GEADA, 1, Color(0.58, 0.76, 0.88))
+	_angel(2, &"lumael", F.LUZ, 2, Color(0.92, 0.8, 0.52))
+	_angel(3, &"shomael", F.VIGILIA, 3, Color(0.3, 0.62, 0.6))

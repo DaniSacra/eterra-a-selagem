@@ -36,6 +36,7 @@ branch = 4
 tier = 3
 cost = 3
 unlock_level = 13
+memory_cost = 3
 slot = 2
 joins = Array[int]([3, 2])
 mods = Array[ExtResource("1_66asu")]([SubResource("Resource_q84rp"), SubResource("Resource_k28hu"), SubResource("Resource_3m3jt")])

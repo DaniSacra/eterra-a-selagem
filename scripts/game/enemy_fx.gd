@@ -52,8 +52,15 @@ const CROSSBOW_SWEEP := 0.3
 const CROSSBOW_STROKE := 0.075
 const STRING_STROKE := 0.035
 ## The ink round each stroke: this much wider than it (meters at size 1, each side).
-const INK_EDGE := 0.065
-const INK_ALPHA := 0.6
+const INK_EDGE := 0.09
+const INK_ALPHA := 0.78
+## L-1 (art review of the Sworn P1, P2): the strokes read as paint on the figure, not an interface laid over it. The
+## crossbow's body in the aged bone and wood of the weapon (BOW_BODY), the priest's arms a darker violet
+## (RITUAL_ARM_DARK of their light), each at STROKE_TONE of the light lit() allows; with the thicker ink above, the
+## strokes' luma p50 170 to 200 at 1080 (217 to 219 before) and nothing pure white. Size, shape and timing unchanged.
+const BOW_BODY := Color(0.86, 0.7, 0.48)
+const STROKE_TONE := 0.78
+const RITUAL_ARM_DARK := 0.72
 ## The strokes (BAR) are lit to this share of the brightest their hue may be and stay under ScreenTone.SAFE on the
 ## screen (ScreenTone.fit, linear): the rest is the room for what shows through the ink under them.
 const STROKE_ROOM := 0.9
@@ -329,7 +336,7 @@ func _rite(e: Enemy, k: float, at: Vector3, model: BakedModel, anim: StringName,
 		for end in ends:
 			_flat_bar(Shape.INK, chest, Vector2.ZERO, end, (RITUAL_ARM + INK_EDGE * 2.0) * d.size, INK_EDGE * d.size, Color.BLACK, INK_ALPHA * minf(arm_alpha / 0.9, 1.0))
 		for end in ends:
-			_flat_bar(Shape.BAR, chest, Vector2.ZERO, end, RITUAL_ARM * d.size, 0.0, lit(c), arm_alpha)
+			_flat_bar(Shape.BAR, chest, Vector2.ZERO, end, RITUAL_ARM * d.size, 0.0, toned(lit(c), RITUAL_ARM_DARK), arm_alpha)
 		# a glow in each palm, at the V's ends
 		for end in ends:
 			_put(Shape.DOT, chest + _right * end.x + _up * end.y, Vector2.ONE * RITUAL_PALM * d.size, c * MAGIC_SPARK, 0.8 * flame * gone, 0.0, 0.0, true)
@@ -355,6 +362,11 @@ func lit(c: Color) -> Color:
 	return _lit[c]
 
 
+## A stroke's colour a share of its light (alpha untouched).
+static func toned(c: Color, k: float) -> Color:
+	return Color(c.r * k, c.g * k, c.b * k, c.a)
+
+
 ## LC-1b: the crossbow in light where the pose holds it (at), in the screen's plane, pointing where it aims, and the
 ## sight from its tip down to the aim's wire on the floor (see CROSSBOW_*).
 func _crossbow(e: Enemy, k: float, at: Vector3) -> void:
@@ -369,7 +381,7 @@ func _crossbow(e: Enemy, k: float, at: Vector3) -> void:
 	on = on.normalized() if on.length_squared() > 1e-4 else Vector2.RIGHT
 	var across := Vector2(-on.y, on.x)
 	var z := d.size
-	var pale := lit(PALE)
+	var pale := toned(lit(BOW_BODY), STROKE_TONE)
 	var front := on * BOW_AHEAD * z
 	var strokes: Array = [[-on * CROSSBOW_STOCK * 0.6 * z, on * CROSSBOW_STOCK * 0.4 * z, CROSSBOW_STROKE]]
 	var ends: Array[Vector2] = []

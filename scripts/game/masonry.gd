@@ -625,6 +625,49 @@ func shaft(foot: Vector3, radius: float, height: float, mat: Material = null) ->
 	return mi
 
 
+## A fluted drum of a column standing at foot (Sworn F-1): `radius` to the flutes' arrises, `height`, `flutes` shallow
+## concave grooves `depth` m deep round it (FLUTE_SIDES sides each), flat ends. Shared by snapped size.
+func fluted(foot: Vector3, radius: float, height: float, flutes: int, depth: float, mat: Material = null) -> MeshInstance3D:
+	var key := "fluted|%.2f|%.2f|%d|%.3f" % [radius, height, flutes, depth]
+	if not _fluted.has(key):
+		_fluted[key] = fluted_mesh(snappedf(radius, 0.01), snappedf(height, 0.01), flutes, depth)
+	var mi := MeshInstance3D.new()
+	mi.mesh = _fluted[key]
+	mi.position = foot + Vector3(0, height * 0.5, 0)
+	mi.material_override = mat if mat else stone(foot.y)
+	_add(mi)
+	return mi
+
+
+const FLUTE_SIDES := 4
+var _fluted := {}
+
+
+## The fluted drum's mesh, centred, along Y (fluted), flat facets so the flutes catch the light.
+func fluted_mesh(radius: float, height: float, flutes: int, depth: float) -> ArrayMesh:
+	var n := flutes * FLUTE_SIDES
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var ring: Array[Vector2] = []
+	for i in n:
+		var a := TAU * i / n
+		# each flute a shallow scoop between two sharp arrises
+		var s := sin(PI * float(i % FLUTE_SIDES) / FLUTE_SIDES)
+		ring.append(Vector2(cos(a), sin(a)) * (radius - depth * s))
+	var h := height * 0.5
+	for i in n:
+		var p: Vector2 = ring[i]
+		var q: Vector2 = ring[(i + 1) % n]
+		var a0 := Vector3(p.x, -h, p.y)
+		var a1 := Vector3(q.x, -h, q.y)
+		var b0 := Vector3(p.x, h, p.y)
+		var b1 := Vector3(q.x, h, q.y)
+		_quad(st, a0, a1, b1, b0)
+		_tri(st, Vector3(0, h, 0), b0, b1)
+		_tri(st, Vector3(0, -h, 0), a1, a0)
+	return st.commit()
+
+
 ## SW-K1: an empty iron cage (a gibbet) hanging from its hook at the origin, one mesh: a dome of four straps from the
 ## hook to the top ring, `bars` upright bars down to the bottom ring, a band round its middle and two straps across its
 ## floor. size: radius, height of the bars, height of the dome, the bars' width (m). door: degrees its door (the two

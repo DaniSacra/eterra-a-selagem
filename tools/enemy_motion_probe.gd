@@ -82,6 +82,8 @@ func _process(_d: float) -> bool:
 			uid[e] = uid.size()
 		var model: BakedModel = renderer.kind(d).model
 		var w: Object = e.warning
+		if (w == null or w.cancelled or w.life <= 0.0) and e.get(&"warning2") != null:
+			w = e.warning2  # C19: an elite's second blow (its own warning, from the wind-up)
 		var wl := -1.0
 		var wt := -1.0
 		if w != null and not w.cancelled and w.life > 0.0:

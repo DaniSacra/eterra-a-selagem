@@ -42,7 +42,14 @@ const PASSIVE_EDGE := 0.96
 const SLOT_GAP := 8
 const FONT_SMALL := 15
 const FONT_TEXT := 19
-const FONT_CLOCK := 24
+const FONT_CLOCK := 22
+## The clock's box, where it stands (top middle) and, while a boss's bar is up, under the gold on the right; the
+## boss's bar under the clock, or at the top alone while the clock is in the corner.
+const CLOCK_BOX := Vector2(120, 30)
+const CLOCK_Y := 7.0
+const CLOCK_BOSS_Y := 40.0
+const BOSS_TOP := 42.0
+const BOSS_TOP_ALONE := 12.0
 ## The hit count (VX-12): its digits stay under 48 px tall at 1080 lines even at the top of the pop, and the move's
 ## name under it is dimmed, so neither competes with the fight.
 const FONT_COMBO := 30
@@ -98,6 +105,11 @@ var _room: Label
 ## descent's map (MapScreen) over the stopped run. Never takes the focus (Space and Enter stay the dodge).
 var map_button: Button
 var _clock: Label
+var _clock_veil: HudVeil
+var _clock_at_boss := false
+var _combo_veil: HudVeil
+## The materials greeted so far, by "material/source" (Rejogabilidade, Fatia 1: _greet_materials).
+var _found_seen := {}
 var _purse: HBoxContainer
 var _coin: HudMark
 var _gold: Label
@@ -188,6 +200,9 @@ func _ready() -> void:
 	if game != null:
 		game.psalm_offered.connect(_on_psalm.bind(false))
 		game.psalm_taken.connect(_on_psalm.bind(true))
+		# Rejogabilidade, Fatia 1: the meetings with the angels open the Encontro (the run's encounters exist once it is
+		# ready), and the materials found are greeted
+		game.ready.connect(func() -> void: EncounterScreen.attach(game), CONNECT_ONE_SHOT)
 
 
 ## Top: experience (horde mode only, a thin gold line across the top), room or level, clock, gold or kills, boss.
@@ -202,7 +217,9 @@ func _build_top() -> void:
 	top_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(top_left)
 	_place(top_left, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 8), Vector2(300, 32))
-	_room = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.TITLE_FONT))
+	# every number of the HUD in lining figures (UiKit.number_font): Cinzel's 1 is a bare stroke, "Sala 1 de 11" read
+	# "SALA I DE II" (UI review d2ff05d, P0-1)
+	_room = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.number_font()))
 	_room.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top_left.add_child(_room)
 	# the look of the menus' quiet links (UiKit.link), but never focused: hovering it takes nothing from the fight
@@ -226,9 +243,10 @@ func _build_top() -> void:
 	map_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	map_button.visible = false
 	top_left.add_child(map_button)
-	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 8))
-	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_clock.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.number_font(), Control.PRESET_CENTER_TOP, Vector2.ZERO)
+	_clock.name = "clock"
+	_clock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_clock_veil = _veil([_clock])
 	_purse = HBoxContainer.new()
 	_purse.add_theme_constant_override(&"separation", 6)
 	_purse.alignment = BoxContainer.ALIGNMENT_END
@@ -238,14 +256,14 @@ func _build_top() -> void:
 	_coin = HudMark.new().setup(HudMark.Kind.COIN, Vector2(17, 17))
 	_coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_purse.add_child(_coin)
-	_gold = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.TITLE_FONT))
+	_gold = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.number_font()))
 	_purse.add_child(_gold)
 	_boss_box = VBoxContainer.new()
 	_boss_box.add_theme_constant_override(&"separation", 2)
 	_boss_box.visible = false
 	_boss_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_boss_box)
-	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, 42), Vector2(BOSS.x, 40))
+	_place(_boss_box, Control.PRESET_CENTER_TOP, Vector2(0, BOSS_TOP), Vector2(BOSS.x, 40))
 	_boss_name = UiKit.shadow(UiKit.title("", FONT_TEXT, UiKit.PALE))
 	_boss_name.add_theme_constant_override(&"outline_size", 5)
 	_boss_box.add_child(_boss_name)
@@ -258,13 +276,14 @@ func _build_top() -> void:
 	_phase_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_phase_box.modulate.a = 0.0
 	add_child(_phase_box)
-	_place(_phase_box, Control.PRESET_CENTER_TOP, Vector2(0, 42 + 40 + 2), Vector2(BOSS.x + 160, 44))
+	_place(_phase_box, Control.PRESET_CENTER_TOP, Vector2(0, BOSS_TOP + 40 + 2), Vector2(BOSS.x + 160, 44))
 	_phase_name = UiKit.shadow(UiKit.title("", PHASE_NAME_SIZE, UiKit.GOLD))
 	_phase_name.add_theme_constant_override(&"outline_size", 5)
 	_phase_box.add_child(_phase_name)
 	_phase_tip = UiKit.shadow(UiKit.label("", UiKit.PALE, PHASE_TIP_SIZE))
 	_phase_tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_phase_box.add_child(_phase_tip)
+	_place_clock(false)
 
 
 ## Bottom left: the medallion, with life and Magia coming out from behind it.
@@ -319,7 +338,7 @@ func _build_actions() -> void:
 
 ## Right: the hit count with a brush stroke, and the move's name under it.
 func _build_combo() -> void:
-	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -100))
+	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.number_font(), Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -100))
 	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_combo.add_theme_constant_override(&"outline_size", 6)
 	_combo_word = _label(T.t(&"hud_hits"), UiKit.PALE, FONT_SMALL, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -68))
@@ -331,6 +350,46 @@ func _build_combo() -> void:
 	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
 		c.visible = false
+	_combo_veil = _veil([_combo, _combo_word, _move])
+
+
+## A material found greets in the banner (EloBanner.show_material), but not an elite's drop: it is a word where the elite
+## fell, as the gold is (Rooms.found), and a greeting for each would crowd the top of the fight.
+func _greet_materials() -> void:
+	var found: Dictionary = game.materials.found
+	for m: StringName in found:
+		for source: StringName in found[m]:
+			var key := "%s/%s" % [m, source]
+			var n := int(found[m][source])
+			var was := int(_found_seen.get(key, 0))
+			if n > was:
+				_found_seen[key] = n
+				if source != &"elite":
+					_elo_banner.show_material(m, n - was)
+
+
+## A veil of ink under labels that stand over the scene (HudVeil), drawn under them.
+func _veil(over: Array[Control]) -> HudVeil:
+	var v := HudVeil.new()
+	v.covers = over
+	add_child(v)
+	move_child(v, over[0].get_index())
+	return v
+
+
+## The clock: at the top in the middle, or, while a boss's bar is up, under the gold in the top right corner, so the
+## boss's name stands alone over his bar (UI review d2ff05d, P1-2). The boss's bar and the phase's name go up with it.
+func _place_clock(boss: bool) -> void:
+	_clock_at_boss = boss
+	if boss:
+		_place(_clock, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, CLOCK_BOSS_Y), CLOCK_BOX)
+		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	else:
+		_place(_clock, Control.PRESET_CENTER_TOP, Vector2(0, CLOCK_Y), CLOCK_BOX)
+		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var top := BOSS_TOP_ALONE if boss else BOSS_TOP
+	_boss_box.position.y = top
+	_phase_box.position.y = top + 40 + 2
 
 
 ## Puts a control of a given size at a corner or edge of the screen, moved by offset from there.
@@ -376,6 +435,10 @@ func _process(delta: float) -> void:
 	# a screen over the run (cards, pause, an event): the gifts' row and the greetings wait under it (BUG-107)
 	var over := game.mode != Game.Mode.PLAY
 	_passives.visible = not over
+	# the pause's panel stands on the left: the medallion and the bars go under it (UI review d2ff05d, P2-7)
+	var paused := game.mode == Game.Mode.PAUSE
+	for c: CanvasItem in [_crest, _life, _magick]:
+		c.visible = not paused
 	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
 		c.visible = _combo_count >= 3 and not over
 	_move.visible = not over
@@ -405,9 +468,13 @@ func _process(delta: float) -> void:
 	_update_passives()
 	_update_elos()
 	_update_psalms()
+	_greet_materials()
 	# the boss (or the guardian) once a frame: finding a guardian walks the whole crowd
 	var chief := game.boss_enemy()
 	_update_boss(chief)
+	if _boss_box.visible != _clock_at_boss:
+		_place_clock(_boss_box.visible)
+	_clock_veil.follow()
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * COMBO_POP)
 	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
@@ -426,6 +493,7 @@ func _process(delta: float) -> void:
 		_phase_box.modulate.a = _shield_t
 	_update_pointers(chief)
 	_update_veil(delta)
+	_combo_veil.follow()
 
 
 func _update_life(p: Player) -> void:
@@ -806,6 +874,7 @@ func show_notice(text: String, time: float = 2.5) -> void:
 		show_phase(text)
 		return
 	_notice.text = text
+	_notice.add_theme_font_override(&"font", UiKit.number_font() if UiKit.has_digit(text) else UiKit.TITLE_FONT)
 	_notice.size = Vector2.ZERO
 	_notice.position.x = (get_viewport_rect().size.x - _notice.get_combined_minimum_size().x) * 0.5
 	_notice_t = time

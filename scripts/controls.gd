@@ -7,7 +7,8 @@ signal device_changed(pad: bool)
 
 const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"interact", &"pause", &"feel_panel"]
 ## Actions the player may rebind in Options. map (DV-1, MAP-03): the descent's map in the Livro de Ahk (MapScreen).
-## interact (HUB-B1): use the station in focus in the hub (E, A on the gamepad; nothing in a descent).
+## interact (HUB-B1): use the station in focus in the hub (E, A on the gamepad); in a descent (C19, Q-13) take the
+## reward, buy a shop's item, walk through a door.
 const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"interact"]
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],

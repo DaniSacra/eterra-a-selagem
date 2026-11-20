@@ -4,12 +4,13 @@ extends Control
 ## Victory (after the sealing): the sealing first, alone on screen: the seal (SealEmblem) closes its ring round the lion
 ## and lights it while "Morvath foi selado" and "O poder de Morvath foi contido." come in; then the summary rises under
 ## it: what the descent gathered (the gifts carried, the time, the foes, the longest sequence, the gold), the Mastery
-## the run gave (MasteryReport, only when it is kept) and "Continuar" (to the title, with the focus) or "Descer de novo".
+## the run gave (MasteryReport, only when it is kept) and the ways on (_ways).
 ## A press during the sealing shows everything at once.
 ## Defeat: a framed panel: the title, the result (what struck the last blow, "Derrotado por: Tempestade das Seis
 ## Almas", in warm gold; where it fell, "Sala 3 de 7, Cripta dos Esquecidos"), the gifts carried, the progress (the
-## Mastery, when kept), the numbers of the run with the best time, and the ways on: "Tentar de novo" (the main action,
-## with the focus) and "Menu" (the title). Keys, mouse and gamepad reach every button.
+## Mastery, when kept), the numbers of the run in one row with the best time, and the ways on. Both endings put the
+## ways in the same places (back to the hub left, down again right; _ways) and hide the HUD. Keys, mouse and gamepad
+## reach every button.
 
 signal retry
 signal menu
@@ -33,6 +34,10 @@ const SUB_SIZE := 21
 const HEAD_SIZE := 15
 const STAT_KEY_SIZE := 17
 const STAT_VALUE_SIZE := 22
+## The row of numbers: each cell's least width and the gap between cells; the ways' buttons.
+const STAT_CELL := 96.0
+const STAT_GAP := 14
+const WAY_WIDTH := 230.0
 const GIFT_ICON := 38.0
 ## Gifts shown at most (the rest are summed in "+N").
 const GIFTS_MAX := 10
@@ -97,6 +102,7 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		v.add_child(gifts)
 	else:
 		gifts.free()
+	_brought(v, stats)
 	_mastery(v, stats)
 	var grid := _grid(v)
 	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time), UiKit.GOLD if new_best else UiKit.PALE)
@@ -114,15 +120,8 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		nb.name = "new_best"
 		nb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(nb)
-	var buttons := UiKit.foot(16)
-	v.add_child(buttons)
-	var again := UiKit.primary(UiKit.button(T.t(&"end_again"), func() -> void: retry.emit(), 230))
-	again.name = "retry"
-	buttons.add_child(again)
-	var to_menu := UiKit.button(T.t(&"end_menu"), func() -> void: menu.emit(), 220)
-	to_menu.name = "menu"
-	buttons.add_child(to_menu)
-	again.grab_focus.call_deferred()
+	_hide_hud()
+	_ways(v, false)
 
 
 ## The victory: the sealing (the seal, the title, a line on what was done), then the spoils of the descent and the
@@ -149,14 +148,13 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		s.add_child(gifts)
 	else:
 		gifts.free()
+	_brought(s, stats)
 	var grid := _grid(s)
 	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time), UiKit.GOLD if new_best else UiKit.PALE)
 	_stat(grid, T.t(&"end_kills"), str(stats.kills))
 	_stat(grid, T.t(&"end_combo"), str(stats.best_combo))
 	var game := _game()
-	if game and game.hud:
-		# the fight is over: the screen is the victory's alone
-		game.hud.visible = false
+	_hide_hud()
 	if game and game.rooms:
 		_stat(grid, T.t(&"hud_gold"), str(game.rooms.gold))
 	else:
@@ -167,15 +165,7 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		nb.name = "new_best"
 		nb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		s.add_child(nb)
-	var buttons := UiKit.foot(16)
-	s.add_child(buttons)
-	var go_on := UiKit.primary(UiKit.button(T.t(&"end_menu"), func() -> void: menu.emit(), 220))
-	go_on.name = "continue"
-	buttons.add_child(go_on)
-	var again := UiKit.button(T.t(&"end_again"), func() -> void: retry.emit(), 220)
-	again.name = "again"
-	buttons.add_child(again)
-	go_on.grab_focus.call_deferred()
+	_ways(s, true)
 	# the sealing alone first, over the summary's place
 	_sealing = Control.new()
 	_sealing.name = "sealing"
@@ -306,6 +296,30 @@ func _mastery(parent: Control, stats: Dictionary) -> void:
 		parent.add_child(_mastery_report)
 
 
+## "Trazidos" (Rejogabilidade, Fatia 1): the materials this descent brought home, mark and number each (MaterialCount),
+## under the Blessings carried (UI review d2ff05d, "Fatia 1" 6). stats "materials" ({id: n}) or the run's
+## materials_banked; without a save (nothing is kept) the run's own totals, so the screen still says what was found.
+## Nothing when none came.
+func _brought(parent: Control, stats: Dictionary) -> void:
+	var got: Dictionary = stats.get("materials", {})
+	var game := _game()
+	if got.is_empty() and game != null:
+		got = game.materials_banked if not game.materials_banked.is_empty() or Save.enabled else game.materials.totals()
+	var row := HBoxContainer.new()
+	row.name = "brought"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override(&"separation", 22)
+	for m: StringName in [MaterialPurse.SILVER, MaterialPurse.MEMORY]:
+		var n := int(got.get(String(m), 0))
+		if n > 0:
+			row.add_child(MaterialCount.new().setup(m, n, UiKit.PALE, 19, 22.0, true))
+	if row.get_child_count() == 0:
+		row.free()
+		return
+	parent.add_child(_head(T.t(&"end_brought")))
+	parent.add_child(row)
+
+
 ## A part's name, small, in old gold, centred.
 func _head(text: String) -> Label:
 	var head := UiKit.title(text, HEAD_SIZE, UiKit.OLD_GOLD.lightened(0.25))
@@ -323,30 +337,59 @@ func _gifts(stats: Dictionary) -> HBoxContainer:
 	var game := _game()
 	if carried.is_empty() and game != null:
 		carried = UiKit.carried_of(game.boons)
-	UiKit.gift_icons(row, carried, GIFT_ICON, GIFTS_MAX)
+	UiKit.gift_icons(row, carried, GIFT_ICON, GIFTS_MAX, false)
 	return row
 
 
-## The numbers of the run in two columns.
-func _grid(parent: Control) -> GridContainer:
-	var grid := GridContainer.new()
-	grid.name = "stats"
-	grid.columns = 2
-	grid.add_theme_constant_override(&"h_separation", 36)
-	grid.add_theme_constant_override(&"v_separation", 2)
-	grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	parent.add_child(grid)
-	return grid
+## The numbers of the run in one row (P1-10: a grid of two columns left an empty cell), a cell each: its name small on
+## top, the number under it.
+func _grid(parent: Control) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = "stats"
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override(&"separation", STAT_GAP)
+	parent.add_child(row)
+	return row
 
 
-func _stat(grid: GridContainer, key: String, value: String, color: Color = UiKit.PALE) -> void:
-	var h := HBoxContainer.new()
-	h.custom_minimum_size.x = 230
+func _stat(row: HBoxContainer, key: String, value: String, color: Color = UiKit.PALE) -> void:
+	var cell := VBoxContainer.new()
+	cell.name = "stat"
+	cell.add_theme_constant_override(&"separation", -2)
+	cell.custom_minimum_size.x = STAT_CELL
 	var k := UiKit.shadow(UiKit.label(key, UiKit.DIM.lightened(0.15), STAT_KEY_SIZE))
-	k.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	h.add_child(k)
-	h.add_child(UiKit.shadow(UiKit.label(value, color, STAT_VALUE_SIZE, UiKit.number_font())))
-	grid.add_child(h)
+	k.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cell.add_child(k)
+	var n := UiKit.shadow(UiKit.label(value, color, STAT_VALUE_SIZE, UiKit.number_font()))
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cell.add_child(n)
+	row.add_child(cell)
+
+
+## The ways on, in the same places in both endings (UI review d2ff05d, P1-10): back to the hub on the left, down again
+## on the right; the main one (bronze, with the focus) is the hub after a victory and the descent after a defeat.
+## Named "continue" and "again" in a victory, "menu" and "retry" in a defeat.
+func _ways(parent: Control, victory: bool) -> void:
+	var buttons := UiKit.foot(16)
+	buttons.name = "ways"
+	parent.add_child(buttons)
+	var to_menu := UiKit.button(T.t(&"end_menu"), func() -> void: menu.emit(), WAY_WIDTH)
+	to_menu.name = "continue" if victory else "menu"
+	buttons.add_child(to_menu)
+	var again := UiKit.button(T.t(&"end_again"), func() -> void: retry.emit(), WAY_WIDTH)
+	again.name = "again" if victory else "retry"
+	buttons.add_child(again)
+	var main := to_menu if victory else again
+	UiKit.primary(main)
+	main.grab_focus.call_deferred()
+
+
+## The fight is over: the HUD hides under any ending (the defeat showed the map, the hit count and the gifts' row
+## through its shade).
+func _hide_hud() -> void:
+	var game := _game()
+	if game and game.hud:
+		game.hud.visible = false
 
 
 ## The run this screen closes (the Game above it), or null.

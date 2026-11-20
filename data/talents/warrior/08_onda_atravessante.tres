@@ -20,5 +20,6 @@ branch = 2
 tier = 2
 cost = 4
 unlock_level = 20
+memory_cost = 4
 partner = 3
 mods = Array[ExtResource("1_bt5vd")]([SubResource("Resource_umise")])

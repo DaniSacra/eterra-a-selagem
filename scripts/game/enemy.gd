@@ -95,6 +95,16 @@ var facing_him := false
 var landed := false
 var travel := 0.0
 var strike_t := 0.0
+## C19-1, C19-2 (EnemyDef.strikes): the blows of this attack that have landed, the warning of the next one (shown from
+## the wind-up on for a soldier, from the first burst for a runner; null: none) and where a soldier's next blade aims
+## (where the paladin stood at the end of its wind-up), from where its body lands.
+var blows := 0
+var warning2: RefCounted
+var aim2 := Vector2.DOWN
+var lands_at := Vector2.ZERO
+## C19-5: the aim threads of a fan of shots winding up (the elder priest's: its edges and its middle), turned with
+## its aim until it shoots; a blow that cuts the attack ends them.
+var fan: Array = []
 ## T5-12: the clip its recovery plays (&"": the rest of its blow), then its guard.
 var recover_anim: StringName = &""
 ## Only drawn (T5-10): seconds its real speed has stayed on the other side of the walk's threshold (the drawing

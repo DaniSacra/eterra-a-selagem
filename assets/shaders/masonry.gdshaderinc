@@ -156,22 +156,28 @@ void vertex() {
 }
 
 #include "res://assets/shaders/see_through.gdshaderinc"
+#include "res://assets/shaders/frame_yaw.gdshaderinc"
 
 void fragment() {
 	if (see_through_hole(VERTEX, FRAGCOORD.xy, VIEW_MATRIX, PROJECTION_MATRIX, see_through, see_radius, see_height, see_keep, see_gap)) {
 		discard;
 	}
-	vec3 n = abs(wnormal);
+	// the courses run along the room's own axes (frame_yaw.gdshaderinc: the hub is turned; elsewhere fw is world)
+	vec3 fw = vec3(world.x, world.y, world.z);
+	vec3 fn = wnormal;
+	fw.xz = frame_in(world.xz);
+	fn.xz = frame_in(wnormal.xz);
+	vec3 n = abs(fn);
 	vec4 s;
 	float to_top;
 	float top = smoothstep(0.6, 0.85, n.y);
 	if (n.y > 0.7) {
 		// tops: big worn slabs
-		s = blocks(world.xz * 0.6, to_top);
+		s = blocks(fw.xz * 0.6, to_top);
 	} else if (n.x > n.z) {
-		s = blocks(vec2(world.z, world.y), to_top);
+		s = blocks(vec2(fw.z, fw.y), to_top);
 	} else {
-		s = blocks(vec2(world.x, world.y), to_top);
+		s = blocks(vec2(fw.x, fw.y), to_top);
 	}
 	float rnd = hash1(s.yz);
 #ifdef PAINT
@@ -194,9 +200,11 @@ void fragment() {
 	float rock_value_ = rock_value;
 	float rock_relief_ = rock_relief;
 #endif
-	vec2 wp = n.y > 0.7 ? world.xz : (n.x > n.z ? world.zy : world.xy);
+	vec2 wp = n.y > 0.7 ? fw.xz : (n.x > n.z ? fw.zy : fw.xy);
 	vec3 tu = n.y > 0.7 ? vec3(1.0, 0.0, 0.0) : (n.x > n.z ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0));
 	vec3 tv = n.y > 0.7 ? vec3(0.0, 0.0, 1.0) : vec3(0.0, 1.0, 0.0);
+	tu.xz = frame_out(tu.xz);
+	tv.xz = frame_out(tv.xz);
 	vec2 ruv = wp * rock_scale + s.yz * 0.31;
 	float rh = texture(rock_height, ruv).r;
 	// the normal is stored in two channels (BC5, compress/normal_map): its z is rebuilt

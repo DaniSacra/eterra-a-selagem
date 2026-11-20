@@ -13,6 +13,8 @@ const REST_HEAL := 10.0
 const GUARD_MS := 350
 ## The lead line under the title (_page, the events' screens).
 const LEAD_SIZE := 20
+## The angel's seal over its cards (by_angel).
+const ANGEL_SEAL := 44.0
 
 var _cards: Array[BoonCard] = []
 var _opened_at := 0
@@ -20,6 +22,12 @@ var _rarities: Dictionary = {}
 var _upgrades: Dictionary = {}
 ## The draw open_cards shows, in the cards' order (empty with open).
 var _drawn: Array[BoonState.Card] = []
+## The cards an angel brought (Rejogabilidade, Fatia 1; by_angel): its seal over them, and B or Esc goes back to the
+## pair (back).
+var angel: AngelDef
+var back := Callable()
+var _head: VBoxContainer
+var _hint: Label
 
 
 ## rarities: each card's offer by gift id (offer_of): a Boon.Rarity, or a Dictionary {rarity, upgrade} for an
@@ -87,6 +95,8 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 	var page := UiKit.column(self, 1100.0, 0.74)
 	page.add_theme_constant_override(&"separation", 20)
 	var head := VBoxContainer.new()
+	head.name = "head"
+	_head = head
 	head.add_theme_constant_override(&"separation", 2)
 	head.add_child(UiKit.shadow(UiKit.title(title_text if title_text != "" else T.t(&"choice_title"), 40)))
 	if lead_text != "":
@@ -100,9 +110,40 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 	row.add_theme_constant_override(&"separation", 30)
 	page.add_child(row)
 	var hint := UiKit.shadow(UiKit.label(hint_text if hint_text != "" else T.t(&"choice_hint"), UiKit.DIM, 20))
+	hint.name = "hint"
+	_hint = hint
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)
 	return row
+
+
+## The cards came by an angel (EncounterScreen): its seal small over the title with its name, and a line in the hint
+## for going back to the pair; B or Esc (ui_cancel) calls on_back.
+func by_angel(a: AngelDef, on_back: Callable) -> void:
+	angel = a
+	back = on_back
+	if _head != null:
+		var row := HBoxContainer.new()
+		row.name = "angel"
+		row.alignment = BoxContainer.ALIGNMENT_CENTER
+		row.add_theme_constant_override(&"separation", 8)
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(AngelSeal.new().setup(a.family, ANGEL_SEAL))
+		var n := UiKit.shadow(UiKit.title(T.t(&"choice_by_angel", {"name": T.t(a.name_key)}), 20, AngelSeal.tint(a.family).lightened(0.3)))
+		n.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(n)
+		_head.add_child(row)
+		_head.move_child(row, 0)
+	if _hint != null:
+		_hint.text = T.t(&"choice_hint_angel_pad" if Controls.using_pad else &"choice_hint_angel")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if back.is_valid() and event.is_action_pressed(&"ui_cancel"):
+		get_viewport().set_input_as_handled()
+		var go := back
+		back = Callable()
+		go.call()
 
 
 func _ready_cards() -> void:

@@ -185,6 +185,34 @@ a 1080 e, se for o caso, recortar maior da prancha.
   `assets/models/palettes/priest.png` = `priest_elder.png`; as quatro texturas de esqueleto do KayKit e
   `weapons/skeleton_texture.png` iguais. Fora do pacote, mas 60 MB no repositório.
 
+## HUB-D e Fatia 1 (technical-artist, 2026-11-19)
+
+Entregue: gente do hub assada (`npc_vendor.res` 0,77 MB, `npc_smith.res` 0,85 MB, 8 237 triângulos juntos contra o
+teto de 12 mil, solas a 0,000 m, paleta comprimida dentro do `.res` porque `assets/models/palettes/*` não é
+exportado), `frame_yaw` na cantaria e nas lajes (global 0 fora do hub), `temper` na Emeth (padrão 0), selos dos anjos
+em código. Achados:
+- **P1** `HubPlan.SMITH_SPOT` (-23,4; -8,6), o círculo de colisão do Forjador, fica 1,7 m da bigorna; o martelo do
+  `1H_Melee_Attack_Chop` alcança 0,79 m, então o Forjador é desenhado em (-22,66; -7,11) do quadro do hub (onde o
+  martelo pousa na face da bigorna) e o círculo velho barra um lugar sem desenho. Mover `SMITH_SPOT` para esse ponto
+  (dono: gameplay-engineer, `scripts/core/hub_plan.gd`).
+- **P2** o Vendedor fica no chão andável atrás do balcão (u -23,9, o chão vai a -25): o herói pode contornar o balcão
+  e atravessá-lo (não tem colisão própria). Se incomodar, um círculo `hub_vendor` de 0,4 m no `HubPlan`.
+- **P2** o golpe da biblioteca desce em dois quadros (0,58 a 0,60 s do clipe): 12 poses em 0,555 s bastam para a tela,
+  mas a cabeça do martelo só fica a 0,89 a 0,94 m no último quadro com o tronco 12 graus para trás (`bend` do clipe).
+- **P2** `test_hub.gd` falha num teste que não é de asset (urna `hub_urn` em (-16; 1) a 1,2 m da rota até o
+  Vendedor depois do `URN_R` 0,75 de outra frente).
+- **P2** os selos ficaram com a Vigília em verde-oliva (`AngelSeal.TINT` mudado por outra frente depois da minha
+  entrega; o meu era petróleo 0,3 / 0,62 / 0,6): conferir com o art-director qual vale. A alça da trombeta agora pende
+  das duas braçadeiras (solta embaixo lia como um sorriso).
+
+Evidência (RTX, Forward+): `docs/gallery/hub/d/` (`vendor_sty_720.jpg`, `arrival_sty_1080.jpg` e
+`arrival_classic_1080.jpg` com a cantaria e as lajes no quadro do hub, `smith_sty_near_5.55.jpg` e
+`smith_classic_near_5.55.jpg`, `smith_blow_strip_sty.png` com 5,1 / 5,55 / 5,75 s: braço erguido, martelo na face da
+bigorna com a fagulha, fagulhas caindo); `docs/gallery/rj1/` (`angel_seals.png` de 36 a 168 px na tinta e no papel,
+aceso e apagado; `emeth_temper_classic.jpg` e `_stylized.jpg` com os postos 0, 1, 2 e 1,5). Salas iguais com
+`frame_yaw` 0 (`a13_*`, depois contra antes no HEAD): Salão clássico 1,10% e Cripta estilizada 1,35% dos pixels
+mudam mais de 12, todos no HUD (que outras frentes mudaram), nas chamas e nas partículas; nenhuma pedra nem laje.
+
 ## Melhorias propostas (maior ganho por esforço primeiro)
 
 ### Técnicas (posso fazer sem pedir; medir antes e depois, captura na GPU)

@@ -11,7 +11,8 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
 - **Arte da tela de título (vai no jogo)**: `assets/ui/title/title_screen_reference.png` (2026-11-15, feita por IA para o
   Daniel): os quatro heróis, a fortaleza, o portal e o logotipo "Crônicas de Eterra: A Selagem". No jogo entra uma cópia
   com os botões pintados apagados (os botões reais são da Godot por cima); o logotipo é o da imagem. O retrato do herói no HUD (`assets/ui/hud/hero_portrait.png`) é o rosto do Explorador
-  recortado dessa mesma arte.
+  recortado dessa mesma arte, e o fundo das faixas fora de 16:9 (`assets/ui/title/title_fill.png`) é uma cópia pequena e
+  desfocada dela (`tools/make_title_bg.sh`, ffmpeg); a cópia limpa `title_bg.png` também sai dela.
 - **Medalhões pintados da tela de dons (vão no jogo, 2026-11-16)**: `assets/ui/boons/vapor.png`, `aurora.png` e
   `redemoinho.png` (Vapor, Aurora Gelada e Redemoinho de Fogo), recortados por `tools/cut_medallions.gd` da prancha de
   medalhões feita por IA para o Daniel (`docs/art/ref/boon_cards/02_medalhoes.png`, só local). A outra imagem do pedido,
@@ -38,7 +39,7 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
     vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
     `assets/baked/`, com animações CC0 da Quaternius e do KayKit) e a espada Emeth (`assets/models/meshy/emeth/`,
     gerada da imagem da Emeth enviada pelo Daniel, também feita por IA);
-  - sem uso: o herói "Sombra" e o `paladin_1`.
+  - fora do jogo e do repositório desde 2026-11-19 (DT-107): o herói "Sombra" e o `paladin_1` (só no histórico do git).
 - **Código, shaders e textos**: escritos com assistentes de IA (Claude, Codex).
 - **Leão do selo da Câmara do Selo** (vai no jogo, 2026-11-15): desenho vetorial do leão rampante
   (`assets/textures/seal/lion.svg`) escrito à mão em SVG por um assistente de IA (Claude), sem gerador de imagem; o
@@ -50,6 +51,15 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   de áudio por IA, nenhuma amostra gravada; o som sai da síntese do próprio script. MUS-1 (2026-11-18): as peças de
   luta "Marcha das Lâminas", "Tambores do Fundo", "Pulso de Ferro" e "Morvath, a Batalha"
   (`audio/music/blade_march_*`, `deep_drums_*`, `iron_pulse_*`, `morvath_battle_*`), do mesmo jeito.
+- **Ambiência das salas (vai no jogo, C15-04)**: `audio/ambience/amb_*.ogg`, laços sintetizados em código
+  (`tools/make_ambience.gd`) escrito por um assistente de IA (Claude), como a música: nenhum gerador de áudio por IA.
+- **Selos dos quatro anjos e gente do hub (vão no jogo, 2026-11-19)**: os selos (`AngelSeal`,
+  `scripts/ui/angel_seal.gd`) são desenho vetorial em código escrito por um assistente de IA (Claude), sem gerador de
+  imagem; o Vendedor e o Forjador do hub são bonecos do KayKit (CC0) repintados e assados pelo `tools/bake.gd`, sem IA
+  na arte.
 
 ## Sem IA
-- Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), sons Kenney (CC0), fontes Cinzel e Alegreya Sans (OFL).
+- Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), fontes Cinzel e Alegreya Sans (OFL), textura
+  Rock Surface (Amal Kumar, Poly Haven, CC0).
+- Sons gravados: Kenney (CC0), Iwan Gabovitch (qubodup, CC0), rubberduck (CC0), Little Robot Sound Factory (CC BY 3.0);
+  músicas de Kevin MacLeod (CC BY 4.0). Lista completa por arquivo em `audio/LICENSES.md`.

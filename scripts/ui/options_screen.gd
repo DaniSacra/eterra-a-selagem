@@ -4,7 +4,10 @@ extends Control
 ## T5, hear every piece and choose the title's, the rooms' and Morvath's), Vídeo (window size, full screen, graphics
 ## quality), Conforto (screen shake, impact frames, slow motion, colour split, gamepad vibration; all on by default, the
 ## run reads them in Game.apply_options) and Controles (key remapping and the default keys). Everything is saved at
-## once. Each row is a button or a "< value >" pair: arrows, Enter, the gamepad's pad and A, and the mouse all work.
+## once. One control for every setting (UI review d2ff05d, P1-11): a row with its name on the left and its value
+## between two chevrons of old gold on the right ("‹ Sim ›", a gauge for a volume); left and right step it, Enter, A or
+## a click on the row steps it forward (a switch flips), a click on a chevron steps that way. "Janela" is greyed and
+## skipped while the full screen is on. Under the page, a line says what the setting in focus does (opt_<id>_tip).
 ## Moving onto a tab shows its page; down goes into it. The focus kept across a rebuild opens the page it is on.
 
 signal closed
@@ -26,8 +29,13 @@ const WIDTH := 780.0
 const TAB_WIDTH := 172.0
 ## The page under the tabs is this tall (the tallest, Controles, fits it), so the tabs and Voltar never move.
 const PAGE_HEIGHT := 400.0
-## The value between a row's arrows.
+## The value between a row's chevrons, the chevrons' size, the value's letters.
 const VALUE_WIDTH := 280.0
+const CHEVRON := 30.0
+const VALUE_SIZE := 20
+## The line under the page that tells what the setting in focus does.
+const TIP_SIZE := 17
+const TIP_HEIGHT := 46.0
 
 var tab := Tab.AUDIO
 var tabs: Array[Button] = []
@@ -35,6 +43,8 @@ var pages: Array[VBoxContainer] = []
 var _list: VBoxContainer
 var _waiting: StringName = &""
 var _focus_key := ""
+## What the setting in focus does (opt_<id>_tip), under the page.
+var tip: Label
 
 
 func open() -> void:
@@ -82,10 +92,10 @@ func _build() -> void:
 		pages.append(page)
 	_list = pages[Tab.AUDIO]
 	for key in VOLUMES:
-		_stepper("opt_" + key, "%d%%" % roundi(float(Save.option(key)) * 100.0), func(dir: int) -> void:
-			_set_volume(key, float(Save.option(key)) + dir * 0.1), float(Save.option(key)),
+		_setting("opt_" + key, "%d%%" % roundi(float(Save.option(key)) * 100.0), func(dir: int) -> void:
+			_set_volume(key, float(Save.option(key)) + dir * 0.1), true, float(Save.option(key)),
 			func(f: float) -> void:
-				_focus_key = "opt_%s_1" % key
+				_focus_key = "opt_" + key
 				_set_volume(key, f)
 				_build())
 	# T5: the music to hear and to choose for the title, the rooms and Morvath (MusicRoomScreen)
@@ -96,16 +106,17 @@ func _build() -> void:
 	_list.add_child(music)
 	_list = pages[Tab.VIDEO]
 	var win := App.window_size()
-	_stepper("opt_scale", "%dx%d" % [win.x, win.y], func(dir: int) -> void:
-		Save.set_option("scale", clampi(int(Save.option("scale")) + dir, 1, App.WINDOW_SIZES.size()))
-		App.apply_options())
+	# the window's size means nothing under the full screen: greyed and skipped by the focus then
+	_setting("opt_scale", "%dx%d" % [win.x, win.y], func(dir: int) -> void:
+		Save.set_option("scale", posmod(int(Save.option("scale")) - 1 + dir, App.WINDOW_SIZES.size()) + 1)
+		App.apply_options(), not bool(Save.option("fullscreen")))
 	_toggle("opt_fullscreen", "fullscreen")
 	# E6 (DT-003): Alta, Média, Baixa (GraphicsQuality); the run in progress gets it when the pause closes
-	_stepper("opt_quality", T.t(GraphicsQuality.TEXT[GraphicsQuality.clamp_level(int(Save.option("quality")))]), func(dir: int) -> void:
-		Save.set_option("quality", GraphicsQuality.clamp_level(int(Save.option("quality")) + dir))
+	_setting("opt_quality", T.t(GraphicsQuality.TEXT[GraphicsQuality.clamp_level(int(Save.option("quality")))]), func(dir: int) -> void:
+		Save.set_option("quality", posmod(GraphicsQuality.clamp_level(int(Save.option("quality"))) + dir, GraphicsQuality.TEXT.size()))
 		App.apply_options())
 	# the near camera (Daniel, 2026-11-19; CamRig.near, read every frame: the run behind the pause moves at once)
-	_stepper("opt_camera", T.t("opt_camera_near" if String(Save.option("camera")) == "near" else "opt_camera_far"), func(_dir: int) -> void:
+	_setting("opt_camera", T.t("opt_camera_near" if String(Save.option("camera")) == "near" else "opt_camera_far"), func(_dir: int) -> void:
 		Save.set_option("camera", "far" if String(Save.option("camera")) == "near" else "near"))
 	_list = pages[Tab.COMFORT]
 	for option in COMFORT:
@@ -126,7 +137,16 @@ func _build() -> void:
 		b.custom_minimum_size = Vector2(340, ROW)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		_state(b, T.t(&"options_press") if waiting else UiKit.action_label(action), UiKit.PALE if waiting else UiKit.GOLD)
+		_state(b, T.t(&"options_press") if waiting else HowToScreen.keys_label([action]), UiKit.PALE if waiting else UiKit.GOLD)
+		# the gamepad's button beside the key, to read (UI review d2ff05d, P2-4; the pad is not remapped yet)
+		var pad := UiKit.label(HowToScreen.pad_label([action]), UiKit.DIM.lightened(0.15), 17, UiKit.BOLD_FONT)
+		pad.name = "pad"
+		pad.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+		pad.offset_left = -180.0
+		pad.offset_right = -126.0
+		pad.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		pad.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		b.add_child(pad)
 		keys.add_child(b)
 	var reset := UiKit.button(T.t(&"options_reset"), func() -> void:
 		_focus_key = "options_reset"
@@ -136,6 +156,13 @@ func _build() -> void:
 	reset.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_list.add_child(_gap(4))
 	_list.add_child(reset)
+	tip = UiKit.label("", UiKit.DIM.lightened(0.2), TIP_SIZE)
+	tip.name = "tip"
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tip.custom_minimum_size = Vector2(WIDTH - 60.0, TIP_HEIGHT)
+	tip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(tip)
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
 	back.name = "back"
 	var f := UiKit.foot()
@@ -199,6 +226,8 @@ func _page_of(c: Control) -> int:
 func _on_focus(c: Control) -> void:
 	if c == null or pages.is_empty() or not is_ancestor_of(c):
 		return
+	if is_instance_valid(tip):
+		tip.text = tip_text(c.name)
 	var p := _page_of(c)
 	if p != tab or not pages[p].visible:
 		_show_tab(p)
@@ -240,22 +269,45 @@ func _gap(h: float) -> Control:
 	return g
 
 
-## A row "< value >": left and right change it, so it works the same with keys, mouse and gamepad. With a fraction
-## (0..1) the value is a gauge (the volumes); a click on the gauge sets it there (set_to).
-func _stepper(text_key: String, value: String, change: Callable, fraction: float = -1.0, set_to: Callable = Callable()) -> void:
-	var row := HBoxContainer.new()
-	row.name = text_key
-	var l := UiKit.label(T.t(text_key), UiKit.PALE, 22)
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(l)
+## What a setting does, for the line under the page ("" for a row without a tip).
+static func tip_text(row: String) -> String:
+	var key := row + "_tip"
+	return T.t(key) if row.begins_with("opt_") and T.table.entries.has(key) else ""
+
+
+## A setting (P1-11, one control for every kind): a row button with its name on the left and on the right its value
+## between two drawn chevrons of old gold; change(dir) steps it. Left and right step it, Enter, A or a click on the
+## row step it forward, a click on a chevron steps that way (the chevrons are opt_<id>_-1 and opt_<id>_1, never
+## focused). With a fraction (0..1) the value is a gauge (the volumes); a click on the gauge sets it there (set_to).
+## Not enabled: greyed, no focus, no chevrons.
+func _setting(text_key: String, value: String, change: Callable, enabled: bool = true, fraction: float = -1.0,
+		set_to: Callable = Callable()) -> Button:
+	var step := func(dir: int) -> void:
+		_focus_key = text_key
+		change.call(dir)
+		_build()
+	var b := UiKit.button(T.t(text_key), step.bind(1))
+	b.name = text_key
+	b.custom_minimum_size = Vector2(0, ROW)
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	b.add_theme_font_size_override(&"font_size", 21)
+	var right := HBoxContainer.new()
+	right.name = "value"
+	right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	right.add_theme_constant_override(&"separation", 2)
+	right.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+	right.offset_left = -(VALUE_WIDTH + CHEVRON * 2.0 + 14.0)
+	right.offset_right = -8.0
+	b.add_child(right)
 	for dir: int in [-1, 1]:
-		var b := UiKit.button("<" if dir < 0 else ">", func() -> void:
-			_focus_key = "%s_%d" % [text_key, dir]
-			change.call(dir)
-			_build())
-		b.name = "%s_%d" % [text_key, dir]
-		b.custom_minimum_size = Vector2(ROW, ROW)
-		row.add_child(b)
+		var c := Chevron.new()
+		c.name = "%s_%d" % [text_key, dir]
+		c.dir = dir
+		c.visible = enabled
+		c.custom_minimum_size = Vector2(CHEVRON, ROW)
+		c.pressed.connect(step.bind(dir))
+		right.add_child(c)
 		if dir < 0:
 			if fraction >= 0.0:
 				var g := Gauge.new()
@@ -263,31 +315,42 @@ func _stepper(text_key: String, value: String, change: Callable, fraction: float
 				g.text = value
 				g.on_set = set_to
 				g.custom_minimum_size = Vector2(VALUE_WIDTH, ROW)
-				row.add_child(g)
+				right.add_child(g)
 			else:
-				var v := UiKit.label(value, UiKit.GOLD, 22, UiKit.BOLD_FONT)
+				var v := UiKit.label(value, UiKit.GOLD if enabled else UiKit.DIM, VALUE_SIZE,
+						UiKit.number_font() if UiKit.has_digit(value) else UiKit.TITLE_FONT)
+				v.name = "state"
 				v.custom_minimum_size.x = VALUE_WIDTH
 				v.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-				row.add_child(v)
-	_list.add_child(row)
+				v.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+				v.size_flags_vertical = Control.SIZE_FILL
+				right.add_child(v)
+	if enabled:
+		b.gui_input.connect(func(event: InputEvent) -> void:
+			for pair: Array in [[&"ui_left", -1], [&"ui_right", 1]]:
+				if event.is_action_pressed(pair[0], true):
+					b.accept_event()
+					Audio.play(&"ui_move")
+					step.call(pair[1])
+					return)
+	else:
+		b.disabled = true
+		b.focus_mode = Control.FOCUS_NONE
+	_list.add_child(b)
+	return b
 
 
-## A switch: the row is a button with its name on the left and its state (sim, não) on the right, gold when on.
+## A switch: a setting whose value is Sim or Não (gold when on); any step flips it.
 func _toggle(text_key: String, option: String) -> void:
 	var on: bool = Save.option(option)
-	var b := UiKit.button(T.t(text_key), func() -> void:
+	var b := _setting(text_key, T.t(&"on" if on else &"off"), func(_dir: int) -> void:
 		Save.set_option(option, not Save.option(option))
 		App.apply_options()
 		if option == "rumble" and Save.option(option):
 			for pad in Input.get_connected_joypads():
-				Input.start_joy_vibration(pad, RUMBLE_TRY.x, RUMBLE_TRY.y, RUMBLE_TRY.z)
-		_focus_key = text_key
-		_build())
-	b.name = text_key
-	b.custom_minimum_size.y = ROW
-	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_state(b, T.t(&"on" if on else &"off"), UiKit.GOLD if on else UiKit.DIM)
-	_list.add_child(b)
+				Input.start_joy_vibration(pad, RUMBLE_TRY.x, RUMBLE_TRY.y, RUMBLE_TRY.z))
+	if not on:
+		(b.find_child("state", true, false) as Label).add_theme_color_override(&"font_color", UiKit.DIM.lightened(0.2))
 
 
 ## A row button's value on its right end (a switch's sim or não, a key's binding).
@@ -295,7 +358,7 @@ func _state(b: Button, text: String, color: Color) -> void:
 	var state := UiKit.label(text, color, 21, UiKit.BOLD_FONT)
 	state.name = "state"
 	state.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
-	state.offset_left = -170.0
+	state.offset_left = -120.0
 	state.offset_right = -14.0
 	state.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	state.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -356,3 +419,24 @@ class Gauge:
 			var r := _track()
 			accept_event()
 			on_set.call(clampf((mb.position.x - r.position.x) / r.size.x, 0.0, 1.0))
+
+
+## A step of a setting's value: a chevron of old gold pointing left or right, lit while hovered; clicked, it steps.
+class Chevron:
+	extends BaseButton
+
+	var dir := 1
+
+	func _init() -> void:
+		focus_mode = Control.FOCUS_NONE
+		mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		mouse_entered.connect(queue_redraw)
+		mouse_exited.connect(queue_redraw)
+
+	func _draw() -> void:
+		var c := size * 0.5
+		var k := 6.0
+		var col := UiKit.GOLD if is_hovered() else UiKit.OLD_GOLD.lightened(0.25)
+		var tip := c + Vector2(k * dir, 0)
+		var back := c - Vector2(k * dir, 0)
+		draw_polyline(PackedVector2Array([back + Vector2(0, -k * 1.3), tip, back + Vector2(0, k * 1.3)]), col, 2.4, true)

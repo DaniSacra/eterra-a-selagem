@@ -160,6 +160,11 @@ func step(dt: float, game: Game) -> void:
 		pad.release(&"dodge")
 	pad.release(&"cast")
 	pad.release(&"ultimate")
+	# C19, Q-13: the reward, a shop's item and a door are used with interact, as a player presses it there
+	if game.rooms and game.rooms.usable() and not pad.held.has(&"interact"):
+		pad.press(&"interact")
+	else:
+		pad.release(&"interact")
 	if game.rooms and game.horde.count() == 0:
 		# between fights: drink from the fountain when hurt (B-2), take the reward, buy what there is gold for, walk
 		# through a door
@@ -295,8 +300,8 @@ func _nearest(game: Game) -> Vector2:
 func _danger(game: Game) -> Vector2:
 	var p := game.player.pos
 	for z in game.ground.zones:
-		if z.kind != Ground.Kind.WARNING or z.life > 0.55:
-			continue
+		if z.kind != Ground.Kind.WARNING or z.life > 0.55 or z.tags.has(Horde.FAN_TAG):
+			continue  # (C19-5: a fan's threads only show where its orbs leave; it dodges the orbs below)
 		if not Ground.inside(z, p, 0.9):
 			continue
 		if z.shape == Ground.Shape.LINE:
@@ -338,7 +343,8 @@ func _escape(game: Game, from: Vector2, dir: Vector2) -> Vector2:
 ## True when a warning lands at q within ESCAPE_AHEAD seconds, or a crescent flies at it.
 func _threatened(game: Game, q: Vector2) -> bool:
 	for z in game.ground.zones:
-		if z.kind == Ground.Kind.WARNING and z.rune != Ground.Rune.SUMMON and z.life <= ESCAPE_AHEAD and Ground.inside(z, q, 0.6):
+		if z.kind == Ground.Kind.WARNING and z.rune != Ground.Rune.SUMMON and z.life <= ESCAPE_AHEAD and not z.tags.has(Horde.FAN_TAG) \
+				and Ground.inside(z, q, 0.6):
 			return true
 	for shot in game.projectiles.shots:
 		if shot.kind != Projectiles.Kind.SOUL or shot.seen.has(game.player):

@@ -60,6 +60,14 @@ var skills: Skills
 ## The ultimate of this descent in play (charge, gesture's blow, the Voragem on the floor).
 var ults: Ultimates
 var boons: BoonState
+## Rejogabilidade, Fatia 1 (docs/design/rejogabilidade/sistemas.md): the materials this descent picked up (banked into
+## the save once when it ends, log_run: materials_banked is what went in), the Forja's Temperar carried (forge_temper,
+## its ranks summed in boons.stat), the meetings with the angels (encounters) and the Gifts open at the start.
+var materials := MaterialPurse.new()
+var materials_banked := {}
+var forge_temper := 0
+var talents_opened := 0
+var encounters: Encounters
 ## The hero played (DT-013) and, for this descent, the Gifts equipped (ids) and the ultimate chosen (id or "").
 var hero: HeroDef = HeroDef.warrior()
 var talents: Array[StringName] = []
@@ -177,13 +185,13 @@ func _ready() -> void:
 	horde.ground = ground
 	horde.projectiles = projectiles
 	# shooters only wind up on the screen (cycle C12): where a floor point shows, at chest height, in the frame the
-	# camera settles on for the paladin where he stands (the simulation's own, not the drawn camera's lag)
+	# camera settles on for the paladin where he stands (the simulation's own, not the drawn camera's lag). The rule
+	# reads the far camera's frame whatever the options say (LR-02: the near one is no hidden difficulty setting);
+	# the camera in use is for the run's log and the edge marks of shooters winding up off it (Horde.seen)
 	horde.view = func(p: Vector2) -> Vector2:
-		var fov := Feel.live().cam_fov
-		var distance := CamRig.distance()
-		var size := get_viewport().get_visible_rect().size
-		return CamFrame.screen_of(p, 1.0, cam_look_at(player.pos, distance, fov), distance, Dev.num("cam-pitch", Feel.live().cam_pitch),
-			cam_yaw(), fov, size.x / maxf(size.y, 1.0))
+		return _screen_of(p, Feel.live().cam_distance, true)
+	horde.seen = func(p: Vector2) -> Vector2:
+		return _screen_of(p, CamRig.distance(), false)
 	combat.swung.connect(func(_n: ComboNode, struck: int) -> void:
 		if struck > 0:
 			room_tally.touch(time))
@@ -220,8 +228,10 @@ func _ready() -> void:
 	if Dev.has("bot"):
 		bot = Bot.new()
 		Controls.virtual = bot.pad
-	# the Gifts before the first room: it records the life he walks in with
+	# the Gifts and the Forja before the first room: it records the life he walks in with
+	_equip_forge()
 	_equip_talents()
+	encounters = Encounters.new(self)
 	ults.equip(hero.ultimate(StringName(ultimate)))
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
@@ -570,19 +580,38 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 
 ## Gifts by a cleared room or the shop: three cards drawn with these rarity chances (Boon.RARITY_CHANCE; the stage's
 ## own in the rooms), with the stage's chances of an Elo and of a trade, and of a Psalm (psalm_chance < 0: the stage's
-## for a room, StageDef.psalm_chance; the guardian passes its own).
-func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0) -> void:
+## for a room, StageDef.psalm_chance; the guardian passes its own). meeting: a room's Blessing, which comes by two
+## angels (Rejogabilidade, Fatia 1: Encounters; --no-angels draws as before).
+func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0, meeting := false) -> void:
+	if meeting and encounters != null and encounters.on():
+		encounters.open(chances, psalm_chance)
+		return
 	_open_choice(_draw_cards(chances, psalm_chance))
+
+
+## Opens the choice screen on these cards (the angel's, Encounters; none: the rest card).
+func open_cards(cards: Array[BoonState.Card]) -> void:
+	_open_choice(cards)
 
 
 func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0) -> Array[BoonState.Card]:
 	var elo := rooms.stage.elo_chance if rooms else Boon.ELO_CHANCE
 	var trade := rooms.stage.trade_chance if rooms else Boon.TRADE_CHANCE
 	var cards := boons.draw(_rng, 3, chances, elo, trade)
-	# Psalms only in the descent by rooms (the old endless hall, --horde, stays as it was)
-	if psalm_cards and rooms != null:
-		psalms.fill(cards, _rng, rooms.stage.psalm_chance if psalm_chance < 0.0 else psalm_chance, boons, talents)
+	fill_psalm(cards, psalm_chance, _rng)
 	return cards
+
+
+## A Psalm may take a card (Psalms.fill; psalm_chance < 0: the stage's). Psalms only in the descent by rooms (the old
+## endless hall, --horde, stays as it was).
+func fill_psalm(cards: Array[BoonState.Card], psalm_chance: float, rng: RandomNumberGenerator) -> void:
+	if psalm_cards and rooms != null:
+		psalms.fill(cards, rng, rooms.stage.psalm_chance if psalm_chance < 0.0 else psalm_chance, boons, talents)
+
+
+## The seed the run's own dice were drawn from (the map's and the angels' dice salt it: Rooms.MAP_SALT, Encounter.SALT).
+func run_seed() -> int:
+	return _rng.seed
 
 
 ## True when the choice screen shows Psalm cards (it has open_cards(cards, state, game) and emits
@@ -684,6 +713,10 @@ func _start_boss(id: StringName) -> void:
 	# his music, one layer more per phase (E4-06)
 	Music.boss_phase(boss.phase)
 	boss.phase_changed.connect(Music.boss_phase)
+	if rooms:
+		# Prata for each phase reached (Rejogabilidade, Fatia 1)
+		rooms.boss_phase(boss.phase)
+		boss.phase_changed.connect(rooms.boss_phase)
 	boss.moment.connect(func(name: StringName) -> void:
 		if name == &"victory":
 			_on_boss_falling())
@@ -1026,6 +1059,8 @@ func _on_boss_defeated() -> void:
 	Save.data.wins += 1
 	# a run without a save (--nosave) keeps no record, so it can never be a new best (BUG-008)
 	var new_best := SaveData.record_win_time(Save.data, time, Save.enabled)
+	if rooms:
+		rooms.victory()  # the sealing's Prata and Memória, before the run is banked
 	Save.write()
 	log_run("victory")
 	await _play_ending(at)
@@ -1219,6 +1254,16 @@ func cam_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 	return cam.look_at(want, distance, fov)
 
 
+## Where a floor point shows (0 to 1, at chest height) in the frame a camera `distance` meters away settles on for the
+## paladin where he stands; as_far: placed as the far camera would be (Horde.view, LR-02), else as the camera in use.
+func _screen_of(p: Vector2, distance: float, as_far: bool) -> Vector2:
+	var fov := Feel.live().cam_fov
+	var size := get_viewport().get_visible_rect().size
+	cam.focus = focus
+	return CamFrame.screen_of(p, 1.0, cam.look_at(player.pos, distance, fov, as_far), distance, Dev.num("cam-pitch", Feel.live().cam_pitch),
+		cam_yaw(), fov, size.x / maxf(size.y, 1.0))
+
+
 ## The floor point the camera looks at in a boss chamber (CamRig.hold_at).
 func chamber_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 	cam.focus = focus
@@ -1385,12 +1430,23 @@ func log_run(outcome: String) -> void:
 	mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)} if kept else {}
 	if kept:
 		award_mastery(gain, outcome, Save.data)
+	# the materials go home once, whatever the outcome (dying keeps them all); never the robot's (unless
+	# --materials-keep, for measures) nor without a save (Rejogabilidade, Fatia 1, A2)
+	if banks_materials(Save.enabled, bot != null, Dev.has("materials-keep")):
+		materials_banked = MaterialPurse.bank(Save.data, materials)
+	if kept or not materials_banked.is_empty():
 		Save.write()
 	if Dev.has("runlog"):
 		RunLog.append(RunLog.PATH if Dev.arg("runlog") == "1" else Dev.arg("runlog"), e)
 	elif Save.enabled and bot == null:
 		RunLog.append(RunLog.PATH, e)
 	run_logged.emit(outcome, e)
+
+
+## Whether a run's materials go into the save (Rejogabilidade, Fatia 1, A2): only with a save, never the robot's
+## (keep: --materials-keep, for measures).
+static func banks_materials(save_enabled: bool, robot: bool, keep: bool) -> bool:
+	return save_enabled and (not robot or keep)
 
 
 ## The hero's Gifts for this descent (E2a): the loadout saved in heroes.<id>.equipped, kept only where it is valid at
@@ -1408,7 +1464,10 @@ func _equip_talents() -> void:
 	elif bot == null:
 		var block := SaveData.hero(Save.data, String(hero.id))
 		var level := hero.mastery.level_of(int(block.mastery_xp))
-		ids = book.sanitized(block.equipped, level, hero.mastery.devotion(level))
+		# only the Gifts opened with Memória (Rejogabilidade, Fatia 1; the free ones always)
+		var opened := Talents.opened_of(block)
+		ids = book.sanitized(block.equipped, level, hero.mastery.devotion(level), opened)
+		talents_opened = book.open_ones(level, opened).size()
 		if Dev.has("hero-equip"):
 			_warn_dropped(book, block.equipped, ids, level)
 		# the one chosen or, never chosen (T5), the first the level unlocks, kept in the save as the choice
@@ -1426,8 +1485,20 @@ func _equip_talents() -> void:
 		if chosen == null:
 			push_warning("--ultimate: no ultimate %s" % Dev.arg("ultimate"))
 	talents = ids
-	if not ids.is_empty():
+	if bot != null or Dev.has("talents"):
+		talents_opened = ids.size()
+	if not ids.is_empty() or not boons.forge.is_empty():
 		_apply_talents(ids)
+
+
+## The Forja's ranks for this descent (Rejogabilidade, Fatia 1): --forge=N (Temperar up to N, also the robot's), else a
+## person's save (heroes.<id>.forge.temper); none for the robot. Summed in boons.stat as the Gifts (BoonState.forge).
+func _equip_forge() -> void:
+	if Dev.has("forge"):
+		forge_temper = int(Dev.num("forge", 0))
+	elif bot == null:
+		forge_temper = Forge.temper(Save.data, String(hero.id))
+	boons.equip_forge(Forge.new(Forge.load_catalog()).up_to(forge_temper))
 
 
 ## The Juramentos of this descent (E6): --juramentos=id:rank,... (any, for tests and the robot), else a person's
@@ -1582,7 +1653,9 @@ func result() -> Dictionary:
 		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true), "map": rooms.map.summary() if rooms else {},
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
 			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},
-		"juramentos": juramentos.to_dict() if juramentos else {}, "weight": juramentos.weight() if juramentos else 0}
+		"juramentos": juramentos.to_dict() if juramentos else {}, "weight": juramentos.weight() if juramentos else 0,
+		"materials": materials.report(), "forge": {"temper": forge_temper}, "talents_opened": talents_opened,
+		"angels": encounters.meetings.duplicate(true) if encounters else []}
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

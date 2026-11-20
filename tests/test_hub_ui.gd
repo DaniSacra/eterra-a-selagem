@@ -61,7 +61,9 @@ func test_one_sign_per_station_with_its_name_line_and_key() -> void:
 		assert_eq(hub.station_sign.station, id)
 		assert_eq(hub.station_sign.title.text, T.t("hub_" + id))
 		assert_eq(hub.station_sign.detail.text, T.t(Hub.station_line(id)))
-		assert_eq(hub.station_sign.prompt.text, T.t(&"hub_use"))
+		# the station's own verb, never the generic "Interagir" (UI review d2ff05d, P1-9)
+		assert_eq(hub.station_sign.prompt.text, T.t("hub_use_" + id))
+		assert_ne(hub.station_sign.prompt.text, T.t(&"hub_use"))
 		assert_eq(hub.station_sign.key_text(), "E")
 		assert_true(hub.station_sign.plate.visible, "%s: on show" % id)
 	hub.player.pos = hub.arena.start
@@ -173,9 +175,11 @@ func test_the_portal_asks_on_a_leaf_of_the_book() -> void:
 	assert_lte(p.leaf.size.y, view.y)
 
 
-func test_the_vendor_and_the_smith_are_honest() -> void:
+## The Forjador's page is the Forja since the Rejogabilidade's Fatia 1 (test_rejogabilidade_game.gd); the Vendedor
+## stays honest.
+func test_the_vendor_is_honest() -> void:
 	_hub()
-	for id in [HubPlan.VENDOR, HubPlan.SMITH]:
+	for id in [HubPlan.VENDOR]:
 		hub.use(id)
 		var p := hub.host.screen as HubPanel
 		assert_eq((p.find_child("title", true, false) as Label).text, T.t("hub_" + id))

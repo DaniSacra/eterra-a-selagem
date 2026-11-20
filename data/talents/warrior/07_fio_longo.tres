@@ -19,4 +19,5 @@ desc_key = &"talent_fio_longo_desc"
 branch = 2
 tier = 1
 unlock_level = 9
+memory_cost = 1
 mods = Array[ExtResource("1_y8jm2")]([SubResource("Resource_yeldi")])

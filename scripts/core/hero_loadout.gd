@@ -6,7 +6,13 @@ extends RefCounted
 ## (the screen calls Save.write after a change).
 
 ## A Gift's place on the screen: not reached yet, free to put on, on, or reached but refused by a rule now.
-enum State { LOCKED, OPEN, EQUIPPED, BLOCKED }
+## SEALED (Rejogabilidade, Fatia 1): revealed by the Mastery, not opened with Memória yet (open: the "Abrir" step).
+##
+## API for the UI's "Abrir" (sistemas.md 1.4): state(t) == SEALED; open_cost(t) (its TalentDef.memory_cost);
+## memory() (the save's Fragmentos de Memória); can_open(t) -> Talents.Problem (OK, OPENED, SHORT, LOCKED); open(id)
+## -> bool (spends and keeps it opened; the screen writes the save). The hero screen asks a confirmation on its own page
+## before open (HeroScreen._pick); toggle never opens a sealed Gift (its problem is SEALED).
+enum State { LOCKED, OPEN, EQUIPPED, BLOCKED, SEALED }
 
 ## Text keys of the actions a Gift may take (Boon.Slot).
 const ACTION_KEY := {
@@ -29,14 +35,43 @@ var hero: HeroDef
 var book: Talents
 ## The hero's block inside the save data (edited in place).
 var block: Dictionary
+## The whole save data (the materials live at its root).
+var data: Dictionary
 
 
-func _init(p_hero: HeroDef, data: Dictionary) -> void:
+func _init(p_hero: HeroDef, data_: Dictionary) -> void:
 	hero = p_hero
 	book = hero.talents()
+	data = data_
 	block = SaveData.hero(data, String(hero.id))
 	# what an older or edited file holds is kept only where it is still valid
-	block.equipped = ids_as_strings(book.sanitized(block.equipped, level(), devotion()))
+	block.equipped = ids_as_strings(book.sanitized(block.equipped, level(), devotion(), opened()))
+
+
+## The Gifts opened with Memória (ids in the save).
+func opened() -> Array:
+	return Talents.opened_of(block)
+
+
+func is_open(t: TalentDef) -> bool:
+	return Talents.is_open(t, opened())
+
+
+func memory() -> int:
+	return MaterialPurse.amount(data, MaterialPurse.MEMORY)
+
+
+func open_cost(t: TalentDef) -> int:
+	return t.memory_cost
+
+
+func can_open(t: TalentDef) -> Talents.Problem:
+	return book.open_problem(t.id, level(), opened(), memory())
+
+
+## Opens a sealed Gift with Memória. False when can_open is not OK.
+func open(id: StringName) -> bool:
+	return book.open_in(data, String(hero.id), id, level())
 
 
 func xp() -> int:
@@ -68,11 +103,13 @@ func state(t: TalentDef) -> State:
 		return State.EQUIPPED
 	if t.unlock_level > level():
 		return State.LOCKED
+	if not is_open(t):
+		return State.SEALED
 	return State.OPEN if problem(t) == Talents.Problem.OK else State.BLOCKED
 
 
 func problem(t: TalentDef) -> Talents.Problem:
-	return book.can_add(block.equipped, t.id, level(), devotion())
+	return book.can_add(block.equipped, t.id, level(), devotion(), opened())
 
 
 ## Puts the Gift on or takes it off. Taking one off also takes off what needed it (Talents.sanitized). False when
@@ -81,7 +118,7 @@ func toggle(id: StringName) -> bool:
 	if is_equipped(id):
 		var rest: Array = (block.equipped as Array).duplicate()
 		rest.erase(String(id))
-		block.equipped = ids_as_strings(book.sanitized(rest, level(), devotion()))
+		block.equipped = ids_as_strings(book.sanitized(rest, level(), devotion(), opened()))
 		return true
 	var t := book.find(id)
 	if t == null or problem(t) != Talents.Problem.OK:
@@ -123,6 +160,8 @@ func why(t: TalentDef) -> Dictionary:
 			return {"key": &"hero_why_slot", "args": {"name": _name(holder)}}
 		Talents.Problem.NEEDS:
 			return needs(t)
+		Talents.Problem.SEALED:
+			return {"key": &"hero_why_sealed", "args": {"cost": t.memory_cost}}
 	return {}
 
 
@@ -141,6 +180,8 @@ func next_step(t: TalentDef) -> Dictionary:
 			return {"key": &"hero_step_mastery", "args": {"n": t.unlock_level, "xp": xp_missing(t.unlock_level)}}
 		State.BLOCKED:
 			return why(t)
+		State.SEALED:
+			return {"key": &"hero_step_open", "args": {"cost": t.memory_cost, "have": memory()}}
 	return {}
 
 

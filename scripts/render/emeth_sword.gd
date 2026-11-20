@@ -40,6 +40,8 @@ const CORE_SPAN := Vector2(0.08, 0.86)
 ## STY-09: (0.72, 0.95, 0.8) still reached 255 on the screen (exposure 1.25), white pixels down the raised blade; now
 ## under the screen's ceiling (ScreenTone.SAFE) with the stylized look's saturation.
 const STYLE_CORE := Color(0.56, 0.76, 0.63)
+## Temperar (Fatia 1): the highest rank of the blade the shader draws (set_temper).
+const TEMPER_MAX := 2
 
 
 ## The sword: an empty holder at the grip with the model under it (HeroBody places the holder in the hand).
@@ -98,6 +100,13 @@ static func set_pulse(blade: ShaderMaterial, k: float) -> void:
 ## Emeth's emerald whole.
 static func set_corrupt(blade: ShaderMaterial, k: float) -> void:
 	blade.set_shader_parameter(&"corrupt", clampf(k, 0.0, 1.0))
+
+
+## Temperar (Fatia 1): the Forjador's rank of the blade (ForgeRank, 0 to TEMPER_MAX; fractions grow the marks in,
+## for the moment of the upgrade): one vein of old gold and one more reach of the pale edge thread per rank
+## (emeth.gdshader temper). 0 is the blade as it always was.
+static func set_temper(blade: ShaderMaterial, rank: float) -> void:
+	blade.set_shader_parameter(&"temper", clampf(rank, 0.0, float(TEMPER_MAX)))
 
 
 ## The model's size in the sword's space: its blade and guard fill GRIP_TOP to TIP.

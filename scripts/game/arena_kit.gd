@@ -442,14 +442,16 @@ static func gobo(look: Dictionary, spots: Array[Vector4]) -> Dictionary:
 ## SW-G3 and SW-C1 (docs/art/sworn_reference_ideas.md 3.1 and 3.2; floor_biome.gdshaderinc): slabs laid by hand in the
 ## painted floor, in paint and normal only (nothing raised, nothing collides). RAISED: a raised moulding round a worn
 ## slab (SW-G3, frames of 2 to 3 m in groups of 2 to 4); GRAVE: a grave slab with a sunk groove, never a word, `lion`
-## the seal's lion small in raised relief (SW-C1, one in five). At most FRAMED_MAX a room.
+## the seal's lion small in raised relief (SW-C1, one in five). `mark` on a RAISED one (S-1 of the Sworn P1 review): a
+## corner of its moulding broken off (which corner by the seed). At most FRAMED_MAX a room.
 enum Framed { RAISED, GRAVE }
 const FRAMED_MAX := 16
 
 
-## One slab: its middle (x, z) and size (m, along x and z), its kind, the lion, its value (times the floor's) and seed.
-static func framed_slab(at: Vector2, size: Vector2, kind := Framed.RAISED, lion := false, value := 1.0, seed_ := 0) -> Array[Vector4]:
-	var out: Array[Vector4] = [Vector4(at.x, at.y, size.x * 0.5, size.y * 0.5), Vector4(kind, 1.0 if lion else 0.0, value, seed_)]
+## One slab: its middle (x, z) and size (m, along x and z), its kind, its mark (GRAVE: the lion; RAISED: a broken
+## corner), its value (times the floor's) and seed.
+static func framed_slab(at: Vector2, size: Vector2, kind := Framed.RAISED, mark := false, value := 1.0, seed_ := 0) -> Array[Vector4]:
+	var out: Array[Vector4] = [Vector4(at.x, at.y, size.x * 0.5, size.y * 0.5), Vector4(kind, 1.0 if mark else 0.0, value, seed_)]
 	return out
 
 

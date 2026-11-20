@@ -22,6 +22,10 @@ const FRAME := 2.0
 const SHADOW := Color(0.047, 0.039, 0.055, 0.6)
 const SHADOW_DROP := 2
 const SHADOW_SPREAD := 6
+## The scroll bar (scroll_bar): its width, the length of the grabber's points; the fade at a list's foot (scroll_fade).
+const SCROLL_WIDTH := 10.0
+const LOZENGE_TIP := 7
+const FADE_HEIGHT := 24.0
 
 static var _theme: Theme
 static var _number_font: FontVariation
@@ -50,8 +54,56 @@ static func theme() -> Theme:
 	t.set_constant(&"outline_size", &"Label", 4)
 	t.set_constant(&"separation", &"VBoxContainer", 8)
 	t.set_constant(&"separation", &"HBoxContainer", 10)
+	scroll_bar(t, OLD_GOLD, GOLD)
 	_theme = t
 	return t
+
+
+## The scroll bar of a theme (UI review d2ff05d, P1-12; the Godot grey one was the only piece of the game without a
+## look): a track of a 2 px line at 0.3 of `line`, and a grabber in a long diamond (pointed at both ends) of `line`,
+## `lit` while hovered or dragged.
+static func scroll_bar(t: Theme, line: Color, lit: Color) -> void:
+	var track := StyleBoxLine.new()
+	track.vertical = true
+	track.thickness = 2
+	track.color = Color(line, 0.3)
+	track.content_margin_left = SCROLL_WIDTH * 0.5
+	track.content_margin_right = SCROLL_WIDTH * 0.5
+	t.set_stylebox(&"scroll", &"VScrollBar", track)
+	t.set_stylebox(&"scroll_focus", &"VScrollBar", track)
+	t.set_stylebox(&"grabber", &"VScrollBar", _lozenge(line))
+	t.set_stylebox(&"grabber_highlight", &"VScrollBar", _lozenge(lit))
+	t.set_stylebox(&"grabber_pressed", &"VScrollBar", _lozenge(lit))
+
+
+## A long diamond that stretches in its middle: pointed ends LOZENGE_TIP px long, SCROLL_WIDTH wide.
+static func _lozenge(c: Color) -> StyleBoxTexture:
+	var w := int(SCROLL_WIDTH)
+	var tip := LOZENGE_TIP
+	var h := tip * 2 + 2
+	var img := Image.create(w, h, false, Image.FORMAT_RGBA8)
+	for y in h:
+		# half width at this row: grows over the tip, straight between
+		var half := minf(float(mini(y, h - 1 - y)) + 0.5, float(tip)) / float(tip) * float(w) * 0.5
+		for x in w:
+			var d := absf(float(x) + 0.5 - float(w) * 0.5)
+			img.set_pixel(x, y, Color(c, c.a * clampf(half - d + 0.5, 0.0, 1.0)))
+	var sb := StyleBoxTexture.new()
+	sb.texture = ImageTexture.create_from_image(img)
+	sb.texture_margin_top = tip
+	sb.texture_margin_bottom = tip
+	sb.content_margin_top = tip
+	sb.content_margin_bottom = tip
+	return sb
+
+
+## A scroll's foot fades into the page while more of the list lies below (P1-12: the last line was cut in the middle,
+## with nothing to say there was more): FADE_HEIGHT px from clear to `paper`, over the list, hidden at the end.
+static func scroll_fade(scroll: ScrollContainer, paper: Color) -> Control:
+	var fade := ScrollFade.new()
+	fade.paper = paper
+	scroll.add_child(fade, false, Node.INTERNAL_MODE_FRONT)
+	return fade
 
 
 static func box(bg: Color, border: Color, width: int = 1, margin: int = 8, radius: int = 4) -> StyleBoxFlat:
@@ -138,6 +190,15 @@ static func column(parent: Control, width: float, dim: float = 0.6) -> VBoxConta
 	box_.alignment = BoxContainer.ALIGNMENT_CENTER
 	center.add_child(box_)
 	return box_
+
+
+## Whether a text has a digit: such a text is never set in Cinzel, whose 1 is a bare stroke and reads as a Roman I
+## (UI review d2ff05d, P0-1); use number_font for it.
+static func has_digit(text: String) -> bool:
+	for c in text:
+		if c >= "0" and c <= "9":
+			return true
+	return false
 
 
 ## A number as the player reads it: a whole one plain, else one decimal with a comma (seconds, metres: "1,5 s").
@@ -316,12 +377,15 @@ static func focus_row(margin: int = 10) -> PanelContainer:
 
 ## The gifts carried, as medallions in a row or a flow (the end screen, the pause): carried is [{boon, level}], at
 ## most max_shown of them, the rest summed in "+N".
-static func gift_icons(parent: Container, carried: Array, icon_px: float, max_shown: int) -> void:
+## levels: the level's dots under each medallion (the endings leave them out: too small to read, and Suas Bênçãos tells
+## them; UI review d2ff05d, P2-12).
+static func gift_icons(parent: Container, carried: Array, icon_px: float, max_shown: int, levels: bool = true) -> void:
 	for i in mini(carried.size(), max_shown):
 		var b: Boon = carried[i].boon
 		var icon := BoonIcon.new().setup(b, icon_px)
-		icon.level = int(carried[i].get("level", 1))
-		icon.max_level = b.max_level
+		if levels:
+			icon.level = int(carried[i].get("level", 1))
+			icon.max_level = b.max_level
 		parent.add_child(icon)
 	if carried.size() > max_shown:
 		var more := label("+%d" % (carried.size() - max_shown), PALE, roundi(icon_px * 0.55), BOLD_FONT)
@@ -337,3 +401,31 @@ static func carried_of(state: BoonState) -> Array:
 		for b: Boon in state.owned():
 			out.append({"boon": b, "level": state.level(b.id)})
 	return out
+
+
+## The fade at a list's foot (scroll_fade): follows its ScrollContainer each frame.
+class ScrollFade:
+	extends Control
+
+	var paper := Color.BLACK
+
+	func _init() -> void:
+		name = "fade"
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _process(_delta: float) -> void:
+		var scroll := get_parent() as ScrollContainer
+		if scroll == null:
+			return
+		var bar := scroll.get_v_scroll_bar()
+		var more := bar.visible and bar.value + bar.page < bar.max_value - 1.0
+		visible = more
+		if more:
+			position = Vector2(0, scroll.size.y - FADE_HEIGHT)
+			size = Vector2(scroll.size.x - bar.size.x, FADE_HEIGHT)
+
+	func _draw() -> void:
+		var w := size.x
+		var h := size.y
+		draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(w, 0), Vector2(w, h), Vector2(0, h)]),
+			PackedColorArray([Color(paper, 0.0), Color(paper, 0.0), paper, paper]))

@@ -26,5 +26,6 @@ branch = 3
 tier = 2
 cost = 4
 unlock_level = 20
+memory_cost = 4
 partner = 2
 mods = Array[ExtResource("1_yew0c")]([SubResource("Resource_n253y"), SubResource("Resource_8bh5o")])

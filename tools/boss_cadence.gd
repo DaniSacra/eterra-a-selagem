@@ -56,7 +56,10 @@ func _change(boss: Object, states: Array, st: int, t: float) -> void:
 		_cur.rest = spent
 	if boss.ATTACKS.values().has(st):
 		_close()
-		_cur = {"id": boss._attack, "phase": boss.phase, "at": t}
+		_cur = {"id": boss._attack, "phase": boss.phase, "at": t, "dist": boss.game.player.pos.distance_to(boss.e.pos)}
+		if _log:
+			# C19-3: the paladin's distance as the attack was chosen (phase 1 within 4 m: no attack over half)
+			print("CHOSE %s phase=%d dist=%.2f" % [boss._attack, boss.phase, float(_cur.dist)])
 	if now == "RECOVER" and not _cur.is_empty():
 		_cur.attack = t - float(_cur.at)
 		_hp_at = boss.e.hp

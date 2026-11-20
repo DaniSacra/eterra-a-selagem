@@ -40,12 +40,53 @@ uniform float style_cap = 0.6; // STY-09: 0.98 still clipped to white on the scr
 // screen: the blade takes only this share of it there (its colour is the two painted bands of the emission).
 uniform float style_lit = 0.25;
 
+// Temperar (Fatia 1, docs/design/rejogabilidade/sistemas.md 3.4; EmethSword.set_temper): the Forjador's rank of the
+// blade, 0 to 2 (fractions grow the marks in). Each rank lays one vein of old gold along a flat of the crystal (rank 1
+// the left of the middle, to temper_reach.x of the blade; rank 2 the right as well, to temper_reach.y) and one more
+// reach of the pale thread along the cutting edges (rank 1 to temper_edge.x of the blade, rank 2 to the tip). Nothing
+// passes 1.0 in a channel (under the glow); in the stylized look the gold and the thread under style_cap. 0: nothing
+// drawn, the blade as before.
+uniform float temper = 0.0;
+uniform vec3 temper_gold : source_color = vec3(0.9, 0.66, 0.3);
+uniform vec3 temper_thread : source_color = vec3(0.78, 0.95, 0.84);
+uniform vec2 temper_reach = vec2(0.72, 0.86);
+uniform vec2 temper_edge = vec2(0.5, 0.97);
+// The blade's half width in the model's space at the guard and near the tip (emeth.glb measured), a vein's width
+// (meters of the model, about 1:1 with the game's), how far off the middle a vein runs (share of the half width).
+uniform vec2 temper_half = vec2(0.095, 0.06);
+uniform float temper_width = 0.018;
+uniform float temper_off = 0.42;
+
 varying float along;
 varying vec3 local;
+varying vec3 lnormal;
 
 void vertex() {
 	along = VERTEX.y;
 	local = VERTEX;
+	lnormal = NORMAL;
+}
+
+// The temper's marks at this point of the blade: x the gold veins, y the edge thread (0..1 each).
+vec2 temper_marks(float up) {
+	float half_w = mix(temper_half.x, temper_half.y, up);
+	float veins = 0.0;
+	for (int k = 0; k < 2; k++) {
+		float grown = clamp(temper - float(k), 0.0, 1.0);
+		if (grown <= 0.0) {
+			break;
+		}
+		float side = k == 0 ? -1.0 : 1.0;
+		float reach = (k == 0 ? temper_reach.x : temper_reach.y) * grown;
+		float x = side * half_w * temper_off + sin(along * 17.0 + side * 1.3) * 0.01;
+		float line = 1.0 - smoothstep(temper_width * 0.35, temper_width * 0.5, abs(local.x - x));
+		float span = smoothstep(0.02, 0.08, up) * (1.0 - smoothstep(reach - 0.06, reach, up));
+		veins = max(veins, line * span);
+	}
+	float edge_reach = mix(0.0, temper_edge.x, clamp(temper, 0.0, 1.0)) + (temper_edge.y - temper_edge.x) * clamp(temper - 1.0, 0.0, 1.0);
+	float edge = smoothstep(0.55, 0.85, abs(normalize(lnormal).x)) * step(half_w * 0.5, abs(local.x));
+	edge *= smoothstep(0.03, 0.08, up) * (1.0 - smoothstep(edge_reach - 0.05, edge_reach, up));
+	return vec2(veins, edge);
 }
 
 void fragment() {
@@ -74,6 +115,16 @@ void fragment() {
 		ALBEDO = mix(ALBEDO, corrupt_color * 0.25, k * blade);
 	}
 	EMISSION = c * fill + mix(lit, c, blade_paint) * (blade_glow + pulse) * blade;
+	if (temper > 0.0) {
+		vec2 tm = temper_marks(clamp((along - blade_from) / (0.95 - blade_from), 0.0, 1.0)) * blade;
+		// under style_cap in the stylized look, keeping the gold's hue (a cap per channel would grey it)
+		float k = styled ? style_cap : 1.0;
+		vec3 gold = temper_gold * k;
+		vec3 thread = temper_thread * k;
+		EMISSION = mix(EMISSION, thread, tm.y);
+		EMISSION = mix(EMISSION, gold, tm.x);
+		ALBEDO = mix(ALBEDO, temper_gold * 0.5, max(tm.x, tm.y * 0.5));
+	}
 	if (styled) {
 		EMISSION = min(EMISSION, vec3(style_cap));
 	}

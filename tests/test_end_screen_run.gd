@@ -44,7 +44,8 @@ func test_defeat_in_the_crypt_room_3_shows_the_room_the_arena_and_two_gifts() ->
 	assert_eq(gifts.get_child_count(), 2)
 	for icon in gifts.get_children():
 		assert_true(icon is BoonIcon)
-		assert_eq((icon as BoonIcon).level, 2)
+		# no level dots under the endings' medallions (UI review d2ff05d, P2-12)
+		assert_eq((icon as BoonIcon).max_level, 0)
 	var texts := _texts(end)
 	assert_true(texts.has(T.t(&"end_gifts")), "the gifts have their heading")
 	assert_false(texts.has(T.t(&"end_boons")), "no count row under the medallions")

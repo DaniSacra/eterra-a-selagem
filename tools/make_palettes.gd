@@ -4,7 +4,7 @@ extends SceneTree
 ## docs/art/enemies_phase1.md. tools/bake.gd draws each enemy with its palette ("texture" in MODELS) and moves mesh
 ## parts and props to the cells below; the elite version of each one (EnemyDef.palette) is the same palette with old
 ## gold on its trims. Writes assets/models/palettes/<id>.png and <id>_elite.png.
-##   ~/tools/godot/godot --headless --path . -s tools/make_palettes.gd
+##   ~/tools/godot/godot --headless --path . -s tools/make_palettes.gd [-- npcs]
 ## then ~/tools/godot/godot --headless --path . --import (new files) and tools/bake.gd.
 
 const BASE := "res://assets/models/characters/Skeleton_Minion_skeleton_texture.png"
@@ -96,7 +96,49 @@ const ELITE_TRIMS := {
 }
 
 
+## The hub's two people (HUB-D, tools/bake.gd NPCS; `-- npcs` writes only these): over their own KayKit adventurer's
+## palette, every cell their meshes use repainted in the game's calm tones (earth, leather, dark iron, a dark petrol
+## hood under 0.25 of value; no saturated petrol, emerald nor elite gold). cell -> [light, shadow].
+const SKIN := ["b08c72", "5a3e30"]
+const NPC_PALETTES := {
+	"npc_vendor": {
+		"base": "res://assets/models/characters/Rogue_Hooded_rogue_texture.png",
+		"cells": {
+			0: SKIN, 1: ["4a3c32", "1e1612"], 2: ["1a1614", "060504"],
+			# the hood and cape: dark petrol, its light at 0.25 of value
+			9: ["2a3d40", "0c1416"],
+			# the mantle: muted earth; its trims and the belt in leather, the buckles in dull iron
+			8: ["6a5442", "2a2018"], 5: ["5e4230", "241810"], 6: ["4c3a2c", "1c140e"], 21: ["584434", "201812"],
+			15: ["3a302a", "141010"], 19: ["4e4034", "1c1612"], 3: ["6a6660", "26241f"],
+		},
+	},
+	"npc_smith": {
+		"base": "res://assets/models/characters/Knight_knight_texture.png",
+		"cells": {
+			0: SKIN, 1: ["5a5048", "221c18"], 2: ["1a1614", "060504"],
+			# the apron (the breastplate's cell) and its skirt (the tabard's) in dark leather
+			3: ["5a4030", "20160e"], 8: ["4e3828", "1c120c"],
+			# the linen under it and the trims
+			9: ["7a7064", "3a342c"], 10: ["6c6458", "2e2a24"],
+			# belts, bracers and boots in leather, the bracers' rivets dark iron
+			6: ["4a3424", "1a120c"], 7: ["3e3026", "16100c"], 4: ["3c3a38", "121212"], 15: ["2e2a28", "0e0c0c"],
+			# free cells: dark wool of the legs, bare forearms, the hammer's handle and head
+			19: ["3a3430", "141210"], 20: SKIN, 22: ["5a4430", "22180e"], 23: ["4a4846", "161616"],
+		},
+	},
+}
+
+
 func _init() -> void:
+	if Array(OS.get_cmdline_user_args()).has("npcs"):
+		for id: String in NPC_PALETTES:
+			var src := (load(NPC_PALETTES[id].base) as Texture2D).get_image()
+			src.decompress()
+			src.convert(Image.FORMAT_RGB8)
+			src.resize(SIZE, SIZE, Image.INTERPOLATE_BILINEAR)
+			_write(src, NPC_PALETTES[id].cells, OUT + id + ".png")
+		quit()
+		return
 	var base := (load(BASE) as Texture2D).get_image()
 	base.decompress()
 	base.convert(Image.FORMAT_RGB8)

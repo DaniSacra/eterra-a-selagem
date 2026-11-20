@@ -306,6 +306,51 @@ Temperar I no primeiro teste. Tudo pelo `defaults()` e `hero_defaults()`, senão
 - Os eventos `door` e `reward` de hoje já levam as recompensas novas pelo `RunMap.Reward`.
 - `RunLog.normalized` lê as linhas antigas com `materials` vazio e `angels` `[]`.
 
+### 5.3 API para a UI (gameplay-engineer, Fatia 1 implementada em 2026-11-19)
+
+Tudo o que as telas do `ui-ux-designer` precisam já existe; as três telas provisórias (marcadas `PROVISIONAL` no código)
+saem quando as dele entrarem. O comentário no topo de cada arquivo repete isto.
+
+**Materiais** (`MaterialPurse`, `scripts/core/material_purse.gd`, puro):
+- Ids `MaterialPurse.SILVER`, `MEMORY`, `EMERALD`; nome `NAME_KEY[id]` ("Prata Antiga", "Fragmento de Memória",
+  "Esmeralda") e curto `SHORT_KEY[id]` ("Prata", "Memória", "Esmeralda") no `text_pt.tres`; tetos em `CAP`.
+- No save: `MaterialPurse.amount(Save.data, id)`, `can_pay`, `spend`, `give`; `Save.data.materials_total` para o Compêndio.
+- Na descida: `game.materials` (um `MaterialPurse`): `total(id)`, `totals()`, `report()` (fonte por fonte); o que foi
+  guardado no fim fica em `game.materials_banked` ({id: n}, vazio para o robô e sem save): é o "Trazidos" da tela de fim.
+- Achado na sala: `Rooms.found(material, source, n, at)` mostra a palavra "+n Prata" de hoje (a tela pode ouvir o
+  `game.materials` ou trocar isso).
+- Portas: `RunMap.Reward.SILVER` e `MEMORY`, chaves `reward_silver`/`reward_memory`, cor `Rooms.SILVER_COLOR`/
+  `MEMORY_COLOR`. `DoorGlyph.of_reward` e `RewardGem.mark_of` ainda caem em NONE para elas (marcas novas: da UI e do
+  technical-artist).
+
+**Forja** (`Forge`, `scripts/core/forge.gd`; postos `ForgeRank` em `data/forge/emeth/`, parte `forge` do `make_data.gd`):
+- `var f := Forge.new(Forge.load_catalog())`; `f.track(Forge.TEMPER)` (os postos em ordem); `f.state(Save.data, posto)`
+  (`OWNED`, `NEXT`, `LOCKED`); `f.problem(Save.data, posto)` (`OK`, `OWNED`, `NEEDS` o anterior, `SHORT` de Prata,
+  `UNKNOWN`); `f.buy(Save.data, id)` gasta e grava no bloco (a tela chama `Save.write()` depois); `Forge.temper(data)`.
+- Texto: `posto.name_key`, `posto.desc_key`, `posto.cost`, `posto.material`; frases `forge_have`, `forge_next`,
+  `forge_buy`, `forge_short`, `forge_done`.
+- Hub: `Hub.forged(rank)` sai depois de cada compra (a forja e a Emeth podem reagir). A página provisória é
+  `Hub._open_forge` (um `HubPanel` com o posto seguinte e Voltar).
+
+**Dons com Memória** (`HeroLoadout`, `Talents`):
+- `HeroLoadout.State.SEALED` (revelado pela Maestria, ainda não aberto); `open_cost(t)`, `memory()`, `can_open(t)`
+  (`Talents.Problem` `OK`, `OPENED`, `SHORT`, `LOCKED`), `open(id)` (gasta; a tela grava o save); `next_step(t)` dá
+  `hero_step_open` ({cost, have}) e `why(t)` dá `hero_why_sealed`.
+- Provisório: `toggle` num Dom selado que se pode pagar abre e equipa num aperto só; com o passo "Abrir" da tela, tirar.
+
+**Encontro** (`Encounters`, `scripts/game/encounters.gd`, em `game.encounters`; regras puras em `Encounter`):
+- `signal opened(angels)`: um encontro precisa de escolha. Se alguém estiver ligado no sinal, a `AngelChoice`
+  provisória não abre e a tela nova faz tudo.
+- `angels_now` (o par à mostra), `cards_of(anjo)` (as cartas daquele anjo, sempre as mesmas: dado próprio; serve para
+  voltar ao par sem sortear de novo), `choose(anjo)` (abre as cartas na `BoonChoice`).
+- `meetings`: o registro (`RESULT.angels`).
+- Anjo: `AngelDef` (`id`, `family`, `name_key`, `line_key`, `color`, `symbol`); selo `AngelSeal.new().setup(family, px)`.
+- Textos `encounter_title`, `encounter_alone`, `encounter_hint`.
+
+**Opções de teste**: `--materials=silver:30,memory:5` (o save da sessão, nada gravado), `--forge=N` (Temperar N na
+sessão e na descida, também a do robô), `--angels=a,b` (o par forçado), `--no-angels` (o sorteio de antes),
+`--materials-keep` (o robô guarda o que traz, para medir A7 com save).
+
 ---
 
 ## 6. Perguntas para o Daniel (curtas, com a minha recomendação)

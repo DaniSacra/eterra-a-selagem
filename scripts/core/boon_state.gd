@@ -35,6 +35,9 @@ var rarities: Dictionary = {}
 ## The hero's Gifts equipped for this descent (TalentDef): their mods add up with the Blessings' in stat (at level 1,
 ## never scaled by rarity), so every blow reads Gift and Blessing in the same sum.
 var talents: Array[TalentDef] = []
+## The Forja's ranks owned for this descent (Rejogabilidade, Fatia 1; ForgeRank): their mods add up in stat at level 1,
+## never scaled by rarity, as the Gifts'.
+var forge: Array[ForgeRank] = []
 ## Numbers won outside the Blessings (E5: a Provação's blessing, Trials.blessing_mods), fixed, added to stat.
 var granted: Array[BoonMod] = []
 ## Blessings that left the descent (id: true; E6, the Juramento Escolhas Perdidas): never offered again.
@@ -199,6 +202,12 @@ func equip_talents(defs: Array[TalentDef]) -> void:
 	_cache.clear()
 
 
+## Carries the Forja's ranks for the descent (Game._equip_forge).
+func equip_forge(ranks: Array[ForgeRank]) -> void:
+	forge = ranks
+	_cache.clear()
+
+
 ## Adds numbers won outside the Blessings (E5, the Provação): they count in stat from now on.
 func grant(mods: Array[BoonMod]) -> void:
 	granted.append_array(mods)
@@ -215,6 +224,10 @@ func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 	for m in granted:
 		if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
 			total += m.value(1)
+	for r in forge:
+		for m in r.mods:
+			if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
+				total += m.value(1)
 	for t in talents:
 		for m in t.mods:
 			if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
@@ -241,14 +254,15 @@ func offers(rng: RandomNumberGenerator, n: int = 3) -> Array[Boon]:
 
 ## Up to n cards, each a different gift (see the class's comment). chances: the rarity draw (roll_rarity); elo_chance
 ## and trade_chance per card. When no fresh gift is left, a card falls back to a plain replacement (no rarity up), then
-## to an Elo that can be formed.
+## to an Elo that can be formed. allow (b: Boon) -> bool keeps only some gifts in the draw (an angel's family,
+## Encounter.cards); every rule stays the same over what is left.
 func draw(rng: RandomNumberGenerator, n: int = 3, chances: Array[float] = Boon.RARITY_CHANCE,
-		elo_chance: float = Boon.ELO_CHANCE, trade_chance: float = Boon.TRADE_CHANCE) -> Array[Card]:
+		elo_chance: float = Boon.ELO_CHANCE, trade_chance: float = Boon.TRADE_CHANCE, allow: Callable = Callable()) -> Array[Card]:
 	var fresh: Array[Boon] = []
 	var trades: Array[Boon] = []
 	var elos: Array[Boon] = []
 	for b in catalog:
-		if level(b.id) > 0 or not can_offer(b):
+		if level(b.id) > 0 or not can_offer(b) or (allow.is_valid() and not allow.call(b)):
 			continue
 		if b.is_duo():
 			elos.append(b)

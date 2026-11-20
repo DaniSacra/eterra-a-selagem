@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AngelDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/angel_def.gd" id="1_gi8sn"]
+
+[resource]
+script = ExtResource("1_gi8sn")
+id = &"nivael"
+family = 1
+name_key = &"angel_nivael"
+line_key = &"angel_nivael_line"
+color = Color(0.55, 0.72, 0.84, 1)
+symbol = 1

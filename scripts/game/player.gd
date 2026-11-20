@@ -39,6 +39,8 @@ const TURN_SWING := 30.0
 const DODGE_BUFFER := 0.15
 ## The Omega's charge sound starts once the button has been held this long (a tap plays none).
 const CHARGE_SOUND_AT := 0.12
+## C19-4: seconds the charge's sound fades out in when the charge ends (Hades II).
+const CHARGE_SOUND_FADE := 0.2
 ## Meters per second the run and sprint clips cover at their own speed (tools/bake_hero.gd measures them), so the
 ## clips play as fast as the paladin moves and the feet keep up.
 const RUN_CLIP_PACE := 8.7
@@ -491,6 +493,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 				sp *= Feel.live().sprint_scale
 			if _casting:
 				sp *= hero.cast_slow
+			sp *= charge_move_scale()
 			if runner.planted():
 				# windup, blow and recovery: he stands still (E1c), only the dash attack's lunge carries him
 				pos += move * sp * runner.move_scale(Feel.live()) * dt + _lunge * dt
@@ -498,7 +501,11 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 				# free again (no move, the chain window, or past a special's walk_after): he walks and runs, no sliding
 				pos += move * sp * dt + _lunge * dt
 				if move.length() > 0.1:
-					facing = move.normalized()
+					if charging and _charge_action == &"light_attack":
+						# C19-4: the attack's Omega charging, his body all but locked (charge_turn_light degrees a second)
+						facing = Horde.turned(facing, move.normalized(), deg_to_rad(hero.charge_turn_light) * dt)
+					else:
+						facing = move.normalized()
 	if not ran:
 		runner.glint_scale = Feel.live().glint_scale
 		runner.step(dt)
@@ -543,7 +550,7 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 	if curse.active():
 		# the curse locks the special: a press does nothing, a charge already under way is dropped
 		if charging and _charge_action == CURSE_ACTION:
-			charging = false
+			_end_charge()
 	else:
 		_press_attack(CURSE_ACTION, ComboNode.In.HEAVY, ComboNode.In.CHARGE)
 	if charging:
@@ -552,10 +559,10 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 			Audio.play(&"charge_up")
 			charges_started += 1
 		if not Controls.held(_charge_action):
-			charging = false  # let go before the charge filled: nothing more comes
+			_end_charge()  # let go before the charge filled: nothing more comes
 		elif charge_t >= _charge_time() - _charge_lead() and not runner.is_attacking():
 			# the held move starts its windup (and glint) inside the charge, so it lands when the charge fills (GF-08)
-			charging = false
+			_end_charge()
 			charges_filled += 1
 			if charge_t < CHARGE_SOUND_AT:
 				charges_started += 1
@@ -593,6 +600,20 @@ func _press_attack(action: StringName, tap: ComboNode.In, held: ComboNode.In) ->
 		_charge_tap = tap
 		_charge_held = held
 		_charge_discount = omega_discount
+
+
+## Ends an Omega's charge (filled, let go or cut): its rising sound fades out in CHARGE_SOUND_FADE (C19-4, Hades).
+func _end_charge() -> void:
+	if charging:
+		Audio.fade_out(&"charge_up", CHARGE_SOUND_FADE)
+	charging = false
+
+
+## C19-4: how much slower he walks while an Omega charges (HeroDef.charge_move_light, charge_move_heavy; 1 with none).
+func charge_move_scale() -> float:
+	if not charging:
+		return 1.0
+	return hero.charge_move_light if _charge_action == &"light_attack" else hero.charge_move_heavy
 
 
 ## Omega charges let go, cut (dodge, blow, curse) or out of Magia before they filled; one still under way is not counted.
@@ -708,7 +729,7 @@ var _aim := Vector2.ZERO
 
 
 func _start_dodge(move: Vector2) -> void:
-	charging = false
+	_end_charge()  # (C19-4: the dodge cuts the charge on the frame of the press; no Magia is spent)
 	_casting = false
 	state = State.DODGE
 	_state_t = 0.0
@@ -727,7 +748,7 @@ func _start_dodge(move: Vector2) -> void:
 ## the combo starts over, presses wait in the locked runner and come out when it ends. Its clip plays so that the
 ## blade lands as the gesture ends (UltDef.anim_peak).
 func _start_ult() -> void:
-	charging = false
+	_end_charge()
 	_casting = false
 	sprinting = false
 	state = State.ULT
@@ -831,7 +852,7 @@ func hurt(amount: float, from: Vector2) -> void:
 	invuln = hero.hurt_invuln
 	_blink = hero.hurt_invuln
 	_flash = 1.0
-	charging = false
+	_end_charge()
 	runner.reset(false)
 	# presses in the stagger are kept for its end (GF-03)
 	runner.locked = true
@@ -869,7 +890,7 @@ func apply_curse(seconds: float, slow: float, immunity: float) -> bool:
 	if not alive() or not curse.apply(seconds, slow, immunity):
 		return false
 	if charging and _charge_action == CURSE_ACTION:
-		charging = false
+		_end_charge()
 	fx.burst(&"curse", Vector3(pos.x, 1.3, pos.y))
 	fx.word(Vector3(pos.x, 3.2, pos.y), T.t(&"word_cursed"), Color(CURSE_GLOW, 1.0))
 	Audio.play(&"cursed")
@@ -929,8 +950,14 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 		fx.hero_head = position + Vector3(0, HeroBody.HEIGHT, 0)
 	if state != State.MOVE or runner.planted():
 		return  # planted in a blow: its own clip (or its held pose), never the run
+	if charging and _charge_action == &"light_attack" and not runner.is_attacking():
+		# C19-4: charging the attack's Omega he holds its blow drawn back (never the run in slow motion at 0.2 m/s)
+		var held := ComboTree.find(tree.neutral, _charge_held)
+		if held != null and held.anim != &"" and _current_anim != held.anim:
+			_play(held.anim, 0.0, held.anim_from)
+		return
 	if move.length() > 0.1:
-		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * (Feel.live().sprint_scale if sprinting else 1.0)
+		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * (Feel.live().sprint_scale if sprinting else 1.0) * charge_move_scale()
 		if sprinting:
 			_play(&"Sprint", pace / SPRINT_CLIP_PACE)
 		else:

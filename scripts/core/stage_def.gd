@@ -92,6 +92,21 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## The fountain heals this share of life.
 @export var fountain_heal := 0.4
 
+@export_group("Materials")
+## What the descent brings home (Rejogabilidade, Fatia 1; sistemas.md 1.2): Prata Antiga by an elite felled, a door of
+## Prata, a guardian won, each of Morvath's phases reached (silver_phase each, up to phase_max) and the sealing;
+## Fragmentos de Memória by a door of Memória, a guardian won, a Provação won and the sealing.
+@export var silver_elite := 1
+@export var silver_door := 10
+@export var silver_guardian := 6
+@export var silver_phase := 2
+@export var phase_max := 4
+@export var silver_victory := 10
+@export var memory_door := 3
+@export var memory_guardian := 2
+@export var memory_trial := 2
+@export var memory_victory := 3
+
 @export_group("Blessings")
 ## Rarity chances of a card, tried in turn (rare, epic, legendary; BoonState.roll_rarity), and the guardian's.
 @export var rarity_chance: Array[float] = Boon.RARITY_CHANCE

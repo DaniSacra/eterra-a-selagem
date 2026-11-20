@@ -9,13 +9,13 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 | Sala | Tamanho, andável | Ideia de jogo (a pergunta da sala) | Profundidade (progresso) | Teto de pé | Perigo |
 |---|---|---|---|---|---|
 | Salão das Catacumbas | 32 x 30 m, cerca de 900 m² | abertura no claro; também fonte e loja | 1, 5 a 8 (fonte), 10 | 4 a 8 | nenhum |
-| Cripta A | 24 x 21 m, 498 m² | cobertura: contornar o sarcófago do meio contra até 2 atiradores | 0,1 a 1,0 | 4 a 6, sem sacerdote | nenhum |
-| Cripta B (Ossuário) | igual | de que lado do muro divisor | igual | igual | nenhum |
+| Cripta A | 24 x 21 m, 498 m² | cobertura: contornar o sarcófago do meio contra até 2 atiradores | 0,1 a 1,0 | 4 a 6, sem sacerdote | quatro lajes rachadas junto das paredes (RP-06), dormentes nas salas 2 e 3 |
+| Cripta B (Ossuário) | igual | de que lado do muro divisor | igual | igual | duas lajes no pé do muro (RP-06) |
 | Fendas A | 42 x 30 m, cerca de 1060 m² | em que ponte cruzar, ou dar a volta pelo sul; três tocos de apoio (RP-05) | 0,1 a 1,0 | 6 a 8 | nenhum |
 | Fendas B | igual, ponte norte caída | uma ponte só e a volta sul | igual | igual | nenhum |
 | Jardim A / B | 34 x 28 m, 875 m² | o tronco como escudo, raízes que cortam o passo | 0,1 a 1,0 | 6 a 8 | nenhum |
-| Santuário A | 44 x 28 m, 1192 m² | nave aberta ou naves laterais (casa do guardião) | 0,4 a 1,0; guardião em qualquer uma | 6 a 8 | nenhum |
-| Santuário B | igual, buraco na nave | o buraco entre o herói e o guardião | igual | igual | nenhum |
+| Santuário A | 44 x 28 m, 1192 m² | nave aberta ou naves laterais (casa do guardião) | 0,4 a 1,0; guardião em qualquer uma | 6 a 8 | duas lajes em cada nave lateral (RP-06), também no guardião |
+| Santuário B | igual, buraco na nave | o buraco entre o herói e o guardião | igual | igual | as lajes das laterais e a borda que desmorona nas pontas do buraco (RP-13) |
 | Ponte A | 56 x 18 m, 771 m² | atravessar sob fogo: todos nascem no leste, bloco no fim da ponte 2 (RP-04) | 0,5 a 1,0 | 6 a 8, sem sacerdote | nenhum |
 | Ponte B | 56 x 18 m, 701 m² | a ponte longa com patamar | igual | igual | nenhum |
 | Runas A | 30 x 24 m, 702 m² | atrair os inimigos para a faixa que vai acender | 0,5 a 1,0 | 4 a 6 | faixas (sweep, comb, cut); herói 7, inimigos 60, nada a 6 m da entrada (RP-02, RP-03) |
@@ -24,6 +24,63 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 | Câmara do Selo | círculo de 12,5 m | Morvath | 11 | Morvath + até 6 | os ataques dele |
 
 ---
+
+## Feito em 2026-11-19 (noite): RP-06 (laje rachada) e RP-13 só no Santuário B
+
+**O que entrou.** `HazardDef.kind` `PLATES` (`plates`, `rearm`, `from_progress`, por laje `plate_hero_damage` e
+`plate_push`), lógica pura `PlateHazard` (`scripts/core/plate_hazard.gd`), no jogo `PlateFloor`
+(`scripts/game/plate_floor.gd`), dado `_plates` no `_stage`. Números: aviso 1,0 s (a laje acende da borda para o meio),
+golpe 0,25 s, herói 7, inimigo 60 (RP-03), recarga 5 s, nada nos 3 s do começo, nunca em laje na boca de porta, no
+máximo 3 armadas de uma vez (o 222700 do Sworn), dormentes antes do progresso 0,34 (salas 2 e 3: desenhadas, não ferem).
+Lugares (todas de 3 x 3 m, inteiras no chão, fora de peça, porta e nascimento, 6 m ou mais da entrada; GUT):
+
+| Sala | Lajes |
+|---|---|
+| Cripta A | (-7,2..-4,2; -10,3..-7,3) parede norte; (8..11; -7,5..-4,5) nordeste; (2..5; 7,3..10,3) sul; (8..11; 1,3..4,3) leste. O canto sudoeste é a entrada (6 m) e o noroeste é nascimento: "quatro cantos" virou "junto das paredes, fora dos corredores do sarcófago" |
+| Cripta B | (-3,4..-0,4; -6,3..-3,3) e (1,4..4,4; -6,3..-3,3): os dois lados da ponta do muro divisor |
+| Santuário A e B | nave lateral norte (-13,5..-10,5; -11..-8) e (10,5..13,5; -11..-8); sul (-7,5..-4,5; 8..11) e (0..3; 8..11). Valem também na luta do guardião |
+| Santuário B (RP-13) | a borda que desmorona: (-2,6..0,4; -1,5..1,5) e (9,6..12,6; -1,5..1,5), nas pontas do buraco (ao longo dele a nave tem só 1,85 m), ferem 5 e jogam 2,5 m para longe do buraco; zona `hole_edge` |
+
+As Fendas B ficaram sem a borda que desmorona: a tabela do Sworn (seção 3) diz "nunca lajes nas Fendas, a beira já pede
+atenção", e o RP-08 (fenda que respira) é o perigo delas. Desenho: placeholder no estilo HAZARD do `ground.gdshaderinc`
+(`plate`, `crack_m`): moldura e duas rachaduras em osso apagado em repouso (nunca âmbar), o âmbar entra da borda ao
+armar. Falta a peça do `environment-artist` (SW-G7).
+
+**Como medi.** Igual ao de cima, 36 sementes (1 a 36), base = este código sem o RP-06 (cópia isolada), final = RP-06 e
+RP-13. Saídas: `/tmp/claude-1000/-home-dani-games-eterra-a-selagem/78898d24-f62f-43d1-9d7c-e7eaa36af8bf/scratchpad/rp06/`.
+
+| Medida (por sala; "acordada" = sala 4 ou mais) | Base | Final | Aceite |
+|---|---|---|---|
+| Vitórias (36) | 29 | 25 | no máximo 3 abaixo (ver leitura) |
+| `stuck` / `bot.stuck` | 0 / 0 | 0 / 0 | 0 |
+| Morvath alcançado (mediana) | 236 s | 232 s | |
+| Dano das lajes no herói, todas as vistas | | **0** em 91 salas | 0,5 a 2 |
+| Cripta A acordada (6): golpes, dano nos inimigos, abates | | 3,0 / 50 / 0,17 | |
+| Cripta B acordada (11) | | 2,7 / 30 / 0,27 | |
+| Santuário A (25) / B (29) | | 0,5 / 2,4 e 1,1 / 4,1 | |
+| Quem arma (Cripta A acordada, herói / inimigo) | | 1,2 / 1,8 | |
+| Segundos do herói em cima (Cripta B / Santuário) | | 1,8 / 0,1 a 0,4 | |
+| Cripta A zonas (norte, meio, sul) | 42 / 30 / 27 | 44 / 29 / 26 | |
+| Santuário A naves laterais | 34% | 28% | 20 a 35% |
+| Santuário B naves laterais, `hole_edge` | 28% | 26%, 1% | |
+| Dano por sala (Cripta A / B acordada) | 0,0 / 1,75 | 0,67 / 2,55 | |
+
+**Leitura.** As lajes armam e golpeiam (2,7 a 3 golpes por sala de Cripta acordada, metade armadas por inimigos), mas
+**o robô nunca é atingido**: 1,0 s de aviso numa laje de 3 m é saída fácil para quem reage em 0,25 s (anda 5 m). É o que
+o RP-03 já mostrou com as Runas: o robô lê bem o âmbar e o aceite de dano no herói vira a sessão do Daniel. Não encurto
+o aviso (a regra é 1,0 s ou mais). Os inimigos também saem (andam atrás do herói), então o dano neles é baixo (14 a 50 por
+sala); a laje hoje muda pouco onde se luta (Cripta igual, Santuário laterais 34 para 28%). As 4 vitórias a menos não vêm
+das lajes (nenhum dano delas no herói): 5 das 6 sementes que trocaram de resultado morrem em Morvath, a partida diverge
+na primeira sala com laje (efeito borboleta); com 36 sementes isso está no ruído (a seção de cima mediu 37 a 39 em 48 sem
+mudar dano). O que levantaria a laje sem quebrar regra, para a sessão com gente: laje no caminho que o robô e o jogador
+fazem de verdade (RP-21, lajes nas cabeceiras do sarcófago da Cripta A) e a seteira ligada (RP-16), que faz o jogador
+pisar de propósito.
+
+**Conferido.** `tools/check.gd` e `tools/test.sh` inteiro verdes; `tests/test_plates.gd` (10 testes: ritmo, inimigo
+arma, dormente, porta, três de cada vez, lugares, saída andando de 12 x 12 pontos com 0,25 s de reação, sala real com
+os números do `RESULT`, empurrão, a borda do Santuário B); `tools/fit_probe.gd` Cripta A e B e Santuário A e B iguais à
+base (fantasma 0,32 / 0,31 / 1,20 / 1,20 m²; a laje é marca no chão, não peça). Sem captura na GPU (worktree fora do
+espelho).
 
 ## Feito em 2026-11-19: RP-01 a RP-05 (quickwins aprovados pelo Daniel)
 
@@ -292,7 +349,7 @@ com o Daniel); nunca a menos de 6 m do `hero_spawn` nem nos 3 primeiros segundos
 no `RESULT` (`enemy_damage`, `kills`, `strikes`, mais `hero_damage`). Desenho: entrego forma, tempo e estado como o
 `RunesLook.set_tile`; placeholder do `GroundLook.Style.HAZARD` até o `environment-artist` com a spec do `art-director`.
 
-**RP-06 (P1) Primeiro comportamento novo: `HazardDef` com gatilho de proximidade ("laje de pisar", H-2).**
+**[Feito 2026-11-19 noite, ver "Feito em 2026-11-19 (noite)"] RP-06 (P1) Primeiro comportamento novo: `HazardDef` com gatilho de proximidade ("laje de pisar", H-2).**
 - Problema: 2.4.1 e 2.4.2 (salas iguais e as primeiras sem lição); é o perigo mais barato que muda onde lutar.
 - Proposta: lajes de 3 x 3 m fixas, marcadas sempre (moldura rachada no chão, visível em repouso), que **qualquer um** arma
   ao pisar (herói ou inimigo, como o vapor do Hades, que mira inimigos e herói); 1,0 s de aviso (a laje acende da borda
@@ -383,7 +440,7 @@ no `RESULT` (`enemy_damage`, `kills`, `strikes`, mais `hero_damage`). Desenho: e
   chão de 2,5 m, explosão de 8 no herói e 80 nos inimigos; o óleo derramado corre por um canal raso de 6 m (linha do
   RP-11, andando a 3 m/s, aviso à frente dele) e apaga em 2 s. Só depois do progresso 0,67. Custo M depois do RP-11.
 
-**RP-13 (P3) Borda que desmorona no Santuário B e nas Fendas B (o "chão que cai" sem buraco novo).**
+**[Feito só no Santuário B, 2026-11-19 noite] RP-13 (P3) Borda que desmorona no Santuário B e nas Fendas B (o "chão que cai" sem buraco novo).**
 - Problema: 2.4.7. Proposta: lajes da beira do buraco (RP-06) que racham ao pisar e, no golpe, ferem 5 e empurram para o
   chão firme (a queda fere e devolve; nenhum chão some, então nada de `NavGrid` dinâmico, o risco que fez o H-6 ser
   "não"). Aceite: zona "beira do buraco" com tempo próprio e dano dela até 1 por sala. Custo P depois do RP-06.
@@ -793,6 +850,11 @@ Custo: P até meio dia, M 1 a 2 dias. Aceite sempre com a régua do item 1 (24 s
 - Junto: Provação e Altar ficam como estão (sala de escolha); com a Longe valeria só aproximar a câmera nelas
   (`cam_target` com distância própria, gameplay-engineer).
 - Dono: Game Director decide; `gameplay-engineer` (padrão do save), `ui-ux-designer` (opção). Custo: P.
+- **Feito (gameplay-engineer, 2026-11-19): Perto como padrão.** `SaveData` versão 7, padrão `"near"`; save de antes no
+  padrão antigo `"far"` passa a `"near"` uma vez, a menos que o jogador tenha escolhido (`camera_chosen`, marcado por
+  `Save.set_option("camera", ...)`; saves da versão 6 não tinham a marca, então quem escolheu Longe no dia de hoje volta
+  para Perto uma vez). No hub, com a Perto, nenhuma estação aparece nomeada da chegada (`test_ui_review` fixa a Longe
+  nesse caso): é do LR-11.
 
 **LR-02 A Perto não pode calar os atiradores.**
 - Evidência: 2.2. A faixa de 5 a 95% da tela da câmera em uso tira um terço do tempo de tiro nas salas grandes; dano por
@@ -804,6 +866,15 @@ Custo: P até meio dia, M 1 a 2 dias. Aceite sempre com a régua do item 1 (24 s
   luta (`keep_away` por sala); pior, porque muda o comportamento do inimigo por sala.
 - Aceite: tiros por sala e dano por sala na Perto dentro de 10% da Longe nas 12 vistas; `hurt_ctx.offscreen` sem subir.
 - Dono: `gameplay-engineer` (`Horde._can_fire`), `ui-ux-designer` (divisa). Custo: P a M.
+- **Feito (gameplay-engineer, 2026-11-19, junto com o LR-01).** A regra lê o quadro que a câmera Longe teria (54 m, posta
+  pelas regras dela, sem a folga da Perto: `Game._screen_of(..., as_far)`, `CamRig.look_at(..., as_far)`), não o quadro da
+  Longe centrado na Perto: assim a câmera não muda nada da simulação. `RESULT` de `--cam=far` igual ao de antes do LR-02
+  (semente 5) e, nas 24 sementes da régua (`--bot-reaction=0.25 --ultimate=cleave`), `--cam=near` e `--cam=far` dão o
+  mesmo `RESULT` nas 24 (fora fps e tempo de passo). Tiros e dano por sala na Perto (antes / depois, depois = Longe):
+  Jardim A 5,2 / 8,4 tiros e 0,27 / 1,35 de dano, Jardim B 12,0 / 11,7 e 1,00 / 2,85, Ponte A 3,8 / 5,8 e 1,45 / 1,33,
+  Ponte B 5,7 / 9,1 e 0,53 / 0,77 (as colunas "depois" são de hoje, com a Laje Rachada e a Fatia 1; compare com a Longe
+  de hoje, igual). 0 `stuck`, 0 `bot.stuck`. A tela em uso fica para o registro (`Horde.seen`, `screen_flag`) e para a
+  divisa: `Horde.off_screen_windups()` (atiradores e sacerdote ancião preparando fora da tela em uso).
 
 #### P1
 

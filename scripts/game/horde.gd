@@ -172,8 +172,12 @@ var last_by: StringName = &""
 ## unknown (-1), for the run's log (RoomTally.hurt_context; GP-02).
 var last_warn := -1.0
 var last_offscreen := -1
-## Where a floor point shows on the screen (0 to 1; Game sets it from its camera; unset: everywhere is seen).
+## Where a floor point shows on the far camera's screen (0 to 1; Game sets it; unset: everywhere is seen): the
+## shooters' rule (_can_fire), the same whatever camera the options chose (LR-02).
 var view := Callable()
+## Where a floor point shows on the screen of the camera in use (unset: the far one, view): the run's log (screen_flag)
+## and the shooters winding up off it (off_screen_windups, the HUD's edge marks).
+var seen := Callable()
 ## Enemies that got stuck this run, by kind (RESULT stuck; Bot.stats).
 var stuck_by := {}
 ## Blows that stunned someone, and attacks those blows cut, this run (GF-12; RESULT flinches, interrupts).
@@ -494,9 +498,12 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		if not d.shot_line and e.state_t < d.attack_windup - RANGED_LOCK:
 			e.aim = toward
 		e.dir = e.aim
+		if not e.fan.is_empty():
+			_point_fan(e)
 		if e.state_t >= d.attack_windup:
 			if caster:
 				e.warning = ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
+			e.fan.clear()  # (its threads fill on the frame the first shot leaves, then go)
 			e.memo = 0
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
@@ -570,6 +577,10 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 			# the line on the floor ends where the bolt will die on cover
 			e.warning = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
 				d.attack_windup, 0.0)
+		elif d.shot_orb and not d.shot_low and not caster:
+			# C19-5 (Q-14 a): the mage's orbs leave along a thread too, from the start of its wind-up to the first orb,
+			# turning with its aim until it locks (the burst keeps one thread; the orb turns a little in its first 0.8 s)
+			_aim_fan(e, toward)
 
 
 ## How many of this kind (the common one and its elite count together) are winding up or shooting now.
@@ -659,16 +670,29 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
 	match e.state:
 		Enemy.State.WINDUP:
+			if e.warning2 != null:
+				# C19-1: its second blade follows him through the wind-up and keeps where he stood at its end
+				var to2 := target - e.lands_at
+				if to2.length_squared() > 0.01:
+					e.aim2 = to2.normalized()
+				Ground.point_line(e.warning2 as Ground.Zone, e.lands_at, e.aim2)
 			if e.state_t >= d.attack_windup - TICK_SLACK:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		Enemy.State.ATTACK:
 			var go := minf(e.travel, d.lunge_speed * dt)
 			e.pos += e.aim * go
 			e.travel -= go
-			if not e.landed and e.state_t >= e.strike_t - TICK_SLACK:
+			if e.blows < d.strikes and e.state_t >= blow_at(e, e.blows) - TICK_SLACK:
+				if e.blows == 1:
+					# (C19-1) the second blade, at once from where the body landed, to where he stood
+					e.aim = e.aim2
+					e.dir = e.aim2
+					e.travel = 0.0
+					e.warning2 = null
+				e.blows += 1
 				e.landed = true
 				_blade_lands(e)
-			if e.state_t >= maxf(d.lunge_time, e.strike_t + STRIKE_BITE):
+			if e.state_t >= maxf(d.lunge_time, blow_at(e, d.strikes - 1) + STRIKE_BITE):
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.8, 1.3)
 				_end_attack(e)
 		_:
@@ -683,9 +707,25 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.travel = clampf(dist - d.radius - Player.RADIUS, 0.0, d.lunge_speed * d.lunge_time)
 				e.strike_t = maxf(d.strike_at, e.travel / maxf(d.lunge_speed, 0.1))
 				e.landed = false
+				e.blows = 0
 				e.warning = ground.add_aim_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
+				if d.strikes > 1:
+					# C19-1 (Hades' Guard elite): the second blade's thread shows from the wind-up on (0.2 s after the
+					# first is too short to read a warning born then), from where the body lands
+					e.lands_at = e.pos + toward * e.travel
+					e.aim2 = toward
+					e.warning2 = ground.add_aim_warning(e.lands_at, toward, blade_reach(d), 1.3, d.attack_windup + blow_at(e, 1) + dt, 0.0)
 			else:
 				_wait_ring(e, dt, toward, dist)
+
+
+## Seconds a runner's spin goes on after its last burst before its recovery (0.4 s attack, the burst at 0.1).
+const PULSE_AFTER := 0.3
+
+
+## Seconds into its attack at which its blow `k` lands (0 the first; C19-1, C19-2: EnemyDef.strike_gap apart).
+static func blow_at(e: Enemy, k: int) -> float:
+	return e.strike_t + maxi(k, 0) * e.def.strike_gap
 
 
 ## T5-09: a warning made in the crowd's step already loses that frame in the floor's step (Game: horde, then ground),
@@ -840,6 +880,10 @@ func raise_spot(from: Vector2, k: int) -> Vector2:
 func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
 	if e.state == Enemy.State.WINDUP:
+		if not e.fan.is_empty():
+			# C19-5: its fan's threads follow him until it shoots (they and the orbs leave along the same aim)
+			e.aim = toward
+			_point_fan(e)
 		if e.state_t >= d.attack_windup:
 			e.memo += 1
 			# every other cast raises skeletons, as many as the fight has room for (none: it conjures circles)
@@ -853,7 +897,10 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				Audio.play(&"summon")
 			else:
 				# the circles on the floor are Morvath's alone (Daniel, 2026-11-16): a fan of orbs
-				shoot(e, toward)
+				shoot(e, e.aim if not e.fan.is_empty() else toward)
+			if raised > 0:
+				_end_fan(e)
+			e.fan.clear()
 			e.cooldown = d.attack_cooldown
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		return
@@ -872,6 +919,56 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		# T5-03: raising the dead is its own gesture (the priest's ritual), the fan of orbs the staff's
 		var raises := (e.memo + 1) % 2 == 1 and room_for(PRIEST_RAISES) > 0
 		_set_state(e, Enemy.State.WINDUP, &"summon" if raises else &"cast")
+		if not raises:
+			_aim_fan(e, toward)
+
+
+## C19-5 (Q-14 a, combat_cadence.md 8.2): the threads of a fan of shots winding up, in the crossbow's grammar
+## (Ground.add_aim_warning): one per shot, up to FAN_THREADS (the elder's five: with only its edges and its middle,
+## stepping off a thread put him on an orb with none, and the robot's hits by the elder went 45 to 99 in 24 seeds),
+## born together with the wind-up and full on the frame it shoots, each as long as its shot flies before stone.
+const FAN_THREADS := 5
+const AIM_THREAD_WIDTH := 0.7
+## The tag on those threads (Ground.Zone.tags): the robot dodges their shots, not the threads (Bot._danger).
+const FAN_TAG := &"aim_fan"
+
+
+func _aim_fan(e: Enemy, toward: Vector2) -> void:
+	_end_fan(e)
+	var d := e.def
+	var n := mini(FAN_THREADS, maxi(1, d.shot_count))
+	for i in n:
+		var z := ground.add_aim_warning(e.pos, toward, 1.0, AIM_THREAD_WIDTH, d.attack_windup + _dt, 0.0)
+		z.tags.append(FAN_TAG)
+		e.fan.append(z)
+	e.aim = toward
+	_point_fan(e)
+
+
+## Turns the fan's threads with e.aim (each the length its shot flies before stone stops it).
+func _point_fan(e: Enemy) -> void:
+	var d := e.def
+	var n := e.fan.size()
+	var reach := d.shot_range if d.shot_range > 0.0 else d.attack_range * RANGED_REACH
+	for i in n:
+		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
+		var dir := e.aim.rotated(turn)
+		var z := e.fan[i] as Ground.Zone
+		if z == null or z.cancelled or z.node == null or not is_instance_valid(z.node):
+			continue  # (the floor was cleared under it: a new room, his fall)
+		var from := e.pos + dir * (d.radius + 0.2)
+		var length := arena.shot_reach(from, dir, reach, Projectiles.SHOT_EDGE)
+		if absf(z.radius - length) > 0.05:
+			z.radius = length
+			z.node.scale.z = length
+			GroundLook.put(z.mat, &"length_m", length)
+		Ground.point_line(z, from, dir)
+
+
+func _end_fan(e: Enemy) -> void:
+	for z in e.fan:
+		Ground.end_zone(z as Ground.Zone)
+	e.fan.clear()
 
 
 ## Runs in close, stops, glows (the warning ring) and bursts all around itself.
@@ -882,7 +979,16 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if e.state_t >= d.attack_windup:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 		Enemy.State.ATTACK:
-			if e.state_t >= 0.4:
+			# C19-2: each burst after the first gets its ring on the frame of the one before, where the body is, full
+			# on the frame of its own (strike_gap, at least 0.5 s to read a new ring)
+			while e.blows < d.strikes and e.state_t >= blow_at(e, e.blows) - TICK_SLACK:
+				if e.blows > 0:
+					Audio.play(CombatSounds.strike(d))  # (the first one's sound came with the attack)
+				e.blows += 1
+				if e.blows < d.strikes:
+					e.warning2 = ground.add_warning(e.pos, d.attack_width, d.strike_gap + dt, d.attack_damage * damage_scale, d.magic_color)
+			if e.state_t >= blow_at(e, d.strikes - 1) + PULSE_AFTER:
+				e.warning2 = null
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
 				_end_attack(e)
 		_:
@@ -892,6 +998,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			elif e.cooldown <= 0.0 and target_alive:
 				_set_state(e, Enemy.State.WINDUP, &"windup")
 				e.strike_t = d.strike_at
+				e.blows = 0
 				# it bursts as its arms open, strike_at into its attack (T5-09): the warning fills until then
 				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * damage_scale, d.magic_color)
 			else:
@@ -939,26 +1046,46 @@ func _way(e: Enemy, toward: Vector2, dist: float) -> Vector2:
 	return toward if e.straight else e.way
 
 
-## A shooter may wind up: a clear line of fire to the paladin and its body on the screen (VIEW_EDGE).
+## A shooter may wind up: a clear line of fire to the paladin and its body on the far camera's screen (VIEW_EDGE).
 func _can_fire(e: Enemy) -> bool:
 	if not arena.clear_shot(e.pos, target, LINE_OF_FIRE):
 		return false
 	return on_screen(e.pos)
 
 
-## True when a body at p shows on the screen, VIEW_EDGE inside its edges (always, without a view).
+## True when a body at p shows on the far camera's screen, VIEW_EDGE inside its edges (always, without a view).
 func on_screen(p: Vector2) -> bool:
-	if not view.is_valid():
+	return _inside(view, p)
+
+
+## True when a body at p shows on the screen of the camera in use, VIEW_EDGE inside its edges (the far one without seen).
+func in_sight(p: Vector2) -> bool:
+	return _inside(seen if seen.is_valid() else view, p)
+
+
+static func _inside(frame: Callable, p: Vector2) -> bool:
+	if not frame.is_valid():
 		return true
-	var s: Vector2 = view.call(p)
+	var s: Vector2 = frame.call(p)
 	return s.x >= VIEW_EDGE and s.x <= 1.0 - VIEW_EDGE and s.y >= VIEW_EDGE and s.y <= 1.0 - VIEW_EDGE
 
 
-## For the run's log: 1 when a body at p is off the screen, 0 on it, -1 unknown (no view, or p is Vector2.INF).
+## For the run's log: 1 when a body at p is off the screen in use, 0 on it, -1 unknown (no view, or p is Vector2.INF).
 func screen_flag(p: Vector2) -> int:
-	if not view.is_valid() or not p.is_finite():
+	if not (seen.is_valid() or view.is_valid()) or not p.is_finite():
 		return -1
-	return 0 if on_screen(p) else 1
+	return 0 if in_sight(p) else 1
+
+
+## The shooters (ARCHER, and the elder PRIEST: everyone _can_fire lets wind up) winding up now off the screen of the camera in use (the far camera's rule lets them, LR-02):
+## for the HUD's edge marks (ui-ux-designer). Each is the Enemy itself (pos, def, state_t of its windup).
+func off_screen_windups() -> Array[Enemy]:
+	var out: Array[Enemy] = []
+	for e in list:
+		if e.state == Enemy.State.WINDUP and (e.def.behavior == EnemyDef.Behavior.ARCHER or e.def.behavior == EnemyDef.Behavior.PRIEST) \
+				and not in_sight(e.pos):
+			out.append(e)
+	return out
 
 
 ## Counts an enemy that wants to come closer and has not moved for STUCK_TIME seconds (once each).
@@ -1124,6 +1251,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 		return false
 	# what it really takes off (armor, or life down to its floor), under where it came from (DT-016)
 	dealt.add(dealing, minf(amount, e.armor) if e.armor > 0.0 else clampf(e.hp - e.hp_floor, 0.0, amount))
+	if e.state == Enemy.State.RECOVER and flash and from_dir != Vector2.ZERO:
+		_tally_windup(e, 3)  # a blow in its window after the attack (on the armor too)
 	if e.armor > 0.0:
 		# armor takes the blow: no push, no flinch; breaking it staggers (Game listens to armor_broken)
 		e.armor = DamageCalc.against_armor(e.armor, amount)[0]
@@ -1161,6 +1290,11 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if e.hp <= 0.0:
 		if e.state == Enemy.State.WINDUP:
 			_tally_windup(e, 2)
+		# its blows still to come (C19: a second blade or burst, a fan's threads) go with it
+		if e.warning2 != null:
+			Ground.end_zone(e.warning2 as Ground.Zone)
+			e.warning2 = null
+		_end_fan(e)
 		e.alive = false
 		e.state = Enemy.State.DEAD
 		if e.def.behavior == EnemyDef.Behavior.BOSS:
@@ -1213,6 +1347,10 @@ func interrupt(e: Enemy) -> bool:
 	if e.warning != null:
 		Ground.end_zone(e.warning as Ground.Zone)
 		e.warning = null
+	if e.warning2 != null:
+		Ground.end_zone(e.warning2 as Ground.Zone)
+		e.warning2 = null
+	_end_fan(e)
 	if e.def.behavior != EnemyDef.Behavior.PRIEST:
 		e.memo = 0  # (a knight's slam, a burst's ticks; the elder priest counts its casts there)
 	_cutting = true
@@ -1241,20 +1379,21 @@ func _sweep() -> void:
 		dying.pop_front()
 
 
-## DT-102: one wind-up of e's kind started (0), reached its blow (1) or was cut (2).
+## DT-102: one wind-up of e's kind started (0), reached its blow (1) or was cut (2); C19-1: a blow it took in its
+## recovery (3, the window punished).
 func _tally_windup(e: Enemy, what: int) -> void:
 	var id := String(e.def.id)
 	if not windups.has(id):
-		windups[id] = [0, 0, 0]
+		windups[id] = [0, 0, 0, 0]
 	windups[id][what] += 1
 
 
-## The wind-ups by kind for RESULT: {id: {started, struck, cut}}.
+## The wind-ups by kind for RESULT: {id: {started, struck, cut, punished}}.
 func windup_report() -> Dictionary:
 	var out := {}
 	for id: String in windups:
 		var w: Array = windups[id]
-		out[id] = {"started": w[0], "struck": w[1], "cut": w[2]}
+		out[id] = {"started": w[0], "struck": w[1], "cut": w[2], "punished": w[3]}
 	return out
 
 
@@ -1437,8 +1576,21 @@ func render(render_dt := 1.0 / 60.0) -> void:
 				# from where the wind-up left it: the start of its own attack clip when it has a wind-up clip (the
 				# soldier's blade held high while its body pounces, coming down as it lands: strike_t, T5-09), else
 				# the share of the swing the wind-up stretched
-				if kind.has_windup:
+				if kind.has_windup and d.strikes > 1 and d.behavior == EnemyDef.Behavior.RUNNER:
+					# C19-1: the second blade is the blow again from its top, faded in from where the first ended
+					var k := 0
+					while k + 1 < d.strikes and e.state_t >= blow_at(e, k + 1) - d.strike_at:
+						k += 1
+					if k != e.drawn_tick:
+						e.drawn_tick = k
+						e.drawn_anim = &""
+					fade_len = d.strike_gap * 0.5
+					t = maxf(0.0, e.state_t - (blow_at(e, k) - d.strike_at)) * ATTACK_PLAY
+				elif kind.has_windup:
 					t = maxf(0.0, e.state_t - (e.strike_t - d.strike_at)) * ATTACK_PLAY
+					if d.strikes > 1:
+						# C19-2: the runner's spin goes on round and round between its bursts
+						t = fposmod(t, maxf(kind.model.duration(&"attack"), 0.01))
 				else:
 					t = e.state_t * ATTACK_PLAY + kind.attack_time * IMPACT_SHARE
 				e.blow_t = t

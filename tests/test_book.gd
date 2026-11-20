@@ -12,6 +12,7 @@ func _data(xp: int, equipped: Array = []) -> Dictionary:
 	var d := SaveData.defaults()
 	var block := SaveData.hero(d, "warrior")
 	block.mastery_xp = xp
+	SaveData.open_revealed(block)  # a player who got there before the Memória (Rejogabilidade): every Gift opened
 	block.equipped = equipped
 	return d
 

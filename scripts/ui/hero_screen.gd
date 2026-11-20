@@ -26,8 +26,9 @@ enum Chapter { OPENING, HERO, GIFTS }
 const CHAPTER_KEY: Array[StringName] = [&"book_chapter_opening", &"title_hero", &"hero_gifts"]
 const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter_gifts"]
 ## Screen margins round the book and the bookmarks' width, px at 720 lines.
-const OUTER := Vector2(22, 4)
-const TAB_WIDTH := 180.0
+## (12 px over the bookmarks at the top: UI review d2ff05d, P1-5.)
+const OUTER := Vector2(22, 12)
+const TAB_WIDTH := 170.0
 ## The spine: the left page (the tree, the painting) a little wider than the right (the words).
 const SPINE := 0.55
 const CREST := 46.0
@@ -35,6 +36,8 @@ const NAME_SIZE := 26
 const DESC_SIZE := 18
 const META_SIZE := 16
 const STEP_GLYPH := 52.0
+## The buttons in the foot of the right page.
+const FOOT_WIDTH := 124.0
 const MARK := 26.0
 ## The places beside the Warrior's in the book's head: how many are sealed, and their size.
 const SEALED := 3
@@ -81,15 +84,27 @@ var _hint: Label
 var _to_gifts: Button
 var _down: Button
 var _down_hero: Button
+## Opened in the hub (the Livro de Ahk at its lectern): no way down from the book, the Portal is the way down (UI
+## review d2ff05d, P1-4).
+var in_hub := false
 ## The Compêndio opened from the book (null: none).
 var _codex: CodexScreen
 var _codex_button: Button
 ## What the panel tells now (a TalentDef, an UltDef or null for the centre).
 var _shown: Variant = null
+## Abrir with Memória (Rejogabilidade, Fatia 1): the sealed Gift asked to open, waiting for the second press that
+## confirms it on this page (no sheet over the book), for CONFIRM_TIME seconds; moving the focus forgets it.
+const CONFIRM_TIME := 3.0
+var arming: StringName = &""
+var _arm_t := 0.0
+## The materials held, in the head of the right page (MaterialCount.purse).
+var _purse: HBoxContainer
 
 
 ## data: the save data to read and edit (Save.data in the game; tests give their own); start: the chapter open first.
-func open(data: Dictionary = {}, start: Chapter = Chapter.HERO) -> void:
+## hub: opened in the hub, where only the Portal goes down (no "Descer às catacumbas" in the book).
+func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = false) -> void:
+	in_hub = hub
 	_data = data if not data.is_empty() else Save.data
 	loadout = HeroLoadout.new(HeroDef.warrior(), _data)
 	theme = Book.theme()
@@ -106,15 +121,17 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO) -> void:
 	frame.add_theme_constant_override(&"margin_bottom", int(BookSpread.RIBBON_DROP))
 	add_child(frame)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override(&"separation", 2)
+	col.add_theme_constant_override(&"separation", 0)
 	frame.add_child(col)
+	# the chapters are leather bookmarks standing out of the top of the cover (P1-5), not the menus' tabs
 	var marks := HBoxContainer.new()
 	marks.name = "chapters"
 	marks.alignment = BoxContainer.ALIGNMENT_CENTER
 	marks.add_theme_constant_override(&"separation", 6)
+	marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
 	col.add_child(marks)
 	for c: int in Chapter.values():
-		var b := UiKit.tab(T.t(CHAPTER_KEY[c]), TAB_WIDTH)
+		var b := Book.mark(T.t(CHAPTER_KEY[c]), TAB_WIDTH)
 		b.name = CHAPTER_NAME[c]
 		b.focus_entered.connect(_show.bind(c))
 		b.pressed.connect(_show.bind(c))
@@ -219,6 +236,12 @@ func _head_right() -> Control:
 	_devotion = DevotionPips.new()
 	dev.add_child(_devotion)
 	row.add_child(dev)
+	# the purse: Prata and Memória held (the Memória opens the sealed Gifts), under the Devotion's pips (beside them
+	# it pushed the page's buttons out at 720 lines)
+	_purse = MaterialCount.purse(_data, Book.INK, 15, 16.0)
+	_purse.alignment = BoxContainer.ALIGNMENT_END
+	_purse.add_theme_constant_override(&"separation", 12)
+	dev.add_child(_purse)
 	return row
 
 
@@ -275,13 +298,14 @@ func _opening_right() -> Control:
 	var gap := Control.new()
 	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(gap)
-	_down = _descend_button("descend")
-	v.add_child(_down)
+	if not in_hub:
+		_down = _descend_button("descend")
+		v.add_child(_down)
 	return v
 
 
 func _descend_button(id: String) -> Button:
-	var b := UiKit.primary(UiKit.button(T.t(&"menu_play"), func() -> void: descend.emit(), 280))
+	var b := Book.primary(Book.button(T.t(&"menu_play"), func() -> void: descend.emit(), 280))
 	b.name = id
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	return b
@@ -340,15 +364,10 @@ func _hero_right() -> Control:
 	var gap := Control.new()
 	gap.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(gap)
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override(&"separation", 12)
-	_to_gifts = UiKit.button(T.t(&"hero_gifts"), func() -> void: _open_chapter(Chapter.GIFTS), 170)
-	_to_gifts.name = "to_gifts"
-	row.add_child(_to_gifts)
-	_down_hero = _descend_button("descend_hero")
-	row.add_child(_down_hero)
-	v.add_child(row)
+	# the way down on the title's book only; Dons sits in the foot with the Compêndio and Voltar (P1-4)
+	if not in_hub:
+		_down_hero = _descend_button("descend_hero")
+		v.add_child(_down_hero)
 	return v
 
 
@@ -450,10 +469,15 @@ func _footer() -> Control:
 	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(_hint)
-	_codex_button = UiKit.button(T.t(&"pause_moves"), _open_codex, 150)
+	# one row at the foot of the right page, to its right (P1-4): Dons (on the Warrior's chapter), Compêndio, Voltar
+	row.add_theme_constant_override(&"separation", 10)
+	_to_gifts = Book.button(T.t(&"hero_gifts"), func() -> void: _open_chapter(Chapter.GIFTS), FOOT_WIDTH)
+	_to_gifts.name = "to_gifts"
+	row.add_child(_to_gifts)
+	_codex_button = Book.button(T.t(&"pause_moves"), _open_codex, FOOT_WIDTH + 24.0)
 	_codex_button.name = "codex"
 	row.add_child(_codex_button)
-	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 150)
+	var back := Book.button(T.t(&"back"), func() -> void: closed.emit(), FOOT_WIDTH)
 	back.name = "back"
 	row.add_child(back)
 	return row
@@ -502,9 +526,10 @@ func _unhandled_input(event: InputEvent) -> void:
 func _show(c: int) -> void:
 	chapter = c as Chapter
 	for i in chapters.size():
-		chapters[i].set_pressed_no_signal(i == c)
+		Book.mark_open(chapters[i], i == c)
 		_left[i].visible = i == c
 		_right[i].visible = i == c
+	_to_gifts.visible = chapter == Chapter.HERO
 	# the keys' hint is the Gifts'; elsewhere the line stays (empty) so Voltar keeps its corner
 	_hint.self_modulate.a = 1.0 if chapter == Chapter.GIFTS else 0.0
 
@@ -524,7 +549,8 @@ func _first_focus() -> Control:
 func _chapter_focus(c: Chapter) -> Control:
 	match c:
 		Chapter.OPENING:
-			return _down
+			# in the hub the Opening has no way down: its bookmark holds the focus
+			return _down if _down != null else chapters[Chapter.OPENING]
 		Chapter.HERO:
 			return _to_gifts
 	# the Gifts: the first that can go on, else the first one on, else the centre
@@ -536,12 +562,45 @@ func _chapter_focus(c: Chapter) -> Control:
 
 
 func _pick(t: TalentDef) -> void:
+	if loadout.state(t) == HeroLoadout.State.SEALED:
+		_open_sealed(t)
+		return
 	if loadout.toggle(t.id):
 		Audio.play(&"ui_ok")
 		_save()
 	else:
 		tree.node(t.id).refuse()
 	_refresh()
+
+
+## A sealed Gift: the first press asks (the panel says what it costs), the second within CONFIRM_TIME opens it with
+## Memória and writes the save; without enough Memória the node refuses and the panel says what is missing.
+func _open_sealed(t: TalentDef) -> void:
+	if loadout.can_open(t) != Talents.Problem.OK:
+		arming = &""
+		tree.node(t.id).refuse()
+		_tell(t)
+		return
+	if arming != t.id:
+		arming = t.id
+		_arm_t = CONFIRM_TIME
+		Audio.play(&"ui_move")
+		_tell(t)
+		return
+	arming = &""
+	if loadout.open(t.id):
+		Audio.play(&"ui_ok")
+		_save()
+	_refresh()
+
+
+func _process(delta: float) -> void:
+	if arming == &"":
+		return
+	_arm_t -= delta
+	if _arm_t <= 0.0:
+		arming = &""
+		_tell(_shown)
 
 
 func _choose(u: UltDef) -> void:
@@ -565,6 +624,7 @@ func _refresh() -> void:
 	for c in ults:
 		c.open = loadout.ult_open(c.def)
 		c.chosen = loadout.ultimate() == c.def.id
+	MaterialCount.refresh(_purse, _data)
 	_devotion.set_counts(loadout.used(), loadout.devotion())
 	_devotion_count.text = T.t(&"hero_devotion_count", {"used": loadout.used(), "max": loadout.devotion()})
 	var next := loadout.next_unlocks()
@@ -575,12 +635,20 @@ func _refresh() -> void:
 
 ## The footer names the keys of the device in hand, and changes live when the player picks up the other one.
 func _name_keys(pad: bool) -> void:
-	_hint.text = T.t(&"hero_hint_pad" if pad else &"hero_hint")
+	var sealed := _shown is TalentDef and loadout.state(_shown) == HeroLoadout.State.SEALED
+	if sealed:
+		_hint.text = T.t(&"hero_hint_open_pad" if pad else &"hero_hint_open")
+	else:
+		_hint.text = T.t(&"hero_hint_pad" if pad else &"hero_hint")
 
 
 ## The panel tells a Gift (TalentDef), an ultimate (UltDef) or the passive (null).
 func _tell(what: Variant) -> void:
+	if not (what is TalentDef and (what as TalentDef).id == arming):
+		arming = &""
 	_shown = what
+	if _hint != null:
+		_name_keys(Controls.using_pad)
 	if what is TalentDef:
 		_tell_gift(what)
 	elif what is UltDef:
@@ -603,6 +671,8 @@ func _tell_gift(t: TalentDef) -> void:
 	var cost := T.t(&"hero_cost_devotion", {"n": t.cost})
 	if t.slot != Boon.Slot.NONE:
 		cost += ". " + T.t(&"hero_action", {"action": T.t(HeroLoadout.ACTION_KEY[t.slot])})
+	if not loadout.is_open(t) and loadout.open_cost(t) > 0:
+		cost += ". " + T.t(&"hero_cost_memory", {"n": loadout.open_cost(t)})
 	_cost.text = cost
 	var need := loadout.needs_text(t)
 	_needs.text = T.t(need.key, need.args)
@@ -613,11 +683,27 @@ func _tell_gift(t: TalentDef) -> void:
 			_set_status(T.t(&"hero_can_equip"), Book.INK)
 		HeroLoadout.State.LOCKED:
 			_set_status(T.t(&"hero_why_locked", {"n": t.unlock_level}), Book.FADED)
+		HeroLoadout.State.SEALED:
+			_set_status(T.t(&"hero_state_sealed"), Book.INK)
 		_:
 			var why := loadout.why(t)
 			_set_status(T.t(why.key, why.args) if not why.is_empty() else "", Book.WARN)
 	var step := loadout.next_step(t)
-	_step.text = T.t(step.key, step.args) if loadout.state(t) == HeroLoadout.State.LOCKED else ""
+	_step.add_theme_color_override(&"font_color", Book.FADED)
+	match loadout.state(t):
+		HeroLoadout.State.LOCKED:
+			_step.text = T.t(step.key, step.args)
+		HeroLoadout.State.SEALED:
+			if arming == t.id:
+				_step.text = T.t(&"hero_open_confirm", {"cost": loadout.open_cost(t)})
+				_step.add_theme_color_override(&"font_color", Book.RUBRIC)
+			elif loadout.can_open(t) == Talents.Problem.SHORT:
+				_step.text = T.t(&"hero_open_short", {"n": loadout.open_cost(t) - loadout.memory()})
+				_step.add_theme_color_override(&"font_color", Book.WARN)
+			else:
+				_step.text = T.t(step.key, step.args)
+		_:
+			_step.text = ""
 
 
 func _tell_ult(u: UltDef) -> void:

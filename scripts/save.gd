@@ -21,9 +21,10 @@ func _ready() -> void:
 			push_warning("save: %s could not be read; loaded its copy %s%s" % [PATH, PATH, SaveFile.BAK])
 	_dev_hero()
 	_dev_juramentos()
+	_dev_materials()
 
 
-## Captures and checks (E2-06): --hero-xp=N and --hero-equip=a,b set the Warrior's Mastery XP and Gifts for this
+## Captures and checks (E2-06): --hero-xp=N (with --hero-opened=a,b, only those opened) and --hero-equip=a,b set the Warrior's Mastery XP and Gifts for this
 ## session only (nothing is written afterwards).
 func _dev_hero() -> void:
 	if not Dev.has("hero-xp") and not Dev.has("hero-equip"):
@@ -32,6 +33,12 @@ func _dev_hero() -> void:
 	var block := SaveData.hero(data, SaveData.FIRST_HERO)
 	if Dev.has("hero-xp"):
 		block.mastery_xp = int(Dev.num("hero-xp", 0))
+		# a save of that level has opened what its Mastery revealed (as the version 6 migration did); --hero-opened=a,b
+		# opens only those (the others revealed stay sealed, for captures of Abrir with Memória)
+		if Dev.has("hero-opened"):
+			block.opened = Array(Dev.arg("hero-opened").split(",", false))
+		else:
+			SaveData.open_revealed(block)
 	if Dev.has("hero-equip"):
 		block.equipped = Array(Dev.arg("hero-equip").split(",", false))
 	if Dev.has("hero-ult"):
@@ -50,6 +57,21 @@ func _dev_juramentos() -> void:
 		Juramentos.block(data)["ranks"] = Juramentos.parse(Dev.arg("juramentos"))
 
 
+## Captures and checks (Rejogabilidade, Fatia 1): --materials=silver:30,memory:5 (what the save holds) and --forge=N
+## (the Forja's Temperar bought), for this session only (nothing is written afterwards). A run reads --forge itself too
+## (Game._equip_forge, also the robot's).
+func _dev_materials() -> void:
+	if not Dev.has("materials") and not Dev.has("forge"):
+		return
+	enabled = false
+	if Dev.has("materials"):
+		var got := MaterialPurse.parse(Dev.arg("materials"))
+		for id: String in got:
+			data.materials[id] = got[id]
+	if Dev.has("forge"):
+		Forge.block(data)["temper"] = int(Dev.num("forge", 0))
+
+
 func write() -> void:
 	if not enabled:
 		return
@@ -63,4 +85,7 @@ func option(key: String) -> Variant:
 
 func set_option(key: String, value: Variant) -> void:
 	data.options[key] = value
+	if key == "camera":
+		# the player's own choice: no default change moves it again (SaveData version 7, LR-01)
+		data.options["camera_chosen"] = true
 	write()

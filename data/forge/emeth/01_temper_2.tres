@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_uunuh"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_yss7y"]
+
+[sub_resource type="Resource" id="Resource_80tuk"]
+script = ExtResource("1_uunuh")
+stat = &"damage_pct"
+tag = &"heavy"
+base = 0.1
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_yss7y")
+id = &"temper_2"
+rank = 2
+name_key = &"forge_temper_2"
+desc_key = &"forge_temper_2_desc"
+cost = 35
+mods = Array[ExtResource("1_uunuh")]([SubResource("Resource_80tuk")])

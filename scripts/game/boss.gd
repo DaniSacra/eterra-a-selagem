@@ -43,7 +43,7 @@ signal cue(name: StringName, at: Vector2, dir: Vector2, size: float, seconds: fl
 ## each of those dead falling and when it ends (left 0). Also readable at any time: ritual_left(), ritual_total().
 signal ritual_changed(left: int, total: int)
 
-enum State { ENTER, CHASE, SCYTHE, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER }
+enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER }
 
 ## T5b P1-4 (docs/qa/t5b_boss_fight.md): his body turns at most BODY_TURN degrees a second toward where he faces (e.dir,
 ## which his attacks still set at once: the warnings and the blows do not move); it snapped 100 to 137 degrees in one
@@ -53,7 +53,7 @@ const BODY_TURN := 720.0
 const FOLLOW_RATE := 2.0
 ## The states the director's attack ids stand for.
 const ATTACKS := {
-	&"scythe": State.SCYTHE, &"blades": State.BLADES, &"storm": State.STORM, &"eruptions": State.ERUPTIONS,
+	&"scythe": State.SCYTHE, &"reap": State.REAP, &"blades": State.BLADES, &"storm": State.STORM, &"eruptions": State.ERUPTIONS,
 	&"curse": State.CURSE, &"summon": State.SUMMON, &"dash": State.DASH_WARN,
 }
 const DEFS_DIR := "res://data/bosses/"
@@ -103,6 +103,13 @@ const SCYTHE_LIFE := 0.55
 ## T5-14: seconds into the sweep when the blade crosses his waist (slash3's poses 7 to 8 of the fall from 6 to 9): the
 ## blow lands then.
 const SCYTHE_HIT := 0.07
+## C19-3, the Double Reap: its two sweeps are slash1 and slash2 (Sword_Regular_A and B, in place since E1c), drawn
+## back to REAP_ARMED of their length in the wind-up and fastest at REAP_PEAK (tools/clip_motion.gd: 0.23 of 0.43 s
+## and 0.25 of 0.53 s).
+const REAP_FIRST := &"slash1"
+const REAP_SECOND := &"slash2"
+const REAP_ARMED := 0.38
+const REAP_PEAK := {&"slash1": 0.53, &"slash2": 0.47}
 ## T5-15: his wind-ups in three beats as the crowd's (Horde.windup_arm): seconds to settle, share of the end held,
 ## and how much he trembles in that hold (m, only drawn).
 const WINDUP_SETTLE := 0.12
@@ -203,6 +210,9 @@ var _layers: Array[StringName] = []
 var _layer_due := 0.0
 ## The recovery now: how long, and its pose.
 var _recover_time := 0.0
+## C19-3: when the reap's short rest ends and its second wind-up begins (-1: not yet).
+var _reap_due := -1.0
+var _reap_end := 0.0
 var _recover_anim: StringName = &"idle"
 var _punished := false
 ## The storm: when each crescent of the wave leaves (seconds of _t; < 0 once gone), and the wave.
@@ -346,6 +356,8 @@ func _advance(dt: float) -> void:
 				_choose(to.length())
 		State.SCYTHE:
 			_step_scythe(dt, to, toward)
+		State.REAP:
+			_step_reap(dt, to, toward)
 		State.BLADES:
 			_step_blades(dt)
 		State.STORM:
@@ -549,6 +561,86 @@ func _step_scythe(dt: float, to: Vector2, toward: Vector2) -> void:
 				_recover(def.scythe_recovery - SCYTHE_SWEEP, SCYTHE_CLIP, SCYTHE_SWEEP)
 
 
+## C19-3, the Double Reap (Q-09 a; Hades II's Hecate pair, docs/design/combat_cadence.md 8.2): close in, a sweep to
+## his right and at once one back to his left, then a long window. Walks in as the scythe does; the first sweep's half
+## circle (reap_degrees) fills over reap_windup and strikes as slash1's blade is fastest (REAP_PEAK); reap_active
+## after it the second's is born where the paladin is then and fills over reap_pause and reap2_windup (slash2), then
+## reap_recovery standing spent. Both clips are his in place (E1c), held in both hands; his body turns at BODY_TURN.
+func _step_reap(dt: float, to: Vector2, toward: Vector2) -> void:
+	match _step:
+		0:
+			if to.length() > def.reap_reach * 0.55 and _t < def.scythe_approach:
+				e.dir = e.dir.slerp(toward, 0.3)
+				e.pos += toward * e.def.speed * 1.25 * dt
+				_anim(&"walk")
+				return
+			_step = 1
+			_mark = _t
+			_reap_warn(toward, _windup(def.reap_windup))
+		1:
+			if _reap_swing(dt, REAP_FIRST, _windup(def.reap_windup)):
+				_step = 2
+				_mark = _t
+		2:
+			# the first sweep's follow-through, through its active time and the short rest after it
+			_play_on(REAP_FIRST, float(REAP_PEAK[REAP_FIRST]))
+			if _t - _mark >= def.reap_active and _reap_due < 0.0:
+				# the second is born where the paladin is now, filling over the short rest and its own wind-up
+				var to_him := game.player.pos - e.pos
+				var both := _windup(def.reap_pause + def.reap2_windup)
+				_reap_due = _t + both * def.reap_pause / maxf(def.reap_pause + def.reap2_windup, 0.01)
+				_reap_end = _t + both
+				_reap_warn(to_him.normalized() if to_him.length() > 0.2 else _dir, both)
+			if _reap_due >= 0.0 and _t >= _reap_due:
+				_step = 3
+				_mark = _t
+				_reap_due = -1.0
+		3:
+			if _reap_swing(dt, REAP_SECOND, _reap_end - _mark):
+				_step = 4
+				_mark = _t
+		4:
+			_play_on(REAP_SECOND, float(REAP_PEAK[REAP_SECOND]))
+			if _t - _mark >= def.reap2_active:
+				_recover(def.reap_recovery, REAP_SECOND, def.reap2_active)
+
+
+## One of the reap's half circles on the floor (filling for `windup` seconds), toward `dir`.
+func _reap_warn(dir: Vector2, windup: float) -> void:
+	_dir = dir
+	e.dir = _dir
+	_warn(game.ground.add_arc_warning(e.pos, _dir, def.reap_reach, def.reap_degrees, windup, def.reap_damage))
+	moment.emit(&"reap_warn")
+	cue.emit(&"scythe_raise", e.pos, _dir, def.reap_reach, windup)
+	Audio.play(&"scythe_raise")
+
+
+## A reap's sweep through its wind-up of `windup` seconds since _mark: the clip drawn back to REAP_ARMED and held
+## trembling, then played on so its fastest frame falls on the warning's full one. True on the frame it lands.
+func _reap_swing(dt: float, clip: StringName, windup: float) -> bool:
+	var since := _t - _mark
+	var length := game.horde.renderer.model_of(e.def).duration(clip) if game.horde.renderer else 0.0
+	var lead := maxf(0.0, (float(REAP_PEAK[clip]) - REAP_ARMED) * length) / game.horde.clip_rate(e) if length > 0.0 else 0.0
+	var swing := maxf(windup - lead, 0.0)
+	if since < swing:
+		_pose(clip, REAP_ARMED * Horde.windup_arm(since, swing, WINDUP_SETTLE, WINDUP_HOLD))
+		e.shake = WINDUP_SHAKE * 0.5 if since >= swing * (1.0 - WINDUP_HOLD) else 0.0
+		_gathering(dt, e.pos + _dir.rotated(-PI * 0.5) * 1.1, VIOLET)
+	elif length > 0.0:
+		e.shake = 0.0
+		e.anim = clip
+		e.anim_t = (REAP_ARMED * length + (since - swing)) / game.horde.clip_rate(e)
+	if since < windup:
+		return false
+	game.fx.boss_scythe(e.pos, _dir, def.reap_reach, def.reap_degrees, SCYTHE_SWEEP, SCYTHE_LIFE, VIOLET, SPECTRAL)
+	game.fx.shake(1.5)
+	game.fx.kick(_dir, 0.45)
+	Audio.play(&"scythe")
+	moment.emit(&"reap_strike")
+	cue.emit(&"scythe_sweep", e.pos, _dir, def.reap_reach, SCYTHE_SWEEP)
+	return true
+
+
 ## Where the blade passed: ashes of violet and blue-green rise from inside the half circle (never past its edge),
 ## and the stone takes the blow at the far middle of the arc.
 func _scythe_ashes() -> void:
@@ -677,6 +769,7 @@ func _step_storm() -> void:
 func _base_windup(id: StringName) -> float:
 	match id:
 		&"scythe": return def.scythe_windup
+		&"reap": return def.reap_windup
 		&"blades": return def.blade_windup
 		&"storm": return def.storm_windup
 		&"eruptions": return def.eruption_delay
@@ -1407,6 +1500,7 @@ func _go(next: State) -> void:
 	_thrown = -1
 	_wave_at = 0.0
 	_gather = 0.0
+	_reap_due = -1.0
 	e.memo = 0
 	e.shake = 0.0
 

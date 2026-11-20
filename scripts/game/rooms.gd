@@ -26,12 +26,46 @@ const MAP_SALT := 7411
 const START_DELAY := 1.0
 ## Meters from the reward or a pedestal that count as touching it.
 const TOUCH := 1.6
+## C19, Q-13 (Hades II): the reward, a shop's item and a door are used with the interact action (E, A on the gamepad),
+## standing at them; touching them does nothing more (before, stepping on a pedestal bought it, on a door's foot left).
+## use() is the same press from elsewhere (a click on a sign, a test).
+var _use_queued := false
+
+
+func use() -> void:
+	_use_queued = true
+
+
+## The interact action this step (or a use() queued), once.
+func _used() -> bool:
+	var want := _use_queued or Controls.pressed(&"interact")
+	_use_queued = false
+	return want
+
+
+## Whether the paladin stands at something to use now (the reward, a shop's item, a door): the robot presses then,
+## and the HUD may show the key.
+func usable() -> bool:
+	match phase:
+		Phase.REWARD:
+			return _reward_node != null and game.player.pos.distance_to(_reward_at) < TOUCH
+		Phase.OPEN:
+			for p in _pedestals:
+				if game.player.pos.distance_to(p.at) < TOUCH:
+					return true
+			var door := game.arena.exit_at(game.player.pos)
+			return door >= 0 and door < next_rooms.size()
+	return false
 const FADE := 0.35
 ## The last kill of a room: world speed, seconds held and seconds back to normal (Hades II: 0.35, about 0.6, 0.4).
 const LAST_KILL_SLOW := 0.35
 const LAST_KILL_HOLD := 0.55
 const LAST_KILL_OUT := 0.4
 const GOLD_COLOR := Color(1.0, 0.82, 0.35)
+## The words of the materials where they fall ("+10 Prata"; Rejogabilidade, Fatia 1): silver cold and pale, the
+## Memória a parchment.
+const SILVER_COLOR := Color(0.78, 0.8, 0.86)
+const MEMORY_COLOR := Color(0.86, 0.78, 0.6)
 
 var game: Game
 var stage: StageDef
@@ -70,6 +104,8 @@ var trial_cards: Array[Trials.Card] = []
 var altar_options: Array[Dictionary] = []
 ## The floor of the runes in a fight there (null: none).
 var runes: RuneFloor
+## RP-06: the slabs that strike when stepped on in a fight there (null: none).
+var plates: PlateFloor
 var _slab_node: Node3D
 var _slab_sign: DoorSign
 ## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
@@ -174,17 +210,21 @@ func step(dt: float) -> void:
 		Phase.FIGHT:
 			_step_fight(dt)
 		Phase.REWARD:
-			if _reward_node != null and game.player.pos.distance_to(_reward_at) < TOUCH:
+			if _reward_node != null and game.player.pos.distance_to(_reward_at) < TOUCH and _used():
 				_collect()
 		Phase.OPEN:
-			_step_shop()
+			var use := _used()
+			_step_shop(use)
 			_step_slab(dt)
 			_step_spots()
 			var door := game.arena.exit_at(game.player.pos)
-			if door >= 0 and door < next_rooms.size():
+			if door >= 0 and door < next_rooms.size() and use:
 				_leave(next_rooms[door])
 		Phase.EVENT:
 			_step_spots()
+			_use_queued = false
+		_:
+			_use_queued = false
 
 
 # ---------- entering ----------
@@ -263,8 +303,7 @@ func _enter(next: RunMap.Room) -> void:
 			_cap = fight.cap
 			game.horde.alive_cap = fight.ceiling
 			phase = Phase.FIGHT
-			if layout != null and layout.hazard != null:
-				runes = RuneFloor.new(game, layout.hazard, _rng)
+			_start_hazard(layout)
 		RunMap.Kind.MINIBOSS:
 			var guardian: Array[StringName] = [room.fight.kinds[0] if room.fight != null and not room.fight.kinds.is_empty()
 				else room.guardian if room.guardian != &"" else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
@@ -273,6 +312,8 @@ func _enter(next: RunMap.Room) -> void:
 			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
 			game.horde.alive_cap = alive.y
 			phase = Phase.FIGHT
+			if layout != null and layout.hazard != null and layout.hazard.kind == HazardDef.Kind.PLATES:
+				_start_hazard(layout)  # the slabs of the guardian's house (RP-06); the runes never hold a guardian
 		RunMap.Kind.FOUNTAIN:
 			game.spawn_fountain(Vector2(0, -2.0))
 			_open_doors()
@@ -304,6 +345,8 @@ func _step_fight(dt: float) -> void:
 		game.room_tally.zone_time(_layout.area_at(game.player.pos), dt)
 	if runes != null:
 		runes.step(dt)
+	if plates != null:
+		plates.step(dt)
 	if _wave_wait > 0.0:
 		_wave_wait -= dt
 		if _wave_wait <= 0.0:
@@ -410,6 +453,10 @@ func _room_cleared() -> void:
 	Audio.play(&"elite_down")
 	purse = null
 	game.hud.show_notice(T.t(&"notice_room_clear"), 2.0)
+	if room.kind == RunMap.Kind.MINIBOSS:
+		# the guardian won: Prata and Memória for home (Rejogabilidade, Fatia 1)
+		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
+		found(MaterialPurse.MEMORY, &"guardian", stage.memory_guardian)
 	if room.reward == RunMap.Reward.NONE:
 		_open_doors()
 		return
@@ -418,15 +465,19 @@ func _room_cleared() -> void:
 	game.column(_reward_at, _reward_color(room.reward), 1.4, 12.0, 1.0)
 
 
-## An enemy fell: in a fight it may leave its share of the fight's gold (GoldPurse), shown where it fell.
+## An enemy fell: in a fight it may leave its share of the fight's gold (GoldPurse), shown where it fell. An elite
+## (not a guardian nor Morvath) leaves Prata Antiga too (Rejogabilidade, Fatia 1).
 func _on_killed(e: Enemy) -> void:
+	if e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS and not stage.minibosses.has(e.def.id) \
+			and room != null and room.kind != RunMap.Kind.BOSS:
+		found(MaterialPurse.SILVER, &"elite", stage.silver_elite, e.pos)
 	if purse == null or phase != Phase.FIGHT:
 		return
 	var found := floori(purse.drop(e.def.rating, _rng) * maxf(0.0, 1.0 + trials.curse(&"gold_pct")))
 	if found <= 0:
 		return
 	gold += found
-	game.fx.word(Vector3(e.pos.x, 2.4, e.pos.y), "+%d %s" % [found, T.t(&"hud_gold_short")], GOLD_COLOR)
+	game.fx.gold(Vector3(e.pos.x, 2.4, e.pos.y), found)
 
 
 func _collect() -> void:
@@ -435,17 +486,22 @@ func _collect() -> void:
 	_reward_node = null
 	# what the room gave, beside the door that promised it (DV-1, MAP-02: the log checks the promise)
 	game.room_tally.event("reward", game.time, {"node": room.id, "reward": (RunMap.Reward.keys()[reward] as String).to_lower()})
-	_give(reward, room.kind == RunMap.Kind.MINIBOSS)
+	_give(reward, room.kind == RunMap.Kind.MINIBOSS, true)
 	_open_doors()
 
 
-## Hands over a reward (from a room or bought in the shop).
-func _give(reward: RunMap.Reward, guardian: bool = false) -> void:
+## Hands over a reward (from a room or bought in the shop). meeting: a room's Blessing comes by the meeting with two
+## angels (Rejogabilidade, Fatia 1: Encounters); the shop's Blessing is drawn as before.
+func _give(reward: RunMap.Reward, guardian: bool = false, meeting: bool = false) -> void:
 	var p := game.player
 	match reward:
 		RunMap.Reward.BOON:
 			game.open_boon_choice(stage.guardian_rarity_chance if guardian else stage.rarity_chance,
-					stage.guardian_psalm_chance if guardian else stage.psalm_chance)
+					stage.guardian_psalm_chance if guardian else stage.psalm_chance, meeting)
+		RunMap.Reward.SILVER:
+			found(MaterialPurse.SILVER, &"door", stage.silver_door)
+		RunMap.Reward.MEMORY:
+			found(MaterialPurse.MEMORY, &"door", stage.memory_door)
 		RunMap.Reward.POM:
 			game.open_grow_choice()
 		RunMap.Reward.POM_SLICE:
@@ -458,11 +514,42 @@ func _give(reward: RunMap.Reward, guardian: bool = false) -> void:
 			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(stage.magick_more), T.t(&"hud_magick")], Color(0.5, 0.75, 1.0))
 		RunMap.Reward.GOLD:
 			gold += stage.gold_reward
-			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [stage.gold_reward, T.t(&"hud_gold_short")], GOLD_COLOR)
+			game.fx.gold(Vector3(p.pos.x, 3.0, p.pos.y), stage.gold_reward)
 		RunMap.Reward.HEAL:
 			p.heal(p.max_hp * stage.shop_heal)
 			game.fx.burst(&"heal", Vector3(p.pos.x, 1.2, p.pos.y))
 	Audio.play(&"heal" if reward == RunMap.Reward.HEAL or reward == RunMap.Reward.HEART else &"orb")
+
+
+# ---------- Rejogabilidade, Fatia 1: the materials brought home ----------
+
+## Picks up n of a material for home (the run's MaterialPurse, game.materials), from a source (elite, door, guardian,
+## trial, boss), the word "+n Prata" shown where it falls (at; the paladin when none). Never a counter in the HUD
+## (sistemas.md 1.2): the end screen and the hub show the totals.
+func found(material: StringName, source: StringName, n: int, at: Variant = null) -> void:
+	if game.materials.add(material, source, n) <= 0:
+		return
+	var where: Vector2 = at if at is Vector2 else game.player.pos
+	var color := SILVER_COLOR if material == MaterialPurse.SILVER else MEMORY_COLOR
+	game.fx.word(Vector3(where.x, 3.0, where.y), "+%d %s" % [n, T.t(MaterialPurse.SHORT_KEY[material])], color)
+
+
+## Morvath reached a phase (1 when he rises, Boss.phase_changed after): silver_phase Prata for each phase not paid yet,
+## up to StageDef.phase_max.
+var _phases_paid := 0
+
+
+func boss_phase(n: int) -> void:
+	var upto := mini(n, stage.phase_max)
+	while _phases_paid < upto:
+		_phases_paid += 1
+		found(MaterialPurse.SILVER, &"boss", stage.silver_phase)
+
+
+## Morvath is sealed: the victory's Prata and Memória.
+func victory() -> void:
+	found(MaterialPurse.SILVER, &"boss", stage.silver_victory)
+	found(MaterialPurse.MEMORY, &"boss", stage.memory_victory)
 
 
 # ---------- doors ----------
@@ -639,6 +726,7 @@ func _fight_won() -> void:
 	game.fx.hero_burst(&"light", Vector3(p.pos.x, 1.2, p.pos.y))
 	game.hud.show_trial_won(done)
 	game.room_tally.event("trial_turned", game.time, {"blessing": String(done.blessing.id), "rarity": done.rarity})
+	found(MaterialPurse.MEMORY, &"trial", stage.memory_trial)  # a Provação won brings Memória home (Fatia 1)
 	trial_turned.emit(done)
 
 
@@ -894,7 +982,23 @@ func _to_look(what: StringName) -> void:
 		look.call(what)
 
 
+## The floor that strikes on its own in this fight, by its kind (RuneFloor for the runes' grid, PlateFloor for the
+## slabs of RP-06, asleep before the descent reaches HazardDef.from_progress).
+func _start_hazard(layout: RoomLayout) -> void:
+	if layout == null or layout.hazard == null:
+		return
+	if layout.hazard.kind == HazardDef.Kind.PLATES:
+		plates = PlateFloor.new(game, layout.hazard, EncounterGen.progress(stage, room.depth) >= layout.hazard.from_progress)
+	else:
+		runes = RuneFloor.new(game, layout.hazard, _rng)
+
+
 func _stop_runes() -> void:
+	if plates != null:
+		plates.stop()
+		game.room_tally.hazard(plates.enemy_damage, plates.kills, plates.hazard.fired, String(Ground.PLATE_SOURCE),
+			plates.tally())
+		plates = null
 	if runes == null:
 		return
 	runes.stop()
@@ -960,15 +1064,13 @@ func shop() -> Array[Dictionary]:
 	return out
 
 
-## Stepping onto an item buys it when there is gold for it.
-func _step_shop() -> void:
+## Interact at an item buys it when there is gold for it (C19, Q-13: standing on it no longer does).
+func _step_shop(use: bool) -> void:
 	for p in _pedestals.duplicate():
-		if game.player.pos.distance_to(p.at) >= TOUCH:
+		if game.player.pos.distance_to(p.at) >= TOUCH or not use:
 			continue
 		if gold < p.price:
-			if not p.get("warned", false):
-				p.warned = true
-				game.hud.show_notice(T.t(&"notice_no_gold"), 1.5)
+			game.hud.show_notice(T.t(&"notice_no_gold"), 1.5)
 			continue
 		gold -= p.price
 		game.room_tally.bought(RunMap.Reward.keys()[p.item].to_lower(), p.price)
@@ -980,6 +1082,14 @@ func _step_shop() -> void:
 ## The order in which the bot picks a door, as a player would (E3: before it took the first door, so the rewards it
 ## got were the deck's draw, not a choice): the fountain, a Blessing, a pomegranate, a heart, gold, Magia.
 const BOT_PREFERENCE: Array[RunMap.Reward] = [RunMap.Reward.BOON, RunMap.Reward.POM, RunMap.Reward.HEART, RunMap.Reward.GOLD, RunMap.Reward.MAGICK]
+## The doors of a material for home (Rejogabilidade, Fatia 1, MAP-04's taste): between the heart and gold, Memória a
+## little before Prata; never over the power of this descent (a Blessing, a pomegranate, a heart).
+const BOT_MATERIAL_RANK := {RunMap.Reward.MEMORY: 2.4, RunMap.Reward.SILVER: 2.6}
+
+
+## A reward's place in the robot's taste (BOT_PREFERENCE, BOT_MATERIAL_RANK; -1 for none of them).
+static func _bot_rank(r: RunMap.Reward) -> float:
+	return float(BOT_MATERIAL_RANK.get(r, BOT_PREFERENCE.find(r)))
 
 
 ## Where the altar's door stands in that order (E5): after a Blessing and a pomegranate (its trade grows a Blessing).
@@ -1007,7 +1117,7 @@ static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life:
 	var top := -INF
 	var memo := {}
 	for i in doors.size():
-		var rank := float(BOT_PREFERENCE.find(doors[i].reward))
+		var rank := _bot_rank(doors[i].reward)
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
 			rank = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
 		elif doors[i].kind == RunMap.Kind.ALTAR:
@@ -1046,8 +1156,8 @@ static func _bot_worth(r: RunMap.Room, altar_useful: bool) -> float:
 			return BOT_PREFERENCE.size() - BOT_ALTAR_RANK if altar_useful else 0.0
 		RunMap.Kind.SHOP, RunMap.Kind.BOSS:
 			return 0.0
-	var rank := BOT_PREFERENCE.find(r.reward)
-	return float(BOT_PREFERENCE.size() - rank) if rank >= 0 else 0.0
+	var rank := _bot_rank(r.reward)
+	return float(BOT_PREFERENCE.size()) - rank if rank >= 0.0 else 0.0
 
 
 ## The altar's trade the robot would make now (Altar.bot_choice; -1: none).
@@ -1142,6 +1252,10 @@ static func _reward_color(r: RunMap.Reward) -> Color:
 			return GOLD_COLOR
 		RunMap.Reward.HEAL:
 			return Color(0.5, 1.0, 0.6)
+		RunMap.Reward.SILVER:
+			return SILVER_COLOR
+		RunMap.Reward.MEMORY:
+			return MEMORY_COLOR
 	return Color.WHITE
 
 

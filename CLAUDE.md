@@ -97,7 +97,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   dele por até 0,8 m, uns 2% da tela) e cada sala nova começa enquadrada nele (`Game.snap_camera` no `Rooms._enter`; antes a
   câmera voava da sala anterior, até 2,9 m por quadro atrás do escurecimento). `--trace-cam` imprime por sala o maior salto
   do alvo entre quadros e onde (`CAM_TRACE`, `CamFrame.JumpTrace`), e o da partida no fim.
-  **Câmera Perto (opção, 2026-11-19)**: Configurações > Vídeo > Câmera, "Longe" (padrão, a de sempre, 54 m) ou "Perto"
+  **Câmera Perto (2026-11-19; padrão desde o LR-01)**: Configurações > Vídeo > Câmera, "Perto" (padrão) ou "Longe" (a de
+  antes, 54 m). Save versão 7: padrão `"near"`; um save de antes ainda no padrão antigo `"far"` passa a `"near"` uma vez, a
+  menos que o jogador tenha escolhido (`camera_chosen`, marcado pelo `Save.set_option("camera", ...)`). "Perto"
   (`Feel.cam_distance_near` 37 m, o ZoomFraction 0,85 das salas de Érebo do Hades II: uns 28 m de largura na tela contra 41,
   a sala maior que a tela); chave `camera` do save (`"far"`/`"near"`), lida a cada quadro (`CamRig.near`, `CamRig.distance`:
   muda ao vivo, também no hub), `--cam=near|far` para capturas e testes (`--cam-dist` continua por cima). Perto, as margens da
@@ -105,8 +107,13 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (Runas, Provação, Altar, Câmara do Selo, hub) a câmera segue o herói (`CamRig.holds` só longe) e o alcance cresce, como a
   caixa `cam_bounds`, pelo que a câmera longe via a mais (`CamFrame.slack`, metade do chão visto no meio da tela a 54 menos a
   37, na largura e na altura da tela; `CamFrame.widen`); `hold` e `keep` iguais com folga zero, então Longe dá o mesmo
-  `RESULT` com a mesma semente. Os atiradores seguem preparando só dentro de 5 a 95% da tela (`Horde._can_fire` pela câmera
-  em uso). Testes em `tests/test_camera_near.gd`; capturas em `docs/gallery/camera_near/`.
+  `RESULT` com a mesma semente. **LR-02**: os atiradores preparam só dentro de 5 a 95% da tela **da câmera Longe**, qualquer
+  que seja a câmera (`Horde.view`, `on_screen`, `_can_fire`; `Game._screen_of(..., as_far)`, `CamRig.look_at(..., as_far)`
+  sem folga): a Perto não é dificuldade escondida, o `RESULT` é o mesmo com `--cam=near` e `--cam=far` na mesma semente
+  (tiros e dano por sala iguais aos da Longe). A tela em uso (`Horde.seen`, `in_sight`) serve ao registro
+  (`screen_flag`, `hurt_ctx.offscreen`) e à lista dos atiradores (e do sacerdote ancião) preparando fora dela
+  (`Horde.off_screen_windups()`, para a divisa na borda da tela do ui-ux-designer). Testes em `tests/test_camera_near.gd`;
+  capturas em `docs/gallery/camera_near/`.
 - Herói no meio da multidão: onde algo o cobre ele aparece como o próprio corpo iluminado, nas cores dele (ciclo 7: nada de
   silhueta chapada), com fio marfim fino em pixels da tela e a Emeth por cima, em três passes desenhados por último
   (`xray_depth`, `xray`, `xray_edge`; `Player.XRAY_*`), mais um anel fino petróleo no chão com uma cunha para onde ele olha
@@ -235,7 +242,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   flank besteiro, block Escudo, area sacerdote) em conjuntos `EncounterPool` no `_stage` do `make_data.gd`: começo da
   região 2 papéis, meio 3 que se completam, fim misturas exigentes com elites e uma especial rara de 4. `--horde` e
   `--stress` ignoram os tetos. O RESULT do `--smoke` traz `max_alive` (pico de inimigos de pé, chefe incluído), `boss_at` e o custo do passo da simulação medido só nos quadros com inimigos de pé, `step_ms_avg` e `step_ms_peak` (`StepTimer`, `core/step_timer.gd`; `step_ms` continua, suavizado e lido no fim). Nó `Rooms` (`game/rooms.gd`) conduz: ondas, recompensa,
-  portas, fonte, loja (pisar compra), chefe. Magia enche em toda sala; sem experiência nem níveis.
+  portas, fonte, loja (o botão de usar compra, C19), chefe. Magia enche em toda sala; sem experiência nem níveis.
 - **Bênçãos e economia da E3 (Hades II; regras, números e decisões em `docs/design/e3_blessings.md`, métricas do robô em
   `docs/qa/e3_metrics.md`)**: as portas tiram cartas de um baralho sem repor que volta inteiro quando nada serve
   (`StageDef.reward_deck`, `RewardDeck`: 6 Bênçãos, 2 romãs, 2 corações, 2 Magia, 2 ouro). Raridade em sequência
@@ -440,8 +447,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   e recebe a luz do paladino pelo global `hero_pos`. O `RESULT` sai em JSON (`Game.result_line`, E1a-5).
 - O herói (o Guerreiro) usa o modelo do Explorador do Meshy (2026-11-15, da folha aprovada; `assets/models/meshy/hero_explorer/hero_explorer-rigged.glb`,
   24 ossos, os mesmos da antiga "Sombra", pose em A), montado por `HeroBody` (`scripts/render/hero_body.gd`, também usado na
-  galeria de inimigos), desenhado com 2,75 m (`HeroBody.HEIGHT`; o combate continua com 2,5). A "Sombra" repintada
-  (`tools/recolor_hero.gd`, `HeroGear`) ficou guardada, sem uso. As animações dele são próprias
+  galeria de inimigos), desenhado com 2,75 m (`HeroBody.HEIGHT`; o combate continua com 2,5). A "Sombra" e o
+  `paladin_1` saíram do repositório (DT-107, Q-19 a; o histórico do git os guarda). As animações dele são próprias
   (`hero_explorer/hero_anims.res`): `tools/bake_hero.gd` transfere clipes da Universal Animation Library 1 e 2 da Quaternius (CC0,
   `assets/models/anim/`) para o esqueleto dele pelo `Retarget` (`scripts/render/retarget.gd`) e mede o pico de cada golpe
   (`PEAK` em `make_data.gd`), o passo da corrida (`Player.RUN_CLIP_PACE`), achata o sobe e desce do quadril na corrida e a pegada da espada (pela linha dos nós dos
@@ -877,6 +884,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   nada desenhado duas vezes; continuam ferindo). Grade conferida contra o look (`RuneFloor.fits`, 10 x 8 de 3 m desde
   (-15; -12)); em outro look o âmbar volta. `rooms[].hazard` no `RESULT`. Som: `rune_arm` ao armar e `rune_crack` no
   golpe, um por padrão (ver o som do combate).
+- **Laje Rachada (RP-06, H-2; RP-13; plano e medidas em `docs/design/rooms_progression.md`)**: segundo tipo de
+  `HazardDef` (`kind` `GRID` as Runas, `PLATES` as lajes; campos `plates`, `rearm`, `from_progress`, e por laje
+  `plate_hero_damage` e `plate_push`), dado no `_stage` (`_plates`, `PLATES_FROM` 0,34). Lajes de 3 x 3 m que qualquer
+  um arma ao pisar (herói ou inimigo, como o vapor do Hades II): 1,0 s de aviso acendendo da borda para o meio, golpe de
+  0,25 s em quem está em cima (herói 7, inimigo 60, os números do RP-03), recarga 5 s; nada nos 3 s do começo, nada em
+  laje na boca de porta, no máximo 3 armadas ao mesmo tempo (`PlateHazard.MOST_AT_ONCE`); antes do progresso 0,34 (salas
+  2 e 3) ficam desenhadas e dormem. Lógica pura `PlateHazard` (`core/plate_hazard.gd`), no jogo `PlateFloor`
+  (`game/plate_floor.gd`, criado por `Rooms._start_hazard` em luta e no guardião): o golpe é o `Ground.add_hazard(...,
+  drawn = false, Ground.PLATE_SOURCE)`; o desenho é dele, um nó por laje pendurado na arena (`GroundLook.plate`,
+  `set_plate`: moldura e duas rachaduras em osso apagado em repouso, `PLATE_REST_COLOR`, nunca âmbar; armando, o âmbar das
+  Runas entrando da borda; `plate` e `crack_m` no estilo HAZARD do `ground.gdshaderinc`; placeholder até a peça do
+  `environment-artist`, SW-G7). Onde: Cripta A (quatro, junto das paredes, fora dos corredores do sarcófago), Cripta B
+  (duas no pé do muro divisor), Santuário A e B (duas em cada nave lateral). RP-13, a borda que desmorona (Santuário
+  B): duas lajes nas pontas do buraco ferem 5 e jogam todos 2,5 m para longe dele (`plate_push`, por `Arena.sweep`,
+  ninguém cai), zona `hole_edge`. "Derrotado por: Laje Rachada" (`killer_plates`, nome provisório para o Daniel); som
+  `plate_arm`/`plate_fire` = `rune_arm`/`rune_crack`. `rooms[].hazard` com `kind` `plates`, `hero_damage`, `enemy_damage`,
+  `kills`, `strikes`, `armed_by_hero`, `armed_by_enemy` e `hero_on_s` (segundos dele em cima); o das Runas ganhou
+  `hero_damage`. Testes em `tests/test_plates.gd` (ritmo, inimigo arma, dormente, porta, três de cada vez, lugares
+  contra chão, peças, portas, nascimentos e 6 m da entrada, saída andando de 12 x 12 pontos, sala real, empurrão).
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
   numa sala de luta vencida (20%, profundidades 2 a 7, intervalo de 10 salas, nunca com maldição em curso), custo
   `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3
@@ -1429,6 +1455,43 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ele recua `blade_step` 2 m em `blade_step_time` 0,25 s e as faixas saem de onde ele termina. Fase 1 em 3 sementes:
   foice 91% para 62%, maior sequência igual 9 para 2 (`tools/boss_cadence.gd --cadence-log`).
 
+## C19 "Variedade do combate e da descida", frente de gameplay (backlog `docs/backlog.md` Lote 2A; critérios em `docs/design/combat_cadence.md` 8.2; testes em `tests/test_c19.gd`)
+- **Golpes por ataque como dado (Q-11)**: `EnemyDef.strikes` e `strike_gap` (`_enemies` do `make_data.gd`); um elite novo
+  com dois golpes não pede código. **Esqueleto elite** (C19-1): 2 golpes a 0,2 s (o Guard elite do Hades); o fio do
+  segundo nasce com a preparação (`Enemy.warning2`, `Ground.add_aim_warning`, fraco até os últimos 30%) a partir de onde
+  o bote termina (`Enemy.lands_at`) e segue o herói até o fim da preparação (`Ground.point_line`); o segundo golpe vai
+  para onde ele estava então (`Enemy.aim2`), `Horde.blow_at(e, k)`; atordoar depois do primeiro corta o segundo e o fio
+  (`Horde.interrupt`, a morte também); recuperação 1,5 s (`recover_time`). **Corredor elite** (C19-2): explosão dupla a
+  0,5 s; o segundo anel nasce no quadro da primeira explosão onde o corpo está e enche na segunda; giro em laço
+  (`Horde.render`), `PULSE_AFTER` 0,3 s depois. O `windups` do `RESULT` ganhou `punished` (golpes que o tipo levou na
+  recuperação, `_tally_windup(e, 3)`).
+- **Ceifa Dupla de Morvath (Q-09 a, C19-3)**: ataque `reap` (`BossAttack`: fase 1 em diante, até 6 m, `near_bias` 2,2,
+  `streak` 1, peso 3,5; números em `BossDef` grupo Double reap): meia-lua de 4,5 m e 150 graus, preparo 0,85 s e ativo
+  0,4 (clipe `slash1`), pausa 0,35 e o segundo com preparo 0,5 e ativo 0,5 (`slash2`), recuperação 2,2 s; o aviso do
+  segundo nasce no fim do ativo do primeiro (0,85 s para ler) na direção do herói; cada aviso cheio no quadro do golpe;
+  pico do clipe no fim do preparo (`Boss.REAP_PEAK`, medido com `tools/clip_motion.gd`), corpo virando no `BODY_TURN`.
+  Estado `Boss.State.REAP`, `_step_reap`, momentos `reap_warn`/`reap_strike`, "Derrotado por: Ceifa Dupla de Morvath"
+  (`killer_reap`). `tools/boss_cadence.gd --cadence-log` imprime `CHOSE <ataque> phase=N dist=X`.
+- **Ômega carregando no número do Hades (Q-12, C19-4)**: `HeroDef.charge_move_light` 0,03 (Swing5SelfSlowCharge) com o
+  corpo travado (`charge_turn_light` 0, RotationMultiplier 1e-8) e `charge_move_heavy` 0,6 (inferência: o Ômega do
+  especial do cajado não tem velocidade própria; WeaponStaffBoltInstantStop 0,6); `Player.charge_move_scale`. Carregando
+  o do ataque ele segura a pose do golpe (nada de corrida a 0,2 m/s); a esquiva corta a carga no quadro do aperto sem
+  gastar Magia; toda carga que acaba passa por `Player._end_charge`, que apaga o `charge_up` em `CHARGE_SOUND_FADE` 0,2 s
+  (`Audio.fade_out(som, segundos)`, novo). Sonda: meta `C19-4` (0,066 m do aperto ao golpe, sem virar, corte em f20 sem
+  Magia); 41 metas.
+- **Fio da mira do feiticeiro e do Ancião (Q-14 a, C19-5)**: na gramática do besteiro (`Ground.add_aim_warning`): o
+  feiticeiro mostra um fio do começo da preparação ao primeiro orbe (um fio para a rajada), virando com a mira; o leque
+  do Ancião um fio por orbe (5, `Horde.FAN_THREADS`; com só as bordas e o meio, sair de um fio punha o herói num orbe sem
+  fio e o robô levou o dobro do Ancião), todos nascendo e enchendo juntos no quadro do tiro;
+  cada fio do comprimento que o tiro voa antes da pedra (`arena.shot_reach`); `Enemy.fan`, `Horde._aim_fan`,
+  `_point_fan`, `_end_fan` (golpe que corta, morte). A trepadeira do sacerdote segue a regra (b): o rito é o aviso. Os
+  fios levam a etiqueta `Horde.FAN_TAG` e o robô desvia dos orbes, não dos fios (`Bot._danger`, `_threatened`: com a
+  folga de 0,9 m dele as faixas de cinco fios se tocavam e ele ficava pulando de uma para outra dentro do leque).
+- **Botão de usar (Q-13)**: recompensa, item da loja e porta só com a ação `interact` (E, A no controle) parado neles;
+  encostar não compra nem sai (`Rooms._used`, `usable`, `use()` para clique e testes); o robô aperta quando
+  `usable()`. A placa com a tecla é do ui-ux-designer.
+- `tools/enemy_motion_probe.gd` lê também o `warning2` (o segundo golpe): aviso e dano a 0 ou 1 quadro.
+
 ## Prova estilizada (STY-03 a STY-05, cenário; spec `docs/art/stylized_spec.md`, plano `docs/art/stylized_poc_plan.md`)
 - Perfil visual reversível (`VisualProfile`, `core/visual_profile.gd`): `Look.CLASSIC` e `STYLIZED`; **no exe exportado o padrão é o
   STYLIZED** (RS-F2, 2026-11-19, `VisualProfile.default_look`: `OS.has_feature("template")`), na Godot do editor (testes, capturas,
@@ -1802,9 +1865,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`hub_page.gdshader`: pergaminho com linhas de tinta e rubrica, nada legível), fita petróleo, velas, tapete. Luz por
   estação em `HubLook.station_lights` (`station_light(id)`, para o HUB-B3). Ar e pintura próprios (`AIR`, `STYLE`:
   calcário morno, sombra petróleo; ambiente e lua um pouco mais neutros que a spec para a saturação ficar na meta) e
-  no Compatibility `STY_COMPAT_*`; no clássico (F7) o chão é o calcário `CLASSIC_FLOOR`, não a laje rosada do salão. `tools/fit_probe.gd -- --arena=hub`. Pendente: a cantaria e as lajes são mapeadas no
-  mundo (a 35 graus das paredes até o `frame_yaw` do technical-artist), os anéis de lajes em volta do medalhão
-  dependem desse shader, os NPCs são do HUB-D.
+  no Compatibility `STY_COMPAT_*`; no clássico (F7) o chão é o calcário `CLASSIC_FLOOR`, não a laje rosada do salão. `tools/fit_probe.gd -- --arena=hub`. A cantaria e as lajes seguem o quadro girado (HUB-D,
+  global `frame_yaw`, ver abaixo).
 - **Placa e páginas (HUB-B3 e a interface do HUB-C; testes em `tests/test_hub_ui.gd`, capturas em `docs/gallery/hub/ui/`)**:
   uma placa só, da estação em foco (`StationSign`, `scripts/ui/station_sign.gd`, na língua da `DoorSign`: nome em ouro
   claro, linha curta em marfim, véu escuro de cantos cortados, e embaixo a tecla real na plaqueta do HUD,
@@ -1827,6 +1889,192 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `Game.air`), anfitrião de telas `ScreenHost` (`ui/screen_host.gd`, do título e do hub: Esc/B fecha,
   `Controls.clear_presses`, nada vaza). `--hub` entra direto no hub (`--hero-at`, `--shot`); `--bot`, `--smoke`,
   `--start`, `--stress`, `--play` e `--shot` sem `--title` seguem pulando título e hub (`boot.route`). Testes em `tests/test_hub.gd`; fluxo por teclado em `tools/title_flow_check.gd`.
+- **HUB-D, parte do technical-artist (Meshy zero; capturas em `docs/gallery/hub/d/`, testes em
+  `tests/test_hub_d_assets.gd`)**: **gente do hub**: Vendedor e Forjador são bonecos do KayKit Adventurers (CC0)
+  assados como a multidão antiga, `tools/bake.gd -- npcs` (`NPCS`, 1 s cada) em `assets/baked/npc_vendor.res` e
+  `npc_smith.res` (no pacote; a paleta própria, `tools/make_palettes.gd -- npcs`, vai comprimida dentro do `.res`,
+  `"embed"`, porque `assets/models/palettes` é excluído): `Rogue_Hooded` sem armas, capuz petróleo escuro e manto
+  terra; `Knight` sem elmo, escudo, espada nem capa, braços nus e pernas de lã por `remap`, avental de couro e martelo
+  procedural `NPC_HAMMER` na mão (peça `hammer`); `Slender`, `height` 1,90 e 1,95 m com as solas no chão, cabeça a
+  `head_shrink` 0,9; 4 005 + 4 232 triângulos (teto 12 mil). Opções novas do modo KayKit do assado: `height`,
+  `head_shrink`, `embed` e o 4º campo do clipe `{from, to, bend}`. Desenhados por `HubNpc`
+  (`scripts/render/hub_npc.gd`: um `CrowdRenderer` próprio com uma figura, a mesma pintura, contorno e faixas do
+  estilizado da multidão, F7 ao vivo; `HubNpc.make(HubNpc.Who.VENDOR|SMITH)`, `face(ponto)`, `gesture()`): parado no
+  `Idle` e um gesto de vez em quando (Vendedor `Interact` a cada 6 a 9 s; Forjador em séries de 3 a 5 golpes do
+  `1H_Melee_Attack_Chop` a cada 1,2 s, cortado onde a cabeça do martelo pousa na face da bigorna a 0,94 m com o
+  tronco 12 graus para trás, `HubNpc.landing`, `strike_point`, e 4 a 7 s de descanso), fagulhas âmbar pequenas
+  (`CPUParticles3D`, 10, 0,4 s, nenhum canal acima de 1,0) no quadro do golpe. Postos pelo `HubLook._people`: o Vendedor
+  atrás do balcão (`VENDOR_STAND`, virado 30 graus para a câmera), o Forjador a oeste da bigorna olhando para ela de
+  perfil, onde o martelo pousa nela (0,79 m da bigorna; o `HubPlan.SMITH_SPOT` de colisão fica 1,7 m dela e deve ir
+  para esse ponto, dono gameplay-engineer). **`frame_yaw`**: global de shader (`project.godot`, padrão 0) que
+  `frame_yaw.gdshaderinc` (`frame_in`, `frame_out`) usa para assentar a cantaria (`masonry.gdshaderinc`) e as lajes
+  (`catacomb_floor.gdshaderinc`, fora das lajes emolduradas e das Runas) no quadro da sala; o `HubLook.dress` o põe no
+  `cam_yaw` (`HubLook.FRAME_YAW`) e o `_exit_tree` volta a 0; com 0 nenhuma conta muda (as salas iguais).
+- **HUB-D, planta e cenário (environment-artist; revisão `docs/gallery/hub/ART_REVIEW.md` H-P0-1 a H-P0-4, LR-07 do
+  room-designer; capturas em `docs/gallery/hub/d/`, testes em `tests/test_hub_d.gd`)**, valendo sobre a Planta e o
+  Cenário acima: a câmera Longe vê uns 25 m de chão entre a margem do herói e o portal a um quinto da tela, então o
+  portal veio 4,5 m para dentro (fachada em v 17,5, folha `SHEET_V` 18,75, escada do pé `HubPlan.NORTH` 12) e o chão
+  sobe ao lado do terraço em dois lóbulos até `LOBE` (16, a partir de |u| 9), onde ficam Vendedor e Árvore; o herói
+  chega pela escada num poço cortado na borda sul (`WELL`: meia largura 3,5, topo em -9; 20 degraus que descem até a
+  bruma, sem grade) e aparece em `ARRIVAL` (0; -7,8) na borda do medalhão (0; -4,6). Chão 50 x 32,5 m. Estações a 11,5 m
+  do eixo (`USE`; nenhum par a mais de 4 s andando, `test_no_two_stations_more_than_four_seconds_apart`), portal usado ao
+  pé da escada (0; 11), a placa na metade direita da escada (fora do portal e do herói). Câmera: `CAM_TARGET` (0; 5,6) deixa a soleira do portal a 0,22 da tela e o
+  arco inteiro (`PORTAL_TOP`, a 3ª ordem a 7,8 m) da chegada e de toda estação, sem a câmera se mexer ao chegar no portal
+  (o `SHOW` dele fica mais baixo; `test_far_the_portal_shows_whole_from_everywhere`);
+  na Perto o `Hub.lean` sempre segue o herói por `HubPlan.near_want` (nunca olha ao sul de `NEAR_SOUTH` -6), a borda sul
+  fica abaixo de 0,85 da tela (`test_near_the_south_edge_stays_low`); com estação em foco a câmera ainda se inclina pelo
+  `HubPlan.frame_for` (`SHOW`, `CamRig.lean`). Estações com lugar próprio e de frente para a câmera: barraca do Vendedor
+  no lóbulo oeste (`COUNTER` com `COUNTER_HALF`, toldo de 5,8 m listrado terra e ocre de 5 a 3,5 m de altura sobre quatro
+  postes, `AWNING_*`, prateleiras atrás, mercadorias, duas lanternas; mercadorias encostadas, `GOODS`); Árvore a 0,8 sobre
+  o estrado no lóbulo leste (folhas em cartões maiores e em menos lugares, H-P2-1); forja no chão a noroeste da bigorna
+  (`FORGE`, `FORGE_HALF`: bloco de 3,8 x 3 m e 3,4 de altura, boca em arco para o sul com brasas, fogo e brilho, coifa,
+  chaminé de 5,8 m com fumaça, a única luz de fogo com sombra), bigorna 1,5 vez maior, os dois NPCs com círculo de corpo onde são desenhados (`HubPlan.SMITH_SPOT` onde o martelo do
+  Forjador pousa, `VENDOR_SPOT` 0,4 m atrás do balcão, `test_the_npcs_block_where_they_stand`), pátio a oeste (`YARD`: cavalete com
+  quatro lâminas e o escudo do leão de frente, cocho, carvão, rebolo; o desenho no `hub_yard`, as outras partes só
+  colidem, `hub_yard_part`); Livro num atril de 1,5 m sobre degrau, dois castiçais de ferro, tapete, estante alta de 4 x 4,6
+  m de frente (`SHELF`, `_shelf`: livros, rolos, escada, velas) e a mesa de escrita (`DESK`); os pátios de baixo fechados
+  ao sul por muretas de 0,65 m (`YARD_WALL`). Praça: fonte de 5,6 m com estela de 2,8 e o leão em ouro velho (H-P1-5,
+  H-P2-2), lajes em anel nela e no medalhão e caminhos de lajes com meio-fio e um fio de ouro de 0,18 m que termina na
+  laje de uso (`_pave_way`, `WAY_FILET`, `WAY_SHORT`; as de cima saem da fonte, as de baixo do medalhão, H-P1-2),
+  ciprestes em floreiras (`CYPRESSES`), canteiros elevados com arbustos de cobre (`BEDS`, `ARBOUR`, `_crowns`
+  "Shrubs", `SHRUB_*`; os de flores pareciam caixões), urnas grandes abertas com um arbusto de cobre (fechadas e altas pareciam espetos pretos), bancos ao lado do eixo do portal, braseiros em pé
+  ao lado da escada de chegada (`ARRIVAL_FIRES`, sem sombra, luz quente na praça, H-P1-7) e postes com lanterna; nichos
+  de fora da fachada com urna no lugar da figura (H-P1-4); estelas do leão do terraço a 1,7 vez (H-P1-3, procedural).
+  `HubLook.focus(id)` (chamado pelo `Hub` no `focus_changed`): a luz da estação em foco sobe `FOCUS_GAIN` 25% por uma
+  gêmea sem sombra e um fio de ouro fraco (`FOCUS_RIM`, `ScreenTone.fit`) contorna a laje de uso, entrando e saindo em
+  `FOCUS_EASE` 0,3 s. `HubLook.set_forge_rank(n)` (0 a `FORGE_RANKS` 3, para o gameplay-engineer pelo `hub.arena.look`):
+  brilho do fundo da forja mais forte, uma gêmea de luz `FORGE_RANK_LIGHT` 0,3 por posto e duas línguas de fogo a mais
+  desde o posto 2. Medalhões da Fatia 1 no `RewardGem`: Prata Antiga em prata com a barra (`Mark.INGOT`, aro de prata) e
+  Fragmento de Memória em pergaminho com a folha rasgada a tinta (`Mark.LEAF`, `parchment` no `reward_gem.gdshader`);
+  `tools/gem_lab.gd` mostra os medalhões lado a lado (`docs/gallery/hub/d/medallions_silver_memory_720.png`). Capturas do hub
+  com a câmera Longe pedem `--cam=far` (a Perto é o padrão desde o LR-01).
+- **Fatia 1, parte do technical-artist (`docs/design/rejogabilidade/sistemas.md` 3.4; provas em `docs/gallery/rj1/`,
+  `tools/rj1_lab.gd`)**: a Emeth por posto de Temperar: `temper` no `emeth.gdshader` (0 a 2, padrão 0 = a lâmina de
+  sempre; frações fazem crescer), `EmethSword.set_temper(blade, posto)` e `EmethSword.TEMPER_MAX`: cada posto põe um
+  veio de ouro velho num lado do meio da lâmina (`temper_gold`, até `temper_reach`) e estende o fio pálido do gume
+  (`temper_thread`, `temper_edge`: posto 1 até a metade, 2 até a ponta), nada acima de 1,0, no estilizado sob o
+  `style_cap`; o gameplay-engineer liga ao `ForgeRank`. Selos dos quatro anjos em código (`AngelSeal`,
+  `scripts/ui/angel_seal.gd`: `AngelSeal.new().setup(Boon.Family.X, px, lit)` ou `AngelSeal.mark(ci, família, centro,
+  raio, linha, cor)`): o selo da casa (`SealMedal.draw_seal`) e a marca da família (Chama brasa em losango com três
+  línguas de fogo, Geada floco de seis braços, Luz feixe vertical sobre um losango sem raios, Vigília a trombeta do
+  vigia), cores calmas em `AngelSeal.TINT`; nunca sol, cruz, leão, escudo nem olho; o Elo não tem selo.
+
+## Rejogabilidade, Fatia 1 (gameplay; spec `docs/design/rejogabilidade/sistemas.md` 1, 3 a 5; API para a UI em 5.3)
+- **Três materiais, sem Brasa** (Q-RJ1 a Q-RJ3): Prata Antiga, Fragmento de Memória e Esmeralda (nomes de trabalho),
+  `MaterialPurse` (`core/material_purse.gd`, puro: soma por fonte na descida, teto 999/999/99, `bank` no fim, `give`,
+  `spend`, `parse`). Na descida (`game.materials`): elite comum abatida 1 de Prata (não guardião nem chefe,
+  `Rooms._on_killed`), porta de Prata 10 e de Memória 3 (`RunMap.Reward.SILVER` e `MEMORY`, `_give`), guardião 6 e 2
+  (`_room_cleared`), Provação vencida 2 de Memória (`_fight_won`), cada fase de Morvath alcançada 2 (até 4, uma vez,
+  `Rooms.boss_phase`) e a vitória 10 e 3 (`Rooms.victory`); números no grupo Materials do `StageDef` (`_stage` do
+  `make_data.gd`). Baralho das portas com 16 cartas (uma Prata, uma Memória a mais; nada saiu). Guardados no save no
+  fim de toda descida (`Game.log_run`, `Game.banks_materials`): nunca o robô nem sem save (`--materials-keep` deixa o
+  robô guardar, para medir). Robô: porta de material com peso 2,6 / 2,4 (`Rooms.BOT_MATERIAL_RANK`, entre Magia e romã).
+- **Forja** (`Forge`, `core/forge.gd`; `ForgeRank` em `data/forge/emeth/`, parte `forge`): Temperar I 15 de Prata (+10%
+  no ataque, tag `light`, a lança junto) e II 35 (+10% no especial, tag `heavy`); somados ao `BoonState.stat` pelo
+  `equip_forge` (`Game._equip_forge`: do save para gente, `--forge=N` também para o robô). No hub o Forjador abre a
+  Forja (`ForgeScreen`, ver a interface da Fatia 1 abaixo), que compra, grava e emite `Hub.forged(rank)`.
+- **Dons abertos com Memória** (Q-RJ11: a Maestria revela um Dom por nível): `TalentDef.memory_cost` (o custo de
+  Devoção; 0 no Dom do nível 1, o Quarto Corte), `opened` no bloco do herói; `Talents` com `SEALED`, `OPENED`, `SHORT`,
+  `open_in`, `open_problem`, `is_open` (`opened` nulo = tudo aberto, o robô e `--talents`). `HeroLoadout.State.SEALED`;
+  abrir é só pela confirmação na página do Livro (`HeroLoadout.open`; `toggle` nunca abre um selado).
+- **Anjos e o Encontro** (Q-RJ4 a Q-RJ6, nada canônico): Sarael (Chama), Nivael (Geada), Lumael (Luz), Shomael
+  (Vigília), `AngelDef` em `data/angels/` (parte `angels`). Toda Bênção de sala e do guardião vem de dois anjos
+  (`Encounter.pair` no dado da sala, `Encounter.dice`, sal 9241; a Bênção da loja segue o sorteio de antes); o anjo
+  escolhido oferece até 3 Bênçãos da família (`BoonState.draw` com filtro, `Encounter.belongs`: o Elo pertence se uma
+  das listas tem a família), raridade, troca, Elo e Salmo como antes, dado próprio por anjo (`cards_dice`). Só um anjo
+  com carta: vem sozinho; nenhum: o Fôlego. `Encounters` (`game/encounters.gd`, `game.encounters`) conduz; gente vê a
+  o Encontro (`EncounterScreen`, ver abaixo; a `AngelChoice` provisória só abre se ninguém ouvir `Encounters.opened`) e depois a `BoonChoice`; robô e `--autopick` escolhem por
+  afinidade (`Encounter.affinity`). `--angels=a,b`, `--no-angels`.
+- **Save versão 6** (`materials`, `materials_total`; no herói `opened`, `forge`, `tools`): a migração abre de graça
+  todo Dom que a Maestria já destravava e dá 5 de Prata por descida jogada, até 30 (Q-RJ8). `_fixed_keys` entra nos
+  blocos com chaves conhecidas (`forge`). Fixture `tests/fixtures/save_v5.json`. **Registro e `RESULT` versão 5**:
+  `materials` (por fonte e total), `forge`, `talents_opened`, `angels` (um por encontro: `room`, `node`, `offered`,
+  `chose`, `cards`, `fallback`). Opções `--materials=silver:30,memory:5` e `--forge=N` (só na sessão).
+- Testes: `tests/test_rejogabilidade.gd` (puros, A1, A3, A4, A6) e `tests/test_rejogabilidade_game.gd` (cena: o
+  encontro, robô por afinidade, materiais por fonte, A2, Forjador).
+
+## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
+- **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
+  `DoorGlyph.of_reward` para `RunMap.Reward.SILVER`/`MEMORY` (placas das portas e mapa) e `DoorGlyph.of_material(id)`;
+  `DoorGlyph.material(ci, kind, centro, altura)` desenha a marca em qualquer canvas. `MaterialCount`
+  (`scripts/ui/material_count.gd`): marca e número no `UiKit.number_font` (nunca Cinzel), `named` acrescenta "Prata",
+  `plus` escreve "+3"; `MaterialCount.purse(data)` é a Bolsa (Prata e Memória lado a lado) e `refresh(row, data)`. A
+  legenda do mapa (`MapScreen.legend_kinds`) só mostra os tipos que a descida tem (Prata e Memória entram quando há).
+- **Forja da Emeth** (`ForgeScreen`, `scripts/ui/forge_screen.gd`, aberta pelo Forjador em `Hub._open_forge` pelo `ScreenHost`):
+  `BookSpread` de duas páginas. Esquerda: título, uma linha do que a Forja faz, "Temperar" com uma entrada por posto
+  (`Book.index_entry`, marca de Prata e o custo, "Forjado" quando já tem) e a Bolsa no pé. Direita: o posto em foco com
+  Efeito, Custo (`MaterialCount` com o nome), Estado e Próximo passo (pelo `Forge.problem`: pronto, falta Prata com quanto,
+  pede o anterior, forjado), Forjar (ação principal, só habilitado e focável quando pode) e Voltar. Mover o foco só mostra;
+  Enter numa entrada leva ao Forjar; comprar gasta (`Forge.buy`), grava (`Save.write`, só nos dados do jogo), emite
+  `forged` e passa ao próximo posto. `forge_done` sem "nesta versão".
+- **Abrir Dom com Memória** (`HeroScreen`, `TalentNode`): o Dom revelado e não aberto (`HeroLoadout.State.SEALED`) mostra o
+  glifo a meia força e, embaixo, a folha da Memória com o preço (`TalentNode.SEALED_GLYPH`, `MEMORY_MARK`, `MEMORY_SIZE`) no
+  lugar dos losangos de Devoção. O painel diz "Abrir: N de Memória" no Custo, "Revelado pela Maestria, ainda fechado" no
+  Estado e o próximo passo; a dica do rodapé troca para abrir. O primeiro aperto pergunta na própria página ("Abrir por N
+  de Memória? Aperte de novo para confirmar. Não há volta.", em rubrica; `HeroScreen.arming`), o segundo em até
+  `CONFIRM_TIME` 3 s abre (`HeroLoadout.open`, grava) e não equipa; mudar o foco ou o tempo esquece; sem Memória o nó
+  recusa e diz quanto falta. A Bolsa fica no alto da página direita, ao lado da Devoção.
+- **Encontro** (`EncounterScreen`, `scripts/ui/encounter_screen.gd`): na língua da `BoonChoice` (título Cinzel sobre a
+  partida escurecida, dica embaixo), um cartão de tinta por anjo (`EncounterScreen.AngelCard`, 300 x 392): selo grande
+  (`AngelSeal`), nome, "Bênçãos de {família}", filete, a linha do anjo e quantas Bênçãos da família o herói leva (o fato
+  que decide a escolha); foco no primeiro. `EncounterScreen.attach(game)` (o `Hud` liga no `game.ready`) ouve
+  `Encounters.opened`; escolher fecha, chama `encounters.choose` e a `BoonChoice` ganha o selo pequeno e "Trazidas por
+  {nome}" no alto (`BoonChoice.by_angel(anjo, voltar)`); Esc ou B ali volta ao mesmo par, com o foco no anjo visto, e as
+  cartas são as mesmas (`Encounters.cards_of`). Cores dos selos (`AngelSeal.TINT`) longe do vermelho do perigo, do
+  esmeralda da Emeth e do petróleo do herói: Chama âmbar terroso (matiz 24), Vigília sálvia (matiz 88; era petróleo, 177);
+  testado com 20 graus de folga.
+- **Trazidos e Bolsa**: a tela de fim mostra "Trazidos" sob as Bênçãos levadas (`EndScreen._brought`: `stats.materials`,
+  senão `game.materials_banked`, e sem save o que a descida achou; nada quando nada veio). O hub tem a Bolsa no canto
+  de cima à direita sobre um véu de tinta (`HubLabels.purse`, `PURSE_MARGIN`), escondida com tela aberta.
+- **Saudação de material** (`EloBanner.show_material`, na fila das outras, 1,8 s, `MATERIAL_TIME`): "+10 Prata" com a marca;
+  mais do mesmo enquanto aparece ou espera soma. O `Hud._greet_materials` lê `game.materials.found` a cada quadro e saúda
+  tudo menos o abate de elite (fica só a palavra do `Rooms.found` onde ele caiu). Respeita o `keep_out` das placas como
+  as outras saudações.
+- Capturas: `--hub --hero-at=smith --hub-use=smith --materials=silver:30,memory:5` (Forja), `--title --screen=gifts
+  --hero-xp=160 --hero-opened=quarto_corte --materials=...` (`--hero-opened` só abre esses, os outros revelados ficam
+  selados; `Save._dev_hero`), `tools/book_lab.gd` (`gifts_sealed`, `_ask`, `_short`), `tools/ui_lab.gd -- --meeting` e
+  `--found`, `tools/menu_lab.gd` (fim com Trazidos), `--hub --hero-at=vendor --materials=...` (Bolsa do hub).
+
+## Revisão de layout da interface (d2ff05d; `docs/gallery/ui_review_d2ff05d/REVIEW.md`, depois em `after/`)
+- **Números nunca em Cinzel** (P0-1: o 1 da Cinzel lia como I romano, "SALA I DE II"): sala, relógio, ouro, contador de
+  golpes e todo aviso com algarismo em `UiKit.number_font()` (`UiKit.has_digit`); teste em `tests/test_ui_review.gd`.
+- Relógio e contador de golpes sobre um véu de tinta de cantos cortados (`HudVeil`, `scripts/ui/hud_veil.gd`: cobre só o
+  texto dos rótulos pelo alinhamento, some sem eles); com a barra de um chefe ou guardião o relógio vai para o canto de
+  cima à direita, sob o ouro, e o nome do chefe fica sozinho sobre a barra (`Hud._place_clock`, `CLOCK_BOSS_Y`,
+  `BOSS_TOP_ALONE`). Na pausa o medalhão e as barras somem sob o painel (P2-7).
+- Ouro que cai soma como o dano (`Fx.gold(pos, n)`, `GOLD_SIZE` 15, `GOLD_WORD` ouro velho claro, junta em
+  `NumberTally.MERGE_TIME` e `GOLD_JOIN` 6 m: "+3 ouro", nunca "+1 ouro+1 ouro"); o `Rooms` chama `fx.gold`.
+- Saudações e placas não se tocam: enquanto o `EloBanner` mostra algo ele marca a faixa dele em `DoorSign.keep_out`
+  (`EloBanner.band`) e a placa que cruzaria desce para baixo dela (`DoorSign.KEEP_GAP`).
+- **Livro**: botões do papel `Book.button` (tinta sobre papel mais escuro, fio `GILT`, foco fio rubrica e losango à
+  esquerda) e `Book.primary` (papel tostado, letras rubrica) na folha do Portal e do Vendedor (`HubPanel`), no Livro, no
+  Compêndio e no Mapa; cartas de ultimate no papel com o estado escrito (`UltCard`: Escolhida, Pode escolher, Destrava
+  na Maestria N). Capítulos como marcadores de couro saindo da capa (`Book.mark`, `Book.mark_open`: o aberto mais longo
+  e com a fita petróleo; `HeroScreen.OUTER` 12 px do topo). Rodapé numa fileira só à direita: Dons (no capítulo O
+  Guerreiro), Compêndio, Voltar (`HeroScreen.FOOT_WIDTH`). **Aberto no hub não tem "Descer às catacumbas"**
+  (`HeroScreen.open(data, chapter, true)`, `in_hub`; só o Portal desce); no título continua. Folha única com a fita no
+  meio (P2-6). Barras de rolagem com tema (`UiKit.scroll_bar`: trilho de 2 px, pegador em losango alongado; no
+  `UiKit.theme()` em ouro velho e no `Book.theme()` no ouro do papel) e o pé da lista esmaece quando há mais
+  (`UiKit.scroll_fade`, `ScrollFade`, `FADE_HEIGHT` 24, filho interno do `ScrollContainer`) no Compêndio e em Suas
+  Bênçãos.
+- **Santuário**: placa da estação com o verbo dela no lugar de "Interagir" (`StationSign.verb`, chaves `hub_use_<id>`:
+  Descer, Olhar, Ver os Dons, Forjar, Ler); a linha do meio diz o que a estação é ("O caminho para as catacumbas").
+  Vendedor sem texto de protótipo: "Balcão fechado" e "Não há nada à venda no balcão." (`hub_soon`, `hub_vendor_soon`).
+  Nome do lugar por 2 s ao chegar e um nome fraco sobre cada estação na tela, menos a que está em foco
+  (`HubLabels`, `scripts/ui/hub_labels.gd`, posto pelo `Hub._ready`).
+- **Fins de partida**: os dois com os caminhos no mesmo lugar ("Voltar ao {HUB}" à esquerda, "Descer de novo" à direita;
+  o destaque muda: vitória o hub, derrota a descida; `EndScreen._ways`), HUD escondido nos dois (`_hide_hud`), números
+  numa fileira só de células (nome em cima, número embaixo; `STAT_CELL`) e medalhões sem os pontos de nível (P2-12,
+  `UiKit.gift_icons(..., levels)`).
+- **Configurações**: um controle só para toda opção (`OptionsScreen._setting`): linha-botão com o nome à esquerda e o
+  valor entre duas divisas de ouro velho desenhadas (`OptionsScreen.Chevron`, `opt_<id>_-1`/`_1`, sem foco), Cinzel no
+  valor sem algarismo e `number_font` com; esquerda e direita mudam, Enter, A ou clique avançam (o interruptor vira
+  "Sim"/"Não"); "Janela" apagada e pulada pelo foco com a tela cheia ligada; embaixo da página a linha do que a opção em
+  foco faz (`opt_<id>_tip`, `OptionsScreen.tip_text`).
+- P2 feitos: ícone de Sair do título é uma porta em arco aberta (`TitleButton._draw_door`, nada de símbolo de energia);
+  estado da porta no Mapa em tinta e curto ("Uma porta desta sala leva até aqui."). Ficaram: P2-2 (Juramentos e
+  Músicas), P2-3 e P2-4 (Controles), P2-5 (Compêndio), P2-8, P2-10, P2-11 (asset), resto do P2-12; enquadramento do
+  Portal pela câmera (P1-8, gameplay).
 
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
@@ -1837,14 +2085,14 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   somam mais da metade do dano). A luta dura de 1 min 40 s a 2 min para o robô (abaixo da meta de 2 a 4 min; gente bate
   menos, medir antes de mexer na vida). A dificuldade para gente ainda não foi medida. A foice é a lâmina do modelo aprovado (ele não
   tem foice); meias-luas sem as caveiras da referência; maldição lida pelo brilho roxo e fumaça no herói. Diferenças do Hades
-  que ficaram: Morvath tem ataques próprios (não os da chefe do Hades), só a vida (6050) e o dano seguem a escala; sem martelo, feitiço lunar ou dom de velocidade como recompensa; a loja compra ao pisar (não há botão de
+  que ficaram: Morvath tem ataques próprios (não os da chefe do Hades), só a vida (6050) e o dano seguem a escala; sem martelo, feitiço lunar ou dom de velocidade como recompensa; a loja, a recompensa e a porta pedem o botão de usar desde o C19 (`interact`; antes a loja comprava ao pisar e não havia botão de
   interagir); a seta especial não persegue (o bônus de sequência de golpes saiu na E3, D-10).
   Depois do 1º teste do Daniel (mais dinâmico, 2026-11-14; o avanço e o "andar corta o golpe" desta época saíram na E1c,
   ver Golpe parado): o corte de luz segue o lado do braço
   (`ComboNode.sweep`, `SWEEP` em `make_data.gd`), golpes
   empurram mais, inimigos mais rápidos (esqueleto 3,75 m/s) e com menos espera entre ataques (avisos iguais); a câmera
   se adianta para onde ele anda, não para a mira.
-- Cenário do KayKit, fontes e áudio sintetizado são provisórios. Assados somam 43,9 MB (43,75 no pacote; 16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`, textura S3TC de 1024 dentro de cada um). Fora do pacote (`exclude_filter` dos três presets): os `enemy_*` de origem, os bonecos do KayKit (`assets/models/characters`), a UAL (`assets/models/anim`), as armas (`assets/models/weapons`) e a `statue.res` sem uso; ficam no repositório para o `tools/bake.gd` e o `tools/bake_hero.gd`. Pacote (C1 do artista técnico, `docs/qa/asset_report.md`): exe do Windows 197,2 MB (PCK 87,9; era 219,7 / 110,3), `index.pck` da Web 88,0 MB. **Texturas 3D comprimidas para a placa em todo `.import`** (`compress/mode=2`, `detect_3d/compress_to=0`: o projeto é importado sem tela e a detecção do editor nunca trocava): herói 2048 e Emeth 1024 (`process/size_limit`) em BC7, normal da rocha em BC5 (o z refeito no `masonry.gdshader` e no `catacomb_floor.gdshaderinc`), altura em BC4; as peças do KayKit usam um material só, `assets/models/kaykit_material.tres` com a paleta `kaykit_palette.png` em BC7 (`use_external` no `_subresources` de cada `.glb.import`, sem imagem extraída). VRAM dessas texturas de 161 para 10 MB. Travado por `tests/test_asset_import.gd`; medir com `tools/asset_probe.gd -- vram` e `tools/pck_sizes.py`.
+- Cenário do KayKit, fontes e áudio sintetizado são provisórios. Assados somam 45,3 MB com os dois do hub (os nove inimigos 43,75; 16 bits, `ARRAY_FLAG_COMPRESS_ATTRIBUTES`, textura S3TC de 1024 dentro de cada um), todos reassados juntos em 2026-11-19 (Lote 2C; Morvath estava dois commits do `bake.gd` atrás). Cada `.res` guarda o `bake_stamp` da sua entrada no `tools/bake.gd` (`stamp()`, `PIPELINE`: subir quando uma mudança do código muda todo assado) e `tests/test_asset_budget.gd` (DT-104) falha com assado atrasado, assados acima de 70 MB, música do pacote acima de 18 MB ou figura acima de 5 600 triângulos (os de cajado têm 5 530 e 5 557; o `"lod"` de um `held` existe, mas tira a cabeça do cajado e a borda do escudo e mexe nas medidas do `test_enemy_windup.gd`, então ficou de fora). Fora do pacote (`exclude_filter` dos três presets): os `enemy_*` de origem, os bonecos do KayKit (`assets/models/characters`), a UAL (`assets/models/anim`), as armas (`assets/models/weapons`), as paletas e o `lion.svg` (fonte do `lion_sdf.res`); ficam no repositório para o `tools/bake.gd`, o `tools/bake_hero.gd` e o `tools/make_seal_lion.gd`. Sem `include_filter` (o `*.json` levava o `.gutconfig.json` ao pacote). A `statue.res`, a "Sombra" (`hero_sombra/`), o `paladin_1/`, o `tools/recolor_hero.gd` e o `HeroGear` saíram do repositório (DT-107, Q-19 a). Pacote (C1 do artista técnico, `docs/qa/asset_report.md`): exe do Windows 197,2 MB (PCK 87,9; era 219,7 / 110,3), `index.pck` da Web 88,0 MB. **Texturas 3D comprimidas para a placa em todo `.import`** (`compress/mode=2`, `detect_3d/compress_to=0`: o projeto é importado sem tela e a detecção do editor nunca trocava): herói 2048 e Emeth 1024 (`process/size_limit`) em BC7, normal da rocha em BC5 (o z refeito no `masonry.gdshader` e no `catacomb_floor.gdshaderinc`), altura em BC4; as peças do KayKit usam um material só, `assets/models/kaykit_material.tres` com a paleta `kaykit_palette.png` em BC7 (`use_external` no `_subresources` de cada `.glb.import`, sem imagem extraída). VRAM dessas texturas de 161 para 10 MB. Travado por `tests/test_asset_import.gd`; medir com `tools/asset_probe.gd -- vram` e `tools/pck_sizes.py`.
 - O lobo de geada do spec virou o esqueleto corredor. Vigília aparece como voto do PALADIN_1 (provisório).
 - O spec fala em quatro paladinos; o cânone de 12/11 fala em um paladino do leão e quatro guardiões. Vale o que o Daniel decidir.
 - Nomes dos paladinos: enquanto `PALADIN_n` for o próprio marcador, a oração entre colchetes que o cita some do texto
@@ -1985,16 +2233,38 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   lados do túmulo grande na A, 1,9 m entre os dois sarcófagos do sul na B (`STY_FRAMES_A`, `_B`; `_graves`). Santuário
   (SW-S3): três de 2,4 m em fileira no chão da nave diante da grade (`SanctuaryLook.STY_FRAMES_*`). Ponte (losango) ficou
   de fora: o shader só faz retângulos alinhados.
-- **SW-F1, coluna tombada nas Fendas** (`RiftLook._fallen_column`, `FALLEN_COLUMN_*`, A e B): três tambores por metade
-  atravessando o buraco do sul da fenda em z 6,2 (o do meio fica escondido atrás da ponte do sul na câmera do jogo), de
-  baixo do lábio oeste (x -8,4) a baixo do leste (3,4), quebrada no meio (x -2,3, vão de 0,9 m), cada metade descendo 7
-  graus do lábio para a quebra, topo a -0,3 m nos lábios; lascas da quebra caídas embaixo, corrente atravessando a
-  quebra e duas pendendo das pontas. Pedra da sala (`ashlar()`, como as lascas suspensas do F2; a pedra funda ficava preta
-  contra o escuro da fenda) na camada das profundezas, sem luz, nada colide, tudo no `kit.styled()`.
+- **SW-F1, coluna tombada nas Fendas** (`RiftLook._fallen_column`, `FALLEN_COLUMN_*`, A e B; refeita pela revisão do
+  Sworn P1, F-1 e F-2, `docs/gallery/redesign/sworn_p1/ART_REVIEW.md`): coluna de 0,7 m de raio com caneluras
+  (`Masonry.fluted`, 14 caneluras de 0,06 m, cilindro facetado em leque), três tambores por metade de raio 0,88 a 1,0 e
+  giro próprios, base com plinto e toro na ponta oeste (`FALLEN_COLUMN_BASE`) e o capitel caído pendurado na quebra
+  (ábaco, campana e um toco do fuste, `FALLEN_CAPITAL*`), atravessando o buraco do sul da fenda no lado norte dele (z 5,0,
+  onde a câmera do jogo a vê inteira; em z 6,2 o meio ficava atrás da ponte do sul), de baixo do lábio oeste (x -8) a
+  baixo do leste (3,4), quebrada em x -2,3 (vão de 0,9 m), cada metade descendo 12 graus para a quebra, topo a -0,6 m
+  nos lábios, a metade leste girada 15 graus para o sul no plano (`FALLEN_COLUMN_TWIST`): não lê como viga nem cano nem
+  passarela. Pedra da sala a 0,7 do valor (`ashlar()` vezes `FALLEN_COLUMN_VALUE`) na camada das profundezas, lascas da
+  quebra embaixo, correntes da quebra e das pontas (`FALLEN_COLUMN_HANG`), sem luz, nada colide, tudo no `kit.styled()`.
+- **Correções da revisão do Sworn P1** (só no estilizado; antes e depois na GPU em `docs/gallery/redesign/sworn_p1/fix_*`):
+  C-1 as 6 lajes tumulares antigas da Cripta (escuras, liam como alçapão) pintadas pelo próprio `paint_ref`
+  (`CryptLook.STY_OLD_SLAB`: laje 0,22, moldura 0,1, sulco 0,03, inscrição 0,2; gêmeos `_own_paint` com
+  `ArenaKit.PAINT_OWN`): na luta da A a laje fica a 0,73 a 1,0 da luma p50 do chão a 1 m (era 0,59 a 0,79). S-1 Salão: as quatro emolduradas
+  com tamanhos, valores e tipos próprios (`CatacombHall.STY_FRAMES`: 2,0 a 2,8 m, valor 0,92 a 1,0, uma tumular com o
+  leão, uma com a quina quebrada), moldura mais baixa (`framed_lip` 1,08, `framed_worn` 0,05): na vitrine as lajes medem
+  luma p50 96 a 134 contra 98 a 138 do chão vizinho (antes 102 a 141, de 4 a 9 acima). `ArenaKit.framed_slab(..., mark)`: na tumular o leão, na RAISED a quina quebrada
+  (`framed_broken` 0,55 no `floor_biome.gdshaderinc`: uma quina por semente, borda irregular, sem moldura nem topo, mais
+  escura). S-2 Santuário: as três (`SanctuaryLook.STY_FRAMES`, tamanhos e valores próprios, uma quebrada) descem a nave do
+  facho do guardião para leste, 2 m ao norte do eixo, entre as fileiras de colunas, onde a câmera do jogo as vê. G-2
+  nervuras do Santuário mais fortes e duras (`gobo_strength` 0,35, `gobo_soft` 0,03). K-1 gaiolas da Câmara do Selo
+  maiores (`BossChamber.STY_CAGE` 0,73 x 2,13 m, barras 0,08) e um osso velho caído numa delas (`STY_CAGE_BONE*`). R-1
+  na Cripta A metade dos grupos de velas fora da coroa apagados no estilizado (`CryptLook.STY_GROUPS_OUT`, chamas
+  escondidas e luz em `off`; 16 luzes acesas, eram 18). Nenhuma laje só desenhada (emoldurada ou tumular) a menos
+  de `ArenaRoom.PLATE_CLEAR` 0,6 m de uma laje que fere do RP-06 (`ArenaRoom.clear_of_plates`, lido do
+  `layout.hazard`): na Cripta A saem 4 tumulares novas (ficam 8). Colisão, clássico e `fit_probe` iguais; iGPU 720
+  Baixa (GPU) Cripta A 13,70 / 13,89 para 13,88 ms, Fendas A 14,58 / 14,55 para 14,69 / 14,81.
 - Testes em `tests/test_room_style.gd`: `test_sworn_framed_slabs_lie_on_free_floor` (Salão, Cripta A e B, Santuário A e B:
   cada laje no chão, longe de toda peça e das outras, 2 a 3 m as emolduradas, o Salão com 4 longe do medalhão, a Cripta
   com 2 emolduradas, mais de 10 tumulares e 15 a 25% de leões contando as antigas; nenhuma no chão clássico) e
-  `test_sworn_fallen_column_under_the_floor` (A e B: topo abaixo de -0,25 m, de baixo do lábio oeste a baixo do leste);
+  `test_sworn_fallen_column_under_the_floor` (A e B: topo abaixo do chão, de baixo do lábio oeste a baixo do leste, a
+  metade leste girada para fora da linha);
   ida e volta do F7 e "nada do estilizado sobre o chão entre 0,3 e 2,6 m" nos testes de antes.
 - Medido (G3, C1, F1; RTX 1672 x 941, semente 5, vitrine 2 s e luta 9 s, `frame_stats.py --hue --scene`; capturas `g3_*`,
   `c1_*`, `f1_*` com recortes `*_detail_*` e `*_compat_after`): o quadro igual (luma p50 da cena 67 / 44 / 43 / 63 no

@@ -118,6 +118,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"light_cap", NO_CAP)
 	put(m, &"color", color)
 	put(m, &"tile_m", 0.0)
+	put(m, &"plate", 0.0)
 	put(m, &"aim_px", 0.0)
 	put(m, &"fill_early", FILL_EARLY)
 	put(m, &"fill_max", FILL_MAX)
@@ -165,6 +166,37 @@ static func hazard(node: MeshInstance3D, at: Vector2, dir: Vector2, length: floa
 	put(m, &"tile_m", HAZARD_TILE)
 	put(m, &"fill_early", HAZARD_FILL_EARLY)
 	put(m, &"fill_max", HAZARD_FILL_MAX)
+
+
+## RP-06: a slab that strikes when stepped on (PlateFloor), placeholder until the environment artist's piece (SW-G7):
+## at rest its frame and two cracks in a dull bone (PLATE_REST_COLOR at PLATE_REST_STRENGTH: read, never amber, the
+## colour only a lit floor danger has); arming, the amber of the runes reaching from the frame to the middle.
+const PLATE_REST_COLOR := Color(0.62, 0.57, 0.48)
+const PLATE_REST_STRENGTH := 0.9
+const PLATE_CRACK := 0.8
+const PLATE_RIM := 0.14
+
+
+## Lays a slab's quad over the rectangle r, drawn at rest (set_plate moves it on).
+static func plate(node: MeshInstance3D, r: Rect2, y: float) -> void:
+	var from := Vector2(r.position.x, r.get_center().y)
+	dress(node, Style.HAZARD, Shape.LINE, PLATE_REST_COLOR, PLATE_REST_STRENGTH, PLATE_RIM, from, Vector2.RIGHT, r.size.x,
+		r.size.y, y)
+	var m := node.material_override as ShaderMaterial
+	put(m, &"plate", PLATE_CRACK)
+	put(m, &"fill_early", HAZARD_FILL_EARLY)
+	put(m, &"fill_max", HAZARD_FILL_MAX)
+
+
+## A slab's state (PlateHazard.state: x arming, y strike, z ember): at rest the bone frame; arming the amber reaching in;
+## striking the whole slab lit; the ember falling back to rest.
+static func set_plate(node: MeshInstance3D, s: Vector3) -> void:
+	var m := node.material_override as ShaderMaterial
+	var hot := maxf(maxf(s.x, s.y), s.z)
+	var lit := s.x > 0.0 or s.y > 0.0
+	put(m, &"color", PLATE_REST_COLOR.lerp(HAZARD_COLOR, minf(1.0, hot * 4.0)))
+	put(m, &"strength", lerpf(PLATE_REST_STRENGTH, HAZARD_STRENGTH, minf(1.0, hot * 4.0)))
+	put(m, &"progress", s.x if s.x > 0.0 else 1.0 if s.y > 0.0 else s.z if not lit else 0.0)
 
 
 static func _priority(m: ShaderMaterial, p: int) -> void:

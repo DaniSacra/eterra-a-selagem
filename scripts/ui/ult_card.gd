@@ -1,13 +1,13 @@
 class_name UltCard
 extends BaseButton
-## One ultimate on the hero screen (E2-06): its name and, under it, "Escolhida" in old gold, nothing when it can be
-## chosen, or a lock and the Mastery level that opens it. Chosen: a brighter line and an emerald one inside (the
-## Emeth's). Focus is the ivory line of the Gift nodes; the mouse takes the focus with it.
+## One ultimate on the hero screen (E2-06), on the book's paper like its buttons (Book.button): its name and, under
+## it, its state written: "Escolhida" in the page's green, "Pode escolher", or the Mastery level that opens it.
+## Chosen: a green line and a second one inside. Focus is the rubric line of the paper buttons; the mouse takes the
+## focus with it.
 
 const SIZE := Vector2(206, 62)
 const NAME_SIZE := 19
 const SUB_SIZE := 15
-const EMERALD := Color("3fae7c")
 
 var def: UltDef
 var open := false:
@@ -34,29 +34,26 @@ func setup(p_def: UltDef) -> UltCard:
 
 
 func _draw() -> void:
+	# on the book's paper (UI review d2ff05d, P1-6): the paper buttons' fills, the state always written
 	var r := Rect2(Vector2.ZERO, size)
-	var ink := UiKit.INK if open else TalentNode.LOCK_INK
+	var fill := Book.BUTTON_PAPER if open else Color(Book.BUTTON_PAPER, Book.BUTTON_PAPER.a * 0.4)
 	if chosen:
-		ink = UiKit.INK.lerp(EMERALD.darkened(0.6), 0.45)
-	draw_rect(r, ink)
-	var line := UiKit.OLD_GOLD.lightened(0.45) if chosen else (UiKit.OLD_GOLD if open else TalentNode.LOCK_LINE)
-	draw_rect(r.grow(-1.0), line, false, UiKit.FRAME)
+		fill = Color(Book.OK, 0.16)
+	draw_rect(r, fill)
+	var line := Book.OK if chosen else (Book.GILT if open else Color(Book.GILT, 0.45))
+	draw_rect(r.grow(-0.5), line, false, 1.0 if not chosen else 2.0)
 	if chosen:
-		draw_rect(r.grow(-5.0), Color(EMERALD, 0.7), false, 1.0)
+		draw_rect(r.grow(-4.0), Color(Book.OK, 0.5), false, 1.0)
 	if has_focus():
-		draw_rect(r.grow(3.0), TalentNode.FOCUS, false, 1.6)
+		draw_rect(r.grow(3.0), Book.RUBRIC, false, 1.6)
 	var title := T.t(def.name_key)
-	var font := UiKit.BOLD_FONT
-	var col := UiKit.PALE if open else UiKit.DIM
-	var at := Vector2(14.0, 26.0)
-	UiKit.draw_shadow(self, font, at, title, NAME_SIZE)
-	draw_string(font, at, title, HORIZONTAL_ALIGNMENT_LEFT, size.x - 24.0, NAME_SIZE, col)
-	var sub := ""
-	var sub_col := UiKit.DIM
+	draw_string(UiKit.BOLD_FONT, Vector2(14.0, 26.0), title, HORIZONTAL_ALIGNMENT_LEFT, size.x - 24.0, NAME_SIZE,
+		Book.INK if open else Book.FADED)
+	var sub := T.t(&"hero_ult_can_choose")
+	var sub_col := Book.FADED
 	if not open:
 		sub = T.t(&"hero_ult_locked", {"n": def.mastery_level})
 	elif chosen:
 		sub = T.t(&"hero_ult_chosen")
-		sub_col = UiKit.GOLD
-	if sub != "":
-		draw_string(UiKit.TEXT_FONT, Vector2(14.0, 48.0), sub, HORIZONTAL_ALIGNMENT_LEFT, size.x - 24.0, SUB_SIZE, sub_col)
+		sub_col = Book.OK
+	draw_string(UiKit.TEXT_FONT, Vector2(14.0, 48.0), sub, HORIZONTAL_ALIGNMENT_LEFT, size.x - 24.0, SUB_SIZE, sub_col)

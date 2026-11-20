@@ -77,9 +77,11 @@ func _frames(n: int) -> void:
 func test_the_plan_turns_into_the_world_and_back() -> void:
 	# the spec's own table (2.3, 2.4): local (u, v) and world (x, z)
 	assert_almost_eq(HubPlan.to_world(Vector2(0.0, 1.0), 35.0), Vector2(-0.574, -0.819), Vector2(0.01, 0.01), "the camera's point")
-	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-8.6, -12.29), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(19.66, -6.44), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(5.92, 13.68), Vector2(0.06, 0.06))
+	# HUB-D: the stations 11.5 m off the axis (LR-07), the portal's at the foot of its stairs, the arrival at the
+	# top of the stairs' well
+	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-6.31, -9.01), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(11.49, -3.65), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(4.47, 6.39), Vector2(0.06, 0.06))
 	for p: Vector2 in [Vector2(3, -7), Vector2(-12, 4), Vector2(0.5, 0.25)]:
 		assert_almost_eq(HubPlan.to_local(HubPlan.to_world(p, 35.0), 35.0), p, Vector2(0.0001, 0.0001))
 
@@ -104,7 +106,8 @@ func test_the_layout_is_its_own_and_stands_on_the_plan() -> void:
 	var area := 0.0
 	for i in HubPlan.FLOOR.size():
 		area += HubPlan.FLOOR[i].cross(HubPlan.FLOOR[(i + 1) % HubPlan.FLOOR.size()]) * 0.5
-	assert_between(absf(area), 1500.0, 1800.0, "about 48 to 52 by 30 to 34 m")
+	# (HUB-D: less the arrival stairs' well, 7 x 6 m, plus the lobes beside the portal's terrace)
+	assert_between(absf(area), 1400.0, 1800.0, "about 48 to 52 by 30 to 34 m")
 
 
 # ---------- focus ----------
@@ -296,7 +299,7 @@ func test_interact_opens_a_station_and_esc_closes_it_without_leaking() -> void:
 	await _frames(2)
 	await _tap(KEY_E)
 	assert_true(hub.host.is_open(), "E on the Forjador opens its page")
-	assert_true(hub.host.screen is HubPanel)
+	assert_true(hub.host.screen is ForgeScreen, "the Forja (Rejogabilidade, Fatia 1)")
 	await _tap(KEY_E)
 	assert_true(hub.host.is_open(), "E again does not open a second one")
 	await _send(_key(KEY_ESCAPE, true), 3)

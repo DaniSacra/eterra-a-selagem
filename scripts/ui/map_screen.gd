@@ -23,7 +23,8 @@ const BACK_WIDTH := 170.0
 const LEGEND: Array[Array] = [
 	[DoorGlyph.Kind.BLESSING, &"reward_boon"], [DoorGlyph.Kind.POMEGRANATE, &"reward_pom"],
 	[DoorGlyph.Kind.HEART, &"reward_heart"], [DoorGlyph.Kind.MAGICK, &"reward_magick"],
-	[DoorGlyph.Kind.GOLD, &"reward_gold"], [DoorGlyph.Kind.FOUNTAIN, &"room_fountain"],
+	[DoorGlyph.Kind.GOLD, &"reward_gold"], [DoorGlyph.Kind.SILVER, &"material_silver_short"],
+	[DoorGlyph.Kind.MEMORY, &"material_memory_short"], [DoorGlyph.Kind.FOUNTAIN, &"room_fountain"],
 	[DoorGlyph.Kind.SHOP, &"room_shop"], [DoorGlyph.Kind.ALTAR, &"room_altar"],
 	[DoorGlyph.Kind.TRIAL, &"room_trial"], [DoorGlyph.Kind.UNKNOWN, &"map_legend_hidden"],
 	[DoorGlyph.Kind.HARD, &"door_hard"], [DoorGlyph.Kind.GUARDIAN, &"room_miniboss"],
@@ -104,14 +105,18 @@ func _left_page(page: MarginContainer) -> void:
 	grid.add_theme_constant_override(&"h_separation", 14)
 	grid.add_theme_constant_override(&"v_separation", 0)
 	v.add_child(grid)
+	# only the marks this descent's map has (UI review d2ff05d, P2-9: the legend had grown past the page)
+	var present := legend_kinds(map)
 	for entry: Array in LEGEND:
+		if not present.has(entry[0]):
+			continue
 		grid.add_child(_legend_row(_legend_mark(entry[0] as DoorGlyph.Kind), T.t(entry[1] as StringName)))
 	for entry: Array in STATES:
 		grid.add_child(_legend_row(_state_mark(entry[0] as DescentMap.State), T.t(entry[1] as StringName)))
 	var foot := HBoxContainer.new()
 	foot.add_theme_constant_override(&"separation", 12)
 	v.add_child(foot)
-	_back = UiKit.button(T.t(&"back"), func() -> void: close(), BACK_WIDTH)
+	_back = Book.button(T.t(&"back"), func() -> void: close(), BACK_WIDTH)
 	_back.name = "back"
 	_back.custom_minimum_size.y = 40
 	foot.add_child(_back)
@@ -119,6 +124,15 @@ func _left_page(page: MarginContainer) -> void:
 	hint.name = "hint"
 	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	foot.add_child(hint)
+
+
+## The marks a descent's map shows (its rooms' marks and chevrons), for the legend.
+static func legend_kinds(m: DescentMap) -> Dictionary:
+	var out := {}
+	for id: int in m.rooms:
+		out[m.mark(id)] = true
+		out[m.badge(id)] = true
+	return out
 
 
 func _legend_row(mark: Control, text: String) -> HBoxContainer:
@@ -195,9 +209,9 @@ func _show(id: int) -> void:
 		var l := Book.text(line, Book.INK if first else Book.FADED, TEXT_SIZE)
 		_lines.add_child(l)
 		first = false
-	# how it stands now, last, in the rubric
+	# how it stands now, last, in ink (in the rubric it read as an error; UI review d2ff05d, P2-9)
 	if _lines.get_child_count() > 0:
-		(_lines.get_child(_lines.get_child_count() - 1) as Label).add_theme_color_override(&"font_color", Book.RUBRIC)
+		(_lines.get_child(_lines.get_child_count() - 1) as Label).add_theme_color_override(&"font_color", Book.INK)
 
 
 ## The text on the left page now (tests).

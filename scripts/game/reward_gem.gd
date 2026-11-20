@@ -33,6 +33,13 @@ const ENAMEL_WATER := Vector3(196.0, 0.2, 0.45)
 const ENAMEL_TRIAL := Vector3(282.0, 0.3, 0.42)
 const ENAMEL_ALTAR := Vector3(30.0, 0.4, 0.42)
 const ENAMEL_ROOM := Vector3(220.0, 0.08, 0.26)
+## The two materials brought home (Rejogabilidade, Fatia 1, sistemas.md 3.4): neither is enamel. Prata Antiga's face is
+## the coin of gold's made in old silver (SILVER, cool and greyed, never white; its rim and halo the same), struck with an
+## ingot; Fragmento de Memória's is a leaf of parchment (PARCHMENT, under ENAMEL_MAX's value) with a torn page written
+## in ink (INK, never metal). Their halos: the silver's own, a pale parchment's.
+const SILVER := Color(0.6, 0.62, 0.64)
+const PARCHMENT := Color(0.5, 0.43, 0.32)
+const INK := Color(0.12, 0.09, 0.07)
 ## The struck mark's metal: gold on the enamel, ivory on the Blessing's petrol (art_direction.md 6.3).
 const IVORY := Color(0.86, 0.82, 0.72)
 ## The halo's light: the most it lays at its middle and its brightest channel (under 1, the glow's threshold); its
@@ -82,7 +89,7 @@ const HALO_SHADER := preload("res://assets/shaders/reward_halo.gdshader")
 const CLOTH_SHADER := preload("res://assets/shaders/reliquary_cloth.gdshader")
 
 ## The shader's marks (reward_gem.gdshader `mark`).
-enum Mark { NONE, BLESSING, COIN, HEART, GEM, DROP, CHEVRON_1, CHEVRON_2, CHEVRON_3 }
+enum Mark { NONE, BLESSING, COIN, HEART, GEM, DROP, CHEVRON_1, CHEVRON_2, CHEVRON_3, INGOT, LEAF }
 ## How it stands: on a reliquary, floating (a door's sign), or by where it is (AUTO: floating over a door's mouth,
 ## Arena.door_label, else on a reliquary).
 enum Stand { AUTO, RELIQUARY, FLOAT }
@@ -90,6 +97,7 @@ enum Stand { AUTO, RELIQUARY, FLOAT }
 static var _faces := {}
 static var _halos := {}
 static var _rim_mat: StandardMaterial3D
+static var _silver_rim_mat: StandardMaterial3D
 static var _cloth_mat: ShaderMaterial
 static var _face_mesh: QuadMesh
 static var _rim_mesh: CylinderMesh
@@ -133,7 +141,7 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	frame.add_child(spin)
 	var rim := MeshInstance3D.new()
 	rim.mesh = _rim_mesh
-	rim.material_override = _rim_mat
+	rim.material_override = _silver_rim_mat if reward == RunMap.Reward.SILVER else _rim_mat
 	rim.rotation.x = PI * 0.5
 	spin.add_child(rim)
 	var face_mat := _face(key, reward, kind)
@@ -198,6 +206,10 @@ static func mark_of(reward: RunMap.Reward, kind: RunMap.Kind) -> Mark:
 			return Mark.GEM
 		RunMap.Reward.HEAL:
 			return Mark.DROP
+		RunMap.Reward.SILVER:
+			return Mark.INGOT
+		RunMap.Reward.MEMORY:
+			return Mark.LEAF
 		RunMap.Reward.NONE:
 			match kind:
 				RunMap.Kind.SHOP:
@@ -216,6 +228,19 @@ static func mark_of(reward: RunMap.Reward, kind: RunMap.Kind) -> Mark:
 ## True when the face is the coin itself, all old gold (gold and the shop: art_direction.md 6.3, no enamel).
 static func is_gold(reward: RunMap.Reward, kind: RunMap.Kind) -> bool:
 	return reward == RunMap.Reward.GOLD or (reward == RunMap.Reward.NONE and kind == RunMap.Kind.SHOP)
+
+
+## The face's own stuff when it is no enamel (Color(0, 0, 0, 0): enamel): gold's coin, Prata Antiga's silver, the
+## Memória's parchment. Its halo takes this colour too.
+static func face_stuff(reward: RunMap.Reward, kind: RunMap.Kind) -> Color:
+	if is_gold(reward, kind):
+		return GOLD
+	match reward:
+		RunMap.Reward.SILVER:
+			return SILVER
+		RunMap.Reward.MEMORY:
+			return PARCHMENT
+	return Color(0, 0, 0, 0)
 
 
 ## The family's enamel (hue in degrees, saturation, value) of a reward or a room (ENAMEL_*).
@@ -284,6 +309,9 @@ static func _ready() -> void:
 	_rim_mat.roughness = 0.35
 	_rim_mat.emission_enabled = true
 	_rim_mat.emission = GOLD * 0.12
+	_silver_rim_mat = _rim_mat.duplicate() as StandardMaterial3D
+	_silver_rim_mat.albedo_color = SILVER
+	_silver_rim_mat.emission = SILVER * 0.12
 	_stem_mesh = CylinderMesh.new()
 	_stem_mesh.top_radius = STEM
 	_stem_mesh.bottom_radius = STEM * 1.6
@@ -447,9 +475,16 @@ static func _face(key: String, reward: RunMap.Reward, kind: RunMap.Kind) -> Shad
 		m.set_shader_parameter(&"medallion", tex)
 	m.set_shader_parameter(&"mark", mark_of(reward, kind))
 	m.set_shader_parameter(&"enamel", enamel_of(reward, kind))
-	m.set_shader_parameter(&"gold", GOLD)
-	m.set_shader_parameter(&"all_gold", is_gold(reward, kind))
-	m.set_shader_parameter(&"mark_metal", IVORY if mark_of(reward, kind) == Mark.BLESSING else GOLD)
+	var stuff := face_stuff(reward, kind)
+	var memory := reward == RunMap.Reward.MEMORY
+	# the face's metal (the rim drawn on it and a coin's field): silver for the Prata, gold for the rest
+	m.set_shader_parameter(&"gold", SILVER if reward == RunMap.Reward.SILVER else GOLD)
+	m.set_shader_parameter(&"all_gold", stuff.a > 0.0 and not memory)
+	m.set_shader_parameter(&"parchment", memory)
+	if memory:
+		m.set_shader_parameter(&"enamel", PARCHMENT)
+	var mk := mark_of(reward, kind)
+	m.set_shader_parameter(&"mark_metal", IVORY if mk == Mark.BLESSING else INK if memory else SILVER if reward == RunMap.Reward.SILVER else GOLD)
 	_faces[key] = m
 	return m
 
@@ -457,7 +492,8 @@ static func _face(key: String, reward: RunMap.Reward, kind: RunMap.Kind) -> Shad
 static func _halo(key: String, reward: RunMap.Reward, kind: RunMap.Kind, _color: Color) -> ShaderMaterial:
 	if _halos.has(key):
 		return _halos[key]
-	var c := GOLD if is_gold(reward, kind) else Color.from_hsv(fposmod(family(reward, kind).x, 360.0) / 360.0, HALO_SATURATION, 1.0)
+	var stuff := face_stuff(reward, kind)
+	var c := stuff if stuff.a > 0.0 else Color.from_hsv(fposmod(family(reward, kind).x, 360.0) / 360.0, HALO_SATURATION, 1.0)
 	var m := ShaderMaterial.new()
 	m.shader = HALO_SHADER
 	m.set_shader_parameter(&"color", Color(c.r, c.g, c.b))

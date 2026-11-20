@@ -9,7 +9,12 @@ extends RefCounted
 ## already played, once (MasteryCurve.retro_xp).
 ## 4 (E6, D-63): juramentos (ranks: the Juramentos chosen for the next descent, id to rank; best: the highest Peso
 ## won). An older file opens with none chosen and nothing won; nothing else changes.
-const VERSION := 5
+## 6 (Rejogabilidade, Fatia 1; sistemas.md 5.1): materials (silver, memory, emerald: what the save holds, MaterialPurse)
+## and materials_total (all ever brought home); in each hero, opened (the Gifts opened with Memória), forge (temper: the
+## Forja's highest Temperar bought; refine, awaken, inscribed for the next slices) and tools (the Forjador's, Fatia 2).
+## An older file opens every Gift its Mastery had already unlocked, for free (nobody loses a Gift), and gets 5 silver a
+## descent it played, up to 30 (Q-RJ8 a, MaterialPurse.retro_silver), once.
+const VERSION := 7
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -17,7 +22,7 @@ const FIRST_HERO := "warrior"
 ## elite; Morvath: met, phase the highest reached, defeated) and arenas (entered).
 const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies", "arenas"]
 ## The lists of ids in a hero's block (only strings are kept).
-const HERO_LISTS: Array[String] = ["unlocked", "equipped"]
+const HERO_LISTS: Array[String] = ["unlocked", "equipped", "opened", "tools"]
 
 
 static func defaults() -> Dictionary:
@@ -26,7 +31,7 @@ static func defaults() -> Dictionary:
 		codex[section] = {}
 	return {
 		"version": VERSION,
-		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "camera": "far", "bindings": {},
+		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "camera": "near", "camera_chosen": false, "bindings": {},
 			# T5 (the PO's review): the piece chosen for each place (MusicCatalog; Music.piece_for falls back to the default)
 			"music_title": String(MusicCatalog.DEFAULT[MusicCatalog.TITLE]), "music_hub": String(MusicCatalog.DEFAULT[MusicCatalog.HUB]),
 			"music_dungeon": String(MusicCatalog.DEFAULT[MusicCatalog.DUNGEON]),
@@ -38,6 +43,8 @@ static func defaults() -> Dictionary:
 		"heroes": {FIRST_HERO: hero_defaults()},
 		"codex": codex,
 		"juramentos": juramentos_defaults(),
+		"materials": MaterialPurse.defaults(),
+		"materials_total": MaterialPurse.defaults(),
 	}
 
 
@@ -50,8 +57,16 @@ static func juramentos_defaults() -> Dictionary:
 ## One hero's block: the Mastery XP (the level comes out of it), the Gifts unlocked (ids, what the screens have shown),
 ## the Gifts equipped for the next descent (ids), the ultimate chosen (id or "") and first times (guardian, victory:
 ## counts) for the Mastery's first-time XP.
+## Since version 6: opened (the Gifts opened with Memória, ids), forge (forge_defaults) and tools (ids, Fatia 2).
 static func hero_defaults() -> Dictionary:
-	return {"mastery_xp": 0, "unlocked": [], "equipped": [], "ultimate": "", "firsts": {}}
+	return {"mastery_xp": 0, "unlocked": [], "equipped": [], "ultimate": "", "firsts": {}, "opened": [],
+		"forge": forge_defaults(), "tools": []}
+
+
+## The Forja's block of a hero (Forge): the highest Temperar bought (0: none); refine (action: choice), awaken (the one
+## awakened) and inscribed (Encantos learned) wait for the next slices.
+static func forge_defaults() -> Dictionary:
+	return {"temper": 0, "refine": {}, "awaken": "", "inscribed": []}
 
 
 ## Fills anything missing from an older or damaged file, never dropping what is valid. Dictionaries with free keys
@@ -101,8 +116,28 @@ static func merged(loaded: Variant) -> Dictionary:
 		for key: String in old_defaults:
 			if String(out.options.get(key, "")) == old_defaults[key]:
 				out.options[key] = String(MusicCatalog.DEFAULT[places[key]])
+	# files before version 6 (Rejogabilidade, Fatia 1): every Gift the Mastery had unlocked is opened for free and the
+	# descents already played give their silver once
+	if version < 6:
+		open_revealed(out.heroes[FIRST_HERO])
+		var retro := MaterialPurse.retro_silver(int(out.runs))
+		MaterialPurse.give(out, MaterialPurse.SILVER, maxi(0, retro - MaterialPurse.amount(out, MaterialPurse.SILVER)))
+	# files before version 7 (LR-01): the near camera is the default now; a save still on the old default ("far") moves
+	# to it once, unless the player chose the camera by hand (camera_chosen, set by Save.set_option)
+	if version < 7 and String(out.options.camera) == "far" and not bool(out.options.camera_chosen):
+		out.options.camera = "near"
 	out.version = VERSION
 	return out
+
+
+## Opens for free every Gift the Warrior's block has revealed by its Mastery (the version 6 migration; a test or a
+## capture that sets the Mastery and wants the save of a player who got there before the Memória).
+static func open_revealed(block: Dictionary) -> void:
+	var warrior := HeroDef.warrior()
+	var opened: Array = block.opened
+	for t in warrior.talents().unlocked(warrior.mastery.level_of(int(block.mastery_xp))):
+		if not opened.has(String(t.id)):
+			opened.append(String(t.id))
 
 
 ## A dictionary with known keys: each known key read in its default's type (an empty default dictionary, as bindings
@@ -114,6 +149,8 @@ static func _fixed_keys(loaded: Dictionary, model: Dictionary) -> Dictionary:
 			continue
 		if sub in HERO_LISTS and loaded[sub] is Array:
 			out[sub] = (loaded[sub] as Array).filter(func(v: Variant) -> bool: return v is String)
+		elif model[sub] is Dictionary and not (model[sub] as Dictionary).is_empty() and loaded[sub] is Dictionary:
+			out[sub] = _fixed_keys(loaded[sub], model[sub])  # a block with known keys inside (forge)
 		else:
 			out[sub] = _coerced(loaded[sub], model[sub])
 	return out

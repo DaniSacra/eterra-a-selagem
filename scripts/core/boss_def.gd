@@ -74,6 +74,20 @@ extends Resource
 ## Seconds he may walk in before the swing.
 @export var scythe_approach := 1.2
 
+@export_group("Double reap")
+## C19-3 (Q-09 a; Hades II's Hecate: right 0.85 / 0.4 / 0.35 s and at once left 0.5 / 0.5 / 2.2 s): two sweeps
+## close in. The first's wind-up reap_windup; reap_active seconds after it lands the second's warning is born (aimed
+## where the paladin is then), filling over reap_pause and reap2_windup; reap_recovery after the second.
+@export var reap_reach := 4.5
+@export var reap_degrees := 150.0
+@export var reap_windup := 0.85
+@export var reap_active := 0.4
+@export var reap_pause := 0.35
+@export var reap2_windup := 0.5
+@export var reap2_active := 0.5
+@export var reap_recovery := 2.2
+@export var reap_damage := 10.0
+
 @export_group("Blades of the souls")
 @export var blade_spread := 38.0
 @export var blade_speed := 11.0

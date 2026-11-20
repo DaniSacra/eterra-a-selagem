@@ -21,6 +21,8 @@ extends Node3D
 ## DoorGlyph.of_reward: the same mark the altar's cards and the shop use); the room's pictogram then stands left of the
 ## line under it ("Difícil", "Guardião"), so each mark sits by the words it explains.
 ##   var sign := DoorSign.make(T.t(&"reward_gold"), T.t(&"door_hard"), DoorGlyph.Kind.HARD, DoorGlyph.Kind.GOLD)
+## Signs and HUD greetings never touch (keep_out): while a greeting shows, a sign that would cross its band stands
+## under it.
 
 ## Height of the capitals at a screen 1080 lines tall (the backlog asks for 16 at least).
 const CAP_PX := 19.0
@@ -58,6 +60,11 @@ const OUTLINE_COLOR := Color(0.035, 0.027, 0.04)
 const MIN_CONTRAST := 4.5
 ## Above the world, with the damage numbers, under the HUD and the menus (Game: numbers 2, HUD 5).
 const LAYER := 2
+## The band of the screen a HUD greeting stands in while it shows (EloBanner sets it, Rect2() when none; canvas px):
+## a sign that would cross it goes under it, KEEP_GAP px lower (UI review d2ff05d, P1-1: "Provação vencida" touched
+## the door's "Bênção / Guardião", the shop's "Bênção nova" stood 50 px over its five signs).
+static var keep_out := Rect2()
+const KEEP_GAP := 8.0
 
 var title: Label
 var detail: Label
@@ -236,6 +243,9 @@ func _process(_delta: float) -> void:
 	var s := _box.get_combined_minimum_size()
 	_box.size = s
 	_box.position = (cam.unproject_position(at) - Vector2(s.x * 0.5, s.y)).round()
+	# a greeting of the HUD up there (EloBanner): the sign steps down under it, never touching it (P1-1)
+	if keep_out.has_area() and Rect2(_box.position, s).intersects(keep_out):
+		_box.position.y = keep_out.end.y + KEEP_GAP
 	_box.visible = true
 
 

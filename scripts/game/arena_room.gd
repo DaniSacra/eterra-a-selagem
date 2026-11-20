@@ -300,6 +300,22 @@ func style() -> Dictionary:
 	return {}
 
 
+## How far a slab only drawn (ArenaKit.framed_slab) keeps from the slabs that strike (RP-06, HazardDef.PLATES), in m:
+## a frame or a grave slab next to one would read as one more trap (Sworn P1 review, S-1).
+const PLATE_CLEAR := 0.6
+
+
+## True when a drawn slab of this middle and size (m) keeps PLATE_CLEAR from every slab that strikes in this room.
+func clear_of_plates(at: Vector2, size: Vector2) -> bool:
+	if layout == null or layout.hazard == null or layout.hazard.kind != HazardDef.Kind.PLATES:
+		return true
+	var mine := Rect2(at - size * 0.5, size).grow(PLATE_CLEAR)
+	for p: Rect2 in layout.hazard.plates:
+		if mine.intersects(p):
+			return false
+	return true
+
+
 var _style := {}
 
 

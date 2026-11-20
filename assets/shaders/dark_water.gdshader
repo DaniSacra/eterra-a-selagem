@@ -31,6 +31,10 @@ uniform float streaks = 3.0;
 uniform float fall_speed = 2.2;
 uniform float fall_light = 0.55;
 uniform float foot = 2.5;
+// Compatibility only: the body's own light, a share of its colour (no reflections there to show it)
+uniform float compat_body = 1.0;
+// and the ripples' and foam's light (measured: luma p90 139 at 1.0 against the desktop's 97)
+uniform float compat_glow = 0.7;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -89,5 +93,11 @@ void fragment() {
 	ROUGHNESS = 0.1;
 	SPECULAR = 0.4;
 	EMISSION = capped(glow);
+#if CURRENT_RENDERER == RENDERER_COMPATIBILITY
+	// the browser's renderer (HUB-E P2-9): no reflections to light the dark albedo (it went black) and its light reaches
+	// the screen without the linear-to-sRGB step (a glow v showed as about v^2.2); the body glows a little in its own
+	// colour and the ripples and foam come back to the desktop's values
+	EMISSION = capped(pow(EMISSION, vec3(1.0 / 2.2)) * compat_glow + c * compat_body);
+#endif
 	ALPHA = clamp(a, 0.0, 1.0);
 }

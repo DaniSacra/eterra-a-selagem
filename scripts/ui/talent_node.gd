@@ -39,6 +39,11 @@ const FLARE_WIDE := 2.6
 const PIP := 3.2
 const PIP_STEP := 9.0
 const LEVEL_SIZE := 15
+## A sealed Gift (revealed by the Mastery, not opened with Memória): its glyph at half strength, and under it the leaf
+## of Memória and the price, in place of the Devotion's pips.
+const SEALED_GLYPH := 0.5
+const MEMORY_MARK := 13.0
+const MEMORY_SIZE := 14
 
 ## Glyph outlines in units of the glyph's radius (convex enough to triangulate).
 const FLAME := TalentGlyph.FLAME
@@ -103,6 +108,7 @@ func _draw() -> void:
 	var h := size.x * 0.5
 	var locked := state == HeroLoadout.State.LOCKED
 	var blocked := state == HeroLoadout.State.BLOCKED and def != null
+	var sealed := state == HeroLoadout.State.SEALED and def != null
 	var on := equipped()
 	var line := line_color()
 	if _flash > 0.0:
@@ -134,7 +140,10 @@ func _draw() -> void:
 		var col := glyph_color()
 		if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
 			branch_glyph(self, glyph, c, r, col)
-	if def != null and def.cost > 0:
+	if sealed and def.memory_cost > 0:
+		# revealed, not opened (Rejogabilidade, Fatia 1): its price in Memória under it, not its Devotion
+		_draw_memory(c, def.memory_cost)
+	elif def != null and def.cost > 0:
 		var pip := (EQUIPPED_LINE if on else UiKit.OLD_GOLD.lightened(0.3)) if not locked else LOCK_LINE.lightened(0.2)
 		if blocked:
 			pip = BLOCKED_LINE
@@ -186,7 +195,21 @@ func line_color() -> Color:
 func glyph_color() -> Color:
 	if equipped():
 		return color().lerp(Color.WHITE, 0.7)
+	if state == HeroLoadout.State.SEALED:
+		return Color(color().lightened(0.15), SEALED_GLYPH)
 	return color().lightened(0.15) if state == HeroLoadout.State.OPEN else UiKit.DIM.darkened(0.15)
+
+
+## The price of opening a sealed Gift under its diamond: the Memória's leaf and the number (MaterialCount's language).
+func _draw_memory(c: Vector2, n: int) -> void:
+	var font := UiKit.number_font()
+	var text := str(n)
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, MEMORY_SIZE).x
+	var y := size.y + 8.0
+	var x0 := c.x - (MEMORY_MARK + 3.0 + w) * 0.5
+	DoorGlyph.material(self, DoorGlyph.Kind.MEMORY, Vector2(x0 + MEMORY_MARK * 0.5, y), MEMORY_MARK)
+	draw_string_outline(font, Vector2(x0 + MEMORY_MARK + 3.0, y + MEMORY_SIZE * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, MEMORY_SIZE, 3, DoorGlyph.OUTLINE_COLOR)
+	draw_string(font, Vector2(x0 + MEMORY_MARK + 3.0, y + MEMORY_SIZE * 0.36), text, HORIZONTAL_ALIGNMENT_LEFT, -1, MEMORY_SIZE, DoorGlyph.PARCHMENT_FILL)
 
 
 func _draw_lock(c: Vector2, level: int) -> void:

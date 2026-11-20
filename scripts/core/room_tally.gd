@@ -96,10 +96,14 @@ func zone_time(zone: String, dt: float) -> void:
 
 
 ## E5: what the floor of the runes did in the current room: life it took from the enemies, enemies it felled and how
-## many times it struck (what it took from him is in hurt_by, "runes").
-func hazard(enemy_damage: float, kills: int, strikes: int) -> void:
+## many times it struck; hero_damage, what it took from him (hurt_by of its source, "runes"). RP-06: the slabs (source
+## "plates") add their own numbers in extra (PlateFloor.tally: kind, who armed them, seconds he stood on one).
+func hazard(enemy_damage: float, kills: int, strikes: int, source := "runes", extra := {}) -> void:
 	if not _rooms.is_empty():
-		_rooms[-1].hazard = {"enemy_damage": snappedf(enemy_damage, 0.1), "kills": kills, "strikes": strikes}
+		var r := _rooms[-1]
+		r.hazard = {"enemy_damage": snappedf(enemy_damage, 0.1), "kills": kills, "strikes": strikes,
+			"hero_damage": snappedf(float((r.hurt_by as Dictionary).get(source, 0.0)), 0.1)}
+		(r.hazard as Dictionary).merge(extra, true)
 
 
 ## E5: a decision of an event (type: what happened; data: its details), at play time `time`, in the current room.

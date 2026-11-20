@@ -171,7 +171,7 @@ func _controls() -> Control:
 	var grid := GridContainer.new()
 	grid.columns = 4
 	grid.add_theme_constant_override(&"h_separation", 18)
-	grid.add_theme_constant_override(&"v_separation", 5)
+	grid.add_theme_constant_override(&"v_separation", 6)
 	page.add_child(grid)
 	for head: StringName in [&"howto_col_action", &"howto_col_keys", &"howto_col_pad", &""]:
 		grid.add_child(UiKit.label(T.t(head) if head != &"" else "", UiKit.OLD_GOLD.lightened(0.35), 17, UiKit.BOLD_FONT))
@@ -193,13 +193,20 @@ func _controls() -> Control:
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(tip)
+	# the note keeps clear of the buttons under the page (UI review d2ff05d, P2-3)
+	var gap := Control.new()
+	gap.custom_minimum_size.y = 14
+	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	page.add_child(gap)
 	return page
 
 
 func _cell(text: String, color: Color, size: int, font: Font, width: float) -> Label:
 	var l := UiKit.label(text, color, size, font)
 	l.custom_minimum_size.x = width
-	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# every column aligned on top: a two-line description no longer leaves the name in the middle (P2-3)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_TOP
+	l.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	return l
 
 

@@ -390,17 +390,25 @@ const STYLE := {
 		&"bowl_gain": STY_BOWL_GAIN, &"candle_gain": STY_CANDLE_GAIN, &"compat": STY_COMPAT_FIRE},
 	&"floor": STY_FLOOR_BIOME,
 }
+## S-1: the hall's mouldings lower and its slabs less worn pale than the defaults (1.22, 0.16): noble floor, no buttons.
+const STY_FRAMED_LIP := 1.08
+const STY_FRAMED_WORN := 0.05
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`).
 ## The hall: pale worn dust on the blue slate; its plate carries no edge distance, so its walkable box is given.
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.421, 0.436, 0.473), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5,
-	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y)}
-## SW-H1, SW-G3 (docs/art/sworn_reference_ideas.md 3.2): two pairs of raised frames (ArenaKit.framed, RAISED) flanking
-## the axis of the dais's flight (its middle, x) on the way from the medallion to the portal: their middles' x either
-## side of the axis, their rows' z, their side (m).
-const STY_FRAMES_X := 2.3
-const STY_FRAMES_Z := Vector2(-9.4, -12.2)
-const STY_FRAME_SIZE := 2.4
+	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y), &"framed_lip": STY_FRAMED_LIP, &"framed_worn": STY_FRAMED_WORN}
+## SW-H1, SW-G3 (docs/art/sworn_reference_ideas.md 3.2): two pairs of slabs (ArenaKit.framed) flanking the axis of
+## the dais's flight (its middle, x) on the way from the medallion to the portal. S-1 of the Sworn P1 review: four equal
+## square frames lighter than the floor read as pressure plates (the runes' room has slabs that strike): each its own
+## size, value (never over the floor's) and kind, one a grave slab with the lion, one with a corner of its moulding
+## broken. Each: x from the axis, z, size x, size z (m), kind, mark (lion or broken corner), value.
+const STY_FRAMES: Array[Array] = [
+	[-2.3, -9.3, 2.0, 2.0, ArenaKit.Framed.RAISED, false, 0.95],
+	[2.4, -9.4, 2.6, 2.2, ArenaKit.Framed.RAISED, true, 1.0],
+	[-2.5, -12.0, 2.8, 2.2, ArenaKit.Framed.GRAVE, true, 0.97],
+	[2.2, -12.0, 2.2, 2.0, ArenaKit.Framed.RAISED, false, 0.92],
+]
 ## The decals of the stylized look (floor_decal.gdshader: the shop's rugs, the fountain's moss), a centimetre over the
 ## slabs.
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
@@ -492,16 +500,14 @@ func _stylize() -> void:
 	kit.stylize(style, arena)
 
 
-## SW-H1: the four raised frames of the way to the portal (STY_FRAMES_*), a value of their own each.
+## SW-H1: the four slabs of the way to the portal (STY_FRAMES).
 func _frames() -> Array:
 	var axis := (FLIGHT.x + FLIGHT.y) * 0.5
 	var out := []
-	var k := 0
-	for z: float in [STY_FRAMES_Z.x, STY_FRAMES_Z.y]:
-		for sd: float in [-1.0, 1.0]:
-			out.append(ArenaKit.framed_slab(Vector2(axis + sd * STY_FRAMES_X, z), Vector2.ONE * STY_FRAME_SIZE,
-				ArenaKit.Framed.RAISED, false, 1.0 + 0.04 * ((k * 3) % 4 - 1.5) / 1.5, k))
-			k += 1
+	for k in STY_FRAMES.size():
+		var f: Array = STY_FRAMES[k]
+		out.append(ArenaKit.framed_slab(Vector2(axis + float(f[0]), float(f[1])), Vector2(float(f[2]), float(f[3])), f[4], f[5],
+			float(f[6]), k))
 	return out
 
 

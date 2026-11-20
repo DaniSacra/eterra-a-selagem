@@ -20,6 +20,9 @@ extends Node3D
 ## The station in focus changed (&"": none) and a station was used.
 signal focus_changed(id: StringName)
 signal used(id: StringName)
+## A rank of the Forja was bought at the Forjador (Rejogabilidade, Fatia 1; ForgeRank.id): the forge and the Emeth may
+## show it (environment-artist, technical-artist), the save is already written.
+signal forged(rank: StringName)
 
 ## Seconds to black before the run starts.
 const FADE := 0.45
@@ -96,6 +99,8 @@ func _ready() -> void:
 	for id in HubPlan.STATIONS:
 		points[id] = HubPlan.use_point(id)
 	focus = HubFocus.new(points)
+	# the place's name on arriving and a faint name over every station (UI review d2ff05d, P1-8)
+	add_child(HubLabels.new().setup(self))
 	apply_options()
 	# its own place in Músicas (the title's piece by default: from the title it goes on without a seam)
 	Music.play(MusicCatalog.HUB)
@@ -133,12 +138,30 @@ func _process(delta: float) -> void:
 	if Controls.pressed(&"look_toggle"):
 		VisualProfile.toggle()
 		arena.restyle()
+	# at a station the camera leans to show it whole (the Portal's head, the forge), his safe frame first (HUB-D)
+	cam.lean = lean()
 	cam.follow(delta, Vector3.ZERO)
 	Controls.flush()
 
 
 func _exit_tree() -> void:
 	Controls.virtual = null
+
+
+## The floor point the camera leans to while a station is in focus (HubPlan.frame_for; INF: none, the far camera's
+## own point): from where it would look without one, as little as it takes to bring the station's SHOW point inside
+## the screen. The near camera always leans: on him, never south of HubPlan.NEAR_SOUTH (art review H-P0-2).
+func lean() -> Vector2:
+	if focus.current == &"" and cam.holds():
+		return Vector2.INF
+	var view := get_viewport().get_visible_rect().size
+	var d := CamRig.distance()
+	# the near camera follows him, but never looks south of the hub's NEAR_SOUTH (art review H-P0-2)
+	var from := cam.look_at(arena.cam_target if cam.holds() else HubPlan.near_want(player.pos), d, camera.fov)
+	if focus.current == &"":
+		return from
+	return HubPlan.frame_for(focus.current, from, d, Dev.num("cam-pitch", Feel.live().cam_pitch), CamRig.yaw(), camera.fov,
+		view.x / maxf(view.y, 1.0))
 
 
 ## Where the player pushes, on the floor (keys and sticks turn with the camera; the virtual pad gives floor ways).
@@ -154,6 +177,9 @@ func _show_focus() -> void:
 	station_sign = null
 	var id := focus.current
 	focus_changed.emit(id)
+	# its light a step brighter and a thread of gold round its slab (HubLook.focus)
+	if arena.look is HubLook:
+		(arena.look as HubLook).focus(id)
 	if id == &"":
 		return
 	station_sign = StationSign.make(id, T.t("hub_" + id), T.t(station_line(id)))
@@ -168,7 +194,7 @@ func _show_focus() -> void:
 ## The text key of a station's short line (the Vendedor and the Forjador: still to be defined).
 static func station_line(id: StringName) -> StringName:
 	match id:
-		HubPlan.VENDOR, HubPlan.SMITH:
+		HubPlan.VENDOR:
 			return &"hub_soon"
 	return StringName("hub_%s_desc" % id)
 
@@ -190,18 +216,25 @@ func use(id: StringName) -> void:
 			_open_book(HeroScreen.Chapter.GIFTS)
 		HubPlan.BOOK:
 			_open_book(HeroScreen.Chapter.HERO)
-		HubPlan.VENDOR, HubPlan.SMITH:
+		HubPlan.SMITH:
+			_open_forge()
+		HubPlan.VENDOR:
 			host.open(HubPanel.new(), [T.t("hub_" + id), T.t("hub_%s_soon" % id), [[&"back", T.t(&"back")]],
 				SealedMark.new().setup(MARK), T.t(&"hub_soon")])
 
 
-## The Livro de Ahk on a chapter; its way down goes through the Portal's (descend).
+## The Forja da Emeth at the Forjador (ForgeScreen, a spread of the Livro): each purchase is written and said
+## (forged).
+func _open_forge() -> void:
+	var f := ForgeScreen.new()
+	if host.open(f, [Save.data]):
+		f.forged.connect(func(rank: StringName) -> void: forged.emit(rank))
+
+
+## The Livro de Ahk on a chapter, in its hub form: no way down from the book, the Portal is the way down (UI review
+## d2ff05d, P1-4).
 func _open_book(chapter: HeroScreen.Chapter) -> void:
-	var screen := HeroScreen.new()
-	host.open(screen, [{}, chapter])
-	screen.descend.connect(func() -> void:
-		host.close()
-		descend())
+	host.open(HeroScreen.new(), [{}, chapter, true])
 
 
 ## The hub's Esc menu (PauseMenu in its hub form).
