@@ -239,3 +239,32 @@ trancada e pronta, com o selo da maldição e com a Provação):
 4. O losango continua o mesmo componente (`ActionSlot`: recarga no aro, nível na gema, véu translúcido com alguém atrás); a
    faixa de baixo do meio fica livre (caixa `520,960,880,120` sem HUD a 1080).
 5. As divisas de fora da tela e o selo da Provação e da maldição não colidem com a fileira nova.
+
+### 3.1 P1-4 avaliado (capturas `ui3_*`, 2026-11-20)
+
+Decisão: **fileira com ajustes; vira o padrão depois dos ajustes A a C** (até lá, o padrão segue o de hoje).
+
+Pelo critério acima:
+1. Fileira sobre as barras, sem cobri-las; HUD do herói até cerca de 27% da largura: **cumpre**.
+2. Teclas legíveis a 720 (`ui3_hall_row_720.png`): **cumpre**. Legenda da ultimate: não aparece trancada nem pronta
+   nestas capturas, **falta ver**.
+3. Herói na margem de baixo: nada do HUD sobre ele nas vistas: **cumpre** nas capturas (falta a com `--hero-at` na borda sul).
+4. Meio de baixo livre: **cumpre**, e é o ganho principal: na Ponte A o tabuleiro de perto e o círculo de luz deixam de
+   passar por dentro dos losangos.
+5. Divisas e selos: não aparecem nas capturas, **falta ver**.
+
+Problemas, confirmando o ponto do ui-ux-designer:
+- Com a horda atrás (720, Salão), o corpo dos losangos de 46 px some na multidão; só os glifos e as teclas leem.
+- O bloco do HUD fica alto: contador a cerca de 820 px, fileira, legendas, barras, de 790 a 1040 a 1080. A 720, o
+  "12 Golpes" some e só "Onda de Luz" fica solto sobre a horda.
+
+Ajustes (ui-ux-designer):
+- **A.** Losangos de 31 para 36 (`Hud.ROW_DIAMOND`, cerca de 54 px a 1080), com o corpo de tinta a 0,85 ou mais sobre a
+  multidão. O véu translúcido (`ActionSlot.veil`) fica só para quando o herói está atrás, não para a horda.
+- **B.** Uma faixa de tinta comum atrás da fileira (como o `HudVeil`: cantos cortados, sem moldura nova), para a horda não
+  atravessar entre os losangos.
+- **C.** O contador não sobe: vai para a mesma linha da fileira, à direita do último losango (número e "Golpes", com o nome do
+  golpe embaixo, em letra menor). O bloco do HUD fica com no máximo 200 px de altura a 1080 e o contador inteiro a 720.
+- Aceite: novas `ui3_*` a 720 e 1080 com a horda de 300 atrás. Mais uma com a ultimate trancada e pronta, uma com a
+  Provação e a maldição ativas, e uma com o herói na borda sul. Recarga lida no aro a 46 a 54 px. Na caixa de cada
+  losango, o corpo com luma p50 até 40 sobre a horda.
