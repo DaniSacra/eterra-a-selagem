@@ -992,3 +992,15 @@ Director com o equivalente do Hades II:**
 fina sem raios, asas fechadas e rosto encoberto, dois anjos em toda sala de Bênção, primeira melhoria da Forja cedo e
 pequena, crédito retroativo de Prata, e o resto como recomendado). **Segurado**: a Fatia 1 só começa depois que ele
 testar o exe com o Santuário.
+
+## 11. Ofícios e Descobertas do Santuário (pedido do PO de 2026-11-20): **aguardando aprovação do PO**
+
+Estudo só de planejamento em `docs/design/oficios/` (ler primeiro o `README.md`; diagnóstico do gameplay-engineer,
+coleta do room-designer, economia do balance-designer, UX do ui-ux-designer, síntese do game-director). Recomendação:
+nenhuma camada paralela nem moeda nova; os Ofícios continuam a Rejogabilidade nas estações que existem (Forjador com a
+Oficina, Vendedor com encomendas e Obras, Livro com o capítulo Ofícios). Protótipo: **a Primeira Picareta revista**
+(veio preso nas Fendas e Runas depois do guardião, cabeça achada numa sala marcada no mapa com piedade, restaurada por
+20 de Prata, Pedra Funda como o único contável novo, o Vendedor abre a 1ª Obra). Épicos e histórias **OF-01 a OF-30**
+em `docs/design/oficios/17_backlog.md`; roteiros A, B, C em `18_roadmap.md`; 15 perguntas (Q-OF1 a Q-OF15) em
+`22_decisoes_pendentes.md`. **OF-05** (porta de Prata desde a profundidade 4 e de Memória depois do guardião) corrige
+um farming medido hoje e pode ser aprovada sozinha. Nada começa sem o Daniel.
