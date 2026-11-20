@@ -268,3 +268,119 @@ Ajustes (ui-ux-designer):
 - Aceite: novas `ui3_*` a 720 e 1080 com a horda de 300 atrás. Mais uma com a ultimate trancada e pronta, uma com a
   Provação e a maldição ativas, e uma com o herói na borda sul. Recarga lida no aro a 46 a 54 px. Na caixa de cada
   losango, o corpo com luma p50 até 40 sobre a horda.
+
+## 4. Método do Salão nos 8 biomas (segunda passada, commit 2662d2c; revisão 2026-11-20)
+
+Capturas: `env2_*_{near,far}_{before,after}.jpg`, `env2_*_armed_after.jpg`, `env2_runes0_rest_*`, `env2_*_compat_after.jpg`,
+`env2_hub_*`, `env2_fountain_*`. Medido de novo por mim com `tools/frame_stats.py --hue --scene` e as caixas da 7.3 (Meio
+`640,360,640,360`, laterais `60,140,320,760` e `1540,140,320,760`, Perto `520,780,880,150`); matiz = p50 dos pixels com
+saturação acima de 0,10 (o "matiz médio" do relatório difere alguns graus nos mornos).
+
+### 4.1 Tabela (cena; matiz p50, sat p50, luma p50; Perto / Longe)
+
+| Sala | Matiz | Sat | Luma | Alvo 7.2 | Laterais / meio | Faixa de perto / meio |
+|---|---|---|---|---|---|---|
+| Salão | 207 | 0,40 a 0,42 | 48 a 55 | 200 a 212 | 0,43 a 0,54 | 0,54 a 0,55 |
+| Cripta A | 185 a 190 | 0,33 a 0,34 | 44 a 51 | 184 a 194 | 0,33 a 0,95* | 0,57 a 0,93* |
+| Cripta B | 189 a 190 | 0,34 a 0,37 | 43 a 49 | 184 a 194 | 0,31 a 0,74* | 0,63 a 0,92* |
+| Fendas A e B | 248 a 249 | 0,37 a 0,38 | 50 a 54 | 246 a 260 | 0,30 a 0,77 | 0,89 a 1,08 |
+| Ponte A e B | 215 a 216 | 0,34 a 0,37 | 36 a 53 | 216 a 226 | 0,31 a 0,46 | Perto 1,05 a 1,09; Longe 0,22 a 0,35 |
+| Runas A | 232 | 0,28 | 49 | 232 a 242 | 0,34 a 0,42 | 0,79 |
+| Jardim A e B | 74 a 77 | 0,28 a 0,32 | 52 a 55 | 75 a 95 | 0,27 a 0,80 | 0,75 a 0,85 |
+| Santuário A e B | 37 | 0,30 a 0,34 | 60 a 64 | 32 a 42 | 0,28 a 0,64 | 0,49 a 0,93 |
+| Provação | 265 | 0,31 a 0,32 | 42 a 47 | 266 a 280 | 0,66 a 1,15 | 0,52 a 0,62 |
+| Altar | 33 a 35 | 0,30 a 0,33 | 45 | **18 a 28** | 0,28 a 0,74 | 0,39 a 0,68 |
+| Hub (chegada) | 44 | 0,27 a 0,29 | 50 a 54 | 32 a 46 | 0,77 a 0,95 | 0,98 a 1,02 |
+
+\* na Perto a lateral direita e a faixa de baixo pegam as poças das velas e braseiros (quente 11 a 15% nas caixas).
+
+### 4.2 O que bate
+
+- **O método pegou.** Todas as salas de luta saíram do cinza-azulado comum: cada uma tem o próprio matiz, a saturação da
+  cena subiu para 0,28 a 0,38 e a moldura escura aparece nas laterais (0,27 a 0,46 na maioria). Lado a lado (Longe), nenhuma
+  sala se confunde com outra: Cripta verde-petróleo de velas, Fendas índigo-lilás, Ponte ardósia pálida sobre o abismo,
+  Runas grade de pedra fria, Jardim oliva com a árvore, Santuário calcário de colunas, Provação lilás, Altar terra.
+- **Separação na roda** entre as frias: Cripta 190, Salão 207, Ponte 215, Runas 232, Fendas 249, Provação 265. Passa a 15
+  graus em todos os pares menos Salão e Ponte (8 graus, ver P2-B5).
+- **Perigo**: nas capturas armadas o vermelho lê em todas (Cripta, Fendas, Ponte, Jardim, Santuário); as Runas ficam
+  sem âmbar em repouso e a laje armada é a coisa mais quente da sala; a grade de repouso está discreta, como pedido.
+- **Herói**: acha-se primeiro em todas as capturas de luta (cabelo vermelho, capa petróleo e Emeth sobre chão médio).
+  Nas Fendas e na Ponte, sobre chão claro, ele lê pela silhueta escura; no Jardim e na Cripta, pela luz.
+- Desvios relatados que **aceito como estão**: Cripta A Longe quente 4,9% (eu meço 5,0; está no limite); Ponte Longe luma
+  36 a 38 e sat 0,36 (o meio, onde se luta, mede 78 a 81; o escuro é o abismo fazendo a moldura, que é a identidade da
+  sala); Jardim sat 0,25 (eu meço 0,28 a 0,32 na cena: dentro); Altar luma 44 (eu meço 45: dentro); Provação Perto luma 42
+  (o meio mede 47; o resto é abismo; sala de evento).
+
+### 4.3 O que difere
+
+1. **Altar e Santuário com o mesmo matiz (P1).** Altar 33 a 35 contra Santuário 37 (alvo do Altar 18 a 28, separação
+   pedida de 14 graus) e saturação igual (0,30 a 0,33 contra 0,30 a 0,34; a regra pede 0,05). Só a luma separa (45 contra
+   60 a 64). O Altar sai de qualquer camada de 2 a 8 e o Santuário é a casa do guardião (4 a 6): podem vir em seguida. A
+   arquitetura os separa, a luz não.
+2. **Santuário: pedra dos fachos a 0,36 a 0,37 (P1).** A caixa do meio tem 26 a 37% de pixels na faixa quente. A matriz
+   pôs o teto de 0,25 justamente porque o Santuário tem as Lajes Rachadas (RP-06) nas naves laterais, que armam em âmbar.
+   Na captura armada os esqueletos (osso morno) também ficam no mesmo valor e matiz do calcário e leem só pelo contorno.
+3. **Faixa de perto das Fendas e da Ponte na Perto: 0,89 a 1,09 (P2).** A regra 7.3 já cobre o caso de chão andável
+   (0,70). Acima de 1,0 o chão de baixo é mais claro que o meio onde está o herói. Na Ponte Perto a laje pálida de baixo é
+   a área mais clara do quadro depois do herói.
+4. **Hub: laterais 0,77 a 0,95 e faixa de perto 0,98 a 1,02 na chegada (P2).** As laterais têm as estações (aceito, ver
+   4.4); a faixa de perto tem os dois braseiros da chegada (quente 33% na caixa), que são o fogo mais forte do quadro no
+   primeiro segundo do hub.
+5. **Ponte encostou no Salão (P2).** 215 contra 207. Saturação (0,34 a 0,37 contra 0,40 a 0,42) e arquitetura separam;
+   ainda assim fica no limite de baixo do alvo.
+6. **Jardim no limite de baixo do matiz (P2).** 74 a 77 (alvo 75 a 95); a lateral esquerda mede matiz 160 a 184 (cascatas e
+   abismo frio, luma 18 a 22): escura, não pesa, mas é o único verde-ciano da sala.
+7. **Cripta A: anel do aviso dentro da poça âmbar da coroa (P2).** O vermelho lê, mas a metade do anel sobre a poça
+   perde contraste de matiz. Só observar no teste do Daniel.
+8. **Fendas e Câmara do Selo no mesmo matiz** (249 contra 256): previsto na matriz; separa pela luma (50 contra cerca de 40)
+   e pela saturação (0,38 contra 0,50), e nunca vêm em seguida. Sem pedido.
+
+### 4.4 Os três pontos decididos pelo Game Director
+
+1. **Bordas do hub em 0,78 a 0,90: confirmo, com uma ressalva.** As caixas laterais caem sobre as estações (Forja e Livro),
+   que são o que o olho deve achar; escurecê-las contradiz o BH-07. A regra das bordas no hub passa a valer para o chão
+   entre as estações: a borda do pátio sem estação (caixas entre as poças, por exemplo os cantos de cima das laterais)
+   até 0,70 da praça. Medir isso na próxima captura (P2-B3).
+2. **Faixa de baixo de Fendas e Ponte em 0,9 a 1,08: corrijo.** Não aceitar acima de 1,0: o chão de baixo não pode ser
+   mais claro que o meio. Teto provisório **0,80** para essas duas salas na Perto (0,70 continua a meta da 7.3), feito pela
+   luz e não pintando o chão: a poça da luz de chave centrada no campo da luta, com queda para o lado da câmera, sem
+   escurecer avisos (P2-B1). Na Longe as duas já cumprem.
+3. **Fonte na borda vai para a câmera: confirmo.** Na Perto a fonte do Salão entra cortada na borda direita
+   (`env2_fountain_near_after`); o cenário está certo, é enquadramento ao entrar na sala (P2-B4, gameplay-engineer).
+
+### 4.5 Pedidos de correção
+
+**environment-artist**
+- **P1-B1, Altar**: levar a cena ao matiz p50 de 20 a 28 (pedra mais terrosa e cera mais avermelhada na luz das velas, a
+  sombra mais fria) e a saturação a 0,05 abaixo ou acima do Santuário; vermelho saturado até 0,5%. Aceite: Altar Perto e
+  Longe com matiz p50 ≤ 28 e Santuário ≥ 34 (14 graus ou mais), mais a luma já separada.
+- **P1-B2, Santuário**: pedra nos fachos até 0,25 de saturação (a cor do facho sobe pela luz marfim-ouro, não pelo calcário
+  laranja); caixa do meio com quente até 15%. Aceite: captura com uma Laje Rachada armada na nave lateral (`--arena=sanctuary
+  --seed=5`, herói ou inimigo sobre ela) em que a laje armada fica pelo menos 0,15 de saturação e 25 de luma acima da pedra
+  em volta, mais a `env2_sanct0_armed` refeita com os esqueletos lendo pelo valor (corpo pelo menos 25 de luma abaixo do
+  chão vizinho).
+- **P2-B1, Fendas e Ponte Perto**: faixa de baixo até 0,80 do meio pela luz (ver 4.4, ponto 2). Aceite: `near_after` refeitas
+  com Perto/Meio ≤ 0,80 e fio da mira menos o chão em volta igual ou maior que hoje.
+- **P2-B2, hub, chegada**: braseiros da chegada um terço mais baixos de chama (a luz pode ficar), ou fora da faixa de perto.
+  Aceite: caixa Perto do `hub_arrive_far` com quente até 15%.
+- **P2-B3, hub, bordas**: medir a borda do pátio sem estação (ponto 1 de 4.4); se passar de 0,70, escurecer só ali
+  (`STY_RIM_FLOOR` já poupa as poças).
+- **P2-B5, Ponte**: subir o matiz p50 para 219 a 223 (bruma e pedra, não o chão das plataformas). Aceite: 12 graus ou mais
+  do Salão.
+- **P2-B6, Jardim**: matiz p50 para 80 ou mais pela ferrugem da copa e das folhas caídas, como a matriz pede (não pelo
+  chão); lateral oeste sem ciano acima de 2%.
+
+**gameplay-engineer**
+- **P2-B4, Fonte**: ao entrar numa sala com fonte, na Perto, a fonte inteira dentro de 5 a 95% da tela no primeiro quadro
+  (ou com a margem do herói, o quanto der). Aceite: `env2_fountain_near_after` refeita com a bacia inteira na tela.
+
+**technical-artist**
+- Nada nesta passada. Se o P1-B2 não resolver os esqueletos no calcário só pelo chão, a borda morna da multidão no
+  estilizado do Santuário fica para ele (medir antes).
+
+### 4.6 Veredito
+
+O método está replicado e as salas são reconhecíveis entre si pela arquitetura e pela luz; o Guerreiro e o perigo são o
+primeiro que o olho acha em todas as capturas de luta. **Aprovado para o teste do Daniel com os dois P1 (Altar e Santuário)
+feitos antes**: os dois são do environment-artist, só cor e luz, sem colisão. Os P2 podem ir junto ou depois. A aprovação
+artística final é do Daniel.
