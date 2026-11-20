@@ -227,6 +227,9 @@ func test_rewards_and_doors_wait_for_the_use_button() -> void:
 		assert_true(rooms.usable())
 		rooms.step(0.0)
 		assert_eq(rooms.phase, Rooms.Phase.REWARD, "standing on it takes nothing")
+		assert_not_null(rooms.prompt, "the key shows over him at the reward")
+		assert_eq(rooms.prompt.prompt.text, T.t(&"hub_use_reward"))
+		assert_ne(rooms.prompt.key_text(), "", "with the real key")
 		rooms.use()
 		rooms.step(0.0)
 		assert_ne(rooms.phase, Rooms.Phase.REWARD, "interact takes it")
@@ -237,6 +240,10 @@ func test_rewards_and_doors_wait_for_the_use_button() -> void:
 		rooms.step(0.0)
 		assert_eq(rooms.room, room_before, "at the door's foot without the button: he stays")
 		assert_true(rooms.usable())
+		assert_eq(rooms.prompt.prompt.text, T.t(&"hub_use_door"), "the door's verb over him")
+		game.player.pos = Vector2(1000, 1000)
+		rooms.step(0.0)
+		assert_null(rooms.prompt, "away from it, no key")
 
 
 ## G-2: the Forja's rank shows on the Emeth in his hand (EmethSword.set_temper on the blade's material).

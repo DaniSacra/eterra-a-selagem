@@ -70,6 +70,7 @@ static func make(id: StringName, name_text: String, detail_text: String, p_actio
 	s.plate.add_child(v)
 	s.title = DoorSign._label(name_text, DoorSign.TITLE_COLOR, DoorSign.FONT_SIZE)
 	s.title.name = "title"
+	s.title.visible = name_text != ""  # a prompt only (Rooms.prompt: the key and the verb over the hero)
 	v.add_child(s.title)
 	if detail_text != "":
 		s.detail = DoorSign._label(detail_text, DoorSign.DETAIL_COLOR, DoorSign.DETAIL_SIZE)

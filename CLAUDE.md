@@ -673,6 +673,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `node` -1): `map` (semente, nós `[profundidade, tipo, recompensa, arena, guardião?, "trial"?]`, arestas, caminho,
   `failures`, `pom_turned`), `rooms[].node`, evento `door` com `node` e `offered` e evento novo `reward` (o que a sala
   deu, ao lado do que a porta prometeu).
+- **Tecla de usar na descida** (C19, Q-13, o Daniel pediu a letra na tela): recompensa, item da loja e porta só com
+  `interact` (E, A no controle), parado neles (`Rooms.usable`, `use_kind`). Enquanto há algo para usar, a plaqueta
+  da `StationSign` sem nome (só a tecla real e o verbo: "Pegar", "Comprar", "Entrar", `hub_use_reward`/`shop`/`door`)
+  fica sobre a cabeça do herói (`Rooms.prompt`, `_step_prompt`; escondida fora do modo PLAY e para o robô); clique nela usa.
 - **Robô** (MAP-04): `Rooms.bot_door(doors, altar_useful, life, map)` lê o mapa: o gosto de antes pela porta da frente
   mais `BOT_AHEAD` 1,0 do melhor caminho depois dela (`bot_way`: cada sala vale pela mesma ordem, Bênção 5 a Magia 1, a
   fonte `BOT_FOUNTAIN_AHEAD` 12, o altar útil 3,5). Régua refeita em `docs/qa/dv1_metrics.md`.

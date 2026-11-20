@@ -206,6 +206,7 @@ func depth() -> int:
 
 
 func step(dt: float) -> void:
+	_step_prompt()
 	match phase:
 		Phase.FIGHT:
 			_step_fight(dt)
@@ -225,6 +226,50 @@ func step(dt: float) -> void:
 			_use_queued = false
 		_:
 			_use_queued = false
+
+
+## The key to press over the hero while he stands at something to use (the reward, a shop's item, a door): the
+## StationSign's plate without a name, the real key and the verb ("Pegar", "Comprar", "Entrar"); none for the robot.
+var prompt: StationSign
+var _prompt_kind := &""
+
+
+## What the paladin stands at to use now: &"reward", &"shop", &"door" or &"" (usable()'s places, by kind).
+func use_kind() -> StringName:
+	match phase:
+		Phase.REWARD:
+			if _reward_node != null and game.player.pos.distance_to(_reward_at) < TOUCH:
+				return &"reward"
+		Phase.OPEN:
+			for p in _pedestals:
+				if game.player.pos.distance_to(p.at) < TOUCH:
+					return &"shop"
+			var door := game.arena.exit_at(game.player.pos)
+			if door >= 0 and door < next_rooms.size():
+				return &"door"
+	return &""
+
+
+func _process(_delta: float) -> void:
+	if prompt != null:
+		prompt.visible = game.mode == Game.Mode.PLAY  # nothing over a screen, the pause or the end
+
+
+func _step_prompt() -> void:
+	var kind := &"" if game.bot != null else use_kind()
+	if kind != _prompt_kind:
+		_prompt_kind = kind
+		if is_instance_valid(prompt):
+			prompt.queue_free()
+		prompt = null
+		if kind != &"":
+			prompt = StationSign.make(kind, "", "")
+			prompt.pressed.connect(use)
+			add_child(prompt)
+	if prompt != null:
+		var at := Vector3(game.player.pos.x, 0.0, game.player.pos.y)
+		prompt.position = at
+		prompt.hero_at = at
 
 
 # ---------- entering ----------
