@@ -2682,8 +2682,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   desfazem de baixo (`Fx.wisps`, MultiMesh de `WISP_POOL` 96, `wisp.gdshader`, premul: escuro cobre, claro soma pouco);
   cores todas abaixo de 1 (cura marfim-rosada, sombra de inimigo em fumaça escura, fogo com dois fiapos de fumaça no
   fim). `chip.gdshader` agora premul sob `cap` (226 na tela). Orçamento igual.
-- **V-11 e V-12, inimigo**: orbe com núcleo escuro (`enemy_orb.gdshader`: tinta no meio, aro na cor, `rim` 0,62) e
-  fumaça rasgada com três espinhos girando em volta (`enemy_orb_halo.gdshader`, premul); virote = agulha escura com a
+- **V-11 e V-12, inimigo**: orbe com núcleo escuro (`enemy_orb.gdshader`: tinta no meio, aro na cor, `rim` 0,21 e `hot` 0,1: o
+  `ScreenTone.linear_peak` do magenta e do carmim a 210 é 0,21 a 0,24; a 0,48 a curva da tela levava o aro a 248 e 255) e
+  fumaça rasgada com três espinhos girando em volta (`enemy_orb_halo.gdshader`, premul, `spike_light` 0,22); virote = agulha escura com a
   ponta na cor (`needle`), sem halo; rastro de fumaça a cada 0,45 m (virote) ou 0,7 m (orbe) (`Projectiles._trail`). Onde
   o golpe de um inimigo cai: anel de fumaça escura de borda rasgada que se abre, aro de dentro na cor sob 205 na tela, meio
   escuro, sete fiapos (`Fx.smoke_ring`, `smoke_ring.gdshader`, `Ground._land`; o `land_quick` é o anel fino); as
@@ -2694,7 +2695,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`crescent.gdshader`: `CRESCENT_SPIN` 300 graus, finalizador `CRESCENT_ARC` 120 a 180, cabeça 0,35 m e cauda 0,08 m,
   fio só no terço da cabeça, a cauda some primeiro); o brilho do finalizador é estrela de 6 pontas desiguais girada por
   golpe, sem cruz nem risco longo (`glint.gdshader` `seed`, `spike_min_m` 0,18, `spike_max_m` 0,42); a estocada é uma
-  lâmina (`emeth_thrust.gdshader`: base a ponta 1,0 a 0,15, fio de 2 px, miolo escuro, tinta 0,4, entra em `THRUST_IN`
+  lâmina (`emeth_thrust.gdshader`: base a ponta 1,0 a 0,15 de `blade_share` 0,4 da largura do golpe, inteira lia como
+  folha verde; fio de 2 px, miolo `core_light` 0,12, miolo escuro, tinta 0,4, entra em `THRUST_IN`
   0,06 s e sai em `THRUST_OUT` 0,15; Ômega com os veios e `THRUST_SPIKES` 5 lascas de cristal na ponta); o estalo no
   contato (`Fx.contact`, `contact.gdshader`: 5 a 7 espinhos desiguais, metade num leque de 70 graus para onde a lâmina
   foi, miolo marfim 0,12 m, 0,05 s crescendo a 1,25; orçamento próprio `contacts` de 8 por quadro), chamado no
@@ -2709,3 +2711,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   a pintura `saturation` 1,8 (`hero_paint.gdshader`) e a Emeth com teto pelo maior canal e cristal mais saturado
   (`emeth.gdshader` `style_back`/`style_face`, `EmethSword.STYLE_CORE`): verde na caixa do herói 0,61% para 1,00% na GPU,
   matiz 130 (`docs/gallery/hb/hb3_*`). `chain_weight` refeito (elos a 90 graus, catenária, contrapeso de 0,7 m).
+- **Corpo da multidão um quarto mais escuro no estilizado** (Game Director: no calcário do Santuário o osso lia tão claro
+  quanto a laje): `crowd.gdshader` `style_light` 0,15, `style_scene` 0,075, `style_rim` 0,14, `style_hero` 0,15 (eram 0,2 /
+  0,1 / 0,18 / 0,2); ouro das elites, "vai bater" e pisca iguais. Osso do esqueleto no Santuário A (RTX 1080, semente 5,
+  `--arena=sanctuary --hero-at=-12,-9.5`, 4 s) p50 85 para 74 contra o chão 96 a 108 (22 a 34 abaixo, meta 25).
+- Medido no fim (RTX 1080, estilizado, semente 5, `docs/gallery/vfx_pass/`): orbes p99 180 a 185, nenhum pixel acima de
+  210, matiz 313 (a cor do feiticeiro do `make_data.gd`; a spec pede 320 a 355); fita do giro matiz p50 135, p99 226;
+  estalo do contato até 225; foice e Ceifa matiz p50 250 a 254, sem ciano no setor. Sonda de sensação 41/41.

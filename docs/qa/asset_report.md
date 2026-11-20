@@ -304,12 +304,13 @@ Evidência em `docs/gallery/vfx_pass/` (antes em `docs/art/shots/vfx_pass_before
   maior canal p99 159 (`shafts_sheet_stylized.png`, também `_classic` e `_compat`). Falta ligar no jogo
   (gameplay-engineer) e medir a poça contra um chão de sala (o chão do laboratório é claro demais, 105).
 - P0 feito, partículas: nenhum `CPUParticles3D` no `Fx`, nenhum ponto redondo; teto premul de 226 nas lascas.
-- P0 feito, orbe e virote com núcleo escuro; orbe p99 244 (1,6% acima de 210) na primeira captura, aro baixado de 0,62
-  para 0,48 depois (recaptura pendente); anel de fumaça no golpe que cai.
+- P0 feito, orbe e virote com núcleo escuro: aro a 0,62 ia a 248 a 255 na tela (a curva satura o magenta); a 0,21,
+  p99 180 a 185, nada acima de 210, matiz 313 (spec 320 a 355: cor do gameplay-engineer); anel de fumaça no golpe que cai.
 - P0 feito, V-01 a V-05 e V-16 (ver CLAUDE.md). Fita do giro sem anel fechado (`h_spin.png`); estalo do contato visível
   (`s_hit.png`). A estocada saiu primeiro como lâmina da largura inteira do golpe (lia como folha verde) e foi afinada
-  a 0,4 da largura (recaptura pendente).
-- P1, a medir: V-01 matiz do corte 122 a 150 e p99 até 226 sobre Morvath; V-16 matiz 240 a 285 no setor.
+  a 0,4 da largura (`s_omega.png` recapturada).
+- Medido: fita do giro matiz p50 135 e p99 226; estalo até 225; foice e Ceifa matiz p50 250 a 254 sem ciano no setor.
+  Falta: o corte comum sobre Morvath (as capturas pegaram o especial) e a explosão do corredor (`e_runner.png` pegou o aviso).
 - HB3: verde na caixa do herói 0,61% para 1,00% (meta 1%), Emeth matiz 130.
 - Tinta: com 12 inimigos na Perto, Alta e Média, nenhuma borda nas figuras nem sobre as barras.
 - Santuário (pedido do Game Director): osso do esqueleto p50 85 para 74 contra o calcário 96 a 108 (corpo um quarto

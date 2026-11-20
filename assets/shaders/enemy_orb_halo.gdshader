@@ -8,7 +8,7 @@ render_mode unshaded, blend_premul_alpha, depth_draw_never, cull_disabled, shado
 instance uniform vec3 hue = vec3(0.53, 0.39, 1.0);
 uniform vec3 smoke : source_color = vec3(0.06, 0.03, 0.05);
 uniform float smoke_alpha = 0.55;
-uniform float spike_light = 0.6;
+uniform float spike_light = 0.22;
 uniform float turn = 0.8;
 uniform float torn = 0.35;
 

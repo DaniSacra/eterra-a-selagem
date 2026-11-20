@@ -2,16 +2,16 @@ shader_type spatial;
 // An enemy's shot (vfx_pass_spec.md V-11: the dead's magic is the opposite of the paladin's light): a dark core
 // (`ink`, core_share of the radius) with the shooter's hue only in a rim round it (rim, a little hotter in a thin band),
 // never a bright ball. The crossbowman's bolt (needle 1, the ball stretched along its flight): a dark needle whose tip
-// (the front third) burns in the hue. All under the screen's 210 (rim 0.48: at 0.62 the magenta rim reached 244). One material for every shot; the hue
+// (the front third) burns in the hue. All under the screen's 210 (rim 0.21: ScreenTone.linear_peak of the magic hues at 210 is 0.21 to 0.24; at 0.48 the exposure and the saturation of the tone curve took the magenta to 248 and the carmine to 255). One material for every shot; the hue
 // per shot (instance uniform, Projectiles._tint: the magic colour with its largest channel at 1).
 render_mode unshaded, cull_back, shadows_disabled;
 
 instance uniform vec3 hue = vec3(0.53, 0.39, 1.0);
 instance uniform float needle = 0.0;
 uniform vec3 ink : source_color = vec3(0.05, 0.02, 0.05);
-uniform float rim = 0.48;
+uniform float rim = 0.21;
 uniform float core_share = 0.6;
-uniform float hot = 0.15;
+uniform float hot = 0.1;
 
 varying vec3 local;
 

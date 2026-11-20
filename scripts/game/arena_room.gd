@@ -342,26 +342,41 @@ func _stylize() -> void:
 		_dress_air()
 
 
-## ENV-HB4: the far ruins' cards (abyss_ruins.gdshader) in the stylized look without the tall pale bands of mist
-## between their towers (seen from above they ran from the top of the picture to the bottom): fewer slender shafts,
-## every gap between two towers bridged (an arch or a deck across it), the card's mist STY_RUIN_MIST of the way to its
-## stone (the towers read as a darker ruin in the haze, not as posts against pale bands).
+## ENV-HB4: the far ruins' cards (abyss_ruins.gdshader) in the stylized look without the tall pale bands between their
+## towers (seen from above, the towers ran from the top of the picture to the bottom and the sky showed between them,
+## the card being cut out): the farthest card paints its own mist where no stone stands (its `backdrop` mode, with no
+## lighter patches), that mist STY_RUIN_MIST of the way to its stone, fewer slender shafts and every gap between two
+## towers bridged (an arch or a deck across it).
 const STY_RUIN_SHAFTS := 0.1
 const STY_RUIN_BRIDGED := 1.0
-const STY_RUIN_MIST := 0.6
+const STY_RUIN_MIST := 0.7
+const STY_RUIN_NO_PATCH := Vector4(1e4, 1e4, 1.0, 1.0)
 
 
 func _style_ruins() -> void:
-	var seen := {}
+	var cards: Array[ShaderMaterial] = []
 	for n in find_children("*", "GeometryInstance3D", true, false):
 		var sm := (n as GeometryInstance3D).material_override as ShaderMaterial
-		if sm != null and sm.shader == RUIN_SHADER and not seen.has(sm):
-			seen[sm] = true
-			# the room may have varied them already: start from their stylized values
-			var mist: Color = VisualProfile.styled(sm, &"shader_parameter/mist_color", sm.get_shader_parameter(&"mist_color"))
-			var stone_c: Color = VisualProfile.styled(sm, &"shader_parameter/stone_color", sm.get_shader_parameter(&"stone_color"))
-			VisualProfile.vary(sm, {&"shader_parameter/shafts": STY_RUIN_SHAFTS, &"shader_parameter/bridged": STY_RUIN_BRIDGED,
-				&"shader_parameter/mist_color": mist.lerp(stone_c, STY_RUIN_MIST)})
+		if sm != null and sm.shader == RUIN_SHADER and not cards.has(sm):
+			cards.append(sm)
+	var far: ShaderMaterial = null
+	for sm in cards:
+		# the room may have varied them already: start from their stylized values
+		var mist: Color = VisualProfile.styled(sm, &"shader_parameter/mist_color", sm.get_shader_parameter(&"mist_color"))
+		var stone_c: Color = VisualProfile.styled(sm, &"shader_parameter/stone_color", sm.get_shader_parameter(&"stone_color"))
+		VisualProfile.vary(sm, {&"shader_parameter/shafts": STY_RUIN_SHAFTS, &"shader_parameter/bridged": STY_RUIN_BRIDGED,
+			&"shader_parameter/mist_color": mist.lerp(stone_c, STY_RUIN_MIST)})
+		if far == null or _param(sm, &"haze", 0.35) > _param(far, &"haze", 0.35):
+			far = sm
+	if far != null and _param(far, &"backdrop", 0.0) < 0.5:
+		VisualProfile.vary(far, {&"shader_parameter/backdrop": 1.0, &"shader_parameter/patch_a": STY_RUIN_NO_PATCH,
+			&"shader_parameter/patch_b": STY_RUIN_NO_PATCH})
+
+
+## A float uniform of a material, or its default when never set.
+static func _param(sm: ShaderMaterial, name_: StringName, fallback: float) -> float:
+	var v: Variant = sm.get_shader_parameter(name_)
+	return fallback if v == null else float(v)
 
 
 const RUIN_SHADER := preload("res://assets/shaders/abyss_ruins.gdshader")
