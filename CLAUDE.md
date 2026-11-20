@@ -1073,7 +1073,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`push_out`; `PlateFloor.strike(..., out)`, `PlateFloor.away`) e nome próprio (`plate_source`; sons `<nome>_arm` e
   `_fire`, as lajes seguem `plate_arm`). Jardim (`_roots` no `make_data.gd`): as duas raízes de fora de cada variante
   (A: a do norte e a do oeste, cortada antes de 6 m da entrada; B: a do oeste, cortada, e o toco junto da parede oeste),
-  faixa da face do tronco até a ponta; quem fica 0,5 s nela (herói ou inimigo) acorda: 1,2 s de aviso âmbar com poeira,
+  faixa da face do tronco até a ponta; quem fica nela acorda (herói 0,5 s, inimigo 0,2 s, `HazardDef.enemy_dwell`): 1,2 s de aviso âmbar com poeira,
   golpe 0,25 s de 7 no herói e 60 no inimigo, empurrão de 1 m para fora da raiz, 6 s até acordar de novo; dormente
   antes da sala 4 (`PLATES_FROM`). `Ground.add_band` (o `add_hazard` sobre qualquer faixa), `GroundLook.plate_band`
   (placeholder: a moldura da laje ao longo da raiz; a raiz que racha é do environment-artist), `Ground.ROOT_SOURCE`

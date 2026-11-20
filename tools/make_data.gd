@@ -798,8 +798,8 @@ const PLATES_FROM := 0.34
 
 
 ## RP-10 (H-1, docs/design/rooms_progression.md): the Jardim's outer roots strike. A band 3 m across along each root
-## (its metre and one more each side), from the trunk's face to `tips`; whoever lingers 0.5 s on it (the paladin or an
-## enemy) wakes it: 1.2 s cracking (the runes' amber), a strike of 0.25 s with the runes' numbers (RP-03: 7 to him, 60
+## (its metre and one more each side), from the trunk's face to `tips`; the paladin lingering 0.5 s on it, or an enemy
+## 0.2 s, wakes it: 1.2 s cracking (the runes' amber), a strike of 0.25 s with the runes' numbers (RP-03: 7 to him, 60
 ## to an enemy) that throws everyone on it 1 m off the root, 6 s before that root wakes again. Asleep before the 4th
 ## room, as the slabs. Each band 6 m or more from the way in (test_roots.gd).
 func _roots(tips: Array) -> HazardDef:
@@ -814,6 +814,8 @@ func _roots(tips: Array) -> HazardDef:
 	h.strips = strips
 	h.strip_width = 3.0
 	h.dwell = 0.5
+	# an enemy only walks over it: a fifth of a second wakes it (second pass, the Game Director: the outer roots never woke)
+	h.enemy_dwell = 0.2
 	h.warn = 1.2
 	h.rearm = 6.0
 	h.push_out = 1.0

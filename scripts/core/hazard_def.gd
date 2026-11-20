@@ -63,6 +63,9 @@ enum Kind { GRID, PLATES, LINE }
 @export var strips: PackedVector4Array = PackedVector4Array()
 @export var strip_width := 3.0
 @export var dwell := 0.0
+## PLATES: the seconds an enemy must stay on a slab before it arms (negative: dwell). The roots wake sooner to an enemy,
+## who only walks over them (RP-10, second pass).
+@export var enemy_dwell := -1.0
 @export var push_out := 0.0
 @export var plate_source: StringName = &"plates"
 
@@ -83,6 +86,11 @@ enum Kind { GRID, PLATES, LINE }
 ## LINE: the push of band i (zero: none).
 func band_push_of(i: int) -> Vector2:
 	return band_push[i] if i < band_push.size() else Vector2.ZERO
+
+
+## PLATES: the seconds an enemy must stay on a slab before it arms.
+func dwell_of_enemy() -> float:
+	return dwell if enemy_dwell < 0.0 else enemy_dwell
 
 
 ## PLATES: the paladin's damage of slab i.

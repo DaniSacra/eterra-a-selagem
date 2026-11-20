@@ -87,6 +87,24 @@ func test_it_wakes_only_to_who_lingers() -> void:
 	assert_eq(h.armed_by_enemy, 1, "an enemy lingering wakes it too")
 
 
+func test_an_enemy_wakes_it_sooner() -> void:
+	var def := _def(PackedVector4Array([Vector4(0, 0, 4, 0)]))
+	def.enemy_dwell = 0.2
+	var h := PlateHazard.new(def, [])
+	var foe := PackedVector2Array([Vector2(2, 1)])
+	for i in roundi(0.15 / DT):
+		h.step(DT, Vector2.INF, foe)
+	assert_eq(h.phase[0], PlateHazard.Phase.IDLE, "0.15 s: asleep")
+	for i in roundi(0.1 / DT):
+		h.step(DT, Vector2.INF, foe)
+	assert_eq(h.phase[0], PlateHazard.Phase.ARM, "0.25 s of an enemy: awake")
+	assert_eq(h.armed_by_enemy, 1)
+	var g := PlateHazard.new(def, [])
+	for i in roundi(0.3 / DT):
+		g.step(DT, Vector2(2, -1), PackedVector2Array())
+	assert_eq(g.phase[0], PlateHazard.Phase.IDLE, "the paladin still needs 0.5 s")
+
+
 ## The data: the two outer roots of each variant, numbered as the plan, each band along its root.
 func test_where_the_roots_strike() -> void:
 	var base := _garden()
@@ -99,6 +117,7 @@ func test_where_the_roots_strike() -> void:
 		assert_eq(h.plates.size(), 0)
 		assert_eq(h.strips.size(), 2, "the two outer roots")
 		assert_almost_eq(h.dwell, 0.5, 0.001)
+		assert_almost_eq(h.dwell_of_enemy(), 0.2, 0.001, "an enemy only walks over it")
 		assert_almost_eq(h.warn, 1.2, 0.001)
 		assert_almost_eq(h.rearm, 6.0, 0.001)
 		assert_almost_eq(h.push_out, 1.0, 0.001)

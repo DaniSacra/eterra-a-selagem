@@ -31,8 +31,10 @@ var armed_by_hero := 0
 var armed_by_enemy := 0
 ## Seconds of the ember of the last strike of each slab (ArenaHazard.EMBER down to 0).
 var ember := PackedFloat32Array()
-## Seconds someone has stood on each idle slab (it arms at HazardDef.dwell).
+## Seconds the paladin and seconds an enemy has stood on each idle slab (it arms at HazardDef.dwell and
+## HazardDef.dwell_of_enemy()).
 var stay := PackedFloat32Array()
+var foe_stay := PackedFloat32Array()
 ## Each slab as a band of the floor (Ground's LINE): from the middle of one end, along dir, length long, width across.
 ## A rectangle runs west to east; a strip (RP-10, a root) from its a to its b.
 var from := PackedVector2Array()
@@ -65,6 +67,7 @@ func _init(hazard: HazardDef, doors: Array[Rect2], is_awake := true) -> void:
 	by_hero.resize(n)
 	ember.resize(n)
 	stay.resize(n)
+	foe_stay.resize(n)
 	for i in n:
 		var ok := 1
 		for d in doors:
@@ -116,17 +119,21 @@ func step(dt: float, hero: Vector2, bodies: PackedVector2Array) -> Dictionary:
 			Phase.IDLE:
 				if not awake or calm > 0.0 or live[i] == 0:
 					stay[i] = 0.0
+					foe_stay[i] = 0.0
 					continue
 				var hero_on := on(i, hero)
 				var enemy_on := false
-				if not hero_on:
-					for b in bodies:
-						if on(i, b):
-							enemy_on = true
-							break
-				stay[i] = stay[i] + dt if hero_on or enemy_on else 0.0
-				if (hero_on or enemy_on) and stay[i] >= def.dwell and going < MOST_AT_ONCE:
+				for b in bodies:
+					if on(i, b):
+						enemy_on = true
+						break
+				stay[i] = stay[i] + dt if hero_on else 0.0
+				foe_stay[i] = foe_stay[i] + dt if enemy_on else 0.0
+				hero_on = hero_on and stay[i] >= def.dwell
+				enemy_on = enemy_on and foe_stay[i] >= def.dwell_of_enemy()
+				if (hero_on or enemy_on) and going < MOST_AT_ONCE:
 					stay[i] = 0.0
+					foe_stay[i] = 0.0
 					phase[i] = Phase.ARM
 					left[i] = def.warn
 					by_hero[i] = 1 if hero_on else 0
@@ -183,5 +190,6 @@ func stop() -> void:
 	for i in count():
 		phase[i] = Phase.IDLE
 		stay[i] = 0.0
+		foe_stay[i] = 0.0
 		left[i] = 0.0
 	awake = false

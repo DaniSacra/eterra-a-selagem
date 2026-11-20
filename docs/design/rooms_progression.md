@@ -45,6 +45,18 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
   fora ficam longe de onde o robô e os inimigos lutam; para o perigo pesar, o room-designer decide entre (a) a raiz de
   dentro (a que chega ao meio), (b) espera menor para o inimigo, que só passa por ela, ou (c) medir com gente. Testes em
   `tests/test_roots.gd`.
+- **Segunda passada (Game Director)**: o inimigo acorda a raiz em 0,2 s (`HazardDef.enemy_dwell`; o herói segue 0,5 s).
+  Mesmas 24 sementes: **nenhuma raiz acordou de novo** (0 golpes, 0 de dano, vitórias 15 de 24, `stuck` 1, iguais). Medi
+  também, só como experimento e devolvido, a raiz de dentro de cada variante (A: da face do tronco a (0,3; 1,2), a que
+  chega ao meio; B: a do norte, até (0,9; -5,4)): ainda **0** golpes. A luta do Jardim acontece a leste do tronco
+  (`east_field` 49% do tempo, o resto no sudoeste da entrada); nenhuma raiz, nem a de dentro, chega lá. Para a raiz
+  pesar, o perigo precisa estar no campo leste (raiz nova saindo do tronco para leste, peça e desenho novos) ou os
+  inimigos precisam nascer a oeste do tronco: decisão do room-designer. A raiz de dentro **não** entrou (falta a
+  aprovação dele aqui).
+- **RP-21 na Cripta A, tentado e devolvido**: a laje na cabeceira leste do túmulo grande ((4,6..7,6; -1,5..1,5); a
+  oeste fica a menos de 6 m da entrada) faz o `ArenaRoom.clear_of_plates` apagar a laje emoldurada desenhada nessa
+  cabeceira (SW-G3, `CryptLook.STY_FRAMES_A`, a 4,4; 0): a de enfeite e a que fere ficariam lado a lado. Precisa do
+  environment-artist mover ou trocar o par emoldurado antes.
 
 ## Feito em 2026-11-20 (gameplay-engineer): RP-09 (coluna rachada que tomba)
 
