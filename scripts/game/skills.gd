@@ -165,7 +165,7 @@ func _falling(family: int, at: Vector2, color: Color, delay: float, streaks: int
 		return
 	var speed := FALL_HEIGHT / maxf(delay, 0.05)
 	for k in streaks:
-		var off := Vector2(randf_range(-0.4, 0.4), randf_range(-0.4, 0.4)) if k > 0 else Vector2.ZERO
+		var off := Vector2.from_angle(TAU * k / maxf(streaks, 1)) * 0.35 if k > 0 else Vector2.ZERO
 		game.fx.chips(Vector3(at.x + off.x, FALL_HEIGHT, at.y + off.y), Vector3.DOWN, color * 0.4, 1, speed, 0.22, delay, 0.0)
 
 

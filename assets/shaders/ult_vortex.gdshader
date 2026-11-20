@@ -100,7 +100,9 @@ void fragment() {
 	vec3 e = color.rgb / max(max(color.r, color.g), max(color.b, 0.001));
 	vec3 iv = ivory.rgb / max(max(ivory.r, ivory.g), max(ivory.b, 0.001));
 	vec3 g = gold.rgb / max(max(gold.r, gold.g), max(gold.b, 0.001));
-	vec3 light = e * veil_peak * veil_light * va / max(veil, 0.001);
+	// V-10: the veil leans yellow of the Emeth (over the petrol floors its own green read cyan, hue 171)
+	vec3 ev = mix(e, vec3(0.55, 1.0, 0.2), 0.6);
+	vec3 light = ev * veil_peak * veil_light * va / max(veil, 0.001);
 	light = mix(light, iv * arm_peak, arm);
 	light = mix(light, g * rim_peak, rim);
 	float dark = ink * mix(1.0, 0.45, smoothstep(0.0, 1.0, r)) * inside * (1.0 - close);

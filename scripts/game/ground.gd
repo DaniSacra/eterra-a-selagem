@@ -21,6 +21,8 @@ const LAND_QUICK := 0.1
 const HAZARD_SOURCE := &"runes"
 ## The source of the slabs that strike when stepped on (RP-06, PlateFloor): "Derrotado por: Laje Rachada".
 const PLATE_SOURCE := &"plates"
+## RP-11: the bands that strike in turn (the chain of the Ponte dos Condenados, BandFloor).
+const CHAIN_SOURCE := &"chain"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.

@@ -16,6 +16,16 @@ const SMOKE_RING := preload("res://assets/shaders/smoke_ring.gdshader")
 ## The snap where a blow lands (V-05): its shader, pool, life (3 frames), growth and size (metres, half a quad).
 const CONTACT := preload("res://assets/shaders/contact.gdshader")
 const CONTACT_POOL := 12
+## V-09: the crystal spikes of the Judgement Cut (crystal_spike.gdshader): how many at once, how long one lives, the
+## share of it spent growing and the share from which it breaks (into SPIKE_CHIPS chips), its base radius (m).
+const SPIKE := preload("res://assets/shaders/crystal_spike.gdshader")
+const SPIKE_POOL := 14
+const SPIKE_TIME := 0.42
+const SPIKE_GROW := 0.08
+const SPIKE_BREAK := 0.17
+const SPIKE_RADIUS := 0.24
+const SPIKE_CHIPS := 4
+const SPIKE_SCREEN := 215
 ## VFX pass P1-1 and P1-2: the screen value the snap's heart and the gash's core stop at (ScreenTone.linear_peak),
 ## with room under the rule's 226 for the bloom and what lies under them.
 const CONTACT_SCREEN := 210
@@ -272,6 +282,7 @@ var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
 var _smoke_rings: Array[Dictionary] = []
 var _contacts: Array[Dictionary] = []
+var _spikes: Array[Dictionary] = []
 var _marks: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
 ## The last pillar raised (beam): where, its intensity and cap (tests of GP-01).
@@ -392,6 +403,21 @@ func setup(cam: Camera3D, over: Control) -> void:
 		(e.node as MeshInstance3D).sorting_offset = 11.0
 		(e.node as MeshInstance3D).extra_cull_margin = 2.0
 		_contacts.append(e)
+	var prism := CylinderMesh.new()
+	prism.top_radius = 0.0
+	prism.bottom_radius = 1.0
+	prism.height = 1.0
+	prism.radial_segments = 4
+	prism.rings = 1
+	prism.cap_top = false
+	for i in SPIKE_POOL:
+		var e := _effect_node(SPIKE, prism)
+		e.delay = 0.0
+		e.lean = Basis()
+		e.foot = Vector3.ZERO
+		e.tall = 1.0
+		e.broke = false
+		_spikes.append(e)
 	for i in MARK_POOL:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2(2, 2)
@@ -945,6 +971,47 @@ func smoke_ring(center: Vector2, radius: float, color: Color, time: float = 0.5,
 	return r
 
 
+## A spike of emerald crystal breaking out of the floor at `foot` after `delay` s (V-09): `tall` m, leaning `lean` (a
+## turn off the upright), grows in SPIKE_GROW s and breaks into chips SPIKE_BREAK s later.
+func crystal_spike(foot: Vector3, tall: float, lean: Basis, delay: float, color: Color) -> void:
+	var e: Dictionary = _take(_spikes)
+	e.delay = delay
+	e.lean = lean
+	e.foot = foot
+	e.tall = tall
+	e.broke = false
+	e.time = SPIKE_TIME
+	var mi: MeshInstance3D = e.node
+	mi.visible = delay <= 0.0
+	mi.scale = Vector3.ZERO
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.25), SPIKE_SCREEN))
+	mat.set_shader_parameter(&"grow", SPIKE_GROW / SPIKE_TIME)
+	mat.set_shader_parameter(&"shatter", (SPIKE_GROW + SPIKE_BREAK) / SPIKE_TIME)
+	mat.set_shader_parameter(&"life", 0.0)
+	if delay > 0.0:
+		mi.visible = true
+		mi.scale = Vector3.ZERO
+
+
+func _step_spike(e: Dictionary, delta: float) -> void:
+	if e.delay > 0.0:
+		e.delay -= delta
+		return
+	_age(e, delta)
+	var mi: MeshInstance3D = e.node
+	var grown := clampf(e.life * SPIKE_TIME / SPIKE_GROW, 0.0, 1.0)
+	var tall: float = e.tall * (1.0 - pow(1.0 - grown, 3.0))
+	var b: Basis = e.lean * Basis.from_scale(Vector3(SPIKE_RADIUS, maxf(tall, 0.001), SPIKE_RADIUS))
+	mi.transform = Transform3D(b, e.foot + e.lean.y * tall * 0.5)
+	(e.mat as ShaderMaterial).set_shader_parameter(&"life", e.life)
+	if not e.broke and e.life * SPIKE_TIME >= SPIKE_GROW + SPIKE_BREAK:
+		e.broke = true
+		var tip: Vector3 = e.foot + e.lean.y * tall * 0.7
+		chips(tip, e.lean.y + Vector3.UP * 0.3, Combat.EMETH * 0.7, SPIKE_CHIPS, 4.0, 0.14, 0.3, 0.9)
+
+
 ## An elite rises (vfx_pass_spec.md V-15): no column; a ring of dark smoke with a dull old gold edge (value 0.5) closes on
 ## the spot in ELITE_SURGE_TIME, and a breath of wisps rises 1.5 m.
 const ELITE_SURGE_TIME := 0.4
@@ -1290,6 +1357,9 @@ func animate(delta: float) -> void:
 			var mi: Node3D = c.node
 			mi.scale = Vector3.ONE * c.size * lerpf(1.0, CONTACT_GROW, c.life) / CONTACT_GROW
 			(c.mat as ShaderMaterial).set_shader_parameter(&"life", c.life)
+	for sp in _spikes:
+		if (sp.node as Node3D).visible:
+			_step_spike(sp, delta)
 	for m in _marks:
 		if (m.node as Node3D).visible:
 			_age(m, delta)

@@ -94,6 +94,14 @@ const CANDLE_RADIUS := Vector2(0.12, 0.22)
 ## standing on something (a plinth, a crate) are this share of the size and may be fewer.
 const CANDLE_MAX := 5
 const CANDLE_ON_TOP := 0.6
+## ENV-HB7 (benchmark_hades2_style.md 4.1): in the stylized look every candle is this share of its height and radius
+## (the tallest 0.5 m, under a fifth of the hero's drawn 2.75 m; the clusters read near half of him), its halo and
+## light lowered with it. The classic candles (on their own Masonry, classic only) and the stylized twins (on
+## kit.styled()) take the same random sizes.
+const STY_CANDLE_HEIGHT := 0.45
+const STY_CANDLE_RADIUS := 0.85
+## The stone stand-in of a fight-field crate (_field_crate): the block left on it, a share of its size.
+const FIELD_CRATE_CHIP := Vector3(0.45, 0.3, 0.4)
 const CANDLE_HALO := 0.5
 ## A heap of fallen stones (_rubble): how many blocks, their width range and height range (m, under the knee), how far
 ## from the heap's middle.
@@ -415,11 +423,12 @@ const STY_CALM := {&"stone_a": Color(0.35, 0.29, 0.32), &"stone_b": Color(0.42, 
 	&"edge_span": STY_EDGE_SPAN, &"paint_pool_gain": STY_POOL_GAIN, &"paint_pool_saturation": STY_FLOOR_POOL_SATURATION}
 ## ... the floor darker toward the hall's edge than elsewhere (from STY_EDGE_SPAN times the calm radius out; ENV-HB3,
 ## the bottom of the screen darker than the fight), and the fires' pools on the floor amber, not beige: less bright than
-## the default gain (2.5 burnt them to white) and their colour pushed past the fire's (1 is the fire's own).
+## the default gain (2.5 burnt them to white) and their colour pushed past the fire's (1 is the fire's own; ENV-HB7: 1.9, a
+## saturation p50 of 0.45 or more in the pool, was 0.26 to 0.37 at 1.35).
 const STY_EDGE_VALUE := 0.38
 const STY_EDGE_SPAN := Vector2(0.5, 1.25)
 const STY_POOL_GAIN := 1.8
-const STY_FLOOR_POOL_SATURATION := 1.35
+const STY_FLOOR_POOL_SATURATION := 1.9
 ## S-1: the hall's mouldings lower and its slabs less worn pale than the defaults (1.22, 0.16): noble floor, no buttons.
 const STY_FRAMED_LIP := 1.08
 const STY_FRAMED_WORN := 0.05
@@ -524,6 +533,9 @@ var kit: ArenaKit
 var _key: OmniLight3D
 var m: Masonry
 var _rng := RandomNumberGenerator.new()
+## The classic look's candles and fight-field crates (hidden in the stylized look, where kit.styled() holds their
+## stand-ins).
+var _classic: Masonry
 
 
 func _init(a: Arena, seed_: int) -> void:
@@ -556,6 +568,8 @@ func build(exit_count: int) -> void:
 	_depths()
 	_doors(exit_count)
 	m.merge()
+	if _classic != null:
+		_classic.merge()
 	a.pillars.append_array(kit.circles)
 	a.boxes.append_array(kit.boxes)
 	_stylize()
@@ -1109,7 +1123,7 @@ func _east(stairs_down: bool) -> void:
 	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))
-	kit.crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 1.0)
+	_field_crate(Vector3(x - 1.9, 0, EAST_STONE.y + 2.6), 0.4, Vector3.ONE * 0.9, 1.0)
 	_candles(Vector3(x - 2.4, 0, EAST_STONE.y + 1.8), 4, false, false, true)
 	# the clutter by the stone stops the way as it reads (C18, ENV P2-6: a phantom of 2.5 m² at x 13 to 15)
 	kit.circles.append(Vector3(x - 2.4, EAST_STONE.y + 1.8, EAST_CLUTTER))
@@ -1480,6 +1494,44 @@ func _rubble(at: Vector2) -> void:
 		b.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.2, 0.2))
 
 
+## The Masonry of the pieces only the classic look shows (made on first use, joined at the end of build()).
+func classic() -> Masonry:
+	if _classic == null:
+		var node := Node3D.new()
+		node.name = "ClassicOnly"
+		kit.root.add_child(node)
+		VisualProfile.vary(node, {&"visible": false})
+		_classic = Masonry.new(node)
+		_classic.layers = m.layers
+	return _classic
+
+
+## ENV-HB7: a KayKit crate in the fight field (the east stone's) drawn only in the classic look; in the stylized one a
+## block of the hall's stone of the same size and place (its blocking box the same) with a broken corner block on it.
+func _field_crate(pos: Vector3, yaw: float, size: Vector3, solid: float) -> void:
+	kit.crate(pos, yaw, size, solid, classic())
+	var f := kit.crate_frame(pos, yaw, size)
+	var foot: Vector3 = f[0]
+	var dims: Vector3 = f[1]
+	var sty := kit.styled()
+	sty.box(foot + Vector3(0, dims.y * 0.5, 0), dims, yaw)
+	var chip := dims * FIELD_CRATE_CHIP
+	sty.box(foot + Vector3(dims.x * 0.2, dims.y + chip.y * 0.5, -dims.z * 0.15), chip, yaw + 0.5)
+
+
+## One candle (lit or burnt out) in both looks: the classic one on _classic, its shorter stylized twin on kit.styled().
+func _candle(p: Vector3, height: float, radius: float, burnt: bool) -> void:
+	var sty := kit.styled()
+	var h := height * STY_CANDLE_HEIGHT
+	var r := radius * STY_CANDLE_RADIUS
+	if burnt:
+		classic().candle_out(p, height, radius)
+		sty.candle_out(p, h, r)
+	else:
+		classic().candle(p, height, radius)
+		sty.candle(p, h, r)
+
+
 ## A cluster of thick candles on the floor (or on top of something at `at`: then smaller), a warm halo over them and
 ## one warm light unless light is false: one tall thick candle in the middle, one or two of middle height and stubs
 ## round it (the taller, the thicker). tall: the stubs are left out (the south stone's cluster). burnt: the cluster is
@@ -1498,10 +1550,7 @@ func _candles(at: Vector3, count: int, light := true, tall := false, burnt := fa
 		if i > 0:
 			var a := turn + TAU * float(i) / float(n - 1) + _rng.randf_range(-0.3, 0.3)
 			p += Vector3(cos(a), 0, sin(a)) * (CANDLE_RADIUS.y * size + r + _rng.randf_range(0.04, 0.22) * size)
-		if burnt:
-			m.candle_out(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r)
-		else:
-			m.candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r)
+		_candle(p, lerpf(CANDLE_HEIGHT.x, CANDLE_HEIGHT.y, t) * size, r, burnt)
 	if burnt:
 		return
 	var glow := MeshInstance3D.new()
@@ -1509,6 +1558,7 @@ func _candles(at: Vector3, count: int, light := true, tall := false, burnt := fa
 	glow.position = at + Vector3(0, CANDLE_HEIGHT.y * 0.8 * size, 0)
 	glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	arena.add_child(glow)
+	VisualProfile.vary(glow, {&"position": at + Vector3(0, CANDLE_HEIGHT.y * 0.8 * size * STY_CANDLE_HEIGHT, 0)})
 	if not light:
 		return
 	var l := OmniLight3D.new()

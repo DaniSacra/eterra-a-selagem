@@ -261,15 +261,22 @@ func _block(box: AABB, solid: float) -> void:
 
 ## A wooden crate (Masonry.crate) in the place, size and footprint of the kit's "box_small", which it replaces (that
 ## one's pale blue frame is not in the picture). Same arguments as piece(); the blocking box is the kit piece's.
-func crate(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE, solid := 0.0) -> void:
+func crate(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE, solid := 0.0, into: Masonry = null) -> void:
+	var f := crate_frame(pos, yaw, size)
+	(masonry if into == null else into).crate(f[0], f[1], yaw)
+	if solid > 0.0:
+		_block(f[2], solid)
+
+
+## Where crate() draws a crate: [the middle of its foot, its size, its box in the room] (ENV-HB7: a stylized stand-in
+## takes the same place).
+func crate_frame(pos: Vector3, yaw: float = 0.0, size := Vector3.ONE) -> Array:
 	var e := _kit_mesh("box_small")
 	var xf := Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(size), pos) * (e[1] as Transform3D)
 	var local: AABB = (e[0] as Mesh).get_aabb()
 	var dims := (xf.basis.get_scale() * local.size).abs()
 	var middle := xf * local.get_center()
-	masonry.crate(Vector3(middle.x, middle.y - dims.y * 0.5, middle.z), dims, yaw)
-	if solid > 0.0:
-		_block(xf * local, solid)
+	return [Vector3(middle.x, middle.y - dims.y * 0.5, middle.z), dims, xf * local]
 
 
 ## A banner hanging on the facade from `top` (the middle of its bar), facing along yaw: cloth with a pointed foot,

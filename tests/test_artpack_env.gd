@@ -113,7 +113,9 @@ func test_morvaths_crescents_are_a_cold_violet_with_a_pale_core() -> void:
 		var core := Color(float(m.get_string(1)), float(m.get_string(2)), float(m.get_string(3)))
 		assert_gt(core.v, 0.9, "the core is pale")
 		assert_lt(core.s, 0.15, "the core is nearly white")
-	assert_true(code.contains("vec3 heart = core_color.rgb"), "its core line is the pale colour")
+	# V-17 (vfx_pass_spec.md): the lilac core only in the middle third, leaning to the pale colour, under the screen's cap
+	assert_true(code.contains("vec3 heart = mix(soft, core_color.rgb"), "its core line leans to the pale colour")
+	assert_true(code.contains("blend_premul_alpha") and code.contains("uniform float peak"), "laid over, under a cap")
 
 
 func test_the_seal_goes_quiet_under_his_attacks() -> void:

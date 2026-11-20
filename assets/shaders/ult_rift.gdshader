@@ -14,7 +14,8 @@ global uniform vec3 hero_pos;
 uniform vec4 color : source_color = vec4(0.3, 1.0, 0.45, 1.0);
 // The brightest channel the lips reach (linear) and the breath over the band (share of it).
 uniform float peak = 1.0;
-uniform float breath = 0.12;
+// V-09: no flat green band (it was 0.12 of the light over the whole strip): the strip is read by its two long edges
+uniform float breath = 0.0;
 uniform float edge_light = 0.3;
 // How far the lips go toward white.
 uniform float lip_pale = 0.3;
@@ -61,7 +62,7 @@ void fragment() {
 	float band = step(abs(at.x), half_w) * step(0.0, at.y) * step(at.y, length_m) * smoothstep(run + 0.08, run - 0.08, along);
 	float side = (1.0 - smoothstep(0.0, 0.05, abs(abs(at.x) - half_w))) * band;
 	vec3 hue = color.rgb / max(max(color.r, color.g), max(color.b, 0.001));
-	vec3 light = hue * peak * (glow * 0.55 + band * breath + side * edge_light);
+	vec3 light = hue * peak * (glow * 0.35 + band * breath) + mix(hue, vec3(1.0), 0.4) * peak * side * edge_light * 1.6;
 	light = max(light, mix(hue, vec3(1.0), lip_pale) * peak * lip);
 	float dark = ink * inside * ahead;
 	vec3 hero = (VIEW_MATRIX * vec4(hero_pos + vec3(0.0, HERO_MID, 0.0), 1.0)).xyz;

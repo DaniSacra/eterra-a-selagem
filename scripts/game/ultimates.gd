@@ -237,7 +237,8 @@ func _cleave(origin: Vector2, dir: Vector2) -> void:
 		struck += 1
 		if not e.invulnerable:
 			mats.append(CombatSounds.material_of(e))
-			game.fx.gash(Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(0, -1, 0).lerp(Vector3(dir.x, 0, dir.y), 0.3), Combat.EMETH, Combat.GASH_HEAVY, true, Combat.GASH_TIME.y)
+			# V-09: the heavy snap of the contact (V-05), never a 4-point star
+			game.fx.contact(Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(dir.x, 0, dir.y), Combat.EMETH, true)
 		_hit(e, amount, dir, def.knockback, def.stun)
 	_show_rift(origin, dir)
 	var fx := game.fx
@@ -246,8 +247,8 @@ func _cleave(origin: Vector2, dir: Vector2) -> void:
 	fx.buzz(Combat.RUMBLE_OMEGA.x, Combat.RUMBLE_OMEGA.y, Combat.RUMBLE_OMEGA.z)
 	for k in 5:
 		var at := origin + dir * def.length * (k + 0.5) / 5.0
-		fx.chips(Vector3(at.x, 0.3, at.y), Vector3(dir.x, 1.2, dir.y), MOTE_COLOR, 4, 5.0, 0.1, 0.45, 0.8, Fx.MOTE_GOLD_EVERY)
 		fx.burst(&"dust", Vector3(at.x, 0.2, at.y))
+	_spikes(origin, dir)
 	Audio.play(CombatSounds.EVENTS[&"ult_cleave"])
 	if struck > 0:
 		var k := Feel.live().hit_stop_scale
@@ -256,6 +257,32 @@ func _cleave(origin: Vector2, dir: Vector2) -> void:
 		var m := CombatSounds.material(CombatSounds.loudest(mats))
 		if m != &"":
 			Audio.play(m)
+
+
+## V-09: crystal spikes break out of the rift, CLEAVE_SPIKES of them in two alternating rows along its axis, leaning out
+## CLEAVE_LEAN degrees, CLEAVE_SPIKE_TALL m, from the paladin to the far end over CLEAVE_SPIKE_SPAN s (Fx.crystal_spike).
+const CLEAVE_SPIKES := 10
+const CLEAVE_LEAN := Vector2(15.0, 30.0)
+const CLEAVE_SPIKE_TALL := Vector2(1.2, 2.4)
+const CLEAVE_SPIKE_SPAN := 0.12
+const CLEAVE_SPIKE_ROW := 0.45
+
+
+func _spikes(origin: Vector2, dir: Vector2) -> void:
+	var side := Vector2(-dir.y, dir.x)
+	for k in CLEAVE_SPIKES:
+		var along := (k + 0.6) / CLEAVE_SPIKES
+		var row := 1.0 if k % 2 == 0 else -1.0
+		var at := origin + dir * def.length * along + side * row * CLEAVE_SPIKE_ROW
+		var out := Vector3(side.x * row, 0.0, side.y * row)
+		# their scatter from k only (never a random generator: the run stays the same with the same seed)
+		var h1 := fposmod(sin(k * 12.9898) * 43758.5453, 1.0)
+		var h2 := fposmod(sin(k * 39.3468 + 1.7) * 24634.6345, 1.0)
+		var tilt := deg_to_rad(lerpf(CLEAVE_LEAN.x, CLEAVE_LEAN.y, h1))
+		var axis := out.cross(Vector3.UP).normalized()
+		var lean := Basis(axis, -tilt) if axis.length_squared() > 0.0 else Basis()
+		var tall := lerpf(CLEAVE_SPIKE_TALL.x, CLEAVE_SPIKE_TALL.y, h2) * (0.75 + 0.25 * sin(along * PI))
+		game.fx.crystal_spike(Vector3(at.x, 0.0, at.y), tall, lean, CLEAVE_SPIKE_SPAN * along, Combat.EMETH)
 
 
 ## One hit of the ultimate: never a blow of the combo (counts false: no combo count, no Magia back), the armor takes

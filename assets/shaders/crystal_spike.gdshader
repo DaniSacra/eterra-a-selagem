@@ -1,7 +1,7 @@
 shader_type spatial;
 // A spike of emerald crystal breaking out of the floor (vfx_pass_spec.md V-09, the Judgement Cut; Fx.crystal_spike): a
-// four-sided point on a CylinderMesh (top radius 0, its origin at its foot), lit faces of its own (one facet pale, the
-// next deep, the edges a thin ivory-mint line), laid over what is behind (premultiplied) under `peak` (the screen's
+// four-sided point on a CylinderMesh 1 m tall (top radius 0, centred: its foot at -0.5; Fx scales and leans it), lit
+// faces of its own (one facet pale, the next deep, the edges a thin ivory-mint line), laid over what is behind (premultiplied) under `peak` (the screen's
 // 226). `life` 0 to 1: it grows out in `grow` of it, holds, and from `shatter` on breaks from the tip down (Fx sprays the
 // chips). Opens around the paladin where it stands between him and the camera (hero_pos, as the rift).
 render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled;
@@ -12,7 +12,6 @@ uniform float peak = 0.8;
 uniform float life = 0.0;
 uniform float grow = 0.3;
 uniform float shatter = 0.65;
-uniform float height_m = 1.8;
 uniform float deep = 0.32;
 uniform float edge_pale = 0.4;
 uniform vec2 hero_hole = vec2(0.6, 1.4);
@@ -26,7 +25,7 @@ void vertex() {
 }
 
 void fragment() {
-	float up = clamp(local.y / max(height_m, 0.001), 0.0, 1.0);
+	float up = clamp(local.y + 0.5, 0.0, 1.0);
 	// breaking from the tip down after `shatter`
 	float broken = smoothstep(shatter, 1.0, life);
 	if (up > 1.0 - broken) discard;

@@ -118,6 +118,8 @@ var altar_options: Array[Dictionary] = []
 var runes: RuneFloor
 ## RP-06: the slabs that strike when stepped on in a fight there (null: none).
 var plates: PlateFloor
+## RP-11: the bands that strike in turn (the chain of the bridge), or null.
+var bands: BandFloor
 var _slab_node: Node3D
 var _slab_sign: DoorSign
 ## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
@@ -459,6 +461,8 @@ func _step_fight(dt: float) -> void:
 		runes.step(dt)
 	if plates != null:
 		plates.step(dt)
+	if bands != null:
+		bands.step(dt)
 	if _wave_wait > 0.0:
 		_wave_wait -= dt
 		if _wave_wait <= 0.0:
@@ -1172,7 +1176,9 @@ func _to_look(what: StringName) -> void:
 func _start_hazard(layout: RoomLayout) -> void:
 	if layout == null or layout.hazard == null:
 		return
-	if layout.hazard.kind == HazardDef.Kind.PLATES:
+	if layout.hazard.kind == HazardDef.Kind.LINE:
+		bands = BandFloor.new(game, layout.hazard)
+	elif layout.hazard.kind == HazardDef.Kind.PLATES:
 		plates = PlateFloor.new(game, layout.hazard, EncounterGen.progress(stage, room.depth) >= layout.hazard.from_progress)
 	else:
 		runes = RuneFloor.new(game, layout.hazard, _rng)
@@ -1184,6 +1190,11 @@ func _stop_runes() -> void:
 		game.room_tally.hazard(plates.enemy_damage, plates.kills, plates.hazard.fired, String(Ground.PLATE_SOURCE),
 			plates.tally())
 		plates = null
+	if bands != null:
+		bands.stop()
+		game.room_tally.hazard(bands.enemy_damage, bands.kills, bands.hazard.fired, String(Ground.CHAIN_SOURCE),
+			bands.tally())
+		bands = null
 	if runes == null:
 		return
 	runes.stop()

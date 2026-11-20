@@ -336,6 +336,7 @@ func _stylize() -> void:
 			var n := kit.root.get_child(i) as Node3D
 			if n != null:
 				ArenaKit.style_only(n)
+	_break_rails()
 	kit.stylize(_style, self, tomb)
 	_style_ruins()
 	if _style.has(&"air"):
@@ -784,6 +785,7 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 	var off := out * BALUSTRADE_OUT
 	if not broken:
 		m.balustrade(Vector3(a.x + off.x, 0.0, a.y + off.y), Vector3(b.x + off.x, 0.0, b.y + off.y), true, mat)
+		_rails.append([a + off, b + off, out])
 		return
 	var r := RandomNumberGenerator.new()
 	r.seed = hash(Vector2i((a - b) * 10.0))
@@ -796,6 +798,7 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 		var p0 := a + along * s + off
 		var p1 := a + along * (s + run) + off
 		m.balustrade(Vector3(p0.x, 0.0, p0.y), Vector3(p1.x, 0.0, p1.y), true, mat)
+		_rails.append([p0, p1, out])
 		s += run
 		var gap := minf(r.randf_range(BALUSTRADE_GAP.x, BALUSTRADE_GAP.y), stop - s)
 		if gap > 0.6:
@@ -1687,6 +1690,84 @@ func under_look() -> Dictionary:
 
 
 var _runs: Array = []
+## The balustrades the room stood along its edges (balustrade_edge): [from, to, out] on the floor plane.
+var _rails: Array = []
+
+
+## ENV-HB5 (benchmark_hades2_style.md 4.1): in the stylized look a long balustrade no longer reads as the same module
+## over and over: every RAIL_BREAK_EVERY spans (Masonry.POST_GAP apart) one piece breaks it, in turn ivy draped over
+## the rail (RAIL_IVY: width, length down its outer face), a broken cap of fallen blocks on a post (RAIL_RUBBLE: across)
+## and dead roots over the rail (RAIL_ROOTS); none near a door, all on or outside the rail (never over the floor). On a
+## rail turned from the camera (its outer face unseen) the drapes hang down its inner face to the curb instead
+## (RAIL_INNER m inside the rail's middle line, still outside the floor).
+const RAIL_BREAK_EVERY := 3
+const RAIL_BREAK_FIRST := 1
+const RAIL_IVY := Vector2(1.8, 1.7)
+const RAIL_RUBBLE := 0.8
+const RAIL_ROOTS := Vector2(1.6, 2.2)
+const RAIL_DRAPE_OUT := 0.12
+const RAIL_FAR_OUT := 0.15
+const RAIL_FAR := 0.95
+const RAIL_STUMP := Vector2(0.3, 1.5)
+
+
+## The rails with those that go on one from another along the same line joined (a polygon's edge is cut wherever
+## a hole or a door meets it: the pieces are short, the balustrade one).
+func _joined_rails() -> Array:
+	var joined: Array = []
+	for rail: Array in _rails:
+		if not joined.is_empty():
+			var last: Array = joined[-1]
+			var dir_last: Vector2 = ((last[1] as Vector2) - (last[0] as Vector2)).normalized()
+			var dir: Vector2 = ((rail[1] as Vector2) - (rail[0] as Vector2)).normalized()
+			if (last[1] as Vector2).distance_to(rail[0]) < 0.05 and dir_last.dot(dir) > 0.999:
+				joined[-1] = [last[0], rail[1], last[2]]
+				continue
+		joined.append(rail.duplicate())
+	return joined
+
+
+func _break_rails() -> void:
+	var gap := Masonry.POST_GAP
+	var kinds := 0
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var eye := Vector2(sin(yaw), cos(yaw))
+	for rail: Array in _joined_rails():
+		var a: Vector2 = rail[0]
+		var b: Vector2 = rail[1]
+		var out: Vector2 = rail[2]
+		var length := a.distance_to(b)
+		var spans := maxi(1, roundi(length / gap))
+		if spans < RAIL_BREAK_EVERY:
+			continue
+		var along := (b - a) / maxf(length, 0.001)
+		var k := RAIL_BREAK_FIRST
+		while k < spans:
+			var kind := kinds % 3
+			# drapes hang in the middle of a span, the fallen cap sits on a post
+			var t := (float(k) + (0.0 if kind == 1 else 0.5)) / float(spans)
+			var p := a.lerp(b, t)
+			k += RAIL_BREAK_EVERY
+			if _near_door(p, out, RAIL_IVY.x):
+				continue
+			kinds += 1
+			var seed_ := hash(Vector2i(p * 10.0))
+			if out.dot(eye) <= 0.2:
+				if kind == 1:
+					edge_kit().broken_pillar(Vector3(p.x, Masonry.POST.y + Masonry.POST_CAP.y, p.y), RAIL_STUMP.x, RAIL_STUMP.y,
+						out, seed_)
+				else:
+					var q := p + out * RAIL_FAR_OUT
+					edge_kit().rubble(Vector3(q.x, Masonry.RAIL_TOP, q.y), RAIL_FAR, seed_)
+				continue
+			var top := Vector3(p.x + out.x * RAIL_DRAPE_OUT, Masonry.RAIL_TOP, p.y + out.y * RAIL_DRAPE_OUT)
+			match kind:
+				0:
+					edge_kit().ivy(top, RAIL_IVY.x, RAIL_IVY.y, along, eye, seed_)
+				1:
+					edge_kit().rubble(Vector3(p.x, Masonry.POST.y + Masonry.POST_CAP.y, p.y), RAIL_RUBBLE, seed_)
+				2:
+					edge_kit().root_curtain(top, RAIL_ROOTS.x, RAIL_ROOTS.y, along, seed_)
 
 
 func _under_arcades(u: Dictionary) -> void:

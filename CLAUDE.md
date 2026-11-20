@@ -1033,6 +1033,15 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `kills`, `strikes`, `armed_by_hero`, `armed_by_enemy` e `hero_on_s` (segundos dele em cima); o das Runas ganhou
   `hero_damage`. Testes em `tests/test_plates.gd` (ritmo, inimigo arma, dormente, porta, três de cada vez, lugares
   contra chão, peças, portas, nascimentos e 6 m da entrada, saída andando de 12 x 12 pontos, sala real, empurrão).
+- **Corrente da Ponte (RP-11, H-3; `docs/design/rooms_progression.md`)**: terceiro tipo de `HazardDef` (`LINE`: `bands`,
+  `band_push`, `cycle`), faixas que golpeiam uma por vez e em ordem no relógio da sala (`BandHazard`, `core/band_hazard.gd`;
+  no jogo `BandFloor`, `game/band_floor.gd`, pelo `Rooms._start_hazard`, `Rooms.bands`): 3 s de calma, uma a cada 6 s,
+  aviso 1,2 s desenhado como a faixa âmbar (`Ground.add_hazard`, `Ground.CHAIN_SOURCE`; placeholder até a corrente do
+  `environment-artist`), golpe 0,25 s de 7 no herói e 60 no inimigo, empurrão de 2,5 m ao longo da ponte para a
+  plataforma (`PlateFloor.strike`, comum às lajes); faixa na boca de porta nunca golpeia. Ponte A: uma faixa de 2 m em
+  cada ponte, alternando; B: as duas metades da ponte longa, a 6 m do patamar (`_chain`, `CHAIN_PUSH` no `make_data.gd`).
+  "Derrotado por: Corrente da Ponte" (`killer_chain`, provisório); `rooms[].hazard` `kind` `chain`, `hero_in_s`; som
+  `chain_arm`/`chain_fire` = os das Runas. Testes em `tests/test_chain.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
   numa sala de luta vencida (20%, profundidades 2 a 7, intervalo de 10 salas, nunca com maldição em curso), custo
   `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3
@@ -2606,6 +2615,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   0,30 / 0,36, 38 / 56, 0,41 / 0,41, faixa da esquerda 319 / 255 px (as cascatas ao norte, P4, são faixas de propósito).
   fit_probe igual ao de antes; clássico igual (`test_room_style` 43/43, `test_visual_profile` 6/6).
 
+## ENV-HB7 e ENV-HB5 (só no estilizado; `docs/art/benchmark_hades2_style.md` 4.1; capturas `docs/gallery/ciclo_visual_1120/env7_*`, `env5_*`)
+- **ENV-HB7, Salão**: velas no estilizado a `CatacombHall.STY_CANDLE_HEIGHT` 0,45 da altura e `STY_CANDLE_RADIUS` 0,85
+  do raio (a maior 0,5 m contra os 2,75 m do herói desenhado), o halo e a luz descem junto; as velas clássicas ficam num
+  `Masonry` só do clássico (`CatacombHall.classic()`, nó "ClassicOnly") e as gêmeas no `kit.styled()`, com os mesmos
+  tamanhos sorteados. Poças do chão mais saturadas (`STY_FLOOR_POOL_SATURATION` 1,9, era 1,35). O caixote do KayKit da
+  pedra leste, no campo de luta, vira no estilizado um bloco da pedra do salão do mesmo tamanho e no mesmo lugar, com uma
+  lasca em cima (`_field_crate`, `FIELD_CRATE_CHIP`; `ArenaKit.crate(..., into)` e `crate_frame`); a colisão é a mesma.
+  Os outros caixotes ficam no pé do altar e na balaustrada, fora da luta. Medido (RTX 1080, Longe, semente 5, antes /
+  depois): saturação p50 da poça da vela oeste 0,22 / 0,47, do braseiro leste 0,36 / 0,80, do norte 0,39 / 0,55; cera da
+  vela maior 55 / 37 px contra o herói correndo com 122 px. fit_probe estilizado fantasma 3,04 / 2,49 e borda falsa
+  39,06 / 41,20 (os topos das velas baixas fora do chão contam como chão; com as velas no tamanho clássico 39,40).
+- **ENV-HB5, balaustradas** (`ArenaRoom._break_rails`, `RAIL_*`, toda `balustrade_edge`; as linhas que continuam uma a
+  outra juntas por `_joined_rails`): a cada `RAIL_BREAK_EVERY` 3 vãos uma peça quebra a fileira, nunca perto de porta e
+  nunca sobre o chão. Na balaustrada virada para a câmera, em rodízio: hera pela face de fora, pedras caídas num poste,
+  raízes. Na virada para longe: um toco de coluna quebrada sobre o poste (`RAIL_STUMP`, tambores caídos para fora) ou
+  pedras sobre o corrimão. Parcial: lê nas Fendas (toco e pedras na fileira norte e oeste), pouco na Ponte; as caixas
+  laterais seguem no vazio do abismo (p90-p10 à esquerda e à direita, antes / depois: Fendas 22 e 54 / 22 e 53, Ponte 58 e 52 / 57 e 52), então o aceite de
+  50 nelas depende do HB4, que ficou como está. fit_probe estilizado igual ou melhor (Fendas borda falsa 5,47 para 3,45).
+
 ## Lote 2B e TA-HB, parte do technical-artist (2026-11-20; evidências em `docs/gallery/lote2b/`, `docs/gallery/hb/`, `docs/gallery/c19/hurt_flash/`)
 - **Ferramentas de `-s` que nomeiam classes com autoload** (`T`, `Audio`): o script de `-s` é compilado antes dos
   autoloads existirem. `tools/enemy_lab.gd`, `tools/walk_strip.gd`, `tools/rj1_lab.gd` e `tools/edge_lab.gd` são calços
@@ -2672,8 +2700,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`RewardShaft.SHOP_CAN` 0,75 com ouro, `SHOP_CANNOT` 0,3 sem), seguida pelo setter do `Rooms.gold`; comprar levanta.
   Fonte: `RewardShaft.FOUNTAIN` 0,8 enquanto há água (`Game.spawn_fountain`, filho do nó da fonte), `take()` junto do
   `fountain_spent`. Elite surgindo sem coluna (`Rooms._spawn`, `Game._spawn_elite`); a peça no chão dela (V-15/V-18) é do
-  technical-artist. Ficaram com coluna: Bênção e Salmo tomados (`Game` 721 e 936), dom que cai (`Skills`, Lote 2) e a
-  morte de elite no modo `--horde`. `--no-shafts` desliga (a peça).
+  technical-artist. Bênção e Salmo tomados sem coluna (seção 6: a marca da família no chão,
+  `Fx.family_mark`; Elo um anel). Ficaram com coluna: dom que cai (`Skills`, Lote 2) e a morte de elite no `--horde`. `--no-shafts` desliga (a peça).
 - **Paleta** (seção 4): `Combat.FIRE` âmbar (1,0; 0,6; 0,16), matiz 31; `Combat.LIGHT` ouro pálido (1,0; 0,92; 0,7);
   `Combat.VIGIL` sálvia (0,66; 0,78; 0,46), matiz 82, e `Combat.color_of` dá a Vigília separada da Luz. **`Boon.FAMILY_COLOR`
   mudou (para o ui-ux-designer: cartas, HUD e medalhões leem dali; conferir as telas)**: Chama e Luz como acima, Geada
@@ -2743,3 +2771,47 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Medido no fim (RTX 1080, estilizado, semente 5, `docs/gallery/vfx_pass/`): orbes p99 180 a 185, nenhum pixel acima de
   210, matiz 313 (a cor do feiticeiro do `make_data.gd`; a spec pede 320 a 355); fita do giro matiz p50 135, p99 226;
   estalo do contato até 225; foice e Ceifa matiz p50 250 a 254, sem ciano no setor. Sonda de sensação 41/41.
+
+## Passe de VFX, correções do Lote 1 e Lote 2, parte do technical-artist (2026-11-20; revisão `docs/gallery/vfx_pass/ART_REVIEW.md`, capturas `fix_*` e `l2_*`)
+- **P1 da revisão**: estalo do contato (`contact.gdshader`) com miolo em estrela dura de 5 pontas (`heart_m` 0,12, não o
+  disco macio), 6 ou 7 espinhos com os do leque espalhados por ele, todos encolhendo juntos para o menor no fim (nunca um
+  par sobrando em cruz), teto `Fx.CONTACT_SCREEN` 210: na caixa de 80 x 80 sobre Morvath maior canal 209, branco 0%. O
+  traço branco vertical era o talho (`impact.gdshader`, `Fx.gash`) somado e visto de ponta: agora premul sob
+  `ScreenTone.linear_peak` a `GASH_SCREEN` 210 e `pale` 0,35 (branco nos quadros da multidão 6,7% para até 0,03%). Aro do
+  brilho do finalizador (`glint.gdshader`) não se desenha sobre o corpo do herói (a estrela fica com `over_body`). Lascas
+  de luz do herói (`Fx.hero_burst(&"light")`) saem baixas e caem (`HERO_LIGHT_TOP` 0,9, nunca acima de `HERO_SHOULDER`
+  1,9 m; o atordoar do combo também passa por ele). Morvath no estilizado pisca no próprio violeta (`own_flash` no
+  `crowd.gdshader` pelo `style_vivid`, teto `style_boss_flash_cap` 0,5, sem o quadro marfim). P2: anel da explosão do
+  corredor mais largo e com meio escuro (`band` 0,3, `middle_dark` 0,5, `rim_light` 0,8), foice com o lilás-marfim no
+  miolo (`pale_light` 0,55) e fiapos deitados, fita do herói mais saturada no estilizado (`style_edge_pale` 0,3,
+  `style_core_sat` 0,65), virote capturado (`fix_bolt.png`: agulha escura de ponta carmim).
+- **5.3, formas das famílias**: `family_mark.gdshader` (`Fx.family_mark(família, ponto, raio, cor, tempo, rumo, arco)`,
+  pool `MARK_POOL` 12, orçamento `marks`): Chama línguas de fogo sobre um anel chamuscado, Geada placas hexagonais que se
+  espalham e racham, Luz um aro fino desenhado a partir do lado do herói com 8 marcas e fio de ouro, Vigília três arcos
+  segmentados que se abrem. `Fx.family_of(cor)` acha a família pela cor (`Combat.FIRE`... e `Boon.FAMILY_COLOR`);
+  `Fx.family_hit` no acerto (`Combat._draw_hit`): línguas, farpas de gelo, raio fino com o aro da Luz, grito da
+  Vigília. Lascas com forma (`chip.gdshader`, `shape` em `MODEL_MATRIX[1].z`: lente, farpa, língua; `Fx.SHAPE_*`). Cortes
+  (`slash.gdshader` `family`): Chama cauda em línguas (e 3 a 5 línguas soltas), Geada farpas na borda, Luz fio mais fino
+  e longo, Vigília três traços partidos. `Skills`: NOVA, CONSECRATE e o pouso pelo `family_mark` (sem anel cheio nem
+  explosões redondas), STRIKES da Luz um raio fino (`STRIKE_RAY` 0,08 m) e das outras famílias lascas caindo de 7 m,
+  orbe de fogo uma brasa alongada com fumaça (sem halo nem `CPUParticles3D`). Corpo congelado com casca facetada
+  (`frost_cell` 0,16 m, juntas `frost_seam`). Bênção e Salmo tomados sem coluna: a forma da família no chão em volta dele.
+- **V-06**: onda do especial com corpo 0,75 e borda 0,5 (`WAVE_BODY_LIGHT`, `WAVE_EDGE_PALE`), rastro de lascas de
+  cristal a cada 0,6 m (`Projectiles._trail`, `WAKE_CHIP*`), acerto = o estalo V-05 com pontas de ouro velho e a forma da
+  família (sai a estrela furada `SPECIAL_STAR`). **V-07**: o círculo de luz lança com o aro da Luz e 5 lascas caindo no
+  aro (`Fx.circle_cast`), o Ômega explode em 10 espinhos de cristal do aro para dentro (`Fx.circle_burst`); o aro do chão
+  a `circle_rim` 0,62 (ia a 233 a 235). **V-13**: `EnemyFx.PALE` marfim-avermelhado (1,05; 0,78; 0,74); o brilho da
+  lâmina do esqueleto é um traço que corre a lâmina com um ponto quente na ponta (`GLINT_LINE`, `GLINT_RUN`), sem
+  estrela; o orbe do feiticeiro escuro por dentro com a cor no aro. **V-14**: a morte arde em brasa suja
+  (`dissolve_color` (0,35; 0,07; 0,06)) e solta um fiapo cinza (`Fx.DEATH_ASH`); as lascas de osso já eram cinza-osso.
+  **V-15**: elite surgindo e caindo (horda) com anel de fumaça que se fecha e borda de ouro apagado (`Fx.elite_surge`,
+  `smoke_ring.gdshader` `closing`), sem coluna. **V-17**: meias-luas de Morvath premul sob 215, borda roída, corpo
+  escuro, lilás só no terço do meio, três caudas de fumaça e giro de 15 graus/s (`Projectiles.SOUL_*`; o rastro aditivo
+  `boss_wake` escondido). **V-18**: erupções em lilás-marfim (`eruption_color`) sob `eruption_cap` 0,62.
+  **V-09**: Corte do Juízo sem a faixa verde chapada (`ult_rift.gdshader` `breath` 0, as duas bordas em fio
+  marfim-menta), 10 espinhos de cristal em duas fileiras saindo da fenda em 0,12 s e quebrando em lascas
+  (`Fx.crystal_spike`, `crystal_spike.gdshader`, `Ultimates.CLEAVE_*`; espalhamento por hash, nunca o sorteio da partida),
+  acerto pelo estalo pesado. **V-10**: Voragem com véu 0,15 puxado para o amarelo da Emeth, chão escurecido (`ink`
+  0,35) e braços partidos em lascas (`dash_m`). **5.7**: número entra a 1,3 e volta a 1,0 em 0,08 s (`Fx.NUMBER_POP`).
+- Falta: V-08 (silhuetas de tinta na esquiva, fio do Retorno na lâmina); as lascas de ouro velho das elites ao morrer
+  (uma linha no `horde.gd`, gameplay-engineer); capturas de cada família com as Bênçãos e do surgir da elite na sala.

@@ -6,9 +6,13 @@ extends Resource
 ## PLATES (RP-06, H-2, the "laje de pisar"): fixed slabs, marked at rest, that anyone stepping on arms (the paladin or
 ## an enemy, as the steam trap of the Hades II): warn seconds lighting from the edge to the middle, a strike of fire
 ## seconds on whoever stands on it, rearm seconds before it may arm again; PlateHazard runs it, PlateFloor puts it on
-## the floor. Numbers only, written by _stage in tools/make_data.gd (RoomLayout.hazard, ArenaVariant.hazard).
+## the floor. LINE (RP-11, H-3, "a corrente que varre"): bands across the floor that strike in turn on their own clock,
+## one at a time (the chain of the Ponte dos Condenados swinging across a bridge): every `cycle` seconds the next band
+## warms up warn seconds and strikes fire seconds, pushing whoever it struck along band_push; BandHazard runs it,
+## BandFloor puts it on the floor. Numbers only, written by _stage in tools/make_data.gd (RoomLayout.hazard,
+## ArenaVariant.hazard).
 
-enum Kind { GRID, PLATES }
+enum Kind { GRID, PLATES, LINE }
 @export var kind := Kind.GRID
 
 ## The grid: the north-west corner of tile (0, 0), the side of a tile (m), how many columns (west to east) and rows
@@ -49,6 +53,17 @@ enum Kind { GRID, PLATES }
 ## firm floor; nobody falls (D-28), the push is swept as any body pushed.
 @export var plate_hero_damage: PackedFloat32Array = PackedFloat32Array()
 @export var plate_push: PackedVector2Array = PackedVector2Array()
+
+## LINE: the bands (rectangles of the floor, struck one at a time in this order, round and round), the push of each
+## (meters along the floor, never off it: nobody falls, D-28), and the seconds from one band's warning to the next's.
+@export var bands: Array[Rect2] = []
+@export var band_push: PackedVector2Array = PackedVector2Array()
+@export var cycle := 6.0
+
+
+## LINE: the push of band i (zero: none).
+func band_push_of(i: int) -> Vector2:
+	return band_push[i] if i < band_push.size() else Vector2.ZERO
 
 
 ## PLATES: the paladin's damage of slab i.

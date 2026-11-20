@@ -25,6 +25,24 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Feito em 2026-11-20 (gameplay-engineer): RP-11 na Ponte (a corrente que varre)
+
+- Comportamento `LINE` (`HazardDef.Kind.LINE`: `bands`, `band_push`, `cycle`; puro em `BandHazard`, no jogo `BandFloor`,
+  ligado pelo `Rooms._start_hazard`): faixas que golpeiam uma por vez, em ordem, no relógio da sala; 3 s de calma, uma a
+  cada 6 s, aviso 1,2 s (a faixa âmbar das Runas, `Ground.add_hazard` desenhado, até a corrente do environment-artist),
+  golpe 0,25 s com os números do RP-03 (7 no herói, 60 no inimigo) e empurrão de 2,5 m ao longo da ponte para a
+  plataforma a que ela leva (`PlateFloor.strike`, comum às lajes; ninguém cai). Faixa sobre boca de porta nunca golpeia.
+  Dado (`_chain` no `make_data.gd`): Ponte A uma faixa de 2 m em cada ponte (x -11,5 a -9,5 e 9,5 a 11,5), alternando;
+  Ponte B as duas metades da ponte longa (x -11 a -9 e 9 a 11), a 6 m do patamar. "Derrotado por: Corrente da Ponte"
+  (`killer_chain`, nome provisório para o Daniel), `rooms[].hazard` com `kind` `chain` e `hero_in_s`. Som: o das Runas.
+- Robô (reação 0,25, a Ponte como primeira sala, sementes 1 a 8): A ponte 1 + ponte 2 de 9 a 24% do tempo, meio 45 a
+  76%; B ponte 10 a 36% (mediana 20), patamar 14 a 68% (abaixo de 25% em 2 de 8); dano da corrente no herói 0 em 16
+  salas (o robô sai de todo aviso no chão; a meta de 0,5 a 2 por sala é para gente), nos inimigos 0 a 120 (2 a 4
+  golpes por sala, 4 abates em 16 salas); `stuck` 0. Fica de fora: o raio entre pilares das Runas A tardias (o mesmo
+  `LINE`, só dado, quando o room-designer escolher os pares) e a medida em salas tardias.
+- Testes em `tests/test_chain.gd` (relógio e ordem, nunca duas, porta, faixas inteiras no tabuleiro, empurrão no chão,
+  saída com uma esquiva ao longo da ponte de qualquer ponto da faixa, sala real).
+
 ## Feito em 2026-11-20 (gameplay-engineer): LR-03 e RP-07; LR-04 e LR-06 provados e devolvidos
 
 Medido com `smoke 900 --bot-reaction=0.25 --ultimate=cleave --trace-thirds`, sementes 1 a 24 (salas de luta sem

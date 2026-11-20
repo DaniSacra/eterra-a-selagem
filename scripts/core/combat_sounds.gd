@@ -37,6 +37,8 @@ const EVENTS := {
 	# it strikes (at most three slabs at once, PlateHazard.MOST_AT_ONCE)
 	&"plate_arm": &"rune_arm",
 	&"plate_fire": &"rune_crack",
+	&"chain_arm": &"rune_arm",
+	&"chain_fire": &"rune_crack",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
 const MATERIALS: Array[StringName] = [&"spectral", &"armor", &"shield", &"bone"]

@@ -317,6 +317,21 @@ Evidência em `docs/gallery/vfx_pass/` (antes em `docs/art/shots/vfx_pass_before
   mais escuro no estilizado, `crowd.gdshader`).
 - Sonda de sensação 41/41; GUT 1356 com `test_mix` instável (passa na segunda rodada, áudio).
 
+## Passe de VFX, correções do Lote 1 e Lote 2 (technical-artist, 2026-11-20)
+Evidência em `docs/gallery/vfx_pass/` (`fix_*`, `l2_*`), RTX 1920 x 1080, estilizado, semente 5. Maior canal na tela
+(teto 226; p99 / máximo / acima de 226 / branco, todos os canais acima de 235):
+- P1-1 estalo sobre Morvath (`fix_boss_contact.png`, caixa 80 x 80): máximo 209, nada acima de 226, branco 0%.
+- P1-2 traço branco: era o talho somado visto de ponta; branco na multidão 6,7% (caixa do talho) para no máximo 0,03% do quadro.
+- P1-3 aro do brilho fora do corpo (`fix_glint_ring.png`); P1-4 lascas de luz nunca acima de 1,9 m.
+- P1-5 Morvath no golpe forte (`fix_boss_flash.png`): pisca violeta, matiz 281; o branco que sobra é a coroa clara dele,
+  já em repouso (p99 239, 0,26%), da pintura do modelo.
+- V-09 Corte do Juízo (`l2_ult_cleave.png`, caixa 800 x 350): p99 220, acima de 226 0,66% (os números de dano e o HUD
+  dentro da caixa), branco 0,03%. V-10 Voragem (`l2_ult_vortex.png`): matiz do disco 174 para a faixa ciano 36% para
+  0,2%, saturação p50 0,41 para 0,27 (meta 125 a 150 ainda não: o petróleo do chão puxa a média para 170). Tempestade de
+  Morvath com as almas novas (`l2_storm_souls.png`): p99 217 a 230, branco 0,01%.
+- Falta capturar: cada família com as Bênçãos (`--boon-ids=`), a elite surgindo na sala (a sala do guardião não tem elite
+  nos primeiros 3 s), V-06 núcleo a 8 a 12 m.
+
 ## Melhorias propostas (maior ganho por esforço primeiro)
 
 ### Técnicas (posso fazer sem pedir; medir antes e depois, captura na GPU)

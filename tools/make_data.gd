@@ -1513,7 +1513,12 @@ func _bridge() -> RoomLayout:
 	b.spawns = [_rect(17, 24, -7.5, -1), _rect(17, 24, 1, 7.5)]
 	_areas(b, ["west", _rect(-28, -12, -9, 9), "landing", _rect(-3, 3, -4.5, 4.5), "bridge", _rect(-12, 12, -3, 3),
 		"east", _rect(12, 28, -9, 9)])
+	# RP-11: the chain across the long bridge, one half then the other, never within 4 m of the landing (the shelter)
+	b.hazard = _chain([_rect(-11, -9, -2.5, 2.5), _rect(9, 11, -2.5, 2.5)], [Vector2(-CHAIN_PUSH, 0), Vector2(CHAIN_PUSH, 0)])
 	l.variants = [b]
+	# RP-11: on A one bridge at a time, in turn
+	l.hazard = _chain([_rect(-11.5, -9.5, -2.5, 2.5), _rect(9.5, 11.5, -2.5, 2.5)],
+		[Vector2(-CHAIN_PUSH, 0), Vector2(CHAIN_PUSH, 0)])
 	# RP-07: A in the middle of the descent, B (the long bridge) late
 	l.variant_depth = Vector2(0.5, 0.8)
 	l.variants[0].depth = Vector2(0.67, 1.0)
@@ -1530,6 +1535,26 @@ func _bridge() -> RoomLayout:
 	_areas(l, ["west", _rect(-28, -14, -9, 9), "bridge1", _rect(-14, -7, -3, 3), "middle", _rect(-7, 7, -8, 8),
 		"bridge2", _rect(7, 14, -3, 3), "east", _rect(14, 28, -9, 9)])
 	return l
+
+
+## RP-11 (H-3): the chain that sweeps a bridge. A band of 2 m across the deck warms up 1.2 s (as the runes), strikes
+## 0.25 s with the numbers of RP-03 (7 to the paladin, 60 to an enemy) and pushes everyone in it 2.5 m along the bridge
+## toward the platform it leads to (never off it); one band every 6 s, in turn, after 3 s of calm.
+const CHAIN_PUSH := 2.5
+
+
+func _chain(bands: Array[Rect2], pushes: Array[Vector2]) -> HazardDef:
+	var h := HazardDef.new()
+	h.kind = HazardDef.Kind.LINE
+	h.bands = bands
+	h.band_push = PackedVector2Array(pushes)
+	h.warn = 1.2
+	h.fire = 0.25
+	h.cycle = 6.0
+	h.start_delay = 3.0
+	h.hero_damage = 7.0
+	h.enemy_damage = 60.0
+	return h
 
 
 ## RP-02: the tiles any part of which lies within 6 m of the way in (hero_spawn (-12.5, 3.5)) never light: columns 0

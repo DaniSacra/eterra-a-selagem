@@ -185,6 +185,14 @@ varre), `glint` (estrela de 6 pontas), `emeth_thrust` (perfil de lâmina), `boss
 `hero_paint` (`saturation` 1,8), `emeth` (teto pelo maior canal) e `crowd` (corpo um quarto mais escuro) só no
 estilizado. Estado: provisório até a revisão do art-director e o aceite do combat-feel-director.
 
+Passe de VFX, correções do Lote 1 e Lote 2 (technical-artist, 2026-11-20; procedural, licença do projeto, sem textura
+nova): novos `family_mark` (formas das famílias no chão, pool de 12 quads, `Fx.family_mark`) e `crystal_spike` (espinhos
+do Corte do Juízo, pool de 14, `CylinderMesh` de 4 lados sem tampa, 8 triângulos cada). Mexidos: `contact` (miolo em
+estrela de 5 pontas), `impact` (premul com teto), `glint` (aro fora do corpo do herói), `chip` (forma por lasca), `slash`
+(`family`), `smoke_ring` (`closing`), `soul_crescent` (premul, borda roída), `ritual_rune` (`eruption_cap`), `ult_rift`
+(sem faixa chapada), `ult_vortex` (véu 0,15, `ink`, braços partidos), `crowd` (casca de gelo, pisca de Morvath no
+violeta, brasa da morte), `ground.gdshaderinc` (`circle_rim` 0,62). Estado: provisório até a revisão do art-director.
+
 ## 8b. Kit de borda e primeiro plano (TA-HB2, `EdgeKit`, procedural, licença do projeto)
 
 `scripts/game/edge_kit.gd`, shaders `edge_piece.gdshader` (+ `.gdshaderinc`) e `edge_piece_paint.gdshader`. Nenhuma
