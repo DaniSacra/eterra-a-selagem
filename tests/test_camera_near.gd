@@ -181,3 +181,30 @@ func test_the_shooters_rule_is_the_far_frame_with_either_camera() -> void:
 	assert_eq(game.horde.off_screen_windups(), [e] as Array[Enemy], "winding up off the near screen")
 	Save.set_option("camera", "far")
 	assert_eq(game.horde.off_screen_windups().size(), 0, "far: on the screen")
+
+
+func test_near_arriving_at_the_hub_shows_the_portal_first() -> void:
+	# art review ciclo_visual_1120 P1-A2: the near camera looks at the far one's point (the portal in the frame) for
+	# HubPlan.ARRIVAL_LOOK seconds, then follows him; the far camera is as before (its point, Hub.lean INF)
+	var arrival := HubPlan.to_world(HubPlan.ARRIVAL)
+	var north := HubPlan.to_world(HubPlan.CAM_TARGET)
+	assert_eq(HubPlan.near_want_at(arrival, 0.0), north)
+	assert_eq(HubPlan.near_want_at(arrival, HubPlan.ARRIVAL_LOOK - 0.01), north)
+	assert_eq(HubPlan.near_want_at(arrival, HubPlan.ARRIVAL_LOOK), HubPlan.near_want(arrival), "then on him")
+	assert_eq(HubPlan.near_want_at(arrival, -1.0), HubPlan.near_want(arrival), "placed by --hero-at: on him")
+	for camera in ["near", "far"]:
+		Save.data.options["camera"] = camera
+		var hub: Hub = (load(SceneGo.HUB) as PackedScene).instantiate()
+		add_child_autofree(hub)
+		await wait_physics_frames(2)
+		var at := Vector2(hub.cam.target.x, hub.cam.target.z)
+		var local := HubPlan.to_local(at)
+		if camera == "far":
+			assert_false(hub.lean().is_finite(), "far: its own point, as before")
+		else:
+			assert_gt(local.y, HubPlan.to_local(hub.player.pos).y + 3.0, "near: looking north of him, to the portal")
+			hub.arrived = HubPlan.ARRIVAL_LOOK
+			var on_him := HubPlan.to_local(hub.lean())
+			assert_lt(on_him.y, local.y, "after it, back toward him")
+		hub.queue_free()
+		await wait_physics_frames(1)

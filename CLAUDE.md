@@ -424,12 +424,43 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`slots_saves_when`). Toda `UiKit.column` (páginas de menu, cartas, fim) centra acima da fileira da `ActionBar`
   (`ActionBar.RESERVE`); nas Configurações a dica fica no pé da página (`tip` dentro do quadro). Testes em `tests/test_bench_ui.gd`.
   Terceiro lote (capturas `docs/gallery/ciclo_visual_1120/ui3_*`, `_side_` lado a lado): o nome do golpe sai mais
-  longe do medalhão e acima do fio da barra (`Hud.COMBO_INSET` 14, `COMBO_RISE` 9; encostava nele na horda). **P1-4 em
-  teste, `--hud=row`** (padrão: o de hoje; o art-director decide): os cinco losangos menores (`Hud.ROW_DIAMOND` 31,
-  cerca de 46 px a 1080; `ActionSlot.side`) numa fileira sobre as barras a partir do ombro do medalhão, a tecla
-  pendurada sob a ponta (`ActionSlot.key_drop`, `ROW_KEY_DROP`), nada entre 30 e 70% da largura embaixo (a fileira
-  acaba em 27%); contador, selo da maldição e selo da Provação sobem a altura da fileira e das legendas
-  (`Hud._row_lift`); as Bênçãos que agem sozinhas no canto de baixo à direita, cada grupo com o próprio véu.
+  longe do medalhão e acima do fio da barra (`Hud.COMBO_INSET` 14, `COMBO_RISE` 9; encostava nele na horda). **P1-4,
+  a fileira, é o padrão** (aprovada pelo art-director com os ajustes A a C de `ART_REVIEW.md` 3.1; `--hud=classic` volta
+  aos losangos no meio de baixo para comparar): os cinco losangos menores (`Hud.ROW_DIAMOND` 36, 54 px a 1080;
+  `ActionSlot.side`) numa fileira sobre as barras a partir do ombro do medalhão, a tecla pendurada sob a ponta
+  (`ActionSlot.key_drop`, `ROW_KEY_DROP`), nada entre 30 e 70% da largura embaixo (a fileira acaba em 28%); uma faixa de
+  tinta atrás dela (`HudVeil` sobre os losangos, `Hud._row_band`) e o véu dos losangos só pelo herói atrás
+  (`_someone_behind(..., true)`): corpo do losango com luma p50 12 sobre a horda de 300; o contador e o nome do golpe na
+  mesma linha, à direita do último losango à mostra (`Hud._follow_row`, `ROW_COUNT_GAP`; o robô não tem o da
+  ultimate), o bloco todo com cerca de 197 px a 1080 (teto 200); selo da maldição e selo da Provação sobem a altura da
+  fileira e das legendas (`Hud._row_lift`; só com eles à mostra o bloco passa dos 200); as Bênçãos que agem sozinhas no
+  canto de baixo à direita, cada grupo com o próprio véu; divisas da borda acima da fileira (`Hud.edge_bottom()`,
+  `ROW_EDGE_BOTTOM` 168). Capturas do aceite em `ui3_after_*` (Salão e Ponte A com a horda a 720 e 1080, ultimate
+  trancada e pronta, maldição, Provação, herói na borda sul, `classic`).
+- **Fatia 2 na interface** (`docs/design/rejogabilidade/sistemas.md` 5.3 "Fatia 2"; testes em `tests/test_ui_fatia2.gd`;
+  capturas `docs/gallery/ciclo_visual_1120/ui4_*`): **Encanto** nas cartas (`EnchantChoice`, filha da `BoonChoice`:
+  título, linha de baixo, dica "Até dois Encantos por descida", barra de ações, `GUARD_MS`; `open_enchants(opções)`,
+  sinal `chosen_enchant`; aberta pelo `Game.open_enchant_choice` quando ninguém ouve `enchant_offered`):
+  `BoonCard.setup_enchant` com a aba "Encanto", medalhão de tinta com a marca, nome, "Muda: <ação>" com o símbolo do HUD, a regra,
+  o texto com os números em negrito (`BoonCard.strong_numbers`) e "Até o fim da descida"; borda e brilho esmeralda
+  pálido (`ENCHANT_EDGE`, `ENCHANT_GLOW`), sem raridade nem nível. **Marcas** desenhadas (`DoorGlyph.Kind`): `ENCHANT` a
+  lâmina inclinada com uma centelha de ouro velho de quatro pontas (`DoorGlyph.enchant`; nunca de pé com a guarda, que
+  lê como cruz, nem com um aro, que lia como o sinal de Vênus), `PSALM` o arco ogival das cartas de Salmo com a luz
+  lilás e um losango, `EMERALD` a pedra lapidada mais alta que larga no esmeralda da Emeth (a gema da Magia é redonda e
+  azul); `of_reward` (ENCHANT, PSALM), `of_material` (EMERALD), na legenda do mapa e nas placas da loja. **Anjo na
+  porta**: a linha do anjo sob a recompensa ganha o selo da casa e o nome na cor dele, ou dois selos e "Dois anjos"
+  (`DoorSign.show_angel`, `angel_row`, chamada pelo `Rooms._sign_angel`; o texto do `door_text` não mudou e sai do
+  detalhe, que fica com "Difícil"). **Forja** (`ForgeScreen`): o índice é uma grade de três colunas que cabe em 720
+  (Temperar I a III, Refinar Ataque e Especial com três escolhas cada; `Book.index_entry` com altura, fonte e margens
+  compactas), cada entrada com a marca do estado (`ForgeScreen.Mark`: lingote e preço esperando, losango de ouro velho
+  forjado, losango esmeralda na lâmina, losango apagado sem a ferramenta), sobre o Refinar "Ferramenta: Encontrada" ou
+  "Ainda perdida nas catacumbas"; o botão diz o que faz: Forjar (a primeira de uma ação entra na lâmina), Usar (troca
+  a da ação, sem custo, `Forge.put_on`) ou Em uso; sem a ferramenta, Estado "Falta a ferramenta" e o `forge_no_tool`.
+  **Esmeralda**: na Bolsa (`MaterialCount.purse`, `shown`) depois da primeira, no cartão do save, em Trazidos (todo
+  `MaterialPurse.IDS`) e na saudação de material; a ferramenta achada também em Trazidos. Capturas: `tools/ui_lab.gd --
+  --enchant`, `--doors=boon,meeting,enchant,psalm`, `--shop --route --want-enchant`, `--cursed`; Forja com
+  `--tools=tool_refine --refined=refine_fio,refine_peso` (só na sessão, `Save._dev_materials`). Pendente do
+  technical-artist: o medalhão no mundo (`RewardGem`) para Encanto e Salmo ainda sai vazio.
 - **Mapa da descida** (DV-1, MAP-03, lê o grafo do MAP-01): ação `map` em `Controls` (M, Back
   no controle; remapeável no teclado nas Configurações, linha "Mapa" no Como Jogar), botão discreto "Mapa [M]" ao lado do
   "Sala N de 11" no HUD (`Hud.map_button`: nunca toma o foco, abre no aperto para o clique, que também é o ataque, não
@@ -593,7 +624,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - O jogo abre em tela cheia (padrão desde 2026-11-16, `SaveData.VERSION` 2 passa os saves antigos para tela cheia uma vez; capturas, vídeos e `--nosave` ficam em janela, `App.apply_options`); a pausa tem "Sair do jogo" no desktop (`pause_exit_game`).
 - Save em três espaços, `user://save_1.json` a `save_3.json` (ver "Escolha de save" na Tela de título), pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio; versão 5 passa uma vez as músicas que estavam no padrão antigo para o padrão novo do MUS-1). Sem save (`--nosave`) não há recorde
   (`SaveData.record_win_time`). Os testes nunca gravam o save nem o registro (`tests/hooks/pre_run.gd`, `pre_run_script` no
-  `.gutconfig.json`; `tools/title_flow_check.gd` também desliga).
+  `.gutconfig.json`; `tools/title_flow_check.gd` também desliga). O mesmo gancho põe `--seed=1` (BUG-109): todo jogo
+  aberto num teste joga o mesmo dado, e a suíte dá a mesma contagem de asserções em toda rodada. Teste que troca a
+  semente devolve `Dev.put("seed", "1")` no `after_each`, nunca a apaga (12 arquivos apagavam e deixavam o resto da
+  suíte em dado sorteado; `tests/test_zz_seed_kept.gd`, o último, confere); `RandomNumberGenerator` de teste com semente.
 - Registro das partidas de gente (ciclo 10, QW-001): `user://runs.jsonl`, uma linha JSON por partida (vitória, morte ou saída,
   `Game.log_run`, uma vez só; sair no meio grava `quit` no `_exit_tree`) com o dicionário do `RESULT`, os dons na ordem
   (`gifts`: id, nível, raridade), o controle (`device`: keyboard, gamepad, both; `Controls.seen_keys`/`seen_pad`), `omegas`,
@@ -844,6 +878,17 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - `RESULT` e o registro trazem `rooms` (por sala: profundidade, arena, vida ao entrar, dano por fonte, tempo e primeiro
   contato), `hp_at_boss`, `arena`, `stuck`/`stuck_by` (inimigo que queria andar e ficou 3 s parado) e `shots_blocked`;
   desde o C12c também os campos do GP-02 por sala e `boons_at_boss`, `shop`, `fountain_used` (ver Registro das partidas).
+- **RP-07, variante pela profundidade**: cada variante tem a faixa da descida em que pode sair (`RoomLayout.variant_depth`
+  para a A, `ArenaVariant.depth` para as outras; `RoomLayout.variants_at(progresso)`, a primeira quando nenhuma cabe); o
+  `RunMap` sorteia só entre as que cabem, com o mesmo dado de antes (sem faixa, o mapa de antes). Faixas do room-designer:
+  Fendas A 0,1 a 0,6 e B 0,34 a 1; Ponte A 0,5 a 0,8 e B 0,67 a 1; Runas B 0,5 a 0,8 e A 0,67 a 1 (`_stage`). A
+  intensidade do perigo pela faixa (Runas A tardia mais densa) não entrou: é número. Teste
+  `test_rp07_no_variant_out_of_its_band` (1000 grafos).
+- **LR-03 (Santuário)**: a primeira onda nasce também no leste das duas naves laterais (`_rect(4, 12, 8, 12)`,
+  `_rect(-2, 6, -12, -8.5)`). LR-04 (Jardim, atiradores ao norte do tronco) e LR-06 (Cripta B, muro de 12 m) foram
+  provados e voltaram (sem efeito com o robô; números em `rooms_progression.md`). `--trace-thirds` soma em
+  `rooms[].zones` os segundos do herói por terço da sala (`hero_x0..2` oeste a leste, `hero_z0..2` norte a sul) e dos
+  inimigos (`foe_x0..2`); sem ela o `RESULT` é o de antes.
 - Opções: `--arena=crypt|rift|garden|hall` (a primeira sala), `--variant=n`, `--short`, `--trace-steps` (imprime os
   passos acima de 4 ms e onde o tempo foi), `--trace-cam` (maior salto do alvo da câmera por sala, GP-06). Laboratório sem personagens, com grade, bordas, peças, zonas e câmera:
   `tools/arena_lab.gd` (comando no topo; `--top` vista de cima). Testes: `test_arenas.gd`, `test_descent.gd`,
@@ -2030,7 +2075,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   arco inteiro (`PORTAL_TOP`, a 3ª ordem a 7,8 m) da chegada e de toda estação, sem a câmera se mexer ao chegar no portal
   (o `SHOW` dele fica mais baixo; `test_far_the_portal_shows_whole_from_everywhere`);
   na Perto o `Hub.lean` sempre segue o herói por `HubPlan.near_want` (nunca olha ao sul de `NEAR_SOUTH` -6), a borda sul
-  fica abaixo de 0,85 da tela (`test_near_the_south_edge_stays_low`); com estação em foco a câmera ainda se inclina pelo
+  fica abaixo de 0,85 da tela (`test_near_the_south_edge_stays_low`); ao chegar pela escada a Perto olha primeiro o ponto
+  da Longe (`HubPlan.CAM_TARGET`) por `HubPlan.ARRIVAL_LOOK` 1,5 s, com a margem de 18% do herói valendo, e só então o
+  segue (`HubPlan.near_want_at`, `Hub.arrived`; P1-A2 da revisão `ciclo_visual_1120`: o portal no alto do quadro, verde
+  36,8% na caixa 690,0,300,150 a 1672 x 941 no `--shot-at=1`; a Longe igual; `--hero-at` pula isso); com estação em foco a câmera ainda se inclina pelo
   `HubPlan.frame_for` (`SHOW`, `CamRig.lean`). Estações com lugar próprio e de frente para a câmera: barraca do Vendedor
   no lóbulo oeste (`COUNTER` com `COUNTER_HALF`, toldo de 5,8 m listrado terra e ocre de 5 a 3,5 m de altura sobre quatro
   postes, `AWNING_*`, prateleiras atrás, mercadorias, duas lanternas; mercadorias encostadas, `GOODS`); Árvore a 0,56 (inteira na tela da Longe, re-revisão E-3) em ouro mais velho sobre
@@ -2108,10 +2156,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - **Portas (RJ-2, RJ-3)**: baralho de 21 (mais 2 `ENCHANT`, 1 `PSALM` e 2 `BOON`, para a Bênção manter a fatia de antes); grupos `RunMap.Group` POWER (Bênção, romã,
   Encanto, Salmo), BODY (coração, Magia, ouro, cura), HOME (Prata, Memória), `RunMap.group_of`; o gerador prefere a
   carta de um grupo que as portas irmãs ainda não mostram (`RewardDeck.draw_prefer`): bifurcações com dois grupos 77,8%
-  para 93,2% em 1000 grafos, três grupos 3,8% para 9,5% (`tools/door_forks.gd`). Encanto no máximo 2 num caminho
+  para 93,9% em 1000 grafos, três grupos 3,8% para 9,4% (`tools/door_forks.gd`). Encanto no máximo 2 num caminho
   (`StageDef.enchant_max`), o segundo desde a sala 5 (`enchant_second_from`); Salmo desde a 4 (`psalm_from_depth`);
   `RunMap.settle(portas, romã, salmo, encanto)` troca por Bênção o que não pode vir. Caminhos com menos de 3 portas de
-  Bênção 9,7% para 12,1%.
+  Bênção 9,7% para 10,4%; encontros de dois 30% das salas de Bênção.
 - **Anjo na porta (Q-RJ5 a)**: sala de Bênção é encontro de dois (`Room.meeting`: a sala 1, o guardião e 2 de cada 6,
   `StageDef.angel_deck`, dado próprio `RunMap.ANGEL_SALT`) ou mostra um anjo (`Room.angel`, sorteado ao abrir as portas
   por `Encounters.door_angel`); a placa diz o nome ou "Dois anjos"; o encontro abre direto nas cartas dele
@@ -2122,7 +2170,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `return_time`, `return_reach`, `Combat.swing_shape(..., largura)`); exclusões com os Dons (`excludes`); `BoonState.enchants`
   somados no `stat`; `Game.open_enchant_choice`, `take_enchant`, `enchant_offers` (dado da sala, `ENCHANT_SALT`), sinal
   `enchant_offered` (sem ninguém ouvindo, a `EnchantChoice` provisória); loja: Encanto 200 no grupo da Magia e da romã.
-- **Porta de Salmo**: `Game.open_psalm_choice` (três Bênçãos, a primeira carta um Salmo elegível).
+- **Porta de Salmo**: `Game.open_psalm_choice` (três Bênçãos, a primeira carta um Salmo elegível). O mapa nunca promete
+  um Salmo que não vem: a carta de Salmo do baralho cai no mapa como Bênção (`Room.psalm`, nunca encontro de dois, desde
+  a sala 4) e a porta só vira de Salmo ao abrir, quando um pode vir (`RunMap.settle(..., can_psalm)`, padrão `false`);
+  antes o mapa mostrava o Salmo e a porta trocava por Bênção (o robô sem Dons nunca tinha um elegível). `--start=shop`
+  é a loja antes de Morvath, nunca a de rota.
 - **Forja**: Temperar III (60 Prata, +5% em `light` e `heavy`); Refinar (`Forge.REFINE`, 25 Prata, uma escolha por ação:
   Fio `reach_pct`, Peso `stun_pct` (novo: `Horde.stun_scale`), Pressa `blow_speed` (novo: `GiftState.attack_speed(tags)`)
   no ataque; Onda Larga, Onda Pesada, Onda Pronta no especial), aberto pela ferramenta `tool_refine` achada no primeiro
@@ -2469,6 +2521,38 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`SHOP_LAMP_LIGHT` 1,0 / 0,66 / 0,36; com a saturação das poças do chão ia a amarelo vivo, matiz 48 e saturação 0,71,
   agora 37 e 0,52). Compatibility sem erro (Salão e hub; lá o Salão sai mais contrastado: cena 40, meio 99). iGPU 720
   Baixa: Salão 17,32 / 17,29 ms de quadro (17,18 / 18,07 no Sworn P1), hub 17,18 / 17,18 (GPU 15,15).
+
+## Ciclo visual 2026-11-20, cenário, segunda passada (item 4 e o método do Salão por bioma; só no estilizado; matriz em `docs/art/benchmark_hades2_style.md` 7.2, revisão em `docs/gallery/ciclo_visual_1120/ART_REVIEW.md`; capturas `docs/gallery/ciclo_visual_1120/env2_*`)
+- **Salão e hub (revisão do art-director)**: manchas do bioma mais calmas para toda sala (`ArenaKit.SOFT_PATCHES`, somado
+  depois do `ArenaKit.CALM_FLOOR`; o dicionário do bioma só traz a `patch_color`); o derrame do portal no chão é um ponto
+  de luz pequeno (`CatacombHall.STY_SPILL`: verde 0% na caixa 1440,320,140,60 da Longe); no Compatibility o chão do
+  Salão escurece menos para a borda (`STY_COMPAT_FLOOR`: laterais 0,34 a 0,43 e faixa de baixo 0,42 a 0,47 do meio). Fonte
+  do Salão com uma poça fria de luz difusa por cima (`CatacombHall.FOUNTAIN_POOL*`, `light_specular` 0, sem sombra, nunca na
+  multidão; `ArenaKit.fountain_spent` a apaga a 0,3 junto com a água). Hub: água da fonte sem o céu (P2-A9: o mármore eram
+  as próprias ondas largas e o cubemap baixo; no estilizado `dark_water_matte.gdshader`, `ambient_light_disabled`, com
+  ondas finas e fracas e luz própria do corpo, `HubLook.STY_WATER_*`, `body_light` no `dark_water.gdshaderinc`, corpo
+  comum dos dois shaders); borda do pátio mais escura (`HubLook.STY_RIM_FLOOR`: `calm_radius` 8, `edge_value` 0,45) com as
+  poças das estações poupadas (uniforms novos `keep_spots`/`keep_spot_count` no `catacomb_floor.gdshaderinc`, lidos das
+  miras de `STY_POOLS`); a poça do portal verde e larga (P1-A2: verde 21% na caixa 810,40,300,150 da Perto).
+- **Por bioma** (cor da pedra, sombra, ar, chão e manchas no `STYLE`/`STY_FLOOR_BIOME` de cada look; nada colide):
+  Cripta petróleo (A: coroa um pouco menos verde, `CROWN_COLOR`, `CROWN_ENERGY` 2,2; B: banho frio sobre o ossuário,
+  `STY_OSSUARY_WASH*`, 17 luzes acesas), Fendas índigo (aqueduto na pedra funda `deep()`), Ponte ardósia (pontes do fundo
+  nas duas variantes e quatro esporões de rocha subindo da bruma, `ArenaRoom.depth_spurs`, `BridgeLook.STY_SPURS`), Runas
+  ardósia (grade de repouso a `paint_trace_share` 0,2, sulcos dos pilares `STY_IVORY` mais apagados; âmbar só armado),
+  Jardim oliva, Santuário calcário morno (fachos `STY_SHAFT_WARM` menos laranja), Provação e Altar com moldura escura
+  (`STY_FRAME`: `calm_radius` 6, `edge_value` 0,6) e o Altar em pedra morna.
+- Medido (RTX 1920 x 1080, semente 5, Perto / Longe, `frame_stats.py --hue --scene`; matiz, saturação p50, luma p50):
+  Cripta A 183 a 192, 0,32 a 0,34, 44 a 51 (quente 4,9 a 8,6%), B 189 a 193, 0,33 a 0,38, 43 a 49; Fendas 252 a 254,
+  0,39 a 0,40, 48 a 54; Ponte 221, 0,34, 50 na Perto (na Longe o abismo toma o quadro: 220, 0,36, 36 a 38); Runas 239 a
+  241, 0,28 a 0,29, 49 a 55; Jardim 73 a 82, 0,25 a 0,28, 51 a 54, verde 0%; Santuário 32, 0,30 a 0,33, 60 a 64; Provação
+  267 a 270, 0,33 a 0,34, 42 a 47; Altar 28 a 30, 0,29 a 0,33, 44 a 45; Salão Longe 210, 0,42, 48. Moldura: Salão
+  laterais 0,43 e 0,50 e faixa de baixo 0,55 do meio, vitrine 0,62; Cripta laterais 0,34 a 0,43. Não atingido: a faixa de
+  baixo das Fendas e da Ponte na Perto (0,9 a 1,08: é o chão andável) e as bordas do hub (0,78 a 1,0: as estações acesas
+  ficam nas laterais do quadro, BH-07). Compatibility sem erro em todas, matizes iguais. `test_room_style` 43/43,
+  `test_hub` 54/54, `fit_probe` igual em todas.
+  iGPU 720 Baixa (GPU, `sty_probe` com `--play`, o quadro preso no vsync): antes e depois no mesmo arranjo, Jardim 15,88
+  e 15,89 ms, Ponte A 12,87 e 12,67 (as pontes do fundo e os esporões não custam); Salão 15,05 a 15,18, hub 15,24 a 15,27,
+  Cripta 14,4 a 14,5, Fendas 14,1, Santuário 13,9, Runas 13,6 a 13,7, Altar 10,7, Provação 11,7.
 
 ## Lote 2B e TA-HB, parte do technical-artist (2026-11-20; evidências em `docs/gallery/lote2b/`, `docs/gallery/hb/`, `docs/gallery/c19/hurt_flash/`)
 - **Ferramentas de `-s` que nomeiam classes com autoload** (`T`, `Audio`): o script de `-s` é compilado antes dos

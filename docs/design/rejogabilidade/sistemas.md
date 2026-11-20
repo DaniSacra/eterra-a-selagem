@@ -368,6 +368,11 @@ Mesma regra: a lógica está pronta e testada (`tests/test_fatia2.gd`); a única
 - Encanto no máximo `StageDef.enchant_max` 2 em qualquer caminho, o segundo desde a sala `enchant_second_from` 5; Salmo
   desde a sala `psalm_from_depth` 4. Ao abrir as portas, `RunMap.settle(portas, pode_romã, pode_salmo, pode_encanto)`
   troca por Bênção o que não pode vir agora (nenhum Salmo elegível, dois Encantos já tomados).
+- Porta de Salmo sem promessa falsa (2026-11-20): a carta de Salmo do baralho cai no mapa como Bênção com
+  `Room.psalm` verdadeiro (nunca encontro de dois) e só vira `PSALM` ao abrir as portas, se um Salmo pode vir então
+  (`settle(..., pode_salmo)`, padrão `false`). O mapa e a placa nunca mostram um Salmo que a porta não dá. Medido: nas
+  72 descidas do robô (sem Dons) nenhum Salmo ficou elegível, então a porta de Salmo só aparece para quem tem Dons ou a
+  mão certa; a frequência é do balance-designer.
 - Anjo à mostra: cada sala de Bênção tem `Room.meeting` (encontro de dois; a sala 1, o guardião e duas de cada seis
   das outras, `StageDef.angel_deck`) ou, ao abrir as portas, `Room.angel` (o id do anjo que espera ali,
   `game.encounters.door_angel(sala)`). `door_info(i)` e `RunMap.view()` trazem `meeting` e `angel`;

@@ -86,6 +86,7 @@ func test_each_phase_opens_on_its_own_pattern() -> void:
 func test_combinations_come_only_in_the_last_phase_and_never_repeat() -> void:
 	var d := BossDirector.new(def)
 	var rng := RandomNumberGenerator.new()
+	rng.seed = 86  # BUG-109: the same draws, the same asserts, every run
 	var seen := {}
 	for i in 600:
 		var id: StringName = [&"scythe", &"storm", &"eruptions", &"blades", &"dash", &"curse", &"summon"][i % 7]

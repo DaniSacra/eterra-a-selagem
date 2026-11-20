@@ -321,10 +321,16 @@ func _brought(parent: Control, stats: Dictionary) -> void:
 	row.name = "brought"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 22)
-	for m: StringName in [MaterialPurse.SILVER, MaterialPurse.MEMORY]:
+	for m: StringName in MaterialPurse.IDS:
 		var n := int(got.get(String(m), 0))
 		if n > 0:
 			row.add_child(MaterialCount.new().setup(m, n, UiKit.STRONG, BROUGHT_SIZE, BROUGHT_MARK, true))
+	# a tool of the Forjador found in this descent (Fatia 2), by the materials
+	var tools: Array = stats.get("tools", game.tools_found if game != null else [])
+	for t in tools:
+		var l := UiKit.shadow(UiKit.label(T.t(StringName("tool_" + String(t))), UiKit.STRONG, BROUGHT_SIZE - 4, UiKit.BOLD_FONT))
+		l.name = "tool"
+		row.add_child(l)
 	if row.get_child_count() == 0:
 		row.free()
 		return

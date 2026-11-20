@@ -87,14 +87,14 @@ const FLASH_INSET := 0.1
 ## The stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md 1.3): pale cold stone, almost grey, so
 ## the amber of an armed tile reads alone; the north door's bowls with the hall's fire numbers (the lights over the armed
 ## tiles are the danger's: ArenaKit.NOT_FIRE, as they are, only diffuse, nothing round on the floor).
-## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the pale stone colder (hue 220 to 235 on the
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the pale stone colder (hue 232 to 242 on the
 ## screen) through the stone, the shadow and the air, the saturation at the low end; the floor is the danger, so only
 ## its rest grows quieter (STY_REST).
 const STYLE := {
-	&"stone": Color(0.32, 0.34, 0.39), &"shadow": Color(0.86, 0.91, 1.0), &"floor_stone": Color(0.315, 0.333, 0.375),
+	&"stone": Color(0.335, 0.34, 0.395), &"shadow": Color(0.88, 0.9, 1.0), &"floor_stone": Color(0.33, 0.335, 0.385),
 	&"joint_cold": Color(1.0, 1.0, 1.02), &"olive_share": 0.0, &"slab_hue": 2.0, &"edge_value": 1.0, &"metal": true, &"fire": CatacombHall.STYLE[&"fire"],
-	&"air": {&"sky": Color(0.045, 0.05, 0.07), &"fog": Color(0.09, 0.10, 0.13), &"ambient": Color(0.68, 0.71, 0.79),
-		&"ambient_gain": 1.55, &"moon": Color(0.9, 0.9, 0.93), &"moon_energy": 0.8, &"moon_shadow": false},
+	&"air": {&"sky": Color(0.045, 0.05, 0.07), &"fog": Color(0.09, 0.10, 0.13), &"ambient": Color(0.69, 0.70, 0.79),
+		&"ambient_gain": 1.7, &"moon": Color(0.9, 0.9, 0.93), &"moon_energy": 0.8, &"moon_shadow": false},
 }
 ## Item 4 of the cycle: the grid at rest discreet (the frames' and marks' ivory trace nearer the stone,
 ## rune_tiles.gdshaderinc), the strong amber only on a tile that arms.
@@ -114,8 +114,9 @@ const COMPAT_TONE := 0.6
 const COMPAT_GLOW := 0.45
 const COMPAT_STRIKE := 0.4
 ## R1 and R3: the glyphs of the pillars at rest and the marks of the stelae, dim carved ivory (never green); the
-## pillars' grooves matte stone there (metallic, roughness).
-const STY_IVORY := Color(0.55, 0.52, 0.46)
+## pillars' grooves matte stone there (metallic, roughness). The cycle of 2026-11-20: a step dimmer (the grooves read
+## as white stripes over the resting grid).
+const STY_IVORY := Color(0.42, 0.40, 0.36)
 ## The light from above in the stylized look: near neutral (the floor's saturation stays low) and diffuse.
 const STY_KEY := Color(0.86, 0.87, 0.9)
 const STY_GROOVE := Vector2(0.05, 0.85)

@@ -310,6 +310,30 @@ func test_every_arena_and_variant_comes_up() -> void:
 			assert_true(seen.has("%s %d" % [id, v]), "%s %d is drawn" % [id, v])
 
 
+## RP-07: in 1000 graphs no room wears a variant out of its band (RoomLayout.variant_depth, ArenaVariant.depth), and
+## the bands of the Fendas, the Ponte and the Runas are set (the others: every depth).
+func test_rp07_no_variant_out_of_its_band() -> void:
+	var out := []
+	var banded := 0
+	for s in 1000:
+		var map := RunMap.new(stage, s)
+		for r in map.nodes:
+			if r.layout < 0 or r.kind == RunMap.Kind.SHOP:
+				continue
+			var l := stage.layouts[r.layout]
+			var fit := l.variants_at(EncounterGen.progress(stage, r.depth))
+			if not fit.has(r.variant):
+				out.append("seed %d room %d: %s %d" % [s, r.depth, l.id, r.variant])
+			if fit.size() < l.variant_count():
+				banded += 1
+	assert_eq(out.size(), 0, "no variant out of its band: %s" % str(out.slice(0, 5)))
+	assert_gt(banded, 1000, "the bands do pick (%d rooms)" % banded)
+	for id: StringName in [&"rift", &"bridge", &"runes"]:
+		var l: RoomLayout = stage.layouts.filter(func(x: RoomLayout) -> bool: return x.id == id)[0]
+		assert_ne(l.variant_depth, Vector2(0, 1), "%s A has a band" % id)
+		assert_ne(l.variants[0].depth, Vector2(0, 1), "%s B has a band" % id)
+
+
 ## The guardian's fight is in the Santuário when it may be (it is a high arena drawn from 40% of the descent for
 ## fights); and in the shorter descents too.
 func test_the_guardian_fights_in_the_sanctuary() -> void:

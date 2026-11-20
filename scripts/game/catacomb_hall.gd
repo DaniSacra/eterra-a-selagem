@@ -509,7 +509,7 @@ const FOUNTAIN_LIT := 4
 ## Item 4 of the cycle of 2026-11-20 (the fountain read at the near camera's edge): the cold pool over it, from straight
 ## above (over the basin's middle; energy, cone, reach), its node's name and what is left of it when spent.
 const FOUNTAIN_POOL_FROM := Vector3(0.0, 8.0, 0.0)
-const FOUNTAIN_POOL := Vector3(7.0, 26.0, 11.0)
+const FOUNTAIN_POOL := Vector3(11.0, 36.0, 11.0)
 const FOUNTAIN_POOL_NAME := &"FountainPool"
 const FOUNTAIN_POOL_SPENT := 0.3
 ## The stylized look's urns (x, z, height, y of what they stand on): by the west balustrade's two pot groups, between

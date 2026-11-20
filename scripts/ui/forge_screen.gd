@@ -7,15 +7,27 @@ extends Control
 ## problem OK) and Voltar. Forjar spends the Prata (Forge.buy), writes the save and says so (forged); everything on the
 ## pages reads the save again. Nothing is bought by moving the focus: the index only shows, Enter on it goes to
 ## Forjar. Esc and B close it (ScreenHost).
-##   host.open(ForgeScreen.new(), [Save.data])          # forged(rank) after each purchase
+## Fatia 2 (sistemas.md 1.5, 3.6 and 5.3 "Fatia 2"): the index is a grid of three columns that fits 720 lines, the
+## Temperar (I to III) and the Refinar's two actions (Ataque, Especial: three choices each, one on each action), every
+## entry with a mark of its state (Mark: the Prata's ingot and the cost while it waits, a diamond of old gold forged and
+## kept, an emerald diamond on the blade, a hollow one while the Forjador's tool is lost). Over the Refinar the tool's
+## state ("Ferramenta: Encontrada" or still lost). The main button says what it does: Forjar (buy; the first Refinar
+## bought on an action goes on it), Usar (a Refinar forged and kept goes on its action, free: Forge.put_on) or, the
+## one on the blade, Em uso (off).
+##   host.open(ForgeScreen.new(), [Save.data])          # forged(rank) after each purchase and each change
 
 signal closed
 signal forged(rank: StringName)
 
 const SPINE := 0.46
 const OUTER := Vector2(22, 10)
-const ENTRY_WIDTH := 300.0
-const MARK := 22.0
+const ENTRY_WIDTH := 176.0
+const ENTRY_HEIGHT := 34.0
+const ENTRY_FONT := 16
+const ENTRY_PAD := 34
+const ENTRY_COUNT := 30.0
+const COLUMN_GAP := 10
+const MARK := 18.0
 const TEXT_SIZE := 18
 const BUTTON_WIDTH := 190.0
 ## The Emeth's place on the left page and the size of the cost and the purse by the button.
@@ -23,7 +35,9 @@ const EMETH := Vector2(300, 330)
 const DEAL_SIZE := 22
 
 var forge: Forge
+## Every entry's rank, as entries: the Temperar first (rank order), then the Refinar's (attack, then special).
 var ranks: Array[ForgeRank] = []
+var temper_ranks: Array[ForgeRank] = []
 var entries: Array[Button] = []
 ## The rank on show on the right page.
 var shown: ForgeRank
@@ -41,13 +55,43 @@ var _done: Label
 var emeth: EmethView
 var _now: Label
 var _kind: Label
+var _tool: Label
+var _deal: Control
+
+
+## An entry's mark, by its state.
+class Mark extends Control:
+	enum Look { BUY, OWNED, ON, LOCKED }
+	var look := Look.BUY:
+		set(v):
+			look = v
+			queue_redraw()
+
+	func _draw() -> void:
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.42
+		var d := PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)])
+		match look:
+			Look.BUY:
+				DoorGlyph.material(self, DoorGlyph.Kind.SILVER, c, size.y)
+			Look.OWNED:
+				draw_colored_polygon(d, Color(Book.INK, 0.12))
+				d.append(d[0])
+				draw_polyline(d, Book.GILT, 2.0, true)
+			Look.ON:
+				draw_colored_polygon(d, DoorGlyph.EMERALD_FILL)
+				d.append(d[0])
+				draw_polyline(d, UiKit.OLD_GOLD, 2.0, true)
+			Look.LOCKED:
+				d.append(d[0])
+				draw_polyline(d, Color(Book.FADED, 0.6), 1.5, true)
 
 
 ## data: the save data (Save.data in the game; tests give their own).
 func open(data: Dictionary = {}) -> void:
 	_data = data if not data.is_empty() else Save.data
 	forge = Forge.new(Forge.load_catalog())
-	ranks = forge.track(Forge.TEMPER)
+	temper_ranks = forge.track(Forge.TEMPER)
 	name = "forge_screen"
 	theme = Book.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -66,8 +110,6 @@ func open(data: Dictionary = {}) -> void:
 	frame.add_child(book)
 	_left_page(book.left)
 	_right_page(book.right)
-	for e in entries:
-		e.focus_neighbor_right = e.get_path_to(buy_button)
 	buy_button.focus_neighbor_left = buy_button.get_path_to(entries[0] if not entries.is_empty() else buy_button)
 	back_button.focus_neighbor_left = back_button.get_path_to(buy_button)
 	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus),
@@ -76,7 +118,7 @@ func open(data: Dictionary = {}) -> void:
 	var start := _first()
 	_show(start)
 	if start != null:
-		entries[ranks.find(start)].grab_focus.call_deferred()
+		_entry_of(start).grab_focus.call_deferred()
 	else:
 		back_button.grab_focus.call_deferred()
 
@@ -113,20 +155,27 @@ func _right_page(page: MarginContainer) -> void:
 	v.name = "rank"
 	v.add_theme_constant_override(&"separation", 4)
 	page.add_child(v)
-	v.add_child(Book.section(T.t(&"forge_track_temper")))
-	for r in ranks:
-		var mark := DoorGlyph.new().setup(DoorGlyph.Kind.SILVER, MARK)
-		mark.custom_minimum_size = Vector2(MARK, MARK)
-		var e := Book.index_entry(T.t(r.name_key), mark, "", ENTRY_WIDTH)
-		e.name = String(r.id)
-		e.focus_entered.connect(_show.bind(r))
-		e.pressed.connect(func() -> void:
-			_show(r)
-			if not buy_button.disabled:
-				buy_button.grab_focus())
-		entries.append(e)
-		v.add_child(e)
-	v.add_child(_gap(10))
+	# the heads: Temperar over its column, Refinar over the two of the actions with the tool's state at its end
+	var heads := HBoxContainer.new()
+	heads.add_theme_constant_override(&"separation", COLUMN_GAP)
+	v.add_child(heads)
+	var temper_head := Book.section(T.t(&"forge_track_temper"))
+	temper_head.custom_minimum_size.x = ENTRY_WIDTH
+	heads.add_child(temper_head)
+	var refine_head := Book.section(T.t(&"forge_track_refine"))
+	refine_head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	heads.add_child(refine_head)
+	_tool = Book.label("", Book.FADED, 14, UiKit.BOLD_FONT)
+	_tool.name = "tool"
+	refine_head.add_child(_tool)
+	var grid := HBoxContainer.new()
+	grid.name = "grid"
+	grid.add_theme_constant_override(&"separation", COLUMN_GAP)
+	v.add_child(grid)
+	grid.add_child(_column("", temper_ranks))
+	for slot in forge.refine_slots():
+		grid.add_child(_column(T.t(StringName("forge_refine_slot_" + String(slot))), forge.refine_options(slot)))
+	v.add_child(_gap(6))
 	_kind = Book.label("", Book.RUBRIC, 14, UiKit.TITLE_FONT)
 	_kind.name = "kind"
 	v.add_child(_kind)
@@ -156,6 +205,7 @@ func _right_page(page: MarginContainer) -> void:
 	# the deal by the button: cost on the left, the purse on the right, label over value (benchmark 2.3)
 	var deal := HBoxContainer.new()
 	deal.name = "deal"
+	_deal = deal
 	deal.add_theme_constant_override(&"separation", 40)
 	v.add_child(deal)
 	var cost := VBoxContainer.new()
@@ -185,6 +235,38 @@ func _right_page(page: MarginContainer) -> void:
 	foot.add_child(back_button)
 
 
+## A column of the index: its action's name over its entries ("" keeps the line, for the Temperar's).
+func _column(head: String, of: Array[ForgeRank]) -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", 2)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var h := Book.label(head, Book.RUBRIC, 14, UiKit.BOLD_FONT)
+	h.custom_minimum_size.y = 18
+	col.add_child(h)
+	for r in of:
+		var mark := Mark.new()
+		mark.name = "mark"
+		mark.custom_minimum_size = Vector2(MARK, MARK)
+		mark.size = mark.custom_minimum_size
+		mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var e := Book.index_entry(T.t(r.name_key), mark, "", ENTRY_WIDTH, ENTRY_HEIGHT, ENTRY_FONT, ENTRY_PAD, ENTRY_COUNT)
+		e.name = String(r.id)
+		e.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		e.focus_entered.connect(_show.bind(r))
+		e.pressed.connect(func() -> void:
+			_show(r)
+			if not buy_button.disabled:
+				buy_button.grab_focus())
+		ranks.append(r)
+		entries.append(e)
+		col.add_child(e)
+	return col
+
+
+func _entry_of(r: ForgeRank) -> Button:
+	return entries[ranks.find(r)]
+
+
 static func _gap(h: float) -> Control:
 	var c := Control.new()
 	c.custom_minimum_size.y = h
@@ -192,12 +274,16 @@ static func _gap(h: float) -> Control:
 	return c
 
 
-## Where the focus starts: the rank to buy now, else the last one (all owned).
+## Where the focus starts: the Temperar to buy now, else a Refinar to forge with the tool found, else the last
+## Temperar (all owned).
 func _first() -> ForgeRank:
-	for r in ranks:
+	for r in temper_ranks:
 		if forge.state(_data, r) != Forge.State.OWNED:
 			return r
-	return ranks.back() if not ranks.is_empty() else null
+	for r in ranks:
+		if r.track == Forge.REFINE and forge.problem(_data, r) in [Forge.Problem.OK, Forge.Problem.SHORT]:
+			return r
+	return temper_ranks.back() if not temper_ranks.is_empty() else null
 
 
 func _show(r: ForgeRank) -> void:
@@ -209,28 +295,60 @@ func _show(r: ForgeRank) -> void:
 func _refresh() -> void:
 	MaterialCount.refresh(_purse, _data)
 	var silver := MaterialPurse.amount(_data, MaterialPurse.SILVER)
+	var tool := Forge.has_tool(_data, Forge.TOOL_REFINE)
+	_tool.text = "%s: %s" % [T.t(&"forge_tool"), T.t(&"forge_tool_found" if tool else &"forge_tool_missing")]
+	_tool.add_theme_color_override(&"font_color", Book.OK if tool else Book.FADED)
 	for i in ranks.size():
 		var r := ranks[i]
+		var owned := forge.state(_data, r) == Forge.State.OWNED
 		var count := entries[i].find_child("count", false, false) as Label
-		count.text = T.t(&"forge_owned") if forge.state(_data, r) == Forge.State.OWNED else str(r.cost)
+		count.text = "" if owned else str(r.cost)
+		var mark := entries[i].find_child("mark", false, false) as Mark
+		if forge.problem(_data, r) == Forge.Problem.NO_TOOL:
+			mark.look = Mark.Look.LOCKED
+		elif r.track == Forge.REFINE and forge.is_on(_data, r):
+			mark.look = Mark.Look.ON
+		else:
+			mark.look = Mark.Look.OWNED if owned else Mark.Look.BUY
 		entries[i].set_pressed_no_signal(r == shown)
 		count.add_theme_color_override(&"font_color", UiKit.GOLD if r == shown else Book.GILT)
-	_done.visible = _first() != null and forge.state(_data, _first()) == Forge.State.OWNED
+	_done.visible = forge.state(_data, temper_ranks.back()) == Forge.State.OWNED and (shown == null or shown.track == Forge.TEMPER)
 	var rank := Forge.temper(_data)
-	_now.text = T.t(ranks[rank - 1].name_key) if rank > 0 and rank <= ranks.size() else T.t(&"forge_current_none")
+	_now.text = T.t(temper_ranks[rank - 1].name_key) if rank > 0 and rank <= temper_ranks.size() else T.t(&"forge_current_none")
 	if shown == null:
 		buy_button.disabled = true
 		return
 	(_title.get_node("text") as Label).text = T.t(shown.name_key)
-	_kind.text = T.t(&"forge_owned" if forge.state(_data, shown) == Forge.State.OWNED else &"forge_next").to_upper()
+	var owned_now := forge.state(_data, shown) == Forge.State.OWNED
+	if shown.track == Forge.REFINE:
+		_kind.text = ("%s · %s" % [T.t(&"forge_track_refine"), T.t(StringName("forge_refine_slot_" + String(shown.slot)))]).to_upper()
+	else:
+		_kind.text = T.t(&"forge_owned" if owned_now else &"forge_next").to_upper()
 	_effect.text = T.t(shown.desc_key)
 	_cost.set_amount(shown.cost)
+	_deal.visible = not owned_now
 	var problem := forge.problem(_data, shown)
 	var before := _before(shown)
+	var verb := T.t(&"forge_do")
+	var can := problem == Forge.Problem.OK
 	match problem:
 		Forge.Problem.OWNED:
-			_set_state(T.t(&"forge_state_owned"), Book.OK)
-			_step.text = T.t(&"forge_step_owned")
+			if shown.track == Forge.REFINE and forge.is_on(_data, shown):
+				_set_state(T.t(&"forge_state_on"), Book.OK)
+				_step.text = T.t(&"forge_step_on")
+				verb = T.t(&"forge_refine_in_use")
+			elif shown.track == Forge.REFINE:
+				_set_state(T.t(&"forge_state_off"), Book.INK)
+				var now_on := _on_of(shown.slot)
+				_step.text = T.t(&"forge_step_use", {"name": T.t(now_on.name_key)}) if now_on else T.t(&"forge_step_use_free")
+				verb = T.t(&"forge_refine_use")
+				can = true
+			else:
+				_set_state(T.t(&"forge_state_owned"), Book.OK)
+				_step.text = T.t(&"forge_step_owned")
+		Forge.Problem.NO_TOOL:
+			_set_state(T.t(&"forge_state_no_tool"), Book.FADED)
+			_step.text = T.t(&"forge_no_tool")
 		Forge.Problem.NEEDS:
 			_set_state(T.t(&"forge_state_needs", {"name": T.t(before.name_key) if before else ""}), Book.FADED)
 			_step.text = T.t(&"forge_step_needs", {"name": T.t(before.name_key) if before else ""})
@@ -240,8 +358,17 @@ func _refresh() -> void:
 		_:
 			_set_state(T.t(&"forge_state_ready"), Book.INK)
 			_step.text = T.t(&"forge_step_buy", {"cost": shown.cost, "have": silver})
-	buy_button.disabled = problem != Forge.Problem.OK
+	buy_button.text = verb
+	buy_button.disabled = not can
 	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
+
+
+## The Refinar on an action now (null: none).
+func _on_of(slot: StringName) -> ForgeRank:
+	for r in forge.refine_options(slot):
+		if forge.is_on(_data, r):
+			return r
+	return null
 
 
 ## The control in focus pressed (the action bar's click).
@@ -256,25 +383,35 @@ func _set_state(text: String, color: Color) -> void:
 	_state.add_theme_color_override(&"font_color", color)
 
 
-## The rank before r on its track (null for the first).
+## The rank before r on its track (null for the first; the Refinar's choices have none).
 func _before(r: ForgeRank) -> ForgeRank:
-	var i := ranks.find(r)
-	return ranks[i - 1] if i > 0 else null
+	var i := temper_ranks.find(r)
+	return temper_ranks[i - 1] if i > 0 else null
 
 
-## Forjar: spends, writes the save (only the game's own data), tells the hub; the focus goes on to the next rank.
+## The main button: Forjar spends, writes the save (only the game's own data), tells the hub and the focus goes on to
+## the next rank; on a Refinar forged and kept, Usar puts it on its action (free) and stays on it.
 func _buy() -> void:
-	if shown == null or not forge.buy(_data, shown.id):
+	if shown == null:
+		return
+	var r := shown
+	if r.track == Forge.REFINE and forge.state(_data, r) == Forge.State.OWNED:
+		if forge.is_on(_data, r) or not forge.put_on(_data, r.id):
+			return
+	elif not forge.buy(_data, r.id):
 		return
 	if is_same(_data, Save.data):
 		Save.write()
 	Audio.play(&"ui_ok")
-	var bought := shown.id
+	forged.emit(r.id)
+	if r.track == Forge.REFINE:
+		_refresh()
+		_entry_of(r).grab_focus()
+		return
 	emeth.show_rank(Forge.temper(_data), true)
-	forged.emit(bought)
 	var next := _first()
 	_show(next)
 	if next != null and forge.state(_data, next) != Forge.State.OWNED:
-		entries[ranks.find(next)].grab_focus()
+		_entry_of(next).grab_focus()
 	else:
 		back_button.grab_focus()

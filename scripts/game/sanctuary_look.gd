@@ -106,23 +106,28 @@ const UNDER_FLOOR := Color(0.55, 0.55, 0.55)
 ## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 1): the sanctuary's biome in the stylized look,
 ## warm limestone (the one fighting room in warm stone), cold shadows, the hall's fires, its own air, the soft key over
 ## the nave at STY_KEY of its energy.
+## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 6): the limestone warmer (stone and floor at
+## 0.22 to 0.25 of saturation, never past), the shafts warmer, the shadow colder: the colour from that contrast.
 const STYLE := {
-	&"stone": Color(0.38, 0.368, 0.35), &"shadow": Color(0.86, 0.9, 0.98), &"floor_stone": STY_FLOOR,
+	&"stone": Color(0.40, 0.357, 0.305), &"shadow": Color(0.78, 0.86, 1.0), &"floor_stone": STY_FLOOR,
 	&"slab_paint": STY_SLAB_PAINT, &"slab_hue": STY_SLAB_HUE, &"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"],
-	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.74, 0.73, 0.72),
+	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.76, 0.73, 0.68),
 		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.85, &"moon_shadow": true},
 }
 ## The floor's limestone in the stylized look (room redesign fixes: it read neutral grey, nave luma 71 to 83 flat): a
 ## warmer stone, the slabs further apart in value and a little more in hue, fewer olive slabs.
-const STY_FLOOR := Color(0.356, 0.343, 0.326)
+const STY_FLOOR := Color(0.37, 0.336, 0.292)
 ## SW-G1 and SW-G2 (docs/art/sworn_reference_ideas.md 3.1; floor_biome.gdshaderinc, ArenaKit.paint_look's `floor`,
 ## put by style()): the painted floor's second colour of the biome in patches of 3 to 8 m, stronger near the edge, and
 ## the shadow of the vault's broken ribs (SW-S1) in the shafts: a quadripartite bay of gobo_scale m, stretched along
 ## STY_SHAFT_LEAN, on each shaft's floor (STY_GOBO_SHAFT: radius, weight; the guardian's smaller, STY_GOBO_GUARD).
 ## Pale dust, 1.5 times the limestone's value. G-2 of the Sworn P1 review: the ribs sharper and darker (strength 0.35,
 ## soft 0.03; were 0.25 and 0.05) so the broken vault reads in the shaft's pool.
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.544, 0.514, 0.464), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5,
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome, docs/art/benchmark_hades2_style.md 7): the floor
+## calm between neighbour slabs (ArenaKit.CALM_FLOOR) and the patches soft and large (ArenaKit.SOFT_PATCHES); the stone
+## at most 0.25 of saturation, the colour from the warm and cold contrast (matrix row 6).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.544, 0.514, 0.464),
 	&"gobo_kind": 2, &"gobo_strength": 0.35, &"gobo_width": 0.1, &"gobo_base": 0.0, &"gobo_scale": 2.6, &"gobo_stretch": 1.5,
 	&"gobo_along": -STY_SHAFT_LEAN, &"gobo_sway": 0.04, &"gobo_soft": 0.03, &"gobo_cover": 0.5}
 ## SW-S3 with SW-G3 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, RAISED): a row of raised frames on the
@@ -155,7 +160,7 @@ const STY_SHAFT := Color(0.96, 0.88, 0.70)
 ## paint.gdshaderinc skips the bands and the pool's edge), warmer, weaker, its cone wider so it fades out over metres,
 ## leaning further so its fall on the floor is long along the light: colour, share of its energy, cone (degrees), lean
 ## (x, z m at the vault's height).
-const STY_SHAFT_WARM := Color(1.0, 0.86, 0.66)
+const STY_SHAFT_WARM := Color(1.0, 0.85, 0.66)
 const STY_SHAFT_GAIN := 0.75
 const STY_SHAFT_CONE := 30.0
 const STY_SHAFT_LEAN := Vector2(-5.5, -7.0)
@@ -612,7 +617,7 @@ func style() -> Dictionary:
 			continue
 		frames.append(ArenaKit.framed_slab(Vector2(_west + float(f[0]), _chancel.y + float(f[1])), Vector2(float(f[2]), float(f[3])),
 			ArenaKit.Framed.RAISED, f[4], float(f[5]), k))
-	st[&"floor"] = ArenaKit.framed(ArenaKit.gobo(STY_FLOOR_BIOME, lit), frames)
+	st[&"floor"] = ArenaKit.framed(ArenaKit.gobo(ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME), lit), frames)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

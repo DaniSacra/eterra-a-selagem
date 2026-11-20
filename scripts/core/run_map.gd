@@ -37,8 +37,9 @@ enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR }
 ## SILVER, Prata Antiga for the Forja, and MEMORY, Fragmentos de Memória to open the Gifts; both go home (MaterialPurse),
 ## the doors that trade power now for power in the next descents.
 ## Fatia 2 (sistemas.md 1.7): ENCHANT, a door (or the shop's item) of an Encanto, one of three learned at the Forja
-## (Enchants), at most StageDef.enchant_max on a way; PSALM, a door whose Blessings hold a Psalm card (only where one
-## can come: settle turns it into a Blessing before its sign shows).
+## (Enchants), at most StageDef.enchant_max on a way; PSALM, a door whose Blessings hold a Psalm card. The deck's Psalm
+## card lies on the map as a Blessing that may become one (Room.psalm): settle shows it as a Psalm's door only when a
+## Psalm can come then, so the map never promises one that does not come (it promised and turned it before).
 enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE, SILVER, MEMORY, ENCHANT, PSALM }
 ## RJ-2, the groups of the rewards: power for this descent (a Blessing, a pomegranate, an Encanto, a Psalm), the body
 ## and the purse (life, Magia, gold, healing) and home (the materials). Two doors of a room show two groups when the
@@ -89,6 +90,9 @@ class Room:
 	## for the hand: Rooms.door_angel; &"" until then, and for a meeting).
 	var meeting := false
 	var angel: StringName = &""
+	## The deck's Psalm card fell here: a Blessing's room, never a meeting, that settle shows as a Psalm's door when
+	## one can come as its door opens.
+	var psalm := false
 
 	## What the door's sign may tell (E5-D8; docs/art/e5_spec.md 7.1): kind and reward (their enums), hard (a fight
 	## with an elite), guardian, tier (StageDef.Tier of its fight, -1: no fight), elites (ids), depth; since DV-1 the
@@ -287,12 +291,18 @@ func trial(at_depth: int) -> Room:
 
 ## The doors about to open: a pomegranate behind one when nothing can grow (can_pom false), a Psalm's door when no Psalm
 ## can come (can_psalm false) and an Encanto's when none is left to offer (can_enchant false) turn into a Blessing
-## (one angel shown, Rooms) before its sign shows (Q-25 a; Fatia 2). Returns how many turned.
-func settle(doors_: Array[Room], can_pom: bool, can_psalm := true, can_enchant := true) -> int:
+## (one angel shown, Rooms) before its sign shows (Q-25 a; Fatia 2); the Blessing where the deck's Psalm card fell
+## (Room.psalm) shows as a Psalm's door when one can come. Returns how many changed.
+func settle(doors_: Array[Room], can_pom: bool, can_psalm := false, can_enchant := true) -> int:
 	var n := 0
 	for r in doors_:
 		var turn := (r.reward == Reward.POM and not can_pom) or (r.reward == Reward.PSALM and not can_psalm) \
 				or (r.reward == Reward.ENCHANT and not can_enchant)
+		if r.psalm and r.reward == Reward.BOON and can_psalm:
+			# the Blessing where the deck's Psalm card fell shows as a Psalm's door: one can come now
+			r.reward = Reward.PSALM
+			n += 1
+			continue
 		if turn:
 			if r.reward == Reward.POM:
 				pom_turned += 1
@@ -548,7 +558,10 @@ func _place_arenas(d: int) -> void:
 		if r.layout >= 0 and r.layout < stage.layouts.size():
 			var l := stage.layouts[r.layout]
 			r.arena = l.id
-			r.variant = _rng.randi() % maxi(1, l.variant_count()) if r.kind != Kind.SHOP else 0
+			# RP-07: only among the variants whose band holds this depth (one draw either way: no band, the map of before)
+			var fit := l.variants_at(EncounterGen.progress(stage, d))
+			var roll := _rng.randi()
+			r.variant = fit[roll % fit.size()] if r.kind != Kind.SHOP else 0
 			if r.kind != Kind.SHOP:
 				# (a shop is no fight's arena: the route shop of DV-2 never uses up the hall's)
 				uses[r.layout] = int(uses.get(r.layout, 0)) + 1
@@ -580,11 +593,18 @@ func _draw_rewards(d: int) -> void:
 			for n in nodes[p].next:
 				if n != id and nodes[n].reward != Reward.NONE:
 					beside[group_of(nodes[n].reward)] = true
+		# (the Psalm card shows as a Blessing on the map: one promise with it)
 		var card := deck.draw_prefer(_rng, func(c: int) -> bool:
-			return not used.has(c) and _may(c, d, most),
+			return not used.has(Reward.BOON if c == Reward.PSALM else c) and _may(c, d, most),
 			func(c: int) -> bool: return not beside.has(group_of(c)))
 		r.reward = Reward.BOON if card < 0 else card as Reward
-		used.append(r.reward)
+		used.append(Reward.BOON if r.reward == Reward.PSALM else r.reward)
+		if r.reward == Reward.PSALM:
+			# a Blessing that may become a Psalm's door (settle): no meeting, and the angels' dice stay as they were
+			r.reward = Reward.BOON
+			r.psalm = true
+			_enchants[id] = most
+			continue
 		_enchants[id] = most + (1 if r.reward == Reward.ENCHANT else 0)
 		if r.reward == Reward.BOON:
 			r.meeting = _angel_deck.draw(_angel_rng, func(_c: int) -> bool: return true) == 1

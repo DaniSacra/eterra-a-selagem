@@ -20,7 +20,7 @@ var _named := false
 var plus := false
 
 
-## p_id: MaterialPurse.SILVER or MEMORY. named: the short name after the number.
+## p_id: MaterialPurse.SILVER, MEMORY or EMERALD. named: the short name after the number.
 func setup(p_id: StringName, n: int, color: Color = UiKit.PALE, size: int = SIZE, mark_px: float = MARK,
 		named: bool = false) -> MaterialCount:
 	self.id = p_id
@@ -49,15 +49,25 @@ func set_color(c: Color) -> void:
 	number.add_theme_color_override(&"font_color", c)
 
 
-## The "Bolsa": what the save holds of each material, side by side (the Forja, the Livro, the hub).
+## The "Bolsa": what the save holds of each material, side by side (the Forja, the Livro, the hub). The Esmeralda
+## (Fatia 2) only once one was ever found (shown): a new save sees no stone it cannot get yet.
 static func purse(data: Dictionary, color: Color = UiKit.PALE, size: int = SIZE, mark_px: float = MARK) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.name = "purse"
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override(&"separation", 14)
-	for m: StringName in [MaterialPurse.SILVER, MaterialPurse.MEMORY]:
+	for m: StringName in shown(data):
 		row.add_child(MaterialCount.new().setup(m, MaterialPurse.amount(data, m), color, size, mark_px))
 	return row
+
+
+## The materials a purse shows: Prata and Memória always, the Esmeralda once the save has held one.
+static func shown(data: Dictionary) -> Array[StringName]:
+	var out: Array[StringName] = [MaterialPurse.SILVER, MaterialPurse.MEMORY]
+	var total: Dictionary = data.get("materials_total", {}) if data.get("materials_total") is Dictionary else {}
+	if MaterialPurse.amount(data, MaterialPurse.EMERALD) > 0 or int(total.get(String(MaterialPurse.EMERALD), 0)) > 0:
+		out.append(MaterialPurse.EMERALD)
+	return out
 
 
 ## Reads the save again into a purse made by purse().

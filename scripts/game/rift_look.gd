@@ -136,13 +136,14 @@ const OLD_ARCH := Vector3(-9.5, 3.2, 0.5)
 
 ## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 2): the rift's biome in the stylized look, indigo
 ## slate, the hall's fires, its own air; the violet only under the brink and far off.
-## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the indigo fuller (hue 240 to 255 on the
-## screen, scene saturation up to 0.40, short of Morvath's violet), the violet still only under the brink.
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the indigo fuller (hue 246 to 260 on the
+## screen, docs/art/benchmark_hades2_style.md 7.2 row 2; scene saturation 0.30 to 0.40, short of Morvath's violet),
+## the violet still only under the brink.
 const STYLE := {
-	&"stone": Color(0.26, 0.25, 0.37), &"shadow": Color(0.82, 0.8, 1.0), &"floor_stone": STY_FLOOR,
+	&"stone": Color(0.28, 0.265, 0.355), &"shadow": Color(0.87, 0.85, 1.0), &"floor_stone": STY_FLOOR,
 	&"edge_value": STY_EDGE_VALUE, &"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
-	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.66, 0.66, 0.76),
+	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.69, 0.68, 0.76),
 		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 1.4, &"moon_shadow": true},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
@@ -150,10 +151,10 @@ const STYLE := {
 ## Grey salt, paler than the slate, 1.4 times the slab's value (the floor between them at patch_rest).
 ## The cycle of 2026-11-20: the patches soft (ArenaKit.SOFT_PATCHES), the floor calm (ArenaKit.CALM_FLOOR) and darker
 ## toward the room's far edges (edge_value from edge_span times the calm radius; the fight's middle stays).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.4, 0.39, 0.52), &"edge_value": 0.6, &"edge_span": Vector2(1.3, 2.3)}
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.42, 0.4, 0.51), &"edge_value": 0.5, &"edge_span": Vector2(1.1, 2.0)}
 ## The floor's slate and how dark it falls toward the room's edge (room redesign fixes: the east platform's front read
 ## at luma 42, meta 50 to 65; the floor's middle stays near).
-const STY_FLOOR := Color(0.27, 0.26, 0.38)
+const STY_FLOOR := Color(0.285, 0.27, 0.37)
 const STY_EDGE_VALUE := 1.0
 ## The stylized air in the browser's renderer (its ambient and moon lower, as the crypt's).
 const STY_COMPAT_AMBIENT := 0.5
@@ -764,13 +765,12 @@ const STY_AQUEDUCT_CHAINS: Array[int] = [1, 3]
 const STY_AQUEDUCT_CHAIN := Vector2(1.8, 1.3)
 const STY_ROCKS: Array[Vector4] = [Vector4(-27.0, 19.0, -2.5, 2.2), Vector4(-24.0, 23.0, -4.0, 1.7), Vector4(-33.0, 15.5, -1.2, 2.6)]
 const STY_ROCK_FOOT := -18.0
-## The mist the aqueduct and the spurs fade into (Masonry.depth_stone).
-const STY_DEPTH_FADE := 0.3
 const STY_DEPTH_SEED := 9113
 
 
 func _aqueduct(sm: Masonry) -> void:
-	var dark := sm.depth_stone(RUIN_MIST, STY_DEPTH_FADE)
+	# the depths' own stone (deep(): the rift's cliffs), dark violet-indigo; a ruin card's stone read teal here
+	var dark := deep()
 	var a := STY_AQUEDUCT
 	var n := STY_AQUEDUCT_PIERS.size()
 	var step := (a.z - a.y) / float(n - 1)

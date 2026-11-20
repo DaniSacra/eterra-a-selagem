@@ -119,17 +119,17 @@ const STATUE_GLOW := Vector3(1.4, 5.0, 40.0)
 ## stone, cold shadow, dry floor (one slab in 33 to the olive), the candles' pools, a cold air, the key and the
 ## floor's fill off (in the painted light an omni with no fire draws rings on the floor), the backdrop in mist.
 ## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method replicated by biome): the crypt in a deep green petrol
-## (hue 190 to 198 on the screen, a step darker than the hall's petrol), the stone, the floor, the shadow, the air and
+## (hue 184 to 194 on the screen, docs/art/benchmark_hades2_style.md 7.2 row 1; a step darker than the hall's petrol), the stone, the floor, the shadow, the air and
 ## the backdrop moved there.
 const STYLE := {
-	&"stone": Color(0.19, 0.285, 0.305), &"shadow": Color(0.80, 0.92, 0.96), &"floor_stone": Color(0.175, 0.265, 0.285),
-	&"joint_cold": Color(0.86, 0.97, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.4, &"pool_saturation": 1.0,
-	&"fire": {&"candle_range": 3.4, &"candle_gain": 1.8, &"bowl_range": 4.5, &"bowl_attenuation": 0.7, &"bowl_gain": 1.5,
+	&"stone": Color(0.222, 0.275, 0.29), &"shadow": Color(0.85, 0.93, 0.96), &"floor_stone": Color(0.21, 0.25, 0.265),
+	&"joint_cold": Color(0.9, 0.97, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.4, &"pool_saturation": 1.0,
+	&"fire": {&"candle_range": 3.4, &"candle_gain": 2.2, &"bowl_range": 4.5, &"bowl_attenuation": 0.7, &"bowl_gain": 1.5,
 		&"compat": 0.4},
-	&"air": {&"sky": Color(0.035, 0.065, 0.07), &"fog": Color(0.08, 0.125, 0.13), &"fog_depth": Vector2(40.0, 85.0),
-		&"ambient": Color(0.70, 0.80, 0.80), &"ambient_gain": 2.1, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
+	&"air": {&"sky": Color(0.04, 0.062, 0.068), &"fog": Color(0.085, 0.12, 0.128), &"fog_depth": Vector2(40.0, 85.0),
+		&"ambient": Color(0.75, 0.78, 0.79), &"ambient_gain": 2.7, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
 		&"moon_shadow": true},
-	&"backdrop": {&"mist": Color(0.08, 0.15, 0.16), &"stone": Color(0.04, 0.07, 0.075), &"edge": Color(0.13, 0.22, 0.24)},
+	&"backdrop": {&"mist": Color(0.09, 0.14, 0.15), &"stone": Color(0.045, 0.068, 0.073), &"edge": Color(0.15, 0.21, 0.225)},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
@@ -137,8 +137,8 @@ const STYLE := {
 ## The cycle of 2026-11-20: the patches soft (ArenaKit.SOFT_PATCHES) and the floor calm (ArenaKit.CALM_FLOOR) as in the
 ## Salão; the frame is the walls themselves: the floor darker at their foot (edge_value from edge_span times the calm
 ## radius out), the candles' pools on it a little warmer.
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.25, 0.37, 0.4), &"edge_value": 0.55, &"edge_span": Vector2(1.0, 1.6),
-	&"paint_pool_saturation": 1.3}
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.28, 0.355, 0.375), &"edge_value": 0.55, &"edge_span": Vector2(1.0, 1.6),
+	&"paint_pool_saturation": 1.5}
 ## SW-C1 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, GRAVE): grave slabs in the painted floor, the size
 ## of the old ones (SLAB), filling their rows (SLAB_ROWS: z -8.3 and 8.3) between the sarcophagi; x of each, its lion
 ## (z: 1, one in five counting the old ones). B leaves out the north-west one by its sarcophagus.
@@ -245,10 +245,11 @@ const CROWN_CHAIN := 0.5
 ## (Its attenuation under the spec's 1.0: at 5.7 m over the floor a fall-off of 1/d left N.L times it under the painted
 ## pool's edge, paint_pool 0.1, and the floor round the tomb took no warm at all.)
 const CROWN_LIGHT_DROP := 0.3
-const CROWN_ENERGY := 1.8
+const CROWN_ENERGY := 2.2
 ## Its colour: the room's candle warm a little yellower (CANDLE_COLOR painted the pool at hue 19 to 23 on the petrol
-## stone, the aim 25 to 40).
-const CROWN_COLOR := Color(1.0, 0.76, 0.42)
+## stone, the aim 25 to 40). The cycle of 2026-11-20: a little less green in it, on the greener petrol floor it painted
+## an olive pool.
+const CROWN_COLOR := Color(1.0, 0.66, 0.34)
 const CROWN_LIGHT := Vector2(9.5, 0.4)
 ## A warm halo round each lit crown candle (size, alpha of CROWN_HALO_COLOR), added on what is behind, under the glow.
 const CROWN_HALO := Vector2(0.65, 0.55)

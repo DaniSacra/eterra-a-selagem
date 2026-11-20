@@ -111,13 +111,22 @@ func _dev_juramentos() -> void:
 		Juramentos.block(data)["ranks"] = Juramentos.parse(Dev.arg("juramentos"))
 
 
-## Captures and checks (Rejogabilidade, Fatia 1): --materials=silver:30,memory:5 (what the save holds) and --forge=N
+## Captures and checks (Rejogabilidade, Fatia 1): --materials=silver:30,memory:5,emerald:2 (what the save holds), --forge=N
 ## (the Forja's Temperar bought), for this session only (nothing is written afterwards). A run reads --forge itself too
 ## (Game._equip_forge, also the robot's).
 func _dev_materials() -> void:
-	if not Dev.has("materials") and not Dev.has("forge"):
+	if not Dev.has("materials") and not Dev.has("forge") and not Dev.has("tools") and not Dev.has("refined"):
 		return
 	enabled = false
+	# Fatia 2: --tools=tool_refine (found) and --refined=refine_fio,refine_peso (forged; the first of each action on it)
+	for t in Dev.arg("tools", "").split(",", false):
+		Forge.add_tool(data, StringName(t))
+	var block := Forge.block(data)
+	for id in Dev.arg("refined", "").split(",", false):
+		(block.get_or_add("refined", []) as Array).append(id)
+		var r := Forge.new(Forge.load_catalog()).find(StringName(id))
+		if r != null and not (block.get_or_add("refine", {}) as Dictionary).has(String(r.slot)):
+			block.refine[String(r.slot)] = id
 	if Dev.has("materials"):
 		var got := MaterialPurse.parse(Dev.arg("materials"))
 		for id: String in got:

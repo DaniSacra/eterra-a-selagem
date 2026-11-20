@@ -136,6 +136,15 @@ const WATER_Y := 0.56
 const WATER_R := 2.6
 ## The fountain's ripples (dark_water.gdshader): bands per metre, their sharpness, their light.
 const WATER_RINGS := Vector3(0.6, 2.5, 0.05)
+## P2-A9, only in the stylized look (with WATER_MATTE): the ripples brighter, the surface nearly matte (roughness,
+## specular); it mirrored the sky's low cubemap, blotchy clouds that read as veins of marble.
+## The classic surface (roughness, specular), the shader's own.
+const WATER_GLOSS := Vector2(0.1, 0.4)
+## The ripples themselves had become the marble (broad swells of light, WATER_RINGS' sharpness): in the stylized look
+## they are faint thin lines (sharpness, light) over a body with a little light of its own (dark_water's body_light).
+const STY_WATER_RINGS := Vector2(8.0, 0.035)
+const STY_WATER_BODY := 1.4
+const STY_WATER_GLOSS := Vector2(0.85, 0.03)
 const FOUNTAIN_STELE := Vector3(1.5, 2.8, 0.5)
 const FOUNTAIN_LION := Vector2(1.1, 1.9)
 const SPOUT := 0.2
@@ -344,7 +353,12 @@ const STY_POOLS: Array[Array] = [
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
 ## screen on arriving with the near camera. P2-A7: the floor's outer ring (past the stations, from the fountain at the
 ## world's middle: edge_span times the floor's calm radius) a step darker, so the frame is no lighter than the square.
-const STY_RIM_FLOOR := {&"edge_value": 0.55, &"edge_span": Vector2(2.0, 2.9)}
+## The darkening starts past STY_RIM_FLOOR's calm radius times edge_span (from the fountain; the hub's floor box is
+## turned, its own calm radius came out past the cliffs) and leaves each station's pool alone (STY_KEEP: full to, none
+## from, m round each pool's aim).
+const STY_RIM_FLOOR := {&"calm_radius": 8.0, &"edge_value": 0.45, &"edge_span": Vector2(1.1, 2.0)}
+const STY_KEEP := Vector2(3.0, 5.5)
+const KEEP_MAX := 6
 ## The browser's renderer: the stylized air's share there (its painted stone lights lighter).
 const STY_COMPAT_AMBIENT := 0.3
 const STY_COMPAT_MOON := 0.3
@@ -355,6 +369,8 @@ const KEY_ENERGY := 0.75
 const LION_SHADER := preload("res://assets/shaders/altar_lion.gdshader")
 const PAGE_SHADER := preload("res://assets/shaders/hub_page.gdshader")
 const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
+## The fountain in the stylized look: the same water without the sky mirrored in it (P2-A9, the cycle of 2026-11-20).
+const WATER_MATTE := preload("res://assets/shaders/dark_water_matte.gdshader")
 const CANOPY_SHADER := preload("res://assets/shaders/canopy.gdshader")
 const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
 ## Facing directions in the frame (x, z): toward the camera (south), east, west.
@@ -509,7 +525,15 @@ func _exit_tree() -> void:
 func style() -> Dictionary:
 	_station_pools()
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = STY_RIM_FLOOR
+	var ground := STY_RIM_FLOOR.duplicate()
+	var keep := PackedVector4Array()
+	for p: Array in STY_POOLS:
+		var aim: Vector3 = world(p[1].x, 0.0, p[1].z)
+		if keep.size() < KEEP_MAX:
+			keep.append(Vector4(aim.x, aim.z, STY_KEEP.x, STY_KEEP.y))
+	ground[&"keep_spots"] = keep
+	ground[&"keep_spot_count"] = keep.size()
+	st[&"floor"] = ground
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
@@ -1340,6 +1364,12 @@ func _fountain(c: Vector2) -> void:
 	wm.set_shader_parameter(&"ring_sharp", WATER_RINGS.y)
 	wm.set_shader_parameter(&"ring_light", WATER_RINGS.z)
 	water.material_override = wm
+	wm.set_shader_parameter(&"gloss_roughness", WATER_GLOSS.x)
+	wm.set_shader_parameter(&"gloss_specular", WATER_GLOSS.y)
+	wm.set_shader_parameter(&"body_light", 0.0)
+	VisualProfile.vary(wm, {&"shader": WATER_MATTE, &"shader_parameter/ring_sharp": STY_WATER_RINGS.x,
+		&"shader_parameter/ring_light": STY_WATER_RINGS.y, &"shader_parameter/body_light": STY_WATER_BODY,
+		&"shader_parameter/gloss_roughness": STY_WATER_GLOSS.x, &"shader_parameter/gloss_specular": STY_WATER_GLOSS.y})
 	water.position = at(c.x, WATER_Y, c.y)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	frame.add_child(water)

@@ -46,6 +46,9 @@ const ARRIVAL := Vector2(0.0, -7.8)
 const CAM_TARGET := Vector2(0.0, 5.6)
 const CAM_REACH := 16.0
 const NEAR_SOUTH := -6.0
+## On arriving the near camera first looks where the far one does (CAM_TARGET: the portal in the frame, art review
+## ciclo_visual_1120 P1-A2) for ARRIVAL_LOOK seconds, his safe frame first, then follows him (Hub.lean).
+const ARRIVAL_LOOK := 1.5
 ## Each station's use point on the floor (local) and the anchor its sign stands on (local u, v and height y).
 ## HUB-D (LR-07): 11.5 m off the axis arrival to portal, so no two are more than 4 s apart walking (the portal's at
 ## the foot of its stairs, its sign over them).
@@ -182,6 +185,14 @@ static func frame_for(id: StringName, from: Vector2, distance: float, pitch_deg:
 static func near_want(hero: Vector2, yaw_deg: float = Feel.live().cam_yaw) -> Vector2:
 	var l := to_local(hero, yaw_deg)
 	return to_world(Vector2(l.x, maxf(l.y, NEAR_SOUTH)), yaw_deg)
+
+
+## What the near camera wants with the hero at `hero` (world), `since` seconds after arriving (-1: he did not arrive
+## by the stairs, a capture's --hero-at): the far camera's point for ARRIVAL_LOOK, then near_want.
+static func near_want_at(hero: Vector2, since: float, yaw_deg: float = Feel.live().cam_yaw) -> Vector2:
+	if since >= 0.0 and since < ARRIVAL_LOOK:
+		return to_world(CAM_TARGET, yaw_deg)
+	return near_want(hero, yaw_deg)
 
 
 ## A station's use point in the world.

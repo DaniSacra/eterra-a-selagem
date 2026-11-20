@@ -3,6 +3,8 @@ extends Resource
 ## Another way of dressing the same arena (cycle C12, RoomLayout.variants): mirrored across x = 0, another set of
 ## obstacles, other doors. RoomLayout.variant(n) gives the layout as it stands in variant n (0: the arena itself).
 
+## RP-07: where in the descent this variant may be drawn (EncounterGen.progress; RoomLayout.variants_at).
+@export var depth := Vector2(0.0, 1.0)
 ## Everything seen in a mirror across x = 0 (floor, holes, obstacles, spawns, doors, camera bounds, way in).
 @export var mirror := false
 ## Stands in for the arena's obstacles when not empty.

@@ -117,6 +117,12 @@ const SWAP_SIZE := 15
 ## The action's mark beside its name (ActionSlot.mark, the HUD's symbol).
 const ACTION_MARK := 20.0
 const ALTAR_GLOW := Color(0.95, 0.85, 0.65)
+## The Encanto's card (Fatia 2): the Emeth's pale emerald on its edge and glow (a blow of the Emeth changed), the
+## medallion of ink with the Encanto's mark (DoorGlyph.enchant) and an old gold ring.
+const ENCHANT_EDGE := Color(0.5, 0.78, 0.62)
+const ENCHANT_GLOW := Color(0.45, 0.85, 0.6)
+const ENCHANT_ICON := 104.0
+const ENCHANT_SIZE := Vector2(300, 380)
 ## The altar's medallion of each trade: its colour, its drawn glyph (SealMedal, when the painting is missing) and its
 ## painting (BoonArt.event). Life buys a pomegranate (never a heart: the trade takes life), gold lights the candles,
 ## walking on is the open passage.
@@ -137,6 +143,8 @@ var psalm: PsalmDef
 ## The Provação's card shown (E5; boon is null), and the altar's trade (E5: &"life", &"candles", &"none"; &"" otherwise).
 var trial: Trials.Card
 var altar := &""
+## An Encanto's card (Fatia 2, setup_enchant): boon is null; no rarity, no level.
+var enchant: EnchantDef
 ## The control that shows the gift at the top: a TextureRect (painted), a BoonIcon or an EloLink.
 var crest: Control
 ## The description as plain words (no markup): the glossary reads its terms from it (Glossary.show_for).
@@ -266,6 +274,8 @@ func fit_height() -> void:
 func edge_color() -> Color:
 	if psalm != null:
 		return PSALM_EDGE
+	if enchant != null:
+		return ENCHANT_EDGE
 	return ELO_EDGE if elo else rarity_color(rarity)
 
 
@@ -533,6 +543,61 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 	tab.name = &"PsalmTab"
 	add_child(tab)
 	return self
+
+
+## An Encanto's card (Fatia 2; sistemas.md 1.7): a tab "Encanto" on top, the medallion with the Encanto's mark,
+## its name, the action it changes with the HUD's mark ("Muda o ataque"), the rule, what it does with its numbers
+## marked and, at the bottom, that it lasts to the end of the descent. No rarity, no level: one of each, taken once.
+func setup_enchant(e: EnchantDef) -> BoonCard:
+	enchant = e
+	var box := _shell(ENCHANT_GLOW, ENCHANT_SIZE)
+	var medal := Control.new()
+	medal.name = &"Medal"
+	medal.custom_minimum_size = Vector2(ENCHANT_ICON, ENCHANT_ICON)
+	medal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	medal.draw.connect(func() -> void:
+		var c := medal.size * 0.5
+		var r := minf(medal.size.x, medal.size.y) * 0.46
+		medal.draw_circle(c, r + 4.0, UiKit.OLD_GOLD)
+		medal.draw_circle(c, r, Color(0.05, 0.09, 0.07))
+		medal.draw_circle(c + Vector2(-r * 0.15, -r * 0.18), r * 0.8, ENCHANT_GLOW.darkened(0.78))
+		DoorGlyph.enchant(medal, c, r * 1.5)
+		medal.draw_arc(c, r, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8), 2.0, true))
+	crest = medal
+	_art(box).add_child(medal)
+	var title := _name(T.t(e.name_key))
+	title.name = &"Name"
+	box.add_child(title)
+	var line := HBoxContainer.new()
+	line.name = &"Changes"
+	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	line.add_theme_constant_override(&"separation", 7)
+	line.add_child(ActionSlot.mark(e.slot, ACTION_MARK + 2.0))
+	line.add_child(UiKit.label(T.t(&"enchant_changes", {"action": T.t(Boon.SLOT_KEY[e.slot])}), ENCHANT_EDGE.lightened(0.2), 17, UiKit.BOLD_FONT))
+	box.add_child(line)
+	box.add_child(_rule())
+	box.add_child(_rich(strong_numbers(T.t(e.desc_key))))
+	box.add_child(_fill())
+	var lasts := _text(T.t(&"enchant_lasts"), UiKit.DIM, 15, UiKit.BOLD_FONT)
+	lasts.name = &"Lasts"
+	box.add_child(lasts)
+	_finish()
+	var tab := _tab(T.t(&"reward_enchant"), IVORY, ENCHANT_EDGE, DoorGlyph.new().setup(DoorGlyph.Kind.ENCHANT, 18.0))
+	tab.name = &"EnchantTab"
+	add_child(tab)
+	return self
+
+
+## Every number of a text (with its unit: "12", "0,3 s", "30%") marked as UiKit.strong (the cards' numbers, UI-HB2).
+static func strong_numbers(text: String) -> String:
+	var re := RegEx.create_from_string("\\d+(,\\d+)?( s\\b|%)?")
+	var out := ""
+	var at := 0
+	for m in re.search_all(text):
+		out += text.substr(at, m.get_start() - at) + UiKit.strong(m.get_string())
+		at = m.get_end()
+	return out + text.substr(at)
 
 
 ## The Provação's card (E5, spec 5.3): the blessing on top, the curse on a band of dark lilac below it with its length.

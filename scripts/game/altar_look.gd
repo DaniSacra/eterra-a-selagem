@@ -58,17 +58,23 @@ const CLIFF := {&"stone_color": Color(0.08, 0.08, 0.09), &"edge_color": Color(0.
 
 ## The stylized look (spec 3.2): warm calm stone, the altar's candles lit at 3 m and 1.2 of the light (their light
 ## keeps its shadow, the room's only one: ArenaKit.KEEP_SHADOW), a dark still air.
+## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 7b): an earthy warm stone (hue 18 to 28),
+## apart from the Santuário by hue, the air warmer and a step lighter.
 const STYLE := {
-	&"stone": Color(0.354, 0.339, 0.319), &"shadow": Color(0.88, 0.9, 0.98), &"floor_stone": Color(0.33, 0.318, 0.3),
+	&"stone": Color(0.36, 0.318, 0.29), &"shadow": Color(0.86, 0.9, 1.0), &"floor_stone": Color(0.342, 0.302, 0.276),
 	&"olive_share": 0.06, &"edge_value": 1.0, &"metal": true,
 	&"fire": {&"candle_range": 3.0, &"candle_gain": 1.2, &"bowl_range": 7.5, &"bowl_gain": 2.2},
-	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.68, 0.66, 0.62),
-		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.88, 0.84), &"moon_energy": 0.8, &"moon_shadow": false},
+	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.70, 0.66, 0.61),
+		&"ambient_gain": 3.2, &"moon": Color(0.9, 0.88, 0.84), &"moon_energy": 0.8, &"moon_shadow": false},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Pale warm dust and old wax, 1.4 times the slab's value (the floor between them at patch_rest).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.475, 0.445, 0.386), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome, docs/art/benchmark_hades2_style.md 7): the floor
+## calm between neighbour slabs (ArenaKit.CALM_FLOOR) and the patches soft and large (ArenaKit.SOFT_PATCHES); only HB2 and the frame (matrix
+## row 7): the floor darkens toward the walls past STY_FRAME (calm_radius in m, edge_value, edge_span).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.475, 0.445, 0.386)}
+const STY_FRAME := {&"calm_radius": 6.0, &"edge_value": 0.6, &"edge_span": Vector2(1.1, 2.0)}
 ## The far ruins in the stylized look: a warm grey haze, their stone and edge (style_backdrop).
 const STY_BACKDROP := [Color(0.17, 0.16, 0.145), Color(0.075, 0.07, 0.065), Color(0.21, 0.19, 0.16)]
 ## The browser's renderer: the stylized air's share there (the painted stone lights grey-white).
@@ -292,7 +298,7 @@ func _banners(north: float) -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = STY_FLOOR_BIOME
+	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME).merged(STY_FRAME)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

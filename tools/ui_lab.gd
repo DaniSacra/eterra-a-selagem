@@ -21,6 +21,11 @@ extends SceneTree
 ##   --slab (start with --start=fountain --hero-hp=N) shows the Provação's slab and its sign there (_slab.png).
 ## Rejogabilidade (Fatia 1): --meeting opens a room's Blessing by two angels (_meeting.png), then the cards of the
 ##   first (_meeting_cards.png); start without --bot. --found greets a door's Prata and Memória (_found.png).
+## Rejogabilidade (Fatia 2): --enchant opens the Encanto's cards (_enchant.png; start without --bot);
+##   --doors=boon,meeting,enchant,psalm puts those rewards behind the room's doors in order (boon: one angel, meeting:
+##   two) and opens them with the hero standing before them (_doors.png); --shop --route rebuilds the shelf as a route
+##   shop of three items, --want-enchant until an Encanto is on it (both put the hero before the shelf's middle);
+##   --cursed lays Morvath's curse on the hero (_cursed.png, the HUD's condition seal).
 ## DV-1: --map writes the HUD with its "Mapa [M]" button (_hud.png), then opens the descent's map over the stopped
 ##   run (_map.png): the run's own map, or a fixed sample descent with --map-at=start|middle|doors (MapSample).
 
@@ -65,6 +70,24 @@ func _run() -> void:
 		rooms.call(&"found", MaterialPurse.MEMORY, &"door", 3)
 		await create_timer(0.35).timeout
 		await _shot("found")
+		quit()
+		return
+	if Dev.has("enchant"):
+		game.set(&"bot", null)
+		game.call(&"open_enchant_choice")
+		await create_timer(0.9).timeout
+		await _shot("enchant")
+		quit()
+		return
+	if Dev.has("cursed"):
+		# the HUD with Morvath's curse on the hero (the condition's seal over the row), over the fight
+		(game.get(&"player") as Variant).call(&"apply_curse", 8.0, 0.3, 0.0)
+		await create_timer(0.8).timeout
+		await _shot("cursed")
+		quit()
+		return
+	if Dev.has("doors"):
+		await _doors(game)
 		quit()
 		return
 	if Dev.has("meeting"):
@@ -215,9 +238,66 @@ func _shop(game: Node) -> void:
 			(p.node as Node).free()
 		pedestals.clear()
 		rooms.call(&"_build_shop")
+	if Dev.has("route") or Dev.has("want-enchant"):
+		if Dev.has("route"):
+			# a shop of the way (DV-2): in a layer before the last (RunMap.is_route_shop)
+			here.set(&"depth", 7)
+		for i in 40:
+			var pedestals: Array = rooms.get(&"_pedestals")
+			for p: Dictionary in pedestals:
+				(p.node as Node).free()
+			pedestals.clear()
+			rooms.call(&"_build_shop")
+			var has := false
+			for p: Dictionary in rooms.get(&"_pedestals"):
+				has = has or int(p.item) == RunMap.Reward.ENCHANT
+			if has or not Dev.has("want-enchant"):
+				break
 	rooms.set(&"gold", int(Dev.arg("gold", "110")))
+	if Dev.has("route") or Dev.has("want-enchant"):
+		# the hero before the middle of the shelf, so the whole of it shows
+		var mid := Vector2.ZERO
+		var pedestals: Array = rooms.get(&"_pedestals")
+		for p: Dictionary in pedestals:
+			mid += (p.at as Vector2) / pedestals.size()
+		(game.get(&"player") as Variant).set(&"pos", mid + Vector2(2.5, 2.5))
+		game.call(&"snap_camera")
 	await create_timer(0.6).timeout
 	await _shot("shop")
+
+
+## Fatia 2: the next rooms' doors with the rewards asked for (--doors=boon,meeting,enchant,psalm), their signs made
+## again by the run's own code (Rooms._marker, _sign_angel), the hero standing before them.
+func _doors(game: Node) -> void:
+	game.set(&"bot", null)
+	var rooms: Node = game.get(&"rooms")
+	(game.get(&"horde") as Variant).call(&"clear_crowd")
+	rooms.call(&"_open_doors")
+	var want := Dev.arg("doors", "boon,meeting,enchant").split(",", false)
+	var next: Array = rooms.get(&"next_rooms")
+	var labels: Array = rooms.get(&"_door_labels")
+	var arena: Variant = game.get(&"arena")
+	var encounters: Variant = game.get(&"encounters")
+	var mid := Vector2.ZERO
+	for i in next.size():
+		var r: Variant = next[i]
+		var w := want[i % want.size()]
+		r.set(&"kind", 0)  # RunMap.Kind.COMBAT
+		r.set(&"meeting", w == "meeting")
+		r.set(&"reward", {"enchant": RunMap.Reward.ENCHANT, "psalm": RunMap.Reward.PSALM}.get(w, RunMap.Reward.BOON))
+		r.set(&"angel", encounters.call(&"door_angel", r) if w == "boon" else &"")
+		(labels[i] as Node).free()
+		var at: Vector2 = arena.call(&"door_label", i)
+		mid += at / next.size()
+		var glyph: int = (load("res://scripts/ui/door_glyph.gd") as GDScript).call(&"of", rooms.call(&"door_info", i))
+		var marker: Node3D = rooms.call(&"_marker", at, r.get(&"reward"), rooms.call(&"door_text", r), 0, glyph)
+		labels[i] = marker
+		rooms.call(&"_sign_angel", marker, r)
+	var player: Variant = game.get(&"player")
+	player.set(&"pos", mid * 0.55)
+	game.call(&"snap_camera")
+	await create_timer(1.0).timeout
+	await _shot("doors")
 
 
 ## A Psalm card between two Blessings in the run (holding one thing of each of its groups), then picked: the card and

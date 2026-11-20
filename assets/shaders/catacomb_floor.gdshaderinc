@@ -132,6 +132,10 @@ uniform vec3 joint_cold : source_color = vec3(0.93, 0.96, 1.05);
 uniform float paint_bevel = 0.75;
 uniform float edge_value = 0.72;
 uniform vec2 edge_span = vec2(0.9, 1.7);
+// Spots the darkening toward the edge leaves alone (x, z, full to, none from; m): the hub's stations' pools of light
+// (the fire bowls' wet_spots already are).
+uniform vec4 keep_spots[6];
+uniform int keep_spot_count = 0;
 uniform float paint_clearing = 0.4;
 uniform float paint_washes = 0.5;
 // ENV-HB2 (docs/art/benchmark_hades2_style.md 4.1, the hall's finish test): how far the slabs' joints, their cracks and
@@ -537,6 +541,10 @@ void fragment() {
 	for (int i = 0; i < 8; i++) {
 		if (i >= wet_spot_count) { break; }
 		fire_near = max(fire_near, 1.0 - smoothstep(wet_spots[i].z, wet_spots[i].w, length(wp - wet_spots[i].xy)));
+	}
+	for (int i = 0; i < 6; i++) {
+		if (i >= keep_spot_count) { break; }
+		fire_near = max(fire_near, 1.0 - smoothstep(keep_spots[i].z, keep_spots[i].w, length(wp - keep_spots[i].xy)));
 	}
 	c *= mix(mix(1.0, edge_value, smoothstep(calm_radius * edge_span.x, calm_radius * edge_span.y, length(wp))), 1.0, fire_near);
 #else

@@ -40,17 +40,23 @@ const PASSIVE_GAP := 4
 ## Those with a recharge go first: their timer is what is worth a glance in a fight.
 const PASSIVE_EDGE := 0.96
 const SLOT_GAP := 8
-## P1-4 of the Hades II UI benchmark, under test (--hud=row; the default is the bottom-centre row; the art-director
-## decides): the five diamonds smaller (ROW_DIAMOND, about 46 px at 1080) in a row over the bars, from the medallion's
-## shoulder, ROW_ABOVE px over the life bar's frame, so nothing stands between 30% and 70% of the width at the bottom;
-## what stood over the bars (the count, the curse's badge, the Provação's seal) climbs over the row and the room of
-## its captions (ROW_CAPTION); the gifts that act alone go to the bottom right corner.
-const ROW_DIAMOND := 31.0
-const ROW_GAP := 10
-const ROW_ABOVE := 6.0
-## The keys hang under the small diamonds' point (ActionSlot.key_drop): the little mouse is 22 px tall.
-const ROW_KEY_DROP := 9.0
+## P1-4 of the Hades II UI benchmark, the default since the art-director's review (ART_REVIEW.md 3.1, A to C;
+## --hud=classic keeps the bottom-centre row to compare): the five diamonds smaller (ROW_DIAMOND, about 54 px at 1080)
+## in a row over the bars, from the medallion's shoulder, ROW_ABOVE px over the life bar's frame, on a band of ink
+## (HudVeil) so the crowd does not run between them, their bodies veiled only by the hero standing behind (never by the
+## crowd); nothing stands between 30% and 70% of the width at the bottom. The hit count stands on the row's line, right
+## of the last diamond, the move's name under it; the curse's badge and the Provação's seal (conditions, not always
+## there) climb over the row and the room of its captions (ROW_CAPTION); the gifts that act alone go to the bottom
+## right corner. The block (captions, row, bars, medallion) stays under 200 px tall at 1080.
+const ROW_DIAMOND := 36.0
+const ROW_GAP := 6
+const ROW_ABOVE := 4.0
+## The keys hang under the diamonds' point (ActionSlot.key_drop): the little mouse is 22 px tall.
+const ROW_KEY_DROP := 7.0
 const ROW_CAPTION := 20.0
+## The hit count right of the last diamond, and the bottom of the edge chevrons' frame over the whole block.
+const ROW_COUNT_GAP := 12.0
+const ROW_EDGE_BOTTOM := 168.0
 const FONT_SMALL := 15
 const FONT_TEXT := 19
 const FONT_CLOCK := 22
@@ -177,9 +183,11 @@ var _veiled := false
 var _passives_veiled := false
 ## The diamonds' body opacity (they fade only their bodies, ActionSlot.veil).
 var _slot_alpha := 1.0
-## The --hud=row layout (P1-4, under test) and how much higher what stood over the bars stands in it.
+## The row layout (P1-4, the default; --hud=classic the bottom-centre one) and how much higher what stood over the bars stands in it.
 var _row_mode := false
 var _row_lift := 0.0
+## The band of ink behind the row (B of the review).
+var _row_band: HudVeil
 ## Magia each action's held version costs (by slot).
 var _omega_cost := {}
 ## The dodge's recharge, followed by the run's clock (Player keeps its own timer to itself).
@@ -206,7 +214,7 @@ func _ready() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_row_mode = Dev.arg("hud") == "row"
+	_row_mode = Dev.arg("hud") != "classic"
 	_row_lift = ROW_ABOVE + ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP + ROW_CAPTION if _row_mode else 0.0
 	_build_top()
 	_build_life()
@@ -368,20 +376,34 @@ func _build_actions() -> void:
 	_place(_passives, Control.PRESET_CENTER_BOTTOM, Vector2(width * 0.5 + 18 + room * 0.5, -MARGIN - 4), Vector2(room, PASSIVE_ICON + 6))
 
 
-## The --hud=row layout (P1-4, under test): the diamonds over the bars from the medallion's shoulder, the gifts that
-## act alone in the bottom right corner, right-aligned.
+## The row layout (P1-4, the default): the diamonds over the bars from the medallion's shoulder on a band of ink, the
+## gifts that act alone in the bottom right corner, right-aligned.
 func _build_row(row: HBoxContainer) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
 	var height := ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP
 	var life_top := MARGIN + CREST * 0.5 + 1.0 + LIFE.y
 	_place(row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 6, -life_top - ROW_ABOVE), Vector2(row.get_combined_minimum_size().x, height))
+	var under: Array[Control] = []
+	under.assign(_slots + [_ult_slot])
+	_row_band = HudVeil.new()
+	_row_band.covers = under
+	add_child(_row_band)
+	move_child(_row_band, row.get_index())
 	_passives = HBoxContainer.new()
 	_passives.name = &"Passives"
 	_passives.add_theme_constant_override(&"separation", PASSIVE_GAP)
 	_passives.alignment = BoxContainer.ALIGNMENT_END
 	_passives.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_passives)
-	_place(_passives, Control.PRESET_BOTTOM_RIGHT, Vector2(-MARGIN, -MARGIN), Vector2(300, PASSIVE_ICON + 6))
+	# its right end at PASSIVE_EDGE of the width, as the bottom-centre row's last medallion (BUG-105)
+	_passives.anchor_left = PASSIVE_EDGE
+	_passives.anchor_right = PASSIVE_EDGE
+	_passives.anchor_top = 1.0
+	_passives.anchor_bottom = 1.0
+	_passives.offset_left = -300.0
+	_passives.offset_right = 0.0
+	_passives.offset_bottom = -MARGIN
+	_passives.offset_top = -MARGIN - PASSIVE_ICON - 6.0
 
 
 ## The hit count and the move's name, by the bars at the bottom left (benchmark_hades2_ui.md P0-3, UI-HB5): out of
@@ -405,7 +427,21 @@ func _build_combo() -> void:
 	_move.name = &"Move"
 	_move.size_flags_vertical = Control.SIZE_SHRINK_END
 	_combo_row.add_child(_move)
-	_place(_combo_row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST + COMBO_INSET, -MARGIN - CREST * 0.5 - LIFE.y - COMBO_RISE - _row_lift), Vector2(LIFE.x, COMBO_H))
+	if _row_mode:
+		# on the row's line, right of the last diamond; the move's name under the count, smaller (C of the review)
+		_combo_row.remove_child(_move)
+		add_child(_move)
+		var x := _action_row.offset_left + _action_row.size.x + ROW_COUNT_GAP
+		for c: Control in [_combo_row, _move]:
+			c.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+			c.offset_left = x
+			c.offset_right = x + LIFE.x
+		_combo_row.offset_top = _action_row.offset_top - 2.0
+		_combo_row.offset_bottom = _combo_row.offset_top + COMBO_H
+		_move.offset_top = _combo_row.offset_bottom - 2.0
+		_move.offset_bottom = _move.offset_top + COMBO_WORD + 6.0
+	else:
+		_place(_combo_row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST + COMBO_INSET, -MARGIN - CREST * 0.5 - LIFE.y - COMBO_RISE), Vector2(LIFE.x, COMBO_H))
 	_combo_top = _combo_row.offset_top
 	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = false
@@ -501,7 +537,7 @@ func _process(delta: float) -> void:
 		c.visible = _combo_count >= 3 and not over
 	_move.visible = not over
 	# the curse's badge stands on the life bar's line: the count climbs over it meanwhile
-	var lift := ConditionBadge.SIZE + 4.0 if _curse_badge.shown() > 0.0 else 0.0
+	var lift := ConditionBadge.SIZE + 4.0 if _curse_badge.shown() > 0.0 and not _row_mode else 0.0
 	_combo_row.offset_top = _combo_top - lift
 	_combo_row.offset_bottom = _combo_top - lift + COMBO_H
 	_elo_banner.held = over
@@ -537,6 +573,9 @@ func _process(delta: float) -> void:
 	if _boss_box.visible != _clock_at_boss:
 		_place_clock(_boss_box.visible)
 	_clock_veil.follow()
+	if _row_band:
+		_row_band.follow()
+		_follow_row()
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * COMBO_POP)
 	_combo.pivot_offset = _combo.size * Vector2(0.0, 0.5)
@@ -790,11 +829,27 @@ func _update_boss(b: Enemy) -> void:
 		_boss_bar.show_ritual(boss.ritual_left() if boss else 0, boss.ritual_total() if boss and _shield_t > 0.0 else 0)
 
 
+## The count and the move's name stand right of the last diamond shown (the robot has no ultimate's).
+func _follow_row() -> void:
+	var last: Control = _ult_slot if _ult_slot.visible else _slots.back()
+	var x := last.get_global_rect().end.x - get_global_rect().position.x + ROW_COUNT_GAP - ActionSlot.KEY_H * 0.5
+	for c: Control in [_combo_row, _move]:
+		if not is_equal_approx(c.offset_left, x):
+			c.offset_left = x
+			c.offset_right = x + LIFE.x
+
+
+## How far over the bottom of the screen the edge chevrons' frame stands (it clears the captions over the diamonds).
+func edge_bottom() -> float:
+	return ROW_EDGE_BOTTOM if _row_mode else EDGE_INSET.w
+
+
 ## Chevrons on the edge of the screen: the light fountain (with its name) and the nearest elites, guardian or boss
 ## out of view. Nothing shows while they are all on screen.
 func _update_pointers(chief: Enemy) -> void:
 	var view := get_viewport_rect()
-	var frame := Rect2(view.position + Vector2(EDGE_INSET.x, EDGE_INSET.y), view.size - Vector2(EDGE_INSET.x + EDGE_INSET.z, EDGE_INSET.y + EDGE_INSET.w))
+	var bottom := edge_bottom()
+	var frame := Rect2(view.position + Vector2(EDGE_INSET.x, EDGE_INSET.y), view.size - Vector2(EDGE_INSET.x + EDGE_INSET.z, EDGE_INSET.y + bottom))
 	var at: Variant = game.fountain_target()
 	var edge: Variant = _edge(at as Vector2, view, frame) if at != null else null
 	_arrow.visible = edge != null
@@ -860,7 +915,7 @@ func _update_veil(delta: float) -> void:
 		_veil_t = VEIL_EVERY
 		if _row_mode:
 			# apart in the row layout: the diamonds on the left, the gifts in the right corner
-			_veiled = _someone_behind(_action_row.get_global_rect())
+			_veiled = _someone_behind(_action_row.get_global_rect(), true)
 			_passives_veiled = _someone_behind(_passives_rect())
 		else:
 			_veiled = _someone_behind(_actions_rect())
@@ -887,13 +942,15 @@ func _passives_rect() -> Rect2:
 	return r
 
 
-func _someone_behind(rect: Rect2) -> bool:
+func _someone_behind(rect: Rect2, hero_only := false) -> bool:
 	var p := game.player
 	var feet := game.camera.unproject_position(Vector3(p.pos.x, 0.0, p.pos.y))
 	# how tall a body stands on screen (the same for everyone, near enough, with this long lens)
 	var tall := feet.y - game.camera.unproject_position(Vector3(p.pos.x, BODY_HEIGHT, p.pos.y)).y
 	if body_rect(feet, tall).intersects(rect):
 		return true
+	if hero_only:
+		return false
 	for e in game.horde.list:
 		if e.alive and body_rect(game.camera.unproject_position(Vector3(e.pos.x, 0.0, e.pos.y)), tall).intersects(rect):
 			return true

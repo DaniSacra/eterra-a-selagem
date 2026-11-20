@@ -102,14 +102,15 @@ static func text(s: String, color: Color = INK, size: int = 18) -> Label:
 
 ## An entry of an index on the page (the Compendium's chapters): a toggle with a mark on its left and a count on its
 ## right; ink when it waits, the petrol of the menus' tabs when it is the one on show, a gilt line with the focus.
-static func index_entry(text_: String, mark: Control, count: String, width: float) -> Button:
+## height, font_size, pad (where the name starts) and count_w make the compact entries of the Forja's grid.
+static func index_entry(text_: String, mark: Control, count: String, width: float, height := 40.0, font_size := 18,
+		pad := 48, count_w := 60.0) -> Button:
 	var b := UiKit.button(text_, Callable(), width)
 	b.toggle_mode = true
-	b.custom_minimum_size.y = 40
+	b.custom_minimum_size.y = height
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override(&"font", UiKit.TITLE_FONT)
-	b.add_theme_font_size_override(&"font_size", 18)
-	var pad := 48
+	b.add_theme_font_size_override(&"font_size", font_size)
 	b.add_theme_stylebox_override(&"normal", _entry_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 1, pad))
 	b.add_theme_stylebox_override(&"hover", _entry_box(Color(INK, 0.07), GILT, 1, pad))
 	b.add_theme_stylebox_override(&"pressed", _entry_box(UiKit.TAB_ON, UiKit.OLD_GOLD, 1, pad))
@@ -125,7 +126,7 @@ static func index_entry(text_: String, mark: Control, count: String, width: floa
 	var n := label(count, GILT, 15, UiKit.number_font())
 	n.name = "count"
 	n.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
-	n.offset_left = -70
+	n.offset_left = -10 - count_w
 	n.offset_right = -10
 	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	n.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

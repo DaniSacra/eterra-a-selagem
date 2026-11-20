@@ -8,7 +8,7 @@ var game: Game
 
 
 func after_each() -> void:
-	Dev._args.erase("seed")
+	Dev.put("seed", "1")  # back to the seed of every test, never none (tests/hooks/pre_run.gd, BUG-109)
 	Dev._args.erase("boons")
 	DoorSign.keep_out = Rect2()
 
@@ -84,7 +84,8 @@ func test_the_forge_is_a_spread_that_buys_in_order() -> void:
 	assert_eq(Forge.temper(d), 1)
 	assert_eq(bought, [&"temper_1"] as Array[StringName])
 	assert_eq(f.shown.id, &"temper_2", "on to the next")
-	assert_eq((f.entries[0].find_child("count", false, false) as Label).text, T.t(&"forge_owned"))
+	assert_eq((f.entries[0].find_child("count", false, false) as Label).text, "", "forged: no price")
+	assert_eq((f.entries[0].find_child("mark", false, false) as ForgeScreen.Mark).look, ForgeScreen.Mark.Look.OWNED)
 	assert_false(f.buy_button.disabled, "45 of 35")
 	f.buy_button.pressed.emit()
 	assert_eq(Forge.temper(d), 2)

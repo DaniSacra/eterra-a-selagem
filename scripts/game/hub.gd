@@ -42,6 +42,8 @@ var station_sign: StationSign
 var leaving := false
 ## The Juramentos were seen on the way down this time (Descer goes on from there).
 var _sworn := false
+## Seconds since he came up the stairs (-1: placed by --hero-at; HubPlan.near_want_at).
+var arrived := 0.0
 var _fade: ColorRect
 
 
@@ -67,6 +69,7 @@ func _ready() -> void:
 		var where := HubPlan.use_point(StringName(at)) if HubPlan.STATIONS.has(StringName(at)) \
 			else Vector2(float(xz[0]), float(xz[1]))
 		player.pos = arena.resolve(where, Player.RADIUS)
+		arrived = -1.0
 	add_child(player)
 	_show_forge()
 	camera = Camera3D.new()
@@ -74,6 +77,10 @@ func _ready() -> void:
 	camera.make_current()
 	cam = CamRig.new(camera, arena, player)
 	cam.snap()
+	if not cam.holds() and arrived >= 0.0:
+		# the near camera starts on the far one's point: the portal in the frame as he comes up (P1-A2)
+		var p := HubPlan.near_want_at(player.pos, 0.0)
+		cam.target = Vector3(p.x, 0, p.y)
 	cam.place(Vector3.ZERO, 1.0)
 	# the host first: a screen's own pages (later in the tree) see Esc before it does
 	host = ScreenHost.new()
@@ -124,6 +131,8 @@ func apply_options() -> void:
 
 func _process(delta: float) -> void:
 	var dt := minf(delta, 0.05)
+	if arrived >= 0.0:
+		arrived += dt
 	var free := not host.is_open() and not leaving
 	player.step(dt, move() if free else Vector2.ZERO, Vector2.ZERO)
 	if focus.step(player.pos):
@@ -151,14 +160,15 @@ func _exit_tree() -> void:
 
 ## The floor point the camera leans to while a station is in focus (HubPlan.frame_for; INF: none, the far camera's
 ## own point): from where it would look without one, as little as it takes to bring the station's SHOW point inside
-## the screen. The near camera always leans: on him, never south of HubPlan.NEAR_SOUTH (art review H-P0-2).
+## the screen. The near camera always leans: on him, never south of HubPlan.NEAR_SOUTH (art review H-P0-2), and for
+## its first HubPlan.ARRIVAL_LOOK seconds on the far camera's point (the portal in the frame, P1-A2).
 func lean() -> Vector2:
 	if focus.current == &"" and cam.holds():
 		return Vector2.INF
 	var view := get_viewport().get_visible_rect().size
 	var d := CamRig.distance()
 	# the near camera follows him, but never looks south of the hub's NEAR_SOUTH (art review H-P0-2)
-	var from := cam.look_at(arena.cam_target if cam.holds() else HubPlan.near_want(player.pos), d, camera.fov)
+	var from := cam.look_at(arena.cam_target if cam.holds() else HubPlan.near_want_at(player.pos, arrived), d, camera.fov)
 	if focus.current == &"":
 		return from
 	return HubPlan.frame_for(focus.current, from, d, Dev.num("cam-pitch", Feel.live().cam_pitch), CamRig.yaw(), camera.fov,

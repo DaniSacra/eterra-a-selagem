@@ -14,7 +14,7 @@ signal victory_finished(stats: Dictionary)
 signal run_logged(outcome: String, entry: Dictionary)
 ## A Psalm came on a card (E4): first when the Codex never had it (the "Salmo descoberto" greeting, without pausing).
 ## Fatia 2: an Encanto's choice opens (options: Array[EnchantDef], up to three); a screen that listens takes the
-## choice with take_enchant (none listening: the provisional EnchantChoice opens). taken after it is taken.
+## choice with take_enchant (none listening: the EnchantChoice opens). taken after it is taken.
 signal enchant_offered(options: Array)
 signal enchant_taken(enchant: EnchantDef)
 ## Fatia 2: a tool of the Forjador found in this descent (kept in the save when the descent ends, as the materials).
@@ -646,7 +646,7 @@ func enchant_offers() -> Array[EnchantDef]:
 
 
 ## Opens the Encanto's choice (a door of Encanto, the shop's): the robot and --autopick take the first at once; a person
-## sees the screen (enchant_offered; none listening: the provisional EnchantChoice). Nothing to offer: a Blessing.
+## sees the screen (enchant_offered; none listening: the EnchantChoice). Nothing to offer: a Blessing.
 func open_enchant_choice() -> void:
 	enchant_options = enchant_offers()
 	if enchant_options.is_empty():
@@ -659,8 +659,8 @@ func open_enchant_choice() -> void:
 	if enchant_offered.get_connections().is_empty():
 		var screen := EnchantChoice.new()
 		open_screen(screen)
-		screen.open(enchant_options)
-		screen.chosen.connect(func(e: EnchantDef) -> void:
+		screen.open_enchants(enchant_options)
+		screen.chosen_enchant.connect(func(e: EnchantDef) -> void:
 			close_screen()
 			take_enchant(e))
 

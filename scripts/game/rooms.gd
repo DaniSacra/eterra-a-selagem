@@ -419,9 +419,31 @@ func _enter(next: RunMap.Room) -> void:
 
 # ---------- the fight ----------
 
+## Dev (--trace-thirds, the room-designer's "where the fight happens", rooms_progression.md 2.3): seconds of the hero
+## in each third of the room west to east (hero_x0..2) and north to south (hero_z0..2), and enemy-seconds west to east
+## (foe_x0..2), added to rooms[].zones. Off by default: the RESULT stays as it was.
+var _thirds := Dev.has("trace-thirds")
+
+
+func _third(v: float, half: float) -> int:
+	return clampi(int(floorf((v + half) / (2.0 * half) * 3.0)), 0, 2)
+
+
+func _tally_thirds(dt: float) -> void:
+	var h := _layout.half
+	var p := game.player.pos
+	game.room_tally.zone_time("hero_x%d" % _third(p.x, h.x), dt)
+	game.room_tally.zone_time("hero_z%d" % _third(p.y, h.y), dt)
+	for e in game.horde.list:
+		if e.alive:
+			game.room_tally.zone_time("foe_x%d" % _third(e.pos.x, h.x), dt)
+
+
 func _step_fight(dt: float) -> void:
 	if _layout != null and not _layout.areas.is_empty():
 		game.room_tally.zone_time(_layout.area_at(game.player.pos), dt)
+	if _layout != null and _thirds:
+		_tally_thirds(dt)
 	if runes != null:
 		runes.step(dt)
 	if plates != null:
@@ -643,6 +665,11 @@ func victory() -> void:
 
 # ---------- doors ----------
 
+## Whether a Psalm may come now (a Psalm's door shows only then: RunMap.settle, Room.psalm).
+func psalm_can_come() -> bool:
+	return game.psalm_cards and not game.psalms.eligible(game.boons, game.talents).is_empty()
+
+
 func _open_doors() -> void:
 	phase = Phase.OPEN
 	if room.kind == RunMap.Kind.COMBAT or room.kind == RunMap.Kind.MINIBOSS:
@@ -650,7 +677,7 @@ func _open_doors() -> void:
 	# a pomegranate behind a door when nothing can grow turns into a Blessing before its sign shows (Q-25 a); the
 	# Blessing of this room counts as one to grow
 	map.settle(next_rooms, game.boons.can_grow() or room.reward == RunMap.Reward.BOON,
-		game.psalm_cards and not game.psalms.eligible(game.boons, game.talents).is_empty(), not game.enchant_offers().is_empty())
+		psalm_can_come(), not game.enchant_offers().is_empty())
 	# Fatia 2: a Blessing's door that is no meeting shows the angel who waits there (Encounters.door_angel)
 	for r in next_rooms:
 		if r.reward == RunMap.Reward.BOON and not r.meeting and r.kind == RunMap.Kind.COMBAT and game.encounters != null:
@@ -661,7 +688,9 @@ func _open_doors() -> void:
 		if game.arena.look != null:
 			# the air of the room behind it breathes out of the doorway (ArenaRoom.breath)
 			game.arena.look.breath(i, door_look(i))
-		_door_labels.append(_marker(game.arena.door_label(i), r.reward, door_text(r), r.kind, DoorGlyph.of(door_info(i))))
+		var marker := _marker(game.arena.door_label(i), r.reward, door_text(r), r.kind, DoorGlyph.of(door_info(i)))
+		_door_labels.append(marker)
+		_sign_angel(marker, r)
 	if not next_rooms.is_empty():
 		Audio.play(&"door")
 
@@ -699,6 +728,19 @@ static func elite_heads(r: RunMap.Room) -> int:
 				if String(id).ends_with("_elite"):
 					n += 1
 	return n
+
+
+## The angel's line of a door's sign drawn with its seal and colour (DoorSign.show_angel; the text stays the same).
+func _sign_angel(marker: Node3D, r: RunMap.Room) -> void:
+	var line := _angel_line(r).strip_edges()
+	if line == "":
+		return
+	for c in marker.get_children():
+		if c is DoorSign:
+			var who: AngelDef = null
+			if not r.meeting and game.encounters != null:
+				who = game.encounters.book.find(r.angel)
+			(c as DoorSign).show_angel(line, who)
 
 
 ## Under a Blessing's reward, the angel its door shows, or "Dois anjos" for a meeting (Fatia 2).

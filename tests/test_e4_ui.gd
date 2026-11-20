@@ -13,7 +13,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-	Dev._args.erase("seed")
+	Dev.put("seed", "1")  # back to the seed of every test, never none (tests/hooks/pre_run.gd, BUG-109)
 
 
 func _run() -> void:

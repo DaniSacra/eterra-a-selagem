@@ -73,20 +73,21 @@ const RUIN_EDGE := Color(0.12, 0.16, 0.24)
 # ---------- the stylized look (room redesign, lot C section 3: docs/art/room_redesign_lotC_spec.md) ----------
 ## The bridge's biome: worn blue-grey stone (hue 212), little olive, the hall's fires, its own air.
 const STYLE := {
-	&"stone": Color(0.318, 0.335, 0.354), &"shadow": Color(0.833, 0.906, 0.98), &"floor_stone": STY_FLOOR, &"edge_value": STY_EDGE_VALUE,
+	&"stone": Color(0.31, 0.33, 0.36), &"shadow": Color(0.80, 0.88, 1.0), &"floor_stone": STY_FLOOR, &"edge_value": STY_EDGE_VALUE,
 	&"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.05, &"slab_paint": Vector2(0.86, 1.12), &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"pool_saturation": 1.0,
-	&"air": {&"sky": Color(0.05, 0.055, 0.065), &"fog": Color(0.12, 0.13, 0.15), &"ambient": Color(0.68, 0.70, 0.74),
-		&"ambient_gain": 1.8, &"moon": Color(0.82, 0.86, 0.95), &"moon_energy": 1.0, &"moon_shadow": true},
+	&"air": {&"sky": Color(0.045, 0.055, 0.075), &"fog": Color(0.10, 0.12, 0.15), &"ambient": Color(0.66, 0.70, 0.77),
+		&"ambient_gain": 2.1, &"moon": Color(0.80, 0.86, 0.98), &"moon_energy": 1.0, &"moon_shadow": true},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Pale grey lichen on the slate, 1.5 times the slab's value (the floor between them at patch_rest).
 ## The cycle of 2026-11-20 (ART_REVIEW.md: B is a strong reference, only the floor and the saturation move): the
-## slate a little lighter and greyer (hue 215 to 225), the patches soft (ArenaKit.SOFT_PATCHES), the floor calm
-## (ArenaKit.CALM_FLOOR); the cold goes to the mist (STY_MIST_SAT), not the floor.
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.46, 0.497, 0.491)}
-const STY_FLOOR := Color(0.335, 0.35, 0.375)
+## slate a little lighter (hue 215 to 225), the lichen a blue grey, the patches soft (ArenaKit.SOFT_PATCHES), the floor calm
+## (ArenaKit.CALM_FLOOR); the cold goes to the mist (STY_MIST_SAT), the shadow and the air (matrix row 3: scene hue
+## 216 to 226, saturation 0.30 to 0.35), not the floor.
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.46, 0.48, 0.52)}
+const STY_FLOOR := Color(0.32, 0.34, 0.37)
 ## The platforms are narrow: the floor keeps its value to the edge (the spec's luma 55 to 70 on them; as the Rift).
 const STY_EDGE_VALUE := 1.0
 ## The browser's renderer: the stylized ambient and key lower (as the other rooms').
@@ -94,7 +95,7 @@ const STY_COMPAT_AMBIENT := 0.55
 const STY_COMPAT_MOON := 0.6
 ## The abyss: its mist, banks and depths' light at this share of their saturation and value (spec 3.2: 0.85), the
 ## thread of violet's glow cards a cold grey blue, the cliffs and piers in a grey blue depth stone.
-const STY_MIST_SAT := 0.95
+const STY_MIST_SAT := 0.8
 const STY_MIST_VALUE := 0.85
 const STY_GLOW := Color(0.36, 0.42, 0.52)
 const STY_CLIFF := {&"stone_color": Color(0.05, 0.058, 0.07), &"edge_color": Color(0.13, 0.15, 0.18),

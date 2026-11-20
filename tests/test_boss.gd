@@ -274,6 +274,7 @@ func test_the_director_reads_where_the_paladin_is() -> void:
 
 func test_the_director_does_not_repeat_too_much_and_keeps_cooldowns() -> void:
 	var rng := RandomNumberGenerator.new()
+	rng.seed = 275  # BUG-109: the same draws, the same asserts, every run
 	var d := _director()
 	var run := 0
 	var last := &""

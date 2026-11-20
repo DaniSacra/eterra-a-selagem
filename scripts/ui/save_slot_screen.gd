@@ -215,6 +215,8 @@ func _card(n: int, info: Variant) -> Button:
 	purse.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	purse.add_child(MaterialCount.new().setup(MaterialPurse.SILVER, int(info.silver), UiKit.PALE, VALUE_SIZE, 20.0))
 	purse.add_child(MaterialCount.new().setup(MaterialPurse.MEMORY, int(info.memory), UiKit.PALE, VALUE_SIZE, 20.0))
+	if int(info.get("emerald", 0)) > 0:
+		purse.add_child(MaterialCount.new().setup(MaterialPurse.EMERALD, int(info.emerald), UiKit.PALE, VALUE_SIZE, 20.0))
 	_fact(grid, &"slot_materials", "", purse)
 	var when := SaveSlots.date_text(int(info.played_at))
 	var last := UiKit.shadow(UiKit.label(T.t(&"slot_last"), UiKit.OLD_GOLD.lightened(0.35), LABEL_SIZE, UiKit.TITLE_FONT))

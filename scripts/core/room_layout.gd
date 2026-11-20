@@ -48,6 +48,9 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## Where in the descent it may be drawn for a fight: from and to, as EncounterGen.progress (0 the first room, 1 the last
 ## fight before the shop).
 @export var depth := Vector2(0.0, 1.0)
+## RP-07: where in the descent this arena's own dress (variant 0) may be drawn, as `depth`; each variant has its own
+## (ArenaVariant.depth). RunMap draws among those that hold the room's progress, the first when none does.
+@export var variant_depth := Vector2(0.0, 1.0)
 ## The fewest and the most enemies standing at once in it (0: the tier's own); never past the tier's most.
 @export var max_alive := Vector2i.ZERO
 ## At most this many shooters (EnemyDef.Behavior.ARCHER) at once (0: no limit); roles never drawn here.
@@ -103,6 +106,18 @@ func variant(n: int) -> RoomLayout:
 		out.area_names = v.area_names.duplicate()
 	if v.mirror:
 		out._mirror()
+	return out
+
+
+## RP-07: the variants (0 itself) whose band holds this progress (EncounterGen.progress); [0] when none does.
+func variants_at(at: float) -> Array[int]:
+	var out: Array[int] = []
+	for n in variant_count():
+		var band := variant_depth if n == 0 else variants[n - 1].depth
+		if at >= band.x - 0.001 and at <= band.y + 0.001:
+			out.append(n)
+	if out.is_empty():
+		out.append(0)
 	return out
 
 

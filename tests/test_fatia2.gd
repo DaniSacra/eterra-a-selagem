@@ -73,7 +73,7 @@ func test_at_most_two_enchants_on_any_way_and_the_second_late() -> void:
 				var x := map.at(id)
 				if x.reward == R.ENCHANT:
 					depths.append(x.depth)
-				if x.reward == R.PSALM:
+				if x.psalm:
 					assert_gte(x.depth, stage.psalm_from_depth, "seed %d: a Psalm's door from room %d" % [s, stage.psalm_from_depth])
 			assert_lte(depths.size(), stage.enchant_max, "seed %d: at most two Encantos on a way" % s)
 			if depths.size() == 2:
@@ -86,7 +86,7 @@ func test_a_third_of_the_blessing_rooms_are_meetings() -> void:
 	for s in 300:
 		var map := RunMap.new(stage, hash([s, MAP_SALT]))
 		for r in map.nodes:
-			if r.reward == R.BOON and r.kind == RunMap.Kind.COMBAT and r.depth > 1:
+			if r.reward == R.BOON and r.kind == RunMap.Kind.COMBAT and r.depth > 1 and not r.psalm:
 				boons += 1
 				if r.meeting:
 					meetings += 1
@@ -94,6 +94,30 @@ func test_a_third_of_the_blessing_rooms_are_meetings() -> void:
 				assert_true(r.meeting or r.reward != R.BOON, "the hall and the guardian are meetings")
 	var share := float(meetings) / boons
 	assert_between(share, 0.25, 0.42, "two of six (%.2f)" % share)
+
+
+func test_the_psalm_card_never_promises_a_psalm_on_the_map() -> void:
+	# the deck's Psalm card lies on the map as a Blessing (never a meeting); its door shows a Psalm only when one can come
+	var hopes := 0
+	for s in 300:
+		var map := RunMap.new(stage, hash([s, MAP_SALT]))
+		for r in map.nodes:
+			if r.reward == R.PSALM:
+				hopes = -1000
+			if r.psalm:
+				hopes += 1
+				if r.reward != R.BOON or r.meeting or r.depth < stage.psalm_from_depth:
+					hopes = -1000
+	assert_gt(hopes, 150, "the Psalm card lands on the map (%d in 300), as a Blessing, from room %d, never a meeting" % [hopes, stage.psalm_from_depth])
+	var map := RunMap.new(stage, 5)
+	var hope := RunMap.Room.new(RunMap.Kind.COMBAT, R.BOON, 5)
+	hope.psalm = true
+	var plain := RunMap.Room.new(RunMap.Kind.COMBAT, R.BOON, 5)
+	var doors: Array[RunMap.Room] = [hope, plain]
+	assert_eq(map.settle(doors, true), 0, "no Psalm can come: it stays a Blessing")
+	assert_eq(hope.reward, R.BOON)
+	assert_eq(map.settle(doors, true, true), 1, "one can come: its door shows the Psalm")
+	assert_eq([hope.reward, plain.reward], [R.PSALM, R.BOON], "only where the card fell")
 
 
 func test_settle_turns_what_cannot_come_into_a_blessing() -> void:
@@ -373,3 +397,31 @@ func test_the_robot_walks_into_a_route_shop_with_gold() -> void:
 	var doors: Array[RunMap.Room] = [gold, shop]
 	assert_eq(Rooms.bot_door(doors, false, 1.0, null, 40), 0, "no gold: the fight")
 	assert_eq(Rooms.bot_door(doors, false, 1.0, null, 160), 1, "gold to spend: the shop")
+
+
+func test_the_psalm_door_stands_when_the_hand_opens_a_psalm() -> void:
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	game.rooms.start_at(RunMap.Kind.COMBAT)
+	game.horde.clear_crowd()
+	game.psalm_cards = true
+	var hope := RunMap.Room.new(RunMap.Kind.COMBAT, R.BOON, 5)
+	hope.psalm = true
+	var doors: Array[RunMap.Room] = [hope]
+	assert_false(game.rooms.psalm_can_come(), "an empty hand opens no Psalm")
+	game.rooms.map.settle(doors, true, game.rooms.psalm_can_come())
+	assert_eq(hope.reward, R.BOON, "no Psalm can come: the door stays a Blessing")
+	# the Sentinela's three groups: a circle, a shield, an Elo of the two (Rastro)
+	for id in ["circulo_brasa", "escudo", "rastro"]:
+		game.boons.take(load(_boon_path(id)))
+	assert_true(game.rooms.psalm_can_come(), "the hand opens the Sentinela (%s; %d in the catalog, %d taken)" % [
+		str(Psalms.held_of(game.boons, game.talents).keys()), game.psalms.catalog.size(), game.psalms.taken.size()])
+	game.rooms.map.settle(doors, true, game.rooms.psalm_can_come())
+	assert_eq(hope.reward, R.PSALM, "now its door shows the Psalm")
+
+
+func _boon_path(id: String) -> String:
+	for f in DirAccess.get_files_at("res://data/boons/"):
+		if f.ends_with("_%s.tres" % id):
+			return "res://data/boons/" + f
+	return ""

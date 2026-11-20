@@ -118,7 +118,7 @@ static func erase(n: int, base: String = "user://") -> void:
 		broken = p + SaveFile.BROKEN + str(k)
 
 
-## What the slot screen shows of a save: {level, runs, wins, silver, memory, played_at (unix seconds of the last
+## What the slot screen shows of a save: {level, runs, wins, silver, memory, emerald, played_at (unix seconds of the last
 ## descent's end, 0 none)}.
 static func summary(data: Dictionary) -> Dictionary:
 	var warrior := HeroDef.warrior()
@@ -129,6 +129,7 @@ static func summary(data: Dictionary) -> Dictionary:
 		"wins": int(data.get("wins", 0)),
 		"silver": MaterialPurse.amount(data, MaterialPurse.SILVER),
 		"memory": MaterialPurse.amount(data, MaterialPurse.MEMORY),
+		"emerald": MaterialPurse.amount(data, MaterialPurse.EMERALD),
 		"played_at": int(data.get("played_at", 0)),
 	}
 

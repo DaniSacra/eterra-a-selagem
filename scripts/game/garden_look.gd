@@ -183,7 +183,7 @@ const STYLE := {
 	&"stone": Color(0.32, 0.325, 0.28), &"shadow": Color(0.9, 0.93, 0.96), &"floor_stone": STY_FLOOR,
 	&"joint_cold": Color(0.92, 0.95, 1.0), &"olive_share": 0.25, &"slab_paint": Vector2(0.86, 1.12), &"slab_hue": 5.0,
 	&"metal": true, &"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"moss": STY_MOSS,
-	&"air": {&"sky": Color(0.04, 0.05, 0.05), &"fog": Color(0.07, 0.09, 0.09), &"ambient": Color(0.68, 0.70, 0.68),
+	&"air": {&"sky": Color(0.04, 0.05, 0.05), &"fog": Color(0.07, 0.09, 0.09), &"ambient": Color(0.71, 0.71, 0.64),
 		&"ambient_gain": 1.8, &"moon": Color(0.88, 0.88, 0.86), &"moon_energy": 0.75, &"moon_shadow": true},
 }
 const STY_FLOOR := Color(0.30, 0.31, 0.275)
@@ -191,16 +191,21 @@ const STY_FLOOR := Color(0.30, 0.31, 0.275)
 ## put by style()): the painted floor's second colour of the biome in patches of 3 to 8 m, stronger near the edge, and
 ## the canopy's dappled shade (SW-J1) on the whole floor, denser under the crown (STY_GOBO_TREE: radius, weight round
 ## the trunk), drifting and swaying slowly. Moss: a dry olive green, 1.5 times the slab's value (the dapples darken).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.428, 0.479, 0.338), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5,
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome, docs/art/benchmark_hades2_style.md 7): the floor
+## calm between neighbour slabs (ArenaKit.CALM_FLOOR) and the patches soft and large (ArenaKit.SOFT_PATCHES); the colour
+## rises in the rust and the mist, never in the floor (matrix row 5).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.428, 0.479, 0.338),
 	&"gobo_kind": 1, &"gobo_strength": 0.25, &"gobo_base": 0.85, &"gobo_scale": 1.4, &"gobo_drift": Vector2(0.03, 0.012),
 	&"gobo_sway": 0.12, &"gobo_soft": 0.05, &"gobo_cover": 0.7}
 const STY_GOBO_TREE := Vector2(10.0, 1.0)
 ## The painted moss (lot C 1: grey green, never past 0.3 of saturation in the hues of the Emeth).
 const STY_MOSS := Color(0.20, 0.24, 0.17)
 ## The abyss in the stylized look: a dark grey green mist (no violet), its glow cards and its light cold and grey.
-const STY_MIST := Color(0.075, 0.085, 0.085)
-const STY_GLOW := Color(0.34, 0.42, 0.44)
-const STY_ABYSS_LIGHT := Color(0.42, 0.5, 0.52)
+## The cycle of 2026-11-20 (matrix row 5: hue 75 to 95, saturation 0.28 to 0.35): the mist, its glow and its light
+## from the cold grey to an olive grey, the colour rising there and in the rust (STY_LEAF_*), never in the floor.
+const STY_MIST := Color(0.088, 0.09, 0.068)
+const STY_GLOW := Color(0.42, 0.43, 0.33)
+const STY_ABYSS_LIGHT := Color(0.52, 0.53, 0.43)
 ## The cliffs and the arches under the front in the depths' stone of the stylized look (no violet in their glow).
 const STY_CLIFF := {&"stone_color": Color(0.055, 0.062, 0.06), &"edge_color": Color(0.14, 0.16, 0.15),
 	&"mist_color": STY_MIST, &"glow_color": Color(0.3, 0.38, 0.4)}
@@ -218,8 +223,8 @@ const STY_LICHEN := Color(0.30, 0.31, 0.24)
 ## The fill on the tree a neutral warm (the cold one turned the moss grey bark mint).
 const STY_TREE_FILL := Color(0.86, 0.84, 0.78)
 ## J1: the crown in dead rust (hue 15 to 25, saturation up to 0.45, value up to 0.4; never the warnings' red).
-const STY_LEAF_A := Color(0.26, 0.17, 0.12)
-const STY_LEAF_B := Color(0.40, 0.27, 0.19)
+const STY_LEAF_A := Color(0.30, 0.16, 0.09)
+const STY_LEAF_B := Color(0.47, 0.27, 0.14)
 ## The dry grass a little more straw than lilac (dry_grass.gdshader's tint, if it has one).
 ## The windows: the violet behind them turns to the cold of falling water (light on the walls' stone, the mist).
 const STY_WINDOW_LIGHT := Color(0.62, 0.72, 0.78)
@@ -1025,7 +1030,7 @@ func style() -> Dictionary:
 	var under: Array[Vector4] = []
 	if tree != null:
 		under.append(Vector4(tree.at.x, tree.at.z, STY_GOBO_TREE.x, STY_GOBO_TREE.y))
-	st[&"floor"] = ArenaKit.gobo(STY_FLOOR_BIOME, under)
+	st[&"floor"] = ArenaKit.gobo(ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME), under)
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

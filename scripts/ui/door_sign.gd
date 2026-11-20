@@ -21,6 +21,9 @@ extends Node3D
 ## DoorGlyph.of_reward: the same mark the altar's cards and the shop use); the room's pictogram then stands left of the
 ## line under it ("Difícil", "Guardião"), so each mark sits by the words it explains.
 ##   var sign := DoorSign.make(T.t(&"reward_gold"), T.t(&"door_hard"), DoorGlyph.Kind.HARD, DoorGlyph.Kind.GOLD)
+## Fatia 2: a Blessing's door names who waits behind it on a line of its own under the reward (show_angel): the
+## angel's seal (AngelSeal, its house's mark) and its name in its colour, or two small seals and "Dois anjos" for a
+## meeting of two (who they are is drawn when the room opens).
 ## Signs and HUD greetings never touch (keep_out): while a greeting shows, a sign that would cross its band stands
 ## under it.
 
@@ -85,6 +88,10 @@ var price := -1
 var missing := 0
 var _layer: CanvasLayer
 var _box: VBoxContainer
+## The angel's line (null: none; show_angel).
+var angel_row: HBoxContainer
+## The seal's height on the sign and the gap of the two seals of a meeting.
+const ANGEL_SEAL := 20.0
 
 
 ## A sign with a name and, optionally, a detail line under it (empty: none), a pictogram left of the name and the
@@ -120,6 +127,41 @@ static func make(name_text: String, detail_text: String = "", glyph: DoorGlyph.K
 		s.title.get_parent().add_child(s.mark)
 		s.title.get_parent().move_child(s.mark, 0)
 	return s
+
+
+## The angel waiting behind the door (angel null: a meeting of two) on its own line under the name; text is the line
+## the room's words already carry (Rooms.door_text), taken out of the detail so it shows once.
+func show_angel(text: String, angel: AngelDef) -> void:
+	if detail != null:
+		var lines := Array(detail.text.split("\n"))
+		lines.erase(text)
+		detail.text = "\n".join(lines)
+		var row := detail.get_parent() if detail.get_parent() != _box else detail
+		row.visible = detail.text != ""
+	angel_row = HBoxContainer.new()
+	angel_row.name = "angel"
+	angel_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	angel_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	angel_row.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	angel_row.add_theme_constant_override(&"separation", 5)
+	var col := DETAIL_COLOR
+	if angel != null:
+		col = AngelSeal.tint(angel.family).lightened(0.35)
+		angel_row.add_child(AngelSeal.new().setup(angel.family, ANGEL_SEAL))
+	else:
+		var two := Control.new()
+		two.name = "two"
+		two.custom_minimum_size = Vector2(ANGEL_SEAL * 1.5, ANGEL_SEAL)
+		two.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		two.draw.connect(func() -> void:
+			for i in 2:
+				SealMedal.draw_seal(two, Vector2(ANGEL_SEAL * (0.5 + i * 0.5), ANGEL_SEAL * 0.5), ANGEL_SEAL * 0.42, 1.0))
+		angel_row.add_child(two)
+	var l := _label(text, col, DETAIL_SIZE)
+	l.name = "angel_name"
+	angel_row.add_child(l)
+	_box.add_child(angel_row)
+	_box.move_child(angel_row, title.get_parent().get_index() + 1 if title.get_parent() != _box else title.get_index() + 1)
 
 
 ## A line of the sign: the label alone, or a row with the mark left of it.

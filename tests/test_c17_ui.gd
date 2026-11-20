@@ -14,7 +14,7 @@ var game: Game
 
 func after_each() -> void:
 	Dev._args.erase("boons")
-	Dev._args.erase("seed")
+	Dev.put("seed", "1")  # back to the seed of every test, never none (tests/hooks/pre_run.gd, BUG-109)
 
 
 ## Save data with the Warrior at this much XP (the screens read and never write it).
@@ -211,7 +211,7 @@ func test_the_chevrons_clear_the_ultimates_caption() -> void:
 	await _run_with_boons(0)
 	var view := game.hud.get_viewport_rect()
 	# a chevron on the bottom edge, about its middle
-	var chevron_bottom := view.size.y - Hud.EDGE_INSET.w + Hud.POINTER_SIZE * 0.5
+	var chevron_bottom := view.size.y - game.hud.edge_bottom() + Hud.POINTER_SIZE * 0.5
 	var row := game.hud._action_row
 	var caption_top := row.get_global_rect().position.y - ActionSlot.CAPTION_RISE - ActionSlot.CAPTION_FONT
 	assert_lt(chevron_bottom, caption_top, "the chevron stays above \"Maestria 2\"")

@@ -17,7 +17,11 @@ extends Control
 ## SILVER and MEMORY (Rejogabilidade, Fatia 1): Prata Antiga an ingot of old silver, Fragmento de Memória a leaf of
 ## parchment torn at its corner with lines of ink (the in-world medallion's own marks, RewardGem.Mark INGOT and LEAF);
 ## the same wherever a material shows (doors, the map, the Forja, the Livro, the end screen, the hub: MaterialCount).
-enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN, SILVER, MEMORY }
+## ENCHANT, PSALM and EMERALD (Fatia 2): the Encanto the Emeth's blade leaning with a four-pointed spark of old gold
+## by it (a blow enchanted; never a hammer, that is the Forja's); the Salmo the Psalm cards' pointed
+## arch in ivory with the lilac light under it (PsalmIcon's arch); the Esmeralda a step-cut stone, taller than wide, in
+## the Emeth's emerald (the Magia's gem is a round blue cut: they differ by shape and hue).
+enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN, SILVER, MEMORY, ENCHANT, PSALM, EMERALD }
 
 ## Height of the glyph on the sign's canvas (the name's capitals are about 13; a little taller reads better).
 const HEIGHT := 17.0
@@ -39,6 +43,10 @@ const HEAL_GREEN := Color(0.5, 0.86, 0.6)
 const SILVER_FILL := Color(0.62, 0.65, 0.7)
 const PARCHMENT_FILL := Color(0.84, 0.74, 0.55)
 const LEAF_INK := Color(0.2, 0.14, 0.09)
+## The Esmeralda's greens (the Emeth's, darkened to read on ink, a pale facet), the Salmo's lilac light.
+const EMERALD_FILL := Color(0.2, 0.62, 0.42)
+const EMERALD_LIT := Color(0.62, 0.9, 0.74)
+const PSALM_LIGHT := Color(0.74, 0.66, 0.94)
 
 var kind := Kind.NONE
 var height := HEIGHT
@@ -83,6 +91,10 @@ static func of_reward(r: RunMap.Reward) -> Kind:
 			return Kind.SILVER
 		RunMap.Reward.MEMORY:
 			return Kind.MEMORY
+		RunMap.Reward.ENCHANT:
+			return Kind.ENCHANT
+		RunMap.Reward.PSALM:
+			return Kind.PSALM
 	return Kind.NONE
 
 
@@ -93,6 +105,8 @@ static func of_material(id: StringName) -> Kind:
 			return Kind.SILVER
 		MaterialPurse.MEMORY:
 			return Kind.MEMORY
+		MaterialPurse.EMERALD:
+			return Kind.EMERALD
 	return Kind.NONE
 
 
@@ -174,8 +188,19 @@ func _draw() -> void:
 		Kind.MAGICK:
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.52, OUTLINE_COLOR, OUTLINE_COLOR)
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.44, MAGICK_BLUE, MAGICK_BLUE.darkened(0.45))
-		Kind.SILVER, Kind.MEMORY:
+		Kind.SILVER, Kind.MEMORY, Kind.EMERALD:
 			material(self, kind, c, h)
+		Kind.ENCHANT:
+			enchant(self, c, h)
+		Kind.PSALM:
+			# the Psalm cards' pointed arch, its light under it
+			var arch := PsalmIcon.arch(c + Vector2(0, h * 0.02), h * 0.3, h * 0.84)
+			draw_colored_polygon(arch, Color(PSALM_LIGHT, 0.45))
+			arch.append(arch[0])
+			_stroke(arch, IVORY, stroke)
+			var d := h * 0.12
+			draw_colored_polygon(PackedVector2Array([c + Vector2(0, h * 0.14 - d), c + Vector2(d, h * 0.14), c + Vector2(0, h * 0.14 + d),
+				c + Vector2(-d, h * 0.14)]), CHEVRON_GOLD)
 		Kind.UNKNOWN:
 			# a question mark drawn in the signs' stroke: a hook over a short stem, and a dot
 			var hook := PackedVector2Array()
@@ -189,9 +214,58 @@ func _draw() -> void:
 			draw_circle(c + Vector2(0, h * 0.36), stroke * 1.2, IVORY)
 
 
+## The Encanto's mark on any canvas (the card's medallion draws it big), h tall around c: the Emeth's blade leaning,
+## point up to the right, with a short guard and grip, and a four-pointed spark of old gold by its edge (a blow
+## enchanted). Never upright with its guard (it would read as a cross), never a ring round it (a sign of Venus).
+static func enchant(ci: CanvasItem, c: Vector2, h: float) -> void:
+	var w := maxf(1.4, h * 0.085)
+	var o := w + maxf(2.0, h * 0.11)
+	var along := Vector2(1, -1).normalized()
+	var side := Vector2(along.y, -along.x)
+	var base := c + Vector2(-h * 0.08, h * 0.08)
+	var tip := base + along * h * 0.5
+	var hilt := base - along * h * 0.08
+	var half := h * 0.075
+	var blade := PackedVector2Array([tip, hilt + along * h * 0.42 + side * half, hilt + side * half, hilt - side * half,
+		hilt + along * h * 0.42 - side * half])
+	var guard := [hilt + side * h * 0.2, hilt - side * h * 0.2]
+	var grip := [hilt, hilt - along * h * 0.24]
+	ci.draw_colored_polygon(_grown(blade, base + along * h * 0.2, maxf(1.0, h * 0.08)), OUTLINE_COLOR)
+	ci.draw_line(guard[0], guard[1], OUTLINE_COLOR, o, true)
+	ci.draw_line(grip[0], grip[1], OUTLINE_COLOR, o, true)
+	ci.draw_colored_polygon(blade, IVORY)
+	ci.draw_line(tip, hilt, EMERALD_FILL, maxf(1.0, h * 0.04), true)
+	ci.draw_line(guard[0], guard[1], CHEVRON_GOLD, w, true)
+	ci.draw_line(grip[0], grip[1], Color(0.62, 0.22, 0.2), w, true)
+	# the spark by the blade's edge, up on the left
+	var at := c + Vector2(-h * 0.22, -h * 0.24)
+	var r := h * 0.2
+	var t := r * 0.28
+	var star := PackedVector2Array([at + Vector2(0, -r), at + Vector2(t, -t), at + Vector2(r, 0), at + Vector2(t, t),
+		at + Vector2(0, r), at + Vector2(-t, t), at + Vector2(-r, 0), at + Vector2(-t, -t)])
+	ci.draw_colored_polygon(_grown(star, at, maxf(1.0, h * 0.06)), OUTLINE_COLOR)
+	ci.draw_colored_polygon(star, CHEVRON_GOLD)
+
+
 ## A material's mark drawn on any canvas (the Gift tree's cost under a sealed Gift uses it), h tall around c.
 static func material(ci: CanvasItem, k: Kind, c: Vector2, h: float) -> void:
 	var o := maxf(1.0, h * 0.09)
+	if k == Kind.EMERALD:
+		# a step-cut stone, taller than wide: an octagon with its table, a pale facet on the upper left
+		var hw := h * 0.28
+		var hh := h * 0.42
+		var cut := h * 0.12
+		var gem := PackedVector2Array([c + Vector2(-hw + cut, -hh), c + Vector2(hw - cut, -hh), c + Vector2(hw, -hh + cut),
+			c + Vector2(hw, hh - cut), c + Vector2(hw - cut, hh), c + Vector2(-hw + cut, hh), c + Vector2(-hw, hh - cut), c + Vector2(-hw, -hh + cut)])
+		ci.draw_colored_polygon(_grown(gem, c, o), OUTLINE_COLOR)
+		ci.draw_colored_polygon(gem, EMERALD_FILL)
+		var t := 0.55
+		var table := PackedVector2Array()
+		for p in gem:
+			table.append(c + (p - c) * t)
+		ci.draw_colored_polygon(table, EMERALD_FILL.lightened(0.18))
+		ci.draw_line(gem[7].lerp(gem[0], 0.5), table[7].lerp(table[0], 0.5), EMERALD_LIT, maxf(1.0, h * 0.06), true)
+		return
 	if k == Kind.SILVER:
 		# an ingot seen from the front and a little above: the top narrower, a groove across it
 		var w := h * 0.46

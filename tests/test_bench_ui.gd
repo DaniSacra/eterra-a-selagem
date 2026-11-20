@@ -168,16 +168,16 @@ func _hud_with(layout: String) -> Hud:
 	return game.hud
 
 
-func test_the_default_keeps_the_diamonds_at_the_bottom_middle() -> void:
-	var hud := await _hud_with("")
+func test_the_classic_keeps_the_diamonds_at_the_bottom_middle() -> void:
+	var hud := await _hud_with("classic")
 	var screen := hud.get_viewport_rect().size
 	var row := hud._action_row.get_global_rect()
-	assert_almost_eq(row.get_center().x, screen.x * 0.5, 1.0, "today's layout unchanged")
+	assert_almost_eq(row.get_center().x, screen.x * 0.5, 1.0, "the layout before P1-4, to compare")
 	assert_eq(hud._slots[0].side, ActionSlot.DIAMOND)
 
 
 func test_the_row_layout_frees_the_bottom_middle() -> void:
-	var hud := await _hud_with("row")
+	var hud := await _hud_with("")
 	var screen := hud.get_viewport_rect().size
 	var row := hud._action_row.get_global_rect()
 	assert_lte(row.end.x, screen.x * 0.3, "no diamond between 30% and 70% of the width")
@@ -185,8 +185,17 @@ func test_the_row_layout_frees_the_bottom_middle() -> void:
 	assert_lte(row.end.y, hud._life.get_global_rect().position.y, "over the bars")
 	assert_gte(row.position.x, hud._crest.get_global_rect().end.x - 10.0, "from the medallion's shoulder")
 	assert_gte(hud._passives.get_global_rect().position.x, screen.x * 0.7, "the gifts in the right corner")
-	for c: Control in [hud._combo_row, hud._curse_badge, hud._trial_seal]:
+	for c: Control in [hud._curse_badge, hud._trial_seal]:
 		assert_lte(c.get_global_rect().end.y, row.position.y - Hud.ROW_CAPTION + 1.0, "%s over the row and its captions" % c.name)
+	# the count on the row's line, right of the last diamond, the move's name under it (review 3.1 C)
+	var count := hud._combo_row.get_global_rect()
+	assert_gte(count.position.x, row.end.x, "right of the row")
+	assert_almost_eq(count.position.y, row.position.y, 4.0, "on its line")
+	assert_gte(hud._move.get_global_rect().position.y, count.position.y + 20.0, "the move's name under the count")
+	# the block (captions over the row to the medallion's foot) under 200 px at 1080 (133 at 720 lines)
+	var top := row.position.y - ActionSlot.CAPTION_RISE - ActionSlot.CAPTION_FONT
+	assert_lte(hud._crest.get_global_rect().end.y - top, 200.0 * screen.y / 1080.0)
+	assert_gte(Hud.ROW_DIAMOND * 1080.0 / 720.0, 52.0, "about 54 px at 1080")
 	# the permanent HUD of the fight under 5.5% of the screen (P1-4 acceptance): medallion, bars, diamonds
 	var area := 0.0
 	for c: Control in [hud._crest, hud._life, hud._magick, hud._action_row]:

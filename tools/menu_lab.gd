@@ -72,7 +72,8 @@ func _game() -> void:
 	await process_frame
 	var won := stats.duplicate()
 	won.erase("defeated_by")
-	won.materials = {"silver": 24, "memory": 7}
+	won.materials = {"silver": 24, "memory": 7, "emerald": 2}
+	won.tools = ["tool_refine"]
 	won.mastery = {"gain": load("res://scripts/core/hero_def.gd").call(&"warrior").get(&"mastery").call(&"run_xp",
 		{"rooms": 10, "guardians": 1, "phase": 4, "victory": true}), "xp_before": 120}
 	end = (load("res://scripts/ui/end_screen.gd") as GDScript).new()

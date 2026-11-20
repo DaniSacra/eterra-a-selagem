@@ -25,6 +25,26 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Feito em 2026-11-20 (gameplay-engineer): LR-03 e RP-07; LR-04 e LR-06 provados e devolvidos
+
+Medido com `smoke 900 --bot-reaction=0.25 --ultimate=cleave --trace-thirds`, sementes 1 a 24 (salas de luta sem
+guardião; terços como na 2.3, agora contados pelo próprio jogo: `--trace-thirds`, `hero_x0..2`, `hero_z0..2`,
+`foe_x0..2` em `rooms[].zones`).
+
+- **LR-03, entrou** (`_rect(4, 12, 8, 12)` e `_rect(-2, 6, -12, -8.5)` na primeira onda do Santuário). Luta comum,
+  A (8 salas) / B (4): terço leste do herói 46 / 51% (era 14 / 21), dos inimigos 18 / 22% (era 1 / 5), primeiro
+  contato 2,3 / 3,2 s (era 5,0): passam. **Não passam**: a nave cai para 44 / 40% (meta 50 a 65; as naves laterais
+  ficaram com 56 / 57%) e o dano por sala 1,0 / 0,5 (amostra pequena; a meta pedia dentro de 20% de hoje). Para o
+  room-designer: trocar um dos dois retângulos por um no meio leste da nave devolveria a nave sem perder o leste.
+- **LR-04, devolvido**: com o grupo do norte em x -12 a -5, `tree_shade` ficou 5 / 7% (era 3 a 7) e o tronco barrou
+  0,08 a 0,12 tiro por sala (meta 1 ou mais). Como a proposta dizia, pode ser o robô (não procura cobertura); o tronco
+  no meio é a outra saída, de arte.
+- **LR-06, devolvido**: com o muro de 12 m (fim em z 1,5) a luta foi para o sul: terço sul do herói 40 para 55%,
+  `south_open` (as áreas de antes) 79 a 82 para 77%, `west_of_wall` 6% (meta 15). O herói entra no sudoeste e os
+  inimigos nascem a leste: o muro mais longo só fechou o meio.
+- **RP-07, entrou** (filtro no `RunMap`, faixas desta página no `_stage`; ver CLAUDE.md "Arenas"). A intensidade do perigo
+  pela faixa (Runas A tardia com `rest` 1,8 e `max_share` 0,4) ficou de fora: é número, vai com o balance-designer.
+
 ## Feito em 2026-11-19 (noite): RP-06 (laje rachada) e RP-13 só no Santuário B
 
 **O que entrou.** `HazardDef.kind` `PLATES` (`plates`, `rearm`, `from_progress`, por laje `plate_hero_damage` e

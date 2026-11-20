@@ -106,7 +106,11 @@ const STYLE := {
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Pale lilac ash, 1.4 times the slab's value (the floor between them at patch_rest).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.439, 0.41, 0.47), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome, docs/art/benchmark_hades2_style.md 7): the floor
+## calm between neighbour slabs (ArenaKit.CALM_FLOOR) and the patches soft and large (ArenaKit.SOFT_PATCHES); only HB2 and the frame (matrix
+## row 7): the floor darkens toward the walls past STY_FRAME (calm_radius in m, edge_value, edge_span).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.439, 0.41, 0.47)}
+const STY_FRAME := {&"calm_radius": 6.0, &"edge_value": 0.6, &"edge_span": Vector2(1.1, 2.0)}
 ## The far ruins in the stylized look: a lilac haze, their stone and edge (style_backdrop).
 const STY_BACKDROP := [Color(0.26, 0.22, 0.31), Color(0.12, 0.105, 0.14), Color(0.32, 0.27, 0.38)]
 const STY_COMPAT_AMBIENT := 0.7
@@ -427,7 +431,7 @@ static func entry_slab(parent: Node3D, at: Vector2, yaw := 0.0) -> Node3D:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = STY_FLOOR_BIOME
+	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME).merged(STY_FRAME)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

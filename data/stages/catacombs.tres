@@ -480,6 +480,7 @@ height = 1.35
 
 [sub_resource type="Resource" id="Resource_s1sfb"]
 script = ExtResource("5_wmys5")
+depth = Vector2(0.34, 1)
 obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_fr2k5"), SubResource("Resource_q6hi7"), SubResource("Resource_hi33f"), SubResource("Resource_vbe0e"), SubResource("Resource_7rjok"), SubResource("Resource_3pvnp"), SubResource("Resource_0lpor")])
 late_spawns = Array[Rect2]([Rect2(-19.5, -12, 4, 5)])
 floor = SubResource("Resource_vlysx")
@@ -497,6 +498,7 @@ look = &"rift"
 size_class = 2
 difficulty = 1
 depth = Vector2(0.1, 1)
+variant_depth = Vector2(0.1, 0.6)
 max_alive = Vector2i(6, 8)
 areas = Array[Rect2]([Rect2(-7, -12, 9, 5), Rect2(-7, -1, 9, 5), Rect2(-8, 9, 11, 6), Rect2(-21, -15, 14, 30), Rect2(2, -15, 19, 30)])
 area_names = PackedStringArray("bridge_n", "bridge_s", "south_way", "west", "east")
@@ -1197,7 +1199,7 @@ hazard = SubResource("Resource_q7f36")
 areas = Array[Rect2]([Rect2(-22, -5.35, 44, 10.7), Rect2(-22, -14, 44, 8.65), Rect2(-22, 5.35, 44, 8.65)])
 area_names = PackedStringArray("nave", "aisles", "aisles")
 obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_tebmx"), SubResource("Resource_5i70t"), SubResource("Resource_edqrd"), SubResource("Resource_4maq2"), SubResource("Resource_gwcyj"), SubResource("Resource_bxin2"), SubResource("Resource_tlv08"), SubResource("Resource_tc8an"), SubResource("Resource_slhqw"), SubResource("Resource_fxr16"), SubResource("Resource_s8mvf"), SubResource("Resource_rbg74"), SubResource("Resource_mrscu"), SubResource("Resource_sonfj"), SubResource("Resource_psbln"), SubResource("Resource_8vf53"), SubResource("Resource_g81yf"), SubResource("Resource_7pks0"), SubResource("Resource_84flu")])
-spawns = Array[Rect2]([Rect2(-20, -3, 6, 6), Rect2(-19, 8, 4, 3), Rect2(-8, -12, 6, 3.5)])
+spawns = Array[Rect2]([Rect2(-20, -3, 6, 6), Rect2(-19, 8, 4, 3), Rect2(-8, -12, 6, 3.5), Rect2(4, 8, 8, 4), Rect2(-2, -12, 8, 3.5)])
 late_spawns = Array[Rect2]([Rect2(10, 8, 6, 4)])
 exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_pm87n"), SubResource("Resource_i4d1g"), SubResource("Resource_736p0")])
 cam_bounds = Rect2(-10, -2, 20, 4)
@@ -1292,6 +1294,7 @@ polys = Array[PackedVector2Array]([PackedVector2Array(-28, -6, -25, -9, -13, -9,
 
 [sub_resource type="Resource" id="Resource_f6t5t"]
 script = ExtResource("5_wmys5")
+depth = Vector2(0.67, 1)
 obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_exdvp"), SubResource("Resource_e3brq"), SubResource("Resource_1xlks")])
 spawns = Array[Rect2]([Rect2(17, -7.5, 7, 6.5), Rect2(17, 1, 7, 6.5)])
 floor = SubResource("Resource_5qps6")
@@ -1310,6 +1313,7 @@ look = &"bridge"
 size_class = 3
 difficulty = 2
 depth = Vector2(0.5, 1)
+variant_depth = Vector2(0.5, 0.8)
 max_alive = Vector2i(6, 8)
 max_ranged = 3
 banned_roles = Array[StringName]([&"area"])
@@ -1449,6 +1453,7 @@ height = 0.0
 
 [sub_resource type="Resource" id="Resource_mtqcf"]
 script = ExtResource("5_wmys5")
+depth = Vector2(0.5, 0.8)
 obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_vnfky"), SubResource("Resource_4e216"), SubResource("Resource_utid5"), SubResource("Resource_dd3xu"), SubResource("Resource_g2yqu")])
 hazard = SubResource("Resource_gkxnl")
 areas = Array[Rect2]([Rect2(-3, -3, 6, 6), Rect2(-9, -9, 18, 18), Rect2(-15, -12, 30, 24)])
@@ -1466,6 +1471,7 @@ name_key = &"arena_runes"
 look = &"runes"
 difficulty = 2
 depth = Vector2(0.5, 1)
+variant_depth = Vector2(0.67, 1)
 max_alive = Vector2i(4, 6)
 max_ranged = 2
 banned_roles = Array[StringName]([&"area"])

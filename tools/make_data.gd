@@ -794,7 +794,8 @@ func _crypt() -> RoomLayout:
 	]
 	a.append_array(bowls)
 	l.obstacles = a
-	# variant B, "Ossuary": a dividing wall from the north wall, the south half open
+	# variant B, "Ossuary": a dividing wall from the north wall, the south half open (LR-06, the wall to 12 m, was tried
+	# on 2026-11-20 and put back: with the robot the fight went south, 40 to 55% of his time in the south third)
 	var b: Array[ArenaObstacle] = [
 		_sarcophagus(0.5, -7.0, 0.8, 7.0, 3.2, &"block", true),
 		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _column(6.5, -6.0, 5.2, 0.65),
@@ -862,6 +863,9 @@ func _rift() -> RoomLayout:
 	var fallen := FloorShape.poly([outline], [_poly(RIFT_FALLEN), _poly(RIFT_SOUTH),
 		_poly([-17.5, -3, -16, -5.2, -13, -5.6, -11.3, -3.5, -11.6, -0.4, -14, 0.6, -16.6, -0.6])])
 	l.variants = [_variant(b, fallen, [_rect(-19.5, -15.5, -12, -7)])]
+	# RP-07 (the room-designer's bands, by the damage measured): A early to the middle, B from the 4th room on
+	l.variant_depth = Vector2(0.1, 0.6)
+	l.variants[0].depth = Vector2(0.34, 1.0)
 	l.hero_spawn = Vector2(-18.0, 6.5)
 	l.hero_facing = Vector2(1, 0)
 	l.exits = [ArenaExit.at_edge(Vector2(12, -15), Vector2(0, 1)), ArenaExit.at_edge(Vector2(21, 2), Vector2(-1, 0)),
@@ -912,6 +916,8 @@ func _garden() -> RoomLayout:
 	l.hero_facing = Vector2(1, -1).normalized()
 	l.exits = [ArenaExit.at_edge(Vector2(13, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(17, 0), Vector2(-1, 0)),
 		ArenaExit.at_edge(Vector2(5, 14), Vector2(0, -1))]
+	# (LR-04, the north group north of the trunk, x -12 to -5, was tried on 2026-11-20 and put back: tree_shade stayed 5
+	# to 7%, the trunk stopped 0.1 shot a room)
 	l.spawns = [_rect(6, 12, -12.5, -9.5), _rect(13, 16, -4, 3), _rect(-6, 0, -13.2, -10.5), _rect(-2, 6, 9, 12.5)]
 	l.late_spawns = [_rect(-15, -13, -6, -3.5)]
 	l.cam_bounds = _rect(-3, 4, -2, 3)
@@ -1437,7 +1443,10 @@ func _sanctuary() -> RoomLayout:
 	l.boss_spawn = Vector2(-17.0, 0.0)
 	l.exits = [ArenaExit.at_edge(Vector2(6.5, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(-6, 14), Vector2(0, -1)),
 		ArenaExit.at_edge(Vector2(-22, -10.5), Vector2(1, 0))]
-	l.spawns = [_rect(-20, -14, -3, 3), _rect(-19, -15, 8, 11), _rect(-8, -2, -12, -8.5)]
+	# LR-03: the first wave rises also in the south aisle's east and the middle of the north one, so the fight opens in
+	# both aisles and the east third is no corridor (it was the hero's 5 s walk to a fight all in the west)
+	l.spawns = [_rect(-20, -14, -3, 3), _rect(-19, -15, 8, 11), _rect(-8, -2, -12, -8.5), _rect(4, 12, 8, 12),
+		_rect(-2, 6, -12, -8.5)]
 	l.late_spawns = [_rect(10, 16, 8, 12)]
 	l.cam_bounds = _rect(-10, 10, -2, 2)
 	# the question of the room (spec 0.2): the open nave or the aisles behind the columns
@@ -1495,6 +1504,9 @@ func _bridge() -> RoomLayout:
 	_areas(b, ["west", _rect(-28, -12, -9, 9), "landing", _rect(-3, 3, -4.5, 4.5), "bridge", _rect(-12, 12, -3, 3),
 		"east", _rect(12, 28, -9, 9)])
 	l.variants = [b]
+	# RP-07: A in the middle of the descent, B (the long bridge) late
+	l.variant_depth = Vector2(0.5, 0.8)
+	l.variants[0].depth = Vector2(0.67, 1.0)
 	l.hero_spawn = Vector2(-24.5, 0.0)
 	l.hero_facing = Vector2(1, 0)
 	l.exits = [ArenaExit.at_edge(Vector2(21, -9), Vector2(0, 1)), ArenaExit.at_edge(Vector2(28, 0.5), Vector2(-1, 0)),
@@ -1573,6 +1585,9 @@ func _runes() -> RoomLayout:
 	# RP-01: the quiet stone, the cross round it, the edge (B's two pillars stand on the edge)
 	_areas(vb, ["quiet", _rect(-3, 3, -3, 3), "middle", _rect(-9, 9, -9, 9), "edge", _rect(-15, 15, -12, 12)])
 	l.variants = [vb]
+	# RP-07: B (the quiet stone, easier) in the middle, A late
+	l.variant_depth = Vector2(0.67, 1.0)
+	l.variants[0].depth = Vector2(0.5, 0.8)
 	l.hero_spawn = Vector2(-12.5, 3.5)
 	l.hero_facing = Vector2(1, 0)
 	l.exits = [ArenaExit.at_edge(Vector2(6, -12), Vector2(0, 1)), ArenaExit.at_edge(Vector2(15, 0), Vector2(-1, 0)),
