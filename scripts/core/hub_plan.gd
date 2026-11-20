@@ -110,7 +110,7 @@ const BENCH := Vector2(0.35, 1.3)
 const BEDS: Array[Vector4] = [Vector4(-10.0, -12.6, 2.2, 0.8), Vector4(10.0, -12.6, 2.2, 0.8),
 	Vector4(-20.8, 1.6, 1.0, 2.4), Vector4(20.8, 1.6, 1.0, 2.4),
 	# the two lower quarters of the square, between the medallion's way and the fountain (art re-review E-1: 9.75 m free)
-	Vector4(-7.4, -1.8, 1.2, 0.5), Vector4(7.4, -1.8, 1.2, 0.5)]
+	Vector4(-7.4, -1.5, 1.2, 0.5), Vector4(7.4, -1.5, 1.2, 0.5)]
 const BED_HEIGHT := 0.55
 ## The braziers on stands flanking the top of the arrival's stairs (warm light in the square, H-P1-7).
 const ARRIVAL_FIRES: Array[Vector2] = [Vector2(-4.8, -11.4), Vector2(4.8, -11.4)]

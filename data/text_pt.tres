@@ -562,7 +562,6 @@ entries = {
 "jur_weight": "Peso: {n}",
 "jur_best": "Maior Peso vencido: {n}",
 "jur_xp": "Vitória com este Peso: +{n} XP de Maestria",
-"jur_off": "Desligado",
 "jur_rank": "{n} de {max}",
 "jur_rank_weight": "Peso {n}",
 "jur_descend": "Descer",

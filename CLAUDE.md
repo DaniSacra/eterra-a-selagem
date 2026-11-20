@@ -1701,7 +1701,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Masonry.fungus(at, count, reach, seed)`, cacho de chapéus achatados, `fungus.gdshader`: marfim-cinza, brilho só na
   borda do chapéu, maior canal até 0,6); água escura (`dark_water.gdshader`, da família do `fountain_water` mas à parte
   para a fonte clássica não mudar: `form` 0 lâmina com ondas lentas e espuma quebrada na borda, `foam_at` onde cai a
-  cascata; `form` 1 cascata em cartão com veios descendo e névoa no pé; matiz 200 a 210, espuma abaixo de `peak` 0,9).
+  cascata; `form` 1 cascata em cartão com veios descendo e névoa no pé; matiz 200 a 210, espuma abaixo de `peak` 0,9; no Compatibility, onde a luz própria sai sem o linear para sRGB e a
+  água ficava preta, o corpo entra pela luz própria `compat_body` 1,0 e ondas e espuma sobem pela raiz de 2,2 vezes
+  `compat_glow` 0,7: na fonte do hub matiz 193 para 202, saturação 0 para 0,41, luma p90 102 para 109, contra 203, 0,39 e 97 no Forward+).
   Em `ArenaRoom`: `added_since(from)`, `style_abyss(nós, mist, cor, luz)` (apaga partículas, recolore as luzes da camada
   funda e a bruma), `style_depths(valores)` (todo material da pedra funda da sala, inclusive a das bordas) e
   `hanging_lantern(from, ring_y, size, luz, styled)` (a lanterna do Jardim, agora comum; `styled` monta no `kit.styled()`).
@@ -1899,7 +1901,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `head_shrink` 0,9; 4 005 + 4 232 triângulos (teto 12 mil). Opções novas do modo KayKit do assado: `height`,
   `head_shrink`, `embed` e o 4º campo do clipe `{from, to, bend}`. Desenhados por `HubNpc`
   (`scripts/render/hub_npc.gd`: um `CrowdRenderer` próprio com uma figura, a mesma pintura, contorno e faixas do
-  estilizado da multidão, F7 ao vivo; `HubNpc.make(HubNpc.Who.VENDOR|SMITH)`, `face(ponto)`, `gesture()`): parado no
+  estilizado da multidão, F7 ao vivo, mas mais claros que os mortos: T-1 da re-revisão, `HubNpc.STYLE_LIGHT` 0,5,
+  `STYLE_SCENE` 0,3 e `STYLE_RIM` 0,35 contra 0,2 / 0,1 / 0,18 da multidão, o Vendedor, de capuz escuro sob o toldo,
+  vezes `STYLE_VENDOR` 2,2; corpo na câmera Perto de luma p50 cerca de 55 para 79 no Forjador e 45 para 76 no
+  Vendedor, o herói ao lado 94 a 97; `HubNpc.make(HubNpc.Who.VENDOR|SMITH)`, `face(ponto)`, `gesture()`): parado no
   `Idle` e um gesto de vez em quando (Vendedor `Interact` a cada 6 a 9 s; Forjador em séries de 3 a 5 golpes do
   `1H_Melee_Attack_Chop` a cada 1,2 s, cortado onde a cabeça do martelo pousa na face da bigorna a 0,94 m com o
   tronco 12 graus para trás, `HubNpc.landing`, `strike_point`, e 4 a 7 s de descanso), fagulhas âmbar pequenas
@@ -1925,7 +1930,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   fica abaixo de 0,85 da tela (`test_near_the_south_edge_stays_low`); com estação em foco a câmera ainda se inclina pelo
   `HubPlan.frame_for` (`SHOW`, `CamRig.lean`). Estações com lugar próprio e de frente para a câmera: barraca do Vendedor
   no lóbulo oeste (`COUNTER` com `COUNTER_HALF`, toldo de 5,8 m listrado terra e ocre de 5 a 3,5 m de altura sobre quatro
-  postes, `AWNING_*`, prateleiras atrás, mercadorias, duas lanternas; mercadorias encostadas, `GOODS`); Árvore a 0,8 sobre
+  postes, `AWNING_*`, prateleiras atrás, mercadorias, duas lanternas; mercadorias encostadas, `GOODS`); Árvore a 0,56 (inteira na tela da Longe, re-revisão E-3) em ouro mais velho sobre
   o estrado no lóbulo leste (folhas em cartões maiores e em menos lugares, H-P2-1); forja no chão a noroeste da bigorna
   (`FORGE`, `FORGE_HALF`: bloco de 3,8 x 3 m e 3,4 de altura, boca em arco para o sul com brasas, fogo e brilho, coifa,
   chaminé de 5,8 m com fumaça, a única luz de fogo com sombra), bigorna 1,5 vez maior, os dois NPCs com círculo de corpo onde são desenhados (`HubPlan.SMITH_SPOT` onde o martelo do
@@ -1946,7 +1951,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   brilho do fundo da forja mais forte, uma gêmea de luz `FORGE_RANK_LIGHT` 0,3 por posto e duas línguas de fogo a mais
   desde o posto 2. Medalhões da Fatia 1 no `RewardGem`: Prata Antiga em prata com a barra (`Mark.INGOT`, aro de prata) e
   Fragmento de Memória em pergaminho com a folha rasgada a tinta (`Mark.LEAF`, `parchment` no `reward_gem.gdshader`);
-  `tools/gem_lab.gd` mostra os medalhões lado a lado (`docs/gallery/hub/d/medallions_silver_memory_720.png`). Capturas do hub
+  Re-revisão do art-director (E-1 a E-4): os braseiros do terraço acendem difuso no estilizado (`light_specular` 0, sem
+  os discos de borda dura na fachada), a luz da forja fica `FORGE_LIGHT_EAST` 1,5 m a leste da boca (a poça chega à
+  bigorna e ao Forjador) e dois canteiros baixos partem os quadrantes de baixo da praça (`BEDS`, u ±7,4, v -1,5; o
+  maior quadrado livre de peça é o do medalhão da chegada, 8,5 m). `tools/gem_lab.gd` mostra os medalhões lado a lado (`docs/gallery/hub/d/medallions_silver_memory_720.png`). Capturas do hub
   com a câmera Longe pedem `--cam=far` (a Perto é o padrão desde o LR-01).
 - **Fatia 1, parte do technical-artist (`docs/design/rejogabilidade/sistemas.md` 3.4; provas em `docs/gallery/rj1/`,
   `tools/rj1_lab.gd`)**: a Emeth por posto de Temperar: `temper` no `emeth.gdshader` (0 a 2, padrão 0 = a lâmina de
@@ -1956,8 +1964,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `style_cap`; o gameplay-engineer liga ao `ForgeRank`. Selos dos quatro anjos em código (`AngelSeal`,
   `scripts/ui/angel_seal.gd`: `AngelSeal.new().setup(Boon.Family.X, px, lit)` ou `AngelSeal.mark(ci, família, centro,
   raio, linha, cor)`): o selo da casa (`SealMedal.draw_seal`) e a marca da família (Chama brasa em losango com três
-  línguas de fogo, Geada floco de seis braços, Luz feixe vertical sobre um losango sem raios, Vigília a trombeta do
-  vigia), cores calmas em `AngelSeal.TINT`; nunca sol, cruz, leão, escudo nem olho; o Elo não tem selo.
+  línguas de fogo, Geada floco de seis braços, Luz um feixe sem ponta que desce sobre um losango, o topo reto esmaecendo (alfa 0,2 no alto a 0,9 embaixo) e alargando até a largura do losango com dois fios nas bordas, T-2, nunca pedra em pé nem raios, Vigília a trombeta do
+  vigia, oliva, T-3), cores calmas em `AngelSeal.TINT`; nunca sol, cruz, leão, escudo nem olho; o Elo não tem selo.
 
 ## Rejogabilidade, Fatia 1 (gameplay; spec `docs/design/rejogabilidade/sistemas.md` 1, 3 a 5; API para a UI em 5.3)
 - **Três materiais, sem Brasa** (Q-RJ1 a Q-RJ3): Prata Antiga, Fragmento de Memória e Esmeralda (nomes de trabalho),
@@ -2030,6 +2038,18 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   mais do mesmo enquanto aparece ou espera soma. O `Hud._greet_materials` lê `game.materials.found` a cada quadro e saúda
   tudo menos o abate de elite (fica só a palavra do `Rooms.found` onde ele caiu). Respeita o `keep_out` das placas como
   as outras saudações.
+- Texto da Maestria: o nível revela, a Memória abre: "Dom revelado: X" / "Dons revelados: X, Y" no fim
+  (`MasteryReport.unlocks`) e "O nível N revela: ..." no Livro (`hero_next`).
+- P2 da revisão d2ff05d fechados depois: Juramentos sem caixa por linha, fio entre linhas, foco numa faixa com a linha de
+  ouro, "Peso N" à direita só ligado (`JuramentoScreen._thread`); Músicas com cabeçalhos `UiKit.section` e o Ouvir só
+  inteiro na linha em foco, sob o ponteiro ou tocando (`MusicRoomScreen.QUIET_LISTEN` 0,3; a largura ficou a de antes,
+  1160: com as duas colunas numa de 780 a lista não cabe em 720); Compêndio, Inimigos e Dons com linhas de 34 px
+  (`CodexScreen.LIST_ROW`), a marca do papel do inimigo a tinta (`RoleMark`, `scripts/ui/role_mark.gd`) e a contagem
+  "64 derrotados · 5 de elite" em `FADED` no `number_font`; menu do Santuário numa folha do Livro (`PauseMenu` com
+  `hub`: `BookSpread` única, botões de papel); foco das cartas (Bênção, Provação, Altar, Encontro) em cantoneiras marfim
+  por dentro da linha de metal, nunca uma linha inteira (`BoonCard.draw_focus`, `FOCUS_ARM`; a Comum em foco ganha um
+  brilho marfim, as outras ficam com o brilho da raridade); os cabeçalhos em versal das cartas de evento ficam em 13
+  px (`BoonCard.HEAD_SIZE`: a 14 o da maldição quebra em duas linhas na faixa). Testes no fim de `tests/test_ui_review.gd`.
 - Capturas: `--hub --hero-at=smith --hub-use=smith --materials=silver:30,memory:5` (Forja), `--title --screen=gifts
   --hero-xp=160 --hero-opened=quarto_corte --materials=...` (`--hero-opened` só abre esses, os outros revelados ficam
   selados; `Save._dev_hero`), `tools/book_lab.gd` (`gifts_sealed`, `_ask`, `_short`), `tools/ui_lab.gd -- --meeting` e

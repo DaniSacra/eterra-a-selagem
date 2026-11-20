@@ -8,7 +8,8 @@ extends Control
 ## the button that opened it.
 ## HUB-B1: Sair para o menu goes to the hub (scenes/hub.tscn); in the hub (hub true) the same panel is its Esc menu,
 ## titled with the place's name, without the descent's Bênçãos, map and medallions, with Como Jogar (the title's, as
-## the hub stands between descents), its way out Voltar ao título.
+## the hub stands between descents), its way out Voltar ao título. In the hub it is a leaf of the Livro (UI review
+## d2ff05d, P2-8: everything else in the Santuário is paper): BookSpread single, the paper's buttons, the title in rubric.
 
 signal resumed
 
@@ -36,7 +37,7 @@ var hub := false
 
 
 func open() -> void:
-	theme = UiKit.theme()
+	theme = Book.theme() if hub else UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_main = Control.new()
 	_main.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -48,15 +49,30 @@ func open() -> void:
 	rail.offset_right = LEFT + WIDTH
 	rail.alignment = BoxContainer.ALIGNMENT_CENTER
 	_main.add_child(rail)
-	var panel := PanelContainer.new()
-	panel.name = "panel"
-	panel.add_theme_stylebox_override(&"panel", UiKit.frame_box(20))
-	rail.add_child(panel)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override(&"separation", 9)
-	panel.add_child(v)
-	v.add_child(UiKit.header(T.t(&"hub_name" if hub else &"pause_title"), 40, WIDTH * 0.72))
-	var go_on := UiKit.primary(_button(v, "continue", T.t(&"pause_continue"), func() -> void: resumed.emit()))
+	if hub:
+		var leaf := BookSpread.new().setup(0.62, true)
+		leaf.name = "panel"
+		rail.add_child(leaf)
+		v.custom_minimum_size.x = WIDTH - 40.0
+		leaf.left.add_child(v)
+		var head := Book.heading(T.t(&"hub_name"), 34, WIDTH * 0.72)
+		(head.get_node("text") as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		(head.get_child(1) as Control).size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		v.add_child(head)
+	else:
+		var panel := PanelContainer.new()
+		panel.name = "panel"
+		panel.add_theme_stylebox_override(&"panel", UiKit.frame_box(20))
+		rail.add_child(panel)
+		panel.add_child(v)
+		v.add_child(UiKit.header(T.t(&"pause_title"), 40, WIDTH * 0.72))
+	var go_on := _button(v, "continue", T.t(&"pause_continue"), func() -> void: resumed.emit())
+	if hub:
+		Book.primary(go_on)
+	else:
+		UiKit.primary(go_on)
 	go_on.add_theme_font_size_override(&"font_size", 24)
 	# the descent's map (DV-1, MAP-03), only in a descent by rooms
 	var game := _game()
@@ -76,19 +92,21 @@ func open() -> void:
 	options.pressed.connect(func() -> void: _show(OptionsScreen.new(), options))
 	_carried(v)
 	var rule := GoldRule.new()
+	if hub:
+		rule.tint = Book.GILT
 	rule.custom_minimum_size = Vector2(WIDTH * 0.6, 12)
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(rule)
 	var foot := UiKit.foot(6)
 	v.add_child(foot)
-	var quit := UiKit.link(T.t(&"hub_to_title" if hub else &"pause_quit"), func() -> void:
+	var quit := _link(T.t(&"hub_to_title" if hub else &"pause_quit"), func() -> void:
 		SceneGo.to(get_tree(), SceneGo.TITLE if hub else SceneGo.HUB))
 	quit.name = "quit"
 	foot.add_child(quit)
 	buttons.append(quit)
 	# leave the game from the pause too (desktop only: phones and the browser close by themselves)
 	if not OS.has_feature("mobile") and not OS.has_feature("web"):
-		var leave := UiKit.link(T.t(&"pause_exit_game"), func() -> void: get_tree().quit())
+		var leave := _link(T.t(&"pause_exit_game"), func() -> void: get_tree().quit())
 		leave.name = "exit_game"
 		foot.add_child(leave)
 		buttons.append(leave)
@@ -96,9 +114,18 @@ func open() -> void:
 	go_on.grab_focus.call_deferred()
 
 
+## A quiet way out at the foot: a link on the ink panel, a small paper button on the hub's leaf.
+func _link(text: String, on_press: Callable) -> Button:
+	if not hub:
+		return UiKit.link(text, on_press)
+	var b := Book.button(text, on_press, 0.0)
+	b.add_theme_font_size_override(&"font_size", 16)
+	return b
+
+
 ## A button of the panel's column, as wide as the panel, in the focus order.
 func _button(parent: Control, id: String, text: String, on_press: Callable) -> Button:
-	var b := UiKit.button(text, on_press, 0.0)
+	var b := Book.button(text, on_press, 0.0) if hub else UiKit.button(text, on_press, 0.0)
 	b.name = id
 	b.custom_minimum_size.y = 46
 	parent.add_child(b)

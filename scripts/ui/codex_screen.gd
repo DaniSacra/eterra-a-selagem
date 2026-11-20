@@ -37,12 +37,15 @@ const PHASES := 4
 const PSALM_ICON := 34.0
 const PSALM_ROW := 50.0
 const PSALM_NAME_WIDTH := 220.0
-const ENEMY_NAME_WIDTH := 240.0
+const ENEMY_NAME_WIDTH := 206.0
 const ROLE_WIDTH := 300.0
 const ROW_SIZE := 17
 const NAME_WIDTH := 170.0
 ## The Gifts' rows carry the tree's own node (TalentGlyph.mark), this wide.
 const GIFT_MARK := 22.0
+## The Inimigos' and Dons' rows (UI review d2ff05d, P2-5): at least this tall, a mark first (RoleMark, TalentGlyph).
+const LIST_ROW := 34.0
+const ROLE_MARK := 22.0
 const KEYS_WIDTH := 240.0
 ## The HUD marks of a move's inputs (Golpes).
 const MOVE_MARK := 28.0
@@ -279,6 +282,7 @@ func _gifts() -> void:
 		var open := t.unlock_level <= level
 		var row := HBoxContainer.new()
 		row.name = String(t.id)
+		row.custom_minimum_size.y = LIST_ROW
 		row.add_theme_constant_override(&"separation", 10)
 		row.add_child(TalentGlyph.mark(t, GIFT_MARK, open))
 		var name := UiKit.label(T.t(t.name_key) if open else UNKNOWN, Book.ink(TalentNode.BRANCH_COLOR[t.branch]) if open else Book.FADED, ROW_SIZE, UiKit.BOLD_FONT)
@@ -419,7 +423,11 @@ func _enemies() -> void:
 		var n := count("enemies", id, "defeated")
 		var row := HBoxContainer.new()
 		row.name = String(id)
+		row.custom_minimum_size.y = LIST_ROW
 		row.add_theme_constant_override(&"separation", 12)
+		var mark := RoleMark.new().setup(def.role if def.role != &"" else &"guardian", ROLE_MARK, n <= 0)
+		mark.name = &"Mark"
+		row.add_child(mark)
 		var name := UiKit.label(enemy_name(def) if n > 0 else UNKNOWN, Book.INK if n > 0 else Book.FADED, ROW_SIZE, UiKit.BOLD_FONT)
 		name.name = &"Name"
 		name.custom_minimum_size.x = ENEMY_NAME_WIDTH
@@ -429,12 +437,12 @@ func _enemies() -> void:
 		role.custom_minimum_size.x = ROLE_WIDTH
 		row.add_child(role)
 		var elite := count("enemies", id, "elite")
-		var tally := UiKit.label(T.t(&"codex_defeated" if n != 1 else &"codex_defeated_one", {"n": n}) if n > 0 else "", Book.GILT, ROW_SIZE - 2)
+		var tally := UiKit.label(T.t(&"codex_defeated" if n != 1 else &"codex_defeated_one", {"n": n}) if n > 0 else "", Book.FADED, ROW_SIZE - 2, UiKit.number_font())
 		tally.name = &"Times"
 		tally.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		tally.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		if elite > 0:
-			tally.text += "  " + T.t(&"codex_defeated_elite", {"n": elite})
+			tally.text += " · " + T.t(&"codex_defeated_elite", {"n": elite})
 		row.add_child(tally)
 		_list.add_child(row)
 

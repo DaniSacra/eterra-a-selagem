@@ -314,3 +314,61 @@ func test_the_hub_names_its_place_and_its_stations() -> void:
 		await get_tree().process_frame
 	assert_false(labels.shown().has(HubPlan.BOOK), "the one in focus has its sign instead")
 	Save.data.options["camera"] = cam_was
+
+
+# ---------- P2-2, P2-5, P2-8, the Mastery's line (after Fatia 1) ----------
+
+func test_the_mastery_reveals_and_the_memory_opens() -> void:
+	assert_true(T.t(&"end_unlocked_many", {"name": "x"}).begins_with("Dons revelados"))
+	assert_true(T.t(&"end_unlocked", {"name": "x"}).begins_with("Dom revelado"))
+	assert_true(T.t(&"hero_next", {"n": 3, "what": "x"}).contains("revela"))
+
+
+func test_the_codex_enemies_have_a_mark_and_a_tall_row() -> void:
+	var d := _data(0)
+	d.codex.enemies = {"skeleton": {"defeated": 64, "elite": 5}}
+	var c := CodexScreen.new()
+	add_child_autofree(c)
+	c.open(CodexScreen.Tab.ENEMIES, d)
+	var row := c.find_child("skeleton", true, false) as HBoxContainer
+	assert_not_null(row.find_child("Mark", false, false) as RoleMark)
+	assert_gte(row.custom_minimum_size.y, CodexScreen.LIST_ROW)
+	var times := row.find_child("Times", false, false) as Label
+	assert_true(times.text.contains(" · "), times.text)
+	assert_eq(times.get_theme_font(&"font"), UiKit.number_font())
+
+
+func test_a_juramento_off_says_nothing_on_the_right() -> void:
+	var saved := Save.data
+	Save.data = SaveData.defaults()
+	Save.data.wins = 1
+	var j := JuramentoScreen.new()
+	add_child_autofree(j)
+	j.open()
+	for id: StringName in j._rows:
+		assert_eq((j._rows[id].cost as Label).text, "")
+	Save.data = saved
+
+
+func test_the_hubs_menu_is_a_leaf_of_the_livro() -> void:
+	var p := PauseMenu.new()
+	p.hub = true
+	add_child_autofree(p)
+	p.open()
+	assert_true(p.find_child("panel", true, false) is BookSpread)
+	var plain := PauseMenu.new()
+	add_child_autofree(plain)
+	plain.open()
+	assert_true(plain.find_child("panel", true, false) is PanelContainer)
+
+
+func test_the_music_lists_one_lit_listen() -> void:
+	var m := MusicRoomScreen.new()
+	add_child_autofree(m)
+	m.open()
+	await wait_process_frames(2)
+	var lit := 0
+	for id: StringName in m._listen:
+		if (m._listen[id] as Button).modulate.a > 0.5:
+			lit += 1
+	assert_lte(lit, 1, "only the one in focus, hovered or playing")

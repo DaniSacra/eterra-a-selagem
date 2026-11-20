@@ -21,6 +21,8 @@ const NAME_WIDTH := 450.0
 const NAME_SIZE := 19
 ## Room above each place on the left, so each label reads with its own choice.
 const PLACE_GAP := 10.0
+## A list's Ouvir not in focus, not hovered and not playing: faint, so the column reads as one button (P2-2).
+const QUIET_LISTEN := 0.3
 
 ## Each piece's chosen level in this screen (id -> level; 0 = all phases).
 var levels: Dictionary = {}
@@ -59,7 +61,7 @@ func _build() -> void:
 	left.custom_minimum_size.x = LEFT_WIDTH
 	left.add_theme_constant_override(&"separation", 6)
 	cols.add_child(left)
-	left.add_child(UiKit.label(T.t(&"music_room_places"), UiKit.GOLD, 24, UiKit.BOLD_FONT))
+	left.add_child(UiKit.section(T.t(&"music_room_places")))
 	for place in MusicCatalog.PLACES:
 		var gap := Control.new()
 		gap.custom_minimum_size.y = PLACE_GAP
@@ -72,7 +74,7 @@ func _build() -> void:
 	right.custom_minimum_size.x = RIGHT_WIDTH
 	right.add_theme_constant_override(&"separation", 1)
 	cols.add_child(right)
-	right.add_child(UiKit.label(T.t(&"music_room_list"), UiKit.GOLD, 24, UiKit.BOLD_FONT))
+	right.add_child(UiKit.section(T.t(&"music_room_list")))
 	for id: StringName in MusicCatalog.PIECES:
 		right.add_child(_piece_row(id))
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
@@ -112,6 +114,8 @@ func _piece_row(id: StringName) -> HBoxContainer:
 		_refresh(), 120.0)
 	b.name = "listen_" + id
 	b.custom_minimum_size.y = ROW
+	# one Ouvir that reads (UI review d2ff05d, P2-2): only the row in focus, under the pointer or playing shows it
+	# whole (_refresh, every frame)
 	_listen[id] = b
 	row.add_child(b)
 	for c: Button in row.find_children("*", "Button", true, false):
@@ -183,6 +187,8 @@ func _refresh() -> void:
 	for id: StringName in _listen:
 		var b: Button = _listen[id]
 		b.text = T.t(&"music_stop" if id == now else &"music_listen")
+		var lit := id == now or b.has_focus() or b.is_hovered()
+		b.modulate.a = 1.0 if lit else QUIET_LISTEN
 
 
 func _process(delta: float) -> void:

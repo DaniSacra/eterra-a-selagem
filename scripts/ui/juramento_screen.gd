@@ -87,10 +87,12 @@ func open(with_descend: bool = false) -> void:
 	_xp = UiKit.shadow(UiKit.label("", UiKit.DIM, 20))
 	head.add_child(_xp)
 	var list := VBoxContainer.new()
-	list.add_theme_constant_override(&"separation", 4)
+	list.add_theme_constant_override(&"separation", 0)
 	page.add_child(list)
 	var first: Control = null
 	for d in vows.catalog:
+		if first != null:
+			list.add_child(_thread())
 		var row := _row(d)
 		list.add_child(row)
 		if first == null:
@@ -128,12 +130,26 @@ func hover_takes_focus(at: Vector2) -> bool:
 	return _open_mouse == Vector2.INF or at.distance_to(_open_mouse) >= HOVER_AFTER_PX
 
 
+## The thin line between two Juramentos (UI review d2ff05d, P2-2: no box round each row, a thread between them).
+static func _thread() -> Control:
+	var t := ColorRect.new()
+	t.color = Color(UiKit.OLD_GOLD, 0.22)
+	t.custom_minimum_size.y = 1
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
 ## One Juramento: a button the size of the row (focus, click), with its name, diamonds, line and Peso inside.
 func _row(d: JuramentoDef) -> Button:
 	var b := Button.new()
 	b.name = String(d.id)
 	b.custom_minimum_size = Vector2(0, ROW_HEIGHT)
 	b.focus_mode = Control.FOCUS_ALL
+	# no box: the row is plain until in focus, then a faint lit band with the gold line (UiKit.focus_row's)
+	var empty := StyleBoxEmpty.new()
+	for st: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+		b.add_theme_stylebox_override(st, empty)
+	b.add_theme_stylebox_override(&"focus", UiKit.box(Color(0.12, 0.08, 0.1, 0.7), UiKit.GOLD, 2, 0, 4))
 	b.mouse_entered.connect(func() -> void:
 		if not b.has_focus() and hover_takes_focus(get_viewport().get_mouse_position()):
 			_open_mouse = Vector2.INF
@@ -206,7 +222,8 @@ func _refresh() -> void:
 		(r.desc as Label).text = T.t(d.desc_key, {"v": d.shown_value(maxi(rank, 1))})
 		(r.desc as Label).modulate = Color.WHITE if rank > 0 else Color(1, 1, 1, 0.55)
 		(r.title as Label).add_theme_color_override(&"font_color", UiKit.GOLD if rank > 0 else UiKit.PALE)
-		(r.cost as Label).text = T.t(&"jur_rank_weight", {"n": d.weight(rank)}) if rank > 0 else T.t(&"jur_off")
+		# the state on the right only when sworn (off, the dimmed line already says so)
+		(r.cost as Label).text = T.t(&"jur_rank_weight", {"n": d.weight(rank)}) if rank > 0 else ""
 		(r.cost as Label).add_theme_color_override(&"font_color", UiKit.GOLD if rank > 0 else UiKit.DIM)
 	var w := vows.weight()
 	_total.text = T.t(&"jur_weight", {"n": w})
