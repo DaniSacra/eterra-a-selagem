@@ -52,6 +52,9 @@ const DEFEAT_WIDTH := 560.0
 const WHERE_SIZE := 21
 
 ## The sealing is still playing (victory).
+## The materials brought home, first on both endings: larger than the numbers.
+const BROUGHT_SIZE := 24
+const BROUGHT_MARK := 28.0
 var intro := false
 var _summary: Control
 ## The sealing alone (the big seal, the title, the line), and the column with the summary that takes its place.
@@ -95,6 +98,10 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	sub.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	sub.custom_minimum_size.x = DEFEAT_WIDTH - 60.0
 	v.add_child(sub)
+	# first what he keeps (ciclo visual 2026-11-20: what was brought and the next action first): the materials home
+	# and the Mastery, then the Blessings the descent carried, then the numbers
+	_brought(v, stats)
+	_mastery(v, stats)
 	var gifts := _gifts(stats)
 	var shows_gifts := gifts.get_child_count() > 0
 	if shows_gifts:
@@ -102,8 +109,6 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 		v.add_child(gifts)
 	else:
 		gifts.free()
-	_brought(v, stats)
-	_mastery(v, stats)
 	var grid := _grid(v)
 	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time), UiKit.GOLD if new_best else UiKit.PALE)
 	if int(stats.get("level", 0)) > 0: # the old horde mode has levels; the room run does not
@@ -136,19 +141,27 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 	var panel := PanelContainer.new()
 	panel.name = "summary_panel"
 	panel.add_theme_stylebox_override(&"panel", UiKit.frame_box(SUMMARY_MARGIN))
+	UiKit.crown(panel)
+	# room for the crown over the panel's top edge (UiKit.crown), clear of the line above
+	var air := Control.new()
+	air.custom_minimum_size.y = 8
+	air.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	v.add_child(air)
 	v.add_child(panel)
 	var s := VBoxContainer.new()
 	s.name = "summary"
 	s.add_theme_constant_override(&"separation", 6)
 	panel.add_child(s)
 	_summary = s
+	# what he keeps first: the materials home and the Mastery, then the Blessings and the numbers
+	_brought(s, stats)
+	_mastery(s, stats)
 	s.add_child(_head(T.t(&"end_spoils")))
 	var gifts := _gifts(stats)
 	if gifts.get_child_count() > 0:
 		s.add_child(gifts)
 	else:
 		gifts.free()
-	_brought(s, stats)
 	var grid := _grid(s)
 	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time), UiKit.GOLD if new_best else UiKit.PALE)
 	_stat(grid, T.t(&"end_kills"), str(stats.kills))
@@ -159,7 +172,6 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 		_stat(grid, T.t(&"hud_gold"), str(game.rooms.gold))
 	else:
 		_stat(grid, T.t(&"end_boons"), str(stats.boons))
-	_mastery(s, stats)
 	if new_best:
 		var nb := UiKit.shadow(UiKit.label(T.t(&"end_new_best"), UiKit.GOLD, 19, UiKit.BOLD_FONT))
 		nb.name = "new_best"
@@ -312,7 +324,7 @@ func _brought(parent: Control, stats: Dictionary) -> void:
 	for m: StringName in [MaterialPurse.SILVER, MaterialPurse.MEMORY]:
 		var n := int(got.get(String(m), 0))
 		if n > 0:
-			row.add_child(MaterialCount.new().setup(m, n, UiKit.PALE, 19, 22.0, true))
+			row.add_child(MaterialCount.new().setup(m, n, UiKit.STRONG, BROUGHT_SIZE, BROUGHT_MARK, true))
 	if row.get_child_count() == 0:
 		row.free()
 		return
@@ -382,6 +394,8 @@ func _ways(parent: Control, victory: bool) -> void:
 	var main := to_menu if victory else again
 	UiKit.primary(main)
 	main.grab_focus.call_deferred()
+	# the keys at the foot (benchmark P0-2, UI-HB6)
+	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self))])
 
 
 ## The fight is over: the HUD hides under any ending (the defeat showed the map, the hit count and the gifts' row

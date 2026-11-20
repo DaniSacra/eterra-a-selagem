@@ -136,20 +136,24 @@ const OLD_ARCH := Vector3(-9.5, 3.2, 0.5)
 
 ## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 2): the rift's biome in the stylized look, indigo
 ## slate, the hall's fires, its own air; the violet only under the brink and far off.
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the indigo fuller (hue 240 to 255 on the
+## screen, scene saturation up to 0.40, short of Morvath's violet), the violet still only under the brink.
 const STYLE := {
-	&"stone": Color(0.327, 0.319, 0.363), &"shadow": Color(0.87, 0.833, 0.98), &"floor_stone": STY_FLOOR,
+	&"stone": Color(0.26, 0.25, 0.37), &"shadow": Color(0.82, 0.8, 1.0), &"floor_stone": STY_FLOOR,
 	&"edge_value": STY_EDGE_VALUE, &"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
-	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.70, 0.70, 0.74),
+	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.66, 0.66, 0.76),
 		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 1.4, &"moon_shadow": true},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Grey salt, paler than the slate, 1.4 times the slab's value (the floor between them at patch_rest).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.483, 0.476, 0.508), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
+## The cycle of 2026-11-20: the patches soft (ArenaKit.SOFT_PATCHES), the floor calm (ArenaKit.CALM_FLOOR) and darker
+## toward the room's far edges (edge_value from edge_span times the calm radius; the fight's middle stays).
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.4, 0.39, 0.52), &"edge_value": 0.6, &"edge_span": Vector2(1.3, 2.3)}
 ## The floor's slate and how dark it falls toward the room's edge (room redesign fixes: the east platform's front read
 ## at luma 42, meta 50 to 65; the floor's middle stays near).
-const STY_FLOOR := Color(0.345, 0.34, 0.366)
+const STY_FLOOR := Color(0.27, 0.26, 0.38)
 const STY_EDGE_VALUE := 1.0
 ## The stylized air in the browser's renderer (its ambient and moon lower, as the crypt's).
 const STY_COMPAT_AMBIENT := 0.5
@@ -620,7 +624,7 @@ func _far() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = STY_FLOOR_BIOME
+	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME)
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
@@ -654,6 +658,7 @@ func _dress_styled() -> void:
 					_head_bowl(sm, at)
 	_hung_shards(sm)
 	_mouth_arch(sm)
+	_aqueduct(sm)
 	_fallen_column(sm)
 	if _fallen:
 		_fallen_arch(sm)
@@ -741,6 +746,54 @@ func _mouth_arch(sm: Masonry) -> void:
 	kit.styled_build(func() -> void:
 		kit.chain(MOUTH_CHAIN_FROM, end + Vector3(0, 0.3, 0), 1.6, 1.0)
 		kit.chain(end, end + Vector3(0.4, -MOUTH_CHAIN_HANG, 0.2), 0.05, 0.8))
+
+
+## Item 4 of the cycle of 2026-11-20 (depth past the edge): the dark masses of a ruined aqueduct rising out of the mist
+## west of the room (STY_AQUEDUCT: x, from z, to z, the piers' foot height; STY_AQUEDUCT_PIERS: each pier's top over the
+## floor, the last arches broken), its piers in the depths' unlit stone, chains from the room's west lip down to two
+## of them, and spurs of rock south-west. All west or below the floor, so none hides the floor on the screen (a point h
+## high hides the floor 1.73 h m behind it, to its north-west).
+const STY_AQUEDUCT := Vector4(-30.0, -13.0, 13.0, -16.0)
+const STY_AQUEDUCT_PIERS: Array[float] = [0.6, -0.4, 1.2, -1.6, 0.2]
+const STY_AQUEDUCT_PIER := Vector2(1.6, 1.4)
+const STY_AQUEDUCT_RING := Vector2(0.8, 1.3)
+## The arches' radius as a share of their span (Masonry.voussoir_arch).
+const STY_ARCH_RADIUS := 0.8
+const STY_AQUEDUCT_GAPS: Array[Vector2] = [Vector2(-0.4, 1.8), Vector2(9.0, 9.0), Vector2(-2.6, 0.6), Vector2(9.0, 9.0)]
+const STY_AQUEDUCT_CHAINS: Array[int] = [1, 3]
+const STY_AQUEDUCT_CHAIN := Vector2(1.8, 1.3)
+const STY_ROCKS: Array[Vector4] = [Vector4(-27.0, 19.0, -2.5, 2.2), Vector4(-24.0, 23.0, -4.0, 1.7), Vector4(-33.0, 15.5, -1.2, 2.6)]
+const STY_ROCK_FOOT := -18.0
+## The mist the aqueduct and the spurs fade into (Masonry.depth_stone).
+const STY_DEPTH_FADE := 0.3
+const STY_DEPTH_SEED := 9113
+
+
+func _aqueduct(sm: Masonry) -> void:
+	var dark := sm.depth_stone(RUIN_MIST, STY_DEPTH_FADE)
+	var a := STY_AQUEDUCT
+	var n := STY_AQUEDUCT_PIERS.size()
+	var step := (a.z - a.y) / float(n - 1)
+	var tops: Array[Vector3] = []
+	for k in n:
+		var z := a.y + step * k
+		var top := STY_AQUEDUCT_PIERS[k]
+		sm.box(Vector3(a.x, (a.w + top) * 0.5, z), Vector3(STY_AQUEDUCT_PIER.x, top - a.w, STY_AQUEDUCT_PIER.y), 0.0, dark, false)
+		tops.append(Vector3(a.x, top, z))
+		if k == n - 1:
+			continue
+		# the arch to the next pier, its outer apex at the lower top; some of its stones gone
+		var span := step - STY_AQUEDUCT_PIER.y
+		var rise := sqrt(pow(span * STY_ARCH_RADIUS, 2.0) - pow(span * (STY_ARCH_RADIUS - 0.5), 2.0)) + STY_AQUEDUCT_RING.x
+		var spring := minf(top, STY_AQUEDUCT_PIERS[k + 1]) - rise
+		sm.broken_arch(Vector3(a.x, spring, z + step * 0.5), Vector2(1, 0), span, 0.0, STY_AQUEDUCT_RING.x, STY_AQUEDUCT_RING.y,
+			dark, STY_AQUEDUCT_GAPS[k % STY_AQUEDUCT_GAPS.size()], STY_ARCH_RADIUS)
+	depth_spurs(sm, STY_ROCKS, STY_ROCK_FOOT, dark, STY_DEPTH_SEED)
+	var lip := -layout.half.x - 0.4
+	kit.styled_build(func() -> void:
+		for k: int in STY_AQUEDUCT_CHAINS:
+			var t := tops[k]
+			kit.chain(Vector3(lip, -0.3, t.z), t + Vector3(0, 0.1, 0), STY_AQUEDUCT_CHAIN.x, STY_AQUEDUCT_CHAIN.y))
 
 
 ## SW-F1: the fallen column across the rift's south hole (FALLEN_COLUMN_*), under the floor's level, its two halves

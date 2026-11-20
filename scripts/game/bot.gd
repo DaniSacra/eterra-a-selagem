@@ -4,6 +4,8 @@ extends RefCounted
 ## walks to the nearest enemy, plays the combos of the tree, steps out of warnings and dodges bolts.
 
 ## L attack, H special, C special held (Omega special), O attack held (Omega attack), Q circle of light, d dash.
+## How near a shot being readied keeps the robot from the attack's Omega (shot_coming).
+const SHOT_NEAR := 12.0
 const COMBOS: Array[String] = ["LLL", "Q", "H", "LLL", "O", "LL", "H", "C", "dL", "LLL"]
 const GAP := 0.25
 const REACH := 3.6
@@ -243,9 +245,13 @@ func step(dt: float, game: Game) -> void:
 			_held = &"heavy_attack"
 			_hold = 0.75
 		"O":
-			pad.press(&"light_attack")
-			_held = &"light_attack"
-			_hold = 0.9
+			if shot_coming(game, p):
+				# (C19, combat_cadence.md 8.3: never planted in the attack's Omega with a shot being readied near)
+				pad.press(&"light_attack")
+			else:
+				pad.press(&"light_attack")
+				_held = &"light_attack"
+				_hold = 0.9
 		"Q":
 			pad.press(&"cast")
 		"d":
@@ -281,6 +287,17 @@ func _keep_away(game: Game, p: Vector2, boss: Vector2, first: bool, dt: float) -
 	var out := away.normalized() if away.length() > 0.1 else Vector2.RIGHT
 	pad.move = _steer(game, p, _escape(game, p, out))
 	pad.press(&"dodge")  # held: the dodge, then the run
+
+
+## True when an enemy that shoots (ARCHER, PRIEST: the mage, the archer, the priests, the Elder) readies a shot within
+## SHOT_NEAR m: the robot does not plant itself in the attack's Omega then (C19, combat_cadence.md 8.3 (a): the Elder's
+## fan hit it while it charged).
+static func shot_coming(game: Game, p: Vector2) -> bool:
+	for e in game.horde.list:
+		if e.alive and e.state == Enemy.State.WINDUP and p.distance_to(e.pos) < SHOT_NEAR \
+				and (e.def.behavior == EnemyDef.Behavior.ARCHER or e.def.behavior == EnemyDef.Behavior.PRIEST):
+			return true
+	return false
 
 
 ## The nearest enemy that can be hurt (behind his ritual's shield the boss waits: his dead come first).

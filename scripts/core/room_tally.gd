@@ -25,6 +25,9 @@ var boons_at_boss := -1
 var hurt_ctx: Array[Dictionary] = []
 ## The shop: gold walking in and what was bought ({} before it).
 var shop := {}
+## DV-2 (MAP-09): the route shop's, the same fields ({} when the way passed none).
+var route_shop := {}
+var _route := false
 ## The fountain healed him.
 var fountain_used := false
 ## E5: every decision of the events, in order ({type, room, t, ...}: the Provação's slab shown, refused, paid, the card
@@ -114,16 +117,23 @@ func event(type: String, time: float, data := {}) -> void:
 
 
 ## The shop was walked into with `gold`.
-func shop_entered(gold: int) -> void:
-	shop = {"gold": gold, "bought": [], "spent": 0}
+## DV-2 (MAP-09): a route shop (before the last one) keeps its own in route_shop; what is bought goes to the shop
+## walked into last.
+func shop_entered(gold: int, route := false) -> void:
+	_route = route
+	if route:
+		route_shop = {"gold": gold, "bought": [], "spent": 0}
+	else:
+		shop = {"gold": gold, "bought": [], "spent": 0}
 
 
 ## Bought `item` (a RunMap.Reward's name) for `price` in the shop.
 func bought(item: String, price: int) -> void:
-	if shop.is_empty():
-		shop_entered(0)
-	(shop.bought as Array).append(item)
-	shop.spent = int(shop.spent) + price
+	if (route_shop if _route else shop).is_empty():
+		shop_entered(0, _route)
+	var s: Dictionary = route_shop if _route else shop
+	(s.bought as Array).append(item)
+	s.spent = int(s.spent) + price
 
 
 ## The fountain healed him.
@@ -157,7 +167,7 @@ func rooms(time: float) -> Array:
 
 ## The run's own fields (GP-02) for the log: boons_at_boss, shop, fountain_used and hurt_ctx (copies).
 func run_fields() -> Dictionary:
-	return {"boons_at_boss": boons_at_boss, "shop": shop.duplicate(true), "fountain_used": fountain_used,
+	return {"boons_at_boss": boons_at_boss, "shop": shop.duplicate(true), "route_shop": route_shop.duplicate(true), "fountain_used": fountain_used,
 		"hurt_ctx": hurt_ctx.duplicate(true), "events": events.duplicate(true)}
 
 

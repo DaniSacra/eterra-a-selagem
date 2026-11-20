@@ -94,7 +94,7 @@ func test_materials_come_from_doors_elites_the_guardian_and_morvath() -> void:
 	assert_eq(game.materials.report().memory.boss, st.memory_victory)
 	var r := game.result()
 	assert_eq(r.materials.total.silver, game.materials.total(MaterialPurse.SILVER))
-	assert_eq(r.forge, {"temper": 0})
+	assert_eq(r.forge, {"temper": 0, "refine": []})
 	assert_true(r.has("talents_opened"))
 	assert_eq(game.run_entry("quit", {}).version, 5)
 

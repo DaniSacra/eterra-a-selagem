@@ -732,14 +732,14 @@ func word(pos: Vector3, text: String, color: Color) -> void:
 ## follows within NumberTally.MERGE_TIME and GOLD_JOIN metres joins the "+N" still showing, as the hits on one target
 ## join one number, so a horde's drops read "+3 ouro", never a pile of "+1 ouro".
 func gold(pos: Vector3, amount: int) -> void:
-	var text := "+%d %s" % [amount, T.t(&"hud_gold_short")]
+	var text := "+%d %s" % [amount, _gold_word()]
 	if _gold_at >= 0:
 		var e := _tally.entries[_gold_at]
 		if e.shown and e.amount < 0.0 and e.color == GOLD_WORD and e.life <= NumberTally.MERGE_TIME \
 				and Vector2(e.pos.x - pos.x, e.pos.z - pos.z).length() <= GOLD_JOIN:
 			_gold_sum += amount
 			e.life = 0.0
-			_show_label(_gold_at, "+%d %s" % [_gold_sum, T.t(&"hud_gold_short")], GOLD_WORD, GOLD_SIZE)
+			_show_label(_gold_at, "+%d %s" % [_gold_sum, _gold_word()], GOLD_WORD, GOLD_SIZE)
 			return
 	_gold_sum = amount
 	_gold_at = _tally.add_word(pos + _jitter(), GOLD_WORD)
@@ -1081,3 +1081,10 @@ func _arc(reach: float, width_deg: float, inner_frac: float) -> ArrayMesh:
 	var mesh := st.commit()
 	_arc_meshes[key] = mesh
 	return mesh
+
+
+## "ouro" from the text table, through the autoload found at run time: naming T here broke every -s lab that draws the
+## crowd (a -s script and what it names compile before the autoloads exist).
+func _gold_word() -> String:
+	var t: Node = get_node_or_null(^"/root/T")
+	return t.call(&"t", &"hud_gold_short") if t != null else "ouro"

@@ -44,6 +44,12 @@ const LEVEL_SIZE := 15
 const SEALED_GLYPH := 0.5
 const MEMORY_MARK := 13.0
 const MEMORY_SIZE := 14
+## Ciclo visual 2026-11-20 (item 3, Dons): worn, open and sealed told apart by shape too, not by colour alone. Worn: a
+## round badge with a tick at the upper right tip; sealed: the frame in dashes (no flares) and a small round wax seal
+## at the upper right, the lock of Memória. BADGE is the badge's radius against the node's half side.
+const BADGE := 0.3
+const DASH := 5.0
+const SEAL_WAX := Color("7a3a34")
 
 ## Glyph outlines in units of the glyph's radius (convex enough to triangulate).
 const FLAME := TalentGlyph.FLAME
@@ -121,11 +127,16 @@ func _draw() -> void:
 	if on_path and not has_focus():
 		draw_polyline(_closed(_diamond(c, h + 4.0 + (GLOW_REACH * 0.5 if on else 0.0))), PATH, 1.2, true)
 	# the frame: a band of the line's colour, the felt inside, a thin inner line
-	draw_colored_polygon(_diamond(c, h), line.darkened(0.35))
-	draw_colored_polygon(_diamond(c, h - UiKit.FRAME - (1.0 if on else 0.0)), ink_color())
-	draw_polyline(_closed(_diamond(c, h)), line, 1.4, true)
+	if sealed:
+		# revealed, not opened: no solid frame yet, a line of dashes round the dark felt
+		draw_colored_polygon(_diamond(c, h - UiKit.FRAME), ink_color())
+		_dashed(_closed(_diamond(c, h)), line, 1.6)
+	else:
+		draw_colored_polygon(_diamond(c, h), line.darkened(0.35))
+		draw_colored_polygon(_diamond(c, h - UiKit.FRAME - (1.0 if on else 0.0)), ink_color())
+		draw_polyline(_closed(_diamond(c, h)), line, 1.4, true)
 	draw_polyline(_closed(_diamond(c, h - 5.0)), Color(line, 0.25 if locked or blocked else 0.45), 1.0, true)
-	if not locked:
+	if not locked and not sealed:
 		_flares(c, h, line.lightened(0.1) if not blocked else line)
 	if blocked:
 		# the frame cut at its four tips: reached, but not now
@@ -140,6 +151,10 @@ func _draw() -> void:
 		var col := glyph_color()
 		if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
 			branch_glyph(self, glyph, c, r, col)
+	if on and def != null:
+		_badge_tick(c + Vector2(h * 0.62, -h * 0.62), h * BADGE)
+	elif sealed:
+		_badge_seal(c + Vector2(h * 0.62, -h * 0.62), h * BADGE)
 	if sealed and def.memory_cost > 0:
 		# revealed, not opened (Rejogabilidade, Fatia 1): its price in Memória under it, not its Devotion
 		_draw_memory(c, def.memory_cost)
@@ -150,6 +165,34 @@ func _draw() -> void:
 		var x0 := c.x - (def.cost - 1) * PIP_STEP * 0.5
 		for i in def.cost:
 			draw_colored_polygon(_diamond(Vector2(x0 + i * PIP_STEP, size.y + 7.0), PIP), pip)
+
+
+## A polyline in dashes of DASH px.
+func _dashed(pts: PackedVector2Array, col: Color, width: float) -> void:
+	for i in pts.size() - 1:
+		var a := pts[i]
+		var b := pts[i + 1]
+		var n := int(a.distance_to(b) / DASH)
+		for k in range(0, n, 2):
+			draw_line(a.lerp(b, float(k) / n), a.lerp(b, minf(float(k + 1) / n, 1.0)), col, width, true)
+
+
+## Worn: a round emerald badge with a tick of ivory.
+func _badge_tick(at: Vector2, r: float) -> void:
+	draw_circle(at, r + 1.5, UiKit.INK)
+	draw_circle(at, r, EQUIPPED_LINE.darkened(0.25))
+	draw_polyline(PackedVector2Array([at + Vector2(-r * 0.5, 0.0), at + Vector2(-r * 0.1, r * 0.4), at + Vector2(r * 0.55, -r * 0.4)]),
+		Color(1.0, 0.97, 0.9), maxf(1.6, r * 0.28), true)
+
+
+## Sealed: a small round wax seal with a notched rim and a diamond pressed in it.
+func _badge_seal(at: Vector2, r: float) -> void:
+	draw_circle(at, r + 1.5, UiKit.INK)
+	var rim := PackedVector2Array()
+	for i in 16:
+		rim.append(at + Vector2.from_angle(i * TAU / 16.0) * (r if i % 2 == 0 else r * 0.84))
+	draw_colored_polygon(rim, SEAL_WAX)
+	draw_colored_polygon(_diamond(at, r * 0.42), SEAL_WAX.lightened(0.35))
 
 
 ## The small flares of the frame (board 09): a thin spike out of each tip.

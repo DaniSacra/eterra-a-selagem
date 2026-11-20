@@ -492,7 +492,7 @@ func test_the_free_way_leads_out_of_the_attack_it_is_laid_over() -> void:
 	for id: String in counts:
 		gut.p("free way out of the %s: %d of %d" % [id, counts[id][0], counts[id][1]])
 		assert_gt(counts[id][1], 10)
-		assert_gte(counts[id][0], counts[id][1] * 0.9, "the %s's way out ends out of it" % id)
+		assert_gte(float(counts[id][0]), counts[id][1] * 0.9, "the %s's way out ends out of it" % id)
 
 
 func test_the_storm_with_eruptions_and_his_dead_has_a_way_out_of_every_wave() -> void:

@@ -29,6 +29,10 @@ const EDGE := 8.0
 ## A sign whose top would come within this share of the screen's height from the top goes under the hero instead:
 ## its station stands at the top of the screen (the Portal seen from its foot) and the sign would cover it.
 const TOP_BAND := 0.06
+## Under the object (Rooms.prompt, benchmark_hades2_ui.md P0-1): the plate's top this far under the anchor (the foot
+## of the reward, the shop item, the door's medallion), and never on the hero: where he covers that spot it goes under
+## his feet, at most a few tens of pixels from the object.
+const UNDER_GAP := 6.0
 ## The hero's drawn height (HeroBody.HEIGHT) and his half width on screen against his height.
 const HERO_HEIGHT := 2.75
 const HERO_HALF := 0.3
@@ -44,6 +48,8 @@ var prompt: Label
 var plate: PanelContainer
 ## The hero's feet in the world (the sign never covers him); Vector3.INF: nobody to keep clear of.
 var hero_at := Vector3.INF
+## The plate hangs under its anchor (place_under) instead of standing on it (place).
+var under := false
 var hovered := false
 var _layer: CanvasLayer
 var _shown := 0.0
@@ -163,6 +169,28 @@ static func place(anchor: Vector2, s: Vector2, screen: Vector2, head: Vector2 = 
 	return _inside(Vector2(feet.x - s.x * 0.5, hero.end.y), s, screen).round()
 
 
+## Where the plate goes when it hangs under its anchor (under): its top centre UNDER_GAP under the anchor, inside the
+## screen; when that would touch the hero's box (his height from the feet up, HERO_GAP round it), under his feet.
+static func place_under(anchor: Vector2, s: Vector2, screen: Vector2, head: Vector2 = Vector2.INF,
+		feet: Vector2 = Vector2.INF) -> Vector2:
+	var at := _inside(anchor + Vector2(-s.x * 0.5, UNDER_GAP), s, screen)
+	if head == Vector2.INF:
+		return at.round()
+	var box := hero_box(head, feet)
+	if Rect2(at, s).intersects(box):
+		at = _inside(Vector2(at.x, box.end.y), s, screen)
+		if Rect2(at, s).intersects(box):
+			# the bottom of the screen: over his head instead
+			at.y = box.position.y - s.y
+	return at.round()
+
+
+## The hero's box on the screen, HERO_GAP round it: his height from the feet up, HERO_HALF of it to each side.
+static func hero_box(head: Vector2, feet: Vector2) -> Rect2:
+	var half := absf(feet.y - head.y) * HERO_HALF
+	return Rect2(head.x - half, head.y, half * 2.0, absf(feet.y - head.y)).grow(HERO_GAP)
+
+
 static func _inside(at: Vector2, s: Vector2, screen: Vector2) -> Vector2:
 	return Vector2(clampf(at.x, EDGE, maxf(EDGE, screen.x - EDGE - s.x)),
 			clampf(at.y, EDGE, maxf(EDGE, screen.y - EDGE - s.y)))
@@ -183,8 +211,10 @@ func _process(delta: float) -> void:
 	if hero_at != Vector3.INF:
 		head = cam.unproject_position(hero_at + Vector3(0, HERO_HEIGHT, 0))
 		feet = cam.unproject_position(hero_at)
-	var p := place(cam.unproject_position(at), s, get_viewport().get_visible_rect().size, head, feet)
-	plate.position = p + Vector2(0, RISE * (1.0 - _shown))
+	var screen := get_viewport().get_visible_rect().size
+	var p := place_under(cam.unproject_position(at), s, screen, head, feet) if under \
+		else place(cam.unproject_position(at), s, screen, head, feet)
+	plate.position = p + Vector2(0, RISE * (1.0 - _shown) * (-1.0 if under else 1.0))
 	plate.modulate.a = _shown
 	plate.visible = true
 
@@ -196,6 +226,9 @@ class KeyCap:
 	var text := ""
 	var rounded := false
 	var line := UiKit.OLD_GOLD
+	## The key's font size and the plate's height (ActionBar uses its own).
+	var font_size := StationSign.KEY_SIZE
+	var height := StationSign.KEY_H
 
 	func _init() -> void:
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -204,9 +237,9 @@ class KeyCap:
 	func set_key(p_text: String, pad: bool) -> void:
 		text = p_text
 		rounded = pad and p_text.length() <= 2
-		var tw := UiKit.BOLD_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, StationSign.KEY_SIZE).x
-		custom_minimum_size = Vector2(maxf(StationSign.KEY_H, tw + 8.0), StationSign.KEY_H)
+		var tw := UiKit.BOLD_FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		custom_minimum_size = Vector2(maxf(height, tw + 8.0), height)
 		queue_redraw()
 
 	func _draw() -> void:
-		ActionSlot.key_plate(self, size * 0.5, text, StationSign.KEY_SIZE, StationSign.KEY_H, rounded, line)
+		ActionSlot.key_plate(self, size * 0.5, text, font_size, height, rounded, line)

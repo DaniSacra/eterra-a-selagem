@@ -1,0 +1,44 @@
+[gd_resource type="Resource" script_class="EnchantDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_vqwxm"]
+[ext_resource type="Script" path="res://scripts/core/enchant_def.gd" id="2_22sen"]
+
+[sub_resource type="Resource" id="Resource_ok53v"]
+script = ExtResource("1_vqwxm")
+stat = &"blow_wave"
+tag = &"spin"
+base = 12.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_akvpt"]
+script = ExtResource("1_vqwxm")
+stat = &"blow_wave_m"
+tag = &"spin"
+base = 6.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_httfi"]
+script = ExtResource("1_vqwxm")
+stat = &"blow_wave_w"
+tag = &"spin"
+base = 3.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_w2121"]
+script = ExtResource("1_vqwxm")
+stat = &"blow_wave_fan"
+tag = &"spin"
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_22sen")
+id = &"lamina_triplice"
+name_key = &"enchant_lamina_triplice"
+desc_key = &"enchant_lamina_triplice_desc"
+mods = Array[ExtResource("1_vqwxm")]([SubResource("Resource_ok53v"), SubResource("Resource_akvpt"), SubResource("Resource_httfi"), SubResource("Resource_w2121")])
+excludes = Array[StringName]([&"corte_crescente"])

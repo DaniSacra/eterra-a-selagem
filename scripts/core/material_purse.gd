@@ -2,7 +2,7 @@ class_name MaterialPurse
 extends RefCounted
 ## The materials a descent brings home (Rejogabilidade, Fatia 1; docs/design/rejogabilidade/sistemas.md 1.2 and 5),
 ## pure. Three currencies, each with one use only: Prata Antiga (silver, the Forja), Fragmento de Memória (memory, opens
-## the Gifts) and Esmeralda (emerald, the Fatia 2; no source yet). Gold stays the descent's own (GoldPurse, Rooms.gold).
+## the Gifts) and Esmeralda (emerald, the Fatia 2: Morvath's phase 3 and the sealing; spent on the Despertar, Fatia 3). Gold stays the descent's own (GoldPurse, Rooms.gold).
 ## Names are working names (Q-RJ3): the screens read material_<id> and material_<id>_short from the text table.
 ##
 ## An instance is one descent's purse: what was picked up, by source (elite, door, guardian, boss, trial), shown in the
@@ -15,7 +15,7 @@ extends RefCounted
 ##   MaterialPurse.amount(data, MaterialPurse.SILVER) -> int: what the save holds now.
 ##   MaterialPurse.can_pay(data, id, n) -> bool; MaterialPurse.spend(data, id, n) -> bool (false: not enough, nothing
 ##     spent). The Forja (Forge.buy) and the Gifts (Talents.open_in) already spend through here.
-##   game.materials.totals() -> {silver, memory}: what this descent picked up so far (the end screen's "Trazidos").
+##   game.materials.totals() -> {silver, memory, emerald}: what this descent picked up so far (the end screen's "Trazidos").
 ##   game.materials_banked -> Dictionary: what log_run put into the save ({} when nothing is kept: robot, --nosave).
 
 const SILVER := &"silver"
@@ -25,7 +25,8 @@ const IDS: Array[StringName] = [SILVER, MEMORY, EMERALD]
 ## The most the save holds of each (sistemas.md 1.2).
 const CAP := {SILVER: 999, MEMORY: 999, EMERALD: 99}
 ## Where a descent's materials come from, per material (the RESULT lists each with 0 when none came from it).
-const SOURCES := {SILVER: [&"elite", &"door", &"guardian", &"boss"], MEMORY: [&"door", &"guardian", &"trial", &"boss"]}
+const SOURCES := {SILVER: [&"elite", &"door", &"guardian", &"boss"], MEMORY: [&"door", &"guardian", &"trial", &"boss"],
+	EMERALD: [&"boss"]}
 ## The text keys of each material's name (long and short).
 const NAME_KEY := {SILVER: &"material_silver", MEMORY: &"material_memory", EMERALD: &"material_emerald"}
 const SHORT_KEY := {SILVER: &"material_silver_short", MEMORY: &"material_memory_short", EMERALD: &"material_emerald_short"}

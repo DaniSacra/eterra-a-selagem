@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="EnchantDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_yc3c1"]
+[ext_resource type="Script" path="res://scripts/core/enchant_def.gd" id="2_r757h"]
+
+[sub_resource type="Resource" id="Resource_jqalp"]
+script = ExtResource("1_yc3c1")
+stat = &"return_time"
+tag = &"dash"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_03qhk"]
+script = ExtResource("1_yc3c1")
+stat = &"return_reach"
+tag = &"dash"
+base = 0.3
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_r757h")
+id = &"retorno_do_corte"
+name_key = &"enchant_retorno_do_corte"
+desc_key = &"enchant_retorno_do_corte_desc"
+slot = 4
+mods = Array[ExtResource("1_yc3c1")]([SubResource("Resource_jqalp"), SubResource("Resource_03qhk")])
+excludes = Array[StringName]([&"passo_encadeado", &"fio_do_passo"])

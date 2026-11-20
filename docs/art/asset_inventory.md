@@ -58,6 +58,12 @@ triângulos (5 600; ver a nota da tabela).
 | sacerdote ancião (guardião) | `priest_elder.res` | 5,30 MB | 6 617 | 5 557 | 116 (9) | 2048 x 375 | 2,07 | **-0,081** | Lote 2C (marca `orb`) |
 | Morvath | `morvath.res` | 7,96 MB | 5 325 | 4 281 | 230 (17) | 2048 x 599 | 2,02 | -0,012 | Lote 2C (estava em `6338417`); `pose_drift` até 0,44 m fora da queda (0,52) e do levantar (0,41) |
 
+| corredor elite (Lote 2B, sem uso ainda) | `runner_elite.res` | 3,47 MB | 5 304 | 3 866 | 90 (7) | 2048 x 234 | 1,65 | +0,012 | 2026-11-20; o corredor com `RUNNER_ELITE_JOG` (passada 1,55, 199 passos/min a 7,4 m/s, escorrega 4,6 cm); falta `"model"` na elite do `make_data.gd` (gameplay) |
+
+Lote 2B (2026-11-20): os nove reassados juntos (opção `"centred"` no erguer, `"kick"` no tiro do besteiro, Morvath com
+`curse_windup` e `rain_wave`, 8,20 MB, 17 + 2 clipes). Assados no disco: **47,3 MB** com o corredor elite e a gente do
+hub (teto 70).
+
 | Vendedor do hub (HUB-D) | `npc_vendor.res` | 0,77 MB | 3 252 | 4 005 | 30 (2: `idle` 16, `gesture` 14 = `Interact`) | 2048 x 48 | 1,90 | 0,000 | HUB-D (2026-11-19), `tools/bake.gd -- npcs` |
 | Forjador do hub (HUB-D) | `npc_smith.res` | 0,85 MB | 3 807 | 4 232 | 28 (2: `idle` 16, `gesture` 12 = `1H_Melee_Attack_Chop` de 0,1 a 0,655 s, tronco 12 graus para trás) | 2048 x 56 | 1,95 | 0,000 | HUB-D, idem; peças `hammer` e `handle` |
 
@@ -167,6 +173,24 @@ HUB-D e Fatia 1 (technical-artist, 2026-11-19): `frame_yaw.gdshaderinc` (novo; g
 `catacomb_floor.gdshaderinc` seguem as paredes do hub girado 35 graus; com 0 as funções devolvem o argumento sem conta
 nenhuma) e `emeth.gdshader` com `temper` (0 a 2, padrão 0: nada desenhado; veios de ouro velho e o fio pálido do gume
 por posto de Temperar, nenhum canal acima de 1,0, no estilizado sob o `style_cap`).
+
+## 8b. Kit de borda e primeiro plano (TA-HB2, `EdgeKit`, procedural, licença do projeto)
+
+`scripts/game/edge_kit.gd`, shaders `edge_piece.gdshader` (+ `.gdshaderinc`) e `edge_piece_paint.gdshader`. Nenhuma
+textura nova, nada no pacote além dos scripts e shaders. Medido no tabuleiro `tools/edge_lab.gd` (CPU, peças soltas
+antes do `Masonry.merge`; a sala junta a pedra com a dela):
+
+| Peça | Triângulos | Chamadas soltas | Material |
+|---|---|---|---|
+| `broken_pillar` (r 0,55, 3,4 m, dois tambores caídos) | 944 | 14 | cantaria da sala com `see_through` |
+| `broken_arch` (4 m de vão, dois pilares) | 660 | 22 | idem |
+| `rubble` (1,8 m) | 220 | 12 | idem |
+| `root_curtain` (4 x 3,5 m) | 2 710 | 1 | `bark` |
+| `ivy` (2,4 x 3 m) | 1 424 | 1 | `ivy` (cor no vértice) |
+| `chain_weight` (4,5 m) | 1 496 | 7 | `iron` (elos em MultiMesh) e pedra |
+
+As seis juntas depois do `merge`: 22 chamadas no quadro do tabuleiro (4 do chão). Estado: provisório até o
+environment-artist usar numa sala (ENV-HB3 a HB5) e o art-director revisar. Capturas `docs/gallery/hb/edge_kit_*.png`.
 
 ## 9. Música (`audio/music/`, teto no pacote 18 MB; MUS-1: 16,69 MB no disco e **17,73 MB importados**)
 

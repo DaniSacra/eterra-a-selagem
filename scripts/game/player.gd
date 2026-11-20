@@ -109,6 +109,11 @@ const CONTACT_SHADOW_ALPHA := 0.5
 ## Omega's gold shows past this share of its charge, up to CHARGE_GLOW; the ready shield is a faint green edge.
 const HURT_FLASH := 0.05
 const HURT_LIGHTEN := 0.35
+## The flash itself is his own painting as more light (HeroBody.set_fill, the same path as the blink), this much more
+## at its start, and only a warm edge from the overlay (flash.gdshader): the overlay used to add a flat warm colour
+## over the whole body, +0.45 to +0.75 in linear, which painted him as an ivory silhouette for two or three frames
+## (combat_cadence.md 8.3, docs/gallery/c19/), in both looks.
+const HURT_FLASH_LIGHT := 0.45
 const BODY_LIGHT := 0.8
 const BLINK_PERIOD := 0.16
 const CHARGE_GLOW_FROM := 0.25
@@ -938,7 +943,7 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	_show_curse()
 	_overlay.set_shader_parameter(&"flash", _flash)
 	# the blink after a hit: more of his own painting as light, on the body and on what shows through a cover
-	var fill := HeroBody.FILL + blink_lighten(_blink) * BODY_LIGHT
+	var fill := HeroBody.FILL + maxf(blink_lighten(_blink) * BODY_LIGHT, _flash * HURT_FLASH_LIGHT)
 	if fill != _shown_fill:
 		_shown_fill = fill
 		for own in _fills:

@@ -134,6 +134,8 @@ const BASIN_BLOCKS := 20
 const BASIN := Vector3(2.8, 0.7, 0.4)
 const WATER_Y := 0.56
 const WATER_R := 2.6
+## The fountain's ripples (dark_water.gdshader): bands per metre, their sharpness, their light.
+const WATER_RINGS := Vector3(0.6, 2.5, 0.05)
 const FOUNTAIN_STELE := Vector3(1.5, 2.8, 0.5)
 const FOUNTAIN_LION := Vector2(1.1, 1.9)
 const SPOUT := 0.2
@@ -315,8 +317,34 @@ const STYLE := {
 	&"edge_value": 1.0, &"pool_saturation": 0.8, &"metal": true,
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
 	&"air": {&"sky": Color(0.06, 0.08, 0.13), &"fog": Color(0.14, 0.13, 0.13), &"ambient": Color(0.76, 0.76, 0.75),
-		&"ambient_gain": 1.55, &"moon": Color(1.0, 0.96, 0.9), &"moon_energy": 0.85, &"moon_shadow": true},
+		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": Color(1.0, 0.96, 0.9), &"moon_energy": STY_MOON, &"moon_shadow": true},
 }
+## ENV-HB6 and BH-07 (docs/design/ciclo_visual_2026-11-20.md item 2; benchmark_hades2_style.md 4.1; rooms_progression.md
+## BH-07), only in the stylized look: the square a step darker (the air's ambient and the moon, the soft fill over it at
+## a share), and each station a clearing of its own light: a warm pool from high over its place (diffuse: no drawn
+## circle, light_specular 0, paint.gdshaderinc), never on the crowd. The Forja reads by its fire, its anvil and the
+## Forjador (the pool between the forge's mouth and the anvil, the fire stronger); the Livro by its lectern, the open
+## book and a reading light over it (a narrow pool on the lectern, a wider one on the rug); the Vendedor and the Árvore
+## the same, a little softer. The fountain, the gold threads and the ways stay readable between them; the portal's own
+## glow reads the more for it on arriving, and a pale green pool at the foot of its flight (the top of the screen on
+## arriving, where the camera holds the portal itself out of the frame) points the way. Each pool: station, aim (u, height, v), from (u, height, v), energy, cone
+## (degrees), reach, colour.
+const STY_AMBIENT_GAIN := 0.8
+const STY_MOON := 0.45
+const STY_KEY_SHARE := 0.45
+const STY_FORGE_GAIN := 1.5
+const STY_POOLS: Array[Array] = [
+	[HubPlan.SMITH, Vector3(-14.6, 0.6, -2.9), Vector3(-12.0, 7.5, -7.2), 9.0, 30.0, 12.0, Color(1.0, 0.7, 0.42)],
+	[HubPlan.BOOK, Vector3(13.4, 1.2, -4.4), Vector3(12.4, 6.2, -6.4), 10.0, 18.0, 9.0, Color(1.0, 0.86, 0.62)],
+	[HubPlan.BOOK, Vector3(12.8, 0.0, -3.8), Vector3(11.6, 8.0, -7.6), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
+	[HubPlan.VENDOR, Vector3(-13.0, 0.8, 12.2), Vector3(-11.6, 8.0, 8.0), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
+	[HubPlan.TREE, Vector3(14.8, 1.0, 13.0), Vector3(13.0, 9.0, 8.6), 9.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
+	[HubPlan.PORTAL, Vector3(0.0, 0.0, 10.4), Vector3(0.0, 8.0, 5.5), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
+]
+## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
+## screen on arriving with the near camera. P2-A7: the floor's outer ring (past the stations, from the fountain at the
+## world's middle: edge_span times the floor's calm radius) a step darker, so the frame is no lighter than the square.
+const STY_RIM_FLOOR := {&"edge_value": 0.55, &"edge_span": Vector2(2.0, 2.9)}
 ## The browser's renderer: the stylized air's share there (its painted stone lights lighter).
 const STY_COMPAT_AMBIENT := 0.3
 const STY_COMPAT_MOON := 0.3
@@ -404,7 +432,8 @@ func piece(o: ArenaObstacle) -> void:
 
 
 func _light() -> void:
-	key_light(KEY, KEY_ENERGY * (STY_COMPAT_KEY if compat() else 1.0))
+	var key := key_light(KEY, KEY_ENERGY * (STY_COMPAT_KEY if compat() else 1.0))
+	VisualProfile.vary(key, {&"light_energy": key.light_energy * STY_KEY_SHARE})
 
 
 func dress() -> void:
@@ -478,12 +507,41 @@ func _exit_tree() -> void:
 
 
 func style() -> Dictionary:
+	_station_pools()
 	var st := STYLE.duplicate(true)
+	st[&"floor"] = STY_RIM_FLOOR
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
 	fk.stylize_metal()
 	return st
+
+
+## The stations' pools of the stylized look (STY_POOLS), under a node shown only in it; the forge's fire stronger.
+func _station_pools() -> void:
+	var node := Node3D.new()
+	node.name = "StationPools"
+	frame.add_child(node)
+	ArenaKit.style_only(node)
+	for p: Array in STY_POOLS:
+		var l := SpotLight3D.new()
+		l.name = "Pool_%s" % p[0]
+		node.add_child(l)
+		var aim: Vector3 = world(p[1].x, p[1].y, p[1].z)
+		var from: Vector3 = world(p[2].x, p[2].y, p[2].z)
+		l.look_at_from_position(from, aim, Vector3.UP)
+		l.light_energy = float(p[3]) * (STY_COMPAT_KEY if compat() else 1.0)
+		l.spot_angle = p[4]
+		l.spot_range = p[5]
+		l.spot_attenuation = 0.6
+		l.spot_angle_attenuation = 1.6
+		l.light_color = p[6]
+		l.light_specular = 0.0
+		l.shadow_enabled = false
+		l.light_cull_mask = ~Arena.CROWD_LAYER
+		l.set_meta(ArenaKit.NOT_FIRE, true)
+	if _forge_light != null:
+		_forge_light.set_meta(ArenaKit.FIRE_SHARE, STY_FORGE_GAIN)
 
 
 ## The light of a station (HubPlan.STATIONS id; null if it has none).
@@ -1277,6 +1335,10 @@ func _fountain(c: Vector2) -> void:
 	wm.set_shader_parameter(&"fade", 0.05)
 	wm.set_shader_parameter(&"foam_at", Vector2(0.5, 0.2))
 	wm.set_shader_parameter(&"foam_reach", 0.5)
+	# P2-A9 of the cycle's art review: broad soft swells, not white veins (it read as marble)
+	wm.set_shader_parameter(&"rings", WATER_RINGS.x)
+	wm.set_shader_parameter(&"ring_sharp", WATER_RINGS.y)
+	wm.set_shader_parameter(&"ring_light", WATER_RINGS.z)
 	water.material_override = wm
 	water.position = at(c.x, WATER_Y, c.y)
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

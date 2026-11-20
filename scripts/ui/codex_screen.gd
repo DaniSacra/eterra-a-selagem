@@ -60,6 +60,12 @@ const ELO_SMALL := 20.0
 const ELO_GAP := 8.0
 const ELO_NAME_WIDTH := 170.0
 const UNKNOWN := "???"
+## The detail's figure on the index page, and the Gift's mark there.
+const FIGURE := Vector2(130, 170)
+const DETAIL_MARK := 96.0
+const DETAIL_TEXT := 15
+## The selected row's ink wash.
+const ROW_LIT := Color(0.42, 0.3, 0.16, 0.16)
 
 var tab := Tab.GIFTS
 var tabs: Array[Button] = []
@@ -75,6 +81,15 @@ var _chapter: VBoxContainer
 var _data: Dictionary
 ## Every gift of the game (Blessings and Elos), loaded once when a tab needs it.
 var _catalog: BoonState
+## The selected entry's detail on the index page (ciclo visual 2026-11-20, item 3): the enemy's own figure
+## (FigureView) or the Gift's mark large, its name and line. Only the chapters with a figure (Inimigos, Dons).
+var detail: VBoxContainer
+var figure: FigureView
+var _detail_mark: Control
+var _detail_name: Label
+var _detail_line: Label
+## The entry selected now (its row's name: the enemy's or Gift's id).
+var selected := &""
 
 
 func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
@@ -90,7 +105,7 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 	frame.add_theme_constant_override(&"margin_left", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_right", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
-	frame.add_theme_constant_override(&"margin_bottom", int(BookSpread.RIBBON_DROP))
+	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var book := BookSpread.new().setup(SPINE)
 	frame.add_child(book)
@@ -115,6 +130,7 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 		b.pressed.connect(_show.bind(t))
 		tabs.append(b)
 		index.add_child(b)
+	index.add_child(_detail_block())
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override(&"separation", 8)
 	book.right.add_child(page)
@@ -127,6 +143,7 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 	_scroll = ScrollContainer.new()
 	_scroll.name = "scroll"
 	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_scroll.follow_focus = true
 	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_scroll.focus_mode = Control.FOCUS_ALL
 	_scroll.add_theme_stylebox_override(&"panel", StyleBoxEmpty.new())
@@ -151,6 +168,19 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 	back.focus_neighbor_top = back.get_path_to(tabs[0])
 	_show(start)
 	tabs[start].grab_focus.call_deferred()
+	# the keys at the foot (benchmark P0-2): the chapters on the left, the way back on the right
+	ActionBar.attach(self, [
+		ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true),
+		ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn(1), true),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
+
+
+## The chapter before (-1) or after (1) in the index, as LB and RB.
+func _turn(step: int) -> void:
+	var t := clampi(tab + step, 0, tabs.size() - 1)
+	if t != tab:
+		tabs[t].grab_focus()
+		_show(t as Tab)
 
 
 ## LB and RB (PageUp, PageDown) walk the index (DT-103).
@@ -165,9 +195,12 @@ func scrolls() -> bool:
 	return bar.max_value > bar.page + 0.5
 
 
-## Right from the index: into the list when it scrolls, else straight on to Voltar.
+## Right from the index: into the first row that can be picked, else into the list when it scrolls, else to Voltar.
 func _scroll_focused() -> void:
-	if not scrolls():
+	var first := _first_row()
+	if first != null:
+		first.grab_focus.call_deferred()
+	elif not scrolls():
 		_back.grab_focus.call_deferred()
 
 
@@ -237,6 +270,110 @@ func _show(t: Tab) -> void:
 		_:
 			_moves()
 			_legend.text = T.t(&"moves_legend")
+	_pickable()
+
+
+## The detail block under the index: a rule, then the figure (or the Gift's mark) beside its name and line.
+func _detail_block() -> Control:
+	detail = VBoxContainer.new()
+	detail.name = "detail"
+	detail.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail.alignment = BoxContainer.ALIGNMENT_END
+	detail.add_theme_constant_override(&"separation", 4)
+	detail.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var rule := GoldRule.new()
+	rule.tint = Book.GILT
+	rule.custom_minimum_size = Vector2(200, 10)
+	detail.add_child(rule)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 12)
+	detail.add_child(row)
+	var art := CenterContainer.new()
+	art.name = "art"
+	art.custom_minimum_size = FIGURE
+	row.add_child(art)
+	figure = FigureView.new().setup(FIGURE)
+	art.add_child(figure)
+	var words := VBoxContainer.new()
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_child(words)
+	_detail_name = Book.label("", Book.INK, 20, UiKit.TITLE_FONT)
+	_detail_name.name = "detail_name"
+	_detail_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.add_child(_detail_name)
+	_detail_line = Book.text("", Book.FADED, DETAIL_TEXT)
+	_detail_line.name = "detail_line"
+	words.add_child(_detail_line)
+	detail.visible = false
+	return detail
+
+
+## The rows of the chapter on show that can be picked (Inimigos, Dons): focus and the mouse select them, the first one
+## at the start; left goes back to the index, right to Voltar.
+func _pickable() -> void:
+	if detail == null:
+		return
+	var rows := _list.get_children().filter(func(r: Node) -> bool: return tab in [Tab.ENEMIES, Tab.GIFTS])
+	detail.visible = not rows.is_empty()
+	for i in rows.size():
+		var r := rows[i] as Control
+		r.focus_mode = Control.FOCUS_ALL
+		r.mouse_filter = Control.MOUSE_FILTER_STOP
+		var id := StringName(r.name)
+		r.focus_entered.connect(_select.bind(id))
+		r.focus_entered.connect(r.queue_redraw)
+		r.focus_exited.connect(r.queue_redraw)
+		r.mouse_entered.connect(r.grab_focus)
+		r.draw.connect(func() -> void:
+			if selected == id:
+				r.draw_rect(Rect2(Vector2(-6, 0), r.size + Vector2(12, 0)), ROW_LIT)
+				r.draw_line(Vector2(-6, 0), Vector2(-6, r.size.y), Book.GILT, 2.0))
+		r.focus_neighbor_left = r.get_path_to(tabs[tab])
+		r.focus_neighbor_right = r.get_path_to(_back)
+		if i == rows.size() - 1:
+			r.focus_neighbor_bottom = r.get_path_to(_back)
+	if not rows.is_empty():
+		_select(StringName(rows[0].name))
+
+
+func _first_row() -> Control:
+	for r in _list.get_children():
+		if (r as Control).focus_mode == Control.FOCUS_ALL:
+			return r
+	return null
+
+
+## Shows an entry's detail: an enemy's figure (a silhouette before it falls once), a Gift's mark large.
+func _select(id: StringName) -> void:
+	selected = id
+	for r in _list.get_children():
+		(r as Control).queue_redraw()
+	if _detail_mark != null:
+		_detail_mark.queue_free()
+		_detail_mark = null
+	if tab == Tab.ENEMIES:
+		var def: EnemyDef = load(ENEMY_DIR + String(id) + ".tres")
+		var known := count("enemies", id, "defeated") > 0
+		figure.visible = true
+		figure.show_enemy(def, known)
+		_detail_name.text = enemy_name(def) if known else UNKNOWN
+		_detail_line.text = T.t(role_key(def)) if known else T.t(&"codex_unknown_enemy")
+	elif tab == Tab.GIFTS:
+		var hero := HeroDef.warrior()
+		var level := hero.mastery.level_of(int(SaveData.hero(_data, String(hero.id)).mastery_xp))
+		var t: TalentDef = null
+		for x in hero.talents().catalog:
+			if x.id == id:
+				t = x
+		if t == null:
+			return
+		var open := t.unlock_level <= level
+		figure.visible = false
+		_detail_mark = TalentGlyph.mark(t, DETAIL_MARK, open)
+		figure.get_parent().add_child(_detail_mark)
+		_detail_name.text = T.t(t.name_key) if open else UNKNOWN
+		_detail_line.text = T.t(t.desc_key) if open else T.t(&"codex_locked", {"n": t.unlock_level})
 
 
 ## How much of a chapter was found: (found, total). Gifts: reached by the Mastery; Blessings: met; Elos: formed;

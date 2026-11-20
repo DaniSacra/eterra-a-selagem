@@ -351,6 +351,72 @@ saem quando as dele entrarem. O comentário no topo de cada arquivo repete isto.
 sessão e na descida, também a do robô), `--angels=a,b` (o par forçado), `--no-angels` (o sorteio de antes),
 `--materials-keep` (o robô guarda o que traz, para medir A7 com save).
 
+#### Fatia 2 (gameplay-engineer, implementada em 2026-11-20)
+
+Mesma regra: a lógica está pronta e testada (`tests/test_fatia2.gd`); a única tela provisória nova é a `EnchantChoice`
+(`scripts/ui/enchant_choice.gd`, marcada `PROVISIONAL`), que só abre quando ninguém ouve o `Game.enchant_offered`.
+
+**Portas e mapa** (`RunMap`):
+- Recompensas novas `RunMap.Reward.ENCHANT` e `PSALM` (chaves `reward_enchant`, `reward_psalm`; cores provisórias
+  `Rooms.ENCHANT_COLOR`, `PSALM_COLOR`; `DoorGlyph.of_reward` e `RewardGem.mark_of` caem em NONE para elas: marcas
+  novas são da UI e do technical-artist). Baralho de 21 cartas (16 + 2 Encantos + 1 Salmo + 2 Bênçãos, para a Bênção
+  manter a fatia de 6 em 16).
+- Grupos (RJ-2): `RunMap.group_of(reward)` dá `Group.POWER` (Bênção, romã, Encanto, Salmo), `BODY` (coração, Magia,
+  ouro, cura) ou `HOME` (Prata, Memória). O gerador prefere, porta a porta, uma carta de grupo que as portas irmãs ainda
+  não mostram (`RewardDeck.draw_prefer`): em 1000 grafos, 93,2% das bifurcações mostram dois grupos ou mais (77,8%
+  antes), 9,5% os três (3,8%), nenhuma com a mesma recompensa duas vezes (`tools/door_forks.gd`).
+- Encanto no máximo `StageDef.enchant_max` 2 em qualquer caminho, o segundo desde a sala `enchant_second_from` 5; Salmo
+  desde a sala `psalm_from_depth` 4. Ao abrir as portas, `RunMap.settle(portas, pode_romã, pode_salmo, pode_encanto)`
+  troca por Bênção o que não pode vir agora (nenhum Salmo elegível, dois Encantos já tomados).
+- Anjo à mostra: cada sala de Bênção tem `Room.meeting` (encontro de dois; a sala 1, o guardião e duas de cada seis
+  das outras, `StageDef.angel_deck`) ou, ao abrir as portas, `Room.angel` (o id do anjo que espera ali,
+  `game.encounters.door_angel(sala)`). `door_info(i)` e `RunMap.view()` trazem `meeting` e `angel`;
+  `Rooms.door_text` já escreve o nome do anjo ou "Dois anjos" embaixo da recompensa (`door_angels_two`).
+- Porta Difícil com a Prata a mais: "Difícil, +N Prata" (`door_hard_silver`, `{n}`), N = `Rooms.elite_heads(sala)` x
+  `StageDef.silver_elite`.
+
+**Encontro** (`Encounters`): a sala com `angel` abre direto nas cartas daquele anjo (sem a tela do par;
+`meetings[].fallback` = `"door"`); se ele não tiver mais carta para a mão, volta o par. O resto da API não mudou.
+
+**Encantos** (`Enchants`, `scripts/core/enchants.gd`, puro; `EnchantDef` em `data/enchants/`, parte `enchants`):
+- `Game.enchant_offered(options)` sai quando uma escolha abre (porta de Encanto, loja); `game.enchant_options` (até 3
+  `EnchantDef`: `id`, `name_key`, `desc_key`, `slot`, `mods`, `excludes`); `game.take_enchant(e)` toma (a tela fecha
+  com `game.close_screen()` antes ou depois); `Game.enchant_taken(e)` sai depois. `game.enchant_offers()` diz o que
+  viria agora (vazio com dois tomados); `game.boons.enchants` os da descida.
+- Os três: Lâmina Tríplice (o giro solta três ondas em leque, nunca com o Dom Corte Crescente), Eco da Verdade (o giro
+  golpeia de novo 0,3 s depois com metade, tag `echo` no `dealt_by`), Retorno do Corte (1 s depois do Corte Veloz o
+  próximo golpe alcança 30% mais longe e mais largo; nunca com Passo Encadeado nem Fio do Passo). Textos
+  `enchant_<id>`, `enchant_<id>_desc`, `enchant_title`, `enchant_hint`.
+- Loja: o Encanto (200) está no grupo da Magia e da romã (`Rooms.shop()` traz `item` = `RunMap.Reward.ENCHANT`), só
+  quando `enchant_offers()` não está vazio.
+
+**Salmo pela porta**: `Game.open_psalm_choice(chances)` abre a `BoonChoice` de sempre com três cartas, a primeira um
+Salmo que já pode vir (`card_chosen` como antes).
+
+**Forja**:
+- `Forge.TEMPER` com três postos (Temperar III, 60 Prata, +5% em todo golpe).
+- Refinar (`Forge.REFINE`): `f.refine_slots()` (`attack`, `special`), `f.refine_options(slot)` (três por ação: Fio,
+  Peso, Pressa; Onda Larga, Onda Pesada, Onda Pronta; 25 Prata cada, `posto.slot`, `posto.tool`), `f.state`/`problem`
+  (`Problem.NO_TOOL` sem a ferramenta, texto `forge_no_tool`), `f.buy` (o primeiro de cada ação já entra), `f.is_on`,
+  `f.put_on(data, id)` (troca de graça entre os comprados), `f.take_off(data, slot)`, `f.refines_on(data)`,
+  `f.ranks_for(data)` (o que a descida leva). Textos `forge_track_refine`, `forge_refine_slot_<slot>`,
+  `forge_refine_<id>`, `forge_refine_<id>_desc`, `forge_temper_3`.
+- Ferramentas: `Forge.TOOLS`, `Forge.has_tool(data, tool)`; na descida `game.tools_found` (o primeiro guardião
+  vencido acha `tool_refine`), sinal `Game.tool_found(tool)`, aviso `tool_found`; guardadas no fim como os materiais
+  (`game.tools_banked`). Nome `tool_<id>`.
+
+**Esmeralda**: `MaterialPurse.EMERALD`, fonte `boss` (fase 3 de Morvath alcançada 1, vitória 1).
+
+**`RESULT` e registro**: `enchants` (ids), `tools`, `forge.refine` (ids), `materials` com `emerald`.
+
+**Loja de rota (DV-2, MAP-09)**: `RunMap.is_route_shop(sala)`; a mesma `Rooms.shop()` com 3 itens (um de cada grupo);
+`RESULT.route_shop` (ouro ao entrar, comprado, gasto) à parte do `shop`.
+
+**Aceite medido** (72 sementes, robô 0,25): Encantos 28 / 36 / 36%; nenhum encontro com menos de 3 cartas em 384;
+bifurcações contrastantes 93,2%. Detalhes e a queda de vitórias do robô (vida em Morvath) no `balance.md`.
+
+**Opções de teste**: `--refine=refine_fio,refine_onda_larga` (o Refinar na descida, também a do robô).
+
 ---
 
 ## 6. Perguntas para o Daniel (curtas, com a minha recomendação)

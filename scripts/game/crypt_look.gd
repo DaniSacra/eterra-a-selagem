@@ -118,20 +118,27 @@ const STATUE_GLOW := Vector3(1.4, 5.0, 40.0)
 ## Room redesign, lot A (docs/art/room_redesign_lotA_spec.md part 2): the crypt's biome in the stylized look, petrol
 ## stone, cold shadow, dry floor (one slab in 33 to the olive), the candles' pools, a cold air, the key and the
 ## floor's fill off (in the painted light an omni with no fire draws rings on the floor), the backdrop in mist.
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method replicated by biome): the crypt in a deep green petrol
+## (hue 190 to 198 on the screen, a step darker than the hall's petrol), the stone, the floor, the shadow, the air and
+## the backdrop moved there.
 const STYLE := {
-	&"stone": Color(0.315, 0.325, 0.335), &"shadow": Color(0.90, 0.94, 0.97), &"floor_stone": Color(0.285, 0.296, 0.306),
-	&"joint_cold": Color(0.85, 0.938, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.4, &"pool_saturation": 1.0,
+	&"stone": Color(0.19, 0.285, 0.305), &"shadow": Color(0.80, 0.92, 0.96), &"floor_stone": Color(0.175, 0.265, 0.285),
+	&"joint_cold": Color(0.86, 0.97, 1.0), &"olive_share": 0.03, &"slab_hue": 4.0, &"metal": true, &"pool_gain": 1.4, &"pool_saturation": 1.0,
 	&"fire": {&"candle_range": 3.4, &"candle_gain": 1.8, &"bowl_range": 4.5, &"bowl_attenuation": 0.7, &"bowl_gain": 1.5,
 		&"compat": 0.4},
-	&"air": {&"sky": Color(0.045, 0.065, 0.08), &"fog": Color(0.10, 0.125, 0.14), &"fog_depth": Vector2(40.0, 85.0),
-		&"ambient": Color(0.74, 0.76, 0.78), &"ambient_gain": 2.1, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
+	&"air": {&"sky": Color(0.035, 0.065, 0.07), &"fog": Color(0.08, 0.125, 0.13), &"fog_depth": Vector2(40.0, 85.0),
+		&"ambient": Color(0.70, 0.80, 0.80), &"ambient_gain": 2.1, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
 		&"moon_shadow": true},
-	&"backdrop": {&"mist": Color(0.10, 0.15, 0.18), &"stone": Color(0.05, 0.07, 0.08), &"edge": Color(0.16, 0.22, 0.26)},
+	&"backdrop": {&"mist": Color(0.08, 0.15, 0.16), &"stone": Color(0.04, 0.07, 0.075), &"edge": Color(0.13, 0.22, 0.24)},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Cold damp: a pale cold bloom of salts on the slate, 1.4 times its value (the floor between them at patch_rest).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.382, 0.417, 0.449), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5}
+## The cycle of 2026-11-20: the patches soft (ArenaKit.SOFT_PATCHES) and the floor calm (ArenaKit.CALM_FLOOR) as in the
+## Salão; the frame is the walls themselves: the floor darker at their foot (edge_value from edge_span times the calm
+## radius out), the candles' pools on it a little warmer.
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.25, 0.37, 0.4), &"edge_value": 0.55, &"edge_span": Vector2(1.0, 1.6),
+	&"paint_pool_saturation": 1.3}
 ## SW-C1 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, GRAVE): grave slabs in the painted floor, the size
 ## of the old ones (SLAB), filling their rows (SLAB_ROWS: z -8.3 and 8.3) between the sarcophagi; x of each, its lion
 ## (z: 1, one in five counting the old ones). B leaves out the north-west one by its sarcophagus.
@@ -165,7 +172,7 @@ const STY_LIGHT_STONE := 1.35
 const STY_LID_POOL := 0.45
 ## B: the light of the small sarcophagi's lit candles, a share of the room's stylized candles (lot A review item 7:
 ## with the candles at 1.8 the west floor beside the lid burnt to luma 92).
-const STY_LID_LIGHT := 0.6
+const STY_LID_LIGHT := 0.4
 ## The cold shaft in the stylized look (hue 200, saturation 0.28).
 const STY_COLD := Color(0.66, 0.82, 0.92)
 ## The cold glow far behind the north door (spec 2.3): how far behind the wall's face (and at least 0.3 m past the
@@ -238,7 +245,7 @@ const CROWN_CHAIN := 0.5
 ## (Its attenuation under the spec's 1.0: at 5.7 m over the floor a fall-off of 1/d left N.L times it under the painted
 ## pool's edge, paint_pool 0.1, and the floor round the tomb took no warm at all.)
 const CROWN_LIGHT_DROP := 0.3
-const CROWN_ENERGY := 1.25
+const CROWN_ENERGY := 1.8
 ## Its colour: the room's candle warm a little yellower (CANDLE_COLOR painted the pool at hue 19 to 23 on the petrol
 ## stone, the aim 25 to 40).
 const CROWN_COLOR := Color(1.0, 0.76, 0.42)
@@ -269,8 +276,8 @@ const PALL_SHADER := preload("res://assets/shaders/reliquary_cloth.gdshader")
 ## light of the tomb's west step goes out (the crown lights there).
 const STY_NORTH_LID := 0.6
 const STY_STATUE_CANDLES := 0.5
-const STY_BOWLS := 0.75
-const STY_TOMB_SHAFT := 1.1
+const STY_BOWLS := 0.5
+const STY_TOMB_SHAFT := 1.5
 ## R-1 of the Sworn P1 review (the warm in a dozen spots competed with the crown): every other candle group on the small
 ## sarcophagi's lids, the columns' feet and the back ledges goes out in the stylized look (its flames and its light; the
 ## crown, the great tomb's and the statues' stay), as VX-13 did in the hall. Which of each two (0 or 1).
@@ -294,6 +301,12 @@ const STY_SHAFT_FROM := Vector3(2.5, 14.0, -3.0)
 const STY_SHAFT_AIM := 2.8
 const STY_SHAFT := Vector2(14.0, 1.6)
 const STY_VEILED_GLOW := 4.0
+## Item 4 of the cycle (B: the niches and the urns rule the frame): a cold wash grazing the ossuary wall's face toward the
+## camera (from: out of the face, height, along the wall from its middle; aim height; energy, cone, reach), diffuse, no
+## shadow, never on the crowd.
+const STY_OSSUARY_WASH_FROM := Vector3(5.0, 7.0, 2.0)
+const STY_OSSUARY_WASH_AIM := 1.4
+const STY_OSSUARY_WASH := Vector3(5.0, 34.0, 14.0)
 
 var _key: OmniLight3D
 var _fill: OmniLight3D
@@ -838,7 +851,7 @@ func _cold_shaft() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = ArenaKit.framed(STY_FLOOR_BIOME, _graves(_divider() != null))
+	st[&"floor"] = ArenaKit.framed(ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME), _graves(_divider() != null))
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
@@ -927,6 +940,28 @@ func _quiet_b(divider: ArenaObstacle) -> void:
 		VisualProfile.vary(_shaft, {&"transform": aimed, &"spot_angle": STY_SHAFT.x, &"light_energy": STY_SHAFT.y})
 	if _shaft_dust != null:
 		VisualProfile.vary(_shaft_dust, {&"visible": false})
+	_ossuary_wash(divider)
+
+
+## Item 4 of the cycle: the cold wash on the ossuary wall's niches (STY_OSSUARY_WASH_*), only in the stylized look.
+func _ossuary_wash(divider: ArenaObstacle) -> void:
+	var long_x := divider.half.x >= divider.half.y
+	var face := Vector3(0, 0, 1) if long_x else Vector3(1, 0, 0)
+	var along := Vector3(1, 0, 0) if long_x else Vector3(0, 0, 1)
+	var mid := Vector3(divider.center.x, STY_OSSUARY_WASH_AIM, divider.center.y)
+	var f := STY_OSSUARY_WASH_FROM
+	var spot := SpotLight3D.new()
+	add_child(spot)
+	ArenaKit.style_only(spot)
+	spot.look_at_from_position(mid + face * f.x + Vector3.UP * f.y + along * f.z, mid)
+	spot.light_color = STY_COLD
+	spot.light_energy = STY_OSSUARY_WASH.x
+	spot.spot_angle = STY_OSSUARY_WASH.y
+	spot.spot_range = STY_OSSUARY_WASH.z
+	spot.light_specular = 0.0
+	spot.shadow_enabled = false
+	spot.light_cull_mask = ~Arena.CROWD_LAYER
+	spot.set_meta(ArenaKit.NOT_FIRE, true)
 
 
 ## The great tomb of variant A (null in B).

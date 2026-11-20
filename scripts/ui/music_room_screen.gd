@@ -82,6 +82,9 @@ func _build() -> void:
 	back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	page.add_child(back)
 	_refresh()
+	ActionBar.attach(self, [ActionBar.entry(ActionBar.STEP, T.t(&"bar_change")),
+		ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self)),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_restore_focus.call_deferred()
 
 

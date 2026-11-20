@@ -73,6 +73,12 @@ const ORB_TELL := 1.8
 const TELL_LIGHT := 0.5
 
 
+## The share of its wind-up over which its body clears (QW-104 P2): min(tell_time, wind-up) / wind-up.
+static func tell_share(d: EnemyDef) -> float:
+	var w := maxf(d.attack_windup, 0.01)
+	return clampf(minf(d.tell_time, w) / w, 0.05, 1.0)
+
+
 ## How far the body has cleared at this point of its wind-up (0..1 of `tell`), the crowd.gdshader `ready` without
 ## TELL_LIGHT: nothing before the hold (the last `hold` share), all of it as the blow comes.
 static func tell_ready(tell: float, hold: float) -> float:
@@ -202,8 +208,8 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"orb", ORB_GLOW)
 	mat.set_shader_parameter(&"orb_tell", ORB_TELL)
 	mat.set_shader_parameter(&"crest", d.crest)
-	# QW-104: the body clears in the hold of its own wind-up (its windup_hold share), to TELL_LIGHT of the flash
-	mat.set_shader_parameter(&"tell_hold", clampf(d.windup_hold, 0.05, 1.0))
+	# QW-104: the body clears over the last tell_time of its wind-up (P2: no longer tied to the held pose), to TELL_LIGHT
+	mat.set_shader_parameter(&"tell_hold", tell_share(d))
 	mat.set_shader_parameter(&"tell_light", TELL_LIGHT)
 	mat.set_shader_parameter(&"style_tell", STYLE_TELL)
 	mat.set_shader_parameter(&"style_vivid", STYLE_BOSS_VIVID if d.behavior == EnemyDef.Behavior.BOSS else 0.0)

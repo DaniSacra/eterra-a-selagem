@@ -9,6 +9,9 @@ extends Node
 ## No path of its own (the slot's file is written); a test that writes a save of its own sets `path` elsewhere.
 const PATH := ""
 
+## The save in use was written (SaveSeal shows its small seal for a second; benchmark P2-4).
+signal written
+
 var data: Dictionary = SaveData.defaults()
 var enabled := true
 ## Where it is written ("": the file of the slot in use; a test writing a save of its own points it elsewhere, never at
@@ -142,6 +145,10 @@ func write() -> void:
 		SaveSlots.write_profile(slot, data.options, base)
 	if not SaveFile.write(to, JSON.stringify(data, "  ")):
 		push_warning("save: could not write %s (the file of before is kept)" % to)
+		return
+	written.emit()
+	if path == "" and not Dev.has("smoke"):
+		SaveSeal.flash(self)
 
 
 func option(key: String) -> Variant:

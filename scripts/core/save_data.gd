@@ -22,7 +22,7 @@ const FIRST_HERO := "warrior"
 ## elite; Morvath: met, phase the highest reached, defeated) and arenas (entered).
 const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies", "arenas"]
 ## The lists of ids in a hero's block (only strings are kept).
-const HERO_LISTS: Array[String] = ["unlocked", "equipped", "opened", "tools"]
+const HERO_LISTS: Array[String] = ["unlocked", "equipped", "opened", "tools", "refined", "inscribed"]
 
 
 static func defaults() -> Dictionary:
@@ -65,10 +65,11 @@ static func hero_defaults() -> Dictionary:
 		"forge": forge_defaults(), "tools": []}
 
 
-## The Forja's block of a hero (Forge): the highest Temperar bought (0: none); refine (action: choice), awaken (the one
-## awakened) and inscribed (Encantos learned) wait for the next slices.
+## The Forja's block of a hero (Forge): the highest Temperar bought (0: none); refine (action: the Refinar on it, Fatia
+## 2) and refined (the Refinar bought, ids); awaken (the one awakened) and inscribed (Encantos learned) wait for the
+## Fatia 3.
 static func forge_defaults() -> Dictionary:
-	return {"temper": 0, "refine": {}, "awaken": "", "inscribed": []}
+	return {"temper": 0, "refine": {}, "refined": [], "awaken": "", "inscribed": []}
 
 
 ## Fills anything missing from an older or damaged file, never dropping what is valid. Dictionaries with free keys

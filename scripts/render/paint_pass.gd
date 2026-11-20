@@ -16,9 +16,22 @@ const EDGE_ALPHA := 0.6
 const EDGE_JUMP := 0.04
 ## Whether the filter is on when nothing says otherwise (`--paint-pass`): see attach().
 const DEFAULT_ON := false
+## TA-HB1 (docs/art/benchmark_hades2_style.md 4.2): the ink line alone, no Kuwahara (which smeared the medallion's
+## runes): only where the depth jumps, so it outlines the pieces and the figures and never the floor's painted relief
+## (its runes, the framed slabs) nor the floor marks (drawn without depth). INK_PX at 1080, in the rooms' shadow ink,
+## from a jump of INK_JUMP of the pixel's depth (full at twice that). It runs after the transparent pass so it keeps the
+## Alta's MSAA (the painting filter has to turn it off), in the stylized look only, on the Forward+ only, at every
+## quality; off until the art-director approves it (`--ink-line=1` turns it on for a run, INK_DEFAULT_ON).
+const INK_PX := 2.0
+const INK_COLOR := Color(0.045, 0.05, 0.065)
+const INK_ALPHA := 0.7
+const INK_JUMP := 0.015
+const INK_DEFAULT_ON := false
 
 var kuwahara := true
 var contour := true
+## The ink line alone (TA-HB1): no Kuwahara, INK_* for the contour.
+var ink := false
 
 var _rd: RenderingDevice
 var _shader: RID
@@ -51,20 +64,38 @@ static func wanted(level: int) -> bool:
 	return DEFAULT_ON
 
 
-## Puts the filter on the camera when wanted() (and takes it off when not), enabled only in the stylized look
-## (VisualProfile). Returns whether it is on the camera.
+## Whether the ink line alone may run (TA-HB1): the Forward+ above the Baixa quality and `--ink-line` (else
+## INK_DEFAULT_ON). On the Baixa it cost the iGPU 1.4 ms of GPU at 1280 x 720 (58.6 to 52.6 frames a second, the
+## acceptance allows 3), on the RTX at 1080 0.04 ms.
+static func ink_wanted(level: int = GraphicsQuality.HIGH) -> bool:
+	if RenderingServer.get_current_rendering_method() != "forward_plus" or level == GraphicsQuality.LOW:
+		return false
+	if Dev.has("ink-line"):
+		return Dev.arg("ink-line") != "0"
+	return INK_DEFAULT_ON
+
+
+## Puts the filter on the camera when wanted() (and takes it off when not), or else the ink line alone when
+## ink_wanted(), enabled only in the stylized look (VisualProfile). Returns whether one is on the camera.
 static func attach(camera: Camera3D, level: int) -> bool:
 	if camera == null:
 		return false
-	if not wanted(level):
+	var line := not wanted(level) and ink_wanted(level)
+	if not wanted(level) and not line:
 		camera.compositor = null
 		return false
-	if camera.compositor and camera.compositor.compositor_effects.size() > 0 and camera.compositor.compositor_effects[0] is PaintPass:
+	if camera.compositor and camera.compositor.compositor_effects.size() > 0 and camera.compositor.compositor_effects[0] is PaintPass \
+			and (camera.compositor.compositor_effects[0] as PaintPass).ink == line:
 		return true
-	# with MSAA the frame is resolved again after the transparent pass and the filter's work is lost (measured on the
-	# Alta's 2x): the filter runs without it
-	camera.get_viewport().msaa_3d = Viewport.MSAA_DISABLED
 	var effect := PaintPass.new()
+	if line:
+		effect.ink = true
+		effect.kuwahara = false
+		effect.effect_callback_type = EFFECT_CALLBACK_TYPE_POST_TRANSPARENT
+	else:
+		# with MSAA the frame is resolved again after the transparent pass and the filter's work is lost (measured
+		# on the Alta's 2x): the filter runs without it
+		camera.get_viewport().msaa_3d = Viewport.MSAA_DISABLED
 	effect.enabled = false
 	VisualProfile.vary(effect, {&"enabled": true})
 	var comp := Compositor.new()
@@ -102,8 +133,14 @@ func _render_callback(_type: int, data: RenderData) -> void:
 		buffers.create_texture(&"paint_pass", &"copy", RenderingDevice.DATA_FORMAT_R16G16B16A16_SFLOAT, usage,
 			RenderingDevice.TEXTURE_SAMPLES_1, size, 1, 1, true, false)
 	var edge := Color(EDGE_COLOR.srgb_to_linear(), EDGE_ALPHA if contour else 0.0)
-	var filter := _push(size, maxf(1.0, roundf(RADIUS * scale)), maxf(1.0, EDGE_PX * scale), edge, 1.0 if kuwahara else 0.0, 0.0)
-	var back := _push(size, 0.0, 0.0, Color(0, 0, 0, 0), 0.0, 1.0)
+	var width := EDGE_PX
+	var jump := EDGE_JUMP
+	if ink:
+		edge = Color(INK_COLOR.srgb_to_linear(), INK_ALPHA)
+		width = INK_PX
+		jump = INK_JUMP
+	var filter := _push(size, maxf(1.0, roundf(RADIUS * scale)), maxf(1.0, width * scale), edge, 1.0 if kuwahara else 0.0, 0.0, jump)
+	var back := _push(size, 0.0, 0.0, Color(0, 0, 0, 0), 0.0, 1.0, jump)
 	var groups := Vector2i(ceili(size.x / 8.0), ceili(size.y / 8.0))
 	for view in buffers.get_view_count():
 		var color := buffers.get_color_layer(view)
@@ -113,8 +150,8 @@ func _render_callback(_type: int, data: RenderData) -> void:
 		_dispatch(copy, color, depth, back, groups)
 
 
-static func _push(size: Vector2i, radius: float, edge_px: float, edge: Color, kuwahara: float, copy_only: float) -> PackedByteArray:
-	return PackedFloat32Array([size.x, size.y, radius, edge_px, edge.r, edge.g, edge.b, edge.a, EDGE_JUMP, kuwahara,
+static func _push(size: Vector2i, radius: float, edge_px: float, edge: Color, kuwahara: float, copy_only: float, jump: float) -> PackedByteArray:
+	return PackedFloat32Array([size.x, size.y, radius, edge_px, edge.r, edge.g, edge.b, edge.a, jump, kuwahara,
 		copy_only, 0.0]).to_byte_array()
 
 

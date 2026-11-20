@@ -189,12 +189,14 @@ func test_the_hint_names_the_keys_of_the_device_in_hand() -> void:
 	var was := Controls.using_pad
 	Controls.using_pad = false
 	var s := _screen(_data(0))
-	var hint := s.find_child("hint", true, false) as Label
-	assert_eq(hint.text, T.t(&"hero_hint"))
+	# the action bar at the foot (benchmark P0-2): the real key, live
+	var accept := s.bar.item(&"ui_accept")
+	assert_eq(accept.key_text(), UiKit.action_label(&"ui_accept"))
 	Controls.using_pad = true
-	assert_eq(hint.text, T.t(&"hero_hint_pad"), "changes live")
+	assert_eq(accept.key_text(), UiKit.action_label(&"ui_accept"), "changes live")
+	assert_eq(accept.key_text(), "A")
 	Controls.using_pad = false
-	assert_eq(hint.text, T.t(&"hero_hint"))
+	assert_eq(accept.key_text(), UiKit.action_label(&"ui_accept"))
 	Controls.using_pad = was
 
 
@@ -235,7 +237,7 @@ func test_keys_walk_the_diamond() -> void:
 
 func test_every_text_of_the_screen_is_in_the_table() -> void:
 	for key: StringName in [&"title_hero", &"hero_mastery", &"hero_devotion", &"hero_passive", &"hero_passive_desc",
-			&"hero_ultimate", &"hero_hint", &"hero_hint_pad", &"hero_why_locked", &"hero_why_devotion", &"hero_why_slot",
+			&"hero_ultimate", &"bar_equip", &"bar_open", &"hero_why_locked", &"hero_why_devotion", &"hero_why_slot",
 			&"hero_why_needs", &"hero_why_apex", &"hero_why_bridge", &"codex_title", &"end_level_up"]:
 		assert_true(T.table.entries.has(String(key)), String(key))
 		assert_false(T.t(key).contains("—"), String(key))

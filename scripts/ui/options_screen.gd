@@ -43,7 +43,7 @@ var pages: Array[VBoxContainer] = []
 var _list: VBoxContainer
 var _waiting: StringName = &""
 var _focus_key := ""
-## What the setting in focus does (opt_<id>_tip), under the page.
+## What the setting in focus does (opt_<id>_tip), at the foot of the page.
 var tip: Label
 
 
@@ -162,13 +162,24 @@ func _build() -> void:
 	tip.custom_minimum_size = Vector2(WIDTH - 60.0, TIP_HEIGHT)
 	tip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(tip)
+	# at the page's foot, inside it (the tallest page, Controles, has no tips): the page and Voltar stay clear of the
+	# action bar at 720
+	tip.size_flags_vertical = Control.SIZE_SHRINK_END
+	tip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.add_child(tip)
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 220)
 	back.name = "back"
 	var f := UiKit.foot()
 	f.add_child(back)
 	v.add_child(f)
 	_link_tabs()
+	# the keys at the foot (benchmark P0-2, UI-HB6): the tabs on the left, change, confirm and back on the right
+	ActionBar.attach(self, [
+		ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _step_tab(-1), true),
+		ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _step_tab(1), true),
+		ActionBar.entry(ActionBar.STEP, T.t(&"bar_change")),
+		ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self)),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	var target := _focus_target()
 	_show_tab(_page_of(target) if target else tab)
 	_restore_focus.call_deferred()
@@ -203,6 +214,13 @@ func _show_tab(t: int) -> void:
 	for i in tabs.size():
 		tabs[i].set_pressed_no_signal(i == t)
 		pages[i].visible = i == t
+
+
+## The tab before (-1) or after (1), as LB and RB.
+func _step_tab(step: int) -> void:
+	var t := clampi(tab + step, 0, tabs.size() - 1)
+	tabs[t].grab_focus()
+	_show_tab(t)
 
 
 ## LB and RB (PageUp, PageDown) go to the tab before or after (DT-103); not while a key waits to be bound, nor under

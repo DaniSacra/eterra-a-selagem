@@ -142,7 +142,8 @@ func _broken(map: RunMap, opening: StringName) -> String:
 		var uses := {}
 		for i in way.size():
 			var r: RunMap.Room = way[i]
-			if r.layout >= 0:
+			# (a shop is no fight's arena: the route shop of DV-2 never uses the hall up)
+			if r.layout >= 0 and r.kind != RunMap.Kind.SHOP:
 				uses[r.layout] = int(uses.get(r.layout, 0)) + 1
 			if (r.kind == RunMap.Kind.COMBAT or r.kind == RunMap.Kind.MINIBOSS) and i > 0:
 				var l := stage.layouts[r.layout]

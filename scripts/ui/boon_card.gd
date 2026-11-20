@@ -30,16 +30,28 @@ extends Button
 ## and got carries the reward's mark (DoorGlyph: heart, coin, pomegranate, gem) and walking on says "Sem custo"; the
 ## Provação's crest is the blessing's medallion alone and the curse's band carries the painted cracked seal.
 
-## Card size at 720 lines (the screen scales with the window: canvas_items stretch).
-const SIZE := Vector2(320, 450)
+## Card size at 720 lines (the screen scales with the window: canvas_items stretch). A Blessing's and a Psalm's card
+## take the height of what they say (fit_height, UI-HB1: the bottom third of the tall cards was empty), never past
+## SIZE.y nor under MIN_H; the cards of a row stand as tall as the tallest (the row's container).
+const SIZE := Vector2(300, 450)
+const MIN_H := 300.0
 const PAD := 18.0
 ## Height of the art band at the top.
-const ART_H := 172.0
+const ART_H := 140.0
 ## Medallions: painted Elo, painted single gift, drawn single gift; the drawn Elo (EloLink) and the sources.
-const PAINTED_ELO := 138.0
-const PAINTED := 156.0
-const DRAWN := 116.0
-const DRAWN_ELO := 88.0
+const PAINTED_ELO := 120.0
+const PAINTED := 128.0
+const DRAWN := 100.0
+const DRAWN_ELO := 80.0
+## The description (UI-HB2): its body in a quieter ivory, the numbers and the words of rule in full ivory and bold
+## (UiKit.strong, Glossary.emphasize; never a reserved colour), left aligned, and its size.
+const BODY := Color(0.8, 0.76, 0.69)
+const BODY_SIZE := 17
+## The card's facts (UI-HB1, benchmark P1-1): one row per number, its label small and quiet on the left, its value in
+## bold ivory on the right ("Congela por" / "0,4 s"); on a trade, the value of what goes out before it, dimmed.
+const FACT_LABEL := 14
+const FACT_VALUE := 18
+const FACT_MAX := 3
 const SOURCE := 46.0
 const SOURCE_GAP := 20.0
 const DRAWN_SOURCE := 50.0
@@ -127,14 +139,19 @@ var trial: Trials.Card
 var altar := &""
 ## The control that shows the gift at the top: a TextureRect (painted), a BoonIcon or an EloLink.
 var crest: Control
+## The description as plain words (no markup): the glossary reads its terms from it (Glossary.show_for).
+var plain := ""
+var _box: VBoxContainer
+var _fits := 0
 
 static var _glow: GradientTexture2D
 
 
 ## level: the gift's level now (0 = new; an exchange: the level it keeps); replaces: the gift it would replace, or null.
 ## upgrade: the card is an exchange one rarity up; replaced_rarity: the rarity of the gift it replaces.
+## replaced_level: the level of the gift it replaces (its numbers stand before the card's, dimmed, on a trade).
 func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replaces: Boon, text: String,
-		upgrade_: bool = false, replaced_rarity: Boon.Rarity = Boon.Rarity.COMMON) -> BoonCard:
+		upgrade_: bool = false, replaced_rarity: Boon.Rarity = Boon.Rarity.COMMON, replaced_level := 0) -> BoonCard:
 	boon = b
 	elo = b != null and (b.is_duo() or not from.is_empty())
 	upgrade = upgrade_ and b != null and not elo
@@ -146,7 +163,7 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 	if b == null:
 		box.add_child(_name(T.t(&"boon_rest")))
 		box.add_child(_rule())
-		box.add_child(_text(text, UiKit.PALE, 18))
+		box.add_child(_rich(text))
 	else:
 		box.add_child(_name(T.t("boon_" + String(b.id))))
 		var cap := EloLink.caption(from) if not from.is_empty() else T.t(Boon.FAMILY_KEY[b.family])
@@ -157,18 +174,21 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 		else:
 			meta.free()
 		box.add_child(_rule())
-		var desc := _text(text, UiKit.PALE, 18)
-		desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		box.add_child(desc)
+		box.add_child(_rich(text))
+		# the facts at the level shown: the next one (new or grown), or the one a trade keeps
+		var lv := maxi(level, 1) if upgrade else level + 1
+		var before: Array = []
+		if replaces != null and replaced_level > 0:
+			before = BoonChoice.facts(replaces, replaced_level, Boon.RARITY_MULT[replaced_rarity])
+		var facts := _facts(BoonChoice.facts(b, lv, Boon.RARITY_MULT[rarity] if not elo else 1.0), before)
+		if facts != null:
+			box.add_child(facts)
+		# what is left of the height goes over the trade, so it always stands at the bottom
+		box.add_child(_fill())
 		if replaces != null:
-			var replaced_name := T.t("boon_" + String(replaces.id))
-			if upgrade:
-				box.add_child(_swap(replaces, replaced_rarity, b, rarity))
-			else:
-				var warn := _text(T.t(&"choice_replaces", {"name": replaced_name}), WARN, 16, UiKit.BOLD_FONT)
-				warn.name = &"Replaces"
-				box.add_child(warn)
-	_finish()
+			# what goes out and what comes in, in that order (UI-HB1: a trade said plainly, also on a plain replace)
+			box.add_child(_swap(replaces, replaced_rarity, b, rarity))
+	_finish(true)
 	if upgrade:
 		add_child(_upgrade_tab())
 	return self
@@ -192,6 +212,7 @@ func _shell(glow: Color, size_px: Vector2 = SIZE, art_h: float = ART_H) -> VBoxC
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override(&"separation", 5)
 	add_child(box)
+	_box = box
 	return box
 
 
@@ -204,8 +225,13 @@ func _art(box: VBoxContainer, art_h: float = ART_H) -> CenterContainer:
 	return art
 
 
-## The end every card shares: the frame drawn over its parts, and focus that follows the mouse.
-func _finish() -> void:
+## The end every card shares: the frame drawn over its parts, and focus that follows the mouse. fit: the card takes
+## the height of what it says (fit_height, once laid out).
+func _finish(fit := false) -> void:
+	if fit:
+		custom_minimum_size.y = MIN_H
+		_fits = 2
+		_fit_later.call_deferred()
 	var frame := Control.new()
 	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -216,6 +242,24 @@ func _finish() -> void:
 			grab_focus())
 	focus_entered.connect(_on_focus.bind(true, frame))
 	focus_exited.connect(_on_focus.bind(false, frame))
+
+
+func _fit_later() -> void:
+	if not is_inside_tree():
+		return
+	fit_height()
+	_fits -= 1
+	if _fits > 0:
+		# the text wraps to the width it got: once more after the row has laid the card out
+		_fit_later.call_deferred()
+
+
+## The height of what the card says, from its top to its last line, between MIN_H and SIZE.y.
+func fit_height() -> void:
+	if _box == null:
+		return
+	var need := _box.get_combined_minimum_size().y + _box.offset_top - _box.offset_bottom
+	custom_minimum_size.y = clampf(ceilf(need), MIN_H, SIZE.y)
 
 
 ## The colour of the outer edge: the rarity's (rarity_color), the chain's metal for an Elo. Never changed by focus.
@@ -469,15 +513,18 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 	line.add_child(does)
 	box.add_child(line)
 	box.add_child(_rule())
-	var desc := _text(T.t(p.desc_key, p.text_args()), UiKit.PALE, 18)
+	var args := p.text_args()
+	for k: String in args:
+		args[k] = UiKit.strong(str(args[k]))
+	var desc := _rich(T.t(p.desc_key, args))
 	desc.name = &"Desc"
-	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(desc)
+	box.add_child(_fill())
 	if not opened_by.is_empty():
 		var by := _text(T.t(&"psalm_opened_by", {"list": " · ".join(opened_by)}), EloLink.METAL_LIT, 15, UiKit.BOLD_FONT)
 		by.name = &"OpenedBy"
 		box.add_child(by)
-	_finish()
+	_finish(true)
 	var mark := Control.new()
 	mark.custom_minimum_size = Vector2(10, 18)
 	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -784,6 +831,60 @@ func _text(text: String, color: Color, size_: int, font: Font = null) -> Label:
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.custom_minimum_size.x = SIZE.x - PAD * 2.0
 	return l
+
+
+## The description (UI-HB2): bbcode with the numbers and the words of rule already marked (UiKit.strong,
+## Glossary.emphasize), the body in BODY, left aligned, as tall as its lines. Its plain words go to plain.
+func _rich(bbcode: String) -> RichTextLabel:
+	var marked := Glossary.emphasize(bbcode)
+	var r := UiKit.rich(marked, BODY, BODY_SIZE)
+	r.name = &"Desc"
+	r.custom_minimum_size.x = SIZE.x - PAD * 2.0
+	plain = r.get_parsed_text()
+	return r
+
+
+## The rows of facts (BoonChoice.facts: [stat, label, value]); before: the same of what a trade lets go, matched by
+## stat (its value shows dimmed before the new one). null without facts.
+func _facts(rows: Array, before: Array = []) -> VBoxContainer:
+	if rows.is_empty():
+		return null
+	var old := {}
+	for f: Array in before:
+		old[f[0]] = f[2]
+	var col := VBoxContainer.new()
+	col.name = &"Facts"
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override(&"separation", 0)
+	for f: Array in rows.slice(0, FACT_MAX):
+		var row := HBoxContainer.new()
+		row.name = StringName("Fact_" + String(f[0]))
+		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_theme_constant_override(&"separation", 6)
+		var label := UiKit.label(String(f[1]), UiKit.DIM, FACT_LABEL, UiKit.BOLD_FONT)
+		label.name = &"Label"
+		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(label)
+		if old.has(f[0]) and old[f[0]] != f[2]:
+			var was := UiKit.label(T.t(&"fact_was", {"v": old[f[0]]}), UiKit.DIM, FACT_LABEL + 1, UiKit.number_font())
+			was.name = &"Was"
+			was.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			row.add_child(was)
+		var value := UiKit.label(String(f[2]), UiKit.STRONG, FACT_VALUE, UiKit.number_font())
+		value.name = &"Value"
+		row.add_child(value)
+		col.add_child(row)
+	return col
+
+
+## A spacer that takes the card's height left over.
+func _fill() -> Control:
+	var c := Control.new()
+	c.name = &"Fill"
+	c.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return c
 
 
 ## Action (if any), level and rarity on one line, each in its own colour. An Elo shows only its action (it has

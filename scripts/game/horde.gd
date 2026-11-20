@@ -142,6 +142,8 @@ var list: Array[Enemy] = []
 ## comes from (Combat sets it around a hit; &"" counts as other).
 var dealt := DealtBy.new()
 var dealing: StringName = &""
+## Fatia 2, the Refinar Peso: a blow's flinch lasts this many times its own (Combat sets it while it deals a blow).
+var stun_scale := 1.0
 ## How fast the enemies walk, times their own (E5: a Provação's curse, set by Rooms on entering a fight; 1: as is).
 var speed_scale := 1.0
 var dying: Array[Enemy] = []
@@ -987,13 +989,17 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.blows += 1
 				if e.blows < d.strikes:
 					e.warning2 = ground.add_warning(e.pos, d.attack_width, d.strike_gap + dt, d.attack_damage * damage_scale, d.magic_color)
+					(e.warning2 as Ground.Zone).land_quick = e.blows < d.strikes - 1
 			if e.state_t >= blow_at(e, d.strikes - 1) + PULSE_AFTER:
 				e.warning2 = null
 				e.cooldown = d.attack_cooldown * _rng.randf_range(0.85, 1.2)
 				_end_attack(e)
 		_:
 			e.dir = toward
-			if dist > d.attack_range:
+			# (C19, combat_cadence.md 8.3 (b): pushed off his body while it waits it walked in again at once, a 12 cm saw
+			# at 8 Hz; it walks again only MELEE_WALK_BAND past its reach, as the knight)
+			e.closing = dist > (d.attack_range if e.closing else d.attack_range + MELEE_WALK_BAND)
+			if e.closing:
 				e.pos += _walk * _speed(e) * dt
 			elif e.cooldown <= 0.0 and target_alive:
 				_set_state(e, Enemy.State.WINDUP, &"windup")
@@ -1001,6 +1007,8 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.blows = 0
 				# it bursts as its arms open, strike_at into its attack (T5-09): the warning fills until then
 				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * damage_scale, d.magic_color)
+				# (P2-C19a: a burst with another after it leaves only a thin ring for LAND_QUICK s, never over the next)
+				(e.warning as Ground.Zone).land_quick = d.strikes > 1
 			else:
 				e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
 
@@ -1281,8 +1289,9 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if (e.state == Enemy.State.WALK or e.state == Enemy.State.RECOVER) and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if flash and from_dir != Vector2.ZERO and e.hp > 0.0:
-		# a blow, not a burn's tick or a zone's: a common body flinches (GF-12)
-		flinch(e, e.def.stun_heavy_time if big else e.def.stun_time)
+		# a blow, not a burn's tick or a zone's: a common body flinches (GF-12), longer by the blow's stun_scale (the
+		# Refinar Peso, Fatia 2: Combat sets it around its damage)
+		flinch(e, (e.def.stun_heavy_time if big else e.def.stun_time) * stun_scale)
 	if knockback > 0.0:
 		e.push = from_dir * knockback * (0.35 if e.def.heavy else 1.0)
 	if show_number:

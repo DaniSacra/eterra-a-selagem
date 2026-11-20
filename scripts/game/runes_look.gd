@@ -87,12 +87,18 @@ const FLASH_INSET := 0.1
 ## The stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md 1.3): pale cold stone, almost grey, so
 ## the amber of an armed tile reads alone; the north door's bowls with the hall's fire numbers (the lights over the armed
 ## tiles are the danger's: ArenaKit.NOT_FIRE, as they are, only diffuse, nothing round on the floor).
+## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the pale stone colder (hue 220 to 235 on the
+## screen) through the stone, the shadow and the air, the saturation at the low end; the floor is the danger, so only
+## its rest grows quieter (STY_REST).
 const STYLE := {
-	&"stone": Color(0.344, 0.349, 0.366), &"shadow": Color(0.95, 0.955, 0.98), &"floor_stone": Color(0.331, 0.336, 0.346),
+	&"stone": Color(0.32, 0.34, 0.39), &"shadow": Color(0.86, 0.91, 1.0), &"floor_stone": Color(0.315, 0.333, 0.375),
 	&"joint_cold": Color(1.0, 1.0, 1.02), &"olive_share": 0.0, &"slab_hue": 2.0, &"edge_value": 1.0, &"metal": true, &"fire": CatacombHall.STYLE[&"fire"],
-	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.10, 0.10, 0.12), &"ambient": Color(0.72, 0.725, 0.75),
+	&"air": {&"sky": Color(0.045, 0.05, 0.07), &"fog": Color(0.09, 0.10, 0.13), &"ambient": Color(0.68, 0.71, 0.79),
 		&"ambient_gain": 1.55, &"moon": Color(0.9, 0.9, 0.93), &"moon_energy": 0.8, &"moon_shadow": false},
 }
+## Item 4 of the cycle: the grid at rest discreet (the frames' and marks' ivory trace nearer the stone,
+## rune_tiles.gdshaderinc), the strong amber only on a tile that arms.
+const STY_REST := {&"paint_trace_share": 0.2}
 ## The browser's renderer: the stylized air's share there.
 const STY_COMPAT_AMBIENT := 0.7
 const STY_COMPAT_MOON := 0.6
@@ -553,6 +559,7 @@ func _pillar(o: ArenaObstacle) -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
+	st[&"floor"] = STY_REST
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON

@@ -36,11 +36,21 @@ enum Kind { COMBAT, MINIBOSS, FOUNTAIN, SHOP, BOSS, TRIAL, ALTAR }
 ## drawn among those held, no choice (shop only; Hades II's pom slice). Rejogabilidade, Fatia 1 (sistemas.md 3.1):
 ## SILVER, Prata Antiga for the Forja, and MEMORY, Fragmentos de Memória to open the Gifts; both go home (MaterialPurse),
 ## the doors that trade power now for power in the next descents.
-enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE, SILVER, MEMORY }
+## Fatia 2 (sistemas.md 1.7): ENCHANT, a door (or the shop's item) of an Encanto, one of three learned at the Forja
+## (Enchants), at most StageDef.enchant_max on a way; PSALM, a door whose Blessings hold a Psalm card (only where one
+## can come: settle turns it into a Blessing before its sign shows).
+enum Reward { NONE, BOON, POM, HEART, MAGICK, GOLD, HEAL, POM_SLICE, SILVER, MEMORY, ENCHANT, PSALM }
+## RJ-2, the groups of the rewards: power for this descent (a Blessing, a pomegranate, an Encanto, a Psalm), the body
+## and the purse (life, Magia, gold, healing) and home (the materials). Two doors of a room show two groups when the
+## deck has them (_draw_rewards): the choice is between kinds of things, not between two of a kind.
+enum Group { NONE, POWER, BODY, HOME }
 
-const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal", &"reward_pom_slice", &"reward_silver", &"reward_memory"]
+const REWARD_KEY: Array[StringName] = [&"", &"reward_boon", &"reward_pom", &"reward_heart", &"reward_magick", &"reward_gold", &"reward_heal", &"reward_pom_slice", &"reward_silver", &"reward_memory", &"reward_enchant", &"reward_psalm"]
 ## The rewards that are materials brought home (Rooms gives them to the run's MaterialPurse).
 const MATERIAL_REWARDS: Array[Reward] = [Reward.SILVER, Reward.MEMORY]
+const GROUP_OF := {Reward.BOON: Group.POWER, Reward.POM: Group.POWER, Reward.ENCHANT: Group.POWER,
+	Reward.PSALM: Group.POWER, Reward.POM_SLICE: Group.POWER, Reward.HEART: Group.BODY, Reward.MAGICK: Group.BODY,
+	Reward.GOLD: Group.BODY, Reward.HEAL: Group.BODY, Reward.SILVER: Group.HOME, Reward.MEMORY: Group.HOME}
 const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar"]
 
 ## The most doors a room has (every arena has 3, the hall too: CatacombHall._doors).
@@ -49,6 +59,8 @@ const MAX_DOORS := 3
 const HARD_FROM := 0.4
 ## Tries to draw a graph that keeps every rule before the last one is kept as it is (never seen in 1000 seeds).
 const MAX_TRIES := 60
+## The angels' deck is drawn on dice of their own (the map's seed salted with this).
+const ANGEL_SALT := 3307
 
 
 class Room:
@@ -72,6 +84,11 @@ class Room:
 	var trial := false
 	var hidden := false
 	var fight_seed := 0
+	## Fatia 2 (sistemas.md 1.6): a Blessing's room where two angels meet him (the rarer card, StageDef.angel_deck),
+	## and, for the others, the one angel its door shows (drawn by Rooms when the door opens, among those with a card
+	## for the hand: Rooms.door_angel; &"" until then, and for a meeting).
+	var meeting := false
+	var angel: StringName = &""
 
 	## What the door's sign may tell (E5-D8; docs/art/e5_spec.md 7.1): kind and reward (their enums), hard (a fight
 	## with an elite), guardian, tier (StageDef.Tier of its fight, -1: no fight), elites (ids), depth; since DV-1 the
@@ -86,12 +103,13 @@ class Room:
 					elites.append(String(e))
 		return {"kind": kind, "reward": reward, "depth": depth, "tier": tier, "guardian": kind == Kind.MINIBOSS,
 			"hard": kind == Kind.COMBAT and not elites.is_empty(), "elites": elites, "node": id, "hidden": hidden,
-			"guardian_id": String(guardian)}
+			"guardian_id": String(guardian), "meeting": meeting and reward == Reward.BOON, "angel": String(angel)}
 
 	## The room in plain values (RunMap.view).
 	func view() -> Dictionary:
 		return {"id": id, "depth": depth, "slot": slot, "kind": kind, "reward": reward, "guardian": String(guardian),
-			"hidden": hidden, "arena": String(arena), "next": next.duplicate()}
+			"hidden": hidden, "arena": String(arena), "next": next.duplicate(), "meeting": meeting and reward == Reward.BOON,
+			"angel": String(angel)}
 
 	func _init(k: Kind, r: Reward, d: int, l: int = 0, v: int = 0) -> void:
 		kind = k
@@ -131,6 +149,10 @@ var _parents: Array[PackedInt32Array] = []
 var _uses: Array[Dictionary] = []
 var _before: Array[PackedInt32Array] = []
 var _fights_min := PackedInt32Array()
+## Fatia 2: the most Encantos on a way up to each room (index = id), and the angels' deck with its own dice.
+var _enchants := PackedInt32Array()
+var _angel_deck: RewardDeck
+var _angel_rng := RandomNumberGenerator.new()
 
 
 func _init(stage_def: StageDef, seed_value: int, forced := -1, shortest_curse := 3) -> void:
@@ -263,18 +285,20 @@ func trial(at_depth: int) -> Room:
 	return Room.new(Kind.TRIAL, Reward.NONE, at_depth, -1)
 
 
-## The doors about to open: a pomegranate behind one when nothing can grow (can_pom false) turns into a Blessing
-## before its sign shows (Q-25 a; expected never). Returns how many turned.
-func settle(doors_: Array[Room], can_pom: bool) -> int:
+## The doors about to open: a pomegranate behind one when nothing can grow (can_pom false), a Psalm's door when no Psalm
+## can come (can_psalm false) and an Encanto's when none is left to offer (can_enchant false) turn into a Blessing
+## (one angel shown, Rooms) before its sign shows (Q-25 a; Fatia 2). Returns how many turned.
+func settle(doors_: Array[Room], can_pom: bool, can_psalm := true, can_enchant := true) -> int:
 	var n := 0
-	if can_pom:
-		return 0
 	for r in doors_:
-		if r.reward == Reward.POM:
+		var turn := (r.reward == Reward.POM and not can_pom) or (r.reward == Reward.PSALM and not can_psalm) \
+				or (r.reward == Reward.ENCHANT and not can_enchant)
+		if turn:
+			if r.reward == Reward.POM:
+				pom_turned += 1
 			r.reward = Reward.BOON
 			n += 1
 	if n > 0:
-		pom_turned += n
 		changed.emit()
 	return n
 
@@ -284,6 +308,16 @@ func reveal(r: Room) -> void:
 	if r != null and r.hidden:
 		r.hidden = false
 		changed.emit()
+
+
+## DV-2 (MAP-09): a shop before the last one (the route shop, fewer items).
+func is_route_shop(r: Room) -> bool:
+	return r != null and r.kind == Kind.SHOP and r.depth < stage.rooms
+
+
+## The group of a reward (RJ-2).
+static func group_of(r: int) -> Group:
+	return GROUP_OF.get(r, Group.NONE)
 
 
 # ---------- drawing ----------
@@ -301,6 +335,9 @@ func _build() -> bool:
 	_uses.clear()
 	_before.clear()
 	deck = RewardDeck.new(stage.reward_deck)
+	_angel_deck = RewardDeck.new(stage.angel_deck)
+	_angel_rng.seed = hash([map_seed, ANGEL_SALT])
+	_enchants.clear()
 	var last := stage.rooms + 1
 	miniboss_depth = _rng.randi_range(stage.miniboss_depth_min, stage.miniboss_depth_max)
 	var fountains := _event_depths(stage.fountain_depth_min, stage.fountain_depth_max, stage.fountain_chance, true, [])
@@ -312,6 +349,12 @@ func _build() -> bool:
 	var altar: Array[int] = []
 	if stage.altar_layout != null:
 		altar = _event_depths(stage.altar_depth_min, stage.altar_depth_max, stage.altar_chance, false, fountains)
+	# DV-2 (MAP-09): a route shop on one branch of a middle layer, never one of the fountain's nor the altar's
+	var route: Array[int] = []
+	if stage.route_shop_chance > 0.0:
+		var busy: Array = fountains.duplicate()
+		busy.append_array(altar)
+		route = _event_depths(stage.route_shop_depth_min, stage.route_shop_depth_max, stage.route_shop_chance, false, busy)
 	for d in range(1, last + 1):
 		var ids := PackedInt32Array()
 		var width := _width(d, layers[d - 1].size() if d > 1 else 1)
@@ -337,6 +380,7 @@ func _build() -> bool:
 			_parents.append(PackedInt32Array())
 			_uses.append({})
 			_before.append(PackedInt32Array())
+			_enchants.append(0)
 		layers.append(ids)
 		for k in fountains.count(d):
 			# a layer keeps a fight beside its fountains
@@ -347,6 +391,10 @@ func _build() -> bool:
 			var plain := Array(ids).filter(func(id: int) -> bool: return nodes[id].kind == Kind.COMBAT)
 			if not plain.is_empty():
 				nodes[plain[_rng.randi() % plain.size()]].kind = Kind.ALTAR
+		if d in route and ids.size() > 1:
+			var plain := Array(ids).filter(func(id: int) -> bool: return nodes[id].kind == Kind.COMBAT)
+			if plain.size() > 1:
+				nodes[plain[_rng.randi() % plain.size()]].kind = Kind.SHOP
 	for d in range(1, last):
 		_link(layers[d], layers[d + 1])
 	_one_fountain()
@@ -501,7 +549,9 @@ func _place_arenas(d: int) -> void:
 			var l := stage.layouts[r.layout]
 			r.arena = l.id
 			r.variant = _rng.randi() % maxi(1, l.variant_count()) if r.kind != Kind.SHOP else 0
-			uses[r.layout] = int(uses.get(r.layout, 0)) + 1
+			if r.kind != Kind.SHOP:
+				# (a shop is no fight's arena: the route shop of DV-2 never uses up the hall's)
+				uses[r.layout] = int(uses.get(r.layout, 0)) + 1
 			taken.append(r.layout)
 		_uses[id] = uses
 		_before[id] = before if r.kind == Kind.ALTAR else PackedInt32Array([r.layout])
@@ -509,17 +559,47 @@ func _place_arenas(d: int) -> void:
 
 ## The rewards of a layer's fights, off the deck: no two rooms of a layer with the same (so no two doors of a room),
 ## a pomegranate only from StageDef.pom_from_depth (the hall gives a Blessing, the next room may still not have one
-## to grow); a Blessing when the deck has nothing that fits even full.
+## to grow), a Psalm only from psalm_from_depth, an Encanto never past enchant_max on a way and its second only from
+## enchant_second_from; a Blessing when the deck has nothing that fits even full. RJ-2: a card of a group the other
+## doors of its rooms do not show yet is taken first when the deck has one. A Blessing's room is a meeting of two
+## angels when its card off the angels' deck says so (StageDef.angel_deck, dice of their own: the map of before stays).
 func _draw_rewards(d: int) -> void:
 	var used: Array[int] = []
 	for id in layers[d]:
 		var r := nodes[id]
+		var most := 0
+		for p in _parents[id]:
+			most = maxi(most, _enchants[p])
 		if r.kind != Kind.COMBAT or d == 1:
+			_enchants[id] = most
+			if r.reward == Reward.BOON:
+				r.meeting = true  # the hall's and the guardian's: no door shows them
 			continue
-		var card := deck.draw(_rng, func(c: int) -> bool:
-			return not used.has(c) and (c != Reward.POM or d >= stage.pom_from_depth))
+		var beside := {}
+		for p in _parents[id]:
+			for n in nodes[p].next:
+				if n != id and nodes[n].reward != Reward.NONE:
+					beside[group_of(nodes[n].reward)] = true
+		var card := deck.draw_prefer(_rng, func(c: int) -> bool:
+			return not used.has(c) and _may(c, d, most),
+			func(c: int) -> bool: return not beside.has(group_of(c)))
 		r.reward = Reward.BOON if card < 0 else card as Reward
 		used.append(r.reward)
+		_enchants[id] = most + (1 if r.reward == Reward.ENCHANT else 0)
+		if r.reward == Reward.BOON:
+			r.meeting = _angel_deck.draw(_angel_rng, func(_c: int) -> bool: return true) == 1
+
+
+## Whether a card may lie at depth d behind a room with `most` Encantos already on a way to it.
+func _may(c: int, d: int, most: int) -> bool:
+	match c:
+		Reward.POM:
+			return d >= stage.pom_from_depth
+		Reward.PSALM:
+			return d >= stage.psalm_from_depth
+		Reward.ENCHANT:
+			return most < stage.enchant_max and (most == 0 or d >= stage.enchant_second_from)
+	return true
 
 
 ## The fewest fights after each room on any way to the shop (fights_left).

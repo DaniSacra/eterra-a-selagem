@@ -15,7 +15,9 @@ extends RefCounted
 ##   game.encounters.cards_of(angel) -> Array[BoonState.Card]: the cards that angel would offer (the same ones choose
 ##     opens: its own dice), for a screen that previews them or goes back to the pair.
 ##   game.encounters.meetings -> Array[Dictionary]: one entry a meeting ({room, node, offered, chose, cards, fallback}),
-##     the RESULT's angels.
+##     the RESULT's angels (fallback "door": the one angel the door showed, Fatia 2).
+##   game.encounters.door_angel(room) -> StringName: the angel a Blessing's door shows (Rooms sets RunMap.Room.angel
+##     when the doors open; RunMap.Room.meeting: two angels meet him there instead).
 ##   signal opened(angels: Array[AngelDef]) when a meeting needs a choice (EncounterScreen listens; with no listener
 ##     the old AngelChoice opens).
 
@@ -47,11 +49,17 @@ func open(chances: Array[float], psalm_chance: float) -> void:
 	_chances = chances
 	_psalm = psalm_chance
 	var forced: Array = Array(Dev.arg("angels").split(",", false)) if Dev.has("angels") else []
-	angels_now = book.pair(game.boons, _dice(), forced)
 	var room := game.rooms.room
+	# Fatia 2: a door that showed one angel brings that one (if it still has a card for the hand: else a pair)
+	var shown := book.find(room.angel) if room != null and not room.meeting and room.angel != &"" and forced.is_empty() else null
+	if shown != null and Encounter.eligible(game.boons, shown):
+		angels_now = [shown] as Array[AngelDef]
+	else:
+		angels_now = book.pair(game.boons, _dice(), forced)
 	_entry = {"room": room.depth if room else 0, "node": room.id if room else -1,
 		"offered": angels_now.map(func(a: AngelDef) -> String: return String(a.id)), "chose": "", "cards": [],
-		"fallback": "" if angels_now.size() >= Encounter.SIZE else ("single" if angels_now.size() == 1 else "none")}
+		"fallback": "door" if shown != null and angels_now.size() == 1 and angels_now[0] == shown else "" if angels_now.size() >= Encounter.SIZE \
+			else ("single" if angels_now.size() == 1 else "none")}
 	meetings.append(_entry)
 	if angels_now.is_empty():
 		game.open_cards([])  # nobody has a card for this hand: the rest card of today
@@ -67,6 +75,14 @@ func open(chances: Array[float], psalm_chance: float) -> void:
 		screen.chosen.connect(func(a: AngelDef) -> void:
 			game.close_screen()
 			choose(a))
+
+
+## Fatia 2 (sistemas.md 1.6): the one angel a Blessing's door shows (no meeting), drawn when the door opens on dice of
+## that room among the angels with a card for the hand; &"" when none has (the room falls back to the pair).
+func door_angel(r: RunMap.Room) -> StringName:
+	var rng := Encounter.dice(game.run_seed(), r.id, r.depth)
+	var one := book.pair(game.boons, rng)
+	return one[0].id if not one.is_empty() else &""
 
 
 ## Takes an angel of the pair: its cards on the choice screen.

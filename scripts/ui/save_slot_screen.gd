@@ -41,7 +41,8 @@ var erasers: Array[Button] = []
 var question: Control
 var asking := 0
 var _row: HBoxContainer
-var _hint: Label
+## The keys at the foot (benchmark P0-2).
+var bar: ActionBar
 
 
 ## folder: where the saves are ("": Save.base, the game's).
@@ -60,13 +61,15 @@ func open(can_back: bool = false, folder: String = "") -> void:
 	_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	_row.add_theme_constant_override(&"separation", CARD_GAP)
 	page.add_child(_row)
-	_hint = UiKit.shadow(UiKit.label("", UiKit.DIM, 15))
-	_hint.name = "hint"
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page.add_child(_hint)
+	# when the game writes the save (benchmark P2-4; the small "Salvo" seal shows it, SaveSeal)
+	var when := UiKit.shadow(UiKit.label(T.t(&"slots_saves_when"), UiKit.DIM, 15))
+	when.name = "saves_when"
+	when.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	page.add_child(when)
 	refresh()
-	Controls.device_changed.connect(_name_keys)
-	_name_keys(Controls.using_pad)
+	bar = ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_play"), _press_focus)])
+	if back:
+		bar.add(ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit()))
 	var start := clampi((Save.slot if Save.slot > 0 else 1) - 1, 0, SaveSlots.COUNT - 1)
 	cards[start].grab_focus.call_deferred()
 	if Dev.has("slot-ask"):
@@ -298,9 +301,11 @@ func _unask() -> void:
 	to.grab_focus.call_deferred()
 
 
-func _name_keys(pad: bool) -> void:
-	if is_instance_valid(_hint):
-		_hint.text = T.t(&"slot_hint_pad" if pad else &"slot_hint")
+## The card or button in focus pressed (the action bar's click).
+func _press_focus() -> void:
+	var f := get_viewport().gui_get_focus_owner() as BaseButton
+	if f != null and is_ancestor_of(f) and not f.disabled:
+		f.pressed.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:

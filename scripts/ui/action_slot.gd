@@ -69,6 +69,11 @@ const SEAL_GLYPH := 0.35
 
 var action: StringName
 var slot: Boon.Slot
+## The diamond's height in pixels (DIAMOND; the --hud=row test layout draws them smaller, Hud.ROW_DIAMOND).
+var side := DIAMOND
+## How far under the diamond's lower point the key's plate stands (0: over the point; the small diamonds of the row
+## layout hang it below, or the plate and the little mouse would cover half the glyph).
+var key_drop := 0.0
 var boon: Boon
 ## 0..1: the part still recharging.
 var wait := 0.0
@@ -139,10 +144,12 @@ var _flash := 0.0
 var _release := 0.0
 
 
-func setup(action_name: StringName, action_slot: Boon.Slot) -> ActionSlot:
+func setup(action_name: StringName, action_slot: Boon.Slot, side_px: float = DIAMOND, drop: float = 0.0) -> ActionSlot:
 	action = action_name
 	slot = action_slot
-	custom_minimum_size = Vector2(DIAMOND + 12.0, DIAMOND + KEY_H * 0.5)
+	side = side_px
+	key_drop = drop
+	custom_minimum_size = Vector2(side + 12.0, side + KEY_H * 0.5 + key_drop)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_process(false)
 	return self
@@ -194,8 +201,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var c := Vector2(size.x * 0.5, DIAMOND * 0.5)
-	var r := DIAMOND * 0.5
+	var c := Vector2(size.x * 0.5, side * 0.5)
+	var r := side * 0.5
 	var gem := boon.color() if boon else Color(0.3, 0.32, 0.36)
 	var core := r - UiKit.FRAME - 0.5
 	var waiting := wait > 0.0
@@ -256,7 +263,7 @@ func _draw() -> void:
 		var p := Vector2(c.x + (i - (lights_max - 1) * 0.5) * LIGHT_GAP, c.y - r - LIGHT_RISE)
 		draw_colored_polygon(_diamond(p, LIGHT + 1.5), UiKit.INK)
 		draw_colored_polygon(_diamond(p, LIGHT), light_color if i < lights else CHARGE_SPENT)
-	_draw_key(Vector2(c.x, DIAMOND))
+	_draw_key(Vector2(c.x, side + key_drop))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
 

@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_p2h8s"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_2tqss"]
+
+[sub_resource type="Resource" id="Resource_fbw7w"]
+script = ExtResource("1_p2h8s")
+stat = &"stun_pct"
+tag = &"heavy"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_2tqss")
+slot = &"special"
+tool = &"tool_refine"
+id = &"refine_onda_pesada"
+track = &"refine"
+name_key = &"forge_refine_onda_pesada"
+desc_key = &"forge_refine_onda_pesada_desc"
+cost = 25
+mods = Array[ExtResource("1_p2h8s")]([SubResource("Resource_fbw7w")])

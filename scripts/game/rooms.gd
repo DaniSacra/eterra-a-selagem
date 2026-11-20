@@ -66,6 +66,9 @@ const GOLD_COLOR := Color(1.0, 0.82, 0.35)
 ## Memória a parchment.
 const SILVER_COLOR := Color(0.78, 0.8, 0.86)
 const MEMORY_COLOR := Color(0.86, 0.78, 0.6)
+## Fatia 2 (provisional, for the art-director): an Encanto's door in the Emeth's green, paler; a Psalm's ivory-lilac.
+const ENCHANT_COLOR := Color(0.45, 0.85, 0.6)
+const PSALM_COLOR := Color(0.85, 0.8, 1.0)
 
 var game: Game
 var stage: StageDef
@@ -130,6 +133,7 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 	if g.juramentos:
 		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
 	trials = Trials.new(Trials.load_catalog())
+	sign_silver = stage.silver_elite
 	var forced := -1
 	if Dev.has("arena"):
 		# dev: --arena=id makes the opening room that arena (--variant=n dresses it)
@@ -195,7 +199,8 @@ func start_at(kind: RunMap.Kind) -> void:
 		_enter(map.trial(map.depth))
 		return
 	for r in map.nodes:
-		if r.kind == kind:
+		# --start=shop is the last shop before Morvath, never a route shop (DV-2)
+		if r.kind == kind and not (kind == RunMap.Kind.SHOP and map.is_route_shop(r)):
 			_enter(r)
 			return
 	_enter(map.first())
@@ -264,12 +269,41 @@ func _step_prompt() -> void:
 		prompt = null
 		if kind != &"":
 			prompt = StationSign.make(kind, "", "")
+			prompt.under = true
 			prompt.pressed.connect(use)
 			add_child(prompt)
 	if prompt != null:
-		var at := Vector3(game.player.pos.x, 0.0, game.player.pos.y)
-		prompt.position = at
-		prompt.hero_at = at
+		# under the thing used, never on the hero (benchmark_hades2_ui.md P0-1)
+		var spot := use_spot()
+		prompt.position = Vector3(spot.x, 0.0, spot.y)
+		prompt.hero_at = Vector3(game.player.pos.x, 0.0, game.player.pos.y)
+		if kind == &"shop":
+			# a price out of reach says what is missing by the key, not on the sign (P1-3)
+			var short := _short_of(spot)
+			prompt.prompt.text = T.t(&"shop_use_short", {"n": short}) if short > 0 else StationSign.verb(kind)
+
+
+## The foot of what the paladin stands at to use (use_kind): the reward, the shop item, the door's medallion; his own
+## feet when nothing.
+func use_spot() -> Vector2:
+	match use_kind():
+		&"reward":
+			return _reward_at
+		&"shop":
+			for p in _pedestals:
+				if game.player.pos.distance_to(p.at) < TOUCH:
+					return p.at
+		&"door":
+			return game.arena.door_label(game.arena.exit_at(game.player.pos))
+	return game.player.pos
+
+
+## The gold missing for the shop item at a spot (0: enough, or no item there).
+func _short_of(spot: Vector2) -> int:
+	for p in _pedestals:
+		if p.at == spot:
+			return maxi(int(p.price) - gold, 0)
+	return 0
 
 
 # ---------- entering ----------
@@ -315,7 +349,7 @@ func _enter(next: RunMap.Room) -> void:
 	game.room_tally.enter(room.depth, String(game.arena.id), game.player.hp, game.time, room.kind == RunMap.Kind.BOSS,
 		variant, gold, game.boons.owned().size(), room.id)
 	if room.kind == RunMap.Kind.SHOP:
-		game.room_tally.shop_entered(gold)
+		game.room_tally.shop_entered(gold, map.is_route_shop(room))
 	_queue.clear()
 	_waves.clear()
 	_wave = -1
@@ -502,6 +536,7 @@ func _room_cleared() -> void:
 		# the guardian won: Prata and Memória for home (Rejogabilidade, Fatia 1)
 		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
 		found(MaterialPurse.MEMORY, &"guardian", stage.memory_guardian)
+		game.find_tool(Forge.TOOL_REFINE)  # (Fatia 2: the Forjador's first tool, at the first guardian won)
 	if room.reward == RunMap.Reward.NONE:
 		_open_doors()
 		return
@@ -547,6 +582,10 @@ func _give(reward: RunMap.Reward, guardian: bool = false, meeting: bool = false)
 			found(MaterialPurse.SILVER, &"door", stage.silver_door)
 		RunMap.Reward.MEMORY:
 			found(MaterialPurse.MEMORY, &"door", stage.memory_door)
+		RunMap.Reward.ENCHANT:
+			game.open_enchant_choice()
+		RunMap.Reward.PSALM:
+			game.open_psalm_choice(stage.rarity_chance)
 		RunMap.Reward.POM:
 			game.open_grow_choice()
 		RunMap.Reward.POM_SLICE:
@@ -591,12 +630,15 @@ func boss_phase(n: int) -> void:
 	while _phases_paid < upto:
 		_phases_paid += 1
 		found(MaterialPurse.SILVER, &"boss", stage.silver_phase)
+		if _phases_paid == stage.emerald_phase_at:
+			found(MaterialPurse.EMERALD, &"boss", stage.emerald_phase)  # (Fatia 2: the phase 3 reached)
 
 
 ## Morvath is sealed: the victory's Prata and Memória.
 func victory() -> void:
 	found(MaterialPurse.SILVER, &"boss", stage.silver_victory)
 	found(MaterialPurse.MEMORY, &"boss", stage.memory_victory)
+	found(MaterialPurse.EMERALD, &"boss", stage.emerald_victory)
 
 
 # ---------- doors ----------
@@ -607,7 +649,12 @@ func _open_doors() -> void:
 		_roll_slab()
 	# a pomegranate behind a door when nothing can grow turns into a Blessing before its sign shows (Q-25 a); the
 	# Blessing of this room counts as one to grow
-	map.settle(next_rooms, game.boons.can_grow() or room.reward == RunMap.Reward.BOON)
+	map.settle(next_rooms, game.boons.can_grow() or room.reward == RunMap.Reward.BOON,
+		game.psalm_cards and not game.psalms.eligible(game.boons, game.talents).is_empty(), not game.enchant_offers().is_empty())
+	# Fatia 2: a Blessing's door that is no meeting shows the angel who waits there (Encounters.door_angel)
+	for r in next_rooms:
+		if r.reward == RunMap.Reward.BOON and not r.meeting and r.kind == RunMap.Kind.COMBAT and game.encounters != null:
+			r.angel = game.encounters.door_angel(r)
 	for i in next_rooms.size():
 		var r := next_rooms[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
@@ -625,13 +672,44 @@ func _open_doors() -> void:
 static func door_text(r: RunMap.Room) -> String:
 	match r.kind:
 		RunMap.Kind.COMBAT:
-			var hard := bool(r.sign().hard)
-			return T.t(RunMap.REWARD_KEY[r.reward]) + ("\n" + T.t(&"door_hard") if hard else "")
+			var sign := r.sign()
+			var text := T.t(RunMap.REWARD_KEY[r.reward]) + _angel_line(r)
+			if bool(sign.hard):
+				# Fatia 2: the Prata its elites leave, on the sign (1 an elite, StageDef.silver_elite)
+				var silver := elite_heads(r) * sign_silver
+				text += "\n" + (T.t(&"door_hard_silver").format({"n": silver}) if silver > 0 else T.t(&"door_hard"))
+			return text
 		RunMap.Kind.MINIBOSS:
 			return T.t(RunMap.REWARD_KEY[r.reward]) + "\n" + T.t(RunMap.KIND_KEY[r.kind])
 		RunMap.Kind.ALTAR:
 			return T.t(RunMap.KIND_KEY[r.kind]) + "\n" + T.t(&"door_altar")
 	return T.t(RunMap.KIND_KEY[r.kind])
+
+
+## The Prata an elite leaves, for the signs of the hard doors (the stage's silver_elite; a static sign reads this).
+static var sign_silver := 1
+
+
+## The elites a room's fight brings, every wave (each leaves its Prata: the hard door's sign says how much).
+static func elite_heads(r: RunMap.Room) -> int:
+	var n := 0
+	if r.fight != null:
+		for wave in r.fight.waves:
+			for id in wave:
+				if String(id).ends_with("_elite"):
+					n += 1
+	return n
+
+
+## Under a Blessing's reward, the angel its door shows, or "Dois anjos" for a meeting (Fatia 2).
+static func _angel_line(r: RunMap.Room) -> String:
+	if r.reward != RunMap.Reward.BOON:
+		return ""
+	if r.meeting:
+		return "\n" + T.t(&"door_angels_two")
+	if r.angel != &"":
+		return "\n" + T.t(StringName("angel_" + String(r.angel)))
+	return ""
 
 
 func _leave(next: RunMap.Room) -> void:
@@ -1072,12 +1150,25 @@ const MARK_SIGN_Y := 2.7
 
 func _build_shop() -> void:
 	var can_grow := game.boons.can_grow()
+	var can_enchant := not game.enchant_offers().is_empty()
 	var valid := func(item: int) -> bool:
+		if item == RunMap.Reward.ENCHANT:
+			return can_enchant
 		return can_grow or (item != RunMap.Reward.POM and item != RunMap.Reward.POM_SLICE)
 	var picks: Array[Dictionary] = []
+	# DV-2 (MAP-09): the route shop has one item of each group (route_shop_items), the last one all of them
+	var route := map != null and map.is_route_shop(room)
 	for g in stage.shop_groups.size():
 		var group := stage.shop_groups[g]
-		for i in group.pick_all(_rng, valid):
+		var chosen: Array[int] = []
+		if route:
+			if picks.size() < stage.route_shop_items:
+				var i := group.pick(_rng, valid)
+				if i >= 0:
+					chosen.append(i)
+		else:
+			chosen = group.pick_all(_rng, valid)
+		for i in chosen:
 			picks.append({"item": group.items[i] as RunMap.Reward, "price": group.prices[i], "group": g})
 	var n := picks.size()
 	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
@@ -1086,10 +1177,9 @@ func _build_shop() -> void:
 		var at := right * ((k - (n - 1) * 0.5) * SHOP_STEP - SHOP_SHIFT)
 		p.at = at
 		p.node = _marker(at, p.item, "")
-		# the group's word over the name, the price under it (C13-04); a group named as its only item says it once
-		var name_text := T.t(RunMap.REWARD_KEY[p.item])
-		var group_text := T.t(SHOP_GROUP_KEY[p.group]) if p.group < SHOP_GROUP_KEY.size() else ""
-		var sign := DoorSign.shop(name_text, p.price, "" if group_text == name_text else group_text, DoorGlyph.of_reward(p.item))
+		# two lines, the name and the price (benchmark_hades2_ui.md P1-3: the reward's mark says the group; the price
+		# out of reach says it by its colour, and what is missing by the key when he stands at it)
+		var sign := DoorSign.shop(T.t(RunMap.REWARD_KEY[p.item]), p.price, "", DoorGlyph.of_reward(p.item))
 		sign.position.y = MARK_SIGN_Y
 		sign.set_gold(gold)
 		(p.node as Node3D).add_child(sign)
@@ -1132,11 +1222,15 @@ const BOT_PREFERENCE: Array[RunMap.Reward] = [RunMap.Reward.BOON, RunMap.Reward.
 ## The doors of a material for home (Rejogabilidade, Fatia 1, MAP-04's taste): between the heart and gold, Memória a
 ## little before Prata; never over the power of this descent (a Blessing, a pomegranate, a heart).
 const BOT_MATERIAL_RANK := {RunMap.Reward.MEMORY: 2.4, RunMap.Reward.SILVER: 2.6}
+## Fatia 2: a Psalm's door just after a Blessing (it holds Blessings and the Psalm), an Encanto's after the heart (put
+## before the pomegranate the robot took half the hearts it took before, reached Morvath with 30 of life against 51 and
+## won 46 of 72 against 58; 2026-11-20, 72 seeds).
+const BOT_FATIA2_RANK := {RunMap.Reward.PSALM: 0.2, RunMap.Reward.ENCHANT: 2.5}
 
 
 ## A reward's place in the robot's taste (BOT_PREFERENCE, BOT_MATERIAL_RANK; -1 for none of them).
 static func _bot_rank(r: RunMap.Reward) -> float:
-	return float(BOT_MATERIAL_RANK.get(r, BOT_PREFERENCE.find(r)))
+	return float(BOT_FATIA2_RANK.get(r, BOT_MATERIAL_RANK.get(r, BOT_PREFERENCE.find(r))))
 
 
 ## Where the altar's door stands in that order (E5): after a Blessing and a pomegranate (its trade grows a Blessing).
@@ -1159,7 +1253,12 @@ const BOT_AHEAD := 1.0
 const BOT_FOUNTAIN_AHEAD := 12.0
 
 
-static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0, map: RunMap = null) -> int:
+## DV-2 (MAP-09): a route shop's door ranks after a Blessing when the robot carries BOT_ROUTE_SHOP_GOLD (something
+## besides the healing to buy), otherwise last.
+const BOT_ROUTE_SHOP_GOLD := 100
+
+
+static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0, map: RunMap = null, gold_now := 0) -> int:
 	var best := 0
 	var top := -INF
 	var memo := {}
@@ -1169,6 +1268,10 @@ static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life:
 			rank = -1.0 if life < BOT_FOUNTAIN_BELOW else BOT_PREFERENCE.size() + 0.5
 		elif doors[i].kind == RunMap.Kind.ALTAR:
 			rank = BOT_ALTAR_RANK if altar_useful else BOT_PREFERENCE.size() + 1.0
+		elif doors[i].kind == RunMap.Kind.SHOP:
+			# (hurt, the healing for 50 is worth the door too)
+			var worth := gold_now >= BOT_ROUTE_SHOP_GOLD or (gold_now >= BOT_ROUTE_SHOP_GOLD / 2 and life < BOT_FOUNTAIN_BELOW)
+			rank = 1.0 if worth else BOT_PREFERENCE.size() + 0.5
 		elif rank < 0.0:
 			rank = BOT_PREFERENCE.size()
 		var score := -rank
@@ -1231,7 +1334,7 @@ func bot_goal() -> Variant:
 				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0), map),
+			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0), map, gold),
 				0, game.arena.exits.size() - 1))
 	return null
 
@@ -1303,6 +1406,10 @@ static func _reward_color(r: RunMap.Reward) -> Color:
 			return SILVER_COLOR
 		RunMap.Reward.MEMORY:
 			return MEMORY_COLOR
+		RunMap.Reward.ENCHANT:
+			return ENCHANT_COLOR
+		RunMap.Reward.PSALM:
+			return PSALM_COLOR
 	return Color.WHITE
 
 

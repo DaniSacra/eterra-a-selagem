@@ -35,7 +35,10 @@ func equip() -> void:
 func step(dt: float) -> void:
 	state.step(dt)
 	var p := game.player
-	p.runner.speed = state.attack_speed()
+	var tags: Array[StringName] = []
+	if p.runner.node != null:
+		tags = p.runner.node.tags
+	p.runner.speed = state.attack_speed(tags)
 	p.omega_discount = state.omega_discount()
 	p.show_fury(state.fury)
 

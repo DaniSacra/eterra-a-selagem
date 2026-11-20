@@ -15,5 +15,5 @@ id = &"rastro"
 family = 4
 icon = 16
 max_level = 1
-requires_sets = Array[PackedStringArray]([PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme"), PackedStringArray("brasas", "redemoinho", "lamina_ardente", "golpe_brasa", "pesado_brasa", "circulo_brasa", "passo_brasa")])
+requires_sets = Array[PackedStringArray]([PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme", "vigia_firme", "vigilia_longa", "guarda_atenta"), PackedStringArray("brasas", "redemoinho", "lamina_ardente", "golpe_brasa", "pesado_brasa", "circulo_brasa", "passo_brasa", "omega_brasa", "chuva_brasas")])
 mods = Array[ExtResource("1_1fe7v")]([SubResource("Resource_3jku6")])

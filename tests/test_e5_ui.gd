@@ -105,7 +105,7 @@ func test_the_blessing_sits_close_to_the_curse() -> void:
 	var screen := EventChoice.new()
 	add_child_autofree(screen)
 	screen.open_trial(_cards())
-	await wait_frames(3)
+	await wait_process_frames(3)
 	for card in screen.cards():
 		var keep := card.find_child("Keep", true, false) as Control
 		var band := card.find_child("CurseBand", true, false) as Control

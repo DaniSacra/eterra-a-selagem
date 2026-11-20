@@ -107,9 +107,10 @@ func test_long_text_and_replacement_fit_the_card() -> void:
 	state.take(state.find(&"toque_geada"))
 	var cards := _open([&"estilhaco", &"firmeza", &"pesado_firme"]).cards()
 	await wait_physics_frames(2)
-	var warn := cards[2].find_child("Replaces", true, false) as Label
-	assert_not_null(warn, "the replaced gift is named")
-	assert_true(warn.text.contains(T.t(&"boon_toque_geada")))
+	var trade := cards[2].find_child("Replaces", true, false)
+	assert_not_null(trade, "the replaced gift is named (UI-HB1: what goes out and what comes in)")
+	assert_eq((trade.find_child("OutName", true, false) as Label).text, T.t(&"boon_toque_geada"))
+	assert_eq((trade.find_child("InName", true, false) as Label).text, T.t(&"boon_pesado_firme"))
 	for c in cards:
 		assert_lte(c.size.y, BoonCard.SIZE.y + 1.0, "%s grows past the card" % c.boon.id)
 

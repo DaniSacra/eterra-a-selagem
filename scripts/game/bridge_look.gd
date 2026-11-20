@@ -82,8 +82,11 @@ const STYLE := {
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Pale grey lichen on the slate, 1.5 times the slab's value (the floor between them at patch_rest).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.46, 0.497, 0.491), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.9, &"patch_scale": 3.5}
-const STY_FLOOR := Color(0.31, 0.325, 0.345)
+## The cycle of 2026-11-20 (ART_REVIEW.md: B is a strong reference, only the floor and the saturation move): the
+## slate a little lighter and greyer (hue 215 to 225), the patches soft (ArenaKit.SOFT_PATCHES), the floor calm
+## (ArenaKit.CALM_FLOOR); the cold goes to the mist (STY_MIST_SAT), not the floor.
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.46, 0.497, 0.491)}
+const STY_FLOOR := Color(0.335, 0.35, 0.375)
 ## The platforms are narrow: the floor keeps its value to the edge (the spec's luma 55 to 70 on them; as the Rift).
 const STY_EDGE_VALUE := 1.0
 ## The browser's renderer: the stylized ambient and key lower (as the other rooms').
@@ -91,7 +94,7 @@ const STY_COMPAT_AMBIENT := 0.55
 const STY_COMPAT_MOON := 0.6
 ## The abyss: its mist, banks and depths' light at this share of their saturation and value (spec 3.2: 0.85), the
 ## thread of violet's glow cards a cold grey blue, the cliffs and piers in a grey blue depth stone.
-const STY_MIST_SAT := 0.6
+const STY_MIST_SAT := 0.95
 const STY_MIST_VALUE := 0.85
 const STY_GLOW := Color(0.36, 0.42, 0.52)
 const STY_CLIFF := {&"stone_color": Color(0.05, 0.058, 0.07), &"edge_color": Color(0.13, 0.15, 0.18),
@@ -130,6 +133,12 @@ const LANDING_LANTERN_IN := 1.4
 const LANDING_LANTERN_TOP := 18.0
 const LANDING_LANTERN := Vector2(0.6, 3.5)
 const LANDING_LANTERN_SIZE := Vector3(0.34, 0.5, 0.34)
+## Item 4 of the cycle of 2026-11-20: spurs of rock out of the haze south and west of the platforms, their tops under
+## the floor (ArenaRoom.depth_spurs: x, z, top, width), so none hides the floor on the screen.
+const STY_SPURS: Array[Vector4] = [Vector4(-27.0, 12.0, -1.5, 2.4), Vector4(-23.0, 17.0, -3.5, 1.8), Vector4(4.0, 19.0, -2.5, 2.0),
+	Vector4(-33.0, 4.0, -0.8, 2.8)]
+const STY_SPUR_FOOT := -18.0
+const STY_SPUR_SEED := 4127
 
 var _decks: Array[Rect2] = []
 var _landings: Array[Rect2] = []
@@ -394,7 +403,7 @@ func _far() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = STY_FLOOR_BIOME
+	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME)
 	if compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
@@ -429,8 +438,10 @@ func _dress_styled() -> void:
 			var into := 1.0 if west else -1.0
 			_head_bowl(sm, Vector2(lip + into * HEAD_OUT.y, side + away * HEAD_OUT.x), away)
 	_falls(sm)
+	# item 4 of the cycle of 2026-11-20 (depth past the edge): the far broken bridges in both variants, spurs of rock
+	_far_bridges(sm)
+	depth_spurs(sm, STY_SPURS, STY_SPUR_FOOT, deep(), STY_SPUR_SEED)
 	if _long:
-		_far_bridges(sm)
 		for w in _landings:
 			for c: Vector2 in [Vector2(w.position.x + LANDING_LANTERN_IN, w.position.y + LANDING_LANTERN_IN),
 					Vector2(w.end.x - LANDING_LANTERN_IN, w.end.y - LANDING_LANTERN_IN)]:

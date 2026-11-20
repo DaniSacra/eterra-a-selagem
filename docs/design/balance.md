@@ -291,3 +291,36 @@ As 17 partidas do registro do Daniel (16/11 a 19/11 08:38) são todas de exes an
 toda porta dava Bênção (sem portas de ouro, romã, coração ou Magia). "Nunca comprou na loja" não é preferência nem
 leitura da tela, e o ouro (37 a 84 ao chegar à loja) e a vida ao chegar em Morvath dessas partidas também não valem
 como régua da economia de hoje. Recalibrar a régua 0,45 só com partidas do exe novo.
+
+## Para o equilíbrio (gameplay-engineer, 2026-11-20; observações, nenhum número mudado)
+
+- **Ancião contra o robô** (C19, `combat_cadence.md` 8.3 (a)): o dano do Ancião ao robô 0,25 nas 24 descidas (sementes
+  1 a 24, `smoke 900 --ultimate=cleave`) foi de 45 para 126 com a carga do Ômega a 3% do andar (C19-4, número do
+  Hades); não são as linhas do leque (sem elas, 126 igual). O robô agora não começa o Ômega do ataque com um tiro
+  preparando a menos de 12 m (`Bot.shot_coming`): 126 para **81**, ainda acima da meta de 68. Os golpes chegam com
+  aviso de 1,04 s ou mais enquanto ele está plantado num golpe comum: é leitura de gente, não injustiça. Vitórias nas
+  24: 20 antes, 18 depois (ruído). Proposta a medir: o leque do Ancião com uma onda a menos ou o intervalo entre
+  leques maior, ou nada (o Ancião é a parede do guardião, B-5).
+- **Renda da loja e combinações** (Q-15, `docs/qa/q15_economy.md`, 72 sementes): ouro mediano ao entrar na loja 81,5
+  (meta 150 a 220; dois montes, 60 a 90 sem a porta de ouro e 160 a 190 com ela); compra além da cura em 29% (meta
+  33%); Elo em 24% das descidas (meta 35%); Salmo em 5,6% (meta 15%). O encontro com anjos concentra a mão numa
+  família (o robô escolhe por afinidade), o que reduz Elos e Salmos possíveis. A porta de Salmo e o anjo à mostra na
+  porta (Fatia 2) mudam essas contas: medir de novo depois dela.
+- **Prata**: a Fatia 1 medida pelo `balance-designer` fica como estava; a Fatia 2 soma a Prata a mais da porta Difícil
+  só na placa (é a de sempre, 1 por elite) e Temperar III (60) e Refinar (25 cada, seis escolhas) como sumidouros.
+  Esmeralda: 2 numa vitória (fase 3 e selagem), 1 numa derrota depois da fase 3; ainda sem uso (Despertar, Fatia 3).
+- **Fatia 2 e o robô** (72 sementes, `smoke 900 --bot-reaction=0.25 --ultimate=cleave`): vitórias 58 para 47, vida ao
+  entrar em Morvath mediana 51,5 para 30, Bênçãos em Morvath 6 para 5 a 6, 15 mortes antes de Morvath (eram 2). Não são
+  as portas novas: com o baralho, o encontro e a loja da Fatia 1 (24 sementes) 16 de 24 e vida 30; sem as Bênçãos novas,
+  13 de 24 e vida 30; a medida do C19 (24 sementes, antes da Fatia 2) dava 18 e vida 48. O que caiu foi o coração: 0,61
+  por descida no Q-15 para 0,24 a 0,31 agora. A bifurcação por grupos (RJ-3) põe a Bênção ao lado de uma porta de corpo
+  (coração, Magia, ouro), e o robô sempre leva a Bênção; antes coração e ouro dividiam porta. Propostas a medir: o
+  coração no grupo POWER (fica ao lado do ouro e da Magia de novo), o robô levar o coração abaixo de 60% da vida, ou o
+  coração com mais vida. O baralho ganhou 2 Bênçãos para elas manterem a fatia de antes (6 de 16, agora 8 de 21); a
+  porta de Encanto fica depois do coração no gosto do robô (antes da romã ele largava metade dos corações).
+- **Porta de Salmo**: nas 72 descidas nenhuma ficou de pé (o robô quase nunca tem as três coisas de um Salmo, e
+  `settle` a troca por Bênção); Salmo continua em 0 a 5% das descidas do robô (meta 15%). Proposta: a porta de Salmo
+  conta uma coisa a menos (dois grupos), ou o Salmo pela porta com 100% quando ela fica.
+- **Loja de rota (DV-2, MAP-09)**: em 45% dos mapas, num ramo de 6 a 8. O robô chega à sala 6 com 50 de ouro ou mais
+  em 29% das descidas, à 7 em 62%, à 8 em 86% (mediana 44, 52, 62,5): a meta "ouro para um item em 2 de 3 de quem
+  passa" só fecha nas camadas 7 e 8. Depende da renda (Q-15): se a renda subir, a loja de rota ganha sentido.

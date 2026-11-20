@@ -15,6 +15,8 @@ enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND, SHELTER, STONE }
 enum Shape { CIRCLE, LINE, ARC }
 
 const TICK := 0.25
+## Seconds the landing ring of a blow with another right after it lives (Zone.land_quick; 0.3 the others).
+const LAND_QUICK := 0.1
 ## The source of the floor's own warnings (the runes, E5): "Derrotado por: Runas Instáveis" (DefeatCause).
 const HAZARD_SOURCE := &"runes"
 ## The source of the slabs that strike when stepped on (RP-06, PlateFloor): "Derrotado por: Laje Rachada".
@@ -83,6 +85,9 @@ class Zone:
 	var tags: Array[StringName] = []
 	## Colour of the ring where a warning lands (alpha 0: LAND_COLOR).
 	var land_color := Color(0, 0, 0, 0)
+	## A blow with another right after it on the same spot (the elite runner's first burst, C19): its landing is only a
+	## thin ring for LAND_QUICK s, so the next warning's rim reads under it (P2-C19a).
+	var land_quick := false
 	## Damage dealt to everything inside when the zone runs out (the held circle of light). 0 = none.
 	var burst := 0.0
 	## A warning that lands as a column of spectral fire (a boss's eruption) instead of a burst of shadow.
@@ -340,7 +345,10 @@ func _land(z: Zone) -> void:
 		var color := z.land_color if z.land_color.a > 0.0 else LAND_COLOR
 		# a ritual circle has its own column (_dissolve); the others a ring and a burst of shadow
 		if z.rune == Rune.NONE:
-			fx.ring(z.pos, z.radius * 1.1, color, 0.3)
+			if z.land_quick:
+				fx.ring(z.pos, z.radius * 1.1, color, LAND_QUICK, 0.15, true)
+			else:
+				fx.ring(z.pos, z.radius * 1.1, color, 0.3)
 		fx.burst(&"soul" if z.eruption else &"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
 		if z.eruption and z.rune == Rune.NONE:
 			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)

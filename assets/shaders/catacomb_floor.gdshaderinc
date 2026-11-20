@@ -134,6 +134,11 @@ uniform float edge_value = 0.72;
 uniform vec2 edge_span = vec2(0.9, 1.7);
 uniform float paint_clearing = 0.4;
 uniform float paint_washes = 0.5;
+// ENV-HB2 (docs/art/benchmark_hades2_style.md 4.1, the hall's finish test): how far the slabs' joints, their cracks and
+// the gravel of their missing corners come up toward the slab's own value (0 drawn in the joint's value as ever, 1 as
+// the slab), so the floor is calm at the scale of a few slabs; the medallion's grooves and runes and the framed slabs'
+// mouldings keep the joint's value (the landmarks of the large scale).
+uniform float joint_lift = 0.0;
 // STY-10 (art review, request 3: the runes read as smudges, the ring as a soft double edge): the medallion's band as
 // one stone a little lighter than the slabs, cut by a single groove on each rim; its runes longer and thinner, cut
 // crisp in the joint's value (stroke in m: 0.12 is 5.6 px at 1080 from the game's camera across the view and 3 px
@@ -524,7 +529,7 @@ void fragment() {
 	float thin = mix(0.008, 0.02, smoothstep(0.0, 0.6, min(half_size.x - abs(lp.x), half_size.y - abs(lp.y)) < 0.6 ? 0.0 : 0.6));
 #ifdef PAINT
 	float crack = (1.0 - smoothstep(0.0, mix(0.01, 0.004, smoothstep(0.1, 0.7, edge)), abs(cn - 0.5))) * step(hash1(id + 3.0), cracked);
-	c = mix(c, hollow_c, crack * 0.85);
+	c = mix(c, hollow_c, crack * 0.85 * (1.0 - joint_lift));
 	// big washes, fainter (the painted value is per slab), and the floor darker toward the room's edge
 	float big = fbm(wp * 0.07 + 3.0);
 	c *= 1.0 - 0.3 * paint_washes + 0.6 * paint_washes * big;
@@ -582,7 +587,7 @@ void fragment() {
 	c *= mix(1.0, mix(paint_bevel, 1.0, smoothstep(joint_width, joint_width + bevel, edge)), joint_k);
 	float joint = (1.0 - smoothstep(joint_width * 0.5, joint_width, edge)) * joint_k;
 	vec3 gravel = hollow_c * (0.85 + 0.3 * noise(wp * 30.0));
-	c = mix(c, gravel, max(joint, gone));
+	c = mix(c, mix(gravel, c, joint_lift), max(joint, gone));
 	vec3 cut_c = mix(hollow_c, c * joint_value * joint_cold, on_band);
 	c = mix(c, cut_c, clamp(rose.w, 0.0, 1.0) * groove_cover);
 	c = mix(c, cut_c, rose.y * metal_cover);

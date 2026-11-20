@@ -364,6 +364,23 @@ func style_abyss(nodes: Array[Node], was: Color, mist: Color, light: Color) -> v
 				VisualProfile.vary(sm, {&"shader_parameter/color": mist * lift})
 
 
+## Spurs of rock rising out of the mist past a room's edge (the cycle of 2026-11-20, depth past the edge): each
+## Vector4 is x, z, its top's height, its width; from `foot` up, leaning a little, a block askew on top, all in `mat`
+## (the depths' unlit stone), seeded by `seed_` (never the room's random numbers).
+const SPUR_TILT := 0.12
+const SPUR_CAP := Vector3(0.6, 0.5, 0.5)
+
+
+func depth_spurs(sm: Masonry, rocks: Array[Vector4], foot: float, mat: Material, seed_: int) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_
+	for rock: Vector4 in rocks:
+		var h := rock.z - foot
+		var spur := sm.box(Vector3(rock.x, foot + h * 0.5, rock.y), Vector3(rock.w, h, rock.w * 0.8), r.randf() * TAU, mat, false)
+		spur.rotate_object_local(Vector3.RIGHT, r.randf_range(-SPUR_TILT, SPUR_TILT))
+		sm.box(Vector3(rock.x, rock.z, rock.y), rock.w * SPUR_CAP, r.randf() * TAU, mat, false)
+
+
 ## The depths' stone of the stylized look (lot C): every depth_stone material under the room (the cliffs, the arches
 ## and piers under the floor) takes `values` (its uniforms: stone_color, edge_color, mist_color, glow_color...).
 func style_depths(values: Dictionary) -> void:

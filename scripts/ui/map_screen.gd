@@ -57,7 +57,7 @@ func open(m: DescentMap = null) -> void:
 	frame.add_theme_constant_override(&"margin_left", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_right", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
-	frame.add_theme_constant_override(&"margin_bottom", int(BookSpread.RIBBON_DROP))
+	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var book := BookSpread.new().setup(SPINE)
 	frame.add_child(book)
@@ -73,6 +73,8 @@ func open(m: DescentMap = null) -> void:
 	var start := map.first_focus()
 	graph.set_focus(start)
 	graph.grab_focus.call_deferred()
+	# the keys at the foot (benchmark P0-2): the map's own key closes it
+	ActionBar.attach(self, [ActionBar.entry(&"map", T.t(&"bar_close"), close)])
 
 
 func _left_page(page: MarginContainer) -> void:
@@ -120,10 +122,6 @@ func _left_page(page: MarginContainer) -> void:
 	_back.name = "back"
 	_back.custom_minimum_size.y = 40
 	foot.add_child(_back)
-	var hint := Book.label(T.t(&"map_close_hint", {"key": Controls.label(&"map")}), Book.FADED, 14)
-	hint.name = "hint"
-	hint.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	foot.add_child(hint)
 
 
 ## The marks a descent's map shows (its rooms' marks and chevrons), for the legend.

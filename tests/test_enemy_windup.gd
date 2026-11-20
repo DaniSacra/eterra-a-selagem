@@ -305,12 +305,14 @@ func test_the_runner_warns_a_full_second() -> void:
 		assert_gte(def.attack_windup, 0.9, "%s warns at least 0.9 s" % id)
 
 
-## C17, QW-104 (CF-06): the body clears in the hold of its wind-up only (its last windup_hold), all of it as the blow
-## comes, under the flash's cap; every crowd material carries its own hold.
+## C17, QW-104 (CF-06), P2 of combat_cadence.md 8.1: the body clears over the last tell_time (0.5 s, Hades II) of its
+## wind-up, never longer than the wind-up, all of it as the blow comes, under the flash's cap; every crowd material
+## carries its own share.
 func test_the_body_clears_in_the_hold() -> void:
-	for id in [&"skeleton", &"guard", &"mage", &"runner"]:
+	for id in [&"skeleton", &"guard", &"mage", &"runner", &"archer", &"priest", &"priest_elder"]:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
-		var hold := d.windup_hold
+		var hold := CrowdRenderer.tell_share(d)
+		assert_almost_eq(hold * d.attack_windup, minf(0.5, d.attack_windup), 0.001, "%s: the last 0.5 s of its wind-up" % id)
 		assert_eq(CrowdRenderer.tell_ready(1.0 - hold - 0.01, hold), 0.0, "%s: nothing before the hold" % id)
 		assert_gt(CrowdRenderer.tell_ready(1.0 - hold * 0.5, hold), 0.0, "%s: clearing in the hold" % id)
 		assert_almost_eq(CrowdRenderer.tell_ready(1.0, hold), 1.0, 0.001, "%s: all of it as the blow comes" % id)
@@ -323,7 +325,7 @@ func test_the_body_clears_in_the_hold() -> void:
 	var e := game.horde.spawn(game.horde.def(&"guard"), Vector2(5, 0), false)
 	game.horde.render(DT)
 	var mat := game.horde.renderer.kind(e.def).material as ShaderMaterial
-	assert_almost_eq(float(mat.get_shader_parameter(&"tell_hold")), e.def.windup_hold, 0.001, "its own hold")
+	assert_almost_eq(float(mat.get_shader_parameter(&"tell_hold")), CrowdRenderer.tell_share(e.def), 0.001, "its own share")
 	assert_almost_eq(float(mat.get_shader_parameter(&"tell_light")), CrowdRenderer.TELL_LIGHT, 0.001)
 
 

@@ -80,7 +80,8 @@ var _needs: Label
 var _status: Label
 var _step: Label
 var _parts: Dictionary = {}
-var _hint: Label
+## The keys at the foot (benchmark P0-2): chapters on the left, the press and the way back on the right.
+var bar: ActionBar
 var _to_gifts: Button
 var _down: Button
 var _down_hero: Button
@@ -118,7 +119,7 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	frame.add_theme_constant_override(&"margin_left", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_right", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
-	frame.add_theme_constant_override(&"margin_bottom", int(BookSpread.RIBBON_DROP))
+	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override(&"separation", 0)
@@ -151,7 +152,11 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 		left.add_child(_left[i])
 		right.add_child(_right[i])
 	right.add_child(_footer())
-	Controls.device_changed.connect(_name_keys)
+	bar = ActionBar.attach(self, [
+		ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true),
+		ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn(1), true),
+		ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), _press_focus),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_refresh()
 	_show(start)
 	_first_focus().grab_focus.call_deferred()
@@ -418,8 +423,21 @@ func _gifts_right() -> Control:
 	v.add_child(_place)
 	_desc = _part(v, &"effect", &"hero_effect", DESC_SIZE)
 	_desc.custom_minimum_size.y = 46
-	_cost = _part(v, &"cost", &"hero_cost_head", META_SIZE + 1)
-	_needs = _part(v, &"needs", &"hero_needs_head", META_SIZE + 1)
+	# cost and what it asks side by side, label over value in bold (ciclo visual 2026-11-20: read at a glance)
+	var glance := HBoxContainer.new()
+	glance.name = "glance"
+	glance.add_theme_constant_override(&"separation", 24)
+	v.add_child(glance)
+	var cols: Array[VBoxContainer] = []
+	for i in 2:
+		var col := VBoxContainer.new()
+		col.add_theme_constant_override(&"separation", 1)
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.size_flags_stretch_ratio = 1.0
+		glance.add_child(col)
+		cols.append(col)
+	_cost = _part(cols[0], &"cost", &"hero_cost_head", META_SIZE + 1, UiKit.BOLD_FONT)
+	_needs = _part(cols[1], &"needs", &"hero_needs_head", META_SIZE + 1, UiKit.BOLD_FONT)
 	_status = _part(v, &"state", &"hero_state_head", META_SIZE + 1, UiKit.BOLD_FONT)
 	_status.name = "status"
 	_step = Book.text("", Book.FADED, META_SIZE)
@@ -463,12 +481,10 @@ func _part_visible(id: StringName, on: bool) -> void:
 func _footer() -> Control:
 	var row := HBoxContainer.new()
 	row.name = "foot"
-	_hint = Book.label("", Book.FADED, 15)
-	_hint.name = "hint"
-	_hint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	row.add_child(_hint)
+	var fill := Control.new()
+	fill.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_child(fill)
 	# one row at the foot of the right page, to its right (P1-4): Dons (on the Warrior's chapter), Compêndio, Voltar
 	row.add_theme_constant_override(&"separation", 10)
 	_to_gifts = Book.button(T.t(&"hero_gifts"), func() -> void: _open_chapter(Chapter.GIFTS), FOOT_WIDTH)
@@ -530,8 +546,7 @@ func _show(c: int) -> void:
 		_left[i].visible = i == c
 		_right[i].visible = i == c
 	_to_gifts.visible = chapter == Chapter.HERO
-	# the keys' hint is the Gifts'; elsewhere the line stays (empty) so Voltar keeps its corner
-	_hint.self_modulate.a = 1.0 if chapter == Chapter.GIFTS else 0.0
+	_name_keys(Controls.using_pad)
 
 
 ## Opens a chapter from inside the book (a button), with the focus on its first control.
@@ -633,13 +648,31 @@ func _refresh() -> void:
 	_tell(_shown)
 
 
-## The footer names the keys of the device in hand, and changes live when the player picks up the other one.
-func _name_keys(pad: bool) -> void:
-	var sealed := _shown is TalentDef and loadout.state(_shown) == HeroLoadout.State.SEALED
-	if sealed:
-		_hint.text = T.t(&"hero_hint_open_pad" if pad else &"hero_hint_open")
-	else:
-		_hint.text = T.t(&"hero_hint_pad" if pad else &"hero_hint")
+## The action bar's press says what it does here: on the Gifts' chapter equip or take off (open with Memória on a
+## sealed Gift), elsewhere confirm. Its keys follow the device by themselves (ActionBar).
+func _name_keys(_pad: bool = false) -> void:
+	if bar == null:
+		return
+	var verb := &"bar_confirm"
+	if chapter == Chapter.GIFTS:
+		var sealed := _shown is TalentDef and loadout.state(_shown) == HeroLoadout.State.SEALED
+		verb = &"bar_open" if sealed else &"bar_equip"
+	bar.item(&"ui_accept").set_verb(T.t(verb))
+
+
+## The control in focus pressed (the action bar's click).
+func _press_focus() -> void:
+	var f := get_viewport().gui_get_focus_owner() as BaseButton
+	if f != null and is_ancestor_of(f) and not f.disabled:
+		f.pressed.emit()
+
+
+## The chapter before (-1) or after (1), as LB and RB.
+func _turn(step: int) -> void:
+	var c := clampi(chapter + step, 0, chapters.size() - 1)
+	if c != chapter:
+		_show(c)
+		chapters[c].grab_focus()
 
 
 ## The panel tells a Gift (TalentDef), an ultimate (UltDef) or the passive (null).
@@ -647,8 +680,7 @@ func _tell(what: Variant) -> void:
 	if not (what is TalentDef and (what as TalentDef).id == arming):
 		arming = &""
 	_shown = what
-	if _hint != null:
-		_name_keys(Controls.using_pad)
+	_name_keys()
 	if what is TalentDef:
 		_tell_gift(what)
 	elif what is UltDef:

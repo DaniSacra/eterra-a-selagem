@@ -18,6 +18,9 @@ extends RefCounted
 ## - Corte Crescente, Onda Carregada, Fio do Passo: blow_wave (damage), blow_wave_m, blow_wave_w (Combat throws it).
 ## - Ainda de Pé: once a descent, a fall leaves him standing with rise_share of his life (rise_boss_share in Morvath's
 ##   room, E6: none today).
+## - Fatia 2 (Encantos, Refinar): blow_wave_fan more waves in a fan (Lâmina Tríplice); echo_pct of a blow again after
+##   echo_delay (Eco da Verdade, Combat); return_reach after a blow with return_time (Retorno do Corte, Combat);
+##   blow_speed (Pressa) and stun_pct (Peso, Combat).
 ## - Respiro: room_heal of life a room won. Coração da Emeth: ult_charge_pct (the ultimate reads it), finisher_magick.
 
 ## The Blessings and Gifts of the run (their stat sums every number; held here, a Callable would not keep it alive).
@@ -93,9 +96,11 @@ func on_kill(tags: Array[StringName]) -> int:
 	return fury - before
 
 
-## How fast every blow plays (ComboRunner.speed): 1 with no charge.
-func attack_speed() -> float:
-	return 1.0 + fury * value(&"fury_speed") if fury > 0 else 1.0
+## How fast every blow plays (ComboRunner.speed): 1 with no charge. tags: the blow playing now (the Refinar Pressa,
+## blow_speed with the attack's tag, Fatia 2, plays the attack's blows faster).
+func attack_speed(tags: Array[StringName] = []) -> float:
+	var fast := value(&"blow_speed", tags) if not tags.is_empty() else 0.0
+	return 1.0 + fast + (fury * value(&"fury_speed") if fury > 0 else 0.0)
 
 
 ## Seconds more a finisher with these tags stuns (Fúria Plena, only with every charge).

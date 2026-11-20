@@ -13,12 +13,20 @@ signal victory_finished(stats: Dictionary)
 ## log is off: --nosave and the bot write nothing).
 signal run_logged(outcome: String, entry: Dictionary)
 ## A Psalm came on a card (E4): first when the Codex never had it (the "Salmo descoberto" greeting, without pausing).
+## Fatia 2: an Encanto's choice opens (options: Array[EnchantDef], up to three); a screen that listens takes the
+## choice with take_enchant (none listening: the provisional EnchantChoice opens). taken after it is taken.
+signal enchant_offered(options: Array)
+signal enchant_taken(enchant: EnchantDef)
+## Fatia 2: a tool of the Forjador found in this descent (kept in the save when the descent ends, as the materials).
+signal tool_found(tool: StringName)
 signal psalm_offered(psalm: PsalmDef, first: bool)
 ## A Psalm was taken: first when it was never taken before in the save (its short line, PsalmDef.line_key).
 signal psalm_taken(psalm: PsalmDef, first: bool)
 
 ## Magia a kill gives back (Player.magick).
 const MAGICK_PER_KILL := 1.0
+## The Encantos' offers are drawn on dice of the room (the run's seed salted with this).
+const ENCHANT_SALT := 5813
 const MAGICK_PER_ELITE := 40.0
 const WAVES := "res://data/waves/catacombs.tres"
 const FOUNTAIN_HEAL := 0.4
@@ -65,6 +73,13 @@ var boons: BoonState
 ## its ranks summed in boons.stat), the meetings with the angels (encounters) and the Gifts open at the start.
 var materials := MaterialPurse.new()
 var materials_banked := {}
+## Fatia 2 (sistemas.md 3.6): the Encantos that may come in this descent (learned at the Forja: Enchants.learned), the
+## choice open now, the Forjador's tools found in it (tools_banked: those log_run kept) and the Refinar carried (ids).
+var enchant_pool: Array[EnchantDef] = []
+var enchant_options: Array[EnchantDef] = []
+var tools_found: Array[StringName] = []
+var tools_banked: Array[StringName] = []
+var forge_refine: Array[String] = []
 var forge_temper := 0
 var talents_opened := 0
 var encounters: Encounters
@@ -232,6 +247,7 @@ func _ready() -> void:
 	_equip_forge()
 	_equip_talents()
 	encounters = Encounters.new(self)
+	enchant_pool = Enchants.learned(Enchants.load_catalog(), Save.data if bot == null else {}, String(hero.id))
 	ults.equip(hero.ultimate(StringName(ultimate)))
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
@@ -360,6 +376,16 @@ func _exit_tree() -> void:
 		_trace_cam_cut(true)
 	Controls.virtual = null
 	Engine.time_scale = 1.0
+	if boss != null:
+		Game.unhook(boss)
+
+
+## Drops every connection on the signals of `obj` (BUG-108: Boss is RefCounted, and a Callable connected to it that
+## holds it back, a test's lambda reading boss._clock, kept both alive past the end of the game).
+static func unhook(obj: Object) -> void:
+	for sig in obj.get_signal_list():
+		for c: Dictionary in obj.get_signal_connection_list(sig.name):
+			obj.disconnect(sig.name, c.callable)
 
 
 func _process(delta: float) -> void:
@@ -589,9 +615,73 @@ func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance :
 	_open_choice(_draw_cards(chances, psalm_chance))
 
 
+## A Psalm's door (Fatia 2, sistemas.md 1.7): three Blessings of every family as the shop's, the first card a Psalm
+## that may come now (the door turned into a Blessing when none could: RunMap.settle).
+func open_psalm_choice(chances: Array[float] = Boon.RARITY_CHANCE) -> void:
+	var cards := _draw_cards(chances, 0.0)
+	if psalm_cards and rooms != null:
+		var dice := RandomNumberGenerator.new()
+		dice.seed = hash([run_seed(), ENCHANT_SALT, rooms.room.id if rooms.room else -1, &"psalm"])
+		psalms.fill(cards, dice, 1.0, boons, talents, 1)
+	_open_choice(cards)
+
+
 ## Opens the choice screen on these cards (the angel's, Encounters; none: the rest card).
 func open_cards(cards: Array[BoonState.Card]) -> void:
 	_open_choice(cards)
+
+
+# ---------- Fatia 2: the Encantos ----------
+
+## The Encantos that may be offered now (none once StageDef.enchant_max are taken): up to Enchants.CHOICES, on dice of
+## the room (the same offer whatever came before in the run).
+func enchant_offers() -> Array[EnchantDef]:
+	var most := rooms.stage.enchant_max if rooms else 2
+	if boons.enchants.size() >= most:
+		return []
+	var dice := RandomNumberGenerator.new()
+	var room := rooms.room if rooms else null
+	dice.seed = hash([run_seed(), ENCHANT_SALT, room.id if room else -1, room.depth if room else 0, boons.enchants.size()])
+	return Enchants.offers(enchant_pool, boons.enchants, talents, dice)
+
+
+## Opens the Encanto's choice (a door of Encanto, the shop's): the robot and --autopick take the first at once; a person
+## sees the screen (enchant_offered; none listening: the provisional EnchantChoice). Nothing to offer: a Blessing.
+func open_enchant_choice() -> void:
+	enchant_options = enchant_offers()
+	if enchant_options.is_empty():
+		open_boon_choice(rooms.stage.rarity_chance if rooms else Boon.RARITY_CHANCE)
+		return
+	if bot != null or Dev.has("autopick"):
+		take_enchant(enchant_options[0])
+		return
+	enchant_offered.emit(enchant_options)
+	if enchant_offered.get_connections().is_empty():
+		var screen := EnchantChoice.new()
+		open_screen(screen)
+		screen.open(enchant_options)
+		screen.chosen.connect(func(e: EnchantDef) -> void:
+			close_screen()
+			take_enchant(e))
+
+
+## Takes an Encanto of the choice open now: its numbers count from the next blow.
+func take_enchant(e: EnchantDef) -> void:
+	if e == null or not enchant_options.has(e) or not boons.take_enchant(e):
+		return
+	enchant_options = []
+	room_tally.event("enchant", time, {"id": String(e.id), "room": rooms.room.depth if rooms and rooms.room else 0})
+	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
+	enchant_taken.emit(e)
+
+
+## A tool of the Forjador found (once a save: Forge.has_tool; the robot finds it each descent, nothing kept).
+func find_tool(tool: StringName) -> void:
+	if tools_found.has(tool) or (bot == null and Save.enabled and Forge.has_tool(Save.data, tool, String(hero.id))):
+		return
+	tools_found.append(tool)
+	tool_found.emit(tool)
+	hud.show_notice(T.t(StringName("tool_found")), 2.5)
 
 
 func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0) -> Array[BoonState.Card]:
@@ -1276,18 +1366,24 @@ func chamber_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 ## screen. Also ritual-left:<n> (n of the ritual's dead standing), hurt, hurt-cursed (a blow taken) and end (the end
 ## screen).
 func _shot() -> void:
+	# Q-T5-7: a boss moment is listened for from the start (_watch_moment): one that came before --shot-at no longer
+	# hangs the capture, which then shoots as --shot-at ends (and says so)
+	var seen: Array[int] = [0, 0]
+	if Dev.arg("shot-on").begins_with("boss:"):
+		_watch_moment(StringName(Dev.arg("shot-on").trim_prefix("boss:")), seen)
 	await get_tree().create_timer(Dev.num("shot-at", 2.0)).timeout
 	if Dev.arg("shot-on").begins_with("boss:"):
 		# a moment of the boss fight (Boss.moment): an attack's id, scythe_strike, blades_fire, storm_fire, ritual,
 		# cursed, fallen
-		var name := StringName(Dev.arg("shot-on").trim_prefix("boss:"))
-		while true:
-			if boss == null:
-				await get_tree().process_frame
-				continue
-			var got: StringName = await boss.moment
-			if got == name:
+		var before := seen[0]
+		while seen[0] == before:
+			if before > 0 and boss == null:
 				break
+			if before > 0 and seen[1] > 0:
+				print("SHOT %s came %d time(s) before --shot-at; shooting now" % [Dev.arg("shot-on"), before])
+				break
+			seen[1] += 1
+			await get_tree().process_frame
 		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
 	elif Dev.arg("shot-on").begins_with("ritual-left:"):
 		# the ritual's count on the boss's bar: waits until only N of its dead stand (Boss.ritual_changed)
@@ -1334,6 +1430,17 @@ func _shot() -> void:
 
 
 ## --frames=prefix: saves --count frames, one every --every seconds, starting at --shot-at (to check animations).
+## Counts every Boss.moment named `name` in seen[0] from the start of the run (Q-T5-7, for _shot).
+func _watch_moment(name: StringName, seen: Array[int]) -> void:
+	while is_inside_tree():
+		if boss == null:
+			await get_tree().process_frame
+			continue
+		var got: StringName = await boss.moment
+		if got == name:
+			seen[0] += 1
+
+
 func _frames() -> void:
 	await get_tree().create_timer(Dev.num("shot-at", 2.0)).timeout
 	for i in int(Dev.num("count", 12)):
@@ -1437,7 +1544,10 @@ func log_run(outcome: String) -> void:
 	# --materials-keep, for measures) nor without a save (Rejogabilidade, Fatia 1, A2)
 	if banks_materials(Save.enabled, bot != null, Dev.has("materials-keep")):
 		materials_banked = MaterialPurse.bank(Save.data, materials)
-	if kept or not materials_banked.is_empty():
+		for t in tools_found:
+			if Forge.add_tool(Save.data, t, String(hero.id)):
+				tools_banked.append(t)
+	if kept or not materials_banked.is_empty() or not tools_banked.is_empty():
 		Save.write()
 	if Dev.has("runlog"):
 		RunLog.append(RunLog.PATH if Dev.arg("runlog") == "1" else Dev.arg("runlog"), e)
@@ -1501,7 +1611,21 @@ func _equip_forge() -> void:
 		forge_temper = int(Dev.num("forge", 0))
 	elif bot == null:
 		forge_temper = Forge.temper(Save.data, String(hero.id))
-	boons.equip_forge(Forge.new(Forge.load_catalog()).up_to(forge_temper))
+	var forge := Forge.new(Forge.load_catalog())
+	var ranks := forge.up_to(forge_temper)
+	# the Refinar on (Fatia 2): --refine=a,b (also the robot's), else a person's save
+	var refine: Array[ForgeRank] = []
+	if Dev.has("refine"):
+		for id in Dev.arg("refine").split(",", false):
+			var r := forge.find(StringName(id))
+			if r != null and r.track == Forge.REFINE:
+				refine.append(r)
+	elif bot == null and not Dev.has("forge"):
+		refine = forge.refines_on(Save.data, String(hero.id))
+	for r in refine:
+		ranks.append(r)
+		forge_refine.append(String(r.id))
+	boons.equip_forge(ranks)
 	player.set_temper(forge_temper)  # (G-2: the blade shows its rank)
 
 
@@ -1652,13 +1776,15 @@ func result() -> Dictionary:
 		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
 		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts,
 		"windups": horde.windup_report(), "shot_flight": projectiles.flight_report(),
-		"omega_charges_started": player.charges_started, "omega_charges_cancelled": player.charges_cancelled(), "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop,
+		"omega_charges_started": player.charges_started, "omega_charges_cancelled": player.charges_cancelled(), "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop, "route_shop": room_tally.route_shop,
 		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
 		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true), "map": rooms.map.summary() if rooms else {},
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
 			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},
 		"juramentos": juramentos.to_dict() if juramentos else {}, "weight": juramentos.weight() if juramentos else 0,
-		"materials": materials.report(), "forge": {"temper": forge_temper}, "talents_opened": talents_opened,
+		"materials": materials.report(), "forge": {"temper": forge_temper, "refine": forge_refine.duplicate()},
+		"talents_opened": talents_opened, "enchants": boons.enchants.map(func(e: EnchantDef) -> String: return String(e.id)),
+		"tools": tools_found.map(func(t: StringName) -> String: return String(t)),
 		"angels": encounters.meetings.duplicate(true) if encounters else []}
 
 

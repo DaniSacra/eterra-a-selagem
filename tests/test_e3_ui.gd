@@ -296,7 +296,8 @@ func test_shop_sign_has_group_name_and_price() -> void:
 	s.set_gold(20)
 	assert_false(s.affordable())
 	assert_eq(s.missing, 30)
-	assert_eq(s.detail.text, T.t(&"shop_price_short", {"n": 50, "missing": 30}), "says what is missing, not only a colour")
+	assert_eq(s.detail.text, T.t(&"shop_price", {"n": 50}), "the price alone (P1-3)")
+	assert_eq(s.detail.get_theme_color(&"font_color"), DoorSign.SHORT_COLOR, "short: the colour says it")
 
 
 func test_shop_sign_colours_keep_contrast() -> void:

@@ -5,6 +5,10 @@ extends Resource
 ## BoonState.stat (level 1, never scaled by rarity), so it needs no fight code. Data in data/forge/emeth/, written by
 ## _forge in tools/make_data.gd. The Fatia 1 has the track temper (Temperar I and II); Refinar and Despertar come later.
 
+## Fatia 2: the track refine (Refinar) holds choices, not steps: each bought once (rank 1), one on each action (slot:
+## &"attack", &"special"; free to change in the hub), opened by a tool (tool: the Forjador's tool it needs).
+@export var slot: StringName = &""
+@export var tool: StringName = &""
 ## The track it belongs to and its place on it (1, 2...): the save keeps the highest rank bought of each track
 ## (heroes.<id>.forge.temper).
 @export var id: StringName

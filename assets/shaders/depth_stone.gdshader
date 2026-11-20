@@ -38,6 +38,14 @@ uniform float weather = 0.8;
 uniform float grit = 0.5;
 uniform float grit_scale = 4.0;
 uniform float joint_dark = 0.75;
+// ENV-HB3 (the hall's dark frame, only in the stylized look): a piece standing between the eye and the hall opens in a
+// stippled hole round the paladin behind it (see_through.gdshaderinc, as the obelisks); 0 never.
+uniform float see_through = 0.0;
+uniform float see_radius = 2.6;
+uniform float see_height = 1.3;
+uniform float see_keep = 0.1;
+uniform float see_gap = 0.4;
+#include "res://assets/shaders/see_through.gdshaderinc"
 
 varying vec3 world;
 varying vec3 wnormal;
@@ -59,6 +67,9 @@ void vertex() {
 }
 
 void fragment() {
+	if (see_through_hole(VERTEX, FRAGCOORD.xy, VIEW_MATRIX, PROJECTION_MATRIX, see_through, see_radius, see_height, see_keep, see_gap)) {
+		discard;
+	}
 	vec3 n = abs(wnormal);
 	vec2 uv = n.y > 0.7 ? world.xz : (n.x > n.z ? world.zy : world.xy);
 	float row = floor(uv.y / course);

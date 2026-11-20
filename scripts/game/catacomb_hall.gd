@@ -369,8 +369,9 @@ const LANTERN_CROSSES := 1
 ## (paint.gdshaderinc, paint_pool_gain), so its falloff only sets how far the edge reaches: the bowls' gentler (their
 ## light stands 2.8 m up, on the pedestal); the candles' energy up again; the bowls cast no shadow in this look (the
 ## bowl's own rim shadowed the floor out to 2.3 m round the pedestal: the pool was a thin ring outside a dark disc; the
-## key from behind the camera draws the figures' shadows).
-const STY_BOWL_RANGE := 4.5
+## key from behind the camera draws the figures' shadows). ENV-HB1 (2026-11-20): the bowls' pools a metre wider (4.5 to
+## 5.5), the amber marking the areas of the hall on the petrol slate.
+const STY_BOWL_RANGE := 5.5
 const STY_CANDLE_RANGE := 3.5
 const STY_BOWL_ATTENUATION := 0.5
 const STY_BOWL_GAIN := 1.1
@@ -381,23 +382,86 @@ const STY_POOL_SATURATION := 1.0
 ## The browser's renderer (Compatibility) paints the pools near white at those energies (laje 217 beside the east bowl):
 ## the fires a share of them there (as VisualProfile.COMPAT_KEY does for the key).
 const STY_COMPAT_FIRE := 0.4
+## P2-A5: in Compatibility (no linear to sRGB on the way out) the edge's darkening went to a quarter of the middle and
+## the pushed pools went lime under the paladin: there the edge darkens less and the pools keep the fire's own colour.
+const STY_COMPAT_FLOOR := {&"edge_value": 0.62, &"paint_pool_saturation": 1.0}
+## P2-A4: the portal's spill held on the steps and the floor at their foot in the stylized look (cone in degrees,
+## reach): on the petrol floor its green by the north-east candles read as an emerald stain (the emerald is the Emeth's).
+const STY_SPILL := Vector2(32.0, 12.0)
 ## Room redesign (lot A 3.2, decision L-1): the hall's biome in the stylized look, blue slate instead of the STY's warm
 ## umber (docs/art/room_redesign_lotA_spec.md 3.2; ArenaKit.paint_look, stylize_fires). The fires are STY-10's.
+## ENV-HB1 (docs/art/benchmark_hades2_style.md 4.1; the hall's finish test of 2026-11-20, docs/design/
+## ciclo_visual_2026-11-20.md item 1): the slate a petrol blue again, its colour the air of the hall (the scene's
+## saturation p50 0.14 was greybox), at the same value: stone, floor, the shadow band's tint.
 const STYLE := {
-	&"stone": Color(0.325, 0.341, 0.386), &"shadow": Color(0.833, 0.877, 0.98), &"floor_stone": Color(0.292, 0.312, 0.36),
+	&"stone": STY_STONE, &"shadow": STY_SHADOW, &"floor_stone": STY_FLOOR_STONE,
 	&"joint_cold": Color(0.88, 0.91, 1.0), &"olive_share": 0.06, &"abyss_glow": STY_ABYSS_GLOW, &"pool_saturation": STY_POOL_SATURATION,
 	&"fire": {&"bowl_range": STY_BOWL_RANGE, &"candle_range": STY_CANDLE_RANGE, &"bowl_attenuation": STY_BOWL_ATTENUATION,
 		&"bowl_gain": STY_BOWL_GAIN, &"candle_gain": STY_CANDLE_GAIN, &"compat": STY_COMPAT_FIRE},
 	&"floor": STY_FLOOR_BIOME,
 }
+const STY_STONE := Color(0.27, 0.35, 0.44)
+const STY_FLOOR_STONE := Color(0.25, 0.325, 0.415)
+const STY_SHADOW := Color(0.78, 0.87, 1.0)
+## ENV-HB2 (benchmark 4.1; Daniel's two scales): the floor calm at the scale of a few slabs (a 3 x 2 m patch of
+## bare floor up to 30 of luma from p10 to p90, it was 39 to 72): the joints, cracks and missing corners near the slab's
+## own value (joint_lift, catacomb_floor.gdshaderinc), a soft bevel, slabs of near values (the classic stone_a and
+## stone_b closer, the painted swing and the brush narrower), less rock grain, the slabs barely tilted (the key from
+## behind the camera turned each tilt into a lighter or darker slab). The large scale stays: the biome's patches, the
+## washes, the clearings, the framed slabs and the medallion (its grooves keep the joint's value), the fires' pools and
+## the floor darker toward the hall's edge. The calm numbers shared by every room are ArenaKit.CALM_FLOOR; the hall's own:
+## its classic slabs closer, the edge and the pools.
+const STY_CALM := {&"stone_a": Color(0.35, 0.29, 0.32), &"stone_b": Color(0.42, 0.35, 0.38), &"edge_value": STY_EDGE_VALUE,
+	&"edge_span": STY_EDGE_SPAN, &"paint_pool_gain": STY_POOL_GAIN, &"paint_pool_saturation": STY_FLOOR_POOL_SATURATION}
+## ... the floor darker toward the hall's edge than elsewhere (from STY_EDGE_SPAN times the calm radius out; ENV-HB3,
+## the bottom of the screen darker than the fight), and the fires' pools on the floor amber, not beige: less bright than
+## the default gain (2.5 burnt them to white) and their colour pushed past the fire's (1 is the fire's own).
+const STY_EDGE_VALUE := 0.38
+const STY_EDGE_SPAN := Vector2(0.5, 1.25)
+const STY_POOL_GAIN := 1.8
+const STY_FLOOR_POOL_SATURATION := 1.35
 ## S-1: the hall's mouldings lower and its slabs less worn pale than the defaults (1.22, 0.16): noble floor, no buttons.
 const STY_FRAMED_LIP := 1.08
 const STY_FRAMED_WORN := 0.05
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`).
 ## The hall: pale worn dust on the blue slate; its plate carries no edge distance, so its walkable box is given.
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.421, 0.436, 0.473), &"patch_share": Vector2(0.8, 1.0), &"patch_rest": 0.95, &"patch_scale": 3.5,
+## P1-A1 of the cycle's art review: the patches were the floor's strongest texture once the joints went quiet (damp
+## stains with serrated edges all over the field): now ArenaKit.SOFT_PATCHES (fewer, bigger, soft, faint) and the big
+## washes faint (ArenaKit.CALM_FLOOR). The large scale comes from the fires' pools, the edge, the framed slabs and the
+## medallion.
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.36, 0.45, 0.55),
 	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y), &"framed_lip": STY_FRAMED_LIP, &"framed_worn": STY_FRAMED_WORN}
+## ENV-HB3 (benchmark 4.1): the frame dark and full. The hall's own stone below the floor (the lips, the buttresses and
+## the cliffs) a deep petrol in the stylized look, so the bottom of the screen is no lighter than the fight; and out in
+## the abyss toward the camera, south and east of the hall, broken columns of the depths' stone rising out of the mist
+## (each: x, z, top over the floor, radius), never over the walkable floor nor a way out on the screen (a point at
+## height h hides the floor 1.73 h m behind it along the view: x - 0.99 h, z - 1.42 h, kept off the room and the
+## stairs), opening in a stipple round the paladin behind them; a fallen drum (x, z, size) and a chain between two.
+const STY_FRAME_STONE := Color(0.11, 0.17, 0.22)
+## ... and the balustrades nearest the camera (south, the landing's, the east one by the corner) a step darker than the
+## hall's stone, so their lit tops do not make a light band at the bottom of the screen.
+const STY_NEAR_STONE := Color(0.13, 0.18, 0.24)
+const STY_FRAME_COLUMNS: Array[Vector4] = [Vector4(19.6, 19.4, 3.4, 0.75), Vector4(22.0, 12.5, 4.6, 0.8),
+	Vector4(21.6, 8.0, 3.6, 0.65), Vector4(15.5, 21.5, 3.6, 0.7), Vector4(4.6, 22.6, 3.0, 0.6), Vector4(2.0, 21.4, 3.2, 0.75)]
+const STY_FRAME_FOOT := -12.0
+const STY_FRAME_DRUM := Vector4(18.2, 22.6, 1.3, 0.6)
+const STY_FRAME_CHAIN: Array[int] = [1, 0]
+## The columns' broken tops (the shaft stops this share of a radius under the top, where an askew drum of CAP times the
+## radius sits, tilted up to TILT rad), a ring of fallen stone at RING_AT of the height down (RING: width in radii,
+## height), the drum's length in its diameters and its lean (rad), the chain's drop under the tops, sag and link size;
+## the columns' own dice (never the room's _rng: the classic look stays the same).
+const STY_FRAME_BREAK := 0.6
+const STY_FRAME_CAP := Vector3(1.7, 0.6, 1.7)
+const STY_FRAME_TILT := 0.25
+const STY_FRAME_RING_AT := 0.55
+const STY_FRAME_RING := Vector2(2.4, 0.5)
+const STY_FRAME_DRUM_LONG := 1.6
+const STY_FRAME_DRUM_LEAN := 1.2
+const STY_FRAME_CHAIN_DROP := 0.55
+const STY_FRAME_CHAIN_SAG := 2.2
+const STY_FRAME_CHAIN_SIZE := 1.6
+const STY_FRAME_SEED := 4417
 ## SW-H1, SW-G3 (docs/art/sworn_reference_ideas.md 3.2): two pairs of slabs (ArenaKit.framed) flanking the axis of
 ## the dais's flight (its middle, x) on the way from the medallion to the portal. S-1 of the Sworn P1 review: four equal
 ## square frames lighter than the floor read as pressure plates (the runes' room has slabs that strike): each its own
@@ -424,8 +488,9 @@ const SHOP_LANTERN_FOOT := 1.0
 const SHOP_LANTERN_POST := Vector3(0.05, 0.02, 0.05)
 const SHOP_LAMP_RANGE := 4.5
 const SHOP_LAMP_ENERGY := 7.0
-## ... amber, deeper than a candle's (its pool is painted at a share of a fire's saturation).
-const SHOP_LAMP_LIGHT := Color(1.0, 0.7, 0.25)
+## ... amber, deeper than a candle's (its pool is painted at a share of a fire's saturation). ENV-HB1: nearer the
+## bowls' amber (the floor's pools at STY_FLOOR_POOL_SATURATION turned the old 1.0 / 0.7 / 0.25 a vivid yellow, hue 48).
+const SHOP_LAMP_LIGHT := Color(1.0, 0.66, 0.36)
 static var SHOP_LAMP := TombKit.Lamp.new(ScreenTone.fit(Color(1.0, 0.62, 0.3)), ScreenTone.fit(Color(1.9, 1.0, 0.35)),
 	SHOP_LAMP_LIGHT, SHOP_LAMP_ENERGY, SHOP_LAMP_RANGE, 1.3)
 ## The provisions' cloth (umber, folded over the crates: x, z, size, y of its top) and its colour (times the stone's),
@@ -441,6 +506,12 @@ const FOUNTAIN_MOSS_RAGGED := 0.5
 const FOUNTAIN_MOSS_NORTH := 0.3
 const FOUNTAIN_CANDLES: Array[float] = [-2.2, -1.95, -0.9, 0.7, 2.4, 2.65]
 const FOUNTAIN_LIT := 4
+## Item 4 of the cycle of 2026-11-20 (the fountain read at the near camera's edge): the cold pool over it, from straight
+## above (over the basin's middle; energy, cone, reach), its node's name and what is left of it when spent.
+const FOUNTAIN_POOL_FROM := Vector3(0.0, 8.0, 0.0)
+const FOUNTAIN_POOL := Vector3(7.0, 26.0, 11.0)
+const FOUNTAIN_POOL_NAME := &"FountainPool"
+const FOUNTAIN_POOL_SPENT := 0.3
 ## The stylized look's urns (x, z, height, y of what they stand on): by the west balustrade's two pot groups, between
 ## the pots and the balustrade (its posts fill the lip over the abyss), never over 0.28 m (nothing new above 0.3 m on
 ## the walkable floor), and on the lower step of the portal statues' plinths (in front, toward the steps).
@@ -494,10 +565,46 @@ func build(exit_count: int) -> void:
 ## fires' pools, the key off, the stylized-only urns. Nothing here moves a piece or touches what blocks.
 func _stylize() -> void:
 	_urns()
+	_frame()
 	var style := STYLE.duplicate()
 	style[&"off"] = [_key]
-	style[&"floor"] = ArenaKit.framed(STY_FLOOR_BIOME, _frames())
+	var ground := ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME).merged(STY_CALM)
+	if ArenaRoom.compat():
+		ground.merge(STY_COMPAT_FLOOR, true)
+	style[&"floor"] = ArenaKit.framed(ground, _frames())
 	kit.stylize(style, arena)
+	if _spill != null:
+		VisualProfile.vary(_spill, {&"spot_angle": STY_SPILL.x, &"spot_range": STY_SPILL.y})
+
+
+## ENV-HB3: the stone under the floor a deep petrol (its own painted numbers, ArenaKit.PAINT_OWN) and the broken
+## columns of the frame (STY_FRAME_*), only in the stylized look.
+func _frame() -> void:
+	for mat: Material in _under:
+		mat.set_meta(ArenaKit.PAINT_OWN, {&"paint_stone": STY_FRAME_STONE})
+	if _near_mat != null:
+		_near_mat.set_meta(ArenaKit.PAINT_OWN, {&"paint_stone": STY_NEAR_STONE})
+	var sm := kit.styled()
+	var dark := (sm.depth_stone(Game.FOG) as ShaderMaterial).duplicate() as ShaderMaterial
+	dark.set_shader_parameter(&"see_through", 1.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = STY_FRAME_SEED
+	for c: Vector4 in STY_FRAME_COLUMNS:
+		var h := c.z - STY_FRAME_FOOT
+		sm.shaft(Vector3(c.x, STY_FRAME_FOOT, c.y), c.w, h - c.w * STY_FRAME_BREAK, dark)
+		# the broken top: a drum set askew on it; a ring of fallen stone round the shaft lower down
+		var cap := STY_FRAME_CAP * c.w
+		var top := sm.box(Vector3(c.x, c.z - cap.y * 0.5, c.y), cap, r.randf() * TAU, dark, false)
+		top.rotate_object_local(Vector3.RIGHT, r.randf_range(-STY_FRAME_TILT, STY_FRAME_TILT))
+		sm.box(Vector3(c.x, c.z - h * STY_FRAME_RING_AT, c.y), Vector3(c.w * STY_FRAME_RING.x, STY_FRAME_RING.y, c.w * STY_FRAME_RING.x),
+			r.randf() * TAU, dark, false)
+	var d := STY_FRAME_DRUM
+	var drum := sm.shaft(Vector3(d.x, d.w - d.z * 0.5, d.y), d.z * 0.5, d.z * STY_FRAME_DRUM_LONG, dark)
+	drum.rotate_object_local(Vector3.FORWARD, STY_FRAME_DRUM_LEAN)
+	var a: Vector4 = STY_FRAME_COLUMNS[STY_FRAME_CHAIN[0]]
+	var b: Vector4 = STY_FRAME_COLUMNS[STY_FRAME_CHAIN[1]]
+	kit.styled_build(func() -> void: kit.chain(Vector3(a.x, a.z - STY_FRAME_CHAIN_DROP, a.y), Vector3(b.x, b.z - STY_FRAME_CHAIN_DROP, b.y),
+		STY_FRAME_CHAIN_SAG, STY_FRAME_CHAIN_SIZE))
 
 
 ## SW-H1: the four slabs of the way to the portal (STY_FRAMES).
@@ -603,6 +710,21 @@ static func dress_fountain(parent: Node3D) -> void:
 		else:
 			mason.candle_out(at, 0.1, 0.05)
 	mason.merge()
+	# item 4 of the cycle of 2026-11-20: a cold pool of light over it (diffuse, no shadow, never on the crowd), so it
+	# reads at the edge of the near camera's frame among the warm candles' pools; it fades when he drinks
+	var pool := SpotLight3D.new()
+	pool.name = FOUNTAIN_POOL_NAME
+	node.add_child(pool)
+	pool.position = FOUNTAIN_POOL_FROM
+	pool.rotation.x = -PI * 0.5  # straight down (a spot shines along its -z)
+	pool.light_color = ArenaKit.FOUNTAIN_LIGHT
+	pool.light_energy = FOUNTAIN_POOL.x
+	pool.spot_angle = FOUNTAIN_POOL.y
+	pool.spot_range = FOUNTAIN_POOL.z
+	pool.spot_angle_attenuation = 1.6
+	pool.light_specular = 0.0
+	pool.shadow_enabled = false
+	pool.light_cull_mask = ~Arena.CROWD_LAYER
 	var kit := ArenaKit.new(parent, 0)
 	kit.paint_look(STYLE)
 
@@ -626,20 +748,42 @@ func _floor() -> void:
 	# buttresses under the lip on the open sides, so the drop reads as built stone
 	for i in 8:
 		var t := -HALF.y + 2.0 + i * 3.8
-		m.box(Vector3(-HALF.x - 0.7, -3.5, t), Vector3(1.0, 6.0, 1.4))
-		m.box(Vector3(HALF.x + 0.7, -3.5, t), Vector3(1.0, 6.0, 1.4))
+		_under_of(m.box(Vector3(-HALF.x - 0.7, -3.5, t), Vector3(1.0, 6.0, 1.4)))
+		_under_of(m.box(Vector3(HALF.x + 0.7, -3.5, t), Vector3(1.0, 6.0, 1.4)))
 		var s := -HALF.x + 2.0 + i * 4.0
 		if s > LANDING.y:
-			m.box(Vector3(s, -3.5, HALF.y + 0.7), Vector3(1.4, 6.0, 1.0))
+			_under_of(m.box(Vector3(s, -3.5, HALF.y + 0.7), Vector3(1.4, 6.0, 1.0)))
+
+
+## The stone under the floor (ENV-HB3: its materials take the frame's dark petrol in the stylized look).
+var _under: Array[Material] = []
+
+
+func _under_of(mi: MeshInstance3D) -> void:
+	if not _under.has(mi.material_override):
+		_under.append(mi.material_override)
+
+
+## The balustrades nearest the camera (the south edge, the landing's, the east one up to its standing stone): their own
+## copy of the hall's stone, the same in the classic look, a darker petrol in the stylized one (ENV-HB3, STY_NEAR_STONE).
+var _near_mat: ShaderMaterial
+## The portal's spill down the steps (P2-A4 narrows it in the stylized look).
+var _spill: SpotLight3D
+
+
+func _near() -> ShaderMaterial:
+	if _near_mat == null:
+		_near_mat = m.stone(0.0).duplicate() as ShaderMaterial
+	return _near_mat
 
 
 ## A block of platform: its walls dropping into the abyss under a floor (x, z rect), and a thick lip under its edge.
 func _cliff(r: Rect2) -> void:
 	var c := r.get_center()
 	m.layers = ArenaKit.DEPTH_LAYER
-	m.box(Vector3(c.x, -DEPTH * 0.5 - 0.05, c.y), Vector3(r.size.x + 0.4, DEPTH, r.size.y + 0.4), 0.0, m.ashlar(-DEPTH, Color.WHITE * CLIFF_TINT))
+	_under_of(m.box(Vector3(c.x, -DEPTH * 0.5 - 0.05, c.y), Vector3(r.size.x + 0.4, DEPTH, r.size.y + 0.4), 0.0, m.ashlar(-DEPTH, Color.WHITE * CLIFF_TINT)))
 	m.layers = 1
-	m.box(Vector3(c.x, -0.4, c.y), Vector3(r.size.x + 1.0, 0.7, r.size.y + 1.0))
+	_under_of(m.box(Vector3(c.x, -0.4, c.y), Vector3(r.size.x + 1.0, 0.7, r.size.y + 1.0)))
 
 
 # ---------- north: the dais and the portal ----------
@@ -801,6 +945,7 @@ func _facade() -> void:
 	# the portal's light spilling down the steps and over the wet floor in front of them (not on the facade)
 	m.layers = 1
 	var spill := SpotLight3D.new()
+	_spill = spill
 	arena.add_child(spill)
 	spill.look_at_from_position(Vector3(PORTAL_X, y + h * 0.6, FACADE_Z + PORTAL_PORCH - 0.5), Vector3(PORTAL_X - 0.5, 0, -HALF.y + SPILL_AIM))
 	spill.light_color = SPILL_COLOR
@@ -931,9 +1076,9 @@ func _landing() -> void:
 	kit.floor_plate(Vector3(r.get_center().x, 0, r.get_center().y + 0.3), r.size + Vector2(0.6, 0.6))
 	_cliff(r)
 	var z := LANDING_END - 0.1
-	m.balustrade(Vector3(LANDING.x, 0, z), Vector3(WAY_IN.x, 0, z))
-	m.balustrade(Vector3(WAY_IN.y, 0, z), Vector3(LANDING.y, 0, z))
-	m.balustrade(Vector3(LANDING.y - 0.1, 0, HALF.y + 0.8), Vector3(LANDING.y - 0.1, 0, z), false)
+	m.balustrade(Vector3(LANDING.x, 0, z), Vector3(WAY_IN.x, 0, z), true, _near())
+	m.balustrade(Vector3(WAY_IN.y, 0, z), Vector3(LANDING.y, 0, z), true, _near())
+	m.balustrade(Vector3(LANDING.y - 0.1, 0, HALF.y + 0.8), Vector3(LANDING.y - 0.1, 0, z), false, _near())
 	_stairs_down(Vector3((WAY_IN.x + WAY_IN.y) * 0.5, 0, LANDING_END), Vector2(0, 1), WAY_IN.y - WAY_IN.x)
 	# the standing stone in the middle of the south edge, where the landing meets the hall
 	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), 5.2, OBELISK_SOUTH, Vector2(1, 1).normalized())
@@ -950,17 +1095,17 @@ func _south(stairs_down: bool) -> void:
 	var a := Vector3(SOUTH_STONE.x + 1.0, 0, z)
 	var b := Vector3(HALF.x, 0, z)
 	if not stairs_down:
-		m.balustrade(a, b)
+		m.balustrade(a, b, true, _near())
 		return
-	m.balustrade(a, Vector3(SOUTH_GAP.x, 0, z))
-	m.balustrade(Vector3(SOUTH_GAP.y, 0, z), b)
+	m.balustrade(a, Vector3(SOUTH_GAP.x, 0, z), true, _near())
+	m.balustrade(Vector3(SOUTH_GAP.y, 0, z), b, true, _near())
 	_stairs_down(Vector3((SOUTH_GAP.x + SOUTH_GAP.y) * 0.5, 0, HALF.y), Vector2(0, 1), SOUTH_GAP.y - SOUTH_GAP.x)
 
 
 func _east(stairs_down: bool) -> void:
 	var x := HALF.x - 0.1
 	# from the south-east corner up to the standing stone, its fire bowl and clutter on the inside
-	m.balustrade(Vector3(x, 0, HALF.y), Vector3(x, 0, EAST_STONE.y + 1.2))
+	m.balustrade(Vector3(x, 0, HALF.y), Vector3(x, 0, EAST_STONE.y + 1.2), true, _near())
 	m.obelisk(Vector3(EAST_STONE.x, 0, EAST_STONE.y), 5.6, OBELISK_EAST, Vector2(-1, 1).normalized())
 	kit.circles.append(Vector3(EAST_STONE.x - 0.3, EAST_STONE.y, OBELISK_EAST * 0.62))
 	kit.brazier(Vector2(x - 1.7, EAST_STONE.y + 0.6))

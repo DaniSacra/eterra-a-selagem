@@ -58,8 +58,12 @@ func test_the_deck_has_hades_shape() -> void:
 ## out), and no two doors of a room promise the same.
 func test_doors_of_a_room_never_repeat_and_the_deck_runs_down() -> void:
 	var big := 0
+	# (a deck of the E3's 14 cards, so graphs run it down; the stage's of 21 seldom ends in a descent)
+	var small: StageDef = stage.duplicate()
+	small.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.POM, R.HEART, R.HEART,
+		R.MAGICK, R.MAGICK, R.GOLD, R.GOLD])
 	for s in 50:
-		var map := RunMap.new(stage, s)
+		var map := RunMap.new(small, s)
 		var fights := 0
 		for r in map.nodes:
 			if r.kind == RunMap.Kind.COMBAT and r.depth > 1:
@@ -69,10 +73,10 @@ func test_doors_of_a_room_never_repeat_and_the_deck_runs_down() -> void:
 				if d.kind == RunMap.Kind.COMBAT:
 					assert_false(seen.has(d.reward), "seed %d room %d: two doors promise the same" % [s, r.id])
 					seen[d.reward] = true
-		if fights > stage.reward_deck.size():
+		if fights > small.reward_deck.size():
 			big += 1
 			assert_gte(map.deck.refills, 1, "seed %d: the deck ran down and was filled again" % s)
-		assert_lt(map.deck.left.size(), stage.reward_deck.size(), "seed %d: the cards drawn are off the deck" % s)
+		assert_lt(map.deck.left.size(), small.reward_deck.size(), "seed %d: the cards drawn are off the deck" % s)
 	assert_gt(big, 10, "graphs with more fights than cards in the deck")
 
 
@@ -110,8 +114,10 @@ func test_the_shop_has_three_groups_with_hades_prices() -> void:
 	assert_eq(price[R.MAGICK], 100)
 	assert_eq(price[R.POM], 100)
 	assert_eq(price[R.POM_SLICE], 50)
+	assert_eq(price[R.ENCHANT], 200, "an Encanto 200, Hades II's hammer (Fatia 2)")
 	var rng := RandomNumberGenerator.new()
-	var no_pom := func(item: int) -> bool: return item != R.POM and item != R.POM_SLICE
+	# (no Encanto either: this checks the pomegranates' rule alone)
+	var no_pom := func(item: int) -> bool: return item != R.POM and item != R.POM_SLICE and item != R.ENCHANT
 	for i in 100:
 		var g: ShopGroup = stage.shop_groups[2]
 		assert_eq(g.items[g.pick(rng, no_pom)], R.MAGICK, "no pomegranate when nothing can grow")
@@ -129,8 +135,9 @@ func test_the_shop_in_a_real_run() -> void:
 	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	game.rooms.start_at(RunMap.Kind.SHOP)
+	assert_false(game.rooms.map.is_route_shop(game.rooms.map.here), "--start=shop is the shop before Morvath, never a route shop")
 	var shelf := game.rooms.shop()
-	assert_eq(shelf.size(), 4, "the Blessing, healing and the heart, the tonic (no pomegranate: nothing to grow)")
+	assert_eq(shelf.size(), 5, "the Blessing, healing and the heart, the tonic and an Encanto (no pomegranate: nothing to grow)")
 	var groups := {}
 	var items := {}
 	for item: Dictionary in shelf:
@@ -139,6 +146,7 @@ func test_the_shop_in_a_real_run() -> void:
 		assert_true(item.has("price") and item.has("affordable") and item.has("at"))
 	assert_eq(groups.size(), 3)
 	assert_true(items.has(R.HEAL), "healing for 50 is always there")
+	assert_true(items.has(R.ENCHANT), "the Encanto with the tonic when nothing can grow (Fatia 2)")
 	assert_false(items.has(R.POM) or items.has(R.POM_SLICE))
 	# the gold falls from the enemies, not when the room is won
 	game.rooms.gold = 0
@@ -197,7 +205,7 @@ func test_no_shop_sign_in_the_chamber() -> void:
 	game.rooms.start_at(RunMap.Kind.SHOP)
 	assert_gt(_signs(game), 0, "the shop has its signs")
 	game.rooms._enter(game.rooms.next_rooms[0])
-	await wait_frames(2)
+	await wait_process_frames(2)
 	assert_eq(game.rooms.room.kind, RunMap.Kind.BOSS)
 	assert_eq(_signs(game), 0, "no sign of the shop in Morvath's chamber")
 	assert_true(game.rooms.shop().is_empty())

@@ -36,7 +36,8 @@ func test_a_purse_counts_by_source_and_reports_every_source() -> void:
 	var r := p.report()
 	assert_eq(r.silver, {"elite": 2, "door": 10, "guardian": 0, "boss": 0})
 	assert_eq(r.memory, {"door": 0, "guardian": 0, "trial": 2, "boss": 0})
-	assert_eq(r.total, {"silver": 12, "memory": 2})
+	assert_eq(r.emerald, {"boss": 0}, "Esmeralda only from Morvath (Fatia 2)")
+	assert_eq(r.total, {"silver": 12, "memory": 2, "emerald": 0})
 
 
 func test_the_save_holds_materials_up_to_their_cap_and_spends_only_what_it_has() -> void:
@@ -166,9 +167,10 @@ func test_the_hero_screen_sees_a_sealed_gift_and_opens_it() -> void:
 func test_the_forge_sells_temper_in_order_with_silver() -> void:
 	var forge := Forge.new(Forge.load_catalog())
 	var track := forge.track(Forge.TEMPER)
-	assert_eq(track.size(), 2)
+	assert_eq(track.size(), 3, "Temperar I, II and III (Fatia 2)")
 	assert_eq(track[0].cost, 15, "Temperar I, early and small (Q-RJ7 a)")
 	assert_eq(track[1].cost, 35)
+	assert_eq(track[2].cost, 60)
 	var d := SaveData.defaults()
 	assert_eq(forge.problem(d, track[0]), Forge.Problem.SHORT)
 	assert_eq(forge.problem(d, track[1]), Forge.Problem.NEEDS)
@@ -205,10 +207,12 @@ func test_temper_adds_to_the_blows_through_the_boons_stat() -> void:
 
 func test_the_deck_has_a_door_of_silver_and_one_of_memory_more() -> void:
 	var deck := Array(stage.reward_deck)
-	assert_eq(deck.size(), 16)
+	assert_eq(deck.size(), 21, "16 of the Fatia 1, two Encantos, a Psalm and two Blessings (Fatia 2)")
+	assert_eq(deck.count(RunMap.Reward.ENCHANT), 2)
+	assert_eq(deck.count(RunMap.Reward.PSALM), 1)
 	assert_eq(deck.count(RunMap.Reward.SILVER), 1)
 	assert_eq(deck.count(RunMap.Reward.MEMORY), 1)
-	assert_eq(deck.count(RunMap.Reward.BOON), 6, "nothing taken")
+	assert_eq(deck.count(RunMap.Reward.BOON), 8, "nothing taken; two more in the Fatia 2 (the same share)")
 	assert_eq(RunMap.REWARD_KEY.size(), RunMap.Reward.size())
 	for k in RunMap.REWARD_KEY:
 		if k != &"":

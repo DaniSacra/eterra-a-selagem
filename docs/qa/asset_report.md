@@ -252,6 +252,43 @@ mudam mais de 12, todos no HUD (que outras frentes mudaram), nas chamas e nas pa
   existir. `tools/walk_strip.gd` e `tools/rj1_lab.gd` (parte da Emeth) não compilam hoje sem os autoloads
   (`T` no `fx.gd`, `Audio` no `ui_kit.gd`).
 
+## Lote 2B e TA-HB (technical-artist, 2026-11-20)
+
+- **Ferramentas**: `enemy_lab`, `walk_strip`, `rj1_lab` (e o novo `edge_lab`) viraram calços que carregam
+  `tools/lab/<nome>.gd` em tempo de execução (o `-s` compila antes dos autoloads); `Fx._gold_word()` tirou o `T` do
+  caminho do `chamber_lab` e do `drawn_probe`. O `arena_lab` ainda imprime erros de `Controls` e `Audio` (do
+  `player.gd` e do `horde.gd`, antigos) mas gera a imagem; `tools/hub_walk.gd` (não é meu) falha em `Controls`.
+- **P1 golpe sofrido virava silhueta marfim** (combat_cadence 8.3 item 4): causa no `flash.gdshader` (cor morna chapada
+  somada ao corpo inteiro). Corrigido: clarão pela pintura (`Player.HURT_FLASH_LIGHT`) e só borda no overlay
+  (`flash_edge`). Pico da caixa do herói a 60 qps: 154 para 121 (repouso 105). `docs/gallery/c19/hurt_flash/
+  hurt_flash_before_after_60fps.png` (em cima antes, embaixo depois, quadros 106 a 112), stills dos dois looks.
+- **T5b P2-2** (`"centred"`): erguer 0,23 para 0,05 m no esqueleto; tabela no `CLAUDE.md`. Feiticeiro 0,21, Escudo 0,17
+  e ancião 0,31 ficam pela pose final da guarda (não é deriva do erguer).
+- **T5-17, T5-18** (Morvath): `curse_windup` (0,10 m de deriva) e `rain_wave` (0,14); `boss_probe` semente 5, 120 s:
+  `CURSE/curse_windup` 44 quadros, `ERUPTIONS/rain_wave` 422, nenhum `rain:13` parado; os 7 quadros ruins são das Lâminas
+  (`blades_windup`, 0,258 m: o recuo de 2 m em 0,25 s do Q-09 b, do C19). Pior pose de Morvath 0,44 m (teto 0,45).
+- **T5-19**: `CROSSBOW_KICK` no tiro do besteiro. Tira de lado nova: `docs/gallery/lote2b/archer_walk.jpg`.
+- **Corredor elite**: `runner_elite.res` a 199 passos por minuto (era 259), escorrega 4,6 cm;
+  `docs/gallery/lote2b/runner_elite_walk.jpg` (antes, o assado comum a 2,01x) e `runner_elite_as_runner_elite_walk.jpg`
+  (depois, 1,55x). Falta ligar no `make_data.gd` (gameplay).
+- **Q-T5-6**: orbes do Redemoinho abaixo do glow (`Skills.ORB_*`, halo de 1,6 para 0,9 m). `qt56_victory_orbs_step1.png`
+  (primeiro passo, ainda globos) e `qt56_victory_orbs_after.png`. Os pontos esverdeados no fim de duas linhas da placa
+  da laje não foram vistos: ficam com o ui-ux-designer (`door_sign.gd`).
+- **Q-T5-7**: `--shot-on=boss:victory` com `--shot-at=0.5` capturou (antes travava).
+- **`enemy_motion_probe`** semente 2, 40 s: avisos terminam no quadro do golpe (+0 f, um +1 e um -1 do Escudo), pose
+  parada mais longa 0,22 s (teto 0,3). **Testes**: 1 321, 6 falhas todas de loja, Elo, Bênçãos por família e Forja
+  (Fatia 2 em curso, não são de asset); `check.gd` ok.
+- **TA-HB1** linha de tinta: RTX 1080 Alta GPU 2,37 para 2,41 ms (quadro 3,36 para 3,58); iGPU 720 Baixa GPU 15,02 para
+  16,42 ms (58,6 para 52,6 qps, passa do limite de 3): **desligada na Baixa** (`ink_wanted(level)`). Desligada por padrão.
+- **TA-HB2** `EdgeKit`: seção 8b do inventário. **TA-HB3**: ver a captura `docs/gallery/hb/hb3_hall_figures.png`.
+- **Para o gameplay-engineer**: (1) `"model": &"runner_elite"` na elite do corredor (`_pair` do `make_data.gd`) e
+  regerar `enemies`; (2) **B-b**: `player.gd:758` `_play(&"Dash", DASH_CLIP_SPEED)` mistura 0,08 s
+  (`playback_default_blend_time`), então o primeiro quadro da esquiva ainda é quase a pose de antes; tocar a esquiva sem
+  mistura (`_anim.play(&"Dash", 0.0, DASH_CLIP_SPEED)`); (3) **GF-15** e **VX-17** são desenho no `player.gd`: a UAL 1 e
+  2 não têm clipe de arranque nem de parada (só `Jump_Start`, `Jump_Land`, `Slide_Start`); proposta: arranque e parada
+  como mistura de 0,1 s com inclinação do tronco pelo `Player` e a pose final do finalizador segurando a última pose
+  do clipe em vez de voltar à guarda (`recover_anim`).
+
 ## Melhorias propostas (maior ganho por esforço primeiro)
 
 ### Técnicas (posso fazer sem pedir; medir antes e depois, captura na GPU)

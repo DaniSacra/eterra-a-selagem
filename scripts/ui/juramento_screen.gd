@@ -26,7 +26,8 @@ var locked := false
 var _rows: Dictionary = {}
 var _total: Label
 var _xp: Label
-var _hint: Label
+## The keys at the foot (benchmark P0-2, UI-HB6).
+var bar: ActionBar
 
 
 ## Ranks of a Juramento in diamonds: filled up to the rank chosen, outlined after.
@@ -72,6 +73,7 @@ func open(with_descend: bool = false) -> void:
 		back.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		page.add_child(back)
 		back.grab_focus.call_deferred()
+		bar = ActionBar.attach(self, [ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 		return
 	var intro := UiKit.shadow(UiKit.label(T.t(&"jur_intro"), UiKit.DIM, 19))
 	intro.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -112,12 +114,9 @@ func open(with_descend: bool = false) -> void:
 	var back := UiKit.button(T.t(&"back"), func() -> void: closed.emit(), 200)
 	back.name = "back"
 	bottom.add_child(back)
-	_hint = UiKit.shadow(UiKit.label("", UiKit.DIM, 16))
-	_hint.name = "hint"
-	_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page.add_child(_hint)
-	Controls.device_changed.connect(_name_keys)
-	_name_keys(Controls.using_pad)
+	bar = ActionBar.attach(self, [ActionBar.entry(ActionBar.STEP, T.t(&"bar_rank"), Callable(), true),
+		ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self)),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	_refresh()
 	# "Descer" first when going down (Enter twice and he is on his way), else the first Juramento
 	var start: Control = page.find_child("descend", true, false) as Control if with_descend else first
@@ -230,7 +229,3 @@ func _refresh() -> void:
 	_xp.text = T.t(&"jur_xp", {"n": HeroDef.warrior().mastery.weight_xp * w})
 	_xp.visible = w > 0
 
-
-func _name_keys(pad: bool) -> void:
-	if is_instance_valid(_hint):
-		_hint.text = T.t(&"jur_hint_pad" if pad else &"jur_hint_keys")

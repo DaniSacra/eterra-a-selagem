@@ -13,8 +13,12 @@ extends Control
 
 signal chosen(angel: AngelDef)
 
-const SEAL := 128.0
-const CARD := Vector2(300, 392)
+## The seal stands for the angel while the angels have no figure (ciclo visual 2026-11-20, item 3: "dê presença ao
+## selo"): large, over a soft glow of its colour (GLOW_*: under the glow threshold, a light of the card's own).
+const SEAL := 176.0
+const CARD := Vector2(300, 412)
+const GLOW_REACH := 1.25
+const GLOW_ALPHA := 0.28
 const NAME_SIZE := 30
 const LINE_SIZE := 17
 
@@ -79,10 +83,11 @@ func open(p_angels: Array[AngelDef], state: BoonState = null, focus := 0) -> voi
 		card.pressed.connect(_pick.bind(a))
 		buttons.append(card)
 		row.add_child(card)
-	var hint := UiKit.shadow(UiKit.label(T.t(&"encounter_hint"), UiKit.DIM, 20))
+	var hint := UiKit.shadow(UiKit.label(T.t(&"encounter_hint"), UiKit.DIM, 18))
 	hint.name = "hint"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(hint)
+	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus)])
 	Audio.play(&"level_up")
 	if not buttons.is_empty():
 		buttons[clampi(focus, 0, buttons.size() - 1)].grab_focus.call_deferred()
@@ -97,6 +102,13 @@ static func held_of(state: BoonState, a: AngelDef) -> int:
 		if Encounter.belongs(state, b, a.family):
 			n += 1
 	return n
+
+
+## The card in focus taken (the action bar's click).
+func _press_focus() -> void:
+	var f := get_viewport().gui_get_focus_owner() as AngelCard
+	if f != null and is_ancestor_of(f):
+		f.pressed.emit()
 
 
 func _pick(a: AngelDef) -> void:
@@ -141,6 +153,7 @@ class AngelCard:
 		seal.name = "seal"
 		seal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		v.add_child(seal)
+		seal.item_rect_changed.connect(queue_redraw)
 		var n := UiKit.shadow(UiKit.title(T.t(a.name_key), EncounterScreen.NAME_SIZE, tint.lightened(0.25)))
 		n.name = "name"
 		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -179,6 +192,14 @@ class AngelCard:
 		bg.shadow_color = Color(tint, 0.3 if has_focus() else 0.15)
 		bg.shadow_size = 14
 		draw_style_box(bg, r)
+		# the seal's own light behind it, in its colour, rings fading out
+		var seal := find_child("seal", true, false) as Control
+		if seal != null:
+			var c := seal.get_global_rect().get_center() - get_global_rect().position
+			var reach := EncounterScreen.SEAL * 0.5 * EncounterScreen.GLOW_REACH
+			for k in 8:
+				var t := float(k) / 8.0
+				draw_circle(c, reach * (1.0 - t * 0.6), Color(tint, EncounterScreen.GLOW_ALPHA * 0.16 * (0.4 + t)))
 		draw_rect(r.grow(-BoonCard.METAL_INSET), Color(UiKit.OLD_GOLD, 0.6), false, 1.0)
 		if has_focus():
 			BoonCard.draw_focus(self, r)

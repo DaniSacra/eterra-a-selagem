@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_gorn5"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_weikn"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_80aky"]
+
+[sub_resource type="Resource" id="Resource_y1usf"]
+script = ExtResource("3_80aky")
+kind = 4
+cooldown = PackedFloat32Array(9, 8, 7)
+damage = PackedFloat32Array(40, 60, 85)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(3.5, 4, 4.5)
+status = &"burn"
+status_power = PackedFloat32Array(6, 8, 10)
+
+[resource]
+script = ExtResource("2_weikn")
+id = &"chuva_brasas"
+family = 0
+skill = SubResource("Resource_y1usf")

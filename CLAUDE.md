@@ -374,6 +374,62 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   achado (`progress`, `codex_count`), cima e baixo andam no índice, direita vai ao Voltar; a lista na página direita em
   tinta, os Dons com o nó da árvore (`TalentGlyph.mark`). Capturas: `--title --screen=hero|gifts|book|codex` e
   `tools/book_lab.gd` (comando no topo). Testes em `tests/test_book.gd`.
+- **Benchmark de interface contra o Hades II (P0 e P1 de `docs/design/benchmark_hades2_ui.md`, UI-HB1, HB2, HB5 de
+  `docs/art/benchmark_hades2_style.md`, item 3 do `docs/design/ciclo_visual_2026-11-20.md`; testes em
+  `tests/test_bench_ui.gd`; capturas em `docs/gallery/ciclo_visual_1120/ui_*`)**: a tecla de usar da partida
+  (`Rooms.prompt`) fica pendurada embaixo do que se usa, não em cima do herói (`StationSign.under`, `place_under`,
+  `UNDER_GAP`; âncora em `Rooms.use_spot`: a recompensa, o item da loja, o medalhão da porta), e onde o herói cobre
+  esse ponto desce para baixo dos pés dele (`StationSign.hero_box`); na loja sem ouro a linha diz "Faltam N de ouro"
+  (`shop_use_short`). Placas da loja em duas linhas, nome e preço, a falta pela cor do preço (`DoorSign.set_gold`,
+  `SHORT_COLOR`; a palavra do grupo saiu). **Barra de ações** (`ActionBar`, `scripts/ui/action_bar.gd`):
+  `ActionBar.attach(tela, [ActionBar.entry(ação, verbo, ao_clicar, extra)])` põe no rodapé a tecla real de cada ação
+  (`StationSign.KeyCap`, `UiKit.action_label`; A e B do controle para `ui_accept`/`ui_cancel` por `UiKit.MENU_PAD`) e
+  o verbo, que troca ao vivo entre teclado e controle e é clicável; `ActionBar.RESERVE` é a margem de baixo dos livros.
+  Nas Bênçãos, nos anjos, no Livro (o verbo segue o capítulo: Confirmar, Equipar ou tirar, Abrir com Memória;
+  `HeroScreen.bar`), no mapa, no Compêndio, na Forja, na escolha de save e na pausa; as frases de teclas saíram
+  (`hero_hint*`, `slot_hint*`, `map_close_hint` ficaram sem uso). **Contador de golpes** fora da luta (UI-HB5): uma linha
+  só sobre a barra de vida, à direita do medalhão (`Hud._combo_row`: número `FONT_COMBO` 24 com contorno, sem véu, a
+  palavra e o nome do golpe em Alegreya Sans Bold 14), que sobe quando o selo da maldição aparece. **Cartas de
+  Bênção** (UI-HB1, HB2): altura pelo conteúdo, de `BoonCard.MIN_H` 300 até `SIZE.y` 450 (`fit_height`), descrição em
+  `UiKit.rich` com o corpo em marfim mais quieto (`BoonCard.BODY`) e números e palavras-chave em negrito no marfim
+  cheio (`UiKit.strong`, `UiKit.STRONG`; `BoonChoice.describe(..., marked)`, `Glossary.emphasize`), alinhada à
+  esquerda; os números do efeito em linhas rótulo e valor (`BoonChoice.facts`, `fact_value`, chaves `fact_*`; nós
+  `Facts`, `Fact_<stat>`, `Value`, e `Was` com o valor de antes quando a carta troca uma Bênção que tem o mesmo número).
+  Troca sempre com Sai e Entra (`Replaces`). **Glossário** (`Glossary`, `scripts/ui/glossary.gd`) à direita da fileira
+  de cartas: os termos da carta em foco (congelar, queimadura, atordoar, Ômega, Magia, armadura, Corte Veloz; chaves
+  `gloss_<id>`, `_text` e `_words`, as raízes que acham a palavra no texto), no máximo 2. **Encontro dos anjos**: o selo
+  de cada anjo maior (`EncounterScreen.SEAL` 176) sobre uma luz da cor dele abaixo do limiar (`GLOW_*`); nada de figura.
+  **Forja**: a Emeth de verdade na página esquerda (`EmethView`, `scripts/ui/emeth_view.gd`: `SubViewport` com mundo
+  próprio, o modelo do `EmethSword` com o `set_temper` do posto, câmera ortográfica, balanço lento; `show_rank(r, grow)`
+  faz o veio crescer ao forjar) com "Posto da Emeth" embaixo; à direita o índice dos postos, "Melhoria seguinte" ou
+  "Forjado", Efeito, Estado, Próximo passo e, junto do Forjar, Custo e Saldo lado a lado (nó `deal`).
+  Segundo lote (ciclo visual 2026-11-20, item 3; capturas `docs/gallery/ciclo_visual_1120/ui2_*`): **Compêndio** com o
+  detalhe da entrada selecionada na página do índice (`CodexScreen.detail`): em Inimigos a própria figura assada
+  (`FigureView`, `scripts/ui/figure_view.gd`: `SubViewport` com mundo próprio e um `CrowdRenderer` de uma figura, no
+  `idle`, girando devagar; nunca derrotado, silhueta em tinta e "Derrote um para conhecer."), em Dons a marca do Dom
+  grande (`TalentGlyph.mark`); as linhas dessas abas tomam o foco (direita do índice entra, esquerda volta, mouse
+  seleciona; `CodexScreen.selected`). **Árvore**: equipado com um selo redondo esmeralda com visto no canto
+  (`TalentNode._badge_tick`), selado com a moldura tracejada sem pontas e um lacre de cera (`_badge_seal`,
+  `SEAL_WAX`), além da cor; no painel Custo e Pré-requisito lado a lado em negrito (nó `glance`). **Menus**: a
+  `ActionBar` também nos Juramentos (`ActionBar.STEP`, a placa "← →" para o nível), nas Configurações (abas, Mudar,
+  Confirmar, Voltar), nas Músicas, na tela de fim e na página das estações do hub (`HubPanel`), sempre no mesmo lugar;
+  `ActionBar.press_focus(tela)` aperta o botão em foco (as frases `jur_hint_*` saíram). Fim de partida: primeiro o que
+  fica (os materiais trazidos em 24 px, `EndScreen.BROUGHT_SIZE`, e a Maestria), depois as Bênçãos da descida e os
+  números. **Molduras (UI-HB3)**: toda página de menu (`UiKit.page`), a pausa e o resumo da vitória ganham um remate no
+  topo (arco com o losango) e cantoneiras de ouro velho com losango (`UiKit.crown`). **Selo do anjo (UI-HB4)**: na
+  escolha de Bênção trazida por um anjo, o selo grande numa coluna à esquerda das cartas (`BoonChoice.ANGEL_FIGURE`
+  220 a 720, cerca de 330 a 1080, luz da cor dele) com o nome e o glossário embaixo. **Selo de salvo (P2-4)**: todo
+  `Save.write` que grava o save em uso emite `Save.written` e mostra por 1 s um selo pequeno com "Salvo" no canto de
+  baixo à direita (`SaveSeal`, `scripts/ui/save_seal.gd`); nunca sem save; a escolha de save diz quando ele grava
+  (`slots_saves_when`). Toda `UiKit.column` (páginas de menu, cartas, fim) centra acima da fileira da `ActionBar`
+  (`ActionBar.RESERVE`); nas Configurações a dica fica no pé da página (`tip` dentro do quadro). Testes em `tests/test_bench_ui.gd`.
+  Terceiro lote (capturas `docs/gallery/ciclo_visual_1120/ui3_*`, `_side_` lado a lado): o nome do golpe sai mais
+  longe do medalhão e acima do fio da barra (`Hud.COMBO_INSET` 14, `COMBO_RISE` 9; encostava nele na horda). **P1-4 em
+  teste, `--hud=row`** (padrão: o de hoje; o art-director decide): os cinco losangos menores (`Hud.ROW_DIAMOND` 31,
+  cerca de 46 px a 1080; `ActionSlot.side`) numa fileira sobre as barras a partir do ombro do medalhão, a tecla
+  pendurada sob a ponta (`ActionSlot.key_drop`, `ROW_KEY_DROP`), nada entre 30 e 70% da largura embaixo (a fileira
+  acaba em 27%); contador, selo da maldição e selo da Provação sobem a altura da fileira e das legendas
+  (`Hud._row_lift`); as Bênçãos que agem sozinhas no canto de baixo à direita, cada grupo com o próprio véu.
 - **Mapa da descida** (DV-1, MAP-03, lê o grafo do MAP-01): ação `map` em `Controls` (M, Back
   no controle; remapeável no teclado nas Configurações, linha "Mapa" no Como Jogar), botão discreto "Mapa [M]" ao lado do
   "Sala N de 11" no HUD (`Hud.map_button`: nunca toma o foco, abre no aperto para o clique, que também é o ataque, não
@@ -1517,6 +1573,27 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   encostar não compra nem sai (`Rooms._used`, `usable`, `use()` para clique e testes); o robô aperta quando
   `usable()`. A placa com a tecla é do ui-ux-designer.
 - `tools/enemy_motion_probe.gd` lê também o `warning2` (o segundo golpe): aviso e dano a 0 ou 1 quadro.
+- **Aceite medido (2026-11-20, HEAD `b903eee`)**: GUT 1282/1282 (`test_c19` 10/10, 75 asserções); sonda 41/41;
+  `enemy_motion_probe` sementes 1 a 3 iguais à seção 8.1 (corredor da semente 2 na borda, Escudo +3 f conhecido) e com
+  `--stress=4 --stress-ids=skeleton_elite,runner_elite`: os dois golpes de cada elite com aviso a -1 a +1 f do dano,
+  segundo golpe do esqueleto a 0,99 a 1,78 m, pose parada até 0,22 s; `boss_cadence --cadence-log` sementes 1, 2, 3 e 5
+  (reação 0,25, 5 Bênçãos): fase 1 perto, maior parte 43 / 43 / 50 / 43%, nunca 3 iguais, Ceifa com recuperação 2,21 s;
+  24 descidas do robô (`smoke 900 --bot-reaction=0.25 --ultimate=cleave`): 20 vitórias, 24 em Morvath, `stuck` 0,
+  nenhum golpe com `warn_s` abaixo de 0,97 s (Ancião 1,04), esqueleto elite 0 de dano antes e depois (o robô esquiva
+  os botes). Ancião 45 para 126 de dano nas 24 (5 para 14 golpes): não é o fio (sem os fios, 126), é o Ômega a 3%
+  (C19-4; com a carga a 100% volta a 45 nas mesmas 8 sementes); os golpes saem com o robô plantado em golpes comuns, aviso
+  1,04 s ou mais, então fica para o balance-designer e o teste com gente. Vídeos a 1/4 da velocidade (GPU, 1280 x 720,
+  semente 5) em `docs/gallery/c19/` (`skeleton_elite_*`, `runner_elite_*`, `reap_*`).
+- **Depois da aprovação do C19 (combat_cadence.md 8.3)**: (a) o robô não começa o Ômega do ataque com um atirador
+  (feiticeiro, besteiro, sacerdote, Ancião) preparando a menos de `Bot.SHOT_NEAR` 12 m (`Bot.shot_coming`: toca em vez
+  de segurar); Ancião 126 para 81 de dano nas 24 descidas (meta 68: fica para o equilíbrio, `balance.md`). (b) O
+  corredor (comum e elite) esperando a recarga encostado no herói usa a folga `Horde.MELEE_WALK_BAND` 0,8 m
+  (`Enemy.closing`, como Cavaleiro e Escudo): idas e voltas por segundo 1,5 a 4,6 para 0,2 a 0,63. (c) O disco da
+  primeira explosão do corredor elite é um aro fino sem preenchimento que some em `Ground.LAND_QUICK` 0,1 s
+  (`Zone.land_quick`): o aro do segundo anel fica 0,4 s à vista antes da segunda explosão. BUG-108: `Game.unhook` no
+  `_exit_tree` e no `Boss` derrotado solta os sinais de objetos `RefCounted` (os lambdas seguravam `Boss`, `Enemy`,
+  `BossDirector`). QW-104 P2: `EnemyDef.tell_time` 0,5 s (`CrowdRenderer.tell_share`), falta o aceite do
+  combat-feel-director. Q-15 medido em `docs/qa/q15_economy.md` (ouro na loja mediana 81,5, Elo 24%, Salmo 5,6%).
 
 ## Prova estilizada (STY-03 a STY-05, cenário; spec `docs/art/stylized_spec.md`, plano `docs/art/stylized_poc_plan.md`)
 - Perfil visual reversível (`VisualProfile`, `core/visual_profile.gd`): `Look.CLASSIC` e `STYLIZED`; **no exe exportado o padrão é o
@@ -2027,6 +2104,49 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Testes: `tests/test_rejogabilidade.gd` (puros, A1, A3, A4, A6) e `tests/test_rejogabilidade_game.gd` (cena: o
   encontro, robô por afinidade, materiais por fonte, A2, Forjador).
 
+## Rejogabilidade, Fatia 2 e DV-2 (gameplay; spec `sistemas.md` 1.5 a 1.7 e 3.6, API para a UI em 5.3 "Fatia 2"; testes em `tests/test_fatia2.gd`)
+- **Portas (RJ-2, RJ-3)**: baralho de 21 (mais 2 `ENCHANT`, 1 `PSALM` e 2 `BOON`, para a Bênção manter a fatia de antes); grupos `RunMap.Group` POWER (Bênção, romã,
+  Encanto, Salmo), BODY (coração, Magia, ouro, cura), HOME (Prata, Memória), `RunMap.group_of`; o gerador prefere a
+  carta de um grupo que as portas irmãs ainda não mostram (`RewardDeck.draw_prefer`): bifurcações com dois grupos 77,8%
+  para 93,2% em 1000 grafos, três grupos 3,8% para 9,5% (`tools/door_forks.gd`). Encanto no máximo 2 num caminho
+  (`StageDef.enchant_max`), o segundo desde a sala 5 (`enchant_second_from`); Salmo desde a 4 (`psalm_from_depth`);
+  `RunMap.settle(portas, romã, salmo, encanto)` troca por Bênção o que não pode vir. Caminhos com menos de 3 portas de
+  Bênção 9,7% para 12,1%.
+- **Anjo na porta (Q-RJ5 a)**: sala de Bênção é encontro de dois (`Room.meeting`: a sala 1, o guardião e 2 de cada 6,
+  `StageDef.angel_deck`, dado próprio `RunMap.ANGEL_SALT`) ou mostra um anjo (`Room.angel`, sorteado ao abrir as portas
+  por `Encounters.door_angel`); a placa diz o nome ou "Dois anjos"; o encontro abre direto nas cartas dele
+  (`fallback` "door").
+- **Encantos** (`EnchantDef`, `Enchants`, `data/enchants/`, parte `enchants`): Lâmina Tríplice (o giro solta 3 ondas
+  em leque, `blow_wave_fan`, `Psalms.fan`), Eco da Verdade (o giro golpeia de novo 0,3 s depois com metade,
+  `Combat._echo`, tag `echo`), Retorno do Corte (1 s depois do Corte Veloz o golpe alcança e abre 30% mais,
+  `return_time`, `return_reach`, `Combat.swing_shape(..., largura)`); exclusões com os Dons (`excludes`); `BoonState.enchants`
+  somados no `stat`; `Game.open_enchant_choice`, `take_enchant`, `enchant_offers` (dado da sala, `ENCHANT_SALT`), sinal
+  `enchant_offered` (sem ninguém ouvindo, a `EnchantChoice` provisória); loja: Encanto 200 no grupo da Magia e da romã.
+- **Porta de Salmo**: `Game.open_psalm_choice` (três Bênçãos, a primeira carta um Salmo elegível).
+- **Forja**: Temperar III (60 Prata, +5% em `light` e `heavy`); Refinar (`Forge.REFINE`, 25 Prata, uma escolha por ação:
+  Fio `reach_pct`, Peso `stun_pct` (novo: `Horde.stun_scale`), Pressa `blow_speed` (novo: `GiftState.attack_speed(tags)`)
+  no ataque; Onda Larga, Onda Pesada, Onda Pronta no especial), aberto pela ferramenta `tool_refine` achada no primeiro
+  guardião vencido (`Game.find_tool`, `tools_found`, guardada no fim como os materiais); `Forge.ranks_for(data)`,
+  `--refine=a,b`. Save: `forge.refine`, `refined`, `inscribed` (`HERO_LISTS`).
+- **Esmeralda**: 1 na fase 3 de Morvath alcançada, 1 na vitória (`MaterialPurse.SOURCES[EMERALD]` = `boss`).
+- **Bênçãos novas** (todas sem ação, `Slot.NONE`, só estatísticas que existem; entram nas listas dos Elos): Geada Final,
+  Flocos Errantes, Ômega de Gelo; Vigia Firme, Vigília Longa, Guarda Atenta; Ômega em Brasa, Chuva de Brasas; Final
+  Radiante, Onda Clara (9 por família).
+- **DV-2, loja de rota (MAP-09, Q-26 b)**: num ramo de uma camada de 6 a 8 (`StageDef.route_shop_*`, 35% por camada
+  onde cabe, nunca na camada da fonte nem do altar, só em camada de 2 salas ou mais), 3 itens, um de cada grupo da
+  loja (`Rooms._build_shop`, `RunMap.is_route_shop`); loja não gasta usos de arena (`_place_arenas`). `RESULT`
+  `route_shop` à parte do `shop` (`RoomTally.shop_entered(ouro, rota)`). Robô entra com 100 de ouro ou mais
+  (`Rooms.BOT_ROUTE_SHOP_GOLD`, `bot_door(..., ouro)`). Em 300 grafos, 45% têm a loja de rota.
+- `RESULT`: `enchants`, `tools`, `forge.refine`, `route_shop`, `materials` com `emerald`.
+- **Medido (72 sementes, `smoke 900 --bot-reaction=0.25 --ultimate=cleave`)**: Encantos escolhidos 28 / 36 / 36%
+  (Lâmina Tríplice, Eco, Retorno; meta 20 a 45%); 384 encontros, nenhum com menos de 3 cartas (meta: 95% com 3);
+  171 de 384 pela porta de um anjo; ferramenta em 69 de 72; Esmeralda 2 em 47, 1 em 9. Porta de Salmo: o robô nunca a
+  viu (a mão dele quase nunca abre um Salmo: `settle` a troca por Bênção). Robô 47 de 72 vitórias, vida em Morvath
+  mediana 30 (Q-15: 58 e 51,5); a mesma queda aparece sem as portas da Fatia 2 (16 de 24, vida 30) e sem as Bênçãos
+  novas (13 de 24): vem de o robô levar 0,3 coração por descida (0,61 no Q-15), RJ-3 põe Bênção ao lado de corpo e ele
+  escolhe a Bênção. Para o `balance-designer` (`balance.md`). Loja de rota: o robô passa com 50 de ouro ou mais
+  em 29% (sala 6), 62% (7) e 86% (8) das descidas, entra só com 100 (ou 50 ferido): 5 visitas em 72.
+
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
   `DoorGlyph.of_reward` para `RunMap.Reward.SILVER`/`MEMORY` (placas das portas e mapa) e `DoorGlyph.of_material(id)`;
@@ -2322,3 +2442,79 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   B 15,93 / 16,27 para 16,05 / 14,99 / 15,42 (uma rodada de 19,04 fora), Fendas A 17,98 / 16,64 para 17,09 / 16,68, B
   17,00 / 17,63 para 17,36 / 17,20, Santuário 18,59 / 18,24 para 18,23 / 18,05: nada acima do ruído. Compatibility sem
   erro no Salão, Cripta e Fendas.
+
+## Ciclo visual 2026-11-20, cenário (ENV-HB1 a HB3 no Salão, BH-07 no hub; só no estilizado; `docs/design/ciclo_visual_2026-11-20.md` itens 1 e 2, metas em `docs/art/benchmark_hades2_style.md` 4.1; capturas `docs/gallery/ciclo_visual_1120/env_*`)
+- **Salão, ENV-HB1 (petróleo)**: pedra, chão e sombra do `CatacombHall.STYLE` num azul-petróleo (`STY_STONE`,
+  `STY_FLOOR_STONE`, `STY_SHADOW`; manchas do bioma `patch_color` no mesmo tom), braseiros com poça 1 m mais larga
+  (`STY_BOWL_RANGE` 5,5) e as poças do chão âmbar, não bege (`STY_POOL_GAIN` 1,8, `STY_FLOOR_POOL_SATURATION` 1,35, só
+  no chão, pela chave `floor`). **ENV-HB2 (duas escalas)**: o chão calmo na escala de poucas lajes (`STY_CALM`, somado ao
+  `STY_FLOOR_BIOME` na chave `floor`): juntas, rachaduras e cantos faltando perto do valor da própria laje (uniform novo
+  `joint_lift` no `catacomb_floor.gdshaderinc`, só no `PAINT`, padrão 0 = as outras salas iguais; os sulcos do medalhão
+  não mudam), chanfro suave, lajes de valores próximos, menos grão e quase sem inclinação; a escala grande fica (manchas,
+  lavados, clareiras, lajes emolduradas, medalhão, poças de fogo, borda mais escura). **ENV-HB3 (moldura)**: o chão
+  escurece para a borda da sala mais cedo e mais fundo (`STY_EDGE_VALUE` 0,38, `STY_EDGE_SPAN` 0,5 a 1,25 do raio calmo),
+  a pedra de baixo do chão (lábios, contrafortes e penhascos, `_under`) num petróleo fundo (`STY_FRAME_STONE`, por
+  `ArenaKit.PAINT_OWN`), as balaustradas mais perto da câmera (sul, patamar e a leste até a pedra) com material próprio um
+  degrau mais escuro (`_near`, `STY_NEAR_STONE`; no clássico é a mesma pedra) e, no abismo ao sul e a leste, colunas
+  quebradas da pedra funda subindo da bruma (`_frame`, `STY_FRAME_*`: seis colunas, um tambor caído e uma corrente; postas
+  pela regra de projeção para nunca cobrir chão, escada nem saída na tela; abrem em pontilhado em volta do herói, uniforms
+  `see_*` novos no `depth_stone.gdshader` com o `see_through.gdshaderinc`). Nenhuma vinheta nova; nada colide.
+- Medido (RTX 1920 x 1080, semente 5, `frame_stats.py --hue --scene`; antes / depois): luta Longe cena matiz 221 / 209,
+  saturação p50 0,14 / 0,41, luma p50 65 / 54; meio 80 / 76; laterais 45 e 45 / 34 e 41 (0,45 e 0,54 do meio); faixa de
+  baixo 62 / 44 (0,58); chão 3 x 2 m (caixa 1150,600,200,150) p10 a p90 42 a 85 / 43 a 61 (18), e a 6 m dela 42 contra 51
+  (a escala grande fica). Luta Perto: cena 0,12 / 0,38, luma 72 / 61, laterais 0,49 e 0,60, faixa de baixo 0,66 (no
+  limite: a câmera perto põe o próprio chão da luta nela), chão 3 x 2 m 22. Vitrine: cena 0,15 / 0,41, luma 67 / 58,
+  laterais 0,51 e 0,60, faixa de baixo 0,75 (é o chão andável do patamar, que não se escurece mais). Clássico igual
+  (`test_room_style`), fit_probe igual (3,04 / 39,06). Loja: a luz das lanternas mais perto do âmbar dos braseiros
+  (`SHOP_LAMP_LIGHT` 1,0 / 0,66 / 0,36; com a saturação das poças do chão ia a amarelo vivo, matiz 48 e saturação 0,71,
+  agora 37 e 0,52). Compatibility sem erro (Salão e hub; lá o Salão sai mais contrastado: cena 40, meio 99). iGPU 720
+  Baixa: Salão 17,32 / 17,29 ms de quadro (17,18 / 18,07 no Sworn P1), hub 17,18 / 17,18 (GPU 15,15).
+
+## Lote 2B e TA-HB, parte do technical-artist (2026-11-20; evidências em `docs/gallery/lote2b/`, `docs/gallery/hb/`, `docs/gallery/c19/hurt_flash/`)
+- **Ferramentas de `-s` que nomeiam classes com autoload** (`T`, `Audio`): o script de `-s` é compilado antes dos
+  autoloads existirem. `tools/enemy_lab.gd`, `tools/walk_strip.gd`, `tools/rj1_lab.gd` e `tools/edge_lab.gd` são calços
+  que carregam o corpo de `tools/lab/<nome>.gd` (um `Node`) em tempo de execução; ferramenta nova que monta o jogo faz
+  igual. `Fx` lê o texto do ouro por `_gold_word()` (o `chamber_lab` e o `drawn_probe` voltaram a compilar).
+  `walk_strip` aceita `id@modelo` (o mesmo inimigo com outro assado).
+- **Golpe sofrido sem silhueta** (combat_cadence 8.3 item 4): o `flash.gdshader` somava uma cor morna chapada no corpo
+  inteiro (+0,45 a +0,75 linear) e o herói virava marfim por 2 a 3 quadros nos dois looks. Agora o clarão é a própria
+  pintura dele mais clara (`Player.HURT_FLASH_LIGHT` 0,45 somado ao `fill` do `HeroBody.set_fill`, o caminho do pisca) e
+  o overlay só deixa uma borda morna (`flash_edge` 0,35, `flash_gain` 0,6). Medido a 60 qps (Movie Maker, 10 esqueletos
+  elite, semente 5): luma da caixa do herói no pico 154 antes, 121 depois (105 em repouso), cores e rosto lidos.
+- **Assado** (`tools/bake.gd`): opção `"centred"` no clipe (cada pose deslocada em x e z para o centro dos vértices ir em
+  linha da origem ao da última pose; o erguer de quem levanta no lugar: esqueleto 0,23 para 0,05 m, corredor 0,18 para
+  0,02, besteiro 0,14 para 0,03, sacerdote 0,26 para 0,06, Cavaleiro 0,30 para 0,14; feiticeiro, Escudo e ancião têm o
+  pior na última pose, a guarda com cajado ou escudo, T5b P2-2); opção `"kick"` (`{at, up, down, bend}`: a dobra sobe em
+  `up` s e volta em `down` s; o tiro do besteiro `CROSSBOW_KICK`, tronco 5 graus para trás em 0,06 s e de volta em 0,2,
+  T5-19). Morvath: `curse_windup` (`OverhandThrow` 0 a 0,26 s, no lugar) armado pelo `Boss._step_curse` com o
+  `Horde.windup_arm` antes do arremesso (T5-17) e `rain_wave` (`Spellcast_Raise` 0 a 0,5 s ida e volta) tocado uma vez
+  por onda de erupção (`Boss._step_eruptions`, T5-18; o `rain:13` parado saiu). Assado novo `runner_elite.res`
+  (`RUNNER_ELITE_JOG`, passada 1,55: 199 passos por minuto a 7,4 m/s, escorrega 4,6 cm; o comum daria 259), ainda sem uso:
+  falta o `"model": &"runner_elite"` na elite do corredor no `make_data.gd` (gameplay-engineer).
+- **`--shot-on` antes do `--shot-at`** (Q-T5-7): o `Game._shot` escuta os momentos `boss:` desde o começo; se o momento
+  já passou quando o `--shot-at` chega, captura no quadro seguinte e imprime `SHOT ... came N time(s) before --shot-at`.
+- **Orbes do Redemoinho** (Q-T5-6): miolo, halo e rastro abaixo do limiar do glow (`Skills.ORB_CORE`, `ORB_HALO`,
+  `ORB_TRAIL`; eram 3,0 / 2,4 / 2,6 e viravam dois globos laranja estourados perto do herói).
+- **Linha de tinta nas peças (TA-HB1)**: `PaintPass` com `ink` (só contorno por salto de profundidade, sem Kuwahara,
+  depois dos transparentes, MSAA mantido): `INK_PX` 2, `INK_COLOR` no tom da sombra, `INK_ALPHA` 0,7, `INK_JUMP` 0,015.
+  Só Forward+, estilizado, Alta e Média (na Baixa a iGPU perdia 6 qps), **desligada** (`INK_DEFAULT_ON` false) até o
+  art-director aprovar; `--ink-line=1` liga. Custo na RTX a 1080: GPU 2,37 para 2,41 ms.
+- **Kit de borda e primeiro plano (TA-HB2)**: `EdgeKit` (`scripts/game/edge_kit.gd`, `EdgeKit.new(kit)` sobre o
+  `ArenaKit` da sala): `broken_pillar`, `broken_arch`, `rubble`, `root_curtain`, `ivy`, `chain_weight`; nada colide; tudo
+  abre em pontilhado em volta do herói e de Morvath (`see_through`); pedra = a cantaria da sala com `see_through` (pintada
+  pelo `paint_look`), raiz, hera e ferro um material cada (`edge_piece.gdshader`, gêmeo `edge_piece_paint.gdshader` pelo
+  `VisualProfile`). Triângulos e chamadas por peça em `docs/art/asset_inventory.md`; tabuleiro `tools/edge_lab.gd`.
+- **Hub, BH-07 (luz por estação)**: no estilizado o pátio um degrau mais escuro (`HubLook.STY_AMBIENT_GAIN` 0,8, lua
+  `STY_MOON` 0,45, preenchimento a `STY_KEY_SHARE` 0,45) e cada estação com poça própria de luz morna vinda do alto
+  (`STY_POOLS`: estação, mira, origem, energia, cone, alcance, cor; `_station_pools` monta os `SpotLight3D` difusos,
+  `light_specular` 0, sem sombra, `cull_mask` sem a multidão, meta `NOT_FIRE`, num nó só do estilizado): Forja entre a
+  boca do forno e a bigorna (fogo do forno a `STY_FORGE_GAIN` 1,5), Livro com uma luz de leitura estreita no atril e
+  uma larga no tapete, Vendedor no balcão, Árvore no estrado, e uma poça verde-pálida no pé da escada do portal (na
+  chegada a câmera segura o portal fora do quadro: a poça no alto da tela aponta o caminho). Medido (RTX 1080, luma p50
+  do chão de uso contra a praça, antes / depois): Forja 153/78 = 1,96 para 166/52 = 3,2; Livro 121/79 = 1,53 para
+  109/53 = 2,06; Vendedor 111/61 = 1,82; Árvore 145/46 = 3,2 (meta 1,8). Cena luma p50 80 para 54 a 56, saturação 0,23
+  para 0,25 a 0,26. O ENV-HB6 completo (meio 90 ou mais, bordas até 0,35 do meio, saturação 0,30) não foi atingido:
+  pede escurecer as bordas do pátio a um terço do meio, o que briga com a spec do hub (4.2, o chão mais claro do jogo);
+  fica para o Game Director decidir. `tools/hub_walk.gd` (ferramenta de arte) anda o herói da chegada até uma estação
+  pelo `VirtualPad` e grava quadros (`--walk-to`, `--walk-frames`, `--walk-every`, `--walk-count`, `--walk-wait`;
+  comando no topo). Testes: `test_room_style` 43/43, `test_hub*` 54/54; fit_probe do hub igual (6,09 / 7,18).

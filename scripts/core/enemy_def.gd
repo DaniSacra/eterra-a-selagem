@@ -98,6 +98,9 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## The settle is also how long its last clip fades into the wind-up (T5-05: the crossbow rising to the shoulder).
 @export var windup_settle := 0.12
 @export var windup_hold := 0.3
+## QW-104 P2 (combat_cadence.md 8.1; Hades II lights the body over the last min(0.5 s, wind-up)): seconds before the
+## blow over which its body clears in "about to strike", whatever share of the wind-up its held pose takes.
+@export var tell_time := 0.5
 ## T5-09: seconds into its attack at which its blow lands (a soldier's blade down, a runner's arms open): the warning
 ## on the floor fills until that frame, and the damage is dealt there from where its body is.
 @export var strike_at := 0.0

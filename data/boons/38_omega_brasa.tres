@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_sqn65"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_6t36k"]
+
+[sub_resource type="Resource" id="Resource_mddr8"]
+script = ExtResource("1_sqn65")
+stat = &"burn_dps"
+tag = &"omega"
+base = 8.0
+per_level = PackedFloat32Array(4, 4)
+
+[resource]
+script = ExtResource("2_6t36k")
+id = &"omega_brasa"
+family = 0
+icon = 2
+mods = Array[ExtResource("1_sqn65")]([SubResource("Resource_mddr8")])

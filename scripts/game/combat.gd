@@ -100,6 +100,16 @@ const NUMBER_PALE := UiKit.PALE
 ## Tags that mark a blow as coming from a gift (skills carry "skill" and their family's tag).
 const GIFT_TAGS: Array[StringName] = [&"skill", &"luz", &"vigilia", &"duo"]
 
+## Fatia 2, the Encantos: degrees between the waves of Lâmina Tríplice's fan; the tag of Eco da Verdade's echo (never
+## echoed again).
+const WAVE_FAN := 14.0
+const ECHO_TAG := &"echo"
+
+## Retorno do Corte: seconds left of the window after a Corte Veloz and how much farther the next blow reaches.
+var _return_t := 0.0
+var _return_reach := 0.0
+## Eco da Verdade: the blows to echo ({node, origin, dir, t, share}).
+var _echoes: Array[Dictionary] = []
 var horde: Horde
 var fx: Fx
 var ground: Ground
@@ -138,6 +148,8 @@ func _init() -> void:
 
 
 func step(dt: float) -> void:
+	_return_t = maxf(0.0, _return_t - dt)
+	_step_echoes(dt)
 	_slow_cd = maxf(0.0, _slow_cd - dt)
 	_cine_cd = maxf(0.0, _cine_cd - dt)
 	_frame_cd = maxf(0.0, _frame_cd - dt)
@@ -153,6 +165,41 @@ func drop_combo() -> void:
 		combo_changed.emit(0)
 
 
+## Eco da Verdade (Fatia 2; auditoria.md 3.1, "Emeth" is "truth"): a blow with echo_pct strikes again from where it was,
+## echo_delay later, for that share of its damage, in its shape; the echo is no blow of the combo (no Magia, no fury,
+## no wave, never echoed again) and is drawn as the blow, paler.
+func _step_echoes(dt: float) -> void:
+	var i := _echoes.size() - 1
+	while i >= 0:
+		var x: Dictionary = _echoes[i]
+		x.t = float(x.t) - dt
+		if float(x.t) <= 0.0:
+			_echoes.remove_at(i)
+			_echo(x.node, x.origin, x.dir, float(x.share))
+		i -= 1
+
+
+func _echo(node: ComboNode, origin: Vector2, dir: Vector2, share: float) -> void:
+	var tags: Array[StringName] = [ECHO_TAG]
+	for t in node.tags:
+		if t != OMEGA_TAG and t != &"finisher":
+			tags.append(t)
+	var shape := swing_shape(node, boons.stat(&"reach_pct", tags))
+	_hits.clear()
+	match node.shape:
+		ComboNode.Shape.CIRCLE:
+			horde.in_circle(origin, shape.hit_reach, _hits)
+		ComboNode.Shape.LINE:
+			horde.in_line(origin, dir, shape.hit_reach, node.width, _hits)
+		_:
+			horde.in_arc(origin, dir, shape.hit_reach, shape.hit_width, _hits)
+	var color := color_of(tags).lerp(Color(1, 1, 1), 0.35)
+	_draw_swing(node, shape, origin, dir, color, false, false, node.sweep_flip(_swing % 2 == 0))
+	for e: Enemy in _hits.duplicate():
+		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir
+		hit_enemy(e, node.damage * share, tags, away, node.knockback * 0.5, false)
+
+
 ## A move of the combo tree lands.
 func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
@@ -160,7 +207,12 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var tags := node.tags
 	var fury_stun := gifts.fury_stun(tags) if gifts else 0.0
 	var hits := 0
-	var shape := swing_shape(node, boons.stat(&"reach_pct", tags))
+	# Retorno do Corte (Fatia 2): the blow right after a Corte Veloz reaches farther and wider
+	var back := 0.0
+	if _return_t > 0.0 and not node.has_tag(&"dash"):
+		back = _return_reach
+		_return_t = 0.0
+	var shape := swing_shape(node, boons.stat(&"reach_pct", tags) + back, back)
 	var reach: float = shape.hit_reach
 	var color := color_of(tags)
 	var heavy := node.has_tag(&"heavy")
@@ -244,6 +296,13 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			fx.burst(&"light", Vector3(origin.x, 0.4, origin.y))
 	if gifts:
 		_gift_wave(node, origin, dir, color)
+	var window := boons.stat(&"return_time", tags)
+	if window > 0.0:
+		_return_t = window
+		_return_reach = boons.stat(&"return_reach", tags)
+	var echo := boons.stat(&"echo_pct", tags)
+	if echo > 0.0 and not tags.has(ECHO_TAG):
+		_echoes.append({"node": node, "origin": origin, "dir": dir, "t": boons.stat(&"echo_delay", tags), "share": echo})
 	kill_blow = 0
 	swung.emit(node, struck.size())
 	if hits > 0:
@@ -278,10 +337,14 @@ func _gift_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color) ->
 	var size := 1.0 + boons.stat(&"wave_size_pct", tags)
 	var width := float(w.width) * size
 	var look := Projectiles.Kind.SPARK if width <= Projectiles.WAVE_SPAN + 0.01 else Projectiles.Kind.WAVE
-	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, float(w.damage), float(w.reach) * size, width, color, tags)
-	projectiles.bolden(shot)
-	shot.counted = true
-	shot.through = boons.stat(&"wave_through", tags) > 0.0
+	# Lâmina Tríplice (Fatia 2): blow_wave_fan more of them in a fan (the Pastor's spread)
+	var ways: Array[Vector2] = [dir]
+	ways.append_array(Psalms.fan(dir, int(boons.stat(&"blow_wave_fan", tags)), WAVE_FAN))
+	for way in ways:
+		var shot := projectiles.fire_wave(look, origin + way * 0.8, way, float(w.damage), float(w.reach) * size, width, color, tags)
+		projectiles.bolden(shot)
+		shot.counted = true
+		shot.through = boons.stat(&"wave_through", tags) > 0.0
 
 
 ## What a swing shows whether it lands or not: the ribbon of the arc (a thin beam for a thrust), the motes off its
@@ -524,7 +587,9 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var hp_before := e.hp
 	kill_tags = tags
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
+	horde.stun_scale = 1.0 + boons.stat(&"stun_pct", tags)
 	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
+	horde.stun_scale = 1.0
 	kill_tags = []
 	horde.dealing = &""
 	_impact_frame(tags.has(OMEGA_TAG), breaks_phase(e, hp_before))
@@ -620,12 +685,14 @@ func number_color(tags: Array[StringName], big: bool) -> Color:
 
 ## Where a move hits and what is drawn for it. The arc on screen covers exactly what the blow reaches
 ## (tests/test_combo.gd checks every move of the tree). reach_pct: the gifts' bonus to reach.
-static func swing_shape(node: ComboNode, reach_pct: float) -> Dictionary:
+static func swing_shape(node: ComboNode, reach_pct: float, width_pct := 0.0) -> Dictionary:
 	var reach := node.reach * (1.0 + reach_pct)
 	match node.shape:
 		ComboNode.Shape.CIRCLE:
 			return {"hit_reach": reach, "hit_width": 360.0, "draw_reach": reach, "draw_width": 360.0}
 		ComboNode.Shape.LINE:
 			# a thrust: a narrow arc whose tip is the end of the line (width is meters across, not degrees)
-			return {"hit_reach": reach, "hit_width": node.width, "draw_reach": reach, "draw_width": LINE_ARC}
-	return {"hit_reach": reach, "hit_width": node.width, "draw_reach": reach, "draw_width": node.width}
+			var across := node.width * (1.0 + width_pct)
+			return {"hit_reach": reach, "hit_width": across, "draw_reach": reach, "draw_width": LINE_ARC * (1.0 + width_pct)}
+	var arc := minf(node.width * (1.0 + width_pct), 360.0)
+	return {"hit_reach": reach, "hit_width": arc, "draw_reach": reach, "draw_width": arc}

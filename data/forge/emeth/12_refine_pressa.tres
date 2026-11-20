@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_boajp"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_x5mhs"]
+
+[sub_resource type="Resource" id="Resource_ileq0"]
+script = ExtResource("1_boajp")
+stat = &"blow_speed"
+tag = &"light"
+base = 0.08
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_x5mhs")
+slot = &"attack"
+tool = &"tool_refine"
+id = &"refine_pressa"
+track = &"refine"
+name_key = &"forge_refine_pressa"
+desc_key = &"forge_refine_pressa_desc"
+cost = 25
+mods = Array[ExtResource("1_boajp")]([SubResource("Resource_ileq0")])

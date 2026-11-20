@@ -246,7 +246,8 @@ func test_rs_c1_lights() -> void:
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	# R-1 (Sworn P1 review): every other candle group of A out, two of them with a light
 	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(16, 1), "crypt A stylized: the crown's light in, the west step's and two groups' out")
-	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(16, 1), "crypt B stylized: the lantern in, two bowls and the statue's candles out")
+	# cycle 2026-11-20 item 4: B adds the cold wash on the ossuary's niches (no shadow)
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 1), "crypt B stylized: the lantern and the ossuary's wash in, two bowls and the statue's candles out")
 
 
 func test_rs_c1_pieces_only_in_the_stylized_look() -> void:

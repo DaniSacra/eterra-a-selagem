@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="EnchantDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_d2t3v"]
+[ext_resource type="Script" path="res://scripts/core/enchant_def.gd" id="2_g4nxl"]
+
+[sub_resource type="Resource" id="Resource_txmix"]
+script = ExtResource("1_d2t3v")
+stat = &"echo_pct"
+tag = &"spin"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_cclp8"]
+script = ExtResource("1_d2t3v")
+stat = &"echo_delay"
+tag = &"spin"
+base = 0.3
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_g4nxl")
+id = &"eco_da_verdade"
+name_key = &"enchant_eco_da_verdade"
+desc_key = &"enchant_eco_da_verdade_desc"
+mods = Array[ExtResource("1_d2t3v")]([SubResource("Resource_txmix"), SubResource("Resource_cclp8")])

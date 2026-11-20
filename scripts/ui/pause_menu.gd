@@ -24,6 +24,8 @@ const SHADE_LEFT := 0.8
 const SHADE_MID := 0.42
 const SHADE_RIGHT := 0.14
 
+## The keys at the foot (benchmark P0-2).
+var bar: ActionBar
 var _main: Control
 var _sub: Control
 ## The button that opened the page on show (the focus goes back to it).
@@ -65,10 +67,14 @@ func open() -> void:
 		var panel := PanelContainer.new()
 		panel.name = "panel"
 		panel.add_theme_stylebox_override(&"panel", UiKit.frame_box(20))
+		UiKit.crown(panel)
 		rail.add_child(panel)
 		panel.add_child(v)
 		v.add_child(UiKit.header(T.t(&"pause_title"), 40, WIDTH * 0.72))
 	var go_on := _button(v, "continue", T.t(&"pause_continue"), func() -> void: resumed.emit())
+	# the keys at the foot (benchmark P0-2), on the menu's own layer: a page opened over it hides it (_main)
+	bar = ActionBar.attach(_main, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), _press_focus),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_continue"), func() -> void: resumed.emit())])
 	if hub:
 		Book.primary(go_on)
 	else:
@@ -217,6 +223,13 @@ func _show(screen: Control, from: Control = null) -> void:
 		_main.visible = true
 		if is_instance_valid(_from):
 			_from.grab_focus())
+
+
+## The button in focus pressed (the action bar's click).
+func _press_focus() -> void:
+	var f := get_viewport().gui_get_focus_owner() as BaseButton
+	if f != null and is_ancestor_of(f) and not f.disabled:
+		f.pressed.emit()
 
 
 func _unhandled_input(event: InputEvent) -> void:

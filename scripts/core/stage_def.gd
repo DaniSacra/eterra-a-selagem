@@ -106,6 +106,19 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var memory_guardian := 2
 @export var memory_trial := 2
 @export var memory_victory := 3
+## Fatia 2: Esmeralda by Morvath's phase emerald_phase_at reached (once) and the sealing (sistemas.md 1.2).
+@export var emerald_phase_at := 3
+@export var emerald_phase := 1
+@export var emerald_victory := 1
+
+@export_group("Fatia 2")
+## The doors of the Fatia 2 (sistemas.md 1.6, 1.7, 3.6): a Psalm's door from this depth; at most enchant_max Encantos on
+## a way (doors and the shop), the second only from enchant_second_from (Hades II's late hammer); the angels' deck: one
+## card for each Blessing's door, 1 = a meeting of two angels, 0 = one angel shown on the door.
+@export var psalm_from_depth := 4
+@export var enchant_max := 2
+@export var enchant_second_from := 5
+@export var angel_deck: PackedInt32Array = [1, 1, 0, 0, 0, 0]
 
 @export_group("Blessings")
 ## Rarity chances of a card, tried in turn (rare, epic, legendary; BoonState.roll_rarity), and the guardian's.
@@ -142,6 +155,12 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var altar_depth_min := 2
 @export var altar_depth_max := 8
 @export var altar_chance := 0.2
+## DV-2 (MAP-09, Q-26 b): a smaller shop on some branches between these depths (one layer at most, never on every way:
+## a layer with two rooms or more), route_shop_chance a layer, route_shop_items items (one of each shop group).
+@export var route_shop_depth_min := 6
+@export var route_shop_depth_max := 8
+@export var route_shop_chance := 0.0
+@export var route_shop_items := 3
 @export var altar_life_cost := 10.0
 @export var altar_gold_cost := 75
 @export var altar_magick := 25.0

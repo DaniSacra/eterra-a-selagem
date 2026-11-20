@@ -8,6 +8,8 @@ const BOLD_FONT: Font = preload("res://assets/fonts/AlegreyaSans-Bold.ttf")
 const GOLD := Color(0.96, 0.8, 0.45)
 const PALE := Color(0.94, 0.9, 0.82)
 const DIM := Color(0.66, 0.62, 0.7)
+## The words and numbers that matter inside a text (UI-HB2): full ivory and bold, never a reserved colour.
+const STRONG := Color(0.98, 0.95, 0.87)
 const RED := Color(0.86, 0.2, 0.18)
 const PANEL := Color(0.055, 0.04, 0.075, 0.94)
 const EDGE := Color(0.72, 0.56, 0.3)
@@ -135,6 +137,29 @@ static func title(text: String, size: int = 44, color: Color = GOLD) -> Label:
 
 
 ## Gives a label the HUD's text shadow (on top of the theme's thin outline).
+## A number or a word of rule marked inside a text for a RichTextLabel (rich): full ivory, bold (UI-HB2).
+static func strong(text: String) -> String:
+	return "[color=#%s][b]%s[/b][/color]" % [STRONG.to_html(false), text]
+
+
+## A wrapping text with marks (strong) in Alegreya Sans, as tall as its lines, left aligned; body: its plain colour.
+static func rich(bbcode: String, body: Color = PALE, size: int = 18) -> RichTextLabel:
+	var r := RichTextLabel.new()
+	r.bbcode_enabled = true
+	r.fit_content = true
+	r.scroll_active = false
+	r.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	r.add_theme_font_override(&"normal_font", TEXT_FONT)
+	r.add_theme_font_override(&"bold_font", BOLD_FONT)
+	r.add_theme_font_size_override(&"normal_font_size", size)
+	r.add_theme_font_size_override(&"bold_font_size", size)
+	r.add_theme_color_override(&"default_color", body)
+	r.add_theme_constant_override(&"line_separation", 1)
+	r.text = bbcode
+	return r
+
+
 static func shadow(l: Label) -> Label:
 	l.add_theme_color_override(&"font_shadow_color", SHADOW)
 	l.add_theme_constant_override(&"shadow_offset_x", 0)
@@ -184,6 +209,8 @@ static func column(parent: Control, width: float, dim: float = 0.6) -> VBoxConta
 	parent.add_child(shade)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# centred over the action bar's row, never under it (every such screen has the bar)
+	center.offset_bottom = -ActionBar.RESERVE
 	parent.add_child(center)
 	var box_ := VBoxContainer.new()
 	box_.custom_minimum_size.x = width
@@ -228,8 +255,21 @@ static func step_tabs(event: InputEvent, buttons: Array, current: int) -> bool:
 
 
 ## Label of the key or button of an action, with every gamepad button named (Controls.label names only A, B, X, Y).
+## The gamepad's buttons of Godot's menu actions.
+const MENU_PAD := {&"ui_accept": JOY_BUTTON_A, &"ui_cancel": JOY_BUTTON_B}
+
+
 static func action_label(action: StringName) -> String:
 	var label := Controls.label(action)
+	if label == "" and not Controls.using_pad:
+		# Godot's own menu actions (ui_accept, ui_cancel) bind by key code, not by place on the keyboard
+		for ev in InputMap.action_get_events(action):
+			if ev is InputEventKey and (ev as InputEventKey).keycode != KEY_NONE:
+				label = OS.get_keycode_string((ev as InputEventKey).keycode)
+				break
+	if Controls.using_pad and (label == "" or label == "?") and MENU_PAD.has(action):
+		# the menus' A and B: Godot's own, not always listed in the map (the ScreenHost and the screens read them)
+		label = T.t("pad_%d" % MENU_PAD[action])
 	# key names come from the system in English ("Space"); the common ones have a Portuguese name
 	return T.t("key_" + label) if T.table.entries.has("key_" + label) else label
 
@@ -286,12 +326,49 @@ static func page(parent: Control, text: String, width: float, dim: float = 0.8, 
 	var panel := PanelContainer.new()
 	panel.name = "page"
 	panel.add_theme_stylebox_override(&"panel", frame_box())
+	crown(panel)
 	outer.add_child(panel)
 	var v := VBoxContainer.new()
 	v.add_theme_constant_override(&"separation", 10)
 	panel.add_child(v)
 	v.add_child(header(text, title_size, width * 0.55))
 	return v
+
+
+## UI-HB3 (benchmark_hades2_style.md): a menu panel is not a bare rectangle. Over its frame: a crest on the top edge
+## (a diamond of old gold in a small arch of two lines, the cards' diamond) and a bracket of old gold at each corner with
+## a small diamond on it. Drawn on the panel itself, under its children; nothing of the layout changes.
+const CROWN_ARCH := 46.0
+const CROWN_DIAMOND := 7.0
+const CROWN_CORNER := 22.0
+
+
+static func crown(panel: Control) -> void:
+	panel.draw.connect(func() -> void:
+		var s := panel.size
+		var gold := OLD_GOLD.lightened(0.15)
+		var top := Vector2(s.x * 0.5, 0.0)
+		# the arch over the top edge, a diamond in it, the edge cut under it
+		var arch := PackedVector2Array()
+		for i in 13:
+			var a := PI + PI * i / 12.0
+			arch.append(top + Vector2(cos(a) * CROWN_ARCH * 0.5, sin(a) * CROWN_ARCH * 0.32))
+		var fill := arch.duplicate()
+		panel.draw_colored_polygon(fill, INK)
+		panel.draw_polyline(arch, gold, 1.6, true)
+		panel.draw_line(top + Vector2(-CROWN_ARCH * 0.5 - 30.0, 0), top + Vector2(-CROWN_ARCH * 0.5, 0), gold, 1.6, true)
+		panel.draw_line(top + Vector2(CROWN_ARCH * 0.5, 0), top + Vector2(CROWN_ARCH * 0.5 + 30.0, 0), gold, 1.6, true)
+		var d := top + Vector2(0, -CROWN_ARCH * 0.14)
+		var h := CROWN_DIAMOND
+		panel.draw_colored_polygon(PackedVector2Array([d + Vector2(0, -h), d + Vector2(h * 0.75, 0), d + Vector2(0, h), d + Vector2(-h * 0.75, 0)]), GOLD)
+		# the corners' brackets, each with a small diamond at its bend
+		for c: Vector2 in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
+			var at := Vector2(c.x * s.x, c.y * s.y) + Vector2(6.0 if c.x == 0 else -6.0, 6.0 if c.y == 0 else -6.0)
+			var dx := CROWN_CORNER * (1.0 if c.x == 0 else -1.0)
+			var dy := CROWN_CORNER * (1.0 if c.y == 0 else -1.0)
+			panel.draw_polyline(PackedVector2Array([at + Vector2(dx, 0), at, at + Vector2(0, dy)]), gold, 2.0, true)
+			var k := 3.5
+			panel.draw_colored_polygon(PackedVector2Array([at + Vector2(0, -k), at + Vector2(k, 0), at + Vector2(0, k), at + Vector2(-k, 0)]), GOLD))
 
 
 ## Makes a button the screen's main action: bronze fill and a lit gold line even without the focus.

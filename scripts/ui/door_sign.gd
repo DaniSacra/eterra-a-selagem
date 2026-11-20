@@ -8,8 +8,8 @@ extends Node3D
 ##   var sign := DoorSign.make(T.t(&"reward_gold"), "120 ouro")
 ##   sign.position.y = 2.7   # the point the sign stands on (its text grows upwards from there)
 ## The shop (C13-04, three groups and the healing): DoorSign.shop(name, price, group) adds the group's word over the
-## name in a cool grey and the price in ivory under it; set_gold(gold) keeps the price ivory while there is gold for it
-## and, when not, turns it a muted rose with what is missing ("150 ouro, faltam 40"): the word, not only the colour.
+## name in a cool grey (the run's shop passes none since P1-3) and the price in ivory under it; set_gold(gold) keeps the
+## price ivory while there is gold for it and, when not, turns it a muted rose (the colour says it, as the Hades shop).
 ##   var sign := DoorSign.shop(T.t(&"reward_heal"), 50, T.t(&"shop_group_care"))
 ##   sign.set_gold(rooms.gold)
 ## E5 (docs/art/e5_spec.md 7.1): a door's sign may carry a pictogram left of its name (DoorGlyph: chevrons for a hard
@@ -160,12 +160,10 @@ func set_gold(gold: int) -> void:
 	if detail == null or price < 0:
 		return
 	missing = maxi(price - gold, 0)
-	if missing > 0:
-		detail.text = T.t(&"shop_price_short", {"n": price, "missing": missing})
-		detail.add_theme_color_override(&"font_color", SHORT_COLOR)
-	else:
-		detail.text = price_text(price)
-		detail.add_theme_color_override(&"font_color", DETAIL_COLOR)
+	# the price alone, its colour saying whether there is gold for it (benchmark_hades2_ui.md P1-3; what is missing
+	# shows by the key when he stands at the item, Rooms._step_prompt)
+	detail.text = price_text(price)
+	detail.add_theme_color_override(&"font_color", SHORT_COLOR if missing > 0 else DETAIL_COLOR)
 
 
 ## A short explanation under everything (T5, the Provação's slab: what it is and how to refuse it). Lines split by

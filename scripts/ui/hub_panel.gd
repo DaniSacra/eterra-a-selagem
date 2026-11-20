@@ -96,6 +96,9 @@ func open(title: String, line: String, choices: Array, mark: Control = null, sta
 	_chain()
 	if not buttons.is_empty():
 		buttons[0].grab_focus.call_deferred()
+	# the keys at the foot (benchmark P0-2, UI-HB6): in the same place as on every other screen
+	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self)),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
 	# the page comes up as the book's do
 	leaf.modulate.a = 0.0
 	create_tween().tween_property(leaf, ^"modulate:a", 1.0, 0.18)

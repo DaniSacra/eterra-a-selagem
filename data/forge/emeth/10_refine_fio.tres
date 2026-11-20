@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_tu72x"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_hdlaj"]
+
+[sub_resource type="Resource" id="Resource_t31ko"]
+script = ExtResource("1_tu72x")
+stat = &"reach_pct"
+tag = &"light"
+base = 0.1
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_hdlaj")
+slot = &"attack"
+tool = &"tool_refine"
+id = &"refine_fio"
+track = &"refine"
+name_key = &"forge_refine_fio"
+desc_key = &"forge_refine_fio_desc"
+cost = 25
+mods = Array[ExtResource("1_tu72x")]([SubResource("Resource_t31ko")])

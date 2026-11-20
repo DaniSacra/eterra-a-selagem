@@ -15,6 +15,13 @@ const BEAM_OVER_BOSS := 0.2
 const BEAM_CORE_CAP := Fx.BEAM_CORE_CAP
 const ORBIT_SPEED := 2.6
 const ORBIT_TICK := 0.3
+## Q-T5-6: the fire orbs read as embers by the paladin, not as two blown-out orange globes: the core under the
+## screen's ceiling (ScreenTone: 1.0 a channel is already near white after exposure and the filmic curve), a small dim
+## halo (ORB_HALO_SIZE m, it was 1.6 m at 2.4) and a dim trail (they were 3.0, 2.4 and 2.6, over the glow threshold).
+const ORB_CORE := Color(0.95, 0.4, 0.1)
+const ORB_HALO := Color(0.42, 0.14, 0.03)
+const ORB_HALO_SIZE := 0.9
+const ORB_TRAIL := Color(0.6, 0.22, 0.05)
 
 class Pending:
 	var at := Vector2.ZERO
@@ -213,16 +220,16 @@ func _step_orbit(b: Boon, dt: float) -> void:
 		mi.mesh = sphere
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = Color(3.0, 1.3, 0.35)
+		m.albedo_color = ORB_CORE
 		mi.material_override = m
 		var glow := MeshInstance3D.new()
-		glow.mesh = Fx.quad(1.6, Color(2.4, 0.9, 0.2))
+		glow.mesh = Fx.quad(ORB_HALO_SIZE, ORB_HALO)
 		(glow.mesh as QuadMesh).material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
 		mi.add_child(glow)
 		var trail := CPUParticles3D.new()
 		trail.amount = 14
 		trail.lifetime = 0.35
-		trail.mesh = Fx.quad(0.4, Color(2.6, 1.0, 0.25))
+		trail.mesh = Fx.quad(0.4, ORB_TRAIL)
 		trail.color_ramp = Fx.fade_ramp(Color.WHITE)
 		trail.gravity = Vector3(0, 1.5, 0)
 		trail.initial_velocity_max = 0.3

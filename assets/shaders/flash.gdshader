@@ -7,9 +7,11 @@ shader_type spatial;
 render_mode unshaded, blend_add, cull_back, shadows_disabled, depth_draw_never;
 
 uniform float flash = 0.0;
-// The flash is warm and keeps the shape of the body (stronger on its edges), never a flat white.
+// The flash is a warm edge only (his body lightens in its own colours through Player.HURT_FLASH_LIGHT): over the
+// whole body it was an ivory silhouette (combat_cadence.md 8.3). From flash_edge (0..1 of the grazing angle) out.
 uniform vec3 flash_color : source_color = vec3(1.0, 0.94, 0.82);
-uniform float flash_gain = 0.75;
+uniform float flash_gain = 0.6;
+uniform float flash_edge = 0.35;
 uniform vec4 glow : source_color = vec4(0.0);
 // A steady coloured edge so the paladin reads in a crowd (alpha is strength).
 uniform vec4 outline : source_color = vec4(1.0, 0.78, 0.35, 0.0);
@@ -28,7 +30,7 @@ void fragment() {
 	float rim = grazing * grazing * grazing;
 	float edge = smoothstep(edge_from, 1.0, grazing);
 	float lobe = max(dot(NORMAL, normalize(key_dir)), 0.0);
-	ALBEDO = flash_color * flash * flash_gain * (0.6 + 0.4 * grazing)
+	ALBEDO = flash_color * flash * flash_gain * smoothstep(flash_edge, 1.0, grazing)
 		+ glow.rgb * glow.a * (glow_body + rim * 1.2)
 		+ outline.rgb * outline.a * edge * edge_gain
 		+ key.rgb * key.a * lobe * lobe * lobe;

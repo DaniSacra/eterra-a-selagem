@@ -46,7 +46,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -401,11 +401,11 @@ func _boons() -> void:
 	# The Elos (E3-02): one gift of each family's list. Burn and frost come from any gift of the flame or the frost; the
 	# light that hits on its own (the fan, the scourge) is what aurora and chama_viva change; bastiao bursts the
 	# Vigília's shield; rastro and passo_frio ride the dodge of any Vigília gift.
-	var chama := [&"brasas", &"redemoinho", &"lamina_ardente", &"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa"]
-	var geada := [&"toque_geada", &"estilhaco", &"peso_inverno", &"golpe_geada", &"circulo_geada", &"passo_geada"]
+	var chama := [&"brasas", &"redemoinho", &"lamina_ardente", &"golpe_brasa", &"pesado_brasa", &"circulo_brasa", &"passo_brasa", &"omega_brasa", &"chuva_brasas"]
+	var geada := [&"toque_geada", &"estilhaco", &"peso_inverno", &"golpe_geada", &"circulo_geada", &"passo_geada", &"geada_final", &"floco_errante", &"omega_geada"]
 	var luz_hits := [&"onda_maior", &"flagelo"]
-	var luz := [&"consolo", &"onda_maior", &"flagelo", &"golpe_radiante", &"pesado_radiante", &"circulo_radiante", &"passo_radiante"]
-	var vigilia := [&"passos", &"escudo", &"firmeza", &"golpe_firme", &"pesado_firme", &"circulo_firme"]
+	var luz := [&"consolo", &"onda_maior", &"flagelo", &"golpe_radiante", &"pesado_radiante", &"circulo_radiante", &"passo_radiante", &"final_radiante", &"onda_clara"]
+	var vigilia := [&"passos", &"escudo", &"firmeza", &"golpe_firme", &"pesado_firme", &"circulo_firme", &"vigia_firme", &"vigilia_longa", &"guarda_atenta"]
 	_elo(12, &"vapor", 12, [_mod(&"steam_time", 2)], [chama, geada])
 	_elo(13, &"aurora", 13, [_mod(&"freeze_time", 0.8, [], &"luz")], [luz_hits, geada])
 	_elo(14, &"chama_viva", 14, [_mod(&"burn_dps", 5, [], &"luz")], [chama, [&"flagelo", &"onda_maior"]])
@@ -427,6 +427,18 @@ func _boons() -> void:
 	_boon(29, &"passo_brasa", F.CHAMA, 16, [_mod(&"dodge_ember_dps", 6, [3, 3])], null, S.DASH)
 	_boon(30, &"passo_geada", F.GEADA, 17, [_mod(&"freeze_time", 0.8, [0.4, 0.4], &"dash")], null, S.DASH)
 	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash")], null, S.DASH)
+	# Fatia 2 (sistemas.md 1.6, 3.6): 2 to 3 Blessings more a family, all on their own (no action taken), so an angel
+	# meets a hand with three offers more often; Geada and Vigília (six each) first. Only stats the game knows.
+	_boon(32, &"geada_final", F.GEADA, 3, [_mod(&"freeze_time", 0.6, [0.3, 0.3], &"finisher")])
+	_boon(33, &"floco_errante", F.GEADA, 4, [], _skill(K.ORBIT, {"damage": [8, 11, 15], "count": [2, 3, 4], "cooldown": [0.5], "radius": [3.0, 3.3, 3.6], "status": &"freeze", "status_power": [0.5, 0.6, 0.7]}))
+	_boon(34, &"omega_geada", F.GEADA, 5, [_mod(&"freeze_time", 1.2, [0.4, 0.4], &"omega")])
+	_boon(35, &"vigia_firme", F.VIGILIA, 9, [_fixed(&"stun_pct", 0.3, [0.15, 0.15])])
+	_boon(36, &"vigilia_longa", F.VIGILIA, 11, [_mod(&"magick_max", 15, [10, 10])])
+	_boon(37, &"guarda_atenta", F.VIGILIA, 10, [_fixed(&"move_speed_pct", 0.06, [0.04, 0.04]), _fixed(&"reach_pct", 0.06, [0.03, 0.03], &"light")])
+	_boon(38, &"omega_brasa", F.CHAMA, 2, [_mod(&"burn_dps", 8, [4, 4], &"omega")])
+	_boon(39, &"chuva_brasas", F.CHAMA, 0, [], _skill(K.METEOR, {"damage": [40, 60, 85], "cooldown": [9, 8, 7], "radius": [3.5, 4.0, 4.5], "status": &"burn", "status_power": [6, 8, 10]}))
+	_boon(40, &"final_radiante", F.LUZ, 8, [_mod(&"damage_pct", 0.2, [0.1, 0.1], &"finisher")])
+	_boon(41, &"onda_clara", F.LUZ, 7, [_fixed(&"wave_size_pct", 0.2, [0.1, 0.1], &"heavy"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"heavy")])
 
 
 # ---------- waves ----------
@@ -567,8 +579,18 @@ func _stage() -> void:
 	# 2 hammers, Hermes, Selene, the star path and a room of two gods). What we do not have yet is left out (hammer,
 	# Selene, star path); Hermes and the two gods' room are Blessings here. Drawn without putting back, filled again.
 	# Rejogabilidade, Fatia 1 (sistemas.md 3.1): one door of Prata and one of Memória more, nothing taken (14 to 16).
-	st.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.POM, R.HEART, R.HEART,
-		R.MAGICK, R.MAGICK, R.GOLD, R.GOLD, R.SILVER, R.MEMORY])
+	# Fatia 2 (sistemas.md 1.7, 3.6): two Encantos (Hades II's two hammer cards) and a Psalm's door, and two Blessings
+	# more so they keep their share of the deck (6 of 16, now 8 of 21: with the six of before the robot reached Morvath
+	# with a Blessing less and won 46 of 72 against 58, 2026-11-20); of the Blessings two in six are a meeting of two
+	# angels and the rest show one angel (angel_deck, Q-RJ5 a).
+	st.reward_deck = PackedInt32Array([R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.BOON, R.POM, R.POM,
+		R.HEART, R.HEART, R.MAGICK, R.MAGICK, R.GOLD, R.GOLD, R.SILVER, R.MEMORY, R.ENCHANT, R.ENCHANT, R.PSALM])
+	st.angel_deck = PackedInt32Array([1, 1, 0, 0, 0, 0])
+	# the Psalm's door from the 4th room (a Psalm needs three things of the hand); at most two Encantos on a way, the
+	# second from the 5th room (Hades II's late hammer: past half the run)
+	st.psalm_from_depth = 4
+	st.enchant_max = 2
+	st.enchant_second_from = 5
 	# What a descent brings home (sistemas.md 1.2, starting numbers for the balance-designer): Prata by an elite 1, a
 	# door 10, a guardian 6, Morvath 2 a phase reached (up to 8) and 10 at the sealing; Memória by a door 3, a guardian 2,
 	# a Provação won 2 and the sealing 3.
@@ -582,6 +604,10 @@ func _stage() -> void:
 	st.memory_guardian = 2
 	st.memory_trial = 2
 	st.memory_victory = 3
+	# Esmeralda (Fatia 2): 1 when Morvath's phase 3 is reached, 1 at the sealing
+	st.emerald_phase_at = 3
+	st.emerald_phase = 1
+	st.emerald_victory = 1
 	# Gold (C13-04, Hades II): a fight's ceiling 10 to 15 plus 0.5 a room of depth, 70% that each enemy leaves its
 	# share; a gold reward 100.
 	st.gold_cap_min = 10
@@ -605,7 +631,9 @@ func _stage() -> void:
 	st.shop_groups = [
 		_shop_group([R.BOON], [150], [1.0], 1),
 		_shop_group([R.HEAL, R.HEART], [50, 125], [1.0, 1.0], 2),
-		_shop_group([R.MAGICK, R.POM, R.POM_SLICE], [100, 100, 50], [1.0, 1.0, 1.0], 2),
+		# an Encanto 200 with the growth (Fatia 2; Hades II keeps the hammer by the healing, ours keeps the healing on
+		# the shelf always)
+		_shop_group([R.MAGICK, R.POM, R.POM_SLICE, R.ENCHANT], [100, 100, 50, 200], [1.0, 1.0, 1.0, 1.0], 2),
 	]
 	st.shop_heal = 0.4
 	# The arenas (cycle C12; docs/design/cycle12_arenas_plan.md, plans in docs/art/cycle12_arenas_spec.md). The catacomb
@@ -639,6 +667,12 @@ func _stage() -> void:
 	st.altar_depth_min = 2
 	st.altar_depth_max = 8
 	st.altar_chance = 0.2
+	# DV-2 (MAP-09): a route shop of three items (a Blessing, healing or a heart, the growth's) on one branch of the
+	# 6th to 8th rooms, 35% a layer where it may stand (about a third of the maps), beside the last one in the 10th
+	st.route_shop_depth_min = 6
+	st.route_shop_depth_max = 8
+	st.route_shop_chance = 0.35
+	st.route_shop_items = 3
 	st.altar_life_cost = 10.0
 	st.altar_gold_cost = 75
 	st.altar_magick = 25.0
@@ -1634,10 +1668,13 @@ func _juramentos() -> void:
 const FORGE_DIR := "res://data/forge/emeth/"
 
 
-func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonMod]) -> void:
+func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonMod], track: StringName = &"temper",
+		slot: StringName = &"", tool: StringName = &"") -> void:
 	var r := ForgeRank.new()
 	r.id = id
-	r.track = &"temper"
+	r.track = track
+	r.slot = slot
+	r.tool = tool
 	r.rank = rank
 	r.name_key = StringName("forge_" + id)
 	r.desc_key = StringName("forge_%s_desc" % id)
@@ -1657,9 +1694,51 @@ func _forge() -> void:
 		DirAccess.remove_absolute(FORGE_DIR + f)
 	_forge_rank(0, &"temper_1", 1, 15, [_fixed(&"damage_pct", 0.1, [], &"light")] as Array[BoonMod])
 	_forge_rank(1, &"temper_2", 2, 35, [_fixed(&"damage_pct", 0.1, [], &"heavy")] as Array[BoonMod])
+	# Fatia 2: Temperar III, every blow of the Emeth 5% more (the attack's and the special's tags; no blow has both), 60
+	_forge_rank(2, &"temper_3", 3, 60, [_fixed(&"damage_pct", 0.05, [], &"light"), _fixed(&"damage_pct", 0.05, [], &"heavy")] as Array[BoonMod])
+	# Refinar (sistemas.md 1.5): a choice on each action, 25 Prata each, opened by the Forjador's first tool; Fio
+	# (reach), Peso (the flinch longer) and Pressa (the blows faster) on the attack, their twins on the special
+	var R := Forge.REFINE
+	var tool := Forge.TOOL_REFINE
+	_forge_rank(10, &"refine_fio", 1, 25, [_fixed(&"reach_pct", 0.1, [], &"light")] as Array[BoonMod], R, &"attack", tool)
+	_forge_rank(11, &"refine_peso", 1, 25, [_fixed(&"stun_pct", 0.5, [], &"light")] as Array[BoonMod], R, &"attack", tool)
+	_forge_rank(12, &"refine_pressa", 1, 25, [_fixed(&"blow_speed", 0.08, [], &"light")] as Array[BoonMod], R, &"attack", tool)
+	_forge_rank(13, &"refine_onda_larga", 1, 25, [_fixed(&"wave_size_pct", 0.2, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
+	_forge_rank(14, &"refine_onda_pesada", 1, 25, [_fixed(&"stun_pct", 0.5, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
+	_forge_rank(15, &"refine_onda_pronta", 1, 25, [_fixed(&"blow_speed", 0.08, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
 
 
 const ANGEL_DIR := "res://data/angels/"
+const ENCHANT_DIR := "res://data/enchants/"
+
+
+func _enchant(n: int, id: StringName, slot: Boon.Slot, mods: Array[BoonMod], excludes: Array[StringName] = []) -> void:
+	var e := EnchantDef.new()
+	e.id = id
+	e.name_key = StringName("enchant_" + id)
+	e.desc_key = StringName("enchant_%s_desc" % id)
+	e.slot = slot
+	e.mods = mods
+	e.excludes = excludes
+	e.learned = true
+	_save(e, ENCHANT_DIR + "%02d_%s.tres" % [n, id])
+
+
+## The Encantos of the Fatia 2 (sistemas.md 1.7, auditoria.md 3.1: the Lapidação of hades2_sistemas.md 6, Hades II's
+## hammer), all three learned from the start: Lâmina Tríplice, the spin throws three waves in a fan, 12 each, 6 m (the
+## Corte Crescente's substitute: never with it); Eco da Verdade, the spin strikes again 0.3 s later for half; Retorno
+## do Corte, within 1 s of a Corte Veloz the next blow reaches 30% farther and wider (never with the dash's chains).
+func _enchants() -> void:
+	DirAccess.make_dir_recursive_absolute(ENCHANT_DIR)
+	for f in DirAccess.get_files_at(ENCHANT_DIR):
+		DirAccess.remove_absolute(ENCHANT_DIR + f)
+	var S := Boon.Slot
+	var fan := _wave(&"spin", 12.0, 6.0, 3.0)
+	fan.append(_fixed(&"blow_wave_fan", 2, [], &"spin"))
+	_enchant(0, &"lamina_triplice", S.ATTACK, fan, [&"corte_crescente"] as Array[StringName])
+	_enchant(1, &"eco_da_verdade", S.ATTACK, [_fixed(&"echo_pct", 0.5, [], &"spin"), _fixed(&"echo_delay", 0.3, [], &"spin")] as Array[BoonMod])
+	_enchant(2, &"retorno_do_corte", S.DASH, [_fixed(&"return_time", 1.0, [], &"dash"), _fixed(&"return_reach", 0.3, [], &"dash")] as Array[BoonMod],
+		[&"passo_encadeado", &"fio_do_passo"] as Array[StringName])
 
 
 func _angel(n: int, id: StringName, family: Boon.Family, symbol: int, color: Color) -> void:

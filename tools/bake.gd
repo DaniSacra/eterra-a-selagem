@@ -218,7 +218,12 @@ const CROSSBOW_JOG := {"guard": CROSSBOW_LOW, "lock": true, "stride": 0.79, "lif
 ## a minute). It jogs as the soldier does: the library's Jog_Fwd, the feet locked on a long stride (it is the fastest,
 ## 4.9 m/s: 171 steps a minute, the foot sliding 3.2 cm), the body planted toward each pose's floor ("plant" 0.6: no
 ## pose over 0.08 m), a sixth of the hop, standing taller. The Sprint slid 34 cm a step locked (its flight is too long).
+## T5-19 (combat_cadence.md 6.5): the crossbow's recoil, the trunk 5 degrees back in 0.06 s and back in 0.2 s.
+const CROSSBOW_KICK := {"at": 0.0, "up": 0.06, "down": 0.2, "bend": {"Spine01": Vector3(-5, 0, 0), "Spine02": Vector3(-2, 0, 0)}}
 const RUNNER_JOG := {"lock": true, "stride": 1.2, "lift": 0.15, "plant": 0.6, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
+## The elite runner's stride (2B): the same jog with its feet locked a longer way, about 200 steps a minute at its
+## 7.4 m/s (tools/walk_probe.gd: Jog_Fwd at 1.55 slides 4.5 cm; the Sprint slid 6 to 13 cm and leaned 37 degrees).
+const RUNNER_ELITE_JOG := {"lock": true, "stride": 1.55, "lift": 0.15, "plant": 0.6, "stand": 0.15, "bend": {"Spine01": Vector3(-20, 0, 0)}}
 ## T5-02: the soldier's wind-up coils the trunk back and toward the blade (grown over the wind-up, "bend_in") and its
 ## blow uncoils it in its first 0.15 s ("bend_out").
 const SOLDIER_COIL := {"Spine01": Vector3(-18, 30, 0)}
@@ -264,13 +269,13 @@ const ROAR_BEND := {"Spine01": Vector3(-10, 0, 0), "Head": Vector3(-18, 0, 0)}
 const COMMON_ANIMS := {
 	"hit": [&"ual", "Hit_Chest", 8, false],
 	"death": [&"ual", "Death01", 16, false, {"to": 1.9}],
-	"rise": [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true}],
+	"rise": [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "centred": true}],
 }
 ## T5b P1-2 (docs/qa/t5b_boss_fight.md): LayToIdle ends stooped; with a staff (the sorcerer, the elder) or the round
 ## shield (the knight) the figure ended 0.3 to 0.4 m from its guard, the sorcerer's staff lying (the top of the figure
 ## at 1.88 m, its idle 2.65) and its walk after it threw the body up 0.5 m. Their last 0.45 s ease into their guard.
-const STAFF_RISE := [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "settle": [&"ual", "Idle_Torch", 0.45]}]
-const SHIELD_RISE := [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "settle": [&"ual2", "Idle_Shield", 0.45]}]
+const STAFF_RISE := [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "centred": true, "settle": [&"ual", "Idle_Torch", 0.45]}]
+const SHIELD_RISE := [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "centred": true, "settle": [&"ual2", "Idle_Shield", 0.45]}]
 ## Horde.IMPACT_SHARE of the swing is the windup: the clips are cut so the blade comes down there.
 const SWORD_BLOW := [&"ual", "Sword_Attack", 16, false, {"from": 0.1, "to": 1.2}]
 const CASTER_CLIPS := {
@@ -328,6 +333,21 @@ const MODELS := {
 			"attack": [&"kaykit", "2H_Melee_Attack_Spinning", 14, false],
 		},
 	},
+	# the elite runner (7.4 m/s): the same figure on its own stride (RUNNER_ELITE_JOG); on the common one it ran 259
+	# steps a minute (docs/qa/t5b_boss_fight.md), a frantic patter. Its EnemyDef.model is "runner_elite".
+	"runner_elite": {
+		"meshy": "runner", "height": 1.65, "triangles": BODY_TRIANGLES,
+		"bend": {"Spine02": Vector3(14, 0, 0), "Head": Vector3(25, 0, 0)},
+		"anims": {
+			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_ELITE_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
+			# T5-04, T5-16: it gathers into a crouch, the arms drawn back (the coil of the library's jump), then bursts
+			# all around itself spinning with its arms out (its blast lands as they open, EnemyDef.strike_at); it
+			# was a still crouch and a punch ahead for a burst around it. A-T5-3: from 0.26 s, past the jump's raised knee
+			# (from 0.18 one foot was 0.22 m over the other), to 0.4 to keep its pace (1.0 m/s drawn), in its 0.15 s
+			"windup": [&"ual", "Jump_Start", 8, false, {"from": 0.26, "to": 0.4, "time": 0.15}],
+			"attack": [&"kaykit", "2H_Melee_Attack_Spinning", 14, false],
+		},
+	},
 	# 3. the sorcerer: dark hood and robe over the ribs, steel arms; the staff with the cold violet gem is KayKit's
 	"mage": {
 		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
@@ -353,7 +373,8 @@ const MODELS := {
 		"held": [{"hand": "Right", "file": "Skeleton_Crossbow.gltf", "scale": CROSSBOW_SCALE, "rot": THUMB_UP, "paint": CROSSBOW_PAINT, "name": "crossbow"}],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, CROSSBOW_JOG], "idle": [&"ual", "Idle", 12, true, CROSSBOW_GUARD],
-			"attack": [&"ual", "Pistol_Shoot", 14, false], "aim": [&"ual", "Pistol_Idle", 8, true],
+			# T5-19: the shot leaves on the clip's first frame (Horde: ATTACK at state_t 0); the trunk kicks back with it
+			"attack": [&"ual", "Pistol_Shoot", 14, false, {"kick": CROSSBOW_KICK}], "aim": [&"ual", "Pistol_Idle", 8, true],
 		},
 	},
 	# 5. the brute: dark plate, the tower shield with its emblem and the sword are the model's own
@@ -451,6 +472,12 @@ const MODELS := {
 			# the curse and each wave of the storm are thrown (Boss poses it as they leave): the library's overhand
 			# throw from the top of its swing, the release at the share the old cast had it, in the same 0.5 s
 			"volley": [&"ual2", "OverhandThrow", 14, false, {"from": 0.26, "to": 0.92, "time": 0.5, "in_place": true}],
+			# T5-17: the curse's own wind-up, the throw's draw back up to where volley starts (Boss poses it over the
+			# wind-up, Horde.windup_arm; it was the start of the summon, the dead's gesture)
+			"curse_windup": [&"ual2", "OverhandThrow", 8, false, {"from": 0.0, "to": 0.26, "in_place": true}],
+			# T5-18: each wave of the eruptions raises the hands and brings them down (the raise of the cast, there and
+			# back; Boss poses it by the share of each wave's beat), where the whole rain played once and held
+			"rain_wave": [&"kaykit", "Spellcast_Raise", 12, false, {"from": 0.0, "to": 0.5, "there_and_back": true, "lift": 0.2}],
 			# the roar: both arms flung up and out, chest open and head thrown back, in the same 1.03 s
 			"roar": [&"kaykit", "Taunt_Longer", 14, false, {"from": 1.38, "to": 2.4133, "lift": 0.2, "bend": ROAR_BEND}],
 			"stunned": [&"ual", "Crouch_Idle", 12, true],
@@ -841,6 +868,8 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 			poses.append(posed)
 			if anim == "walk":
 				walk_poses.append(posed[Mesh.ARRAY_VERTEX])
+		if opts.get("centred", false):
+			_centre(poses)
 		clips[anim] = poses
 		if anim == "walk":
 			print("  walk: the upper arms out to the side at most %.0f (left) and %.0f (right) degrees" % arm_out)
@@ -853,6 +882,31 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 	out.height = spec.height
 	model.free()
 	return out
+
+
+## "centred" (T5b P2-2): a clip that must stay on its place on the floor though its body does not (the rise, lying
+## down beside its hips and standing up) is moved in x and z so the middle of its vertices (BakedModel.pose_centre)
+## goes from the place itself at the first pose to where the last one already stands, in a straight line; the last
+## pose does not move (the clip after it starts there).
+func _centre(poses: Array) -> void:
+	var middles: Array[Vector2] = []
+	for posed: Array in poses:
+		var verts: PackedVector3Array = posed[Mesh.ARRAY_VERTEX]
+		var sum := Vector2.ZERO
+		var n := 0
+		for v in range(0, verts.size(), 7):
+			sum += Vector2(verts[v].x, verts[v].z)
+			n += 1
+		middles.append(sum / maxf(n, 1))
+	var last := middles[middles.size() - 1]
+	for i in poses.size():
+		var share := float(i) / maxf(poses.size() - 1, 1)
+		var by := last * share - middles[i]
+		var shift := Vector3(by.x, 0.0, by.y)
+		var verts: PackedVector3Array = poses[i][Mesh.ARRAY_VERTEX]
+		for v in verts.size():
+			verts[v] += shift
+		poses[i][Mesh.ARRAY_VERTEX] = verts
 
 
 ## The poses of every clip (animation name -> Array of PoseBaker.pose_arrays) into the model's vertex animation
@@ -946,6 +1000,18 @@ func _pose_meshy(skeleton: Skeleton3D, model: Node3D, retargets: Dictionary, a: 
 		var deg: Vector3 = bend[bone] - (own.get(bone, Vector3.ZERO) as Vector3) * (1.0 - coil)
 		var q := Quaternion.from_euler(Vector3(deg_to_rad(deg.x), deg_to_rad(deg.y), deg_to_rad(deg.z)))
 		skeleton.set_bone_pose_rotation(i, skeleton.get_bone_pose_rotation(i) * q)
+	# "kick" ({"at", "up", "down" in the clip's seconds, "bend"}, T5-19): a recoil, that bend grown over `up` seconds
+	# from `at` and eased off over the `down` after
+	if opts.has("kick"):
+		var k: Dictionary = opts.kick
+		var at := from + float(k.at)
+		var up := float(k.up)
+		var w := smoothstep(at, at + up, t) if t < at + up else 1.0 - smoothstep(at + up, at + up + float(k.down), t)
+		for bone: String in k.bend:
+			var i := skeleton.find_bone(bone)
+			var deg: Vector3 = (k.bend[bone] as Vector3) * w
+			var q := Quaternion.from_euler(Vector3(deg_to_rad(deg.x), deg_to_rad(deg.y), deg_to_rad(deg.z)))
+			skeleton.set_bone_pose_rotation(i, skeleton.get_bone_pose_rotation(i) * q)
 	if _even_legs:
 		for leg: Array in LEGS:
 			_even_leg(skeleton, leg)

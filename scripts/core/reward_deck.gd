@@ -31,6 +31,16 @@ func draw(rng: RandomNumberGenerator, valid: Callable) -> int:
 	return left.pop_at(i)
 
 
+## As draw, but among the cards left it takes one that prefer accepts too when there is one (RJ-2: two doors of a room
+## of different groups), never filling the deck again for that alone.
+func draw_prefer(rng: RandomNumberGenerator, valid: Callable, prefer: Callable) -> int:
+	var found := _valid(func(c: int) -> bool: return valid.call(c) and prefer.call(c))
+	if found.is_empty():
+		return draw(rng, valid)
+	var i: int = found[rng.randi() % found.size()]
+	return left.pop_at(i)
+
+
 func _valid(valid: Callable) -> Array[int]:
 	var out: Array[int] = []
 	for i in left.size():

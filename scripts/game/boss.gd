@@ -866,8 +866,10 @@ func _shots_flying() -> bool:
 ## The Sepulchral Eruptions: eruption_sequences of 2 or 3 circles, one on the paladin, the lane to the middle of
 ## the hall always free; each sequence lands before the next appears.
 func _step_eruptions() -> void:
-	_anim(&"rain")
 	var beat := _windup(def.eruption_delay) + def.eruption_gap
+	# T5-18: every wave raises his hands and brings them down again (rain_wave, there and back, highest half way
+	# through the beat, about as its circles burst), where the whole rain played once and held for the second wave
+	_pose(&"rain_wave", clampf(fposmod(_t, beat) / beat, 0.0, 1.0))
 	if _step < def.eruption_sequences and _t >= _step * beat:
 		_step += 1
 		_erupt()
@@ -901,11 +903,19 @@ func _step_curse(dt: float) -> void:
 		_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, def.curse_speed * def.curse_homing), 1.4, windup, 0.0))
 		game.fx.ring(e.pos, 2.4, Color(0.55, 0.15, 0.8), windup, 0.15, true)
 		game.fx.burst(&"curse", Vector3(e.pos.x, 2.6, e.pos.y))
-		_anim(&"summon")
+		_pose(&"curse_windup", 0.0)
 		Audio.play(&"curse")
 		cue.emit(&"curse_gather", e.pos + _dir * HAND.y, _dir, 2.4, windup)
 	elif _step == 1:
 		_gathering(dt, e.pos + _dir * HAND.y, CURSE_COLOR)
+		# T5-17: the curse's own wind-up (the throw drawn back, curse_windup, in three beats as his others), then the
+		# throw from where it ends; it was the start of the summon, the gesture of raising the dead
+		var throw := windup - _throw_lead(&"volley")
+		if e.anim != &"volley" and _t < throw:
+			_pose(&"curse_windup", Horde.windup_arm(_t, throw, WINDUP_SETTLE, WINDUP_HOLD))
+			e.shake = WINDUP_SHAKE * 0.5 if _t >= throw * (1.0 - WINDUP_HOLD) else 0.0
+		else:
+			e.shake = 0.0
 		_throw_by(&"volley", windup)
 		if _t >= windup:
 			_step = 2
@@ -1485,6 +1495,7 @@ func _step_dying(dt: float) -> void:
 		game.boss = null
 		RenderingServer.global_shader_parameter_set(&"boss_pos", Arena.NO_BOSS)
 		defeated.emit()
+		Game.unhook(self)  # (BUG-108: nothing keeps the fallen fight alive through its own signals)
 
 
 # ---------- small helpers ----------

@@ -12,12 +12,15 @@ extends Control
 signal closed
 signal forged(rank: StringName)
 
-const SPINE := 0.4
+const SPINE := 0.46
 const OUTER := Vector2(22, 10)
 const ENTRY_WIDTH := 300.0
 const MARK := 22.0
 const TEXT_SIZE := 18
 const BUTTON_WIDTH := 190.0
+## The Emeth's place on the left page and the size of the cost and the purse by the button.
+const EMETH := Vector2(300, 330)
+const DEAL_SIZE := 22
 
 var forge: Forge
 var ranks: Array[ForgeRank] = []
@@ -34,6 +37,10 @@ var _cost: MaterialCount
 var _state: Label
 var _step: Label
 var _done: Label
+## The Emeth on the left page, the rank it has now under it, and over the rank in focus whether it is the next one.
+var emeth: EmethView
+var _now: Label
+var _kind: Label
 
 
 ## data: the save data (Save.data in the game; tests give their own).
@@ -53,7 +60,7 @@ func open(data: Dictionary = {}) -> void:
 	for side: String in ["left", "right"]:
 		frame.add_theme_constant_override("margin_" + side, int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
-	frame.add_theme_constant_override(&"margin_bottom", int(BookSpread.RIBBON_DROP))
+	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var book := BookSpread.new().setup(SPINE)
 	frame.add_child(book)
@@ -63,6 +70,9 @@ func open(data: Dictionary = {}) -> void:
 		e.focus_neighbor_right = e.get_path_to(buy_button)
 	buy_button.focus_neighbor_left = buy_button.get_path_to(entries[0] if not entries.is_empty() else buy_button)
 	back_button.focus_neighbor_left = back_button.get_path_to(buy_button)
+	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
+	emeth.show_rank(Forge.temper(_data))
 	var start := _first()
 	_show(start)
 	if start != null:
@@ -71,14 +81,38 @@ func open(data: Dictionary = {}) -> void:
 		back_button.grab_focus.call_deferred()
 
 
+## The left page: the Emeth itself, the forge's piece (ciclo visual 2026-11-20, item 3; UI-HB4), with its rank of
+## Temperar on the blade, the title over it and the rank it has now under it.
 func _left_page(page: MarginContainer) -> void:
 	var v := VBoxContainer.new()
 	v.name = "index"
-	v.add_theme_constant_override(&"separation", 6)
+	v.add_theme_constant_override(&"separation", 4)
 	page.add_child(v)
 	v.add_child(Book.heading(T.t(&"forge_title"), 30, 260))
-	v.add_child(Book.text(T.t(&"forge_lead"), Book.FADED, 16))
-	v.add_child(_gap(6))
+	v.add_child(Book.text(T.t(&"forge_lead"), Book.FADED, 15))
+	emeth = EmethView.new().setup(EMETH)
+	emeth.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	emeth.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(emeth)
+	var now := HBoxContainer.new()
+	now.name = "now"
+	now.alignment = BoxContainer.ALIGNMENT_CENTER
+	now.add_theme_constant_override(&"separation", 10)
+	v.add_child(now)
+	now.add_child(Book.label(T.t(&"forge_current").to_upper(), Book.RUBRIC, 14, UiKit.TITLE_FONT))
+	_now = Book.label("", Book.INK, 20, UiKit.BOLD_FONT)
+	_now.name = "rank_now"
+	now.add_child(_now)
+
+
+## The right page: the track's ranks as an index, the rank in focus (the next improvement, or one forged) with its
+## effect, state and next step, and, by the buttons, the cost and the purse side by side (ciclo visual 2026-11-20:
+## "custo e saldo perto da ação de forjar").
+func _right_page(page: MarginContainer) -> void:
+	var v := VBoxContainer.new()
+	v.name = "rank"
+	v.add_theme_constant_override(&"separation", 4)
+	page.add_child(v)
 	v.add_child(Book.section(T.t(&"forge_track_temper")))
 	for r in ranks:
 		var mark := DoorGlyph.new().setup(DoorGlyph.Kind.SILVER, MARK)
@@ -92,30 +126,16 @@ func _left_page(page: MarginContainer) -> void:
 				buy_button.grab_focus())
 		entries.append(e)
 		v.add_child(e)
-	var fill := Control.new()
-	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	v.add_child(fill)
-	v.add_child(Book.section(T.t(&"purse_title")))
-	_purse = MaterialCount.purse(_data, Book.INK, 18, 20.0)
-	v.add_child(_purse)
-
-
-func _right_page(page: MarginContainer) -> void:
-	var v := VBoxContainer.new()
-	v.name = "rank"
-	v.add_theme_constant_override(&"separation", 4)
-	page.add_child(v)
+	v.add_child(_gap(10))
+	_kind = Book.label("", Book.RUBRIC, 14, UiKit.TITLE_FONT)
+	_kind.name = "kind"
+	v.add_child(_kind)
 	_title = Book.heading("", 28, 300)
 	v.add_child(_title)
 	v.add_child(Book.section(T.t(&"hero_effect")))
 	_effect = Book.text("", Book.INK, TEXT_SIZE)
 	_effect.name = "effect"
 	v.add_child(_effect)
-	v.add_child(_gap(4))
-	v.add_child(Book.section(T.t(&"hero_cost_head")))
-	_cost = MaterialCount.new().setup(MaterialPurse.SILVER, 0, Book.INK, TEXT_SIZE, 20.0, true)
-	_cost.name = "cost"
-	v.add_child(_cost)
 	v.add_child(_gap(4))
 	v.add_child(Book.section(T.t(&"hero_state_head")))
 	_state = Book.text("", Book.INK, TEXT_SIZE)
@@ -133,6 +153,25 @@ func _right_page(page: MarginContainer) -> void:
 	var fill := Control.new()
 	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	v.add_child(fill)
+	# the deal by the button: cost on the left, the purse on the right, label over value (benchmark 2.3)
+	var deal := HBoxContainer.new()
+	deal.name = "deal"
+	deal.add_theme_constant_override(&"separation", 40)
+	v.add_child(deal)
+	var cost := VBoxContainer.new()
+	cost.add_theme_constant_override(&"separation", 2)
+	cost.add_child(Book.section(T.t(&"hero_cost_head")))
+	_cost = MaterialCount.new().setup(MaterialPurse.SILVER, 0, Book.INK, DEAL_SIZE, 24.0, true)
+	_cost.name = "cost"
+	cost.add_child(_cost)
+	deal.add_child(cost)
+	var have := VBoxContainer.new()
+	have.add_theme_constant_override(&"separation", 2)
+	have.add_child(Book.section(T.t(&"forge_balance")))
+	_purse = MaterialCount.purse(_data, Book.INK, DEAL_SIZE, 24.0)
+	have.add_child(_purse)
+	deal.add_child(have)
+	v.add_child(_gap(8))
 	var foot := HBoxContainer.new()
 	foot.name = "foot"
 	foot.alignment = BoxContainer.ALIGNMENT_END
@@ -177,10 +216,13 @@ func _refresh() -> void:
 		entries[i].set_pressed_no_signal(r == shown)
 		count.add_theme_color_override(&"font_color", UiKit.GOLD if r == shown else Book.GILT)
 	_done.visible = _first() != null and forge.state(_data, _first()) == Forge.State.OWNED
+	var rank := Forge.temper(_data)
+	_now.text = T.t(ranks[rank - 1].name_key) if rank > 0 and rank <= ranks.size() else T.t(&"forge_current_none")
 	if shown == null:
 		buy_button.disabled = true
 		return
 	(_title.get_node("text") as Label).text = T.t(shown.name_key)
+	_kind.text = T.t(&"forge_owned" if forge.state(_data, shown) == Forge.State.OWNED else &"forge_next").to_upper()
 	_effect.text = T.t(shown.desc_key)
 	_cost.set_amount(shown.cost)
 	var problem := forge.problem(_data, shown)
@@ -202,6 +244,13 @@ func _refresh() -> void:
 	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
 
 
+## The control in focus pressed (the action bar's click).
+func _press_focus() -> void:
+	var f := get_viewport().gui_get_focus_owner() as BaseButton
+	if f != null and is_ancestor_of(f) and not f.disabled:
+		f.pressed.emit()
+
+
 func _set_state(text: String, color: Color) -> void:
 	_state.text = text
 	_state.add_theme_color_override(&"font_color", color)
@@ -221,6 +270,7 @@ func _buy() -> void:
 		Save.write()
 	Audio.play(&"ui_ok")
 	var bought := shown.id
+	emeth.show_rank(Forge.temper(_data), true)
 	forged.emit(bought)
 	var next := _first()
 	_show(next)

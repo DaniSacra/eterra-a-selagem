@@ -9,6 +9,8 @@ var by: Dictionary = {}
 
 ## Where a hit with these tags came from. A Blessing's own hits carry &"skill", its family tag and its id (Skills).
 static func source(tags: Array[StringName]) -> StringName:
+	if tags.has(&"echo"):
+		return &"echo"  # Eco da Verdade's echo of a blow (Fatia 2)
 	if tags.has(&"psalm"):
 		return &"psalm"  # what a Psalm adds (E4): the Pastor's waves, the Rocha's stone, the Sentinela's blows
 	if tags.has(&"ultimate"):

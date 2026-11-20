@@ -20,6 +20,8 @@ uniform float peak = 0.9;
 uniform float rings = 1.3;
 uniform float ring_rate = 0.12;
 uniform float ring_light = 0.1;
+// How thin the ripples' bright bands are (the power of their sine: 8 thin lines, about 2 to 3 broad soft swells).
+uniform float ring_sharp = 8.0;
 uniform float edge_foam = 0.25;
 uniform float edge_light = 0.12;
 uniform vec2 foam_at = vec2(-1.0, -1.0);
@@ -63,7 +65,7 @@ void fragment() {
 	if (form == 0) {
 		// slow ripples: two sets of bands crossing, warped by noise
 		float w = fbm(m * 0.6 + vec2(TIME * 0.05, -TIME * 0.03));
-		float r = pow(0.5 + 0.5 * sin((m.x * 0.7 + m.y * 0.4 + w * 2.0) * rings * 6.2832 - TIME * ring_rate * 6.2832), 8.0);
+		float r = pow(0.5 + 0.5 * sin((m.x * 0.7 + m.y * 0.4 + w * 2.0) * rings * 6.2832 - TIME * ring_rate * 6.2832), ring_sharp);
 		c = deep * mix(0.8, 1.15, w);
 		glow = pale * r * ring_light;
 		vec2 d = min(m, size - m);

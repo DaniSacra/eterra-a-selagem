@@ -38,6 +38,8 @@ var talents: Array[TalentDef] = []
 ## The Forja's ranks owned for this descent (Rejogabilidade, Fatia 1; ForgeRank): their mods add up in stat at level 1,
 ## never scaled by rarity, as the Gifts'.
 var forge: Array[ForgeRank] = []
+## The Encantos taken in this descent (Rejogabilidade, Fatia 2; EnchantDef): their mods add up in stat at level 1.
+var enchants: Array[EnchantDef] = []
 ## Numbers won outside the Blessings (E5: a Provação's blessing, Trials.blessing_mods), fixed, added to stat.
 var granted: Array[BoonMod] = []
 ## Blessings that left the descent (id: true; E6, the Juramento Escolhas Perdidas): never offered again.
@@ -208,6 +210,15 @@ func equip_forge(ranks: Array[ForgeRank]) -> void:
 	_cache.clear()
 
 
+## Takes an Encanto for this descent (Fatia 2): its numbers count in stat from now on. False when already taken.
+func take_enchant(e: EnchantDef) -> bool:
+	if e == null or enchants.has(e):
+		return false
+	enchants.append(e)
+	_cache.clear()
+	return true
+
+
 ## Adds numbers won outside the Blessings (E5, the Provação): they count in stat from now on.
 func grant(mods: Array[BoonMod]) -> void:
 	granted.append_array(mods)
@@ -230,6 +241,10 @@ func stat(stat_name: StringName, tags: Array[StringName] = []) -> float:
 				total += m.value(1)
 	for t in talents:
 		for m in t.mods:
+			if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
+				total += m.value(1)
+	for e in enchants:
+		for m in e.mods:
 			if m.stat == stat_name and (m.tag == &"" or tags.has(m.tag)):
 				total += m.value(1)
 	for b in catalog:

@@ -424,6 +424,16 @@ const MOSS_KEYS := {&"shadow": &"paint_shadow", &"moss": &"paint_moss"}
 const FLOOR_KEYS := {&"floor_stone": &"floor_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold",
 	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"slab_paint": &"slab_paint", &"edge_value": &"edge_value",
 	&"pool_saturation": &"paint_pool_saturation"}
+## ENV-HB2, the Salão's finish test replicated as a method (docs/gallery/ciclo_visual_1120/ART_REVIEW.md): the painted
+## floor calm at the scale of a few slabs (joints, cracks and missing corners near the slab's own value, a soft bevel,
+## slabs of near values, little grain, barely tilted) and the big washes faint; a room merges it into its `floor`
+## (catacomb_floor.gdshaderinc uniforms) under its own numbers. The large scale is the room's light and landmarks.
+const CALM_FLOOR := {&"joint_lift": 0.72, &"paint_bevel": 0.93, &"slab_paint": Vector2(0.95, 1.05), &"brush_value": Vector2(0.95, 1.05),
+	&"paint_rock": 0.12, &"cracked": 0.12, &"missing": 0.05, &"slab_tilt": 1.0, &"bevel_tilt": 0.35, &"paint_washes": 0.2}
+## ... and the biome's patches as P1-A1 left them in the Salão: few, big, soft and faint, nothing darker between them
+## (floor_biome.gdshaderinc; a room adds its own patch_color).
+const SOFT_PATCHES := {&"patch_share": Vector2(0.35, 0.5), &"patch_rest": 1.0, &"patch_scale": 8.0, &"patch_cut": Vector2(0.4, 0.75),
+	&"patch_break": 0.02}
 ## The painted floor's mottled shade (SW-G2, floor_biome.gdshaderinc): its uniforms with up to GOBO_SPOTS places where
 ## it is stronger (each Vector4: x, z, radius, weight), merged over the room's `floor` dictionary of its style().
 const GOBO_SPOTS := 4
@@ -1554,7 +1564,13 @@ static func fountain_spent(parent: Node3D) -> void:
 	if water == null:
 		return
 	var wm := water.material_override as ShaderMaterial
+	var pool := parent.find_child(String(CatacombHall.FOUNTAIN_POOL_NAME), true, false) as Light3D
+	var lit := pool.light_energy if pool != null else 0.0
+	var dim := func(v: float) -> void:
+		wm.set_shader_parameter(&"spent", v)
+		if pool != null:
+			pool.light_energy = lerpf(lit, lit * CatacombHall.FOUNTAIN_POOL_SPENT, v)
 	if water.is_inside_tree():
-		water.create_tween().tween_method(func(v: float) -> void: wm.set_shader_parameter(&"spent", v), 0.0, 1.0, FOUNTAIN_SPENT_TIME)
+		water.create_tween().tween_method(dim, 0.0, 1.0, FOUNTAIN_SPENT_TIME)
 	else:
-		wm.set_shader_parameter(&"spent", 1.0)
+		dim.call(1.0)

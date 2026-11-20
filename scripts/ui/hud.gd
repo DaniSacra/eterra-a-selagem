@@ -40,6 +40,17 @@ const PASSIVE_GAP := 4
 ## Those with a recharge go first: their timer is what is worth a glance in a fight.
 const PASSIVE_EDGE := 0.96
 const SLOT_GAP := 8
+## P1-4 of the Hades II UI benchmark, under test (--hud=row; the default is the bottom-centre row; the art-director
+## decides): the five diamonds smaller (ROW_DIAMOND, about 46 px at 1080) in a row over the bars, from the medallion's
+## shoulder, ROW_ABOVE px over the life bar's frame, so nothing stands between 30% and 70% of the width at the bottom;
+## what stood over the bars (the count, the curse's badge, the Provação's seal) climbs over the row and the room of
+## its captions (ROW_CAPTION); the gifts that act alone go to the bottom right corner.
+const ROW_DIAMOND := 31.0
+const ROW_GAP := 10
+const ROW_ABOVE := 6.0
+## The keys hang under the small diamonds' point (ActionSlot.key_drop): the little mouse is 22 px tall.
+const ROW_KEY_DROP := 9.0
+const ROW_CAPTION := 20.0
 const FONT_SMALL := 15
 const FONT_TEXT := 19
 const FONT_CLOCK := 22
@@ -52,8 +63,16 @@ const BOSS_TOP := 42.0
 const BOSS_TOP_ALONE := 12.0
 ## The hit count (VX-12): its digits stay under 48 px tall at 1080 lines even at the top of the pop, and the move's
 ## name under it is dimmed, so neither competes with the fight.
-const FONT_COMBO := 30
+const FONT_COMBO := 24
 const COMBO_POP := 0.15
+## The word "Golpes" and the move's name beside the count, the row's height and where it stands: over the life bar,
+## COMBO_INSET px into it from the medallion's edge, COMBO_RISE px above the bar's top (benchmark P0-3).
+const COMBO_WORD := 14
+const COMBO_H := 28.0
+## (14 and 9 since the horde capture of 2026-11-20: at 4 and 6 the move's name touched the medallion's ring and sat on
+## the bar's frame.)
+const COMBO_INSET := 14.0
+const COMBO_RISE := 9.0
 const MOVE_ALPHA := 0.7
 ## The move's name: how long it shows, and how fast it goes (a short cut, no long ghost).
 const MOVE_TIME := 1.2
@@ -107,7 +126,6 @@ var map_button: Button
 var _clock: Label
 var _clock_veil: HudVeil
 var _clock_at_boss := false
-var _combo_veil: HudVeil
 ## The materials greeted so far, by "material/source" (Rejogabilidade, Fatia 1: _greet_materials).
 var _found_seen := {}
 var _purse: HBoxContainer
@@ -134,7 +152,8 @@ var _shield_t := 0.0
 var _ritual_hint := false
 var _combo: Label
 var _combo_word: Label
-var _combo_stroke: HudMark
+var _combo_row: HBoxContainer
+var _combo_top := 0.0
 var _move: Label
 var _notice: Label
 var _slots: Array[ActionSlot] = []
@@ -155,6 +174,12 @@ var _pointers: Array[HudMark] = []
 var _action_row: HBoxContainer
 var _veil_t := 0.0
 var _veiled := false
+var _passives_veiled := false
+## The diamonds' body opacity (they fade only their bodies, ActionSlot.veil).
+var _slot_alpha := 1.0
+## The --hud=row layout (P1-4, under test) and how much higher what stood over the bars stands in it.
+var _row_mode := false
+var _row_lift := 0.0
 ## Magia each action's held version costs (by slot).
 var _omega_cost := {}
 ## The dodge's recharge, followed by the run's clock (Player keeps its own timer to itself).
@@ -181,6 +206,8 @@ func _ready() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_row_mode = Dev.arg("hud") == "row"
+	_row_lift = ROW_ABOVE + ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP + ROW_CAPTION if _row_mode else 0.0
 	_build_top()
 	_build_life()
 	_build_actions()
@@ -302,26 +329,31 @@ func _build_life() -> void:
 	# a condition (the boss's curse): over the left end of the life bar, against the medallion's shoulder
 	_curse_badge = ConditionBadge.new().setup(CURSE_COLOR, T.t(&"hud_cursed"), T.t(&"hud_cursed_effects"))
 	add_child(_curse_badge)
-	_place(_curse_badge, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 4, -mid - LIFE.y - 2.0 * UiKit.FRAME - 6), _curse_badge.size)
+	_place(_curse_badge, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 4, -mid - LIFE.y - 2.0 * UiKit.FRAME - 6 - _row_lift), _curse_badge.size)
 	# the Provação's seal: above the medallion, clear of Morvath's curse badge (which sits on the life bar's end)
 	_trial_seal = TrialSeal.new().setup(TRIAL_SEAL, true)
 	add_child(_trial_seal)
-	_place(_trial_seal, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + (CREST - TRIAL_SEAL) * 0.5, -MARGIN - CREST - TRIAL_SEAL_GAP), Vector2(TRIAL_SEAL, TRIAL_SEAL))
+	_place(_trial_seal, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + (CREST - TRIAL_SEAL) * 0.5, -MARGIN - CREST - TRIAL_SEAL_GAP - _row_lift), Vector2(TRIAL_SEAL, TRIAL_SEAL))
 
 
 ## Bottom centre: the four action diamonds; the gifts that act alone sit in a row to their right.
 func _build_actions() -> void:
 	var row := HBoxContainer.new()
 	_action_row = row
-	row.add_theme_constant_override(&"separation", SLOT_GAP)
+	row.add_theme_constant_override(&"separation", ROW_GAP if _row_mode else SLOT_GAP)
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
+	var side := ROW_DIAMOND if _row_mode else ActionSlot.DIAMOND
+	var drop := ROW_KEY_DROP if _row_mode else 0.0
 	for i in ACTIONS.size():
-		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i])
+		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], side, drop)
 		row.add_child(s)
 		_slots.append(s)
-	_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE)
+	_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, side, drop)
 	row.add_child(_ult_slot)
+	if _row_mode:
+		_build_row(row)
+		return
 	# (the row is laid out for five; without an ultimate the four stay in the middle)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	var width := row.get_combined_minimum_size().x
@@ -336,21 +368,47 @@ func _build_actions() -> void:
 	_place(_passives, Control.PRESET_CENTER_BOTTOM, Vector2(width * 0.5 + 18 + room * 0.5, -MARGIN - 4), Vector2(room, PASSIVE_ICON + 6))
 
 
-## Right: the hit count with a brush stroke, and the move's name under it.
+## The --hud=row layout (P1-4, under test): the diamonds over the bars from the medallion's shoulder, the gifts that
+## act alone in the bottom right corner, right-aligned.
+func _build_row(row: HBoxContainer) -> void:
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	var height := ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP
+	var life_top := MARGIN + CREST * 0.5 + 1.0 + LIFE.y
+	_place(row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 6, -life_top - ROW_ABOVE), Vector2(row.get_combined_minimum_size().x, height))
+	_passives = HBoxContainer.new()
+	_passives.name = &"Passives"
+	_passives.add_theme_constant_override(&"separation", PASSIVE_GAP)
+	_passives.alignment = BoxContainer.ALIGNMENT_END
+	_passives.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_passives)
+	_place(_passives, Control.PRESET_BOTTOM_RIGHT, Vector2(-MARGIN, -MARGIN), Vector2(300, PASSIVE_ICON + 6))
+
+
+## The hit count and the move's name, by the bars at the bottom left (benchmark_hades2_ui.md P0-3, UI-HB5): out of
+## the field, small, without a veil or a stroke, in Alegreya Sans (Cinzel only from 24 px), on one line over the life
+## bar's right part: "12 Golpes  Giro da Alvorada". Over the curse badge's line it climbs a line while the badge shows.
 func _build_combo() -> void:
-	_combo = _label("", UiKit.GOLD, FONT_COMBO, UiKit.number_font(), Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 8, -100))
-	_combo.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo.add_theme_constant_override(&"outline_size", 6)
-	_combo_word = _label(T.t(&"hud_hits"), UiKit.PALE, FONT_SMALL, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -68))
-	_combo_word.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_combo_stroke = HudMark.new().setup(HudMark.Kind.STROKE, Vector2(76, 12))
-	add_child(_combo_stroke)
-	_place(_combo_stroke, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN + 6, -50), Vector2(76, 12))
-	_move = _label("", UiKit.PALE, FONT_TEXT - 2, UiKit.TITLE_FONT, Control.PRESET_CENTER_RIGHT, Vector2(-MARGIN - 6, -34))
-	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
+	_combo_row = HBoxContainer.new()
+	_combo_row.name = &"Combo"
+	_combo_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_combo_row.add_theme_constant_override(&"separation", 6)
+	add_child(_combo_row)
+	_combo = UiKit.shadow(UiKit.label("", UiKit.GOLD, FONT_COMBO, UiKit.number_font()))
+	_combo.name = &"Count"
+	_combo.add_theme_constant_override(&"outline_size", 5)
+	_combo_row.add_child(_combo)
+	_combo_word = UiKit.shadow(UiKit.label(T.t(&"hud_hits"), UiKit.PALE, COMBO_WORD, UiKit.BOLD_FONT))
+	_combo_word.name = &"Word"
+	_combo_word.size_flags_vertical = Control.SIZE_SHRINK_END
+	_combo_row.add_child(_combo_word)
+	_move = UiKit.shadow(UiKit.label("", UiKit.PALE, COMBO_WORD, UiKit.BOLD_FONT))
+	_move.name = &"Move"
+	_move.size_flags_vertical = Control.SIZE_SHRINK_END
+	_combo_row.add_child(_move)
+	_place(_combo_row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST + COMBO_INSET, -MARGIN - CREST * 0.5 - LIFE.y - COMBO_RISE - _row_lift), Vector2(LIFE.x, COMBO_H))
+	_combo_top = _combo_row.offset_top
+	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = false
-	_combo_veil = _veil([_combo, _combo_word, _move])
 
 
 ## A material found greets in the banner (EloBanner.show_material), but not an elite's drop: it is a word where the elite
@@ -439,9 +497,13 @@ func _process(delta: float) -> void:
 	var paused := game.mode == Game.Mode.PAUSE
 	for c: CanvasItem in [_crest, _life, _magick]:
 		c.visible = not paused
-	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
+	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = _combo_count >= 3 and not over
 	_move.visible = not over
+	# the curse's badge stands on the life bar's line: the count climbs over it meanwhile
+	var lift := ConditionBadge.SIZE + 4.0 if _curse_badge.shown() > 0.0 else 0.0
+	_combo_row.offset_top = _combo_top - lift
+	_combo_row.offset_bottom = _combo_top - lift + COMBO_H
 	_elo_banner.held = over
 	_clock.text = SaveData.format_time(game.time)
 	_coin.visible = game.rooms != null
@@ -477,7 +539,7 @@ func _process(delta: float) -> void:
 	_clock_veil.follow()
 	_combo_pop = maxf(0.0, _combo_pop - delta * 4.0)
 	_combo.scale = Vector2.ONE * (1.0 + _combo_pop * COMBO_POP)
-	_combo.pivot_offset = _combo.size * Vector2(1.0, 0.5)
+	_combo.pivot_offset = _combo.size * Vector2(0.0, 0.5)
 	_move_t -= delta
 	_move.modulate.a = MOVE_ALPHA * clampf(_move_t / MOVE_FADE, 0.0, 1.0)
 	_notice_t -= delta
@@ -493,7 +555,6 @@ func _process(delta: float) -> void:
 		_phase_box.modulate.a = _shield_t
 	_update_pointers(chief)
 	_update_veil(delta)
-	_combo_veil.follow()
 
 
 func _update_life(p: Player) -> void:
@@ -797,9 +858,16 @@ func _update_veil(delta: float) -> void:
 	_veil_t -= delta
 	if _veil_t <= 0.0:
 		_veil_t = VEIL_EVERY
-		_veiled = _someone_behind(_actions_rect())
-	var a := move_toward(_passives.modulate.a, VEIL_ALPHA if _veiled else 1.0, delta * VEIL_SPEED)
-	_passives.modulate.a = a
+		if _row_mode:
+			# apart in the row layout: the diamonds on the left, the gifts in the right corner
+			_veiled = _someone_behind(_action_row.get_global_rect())
+			_passives_veiled = _someone_behind(_passives_rect())
+		else:
+			_veiled = _someone_behind(_actions_rect())
+			_passives_veiled = _veiled
+	_passives.modulate.a = move_toward(_passives.modulate.a, VEIL_ALPHA if _passives_veiled else 1.0, delta * VEIL_SPEED)
+	var a := move_toward(_slot_alpha, VEIL_ALPHA if _veiled else 1.0, delta * VEIL_SPEED)
+	_slot_alpha = a
 	# the diamonds fade only their bodies: what they say (glyph, recharge, key) stays whole
 	for s in _slots:
 		s.veil = (1.0 - a) / (1.0 - VEIL_ALPHA)
@@ -808,9 +876,14 @@ func _update_veil(delta: float) -> void:
 
 ## The diamonds and the gifts beside them, on screen.
 func _actions_rect() -> Rect2:
-	var r := _action_row.get_global_rect()
+	return _action_row.get_global_rect().merge(_passives_rect()) if _passives.get_child_count() > 0 else _action_row.get_global_rect()
+
+
+## The gifts' medallions on screen (an empty rect without any).
+func _passives_rect() -> Rect2:
+	var r := Rect2()
 	for c in _passives.get_children():
-		r = r.merge((c as Control).get_global_rect())
+		r = (c as Control).get_global_rect() if r.size == Vector2.ZERO else r.merge((c as Control).get_global_rect())
 	return r
 
 
@@ -834,7 +907,7 @@ static func body_rect(feet: Vector2, tall: float) -> Rect2:
 
 func on_combo(count: int) -> void:
 	_combo_count = count
-	for c: CanvasItem in [_combo, _combo_word, _combo_stroke]:
+	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = count >= 3
 	if count == 0:
 		# the count ran out: the move's name goes with it (BUG-112), a short fade and never alone in the corner

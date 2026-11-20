@@ -259,3 +259,49 @@ func test_the_forge_rank_shows_on_the_blade() -> void:
 	game.player.set_temper(0)
 	if blade != null:
 		assert_almost_eq(float(blade.get_shader_parameter(&"temper")), 0.0, 0.001)
+
+
+## combat_cadence.md 8.3 (c), P2-C19a: the runner elite's first burst leaves only a thin ring for Ground.LAND_QUICK s,
+## so the second ring's rim reads 0.4 s or more before the second burst; the last burst (and a plain runner's) lands
+## as before.
+func test_the_first_burst_never_covers_the_second_ring() -> void:
+	var e := _alone(&"runner_elite", 1.2)
+	assert_true(_into(e, Enemy.State.WINDUP))
+	assert_true((e.warning as Ground.Zone).land_quick, "the first burst lands quick")
+	assert_true(_into(e, Enemy.State.ATTACK))
+	for i in 80:
+		_step()
+		if e.blows == 1 and e.warning2 != null:
+			break
+	assert_false((e.warning2 as Ground.Zone).land_quick, "the last burst lands as before")
+	assert_gte(e.def.strike_gap - Ground.LAND_QUICK, 0.4 - 0.001, "the second rim reads 0.4 s before its burst")
+	var r := _alone(&"runner", 1.2)
+	assert_true(_into(r, Enemy.State.WINDUP))
+	assert_false((r.warning as Ground.Zone).land_quick, "a single burst lands as before")
+
+
+## combat_cadence.md 8.3 (b): a runner waiting by him for its cooldown walks in again only MELEE_WALK_BAND past its
+## reach (no 12 cm saw at 8 Hz).
+func test_the_waiting_runner_keeps_a_band() -> void:
+	var e := _alone(&"runner", 1.2)
+	e.cooldown = 99.0
+	_step(60)
+	var d0 := e.pos.distance_to(game.player.pos)
+	var flips := 0
+	var closing := e.closing
+	for i in 120:
+		_step()
+		if e.closing != closing:
+			flips += 1
+			closing = e.closing
+	assert_lte(flips, 2, "at most one walk in a second while it waits (started %.2f m off)" % d0)
+
+
+## combat_cadence.md 8.3 (a): the robot does not begin the attack's Omega with a shot being readied within 12 m.
+func test_the_robot_sees_a_shot_coming() -> void:
+	var e := _alone(&"mage", 8.0)
+	assert_false(Bot.shot_coming(game, game.player.pos), "nothing readied yet")
+	e.state = Enemy.State.WINDUP
+	assert_true(Bot.shot_coming(game, game.player.pos), "the mage readies 8 m off")
+	e.pos = game.player.pos + Vector2(Bot.SHOT_NEAR + 1.0, 0)
+	assert_false(Bot.shot_coming(game, game.player.pos), "too far to matter")

@@ -41,6 +41,8 @@ uniform vec2 patch_cut = vec2(0.46, 0.6);
 // between dark ones: the floor's mean value stays and its range opens both ways).
 uniform float patch_rest = 1.0;
 uniform float patch_cut_edge = 0.1;
+// How much a finer noise breaks the patches' outline (0.1 a serrated edge; lower, a soft one).
+uniform float patch_break = 0.1;
 
 vec3 floor_patches(vec3 c, vec2 wp, float edge_m, vec3 stone) {
 	if (patch_share.x <= 0.0 && patch_share.y <= 0.0) {
@@ -48,7 +50,7 @@ vec3 floor_patches(vec3 c, vec2 wp, float edge_m, vec3 stone) {
 	}
 	float near = 1.0 - smoothstep(patch_reach, patch_reach * 2.0, edge_m);
 	// a low noise for the patches' bodies, a finer one breaking their outline
-	float n = fbm(wp / patch_scale + vec2(57.0, 13.0)) + (noise(wp * 0.9 + 71.0) - 0.5) * 0.1;
+	float n = fbm(wp / patch_scale + vec2(57.0, 13.0)) + (noise(wp * 0.9 + 71.0) - 0.5) * patch_break;
 	float lower = patch_cut_edge * near;
 	float m = smoothstep(patch_cut.x - lower, patch_cut.y - lower, n);
 	vec3 patched = patch_color * (paint_luma(c) / max(paint_luma(stone), 1e-3));
