@@ -5,7 +5,11 @@ shader_type spatial;
 // sweep everything breaks into ashes and fades. Drawn on Fx's ring-sector mesh: UV.x along the swing (0 start,
 // 1 end), UV.y from the inner edge (near his feet) to the outer one (the reach of the blow): it never leaves it.
 // t goes 0 -> 1 over its life; the head crosses during the first `sweep` of it.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
+// vfx_pass_spec.md V-16 (the same light and the same cyan edge as the paladin's cut): the violet of the body reaches the
+// edge, gnawed by noise (gnaw_m deep at gnaw_scale_m, Fx gives reach_m); the head is a violet line, the palest is a
+// lilac-ivory (`pale`) in the middle of the sector, never at its edge; nothing under hue 230 (`edge` is no longer
+// drawn). Laid over the floor (premultiplied) under `peak` (226 on the screen).
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled;
 
 uniform vec4 body : source_color = vec4(0.62, 0.22, 1.2, 1.0);
 uniform vec4 edge : source_color = vec4(0.38, 1.55, 1.1, 1.0);
@@ -19,6 +23,13 @@ uniform float intensity = 1.0;
 uniform float blade_light = 1.0;
 uniform float rim_light = 0.6;
 uniform float body_light = 0.75;
+uniform vec3 pale : source_color = vec3(0.8, 0.72, 0.95);
+uniform float reach_m = 5.0;
+uniform float band_m = 4.0;
+uniform float gnaw_m = 0.15;
+uniform float gnaw_scale_m = 0.4;
+uniform float peak = 0.8;
+uniform float smoke_alpha = 0.35;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -42,14 +53,25 @@ void fragment() {
 	float grain = noise(vec2(UV.x * 30.0, y * 8.0 - t * 2.0));
 	if (grain < rest * 1.05) discard;
 	float trail = 1.0 - smoothstep(0.0, tail, behind);
-	// the blade: a thin line across the radius at the head, only while it moves
+	// the reach gnawed by noise: the outer edge eaten up to gnaw_m in
+	float along_m = UV.x * reach_m * 3.0;
+	float gnaw = noise(vec2(along_m / gnaw_scale_m, t * 3.0)) * 0.7 + noise(vec2(along_m / (gnaw_scale_m * 0.4), 7.0)) * 0.3;
+	float outer = 1.0 - gnaw * gnaw_m / max(band_m, 0.001);
+	if (y > outer) discard;
+	// the blade: a violet line across the radius at the head, only while it moves
 	float blade = (1.0 - smoothstep(0.0, 0.03, behind)) * (1.0 - rest);
-	// the rim: the reach of the blow, along what was swept
-	float rim = (1.0 - smoothstep(0.0, 0.06, 1.0 - y)) * (0.35 + 0.65 * trail);
-	// the body: violet smoke carried by the trail, stronger toward the reach, crawling against the swing
+	// the rim: violet along the gnawed reach of what was swept
+	float rim = (1.0 - smoothstep(0.0, 0.06, outer - y)) * (0.35 + 0.65 * trail);
 	float smoke = 0.55 + 0.6 * noise(vec2(UV.x * 14.0 + t * 5.0, y * 4.0));
 	float fill = mix(0.12, 0.8, y * y) * trail * smoke;
-	vec3 soft = body.rgb / max(max(body.r, max(body.g, body.b)), 1.0);
-	vec3 c = soft * fill * body_light + edge.rgb * (rim * rim_light + blade * blade_light);
-	ALBEDO = c * (1.0 - rest) * intensity;
+	vec3 violet = body.rgb / max(max(body.r, max(body.g, body.b)), 0.0001);
+	// the palest in the middle of the band, never at the edge
+	float middle = (1.0 - smoothstep(0.0, 0.25, abs(y - 0.5))) * trail;
+	vec3 c = violet * (fill * body_light + rim * rim_light + blade * blade_light * 0.8) + pale * middle * fill * 0.4;
+	c *= (1.0 - rest) * intensity;
+	float top = max(c.r, max(c.g, c.b));
+	c *= min(1.0, peak / max(top, 0.0001));
+	float cover = fill * smoke_alpha * (1.0 - rest);
+	ALBEDO = vec3(0.04, 0.01, 0.06) * cover + c;
+	ALPHA = clamp(cover + min(top, peak) / max(peak, 0.0001), 0.0, 1.0);
 }

@@ -20,13 +20,17 @@ const DEFAULT_ON := false
 ## runes): only where the depth jumps, so it outlines the pieces and the figures and never the floor's painted relief
 ## (its runes, the framed slabs) nor the floor marks (drawn without depth). INK_PX at 1080, in the rooms' shadow ink,
 ## from a jump of INK_JUMP of the pixel's depth (full at twice that). It runs after the transparent pass so it keeps the
-## Alta's MSAA (the painting filter has to turn it off), in the stylized look only, on the Forward+ only, at every
-## quality; off until the art-director approves it (`--ink-line=1` turns it on for a run, INK_DEFAULT_ON).
+## Alta's MSAA (the painting filter has to turn it off), in the stylized look only, on the Forward+ only, at the Alta and
+## Média; on by default since the art-director approved it on 2026-11-20 (`--ink-line=0` turns it off, INK_DEFAULT_ON).
+## Only on the pieces: the Forward+ marks a moving instance (the crowd, the paladin, his sword) in its normal-roughness
+## buffer (roughness channel above 0.5; needs_normal_roughness), and no edge touching one is inked (with 12 enemies the
+## figures' outline doubled and their edges were drawn over the life bars in front of them). `--ink-debug` shows that
+## mark (red) instead of the frame.
 const INK_PX := 2.0
 const INK_COLOR := Color(0.045, 0.05, 0.065)
 const INK_ALPHA := 0.7
 const INK_JUMP := 0.015
-const INK_DEFAULT_ON := false
+const INK_DEFAULT_ON := true
 
 var kuwahara := true
 var contour := true
@@ -92,6 +96,7 @@ static func attach(camera: Camera3D, level: int) -> bool:
 		effect.ink = true
 		effect.kuwahara = false
 		effect.effect_callback_type = EFFECT_CALLBACK_TYPE_POST_TRANSPARENT
+		effect.needs_normal_roughness = true
 	else:
 		# with MSAA the frame is resolved again after the transparent pass and the filter's work is lost (measured
 		# on the Alta's 2x): the filter runs without it
@@ -139,23 +144,30 @@ func _render_callback(_type: int, data: RenderData) -> void:
 		edge = Color(INK_COLOR.srgb_to_linear(), INK_ALPHA)
 		width = INK_PX
 		jump = INK_JUMP
-	var filter := _push(size, maxf(1.0, roundf(RADIUS * scale)), maxf(1.0, width * scale), edge, 1.0 if kuwahara else 0.0, 0.0, jump)
+	var nr := RID()
+	if ink and buffers.has_texture(&"forward_clustered", &"normal_roughness"):
+		nr = buffers.get_texture(&"forward_clustered", &"normal_roughness")
+	var mask := 0.0
+	if nr.is_valid():
+		mask = 2.0 if Dev.has("ink-debug") else 1.0
+	var filter := _push(size, maxf(1.0, roundf(RADIUS * scale)), maxf(1.0, width * scale), edge, 1.0 if kuwahara else 0.0, 0.0, jump, mask)
 	var back := _push(size, 0.0, 0.0, Color(0, 0, 0, 0), 0.0, 1.0, jump)
 	var groups := Vector2i(ceili(size.x / 8.0), ceili(size.y / 8.0))
 	for view in buffers.get_view_count():
 		var color := buffers.get_color_layer(view)
 		var depth := buffers.get_depth_layer(view)
 		var copy := buffers.get_texture(&"paint_pass", &"copy")
-		_dispatch(color, copy, depth, filter, groups)
-		_dispatch(copy, color, depth, back, groups)
+		var tag := nr if nr.is_valid() else depth
+		_dispatch(color, copy, depth, tag, filter, groups)
+		_dispatch(copy, color, depth, tag, back, groups)
 
 
-static func _push(size: Vector2i, radius: float, edge_px: float, edge: Color, kuwahara: float, copy_only: float, jump: float) -> PackedByteArray:
+static func _push(size: Vector2i, radius: float, edge_px: float, edge: Color, kuwahara: float, copy_only: float, jump: float, mask := 0.0) -> PackedByteArray:
 	return PackedFloat32Array([size.x, size.y, radius, edge_px, edge.r, edge.g, edge.b, edge.a, jump, kuwahara,
-		copy_only, 0.0]).to_byte_array()
+		copy_only, mask]).to_byte_array()
 
 
-func _dispatch(from: RID, to: RID, depth: RID, push: PackedByteArray, groups: Vector2i) -> void:
+func _dispatch(from: RID, to: RID, depth: RID, tag: RID, push: PackedByteArray, groups: Vector2i) -> void:
 	var out := RDUniform.new()
 	out.uniform_type = RenderingDevice.UNIFORM_TYPE_IMAGE
 	out.binding = 0
@@ -169,7 +181,12 @@ func _dispatch(from: RID, to: RID, depth: RID, push: PackedByteArray, groups: Ve
 	deep.binding = 2
 	deep.add_id(_sampler)
 	deep.add_id(depth)
-	var uniforms := UniformSetCacheRD.get_cache(_shader, 0, [out, src, deep])
+	var rough := RDUniform.new()
+	rough.uniform_type = RenderingDevice.UNIFORM_TYPE_SAMPLER_WITH_TEXTURE
+	rough.binding = 3
+	rough.add_id(_sampler)
+	rough.add_id(tag)
+	var uniforms := UniformSetCacheRD.get_cache(_shader, 0, [out, src, deep, rough])
 	var list := _rd.compute_list_begin()
 	_rd.compute_list_bind_compute_pipeline(list, _pipeline)
 	_rd.compute_list_bind_uniform_set(list, uniforms, 0)

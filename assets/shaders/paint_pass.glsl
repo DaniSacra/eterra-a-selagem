@@ -13,6 +13,8 @@ layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 layout(rgba16f, set = 0, binding = 0) uniform restrict writeonly image2D out_color;
 layout(rgba16f, set = 0, binding = 1) uniform restrict readonly image2D src_color;
 layout(set = 0, binding = 2) uniform sampler2D src_depth;
+// The Forward+ normal and roughness (resolved), for the ink's figure mask (`mask`); the depth again when absent.
+layout(set = 0, binding = 3) uniform sampler2D src_normal_roughness;
 
 layout(push_constant, std430) uniform Params {
 	vec2 size;
@@ -22,7 +24,7 @@ layout(push_constant, std430) uniform Params {
 	float edge_jump;
 	float kuwahara;
 	float copy_only;
-	float pad1;
+	float mask; // 0 none; 1 no ink where a figure (roughness tag) is in the cross; 2 shows the roughness channel
 } p;
 
 float luma(vec3 c) {
@@ -43,6 +45,12 @@ void main() {
 		return;
 	}
 	vec3 here = fetch(at);
+	if (p.mask > 1.5 && p.copy_only < 0.5) {
+		// red where the instance is dynamic (Forward+ packs it above 0.5), grey by the roughness elsewhere
+		float a = texelFetch(src_normal_roughness, at, 0).a;
+		imageStore(out_color, at, a > 0.5 ? vec4(0.8, 0.05, 0.05, 1.0) : vec4(vec3(a * 0.5), 1.0));
+		return;
+	}
 	if (p.copy_only > 0.5) {
 		imageStore(out_color, at, vec4(here, 1.0));
 		return;
@@ -90,6 +98,17 @@ void main() {
 		jump = max(jump, d - depth_at(at + ivec2(0, -w)));
 		float rel = jump / max(d, 1e-6);
 		float edge = smoothstep(p.edge_jump, p.edge_jump * 2.0, rel);
+		if (p.mask > 0.5 && edge > 0.0) {
+			// no ink on the figures (the art review of 2026-11-20: the crowd's outline doubled, and figures behind a life
+			// bar drew their edge over it): the Forward+ marks a moving instance (the crowd, the paladin, his sword)
+			// with its roughness channel above 0.5, so any edge touching one is left alone
+			float dyn = texelFetch(src_normal_roughness, at, 0).a;
+			dyn = max(dyn, texelFetch(src_normal_roughness, clamp(at + ivec2(w, 0), ivec2(0), ivec2(p.size) - 1), 0).a);
+			dyn = max(dyn, texelFetch(src_normal_roughness, clamp(at + ivec2(-w, 0), ivec2(0), ivec2(p.size) - 1), 0).a);
+			dyn = max(dyn, texelFetch(src_normal_roughness, clamp(at + ivec2(0, w), ivec2(0), ivec2(p.size) - 1), 0).a);
+			dyn = max(dyn, texelFetch(src_normal_roughness, clamp(at + ivec2(0, -w), ivec2(0), ivec2(p.size) - 1), 0).a);
+			edge *= 1.0 - step(0.5, dyn);
+		}
 		result = mix(result, p.edge_color.rgb, edge * p.edge_color.a);
 	}
 	imageStore(out_color, at, vec4(result, 1.0));

@@ -139,17 +139,21 @@ uniform float hero_light = 1.0;
 // clearing is raised style_tell times (CrowdRenderer.STYLE_TELL) so it lifts the darker body as much as the classic one
 // (P2-5), and a figure with a colour of its own (style_vivid > 0: Morvath's violet, P2-2) keeps its saturation and
 // takes its own rim colour in place of the warm one.
+// 2026-11-20 (ciclo visual, art-director goal: the body 25 of luma under the floor): in the Sanctuary's limestone the
+// bone of a skeleton read as light as the slab (p90 122 against 96 to 108), so the body is a quarter darker again
+// (style_light 0.2 to 0.15, style_scene 0.1 to 0.075, style_rim 0.18 to 0.14, style_hero 0.2 to 0.15); the elites' gold
+// (style_gild_*), the tell and the flash are their own and do not change.
 global uniform float art_style;
-uniform float style_light = 0.2;
-uniform float style_scene = 0.1;
+uniform float style_light = 0.15;
+uniform float style_scene = 0.075;
 uniform vec3 style_rim_color : source_color = vec3(1.0, 0.82, 0.62);
 uniform float style_rim_power = 3.5;
-uniform float style_rim = 0.18;
+uniform float style_rim = 0.14;
 uniform float style_flat = 0.35;
 uniform float style_flat_lod = 3.0;
 uniform float style_tell = 1.0;
 uniform float style_vivid = 0.0;
-uniform float style_hero = 0.2;
+uniform float style_hero = 0.15;
 // Elite gold in the stylized look (the PO, 2026-11-19: elites read like the commons there). With the body at style_light
 // of the key, the classic's old gold on the steel (gild, mixed into the painting) went as dark as the rest and the warm
 // rim made every figure the same brown. A figure with style_elite 1 (elites and guardians: CrowdRenderer.STYLE_ELITE,

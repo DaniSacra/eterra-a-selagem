@@ -6,13 +6,13 @@
 script = ExtResource("1_tl3ky")
 id = &"runner_elite"
 name_key = &"enemy_runner"
-model = &"runner"
+model = &"runner_elite"
 size = 1.04
 tint = Color(1, 0.72, 0.5, 1)
 rim_color = Color(0.62, 0.46, 0.22, 1)
 rim = 0.3
 gild = 0.85
-magic_color = Color(3, 1.1, 0.25, 1)
+magic_color = Color(1.4, 0.16, 0.3, 1)
 vivid = 0.1
 sway = 7.0
 windup_shake = 0.04

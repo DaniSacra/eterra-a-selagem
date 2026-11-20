@@ -31,8 +31,8 @@ uniform float metallic = 0.3;
 // channel of the sword passes style_cap (no light past 1.0, the pulse of a swing included). The pale edge down the
 // middle is EmethSword's (EmethSword.STYLE_CORE). art_style 0: the classic blade, unchanged.
 global uniform float art_style;
-uniform vec3 style_back : source_color = vec3(0.11, 0.45, 0.23);
-uniform vec3 style_face : source_color = vec3(0.23, 0.75, 0.34);
+uniform vec3 style_back : source_color = vec3(0.07, 0.45, 0.2);
+uniform vec3 style_face : source_color = vec3(0.16, 0.75, 0.3);
 uniform vec3 style_key = vec3(-0.45, 0.75, 0.5);
 uniform float style_split = 0.12;
 uniform float style_cap = 0.6; // STY-09: 0.98 still clipped to white on the screen (exposure 1.25)
@@ -126,6 +126,9 @@ void fragment() {
 		ALBEDO = mix(ALBEDO, temper_gold * 0.5, max(tm.x, tm.y * 0.5));
 	}
 	if (styled) {
-		EMISSION = min(EMISSION, vec3(style_cap));
+		// HB3 (2026-11-20): capped by its brightest channel, the hue kept (a cap per channel clipped only the green and
+		// greyed the crystal: 0.6% of green round the paladin on the GPU, 1% asked)
+		float peak = max(EMISSION.r, max(EMISSION.g, EMISSION.b));
+		EMISSION *= min(1.0, style_cap / max(peak, 0.0001));
 	}
 }

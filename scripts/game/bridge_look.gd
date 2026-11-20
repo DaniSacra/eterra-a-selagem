@@ -73,11 +73,11 @@ const RUIN_EDGE := Color(0.12, 0.16, 0.24)
 # ---------- the stylized look (room redesign, lot C section 3: docs/art/room_redesign_lotC_spec.md) ----------
 ## The bridge's biome: worn blue-grey stone (hue 212), little olive, the hall's fires, its own air.
 const STYLE := {
-	&"stone": Color(0.31, 0.33, 0.36), &"shadow": Color(0.80, 0.88, 1.0), &"floor_stone": STY_FLOOR, &"edge_value": STY_EDGE_VALUE,
+	&"stone": Color(0.30, 0.325, 0.378), &"shadow": Color(0.80, 0.865, 1.0), &"floor_stone": STY_FLOOR, &"edge_value": STY_EDGE_VALUE,
 	&"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.05, &"slab_paint": Vector2(0.86, 1.12), &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"pool_saturation": 1.0,
-	&"air": {&"sky": Color(0.045, 0.055, 0.075), &"fog": Color(0.10, 0.12, 0.15), &"ambient": Color(0.66, 0.70, 0.77),
-		&"ambient_gain": 2.1, &"moon": Color(0.80, 0.86, 0.98), &"moon_energy": 1.0, &"moon_shadow": true},
+	&"air": {&"sky": Color(0.045, 0.053, 0.08), &"fog": Color(0.10, 0.115, 0.155), &"ambient": Color(0.66, 0.695, 0.78),
+		&"ambient_gain": 1.3, &"moon": Color(0.80, 0.86, 0.98), &"moon_energy": 0.6, &"moon_shadow": true},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
@@ -85,7 +85,8 @@ const STYLE := {
 ## The cycle of 2026-11-20 (ART_REVIEW.md: B is a strong reference, only the floor and the saturation move): the
 ## slate a little lighter (hue 215 to 225), the lichen a blue grey, the patches soft (ArenaKit.SOFT_PATCHES), the floor calm
 ## (ArenaKit.CALM_FLOOR); the cold goes to the mist (STY_MIST_SAT), the shadow and the air (matrix row 3: scene hue
-## 216 to 226, saturation 0.30 to 0.35), not the floor.
+## 216 to 226, saturation 0.30 to 0.35), not the floor. ART_REVIEW.md 4.5 P2-B5: the stone, the shadow, the air and
+## the glow a few degrees bluer (hue 219 to 223, 12 degrees or more from the Salão), the platforms' floor as it was.
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.46, 0.48, 0.52)}
 const STY_FLOOR := Color(0.32, 0.34, 0.37)
 ## The platforms are narrow: the floor keeps its value to the edge (the spec's luma 55 to 70 on them; as the Rift).
@@ -96,8 +97,15 @@ const STY_COMPAT_MOON := 0.6
 ## The abyss: its mist, banks and depths' light at this share of their saturation and value (spec 3.2: 0.85), the
 ## thread of violet's glow cards a cold grey blue, the cliffs and piers in a grey blue depth stone.
 const STY_MIST_SAT := 0.8
+const EDGE_ARCHES: Array[Vector4] = [Vector4(-9.0, -21.0, -6.0, 6.0), Vector4(11.0, -24.0, -7.0, 7.0)]
+const EDGE_ARCH_SPRING := 7.5
+## P2-B1 (ART_REVIEW.md 4.5): soft pools of key light over the three platforms (ArenaRoom.key_pool: x, z, radius),
+## their colour and energy; the moon lower (STYLE's air) so the floor nearest the camera falls under 0.80 of the middle.
+const STY_KEY_POOLS: Array[Vector3] = [Vector3(-21.0, 0.0, 6.0), Vector3(0.0, 0.0, 5.0), Vector3(21.0, 0.0, 6.0)]
+const STY_KEY_POOL_COLOR := Color(0.84, 0.88, 1.0)
+const STY_KEY_POOL_ENERGY := 6.0
 const STY_MIST_VALUE := 0.85
-const STY_GLOW := Color(0.36, 0.42, 0.52)
+const STY_GLOW := Color(0.36, 0.41, 0.53)
 const STY_CLIFF := {&"stone_color": Color(0.05, 0.058, 0.07), &"edge_color": Color(0.13, 0.15, 0.18),
 	&"glow_color": Color(0.3, 0.36, 0.46)}
 ## P1: a fire bowl on a pillar at each bridge end, over the gap beside the deck (the corner without the statue): the
@@ -162,6 +170,17 @@ func air() -> Dictionary:
 
 func mist() -> Color:
 	return MIST
+
+
+## ENV-HB4 (ArenaRoom.under_look, only in the stylized look): the camera's side of the floor's edge on arches going
+## down into the mist instead of a plain coursed wall.
+## Not under the bridges (the gaps between the platforms: the bridges' own arches stand there).
+const STY_UNDER := {&"set": ArenaRoom.LIP.y, &"top": -0.7,
+	&"skip": [Rect2(-14.6, -12.0, 8.2, 24.0), Rect2(6.4, -12.0, 8.2, 24.0)]}
+
+
+func under_look() -> Dictionary:
+	return STY_UNDER
 
 
 func cliff_look() -> Dictionary:
@@ -442,6 +461,14 @@ func _dress_styled() -> void:
 	# item 4 of the cycle of 2026-11-20 (depth past the edge): the far broken bridges in both variants, spurs of rock
 	_far_bridges(sm)
 	depth_spurs(sm, STY_SPURS, STY_SPUR_FOOT, deep(), STY_SPUR_SEED)
+	# TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Ponte): broken arches far out in the abyss to the north, rising out
+	# of the mist (EDGE_ARCHES: x, z, foot below the floor, span; their springing EDGE_ARCH_SPRING); the chain with its
+	# weight waits for the technical-artist's fix
+	for a: Vector4 in EDGE_ARCHES:
+		edge_kit().broken_arch(Vector3(a.x, a.z, a.y), Vector2(0, 1), a.w, EDGE_ARCH_SPRING)
+	# P2-B1 (ART_REVIEW.md 4.5): each platform lit a step more than its edge nearest the camera
+	for f: Vector3 in STY_KEY_POOLS:
+		key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
 	if _long:
 		for w in _landings:
 			for c: Vector2 in [Vector2(w.position.x + LANDING_LANTERN_IN, w.position.y + LANDING_LANTERN_IN),

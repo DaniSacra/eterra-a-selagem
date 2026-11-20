@@ -34,7 +34,9 @@ const RARITY_KEY: Array[StringName] = [&"rarity_common", &"rarity_rare", &"rarit
 const SLOT_TAG: Array[StringName] = [&"", &"light", &"heavy", &"cast", &"dash"]
 const SLOT_KEY: Array[StringName] = [&"", &"slot_attack", &"slot_special", &"slot_cast", &"slot_dash"]
 
-const FAMILY_COLOR: Array[Color] = [Color(1.0, 0.45, 0.12), Color(0.45, 0.8, 1.0), Color(1.0, 0.85, 0.4), Color(0.45, 0.95, 0.6), Color(0.85, 0.5, 1.0)]
+## vfx_pass_spec.md 4 (Lote 1): Chama amber, Geada as it was, Luz pale gold, Vigília sage (hue 82; was the emerald's
+## green), Elo old gold (was violet, Morvath's). The cards, the HUD and the effects read them (Combat.color_of the same).
+const FAMILY_COLOR: Array[Color] = [Color(1.0, 0.6, 0.16), Color(0.45, 0.8, 1.0), Color(1.0, 0.92, 0.7), Color(0.66, 0.78, 0.46), Color(0.78, 0.62, 0.34)]
 ## Tag carried by the hits of a family's skills, so other gifts can change them.
 const FAMILY_TAG: Array[StringName] = [&"chama", &"geada", &"luz", &"vigilia", &"duo"]
 const FAMILY_KEY: Array[StringName] = [&"family_chama", &"family_geada", &"family_luz", &"family_vigilia", &"family_duo"]

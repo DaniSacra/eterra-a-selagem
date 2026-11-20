@@ -12,11 +12,28 @@ const BOSS_POOL := 3
 const BOSS_SCYTHE_INNER := 0.1
 const INK := preload("res://assets/shaders/slash_ink.gdshader")
 const RING := preload("res://assets/shaders/ring.gdshader")
+const SMOKE_RING := preload("res://assets/shaders/smoke_ring.gdshader")
+## The snap where a blow lands (V-05): its shader, pool, life (3 frames), growth and size (metres, half a quad).
+const CONTACT := preload("res://assets/shaders/contact.gdshader")
+const CONTACT_POOL := 12
+const CONTACT_TIME := 0.05
+const CONTACT_GROW := 1.25
+const CONTACT_SPIKES := Vector2(0.25, 0.6)
+const CONTACT_SPIKES_HEAVY := Vector2(0.4, 0.9)
+## An enemy's blow landing (smoke_ring): how many may show at once, the screen's ceiling of its rim (V-12: 205) and the
+## dirty embers and smoke it leaves.
+const SMOKE_RING_POOL := 12
+const SMOKE_RING_SCREEN := 205
+const SMOKE_RING_EMBERS := 7
 const BEAM := preload("res://assets/shaders/beam.gdshader")
 const IMPACT := preload("res://assets/shaders/impact.gdshader")
 const IMPACT_POOL := 40
 const THRUST := preload("res://assets/shaders/emeth_thrust.gdshader")
 const THRUST_POOL := 4
+## V-04: seconds the thrust's light takes to reach its point and to leave it, and the crystal spikes of the Omega.
+const THRUST_IN := 0.06
+const THRUST_OUT := 0.15
+const THRUST_SPIKES := 5
 ## Motes: the specks of magic a swing sheds and the chips of a blow landing, all in one MultiMesh.
 const MOTE_POOL := 192
 const MOTE_GRAVITY := 5.0
@@ -61,6 +78,9 @@ const CRESCENT_INNER := 0.87
 const CRESCENT_MAX_REACH := 5.5
 ## Share of the ink opacity (Feel.ink_opacity) its dark body keeps: lighter than a blow, so the white edge leads.
 const CRESCENT_INK := 0.28
+## V-02: the degrees the spin's ribbon sweeps, and a finisher's at least and at most.
+const CRESCENT_SPIN := 300.0
+const CRESCENT_ARC := Vector2(120.0, 180.0)
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
@@ -114,25 +134,43 @@ const BURST_SCALE := 0.7
 const BURST_AMOUNT := 0.7
 const SHAKE_METERS := 0.12
 
-## kind -> [colour, amount, speed, gravity, size, lifetime, spread]
+## kind -> [colour, amount, speed, gravity, size, lifetime, spread (degrees), form]. vfx_pass_spec.md 5.6: no round
+## soft dot any more (they read as soap bubbles round the paladin): `chip` bursts are slivers in the motes' MultiMesh
+## (chip.gdshader, stretched along their flight), `wisp` bursts are smoke wisps with a torn edge (wisp.gdshader), and
+## every colour stays under 1 per channel (under the glow; the shaders cap them under the screen's 226). gravity:
+## upward acceleration (m/s2, negative falls). fire also leaves FIRE_SMOKE dark wisps.
 const BURSTS := {
-	&"spark": [Color(2.6, 2.2, 1.4), 10, 9.0, -6.0, 0.16, 0.28, 50.0],
-	&"bone": [Color(1.4, 1.35, 1.2), 9, 5.5, -16.0, 0.22, 0.7, 70.0],
-	&"fire": [Color(3.0, 1.2, 0.3), 16, 4.0, 3.0, 0.42, 0.55, 80.0],
-	&"frost": [Color(1.2, 2.2, 3.2), 14, 6.0, -5.0, 0.26, 0.5, 80.0],
-	# the paladin's light (a gift taken, an Omega charged, the circle): warm ivory under the glow, never a saturated
-	# yellow over him (ART-009 of cycle 10); drawn behind him from the camera (hero_burst)
-	&"light": [Color(1.1, 0.98, 0.78), 18, 4.0, 2.0, 0.3, 0.7, 90.0],
-	&"shadow": [Color(0.75, 0.52, 1.3), 16, 3.0, 1.5, 0.55, 0.8, 90.0],
-	&"dust": [Color(0.5, 0.45, 0.42), 10, 2.5, 0.5, 0.6, 0.6, 70.0],
-	&"heal": [Color(0.8, 2.6, 1.2), 16, 2.5, 2.5, 0.3, 0.8, 90.0],
-	# a boss's souls and necromancy: a cold, pale smoke that rises slowly (never Emeth's crystal green). C18 (ART P1-4):
-	# specks of 0.12 m at most (0.17 x BURST_SCALE), hue pulled to the blue (about 181), brightest channel 0.9 (under
-	# the glow): at 0.35 m and 1.55 they were the green-cyan bubbles round the hero in the storm
-	&"soul": [Color(0.45, 0.88, 0.9), 14, 2.2, 2.2, 0.17, 0.9, 80.0],
+	&"spark": [Color(0.95, 0.9, 0.78), 8, 9.0, -6.0, 0.16, 0.16, 50.0, &"chip"],
+	&"bone": [Color(0.55, 0.52, 0.46), 8, 5.5, -16.0, 0.2, 0.6, 70.0, &"chip"],
+	&"fire": [Color(0.95, 0.57, 0.15), 10, 4.0, 3.0, 0.3, 0.5, 80.0, &"chip"],
+	&"frost": [Color(0.48, 0.78, 0.95), 8, 6.0, -8.0, 0.24, 0.35, 80.0, &"chip"],
+	# the paladin's light (a gift taken, an Omega charged, the circle): ivory slivers rising, under the glow, never a
+	# saturated yellow over him (ART-009 of cycle 10); drawn behind him from the camera (hero_burst)
+	&"light": [Color(0.9, 0.84, 0.7), 10, 4.0, 2.0, 0.26, 0.7, 90.0, &"chip"],
+	# an enemy rising: dark smoke with a faint carmine edge (never the paladin's light)
+	&"shadow": [Color(0.2, 0.08, 0.09), 8, 3.0, 1.5, 0.6, 0.8, 90.0, &"wisp"],
+	&"dust": [Color(0.42, 0.4, 0.38), 6, 2.5, 0.5, 0.6, 0.6, 70.0, &"wisp"],
+	# healing: ivory-rose slivers rising (the heart, hue 345), never the Emeth's green
+	&"heal": [Color(0.95, 0.71, 0.77), 10, 2.5, 2.5, 0.26, 0.8, 90.0, &"chip"],
+	# a boss's souls and necromancy: a cold, pale smoke that rises slowly (never Emeth's crystal green; C18 ART P1-4:
+	# small, hue pulled to the blue, under the glow)
+	&"soul": [Color(0.45, 0.88, 0.9), 10, 2.2, 2.2, 0.3, 0.9, 80.0, &"wisp"],
 	# a curse: dark purple wisps
-	&"curse": [Color(0.55, 0.15, 0.8), 10, 1.6, 1.2, 0.35, 0.7, 90.0],
+	&"curse": [Color(0.55, 0.15, 0.8), 10, 1.6, 1.2, 0.4, 0.7, 90.0, &"wisp"],
 }
+## A fire burst's dark smoke at its end: so many wisps, their colour.
+const FIRE_SMOKE := 2
+const SMOKE := Color(0.12, 0.1, 0.09)
+## V-16: dark violet wisps the scythe's reach sheds (so many along the arc).
+const SCYTHE_WISPS := 7
+const SCYTHE_SMOKE := Color(0.16, 0.07, 0.24)
+## How much a wisp's colour covers what is behind it (premultiplied alpha), by how bright it is: dark smoke covers,
+## pale souls mostly add.
+const WISP_COVER := 0.75
+const WISP_POOL := 96
+const WISP := preload("res://assets/shaders/wisp.gdshader")
+## The motes' light at most (linear, before the exposure): the screen's ScreenTone.SAFE for white (chip.gdshader).
+const MOTE_CAP_SCREEN := 226
 
 var camera: Camera3D
 ## Where damage numbers are drawn (a Control over the 3D view).
@@ -180,8 +218,6 @@ var _slow_t := 0.0
 ## A slow motion asked for during a hit stop waits for it to end (GF-05: else the two together read as a freeze).
 var _slow_wait := false
 var _shake := 0.0
-var _pools: Dictionary = {}
-var _next: Dictionary = {}
 var _slashes: Array[Dictionary] = []
 var _inks: Array[Dictionary] = []
 var _impacts: Array[Dictionary] = []
@@ -194,6 +230,18 @@ var _mote_life := PackedFloat32Array()
 var _mote_time := PackedFloat32Array()
 var _mote_size := PackedFloat32Array()
 var _mote_color := PackedColorArray()
+var _mote_grav := PackedFloat32Array()
+## 1 where the mote came from a burst (showing(&"motes") counts only the swing's and the hits' own).
+var _mote_burst := PackedByteArray()
+var _wisps: MultiMesh
+var _wisp_n := 0
+var _wisp_pos := PackedVector3Array()
+var _wisp_vel := PackedVector3Array()
+var _wisp_life := PackedFloat32Array()
+var _wisp_time := PackedFloat32Array()
+var _wisp_size := PackedFloat32Array()
+var _wisp_color := PackedColorArray()
+var _wisp_rise := PackedFloat32Array()
 ## The motes' MultiMesh buffer (12 floats of transform, 4 of colour each), sent in one call a frame.
 var _mote_buf := PackedFloat32Array()
 var _blade: ShaderMaterial
@@ -203,6 +251,8 @@ var _glints: Array[Dictionary] = []
 var _crescents: Array[Dictionary] = []
 var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
+var _smoke_rings: Array[Dictionary] = []
+var _contacts: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
 ## The last pillar raised (beam): where, its intensity and cap (tests of GP-01).
 var last_beam := {}
@@ -214,7 +264,7 @@ var _gold_at := -1
 var _gold_sum := 0
 ## The paladin's head in the world (Player sets it each frame): no number stands within NumberTally.HERO_CLEAR of it.
 var hero_head := Vector3.INF
-var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS})
+var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS, &"contacts": BUDGET_GASHES})
 var _font: Font
 var _arc_meshes: Dictionary = {}
 var _boss_scythes: Array[Dictionary] = []
@@ -272,32 +322,6 @@ func setup(cam: Camera3D, over: Control) -> void:
 	camera = cam
 	overlay = over
 	_font = load("res://assets/fonts/AlegreyaSans-Bold.ttf")
-	for kind: StringName in BURSTS:
-		var spec: Array = BURSTS[kind]
-		var list: Array[CPUParticles3D] = []
-		for i in 14:
-			var p := CPUParticles3D.new()
-			p.emitting = false
-			p.one_shot = true
-			p.explosiveness = 0.92
-			p.amount = maxi(3, roundi(spec[1] * BURST_AMOUNT))
-			p.lifetime = spec[5]
-			p.initial_velocity_min = spec[2] * 0.4
-			p.initial_velocity_max = spec[2]
-			p.gravity = Vector3(0, spec[3], 0)
-			p.spread = spec[6]
-			p.direction = Vector3.UP
-			p.scale_amount_min = 0.5
-			p.scale_amount_max = 1.0
-			p.damping_min = 2.0
-			p.damping_max = 4.0
-			p.mesh = quad(spec[4] * BURST_SCALE, spec[0])
-			p.color_ramp = fade_ramp(Color.WHITE)
-			p.local_coords = false
-			add_child(p)
-			list.append(p)
-		_pools[kind] = list
-		_next[kind] = 0
 	for i in SLASH_POOL:
 		_inks.append(_effect_node(INK, null))
 		_slashes.append(_effect_node(SLASH, null))
@@ -319,6 +343,7 @@ func setup(cam: Camera3D, over: Control) -> void:
 		(e.mat as ShaderMaterial).render_priority = 1
 		_thrusts.append(e)
 	_build_motes()
+	_build_wisps()
 	var gq := QuadMesh.new()
 	gq.size = Vector2.ONE
 	for i in GLINT_POOL:
@@ -340,6 +365,19 @@ func setup(cam: Camera3D, over: Control) -> void:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2(2, 2)
 		_rings.append(_effect_node(RING, plane))
+	var cq := QuadMesh.new()
+	cq.size = Vector2(2, 2)
+	for i in CONTACT_POOL:
+		var e := _effect_node(CONTACT, cq)
+		(e.node as MeshInstance3D).sorting_offset = 11.0
+		(e.node as MeshInstance3D).extra_cull_margin = 2.0
+		_contacts.append(e)
+	for i in SMOKE_RING_POOL:
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(2, 2)
+		var e := _effect_node(SMOKE_RING, plane)
+		(e.mat as ShaderMaterial).render_priority = -1
+		_smoke_rings.append(e)
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = 0.7
 	cyl.bottom_radius = 1.0
@@ -379,11 +417,37 @@ func _build_motes() -> void:
 	_mote_time.resize(MOTE_POOL)
 	_mote_size.resize(MOTE_POOL)
 	_mote_color.resize(MOTE_POOL)
+	_mote_grav.resize(MOTE_POOL)
+	_mote_burst.resize(MOTE_POOL)
+	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(Color.WHITE, MOTE_CAP_SCREEN))
 	_mote_buf.resize(MOTE_POOL * 16)
 	var mmi := MultiMeshInstance3D.new()
 	mmi.multimesh = _motes
 	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# the motes fly anywhere in the room: never culled by the box of the first ones
+	mmi.custom_aabb = AABB(Vector3(-60, -5, -60), Vector3(120, 30, 120))
+	add_child(mmi)
+
+
+func _build_wisps() -> void:
+	_wisps = MultiMesh.new()
+	_wisps.transform_format = MultiMesh.TRANSFORM_3D
+	_wisps.use_colors = true
+	_wisps.use_custom_data = true
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	var mat := ShaderMaterial.new()
+	mat.shader = WISP
+	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(Color.WHITE, MOTE_CAP_SCREEN))
+	q.material = mat
+	_wisps.mesh = q
+	_wisps.instance_count = WISP_POOL
+	_wisps.visible_instance_count = 0
+	for arr in [_wisp_pos, _wisp_vel, _wisp_life, _wisp_time, _wisp_size, _wisp_color, _wisp_rise]:
+		arr.resize(WISP_POOL)
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = _wisps
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mmi.custom_aabb = AABB(Vector3(-60, -5, -60), Vector3(120, 30, 120))
 	add_child(mmi)
 
@@ -403,17 +467,43 @@ func _effect_node(shader: Shader, mesh: Mesh) -> Dictionary:
 # ---------- what the game calls ----------
 
 func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
-	var list: Array = _pools.get(kind, [])
-	if list.is_empty() or not budget.allows(&"bursts"):
+	if not BURSTS.has(kind) or not budget.allows(&"bursts"):
 		return
-	var i: int = _next[kind]
-	_next[kind] = (i + 1) % list.size()
-	var p: CPUParticles3D = list[i]
+	var spec: Array = BURSTS[kind]
 	if kind in CLEAR_OF_HERO:
 		pos = clear_of_hero(pos)
-	p.global_position = pos
-	p.direction = (dir + Vector3.UP * 0.6).normalized() if dir != Vector3.ZERO else Vector3.UP
-	p.restart()
+	var up := (dir + Vector3.UP * 0.6).normalized() if dir != Vector3.ZERO else Vector3.UP
+	var count := maxi(3, roundi(int(spec[1]) * BURST_AMOUNT))
+	var spread := deg_to_rad(float(spec[6]))
+	var size: float = spec[4] * BURST_SCALE
+	if spec[7] == &"wisp":
+		wisps(pos, up, spec[0], count, spec[2], size, spec[5], spread, spec[3])
+		return
+	_spray(pos, up, spec[0], count, spec[2], size, spec[5], spread, -float(spec[3]), true)
+	if kind == &"fire":
+		wisps(pos + Vector3.UP * 0.3, Vector3.UP, SMOKE, FIRE_SMOKE, 0.8, 0.5, 0.8, 0.5, 1.0)
+
+
+## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
+## from pos along dir within spread radians. color: their light (dark for smoke, pale for souls), size in meters.
+func wisps(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float = 2.0, size: float = 0.5, life: float = 0.7, spread: float = 1.2, rise: float = 1.0) -> void:
+	var forward := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.UP
+	var side := forward.cross(Vector3.FORWARD if absf(forward.z) < 0.9 else Vector3.RIGHT).normalized()
+	var up := side.cross(forward)
+	for i in count:
+		if _wisp_n >= WISP_POOL:
+			return
+		var k := _wisp_n
+		_wisp_n += 1
+		var a := _rng.randf_range(-spread, spread)
+		var b := _rng.randf_range(-spread, spread)
+		_wisp_pos[k] = pos
+		_wisp_vel[k] = (forward + side * tan(clampf(a, -1.3, 1.3)) * 0.6 + up * tan(clampf(b, -1.3, 1.3)) * 0.6).normalized() * speed * _rng.randf_range(0.3, 1.0)
+		_wisp_life[k] = 0.0
+		_wisp_time[k] = life * _rng.randf_range(0.7, 1.0)
+		_wisp_size[k] = size * _rng.randf_range(0.7, 1.0)
+		_wisp_color[k] = color
+		_wisp_rise[k] = rise
 
 
 ## C18 (ART P1-4): Morvath's spectral bursts never start nearer the paladin than this (on the floor): a soul landing
@@ -480,6 +570,7 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"band_from", SLASH_INNER)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"band_from", INK_INNER)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"tail", minf(SLASH_TAIL, SLASH_TAIL_DEGREES / maxf(width_deg, 1.0)))
@@ -510,6 +601,37 @@ func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross:
 	e.time = time
 
 
+## The snap where a blow of the paladin lands (vfx_pass_spec.md V-05): a star of 5 to 7 uneven spikes at pos, half of
+## them toward dir (the way the blade went), a small ivory heart, the tips in color; 3 frames growing 1.0 to 1.25, under
+## the screen's 226. heavy: longer spikes (0.4 to 0.9 m). As many a frame as the gashes (BUDGET_GASHES, own count: on
+## the gashes' own count a crowd showed half its cuts).
+func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false) -> void:
+	if not budget.allows(&"contacts"):
+		return
+	var e: Dictionary = _take(_contacts)
+	var mi: MeshInstance3D = e.node
+	mi.position = pos
+	var spikes := CONTACT_SPIKES_HEAVY if heavy else CONTACT_SPIKES
+	e.size = spikes.y * CONTACT_GROW
+	mi.scale = Vector3.ONE * e.size
+	e.time = CONTACT_TIME
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"seed", _rng.randf())
+	mat.set_shader_parameter(&"count", float(_rng.randi_range(5, 7)))
+	mat.set_shader_parameter(&"half_m", e.size)
+	mat.set_shader_parameter(&"spike_min_m", spikes.x)
+	mat.set_shader_parameter(&"spike_max_m", spikes.y)
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9)))
+	var aim := Vector2(1, 0)
+	if camera != null and dir.length_squared() > 0.0001:
+		var b := camera.global_transform.basis
+		aim = Vector2(dir.dot(b.x), dir.dot(b.y))
+		aim = aim.normalized() if aim.length_squared() > 0.0001 else Vector2(1, 0)
+	mat.set_shader_parameter(&"aim", aim)
+
+
 ## A burst where something breaks (armor): two crossed cuts, upright. size 1 is IMPACT_SIZE meters across.
 func impact(pos: Vector3, color: Color, size: float = 1.0, time: float = -1.0) -> void:
 	gash(pos, Vector3(_rng.randf_range(-0.4, 0.4), 1.0, 0.0), color, IMPACT_SIZE * size, true, time if time > 0.0 else 0.18)
@@ -530,6 +652,18 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"intensity", Feel.live().slash_intensity)
 	mat.set_shader_parameter(&"omega", 1.0 if omega else 0.0)
+	# V-04: the light runs in to the point in THRUST_IN s and leaves over THRUST_OUT s
+	mat.set_shader_parameter(&"sweep", clampf(THRUST_IN / time, 0.05, 0.9))
+	mat.set_shader_parameter(&"leave", clampf(THRUST_OUT / time, 0.1, 0.95))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
+	if omega:
+		# crystal spikes from the point to the sides (V-04): long slivers, flying out a moment
+		var tip := Vector3(origin.x + dir.x * reach, height, origin.y + dir.y * reach)
+		var fwd := Vector3(dir.x, 0.0, dir.y)
+		for k in THRUST_SPIKES:
+			var side := fwd.cross(Vector3.UP) * (1.0 if k % 2 == 0 else -1.0)
+			var out := (side * _rng.randf_range(0.6, 1.0) + fwd * _rng.randf_range(0.2, 0.7)).normalized()
+			_spray(tip, out, color.lerp(Color.WHITE, 0.3) * 0.9, 1, 9.0, 0.16, 0.18, 0.15, 0.0, true)
 
 
 ## Small specks flying from pos along dir (meters per second at most; a third of that at least) within spread
@@ -537,11 +671,17 @@ func thrust(origin: Vector2, dir: Vector2, reach: float, width: float, color: Co
 ## seconds, both at most. gold_every: one in so many is old gold instead of color (0: none).
 func chips(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float = 6.0, size: float = 0.1, life: float = 0.35, spread: float = 0.6, gold_every: int = 0) -> void:
 	var lit := Color(color.r * MOTE_GLOW, color.g * MOTE_GLOW, color.b * MOTE_GLOW)
+	_spray(pos, dir, lit, budget.take(&"motes", count), speed, size, life, spread, MOTE_GRAVITY, false, gold_every)
+
+
+## count slivers from pos along dir (spread radians round it), falling at gravity m/s2; burst: from Fx.burst (not
+## counted by showing(&"motes"), not in the motes' budget).
+func _spray(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float, size: float, life: float, spread: float, gravity: float, from_burst: bool, gold_every: int = 0) -> void:
 	var forward := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.UP
 	var side := forward.cross(Vector3.UP)
 	side = side.normalized() if side.length_squared() > 0.0001 else Vector3.RIGHT
 	var up := side.cross(forward)
-	for i in budget.take(&"motes", count):
+	for i in count:
 		if _mote_n >= MOTE_POOL:
 			return
 		var k := _mote_n
@@ -549,11 +689,13 @@ func chips(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float = 
 		var a := _rng.randf_range(-spread, spread)
 		var b := _rng.randf_range(-spread, spread) * 0.6
 		_mote_pos[k] = pos
-		_mote_vel[k] = (forward + side * tan(a) + up * tan(b)).normalized() * speed * _rng.randf_range(0.35, 1.0)
+		_mote_vel[k] = (forward + side * tan(clampf(a, -1.3, 1.3)) + up * tan(clampf(b, -1.3, 1.3))).normalized() * speed * _rng.randf_range(0.35, 1.0)
 		_mote_life[k] = 0.0
 		_mote_time[k] = life * _rng.randf_range(0.6, 1.0)
 		_mote_size[k] = size * _rng.randf_range(0.75, 1.0)
-		_mote_color[k] = OLD_GOLD if gold_every > 0 and i % gold_every == gold_every - 1 else lit
+		_mote_color[k] = OLD_GOLD if gold_every > 0 and i % gold_every == gold_every - 1 else color
+		_mote_grav[k] = gravity
+		_mote_burst[k] = 1 if from_burst else 0
 
 
 ## The blade answers a swing: its light rises for an instant (never a light on the room).
@@ -565,14 +707,19 @@ func blade_pulse() -> void:
 func showing(kind: StringName) -> int:
 	match kind:
 		&"motes":
-			return _mote_n
+			var own := 0
+			for i in _mote_n:
+				own += 1 - _mote_burst[i]
+			return own
+		&"wisps":
+			return _wisp_n
 		&"numbers":
 			var shown := 0
 			for l in _labels:
 				if l.visible:
 					shown += 1
 			return shown
-	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"glints": _glints,
+	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts, &"glints": _glints,
 		&"boss_scythes": _boss_scythes, &"boss_wakes": _boss_wakes}
 	var count := 0
 	for e: Dictionary in pools.get(kind, []):
@@ -594,18 +741,26 @@ func glint(pos: Vector3, color: Color, hold: float, follow: Node3D = null) -> vo
 	mat.set_shader_parameter(&"hold", hold / e.time)
 	mat.set_shader_parameter(&"life", 0.0)
 	mat.set_shader_parameter(&"streak_angle", _rng.randf_range(0.25, 0.45) * (1.0 if _rng.randf() < 0.5 else -1.0))
+	mat.set_shader_parameter(&"seed", _rng.randf())
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9)))
 
 
 ## The wave of a finisher: a thin crescent of ink with a white edge that flies far past the blow and fades.
 func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color: Color, height: float = 0.7) -> void:
 	var e: Dictionary = _take(_crescents)
-	_place_arc(e, _arc(minf(reach, CRESCENT_MAX_REACH), width_deg, CRESCENT_INNER), origin, dir, height, 0.0)
+	# V-02: the spin sweeps CRESCENT_SPIN degrees (never a closed ring), a finisher CRESCENT_ARC
+	var deg := CRESCENT_SPIN if width_deg >= CRESCENT_SPIN else clampf(width_deg, CRESCENT_ARC.x, CRESCENT_ARC.y)
+	var r := minf(reach, CRESCENT_MAX_REACH)
+	_place_arc(e, _arc(r, deg, CRESCENT_INNER), origin, dir, height, 0.0)
 	(e.node as Node3D).scale = Vector3.ONE
 	e.time = CRESCENT_TIME
 	var mat: ShaderMaterial = e.mat
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"ink_opacity", Feel.live().ink_opacity * CRESCENT_INK)
+	mat.set_shader_parameter(&"band_m", r * (1.0 - CRESCENT_INNER))
+	mat.set_shader_parameter(&"sweep", clampf(Feel.live().slash_sweep_time / CRESCENT_TIME, 0.05, 0.5))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
 
 
 ## Morvath's Sepulchral Scythe: the blade crosses the half circle from origin along dir (reach m, degrees wide) in
@@ -621,6 +776,16 @@ func boss_scythe(origin: Vector2, dir: Vector2, reach: float, degrees: float, sw
 	mat.set_shader_parameter(&"flip", _rng.randf() < 0.5)
 	mat.set_shader_parameter(&"body", body)
 	mat.set_shader_parameter(&"edge", edge)
+	# V-16: the gnawed reach in metres, under the screen's 226, and dark violet wisps leaving the reach
+	mat.set_shader_parameter(&"reach_m", reach * deg_to_rad(degrees) / 3.0)
+	mat.set_shader_parameter(&"band_m", reach * (1.0 - BOSS_SCYTHE_INNER))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(body))
+	var half := deg_to_rad(degrees) * 0.5
+	var facing := atan2(dir.x, dir.y)
+	for k in SCYTHE_WISPS:
+		var a := facing - half + 2.0 * half * (k + 0.5) / SCYTHE_WISPS
+		var out := Vector3(sin(a), 0.0, cos(a))
+		wisps(Vector3(origin.x, 0.3, origin.y) + out * reach, out * 0.8 + Vector3.UP * 0.4, SCYTHE_SMOKE, 1, 1.5, 0.5, 0.3, 0.3, 0.8)
 
 
 ## Morvath's dash: its lane (from, dir, length, width in m) revealed as he runs it in `run` seconds, breaking into
@@ -688,6 +853,29 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 	(r.mat as ShaderMaterial).set_shader_parameter(&"band", 0.035 if thin else 0.08)
 	(r.mat as ShaderMaterial).set_shader_parameter(&"fill", 0.0 if thin else 0.18)
 	r.time = time
+
+
+## Where an enemy's blow lands (vfx_pass_spec.md V-12): a ring of dark smoke with a torn edge opening to `radius`, its
+## inner rim in `color` under the screen's 205, a dark middle, dirty embers and smoke rising; nothing lit is filled.
+## thin: only a thin ring, gone in `time` (a blow with another right after it).
+func smoke_ring(center: Vector2, radius: float, color: Color, time: float = 0.5, thin: bool = false) -> void:
+	var r: Dictionary = _take(_smoke_rings)
+	var mi: MeshInstance3D = r.node
+	mi.position = Vector3(center.x, 0.12, center.y)
+	mi.scale = Vector3.ONE * radius
+	r.time = time
+	var mat: ShaderMaterial = r.mat
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(color, SMOKE_RING_SCREEN))
+	mat.set_shader_parameter(&"thin", 1.0 if thin else 0.0)
+	mat.set_shader_parameter(&"life", 0.0)
+	if thin:
+		return
+	var ember := Color(color.r, color.g, color.b) / maxf(maxf(color.r, color.g), maxf(color.b, 0.001)) * 0.5
+	for k in SMOKE_RING_EMBERS:
+		var a := TAU * k / SMOKE_RING_EMBERS + _rng.randf_range(-0.3, 0.3)
+		var at := Vector3(center.x + cos(a) * radius * 0.8, 0.2, center.y + sin(a) * radius * 0.8)
+		wisps(at, Vector3(cos(a) * 0.4, 1.0, sin(a) * 0.4), ember * 0.6 if k % 2 == 0 else SMOKE, 1, 1.2, 0.45, 0.5, 0.4, 1.2)
 
 
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
@@ -889,6 +1077,7 @@ func animate(delta: float) -> void:
 				_age(s, delta)
 				(s.mat as ShaderMaterial).set_shader_parameter(&"t", s.life)
 	_animate_motes(delta)
+	_animate_wisps(delta)
 	_animate_blade(delta)
 	for g in _glints:
 		if (g.node as Node3D).visible:
@@ -913,6 +1102,16 @@ func animate(delta: float) -> void:
 			_age(r, delta)
 			var k: float = 1.0 - pow(1.0 - r.life, 3.0)
 			(r.node as Node3D).scale = Vector3.ONE * r.size * lerpf(0.3, 1.0, k)
+			(r.mat as ShaderMaterial).set_shader_parameter(&"life", r.life)
+	for c in _contacts:
+		if (c.node as Node3D).visible:
+			_age(c, delta)
+			var mi: Node3D = c.node
+			mi.scale = Vector3.ONE * c.size * lerpf(1.0, CONTACT_GROW, c.life) / CONTACT_GROW
+			(c.mat as ShaderMaterial).set_shader_parameter(&"life", c.life)
+	for r in _smoke_rings:
+		if (r.node as Node3D).visible:
+			_age(r, delta)
 			(r.mat as ShaderMaterial).set_shader_parameter(&"life", r.life)
 	for b in _beams:
 		if (b.node as Node3D).visible:
@@ -966,9 +1165,11 @@ func _animate_motes(delta: float) -> void:
 			_mote_time[i] = _mote_time[_mote_n]
 			_mote_size[i] = _mote_size[_mote_n]
 			_mote_color[i] = _mote_color[_mote_n]
+			_mote_grav[i] = _mote_grav[_mote_n]
+			_mote_burst[i] = _mote_burst[_mote_n]
 			continue
 		_mote_life[i] = life
-		var vel := _mote_vel[i] * drag - Vector3(0, MOTE_GRAVITY * delta, 0)
+		var vel := _mote_vel[i] * drag - Vector3(0, _mote_grav[i] * delta, 0)
 		_mote_vel[i] = vel
 		_mote_pos[i] += vel * delta
 		var fade := 1.0 - life * life
@@ -989,6 +1190,32 @@ func _animate_motes(delta: float) -> void:
 	if _mote_n > 0:
 		_motes.buffer = _mote_buf
 	_motes.visible_instance_count = _mote_n
+
+
+func _animate_wisps(delta: float) -> void:
+	if _wisp_n == 0:
+		if _wisps.visible_instance_count != 0:
+			_wisps.visible_instance_count = 0
+		return
+	var drag := maxf(0.0, 1.0 - 2.5 * delta)
+	var i := 0
+	while i < _wisp_n:
+		var life := _wisp_life[i] + delta / _wisp_time[i]
+		if life >= 1.0:
+			_wisp_n -= 1
+			for arr in [_wisp_pos, _wisp_vel, _wisp_life, _wisp_time, _wisp_size, _wisp_color, _wisp_rise]:
+				arr[i] = arr[_wisp_n]
+			continue
+		_wisp_life[i] = life
+		_wisp_vel[i] = _wisp_vel[i] * drag + Vector3(0, _wisp_rise[i] * delta, 0)
+		_wisp_pos[i] += _wisp_vel[i] * delta
+		var w := _wisp_size[i] * (0.7 + 0.6 * life)
+		_wisps.set_instance_transform(i, Transform3D(Basis().scaled(Vector3(w, w * 1.6, w)), _wisp_pos[i]))
+		var c := _wisp_color[i]
+		_wisps.set_instance_color(i, Color(c.r, c.g, c.b, 1.0 - life))
+		_wisps.set_instance_custom_data(i, Color(float(i % 17) / 17.0, life, 0, 0))
+		i += 1
+	_wisps.visible_instance_count = _wisp_n
 
 
 ## The axis of a sliver flying at vel, width w meters across: along the flight, MOTE_STREAK seconds of it long but

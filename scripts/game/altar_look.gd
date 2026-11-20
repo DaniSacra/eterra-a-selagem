@@ -58,13 +58,13 @@ const CLIFF := {&"stone_color": Color(0.08, 0.08, 0.09), &"edge_color": Color(0.
 
 ## The stylized look (spec 3.2): warm calm stone, the altar's candles lit at 3 m and 1.2 of the light (their light
 ## keeps its shadow, the room's only one: ArenaKit.KEEP_SHADOW), a dark still air.
-## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 7b): an earthy warm stone (hue 18 to 28),
-## apart from the Santuário by hue, the air warmer and a step lighter.
+## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 7b; ART_REVIEW.md 4.5 P1-B1): an earthy reddish
+## stone and air (hue 18 to 28, 14 degrees or more from the Santuário's yellow limestone, and more saturated than it).
 const STYLE := {
-	&"stone": Color(0.36, 0.318, 0.29), &"shadow": Color(0.86, 0.9, 1.0), &"floor_stone": Color(0.342, 0.302, 0.276),
+	&"stone": Color(0.365, 0.308, 0.278), &"shadow": Color(0.84, 0.9, 1.0), &"floor_stone": Color(0.348, 0.293, 0.265),
 	&"olive_share": 0.06, &"edge_value": 1.0, &"metal": true,
 	&"fire": {&"candle_range": 3.0, &"candle_gain": 1.2, &"bowl_range": 7.5, &"bowl_gain": 2.2},
-	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.70, 0.66, 0.61),
+	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.72, 0.635, 0.575),
 		&"ambient_gain": 3.2, &"moon": Color(0.9, 0.88, 0.84), &"moon_energy": 0.8, &"moon_shadow": false},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
@@ -73,7 +73,7 @@ const STYLE := {
 ## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome, docs/art/benchmark_hades2_style.md 7): the floor
 ## calm between neighbour slabs (ArenaKit.CALM_FLOOR) and the patches soft and large (ArenaKit.SOFT_PATCHES); only HB2 and the frame (matrix
 ## row 7): the floor darkens toward the walls past STY_FRAME (calm_radius in m, edge_value, edge_span).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.475, 0.445, 0.386)}
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.49, 0.43, 0.37)}
 const STY_FRAME := {&"calm_radius": 6.0, &"edge_value": 0.6, &"edge_span": Vector2(1.1, 2.0)}
 ## The far ruins in the stylized look: a warm grey haze, their stone and edge (style_backdrop).
 const STY_BACKDROP := [Color(0.17, 0.16, 0.145), Color(0.075, 0.07, 0.065), Color(0.21, 0.19, 0.16)]

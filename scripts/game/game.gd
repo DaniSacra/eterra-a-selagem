@@ -548,8 +548,7 @@ func _spawn_elite(id: StringName) -> void:
 	var d := horde.def(id)
 	var at := _spawn_point()
 	horde.spawn(d, at, true)
-	fx.burst(&"shadow", Vector3(at.x, 1.0, at.y))
-	column(at, d.rim_color, 1.5, 12.0, 1.0)
+	fx.burst(&"shadow", Vector3(at.x, 1.0, at.y))  # (no column: vfx_pass_spec.md 5.4, V-15)
 	hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}))
 	Audio.play(&"elite")
 
@@ -985,7 +984,9 @@ func spawn_fountain(at: Vector2) -> void:
 	_fountain.add_child(l)
 	var pool := ground.add_zone(Ground.Kind.HOLY, _fountain_at, 1.8, 9999.0, 0.0)
 	pool.tags = []
-	column(_fountain_at, Combat.LIGHT, 1.4, 14.0, 1.2)
+	# the light that falls on what is taken, while it has water (vfx_pass_spec.md 6; the column of 1.2 s went)
+	_fountain_shaft = RewardShaft.make(_fountain, Vector3(_fountain_at.x, 0, _fountain_at.y), RewardShaft.fountain_tint(), RewardShaft.FOUNTAIN)
+	_fountain_shaft.appear(0.0, true)
 	hud.show_notice(T.t(&"notice_fountain"), 4.0)
 	Audio.play(&"fountain")
 
@@ -1000,6 +1001,9 @@ func _step_fountain() -> void:
 		(_fountain.get_node("Light") as OmniLight3D).light_energy = 0.6
 		(_fountain.get_node("Spring") as CPUParticles3D).emitting = false
 		ArenaKit.fountain_spent(_fountain)
+		if is_instance_valid(_fountain_shaft):
+			_fountain_shaft.take()
+		_fountain_shaft = null
 		for z in ground.zones:
 			if z.kind == Ground.Kind.HOLY and z.pos == _fountain_at:
 				z.life = 0.3
@@ -1293,6 +1297,10 @@ const BEAM_NEAR_HERO := 2.0
 ## A column of light at a point (a reward, the fountain, a gift taken or falling, an elite rising): every one under
 ## the glow threshold (Fx.BEAM_CORE_CAP), and faint (Skills.BEAM_OVER_BOSS) where it would stand on or in front of
 ## the paladin or the boss on the screen, so neither of them is ever lost in it (GP-01 of cycle C12c).
+## The fountain's light while it has water (vfx_pass_spec.md 6, RewardShaft).
+var _fountain_shaft: RewardShaft
+
+
 func column(at: Vector2, color: Color, radius: float, height: float, time: float) -> void:
 	var pitch := Dev.num("cam-pitch", Feel.live().cam_pitch)
 	var faint := at.distance_to(player.pos) < BEAM_NEAR_HERO \
@@ -1429,7 +1437,6 @@ func _shot() -> void:
 	get_tree().quit()
 
 
-## --frames=prefix: saves --count frames, one every --every seconds, starting at --shot-at (to check animations).
 ## Counts every Boss.moment named `name` in seen[0] from the start of the run (Q-T5-7, for _shot).
 func _watch_moment(name: StringName, seen: Array[int]) -> void:
 	while is_inside_tree():
@@ -1441,6 +1448,7 @@ func _watch_moment(name: StringName, seen: Array[int]) -> void:
 			seen[0] += 1
 
 
+## --frames=prefix: saves --count frames, one every --every seconds, starting at --shot-at (to check animations).
 func _frames() -> void:
 	await get_tree().create_timer(Dev.num("shot-at", 2.0)).timeout
 	for i in int(Dev.num("count", 12)):

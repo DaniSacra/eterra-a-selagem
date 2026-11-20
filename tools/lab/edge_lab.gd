@@ -80,7 +80,9 @@ func _run() -> void:
 			&"rubble": edge.rubble(Vector3(5, 0, 5), 1.8)
 			&"root_curtain": edge.root_curtain(Vector3(-1, 5.5, -9), 4.0, 3.5, Vector2(1, 0))
 			&"ivy": edge.ivy(Vector3(5, 5.0, -8), 2.4, 3.0, Vector2(1, 0), Vector2(0, 1))
-			&"chain_weight": edge.chain_weight(Vector3(8, 7.0, -2), 4.5, 1.0)
+			&"chain_weight":
+				edge.chain_weight(Vector3(8, 7.0, -2), 4.5, 1.0)
+				edge.chain_weight(Vector3(10, 6.5, 5), 0.0, 1.0, Vector3(14, 6.5, 5), 0.9)
 		await _settle()
 		var now := _calls()
 		var tris := _tris(holder)

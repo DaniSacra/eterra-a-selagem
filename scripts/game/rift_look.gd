@@ -144,7 +144,7 @@ const STYLE := {
 	&"edge_value": STY_EDGE_VALUE, &"joint_cold": Color(0.9, 0.88, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
 	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.69, 0.68, 0.76),
-		&"ambient_gain": 2.8, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 1.4, &"moon_shadow": true},
+		&"ambient_gain": 1.6, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 0.8, &"moon_shadow": true},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
@@ -162,6 +162,12 @@ const STY_COMPAT_MOON := 0.6
 ## The haze and the lips' violet in the stylized look: this share of the way to their own grey (the haze's lightest
 ## (0.23, 0.14, 0.42) to about (0.24, 0.17, 0.38); the abyss's mist cards too); the lips' sheet on the slabs fainter (the violet under the brink).
 const STY_HAZE_GREY := 0.4
+## P2-B1 (ART_REVIEW.md 4.5): soft pools of key light over the fight fields (ArenaRoom.key_pool: x, z, radius), the
+## west where he enters, the middle between the bridges, the east fight; their colour and energy. With the
+## moon lower (STYLE's air), the floor nearest the camera in the near camera under 0.80 of the middle.
+const STY_KEY_POOLS: Array[Vector3] = [Vector3(-16.0, 3.0, 7.0), Vector3(-2.5, -3.0, 5.0), Vector3(12.0, -1.0, 7.0)]
+const STY_KEY_POOL_COLOR := Color(0.86, 0.85, 0.96)
+const STY_KEY_POOL_ENERGY := 6.0
 const STY_LIP_GLOW_ALPHA := 0.14
 ## B: the violet mist bank where the bridge was, in the stylized look (it lit the gap's middle at saturation 0.67).
 const STY_FALLEN_MIST := Color(0.34, 0.26, 0.5)
@@ -262,6 +268,15 @@ func mist() -> Color:
 	return MIST
 
 
+## ENV-HB4 (ArenaRoom.under_look, only in the stylized look): the camera's side of the floor's edge on arches going
+## down into the mist instead of a plain coursed wall.
+const STY_UNDER := {&"set": ArenaRoom.LIP.y, &"top": -0.7}
+
+
+func under_look() -> Dictionary:
+	return STY_UNDER
+
+
 func cliff_look() -> Dictionary:
 	return CLIFF
 
@@ -315,6 +330,8 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 	if kind == Edge.HOLE:
 		var railed := _in_rift(mid + out * 2.0) and mid.x < (RIFT_X.x + RIFT_X.y) * 0.5 and out.x > 0.0
 		broken_lip(a, b, out, faces, LIP_LEDGE if railed else 0.0)
+		if railed:
+			_ledges.append(PackedVector2Array([a, b, out]))
 		_lip_glow(a, b, out)
 		if railed:
 			balustrade_edge(a, b, out, true)
@@ -328,6 +345,8 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 
 
 var _glow: SurfaceTool
+## The railed lips' sunk ledges (a, b, out), where the stylized look's fallen blocks lie (_edge_pieces).
+var _ledges: Array[PackedVector2Array] = []
 
 
 ## The violet on the slabs along a lip (F-1: painted, no light): a strip LIP_GLOW_WIDTH wide inside the edge a to b,
@@ -661,9 +680,44 @@ func _dress_styled() -> void:
 	_mouth_arch(sm)
 	_aqueduct(sm)
 	_fallen_column(sm)
+	# P2-B1 (ART_REVIEW.md 4.5): the fight fields lit a step more than the floor nearest the camera
+	for f: Vector3 in STY_KEY_POOLS:
+		key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
+	_edge_pieces()
 	if _fallen:
 		_fallen_arch(sm)
 		_vortex()
+
+
+## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Fendas): dead roots hanging from under each standing bridge's deck on
+## the side the camera sees, their top hidden under its overhang (EDGE_ROOTS: how far under the deck's edge, down from
+## the floor, how long; EDGE_ROOT_CLUMPS: the clumps' middles as a share of the span from its middle, their width, a
+## share of the length); a heap of fallen blocks on every other railed lip's sunk ledge
+## (EDGE_RUBBLE: out from the lip, its size). The north mouth keeps its broken arch (MOUTH_ARCH).
+const EDGE_ROOTS := Vector3(0.25, 0.66, 2.8)
+const EDGE_ROOT_CLUMPS: Array[Vector3] = [Vector3(-0.26, 0.8, 0.5), Vector3(0.18, 1.0, 0.62)]
+const EDGE_RUBBLE := Vector2(0.5, 0.9)
+## ... none near the fallen column (its z, FALLEN_COLUMN.x), which lies under the south hole's lips.
+const EDGE_RUBBLE_CLEAR := 2.5
+
+
+func _edge_pieces() -> void:
+	var edge := edge_kit()
+	var k := 0
+	for r in BRIDGES:
+		if not layout.floor.covers(r.get_center()):
+			continue
+		# in clumps, not a curtain the deck's whole length (an even row of roots read as a comb)
+		for c: Vector3 in EDGE_ROOT_CLUMPS:
+			var top := Vector3(r.get_center().x + c.x * r.size.x, -EDGE_ROOTS.y, r.end.y + DECK_OUT - EDGE_ROOTS.x)
+			edge.root_curtain(top, c.y, EDGE_ROOTS.z * c.z, Vector2(1, 0), k)
+			k += 1
+	for i in range(0, _ledges.size(), 2):
+		var l := _ledges[i]
+		var at := (l[0] + l[1]) * 0.5 + l[2] * EDGE_RUBBLE.x
+		if absf(at.y - FALLEN_COLUMN.x) < EDGE_RUBBLE_CLEAR:
+			continue
+		edge.rubble(Vector3(at.x, -LIP_SINK.x, at.y), EDGE_RUBBLE.y, i)
 
 
 ## F1: a small fire bowl on a pillar standing out of the rift's wall at `at` (off the floor): a corbel of the depths'

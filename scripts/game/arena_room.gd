@@ -322,6 +322,9 @@ var _style := {}
 ## The stylized look of the room (style()): its own pieces (dressed in dress() on kit.styled()), the backdrop, the
 ## painted stone, floor and kit, the fires, the metals; all through VisualProfile, so the classic look is as built.
 func _stylize() -> void:
+	var under := under_look()
+	if not under.is_empty():
+		_under_arcades(under)
 	_style = style()
 	if _style.is_empty():
 		return
@@ -334,8 +337,34 @@ func _stylize() -> void:
 			if n != null:
 				ArenaKit.style_only(n)
 	kit.stylize(_style, self, tomb)
+	_style_ruins()
 	if _style.has(&"air"):
 		_dress_air()
+
+
+## ENV-HB4: the far ruins' cards (abyss_ruins.gdshader) in the stylized look without the tall pale bands of mist
+## between their towers (seen from above they ran from the top of the picture to the bottom): fewer slender shafts,
+## every gap between two towers bridged (an arch or a deck across it), the card's mist STY_RUIN_MIST of the way to its
+## stone (the towers read as a darker ruin in the haze, not as posts against pale bands).
+const STY_RUIN_SHAFTS := 0.1
+const STY_RUIN_BRIDGED := 1.0
+const STY_RUIN_MIST := 0.6
+
+
+func _style_ruins() -> void:
+	var seen := {}
+	for n in find_children("*", "GeometryInstance3D", true, false):
+		var sm := (n as GeometryInstance3D).material_override as ShaderMaterial
+		if sm != null and sm.shader == RUIN_SHADER and not seen.has(sm):
+			seen[sm] = true
+			# the room may have varied them already: start from their stylized values
+			var mist: Color = VisualProfile.styled(sm, &"shader_parameter/mist_color", sm.get_shader_parameter(&"mist_color"))
+			var stone_c: Color = VisualProfile.styled(sm, &"shader_parameter/stone_color", sm.get_shader_parameter(&"stone_color"))
+			VisualProfile.vary(sm, {&"shader_parameter/shafts": STY_RUIN_SHAFTS, &"shader_parameter/bridged": STY_RUIN_BRIDGED,
+				&"shader_parameter/mist_color": mist.lerp(stone_c, STY_RUIN_MIST)})
+
+
+const RUIN_SHADER := preload("res://assets/shaders/abyss_ruins.gdshader")
 
 
 ## Room redesign lot C: the nodes added under the room since child `from` (the abyss's planes, lights and wisps), to
@@ -655,6 +684,7 @@ func _edges() -> void:
 			if layout.exits[k].mouth.grow(0.05).has_point((a + b) * 0.5):
 				kind = Edge.MOUTH
 		edge(a, b, out, kind, faces)
+		_runs.append([a, b, out, kind])
 	faces.generate_normals()
 	var mi := MeshInstance3D.new()
 	mi.mesh = faces.commit()
@@ -1553,6 +1583,193 @@ func backdrop(mist: Color, stone: Color, edge_color: Color) -> void:
 ## True on the browser's and the phone's renderer (Compatibility).
 static func compat() -> bool:
 	return RenderingServer.get_current_rendering_method() == "gl_compatibility"
+
+
+## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2): the edge and foreground pieces (EdgeKit) for the stylized look only:
+## built on kit.styled() (hidden in the classic look, painted with the room's stone by paint_look), never on the
+## walkable floor, roots and ivy always hanging from something that hides their top, no light of their own.
+var _edge: EdgeKit
+
+
+func edge_kit() -> EdgeKit:
+	if _edge == null:
+		_edge = EdgeKit.new(kit)
+		_edge.stone = kit.styled()
+	return _edge
+
+
+## ART_REVIEW.md 4.5 P2-B1 (only in the stylized look): a soft pool of key light over a fight field (x, z, radius),
+## diffuse (no painted bands, no hard edge), no shadow, never on the crowd; its middle KEY_POOL_SHIFT of the radius away
+## from the camera, so the floor nearest the camera, below the hero on the screen, falls off and the fight reads as the
+## lightest part (the near band under 0.80 of the middle). Height, the softness of its edge (spot_angle_attenuation;
+## no fall-off with distance, its energy is what reaches the floor).
+const KEY_POOL_SHIFT := 0.25
+const KEY_POOL_HEIGHT := 16.0
+const KEY_POOL_SOFT := 2.0
+
+
+func key_pool(field: Vector3, color: Color, energy: float) -> SpotLight3D:
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var away := -Vector2(sin(yaw), cos(yaw)) * field.z * KEY_POOL_SHIFT
+	var to := Vector3(field.x + away.x, 0.0, field.y + away.y)
+	var spot := SpotLight3D.new()
+	add_child(spot)
+	spot.look_at_from_position(to + Vector3(0.01, KEY_POOL_HEIGHT, 0.0), to)
+	spot.light_color = color
+	spot.light_energy = energy
+	spot.light_specular = 0.0
+	spot.spot_angle = rad_to_deg(atan(field.z / KEY_POOL_HEIGHT))
+	spot.spot_range = KEY_POOL_HEIGHT * 1.6
+	spot.spot_attenuation = 0.0
+	spot.spot_angle_attenuation = KEY_POOL_SOFT
+	spot.shadow_enabled = false
+	spot.light_cull_mask = ~Arena.CROWD_LAYER
+	spot.set_meta(ArenaKit.NOT_FIRE, true)
+	ArenaKit.style_only(spot)
+	return spot
+
+
+## ENV-HB4 (docs/art/benchmark_hades2_style.md 4.1, only in the stylized look, on kit.styled()): the plain coursed wall
+## under the floor's edges the camera sees (a maquette's cut in the air) becomes a substructure going down into the
+## mist: piers, pointed arches over dark openings, rock fallen against it, dead roots hanging from under some arches.
+## A look turns it on with under_look(): `set` (m out of the floor's edge where the wall's face is), `top` (the arches'
+## outer tops' height), optional `colors` (depth_stone uniforms for its own stone, if the room has no depths' stone),
+## optional `skip` (Rect2s: an edge whose middle is in one is left, e.g. a bridge's deck). Edges whose outside faces the
+## camera by UNDER_FACING or more and UNDER_MIN m long or more; never in front of a door's stairs (UNDER_DOOR round each
+## exit's mouth). Nothing collides; nothing over the floor (everything is outside it).
+const UNDER_FACING := 0.2
+const UNDER_MIN := 4.0
+## Pier to pier along the edge, its width and how far it stands out of the face, how far its foot goes down.
+const UNDER_STEP := 4.6
+const UNDER_PIER := Vector2(1.0, 0.8)
+const UNDER_FOOT := -18.0
+## A pier jittered along the edge by up to this; this share of them broken short (UNDER_BREAK m under the top, a block
+## askew on it).
+const UNDER_JITTER := 0.35
+const UNDER_BROKEN := 0.3
+const UNDER_BREAK := Vector2(0.9, 2.2)
+## The arch's ring (width, depth) and its springing line as a share of the opening.
+const UNDER_RING := Vector2(0.42, 0.55)
+const UNDER_SPRING := 0.3
+## The openings' darkness (the depth stone's tint), sunk this far in front of the face.
+const UNDER_RECESS := 0.32
+const UNDER_RECESS_OUT := 0.05
+## Rock fallen against the wall: the chance per bay, its size range, how far below the top it sits (range).
+const UNDER_ROCK := Vector3(0.45, 1.1, 2.3)
+const UNDER_ROCK_DROP := Vector2(1.2, 5.0)
+## Its stone: the depths' stone in bigger, rougher courses.
+const UNDER_ROCK_COURSE := Vector2(2.6, 3.4)
+## Dead roots from under an arch's crown: the chance per bay, width, length.
+const UNDER_ROOTS := Vector3(0.34, 0.9, 1.9)
+## Clear of a door's mouth by this (its stairs go down there).
+const UNDER_DOOR := 0.5
+
+
+func under_look() -> Dictionary:
+	return {}
+
+
+var _runs: Array = []
+
+
+func _under_arcades(u: Dictionary) -> void:
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var toward := Vector2(sin(yaw), cos(yaw))
+	var mat := deep()
+	if u.has(&"colors"):
+		mat = mat.duplicate() as ShaderMaterial
+		var colors: Dictionary = u[&"colors"]
+		for k: StringName in colors:
+			mat.set_shader_parameter(k, colors[k])
+	var recess := mat.duplicate() as ShaderMaterial
+	recess.set_shader_parameter(&"tint", UNDER_RECESS)
+	var rock := mat.duplicate() as ShaderMaterial
+	rock.set_shader_parameter(&"course", UNDER_ROCK_COURSE.x)
+	rock.set_shader_parameter(&"block_len", UNDER_ROCK_COURSE.y)
+	var skip: Array = u.get(&"skip", [])
+	for run: Array in _runs:
+		var a: Vector2 = run[0]
+		var b: Vector2 = run[1]
+		var out: Vector2 = run[2]
+		if run[3] != Edge.OUTER or out.dot(toward) < UNDER_FACING or a.distance_to(b) < UNDER_MIN:
+			continue
+		var hidden := false
+		for r: Rect2 in skip:
+			if r.has_point((a + b) * 0.5):
+				hidden = true
+		if not hidden:
+			_under_run(a, b, out, float(u[&"set"]), float(u[&"top"]), mat, recess, rock)
+
+
+## One edge's arcade (see _under_arcades).
+func _under_run(a: Vector2, b: Vector2, out: Vector2, set_: float, top: float, mat: ShaderMaterial,
+		recess: ShaderMaterial, rock: ShaderMaterial) -> void:
+	var sm := kit.styled()
+	var length := a.distance_to(b)
+	var along := (b - a) / length
+	var yaw := atan2(-along.y, along.x)
+	var r := RandomNumberGenerator.new()
+	r.seed = hash(Vector2i((a + b) * 10.0)) + 4471
+	var n := maxi(2, roundi(length / UNDER_STEP) + 1)
+	var piers: Array[float] = []
+	for i in n:
+		var s := lerpf(UNDER_PIER.x * 0.5, length - UNDER_PIER.x * 0.5, float(i) / (n - 1))
+		if i > 0 and i < n - 1:
+			s += r.randf_range(-UNDER_JITTER, UNDER_JITTER)
+		piers.append(s)
+	var face := out * set_
+	for i in n:
+		var s := piers[i]
+		if _near_door(a + along * s, out, UNDER_PIER.x):
+			continue
+		var t := top
+		var broken := i > 0 and i < n - 1 and r.randf() < UNDER_BROKEN
+		if broken:
+			t -= r.randf_range(UNDER_BREAK.x, UNDER_BREAK.y)
+		var p := a + along * s + face + out * UNDER_PIER.y * 0.5
+		sm.box(Vector3(p.x, (t + UNDER_FOOT) * 0.5, p.y), Vector3(UNDER_PIER.x, t - UNDER_FOOT, UNDER_PIER.y), yaw, mat, false)
+		if broken:
+			var cap := sm.box(Vector3(p.x, t + 0.15, p.y), Vector3(UNDER_PIER.x * 0.8, 0.5, UNDER_PIER.y * 0.9), yaw + r.randf_range(-0.3, 0.3), rock, false)
+			cap.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.25, 0.25))
+	for i in n - 1:
+		var s0 := piers[i] + UNDER_PIER.x * 0.5
+		var s1 := piers[i + 1] - UNDER_PIER.x * 0.5
+		var span := s1 - s0
+		var mid := a + along * (s0 + s1) * 0.5
+		if span < 1.0 or _near_door(mid, out, span):
+			continue
+		# the arch's outer apex at `top`: voussoir_arch's geometry (radius 0.8 of the span)
+		var rad := span * 0.8
+		var cx := rad - span * 0.5
+		var spring := span * UNDER_SPRING
+		var apex := spring + sqrt((rad + UNDER_RING.x) * (rad + UNDER_RING.x) - cx * cx)
+		var foot_y := top - apex
+		var at := mid + face + out * UNDER_RING.y * 0.5
+		sm.voussoir_arch(Vector3(at.x, foot_y, at.y), out, span, spring, UNDER_RING.x, UNDER_RING.y, mat)
+		# the bay's wall behind (over whatever face was there) and its dark opening under the springing line
+		var w := mid + face + out * 0.02
+		sm.box(Vector3(w.x, (top + UNDER_FOOT) * 0.5, w.y), Vector3(span + 0.1, top - UNDER_FOOT, 0.04), yaw, mat, false)
+		var o := mid + face + out * UNDER_RECESS_OUT
+		var o_top := foot_y + spring + span * 0.12
+		sm.box(Vector3(o.x, (o_top + UNDER_FOOT) * 0.5, o.y), Vector3(span * 0.96, o_top - UNDER_FOOT, 0.04), yaw, recess, false)
+		if r.randf() < UNDER_ROCK.x:
+			var size := r.randf_range(UNDER_ROCK.y, UNDER_ROCK.z)
+			var q := mid + along * r.randf_range(-span * 0.3, span * 0.3) + face + out * (size * 0.4 + 0.1)
+			var blk := sm.box(Vector3(q.x, top - r.randf_range(UNDER_ROCK_DROP.x, UNDER_ROCK_DROP.y), q.y),
+				Vector3(size, size * 0.7, size * 0.8), r.randf() * TAU, rock, false)
+			blk.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.4, 0.4))
+		elif r.randf() < UNDER_ROOTS.x:
+			edge_kit().root_curtain(Vector3(at.x, top - UNDER_RING.x, at.y), UNDER_ROOTS.y, UNDER_ROOTS.z, along, i)
+
+
+## A point of an edge (with `width` along it) within UNDER_DOOR of a door's mouth on that side.
+func _near_door(p: Vector2, out: Vector2, width: float) -> bool:
+	for e in layout.exits:
+		var box := e.mouth.grow(UNDER_DOOR + width * 0.5)
+		for k in 4:
+			if box.has_point(p + out * (0.6 * k)):
+				return true
+	return false
 
 
 ## A shaft of light falling on `target` from a hole in the vault `height` m up (leaning SHAFT_LEAN toward the back): a

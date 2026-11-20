@@ -106,18 +106,19 @@ const UNDER_FLOOR := Color(0.55, 0.55, 0.55)
 ## Room redesign, lot B (docs/art/room_redesign_lotB_spec.md section 1): the sanctuary's biome in the stylized look,
 ## warm limestone (the one fighting room in warm stone), cold shadows, the hall's fires, its own air, the soft key over
 ## the nave at STY_KEY of its energy.
-## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 6): the limestone warmer (stone and floor at
-## 0.22 to 0.25 of saturation, never past), the shafts warmer, the shadow colder: the colour from that contrast.
+## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 6; ART_REVIEW.md 4.5 P1-B2): a pale yellow
+## limestone (hue 34 to 42, under 0.2 of saturation, so the stone in the shafts stays under 0.25 and the cracked slabs'
+## amber reads on it), the shafts ivory gold, the shadow cold: the colour from that contrast.
 const STYLE := {
-	&"stone": Color(0.40, 0.357, 0.305), &"shadow": Color(0.78, 0.86, 1.0), &"floor_stone": STY_FLOOR,
+	&"stone": Color(0.39, 0.365, 0.325), &"shadow": Color(0.78, 0.86, 1.0), &"floor_stone": STY_FLOOR,
 	&"slab_paint": STY_SLAB_PAINT, &"slab_hue": STY_SLAB_HUE, &"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"],
-	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.76, 0.73, 0.68),
+	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.76, 0.745, 0.70),
 		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.85, &"moon_shadow": true},
 }
 ## The floor's limestone in the stylized look (room redesign fixes: it read neutral grey, nave luma 71 to 83 flat): a
 ## warmer stone, the slabs further apart in value and a little more in hue, fewer olive slabs.
-const STY_FLOOR := Color(0.37, 0.336, 0.292)
+const STY_FLOOR := Color(0.36, 0.343, 0.313)
 ## SW-G1 and SW-G2 (docs/art/sworn_reference_ideas.md 3.1; floor_biome.gdshaderinc, ArenaKit.paint_look's `floor`,
 ## put by style()): the painted floor's second colour of the biome in patches of 3 to 8 m, stronger near the edge, and
 ## the shadow of the vault's broken ribs (SW-S1) in the shafts: a quadripartite bay of gobo_scale m, stretched along
@@ -127,7 +128,7 @@ const STY_FLOOR := Color(0.37, 0.336, 0.292)
 ## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome, docs/art/benchmark_hades2_style.md 7): the floor
 ## calm between neighbour slabs (ArenaKit.CALM_FLOOR) and the patches soft and large (ArenaKit.SOFT_PATCHES); the stone
 ## at most 0.25 of saturation, the colour from the warm and cold contrast (matrix row 6).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.544, 0.514, 0.464),
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.54, 0.517, 0.476),
 	&"gobo_kind": 2, &"gobo_strength": 0.35, &"gobo_width": 0.1, &"gobo_base": 0.0, &"gobo_scale": 2.6, &"gobo_stretch": 1.5,
 	&"gobo_along": -STY_SHAFT_LEAN, &"gobo_sway": 0.04, &"gobo_soft": 0.03, &"gobo_cover": 0.5}
 ## SW-S3 with SW-G3 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, RAISED): a row of raised frames on the
@@ -160,7 +161,7 @@ const STY_SHAFT := Color(0.96, 0.88, 0.70)
 ## paint.gdshaderinc skips the bands and the pool's edge), warmer, weaker, its cone wider so it fades out over metres,
 ## leaning further so its fall on the floor is long along the light: colour, share of its energy, cone (degrees), lean
 ## (x, z m at the vault's height).
-const STY_SHAFT_WARM := Color(1.0, 0.85, 0.66)
+const STY_SHAFT_WARM := Color(1.0, 0.96, 0.89)
 const STY_SHAFT_GAIN := 0.75
 const STY_SHAFT_CONE := 30.0
 const STY_SHAFT_LEAN := Vector2(-5.5, -7.0)
@@ -672,6 +673,32 @@ func _dress_styled() -> void:
 	_moss(sm, face)
 	if not _hole.is_empty():
 		_torn_vault(sm)
+	_edge_pieces()
+
+
+## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Santuário): the foreground past the south cut wall, out of the nave and
+## off the floor: broken columns rising out of the dark below the room in two of the wall's gaps (EDGE_PILLARS: the gap
+## of SOUTH_GAPS, out past the floor's edge, their foot below the floor, how far over it they reach; EDGE_PILLAR_RADIUS)
+## and heaps of fallen blocks lying on the cut wall's top (EDGE_RUBBLE_AT: m along the south wall from its west end;
+## EDGE_RUBBLE: out of the floor's edge onto the wall, its size). All open in a stipple round the paladin.
+const EDGE_PILLARS: Array[Vector4] = [Vector4(1, 1.4, -3.6, 1.4), Vector4(2, 1.5, -3.6, 1.0)]
+const EDGE_PILLAR_RADIUS := 0.5
+const EDGE_RUBBLE_AT: Array[float] = [8.0, 25.0, 36.5]
+const EDGE_RUBBLE := Vector2(0.55, 0.55)
+
+
+func _edge_pieces() -> void:
+	var edge := edge_kit()
+	var west := _west_south_x()
+	var k := 0
+	for p in EDGE_PILLARS:
+		var gap := SOUTH_GAPS[int(p.x)]
+		var x := west + (gap.x + gap.y) * 0.5
+		edge.broken_pillar(Vector3(x, p.z, _south + p.y), EDGE_PILLAR_RADIUS, p.w - p.z, Vector2(1, 0), k)
+		k += 1
+	for s in EDGE_RUBBLE_AT:
+		edge.rubble(Vector3(west + s, CUT_WALL.x, _south + EDGE_RUBBLE.x), EDGE_RUBBLE.y, k)
+		k += 1
 
 
 ## S1, S2: candles and urns on the chancel's floor behind the grille, and the faded petrol runner from the grille to

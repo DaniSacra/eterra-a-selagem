@@ -8,7 +8,11 @@ shader_type spatial;
 // ring_burst_m when it bursts: under 0.6 of his height across), the middle of the cross is hollow (hollow_m: no ball
 // of light, the blade shows through it), and over his body (hero_pos, a column body_half_m wide and body_height_m
 // tall, seen from the camera) every part of it keeps only over_body of its light.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled, fog_disabled;
+// vfx_pass_spec.md V-03: no cross and no long streak (a gun sight through the paladin): a star of six uneven points
+// (spike_min_m to spike_max_m, each turned off the regular by 12 to 20 degrees, the whole turned by `seed`, a new one
+// every blow), ivory in the middle, the blow's colour at the tips; laid over what is behind (premultiplied) under
+// `peak` (Fx: ScreenTone.linear_peak, 226 on the screen).
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled, fog_disabled;
 
 uniform vec4 color : source_color = vec4(0.85, 0.82, 1.0, 1.0);
 uniform float life = 0.0;
@@ -29,6 +33,10 @@ uniform float spike_short = 0.12;
 uniform float streak_length = 1.0;
 // The hollow middle of the cross, in meters (nothing of the glint inside it but a faint halo).
 uniform float hollow_m = 0.14;
+uniform float seed = 0.0;
+uniform float spike_min_m = 0.18;
+uniform float spike_max_m = 0.42;
+uniform float peak = 1.0;
 // The paladin's body as the camera sees it: a column this wide (half, m) and tall over hero_pos; the glint keeps
 // over_body of its light there, fading in over body_soft_m around it.
 global uniform vec3 hero_pos;
@@ -79,12 +87,31 @@ void fragment() {
 	float flash = burst > 0.0 ? (1.0 - smoothstep(0.0, 0.35, burst)) * 0.2 : 0.0;
 	float fade = 1.0 - smoothstep(0.0, 0.75, burst);
 
-	// (hairlines: at 13 m across, a wider spike is a ball of white over the paladin and whoever he strikes)
-	float cross = spike(p.y, p.x, spike_long * grow, 0.016) + spike(p.x, p.y, spike_short * grow, 0.013);
-	float c = cos(streak_angle);
-	float s = sin(streak_angle);
-	vec2 q = vec2(c * p.x + s * p.y, -s * p.x + c * p.y);
-	float streak = spike(q.x, q.y, streak_length * mix(0.35, 1.0, charge) * (1.0 + burst * 0.3), 0.008);
+	// six uneven points, in metres from the middle
+	vec2 m = p * half_m;
+	float star = 0.0;
+	float tip_mix = 0.0;
+	for (int i = 0; i < 6; i++) {
+		float fi = float(i);
+		float h1 = fract(sin(fi * 12.9898 + seed * 78.233) * 43758.5453);
+		float h2 = fract(sin(fi * 39.3468 + seed * 11.135) * 24634.6345);
+		float jitter = radians(mix(12.0, 20.0, h1)) * (h2 < 0.5 ? -1.0 : 1.0);
+		float ang = seed * TAU + fi * TAU / 6.0 + jitter;
+		vec2 axis = vec2(cos(ang), sin(ang));
+		float len = mix(spike_min_m, spike_max_m, h2) * grow * (1.0 + burst * 0.4);
+		float along = dot(m, axis);
+		float across = abs(m.x * axis.y - m.y * axis.x);
+		if (along > 0.0 && along < len) {
+			float k = along / len;
+			float w = 0.035 * (1.0 - k);
+			float on = 1.0 - smoothstep(w * 0.6, w, across);
+			star = max(star, on);
+			tip_mix = max(tip_mix, on * k);
+		}
+	}
+	float cross = star;
+	float streak = 0.0;
+	vec2 q = p;
 	float r_m = length(p) * half_m;
 	float ring_r = ring_m * mix(0.6, 1.0, charge) + burst * ring_burst_m;
 	float ring_w = 0.04 + burst * 0.03;
@@ -92,12 +119,16 @@ void fragment() {
 	// the hollow middle: the lines start hollow_m out, a faint halo is all that is left inside
 	float open = smoothstep(hollow_m * 0.6, hollow_m, r_m);
 	float halo = (1.0 - smoothstep(0.0, 0.3 * grow, length(p))) * 0.05;
-	// a soft smear of light along the streak
-	float smear = exp(-q.y * q.y * 2500.0) * (1.0 - smoothstep(0.0, 0.8, abs(q.x))) * 0.2;
+	float smear = 0.0;
 
 	float v = min((cross * 1.2 + streak * 0.9 + smear) * open + ring * 0.9 + halo, max_light) * pulse * (1.0 + flash) * fade;
 	v *= clear_of_body(VERTEX);
-	// the blow's colour, pale but never white: the paladin behind it must still read
-	vec3 tint = mix(color.rgb, vec3(1.0), 0.35);
-	ALBEDO = tint * v * intensity * mix(0.5, 1.0, charge);
+	// ivory in the middle, the blow's colour toward the tips; the paladin behind it must still read
+	vec3 hue = color.rgb / max(max(color.r, max(color.g, color.b)), 0.0001);
+	vec3 tint = mix(vec3(1.0, 0.97, 0.9), hue, clamp(tip_mix * 1.4, 0.0, 1.0));
+	vec3 light = tint * v * intensity * mix(0.5, 1.0, charge);
+	float top = max(light.r, max(light.g, light.b));
+	light *= min(1.0, peak / max(top, 0.0001));
+	ALBEDO = light;
+	ALPHA = clamp(min(top, peak) / max(peak, 0.0001), 0.0, 1.0);
 }

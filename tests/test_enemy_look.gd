@@ -47,7 +47,13 @@ func test_elites_are_the_same_figure_in_old_gold() -> void:
 		if d.elite_version == &"":
 			continue
 		var e: EnemyDef = load(DIR + "%s.tres" % d.elite_version)
-		assert_eq(e.model, d.model, "the elite of %s is the same figure" % d.id)
+		# (or its own bake of the same figure, "<model>_elite": the elite runner's longer stride, Lote 2B)
+		if e.model != d.model:
+			assert_eq(e.model, StringName(String(d.model) + "_elite"), "the elite of %s is the same figure" % d.id)
+			var own: BakedModel = load("res://assets/baked/%s.res" % e.model)
+			var common: BakedModel = load("res://assets/baked/%s.res" % d.model)
+			assert_eq(own.vertices, common.vertices, "the elite of %s is the same mesh" % d.id)
+			assert_almost_eq(own.height, common.height, 0.01, "the elite of %s as tall" % d.id)
 		assert_gt(e.gild, 0.5, "the elite of %s wears old gold" % d.id)
 		assert_eq(d.gild, 0.0, "the common %s does not" % d.id)
 		assert_true(e.armor > 0.0, "the elite of %s keeps its armor bar" % d.id)
@@ -126,11 +132,12 @@ func test_magic_colours() -> void:
 	var mage: EnemyDef = load(DIR + "mage.tres")
 	var priest: EnemyDef = load(DIR + "priest.tres")
 	var archer: EnemyDef = load(DIR + "archer.tres")
-	# the sorcerer's violet: purple, colder and lighter than the priests' (Daniel, 2026-11-14), never green
-	assert_true(mage.magic_color.b > mage.magic_color.r and mage.magic_color.b > mage.magic_color.g)
-	assert_true(mage.magic_color.g > priest.magic_color.g, "the sorcerer's violet is lighter and colder")
-	assert_true(priest.magic_color.b > priest.magic_color.g and priest.magic_color.r > priest.magic_color.g)
-	assert_true(archer.magic_color.r > archer.magic_color.g and archer.magic_color.g > archer.magic_color.b, "orange bolts")
+	# vfx_pass_spec.md 4 and 5.4 (V-11, Lote 1): the magic of the dead is the danger's, crimson for the bolt and the
+	# burst, magenta for the orbs and the vines (the sorcerer's cold violet of 2026-11-14 went: violet is Morvath's)
+	assert_true(mage.magic_color.r > mage.magic_color.b and mage.magic_color.b > mage.magic_color.g, "the sorcerer's magenta")
+	assert_eq(mage.magic_color, priest.magic_color, "the orbs and the vines one magenta")
+	assert_true(archer.magic_color.r > archer.magic_color.b and archer.magic_color.b > archer.magic_color.g, "crimson bolts")
+	assert_gt(archer.magic_color.r / archer.magic_color.b, mage.magic_color.r / mage.magic_color.b, "the crimson redder than the magenta")
 
 
 ## Cycle 5 (docs/art/cycle5_spec.md A1): the figure is costume, so its gold is old and calm; yellow on the screen

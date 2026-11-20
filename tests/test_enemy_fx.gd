@@ -335,7 +335,7 @@ func test_magic_lights_are_the_colour_of_the_magic_and_gold_stays_on_the_steel()
 	renderer.register(elite)
 	var magic: Vector3 = (renderer._materials[mage.id] as ShaderMaterial).get_shader_parameter(&"magic")
 	assert_almost_eq(maxf(magic.x, maxf(magic.y, magic.z)), 1.0, 0.001, "its largest channel at 1")
-	assert_true(magic.z > magic.x and magic.x > magic.y, "cold violet")
+	assert_true(magic.x > magic.z and magic.z > magic.y, "magenta (vfx_pass_spec.md 5.4, V-11)")
 	assert_lt(CrowdRenderer.ORB_GLOW, CrowdRenderer.ORB_TELL)
 	assert_lte(CrowdRenderer.ORB_TELL, 1.8, "the swollen orb is capped")
 	var gilded: ShaderMaterial = renderer._materials[elite.id]

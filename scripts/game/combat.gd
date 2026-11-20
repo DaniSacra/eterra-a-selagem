@@ -89,10 +89,14 @@ const WARD_SPARK := Color(0.3, 0.95, 0.75)
 ## option off (Fx.impact_frames).
 const OMEGA_TAG := &"omega"
 const BURN_TIME := 3.0
-const FIRE := Color(1.0, 0.45, 0.12)
+## The families' colours (vfx_pass_spec.md 4, Lote 1): the Chama in amber 30 to 38 on the screen (it was 4 to 25, the
+## danger's red), the Geada as it was, the Luz pale gold 42 to 48, the Vigília sage 80 to 95 (it was the Luz's gold;
+## AngelSeal.TINT of Shomael), far from the Emeth's emerald 125 to 145.
+const FIRE := Color(1.0, 0.6, 0.16)
 const FROST := Color(0.5, 0.82, 1.0)
 ## Elun's gold: only blows that come from gifts.
-const LIGHT := Color(1.0, 0.82, 0.38)
+const LIGHT := Color(1.0, 0.92, 0.7)
+const VIGIL := Color(0.66, 0.78, 0.46)
 ## The paladin's own sword, Emeth: the green of its blade.
 const EMETH := Color(0.3, 1.0, 0.45)
 ## Damage numbers of the sword's common blows: pale, so the emerald ones (finishers, held blows) stand out.
@@ -383,6 +387,8 @@ func _draw_hit(e: Enemy, axis: Vector2, away: Vector2, color: Color, heavy: bool
 	var lean := tan(_look.randf_range(-GASH_LEAN, GASH_LEAN))
 	var length := GASH_HEAVY if heavy else GASH.y if finisher else _look.randf_range(GASH.x, GASH.y)
 	fx.gash(at, Vector3(axis.x, lean, axis.y), color, length, heavy, GASH_TIME.y if heavy or finisher else GASH_TIME.x)
+	# the snap at the contact (vfx_pass_spec.md V-05)
+	fx.contact(at, Vector3(axis.x, 0.0, axis.y), color, heavy or finisher)
 	fx.chips(at, Vector3(away.x, 0.35, away.y), CHIP_COLOR, _look.randi_range(GASH_CHIPS.x, GASH_CHIPS.y), CHIP_SPEED, CHIP_SIZE, CHIP_LIFE, 0.7)
 
 
@@ -668,6 +674,8 @@ func color_of(tags: Array[StringName]) -> Color:
 		return FIRE
 	if tags.has(&"geada") or boons.stat(&"freeze_time", tags) > 0.0:
 		return FROST
+	if tags.has(&"vigilia"):
+		return VIGIL
 	for t in GIFT_TAGS:
 		if tags.has(t):
 			return LIGHT

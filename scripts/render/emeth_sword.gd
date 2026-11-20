@@ -39,7 +39,7 @@ const CORE_SPAN := Vector2(0.08, 0.86)
 ## Eterra Stylized (STY-06, T22): the pale edge in that look, ivory-mint with no channel past 1.0 (nothing blooms).
 ## STY-09: (0.72, 0.95, 0.8) still reached 255 on the screen (exposure 1.25), white pixels down the raised blade; now
 ## under the screen's ceiling (ScreenTone.SAFE) with the stylized look's saturation.
-const STYLE_CORE := Color(0.56, 0.76, 0.63)
+const STYLE_CORE := Color(0.5, 0.78, 0.6)
 ## Temperar (Fatia 1): the highest rank of the blade the shader draws (set_temper).
 const TEMPER_MAX := 2
 

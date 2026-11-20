@@ -70,6 +70,8 @@ const LOOK := {
 
 class Shot:
 	var kind := Kind.BOLT
+	## How many smoke puffs its trail has left (Projectiles._trail).
+	var trail := 0
 	var pos := Vector2.ZERO
 	var vel := Vector2.ZERO
 	var damage := 0.0
@@ -156,6 +158,7 @@ func fire(kind: Kind, from: Vector2, dir: Vector2, speed: float, damage: float, 
 		shot_logged.emit(shooter(s), RoomTally.SHOT_FIRED, "")
 	s.node = _take(kind)
 	s.node.visible = true
+	s.trail = 0
 	if kind == Kind.BOLT or kind == Kind.ORB or kind == Kind.CURSE:
 		_tint(s.node, color if color.a > 0.0 else (LOOK[kind] as Array)[0])
 	_place(s)
@@ -358,12 +361,32 @@ static func touches_soul(s: Shot, p: Vector2, radius: float) -> bool:
 	return absf(d.dot(ahead)) <= s.radius + radius and absf(d.cross(ahead)) <= s.half_width + radius * 0.5
 
 
+## The smoke an enemy shot leaves (vfx_pass_spec.md V-11): a dark puff every TRAIL_STEP metres flown (the bolt's
+## thinner and closer, a fiapo of 0.8 m behind it), drifting up and coming apart (Fx.wisps).
+const TRAIL_STEP := {Kind.BOLT: 0.45, Kind.ORB: 0.7, Kind.CURSE: 0.7}
+const TRAIL_SMOKE := Color(0.08, 0.04, 0.05)
+
+
+func _trail(s: Shot) -> void:
+	if fx == null:
+		return
+	var step: float = TRAIL_STEP[s.kind]
+	var due := int(s.flown / step)
+	if due <= s.trail:
+		return
+	s.trail = due
+	var size := 0.32 if s.kind == Kind.BOLT else 0.5
+	fx.wisps(s.node.position, Vector3(-s.vel.x, 0.0, -s.vel.y) * 0.05 + Vector3.UP * 0.2, TRAIL_SMOKE, 1, 0.4, size, 0.35, 0.3, 0.6)
+
+
 func _place(s: Shot) -> void:
 	s.node.position = Vector3(s.pos.x, SOUL_HEIGHT if s.kind == Kind.SOUL else (LOW_HEIGHT if s.low else HEIGHT), s.pos.y)
 	if s.vel.length_squared() > 0.0:
 		s.node.rotation.y = atan2(s.vel.x, s.vel.y)
 	if s.kind == Kind.SOUL:
 		_place_soul(s)
+	if s.kind == Kind.BOLT or s.kind == Kind.ORB or s.kind == Kind.CURSE:
+		_trail(s)
 	if s.kind == Kind.WAVE or s.kind == Kind.SPARK:
 		var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
 		mat.set_shader_parameter(&"flown", s.flown)
@@ -415,12 +438,15 @@ func _take(kind: Kind) -> Node3D:
 		mi.material_override = _orb_material(ORB_SHADER)
 		if kind == Kind.BOLT:
 			mi.scale = Vector3(0.6, 0.6, 2.4)
+			mi.set_instance_shader_parameter(&"needle", 1.0)
 		var glow := MeshInstance3D.new()
 		var q := QuadMesh.new()
 		q.size = Vector2.ONE * look[1] * 2.0 * HALO
 		glow.mesh = q
 		glow.material_override = _orb_material(HALO_SHADER)
 		glow.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# the bolt has no smoke round it, only its trail (_trail)
+		glow.visible = kind != Kind.BOLT
 		mi.add_child(glow)
 	add_child(mi)
 	return mi

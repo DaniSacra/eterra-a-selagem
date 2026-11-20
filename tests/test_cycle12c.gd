@@ -42,7 +42,9 @@ func test_the_reward_column_on_the_paladin_is_faint_and_far_from_him_full() -> v
 	_start()
 	game.player.pos = game.arena.middle
 	game.rooms._room_cleared()
-	assert_false(game.fx.last_beam.is_empty(), "the reward's column rose")
+	# (vfx_pass_spec.md 6: the room's reward has the shaft now, never a column; the column's rules stay for its others)
+	assert_true(game.fx.last_beam.is_empty(), "no column over the reward")
+	game.column(game.arena.middle, Color.WHITE, 1.4, 12.0, 1.0)
 	assert_lte(float(game.fx.last_beam.cap), 1.0)
 	assert_almost_eq(float(game.fx.last_beam.intensity), Fx.BEAM_INTENSITY * Skills.BEAM_OVER_BOSS, 0.001, "on him it is faint")
 	game.player.pos = game.arena.middle + Vector2(0, 6)

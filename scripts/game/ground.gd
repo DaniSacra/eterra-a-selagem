@@ -345,10 +345,13 @@ func _land(z: Zone) -> void:
 		var color := z.land_color if z.land_color.a > 0.0 else LAND_COLOR
 		# a ritual circle has its own column (_dissolve); the others a ring and a burst of shadow
 		if z.rune == Rune.NONE:
-			if z.land_quick:
-				fx.ring(z.pos, z.radius * 1.1, color, LAND_QUICK, 0.15, true)
-			else:
+			# an enemy's blow lands in smoke (vfx_pass_spec.md V-12), Morvath's eruptions keep their own ring
+			if z.eruption:
 				fx.ring(z.pos, z.radius * 1.1, color, 0.3)
+			elif z.land_quick:
+				fx.smoke_ring(z.pos, z.radius * 1.1, color, LAND_QUICK, true)
+			else:
+				fx.smoke_ring(z.pos, z.radius * 1.1, color, 0.5)
 		fx.burst(&"soul" if z.eruption else &"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
 		if z.eruption and z.rune == Rune.NONE:
 			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)

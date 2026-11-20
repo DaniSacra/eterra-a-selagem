@@ -174,6 +174,17 @@ HUB-D e Fatia 1 (technical-artist, 2026-11-19): `frame_yaw.gdshaderinc` (novo; g
 nenhuma) e `emeth.gdshader` com `temper` (0 a 2, padrão 0: nada desenhado; veios de ouro velho e o fio pálido do gume
 por posto de Temperar, nenhum canal acima de 1,0, no estilizado sob o `style_cap`).
 
+Passe de VFX, Lote 1 (technical-artist, 2026-11-20; `vfx_pass_spec.md`; tudo procedural, licença do projeto, sem
+textura nova): novos `reward_shaft`, `reward_pool`, `reward_dust` (a luz sobre o que se pega, `RewardShaft`; um material
+por facho, 3 chamadas de desenho: tronco sem tampas de 24 lados, plano da poça, MultiMesh de 8 riscos), `wisp` (fiapos de
+fumaça, uma MultiMesh de 96 no `Fx`), `smoke_ring` (onde o golpe de inimigo cai, pool de 12), `contact` (estalo do
+acerto, pool de 12). Reescritos: `chip` (premul com teto), `enemy_orb` (núcleo escuro, agulha do virote),
+`enemy_orb_halo` (fumaça rasgada e espinhos), `slash` (premul, teto pelo maior canal no estilizado), `crescent` (fita que
+varre), `glint` (estrela de 6 pontas), `emeth_thrust` (perfil de lâmina), `boss_scythe` (borda roída). Os
+`CPUParticles3D` do `Fx` (10 tipos x 14 nós = 140 nós) saíram: as explosões são lascas e fiapos nas duas MultiMesh.
+`hero_paint` (`saturation` 1,8), `emeth` (teto pelo maior canal) e `crowd` (corpo um quarto mais escuro) só no
+estilizado. Estado: provisório até a revisão do art-director e o aceite do combat-feel-director.
+
 ## 8b. Kit de borda e primeiro plano (TA-HB2, `EdgeKit`, procedural, licença do projeto)
 
 `scripts/game/edge_kit.gd`, shaders `edge_piece.gdshader` (+ `.gdshaderinc`) e `edge_piece_paint.gdshader`. Nenhuma
@@ -187,7 +198,7 @@ antes do `Masonry.merge`; a sala junta a pedra com a dela):
 | `rubble` (1,8 m) | 220 | 12 | idem |
 | `root_curtain` (4 x 3,5 m) | 2 710 | 1 | `bark` |
 | `ivy` (2,4 x 3 m) | 1 424 | 1 | `ivy` (cor no vértice) |
-| `chain_weight` (4,5 m) | 1 496 | 7 | `iron` (elos em MultiMesh) e pedra |
+| `chain_weight` (4,5 m solta, mais 4 m presa nas duas pontas com 0,9 m de flecha; refeita pela revisão de 2026-11-20) | 3 056 as duas (cerca de 1 400 a solta) | 15 as duas, antes do `merge` | `iron` (elos próprios em MultiMesh: 0,13 m, fio 0,04, olho aberto, um em dois a 90 graus, passo 0,27 m; olhal) e pedra (contrapeso octogonal lavrado de 0,7 m com cinta de ferro) |
 
 As seis juntas depois do `merge`: 22 chamadas no quadro do tabuleiro (4 do chão). Estado: provisório até o
 environment-artist usar numa sala (ENV-HB3 a HB5) e o art-director revisar. Capturas `docs/gallery/hb/edge_kit_*.png`.

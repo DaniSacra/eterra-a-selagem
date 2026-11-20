@@ -54,6 +54,10 @@ const GLINT_ANIM_SPEED := 0.15
 const ASSIST_RANGE := 5.0
 const ASSIST_HALF_ARC := deg_to_rad(65.0)
 const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
+## VX-17: a finisher's clip ends and its last pose stays this long (the blow's weight is read on it), then eases into
+## the guard over FINISHER_SETTLE (it snapped back in 0.08 s); walking or another blow cuts it as before.
+const FINISHER_HOLD := 0.3
+const FINISHER_SETTLE := 0.3
 const FLASH := preload("res://assets/shaders/flash.gdshader")
 const XRAY := preload("res://assets/shaders/xray.gdshader")
 const XRAY_BEHIND := preload("res://assets/shaders/xray_behind.gdshader")
@@ -232,6 +236,11 @@ var _current_anim := &""
 ## The last move's clip and the clip that brings it back to the guard when it ends (ComboNode.recover_anim).
 var _move_anim := &""
 var _recover_anim := &""
+## VX-17: the last move was a finisher, and how long its last pose has been held.
+var _move_finisher := false
+var _held := 0.0
+## GF-15: the lean of the run's start and stop (drawing only).
+var _lean := RunLean.new()
 var _light: OmniLight3D
 ## A point near the tip of the sword (moves with the swing).
 var blade_tip: Node3D
@@ -755,7 +764,8 @@ func _start_dodge(move: Vector2) -> void:
 	_dodge_dir = move.normalized() if move.length() > 0.2 else facing
 	facing = _dodge_dir
 	runner.on_dodge()
-	_play(&"Dash", DASH_CLIP_SPEED)
+	# B-b: no mix into the dash (its pose is there on the frame of the press, as its 19 frames of shelter are)
+	_play(&"Dash", DASH_CLIP_SPEED, 0.0, 0.0)
 	fx.burst(&"dust", Vector3(pos.x, 0.2, pos.y), Vector3(-_dodge_dir.x, 0, -_dodge_dir.y))
 	Audio.play(&"dodge")
 	dodged.emit(_dodge_dir)
@@ -832,6 +842,8 @@ func _on_move_started(node: ComboNode) -> void:
 	_play(node.anim, node.anim_speed * runner.speed, node.anim_from)
 	_move_anim = node.anim
 	_recover_anim = node.recover_anim
+	_move_finisher = node.tags.has(&"finisher")
+	_held = 0.0
 	if node.title != &"":
 		move_shown.emit(node)
 
@@ -965,6 +977,11 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	RenderingServer.global_shader_parameter_set(&"hero_pos", position)
 	if fx:
 		fx.hero_head = position + Vector3(0, HeroBody.HEIGHT, 0)
+	# GF-15: leaning into the first steps and back on the stop (the dodge and the blows keep what was)
+	var on_legs: Variant = null
+	if state == State.MOVE and not runner.planted() and not runner.is_attacking():
+		on_legs = move.length() > 0.1
+	_model.rotation.x = _lean.step(on_legs, dt)
 	if state != State.MOVE or runner.planted():
 		return  # planted in a blow: its own clip (or its held pose), never the run
 	if charging and _charge_action == &"light_attack" and not runner.is_attacking():
@@ -975,17 +992,26 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 		return
 	if move.length() > 0.1:
 		var pace := Feel.live().speed * (1.0 + speed_bonus) * curse.speed_scale() * (Feel.live().sprint_scale if sprinting else 1.0) * charge_move_scale()
+		# (GF-15: from the guard into the run in RunLean.BLEND; run and sprint into each other as before)
+		var blend := -1.0 if _current_anim == &"Run" or _current_anim == &"Sprint" else RunLean.BLEND
 		if sprinting:
-			_play(&"Sprint", pace / SPRINT_CLIP_PACE)
+			_play(&"Sprint", pace / SPRINT_CLIP_PACE, -1.0, blend)
 		else:
-			_play(&"Run", pace / RUN_CLIP_PACE)
+			_play(&"Run", pace / RUN_CLIP_PACE, -1.0, blend)
+		_move_anim = &""
 	elif runner.is_attacking() or (_anim.is_playing() and not LOOPS.has(_current_anim)):
 		return  # let the follow-through of a swing finish
 	elif _current_anim == _move_anim and _recover_anim != &"":
 		_play(_recover_anim)  # the blade comes back to the guard (walking cuts it), never a cut to the idle
 		_move_anim = &""
+	elif _current_anim == _move_anim and _move_finisher:
+		# VX-17: the finisher's last pose stays, then eases into the guard
+		_held += dt
+		if _held >= FINISHER_HOLD:
+			_play(&"Idle", 1.0, -1.0, FINISHER_SETTLE)
+			_move_anim = &""
 	else:
-		_play(&"Idle")
+		_play(&"Idle", 1.0, -1.0, RunLean.BLEND if _current_anim == &"Run" or _current_anim == &"Sprint" else -1.0)
 
 
 ## The curse's look follows the curse: the runes and the haze ease in and out, Emeth's violet veins with them.
@@ -997,11 +1023,12 @@ func _show_curse() -> void:
 		EmethSword.set_corrupt(_blade_mat, k)
 
 
-func _play(anim: StringName, speed: float = 1.0, from: float = -1.0) -> void:
+## blend >= 0: that mix from what played (the dash's 0: B-b, its first frame is the dash's own) and from the clip's start.
+func _play(anim: StringName, speed: float = 1.0, from: float = -1.0, blend: float = -1.0) -> void:
 	_anim.speed_scale = 1.0  # (a follow-through slows the clip it plays; never what comes after it)
 	if from >= 0.0:
-		_anim.play(anim, 0.05, speed)
+		_anim.play(anim, blend if blend >= 0.0 else 0.05, speed)
 		_anim.seek(from, true)
 	elif _current_anim != anim or not _anim.is_playing():
-		_anim.play(anim, -1, speed)
+		_anim.play(anim, blend, speed)
 	_current_anim = anim

@@ -272,7 +272,8 @@ mudam mais de 12, todos no HUD (que outras frentes mudaram), nas chamas e nas pa
   `docs/gallery/lote2b/runner_elite_walk.jpg` (antes, o assado comum a 2,01x) e `runner_elite_as_runner_elite_walk.jpg`
   (depois, 1,55x). Falta ligar no `make_data.gd` (gameplay).
 - **Q-T5-6**: orbes do Redemoinho abaixo do glow (`Skills.ORB_*`, halo de 1,6 para 0,9 m). `qt56_victory_orbs_step1.png`
-  (primeiro passo, ainda globos) e `qt56_victory_orbs_after.png`. Os pontos esverdeados no fim de duas linhas da placa
+  é o primeiro passo (ainda globos); a captura do valor final na GPU ficou pendente (o Game Director suspendeu a GPU
+  enquanto o Daniel joga). Os pontos esverdeados no fim de duas linhas da placa
   da laje não foram vistos: ficam com o ui-ux-designer (`door_sign.gd`).
 - **Q-T5-7**: `--shot-on=boss:victory` com `--shot-at=0.5` capturou (antes travava).
 - **`enemy_motion_probe`** semente 2, 40 s: avisos terminam no quadro do golpe (+0 f, um +1 e um -1 do Escudo), pose
@@ -280,7 +281,14 @@ mudam mais de 12, todos no HUD (que outras frentes mudaram), nas chamas e nas pa
   (Fatia 2 em curso, não são de asset); `check.gd` ok.
 - **TA-HB1** linha de tinta: RTX 1080 Alta GPU 2,37 para 2,41 ms (quadro 3,36 para 3,58); iGPU 720 Baixa GPU 15,02 para
   16,42 ms (58,6 para 52,6 qps, passa do limite de 3): **desligada na Baixa** (`ink_wanted(level)`). Desligada por padrão.
-- **TA-HB2** `EdgeKit`: seção 8b do inventário. **TA-HB3**: ver a captura `docs/gallery/hb/hb3_hall_figures.png`.
+- **TA-HB2** `EdgeKit`: seção 8b do inventário. **TA-HB3** (figuras sobre o petróleo do Salão, ENV-HB1): medido em
+  captura de CPU (`tools/shot.sh`, Vulkan no llvmpipe, 1280 x 720, `--stress=8` com os oito tipos, semente 5, herói em
+  2,2; `docs/gallery/hb/hb3_hall_figures_cpu_classic.jpg` e `_stylized.jpg`). Luma p50 da figura contra o chão ao lado,
+  clássico / estilizado: besteiro 32 contra 51 / 19 contra 40; feiticeiro 68 contra 73 / 55 contra 90; esqueleto junto
+  ao herói 83 contra 56 / 69 contra 81. No estilizado o corpo é morno (matiz 5 a 23, saturação 0,31 a 0,41) sobre o chão
+  petróleo (matiz 210 a 220): todas leem pelo matiz e pelo contorno, e as escuras pelo valor. O esqueleto claro perto do
+  herói fica só 12 abaixo do chão iluminado por ele: lê pelo matiz e pela casca escura, não pelo valor. Nenhuma mudança
+  pedida; conferir na GPU quando ela voltar.
 - **Para o gameplay-engineer**: (1) `"model": &"runner_elite"` na elite do corredor (`_pair` do `make_data.gd`) e
   regerar `enemies`; (2) **B-b**: `player.gd:758` `_play(&"Dash", DASH_CLIP_SPEED)` mistura 0,08 s
   (`playback_default_blend_time`), então o primeiro quadro da esquiva ainda é quase a pose de antes; tocar a esquiva sem
@@ -288,6 +296,25 @@ mudam mais de 12, todos no HUD (que outras frentes mudaram), nas chamas e nas pa
   2 não têm clipe de arranque nem de parada (só `Jump_Start`, `Jump_Land`, `Slide_Start`); proposta: arranque e parada
   como mistura de 0,1 s com inclinação do tronco pelo `Player` e a pose final do finalizador segurando a última pose
   do clipe em vez de voltar à guarda (`recover_anim`).
+
+## Passe de VFX, Lote 1 e fila do HB (technical-artist, 2026-11-20)
+Evidência em `docs/gallery/vfx_pass/` (antes em `docs/art/shots/vfx_pass_before/`), `docs/gallery/hb/` e
+`docs/gallery/hb/ink_crowd/`. RTX 1920 x 1080, estilizado, semente 5.
+- P0 feito, luz sobre o que se pega (`RewardShaft`): colunas no matiz da tabela a até 3 graus, saturação p50 até 0,26,
+  maior canal p99 159 (`shafts_sheet_stylized.png`, também `_classic` e `_compat`). Falta ligar no jogo
+  (gameplay-engineer) e medir a poça contra um chão de sala (o chão do laboratório é claro demais, 105).
+- P0 feito, partículas: nenhum `CPUParticles3D` no `Fx`, nenhum ponto redondo; teto premul de 226 nas lascas.
+- P0 feito, orbe e virote com núcleo escuro; orbe p99 244 (1,6% acima de 210) na primeira captura, aro baixado de 0,62
+  para 0,48 depois (recaptura pendente); anel de fumaça no golpe que cai.
+- P0 feito, V-01 a V-05 e V-16 (ver CLAUDE.md). Fita do giro sem anel fechado (`h_spin.png`); estalo do contato visível
+  (`s_hit.png`). A estocada saiu primeiro como lâmina da largura inteira do golpe (lia como folha verde) e foi afinada
+  a 0,4 da largura (recaptura pendente).
+- P1, a medir: V-01 matiz do corte 122 a 150 e p99 até 226 sobre Morvath; V-16 matiz 240 a 285 no setor.
+- HB3: verde na caixa do herói 0,61% para 1,00% (meta 1%), Emeth matiz 130.
+- Tinta: com 12 inimigos na Perto, Alta e Média, nenhuma borda nas figuras nem sobre as barras.
+- Santuário (pedido do Game Director): osso do esqueleto p50 85 para 74 contra o calcário 96 a 108 (corpo um quarto
+  mais escuro no estilizado, `crowd.gdshader`).
+- Sonda de sensação 41/41; GUT 1356 com `test_mix` instável (passa na segunda rodada, áudio).
 
 ## Melhorias propostas (maior ganho por esforço primeiro)
 

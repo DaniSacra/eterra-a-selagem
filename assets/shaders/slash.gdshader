@@ -8,7 +8,11 @@ shader_type spatial;
 // mesh runs from band_from * reach_m to reach_m); without them, at the outer edge of the mesh.
 // t goes 0 -> 1 over the life of the slash: the head sweeps through during the first `sweep` of it, then the tail
 // catches up with it while everything fades.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled;
+// vfx_pass_spec.md V-01: premultiplied, ALPHA 0 in the classic look (the same sum as blend_add); in the stylized look
+// the edge half as pale (style_edge_pale: the Emeth's green, never cyan or white), and the arc laid over what is
+// behind it under style_peak (Fx: ScreenTone.linear_peak of its edge colour, 226 on the screen), its hue kept (a cap per
+// channel greyed it: the edge (0.86; 1; 0.89) capped at 0.38 was flat grey-white).
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled;
 
 uniform vec4 color : source_color = vec4(0.85, 0.82, 1.0, 1.0);
 uniform float t = 0.0;
@@ -49,6 +53,8 @@ uniform float style_core_thin = 0.5;
 uniform float style_core_light = 0.216;
 uniform float style_cap = 0.55;
 uniform float style_edge_cap = 0.38;
+uniform float style_edge_pale = 0.45;
+uniform float style_peak = 0.6;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
 
@@ -117,9 +123,16 @@ void fragment() {
 	vec3 core_c = pale_to(color.rgb, core_sat);
 	if (wire + core <= 0.002) discard;
 	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow) * life * intensity;
+	ALPHA = 0.0;
 	if (styled) {
-		vec3 edge_part = min(edge_c * wire * edge_light * (0.55 + 0.45 * glow) * life * intensity, vec3(style_edge_cap));
-		vec3 core_part = min(core_c * core * style_core_light * glow * life * intensity, vec3(style_cap));
-		ALBEDO = min(edge_part + core_part, vec3(mix(style_cap, style_edge_cap, clamp(wire, 0.0, 1.0))));
+		vec3 ec = mix(color.rgb, vec3(1.0), style_edge_pale);
+		vec3 lit = ec * wire * edge_light * (0.55 + 0.45 * glow) * life * intensity + core_c * core * style_core_light * glow * life * intensity;
+		float peak = max(lit.r, max(lit.g, lit.b));
+		if (peak > style_peak) {
+			lit *= style_peak / peak;
+			peak = style_peak;
+		}
+		ALBEDO = lit;
+		ALPHA = clamp(peak / max(style_peak, 0.0001), 0.0, 1.0);
 	}
 }

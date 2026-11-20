@@ -2553,6 +2553,33 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   iGPU 720 Baixa (GPU, `sty_probe` com `--play`, o quadro preso no vsync): antes e depois no mesmo arranjo, Jardim 15,88
   e 15,89 ms, Ponte A 12,87 e 12,67 (as pontes do fundo e os esporões não custam); Salão 15,05 a 15,18, hub 15,24 a 15,27,
   Cripta 14,4 a 14,5, Fendas 14,1, Santuário 13,9, Runas 13,6 a 13,7, Altar 10,7, Provação 11,7.
+- **P1 e P2 da revisão dos biomas** (`docs/gallery/ciclo_visual_1120/ART_REVIEW.md` 4.5; capturas `env3_*`): Altar mais
+  vermelho que o Santuário (pedra, chão, ar e manchas, `AltarLook.STYLE`), Santuário em calcário amarelo-pálido menos
+  saturado (`STY_FLOOR`, `STY_SHAFT_WARM` quase marfim, manchas); Fendas e Ponte com poças de luz de chave difusas sobre
+  os campos de luta (`ArenaRoom.key_pool`: `SpotLight3D` sem especular nem sombra, nunca na multidão, só no estilizado,
+  o meio `KEY_POOL_SHIFT` do raio para longe da câmera; `RiftLook.STY_KEY_POOLS`, `BridgeLook.STY_KEY_POOLS`, energia 6)
+  e o ar mais baixo (ambiente 1,6 e 1,3, lua 0,8 e 0,6), sem pintar o chão nem mexer nos avisos; hub com as chamas dos
+  braseiros da chegada a 0,67 (`HubLook.STY_STAND_FLAME`, a luz igual) e a borda entre as estações mais escura
+  (`STY_RIM_FLOOR` `edge_value` 0,32, `STY_KEEP` 2,5 a 4 m); Ponte com pedra, sombra, céu, névoa e brilho do abismo mais
+  azuis (`BridgeLook.STYLE`, `STY_GLOW`); Jardim com ar, casca, cordas e preenchimento da árvore um pouco mais verdes,
+  ferrugem da copa e das folhas mais viva, janelas e água das cascatas em cinza-oliva (`GardenLook.WATER_DEEP`,
+  `WATER_PALE`, `STY_WINDOW_*`). Medido (RTX 1080, semente 5): Altar matiz 23 (Perto e Longe), saturação 0,40 a 0,42,
+  vermelho 0,1%; Santuário 36 a 37, 0,24 a 0,25; laje Rachada armada na nave oeste (`--start=miniboss --hero-at=-12,-9.5`,
+  4 s) saturação 0,53 e luma 161 contra 0,23 a 0,26 e 72 a 96 da pedra em volta; Fendas Perto faixa de baixo 0,77 do meio
+  (era 1,0), Ponte 0,73 (era 0,94); fio da mira menos o chão em volta: Fendas 35 para 40, Ponte 0 para 1; Ponte matiz 223;
+  Jardim 84, ciano 0% na lateral oeste; hub: faixa de perto quente 11%, borda oeste entre as estações 0,63 da praça.
+  Não atingido: o esqueleto à direita do herói no `sanct0_armed` (corpo 73 contra 60 a 75 do chão; o de baixo fica 37 a
+  46 abaixo): é a luz do corpo (`crowd.gdshader`), do technical-artist.
+- **EdgeKit nas salas (TA-HB2, `docs/gallery/hb/ART_REVIEW.md` item 2; só no estilizado, por `ArenaRoom.edge_kit()`, um
+  `EdgeKit` sobre o `kit.styled()`)**: Fendas com tufos de raízes presos sob a beira do tabuleiro de cada ponte de pé, do
+  lado da câmera (`RiftLook.EDGE_ROOTS`, `EDGE_ROOT_CLUMPS`), e entulho no degrau afundado de metade dos lábios com
+  balaustrada (`_ledges`, `EDGE_RUBBLE`; nenhum perto da coluna tombada); o arco quebrado da boca norte ficou. Jardim:
+  raízes dentro das janelas cegas do norte sob o arco e no topo quebrado do pilar noroeste, hera sob a cornija de cima da
+  parede norte e, na A, da oeste (`GardenLook.EDGE_*`). Santuário: duas colunas quebradas subindo do escuro em dois vãos
+  da parede baixa do sul e entulho sobre o topo dela (`SanctuaryLook.EDGE_*`). Cripta: hera sobre a crista da parede
+  norte entre os nichos e dentro do nicho sem estátua, com entulho no chão dele (`CryptLook.EDGE_*`). Ponte: dois arcos
+  quebrados longe no abismo ao norte (`BridgeLook.EDGE_ARCHES`); a corrente com peso espera a correção. Salão sem nada.
+  Nada colide nem passa sobre o chão andável (`test_room_style` 43/43, `fit_probe` igual em todas).
 
 ## Lote 2B e TA-HB, parte do technical-artist (2026-11-20; evidências em `docs/gallery/lote2b/`, `docs/gallery/hb/`, `docs/gallery/c19/hurt_flash/`)
 - **Ferramentas de `-s` que nomeiam classes com autoload** (`T`, `Audio`): o script de `-s` é compilado antes dos
@@ -2573,8 +2600,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   T5-19). Morvath: `curse_windup` (`OverhandThrow` 0 a 0,26 s, no lugar) armado pelo `Boss._step_curse` com o
   `Horde.windup_arm` antes do arremesso (T5-17) e `rain_wave` (`Spellcast_Raise` 0 a 0,5 s ida e volta) tocado uma vez
   por onda de erupção (`Boss._step_eruptions`, T5-18; o `rain:13` parado saiu). Assado novo `runner_elite.res`
-  (`RUNNER_ELITE_JOG`, passada 1,55: 199 passos por minuto a 7,4 m/s, escorrega 4,6 cm; o comum daria 259), ainda sem uso:
-  falta o `"model": &"runner_elite"` na elite do corredor no `make_data.gd` (gameplay-engineer).
+  (`RUNNER_ELITE_JOG`, passada 1,55: 199 passos por minuto a 7,4 m/s, escorrega 4,6 cm; o comum daria 259), usado pela
+  elite do corredor (`"model": &"runner_elite"` no `_pair` do `make_data.gd`).
+- **Arranque, parada, finalizador e esquiva no desenho do herói (GF-15, VX-17, B-b; gameplay-engineer; testes em
+  `tests/test_hero_motion_look.gd`, sonda 41/41)**: a UAL não tem clipes de arrancar e parar, então o `Player` faz por
+  código: da guarda à corrida e da corrida à guarda o clipe mistura em `RunLean.BLEND` 0,1 s e o corpo inclina num pulso
+  de `RunLean.TIME` 0,3 s (pico a um terço), `START_DEG` 7 graus para frente ao sair e `STOP_DEG` 5 para trás ao parar
+  (`RunLean`, `core/run_lean.gd`, puro; `_model.rotation.x`, só desenho, nunca durante golpe ou esquiva). O finalizador
+  (golpe com a tag `finisher`: giro, lança) segura a última pose do clipe `Player.FINISHER_HOLD` 0,3 s e só então vai à
+  guarda numa mistura de `FINISHER_SETTLE` 0,3 s (antes voltava em 0,08 s); andar ou outro golpe cortam no quadro. A
+  esquiva toca o `Dash` do começo e sem mistura (`_play(..., from, blend)`). Resposta ao direcional e tempos iguais.
 - **`--shot-on` antes do `--shot-at`** (Q-T5-7): o `Game._shot` escuta os momentos `boss:` desde o começo; se o momento
   já passou quando o `--shot-at` chega, captura no quadro seguinte e imprime `SHOT ... came N time(s) before --shot-at`.
 - **Orbes do Redemoinho** (Q-T5-6): miolo, halo e rastro abaixo do limiar do glow (`Skills.ORB_CORE`, `ORB_HALO`,
@@ -2602,3 +2637,75 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   fica para o Game Director decidir. `tools/hub_walk.gd` (ferramenta de arte) anda o herói da chegada até uma estação
   pelo `VirtualPad` e grava quadros (`--walk-to`, `--walk-frames`, `--walk-every`, `--walk-count`, `--walk-wait`;
   comando no topo). Testes: `test_room_style` 43/43, `test_hub*` 54/54; fit_probe do hub igual (6,09 / 7,18).
+
+## Passada de VFX, Lote 1, parte do gameplay (spec `docs/art/vfx_pass_spec.md` 4, 5.3, 5.4 e 6; testes em `tests/test_vfx_lote1.gd`)
+- **Luz sobre o que se pega** (o pedido do Daniel; a peça é o `RewardShaft` do technical-artist,
+  `scripts/game/reward_shaft.gd`): a sala vencida não sobe mais coluna (`Rooms._room_cleared`); a recompensa ganha o facho
+  (`RewardShaft.make(rooms, ponto, RewardShaft.tint_of(recompensa, família do anjo da porta))`, `appear()` espera o fim da
+  câmera lenta) e pegar chama `take()`; a família vem do anjo que a porta mostrou (`Rooms._angel_family`; encontro de dois
+  anjos e guardião, marfim). Loja: cada item com o facho na hora (`appear(0, true)`), força `Rooms.shop_light`
+  (`RewardShaft.SHOP_CAN` 0,75 com ouro, `SHOP_CANNOT` 0,3 sem), seguida pelo setter do `Rooms.gold`; comprar levanta.
+  Fonte: `RewardShaft.FOUNTAIN` 0,8 enquanto há água (`Game.spawn_fountain`, filho do nó da fonte), `take()` junto do
+  `fountain_spent`. Elite surgindo sem coluna (`Rooms._spawn`, `Game._spawn_elite`); a peça no chão dela (V-15/V-18) é do
+  technical-artist. Ficaram com coluna: Bênção e Salmo tomados (`Game` 721 e 936), dom que cai (`Skills`, Lote 2) e a
+  morte de elite no modo `--horde`. `--no-shafts` desliga (a peça).
+- **Paleta** (seção 4): `Combat.FIRE` âmbar (1,0; 0,6; 0,16), matiz 31; `Combat.LIGHT` ouro pálido (1,0; 0,92; 0,7);
+  `Combat.VIGIL` sálvia (0,66; 0,78; 0,46), matiz 82, e `Combat.color_of` dá a Vigília separada da Luz. **`Boon.FAMILY_COLOR`
+  mudou (para o ui-ux-designer: cartas, HUD e medalhões leem dali; conferir as telas)**: Chama e Luz como acima, Geada
+  igual, Vigília sálvia (era verde 0,45 / 0,95 / 0,6, perto da Emeth), Elo ouro velho (0,78; 0,62; 0,34), o do
+  `PsalmDef.color` (era violeta, o de Morvath). `Rooms.PSALM_COLOR` = esse ouro velho (era marfim-lilás); romã e coração
+  saem do vermelho do perigo (`Rooms._reward_color`: matiz 352 sat 0,5 e 340 sat 0,45). Magia dos mortos (V-11, `_enemies` do
+  `make_data.gd`): `DEAD_CRIMSON` (1,4; 0,16; 0,3) no corredor e no besteiro, `DEAD_MAGENTA` (1,2; 0,18; 0,85) no
+  feiticeiro, no sacerdote e no Ancião (o violeta frio do feiticeiro, do Daniel de 2026-11-14, saiu com a spec); violeta só
+  de Morvath. Nenhum tempo, dano nem alcance mudou.
+
+## Passe de VFX, Lote 1, parte do technical-artist (2026-11-20; spec `docs/art/vfx_pass_spec.md`, capturas em `docs/gallery/vfx_pass/`)
+- **Luz que cai sobre o que se pega (seção 6, `RewardShaft`, `scripts/game/reward_shaft.gd`)**: tronco de luz fraca de
+  cima da tela até o relicário (0,6 m em cima, 1,25 no chão, 18 m, `reward_shaft.gdshader`), poça no chão (decalque,
+  sem luz real, `reward_pool.gdshader`) e poeira caindo (`reward_dust.gdshader`); tudo `blend_premul_alpha` sob
+  `ScreenTone.linear_peak(cor) x CAP_SHARE` 0,85; a 2,5 m do eixo do herói cai a 0,35 (a poça a 0,6) e abre em volta dele
+  (`hero_hole`); tempo real. Cor: o matiz do esmalte da recompensa (`TONE`) ou do anjo da porta (`AngelSeal.TINT`), a
+  saturação a `TINT` 0,55 da dela e no máximo `PALE` 0,28 (em HSV: misturado com marfim em RGB a romã e o Encanto iam 30
+  a 48 graus para o marfim); Bênção de dois anjos ou do guardião em marfim; fonte `fountain_tint()`.
+  **API para o gameplay-engineer** (`rooms.gd`, loja e fonte; a `game.column` do `_room_cleared` sai):
+  `var s := RewardShaft.make(pai, Vector3(x, 0, z), RewardShaft.tint_of(recompensa, família_do_anjo))`; `s.appear()`
+  (espera `WAIT` 0,45 s, desce em 0,35, pousa em 0,25 com pulso, respira); `s.appear(0.0, true)` (loja e fonte: já ali);
+  `s.set_strength(RewardShaft.SHOP_CAN | SHOP_CANNOT)` (0,75 / 0,3 pelo ouro; fonte `FOUNTAIN` 0,8 no `make`);
+  `s.take()` (sobe em 0,3 s e se apaga sozinho). `--no-shafts` esconde. `tools/gem_lab.gd -- --shafts [--at=s]
+  [--shop=0.3]`. Medido (RTX 1080, estilizado, `shafts_sheet_stylized.png`): matiz de cada coluna a até 3 graus da tabela
+  (romã 350, coração 340, Magia 226, ouro 40, prata 211, Memória 37, Encanto 137, Salmo 40, Vigília 85), saturação p50 até
+  0,26, maior canal p99 159 (teto 210); no Compatibility igual a olho com `COMPAT_GAIN` 1,6. Teste `tests/test_reward_shaft.gd`.
+  Falta: medalhão do Encanto e do Salmo é um aro vazio no `RewardGem` (sem marca).
+- **Partículas sem bolinha (5.6)**: os `Fx.BURSTS` não usam mais `CPUParticles3D` com o ponto redondo (`Fx.soft_dot` e
+  `Fx.quad` ficam para os halos das velas): `form` `chip` = lascas na MultiMesh das lascas (`Fx._spray`, gravidade por
+  lasca, as de explosão não contam em `showing(&"motes")`), `wisp` = fiapos de fumaça de borda rasgada que sobem e se
+  desfazem de baixo (`Fx.wisps`, MultiMesh de `WISP_POOL` 96, `wisp.gdshader`, premul: escuro cobre, claro soma pouco);
+  cores todas abaixo de 1 (cura marfim-rosada, sombra de inimigo em fumaça escura, fogo com dois fiapos de fumaça no
+  fim). `chip.gdshader` agora premul sob `cap` (226 na tela). Orçamento igual.
+- **V-11 e V-12, inimigo**: orbe com núcleo escuro (`enemy_orb.gdshader`: tinta no meio, aro na cor, `rim` 0,62) e
+  fumaça rasgada com três espinhos girando em volta (`enemy_orb_halo.gdshader`, premul); virote = agulha escura com a
+  ponta na cor (`needle`), sem halo; rastro de fumaça a cada 0,45 m (virote) ou 0,7 m (orbe) (`Projectiles._trail`). Onde
+  o golpe de um inimigo cai: anel de fumaça escura de borda rasgada que se abre, aro de dentro na cor sob 205 na tela, meio
+  escuro, sete fiapos (`Fx.smoke_ring`, `smoke_ring.gdshader`, `Ground._land`; o `land_quick` é o anel fino); as
+  erupções de Morvath ficam com o `Fx.ring`. A cor da magia (carmim e magenta) é do `make_data.gd` (gameplay-engineer).
+- **V-01 a V-05, a lâmina**: `slash.gdshader` premul (alfa 0 no clássico = a mesma soma), no estilizado o fio a
+  `style_edge_pale` 0,45 e o teto pelo maior canal (`style_peak` = `ScreenTone.linear_peak` do fio, posto pelo
+  `Fx.slash`; o teto por canal deixava o fio branco-cinza); o giro e os finalizadores são uma fita que varre
+  (`crescent.gdshader`: `CRESCENT_SPIN` 300 graus, finalizador `CRESCENT_ARC` 120 a 180, cabeça 0,35 m e cauda 0,08 m,
+  fio só no terço da cabeça, a cauda some primeiro); o brilho do finalizador é estrela de 6 pontas desiguais girada por
+  golpe, sem cruz nem risco longo (`glint.gdshader` `seed`, `spike_min_m` 0,18, `spike_max_m` 0,42); a estocada é uma
+  lâmina (`emeth_thrust.gdshader`: base a ponta 1,0 a 0,15, fio de 2 px, miolo escuro, tinta 0,4, entra em `THRUST_IN`
+  0,06 s e sai em `THRUST_OUT` 0,15; Ômega com os veios e `THRUST_SPIKES` 5 lascas de cristal na ponta); o estalo no
+  contato (`Fx.contact`, `contact.gdshader`: 5 a 7 espinhos desiguais, metade num leque de 70 graus para onde a lâmina
+  foi, miolo marfim 0,12 m, 0,05 s crescendo a 1,25; orçamento próprio `contacts` de 8 por quadro), chamado no
+  `Combat._draw_hit`.
+- **V-16, foice e Ceifa**: `boss_scythe.gdshader` premul sob 226: borda roída por ruído (0,15 m em 0,4 m), aro e cabeça
+  no violeta, lilás-marfim só no meio do setor, o `edge` espectral não é mais desenhado; `SCYTHE_WISPS` 7 fiapos violeta
+  escuro saindo do alcance.
+- **Também (fila do HB)**: a linha de tinta ligada por padrão (`PaintPass.INK_DEFAULT_ON`) e fora das figuras: o
+  Forward+ marca instância que se mexe no alfa do `normal_roughness` (acima de 0,5) e nenhuma borda que toque uma é
+  pintada (`needs_normal_roughness`, `mask` no `paint_pass.glsl`; `--ink-debug` mostra a marca); com 12 inimigos o
+  contorno não dobra e não cruza as barras (`docs/gallery/hb/ink_crowd/near_*_masked.png`). HB3: herói no estilizado com
+  a pintura `saturation` 1,8 (`hero_paint.gdshader`) e a Emeth com teto pelo maior canal e cristal mais saturado
+  (`emeth.gdshader` `style_back`/`style_face`, `EmethSword.STYLE_CORE`): verde na caixa do herói 0,61% para 1,00% na GPU,
+  matiz 130 (`docs/gallery/hb/hb3_*`). `chain_weight` refeito (elos a 90 graus, catenária, contrapeso de 0,7 m).

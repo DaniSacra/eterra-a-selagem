@@ -194,6 +194,8 @@ const SHRUB_EVERY := 1.4
 ## The yards' low walls (coping), the braziers on stands at the arrival (their light), the goods' crates.
 const YARD_COPING := 0.1
 const STAND_FIRE := Vector2(2.4, 5.5)
+## P2-B2: the arrival braziers' flames in the stylized look, a share of their height and size (their light unchanged).
+const STY_STAND_FLAME := 0.67
 
 # ---------- the stations ----------
 ## Vendedor (spec 3.2; HUB-D): the awning's back and front heights, how far it reaches south and north of the
@@ -356,8 +358,9 @@ const STY_POOLS: Array[Array] = [
 ## The darkening starts past STY_RIM_FLOOR's calm radius times edge_span (from the fountain; the hub's floor box is
 ## turned, its own calm radius came out past the cliffs) and leaves each station's pool alone (STY_KEEP: full to, none
 ## from, m round each pool's aim).
-const STY_RIM_FLOOR := {&"calm_radius": 8.0, &"edge_value": 0.45, &"edge_span": Vector2(1.1, 2.0)}
-const STY_KEEP := Vector2(3.0, 5.5)
+## P2-B3 (ART_REVIEW.md 4.5): the rim between the stations to 0.70 of the square or under (it measured 0.75 to 0.82).
+const STY_RIM_FLOOR := {&"calm_radius": 8.0, &"edge_value": 0.32, &"edge_span": Vector2(1.1, 1.9)}
+const STY_KEEP := Vector2(2.5, 4.0)
 const KEEP_MAX := 6
 ## The browser's renderer: the stylized air's share there (its painted stone lights lighter).
 const STY_COMPAT_AMBIENT := 0.3
@@ -932,9 +935,17 @@ func _goods(c: Vector2, o: ArenaObstacle) -> void:
 
 ## A brazier on a stand by the arrival (HUB-D, H-P1-7: warm light in the square), without a shadow.
 func _stand_fire(c: Vector2) -> void:
+	var from := fk.root.get_child_count()
 	var l := fk.brazier(Vector2(c.x, -c.y), 0.0, false, STAND_FIRE.x)
 	l.omni_range = STAND_FIRE.y
 	l.shadow_enabled = false
+	# P2-B2 (ART_REVIEW.md 4.5): in the stylized look the flames a third lower (their tongues' life and size), the
+	# light as it was; they were the strongest fire of the frame on arriving, in the band nearest the camera
+	for i in range(from, fk.root.get_child_count()):
+		var p := fk.root.get_child(i) as CPUParticles3D
+		if p != null:
+			VisualProfile.vary(p, {&"lifetime": p.lifetime * STY_STAND_FLAME,
+				&"scale_amount_min": p.scale_amount_min * STY_STAND_FLAME, &"scale_amount_max": p.scale_amount_max * STY_STAND_FLAME})
 
 
 ## The Livro's writing desk on its footprint (HUB-D): a table of dark wood, rolls and a closed book on it, an inkwell,

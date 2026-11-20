@@ -352,6 +352,18 @@ func air() -> Dictionary:
 	return a
 
 
+## ENV-HB4 (ArenaRoom.under_look, only in the stylized look): the camera's side of the floor's edge on arches going
+## down into the mist instead of a plain coursed wall.
+## Here the face is the cut front walls' outer one (FRONT.y out), the arches' tops under their coping, and the crypt
+## has no depths' stone of its own: a dark petrol one fading into the front's mist.
+const STY_UNDER := {&"set": FRONT.y, &"top": FRONT.x - 0.4, &"colors": {&"stone_color": Color(0.04, 0.066, 0.07),
+	&"edge_color": Color(0.1, 0.16, 0.17), &"mist_color": FRONT_MIST_COLOR * 2.0}}
+
+
+func under_look() -> Dictionary:
+	return STY_UNDER
+
+
 ## The north door (X1) opens in the wall.
 func in_wall(i: int) -> bool:
 	return layout.exits[i].inward.y > 0.5
@@ -1052,6 +1064,31 @@ func _dress_styled() -> void:
 		ArenaKit.style_only(kit.root.get_child(i) as Node3D)
 	if divider != null:
 		_ossuary_crown(sm, divider)
+	_edge_pieces()
+
+
+## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Cripta), in the north bays, away from the crown (A) and the veiled
+## figure (B): ivy hanging over the north wall's crest between the niches (EDGE_IVY_AT: x; EDGE_IVY: out of the face,
+## down from the crest, width, length), a little ivy under the head of the bare niche and a heap of fallen blocks on its
+## floor (EDGE_NICHE: the niche of NORTH_NICHES; EDGE_NICHE_IVY: in from its face, down from its head, width, length;
+## EDGE_NICHE_RUBBLE: in from the face, along it, size).
+const EDGE_IVY_AT: Array[float] = [-5.5, -11.0]
+const EDGE_IVY := Vector4(0.04, 0.05, 1.6, 2.6)
+const EDGE_NICHE := 0
+const EDGE_NICHE_IVY := Vector4(0.3, 0.08, 1.1, 1.1)
+const EDGE_NICHE_RUBBLE := Vector3(0.5, 0.35, 0.6)
+
+
+func _edge_pieces() -> void:
+	var edge := edge_kit()
+	var face := _north - WALL_SET
+	for x in EDGE_IVY_AT:
+		edge.ivy(Vector3(x, WALL_HEIGHT - EDGE_IVY.y, face + EDGE_IVY.x), EDGE_IVY.z if x > _west + 2.0 else EDGE_IVY.z * 0.6,
+			EDGE_IVY.w, Vector2(1, 0), Vector2(0, 1), int(x * 10.0))
+	var nx: float = NORTH_NICHES[EDGE_NICHE]
+	edge.ivy(Vector3(nx, LEDGE + NICHE.y - EDGE_NICHE_IVY.y, face - EDGE_NICHE_IVY.x), EDGE_NICHE_IVY.z, EDGE_NICHE_IVY.w,
+		Vector2(1, 0), Vector2(0, 1), 3)
+	edge.rubble(Vector3(nx + EDGE_NICHE_RUBBLE.y, LEDGE, face - EDGE_NICHE_RUBBLE.x), EDGE_NICHE_RUBBLE.z, 5)
 
 
 ## The sill in front of a niche: five lit candles at a statue's feet (and their light), or two urns and three burnt-out

@@ -180,10 +180,10 @@ const WINDOW_MIST_ALPHA := 0.75
 # ---------- the stylized look (room redesign, lot C section 2: docs/art/room_redesign_lotC_spec.md) ----------
 ## The garden's biome: moss grey stone (hue 85), the oldest olive, the hall's fires, its own air.
 const STYLE := {
-	&"stone": Color(0.32, 0.325, 0.28), &"shadow": Color(0.9, 0.93, 0.96), &"floor_stone": STY_FLOOR,
+	&"stone": Color(0.31, 0.325, 0.275), &"shadow": Color(0.9, 0.93, 0.96), &"floor_stone": STY_FLOOR,
 	&"joint_cold": Color(0.92, 0.95, 1.0), &"olive_share": 0.25, &"slab_paint": Vector2(0.86, 1.12), &"slab_hue": 5.0,
 	&"metal": true, &"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"moss": STY_MOSS,
-	&"air": {&"sky": Color(0.04, 0.05, 0.05), &"fog": Color(0.07, 0.09, 0.09), &"ambient": Color(0.71, 0.71, 0.64),
+	&"air": {&"sky": Color(0.04, 0.05, 0.05), &"fog": Color(0.075, 0.09, 0.08), &"ambient": Color(0.69, 0.72, 0.635),
 		&"ambient_gain": 1.8, &"moon": Color(0.88, 0.88, 0.86), &"moon_energy": 0.75, &"moon_shadow": true},
 }
 const STY_FLOOR := Color(0.30, 0.31, 0.275)
@@ -203,9 +203,10 @@ const STY_MOSS := Color(0.20, 0.24, 0.17)
 ## The abyss in the stylized look: a dark grey green mist (no violet), its glow cards and its light cold and grey.
 ## The cycle of 2026-11-20 (matrix row 5: hue 75 to 95, saturation 0.28 to 0.35): the mist, its glow and its light
 ## from the cold grey to an olive grey, the colour rising there and in the rust (STY_LEAF_*), never in the floor.
-const STY_MIST := Color(0.088, 0.09, 0.068)
-const STY_GLOW := Color(0.42, 0.43, 0.33)
-const STY_ABYSS_LIGHT := Color(0.52, 0.53, 0.43)
+## ART_REVIEW.md 4.5 P2-B6: a few degrees greener (hue about 82, the scene to 80 or more), never cyan.
+const STY_MIST := Color(0.081, 0.09, 0.066)
+const STY_GLOW := Color(0.39, 0.43, 0.33)
+const STY_ABYSS_LIGHT := Color(0.49, 0.53, 0.43)
 ## The cliffs and the arches under the front in the depths' stone of the stylized look (no violet in their glow).
 const STY_CLIFF := {&"stone_color": Color(0.055, 0.062, 0.06), &"edge_color": Color(0.14, 0.16, 0.15),
 	&"mist_color": STY_MIST, &"glow_color": Color(0.3, 0.38, 0.4)}
@@ -217,27 +218,29 @@ const STY_COMPAT_MOON := 0.6
 const STY_KEY := 1.0
 const STY_BEAM := 0.9
 ## The tree's bark in the moss grey (hue 70 to 90, the trunk at 0.9 of the stone's value): base, cords, lichen.
-const STY_BARK := Color(0.21, 0.205, 0.17)
-const STY_CORD := Color(0.31, 0.305, 0.25)
+## P2-B6 (ART_REVIEW.md 4.5): bark, cords and the tree's fill a few degrees greener (the scene's hue to 80 or more).
+const STY_BARK := Color(0.20, 0.205, 0.165)
+const STY_CORD := Color(0.30, 0.31, 0.245)
 const STY_LICHEN := Color(0.30, 0.31, 0.24)
 ## The fill on the tree a neutral warm (the cold one turned the moss grey bark mint).
-const STY_TREE_FILL := Color(0.86, 0.84, 0.78)
+const STY_TREE_FILL := Color(0.84, 0.85, 0.78)
 ## J1: the crown in dead rust (hue 15 to 25, saturation up to 0.45, value up to 0.4; never the warnings' red).
-const STY_LEAF_A := Color(0.30, 0.16, 0.09)
-const STY_LEAF_B := Color(0.47, 0.27, 0.14)
+const STY_LEAF_A := Color(0.32, 0.17, 0.07)
+const STY_LEAF_B := Color(0.52, 0.31, 0.12)
 ## The dry grass a little more straw than lilac (dry_grass.gdshader's tint, if it has one).
-## The windows: the violet behind them turns to the cold of falling water (light on the walls' stone, the mist).
-const STY_WINDOW_LIGHT := Color(0.62, 0.72, 0.78)
+## The windows: the violet behind them turns to a grey of falling water (light on the walls' stone, the mist); P2-B6:
+## olive grey, not cold (the west side read cyan).
+const STY_WINDOW_LIGHT := Color(0.70, 0.72, 0.66)
 const STY_WINDOW_ENERGY := 1.4
-const STY_WINDOW_MIST := Color(0.20, 0.25, 0.27)
+const STY_WINDOW_MIST := Color(0.23, 0.25, 0.22)
 const STY_WINDOW_MIST_ALPHA := 0.45
 ## J2: fallen leaves on the floor, only along the north and west walls' feet (this deep) and round the trunk's foot
 ## (from its radius out this far); the cover's most (share of a band).
 const LEAVES_WALL := 1.2
 const LEAVES_TRUNK := 0.5
 const LEAVES_COVER := 0.3
-const LEAF_DARK := Color(0.26, 0.17, 0.12)
-const LEAF_LIGHT := Color(0.38, 0.25, 0.17)
+const LEAF_DARK := Color(0.28, 0.17, 0.09)
+const LEAF_LIGHT := Color(0.42, 0.27, 0.13)
 const LEAF_CELL := 0.22
 const LEAF_SIZE := Vector2(0.14, 0.24)
 ## J3: pale fungus: clusters (caps, reach m) on the lids, the column feet, the window sills and along the walls'
@@ -255,6 +258,10 @@ const FALL_NW_SIZE := Vector2(3.4, 16.0)
 const POOL_SIZE := Vector2(3.6, 2.4)
 const POOL_Y := -0.25
 const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
+## The garden's falls and pools (all stylized only): their water a grey green, not the default cold blue (P2-B6: the
+## west side read cyan); deep and foam.
+const WATER_DEEP := Color(0.055, 0.07, 0.065)
+const WATER_PALE := Color(0.66, 0.70, 0.64)
 ## J5 (B): the west wall gives way to a low broken parapet (its top's range, m, its blocks' length) and a dark lake
 ## past it, under the floor (its surface's y, how far west, how far north and south past the floor), a fall at its
 ## back (x, width, top).
@@ -299,6 +306,15 @@ func floor_look() -> Dictionary:
 
 func mist() -> Color:
 	return MIST
+
+
+## ENV-HB4 (ArenaRoom.under_look, only in the stylized look): the camera's side of the floor's edge on arches going
+## down into the mist instead of a plain coursed wall.
+const STY_UNDER := {&"set": ArenaRoom.LIP.y, &"top": -0.7}
+
+
+func under_look() -> Dictionary:
+	return STY_UNDER
 
 
 func cliff_look() -> Dictionary:
@@ -1084,6 +1100,37 @@ func _dress_styled() -> void:
 	_fall(sm, Vector3(nw.x, nw.y - FALL_NW_SIZE.y + FALL_TOP, nw.z), PI * 0.25, FALL_NW_SIZE.x, FALL_NW_SIZE.y, false)
 	if variant_b:
 		_lake(sm, b)
+	_edge_pieces()
+
+
+## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Jardim), never over the walkable floor: dead roots hanging inside the
+## north blind windows from under their arch (EDGE_WINDOW_ROOTS: down from the crown, behind the face, width, length)
+## and from the north-west pier's broken top on its face toward the room (EDGE_PIER_ROOTS: out from the pier's middle
+## toward the room, still past the cut; its top; width; length); ivy from under the upper string course on the north
+## wall and, in A, on the west wall (EDGE_IVY_NORTH, EDGE_IVY_WEST: along the wall; EDGE_IVY: out of the face, its top
+## under the course, width, length).
+const EDGE_WINDOW_ROOTS := Vector4(0.45, 0.12, 1.5, 2.6)
+const EDGE_PIER_ROOTS := Vector4(0.78, 5.0, 1.2, 2.3)
+const EDGE_IVY_NORTH: Array[float] = [-8.0, 0.25, 6.5]
+const EDGE_IVY_WEST: Array[float] = [-0.6, 5.5]
+const EDGE_IVY := Vector4(0.1, 0.06, 1.6, 2.2)
+
+
+func _edge_pieces() -> void:
+	var edge := edge_kit()
+	var crown := WINDOW_SILL + WINDOW.y
+	for x in NORTH_WINDOWS:
+		edge.root_curtain(Vector3(x, crown - EDGE_WINDOW_ROOTS.x, NORTH_Z - EDGE_WINDOW_ROOTS.y), EDGE_WINDOW_ROOTS.z,
+			EDGE_WINDOW_ROOTS.w, Vector2(1, 0), int(x))
+	var into := Vector2(1, 1).normalized()
+	var pier := Vector2(NW_PIER.x, NW_PIER.y) + into * EDGE_PIER_ROOTS.x
+	edge.root_curtain(Vector3(pier.x, EDGE_PIER_ROOTS.y, pier.y), EDGE_PIER_ROOTS.z, EDGE_PIER_ROOTS.w, into.orthogonal(), 7)
+	var course: float = COURSES[COURSES.size() - 1] - EDGE_IVY.y
+	for x in EDGE_IVY_NORTH:
+		edge.ivy(Vector3(x, course, NORTH_Z + EDGE_IVY.x), EDGE_IVY.z, EDGE_IVY.w, Vector2(1, 0), Vector2(0, 1), int(x * 10.0))
+	if not variant_b:
+		for z in EDGE_IVY_WEST:
+			edge.ivy(Vector3(WEST_X + EDGE_IVY.x, course, z), EDGE_IVY.z, EDGE_IVY.w, Vector2(0, 1), Vector2(1, 0), int(z * 10.0))
 
 
 ## J2: a card of fallen leaves along a wall's foot from a to b (inward: toward the floor), LEAVES_WALL deep.
@@ -1185,6 +1232,8 @@ func _fall(sm: Masonry, foot: Vector3, yaw: float, width: float, height: float, 
 	var mat := ShaderMaterial.new()
 	mat.shader = WATER_SHADER
 	mat.set_shader_parameter(&"form", 1)
+	mat.set_shader_parameter(&"deep", WATER_DEEP)
+	mat.set_shader_parameter(&"pale", WATER_PALE)
 	mat.set_shader_parameter(&"size", q.size)
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
@@ -1204,6 +1253,8 @@ func _sheet(sm: Masonry, at: Vector3, yaw: float, size: Vector2, foam: Vector2) 
 	var mat := ShaderMaterial.new()
 	mat.shader = WATER_SHADER
 	mat.set_shader_parameter(&"form", 0)
+	mat.set_shader_parameter(&"deep", WATER_DEEP)
+	mat.set_shader_parameter(&"pale", WATER_PALE)
 	mat.set_shader_parameter(&"size", size)
 	mat.set_shader_parameter(&"foam_at", foam)
 	mi.material_override = mat

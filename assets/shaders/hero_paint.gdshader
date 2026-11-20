@@ -20,6 +20,9 @@ uniform float specular = 0.12;
 // How dark the body is drawn (1: as painted): under the floor's value, separated from it by the rim and the outline.
 uniform float value = 0.28;
 uniform float flatten = 0.35;
+// HB3 (2026-11-20): the paint pushed this much away from its own grey (the flattening and the warm rim greyed his
+// petrol-green cloak: 0.6% of green round him on the GPU against 3.1% in the classic look, 1% asked)
+uniform float saturation = 1.8;
 // STY-10 (the art-director's STY-09, criterion 5): the painting's lightest patches (the cream lining of the cape) were
 // the lightest of his body; above `top` of luma the painting is brought down to it (its hue kept), so the warm rim is
 // his lightest edge (value 0.28 and rim 0.7 with it). 1: off.
@@ -43,6 +46,8 @@ uniform float gamma = 1.0;
 void fragment() {
 	vec3 raw = texture(albedo, UV).rgb;
 	vec3 c = figure_flatten(raw, textureLod(albedo, UV, flat_lod).rgb, flatten);
+	float grey = dot(c, vec3(0.2126, 0.7152, 0.0722));
+	c = max(mix(vec3(grey), c, saturation), vec3(0.0));
 	c *= min(1.0, top / max(dot(c, vec3(0.2126, 0.7152, 0.0722)), 0.0001));
 	c *= tint.rgb * value;
 	ALBEDO = c;

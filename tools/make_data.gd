@@ -206,6 +206,12 @@ func _enemy(props: Dictionary) -> void:
 ## pose's: OnHitStun 0.5 s on the light blows and OnHitStunHeavy 1.1 s on the strong ones (study 1.1 and 4.1), for
 ## every common enemy; the hit pose is stretched over it (Horde.render).
 const STUN := 0.5
+## The magic of the dead (vfx_pass_spec.md 4 and 5.4, V-11, Lote 1): the danger's crimson and magenta over a dark core,
+## the opposite of the hero's language; violet is Morvath's alone (the caster's cold violet, Daniel 2026-11-14, went
+## to magenta with the spec). Crimson: the crossbow's bolt and the runner's burst (hue 350 to 355 on the screen);
+## magenta: the caster's orbs, the priest's vine and the elder's fan (320 to 330).
+const DEAD_CRIMSON := Color(1.4, 0.16, 0.3)
+const DEAD_MAGENTA := Color(1.2, 0.18, 0.85)
 const STUN_HEAVY := 1.1
 ## E1c (AUDIT.md P2): Hades II's PostAttackDuration of each one's counterpart (study 4.2), the window it stands
 ## still after its blow (EnemyDef.recover_time): Guard 2.1 (elite 1.5), Radiator 1.35 (elite 0.5), Brawler 1.1 after
@@ -234,13 +240,16 @@ func _enemies() -> void:
 	# blows with 0.70 to 0.82 s; Hades' Radiator winds up 1.5 s)
 	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
 		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 1.0,
-		"magic_color": Color(3.0, 1.1, 0.25), "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
+		"magic_color": DEAD_CRIMSON, "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
 		"strike_at": 0.1,
 		"tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY, "recover_time": ENEMY_RECOVER.runner[0]},
 		# C19-2 (Q-11): the elite bursts twice in one spin, 0.5 s apart (combat_cadence.md 8.2: a new ring needs that to
 		# be read), then Hades' 0.5 s of the Radiator elite
-		{"armor": 85.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1], "strikes": 2, "strike_gap": 0.5})
+		# (its own bake, runner_elite.res: the same figure with a longer stride for its 7.4 m/s, 199 steps a minute; the
+		# common one's would be 259, Lote 2B)
+		{"armor": 85.0, "speed": 590.0 / U, "rating": 17.0, "recover_time": ENEMY_RECOVER.runner[1], "strikes": 2, "strike_gap": 0.5,
+			"model": &"runner_elite"})
 	# Ranged enemies with the numbers of Hades II's ranged ones in its first region (study of 2026-11-16) and Daniel's
 	# rule of the same day: they stay at their farthest and shoot, never close in (keep_away is ours: Hades' mage hides
 	# instead of running). The caster (Hades: the Mage, its life and rating): 3.5 m/s; from up to 13.1 m (elite 16.25),
@@ -249,9 +258,9 @@ func _enemies() -> void:
 	# first 0.8 s, then straight (C17, QW-101: they caught him late in their flight, the PO's most unfair blow; the robot
 	# took 46% of its blows in the rooms from them, 35% with both), 4 damage; then
 	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 6 at once.
-	# Cold violet: Daniel, 2026-11-14.
+	# Cold violet (Daniel, 2026-11-14) until the VFX pass: magenta, DEAD_MAGENTA.
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 280.0 / U, "damage": 4.0, "radius": 0.5,
-		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": Color(1.7, 1.25, 3.2),
+		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 20.0, "shot_homing": 0.8, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
@@ -261,7 +270,7 @@ func _enemies() -> void:
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
 	# from Hades, after each attack it runs 8.75 m from him for 1.5 to 1.75 s, and at most 2 wind up at once; 3.6 m/s
 	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 290.0 / U, "damage": 3.0, "radius": 0.55,
-		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": Color(3.0, 1.3, 0.3),
+		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": DEAD_CRIMSON,
 		"shot_speed": 16.0, "shot_line": true, "keep_away": 0.65, "retreat_far": 700.0 / U, "retreat_time": Vector2(1.5, 1.75), "max_attackers": 2,
 		# T5-05: the crossbow rises to the shoulder over its settle (it rose in 0.1 s)
 		"windup_settle": 0.25,
@@ -281,7 +290,7 @@ func _enemies() -> void:
 	# 15 less each second, for 12 s, 6 damage; then 3.25 s (elite: 3 vines 0.7 s apart, then 2.25 s). Before
 	# 2026-11-16 it dropped circles under him: those are Morvath's alone now.
 	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
-		"heavy": true, "attack_damage": 6.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": Color(1.9, 0.45, 3.0),
+		"heavy": true, "attack_damage": 6.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 150.0 / U, "shot_turn": 90.0, "shot_turn_decay": 15.0, "shot_range": 150.0 / U * 12.0, "shot_low": true,
 		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25,
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY},
@@ -297,7 +306,7 @@ func _enemies() -> void:
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
-		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": Color(1.9, 0.45, 3.0), "shot_orb": true, "shot_speed": 7.0,
+		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 7.0,
 		"shot_count": 5, "shot_spread": 70.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold

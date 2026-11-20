@@ -27,6 +27,17 @@ const LEAF := 0.16
 const WANDER := 0.22
 ## Sides of a root's section (5 reads round at the game's camera).
 const SIDES := 5
+## The edge chain (chain_weight): a link's outer radius and wire (m), its stretch along the chain and the pitch between
+## links (each passes through the next one's eye); the counterweight's height, radius and eye, and its drop under a
+## chain held at both ends.
+const CHAIN_LINK := 0.13
+const CHAIN_WIRE := 0.04
+const CHAIN_STRETCH := 1.55
+const CHAIN_PITCH := 0.27
+const WEIGHT_HEIGHT := 0.7
+const WEIGHT_RADIUS := 0.3
+const WEIGHT_EYE := 0.11
+const WEIGHT_DROP := 0.9
 
 var kit: ArenaKit
 var stone: Masonry
@@ -163,25 +174,109 @@ func ivy(top: Vector3, width := 2.0, length := 2.4, along := Vector2(1, 0), faci
 	return _put(st, &"ivy")
 
 
-## A chain from `top` straight down `length` m with a stone weight (a block bound in iron) at its end; `size` scales
-## the links (ArenaKit.chains) and the weight.
-func chain_weight(top: Vector3, length := 3.0, size := 1.0) -> void:
-	var foot := top - Vector3(0, length, 0)
-	var before := kit.root.get_child_count()
-	kit.chains([[top, foot]], 0.0, size)
-	for i in range(before, kit.root.get_child_count()):
-		var mm := kit.root.get_child(i) as MultiMeshInstance3D
-		if mm:
-			mm.material_override = material(&"iron")
-	var w := 0.5 * size
-	stone.box(foot - Vector3(0, w * 0.55, 0), Vector3(w, w * 1.1, w), 0.4, stone_see(foot.y - w), false)
-	var band := MeshInstance3D.new()
-	var b := BoxMesh.new()
-	b.size = Vector3(w * 1.06, w * 0.14, w * 1.06)
-	band.mesh = b
-	band.transform = Transform3D(Basis(Vector3.UP, 0.4), foot - Vector3(0, w * 0.2, 0))
-	band.material_override = material(&"iron")
-	stone.root.add_child(band)
+## A chain with its counterweight (art review of 2026-11-20: the room kit's chain read as a spring at this length).
+## One line of links, every other one turned a quarter, thin wire round an open eye (CHAIN_*), so it reads as links at
+## the game's camera; from `top` straight down `length` m, or, with `end` (not NAN), between `top` and `end` sagging
+## `sag` m with the weight hanging WEIGHT_DROP under the lowest link. The weight is a carved octagonal block of the
+## room's stone (WEIGHT_*, 0.7 m tall at size 1) with an iron band and the iron eye the chain goes through. Links in
+## one MultiMesh, the stone stays a separate mesh until the look merges the room.
+func chain_weight(top: Vector3, length := 3.0, size := 1.0, end := Vector3(NAN, NAN, NAN), sag := 0.6) -> void:
+	var held := not is_nan(end.x)
+	var spine := PackedVector3Array()
+	var low := top - Vector3(0, length, 0)
+	if held:
+		var n := 24
+		var deepest := 0
+		for i in n + 1:
+			var t := float(i) / n
+			spine.append(top.lerp(end, t) + Vector3.DOWN * sag * 4.0 * t * (1.0 - t))
+			if spine[i].y < spine[deepest].y:
+				deepest = i
+		low = spine[deepest]
+		_links(spine, size)
+		_links(PackedVector3Array([low, low - Vector3(0, WEIGHT_DROP * size, 0)]), size)
+		low -= Vector3(0, WEIGHT_DROP * size, 0)
+	else:
+		_links(PackedVector3Array([top, low]), size)
+	_weight(low, size)
+
+
+## Links along the polyline `spine`, CHAIN_PITCH apart, the eye of every other one turned a quarter about the line.
+func _links(spine: PackedVector3Array, size: float) -> void:
+	var total := 0.0
+	for i in spine.size() - 1:
+		total += spine[i].distance_to(spine[i + 1])
+	var count := maxi(2, ceili(total / (CHAIN_PITCH * size)))
+	var torus := TorusMesh.new()
+	torus.outer_radius = CHAIN_LINK * size
+	torus.inner_radius = (CHAIN_LINK - CHAIN_WIRE) * size
+	torus.rings = 8
+	torus.ring_segments = 4
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = torus
+	mm.instance_count = count
+	var seg := 0
+	var seg_from := 0.0
+	for k in count:
+		var d := total * (k + 0.5) / count
+		while seg < spine.size() - 2 and d > seg_from + spine[seg].distance_to(spine[seg + 1]):
+			seg_from += spine[seg].distance_to(spine[seg + 1])
+			seg += 1
+		var a := spine[seg]
+		var b := spine[seg + 1]
+		var along := (b - a).normalized()
+		var p := a + along * (d - seg_from)
+		var side := along.cross(Vector3.UP)
+		side = Vector3.RIGHT if side.length() < 0.1 else side.normalized()
+		var eye := side if k % 2 == 0 else side.cross(along).normalized()
+		# the torus lies in its x-z plane round y: x along the chain (stretched), y the eye's axis
+		mm.set_instance_transform(k, Transform3D(Basis(along * CHAIN_STRETCH, eye, along.cross(eye)), p))
+	var mmi := MultiMeshInstance3D.new()
+	mmi.multimesh = mm
+	mmi.material_override = material(&"iron")
+	mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	stone.root.add_child(mmi)
+
+
+## The counterweight hanging from `at`: the iron eye, a short neck, a carved octagonal block narrowing to the top
+## with a chamfered foot and an iron band.
+func _weight(at: Vector3, size: float) -> void:
+	var h := WEIGHT_HEIGHT * size
+	var r := WEIGHT_RADIUS * size
+	var ring := MeshInstance3D.new()
+	var t := TorusMesh.new()
+	t.outer_radius = WEIGHT_EYE * size
+	t.inner_radius = (WEIGHT_EYE - CHAIN_WIRE * 1.4) * size
+	t.rings = 12
+	t.ring_segments = 5
+	ring.mesh = t
+	ring.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), at - Vector3(0, WEIGHT_EYE * size, 0))
+	ring.material_override = material(&"iron")
+	stone.root.add_child(ring)
+	var top_y := at.y - WEIGHT_EYE * size * 1.8
+	var parts := [
+		# [height, top radius, bottom radius, material]: neck cap, body narrowing up, foot chamfer
+		[0.12 * h, r * 0.45, r * 0.8, &"stone"],
+		[0.68 * h, r * 0.86, r, &"stone"],
+		[0.08 * h, r * 1.02, r * 1.02, &"iron"],
+		[0.12 * h, r, r * 0.78, &"stone"],
+	]
+	var y := top_y
+	for part: Array in parts:
+		var c := CylinderMesh.new()
+		c.height = part[0]
+		c.top_radius = part[1]
+		c.bottom_radius = part[2]
+		c.radial_segments = 8
+		c.rings = 1
+		var mi := MeshInstance3D.new()
+		mi.mesh = c
+		mi.transform = Transform3D(Basis(Vector3.UP, PI / 8.0), Vector3(at.x, y - float(part[0]) * 0.5, at.z))
+		mi.material_override = material(&"iron") if part[3] == &"iron" else stone_see(top_y - h)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		stone.root.add_child(mi)
+		y -= float(part[0])
 
 
 func _rng(at: Vector3, seed_: int) -> RandomNumberGenerator:

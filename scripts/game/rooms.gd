@@ -66,9 +66,14 @@ const GOLD_COLOR := Color(1.0, 0.82, 0.35)
 ## Memória a parchment.
 const SILVER_COLOR := Color(0.78, 0.8, 0.86)
 const MEMORY_COLOR := Color(0.86, 0.78, 0.6)
-## Fatia 2 (provisional, for the art-director): an Encanto's door in the Emeth's green, paler; a Psalm's ivory-lilac.
+## Fatia 2 (provisional, for the art-director): an Encanto's door in the Emeth's green, paler; a Psalm's old gold, the
+## PsalmDef's own colour (vfx_pass_spec.md 4: the lilac went, too near Morvath's violet).
 const ENCHANT_COLOR := Color(0.45, 0.85, 0.6)
-const PSALM_COLOR := Color(0.85, 0.8, 1.0)
+const PSALM_COLOR := Color(0.78, 0.62, 0.34)
+## The light that falls on what is taken (vfx_pass_spec.md 6, Daniel's ask; the piece is the technical-artist's
+## RewardShaft): on the room's reward once the room is won (it waits RewardShaft.WAIT, the end of the last kill's slow
+## motion), on every item of the shop at once (RewardShaft.SHOP_CAN when the gold reaches it, SHOP_CANNOT when not,
+## following the gold) and on the fountain while it has water (Game.spawn_fountain). Taking the thing lifts it.
 
 var game: Game
 var stage: StageDef
@@ -81,6 +86,8 @@ var gold := 0:
 		gold = v
 		for p in _pedestals:
 			(p.sign as DoorSign).set_gold(gold)
+			if is_instance_valid(p.get("shaft")):
+				(p.shaft as RewardShaft).set_strength(shop_light(gold >= int(p.price)))
 ## The kinds of the rooms won in this run (fights and the guardian's), for the Mastery (Game.mastery_gain).
 var won: Array[RunMap.Kind] = []
 ## The gold this fight can still give, dropped by the enemies that fall (C13-04; null outside a fight).
@@ -93,6 +100,8 @@ var _wave_wait := 0.0
 var _cap := 4
 var _reward_at := Vector2.ZERO
 var _reward_node: Node3D
+## The room's reward's light (vfx_pass_spec.md 6).
+var _reward_shaft: RewardShaft
 var _pedestals: Array[Dictionary] = []
 var _door_labels: Array[Node3D] = []
 var _defs: Dictionary = {}
@@ -484,7 +493,7 @@ func _spawn(id: StringName) -> void:
 	game.horde.spawn(d, at, true)
 	game.fx.burst(&"shadow", Vector3(at.x, 0.6, at.y))
 	if d.elite:
-		game.column(at, d.rim_color, 1.2, 8.0, 0.8)
+		# (vfx_pass_spec.md 5.4, V-15: no column of light; light from above is only for what is taken)
 		if room.kind == RunMap.Kind.MINIBOSS:
 			game.hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}), 3.0)
 			Audio.play(&"elite")
@@ -564,7 +573,9 @@ func _room_cleared() -> void:
 		return
 	_reward_at = game.arena.resolve(game.arena.middle, 1.0)
 	_reward_node = _marker(_reward_at, room.reward, "")
-	game.column(_reward_at, _reward_color(room.reward), 1.4, 12.0, 1.0)
+	# the light that falls on it and stays until he takes it (vfx_pass_spec.md 6; the column of 1 s went)
+	_reward_shaft = RewardShaft.make(self, Vector3(_reward_at.x, 0, _reward_at.y), RewardShaft.tint_of(room.reward, _angel_family(room)))
+	_reward_shaft.appear()
 
 
 ## An enemy fell: in a fight it may leave its share of the fight's gold (GoldPurse), shown where it fell. An elite
@@ -586,6 +597,9 @@ func _collect() -> void:
 	var reward := room.reward
 	_reward_node.queue_free()
 	_reward_node = null
+	if is_instance_valid(_reward_shaft):
+		_reward_shaft.take()
+	_reward_shaft = null
 	# what the room gave, beside the door that promised it (DV-1, MAP-02: the log checks the promise)
 	game.room_tally.event("reward", game.time, {"node": room.id, "reward": (RunMap.Reward.keys()[reward] as String).to_lower()})
 	_give(reward, room.kind == RunMap.Kind.MINIBOSS, true)
@@ -1226,6 +1240,10 @@ func _build_shop() -> void:
 		sign.set_gold(gold)
 		(p.node as Node3D).add_child(sign)
 		p.sign = sign
+		# every item under its light at once, as he comes in; strong when the gold reaches it (vfx_pass_spec.md 6)
+		var shaft := RewardShaft.make(self, Vector3(at.x, 0, at.y), RewardShaft.tint_of(p.item), shop_light(gold >= int(p.price)))
+		shaft.appear(0.0, true)
+		p.shaft = shaft
 		_pedestals.append(p)
 	# the stylized look dresses the row (room redesign lot A 3.3; nothing of it blocks)
 	var points: Array[Vector2] = []
@@ -1254,6 +1272,8 @@ func _step_shop(use: bool) -> void:
 		gold -= p.price
 		game.room_tally.bought(RunMap.Reward.keys()[p.item].to_lower(), p.price)
 		(p.node as Node3D).queue_free()
+		if is_instance_valid(p.get("shaft")):
+			(p.shaft as RewardShaft).take()
 		_pedestals.erase(p)
 		_give(p.item)
 
@@ -1425,6 +1445,7 @@ func _clear_props() -> void:
 	for c in get_children():
 		c.queue_free()
 	_reward_node = null
+	_reward_shaft = null
 	_gems.clear()
 	_pedestals.clear()
 	_door_labels.clear()
@@ -1434,10 +1455,11 @@ static func _reward_color(r: RunMap.Reward) -> Color:
 	match r:
 		RunMap.Reward.BOON:
 			return Color(1.0, 0.82, 0.38)
+		# (vfx_pass_spec.md 4 and 6.3: the pomegranate and the heart out of the danger's red, rose and a colder rose)
 		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
-			return Color(1.0, 0.4, 0.35)
+			return Color.from_hsv(352.0 / 360.0, 0.5, 1.0)
 		RunMap.Reward.HEART:
-			return Color(1.0, 0.3, 0.45)
+			return Color.from_hsv(340.0 / 360.0, 0.45, 1.0)
 		RunMap.Reward.MAGICK:
 			return Color(0.45, 0.65, 1.0)
 		RunMap.Reward.GOLD:
@@ -1453,6 +1475,21 @@ static func _reward_color(r: RunMap.Reward) -> Color:
 		RunMap.Reward.PSALM:
 			return PSALM_COLOR
 	return Color.WHITE
+
+
+## How strong a shop item's light is: RewardShaft.SHOP_CAN when the gold reaches its price, SHOP_CANNOT when not.
+static func shop_light(affordable: bool) -> float:
+	return RewardShaft.SHOP_CAN if affordable else RewardShaft.SHOP_CANNOT
+
+
+## The family of the one angel a Blessing's door showed (-1: two angels meet him, the guardian, or none).
+func _angel_family(r: RunMap.Room) -> int:
+	if r == null or r.meeting or r.kind == RunMap.Kind.MINIBOSS or r.angel == &"" or game.encounters == null:
+		return -1
+	for a: AngelDef in game.encounters.book.catalog:
+		if a.id == r.angel:
+			return a.family
+	return -1
 
 
 static func _kind_color(k: RunMap.Kind) -> Color:

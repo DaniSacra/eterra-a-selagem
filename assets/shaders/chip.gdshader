@@ -4,12 +4,15 @@ shader_type spatial;
 // the sliver's length (meters); the y column's length is its width; the origin where it is; the colour is its light
 // (already faded). Drawn on a unit quad turned round the axis to face the camera, pointed at both ends, a little paler
 // in the middle.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled, skip_vertex_transform;
+// vfx_pass_spec.md (rule 1 of section 3): laid over what is behind it (premultiplied, a = light / cap), never added:
+// however many cross, nothing passes `cap` (Fx: ScreenTone.linear_peak of white at 226), hue kept.
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled, fog_disabled, skip_vertex_transform;
 
 // How far the middle goes toward ivory, and the sliver's shape: its width over the length (1: a lens as wide as
 // long), how soft its sides are.
 uniform float heart_pale = 0.35;
 uniform float soft = 0.35;
+uniform float cap = 1.0;
 
 // Eterra Stylized (STY-06, T24; docs/art/stylized_spec.md 3.3): with the global art_style at 1 the emerald motes a swing
 // sheds (green the largest channel, saturated) are thin strokes, style_thin of their width (0.06 to 0.03 m), with no
@@ -50,6 +53,12 @@ void fragment() {
 	float body = (1.0 - smoothstep(1.0 - soft, 1.0, d)) * step(k, 0.999);
 	if (body <= 0.002) discard;
 	float heart = 1.0 - smoothstep(0.0, 0.5, d);
-	vec3 c = mix(tone.rgb, vec3(max(tone.r, max(tone.g, tone.b))), heart * heart_pale);
-	ALBEDO = c * body;
+	vec3 c = mix(tone.rgb, vec3(max(tone.r, max(tone.g, tone.b))), heart * heart_pale) * body;
+	float peak = max(c.r, max(c.g, c.b));
+	if (peak > cap) {
+		c *= cap / peak;
+		peak = cap;
+	}
+	ALBEDO = c;
+	ALPHA = clamp(peak / max(cap, 0.0001), 0.0, 1.0);
 }
