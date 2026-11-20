@@ -1049,6 +1049,24 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   imune nem guardião); o aviso do chão sem dano não fere (`Ground.Zone.floor_own`: aterrissa e avisa `hazard_landed`
   mesmo sem dano, `hit_player` só com `power` acima de 0). Som `breath_arm` = `rune_arm`, `breath_fire` = `dodge`.
   `rooms[].hazard` `kind` `breath` com `pushed` e `cut` (a corrente também). Testes em `tests/test_breath.gd`.
+- **Coluna rachada que tomba (RP-09, a árvore que cai do Érebo do Hades II)**: `ArenaObstacle.hits_to_fall` (0 = nunca),
+  `fall_length` 5, `fall_width` 1,2, `fall_time` 0,6, `fall_damage` 50 (`_cracked` no `make_data.gd`): Santuário A e B
+  (15; -6) e (-9; 6), Jardim A (4,5; 7), Cripta B (6,5; -6). Só os golpes do herói contam (`Combat.reached`: forma,
+  origem, direção, alcance e largura de todo golpe do combo com dano; `ColumnFall.touches`): o 1º racha, o 2º tomba
+  para onde o golpe foi (nunca de volta nele): faixa âmbar de 1,2 x 5 m por 0,6 s enquanto inclina
+  (`Ground.add_fall`, `FALL_SOURCE` `column`, sem `power`), 50 a todo inimigo cujo corpo toca a faixa
+  (`PlateFloor.strike(..., bodies)`), nada ao herói; fica o toco no mesmo lugar (para corpos, não tiros: sai do
+  `Arena.cover`; a grade de andar não muda). Uma vez por coluna por sala. Lógica pura `ColumnFall`
+  (`core/column_fall.gd`), no jogo `ColumnFloor` (`game/column_floor.gd`, criado pelo `Rooms._start_hazard` em luta e
+  guardião, `Rooms.columns`); `rooms[].columns` (`cracked`, `toppled`, `enemy_damage`, `kills`). Som `column_crack` =
+  `rune_crack`, `column_fall` = `boss_down`. Robô: vai a uma coluna a até 10 m que cairia sobre um inimigo ou mais,
+  contorna para o outro lado e golpeia na direção do bando (`Bot.column_plan`, `COLUMN_*`). **Visual provisório, para o
+  environment-artist**: as malhas da coluna ficam fora do `merge` (`ArenaRoom.toppling`, `Masonry.take_since`) sob um
+  pivô no pé; a racha só balança 3 graus com poeira, o tombo gira o pivô até 82 graus em 0,6 s e ao bater ela some e
+  aparece um `TombKit.column` quebrado baixo com poeira ao longo da faixa e tremor. Falta: racha desenhada na pedra
+  (fissura que acende ou abre no 1º golpe), a coluna caindo de verdade (tambores se separando, pedaços rolando na faixa,
+  a coluna deitada ou em pedaços no chão depois, sem colidir), o toco com a quebra (topo irregular, lascas em volta) e
+  pó mais grosso no impacto; nada pode mudar a colisão nem a faixa. Testes em `tests/test_columns.gd`.
 - **Morte de elite** (V-14): elite de aço dourado (`EnemyDef.elite` com `gild`; guardiões não) cai com duas lascas de
   ouro velho a mais (`CrowdRenderer.GILD_COLOR`, `Horde.damage`); teste em `test_vfx_lote1.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje

@@ -120,6 +120,8 @@ var runes: RuneFloor
 var plates: PlateFloor
 ## RP-11: the bands that strike in turn (the chain of the bridge), or null.
 var bands: BandFloor
+## RP-09: the room's cracked columns that topple, or null.
+var columns: ColumnFloor
 var _slab_node: Node3D
 var _slab_sign: DoorSign
 ## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
@@ -404,8 +406,8 @@ func _enter(next: RunMap.Room) -> void:
 			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
 			game.horde.alive_cap = alive.y
 			phase = Phase.FIGHT
-			if layout != null and layout.hazard != null and layout.hazard.kind == HazardDef.Kind.PLATES:
-				_start_hazard(layout)  # the slabs of the guardian's house (RP-06); the runes never hold a guardian
+			if layout != null and (layout.hazard == null or layout.hazard.kind == HazardDef.Kind.PLATES):
+				_start_hazard(layout)  # the slabs of the guardian's house (RP-06), its columns (RP-09); never the runes
 		RunMap.Kind.FOUNTAIN:
 			game.spawn_fountain(Vector2(0, -2.0))
 			_open_doors()
@@ -463,6 +465,8 @@ func _step_fight(dt: float) -> void:
 		plates.step(dt)
 	if bands != null:
 		bands.step(dt)
+	if columns != null:
+		columns.step(dt)
 	if _wave_wait > 0.0:
 		_wave_wait -= dt
 		if _wave_wait <= 0.0:
@@ -1174,6 +1178,12 @@ func _to_look(what: StringName) -> void:
 ## The floor that strikes on its own in this fight, by its kind (RuneFloor for the runes' grid, PlateFloor for the
 ## slabs of RP-06, asleep before the descent reaches HazardDef.from_progress).
 func _start_hazard(layout: RoomLayout) -> void:
+	if layout != null and columns == null:
+		var c := ColumnFloor.new(game, layout.obstacles)
+		if c.count() > 0:
+			columns = c
+		else:
+			c.stop()
 	if layout == null or layout.hazard == null:
 		return
 	if layout.hazard.kind == HazardDef.Kind.LINE:
@@ -1185,6 +1195,10 @@ func _start_hazard(layout: RoomLayout) -> void:
 
 
 func _stop_runes() -> void:
+	if columns != null:
+		columns.stop()
+		game.room_tally.columns(columns.tally())
+		columns = null
 	if plates != null:
 		plates.stop()
 		game.room_tally.hazard(plates.enemy_damage, plates.kills, plates.hazard.fired, String(Ground.PLATE_SOURCE),

@@ -109,6 +109,12 @@ func hazard(enemy_damage: float, kills: int, strikes: int, source := "runes", ex
 		(r.hazard as Dictionary).merge(extra, true)
 
 
+## RP-09: the room's toppling columns (ColumnFloor.tally: how many, cracked, toppled, what they dealt, kills).
+func columns(data: Dictionary) -> void:
+	if not _rooms.is_empty():
+		_rooms[-1].columns = data
+
+
 ## E5: a decision of an event (type: what happened; data: its details), at play time `time`, in the current room.
 func event(type: String, time: float, data := {}) -> void:
 	var e := {"type": type, "room": int(_rooms[-1].depth) if not _rooms.is_empty() else 0, "t": snappedf(time, 0.1)}

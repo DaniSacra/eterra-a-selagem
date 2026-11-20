@@ -41,6 +41,8 @@ const EVENTS := {
 	&"chain_fire": &"rune_crack",
 	&"breath_arm": &"rune_arm",
 	&"breath_fire": &"dodge",
+	&"column_crack": &"rune_crack",
+	&"column_fall": &"boss_down",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
 const MATERIALS: Array[StringName] = [&"spectral", &"armor", &"shield", &"bone"]

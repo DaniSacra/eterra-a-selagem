@@ -246,7 +246,10 @@ func build(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> void:
 	_edges()
 	_abyss()
 	for o in layout.obstacles:
+		var from := m.built_count()
 		piece(o)
+		if o.hits_to_fall > 0:
+			toppling[o] = m.take_since(from)  # (RP-09: it may topple, so it stays out of the merge)
 	_doors()
 	_light()
 	dress()
@@ -381,6 +384,11 @@ static func _param(sm: ShaderMaterial, name_: StringName, fallback: float) -> fl
 
 
 const RUIN_SHADER := preload("res://assets/shaders/abyss_ruins.gdshader")
+
+
+## RP-09: the meshes of each obstacle that may topple (ArenaObstacle.hits_to_fall), kept apart from the merge so the
+## fight can lean them over (ColumnFloor); obstacle to Array[MeshInstance3D].
+var toppling := {}
 
 
 ## Room redesign lot C: the nodes added under the room since child `from` (the abyss's planes, lights and wisps), to

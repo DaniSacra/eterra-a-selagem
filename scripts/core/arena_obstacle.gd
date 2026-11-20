@@ -24,6 +24,15 @@ enum Shape { CIRCLE, BOX }
 @export var piece: StringName = &"block"
 ## Height of the piece (meters; the look's, and whether it is low enough to see over).
 @export var height := 1.0
+## RP-09, a cracked column that topples (the falling tree of the Hades II's Erebus): the paladin's blows it takes before
+## it falls (0: it never does; the first cracks it, the last topples it toward where the blow went), the band it falls
+## on (meters long from its middle and wide), the seconds the band shows while it leans, and what it deals to each enemy
+## on the band (never to the paladin). Fallen, it is a stump (column_base): it stops bodies, no more shots.
+@export var hits_to_fall := 0
+@export var fall_length := 5.0
+@export var fall_width := 1.2
+@export var fall_time := 0.6
+@export var fall_damage := 50.0
 
 
 static func circle(at: Vector2, r: float, what: StringName, h: float, shots := true, see := false) -> ArenaObstacle:

@@ -25,6 +25,20 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Feito em 2026-11-20 (gameplay-engineer): RP-09 (coluna rachada que tomba)
+
+- Dado: `ArenaObstacle.hits_to_fall` 2, `fall_length` 5, `fall_width` 1,2, `fall_time` 0,6, `fall_damage` 50 (`_cracked` no
+  `make_data.gd`) nas colunas quebradas do Santuário A e B (15; -6) e (-9; 6), do Jardim A (4,5; 7) e da Cripta B (6,5; -6).
+- 1º golpe do herói racha, 2º tomba para onde o golpe foi (nunca de volta nele); faixa âmbar 0,6 s; 50 a cada inimigo
+  que o corpo toca a faixa; 0 ao herói; toco no mesmo lugar (corpo sim, tiro não); uma vez por coluna por sala.
+- Robô (24 sementes, `smoke 900 --bot-reaction=0.25 --ultimate=cleave`): 65 salas com coluna, tomba em 35 (54%, meta 30%
+  cumprida); dano médio por sala com coluna derrubada 28 (meta 40 **não** cumprida): metade dos tombos é acidental (a
+  coluna está no arco de um golpe dado contra outro inimigo) e cai em ninguém; quando o robô planeja (`Bot.column_plan`)
+  o tombo dá 50 a 100. Com gente, mirar a coluna é o natural: medir no teste. Robô: 22 de 24 em Morvath, `stuck` 1
+  (esqueleto elite numa sala sem coluna); as duas mortes em salas sem coluna.
+- Visual provisório (malhas da coluna num pivô que inclina, toco do `TombKit`); o pedido ao environment-artist está no
+  CLAUDE.md (Coluna rachada que tomba).
+
 ## Feito em 2026-11-20 (gameplay-engineer): RP-08 nas Fendas (a fenda que respira)
 
 - O mesmo `LINE` do RP-11 sem dano (`HazardDef.band_source` `breath`, `_breath` e `BREATH_PUSH` no `make_data.gd`): três

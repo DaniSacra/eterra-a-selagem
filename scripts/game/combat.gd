@@ -6,6 +6,9 @@ signal combo_changed(count: int)
 signal enemy_struck(e: Enemy, tags: Array[StringName], damage: float)
 ## Every swing of the combo, after its hits (struck: how many it reached); captures freeze on it (--shot-on).
 signal swung(node: ComboNode, struck: int)
+## Where a swing of the combo that deals damage reached (RP-09: the cracked columns, ColumnFloor): its shape
+## (ComboNode.Shape), from `origin` toward `dir`, out to `reach`, `width` degrees (ARC) or meters (LINE).
+signal reached(shape: int, origin: Vector2, dir: Vector2, reach: float, width: float)
 ## A blow of the paladin's landed on hits enemies (wards not counted): a move of the combo tree (node), or the first
 ## enemy a wave of a move struck (node null; its shot is counted once, Projectiles.Shot.counted). The passive and the
 ## Gifts read it (HeroGifts).
@@ -308,6 +311,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	if echo > 0.0 and not tags.has(ECHO_TAG):
 		_echoes.append({"node": node, "origin": origin, "dir": dir, "t": boons.stat(&"echo_delay", tags), "share": echo})
 	kill_blow = 0
+	if node.damage > 0.0:
+		reached.emit(node.shape, origin, dir, reach, shape.hit_width if node.shape == ComboNode.Shape.ARC else node.width)
 	swung.emit(node, struck.size())
 	if hits > 0:
 		landed.emit(node, tags, hits)

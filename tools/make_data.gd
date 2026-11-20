@@ -724,6 +724,19 @@ func _column(x: float, z: float, top: float, r := 0.7) -> ArenaObstacle:
 	return ArenaObstacle.circle(Vector2(x, z), r, &"column", top, top >= 1.25, true)
 
 
+## RP-09: a cracked column that topples (the falling tree of the Hades II's Erebus): the first blow of the paladin
+## cracks it, the second topples it away from him: a band of 1.2 x 5 m shown 0.6 s while it leans, 50 to each enemy on
+## it (a whole skeleton almost), 0 to him; then a stump. Santuário (15, -6) and (-9, 6), Jardim A (4.5, 7), Cripta B
+## (6.5, -6).
+func _cracked(o: ArenaObstacle) -> ArenaObstacle:
+	o.hits_to_fall = 2
+	o.fall_length = 5.0
+	o.fall_width = 1.2
+	o.fall_time = 0.6
+	o.fall_damage = 50.0
+	return o
+
+
 ## A box lying along x (or along z when turned), of size w x d.
 func _sarcophagus(x: float, z: float, w: float, d: float, top := 1.35, piece := &"sarcophagus", see := false) -> ArenaObstacle:
 	return ArenaObstacle.box(Vector2(x, z), Vector2(w, d) * 0.5, 0.0, piece, top, top >= 1.25, see)
@@ -808,7 +821,7 @@ func _crypt() -> RoomLayout:
 	# on 2026-11-20 and put back: with the robot the fight went south, 40 to 55% of his time in the south third)
 	var b: Array[ArenaObstacle] = [
 		_sarcophagus(0.5, -7.0, 0.8, 7.0, 3.2, &"block", true),
-		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _column(6.5, -6.0, 5.2, 0.65),
+		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _cracked(_column(6.5, -6.0, 5.2, 0.65)),
 		_sarcophagus(-4.0, 3.0, 2.5, 1.2), _sarcophagus(3.0, 3.0, 2.5, 1.2),
 		_capsule(Vector2(-12, -2.5), Vector2(-8, -2.5), 0.6, 0.9), _capsule(Vector2(12, 1.0), Vector2(8, 1.0), 0.6, 0.9),
 	]
@@ -916,7 +929,7 @@ func _garden() -> RoomLayout:
 			[Vector2(-11.5, -7.0), Vector2(-12.8, -7.8)]]:
 		a.append_array(_root(TRUNK, TRUNK_RADIUS, pts))
 	a.append_array([_sarcophagus(7.5, -5.0, 2.5, 1.2), _sarcophagus(-16.4, -1.5, 1.2, 2.5),
-		_capsule(Vector2(9, 5), Vector2(13, 5), 0.8, 1.0), _column(4.5, 7.0, 3.6)])
+		_capsule(Vector2(9, 5), Vector2(13, 5), 0.8, 1.0), _cracked(_column(4.5, 7.0, 3.6))])
 	a.append_array(bowls)
 	l.obstacles = a
 	var b: Array[ArenaObstacle] = [trunk]
@@ -1439,7 +1452,7 @@ func _sanctuary() -> RoomLayout:
 		a.append(_column(x, -6.0, 5.2, 0.65))
 	for x: float in [-15.0, -3.0, 3.0, 9.0, 15.0]:
 		a.append(_column(x, 6.0, 5.2, 0.65))
-	a.append_array([_column(15.0, -6.0, 3.4, 0.65), _column(-9.0, 6.0, 3.0, 0.65),
+	a.append_array([_cracked(_column(15.0, -6.0, 3.4, 0.65)), _cracked(_column(-9.0, 6.0, 3.0, 0.65)),
 		ArenaObstacle.circle(Vector2(3.0, -6.0), 0.65, &"column_base", 0.6, false),
 		_capsule(Vector2(3.0, -6.9), Vector2(3.0, -9.8), 1.1, 1.0, &"drums")])
 	a.append_array(walls)
@@ -1447,8 +1460,8 @@ func _sanctuary() -> RoomLayout:
 	l.obstacles = a
 	# B, "Nave partida": the nave's floor fell (a hole), the columns of x 3 and 9 with it; the north (-9) one broken
 	var b: Array[ArenaObstacle] = [_column(-15.0, -6.0, 5.2, 0.65), _column(-9.0, -6.0, 3.2, 0.65),
-		_column(-3.0, -6.0, 5.2, 0.65), _column(15.0, -6.0, 3.4, 0.65), _column(-15.0, 6.0, 5.2, 0.65),
-		_column(-9.0, 6.0, 3.0, 0.65), _column(-3.0, 6.0, 5.2, 0.65), _column(15.0, 6.0, 5.2, 0.65)]
+		_column(-3.0, -6.0, 5.2, 0.65), _cracked(_column(15.0, -6.0, 3.4, 0.65)), _column(-15.0, 6.0, 5.2, 0.65),
+		_cracked(_column(-9.0, 6.0, 3.0, 0.65)), _column(-3.0, 6.0, 5.2, 0.65), _column(15.0, 6.0, 5.2, 0.65)]
 	b.append_array(walls)
 	b.append_array(bowls)
 	var fallen := FloorShape.poly([outline], [_poly([1, -3.2, 4.5, -3.5, 9, -3.1, 9.4, 0, 9, 3.1, 4.5, 3.5, 1, 3.2, 0.6, 0])])

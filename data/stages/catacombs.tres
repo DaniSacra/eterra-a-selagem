@@ -270,6 +270,7 @@ radius = 0.65
 see_through = true
 piece = &"column"
 height = 5.2
+hits_to_fall = 2
 
 [sub_resource type="Resource" id="Resource_h4aqg"]
 script = ExtResource("3_kin83")
@@ -743,6 +744,7 @@ radius = 0.7
 see_through = true
 piece = &"column"
 height = 3.6
+hits_to_fall = 2
 
 [sub_resource type="Resource" id="Resource_582o2"]
 script = ExtResource("3_kin83")
@@ -1045,6 +1047,7 @@ radius = 0.65
 see_through = true
 piece = &"column"
 height = 3.4
+hits_to_fall = 2
 
 [sub_resource type="Resource" id="Resource_mrscu"]
 script = ExtResource("3_kin83")
@@ -1053,6 +1056,7 @@ radius = 0.65
 see_through = true
 piece = &"column"
 height = 3.0
+hits_to_fall = 2
 
 [sub_resource type="Resource" id="Resource_sonfj"]
 script = ExtResource("3_kin83")
@@ -1172,6 +1176,7 @@ radius = 0.65
 see_through = true
 piece = &"column"
 height = 3.4
+hits_to_fall = 2
 
 [sub_resource type="Resource" id="Resource_tcefp"]
 script = ExtResource("3_kin83")
@@ -1188,6 +1193,7 @@ radius = 0.65
 see_through = true
 piece = &"column"
 height = 3.0
+hits_to_fall = 2
 
 [sub_resource type="Resource" id="Resource_fxveh"]
 script = ExtResource("3_kin83")

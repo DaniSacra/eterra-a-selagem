@@ -99,14 +99,15 @@ func _on_landed(z: Ground.Zone) -> void:
 ## Ground's own. cut: a push that deals nothing cuts the wind-up or attack of whoever it moved (the rift that breathes,
 ## RP-08: the flood trap of the Hades II; never a charge that cannot be cut, nor a guardian). Returns (life taken,
 ## enemies felled, enemies pushed). Shared by the slabs and the bands (BandFloor).
-static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName, cut := false) -> Vector3:
+## bodies: whoever's body touches it is struck (a column falling: RP-09), not only who stands in it.
+static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName, cut := false, bodies := false) -> Vector3:
 	var dealt := 0.0
 	var felled := 0
 	var pushed := 0
 	var h := game.horde
 	h.dealing = source
 	for e in h.list.duplicate():
-		if not e.alive or e.def.behavior == EnemyDef.Behavior.BOSS or not Ground.inside(z, e.pos):
+		if not e.alive or e.def.behavior == EnemyDef.Behavior.BOSS or not Ground.inside(z, e.pos, e.def.radius if bodies else 0.0):
 			continue
 		var before: float = e.hp
 		if z.hazard > 0.0 and h.damage(e, z.hazard, Vector2.ZERO, 0.0, NUMBER_COLOR):

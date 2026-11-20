@@ -25,6 +25,8 @@ const PLATE_SOURCE := &"plates"
 const CHAIN_SOURCE := &"chain"
 ## RP-08: the rift that breathes (BandFloor, no damage).
 const BREATH_SOURCE := &"breath"
+## RP-09: a column toppling (ColumnFloor; it never hurts the paladin).
+const FALL_SOURCE := &"column"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -216,6 +218,20 @@ func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float, 
 	z.offscreen = 0
 	GroundLook.hazard(z.node, from, Vector2.RIGHT, r.size.x, r.size.y, z.node.position.y)
 	z.node.visible = drawn
+	return z
+
+
+## A band of the floor something falls on (RP-09, a column toppling): `width` across, `length` along `dir` from `from`,
+## shown `time` in the hazards' amber; as it lands it deals `enemy_damage` to every enemy in it (hazard_landed) and
+## nothing to the paladin (as the falling tree of the Hades II).
+func add_fall(from: Vector2, dir: Vector2, length: float, width: float, time: float, enemy_damage: float, source: StringName) -> Zone:
+	var z := _add(Kind.WARNING, Shape.LINE, from, dir, length, width, time, 0.0)
+	z.hazard = enemy_damage
+	z.floor_own = true
+	z.source = source
+	z.by = &""
+	z.offscreen = 0
+	GroundLook.hazard(z.node, from, z.dir, length, width, z.node.position.y)
 	return z
 
 

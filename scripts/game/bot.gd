@@ -9,6 +9,13 @@ const SHOT_NEAR := 12.0
 const COMBOS: Array[String] = ["LLL", "Q", "H", "LLL", "O", "LL", "H", "C", "dL", "LLL"]
 const GAP := 0.25
 const REACH := 3.6
+## RP-09: the bot goes for a cracked column within COLUMN_NEAR m that would fall on COLUMN_PACK enemies or more
+## (column_plan), round to its other side and swings at it from COLUMN_REACH m along the way it should fall.
+const COLUMN_PACK := 1
+const COLUMN_NEAR := 10.0
+const COLUMN_REACH := 2.2
+## How near the spot he swings at a column from counts as there.
+const COLUMN_STAND := 0.7
 
 var pad := Controls.VirtualPad.new()
 var _t := 0.0
@@ -183,9 +190,17 @@ func step(dt: float, game: Game) -> void:
 	_stuck = _stuck + dt if walking and p.distance_to(_last) < dt * 1.0 else 0.0
 	_last = p
 	var target := _nearest(game)
+	var column: Variant = column_plan(game, p)
+	if column != null:
+		target = column.center
 	var to := target - p
 	pad.aim = to.normalized() if to.length() > 0.01 else Vector2.DOWN
 	pad.move = _steer(game, p, _way(game, p, target, dt)) if to.length() > REACH else Vector2.ZERO
+	if column != null:
+		# RP-09: round to the column's far side from the pack, then swing along the way it should fall
+		var stand: Vector2 = column.stand
+		pad.move = _steer(game, p, _way(game, p, stand, dt)) if p.distance_to(stand) > COLUMN_STAND else Vector2.ZERO
+		pad.aim = column.way
 	if _queue.is_empty() and _wait > 0.25:
 		# hit and run: after a combo, step out of the crowd (around the bodies in the way)
 		pad.move = _steer(game, p, -to.normalized().rotated(0.6))
@@ -226,7 +241,7 @@ func step(dt: float, game: Game) -> void:
 	if _wait > 0.0:
 		return
 	if _queue.is_empty():
-		if to.length() > REACH + 2.0:
+		if column != null and p.distance_to(column.stand) > COLUMN_STAND or column == null and to.length() > REACH + 2.0:
 			return
 		_queue = COMBOS[_pick % COMBOS.size()]
 		_pick += 1
@@ -301,6 +316,44 @@ static func shot_coming(game: Game, p: Vector2) -> bool:
 
 
 ## The nearest enemy that can be hurt (behind his ritual's shield the boss waits: his dead come first).
+## RP-09: a cracked column within COLUMN_NEAR that would fall on COLUMN_PACK enemies or more, struck from the other
+## side: {"center", "way" (where it would fall, toward the pack), "stand" (where he swings from, COLUMN_REACH m back
+## from it against the way)}, or null. The pack is counted along the way from each enemy near it (its band, as wide as
+## a body touching it).
+static func column_plan(game: Game, p: Vector2) -> Variant:
+	var floor_ := game.rooms.columns if game.rooms else null
+	if floor_ == null:
+		return null
+	var fall := floor_.fall
+	var best: Variant = null
+	var best_n := COLUMN_PACK - 1
+	for i in fall.columns.size():
+		if fall.stage[i] >= ColumnFall.Stage.LEANING:
+			continue
+		var o := fall.columns[i]
+		if p.distance_to(o.center) > COLUMN_NEAR:
+			continue
+		for lead in game.horde.list:
+			if not lead.alive or lead.def.behavior == EnemyDef.Behavior.BOSS:
+				continue
+			var off := lead.pos - o.center
+			if off.length() < 0.5 or off.length() > o.fall_length:
+				continue
+			var way := off.normalized()
+			var n := 0
+			for e in game.horde.list:
+				if not e.alive or e.def.behavior == EnemyDef.Behavior.BOSS:
+					continue
+				var q := e.pos - o.center
+				var along := q.dot(way)
+				if along >= 0.0 and along <= o.fall_length + e.def.radius and absf(q.cross(way)) <= o.fall_width * 0.5 + e.def.radius:
+					n += 1
+			if n > best_n:
+				best_n = n
+				best = {"center": o.center, "way": way, "stand": o.center - way * COLUMN_REACH}
+	return best
+
+
 func _nearest(game: Game) -> Vector2:
 	var p := game.player.pos
 	var best := p + Vector2(cos(_t * 0.5), sin(_t * 0.5)) * 6.0

@@ -1298,6 +1298,16 @@ func gather_billboards(from: int) -> void:
 ## RS-C1: from (an index in what was built, built_count()): only what was built since, cells false: all of it in one
 ## mesh per material whatever the square (a small piece hanging high, the crypt's crown). Returns the meshes it leaves
 ## (joined or alone).
+## The meshes built since `from`, taken out of what merge() joins (they stay where they are, on their own: RP-09, a
+## column that may topple moves alone).
+func take_since(from: int) -> Array[MeshInstance3D]:
+	var out: Array[MeshInstance3D] = []
+	for i in range(from, _built.size()):
+		out.append(_built[i])
+	_built.resize(mini(from, _built.size()))
+	return out
+
+
 func merge(from := 0, cells := true) -> Array[MeshInstance3D]:
 	var groups := {}
 	for i in range(from, _built.size()):
