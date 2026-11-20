@@ -194,7 +194,8 @@ de hoje (tabela do Sworn P1 no `CLAUDE.md`).
 peças de primeiro plano escuras entre a câmera e a sala (pilar, arco quebrado, corrente, raiz, cortina de hera), que
 abrem em pontilhado em volta do herói como os obeliscos (`see_through`), e bruma colorida no vazio. Nada de vinheta de
 tela nova (a do `screen.gdshader` fica como está). Densidade de detalhe no terço de fora, campo do meio livre.
-Aceite: em toda sala, **laterais e faixa de perto com luma p50 até 0,65 do meio** (hoje até 1,00 no Salão, 0,95 nas
+Aceite (emendado em 2026-11-20, seção 7.3): em toda sala, **laterais e faixa de perto com luma p50 até 0,65 do meio**
+(a faixa de perto até 0,70 quando mais da metade da caixa é chão andável) (hoje até 1,00 no Salão, 0,95 nas
 Fendas B, 0,83 no Santuário A, 0,84 no Jardim A) e saturação p50 de 0,30 ou mais nessas caixas; o herói continua a mais
 de 18% da borda sem nada opaco sobre ele (raio-x só onde já existe).
 
@@ -215,7 +216,9 @@ sequência de mais de 4 módulos idênticos alinhados visível numa captura; o `
 **ENV-HB6 (P1) Hub à noite, com foco.** O Santuário fica uma clareira acesa no meio da noite: luz principal sobre a
 praça e a estação em foco, bordas em valor baixo no matiz frio, primeiro plano escuro (arcadas, floreiras, cortina de
 hera) recortando os cantos; toldo do Vendedor em pano gasto (terra e petróleo apagados, não listra de feira).
-Aceite (`--hub --hero-at=0,0` e as cinco estações): cena luma p50 entre 40 e 60 (hoje 97), meio p50 de 90 ou mais,
+**Emendado em 2026-11-20 (decisão do Game Director, delegada pelo Daniel; seção 7.4): o HB6 completo não será feito;
+vale a `hub_spec_art.md` 4.2 emendada (clareira morna, bordas até 0,70 do meio).** Aceite original, só para registro
+(`--hub --hero-at=0,0` e as cinco estações): cena luma p50 entre 40 e 60 (hoje 97), meio p50 de 90 ou mais,
 **bordas (`0,0,1920,200`, `0,880,1920,200`, `0,200,300,680`, `1620,200,300,680`) até 0,35 do meio** (hoje 0,62 a 0,98;
 Hades 0,06 a 0,10), saturação p50 da cena de 0,30 ou mais. A placa da estação legível (contraste 4,5:1).
 
@@ -301,3 +304,67 @@ Para o Daniel, pelo Game Director:
 A seção 3 do `docs/art/art_direction.md` tem teto de saturação do cenário (p90 até 32) e nenhum piso; hoje estamos em 9
 a 14 e o piso é o que falta. Quando ENV-HB1 for aprovado, o art-director acrescenta: cena com saturação p50 de 0,30 a
 0,45; bordas e faixa de perto até 0,65 do meio; chão nu com p90 menos p10 até 30; hub com bordas até 0,35 do meio.
+
+Feito em 2026-11-20 depois do teste do Salão (`docs/gallery/ciclo_visual_1120/ART_REVIEW.md`), com duas emendas: a faixa de
+perto até 0,70 quando é chão andável e o hub com bordas até 0,70 (não 0,35). Os números por bioma estão na seção 7.
+
+## 7. Matriz de matizes por bioma (P1-A3, 2026-11-20; aprovada pelo Game Director)
+
+O tratamento do Salão (ENV-HB1 a HB3) se replica como **método**, não como cor: cada bioma sobe a saturação no
+**próprio** matiz. Com a saturação a 0,30 ou mais, dois biomas no mesmo matiz viram a mesma sala; o Salão foi para 205
+(pedido do Daniel, "azul-petróleo") e caiu sobre a Cripta (206) e perto da Ponte (222). Esta tabela separa os vizinhos e
+substitui as colunas de matiz do chão da `room_redesign_matrix.md` (a pedra, a sombra e os acentos de lá continuam).
+
+### 7.1 Regras
+
+- Medir a cena (`--scene`) com `python3 -I tools/frame_stats.py --hue`, semente 5, luta aos 9 s, câmera Perto e Longe.
+- **Separação**: o matiz da cena de dois biomas de sala de luta fica a **15 graus ou mais** um do outro (centro da faixa),
+  e as faixas não se cruzam. Onde a roda não deixa (biomas mornos), a separação é de **10 ou mais de luma p50 da cena** e
+  0,05 de saturação.
+- O matiz vai na pedra, no chão, na sombra, na bruma e no fundo. As cores reservadas não mudam de dono: esmeralda só da
+  Emeth e do portal; vermelho só do perigo; violeta saturado só de Morvath e da maldição; âmbar forte só no fogo e na laje
+  acesa das Runas; ouro velho só no metal e nas elites.
+- Chão nu (200 x 150) com p90 menos p10 até 30; variação larga (caixas a 6 m ou mais) de 10 ou mais, vinda da luz, do
+  material e dos marcos, **nunca de manchas de ruído** (P1-A1 da revisão do Salão).
+- Moldura pela regra 7.3. O herói com p90 a 90 ou mais acima do p50 do chão vizinho.
+- Toda entrega por bioma: antes e depois na mesma semente e enquadramento, Perto e Longe, mais **uma captura com perigo
+  armado** (`--stress=7 --stress-ids=...` dos papéis da sala) e uma checagem no Compatibility.
+
+### 7.2 A matriz
+
+| Bioma (ordem de entrega) | Matiz hoje (estilizado) | **Matiz alvo da cena** | Sat p50 da cena | Luma p50 da cena | Identidade (o que manda) | Cuidado |
+|---|---|---|---|---|---|---|
+| Salão (feito) | 205 | **200 a 212** | 0,35 a 0,42 | 52 a 62 | azul-petróleo; poças âmbar dos braseiros; portal esmeralda; abismo | derrame do portal sem verde no chão (P2-A4) |
+| 1. Cripta A e B | 206 | **184 a 194** (verde-petróleo fundo) | 0,30 a 0,38 | 45 a 55 (um degrau abaixo do Salão) | coroa de velas (A, quente 5 a 8% da cena), velada e lanterna fria (B); efígie domina a A, nichos e urnas dominam a B | não deixar o ciano passar de 1% fora do chão; moldura = pé das paredes escuro, nada novo na frente |
+| 2. Fendas A e B | 255 | **246 a 260** (índigo) | 0,30 a 0,40 | 45 a 55 | a fenda e as pontes de pedra; violeta só abaixo da borda | saturação até 0,40 para não encostar no violeta de Morvath; régua de separação: Câmara do Selo |
+| 3. Ponte A e B | 222 | **216 a 226** (ardósia cinza-azulada) | 0,30 a 0,35 | 50 a 60 | a travessia; bruma azul fria, cascatas | B é referência: só chão e saturação; faixa de perto é abismo, escurecer sem apagar o tabuleiro |
+| 4. Runas A e B | 229 | **232 a 242** (pedra clara fria) | 0,28 a 0,34 | 55 a 65 (a mais clara das frias) | grade de lajes com fio de ouro velho | HB2 só na pedra em volta da grade; grade em repouso discreta; âmbar só na laje acesa |
+| 5. Jardim A e B | 85 | **75 a 95** (oliva) | 0,28 a 0,35 | 48 a 58 | silhueta da árvore de pedra, copa e folhas ferrugem | matiz p50 abaixo de 100 e verde até 2% (o verde é da Emeth); a cor sobe na ferrugem e na bruma |
+| 6. Santuário A e B | 32 | **32 a 42** (calcário dourado) | 0,30 (cena) com a pedra até 0,25 | 55 a 65 | nave de colunas, fachos marfim-ouro, estandartes petróleo | a cor entra pelo contraste morno e frio (petróleo e sombra fria), não pela pedra amarela, que encostaria no âmbar do perigo |
+| 7a. Provação | 267 | **266 a 280** (lilás-cinza) | 0,30 a 0,38 | 45 a 55 | estela rachada, veias lilás | só HB2 e moldura |
+| 7b. Altar | 36 | **18 a 28** (pedra morna terrosa, cera) | 0,28 a 0,35 | 45 a 55 (10 abaixo do Santuário) | velas e o leão em relevo | separar do Santuário pelo matiz e pela luma; vermelho saturado até 0,5% |
+| Câmara do Selo | 256 | **não mexer** | 0,50 (a referência) | cerca de 40 | violeta e azul-marinho no fundo | só medir depois dos outros; nunca vem logo depois das Fendas (é sempre depois da loja no Salão) |
+| Santuário (hub) | 40 | 32 a 46 | 0,25 a 0,35 | 50 a 65 | clareira morna, poça de luz em cada estação | `hub_spec_art.md` 4.2 emendada (7.4) |
+
+Vizinhos na roda, centro a centro: Cripta 189, Salão 206, Ponte 221, Runas 237, Fendas 253, Provação 273 (15 a 20
+graus entre cada um). Mornos: Altar 23, Santuário 37 (14 graus e 10 de luma), Jardim 85. O hub e o Santuário de luta
+dividem o matiz, mas nunca se veem um depois do outro sem a Câmara entre eles e o hub é uma cena à parte.
+
+### 7.3 Moldura e faixa de perto (emenda ao ENV-HB3)
+
+Caixas do benchmark (Meio `640,360,640,360`, Laterais `60,140,320,760` e `1540,140,320,760`, Perto `520,780,880,150`):
+
+- Laterais: luma p50 até **0,65** do meio, saturação p50 de 0,30 ou mais.
+- Faixa de perto: até **0,65** do meio quando é moldura (pedra, balaustrada, abismo, peça de borda); até **0,70** quando mais
+  da metade da caixa é chão andável (na câmera Perto a faixa cai no campo da luta e na margem de 18% do herói:
+  escurecer mais esconderia avisos e o próprio herói). Medido no Salão: Perto 0,66 (aceito), vitrine 0,75 (aceito para o
+  teste; P2-A6 leva a 0,70).
+- Nada de vinheta de tela nova; o herói nunca coberto por peça opaca.
+
+### 7.4 Hub: decisão sobre o ENV-HB6
+
+O HB6 completo (bordas a 0,35 do meio, hub à noite) **não será feito**: faria do hub uma segunda Câmara do Selo e tiraria
+o abrigo, e o pedido do Daniel (item 2 do ciclo) é foco localizado nas estações com a praça e os caminhos visíveis. O que
+separa o hub das salas é o matiz (morno contra 184 a 280 das salas frias), não o brilho. Vale a `hub_spec_art.md` 4.2
+emendada: cena luma p50 de 50 a 65 e saturação p50 de 0,25 a 0,35; praça de 60 a 75, "o chão mais morno e limpo do
+jogo"; laje de uso de cada estação pelo menos 1,8 vez a praça (BH-07); bordas até 0,70 do meio.

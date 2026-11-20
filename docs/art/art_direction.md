@@ -81,6 +81,10 @@ Medido com `python3 -I tools/frame_stats.py` (imagem reduzida a 640 px, faixa de
 |---|---|---|
 | Quadro de luta inteiro | luma média 55 a 70 | 55 a 68 em toda arena (`c18/README.md`) |
 | Cenário sem efeitos | saturação p90 até 32 | salão 25 a 28, câmara 26 a 31, arenas 10 a 29 |
+| Cena estilizada (`--scene --hue`, 2026-11-20) | saturação p50 de **0,30 a 0,45** no matiz do bioma, luma p50 45 a 65; matiz de cada bioma na matriz do `benchmark_hades2_style.md` 7.2 (vizinhos a 15 graus ou mais) | Salão 0,38 a 0,41 / 54 a 61 |
+| Chão nu (200 x 150, só laje) | p90 menos p10 até 30; caixas a 6 m diferem 10 ou mais (luz, material, marcos; não ruído) | Salão 18 a 32 |
+| Moldura (laterais e faixa de perto, caixas do benchmark) | luma p50 até 0,65 do meio; faixa de perto até 0,70 quando mais da metade é chão andável; sat 0,30 ou mais | Salão laterais 0,45 a 0,60, perto 0,59 a 0,66 |
+| Hub | `hub_spec_art.md` 4.2 emendada: cena 50 a 65 e sat 0,25 a 0,35, praça 60 a 75, estação 1,8 vez a praça, bordas até 0,70 | cena 52 a 56, estações 1,8 a 3,2 |
 | Violeta saturado | até 5% da tela | 0,0 a 3,6%; fase 4 7,6% (exceção aceita: meias-luas e veios, ART-05.6) |
 | Vermelho saturado (perigo) | proposta: até 1,5% da tela fora dos últimos 30% de um aviso | fase 3 3,0% (ART-05.2, a corrigir) |
 | Âmbar saturado (Runas) | até 12% da tela em preparo | 1,1% no quadro medido |

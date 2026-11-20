@@ -327,10 +327,18 @@ dois NPCs (40) depois que ele disser quem são.
 
 ### 4.2 Paleta na tela (o que manda; medido com `tools/frame_stats.py --hue`)
 
+**Emenda de 2026-11-20** (decisão do Game Director, delegada pelo Daniel; parecer em
+`docs/gallery/ciclo_visual_1120/ART_REVIEW.md` e `docs/art/benchmark_hades2_style.md` 7.4): o hub é uma clareira morna, não
+noite. A luz principal fica sobre a praça e cada estação tem a sua poça; o que o separa das salas é o matiz morno, não o
+brilho. Medido depois do BH-07 (RTX, 1080): cena luma 52 a 56, sat 0,27 a 0,28; meio 54 a 78; bordas 0,51 a 1,17 do meio
+(a corrigir até 0,70, P2-A7).
+
 | Região | Alvo |
 |---|---|
-| Cena (`--scene`) | matiz médio 25 a 45, sat HSV p50 0,10 a 0,22, luma p50 62 a 78; saturação p90 do quadro (SATHIGH) até 32 |
-| Chão da praça (caixa entre fonte e medalhão) | matiz 28 a 42, sat 0,08 a 0,20, luma p50 75 a 92 (**o chão mais claro do jogo**: abrigo; as salas ficam em 50 a 85) |
+| Cena (`--scene`) | matiz médio 25 a 46, sat HSV p50 **0,25 a 0,35**, luma p50 **50 a 65** (emenda de 2026-11-20; era sat 0,10 a 0,22 e luma 62 a 78) |
+| Chão da praça (caixa entre fonte e medalhão) | matiz 28 a 42, sat 0,08 a 0,30, luma p50 **60 a 75**: **o chão mais morno e limpo do jogo** (abrigo; as salas de luta são frias, 184 a 280 de matiz, menos Santuário e Altar). Era "o mais claro, 75 a 92" |
+| Laje de uso de cada estação (Portal, Vendedor, Árvore, Forja, Livro) | luma p50 pelo menos **1,8 vez** a da praça, por uma poça de luz morna própria vinda do alto (BH-07) |
+| Bordas (`0,0,1920,200`, `0,880,1920,200`, `0,200,300,680`, `1620,200,300,680`) | luma p50 até **0,70** do meio (`640,360,640,360`); nunca a 0,35 do ENV-HB6, que não será feito |
 | Sombra de parede (caixa numa parede lateral em sombra) | matiz 185 a 215, sat 0,12 a 0,30, luma p50 30 a 50 |
 | Vista e céu (caixa sobre as arcadas) | matiz 205 a 225, sat até 0,40, luma p50 25 a 55 |
 | Portal (caixa da folha) | verde (faixa `green`) 25% ou mais; nenhum pixel com os três canais acima de 235 |

@@ -314,3 +314,15 @@ pela câmera do jogo; especificação em `docs/art/boss_chamber_spec.md`.
   medalhão igual nas três cartas da Provação; medalhões do Altar chapados e com sentido trocado; placa da laje apertada a 720.
 - Pedidos: A-T5-1 a A-T5-8 (gameplay-engineer, ui-ux-designer, qa-performance).
 - Veredito: aprovado para o teste do Daniel com ressalva; falta vídeo na GPU na câmera do jogo.
+
+## 2026-11-20: ciclo visual, Salão (ENV-HB1 a HB3) e luz do Santuário (BH-07) (sobre `a61349c`, sem commit)
+
+- Capturas: `docs/gallery/ciclo_visual_1120/env_*` (RTX, 1920 x 1080, semente 5) e uma com avisos armados no Salão
+  (`--stress=7 --stress-ids=archer,skeleton,runner,mage`). Revisão completa: `docs/gallery/ciclo_visual_1120/ART_REVIEW.md`.
+- Bate: Salão com cena sat 0,38 a 0,41, chão nu 18 a 32, laterais 0,45 a 0,60, herói +97 a +108 sobre o chão vizinho, aviso
+  vermelho o que mais lê; sala reconhecível. Hub: Forja, Livro, Vendedor e Árvore com poça própria (1,8 a 3,2 vezes a praça).
+- Difere: manchas do bioma viram a textura mais forte do chão; Salão foi para o matiz da Cripta (205); derrame verde do
+  portal no chão; Compatibility contrastado; portal fora do quadro de chegada do hub (Perto).
+- Pedidos: P1-A1 a P1-A3, P2-A4 a P2-A9 (environment-artist, gameplay-engineer, technical-artist, art-director).
+- Veredito: Salão aprovado para o teste do Daniel e replicável como método, por bioma, depois de P1-A1 e P1-A3; hub com
+  BH-07 aprovado e P1-A2 antes de mostrar a chegada; HB6 completo não recomendado (emendar a spec 4.2 do hub).

@@ -98,6 +98,10 @@ Números de partida de material (sRGB 0 a 1, para o `paint_stone`/`paint_shadow`
 linear da pedra pintada de hoje vezes o fator) e alvos de tela (o que se aceita). O environment-artist ajusta o
 material até bater a tela. "Acento" é luz ou pintura de borda, nunca chão de luta.
 
+> **2026-11-20**: com a saturação da cena subindo a 0,30 a 0,45 (ENV-HB1), o matiz da cena de cada bioma passa a ser o da
+> matriz do `docs/art/benchmark_hades2_style.md` 7.2 (vizinhos a 15 graus ou mais; Salão 200 a 212, Cripta 184 a 194).
+> A coluna "Chão de luta na tela" abaixo vale só para a saturação baixa de antes.
+
 | Bioma | Pedra (`paint_stone`) | Fator de valor | Sombra (`paint_shadow`) | Chão de luta na tela: matiz / sat HSV p50 / luma p50 | Acento e fundo |
 |---|---|---|---|---|---|
 | Salão (01, 16, 17) | (0,325; 0,341; 0,386), matiz 224 | 1,0 | (0,833; 0,877; 0,98) | 215 a 235 / 0,08 a 0,16 / 65 a 78 | poças âmbar 27 a 34; portal esmeralda (o único verde); abismo azul 205 a 220 |
