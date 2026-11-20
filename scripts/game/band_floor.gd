@@ -18,6 +18,7 @@ var hero_in := 0.0
 ## Enemies it pushed, and wind-ups or attacks its push cut (the rift that breathes).
 var pushed := 0
 var cut := 0
+var _bodies := PackedVector2Array()
 
 
 func _init(g: Game, def: HazardDef) -> void:
@@ -39,7 +40,12 @@ func step(dt: float) -> void:
 			if r.has_point(game.player.pos):
 				hero_in += dt
 				break
-	var did := hazard.step(dt)
+	_bodies.clear()
+	if def.band_busy:
+		for e in game.horde.list:
+			if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS:
+				_bodies.append(e.pos)
+	var did := hazard.step(dt, _bodies)
 	var armed: int = did.armed
 	if armed >= 0:
 		zone = game.ground.add_hazard(def.bands[armed], def.warn, def.hero_damage, def.enemy_damage, true,

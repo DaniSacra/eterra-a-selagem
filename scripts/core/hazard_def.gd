@@ -64,6 +64,9 @@ enum Kind { GRID, PLATES, LINE }
 ## its sounds are CombatSounds.EVENTS "<name>_arm" and "<name>_fire"): &"chain" the bridge's chain (RP-11), &"breath"
 ## the rift that breathes (RP-08, no damage, only the push).
 @export var band_source: StringName = &"chain"
+## LINE: the next band is the one with the most enemies standing in it (ties and none: in turn), instead of strictly
+## in turn: the rift breathes where the fight is (RP-08).
+@export var band_busy := false
 
 
 ## LINE: the push of band i (zero: none).

@@ -35,11 +35,18 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
   leste) e sul da fenda de baixo (x -5,5 a 0,5, z 10,2 a 12,2); B: o oeste ao longo da ponte caída (x -10 a -7,2, z -13 a
   -7). Fora das cabeceiras das pontes e das zonas de nascimento (GUT). Aviso do chão sem dano não fere nem conta golpe
   (`Ground`: `Zone.floor_own`, só `power` acima de 0 chama o herói). `rooms[].hazard` `kind` `breath`, `pushed`, `cut`.
-- Robô (reação 0,25, as Fendas como primeira sala, sementes 1 a 8 em A e B): 0 de dano, `stuck` 0, 1 a 4 sopros por
-  sala (salas de 13 a 35 s), herói nos trechos 0 a 8,7 s, mas **inimigos empurrados 0 a 1 por sala** (meta 3 ou mais) e
-  nenhum golpe cortado: a luta do robô fica na ponte do sul, no caminho do sul e no leste, longe dos trechos. Não passa;
-  para o room-designer: trechos onde a luta acontece (a beira leste junto da ponte do sul e o caminho do sul) ou ciclo
-  mais curto. Tempo da sala contra antes não medido (a primeira sala é curta demais para ler 15%).
+- **Ajuste (mesmo dia, pedido do Game Director)**: os trechos foram para onde a luta do robô acontece e a bruma sobe no
+  trecho com mais inimigos (`HazardDef.band_busy`; empate ou nenhum: em ordem). A e B: beira leste da fenda do meio (x
+  2,9 a 5,2, z -7 a -1), leste da fenda de baixo junto da ponte do sul (x 2,9 a 4,9, z 4,2 a 9), caminho do sul (x -8 a
+  2, z 10,2 a 12,2), mais o oeste da fenda do meio na A (x -10,8 a -8) e o oeste ao longo da ponte caída na B (x -10 a
+  -7,2, z -13 a -7). A faixa ao lado da cabeceira leste da ponte do sul (z -1 a 4) ficou de fora: atrás dela é a ponte,
+  não a fenda, e o empurrão não leva para longe de beira nenhuma.
+- Robô (reação 0,25): 0 de dano, `stuck` 0. Inimigos empurrados por sala, primeira sala, sementes 1 a 8: A 1,1 (antes
+  0,4), B 0,6; na descida (12 sementes, `smoke 600`, 12 salas das Fendas nas profundidades 2 a 9) 0,75, 0 a 2, golpes
+  cortados 3 em 12 salas. **Não fecha a meta de 3 ou mais**: as salas das Fendas duram 15 a 40 s, o que dá 1 a 5 sopros
+  por sala, e o robô luta andando (os inimigos que o seguem raramente param na beira). Fica para o teste com gente
+  (o jogador que segura a beira, como o perigo pede) e, se ainda faltar, um ciclo mais curto (número, do balance-designer
+  com o room-designer).
 - Testes em `tests/test_breath.gd`.
 
 ## Feito em 2026-11-20 (gameplay-engineer): RP-11 na Ponte (a corrente que varre)

@@ -371,10 +371,11 @@ hero_damage = 0.0
 enemy_damage = 0.0
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
-bands = Array[Rect2]([Rect2(-10.8, -7, 2.8, 6), Rect2(2.9, -7, 2.3, 6), Rect2(-5.5, 10.2, 6, 2)])
-band_push = PackedVector2Array(-2.5, 0, 2.5, 0, 0, 2.5)
+bands = Array[Rect2]([Rect2(2.9, -7, 2.3, 6), Rect2(2.9, 4.2, 2, 4.8), Rect2(-8, 10.2, 10, 2), Rect2(-10.8, -7, 2.8, 6)])
+band_push = PackedVector2Array(2.5, 0, 2.5, 0, 0, 2.5, -2.5, 0)
 cycle = 7.0
 band_source = &"breath"
+band_busy = true
 
 [sub_resource type="Resource" id="Resource_4s1gs"]
 script = ExtResource("3_kin83")
@@ -461,10 +462,11 @@ hero_damage = 0.0
 enemy_damage = 0.0
 plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
-bands = Array[Rect2]([Rect2(-10, -13, 2.8, 6), Rect2(2.9, -7, 2.3, 6), Rect2(-5.5, 10.2, 6, 2)])
-band_push = PackedVector2Array(-2.5, 0, 2.5, 0, 0, 2.5)
+bands = Array[Rect2]([Rect2(2.9, -7, 2.3, 6), Rect2(2.9, 4.2, 2, 4.8), Rect2(-8, 10.2, 10, 2), Rect2(-10, -13, 2.8, 6)])
+band_push = PackedVector2Array(2.5, 0, 2.5, 0, 0, 2.5, -2.5, 0)
 cycle = 7.0
 band_source = &"breath"
+band_busy = true
 
 [sub_resource type="Resource" id="Resource_hi33f"]
 script = ExtResource("3_kin83")

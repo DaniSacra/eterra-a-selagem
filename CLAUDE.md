@@ -1043,7 +1043,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   "Derrotado por: Corrente da Ponte" (`killer_chain`, provisório); `rooms[].hazard` `kind` (`band_source`), `hero_in_s`; som
   `chain_arm`/`chain_fire` = os das Runas. Testes em `tests/test_chain.gd`.
 - **Fenda que respira (RP-08, H-4)**: o `LINE` sem dano nas Fendas (`HazardDef.band_source` `breath`, `Ground.BREATH_SOURCE`;
-  `_breath` no `make_data.gd`): três trechos da beira, um por vez a cada 7 s, aviso 1,2 s, empurrão de 2,5 m para longe
+  `_breath`, `RIFT_BREATH` no `make_data.gd`): quatro trechos da beira onde a luta acontece, um por vez a cada 7 s, o
+  com mais inimigos primeiro (`HazardDef.band_busy`, `BandHazard._busiest`), aviso 1,2 s, empurrão de 2,5 m para longe
   da beira que corta a preparação ou o ataque de quem foi empurrado (`PlateFloor.strike(..., cut)`; nunca investida
   imune nem guardião); o aviso do chão sem dano não fere (`Ground.Zone.floor_own`: aterrissa e avisa `hazard_landed`
   mesmo sem dano, `hit_player` só com `power` acima de 0). Som `breath_arm` = `rune_arm`, `breath_fire` = `dodge`.

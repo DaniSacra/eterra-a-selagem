@@ -41,7 +41,8 @@ func count() -> int:
 
 ## One step. Returns the band that began to warm up in this step and the one that struck (-1: none), as
 ## {"armed": int, "fired": int}.
-func step(dt: float) -> Dictionary:
+## bodies: where the enemies stand (read only with HazardDef.band_busy).
+func step(dt: float, bodies := PackedVector2Array()) -> Dictionary:
 	var armed := -1
 	var struck := -1
 	match phase:
@@ -60,7 +61,11 @@ func step(dt: float) -> Dictionary:
 	wait -= dt
 	if wait <= 0.0 and phase == Phase.IDLE:
 		wait += def.cycle
-		var i := _next_live()
+		var i := _busiest(bodies) if def.band_busy else -1
+		if i < 0:
+			i = _next_live()
+		else:
+			next = (i + 1) % def.bands.size()
 		if i >= 0:
 			active = i
 			phase = Phase.ARM
@@ -77,6 +82,24 @@ func _next_live() -> int:
 			next = (i + 1) % def.bands.size()
 			return i
 	return -1
+
+
+## The live band with the most bodies in it (-1: none has any; ties: the first in turn from next).
+func _busiest(bodies: PackedVector2Array) -> int:
+	var best := -1
+	var most := 0
+	for k in def.bands.size():
+		var i := (next + k) % def.bands.size()
+		if live[i] == 0:
+			continue
+		var n := 0
+		for p in bodies:
+			if def.bands[i].has_point(p):
+				n += 1
+		if n > most:
+			most = n
+			best = i
+	return best
 
 
 ## What band i shows now: x warming 0 to 1, y the strike 1 falling to 0.
