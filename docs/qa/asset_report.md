@@ -213,6 +213,45 @@ aceso e apagado; `emeth_temper_classic.jpg` e `_stylized.jpg` com os postos 0, 1
 `frame_yaw` 0 (`a13_*`, depois contra antes no HEAD): Salão clássico 1,10% e Cripta estilizada 1,35% dos pixels
 mudam mais de 12, todos no HUD (que outras frentes mudaram), nas chamas e nas partículas; nenhuma pedra nem laje.
 
+## Lote 2C e re-revisão do hub (technical-artist, 2026-11-19 noite)
+
+- **DT-104** feito: `tests/test_asset_budget.gd` (4 testes, 0,8 s) falha com assado atrás da entrada do
+  `tools/bake.gd` (cada `.res` guarda `bake_stamp`, `stamp()` com `PIPELINE`), assados acima de 70 MB, música do pacote
+  acima de 18 MB (o `.oggvorbisstr` importado de cada `.ogg`) ou figura acima do teto. Falhava antes do reassado (Morvath
+  e todos sem carimbo); passa depois.
+- **Reassado de tudo** (nove inimigos e os dois do hub): 45,49 MB antes (com a `statue.res`) para 45,32 MB.
+  `test_enemy_windup`, `test_boss_body` (Morvath `pose_drift` até 0,44 m fora da queda 0,52 e do levantar 0,41),
+  `test_living_crowd`, `test_held_weapons`, `test_t5b_fight` passam. **QW-116**: o andar do feiticeiro já leva o cajado
+  13,8 graus para trás e o trote sobe 0,15 (T5b); sem mudança. O clipe novo de Morvath do Q-09 a é do C19 (não existe).
+- **DT-107**: saíram `hero_sombra/` (32 MB), `paladin_1/` (28 MB), `statue.res`, `tools/recolor_hero.gd`, `HeroGear`,
+  o `.uid` órfão do GUT; `.gutconfig.json` e `lion.svg` fora do pacote (`include_filter` vazio, `lion.svg` no
+  `exclude_filter`). **4 100 triângulos não cabe**: os níveis simples das armas do KayKit (`"lod"`, medidos: lâmina 457
+  para 227, cajado 1 519 para 759, escudo 626 para 304) tiram a cabeça do cajado e a borda do escudo e quebram 6
+  medidas do `test_enemy_windup` (média por vértice); ficaram de fora. Teto no teste 5 600 (feiticeiro 5 530, ancião
+  5 557). Para 4 100: armas próprias. Peças do KayKit sem uso: não apagadas, falta o environment-artist confirmar.
+- **DT-101** (sem Q-01): `CREDITOS.txt` com o retrato do Livro, medalhões do Altar e da Provação e as armas e a gente do
+  KayKit; `asset_credits.md` com modelos, fontes (autores dos OFL) e sons apontando ao `audio/LICENSES.md`;
+  `steam-ia.md` com `title_fill.png`/`title_bg.png`, a ambiência sintetizada, os selos dos anjos e a lista "Sem IA" com
+  todos os sons gravados. **DT-108**: saldo do Meshy 546, inventário dos assados, `CLAUDE.md`.
+- **(c)** `BossChamber._exit_tree`: a lua já liberada não vai mais a um parâmetro tipado (`is_instance_valid`);
+  `test_room_style` sem SCRIPT ERROR.
+- **(d)** água escura no Compatibility (`dark_water.gdshader`, `compat_body` 1,0, `compat_glow` 0,7): fonte do hub
+  matiz 193 para 202, saturação 0 para 0,41, luma p90 102 para 109 (Forward+ 203, 0,39, 97). `docs/gallery/hub/d/water_*`.
+- **(a) L-1** traços da preparação mais pintura (`EnemyFx`: tinta `INK_EDGE` 0,09 e `INK_ALPHA` 0,78, besta em osso
+  `BOW_BODY` a `STROKE_TONE` 0,78, braços do Sacerdote a `RITUAL_ARM_DARK` 0,72): besta (caixa só dela, mesmos quadros,
+  câmera Longe) luma p50 208 para 181 e 191 para 172, p90 220 para 189, saturação 0,05 para 0,2 (matiz 38), área igual
+  (-6%); V do Sacerdote p50 137 para 117, saturação 0,45 para 0,51. `docs/gallery/lc/windup/l1_paint/`.
+- **(b)** marcas de Prata e Memória no `RewardGem`: nenhum pedido do ui-ux-designer em arquivo; segue pendente.
+- **T-1** NPCs do hub: `HubNpc.STYLE_LIGHT` 0,5, `STYLE_SCENE` 0,3, `STYLE_RIM` 0,35 (multidão 0,2 / 0,1 / 0,18), o
+  Vendedor vezes `STYLE_VENDOR` 2,2. Câmera Perto em cada estação, pixels do corpo: Forjador p50 cerca de 55 para 79,
+  Vendedor 45 para 76, herói 94 a 97. `docs/gallery/hub/d/t1_*`. Clássico igual (só uniforms `style_*`).
+- **T-2** selo da Luz sem ponta: topo reto esmaecendo (alfa 0,2 a 0,9), largura de baixo 2,9 vezes a de cima, dois fios
+  nas bordas. `docs/gallery/rj1/angel_seals.png` (24, 46, 96 e 140 px). T-3: oliva mantido.
+- **Pendente (2B, em série com o C19 do gameplay-engineer)**: GF-15, VX-17, T5-17 a T5-19, T5b P2-2, corredor elite a
+  259 passos por minuto, tira lateral do besteiro, Q-T5-6, Q-T5-7, B-b; reassar Morvath de novo quando o clipe do Q-09 a
+  existir. `tools/walk_strip.gd` e `tools/rj1_lab.gd` (parte da Emeth) não compilam hoje sem os autoloads
+  (`T` no `fx.gd`, `Audio` no `ui_kit.gd`).
+
 ## Melhorias propostas (maior ganho por esforço primeiro)
 
 ### Técnicas (posso fazer sem pedir; medir antes e depois, captura na GPU)
