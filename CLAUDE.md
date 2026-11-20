@@ -1077,7 +1077,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   golpe 0,25 s de 7 no herói e 60 no inimigo, empurrão de 1 m para fora da raiz, 6 s até acordar de novo; dormente
   antes da sala 4 (`PLATES_FROM`). `Ground.add_band` (o `add_hazard` sobre qualquer faixa), `GroundLook.plate_band`
   (placeholder: a moldura da laje ao longo da raiz; a raiz que racha é do environment-artist), `Ground.ROOT_SOURCE`
-  `roots`, "Derrotado por: Raiz Morta" (`killer_roots`, provisório para o Daniel). `rooms[].hazard` `kind` `roots`.
+  `roots`, "Derrotado por: Raiz Morta" (`killer_roots`, provisório para o Daniel). `rooms[].hazard` `kind` `roots`. A 1ª onda nascendo a oeste e ao sul do tronco foi provada e voltou (2026-11-20: pátio do Jardim a 9% na A e 15% na B, meta 20%; `rooms_progression.md`).
   Testes em `tests/test_roots.gd`.
 - **Seteira ligada à laje (RP-16)**: uma laje do RP-06 com `HazardDef.aims[i]` (segmento da boca da seteira até onde os
   virotes param, `aim_width` 1 m; `aims_away(i)`) arma a seteira em vez de golpear a si mesma: a faixa da seteira avisa

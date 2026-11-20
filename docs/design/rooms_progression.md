@@ -66,6 +66,19 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
   `tests/test_roots.gd`.
 - **Terceira passada**: parte da 2ª onda nascendo a oeste do tronco, ao sul dele (`late_spawns` + (-16..-12,5;
   -0,5..4,5)): 0 raízes acordadas e as salas de Jardim tardias com o mesmo tempo; devolvido.
+- **Quarta passada (Game Director, 2026-11-20: a luta precisa usar o pátio)**: metade da 1ª onda nascendo a oeste e ao
+  sul do tronco, como zonas das `spawns` (sorteadas pela área: (-16,5..-12; -12..-1) e (-11..-3; 1,5..5), 77,5 m² contra
+  83 das outras quatro). 24 sementes contra o RP-17: A `tree_shade` 1 para 9% (dano 1,2 para 0,2 por sala), B 4 para
+  20%, raiz acordada em 2 salas da B (era 0), mortes e `stuck` iguais. Uma segunda tentativa com as zonas dentro do pátio
+  ((-14,5..-11,5; -12..1) e (-11..-4; -1..1), 53 m²) deu menos (A 7%, B 18%) e um `stuck`; saiu. **Ficou só na B**
+  (`ArenaVariant.spawns`): de novo nas 24 sementes, B `tree_shade` 20% (`rest` 80%, `east_field` 0), raiz acordada em 2
+  de 13 salas (2 golpes, 23 de dano nos inimigos), dano no herói 0,4 para 0,2 por sala, sala 23,2 para 18,5 s, vitórias
+  14 para 17, `stuck` 0, nenhuma morte no Jardim. Mas essas zonas ficavam sob a faixa de duas raízes (regra do
+  `test_roots.gd`: nenhuma raiz sobre um nascimento); fora das faixas ((-16,5..-14; -12..1), (-12,5..-8,3; -0,8..5,5),
+  (-4,5..-1,5; 1,5..5), 69,5 m²) a B deu `tree_shade` 15% (`rest` 84%, `east_field` 0), raiz acordada em 1 de 13 salas,
+  `stuck` 0, nenhuma morte no Jardim, vitórias 15. Não passa dos 20%: **devolvido**, nas duas variantes. A luta sai do
+  campo leste, mas vai para o sudoeste fora do pátio; para o pátio pesar faltaria nascer dentro dele, onde estão as
+  raízes (trocar a regra ou as raízes é do room-designer).
 - **Segunda passada (Game Director)**: o inimigo acorda a raiz em 0,2 s (`HazardDef.enemy_dwell`; o herói segue 0,5 s).
   Mesmas 24 sementes: **nenhuma raiz acordou de novo** (0 golpes, 0 de dano, vitórias 15 de 24, `stuck` 1, iguais). Medi
   também, só como experimento e devolvido, a raiz de dentro de cada variante (A: da face do tronco a (0,3; 1,2), a que
