@@ -1040,8 +1040,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `environment-artist`), golpe 0,25 s de 7 no herói e 60 no inimigo, empurrão de 2,5 m ao longo da ponte para a
   plataforma (`PlateFloor.strike`, comum às lajes); faixa na boca de porta nunca golpeia. Ponte A: uma faixa de 2 m em
   cada ponte, alternando; B: as duas metades da ponte longa, a 6 m do patamar (`_chain`, `CHAIN_PUSH` no `make_data.gd`).
-  "Derrotado por: Corrente da Ponte" (`killer_chain`, provisório); `rooms[].hazard` `kind` `chain`, `hero_in_s`; som
+  "Derrotado por: Corrente da Ponte" (`killer_chain`, provisório); `rooms[].hazard` `kind` (`band_source`), `hero_in_s`; som
   `chain_arm`/`chain_fire` = os das Runas. Testes em `tests/test_chain.gd`.
+- **Fenda que respira (RP-08, H-4)**: o `LINE` sem dano nas Fendas (`HazardDef.band_source` `breath`, `Ground.BREATH_SOURCE`;
+  `_breath` no `make_data.gd`): três trechos da beira, um por vez a cada 7 s, aviso 1,2 s, empurrão de 2,5 m para longe
+  da beira que corta a preparação ou o ataque de quem foi empurrado (`PlateFloor.strike(..., cut)`; nunca investida
+  imune nem guardião); o aviso do chão sem dano não fere (`Ground.Zone.floor_own`: aterrissa e avisa `hazard_landed`
+  mesmo sem dano, `hit_player` só com `power` acima de 0). Som `breath_arm` = `rune_arm`, `breath_fire` = `dodge`.
+  `rooms[].hazard` `kind` `breath` com `pushed` e `cut` (a corrente também). Testes em `tests/test_breath.gd`.
+- **Morte de elite** (V-14): elite de aço dourado (`EnemyDef.elite` com `gild`; guardiões não) cai com duas lascas de
+  ouro velho a mais (`CrowdRenderer.GILD_COLOR`, `Horde.damage`); teste em `test_vfx_lote1.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
   numa sala de luta vencida (20%, profundidades 2 a 7, intervalo de 10 salas, nunca com maldição em curso), custo
   `ceil(10 + 0,5 x profundidade)` só com mais vida que isso; pisar paga e leva à câmara (`stage.trial_layout`), com 3

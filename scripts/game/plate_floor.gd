@@ -96,22 +96,29 @@ func _on_landed(z: Ground.Zone) -> void:
 
 ## A floor warning `z` of the room's own hazard landed: deals its damage to every enemy (not the boss) inside it and
 ## pushes everyone it struck by `push` (swept: nobody goes through stone nor falls); the paladin's damage is the
-## Ground's own. Returns (life taken, enemies felled). Shared by the slabs and the bands (BandFloor).
-static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName) -> Vector2:
+## Ground's own. cut: a push that deals nothing cuts the wind-up or attack of whoever it moved (the rift that breathes,
+## RP-08: the flood trap of the Hades II; never a charge that cannot be cut, nor a guardian). Returns (life taken,
+## enemies felled, enemies pushed). Shared by the slabs and the bands (BandFloor).
+static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName, cut := false) -> Vector3:
 	var dealt := 0.0
 	var felled := 0
+	var pushed := 0
 	var h := game.horde
 	h.dealing = source
 	for e in h.list.duplicate():
 		if not e.alive or e.def.behavior == EnemyDef.Behavior.BOSS or not Ground.inside(z, e.pos):
 			continue
 		var before: float = e.hp
-		if h.damage(e, z.hazard, Vector2.ZERO, 0.0, NUMBER_COLOR):
+		if z.hazard > 0.0 and h.damage(e, z.hazard, Vector2.ZERO, 0.0, NUMBER_COLOR):
 			felled += 1
 		dealt += maxf(0.0, before - e.hp)
 		if push != Vector2.ZERO and e.alive:
 			e.pos = game.arena.sweep(e.pos, e.pos + push, e.def.radius)
+			pushed += 1
+			var charging: bool = e.state == Enemy.State.ATTACK and e.def.stun_immune_attacking
+			if cut and e.def.stun_time > 0.0 and not charging:
+				h.interrupt(e)
 	h.dealing = &""
 	if push != Vector2.ZERO and game.player.alive() and Ground.inside(z, game.player.pos, Player.RADIUS * 0.6):
 		game.player.pos = game.arena.sweep(game.player.pos, game.player.pos + push, Player.RADIUS)
-	return Vector2(dealt, felled)
+	return Vector3(dealt, felled, pushed)

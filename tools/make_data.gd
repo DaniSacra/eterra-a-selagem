@@ -872,7 +872,14 @@ func _rift() -> RoomLayout:
 	b.append_array(bowls)
 	var fallen := FloorShape.poly([outline], [_poly(RIFT_FALLEN), _poly(RIFT_SOUTH),
 		_poly([-17.5, -3, -16, -5.2, -13, -5.6, -11.3, -3.5, -11.6, -0.4, -14, 0.6, -16.6, -0.6])])
+	# RP-08: the rift breathes: three stretches of its brink, one at a time (west and east of the middle hole, south of
+	# the south one), off the bridge heads and the spawns, pushing away from the brink
+	l.hazard = _breath([_rect(-10.8, -8.0, -7, -1), _rect(2.9, 5.2, -7, -1), _rect(-5.5, 0.5, 10.2, 12.2)],
+		[Vector2(-BREATH_PUSH, 0), Vector2(BREATH_PUSH, 0), Vector2(0, BREATH_PUSH)])
 	l.variants = [_variant(b, fallen, [_rect(-19.5, -15.5, -12, -7)])]
+	# B (the north bridge fallen): its west stretch along the fallen bridge's brink, away from the second hole
+	l.variants[0].hazard = _breath([_rect(-10.0, -7.2, -13, -7), _rect(2.9, 5.2, -7, -1), _rect(-5.5, 0.5, 10.2, 12.2)],
+		[Vector2(-BREATH_PUSH, 0), Vector2(BREATH_PUSH, 0), Vector2(0, BREATH_PUSH)])
 	# RP-07 (the room-designer's bands, by the damage measured): A early to the middle, B from the 4th room on
 	l.variant_depth = Vector2(0.1, 0.6)
 	l.variants[0].depth = Vector2(0.34, 1.0)
@@ -1554,6 +1561,22 @@ func _chain(bands: Array[Rect2], pushes: Array[Vector2]) -> HazardDef:
 	h.start_delay = 3.0
 	h.hero_damage = 7.0
 	h.enemy_damage = 60.0
+	return h
+
+
+## RP-08 (H-4): the rift that breathes, the flood trap of the Hades II (0 damage, it pushes): every 7 s a stretch of
+## the brink (6 x 2 to 3 m) warms up 1.2 s (the mist rising) and pushes everyone in it 2.5 m away from the brink, cutting
+## a wind-up or an attack there; after 3 s of calm.
+const BREATH_PUSH := 2.5
+
+
+func _breath(bands: Array[Rect2], pushes: Array[Vector2]) -> HazardDef:
+	var h := _chain(bands, pushes)
+	h.band_source = &"breath"
+	h.fire = 0.3
+	h.cycle = 7.0
+	h.hero_damage = 0.0
+	h.enemy_damage = 0.0
 	return h
 
 

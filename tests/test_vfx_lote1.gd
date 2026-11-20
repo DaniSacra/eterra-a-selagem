@@ -128,3 +128,27 @@ func test_the_fountain_is_lit_while_it_has_water() -> void:
 	game.player.hp = 1.0
 	game.call(&"_step_fountain")
 	assert_true(_lifted(shaft), "spent, its light goes")
+
+
+func _gold_slivers(game: Game) -> int:
+	var gold := CrowdRenderer.GILD_COLOR * Fx.MOTE_GLOW
+	var n := 0
+	for i in game.fx._mote_n:
+		var c: Color = game.fx._mote_color[i]
+		if c.is_equal_approx(Color(gold.r, gold.g, gold.b)):
+			n += 1
+	return n
+
+
+## V-14: a gilded elite falls with two slivers of old gold more; a common one and a guardian with none.
+func test_a_gilded_elite_falls_with_two_gold_slivers() -> void:
+	var game := _game()
+	game.horde.clear_crowd()
+	var at := game.player.pos + Vector2(4, 0)
+	for id: StringName in [&"skeleton", &"knight", &"skeleton_elite"]:
+		var before := _gold_slivers(game)
+		var e := game.horde.spawn(game.horde.def(id), at, false)
+		e.armor = 0.0
+		game.horde.damage(e, 99999.0, Vector2.RIGHT, 0.0)
+		assert_false(e.alive, "%s fell" % id)
+		assert_eq(_gold_slivers(game) - before, 2 if id == &"skeleton_elite" else 0, "%s: gold slivers" % id)

@@ -364,6 +364,19 @@ polys = Array[PackedVector2Array]([PackedVector2Array(-21, -12, -18, -15, 21, -1
 holes = Array[PackedVector2Array]([PackedVector2Array(-7, -17, -7, -12, 2, -12, 2, -17), PackedVector2Array(-7, -7, -7.8, -5, -6.6, -3, -7, -1, 2, -1, 1.6, -3, 2.8, -5, 2, -7), PackedVector2Array(-7, 4, -7.6, 6, -6.4, 8, -5, 9.4, -2.5, 10, 0.3, 9.2, 1.6, 8, 2.6, 6, 2, 4), PackedVector2Array(8, -6.5, 9.5, -8.2, 12.5, -8.4, 14.6, -6.2, 14, -2.6, 11, -1.8, 8.4, -3.4)])
 
 [sub_resource type="Resource" id="Resource_71eg4"]
+script = ExtResource("6_51rpt")
+kind = 2
+fire = 0.3
+hero_damage = 0.0
+enemy_damage = 0.0
+plate_hero_damage = PackedFloat32Array()
+plate_push = PackedVector2Array()
+bands = Array[Rect2]([Rect2(-10.8, -7, 2.8, 6), Rect2(2.9, -7, 2.3, 6), Rect2(-5.5, 10.2, 6, 2)])
+band_push = PackedVector2Array(-2.5, 0, 2.5, 0, 0, 2.5)
+cycle = 7.0
+band_source = &"breath"
+
+[sub_resource type="Resource" id="Resource_4s1gs"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(14, 7)
@@ -371,7 +384,7 @@ half = Vector2(1.8, 0.5)
 see_through = true
 height = 2.6
 
-[sub_resource type="Resource" id="Resource_4s1gs"]
+[sub_resource type="Resource" id="Resource_6sy2k"]
 script = ExtResource("3_kin83")
 center = Vector2(7.5, 3)
 radius = 0.7
@@ -379,7 +392,7 @@ see_through = true
 piece = &"column"
 height = 3.8
 
-[sub_resource type="Resource" id="Resource_6sy2k"]
+[sub_resource type="Resource" id="Resource_p8q88"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-14, -5.5)
@@ -387,7 +400,7 @@ half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_p8q88"]
+[sub_resource type="Resource" id="Resource_maxa6"]
 script = ExtResource("3_kin83")
 center = Vector2(-13, 3)
 radius = 0.7
@@ -395,28 +408,28 @@ see_through = true
 piece = &"column"
 height = 3.2
 
-[sub_resource type="Resource" id="Resource_maxa6"]
+[sub_resource type="Resource" id="Resource_k887a"]
 script = ExtResource("3_kin83")
 center = Vector2(-10.5, -4)
 see_through = true
 piece = &"column"
 height = 1.5
 
-[sub_resource type="Resource" id="Resource_k887a"]
+[sub_resource type="Resource" id="Resource_51h6f"]
 script = ExtResource("3_kin83")
 center = Vector2(5.5, -4)
 see_through = true
 piece = &"column"
 height = 1.5
 
-[sub_resource type="Resource" id="Resource_51h6f"]
+[sub_resource type="Resource" id="Resource_3pvnp"]
 script = ExtResource("3_kin83")
 center = Vector2(12.5, 1)
 see_through = true
 piece = &"column"
 height = 1.5
 
-[sub_resource type="Resource" id="Resource_3pvnp"]
+[sub_resource type="Resource" id="Resource_0lpor"]
 script = ExtResource("3_kin83")
 center = Vector2(8.5, -15.6)
 radius = 0.45
@@ -425,7 +438,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_0lpor"]
+[sub_resource type="Resource" id="Resource_vlysx"]
 script = ExtResource("3_kin83")
 center = Vector2(15.5, -15.6)
 radius = 0.45
@@ -434,13 +447,26 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_vlysx"]
+[sub_resource type="Resource" id="Resource_fr2k5"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-21, -12, -18, -15, 21, -15, 21, 9, 15, 15, -15, 15, -21, 10)])
 holes = Array[PackedVector2Array]([PackedVector2Array(-7, -17, -7, -12, -7, -7, -7.8, -5, -6.6, -3, -7, -1, 2, -1, 1.6, -3, 2.8, -5, 2, -7, 2, -12, 2, -17), PackedVector2Array(-7, 4, -7.6, 6, -6.4, 8, -5, 9.4, -2.5, 10, 0.3, 9.2, 1.6, 8, 2.6, 6, 2, 4), PackedVector2Array(-17.5, -3, -16, -5.2, -13, -5.6, -11.3, -3.5, -11.6, -0.4, -14, 0.6, -16.6, -0.6)])
 
-[sub_resource type="Resource" id="Resource_fr2k5"]
+[sub_resource type="Resource" id="Resource_q6hi7"]
+script = ExtResource("6_51rpt")
+kind = 2
+fire = 0.3
+hero_damage = 0.0
+enemy_damage = 0.0
+plate_hero_damage = PackedFloat32Array()
+plate_push = PackedVector2Array()
+bands = Array[Rect2]([Rect2(-10, -13, 2.8, 6), Rect2(2.9, -7, 2.3, 6), Rect2(-5.5, 10.2, 6, 2)])
+band_push = PackedVector2Array(-2.5, 0, 2.5, 0, 0, 2.5)
+cycle = 7.0
+band_source = &"breath"
+
+[sub_resource type="Resource" id="Resource_hi33f"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(14, 7)
@@ -448,7 +474,7 @@ half = Vector2(1.8, 0.5)
 see_through = true
 height = 2.6
 
-[sub_resource type="Resource" id="Resource_q6hi7"]
+[sub_resource type="Resource" id="Resource_vbe0e"]
 script = ExtResource("3_kin83")
 center = Vector2(8, -4)
 radius = 0.7
@@ -456,7 +482,7 @@ see_through = true
 piece = &"column"
 height = 3.8
 
-[sub_resource type="Resource" id="Resource_hi33f"]
+[sub_resource type="Resource" id="Resource_7rjok"]
 script = ExtResource("3_kin83")
 center = Vector2(13, -8.5)
 radius = 0.7
@@ -464,7 +490,7 @@ see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_vbe0e"]
+[sub_resource type="Resource" id="Resource_s1sfb"]
 script = ExtResource("3_kin83")
 center = Vector2(15, -1)
 radius = 0.7
@@ -472,7 +498,7 @@ see_through = true
 piece = &"column"
 height = 2.9
 
-[sub_resource type="Resource" id="Resource_7rjok"]
+[sub_resource type="Resource" id="Resource_nif3a"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-13.5, -10.5)
@@ -480,15 +506,16 @@ half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_s1sfb"]
+[sub_resource type="Resource" id="Resource_b2dkf"]
 script = ExtResource("5_wmys5")
 depth = Vector2(0.34, 1)
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_fr2k5"), SubResource("Resource_q6hi7"), SubResource("Resource_hi33f"), SubResource("Resource_vbe0e"), SubResource("Resource_7rjok"), SubResource("Resource_3pvnp"), SubResource("Resource_0lpor")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_hi33f"), SubResource("Resource_vbe0e"), SubResource("Resource_7rjok"), SubResource("Resource_s1sfb"), SubResource("Resource_nif3a"), SubResource("Resource_0lpor"), SubResource("Resource_vlysx")])
 late_spawns = Array[Rect2]([Rect2(-19.5, -12, 4, 5)])
-floor = SubResource("Resource_vlysx")
+floor = SubResource("Resource_fr2k5")
+hazard = SubResource("Resource_q6hi7")
 area_names = PackedStringArray()
 
-[sub_resource type="Resource" id="Resource_nif3a"]
+[sub_resource type="Resource" id="Resource_tpwa6"]
 script = ExtResource("4_8ur2y")
 half = Vector2(21, 15)
 floor = SubResource("Resource_dyl17")
@@ -502,41 +529,42 @@ difficulty = 1
 depth = Vector2(0.1, 1)
 variant_depth = Vector2(0.1, 0.6)
 max_alive = Vector2i(6, 8)
+hazard = SubResource("Resource_71eg4")
 areas = Array[Rect2]([Rect2(-7, -12, 9, 5), Rect2(-7, -1, 9, 5), Rect2(-8, 9, 11, 6), Rect2(-21, -15, 14, 30), Rect2(2, -15, 19, 30)])
 area_names = PackedStringArray("bridge_n", "bridge_s", "south_way", "west", "east")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_71eg4"), SubResource("Resource_4s1gs"), SubResource("Resource_6sy2k"), SubResource("Resource_p8q88"), SubResource("Resource_maxa6"), SubResource("Resource_k887a"), SubResource("Resource_51h6f"), SubResource("Resource_3pvnp"), SubResource("Resource_0lpor")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_4s1gs"), SubResource("Resource_6sy2k"), SubResource("Resource_p8q88"), SubResource("Resource_maxa6"), SubResource("Resource_k887a"), SubResource("Resource_51h6f"), SubResource("Resource_3pvnp"), SubResource("Resource_0lpor"), SubResource("Resource_vlysx")])
 spawns = Array[Rect2]([Rect2(5, -13.5, 6, 3), Rect2(16, -8, 3.5, 6), Rect2(5, 7, 6, 5)])
 late_spawns = Array[Rect2]([Rect2(-17, -13, 6, 4)])
 exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_nsxxi"), SubResource("Resource_vjfq7"), SubResource("Resource_thnpm")])
 cam_bounds = Rect2(-6, -4, 13, 9)
-variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_s1sfb")])
+variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_b2dkf")])
 
-[sub_resource type="Resource" id="Resource_b2dkf"]
+[sub_resource type="Resource" id="Resource_sv271"]
 script = ExtResource("1_wpebi")
 at = Vector2(13, -15.8)
 zone = Rect2(11, -16.4, 4, 1.1999998)
 mouth = Rect2(11, -16.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_tpwa6"]
+[sub_resource type="Resource" id="Resource_di5o1"]
 script = ExtResource("1_wpebi")
 at = Vector2(18.8, 0)
 inward = Vector2(-1, 0)
 zone = Rect2(18.2, -2, 1.1999989, 4)
 mouth = Rect2(17, -2, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_sv271"]
+[sub_resource type="Resource" id="Resource_7xjok"]
 script = ExtResource("1_wpebi")
 at = Vector2(5, 15.8)
 inward = Vector2(0, -1)
 zone = Rect2(3, 15.2, 4, 1.1999998)
 mouth = Rect2(3, 14, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_di5o1"]
+[sub_resource type="Resource" id="Resource_afiot"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-17, -10, -13, -14, 17, -14, 17, 8, 11, 14, -12, 14, -17, 9)])
 
-[sub_resource type="Resource" id="Resource_7xjok"]
+[sub_resource type="Resource" id="Resource_uibvc"]
 script = ExtResource("3_kin83")
 center = Vector2(-8, -5)
 radius = 3.5
@@ -544,7 +572,7 @@ see_through = true
 piece = &"trunk"
 height = 4.5
 
-[sub_resource type="Resource" id="Resource_afiot"]
+[sub_resource type="Resource" id="Resource_0ylts"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-4.947635, -6.7442083)
@@ -554,7 +582,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_uibvc"]
+[sub_resource type="Resource" id="Resource_vegw7"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-3.5, -7.35)
@@ -564,7 +592,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_0ylts"]
+[sub_resource type="Resource" id="Resource_osx03"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-1.45, -7.9)
@@ -574,7 +602,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_vegw7"]
+[sub_resource type="Resource" id="Resource_tkdd2"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(0.7, -8.1)
@@ -583,7 +611,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_osx03"]
+[sub_resource type="Resource" id="Resource_a43mo"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-5.5393395, -2.53934)
@@ -593,7 +621,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_tkdd2"]
+[sub_resource type="Resource" id="Resource_65xxq"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-4.35, -1.5)
@@ -603,7 +631,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_a43mo"]
+[sub_resource type="Resource" id="Resource_xph6e"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-2.55, -0.25)
@@ -613,7 +641,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_65xxq"]
+[sub_resource type="Resource" id="Resource_dc66y"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-0.65, 0.75)
@@ -623,7 +651,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_xph6e"]
+[sub_resource type="Resource" id="Resource_u37gx"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-9.744208, -1.9476353)
@@ -633,7 +661,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_dc66y"]
+[sub_resource type="Resource" id="Resource_ynxxf"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-10.4, -0.7)
@@ -643,7 +671,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_u37gx"]
+[sub_resource type="Resource" id="Resource_4agcp"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-11.1, 1)
@@ -653,7 +681,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_ynxxf"]
+[sub_resource type="Resource" id="Resource_eqnfm"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-11.65, 2.75)
@@ -663,7 +691,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_4agcp"]
+[sub_resource type="Resource" id="Resource_k7fyg"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-11.052364, -6.7442083)
@@ -673,7 +701,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_eqnfm"]
+[sub_resource type="Resource" id="Resource_5w41h"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-12.15, -7.4)
@@ -683,7 +711,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_k7fyg"]
+[sub_resource type="Resource" id="Resource_se7u8"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(7.5, -5)
@@ -691,7 +719,7 @@ half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_5w41h"]
+[sub_resource type="Resource" id="Resource_rrms1"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-16.4, -1.5)
@@ -699,14 +727,14 @@ half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_se7u8"]
+[sub_resource type="Resource" id="Resource_eacf8"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(11, 5)
 half = Vector2(2.4, 0.4)
 blocks_shots = false
 
-[sub_resource type="Resource" id="Resource_rrms1"]
+[sub_resource type="Resource" id="Resource_6uc8j"]
 script = ExtResource("3_kin83")
 center = Vector2(4.5, 7)
 radius = 0.7
@@ -714,7 +742,7 @@ see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_eacf8"]
+[sub_resource type="Resource" id="Resource_582o2"]
 script = ExtResource("3_kin83")
 center = Vector2(10.5, -14.6)
 radius = 0.45
@@ -723,7 +751,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_6uc8j"]
+[sub_resource type="Resource" id="Resource_vxcoi"]
 script = ExtResource("3_kin83")
 center = Vector2(15.5, -14.6)
 radius = 0.45
@@ -732,7 +760,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_582o2"]
+[sub_resource type="Resource" id="Resource_k5hx5"]
 script = ExtResource("3_kin83")
 center = Vector2(17.6, -2.6)
 radius = 0.45
@@ -741,7 +769,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_vxcoi"]
+[sub_resource type="Resource" id="Resource_jw3ap"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-4.573593, -5.614996)
@@ -751,7 +779,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_k5hx5"]
+[sub_resource type="Resource" id="Resource_bavs6"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-3.25, -5.75)
@@ -761,7 +789,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_jw3ap"]
+[sub_resource type="Resource" id="Resource_t738q"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-1.5500001, -5.75)
@@ -771,7 +799,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_bavs6"]
+[sub_resource type="Resource" id="Resource_mpgig"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(0.099999994, -5.55)
@@ -781,7 +809,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_t738q"]
+[sub_resource type="Resource" id="Resource_ciqix"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-6.7814417, -1.6924852)
@@ -791,7 +819,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_mpgig"]
+[sub_resource type="Resource" id="Resource_d8yg1"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-6.3999996, -0.25000003)
@@ -801,7 +829,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_ciqix"]
+[sub_resource type="Resource" id="Resource_bdugr"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-6.1499996, 1.7)
@@ -811,7 +839,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_d8yg1"]
+[sub_resource type="Resource" id="Resource_1wodb"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-6.2, 3.6999998)
@@ -821,7 +849,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_bdugr"]
+[sub_resource type="Resource" id="Resource_7l6y2"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-11.052364, -3.2557917)
@@ -831,7 +859,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_1wodb"]
+[sub_resource type="Resource" id="Resource_lrxdf"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-11.85, -2.75)
@@ -841,7 +869,7 @@ blocks_shots = false
 piece = &"root"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_7l6y2"]
+[sub_resource type="Resource" id="Resource_so63g"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(11.5, -6)
@@ -849,7 +877,7 @@ half = Vector2(0.6, 1.25)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_lrxdf"]
+[sub_resource type="Resource" id="Resource_0supd"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(6.5, 5)
@@ -857,7 +885,7 @@ half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_so63g"]
+[sub_resource type="Resource" id="Resource_qvvqq"]
 script = ExtResource("3_kin83")
 center = Vector2(12, 3)
 radius = 0.7
@@ -865,7 +893,7 @@ see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_0supd"]
+[sub_resource type="Resource" id="Resource_68qus"]
 script = ExtResource("3_kin83")
 center = Vector2(-12.5, 4)
 radius = 0.7
@@ -873,15 +901,15 @@ see_through = true
 piece = &"column"
 height = 3.0
 
-[sub_resource type="Resource" id="Resource_qvvqq"]
+[sub_resource type="Resource" id="Resource_pm87n"]
 script = ExtResource("5_wmys5")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_7xjok"), SubResource("Resource_vxcoi"), SubResource("Resource_k5hx5"), SubResource("Resource_jw3ap"), SubResource("Resource_bavs6"), SubResource("Resource_t738q"), SubResource("Resource_mpgig"), SubResource("Resource_ciqix"), SubResource("Resource_d8yg1"), SubResource("Resource_bdugr"), SubResource("Resource_1wodb"), SubResource("Resource_7l6y2"), SubResource("Resource_lrxdf"), SubResource("Resource_so63g"), SubResource("Resource_0supd"), SubResource("Resource_eacf8"), SubResource("Resource_6uc8j"), SubResource("Resource_582o2")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_uibvc"), SubResource("Resource_jw3ap"), SubResource("Resource_bavs6"), SubResource("Resource_t738q"), SubResource("Resource_mpgig"), SubResource("Resource_ciqix"), SubResource("Resource_d8yg1"), SubResource("Resource_bdugr"), SubResource("Resource_1wodb"), SubResource("Resource_7l6y2"), SubResource("Resource_lrxdf"), SubResource("Resource_so63g"), SubResource("Resource_0supd"), SubResource("Resource_qvvqq"), SubResource("Resource_68qus"), SubResource("Resource_582o2"), SubResource("Resource_vxcoi"), SubResource("Resource_k5hx5")])
 area_names = PackedStringArray()
 
-[sub_resource type="Resource" id="Resource_68qus"]
+[sub_resource type="Resource" id="Resource_i4d1g"]
 script = ExtResource("4_8ur2y")
 half = Vector2(17, 14)
-floor = SubResource("Resource_di5o1")
+floor = SubResource("Resource_afiot")
 hero_spawn = Vector2(-12, 9)
 hero_facing = Vector2(0.70710677, -0.70710677)
 id = &"garden"
@@ -892,39 +920,39 @@ depth = Vector2(0.1, 1)
 max_alive = Vector2i(6, 8)
 areas = Array[Rect2]([Rect2(-14, -11, 12, 12), Rect2(2, -14, 15, 28), Rect2(-17, -14, 19, 28)])
 area_names = PackedStringArray("tree_shade", "east_field", "rest")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_7xjok"), SubResource("Resource_afiot"), SubResource("Resource_uibvc"), SubResource("Resource_0ylts"), SubResource("Resource_vegw7"), SubResource("Resource_osx03"), SubResource("Resource_tkdd2"), SubResource("Resource_a43mo"), SubResource("Resource_65xxq"), SubResource("Resource_xph6e"), SubResource("Resource_dc66y"), SubResource("Resource_u37gx"), SubResource("Resource_ynxxf"), SubResource("Resource_4agcp"), SubResource("Resource_eqnfm"), SubResource("Resource_k7fyg"), SubResource("Resource_5w41h"), SubResource("Resource_se7u8"), SubResource("Resource_rrms1"), SubResource("Resource_eacf8"), SubResource("Resource_6uc8j"), SubResource("Resource_582o2")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_uibvc"), SubResource("Resource_0ylts"), SubResource("Resource_vegw7"), SubResource("Resource_osx03"), SubResource("Resource_tkdd2"), SubResource("Resource_a43mo"), SubResource("Resource_65xxq"), SubResource("Resource_xph6e"), SubResource("Resource_dc66y"), SubResource("Resource_u37gx"), SubResource("Resource_ynxxf"), SubResource("Resource_4agcp"), SubResource("Resource_eqnfm"), SubResource("Resource_k7fyg"), SubResource("Resource_5w41h"), SubResource("Resource_se7u8"), SubResource("Resource_rrms1"), SubResource("Resource_eacf8"), SubResource("Resource_6uc8j"), SubResource("Resource_582o2"), SubResource("Resource_vxcoi"), SubResource("Resource_k5hx5")])
 spawns = Array[Rect2]([Rect2(6, -12.5, 6, 3), Rect2(13, -4, 3, 7), Rect2(-6, -13.2, 6, 2.7), Rect2(-2, 9, 8, 3.5)])
 late_spawns = Array[Rect2]([Rect2(-15, -6, 2, 2.5)])
-exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_b2dkf"), SubResource("Resource_tpwa6"), SubResource("Resource_sv271")])
+exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_sv271"), SubResource("Resource_di5o1"), SubResource("Resource_7xjok")])
 cam_bounds = Rect2(-3, -2, 7, 5)
-variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_qvvqq")])
+variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_pm87n")])
 
-[sub_resource type="Resource" id="Resource_pm87n"]
+[sub_resource type="Resource" id="Resource_736p0"]
 script = ExtResource("1_wpebi")
 at = Vector2(6.5, -15.8)
 zone = Rect2(4.5, -16.4, 4, 1.1999998)
 mouth = Rect2(4.5, -16.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_i4d1g"]
+[sub_resource type="Resource" id="Resource_mwswc"]
 script = ExtResource("1_wpebi")
 at = Vector2(-6, 15.8)
 inward = Vector2(0, -1)
 zone = Rect2(-8, 15.2, 4, 1.1999998)
 mouth = Rect2(-8, 14, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_736p0"]
+[sub_resource type="Resource" id="Resource_q7f36"]
 script = ExtResource("1_wpebi")
 at = Vector2(-23.8, -10.5)
 inward = Vector2(1, 0)
 zone = Rect2(-24.4, -12.5, 1.1999989, 4)
 mouth = Rect2(-24.4, -12.5, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_mwswc"]
+[sub_resource type="Resource" id="Resource_tebmx"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-22, -14, 14, -14, 22, -6, 22, 14, -18, 14, -22, 10)])
 
-[sub_resource type="Resource" id="Resource_q7f36"]
+[sub_resource type="Resource" id="Resource_5i70t"]
 script = ExtResource("6_51rpt")
 kind = 1
 warn = 1.0
@@ -936,7 +964,7 @@ plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 band_push = PackedVector2Array()
 
-[sub_resource type="Resource" id="Resource_tebmx"]
+[sub_resource type="Resource" id="Resource_edqrd"]
 script = ExtResource("3_kin83")
 center = Vector2(-15, -6)
 radius = 0.65
@@ -944,7 +972,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_5i70t"]
+[sub_resource type="Resource" id="Resource_4maq2"]
 script = ExtResource("3_kin83")
 center = Vector2(-9, -6)
 radius = 0.65
@@ -952,7 +980,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_edqrd"]
+[sub_resource type="Resource" id="Resource_gwcyj"]
 script = ExtResource("3_kin83")
 center = Vector2(-3, -6)
 radius = 0.65
@@ -960,7 +988,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_4maq2"]
+[sub_resource type="Resource" id="Resource_bxin2"]
 script = ExtResource("3_kin83")
 center = Vector2(9, -6)
 radius = 0.65
@@ -968,7 +996,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_gwcyj"]
+[sub_resource type="Resource" id="Resource_tlv08"]
 script = ExtResource("3_kin83")
 center = Vector2(-15, 6)
 radius = 0.65
@@ -976,7 +1004,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_bxin2"]
+[sub_resource type="Resource" id="Resource_tc8an"]
 script = ExtResource("3_kin83")
 center = Vector2(-3, 6)
 radius = 0.65
@@ -984,7 +1012,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_tlv08"]
+[sub_resource type="Resource" id="Resource_slhqw"]
 script = ExtResource("3_kin83")
 center = Vector2(3, 6)
 radius = 0.65
@@ -992,7 +1020,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_tc8an"]
+[sub_resource type="Resource" id="Resource_fxr16"]
 script = ExtResource("3_kin83")
 center = Vector2(9, 6)
 radius = 0.65
@@ -1000,7 +1028,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_slhqw"]
+[sub_resource type="Resource" id="Resource_s8mvf"]
 script = ExtResource("3_kin83")
 center = Vector2(15, 6)
 radius = 0.65
@@ -1008,7 +1036,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_fxr16"]
+[sub_resource type="Resource" id="Resource_rbg74"]
 script = ExtResource("3_kin83")
 center = Vector2(15, -6)
 radius = 0.65
@@ -1016,7 +1044,7 @@ see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_s8mvf"]
+[sub_resource type="Resource" id="Resource_mrscu"]
 script = ExtResource("3_kin83")
 center = Vector2(-9, 6)
 radius = 0.65
@@ -1024,7 +1052,7 @@ see_through = true
 piece = &"column"
 height = 3.0
 
-[sub_resource type="Resource" id="Resource_rbg74"]
+[sub_resource type="Resource" id="Resource_sonfj"]
 script = ExtResource("3_kin83")
 center = Vector2(3, -6)
 radius = 0.65
@@ -1032,7 +1060,7 @@ blocks_shots = false
 piece = &"column_base"
 height = 0.6
 
-[sub_resource type="Resource" id="Resource_mrscu"]
+[sub_resource type="Resource" id="Resource_psbln"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(3, -8.35)
@@ -1041,7 +1069,7 @@ yaw = -1.5707964
 blocks_shots = false
 piece = &"drums"
 
-[sub_resource type="Resource" id="Resource_sonfj"]
+[sub_resource type="Resource" id="Resource_8vf53"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-12, -13.4)
@@ -1049,7 +1077,7 @@ half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_psbln"]
+[sub_resource type="Resource" id="Resource_g81yf"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-4, -13.4)
@@ -1057,7 +1085,7 @@ half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_8vf53"]
+[sub_resource type="Resource" id="Resource_7pks0"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-12, 10.2)
@@ -1066,7 +1094,7 @@ blocks_shots = false
 piece = &"bench_broken"
 height = 0.9
 
-[sub_resource type="Resource" id="Resource_g81yf"]
+[sub_resource type="Resource" id="Resource_84flu"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(6, 10.2)
@@ -1075,7 +1103,7 @@ blocks_shots = false
 piece = &"bench_broken"
 height = 0.9
 
-[sub_resource type="Resource" id="Resource_7pks0"]
+[sub_resource type="Resource" id="Resource_1lccg"]
 script = ExtResource("3_kin83")
 center = Vector2(4.3, -14.9)
 radius = 0.45
@@ -1084,7 +1112,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_84flu"]
+[sub_resource type="Resource" id="Resource_pm300"]
 script = ExtResource("3_kin83")
 center = Vector2(8.7, -14.9)
 radius = 0.45
@@ -1093,13 +1121,13 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_1lccg"]
+[sub_resource type="Resource" id="Resource_row08"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-22, -14, 14, -14, 22, -6, 22, 14, -18, 14, -22, 10)])
 holes = Array[PackedVector2Array]([PackedVector2Array(1, -3.2, 4.5, -3.5, 9, -3.1, 9.4, 0, 9, 3.1, 4.5, 3.5, 1, 3.2, 0.6, 0)])
 
-[sub_resource type="Resource" id="Resource_pm300"]
+[sub_resource type="Resource" id="Resource_6ewq0"]
 script = ExtResource("6_51rpt")
 kind = 1
 warn = 1.0
@@ -1111,7 +1139,7 @@ plate_hero_damage = PackedFloat32Array(0, 0, 0, 0, 5, 5)
 plate_push = PackedVector2Array(0, 0, 0, 0, 0, 0, 0, 0, -2.5, 0, 2.5, 0)
 band_push = PackedVector2Array()
 
-[sub_resource type="Resource" id="Resource_row08"]
+[sub_resource type="Resource" id="Resource_3dn1a"]
 script = ExtResource("3_kin83")
 center = Vector2(-15, -6)
 radius = 0.65
@@ -1119,7 +1147,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_6ewq0"]
+[sub_resource type="Resource" id="Resource_aaj57"]
 script = ExtResource("3_kin83")
 center = Vector2(-9, -6)
 radius = 0.65
@@ -1127,7 +1155,7 @@ see_through = true
 piece = &"column"
 height = 3.2
 
-[sub_resource type="Resource" id="Resource_3dn1a"]
+[sub_resource type="Resource" id="Resource_pxvga"]
 script = ExtResource("3_kin83")
 center = Vector2(-3, -6)
 radius = 0.65
@@ -1135,7 +1163,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_aaj57"]
+[sub_resource type="Resource" id="Resource_vbkt7"]
 script = ExtResource("3_kin83")
 center = Vector2(15, -6)
 radius = 0.65
@@ -1143,7 +1171,7 @@ see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_pxvga"]
+[sub_resource type="Resource" id="Resource_tcefp"]
 script = ExtResource("3_kin83")
 center = Vector2(-15, 6)
 radius = 0.65
@@ -1151,7 +1179,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_vbkt7"]
+[sub_resource type="Resource" id="Resource_1nd41"]
 script = ExtResource("3_kin83")
 center = Vector2(-9, 6)
 radius = 0.65
@@ -1159,7 +1187,7 @@ see_through = true
 piece = &"column"
 height = 3.0
 
-[sub_resource type="Resource" id="Resource_tcefp"]
+[sub_resource type="Resource" id="Resource_fxveh"]
 script = ExtResource("3_kin83")
 center = Vector2(-3, 6)
 radius = 0.65
@@ -1167,7 +1195,7 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_1nd41"]
+[sub_resource type="Resource" id="Resource_gw4yf"]
 script = ExtResource("3_kin83")
 center = Vector2(15, 6)
 radius = 0.65
@@ -1175,18 +1203,18 @@ see_through = true
 piece = &"column"
 height = 5.2
 
-[sub_resource type="Resource" id="Resource_fxveh"]
+[sub_resource type="Resource" id="Resource_tdxg8"]
 script = ExtResource("5_wmys5")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_row08"), SubResource("Resource_6ewq0"), SubResource("Resource_3dn1a"), SubResource("Resource_aaj57"), SubResource("Resource_pxvga"), SubResource("Resource_vbkt7"), SubResource("Resource_tcefp"), SubResource("Resource_1nd41"), SubResource("Resource_sonfj"), SubResource("Resource_psbln"), SubResource("Resource_8vf53"), SubResource("Resource_g81yf"), SubResource("Resource_7pks0"), SubResource("Resource_84flu")])
-floor = SubResource("Resource_1lccg")
-hazard = SubResource("Resource_pm300")
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_3dn1a"), SubResource("Resource_aaj57"), SubResource("Resource_pxvga"), SubResource("Resource_vbkt7"), SubResource("Resource_tcefp"), SubResource("Resource_1nd41"), SubResource("Resource_fxveh"), SubResource("Resource_gw4yf"), SubResource("Resource_8vf53"), SubResource("Resource_g81yf"), SubResource("Resource_7pks0"), SubResource("Resource_84flu"), SubResource("Resource_1lccg"), SubResource("Resource_pm300")])
+floor = SubResource("Resource_row08")
+hazard = SubResource("Resource_6ewq0")
 areas = Array[Rect2]([Rect2(-2.6, -1.5, 3, 3), Rect2(9.6, -1.5, 3, 3), Rect2(-22, -5.35, 44, 10.7), Rect2(-22, -14, 44, 8.65), Rect2(-22, 5.35, 44, 8.65)])
 area_names = PackedStringArray("hole_edge", "hole_edge", "nave", "aisles", "aisles")
 
-[sub_resource type="Resource" id="Resource_gw4yf"]
+[sub_resource type="Resource" id="Resource_w66uj"]
 script = ExtResource("4_8ur2y")
 half = Vector2(22, 14)
-floor = SubResource("Resource_mwswc")
+floor = SubResource("Resource_tebmx")
 hero_spawn = Vector2(19.5, 2)
 hero_facing = Vector2(-1, 0)
 boss_spawn = Vector2(-17, 0)
@@ -1199,42 +1227,42 @@ depth = Vector2(0.4, 1)
 max_alive = Vector2i(6, 8)
 max_ranged = 3
 guardian_home = true
-hazard = SubResource("Resource_q7f36")
+hazard = SubResource("Resource_5i70t")
 areas = Array[Rect2]([Rect2(-22, -5.35, 44, 10.7), Rect2(-22, -14, 44, 8.65), Rect2(-22, 5.35, 44, 8.65)])
 area_names = PackedStringArray("nave", "aisles", "aisles")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_tebmx"), SubResource("Resource_5i70t"), SubResource("Resource_edqrd"), SubResource("Resource_4maq2"), SubResource("Resource_gwcyj"), SubResource("Resource_bxin2"), SubResource("Resource_tlv08"), SubResource("Resource_tc8an"), SubResource("Resource_slhqw"), SubResource("Resource_fxr16"), SubResource("Resource_s8mvf"), SubResource("Resource_rbg74"), SubResource("Resource_mrscu"), SubResource("Resource_sonfj"), SubResource("Resource_psbln"), SubResource("Resource_8vf53"), SubResource("Resource_g81yf"), SubResource("Resource_7pks0"), SubResource("Resource_84flu")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_edqrd"), SubResource("Resource_4maq2"), SubResource("Resource_gwcyj"), SubResource("Resource_bxin2"), SubResource("Resource_tlv08"), SubResource("Resource_tc8an"), SubResource("Resource_slhqw"), SubResource("Resource_fxr16"), SubResource("Resource_s8mvf"), SubResource("Resource_rbg74"), SubResource("Resource_mrscu"), SubResource("Resource_sonfj"), SubResource("Resource_psbln"), SubResource("Resource_8vf53"), SubResource("Resource_g81yf"), SubResource("Resource_7pks0"), SubResource("Resource_84flu"), SubResource("Resource_1lccg"), SubResource("Resource_pm300")])
 spawns = Array[Rect2]([Rect2(-20, -3, 6, 6), Rect2(-19, 8, 4, 3), Rect2(-8, -12, 6, 3.5), Rect2(4, 8, 8, 4), Rect2(-2, -12, 8, 3.5)])
 late_spawns = Array[Rect2]([Rect2(10, 8, 6, 4)])
-exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_pm87n"), SubResource("Resource_i4d1g"), SubResource("Resource_736p0")])
+exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_736p0"), SubResource("Resource_mwswc"), SubResource("Resource_q7f36")])
 cam_bounds = Rect2(-10, -2, 20, 4)
-variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_fxveh")])
+variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_tdxg8")])
 
-[sub_resource type="Resource" id="Resource_tdxg8"]
+[sub_resource type="Resource" id="Resource_qblhx"]
 script = ExtResource("1_wpebi")
 at = Vector2(21, -10.8)
 zone = Rect2(19, -11.4, 4, 1.1999998)
 mouth = Rect2(19, -11.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_w66uj"]
+[sub_resource type="Resource" id="Resource_pgjgb"]
 script = ExtResource("1_wpebi")
 at = Vector2(29.8, 0.5)
 inward = Vector2(-1, 0)
 zone = Rect2(29.2, -1.5, 1.1999989, 4)
 mouth = Rect2(28, -1.5, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_qblhx"]
+[sub_resource type="Resource" id="Resource_exdvp"]
 script = ExtResource("1_wpebi")
 at = Vector2(21, 10.8)
 inward = Vector2(0, -1)
 zone = Rect2(19, 10.2, 4, 1.1999998)
 mouth = Rect2(19, 9, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_pgjgb"]
+[sub_resource type="Resource" id="Resource_e3brq"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-28, -6, -25, -9, -15, -9, -14, -7, -14, 7, -16, 9, -26, 9, -28, 7), PackedVector2Array(-14.05, -2.5, -6.9500003, -2.5, -6.9500003, 2.5, -14.05, 2.5), PackedVector2Array(-7, -6, -5, -8, 5, -8, 7, -6, 7, 6, 5, 8, -5, 8, -7, 6), PackedVector2Array(6.95, -2.5, 14.049999, -2.5, 14.049999, 2.5, 6.95, 2.5), PackedVector2Array(14, -7, 15, -9, 25, -9, 28, -6, 28, 7, 26, 9, 16, 9, 14, 7)])
 
-[sub_resource type="Resource" id="Resource_exdvp"]
+[sub_resource type="Resource" id="Resource_1xlks"]
 script = ExtResource("6_51rpt")
 kind = 2
 hero_damage = 7.0
@@ -1244,7 +1272,7 @@ plate_push = PackedVector2Array()
 bands = Array[Rect2]([Rect2(-11.5, -2.5, 2, 5), Rect2(9.5, -2.5, 2, 5)])
 band_push = PackedVector2Array(-2.5, 0, 2.5, 0)
 
-[sub_resource type="Resource" id="Resource_e3brq"]
+[sub_resource type="Resource" id="Resource_hvggj"]
 script = ExtResource("3_kin83")
 center = Vector2(-21, -4)
 radius = 0.7
@@ -1252,7 +1280,7 @@ see_through = true
 piece = &"column"
 height = 3.0
 
-[sub_resource type="Resource" id="Resource_1xlks"]
+[sub_resource type="Resource" id="Resource_ktett"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(21, -4.8)
@@ -1260,7 +1288,7 @@ half = Vector2(1.25, 0.6)
 piece = &"sarcophagus"
 height = 1.35
 
-[sub_resource type="Resource" id="Resource_hvggj"]
+[sub_resource type="Resource" id="Resource_bcqkj"]
 script = ExtResource("3_kin83")
 center = Vector2(20, 4.5)
 radius = 0.7
@@ -1268,7 +1296,7 @@ see_through = true
 piece = &"column"
 height = 3.6
 
-[sub_resource type="Resource" id="Resource_ktett"]
+[sub_resource type="Resource" id="Resource_6vs2v"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(0, -7.2)
@@ -1277,7 +1305,7 @@ see_through = true
 piece = &"pylon"
 height = 6.0
 
-[sub_resource type="Resource" id="Resource_bcqkj"]
+[sub_resource type="Resource" id="Resource_5qps6"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(2.5, 2.5)
@@ -1285,7 +1313,7 @@ half = Vector2(0.5, 1.6)
 see_through = true
 height = 2.2
 
-[sub_resource type="Resource" id="Resource_6vs2v"]
+[sub_resource type="Resource" id="Resource_f6t5t"]
 script = ExtResource("3_kin83")
 center = Vector2(-2.5, 3.5)
 radius = 0.7
@@ -1293,7 +1321,7 @@ see_through = true
 piece = &"column"
 height = 3.4
 
-[sub_resource type="Resource" id="Resource_5qps6"]
+[sub_resource type="Resource" id="Resource_cvixj"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(16, 0)
@@ -1301,12 +1329,12 @@ half = Vector2(0.5, 1.2)
 see_through = true
 height = 2.2
 
-[sub_resource type="Resource" id="Resource_f6t5t"]
+[sub_resource type="Resource" id="Resource_dvejg"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-28, -6, -25, -9, -13, -9, -12, -7, -12, 7, -14, 9, -26, 9, -28, 7), PackedVector2Array(-12.05, -2.5, 12.05, -2.5, 12.05, 2.5, -12.05, 2.5), PackedVector2Array(-3, -4.5, 3, -4.5, 3, 4.5, -3, 4.5), PackedVector2Array(12, -7, 13, -9, 25, -9, 28, -6, 28, 7, 26, 9, 14, 9, 12, 7)])
 
-[sub_resource type="Resource" id="Resource_cvixj"]
+[sub_resource type="Resource" id="Resource_3ll4o"]
 script = ExtResource("6_51rpt")
 kind = 2
 hero_damage = 7.0
@@ -1316,20 +1344,20 @@ plate_push = PackedVector2Array()
 bands = Array[Rect2]([Rect2(-11, -2.5, 2, 5), Rect2(9, -2.5, 2, 5)])
 band_push = PackedVector2Array(-2.5, 0, 2.5, 0)
 
-[sub_resource type="Resource" id="Resource_dvejg"]
+[sub_resource type="Resource" id="Resource_3suna"]
 script = ExtResource("5_wmys5")
 depth = Vector2(0.67, 1)
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_e3brq"), SubResource("Resource_1xlks"), SubResource("Resource_hvggj")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_hvggj"), SubResource("Resource_ktett"), SubResource("Resource_bcqkj")])
 spawns = Array[Rect2]([Rect2(17, -7.5, 7, 6.5), Rect2(17, 1, 7, 6.5)])
-floor = SubResource("Resource_f6t5t")
-hazard = SubResource("Resource_cvixj")
+floor = SubResource("Resource_dvejg")
+hazard = SubResource("Resource_3ll4o")
 areas = Array[Rect2]([Rect2(-28, -9, 16, 18), Rect2(-3, -4.5, 6, 9), Rect2(-12, -3, 24, 6), Rect2(12, -9, 16, 18)])
 area_names = PackedStringArray("west", "landing", "bridge", "east")
 
-[sub_resource type="Resource" id="Resource_3ll4o"]
+[sub_resource type="Resource" id="Resource_k5f2p"]
 script = ExtResource("4_8ur2y")
 half = Vector2(28, 9)
-floor = SubResource("Resource_pgjgb")
+floor = SubResource("Resource_e3brq")
 hero_spawn = Vector2(-24.5, 0)
 hero_facing = Vector2(1, 0)
 id = &"bridge"
@@ -1343,42 +1371,42 @@ max_alive = Vector2i(6, 8)
 max_ranged = 3
 banned_roles = Array[StringName]([&"area"])
 guardian = false
-hazard = SubResource("Resource_exdvp")
+hazard = SubResource("Resource_1xlks")
 areas = Array[Rect2]([Rect2(-28, -9, 14, 18), Rect2(-14, -3, 7, 6), Rect2(-7, -8, 14, 16), Rect2(7, -3, 7, 6), Rect2(14, -9, 14, 18)])
 area_names = PackedStringArray("west", "bridge1", "middle", "bridge2", "east")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_e3brq"), SubResource("Resource_1xlks"), SubResource("Resource_hvggj"), SubResource("Resource_ktett"), SubResource("Resource_bcqkj"), SubResource("Resource_6vs2v"), SubResource("Resource_5qps6")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_hvggj"), SubResource("Resource_ktett"), SubResource("Resource_bcqkj"), SubResource("Resource_6vs2v"), SubResource("Resource_5qps6"), SubResource("Resource_f6t5t"), SubResource("Resource_cvixj")])
 spawns = Array[Rect2]([Rect2(17, -7.5, 7, 6.5), Rect2(17, 1, 7, 6.5)])
 late_spawns = Array[Rect2]([Rect2(-26, -7, 6, 3)])
-exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_tdxg8"), SubResource("Resource_w66uj"), SubResource("Resource_qblhx")])
+exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_qblhx"), SubResource("Resource_pgjgb"), SubResource("Resource_exdvp")])
 cam_bounds = Rect2(-14, -1, 28, 2)
-variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_dvejg")])
+variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_3suna")])
 
-[sub_resource type="Resource" id="Resource_3suna"]
+[sub_resource type="Resource" id="Resource_daf23"]
 script = ExtResource("1_wpebi")
 at = Vector2(6, -13.8)
 zone = Rect2(4, -14.4, 4, 1.1999998)
 mouth = Rect2(4, -14.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_k5f2p"]
+[sub_resource type="Resource" id="Resource_a2hv0"]
 script = ExtResource("1_wpebi")
 at = Vector2(16.8, 0)
 inward = Vector2(-1, 0)
 zone = Rect2(16.2, -2, 1.1999989, 4)
 mouth = Rect2(15, -2, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_daf23"]
+[sub_resource type="Resource" id="Resource_eju2p"]
 script = ExtResource("1_wpebi")
 at = Vector2(-4.5, 13.8)
 inward = Vector2(0, -1)
 zone = Rect2(-6.5, 13.2, 4, 1.1999998)
 mouth = Rect2(-6.5, 12, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_a2hv0"]
+[sub_resource type="Resource" id="Resource_mk1ki"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-15, -9, -12, -12, 12, -12, 15, -9, 15, 9, 12, 12, -12, 12, -15, 9)])
 
-[sub_resource type="Resource" id="Resource_eju2p"]
+[sub_resource type="Resource" id="Resource_s817t"]
 script = ExtResource("6_51rpt")
 patterns = Array[StringName]([&"sweep", &"comb", &"cut"])
 quiet = Array[Rect2]([Rect2(-15, -3, 6, 15), Rect2(-9, -3, 3, 12)])
@@ -1388,7 +1416,7 @@ plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 band_push = PackedVector2Array()
 
-[sub_resource type="Resource" id="Resource_mk1ki"]
+[sub_resource type="Resource" id="Resource_dd3xu"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-6, -6)
@@ -1397,7 +1425,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_s817t"]
+[sub_resource type="Resource" id="Resource_g2yqu"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(6, -6)
@@ -1406,7 +1434,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_dd3xu"]
+[sub_resource type="Resource" id="Resource_gkxnl"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-6, 6)
@@ -1415,7 +1443,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_g2yqu"]
+[sub_resource type="Resource" id="Resource_vnfky"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(6, 6)
@@ -1424,7 +1452,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_gkxnl"]
+[sub_resource type="Resource" id="Resource_4e216"]
 script = ExtResource("3_kin83")
 center = Vector2(3.8, -12.9)
 radius = 0.45
@@ -1433,7 +1461,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_vnfky"]
+[sub_resource type="Resource" id="Resource_utid5"]
 script = ExtResource("3_kin83")
 center = Vector2(8.2, -12.9)
 radius = 0.45
@@ -1442,7 +1470,7 @@ blocks_shots = false
 piece = &"brazier"
 height = 1.2
 
-[sub_resource type="Resource" id="Resource_4e216"]
+[sub_resource type="Resource" id="Resource_mtqcf"]
 script = ExtResource("6_51rpt")
 patterns = Array[StringName]([&"checker", &"frame", &"islands"])
 quiet = Array[Rect2]([Rect2(-3, -3, 6, 6), Rect2(-15, -3, 6, 15), Rect2(-9, -3, 3, 12)])
@@ -1452,7 +1480,7 @@ plate_hero_damage = PackedFloat32Array()
 plate_push = PackedVector2Array()
 band_push = PackedVector2Array()
 
-[sub_resource type="Resource" id="Resource_utid5"]
+[sub_resource type="Resource" id="Resource_7vtqb"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(-9, -6)
@@ -1461,7 +1489,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_mtqcf"]
+[sub_resource type="Resource" id="Resource_2vdal"]
 script = ExtResource("3_kin83")
 shape = 1
 center = Vector2(9, 6)
@@ -1470,7 +1498,7 @@ see_through = true
 piece = &"rune_pillar"
 height = 4.0
 
-[sub_resource type="Resource" id="Resource_7vtqb"]
+[sub_resource type="Resource" id="Resource_hc1of"]
 script = ExtResource("3_kin83")
 shape = 1
 half = Vector2(3, 3)
@@ -1479,17 +1507,17 @@ blocks_shots = false
 piece = &"quiet"
 height = 0.0
 
-[sub_resource type="Resource" id="Resource_2vdal"]
+[sub_resource type="Resource" id="Resource_dthxe"]
 script = ExtResource("5_wmys5")
 depth = Vector2(0.5, 0.8)
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_utid5"), SubResource("Resource_mtqcf"), SubResource("Resource_7vtqb"), SubResource("Resource_gkxnl"), SubResource("Resource_vnfky")])
-hazard = SubResource("Resource_4e216")
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_7vtqb"), SubResource("Resource_2vdal"), SubResource("Resource_hc1of"), SubResource("Resource_4e216"), SubResource("Resource_utid5")])
+hazard = SubResource("Resource_mtqcf")
 areas = Array[Rect2]([Rect2(-3, -3, 6, 6), Rect2(-9, -9, 18, 18), Rect2(-15, -12, 30, 24)])
 area_names = PackedStringArray("quiet", "middle", "edge")
 
-[sub_resource type="Resource" id="Resource_hc1of"]
+[sub_resource type="Resource" id="Resource_oyqot"]
 script = ExtResource("4_8ur2y")
-floor = SubResource("Resource_a2hv0")
+floor = SubResource("Resource_mk1ki")
 hero_spawn = Vector2(-12.5, 3.5)
 hero_facing = Vector2(1, 0)
 cam_target = Vector2(0.5, 1)
@@ -1504,54 +1532,54 @@ max_alive = Vector2i(4, 6)
 max_ranged = 2
 banned_roles = Array[StringName]([&"area"])
 guardian = false
-hazard = SubResource("Resource_eju2p")
+hazard = SubResource("Resource_s817t")
 areas = Array[Rect2]([Rect2(-9, -9, 6, 6), Rect2(3, -9, 6, 6), Rect2(-9, 3, 6, 6), Rect2(3, 3, 6, 6), Rect2(-9, -9, 18, 18), Rect2(-15, -12, 30, 24)])
 area_names = PackedStringArray("pillars", "pillars", "pillars", "pillars", "middle", "edge")
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_mk1ki"), SubResource("Resource_s817t"), SubResource("Resource_dd3xu"), SubResource("Resource_g2yqu"), SubResource("Resource_gkxnl"), SubResource("Resource_vnfky")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_dd3xu"), SubResource("Resource_g2yqu"), SubResource("Resource_gkxnl"), SubResource("Resource_vnfky"), SubResource("Resource_4e216"), SubResource("Resource_utid5")])
 spawns = Array[Rect2]([Rect2(-4, -11, 7, 3), Rect2(10, -4, 3.5, 8), Rect2(0, 8, 9, 3)])
 late_spawns = Array[Rect2]([Rect2(-13, -9.5, 4, 3.5)])
-exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_3suna"), SubResource("Resource_k5f2p"), SubResource("Resource_daf23")])
-variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_2vdal")])
+exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_daf23"), SubResource("Resource_a2hv0"), SubResource("Resource_eju2p")])
+variants = Array[ExtResource("5_wmys5")]([SubResource("Resource_dthxe")])
 
-[sub_resource type="Resource" id="Resource_dthxe"]
+[sub_resource type="Resource" id="Resource_buicw"]
 script = ExtResource("7_0uifc")
 until = 0.34
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"react"])
 
-[sub_resource type="Resource" id="Resource_oyqot"]
+[sub_resource type="Resource" id="Resource_3sphk"]
 script = ExtResource("7_0uifc")
 until = 0.34
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"flank"])
 
-[sub_resource type="Resource" id="Resource_buicw"]
+[sub_resource type="Resource" id="Resource_irxhi"]
 script = ExtResource("7_0uifc")
 until = 0.34
 roles = Array[StringName]([&"block", &"react"])
 
-[sub_resource type="Resource" id="Resource_3sphk"]
+[sub_resource type="Resource" id="Resource_pullg"]
 script = ExtResource("7_0uifc")
 from = 0.34
 until = 0.67
 weight = 3.0
 roles = Array[StringName]([&"pressure", &"flank", &"control"])
 
-[sub_resource type="Resource" id="Resource_irxhi"]
+[sub_resource type="Resource" id="Resource_tohm6"]
 script = ExtResource("7_0uifc")
 from = 0.34
 until = 0.67
 weight = 2.0
 roles = Array[StringName]([&"block", &"react", &"flank"])
 
-[sub_resource type="Resource" id="Resource_pullg"]
+[sub_resource type="Resource" id="Resource_8i5jo"]
 script = ExtResource("7_0uifc")
 from = 0.34
 until = 0.67
 weight = 2.0
 roles = Array[StringName]([&"pressure", &"block", &"area"])
 
-[sub_resource type="Resource" id="Resource_tohm6"]
+[sub_resource type="Resource" id="Resource_07ml3"]
 script = ExtResource("7_0uifc")
 tier = 1
 from = 0.34
@@ -1559,7 +1587,7 @@ until = 0.67
 roles = Array[StringName]([&"pressure", &"react", &"control"])
 elite_chance = 1.0
 
-[sub_resource type="Resource" id="Resource_8i5jo"]
+[sub_resource type="Resource" id="Resource_o5blt"]
 script = ExtResource("7_0uifc")
 tier = 1
 from = 0.67
@@ -1567,7 +1595,7 @@ weight = 3.0
 roles = Array[StringName]([&"block", &"flank", &"area"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_07ml3"]
+[sub_resource type="Resource" id="Resource_jamgb"]
 script = ExtResource("7_0uifc")
 tier = 1
 from = 0.67
@@ -1575,7 +1603,7 @@ weight = 3.0
 roles = Array[StringName]([&"pressure", &"control", &"area"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_o5blt"]
+[sub_resource type="Resource" id="Resource_bkg0l"]
 script = ExtResource("7_0uifc")
 tier = 1
 from = 0.67
@@ -1583,64 +1611,64 @@ weight = 2.0
 roles = Array[StringName]([&"react", &"flank", &"control"])
 elite_chance = 0.6
 
-[sub_resource type="Resource" id="Resource_jamgb"]
+[sub_resource type="Resource" id="Resource_jxhwo"]
 script = ExtResource("7_0uifc")
 from = 0.67
 roles = Array[StringName]([&"pressure", &"block", &"control"])
 
-[sub_resource type="Resource" id="Resource_bkg0l"]
+[sub_resource type="Resource" id="Resource_8dywt"]
 script = ExtResource("7_0uifc")
 tier = 2
 from = 0.8
 roles = Array[StringName]([&"pressure", &"react", &"flank", &"area"])
 elite_chance = 0.5
 
-[sub_resource type="Resource" id="Resource_jxhwo"]
+[sub_resource type="Resource" id="Resource_mlpul"]
 script = ExtResource("9_otjkh")
 items = PackedInt32Array(1)
 prices = PackedInt32Array(150)
 weights = PackedFloat32Array(1)
 
-[sub_resource type="Resource" id="Resource_8dywt"]
+[sub_resource type="Resource" id="Resource_x4v8o"]
 script = ExtResource("9_otjkh")
 items = PackedInt32Array(6, 3)
 prices = PackedInt32Array(50, 125)
 weights = PackedFloat32Array(1, 1)
 count = 2
 
-[sub_resource type="Resource" id="Resource_mlpul"]
+[sub_resource type="Resource" id="Resource_qeokc"]
 script = ExtResource("9_otjkh")
 items = PackedInt32Array(4, 2, 7, 10)
 prices = PackedInt32Array(100, 100, 50, 200)
 weights = PackedFloat32Array(1, 1, 1, 1)
 count = 2
 
-[sub_resource type="Resource" id="Resource_x4v8o"]
+[sub_resource type="Resource" id="Resource_vk8gc"]
 script = ExtResource("1_wpebi")
 at = Vector2(0, -8.8)
 zone = Rect2(-2, -9.4, 4, 1.1999998)
 mouth = Rect2(-2, -9.4, 4, 2.3999996)
 
-[sub_resource type="Resource" id="Resource_qeokc"]
+[sub_resource type="Resource" id="Resource_huvbo"]
 script = ExtResource("1_wpebi")
 at = Vector2(-9.8, -2)
 inward = Vector2(1, 0)
 zone = Rect2(-10.4, -4, 1.1999998, 4)
 mouth = Rect2(-10.4, -4, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_vk8gc"]
+[sub_resource type="Resource" id="Resource_1532x"]
 script = ExtResource("1_wpebi")
 at = Vector2(9.8, -2)
 inward = Vector2(-1, 0)
 zone = Rect2(9.2, -4, 1.1999998, 4)
 mouth = Rect2(8, -4, 2.3999996, 4)
 
-[sub_resource type="Resource" id="Resource_huvbo"]
+[sub_resource type="Resource" id="Resource_0u4g0"]
 script = ExtResource("2_63so8")
 kind = 2
 polys = Array[PackedVector2Array]([PackedVector2Array(-8, -5.5, -6.5, -7, 6.5, -7, 8, -5.5, 8, 5.5, 6.5, 7, -6.5, 7, -8, 5.5)])
 
-[sub_resource type="Resource" id="Resource_1532x"]
+[sub_resource type="Resource" id="Resource_6qypt"]
 script = ExtResource("3_kin83")
 shape = 1
 half = Vector2(0.6, 0.6)
@@ -1648,10 +1676,10 @@ blocks_shots = false
 piece = &"trial_block"
 height = 1.1
 
-[sub_resource type="Resource" id="Resource_0u4g0"]
+[sub_resource type="Resource" id="Resource_qbh8w"]
 script = ExtResource("4_8ur2y")
 half = Vector2(8, 7)
-floor = SubResource("Resource_huvbo")
+floor = SubResource("Resource_0u4g0")
 hero_spawn = Vector2(-5.5, 4.5)
 hero_facing = Vector2(0.70710677, -0.70710677)
 cam_target = Vector2(0, 0.5)
@@ -1663,24 +1691,24 @@ size_class = 0
 depth = Vector2(0, 0)
 guardian = false
 area_names = PackedStringArray()
-obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_1532x")])
-exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_x4v8o"), SubResource("Resource_qeokc"), SubResource("Resource_vk8gc")])
+obstacles = Array[ExtResource("3_kin83")]([SubResource("Resource_6qypt")])
+exits = Array[ExtResource("1_wpebi")]([SubResource("Resource_vk8gc"), SubResource("Resource_huvbo"), SubResource("Resource_1532x")])
 
 [resource]
 script = ExtResource("8_gcpwj")
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
 fountain_more_chance = 1.0
-layouts = Array[ExtResource("4_8ur2y")]([SubResource("Resource_tk2fo"), SubResource("Resource_jll04"), SubResource("Resource_nif3a"), SubResource("Resource_68qus"), SubResource("Resource_gw4yf"), SubResource("Resource_3ll4o"), SubResource("Resource_hc1of")])
+layouts = Array[ExtResource("4_8ur2y")]([SubResource("Resource_tk2fo"), SubResource("Resource_jll04"), SubResource("Resource_tpwa6"), SubResource("Resource_i4d1g"), SubResource("Resource_w66uj"), SubResource("Resource_k5f2p"), SubResource("Resource_oyqot")])
 boss_layout = SubResource("Resource_m1xgu")
 shop_layout = SubResource("Resource_tk2fo")
-trial_layout = SubResource("Resource_0u4g0")
+trial_layout = SubResource("Resource_qbh8w")
 altar_layout = SubResource("Resource_hw7j7")
 map_widths = PackedFloat32Array(0.35, 0.45, 0.2)
 map_doors = PackedFloat32Array(1, 5, 2)
 enemies = Array[StringName]([&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite", &"guard", &"guard_elite", &"priest", &"priest_elite"])
 wave_split = Array[PackedFloat32Array]([PackedFloat32Array(1), PackedFloat32Array(0.5, 0.5), PackedFloat32Array(0.3, 0.15, 0.55)])
-pools = Array[ExtResource("7_0uifc")]([SubResource("Resource_dthxe"), SubResource("Resource_oyqot"), SubResource("Resource_buicw"), SubResource("Resource_3sphk"), SubResource("Resource_irxhi"), SubResource("Resource_pullg"), SubResource("Resource_tohm6"), SubResource("Resource_8i5jo"), SubResource("Resource_07ml3"), SubResource("Resource_o5blt"), SubResource("Resource_jamgb"), SubResource("Resource_bkg0l")])
+pools = Array[ExtResource("7_0uifc")]([SubResource("Resource_buicw"), SubResource("Resource_3sphk"), SubResource("Resource_irxhi"), SubResource("Resource_pullg"), SubResource("Resource_tohm6"), SubResource("Resource_8i5jo"), SubResource("Resource_07ml3"), SubResource("Resource_o5blt"), SubResource("Resource_jamgb"), SubResource("Resource_bkg0l"), SubResource("Resource_jxhwo"), SubResource("Resource_8dywt")])
 reward_deck = PackedInt32Array(1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 8, 9, 10, 10, 11)
 angel_deck = PackedInt32Array(1, 1, 0, 0, 0, 0)
-shop_groups = Array[ExtResource("9_otjkh")]([SubResource("Resource_jxhwo"), SubResource("Resource_8dywt"), SubResource("Resource_mlpul")])
+shop_groups = Array[ExtResource("9_otjkh")]([SubResource("Resource_mlpul"), SubResource("Resource_x4v8o"), SubResource("Resource_qeokc")])
 route_shop_chance = 0.35

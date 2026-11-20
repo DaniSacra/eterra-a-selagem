@@ -1320,6 +1320,10 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 				e.spin = _rng.randf_range(0.6, 1.0)
 		Audio.play(CombatSounds.kill(e.def))
 		fx.burst(&"bone" if e.def.undead else &"dust", Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(from_dir.x, 0, from_dir.y))
+		if e.def.elite and e.def.gild > 0.0:
+			# V-14: an elite (its steel gilded; not the guardians) falls with two slivers of old gold more (its gilded steel), never more gold than that
+			fx.chips(Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(from_dir.x, 0.6, from_dir.y), CrowdRenderer.GILD_COLOR, 2,
+				5.5, 0.12, 0.6, 1.2)
 		killed.emit(e)
 		return true
 	return false

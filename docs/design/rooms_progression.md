@@ -25,6 +25,23 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Feito em 2026-11-20 (gameplay-engineer): RP-08 nas Fendas (a fenda que respira)
+
+- O mesmo `LINE` do RP-11 sem dano (`HazardDef.band_source` `breath`, `_breath` e `BREATH_PUSH` no `make_data.gd`): três
+  trechos da beira, um por vez a cada 7 s depois de 3 s de calma, aviso 1,2 s (a faixa âmbar provisória, até a bruma do
+  environment-artist), empurrão de 2,5 m para longe da beira; quem é empurrado preparando ou atacando tem o golpe
+  cortado (`PlateFloor.strike(..., cut)`, nunca a investida do Escudo nem guardião). A: oeste da fenda do meio (x -10,8
+  a -8, z -7 a -1, com o toco do RP-05 dentro), leste dela (x 2,9 a 5,2: mais largo, o empurrão cairia no buraco do
+  leste) e sul da fenda de baixo (x -5,5 a 0,5, z 10,2 a 12,2); B: o oeste ao longo da ponte caída (x -10 a -7,2, z -13 a
+  -7). Fora das cabeceiras das pontes e das zonas de nascimento (GUT). Aviso do chão sem dano não fere nem conta golpe
+  (`Ground`: `Zone.floor_own`, só `power` acima de 0 chama o herói). `rooms[].hazard` `kind` `breath`, `pushed`, `cut`.
+- Robô (reação 0,25, as Fendas como primeira sala, sementes 1 a 8 em A e B): 0 de dano, `stuck` 0, 1 a 4 sopros por
+  sala (salas de 13 a 35 s), herói nos trechos 0 a 8,7 s, mas **inimigos empurrados 0 a 1 por sala** (meta 3 ou mais) e
+  nenhum golpe cortado: a luta do robô fica na ponte do sul, no caminho do sul e no leste, longe dos trechos. Não passa;
+  para o room-designer: trechos onde a luta acontece (a beira leste junto da ponte do sul e o caminho do sul) ou ciclo
+  mais curto. Tempo da sala contra antes não medido (a primeira sala é curta demais para ler 15%).
+- Testes em `tests/test_breath.gd`.
+
 ## Feito em 2026-11-20 (gameplay-engineer): RP-11 na Ponte (a corrente que varre)
 
 - Comportamento `LINE` (`HazardDef.Kind.LINE`: `bands`, `band_push`, `cycle`; puro em `BandHazard`, no jogo `BandFloor`,

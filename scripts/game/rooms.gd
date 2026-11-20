@@ -1192,7 +1192,7 @@ func _stop_runes() -> void:
 		plates = null
 	if bands != null:
 		bands.stop()
-		game.room_tally.hazard(bands.enemy_damage, bands.kills, bands.hazard.fired, String(Ground.CHAIN_SOURCE),
+		game.room_tally.hazard(bands.enemy_damage, bands.kills, bands.hazard.fired, String(bands.hazard.def.band_source),
 			bands.tally())
 		bands = null
 	if runes == null:

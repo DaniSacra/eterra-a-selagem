@@ -23,6 +23,8 @@ const HAZARD_SOURCE := &"runes"
 const PLATE_SOURCE := &"plates"
 ## RP-11: the bands that strike in turn (the chain of the Ponte dos Condenados, BandFloor).
 const CHAIN_SOURCE := &"chain"
+## RP-08: the rift that breathes (BandFloor, no damage).
+const BREATH_SOURCE := &"breath"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -113,6 +115,9 @@ class Zone:
 	var struck := {}
 	## A warning of the floor itself (E5, the runes): what it deals to each enemy inside when it lands (0: not one).
 	var hazard := 0.0
+	## A warning of the floor itself (add_hazard): its landing is told (hazard_landed) even when it deals nothing (the
+	## rift that breathes, RP-08, only pushes).
+	var floor_own := false
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
 
@@ -205,6 +210,7 @@ func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float, 
 	var from := Vector2(r.position.x, r.get_center().y)
 	var z := _add(Kind.WARNING, Shape.LINE, from, Vector2.RIGHT, r.size.x, r.size.y, time, hero_damage)
 	z.hazard = enemy_damage
+	z.floor_own = true
 	z.source = source
 	z.by = &""
 	z.offscreen = 0
@@ -317,7 +323,7 @@ func step(dt: float) -> void:
 				if z.rune != Rune.NONE and not z.cancelled:
 					_dissolve(z.node, z.pos, z.radius, z.rune)
 					z.node = null
-				if z.power > 0.0:
+				if z.power > 0.0 or z.floor_own:  # (a floor's own warning lands even dealing nothing: RP-08 only pushes)
 					_land(z)
 				if zones.has(z):
 					_release(z)
@@ -357,13 +363,13 @@ func _land(z: Zone) -> void:
 		fx.burst(&"soul" if z.eruption else &"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
 		if z.eruption and z.rune == Rune.NONE:
 			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)
-	if player and player.alive() and inside(z, player.pos, Player.RADIUS * 0.6):
+	if player and player.alive() and z.power > 0.0 and inside(z, player.pos, Player.RADIUS * 0.6):
 		last_source = z.source
 		last_by = z.by
 		last_warn = z.total
 		last_offscreen = z.offscreen
 		hit_player.emit(z.power, center)
-	if z.hazard > 0.0:
+	if z.hazard > 0.0 or z.floor_own:
 		hazard_landed.emit(z)
 
 

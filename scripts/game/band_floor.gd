@@ -1,8 +1,8 @@
 class_name BandFloor
 extends RefCounted
 ## The bands that strike in turn in a fight (RP-11, H-3: the chain that sweeps the bridges of the Ponte dos Condenados;
-## docs/design/rooms_progression.md): runs a BandHazard and lays each band, as it warms up, on the floor as a drawn
-## floor warning (Ground.add_hazard with CHAIN_SOURCE: the amber band of the runes, GroundLook.Style.HAZARD, until the
+## RP-08, H-4: the rift that breathes, the same with no damage; docs/design/rooms_progression.md): runs a BandHazard and lays each band, as it warms up, on the floor as a drawn
+## floor warning (Ground.add_hazard named by HazardDef.band_source: the amber band of the runes, GroundLook.Style.HAZARD, until the
 ## environment-artist's chain swings over it); as it lands it strikes the paladin (as any warning) and every enemy in it,
 ## and pushes them all along the bridge (PlateFloor.strike). Counts what it dealt and the seconds the paladin stood in a
 ## band. Rooms makes one when the room's HazardDef is LINE.
@@ -15,6 +15,9 @@ var zone_band := -1
 var enemy_damage := 0.0
 var kills := 0
 var hero_in := 0.0
+## Enemies it pushed, and wind-ups or attacks its push cut (the rift that breathes).
+var pushed := 0
+var cut := 0
 
 
 func _init(g: Game, def: HazardDef) -> void:
@@ -40,11 +43,11 @@ func step(dt: float) -> void:
 	var armed: int = did.armed
 	if armed >= 0:
 		zone = game.ground.add_hazard(def.bands[armed], def.warn, def.hero_damage, def.enemy_damage, true,
-			Ground.CHAIN_SOURCE)
+			def.band_source)
 		zone_band = armed
-		Audio.play(CombatSounds.EVENTS[&"chain_arm"])
+		Audio.play(CombatSounds.EVENTS[StringName(String(def.band_source) + "_arm")])
 	if int(did.fired) >= 0:
-		Audio.play(CombatSounds.EVENTS[&"chain_fire"])
+		Audio.play(CombatSounds.EVENTS[StringName(String(def.band_source) + "_fire")])
 
 
 ## The fight is over (or the room left): what is warming up goes away without striking.
@@ -59,13 +62,18 @@ func stop() -> void:
 
 ## The room's numbers (RoomTally.hazard).
 func tally() -> Dictionary:
-	return {"kind": "chain", "hero_in_s": snappedf(hero_in, 0.1)}
+	return {"kind": String(hazard.def.band_source), "hero_in_s": snappedf(hero_in, 0.1), "pushed": pushed,
+		"cut": cut}
 
 
 func _on_landed(z: Ground.Zone) -> void:
 	if z != zone:
 		return
 	zone = null
-	var dealt := PlateFloor.strike(game, z, hazard.def.band_push_of(zone_band), Ground.CHAIN_SOURCE)
+	var cuts := game.horde.interrupts
+	var dealt := PlateFloor.strike(game, z, hazard.def.band_push_of(zone_band), hazard.def.band_source,
+		hazard.def.enemy_damage <= 0.0)
+	cut += game.horde.interrupts - cuts
+	pushed += int(dealt.z)
 	enemy_damage += dealt.x
 	kills += int(dealt.y)

@@ -8,7 +8,8 @@ extends Resource
 ## seconds on whoever stands on it, rearm seconds before it may arm again; PlateHazard runs it, PlateFloor puts it on
 ## the floor. LINE (RP-11, H-3, "a corrente que varre"): bands across the floor that strike in turn on their own clock,
 ## one at a time (the chain of the Ponte dos Condenados swinging across a bridge): every `cycle` seconds the next band
-## warms up warn seconds and strikes fire seconds, pushing whoever it struck along band_push; BandHazard runs it,
+## warms up warn seconds and strikes fire seconds, pushing whoever it struck along band_push (RP-08, the rift that
+## breathes: the same with no damage, it only pushes away from the brink and cuts a wind-up); BandHazard runs it,
 ## BandFloor puts it on the floor. Numbers only, written by _stage in tools/make_data.gd (RoomLayout.hazard,
 ## ArenaVariant.hazard).
 
@@ -59,6 +60,10 @@ enum Kind { GRID, PLATES, LINE }
 @export var bands: Array[Rect2] = []
 @export var band_push: PackedVector2Array = PackedVector2Array()
 @export var cycle := 6.0
+## LINE: what names it (Ground's source: "Derrotado por", the room's hurt_by and the hazard's kind in the run's numbers;
+## its sounds are CombatSounds.EVENTS "<name>_arm" and "<name>_fire"): &"chain" the bridge's chain (RP-11), &"breath"
+## the rift that breathes (RP-08, no damage, only the push).
+@export var band_source: StringName = &"chain"
 
 
 ## LINE: the push of band i (zero: none).
