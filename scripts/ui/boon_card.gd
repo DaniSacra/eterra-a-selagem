@@ -50,6 +50,9 @@ const METAL_INSET := 5.0
 const FOCUS_INSET := 9.0
 const FOCUS_W := 2.0
 const FOCUS_COLOR := Color(1.0, 0.95, 0.84, 0.95)
+## The focus brackets' arms (px at 720 lines) and the ivory glow behind a card in focus.
+const FOCUS_ARM := 30.0
+const FOCUS_GLOW := Color(1.0, 0.95, 0.84, 0.22)
 ## The card's colour of each rarity is Boon.RARITY_COLOR (rare blue, epic violet, legendary old gold), but common is a
 ## quiet metal here (the game's common colour is a plain white). The rarity's word on the card takes the same colour.
 const COMMON_EDGE := Color("8f7f63")
@@ -234,6 +237,19 @@ static func rarity_color(r: Boon.Rarity) -> Color:
 	return COMMON_EDGE if r <= Boon.Rarity.COMMON else Boon.RARITY_COLOR[mini(r, Boon.RARITY_COLOR.size() - 1)]
 
 
+## The focus of a card (UI review d2ff05d, P2-10): ivory corner brackets inside the metal line, never a whole line
+## round the card (a whole ivory line inside the edge read as a second frame line, a Common in focus like a Legendary),
+## with the ink lit and a soft ivory glow behind (_draw). Also the angels' cards (EncounterScreen).
+static func draw_focus(ci: CanvasItem, r: Rect2) -> void:
+	var f := r.grow(-FOCUS_INSET)
+	var arm := minf(FOCUS_ARM, minf(f.size.x, f.size.y) * 0.25)
+	var corners: Array[Vector2] = [f.position, Vector2(f.end.x, f.position.y), f.end, Vector2(f.position.x, f.end.y)]
+	var dirs: Array[Vector2] = [Vector2(1, 1), Vector2(-1, 1), Vector2(-1, -1), Vector2(1, -1)]
+	for i in 4:
+		var c := corners[i]
+		ci.draw_polyline(PackedVector2Array([c + Vector2(dirs[i].x * arm, 0), c, c + Vector2(0, dirs[i].y * arm)]), FOCUS_COLOR, FOCUS_W + 1.0, true)
+
+
 ## Whether the pale inner line of focus is drawn.
 func focus_lit() -> bool:
 	return has_focus()
@@ -266,6 +282,11 @@ func _draw() -> void:
 	else:
 		bg.shadow_color = Color(0, 0, 0, 0.5)
 		bg.shadow_size = 8
+	if has_focus():
+		# the rarity's own glow stays (it says the rarity); a Common, which has none, glows ivory
+		if rarity == Boon.Rarity.COMMON and not elo:
+			bg.shadow_color = FOCUS_GLOW
+		bg.shadow_size += 4
 	draw_style_box(bg, r)
 
 
@@ -293,9 +314,7 @@ func _draw_frame(frame: Control) -> void:
 		if rarity == Boon.Rarity.LEGENDARY:
 			_draw_flourishes(frame, r.grow(-EDGE_W * 0.5), edge)
 	if has_focus():
-		var f := r.grow(-FOCUS_INSET)
-		var s := UiKit.box(Color(0, 0, 0, 0), FOCUS_COLOR, int(FOCUS_W), 0, 5)
-		frame.draw_style_box(s, f)
+		draw_focus(frame, r)
 
 
 ## A Psalm's frame: an ivory octagon doubled by a thinner one, the old gold line inside with diamonds on its cut

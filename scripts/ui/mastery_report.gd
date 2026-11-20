@@ -113,7 +113,7 @@ static func sources_text(gain: Dictionary) -> String:
 
 
 ## What the levels after from up to to unlocked, one line for the Gifts and one for the ultimates, in the order
-## they open: "Novo Dom: X" or "Novos Dons: X, Y"; "Nova ultimate: Z" or "Novas ultimates: Z, W".
+## they reveal (the Memória opens them, Fatia 1): "Dom revelado: X" or "Dons revelados: X, Y"; "Nova ultimate: Z" or "Novas ultimates: Z, W".
 static func unlocks(hero: HeroDef, from: int, to: int) -> Array[String]:
 	var gifts: PackedStringArray = []
 	var ults: PackedStringArray = []

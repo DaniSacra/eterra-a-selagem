@@ -1680,7 +1680,8 @@ func _angels() -> void:
 	for f in DirAccess.get_files_at(ANGEL_DIR):
 		DirAccess.remove_absolute(ANGEL_DIR + f)
 	var F := Boon.Family
-	_angel(0, &"sarael", F.CHAMA, 0, Color(0.8, 0.42, 0.24))
+	# the colors are the seals' (AngelSeal.TINT): Chama earthy amber, Geada, Luz, Vigília sage
+	_angel(0, &"sarael", F.CHAMA, 0, Color(0.82, 0.5, 0.27))
 	_angel(1, &"nivael", F.GEADA, 1, Color(0.58, 0.76, 0.88))
-	_angel(2, &"lumael", F.LUZ, 2, Color(0.92, 0.8, 0.52))
-	_angel(3, &"shomael", F.VIGILIA, 3, Color(0.3, 0.62, 0.6))
+	_angel(2, &"lumael", F.LUZ, 2, Color(0.92, 0.82, 0.56))
+	_angel(3, &"shomael", F.VIGILIA, 3, Color(0.58, 0.68, 0.43))

@@ -68,6 +68,7 @@ func _ready() -> void:
 			else Vector2(float(xz[0]), float(xz[1]))
 		player.pos = arena.resolve(where, Player.RADIUS)
 	add_child(player)
+	_show_forge()
 	camera = Camera3D.new()
 	add_child(camera)
 	camera.make_current()
@@ -228,7 +229,17 @@ func use(id: StringName) -> void:
 func _open_forge() -> void:
 	var f := ForgeScreen.new()
 	if host.open(f, [Save.data]):
-		f.forged.connect(func(rank: StringName) -> void: forged.emit(rank))
+		f.forged.connect(func(rank: StringName) -> void:
+			_show_forge()
+			forged.emit(rank))
+
+
+## G-2: the Forja's rank on the forge (HubLook.set_forge_rank) and on the Emeth in his hand.
+func _show_forge() -> void:
+	var rank := Forge.temper(Save.data)
+	player.set_temper(rank)
+	if arena.look is HubLook:
+		(arena.look as HubLook).set_forge_rank(rank)
 
 
 ## The Livro de Ahk on a chapter, in its hub form: no way down from the book, the Portal is the way down (UI review

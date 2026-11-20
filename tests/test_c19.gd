@@ -237,3 +237,18 @@ func test_rewards_and_doors_wait_for_the_use_button() -> void:
 		rooms.step(0.0)
 		assert_eq(rooms.room, room_before, "at the door's foot without the button: he stays")
 		assert_true(rooms.usable())
+
+
+## G-2: the Forja's rank shows on the Emeth in his hand (EmethSword.set_temper on the blade's material).
+func test_the_forge_rank_shows_on_the_blade() -> void:
+	Dev._args["forge"] = "2"
+	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	Dev._args.erase("forge")
+	assert_eq(game.player.temper, 2)
+	var blade := game.player._blade_mat
+	if blade != null:
+		assert_almost_eq(float(blade.get_shader_parameter(&"temper")), 2.0, 0.001)
+	game.player.set_temper(0)
+	if blade != null:
+		assert_almost_eq(float(blade.get_shader_parameter(&"temper")), 0.0, 0.001)

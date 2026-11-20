@@ -7,5 +7,5 @@ script = ExtResource("1_p63bg")
 id = &"lumael"
 name_key = &"angel_lumael"
 line_key = &"angel_lumael_line"
-color = Color(0.86, 0.78, 0.55, 1)
+color = Color(0.92, 0.82, 0.56, 1)
 symbol = 2

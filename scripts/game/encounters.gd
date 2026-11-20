@@ -5,17 +5,19 @@ extends RefCounted
 ## three Blessings of its family (Encounter.cards on its own dice, with the stage's chances; the Psalm filled as
 ## before), and the usual choice screen (BoonChoice) shows them. One angel eligible: only it comes; none: the rest card
 ## (Fôlego). The robot and --autopick choose at once by affinity (Encounter.affinity); a person sees the meeting's
-## screen first (AngelChoice, PROVISIONAL until the ui-ux-designer's Encontro). --angels=a,b forces the pair,
+## screen first (EncounterScreen, attached by the Hud; AngelChoice is only the fallback when no screen listens to
+## `opened`, as in bare tests). --angels=a,b forces the pair,
 ## --no-angels plays the draw of before (every family, no meeting).
 ##
-## API for the UI (the Encontro screen replaces AngelChoice):
+## API for the UI (used by EncounterScreen):
 ##   game.encounters.angels_now -> Array[AngelDef]: the pair on show (empty when no meeting is open).
 ##   game.encounters.choose(angel) : takes that angel; its cards open on the choice screen (BoonChoice) right after.
 ##   game.encounters.cards_of(angel) -> Array[BoonState.Card]: the cards that angel would offer (the same ones choose
 ##     opens: its own dice), for a screen that previews them or goes back to the pair.
 ##   game.encounters.meetings -> Array[Dictionary]: one entry a meeting ({room, node, offered, chose, cards, fallback}),
 ##     the RESULT's angels.
-##   signal opened(angels: Array[AngelDef]) when a meeting needs a choice (the screen listens or AngelChoice opens).
+##   signal opened(angels: Array[AngelDef]) when a meeting needs a choice (EncounterScreen listens; with no listener
+##     the old AngelChoice opens).
 
 signal opened(angels: Array)
 

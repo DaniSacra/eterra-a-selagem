@@ -1499,6 +1499,7 @@ func _equip_forge() -> void:
 	elif bot == null:
 		forge_temper = Forge.temper(Save.data, String(hero.id))
 	boons.equip_forge(Forge.new(Forge.load_catalog()).up_to(forge_temper))
+	player.set_temper(forge_temper)  # (G-2: the blade shows its rank)
 
 
 ## The Juramentos of this descent (E6): --juramentos=id:rank,... (any, for tests and the robot), else a person's

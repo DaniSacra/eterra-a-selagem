@@ -304,7 +304,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`TitleButton.SMALL_*`; antes três a cada 71). Fluxo testado por `tools/title_flow_check.gd` (teclado, sem tela, passa
   pela tela do herói e pelo Compêndio). Os outros três heróis da arte ainda não têm nome nem papel no jogo.
 - **Tela do herói** (E2-06, `scripts/ui/hero_screen.gd`): medalhão e "O Guerreiro", Maestria (`MasteryBar`, nível num
-  losango de ouro velho, barra de XP e "No nível N: ..." do que o próximo nível dá), Devoção em losangos (usada e livre),
+  losango de ouro velho, barra de XP e "O nível N revela: ..." do que o próximo nível dá), Devoção em losangos (usada e livre),
   a árvore de Dons em losango (`TalentTree`, `TalentNode`: passiva no centro, Combo em cima, Fúria à direita, Magia
   embaixo, Emeth à esquerda, entrada, meio e ápice para fora, pontes nas diagonais, sustento no canto de baixo à esquerda;
   trancado mostra cadeado e o nível; custo em losangos pequenos embaixo de cada nó; linha acesa entre dois equipados;
@@ -372,7 +372,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `tests/test_map_screen.gd` e `tests/test_input_leak.gd`; fluxo por teclado, controle e mouse em
   `tools/map_flow_check.gd`; capturas em `docs/gallery/dv1/ui/` (mapa no começo, no meio e diante das portas a 720 e 1080, sobre a partida, a linha de hoje numa partida real, HUD com o botão, horda de 300, Controles).
 - **Tela de fim com Maestria** (E2-04, `MasteryReport`): "+N XP" ao lado da barra que enche do XP de antes ao de depois,
-  de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Novos Dons: ..." e "Nova ultimate: ..."; dados do
+  de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Dons revelados: ..." (o nível revela, a Memória abre) e "Nova ultimate: ..."; dados do
   `Game.mastery_report` (o `mastery_gain` e o XP antes, guardados no `log_run`, passados no `stats.mastery`).
 - **Bênção no texto** (QW-018, D-50): o texto do jogador chama as cartas de Bênção (raridades no feminino: Comum, Rara,
   Épica, Heroica); "Dom" só nos Dons do herói (`talent_*`, `hero_*`, `codex_*`, `end_unlocked*`; teste em

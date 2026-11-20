@@ -20,6 +20,12 @@ enum Who { VENDOR, SMITH }
 const MODEL := {Who.VENDOR: &"npc_vendor", Who.SMITH: &"npc_smith"}
 ## How wide his soft shadow is (the crowd's: radius x 2.6).
 const RADIUS := 0.42
+## T-1 (art review of the hub, re-review): people of the place, not the dead: in the stylized look their body takes more
+## of the key and of the scene's light than the crowd's (crowd.gdshader style_light 0.2, style_scene 0.1, which keeps
+## the dead below the floor) and a warmer rim, still below the hero. Classic look untouched (only style_* uniforms).
+const STYLE_LIGHT := 0.35
+const STYLE_SCENE := 0.2
+const STYLE_RIM := 0.32
 ## Seconds between the Vendedor's gestures (a random span).
 const VENDOR_REST := Vector2(6.0, 9.0)
 ## The Forjador's bouts: how many blows, how far apart (the gesture restarts on this beat), how long he rests after.
@@ -78,6 +84,10 @@ func _ready() -> void:
 	_def.vivid = CrowdRenderer.CROWD_GREY
 	_renderer.register(_def)
 	_kind = _renderer.kind(_def)
+	var body := _kind.material as ShaderMaterial
+	body.set_shader_parameter(&"style_light", STYLE_LIGHT)
+	body.set_shader_parameter(&"style_scene", STYLE_SCENE)
+	body.set_shader_parameter(&"style_rim", STYLE_RIM)
 	_model = _kind.model
 	if _model.has_point("hammer"):
 		impact = landing(_model)

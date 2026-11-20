@@ -107,7 +107,7 @@ func _pick(a: AngelDef) -> void:
 
 
 ## An angel's card: ink with a line of its colour, its seal, name, family, temperament and the Blessings held; the
-## focus an ivory line inside (the Blessing cards' own, BoonCard.FOCUS_*), never a change of the outer line.
+## focus the Blessing cards' own ivory brackets (BoonCard.draw_focus), never a change of the outer line.
 class AngelCard:
 	extends Button
 
@@ -181,4 +181,4 @@ class AngelCard:
 		draw_style_box(bg, r)
 		draw_rect(r.grow(-BoonCard.METAL_INSET), Color(UiKit.OLD_GOLD, 0.6), false, 1.0)
 		if has_focus():
-			draw_style_box(UiKit.box(Color(0, 0, 0, 0), BoonCard.FOCUS_COLOR, int(BoonCard.FOCUS_W), 0, 5), r.grow(-BoonCard.FOCUS_INSET))
+			BoonCard.draw_focus(self, r)

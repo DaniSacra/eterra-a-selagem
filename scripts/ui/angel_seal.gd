@@ -88,12 +88,24 @@ static func mark(ci: CanvasItem, f: Boon.Family, c: Vector2, r: float, w: float,
 			ci.draw_colored_polygon(hexagon, col)
 			ci.draw_polyline(hexagon, ink, w * 0.8, true)
 		Boon.Family.LUZ:
-			# a narrow beam coming down from the top onto a diamond: it widens a little as it falls, nothing round it
+			# a beam coming down onto a diamond (T-2, art re-review: no apex, never a standing stone): a flat top that
+			# fades in (alpha 0.2 up there to 0.9 below), widening as it falls to the diamond's width, two thin lines on
+			# its edges fading the same way; nothing round it (no rays, no sun, no cross)
 			var d := c + Vector2(0, r * 0.5)
-			var beam := PackedVector2Array([c + Vector2(-r * 0.06, -r * 0.95), c + Vector2(r * 0.06, -r * 0.95),
-				d + Vector2(r * 0.15, -r * 0.34), d + Vector2(-r * 0.15, -r * 0.34)])
-			ci.draw_colored_polygon(beam, Color(col, 0.85 * col.a))
-			ci.draw_line(c + Vector2(0, -r * 0.95), d + Vector2(0, -r * 0.4), Color(ink, 0.9 * ink.a), w * 0.7, true)
+			var top_y := -r * 0.9
+			var foot_y := r * 0.42
+			var top_w := r * 0.14
+			var foot_w := r * 0.4
+			var faint := Color(col, 0.2 * col.a)
+			var full := Color(col, 0.9 * col.a)
+			var beam := PackedVector2Array([c + Vector2(-top_w, top_y), c + Vector2(top_w, top_y),
+				c + Vector2(foot_w, foot_y), c + Vector2(-foot_w, foot_y)])
+			ci.draw_polygon(beam, PackedColorArray([faint, faint, full, full]))
+			var ink_faint := Color(ink, 0.15 * ink.a)
+			var ink_full := Color(ink, 0.85 * ink.a)
+			for side: float in [-1.0, 1.0]:
+				var edge := PackedVector2Array([c + Vector2(side * top_w, top_y), c + Vector2(side * foot_w, foot_y)])
+				ci.draw_polyline_colors(edge, PackedColorArray([ink_faint, ink_full]), w * 0.6, true)
 			var gem := _diamond(d, r * 0.42, r * 0.32)
 			ci.draw_colored_polygon(gem, col.lightened(0.2))
 			ci.draw_polyline(_closed(gem), ink, w, true)

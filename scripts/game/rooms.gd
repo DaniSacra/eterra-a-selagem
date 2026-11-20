@@ -529,7 +529,9 @@ func _give(reward: RunMap.Reward, guardian: bool = false, meeting: bool = false)
 func found(material: StringName, source: StringName, n: int, at: Variant = null) -> void:
 	if game.materials.add(material, source, n) <= 0:
 		return
-	var where: Vector2 = at if at is Vector2 else game.player.pos
+	if not at is Vector2:
+		return  # (a door's or a guardian's: the HUD's greeting says it; the word fell on the damage numbers)
+	var where: Vector2 = at
 	var color := SILVER_COLOR if material == MaterialPurse.SILVER else MEMORY_COLOR
 	game.fx.word(Vector3(where.x, 3.0, where.y), "+%d %s" % [n, T.t(MaterialPurse.SHORT_KEY[material])], color)
 

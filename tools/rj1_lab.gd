@@ -2,11 +2,11 @@ extends SceneTree
 ## Fatia 1 (RJ-1) evidence for the technical-artist's part: the four angels' seals (AngelSeal) and the Emeth at each
 ## rank of Temperar (emeth.gdshader temper, EmethSword.set_temper).
 ##   tools/gpu.sh run --rendering-driver vulkan --resolution 1600x900 -s tools/rj1_lab.gd -- --lab-out=C:/x/rj1 [--look=stylized]
-## Writes <lab-out>_seals.png (the seals at 48, 72, 112 and 168 px on ink and on the book's paper, lit and unlit) and
+## Writes <lab-out>_seals.png (the seals at 24, 46, 96 and 140 px on ink and on the book's paper, lit and unlit) and
 ## <lab-out>_emeth_<look>.png (the blade at temper 0, 1, 2, 1.5 in the world's air, the run's light). Nothing ships.
 
 const FAMILIES: Array[Boon.Family] = [Boon.Family.CHAMA, Boon.Family.GEADA, Boon.Family.LUZ, Boon.Family.VIGILIA]
-const SIZES: Array[float] = [48.0, 72.0, 112.0, 168.0]
+const SIZES: Array[float] = [24.0, 46.0, 96.0, 140.0]
 const PAPER := Color(0.83, 0.76, 0.62)
 const RANKS: Array[float] = [0.0, 1.0, 2.0, 1.5]
 

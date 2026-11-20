@@ -8,5 +8,5 @@ id = &"nivael"
 family = 1
 name_key = &"angel_nivael"
 line_key = &"angel_nivael_line"
-color = Color(0.55, 0.72, 0.84, 1)
+color = Color(0.58, 0.76, 0.88, 1)
 symbol = 1

@@ -288,6 +288,18 @@ func _ready() -> void:
 	add_child(_curse_aura)
 	if _sword and _sword.has_node(^"Blade"):
 		_blade_mat = (_sword.get_node(^"Blade") as MeshInstance3D).material_override as ShaderMaterial
+		set_temper(temper)
+
+
+## Temperar (Fatia 1, G-2): the Forja's rank of the blade drawn on the Emeth (EmethSword.set_temper); kept for when
+## the sword is made.
+var temper := 0
+
+
+func set_temper(rank: int) -> void:
+	temper = rank
+	if _blade_mat != null:
+		EmethSword.set_temper(_blade_mat, rank)
 
 
 ## A soft dark ellipse on the floor under him (it turns with him, longer front to back).

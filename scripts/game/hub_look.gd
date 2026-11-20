@@ -222,6 +222,8 @@ const SMOKE := Vector2(2.4, 4.0)
 const SMOKE_COLOR := Color(0.32, 0.3, 0.29)
 const SMOKE_ALPHA := 0.35
 const FORGE_LIGHT := Vector3(3.0, 7.0, 1.0)
+## How far east of the forge's mouth its light stands (art re-review E-4: the pool reaches the anvil and the Forjador).
+const FORGE_LIGHT_EAST := 1.5
 const FORGE_COLOR := Color(1.0, 0.55, 0.22)
 const FORGE_GLOW := Vector2(1.7, 1.1)
 const FORGE_GLOW_COLOR := Color(1.0, 0.42, 0.14)
@@ -241,9 +243,9 @@ const ANVIL_STUMP := Vector2(0.45, 0.6)
 ## garden's in old gold, the crown's leaves (from height in the tree's own metres, one card every few points, sizes,
 ## pale gold), its light (energy, reach, height over the dais).
 const DAIS: Array[Vector2] = [Vector2(3.2, 0.25), Vector2(2.6, 0.5)]
-const TREE_SCALE := 0.8
-const BARK := Color(0.36, 0.29, 0.18)
-const BARK_CORD := Color(0.44, 0.36, 0.22)
+const TREE_SCALE := 0.56
+const BARK := Color(0.34, 0.3, 0.23)
+const BARK_CORD := Color(0.4, 0.35, 0.27)
 const BARK_LICHEN := Color(0.34, 0.31, 0.24)
 const BARK_FRACTURE := Color(0.52, 0.45, 0.32)
 const TREE_ROOTS: Array[float] = [215.0, 290.0, 25.0]
@@ -252,12 +254,12 @@ const ROOT_SHORT := 2.3
 const LEAVES_FROM := 4.6
 const LEAVES_EVERY := 3
 const LEAF_SIZE := Vector2(1.9, 2.9)
-const LEAF_A := Color(0.36, 0.3, 0.17)
-const LEAF_B := Color(0.58, 0.5, 0.33)
+const LEAF_A := Color(0.33, 0.3, 0.22)
+const LEAF_B := Color(0.5, 0.46, 0.36)
 ## Leaves across a card and how much of it the clump fills (the tree is half the garden's: fewer, larger leaves).
 const LEAF_COUNT := 5.0
 const LEAF_FILL := 0.7
-const TREE_LIGHT := Vector3(1.0, 6.0, 4.2)
+const TREE_LIGHT := Vector3(1.0, 6.0, 3.2)
 const TREE_COLOR := Color(1.0, 0.82, 0.5)
 ## Livro de Ahk (spec 3.5; HUB-D): the lectern's foot and its sloped top (tilt in degrees), the open book (a page's
 ## size), the ribbon; the candle stands' height; the case's boards (heights); the light (energy, height); the rug.
@@ -999,9 +1001,11 @@ func _terrace() -> void:
 	var lights: Array[OmniLight3D] = []
 	for b: Vector2 in BRAZIERS:
 		lights.append(fk.brazier(Vector2(b.x, -b.y), TERRACE_Y, false, BRAZIER_LIGHT))
-	# the braziers burn no shadow (spec 4.3)
+	# the braziers burn no shadow (spec 4.3); stylized, they light diffuse (paint_diffuse): their hard-edged pool fell on
+	# the facade as round spotlights (art re-review E-2)
 	for l in lights:
 		l.shadow_enabled = false
+		VisualProfile.vary(l, {&"light_specular": 0.0})
 
 
 ## A planter along the terrace's front from p.x to p.y in u: a low box of stone, dark earth and pale flowers.
@@ -1487,7 +1491,7 @@ func _forge() -> void:
 	fm.block(at(f.x, CHIMNEY.y, cv), Vector3(CHIMNEY.x + 0.3, 0.2, CHIMNEY.x + 0.3), 0.0, mat, false)
 	fk.mist_bank(at(f.x, CHIMNEY.y + SMOKE.y * 0.45, cv), SMOKE, SMOKE_COLOR, SMOKE_ALPHA, 0.0, 0.0, 0.25)
 	var l := OmniLight3D.new()
-	l.position = at(f.x, sill + 0.8, front - 0.9)
+	l.position = at(f.x + FORGE_LIGHT_EAST, sill + 0.8, front - 0.9)
 	l.light_color = FORGE_COLOR
 	l.light_energy = FORGE_LIGHT.x
 	l.omni_range = FORGE_LIGHT.y
