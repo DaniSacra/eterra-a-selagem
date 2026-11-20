@@ -45,6 +45,8 @@ static func defaults() -> Dictionary:
 		"juramentos": juramentos_defaults(),
 		"materials": MaterialPurse.defaults(),
 		"materials_total": MaterialPurse.defaults(),
+		# when the last descent ended (unix seconds, 0: none; the slot screen's "Última partida"), by Game.log_run
+		"played_at": 0,
 	}
 
 

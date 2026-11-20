@@ -1402,7 +1402,8 @@ func run_entry(outcome: String, gain: Dictionary) -> Dictionary:
 	var extra := {"outcome": outcome, "when": Time.get_datetime_string_from_system(), "gifts": gifts,
 		"device": device, "omegas": omegas, "dodges": dodges,
 		"last_hurt": {"attack": String(last_hurt.get("attack", &"")), "enemy": String(last_hurt.get("enemy", &""))},
-		"defeated_by": String(defeated_by()) if outcome == "death" else "", "source": RunLog.source(bot != null)}
+		"defeated_by": String(defeated_by()) if outcome == "death" else "", "source": RunLog.source(bot != null),
+		"slot": Save.slot}
 	var by := gain.duplicate()
 	by.erase("total")
 	var xp_now := int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)
@@ -1430,6 +1431,8 @@ func log_run(outcome: String) -> void:
 	mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)} if kept else {}
 	if kept:
 		award_mastery(gain, outcome, Save.data)
+		# the slot screen's "Última partida" (save slots, 2026-11-19)
+		Save.data["played_at"] = int(Time.get_unix_time_from_system())
 	# the materials go home once, whatever the outcome (dying keeps them all); never the robot's (unless
 	# --materials-keep, for measures) nor without a save (Rejogabilidade, Fatia 1, A2)
 	if banks_materials(Save.enabled, bot != null, Dev.has("materials-keep")):

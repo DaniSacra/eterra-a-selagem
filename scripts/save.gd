@@ -1,27 +1,78 @@
 extends Node
-## Autoload "Save": one JSON file in user:// with options, best times and discovered moves.
+## Autoload "Save": the save in use (one of three, SaveSlots: user://save_<n>.json) with the Mastery, the Codex, the
+## materials, best times, and the options, which belong to the computer and are shared by the three (profile.json).
+## The first screen of the game picks the save (SaveSlotScreen, boot.gd); until then the one used last is loaded, read
+## only, so the options are already there. --nosave: no save at all (nothing read, nothing written, no slot screen);
+## --slot=N: that save, without the slot screen (captures, tests of a save of one's own); --save-dir=folder: the saves of
+## another folder (captures of the slot screen, with --nosave so nothing is written).
 
-const PATH := "user://save.json"
+## No path of its own (the slot's file is written); a test that writes a save of its own sets `path` elsewhere.
+const PATH := ""
 
 var data: Dictionary = SaveData.defaults()
 var enabled := true
-## Where it is written (PATH; a test writing a save of its own points it elsewhere, never at the player's).
+## Where it is written ("": the file of the slot in use; a test writing a save of its own points it elsewhere, never at
+## the player's).
 var path := PATH
+## The save in use (1 to SaveSlots.COUNT; 0: none yet, a new computer before the slot screen).
+var slot := 0
+## A save was chosen in this session (the slot screen, or --slot): the title shows the slot screen only before.
+var chosen := false
+## The folder of the saves (user://; a test points it at a folder of its own).
+var base := "user://"
 
 
 func _ready() -> void:
+	if Dev.has("save-dir"):
+		# captures of the choice of save on saves made for them (read only with --nosave)
+		base = Dev.arg("save-dir").trim_suffix("/") + "/"
 	if Dev.has("nosave"):
 		enabled = false
-	else:
-		# C17, BUG-102: a damaged file falls back to its copy and is moved aside, never written over
-		var got := SaveFile.read(PATH)
-		if got.data != null:
-			data = SaveData.merged(got.data)
-		if got.from == "bak":
-			push_warning("save: %s could not be read; loaded its copy %s%s" % [PATH, PATH, SaveFile.BAK])
+	if enabled or Dev.has("save-dir"):
+		load_profile()
+		if Dev.has("slot"):
+			slot = clampi(int(Dev.num("slot", 1)), 1, SaveSlots.COUNT)
+			chosen = true
+		_load_slot()
 	_dev_hero()
 	_dev_juramentos()
 	_dev_materials()
+
+
+## Reads the profile (the slot used last and the shared options). Never writes.
+func load_profile() -> void:
+	var profile := SaveSlots.read_profile(base)
+	slot = int(profile.active)
+	data = SaveData.defaults()
+	data.options = SaveSlots.options_of(profile.options)
+
+
+## The slot in use read into data (the defaults when it is empty), keeping the shared options.
+func _load_slot() -> void:
+	var options: Dictionary = data.options
+	var got: Variant = SaveSlots.read(slot, base) if slot > 0 else null
+	data = got if got is Dictionary else SaveData.defaults()
+	data.options = options
+
+
+## Puts save n in use (the slot screen's choice): read from disk, or a new one written at once; the options stay.
+func use(n: int) -> void:
+	slot = clampi(n, 1, SaveSlots.COUNT)
+	chosen = true
+	_load_slot()
+	write()
+
+
+## Erases save n for good (its file and its copy); the save in use goes back to none when it was that one.
+func erase(n: int) -> void:
+	if not enabled:
+		return
+	SaveSlots.erase(n, base)
+	if n == slot:
+		slot = 0
+		chosen = false
+		_load_slot()
+		SaveSlots.write_profile(0, data.options, base)
 
 
 ## Captures and checks (E2-06): --hero-xp=N (with --hero-opened=a,b, only those opened) and --hero-equip=a,b set the Warrior's Mastery XP and Gifts for this
@@ -72,11 +123,25 @@ func _dev_materials() -> void:
 		Forge.block(data)["temper"] = int(Dev.num("forge", 0))
 
 
+## Writes the save in use (and the profile: the slot and the options). Nothing without a save, nor before a slot is
+## chosen (only the options then). Save 1's first write moves the save of before the slots into it (SaveSlots.migrate).
 func write() -> void:
 	if not enabled:
 		return
-	if not SaveFile.write(path, JSON.stringify(data, "  ")):
-		push_warning("save: could not write %s (the file of before is kept)" % path)
+	var to := path
+	if to == "":
+		if slot <= 0:
+			SaveSlots.write_profile(0, data.options, base)
+			return
+		if slot == 1 and SaveSlots.has_legacy(base):
+			# the save of before the slots keeps the day it was last played
+			if int(data.get("played_at", 0)) <= 0 and int(data.get("runs", 0)) > 0:
+				data["played_at"] = SaveSlots.legacy_time(base)
+			SaveSlots.migrate(base)
+		to = SaveSlots.path(slot, base)
+		SaveSlots.write_profile(slot, data.options, base)
+	if not SaveFile.write(to, JSON.stringify(data, "  ")):
+		push_warning("save: could not write %s (the file of before is kept)" % to)
 
 
 func option(key: String) -> Variant:
@@ -88,4 +153,15 @@ func set_option(key: String, value: Variant) -> void:
 	if key == "camera":
 		# the player's own choice: no default change moves it again (SaveData version 7, LR-01)
 		data.options["camera_chosen"] = true
-	write()
+	write_options()
+
+
+## Writes only the options (the profile): they belong to the computer, and changing one is not a game played (the
+## save's "Última partida" stays). A test writing a save of its own (path set) writes it whole instead.
+func write_options() -> void:
+	if not enabled:
+		return
+	if path != "":
+		write()
+		return
+	SaveSlots.write_profile(slot, data.options, base)

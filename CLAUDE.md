@@ -293,6 +293,28 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `tools/bake.gd -- kaykit [ids]` volta a assá-los. Prompts e repinturas em `tools/meshy/prompts.json`.
 
 ## Tela de título (2026-11-15)
+- **Escolha de save (2026-11-19, pedido do Daniel; capturas em `docs/gallery/save_slots/`)**: a primeira tela de cada
+  sessão é a escolha entre Save 1, 2 e 3 (`SaveSlotScreen`, `scripts/ui/save_slot_screen.gd`, na página dos menus,
+  `UiKit.page`, sobre a arte do título escurecida); escolhido, vem o título com Iniciar etc. (fluxo: escolha, título,
+  hub; escolhido uma vez, "Voltar ao título" do hub cai direto no título). Cada cartão mostra o medalhão do Guerreiro,
+  Maestria, descidas, vitórias, Bolsa (Prata e Memória, `MaterialCount`) e "Última partida" (data e hora do fim da última
+  descida, `played_at` gravado no `Game.log_run`); vazio diz "Espaço vazio" e escolher cria um save novo na hora.
+  "Apagar" fica embaixo de cada save que existe e pergunta numa página própria "Apagar o Save N? Não há volta.", com
+  Cancelar em foco (`slot_erase_*`). Esquerda e direita andam nos cartões, baixo vai ao Apagar; Esc e B fecham a pergunta
+  e só fecham a tela quando aberta do título com um save em uso. No título, o canto de baixo à esquerda diz "Save N ·
+  Trocar de save (Esc)" (clique, ou Esc/B no título, reabre a escolha). Regras em `SaveSlots` (`core/save_slots.gd`,
+  puro): cada save é um arquivo inteiro gravado pelo `SaveFile` com `.bak`; `user://profile.json` guarda o save em uso
+  (`active`) e as **opções, que são do computador e valem para os três** (`Save.set_option` grava só o perfil,
+  `write_options`; trocar de save não muda volume, tela nem teclas). O `save.json` de antes lê como Save 1 enquanto o
+  Save 1 não existe e vira ele no primeiro `Save.write` (`SaveSlots.migrate`: copia o arquivo e o `.bak` e renomeia o
+  antigo para `save_legacy.json`, nunca mais lido; o progresso inteiro fica, testado com todos os `tests/fixtures/save_v*.json`).
+  Ler nunca grava. `Save.use(n)` põe o save em uso (cria o vazio), `Save.erase(n)` apaga o arquivo, a cópia, o `.tmp` e os
+  `.broken` (o Save 1 também aposenta o `save.json` antigo, que não volta). `runs.jsonl` continua um só, com `slot` em cada
+  linha. Sem a tela: `--nosave`, os testes (o gancho desliga o save), `--title` (capturas) e `--slot=N` (usa aquele save);
+  `--title --screen=slots` captura a tela, `--save-dir=pasta` lê saves de outra pasta (só leitura com o `--nosave` do
+  `tools/gpu.sh`), `--slot-ask=N` abre a pergunta. Testes em `tests/test_save_slots.gd`; fluxo por teclado no
+  `tools/title_flow_check.gd` (numa pasta própria). Benchmark de interface com o Hades II e propostas P0 a P2:
+  `docs/design/benchmark_hades2_ui.md`.
 - A arte cinematográfica aprovada pelo Daniel (`assets/ui/title/title_screen_reference.png`, feita por IA; quatro heróis,
   fortaleza, portal, logotipo pintado) é o fundo, contida sem corte (`TitleBackdrop`, `scripts/ui/title_backdrop.gd`; faixas
   desfocadas nas outras proporções; névoa, brasas e partículas do portal que não tocam rosto, lâmina nem logotipo). Os botões
@@ -513,7 +535,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `charge_up` segurando o Ômega; vibração por golpe e ao ser ferido (`Fx.buzz`, `Combat.RUMBLE_*`), só com controle
   em uso e a opção `rumble` do save ligada (`Fx.rumble`, `Game.apply_options`).
 - O jogo abre em tela cheia (padrão desde 2026-11-16, `SaveData.VERSION` 2 passa os saves antigos para tela cheia uma vez; capturas, vídeos e `--nosave` ficam em janela, `App.apply_options`); a pausa tem "Sair do jogo" no desktop (`pause_exit_game`).
-- Save em `user://save.json` pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio; versão 5 passa uma vez as músicas que estavam no padrão antigo para o padrão novo do MUS-1). Sem save (`--nosave`) não há recorde
+- Save em três espaços, `user://save_1.json` a `save_3.json` (ver "Escolha de save" na Tela de título), pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio; versão 5 passa uma vez as músicas que estavam no padrão antigo para o padrão novo do MUS-1). Sem save (`--nosave`) não há recorde
   (`SaveData.record_win_time`). Os testes nunca gravam o save nem o registro (`tests/hooks/pre_run.gd`, `pre_run_script` no
   `.gutconfig.json`; `tools/title_flow_check.gd` também desliga).
 - Registro das partidas de gente (ciclo 10, QW-001): `user://runs.jsonl`, uma linha JSON por partida (vitória, morte ou saída,
