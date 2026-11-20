@@ -236,6 +236,8 @@ func _shop(game: Node) -> void:
 		var pedestals: Array = rooms.get(&"_pedestals")
 		for p: Dictionary in pedestals:
 			(p.node as Node).free()
+			if is_instance_valid(p.get("shaft")):
+				(p.shaft as Node).free()  # (its light over the item, RewardShaft, a child of the room)
 		pedestals.clear()
 		rooms.call(&"_build_shop")
 	if Dev.has("route") or Dev.has("want-enchant"):

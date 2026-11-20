@@ -7,7 +7,13 @@ shader_type spatial;
 // fades as it ends (`fade`). Its size is its collision (Projectiles.touches_soul): only the look changed (cycle 9).
 // Drawn on Projectiles' crescent mesh: UV.x 0.3 at the tips to 0.7 in the middle, UV.y 0 on the inner (trailing)
 // side to 1 on the outer (leading) edge.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, shadows_disabled;
+// vfx_pass_spec.md V-17: never the smooth pale edge of the paladin's wave: the leading edge gnawed by noise (gnaw, as the
+// scythe's), a dark violet body laid over the floor (ink), the lilac core only in the middle third, three smoke tails
+// behind (Projectiles._place_soul); laid over what is behind (premultiplied) under `peak` (the screen's 226).
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, shadows_disabled;
+uniform float peak = 0.7;
+uniform float ink = 0.5;
+uniform float gnaw = 0.22;
 
 uniform vec4 color : source_color = vec4(0.62, 0.44, 1.3, 1.0);
 // The violet of the smoke on its trailing side.
@@ -52,15 +58,27 @@ void fragment() {
 	if (smoke < (1.0 - fade) * (1.2 - across)) discard;
 	float fumes = (0.3 + 0.7 * smoothstep(0.0, 0.6, across)) * (0.55 + 0.7 * smoke);
 	// the leading edge: a bright line along the outside, softer toward the tips
-	float line = (1.0 - smoothstep(0.02, 0.16, 1.0 - y)) * smoothstep(0.0, 0.35, mid);
-	// the core: a luminous thread through the thick of the body
-	float thread = exp(-pow((across - 0.62) / 0.12, 2.0)) * smoothstep(0.15, 0.6, mid);
+	// the gnawed leading edge: the outside eaten by noise along the arc
+	float bite = (noise(vec2(UV.x * 26.0, TIME * 2.0)) * 0.7 + noise(vec2(UV.x * 60.0, 3.0)) * 0.3) * gnaw;
+	if (y > 1.0 - bite) discard;
+	float line = (1.0 - smoothstep(0.0, 0.08, 1.0 - bite - y)) * smoothstep(0.0, 0.35, mid);
+	// the lilac core: only the middle third of the body's thickness
+	float thread = (1.0 - smoothstep(0.1, 0.17, abs(across - 0.5))) * smoothstep(0.15, 0.6, mid);
 	float tips = smoothstep(0.0, 0.25, mid);
-	// the body from violet (trailing side) to the spectral colour, both brought under the glow threshold
 	vec3 soft = color.rgb / max(max(color.r, max(color.g, color.b)), 1.0);
 	vec3 dusk = smoke_color.rgb / max(max(smoke_color.r, max(smoke_color.g, smoke_color.b)), 1.0);
-	vec3 cloth = mix(dusk, soft, smoothstep(0.2, 0.85, across));
-	vec3 rim = mix(soft, core_color.rgb, edge_pale);
-	vec3 heart = core_color.rgb;
-	ALBEDO = (cloth * fumes * body * tips + heart * thread * core + rim * line * edge) * intensity * fade * (1.0 + 0.6 * flare);
+	vec3 cloth = mix(dusk, soft, smoothstep(0.2, 0.85, across)) * 0.45;
+	vec3 heart = mix(soft, core_color.rgb, 0.55);
+	vec3 lit = (cloth * fumes * body * tips + heart * thread * core * 0.6 + soft * line * edge * 0.45) * intensity * fade * (1.0 + 0.4 * flare);
+	float top = max(lit.r, max(lit.g, lit.b));
+	if (top > peak) {
+		lit *= peak / top;
+		top = peak;
+	}
+	float cover = ink * fumes * tips * fade;
+	float a = clamp(top / max(peak, 0.0001), 0.0, 1.0);
+	float alpha = clamp(a + cover * (1.0 - a), 0.0, 1.0);
+	if (alpha <= 0.003) discard;
+	ALBEDO = lit;
+	ALPHA = alpha;
 }

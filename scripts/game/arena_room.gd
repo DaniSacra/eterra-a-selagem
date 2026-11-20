@@ -1666,8 +1666,10 @@ const UNDER_BREAK := Vector2(0.9, 2.2)
 ## The arch's ring (width, depth) and its springing line as a share of the opening.
 const UNDER_RING := Vector2(0.42, 0.55)
 const UNDER_SPRING := 0.3
-## The openings' darkness (the depth stone's tint), sunk this far in front of the face.
-const UNDER_RECESS := 0.32
+## The piers' and arches' stone a step lighter than the cliff behind (the depth stone's tint), the openings' darkness,
+## sunk this far in front of the face.
+const UNDER_TINT := 1.7
+const UNDER_RECESS := 0.22
 const UNDER_RECESS_OUT := 0.05
 ## Rock fallen against the wall: the chance per bay, its size range, how far below the top it sits (range).
 const UNDER_ROCK := Vector3(0.45, 1.1, 2.3)
@@ -1698,6 +1700,8 @@ func _under_arcades(u: Dictionary) -> void:
 			mat.set_shader_parameter(k, colors[k])
 	var recess := mat.duplicate() as ShaderMaterial
 	recess.set_shader_parameter(&"tint", UNDER_RECESS)
+	mat = mat.duplicate() as ShaderMaterial
+	mat.set_shader_parameter(&"tint", UNDER_TINT)
 	var rock := mat.duplicate() as ShaderMaterial
 	rock.set_shader_parameter(&"course", UNDER_ROCK_COURSE.x)
 	rock.set_shader_parameter(&"block_len", UNDER_ROCK_COURSE.y)

@@ -30,6 +30,8 @@ uniform float gnaw_m = 0.15;
 uniform float gnaw_scale_m = 0.4;
 uniform float peak = 0.8;
 uniform float smoke_alpha = 0.35;
+// VFX review P2: the lilac-ivory middle reads (it was pale * fill * 0.4 and the sector came out one flat violet)
+uniform float pale_light = 0.55;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -66,8 +68,8 @@ void fragment() {
 	float fill = mix(0.12, 0.8, y * y) * trail * smoke;
 	vec3 violet = body.rgb / max(max(body.r, max(body.g, body.b)), 0.0001);
 	// the palest in the middle of the band, never at the edge
-	float middle = (1.0 - smoothstep(0.0, 0.25, abs(y - 0.5))) * trail;
-	vec3 c = violet * (fill * body_light + rim * rim_light + blade * blade_light * 0.8) + pale * middle * fill * 0.4;
+	float middle = (1.0 - smoothstep(0.05, 0.22, abs(y - 0.55))) * trail;
+	vec3 c = violet * (fill * body_light + rim * rim_light + blade * blade_light * 0.8) + pale * middle * pale_light * (0.6 + 0.4 * smoke);
 	c *= (1.0 - rest) * intensity;
 	float top = max(c.r, max(c.g, c.b));
 	c *= min(1.0, peak / max(top, 0.0001));

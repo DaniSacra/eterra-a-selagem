@@ -39,14 +39,15 @@ const OMEGA_THICK := 0.4
 const OMEGA_WAKE := 1.4
 ## Brightest channel the wave writes (linear, under Game.GLOW_THRESHOLD 1.3) and its gold thread's share of it.
 const WAVE_PEAK := 1.0
-## How far the leading edge goes toward white (emeth_wave.gdshader edge_pale).
-const WAVE_EDGE_PALE := 0.35
+## How far the leading edge goes toward white (emeth_wave.gdshader edge_pale; vfx_pass_spec.md V-06: 0.5, it was 0.35).
+const WAVE_EDGE_PALE := 0.5
 const WAVE_GOLD := Color(0.95, 0.72, 0.3)
 const WAVE_GOLD_LIGHT := 0.85
 ## Seconds the wave fades over at the end of its flight (the special flies 0.18 s, the held one 0.5 s).
 const WAVE_FADE := Vector2(0.04, 0.12)
 ## The body's share of the peak and the dark ink behind it (emeth_wave.gdshader's body_light, ink).
-const WAVE_BODY_LIGHT := 0.55
+## V-06: 0.75 (it was 0.55: ten metres out the wave's core read at 92 of the screen and nearly vanished).
+const WAVE_BODY_LIGHT := 0.75
 const WAVE_INK := 0.3
 ## A Gift's wave (bolden): its band (meters; the held special's is OMEGA_THICK), body, ink and fade (seconds).
 const GIFT_THICK := 0.62
@@ -363,7 +364,11 @@ static func touches_soul(s: Shot, p: Vector2, radius: float) -> bool:
 
 ## The smoke an enemy shot leaves (vfx_pass_spec.md V-11): a dark puff every TRAIL_STEP metres flown (the bolt's
 ## thinner and closer, a fiapo of 0.8 m behind it), drifting up and coming apart (Fx.wisps).
-const TRAIL_STEP := {Kind.BOLT: 0.45, Kind.ORB: 0.7, Kind.CURSE: 0.7}
+const TRAIL_STEP := {Kind.BOLT: 0.45, Kind.ORB: 0.7, Kind.CURSE: 0.7, Kind.SPARK: 0.6, Kind.WAVE: 0.6, Kind.SOUL: 0.5}
+## V-06: the paladin's wave leaves crystal slivers in its path instead (one every 0.6 m, held WAKE_CHIP s, its colour
+## at this share before the chips' glow), never smoke.
+const WAKE_CHIP := 0.15
+const WAKE_CHIP_LIGHT := 0.32
 const TRAIL_SMOKE := Color(0.08, 0.04, 0.05)
 
 
@@ -375,6 +380,17 @@ func _trail(s: Shot) -> void:
 	if due <= s.trail:
 		return
 	s.trail = due
+	if s.kind == Kind.SOUL:
+		# three smoke tails streaming back from its tips and middle, waving (V-17)
+		var back := Vector3(-s.vel.x, 0.0, -s.vel.y).normalized()
+		var side := back.cross(Vector3.UP)
+		for k in 3:
+			var off := side * float(k - 1) * s.half_width * 0.8 + back * (0.1 if k == 1 else 0.35)
+			fx.wisps(s.node.position + off, back + Vector3.UP * 0.15 + side * sin(s.flown * 4.0 + k) * 0.3, SOUL_TAIL, 1, 3.5, 0.45, 0.35, 0.15, 0.2)
+		return
+	if s.kind == Kind.SPARK or s.kind == Kind.WAVE:
+		fx.chips(s.node.position, Vector3(-s.vel.x, 0.0, -s.vel.y).normalized() + Vector3.UP * 0.1, s.color * WAKE_CHIP_LIGHT, 1, 0.8, 0.16, WAKE_CHIP, 0.25)
+		return
 	var size := 0.32 if s.kind == Kind.BOLT else 0.5
 	fx.wisps(s.node.position, Vector3(-s.vel.x, 0.0, -s.vel.y) * 0.05 + Vector3.UP * 0.2, TRAIL_SMOKE, 1, 0.4, size, 0.35, 0.3, 0.6)
 
@@ -383,9 +399,11 @@ func _place(s: Shot) -> void:
 	s.node.position = Vector3(s.pos.x, SOUL_HEIGHT if s.kind == Kind.SOUL else (LOW_HEIGHT if s.low else HEIGHT), s.pos.y)
 	if s.vel.length_squared() > 0.0:
 		s.node.rotation.y = atan2(s.vel.x, s.vel.y)
+		if s.kind == Kind.SOUL:
+			s.node.rotation.y += deg_to_rad(SOUL_TURN) * s.age
 	if s.kind == Kind.SOUL:
 		_place_soul(s)
-	if s.kind == Kind.BOLT or s.kind == Kind.ORB or s.kind == Kind.CURSE:
+	if TRAIL_STEP.has(s.kind):
 		_trail(s)
 	if s.kind == Kind.WAVE or s.kind == Kind.SPARK:
 		var mat: ShaderMaterial = (s.node as MeshInstance3D).material_override
@@ -414,6 +432,7 @@ func _take(kind: Kind) -> Node3D:
 			# a boss's crescent of spectral fire (soul_crescent.gdshader) and its short trail (boss_wake.gdshader)
 			mat.shader = SOUL_SHADER
 			mat.set_shader_parameter(&"intensity", SOUL_INTENSITY)
+			mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(SOUL_PALE, SOUL_SCREEN))
 			mi.add_child(_soul_trail())
 		mi.material_override = mat
 	elif kind == Kind.WAVE or kind == Kind.SPARK:
@@ -514,6 +533,13 @@ const SOUL_TRAIL := SOUL_DEPTH + Player.RADIUS
 const SOUL_TRAIL_WIDTH := 0.55
 const SOUL_FLARE := 0.12
 const SOUL_FADE := 0.22
+## V-17: the lilac its core stops at on the screen, and the three smoke tails it leaves (one wisp each from the two tips
+## and the middle every SOUL_TAIL_STEP m flown, SOUL_TAIL long in their life) while it turns SOUL_TURN degrees a second.
+const SOUL_PALE := Color(0.8, 0.72, 0.95)
+const SOUL_SCREEN := 215
+const SOUL_TAIL_STEP := 0.5
+const SOUL_TAIL := Color(0.09, 0.04, 0.12)
+const SOUL_TURN := 15.0
 
 
 func _soul_trail() -> MeshInstance3D:
@@ -543,7 +569,7 @@ func _place_soul(s: Shot) -> void:
 	var sx := maxf(s.node.scale.x, 0.001)
 	var sz := maxf(s.node.scale.z, 0.001)
 	var length := minf(s.flown, SOUL_TRAIL)
-	trail.visible = length > 0.05
+	trail.visible = false  # V-17: the three smoke tails (_trail) took its place
 	trail.scale = Vector3(s.half_width * 2.0 * SOUL_TRAIL_WIDTH / sx, 1.0, length / sz)
 	trail.position = Vector3(0.0, -0.02, -length / sz)
 	(trail.material_override as ShaderMaterial).set_shader_parameter(&"fade", fade)

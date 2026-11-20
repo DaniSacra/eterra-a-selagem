@@ -33,6 +33,10 @@ const ENAMEL_WATER := Vector3(196.0, 0.2, 0.45)
 const ENAMEL_TRIAL := Vector3(282.0, 0.3, 0.42)
 const ENAMEL_ALTAR := Vector3(30.0, 0.4, 0.42)
 const ENAMEL_ROOM := Vector3(220.0, 0.08, 0.26)
+## Fatia 2: the Encanto's green (the card's ENCHANT_EDGE, darker than the Emeth's crystal) and the Psalm's lilac (the
+## door glyph's PSALM_LIGHT, kept 25 degrees off the Trial's).
+const ENAMEL_ENCHANT := Vector3(148.0, 0.45, 0.3)
+const ENAMEL_PSALM := Vector3(255.0, 0.32, 0.42)
 ## The two materials brought home (Rejogabilidade, Fatia 1, sistemas.md 3.4): neither is enamel. Prata Antiga's face is
 ## the coin of gold's made in old silver (SILVER, cool and greyed, never white; its rim and halo the same), struck with an
 ## ingot; Fragmento de Memória's is a leaf of parchment (PARCHMENT, under ENAMEL_MAX's value) with a torn page written
@@ -89,7 +93,7 @@ const HALO_SHADER := preload("res://assets/shaders/reward_halo.gdshader")
 const CLOTH_SHADER := preload("res://assets/shaders/reliquary_cloth.gdshader")
 
 ## The shader's marks (reward_gem.gdshader `mark`).
-enum Mark { NONE, BLESSING, COIN, HEART, GEM, DROP, CHEVRON_1, CHEVRON_2, CHEVRON_3, INGOT, LEAF }
+enum Mark { NONE, BLESSING, COIN, HEART, GEM, DROP, CHEVRON_1, CHEVRON_2, CHEVRON_3, INGOT, LEAF, ENCHANT, PSALM }
 ## How it stands: on a reliquary, floating (a door's sign), or by where it is (AUTO: floating over a door's mouth,
 ## Arena.door_label, else on a reliquary).
 enum Stand { AUTO, RELIQUARY, FLOAT }
@@ -210,6 +214,10 @@ static func mark_of(reward: RunMap.Reward, kind: RunMap.Kind) -> Mark:
 			return Mark.INGOT
 		RunMap.Reward.MEMORY:
 			return Mark.LEAF
+		RunMap.Reward.ENCHANT:
+			return Mark.ENCHANT
+		RunMap.Reward.PSALM:
+			return Mark.PSALM
 		RunMap.Reward.NONE:
 			match kind:
 				RunMap.Kind.SHOP:
@@ -256,6 +264,10 @@ static func family(reward: RunMap.Reward, kind: RunMap.Kind) -> Vector3:
 			return ENAMEL_MAGICK
 		RunMap.Reward.HEAL:
 			return ENAMEL_WATER
+		RunMap.Reward.ENCHANT:
+			return ENAMEL_ENCHANT
+		RunMap.Reward.PSALM:
+			return ENAMEL_PSALM
 		RunMap.Reward.NONE:
 			match kind:
 				RunMap.Kind.FOUNTAIN:

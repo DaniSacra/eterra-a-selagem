@@ -16,6 +16,10 @@ const SMOKE_RING := preload("res://assets/shaders/smoke_ring.gdshader")
 ## The snap where a blow lands (V-05): its shader, pool, life (3 frames), growth and size (metres, half a quad).
 const CONTACT := preload("res://assets/shaders/contact.gdshader")
 const CONTACT_POOL := 12
+## VFX pass P1-1 and P1-2: the screen value the snap's heart and the gash's core stop at (ScreenTone.linear_peak),
+## with room under the rule's 226 for the bloom and what lies under them.
+const CONTACT_SCREEN := 210
+const GASH_SCREEN := 210
 const CONTACT_TIME := 0.05
 const CONTACT_GROW := 1.25
 const CONTACT_SPIKES := Vector2(0.25, 0.6)
@@ -23,6 +27,15 @@ const CONTACT_SPIKES_HEAVY := Vector2(0.4, 0.9)
 ## An enemy's blow landing (smoke_ring): how many may show at once, the screen's ceiling of its rim (V-12: 205) and the
 ## dirty embers and smoke it leaves.
 const SMOKE_RING_POOL := 12
+## vfx_pass_spec.md 5.3, the forms of the families: the floor marks (family_mark.gdshader) and their screen peaks
+## (section 4: Chama, Geada and Luz up to 210, Vigília 195), the tongues a Chama cut leaves, the ray of Luz.
+const FAMILY_MARK := preload("res://assets/shaders/family_mark.gdshader")
+const MARK_POOL := 12
+const MARK_SCREEN: Array[int] = [210, 210, 210, 195, 210]
+const MARK_FORM := {Boon.Family.CHAMA: 0, Boon.Family.GEADA: 1, Boon.Family.LUZ: 2, Boon.Family.VIGILIA: 3}
+const FAMILY_SLASH_TONGUES := Vector2i(3, 5)
+const LUZ_RAY := Vector3(0.06, 5.0, 0.15)
+const VIGIL_HIT := Vector3(1.8, 0.3, 30.0)
 const SMOKE_RING_SCREEN := 205
 const SMOKE_RING_EMBERS := 7
 const BEAM := preload("res://assets/shaders/beam.gdshader")
@@ -171,6 +184,10 @@ const WISP_POOL := 96
 const WISP := preload("res://assets/shaders/wisp.gdshader")
 ## The motes' light at most (linear, before the exposure): the screen's ScreenTone.SAFE for white (chip.gdshader).
 const MOTE_CAP_SCREEN := 226
+## The shapes of a sliver (chip.gdshader, vfx_pass_spec.md 5.3).
+const SHAPE_LENS := 0
+const SHAPE_BARB := 1
+const SHAPE_TONGUE := 2
 
 var camera: Camera3D
 ## Where damage numbers are drawn (a Control over the 3D view).
@@ -233,6 +250,8 @@ var _mote_color := PackedColorArray()
 var _mote_grav := PackedFloat32Array()
 ## 1 where the mote came from a burst (showing(&"motes") counts only the swing's and the hits' own).
 var _mote_burst := PackedByteArray()
+## The sliver's shape (chip.gdshader): SHAPE_LENS, SHAPE_BARB, SHAPE_TONGUE.
+var _mote_shape := PackedByteArray()
 var _wisps: MultiMesh
 var _wisp_n := 0
 var _wisp_pos := PackedVector3Array()
@@ -253,6 +272,7 @@ var _kick := Vector3.ZERO
 var _rings: Array[Dictionary] = []
 var _smoke_rings: Array[Dictionary] = []
 var _contacts: Array[Dictionary] = []
+var _marks: Array[Dictionary] = []
 var _beams: Array[Dictionary] = []
 ## The last pillar raised (beam): where, its intensity and cap (tests of GP-01).
 var last_beam := {}
@@ -264,7 +284,7 @@ var _gold_at := -1
 var _gold_sum := 0
 ## The paladin's head in the world (Player sets it each frame): no number stands within NumberTally.HERO_CLEAR of it.
 var hero_head := Vector3.INF
-var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS, &"contacts": BUDGET_GASHES})
+var budget := FxBudget.new({&"motes": BUDGET_MOTES, &"gashes": BUDGET_GASHES, &"bursts": BUDGET_BURSTS, &"contacts": BUDGET_GASHES, &"marks": BUDGET_GASHES})
 var _font: Font
 var _arc_meshes: Dictionary = {}
 var _boss_scythes: Array[Dictionary] = []
@@ -372,6 +392,12 @@ func setup(cam: Camera3D, over: Control) -> void:
 		(e.node as MeshInstance3D).sorting_offset = 11.0
 		(e.node as MeshInstance3D).extra_cull_margin = 2.0
 		_contacts.append(e)
+	for i in MARK_POOL:
+		var plane := PlaneMesh.new()
+		plane.size = Vector2(2, 2)
+		var e := _effect_node(FAMILY_MARK, plane)
+		(e.mat as ShaderMaterial).render_priority = -1
+		_marks.append(e)
 	for i in SMOKE_RING_POOL:
 		var plane := PlaneMesh.new()
 		plane.size = Vector2(2, 2)
@@ -419,6 +445,7 @@ func _build_motes() -> void:
 	_mote_color.resize(MOTE_POOL)
 	_mote_grav.resize(MOTE_POOL)
 	_mote_burst.resize(MOTE_POOL)
+	_mote_shape.resize(MOTE_POOL)
 	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(Color.WHITE, MOTE_CAP_SCREEN))
 	_mote_buf.resize(MOTE_POOL * 16)
 	var mmi := MultiMeshInstance3D.new()
@@ -479,9 +506,13 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 	if spec[7] == &"wisp":
 		wisps(pos, up, spec[0], count, spec[2], size, spec[5], spread, spec[3])
 		return
-	_spray(pos, up, spec[0], count, spec[2], size, spec[5], spread, -float(spec[3]), true)
+	var shape := SHAPE_TONGUE if kind == &"fire" else SHAPE_BARB if kind == &"frost" else SHAPE_LENS
+	_spray(pos, up, spec[0], count, spec[2], size, spec[5], spread, -float(spec[3]), true, 0, shape)
 	if kind == &"fire":
 		wisps(pos + Vector3.UP * 0.3, Vector3.UP, SMOKE, FIRE_SMOKE, 0.8, 0.5, 0.8, 0.5, 1.0)
+	elif kind == &"bone":
+		# V-14: a dead one goes up as ash: one dark grey wisp rising about 1 m in 0.6 s
+		wisps(pos, Vector3.UP, DEATH_ASH, 1, 1.4, 0.55, 0.6, 0.2, 0.6)
 
 
 ## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
@@ -529,10 +560,30 @@ func clear_of_hero(pos: Vector3) -> Vector3:
 
 ## Meters behind the paladin (away from the camera, on the floor) where his own bursts are centred (hero_burst).
 const HERO_BURST_BACK := 0.8
+const NUMBER_POP := 1.3
+const NUMBER_POP_TIME := 0.08
+## V-14: the grey of the wisp a dead one leaves (value 0.25).
+const DEATH_ASH := Color(0.25, 0.24, 0.23)
+## P1-4: the most his light slivers rise over where they start (m; the burst starts at 0.4 m, his shoulder is near 2.1)
+## and how fast they fall (m/s2).
+const HERO_LIGHT_TOP := 0.9
+const HERO_SHOULDER := 1.9
+const HERO_LIGHT_FALL := 6.0
 
 
 ## A burst at the paladin, centred a little behind him from the camera: the specks never cover his body.
 func hero_burst(kind: StringName, pos: Vector3) -> void:
+	if kind == &"light":
+		# VFX pass P1-4: his light never goes past his shoulder on the screen: slivers thrown out low round him and
+		# falling (top of the arc about HERO_LIGHT_TOP m over where they start), behind him from the camera
+		if not budget.allows(&"bursts"):
+			return
+		var spec: Array = BURSTS[kind]
+		var count := maxi(3, roundi(int(spec[1]) * BURST_AMOUNT))
+		var at := pos + behind(pos, HERO_BURST_BACK)
+		var speed := sqrt(2.0 * HERO_LIGHT_FALL * clampf(HERO_SHOULDER - at.y, 0.15, HERO_LIGHT_TOP))
+		_spray(at, Vector3.UP, spec[0], count, speed, float(spec[4]) * BURST_SCALE, 0.5, deg_to_rad(70.0), HERO_LIGHT_FALL, true)
+		return
 	burst(kind, pos + behind(pos, HERO_BURST_BACK))
 
 
@@ -570,7 +621,18 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 	(s.mat as ShaderMaterial).set_shader_parameter(&"band_from", SLASH_INNER)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"band_from", INK_INNER)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.3)))
+	var family := family_of(color)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"family", family)
+	if family == Boon.Family.CHAMA:
+		# the tail's tongues rise off it (vfx_pass_spec.md 5.3): 3 to 5 tongue slivers along the back of the arc
+		var n := budget.take(&"motes", _rng.randi_range(FAMILY_SLASH_TONGUES.x, FAMILY_SLASH_TONGUES.y))
+		var mid := dir.normalized() if dir.length_squared() > 0.0001 else Vector2(0, 1)
+		for k in n:
+			var a := deg_to_rad(width_deg) * (_rng.randf_range(-0.5, 0.5))
+			var way := mid.rotated(a)
+			var at := Vector3(origin.x + way.x * reach * 0.8, height, origin.y + way.y * reach * 0.8)
+			_spray(at, Vector3.UP, color * 0.95, 1, 1.8, 0.3, 0.4, 0.3, -3.0, false, 0, SHAPE_TONGUE)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"sweep", sweep)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"intensity", feel.slash_intensity)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"tail", minf(SLASH_TAIL, SLASH_TAIL_DEGREES / maxf(width_deg, 1.0)))
@@ -598,6 +660,7 @@ func gash(pos: Vector3, axis: Vector3, color: Color, length: float = 1.2, cross:
 	mat.set_shader_parameter(&"size", length)
 	mat.set_shader_parameter(&"cross_cut", 1.0 if cross else 0.0)
 	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.35), GASH_SCREEN))
 	e.time = time
 
 
@@ -619,11 +682,12 @@ func contact(pos: Vector3, dir: Vector3, color: Color, heavy: bool = false) -> v
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"life", 0.0)
 	mat.set_shader_parameter(&"seed", _rng.randf())
-	mat.set_shader_parameter(&"count", float(_rng.randi_range(5, 7)))
+	# review: 6 or 7 (with 5 and the fan's spikes on one line it could read as a 4-point star)
+	mat.set_shader_parameter(&"count", float(_rng.randi_range(6, 7)))
 	mat.set_shader_parameter(&"half_m", e.size)
 	mat.set_shader_parameter(&"spike_min_m", spikes.x)
 	mat.set_shader_parameter(&"spike_max_m", spikes.y)
-	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9)))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9), CONTACT_SCREEN))
 	var aim := Vector2(1, 0)
 	if camera != null and dir.length_squared() > 0.0001:
 		var b := camera.global_transform.basis
@@ -676,7 +740,7 @@ func chips(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float = 
 
 ## count slivers from pos along dir (spread radians round it), falling at gravity m/s2; burst: from Fx.burst (not
 ## counted by showing(&"motes"), not in the motes' budget).
-func _spray(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float, size: float, life: float, spread: float, gravity: float, from_burst: bool, gold_every: int = 0) -> void:
+func _spray(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float, size: float, life: float, spread: float, gravity: float, from_burst: bool, gold_every: int = 0, shape: int = SHAPE_LENS) -> void:
 	var forward := dir.normalized() if dir.length_squared() > 0.0001 else Vector3.UP
 	var side := forward.cross(Vector3.UP)
 	side = side.normalized() if side.length_squared() > 0.0001 else Vector3.RIGHT
@@ -696,6 +760,7 @@ func _spray(pos: Vector3, dir: Vector3, color: Color, count: int, speed: float, 
 		_mote_color[k] = OLD_GOLD if gold_every > 0 and i % gold_every == gold_every - 1 else color
 		_mote_grav[k] = gravity
 		_mote_burst[k] = 1 if from_burst else 0
+		_mote_shape[k] = shape
 
 
 ## The blade answers a swing: its light rises for an instant (never a light on the room).
@@ -719,7 +784,7 @@ func showing(kind: StringName) -> int:
 				if l.visible:
 					shown += 1
 			return shown
-	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts, &"glints": _glints,
+	var pools := {&"gashes": _impacts, &"slashes": _slashes, &"thrusts": _thrusts, &"crescents": _crescents, &"rings": _rings, &"smoke_rings": _smoke_rings, &"contacts": _contacts, &"marks": _marks, &"glints": _glints,
 		&"boss_scythes": _boss_scythes, &"boss_wakes": _boss_wakes}
 	var count := 0
 	for e: Dictionary in pools.get(kind, []):
@@ -742,7 +807,7 @@ func glint(pos: Vector3, color: Color, hold: float, follow: Node3D = null) -> vo
 	mat.set_shader_parameter(&"life", 0.0)
 	mat.set_shader_parameter(&"streak_angle", _rng.randf_range(0.25, 0.45) * (1.0 if _rng.randf() < 0.5 else -1.0))
 	mat.set_shader_parameter(&"seed", _rng.randf())
-	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9)))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(Color(1.0, 0.97, 0.9), CONTACT_SCREEN))
 
 
 ## The wave of a finisher: a thin crescent of ink with a white edge that flies far past the blow and fades.
@@ -785,7 +850,7 @@ func boss_scythe(origin: Vector2, dir: Vector2, reach: float, degrees: float, sw
 	for k in SCYTHE_WISPS:
 		var a := facing - half + 2.0 * half * (k + 0.5) / SCYTHE_WISPS
 		var out := Vector3(sin(a), 0.0, cos(a))
-		wisps(Vector3(origin.x, 0.3, origin.y) + out * reach, out * 0.8 + Vector3.UP * 0.4, SCYTHE_SMOKE, 1, 1.5, 0.5, 0.3, 0.3, 0.8)
+		wisps(Vector3(origin.x, 0.3, origin.y) + out * reach, out + Vector3.UP * 0.12, SCYTHE_SMOKE, 1, 2.2, 0.6, 0.35, 0.5, 0.3)
 
 
 ## Morvath's dash: its lane (from, dir, length, width in m) revealed as he runs it in `run` seconds, breaking into
@@ -858,7 +923,7 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 ## Where an enemy's blow lands (vfx_pass_spec.md V-12): a ring of dark smoke with a torn edge opening to `radius`, its
 ## inner rim in `color` under the screen's 205, a dark middle, dirty embers and smoke rising; nothing lit is filled.
 ## thin: only a thin ring, gone in `time` (a blow with another right after it).
-func smoke_ring(center: Vector2, radius: float, color: Color, time: float = 0.5, thin: bool = false) -> void:
+func smoke_ring(center: Vector2, radius: float, color: Color, time: float = 0.5, thin: bool = false) -> Dictionary:
 	var r: Dictionary = _take(_smoke_rings)
 	var mi: MeshInstance3D = r.node
 	mi.position = Vector3(center.x, 0.12, center.y)
@@ -868,14 +933,130 @@ func smoke_ring(center: Vector2, radius: float, color: Color, time: float = 0.5,
 	mat.set_shader_parameter(&"color", color)
 	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(color, SMOKE_RING_SCREEN))
 	mat.set_shader_parameter(&"thin", 1.0 if thin else 0.0)
+	mat.set_shader_parameter(&"closing", 0.0)
 	mat.set_shader_parameter(&"life", 0.0)
 	if thin:
-		return
+		return r
 	var ember := Color(color.r, color.g, color.b) / maxf(maxf(color.r, color.g), maxf(color.b, 0.001)) * 0.5
 	for k in SMOKE_RING_EMBERS:
 		var a := TAU * k / SMOKE_RING_EMBERS + _rng.randf_range(-0.3, 0.3)
 		var at := Vector3(center.x + cos(a) * radius * 0.8, 0.2, center.y + sin(a) * radius * 0.8)
 		wisps(at, Vector3(cos(a) * 0.4, 1.0, sin(a) * 0.4), ember * 0.6 if k % 2 == 0 else SMOKE, 1, 1.2, 0.45, 0.5, 0.4, 1.2)
+	return r
+
+
+## An elite rises (vfx_pass_spec.md V-15): no column; a ring of dark smoke with a dull old gold edge (value 0.5) closes on
+## the spot in ELITE_SURGE_TIME, and a breath of wisps rises 1.5 m.
+const ELITE_SURGE_TIME := 0.4
+const ELITE_SURGE_GOLD := Color(0.5, 0.36, 0.16)
+
+
+func elite_surge(at: Vector2, radius: float = 1.6) -> void:
+	# the ring closes over the shader's open_time (0.33 of its life), so its life is ELITE_SURGE_TIME / 0.33
+	var r := smoke_ring(at, radius, ELITE_SURGE_GOLD, ELITE_SURGE_TIME / 0.33, true)
+	var mat: ShaderMaterial = r.mat
+	mat.set_shader_parameter(&"closing", 1.0)
+	mat.set_shader_parameter(&"thin", 0.0)
+	for k in 5:
+		var a := TAU * k / 5.0 + _rng.randf_range(-0.3, 0.3)
+		wisps(Vector3(at.x + cos(a) * radius * 0.5, 0.2, at.y + sin(a) * radius * 0.5), Vector3.UP, SMOKE, 1, 2.0, 0.5, 0.75, 0.25, 0.4)
+
+
+## The Blessing family a colour belongs to (Combat.FIRE, FROST, LIGHT, VIGIL and Boon.FAMILY_COLOR), -1 for the sword's
+## own green or anything else (vfx_pass_spec.md 5.3: the family's form rides on the colour the blow already carries).
+static func family_of(color: Color) -> int:
+	var known := {Boon.Family.CHAMA: [Combat.FIRE], Boon.Family.GEADA: [Combat.FROST], Boon.Family.LUZ: [Combat.LIGHT], Boon.Family.VIGILIA: [Combat.VIGIL]}
+	for f: int in known:
+		var list: Array = known[f].duplicate()
+		list.append(Boon.FAMILY_COLOR[f])
+		for c: Color in list:
+			if absf(c.r - color.r) + absf(c.g - color.g) + absf(c.b - color.b) < 0.06:
+				return f
+	return -1
+
+
+## The floor form of a family (vfx_pass_spec.md 5.3, family_mark.gdshader) at center, radius meters, for time seconds:
+## Chama a ring of tongues over a charred ring, Geada hexagonal frost plates, Luz a thin ring with eight marks drawn
+## round from the side toward `dir`, Vigília three segmented arcs opening (only within `arc_deg` of dir when it is less
+## than 180). Nothing for the Elo (it shows the two families' own) nor an unknown family.
+func family_mark(family: int, center: Vector2, radius: float, color: Color, time: float = 0.5, dir: Vector2 = Vector2.ZERO, arc_deg: float = 180.0) -> void:
+	if not MARK_FORM.has(family) or not budget.allows(&"marks"):
+		return
+	var e: Dictionary = _take(_marks)
+	var mi: MeshInstance3D = e.node
+	mi.position = Vector3(center.x, 0.1, center.y)
+	mi.scale = Vector3.ONE * radius
+	mi.rotation = Vector3.ZERO
+	var way := dir.normalized() if dir.length_squared() > 0.0001 else Vector2(1, 0)
+	# the quad's +x is the world's +x; its UV.y runs along the world's +z
+	mi.rotation.y = -atan2(way.y, way.x) if arc_deg < 180.0 else 0.0
+	e.time = time
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"form", MARK_FORM[family])
+	mat.set_shader_parameter(&"color", color)
+	mat.set_shader_parameter(&"cap", ScreenTone.linear_peak(color, MARK_SCREEN[family]))
+	mat.set_shader_parameter(&"life", 0.0)
+	mat.set_shader_parameter(&"time", time)
+	mat.set_shader_parameter(&"radius_m", radius)
+	mat.set_shader_parameter(&"seed", _rng.randf())
+	mat.set_shader_parameter(&"count", float(clampi(roundi(radius * 4.0), 12, 18)))
+	mat.set_shader_parameter(&"tongue", clampf(0.6 / maxf(radius, 0.1), 0.12, 0.5))
+	mat.set_shader_parameter(&"arc", deg_to_rad(minf(arc_deg, 180.0)) if arc_deg < 180.0 else PI + 0.1)
+	mat.set_shader_parameter(&"start", Vector2(way.x, way.y) if arc_deg >= 180.0 else Vector2(1, 0))
+	mat.set_shader_parameter(&"gold", OLD_GOLD * 0.7)
+	if family == Boon.Family.CHAMA:
+		# the tongues rise off the floor too: slivers shaped like tongues, a little smoke at the end
+		var n := clampi(roundi(radius * 4.0), 12, 18)
+		for k in budget.take(&"motes", n):
+			var a := TAU * k / n + _rng.randf_range(-0.15, 0.15)
+			var at := Vector3(center.x + cos(a) * radius * 0.82, 0.15, center.y + sin(a) * radius * 0.82)
+			_spray(at, Vector3(cos(a) * 0.25, 1.0, sin(a) * 0.25), color * 0.95, 1, 1.4, 0.34, 0.45, 0.25, -3.0, false, 0, SHAPE_TONGUE)
+		for k in 3:
+			var a := TAU * k / 3.0 + _rng.randf()
+			wisps(Vector3(center.x + cos(a) * radius * 0.7, 0.4, center.y + sin(a) * radius * 0.7), Vector3.UP, SMOKE, 1, 0.8, 0.5, 0.8, 0.5, 1.0)
+
+
+## The circle of light let go (vfx_pass_spec.md V-07): its rim drawn round from the side toward `from` in 0.12 s (the
+## Luz form of family_mark, ivory with its marks and gold thread) and CIRCLE_SLIVERS slivers of light falling 1.5 m onto
+## the rim in 0.2 s; no filled ring.
+const CIRCLE_SLIVERS := 5
+const CIRCLE_SPIKES := 10
+
+
+func circle_cast(at: Vector2, radius: float, color: Color, from: Vector2 = Vector2.ZERO) -> void:
+	family_mark(Boon.Family.LUZ, at, radius, color, 0.35, from)
+	var n := budget.take(&"motes", CIRCLE_SLIVERS)
+	var turn := _rng.randf() * TAU
+	for k in n:
+		var a := turn + TAU * k / maxf(n, 1)
+		_spray(Vector3(at.x + cos(a) * radius, 1.5, at.y + sin(a) * radius), Vector3.DOWN, color * 0.9, 1, 7.5, 0.2, 0.2, 0.0, 0.0, false)
+
+
+## The held circle bursts (V-07): crystal spikes from the rim inward in 0.2 s (the Omega's, V-04), no ring.
+func circle_burst(at: Vector2, radius: float, color: Color) -> void:
+	var n := budget.take(&"motes", CIRCLE_SPIKES)
+	for k in n:
+		var a := TAU * k / maxf(n, 1) + _rng.randf_range(-0.2, 0.2)
+		var rim := Vector3(at.x + cos(a) * radius, 0.4, at.y + sin(a) * radius)
+		_spray(rim, Vector3(-cos(a), 0.15, -sin(a)), Combat.EMETH * 0.85, 1, radius / 0.2 * 0.6, 0.3, 0.2, 0.05, 0.0, false)
+
+
+## A family's mark where its blow lands (vfx_pass_spec.md 5.3, with Fx.contact): Chama three tongues rising, Geada a
+## burst of 5 to 7 frost barbs falling, Luz a thin ray from above and a small ring of marks, Vigília three 60 degree arcs
+## opening toward dir. Nothing for the sword's own green.
+func family_hit(family: int, pos: Vector3, dir: Vector3, color: Color, heavy: bool = false) -> void:
+	match family:
+		Boon.Family.CHAMA:
+			_spray(pos, Vector3.UP, color * 0.95, budget.take(&"motes", 4 if heavy else 3), 1.6, 0.3, 0.45, 0.4, -3.0, false, 0, SHAPE_TONGUE)
+		Boon.Family.GEADA:
+			var out := (dir + Vector3.UP * 0.8).normalized() if dir.length_squared() > 0.0001 else Vector3.UP
+			_spray(pos, out, color * 0.95, budget.take(&"motes", _rng.randi_range(5, 7)), 4.5, 0.2, 0.35, 0.9, 8.0, false, 0, SHAPE_BARB)
+		Boon.Family.LUZ:
+			if budget.allows(&"marks"):
+				beam(Vector2(pos.x, pos.z), color, LUZ_RAY.x, LUZ_RAY.y, LUZ_RAY.z)
+			family_mark(family, Vector2(pos.x, pos.z), 0.8 if not heavy else 1.1, color, 0.35, -Vector2(dir.x, dir.z))
+		Boon.Family.VIGILIA:
+			family_mark(family, Vector2(pos.x, pos.z), VIGIL_HIT.x * (1.2 if heavy else 1.0), color, VIGIL_HIT.y, Vector2(dir.x, dir.z), VIGIL_HIT.z)
 
 
 ## A pillar of light (or shadow) at a point on the floor. intensity: its light (beam.gdshader's; BEAM_INTENSITY
@@ -1109,6 +1290,10 @@ func animate(delta: float) -> void:
 			var mi: Node3D = c.node
 			mi.scale = Vector3.ONE * c.size * lerpf(1.0, CONTACT_GROW, c.life) / CONTACT_GROW
 			(c.mat as ShaderMaterial).set_shader_parameter(&"life", c.life)
+	for m in _marks:
+		if (m.node as Node3D).visible:
+			_age(m, delta)
+			(m.mat as ShaderMaterial).set_shader_parameter(&"life", m.life)
 	for r in _smoke_rings:
 		if (r.node as Node3D).visible:
 			_age(r, delta)
@@ -1141,7 +1326,8 @@ func animate(delta: float) -> void:
 		var sp := camera.unproject_position(p)
 		if hero_head.is_finite() and not camera.is_position_behind(hero_head):
 			sp = NumberTally.clear_of(sp, camera.unproject_position(hero_head), NumberTally.HERO_CLEAR + l.size.y * 0.5)
-		var pop := 1.0 + maxf(0.0, 0.12 - e.life) * 4.0
+		# vfx_pass_spec.md 5.7: in at NUMBER_POP x and down to 1 in NUMBER_POP_TIME (it was 1.48 down over 0.12 s)
+		var pop := 1.0 + (NUMBER_POP - 1.0) * maxf(0.0, 1.0 - e.life / NUMBER_POP_TIME)
 		l.scale = Vector2.ONE * pop
 		l.position = sp - l.size * 0.5 * pop
 		l.modulate.a = 1.0 - smoothstep(0.45, NumberTally.LIFE, e.life)
@@ -1167,6 +1353,7 @@ func _animate_motes(delta: float) -> void:
 			_mote_color[i] = _mote_color[_mote_n]
 			_mote_grav[i] = _mote_grav[_mote_n]
 			_mote_burst[i] = _mote_burst[_mote_n]
+			_mote_shape[i] = _mote_shape[_mote_n]
 			continue
 		_mote_life[i] = life
 		var vel := _mote_vel[i] * drag - Vector3(0, _mote_grav[i] * delta, 0)
@@ -1184,7 +1371,7 @@ func _animate_motes(delta: float) -> void:
 		var d := _mote_buf
 		d[o] = ax.x; d[o + 1] = 0.0; d[o + 2] = 0.0; d[o + 3] = at.x
 		d[o + 4] = ax.y; d[o + 5] = w; d[o + 6] = 0.0; d[o + 7] = at.y
-		d[o + 8] = ax.z; d[o + 9] = 0.0; d[o + 10] = w; d[o + 11] = at.z
+		d[o + 8] = ax.z; d[o + 9] = float(_mote_shape[i]); d[o + 10] = w; d[o + 11] = at.z
 		d[o + 12] = c.r; d[o + 13] = c.g; d[o + 14] = c.b; d[o + 15] = c.a
 		i += 1
 	if _mote_n > 0:

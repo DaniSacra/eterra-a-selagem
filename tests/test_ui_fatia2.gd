@@ -189,3 +189,45 @@ func test_the_purse_shows_the_emerald_once_there_is_one() -> void:
 	assert_true(MaterialCount.shown(d).has(MaterialPurse.EMERALD))
 	var row: HBoxContainer = autofree(MaterialCount.purse(d))
 	assert_eq(row.get_child_count(), 3)
+
+
+func _hue_gap(a: float, b: float) -> float:
+	var d := absf(fposmod(a, 360.0) - fposmod(b, 360.0))
+	return minf(d, 360.0 - d)
+
+
+func test_the_medallions_of_encanto_and_salmo_have_their_marks() -> void:
+	var none := RunMap.Kind.COMBAT
+	assert_eq(RewardGem.mark_of(RunMap.Reward.ENCHANT, none), RewardGem.Mark.ENCHANT)
+	assert_eq(RewardGem.mark_of(RunMap.Reward.PSALM, none), RewardGem.Mark.PSALM)
+	var mat := RewardGem.face_material(RunMap.Reward.PSALM, none)
+	assert_eq(int(mat.get_shader_parameter(&"mark")), RewardGem.Mark.PSALM)
+	# each its own enamel, under the cap, the Psalm's lilac apart from the Trial's and the Encanto's green from the Blessing's petrol
+	var e := RewardGem.family(RunMap.Reward.ENCHANT, none)
+	var p := RewardGem.family(RunMap.Reward.PSALM, none)
+	assert_gt(_hue_gap(p.x, RewardGem.ENAMEL_TRIAL.x), 20.0)
+	assert_gt(_hue_gap(e.x, RewardGem.ENAMEL_BLESSING.x), 20.0)
+	for f: Vector3 in [e, p]:
+		assert_true(f.y <= RewardGem.ENAMEL_MAX.x and f.z <= RewardGem.ENAMEL_MAX.y)
+
+
+func test_the_screens_take_the_family_colours_from_the_boon() -> void:
+	# Vigília in sage: far from the danger red, the Emeth's emerald and the hero's petrol, and the screens read it
+	var vigil := Boon.FAMILY_COLOR[Boon.Family.VIGILIA]
+	var h := vigil.h * 360.0
+	assert_between(h, 60.0, 110.0)
+	assert_gt(_hue_gap(h, 0.0), 20.0)
+	assert_gt(_hue_gap(h, 150.0), 20.0)
+	assert_gt(_hue_gap(h, 186.0), 20.0)
+	var b: Boon = null
+	for f in DirAccess.get_files_at("res://data/boons"):
+		if f.ends_with(".tres"):
+			var x := load("res://data/boons/" + f) as Boon
+			if x.family == Boon.Family.VIGILIA:
+				b = x
+				break
+	assert_not_null(b)
+	assert_eq(b.color(), vigil)
+	# the cards' glow, the HUD's gem, the icons and the Compêndio read Boon.color(); the angel's seal is the calmer sage
+	var seal := AngelSeal.tint(Boon.Family.VIGILIA).h * 360.0
+	assert_lt(_hue_gap(seal, h), 25.0)

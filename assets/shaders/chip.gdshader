@@ -23,11 +23,18 @@ uniform float style_thin = 0.5;
 uniform float style_cap = 0.9;
 
 varying vec4 tone;
+// vfx_pass_spec.md 5.3: the shape of the sliver (Fx writes it in the spare z of the basis's y column): 0 a lens
+// pointed at both ends, 1 a frost barb (a triangle pointed the way it flies, two facets), 2 a tongue of fire (round at
+// its foot, flickering, its tip darker).
+varying flat float shape;
+varying flat float sway;
 
 void vertex() {
 	vec3 center = MODEL_MATRIX[3].xyz;
 	vec3 along = MODEL_MATRIX[0].xyz;
-	float width = length(MODEL_MATRIX[1].xyz);
+	float width = abs(MODEL_MATRIX[1].y);
+	shape = MODEL_MATRIX[1].z;
+	sway = fract(center.x * 3.1 + center.z * 1.7) * 6.28;
 	tone = COLOR;
 	if (art_style > 0.5) {
 		float top = max(COLOR.r, max(COLOR.g, COLOR.b));
@@ -49,11 +56,24 @@ void fragment() {
 	// pointed at both ends: as wide as the quad in the middle, nothing at the tips
 	float k = abs(p.x);
 	float w = 1.0 - k * k;
+	float side_soft = soft;
+	vec3 tint = tone.rgb;
+	if (shape > 1.5) {
+		// a tongue: its foot (behind) round, narrowing to a tip that sways; the tip darker and redder
+		float h = (p.x + 1.0) * 0.5;
+		w = pow(clamp(1.0 - h, 0.0, 1.0), 0.75) * smoothstep(0.0, 0.18, h) * (0.85 + 0.15 * sin(TIME * 23.0 + p.x * 6.0 + sway));
+		tint = mix(tone.rgb, tone.rgb * vec3(0.8, 0.38, 0.22), smoothstep(0.35, 1.0, h));
+	} else if (shape > 0.5) {
+		// a barb: wide behind, pointed ahead, sharp sides, one facet lit
+		w = (1.0 - p.x) * 0.5;
+		side_soft = 0.08;
+		tint = tone.rgb * (p.y > 0.0 ? 1.0 : 0.62);
+	}
 	float d = abs(p.y) / max(w, 0.001);
-	float body = (1.0 - smoothstep(1.0 - soft, 1.0, d)) * step(k, 0.999);
+	float body = (1.0 - smoothstep(1.0 - side_soft, 1.0, d)) * step(k, 0.999);
 	if (body <= 0.002) discard;
-	float heart = 1.0 - smoothstep(0.0, 0.5, d);
-	vec3 c = mix(tone.rgb, vec3(max(tone.r, max(tone.g, tone.b))), heart * heart_pale) * body;
+	float heart = shape > 0.5 ? 0.0 : 1.0 - smoothstep(0.0, 0.5, d);
+	vec3 c = mix(tint, vec3(max(tint.r, max(tint.g, tint.b))), heart * heart_pale) * body;
 	float peak = max(c.r, max(c.g, c.b));
 	if (peak > cap) {
 		c *= cap / peak;

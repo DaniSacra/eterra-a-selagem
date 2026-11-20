@@ -196,6 +196,8 @@ func start() -> void:
 ## in the graph (the altar's graph is drawn again with the altar sure to come; the trial's chamber as if a fight of
 ## depth 3 had shown its slab, its doors those of that room).
 func start_at(kind: RunMap.Kind) -> void:
+	if Dev.has("gold"):
+		gold = int(Dev.num("gold", 0))  # (--gold=N: the gold to start at, for captures of the shop's lights)
 	if kind == RunMap.Kind.ALTAR and stage.altar_layout != null:
 		var st: StageDef = stage.duplicate()
 		st.altar_chance = 1.0
@@ -493,7 +495,9 @@ func _spawn(id: StringName) -> void:
 	game.horde.spawn(d, at, true)
 	game.fx.burst(&"shadow", Vector3(at.x, 0.6, at.y))
 	if d.elite:
-		# (vfx_pass_spec.md 5.4, V-15: no column of light; light from above is only for what is taken)
+		# (vfx_pass_spec.md 5.4, V-15: no column of light; light from above is only for what is taken) a ring of dark
+		# smoke with a dull gold edge closes on it
+		game.fx.elite_surge(at, d.radius * 1.6 + 0.6)
 		if room.kind == RunMap.Kind.MINIBOSS:
 			game.hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}), 3.0)
 			Audio.play(&"elite")

@@ -822,32 +822,57 @@ const STY_ROCK_FOOT := -18.0
 const STY_DEPTH_SEED := 9113
 
 
+## ENV-HB4 (benchmark_hades2_style.md 4.1): the aqueduct's stone a step lighter than the cliffs' (the depth stone's
+## tint), so its arches read against the violet dark, and a second, farther row behind it (the ruins in two depths:
+## STY_AQUEDUCT_FAR as STY_AQUEDUCT, its piers' tops, its gaps), the mist fading it more.
+const STY_AQUEDUCT_TINT := 3.0
+const STY_AQUEDUCT_FAR := Vector4(-41.0, -19.0, 15.0, -20.0)
+const STY_AQUEDUCT_FAR_PIERS: Array[float] = [2.2, 0.6, 2.8, -0.8, 1.6, 0.4]
+const STY_AQUEDUCT_FAR_GAPS: Array[Vector2] = [Vector2(9.0, 9.0), Vector2(-1.2, 1.0), Vector2(9.0, 9.0), Vector2(0.2, 2.4)]
+const STY_AQUEDUCT_FAR_TINT := 2.2
+## The near row sinks into the mist lower down than the cliffs (sink_top, sink_bottom), so its piers keep their form.
+const STY_AQUEDUCT_SINK := Vector2(-8.0, -40.0)
+
+
 func _aqueduct(sm: Masonry) -> void:
 	# the depths' own stone (deep(): the rift's cliffs), dark violet-indigo; a ruin card's stone read teal here
 	var dark := deep()
-	var a := STY_AQUEDUCT
-	var n := STY_AQUEDUCT_PIERS.size()
+	var lit := dark.duplicate() as ShaderMaterial
+	lit.set_shader_parameter(&"tint", STY_AQUEDUCT_TINT)
+	lit.set_shader_parameter(&"sink_top", STY_AQUEDUCT_SINK.x)
+	lit.set_shader_parameter(&"sink_bottom", STY_AQUEDUCT_SINK.y)
+	var far := dark.duplicate() as ShaderMaterial
+	far.set_shader_parameter(&"tint", STY_AQUEDUCT_FAR_TINT)
+	var tops := _aqueduct_row(sm, STY_AQUEDUCT, STY_AQUEDUCT_PIERS, STY_AQUEDUCT_GAPS, lit)
+	_aqueduct_row(sm, STY_AQUEDUCT_FAR, STY_AQUEDUCT_FAR_PIERS, STY_AQUEDUCT_FAR_GAPS, far)
+	depth_spurs(sm, STY_ROCKS, STY_ROCK_FOOT, lit, STY_DEPTH_SEED)
+	var lip := -layout.half.x - 0.4
+	kit.styled_build(func() -> void:
+		for k: int in STY_AQUEDUCT_CHAINS:
+			var t := tops[k]
+			kit.chain(Vector3(lip, -0.3, t.z), t + Vector3(0, 0.1, 0), STY_AQUEDUCT_CHAIN.x, STY_AQUEDUCT_CHAIN.y))
+
+
+## One row of the aqueduct (a: x, from z, to z, the piers' foot height; piers: each top; gaps: each arch's missing
+## stones); returns the piers' tops.
+func _aqueduct_row(sm: Masonry, a: Vector4, piers: Array[float], gaps: Array[Vector2], mat: ShaderMaterial) -> Array[Vector3]:
+	var n := piers.size()
 	var step := (a.z - a.y) / float(n - 1)
 	var tops: Array[Vector3] = []
 	for k in n:
 		var z := a.y + step * k
-		var top := STY_AQUEDUCT_PIERS[k]
-		sm.box(Vector3(a.x, (a.w + top) * 0.5, z), Vector3(STY_AQUEDUCT_PIER.x, top - a.w, STY_AQUEDUCT_PIER.y), 0.0, dark, false)
+		var top := piers[k]
+		sm.box(Vector3(a.x, (a.w + top) * 0.5, z), Vector3(STY_AQUEDUCT_PIER.x, top - a.w, STY_AQUEDUCT_PIER.y), 0.0, mat, false)
 		tops.append(Vector3(a.x, top, z))
 		if k == n - 1:
 			continue
 		# the arch to the next pier, its outer apex at the lower top; some of its stones gone
 		var span := step - STY_AQUEDUCT_PIER.y
 		var rise := sqrt(pow(span * STY_ARCH_RADIUS, 2.0) - pow(span * (STY_ARCH_RADIUS - 0.5), 2.0)) + STY_AQUEDUCT_RING.x
-		var spring := minf(top, STY_AQUEDUCT_PIERS[k + 1]) - rise
+		var spring := minf(top, piers[k + 1]) - rise
 		sm.broken_arch(Vector3(a.x, spring, z + step * 0.5), Vector2(1, 0), span, 0.0, STY_AQUEDUCT_RING.x, STY_AQUEDUCT_RING.y,
-			dark, STY_AQUEDUCT_GAPS[k % STY_AQUEDUCT_GAPS.size()], STY_ARCH_RADIUS)
-	depth_spurs(sm, STY_ROCKS, STY_ROCK_FOOT, dark, STY_DEPTH_SEED)
-	var lip := -layout.half.x - 0.4
-	kit.styled_build(func() -> void:
-		for k: int in STY_AQUEDUCT_CHAINS:
-			var t := tops[k]
-			kit.chain(Vector3(lip, -0.3, t.z), t + Vector3(0, 0.1, 0), STY_AQUEDUCT_CHAIN.x, STY_AQUEDUCT_CHAIN.y))
+			mat, gaps[k % gaps.size()], STY_ARCH_RADIUS)
+	return tops
 
 
 ## SW-F1: the fallen column across the rift's south hole (FALLEN_COLUMN_*), under the floor's level, its two halves

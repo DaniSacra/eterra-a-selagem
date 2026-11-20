@@ -47,8 +47,11 @@ uniform float danger_fill = 0.35;
 uniform float danger_strength = 1.4;
 // C18: an eruption's rim, glyphs and cracks (a pale violet grey, Morvath's family away from the hero's greens) and the
 // most of the floor its red fill covers.
-uniform vec3 eruption_color : source_color = vec3(0.6, 0.55, 0.66);
+uniform vec3 eruption_color : source_color = vec3(0.66, 0.58, 0.74);
 uniform float danger_alpha = 0.24;
+// vfx_pass_spec.md V-18: an eruption's rim, glyphs and cracks stop at this (linear; lilac-ivory under the screen's 226,
+// Ground: ScreenTone.linear_peak): the white rim at 255 was the paladin's light
+uniform float eruption_cap = 0.62;
 
 const float TAU_ = 6.2831853;
 #include "res://assets/shaders/rune_glyph.gdshaderinc"
@@ -131,6 +134,11 @@ void fragment() {
 	// the red fill of an eruption, brighter toward its front as the veil was, laid over the floor
 	float harm = hurts ? step(d, p) * (0.6 + 0.4 * smoothstep(p - 0.35, p, d)) : 0.0;
 	float a = clamp(harm * danger_alpha * (1.0 + beat * 0.3), 0.0, danger_alpha) * shown * gone * gone;
-	ALBEDO = c * lvl * strength * shown * gone * gone + danger * danger_strength * a;
+	vec3 lit = c * lvl * strength * shown * gone * gone;
+	float top = max(lit.r, max(lit.g, lit.b));
+	if (hurts && top > eruption_cap) {
+		lit *= eruption_cap / top;
+	}
+	ALBEDO = lit + danger * danger_strength * a;
 	ALPHA = a;
 }

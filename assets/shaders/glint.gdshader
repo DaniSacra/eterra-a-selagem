@@ -121,8 +121,12 @@ void fragment() {
 	float halo = (1.0 - smoothstep(0.0, 0.3 * grow, length(p))) * 0.05;
 	float smear = 0.0;
 
+	// VFX pass P1-3: the ring opens round his body (none of it over him: an ivory ring on his chest read as a mark of
+	// the interface), the star keeps over_body there
+	float clear = clear_of_body(VERTEX);
+	ring *= clamp((clear - over_body) / max(1.0 - over_body, 0.001), 0.0, 1.0);
 	float v = min((cross * 1.2 + streak * 0.9 + smear) * open + ring * 0.9 + halo, max_light) * pulse * (1.0 + flash) * fade;
-	v *= clear_of_body(VERTEX);
+	v *= clear;
 	// ivory in the middle, the blow's colour toward the tips; the paladin behind it must still read
 	vec3 hue = color.rgb / max(max(color.r, max(color.g, color.b)), 0.0001);
 	vec3 tint = mix(vec3(1.0, 0.97, 0.9), hue, clamp(tip_mix * 1.4, 0.0, 1.0));

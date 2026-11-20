@@ -73,6 +73,8 @@ float mark_extent() {
 	if (mark == 8) return 0.48;
 	if (mark == 9) return 0.48;
 	if (mark == 10) return 0.5;
+	if (mark == 11) return 0.5;
+	if (mark == 12) return 0.54;
 	return 1.0;
 }
 
@@ -115,6 +117,34 @@ float mark_sd(vec2 p) {
 			lines = min(lines, sd_box(q - vec2(-0.04 - float(i) * 0.03, y), vec2(0.19 - float(i) * 0.03, 0.025)));
 		}
 		return min(frame, max(lines, leaf + 0.06));
+	} else if (mark == 11) {
+		// the Encanto (DoorGlyph's): a blade leaning up to the right, its guard and grip, a four-point spark on the left
+		vec2 along = normalize(vec2(1.0, 1.0));
+		vec2 side = vec2(along.y, -along.x);
+		vec2 hilt = vec2(-0.2, -0.2);
+		vec2 q = p - hilt;
+		float u = dot(q, along);
+		float v = dot(q, side);
+		float half_w = 0.075 * clamp((0.66 - u) / 0.2, 0.0, 1.0);
+		float blade = max(abs(v) - half_w, max(-u, u - 0.66));
+		float guard = sd_box(vec2(u, v), vec2(0.035, 0.2));
+		float grip = sd_box(vec2(u + 0.13, v), vec2(0.13, 0.04));
+		vec2 s = abs(p - vec2(-0.22, 0.24));
+		float star = (s.x * 0.28 + s.y - 0.2 * 0.28) * 0.96;
+		star = min(star, (s.x + s.y * 0.28 - 0.2 * 0.28) * 0.96);
+		return min(min(blade, star), min(guard, grip));
+	} else if (mark == 12) {
+		// the Psalm (DoorGlyph's): a pointed arch drawn as a line, its two arcs meeting at the top, a lozenge inside
+		float hw = 0.32;
+		float r = 0.62;
+		float spring = 0.0;
+		float foot = -0.5;
+		vec2 a = vec2(abs(p.x) - (hw - r), p.y - spring);
+		float ogive = max(length(a) - r, -p.y + spring);
+		float body = max(abs(p.x) - hw, max(p.y - spring - 0.1, foot - p.y));
+		float arch = min(ogive, body);
+		float line = abs(arch) - 0.045;
+		return min(line, sd_diamond(p - vec2(0.0, -0.12), 0.15));
 	} else if (mark >= 6 && mark <= 8) {
 		int n = mark - 5;
 		float d = 10.0;

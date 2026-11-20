@@ -33,8 +33,11 @@ func _horde() -> Horde:
 
 
 ## Red on the floor and in the air is danger (the warnings of Ground): no wind-up light may read as red.
+## The warnings' red (vfx_pass_spec.md 3, rule 5: the warning is hue 349 to 4), with a margin: a wind-up's light never
+## reads as a warning on the floor. The dead's magenta (320 to 330, V-11) is not it.
 func _is_red(c: Color) -> bool:
-	return c.r > 1.5 * c.g and c.r > 1.5 * c.b
+	var hue := c.h * 360.0
+	return c.s > 0.4 and (hue >= 340.0 or hue <= 15.0)
 
 
 func test_each_part_has_its_wind_up() -> void:

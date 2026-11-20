@@ -186,7 +186,7 @@ const COLD_GLOW_SHADER := preload("res://assets/shaders/cold_glow.gdshader")
 ## The mist beyond the cut front walls (spec 2.3): how far out of the outer face, its middle's height, height, colour
 ## (times 2 on the card), alpha. ENV-HB4: lower, flatter and fainter (at 5 m high and 0.5 it read as a tall pale band
 ## beside the east front, over the far ruins).
-const FRONT_MIST := Vector4(2.5, -4.0, 3.0, 0.3)
+const FRONT_MIST := Vector4(2.5, -4.0, 3.0, 0.25)
 const FRONT_MIST_COLOR := Color(0.10, 0.15, 0.18)
 ## The shrouded effigy on the great tomb (A1): its length, the share of the tomb's length its middle stands off west
 ## (from x -0.6 to 1.6 on the tomb at 0.5), how much lighter its stone is.

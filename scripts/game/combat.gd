@@ -297,7 +297,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		ComboNode.Effect.WAVE:
 			throw_wave(node, origin, dir, color, tags)
 		ComboNode.Effect.STUN:
-			fx.burst(&"light", Vector3(origin.x, 0.4, origin.y))
+			fx.hero_burst(&"light", Vector3(origin.x, 0.4, origin.y))
 	if gifts:
 		_gift_wave(node, origin, dir, color)
 	var window := boons.stat(&"return_time", tags)
@@ -389,6 +389,8 @@ func _draw_hit(e: Enemy, axis: Vector2, away: Vector2, color: Color, heavy: bool
 	fx.gash(at, Vector3(axis.x, lean, axis.y), color, length, heavy, GASH_TIME.y if heavy or finisher else GASH_TIME.x)
 	# the snap at the contact (vfx_pass_spec.md V-05)
 	fx.contact(at, Vector3(axis.x, 0.0, axis.y), color, heavy or finisher)
+	# and the family's own form over it (vfx_pass_spec.md 5.3)
+	fx.family_hit(Fx.family_of(color), at, Vector3(axis.x, 0.0, axis.y), color, heavy or finisher)
 	fx.chips(at, Vector3(away.x, 0.35, away.y), CHIP_COLOR, _look.randi_range(GASH_CHIPS.x, GASH_CHIPS.y), CHIP_SPEED, CHIP_SIZE, CHIP_LIFE, 0.7)
 
 
@@ -463,7 +465,7 @@ func cast(at: Vector2, omega: bool) -> void:
 	var z := ground.add_zone(Ground.Kind.BIND, at, radius, hero.cast_time, boons.stat(&"cast_dps", CAST_TAGS), CAST_TAGS)
 	if omega:
 		z.burst = hero.cast_burst * (1.0 + boons.stat(&"damage_pct", CAST_TAGS))
-	fx.ring(at, radius, CAST_COLOR, 0.3)
+	fx.circle_cast(at, radius, CAST_COLOR)
 	fx.hero_burst(&"light", Vector3(at.x, 0.4, at.y))
 	Audio.play(CombatSounds.EVENTS[&"circle_omega" if omega else &"circle"])
 
@@ -471,7 +473,7 @@ func cast(at: Vector2, omega: bool) -> void:
 ## The held circle of light runs out: everything inside takes the burst.
 func cast_burst(z: Ground.Zone) -> void:
 	horde.in_circle(z.pos, z.radius, _hits)
-	fx.ring(z.pos, z.radius * 1.1, CAST_COLOR, 0.3)
+	fx.circle_burst(z.pos, z.radius, CAST_COLOR)
 	fx.chips(Vector3(z.pos.x, 0.6, z.pos.y), Vector3.UP, CAST_COLOR, 12, 7.0, 0.12, 0.4, 1.3)
 	fx.shake(2.0)
 	_mats.clear()
@@ -493,8 +495,9 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 	if shot.kind != Projectiles.Kind.BLADE and shot.seen.size() <= MAX_STARS:
 		var at := Vector3(e.pos.x, 1.0 + e.y, e.pos.y)
 		if shot.kind == Projectiles.Kind.SPARK:
-			# the dart: a puncture star, chips with the gold of the blade's veins
-			fx.impact(at, shot.color, SPECIAL_STAR, GASH_TIME.y)
+			# the wave: the snap of the contact (V-05) with old gold tips (V-06), chips with the gold of the blade's veins
+			fx.contact(at, Vector3(along.x, 0.0, along.y), Fx.OLD_GOLD, false)
+			fx.family_hit(Fx.family_of(shot.color), at, Vector3(along.x, 0.0, along.y), shot.color)
 			fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6, 2)
 		else:
 			# the held special: a crossed streak along its flight

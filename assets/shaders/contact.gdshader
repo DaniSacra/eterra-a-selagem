@@ -14,6 +14,8 @@ uniform float half_m = 1.0;
 uniform float spike_min_m = 0.25;
 uniform float spike_max_m = 0.6;
 uniform float heart_m = 0.12;
+// P1-1: the heart is a hard five-point star (heart_m out to its points), no soft disc; as it fades every spike shrinks
+// toward the shortest (spike_min_m), so the last frame never keeps a lone pair of long points (it read as a cross)
 // the screen-space direction the blade went (normalised), and the fan half of the spikes go into
 uniform vec2 aim = vec2(1.0, 0.0);
 uniform float fan = 1.22;
@@ -36,10 +38,10 @@ void fragment() {
 		float h2 = fract(sin(fi * 39.3468 + seed * 11.135) * 24634.6345);
 		// the first half in the fan toward aim, the rest round the other way, all turned off the regular
 		float ang = fi < n * 0.5
-			? base + (h1 - 0.5) * fan
+			? base + ((fi + 0.5) / max(floor(n * 0.5), 1.0) - 0.5) * fan + (h1 - 0.5) * 0.3
 			: base + PI + (fi - n * 0.5) / max(n * 0.5, 1.0) * TAU * 0.6 - TAU * 0.3 + (h1 - 0.5) * 0.5;
 		vec2 axis = vec2(cos(ang), sin(ang));
-		float len = mix(spike_min_m, spike_max_m, h2);
+		float len = mix(spike_min_m, mix(spike_min_m, spike_max_m, h2), 1.0 - smoothstep(0.2, 0.8, life));
 		float along = dot(m, axis);
 		float across = abs(m.x * axis.y - m.y * axis.x);
 		if (along > 0.0 && along < len) {
@@ -50,11 +52,16 @@ void fragment() {
 			tip = max(tip, on * k);
 		}
 	}
-	float heart = 1.0 - smoothstep(heart_m * 0.6, heart_m, length(m));
+	// a five-point star: its radius swings between heart_m (the points) and 0.42 of it (the notches), hard edged
+	float ha = atan(m.y, m.x) + seed * TAU;
+	float notch = abs(fract(ha / TAU * 5.0) * 2.0 - 1.0);
+	float heart_r = mix(heart_m * 0.42, heart_m, pow(notch, 1.6));
+	float hpx = max(fwidth(m.x), 0.0005);
+	float heart = 1.0 - smoothstep(heart_r - hpx, heart_r, length(m));
 	float v = max(star, heart) * (1.0 - smoothstep(0.5, 1.0, life));
 	if (v <= 0.01) discard;
 	vec3 hue = color.rgb / max(max(color.r, max(color.g, color.b)), 0.0001);
-	vec3 light = mix(vec3(1.0, 0.97, 0.9), hue, clamp(tip * 1.5, 0.0, 1.0) * (1.0 - heart)) * v;
+	vec3 light = mix(vec3(1.0, 0.95, 0.86), hue, clamp(tip * 1.5, 0.0, 1.0) * (1.0 - heart)) * v;
 	light *= peak;
 	ALBEDO = light;
 	ALPHA = clamp(v, 0.0, 1.0);

@@ -21,8 +21,9 @@ const OVER_SHADER := preload("res://assets/shaders/enemy_tell_over.gdshader")
 ## Quads on the screen at once; past it the rest is not drawn.
 const POOL := 320
 const FLOATS := 20
-## Steel catching light: blades, the tip of a bolt, the edge of a shield.
-const PALE := Color(1.25, 1.2, 1.05)
+## Steel catching light: blades, the tip of a bolt, the edge of a shield. vfx_pass_spec.md V-13: a reddish ivory (hue
+## near 8, pale), never the paladin's white (it was (1.25, 1.2, 1.05)).
+const PALE := Color(1.05, 0.78, 0.74)
 const DUST := Color(0.34, 0.31, 0.28)
 ## Armor: old gold, as the elites' trims (CrowdRenderer.GILD_COLOR), bright enough to read as a spark.
 const OLD_GOLD := Color(1.5, 1.1, 0.5)
@@ -32,6 +33,11 @@ const OLD_GOLD := Color(1.5, 1.1, 0.5)
 const GLINT_FROM := 0.45
 const GLINT_PEAK := 0.85
 const GLINT_SIZE := 0.7
+## V-13: the gleam is one stroke running once along the edge, from the guard to the tip (GLINT_LINE m at size 1, about
+## 2 px wide at 1080: GLINT_WIDTH m, its lit part GLINT_RUN of the line), and a hot point at the tip; never a star.
+const GLINT_LINE := 0.6
+const GLINT_WIDTH := 0.03
+const GLINT_RUN := 0.35
 ## The crossbow's bolt drawn back: a pale streak along the aim, growing to this length (meters at size 1), from
 ## this share of the wind-up.
 const BOLT_FROM := 0.35
@@ -259,10 +265,13 @@ func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -
 		EnemyDef.Tell.GLINT:
 			var g := ramp(k, GLINT_FROM, GLINT_PEAK)
 			if g > 0.0:
-				# a pale gleam on the edge: it swells toward the blow and is gone when the blade comes down
-				_put(Shape.DOT, at, Vector2.ONE * GLINT_SIZE * 0.5 * d.size * g, PALE, 0.8 * g)
-				_put(Shape.STREAK, at, Vector2(GLINT_SIZE * d.size * g, 0.07 * d.size), PALE, 0.9 * g, 0.5)
-				_put(Shape.STREAK, at, Vector2(GLINT_SIZE * 0.55 * d.size * g, 0.06 * d.size), PALE, 0.7 * g, 0.5 + PI * 0.5)
+				# a gleam running once along the edge toward the blow, a hot point at the tip, gone when the blade comes down
+				var run := smoothstep(GLINT_FROM, GLINT_PEAK, k)
+				var way := (_right * 0.7 + _up * 0.7).normalized() * GLINT_LINE * d.size
+				var guard := at - way * 0.5
+				var head := guard + way * run
+				_stroke(guard + way * maxf(0.0, run - GLINT_RUN), head, GLINT_WIDTH * d.size, PALE, 0.9 * g, 2, false)
+				_put(Shape.DOT, guard + way, Vector2.ONE * 0.16 * d.size, PALE, 0.8 * g * smoothstep(0.6, 1.0, run))
 		EnemyDef.Tell.TREMBLE:
 			# dust shaken off the floor under it
 			for i in 3:
@@ -273,10 +282,12 @@ func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -
 		EnemyDef.Tell.ORB:
 			var c := magic_of(d)
 			var gone := 1.0 - smoothstep(0.94, 1.0, k)
-			_put(Shape.DOT, at, Vector2.ONE * ORB_HALO * d.size * (0.6 + 0.4 * k), c, 0.5 * k * gone)
-			# the core swells as the staff comes up and is held
+			_put(Shape.DOT, at, Vector2.ONE * ORB_HALO * d.size * (0.6 + 0.4 * k), c, 0.25 * k * gone)
+			# the core swells as the staff comes up and is held: dim inside, its hue on a rim (V-11 and V-13: the dark
+			# cored shot it will loose), under what stands in front of it
 			var core := lerpf(ORB_CORE, ORB_CORE_FULL, smoothstep(0.1, 0.85, k)) * d.size
-			_put(Shape.DOT, at, Vector2.ONE * core, c, minf(1.0, k * 2.5) * 0.6 * gone)
+			_put(Shape.DOT, at, Vector2.ONE * core, c, minf(1.0, k * 2.5) * 0.25 * gone)
+			_put(Shape.RING, at, Vector2.ONE * core * 1.08, c, minf(1.0, k * 2.5) * 0.8 * gone, 0.0, 0.22)
 			# rings closing on it: the magic gathered from round it into the staff's top
 			var wave := k * ORB_RINGS
 			var r_k := 1.0 - fposmod(wave, 1.0)
@@ -416,7 +427,7 @@ func _flat_bar(shape: Shape, at: Vector3, a: Vector2, b: Vector2, width: float, 
 
 ## A stroke from a to b in the world, facing the camera, width wide, outlined in ink, drawn over. part: 0 both, 1 only
 ## the ink, 2 only the light (strokes that meet put all their ink first).
-func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, part := 0) -> void:
+func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, part := 0, over := true) -> void:
 	var along := b - a
 	if along.length_squared() < 1e-6 or alpha <= 0.003:
 		return
@@ -430,7 +441,7 @@ func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, p
 		var w := width + (INK_EDGE * 2.0 if ink else 0.0)
 		var x := along + (dir * INK_EDGE * 2.0 if ink else Vector3.ZERO)
 		_write(Basis(x, side * w, facing), (a + b) * 0.5, Shape.INK if ink else Shape.BAR, Color.BLACK if ink else color,
-			(INK_ALPHA * minf(alpha / 0.9, 1.0)) if ink else alpha, 0.0, 0.0, 0.0, true)
+			(INK_ALPHA * minf(alpha / 0.9, 1.0)) if ink else alpha, 0.0, 0.0, 0.0, over)
 
 
 ## One enemy whose attack was just loosed, t seconds ago (model, anim, clip_t: the pose drawn, as for tell()).

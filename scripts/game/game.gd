@@ -716,8 +716,8 @@ func take_psalm(p: PsalmDef) -> bool:
 		return false
 	var codex: Dictionary = (Save.data.get("codex", {}) as Dictionary).get("psalms", {})
 	var first := int((codex.get(String(p.id), {}) as Dictionary).get("taken", 0)) == 0
-	fx.ring(player.pos, 3.5, p.color, 0.6)
-	column(player.pos, p.color, 1.4, 9.0, 0.8)
+	# (vfx_pass_spec.md 6: light from above is only for what lies to be taken) the Psalm's ring drawn round him
+	fx.family_mark(Boon.Family.LUZ, player.pos, 3.5, p.color, 0.8)
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 	fx.word(Vector3(player.pos.x, 3.2, player.pos.y), T.t(p.name_key), p.color)
 	Music.sting(p.id)  # the Psalm's theme over the bed (E4-06)
@@ -931,8 +931,11 @@ func _take(b: Boon) -> void:
 	var hp_bonus := boons.stat(&"max_hp")
 	player.max_hp = hero.max_hp + hp_bonus + life_bonus
 	player.heal(hp_bonus - old_hp_bonus)
-	fx.ring(player.pos, 3.0, b.color(), 0.5)
-	column(player.pos, b.color(), 1.2, 8.0, 0.6)
+	# (vfx_pass_spec.md 6 and 5.3: no column over him; the family's own form on the floor, a plain ring for an Elo)
+	if Fx.MARK_FORM.has(b.family):
+		fx.family_mark(b.family, player.pos, 3.0, b.color(), 0.6)
+	else:
+		fx.ring(player.pos, 3.0, b.color(), 0.5)
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 
 
@@ -1114,7 +1117,7 @@ func _on_killed(e: Enemy) -> void:
 		for i in 14:
 			orbs.drop(e.pos + Vector2.from_angle(TAU * i / 14.0) * 1.2, maxi(1, e.def.xp / 14))
 		fx.shake(3.0)
-		column(e.pos, e.def.rim_color, 1.5, 12.0, 0.8)
+		fx.elite_surge(e.pos, 2.0)  # (V-15: no column; the old horde's elite falls in a ring of smoke)
 		Audio.play(&"elite_down")
 	elif e.def.behavior != EnemyDef.Behavior.BOSS:
 		orbs.drop(e.pos, e.def.xp)
@@ -1372,7 +1375,7 @@ func chamber_look_at(want: Vector2, distance: float, fov: float) -> Vector2:
 ## special|omega|spin|boss:<moment> it then waits for the next such swing of the paladin (hit: one that reaches someone;
 ## special: the special's wave; spin: the combo's spin) and saves --shot-after seconds of real time later, so the swing's effects are on
 ## screen. Also ritual-left:<n> (n of the ritual's dead standing), hurt, hurt-cursed (a blow taken) and end (the end
-## screen).
+## screen), reward (a room won, its reward's light).
 func _shot() -> void:
 	# Q-T5-7: a boss moment is listened for from the start (_watch_moment): one that came before --shot-at no longer
 	# hangs the capture, which then shoots as --shot-at ends (and says so)
@@ -1412,6 +1415,11 @@ func _shot() -> void:
 		while not _screen is EndScreen:
 			await get_tree().process_frame
 		await get_tree().create_timer(Dev.num("shot-after", 0.066), true, false, true).timeout
+	elif Dev.arg("shot-on") == "reward":
+		# a room won: its reward's light (RewardShaft, vfx_pass_spec.md 6.6), --shot-after seconds of real time later
+		while rooms == null or not is_instance_valid(rooms.get(&"_reward_shaft")):
+			await get_tree().process_frame
+		await get_tree().create_timer(Dev.num("shot-after", 1.2), true, false, true).timeout
 	elif Dev.arg("shot-on") == "ult" or Dev.arg("shot-on") == "ult-gesture":
 		# the ultimate: as its gesture begins (the band's warning) or as its blow lands, --shot-after seconds later
 		if Dev.arg("shot-on") == "ult":

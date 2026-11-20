@@ -30,7 +30,8 @@ uniform float circle_veil = 0.02;
 uniform float circle_marks = 7.0;
 // C12d (VX-09): the circle's rim and marks are a fine line, not a mark of the interface over the bodies: the rim's
 // share of the strength, its width as a share of the warnings' rim_m, and the marks' share of the strength and of a turn.
-uniform float circle_rim = 0.8;
+// VFX pass V-07: 0.62 (at 0.8 the ivory rim read 233 to 235 on the screen, past the rule's 226)
+uniform float circle_rim = 0.62;
 uniform float circle_rim_width = 0.25;
 uniform float circle_mark_light = 0.45;
 uniform float circle_mark_span = 0.1;

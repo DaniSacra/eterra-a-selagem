@@ -38,6 +38,10 @@ uniform float core_light = 0.24;
 uniform float core_sat = 0.4;
 // The edge vanishes over this share of the tail (the head keeps the light).
 uniform float edge_tail = 0.85;
+// vfx_pass_spec.md 5.3: the family of the Blessing that changes the blow (Fx.family_of; -1 the sword's own): Chama the
+// back of the ribbon breaks into tongues licking in from the edge, Geada 4 to 6 ice barbs hang in from the edge near the
+// head, Luz a thinner edge that lasts the whole tail, Vigília three segmented strokes behind the edge (the cry's echo).
+uniform int family = -1;
 
 // Eterra Stylized (STY-06, T23): with the global art_style at 1 the core reaches style_core_depth inward and keeps more
 // of its depth down the tail (style_core_thin), cut into broken strokes over the back half (slash_strokes.gdshaderinc);
@@ -53,7 +57,10 @@ uniform float style_core_thin = 0.5;
 uniform float style_core_light = 0.216;
 uniform float style_cap = 0.55;
 uniform float style_edge_cap = 0.38;
-uniform float style_edge_pale = 0.45;
+// VFX review P2 (saturation p50 near 0.4, it was 0.18 to 0.26): the stylized edge less pale (0.3, it was 0.45) and
+// the core more of its colour (style_core_sat 0.65)
+uniform float style_edge_pale = 0.3;
+uniform float style_core_sat = 0.65;
 uniform float style_peak = 0.6;
 
 #include "res://assets/shaders/slash_strokes.gdshaderinc"
@@ -100,9 +107,11 @@ void fragment() {
 	// a pointed nose at the head and no straight cut where the swing stops
 	float nose = pow(clamp(behind / 0.08, 0.0, 1.0), 0.8) * sqrt(smoothstep(0.0, 0.07, 1.0 - along));
 	float px = max(fwidth(y), 0.0001);
+	float wire_px = family == 2 ? edge_px * 0.6 : edge_px;
+	float wire_tail = family == 2 ? 1.05 : edge_tail;
 	// the fine leading edge: edge_px pixels wide, sharp, fading along the tail
-	float wire = (1.0 - smoothstep(px * edge_px * 0.5, px * (edge_px * 0.5 + 1.0), abs(y - e))) * nose;
-	wire *= 1.0 - smoothstep(edge_tail * 0.4, edge_tail, k);
+	float wire = (1.0 - smoothstep(px * wire_px * 0.5, px * (wire_px * 0.5 + 1.0), abs(y - e))) * nose;
+	wire *= 1.0 - smoothstep(wire_tail * 0.4, wire_tail, k);
 	// the core: light just inside the edge, thinner toward the end of the tail
 	bool styled = art_style > 0.5;
 	float depth = core_depth * e * pow(1.0 - k, 1.2) * nose;
@@ -119,14 +128,45 @@ void fragment() {
 	}
 	float glow = pow(1.0 - k, 1.6);
 	float life = pow(1.0 - rest, 1.5);
+	vec3 fam = vec3(0.0);
+	if (family == 0) {
+		// tongues: four lanes along the back of the tail, each a flame licking in from the edge, its tip redder
+		float lane = (k - 0.3) / 0.7 * 4.0;
+		float u = fract(lane) * 2.0 - 1.0;
+		float id = floor(lane);
+		float h = (e - y) / 0.3;
+		float w = pow(clamp(1.0 - h, 0.0, 1.0), 0.7) * 0.8 * (0.8 + 0.2 * sin(TIME * 25.0 + id * 2.3));
+		float tongue = step(0.3, k) * step(0.0, h) * step(h, 1.0) * (1.0 - smoothstep(w - 0.2, w, abs(u)));
+		core *= 1.0 - step(0.3, k);
+		fam = mix(color.rgb, color.rgb * vec3(0.8, 0.38, 0.22), h) * tongue * pow(1.0 - k, 0.6) * 0.5;
+	} else if (family == 1) {
+		// ice barbs hanging in from the edge, five along the arc, near the head only
+		float lane = along * 5.0;
+		float u = fract(lane) * 2.0 - 1.0;
+		float h = (e - y) / 0.2;
+		float barb = step(0.0, h) * step(h, 1.0) * (1.0 - smoothstep((1.0 - h) * 0.45 - 0.05, (1.0 - h) * 0.45, abs(u)));
+		barb *= 1.0 - smoothstep(0.4, 0.75, k);
+		fam = mix(color.rgb, vec3(1.0), u > 0.0 ? 0.45 : 0.1) * barb * 0.55;
+	} else if (family == 3) {
+		// the cry's echo: three strokes behind the edge, broken into segments
+		float strokes = 0.0;
+		for (int i = 1; i <= 3; i++) {
+			float at = e - 0.09 * float(i);
+			strokes += (1.0 - smoothstep(px, px * 2.0, abs(y - at))) * (1.0 - 0.22 * float(i));
+		}
+		strokes *= step(0.25, fract(along * 14.0)) * (1.0 - smoothstep(0.2, 0.8, k)) * nose;
+		core *= 0.6;
+		fam = mix(color.rgb, vec3(1.0), 0.2) * strokes * 0.5;
+	}
+
 	vec3 edge_c = mix(color.rgb, vec3(1.0), edge_pale);
 	vec3 core_c = pale_to(color.rgb, core_sat);
-	if (wire + core <= 0.002) discard;
-	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow) * life * intensity;
+	if (wire + core <= 0.002 && max(fam.r, max(fam.g, fam.b)) <= 0.002) discard;
+	ALBEDO = (edge_c * wire * edge_light * (0.55 + 0.45 * glow) + core_c * core * core_light * glow + fam) * life * intensity;
 	ALPHA = 0.0;
 	if (styled) {
 		vec3 ec = mix(color.rgb, vec3(1.0), style_edge_pale);
-		vec3 lit = ec * wire * edge_light * (0.55 + 0.45 * glow) * life * intensity + core_c * core * style_core_light * glow * life * intensity;
+		vec3 lit = ec * wire * edge_light * (0.55 + 0.45 * glow) * life * intensity + pale_to(color.rgb, style_core_sat) * core * style_core_light * glow * life * intensity + fam * life * intensity;
 		float peak = max(lit.r, max(lit.g, lit.b));
 		if (peak > style_peak) {
 			lit *= style_peak / peak;

@@ -17,6 +17,8 @@ const SHAFTS := [[1, 0], [1, 1], [1, 2], [1, 3], [2, -1], [3, -1], [4, -1], [5, 
 var shafts := false
 var at_s := 2.0
 var shop := 1.0
+## --rewards=10,11,1: other RunMap.Reward ids side by side (10 Encanto, 11 Salmo).
+var rewards: Array = REWARDS
 
 
 func _initialize() -> void:
@@ -30,6 +32,8 @@ func _initialize() -> void:
 			dist = maxf(dist, 46.0)
 		elif a.begins_with("--at="):
 			at_s = float(a.substr(5))
+		elif a.begins_with("--rewards="):
+			rewards = Array(a.substr(10).split(",")).map(func(x: String) -> int: return int(x))
 		elif a.begins_with("--shop="):
 			shop = float(a.substr(7))
 		elif not a.begins_with("--"):
@@ -75,7 +79,7 @@ func _build(out: String, dist: float) -> void:
 	var right := Vector2.RIGHT.rotated(-a)
 	# the paladin far away (the shafts fall near him)
 	RenderingServer.global_shader_parameter_set(&"hero_pos", Vector3(0, 0, 100))
-	var list: Array = SHAFTS if shafts else REWARDS
+	var list: Array = SHAFTS if shafts else rewards
 	var shaft: Variant = load("res://scripts/game/reward_shaft.gd")
 	for i in list.size():
 		var spot := Node3D.new()

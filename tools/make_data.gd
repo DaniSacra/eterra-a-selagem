@@ -211,7 +211,8 @@ const STUN := 0.5
 ## to magenta with the spec). Crimson: the crossbow's bolt and the runner's burst (hue 350 to 355 on the screen);
 ## magenta: the caster's orbs, the priest's vine and the elder's fan (320 to 330).
 const DEAD_CRIMSON := Color(1.4, 0.16, 0.3)
-const DEAD_MAGENTA := Color(1.2, 0.18, 0.85)
+## (ART_REVIEW P2: the spec's (1.2, 0.18, 0.85), hue 321, showed 313 on the screen; 333 in the material lands in 320 to 330)
+const DEAD_MAGENTA := Color(1.2, 0.18, 0.64)
 const STUN_HEAVY := 1.1
 ## E1c (AUDIT.md P2): Hades II's PostAttackDuration of each one's counterpart (study 4.2), the window it stands
 ## still after its blow (EnemyDef.recover_time): Guard 2.1 (elite 1.5), Radiator 1.35 (elite 0.5), Brawler 1.1 after

@@ -2,7 +2,7 @@ shader_type spatial;
 // The cut of a blow landing (Fx.gash): a short streak along `axis` (the way the blade was moving there, in the
 // world), pointed at both ends, a pale core inside the blow's colour, opening fast and closing as it fades. A heavy
 // blow adds a thinner streak across it. Drawn on a quad that turns around the axis to face the camera.
-render_mode unshaded, blend_add, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled, skip_vertex_transform;
+render_mode unshaded, blend_premul_alpha, cull_disabled, depth_draw_never, depth_test_disabled, shadows_disabled, skip_vertex_transform;
 
 uniform vec4 color : source_color = vec4(1.0, 0.8, 0.4, 1.0);
 uniform float life = 0.0;
@@ -14,8 +14,12 @@ uniform vec3 axis = vec3(1.0, 0.0, 0.0);
 uniform float thick = 0.16;
 // 1: the second streak of a heavy blow.
 uniform float cross_cut = 0.0;
-// How far the core goes from the blow's colour toward white.
-uniform float pale = 0.6;
+// How far the core goes from the blow's colour toward white (VFX pass P1-2: 0.35; it was 0.6 and, added, seen end on
+// over the enemy it was the white vertical streak at 255).
+uniform float pale = 0.35;
+// The brightest channel it writes (Fx.gash: ScreenTone.linear_peak of its pale core at 210), laid over what is behind
+// (premultiplied), never added past the screen's 226.
+uniform float peak = 0.8;
 
 void vertex() {
 	vec3 center = MODEL_MATRIX[3].xyz;
@@ -50,5 +54,14 @@ void fragment() {
 	}
 	float fade = 1.0 - smoothstep(0.6, 1.0, life);
 	vec3 c = color.rgb * edge + mix(color.rgb, vec3(1.0), pale) * heart * 0.8;
-	ALBEDO = c * fade * intensity;
+	vec3 lit = c * fade * intensity;
+	float top = max(lit.r, max(lit.g, lit.b));
+	if (top > peak) {
+		lit *= peak / top;
+		top = peak;
+	}
+	float a = clamp(top / max(peak, 0.0001), 0.0, 1.0);
+	if (a <= 0.002) discard;
+	ALBEDO = lit;
+	ALPHA = a;
 }

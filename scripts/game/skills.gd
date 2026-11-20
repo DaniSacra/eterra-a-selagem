@@ -16,12 +16,20 @@ const BEAM_CORE_CAP := Fx.BEAM_CORE_CAP
 const ORBIT_SPEED := 2.6
 const ORBIT_TICK := 0.3
 ## Q-T5-6: the fire orbs read as embers by the paladin, not as two blown-out orange globes: the core under the
-## screen's ceiling (ScreenTone: 1.0 a channel is already near white after exposure and the filmic curve), a small dim
-## halo (ORB_HALO_SIZE m, it was 1.6 m at 2.4) and a dim trail (they were 3.0, 2.4 and 2.6, over the glow threshold).
+## screen's ceiling (ScreenTone: 1.0 a channel is already near white after exposure and the filmic curve). Since the VFX
+## pass (5.3) no halo and no particle trail: an ember drawn out with smoke behind it.
 const ORB_CORE := Color(0.95, 0.4, 0.1)
-const ORB_HALO := Color(0.42, 0.14, 0.03)
-const ORB_HALO_SIZE := 0.9
-const ORB_TRAIL := Color(0.6, 0.22, 0.05)
+## vfx_pass_spec.md 5.3 (the families' forms in what acts on its own): how long each family's floor mark stays (Fx.
+## family_mark: Chama's tongues 0.4 s over a charred ring of 1.5 s, Geada's plates 0.8 s, Luz 0.5 s, Vigília 0.4 s); the
+## Luz strike falls as a thin ray (STRIKE_RAY m of radius, never a reward's column); the others as streaks falling from
+## FALL_HEIGHT m that land with the blow. The fire orb is an ember drawn out along its way (ORB_EMBER, length and radius)
+## trailing smoke every ORB_SMOKE_EVERY s.
+const MARK_TIME: Array[float] = [1.5, 0.8, 0.5, 0.4]
+const STRIKE_RAY := 0.08
+const FALL_HEIGHT := 7.0
+const FALL_STREAKS := 3
+const ORB_EMBER := Vector2(0.62, 0.13)
+const ORB_SMOKE_EVERY := 0.08
 
 class Pending:
 	var at := Vector2.ZERO
@@ -40,6 +48,7 @@ var _pending: Array[Pending] = []
 var _orbs: Array[MeshInstance3D] = []
 var _orbit_angle := 0.0
 var _orbit_tick := 0.0
+var _orb_smoke := 0.0
 var _found: Array[Enemy] = []
 var _rng := RandomNumberGenerator.new()
 
@@ -92,16 +101,14 @@ func _cast(b: Boon) -> bool:
 			for i in targets.size():
 				var at: Vector2 = targets[i]
 				_queue(at, STRIKE_DELAY + i * 0.07, s.get_radius(lv), _damage(b, lv), tags, s.status, s.get_status_power(lv), color)
-				# what falls: a ball of fire or a pillar of light, seen coming down before it lands
-				_beam(at, color, 0.35, 10.0, STRIKE_DELAY + i * 0.07 + 0.12)
+				# what falls, seen coming down before it lands: Luz a thin ray, the others streaks of their colour
+				_falling(b.family, at, color, STRIKE_DELAY + i * 0.07, 1)
 			Audio.play(&"rain")
 		SkillDef.Kind.NOVA:
 			var r := s.get_radius(lv)
-			game.fx.ring(p, r, color, 0.45)
-			game.fx.slash(p, game.player.facing, r, 359.0, color, 0.3)
-			for k in 10:
-				var a := TAU * k / 10.0
-				game.fx.burst(&"frost" if b.family == Boon.Family.GEADA else &"light", Vector3(p.x + cos(a) * r * 0.7, 0.4, p.y + sin(a) * r * 0.7))
+			if not _mark(b.family, p, r, color):
+				game.fx.ring(p, r, color, 0.45)
+				game.fx.slash(p, game.player.facing, r, 359.0, color, 0.3)
 			game.horde.in_circle(p, r, _found)
 			for e in _found.duplicate():
 				game.combat.skill_hit(e, _damage(b, lv), tags, (e.pos - p).normalized(), 6.0, s.status, s.get_status_power(lv))
@@ -121,13 +128,15 @@ func _cast(b: Boon) -> bool:
 				return false
 			var at: Vector2 = found
 			_queue(at, METEOR_DELAY, s.get_radius(lv), _damage(b, lv), tags, s.status, s.get_status_power(lv), color, true)
-			_beam(at, color, 1.6, 16.0, METEOR_DELAY + 0.2)
-			game.fx.ring(at, s.get_radius(lv), color, METEOR_DELAY)
+			_falling(b.family, at, color, METEOR_DELAY, FALL_STREAKS)
+			game.fx.ring(at, s.get_radius(lv), color, METEOR_DELAY, 0.15, true)
 			Audio.play(&"rain")
 		SkillDef.Kind.CONSECRATE:
 			game.ground.add_zone(Ground.Kind.HOLY, p, s.get_radius(lv), s.get_status_power(lv), _damage(b, lv), tags)
-			game.fx.ring(p, s.get_radius(lv), color, 0.5)
-			game.fx.burst(&"light", Vector3(p.x, 0.3, p.y))
+			if not _mark(b.family, p, s.get_radius(lv), color):
+				game.fx.ring(p, s.get_radius(lv), color, 0.5)
+			# slow gold dust rising over the hallowed floor
+			game.fx.chips(Vector3(p.x, 0.2, p.y), Vector3.UP, Fx.OLD_GOLD * 0.4, 6, 0.6, 0.12, 0.8, 1.2)
 			Audio.play(&"heal")
 	return true
 
@@ -136,6 +145,28 @@ func _cast(b: Boon) -> bool:
 ## or the paladin (Game.column).
 func _beam(at: Vector2, color: Color, radius: float, height: float, time: float) -> void:
 	game.column(at, color, radius, height, time)
+
+
+## The family's floor form (Fx.family_mark) for a gift that acts round a point; false for a family without one (the
+## Elo shows its two in its blows), so the caller keeps the plain ring.
+func _mark(family: int, at: Vector2, radius: float, color: Color) -> bool:
+	if not Fx.MARK_FORM.has(family):
+		return false
+	game.fx.family_mark(family, at, radius, color, MARK_TIME[family])
+	return true
+
+
+## What a gift drops on a point, seen coming down for `delay` s: Luz a thin ray from above (Game.column at STRIKE_RAY,
+## the only column outside the rewards, vfx_pass_spec.md 5.3), the others `streaks` slivers of their colour falling
+## from FALL_HEIGHT to land with the blow.
+func _falling(family: int, at: Vector2, color: Color, delay: float, streaks: int) -> void:
+	if family == Boon.Family.LUZ:
+		_beam(at, color, STRIKE_RAY, 6.0, delay + 0.12)
+		return
+	var speed := FALL_HEIGHT / maxf(delay, 0.05)
+	for k in streaks:
+		var off := Vector2(randf_range(-0.4, 0.4), randf_range(-0.4, 0.4)) if k > 0 else Vector2.ZERO
+		game.fx.chips(Vector3(at.x + off.x, FALL_HEIGHT, at.y + off.y), Vector3.DOWN, color * 0.4, 1, speed, 0.22, delay, 0.0)
 
 
 ## True when a column of this radius at this point stands over the boss (or guardian) shown, if any: on him, or, with
@@ -191,10 +222,10 @@ func _step_pending(dt: float) -> void:
 func _land(q: Pending) -> void:
 	var fire := q.tags.has(&"chama")
 	var frost := q.tags.has(&"geada")
-	game.fx.ring(q.at, q.radius * 1.15, q.color, 0.35 if not q.big else 0.6)
-	game.fx.burst(&"fire" if fire else &"frost" if frost else &"light", Vector3(q.at.x, 0.4, q.at.y))
+	if not _mark(Fx.family_of(q.color), q.at, q.radius * 1.15, q.color):
+		game.fx.ring(q.at, q.radius * 1.15, q.color, 0.35 if not q.big else 0.6)
+		game.fx.burst(&"fire" if fire else &"frost" if frost else &"light", Vector3(q.at.x, 0.4, q.at.y))
 	if q.big:
-		game.fx.burst(&"frost" if frost else &"light", Vector3(q.at.x, 1.0, q.at.y))
 		game.fx.shake(2.5)
 		game.fx.kick_split(0.6)
 		game.fx.hit_stop(50)
@@ -213,28 +244,19 @@ func _step_orbit(b: Boon, dt: float) -> void:
 		lv = game.boons.level(b.id)
 		n = b.skill.get_count(lv)
 	while _orbs.size() < n:
+		# an ember drawn out along its way (vfx_pass_spec.md 5.3), its core amber under the glow, no round halo
 		var mi := MeshInstance3D.new()
-		var sphere := SphereMesh.new()
-		sphere.radius = 0.32
-		sphere.height = 0.64
-		mi.mesh = sphere
+		var ember := CapsuleMesh.new()
+		ember.radius = ORB_EMBER.y
+		ember.height = ORB_EMBER.x
+		ember.radial_segments = 8
+		ember.rings = 2
+		mi.mesh = ember
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = ORB_CORE
+		m.albedo_color = ORB_CORE * 0.85
 		mi.material_override = m
-		var glow := MeshInstance3D.new()
-		glow.mesh = Fx.quad(ORB_HALO_SIZE, ORB_HALO)
-		(glow.mesh as QuadMesh).material.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
-		mi.add_child(glow)
-		var trail := CPUParticles3D.new()
-		trail.amount = 14
-		trail.lifetime = 0.35
-		trail.mesh = Fx.quad(0.4, ORB_TRAIL)
-		trail.color_ramp = Fx.fade_ramp(Color.WHITE)
-		trail.gravity = Vector3(0, 1.5, 0)
-		trail.initial_velocity_max = 0.3
-		trail.local_coords = false
-		mi.add_child(trail)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(mi)
 		_orbs.append(mi)
 	while _orbs.size() > n:
@@ -245,9 +267,19 @@ func _step_orbit(b: Boon, dt: float) -> void:
 	var r := s.get_radius(lv)
 	_orbit_angle += dt * ORBIT_SPEED
 	var p := game.player.pos
+	_orb_smoke -= dt
+	var smoke := _orb_smoke <= 0.0
+	if smoke:
+		_orb_smoke = ORB_SMOKE_EVERY
 	for i in n:
 		var a := _orbit_angle + TAU * i / n
-		_orbs[i].position = Vector3(p.x + cos(a) * r, 1.0, p.y + sin(a) * r)
+		var at := Vector3(p.x + cos(a) * r, 1.0, p.y + sin(a) * r)
+		_orbs[i].position = at
+		# lying along the way it turns (the capsule's axis is its y)
+		var way := Vector3(-sin(a), 0.0, cos(a))
+		_orbs[i].basis = Basis(way.cross(Vector3.UP).normalized(), way, Vector3.UP).orthonormalized()
+		if smoke:
+			game.fx.wisps(at - way * 0.4, Vector3.UP, Fx.SMOKE, 1, 0.4, 0.35, 0.45, 0.3, 1.0)
 	_orbit_tick -= dt
 	if _orbit_tick > 0.0:
 		return

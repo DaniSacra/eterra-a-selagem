@@ -1101,6 +1101,7 @@ func _dress_styled() -> void:
 	if variant_b:
 		_lake(sm, b)
 	_edge_pieces()
+	_west_mist()
 
 
 ## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Jardim), never over the walkable floor: dead roots hanging inside the
@@ -1114,6 +1115,23 @@ const EDGE_PIER_ROOTS := Vector4(0.78, 5.0, 1.2, 2.3)
 const EDGE_IVY_NORTH: Array[float] = [-8.0, 0.25, 6.5]
 const EDGE_IVY_WEST: Array[float] = [-0.6, 5.5]
 const EDGE_IVY := Vector4(0.1, 0.06, 1.6, 2.2)
+
+
+## ENV-HB4 (benchmark_hades2_style.md 4.1): the dark under the south-west edge in an olive mist (the void beside the
+## room read black and grey): banks of it below the edge (each x, height, z of its middle; its width, height), their
+## colour times 2 on the card (ArenaKit.mist_bank), alpha.
+const STY_WEST_MIST: Array[Vector3] = [Vector3(-24.0, -5.0, 4.0), Vector3(-20.0, -6.5, 17.0)]
+const STY_WEST_MIST_SIZE := Vector2(26.0, 6.0)
+const STY_WEST_MIST_COLOR := Color(0.11, 0.12, 0.035)
+const STY_WEST_MIST_ALPHA := 0.45
+
+
+func _west_mist() -> void:
+	var before := kit.root.get_child_count()
+	for c in STY_WEST_MIST:
+		kit.mist_bank(c, STY_WEST_MIST_SIZE, STY_WEST_MIST_COLOR * 2.0, STY_WEST_MIST_ALPHA, 0.3, 0.4)
+	for i in range(before, kit.root.get_child_count()):
+		ArenaKit.style_only(kit.root.get_child(i) as Node3D)
 
 
 func _edge_pieces() -> void:

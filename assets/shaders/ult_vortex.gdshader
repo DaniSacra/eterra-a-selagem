@@ -20,7 +20,11 @@ uniform float veil_peak = 1.0;
 uniform float arm_peak = 1.0;
 uniform float rim_peak = 1.0;
 // The veil: its opacity at most (in the middle), at the rim, and the share of its peak it lights.
-uniform float veil = 0.3;
+// vfx_pass_spec.md V-10: the veil 0.15 (at 0.3 it read cyan), the floor inside darkened by ink (0.35 in the middle) and
+// the arms broken into slivers drawn in (dash_m long, never a continuous spiral line)
+uniform float veil = 0.15;
+uniform float ink = 0.35;
+uniform float dash_m = 0.55;
 uniform float veil_edge = 0.08;
 uniform float veil_light = 0.16;
 // The area's radius in meters, the rim's width, the arms' width at the rim and in the middle (meters).
@@ -88,6 +92,9 @@ void fragment() {
 	arm = max(arm, thread(ph2 * d, w * 0.7) * trail);
 	// brighter toward the middle, thinning into the core, gone past the rim
 	float rise = mix(arm_rim_share, 1.0, 1.0 - smoothstep(0.15, 1.0, r)) * smoothstep(0.0, core_m / r_m, r) * inside;
+	// slivers, not a line: each arm broken along its way, the pieces running in with the turn
+	float run = fract(d / dash_m + turn * 1.3 + floor(ang / sector) * 0.37);
+	arm *= step(0.4, run) * smoothstep(0.4, 0.55, run) * (1.0 - smoothstep(0.85, 1.0, run));
 	arm *= rise * arm_light;
 	float rim = thread(abs(d - r_m), rim_m) * rim_light;
 	vec3 e = color.rgb / max(max(color.r, color.g), max(color.b, 0.001));
@@ -96,7 +103,8 @@ void fragment() {
 	vec3 light = e * veil_peak * veil_light * va / max(veil, 0.001);
 	light = mix(light, iv * arm_peak, arm);
 	light = mix(light, g * rim_peak, rim);
-	float cover = max(va, max(arm, rim));
+	float dark = ink * mix(1.0, 0.45, smoothstep(0.0, 1.0, r)) * inside * (1.0 - close);
+	float cover = max(max(va, dark), max(arm, rim));
 	// the paladin seen through it
 	vec3 hero = (VIEW_MATRIX * vec4(hero_pos + vec3(0.0, HERO_MID, 0.0), 1.0)).xyz;
 	float keep = 1.0;

@@ -459,8 +459,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   **Esmeralda**: na Bolsa (`MaterialCount.purse`, `shown`) depois da primeira, no cartão do save, em Trazidos (todo
   `MaterialPurse.IDS`) e na saudação de material; a ferramenta achada também em Trazidos. Capturas: `tools/ui_lab.gd --
   --enchant`, `--doors=boon,meeting,enchant,psalm`, `--shop --route --want-enchant`, `--cursed`; Forja com
-  `--tools=tool_refine --refined=refine_fio,refine_peso` (só na sessão, `Save._dev_materials`). Pendente do
-  technical-artist: o medalhão no mundo (`RewardGem`) para Encanto e Salmo ainda sai vazio.
+  `--tools=tool_refine --refined=refine_fio,refine_peso` (só na sessão, `Save._dev_materials`).
+  Medalhões do mundo (`RewardGem`): Encanto (`Mark.ENCHANT`, a lâmina inclinada com a centelha, esmalte verde
+  `ENAMEL_ENCHANT` matiz 148) e Salmo (`Mark.PSALM`, o arco ogival com o losango, lilás `ENAMEL_PSALM` matiz 255, longe
+  da Provação), desenhados no `reward_gem.gdshader`; `tools/gem_lab.gd --rewards=10,11,1`. Cores das famílias: toda tela
+  lê `Boon.color()` (`FAMILY_COLOR`, Vigília em sálvia) e o selo do anjo o `AngelSeal.TINT`, nada copiado.
 - **Mapa da descida** (DV-1, MAP-03, lê o grafo do MAP-01): ação `map` em `Controls` (M, Back
   no controle; remapeável no teclado nas Configurações, linha "Mapa" no Como Jogar), botão discreto "Mapa [M]" ao lado do
   "Sala N de 11" no HUD (`Hud.map_button`: nunca toma o foco, abre no aperto para o clique, que também é o ataque, não
@@ -2581,6 +2584,28 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   quebrados longe no abismo ao norte (`BridgeLook.EDGE_ARCHES`); a corrente com peso espera a correção. Salão sem nada.
   Nada colide nem passa sobre o chão andável (`test_room_style` 43/43, `fit_probe` igual em todas).
 
+## ENV-HB4, o vazio além da borda (só no estilizado; `docs/art/benchmark_hades2_style.md` 4.1; capturas `docs/gallery/ciclo_visual_1120/env4_*`)
+- **Arcadas sob a borda** (`ArenaRoom.under_look()`, padrão `{}`; `_under_arcades`, `_under_run`, constantes `UNDER_*`): cada
+  borda OUTER virada para a câmera (`UNDER_FACING` 0,2) e com pelo menos `UNDER_MIN` 4 m ganha, sob o chão, pilares a cada
+  `UNDER_STEP` 4,6 m (alguns quebrados com uma pedra em cima), arcos de aduelas com o topo em `top`, um vão escuro
+  (`UNDER_RECESS`) e blocos de rocha ou cortinas de raiz (`EdgeKit.root_curtain`) entre eles, na pedra funda da sala um
+  degrau mais clara (`UNDER_TINT` 1,7); longe das bocas das portas (`_near_door`, `UNDER_DOOR`). Opt-in por look:
+  `STY_UNDER` na Cripta (`set` = `FRONT.y`, cores próprias), Fendas, Jardim e Ponte (esta com `skip` nas plataformas de
+  fora). As bordas são guardadas em `_runs` pelo `_edges`.
+- **Cartões de ruína** (`ArenaRoom._style_ruins`, todo `abyss_ruins.gdshader` da sala): menos fustes (`STY_RUIN_SHAFTS`
+  0,1), todo vão entre torres com ponte (`STY_RUIN_BRIDGED` 1), a bruma do cartão `STY_RUIN_MIST` 0,7 do caminho até a
+  pedra dele, e o cartão mais longe pinta a própria bruma onde não há pedra (`backdrop` 1, sem as manchas claras): as
+  faixas verticais claras entre as torres eram o céu aparecendo pelo cartão recortado. Cripta: a bruma da frente baixa,
+  rasa e mais fraca (`CryptLook.FRONT_MIST` (2,5; -4; 3; 0,25)). Fendas: o aqueduto em duas fileiras
+  (`STY_AQUEDUCT_FAR*`), a de perto em `STY_AQUEDUCT_TINT` 3,0 afundando mais embaixo (`STY_AQUEDUCT_SINK`).
+  Jardim: bancos de bruma oliva sob a borda sudoeste (`GardenLook.STY_WEST_MIST*`).
+- Medido (RTX 1920 x 1080, Longe, semente 5; caixa do vazio contra o meio 640,360,640,360, luma p50, p90-p10,
+  saturação p50; antes / depois): Cripta A (1250,700,600,250) 0,59 / 0,46, 39 / 54, 0,37 / 0,41, faixa clara da
+  direita 320 / 211 px; Fendas A (0,300,300,600) 0,40 / 0,42, 23 / 18, 0,40 / 0,54 (o aqueduto lê em pedra, mas a caixa
+  segue escura: fica abaixo de 30); Jardim A (0,500,300,450) 0,25 / 0,36, 30 / 33, 0,28 / 0,29; Ponte (200,650,700,350)
+  0,30 / 0,36, 38 / 56, 0,41 / 0,41, faixa da esquerda 319 / 255 px (as cascatas ao norte, P4, são faixas de propósito).
+  fit_probe igual ao de antes; clássico igual (`test_room_style` 43/43, `test_visual_profile` 6/6).
+
 ## Lote 2B e TA-HB, parte do technical-artist (2026-11-20; evidências em `docs/gallery/lote2b/`, `docs/gallery/hb/`, `docs/gallery/c19/hurt_flash/`)
 - **Ferramentas de `-s` que nomeiam classes com autoload** (`T`, `Audio`): o script de `-s` é compilado antes dos
   autoloads existirem. `tools/enemy_lab.gd`, `tools/walk_strip.gd`, `tools/rj1_lab.gd` e `tools/edge_lab.gd` são calços
@@ -2655,7 +2680,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   igual, Vigília sálvia (era verde 0,45 / 0,95 / 0,6, perto da Emeth), Elo ouro velho (0,78; 0,62; 0,34), o do
   `PsalmDef.color` (era violeta, o de Morvath). `Rooms.PSALM_COLOR` = esse ouro velho (era marfim-lilás); romã e coração
   saem do vermelho do perigo (`Rooms._reward_color`: matiz 352 sat 0,5 e 340 sat 0,45). Magia dos mortos (V-11, `_enemies` do
-  `make_data.gd`): `DEAD_CRIMSON` (1,4; 0,16; 0,3) no corredor e no besteiro, `DEAD_MAGENTA` (1,2; 0,18; 0,85) no
+  `make_data.gd`): `DEAD_CRIMSON` (1,4; 0,16; 0,3) no corredor e no besteiro, `DEAD_MAGENTA` (1,2; 0,18; 0,64), matiz 333 no material para dar 320 a 330 na tela (P2 da revisão de arte), no
   feiticeiro, no sacerdote e no Ancião (o violeta frio do feiticeiro, do Daniel de 2026-11-14, saiu com a spec); violeta só
   de Morvath. Nenhum tempo, dano nem alcance mudou.
 

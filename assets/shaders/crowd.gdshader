@@ -74,7 +74,9 @@ uniform float gild_light = 1.7;
 uniform float absorb_light = 1.8;
 // The death dissolve (state.a): only the specks about to go smoulder, in old gold under the glow threshold (C11
 // polish: the old whole-body orange at 3.2 lit Morvath's fall as a saturated yellow blot over the seal).
-uniform vec3 dissolve_color : source_color = vec3(0.62, 0.42, 0.18);
+// vfx_pass_spec.md V-14: the dead go up as dirty embers, a dark carmine (it was old gold (0.62, 0.42, 0.18): gold is the
+// paladin's and the elites')
+uniform vec3 dissolve_color : source_color = vec3(0.35, 0.07, 0.06);
 uniform float dissolve_band = 0.08;
 // A pale light on the edges of the top of the figure (EnemyDef.crest: Morvath's crown cut out of the dark floor):
 // strength, and the height in the model's meters from which it is full.
@@ -153,6 +155,8 @@ uniform float style_flat = 0.35;
 uniform float style_flat_lod = 3.0;
 uniform float style_tell = 1.0;
 uniform float style_vivid = 0.0;
+// P1-5: the most the flash lifts Morvath's body to in the stylized look (his violet, under the screen's 226)
+uniform float style_boss_flash_cap = 0.5;
 uniform float style_hero = 0.15;
 // Elite gold in the stylized look (the PO, 2026-11-19: elites read like the commons there). With the body at style_light
 // of the key, the classic's old gold on the steel (gild, mixed into the painting) went as dark as the rest and the warm
@@ -175,6 +179,9 @@ uniform float style_elite_rim_power = 3.5;
 uniform float style_gamma = 1.0;
 
 varying vec4 state;
+// the ice shell of a frozen body (Geada): its cells (m) and the light of their seams
+uniform float frost_cell = 0.16;
+uniform vec3 frost_seam = vec3(0.32, 0.5, 0.62);
 varying vec3 world_pos;
 varying float height;
 
@@ -226,7 +233,14 @@ void fragment() {
 	vec3 c = pow(raw, vec3(paint_gamma));
 	c = max(mix(c, vec3(dot(c, vec3(0.3, 0.55, 0.15))), desaturate), vec3(0.0));
 	c *= tint.rgb;
-	c = mix(c, vec3(0.6, 0.85, 1.0), frost * 0.65);
+	// frozen (vfx_pass_spec.md 5.3, Geada): a faceted shell of ice, not the body painted a flat blue (it read as a cut-out):
+	// angular cells of frost_cell m in the world, each facet its own value, their seams pale ice
+	vec3 fcell = world_pos / frost_cell;
+	vec3 fid = floor(fcell);
+	float facet = hash(fid.xy + fid.z * 13.1);
+	vec3 fin = abs(fract(fcell) - 0.5);
+	float seam = smoothstep(0.4, 0.5, max(fin.x, max(fin.y, fin.z)));
+	c = mix(c, vec3(0.6, 0.85, 1.0) * (0.6 + 0.45 * facet), frost * 0.7);
 	float has_magic = step(0.001, magic.r + magic.g + magic.b);
 	// the cells that glow (a staff's gem, its orb): with a magic of its own they are that light and nothing else
 	float cell = step(glow_from.x, fract(UV.x)) * step(glow_from.y, fract(UV.y));
@@ -257,7 +271,7 @@ void fragment() {
 	float own = step(0.001, rim_power);
 	float fire_rim = mix(burn_rim, min(burn_rim, burn_rim_own), own);
 	float coals = mix(1.0, burn_coals_own, own);
-	EMISSION = vec3(0.35, 0.7, 1.4) * frost * 0.5 + (burn_color * rim * fire_rim + coal_color * coal * coals) * burn
+	EMISSION = (frost_seam * seam + vec3(0.2, 0.36, 0.5) * rim) * frost + (burn_color * rim * fire_rim + coal_color * coal * coals) * burn
 		+ (rim_color * (rim * 0.5 + edge) * rim_power * armored
 		+ crest_color * (rim * 0.6 + edge) * crest * smoothstep(crest_from * 0.6, crest_from, height)) * (1.0 - burn * (1.0 - burn_keep_own * own))
 		+ dissolve_color * smoulder + gild_color * (rim + edge) * absorbed * absorb_light
@@ -285,9 +299,14 @@ void fragment() {
 	if (flash > 0.0) {
 		// the body itself, lighter and warmer: its painting as light, more where it is already lit; what it adds
 		// stops at flash_cap (the figure's own lights, an orb winding up, keep theirs)
-		vec3 lighter = (c * shade * (0.45 + lit) * flash_light + vec3(flash_floor)) * flash_warm * flash;
-		EMISSION += min(lighter, max(vec3(flash_cap) - EMISSION, vec3(0.0)));
-		float white = step(white_from, flash) * flash_white;
+		// VFX pass P1-5: stylized, Morvath (style_vivid) flashes in his own violet, never to beige: the warm cast and
+		// the warm floor take his hue (his body is dark there, so the floor was all of it), no ivory frame
+		bool own_flash = styled && style_vivid > 0.5;
+		vec3 hue = c / max(max(c.r, max(c.g, c.b)), 0.0001);
+		vec3 warm = own_flash ? mix(hue, vec3(1.0), 0.25) : flash_warm;
+		vec3 lighter = (c * shade * (0.45 + lit) * flash_light + vec3(flash_floor)) * warm * flash;
+		EMISSION += min(lighter, max(vec3(own_flash ? style_boss_flash_cap : flash_cap) - EMISSION, vec3(0.0)));
+		float white = own_flash ? 0.0 : step(white_from, flash) * flash_white;
 		EMISSION = mix(EMISSION, min(flash_ivory * shade * (0.75 + 0.25 * facing), vec3(flash_cap)), white);
 		ALBEDO *= 1.0 - white;
 	}

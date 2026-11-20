@@ -67,11 +67,11 @@ func test_the_gift_taken_the_fountain_and_a_falling_gift_stay_under_the_cap() ->
 	_start()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
+	game.fx.last_beam = {}
 	game._take(game.boons.offers(rng, 1)[0])
-	assert_lte(float(game.fx.last_beam.cap), 1.0, "a gift taken")
-	assert_almost_eq(float(game.fx.last_beam.intensity), Fx.BEAM_INTENSITY * Skills.BEAM_OVER_BOSS, 0.001, "it stands on him")
+	assert_true(game.fx.last_beam.is_empty(), "a gift taken: no column over him (vfx_pass_spec.md 6)")
 	game.spawn_fountain(game.player.pos + Vector2(8, 0))
-	assert_lte(float(game.fx.last_beam.cap), 1.0, "the fountain")
+	assert_lte(float(game.fx.last_beam.get("cap", 0.0)), 1.0, "the fountain")
 	game.skills._beam(game.player.pos + Vector2(9, 0), Color(3, 1, 0.3), 1.6, 16.0, 0.5)
 	assert_lte(float(game.fx.last_beam.cap), 1.0, "a gift falling")
 	var z := game.ground.add_warning(game.player.pos + Vector2(10, 0), 2.0, 0.1, 1.0)
