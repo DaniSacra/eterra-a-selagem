@@ -617,3 +617,64 @@ arma desenhada, recuperação viva (pose parada até 0,3 s), troca de clipe com 
 - Aceite geral (backlog): todo tiro com `warn_s` de 0,4 ou mais nas 24 descidas; hoje [M] o menor é 0,83 s.
 
 **C19-6 LC-P1:** não pedido (8.1).
+
+### 8.3 Parecer do C19 (HEAD `8dc0fea`, 2026-11-20)
+
+Medido numa cópia isolada do `8dc0fea` (`git archive`), CPU sem tela a 60 f/s fixos: sonda `feel_probe_run`;
+`enemy_motion_probe` sementes 1 a 3 sem estresse e com `--stress=4 --stress-ids=skeleton_elite,runner_elite` (40 s),
+mais `--stress=4` só de `runner` e só de `runner_elite` (sementes 1 e 3, 30 s); `boss_cadence --cadence-log` sementes 1,
+2, 3 e 5 (reação 0,25, 5 Bênçãos); `boss_probe` sementes 5 e 1; `pose_drift` de Morvath. Vídeos e folhas de
+`docs/gallery/c19/` lidos quadro a quadro com ffmpeg. As 24 descidas do robô não foram refeitas (outros agentes rodavam
+`smoke` na mesma máquina): valem os números do gameplay-engineer no `CLAUDE.md`, seção C19.
+
+**Veredito: aprovado** na cadência, com uma P2 do próprio C19 a resolver no AP-2 e uma P1 antiga que o C19 deixou
+mais visível (fora do escopo, item próprio). Nenhum P0.
+
+| Critério 8.2 | Medido | |
+|---|---|---|
+| Sonda | 41/41 [M] | passa |
+| Aviso cheio no quadro do dano | [M] comuns 0 f em 94 golpes (sem estresse; Escudo +3 f em 1, o caso conhecido); elites: 1º golpe do esqueleto e 1ª explosão "-1 f" na sonda, que é sobra de 0,003 s de vida do aviso (0,2 ms, um arredondamento, não um quadro); 2º golpe 0 f (esqueleto) e +1 f (corredor). 270 golpes de elite nas 3 sementes, nenhum fora de -1 a +1 | passa |
+| 2º golpe do esqueleto elite | [M] 0,2 s depois do 1º (12 f), a 0,93 a 1,97 m do herói (a lâmina alcança 2,21); o fio do 2º nasce com a preparação (vida 1,336 s contra 1,136 do 1º) | passa |
+| Corpo emenda os dois golpes | [D] `Horde.render`: o clipe do golpe recomeça do alto com mistura de 0,1 s (`strike_gap` x 0,5) do fim do 1º, e desce no 0,1 s seguinte; nenhum `idle` entre eles [M] | passa |
+| Pose parada | [M] recuperação até 0,22 s, preparo até 0,17 s (teto 0,3) | passa |
+| Explosão dupla do corredor elite | [D] 2º anel nasce no quadro da 1ª onde o corpo está (ele não anda em ATTACK), vida 0,5 s + 1 f; giro em laço (`fposmod`); fim 0,3 s depois, recuperação 0,5 | passa, ver P2-C19a |
+| Ceifa Dupla: tempos | [M] `boss_cadence`: ataque 2,59 a 3,33 s com a aproximação, recuperação 2,20 a 2,22 s (0,22 e 0,55 só quando a troca de fase corta); [D] o dano é a própria zona do aviso no chão, então o aviso está cheio por construção; o corte visual sai no mesmo `windup` (0 a 1 f) | passa |
+| Ceifa: clipe e corpo | [M] `pose_drift`: `slash1` pior 0,34 m, `slash2` 0,43 m (teto 0,45); `boss_probe`: maior passo 0,258 m (teto 0,3), na Lâmina com o passo atrás do C17, não na Ceifa; na Ceifa `slash1`/`slash2` tocam 1045 e 1115 quadros e `idle` 1 quadro na entrada do estado (dentro da mistura de 0,18 s) | passa |
+| Ceifa: direita e depois esquerda | [O] vídeo: o 1º corte varre de um lado, o 2º volta do outro; 2º aviso nasce depois do 1º corte e enche até o 2º | passa |
+| Fase 1 perto | [M] maior parte 43 / 43 / 50 / 43% (Ceifa ou foice), nunca 3 iguais, 6 a 8 ataques por semente | passa (no limite em 1 de 4) |
+| Janela de punição | [M] vida perdida por janela da Ceifa 62 a 188 contra 26 a 50 da foice: a janela longa existe e é usada | passa (o efeito no tempo da luta é do balance-designer) |
+
+**Ancião 45 para 126 (C19-4): é equilíbrio, não cadência.** Os golpes do leque têm `warn_s` de 1,04 s ou mais, o aviso
+nasce e enche junto do tiro e os orbes saem no quadro do fio cheio: nada na leitura piorou. O que mudou é o custo de
+carregar o Ômega a 3% da velocidade (o número do Hades, de propósito: carregar é se comprometer). O robô começa o Ômega
+com um atirador preparando por perto e, sem carga de esquiva, sai a pé soltando o botão, o que dispara ou encerra o
+golpe plantado; gente pode cortar a carga na esquiva no quadro do aperto (meta `C19-4` da sonda). Recomendação: não
+mexer nos 3%; o gameplay-engineer faz o robô não começar o Ômega do ataque com um tiro preparando a menos de 12 m
+(`Bot`, mesma regra do `_danger`), e o balance-designer relê o dano do Ancião depois disso e no registro de gente
+(`hurt_ctx` com `by: priest_elder`). Aceite: Ancião no robô até 1,5 vez o de antes (até 68 nas 24 descidas) com essa
+regra; se continuar acima, é número do leque (balance), não tempo.
+
+**P2-C19a, 2º anel do corredor elite tapado pela 1ª explosão.** [M] vídeo a 0,25x (`runner_elite_quarter_speed.mp4`,
+1 quadro do vídeo = 1 quadro do jogo): a 1ª explosão sai no quadro 22 e o disco claro dela cobre a área até o 33; o aro
+do 2º anel só se lê do 34 ao 54 (2ª explosão): 0,33 s de leitura dos 0,5 s pedidos. Pouco grave hoje (quem levou a 1ª
+está protegido 1,3 s; o 2º só pega quem esquivou e voltou), mas é o tempo de leitura do critério. Correção
+(gameplay-engineer com o art-director): o disco da explosão do corredor some em até 0,12 s ou o 2º anel desenha por
+cima dele. Aceite: no vídeo a 0,25x, aro do 2º anel visível 0,4 s ou mais antes da 2ª explosão.
+
+**P1 antiga, corredor elite tremendo encostado no herói (não é do C19).** [M] parado no `WALK` esperando a recarga, o
+corredor elite é empurrado para fora pela separação (cerca de 1 m/s) e volta 0,12 m num quadro só quando a distância
+passa de `attack_range` 1,6 (um quadro de andar a 7,375 m/s): dente de serra de 12 cm a uns 8 Hz. Inversões de lugar de
+2 quadros: até 29/s num corredor elite (estresse de elites, sementes 1 e 3), até 11,7/s só de corredores elite, até
+5,7/s nos corredores comuns (4,875 m/s, passo de 8 cm). [D] a lógica de andar do `_behave_pulse` não mudou desde o
+`c3011c0`; o C19 só põe mais corredores elite na tela. Correção (gameplay-engineer): a mesma histerese do Cavaleiro e do
+Escudo (`MELEE_WALK_BAND` 0,8 m, `Enemy.closing`) no `_behave_pulse`: parado dentro do alcance, só volta a andar acima
+de 1,6 + 0,8 m. Aceite: até 2 inversões de lugar por segundo por corredor no mesmo estresse, golpes com aviso de -1 a
++1 f iguais.
+
+**P2, evidência.** O `reap_quarter_speed.mp4` não está a 0,25x: os 0,85 s do preparo ocupam 12 quadros do vídeo a 15 f/s
+(cerca de 0,07 s do jogo por quadro, uns 0,9x), e a recuperação de 2,2 s não aparece inteira. Os números do
+`boss_cadence` cobrem a falta; na próxima captura de Morvath, a 0,25x de verdade e até o fim da janela.
+
+**Observado, para o art-director (não é cadência do C19):** nos três vídeos, ao levar golpe o herói vira silhueta
+marfim chapada por 2 quadros (esqueleto quadros 41 e 42, corredor 23 e 24, Ceifa 18), contra a regra do
+`Player.HURT_*` (clarear morno 0,05 s, nunca silhueta branca). Conferir no estilizado.
