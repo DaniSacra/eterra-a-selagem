@@ -1079,6 +1079,19 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (placeholder: a moldura da laje ao longo da raiz; a raiz que racha é do environment-artist), `Ground.ROOT_SOURCE`
   `roots`, "Derrotado por: Raiz Morta" (`killer_roots`, provisório para o Daniel). `rooms[].hazard` `kind` `roots`.
   Testes em `tests/test_roots.gd`.
+- **Seteira ligada à laje (RP-16)**: uma laje do RP-06 com `HazardDef.aims[i]` (segmento da boca da seteira até onde os
+  virotes param, `aim_width` 1 m; `aims_away(i)`) arma a seteira em vez de golpear a si mesma: a faixa da seteira avisa
+  1,0 s em âmbar desenhada (`Ground.add_band`, `Ground.SLIT_SOURCE` `slit`) e golpeia quem está nela (7 no herói, 60 no
+  inimigo), recarga 5 s pela laje. Cripta B (`_slit`, `SLIT_WEST`, `SLIT_EAST` no `make_data.gd`): uma seteira na parede
+  norte de cada lado do muro divisor, peça `bolt_slit` de 0,5 x 0,6 m e 1,2 m (barra corpo e tiro; bloco provisório até a
+  seteira com a divisa do environment-artist), atirando para o sul até a fileira dos sarcófagos; a laje de um lado arma a
+  seteira do outro. "Derrotado por: Seteira" (`killer_slit`, provisório), som `slit_fire` = `bolt`; `rooms[].hazard` com
+  `slit_damage` e `slit_struck`. Robô: pisa na laje a até 8 m quando 2 inimigos ou mais estão na faixa e ele não
+  (`Bot.slit_plan`, `in_band`, `SLIT_*`). Testes em `tests/test_slits.gd`.
+- **Mureta (RP-17)**: só dado, caixas baixas de 0,9 m (`_capsule(..., 0.5, 0.9)`, peça `block` desenhada como mureta
+  baixa; o corpo dá a volta, o tiro passa por cima): Cripta A uma de 5,5 m ao sul do túmulo grande ((-3,5..2; 3,8));
+  Jardim A duas quebradas num arco a 6 m do tronco (`_low_arc`: leste de -6 a 21 graus, sul de 64 a 98), as raízes que
+  cruzam o arco as três entradas de 4,5 m. Testes em `tests/test_low_walls.gd`.
 - **Morte de elite** (V-14): elite de aço dourado (`EnemyDef.elite` com `gild`; guardiões não) cai com duas lascas de
   ouro velho a mais (`CrowdRenderer.GILD_COLOR`, `Horde.damage`); teste em `test_vfx_lote1.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje

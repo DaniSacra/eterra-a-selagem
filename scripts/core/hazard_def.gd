@@ -68,6 +68,11 @@ enum Kind { GRID, PLATES, LINE }
 @export var enemy_dwell := -1.0
 @export var push_out := 0.0
 @export var plate_source: StringName = &"plates"
+## PLATES, RP-16 (the arrow slit tied to a slab): per slab, the band its slit fires along instead of striking the slab
+## itself, a segment (a.x, a.y, b.x, b.y) from the slit's mouth to where the bolts stop, aim_width across (Vector4.ZERO or
+## missing: the slab strikes as always). Stepping on the slab arms the slit; the band warns and strikes as a slab would.
+@export var aims: PackedVector4Array = PackedVector4Array()
+@export var aim_width := 1.0
 
 ## LINE: the bands (rectangles of the floor, struck one at a time in this order, round and round), the push of each
 ## (meters along the floor, never off it: nobody falls, D-28), and the seconds from one band's warning to the next's.
@@ -91,6 +96,11 @@ func band_push_of(i: int) -> Vector2:
 ## PLATES: the seconds an enemy must stay on a slab before it arms.
 func dwell_of_enemy() -> float:
 	return dwell if enemy_dwell < 0.0 else enemy_dwell
+
+
+## PLATES: whether slab i fires a slit (RP-16), and the band it fires along.
+func aims_away(i: int) -> bool:
+	return i < aims.size() and aims[i] != Vector4.ZERO
 
 
 ## PLATES: the paladin's damage of slab i.

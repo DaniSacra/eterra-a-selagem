@@ -25,6 +25,25 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Feito em 2026-11-20 (gameplay-engineer): RP-16 e RP-17
+
+- **RP-16, seteira ligada à laje, na Cripta B.** As duas lajes do pé do muro divisor (RP-06) armam cada uma a seteira do
+  outro lado: uma seteira na parede norte de cada lado do muro ((-1,5; -10,75) e (1,55; -10,75), a leste fora da boca da
+  porta norte), faixa de 1 m atirando para o sul até a fileira dos sarcófagos (z 2,4), aviso 1,0 s em âmbar, 7 no herói
+  e 60 no inimigo, recarga 5 s. Robô: pisa na laje quando 2 inimigos ou mais estão na faixa e ele não, a até 8 m. Ponte A
+  e Santuário ficaram de fora: a Ponte A tem a corrente (RP-11) e o Santuário já tem lajes e a coluna; um perigo que fere
+  por sala (item 5 dos Riscos). Medido (24 sementes, régua de sempre): 6 salas da Cripta B da sala 4 em diante, seteira
+  acertou 1 inimigo ou mais em 5 (meta: metade), 32,5 de dano nos inimigos por sala e 0 no herói (meta: 25 vezes o do
+  herói); 15 vitórias de 24, `stuck` 1 (o de sempre).
+- **RP-17, mureta.** Cripta A: uma de 5,5 m ao sul do túmulo grande (x -3,5 a 2, z 3,8; encurtada para deixar passagem
+  junto ao sarcófago sul). Jardim A: duas quebradas num arco a 6 m do tronco, a leste (-6 a 21 graus) e ao sul (64 a 98),
+  as raízes que cruzam o arco (-26, 43 e 118 graus) no meio das três entradas de 4,5 m. Medido contra o RP-16 (mesmas 24
+  sementes): Cripta A tiros barrados 42 para 18% (cai, como a meta quer), primeiro contato 3,3 para 3,4 s (meta +1 s,
+  **não**), zonas iguais (meio 34%, sul 30 para 35%); Jardim A o pátio fica vazio (`tree_shade` 0 para 1%, meta 30 a 60%,
+  **não**: o robô e os inimigos lutam no campo leste, como no RP-10), dano por sala 2,1 para 1,2; `stuck` 1 para 0,
+  vitórias 15 para 14 (ruído). Leitura para o room-designer: no Jardim o pátio só pesa se a luta for até ele (nascimentos,
+  ou o pátio no campo leste).
+
 ## Feito em 2026-11-20 (gameplay-engineer): RP-10 (raiz que golpeia, Jardim)
 
 - Comportamento: o `PLATES` do RP-06 com faixas giradas (`HazardDef.strips`, 3 m de largura: a raiz de 1 m e 1 m de cada
@@ -45,6 +64,8 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
   fora ficam longe de onde o robô e os inimigos lutam; para o perigo pesar, o room-designer decide entre (a) a raiz de
   dentro (a que chega ao meio), (b) espera menor para o inimigo, que só passa por ela, ou (c) medir com gente. Testes em
   `tests/test_roots.gd`.
+- **Terceira passada**: parte da 2ª onda nascendo a oeste do tronco, ao sul dele (`late_spawns` + (-16..-12,5;
+  -0,5..4,5)): 0 raízes acordadas e as salas de Jardim tardias com o mesmo tempo; devolvido.
 - **Segunda passada (Game Director)**: o inimigo acorda a raiz em 0,2 s (`HazardDef.enemy_dwell`; o herói segue 0,5 s).
   Mesmas 24 sementes: **nenhuma raiz acordou de novo** (0 golpes, 0 de dano, vitórias 15 de 24, `stuck` 1, iguais). Medi
   também, só como experimento e devolvido, a raiz de dentro de cada variante (A: da face do tronco a (0,3; 1,2), a que
@@ -641,7 +662,7 @@ técnicos e provisórios; o nome para o jogador passa pelo Daniel.
 
 #### Prioridade 1
 
-**RP-16 (novo) Seteira ligada à laje: o primeiro perigo que o jogador arma contra os inimigos.**
+**[Feito na Cripta B 2026-11-20, ver "Feito em 2026-11-20 (gameplay-engineer): RP-16 e RP-17"] RP-16 (novo) Seteira ligada à laje: o primeiro perigo que o jogador arma contra os inimigos.**
 - Da referência: 222430, 222504, 222527 (bloco com a direção gravada que atira através do chão livre).
 - Eterra: uma seteira de túmulo (bloco de cantaria baixo, encostado na parede ou na mureta, com uma **divisa reta
   gravada no topo** apontando para onde atira, a mesma linguagem das divisas das Runas e do `DoorGlyph`). Liga a uma ou
@@ -662,7 +683,7 @@ técnicos e provisórios; o nome para o jogador passa pelo Daniel.
 - Dono: `gameplay-engineer` (ligação e robô), `room-designer` (lugares e números), `environment-artist` (seteira,
   divisa acesa, rajada), `combat-feel-director` (aviso). Custo: M depois do RP-06 e do RP-11.
 
-**RP-17 (novo) Mureta baixa: o corpo dá a volta, o tiro passa por cima.**
+**[Feito 2026-11-20, ver "Feito em 2026-11-20 (gameplay-engineer): RP-16 e RP-17"] RP-17 (novo) Mureta baixa: o corpo dá a volta, o tiro passa por cima.**
 - Da referência: 222504, 222445, 222527 (muretas e balaustradas que dividem a sala em faixas e níveis).
 - Eterra: muretas de 0,9 m (a regra do tiro já existe: até 1,0 m passa por cima) dividindo a sala em faixas. Muda a
   pergunta para os atiradores: o mago atira por cima, o esqueleto tem de contornar, o herói escolhe de que lado ficar.

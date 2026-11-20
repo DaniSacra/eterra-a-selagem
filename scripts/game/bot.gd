@@ -11,6 +11,9 @@ const GAP := 0.25
 const REACH := 3.6
 ## RP-09: the bot goes for a cracked column within COLUMN_NEAR m that would fall on COLUMN_PACK enemies or more
 ## (column_plan), round to its other side and swings at it from COLUMN_REACH m along the way it should fall.
+## RP-16: the bot steps on a slab within SLIT_NEAR m whose slit's band holds SLIT_PACK enemies or more and not him.
+const SLIT_PACK := 2
+const SLIT_NEAR := 8.0
 const COLUMN_PACK := 1
 const COLUMN_NEAR := 10.0
 const COLUMN_REACH := 2.2
@@ -201,6 +204,10 @@ func step(dt: float, game: Game) -> void:
 		var stand: Vector2 = column.stand
 		pad.move = _steer(game, p, _way(game, p, stand, dt)) if p.distance_to(stand) > COLUMN_STAND else Vector2.ZERO
 		pad.aim = column.way
+	else:
+		var slab: Variant = slit_plan(game, p)
+		if slab != null:
+			pad.move = _steer(game, p, _way(game, p, slab as Vector2, dt))
 	if _queue.is_empty() and _wait > 0.25:
 		# hit and run: after a combo, step out of the crowd (around the bodies in the way)
 		pad.move = _steer(game, p, -to.normalized().rotated(0.6))
@@ -316,6 +323,42 @@ static func shot_coming(game: Game, p: Vector2) -> bool:
 
 
 ## The nearest enemy that can be hurt (behind his ritual's shield the boss waits: his dead come first).
+## RP-16: the middle of a slab within SLIT_NEAR whose slit (HazardDef.aims) may arm now and whose band holds SLIT_PACK
+## enemies or more and not him (null: none): he steps on it, as a player lures the pack into the band.
+static func slit_plan(game: Game, p: Vector2) -> Variant:
+	var pf: PlateFloor = game.rooms.plates if game.rooms else null
+	if pf == null or not pf.hazard.awake or pf.hazard.calm > 0.0:
+		return null
+	var h := pf.hazard
+	var def := h.def
+	if h.busy() >= PlateHazard.MOST_AT_ONCE:
+		return null
+	for i in h.count():
+		if not def.aims_away(i) or h.phase[i] != PlateHazard.Phase.IDLE or h.live[i] == 0:
+			continue
+		var c := h.from[i] + h.dirs[i] * h.lengths[i] * 0.5
+		if p.distance_to(c) > SLIT_NEAR:
+			continue
+		var a := Vector2(def.aims[i].x, def.aims[i].y)
+		var b := Vector2(def.aims[i].z, def.aims[i].w)
+		if in_band(a, b, def.aim_width, p):
+			continue
+		var n := 0
+		for e in game.horde.list:
+			if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS and in_band(a, b, def.aim_width, e.pos):
+				n += 1
+		if n >= SLIT_PACK:
+			return c
+	return null
+
+
+## Whether q lies in the band from a to b, `width` across.
+static func in_band(a: Vector2, b: Vector2, width: float, q: Vector2) -> bool:
+	var d := (b - a).normalized()
+	var along := (q - a).dot(d)
+	return along >= 0.0 and along <= a.distance_to(b) and absf((q - a).cross(d)) <= width * 0.5
+
+
 ## RP-09: a cracked column within COLUMN_NEAR that would fall on COLUMN_PACK enemies or more, struck from the other
 ## side: {"center", "way" (where it would fall, toward the pack), "stand" (where he swings from, COLUMN_REACH m back
 ## from it against the way)}, or null. The pack is counted along the way from each enemy near it (its band, as wide as

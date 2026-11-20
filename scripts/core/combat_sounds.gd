@@ -43,6 +43,7 @@ const EVENTS := {
 	&"breath_fire": &"dodge",
 	&"roots_arm": &"rune_arm",
 	&"roots_fire": &"rune_crack",
+	&"slit_fire": &"bolt",
 	&"column_crack": &"rune_crack",
 	&"column_fall": &"boss_down",
 }

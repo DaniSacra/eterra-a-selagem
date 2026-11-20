@@ -29,6 +29,8 @@ const BREATH_SOURCE := &"breath"
 const FALL_SOURCE := &"column"
 ## RP-10: the roots that strike in the Jardim (PlateFloor with strips): "Derrotado por: Raiz Morta".
 const ROOT_SOURCE := &"roots"
+## RP-16: the arrow slit a slab arms (PlateFloor with HazardDef.aims): "Derrotado por: Seteira".
+const SLIT_SOURCE := &"slit"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.

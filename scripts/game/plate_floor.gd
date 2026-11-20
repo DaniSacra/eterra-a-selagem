@@ -20,6 +20,9 @@ var nodes: Array[MeshInstance3D] = []
 ## Life it took from the enemies, enemies it felled, and the seconds the paladin stood on a slab.
 var enemy_damage := 0.0
 var kills := 0
+## RP-16: what the slits dealt to the enemies (inside enemy_damage) and how many enemies they struck.
+var slit_damage := 0.0
+var slit_struck := 0
 var hero_on := 0.0
 var _bodies := PackedVector2Array()
 
@@ -54,13 +57,21 @@ func step(dt: float) -> void:
 	var did := hazard.step(dt, p, _bodies)
 	var def := hazard.def
 	for i: int in did.armed:
-		zones[i] = game.ground.add_band(hazard.from[i], hazard.dirs[i], hazard.lengths[i], hazard.widths[i], def.warn,
-			def.hero_damage_of(i), def.enemy_damage, false, def.plate_source)
+		if def.aims_away(i):
+			# RP-16: the slab arms its slit; the band from the slit's mouth warns in the amber, drawn, and strikes
+			var a := def.aims[i]
+			var from := Vector2(a.x, a.y)
+			var to := Vector2(a.z, a.w)
+			zones[i] = game.ground.add_band(from, to - from, from.distance_to(to), def.aim_width, def.warn,
+				def.hero_damage_of(i), def.enemy_damage, true, Ground.SLIT_SOURCE)
+		else:
+			zones[i] = game.ground.add_band(hazard.from[i], hazard.dirs[i], hazard.lengths[i], hazard.widths[i], def.warn,
+				def.hero_damage_of(i), def.enemy_damage, false, def.plate_source)
 		Audio.play(CombatSounds.EVENTS[StringName(_cue() + "_arm")])
 		if def.dwell > 0.0:
 			_dust(i)
 	for i: int in did.fired:
-		Audio.play(CombatSounds.EVENTS[StringName(_cue() + "_fire")])
+		Audio.play(CombatSounds.EVENTS[&"slit_fire" if def.aims_away(i) else StringName(_cue() + "_fire")])
 	for i in nodes.size():
 		if is_instance_valid(nodes[i]):
 			GroundLook.set_plate(nodes[i], hazard.state(i))
@@ -82,8 +93,12 @@ func stop() -> void:
 
 ## The room's numbers (RoomTally.hazard): {kind, strikes, armed by him and by them, seconds he stood on one}.
 func tally() -> Dictionary:
-	return {"kind": String(hazard.def.plate_source), "armed_by_hero": hazard.armed_by_hero, "armed_by_enemy": hazard.armed_by_enemy,
+	var out := {"kind": String(hazard.def.plate_source), "armed_by_hero": hazard.armed_by_hero, "armed_by_enemy": hazard.armed_by_enemy,
 		"hero_on_s": snappedf(hero_on, 0.1)}
+	if not hazard.def.aims.is_empty():
+		out["slit_damage"] = snappedf(slit_damage, 0.1)
+		out["slit_struck"] = slit_struck
+	return out
 
 
 func _on_landed(z: Ground.Zone) -> void:
@@ -91,9 +106,13 @@ func _on_landed(z: Ground.Zone) -> void:
 	if i < 0:
 		return
 	zones[i] = null
-	var dealt := strike(game, z, hazard.def.push_of(i), hazard.def.plate_source, false, false, hazard.def.push_out)
+	var before := game.horde.list.filter(func(e: Enemy) -> bool: return e.alive and e.def.behavior != EnemyDef.Behavior.BOSS and Ground.inside(z, e.pos)).size()
+	var dealt := strike(game, z, hazard.def.push_of(i), z.source, false, false, hazard.def.push_out)
 	enemy_damage += dealt.x
 	kills += int(dealt.y)
+	if hazard.def.aims_away(i):
+		slit_damage += dealt.x
+		slit_struck += before
 
 
 ## The sounds' name: "plate" the slabs, else the source's (RP-10: "roots").

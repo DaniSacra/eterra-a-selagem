@@ -759,6 +759,17 @@ func _root(trunk: Vector2, r: float, pts: Array, top := 0.6) -> Array[ArenaObsta
 	return out
 
 
+## RP-17: a low wall (0.9 m: bodies go round, shots go over) on an arc round `c` of radius `r` from `from` to `to`
+## degrees (the plane's angle, x toward z), in `legs` straight legs.
+func _low_arc(c: Vector2, r: float, from: float, to: float, legs: int) -> Array[ArenaObstacle]:
+	var out: Array[ArenaObstacle] = []
+	for k in legs:
+		var a := c + Vector2.from_angle(deg_to_rad(lerpf(from, to, float(k) / legs))) * r
+		var b := c + Vector2.from_angle(deg_to_rad(lerpf(from, to, float(k + 1) / legs))) * r
+		out.append(_capsule(a, b, 0.5, 0.9))
+	return out
+
+
 ## A fire bowl or lantern of a door, off the walkable floor: drawn, never blocking.
 func _bowl(x: float, z: float) -> ArenaObstacle:
 	var o := ArenaObstacle.circle(Vector2(x, z), 0.45, &"brazier", 1.2, false)
@@ -825,6 +836,17 @@ func _roots(tips: Array) -> HazardDef:
 
 ## Cripta dos Esquecidos (spec section 2): small, closed, sarcophagi and columns as cover; 4 to 6 enemies, at most 2
 ## shooters, no priest.
+## RP-16 (docs/design/rooms_progression.md): the Ossuary's arrow slits, on the north wall either side of the dividing
+## wall (the east one clear of the north door's mouth): a low block of the wall, 0.5 x 0.6 m, 1.2 m high, stopping bodies
+## and shots (the environment artist's slit with the chevron cut on its top replaces the placeholder block).
+const SLIT_WEST := -1.5
+const SLIT_EAST := 1.55
+
+
+func _slit(x: float) -> ArenaObstacle:
+	return ArenaObstacle.box(Vector2(x, -10.75), Vector2(0.25, 0.3), 0.0, &"bolt_slit", 1.2, true)
+
+
 func _crypt() -> RoomLayout:
 	var l := RoomLayout.new()
 	_arena(l, &"crypt", RoomLayout.Size.SMALL, 1, Vector2(0.1, 1.0))
@@ -840,6 +862,9 @@ func _crypt() -> RoomLayout:
 		_column(-6.0, -5.6, 5.2, 0.65), _column(7.0, -5.6, 5.2, 0.65), _column(-5.5, 5.6, 5.2, 0.65),
 		_sarcophagus(0.5, -5.6, 2.5, 1.2), _sarcophagus(4.0, 5.6, 2.5, 1.2), _sarcophagus(-11.4, -6.0, 1.2, 2.5),
 		_capsule(Vector2(-12, 0), Vector2(-8, 0), 0.6, 0.9), _capsule(Vector2(12, 0.5), Vector2(8, 0.5), 0.6, 0.9),
+		# RP-17: a low wall of 5.5 m south of the great tomb, parallel to it, between the middle row and the south one (the
+		# body goes round, the shot goes over: 0.9 m)
+		_capsule(Vector2(-3.5, 3.8), Vector2(2.0, 3.8), 0.5, 0.9),
 	]
 	a.append_array(bowls)
 	l.obstacles = a
@@ -850,6 +875,7 @@ func _crypt() -> RoomLayout:
 		_sarcophagus(-5.5, -9.25, 1.2, 2.5), _cracked(_column(6.5, -6.0, 5.2, 0.65)),
 		_sarcophagus(-4.0, 3.0, 2.5, 1.2), _sarcophagus(3.0, 3.0, 2.5, 1.2),
 		_capsule(Vector2(-12, -2.5), Vector2(-8, -2.5), 0.6, 0.9), _capsule(Vector2(12, 1.0), Vector2(8, 1.0), 0.6, 0.9),
+		_slit(SLIT_WEST), _slit(SLIT_EAST),
 	]
 	b.append_array(bowls)
 	l.variants = [_variant(b)]
@@ -872,6 +898,10 @@ func _crypt() -> RoomLayout:
 	l.hazard = _plates([_rect(-7.2, -4.2, -10.3, -7.3), _rect(8.0, 11.0, -7.5, -4.5), _rect(2.0, 5.0, 7.3, 10.3),
 		_rect(8.0, 11.0, 1.3, 4.3)], PLATES_FROM)
 	l.variants[0].hazard = _plates([_rect(-3.4, -0.4, -6.3, -3.3), _rect(1.4, 4.4, -6.3, -3.3)], PLATES_FROM)
+	# RP-16: an arrow slit on the north wall each side of the dividing wall, firing south down its corridor to the row of
+	# the south sarcophagi; the slab on one side arms the slit of the other (the pack lured beyond the wall)
+	l.variants[0].hazard.aims = PackedVector4Array([Vector4(SLIT_EAST, -10.4, SLIT_EAST, 2.4),
+		Vector4(SLIT_WEST, -10.4, SLIT_WEST, 2.4)])
 	return l
 
 
@@ -956,6 +986,10 @@ func _garden() -> RoomLayout:
 		a.append_array(_root(TRUNK, TRUNK_RADIUS, pts))
 	a.append_array([_sarcophagus(7.5, -5.0, 2.5, 1.2), _sarcophagus(-16.4, -1.5, 1.2, 2.5),
 		_capsule(Vector2(9, 5), Vector2(13, 5), 0.8, 1.0), _cracked(_column(4.5, 7.0, 3.6))])
+	# RP-17: the tree's courtyard: two low broken walls on an arc 6 m from the trunk, east and south, the three roots
+	# that cross it (north-east, south-east, south-west) the three ways in, 4.5 m each with the root in its middle
+	a.append_array(_low_arc(TRUNK, 6.0, -6.0, 21.0, 1))
+	a.append_array(_low_arc(TRUNK, 6.0, 64.0, 98.0, 2))
 	a.append_array(bowls)
 	l.obstacles = a
 	# RP-10: the north root and the west one (cut short of the way in), the two that keep off the middle
