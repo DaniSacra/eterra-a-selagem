@@ -27,6 +27,8 @@ const CHAIN_SOURCE := &"chain"
 const BREATH_SOURCE := &"breath"
 ## RP-09: a column toppling (ColumnFloor; it never hurts the paladin).
 const FALL_SOURCE := &"column"
+## RP-10: the roots that strike in the Jardim (PlateFloor with strips): "Derrotado por: Raiz Morta".
+const ROOT_SOURCE := &"roots"
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -209,14 +211,20 @@ func add_aim_warning(from: Vector2, dir: Vector2, length: float, width: float, t
 ## same but shows nothing (the Runes' own floor, RunesLook, draws the tiles warming up: nothing drawn twice). source:
 ## what names it (HAZARD_SOURCE the runes, PLATE_SOURCE the slabs of RP-06).
 func add_hazard(r: Rect2, time: float, hero_damage: float, enemy_damage: float, drawn := true, source := HAZARD_SOURCE) -> Zone:
-	var from := Vector2(r.position.x, r.get_center().y)
-	var z := _add(Kind.WARNING, Shape.LINE, from, Vector2.RIGHT, r.size.x, r.size.y, time, hero_damage)
+	return add_band(Vector2(r.position.x, r.get_center().y), Vector2.RIGHT, r.size.x, r.size.y, time, hero_damage,
+		enemy_damage, drawn, source)
+
+
+## add_hazard over any band of the floor: `width` across, `length` along `dir` from `from` (RP-10, a root's strip).
+func add_band(from: Vector2, dir: Vector2, length: float, width: float, time: float, hero_damage: float, enemy_damage: float,
+		drawn := true, source := HAZARD_SOURCE) -> Zone:
+	var z := _add(Kind.WARNING, Shape.LINE, from, dir, length, width, time, hero_damage)
 	z.hazard = enemy_damage
 	z.floor_own = true
 	z.source = source
 	z.by = &""
 	z.offscreen = 0
-	GroundLook.hazard(z.node, from, Vector2.RIGHT, r.size.x, r.size.y, z.node.position.y)
+	GroundLook.hazard(z.node, from, z.dir, length, width, z.node.position.y)
 	z.node.visible = drawn
 	return z
 

@@ -797,6 +797,30 @@ func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
 const PLATES_FROM := 0.34
 
 
+## RP-10 (H-1, docs/design/rooms_progression.md): the Jardim's outer roots strike. A band 3 m across along each root
+## (its metre and one more each side), from the trunk's face to `tips`; whoever lingers 0.5 s on it (the paladin or an
+## enemy) wakes it: 1.2 s cracking (the runes' amber), a strike of 0.25 s with the runes' numbers (RP-03: 7 to him, 60
+## to an enemy) that throws everyone on it 1 m off the root, 6 s before that root wakes again. Asleep before the 4th
+## room, as the slabs. Each band 6 m or more from the way in (test_roots.gd).
+func _roots(tips: Array) -> HazardDef:
+	var h := _plates([], PLATES_FROM)
+	h.plates = []
+	var strips := PackedVector4Array()
+	for pair: Array in tips:
+		var first: Vector2 = pair[0]
+		var tip: Vector2 = pair[1]
+		var a := TRUNK + (first - TRUNK).normalized() * TRUNK_RADIUS
+		strips.append(Vector4(a.x, a.y, tip.x, tip.y))
+	h.strips = strips
+	h.strip_width = 3.0
+	h.dwell = 0.5
+	h.warn = 1.2
+	h.rearm = 6.0
+	h.push_out = 1.0
+	h.plate_source = &"roots"
+	return h
+
+
 ## Cripta dos Esquecidos (spec section 2): small, closed, sarcophagi and columns as cover; 4 to 6 enemies, at most 2
 ## shooters, no priest.
 func _crypt() -> RoomLayout:
@@ -932,6 +956,8 @@ func _garden() -> RoomLayout:
 		_capsule(Vector2(9, 5), Vector2(13, 5), 0.8, 1.0), _cracked(_column(4.5, 7.0, 3.6))])
 	a.append_array(bowls)
 	l.obstacles = a
+	# RP-10: the north root and the west one (cut short of the way in), the two that keep off the middle
+	l.hazard = _roots([[Vector2(-4.5, -7.0), Vector2(1.8, -8.1)], [Vector2(-10.0, -1.5), Vector2(-11.4, 1.9)]])
 	var b: Array[ArenaObstacle] = [trunk]
 	for pts: Array in [[Vector2(-4.1, -5.7), Vector2(-2.4, -5.8), Vector2(-0.7, -5.7), Vector2(0.9, -5.4)],
 			[Vector2(-6.6, -1.2), Vector2(-6.2, 0.7), Vector2(-6.1, 2.7), Vector2(-6.3, 4.7)],
@@ -940,6 +966,8 @@ func _garden() -> RoomLayout:
 	b.append_array([_sarcophagus(11.5, -6.0, 1.2, 2.5), _sarcophagus(6.5, 5.0, 2.5, 1.2), _column(12.0, 3.0, 3.4), _column(-12.5, 4.0, 3.0)])
 	b.append_array(bowls)
 	l.variants = [_variant(b)]
+	# RP-10: B's west root (cut short of the way in) and the stub by the west wall; the north one comes near the middle
+	l.variants[0].hazard = _roots([[Vector2(-6.6, -1.2), Vector2(-6.2, 3.6)], [Vector2(-11.5, -3.0), Vector2(-12.2, -2.5)]])
 	l.hero_spawn = Vector2(-12.0, 9.0)
 	l.hero_facing = Vector2(1, -1).normalized()
 	l.exits = [ArenaExit.at_edge(Vector2(13, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(17, 0), Vector2(-1, 0)),

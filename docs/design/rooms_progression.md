@@ -25,6 +25,27 @@ como evolui e as métricas do robô que provam que ela joga diferente. Base das 
 
 ---
 
+## Feito em 2026-11-20 (gameplay-engineer): RP-10 (raiz que golpeia, Jardim)
+
+- Comportamento: o `PLATES` do RP-06 com faixas giradas (`HazardDef.strips`, 3 m de largura: a raiz de 1 m e 1 m de cada
+  lado), espera para armar (`dwell` 0,5 s: quem fica em cima, herói ou inimigo) e empurrão para fora da linha da raiz
+  (`push_out` 1 m); aviso 1,2 s em âmbar com poeira, golpe 0,25 s, herói 7 e inimigo 60 (RP-03), recarga 6 s por raiz,
+  dormente antes da sala 4 (0,34), nada nos 3 s do começo, no máximo 3 de uma vez (regra das lajes).
+- Onde (`_roots` no `make_data.gd`): A, a raiz do norte (da face do tronco a (1,8; -8,1)) e a do oeste, cortada em
+  (-11,4; 1,9) para a faixa ficar a 6 m ou mais da entrada; B, a do oeste cortada em (-6,2; 3,6) e o toco junto da parede
+  oeste (a do norte da B passa a 5,4 m do meio: ficou de fora, como a proposta pede).
+- "Derrotado por: Raiz Morta" (`killer_roots`, nome provisório para o Daniel); `rooms[].hazard` `kind` `roots`. Desenho
+  provisório: a moldura da laje do RP-06 ao longo da raiz (`GroundLook.plate_band`); a raiz que racha é do
+  environment-artist.
+- Robô (24 sementes, `smoke 900 --bot-reaction=0.25 --ultimate=cleave`): 27 salas de Jardim (18 nas salas 2 e 3, 9 da 4
+  em diante); **nenhuma raiz acordou**: a luta fica no campo leste (`east_field` 50 a 90% do tempo), `tree_shade` 2 a 3%
+  (já estava abaixo dos 30% da meta antes, então essa meta não mede nada hoje), ninguém fica 0,5 s junto das raízes de
+  fora. Dano no herói 0 por sala (teto 1,5 cumprido por vazio) e nos inimigos 0 (meta de 10 vezes o do herói, sem
+  dado). 24 de 24 em Morvath, `stuck` 1 (o mesmo esqueleto elite da semente 22, sala sem raiz). Leitura: as raízes de
+  fora ficam longe de onde o robô e os inimigos lutam; para o perigo pesar, o room-designer decide entre (a) a raiz de
+  dentro (a que chega ao meio), (b) espera menor para o inimigo, que só passa por ela, ou (c) medir com gente. Testes em
+  `tests/test_roots.gd`.
+
 ## Feito em 2026-11-20 (gameplay-engineer): RP-09 (coluna rachada que tomba)
 
 - Dado: `ArenaObstacle.hits_to_fall` 2, `fall_length` 5, `fall_width` 1,2, `fall_time` 0,6, `fall_damage` 50 (`_cracked` no
@@ -482,7 +503,7 @@ no `RESULT` (`enemy_damage`, `kills`, `strikes`, mais `hero_damage`). Desenho: e
   0 no herói; `test_arenas` (pontos dentro de peças) com a coluna e com o toco.
 - Dono: `gameplay-engineer` (peça que muda, robô), `room-designer`, `environment-artist` (racha, tombo, toco). Custo: M a G.
 
-**RP-10 (P2) Raiz que golpeia (H-1), o Jardim acorda da sala 4.**
+**[Feito 2026-11-20, ver "Feito em 2026-11-20 (gameplay-engineer): RP-10"] RP-10 (P2) Raiz que golpeia (H-1), o Jardim acorda da sala 4.**
 - Problema: o Jardim aparece 41 de 58 vezes nas salas 2 a 4 e não fere (0,76); as raízes só cortam o passo.
 - Proposta: só as duas raízes de fora (as que não chegam a 6 m do centro do chão livre). Quem fica 0,5 s a menos de 1,5
   m dela (herói ou inimigo) arma; a raiz racha e solta poeira por 1,2 s, com a faixa de 1 m ao longo dela mais 1 m de cada

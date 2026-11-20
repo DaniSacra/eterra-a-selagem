@@ -13,7 +13,7 @@ const BLOCK := 441  # 10 ms: the music's and the air's gains are stepped at this
 
 ## Returns {"mix": PackedVector2Array (before the Master's limiter), "sounds": count, "seconds": length, "g_sfx": the
 ## effects' gain}. sounds and music_node: the Audio and Music autoloads (read at run time: a tool is compiled first).
-static func render(events: Array, sounds: Node, music_node: Node, before: bool = false, parts: Array = ["music", "air", "sfx"]) -> Dictionary:
+static func render(events: Array, sounds: Node, music_node: Node, before: bool = false, parts: Array = ["music", "air", "sfx"], dice_seed: int = 1) -> Dictionary:
 	var mc: Dictionary = music_node.get_script().get_script_constant_map()
 	var ac: Dictionary = sounds.get_script().get_script_constant_map()
 	var opts: Dictionary = SaveData.defaults().options
@@ -97,6 +97,8 @@ static func render(events: Array, sounds: Node, music_node: Node, before: bool =
 						mix[b * BLOCK + k] += src[at] * g
 	# the sounds: each with its pitch, at most VOICES at once (the oldest cut where the new one starts)
 	var g_sfx := db_to_linear(sfx_db) if parts.has("sfx") else 0.0
+	var dice := RandomNumberGenerator.new()
+	dice.seed = dice_seed  # the randomizers' draws (sample, pitch, volume) on a dice of their own: the same mix in any test order
 	var voices: Array = []  # [start, end, index into cuts]
 	var plays: Array = []  # [start sample, stream samples, cut length]
 	for e: Array in events:
@@ -104,7 +106,7 @@ static func render(events: Array, sounds: Node, music_node: Node, before: bool =
 			continue
 		var at := int(float(e[0]) / 1000.0 * RATE)
 		var pitch: float = e[3] if e.size() > 3 else 1.0
-		var x := _pitched(decode(sounds.call(&"stream", StringName(e[2])), -1.0), pitch)
+		var x := _drawn(sounds.call(&"stream", StringName(e[2])), pitch, dice)
 		if not before:
 			x = _gain(x, db_to_linear(float(ac.GAIN_DB.get(StringName(e[2]), 0.0))))
 		voices = voices.filter(func(v: Array) -> bool: return v[1] > at)
@@ -119,6 +121,18 @@ static func render(events: Array, sounds: Node, music_node: Node, before: bool =
 		for i in mini(int(p[2]), n - at):
 			mix[at + i] += x[i] * g_sfx
 	return {"mix": mix, "sounds": plays.size(), "seconds": seconds, "g_sfx": g_sfx}
+
+
+## One play of a sound. An AudioStreamRandomizer (audio/<name>_0.ogg, _1.ogg...) draws its sample, pitch and volume
+## from Godot's global random, which the tests before this one move: drawn here the same way from the given dice.
+static func _drawn(s: AudioStream, pitch: float, dice: RandomNumberGenerator) -> PackedVector2Array:
+	var r := s as AudioStreamRandomizer
+	if r == null or r.streams_count == 0:
+		return _pitched(decode(s, -1.0), pitch)
+	var one: AudioStream = r.get_stream(dice.randi_range(0, r.streams_count - 1))
+	var spread := maxf(r.random_pitch, 1.0)
+	var x := _pitched(decode(one, -1.0), pitch * dice.randf_range(1.0 / spread, spread))
+	return _gain(x, db_to_linear(dice.randf_range(-r.random_volume_offset_db, r.random_volume_offset_db)))
 
 
 static func decode(s: AudioStream, seconds: float = -1.0) -> PackedVector2Array:

@@ -35,10 +35,10 @@ func _init(g: Game, def: HazardDef, awake := true) -> void:
 			doors.append(e.mouth)
 	hazard = PlateHazard.new(def, doors, awake)
 	zones.resize(hazard.count())
-	for r in def.plates:
+	for i in hazard.count():
 		var n := GroundLook.new_node()
 		g.arena.add_child(n)
-		GroundLook.plate(n, r, Y)
+		GroundLook.plate_band(n, hazard.from[i], hazard.dirs[i], hazard.lengths[i], hazard.widths[i], Y)
 		nodes.append(n)
 	g.ground.hazard_landed.connect(_on_landed)
 
@@ -54,11 +54,13 @@ func step(dt: float) -> void:
 	var did := hazard.step(dt, p, _bodies)
 	var def := hazard.def
 	for i: int in did.armed:
-		zones[i] = game.ground.add_hazard(def.plates[i], def.warn, def.hero_damage_of(i), def.enemy_damage, false,
-			Ground.PLATE_SOURCE)
-		Audio.play(CombatSounds.EVENTS[&"plate_arm"])
+		zones[i] = game.ground.add_band(hazard.from[i], hazard.dirs[i], hazard.lengths[i], hazard.widths[i], def.warn,
+			def.hero_damage_of(i), def.enemy_damage, false, def.plate_source)
+		Audio.play(CombatSounds.EVENTS[StringName(_cue() + "_arm")])
+		if def.dwell > 0.0:
+			_dust(i)
 	for i: int in did.fired:
-		Audio.play(CombatSounds.EVENTS[&"plate_fire"])
+		Audio.play(CombatSounds.EVENTS[StringName(_cue() + "_fire")])
 	for i in nodes.size():
 		if is_instance_valid(nodes[i]):
 			GroundLook.set_plate(nodes[i], hazard.state(i))
@@ -80,7 +82,7 @@ func stop() -> void:
 
 ## The room's numbers (RoomTally.hazard): {kind, strikes, armed by him and by them, seconds he stood on one}.
 func tally() -> Dictionary:
-	return {"kind": "plates", "armed_by_hero": hazard.armed_by_hero, "armed_by_enemy": hazard.armed_by_enemy,
+	return {"kind": String(hazard.def.plate_source), "armed_by_hero": hazard.armed_by_hero, "armed_by_enemy": hazard.armed_by_enemy,
 		"hero_on_s": snappedf(hero_on, 0.1)}
 
 
@@ -89,9 +91,21 @@ func _on_landed(z: Ground.Zone) -> void:
 	if i < 0:
 		return
 	zones[i] = null
-	var dealt := strike(game, z, hazard.def.push_of(i), Ground.PLATE_SOURCE)
+	var dealt := strike(game, z, hazard.def.push_of(i), hazard.def.plate_source, false, false, hazard.def.push_out)
 	enemy_damage += dealt.x
 	kills += int(dealt.y)
+
+
+## The sounds' name: "plate" the slabs, else the source's (RP-10: "roots").
+func _cue() -> String:
+	return "plate" if hazard.def.plate_source == Ground.PLATE_SOURCE else String(hazard.def.plate_source)
+
+
+## A root waking (RP-10): dust along it as it cracks, placeholder until the environment artist's root.
+func _dust(i: int) -> void:
+	for k in 3:
+		var at := hazard.from[i] + hazard.dirs[i] * hazard.lengths[i] * (k + 0.5) / 3.0
+		game.fx.burst(&"dust", Vector3(at.x, 0.3, at.y))
 
 
 ## A floor warning `z` of the room's own hazard landed: deals its damage to every enemy (not the boss) inside it and
@@ -99,8 +113,9 @@ func _on_landed(z: Ground.Zone) -> void:
 ## Ground's own. cut: a push that deals nothing cuts the wind-up or attack of whoever it moved (the rift that breathes,
 ## RP-08: the flood trap of the Hades II; never a charge that cannot be cut, nor a guardian). Returns (life taken,
 ## enemies felled, enemies pushed). Shared by the slabs and the bands (BandFloor).
-## bodies: whoever's body touches it is struck (a column falling: RP-09), not only who stands in it.
-static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName, cut := false, bodies := false) -> Vector3:
+## bodies: whoever's body touches it is struck (a column falling: RP-09), not only who stands in it. out: everyone it
+## struck is also thrown this far away from its middle line (RP-10, a root shrugging them off).
+static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName, cut := false, bodies := false, out := 0.0) -> Vector3:
 	var dealt := 0.0
 	var felled := 0
 	var pushed := 0
@@ -113,13 +128,26 @@ static func strike(game: Game, z: Ground.Zone, push: Vector2, source: StringName
 		if z.hazard > 0.0 and h.damage(e, z.hazard, Vector2.ZERO, 0.0, NUMBER_COLOR):
 			felled += 1
 		dealt += maxf(0.0, before - e.hp)
-		if push != Vector2.ZERO and e.alive:
-			e.pos = game.arena.sweep(e.pos, e.pos + push, e.def.radius)
+		var shove := push + away(z, e.pos) * out
+		if shove != Vector2.ZERO and e.alive:
+			e.pos = game.arena.sweep(e.pos, e.pos + shove, e.def.radius)
 			pushed += 1
 			var charging: bool = e.state == Enemy.State.ATTACK and e.def.stun_immune_attacking
 			if cut and e.def.stun_time > 0.0 and not charging:
 				h.interrupt(e)
 	h.dealing = &""
-	if push != Vector2.ZERO and game.player.alive() and Ground.inside(z, game.player.pos, Player.RADIUS * 0.6):
-		game.player.pos = game.arena.sweep(game.player.pos, game.player.pos + push, Player.RADIUS)
+	if (push != Vector2.ZERO or out > 0.0) and game.player.alive() and Ground.inside(z, game.player.pos, Player.RADIUS * 0.6):
+		var p := game.player.pos
+		game.player.pos = game.arena.sweep(p, p + push + away(z, p) * out, Player.RADIUS)
 	return Vector3(dealt, felled, pushed)
+
+
+## The way from a line zone's middle line out to p, across it (unit; zero for other shapes).
+static func away(z: Ground.Zone, p: Vector2) -> Vector2:
+	if z.shape != Ground.Shape.LINE:
+		return Vector2.ZERO
+	var d := p - z.pos
+	var across := d - z.dir * d.dot(z.dir)
+	if across.length_squared() < 0.0001:
+		return Vector2(-z.dir.y, z.dir.x)
+	return across.normalized()

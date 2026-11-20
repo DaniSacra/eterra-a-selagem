@@ -54,6 +54,17 @@ enum Kind { GRID, PLATES, LINE }
 ## firm floor; nobody falls (D-28), the push is swept as any body pushed.
 @export var plate_hero_damage: PackedFloat32Array = PackedFloat32Array()
 @export var plate_push: PackedVector2Array = PackedVector2Array()
+## PLATES, RP-10 (H-1, the roots that strike in the Jardim): bands along a root, each a segment (a.x, a.y, b.x, b.y)
+## strip_width across (the root's metre and one more each side), slabs as any other (numbered after the rectangles, in
+## this order). dwell: the seconds someone must stay on a slab before it arms (0, the slabs: at once; the roots wake to
+## who lingers). push_out: on the strike everyone on it is thrown this far away from its middle line (the root shrugs
+## them off; swept, nobody falls), on top of plate_push. plate_source: what names it (Ground's source: "Derrotado por"
+## killer_<name>, the run's numbers, the sounds CombatSounds.EVENTS "<name>_arm" and "<name>_fire").
+@export var strips: PackedVector4Array = PackedVector4Array()
+@export var strip_width := 3.0
+@export var dwell := 0.0
+@export var push_out := 0.0
+@export var plate_source: StringName = &"plates"
 
 ## LINE: the bands (rectangles of the floor, struck one at a time in this order, round and round), the push of each
 ## (meters along the floor, never off it: nobody falls, D-28), and the seconds from one band's warning to the next's.

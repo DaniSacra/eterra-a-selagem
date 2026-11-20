@@ -1201,7 +1201,7 @@ func _stop_runes() -> void:
 		columns = null
 	if plates != null:
 		plates.stop()
-		game.room_tally.hazard(plates.enemy_damage, plates.kills, plates.hazard.fired, String(Ground.PLATE_SOURCE),
+		game.room_tally.hazard(plates.enemy_damage, plates.kills, plates.hazard.fired, String(plates.hazard.def.plate_source),
 			plates.tally())
 		plates = null
 	if bands != null:

@@ -728,7 +728,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   foice erguida, investida, erupção, maldição, rugido, invocação) chamam `Music.warn(s)` e a música e o ar descem a
   `MusicMix.WARN_DUCK` 0,5 (-6 dB) em 0,06 s, seguram e voltam em 0,5 s. Medida de verdade: `--sound-log=arquivo` grava
   todo som, música e ar de uma partida no relógio do jogo (`Audio.log_event`) e `tools/mix_probe.gd -- --log=arquivo
-  [--before] [--why] [--parts=music,air,sfx] [--wav=x]` refaz a mistura pelos barramentos (`tools/mix_replay.gd`) e mede
+  [--before] [--why] [--parts=music,air,sfx] [--wav=x]` refaz a mistura pelos barramentos (`tools/mix_replay.gd`) (as amostras, o tom e o volume de cada `AudioStreamRandomizer` num dado próprio, `dice_seed` 1: o `test_mix` dava outro resultado conforme os testes de antes mexiam no aleatório global) e mede
   LUFS integrado (BS.1770, `Loudness`, `core/loudness.gd`, conferido com o `ebur128` do ffmpeg), pico real e as janelas de
   0,1 s em que o limitador trabalha: descida -17,7 LUFS, Morvath -17,3, -1,4 dBTP depois do limitador, limitador em 0,3 a
   0,5% das janelas (antes da E6: -19,5 a -20 LUFS e até 3 janelas fundas). **Ambiência por arena (C15-04)**: um laço
@@ -1067,6 +1067,18 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (fissura que acende ou abre no 1º golpe), a coluna caindo de verdade (tambores se separando, pedaços rolando na faixa,
   a coluna deitada ou em pedaços no chão depois, sem colidir), o toco com a quebra (topo irregular, lascas em volta) e
   pó mais grosso no impacto; nada pode mudar a colisão nem a faixa. Testes em `tests/test_columns.gd`.
+- **Raiz que golpeia (RP-10, H-1)**: as lajes do RP-06 ganharam faixas giradas (`HazardDef.strips`: segmentos de `a` a
+  `b` com `strip_width` 3 m, numerados depois dos retângulos; `PlateHazard.on`, `bounds`, `from`/`dirs`/`lengths`/`widths`),
+  espera para armar (`dwell`: segundos que alguém fica em cima; 0 nas lajes), empurrão para longe da linha do meio
+  (`push_out`; `PlateFloor.strike(..., out)`, `PlateFloor.away`) e nome próprio (`plate_source`; sons `<nome>_arm` e
+  `_fire`, as lajes seguem `plate_arm`). Jardim (`_roots` no `make_data.gd`): as duas raízes de fora de cada variante
+  (A: a do norte e a do oeste, cortada antes de 6 m da entrada; B: a do oeste, cortada, e o toco junto da parede oeste),
+  faixa da face do tronco até a ponta; quem fica 0,5 s nela (herói ou inimigo) acorda: 1,2 s de aviso âmbar com poeira,
+  golpe 0,25 s de 7 no herói e 60 no inimigo, empurrão de 1 m para fora da raiz, 6 s até acordar de novo; dormente
+  antes da sala 4 (`PLATES_FROM`). `Ground.add_band` (o `add_hazard` sobre qualquer faixa), `GroundLook.plate_band`
+  (placeholder: a moldura da laje ao longo da raiz; a raiz que racha é do environment-artist), `Ground.ROOT_SOURCE`
+  `roots`, "Derrotado por: Raiz Morta" (`killer_roots`, provisório para o Daniel). `rooms[].hazard` `kind` `roots`.
+  Testes em `tests/test_roots.gd`.
 - **Morte de elite** (V-14): elite de aço dourado (`EnemyDef.elite` com `gild`; guardiões não) cai com duas lascas de
   ouro velho a mais (`CrowdRenderer.GILD_COLOR`, `Horde.damage`); teste em `test_vfx_lote1.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje

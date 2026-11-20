@@ -179,9 +179,12 @@ const PLATE_RIM := 0.14
 
 ## Lays a slab's quad over the rectangle r, drawn at rest (set_plate moves it on).
 static func plate(node: MeshInstance3D, r: Rect2, y: float) -> void:
-	var from := Vector2(r.position.x, r.get_center().y)
-	dress(node, Style.HAZARD, Shape.LINE, PLATE_REST_COLOR, PLATE_REST_STRENGTH, PLATE_RIM, from, Vector2.RIGHT, r.size.x,
-		r.size.y, y)
+	plate_band(node, Vector2(r.position.x, r.get_center().y), Vector2.RIGHT, r.size.x, r.size.y, y)
+
+
+## plate over any band of the floor (RP-10: a root's strip, placeholder until the environment artist's root that cracks).
+static func plate_band(node: MeshInstance3D, from: Vector2, dir: Vector2, length: float, width: float, y: float) -> void:
+	dress(node, Style.HAZARD, Shape.LINE, PLATE_REST_COLOR, PLATE_REST_STRENGTH, PLATE_RIM, from, dir, length, width, y)
 	var m := node.material_override as ShaderMaterial
 	put(m, &"plate", PLATE_CRACK)
 	put(m, &"fill_early", HAZARD_FILL_EARLY)
