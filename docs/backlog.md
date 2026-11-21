@@ -249,6 +249,8 @@ O HUB-E (QA do hub, A8) roda no hub de hoje para o exe do Lote A e de novo depoi
 | Q-HV1 | Quadrantes das estações (a planta troca norte e sul dos dois lados; a pintura, a prancha 22 e o jogo de hoje não) | (a) disposição de hoje (Vendedor e Árvore em cima, Forja e Livro embaixo) com os raios da planta; (b) a planta literal (Forja e Livro em cima, Vendedor e Árvore embaixo) | **(a)**: é o que a pintura mostra, o texto do pacote diz (o Livro "logo adiante" da chegada sudeste) e o HUB-D já construiu e mediu; a planta muda menos peças |
 | Q-HV2 | A chegada sudeste substitui o poço sul? | (a) sim: o poço sai, toda chegada (save novo, carregar, morte, vitória, pausa) é no selo sudeste; (b) o poço fica para o save novo e o sudeste para as voltas | **(a)**: um lugar só de chegada é o que o pacote pede ("sempre") e é mais simples de testar |
 
+**2026-11-21, o Daniel: "fazer todo o backlog na ordem citada, com todos os agentes, sem perguntar"**: Q-AT1 a Q-AT4, Q-HV1 e Q-HV2 seguem a recomendação (a). Ordem: Lote A e Lote B juntos, depois Lote D (Atlas 1) com o Lote E (Santuário da Vigília), depois Lote C (Ofícios A), Atlas 2 e 3, Fatia 3, AP-4, C20, DT-111.
+
 Q-OF7 muda em parte (registrado em `docs/design/oficios/22_decisoes_pendentes.md`): o espaço e o cenário do Alquimista
 entram (decisão do PO no pacote 2); NPC, nome, receitas e função seguem fora até o Roteiro C.
 
