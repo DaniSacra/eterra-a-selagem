@@ -32,7 +32,7 @@ abaixo do limiar do glow, 1,3, `Game.GLOW_THRESHOLD`); "UI" é cor de interface 
 | Esmeralda da Emeth | a lâmina, os cortes sem Bênção, a onda do especial | `Combat.EMETH` (0,3; 1,0; 0,45), luz | 133 | `combat.gd`, `emeth.gdshader`, `emeth_wave.gdshader` |
 | Petróleo do herói | cachecol, anel no chão, raio-x | `Player.RING_COLOR` 3e9094 | 183 | `player.gd`, `hero_ring.gdshader` |
 | Vermelho do perigo | avisos de ataque, golpe sofrido nas bordas | `GroundLook.WARNING_COLOR` (1,0; 0,18; 0,12) | 4 | `ground_look.gd`, `screen.gdshader` |
-| Âmbar do chão perigoso | só as Runas Instáveis | `GroundLook.HAZARD_COLOR` (1,0; 0,62; 0,25) | 30 | `ground_look.gd`, `rune_tiles.gdshaderinc` |
+| Âmbar do perigo de sala | todo perigo de sala (Runas, lajes, seteira, corrente, raiz, planta, nicho, pedras, cristal, urna de óleo), pela gramática SW-G7 (`docs/art/sw_g7_hazard_grammar.md`: divisa em ouro velho escuro, fenda com brasa, aro âmbar); na tela matiz 26 a 34, saturação 0,30 a 0,55, abaixo da Chama (0,6 a 0,85) | `GroundLook.HAZARD_COLOR` (1,0; 0,62; 0,25) | 30 | `ground_look.gd`, `rune_tiles.gdshaderinc` |
 | Verde espectral | a necromancia de Morvath (almas, invocação) | `Boss.SPECTRAL` (0,38; 1,55; 1,1), luz | 157 | `boss.gd` |
 | Esmeralda corrompido | escudo do ritual, colunas, runas de Morvath | `BossShield.COLOR` (0,315; 0,7; 0,604), saturação 0,55, valor 0,7 | 165 | `boss_shield.gd`, `spectral_column.gdshader` |
 | Violeta de Morvath | o corpo, as meias-luas, a fase 4 | `Boss.VIOLET` (0,62; 0,22; 1,2), `SOUL_VIOLET` (0,62; 0,44; 1,3) | 253 a 265 | `boss.gd`, `soul_crescent.gdshader` |
@@ -192,7 +192,7 @@ Teto: saturação do esmalte até 0,5 e valor até 0,45; quaisquer dois a 40 gra
 - **Raros e caros**: quadro de impacto preto e branco no máximo a cada 10 s; câmera lenta no último abate e no máximo uma
   vez a cada 6 s nos golpes.
 - **Cor do efeito diz quem o fez**: esmeralda e ouro = herói; vermelho = vai ferir; violeta e verde espectral = Morvath;
-  âmbar = o chão das Runas.
+  âmbar = a sala que fere (todo perigo de sala, SW-G7).
 
 ## 10. Regras de consistência e de entrega
 
@@ -208,6 +208,24 @@ Teto: saturação do esmalte até 0,5 e valor até 0,45; quaisquer dois a 40 gra
 8. Nada de lore nova na arte: inscrições sem texto legível, nenhum personagem novo, nenhum símbolo fora da seção 7.
 9. Um ajuste de arte não muda regra, colisão, tempo de aviso, dano nem economia; se precisar, vira item de gameplay com
    aprovação.
+10. **Nunca pedir ao ChatGPT (ou a qualquer gerador de imagem fora do projeto) só a pintura** (regra permanente do PO,
+    2026-11-20). Todo material visual novo pedido fora (cenário, sala, estação, peça) vem com os cinco, e pedido sem os
+    cinco volta:
+    1. **pintura na câmera real** do jogo: giro 35, inclinação 30, campo de visão 24, Perto 37 m e Longe 54 m, 16:9;
+    2. **planta de cima com medidas aproximadas**: contorno do chão, portas e saídas, onde o herói entra, obstáculos que
+       colidem, o que dá cobertura, pontos de uso e interações, no mesmo referencial que o jogo usa (diga qual: x leste e
+       z norte, ou o (u; v) do `HubPlan`);
+    3. **lista ESSENCIAL contra CLIMA**: o que não se corta sem novo layout e o que se corta, reduz ou move se atrapalhar
+       a leitura;
+    4. **notas de luz, colisão e leitura**: fontes de luz com cor e área, o que colide e o que não, o que precisa ler
+       primeiro em 3 s;
+    5. **entrega lado a lado** para a reconstrução na Godot (pintura e planta na mesma folha ou par de arquivos com o
+       mesmo nome).
+    Na reconstrução vale: a planta manda em posição e medida, a pintura em cor, forma e clima, e a câmera do jogo é a
+    prova final. A imagem pedida fora é referência (não asset nem evidência, regra 5), fica fora do repositório público
+    ou só local em `docs/art/ref/`, e entra no `docs/steam-ia.md` quando for de IA. Exemplo bem feito: o pacote do
+    Santuário da Vigília Rev. 02 (`docs/design/po_2026-11-20/santuario_vigilia/`), convertido em
+    `docs/art/hv_santuario_vigilia_art.md`.
 
 ## 11. Pendências deste guia
 
