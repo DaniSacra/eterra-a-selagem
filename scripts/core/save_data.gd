@@ -14,7 +14,7 @@ extends RefCounted
 ## Forja's highest Temperar bought; refine, awaken, inscribed for the next slices) and tools (the Forjador's, Fatia 2).
 ## An older file opens every Gift its Mastery had already unlocked, for free (nobody loses a Gift), and gets 5 silver a
 ## descent it played, up to 30 (Q-RJ8 a, MaterialPurse.retro_silver), once.
-const VERSION := 8
+const VERSION := 9
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -51,7 +51,13 @@ static func defaults() -> Dictionary:
 		"oficios": Oficios.defaults(),
 		# when the last descent ended (unix seconds, 0: none; the slot screen's "Última partida"), by Game.log_run
 		"played_at": 0,
+		# since version 9: the Santuário opens by stages (HubGate): the stations whose opening was shown
+		"hub": hub_defaults(),
 	}
+
+
+static func hub_defaults() -> Dictionary:
+	return {"presented": []}
 
 
 ## The Juramentos block (E6): the ranks chosen for the next descent (id: rank; read through Juramentos.set_all) and the
@@ -134,6 +140,9 @@ static func merged(loaded: Variant) -> Dictionary:
 	# to it once, unless the player chose the camera by hand (camera_chosen, set by Save.set_option)
 	if version < 7 and String(out.options.camera) == "far" and not bool(out.options.camera_chosen):
 		out.options.camera = "near"
+	# files before version 9 (the Santuário opens by stages): what is open already counts as shown (no announcement)
+	if version < 9:
+		HubGate.mark_presented(out, HubGate.open_ids(out).filter(func(id: StringName) -> bool: return HubGate.GATED.has(id)))
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out

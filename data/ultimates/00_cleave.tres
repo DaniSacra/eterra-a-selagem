@@ -7,6 +7,7 @@ script = ExtResource("1_e2lpn")
 id = &"cleave"
 name_key = &"ult_cleave"
 desc_key = &"ult_cleave_desc"
+charge = 90.0
 damage_charge = 0.02
 hurt_charge = 1.0
 mastery_level = 6

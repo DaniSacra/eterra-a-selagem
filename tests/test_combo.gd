@@ -53,7 +53,8 @@ func test_the_named_moves_exist() -> void:
 	assert_eq(names.get(&"bolt"), "D")
 	assert_eq(names.get(&"burst"), "D segurado")
 	assert_eq(names.get(&"dash_cut"), "Esquiva + E")
-	assert_eq(names.size(), 5)
+	assert_eq(names.get(&"shout"), "Brado")
+	assert_eq(names.size(), 6)
 
 
 ## The attack is three swings (as the first weapon of Hades II): 20, 25, then 60 all around.

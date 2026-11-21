@@ -125,9 +125,13 @@ const POINTER_SIZE := 18.0
 const VIEW_INSET := 16.0
 ## (The bottom clears the caption over the ultimate's diamond, "Maestria 2", BUG-111.)
 const EDGE_INSET := Vector4(30.0, 96.0, 30.0, 128.0)
-## The four actions in the order of the diamonds, with the gift slot that changes each.
-const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"dodge"]
-const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]
+## The actions in the order of the diamonds (left button, right button, Q, E, then the ultimate's diamond on Shift, then
+## the dodge on Space: docs/design/heroes/guerreiro.md 3), with the gift slot that changes each. The Brado (E) has no
+## Blessing slot yet (Boon.Slot.NONE); its diamond is hidden when the hero's tree has no such move.
+const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"shout", &"dodge"]
+const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.NONE, Boon.Slot.DASH]
+## Where the ultimate's diamond stands among them: before the dodge.
+const ULT_AT := 4
 ## The map's button beside the room's number: its gap, height and how bright its words are (quiet until hovered).
 const MAP_GAP := 10
 const MAP_BUTTON_HEIGHT := 26.0
@@ -179,7 +183,7 @@ var _combo_top := 0.0
 var _move: Label
 var _notice: Label
 var _slots: Array[ActionSlot] = []
-## The ultimate's diamond, after the four: its gold level rises with the charge; sealed with "Maestria N" over it
+## The ultimate's diamond, between the Brado's and the dodge's: its gold level rises with the charge; sealed with "Maestria N" over it
 ## before the Mastery unlocks one (hidden only for the robot, who has none); a press that cannot let it go says why
 ## (T5, ult_caption).
 var _ult_slot: ActionSlot
@@ -443,11 +447,14 @@ func _build_actions() -> void:
 	var side := ROW_DIAMOND if _row_mode else ActionSlot.DIAMOND
 	var drop := ROW_KEY_DROP if _row_mode else 0.0
 	for i in ACTIONS.size():
+		if i == ULT_AT:
+			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, side, drop)
+			row.add_child(_ult_slot)
 		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], side, drop)
+		if ACTIONS[i] == &"shout":
+			s.glyph = BoonIcon.SHOUT_GLYPH
 		row.add_child(s)
 		_slots.append(s)
-	_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, side, drop)
-	row.add_child(_ult_slot)
 	if _row_mode:
 		_build_row(row)
 		return
@@ -735,6 +742,11 @@ func _update_slots(p: Player) -> void:
 	for b in game.boons.owned():
 		by_slot[b.slot] = b
 	for s in _slots:
+		if s.action == &"shout":
+			# the Brado (E): its recharge, hidden for a hero without it
+			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) != null
+			s.refresh(null, p.shout_wait())
+			continue
 		var b: Boon = by_slot.get(s.slot)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
 		match s.slot:
@@ -954,7 +966,7 @@ func _update_boss(b: Enemy) -> void:
 
 ## The count and the move's name stand right of the last diamond shown (the robot has no ultimate's).
 func _follow_row() -> void:
-	var last: Control = _ult_slot if _ult_slot.visible else _slots.back()
+	var last: Control = _slots.back()  # (the dodge, Space: always there, after the ultimate's)
 	var x := last.get_global_rect().end.x - get_global_rect().position.x + ROW_COUNT_GAP - ActionSlot.KEY_H * 0.5
 	for c: Control in [_combo_row, _move]:
 		if not is_equal_approx(c.offset_left, x):

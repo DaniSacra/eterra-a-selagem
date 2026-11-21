@@ -447,3 +447,16 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   achar, ou "???" com a pista), Ferramentas (a Picareta no estado dela), Pedidos (Forjador, Vendedor) e Obras (Prévia dos
   anjos), em voz neutra.
 
+## Botões do Guerreiro no HUD, Como Jogar e Golpes (2026-11-21; testes em `tests/test_shout.gd`)
+- **HUD**: a fileira tem seis losangos na ordem botão esquerdo, botão direito, Q (círculo), E (Brado), Shift (ultimate) e Espaço
+  (esquiva): `Hud.ACTIONS`/`SLOTS` com `ULT_AT = 4` (o losango da ultimate entra antes da esquiva). O do Brado tem glifo próprio
+  (`BoonIcon.SHOUT_GLYPH` 105: um ponto e três arcos para os dois lados), slot `NONE` (ainda sem Bênção), mostra a recarga de 10 s
+  (`Player.shout_wait()`) e some para herói sem esse golpe. A fileira ficou mais larga (termina em cerca de 32% da largura): os testes
+  `test_bench_ui` passaram de 30% para 35%. A contagem de golpes continua à direita do último losango (`_follow_row` lê a esquiva).
+- **Como Jogar** (Controles): linha nova "Brado de Guerra" depois do Círculo; Ultimate antes da Esquiva; as teclas e botões são lidos do
+  `InputMap`, então mostram E, Shift e F (e R3 no controle) e seguem o remapeamento. Configurações > Controles lista o Brado
+  (remapeável, com o botão do controle na placa). A tela de título lista as teclas novas (`title_controls`, `title_pad`).
+- **Compêndio de Golpes**: "Brado de Guerra" aparece entre os golpes (marca do Brado no lugar do botão esquerdo ou direito,
+  `CodexScreen.move_marks`) e se acende no primeiro uso.
+- **A conferir em captura** (não feitas): a página Controles do Como Jogar com a linha a mais (o quadro tem 420 px; a medida sem
+  tela não é confiável) e a fileira do HUD com seis losangos em 720p e 1080p.

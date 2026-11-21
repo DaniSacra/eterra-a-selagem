@@ -109,10 +109,13 @@ func _ready() -> void:
 	fade_layer.add_child(_fade)
 	var points := {}
 	for id in HubPlan.STATIONS:
-		points[id] = HubPlan.use_point(id)
+		if is_open(id):
+			points[id] = HubPlan.use_point(id)
 	focus = HubFocus.new(points)
+	evolve()  # (the closed stations out of the focus and dark)
 	# the place's name on arriving and a faint name over every station (UI review d2ff05d, P1-8)
 	add_child(HubLabels.new().setup(self))
+	_announce()
 	apply_options()
 	# its own place in Músicas (the title's piece by default: from the title it goes on without a seam)
 	Music.play(MusicCatalog.HUB)
@@ -236,7 +239,7 @@ static func station_line(id: StringName) -> StringName:
 
 ## Uses a station (interact on it in focus).
 func use(id: StringName) -> void:
-	if host.is_open() or leaving:
+	if host.is_open() or leaving or not is_open(id):
 		return
 	used.emit(id)
 	match id:
@@ -321,8 +324,37 @@ func _show_forge() -> void:
 ## HV-E: the hub as the save has grown it (HubEvolution: the forge, the stall, the Gift plates, the Livro's spines and
 ## shelf, the Alquimista's bench), painted by HubLook.
 func evolve() -> void:
+	if focus != null:
+		for id in HubPlan.STATIONS:
+			if is_open(id):
+				focus.points[id] = HubPlan.use_point(id)
 	if arena != null and arena.look != null:
 		HubEvolution.apply(arena.look, HubEvolution.of(Save.data, codex_chapters(Save.data)))
+		if arena.look.has_method(&"set_closed"):
+			for id in HubGate.GATED:
+				arena.look.call(&"set_closed", id, not is_open(id))
+
+
+## Whether a station stands open (HubGate; --hub-open=all opens every one, for captures and the robot).
+func is_open(id: StringName) -> bool:
+	return HubGate.is_open(Save.data, id, Dev.arg("hub-open") == "all")
+
+
+## The openings of this return said once: one line each over the place's name, written in the save (HubGate.presented).
+func _announce() -> void:
+	if Dev.arg("hub-open") == "all" or Dev.has("hero-at"):
+		return
+	var ids := HubGate.to_present(Save.data)
+	if ids.is_empty():
+		return
+	var lines: Array[String] = []
+	for id in ids:
+		lines.append(T.t(HubGate.TEXT[id]))
+	HubGate.mark_presented(Save.data, ids)
+	Save.write()
+	for l in get_children():
+		if l is HubLabels:
+			(l as HubLabels).announce(lines)
 
 
 ## The Compêndio's chapters for the Livro's spines (HubEvolution.of): a Vector2i(found, total) each, read the way the

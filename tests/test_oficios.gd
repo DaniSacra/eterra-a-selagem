@@ -144,7 +144,7 @@ func test_the_whole_journey() -> void:
 ## Save 8: the block round-trips through JSON, and saves 1 to 7 open whole as 8 with an empty block.
 func test_save_8_keeps_the_block_and_opens_older_files() -> void:
 	var data := SaveData.defaults()
-	assert_eq(data.version, 8)
+	assert_eq(data.version, SaveData.VERSION)
 	Oficios.block(data).seen.append("vein")
 	Oficios.add_item(data, def, def.stone, 3)
 	(Oficios.block(data).tools as Array).append("pick")

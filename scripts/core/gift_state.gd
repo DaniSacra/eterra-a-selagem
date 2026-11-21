@@ -88,10 +88,22 @@ func fury_max() -> int:
 ## A kill by a blow with these tags (none: a burn, a zone): the charges it gives. Returns how many it gained.
 func on_kill(tags: Array[StringName]) -> int:
 	var top := fury_max()
-	if top <= 0:
+	if top <= 0 or tags.has(&"shout"):  # (the Brado's charges are on_shout's, a most of 2 whatever it fells)
 		return 0
 	var before := fury
 	fury = mini(top, fury + int(value(&"fury_per_kill", tags)))
+	fury_left = value(&"fury_time")
+	return fury - before
+
+
+## The Brado de Guerra reached `commons` common enemies (never a boss, an elite nor a guardian; Combat.is_common): one
+## charge of Ímpeto for each, at most `cap` a cry, up to fury_max; none without the Dom Ímpeto. Returns the charges gained.
+func on_shout(commons: int, cap: int) -> int:
+	var top := fury_max()
+	if top <= 0 or commons <= 0:
+		return 0
+	var before := fury
+	fury = mini(top, fury + mini(commons, cap))
 	fury_left = value(&"fury_time")
 	return fury - before
 

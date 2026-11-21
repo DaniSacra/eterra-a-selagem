@@ -64,7 +64,7 @@ func test_one_sign_per_station_with_its_name_line_and_key() -> void:
 		# the station's own verb, never the generic "Interagir" (UI review d2ff05d, P1-9)
 		assert_eq(hub.station_sign.prompt.text, T.t("hub_use_" + id))
 		assert_ne(hub.station_sign.prompt.text, T.t(&"hub_use"))
-		assert_eq(hub.station_sign.key_text(), "E")
+		assert_eq(hub.station_sign.key_text(), "F")
 		assert_true(hub.station_sign.plate.visible, "%s: on show" % id)
 	hub.player.pos = hub.arena.start
 	await _frames(3)
@@ -78,13 +78,13 @@ func test_the_key_follows_the_device_and_a_remapping() -> void:
 	assert_eq(hub.station_sign.key_text(), T.t(&"pad_0"), "the gamepad's A, live")
 	assert_true(hub.station_sign.key.rounded, "a face button is round")
 	Controls.using_pad = false
-	assert_eq(hub.station_sign.key_text(), "E", "back to the keyboard")
+	assert_eq(hub.station_sign.key_text(), "F", "back to the keyboard")
 	assert_false(hub.station_sign.key.rounded)
-	var f := InputEventKey.new()
-	f.physical_keycode = KEY_F
-	Controls.rebind(&"interact", f)
+	var g := InputEventKey.new()
+	g.physical_keycode = KEY_G
+	Controls.rebind(&"interact", g)
 	hub.station_sign.refresh()
-	assert_eq(hub.station_sign.key_text(), "F", "the remapped key")
+	assert_eq(hub.station_sign.key_text(), "G", "the remapped key")
 
 
 func test_the_sign_hides_under_a_screen_and_comes_back() -> void:

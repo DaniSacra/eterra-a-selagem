@@ -9,3 +9,5 @@ func run() -> void:
 	Save.enabled = false
 	if not Dev.has("seed"):
 		Dev.put("seed", "1")
+	# the Santuário's stations open by stages (HubGate); the hub tests built before that use them all (test_hub_gate drops it)
+	Dev.put("hub-open", "all")

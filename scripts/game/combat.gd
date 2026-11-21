@@ -141,6 +141,8 @@ var _hits: Array[Enemy] = []
 var _mats: Array[StringName] = []
 var _near: Array[Enemy] = []
 var _swing := 0
+## The cry's blow on one that is not common: no stun at all, Combat.strike.
+var _no_stun := false
 var _behind: Array[Enemy] = []
 var _slow_cd := 0.0
 var _cine_cd := 0.0
@@ -237,12 +239,17 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var color := color_of(tags)
 	var heavy := node.has_tag(&"heavy")
 	var finisher := node.has_tag(&"finisher")
+	# the Brado de Guerra (Effect.STUN): a cry, not a cut (rings, no blade's ribbon), stuns only the common ones
+	var shout := node.effect == ComboNode.Effect.STUN
 	match node.shape:
 		ComboNode.Shape.ARC:
 			horde.in_arc(origin, dir, reach, shape.hit_width, _hits)
 		ComboNode.Shape.CIRCLE:
 			horde.in_circle(origin, reach, _hits)
-			if not finisher:
+			if shout:
+				fx.ring(origin, reach, color, 0.4, 0.15, true)
+				fx.ring(origin, reach * 0.6, color, 0.28, 0.2)
+			elif not finisher:
 				# (a finisher's crescent is the ring flying out: one circle, not rings inside rings)
 				fx.ring(origin, reach, color, 0.35, 0.15, true)
 		ComboNode.Shape.LINE:
@@ -255,21 +262,28 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var flip := node.sweep_flip(_swing % 2 == 0)
 	if node.damage <= 0.0:
 		_hits.clear()
-	else:
+	elif not shout:
 		_draw_swing(node, shape, origin, dir, color, heavy, finisher, flip)
 	var struck: Array[Enemy] = _hits.duplicate()
 	var stars := 0
 	var kills := 0
+	var commons := 0
 	_mats.clear()
 	for e: Enemy in struck:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir if (e.pos - origin).dot(dir) >= 0.0 else -dir
 		if e.invulnerable:
 			hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)  # only a spark on his ward
 			continue
-		if stars < MAX_STARS:
+		if stars < MAX_STARS and not shout:
 			stars += 1
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
+		var common := is_common(e.def)
+		# (the cry only pushes an elite, a guardian or a boss: not even the stun of a plain blow reaches them from it)
+		_no_stun = shout and not common
 		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
+		_no_stun = false
+		if shout and common:
+			commons += 1
 		hits += 1
 		_mats.append(CombatSounds.material_of(e))
 		if heavy:
@@ -287,8 +301,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 					e.air_t = node.effect_time
 					e.air_total = node.effect_time
 			ComboNode.Effect.STUN:
-				if e.def.behavior != EnemyDef.Behavior.BOSS:
-					e.stun_t = maxf(e.stun_t, node.effect_time * (0.5 if e.def.heavy else 1.0))
+				if common:
+					horde.flinch(e, node.effect_time)
 	# (the blade's own sound plays when the move starts, ComboNode.sound: GF-11)
 	if not struck.is_empty():
 		# Hades II holds the hit slow a little longer when the blow kills
@@ -314,6 +328,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			throw_wave(node, origin, dir, color, tags)
 		ComboNode.Effect.STUN:
 			fx.hero_burst(&"light", Vector3(origin.x, 0.4, origin.y))
+			if gifts:
+				gifts.on_shout(commons, int(node.effect_power))
 	if gifts:
 		_gift_wave(node, origin, dir, color)
 	var pulse := boons.stat(&"ground_pulse", tags)
@@ -604,6 +620,12 @@ func _apply_status(e: Enemy, status: StringName, power: float) -> void:
 			e.slow_t = maxf(e.slow_t, power)
 
 
+## A common enemy: not an elite, not a guardian (heavy) and not a boss. The Brado de Guerra stuns only these and gives a
+## charge of Ímpeto for each one it reaches.
+static func is_common(def: EnemyDef) -> bool:
+	return not def.heavy and not def.elite and def.behavior != EnemyDef.Behavior.BOSS
+
+
 ## One enemy takes one hit, with every gift applied. counts: it is a blow of the paladin (feeds the combo counter).
 ## Returns true when it died.
 func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, knockback: float, counts: bool = true, big: bool = false) -> bool:
@@ -619,7 +641,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var hp_before := e.hp
 	kill_tags = tags
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
-	horde.stun_scale = 1.0 + boons.stat(&"stun_pct", tags)
+	horde.stun_scale = 0.0 if _no_stun else 1.0 + boons.stat(&"stun_pct", tags)
 	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
 	horde.stun_scale = 1.0
 	kill_tags = []

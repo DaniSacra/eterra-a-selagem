@@ -8,6 +8,8 @@ extends Control
 const ACTION_GLYPH := 100
 ## Glyph ids of the ultimates: ULT_GLYPH + UltDef.Kind (the cleave, the Voragem).
 const ULT_GLYPH := 110
+## The glyph of the Brado de Guerra (E): a mouth with the cry rippling out in arcs.
+const SHOUT_GLYPH := 105
 ## Glyph of the most Magia (T5, the Provação's Reserva): a cut crystal with a light down its middle.
 const MAGICK_GLYPH := 105
 
@@ -190,6 +192,12 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 3:
 				var y := (k - 1) * r * 0.4
 				ci.draw_line(c + Vector2(-r * (0.95 - absf(k - 1) * 0.2), y), c + Vector2(-r * 0.45, y), w, th * 0.8, true)
+		105:  # the Brado: the cry as three arcs spreading out of a point, to both sides
+			ci.draw_circle(c, r * 0.2, w)
+			for k in 3:
+				var rad := r * (0.45 + k * 0.28)
+				ci.draw_arc(c, rad, -0.75, 0.75, 14, w, th, true)
+				ci.draw_arc(c, rad, PI - 0.75, PI + 0.75, 14, w, th, true)
 		MAGICK_GLYPH:  # the most Magia: a cut gem (table, girdle, a point below), its facets in a V; never a cross
 			var gem := PackedVector2Array([c + Vector2(-r * 0.42, -r * 0.6), c + Vector2(r * 0.42, -r * 0.6), c + Vector2(r * 0.85, -r * 0.15),
 				c + Vector2(0, r * 0.9), c + Vector2(-r * 0.85, -r * 0.15)])

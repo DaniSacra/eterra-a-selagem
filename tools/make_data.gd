@@ -20,6 +20,7 @@ const L := ComboNode.In.LIGHT
 const H := ComboNode.In.HEAVY
 const C := ComboNode.In.CHARGE
 const CL := ComboNode.In.CHARGE_LIGHT
+const SH := ComboNode.In.SHOUT
 
 ## Swing peak (seconds into the clip) of the hero's attack clips, measured from the sword hand by tools/bake_hero.gd.
 const PEAK := {
@@ -150,8 +151,20 @@ func _tree(fourth: bool) -> ComboTree:
 	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
 		{"damage": 30.0, "shape": ComboNode.Shape.LINE, "reach": 640.0 / U, "width": 1.6, "knockback": 10.0, "lunge": 3.2, "windup": 0.06,
 		"recovery": 14.0 / 60.0, "chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.9, "move_scale": 0.0}, [], &"move_dash_cut")
+	# E, the Brado de Guerra (docs/design/heroes/guerreiro.md 3.4 A; Daniel, 2026-11-21): a cry all around, 4 m, 15
+	# damage, the common enemies stunned 0.5 s (an elite, a guardian or a boss is only pushed: Combat.is_common), one
+	# charge of Ímpeto for each common one it reaches, at most 2 a cry (effect_power), never from a boss. Recharge 10 s;
+	# windup 0.25 s, recovery 0.25 s (its legs held as long), planted as every blow; only the dodge cuts it. The 0.10 s of
+	# impact is the hit stop (hit_stop_ms 80, the tree's ceiling: test_combo). The sound is the special's Omega surge, the ring is the FX's own.
+	var shout := _move(&"shout", SH, &"Cast", [&"shout"],
+		{"damage": 15.0, "shape": ComboNode.Shape.CIRCLE, "reach": 4.0, "knockback": 10.0, "windup": 0.25, "recovery": 0.25,
+		"move_hold": 0.25, "chain_window": 0.4, "cooldown": 14.0, "hit_stop_ms": 80.0, "shake": 1.4,
+		"move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.STUN, "effect_power": 2.0, "effect_time": 0.5}, [], &"move_shout")
+	# (the Cast clip peaks at 0.10 s: played slowly from its start so the arms are out when the cry lands at 0.25 s)
+	shout.anim_from = 0.0
+	shout.anim_speed = float(PEAK[&"Cast"]) / shout.windup
 	var tree := ComboTree.new()
-	tree.neutral = [cut1, bolt, burst, lance]
+	tree.neutral = [cut1, bolt, burst, lance, shout]
 	tree.dodge = [dash_cut]
 	tree.dodge_window = 23.0 / 60.0
 	return tree
@@ -187,10 +200,24 @@ func _enemy(props: Dictionary) -> void:
 	var d := EnemyDef.new()
 	for k: String in props:
 		d.set(k, props[k])
+	# Daniel 2026-11-21 ("acho eles lentos"): every enemy but the boss walks ENEMY_PACE faster than its Hades II number
+	# and waits ENEMY_COOLDOWN of its attack cooldown (lunges, windups and tells untouched: as fair as before)
+	if d.behavior != EnemyDef.Behavior.BOSS:
+		d.speed *= ENEMY_PACE
+		d.attack_cooldown *= ENEMY_COOLDOWN
 	if d.name_key == &"":
 		d.name_key = StringName("enemy_" + String(d.id))
 	_save(d, "res://data/enemies/%s.tres" % d.id)
 
+
+## Daniel 2026-11-21: the enemies read slow; every one but the boss a little faster (_enemy).
+const ENEMY_PACE := 1.15
+const ENEMY_COOLDOWN := 0.9
+## Morvath's walk (a share of Hades II's 600) and his pace between attacks (shares of BossDef.rest per phase and of
+## every BossAttack cooldown): 0.5, 1.0 and 1.0 before 2026-11-21.
+const BOSS_WALK := 0.7
+const BOSS_REST := 0.8
+const BOSS_COOLDOWN := 0.85
 
 ## Each enemy takes the numbers of the Hades II enemy that plays the same part in its first region (life, speed,
 ## damage, attack timings, room-generator rating, elite armor), with our own creatures, names and look.
@@ -322,7 +349,7 @@ func _enemies() -> void:
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
 	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
 	# fight's numbers are data/bosses/morvath.tres (_bosses)
-	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 13.0, "radius": 1.4,
+	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * BOSS_WALK, "damage": 13.0, "radius": 1.4,
 		"heavy": true, "armor": 0.0, "attack_damage": 16.0, "magic_color": SPECTRAL, "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
 		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5, "material": &"spectral"})
 
@@ -1393,6 +1420,10 @@ func _bosses() -> void:
 		_attack(&"storm", {"from_phase": 4, "weight": 2.2, "cooldown": 4.0, "near_bias": 1.3, "far_bias": 1.3, "then": &"dash", "then_chance": 0.4, "then_from_phase": 4,
 			"layers": [&"eruptions", &"summon"] as Array[StringName], "layer_from_phase": 4, "layer_chance": 1.0, "layer_share": 0.0}),
 	]
+	for i in b.rest.size():
+		b.rest[i] *= BOSS_REST
+	for at: BossAttack in b.attacks:
+		at.cooldown *= BOSS_COOLDOWN
 	_save(b, "res://data/bosses/morvath.tres")
 
 
@@ -1507,10 +1538,10 @@ func _ultimates() -> void:
 		DirAccess.remove_absolute(ULT_DIR + f)
 	# T5 (docs/design/t5_ultimate.md): it also fills with the damage dealt (ULT_DAMAGE_CHARGE a point, 3000 for the
 	# cleave) and the life lost (ULT_HURT_CHARGE a point): a player who never holds an Omega still gets it
-	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
+	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 90.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
 		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
 		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 300.0, "damage": 200.0, "stun": 1.0, "armor_mult": 2.0})
-	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3,
+	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 105.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3,
 		"tags": [&"ultimate", &"cast"] as Array[StringName], "anim": &"Sword_Attack", "anim_peak": PEAK[&"Sword_Attack"], "knockback": 2.0,
 		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 8.0,
 		"implode_damage": 120.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
@@ -1589,6 +1620,9 @@ func _wave(tag: StringName, damage: float, reach: float, width: float) -> Array[
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
 ## life 30 and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
 ## (5.4 m, 3 s, Omega 20 of Magia held 0.6 s, bursts for 150). The passive gives 2 of Magia a finisher (D-56).
+## Daniel 2026-11-21 ("aumentasse a recarga de todas as habilidades com exceção dos ataques"): the circle 6 s from its
+## cast (was 0.2 s after one ended), the Brado 14 s (was 10), the dodge back in 1.1 s (was 0.74, Hades II), the
+## ultimates 50% more Magia (cleave 90, was 60; Voragem 105, was 70). The attack and the special untouched.
 func _hero() -> void:
 	var h := HeroDef.new()
 	h.id = &"warrior"
@@ -1596,9 +1630,9 @@ func _hero() -> void:
 	h.model = &"hero_explorer"
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
-		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 0.74,
+		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 1.1,
 		"magick_max": 50.0,
-		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 0.2, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
+		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
 		"magick_on_finisher": 2.0,
 		# C19-4 (Q-12): Hades II's Swing5 charge walks at 3% with the body all but locked; the special's 60% is an

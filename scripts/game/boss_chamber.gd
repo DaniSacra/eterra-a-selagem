@@ -321,7 +321,7 @@ const KEY_RANGE := 17.0
 const ABYSS_BEARINGS: Array[float] = [250.0, 80.0]
 ## C18 (ART P1-2, one tone for the scenery: the frame was a fifth saturated violet and blue): the abyss's light, the
 ## sky, fog, mist, ambient, moon and lanterns keep their hue under 0.45 of saturation.
-const ABYSS_LIGHT := Vector4(22.0, -12.0, 5.0, 26.0)
+const ABYSS_LIGHT := Vector4(22.0, -12.0, 3.5, 26.0)
 const ABYSS_COLOR := Color(0.66, 0.52, 1.0)
 const BLUE_AT := Vector3(330.0, 45.0, 4.0)
 const BLUE_COLOR := Color(0.6, 0.68, 0.92)
@@ -340,6 +340,8 @@ const MOON_COLOR := Color(0.52, 0.58, 0.8)
 const MOON_ENERGY := 0.35
 const MOON_ROTATION := Vector3(-50, 150, 0)
 ## Violet glow cards rising from the abyss at the frame's sides (bearing, r, foot height, width, height, energy share).
+## Art review 2026-11-21 (the abyss still read a light lilac beside the arena, over the fight): all of them dimmed.
+const GLOW_DIM := 0.6
 const GLOWS: Array[Array] = [
 	[260.0, 24.0, -16.0, 26.0, 20.0, 1.3], [235.0, 22.0, -16.0, 20.0, 16.0, 1.1], [290.0, 26.0, -16.0, 18.0, 13.0, 1.0],
 	[75.0, 24.0, -16.0, 26.0, 20.0, 1.3], [100.0, 22.0, -16.0, 20.0, 16.0, 1.1], [50.0, 26.0, -16.0, 18.0, 13.0, 1.0],
@@ -356,10 +358,13 @@ const COLUMN_SHAPE := Vector3(0.95, 1.25, 0.42)
 ## Art review 2026-11-21 item 1 (stylized look): the abyss's violet no lighter than the arena (the left third of the
 ## frame was a pale lilac at value 0.7): the glow cards' colour, the fog boxes' albedo, emission and density, all dark
 ## violet (hue 255, saturation 0.45, value up to 0.18 in the fog).
-const STY_GLOW := Color(0.2, 0.17, 0.3)
+const STY_GLOW := Color(0.12, 0.1, 0.19)  # art review 2026-11-21: was (0.2, 0.17, 0.3), a light lilac beside the fight
 const STY_FOG_ALBEDO := Color(0.12, 0.1, 0.18)
-const STY_FOG_EMISSION := Color(0.06, 0.05, 0.09)
+const STY_FOG_EMISSION := Color(0.035, 0.03, 0.06)
 const STY_FOG_DENSITY := 0.025
+## Art review 2026-11-21: the violet climbing the deep piers beside the arena (depth_stone glow_energy, 0.25) read a
+## light lilac over the fight in the stylized look.
+const STY_DEEP_GLOW := 0.08
 ## Violet fog boxes in the abyss (Forward+): bearing, r, size.
 const FOG_BOXES: Array[Vector4] = [Vector4(265.0, 24.0, 18.0, 40.0), Vector4(85.0, 24.0, 18.0, 40.0)]
 
@@ -1355,6 +1360,8 @@ func _deep(fade: float, tint := 1.0) -> ShaderMaterial:
 	d.set_shader_parameter(&"stone_color", DEEP_STONE)
 	d.set_shader_parameter(&"edge_color", DEEP_EDGE)
 	d.set_shader_parameter(&"glow_color", ABYSS_COLOR)
+	d.set_shader_parameter(&"glow_energy", 0.25)  # the shader's own, written so the classic look can go back to it
+	VisualProfile.vary(d, {&"shader_parameter/glow_energy": STY_DEEP_GLOW})
 	return d
 
 
@@ -1431,10 +1438,10 @@ func _far() -> void:
 	# violet glowing up from the abyss at the sides and violet fog low in it
 	for g in GLOWS:
 		var p := at_bearing(g[0], g[1])
-		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * float(g[5]))
+		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_DIM * float(g[5]))
 	for g in COLUMNS:
 		var p := at_bearing(g[0], g[1])
-		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * float(g[5]), COLUMN_SHAPE)
+		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * GLOW_DIM * float(g[5]), COLUMN_SHAPE)
 	for f in FOG_BOXES:
 		var p := at_bearing(f.x, f.y)
 		var fm := kit.abyss_fog(Vector3(p.x, -12.0, p.y), Vector3(f.z, 10.0, f.w))
@@ -1586,6 +1593,9 @@ func _arch_stone() -> ShaderMaterial:
 		_sty_arch.set_shader_parameter(&"mist_color", STY_FAR_MIST)
 		_sty_arch.set_shader_parameter(&"sink_top", STY_ARCH_SINK.x)
 		_sty_arch.set_shader_parameter(&"sink_bottom", STY_ARCH_SINK.y)
+		# a copy keeps the glow of the look it was made in: its own classic and stylized glow, as _deep's
+		_sty_arch.set_shader_parameter(&"glow_energy", 0.25)
+		VisualProfile.vary(_sty_arch, {&"shader_parameter/glow_energy": STY_DEEP_GLOW})
 	return _sty_arch
 
 

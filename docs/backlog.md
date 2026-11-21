@@ -19,6 +19,12 @@ estilizada e Perto; agente `hero-designer` e as specs dos 4 heróis em `docs/des
 5. Heróis novos (Maga, Ladina, Paladino): só depois das decisões de lore e do Guerreiro fechado; pedem modelo e
    animação (Meshy com estimativa antes).
 
+6. **Referência SWORN do Daniel** (`docs/design/sworn_ref_backlog.md`, 2026-11-21): HUD (coluna da build SR-H1, canto
+   do herói SR-H2, moedas SR-H3, palavra-chave SR-H4, placa SR-H5, vinheta SR-H6), gráficos (chão rico SR-G1, sangue
+   SR-G2, moldura SR-G3, golpe SR-G4, contorno SR-G5), perigos (armadilha de parede SR-P1, laje que cede SR-P2, grade
+   SR-P3, aviso de área SR-P4, relíquia SR-P5). Ordem espera o Daniel.
+7. **Guerreiro forte demais** (`docs/design/heroes/guerreiro_revisao.md`): caminho B (números) agora, A (identidade) depois.
+
 **Perguntas abertas ao Daniel**
 - Árvore do Jardim: diminuir (mexe na colisão) ou só escurecida?
 - Névoa de Morvath: escurecer mais?

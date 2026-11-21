@@ -580,6 +580,8 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		ult_refused.emit()
 	_ult_want = maxf(0.0, _ult_want - dt)
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
+	if _press_shout():
+		_end_charge()
 	if curse.active():
 		# the curse locks the special: a press does nothing, a charge already under way is dropped
 		if charging and _charge_action == CURSE_ACTION:
@@ -614,8 +616,26 @@ func _queue_buttons() -> void:
 		_ult_want = DODGE_BUFFER
 	if Controls.pressed(&"light_attack"):
 		runner.press(ComboNode.In.LIGHT)
+	_press_shout()
 	if Controls.pressed(CURSE_ACTION) and not curse.active():
 		runner.press(ComboNode.In.HEAVY)
+
+
+## E, the Brado de Guerra: a press while it recharges does nothing (it keeps the blow already waiting). True when it was
+## given to the runner.
+func _press_shout() -> bool:
+	if not Controls.pressed(&"shout") or ComboTree.find(tree.neutral, ComboNode.In.SHOUT) == null:
+		return false
+	if runner.cooldown_left(&"shout") > 0.0:
+		return false
+	runner.press(ComboNode.In.SHOUT)
+	return true
+
+
+## Share (0..1) of the Brado's recharge still to run (the HUD's diamond); 0 when it is ready or the hero has none.
+func shout_wait() -> float:
+	var node := ComboTree.find(tree.neutral, ComboNode.In.SHOUT)
+	return clampf(runner.cooldown_left(&"shout") / node.cooldown, 0.0, 1.0) if node != null and node.cooldown > 0.0 else 0.0
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega

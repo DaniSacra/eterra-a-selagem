@@ -1,5 +1,11 @@
 # O Guerreiro nos 5 botões + Espaço
 
+> **Entrou em 2026-11-21 (aprovado pelo Daniel)**: Shift = ultimate, F = interagir, E = Brado de Guerra (3.4 A: raio 4 m, 15 de
+> dano, atordoa só comuns 0,5 s, 1 carga de Ímpeto por comum, no máximo 2, nunca por chefe, recarga 10 s, 0,25 / 0,25 s, pés
+> plantados), HUD com os losangos esquerdo, direito, Q, E, Shift e Espaço, robô com o Brado (3 ou mais comuns a 4 m). R3 no controle
+> para o Brado. **Ainda não**: slots `TECH`/`ULT` e as Bênçãos por família do E e do Shift (4), os 3 Dons do Brado (5), a linha do Brado
+> na página do herói. Detalhe em `docs/reference/meta.md` e `ui.md`; testes em `tests/test_shout.gd`.
+
 - **Data**: 2026-11-21. **Autor**: `hero-designer`. **Base**: `docs/design/warrior_spec.md` (aprovada), `docs/reference/meta.md` e `gameplay.md`.
 - **Não muda** (aprovado pelo Daniel): guerreiro ofensivo de espada (a Emeth), sem bloqueio nem aparo, golpe parado, Fúria em cargas sem barra,
   especial como onda, símbolo do leão, nome do jogo "O Guerreiro" (D-64 a D-71), primeiro Salmo o da Sentinela.

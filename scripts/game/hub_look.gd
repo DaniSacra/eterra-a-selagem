@@ -597,6 +597,19 @@ func station_light(id: StringName) -> Light3D:
 	return station_lights.get(id)
 
 
+## A station not open yet (HubGate; Hub calls it with the save): its light and fire are out (the Vendedor keeps his cloth,
+## HubEvolution). Nothing new is drawn: the environment-artist could give the forge a cold mouth and the tree bare roots.
+func set_closed(id: StringName, closed: bool) -> void:
+	var l: Light3D = station_lights.get(id)
+	if l != null:
+		l.visible = not closed
+	if id == HubPlan.SMITH:
+		set_forge_rank(forge_rank)
+		if _forge_glow != null and closed:
+			_forge_glow.albedo_color.a = 0.0
+		if _forge_twin != null:
+			_forge_twin.visible = not closed and forge_rank > 0
+
 ## The station in focus (&"": none; Hub calls it on focus_changed): its light eases FOCUS_GAIN brighter and the thread
 ## of gold round its use slab fades in, the one before eases out.
 func focus(id: StringName) -> void:

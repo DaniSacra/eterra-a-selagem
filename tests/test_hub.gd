@@ -182,12 +182,12 @@ func test_every_station_is_reached_from_the_arrival() -> void:
 
 # ---------- interact ----------
 
-func test_interact_is_e_and_a_and_listed() -> void:
+func test_interact_is_f_and_a_and_listed() -> void:
 	assert_true(Controls.ACTIONS.has(&"interact"))
 	assert_true(Controls.REMAPPABLE.has(&"interact"), "remappable (Configurações > Controles)")
-	assert_eq(Controls.DEFAULT_KEYS[&"interact"], [KEY_E])
+	assert_eq(Controls.DEFAULT_KEYS[&"interact"], [KEY_F])
 	assert_eq(Controls.DEFAULT_PAD[&"interact"], JOY_BUTTON_A)
-	assert_eq(Controls.label(&"interact"), "E")
+	assert_eq(Controls.label(&"interact"), "F")
 	var listed := false
 	for row in HowToScreen.ROWS:
 		listed = listed or (row.actions as Array).has(&"interact")
@@ -197,17 +197,17 @@ func test_interact_is_e_and_a_and_listed() -> void:
 	assert_false(T.t(&"howto_interact_desc").contains("{"), "the place's name is filled in")
 
 
-func test_a_save_that_gave_e_away_keeps_interact_on_a_free_key() -> void:
-	assert_eq(Controls.keys_for(&"interact", {}), [KEY_E])
-	var e_on_attack := {"light_attack": {"type": "key", "code": KEY_E}}
-	assert_eq(Controls.keys_for(&"interact", e_on_attack), [KEY_F])
-	e_on_attack["cast"] = {"type": "key", "code": float(KEY_F)}  # as JSON gives it back
-	assert_eq(Controls.keys_for(&"interact", e_on_attack), [KEY_G])
-	assert_eq(Controls.keys_for(&"dodge", e_on_attack), [KEY_SPACE], "the others keep their defaults as before")
-	Save.set_option("bindings", {"light_attack": {"type": "key", "code": KEY_E}})
+func test_a_save_that_gave_f_away_keeps_interact_on_a_free_key() -> void:
+	assert_eq(Controls.keys_for(&"interact", {}), [KEY_F])
+	var f_on_attack := {"light_attack": {"type": "key", "code": KEY_F}}
+	assert_eq(Controls.keys_for(&"interact", f_on_attack), [KEY_G])
+	f_on_attack["cast"] = {"type": "key", "code": float(KEY_G)}  # as JSON gives it back
+	assert_eq(Controls.keys_for(&"interact", f_on_attack), [KEY_T])
+	assert_eq(Controls.keys_for(&"dodge", f_on_attack), [KEY_SPACE], "the others keep their defaults as before")
+	Save.set_option("bindings", {"light_attack": {"type": "key", "code": KEY_F}})
 	Controls.apply_bindings()
-	assert_eq(Controls.label(&"interact"), "F")
-	assert_eq(Controls.label(&"light_attack"), "E")
+	assert_eq(Controls.label(&"interact"), "G")
+	assert_eq(Controls.label(&"light_attack"), "F")
 
 
 func test_rebinding_onto_a_used_key_swaps_them() -> void:
@@ -215,7 +215,7 @@ func test_rebinding_onto_a_used_key_swaps_them() -> void:
 	space.physical_keycode = KEY_SPACE
 	assert_true(Controls.rebind(&"interact", space))
 	assert_eq(Controls.label(&"interact"), "Space")
-	assert_eq(Controls.label(&"dodge"), "E", "the dodge takes interact's old key")
+	assert_eq(Controls.label(&"dodge"), "F", "the dodge takes interact's old key")
 	var keys := {}
 	for action in Controls.REMAPPABLE:
 		for ev in InputMap.action_get_events(action):
@@ -242,7 +242,7 @@ func test_no_press_in_the_hub_is_a_blow_a_roll_or_a_spell() -> void:
 	await _send(_mouse(MOUSE_BUTTON_LEFT, false), 2)
 	await _send(_mouse(MOUSE_BUTTON_RIGHT, true), 40)
 	await _send(_mouse(MOUSE_BUTTON_RIGHT, false), 2)
-	for code: Key in [KEY_Q, KEY_R, KEY_SPACE]:
+	for code: Key in [KEY_Q, KEY_E, KEY_SHIFT, KEY_SPACE]:
 		await _send(_key(code, true), 40)
 		await _send(_key(code, false), 2)
 	assert_eq(acts, [] as Array[String], "nothing but walking")
@@ -285,7 +285,7 @@ func test_the_station_in_focus_shows_one_sign_with_the_key() -> void:
 	assert_eq(hub.focus.current, HubPlan.BOOK)
 	assert_not_null(hub.station_sign)
 	assert_eq(hub.station_sign.title.text, T.t(&"hub_book"))
-	assert_eq(hub.station_sign.key_text(), "E", "the real key")
+	assert_eq(hub.station_sign.key_text(), "F", "the real key")
 	assert_eq(hub.find_children("*", "StationSign", true, false).size(), 1, "one sign")
 	hub.player.pos = hub.arena.start
 	await _frames(3)
@@ -297,11 +297,11 @@ func test_interact_opens_a_station_and_esc_closes_it_without_leaking() -> void:
 	_hub()
 	hub.player.pos = HubPlan.use_point(HubPlan.SMITH)
 	await _frames(2)
-	await _tap(KEY_E)
-	assert_true(hub.host.is_open(), "E on the Forjador opens its page")
+	await _tap(KEY_F)
+	assert_true(hub.host.is_open(), "F on the Forjador opens its page")
 	assert_true(hub.host.screen is ForgeScreen, "the Forja (Rejogabilidade, Fatia 1)")
-	await _tap(KEY_E)
-	assert_true(hub.host.is_open(), "E again does not open a second one")
+	await _tap(KEY_F)
+	assert_true(hub.host.is_open(), "F again does not open a second one")
 	await _send(_key(KEY_ESCAPE, true), 3)
 	assert_false(hub.host.is_open(), "Esc closes it")
 	await _send(_key(KEY_ESCAPE, false), 4)
@@ -337,7 +337,7 @@ func test_the_portal_asks_and_goes_down() -> void:
 	Save.data.wins = 0
 	hub.player.pos = HubPlan.use_point(HubPlan.PORTAL)
 	await _frames(2)
-	await _tap(KEY_E)
+	await _tap(KEY_F)
 	var panel := hub.host.screen as HubPanel
 	assert_not_null(panel, "a short confirmation")
 	(panel.find_child("stay", true, false) as Button).pressed.emit()

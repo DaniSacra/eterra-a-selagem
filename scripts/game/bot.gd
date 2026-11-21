@@ -145,6 +145,23 @@ func _track_pinned(dt: float, game: Game) -> void:
 		_pin_since += dt
 
 
+## Common enemies within the Brado's reach the robot waits for before it cries out.
+const SHOUT_PACK := 3
+const SHOUT_REACH := 4.0
+
+
+## The Brado de Guerra is ready and SHOUT_PACK or more common enemies stand within its reach.
+static func shout_worth(game: Game, at: Vector2) -> bool:
+	var p := game.player
+	if Dev.has("bot-no-shout") or p.state != Player.State.MOVE:  # (--bot-no-shout: the robot before the Brado, to compare)
+		return false
+	if p.runner.cooldown_left(&"shout") > 0.0 or ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) == null:
+		return false
+	var near: Array[Enemy] = []
+	game.horde.in_circle(at, SHOUT_REACH, near)
+	return near.filter(func(e: Enemy) -> bool: return Combat.is_common(e.def)).size() >= SHOUT_PACK
+
+
 ## The paladin fell (Game._on_player_died): was it while pinned?
 func on_died() -> void:
 	died_pinned = _pin_t >= PIN_TIME or _pin_since < PIN_TIME
@@ -183,6 +200,7 @@ func step(dt: float, game: Game) -> void:
 		pad.release(&"dodge")
 	pad.release(&"cast")
 	pad.release(&"ultimate")
+	pad.release(&"shout")
 	# C19, Q-13: the reward, a shop's item and a door are used with interact, as a player presses it there
 	if game.rooms and game.rooms.usable() and not pad.held.has(&"interact"):
 		pad.press(&"interact")
@@ -254,6 +272,14 @@ func step(dt: float, game: Game) -> void:
 	if game.player.ult_ready and game.ults.worth(p, pad.aim):
 		# the ultimate as soon as it is full and worth it (the pack in the band or the Voragem, or a big one)
 		pad.press(&"ultimate")
+		return
+	if shout_worth(game, p):
+		# the Brado de Guerra (E) with a pack close: 3 or more common ones within its 4 m (it recharges for 10 s)
+		pad.press(&"shout")
+		_queue = ""
+		_hold = 0.0
+		pad.release(&"heavy_attack")
+		pad.release(&"light_attack")
 		return
 	if _hold > 0.0:
 		_hold -= dt

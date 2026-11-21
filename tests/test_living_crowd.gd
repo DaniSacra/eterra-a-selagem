@@ -182,7 +182,9 @@ func test_the_steps_a_minute_fit_the_figure() -> void:
 		var rate := Horde.walk_rate(d.speed, float(m.ground_speed[&"walk"]), d.size)
 		var steps := 120.0 * rate / m.duration(&"walk")
 		gut.p("%s: %.0f steps a minute" % [id, steps])
-		var band: Vector2 = CADENCE[id]
+		# Daniel 2026-11-21: every enemy walks 1.15 times its old speed and Morvath 1.4 (make_data ENEMY_PACE, BOSS_WALK);
+		# the same figures, so the same stride and the steps a minute grow with them
+		var band: Vector2 = CADENCE[id] * (1.4 if id == &"morvath" else 1.15)
 		assert_between(steps, band.x, band.y, String(id))
 
 

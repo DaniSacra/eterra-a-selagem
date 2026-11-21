@@ -10,6 +10,8 @@
 script = ExtResource("2_oyckq")
 name_key = &"hero_warrior"
 combos = "res://data/combos/paladin.tres"
+dodge_recharge = 1.1
+cast_cooldown = 6.0
 ultimates = Array[ExtResource("3_rujxb")]([ExtResource("4_wgqt4"), ExtResource("5_dl24e")])
 talents_dir = "res://data/talents/warrior/"
 mastery = ExtResource("1_iqgsx")

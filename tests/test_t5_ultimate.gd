@@ -52,10 +52,10 @@ func _key(code: Key, down: bool) -> void:
 
 
 func _tap_r() -> void:
-	_key(KEY_R, true)
+	_key(KEY_SHIFT, true)
 	for i in 3:
 		await get_tree().process_frame
-	_key(KEY_R, false)
+	_key(KEY_SHIFT, false)
 	await get_tree().process_frame
 
 
@@ -123,7 +123,7 @@ func test_a_locked_choice_falls_back_to_the_unlocked_one() -> void:
 
 func test_a_refused_press_says_how_much_is_charged() -> void:
 	await _start(HeroDef.warrior().mastery.total_to(6))
-	game.ults.charge.value = 24.0
+	game.ults.charge.value = 36.0
 	await get_tree().process_frame
 	assert_eq(game.hud._ult_slot.caption, "", "nothing over it while charging quietly")
 	await _tap_r()

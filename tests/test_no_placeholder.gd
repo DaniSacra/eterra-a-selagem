@@ -87,4 +87,4 @@ func test_hit_count_digits_stay_under_48_px_at_1080() -> void:
 			tallest = maxf(tallest, ts.font_get_glyph_size(rid, size, g).y)
 	assert_gt(tallest, 0.0, "measured")
 	assert_lte(tallest, 48.0, "figures %.1f px tall" % tallest)
-	assert_lte(Hud.MOVE_ALPHA, 0.7, "the move's name is dimmed")
+	assert_lte(Hud.MOVE_ALPHA, 0.9, "the move's name is dimmed (0.9 since the art review of 2026-11-21: it sits on the row band)")

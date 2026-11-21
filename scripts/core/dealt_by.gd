@@ -19,6 +19,8 @@ static func source(tags: Array[StringName]) -> StringName:
 		return tags[2] if tags.size() > 2 else &"skill"
 	if tags.has(&"omega"):
 		return &"omega_special" if tags.has(&"heavy") else &"omega_attack"
+	if tags.has(&"shout"):
+		return &"shout"  # the Brado de Guerra (E)
 	if tags.has(&"dash"):
 		return &"dash"
 	if tags.has(&"heavy"):

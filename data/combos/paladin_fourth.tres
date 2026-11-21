@@ -202,8 +202,33 @@ magick_cost = 20.0
 charge_time = 0.8
 shake = 2.0
 
+[sub_resource type="Resource" id="Resource_e8vam"]
+script = ExtResource("1_ni07j")
+id = &"shout"
+input = 4
+title = &"move_shout"
+anim = &"Cast"
+anim_speed = 0.4
+tags = Array[StringName]([&"shout"])
+damage = 15.0
+shape = 1
+reach = 4.0
+knockback = 10.0
+move_scale = 0.0
+windup = 0.25
+recovery = 0.25
+move_hold = 0.25
+chain_window = 0.4
+hit_stop_ms = 80.0
+cooldown = 14.0
+sound = &"wave_omega"
+shake = 1.4
+effect = 4
+effect_power = 2.0
+effect_time = 0.5
+
 [resource]
 script = ExtResource("2_wicqm")
-neutral = Array[ExtResource("1_ni07j")]([SubResource("Resource_x4ej5"), SubResource("Resource_mv8ty"), SubResource("Resource_vgjhi"), SubResource("Resource_l3soh")])
+neutral = Array[ExtResource("1_ni07j")]([SubResource("Resource_x4ej5"), SubResource("Resource_mv8ty"), SubResource("Resource_vgjhi"), SubResource("Resource_l3soh"), SubResource("Resource_e8vam")])
 dodge = Array[ExtResource("1_ni07j")]([SubResource("Resource_27m2j")])
 dodge_window = 0.38333333333333336

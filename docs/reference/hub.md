@@ -191,3 +191,17 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   existirem): `set_forge_tools(Array[StringName])`, `set_vendor(estado: int, obras: int)` (0 escondido nunca chega,
   1 fechado, 2 pedido, 3 aberto), `set_tree_plates(acesas, total, nível da Maestria)`, `set_book(lombadas, prateleira,
   itens)`, `set_alchemist(abastecido)`.
+
+## Santuário que abre aos poucos (2026-11-21, `HubGate`, `scripts/core/hub_gate.gd`)
+- Gate puro lido do save, um por estação: Portal sempre; Livro e Árvore de Dons com `runs >= 1` (ou um Dom aberto);
+  Forja ao vencer o 1º guardião (`firsts.guardian`) ou com Prata para o Temperar I (custo vem do dado, `temper_cost()`);
+  Vendedor com `runs >= 3` ou a 1ª Pedra Funda; Juramentos seguem na 1ª vitória; Alquimista desligado. Quem já usou a
+  estação (Temperar comprado, ferramenta, pedido, Obra, Dom aberto) a tem aberta. Constantes no topo da classe.
+- Estação fechada: `Hub.is_open(id)` falso tira do foco (sem placa nem uso) e do nome flutuante (`HubLabels`); o visual
+  apaga a luz e a brasa (`HubLook.set_closed`); o Vendedor já tem o pano (`HubEvolution`). Pendente para o
+  environment-artist: uma boca fria da forja e raízes nuas da árvore (hoje só a luz some).
+- Apresentação: ao voltar com estação nova aberta, uma linha por estação (`hub_open_*` em `text_pt.tres`) sobre o nome
+  do lugar (`HubLabels.announce`, 4 s cada); gravada em `hub.presented` do save (versão 9, uma vez só). Save antigo
+  (< 9) conta as abertas como já apresentadas (migração em `SaveData.merged`).
+- `--hub-open=all` abre tudo e não apresenta nada (capturas, robô); `tests/hooks/pre_run.gd` o liga para toda a suíte,
+  `tests/test_hub_gate.gd` o desliga. `tools/first_tour.gd` pula estação fechada.

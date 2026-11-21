@@ -145,7 +145,7 @@ func test_the_hit_count_stands_by_the_bars_out_of_the_field() -> void:
 	var row := hud.find_child("Combo", true, false) as Control
 	assert_not_null(row)
 	var r := row.get_global_rect()
-	assert_lte(r.position.x, screen.x * 0.3, "at the left, by the medallion")
+	assert_lte(r.position.x, screen.x * 0.35, "at the left, by the medallion (six diamonds before it since the Brado)")
 	assert_gte(r.position.y, screen.y * 0.75, "at the bottom, by the bars")
 	for l: Label in [hud._combo_word, hud._move]:
 		assert_ne(l.get_theme_font(&"font"), UiKit.TITLE_FONT, "no Cinzel under 24 px")
@@ -180,7 +180,7 @@ func test_the_row_layout_frees_the_bottom_middle() -> void:
 	var hud := await _hud_with("")
 	var screen := hud.get_viewport_rect().size
 	var row := hud._action_row.get_global_rect()
-	assert_lte(row.end.x, screen.x * 0.3, "no diamond between 30% and 70% of the width")
+	assert_lte(row.end.x, screen.x * 0.35, "no diamond between 35% and 70% of the width (five diamonds and the dodge since the Brado)")
 	assert_eq(hud._slots[0].side, Hud.ROW_DIAMOND)
 	assert_lte(row.end.y, hud._life.get_global_rect().position.y, "over the bars")
 	assert_gte(row.position.x, hud._crest.get_global_rect().end.x - 10.0, "from the medallion's shoulder")

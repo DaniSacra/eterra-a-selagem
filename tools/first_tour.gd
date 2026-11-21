@@ -71,6 +71,9 @@ func _step_hub(delta: float) -> void:
 				quit()
 		return
 	var station := _walk[_i]
+	if _hub.has_method(&"is_open") and not _hub.call(&"is_open", station):
+		_i += 1  # a station not open yet: nothing to see there
+		return
 	var goal: Vector2 = load(PLAN).use_point(station)
 	var way: Vector2 = goal - (_hub.get(&"player").get(&"pos") as Vector2)
 	_t += delta

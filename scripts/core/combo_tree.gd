@@ -60,6 +60,8 @@ static func notation(path: Array, from_dodge: bool, words: Dictionary) -> String
 				parts.append(words.charge)
 			ComboNode.In.CHARGE_LIGHT:
 				parts.append(words.get("charge_light", "E+"))
+			ComboNode.In.SHOUT:
+				parts.append(words.get("shout", "Brado"))
 			ComboNode.In.LIGHT:
 				parts.append("E")
 			_:

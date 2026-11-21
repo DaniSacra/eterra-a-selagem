@@ -30,6 +30,9 @@ var names := {}
 var purse: PanelContainer
 var _counts: HBoxContainer
 var _t := 0.0
+## The openings of this return (Hub._announce): each its NOTE_TIME after the place's name, in the same label.
+var _notes: Array[String] = []
+const NOTE_TIME := 4.0
 
 
 func setup(p_hub: Hub) -> HubLabels:
@@ -74,6 +77,10 @@ func setup(p_hub: Hub) -> HubLabels:
 	return self
 
 
+func announce(lines: Array[String]) -> void:
+	_notes = lines
+
+
 func _process(delta: float) -> void:
 	_t += delta
 	var quiet := hub == null or hub.host.is_open() or hub.leaving
@@ -82,7 +89,17 @@ func _process(delta: float) -> void:
 		MaterialCount.refresh(_counts, Save.data)
 		purse.size = purse.get_combined_minimum_size()
 		purse.position = Vector2(purse.get_parent_area_size().x - purse.size.x - PURSE_MARGIN.x, PURSE_MARGIN.y)
-	place.modulate.a = 0.0 if quiet else clampf((PLACE_TIME - _t) / PLACE_FADE, 0.0, 1.0) * clampf(_t / 0.2, 0.0, 1.0)
+	var start := 0.0
+	var end := PLACE_TIME
+	var text := T.t(&"hub_name")
+	if _t >= PLACE_TIME and not _notes.is_empty():
+		var i := mini(int((_t - PLACE_TIME) / NOTE_TIME), _notes.size())
+		if i < _notes.size():
+			start = PLACE_TIME + i * NOTE_TIME
+			end = start + NOTE_TIME
+			text = _notes[i]
+	place.text = text
+	place.modulate.a = 0.0 if quiet else clampf((end - _t) / PLACE_FADE, 0.0, 1.0) * clampf((_t - start) / 0.2, 0.0, 1.0)
 	var cam := hub.get_viewport().get_camera_3d() if hub else null
 	var view := hub.get_viewport().get_visible_rect().grow(-EDGE) if hub else Rect2()
 	# HV-D: a faint name never over the hero (the Santuário da Vigília puts stations round him as he walks the ring)
@@ -94,7 +111,7 @@ func _process(delta: float) -> void:
 	for id: StringName in names:
 		var l := names[id] as Label
 		var at := HubPlan.anchor(id)
-		var show := not quiet and cam != null and id != hub.focus.current and not cam.is_position_behind(at)
+		var show := not quiet and cam != null and hub.is_open(id) and id != hub.focus.current and not cam.is_position_behind(at)
 		if show:
 			var sp := cam.unproject_position(at)
 			show = view.has_point(sp)

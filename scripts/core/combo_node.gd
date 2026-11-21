@@ -2,8 +2,9 @@ class_name ComboNode
 extends Resource
 ## One move of the combo tree. Combos are data: a new combo is a new node in data/combos, never new code.
 
-## CHARGE: heavy held (the Omega special). CHARGE_LIGHT: light held (the Omega attack).
-enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT }
+## CHARGE: heavy held (the Omega special). CHARGE_LIGHT: light held (the Omega attack). SHOUT: the Brado de Guerra's
+## button (E; docs/design/heroes/guerreiro.md 3.4), a move of its own that any state may start.
+enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT, SHOUT }
 enum Shape { ARC, CIRCLE, LINE }
 enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 
@@ -91,9 +92,11 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export_group("Effect")
 @export var effect: Effect = Effect.NONE
 ## LAUNCH: unused. GROUND_MARK: damage per second. WAVE: damage of the wave (a move with damage 0 strikes only
-## with its wave, like the special's bolt). STUN: unused.
+## with its wave, like the special's bolt). STUN (the Brado de Guerra): the most charges of Ímpeto it gives, one for each
+## common enemy it reaches (GiftState.on_shout).
 @export var effect_power := 0.0
-## LAUNCH: air time. GROUND_MARK: how long the mark lasts. WAVE: unused. STUN: stun time.
+## LAUNCH: air time. GROUND_MARK: how long the mark lasts. WAVE: unused. STUN: stun time of the common enemies it
+## reaches (never an elite, a guardian nor a boss: Combat.is_common); it draws a ring, not the blade's cut.
 @export var effect_time := 0.0
 ## GROUND_MARK: radius. WAVE: distance travelled.
 @export var effect_radius := 0.0
