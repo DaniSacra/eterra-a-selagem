@@ -545,3 +545,14 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   - **AT-PA1 (Ponte A)**: um arco ogival quebrado em silhueta atrás da borda norte da plataforma do meio, deslocado do centro (`BridgeLook.LANDING_ARCH`, `LANDING_ARCH_FOOT`; `EdgeKit.broken_arch`), fora do andável e longe da linha dos ataques; a visão longitudinal fica livre.
   - **AT-RB1 (Runas B)**: seis ilhas de bloco na pedra funda além das bordas sul e leste, topos de 1,4 a 3,4 m abaixo do chão, com moldura de ouro velho no topo como as lajes da A (`RunesLook.ISLANDS`, `_islands`; só na B). Lêem pouco no escuro; as do sul aparecem acima da fachada.
   - Medido: `fit_probe` estilizado idêntico antes e depois (Ponte A, Runas B); `test_room_style` e `test_visual_profile` passam; `smoke.sh 600 --seed=5` igual (kills 116, damage 22703, time 370.3, hp 39). iGPU não medido (só a GPU: lab 1,7 a 1,8 ms, sem diferença).
+
+## Revisão de arte de 2026-11-21 (itens 1, 3, 5, 7, 8, 9; só look estilizado, via `VisualProfile.vary`)
+- 1 (vazio): `abyss_fog` e `abyss_mist` ganharam `edge_fade` (0 = clássico; 0,15 no estilizado por `ArenaKit.STY_MIST_EDGE_FADE`);
+  `ArenaRoom.backdrop` escurece a névoa do fundo a `STY_BACKDROP_MIST` (0,55) (hub, Cripta e todos que usam o fundo);
+  Morvath: `STY_GLOW`, `STY_FOG_*` em `boss_chamber.gd` (violeta escuro, `ArenaKit.abyss_fog` agora devolve o `FogMaterial`);
+  Runas: `STY_DEPTH_SINK` (parede afunda na névoa de 1 m a 5 m abaixo do piso). Sem blocos de ruína novos (pendente).
+- 3: `STY_POOL_SATURATION` 0,6, `STY_BOWL_GAIN` 0,9, `paint_pool_soft` 0,07 (`paint.gdshaderinc`), `BRAZIER_COLOR` âmbar (1; 0,65; 0,3).
+- 5: `STY_SHRUB_*`, `STY_CROWN_*` (`hub_look.gd`) e `STY_LEAF_*`, `STY_LEAVES/FILL/RAGGED` (`garden_look.gd`): folhas maiores, menos dentes, cor apagada.
+- 7: só o desenho (`STY_TREE_VALUE` 0,78 no albedo, fill da árvore 0,18); tamanho 0,8 e deslocar o tronco mudariam a colisão `_trunk_o`: ficam com o Game Director.
+- 8: Santuário piso -10% e lua -20% (`sanctuary_look.gd`); Runas `paint_quiet_value` 0,36; urnas da loja do Salão `STY_URN_TINT`.
+- 9: os riscos brancos eram o pó das fendas dormentes (`hazard_fissure.gdshader`): `dust_color` agora tinta escura (0,08; 0,07; 0,07).

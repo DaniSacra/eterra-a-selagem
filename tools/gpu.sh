@@ -2,7 +2,8 @@
 # Runs the game on the real GPU from WSL: the Windows build of Godot (same version) talks Vulkan to the NVIDIA card,
 # which WSL's Linux Godot cannot (no Vulkan driver for WSL in Ubuntu: it falls back to llvmpipe, 2 to 4 min a shot).
 # The project is mirrored to the Windows drive (the Windows Godot reads it there fast; its .godot cache stays there).
-#   tools/gpu.sh shot out.png [game options...]      one capture (Forward+, 1672x941 unless RES=WxH), about 15 s
+#   tools/gpu.sh shot out.png [game options...]      one capture (Forward+, 1672x941 unless RES=WxH), about 15 s;
+#                                                    stylized look and near camera unless --look= / --cam= given
 #   tools/gpu.sh run [godot args...]                 anything else, e.g. tools/gpu.sh run -s tools/enemy_lab.gd -- C:/x
 #   tools/gpu.sh sync                                mirror and reimport only
 # At most GPU_SLOTS runs at a time (default 2, Daniel 2026-11-19; slot 1 uses its own mirror, eterra-gpu2), others wait. A game window shows on the desktop while it runs. Paths given to the game are Windows paths (C:/...): `shot` turns
@@ -38,6 +39,10 @@ case "$cmd" in
 		out=$1; shift
 		sync
 		tmp="$MIRROR/.shot_$$.png"
+		# captures show the game as the player has it (Daniel, 2026-11-21): the editor binary opens CLASSIC with the far
+		# camera, so the stylized look and the near camera unless the options name another
+		case " $* " in *" --look="*) ;; *) set -- --look=stylized "$@" ;; esac
+		case " $* " in *" --cam="*|*" --showcase"*) ;; *) set -- --cam=near "$@" ;; esac
 		"$GODOT_WIN" --path "$(win "$MIRROR")" --rendering-driver vulkan --resolution "${RES:-1672x941}" --fixed-fps 30 \
 			-- --nosave --shot="$(win "$tmp")" "$@" 2>&1 | grep -E "Using Device|SCRIPT ERROR|RESULT" || true
 		mv "$tmp" "$out"

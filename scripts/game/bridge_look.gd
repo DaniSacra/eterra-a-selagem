@@ -114,7 +114,7 @@ const STY_CLIFF := {&"stone_color": Color(0.05, 0.058, 0.07), &"edge_color": Col
 ## P1: a fire bowl on a pillar at each bridge end, over the gap beside the deck (the corner without the statue): the
 ## pillar's side and top (the HEAD that the heads have), the bowl's scale, its light; its pier down into the haze.
 const HEAD_BOWL_PILLAR := 0.62
-const HEAD_BOWL_SCALE := 0.5
+const HEAD_BOWL_SCALE := 0.375
 const HEAD_BOWL_LIGHT := 2.6
 ## ... their pools stronger than the hall's bowls (spec 3.1: the warm part 3 to 7% of the frame), in the fire's
 ## whole saturation (style pool_saturation).

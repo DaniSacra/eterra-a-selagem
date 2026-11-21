@@ -34,6 +34,11 @@ extends SceneTree
 ## libraries' sword clips carry the blade; +Z out of the knuckles, along the forearm) and "paint" (KayKit palette
 ## cell of the weapon -> one of SWATCHES: the weapon is repainted in the figures' own painted tones, see _repainted).
 ## A staff or a crossbow, held thumb up by the other clips, is turned over: rot (0, 0, 180).
+## A held piece may be a Meshy model of its own instead ("meshy": assets/models/meshy/<key>/<key>.glb, the pieces w_*
+## of 2026-11-21): MeshSlim makes it "triangles" and repaints it on a 128 px atlas of its own, kept in the strip
+## under the body at "slot" (0 to 3, from the left; the swatches of row 0 and the cells 0 to 3 of the rows below
+## are not used then), "grip" (the point of the model, in its own units, that goes to the fist), "turn" (a Basis
+## instead of rot), "lift" (its texture's value times this), "aim" (see _held), "scale", "at" and "name" as the others. The model's texture is its own paint, no swatch.
 ## "even_legs" (true): the model's rig has one leg's knee misplaced (the brute: its left shin bone 0.6 m long, the
 ## right 0.35), so the clips that straighten the legs would push that foot through the floor and leave the other in
 ## the air; each leg then reaches as far as it does at rest when the clip straightens it (_even_leg).
@@ -63,6 +68,8 @@ const RIGS := {
 ## KayKit palette of the held pieces).
 const ATLAS := 1024
 const BODY := 0.875
+## A held Meshy piece's own atlas (pixels, square) in the strip under the body: slot n sits at x = n * this.
+const SLOT := 128
 const COLS := 8
 const ROWS := 4
 ## Half the thickness of a body lying on the floor, in the models' own units (centimeters).
@@ -173,7 +180,20 @@ const RIGHT_ARM: Array[StringName] = [&"RightShoulder", &"RightArm", &"RightFore
 const LEFT_ARM: Array[StringName] = [&"LeftShoulder", &"LeftArm", &"LeftForeArm", &"LeftHand"]
 ## Held pieces: a blade's edge turned out of the knuckles; a staff or a crossbow turned over in the fist.
 const EDGE_OUT := Vector3(0, 90, 0)
+## The Meshy cleaver (w_cleaver: length along X, handle at +X, edge at -Y, 2 cm of thickness in Z) in the fist: the
+## length along the fist toward the blade (+Y), the edge out of the knuckles (+Z), the flat across the hand (X).
+const CLEAVER_TURN := Basis(Vector3(0, -1, 0), Vector3(0, 0, -1), Vector3(1, 0, 0))
 const THUMB_UP := Vector3(0, 0, 180)
+## The knight's sword and Morvath's scythe, aimed in the idle guard (model space): the sword up and forward, a little
+## out to its side (the shield is on the other); the scythe's pole almost upright, leaning forward.
+const KNIGHT_SWORD_AIM := Vector3(-0.2, 0.8, 0.55)
+const SCYTHE_AIM := Vector3(-0.1, 1.0, 0.3)
+## The Meshy staff (w_staff, 0.95 units long, the ring on top, scale 2 = 1.9 m): the point of it in the fist, and where
+## the middle of its ring lies in the fist's space once it is turned over (the orb of the sorcerer and the elder).
+const STAFF_GRIP := Vector3(0.02, -0.15, -0.03)
+const STAFF_RING := Vector3(0.06, -0.96, 0.04)
+## The elder is drawn twice the sorcerer's size: his staff at three quarters of the scale (the ring moves with it).
+const ELDER_STAFF_SCALE := 1.5
 ## The sword arm in guard while the legs walk or run (the libraries' walks are unarmed: the blade would flail).
 const SWORD_GUARD := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}
 ## The staff held upright, in the left hand (the library holds its torch there; the right hand casts).
@@ -304,7 +324,7 @@ const MODELS := {
 	"skeleton": {
 		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "skeleton.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": CLEAVER_SCALE, "rot": EDGE_OUT, "paint": BLADE_PAINT, "name": "sword"}],
+		"held": [{"hand": "Right", "meshy": "w_cleaver", "triangles": 800, "slot": 0, "grip": Vector3(0.26, 0, 0), "scale": 1.35, "lift": 2.2, "turn": CLEAVER_TURN, "name": "sword"}],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, SOLDIER_JOG], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
 			# T5-02: the wind-up is the clip's whole rise, 0 to 0.35 s (the blade from the hip to its highest, over
@@ -353,9 +373,9 @@ const MODELS := {
 		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "mage.png",
 		"held": [
-			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT, "name": "staff"},
+			{"hand": "Left", "meshy": "w_staff", "triangles": 1000, "slot": 0, "grip": STAFF_GRIP, "scale": 2.0, "rot": THUMB_UP, "name": "staff"},
 			# the cold violet orb in the top of the staff: always lit, it swells as the bolt is conjured
-			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.27 * 0.9, 0), "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
+			{"hand": "Left", "shape": "sphere", "at": STAFF_RING, "size": Vector3(0.09, 0.09, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
 		],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG], "idle": STAFF_CLIPS.idle,
@@ -418,8 +438,8 @@ const MODELS := {
 		"meshy": "knight", "height": 2.03, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "knight.png",
 		"held": [
-			{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.95, "rot": EDGE_OUT, "paint": KNIGHT_BLADE_PAINT, "name": "sword"},
-			{"hand": "Left", "file": "Skeleton_Shield_Large_A.gltf", "scale": 0.75, "rot": Vector3(0, -90, 0), "paint": SHIELD_PAINT, "name": "shield"},
+			{"hand": "Right", "meshy": "w_knight_sword", "triangles": 750, "slot": 0, "grip": Vector3(0, -0.33, 0), "scale": 1.2, "lift": 1.6, "rot": EDGE_OUT, "aim": KNIGHT_SWORD_AIM, "name": "sword"},
+			{"hand": "Left", "meshy": "w_knight_shield", "triangles": 750, "slot": 1, "scale": 0.9, "at": Vector3(0.046, 0, 0), "rot": Vector3(0, -90, 0), "name": "shield"},
 		],
 		"anims": {
 			"walk": [&"ual", "Walk", 20, true, KNIGHT_STRIDE], "idle": SHIELD_IDLE, "rise": SHIELD_RISE,
@@ -436,9 +456,9 @@ const MODELS := {
 		"meshy": "priest_elder", "height": 2.07, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "priest_elder.png",
 		"held": [
-			{"hand": "Left", "file": "Skeleton_Staff.gltf", "scale": 0.9, "rot": THUMB_UP, "paint": STAFF_PAINT},
+			{"hand": "Left", "meshy": "w_staff", "triangles": 1000, "slot": 0, "grip": STAFF_GRIP, "scale": ELDER_STAFF_SCALE, "rot": THUMB_UP},
 			# the purple orb held in the top of the staff (the sheet's block 8)
-			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -1.38 * 0.9, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_PURPLE, "name": "orb", "mark": true},
+			{"hand": "Left", "shape": "sphere", "at": STAFF_RING * (ELDER_STAFF_SCALE / 2.0), "size": Vector3(0.1, 0.1, 0), "cell": C_GLOW_PURPLE, "name": "orb", "mark": true},
 		],
 		"anims": {
 			"walk": [&"ual", "Walk_Formal", 20, true, ELDER_STRIDE], "idle": STAFF_CLIPS.idle, "rise": STAFF_RISE,
@@ -452,7 +472,16 @@ const MODELS := {
 	"morvath": {
 		"meshy": "morvath", "height": 2.02, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "morvath.png",
-		"held": [{"hand": "Right", "file": "Skeleton_Blade.gltf", "scale": 0.8, "rot": EDGE_OUT, "paint": MORVATH_BLADE_PAINT}],
+		"held": [
+			# the war scythe: the model is only the crescent on a short stub (0.95 units, the stub at -Y); the long
+			# pole is built here: dark wood 2.0 m (the body's height, from near the floor to over the head) with iron
+			# collars, a leather wrap at the grip, the right hand at its middle, the crescent on top, aimed up in the guard
+			{"hand": "Right", "meshy": "w_morvath_scythe", "triangles": 1550, "slot": 0, "grip": Vector3(0.05, -0.476, 0), "at": Vector3(0, 0.95, 0), "scale": 0.85, "rot": EDGE_OUT, "aim": SCYTHE_AIM, "name": "scythe"},
+			{"hand": "Right", "shape": "cylinder", "size": Vector3(0.04, 2.0, 0.045), "cell": 3, "aim": SCYTHE_AIM, "name": "scythe_pole"},
+			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, 0.0, 0), "size": Vector3(0.05, 0.3, 0.05), "cell": 6, "segments": 8, "aim": SCYTHE_AIM, "name": "scythe_wrap"},
+			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, -0.97, 0), "size": Vector3(0.065, 0.1, 0.065), "cell": 4, "segments": 8, "aim": SCYTHE_AIM, "name": "scythe_foot"},
+			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, 0.93, 0), "size": Vector3(0.07, 0.09, 0.07), "cell": 4, "segments": 8, "aim": SCYTHE_AIM, "name": "scythe_collar"},
+		],
 		"anims": {
 			"walk": [&"ual", "Walk", 20, true, KING_STRIDE], "idle": [&"ual", "Idle", 12, true, SWORD_GUARD],
 			"attack": SWORD_BLOW,
@@ -739,6 +768,7 @@ func _process(_delta: float) -> bool:
 # ---------- the Meshy figures ----------
 
 func _bake_meshy(spec: Dictionary) -> BakedModel:
+	_slots.clear()
 	var model := (load(MESHY % [spec.meshy, spec.meshy]) as PackedScene).instantiate() as Node3D
 	get_root().add_child(model)
 	var skeleton := PoseBaker.find_skeleton(model)
@@ -803,6 +833,9 @@ func _bake_meshy(spec: Dictionary) -> BakedModel:
 			else:
 				parts[h["name"]] = mine
 		extra.append_array(pieces)
+	var strip_top := int(ATLAS * BODY)
+	for slot: Array in _slots:
+		atlas.blit_rect(slot[1], Rect2i(0, 0, SLOT, SLOT), Vector2i(int(slot[0]) * SLOT, strip_top))
 	var out := BakedModel.new()
 	out.painted = true
 	out.parts = parts
@@ -1372,6 +1405,10 @@ func _retarget(rig_id: StringName, retargets: Dictionary, skeleton: Skeleton3D, 
 
 ## One held piece as pieces for PoseBaker.snapshot. The hand's grip comes from the mannequin's fist, as the hero's
 ## sword (tools/bake_hero.gd): the handle runs across the knuckles, through the middle of the hand.
+## The held Meshy pieces' atlases of this bake: [slot, image].
+var _slots: Array = []
+
+
 func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 	var side := "R" if h.hand == "Right" else "L"
 	var bone := StringName(String(h.hand) + "Hand")
@@ -1386,9 +1423,41 @@ func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 	var unit := Retarget._space(ual.target, model).get_scale().x
 	var hand := Transform3D(Basis(y.cross(z), y, z).scaled(Vector3.ONE / unit), grip[1])
 	var rot: Vector3 = h.get("rot", Vector3.ZERO)
-	var own := Transform3D(Basis.from_euler(Vector3(deg_to_rad(rot.x), deg_to_rad(rot.y), deg_to_rad(rot.z))).scaled(Vector3.ONE * float(h.get("scale", 1.0))), h.get("at", Vector3.ZERO))
+	var turn: Basis = h.turn if h.has("turn") else Basis.from_euler(Vector3(deg_to_rad(rot.x), deg_to_rad(rot.y), deg_to_rad(rot.z)))
+	var own := Transform3D(turn.scaled(Vector3.ONE * float(h.get("scale", 1.0))), h.get("at", Vector3.ZERO))
+	# "aim": the model-space direction (idle, +Y up, +Z in front of the figure) the piece's long axis ("axis", its +Y)
+	# takes: the hand is turned about its own place, the fist the same; the libraries' guard holds a blade level to the
+	# side, behind the body
+	if h.has("aim"):
+		var skeleton := PoseBaker.find_skeleton(model)
+		var to_model := PoseBaker.local_to(model, skeleton).basis * skeleton.get_bone_global_pose(skeleton.find_bone(bone)).basis * hand.basis
+		var u: Vector3 = (own.basis * (h.get("axis", Vector3.UP) as Vector3)).normalized()
+		var want: Vector3 = (to_model.orthonormalized().inverse() * (h.aim as Vector3).normalized()).normalized()
+		own = Transform3D(Basis(Quaternion(u, want)), Vector3.ZERO) * own
 	var pieces: Array[Dictionary] = []
-	if h.has("file"):
+	var slot := -1
+	if h.has("meshy"):
+		var key: String = h.meshy
+		var scene: Node = (load("res://assets/models/meshy/%s/%s.glb" % [key, key]) as PackedScene).instantiate()
+		var mi := _first_mesh(scene)
+		var slim := MeshSlim.slim(mi.mesh.surface_get_arrays(0), PoseBaker.find_albedo(mi).get_image(), int(h.triangles), SLOT)
+		var mesh := ArrayMesh.new()
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, slim[0])
+		slot = int(h.slot)
+		var tex: Image = slim[1]
+		tex.convert(Image.FORMAT_RGB8)
+		var lift: float = h.get("lift", 1.0)
+		if lift != 1.0:
+			for ty in tex.get_height():
+				for tx in tex.get_width():
+					var c := tex.get_pixel(tx, ty)
+					tex.set_pixel(tx, ty, Color(minf(c.r * lift, 1.0), minf(c.g * lift, 1.0), minf(c.b * lift, 1.0)))
+		_slots.append([slot, tex])
+		var back := Transform3D(Basis.IDENTITY, -(h.get("grip", Vector3.ZERO) as Vector3))
+		pieces.append({"mesh": mesh, "bone": bone, "transform": hand * own * back * mi.transform})
+		print("  held %s: %d triangles, %.2f m long" % [key, ((slim[0] as Array)[Mesh.ARRAY_INDEX] as PackedInt32Array).size() / 3, mesh.get_aabb().get_longest_axis_size() * float(h.get("scale", 1.0))])
+		scene.free()
+	elif h.has("file"):
 		var scene: Node = (load(WEAPON + h.file) as PackedScene).instantiate()
 		var mi := _first_mesh(scene)
 		var mesh: Mesh = _lod(mi.mesh, int(h.lod)) if int(h.get("lod", 0)) > 0 else mi.mesh
@@ -1408,7 +1477,8 @@ func _held(h: Dictionary, ual: Retarget, model: Node3D) -> Array[Dictionary]:
 	# the held pieces are painted by the palette strip under the body's atlas
 	for p in pieces:
 		var arrays := (p.mesh as Mesh).surface_get_arrays(0)
-		arrays[Mesh.ARRAY_TEX_UV] = _squeezed(arrays[Mesh.ARRAY_TEX_UV], BODY, 1.0 - BODY)
+		arrays[Mesh.ARRAY_TEX_UV] = _squeezed(arrays[Mesh.ARRAY_TEX_UV], BODY, 1.0 - BODY) if slot < 0 \
+			else _slotted(arrays[Mesh.ARRAY_TEX_UV], slot)
 		var strip := ArrayMesh.new()
 		strip.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 		p.mesh = strip
@@ -1703,6 +1773,16 @@ func _with_strip(atlas: Image, palette: Texture2D) -> Image:
 	return out
 
 
+## A held Meshy piece's UVs (its own square atlas) moved into its slot of the strip.
+func _slotted(uvs: PackedVector2Array, slot: int) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	out.resize(uvs.size())
+	var share := float(SLOT) / ATLAS
+	for i in uvs.size():
+		out[i] = Vector2((slot + clampf(uvs[i].x, 0.0, 1.0)) * share, BODY + clampf(uvs[i].y, 0.0, 1.0) * (1.0 - BODY))
+	return out
+
+
 ## UVs moved into a band of the texture: from `top`, `share` of its height.
 func _squeezed(uvs: PackedVector2Array, top: float, share: float) -> PackedVector2Array:
 	var out := PackedVector2Array()
@@ -1882,7 +1962,7 @@ func _prop(p: Dictionary) -> Array[Dictionary]:
 					c.top_radius = size.x
 					c.height = size.y
 					c.bottom_radius = size.z
-					c.radial_segments = 12
+					c.radial_segments = int(p.get("segments", 12))
 					c.rings = 1
 					shape = c
 			pieces.append({"mesh": _painted(shape.get_mesh_arrays(), cell), "bone": p.bone, "transform": xf})

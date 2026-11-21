@@ -10,6 +10,9 @@ uniform vec2 drift = vec2(0.25, 0.08);
 uniform float scale = 0.06;
 // 1 for the bottom layer: opaque, a deep glow under everything.
 uniform float floor_layer = 0.0;
+// Share of the plane (UV) at each of its four edges where the mist fades to nothing, so the card's straight edges never
+// show (art review 2026-11-21 item 1; 0: off, the classic look).
+uniform float edge_fade = 0.0;
 
 varying vec3 world;
 
@@ -48,7 +51,11 @@ void fragment() {
 		ALBEDO = color * (0.25 + 0.9 * m * m);
 		ALPHA = 1.0;
 	} else {
+		vec2 ed = min(UV, 1.0 - UV);
 		float a = smoothstep(0.35, 0.85, m) * density;
+		if (edge_fade > 0.0) {
+			a *= smoothstep(0.0, edge_fade, ed.x) * smoothstep(0.0, edge_fade, ed.y);
+		}
 		ALBEDO = color * (0.8 + 0.6 * m);
 		ALPHA = a;
 	}

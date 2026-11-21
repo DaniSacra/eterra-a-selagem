@@ -37,6 +37,8 @@ const RUIN_STONE := Color(0.039, 0.11, 0.149)
 const RUIN_EDGE := Color(0.24, 0.42, 0.48)
 const RUIN_COURSE := 1.6
 ## Forward+ only: violet glowing fog filling the sides of the abyss (density, emission).
+## Art review 2026-11-21 item 1 (stylized look): the share of each mist card's UV where it fades out, so no card edge shows.
+const STY_MIST_EDGE_FADE := 0.15
 const ABYSS_FOG_DENSITY := 0.04
 const ABYSS_FOG_EMISSION := Color(0.25, 0.22, 0.33)
 const ABYSS_FOG_ALBEDO := Color(0.36, 0.31, 0.46)
@@ -121,8 +123,13 @@ const BRONZE := Color(0.2, 0.13, 0.07)
 ## narrow. AP-1 (ART-02.3): no white heart any more (it was (1.9, 1.15, 0.35) under a core of (2.6, 2.3, 1.4), past
 ## 235 in all three channels on the screen); the heart is amber, its brightest channel under the glow threshold.
 const FLAME := Color(1.25, 0.52, 0.1)
-const FLAME_HEART := Color(1.2, 0.62, 0.14)
-const FLAME_EDGE := Color(0.85, 0.26, 0.05)
+const FLAME_HEART := Color(1.1, 0.55, 0.14)
+const FLAME_EDGE := Color(0.8, 0.24, 0.05)
+## Art review 2026-11-21 item 4: a lick's top third fades to nothing (it was a solid cone), the licks cool through a
+## half-clear edge, and each layer of licks breathes in height and width on its own beat (share, Hz slowest, Hz fastest).
+const FLAME_TIP_FADE := 0.65
+const FLAME_EDGE_ALPHA := 0.8
+const FLAME_LAYER_FLICKER := Vector3(0.1, 4.0, 7.0)
 ## A tongue's size (width, height) as shares of the fire's tongue size; the inner tongues' share of that, and the
 ## share of the fire's radius they rise from (a fuller white-gold heart, the outer tongues and the light unchanged).
 const TONGUE := Vector2(0.9, 2.0)
@@ -153,7 +160,7 @@ const RIM_GLOW_ENERGY := 0.12
 const BRAZIER_LIGHT := 4.5
 const BRAZIER_RANGE := 10.0
 const BRAZIER_ATTENUATION := 1.3
-const BRAZIER_COLOR := Color(1.0, 0.68, 0.42)
+const BRAZIER_COLOR := Color(1.0, 0.65, 0.3)
 ## The floor round a fire bowl's foot is wet (it mirrors the fire): from this radius it dries, by that one it is dry.
 ## At most WET_SPOTS of them (the floor shader's array).
 const BRAZIER_WET := Vector2(1.5, 3.0)
@@ -866,8 +873,15 @@ func brazier(at: Vector2, y: float = 0.0, solid := true, light := BRAZIER_LIGHT,
 ## Flames rising from a point: radius of the fire, how many tongues, the size of a tongue, how long one lives. Upright
 ## tongues (pointed, ArenaKit.tongue) in orange round a smaller white-gold heart, and embers drifting up.
 func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) -> void:
-	_flames(at, radius, amount, tongue, life, FLAME, FLAME_EDGE, 0)
-	_flames(at, radius * HEART_SPREAD, maxi(3, roundi(amount / 3.0)), tongue * HEART, life * 0.8, FLAME_HEART, FLAME, 1)
+	var sway_beat := RandomNumberGenerator.new()
+	sway_beat.seed = hash(Vector3i(at * 100.0)) + 7
+	for layer: CPUParticles3D in [_flames(at, radius, amount, tongue, life, FLAME, FLAME_EDGE, 0),
+			_flames(at, radius * HEART_SPREAD, maxi(3, roundi(amount / 3.0)), tongue * HEART, life * 0.8, FLAME_HEART, FLAME, 1)]:
+		if layer.is_inside_tree():
+			var sway := layer.create_tween().set_loops()
+			for i in 6:
+				var k := 1.0 + sway_beat.randf_range(-FLAME_LAYER_FLICKER.x, FLAME_LAYER_FLICKER.x)
+				sway.tween_property(layer, "scale", Vector3(2.0 - k, k, 2.0 - k), 0.5 / sway_beat.randf_range(FLAME_LAYER_FLICKER.y, FLAME_LAYER_FLICKER.z))
 	# the fixed core: one near-white tongue that only flickers in size (each fire to its own beat)
 	if _core_mesh == null:
 		_core_mesh = ArenaKit.tongue(FLAME_CORE_SIZE, FLAME_CORE, Tongue.DROP, 2)
@@ -901,7 +915,7 @@ func fire(at: Vector3, radius: float, amount: int, tongue := 0.42, life := 0.7) 
 
 
 ## One layer of a fire's licks: they rise from `radius`, go from `color` to `edge` as they narrow, and fade out.
-func _flames(at: Vector3, radius: float, amount: int, size: float, life: float, color: Color, edge: Color, priority: int) -> void:
+func _flames(at: Vector3, radius: float, amount: int, size: float, life: float, color: Color, edge: Color, priority: int) -> CPUParticles3D:
 	var f := CPUParticles3D.new()
 	f.position = at
 	f.amount = amount
@@ -926,9 +940,10 @@ func _flames(at: Vector3, radius: float, amount: int, size: float, life: float, 
 	var cool := Color(edge.r / color.r, edge.g / color.g, edge.b / color.b)
 	var ramp := Gradient.new()
 	ramp.offsets = PackedFloat32Array([0.0, 0.7, 1.0])
-	ramp.colors = PackedColorArray([Color.WHITE, Color.WHITE.lerp(cool, 0.7), Color(cool, 0.0)])
+	ramp.colors = PackedColorArray([Color.WHITE, Color(Color.WHITE.lerp(cool, 0.7), FLAME_EDGE_ALPHA), Color(cool, 0.0)])
 	f.color_ramp = ramp
 	root.add_child(f)
+	return f
 
 
 ## The shapes of a flame's tongue (tongue): a soft long point added on top (candles); a drop with a soft edge, added
@@ -962,7 +977,8 @@ static func tongue(size: Vector2, color: Color, shape := Tongue.POINT, priority 
 				if drop:
 					alpha = a * a * (0.4 + 0.6 * core)
 				elif shape == Tongue.LICK:
-					alpha = a
+					# the top third fades out: no closed outline up there
+					alpha = a * (1.0 - smoothstep(FLAME_TIP_FADE, 1.0, v))
 				img.set_pixel(x, y, Color(1, 1, 1, alpha))
 		_tongue_tex[shape] = ImageTexture.create_from_image(img)
 	var q := QuadMesh.new()
@@ -1236,6 +1252,7 @@ func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain
 	m.set_shader_parameter(&"alpha", alpha)
 	m.set_shader_parameter(&"grain", grain)
 	m.set_shader_parameter(&"bands", bands)
+	VisualProfile.vary(m, {&"shader_parameter/edge_fade": STY_MIST_EDGE_FADE})
 	if drift >= 0.0:
 		m.set_shader_parameter(&"drift", drift)
 	card.material_override = m
@@ -1247,9 +1264,9 @@ func mist_bank(center: Vector3, size: Vector2, color: Color, alpha: float, grain
 
 ## Forward+ only: a box of violet glowing fog in the abyss (the browser's renderer has no fog volumes: the glow cards
 ## carry the colour there).
-func abyss_fog(center: Vector3, size: Vector3) -> void:
+func abyss_fog(center: Vector3, size: Vector3) -> FogMaterial:
 	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
-		return
+		return null
 	var v := FogVolume.new()
 	v.shape = RenderingServer.FOG_VOLUME_SHAPE_BOX
 	v.size = size
@@ -1261,6 +1278,7 @@ func abyss_fog(center: Vector3, size: Vector3) -> void:
 	fm.edge_fade = 0.4
 	v.material = fm
 	root.add_child(v)
+	return fm
 
 
 ## The abyss around a platform of half size `half`: mist in layers (of colour `mist`) over a deep glow, and dark cliffs
@@ -1279,6 +1297,7 @@ func abyss(half: Vector2, depth: float = 18.0, cliff := true, mist := MIST) -> v
 		m.set_shader_parameter(&"density", 0.55 - k * 0.08)
 		m.set_shader_parameter(&"scale", 0.05 + k * 0.02)
 		m.set_shader_parameter(&"drift", Vector2(0.3, 0.1) * (1.0 + k * 0.4))
+		VisualProfile.vary(m, {&"shader_parameter/edge_fade": STY_MIST_EDGE_FADE})
 		plane.material_override = m
 		plane.position = Vector3(0, -depth + k * depth * 0.24, 0)
 		plane.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

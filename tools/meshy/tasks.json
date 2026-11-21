@@ -221,5 +221,82 @@
     "attempt": 1,
     "imageCredits": 30,
     "bytes": 4271476
+  },
+  "w_cleaver": {
+    "prompt": "A broad heavy butcher cleaver-sword of an undead skeleton, wide rectangular single-edged iron blade much wider than a normal sword, square chipped tip, rust stains, short leather-wrapped grip. Medieval fantasy weapon, not a dagger, not a bayonet. Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+    "polycount": 1500,
+    "previewId": "01a1fefc-2d61-735f-a343-1bb5ad3fe38c",
+    "attempt": 2,
+    "previewCredits": 5,
+    "refineId": "01a1feff-c464-70a1-9e20-1576ee462281",
+    "refineCredits": 10,
+    "bytes": 3566196
+  },
+  "w_crossbow": {
+    "prompt": "A medieval wooden crossbow seen from above, wide horizontal curved iron bow arms across the front, simple straight wooden tiller stock bound with iron bands, taut string, one bolt loaded. Medieval fantasy weapon, no scope, no rifle stock, no gun parts. Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+    "polycount": 2000,
+    "previewId": "01a1fefc-9b53-7519-89a2-ebc720ce3438",
+    "attempt": 2,
+    "previewCredits": 5
+  },
+  "w_staff": {
+    "prompt": "A tall gnarled dark wooden staff of an undead sorcerer, twisted top forming an open claw cage that would hold a glowing orb (cage empty), iron rings and hanging small bone charms along the shaft. Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+    "polycount": 2000,
+    "previewId": "01a1fef5-dda9-73a5-b3f1-fa7a99315fa8",
+    "attempt": 1,
+    "previewCredits": 5,
+    "refineId": "01a1fefa-1195-70d2-bfe4-e6a4ec388724",
+    "refineCredits": 10,
+    "bytes": 3439996
+  },
+  "w_knight_sword": {
+    "prompt": "A full size straight double-edged longsword of a fallen knight, blade three times longer than the grip, dark blackened steel with a fuller, heavy straight guard, leather grip, round pommel. Not curved, not a dagger. Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+    "polycount": 1500,
+    "previewId": "01a1fefc-ea02-77ce-a397-0f383e4de1ef",
+    "attempt": 2,
+    "previewCredits": 5,
+    "refineId": "01a1ff00-2e5f-720c-8753-a8d181f4097f",
+    "refineCredits": 10,
+    "bytes": 2609664
+  },
+  "w_knight_shield": {
+    "prompt": "A large tall kite shield of a fallen undead knight, dark iron rim with rivets, scratched dented face of dark steel plates, plain with no emblem, seen from the front. Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+    "polycount": 1500,
+    "previewId": "01a1fef5-ed45-7734-943a-2199b27fc8d6",
+    "attempt": 1,
+    "previewCredits": 5,
+    "refineId": "01a1fefa-781c-7560-96e0-8eb9c58a6cdb",
+    "refineCredits": 10,
+    "bytes": 2315700
+  },
+  "w_morvath_scythe": {
+    "prompt": "A complete two-handed war scythe, the whole weapon in view: a very long straight black iron pole taller than a man, and at its top end one large curved crescent blade attached at a right angle, jagged dark edge with faint violet runes, chains wrapped around the pole. The pole must be included. Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+    "polycount": 3000,
+    "previewId": "01a1ff00-94b8-7514-9556-659e86eb9550",
+    "attempt": 3,
+    "previewCredits": 5,
+    "refineId": "01a1ff05-c382-7043-90c8-55a99af0b57b",
+    "refineCredits": 10,
+    "bytes": 3083616
+  },
+  "statue_hooded": {
+    "prompt": "A tall solemn hooded stone figure in long robes, face hidden in the deep hood, hands folded in front holding a closed book, standing on a short square plinth, ancient catacomb statue. Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
+    "polycount": 6000,
+    "previewId": "01a1fef5-fd08-7676-a317-9eb2011ab1ec",
+    "attempt": 1,
+    "previewCredits": 5,
+    "refineId": "01a1fefa-ff16-77ee-b277-b34f49e6112c",
+    "refineCredits": 10,
+    "bytes": 3473776
+  },
+  "lion_seated": {
+    "prompt": "A noble seated stone lion guardian on a low rectangular plinth, upright chest, full flowing mane, calm watchful face looking forward, front paws together, heraldic temple guardian statue. Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
+    "polycount": 6000,
+    "previewId": "01a1fef6-04fc-707f-93ab-5919d70e2ba9",
+    "attempt": 1,
+    "previewCredits": 5,
+    "refineId": "01a1fefb-8671-7425-9c93-146a69239b0e",
+    "refineCredits": 10,
+    "bytes": 4095352
   }
 }

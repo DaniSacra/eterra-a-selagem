@@ -353,6 +353,13 @@ const COLUMNS: Array[Array] = [
 	[70.0, 34.0, -24.0, 16.0, 46.0, 0.75], [95.0, 36.0, -24.0, 12.0, 52.0, 0.6], [118.0, 32.0, -24.0, 14.0, 40.0, 0.6],
 ]
 const COLUMN_SHAPE := Vector3(0.95, 1.25, 0.42)
+## Art review 2026-11-21 item 1 (stylized look): the abyss's violet no lighter than the arena (the left third of the
+## frame was a pale lilac at value 0.7): the glow cards' colour, the fog boxes' albedo, emission and density, all dark
+## violet (hue 255, saturation 0.45, value up to 0.18 in the fog).
+const STY_GLOW := Color(0.2, 0.17, 0.3)
+const STY_FOG_ALBEDO := Color(0.12, 0.1, 0.18)
+const STY_FOG_EMISSION := Color(0.06, 0.05, 0.09)
+const STY_FOG_DENSITY := 0.025
 ## Violet fog boxes in the abyss (Forward+): bearing, r, size.
 const FOG_BOXES: Array[Vector4] = [Vector4(265.0, 24.0, 18.0, 40.0), Vector4(85.0, 24.0, 18.0, 40.0)]
 
@@ -1430,7 +1437,11 @@ func _far() -> void:
 		kit.abyss_glow(Vector3(p.x, g[2], p.y), Vector2(g[3], g[4]), yaw, ArenaKit.ABYSS_GLOW_ENERGY * float(g[5]), COLUMN_SHAPE)
 	for f in FOG_BOXES:
 		var p := at_bearing(f.x, f.y)
-		kit.abyss_fog(Vector3(p.x, -12.0, p.y), Vector3(f.z, 10.0, f.w))
+		var fm := kit.abyss_fog(Vector3(p.x, -12.0, p.y), Vector3(f.z, 10.0, f.w))
+		if fm != null:
+			VisualProfile.vary(fm, {&"albedo": STY_FOG_ALBEDO, &"emission": STY_FOG_EMISSION, &"density": STY_FOG_DENSITY})
+	for gm: ShaderMaterial in kit._glow_mats.values():
+		VisualProfile.vary(gm, {&"shader_parameter/color": STY_GLOW})
 
 
 # ---------- the stylized look (room redesign lot E) ----------

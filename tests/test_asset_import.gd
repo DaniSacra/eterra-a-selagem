@@ -10,6 +10,9 @@ const VRAM := {
 	"res://assets/models/kaykit_palette.png": {"compress/high_quality": true},
 	"res://assets/models/meshy/hero_explorer/hero_explorer-rigged_Image_0.jpg": {"compress/high_quality": true},
 	"res://assets/models/meshy/emeth/emeth_0.jpg": {"compress/high_quality": true, "process/size_limit": 1024},
+	# the stone statue and lion are drawn by the rooms' stone material, their own painting is not used: 64 px
+	"res://assets/models/meshy/statue_hooded/statue_hooded_0.jpg": {"compress/high_quality": true, "process/size_limit": 64},
+	"res://assets/models/meshy/lion_seated/lion_seated_0.jpg": {"compress/high_quality": true, "process/size_limit": 64},
 	"res://assets/textures/rock_surface/rock_surface_nor_gl_1k.jpg": {"compress/normal_map": 1},
 	"res://assets/textures/rock_surface/rock_surface_disp_1k.jpg": {"compress/channel_pack": 1},
 }

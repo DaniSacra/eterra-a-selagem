@@ -1735,6 +1735,9 @@ const BACKDROP_SINK: Array[Vector2] = [Vector2(-6.0, -18.0), Vector2(-10.0, -24.
 const BACKDROP_SIZE := Vector2(220.0, 80.0)
 const BACKDROP_TOP := 16.0
 const BACKDROP_BANK := Vector3(-4.0, 8.0, 0.55)
+## Art review 2026-11-21 item 1 (stylized look): the far mist at this share of the room's, so the background reads darker
+## than the floor (value 0.06 to 0.12) instead of a flat grey-blue panel.
+const STY_BACKDROP_MIST := 0.55
 
 
 func backdrop(mist: Color, stone: Color, edge_color: Color) -> void:
@@ -1750,9 +1753,12 @@ func backdrop(mist: Color, stone: Color, edge_color: Color) -> void:
 		var cm := (kit.root.get_child(kit.root.get_child_count() - 1) as MeshInstance3D).material_override as ShaderMaterial
 		cm.set_shader_parameter(&"stone_color", stone)
 		cm.set_shader_parameter(&"edge_color", edge_color)
+		VisualProfile.vary(cm, {&"shader_parameter/mist_color": mist * STY_BACKDROP_MIST})
 	var b := arena.shape().bounds()
 	kit.mist_bank(Vector3(c.x, BACKDROP_BANK.x, c.y), b.size.length() * Vector2(1.6, 0.0) + Vector2(0.0, BACKDROP_BANK.y),
 		mist * 2.0, BACKDROP_BANK.z, 0.3, 0.4)
+	var bank := (kit.root.get_child(kit.root.get_child_count() - 1) as MeshInstance3D).material_override as ShaderMaterial
+	VisualProfile.vary(bank, {&"shader_parameter/color": mist * 2.0 * STY_BACKDROP_MIST})
 
 
 ## True on the browser's and the phone's renderer (Compatibility).

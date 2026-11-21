@@ -14,7 +14,7 @@ uniform float lit_to = 1.0;
 uniform vec3 ember_color : source_color = vec3(1.0, 0.55, 0.2);
 uniform float ember_light = 1.0;
 uniform vec3 dark : source_color = vec3(0.03, 0.028, 0.03);
-uniform vec3 dust_color : source_color = vec3(0.52, 0.5, 0.47);
+uniform vec3 dust_color : source_color = vec3(0.08, 0.07, 0.07);
 uniform float rest_width = 0.3;
 uniform float seed = 0.0;
 // how far along the strip the crack runs (a column's crack climbing), how ragged it is (0: a straight slot, a slit's

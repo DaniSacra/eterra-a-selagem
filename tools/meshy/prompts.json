@@ -148,6 +148,46 @@
         "tools/meshy/ref/emeth/emeth.png"
       ],
       "texture_prompt": "Stylized hand-painted fantasy longsword Emeth: translucent emerald-green crystal blade with thin gold veins and a pale glowing edge, ornate antique gold crossguard with curved horn-like quillons and a round emerald in the centre, dark red leather-wrapped grip, gold pommel with an emerald. Only the sword, no background, no crystals, no ground."
+    },
+    "w_cleaver": {
+      "polycount": 1500,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+      "prompt": "A broad heavy butcher cleaver-sword of an undead skeleton, wide rectangular single-edged iron blade much wider than a normal sword, square chipped tip, rust stains, short leather-wrapped grip. Medieval fantasy weapon, not a dagger, not a bayonet."
+    },
+    "w_crossbow": {
+      "polycount": 2000,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+      "prompt": "A medieval wooden crossbow seen from above, wide horizontal curved iron bow arms across the front, simple straight wooden tiller stock bound with iron bands, taut string, one bolt loaded. Medieval fantasy weapon, no scope, no rifle stock, no gun parts."
+    },
+    "w_staff": {
+      "polycount": 2000,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+      "prompt": "A tall gnarled dark wooden staff of an undead sorcerer, twisted top forming an open claw cage that would hold a glowing orb (cage empty), iron rings and hanging small bone charms along the shaft."
+    },
+    "w_knight_sword": {
+      "polycount": 1500,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+      "prompt": "A full size straight double-edged longsword of a fallen knight, blade three times longer than the grip, dark blackened steel with a fuller, heavy straight guard, leather grip, round pommel. Not curved, not a dagger."
+    },
+    "w_knight_shield": {
+      "polycount": 1500,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+      "prompt": "A large tall kite shield of a fallen undead knight, dark iron rim with rivets, scratched dented face of dark steel plates, plain with no emblem, seen from the front."
+    },
+    "w_morvath_scythe": {
+      "polycount": 3000,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, worn and chipped, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols.",
+      "prompt": "A complete two-handed war scythe, the whole weapon in view: a very long straight black iron pole taller than a man, and at its top end one large curved crescent blade attached at a right angle, jagged dark edge with faint violet runes, chains wrapped around the pole. The pole must be included."
+    },
+    "statue_hooded": {
+      "polycount": 6000,
+      "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
+      "prompt": "A tall solemn hooded stone figure in long robes, face hidden in the deep hood, hands folded in front holding a closed book, standing on a short square plinth, ancient catacomb statue."
+    },
+    "lion_seated": {
+      "polycount": 6000,
+      "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
+      "prompt": "A noble seated stone lion guardian on a low rectangular plinth, upright chest, full flowing mane, calm watchful face looking forward, front paws together, heraldic temple guardian statue."
     }
   }
 }

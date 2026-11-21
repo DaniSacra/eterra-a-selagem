@@ -30,6 +30,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   de arma, talentos por herói; `docs/design/benchmark_ravenswatch.md`). Comparação sistema por sistema e o que falta: `docs/design/comparativo.md` (manter em dia). A versão 2D em pixel art está na tag `v1-pixel-2d`.
 - Modelos **provisórios**: KayKit (Kay Lousberg, CC0) em `assets/models/` (personagens e armas só para o assado; masmorra em `dungeon/` e `dungeon_r/`, todas com a paleta única `kaykit_palette.png`).
   Fontes Cinzel e Alegreya Sans (OFL) em `assets/fonts/`.
+- **Armas e peças do Meshy (2026-11-21)**: cutelo (esqueleto), espada e escudo (cavaleiro), cajado (feiticeiro e ancião) e
+  foice (Morvath) são `held` com `"meshy"` no `tools/bake.gd` (`triangles`, `slot` 0 a 3 do atlas de 128 px na faixa sob o corpo,
+  `grip` o ponto da arma que vai à mão, `turn`/`rot`, `scale`); o orbe do cajado fica no anel (`STAFF_RING`). A foice é só a
+  lâmina em meia-lua: o cabo é um cilindro de madeira (1,1 m, 2,0 m com a lâmina) na mão direita. O arqueiro mantém a besta do KayKit.
+  A estátua do Salão (`Masonry.meshy_stone`, a lathe antiga fica de reserva) e o leão do Santuário (`HubLook.LION_*`, plinto,
+  leão a 2,5 m, o do oeste espelhado, virados 0,3 rad para a escada) usam só a malha, com a pedra `Masonry.carved`.
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), só no assado dos bonecos do KayKit guardados (os modelos do Meshy já têm a proporção certa).
 - Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),
@@ -288,3 +294,4 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   72 a 86 (+50). Sonda de sensação 40/40 nos dois looks; o Compatibility abre sem erro.
 - Medir o quadro do jogo: `tools/sty_probe.gd` (comando no topo; `PROBE` com quadro, CPU, GPU, chamadas e memória de vídeo).
 
+- Revisão de 2026-11-21 (`docs/art/review_2026-11-21.md` itens 2, 4, 6): comuns mais claros no estilizado (`CrowdRenderer.STYLE_COMMON_*`, elites e Morvath intactos); chamas com ponta que some, borda translúcida e oscilação por camada (`ArenaKit.FLAME_*`); raio-x por ruído de gradiente (`see_through.gdshaderinc`, `SEE_GHOST`). Armas no assado: `"aim"` gira a arma na mão para uma direção do modelo no idle (espada do cavaleiro, foice de Morvath com cabo de 2,0 m em peças `shape`), `"lift"` clareia a textura (cutelo).

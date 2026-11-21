@@ -124,11 +124,11 @@ const STYLE := {
 	&"slab_paint": STY_SLAB_PAINT, &"slab_hue": STY_SLAB_HUE, &"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"],
 	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.76, 0.745, 0.70),
-		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.85, &"moon_shadow": true},
+		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.68, &"moon_shadow": true},  # item 8: the cold key -20%
 }
 ## The floor's limestone in the stylized look (room redesign fixes: it read neutral grey, nave luma 71 to 83 flat): a
 ## warmer stone, the slabs further apart in value and a little more in hue, fewer olive slabs.
-const STY_FLOOR := Color(0.36, 0.343, 0.313)
+const STY_FLOOR := Color(0.324, 0.309, 0.282)  # art review 2026-11-21 item 8: -10% so the floor measures 55 to 60
 ## SW-G1 and SW-G2 (docs/art/sworn_reference_ideas.md 3.1; floor_biome.gdshaderinc, ArenaKit.paint_look's `floor`,
 ## put by style()): the painted floor's second colour of the biome in patches of 3 to 8 m, stronger near the edge, and
 ## the shadow of the vault's broken ribs (SW-S1) in the shafts: a quadripartite bay of gobo_scale m, stretched along

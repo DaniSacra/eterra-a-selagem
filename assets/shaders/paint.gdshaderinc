@@ -24,7 +24,7 @@ uniform float paint_soft = 0.1;
 // width (in N.L times falloff).
 uniform float paint_pool = 0.1;
 uniform float paint_pool_core = 0.3;
-uniform float paint_pool_soft = 0.02;
+uniform float paint_pool_soft = 0.07;
 uniform float paint_fire_from = 0.35;
 // How much brighter a fire's pool is painted than its light (only on the painted scenery: the candles' own wax and
 // the figures keep the light's energy, which would burn them white at the pool's brightness).

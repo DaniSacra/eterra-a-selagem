@@ -19,6 +19,8 @@ uniform vec2 grain_scale = vec2(40.0, 16.0);
 // how many of them up the card.
 uniform float bands = 0.0;
 uniform float band_count = 5.0;
+// Share of the card at each of its four edges where the alpha fades out (art review 2026-11-21 item 1: no straight edge; 0: off, the classic look).
+uniform float edge_fade = 0.0;
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -60,6 +62,9 @@ void fragment() {
 	float edge = smoothstep(0.0, ragged, e.y + (n - 0.5) * ragged) * smoothstep(0.0, ragged * 0.5, e.x + (n - 0.5) * ragged * 0.5);
 	ALBEDO = room_air_tint(color * (0.85 + 0.3 * n));
 	float a = alpha * edge * (0.6 + 0.8 * n);
+	if (edge_fade > 0.0) {
+		a *= smoothstep(0.0, edge_fade, e.x) * smoothstep(0.0, edge_fade, e.y);
+	}
 	if (bands > 0.0) {
 		// long level streaks, each drifting its own way, thinner toward the top of the bank
 		float streak = noise(vec2(UV.x * 2.3 + TIME * drift * 2.0, UV.y * band_count)) * 0.65 + noise(vec2(UV.x * 6.1 - TIME * drift, UV.y * band_count * 2.3 + 4.0)) * 0.35;

@@ -39,7 +39,11 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
     também feita por IA), com o esqueleto do Meshy; os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das
     vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
     `assets/baked/`, com animações CC0 da Quaternius e do KayKit) e a espada Emeth (`assets/models/meshy/emeth/`,
-    gerada da imagem da Emeth enviada pelo Daniel, também feita por IA);
+    gerada da imagem da Emeth enviada pelo Daniel, também feita por IA;
+  - no jogo desde 2026-11-21 (peças aprovadas pelo Daniel, geradas no plano Pro, prompts em `tools/meshy/prompts.json`):
+    armas que entram nas mãos dos inimigos assados (`assets/models/meshy/w_cleaver`, `w_knight_sword`, `w_knight_shield`,
+    `w_staff`, `w_morvath_scythe`; o cabo longo da foice é um cilindro feito em código), a estátua encapuzada do Salão
+    (`statue_hooded`) e o leão sentado do Santuário (`lion_seated`; só a malha, a pedra é do material das salas);
   - fora do jogo e do repositório desde 2026-11-19 (DT-107): o herói "Sombra" e o `paladin_1` (só no histórico do git).
 - **Código, shaders e textos**: escritos com assistentes de IA (Claude, Codex).
 - **Leão do selo da Câmara do Selo** (vai no jogo, 2026-11-15): desenho vetorial do leão rampante

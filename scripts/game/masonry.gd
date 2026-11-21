@@ -58,6 +58,8 @@ const HANDS_AT := 0.6
 ## The statue's vertex value of plain stone (the mesh stores value times this, so the brim can be lighter than 1),
 ## and the robe's value by height (height, value): dark where it meets the plinth, under the arms and under the hood.
 const ROBE_VALUE := 0.5
+## The statue of the Salão, a Meshy model (2026-11-21): 6 thousand triangles, shared by every statue of a room.
+const STATUE_MODEL := "res://assets/models/meshy/statue_hooded/statue_hooded.glb"
 const ROBE_SHADE: Array[Vector2] = [Vector2(0.0, 0.55), Vector2(0.05, 0.72), Vector2(0.2, 1.0), Vector2(0.42, 1.0),
 	Vector2(0.54, 0.72), Vector2(0.62, 0.8), Vector2(0.7, 1.0), Vector2(0.76, 0.75), Vector2(0.8, 0.6)]
 ## The statues' stone: Masonry's own, carved from one piece (no courses), a cold grey; each statue only changes its
@@ -918,6 +920,45 @@ func _fungus_tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, cols: Arra
 ## and sunken face and its point behind, arms in wide sleeves, hands. Vertex colour: the stone's value there
 ## (ROBE_VALUE = plain stone), which the material multiplies in: the folds, the foot, under the arms and the face.
 func _build_statue() -> ArrayMesh:
+	# 2026-11-21: the Meshy statue (statue_hooded, Daniel's pick); the lathed monk below stays as the fallback
+	var model := meshy_stone(STATUE_MODEL, true)
+	return model if model != null else _build_lathed_statue()
+
+
+## A Meshy model as carved stone of height 1 standing on its foot (the middle of its base at the origin, looking along
+## the model's +Z): its geometry only (the material, _carved, is the stone), the vertex value ROBE_VALUE, from ROBE_SHADE
+## over its height when `robe` (the lathed monk's folds). null without the model.
+func meshy_stone(path: String, robe := false) -> ArrayMesh:
+	var scene := load(path) as PackedScene
+	if scene == null:
+		return null
+	var root := scene.instantiate()
+	var found := root.find_children("*", "MeshInstance3D", true, false)
+	if found.is_empty():
+		root.free()
+		return null
+	var src := (found[0] as MeshInstance3D).mesh
+	var box := src.get_aabb()
+	var arrays := src.surface_get_arrays(0)
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var index: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
+	root.free()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var scale := 1.0 / box.size.y
+	var mid := box.get_center()
+	for i in index:
+		var v := verts[i]
+		var p := Vector3((v.x - mid.x) * scale, (v.y - box.position.y) * scale, (v.z - mid.z) * scale)
+		st.set_normal(normals[i])
+		st.set_color(Color.WHITE * minf((_shade_at(p.y) if robe else 1.0) * ROBE_VALUE, 1.0))
+		st.add_vertex(p)
+	st.index()
+	return Masonry.kept(st)
+
+
+func _build_lathed_statue() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var robe: Array[Vector2] = [Vector2(0.0, 0.0), Vector2(ROBE_HEM * 1.04, 0.0), Vector2(ROBE_HEM, 0.04),

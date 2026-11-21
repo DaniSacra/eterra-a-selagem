@@ -382,11 +382,11 @@ const LANTERN_CROSSES := 1
 const STY_BOWL_RANGE := 5.5
 const STY_CANDLE_RANGE := 3.5
 const STY_BOWL_ATTENUATION := 0.5
-const STY_BOWL_GAIN := 1.1
+const STY_BOWL_GAIN := 0.9
 const STY_CANDLE_GAIN := 1.5
 ## The fires' pools on the hall's blue slate keep more of their warm (lot A review item 8: the hall had lost its heat,
 ## warm share of the scene 6.5% to 1.8%; paint_pool_saturation, 0.65 elsewhere).
-const STY_POOL_SATURATION := 1.0
+const STY_POOL_SATURATION := 0.6
 ## The browser's renderer (Compatibility) paints the pools near white at those energies (laje 217 beside the east bowl):
 ## the fires a share of them there (as VisualProfile.COMPAT_KEY does for the key).
 const STY_COMPAT_FIRE := 0.4
@@ -506,6 +506,8 @@ static var SHOP_LAMP := TombKit.Lamp.new(ScreenTone.fit(Color(1.0, 0.62, 0.3)), 
 ## and their two urns (x, z, height, y).
 const SHOP_CLOTH := Color(0.55, 0.38, 0.28)
 const SHOP_CLOTHS: Array[Vector4] = [Vector4(7.3, -14.0, 0.75, 1.46), Vector4(-5.35, -14.2, 0.85, 0.56)]
+## Art review 2026-11-21 item 8 (stylized look): the urns' stone tinted to about (0.62, 0.57, 0.5), not white.
+const STY_URN_TINT := Color(0.78, 0.65, 0.53)
 const SHOP_URNS: Array[Vector4] = [Vector4(8.3, -13.8, 0.3, 0.8), Vector4(-6.25, -13.75, 0.26, 0.45)]
 ## The fountain's moss (inner, mean outer radius from the basin's middle; how far its edge breaks either way, how far
 ## it swings out to the north and in to the south: lot A review item 9, 2.6 to 3.4 m), its candles on the rim
@@ -700,7 +702,7 @@ func dress_shop(points: Array[Vector2]) -> void:
 	# the provisions under their cloth
 	for c: Vector4 in SHOP_CLOTHS:
 		mason.box(Vector3(c.x, c.w, c.y), Vector3(c.z, 0.04, c.z * 0.7), 0.4, mason.stone(0.0, SHOP_CLOTH), false)
-	var urn := mason.carved(0.0, Color.WHITE)
+	var urn := mason.carved(0.0, STY_URN_TINT if VisualProfile.stylized() else Color.WHITE)
 	for u: Vector4 in SHOP_URNS:
 		mason.urn(Vector3(u.x, u.w, u.y), u.z, urn)
 	mason.merge()

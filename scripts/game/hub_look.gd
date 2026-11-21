@@ -4,7 +4,7 @@ extends ArenaRoom
 ## an open courtyard at dusk over the mist. In the hub's own frame (u right on the screen, v up it; HubPlan) and so
 ## built under one node turned by the camera's yaw (`frame`): the portal high on the axis in a gothic facade (three
 ## orders of voussoirs, the seal's lion on the keystone, never a star) over a wide flight of stairs and a terrace
-## where two lion stelae guard it, an arcade of three arches each side open to the far ruins and a cascade; the side
+## where two seated lions guard it, an arcade of three arches each side open to the far ruins and a cascade; the side
 ## walls with the stations' niches; the low balustrade in front with the arrival stairs and two lamp posts. On the
 ## square the lion's medallion in old gold and the fountain of the lion (decoration: it neither heals nor is used).
 ## The five stations as pieces (their NPCs are HUB-D's: only their place): the Vendedor's awning with lanterns over
@@ -78,15 +78,16 @@ const INNER_RING := Vector3(0.32, 0.3, 18.45)
 const INNER_TINT := Color(0.62, 0.62, 0.62)
 ## The keystone with the seal's lion in old gold (never a star; spec 3.1): its side and depth.
 const KEYSTONE := Vector2(0.9, 0.35)
-## The lion stelae on the terrace's wings beside the stairs (spec 3.1, no Meshy): u, v; plinth (width, height,
-## depth); the stele (width, height, depth) with the rampant lion in relief on its face (side of the relief); its cap
-## (height, the point over it). HUB-D (H-P1-3): twice as large, at the front of the wings, where the camera sees them.
+## The seated lions on the terrace's wings beside the stairs (the Meshy lion_seated, 2026-11-21; it was a stele with the
+## lion in relief): u, v; plinth (width, height, depth); the lion's height (it sits on a base of its own and looks
+## along +Z, the square; the east one is the west one mirrored) and how far it turns to the stairs (radians), its
+## stone tint over the carved stone of the rooms. HUB-D (H-P1-3): large, at the front of the wings, where the camera sees them.
 const LIONS: Array[Vector2] = [Vector2(-7.0, 13.4), Vector2(7.0, 13.4)]
-const LION_PLINTH := Vector3(2.2, 0.6, 1.8)
-const LION_STELE := Vector3(1.8, 3.0, 1.2)
-const LION_RELIEF := 1.75
-const LION_CAP := Vector2(0.24, 0.8)
-const LION_STONE := Color(0.46, 0.43, 0.39)
+const LION_PLINTH := Vector3(1.9, 0.6, 2.8)
+const LION_MODEL := "res://assets/models/meshy/lion_seated/lion_seated.glb"
+const LION_HEIGHT := 2.5
+const LION_TURN := 0.3
+const LION_TINT := Color(0.9, 0.8, 0.7)
 ## The braziers at the stairs' foot on the terrace (u, v) and their light.
 const BRAZIERS: Array[Vector2] = [Vector2(-7.0, 15.9), Vector2(7.0, 15.9)]
 const BRAZIER_LIGHT := 2.6
@@ -188,6 +189,12 @@ const CYPRESS_B := Color(0.24, 0.27, 0.17)
 ## tall and wide every SHRUB_EVERY metres along the bed.
 const SHRUB_A := Color(0.26, 0.13, 0.06)
 const SHRUB_B := Color(0.5, 0.3, 0.14)
+## Art review 2026-11-21 item 5 (stylized look): the shrubs' leaves muted (the vivid orange is the hazard's colour,
+## saturation under 0.45), bigger and less ragged so the cards stop reading as blocky noise.
+const STY_SHRUB_A := Color(0.22, 0.17, 0.1)
+const STY_SHRUB_B := Color(0.46, 0.32, 0.16)
+const STY_CROWN_LEAVES := 5.0
+const STY_CROWN_RAGGED := 0.12
 const SHRUB_TALL := Vector2(1.0, 1.7)
 const SHRUB_WIDE := 1.5
 const SHRUB_EVERY := 1.4
@@ -880,6 +887,11 @@ func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: 
 	mat.set_shader_parameter(&"leaf_b", leaf_b)
 	mat.set_shader_parameter(&"leaves", CROWN_LEAVES)
 	mat.set_shader_parameter(&"fill", 0.8)
+	var sty := {&"shader_parameter/leaves": STY_CROWN_LEAVES, &"shader_parameter/ragged": STY_CROWN_RAGGED}
+	if leaf_a == SHRUB_A:
+		sty[&"shader_parameter/leaf_a"] = STY_SHRUB_A
+		sty[&"shader_parameter/leaf_b"] = STY_SHRUB_B
+	VisualProfile.vary(mat, sty)
 	var mi := MultiMeshInstance3D.new()
 	mi.name = label
 	mi.multimesh = mm
@@ -1246,19 +1258,21 @@ func _planter(p: Vector2) -> void:
 		&"litter_size": Vector2(0.06, 0.1), &"litter_cover": 0.55})
 
 
-## A lion stele on the terrace (spec 3.1, no Meshy): plinth, the stele with the seal's rampant lion in relief on its
-## face, a lion's head of chamfered blocks on top (mane, head, muzzle, ears), facing the square; candles on the plinth.
+## A seated lion on the terrace (the Meshy model of 2026-11-21): the plinth, the lion on it looking at the square and
+## turned a little to the stairs, the east one mirrored; candles on the plinth. Nothing collides (the terrace is a view).
 func _lion_stele(p: Vector2) -> void:
 	var mat := stone()
 	var y := TERRACE_Y
 	fm.block(at(p.x, y, p.y), Vector3(LION_PLINTH.x, LION_PLINTH.y, LION_PLINTH.z), 0.0, mat)
 	y += LION_PLINTH.y
-	fm.block(at(p.x, y, p.y), LION_STELE, 0.0, mat)
-	_lion(at(p.x, y + LION_STELE.y * 0.55, p.y - LION_STELE.z * 0.5 - 0.006), Basis(), LION_RELIEF, LION_STONE)
-	y += LION_STELE.y
-	# a stepped cap and a ball finial (the lion is the relief, spec 3.1; no carved head)
-	fm.block(at(p.x, y, p.y), Vector3(LION_STELE.x + 0.2, LION_CAP.x, LION_STELE.z + 0.2), 0.0, mat)
-	fm.point(at(p.x, y + LION_CAP.x, p.y), LION_STELE.x * 0.8, LION_CAP.y, 0.0, 0.0, mat)
+	var mesh := fm.meshy_stone(LION_MODEL)
+	if mesh != null:
+		var mi := MeshInstance3D.new()
+		mi.mesh = mesh
+		mi.material_override = fm.carved(y, LION_TINT)
+		var side := -signf(p.x)
+		mi.transform = Transform3D(Basis(Vector3.UP, side * LION_TURN) * Basis.from_scale(Vector3(-side, 1.0, 1.0) * LION_HEIGHT), at(p.x, y, p.y))
+		fm._add(mi)
 	for k in 3:
 		fm.candle(at(p.x - 0.45 + k * 0.42, TERRACE_Y + LION_PLINTH.y, p.y - LION_PLINTH.z * 0.5 + 0.12), 0.14 + 0.06 * (k % 2), 0.05)
 

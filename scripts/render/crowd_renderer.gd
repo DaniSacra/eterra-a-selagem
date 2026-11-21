@@ -37,6 +37,15 @@ const STYLE_OUTLINE_COLOR := Color(0.07, 0.06, 0.06)
 ## STY-10 (P2-5 of the STY-09 combat review): the body is darker in the stylized look (crowd.gdshader `style_light`), so
 ## the "about to strike" clearing (`tell_light`) is raised this many times there to lift the body as much as the classic.
 const STYLE_TELL := 1.6
+## Art review 2026-11-21 item 2: the commons vanished into the slab (bone luma 0.25 to 0.35). In the stylized look their
+## light is raised (key, scene, the hero's light: about half again of the shader's defaults) so the bone reads as a worn
+## ivory (0.55 to 0.65 in mid shade), and their rim is cool and a little stronger so it parts them from the warm floor.
+## Elites, guardians and Morvath keep the shader's defaults (their own steel, gold and violet).
+const STYLE_COMMON_LIGHT := 0.22
+const STYLE_COMMON_SCENE := 0.11
+const STYLE_COMMON_HERO := 0.2
+const STYLE_COMMON_RIM := 0.25
+const STYLE_COMMON_RIM_COLOR := Color(0.7, 0.78, 0.9)
 ## STY-10 (P2-2): Morvath keeps his violet in the stylized look (crowd.gdshader `style_vivid`: his painting this much
 ## more saturated and his own rim colour in place of the warm one; the others 0).
 const STYLE_BOSS_VIVID := 1.0
@@ -221,6 +230,12 @@ func register(d: EnemyDef) -> void:
 	mat.set_shader_parameter(&"crest_from", baked.height * 0.8)
 	# the common crowd in calmed bone colours; elites and the boss in their own colours, with a thin dark outline
 	var common := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
+	if common and d.rim <= 0.0:
+		mat.set_shader_parameter(&"style_light", STYLE_COMMON_LIGHT)
+		mat.set_shader_parameter(&"style_scene", STYLE_COMMON_SCENE)
+		mat.set_shader_parameter(&"style_hero", STYLE_COMMON_HERO)
+		mat.set_shader_parameter(&"style_rim", STYLE_COMMON_RIM)
+		mat.set_shader_parameter(&"style_rim_color", STYLE_COMMON_RIM_COLOR)
 	# an elite's cloth and bone stay the colour of the common figure's (cycle 7): the same share of the tint
 	var tint := Color.WHITE.lerp(d.tint, CROWD_TINT_KEEP) * (Color.WHITE if common else ELITE_SHADE) if d.behavior != EnemyDef.Behavior.BOSS else d.tint
 	mat.set_shader_parameter(&"tint", tint)

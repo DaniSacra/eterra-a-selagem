@@ -152,9 +152,13 @@ func point(name: String, anim: StringName, t: float) -> Vector3:
 ## clip whose poses leave the origin is drawn away from the place the game keeps the figure (E1c, bug 3: Morvath's
 ## blows carried their library's root motion; tools/pose_drift.gd, tests/test_boss_body.gd).
 func pose_centre(anim: StringName, frame: int, step := 7) -> Vector2:
+	# the body's middle: what it carries (named parts: a long scythe, a shield) left out, as body_top does
+	var carried := carried_mask()
 	var sum := Vector2.ZERO
 	var n := 0
 	for v in range(0, vertices, step):
+		if carried[v] == 1:
+			continue
 		var p := position(anim, frame, v)
 		sum += Vector2(p.x, p.z)
 		n += 1

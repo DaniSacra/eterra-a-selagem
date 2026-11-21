@@ -224,9 +224,18 @@ const STY_CORD := Color(0.30, 0.31, 0.245)
 const STY_LICHEN := Color(0.30, 0.31, 0.24)
 ## The fill on the tree a neutral warm (the cold one turned the moss grey bark mint).
 const STY_TREE_FILL := Color(0.84, 0.85, 0.78)
+## Art review 2026-11-21 item 7 (drawing only: the trunk's collision and the walkable floor stay): the trunk darker than
+## the floor round it (a share of its albedo) and its fill a little over half the energy. The size (0.8) and the move to
+## the corner would change the trunk's circle, so they wait for the Game Director.
+const STY_TREE_VALUE := 0.78
+const STY_TREE_FILL_ENERGY := 0.18
 ## J1: the crown in dead rust (hue 15 to 25, saturation up to 0.45, value up to 0.4; never the warnings' red).
-const STY_LEAF_A := Color(0.32, 0.17, 0.07)
-const STY_LEAF_B := Color(0.52, 0.31, 0.12)
+const STY_LEAF_A := Color(0.22, 0.17, 0.1)
+const STY_LEAF_B := Color(0.46, 0.32, 0.16)
+## Art review 2026-11-21 item 5: bigger leaves, a fuller clump and less ragged an edge (canopy.gdshader defaults are 9, 0.62, 0.35).
+const STY_LEAVES := 5.0
+const STY_FILL := 0.8
+const STY_RAGGED := 0.12
 ## The dry grass a little more straw than lilac (dry_grass.gdshader's tint, if it has one).
 ## The windows: the violet behind them turns to a grey of falling water (light on the walls' stone, the mist); P2-B6:
 ## olive grey, not cold (the west side read cyan).
@@ -1109,11 +1118,12 @@ func style() -> Dictionary:
 	style_depths(STY_CLIFF)
 	if tree != null and tree.stone_material != null:
 		VisualProfile.vary(tree.stone_material, {&"shader_parameter/base_color": STY_BARK, &"shader_parameter/cord_color": STY_CORD,
-			&"shader_parameter/lichen_color": STY_LICHEN})
+			&"shader_parameter/lichen_color": STY_LICHEN, &"shader_parameter/value": STY_TREE_VALUE})
 	if _tree_fill != null:
-		VisualProfile.vary(_tree_fill, {&"light_color": STY_TREE_FILL})
+		VisualProfile.vary(_tree_fill, {&"light_color": STY_TREE_FILL, &"light_energy": STY_TREE_FILL_ENERGY})
 	if _canopy_mat != null:
-		VisualProfile.vary(_canopy_mat, {&"shader_parameter/leaf_a": STY_LEAF_A, &"shader_parameter/leaf_b": STY_LEAF_B})
+		VisualProfile.vary(_canopy_mat, {&"shader_parameter/leaf_a": STY_LEAF_A, &"shader_parameter/leaf_b": STY_LEAF_B,
+			&"shader_parameter/leaves": STY_LEAVES, &"shader_parameter/fill": STY_FILL, &"shader_parameter/ragged": STY_RAGGED})
 	if variant_b and _west != null:
 		VisualProfile.vary(_west, {&"visible": false})
 	return st

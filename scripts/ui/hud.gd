@@ -75,11 +75,13 @@ const COMBO_POP := 0.15
 ## COMBO_INSET px into it from the medallion's edge, COMBO_RISE px above the bar's top (benchmark P0-3).
 const COMBO_WORD := 14
 const COMBO_H := 28.0
+## Room between the count's line and the move's name under it (row layout).
+const MOVE_GAP := 4.0
 ## (14 and 9 since the horde capture of 2026-11-20: at 4 and 6 the move's name touched the medallion's ring and sat on
 ## the bar's frame.)
 const COMBO_INSET := 14.0
 const COMBO_RISE := 9.0
-const MOVE_ALPHA := 0.7
+const MOVE_ALPHA := 0.9
 ## The move's name: how long it shows, and how fast it goes (a short cut, no long ghost).
 const MOVE_TIME := 1.2
 const MOVE_FADE := 0.25
@@ -525,8 +527,12 @@ func _build_combo() -> void:
 			c.offset_right = x + LIFE.x
 		_combo_row.offset_top = _action_row.offset_top - 2.0
 		_combo_row.offset_bottom = _combo_row.offset_top + COMBO_H
-		_move.offset_top = _combo_row.offset_bottom - 2.0
+		# art review 2026-11-21 (10): the name on its own line under the count, never touching it, and both on the
+		# row's band of ink with the diamonds (no grey text loose over the floor)
+		_move.offset_top = _combo_row.offset_bottom + MOVE_GAP
 		_move.offset_bottom = _move.offset_top + COMBO_WORD + 6.0
+		if _row_band:
+			_row_band.covers.append_array([_combo, _combo_word, _move] as Array[Control])
 	else:
 		_place(_combo_row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST + COMBO_INSET, -MARGIN - CREST * 0.5 - LIFE.y - COMBO_RISE), Vector2(LIFE.x, COMBO_H))
 	_combo_top = _combo_row.offset_top
