@@ -29,6 +29,14 @@ func _run() -> void:
 	root.size = want
 	await create_timer(1.4).timeout
 	var data := _sample()
+	var only := int(Dev.arg("codex-only", "-1"))
+	if only >= 0:  # --codex-only=N: just the Compendium's tab N (a single capture)
+		var one: Control = (load("res://scripts/ui/codex_screen.gd") as GDScript).new()
+		boot.call(&"_open", one, 2, [only, data])
+		await create_timer(0.6).timeout
+		await _shot("codex_%d" % only)
+		quit()
+		return
 	var hero: Control = (load("res://scripts/ui/hero_screen.gd") as GDScript).new()
 	boot.call(&"_open", hero, 1, [data, 1])
 	await create_timer(0.6).timeout

@@ -326,7 +326,8 @@ func _wash(x0: float, x1: float, y0: float, y1: float, top: float, bottom: float
 				Color(0, 0, 0, bottom * fs[i + 1]), Color(0, 0, 0, bottom * fs[i])]))
 
 
-## Above the first room, the mouth of the catacombs in ink: an arch of three stones over steps going down. No figure.
+## Above the first room, the entrance of the catacombs in ink: a doorway of stone (two jambs under a flat lintel, wider
+## than the opening) with a dark arch inside it and steps going down. Never a dome with a rim (it read as a helmet). No figure.
 func _cave_mouth() -> void:
 	var first := -1
 	for id: int in map.rooms:
@@ -336,30 +337,37 @@ func _cave_mouth() -> void:
 	if first < 0:
 		return
 	var c := centre(first)
-	var base := Vector2(c.x, c.y - RADIUS - 6.0)
-	var w := 13.0
-	var legs := 7.0
-	var ink := Color(Book.INK, 0.9)
-	# the dark of the opening and the steps in it
-	var arch := PackedVector2Array()
-	for i in 13:
-		var a := PI + PI * float(i) / 12.0
-		arch.append(base + Vector2(0, -legs) + Vector2(cos(a) * w, sin(a) * w))
-	var hole := PackedVector2Array([base + Vector2(-w, 0)])
-	hole.append_array(arch)
+	var base := Vector2(c.x, c.y - RADIUS - 5.0)
+	var w := 9.0  # half width of the opening
+	var legs := 11.0  # the straight part of the opening, under its arch
+	var post := 4.0  # the thickness of the stone round it
+	var ink := Color(Book.INK, 0.92)
+	var stone := Color(Book.INK, 0.5)
+	# the stone: jambs and lintel as one dark frame, drawn first
+	var top := base.y - legs - w
+	# (a lighter stone with the opening cut out of it, and its foot flared: a gate, never a hat with a brim)
+	draw_colored_polygon(PackedVector2Array([base + Vector2(-w - post - 2.0, 0), Vector2(base.x - w - post, top - post),
+		Vector2(base.x + w + post, top - post), base + Vector2(w + post + 2.0, 0)]), stone)
+	draw_polyline(PackedVector2Array([base + Vector2(-w - post - 2.0, 0), Vector2(base.x - w - post, top - post),
+		Vector2(base.x + w + post, top - post), base + Vector2(w + post + 2.0, 0)]), ink, 1.6, true)
+	# the opening: dark as the inside of the earth, paper steps going down in it
+	var hole := PackedVector2Array([base + Vector2(-w, 0), base + Vector2(-w, -legs)])
+	for i in 9:
+		var a := PI + PI * float(i) / 8.0
+		hole.append(base + Vector2(0, -legs) + Vector2(cos(a) * w, sin(a) * w))
+	hole.append(base + Vector2(w, -legs))
 	hole.append(base + Vector2(w, 0))
-	draw_colored_polygon(hole, Color(Book.INK, 0.8))
+	draw_colored_polygon(hole, Color(0.03, 0.02, 0.03, 1.0))
 	for k in 3:
-		var y := base.y - 1.0 - k * 3.2
-		var half := w * (1.0 - k * 0.28)
-		draw_line(Vector2(base.x - half, y), Vector2(base.x + half, y), Color(Book.PAPER, 0.55), 1.2, true)
-	# the stone round it: the arch, its legs and the two joints that make three stones
-	draw_polyline(PackedVector2Array([base + Vector2(-w, 0), base + Vector2(-w, -legs)] + Array(arch) + [base + Vector2(w, -legs), base + Vector2(w, 0)]), ink, 2.2, true)
-	for ang: float in [PI * 4.0 / 3.0, PI * 5.0 / 3.0]:
-		var d := Vector2(cos(ang), sin(ang))
-		var o := base + Vector2(0, -legs)
-		draw_line(o + d * (w - 5.0), o + d * (w + 4.0), ink, 1.6, true)
-	draw_line(base + Vector2(-w - 4.0, 0), base + Vector2(w + 4.0, 0), ink, 1.6, true)
+		var half := w * (1.0 - k * 0.3)
+		var y := base.y - 1.0 - k * 3.4
+		draw_line(Vector2(base.x - half, y), Vector2(base.x + half, y), Color(Book.PAPER, 0.5 - k * 0.12), 1.4, true)
+	# stone joints: the keystone and one block each side, in paper lines on the frame
+	var joint := Color(Book.PAPER, 0.45)
+	draw_line(Vector2(base.x, top - post), Vector2(base.x, top - 1.0), joint, 1.2, true)
+	for sx: float in [-1.0, 1.0]:
+		var x := base.x + sx * (w + post * 0.5)
+		draw_line(Vector2(x - 1.6, base.y - legs * 0.5), Vector2(x + 1.6, base.y - legs * 0.5), joint, 1.2, true)
 
 
 ## The diamond of a room that keeps a find (Ofícios, 10_ux.md 10.7): old gold with a dark edge on the medallion's

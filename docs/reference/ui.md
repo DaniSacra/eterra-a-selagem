@@ -276,6 +276,15 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   com foco ou ponteiro; submenus escurecem mais (`DIM_LEVEL` 0,3) e desfocam a arte (`DIM_LOD`). Sem shader novo.
   Não medido por captura: 1.8, 1.9 (sem alteração de código), 1.10 e o contraste de números.
 
+- **Acabamento de interface (ui-ux-designer, 2026-11-21, capturas a 720 em `docs/gallery/ui_polish/`)**: 1.8 e 1.9 conferidos no
+  código (QW-115 no `end_screen`/`SealEmblem`/`fx.gd`, HudVeil, glifos 5, 9, 15 e 110 sem cruz, com testes em
+  `test_lote_a_ui`); sem mudança. Cadeado dos Dons trancados agora fora do losango, no canto superior esquerdo (espelho do
+  selo), sem cobrir a borda do motivo. Abas: `MARK_HIDDEN` 12 (fita fechada sobe 20 px, aberta 28) e a margem de baixo do
+  botão `MARK_HIDDEN - 7`, para o texto não crescer a fita fechada (`test_ui_review` verde). Mapa: a boca da caverna é uma
+  porta de pedra (moldura em trapézio, vão escuro com arco, degraus de papel, sem aro de cúpula nem aba, que lia como
+  capacete). Conferido a 720: Livro (abertura), Compêndio de Inimigos (figura 150 x 200, entradas de 30) e Configurações
+  sobre o título desfocado, sem corte nem sobreposição. `tools/book_lab.gd --codex-only=N` captura só a aba N.
+
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
   `DoorGlyph.of_reward` para `RunMap.Reward.SILVER`/`MEMORY` (placas das portas e mapa) e `DoorGlyph.of_material(id)`;

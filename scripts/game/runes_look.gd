@@ -599,6 +599,7 @@ func _dress_styled(box: Rect2) -> void:
 		_study(sm, a, b)
 	if _quiet:
 		_crystal(sm, north)
+		_islands(sm)
 	_tablets(sm)
 
 
@@ -783,6 +784,37 @@ func _crystal(sm: Masonry, north: float) -> void:
 	mi.mesh = st.commit()
 	mi.material_override = mat
 	sm.root.add_child(mi)
+
+
+## AT-RB1 (B): blocks of stone standing in the abyss past the south and east edges, their tops well under the floor
+## (ISLANDS: x, z, top, side; each a slab of the depths' stone on a shaft), a frame of the runes' old gold sunk round the
+## top as the A's tiles wear it. Off the floor, nothing stops there.
+const ISLANDS: Array[Vector4] = [Vector4(18.0, -4.0, -1.4, 3.0), Vector4(21.0, 0.5, -2.4, 3.0), Vector4(18.5, 5.0, -3.2, 4.5),
+	Vector4(-6.0, 15.0, -2.0, 3.0), Vector4(1.5, 16.5, -3.4, 3.0), Vector4(9.0, 14.8, -1.6, 3.0)]
+const ISLAND_FOOT := -14.0
+const ISLAND_SLAB := 0.5
+const ISLAND_FRAME := Vector2(0.08, 0.05)
+const ISLAND_INSET := 0.2
+
+
+func _islands(sm: Masonry) -> void:
+	var gold := StandardMaterial3D.new()
+	gold.albedo_color = MECH_GOLD
+	gold.metallic = MECH_METAL.x
+	gold.roughness = MECH_METAL.y
+	var mat := deep()
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	for i: Vector4 in ISLANDS:
+		var h := i.z - ISLAND_FOOT
+		sm.box(Vector3(i.x, ISLAND_FOOT + h * 0.5, i.y), Vector3(i.w * 0.7, h, i.w * 0.7), 0.0, mat, false)
+		sm.box(Vector3(i.x, i.z - ISLAND_SLAB * 0.5, i.y), Vector3(i.w, ISLAND_SLAB, i.w), 0.0, mat, false)
+		var half := i.w * 0.5 - ISLAND_INSET
+		for k in 4:
+			var dir := Vector2.from_angle(PI * 0.5 * k)
+			var along := Vector2(-dir.y, dir.x)
+			var size := Vector3(absf(along.x) * half * 2.0 + absf(dir.x) * ISLAND_FRAME.x, ISLAND_FRAME.y, absf(along.y) * half * 2.0 + absf(dir.y) * ISLAND_FRAME.x)
+			sm.box(Vector3(i.x + dir.x * half, i.z + ISLAND_FRAME.y * 0.5, i.y + dir.y * half), size, 0.0, gold, false)
+	sm.layers = 1
 
 
 ## One six-sided prism of `rad` from its foot up `h`, its last fifth a point (flat facets).

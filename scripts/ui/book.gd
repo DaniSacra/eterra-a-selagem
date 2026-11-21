@@ -29,7 +29,7 @@ const ENTRY_DROP := 3.0
 const BUTTON_DIAMOND := 4.5
 ## A chapter's bookmark (mark), px at 720 lines: the part under the cover, the height (a shut one stands 20 above
 ## the cover, 30 less the hidden part), how much longer the open one stands, its letters, padding, least width and tail.
-const MARK_HIDDEN := 10.0
+const MARK_HIDDEN := 12.0
 const MARK_HEIGHT := 32.0
 const MARK_RISE := 8.0
 const MARK_FONT := 19
@@ -230,7 +230,7 @@ static func mark(text_: String, min_width: float = 0.0) -> Button:
 	b.add_theme_font_override(&"font", UiKit.TITLE_FONT)
 	b.add_theme_font_size_override(&"font_size", MARK_FONT)
 	var empty := StyleBoxEmpty.new()
-	empty.content_margin_bottom = MARK_HIDDEN - 5.0
+	empty.content_margin_bottom = MARK_HIDDEN - 7.0
 	empty.content_margin_top = 0
 	for st: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"focus"]:
 		b.add_theme_stylebox_override(st, empty)

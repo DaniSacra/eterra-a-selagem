@@ -99,6 +99,9 @@ const STY_COMPAT_MOON := 0.6
 const STY_MIST_SAT := 0.8
 const EDGE_ARCHES: Array[Vector4] = [Vector4(-9.0, -21.0, -6.0, 6.0), Vector4(11.0, -24.0, -7.0, 7.0)]
 const EDGE_ARCH_SPRING := 7.5
+## AT-PA1: the middle platform's remnant arch (x beside its middle, z past its north edge, span), its foot below the floor.
+const LANDING_ARCH := Vector3(4.0, 3.5, 5.0)
+const LANDING_ARCH_FOOT := -5.0
 ## P2-B1 (ART_REVIEW.md 4.5): soft pools of key light over the three platforms (ArenaRoom.key_pool: x, z, radius),
 ## their colour and energy; the moon lower (STYLE's air) so the floor nearest the camera falls under 0.80 of the middle.
 const STY_KEY_POOLS: Array[Vector3] = [Vector3(-21.0, 0.0, 6.0), Vector3(0.0, 0.0, 5.0), Vector3(21.0, 0.0, 6.0)]
@@ -492,6 +495,11 @@ func _dress_styled_steps() -> Array[Callable]:
 			# weight waits for the technical-artist's fix
 			for a: Vector4 in EDGE_ARCHES:
 				edge_kit().broken_arch(Vector3(a.x, a.z, a.y), Vector2(0, 1), a.w, EDGE_ARCH_SPRING)
+			# AT-PA1 (A): a broken arch in silhouette behind the middle platform's north edge, off to one side
+			if not _long and _decks.size() == 3:
+				var w := _decks[1]
+				var at := Vector2(w.get_center().x + LANDING_ARCH.x, w.position.y - LANDING_ARCH.y)
+				edge_kit().broken_arch(Vector3(at.x, LANDING_ARCH_FOOT, at.y), Vector2(0, 1), LANDING_ARCH.z, EDGE_ARCH_SPRING)
 			# P2-B1 (ART_REVIEW.md 4.5): each platform lit a step more than its edge nearest the camera
 			for f: Vector3 in STY_KEY_POOLS:
 				key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY),

@@ -154,7 +154,7 @@ func _draw() -> void:
 		if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
 			branch_glyph(self, glyph, c, r, col)
 	if locked:
-		_draw_lock(c, def.unlock_level if def else 1)
+		_draw_lock(c + Vector2(-h * 0.62, -h * 0.62), def.unlock_level if def else 1)
 	if on and def != null:
 		_badge_tick(c + Vector2(h * 0.62, -h * 0.62), h * BADGE)
 	elif sealed:
@@ -256,9 +256,10 @@ func _draw_memory(c: Vector2, n: int) -> void:
 
 
 func _draw_lock(c: Vector2, level: int) -> void:
-	# AP-4 1.5: the Gift's motif stays (faded), the padlock and the level sit low in the corner, never in the middle
+	# AP-4 1.5: the Gift's motif stays (faded); the padlock and the level sit outside the diamond, at its upper left
+	# (the mirror of the badge), so they never cover the motif's border
 	var col := Book.FADED
-	var at := c + Vector2(size.x * 0.02, size.y * 0.3)
+	var at := c + Vector2(4.0, 0.0)
 	var body := Rect2(at + Vector2(-9.0, -3.0), Vector2(6.0, 5.0))
 	draw_arc(at + Vector2(-6.0, -3.0), 2.0, PI, TAU, 8, col, 1.2, true)
 	draw_rect(body, col)
