@@ -151,7 +151,7 @@ func test_in_a_real_room_it_hurts_pushes_and_is_counted() -> void:
 		bf.step(DT)
 		game.ground.step(DT)
 		struck = struck or game.player.hp < hp  # the warning lands (and pushes) in the Ground's step
-	assert_almost_eq(game.player.hp, hp - 7.0, 0.01, "the paladin in it loses 7")
+	assert_almost_eq(game.player.hp, hp - 10.0, 0.01, "the paladin in it loses 10 (A1)")
 	assert_almost_eq(e.max_hp - e.hp, 60.0, 0.01, "the enemy in it 60 (the Escudo outlives it)")
 	assert_lt(game.player.pos.x, at.x - 2.0, "pushed along the bridge toward the west")
 	assert_lt(e.pos.x, at.x - 2.0, "the enemy too")
@@ -163,5 +163,5 @@ func test_in_a_real_room_it_hurts_pushes_and_is_counted() -> void:
 	var hz: Dictionary = room.get("hazard", {})
 	assert_eq(hz.get("kind"), "chain")
 	assert_almost_eq(float(hz.get("enemy_damage", 0.0)), 60.0, 0.01)
-	assert_almost_eq(float(hz.get("hero_damage", 0.0)), 7.0, 0.01)
+	assert_almost_eq(float(hz.get("hero_damage", 0.0)), 10.0, 0.01)
 	assert_eq(int(hz.get("strikes", 0)), 1)

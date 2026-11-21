@@ -143,9 +143,9 @@ func test_nothing_lights_within_6_m_of_the_way_in() -> void:
 				near += 1000
 		assert_eq(near, 0, "variant %d: nothing lit within 6 m of the way in, every lit tile beside an unlit one" % v)
 		assert_gte(nearest, 6.0, "variant %d: the nearest lit tile is %.1f m from the way in" % [v, nearest])
-	assert_almost_eq(l.hazard.hero_damage, 7.0, 0.001, "RP-03 step 1: the paladin loses 7 (was 4; the Hades 10)")
+	assert_almost_eq(l.hazard.hero_damage, 10.0, 0.001, "A1: the paladin loses 10 (the Hades; was 7 and 4)")
 	assert_almost_eq(l.hazard.enemy_damage, 60.0, 0.001, "RP-03: an enemy 60 (a whole soldier)")
-	assert_almost_eq(l.variant(1).hazard.hero_damage, 7.0, 0.001)
+	assert_almost_eq(l.variant(1).hazard.hero_damage, 10.0, 0.001)
 
 
 func test_the_rhythm_warn_strike_rest() -> void:

@@ -9,6 +9,8 @@ extends Node3D
 signal hit_player(amount: float, from: Vector2)
 ## A floor that strikes on its own (E5, the runes: add_hazard) struck: RuneFloor hurts the enemies standing in it.
 signal hazard_landed(z: Zone)
+## Any warning that lands, on the frame its blow does (AT-Q1: what breaks the breakables, BreakFloor).
+signal zone_landed(z: Zone)
 
 enum Kind { WARNING, EMBER, MARK, HOLY, STEAM, BIND, SHELTER, STONE }
 ## The same order as GroundLook.Shape (which draws them).
@@ -31,6 +33,16 @@ const FALL_SOURCE := &"column"
 const ROOT_SOURCE := &"roots"
 ## RP-16: the arrow slit a slab arms (PlateFloor with HazardDef.aims): "Derrotado por: Seteira".
 const SLIT_SOURCE := &"slit"
+## A1 (rooms_progression.md): RP-14 the crystal's discharge (RuneFloor), RP-20 the stones of the vault (DropFloor),
+## RP-12 the oil urn's blast and its running flame (UrnFloor).
+const CRYSTAL_SOURCE := &"crystal"
+const ROCKS_SOURCE := &"rocks"
+const URN_SOURCE := &"urn"
+const OIL_SOURCE := &"oil"
+## Sources of the room's own warnings that count against its two at once (combat_cadence.md 9.2 R9); a column toppling
+## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
+const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE,
+	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE]
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -231,6 +243,53 @@ func add_band(from: Vector2, dir: Vector2, length: float, width: float, time: fl
 	return z
 
 
+## add_hazard round a point (RP-12, the oil urn's ring): the circle of `radius` whole from the first frame, the amber
+## filling; as it lands it strikes the paladin hero_damage (as any warning) and every enemy in it (hazard_landed).
+func add_round(at: Vector2, radius: float, time: float, hero_damage: float, enemy_damage: float, source: StringName) -> Zone:
+	var z := _add(Kind.WARNING, Shape.CIRCLE, at, Vector2.DOWN, radius, 0.0, time, hero_damage)
+	z.hazard = enemy_damage
+	z.floor_own = true
+	z.source = source
+	z.by = &""
+	z.offscreen = 0
+	GroundLook.hazard_round(z.node, at, radius, z.node.position.y)
+	return z
+
+
+## The room's own warnings on the floor now, counted by `group` (a pattern of the runes lays several rectangles: one
+## warning): sources in ROOM_SOURCES, still warming up.
+func room_live(groups: Dictionary = {}) -> int:
+	var n := 0
+	for z in zones:
+		if z.kind == Kind.WARNING and z.floor_own and z.life > 0.0 and ROOM_SOURCES.has(z.source):
+			if z.source == HAZARD_SOURCE or z.source == CRYSTAL_SOURCE or z.source == OIL_SOURCE:
+				groups[z.source] = true
+			else:
+				n += 1
+	return n + groups.size()
+
+
+## The room's own warnings on the floor now as rectangles round them (DropHazard keeps its stones off them; R9).
+func room_rects() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	for z in zones:
+		if z.kind == Kind.WARNING and z.floor_own and z.life > 0.0 and ROOM_SOURCES.has(z.source):
+			out.append(bounds(z))
+	return out
+
+
+## The rectangle round a zone.
+static func bounds(z: Zone) -> Rect2:
+	if z.shape != Shape.LINE:
+		return Rect2(z.pos - Vector2.ONE * z.radius, Vector2.ONE * z.radius * 2.0)
+	var side := Vector2(-z.dir.y, z.dir.x) * z.width * 0.5
+	var end := z.pos + z.dir * z.radius
+	var r := Rect2(z.pos + side, Vector2.ZERO)
+	for q in [z.pos - side, end + side, end - side]:
+		r = r.expand(q)
+	return r
+
+
 ## A band of the floor something falls on (RP-09, a column toppling): `width` across, `length` along `dir` from `from`,
 ## shown `time` in the hazards' amber; as it lands it deals `enemy_damage` to every enemy in it (hazard_landed) and
 ## nothing to the paladin (as the falling tree of the Hades II).
@@ -375,7 +434,7 @@ func step(dt: float) -> void:
 ## A warning fills: the blow lands. A burst shows where, and the paladin is hit if still inside.
 func _land(z: Zone) -> void:
 	var center := z.pos + (z.dir * z.radius * 0.5 if z.shape == Shape.LINE else Vector2.ZERO)
-	if z.shape == Shape.CIRCLE and fx != null:
+	if z.shape == Shape.CIRCLE and fx != null and not z.floor_own:
 		var color := z.land_color if z.land_color.a > 0.0 else LAND_COLOR
 		# a ritual circle has its own column (_dissolve); the others a ring and a burst of shadow
 		if z.rune == Rune.NONE:
@@ -397,6 +456,7 @@ func _land(z: Zone) -> void:
 		hit_player.emit(z.power, center)
 	if z.hazard > 0.0 or z.floor_own:
 		hazard_landed.emit(z)
+	zone_landed.emit(z)
 
 
 func _add(kind: Kind, shape: Shape, at: Vector2, dir: Vector2, radius: float, width: float, time: float, power: float) -> Zone:

@@ -119,8 +119,10 @@ func _emeth(look: String) -> void:
 		world.add_child(sword)
 		var blade := (sword.get_node("Blade") as MeshInstance3D).material_override as ShaderMaterial
 		EmethSword.set_temper(blade, RANKS[i])
+		# --return=k (V-08, AP-2): the Retorno do Corte's thread on every blade, k of the window left
+		EmethSword.set_return(blade, Dev.num("return", 0.0))
 	await get_tree().create_timer(0.6).timeout
-	await _shot("emeth_" + look)
+	await _shot("emeth_" + look + ("_return" if Dev.has("return") else ""))
 	world.queue_free()
 	await get_tree().process_frame
 

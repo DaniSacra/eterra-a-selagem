@@ -343,6 +343,80 @@ func _dress_styled(north: float, altar: ArenaObstacle) -> void:
 	for t: Vector3 in IVY:
 		tops.append(Vector3(altar.center.x + t.x if altar != null else t.x, t.y, face + t.z))
 	wall_moss(sm, tops, IVY_CARD, STY_MOSS)
+	if altar != null:
+		for sd: float in [-1.0, 1.0]:
+			_basin(sm, Vector2(altar.center.x + sd * BASIN_AT, north))
+
+
+## Sworn P2 SW-G4: offerings at the foot of the north and west walls, never under the basins.
+func sworn_offerings() -> bool:
+	return true
+
+
+func offer_free(p: Vector2) -> bool:
+	var north := layout.floor.bounds().position.y
+	return absf(absf(p.x - _altar_x()) - BASIN_AT) > 1.0 or absf(p.y - north) > 1.0
+
+
+func _altar_x() -> float:
+	for o in layout.obstacles:
+		if o.piece == &"altar":
+			return o.center.x
+	return layout.floor.bounds().get_center().x
+
+
+## SW-A-1: two pedestals either side of the altar (BASIN_AT m from its middle, between it and the shelves), each a
+## half column engaged in the north wall on the sill, off the floor, with a basin of dark water on it (half a bowl out
+## of the wall's face: BASIN radius, its rim's height, its depth), and a narrow cold spot from above on it alone
+## (diffuse, no shadow, never on the crowd): the local symmetry that marks the special place.
+const BASIN_AT := 2.75
+const BASIN := Vector3(0.27, 1.02, 0.12)
+const BASIN_SHAFT := 0.16
+const BASIN_WATER_DEEP := Color(0.035, 0.05, 0.06)
+const BASIN_WATER_PALE := Color(0.42, 0.5, 0.54)
+const BASIN_SPOT := Vector4(7.0, 9.0, 1.4, 1.2)
+const BASIN_SPOT_COLOR := Color(0.78, 0.86, 0.95)
+const WATER_SHADER := preload("res://assets/shaders/dark_water.gdshader")
+
+
+func _basin(sm: Masonry, at: Vector2) -> void:
+	var face := at.y - FACE_SET
+	var mat := ashlar()
+	var c := Vector3(at.x, 0.0, face)
+	# the foot, the shaft and the bowl: their middles on the wall's face, so only the half toward the room shows
+	sm.block(c, Vector3(BASIN.x * 1.7, 0.16, BASIN.x * 1.7), PI * 0.25, mat)
+	sm.shaft(c + Vector3(0, 0.16, 0), BASIN_SHAFT, BASIN.y - 0.16 - BASIN.z, mat)
+	var bowl := sm.shaft(c + Vector3(0, BASIN.y - BASIN.z, 0), BASIN.x, BASIN.z, mat)
+	(bowl.mesh as CylinderMesh).bottom_radius = BASIN.x * 0.6
+	sm.shaft(c + Vector3(0, BASIN.y, 0), BASIN.x + 0.02, 0.025, mat)
+	var mi := MeshInstance3D.new()
+	var disc := CylinderMesh.new()
+	disc.top_radius = BASIN.x - 0.035
+	disc.bottom_radius = disc.top_radius
+	disc.height = 0.004
+	disc.radial_segments = 24
+	mi.mesh = disc
+	var water := ShaderMaterial.new()
+	water.shader = WATER_SHADER
+	water.set_shader_parameter(&"form", 0)
+	water.set_shader_parameter(&"deep", BASIN_WATER_DEEP)
+	water.set_shader_parameter(&"pale", BASIN_WATER_PALE)
+	water.set_shader_parameter(&"size", Vector2.ONE * BASIN.x * 2.0)
+	mi.material_override = water
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = c + Vector3(0, BASIN.y - 0.03, 0)
+	sm.root.add_child(mi)
+	var spot := SpotLight3D.new()
+	sm.root.add_child(spot)
+	spot.look_at_from_position(c + Vector3(0, BASIN_SPOT.x, BASIN_SPOT.z), c + Vector3(0, BASIN.y, 0.1))
+	spot.light_color = BASIN_SPOT_COLOR
+	spot.light_energy = BASIN_SPOT.w
+	spot.spot_angle = BASIN_SPOT.y
+	spot.spot_range = BASIN_SPOT.x * 1.5
+	spot.light_specular = 0.0
+	spot.shadow_enabled = false
+	spot.light_cull_mask = ~Arena.CROWD_LAYER
+	spot.set_meta(ArenaKit.NOT_FIRE, true)
 
 
 ## One offering at `p` (on a top): 0 an urn, 1 an open urn, 2 a folded cloth (petrol or umber), 3 the old gold bowl.

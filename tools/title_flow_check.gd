@@ -9,7 +9,8 @@ extends SceneTree
 ## (DT-103). First of all the choice of save (save slots, 2026-11-19) on saves of its own (a folder of the check's,
 ## never the player's): the screen opens first, right walks the cards, down reaches Apagar, the question opens on
 ## Cancelar and Esc closes it, Apagar erases the save and its copy, Enter on a card puts it in use and gives the title,
-## Esc on the title opens the choice again and Esc closes it. Prints FLOW ok or FLOW FAIL.
+## Esc on the title opens the choice again and Esc closes it. At the end the way round the title by the gamepad alone
+## (with a button remapped in Controles) and by clicks (DT-103). Prints FLOW ok or FLOW FAIL.
 ## ~/tools/godot/godot --headless --path . -s tools/title_flow_check.gd
 
 var _fail := 0
@@ -50,6 +51,123 @@ func _pad(button: JoyButton) -> void:
 		Input.parse_input_event(e)
 		await process_frame
 	await process_frame
+
+
+## A click (press and release of the left button) in the middle of a control, as the mouse sends it.
+func _click(c: Control) -> void:
+	# in the window's own pixels (the title stands on a canvas layer, stretched to the window)
+	var at := root.get_final_transform() * (c.get_global_transform_with_canvas() * (c.size * 0.5))
+	var m := InputEventMouseMotion.new()
+	m.position = at
+	m.global_position = at
+	Input.parse_input_event(m)
+	await process_frame
+	for down: bool in [true, false]:
+		var e := InputEventMouseButton.new()
+		e.button_index = MOUSE_BUTTON_LEFT
+		e.position = at
+		e.global_position = at
+		e.pressed = down
+		Input.parse_input_event(e)
+		await process_frame
+	await process_frame
+
+
+## DT-103: the whole way round the title with the gamepad only (the d-pad walks, A opens, B closes, RB and LB turn
+## the tabs) and the remapping of a button on it: in Configurações > Controles, A on Ataque waits, Y binds it and the
+## Especial takes the X it had; Start while waiting changes nothing; Teclas padrão gives the buttons back.
+func _pad_round(boot: Node) -> void:
+	var menu = boot.get(&"_menu")
+	menu.button(0).grab_focus()
+	await process_frame
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	_check(menu.button(2).has_focus(), "pad: the d-pad walks the title to Como Jogar")
+	await _pad(JOY_BUTTON_A)
+	await _wait(0.3)
+	_check(_sub_is(boot, "how_to_screen.gd"), "pad: A opens Como Jogar")
+	var howto = boot.get(&"_sub")
+	if howto != null:
+		await _pad(JOY_BUTTON_RIGHT_SHOULDER)
+		_check(int(howto.get(&"tab")) == 1, "pad: RB shows the Controles of Como Jogar")
+	await _pad(JOY_BUTTON_B)
+	await _wait(0.3)
+	_check(boot.get(&"_sub") == null and menu.button(2).has_focus(), "pad: B closes it, the focus back on Como Jogar")
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	await _pad(JOY_BUTTON_A)
+	await _wait(0.3)
+	_check(_sub_is(boot, "options_screen.gd"), "pad: A opens Configurações")
+	var options = boot.get(&"_sub")
+	if options != null:
+		for i in 3:
+			await _pad(JOY_BUTTON_RIGHT_SHOULDER)
+		_check(int(options.get(&"tab")) == 3, "pad: RB three times reaches Controles")
+		var row := options.find_child("key_light_attack", true, false) as Control
+		_check(row != null, "pad: Controles has Ataque")
+		if row != null:
+			row.grab_focus()
+			await process_frame
+			await _pad(JOY_BUTTON_A)
+			_check(options.get(&"_waiting") == &"light_attack", "pad: A on Ataque waits for a key or a button")
+			await _pad(JOY_BUTTON_START)
+			_check(options.get(&"_waiting") == &"" and _pad_of(&"light_attack") == JOY_BUTTON_X, "pad: Start while waiting changes nothing")
+			row = options.find_child("key_light_attack", true, false) as Control
+			row.grab_focus()
+			await process_frame
+			await _pad(JOY_BUTTON_A)
+			await _pad(JOY_BUTTON_Y)
+			_check(_pad_of(&"light_attack") == JOY_BUTTON_Y and _pad_of(&"heavy_attack") == JOY_BUTTON_X,
+					"pad: Y binds Ataque and Especial takes its X")
+			var focus := root.gui_get_focus_owner()
+			_check(focus != null and focus.name == "key_light_attack", "pad: the focus stays on Ataque")
+			var reset := options.find_child("options_reset", true, false) as Control
+			reset.grab_focus()
+			await process_frame
+			await _pad(JOY_BUTTON_A)
+			_check(_pad_of(&"light_attack") == JOY_BUTTON_X and _pad_of(&"heavy_attack") == JOY_BUTTON_Y, "pad: Teclas padrão gives the buttons back")
+	await _pad(JOY_BUTTON_B)
+	await _wait(0.3)
+	_check(boot.get(&"_sub") == null and menu.button(3).has_focus(), "pad: B closes Configurações")
+
+
+## The button an action has on the gamepad now (-1: none).
+func _pad_of(action: StringName) -> int:
+	for ev in InputMap.action_get_events(action):
+		if ev is InputEventJoypadButton:
+			return int((ev as InputEventJoypadButton).button_index)
+	return -1
+
+
+## DT-103: the way round by clicks: Como Jogar opens and its Voltar closes; Configurações opens, a click on the Vídeo tab
+## shows it, a click on Estilo visual flips the style (DT-RS2) and a second puts it back, Voltar closes.
+func _click_round(boot: Node) -> void:
+	var menu = boot.get(&"_menu")
+	await _click(menu.button(2))
+	await _wait(0.3)
+	_check(_sub_is(boot, "how_to_screen.gd"), "click: Como Jogar opens")
+	var howto = boot.get(&"_sub")
+	if howto != null:
+		await _click(howto.find_child("tab_controls", true, false) as Control)
+		_check(int(howto.get(&"tab")) == 1, "click: the Controles tab of Como Jogar")
+		await _click(howto.find_child("back", true, false) as Control)
+		await _wait(0.3)
+	_check(boot.get(&"_sub") == null and menu.visible, "click: Voltar closes Como Jogar")
+	await _click(menu.button(3))
+	await _wait(0.3)
+	_check(_sub_is(boot, "options_screen.gd"), "click: Configurações opens")
+	var options = boot.get(&"_sub")
+	if options != null:
+		await _click(options.find_child("tab_video", true, false) as Control)
+		_check(int(options.get(&"tab")) == 1, "click: the Vídeo tab")
+		var profile: Variant = load("res://scripts/core/visual_profile.gd")
+		var was := int(profile.call(&"current"))
+		await _click(options.find_child("opt_look", true, false) as Control)
+		_check(int(profile.call(&"current")) != was, "click: Estilo visual flips the style")
+		await _click(options.find_child("opt_look", true, false) as Control)
+		_check(int(profile.call(&"current")) == was, "click: and back")
+		await _click(options.find_child("back", true, false) as Control)
+		await _wait(0.3)
+	_check(boot.get(&"_sub") == null and menu.visible, "click: Voltar closes Configurações")
 
 
 func _sub_is(boot: Node, file: String) -> bool:
@@ -392,5 +510,8 @@ func _run() -> void:
 		await _key(&"ui_accept")
 	await _wait(1.5)
 	_check(current_scene != null and current_scene.name == "Boot" and current_scene.get(&"_menu") != null, "back to the title from the hub")
+	if current_scene != null and current_scene.get(&"_menu") != null:
+		await _pad_round(current_scene)
+		await _click_round(current_scene)
 	print("FLOW ok" if _fail == 0 else "FLOW FAIL %d" % _fail)
 	quit(_fail)

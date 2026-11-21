@@ -15,6 +15,11 @@ shader_type spatial;
 //   4 the trial's lozenges (room redesign lot D, T1): grooves of `groove_width` m in `groove_color` along squares turned
 //     45 degrees, all round the card's middle (their sides `lozenges` m; 0: none), worn away in stretches (`groove_worn`);
 //     nothing round (UV 0..1 over the card, `rug_size` its size in m).
+//   5 a wet run (Sworn P2 SW-H2, the fountain's water down the joints): a strip built along a path (UV.x along it in m,
+//     UV.y 0..1 across, COLOR.a its strength fading to the end), `wet` in its middle with a broken edge, or with
+//     `wet_moss` > 0 the moss beside it (the strip's sides only);
+//   6 a worn trail (SW-H3, the shop): the same kind of strip, the slabs under it darker in cells of `trail_cell` m (each
+//     its own wear), soft at its sides, COLOR.a its strength.
 render_mode blend_mix, depth_draw_never, cull_disabled, diffuse_lambert, specular_disabled;
 
 uniform int kind = 0;
@@ -58,6 +63,12 @@ uniform float groove_worn = 0.2;
 // the lit lip along each groove's outer side (its colour, its width as a share of the groove's), so it reads cut
 uniform vec3 groove_lip : source_color = vec3(0.3, 0.29, 0.32);
 uniform float groove_lip_width = 0.7;
+// kinds 5 and 6
+uniform vec3 wet : source_color = vec3(0.05, 0.06, 0.07);
+uniform float wet_moss = 0.0;
+uniform vec3 trail : source_color = vec3(0.08, 0.09, 0.11);
+uniform float trail_cell = 0.9;
+uniform vec2 trail_wear = vec2(0.35, 0.75);
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -150,6 +161,27 @@ void fragment() {
 		float kept = step(groove_worn, noise(m * 1.3 + 4.0) * 0.7 + noise(m * 5.0) * 0.3);
 		c = mix(groove_lip, groove_color, line) * mix(0.85, 1.1, noise(m * 20.0));
 		a = alpha * max(line, lip * 0.35) * kept;
+	} else if (kind == 5) {
+		float across = abs(UV.y - 0.5) * 2.0;
+		float n = noise(vec2(UV.x * 3.0, UV.y * 2.0)) * 0.6 + noise(vec2(UV.x * 11.0, UV.y * 5.0)) * 0.4;
+		if (wet_moss > 0.0) {
+			// moss either side of the run, in tufts
+			float side = smoothstep(0.25, 0.45, across) * (1.0 - smoothstep(0.75, 1.0, across));
+			c = moss * mix(0.8, 1.15, fbm(vec2(UV.x * 6.0, UV.y * 3.0)));
+			a = alpha * wet_moss * side * smoothstep(0.45, 0.6, n) * COLOR.a;
+		} else {
+			c = wet * mix(0.85, 1.15, n);
+			a = alpha * (1.0 - smoothstep(0.35 + n * 0.3, 0.7 + n * 0.3, across)) * smoothstep(0.15, 0.35, n + COLOR.a * 0.4) * COLOR.a;
+		}
+	} else if (kind == 6) {
+		vec2 m = vec2(UV.x, UV.y * rug_size.y);
+		vec2 cell = floor(m / trail_cell);
+		float worn = mix(trail_wear.x, trail_wear.y, hash(cell + 2.3));
+		vec2 f = abs(fract(m / trail_cell) - 0.5) * 2.0;
+		float slab = 1.0 - smoothstep(0.82, 0.97, max(f.x, f.y));
+		float across = abs(UV.y - 0.5) * 2.0;
+		c = trail * mix(0.85, 1.1, noise(m * 4.0));
+		a = alpha * worn * mix(0.55, 1.0, slab) * (1.0 - smoothstep(0.55, 1.0, across + (noise(m * 1.7) - 0.5) * 0.3)) * COLOR.a;
 	} else {
 		float reach = ring.y + north_reach + ragged + 0.1;
 		vec2 m = (UV - 0.5) * 2.0 * reach;

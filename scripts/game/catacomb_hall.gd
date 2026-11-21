@@ -688,8 +688,114 @@ func dress_shop(points: Array[Vector2]) -> void:
 	for u: Vector4 in SHOP_URNS:
 		mason.urn(Vector3(u.x, u.w, u.y), u.z, urn)
 	mason.merge()
+	_trail(node, points)
 	var k2 := ArenaKit.new(node, 0)
 	k2.paint_look(STYLE)
+
+
+## Sworn P2 SW-H3: a worn trail of darker slabs from the way in to the row of reliquaries and along it (floor_decal
+## kind 6, one strip): TRAIL (its width, how far from the paladin's spawn it starts, its strength), TRAIL_Y over the
+## floor (under the rugs).
+const TRAIL := Vector3(1.5, 1.5, 0.55)
+const TRAIL_Y := 0.008
+const TRAIL_COLOR := Color(0.07, 0.08, 0.1)
+
+
+func _trail(node: Node3D, points: Array[Vector2]) -> void:
+	var near := points[0]
+	for p in points:
+		if p.distance_to(arena.start) < near.distance_to(arena.start):
+			near = p
+	var row := points.duplicate()
+	row.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.distance_to(near) < b.distance_to(near))
+	var from := arena.start + (near - arena.start).normalized() * TRAIL.y
+	var path := PackedVector2Array([from])
+	for p in row:
+		path.append(p)
+	var mat := ShaderMaterial.new()
+	mat.shader = DECAL_SHADER
+	mat.set_shader_parameter(&"kind", 6)
+	mat.set_shader_parameter(&"rug_size", Vector2(1.0, TRAIL.x))
+	mat.set_shader_parameter(&"trail", TRAIL_COLOR)
+	mat.set_shader_parameter(&"alpha", TRAIL.z)
+	node.add_child(floor_strip(path, TRAIL.x, TRAIL_Y, mat, false))
+
+
+## A flat strip a hair over the floor along `path` (x, z), `width` wide: UV.x the metres along it, UV.y 0..1 across,
+## the vertex colour's alpha 1 at its start and, with `fade`, 0 at its end (floor_decal kinds 5 and 6).
+static func floor_strip(path: PackedVector2Array, width: float, y: float, mat: Material, fade: bool) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var total := 0.0
+	for i in range(1, path.size()):
+		total += path[i - 1].distance_to(path[i])
+	var s := 0.0
+	var prev_l := Vector3.ZERO
+	var prev_r := Vector3.ZERO
+	var prev_s := 0.0
+	for i in path.size():
+		var d := (path[mini(i + 1, path.size() - 1)] - path[maxi(i - 1, 0)]).normalized()
+		var n := Vector2(-d.y, d.x) * width * 0.5
+		if i > 0:
+			s += path[i - 1].distance_to(path[i])
+		var l := Vector3(path[i].x + n.x, y, path[i].y + n.y)
+		var r := Vector3(path[i].x - n.x, y, path[i].y - n.y)
+		if i > 0:
+			var a0 := 1.0 - (prev_s / total if fade else 0.0)
+			var a1 := 1.0 - (s / total if fade else 0.0)
+			for v: Array in [[prev_l, prev_s, 0.0, a0], [r, s, 1.0, a1], [prev_r, prev_s, 1.0, a0],
+					[prev_l, prev_s, 0.0, a0], [l, s, 0.0, a1], [r, s, 1.0, a1]]:
+				st.set_color(Color(1, 1, 1, v[3]))
+				st.set_uv(Vector2(v[1], v[2]))
+				st.set_normal(Vector3.UP)
+				st.add_vertex(v[0])
+		prev_l = l
+		prev_r = r
+		prev_s = s
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	return mi
+
+
+## Sworn P2 SW-H2: the fountain's water run out of the basin down the floor's joints in RIVULETS (their bearing from
+## north, clockwise, degrees) wet dark runs that turn at right angles as joints do (RIVULET_LEG: a leg's length range,
+## m), fading by RIVULET_REACH m from the rim, moss beside them (only painting, nothing over the floor).
+const RIVULETS: Array[float] = [118.0, 205.0, 262.0]
+const RIVULET_LEG := Vector2(0.35, 0.85)
+const RIVULET_REACH := 3.0
+const RIVULET := Vector2(0.16, 0.55)
+const RIVULET_WET := Color(0.045, 0.06, 0.07)
+const RIVULET_ALPHA := 0.8
+
+
+static func _rivulets(node: Node3D) -> void:
+	var wet := ShaderMaterial.new()
+	wet.shader = DECAL_SHADER
+	wet.set_shader_parameter(&"kind", 5)
+	wet.set_shader_parameter(&"wet", RIVULET_WET)
+	wet.set_shader_parameter(&"alpha", RIVULET_ALPHA)
+	var moss := wet.duplicate() as ShaderMaterial
+	moss.set_shader_parameter(&"wet_moss", 1.0)
+	var r := RandomNumberGenerator.new()
+	r.seed = 2207
+	var rim := ArenaKit.FOUNTAIN_BASIN.x + 0.05
+	for b in RIVULETS:
+		var way := Vector2(sin(deg_to_rad(b)), -cos(deg_to_rad(b)))
+		var p := way * rim
+		var path := PackedVector2Array([p])
+		var run := 0.0
+		var on_x := absf(way.x) > absf(way.y)
+		while run < RIVULET_REACH:
+			var leg := r.randf_range(RIVULET_LEG.x, RIVULET_LEG.y)
+			var step := Vector2(signf(way.x) * leg, 0.0) if on_x else Vector2(0.0, signf(way.y) * leg)
+			p += step
+			path.append(p)
+			run += leg
+			on_x = not on_x if r.randf() < 0.6 else on_x
+		node.add_child(floor_strip(path, RIVULET.y, SHOP_RUG_Y + 0.002, moss, true))
+		node.add_child(floor_strip(path, RIVULET.x, SHOP_RUG_Y + 0.003, wet, true))
 
 
 ## The fountain's dressing in the stylized look (room redesign lot A 3.4; ArenaKit.fountain): its stone painted as the
@@ -724,6 +830,7 @@ static func dress_fountain(parent: Node3D) -> void:
 		else:
 			mason.candle_out(at, 0.1, 0.05)
 	mason.merge()
+	_rivulets(node)
 	# item 4 of the cycle of 2026-11-20: a cold pool of light over it (diffuse, no shadow, never on the crowd), so it
 	# reads at the edge of the near camera's frame among the warm candles' pools; it fades when he drinks
 	var pool := SpotLight3D.new()

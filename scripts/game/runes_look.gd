@@ -599,6 +599,90 @@ func _dress_styled(box: Rect2) -> void:
 		_study(sm, a, b)
 	if _quiet:
 		_crystal(sm, north)
+	_tablets(sm)
+
+
+## Sworn P2 SW-G4: offerings at the foot of the north and west walls, never at a stele's foot (its candles' ledge).
+func sworn_offerings() -> bool:
+	return true
+
+
+func offer_free(p: Vector2) -> bool:
+	return _off_stelae(p) and not (_quiet and absf(p.x - CRYSTAL_X) < CRYSTAL_SPREAD + 1.0 and p.y < 0.0)
+
+
+func _off_stelae(p: Vector2) -> bool:
+	var north := layout.floor.bounds().position.y
+	for x in STELAE:
+		if absf(p.x - x) < TABLET_CLEAR and absf(p.y - north) < 1.0:
+			return false
+	return true
+
+
+## SW-R1: groups of carved stone tablets leaning on the north and west walls between the offerings (half a step of
+## ArenaRoom.OFFER_EVERY along), standing on the sill off the floor, leaning back into the wall: TABLET (width, height,
+## thickness) range by the group's place, TABLETS per group, leant TABLET_LEAN rad back; straight carved strokes (rows
+## of TABLET_ROWS darker grooves, no curve, nothing legible, no amber); TABLET_CLEAR from a stele, a door or the way in.
+const TABLET := Vector3(0.55, 1.15, 0.1)
+const TABLETS := 3
+const TABLET_LEAN := 0.13
+const TABLET_ROWS := 5
+const TABLET_CLEAR := 1.9
+const TABLET_STONE := 0.86
+const TABLET_GROOVE := 0.45
+
+
+func _tablets(sm: Masonry) -> void:
+	var mat := sm.carved(0.0, STONE * TABLET_STONE)
+	var groove := sm.carved(0.0, STONE * TABLET_STONE * TABLET_GROOVE)
+	var g := 0
+	for w: Array in _wall_runs:
+		var a: Vector2 = w[0]
+		var b: Vector2 = w[1]
+		var out: Vector2 = w[2]
+		if not _tall(out) or absf(out.x) > 0.1 and absf(out.y) > 0.1:
+			continue
+		var openings: Array = w[4]
+		var length := a.distance_to(b)
+		var along := (b - a) / maxf(length, 0.001)
+		var s := OFFER_FIRST + OFFER_EVERY * 0.5
+		while s < length - 1.2:
+			var p := a + along * s + out * (FACE_SET - TABLET.z * 0.5 - 0.06)
+			var free := _off_stelae(p) and not _near_door(p, out, TABLET_CLEAR) and p.distance_to(layout.hero_spawn) > OFFER_CLEAR
+			for o: Vector4 in openings:
+				if s > o.x - TABLET_CLEAR and s < o.y + TABLET_CLEAR:
+					free = false
+			if free and g % 2 == 0:
+				_tablet_group(sm, p, along, out, mat, groove, g)
+			if free:
+				g += 1
+			s += OFFER_EVERY
+
+
+func _tablet_group(sm: Masonry, at: Vector2, along: Vector2, out: Vector2, mat: Material, groove: Material, seed_: int) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = STY_SEED + 31 * seed_
+	var yaw := atan2(out.x, out.y)
+	var x := -TABLET.x * (TABLETS - 1) * 0.55
+	for k in TABLETS:
+		var w := TABLET.x * r.randf_range(0.75, 1.1)
+		var h := TABLET.y * r.randf_range(0.55, 1.0)
+		var p := at + along * x + out * r.randf_range(-0.02, 0.03)
+		# the foot on the sill, the slab tipped back about its foot into the wall
+		var basis := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, TABLET_LEAN * r.randf_range(0.7, 1.2))
+		var foot := Vector3(p.x, 0.0, p.y)
+		var slab := sm.box(foot + basis * Vector3(0, h * 0.5, 0), Vector3(w, h, TABLET.z), 0.0, mat, false)
+		slab.basis = basis
+		for row in TABLET_ROWS:
+			var y := h * (0.2 + 0.65 * row / float(TABLET_ROWS - 1))
+			var l := w * r.randf_range(0.35, 0.75)
+			var off := r.randf_range(-0.5, 0.5) * (w - l) * 0.8
+			var cut := sm.box(foot + basis * Vector3(off, y, -TABLET.z * 0.5 - 0.004), Vector3(l, 0.025, 0.01), 0.0, groove, false)
+			cut.basis = basis
+			if row % 2 == 1:
+				var tick := sm.box(foot + basis * Vector3(off + l * 0.5, y + 0.05, -TABLET.z * 0.5 - 0.004), Vector3(0.025, 0.12, 0.01), 0.0, groove, false)
+				tick.basis = basis
+		x += w * 1.1
 
 
 ## R2: a lozenge of square rings of old gold on a dark backing, four bars from the hub to the outer ring and four

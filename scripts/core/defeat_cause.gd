@@ -8,9 +8,11 @@ extends RefCounted
 ## of the ritual; "adds" (his dead) is not here: the kind of the dead names it.
 ## E5: "runes" is the floor of the Câmara das Runas Instáveis (Ground.HAZARD_SOURCE), named the same way; RP-06:
 ## "plates" the slabs that strike when stepped on (Ground.PLATE_SOURCE); RP-11: "chain" the chain that sweeps the bridge
-## (Ground.CHAIN_SOURCE); RP-10: "roots" the roots that strike in the Jardim (Ground.ROOT_SOURCE); RP-16: "slit" the arrow slit (Ground.SLIT_SOURCE).
+## (Ground.CHAIN_SOURCE); RP-10: "roots" the roots that strike in the Jardim (Ground.ROOT_SOURCE); RP-16: "slit" the arrow slit (Ground.SLIT_SOURCE);
+## A1: "crystal" the crystal's discharge (RP-14), "rocks" the stones of the vault (RP-20), "urn" the oil urn's blast
+## and "oil" its running flame (RP-12).
 const BOSS_ATTACKS: Array[StringName] = [&"scythe", &"reap", &"blades", &"storm", &"eruptions", &"ritual", &"curse", &"dash", &"runes",
-	&"plates", &"chain", &"roots", &"slit"]
+	&"plates", &"chain", &"roots", &"slit", &"crystal", &"rocks", &"urn", &"oil"]
 const UNKNOWN := &"killer_unknown"
 
 

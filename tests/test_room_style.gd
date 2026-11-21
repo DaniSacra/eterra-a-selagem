@@ -38,7 +38,7 @@ func _world() -> void:
 	_moon.light_energy = 0.5
 	_moon.rotation_degrees = Vector3(-50, 30, 0)
 	add_child_autofree(_moon)
-	VisualProfile.dress_world(_env, _moon)
+	RoomMood.own(we, _moon)
 
 
 func _layout(id: StringName, variant := 0) -> RoomLayout:
@@ -808,7 +808,8 @@ func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 					assert_gt(ring - Vector2(r.z, r.w).length(), CatacombHall.MEDALLION, "clear of the medallion")
 			&"crypt":
 				assert_eq(raised, 2, "SW-G3: a pair in the crypt")
-				assert_gt(graves, 7, "SW-C1: rows of grave slabs (off the striking slabs, RP-06)")
+				# off the striking slabs (RP-06) and the pieces standing on the rows (AT-Q's oil urn in A)
+				assert_gt(graves, 6, "SW-C1: rows of grave slabs (off the striking slabs and the pieces)")
 				# one in five with the lion, the old slabs (CryptLook.SLAB_ROWS, plain) counted
 				var all := graves + CryptLook.SLAB_ROWS.size()
 				assert_between(float(lions) / all, 0.15, 0.25, "about one grave in five with the lion")
@@ -850,3 +851,102 @@ func test_sworn_fallen_column_under_the_floor() -> void:
 		assert_gt(east_z.y - east_z.x, RiftLook.FALLEN_COLUMN.z * 2.0 + 0.8, "rift %d: the east half turned, not a straight beam" % v)
 		assert_lt(span.x, -6.5, "rift %d: from under the west lip" % v)
 		assert_gt(span.y, 1.5, "rift %d: to under the east lip" % v)
+
+
+## Sworn P2 SW-G5: a gate in every used door's mouth, shut through the fight, opened (once) when the doors open
+## (ArenaRoom.breath), only in the stylized look; every gate off the floor and the mouth, shut and open.
+func test_sworn_gates_open_with_the_doors() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for id: StringName in [&"crypt", &"sanctuary", &"rift", &"bridge", &"altar"]:
+		var a := _arena(id)
+		var look := a.look
+		var gates := a.find_children("Gate*", "Node3D", true, false)
+		assert_eq(gates.size(), look.exits_used, "%s: a gate in each used door" % id)
+		for i in look.exits_used:
+			assert_true(look.gate_shut(i), "%s: door %d shut through the fight" % [id, i])
+		look.breath(0, &"hall")
+		assert_false(look.gate_shut(0), "%s: the first door's gate opens with the doors" % id)
+		look.breath(0, &"hall")
+		assert_false(look.gate_shut(0), "%s: and again does nothing" % id)
+		for g: Node in gates:
+			assert_true(g.get_parent() != null and not (g as Node3D).is_visible_in_tree() == false,
+				"%s: the gate shows in the stylized look" % id)
+		_flip(a)
+		for g: Node in gates:
+			assert_false((g as Node3D).is_visible_in_tree(), "%s: no gate in the classic look" % id)
+		_flip(a)
+
+
+## Sworn P2 SW-G4 and the rooms' items: the offerings (warm clay) stand in the rooms that turn them on; the crypt's
+## femurs (SW-C2) and urns by the niches (SW-C3), the runes' tablets (SW-R1), the altar's basins (SW-A-1), the
+## sanctuary's finials (SW-S2) are there; all off the floor (the lots' tests), none in the classic look.
+func test_sworn_p2_pieces_stand() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	for id: StringName in [&"sanctuary", &"runes", &"trial", &"altar", &"crypt"]:
+		var a := _arena(id)
+		assert_false(a.look._clay.is_empty(), "%s: offerings of warm clay" % id)
+	var altar := _arena(&"altar")
+	var basins := 0
+	for n in altar.find_children("*", "SpotLight3D", true, false):
+		if (n as Light3D).light_color.is_equal_approx(AltarLook.BASIN_SPOT_COLOR):
+			basins += 1
+			assert_false((n as Light3D).shadow_enabled, "altar: the basin's light casts no shadow")
+	assert_eq(basins, 2, "altar: two basins, each in its cold light")
+
+
+## RS-C7: the Ponte's balustrades stop where their end post would stand on a bridge's deck or a door's mouth (both
+## looks): nothing drawn between 0.3 and 2.6 m stands on the open walkable floor (0.2 m in from its edge) of A or B.
+func test_rs_c7_bridge_rails_off_the_decks() -> void:
+	for look: VisualProfile.Look in [VisualProfile.Look.CLASSIC, VisualProfile.Look.STYLIZED]:
+		VisualProfile.set_look(look)
+		for v in 2:
+			var a := _arena(&"bridge", v)
+			var bad := 0
+			for n in a.find_children("*", "MeshInstance3D", true, false):
+				var mi := n as MeshInstance3D
+				if mi.mesh == null or not mi.is_visible_in_tree():
+					continue
+				for sf in mi.mesh.get_surface_count():
+					for vert: Vector3 in mi.mesh.surface_get_arrays(sf)[Mesh.ARRAY_VERTEX]:
+						var w := mi.global_transform * vert
+						# a piece's own drawing may pass its outline by a hand (tools/fit_probe.gd's SLACK)
+						if w.y > 0.3 and w.y < 2.6 and a.shape().contains(Vector2(w.x, w.z), 0.2) and not a.overlaps(Vector2(w.x, w.z), 0.2):
+							bad += 1
+			assert_eq(bad, 0, "bridge %d (%s): nothing drawn over the open floor" % [v, look])
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+
+
+## SW-G7: the hazards drawn as pieces (HazardPiece), built in both looks from the layout: a slab piece per plate, a
+## chain post per band of the bridge (off the walkable floor), the slit's block, the crack up each toppling column
+## (in ArenaRoom.toppling, so it leans with it); set_state and crack draw without touching collision.
+func test_sw_g7_hazard_pieces() -> void:
+	for look: VisualProfile.Look in [VisualProfile.Look.CLASSIC, VisualProfile.Look.STYLIZED]:
+		VisualProfile.set_look(look)
+		var crypt := _arena(&"crypt", 1)
+		var hz := crypt.look.layout.hazard
+		assert_not_null(crypt.look.hazard_piece(hz.plate_source, 0), "crypt B: the first slab's piece")
+		assert_null(crypt.look.hazard_piece(hz.plate_source, hz.plates.size()), "and no more than the slabs")
+		var slit := crypt.look.slit_at(Vector2(1.5, -10.5))
+		assert_not_null(slit, "crypt B: the arrow slit's piece")
+		var p := crypt.look.hazard_piece(hz.plate_source, 0)
+		var cover := crypt.cover.size()
+		for s: Vector3 in [Vector3(0.1, 0, 0), Vector3(0.9, 0, 0), Vector3(0, 0.5, 0), Vector3(0, 0, 0.5)]:
+			p.set_state(s, false, 2.0)
+			slit.set_state(s)
+		p.set_state(Vector3.ZERO, true)
+		assert_eq(crypt.cover.size(), cover, "drawing a hazard changes no collision")
+		for o: ArenaObstacle in crypt.look.toppling:
+			var c := crypt.look.hazard_piece(&"column", o)
+			assert_not_null(c, "crypt B: the toppling column's crack")
+			c.crack()
+			assert_false((crypt.look.toppling[o] as Array).is_empty(), "the crack leans with the column")
+		var bridge := _arena(&"bridge", 0)
+		var bh := bridge.look.layout.hazard
+		for i in bh.bands.size():
+			var chain := bridge.look.hazard_piece(bh.band_source, i)
+			assert_not_null(chain, "bridge: a chain post a band")
+			assert_false(bridge.shape().contains(Vector2(chain.position.x, chain.position.z), 0.0),
+				"bridge: the post stands off the walkable floor")
+			chain.set_state(Vector3(0.5, 0, 0))
+			chain.set_state(Vector3(0, 0.5, 0))
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)

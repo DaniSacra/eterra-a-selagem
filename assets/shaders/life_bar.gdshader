@@ -16,6 +16,11 @@ uniform vec3 elite_frame : source_color = vec3(0.56, 0.45, 0.27);
 uniform float frame_m = 0.03;
 // The armored bar's split: the armor's strip takes this share of the inside (from the top).
 uniform float armor_share = 0.42;
+// ART-02.6: a common enemy's bar (not an elite nor armored) is quieter than the hero's own: its life 15% darker and
+// the bar thinner, its top kept where it was (the share of the quad's height cut from the top). Elites keep their
+// frame and their full bar.
+uniform float common_dim = 0.85;
+uniform float common_cut = 0.25;
 
 varying vec3 fill;
 varying float fade;
@@ -36,7 +41,17 @@ void vertex() {
 void fragment() {
 	vec2 uv = UV;
 	bool armored = fill.g > 0.0;
-	float fy = frame_m / max(size_m.y, 0.001);
+	bool common = elite < 0.5 && !armored;
+	float tall = size_m.y;
+	if (common) {
+		// thinner: the bottom of the quad is cut away, so the top (where the damage numbers start) does not move
+		if (uv.y > 1.0 - common_cut) {
+			discard;
+		}
+		uv.y /= 1.0 - common_cut;
+		tall *= 1.0 - common_cut;
+	}
+	float fy = frame_m / max(tall, 0.001);
 	float fx = frame_m / max(size_m.x, 0.001);
 	vec3 c = mix(back_color, elite_frame, elite);
 	bool inside = uv.x > fx && uv.x < 1.0 - fx && uv.y > fy && uv.y < 1.0 - fy;
@@ -53,7 +68,7 @@ void fragment() {
 			}
 		} else {
 			if (x < fill.r) {
-				c = life_color;
+				c = life_color * (common ? common_dim : 1.0);
 			} else if (x < fill.b) {
 				c = trail_color;
 			}

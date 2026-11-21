@@ -32,6 +32,17 @@ uniform float peak = 0.8;
 uniform float smoke_alpha = 0.35;
 // VFX review P2: the lilac-ivory middle reads (it was pale * fill * 0.4 and the sector came out one flat violet)
 uniform float pale_light = 0.55;
+// ART-05.4 (AP-2): the fill opens around the paladin standing in it (as the special's wave does, hero_hole): within
+// hero_hole.x m of his feet it keeps hero_keep, back to all of it at hero_hole.y. Only the look: the area that hurts
+// is the same sector.
+global uniform vec3 hero_pos;
+uniform vec2 hero_hole = vec2(0.7, 1.5);
+uniform float hero_keep = 0.3;
+varying vec3 world;
+
+void vertex() {
+	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -69,11 +80,13 @@ void fragment() {
 	vec3 violet = body.rgb / max(max(body.r, max(body.g, body.b)), 0.0001);
 	// the palest in the middle of the band, never at the edge
 	float middle = (1.0 - smoothstep(0.05, 0.22, abs(y - 0.55))) * trail;
-	vec3 c = violet * (fill * body_light + rim * rim_light + blade * blade_light * 0.8) + pale * middle * pale_light * (0.6 + 0.4 * smoke);
+	// the fill and the pale middle open around him; the rim and the blade line never (they are the shape)
+	float keep = mix(hero_keep, 1.0, smoothstep(hero_hole.x, hero_hole.y, length(world.xz - hero_pos.xz)));
+	vec3 c = violet * (fill * body_light * keep + rim * rim_light + blade * blade_light * 0.8) + pale * middle * pale_light * (0.6 + 0.4 * smoke) * keep;
 	c *= (1.0 - rest) * intensity;
 	float top = max(c.r, max(c.g, c.b));
 	c *= min(1.0, peak / max(top, 0.0001));
-	float cover = fill * smoke_alpha * (1.0 - rest);
+	float cover = fill * smoke_alpha * (1.0 - rest) * keep;
 	ALBEDO = vec3(0.04, 0.01, 0.06) * cover + c;
 	ALPHA = clamp(cover + min(top, peak) / max(peak, 0.0001), 0.0, 1.0);
 }

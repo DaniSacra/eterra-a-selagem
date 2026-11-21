@@ -15,9 +15,9 @@ func _screen() -> HowToScreen:
 
 
 func _text(s: HowToScreen, node_name: String) -> String:
-	var l := s.find_child(node_name, true, false) as Label
+	var l := s.find_child(node_name, true, false)
 	assert_not_null(l, node_name)
-	return l.text if l else ""
+	return String(l.get(&"text")) if l else ""
 
 
 func test_builds_with_rows_and_buttons() -> void:

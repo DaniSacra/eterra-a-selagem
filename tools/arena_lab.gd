@@ -67,7 +67,7 @@ func _run() -> void:
 	moon.light_energy = 0.35
 	moon.shadow_enabled = true
 	world.add_child(moon)
-	vp.dress_world(env.environment, moon)
+	load("res://scripts/game/room_mood.gd").own(env, moon)
 	var arena: Variant = load("res://scripts/game/arena.gd").new()
 	world.add_child(arena)
 	arena.build(layout, int(opts.get("doors", "3")), 1406)

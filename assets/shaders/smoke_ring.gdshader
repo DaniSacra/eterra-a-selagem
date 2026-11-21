@@ -19,6 +19,7 @@ uniform float torn = 0.35;
 uniform float smoke_alpha = 0.7;
 uniform float rim_light = 0.8;
 uniform float middle_dark = 0.5;
+uniform float thin_reach = 0.62;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -37,7 +38,9 @@ void fragment() {
 	float a = atan(p.y, p.x);
 	float seed = fract(dot(NODE_POSITION_WORLD, vec3(0.31, 0.0, 0.17))) * 30.0;
 	float opened = 1.0 - pow(1.0 - clamp(life / open_time, 0.0, 1.0), 3.0);
-	float r = mix(mix(0.25, 0.92, opened), mix(0.95, 0.4, opened), closing);
+	// P2-C19a (AP-2): a thin ring (a burst with another right after it) opens only to thin_reach of the radius, inside
+	// the next warning's rim, which stays the line to read
+	float r = mix(mix(0.25, mix(0.92, thin_reach, thin), opened), mix(0.95, 0.4, opened), closing);
 	float w = mix(band, band * 0.35, thin);
 	float n = noise(vec2(a * 4.0 + seed, d * 6.0 + life * 3.0)) - 0.5;
 	float n2 = noise(vec2(a * 11.0 - seed, life * 5.0)) - 0.5;

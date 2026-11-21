@@ -17,8 +17,13 @@ const LION_SHARE := 0.62
 ## The gold of the lion and its shade in the cuts.
 const LION_GOLD := Color(0.86, 0.69, 0.4)
 const LION_CUT := Color(0.09, 0.07, 0.07)
-## The soft halo round the closed ring (alpha at full light): warm, low, under the glow of anything on screen.
-const HALO := 0.28
+## The soft halo round the closed ring (alpha at full light): warm, low, under the glow of anything on screen. A radial
+## gradient of old gold to nothing (QW-115: the rings of discs before read as a yellow disc), out to HALO_REACH radii.
+const HALO := 0.42
+const HALO_REACH := 1.55
+const HALO_GOLD := Color(0.62, 0.48, 0.26)
+
+static var _halo_tex: GradientTexture2D
 
 const SHADER := """
 shader_type canvas_item;
@@ -85,13 +90,31 @@ func setup(size_px: float) -> SealEmblem:
 	return self
 
 
+## The halo's gradient: white in the middle (tinted by the draw) to nothing at the edge, eased so no ring shows.
+static func halo_texture() -> GradientTexture2D:
+	if _halo_tex == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.45, 0.75, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0.55), Color(1, 1, 1, 0.16), Color(1, 1, 1, 0)])
+		_halo_tex = GradientTexture2D.new()
+		_halo_tex.gradient = g
+		_halo_tex.fill = GradientTexture2D.FILL_RADIAL
+		_halo_tex.fill_from = Vector2(0.5, 0.5)
+		_halo_tex.fill_to = Vector2(1.0, 0.5)
+		_halo_tex.width = 128
+		_halo_tex.height = 128
+	return _halo_tex
+
+
 func _draw() -> void:
 	var c := size * 0.5
 	var r := minf(size.x, size.y) * 0.5
-	# the halo once it closes, under everything
-	for i in 6:
-		var k := float(i) / 6.0
-		draw_circle(c, r * (1.0 + 0.18 * (1.0 - k)), Color(UiKit.GOLD, HALO * lit * closed * 0.16 * (k + 0.2)))
+	# the halo once it closes, under everything: a radial gradient, nothing at its edge
+	var glow := HALO * lit * closed
+	if glow > 0.0:
+		var reach := r * HALO_REACH
+		draw_texture_rect(halo_texture(), Rect2(c - Vector2(reach, reach), Vector2(reach, reach) * 2.0), false,
+				Color(HALO_GOLD, glow))
 	draw_circle(c, r - 1.0, INK)
 	# the outer ring: dim where still open, old gold where closed (from the top, clockwise)
 	var width := maxf(2.0, r * 0.07)

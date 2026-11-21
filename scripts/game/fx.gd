@@ -134,9 +134,12 @@ const NUMBER_SIZE := 17
 const NUMBER_BIG := 24
 const WORD_SIZE := 21
 ## Gold picked up (gold): its size, its pale old gold, and how far apart two drops still join one word.
-const GOLD_SIZE := 15
+const GOLD_SIZE := 14
 const GOLD_WORD := Color(0.84, 0.72, 0.47)
 const GOLD_JOIN := 6.0
+## The gold rises beside the blow's number, not over it (QW-115, "60" under "+1 ouro"): metres to the right on the
+## screen of where it fell.
+const GOLD_SIDE := 1.1
 const NUMBER_OUTLINE := 5
 ## Meters across the crossed cuts of Fx.impact (times the size asked for).
 const IMPACT_SIZE := 1.0
@@ -187,6 +190,12 @@ const SMOKE := Color(0.12, 0.1, 0.09)
 ## V-16: dark violet wisps the scythe's reach sheds (so many along the arc).
 const SCYTHE_WISPS := 7
 const SCYTHE_SMOKE := Color(0.16, 0.07, 0.24)
+## The dodge's trail (V-08, AP-2; dodge_ghost.gdshader): a silhouette of the paladin left every GHOST_EVERY s of the
+## dodge, at most GHOST_MAX a dodge, each fading over GHOST_TIME s; the first on the dodge's first frame. Only the look.
+const DODGE_GHOST := preload("res://assets/shaders/dodge_ghost.gdshader")
+const GHOST_EVERY := 0.05
+const GHOST_MAX := 4
+const GHOST_TIME := 0.12
 ## How much a wisp's colour covers what is behind it (premultiplied alpha), by how bright it is: dark smoke covers,
 ## pale souls mostly add.
 const WISP_COVER := 0.75
@@ -1178,7 +1187,8 @@ func gold(pos: Vector3, amount: int) -> void:
 			_show_label(_gold_at, "+%d %s" % [_gold_sum, _gold_word()], GOLD_WORD, GOLD_SIZE)
 			return
 	_gold_sum = amount
-	_gold_at = _tally.add_word(pos + _jitter(), GOLD_WORD)
+	var side := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw) * GOLD_SIDE
+	_gold_at = _tally.add_word(pos + Vector3(side.x, 0.0, side.y) + _jitter() * 0.5, GOLD_WORD)
 	_show_label(_gold_at, text, GOLD_WORD, GOLD_SIZE)
 
 
@@ -1327,6 +1337,7 @@ func animate(delta: float) -> void:
 	_animate_motes(delta)
 	_animate_wisps(delta)
 	_animate_blade(delta)
+	_animate_ghosts(delta)
 	for g in _glints:
 		if (g.node as Node3D).visible:
 			if freeze_t >= 0.0:
@@ -1485,17 +1496,118 @@ static func streak(vel: Vector3, w: float) -> Vector3:
 ## The pulse of the blade falls back to its still light. The blade is looked for once: the sword EmethSword made
 ## that lives in this game (the title screen has one of its own).
 func _animate_blade(delta: float) -> void:
+	_animate_return()
 	if _pulse <= 0.0:
 		return
 	if _blade_hold > 0.0:
 		_blade_hold -= delta
 	else:
 		_pulse = maxf(0.0, _pulse - delta / BLADE_PULSE)
+	if _find_blade():
+		EmethSword.set_pulse(_blade, _pulse)
+
+
+var _ghosts: Array[Dictionary] = []
+var _ghost_bodies: Array[MeshInstance3D] = []
+var _ghost_t := 0.0
+var _ghost_n := 0
+var _ghost_player: Node = null
+# no screen (tests, --smoke): nothing to see, and the headless server keeps no mesh data to bake from
+var _ghost_off := DisplayServer.get_name() == "headless"
+
+
+## V-08: while the paladin dodges, his pose is baked into a pooled mesh (MeshInstance3D.bake_mesh_from_current_skeleton_pose)
+## every GHOST_EVERY s and left behind in ink; tests and the lab without a player draw nothing.
+func _animate_ghosts(delta: float) -> void:
+	for g in _ghosts:
+		var gi: MeshInstance3D = g.node
+		if gi.visible:
+			g.life += delta / GHOST_TIME
+			if g.life >= 1.0:
+				gi.visible = false
+			else:
+				(g.mat as ShaderMaterial).set_shader_parameter(&"life", g.life)
+	if _ghost_off:
+		return
+	var p: Variant = get_parent().get(&"player") if get_parent() != null else null
+	if p == null or not is_instance_valid(p) or not p is Player:
+		return
+	var player := p as Player
+	if player.state != Player.State.DODGE:
+		_ghost_n = 0
+		_ghost_t = 0.0
+		return
+	_ghost_t -= delta
+	if _ghost_t > 0.0 or _ghost_n >= GHOST_MAX:
+		return
+	_ghost_t = GHOST_EVERY
+	_ghost_n += 1
+	if _ghost_player != player:
+		_ghost_player = player
+		_ghost_bodies.clear()
+		for n in player.find_children("*", "MeshInstance3D", true, false):
+			var mi := n as MeshInstance3D
+			if mi.skin != null and mi.mesh != null:
+				_ghost_bodies.append(mi)
+	for body in _ghost_bodies:
+		_ghost_of(body)
+
+
+func _ghost_of(body: MeshInstance3D) -> void:
+	var g: Dictionary = {}
+	for e in _ghosts:
+		if not (e.node as MeshInstance3D).visible:
+			g = e
+			break
+	if g.is_empty():
+		if _ghosts.size() >= GHOST_MAX * 2:
+			return
+		var mat := ShaderMaterial.new()
+		mat.shader = DODGE_GHOST
+		mat.render_priority = 1
+		var gi := MeshInstance3D.new()
+		gi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		gi.material_override = mat
+		add_child(gi)
+		g = {"node": gi, "mat": mat, "life": 0.0, "mesh": null}
+		_ghosts.append(g)
+	var node: MeshInstance3D = g.node
+	g.mesh = body.bake_mesh_from_current_skeleton_pose(g.mesh)
+	node.mesh = g.mesh
+	node.global_transform = body.global_transform
+	node.visible = true
+	g.life = 0.0
+	(g.mat as ShaderMaterial).set_shader_parameter(&"life", 0.0)
+
+
+func _find_blade() -> bool:
 	if not _blade_looked:
 		_blade_looked = true
 		_blade = EmethSword.blade_of(get_parent())
-	if _blade:
-		EmethSword.set_pulse(_blade, _pulse)
+	return _blade != null
+
+
+## V-08 (AP-2): the Retorno do Corte's window as a thread on the blade (EmethSword.set_return), read from the game's
+## Combat each frame (its _return_t counts the window down and is zeroed by the blow that takes it). Only the look.
+var _return_window := 0.0
+var _return_shown := 0.0
+var _return_prev := 0.0
+
+
+func _animate_return() -> void:
+	var combat: Variant = get_parent().get(&"combat") if get_parent() != null else null
+	if combat == null or not (combat is Object) or not (combat as Object).get(&"_return_t") is float:
+		return
+	var left: float = (combat as Object).get(&"_return_t")
+	if left > _return_prev or left <= 0.0:
+		_return_window = left
+	_return_prev = left
+	var k := left / _return_window if _return_window > 0.0 else 0.0
+	if k == _return_shown:
+		return
+	_return_shown = k
+	if _find_blade():
+		EmethSword.set_return(_blade, k)
 
 
 func _age(e: Dictionary, delta: float) -> void:

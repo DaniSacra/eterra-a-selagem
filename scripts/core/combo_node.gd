@@ -78,6 +78,9 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export var sound_at := 0.0
 ## Played as the move starts when `sound` waits (sound_at > 0): a short gathering, never the blade (&"": none).
 @export var sound_press: StringName = &""
+## CF-10: a second sound under the blade on the frame the blow lands (the body: a step, an effort), drawn from these,
+## never the same twice running when there are more (Player._body_layer). Empty: none.
+@export var layers: Array[StringName] = []
 ## Magia this move spends (the held Omega moves). A press without enough Magia plays the plain move instead.
 @export var magick_cost := 0.0
 ## Held moves (CHARGE, CHARGE_LIGHT): seconds the button must be held. The move fires by itself when the charge

@@ -27,7 +27,8 @@ extends SceneTree
 ##   shop of three items, --want-enchant until an Encanto is on it (both put the hero before the shelf's middle);
 ##   --cursed lays Morvath's curse on the hero (_cursed.png, the HUD's condition seal).
 ## DV-1: --map writes the HUD with its "Mapa [M]" button (_hud.png), then opens the descent's map over the stopped
-##   run (_map.png): the run's own map, or a fixed sample descent with --map-at=start|middle|doors (MapSample).
+##   run (_map.png): the run's own map, or a fixed sample descent with --map-at=start|middle|doors (MapSample); with the
+##   run's own map it then closes it and writes _map_door.png (the door in focus lit, MAP-07).
 
 const GAME := "res://scenes/game.tscn"
 ## Gifts held before the Elo is offered: both sources of Vapor and of Aurora Gelada, and a few more for the panel.
@@ -410,5 +411,13 @@ func _map(game: Node) -> void:
 		screen.call(&"open", (load("res://scripts/ui/descent_map.gd") as GDScript).call(&"from_dict", sample))
 	else:
 		hud.call(&"open_map")
-	await create_timer(0.4).timeout
+	await create_timer(1.0).timeout
 	await _shot("map")
+	if Dev.has("map-at"):
+		return
+	# MAP-07: the map closed on a room behind a door: the door stays lit in the room, the HUD points at it if out of view
+	var screen: Variant = game.get(&"_screen")
+	if screen != null and (screen as Object).has_method(&"close"):
+		(screen as Object).call(&"close")
+	await create_timer(0.6).timeout
+	await _shot("map_door")

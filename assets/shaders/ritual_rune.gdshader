@@ -52,6 +52,13 @@ uniform float danger_alpha = 0.24;
 // vfx_pass_spec.md V-18: an eruption's rim, glyphs and cracks stop at this (linear; lilac-ivory under the screen's 226,
 // Ground: ScreenTone.linear_peak): the white rim at 255 was the paladin's light
 uniform float eruption_cap = 0.62;
+// ART-05.2 (AP-2): the red fill in the regime of the plain warnings (ground.gdshaderinc's warning_fill): fill_early of
+// danger_alpha while the blow is far off, coming up to all of it only over the last fill_late of the warning; the rim
+// and the glyphs carry the shape the whole time. Radius, timing and damage unchanged.
+uniform float fill_early = 0.25;
+uniform float fill_late = 0.3;
+// Once it has landed the red is spent: it leaves in red_after of the dissolve (the glyphs keep crumbling slowly).
+uniform float red_after = 0.2;
 
 const float TAU_ = 6.2831853;
 #include "res://assets/shaders/rune_glyph.gdshaderinc"
@@ -133,7 +140,9 @@ void fragment() {
 	c += glow * (1.0 - smoothstep(0.0, 0.7, d)) * (after > 0.0 ? (1.0 - smoothstep(0.0, 0.35, after)) * 0.2 : 0.0);
 	// the red fill of an eruption, brighter toward its front as the veil was, laid over the floor
 	float harm = hurts ? step(d, p) * (0.6 + 0.4 * smoothstep(p - 0.35, p, d)) : 0.0;
-	float a = clamp(harm * danger_alpha * (1.0 + beat * 0.3), 0.0, danger_alpha) * shown * gone * gone;
+	float late = mix(fill_early, 1.0, smoothstep(1.0 - fill_late, 1.0, p));
+	float a = clamp(harm * danger_alpha * late * (1.0 + beat * 0.3), 0.0, danger_alpha) * shown * gone * gone
+			* (1.0 - smoothstep(0.0, red_after, after));
 	vec3 lit = c * lvl * strength * shown * gone * gone;
 	float top = max(lit.r, max(lit.g, lit.b));
 	if (hurts && top > eruption_cap) {

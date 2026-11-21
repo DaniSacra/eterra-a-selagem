@@ -49,9 +49,14 @@ static var _look := -1
 static var _entries: Array[Array] = []
 
 
-## The look in use: set_look's, else the command line's (--look=classic|stylized), else the default: STYLIZED in an
-## exported build (room redesign RS-F2, 2026-11-19: the PO plays the redesigned rooms; F7 goes back to classic),
-## CLASSIC from the editor binary (tests, captures and tools keep the frame they always had).
+## The look the save's options asked for (remember; -1: none read yet).
+static var _saved := -1
+
+
+## The look in use: set_look's, else the command line's (--look=classic|stylized), else the default: in an exported
+## build the save's choice (the options' "look", DT-RS2; STYLIZED when the save has none: room redesign RS-F2,
+## 2026-11-19, the PO plays the redesigned rooms), CLASSIC from the editor binary (tests, captures and tools keep the
+## frame they always had, whatever the save says).
 static func current() -> Look:
 	if _look < 0:
 		_look = parse(Dev.arg("look", NAMES[default_look()]))
@@ -59,7 +64,22 @@ static func current() -> Look:
 
 
 static func default_look() -> Look:
-	return Look.STYLIZED if OS.has_feature("template") else Look.CLASSIC
+	if not OS.has_feature("template"):
+		return Look.CLASSIC
+	return (_saved as Look) if _saved >= 0 else Look.STYLIZED
+
+
+## The look a save's options ask for (their "look", DT-RS2): STYLIZED when they have none (a save from before).
+static func of_options(options: Dictionary) -> Look:
+	return parse(String(options.get("look", NAMES[Look.STYLIZED])))
+
+
+## The save's options were read (Save.load_profile): their look is the default from now on, and in use at once in an
+## exported build when nothing else chose one (no --look; nothing set yet).
+static func remember(options: Dictionary) -> void:
+	_saved = of_options(options)
+	if _look >= 0 and not Dev.has("look") and OS.has_feature("template"):
+		set_look(_saved as Look)
 
 
 static func stylized() -> bool:
@@ -152,23 +172,21 @@ static func release(object: Object) -> void:
 	_entries.erase(e)
 
 
-## The world: the Environment and the key light (Game._build_world). Their classic values are as built (with the
-## browser's compensation, Game.COMPAT_*), the stylized ones a share of them where they scale.
-static func dress_world(env: Environment, key: DirectionalLight3D) -> void:
-	var compat := RenderingServer.get_current_rendering_method() == "gl_compatibility"
-	if env != null:
-		vary(env, {
-			&"ambient_light_color": AMBIENT,
-			&"ambient_light_energy": env.ambient_light_energy * AMBIENT_GAIN,
-			&"volumetric_fog_density": env.volumetric_fog_density * FOG_IN_AIR,
-			&"adjustment_saturation": env.adjustment_saturation * SATURATION * (COMPAT_SATURATION if compat else 1.0),
-		})
-	if key != null:
-		vary(key, {
-			&"rotation_degrees": KEY_ROTATION, &"light_color": KEY_COLOR,
-			&"light_energy": KEY_ENERGY * (COMPAT_KEY if compat else 1.0), &"shadow_blur": KEY_BLUR,
-		})
-	set_look(current())
+## The world's air in the stylized look (DT-RS1: RoomMood is the one that writes it): the classic values (as RoomMood.read
+## gives them, the moon's under "moon/"; with the browser's compensation, WorldAir.COMPAT_*) with the stylized
+## proof's numbers over them, a share of them where they scale.
+static func world_values(classic: Dictionary, compat: bool) -> Dictionary:
+	var v := classic.duplicate()
+	v[&"ambient_light_color"] = AMBIENT
+	v[&"ambient_light_energy"] = float(classic.get(&"ambient_light_energy", 1.0)) * AMBIENT_GAIN
+	v[&"volumetric_fog_density"] = float(classic.get(&"volumetric_fog_density", 0.0)) * FOG_IN_AIR
+	v[&"adjustment_saturation"] = float(classic.get(&"adjustment_saturation", 1.0)) * SATURATION * (COMPAT_SATURATION if compat else 1.0)
+	if classic.has(&"moon/light_color"):
+		v[&"moon/rotation_degrees"] = KEY_ROTATION
+		v[&"moon/light_color"] = KEY_COLOR
+		v[&"moon/light_energy"] = KEY_ENERGY * (COMPAT_KEY if compat else 1.0)
+		v[&"moon/shadow_blur"] = KEY_BLUR
+	return v
 
 
 static func _entry(object: Object) -> Array:

@@ -168,6 +168,14 @@ static func hazard(node: MeshInstance3D, at: Vector2, dir: Vector2, length: floa
 	put(m, &"fill_max", HAZARD_FILL_MAX)
 
 
+## RP-12: the hazard's amber over a circle (the oil urn's ring): its rim whole from the first frame, the fill rising.
+static func hazard_round(node: MeshInstance3D, at: Vector2, radius: float, y: float) -> void:
+	dress(node, Style.HAZARD, Shape.CIRCLE, HAZARD_COLOR, HAZARD_STRENGTH, HAZARD_RIM, at, Vector2.DOWN, radius, 0.0, y)
+	var m := node.material_override as ShaderMaterial
+	put(m, &"fill_early", HAZARD_FILL_EARLY)
+	put(m, &"fill_max", HAZARD_FILL_MAX)
+
+
 ## RP-06: a slab that strikes when stepped on (PlateFloor), placeholder until the environment artist's piece (SW-G7):
 ## at rest its frame and two cracks in a dull bone (PLATE_REST_COLOR at PLATE_REST_STRENGTH: read, never amber, the
 ## colour only a lit floor danger has); arming, the amber of the runes reaching from the frame to the middle.

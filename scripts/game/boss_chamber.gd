@@ -433,12 +433,8 @@ var _door_seal := 0.0
 var _door_seal_time := SealLook.VICTORY_SEAL
 var _veil := 0.0
 var _veil_want := 0.0
-## The world's air as it was before the chamber dressed it (_dress_world), put back when the chamber leaves.
-var _air: Dictionary = {}
 var _storm_left := 0
 var _storm_dark := 0.0
-var _air_env: Environment
-var _air_moon: DirectionalLight3D
 ## The spires' cards' materials (lot E: their edges in the stylized look) and the broken arches' stone.
 var _spire_mats: Array[ShaderMaterial] = []
 var _sty_arch: ShaderMaterial
@@ -481,38 +477,29 @@ func build(_arena: Node3D = null, layout: RoomLayout = null, seed_: int = 1406) 
 		_dress_world.call_deferred()
 
 
-## The world's air for the chamber (dress), once the arena stands in the game's world.
+## The world's air for the chamber (air_values), once the arena stands in the game's world: given to the owner of
+## the air (RoomMood, DT-RS1) for both looks; it puts the one in use and takes it off when the chamber leaves.
 func _dress_world() -> void:
 	if not is_inside_tree():
 		return
-	var e := get_world_3d().environment
-	if e == null:
-		for n in get_tree().root.find_children("*", "WorldEnvironment", true, false):
-			e = (n as WorldEnvironment).environment
-	if e == null:
-		return
-	var moon: DirectionalLight3D = null
-	for n in get_tree().root.find_children("*", "DirectionalLight3D", true, false):
-		moon = n as DirectionalLight3D
-	_air_env = e
-	_air_moon = moon
-	_air = air_of(e, moon)
-	dress(e, moon)
+	var owner_ := RoomMood.of(self)
+	if owner_ != null:
+		owner_.dress_room(self, air_values(false), air_values(true))
 
 
-## After the look changed (F7: VisualProfile.toggle put the world's air of the look on the environment and moon,
-## Arena.restyle): the chamber's own air again, in the look in use (dress). Its stylized pieces follow by themselves.
+## After the look changed (F7, the options screen; Arena.restyle): the owner of the air holds both looks of the
+## chamber's air and puts the one in use. Its stylized pieces follow by themselves.
 func restyle() -> void:
-	if _air_env != null:
-		dress(_air_env, _air_moon if is_instance_valid(_air_moon) else null)
+	var owner_ := RoomMood.of(self, false)
+	if owner_ != null and owner_.dresser() == self:
+		owner_.apply()
 
 
 ## The chamber leaves (a common room after it, without a new scene): the world's air goes back exactly as it was.
 func _exit_tree() -> void:
-	if _air_env != null and not _air.is_empty():
-		# the moon can leave the tree first (the whole world freed at once): a freed light is not a DirectionalLight3D
-		restore_air(_air_env, _air_moon if is_instance_valid(_air_moon) else null, _air)
-		_air = {}
+	var owner_ := RoomMood.of(self, false)
+	if owner_ != null:
+		owner_.undress_room(self)
 
 
 # ---------- the interface for the fight ----------
@@ -1628,9 +1615,7 @@ func _light() -> void:
 	add_child(blue)
 
 
-## The chamber's air on the game's environment and moon (Game._build_world makes them; the fight hands them here):
-## a deep blue night, a little cold ambient, distance fog from past the platform, height fog filling the abyss.
-## What dress changes, as it is now (restore_air puts it back).
+## What the chamber's air changes, as it is now (tests compare the hall's air before and after).
 static func air_of(e: Environment, moon: DirectionalLight3D = null) -> Dictionary:
 	var d := {
 		&"background_mode": e.background_mode, &"background_color": e.background_color,
@@ -1643,32 +1628,22 @@ static func air_of(e: Environment, moon: DirectionalLight3D = null) -> Dictionar
 	return d
 
 
-static func restore_air(e: Environment, moon: DirectionalLight3D, d: Dictionary) -> void:
-	for k: StringName in d:
-		if k != &"moon":
-			e.set(k, d[k])
-	if moon != null and is_instance_valid(moon) and d.has(&"moon"):
-		var mv: Array = d[&"moon"]
-		moon.rotation_degrees = mv[0]
-		moon.light_color = mv[1]
-		moon.light_energy = mv[2]
-		moon.shadow_enabled = mv[3]
+## The chamber's air as values of the air (RoomMood.read's keys) for a look: a deep blue night, a little cold
+## ambient, distance fog from past the platform, height fog filling the abyss, the moon from its own side.
+static func air_values(stylized: bool) -> Dictionary:
+	return {
+		&"background_mode": Environment.BG_COLOR,
+		# lot E 3 (E4): in the stylized look the sky a step deeper, so the lighter spires' edges stand off it
+		&"background_color": Color(SKY.r * STY_SKY, SKY.g * STY_SKY, SKY.b * STY_SKY) if stylized else SKY,
+		&"ambient_light_source": Environment.AMBIENT_SOURCE_COLOR, &"ambient_light_color": AMBIENT,
+		&"ambient_light_energy": AMBIENT_ENERGY, &"fog_enabled": true, &"fog_mode": Environment.FOG_MODE_DEPTH,
+		&"fog_light_color": FOG, &"fog_depth_begin": FOG_DEPTH.x, &"fog_depth_end": FOG_DEPTH.y,
+		&"moon/rotation_degrees": MOON_ROTATION, &"moon/light_color": MOON_COLOR, &"moon/light_energy": MOON_ENERGY,
+		&"moon/shadow_enabled": true,
+	}
 
 
+## The chamber's air written straight on an env and moon, for the look in use (the chamber lab, which has no world
+## air of its own; in the game the owner of the air does it, _dress_world).
 static func dress(e: Environment, moon: DirectionalLight3D = null) -> void:
-	e.background_mode = Environment.BG_COLOR
-	# lot E 3 (E4): in the stylized look the sky a step deeper, so the lighter spires' edges stand off it
-	e.background_color = Color(SKY.r * STY_SKY, SKY.g * STY_SKY, SKY.b * STY_SKY) if VisualProfile.stylized() else SKY
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	e.ambient_light_color = AMBIENT
-	e.ambient_light_energy = AMBIENT_ENERGY
-	e.fog_enabled = true
-	e.fog_mode = Environment.FOG_MODE_DEPTH
-	e.fog_light_color = FOG
-	e.fog_depth_begin = FOG_DEPTH.x
-	e.fog_depth_end = FOG_DEPTH.y
-	if moon != null:
-		moon.rotation_degrees = MOON_ROTATION
-		moon.light_color = MOON_COLOR
-		moon.light_energy = MOON_ENERGY
-		moon.shadow_enabled = true
+	RoomMood.write(e, moon, air_values(VisualProfile.stylized()))

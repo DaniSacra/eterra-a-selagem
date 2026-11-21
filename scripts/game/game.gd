@@ -100,6 +100,8 @@ var arenas_seen := {}
 var director: WaveDirector
 ## The descent room by room (null in the endless hall, --horde).
 var rooms: Rooms
+## AT-Q1: the things that break in this room (BreakFloor, under the arena), or null.
+var breaks: BreakFloor
 ## Life gained from hearts (kept when gifts change the life bar).
 var life_bonus := 0.0
 var boss: Boss
@@ -413,7 +415,8 @@ func _process(delta: float) -> void:
 	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
 		_toggle_feel_panel()
 	if Controls.pressed(&"look_toggle"):
-		VisualProfile.toggle()
+		# F7 flips the visual style and keeps it in the options, as the options screen does (DT-RS2)
+		Save.choose_look(VisualProfile.Look.CLASSIC if VisualProfile.stylized() else VisualProfile.Look.STYLIZED)
 		arena.restyle()
 	_hurt_tint.step(fx.real_dt, Feel.live())
 	var low := 1.0 - clampf(player.hp / player.max_hp / 0.3, 0.0, 1.0)
@@ -463,6 +466,8 @@ func _step(dt: float) -> void:
 	_lap(&"boss")
 	max_alive = maxi(max_alive, horde.count())
 	projectiles.step(dt)
+	if is_instance_valid(breaks):
+		breaks.step(dt)
 	_lap(&"shots")
 	ground.step(dt)
 	_lap(&"ground")
@@ -596,6 +601,7 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	arena = Arena.new()
 	add_child(arena)
 	arena.build(layout, exits, seed_)
+	breaks = BreakFloor.make(self, layout)  # AT-Q1: the room's vases and crates (under the arena, gone with it)
 	horde.arena = arena
 	player.arena = arena
 	cam.arena = arena
@@ -1515,56 +1521,21 @@ func defeated_by() -> StringName:
 	return DefeatCause.text_key(last_hurt, name_key)
 
 
-## The run's entry for the log (RunLog): the RESULT line, the gifts taken, the device, Omegas, dodges, what hurt last
-## and (version 3) the hero, the Mastery the run gave (gain, from mastery_gain), the Gifts and the ultimate.
+## The run's entry for the log (RunLog), by RunReport.entry (DT-106).
 func run_entry(outcome: String, gain: Dictionary) -> Dictionary:
-	var gifts: Array = []
-	for id in gifts_taken:
-		gifts.append({"id": String(id), "level": boons.level(id), "rarity": Boon.Rarity.keys()[boons.rarity(id)].to_lower()})
-	var device := "bot" if bot else RunLog.device(Controls.seen_keys, Controls.seen_pad)
-	var extra := {"outcome": outcome, "when": Time.get_datetime_string_from_system(), "gifts": gifts,
-		"device": device, "omegas": omegas, "dodges": dodges,
-		"last_hurt": {"attack": String(last_hurt.get("attack", &"")), "enemy": String(last_hurt.get("enemy", &""))},
-		"defeated_by": String(defeated_by()) if outcome == "death" else "", "source": RunLog.source(bot != null),
-		"slot": Save.slot}
-	var by := gain.duplicate()
-	by.erase("total")
-	var xp_now := int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)
-	extra.merge({"hero": String(hero.id), "xp": int(gain.get("total", 0)), "xp_by": by,
-		"mastery_level": hero.mastery.level_of(xp_now + int(gain.get("total", 0))),
-		"talents": talents.map(func(id: StringName) -> String: return String(id)), "ultimate": ultimate})
-	extra.merge(room_tally.run_fields())
-	if watchdog:
-		extra["watch"] = watchdog.samples
-	return RunLog.entry(result(), extra)
+	return RunReport.entry(self, outcome, gain)
 
 
-## Logs the run once, when it ends (victory, death, or quit when left before either). Written to RunLog.PATH for a
-## person's run with a save (never with --nosave nor for the bot); --runlog=file writes any run there (QA samples;
-## plain --runlog: to RunLog.PATH).
+## Logs the run once, when it ends (victory, death, or quit when left before either), after RunAward.keep put what it
+## gave in the save. Written to RunLog.PATH for a person's run with a save (never with --nosave nor for the bot);
+## --runlog=file writes any run there (QA samples; plain --runlog: to RunLog.PATH).
 func log_run(outcome: String) -> void:
 	if _logged or not is_instance_valid(player):
 		return
 	_logged = true
 	var gain := mastery_gain(outcome, Save.data)
 	var e := run_entry(outcome, gain)
-	# the Mastery is kept by a death too (D-57); never for the test robot (unless --mastery) nor without a save,
-	# and the end screen only shows XP that is really kept (QA T5, Q-T5-2)
-	var kept := Save.enabled and (bot == null or Dev.has("mastery"))
-	mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(hero.id)).mastery_xp)} if kept else {}
-	if kept:
-		award_mastery(gain, outcome, Save.data)
-		# the slot screen's "Última partida" (save slots, 2026-11-19)
-		Save.data["played_at"] = int(Time.get_unix_time_from_system())
-	# the materials go home once, whatever the outcome (dying keeps them all); never the robot's (unless
-	# --materials-keep, for measures) nor without a save (Rejogabilidade, Fatia 1, A2)
-	if banks_materials(Save.enabled, bot != null, Dev.has("materials-keep")):
-		materials_banked = MaterialPurse.bank(Save.data, materials)
-		for t in tools_found:
-			if Forge.add_tool(Save.data, t, String(hero.id)):
-				tools_banked.append(t)
-	if kept or not materials_banked.is_empty() or not tools_banked.is_empty():
-		Save.write()
+	RunAward.keep(self, outcome, gain)
 	if Dev.has("runlog"):
 		RunLog.append(RunLog.PATH if Dev.arg("runlog") == "1" else Dev.arg("runlog"), e)
 	elif Save.enabled and bot == null:
@@ -1572,10 +1543,9 @@ func log_run(outcome: String) -> void:
 	run_logged.emit(outcome, e)
 
 
-## Whether a run's materials go into the save (Rejogabilidade, Fatia 1, A2): only with a save, never the robot's
-## (keep: --materials-keep, for measures).
+## Whether a run's materials go into the save (RunAward.banks_materials).
 static func banks_materials(save_enabled: bool, robot: bool, keep: bool) -> bool:
-	return save_enabled and (not robot or keep)
+	return RunAward.banks_materials(save_enabled, robot, keep)
 
 
 ## The hero's Gifts for this descent (E2a): the loadout saved in heroes.<id>.equipped, kept only where it is valid at
@@ -1680,73 +1650,19 @@ func _apply_talents(ids: Array[StringName]) -> void:
 	player.magick.value = player.magick.max_value
 
 
-## The Mastery XP this run gives (MasteryCurve.run_xp), by source and in total: fight rooms and guardians won,
-## Morvath's highest phase reached, the sealing, and the first times against what the save data has seen (Blessings
-## offered, Elos formed, the first guardian, the first victory).
+## The Mastery XP this run gives, by source and in total (RunAward.gain).
 func mastery_gain(outcome: String, data: Dictionary) -> Dictionary:
-	var block := SaveData.hero(data, String(hero.id))
-	var firsts: Dictionary = block.firsts
-	var codex: Dictionary = data.get("codex", {})
-	var won: Array[RunMap.Kind] = rooms.won if rooms else ([] as Array[RunMap.Kind])
-	var guardians := won.count(RunMap.Kind.MINIBOSS)
-	var victory := outcome == "victory"
-	var seen: Dictionary = codex.get("boons", {})
-	var formed: Dictionary = codex.get("elos", {})
-	var known: Dictionary = codex.get("psalms", {})
-	return hero.mastery.run_xp({
-		"rooms": won.count(RunMap.Kind.COMBAT), "guardians": guardians, "phase": int(boss_stats.get("max_phase", 0)),
-		"victory": victory,
-		"new_boons": seen_boons.keys().filter(func(id: StringName) -> bool: return not seen.has(String(id))).size(),
-		"new_elos": elos_formed.keys().filter(func(id: StringName) -> bool: return not formed.has(String(id))).size(),
-		"new_psalms": psalms.seen.keys().filter(func(id: StringName) -> bool: return not known.has(String(id))).size(),
-		"first_guardian": guardians > 0 and int(firsts.get("guardian", 0)) == 0,
-		"first_victory": victory and int(firsts.get("victory", 0)) == 0,
-		"weight": juramentos.weight() if juramentos else 0,
-	})
+	return RunAward.gain(self, outcome, data)
 
 
-## Adds a run's Mastery to save data: the hero's XP (kept on a death too), the Gifts its level unlocks, the first
-## times and the Codex (Blessings seen, Elos formed).
+## Adds a run's Mastery to save data (RunAward.award).
 func award_mastery(gain: Dictionary, outcome: String, data: Dictionary) -> void:
-	var block := SaveData.hero(data, String(hero.id))
-	block.mastery_xp = int(block.mastery_xp) + int(gain.get("total", 0))
-	var level := hero.mastery.level_of(block.mastery_xp)
-	block.unlocked = hero.talents().unlocked(level).map(func(t: TalentDef) -> String: return String(t.id))
-	for id: StringName in seen_boons:
-		SaveData.codex_add(data, "boons", String(id), "seen")
-	for id: StringName in elos_formed:
-		SaveData.codex_add(data, "elos", String(id), "formed")
-	# the Psalms (E4): seen on a card (found: the Codex shows them from then on) and taken
-	for id: StringName in psalms.seen:
-		SaveData.codex_add(data, "psalms", String(id), "seen")
-	for p in psalms.taken:
-		SaveData.codex_add(data, "psalms", String(p.id), "taken")
-	codex_run(outcome, data)
-	var guardians := rooms.won.count(RunMap.Kind.MINIBOSS) if rooms else 0
-	if guardians > 0:
-		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
-	if outcome == "victory":
-		block.firsts["victory"] = int(block.firsts.get("victory", 0)) + 1
-		if juramentos:
-			Juramentos.record_win(data, juramentos.weight())
+	RunAward.award(self, gain, outcome, data)
 
 
-## E4-05: the enemies defeated (an elite counts for its common kind, and as an elite), Morvath met (the highest phase
-## reached, defeated on a victory) and the arenas entered, into save data's Codex.
+## The run's enemies, Morvath and arenas into save data's Codex (RunAward.codex).
 func codex_run(outcome: String, data: Dictionary) -> void:
-	for id: StringName in defeated:
-		var kind := String(id).trim_suffix("_elite")
-		SaveData.codex_add(data, "enemies", kind, "defeated", int(defeated[id]))
-		if kind != String(id):
-			SaveData.codex_add(data, "enemies", kind, "elite", int(defeated[id]))
-	if not boss_stats.is_empty():
-		var chief := String(rooms.stage.boss) if rooms else "morvath"
-		SaveData.codex_add(data, "enemies", chief, "met")
-		SaveData.codex_max(data, "enemies", chief, "phase", int(boss_stats.get("max_phase", 1)))
-		if outcome == "victory":
-			SaveData.codex_add(data, "enemies", chief, "defeated")
-	for id: StringName in arenas_seen:
-		SaveData.codex_add(data, "arenas", String(id), "entered", int(arenas_seen[id]))
+	RunAward.codex(self, outcome, data)
 
 
 ## One step of the run, timed: step_ms (smoothed, read at any moment) and step_timer (only frames with enemies
@@ -1782,32 +1698,14 @@ func _lap(what: StringName) -> void:
 	_lap_t = now
 
 
-## A line of numbers about the run, for smoke tests and tuning.
+## A line of numbers about the run, for smoke tests and tuning (RunReport.result, DT-106).
 func result() -> Dictionary:
-	return {"time": snappedf(time, 0.1), "hp": int(player.hp), "level": level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": kills, "spawned": director.spawned, "best_combo": combat.best_combo,
-		"enemies": horde.count(), "max_alive": max_alive, "boss_at": snappedf(boss_at, 0.1), "mode": Mode.keys()[mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
-		"boons": boons.owned().size(), "damage": int(combat.damage_dealt), "step_ms": snappedf(step_ms, 0.01),
-		"step_ms_avg": snappedf(step_timer.average(), 0.01), "step_ms_peak": snappedf(step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
-		"boss": boss_stats, "bot": bot.stats() if bot else {}, "rooms": room_tally.rooms(time), "hp_at_boss": room_tally.hp_at_boss,
-		"arena": String(arena.id) if arena else "", "stuck": horde.stuck_count(), "stuck_by": horde.stuck_by,
-		"shots_blocked": projectiles.blocked, "flinches": horde.flinches, "interrupts": horde.interrupts,
-		"windups": horde.windup_report(), "shot_flight": projectiles.flight_report(),
-		"omega_charges_started": player.charges_started, "omega_charges_cancelled": player.charges_cancelled(), "boons_at_boss": room_tally.boons_at_boss, "shop": room_tally.shop, "route_shop": room_tally.route_shop,
-		"fountain_used": room_tally.fountain_used, "ult": ults.stats(), "dealt_by": horde.dealt.report(), "elos": elos_formed.size(),
-		"psalms": psalms.ids(), "events": room_tally.events.duplicate(true), "map": rooms.map.summary() if rooms else {},
-		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
-			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},
-		"juramentos": juramentos.to_dict() if juramentos else {}, "weight": juramentos.weight() if juramentos else 0,
-		"materials": materials.report(), "forge": {"temper": forge_temper, "refine": forge_refine.duplicate()},
-		"talents_opened": talents_opened, "enchants": boons.enchants.map(func(e: EnchantDef) -> String: return String(e.id)),
-		"tools": tools_found.map(func(t: StringName) -> String: return String(t)),
-		"angels": encounters.meetings.duplicate(true) if encounters else []}
+	return RunReport.result(self)
 
 
-## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a
-## Dictionary its StringName keys came out as &"scythe", and no tool could read the line).
+## The RESULT line the smoke runs and captures print (RunReport.line).
 func result_line() -> String:
-	return "RESULT " + JSON.stringify(result())
+	return RunReport.line(self)
 
 
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.

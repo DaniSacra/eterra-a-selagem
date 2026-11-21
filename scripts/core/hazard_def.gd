@@ -13,7 +13,10 @@ extends Resource
 ## BandFloor puts it on the floor. Numbers only, written by _stage in tools/make_data.gd (RoomLayout.hazard,
 ## ArenaVariant.hazard).
 
-enum Kind { GRID, PLATES, LINE }
+## DROPS (RP-20): stones falling from a torn vault; DropHazard runs it, DropFloor. URNS (RP-12): oil urns the paladin's
+## blow lights, the blast and the oil running down a channel; UrnHazard runs it, UrnFloor. A GRID may carry crystals
+## (RP-14) the paladin charges, that discharge along a column of tiles (ArenaHazard.discharge, RuneFloor).
+enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 @export var kind := Kind.GRID
 
 ## The grid: the north-west corner of tile (0, 0), the side of a tile (m), how many columns (west to east) and rows
@@ -86,6 +89,62 @@ enum Kind { GRID, PLATES, LINE }
 ## LINE: the next band is the one with the most enemies standing in it (ties and none: in turn), instead of strictly
 ## in turn: the rift breathes where the fight is (RP-08).
 @export var band_busy := false
+
+
+## A second hazard of the same room, started beside this one (Santuário B: the slabs and the stones of the vault; the
+## Fendas B: the breath and the stones; the Cripta A: the slabs and the oil urns). Rooms counts both against the room's
+## two warnings at once (combat_cadence.md 9.2 R9).
+@export var also: HazardDef
+
+## GRID, RP-14 (H-5, the crystal that discharges): where each crystal stands (off the floor, by the north wall), the
+## column of tiles (0 west) it discharges along, and how far round it a blow of the paladin reaches it (m). Each blow of
+## his that touches a crystal charges it; at crystal_hits it discharges at once: its column's tiles (only those that
+## may light: never the quiet stone, the way in nor a door) become the runes' next pattern, warned warn seconds with the
+## chevrons running away from the crystal, striking as the runes do (named crystal_source). A pattern of the runes
+## warming up then goes dark unstruck (the crystal drains it): never more than one pattern on the floor. Asleep before
+## crystal_from of the descent (the crystal takes no charge).
+@export var crystals: PackedVector2Array = PackedVector2Array()
+@export var crystal_cols: PackedInt32Array = PackedInt32Array()
+@export var crystal_hits := 3
+@export var crystal_radius := 0.6
+@export var crystal_from := 0.0
+@export var crystal_source: StringName = &"crystal"
+
+## DROPS, RP-20 (stones from the torn vault): the parts of the floor stones may fall on, the side of a stone's square
+## (m), at most drop_count stones at once, one every drop_every seconds after start_delay; drop_aim the share aimed at
+## the paladin when he stands in a zone (the others anywhere in one). Each warns warn seconds (the square whole from the
+## first frame, the shadow filling) and strikes fire seconds; never over another stone nor over another hazard's warning
+## (Rooms gives the room's busy squares), never within 6 m of the way in (the data keeps the zones clear). The rubble
+## left is drawn only (it never stops a body: combat_cadence.md 9.3). Asleep before from_progress.
+@export var drop_zones: Array[Rect2] = []
+@export var drop_size := 2.0
+@export var drop_count := 2
+@export var drop_every := 4.0
+@export var drop_aim := 0.5
+
+## URNS, RP-12 (the oil urn, the Hades II's barrel): where each urn stands (the data puts an obstacle there), the
+## blast's radius, and per urn the oil's channel (a.x, a.y, b.x, b.y; Vector4.ZERO: none). A blow of the paladin lights
+## an urn: its ring warns warn seconds (combat_cadence.md 9.4: 1.3 s with 10 to him) and blasts (hero_damage,
+## enemy_damage); the oil runs down the channel at flow_speed m/s, in stretches of flow_step m, each warned flow_lead
+## seconds ahead of the flame (the band whole from its first frame), striking flow_hero / flow_enemy as the flame
+## reaches it and burning burn seconds after (whoever walks in is struck once). Once per urn per room. Asleep before
+## from_progress (a blow only rings on the bronze).
+@export var urns: PackedVector2Array = PackedVector2Array()
+@export var urn_radius := 2.5
+@export var urn_flows: PackedVector4Array = PackedVector4Array()
+@export var flow_width := 1.5
+@export var flow_speed := 3.0
+@export var flow_step := 2.0
+@export var flow_lead := 1.0
+@export var flow_hero := 5.0
+@export var flow_enemy := 40.0
+@export var burn := 2.0
+@export var urn_source: StringName = &"urn"
+
+
+## URNS: the channel of urn i (Vector4.ZERO: none).
+func flow_of(i: int) -> Vector4:
+	return urn_flows[i] if i < urn_flows.size() else Vector4.ZERO
 
 
 ## LINE: the push of band i (zero: none).

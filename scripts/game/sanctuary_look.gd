@@ -674,6 +674,42 @@ func _dress_styled() -> void:
 	if not _hole.is_empty():
 		_torn_vault(sm)
 	_edge_pieces()
+	_finials(sm)
+
+
+## Sworn P2 SW-G4: offerings at the foot of the nave's tall walls (ArenaRoom.offerings).
+func sworn_offerings() -> bool:
+	return true
+
+
+## SW-S2: a finial on each snapped column (the nave's broken silhouette and the short stumps), inside its outline: a
+## carved block set a little askew on the fracture (FINIAL_BLOCK: its side over the column's radius, its height) and,
+## on every other one, a low pinnacle on it (FINIAL_SPIRE: its width over the radius, its height); never on a column
+## that topples (RP-09: it would stay in the air). FINIAL_SEAT: how far under the fracture's highest tooth it sits.
+const FINIAL_BLOCK := Vector2(1.05, 0.42)
+const FINIAL_SPIRE := Vector2(0.62, 0.75)
+const FINIAL_SEAT := 0.12
+
+
+func _finials(sm: Masonry) -> void:
+	var mat := sm.carved(0.0, Color(1.02, 1.0, 0.96))
+	var k := 0
+	for o in layout.obstacles:
+		if o.piece != &"column" or o.hits_to_fall > 0:
+			continue
+		var top := o.height
+		if o.height >= WHOLE_COLUMN:
+			if column_kind(o.center, true) != ColumnKind.BROKEN:
+				continue
+			top = o.height * COLUMN_BROKEN
+		var y := top + 0.43 - FINIAL_SEAT
+		var side := o.radius * TombKit.COLUMN_SHAFT * FINIAL_BLOCK.x * 2.0
+		var turn := float(posmod(hash(Vector2i(o.center * 10.0)), 628)) * 0.01
+		var block := sm.block(Vector3(o.center.x, y, o.center.y), Vector3(side, FINIAL_BLOCK.y, side), turn, mat)
+		block.rotate_object_local(Vector3.BACK, 0.06 * (1.0 if k % 2 == 0 else -1.0))
+		if k % 2 == 0:
+			sm.pinnacle(Vector3(o.center.x, y + FINIAL_BLOCK.y, o.center.y), side * FINIAL_SPIRE.x, FINIAL_SPIRE.y, mat)
+		k += 1
 
 
 ## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Santuário): the foreground past the south cut wall, out of the nave and

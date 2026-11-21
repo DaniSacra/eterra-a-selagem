@@ -174,7 +174,7 @@ guardião; terços como na 2.3, agora contados pelo próprio jogo: `--trace-thir
 `plate_push`), lógica pura `PlateHazard` (`scripts/core/plate_hazard.gd`), no jogo `PlateFloor`
 (`scripts/game/plate_floor.gd`), dado `_plates` no `_stage`. Números: aviso 1,0 s (a laje acende da borda para o meio),
 golpe 0,25 s, herói 7, inimigo 60 (RP-03), recarga 5 s, nada nos 3 s do começo, nunca em laje na boca de porta, no
-máximo 3 armadas de uma vez (o 222700 do Sworn), dormentes antes do progresso 0,34 (salas 2 e 3: desenhadas, não ferem).
+máximo 2 armadas de uma vez (R9; era 3, o 222700 do Sworn), dormentes antes do progresso 0,34 (salas 2 e 3: desenhadas, não ferem).
 Lugares (todas de 3 x 3 m, inteiras no chão, fora de peça, porta e nascimento, 6 m ou mais da entrada; GUT):
 
 | Sala | Lajes |
@@ -220,7 +220,7 @@ fazem de verdade (RP-21, lajes nas cabeceiras do sarcófago da Cripta A) e a set
 pisar de propósito.
 
 **Conferido.** `tools/check.gd` e `tools/test.sh` inteiro verdes; `tests/test_plates.gd` (10 testes: ritmo, inimigo
-arma, dormente, porta, três de cada vez, lugares, saída andando de 12 x 12 pontos com 0,25 s de reação, sala real com
+arma, dormente, porta, duas de cada vez, lugares, saída andando de 12 x 12 pontos com 0,25 s de reação, sala real com
 os números do `RESULT`, empurrão, a borda do Santuário B); `tools/fit_probe.gd` Cripta A e B e Santuário A e B iguais à
 base (fantasma 0,32 / 0,31 / 1,20 / 1,20 m²; a laje é marca no chão, não peça). Sem captura na GPU (worktree fora do
 espelho).
@@ -1370,3 +1370,67 @@ lado, Bênçãos em três linhas com o número do efeito em destaque). Nada a pr
 Chão do miolo mais quieto (BH-02, se decidido); luz das bordas e do miolo (BH-03); primeiro plano e o que fica além da
 borda (BH-04); bocas de porta que mudarem de parede (BH-06); luz e fechamento das estações do hub (BH-07). Nenhuma peça
 nova: tocos, blocos, ruínas, bruma e luzes de estação já existem.
+
+## Lote A, frente A1 (2026-11-21)
+
+Pedido do Daniel (o jogo tem de ficar mais difícil) e critérios do combat-feel-director em `combat_cadence.md` 9.2 a
+9.4 (R1 a R14). Tudo em dado no `_stage` do `make_data.gd`; nomes e chaves de "Derrotado por" provisórios, para o Daniel.
+
+### 1. O que mudou
+
+| Item | O que é | Onde e quando | Números |
+|---|---|---|---|
+| Dano 10 | todo perigo de sala tira 10 do herói (era 7; o Hades II tira 10 sobre os mesmos 30) | Runas, Lajes, Corrente, Raiz, Seteira, e os novos | herói 10, inimigo 60; borda que desmorona 7 (era 5) |
+| P0 com o 10 | aviso da Laje Rachada 1,2 s (era 1,0); a raiz segue 1,2 s; a urna 1,3 s com aro de 2,5 m | todas as lajes | |
+| R9 | no máximo dois avisos de sala no chão ao mesmo tempo, contando os dois perigos da sala | `PlateHazard.MOST_AT_ONCE` 2 (era 3), `Ground.room_live` | |
+| Dois perigos numa sala | `HazardDef.also` | Santuário B (lajes + pedras), Fendas B (fôlego + pedras), Cripta A (lajes + urnas) | `rooms[].hazard.also` no `RESULT` |
+| RP-14 Cristal Instável | três golpes do herói num cristal o descarregam pela coluna de ladrilhos dele (o cubo de vapor do Hades II, perigo que o jogador usa) | Runas B (meio da descida em diante), dois cristais na parede norte, colunas 3 e 8 | aviso 1,2 s, 10 / 60; da 2ª carga a coluna clareia em repouso |
+| RP-20 Pedras da Abóbada | quadrados de 2 m caem da abóbada rasgada, metade mirada nele | Santuário B (nave em volta do buraco), Fendas B (plataforma leste), desde a sala 4 | aviso 1,2 s, uma a cada 4 s, no máximo duas, 10 / 60; entulho só desenhado |
+| RP-12 Urna de Óleo | o golpe acende; o aro explode e o óleo corre pelo canal | Cripta A, desde dois terços da descida, duas urnas (leste e norte) | aro 2,5 m, 1,3 s, 10 / 80; óleo 3 m/s em trechos de 2 m avisados 1,0 s, 5 / 40, arde 2 s |
+| RP-18 Colunata | o leste da nave vira grade de nove colunas de 2,5 m (duas em toco, uma rachada); o oeste fica aberto para a investida | Santuário C, do meio da descida em diante | colunas de 2,5 m (nunca escondem um preparo) |
+| RP-19 Portas no fundo | teste em toda sala e variante: porta a 8 m da entrada, fora dos nascimentos, 5 m das outras | `tests/test_exits.gd` | todas já passavam; nenhuma porta mudou |
+
+Regras comuns, todas testadas: aviso de 1,0 s ou mais com o alcance inteiro desenhado desde o primeiro quadro; o dano
+no quadro em que o aviso enche; fere inimigos também; nada nos 3 primeiros segundos nem a menos de 6 m da entrada nem
+em porta; saída livre (pedras: de dentro de qualquer quadrado um passo de 1,6 m chega a chão fora de toda pedra; óleo:
+um passo de 1,5 m de lado; cristal: a coluna tem 3 m de largura e chão apagado dos dois lados); nenhum empurrão novo.
+
+### 2. Medidas do robô (16 descidas, `smoke 900 --bot-reaction=0.25 --ultimate=cleave`, sementes 1 a 16)
+
+Descida inteira: 9 vitórias em 16, 14 em Morvath, `stuck` 0 (a queda de vitórias não vem dos perigos: eles tiraram
+20 de vida do robô nas 16 descidas, um golpe da Corrente e um das Runas). Por perigo, salas em que apareceu e soma:
+
+| Perigo | Salas | Dano no robô | Dano nos inimigos | Abates | Golpes |
+|---|---|---|---|---|---|
+| Runas A | 8 | 10 | 1998 | 22 | 54 |
+| Runas B (com cristais) | 11 | 0 | 1959 | 25 | 58; cristal carregado 3 vezes, nenhuma descarga |
+| Laje Rachada | 40 | 0 | 528 | 3 | 59 |
+| Pedras da Abóbada | 16 | 0 | 330 | 5 | 93 |
+| Corrente da Ponte | 13 | 10 | 466 | 4 | 50 |
+| Raiz Morta | 18 | 0 | 0 | 0 | 2 |
+| Urna de Óleo | 4 (tardia) | 0 | 0 | 0 | 2 acesas, 2 explosões, sem inimigo perto |
+
+Primeira sala em cada sala nova ou mudada (`--arena=... --variant=n`, 8 sementes, `smoke 150`): `stuck` 0 nas 40.
+Santuário C: o herói passa 30% do tempo na colunata (53 s de 175), 31% na nave, 38% nas naves laterais; a sala dura em
+média 26,7 s contra 21,4 s da B. `fit_probe` do Santuário C: fantasma 1,20 m², peça sem desenho 0 (a A tem 0,17).
+
+### 3. Riscos
+
+- O robô desvia de todo aviso do chão (lê o `Ground`), então quase não leva dano dos perigos: o que eles tiram de gente
+  só se mede com gente. O robô também quase nunca carrega um cristal (bate nos inimigos, não no cristal) e acende urna
+  só por acaso: o uso a favor é para o jogador e não aparece nas métricas do robô.
+- A urna bloqueia corpo (0,45 m) a 0,35 m da parede leste: um inimigo não passa atrás dela (o `NavGrid` contorna).
+- As lajes emolduradas desenhadas do Santuário (SW-S3) ficam na nave; na C a grade de colunas fica no mesmo trecho
+  (só desenho, nada colide, mas o environment-artist pode querer tirá-las da C).
+
+### 4. O que precisa de arte (`environment-artist` com a spec do `art-director`)
+
+- Cristal: peça de cristal fora do chão, junto da parede norte das Runas B (x -4,5 e 10,5), três estados de carga
+  (0, 1, 2) lidos sem olhar para ele (brilho que sobe, rachaduras), a descarga como um raio que corre a coluna para o
+  sul no tempo do aviso; hoje é uma laje de 1,6 x 0,8 m no chão diante dele (`GroundLook.plate`).
+- Pedras: a sombra que cresce no quadrado (hoje o âmbar das Runas), poeira caindo do alto desde o primeiro quadro, a
+  pedra caindo nos últimos 0,25 s, o entulho baixo que some em 3 s (hoje uma caixa cinza), o rasgo na abóbada sobre as
+  zonas (Santuário B já tem a abóbada rasgada do Lote B; as Fendas B não).
+- Urna: bronze, pavio que se vê, silhueta que nunca lembre um quebrável; o pavio aceso com a chama no aro; o canal de
+  óleo no chão (sulco escuro) e a chama correndo; hoje a urna é um cilindro genérico e o óleo a faixa âmbar.
+- Colunata: nove colunas baixas de 2,5 m, dois tocos e a rachada de 2,5 m que tomba 3 m.

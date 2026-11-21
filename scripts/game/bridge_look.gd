@@ -264,7 +264,8 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 	var mid := (a + b) * 0.5
 	if out.x < -0.9 and absf(mid.y - layout.hero_spawn.y) < ENTRY_WIDE * 0.5 + 0.2:
 		return
-	balustrade_edge(a, b, out, false)
+	# RS-C7: the end posts where an edge meets a deck or a door's mouth stepped back off the walkable floor
+	balustrade_edge(a, b, out, false, null, true)
 
 
 ## The abyss (spec 2.5): grey-blue mist, a cold light far below on the depths alone, a weak thread of violet in the
@@ -384,6 +385,7 @@ func piece(o: ArenaObstacle) -> void:
 		m.block(foot + Vector3(0, y, 0), Vector3(size.x + PYLON_COLLAR, 0.3, size.z + PYLON_COLLAR), yaw, mat)
 	m.block(foot + Vector3(0, size.y - PYLON_CAP, 0), Vector3(size.x + PYLON_COLLAR, PYLON_CAP, size.z + PYLON_COLLAR), yaw, mat)
 	var top := foot + Vector3(0, size.y - 0.2, 0)
+	_pylon_tops.append(top)
 	for k in CHAIN_UP.size():
 		var from := top + Vector3((k - 0.5) * size.x * 0.6, 0, -size.z * 0.3)
 		kit.chain(from, CHAIN_UP[k], CHAIN_SAG.x, CHAIN_SIZE)
@@ -469,6 +471,9 @@ func _dress_styled() -> void:
 	# P2-B1 (ART_REVIEW.md 4.5): each platform lit a step more than its edge nearest the camera
 	for f: Vector3 in STY_KEY_POOLS:
 		key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
+	_pylon_banners()
+	_lozenges(sm)
+	_old_piers(sm)
 	if _long:
 		for w in _landings:
 			for c: Vector2 in [Vector2(w.position.x + LANDING_LANTERN_IN, w.position.y + LANDING_LANTERN_IN),
@@ -551,4 +556,107 @@ func _far_bridges(sm: Masonry) -> void:
 		# its piers down into the haze
 		for px: float in [f.x - half, f.x, f.x + half]:
 			sm.box(Vector3(px, FAR_DECK - 12.0, z), Vector3(1.4, 22.0, 2.8), 0.0, mat, false)
+	sm.layers = 1
+
+
+# ---------- Sworn P2 (docs/art/sworn_reference_ideas.md 3.1, Ponte) ----------
+
+## SW-P1: a torn petrol banner with the lion (the kit's banner, its stylized twin) hung from each of the pylons' chains
+## going up (BANNER_ON: how far along the chain from the pylon's top), swaying slowly about its hook (BANNER_SWAY rad,
+## BANNER_SWAY_TIME s for a swing), out of the floor and over the frame's middle.
+const BANNER_ON := 0.11
+const BANNER_SIZE := Vector2(1.0, 2.6)
+const BANNER_SWAY := 0.07
+const BANNER_SWAY_TIME := 3.4
+var _pylon_tops: Array[Vector3] = []
+
+
+func _pylon_banners() -> void:
+	var k := 0
+	for top in _pylon_tops:
+		for j in CHAIN_UP.size():
+			var from := top + Vector3((j - 0.5) * 1.68, 0, -0.48)
+			var t := BANNER_ON
+			var hook := from.lerp(CHAIN_UP[j], t) + Vector3.DOWN * CHAIN_SAG.x * 4.0 * t * (1.0 - t)
+			var yaw := deg_to_rad(Feel.live().cam_yaw)
+			var holder := kit.styled_build(func() -> void: kit.banner(hook, yaw, BANNER_SIZE * (1.0 - 0.15 * j), 1, ArenaKit.Emblem.LION), hook)
+			_sway(holder, BANNER_SWAY * (1.0 + 0.3 * k), BANNER_SWAY_TIME * (1.0 + 0.17 * k))
+			k += 1
+
+
+## A slow sway of `node` about its own origin (its local z), forever, in real time.
+func _sway(node: Node3D, angle: float, period: float) -> void:
+	if not node.is_inside_tree():
+		_sway.call_deferred(node, angle, period)
+		return
+	var tw := node.create_tween().set_loops()
+	tw.set_ignore_time_scale(true)
+	tw.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	tw.tween_property(node, ^"rotation:z", angle, period * 0.5)
+	tw.tween_property(node, ^"rotation:z", -angle, period * 0.5)
+
+
+## SW-P2: the platforms' (and the B's landing's) floor marked with a lozenge of sunk grooves round its middle
+## (floor_decal.gdshader kind 4; no circle), so a platform reads apart from a bridge's deck from above: LOZENGE (the
+## rings' sides, m: half diagonals of 1.6 to 3.8), wholly inside the platform.
+const LOZENGE := Vector3(2.3, 3.8, 5.4)
+const LOZENGE_GROOVE := 0.07
+const LOZENGE_COLOR := Color(0.1, 0.11, 0.13)
+const LOZENGE_WORN := 0.2
+const DECAL_SHADER := preload("res://assets/shaders/floor_decal.gdshader")
+
+
+func _lozenges(sm: Masonry) -> void:
+	for poly in layout.floor.polys:
+		var r := Rect2(poly[0], Vector2.ZERO)
+		for p in poly:
+			r = r.expand(p)
+		if r.size.y <= DECK_WIDE or r.size.x < 9.0:
+			continue
+		var c := r.get_center()
+		var mat := ShaderMaterial.new()
+		mat.shader = DECAL_SHADER
+		mat.set_shader_parameter(&"kind", 4)
+		mat.set_shader_parameter(&"lozenges", LOZENGE)
+		mat.set_shader_parameter(&"groove_width", LOZENGE_GROOVE)
+		mat.set_shader_parameter(&"groove_color", LOZENGE_COLOR)
+		mat.set_shader_parameter(&"groove_worn", LOZENGE_WORN)
+		var size := Vector2.ONE * (LOZENGE.z * 1.4143 + 0.4)
+		mat.set_shader_parameter(&"rug_size", size)
+		var mi := MeshInstance3D.new()
+		var q := PlaneMesh.new()
+		q.size = size
+		mi.mesh = q
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.position = Vector3(c.x, 0.006, c.y)
+		sm.root.add_child(mi)
+
+
+## SW-P3 (SW-G6): two piers of an older bridge rising out of the haze in front (OLD_PIERS: x, z, their top under the
+## floor, width), the depths' stone a step darker, a springer of an arch broken on one of them.
+const OLD_PIERS: Array[Vector4] = [Vector4(-10.8, 7.4, -0.55, 1.5), Vector4(10.2, 8.2, -1.1, 1.3)]
+const OLD_PIER_FOOT := -16.0
+const OLD_PIER_TINT := 0.6
+
+
+func _old_piers(sm: Masonry) -> void:
+	var mat := deep().duplicate() as ShaderMaterial
+	mat.set_shader_parameter(&"tint", OLD_PIER_TINT)
+	sm.layers = 1 | ArenaKit.DEPTH_LAYER
+	var k := 0
+	for p in OLD_PIERS:
+		var foot := Vector3(p.x, OLD_PIER_FOOT, p.y)
+		var h := p.z - OLD_PIER_FOOT
+		sm.box(foot + Vector3(0, h * 0.5, 0), Vector3(p.w, h, p.w * 1.6), 0.0, mat, false)
+		# its cap, broken: two blocks askew
+		var cap := sm.box(Vector3(p.x - 0.2, p.z + 0.12, p.y), Vector3(p.w * 0.7, 0.34, p.w * 1.2), 0.15, mat, false)
+		cap.rotate_object_local(Vector3.BACK, 0.18 * (1.0 if k == 0 else -1.0))
+		if k == 0:
+			# the first voussoirs of an arch springing west from it, snapped
+			for i in 3:
+				var a := 0.35 + i * 0.32
+				var v := sm.box(Vector3(p.x - p.w * 0.5 - 0.35 - i * 0.5, p.z - 0.9 + i * 0.36, p.y), Vector3(0.55, 0.8, p.w * 1.2), 0.0, mat, false)
+				v.rotate_object_local(Vector3.BACK, a)
+		k += 1
 	sm.layers = 1

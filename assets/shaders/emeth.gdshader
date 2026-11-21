@@ -56,6 +56,13 @@ uniform vec2 temper_edge = vec2(0.5, 0.97);
 uniform vec2 temper_half = vec2(0.095, 0.06);
 uniform float temper_width = 0.018;
 uniform float temper_off = 0.42;
+// V-08 (AP-2): the Retorno do Corte's window (EmethSword.set_return, 0 to 1 of the window left): a fine emerald
+// thread runs up the middle of the blade, return_width m wide, a brighter knot travelling guard to tip return_run times
+// a second; under 1.0 (no glow) and under style_cap in the stylized look. 0 draws nothing.
+uniform float return_thread = 0.0;
+uniform vec3 return_color : source_color = vec3(0.45, 0.95, 0.62);
+uniform float return_width = 0.012;
+uniform float return_run = 2.2;
 
 varying float along;
 varying vec3 local;
@@ -124,6 +131,14 @@ void fragment() {
 		EMISSION = mix(EMISSION, thread, tm.y);
 		EMISSION = mix(EMISSION, gold, tm.x);
 		ALBEDO = mix(ALBEDO, temper_gold * 0.5, max(tm.x, tm.y * 0.5));
+	}
+	if (return_thread > 0.0) {
+		float up = clamp((along - blade_from) / (0.95 - blade_from), 0.0, 1.0);
+		float line = 1.0 - smoothstep(return_width * 0.3, return_width * 0.5, abs(local.x));
+		float knot = pow(1.0 - fract(up - TIME * return_run), 6.0);
+		float k = line * blade * smoothstep(0.03, 0.1, up) * (1.0 - smoothstep(0.9, 0.97, up)) * return_thread;
+		vec3 thread = return_color * (0.55 + 0.45 * knot) * (styled ? style_cap : 1.0);
+		EMISSION = mix(EMISSION, thread, k);
 	}
 	if (styled) {
 		// HB3 (2026-11-20): capped by its brightest channel, the hue kept (a cap per channel clipped only the green and

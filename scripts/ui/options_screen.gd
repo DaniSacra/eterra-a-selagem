@@ -50,6 +50,11 @@ var tip: Label
 func open() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# captures: --options-tab=video|comfort|controls opens on that page, --options-focus=opt_look on that row
+	var asked := TAB_NAME.find("tab_" + Dev.arg("options-tab"))
+	if asked >= 0:
+		tab = asked as Tab
+	_focus_key = Dev.arg("options-focus")
 	_build()
 
 
@@ -118,6 +123,9 @@ func _build() -> void:
 	# the near camera (Daniel, 2026-11-19; CamRig.near, read every frame: the run behind the pause moves at once)
 	_setting("opt_camera", T.t("opt_camera_near" if String(Save.option("camera")) == "near" else "opt_camera_far"), func(_dir: int) -> void:
 		Save.set_option("camera", "far" if String(Save.option("camera")) == "near" else "near"))
+	# DT-RS2: the visual style, the F7's flip as a setting (the same frame: VisualProfile and the room's restyle)
+	_setting("opt_look", T.t("opt_look_stylized" if VisualProfile.stylized() else "opt_look_classic"), func(_dir: int) -> void:
+		apply_look(get_tree(), VisualProfile.Look.CLASSIC if VisualProfile.stylized() else VisualProfile.Look.STYLIZED))
 	_list = pages[Tab.COMFORT]
 	for option in COMFORT:
 		_toggle("opt_" + option, option)
@@ -138,15 +146,21 @@ func _build() -> void:
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		_state(b, T.t(&"options_press") if waiting else HowToScreen.keys_label([action]), UiKit.PALE if waiting else UiKit.GOLD)
-		# the gamepad's button beside the key, to read (UI review d2ff05d, P2-4; the pad is not remapped yet)
-		var pad := UiKit.label(HowToScreen.pad_label([action]), UiKit.DIM.lightened(0.15), 17, UiKit.BOLD_FONT)
-		pad.name = "pad"
-		pad.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
-		pad.offset_left = -180.0
-		pad.offset_right = -126.0
-		pad.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		pad.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		b.add_child(pad)
+		# the gamepad's button beside the key, on the HUD's plate (UI review d2ff05d, P2-4); while the row waits, a
+		# button of the gamepad binds it too (DT-103), the walking stays on the stick
+		if Controls.PAD_REMAPPABLE.has(action):
+			var pad := StationSign.KeyCap.new()
+			pad.name = "pad"
+			pad.font_size = 16
+			pad.height = 26.0
+			pad.set_key(HowToScreen.pad_label([action]), true)
+			pad.visible = not waiting
+			pad.set_anchors_and_offsets_preset(Control.PRESET_CENTER_RIGHT)
+			pad.offset_right = -128.0
+			pad.offset_left = pad.offset_right - pad.custom_minimum_size.x
+			pad.offset_top = -pad.custom_minimum_size.y * 0.5
+			pad.offset_bottom = pad.custom_minimum_size.y * 0.5
+			b.add_child(pad)
 		keys.add_child(b)
 	var reset := UiKit.button(T.t(&"options_reset"), func() -> void:
 		_focus_key = "options_reset"
@@ -154,8 +168,17 @@ func _build() -> void:
 		_build(), 260)
 	reset.name = "options_reset"
 	reset.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	var foot_row := HBoxContainer.new()
+	foot_row.add_theme_constant_override(&"separation", 16)
+	foot_row.add_child(reset)
+	var note := UiKit.label(T.t(&"options_pad_note"), UiKit.DIM.lightened(0.2), 16)
+	note.name = "pad_note"
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	note.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	note.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	foot_row.add_child(note)
 	_list.add_child(_gap(4))
-	_list.add_child(reset)
+	_list.add_child(foot_row)
 	tip = UiKit.label("", UiKit.DIM.lightened(0.2), TIP_SIZE)
 	tip.name = "tip"
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -287,6 +310,16 @@ func _gap(h: float) -> Control:
 	return g
 
 
+## Puts a visual style (DT-RS2), as the F7 key does: the profile's values everywhere and the room's own air again
+## (Arena.restyle) in the run or the hub open under the menu. Kept in the save's "look" when the save has that option.
+static func apply_look(tree: SceneTree, look: VisualProfile.Look) -> void:
+	Save.choose_look(look)  # applies and writes it (the save's "look")
+	if tree == null:
+		return
+	for arena in tree.root.find_children("*", "Arena", true, false):
+		(arena as Arena).restyle()
+
+
 ## What a setting does, for the line under the page ("" for a row without a tip).
 static func tip_text(row: String) -> String:
 	var key := row + "_tip"
@@ -386,10 +419,18 @@ func _state(b: Button, text: String, color: Color) -> void:
 func _input(event: InputEvent) -> void:
 	if _waiting == &"":
 		return
-	if event is InputEventKey and event.is_pressed() and (event as InputEventKey).physical_keycode == KEY_ESCAPE:
+	var start := event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == JOY_BUTTON_START
+	if event.is_pressed() and (start or event is InputEventKey and (event as InputEventKey).physical_keycode == KEY_ESCAPE):
+		# Esc or Start: nothing changes
 		_waiting = &""
 	elif (event is InputEventKey or event is InputEventMouseButton) and event.is_pressed():
 		Controls.rebind(_waiting, event)
+		_waiting = &""
+	elif event is InputEventJoypadButton and event.is_pressed():
+		if not Controls.rebind_pad(_waiting, event):
+			# a button for the walking (it stays on the stick): keep waiting, swallowed
+			get_viewport().set_input_as_handled()
+			return
 		_waiting = &""
 	else:
 		return

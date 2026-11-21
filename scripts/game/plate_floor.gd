@@ -54,7 +54,11 @@ func step(dt: float) -> void:
 	for e in game.horde.list:
 		if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS:
 			_bodies.append(e.pos)
-	var did := hazard.step(dt, p, _bodies)
+	var mine := 0
+	for ph in hazard.phase:
+		if ph == PlateHazard.Phase.ARM:
+			mine += 1
+	var did := hazard.step(dt, p, _bodies, maxi(0, game.ground.room_live() - mine))
 	var def := hazard.def
 	for i: int in did.armed:
 		if def.aims_away(i):

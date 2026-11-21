@@ -22,7 +22,7 @@ func _runes() -> RunesLook:
 	add_child_autofree(we)
 	var moon := DirectionalLight3D.new()
 	add_child_autofree(moon)
-	VisualProfile.dress_world(env, moon)
+	RoomMood.own(we, moon)
 	var stage: StageDef = load(STAGE)
 	var layout: RoomLayout = null
 	for l in stage.layouts:

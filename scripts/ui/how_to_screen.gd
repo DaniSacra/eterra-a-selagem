@@ -91,8 +91,10 @@ func open() -> void:
 		b.focus_neighbor_bottom = b.get_path_to(back)
 	for b: Button in [_moves_button, back]:
 		b.focus_neighbor_top = b.get_path_to(tabs[0])
-	_show_tab(Tab.DESCENT)
-	tabs[0].grab_focus.call_deferred()
+	# captures: --howto-tab=controls opens on the keys
+	var first := Tab.CONTROLS if Dev.arg("howto-tab") == "controls" else Tab.DESCENT
+	_show_tab(first)
+	tabs[first].grab_focus.call_deferred()
 
 
 func _show_tab(t: int) -> void:
@@ -179,10 +181,11 @@ func _controls() -> Control:
 		var id: String = row.id
 		var actions: Array = row.actions
 		grid.add_child(_cell(T.t("howto_" + id), UiKit.PALE, 19, UiKit.BOLD_FONT, 150.0))
-		var keys := _cell(keys_label(actions) if not actions.is_empty() else T.t(&"mouse_aim"), UiKit.GOLD, 19, UiKit.BOLD_FONT, 150.0)
+		# the keys and buttons on the HUD's key plate, round on a gamepad's face button (UI review d2ff05d, P2-3)
+		var keys := Plates.new().setup(key_parts(actions) if not actions.is_empty() else [T.t(&"mouse_aim")], false, 150.0)
 		keys.name = "keys_" + id
 		grid.add_child(keys)
-		var pad := _cell(pad_label(actions) if not actions.is_empty() else T.t(&"pad_stick_right"), UiKit.GOLD, 19, UiKit.BOLD_FONT, 160.0)
+		var pad := Plates.new().setup(pad_parts(actions) if not actions.is_empty() else [T.t(&"pad_stick_right")], true, 160.0)
 		pad.name = "pad_" + id
 		grid.add_child(pad)
 		var desc := _cell(T.t("howto_%s_desc" % id), UiKit.PALE, 17, null, 540.0)
@@ -212,17 +215,28 @@ func _cell(text: String, color: Color, size: int, font: Font, width: float) -> L
 
 ## What the keyboard and mouse have on these actions now ("W A S D", "Mouse esq."), whatever device is in use.
 static func keys_label(actions: Array) -> String:
+	return " ".join(key_parts(actions))
+
+
+## The same, one entry per action (a plate each).
+static func key_parts(actions: Array) -> PackedStringArray:
 	var was := Controls.using_pad
 	Controls.using_pad = false
 	var parts: PackedStringArray = []
 	for action: StringName in actions:
 		parts.append(UiKit.action_label(action))
 	Controls.using_pad = was
-	return " ".join(parts)
+	return parts
 
 
 ## What the gamepad has on these actions: its button (Controls.label) or, for movement, the stick of its axis events.
 static func pad_label(actions: Array) -> String:
+	var parts := pad_parts(actions)
+	return " ".join(parts) if not parts.is_empty() else "?"
+
+
+## The same, one entry per button (the four directions of a stick are one).
+static func pad_parts(actions: Array) -> PackedStringArray:
 	var was := Controls.using_pad
 	Controls.using_pad = true
 	var parts: PackedStringArray = []
@@ -233,7 +247,30 @@ static func pad_label(actions: Array) -> String:
 		if text != "" and not parts.has(text):
 			parts.append(text)
 	Controls.using_pad = was
-	return " ".join(parts) if not parts.is_empty() else "?"
+	return parts if not parts.is_empty() else PackedStringArray(["?"])
+
+
+## A row of key plates (StationSign.KeyCap, the HUD's plate): the keys of an action, or its gamepad buttons (round on
+## a face button). `text` is what they say, joined by spaces (tests).
+class Plates:
+	extends HFlowContainer
+
+	var text := ""
+
+	func setup(parts: PackedStringArray, pad: bool, width: float) -> Plates:
+		text = " ".join(parts)
+		custom_minimum_size.x = width
+		size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_theme_constant_override(&"h_separation", 4)
+		add_theme_constant_override(&"v_separation", 4)
+		for part in parts:
+			var cap := StationSign.KeyCap.new()
+			cap.font_size = 17
+			cap.height = 26.0
+			cap.set_key(part, pad)
+			add_child(cap)
+		return self
 
 
 static func _stick_label(action: StringName) -> String:

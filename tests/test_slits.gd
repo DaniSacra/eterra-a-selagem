@@ -95,7 +95,7 @@ func test_in_a_real_room() -> void:
 		f.pos = h.plates[1].get_center()
 		pf.step(DT)
 		game.ground.step(DT)
-	assert_almost_eq(game.player.hp, hp - 7.0, 0.01, "the other slit strikes him in its band")
+	assert_almost_eq(game.player.hp, hp - 10.0, 0.01, "the other slit strikes him in its band")
 	assert_eq(T.t(DefeatCause.text_key(game.last_hurt)), "Seteira")
 	game.rooms._room_cleared()
 	var hz: Dictionary = (game.room_tally.rooms(game.time)[-1] as Dictionary).get("hazard", {})

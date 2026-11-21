@@ -1100,8 +1100,112 @@ func _dress_styled() -> void:
 	_fall(sm, Vector3(nw.x, nw.y - FALL_NW_SIZE.y + FALL_TOP, nw.z), PI * 0.25, FALL_NW_SIZE.x, FALL_NW_SIZE.y, false)
 	if variant_b:
 		_lake(sm, b)
+	else:
+		_cut_pool(sm)
 	_edge_pieces()
 	_west_mist()
+	_shallow_roots(sm)
+
+
+## Sworn P2 SW-G6: the low dark foreground rising out of the haze past the edges the camera looks across.
+func foreground_look() -> Dictionary:
+	return STY_FOREGROUND
+
+
+const STY_FOREGROUND := {&"out": Vector2(1.9, 3.2), &"top": Vector2(-0.9, -0.3), &"every": 7.0, &"tint": 0.55}
+
+
+## SW-J2: shallow roots creeping from the feet of the columns and the low walls over the floor, in the tree's bark (its
+## material), never higher than ROOT_SHALLOW over the floor and never blocking: each a few flattened segments
+## (ROOT_SEGMENTS, ROOT_LENGTH m in all, from ROOT_RADIUS at its foot to a fifth of it), sunk so only a hump shows;
+## ROOTS_PER pieces per foot, never onto a hazard's strip (ArenaRoom.on_hazard) nor a door's mouth.
+const ROOT_SHALLOW := 0.12
+const ROOT_SEGMENTS := 5
+const ROOT_LENGTH := Vector2(0.9, 1.7)
+const ROOT_RADIUS := 0.11
+const ROOT_FLAT := 0.55
+const ROOTS_PER := 3
+
+
+func _shallow_roots(sm: Masonry) -> void:
+	if tree == null or tree.stone_material == null:
+		return
+	var feet: Array[Vector3] = []
+	for o in layout.obstacles:
+		if o.piece == &"column":
+			feet.append(Vector3(o.center.x, o.center.y, o.radius))
+		elif o.piece == &"block" and o.height <= 1.0:
+			var along := Vector2.from_angle(-o.yaw)
+			for sd: float in [-1.0, 1.0]:
+				var end := o.center + along * sd * (o.half.x - 0.2)
+				feet.append(Vector3(end.x, end.y, o.half.y))
+	var r := RandomNumberGenerator.new()
+	r.seed = 6611
+	for f in feet:
+		var c := Vector2(f.x, f.y)
+		for k in ROOTS_PER:
+			var dir := Vector2.from_angle(r.randf() * TAU)
+			_creep(sm, c + dir * (f.z - 0.05), dir, r)
+
+
+func _creep(sm: Masonry, from: Vector2, dir: Vector2, r: RandomNumberGenerator) -> void:
+	var length := r.randf_range(ROOT_LENGTH.x, ROOT_LENGTH.y)
+	var seg := length / ROOT_SEGMENTS
+	var p := from
+	for i in ROOT_SEGMENTS:
+		var q := p + dir * seg
+		if on_hazard(q, 0.3) or not arena.shape().contains(q, 0.2):
+			return
+		for e in layout.exits:
+			if e.mouth.grow(0.5).has_point(q):
+				return
+		var rad := ROOT_RADIUS * lerpf(1.0, 0.2, float(i) / ROOT_SEGMENTS)
+		var mid := (p + q) * 0.5
+		var mi := sm.shaft(Vector3.ZERO, rad, seg * 1.15, tree.stone_material)
+		(mi.mesh as CylinderMesh).bottom_radius = rad * 1.25
+		(mi.mesh as CylinderMesh).radial_segments = 6
+		var d3 := Vector3(dir.x, 0, dir.y)
+		var side := d3.cross(Vector3.UP).normalized()
+		# the cylinder's axis along the way, squashed in height and sunk to a hump of at most ROOT_SHALLOW
+		mi.basis = Basis(side, d3, side.cross(d3)) * Basis.from_scale(Vector3(1.0, 1.0, ROOT_FLAT))
+		mi.position = Vector3(mid.x, ROOT_SHALLOW * 0.8 - rad * 1.25 * ROOT_FLAT, mid.y)
+		p = q
+		dir = dir.rotated(r.randf_range(-0.45, 0.45))
+
+
+## SW-J3 (A): a dark pool cut into the north-west corner past the cut, off the floor, under the floor's level, its
+## shore of fallen stone and tufts of grass (POOL_CUT: out from the cut's middle, length along it, width across).
+const POOL_CUT := Vector3(2.2, 2.6, 1.4)
+const POOL_CUT_Y := -0.32
+const POOL_GRASS := Color(0.2, 0.22, 0.12)
+
+
+func _cut_pool(sm: Masonry) -> void:
+	var a := Vector2(-17.0, -10.0)
+	var b := Vector2(-13.0, -14.0)
+	var mid := (a + b) * 0.5
+	var out := (b - a).orthogonal().normalized()
+	if layout.floor.covers(mid + out * 0.3):
+		out = -out
+	var c := mid + out * POOL_CUT.x
+	var yaw := atan2(-(b - a).y, (b - a).x)
+	_sheet(sm, Vector3(c.x, POOL_CUT_Y, c.y), -yaw, Vector2(POOL_CUT.y, POOL_CUT.z), Vector2(0.5, 0.5))
+	var r := RandomNumberGenerator.new()
+	r.seed = 3307
+	var along := (b - a).normalized()
+	var grass := StandardMaterial3D.new()
+	grass.albedo_color = POOL_GRASS
+	grass.roughness = 1.0
+	for i in 9:
+		var t := r.randf_range(-0.5, 0.5)
+		var rim := c + along * t * POOL_CUT.y + out * (POOL_CUT.z * 0.5 + 0.1) * (1.0 if i % 2 == 0 else -1.0)
+		if i % 3 == 0:
+			sm.box(Vector3(rim.x, POOL_CUT_Y + 0.05, rim.y), Vector3(0.4, 0.22, 0.3) * r.randf_range(0.7, 1.2), r.randf() * TAU, _wall_mat)
+		else:
+			for g in 4:
+				var blade := sm.box(Vector3(rim.x + r.randf_range(-0.12, 0.12), POOL_CUT_Y + 0.12, rim.y + r.randf_range(-0.12, 0.12)),
+					Vector3(0.025, 0.28, 0.01), r.randf() * TAU, grass, false)
+				blade.rotate_object_local(Vector3.BACK, r.randf_range(-0.4, 0.4))
 
 
 ## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Jardim), never over the walkable floor: dead roots hanging inside the

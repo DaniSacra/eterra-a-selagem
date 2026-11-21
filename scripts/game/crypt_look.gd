@@ -888,19 +888,28 @@ func _graves(ossuary: bool) -> Array:
 		for g: Vector2 in row[0]:
 			if ossuary and is_equal_approx(g.x, STY_GRAVES_B_SKIP):
 				continue
-			if not clear_of_plates(Vector2(g.x, row[1]), SLAB):
-				continue  # never a grave slab on or by a slab that strikes (RP-06)
+			if not clear_of_plates(Vector2(g.x, row[1]), SLAB) or not _slab_free(Vector2(g.x, row[1]), SLAB):
+				continue  # never a grave slab on or by a slab that strikes (RP-06), nor under a piece (an urn, AT-Q)
 			out.append(ArenaKit.framed_slab(Vector2(g.x, row[1]), SLAB,
 				ArenaKit.Framed.GRAVE, g.y > 0.5, STY_GRAVE_VALUE, k))
 			k += 1
 	var frames: Array[Vector2] = STY_FRAMES_B if ossuary else STY_FRAMES_A
 	var side := STY_FRAME_B if ossuary else STY_FRAME_A
 	for f in frames:
-		if not clear_of_plates(f, Vector2.ONE * side):
+		if not clear_of_plates(f, Vector2.ONE * side) or not _slab_free(f, Vector2.ONE * side):
 			continue
 		out.append(ArenaKit.framed_slab(f, Vector2.ONE * side, ArenaKit.Framed.RAISED, false, 1.0, k))
 		k += 1
 	return out
+
+
+## True when a drawn slab of this middle and size lies under no piece of the room (its corners, sides' middles, middle).
+func _slab_free(at: Vector2, size: Vector2) -> bool:
+	for u: float in [-1.0, 0.0, 1.0]:
+		for v: float in [-1.0, 0.0, 1.0]:
+			if arena.overlaps(at + Vector2(u * size.x, v * size.y) * 0.5, 0.0):
+				return false
+	return true
 
 
 ## RS-C1, A in the stylized look: the crown makes the light of the tomb's west step (out), the north sarcophagus's
@@ -1066,6 +1075,78 @@ func _dress_styled() -> void:
 	if divider != null:
 		_ossuary_crown(sm, divider)
 	_edge_pieces()
+	_ossuary(sm)
+
+
+## Sworn P2 SW-C2: stacks of thigh bones on the ledge against the north and west walls (FEMUR_STACKS: x on the north
+## wall, FEMUR_STACKS_WEST: z on the west; each FEMUR_STACK wide), rows of heads looking out of the wall as in an
+## ossuary (FEMUR_ROWS rows of femurs lying into the wall, their heads just behind the floor's edge) and a few lying
+## along the wall on top; FEMUR: shaft radius, length, head radius, head length. SW-C3: groups of urns of warm clay and
+## burnt-out candles on the ledge beside the niches (ArenaRoom.offerings; C3_NORTH x, C3_WEST z). Skulls are a model
+## (SW-A1, Meshy): none here.
+const FEMUR_STACKS: Array[float] = [-5.5, -0.35]
+const FEMUR_STACKS_WEST: Array[float] = [-4.6]
+const FEMUR_STACK := 0.95
+const FEMUR_ROWS := 7
+const FEMUR := Vector4(0.02, 0.42, 0.038, 0.07)
+const FEMUR_SIDES := 6
+const C3_NORTH: Array[float] = [-7.1, -3.9]
+const C3_WEST: Array[float] = [-5.85, -9.15]
+
+
+func _ossuary(sm: Masonry) -> void:
+	var bone := sm.stone(0.0, BONE)
+	bone.set_meta(ArenaKit.PAINT_OWN, {&"paint_ref": STY_PAINT_REF * STY_LIGHT_STONE, &"paint_pool_gain": STY_LID_POOL})
+	var k := 0
+	for x in FEMUR_STACKS:
+		_femurs(sm, Vector2(x, _north), Vector2(0, -1), bone, k)
+		k += 1
+	for z in FEMUR_STACKS_WEST:
+		_femurs(sm, Vector2(_west, z), Vector2(-1, 0), bone, k)
+		k += 1
+	for x in C3_NORTH:
+		offerings(Vector2(x, _north - WALL_SET * 0.5), Vector2(1, 0), LEDGE, 3, 91 + k)
+		k += 1
+	for z in C3_WEST:
+		offerings(Vector2(_west - WALL_SET * 0.5, z), Vector2(0, 1), LEDGE, 3, 91 + k)
+		k += 1
+
+
+## One stack of femurs on the ledge at the floor's edge point `at`, the wall `out` of it.
+func _femurs(sm: Masonry, at: Vector2, out: Vector2, bone: Material, seed_: int) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = 5501 + seed_
+	var along := Vector2(-out.y, out.x)
+	var o3 := Vector3(out.x, 0, out.y)
+	var a3 := Vector3(along.x, 0, along.y)
+	var lying := Basis(a3, PI * 0.5) if absf(out.y) > 0.5 else Basis(a3, -PI * 0.5)
+	var step := FEMUR.z * 2.05
+	for row in FEMUR_ROWS:
+		var y := LEDGE + FEMUR.z + row * FEMUR.z * 1.75
+		var n := int(FEMUR_STACK / step) - (1 if row % 2 == 1 else 0) - int(row / 3.0)
+		for i in n:
+			var s := -n * step * 0.5 + step * (i + 0.5)
+			var head := Vector3(at.x, y, at.y) + a3 * s + o3 * (0.04 + r.randf_range(0.0, 0.03))
+			_femur(sm, head, o3, bone, lying)
+	# a few lying along the wall on top
+	var top := LEDGE + FEMUR.z + FEMUR_ROWS * FEMUR.z * 1.75 + FEMUR.z * 0.6
+	for i in 3:
+		var c := Vector3(at.x, top + i * FEMUR.z * 1.6, at.y) + o3 * (0.12 + 0.02 * i) + a3 * r.randf_range(-0.2, 0.2)
+		_femur(sm, c - a3 * FEMUR.y * 0.5, a3, bone, Basis(o3, PI * 0.5))
+
+
+## A femur from its head at `head` running `dir`: the shaft and a knob at each end, few sides.
+func _femur(sm: Masonry, head: Vector3, dir: Vector3, bone: Material, lying: Basis) -> void:
+	for part in 3:
+		var radius := FEMUR.x if part == 0 else FEMUR.z * (1.0 if part == 1 else 0.85)
+		var length := FEMUR.y if part == 0 else FEMUR.w
+		var along := FEMUR.y * 0.5 if part == 0 else (FEMUR.w * 0.5 if part == 1 else FEMUR.y - FEMUR.w * 0.5)
+		var mi := sm.shaft(Vector3.ZERO, radius, length, bone)
+		var c := mi.mesh as CylinderMesh
+		c.radial_segments = FEMUR_SIDES
+		c.bottom_radius = radius
+		mi.basis = lying
+		mi.position = head + dir * along
 
 
 ## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Cripta), in the north bays, away from the crown (A) and the veiled

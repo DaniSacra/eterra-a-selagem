@@ -91,7 +91,7 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	_rng.seed = seed_
 	# an arena's air (ArenaRoom.air) goes back before the next room is built (the old room leaves after it)
-	ArenaRoom.leave_air()
+	ArenaRoom.leave_air(self)
 	hall_look = null
 	_hall = layout == null
 	self.layout = layout
@@ -493,9 +493,16 @@ var _mood: RoomMood
 
 ## The room's mood (RoomMood): what a boss turns the air of the room toward, whatever the scenery. The portal's lights
 ## (and those it tints) stay the portal's.
+## The mood is the world's air's owner (RoomMood.of, DT-RS1), handed this room as its scenery; a room built outside a
+## world with air (some labs) gets one of its own.
 func mood() -> RoomMood:
 	if _mood == null:
-		_mood = RoomMood.new(self)
+		_mood = RoomMood.of(self)
+		if _mood == null:
+			_mood = RoomMood.new()
+			add_child(_mood)
+		_mood.scenery = self
+		_mood.keep.clear()
 		if _kit != null:
 			for p in _kit.portals:
 				for k in range(1, p.size()):
@@ -503,8 +510,13 @@ func mood() -> RoomMood:
 			for i in _kit.portal_tinted:
 				for t in _kit.portal_tinted[i]:
 					_mood.keep.append(t[0])
-		add_child(_mood)
 	return _mood
+
+
+## The room leaves: its mood ends with it (the next room starts in its own air) and its fires are let go.
+func _exit_tree() -> void:
+	if _mood != null and is_instance_valid(_mood):
+		_mood.leave(self)
 
 
 ## Morvath is sealed (cycle 9): over `seconds` his energy gathers from where he fell (`from`, x and z) back into the
@@ -641,6 +653,9 @@ func _build_arena(l: RoomLayout, exit_count: int, seed_: int) -> void:
 ## use (the profile had put the world's on it); so does the Seal Chamber (BossChamber.restyle). The hall has no air of
 ## its own (the profile's is its).
 func restyle() -> void:
+	var owner_ := RoomMood.of(self, false)
+	if owner_ != null:
+		owner_.apply()
 	if look != null and is_instance_valid(look):
 		look.redress_air()
 	if chamber != null and is_instance_valid(chamber) and chamber.has_method(&"restyle"):

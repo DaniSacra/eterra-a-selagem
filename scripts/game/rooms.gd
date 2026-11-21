@@ -122,6 +122,9 @@ var plates: PlateFloor
 var bands: BandFloor
 ## RP-09: the room's cracked columns that topple, or null.
 var columns: ColumnFloor
+## A1: RP-20 the stones from the vault, RP-12 the oil urns (null: none in this fight).
+var drops: DropFloor
+var urns: UrnFloor
 var _slab_node: Node3D
 var _slab_sign: DoorSign
 ## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
@@ -467,6 +470,10 @@ func _step_fight(dt: float) -> void:
 		bands.step(dt)
 	if columns != null:
 		columns.step(dt)
+	if drops != null:
+		drops.step(dt)
+	if urns != null:
+		urns.step(dt)
 	if _wave_wait > 0.0:
 		_wave_wait -= dt
 		if _wave_wait <= 0.0:
@@ -1186,12 +1193,25 @@ func _start_hazard(layout: RoomLayout) -> void:
 			c.stop()
 	if layout == null or layout.hazard == null:
 		return
-	if layout.hazard.kind == HazardDef.Kind.LINE:
-		bands = BandFloor.new(game, layout.hazard)
-	elif layout.hazard.kind == HazardDef.Kind.PLATES:
-		plates = PlateFloor.new(game, layout.hazard, EncounterGen.progress(stage, room.depth) >= layout.hazard.from_progress)
-	else:
-		runes = RuneFloor.new(game, layout.hazard, _rng)
+	_start_one(layout.hazard)
+	if layout.hazard.also != null:
+		_start_one(layout.hazard.also)  # A1: the room's second hazard (the stones of the vault, the oil urns)
+
+
+func _start_one(def: HazardDef) -> void:
+	var progress := EncounterGen.progress(stage, room.depth)
+	match def.kind:
+		HazardDef.Kind.LINE:
+			bands = BandFloor.new(game, def)
+		HazardDef.Kind.PLATES:
+			plates = PlateFloor.new(game, def, progress >= def.from_progress)
+		HazardDef.Kind.DROPS:
+			# the room's own dice (the same fight drops the same way by any path, never the run's)
+			drops = DropFloor.new(game, def, hash([room.fight_seed, room.depth, 2071]), progress >= def.from_progress)
+		HazardDef.Kind.URNS:
+			urns = UrnFloor.new(game, def, progress >= def.from_progress)
+		_:
+			runes = RuneFloor.new(game, def, _rng, progress >= def.crystal_from)
 
 
 func _stop_runes() -> void:
@@ -1209,10 +1229,24 @@ func _stop_runes() -> void:
 		game.room_tally.hazard(bands.enemy_damage, bands.kills, bands.hazard.fired, String(bands.hazard.def.band_source),
 			bands.tally())
 		bands = null
+	if drops != null:
+		drops.stop()
+		game.room_tally.hazard(drops.enemy_damage, drops.kills, drops.hazard.fired, String(Ground.ROCKS_SOURCE),
+			drops.tally())
+		drops = null
+	if urns != null:
+		urns.stop()
+		var t := urns.tally()
+		t["oil_hero_damage"] = game.room_tally.hurt_in_room(String(Ground.OIL_SOURCE))
+		game.room_tally.hazard(urns.enemy_damage, urns.kills, urns.hazard.blasts, String(Ground.URN_SOURCE), t)
+		urns = null
 	if runes == null:
 		return
 	runes.stop()
-	game.room_tally.hazard(runes.enemy_damage, runes.kills, runes.hazard.fired)
+	var rt := runes.tally()
+	if not rt.is_empty():
+		rt["crystal_hero_damage"] = game.room_tally.hurt_in_room(String(Ground.CRYSTAL_SOURCE))
+	game.room_tally.hazard(runes.enemy_damage, runes.kills, runes.hazard.fired, "runes", rt)
 	runes = null
 
 

@@ -21,6 +21,12 @@ const VICTORY_RISE := 0.5
 const SEAL_DELAY := 0.15
 const SEAL_CLOSE := 1.1
 const SUMMARY_AT := 2.0
+## Seconds the lion's light takes to grow once the ring closes (QW-115).
+const LION_GLOW := 0.6
+## The veil under the sealing's words (QW-115): a dark ellipse, this much wider and taller than the words, this dark
+## in its middle; the fight behind never reads through the title.
+const WORDS_VEIL_PAD := Vector2(150, 50)
+const WORDS_VEIL := 0.72
 const SUMMARY_RISE := 0.5
 const SEAL_SIZE := 92.0
 ## The seal alone in the middle of the screen while it closes, and the extra shade under it.
@@ -61,6 +67,9 @@ var _summary: Control
 var _sealing: Control
 var _body: Control
 var _seal: SealEmblem
+## QW-115: the veil under the sealing's words and the column they stand in.
+var _words_veil: TextureRect
+var _words: VBoxContainer
 var _mastery_report: MasteryReport
 var _tween: Tween
 
@@ -198,7 +207,38 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 	alone.custom_minimum_size.x = VICTORY_WIDTH
 	center.add_child(alone)
 	_seal = _sealed_head(alone, SEAL_BIG)
+	_veil_words(alone)
 	_play_sealing()
+
+
+## QW-115: a soft dark ellipse under the title and the line of the sealing (the seal's halo stays clear over it).
+func _veil_words(column: VBoxContainer) -> void:
+	_words_veil = TextureRect.new()
+	_words_veil.name = "words_veil"
+	_words_veil.texture = SealEmblem.halo_texture()
+	_words_veil.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_words_veil.stretch_mode = TextureRect.STRETCH_SCALE
+	_words_veil.modulate = Color(0.01, 0.0, 0.02, WORDS_VEIL)
+	_words_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_sealing.add_child(_words_veil)
+	_sealing.move_child(_words_veil, 1)
+	_words = column
+	column.resized.connect(_fit_words_veil)
+	column.item_rect_changed.connect(_fit_words_veil)
+	_fit_words_veil.call_deferred()
+
+
+func _fit_words_veil() -> void:
+	if not is_instance_valid(_words) or not is_instance_valid(_words_veil):
+		return
+	var title := _words.get_node_or_null(^"title") as Control
+	var sub := _words.get_node_or_null(^"sub") as Control
+	if title == null or sub == null:
+		return
+	var words := title.get_global_rect().merge(sub.get_global_rect())
+	var at := words.grow_individual(WORDS_VEIL_PAD.x, WORDS_VEIL_PAD.y, WORDS_VEIL_PAD.x, WORDS_VEIL_PAD.y)
+	_words_veil.global_position = at.position
+	_words_veil.size = at.size
 
 
 ## The seal, "Morvath foi selado" and the line under it.
@@ -231,7 +271,9 @@ func _play_sealing() -> void:
 	_tween.tween_property(self, ^"modulate:a", 1.0, VICTORY_RISE)
 	_tween.parallel().tween_property(_seal, ^"closed", 1.0, SEAL_CLOSE).set_delay(SEAL_DELAY) \
 			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	_tween.parallel().tween_property(_seal, ^"lit", 1.0, 0.45).set_delay(SEAL_DELAY + SEAL_CLOSE * 0.85)
+	# the lion's old gold grows as the ring meets (QW-115: 0.6 s)
+	_tween.parallel().tween_property(_seal, ^"lit", 1.0, LION_GLOW).set_delay(SEAL_DELAY + SEAL_CLOSE * 0.85) \
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_tween.parallel().tween_property(_body, ^"modulate:a", 1.0, SUMMARY_RISE).set_delay(SUMMARY_AT)
 	_tween.parallel().tween_property(_sealing, ^"modulate:a", 0.0, SUMMARY_RISE).set_delay(SUMMARY_AT)
 	_tween.parallel().tween_callback(_wake_mastery).set_delay(SUMMARY_AT)

@@ -25,6 +25,12 @@ const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AX
 const STICK_DEADZONE := 0.3
 ## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs
 ## (Configurações, Como Jogar, the Livro's chapters, the Compendium's index; DT-103, UiKit.step_tabs).
+## The actions whose gamepad button the player may change (DT-103): those with a button, not the stick's walking.
+const PAD_REMAPPABLE: Array[StringName] = [&"light_attack", &"heavy_attack", &"dodge", &"cast", &"ultimate", &"map", &"interact"]
+## The gamepad's buttons of Godot's menu actions (confirm, back).
+const MENU_BUTTONS := {&"ui_accept": JOY_BUTTON_A, &"ui_cancel": JOY_BUTTON_B}
+## Where a gamepad binding is kept in the saved bindings (beside the key bindings, which use the action's own name).
+const PAD_PREFIX := "pad:"
 const MENU_KEYS := {&"tab_prev": [JOY_BUTTON_LEFT_SHOULDER, KEY_PAGEUP], &"tab_next": [JOY_BUTTON_RIGHT_SHOULDER, KEY_PAGEDOWN]}
 
 ## The last device touched was a gamepad (device_changed when it flips, for hints that name the keys live).
@@ -95,15 +101,27 @@ func apply_bindings() -> void:
 				var mb := InputEventMouseButton.new()
 				mb.button_index = DEFAULT_MOUSE[action]
 				InputMap.action_add_event(action, mb)
-		if DEFAULT_PAD.has(action):
+		var button := pad_button_for(action, saved)
+		if button >= 0:
 			var jb := InputEventJoypadButton.new()
-			jb.button_index = DEFAULT_PAD[action]
+			jb.button_index = button as JoyButton
 			InputMap.action_add_event(action, jb)
 		if PAD_AXES.has(action):
 			var jm := InputEventJoypadMotion.new()
 			jm.axis = PAD_AXES[action][0]
 			jm.axis_value = PAD_AXES[action][1]
 			InputMap.action_add_event(action, jm)
+	# Godot's own menu actions have no gamepad button in this project's map: A confirms and B goes back (DT-103), as
+	# UiKit.MENU_PAD and the action bar say
+	for action: StringName in MENU_BUTTONS:
+		if not InputMap.has_action(action):
+			continue
+		var has := InputMap.action_get_events(action).any(func(ev: InputEvent) -> bool:
+			return ev is InputEventJoypadButton and (ev as InputEventJoypadButton).button_index == MENU_BUTTONS[action])
+		if not has:
+			var jb := InputEventJoypadButton.new()
+			jb.button_index = MENU_BUTTONS[action]
+			InputMap.action_add_event(action, jb)
 	for action: StringName in MENU_KEYS:
 		if InputMap.has_action(action):
 			InputMap.erase_action(action)
@@ -134,6 +152,34 @@ static func keys_for(action: StringName, saved: Dictionary) -> Array:
 		if not taken.has(int(k)):
 			return [k]
 	return own
+
+
+## The gamepad button of an action given the saved bindings: the player's own ("pad:<action>", DT-103), else its
+## default (DEFAULT_PAD), -1 for none.
+static func pad_button_for(action: StringName, saved: Dictionary) -> int:
+	var own: Variant = saved.get(PAD_PREFIX + String(action))
+	if own is Dictionary and (own as Dictionary).get("type") == "pad":
+		return int((own as Dictionary).get("code", -1))
+	return int(DEFAULT_PAD.get(action, -1))
+
+
+## Stores a gamepad button as an action's button (DT-103: remapping on the gamepad, from the Configurações). Only the
+## actions with a button (PAD_REMAPPABLE; walking stays on the stick). A button another of them has is swapped: that
+## action takes this one's old button. Returns false for anything else.
+func rebind_pad(action: StringName, event: InputEvent) -> bool:
+	var jb := event as InputEventJoypadButton
+	if jb == null or not PAD_REMAPPABLE.has(action):
+		return false
+	var saved: Dictionary = Save.option("bindings")
+	var was := pad_button_for(action, saved)
+	var button := int(jb.button_index)
+	for other in PAD_REMAPPABLE:
+		if other != action and pad_button_for(other, saved) == button:
+			saved[PAD_PREFIX + String(other)] = {"type": "pad", "code": was}
+	saved[PAD_PREFIX + String(action)] = {"type": "pad", "code": button}
+	Save.set_option("bindings", saved)
+	apply_bindings()
+	return true
 
 
 ## A binding as the save keeps it ({type: key or mouse, code}), or empty for an event that cannot be bound.

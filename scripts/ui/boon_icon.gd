@@ -99,9 +99,14 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 				var a := TAU * k / 7.0
 				var d := Vector2(cos(a), sin(a))
 				ci.draw_colored_polygon(PackedVector2Array([c + d * r * 0.25 + d.orthogonal() * r * 0.12, c + d * r, c + d * r * 0.25 - d.orthogonal() * r * 0.12]), w)
-		5:  # great falling blade of ice
-			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.3, -r), c + Vector2(r * 0.3, -r), c + Vector2(0, r)]), w)
-			ci.draw_line(c + Vector2(-r * 0.6, -r * 0.55), c + Vector2(r * 0.6, -r * 0.55), w, th, true)
+		5:  # great falling shard of ice: a faceted icicle with two chips beside it, no bar across (QW-117: it read "†")
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.36, -r), c + Vector2(r * 0.12, -r * 0.92),
+				c + Vector2(r * 0.34, -r * 0.55), c + Vector2(0, r)]), w)
+			ci.draw_line(c + Vector2(-r * 0.05, -r * 0.92), c + Vector2(0, r * 0.7), accent, th * 0.6, true)
+			for chip: Vector3 in [Vector3(-0.62, 0.35, 0.16), Vector3(0.58, 0.55, 0.13)]:
+				var p := c + Vector2(chip.x, chip.y) * r
+				var k := chip.z * r
+				ci.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -k * 1.6), p + Vector2(k, 0), p + Vector2(0, k * 1.2), p + Vector2(-k, 0)]), w)
 		6:  # heart
 			ci.draw_circle(c + Vector2(-r * 0.32, -r * 0.2), r * 0.38, w)
 			ci.draw_circle(c + Vector2(r * 0.32, -r * 0.2), r * 0.38, w)
@@ -114,12 +119,14 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 4:
 				var a := -PI * 0.5 + (k - 1.5) * 0.5
 				ci.draw_line(c + Vector2(0, r * 0.6), c + Vector2(0, r * 0.6) + Vector2(cos(a), sin(a)) * r * 0.9, w, th * 0.6, true)
-		9, 15:  # shield with a four-pointed star of light on it (the painted Escudo da Vigília's; never a cross)
+		9, 15:  # the watch's shield: a chevron rising over a small diamond of light (QW-117: the four-pointed star on it
+			# read as a cross at 16 px; never a cross)
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.75, -r * 0.8), c + Vector2(r * 0.75, -r * 0.8), c + Vector2(r * 0.7, 0.1 * r), c + Vector2(0, r), c + Vector2(-r * 0.7, 0.1 * r)]), w)
-			var s := c + Vector2(0, -r * 0.12)
-			var t := r * 0.09
-			ci.draw_colored_polygon(PackedVector2Array([s + Vector2(0, -r * 0.55), s + Vector2(t, -t), s + Vector2(r * 0.4, 0), s + Vector2(t, t),
-				s + Vector2(0, r * 0.62), s + Vector2(-t, t), s + Vector2(-r * 0.4, 0), s + Vector2(-t, -t)]), accent)
+			ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.46, -r * 0.05), c + Vector2(0, -r * 0.5), c + Vector2(r * 0.46, -r * 0.05)]),
+				accent, th * 1.3, true)
+			var g := c + Vector2(0, r * 0.3)
+			var d := r * 0.2
+			ci.draw_colored_polygon(PackedVector2Array([g + Vector2(0, -d), g + Vector2(d * 0.8, 0), g + Vector2(0, d), g + Vector2(-d * 0.8, 0)]), accent)
 		10, 16, 17:  # wing (light steps)
 			for k in 4:
 				var y := -r * 0.6 + k * r * 0.38
@@ -159,9 +166,14 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for x in [-0.42, 0.42]:
 				ci.draw_line(c + Vector2(r * x, -r * 0.6), c + Vector2(0, r * 0.9), accent, th * 0.7, true)
 				ci.draw_line(c + Vector2(r * x, -r * 0.6), c + Vector2(r * x * 2.0, -r * 0.15), accent, th * 0.6, true)
-		110:  # the cleave: the blade coming straight down onto a split in the floor
-			ci.draw_line(c + Vector2(0, -r * 0.95), c + Vector2(0, r * 0.35), w, th * 1.5, true)
-			ci.draw_line(c + Vector2(-r * 0.4, -r * 0.45), c + Vector2(r * 0.4, -r * 0.45), w, th, true)
+		110:  # the cleave: a blade without its guard driving down aslant into a split in the floor, two chips flying
+			# (QW-117: blade and guard upright read as a cross)
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.62, -r * 0.95), c + Vector2(-r * 0.34, -r * 0.98),
+				c + Vector2(r * 0.12, r * 0.45), c + Vector2(-r * 0.04, r * 0.5)]), w)
+			for chip: Vector3 in [Vector3(-0.55, 0.3, 0.12), Vector3(0.5, 0.2, 0.1)]:
+				var p := c + Vector2(chip.x, chip.y) * r
+				var k := chip.z * r
+				ci.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -k), p + Vector2(k, 0), p + Vector2(0, k), p + Vector2(-k, 0)]), w)
 			ci.draw_polyline(PackedVector2Array([c + Vector2(-r * 0.9, r * 0.75), c + Vector2(-r * 0.4, r * 0.6), c + Vector2(-r * 0.1, r * 0.85),
 				c + Vector2(r * 0.3, r * 0.6), c + Vector2(r * 0.9, r * 0.75)]), w, th, true)
 		111:  # the Voragem: three arms turning into the middle

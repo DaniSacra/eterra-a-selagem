@@ -107,8 +107,17 @@ func _run() -> void:
 	_check(text.contains("Sala %d de" % depth), "the page tells the room in focus: " + text.replace("\n", " / "))
 	await _tap(_key(KEY_UP))
 	_check(int(graph.get(&"focus_id")) == first, "up comes back")
+	# MAP-07: the focus on a room behind an open door lights that door in the room; it stays lit after the map closes
+	var doors: Array = graph.get(&"map").get(&"doors")
+	var lit: int = _map().call(&"lit_door")
+	_check(doors.has(first) == (lit == doors.find(first)), "the room in focus lights its door (%d)" % lit)
+	var lights := (_game.get(&"arena") as Node).find_children("MapDoorLight", "", true, false)
+	_check(lights.size() == (1 if lit >= 0 else 0), "one light over the door (%d)" % lights.size())
 	await _tap(_key(KEY_M))
 	_check(_mode() == PLAY and _map() == null, "M closes it")
+	if lit >= 0:
+		_check(float(hud.get(&"_door_t")) > 0.0, "the HUD points at the door a moment after")
+		_check(not (_game.get(&"arena") as Node).find_children("MapDoorLight", "", true, false).is_empty(), "and the door stays lit")
 	await _tap(_key(KEY_M))
 	await _tap(_key(KEY_ESCAPE))
 	_check(_mode() == PLAY, "Esc closes it and the pause stays shut")

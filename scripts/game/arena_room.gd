@@ -250,9 +250,15 @@ func build(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> void:
 		piece(o)
 		if o.hits_to_fall > 0:
 			toppling[o] = m.take_since(from)  # (RP-09: it may topple, so it stays out of the merge)
+			# SW-G7 3.6: the crack up its side leans with it
+			var hp := HazardPiece.column(self, o)
+			_hazard[&"column"][o] = hp
+			for mi in hp.get_children():
+				toppling[o].append(mi)
 	_doors()
 	_light()
 	dress()
+	_hazard_pieces()
 	m.merge()
 	_dress_air()
 	_stylize()
@@ -319,6 +325,26 @@ func clear_of_plates(at: Vector2, size: Vector2) -> bool:
 	return true
 
 
+## True when p lies on a stretch of floor that strikes (a slab or a strip of HazardDef.PLATES, a band of LINE), grown
+## by `grow` m: drawn things that could read as one more trap keep off it.
+func on_hazard(p: Vector2, grow := PLATE_CLEAR) -> bool:
+	if layout == null or layout.hazard == null:
+		return false
+	var hz := layout.hazard
+	for r: Rect2 in hz.plates:
+		if r.grow(grow).has_point(p):
+			return true
+	for r: Rect2 in hz.bands:
+		if r.grow(grow).has_point(p):
+			return true
+	for sg in hz.strips:
+		var a := Vector2(sg.x, sg.y)
+		var b := Vector2(sg.z, sg.w)
+		if Geometry2D.get_closest_point_to_segment(p, a, b).distance_to(p) < hz.strip_width * 0.5 + grow:
+			return true
+	return false
+
+
 var _style := {}
 
 
@@ -340,6 +366,9 @@ func _stylize() -> void:
 			if n != null:
 				ArenaKit.style_only(n)
 	_break_rails()
+	_sworn_p2()
+	if _classic_m != null:
+		_classic_m.merge()
 	kit.stylize(_style, self, tomb)
 	_style_ruins()
 	if _style.has(&"air"):
@@ -784,13 +813,20 @@ func broken_edge(a: Vector2, b: Vector2, out: Vector2, faces: SurfaceTool) -> vo
 
 ## A balustrade standing BALUSTRADE_OUT outside the edge a to b; broken: in runs with gaps and a fallen stump. On an
 ## edge the camera looks across (its outside toward the camera) it opens round the paladin behind it (see_through).
-func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat: Material = null) -> void:
+func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat: Material = null, trim := false) -> void:
 	if mat == null:
 		var yaw := deg_to_rad(Feel.live().cam_yaw)
 		mat = see(stone()) if out.dot(Vector2(sin(yaw), cos(yaw))) > 0.2 else stone()
 	var length := a.distance_to(b)
 	var along := (b - a) / maxf(length, 0.001)
 	var off := out * BALUSTRADE_OUT
+	if trim and not broken:
+		# RS-C7: an end whose post would stand on the walkable floor (where the edge meets a deck or a door's mouth)
+		# steps back along the edge until the post is clear of it
+		a = _rail_end(a, along, off)
+		b = _rail_end(b, -along, off)
+		if a.distance_to(b) < Masonry.POST.x * 2.0 or (b - a).dot(along) <= 0.0:
+			return
 	if not broken:
 		m.balustrade(Vector3(a.x + off.x, 0.0, a.y + off.y), Vector3(b.x + off.x, 0.0, b.y + off.y), true, mat)
 		_rails.append([a + off, b + off, out])
@@ -816,6 +852,32 @@ func balustrade_edge(a: Vector2, b: Vector2, out: Vector2, broken := false, mat:
 			var stub := m.box(Vector3(g.x, 0.3, g.y), Vector3(Masonry.POST.x * 0.8, 0.6, Masonry.POST.z * 0.8), r.randf() * 0.4, mat)
 			stub.rotate_object_local(Vector3.BACK, r.randf_range(-0.15, 0.15))
 		s += gap
+
+
+## RS-C7: the end `p` of a balustrade moved `along` (into the run) by RAIL_TRIM_STEP until its end post (offset `off`
+## out of the edge, its corners) is off the walkable floor (and off a door's mouth), at most RAIL_TRIM_MAX.
+const RAIL_TRIM_STEP := 0.05
+const RAIL_TRIM_MAX := 2.0
+
+
+func _rail_end(p: Vector2, along: Vector2, off: Vector2) -> Vector2:
+	var f := arena.shape()
+	var across := off.normalized()
+	var s := 0.0
+	while s < RAIL_TRIM_MAX:
+		var c := p + along * s + off
+		var clear := true
+		for k: Vector2 in [Vector2(-1, -1), Vector2(-1, 1), Vector2(1, -1), Vector2(1, 1)]:
+			var q := c + along * k.x * Masonry.POST.x * 0.6 + across * k.y * Masonry.POST.z * 0.6
+			if f.contains(q, 0.0):
+				clear = false
+			for e in layout.exits:
+				if e.mouth.has_point(q):
+					clear = false
+		if clear:
+			return p + along * s
+		s += RAIL_TRIM_STEP
+	return p + along * s
 
 
 ## The thread of old gold inlaid in the floor FILET.y in from the bare edge a to b (the limit drawn on the floor).
@@ -876,6 +938,8 @@ func piece(o: ArenaObstacle) -> void:
 			drums(o)
 		&"quiet":
 			pass
+		&"bolt_slit":
+			_hazard_slit(o)
 		&"block":
 			if o.height <= 1.0 and o.shape == ArenaObstacle.Shape.BOX:
 				var ax := Vector2(cos(o.yaw), sin(o.yaw)) * (o.half.x - o.half.y)
@@ -1229,6 +1293,12 @@ func deck(r: Rect2) -> void:
 
 
 ## True when an edge facing `out` (on the floor) is one the camera looks across (its outside toward the camera).
+## The way toward the camera on the floor (the camera looks from there, Feel.cam_yaw).
+static func toward_camera() -> Vector2:
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	return Vector2(sin(yaw), cos(yaw))
+
+
 static func faces_camera(out: Vector2) -> bool:
 	var yaw := deg_to_rad(Feel.live().cam_yaw)
 	return out.dot(Vector2(sin(yaw), cos(yaw))) > 0.2
@@ -1324,6 +1394,7 @@ func wall(a: Vector2, b: Vector2, out: Vector2, height: float, openings: Array[V
 		thick := FACE_THICK) -> void:
 	if mat == null:
 		mat = ashlar()
+	_wall_runs.append([a, b, out, height, openings.duplicate()])
 	var length := a.distance_to(b)
 	var t0 := FACE_SET
 	var t1 := FACE_SET + thick
@@ -1698,6 +1769,8 @@ func under_look() -> Dictionary:
 
 
 var _runs: Array = []
+## The walls the room stood (wall()): [a, b, out, height, openings].
+var _wall_runs: Array = []
 ## The balustrades the room stood along its edges (balustrade_edge): [from, to, out] on the floor plane.
 var _rails: Array = []
 
@@ -1759,6 +1832,8 @@ func _break_rails() -> void:
 			if _near_door(p, out, RAIL_IVY.x):
 				continue
 			kinds += 1
+			if _on_merlons(p):
+				continue  # (SW-F3: the merlons take the rail's place, its turn kept so the rest stands as before)
 			var seed_ := hash(Vector2i(p * 10.0))
 			if out.dot(eye) <= 0.2:
 				if kind == 1:
@@ -1908,6 +1983,7 @@ func moon_shaft(target: Vector2, color: Color, energy: float, cone: float, heigh
 func breath(i: int, look: StringName) -> MeshInstance3D:
 	if i < 0 or i >= exits_used:
 		return null
+	open_gate(i)
 	var e := layout.exits[i]
 	var u := e.inward
 	var depth := absf(e.mouth.size.dot(u))
@@ -2084,77 +2160,454 @@ func _count_shadows() -> int:
 
 # ---------- the air ----------
 
-## The world's air as it was before an arena dressed it, the environment and the moon, and the room that dressed it
-## last (only that one gives it back).
-static var _saved: Dictionary = {}
-static var _air_env: Environment
-static var _air_moon: DirectionalLight3D
-static var _dresser: ArenaRoom
+## Takes any room's air off the world (Arena.build calls it before a room is built: the old room leaves only after the
+## new one stands). The world's air has one owner (RoomMood, DT-RS1); `at` is a node in that world (none: the main one).
+static func leave_air(at: Node = null) -> void:
+	if at == null:
+		at = (Engine.get_main_loop() as SceneTree).root  # (any world's: tests and labs)
+	var owner_ := RoomMood.of(at, false)
+	if owner_ != null:
+		owner_.undress_room()
 
 
-## Puts the world's air back as it was if an arena dressed it (Arena.build calls it before any room is built: the
-## old room leaves only after the new one stands).
-static func leave_air() -> void:
-	if _air_env != null and not _saved.is_empty():
-		BossChamber.restore_air(_air_env, _air_moon if is_instance_valid(_air_moon) else null, _saved)
-		# the air was saved in the look of that moment: what the visual profile holds goes back to the look in use
-		VisualProfile.refresh()
-	_saved = {}
-	_dresser = null
-
-
+## The room's air for both looks to the owner of the air (RoomMood): air(), and in the stylized look its style's air
+## over it. Empty in both: the world's own.
 func _dress_air() -> void:
-	var want := air()
-	if VisualProfile.stylized() and _style.has(&"air"):
-		want = want.merged(_style[&"air"], true)
-	if want.is_empty() or not is_inside_tree():
+	var owner_ := RoomMood.of(self)
+	if owner_ == null:
 		return
-	var e := get_world_3d().environment
-	if e == null:
-		for n in get_tree().root.find_children("*", "WorldEnvironment", true, false):
-			e = (n as WorldEnvironment).environment
-	if e == null:
-		return
-	var moon: DirectionalLight3D = null
-	for n in get_tree().root.find_children("*", "DirectionalLight3D", true, false):
-		moon = n as DirectionalLight3D
-	if _saved.is_empty():
-		_air_env = e
-		_air_moon = moon
-		_saved = BossChamber.air_of(e, moon)
-	_dresser = self
-	# the world's own energy, the classic one whatever the look it was taken in (VisualProfile scales it for the hall)
-	var base_energy: float = VisualProfile.classic_of(e, &"ambient_light_energy", _saved[&"ambient_light_energy"])
-	e.background_mode = Environment.BG_COLOR
-	e.background_color = want.get(&"sky", e.background_color)
-	e.fog_light_color = want.get(&"fog", e.fog_light_color)
-	if want.has(&"fog_depth"):
-		var fd: Vector2 = want[&"fog_depth"]
-		e.fog_depth_begin = fd.x
-		e.fog_depth_end = fd.y
-	e.ambient_light_color = want.get(&"ambient", e.ambient_light_color)
-	# a share of the world's energy (the browser's renderer compensates its own: Game.COMPAT_*)
-	e.ambient_light_energy = base_energy * float(want.get(&"ambient_gain", 1.0))
-	if moon != null:
-		moon.light_color = want.get(&"moon", moon.light_color)
-		moon.light_energy = want.get(&"moon_energy", moon.light_energy)
-		moon.shadow_enabled = want.get(&"moon_shadow", moon.shadow_enabled)
+	var classic := air()
+	var styled := classic.merged(_style[&"air"], true) if _style.has(&"air") else classic
+	owner_.dress_room(self, RoomMood.air_values(classic), RoomMood.air_values(styled))
 
 
-## The room's air again for the look in use, after the look changed (F7: VisualProfile put the world's values of the
-## new look on the environment and the moon; Arena.restyle). Only the room that dressed the air does it.
+## The room's air again for the look in use, after the look changed (F7; Arena.restyle): the owner of the air holds both
+## looks and puts the one in use.
 func redress_air() -> void:
-	if _dresser == self:
-		# what this room's air leaves alone comes back to the world's (the moon's energy of the look, its shadow)
-		if _air_moon != null and is_instance_valid(_air_moon) and _saved.has(&"moon"):
-			_air_moon.shadow_enabled = (_saved[&"moon"] as Array)[3]
-		# and the world's sky and fog, which no look varies (lot D: the altar's classic air leaves its fog alone)
-		if _air_env != null:
-			for k: StringName in [&"background_color", &"fog_light_color", &"fog_depth_begin", &"fog_depth_end"]:
-				_air_env.set(k, _saved[k])
-		_dress_air()
+	var owner_ := RoomMood.of(self, false)
+	if owner_ != null and owner_.dresser() == self:
+		owner_.apply()
 
 
 func _exit_tree() -> void:
-	if _dresser == self:
-		leave_air()
+	var owner_ := RoomMood.of(self, false)
+	if owner_ != null:
+		owner_.undress_room(self)
+
+
+# ---------- Sworn P2 (docs/art/sworn_reference_ideas.md 3.1 and 5.2; only in the stylized look) ----------
+
+## Called by _stylize before the stylized pieces are joined and painted: the offerings at the walls' feet (SW-G4, a
+## look turns them on with sworn_offerings()), the gates of the doors (SW-G5, every room with a style) and the low dark
+## foreground rising out of the abyss beyond the edges the camera looks across (SW-G6, foreground_look()).
+func _sworn_p2() -> void:
+	if sworn_offerings():
+		_wall_offerings()
+	_gates()
+	var fg := foreground_look()
+	if not fg.is_empty():
+		_foreground(fg)
+
+
+## Pieces only the classic look shows (a stretch the stylized look draws otherwise): a Masonry under a node hidden in
+## the stylized look, joined with the room's (build merges it).
+var _classic_m: Masonry
+
+
+func classic_only() -> Masonry:
+	if _classic_m == null:
+		var node := Node3D.new()
+		node.name = "ClassicOnly"
+		kit.root.add_child(node)
+		VisualProfile.vary(node, {&"visible": false})
+		_classic_m = Masonry.new(node)
+		_classic_m.layers = m.layers
+	return _classic_m
+
+
+## SW-F3: low merlons in place of a balustrade along the edge a to b (out: away from the floor), off the floor: a curb
+## (a course MERLON_PLINTH high) and squat blocks turned 45 degrees (a zigzag seen from above and a saw-toothed top), tall and low by turns
+## (MERLON: side, high top, low top), MERLON_STEP apart, their middle BALUSTRADE_OUT out of the edge; the classic look
+## keeps its balustrade there (classic_only).
+const MERLON := Vector3(0.68, 0.98, 0.7)
+const MERLON_STEP := 0.95
+## The wall the merlons stand on (m high): a continuous course, as tall as a balustrade's foot reads.
+const MERLON_PLINTH := 0.36
+
+
+func merlons(a: Vector2, b: Vector2, out: Vector2, mat: Material = null) -> void:
+	if mat == null:
+		mat = stone()
+	var off := out * BALUSTRADE_OUT
+	classic_only().balustrade(Vector3(a.x + off.x, 0.0, a.y + off.y), Vector3(b.x + off.x, 0.0, b.y + off.y), true, mat)
+	_rails.append([a + off, b + off, out])
+	_merlon_runs.append([a + off, b + off])
+	var sm := kit.styled()
+	var length := a.distance_to(b)
+	var along := (b - a) / maxf(length, 0.001)
+	var yaw := atan2(-along.y, along.x)
+	var mid := (a + b) * 0.5 + off
+	sm.box(Vector3(mid.x, MERLON_PLINTH * 0.5, mid.y), Vector3(length, MERLON_PLINTH, MERLON.x * 0.7), yaw, mat)
+	var n := maxi(1, floori(length / MERLON_STEP))
+	for i in n:
+		var p := a + along * (length * (i + 0.5) / n) + off
+		var h := (MERLON.y if i % 2 == 0 else MERLON.z) - MERLON_PLINTH
+		sm.block(Vector3(p.x, MERLON_PLINTH, p.y), Vector3(MERLON.x, h, MERLON.x), yaw + PI * 0.25, mat)
+		# a pointed cap on the tall ones (the saw's tooth)
+		if i % 2 == 0:
+			sm.point(Vector3(p.x, MERLON_PLINTH + h, p.y), MERLON.x * 0.98, MERLON.x * 0.45, yaw + PI * 0.25, 0.0, mat)
+
+
+var _merlon_runs: Array = []
+
+
+## True when p stands along a run of merlons (merlons()).
+func _on_merlons(p: Vector2) -> bool:
+	for r: Array in _merlon_runs:
+		if Geometry2D.get_closest_point_to_segment(p, r[0], r[1]).distance_to(p) < 0.3:
+			return true
+	return false
+
+
+## SW-G4: true when the room's tall walls (wall()) get groups of offerings at their feet.
+func sworn_offerings() -> bool:
+	return false
+
+
+## SW-G4: a group of offerings where two planes meet (the foot of a wall, a ledge): 3 to 5 urns of warm clay of
+## different heights and a burnt-out candle or two in a row along `along` round `at`, standing at height `y`; every
+## piece that would stand on the walkable floor (not inside a blocking piece) is left out. Returns how many stood.
+## OFFER_GAP: from one piece to the next (m), jittered by OFFER_JITTER; OFFER_URN: the urns' heights (their belly is
+## Masonry.URN_BELLY of it, at most OFFER_RADIUS); OFFER_CANDLE: a burnt candle's height range; OFFER_CANDLE_SHARE of
+## the pieces are candles; OFFER_CLAY the warm clay (its own colour in the painted look, ArenaKit.OWN_KEEP) and
+## OFFER_CLAY_DARK a darker glaze for every third urn.
+const OFFER_GAP := 0.27
+const OFFER_JITTER := 0.05
+const OFFER_URN := Vector2(0.2, 0.46)
+const OFFER_RADIUS := 0.12
+const OFFER_CANDLE := Vector2(0.07, 0.16)
+const OFFER_CANDLE_SHARE := 0.25
+const OFFER_CLAY := Color(0.62, 0.42, 0.3)
+const OFFER_CLAY_DARK := Color(0.42, 0.3, 0.24)
+var _clay: Array[ShaderMaterial] = []
+
+
+func offerings(at: Vector2, along: Vector2, y: float, count: int, seed_: int) -> int:
+	var sm := kit.styled()
+	if _clay.is_empty():
+		for c: Color in [OFFER_CLAY, OFFER_CLAY_DARK]:
+			var mat := sm.carved(y, c / Masonry.STATUE_STONE)
+			mat.set_meta(ArenaKit.PAINT_OWN, ArenaKit.OWN_KEEP)
+			_clay.append(mat)
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_
+	var across := Vector2(-along.y, along.x)
+	var placed := 0
+	for k in count:
+		var s := (k - (count - 1) * 0.5) * OFFER_GAP + r.randf_range(-OFFER_JITTER, OFFER_JITTER)
+		var p := at + along * s + across * r.randf_range(-0.02, 0.02)
+		var candle := k > 0 and k < count - 1 and r.randf() < OFFER_CANDLE_SHARE
+		if candle:
+			if not _clear_spot(p, 0.06):
+				continue
+			sm.candle_out(Vector3(p.x, y, p.y), r.randf_range(OFFER_CANDLE.x, OFFER_CANDLE.y), 0.05)
+		else:
+			var h := r.randf_range(OFFER_URN.x, OFFER_URN.y)
+			if not _clear_spot(p, minf(h * Masonry.URN_BELLY, OFFER_RADIUS)):
+				continue
+			sm.urn(Vector3(p.x, y, p.y), h, _clay[1 if k % 3 == 2 else 0], r.randf() < 0.6)
+		placed += 1
+	return placed
+
+
+## True when a round piece of radius r at p stands nowhere on the open walkable floor (its middle and eight points of
+## its outline outside the floor or inside a blocking piece; within 0.05 of the floor's edge counts as outside).
+func _clear_spot(p: Vector2, r: float) -> bool:
+	var f := arena.shape()
+	for k in 9:
+		var q := p if k == 8 else p + Vector2.from_angle(TAU * k / 8.0) * r
+		if f.contains(q, 0.05) and not arena.overlaps(q, 0.0):
+			return false
+	return true
+
+
+## SW-G4: false where a look keeps the foot of its wall for something of its own (a stele, a pedestal).
+func offer_free(_p: Vector2) -> bool:
+	return true
+
+
+## SW-G4 along the tall walls (facing north or west) of the room: a group every OFFER_EVERY m from OFFER_FIRST in, at
+## the wall's foot on its sill (FACE_SET * 0.5 out of the edge, y OFFER_SILL), never in front of an opening down to the
+## floor, a door or the way in (OFFER_CLEAR of the paladin's spawn).
+const OFFER_EVERY := 5.5
+const OFFER_FIRST := 1.6
+const OFFER_SILL := 0.06
+const OFFER_CLEAR := 3.5
+
+
+func _wall_offerings() -> void:
+	for w: Array in _wall_runs:
+		var a: Vector2 = w[0]
+		var b: Vector2 = w[1]
+		var out: Vector2 = w[2]
+		var openings: Array = w[4]
+		if not _tall(out):
+			continue
+		var length := a.distance_to(b)
+		var along := (b - a) / maxf(length, 0.001)
+		var s := OFFER_FIRST
+		var g := 0
+		while s < length - 1.0:
+			var p := a + along * s + out * FACE_SET * 0.5
+			var free := not _near_door(p, out, 1.6) and p.distance_to(layout.hero_spawn) > OFFER_CLEAR and offer_free(p)
+			for o: Vector4 in openings:
+				if o.z <= 0.01 and s > o.x - 0.8 and s < o.y + 0.8:
+					free = false
+			if free:
+				offerings(p, along, OFFER_SILL, 3 + (g % 3), hash(Vector2i(p * 10.0)))
+				g += 1
+			s += OFFER_EVERY
+
+
+## SW-G5: an iron gate in the mouth of every door used, shut through the fight, that opens when the doors do (breath()
+## calls open_gate): two leaves on hinges at the mouth's sides swinging out (away from the room) by GATE_SWING, or, in
+## a door on the side the camera looks from (its gate would hide the paladin at the edge), a low grille that sinks into
+## the steps by GATE_SINK, GATE_PAST m past the mouth's far end (where its stairs start; the mouth is floor once the
+## door is used, the gate stays off it, open or shut). GATE: height, bar spacing, bar width; GATE_LOW the low
+## grille's height; GATE_TIME the opening (s, real time).
+const GATE := Vector3(2.5, 0.17, 0.045)
+const GATE_LOW := 0.85
+const GATE_PAST := 0.12
+const GATE_SWING := 1.75
+const GATE_SINK := 1.1
+const GATE_TIME := 0.9
+const GATE_IRON := Color(0.13, 0.125, 0.13)
+var _gates_of := {}
+
+
+func _gates() -> void:
+	var iron := StandardMaterial3D.new()
+	iron.albedo_color = GATE_IRON
+	iron.roughness = 0.55
+	iron.metallic = 0.6
+	for i in exits_used:
+		var e := layout.exits[i]
+		var u := e.inward
+		var side := Vector2(-u.y, u.x)
+		var depth := absf(e.mouth.size.dot(u))
+		var width := absf(e.mouth.size.dot(side))
+		var end := e.mouth.get_center() - u * depth * 0.5
+		# just past the mouth's far end (where its stairs start): the mouth is the way out, the gate stands across it
+		var at := end - u * GATE_PAST
+		var low := faces_camera(-u)
+		var node := Node3D.new()
+		node.name = "Gate%d" % i
+		kit.styled().root.add_child(node)
+		var leaves: Array[Node3D] = []
+		if low:
+			var grille := Node3D.new()
+			node.add_child(grille)
+			grille.position = Vector3(at.x, 0.0, at.y)
+			grille.rotation.y = atan2(side.x, side.y) - PI * 0.5
+			_gate_leaf(grille, width, GATE_LOW, -width * 0.5, iron)
+			leaves.append(grille)
+		else:
+			for sd: float in [-1.0, 1.0]:
+				var hinge := at + side * sd * width * 0.5
+				var leaf := Node3D.new()
+				node.add_child(leaf)
+				leaf.position = Vector3(hinge.x, 0.0, hinge.y)
+				# the leaf runs from its hinge toward the mouth's middle (local +x)
+				var toward := -side * sd
+				leaf.rotation.y = atan2(-toward.y, toward.x)
+				leaf.set_meta(&"swing", sd)
+				_gate_leaf(leaf, width * 0.5, GATE.x, 0.0, iron)
+				leaves.append(leaf)
+		_gates_of[i] = [leaves, low, u]
+
+
+## One leaf of a gate under `holder` (its hinge at the holder's origin, running `width` along its local +x from `from`,
+## `height` tall): vertical bars GATE.y apart with spear points, three rails, a frame; one mesh.
+func _gate_leaf(holder: Node3D, width: float, height: float, from: float, iron: Material) -> void:
+	var gm := Masonry.new(holder)
+	var bars := maxi(2, roundi(width / GATE.y))
+	for k in bars + 1:
+		var x := from + width * k / bars
+		gm.box(Vector3(x, height * 0.5, 0.0), Vector3(GATE.z, height, GATE.z), 0.0, iron, false)
+		if k > 0 and k < bars:
+			gm.point(Vector3(x, height, 0.0), GATE.z * 2.2, GATE.z * 4.0, 0.0, 0.0, iron)
+	for y: float in [0.12, height * 0.55, height - 0.1]:
+		gm.box(Vector3(from + width * 0.5, y, 0.0), Vector3(width, GATE.z * 1.4, GATE.z * 1.6), 0.0, iron, false)
+	gm.merge(0, false)
+
+
+## SW-G5: door i's gate opens (once; again does nothing).
+func open_gate(i: int) -> void:
+	if not _gates_of.has(i):
+		return
+	var g: Array = _gates_of[i]
+	_gates_of.erase(i)
+	for leaf: Node3D in g[0]:
+		if not leaf.is_inside_tree():
+			continue
+		var tw := leaf.create_tween()
+		tw.set_ignore_time_scale(true)
+		tw.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		if g[1]:
+			tw.tween_property(leaf, ^"position:y", -GATE_SINK, GATE_TIME)
+		else:
+			# outward: away from the room (the swing's sign keeps each leaf turning out of the mouth)
+			var sd: float = leaf.get_meta(&"swing")
+			tw.tween_property(leaf, ^"rotation:y", leaf.rotation.y + sd * GATE_SWING, GATE_TIME)
+
+
+## True while door i's gate is shut (tests).
+func gate_shut(i: int) -> bool:
+	return _gates_of.has(i)
+
+
+## SW-G6: the room's low foreground (empty: none). Keys: out (Vector2: from, to m out of the edge), top (Vector2: the
+## lowest and highest top over the floor's level; never within FG_FLAT of it, which reads as a floor), every (m along
+## an edge), tint (the depths' stone's tint: darker reads as a silhouette).
+func foreground_look() -> Dictionary:
+	return {}
+
+
+const FG_FACING := 0.45
+const FG_MIN := 4.0
+const FG_FLAT := 0.15
+const FG_FOOT := -14.0
+const FG_DRUM := Vector2(0.45, 0.62)
+const FG_VOUSSOIR := Vector3(0.55, 0.9, 0.5)
+const FG_CLEAR := 4.0
+
+
+func _foreground(fg: Dictionary) -> void:
+	var sm := kit.styled()
+	var yaw := deg_to_rad(Feel.live().cam_yaw)
+	var toward := Vector2(sin(yaw), cos(yaw))
+	var mat := deep().duplicate() as ShaderMaterial
+	mat.set_shader_parameter(&"tint", float(fg.get(&"tint", 0.7)))
+	var out_r: Vector2 = fg.get(&"out", Vector2(1.8, 3.0))
+	var top_r: Vector2 = fg.get(&"top", Vector2(-0.6, 0.45))
+	var every := float(fg.get(&"every", 6.0))
+	var n := 0
+	for run: Array in _runs:
+		var a: Vector2 = run[0]
+		var b: Vector2 = run[1]
+		var out: Vector2 = run[2]
+		if run[3] != Edge.OUTER or out.dot(toward) < FG_FACING or a.distance_to(b) < FG_MIN:
+			continue
+		var length := a.distance_to(b)
+		var along := (b - a) / length
+		var r := RandomNumberGenerator.new()
+		r.seed = hash(Vector2i((a + b) * 10.0)) + 7717
+		var s := r.randf_range(1.0, every * 0.6)
+		while s < length - 1.0:
+			var p := a + along * s + out * r.randf_range(out_r.x, out_r.y)
+			s += every * r.randf_range(0.8, 1.2)
+			if _near_door(a + along * s, out, 2.0) or p.distance_to(layout.hero_spawn) < FG_CLEAR or arena.shape().edge_distance(p) > -out_r.x * 0.8:
+				continue
+			var top := r.randf_range(top_r.x, top_r.y)
+			if absf(top) < FG_FLAT:
+				top = FG_FLAT if top >= 0.0 else -FG_FLAT * 2.0
+			if n % 2 == 0:
+				_fg_stump(sm, p, top, mat, r)
+			else:
+				_fg_voussoirs(sm, p, top, out, mat, r)
+			n += 1
+
+
+## A broken column rising out of the haze, its top at `top`, a drum askew on it.
+func _fg_stump(sm: Masonry, p: Vector2, top: float, mat: Material, r: RandomNumberGenerator) -> void:
+	var rad := r.randf_range(FG_DRUM.x, FG_DRUM.y)
+	sm.shaft(Vector3(p.x, FG_FOOT, p.y), rad, top - FG_FOOT - 0.3, mat)
+	var cap := sm.box(Vector3(p.x, top - 0.15, p.y), Vector3(rad * 1.7, 0.42, rad * 1.5), r.randf() * TAU, mat, false)
+	cap.rotate_object_local(Vector3.RIGHT, r.randf_range(-0.35, 0.35))
+	cap.rotate_object_local(Vector3.BACK, r.randf_range(-0.3, 0.3))
+
+
+## Two voussoirs of a fallen arch standing in the haze on a pier, leaning apart, the higher's top at `top`.
+func _fg_voussoirs(sm: Masonry, p: Vector2, top: float, out: Vector2, mat: Material, r: RandomNumberGenerator) -> void:
+	var along := Vector2(-out.y, out.x)
+	var yaw := atan2(-along.y, along.x)
+	var h := FG_VOUSSOIR.y
+	sm.box(Vector3(p.x, (top - h + FG_FOOT) * 0.5, p.y), Vector3(FG_VOUSSOIR.x * 1.8, top - h - FG_FOOT, FG_VOUSSOIR.z * 1.4), yaw, mat, false)
+	for sd: float in [-1.0, 1.0]:
+		var q := p + along * sd * FG_VOUSSOIR.x * 0.5
+		var lift := 0.0 if sd > 0.0 else -r.randf_range(0.15, 0.3)
+		var v := sm.box(Vector3(q.x, top - h * 0.5 + lift, q.y), Vector3(FG_VOUSSOIR.x, h, FG_VOUSSOIR.z), yaw, mat, false)
+		v.rotate_object_local(Vector3.BACK, sd * r.randf_range(0.18, 0.35))
+
+
+# --- SW-G7: the hazards drawn as pieces of the room (docs/art/sw_g7_hazard_grammar.md; HazardPiece) -------------------
+
+## The room's hazard pieces by the hazard's name (HazardDef.plate_source, band_source, &"slit", &"column"): an Array in
+## the hazard's order (the plates' slabs, the bands) or, for &"column", obstacle to piece. Built in both looks.
+var _hazard := {&"column": {}, &"slit": []}
+
+
+## The piece of hazard `name` number i (PlateFloor's slab i: plate_source; BandFloor's band i: band_source), or the
+## toppling column's (key the ArenaObstacle); null when the room has none. The hazard's node drives it (set_state, crack).
+func hazard_piece(name_: StringName, key: Variant) -> HazardPiece:
+	var group: Variant = _hazard.get(name_)
+	if group is Dictionary:
+		return (group as Dictionary).get(key)
+	if group is Array and key is int and int(key) >= 0 and int(key) < (group as Array).size():
+		return (group as Array)[key]
+	return null
+
+
+## The arrow slit nearest p (RP-16: the slab's aim starts at its slit's mouth), or null.
+func slit_at(p: Vector2) -> HazardPiece:
+	var best: HazardPiece = null
+	for hp: HazardPiece in _hazard[&"slit"]:
+		if best == null or Vector2(hp.position.x, hp.position.z).distance_to(p) < Vector2(best.position.x, best.position.z).distance_to(p):
+			best = hp
+	return best
+
+
+## The slabs (plates' rectangles; the roots' strips are not slabs) and the bridge's chains of the room's hazards.
+func _hazard_pieces() -> void:
+	var hz: HazardDef = layout.hazard if layout != null else null
+	while hz != null:
+		if hz.kind == HazardDef.Kind.PLATES and not hz.plates.is_empty():
+			var list: Array = _hazard.get(hz.plate_source, [])
+			for i in hz.plates.size():
+				var r := hz.plates[i]
+				var k := HazardPiece.Kind.PLATE
+				var way := Vector2.ZERO
+				if i < hz.aims.size() and hz.aims[i] != Vector4.ZERO:
+					k = HazardPiece.Kind.ARMS
+					way = Vector2(hz.aims[i].x, hz.aims[i].y) - r.get_center()
+				elif i < hz.plate_push.size() and hz.plate_push[i] != Vector2.ZERO:
+					k = HazardPiece.Kind.PUSH
+					way = hz.plate_push[i]
+				list.append(HazardPiece.plate(self, r, hz.warn, k, way))
+			_hazard[hz.plate_source] = list
+		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == &"chain":
+			var list: Array = []
+			for i in hz.bands.size():
+				var push := hz.band_push[i] if i < hz.band_push.size() else Vector2.ZERO
+				list.append(HazardPiece.chain(self, hz.bands[i], push, hz.warn, arena.shape()))
+			_hazard[hz.band_source] = list
+		hz = hz.also
+
+
+## The arrow slit (RP-16) on obstacle o: its face toward the floor.
+func _hazard_slit(o: ArenaObstacle) -> void:
+	var out := Vector2(0, 1)
+	for d: Vector2 in [Vector2(0, 1), Vector2(0, -1), Vector2(1, 0), Vector2(-1, 0)]:
+		if arena.shape().contains(o.center + d * (maxf(o.half.x, o.half.y) + 0.4)):
+			out = d
+			break
+	(_hazard[&"slit"] as Array).append(HazardPiece.slit(self, o, stone(), out))
+
+
+## The toppled column (RP-09, 3.6) for ColumnFloor: hides nothing (ColumnFloor hides its pivot), lays the drums along
+## `way` for `length` m and the stump with its teeth on the obstacle's footprint; returns [drums, stump].
+func toppled(o: ArenaObstacle, way: Vector2, length: float) -> Array[Node3D]:
+	var drum_mat := m.carved(0.0, Color.WHITE * HazardPiece.DRUM_VALUE)
+	var seed_ := int(o.center.x * 31.0 + o.center.y * 17.0)
+	return [HazardPiece.drums(self, o, way, length, drum_mat, seed_),
+		HazardPiece.stump(self, o, maxf(0.6, TombKit.COLUMN_BASE + 0.4), stone(), seed_)]

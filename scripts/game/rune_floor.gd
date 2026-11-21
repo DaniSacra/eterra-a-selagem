@@ -11,6 +11,9 @@ extends RefCounted
 
 ## The colour of the numbers of what it deals to the enemies (the warnings' amber).
 const NUMBER_COLOR := Color(1.0, 0.7, 0.35)
+## RP-14: how much brighter the column a crystal will discharge along shows at rest from its 2nd charge (the ember's
+## scale: combat_cadence.md 9.3, the charges read without seeing the crystal).
+const HINT := 0.3
 
 var hazard: ArenaHazard
 var game: Game
@@ -23,9 +26,20 @@ var _found: Array[Enemy] = []
 ## The arena's own rune floor (null: another look; the warnings draw then) and whether it shows any tile now.
 var look: RunesLook
 var _shown := false
+## RP-14: the crystals the paladin charges (null: none in this room), a mark on the floor before each (placeholder
+## until the environment artist's crystal), and what the discharges dealt to the enemies (inside enemy_damage).
+var crystals: CrystalHazard
+var crystal_marks: Array[MeshInstance3D] = []
+var crystal_damage := 0.0
+var crystal_kills := 0
+## Where the hint of a crystal at its 2nd charge stands (the column, -1: none).
+var _hinted := -1
+## The column of the discharge on the floor now (-1: none).
+var _col := -1
 
 
-func _init(g: Game, def: HazardDef, rng: RandomNumberGenerator) -> void:
+## crystal_awake: whether the descent reached HazardDef.crystal_from (else the crystals take no charge).
+func _init(g: Game, def: HazardDef, rng: RandomNumberGenerator, crystal_awake := true) -> void:
 	game = g
 	var doors: Array[Rect2] = []
 	for z in g.arena.exit_zones:
@@ -39,6 +53,15 @@ func _init(g: Game, def: HazardDef, rng: RandomNumberGenerator) -> void:
 	if look != null and not fits(def, look):
 		push_warning("RuneFloor: the look's tiles are not the hazard's grid; drawing the warnings instead")
 		look = null
+	if not def.crystals.is_empty():
+		crystals = CrystalHazard.new(def, crystal_awake)
+		for c in def.crystals:
+			# a slab of 1.6 x 0.8 m on the floor's edge before the crystal, lit as it charges (GroundLook.set_plate)
+			var n := GroundLook.new_node()
+			g.arena.add_child(n)
+			GroundLook.plate(n, Rect2(c.x - 0.8, c.y + 0.6, 1.6, 0.8), PlateFloor.Y)
+			crystal_marks.append(n)
+		g.combat.reached.connect(_on_reached)
 
 
 func step(dt: float) -> void:
@@ -50,12 +73,65 @@ func step(dt: float) -> void:
 					look == null))
 			Audio.play(CombatSounds.EVENTS[&"rune_arm"])  # one per pattern, however many tiles it lights
 		ArenaHazard.Event.FIRED:
-			Audio.play(CombatSounds.EVENTS[&"rune_fire"])
+			Audio.play(CombatSounds.EVENTS[&"crystal_fire" if hazard.pattern == &"discharge" else &"rune_fire"])
 		ArenaHazard.Event.ENDED:
 			# (its warnings landed with the strike, in the Ground's step of the same frame or the next)
 			zones.clear()
 	if look != null:
 		_shown = paint(hazard, look, _shown)
+	if crystals != null:
+		for i in crystal_marks.size():
+			if is_instance_valid(crystal_marks[i]):
+				var on := hazard.discharging() and _col == crystals.col(i)
+				GroundLook.set_plate(crystal_marks[i], Vector3(crystals.fill(i) * 0.5, 1.0 if on else 0.0, 0.0))
+
+
+## RP-14: a blow of the paladin; a crystal it fills discharges along its column now (the runes' pattern warming up, if
+## any, goes dark unstruck).
+func _on_reached(shape: int, origin: Vector2, dir: Vector2, reach: float, width: float) -> void:
+	var got := crystals.hit(shape, origin, dir, reach, width, hazard.discharging() or hazard.phase == ArenaHazard.Phase.CALM)
+	for i: int in got.charged:
+		Audio.play(CombatSounds.EVENTS[&"crystal_charge"])
+		if crystals.charge[i] >= crystals.def.crystal_hits - 1:
+			_hint(crystals.col(i))
+	var full: int = got.full
+	if full < 0:
+		return
+	var col := crystals.col(full)
+	_hint(-1)
+	if not hazard.discharging() and hazard.discharge(col):
+		_col = col
+		for z in zones:
+			Ground.end_zone(z)
+		zones.clear()
+		for r in hazard.rects():
+			zones.append(game.ground.add_hazard(r, hazard.def.warn, hazard.def.hero_damage, hazard.def.enemy_damage,
+				look == null, hazard.def.crystal_source))
+		Audio.play(CombatSounds.EVENTS[&"crystal_arm"])
+		var at := crystals.def.crystals[full]
+		game.fx.burst(&"dust", Vector3(at.x, 0.6, at.y))
+
+
+## The column a crystal will discharge along shown a step brighter at rest (-1: none).
+func _hint(col: int) -> void:
+	if _hinted >= 0:
+		hazard.hint_col(_hinted, 0.0)
+	_hinted = col
+	if col >= 0:
+		hazard.hint_col(col, HINT)
+
+
+## Whether a warning of this floor is on the floor now (Rooms: the room's warnings at once, R9).
+func busy() -> int:
+	return 1 if hazard.phase == ArenaHazard.Phase.ARM or hazard.phase == ArenaHazard.Phase.FIRE else 0
+
+
+## The room's numbers (RoomTally.hazard): the crystals', when there are any.
+func tally() -> Dictionary:
+	if crystals == null:
+		return {}
+	return {"crystal_charges": crystals.charged, "discharges": crystals.discharged,
+		"crystal_damage": snappedf(crystal_damage, 0.1), "crystal_kills": crystal_kills}
 
 
 ## True when the look's tiles are the hazard's (same origin, size and count): the floor drawn is the floor that strikes.
@@ -95,18 +171,29 @@ func stop() -> void:
 		look.apply()
 	if game.ground.hazard_landed.is_connected(_on_landed):
 		game.ground.hazard_landed.disconnect(_on_landed)
+	if crystals != null:
+		crystals.awake = false
+		if game.combat.reached.is_connected(_on_reached):
+			game.combat.reached.disconnect(_on_reached)
+		for n in crystal_marks:
+			if is_instance_valid(n):
+				GroundLook.set_plate(n, Vector3.ZERO)
 
 
 func _on_landed(z: Ground.Zone) -> void:
 	if not zones.has(z):
 		return
 	var h := game.horde
-	h.dealing = Ground.HAZARD_SOURCE
+	h.dealing = z.source
 	for e in h.list.duplicate():
 		if not e.alive or e.def.behavior == EnemyDef.Behavior.BOSS or not Ground.inside(z, e.pos):
 			continue
 		var before: float = e.hp
-		if h.damage(e, z.hazard, Vector2.ZERO, 0.0, NUMBER_COLOR):
+		var felled := h.damage(e, z.hazard, Vector2.ZERO, 0.0, NUMBER_COLOR)
+		if felled:
 			kills += 1
 		enemy_damage += maxf(0.0, before - e.hp)
+		if z.source == hazard.def.crystal_source:
+			crystal_damage += maxf(0.0, before - e.hp)
+			crystal_kills += 1 if felled else 0
 	h.dealing = &""

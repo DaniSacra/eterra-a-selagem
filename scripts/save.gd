@@ -48,6 +48,8 @@ func load_profile() -> void:
 	slot = int(profile.active)
 	data = SaveData.defaults()
 	data.options = SaveSlots.options_of(profile.options)
+	# DT-RS2: the visual style kept in the options (stylized by default; the exported build opens in it)
+	VisualProfile.remember(data.options)
 
 
 ## The slot in use read into data (the defaults when it is empty), keeping the shared options.
@@ -170,6 +172,14 @@ func set_option(key: String, value: Variant) -> void:
 		# the player's own choice: no default change moves it again (SaveData version 7, LR-01)
 		data.options["camera_chosen"] = true
 	write_options()
+
+
+## Puts a visual style and keeps it in the options (DT-RS2): the options screen's "Estilo visual" and the F7 key. The
+## look reaches every registered piece at once (VisualProfile.set_look) and the world's air follows it by itself
+## (RoomMood, DT-RS1); Arena.restyle is still the room's own call for what it varies outside the profile.
+func choose_look(look: VisualProfile.Look) -> void:
+	VisualProfile.set_look(look)
+	set_option("look", VisualProfile.NAMES[look])
 
 
 ## Writes only the options (the profile): they belong to the computer, and changing one is not a game played (the

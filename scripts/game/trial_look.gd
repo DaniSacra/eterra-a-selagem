@@ -231,6 +231,11 @@ func dress() -> void:
 	_dress_styled(block)
 
 
+## Sworn P2 SW-G4: offerings at the foot of the north and west walls.
+func sworn_offerings() -> bool:
+	return true
+
+
 ## The light of the veins and the cracks (1 before the choice, SETTLED after it).
 func vein_level() -> float:
 	return _level

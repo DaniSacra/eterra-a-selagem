@@ -40,6 +40,13 @@ const CORE_SPAN := Vector2(0.08, 0.86)
 ## STY-09: (0.72, 0.95, 0.8) still reached 255 on the screen (exposure 1.25), white pixels down the raised blade; now
 ## under the screen's ceiling (ScreenTone.SAFE) with the stylized look's saturation.
 const STYLE_CORE := Color(0.5, 0.78, 0.6)
+## Retorno do Corte (Encanto, V-08 of docs/art/vfx_pass_spec.md): k is the share of the window still open (1 just after
+## the Corte Veloz, 0 when it closes or the blow that takes it lands); a fine emerald thread runs up the blade
+## (emeth.gdshader return_thread). 0 draws nothing.
+static func set_return(blade: ShaderMaterial, k: float) -> void:
+	blade.set_shader_parameter(&"return_thread", clampf(k, 0.0, 1.0))
+
+
 ## Temperar (Fatia 1): the highest rank of the blade the shader draws (set_temper).
 const TEMPER_MAX := 2
 

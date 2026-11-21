@@ -35,6 +35,9 @@ var ember_left := 0.0
 ## The way the armed bands of a sweep will go next (toward the next band; zero for the other patterns): the floor's
 ## chevrons (RunesLook.set_chevrons).
 var chevron := Vector2.ZERO
+## RP-14: a faint light on tiles at rest (0 to 1; the column a crystal will discharge along, from its 2nd charge):
+## added to the ember the floor shows, one step brighter than rest.
+var hint := PackedFloat32Array()
 var _rng: RandomNumberGenerator
 ## The sweep's row and way, the comb's and the checker's parity, the frame's ring.
 var _sweep := 0
@@ -52,6 +55,7 @@ func _init(hazard: HazardDef, floor: FloorShape, doors: Array[Rect2], rng: Rando
 	floor_tile.resize(n)
 	lit.resize(n)
 	ember.resize(n)
+	hint.resize(n)
 	for r in def.rows:
 		for c in def.cols:
 			var box := tile_rect(c, r)
@@ -107,6 +111,8 @@ func state(i: int) -> Vector3:
 		elif phase == Phase.FIRE:
 			strike = clampf(left / maxf(def.fire, 0.001), 0.0, 1.0)
 	var glow := ember_left / EMBER if ember[i] == 1 and lit[i] == 0 else 0.0
+	if lit[i] == 0:
+		glow = maxf(glow, hint[i])
 	return Vector3(arm, strike, glow)
 
 
@@ -148,6 +154,46 @@ func step(dt: float, hero: Vector2, standing: int) -> Event:
 			chevron = Vector2.ZERO
 			return Event.ENDED
 	return Event.NONE
+
+
+## RP-14: a crystal discharges along column `col` now: its tiles that may light (never the quiet stone, the way in, a
+## door nor a cut tile) become the pattern, warned def.warn seconds from this frame with the chevrons running south
+## (away from the crystal by the north wall); whatever pattern was warming up goes dark unstruck (the crystal drains it:
+## never two patterns on the floor, so the 35% and the unlit neighbour hold). Returns false when the column has no
+## tile that may light (nothing happens).
+func discharge(col: int) -> bool:
+	if col < 0 or col >= def.cols:
+		return false
+	var any := false
+	for i in lit.size():
+		lit[i] = 0
+	for r in def.rows:
+		var i := r * def.cols + col
+		if live[i] == 1:
+			lit[i] = 1
+			any = true
+	if not any:
+		return false
+	pattern = &"discharge"
+	phase = Phase.ARM
+	left = def.warn
+	chevron = Vector2(0, 1)
+	ember_left = 0.0
+	for i in hint.size():
+		hint[i] = 0.0
+	return true
+
+
+## RP-14: the tiles of column `col` that may light shown `level` brighter at rest (0: none).
+func hint_col(col: int, level: float) -> void:
+	for r in def.rows:
+		var i := r * def.cols + col
+		hint[i] = level if live[i] == 1 else 0.0
+
+
+## Whether a crystal's discharge is on the floor now (warming up or striking).
+func discharging() -> bool:
+	return pattern == &"discharge" and (phase == Phase.ARM or phase == Phase.FIRE)
 
 
 ## The lit tiles as rectangles, one per run of lit tiles along a row (they never overlap).

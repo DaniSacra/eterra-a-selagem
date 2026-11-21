@@ -519,6 +519,19 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - `scripts/game/game.gd` é dono do relógio: chama `step(dt)` de cada sistema. Hit stop, pausa e a escolha de dom são
   só "não chamar step". Cada sistema que emite sinal dentro do laço (golpe que mata o paladino limpa tudo) precisa
   aguentar a lista mudar no meio (ver `Ground.step`, `Projectiles.step`).
+- **O fim da partida fora do `game.gd`** (DT-106): `RunReport` (`game/run_report.gd`: `result`, `line` e o `entry` do
+  registro) e `RunAward` (`game/run_award.gd`: `keep` grava Maestria, Compêndio, materiais e ferramentas uma vez, `gain`,
+  `award`, `codex`, `banks_materials`); o `Game` guarda delegados de uma linha (`result`, `result_line`, `run_entry`,
+  `log_run`, `mastery_gain`, `award_mastery`, `codex_run`, `banks_materials`). Mesmo `RESULT` antes e depois
+  (`smoke 600 --seed=5` e `--start=boss --boons=25 --seed=5`).
+- **O ar do mundo tem um dono só** (DT-RS1): o `RoomMood` filho do `WorldEnvironment` (`RoomMood.own`, posto pelo
+  `WorldAir.build`; `RoomMood.of(nó)` acha o do mundo daquele nó, o mais perto subindo a árvore) é o único que escreve no
+  `Environment` e na lua. Camadas: o mundo (clássico e estilizado, `VisualProfile.world_values`), a sala
+  (`dress_room(quem, clássico, estilizado)`, `undress_room`; `ArenaRoom._dress_air` e `BossChamber._dress_world` passam
+  os dois ares por `RoomMood.air_values` e `BossChamber.air_values`) e o clima por cima (`blend`, fase 4, selagem). A
+  troca de look (F7, Configurações) é vista pelo dono e recomposta com os fogos; `Arena.restyle` chama `apply`. Saíram
+  `VisualProfile.dress_world`, os ares guardados estáticos do `ArenaRoom` e o `restore_air` da câmara. Teste em
+  `tests/test_air_owner.gd` (todas as salas nos dois looks, F7 ida e volta, fase 4 e o salão depois da câmara iguais).
 - **Multidão**: inimigos são objetos leves em `Horde`; o desenho é `CrowdRenderer` (cada tipo consultado uma vez em `register`: `Kind`, `Clip`; `add_kind` no laço; só os lotes usados são mexidos), um MultiMesh por (inimigo, animação).
   As poses vêm assadas: `tools/bake.gd` esqueleta os modelos (Meshy; os do KayKit ficaram em `KAYKIT`) e guarda cada figura (`assets/baked/*.res`,
   `BakedModel`) como uma malha só e uma **animação por vértice** (E1a, VX-04): toda pose de todo clipe vira texels em duas imagens
@@ -624,6 +637,12 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   começo de cada golpe (`ComboNode.sound`: `blade`, `blade_spin`, `thrust`, `dart`; nada mais de `swing` só no erro) e
   `charge_up` segurando o Ômega; vibração por golpe e ao ser ferido (`Fx.buzz`, `Combat.RUMBLE_*`), só com controle
   em uso e a opção `rumble` do save ligada (`Fx.rumble`, `Game.apply_options`).
+- **CF-09 e CF-10 (sensação)**: nenhum clipe de golpe do herói passa de `HERO_CLIP_MAX` 1,5x na preparação (o clipe
+  começa mais perto do pico, `anim_from` no `_move` do `make_data.gd`; golpe 1 de 2,75x e corte da esquiva e lança de
+  3,67x para 1,5x; o pico continua no fim da preparação, sonda 41/41 com E1c-P4 a P6 iguais). Segunda camada de som no
+  quadro do golpe (`ComboNode.layers`, tocada pelo `Player._body_layer` no `move_hit`, sorteada num dado próprio sem
+  repetir a anterior): golpe 2 o giro do corpo (`dodge`), o giro `dash_land` ou `dodge`, a lança o passo plantado
+  (`dash_land`). Luta de Morvath gravada: -1,42 dBTP depois do limitador (antes -1,44).
 - O jogo abre em tela cheia (padrão desde 2026-11-16, `SaveData.VERSION` 2 passa os saves antigos para tela cheia uma vez; capturas, vídeos e `--nosave` ficam em janela, `App.apply_options`); a pausa tem "Sair do jogo" no desktop (`pause_exit_game`).
 - Save em três espaços, `user://save_1.json` a `save_3.json` (ver "Escolha de save" na Tela de título), pela camada única `Save` (regras puras em `core/save_data.gd`, versão 3 com heróis e Compêndio; versão 5 passa uma vez as músicas que estavam no padrão antigo para o padrão novo do MUS-1). Sem save (`--nosave`) não há recorde
   (`SaveData.record_win_time`). Os testes nunca gravam o save nem o registro (`tests/hooks/pre_run.gd`, `pre_run_script` no
@@ -1019,7 +1038,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `plate_hero_damage` e `plate_push`), dado no `_stage` (`_plates`, `PLATES_FROM` 0,34). Lajes de 3 x 3 m que qualquer
   um arma ao pisar (herói ou inimigo, como o vapor do Hades II): 1,0 s de aviso acendendo da borda para o meio, golpe de
   0,25 s em quem está em cima (herói 7, inimigo 60, os números do RP-03), recarga 5 s; nada nos 3 s do começo, nada em
-  laje na boca de porta, no máximo 3 armadas ao mesmo tempo (`PlateHazard.MOST_AT_ONCE`); antes do progresso 0,34 (salas
+  laje na boca de porta, no máximo 2 armadas ao mesmo tempo (`PlateHazard.MOST_AT_ONCE`, R9); antes do progresso 0,34 (salas
   2 e 3) ficam desenhadas e dormem. Lógica pura `PlateHazard` (`core/plate_hazard.gd`), no jogo `PlateFloor`
   (`game/plate_floor.gd`, criado por `Rooms._start_hazard` em luta e no guardião): o golpe é o `Ground.add_hazard(...,
   drawn = false, Ground.PLATE_SOURCE)`; o desenho é dele, um nó por laje pendurado na arena (`GroundLook.plate`,
@@ -1031,7 +1050,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   ninguém cai), zona `hole_edge`. "Derrotado por: Laje Rachada" (`killer_plates`, nome provisório para o Daniel); som
   `plate_arm`/`plate_fire` = `rune_arm`/`rune_crack`. `rooms[].hazard` com `kind` `plates`, `hero_damage`, `enemy_damage`,
   `kills`, `strikes`, `armed_by_hero`, `armed_by_enemy` e `hero_on_s` (segundos dele em cima); o das Runas ganhou
-  `hero_damage`. Testes em `tests/test_plates.gd` (ritmo, inimigo arma, dormente, porta, três de cada vez, lugares
+  `hero_damage`. Testes em `tests/test_plates.gd` (ritmo, inimigo arma, dormente, porta, duas de cada vez, lugares
   contra chão, peças, portas, nascimentos e 6 m da entrada, saída andando de 12 x 12 pontos, sala real, empurrão).
 - **Corrente da Ponte (RP-11, H-3; `docs/design/rooms_progression.md`)**: terceiro tipo de `HazardDef` (`LINE`: `bands`,
   `band_push`, `cycle`), faixas que golpeiam uma por vez e em ordem no relógio da sala (`BandHazard`, `core/band_hazard.gd`;
@@ -1092,6 +1111,55 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   baixa; o corpo dá a volta, o tiro passa por cima): Cripta A uma de 5,5 m ao sul do túmulo grande ((-3,5..2; 3,8));
   Jardim A duas quebradas num arco a 6 m do tronco (`_low_arc`: leste de -6 a 21 graus, sul de 64 a 98), as raízes que
   cruzam o arco as três entradas de 4,5 m. Testes em `tests/test_low_walls.gd`.
+- **Lote A, frente A1 (2026-11-21; `docs/design/rooms_progression.md` seção "Lote A, frente A1"; critérios em
+  `docs/design/combat_cadence.md` 9), valendo sobre os números acima**: todo perigo de sala tira 10 do herói
+  (`HAZARD_HERO` no `make_data.gd`; era 7) e a borda que desmorona 7 (`CRUMBLE_HERO`; era 5); inimigos seguem 60.
+  Laje Rachada com aviso de 1,2 s (era 1,0; P0 do combat-feel-director com o 10). **R9, dois avisos de sala no máximo**:
+  `PlateHazard.MOST_AT_ONCE` 2 (era 3) e contado com os outros perigos da sala (`PlateHazard.step(..., others)`,
+  `Ground.room_live` e `room_rects` sobre `Ground.ROOM_SOURCES`; um padrão das Runas ou uma descarga conta um). **Dois
+  perigos na mesma sala**: `HazardDef.also` (Santuário B lajes e pedras, Fendas B fôlego e pedras, Cripta A lajes e
+  urnas), iniciado pelo `Rooms._start_one`; o `RESULT` guarda o segundo em `rooms[].hazard.also`
+  (`RoomTally.hazard`, `hurt_in_room`).
+- **Cristal Instável (RP-14, H-5)**: campos `crystals`, `crystal_cols`, `crystal_hits` 3, `crystal_radius`,
+  `crystal_from` no `HazardDef` GRID; Runas B com dois cristais fora do chão junto da parede norte, (-4,5; -12,6) na
+  coluna 3 e (10,5; -12,6) na coluna 8. Cada golpe do herói que toca um cristal o carrega (`Combat.reached`,
+  `ColumnFall.touches`; nada nos 3 s do começo nem com uma descarga no chão); no 3º ele descarrega na hora pela coluna
+  (`ArenaHazard.discharge`: só ladrilhos que podem acender, nunca a pedra quieta, a entrada nem porta; 1,2 s de aviso
+  com as divisas para o sul, golpe das Runas, 10 / 60; o padrão das Runas que esquentava apaga sem golpear, nunca dois
+  no chão), e da 2ª carga a coluna fica um degrau mais clara em repouso (`ArenaHazard.hint`, `RuneFloor.HINT` 0,3).
+  Lógica pura `CrystalHazard` (`core/crystal_hazard.gd`), no jogo pelo `RuneFloor` (marca provisória: uma laje de
+  1,6 x 0,8 m no chão diante de cada cristal, `GroundLook.plate`, acende com a carga). "Derrotado por: Cristal
+  Instável" (`killer_crystal`, provisório), sons `crystal_charge` = `ward`, `crystal_arm`/`_fire` = os das Runas;
+  `rooms[].hazard` com `crystal_charges`, `discharges`, `crystal_damage`, `crystal_kills`, `crystal_hero_damage`. Testes
+  em `tests/test_crystals.gd`.
+- **Pedras da Abóbada (RP-20)**: `HazardDef.Kind.DROPS` (`drop_zones`, `drop_size` 2, `drop_count` 2, `drop_every` 4,
+  `drop_aim` 0,5; `_rocks` no `make_data.gd`, desde a sala 4): quadrados de 2 m caindo um a cada 4 s depois dos 3 s,
+  metade mirada nele quando está numa zona, 1,2 s de aviso (o quadrado inteiro desde o primeiro quadro, o âmbar das
+  Runas enchendo; a pedra cai nos últimos 0,25 s e toca o chão no quadro do golpe), 10 / 60; nunca sobre outra pedra,
+  outro aviso da sala, porta nem fora do chão, e nunca com a sala já com dois avisos (R9). Entulho só desenhado por
+  3 s (não para corpo). Santuário B: a nave em volta do buraco (x -8 a 13); Fendas B: a plataforma leste (dois
+  retângulos). Lógica pura `DropHazard` (`core/drop_hazard.gd`, dado próprio pela `fight_seed` do nó), no jogo
+  `DropFloor` (`game/drop_floor.gd`; pedra provisória em caixa cinza, poeira caindo, tremor). "Derrotado por: Pedras da
+  Abóbada" (`killer_rocks`, provisório), sons `rocks_arm` = `rune_arm`, `rocks_fire` = `boss_down`; `rooms[].hazard`
+  `kind` `rocks`, `hero_in_s`, `aimed`. Testes em `tests/test_rocks.gd` (também o R9 das lajes).
+- **Urna de Óleo (RP-12, o barril do Hades II)**: `HazardDef.Kind.URNS` (`urns`, `urn_radius` 2,5, `urn_flows`,
+  `flow_*`, `burn`; `_urns`, `_urn`, `CRYPT_URNS`, `CRYPT_OIL`, `URNS_FROM` 0,67): Cripta A, duas urnas de bronze ao pé
+  das paredes leste (11,2; -1,6) e norte (-1,6; -10), peça `oil_urn` de 0,45 m e 1 m (barra corpo, tiro passa;
+  desenho genérico até a peça do environment-artist). Um golpe do herói acende: o aro de 2,5 m inteiro em âmbar desde o
+  primeiro quadro (`Ground.add_round`, `GroundLook.hazard_round`, ramo novo do estilo 3 no `ground.gdshaderinc`) por
+  1,3 s (P0 do combat-feel-director) e explode 10 nele e 80 em cada inimigo; o óleo corre pelo canal a 3 m/s em trechos
+  de 2 m, cada um avisado 1,0 s antes da chama (faixa âmbar desenhada), 5 nele e 40 no inimigo quando a chama chega, e
+  arde 2 s (quem entra leva uma vez por trecho). Uma vez por urna por sala; antes de dois terços da descida o golpe só
+  faísca. Lógica pura `UrnHazard` (`core/urn_hazard.gd`), no jogo `UrnFloor` (`game/urn_floor.gd`). "Derrotado por: Urna
+  de Óleo" e "Óleo em Chamas" (`killer_urn`, `killer_oil`, provisórios), sons `urn_arm` = `tell_ember`, `urn_fire` =
+  `enemy_burst`, `oil_arm`/`_fire` = os das Runas; `rooms[].hazard` `kind` `urn`, `lit`, `blasts`, `oil_damage`,
+  `oil_hero_damage`. Testes em `tests/test_urns.gd`.
+- **Colunata (RP-18)**: Santuário C (`depth` 0,5 a 1): o leste da nave vira uma grade de nove colunas baixas de 2,5 m
+  (`COLONNADE`, x 3, 7 e 11 por z -4, 0 e 4, raio 0,5: barram corpo e tiro mas nunca escondem um preparo, critério do
+  combat-feel-director), duas reduzidas a tocos (`column_base`, corpo sim, tiro não) e uma rachada que tomba 3 m
+  (RP-09); o oeste da nave fica aberto para a investida do guardião; lajes da A; zona `colonnade`. Só dado.
+- **Portas no fundo (RP-19)**: `tests/test_exits.gd` confere em toda sala de luta e variante cada porta a 8 m ou mais da
+  entrada, fora de toda zona de nascimento e 5 m ou mais das outras; todas já passavam, nenhuma porta mudou.
 - **Morte de elite** (V-14): elite de aço dourado (`EnemyDef.elite` com `gild`; guardiões não) cai com duas lascas de
   ouro velho a mais (`CrowdRenderer.GILD_COLOR`, `Horde.damage`); teste em `test_vfx_lote1.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
@@ -1708,7 +1776,11 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Perfil visual reversível (`VisualProfile`, `core/visual_profile.gd`): `Look.CLASSIC` e `STYLIZED`; **no exe exportado o padrão é o
   STYLIZED** (RS-F2, 2026-11-19, `VisualProfile.default_look`: `OS.has_feature("template")`), na Godot do editor (testes, capturas,
   ferramentas) continua o CLASSIC; `--look=classic|stylized`,
-  **F7** troca ao vivo também no exe (ação `look_toggle`, lida no `Game._process`), global de shader `art_style` (0 ou 1).
+  **F7** troca ao vivo também no exe (ação `look_toggle`, lida no `Game._process` e no `Hub`), global de shader `art_style` (0 ou 1).
+  DT-RS2: o look fica nas opções do computador (chave `look` do perfil, `"stylized"` ou `"classic"`, padrão `"stylized"`;
+  save de antes sem a chave abre estilizado); `Save.choose_look(look)` aplica e grava, o F7 e a tela das Configurações
+  usam ela; no exe o `Save.load_profile` passa a escolha ao `VisualProfile.remember` (`--look` continua por cima; no
+  editor segue o clássico).
   Um look é uma lista de valores ao lado de cada peça: `VisualProfile.vary(objeto, {propriedade: valor estilizado})` guarda o
   valor de agora como o clássico (referência fraca) e aplica o do look em curso; vale para material (`shader`,
   `shader_parameter/x`, `albedo_color`), luz, `visible` e `Environment`. O clássico é a peça como foi montada: nenhum
@@ -2358,6 +2430,40 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Músicas), P2-3 e P2-4 (Controles), P2-5 (Compêndio), P2-8, P2-10, P2-11 (asset), resto do P2-12; enquadramento do
   Portal pela câmera (P1-8, gameplay).
 
+## Lote A, frente A5, interface (backlog "Estado e ordem de 2026-11-20"; testes em `tests/test_lote_a_ui.gd`, capturas em `docs/gallery/lote_a_ui/`)
+- **Estilo visual (DT-RS2)**: Configurações > Vídeo, "Estilo visual" Estilizado ou Clássico (`opt_look*`), pelo
+  `OptionsScreen.apply_look(tree, look)`: `Save.choose_look` (aplica e grava a chave `look`) e `Arena.restyle()` de toda arena na árvore, o mesmo
+  quadro do F7, gravado na chave `look` por `Save.choose_look`.
+  Capturas: `--title --screen=options --options-tab=video|comfort|controls [--options-focus=opt_look]`.
+- **Controle (resto do DT-103)**: `ui_accept`/`ui_cancel` ganham A e B do controle (`Controls.MENU_BUTTONS`; antes os
+  menus não aceitavam o A). Remapear no controle: nos Controles, escolhida uma ação, um botão do controle a liga
+  (`Controls.rebind_pad`, `PAD_REMAPPABLE`: ataque, especial, esquiva, círculo, ultimate, mapa, usar; troca com quem tinha
+  o botão; o andar fica no analógico), gravado em `bindings` como `pad:<ação>` (`pad_button_for`), Start cancela, Teclas
+  padrão volta tudo. O botão aparece numa plaqueta (`StationSign.KeyCap`, redonda nos botões de face) e uma linha embaixo
+  diz que botão também liga (`options_pad_note`). Como Jogar com as teclas e botões em plaquetas (`HowToScreen.Plates`,
+  `key_parts`, `pad_parts`; P2-3). `tools/title_flow_check.gd` faz uma volta só de controle (Como Jogar, Configurações,
+  remapear o Ataque para Y, Teclas padrão) e uma só de clique (Como Jogar, Configurações, Estilo visual ida e volta).
+- **Mapa (MAP-07, MAP-08)**: com o foco numa sala atrás de uma porta aberta, a porta acende na sala com o facho das
+  recompensas na cor da recompensa (`MapScreen._light_door`, `RewardShaft` "MapDoorLight" sobre o `arena.door_label(i)`;
+  outra sala apaga, `lit_door()`); ao fechar ela fica acesa `DOOR_LINGER` 4 s e o HUD aponta a porta na borda da tela
+  quando ela está fora (`Hud.point_door(onde, nome, s)`, divisa com o nome, some nos últimos `DOOR_FADE` 0,6 s,
+  `clear_door`). A página vira ao abrir (0,22 s em volta da lombada) e ao fechar (0,16 s, numa camada que não toma entrada;
+  o `closed` sai na hora) e, a primeira vez que o mapa abre numa sala, o trecho novo do caminho se desenha a tinta
+  (`MapGraph.ink`, `draw_in`); sem animação sem tela (`MapScreen.turns`). `tools/map_flow_check.gd` confere a luz.
+- **Entrada de Morvath (AP-2, ART-05.5)**: quando ele surge, embaixo da barra dele, num véu, "A Câmara do Selo", "Morvath"
+  em Cinzel e "O rei que traiu a luz" (o `enemy_morvath` cortado na vírgula) por `Hud.ENTRANCE_TIME` 2,3 s, entrando em
+  0,3 e saindo em 0,45 (`Hud.show_entrance`, `entrance_shown`); um `show_notice` do nome da câmara vai para lá.
+- **Vitória (QW-115)**: o halo do selo é um degradê radial de ouro velho até nada (`SealEmblem.halo_texture`, `HALO`
+  0,42, `HALO_REACH` 1,55; os discos de antes liam como disco amarelo), o leão acende em `EndScreen.LION_GLOW` 0,6 s e o
+  título e a frase da selagem ficam sobre um véu escuro em elipse (`words_veil`, `WORDS_VEIL` 0,72). O ouro que cai sobe
+  ao lado do número do golpe e menor (`Fx.GOLD_SIDE` 1,1 m para a direita da tela, `GOLD_SIZE` 14).
+- **Glifos sem cruz (QW-117, `BoonIcon.glyph`)**: lâmina de gelo (5) é um caco facetado sem travessa; escudo da Vigília
+  (9, 15) com divisa e losango no lugar da estrela de quatro pontas; Corte do Juízo (110) é uma lâmina sem guarda descendo
+  de lado na fenda.
+- **Barras dos comuns (ART-02.6)**: no `life_bar.gdshader` a barra de quem não é elite nem tem armadura tem a vida
+  `common_dim` 0,85 mais escura e é `common_cut` 25% mais fina, cortada de baixo (o topo não muda); elites iguais.
+- P2-12: número do selo da Provação em 14 px (`TrialSeal.NUMBER_SIZE`). P2-4, P2-5, P2-8 e P2-10 já estavam feitos.
+
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).
@@ -2389,6 +2495,26 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   o glow fica sempre; `App.apply_options` e `Game.apply_options`; `--quality=alta|media|baixa`, `--gfx-<chave>=valor`).
   Medido na iGPU do notebook do Daniel (Intel RaptorLake-S, `tools/gpu.sh run ... --gpu-index 1`) a 1280 x 720: Alta 15 a
   17 qps, Baixa 62 a 81 qps no salão, Fendas, Jardim, Cripta e fase 4 de Morvath (`docs/qa/e6_audio_perf.md`).
+
+## Quebráveis (AT-Q1, Lote D; arte em `docs/art/at_q0_breakables.md`, cadência em `docs/design/combat_cadence.md` 9.6; testes em `tests/test_breakables.gd`)
+- Dado: `RoomLayout.breakables` e `ArenaVariant.breakables` (`BreakablePiece`, `core/breakable_piece.gd`: `form` vaso,
+  urna, oferenda, vaso de água, caixote, tábua, banco, galho, muda; `at`, `radius` até `Breakables.MAX_RADIUS` 0,45,
+  `height` 0,35 a 1,0, `group`), postos pelo `_place_breakables` do `make_data.gd` (parte `stage`): Salão 10 em 4 grupos
+  (bordas e pé das balaustradas, longe do eixo, do medalhão, da fonte e da fileira da loja), Cripta A e B 8 em 3 grupos.
+  Nenhum no hub. Regras puras em `Breakables` (`core/breakables.gd`): material por forma (`Stuff` CERAMIC, WATER, WOOD,
+  BRANCH), um golpe e o caixote dois (o 1º racha), quebra uma vez só, por golpe do herói (`swing`, pelo `Combat.reached`,
+  que só sai do golpe que saiu: golpe cortado pela esquiva não quebra), pela onda dele (`circle`, tiros não hostis), por
+  golpe de inimigo e perigo de sala quando o aviso aterrissa (`reached_by`, pelo sinal novo `Ground.zone_landed`), nunca
+  por andar; `tally` (`total`, `broken`, `by_hero`, `by_enemy`, `by_hazard`) vai para `rooms[].breakables` do `RESULT`
+  (`RoomTally.breakables`; sala sem quebráveis igual a antes: o `smoke 600 --seed=5` dá o mesmo `RESULT` fora dessa
+  chave). No jogo `BreakFloor` (`game/break_floor.gd`, criado pelo `Game.rebuild_room` debaixo da arena, passo no
+  `Game._step` depois dos tiros): nada barra corpo nem tiro (não é `ArenaObstacle`, fora da `NavGrid`), a mira assistida
+  nunca o escolhe (só a `Horde`), nenhum hit stop, número, combo, Magia, passiva, carga da ultimate nem câmera lenta.
+  Desenho provisório para o AT-Q2: forma simples por material na cor do bioma (`BreakFloor.CLAY`, `WOOD`), achata
+  `SQUASH_TIME` 0,04 s e some, cacos pelo `Fx.chips` e pó pelo `Fx.wisps` (dado do `Fx`); som por material com os sons
+  que existem (`Breakables.SOUND`, um por material por golpe, pela `VoiceGate`) até os `break_*` do AT-Q3. Sonda:
+  `PROBE_VASES=1` põe 6 vasos em volta do herói, inteiros de novo antes de cada caso (`BreakFloor.restore`): 41/41 com os
+  mesmos quadros.
 
 ## Ciclo LC, preparação dos atiradores (LC-1 a LC-3; evidências em `docs/gallery/lc/windup/`)
 - Só desenho, sem mudar tempo, alcance, dano nem duração de clipe. As luzes da preparação (`EnemyFx`) ficam onde a
@@ -2558,6 +2684,59 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   B 15,93 / 16,27 para 16,05 / 14,99 / 15,42 (uma rodada de 19,04 fora), Fendas A 17,98 / 16,64 para 17,09 / 16,68, B
   17,00 / 17,63 para 17,36 / 17,20, Santuário 18,59 / 18,24 para 18,23 / 18,05: nada acima do ruído. Compatibility sem
   erro no Salão, Cripta e Fendas.
+
+## Sworn P2 (cenário; SW-G4 a G6, SW-H2, H3, SW-C2, C3, SW-F2, F3, SW-J2, J3, SW-S2, SW-P1 a P3, SW-R1, SW-A-1, RS-C7; só no estilizado salvo RS-C7; antes e depois em `docs/gallery/sworn_p2/`)
+- **Comum em `ArenaRoom`**: `classic_only()` (um `Masonry` sob o nó "ClassicOnly", escondido no estilizado, o gêmeo do
+  `kit.styled()`); `wall()` guarda as paredes em `_wall_runs` (`[a, b, out, altura, vãos]`); `on_hazard(p, folga)` (lajes,
+  faixas e tiras do perigo da sala). **SW-G4, oferendas**: `offerings(ponto, along, y, quantas, semente)` (urnas de barro
+  morno `OFFER_CLAY`, uma em três mais escura, e velas apagadas, nada sobre o chão andável) e, nas salas com
+  `sworn_offerings()` verdadeiro (Santuário, Runas, Provação, Altar), grupos no pé das paredes altas a cada `OFFER_EVERY`
+  5,5 m, longe de portas, nascimentos, vãos e do que o look recusa (`offer_free`). **SW-G5, portões**: em cada porta usada
+  um portão de ferro logo depois da boca (`GATE_*`): as portas viradas para a câmera uma grade baixa que afunda, as outras
+  duas folhas que giram; fechados na luta, abrem uma vez em `GATE_TIME` 0,9 s quando as portas abrem (`breath(i)` chama
+  `open_gate(i)`; `gate_shut(i)`); Salão e Câmara do Selo sem portões. **SW-G6, primeiro plano**: o look que devolve
+  `foreground_look()` (`out`, `top`, `every`, `tint`) ganha tocos e pares de aduelas da pedra funda fora das bordas viradas
+  para a câmera (`_foreground`, `FG_*`; Fendas e Jardim). **SW-F3, merlões**: `merlons(a, b, out)` (no clássico a
+  balustrada de sempre; no estilizado um murete de `MERLON_PLINTH` 0,36 m com blocos a 45 graus, altos e baixos), no trecho
+  `RiftLook.MERLON_SPAN` da borda norte das Fendas; entra na sequência das quebras de balustrada (`_on_merlons`) para o
+  resto ficar igual. **RS-C7**: `balustrade_edge(..., trim)` recua os postes das pontas para fora do chão e das bocas
+  (`_rail_end`, `RAIL_TRIM_*`); a Ponte usa: fantasma 4,12 / 2,76 m² para 0 nos dois looks, chão igual.
+- **Salas**: Salão, fonte com três filetes de umidade e musgo saindo da bacia (`CatacombHall._rivulets`, `RIVULETS`) e loja
+  com o caminho de lajes gastas da entrada aos itens (`_trail`, `TRAIL`); `CatacombHall.floor_strip(caminho, largura, y,
+  material, esmaecer)` faz a faixa no chão; `floor_decal.gdshader` `kind` 5 (umidade, `wet`, `wet_moss`) e 6 (trilha
+  gasta, `trail`, `trail_cell`, `trail_wear`). Cripta: pilhas de fêmures nos nichos norte e oeste (`CryptLook._ossuary`,
+  `FEMUR_*`, SW-C2: crânios só com o Meshy, nunca sem o Daniel) e oferendas na saliência (C3); `_slab_free` tira as
+  lajes tumulares sob peças. Fendas: sal pálido nas manchas do chão (`STY_SALT`). Jardim: poça rasa fora do corte noroeste
+  na A (`_cut_pool`) e raízes rasas, até 0,12 m, saindo dos pés das colunas (`_shallow_roots`, longe dos perigos).
+  Santuário: remates nas colunas quebradas (`_finials`, nunca na que tomba). Ponte: estandarte do leão balançando em cada
+  pilone (`_pylon_banners`), losangos sulcados nas plataformas (`_lozenges`, decalque `kind` 4) e pegões antigos no
+  abismo (`_old_piers`). Runas: grupos de três tabuletas encostadas nas paredes norte e oeste (`_tablets`). Altar: duas
+  bacias de água escura com luz fria difusa (`AltarLook._basin`, `BASIN_*`). Provação (SW-T1) e SW-H1, S3, F-6, J-5 já
+  estavam feitos.
+
+## SW-G7, os perigos como peças da sala (frente A2; spec `docs/art/sw_g7_hazard_grammar.md`; peça visual, a lógica é do room-designer)
+- `HazardPiece` (`scripts/game/hazard_piece.gd`): a divisa gravada em ouro velho escuro e a fenda com brasa âmbar, em
+  `hazard_mark.gdshader` (multiplicado sobre a pedra: junta escura, afundar, divisas; igual nos dois looks e no
+  Compatibility) e `hazard_fissure.gdshader` (fenda recortada: brasa 0,08 respirando em repouso, até 0,2 nos primeiros 70%
+  do preparo e 0,6 no fim, pó claro dormindo). Montadas pelo `ArenaRoom` a partir do `layout.hazard` (e do `also`), nos
+  dois looks, nada colide nem muda faixa: laje (`HazardPiece.plate`: junta de 0,06 m, quatro divisas para o meio, duas
+  rachaduras que não se cruzam; com `plate_push` três divisas para o empurrão, RP-13; com `aims` três para a seteira,
+  RP-16), seteira (peça `bolt_slit`: bloco de 1,4 m na pegada do obstáculo, boca escura com moldura de ferro que acende
+  de baixo, três divisas), corrente da Ponte (`HazardPiece.chain`: poste de ferro de 3,6 m fora do tabuleiro do lado
+  longe da câmera, braço, corrente e peso com divisas para a plataforma; proposta de forma) e a fenda da coluna que tomba
+  (`HazardPiece.column`, posta em `toppling[o]`, inclina junto).
+- **O que a lógica chama** (PlateFloor, BandFloor, ColumnFloor): `arena.look.hazard_piece(def.plate_source, i)` (laje i)
+  e `hazard_piece(def.band_source, i)` (faixa i da corrente) `.set_state(hazard.state(i), not awake, segundos de recarga
+  que faltam)` sempre que muda: a laje afunda em 0,15 s (pela junta e o sombreado, o chão é uma malha só), segura a meio
+  com os fios novos até o último 0,5 s da recarga; o peso recua 35 graus, treme, varre a 62 e amortece em uns 2 s.
+  `look.slit_at(ponto da boca)` dá a seteira de um `aims[i]` (mesmo `set_state`). Coluna:
+  `hazard_piece(&"column", obstáculo).crack()` no primeiro golpe; ao bater, `look.toppled(o, rumo, comprimento)` monta os
+  tambores deitados (afundados até 0,45 m, 0,8 do valor, descendo 0,2 m em 4 s) e o toco com dentes e lascas, no lugar do
+  `tomb.column`. Enquanto a lógica não liga, as peças ficam em repouso (brasa baixa) e o placeholder do `GroundLook`
+  (moldura de osso) continua por cima: o `PlateFloor` deve trocar o repouso dele pela peça e deixar só o âmbar do preparo.
+  Falta da spec: raiz (3.4), cristal (3.9), urna (3.10), pedras da abóbada (3.8), fenda que respira (3.7), planta e nicho
+  (Lote D). Testes em `tests/test_room_style.gd` (`test_sw_g7_hazard_pieces`, `test_sworn_gates_open_with_the_doors`,
+  `test_sworn_p2_pieces_stand`, `test_rs_c7_bridge_rails_off_the_decks`).
 
 ## Ciclo visual 2026-11-20, cenário (ENV-HB1 a HB3 no Salão, BH-07 no hub; só no estilizado; `docs/design/ciclo_visual_2026-11-20.md` itens 1 e 2, metas em `docs/art/benchmark_hades2_style.md` 4.1; capturas `docs/gallery/ciclo_visual_1120/env_*`)
 - **Salão, ENV-HB1 (petróleo)**: pedra, chão e sombra do `CatacombHall.STYLE` num azul-petróleo (`STY_STONE`,
@@ -2865,5 +3044,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   (`Fx.crystal_spike`, `crystal_spike.gdshader`, `Ultimates.CLEAVE_*`; espalhamento por hash, nunca o sorteio da partida),
   acerto pelo estalo pesado. **V-10**: Voragem com véu 0,15 puxado para o amarelo da Emeth, chão escurecido (`ink`
   0,35) e braços partidos em lascas (`dash_m`). **5.7**: número entra a 1,3 e volta a 1,0 em 0,08 s (`Fx.NUMBER_POP`).
-- Falta: V-08 (silhuetas de tinta na esquiva, fio do Retorno na lâmina); as lascas de ouro velho das elites ao morrer
-  (uma linha no `horde.gd`, gameplay-engineer); capturas de cada família com as Bênçãos e do surgir da elite na sala.
+- Falta: as lascas de ouro velho das elites ao morrer (uma linha no `horde.gd`, gameplay-engineer). V-08 e as capturas
+  saíram no AP-2 (abaixo).
+
+## AP-2 "Combate que se lê", parte do technical-artist (2026-11-21; backlog A6; capturas em `docs/gallery/ap2/`, testes em `tests/test_ap2_read.gd`)
+- **ART-05.2, menos vermelho na fase 3**: o vermelho das erupções segue o regime dos avisos comuns
+  (`ritual_rune.gdshader`: `fill_early` 0,25 da cor enquanto o golpe está longe, inteira só nos últimos `fill_late` 30%;
+  `red_after` 0,2 s depois do pouso some; teto `danger_alpha` 0,24 igual) e o preenchimento dos avisos assinados de
+  Morvath também (`ground.gdshaderinc`: `sign_early` 0,3, `sign_level()`, no traço, no arco e no círculo; aro, fio
+  violeta e runas inteiros desde o primeiro quadro). Raio, tempo e dano iguais.
+- **ART-05.4, foice que abre em volta do herói**: `boss_scythe.gdshader` com `hero_pos`, `hero_hole` (0,7; 1,5) m e
+  `hero_keep` 0,3: preenchimento e miolo pálido caem a 0,3 em volta dele; aro e fio da lâmina nunca.
+- **ART-05.3**: herói atrás de Morvath conferido na GPU (o raio-x do ciclo 8 já o mostra inteiro com o anel; sem mudança).
+- **P2-C19a, corredor elite**: o aro fino do primeiro estouro (`land_quick`) para em `thin_reach` 0,62 do anel
+  (`smoke_ring.gdshader`), dentro do aro do segundo aviso, que fica à vista até a segunda explosão.
+- **V-08, esquiva e Retorno**: na esquiva o `Fx` (`_animate_ghosts`) deixa até 4 silhuetas de tinta do herói, uma a cada
+  `GHOST_EVERY` 0,05 s, cada uma `GHOST_TIME` 0,12 s (`dodge_ghost.gdshader`: tinta do corte, alfa 0,25 a 0,1, fio
+  marfim só nas bordas viradas para cima; pose assada por `bake_mesh_from_current_skeleton_pose`, pool de 8; nada sem
+  tela). Retorno do Corte: um fio esmeralda fino com um nó que corre a lâmina enquanto a janela de 1 s está aberta
+  (`emeth.gdshader` `return_thread`, `EmethSword.set_return(lâmina, k)`, lido do `Combat._return_t` no
+  `Fx._animate_return`; no estilizado sob o `style_cap`); `tools/rj1_lab.gd -- --return=1` mostra a lâmina com ele.
+- **ART-05.5** (entrada de Morvath mais lida) depende do tempo da entrada no `boss.gd`: fica para o gameplay-engineer e
+  o combat-feel-director. `chain_weight` do `EdgeKit` já refeito (2026-11-20), espera a nova revisão do art-director.

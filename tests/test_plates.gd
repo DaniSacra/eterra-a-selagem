@@ -2,7 +2,7 @@ extends GutTest
 ## The slabs that strike when stepped on (RP-06, H-2; docs/design/rooms_progression.md): anyone stepping on one (the
 ## paladin or an enemy) arms it, 1.0 s lighting from the edge to the middle, a strike of 0.25 s on whoever stands on
 ## it (7 to him, 60 to an enemy: RP-03), 5 s before it may arm again; nothing in the first 3 s, nothing asleep before
-## the descent's progress 0.34, nothing over a door, at most three at once. In the data: every slab whole on the
+## the descent's progress 0.34, nothing over a door, at most two at once (R9). In the data: every slab whole on the
 ## floor, off every piece that stops a body, off the doors and the spawns, 6 m or more from the way in, and a way off it
 ## walking before it strikes (as test_boss_exits.gd). In a real room it hurts both and the room counts it.
 
@@ -97,7 +97,7 @@ func test_asleep_over_a_door_and_three_at_once() -> void:
 	for i in 600:
 		h.step(DT, Vector2(-50, 0), bodies)
 		most = maxi(most, h.busy())
-	assert_eq(most, PlateHazard.MOST_AT_ONCE, "never more than three of the room's own warnings at once")
+	assert_eq(most, PlateHazard.MOST_AT_ONCE, "never more than two of the room's own warnings at once")
 
 
 func test_the_state_reaches_from_the_edge_and_the_ember_fades() -> void:
@@ -125,7 +125,7 @@ func test_where_the_slabs_lie() -> void:
 			assert_not_null(h, "%s %d has slabs" % [id, v])
 			assert_eq(h.kind, HazardDef.Kind.PLATES)
 			assert_gte(h.warn, 1.0, "never under an enemy's wind-up")
-			assert_almost_eq(h.hero_damage, 7.0, 0.001)
+			assert_almost_eq(h.hero_damage, 10.0, 0.001)
 			assert_almost_eq(h.enemy_damage, 60.0, 0.001)
 			assert_almost_eq(h.rearm, 5.0, 0.001)
 			assert_almost_eq(h.start_delay, 3.0, 0.001)
@@ -148,7 +148,8 @@ func test_where_the_slabs_lie() -> void:
 					assert_false(s.intersects(r), "%s: off a spawn" % tag)
 				var near := l.hero_spawn.clamp(r.position, r.end)
 				assert_gte(near.distance_to(l.hero_spawn), 6.0, "%s: 6 m or more from the way in" % tag)
-	assert_eq(seen, 4 + 2 + 4 + 6, "crypt A 4, B 2; sanctuary A 4, B 4 and the two of the crumbling edge (RP-13)")
+	assert_eq(seen, 4 + 2 + 4 + 6 + 4,
+		"crypt A 4, B 2; sanctuary A 4, B 4 and the two of the crumbling edge (RP-13), C (RP-18) the A's 4")
 
 
 ## From 12 x 12 spots on every slab a person walks off it before it strikes (the warning less a reaction), on the
@@ -219,7 +220,7 @@ func test_in_a_real_room_it_hurts_both_and_is_counted() -> void:
 		e.pos = slab.get_center() + Vector2(0.8, 0.8)
 		pf.step(DT)
 		game.ground.step(DT)
-	assert_almost_eq(game.player.hp, hp - 7.0, 0.01, "the paladin on it loses 7")
+	assert_almost_eq(game.player.hp, hp - 10.0, 0.01, "the paladin on it loses 10")
 	assert_almost_eq(e.max_hp - e.hp, 60.0, 0.01, "the enemy on it 60")
 	assert_eq(game.last_hurt.get("attack", &""), &"plates")
 	assert_eq(T.t(DefeatCause.text_key(game.last_hurt)), "Laje Rachada")
@@ -229,7 +230,7 @@ func test_in_a_real_room_it_hurts_both_and_is_counted() -> void:
 	var hz: Dictionary = room.get("hazard", {})
 	assert_eq(hz.get("kind"), "plates")
 	assert_almost_eq(float(hz.get("enemy_damage", 0.0)), 60.0, 0.01)
-	assert_almost_eq(float(hz.get("hero_damage", 0.0)), 7.0, 0.01, "what it took from him")
+	assert_almost_eq(float(hz.get("hero_damage", 0.0)), 10.0, 0.01, "what it took from him")
 	assert_gt(float(hz.get("hero_on_s", 0.0)), 4.0, "the seconds he stood on a slab")
 	assert_eq(int(hz.get("strikes", 0)), 1)
 
@@ -279,10 +280,10 @@ func test_the_crumbling_edge_of_the_sanctuary_b() -> void:
 	var h := l.hazard
 	assert_eq(h.plates.size(), 6)
 	for i in 4:
-		assert_almost_eq(h.hero_damage_of(i), 7.0, 0.001, "aisle slab %d as in A" % i)
+		assert_almost_eq(h.hero_damage_of(i), 10.0, 0.001, "aisle slab %d as in A" % i)
 		assert_eq(h.push_of(i), Vector2.ZERO)
 	for i in [4, 5]:
-		assert_almost_eq(h.hero_damage_of(i), 5.0, 0.001, "edge slab %d: 5" % i)
+		assert_almost_eq(h.hero_damage_of(i), 7.0, 0.001, "edge slab %d: 7" % i)
 		var r := h.plates[i]
 		var push := h.push_of(i)
 		assert_almost_eq(push.length(), 2.5, 0.001)

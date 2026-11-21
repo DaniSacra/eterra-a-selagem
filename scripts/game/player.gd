@@ -257,6 +257,7 @@ func _ready() -> void:
 	runner.move_started.connect(_on_move_started)
 	runner.move_hit.connect(func(node: ComboNode) -> void:
 		_follow_through(node)
+		_body_layer(node)
 		struck.emit(node, pos, facing))
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
 		_anim.speed_scale = GLINT_ANIM_SPEED
@@ -807,6 +808,23 @@ func _strike_dir() -> Vector2:
 ## The move whose swish still waits for its blade (ComboNode.sound_at) and the seconds left (null: none).
 var _sound_node: ComboNode
 var _sound_t := 0.0
+
+
+## The body layer played last (CF-10): the next blow draws another when its list has more.
+var _last_layer: StringName = &""
+## Its own dice, so drawing a sound never moves the run's (the same seed, the same RESULT).
+var _layer_dice := RandomNumberGenerator.new()
+
+
+## CF-10: the blow's second sound, the body under the blade, on the frame it lands (ComboNode.layers).
+func _body_layer(node: ComboNode) -> void:
+	if node.layers.is_empty():
+		return
+	var pick: Array[StringName] = node.layers.filter(func(l: StringName) -> bool: return l != _last_layer)
+	if pick.is_empty():
+		pick = node.layers
+	_last_layer = pick[_layer_dice.randi() % pick.size()] if pick.size() > 1 else pick[0]
+	Audio.play(_last_layer)
 
 
 ## QW-103: plays the waiting swish on its time, only while that move still swings (a dodge that cut it drops it).

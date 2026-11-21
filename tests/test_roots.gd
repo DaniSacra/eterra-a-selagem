@@ -121,7 +121,7 @@ func test_where_the_roots_strike() -> void:
 		assert_almost_eq(h.warn, 1.2, 0.001)
 		assert_almost_eq(h.rearm, 6.0, 0.001)
 		assert_almost_eq(h.push_out, 1.0, 0.001)
-		assert_almost_eq(h.hero_damage, 7.0, 0.001)
+		assert_almost_eq(h.hero_damage, 10.0, 0.001)
 		assert_almost_eq(h.enemy_damage, 60.0, 0.001)
 		assert_almost_eq(h.from_progress, 0.34, 0.001)
 		var ph := PlateHazard.new(h, [])
@@ -223,7 +223,7 @@ func test_in_a_real_room() -> void:
 		game.ground.step(DT)
 		if struck_at == Vector2.INF and game.player.hp < hp:
 			struck_at = game.player.pos
-	assert_almost_eq(game.player.hp, hp - 7.0, 0.01, "he loses 7")
+	assert_almost_eq(game.player.hp, hp - 10.0, 0.01, "he loses 10")
 	assert_almost_eq(e.max_hp - e.hp, 60.0, 0.01, "the enemy 60")
 	var off := (struck_at - h.from[0]).cross(h.dirs[0])
 	assert_gt(absf(off), 1.15 + 0.6, "thrown off the root")

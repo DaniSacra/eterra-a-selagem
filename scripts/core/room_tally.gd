@@ -104,15 +104,34 @@ func zone_time(zone: String, dt: float) -> void:
 func hazard(enemy_damage: float, kills: int, strikes: int, source := "runes", extra := {}) -> void:
 	if not _rooms.is_empty():
 		var r := _rooms[-1]
-		r.hazard = {"enemy_damage": snappedf(enemy_damage, 0.1), "kills": kills, "strikes": strikes,
+		var d := {"enemy_damage": snappedf(enemy_damage, 0.1), "kills": kills, "strikes": strikes,
 			"hero_damage": snappedf(float((r.hurt_by as Dictionary).get(source, 0.0)), 0.1)}
-		(r.hazard as Dictionary).merge(extra, true)
+		d.merge(extra, true)
+		# A1: a room with two hazards (HazardDef.also) keeps the second one's numbers under "also"
+		if r.get("hazard") is Dictionary and not (r.hazard as Dictionary).is_empty():
+			(r.hazard as Dictionary)["also"] = d
+		else:
+			r.hazard = d
+
+
+## What `source` took from the paladin in the current room (0: nothing, or no room).
+func hurt_in_room(source: String) -> float:
+	if _rooms.is_empty():
+		return 0.0
+	return snappedf(float((_rooms[-1].hurt_by as Dictionary).get(source, 0.0)), 0.1)
 
 
 ## RP-09: the room's toppling columns (ColumnFloor.tally: how many, cracked, toppled, what they dealt, kills).
 func columns(data: Dictionary) -> void:
 	if not _rooms.is_empty():
 		_rooms[-1].columns = data
+
+
+## AT-Q1: what broke in the room (Breakables.tally: total, broken, by_hero, by_enemy, by_hazard). Only rooms with
+## breakables have it (a room without is as before).
+func breakables(data: Dictionary) -> void:
+	if not _rooms.is_empty():
+		_rooms[-1].breakables = data
 
 
 ## E5: a decision of an event (type: what happened; data: its details), at play time `time`, in the current room.

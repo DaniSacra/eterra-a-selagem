@@ -21,7 +21,7 @@ const TURN_FILL := 0.4
 const TURN_HOLD := 2.2
 const FADE := 0.35
 const NAME_SIZE := 14
-const NUMBER_SIZE := 13
+const NUMBER_SIZE := 14
 ## How much of the crack shows behind the count.
 const CRACK_BEHIND := 0.45
 const TEXT_GAP := 6.0

@@ -96,6 +96,8 @@ func _process(_delta: float) -> void:
 		_on_frame.call()
 	if frame == 30:
 		Controls.virtual = pad
+		if OS.get_environment("PROBE_VASES") != "":
+			_vases()
 		_next.call_deferred()
 
 
@@ -121,8 +123,23 @@ func step(n: int = 1) -> void:
 		await get_tree().process_frame
 
 
+## combat_cadence.md 9.6 (AT-Q1): PROBE_VASES=1 sets 6 vases round where he stands (whole again before each case),
+## so every target is measured with vases breaking under the blows.
+func _vases() -> void:
+	var l := RoomLayout.new()
+	l.id = &"hall"
+	for k in 6:
+		var a := TAU * k / 6.0
+		l.breakables.append(BreakablePiece.make(BreakablePiece.Form.VASE, Vector2(0, 4) + Vector2(cos(a), sin(a)) * 1.3, 0.6, 0))
+	if is_instance_valid(game.breaks):
+		game.breaks.queue_free()
+	game.breaks = BreakFloor.make(game, l)
+
+
 func reset_hero(at := Vector2(0, 4)) -> void:
 	var p := game.player
+	if is_instance_valid(game.breaks) and OS.get_environment("PROBE_VASES") != "":
+		game.breaks.restore()
 	pad.held.clear()
 	pad.tapped.clear()
 	pad.released.clear()

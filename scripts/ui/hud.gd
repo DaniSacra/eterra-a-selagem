@@ -87,6 +87,18 @@ const MOVE_FADE := 0.25
 const PHASE_TIME := 3.0
 ## An arena's name on walking in (cycle C12, decision D-33): in the place and look of a phase's name, this long.
 const PLACE_TIME := 2.0
+## Morvath's entrance (AP-2, ART-05.5): the chamber's name, his name and his epithet low in the middle of the screen (a
+## title over the balustrade, under the hero and Morvath on the seal; nothing of the HUD stands there) while he rises
+## (the 2.4 s of his entrance, Boss State.ENTER), on a veil; the notice and the greetings wait meanwhile. px at 720.
+const ENTRANCE_TIME := 2.3
+const ENTRANCE_IN := 0.3
+const ENTRANCE_OUT := 0.45
+const ENTRANCE_BOTTOM := 120.0
+const ENTRANCE_NAME_SIZE := 34
+const ENTRANCE_LINE_SIZE := 17
+## MAP-07: seconds the chevron points at the door the map looked at, and the last ones it fades over.
+const DOOR_POINT_TIME := 4.0
+const DOOR_FADE := 0.6
 const PHASE_FADE := 0.4
 const PHASE_NAME_SIZE := 18
 const PHASE_TIP_SIZE := 15
@@ -177,6 +189,16 @@ var _passives: HBoxContainer
 var _arrow: Label
 var _arrow_mark: HudMark
 var _pointers: Array[HudMark] = []
+## Morvath's entrance card (show_entrance) and its seconds left.
+var _entrance: VBoxContainer
+var _entrance_veil: HudVeil
+var _entrance_t := 0.0
+var _boss_met := false
+## MAP-07: a door of the room shown from the map (point_door): where, its name and the seconds left.
+var _door_mark: HudMark
+var _door_label: Label
+var _door_at := Vector2.ZERO
+var _door_t := 0.0
 var _action_row: HBoxContainer
 var _veil_t := 0.0
 var _veiled := false
@@ -226,6 +248,12 @@ func _ready() -> void:
 	_arrow = _label(T.t(&"hud_fountain"), UiKit.PALE, FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
 	_arrow.visible = false
 	_arrow_mark = _pointer()
+	# MAP-07: the door the map last looked at, for a moment after it closes (its name inside, as the fountain's)
+	_door_label = _label("", UiKit.PALE, FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
+	_door_label.name = "door_pointer_label"
+	_door_label.visible = false
+	_door_mark = _pointer()
+	_door_mark.name = "door_pointer"
 	for i in POINTERS:
 		_pointers.append(_pointer())
 	# the moment an Elo forms: in the notices' place under the clock, well above the paladin
@@ -319,6 +347,63 @@ func _build_top() -> void:
 	_phase_tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_phase_box.add_child(_phase_tip)
 	_place_clock(false)
+	_build_entrance()
+
+
+## Morvath's entrance: the chamber's name small in old gold, his name in Cinzel, his epithet under it, on a veil.
+func _build_entrance() -> void:
+	_entrance = VBoxContainer.new()
+	_entrance.name = "entrance"
+	_entrance.add_theme_constant_override(&"separation", -2)
+	_entrance.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_entrance.visible = false
+	add_child(_entrance)
+	_place(_entrance, Control.PRESET_CENTER_BOTTOM, Vector2(0, -ENTRANCE_BOTTOM), Vector2(BOSS.x + 160, 96))
+	for spec: Array in [["place", ENTRANCE_LINE_SIZE, UiKit.OLD_GOLD.lightened(0.35), UiKit.BOLD_FONT],
+			["name", ENTRANCE_NAME_SIZE, UiKit.GOLD, UiKit.TITLE_FONT], ["epithet", ENTRANCE_LINE_SIZE + 1, UiKit.PALE, null]]:
+		var l := UiKit.shadow(UiKit.label("", spec[2], spec[1], spec[3]))
+		l.name = spec[0]
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		l.add_theme_constant_override(&"outline_size", 5 if spec[0] == "name" else 3)
+		_entrance.add_child(l)
+	_entrance_veil = HudVeil.new()
+	for l in _entrance.get_children():
+		_entrance_veil.covers.append(l as Control)
+	add_child(_entrance_veil)
+	move_child(_entrance_veil, _entrance.get_index())
+
+
+## AP-2 (ART-05.5): Morvath's entrance under his bar, for the seconds he rises from the seal: the room's name, his own
+## ("Morvath, o rei que traiu a luz" split at its comma: the name, then the epithet) on a veil.
+func show_entrance(place: String) -> void:
+	var full := T.t(&"enemy_morvath")
+	var cut := full.find(", ")
+	var epithet := full.substr(cut + 2) if cut >= 0 else ""
+	(_entrance.get_node(^"place") as Label).text = place
+	(_entrance.get_node(^"name") as Label).text = full.substr(0, cut) if cut >= 0 else full
+	(_entrance.get_node(^"epithet") as Label).text = epithet.left(1).to_upper() + epithet.substr(1)
+	(_entrance.get_node(^"epithet") as Label).visible = epithet != ""
+	_entrance_t = ENTRANCE_TIME
+	_entrance.visible = true
+	_entrance.modulate.a = 0.0
+
+
+## The entrance card showing now (tests).
+func entrance_shown() -> bool:
+	return _entrance.visible and _entrance_t > 0.0
+
+
+func _update_entrance(delta: float) -> void:
+	if not _entrance.visible:
+		_entrance_veil.visible = false
+		return
+	_entrance_t -= delta
+	_notice_t = minf(_notice_t, 0.0)  # the entrance is the only words over the chamber meanwhile
+	_entrance.modulate.a = minf(clampf((ENTRANCE_TIME - _entrance_t) / ENTRANCE_IN, 0.0, 1.0),
+			clampf(_entrance_t / ENTRANCE_OUT, 0.0, 1.0))
+	_entrance.visible = _entrance_t > 0.0
+	_entrance_veil.follow()
+	_entrance_veil.modulate.a *= _entrance.modulate.a
 
 
 ## Bottom left: the medallion, with life and Magia coming out from behind it.
@@ -540,7 +625,7 @@ func _process(delta: float) -> void:
 	var lift := ConditionBadge.SIZE + 4.0 if _curse_badge.shown() > 0.0 and not _row_mode else 0.0
 	_combo_row.offset_top = _combo_top - lift
 	_combo_row.offset_bottom = _combo_top - lift + COMBO_H
-	_elo_banner.held = over
+	_elo_banner.held = over or entrance_shown()
 	_clock.text = SaveData.format_time(game.time)
 	_coin.visible = game.rooms != null
 	if game.rooms:
@@ -593,6 +678,11 @@ func _process(delta: float) -> void:
 		_phase_box.visible = true
 		_phase_box.modulate.a = _shield_t
 	_update_pointers(chief)
+	if game.boss != null and not _boss_met:
+		# Morvath rises from the seal: his entrance under his bar (nobody else names the chamber)
+		_boss_met = true
+		show_entrance(T.t(&"room_boss"))
+	_update_entrance(delta)
 	_update_veil(delta)
 
 
@@ -852,13 +942,14 @@ func _update_pointers(chief: Enemy) -> void:
 	var frame := Rect2(view.position + Vector2(EDGE_INSET.x, EDGE_INSET.y), view.size - Vector2(EDGE_INSET.x + EDGE_INSET.z, EDGE_INSET.y + bottom))
 	var at: Variant = game.fountain_target()
 	var edge: Variant = _edge(at as Vector2, view, frame) if at != null else null
-	_arrow.visible = edge != null
-	_point(_arrow_mark, edge, frame)
-	if edge != null:
-		# the name sits inside the chevron, towards the middle of the screen
-		var dir := (frame.get_center() - (edge as Vector2)).normalized()
-		var half := _arrow.size * 0.5
-		_arrow.position = (edge as Vector2) + dir * (POINTER_SIZE * 0.5 + 6.0 + absf(dir.x) * half.x + absf(dir.y) * half.y) - half
+	_named_pointer(_arrow, _arrow_mark, edge, frame)
+	_door_t = maxf(0.0, _door_t - get_process_delta_time() / maxf(Engine.time_scale, 0.01))
+	var door: Variant = _edge(_door_at, view, frame) if _door_t > 0.0 else null
+	_named_pointer(_door_label, _door_mark, door, frame)
+	if door != null:
+		var a := clampf(_door_t / DOOR_FADE, 0.0, 1.0)
+		_door_mark.modulate.a = a
+		_door_label.modulate.a = a
 	var foes: Array[Enemy] = []
 	if chief:  # Morvath is not an elite by his data
 		foes.append(chief)
@@ -887,6 +978,30 @@ func _edge(floor_at: Vector2, view: Rect2, frame: Rect2) -> Variant:
 	if game.camera.is_position_behind(world):
 		sp = view.get_center() * 2.0 - sp
 	return edge_point(sp, view.grow(-VIEW_INSET), frame)
+
+
+## A chevron on the frame with a name inside it, towards the middle of the screen (the fountain's, the door's).
+func _named_pointer(label: Label, mark: HudMark, edge: Variant, frame: Rect2) -> void:
+	label.visible = edge != null
+	_point(mark, edge, frame)
+	if edge != null:
+		var dir := (frame.get_center() - (edge as Vector2)).normalized()
+		var half := label.size * 0.5
+		label.position = (edge as Vector2) + dir * (POINTER_SIZE * 0.5 + 6.0 + absf(dir.x) * half.x + absf(dir.y) * half.y) - half
+
+
+## MAP-07: points at a door of the room for `seconds` (fading the last DOOR_FADE), when it is out of view: the map
+## looked at the room behind it and closed. A name of the room behind ("" for none).
+func point_door(floor_at: Vector2, room_name: String, seconds: float = DOOR_POINT_TIME) -> void:
+	_door_at = floor_at
+	_door_t = seconds
+	_door_label.text = room_name
+	_door_label.reset_size()
+
+
+## Stops pointing at a door.
+func clear_door() -> void:
+	_door_t = 0.0
 
 
 func _point(mark: HudMark, edge: Variant, frame: Rect2) -> void:
@@ -1000,6 +1115,11 @@ func open_map() -> MapScreen:
 
 
 func show_notice(text: String, time: float = 2.5) -> void:
+	if game and game.boss and text == T.t(&"room_boss"):
+		# Morvath's chamber: the room's name goes into his entrance (AP-2)
+		_boss_met = true
+		show_entrance(text)
+		return
 	if game and game.boss and text == T.t("boss_phase_%d" % game.boss.phase):
 		show_phase(text)
 		return

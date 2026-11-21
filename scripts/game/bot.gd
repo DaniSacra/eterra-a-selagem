@@ -19,6 +19,17 @@ const COLUMN_NEAR := 10.0
 const COLUMN_REACH := 2.2
 ## How near the spot he swings at a column from counts as there.
 const COLUMN_STAND := 0.7
+## RP-14: the bot charges a crystal within CRYSTAL_NEAR m whose column holds CRYSTAL_PACK enemies or more
+## (crystal_plan), from CRYSTAL_SIDE m to its side (out of the column it will strike) and CRYSTAL_BACK m south of it.
+const CRYSTAL_PACK := 2
+const CRYSTAL_NEAR := 12.0
+const CRYSTAL_SIDE := 2.1
+const CRYSTAL_BACK := 1.4
+## RP-12: the bot lights an oil urn within URN_NEAR m with URN_PACK enemies or more in its ring (urn_plan), from
+## URN_REACH m off it on the side away from the pack (he steps out of the ring as it warns: _danger).
+const URN_PACK := 2
+const URN_NEAR := 10.0
+const URN_REACH := 1.5
 
 var pad := Controls.VirtualPad.new()
 var _t := 0.0
@@ -193,7 +204,12 @@ func step(dt: float, game: Game) -> void:
 	_stuck = _stuck + dt if walking and p.distance_to(_last) < dt * 1.0 else 0.0
 	_last = p
 	var target := _nearest(game)
+	# a piece of the room turned on the pack (RP-09 column, RP-14 crystal, RP-12 oil urn): the same plan for all
 	var column: Variant = column_plan(game, p)
+	if column == null:
+		column = crystal_plan(game, p)
+	if column == null:
+		column = urn_plan(game, p)
 	if column != null:
 		target = column.center
 	var to := target - p
@@ -394,6 +410,63 @@ static func column_plan(game: Game, p: Vector2) -> Variant:
 			if n > best_n:
 				best_n = n
 				best = {"center": o.center, "way": way, "stand": o.center - way * COLUMN_REACH}
+	return best
+
+
+## RP-14: a crystal of the Câmara das Runas B within CRYSTAL_NEAR whose column holds CRYSTAL_PACK enemies or more
+## and that may take a charge now: {"center", "way" (toward the crystal), "stand" (to its side, out of the column, on
+## his side of it, CRYSTAL_BACK m south)}, or null. He swings at it until it discharges.
+static func crystal_plan(game: Game, p: Vector2) -> Variant:
+	var rf: RuneFloor = game.rooms.runes if game.rooms else null
+	if rf == null or rf.crystals == null or not rf.crystals.awake or rf.hazard.discharging() \
+			or rf.hazard.phase == ArenaHazard.Phase.CALM:
+		return null
+	var def := rf.hazard.def
+	var best: Variant = null
+	var best_n := CRYSTAL_PACK - 1
+	for i in rf.crystals.count():
+		var c: Vector2 = rf.crystals.def.crystals[i]
+		if p.distance_to(c) > CRYSTAL_NEAR:
+			continue
+		var x0 := def.origin.x + rf.crystals.col(i) * def.tile
+		var n := 0
+		for e in game.horde.list:
+			if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS and e.pos.x >= x0 and e.pos.x <= x0 + def.tile:
+				n += 1
+		if n > best_n:
+			best_n = n
+			var side := -1.0 if p.x < c.x else 1.0
+			var stand := game.arena.resolve(c + Vector2(side * CRYSTAL_SIDE, CRYSTAL_BACK), Player.RADIUS)
+			best = {"center": c, "way": (c - stand).normalized(), "stand": stand}
+	return best
+
+
+## RP-12: an oil urn of the Crypt A within URN_NEAR, unlit and awake, with URN_PACK enemies or more in its ring:
+## {"center", "way" (toward the urn), "stand" (URN_REACH m off it, away from the pack)}, or null.
+static func urn_plan(game: Game, p: Vector2) -> Variant:
+	var uf: UrnFloor = game.rooms.urns if game.rooms else null
+	if uf == null or not uf.hazard.awake:
+		return null
+	var h := uf.hazard
+	var best: Variant = null
+	var best_n := URN_PACK - 1
+	for i in h.count():
+		if h.stage[i] != UrnHazard.Stage.IDLE:
+			continue
+		var c: Vector2 = h.def.urns[i]
+		if p.distance_to(c) > URN_NEAR:
+			continue
+		var n := 0
+		var pack := Vector2.ZERO
+		for e in game.horde.list:
+			if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS and e.pos.distance_to(c) <= h.def.urn_radius + e.def.radius:
+				n += 1
+				pack += e.pos - c
+		if n > best_n:
+			best_n = n
+			var away := -pack.normalized() if pack.length() > 0.01 else (p - c).normalized()
+			var stand := game.arena.resolve(c + away * URN_REACH, Player.RADIUS)
+			best = {"center": c, "way": (c - stand).normalized(), "stand": stand}
 	return best
 
 

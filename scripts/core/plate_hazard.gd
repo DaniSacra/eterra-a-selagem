@@ -10,9 +10,10 @@ extends RefCounted
 ## may wait for someone to linger on it (HazardDef.dwell). Pure: PlateFloor lays it on the floor.
 
 enum Phase { IDLE, ARM, FIRE, REST }
-## At most this many slabs warm up or strike at once (docs/design/rooms_progression.md, Sworn 5: never more than three
-## of a room's own warnings on the floor; the 222700 lesson): one more stepped on waits until one is done.
-const MOST_AT_ONCE := 3
+## At most this many slabs warm up or strike at once (docs/design/rooms_progression.md, Sworn 5; combat_cadence.md 9.2
+## R9: at most two of a room's own warnings on the whole floor, the "never three"): one more stepped on waits until one
+## is done. The room's other hazards count against it (step's `others`).
+const MOST_AT_ONCE := 2
 
 var def: HazardDef
 ## Whether the slabs may arm at all in this room (the descent reached HazardDef.from_progress).
@@ -107,8 +108,9 @@ func plate_at(p: Vector2) -> int:
 
 ## One step. hero: where the paladin stands (Vector2.INF: none); bodies: where the enemies stand. Returns the slabs
 ## that began to arm in this step (their warnings go on the floor now) and the ones that struck, as
-## {"armed": PackedInt32Array, "fired": PackedInt32Array}.
-func step(dt: float, hero: Vector2, bodies: PackedVector2Array) -> Dictionary:
+## {"armed": PackedInt32Array, "fired": PackedInt32Array}. others: the room's other hazards' warnings on the floor now
+## (R9: they and these slabs together never pass MOST_AT_ONCE).
+func step(dt: float, hero: Vector2, bodies: PackedVector2Array, others := 0) -> Dictionary:
 	var armed := PackedInt32Array()
 	var struck := PackedInt32Array()
 	calm = maxf(0.0, calm - dt)
@@ -131,7 +133,7 @@ func step(dt: float, hero: Vector2, bodies: PackedVector2Array) -> Dictionary:
 				foe_stay[i] = foe_stay[i] + dt if enemy_on else 0.0
 				hero_on = hero_on and stay[i] >= def.dwell
 				enemy_on = enemy_on and foe_stay[i] >= def.dwell_of_enemy()
-				if (hero_on or enemy_on) and going < MOST_AT_ONCE:
+				if (hero_on or enemy_on) and going + others < MOST_AT_ONCE:
 					stay[i] = 0.0
 					foe_stay[i] = 0.0
 					phase[i] = Phase.ARM

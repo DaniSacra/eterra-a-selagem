@@ -152,6 +152,12 @@ const STYLE := {
 ## The cycle of 2026-11-20: the patches soft (ArenaKit.SOFT_PATCHES), the floor calm (ArenaKit.CALM_FLOOR) and darker
 ## toward the room's far edges (edge_value from edge_span times the calm radius; the fight's middle stays).
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.42, 0.4, 0.51), &"edge_value": 0.5, &"edge_span": Vector2(1.1, 2.0)}
+## Sworn P2 SW-F2: the salt gathered at the brink: the patches paler and greyer, faint in the middle of the floor (x of
+## patch_share), most of the floor within patch_reach m of an edge (the rift's lips are edges) taken (patch_cut_edge).
+const STY_SALT := {&"patch_color": Color(0.47, 0.465, 0.53), &"patch_share": Vector2(0.25, 0.85), &"patch_reach": 1.0,
+	&"patch_cut_edge": 0.32}
+## SW-F3: the stretch of the north edge (x from, to) in low merlons instead of the balustrade (ArenaRoom.merlons).
+const MERLON_SPAN := Vector2(-16.5, -9.0)
 ## The floor's slate and how dark it falls toward the room's edge (room redesign fixes: the east platform's front read
 ## at luma 42, meta 50 to 65; the floor's middle stays near).
 const STY_FLOOR := Color(0.285, 0.27, 0.37)
@@ -340,6 +346,19 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 		return
 	broken_edge(a, b, out, faces)
 	if out.x < -0.9 and mid.y > ENTRY.x - 0.1 and mid.y < ENTRY.y + 0.1:
+		return
+	if out.y < -0.9 and minf(a.x, b.x) < MERLON_SPAN.y and maxf(a.x, b.x) > MERLON_SPAN.x:
+		# SW-F3: a stretch of the north edge in low merlons (the stylized look; the classic keeps its balustrade)
+		var lo := Vector2(maxf(minf(a.x, b.x), MERLON_SPAN.x), a.y)
+		var hi := Vector2(minf(maxf(a.x, b.x), MERLON_SPAN.y), a.y)
+		var dir := signf(b.x - a.x)
+		var first := lo if dir > 0.0 else hi
+		var last := hi if dir > 0.0 else lo
+		if a.distance_to(first) > 1.0:
+			balustrade_edge(a, first, out, false)
+		merlons(first, last, out)
+		if last.distance_to(b) > 1.0:
+			balustrade_edge(last, b, out, false)
 		return
 	balustrade_edge(a, b, out, false)
 
@@ -644,7 +663,7 @@ func _far() -> void:
 
 func style() -> Dictionary:
 	var st := STYLE.duplicate(true)
-	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME)
+	st[&"floor"] = ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME).merged(STY_SALT)
 	if _compat():
 		st[&"air"][&"ambient_gain"] = float(st[&"air"][&"ambient_gain"]) * STY_COMPAT_AMBIENT
 		st[&"air"][&"moon_energy"] = float(st[&"air"][&"moon_energy"]) * STY_COMPAT_MOON
@@ -687,6 +706,14 @@ func _dress_styled() -> void:
 	if _fallen:
 		_fallen_arch(sm)
 		_vortex()
+
+
+## Sworn P2 SW-G6: the low dark foreground rising out of the haze past the edges the camera looks across.
+func foreground_look() -> Dictionary:
+	return STY_FOREGROUND
+
+
+const STY_FOREGROUND := {&"out": Vector2(1.9, 3.2), &"top": Vector2(-0.8, 0.45), &"every": 6.5, &"tint": 0.55}
 
 
 ## TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Fendas): dead roots hanging from under each standing bridge's deck on

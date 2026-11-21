@@ -64,6 +64,9 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 @export var guardian_home := false
 ## A floor that strikes on its own (E5, the runes: HazardDef; null: none).
 @export var hazard: HazardDef
+## AT-Q1: what a blow breaks in it (vases, crates, branches; BreakablePiece, played by BreakFloor). Never stops a body
+## nor a shot. Empty: nothing.
+@export var breakables: Array[BreakablePiece] = []
 ## Named parts of the floor (E5, the decision each arena asks; RoomTally.zone_time): seconds the paladin spends in
 ## each are counted in a fight (the first rectangle holding him; none: "other"). area_names[i] names areas[i].
 @export var areas: Array[Rect2] = []
@@ -101,6 +104,8 @@ func variant(n: int) -> RoomLayout:
 		out.floor = v.floor
 	if v.hazard != null:
 		out.hazard = v.hazard
+	if not v.breakables.is_empty():
+		out.breakables = v.breakables.duplicate()
 	if not v.areas.is_empty():
 		out.areas = v.areas.duplicate()
 		out.area_names = v.area_names.duplicate()
@@ -145,6 +150,10 @@ func _mirror() -> void:
 	late_spawns = late
 	if cam_bounds.has_area():
 		cam_bounds = mirror_rect(cam_bounds)
+	var brk: Array[BreakablePiece] = []
+	for b in breakables:
+		brk.append(b.mirrored())
+	breakables = brk
 	hero_spawn.x = -hero_spawn.x
 	hero_facing.x = -hero_facing.x
 	boss_spawn.x = -boss_spawn.x

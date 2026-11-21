@@ -434,7 +434,7 @@ func test_the_three_arenas_of_e5() -> void:
 		var l: RoomLayout = by[id]
 		assert_eq(l.difficulty, 2, "%s is a high one" % id)
 		assert_eq(l.exits.size(), 3)
-		assert_eq(l.variant_count(), 2, "%s has two variants" % id)
+		assert_gte(l.variant_count(), 2, "%s has two variants or more (RP-18: the Santuário C)" % id)
 		assert_ne(T.t(l.name_key), String(l.name_key), "%s has its name" % id)
 	var s: RoomLayout = by[&"sanctuary"]
 	assert_true(s.guardian_home, "the Santuário is the guardian's house")

@@ -2,7 +2,7 @@ class_name WorldAir
 extends RefCounted
 ## The air of the world, shared by the run (Game) and the hub (HUB-01, HUB-B1): the WorldEnvironment (sky, ambient,
 ## tone map, glow, fog, the desktop's volumetric fog, contact shadows and reflections) and the moon, dressed for the
-## visual profile (VisualProfile.dress_world). It was inline in Game._build_world; the numbers did not change (Game
+## visual profile (its one owner: RoomMood, DT-RS1). It was inline in Game._build_world; the numbers did not change (Game
 ## keeps its constants as names of these, read by the tests and the scenery).
 ##   var air := WorldAir.build(self)   # adds the WorldEnvironment and the moon under self
 ##   air.env.environment               # the Environment (GraphicsQuality.apply_environment, ArenaRoom's air)
@@ -38,6 +38,8 @@ const ADJUST_SATURATION := 1.3
 
 var env: WorldEnvironment
 var moon: DirectionalLight3D
+## The owner of the air (DT-RS1): every room's air, the look's and Morvath's mood go through it.
+var mood: RoomMood
 
 
 ## Builds the world's air under parent (the WorldEnvironment first, then the moon, as the run always had them).
@@ -110,8 +112,10 @@ static func build(parent: Node) -> WorldAir:
 	air.moon.directional_shadow_max_distance = 90.0
 	air.moon.light_volumetric_fog_energy = 0.3
 	parent.add_child(air.moon)
-	# the visual profile (--look, F7): the stylized proof's numbers for the air and the key (VisualProfile)
-	VisualProfile.dress_world(e, air.moon)
+	# the one owner of the air (RoomMood, DT-RS1): these numbers are the world's classic air, the stylized proof's
+	# its stylized one (VisualProfile.world_values); rooms and moods go over them there, the look in use on top
+	air.mood = RoomMood.own(air.env, air.moon)
+	VisualProfile.set_look(VisualProfile.current())
 	return air
 
 

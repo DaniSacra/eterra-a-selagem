@@ -25,6 +25,13 @@ const CL := ComboNode.In.CHARGE_LIGHT
 const PEAK := {
 	&"Slash_A": 0.23, &"Slash_B": 0.27, &"Slash_C": 0.67, &"Sword_Attack": 0.40, &"Cast": 0.10, &"Throw": 0.40,
 }
+## The fastest a swing clip of the hero plays in its windup (CF-09, combat_cadence.md 3: at most 1.5x).
+const HERO_CLIP_MAX := 1.5
+## CF-10 (combat_cadence.md 3): the body under the blade on the frame the blow lands, from sounds that exist (ComboNode
+## layers): cut2 the turn of the body (cloth and air), the spin and the lance the planted step (a low thud on stone).
+const LAYER_TURN: Array[StringName] = [&"dodge"]
+const LAYER_SPIN: Array[StringName] = [&"dash_land", &"dodge"]
+const LAYER_STEP: Array[StringName] = [&"dash_land"]
 ## Which way the blade crosses in each clip (ComboNode.sweep: 1 from the right to the left, 2 the other way).
 const SWEEP := {
 	&"Slash_A": 1, &"Slash_B": 2, &"Slash_C": 1, &"Sword_Attack": 2,
@@ -71,9 +78,11 @@ func _move(id: StringName, input: ComboNode.In, anim: StringName, tags: Array[St
 	n.sweep = SWEEP.get(anim, 0)
 	n.recover_anim = RECOVER.get(anim, &"")
 	var peak: float = PEAK.get(anim, 0.3)
-	# (a quick move squeezes the last 0.22 s of the lift into its windup; a slow one plays the clip at its own speed
-	# from windup seconds before the peak, so the blade never lands before the blow does)
-	n.anim_from = maxf(0.0, peak - maxf(0.22, n.windup))
+	# (a quick move plays the end of the lift into its windup at most HERO_CLIP_MAX times its speed, starting the clip
+	# nearer the peak; a slow one plays the clip at its own speed from windup seconds before the peak, so the blade
+	# never lands before the blow does. CF-09: the old 0.22 s squeezed into 0.08 played cut1 at 2.75x and the dash cut
+	# and the lance at 3.67x)
+	n.anim_from = maxf(0.0, peak - minf(maxf(0.22, n.windup), n.windup * HERO_CLIP_MAX))
 	n.anim_speed = maxf(1.0, (peak - n.anim_from) / maxf(n.windup, 0.01))
 	return n
 
@@ -104,14 +113,14 @@ func _tree(fourth: bool) -> ComboTree:
 		"recovery": 18.0 / 60.0, "move_hold": 30.0 / 60.0, "chain_window": 0.6, "hit_stop_ms": 70.0, "shake": 1.6, "move_scale": 0.0, "sound": &"blade_spin",
 		# QW-103: the spin's swish (its samples peak 30 to 90 ms in) on the blade's frame, 0.36 s after the press; the
 		# press only gathers
-		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather"}, [], &"move_spin")
+		"sound_at": 0.36 - SWISH_PEAK, "sound_press": &"spin_gather", "layers": LAYER_SPIN}, [], &"move_spin")
 	var after_cut2: Array[ComboNode] = [cut3]
 	if fourth:
 		after_cut2 = [_fourth(cut3)]
 	var cut2 := _move(&"cut2", L, &"Slash_B", [&"light"],
 		{"damage": 25.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[1], "windup": 0.13, "recovery": 13.0 / 60.0,
 		"move_hold": 19.0 / 60.0,
-		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0, "sound": &"blade_heavy"}, after_cut2)
+		"chain_window": 0.4, "hit_stop_ms": 65.0, "shake": 0.8, "move_scale": 0.0, "sound": &"blade_heavy", "layers": LAYER_TURN}, after_cut2)
 	var cut1 := _move(&"cut1", L, &"Slash_A", [&"light"],
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0,
@@ -136,7 +145,7 @@ func _tree(fourth: bool) -> ComboTree:
 	var lance := _move(&"lance", CL, &"Sword_Attack", [&"light", &"thrust", &"finisher", &"omega"],
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 160.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
-		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK}, [], &"move_lance")
+		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK, "layers": LAYER_STEP}, [], &"move_lance")
 	# out of a dash: a thrust along the way
 	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
 		{"damage": 30.0, "shape": ComboNode.Shape.LINE, "reach": 640.0 / U, "width": 1.6, "knockback": 10.0, "lunge": 3.2, "windup": 0.06,
@@ -660,6 +669,7 @@ func _stage() -> void:
 	st.layouts = [hall, _crypt(), _rift(), _garden(), _sanctuary(), _bridge(), _runes()]
 	st.shop_layout = hall
 	st.trial_layout = _trial_room()
+	_place_breakables(st)
 	st.altar_layout = _altar_room()
 	# The Provação (Hades II's Chaos, hades2_sistemas.md 7): 20% a room won, from the 2nd room to the 7th (a curse of 3
 	# to 5 fights must have fights to be carried in before the shop), once in 10 rooms (once in a descent), at
@@ -786,31 +796,36 @@ func _variant(obstacles: Array[ArenaObstacle], floor: FloorShape = null, late: A
 
 
 ## RP-06 (H-2, docs/design/rooms_progression.md): slabs of 3 x 3 m that anyone stepping on arms (the paladin or an enemy:
-## the steam trap of the Hades II), marked at rest; 1.0 s lighting from the edge to the middle (never under an enemy's
-## wind-up), a strike of 0.25 s on whoever stands on it with the runes' numbers (RP-03: 7 to him, 60 to an enemy), 5 s
+## the steam trap of the Hades II), marked at rest; 1.2 s lighting from the edge to the middle (never under an enemy's
+## wind-up), a strike of 0.25 s on whoever stands on it with the runes' numbers (A1: 10 to him, 60 to an enemy), 5 s
 ## before it may arm again, nothing in the first 3 s; asleep (drawn, never striking) before the descent reaches `from`.
 ## Each slab at least 6 m from the way in and off the doors' mouths (test_plates.gd).
 func _plates(rects: Array[Rect2], from := 0.0) -> HazardDef:
 	var h := HazardDef.new()
 	h.kind = HazardDef.Kind.PLATES
 	h.plates = rects
-	h.warn = 1.0
+	# combat_cadence.md 9.4 (P0 with the 10): 1.2 s (was 1.0), an enemy may arm it under him while he is locked
+	h.warn = 1.2
 	h.fire = 0.25
 	h.rearm = 5.0
 	h.start_delay = 3.0
 	h.from_progress = from
-	h.hero_damage = 7.0
+	h.hero_damage = HAZARD_HERO
 	h.enemy_damage = 60.0
 	return h
 
 
 ## RP-06: the slabs wake from the 4th room (progress 0.34); in the 2nd and 3rd they lie at rest and teach.
 const PLATES_FROM := 0.34
+## A1 (Daniel, 2026-11-20: the game must get harder): every room hazard takes 10 from the paladin (the Hades II's own
+## trap damage on the same 30 of life; was 7, RP-03 step 1), the edge that crumbles 7 (was 5). Enemies keep 60.
+const HAZARD_HERO := 10.0
+const CRUMBLE_HERO := 7.0
 
 
 ## RP-10 (H-1, docs/design/rooms_progression.md): the Jardim's outer roots strike. A band 3 m across along each root
 ## (its metre and one more each side), from the trunk's face to `tips`; the paladin lingering 0.5 s on it, or an enemy
-## 0.2 s, wakes it: 1.2 s cracking (the runes' amber), a strike of 0.25 s with the runes' numbers (RP-03: 7 to him, 60
+## 0.2 s, wakes it: 1.2 s cracking (the runes' amber), a strike of 0.25 s with the runes' numbers (A1: 10 to him, 60
 ## to an enemy) that throws everyone on it 1 m off the root, 6 s before that root wakes again. Asleep before the 4th
 ## room, as the slabs. Each band 6 m or more from the way in (test_roots.gd).
 func _roots(tips: Array) -> HazardDef:
@@ -847,6 +862,64 @@ func _slit(x: float) -> ArenaObstacle:
 	return ArenaObstacle.box(Vector2(x, -10.75), Vector2(0.25, 0.3), 0.0, &"bolt_slit", 1.2, true)
 
 
+## A1, RP-20 (the stones of the torn vault; rooms_progression.md): squares of 2 m on `zones`, at most two warming up at
+## once, one every 4 s after the first 3 s, half aimed at him when he stands in a zone; warned 1.2 s (combat_cadence.md
+## 9.3: the square whole from the first frame, the shadow filling), 10 to him and 60 to each enemy under it, the rubble
+## drawn only. Asleep before the 4th room (PLATES_FROM), as the slabs.
+func _rocks(zones: Array[Rect2]) -> HazardDef:
+	var h := HazardDef.new()
+	h.kind = HazardDef.Kind.DROPS
+	h.drop_zones = zones
+	h.drop_size = 2.0
+	h.drop_count = 2
+	h.drop_every = 4.0
+	h.drop_aim = 0.5
+	h.warn = 1.2
+	h.fire = 0.25
+	h.start_delay = 3.0
+	h.from_progress = PLATES_FROM
+	h.hero_damage = HAZARD_HERO
+	h.enemy_damage = 60.0
+	return h
+
+
+## A1, RP-12 (the oil urn, the Hades II's barrel): a blow of his lights an urn; its ring of 2.5 m warns 1.3 s
+## (combat_cadence.md 9.4, P0 with the 10) and blasts 10 to him and 80 to each enemy in it; the oil then runs down its
+## channel at 3 m/s in stretches of 2 m, each warned 1.0 s before the flame, 5 to him and 40 to an enemy, burning 2 s.
+## Once per urn per room; asleep before two thirds of the descent (URNS_FROM: the late Cripta).
+const URNS_FROM := 0.67
+func _urns(at: PackedVector2Array, flows: PackedVector4Array) -> HazardDef:
+	var h := HazardDef.new()
+	h.kind = HazardDef.Kind.URNS
+	h.urns = at
+	h.urn_flows = flows
+	h.urn_radius = 2.5
+	h.warn = 1.3
+	h.fire = 0.25
+	h.flow_width = 1.5
+	h.flow_speed = 3.0
+	h.flow_step = 2.0
+	h.flow_lead = 1.0
+	h.flow_hero = 5.0
+	h.flow_enemy = 40.0
+	h.burn = 2.0
+	h.from_progress = URNS_FROM
+	h.hero_damage = HAZARD_HERO
+	h.enemy_damage = 80.0
+	return h
+
+
+## The oil urn's body (0.45 m, 1.0 m tall: the body goes round, a shot over it).
+func _urn(p: Vector2) -> ArenaObstacle:
+	return ArenaObstacle.circle(p, 0.45, &"oil_urn", 1.0, false)
+
+
+## Where the Cripta A's two urns stand (at the foot of the east and north walls, far from the way in) and their channels
+## (west along the middle row's north side, east along the north wall under the door's mouth).
+const CRYPT_URNS := [Vector2(11.2, -1.6), Vector2(-1.6, -10.0)]
+const CRYPT_OIL := [Vector4(10.2, -2.6, 4.2, -2.6), Vector4(-0.6, -9.0, 5.4, -9.0)]
+
+
 func _crypt() -> RoomLayout:
 	var l := RoomLayout.new()
 	_arena(l, &"crypt", RoomLayout.Size.SMALL, 1, Vector2(0.1, 1.0))
@@ -865,6 +938,7 @@ func _crypt() -> RoomLayout:
 		# RP-17: a low wall of 5.5 m south of the great tomb, parallel to it, between the middle row and the south one (the
 		# body goes round, the shot goes over: 0.9 m)
 		_capsule(Vector2(-3.5, 3.8), Vector2(2.0, 3.8), 0.5, 0.9),
+		_urn(CRYPT_URNS[0]), _urn(CRYPT_URNS[1]),
 	]
 	a.append_array(bowls)
 	l.obstacles = a
@@ -897,12 +971,50 @@ func _crypt() -> RoomLayout:
 	# on each side of its end.
 	l.hazard = _plates([_rect(-7.2, -4.2, -10.3, -7.3), _rect(8.0, 11.0, -7.5, -4.5), _rect(2.0, 5.0, 7.3, 10.3),
 		_rect(8.0, 11.0, 1.3, 4.3)], PLATES_FROM)
+	# A1, RP-12: the oil urns beside the slabs (late)
+	l.hazard.also = _urns(PackedVector2Array(CRYPT_URNS), PackedVector4Array(CRYPT_OIL))
 	l.variants[0].hazard = _plates([_rect(-3.4, -0.4, -6.3, -3.3), _rect(1.4, 4.4, -6.3, -3.3)], PLATES_FROM)
 	# RP-16: an arrow slit on the north wall each side of the dividing wall, firing south down its corridor to the row of
 	# the south sarcophagi; the slab on one side arms the slit of the other (the pack lured beyond the wall)
 	l.variants[0].hazard.aims = PackedVector4Array([Vector4(SLIT_EAST, -10.4, SLIT_EAST, 2.4),
 		Vector4(SLIT_WEST, -10.4, SLIT_WEST, 2.4)])
 	return l
+
+
+## AT-Q1: what a blow breaks (BreakablePiece; art in docs/art/at_q0_breakables.md, places for AT-Q4 by the
+## room-designer): groups of 2 to 4 against a wall or a balustrade, 1.5 m or more from a door, a use spot, a spawn, a
+## slab that strikes and a hazard's band (tests/test_breakables.gd); never in the hub. First the Salão (vases, small
+## urns, a cracked bench at the edges and at the foot of the balustrades, never on the axis nor the medallion) and the
+## Crypt A and B (funeral ceramics, small vases, what is left of benches).
+func _place_breakables(st: StageDef) -> void:
+	const F := BreakablePiece.Form
+	for l: RoomLayout in st.layouts:
+		match l.id:
+			&"hall":
+				l.breakables = _breakable_groups([
+					[[F.VASE, -13.0, -6.6, 0.7], [F.URN, -13.0, -5.6, 0.85], [F.OFFERING, -12.3, -6.1, 0.4]],
+					[[F.URN, -12.8, -12.4, 0.8], [F.VASE, -11.9, -12.6, 0.6]],
+					[[F.VASE, 14.2, 10.6, 0.6], [F.BENCH, 13.4, 12.2, 0.5]],
+					[[F.VASE, 13.6, -10.8, 0.55], [F.OFFERING, 14.3, -11.5, 0.4], [F.URN, 13.4, -12.1, 0.75]],
+				])
+			&"crypt":
+				var south_west := [[F.URN, -8.6, 9.8, 0.8], [F.VASE, -7.7, 9.9, 0.6], [F.OFFERING, -8.2, 9.1, 0.4]]
+				var north_east := [[F.VASE, 9.0, -9.4, 0.6], [F.OFFERING, 8.6, -10.0, 0.4]]
+				l.breakables = _breakable_groups([
+					[[F.VASE, -11.2, -3.3, 0.6], [F.URN, -11.2, -2.4, 0.8], [F.OFFERING, -10.5, -2.9, 0.4]],
+					south_west, north_east])
+				l.variants[0].breakables = _breakable_groups([
+					[[F.VASE, -11.2, -5.0, 0.6], [F.URN, -11.2, -5.9, 0.8], [F.OFFERING, -10.5, -5.4, 0.4]],
+					south_west, north_east])
+
+
+## Pieces from groups of [form, x, z, height].
+func _breakable_groups(groups: Array) -> Array[BreakablePiece]:
+	var out: Array[BreakablePiece] = []
+	for g in groups.size():
+		for d: Array in groups[g]:
+			out.append(BreakablePiece.make(d[0], Vector2(d[1], d[2]), d[3], g))
+	return out
 
 
 ## The rift of the hall of the rifts, cut by its two bridges (each bridge is the floor left between two pieces of it)
@@ -947,6 +1059,9 @@ func _rift() -> RoomLayout:
 	l.variants = [_variant(b, fallen, [_rect(-19.5, -15.5, -12, -7)])]
 	# B (the north bridge fallen): its west stretch along the fallen bridge's brink, away from the second hole
 	l.variants[0].hazard = _breath(RIFT_BREATH + [_rect(-10.0, -7.2, -13, -7)], RIFT_BREATH_PUSH + [Vector2(-BREATH_PUSH, 0)])
+	# A1, RP-20: stones from the vault over the east platform's fight (north of the columns, off the north door, and the
+	# middle of the platform), beside the breath (which does not hurt)
+	l.variants[0].hazard.also = _rocks([_rect(3.0, 9.5, -14.5, -8.0), _rect(4.0, 11.0, -1.0, 5.0)])
 	# RP-07 (the room-designer's bands, by the damage measured): A early to the middle, B from the 4th room on
 	l.variant_depth = Vector2(0.1, 0.6)
 	l.variants[0].depth = Vector2(0.34, 1.0)
@@ -1496,6 +1611,14 @@ func _areas(l: Resource, pairs: Array) -> void:
 ## columns that stop shots, the nave 10.7 m free between them (the knight's charge), the side aisles 7.35 m; the
 ## guardian rises before the presbytery's grille (west). Variant B: the floor of the nave fell in (a hole of 8.4 x 7 m),
 ## the four columns over it with it.
+## RP-18: the Santuário C's grid of low columns (x 3, 7, 11 by z -4, 0, 4), its two stumps and its cracked one.
+const COLONNADE := [Vector2(3, -4), Vector2(7, -4), Vector2(11, -4), Vector2(3, 0), Vector2(7, 0), Vector2(11, 0),
+	Vector2(3, 4), Vector2(7, 4), Vector2(11, 4)]
+const COLONNADE_STUMPS := [Vector2(7, -4), Vector2(3, 4)]
+const COLONNADE_CRACKED := Vector2(11, 0)
+const COLONNADE_TOP := 2.5
+
+
 func _sanctuary() -> RoomLayout:
 	var l := RoomLayout.new()
 	_arena(l, &"sanctuary", RoomLayout.Size.LARGE, 2, Vector2(0.4, 1.0))
@@ -1549,17 +1672,45 @@ func _sanctuary() -> RoomLayout:
 		_rect(-7.5, -4.5, 8.0, 11.0), _rect(0.0, 3.0, 8.0, 11.0)]
 	l.hazard = _plates(aisle_slabs, PLATES_FROM)
 	# RP-13 (B): the edge that crumbles, the slabs at the two ends of the hole (the nave is 1.85 m wide along its long
-	# sides, no room for a slab there): 5 to him (not 7) and everyone on them thrown 2.5 m away from the hole, to the
+	# sides, no room for a slab there): 7 to him (not 10, A1) and everyone on them thrown 2.5 m away from the hole, to the
 	# firm floor (nobody falls, D-28); the same hazard as the aisles' (one hazard that hurts per room)
 	var edge_slabs := aisle_slabs.duplicate()
 	edge_slabs.append_array([_rect(-2.6, 0.4, -1.5, 1.5), _rect(9.6, 12.6, -1.5, 1.5)])
 	var crumble := _plates(edge_slabs, PLATES_FROM)
-	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, 0, 5, 5])
+	crumble.plate_hero_damage = PackedFloat32Array([0, 0, 0, 0, CRUMBLE_HERO, CRUMBLE_HERO])
 	crumble.plate_push = PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2(-2.5, 0),
 		Vector2(2.5, 0)])
 	l.variants[0].hazard = crumble
+	# A1, RP-20: stones from the torn vault over the nave round the hole (the rent above it), 6.5 m and more from the
+	# way in; never on the hole (a square only whole on the floor)
+	crumble.also = _rocks([_rect(-8.0, 13.0, -5.2, 5.2)])
 	_areas(l.variants[0], ["hole_edge", _rect(-2.6, 0.4, -1.5, 1.5), "hole_edge", _rect(9.6, 12.6, -1.5, 1.5),
 		"nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+	# A1, RP-18, C "Colunata": the east of the nave becomes a grid of nine low columns (2.5 m: they stop shots and bodies
+	# but never hide a wind-up, combat_cadence.md 9.3), 4 m apart, two of them broken to stumps (bodies, no shots) and one
+	# cracked (RP-09); the west of the nave stays open for the guardian's charge. The question: fight in the grid (cover
+	# from the shooters, the pack split by the columns) or in the open west. From the middle of the descent on; A's slabs.
+	var c: Array[ArenaObstacle] = [_column(-15.0, -6.0, 5.2, 0.65), _column(-9.0, -6.0, 5.2, 0.65),
+		_column(-3.0, -6.0, 5.2, 0.65), _column(9.0, -6.0, 5.2, 0.65), _cracked(_column(15.0, -6.0, 3.4, 0.65)),
+		_column(-15.0, 6.0, 5.2, 0.65), _cracked(_column(-9.0, 6.0, 3.0, 0.65)), _column(-3.0, 6.0, 5.2, 0.65),
+		_column(9.0, 6.0, 5.2, 0.65), _column(15.0, 6.0, 5.2, 0.65)]
+	for p: Vector2 in COLONNADE:
+		if COLONNADE_STUMPS.has(p):
+			c.append(ArenaObstacle.circle(p, 0.5, &"column_base", 0.6, false))
+		elif p == COLONNADE_CRACKED:
+			var k := _cracked(_column(p.x, p.y, COLONNADE_TOP, 0.5))
+			k.fall_length = 3.0  # a low column falls short
+			c.append(k)
+		else:
+			c.append(_column(p.x, p.y, COLONNADE_TOP, 0.5))
+	c.append_array(walls)
+	c.append_array(bowls)
+	var vc := _variant(c)
+	vc.depth = Vector2(0.5, 1.0)
+	vc.hazard = _plates(aisle_slabs, PLATES_FROM)
+	_areas(vc, ["colonnade", _rect(1.0, 13.0, -5.35, 5.35), "nave", _rect(-22, 22, -5.35, 5.35),
+		"aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
+	l.variants.append(vc)
 	return l
 
 
@@ -1620,7 +1771,7 @@ func _bridge() -> RoomLayout:
 
 
 ## RP-11 (H-3): the chain that sweeps a bridge. A band of 2 m across the deck warms up 1.2 s (as the runes), strikes
-## 0.25 s with the numbers of RP-03 (7 to the paladin, 60 to an enemy) and pushes everyone in it 2.5 m along the bridge
+## 0.25 s with the numbers of RP-03 (A1: 10 to the paladin, 60 to an enemy) and pushes everyone in it 2.5 m along the bridge
 ## toward the platform it leads to (never off it); one band every 6 s, in turn, after 3 s of calm.
 const CHAIN_PUSH := 2.5
 
@@ -1634,7 +1785,7 @@ func _chain(bands: Array[Rect2], pushes: Array[Vector2]) -> HazardDef:
 	h.fire = 0.25
 	h.cycle = 6.0
 	h.start_delay = 3.0
-	h.hero_damage = 7.0
+	h.hero_damage = HAZARD_HERO
 	h.enemy_damage = 60.0
 	return h
 
@@ -1666,8 +1817,8 @@ const RUNES_ENTRY: Array[Rect2] = [Rect2(-15, -3, 6, 15), Rect2(-9, -3, 3, 12)]
 
 
 ## The runes' floor (spec 3.4): tiles of 3 m, 1.2 s warming up, 0.25 s striking, 2.4 s of rest, never in the first
-## 3 s; at most 35% of the tiles lit (50% for the dense patterns, with 3 enemies or fewer). It hurts everyone: 7 to the
-## paladin (RP-03 step 1, was 4; the Hades hurts 10 on the same 30 of life), 60 to an enemy (a
+## 3 s; at most 35% of the tiles lit (50% for the dense patterns, with 3 enemies or fewer). It hurts everyone: 10 to the
+## paladin (A1, was 7 and 4 before; the Hades hurts 10 on the same 30 of life), 60 to an enemy (a
 ## whole soldier; was 35): drawing them onto the band that will light is the room's play.
 func _hazard(patterns: Array[StringName], quiet: Array[Rect2] = []) -> HazardDef:
 	var h := HazardDef.new()
@@ -1685,7 +1836,7 @@ func _hazard(patterns: Array[StringName], quiet: Array[Rect2] = []) -> HazardDef
 	h.patterns = patterns
 	h.islands = 4
 	h.quiet = quiet
-	h.hero_damage = 7.0
+	h.hero_damage = HAZARD_HERO
 	h.enemy_damage = 60.0
 	return h
 
@@ -1720,6 +1871,14 @@ func _runes() -> RoomLayout:
 	var quiet_b: Array[Rect2] = [_rect(-3, 3, -3, 3)]
 	quiet_b.append_array(RUNES_ENTRY)
 	vb.hazard = _hazard([&"checker", &"frame", &"islands"], quiet_b)
+	# A1, RP-14 (H-5): two crystals by the north wall, off the floor; three blows of his discharge one along its column
+	# of tiles (col 3, x -6 to -3; col 8, x 9 to 12), warned 1.2 s, 10 to him and 60 to each enemy on it. Runas B comes
+	# from the middle of the descent (RP-07), so they are awake there.
+	vb.hazard.crystals = PackedVector2Array([Vector2(-4.5, -12.6), Vector2(10.5, -12.6)])
+	vb.hazard.crystal_cols = PackedInt32Array([3, 8])
+	vb.hazard.crystal_hits = 3
+	vb.hazard.crystal_radius = 0.6
+	vb.hazard.crystal_from = 0.5
 	# RP-01: the quiet stone, the cross round it, the edge (B's two pillars stand on the edge)
 	_areas(vb, ["quiet", _rect(-3, 3, -3, 3), "middle", _rect(-9, 9, -9, 9), "edge", _rect(-15, 15, -12, 12)])
 	l.variants = [vb]

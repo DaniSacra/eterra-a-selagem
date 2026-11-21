@@ -193,6 +193,13 @@ estrela de 5 pontas), `impact` (premul com teto), `glint` (aro fora do corpo do 
 (sem faixa chapada), `ult_vortex` (véu 0,15, `ink`, braços partidos), `crowd` (casca de gelo, pisca de Morvath no
 violeta, brasa da morte), `ground.gdshaderinc` (`circle_rim` 0,62). Estado: provisório até a revisão do art-director.
 
+AP-2 "Combate que se lê" (technical-artist, 2026-11-21; procedural, licença do projeto, sem textura nova): novo
+`dodge_ghost` (silhuetas de tinta da esquiva, V-08: a pose do herói assada por `MeshInstance3D.bake_mesh_from_current_skeleton_pose`
+num pool de até 8 malhas no `Fx`, 4 por esquiva, 0,12 s cada; nada sem tela). Mexidos: `ritual_rune` (`fill_early`,
+`fill_late`, `red_after`), `ground.gdshaderinc` (`sign_early`, `sign_level`), `boss_scythe` (`hero_hole`, `hero_keep`),
+`smoke_ring` (`thin_reach`), `emeth` (`return_thread`, o fio do Retorno do Corte). Estado: provisório até a revisão do
+art-director e o aceite do combat-feel-director.
+
 ## 8b. Kit de borda e primeiro plano (TA-HB2, `EdgeKit`, procedural, licença do projeto)
 
 `scripts/game/edge_kit.gd`, shaders `edge_piece.gdshader` (+ `.gdshaderinc`) e `edge_piece_paint.gdshader`. Nenhuma

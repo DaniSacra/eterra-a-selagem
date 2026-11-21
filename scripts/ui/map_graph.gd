@@ -31,6 +31,11 @@ const LINK_WIDTH := 1.4
 ## The pointer focuses a room within this far of its centre.
 const PICK := RADIUS + 8.0
 
+## MAP-08: the newest stretch of the way walked (into the room stood in) drawn so far, 0..1 (draw_in animates it).
+var ink := 1.0:
+	set(v):
+		ink = clampf(v, 0.0, 1.0)
+		queue_redraw()
 var map: DescentMap
 var focus_id := -1
 var _marks: Dictionary = {}
@@ -165,9 +170,30 @@ func _link(a_id: int, b_id: int, kind: int) -> void:
 			draw_line(from, to, Color(Book.INK, 0.5), LINK_WIDTH, true)
 		2:
 			if map.walked(a_id, b_id):
-				draw_line(from, to, Book.RUBRIC, PATH_WIDTH, true)
+				if ink < 1.0 and b_id == map.current and _newest_from() == a_id:
+					# MAP-08: the stretch into the room stood in draws itself in ink, a blot at the nib
+					to = from.lerp(to, ink)
+					if ink > 0.0:
+						draw_circle(to, PATH_WIDTH * 0.85, Book.RUBRIC)
+				if ink > 0.0 or b_id != map.current:
+					draw_line(from, to, Book.RUBRIC, PATH_WIDTH, true)
 			else:
 				draw_line(from, to, Book.GILT, DOOR_WIDTH, true)
+
+
+## The room the way walked came from into the room stood in (-1: none, the first room).
+func _newest_from() -> int:
+	var at := map.path.find(map.current)
+	return map.path[at - 1] if at > 0 else -1
+
+
+## MAP-08: draws the newest stretch of the way walked in ink over `seconds` (real time), after `wait`.
+func draw_in(seconds: float, wait: float = 0.0) -> void:
+	if _newest_from() < 0:
+		return
+	ink = 0.0
+	var t := create_tween().set_ignore_time_scale(true)
+	t.tween_property(self, ^"ink", 1.0, seconds).set_delay(wait).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 ## A room's medallion radius: Morvath's a little larger (his three chevrons are his mark).

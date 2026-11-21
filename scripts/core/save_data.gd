@@ -32,6 +32,8 @@ static func defaults() -> Dictionary:
 	return {
 		"version": VERSION,
 		"options": {"master": 0.8, "music": 0.7, "sfx": 0.9, "fullscreen": true, "scale": 1, "shake": true, "impact_frames": true, "slow_motion": true, "color_split": true, "rumble": true, "quality": 0, "camera": "near", "camera_chosen": false, "bindings": {},
+			# DT-RS2: the visual profile (VisualProfile.NAMES); a save from before has none and opens stylized
+			"look": "stylized",
 			# T5 (the PO's review): the piece chosen for each place (MusicCatalog; Music.piece_for falls back to the default)
 			"music_title": String(MusicCatalog.DEFAULT[MusicCatalog.TITLE]), "music_hub": String(MusicCatalog.DEFAULT[MusicCatalog.HUB]),
 			"music_dungeon": String(MusicCatalog.DEFAULT[MusicCatalog.DUNGEON]),

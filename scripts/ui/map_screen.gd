@@ -7,7 +7,9 @@ extends Control
 ## The focus starts on the first open door; the arrows, the d-pad and the pointer walk the rooms. The map key (M, Back
 ## on the gamepad), the pause key (Esc, Start) and Voltar close it. Opened from the HUD (the map key, the "Mapa [M]"
 ## button: the run stops under it through Game.open_screen) and from the pause (a page of it). It only reads: choosing
-## is still crossing a door in the arena.
+## is still crossing a door in the arena. A room behind a door open now, in focus, lights that door in the room (MAP-07;
+## it stays lit a moment after the map closes and the HUD points at it when out of view). The page turns in and out
+## and the newest stretch of the way draws itself (MAP-08).
 
 signal closed
 
@@ -35,8 +37,26 @@ const LEGEND: Array[Array] = [
 const STATES: Array[Array] = [[DescentMap.State.CURRENT, &"map_key_current"], [DescentMap.State.DOOR, &"map_key_door"],
 	[DescentMap.State.DONE, &"map_key_done"], [DescentMap.State.BEHIND, &"map_key_behind"]]
 
+## MAP-08: the page turns in when the map opens and out when it closes (never in the headless tests: they read the
+## page's rects at once), and the newest stretch of the way draws itself the first time the map opens in a room.
+static var turns := DisplayServer.get_name() != "headless"
+## The room (and the length of the way) whose stretch was drawn last: the next opening in the same room keeps it.
+static var _inked := ""
+const TURN_IN := 0.22
+const TURN_OUT := 0.16
+## The page comes from this share of its width, about the spine.
+const TURN_FROM := 0.55
+const INK_TIME := 0.7
+## MAP-07: seconds the door the map looked at stays lit in the room after the map closes.
+const DOOR_LINGER := 4.0
+
 var map: DescentMap
 var graph: MapGraph
+var _shade: ColorRect
+var _frame: MarginContainer
+## MAP-07: the light over the door behind the room in focus (RewardShaft), and that door (-1: none).
+var _beacon: RewardShaft
+var _beacon_door := -1
 var _title: Label
 var _lines: VBoxContainer
 var _back: Button
@@ -53,7 +73,9 @@ func open(m: DescentMap = null) -> void:
 	shade.color = Color(0.01, 0.0, 0.02, 0.82)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(shade)
+	_shade = shade
 	var frame := MarginContainer.new()
+	_frame = frame
 	frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	frame.add_theme_constant_override(&"margin_left", int(OUTER.x))
 	frame.add_theme_constant_override(&"margin_right", int(OUTER.x))
@@ -76,6 +98,34 @@ func open(m: DescentMap = null) -> void:
 	graph.grab_focus.call_deferred()
 	# the keys at the foot (benchmark P0-2): the map's own key closes it
 	ActionBar.attach(self, [ActionBar.entry(&"map", T.t(&"bar_close"), close)])
+	_turn_in()
+
+
+## MAP-08: the page turns in about the spine and the shade comes up; then, the first time in this room, the newest
+## stretch of the way draws itself in ink.
+func _turn_in() -> void:
+	var key := "%d:%d" % [map.current, map.path.size()]
+	var fresh := key != _inked
+	_inked = key
+	if not turns:
+		return
+	_shade.modulate.a = 0.0
+	_frame.modulate.a = 0.0
+	_frame.scale = Vector2(TURN_FROM, 1.0)
+	_frame.resized.connect(_pivot, CONNECT_ONE_SHOT)
+	_pivot.call_deferred()
+	var t := create_tween().set_ignore_time_scale(true).set_parallel()
+	t.tween_property(_shade, ^"modulate:a", 1.0, TURN_IN)
+	t.tween_property(_frame, ^"modulate:a", 1.0, TURN_IN * 0.7)
+	t.tween_property(_frame, ^"scale:x", 1.0, TURN_IN).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	if fresh:
+		graph.draw_in(INK_TIME, TURN_IN)
+
+
+## The page turns about the book's spine.
+func _pivot() -> void:
+	if is_instance_valid(_frame):
+		_frame.pivot_offset = Vector2(OUTER.x + (_frame.size.x - OUTER.x * 2.0) * SPINE, _frame.size.y * 0.5)
 
 
 func _left_page(page: MarginContainer) -> void:
@@ -198,8 +248,9 @@ static func _draw_state(box: Control, st: DescentMap.State) -> void:
 			box.draw_arc(c, r * 0.7 - 0.7, 0.0, TAU, 24, Color(MapGraph.DISC_EDGE, MapGraph.BEHIND_ALPHA), 1.4, true)
 
 
-## The left page tells the room in focus.
+## The left page tells the room in focus (and the door to it lights in the room, MAP-07).
 func _show(id: int) -> void:
+	_light_door(id)
 	_title.text = map.title(id)
 	for c in _lines.get_children():
 		c.queue_free()
@@ -226,7 +277,99 @@ func close() -> void:
 	if _closing:
 		return
 	_closing = true
+	_leave_door()
+	_turn_out()
 	closed.emit()
+
+
+## MAP-07: a room behind a door open now takes the focus: a light falls over that door in the room (the RewardShaft
+## of the rewards, in the reward's colour), which the shade lets through. Another room puts it out.
+func _light_door(id: int) -> void:
+	var g := _game()
+	var i := map.doors.find(id)
+	if g == null or g.arena == null or g.rooms == null or i >= (g.arena.exits as Array).size():
+		i = -1
+	if i == _beacon_door:
+		return
+	_put_out()
+	if i < 0:
+		return
+	var at: Vector2 = g.arena.door_label(i)
+	var info: Dictionary = g.rooms.door_info(i)
+	_beacon = RewardShaft.make(g.arena, Vector3(at.x, 0.0, at.y), RewardShaft.tint_of(int(info.get("reward", -1))))
+	_beacon.name = "MapDoorLight"
+	_beacon.appear(0.0)
+	_beacon_door = i
+
+
+## The door's light goes up and out.
+func _put_out() -> void:
+	if is_instance_valid(_beacon):
+		_beacon.take()
+	_beacon = null
+	_beacon_door = -1
+
+
+## The door in focus when the map closes stays lit DOOR_LINGER seconds, and the HUD points at it if it is out of view.
+func _leave_door() -> void:
+	if not is_instance_valid(_beacon):
+		return
+	var g := _game()
+	var hud: Variant = g.get(&"hud") if g != null else null
+	if hud != null and hud.has_method(&"point_door"):
+		hud.call(&"point_door", g.arena.door_label(_beacon_door), map.title(graph.focus_id), DOOR_LINGER)
+	var beacon: WeakRef = weakref(_beacon)
+	var tree := _beacon.get_tree()
+	_beacon = null
+	_beacon_door = -1
+	# a weak reference: the room (and the light with it) may be gone before the timer ends
+	tree.create_timer(DOOR_LINGER, true, false, true).timeout.connect(func() -> void:
+		var b: RewardShaft = beacon.get_ref() as RewardShaft
+		if b != null:
+			b.take())
+
+
+## The door the map lights now (-1: none; tests).
+func lit_door() -> int:
+	return _beacon_door
+
+
+## MAP-08: the page turns out over the run going on (the screen itself is freed at once by whoever opened it): the
+## shade and the book move to a short-lived layer of their own that takes no input and fades.
+func _turn_out() -> void:
+	if not turns or get_parent() == null:
+		return
+	var vp := get_viewport()
+	if vp and is_ancestor_of(vp.gui_get_focus_owner() if vp.gui_get_focus_owner() else self):
+		vp.gui_release_focus()
+	var leaving := Control.new()
+	leaving.name = "map_leaving"
+	leaving.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	leaving.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	get_parent().add_child(leaving)
+	for c: Control in [_shade, _frame]:
+		c.reparent(leaving)
+	_ignore_mouse(leaving)
+	leaving.process_mode = Node.PROCESS_MODE_DISABLED
+	var t := leaving.get_tree().create_tween().set_ignore_time_scale(true).set_parallel()
+	t.tween_property(_shade, ^"modulate:a", 0.0, TURN_OUT)
+	t.tween_property(_frame, ^"modulate:a", 0.0, TURN_OUT)
+	t.tween_property(_frame, ^"scale:x", TURN_FROM, TURN_OUT).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	t.chain().tween_callback(leaving.queue_free)
+
+
+static func _ignore_mouse(n: Node) -> void:
+	if n is Control:
+		(n as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+		(n as Control).focus_mode = Control.FOCUS_NONE
+	for c in n.get_children():
+		_ignore_mouse(c)
+
+
+func _exit_tree() -> void:
+	# closed without close() (the run ended under it): the door's light goes
+	if not _closing:
+		_put_out()
 
 
 func _unhandled_input(event: InputEvent) -> void:

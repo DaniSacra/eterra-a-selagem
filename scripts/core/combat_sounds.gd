@@ -34,7 +34,7 @@ const EVENTS := {
 	&"rune_arm": &"rune_arm",
 	&"rune_fire": &"rune_crack",
 	# the slabs that strike when stepped on (RP-06, PlateFloor): the same stone, one sound per slab as it arms and as
-	# it strikes (at most three slabs at once, PlateHazard.MOST_AT_ONCE)
+	# it strikes (at most two slabs at once, PlateHazard.MOST_AT_ONCE)
 	&"plate_arm": &"rune_arm",
 	&"plate_fire": &"rune_crack",
 	&"chain_arm": &"rune_arm",
@@ -45,6 +45,18 @@ const EVENTS := {
 	&"roots_fire": &"rune_crack",
 	&"slit_fire": &"bolt",
 	&"column_crack": &"rune_crack",
+	# A1 (rooms_progression.md): RP-14 the crystal (a chime per charge, the runes' stone as it discharges), RP-20 the
+	# stones of the vault (a scrape of stone as the dust falls, the fall of a heavy body), RP-12 the oil urn (the fuse's
+	# hiss as the ring shows, an explosion; the flame running hisses again)
+	&"crystal_charge": &"ward",
+	&"crystal_arm": &"rune_arm",
+	&"crystal_fire": &"rune_crack",
+	&"rocks_arm": &"rune_arm",
+	&"rocks_fire": &"boss_down",
+	&"urn_arm": &"tell_ember",
+	&"urn_fire": &"enemy_burst",
+	&"oil_arm": &"rune_arm",
+	&"oil_fire": &"rune_crack",
 	&"column_fall": &"boss_down",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).

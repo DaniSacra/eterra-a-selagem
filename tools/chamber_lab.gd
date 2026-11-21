@@ -67,7 +67,7 @@ func _run() -> void:
 		chamber = CH.new()
 		world.add_child(chamber)
 		if opts.has("look"):
-			vp.dress_world(e, moon)
+			load("res://scripts/game/room_mood.gd").own(env, moon)
 		chamber.build()
 		CH.dress(e, moon)
 		if opts.has("compat"):

@@ -146,7 +146,8 @@ func _process(delta: float) -> void:
 		elif Controls.pressed(&"interact") and focus.current != &"":
 			use(focus.current)
 	if Controls.pressed(&"look_toggle"):
-		VisualProfile.toggle()
+		# F7 flips the visual style and keeps it in the options, as the options screen does (DT-RS2)
+		Save.choose_look(VisualProfile.Look.CLASSIC if VisualProfile.stylized() else VisualProfile.Look.STYLIZED)
 		arena.restyle()
 	# at a station the camera leans to show it whole (the Portal's head, the forge), his safe frame first (HUB-D)
 	cam.lean = lean()

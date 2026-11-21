@@ -40,6 +40,10 @@ uniform float circle_mark_span = 0.1;
 uniform float signed = 0.0;
 uniform float pad_m = 0.0;
 uniform float sign_fill = 0.35;
+// ART-05.2 (AP-2): his fill in the regime of the plain warnings too: sign_early of sign_fill while the blow is far off,
+// all of it only over the last fill_late of the wind-up (sign_level); his rim, thread and runes carry the shape the
+// whole time. 1 is the fill as before.
+uniform float sign_early = 0.3;
 uniform float sign_front_m = 0.12;
 uniform float sign_front = 0.6;
 uniform vec3 thread_color = vec3(0.496, 0.176, 0.96);
@@ -163,6 +167,11 @@ vec2 signature(float out_m, float run_m) {
 	return vec2(thread, runes);
 }
 
+// His signed fill's share now (ART-05.2): sign_early, up to all of it over the last fill_late of the wind-up.
+float sign_level() {
+	return mix(sign_early, 1.0, smoothstep(1.0 - fill_late, 1.0, progress));
+}
+
 // An unsigned warning's fill as light (the second pass): fill_early over the part already swept (swept 1), coming up
 // to fill_max over the last fill_late of the wind-up, and its faint floor (base_fill of the strength) everywhere.
 float warning_fill(float swept) {
@@ -238,7 +247,7 @@ void fragment() {
 			float base = 0.0;
 			if (sign) {
 				// his: an even fill (the joints of the floor show through) and a thin bright front
-				fill = step(tip, front) * sign_fill * root_k;
+				fill = step(tip, front) * sign_fill * sign_level() * root_k;
 				base = base_fill * root_k;
 				float fw = max(fwidth(tip), 0.001);
 				head = (1.0 - smoothstep(sign_front_m * 0.5, sign_front_m * 0.5 + fw, abs(tip - front))) * step(0.02, progress) * sign_front / 0.6;
@@ -310,7 +319,7 @@ void fragment() {
 			if (sign) {
 				float fw = max(fwidth(dm), 0.001);
 				float front_m = progress * size_m;
-				fill = step(d, progress) * sign_fill;
+				fill = step(d, progress) * sign_fill * sign_level();
 				front = (1.0 - smoothstep(sign_front_m * 0.5, sign_front_m * 0.5 + fw, abs(dm - front_m))) * step(0.02, progress) * sign_front;
 				base = 0.06;
 			} else {
@@ -323,6 +332,14 @@ void fragment() {
 				ring = max(ring, smoothstep(rim_m, rim_m * 0.3, side_m) * step(0.08, d) * 0.85);
 			}
 			a = ring + fill + front + base;
+		} else if (style == 3) {
+			// RP-12, the hazard's amber over a circle (the oil urn's ring): the rim whole from the first frame, a front
+			// running out from the middle, the fill rising late as on the runes' tiles
+			float rim = clamp(rim_m / size_m, 0.025, 0.14);
+			float ring = smoothstep(1.0 - rim, 1.0 - rim * 0.3, d);
+			float front = smoothstep(progress - 0.05, progress, d) * step(d, progress) * step(0.02, progress) * 0.5;
+			float level = mix(fill_early, fill_max, smoothstep(1.0 - fill_late, 1.0, progress));
+			a = ring * (0.35 + 0.65 * progress) + level + front;
 		} else if (style == 2) {
 			// the paladin's circle of light: a veil thin enough for the floor to show through, read by its rim
 			// (a fine line of fixed width) and a few short marks turning slowly just inside it
