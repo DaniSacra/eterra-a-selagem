@@ -527,3 +527,10 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   laterais seguem no vazio do abismo (p90-p10 à esquerda e à direita, antes / depois: Fendas 22 e 54 / 22 e 53, Ponte 58 e 52 / 57 e 52), então o aceite de
   50 nelas depende do HB4, que ficou como está. fit_probe estilizado igual ou melhor (Fendas borda falsa 5,47 para 3,45).
 
+
+## Atlas, marcos visuais (lote reduzido; só no estilizado; `docs/backlog.md` P.2; capturas `docs/gallery/atlas/at_crypt_b.jpg`, `at_sanct_b.png`)
+- **AT-CB1 (Cripta B)**: uma luz quente de vela no acesso oeste, a única interrupção quente do ossuário frio (`CryptLook.STY_ENTRY_WARM`, `_entry_warm`, sem especular nem sombra, nunca na multidão); `test_room_style` passou a esperar 18 luzes na B estilizada.
+- **AT-SE1 (Santuário B)**: dois degraus de rocha funda bem abaixo do chão do buraco com entulho em cima (`SanctuaryLook.HOLE_DEPTH_LEDGES`, `_hole_depth`, `EdgeKit.rubble`); quase não lê na Perto (o buraco é pequeno): conferir de perto.
+- **AT-FB1 (Fendas B)**: três blocos pendurados em correntes sob a ruptura norte (`RiftLook.FALLEN_REMAINS`, `_hanging_remains`), além do arco e do tabuleiro que já existiam; sem captura.
+- **AT-CS1**: já existe (arcos E1, correntes E2, gaiolas, ruína ao fundo); sem mudança. Os outros itens ficam para depois.
+- Nada colide; sem shader nem material novo (`make_warmup` não necessário). `test_warmup` falha em `book_cover.gdshader` (do outro agente, não deste lote).

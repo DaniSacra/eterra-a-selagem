@@ -101,7 +101,11 @@ func _process(delta: float) -> void:
 			if show:
 				var s := l.get_combined_minimum_size()
 				l.size = s
-				l.position = (sp - Vector2(s.x * 0.5, s.y + NAME_LIFT)).round()
+				# QA A8 P2-1: the anchor is on screen but a long name ran past the edge ("Livro de Ah"): pull it inside
+				var p := sp - Vector2(s.x * 0.5, s.y + NAME_LIFT)
+				p.x = clampf(p.x, view.position.x, maxf(view.position.x, view.end.x - s.x))
+				p.y = maxf(p.y, view.position.y)
+				l.position = p.round()
 				show = not Rect2(l.position, s).intersects(hero) and not Rect2(l.position, s).intersects(purse.get_global_rect())
 		l.visible = show
 

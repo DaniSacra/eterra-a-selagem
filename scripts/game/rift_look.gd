@@ -248,6 +248,22 @@ const FALLEN_CAPITAL := Vector4(1.6, 0.3, 0.32, 0.95)
 const FALLEN_CAPITAL_STUMP := 0.45
 const FALLEN_CAPITAL_AT := Vector4(0.35, -1.9, 0.5, 34.0)
 const FALLEN_COLUMN_HANG := Vector2(3.2, 4.4)
+## AT-FB1 (B): more wreck hung under the break, each a block on a single chain from a stump's broken end (x from the
+## bridge's west end as a share of its length, z, the chain's drop, the block's size).
+const FALLEN_REMAINS: Array[Vector4] = [Vector4(0.12, -10.6, -5.5, 0.9), Vector4(0.9, -12.2, -8.0, 1.1), Vector4(0.62, -11.0, -11.0, 0.7)]
+
+
+func _hanging_remains(sm: Masonry, r: Rect2) -> void:
+	var i := 0
+	for h in FALLEN_REMAINS:
+		var top := Vector3(lerpf(r.position.x, r.end.x, h.x), -0.3, h.y)
+		var low := top + Vector3(0.0, h.z, 0.0)
+		kit.chain(top, low + Vector3(0.0, h.w * 0.5, 0.0), 0.3, 1.0)
+		var b := sm.box(low, Vector3(h.w * 1.3, h.w * 0.6, h.w), 0.4 + i, ashlar())
+		b.rotate_object_local(Vector3.BACK, 0.3 - 0.25 * i)
+		i += 1
+
+
 ## F5 (B): the far vortex, an accent only: distance ahead of the camera (from the middle of its bounds), how far over
 ## the ray of the frame's top edge its middle stands (so only its lower part shows, in the top band of the frame, over
 ## where the north's enemies rise), its offset to the left of the view (m), size, colour (brightest channel 0.45), turn
@@ -1032,7 +1048,8 @@ func _fallen_arch(sm: Masonry) -> void:
 	var east := Vector3(r.end.x - STUMP, -0.3, FALLEN_CHAIN_Z)
 	kit.styled_build(func() -> void:
 		kit.chain(west, FALLEN_DECK + Vector3(-half, 0.25 + half * 0.35, 0), 0.3, 1.0)
-		kit.chain(east, FALLEN_DECK + Vector3(half, 0.25 - half * 0.35, 0), 0.3, 1.0))
+		kit.chain(east, FALLEN_DECK + Vector3(half, 0.25 - half * 0.35, 0), 0.3, 1.0)
+		_hanging_remains(sm, r))
 
 
 ## F5 (B): the far vortex, a turning card of desaturated violet far behind the rift's north mouth, high in the frame

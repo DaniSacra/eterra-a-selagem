@@ -210,6 +210,23 @@ func test_the_faint_names_keep_off_the_hero() -> void:
 		assert_false(Rect2(l.position, l.size).intersects(labels.purse.get_global_rect()), "%s's name off the purse" % id)
 
 
+func test_the_faint_names_stay_whole_inside_the_screen() -> void:
+	# QA A8 P2-1: "Livro de Ah" cut at the right edge on arriving with the Near camera
+	var hub := _hub()
+	var labels := hub.find_child("HubLabels", true, false) as HubLabels
+	var seen := 0
+	for id: StringName in HubPlan.STATIONS:
+		var a := HubPlan.anchor(id)
+		hub.player.pos = Vector2(a.x, a.z) * 0.55
+		await wait_process_frames(20)
+		var view := hub.get_viewport().get_visible_rect().grow(-HubLabels.EDGE + 0.5)
+		for shown_id in labels.shown():
+			var l := labels.names[shown_id] as Label
+			seen += 1
+			assert_true(view.encloses(Rect2(l.position, l.size)), "%s's name whole inside the screen (near %s)" % [shown_id, id])
+	assert_gt(seen, 0, "some name was on screen")
+
+
 func test_the_deep_stone_has_its_own_mark() -> void:
 	assert_eq(DoorGlyph.of_material(DoorGlyph.STONE_ID), DoorGlyph.Kind.STONE)
 	assert_eq(DoorGlyph.STONE_ID, OficiosDef.new().stone, "the id the Ofícios use")

@@ -173,10 +173,10 @@ func test_the_chapters_are_bookmarks_of_the_book() -> void:
 	s.open(_data(500))
 	await wait_process_frames(2)
 	for c in s.chapters:
-		assert_eq((c.get_theme_stylebox(&"normal") as StyleBoxFlat).bg_color, Book.LEATHER, "%s is leather" % c.name)
+		assert_not_null(c.get_node_or_null("ribbon"), "%s is a ribbon out of the cover" % c.name)
 	var open := s.chapters[HeroScreen.Chapter.HERO]
 	var shut := s.chapters[HeroScreen.Chapter.OPENING]
-	assert_gt(open.size.y, shut.size.y, "the open one stands longer")
+	assert_gte(open.size.y - shut.size.y, Book.MARK_RISE - 0.1, "the open one stands longer")
 	assert_gte(open.get_global_rect().position.y, 12.0 - 0.5, "12 px from the top at least")
 
 

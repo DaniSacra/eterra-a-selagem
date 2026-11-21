@@ -381,7 +381,7 @@ a GPU ficou ocupada pelas outras frentes. Os quadros sem sufixo são da RTX a 19
   virarem alvo: medir no OpenGL nativo e aquecer com as próprias salas.
 
 ## AP-4, esboço, motivos dos Dons e aro dos medalhões (technical-artist, 2026-11-21; spec `docs/art/ap4_spec.md` 2.1 a 2.3)
-- Evidência: `docs/gallery/ap4/sketch_enemies_after_720.png` e `_1080` (GPU, `tools/sketch_lab.gd`; o antes é a prancha de
+- Evidência: `docs/gallery/ap4/sketch_enemies_after_720.jpg` e `_1080` (GPU, `tools/sketch_lab.gd`; o antes é a prancha de
   lavapipe `sketch_enemies_before_lavapipe.jpg`), `talent_motifs_720/1080.png` e `talent_motifs_big_1080.png`
   (`tools/motif_sheet.gd`), `boon_ring_after_720/1080.png` (`ui_lab -- --card-only --offer=vapor,lamina_ardente,chama_viva`).
 - 2.1, medido na prancha da GPU (pixels da figura = mais de 14 de diferença do papel): ouro (matiz 32 a 48, saturação 0,3

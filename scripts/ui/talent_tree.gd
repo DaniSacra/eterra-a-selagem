@@ -34,7 +34,7 @@ const FIT_MAX := 1.15
 ## The slate inset under the tree.
 const SLATE := Color(0.06, 0.065, 0.07, 0.97)
 const SLATE_EDGE := Color(0.3, 0.25, 0.17)
-const BRACKET := 22.0
+const BRACKET := 14.0
 
 var loadout: HeroLoadout
 var nodes: Array[TalentNode] = []
@@ -178,35 +178,26 @@ func _draw() -> void:
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE).x
 		var apex := m + axis * HALF * float(TIER_AT[TalentDef.Tier.APEX]) * k
 		var at := apex + Vector2(34.0, 6.0) if axis.x == 0.0 else apex + Vector2(-w * 0.5, 50.0)
-		var col := TalentNode.BRANCH_COLOR[b].lightened(0.15)
-		UiKit.draw_shadow(self, font, at, text, LABEL_SIZE)
+		var col := Book.RUBRIC
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, col)
 	var label := T.t(HeroLoadout.BRANCH_KEY[TalentDef.Branch.SUSTAIN])
 	var lat := m + SUSTAIN_AT * k + Vector2(-22.0, -34.0)
-	UiKit.draw_shadow(self, UiKit.TITLE_FONT, lat, label, LABEL_SIZE - 2)
-	draw_string(UiKit.TITLE_FONT, lat, label, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE - 2, TalentNode.BRANCH_COLOR[TalentDef.Branch.SUSTAIN].lightened(0.1))
+	draw_string(UiKit.TITLE_FONT, lat, label, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE - 2, Book.RUBRIC)
 
 
-## The slate the tree sits on: dark stone with a soft light in the middle, a thin line and gilt brackets in its corners.
+## The plate the tree sits on (AP-4 1.5): the page's own paper inside a double rule of ink (1 px, a gap of 3, 1 px
+## at 1080) with the corners cut at an angle; no slate.
 func _draw_slate() -> void:
-	var r := Rect2(Vector2.ZERO, size)
-	var box := UiKit.box(SLATE, SLATE_EDGE, 1, 0, 4)
-	box.shadow_color = Color(0, 0, 0, 0.35)
-	box.shadow_size = 6
-	draw_style_box(box, r)
-	# a faint lift in the middle, as the board's lit stone
-	for i in 6:
-		var f := 1.0 - i / 6.0
-		draw_circle(_mid(), minf(size.x, size.y) * 0.45 * f, Color(0.16, 0.17, 0.17, 0.035))
-	var g := r.grow(-7.0)
-	for corner: Vector2 in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
-		var at := g.position + g.size * corner
-		var sx := 1.0 if corner.x == 0.0 else -1.0
-		var sy := 1.0 if corner.y == 0.0 else -1.0
-		draw_line(at, at + Vector2(BRACKET * sx, 0), UiKit.OLD_GOLD, 1.4, true)
-		draw_line(at, at + Vector2(0, BRACKET * sy), UiKit.OLD_GOLD, 1.4, true)
-		var d := at + Vector2(6.0 * sx, 6.0 * sy)
-		draw_colored_polygon(PackedVector2Array([d + Vector2(0, -2.6), d + Vector2(2.6, 0), d + Vector2(0, 2.6), d + Vector2(-2.6, 0)]), UiKit.OLD_GOLD)
+	var r := Rect2(Vector2.ZERO, size).grow(-2.0)
+	var col := Color(Book.INK, 0.6)
+	for inset: float in [0.0, 3.0]:
+		var g := r.grow(-inset)
+		var cut := BRACKET - inset
+		var pts := PackedVector2Array([g.position + Vector2(cut, 0), g.position + Vector2(g.size.x - cut, 0),
+			g.position + Vector2(g.size.x, cut), g.position + Vector2(g.size.x, g.size.y - cut),
+			g.position + Vector2(g.size.x - cut, g.size.y), g.position + Vector2(cut, g.size.y),
+			g.position + Vector2(0, g.size.y - cut), g.position + Vector2(0, cut), g.position + Vector2(cut, 0)])
+		draw_polyline(pts, col, 1.0, true)
 
 
 ## The line from what a Gift needs (null: the centre) to it; in ivory when it is on the focused Gift's path.
@@ -215,12 +206,13 @@ func _link(from: TalentDef, to: TalentDef, path: Array[TalentDef]) -> void:
 	var b := _at(to)
 	var lit := _on(from) and _on(to)
 	var locked := to.unlock_level > loadout.level()
-	var col := TalentNode.LOCK_LINE if locked else Color(UiKit.OLD_GOLD, 0.55)
-	var width := 1.6
+	var col := Color(Book.FADED, 0.45 if locked else 0.85)
+	var width := 1.5
 	if lit:
-		col = UiKit.OLD_GOLD.lightened(0.4)
-		width = 3.0
+		draw_line(a, b, Book.GILT.lightened(0.25), 3.0, true)
+		col = Book.GILT
+		width = 2.0
 	if _focus != null and (to == _focus or path.has(to)) and (from == null or path.has(from)):
-		col = TalentNode.FOCUS if not lit else TalentNode.FOCUS.lerp(UiKit.OLD_GOLD.lightened(0.4), 0.4)
+		col = Book.RUBRIC
 		width = maxf(width, 2.4)
 	draw_line(a, b, col, width, true)

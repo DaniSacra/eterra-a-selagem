@@ -28,7 +28,6 @@ const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter
 ## Screen margins round the book and the bookmarks' width, px at 720 lines.
 ## (12 px over the bookmarks at the top: UI review d2ff05d, P1-5.)
 const OUTER := Vector2(22, 12)
-const TAB_WIDTH := 170.0
 ## The spine: the left page (the tree, the painting) a little wider than the right (the words).
 const SPINE := 0.55
 const CREST := 46.0
@@ -125,7 +124,7 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override(&"separation", 0)
+	col.add_theme_constant_override(&"separation", -int(Book.MARK_HIDDEN))
 	frame.add_child(col)
 	# the chapters are leather bookmarks standing out of the top of the cover (P1-5), not the menus' tabs
 	var marks := HBoxContainer.new()
@@ -135,7 +134,7 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
 	col.add_child(marks)
 	for c: int in Chapter.values():
-		var b := Book.mark(T.t(CHAPTER_KEY[c]), TAB_WIDTH)
+		var b := Book.mark(T.t(CHAPTER_KEY[c]))
 		b.name = CHAPTER_NAME[c]
 		b.focus_entered.connect(_show.bind(c))
 		b.pressed.connect(_show.bind(c))

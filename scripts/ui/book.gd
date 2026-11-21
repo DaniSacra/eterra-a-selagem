@@ -10,7 +10,7 @@ const INK := Color(0.16, 0.11, 0.07)
 const FADED := Color(0.38, 0.31, 0.23)
 const RUBRIC := Color(0.47, 0.13, 0.09)
 const GILT := Color(0.5, 0.36, 0.15)
-const LEATHER := Color(0.12, 0.07, 0.05)
+const LEATHER := Color(0.14, 0.1, 0.08)
 const LEATHER_EDGE := Color(0.27, 0.17, 0.09)
 const RIBBON := Color(0.06, 0.27, 0.27)
 ## On the page: a Gift worn, and a rule that refuses.
@@ -23,12 +23,20 @@ const BUTTON_LIT := Color(0.55, 0.43, 0.27, 0.36)
 const BUTTON_TOAST := Color(0.5, 0.27, 0.12, 0.3)
 const BUTTON_TOAST_LIT := Color(0.5, 0.27, 0.12, 0.44)
 const BUTTON_SIZE := 20
+## The rubric band down the left of the selected entry of an index (4 px at 1080).
+const ENTRY_BAND := 3
 const BUTTON_DIAMOND := 4.5
-## A chapter's bookmark (mark): its height, how much longer the open one stands, its letters.
-const MARK_HEIGHT := 30.0
-const MARK_RISE := 6.0
-const MARK_FONT := 15
-const MARK_OPEN := Color(0.22, 0.13, 0.08)
+## A chapter's bookmark (mark), px at 720 lines: the part under the cover, the height (a shut one stands 20 above
+## the cover, 30 less the hidden part), how much longer the open one stands, its letters, padding, least width and tail.
+const MARK_HIDDEN := 10.0
+const MARK_HEIGHT := 32.0
+const MARK_RISE := 8.0
+const MARK_FONT := 17
+const MARK_PAD := 16.0
+const MARK_MIN := 80.0
+const MARK_TAIL := 5.3
+const MARK_SHADOW := 1.3
+const MARK_IVORY := Color(0.97, 0.94, 0.85)
 ## The paper's tone where a list fades out at its foot (UiKit.scroll_fade).
 const PAPER := Color(0.83, 0.75, 0.6)
 ## The value a bright colour of the menus (a family's, a branch's) takes to be read on the paper.
@@ -101,7 +109,8 @@ static func text(s: String, color: Color = INK, size: int = 18) -> Label:
 
 
 ## An entry of an index on the page (the Compendium's chapters): a toggle with a mark on its left and a count on its
-## right; ink when it waits, the petrol of the menus' tabs when it is the one on show, a gilt line with the focus.
+## right; ink when it waits, a wash of paper with a band of rubric on its left when it is the one on show, only a
+## diamond of rubric with the focus (never a solid dark box on the paper, AP-4 1.3).
 ## height, font_size, pad (where the name starts) and count_w make the compact entries of the Forja's grid.
 static func index_entry(text_: String, mark: Control, count: String, width: float, height := 40.0, font_size := 18,
 		pad := 48, count_w := 60.0) -> Button:
@@ -111,16 +120,25 @@ static func index_entry(text_: String, mark: Control, count: String, width: floa
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 	b.add_theme_font_override(&"font", UiKit.TITLE_FONT)
 	b.add_theme_font_size_override(&"font_size", font_size)
-	b.add_theme_stylebox_override(&"normal", _entry_box(Color(0, 0, 0, 0), Color(0, 0, 0, 0), 1, pad))
-	b.add_theme_stylebox_override(&"hover", _entry_box(Color(INK, 0.07), GILT, 1, pad))
-	b.add_theme_stylebox_override(&"pressed", _entry_box(UiKit.TAB_ON, UiKit.OLD_GOLD, 1, pad))
-	b.add_theme_stylebox_override(&"hover_pressed", _entry_box(UiKit.TAB_ON.lightened(0.05), UiKit.GOLD, 2, pad))
-	b.add_theme_stylebox_override(&"focus", _entry_box(Color(0, 0, 0, 0), RUBRIC, 2, pad))
+	var none := Color(0, 0, 0, 0)
+	b.add_theme_stylebox_override(&"normal", _entry_box(none, none, 0, pad))
+	b.add_theme_stylebox_override(&"hover", _entry_box(Color(INK, 0.07), none, 0, pad))
+	b.add_theme_stylebox_override(&"pressed", _entry_box(BUTTON_LIT, RUBRIC, 0, pad, ENTRY_BAND))
+	b.add_theme_stylebox_override(&"hover_pressed", _entry_box(BUTTON_LIT, RUBRIC, 0, pad, ENTRY_BAND))
+	b.add_theme_stylebox_override(&"focus", _entry_box(none, none, 0, pad))
 	b.add_theme_color_override(&"font_color", INK)
 	b.add_theme_color_override(&"font_hover_color", RUBRIC)
 	b.add_theme_color_override(&"font_focus_color", RUBRIC)
-	b.add_theme_color_override(&"font_pressed_color", UiKit.PALE)
-	b.add_theme_color_override(&"font_hover_pressed_color", UiKit.GOLD)
+	b.add_theme_color_override(&"font_pressed_color", RUBRIC)
+	b.add_theme_color_override(&"font_hover_pressed_color", RUBRIC)
+	# the focus without the selection is only the diamond of the rubric on the left
+	b.draw.connect(func() -> void:
+		if b.has_focus() and not b.button_pressed:
+			var d := Vector2(5.0, b.size.y * 0.5)
+			var k := BUTTON_DIAMOND - 0.5
+			b.draw_colored_polygon(PackedVector2Array([d + Vector2(0, -k), d + Vector2(k, 0), d + Vector2(0, k), d + Vector2(-k, 0)]), RUBRIC))
+	b.focus_entered.connect(b.queue_redraw)
+	b.focus_exited.connect(b.queue_redraw)
 	mark.position = Vector2(10, (b.custom_minimum_size.y - mark.custom_minimum_size.y) * 0.5)
 	b.add_child(mark)
 	var n := label(count, GILT, 15, UiKit.number_font())
@@ -134,9 +152,14 @@ static func index_entry(text_: String, mark: Control, count: String, width: floa
 	return b
 
 
-static func _entry_box(bg: Color, border: Color, width: int, pad: int) -> StyleBoxFlat:
+static func _entry_box(bg: Color, border: Color, width: int, pad: int, band: int = 0) -> StyleBoxFlat:
 	var s := UiKit.box(bg, border, width, 8, 3)
 	s.content_margin_left = pad
+	if band > 0:
+		# the selected entry: the rubric band down its left edge, as a marker
+		s.border_width_left = band
+		s.corner_radius_top_left = 0
+		s.corner_radius_bottom_left = 0
 	return s
 
 
@@ -187,26 +210,40 @@ static func _button_box(bg: Color, border: Color, width: int) -> StyleBoxFlat:
 	return s
 
 
-## A chapter's bookmark (UI review d2ff05d, P1-5): a leather tongue standing out of the top of the cover, its name in
-## small Cinzel in old gold; the one open is longer, lighter and has the petrol ribbon on its top; the focus a gilt
-## line round it. A toggle: pressed is the chapter on show (the caller sets it, and lengthens it by mark_open).
-static func mark(text_: String, width: float) -> Button:
-	var b := UiKit.button(text_, Callable(), width)
+## A chapter's bookmark (AP-4 1.2): a narrow ribbon that comes out from under the cover's top edge (its foot hidden
+## behind the book, MARK_HIDDEN px of it; the callers' column overlaps the book by that much) and rises above it, its
+## top cut in a swallow's tail. Shut: toasted leather, rising MARK_SHUT; open: the petrol ribbon with a pale line on
+## its left and a dark one on its right, longer by MARK_RISE, its letters in full ivory; the focus a gilt line round it;
+## a shadow of 2 px on the table. Its width is its name and MARK_PAD (never under MARK_MIN). A toggle: pressed is the
+## chapter on show (mark_open sets it and lengthens it).
+static func mark(text_: String, min_width: float = 0.0) -> Button:
+	var b := UiKit.button(text_, Callable(), 0.0)
 	b.toggle_mode = true
-	b.custom_minimum_size.y = MARK_HEIGHT
+	var w := UiKit.TITLE_FONT.get_string_size(text_, HORIZONTAL_ALIGNMENT_LEFT, -1, MARK_FONT).x + MARK_PAD
+	b.custom_minimum_size = Vector2(maxf(maxf(w, MARK_MIN), min_width), MARK_HEIGHT)
 	b.size_flags_vertical = Control.SIZE_SHRINK_END
 	b.add_theme_font_override(&"font", UiKit.TITLE_FONT)
 	b.add_theme_font_size_override(&"font_size", MARK_FONT)
-	b.add_theme_stylebox_override(&"normal", _tongue(LEATHER, LEATHER_EDGE, 0))
-	b.add_theme_stylebox_override(&"hover", _tongue(LEATHER.lightened(0.08), UiKit.OLD_GOLD, 0))
-	b.add_theme_stylebox_override(&"pressed", _tongue(MARK_OPEN, LEATHER_EDGE.lightened(0.2), 4))
-	b.add_theme_stylebox_override(&"hover_pressed", _tongue(MARK_OPEN.lightened(0.06), UiKit.OLD_GOLD, 4))
-	b.add_theme_stylebox_override(&"focus", _tongue(Color(0, 0, 0, 0), UiKit.GOLD, 0, 2))
-	b.add_theme_color_override(&"font_color", UiKit.OLD_GOLD.lightened(0.15))
-	b.add_theme_color_override(&"font_hover_color", UiKit.GOLD)
-	b.add_theme_color_override(&"font_focus_color", UiKit.GOLD)
-	b.add_theme_color_override(&"font_pressed_color", UiKit.GOLD.lightened(0.2))
-	b.add_theme_color_override(&"font_hover_pressed_color", UiKit.GOLD.lightened(0.2))
+	var empty := StyleBoxEmpty.new()
+	empty.content_margin_bottom = MARK_HIDDEN - 3.0
+	empty.content_margin_top = 0
+	for st: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"focus"]:
+		b.add_theme_stylebox_override(st, empty)
+	var shut_ink := Color(PAPER.r * 0.75, PAPER.g * 0.75, PAPER.b * 0.75)
+	b.add_theme_color_override(&"font_color", shut_ink)
+	b.add_theme_color_override(&"font_hover_color", PAPER)
+	b.add_theme_color_override(&"font_focus_color", PAPER)
+	b.add_theme_color_override(&"font_pressed_color", MARK_IVORY)
+	b.add_theme_color_override(&"font_hover_pressed_color", MARK_IVORY)
+	var tongue := Control.new()
+	tongue.name = "ribbon"
+	tongue.show_behind_parent = true
+	tongue.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tongue.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	tongue.draw.connect(_draw_tongue.bind(tongue, b))
+	b.add_child(tongue)
+	for sig: Signal in [b.toggled, b.focus_entered, b.focus_exited, b.mouse_entered, b.mouse_exited]:
+		sig.connect(func(_a: Variant = null) -> void: tongue.queue_redraw())
 	return b
 
 
@@ -214,17 +251,28 @@ static func mark(text_: String, width: float) -> Button:
 static func mark_open(b: Button, open: bool) -> void:
 	b.set_pressed_no_signal(open)
 	b.custom_minimum_size.y = MARK_HEIGHT + (MARK_RISE if open else 0.0)
+	(b.get_node("ribbon") as Control).queue_redraw()
 
 
-static func _tongue(bg: Color, border: Color, ribbon: int, width: int = 1) -> StyleBoxFlat:
-	var s := UiKit.box(bg, border, width, 6, 0)
-	s.border_width_bottom = 0
-	s.corner_radius_top_left = 6
-	s.corner_radius_top_right = 6
-	s.content_margin_top = 6 + ribbon
-	s.content_margin_bottom = 2
-	if ribbon > 0:
-		# the open one: the petrol ribbon on its top, its sides in the same line
-		s.border_width_top = ribbon
-		s.border_color = RIBBON.lightened(0.15)
-	return s
+static func _draw_tongue(t: Control, b: Button) -> void:
+	var w := t.size.x
+	var h := t.size.y
+	var open := b.button_pressed
+	var notch := MARK_TAIL * (1.25 if open else 1.0)
+	var body := RIBBON if open else LEATHER_EDGE
+	if b.is_hovered() and not open:
+		body = body.lightened(0.12)
+	var shadow := Color(INK, 0.35)
+	var at := Vector2(MARK_SHADOW, MARK_SHADOW)
+	t.draw_colored_polygon(_tail(w, h, notch, at), shadow)
+	t.draw_colored_polygon(_tail(w, h, notch, Vector2.ZERO), body)
+	# the pale line on its left and the dark one on its right (open); the shut one a faint edge
+	t.draw_line(Vector2(0.7, notch * 0.2), Vector2(0.7, h), body.lightened(0.3 if open else 0.15), 1.0)
+	t.draw_line(Vector2(w - 0.7, notch * 0.2), Vector2(w - 0.7, h), body.darkened(0.45), 1.0)
+	if b.has_focus():
+		t.draw_polyline(PackedVector2Array([Vector2(0, h), Vector2(0, 0), Vector2(w * 0.5, notch), Vector2(w, 0), Vector2(w, h)]), UiKit.GOLD, 1.5)
+
+
+## The ribbon's outline: a swallow's tail cut into its top, the foot square.
+static func _tail(w: float, h: float, notch: float, at: Vector2) -> PackedVector2Array:
+	return PackedVector2Array([at, at + Vector2(w * 0.5, notch), at + Vector2(w, 0), at + Vector2(w, h), at + Vector2(0, h)])

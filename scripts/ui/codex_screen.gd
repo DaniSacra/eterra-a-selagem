@@ -240,9 +240,9 @@ func _show(t: Tab) -> void:
 	for i in tabs.size():
 		tabs[i].set_pressed_no_signal(i == t)
 		var on := i == t
-		(tabs[i].find_child("count", false, false) as Label).add_theme_color_override(&"font_color", UiKit.GOLD if on else Book.GILT)
+		(tabs[i].find_child("count", false, false) as Label).add_theme_color_override(&"font_color", Book.RUBRIC if on else Book.GILT)
 		var mark := tabs[i].get_child(0) as CodexMark
-		mark.color = UiKit.PALE if on else Book.INK
+		mark.color = Book.RUBRIC if on else Book.INK
 		mark.queue_redraw()
 	var back := find_child("back", true, false) as Button
 	if back:
@@ -879,10 +879,9 @@ class CodexMark:
 				draw_arc(c, r * 0.6, 0.0, TAU, 24, color, w * 0.7, true)
 				draw_colored_polygon(TalentNode._diamond(c, r * 0.3), color)
 			Tab.ARENAS:
-				draw_line(c + Vector2(-r * 0.55, r * 0.9), c + Vector2(-r * 0.55, -r * 0.15), color, w, true)
-				draw_line(c + Vector2(r * 0.55, r * 0.9), c + Vector2(r * 0.55, -r * 0.15), color, w, true)
-				draw_arc(c + Vector2(0, -r * 0.15), r * 0.55, PI, TAU, 14, color, w, true)
-				draw_line(c + Vector2(-r * 0.95, r * 0.9), c + Vector2(r * 0.95, r * 0.9), color, w, true)
+				# a room's plan: a lozenge with a door's mouth at its foot
+				draw_polyline(TalentNode._closed(TalentNode._diamond(c + Vector2(0, -r * 0.1), r * 0.85)), color, w, true)
+				draw_polyline(PackedVector2Array([c + Vector2(-r * 0.25, r * 0.75), c + Vector2(-r * 0.25, r * 0.4), c + Vector2(r * 0.25, r * 0.4), c + Vector2(r * 0.25, r * 0.75)]), color, w, true)
 			_:
 				for k in 3:
 					var o := Vector2(0.8, 0.6) * r * (k - 1) * 0.42

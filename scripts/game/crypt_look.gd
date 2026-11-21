@@ -310,6 +310,10 @@ const STY_OSSUARY_WASH_FROM := Vector3(5.0, 7.0, 2.0)
 const STY_OSSUARY_WASH_AIM := 1.4
 const STY_OSSUARY_WASH := Vector3(5.0, 34.0, 14.0)
 
+## AT-CB1 (variant B, stylized only): the one warm interruption in the cold ossuary, a candle-coloured light at the
+## west entry (in from the wall, height, energy, reach), diffuse, no shadow, never on the crowd.
+const STY_ENTRY_WARM := Vector4(1.6, 1.9, 2.2, 7.0)
+
 var _key: OmniLight3D
 var _fill: OmniLight3D
 var _shaft: SpotLight3D
@@ -989,6 +993,16 @@ func _quiet_b(divider: ArenaObstacle) -> void:
 	if _shaft_dust != null:
 		VisualProfile.vary(_shaft_dust, {&"visible": false})
 	_ossuary_wash(divider)
+	_entry_warm()
+
+
+## AT-CB1: the warm light at the way in (see STY_ENTRY_WARM).
+func _entry_warm() -> void:
+	var w := STY_ENTRY_WARM
+	var l := warm_light(Vector3(_west + w.x, w.y, (ENTRY.x + ENTRY.y) * 0.5), w.z, false, w.w)
+	l.light_specular = 0.0
+	l.set_meta(ArenaKit.NOT_FIRE, true)
+	ArenaKit.style_only(l)
 
 
 ## Item 4 of the cycle: the cold wash on the ossuary wall's niches (STY_OSSUARY_WASH_*), only in the stylized look.

@@ -46,7 +46,6 @@ const BUTTON_WIDTH := 190.0
 const EMETH := Vector2(300, 330)
 const DEAL_SIZE := 22
 ## The bookmarks' width and the Picareta's drawing on the Oficina's left page.
-const TAB_WIDTH := 170.0
 const PICK := 220.0
 const TAB_KEY: Array[StringName] = [&"forge_tab_emeth", &"forge_tab_workshop", &"forge_tab_arts"]
 const TAB_NAME: Array[String] = ["emeth", "workshop", "arts"]
@@ -144,7 +143,7 @@ func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
 	var col := VBoxContainer.new()
-	col.add_theme_constant_override(&"separation", 0)
+	col.add_theme_constant_override(&"separation", -int(Book.MARK_HIDDEN))
 	frame.add_child(col)
 	_tab_order = [Tab.EMETH]
 	if arts_open():
@@ -160,7 +159,7 @@ func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 		marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
 		col.add_child(marks)
 		for t: Tab in _tab_order:
-			var b := Book.mark(T.t(TAB_KEY[t]), TAB_WIDTH)
+			var b := Book.mark(T.t(TAB_KEY[t]))
 			b.name = "tab_" + TAB_NAME[t]
 			b.pressed.connect(_show_tab.bind(t, true))
 			tabs.append(b)
@@ -542,7 +541,7 @@ func _refresh() -> void:
 		else:
 			mark.look = Mark.Look.OWNED if owned else Mark.Look.BUY
 		entries[i].set_pressed_no_signal(r == shown)
-		count.add_theme_color_override(&"font_color", UiKit.GOLD if r == shown else Book.GILT)
+		count.add_theme_color_override(&"font_color", Book.RUBRIC if r == shown else Book.GILT)
 	_head_line.visible = false
 	if pick_entry != null:
 		_refresh_pick_entry()
@@ -625,7 +624,7 @@ func _refresh_pick_entry() -> void:
 	mark.look = Mark.Look.OWNED if problem == Oficios.DONE else (Mark.Look.LOCKED if problem == Oficios.NO_HEAD else Mark.Look.BUY)
 	count.text = str(_pick_cost()) if problem == &"" or problem == Oficios.SHORT else ""
 	pick_entry.set_pressed_no_signal(showing_pick)
-	count.add_theme_color_override(&"font_color", UiKit.GOLD if showing_pick else Book.GILT)
+	count.add_theme_color_override(&"font_color", Book.RUBRIC if showing_pick else Book.GILT)
 
 
 func _pick_cost() -> int:

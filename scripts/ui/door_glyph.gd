@@ -162,13 +162,28 @@ func _draw() -> void:
 			if kind == Kind.HEAL:
 				draw_colored_polygon(drop, HEAL_GREEN.darkened(0.25))
 			_stroke(drop, IVORY, stroke)
-		Kind.SHOP, Kind.GOLD:
-			# a coin: a ring and a short upright stroke (the gold's, filled in old gold)
-			if kind == Kind.GOLD:
-				draw_circle(c, h * 0.36, COIN_GOLD.darkened(0.2))
-			draw_arc(c, h * 0.36, 0.0, TAU, 24, OUTLINE_COLOR, stroke + (OUTLINE - STROKE) * k, true)
-			draw_arc(c, h * 0.36, 0.0, TAU, 24, IVORY, stroke, true)
-			_stroke(PackedVector2Array([c + Vector2(0, -h * 0.17), c + Vector2(0, h * 0.17)]), IVORY, stroke)
+		Kind.GOLD:
+			# gold: a short stack of three solid old-gold coins seen from the side, filled, no ring (P2-3: it read as the
+			# shop's coin)
+			for i in 3:
+				var y := h * (0.2 - 0.2 * i)
+				var rim := _ellipse(c + Vector2(0, y), h * 0.34, h * 0.12)
+				draw_colored_polygon(_ellipse(c + Vector2(0, y + h * 0.1), h * 0.34, h * 0.12), COIN_GOLD.darkened(0.45))
+				draw_rect(Rect2(c + Vector2(-h * 0.34, y), Vector2(h * 0.68, h * 0.1)), COIN_GOLD.darkened(0.3))
+				draw_colored_polygon(rim, COIN_GOLD)
+				draw_polyline(rim + PackedVector2Array([rim[0]]), OUTLINE_COLOR, stroke * 0.7, true)
+		Kind.SHOP:
+			# the shop: a tied purse in ivory outline (a round belly, a pinched neck, a flared mouth)
+			var belly := PackedVector2Array()
+			for j in 17:
+				var a := PI * 0.5 + (j / 16.0 - 0.5) * TAU * 0.8
+				belly.append(c + Vector2(cos(a) * h * 0.34, sin(a) * h * 0.3 + h * 0.16))
+			var neck_l := c + Vector2(-h * 0.1, -h * 0.12)
+			var neck_r := c + Vector2(h * 0.1, -h * 0.12)
+			belly.insert(0, neck_l)
+			belly.append(neck_r)
+			_stroke(belly, IVORY, stroke)
+			_stroke(PackedVector2Array([neck_l + Vector2(-h * 0.1, -h * 0.2), neck_l, neck_r, neck_r + Vector2(h * 0.1, -h * 0.2)]), IVORY, stroke)
 		Kind.ALTAR:
 			# a candle's flame over a short stub of wax
 			var flame := PackedVector2Array([c + Vector2(0, -h * 0.46), c + Vector2(h * 0.16, -h * 0.14), c + Vector2(h * 0.1, h * 0.04),
@@ -319,3 +334,11 @@ static func _grown(pts: PackedVector2Array, c: Vector2, by: float) -> PackedVect
 func _stroke(pts: PackedVector2Array, col: Color, width: float) -> void:
 	draw_polyline(pts, OUTLINE_COLOR, width + (OUTLINE - STROKE) * height / HEIGHT, true)
 	draw_polyline(pts, col, width, true)
+
+
+static func _ellipse(c: Vector2, rx: float, ry: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for i in 20:
+		var a := TAU * i / 20.0
+		out.append(c + Vector2(cos(a) * rx, sin(a) * ry))
+	return out

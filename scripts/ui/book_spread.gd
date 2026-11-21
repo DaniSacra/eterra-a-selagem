@@ -11,13 +11,17 @@ extends Control
 ##   var leaf := BookSpread.new().setup(0.5, true)    # leaf.left takes the content
 
 const PAGE_SHADER := preload("res://assets/shaders/book_page.gdshader")
+const COVER_SHADER := preload("res://assets/shaders/book_cover.gdshader")
 ## The cover past the pages and the leaves' edges under them, px at 720 lines.
 const COVER := 12.0
 const LEAVES := 4
 ## Inside each page, from its edges (the side by the spine a little more: the fold eats it).
 const MARGIN := Vector2(30, 22)
 const SPINE_MARGIN := 34.0
-const BRACKET := 26.0
+## The corner pieces on the cover: width, length of each arm, rivet radius (2 px at 1080 is 1.3 here).
+const CORNER_WIDTH := 6.0
+const CORNER_LENGTH := 34.0
+const RIVET := 1.6
 const RIBBON_WIDTH := 16.0
 const RIBBON_DROP := 22.0
 
@@ -26,6 +30,8 @@ var spine := 0.5
 var single := false
 var left: MarginContainer
 var right: MarginContainer
+var _cover: ColorRect
+var _under: Control
 var _paper: ColorRect
 var _trim: Control
 var _queued := false
@@ -36,6 +42,21 @@ func setup(p_spine: float = 0.5, p_single: bool = false) -> BookSpread:
 	single = p_single
 	name = "book"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# the cover (leather, AP-4 1.1), then what sits between it and the pages (the leaves' edges, the ribbon)
+	_cover = ColorRect.new()
+	_cover.name = "cover"
+	_cover.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var cm := ShaderMaterial.new()
+	cm.shader = COVER_SHADER
+	cm.set_shader_parameter(&"leather", Book.LEATHER)
+	cm.set_shader_parameter(&"stitch", Book.LEATHER_EDGE.lightened(0.3))
+	_cover.material = cm
+	add_child(_cover)
+	_under = Control.new()
+	_under.name = "under"
+	_under.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_under.draw.connect(_draw_under)
+	add_child(_under)
 	_paper = ColorRect.new()
 	_paper.name = "paper"
 	_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -96,6 +117,9 @@ func _layout() -> void:
 	var r := paper_rect()
 	_paper.position = r.position
 	_paper.size = r.size
+	_cover.size = size
+	(_cover.material as ShaderMaterial).set_shader_parameter(&"size_px", size)
+	_under.size = size
 	_trim.position = Vector2.ZERO
 	_trim.size = size
 	var m := _paper.material as ShaderMaterial
@@ -107,47 +131,60 @@ func _layout() -> void:
 	right.position = r.position + Vector2(sx, 0)
 	right.size = Vector2(r.size.x - sx, r.size.y)
 	queue_redraw()
+	_under.queue_redraw()
 	_trim.queue_redraw()
 
 
 func _draw() -> void:
-	var r := paper_rect()
-	# the cover, with a shadow round it and a darker line at its edge
-	var cover := UiKit.box(Book.LEATHER, Book.LEATHER_EDGE, 2, 0, 10)
+	# the shadow of the cover on the table (the leather itself is the cover's shader)
+	var cover := UiKit.box(Book.LEATHER, Book.LEATHER_EDGE, 0, 0, 0)
 	cover.shadow_color = Color(0, 0, 0, 0.55)
 	cover.shadow_size = 18
 	draw_style_box(cover, Rect2(Vector2.ZERO, size))
+
+
+func _draw_under() -> void:
+	var r := paper_rect()
 	# the leaves under the pages: thin pale lines below and beside them
 	for i in LEAVES:
 		var k := float(i + 1)
 		var tone := Color(0.72, 0.64, 0.5).darkened(0.12 * k)
-		draw_rect(Rect2(r.position + Vector2(-k * 0.6, r.size.y + k - 1.0), Vector2(r.size.x + k * 1.2, 1.2)), tone)
+		_under.draw_rect(Rect2(r.position + Vector2(-k * 0.6, r.size.y + k - 1.0), Vector2(r.size.x + k * 1.2, 1.2)), tone)
 	# the ribbon from the foot, by the spine of the right page (a single leaf: from its middle, UI review P2-6)
 	var x := r.position.x + r.size.x * (0.5 if single else spine + (1.0 - spine) * 0.18)
 	var top := r.end.y - 6.0
 	var bottom := size.y + RIBBON_DROP
 	var w := RIBBON_WIDTH * 0.5
-	draw_colored_polygon(PackedVector2Array([Vector2(x - w, top), Vector2(x + w, top), Vector2(x + w, bottom),
+	_under.draw_colored_polygon(PackedVector2Array([Vector2(x - w, top), Vector2(x + w, top), Vector2(x + w, bottom),
 		Vector2(x, bottom - 7.0), Vector2(x - w, bottom)]), Book.RIBBON)
-	draw_line(Vector2(x - w + 2, top), Vector2(x - w + 2, bottom - 2), Book.RIBBON.lightened(0.25), 1.0)
+	_under.draw_line(Vector2(x - w + 2, top), Vector2(x - w + 2, bottom - 2), Book.RIBBON.lightened(0.25), 1.0)
 
 
-## The brackets of old gold in the outer corners of both pages, over the paper and under the text.
+## The corner pieces of old gold on the cover's four corners (they were on the pages), engraved: a pale pixel on the
+## lit side, a dark one under, and two rivets each.
 func _draw_trim() -> void:
-	var r := paper_rect().grow(-9.0)
+	var t := CORNER_WIDTH
+	var e := size
 	for corner: Vector2 in [Vector2(0, 0), Vector2(1, 0), Vector2(0, 1), Vector2(1, 1)]:
-		var at := r.position + r.size * corner
+		var at := Vector2(e.x * corner.x, e.y * corner.y)
 		var sx := 1.0 if corner.x == 0.0 else -1.0
 		var sy := 1.0 if corner.y == 0.0 else -1.0
-		_bracket(at, Vector2(sx, sy))
+		var arm_x := Rect2(at, Vector2(CORNER_LENGTH * sx, t * sy)).abs()
+		var arm_y := Rect2(at, Vector2(t * sx, CORNER_LENGTH * sy)).abs()
+		for arm: Rect2 in [arm_x, arm_y]:
+			_gilt(arm)
+		for k: float in [0.5, 1.0]:
+			var rivet := at + Vector2(sx, sy) * Vector2(CORNER_LENGTH * 0.5 * k + t * 0.5 * (1.0 - k), t * 0.5)
+			_rivet(rivet)
+			_rivet(Vector2(at.x + sx * t * 0.5, at.y + sy * (CORNER_LENGTH * 0.5 * k + t * 0.5 * (1.0 - k))))
 
 
-func _bracket(at: Vector2, dir: Vector2) -> void:
-	var col := Book.GILT
-	_trim.draw_line(at, at + Vector2(BRACKET * dir.x, 0), col, 1.6, true)
-	_trim.draw_line(at, at + Vector2(0, BRACKET * dir.y), col, 1.6, true)
-	var inner := at + Vector2(5.0 * dir.x, 5.0 * dir.y)
-	_trim.draw_line(inner, inner + Vector2((BRACKET - 10.0) * dir.x, 0), Color(col, 0.6), 1.0, true)
-	_trim.draw_line(inner, inner + Vector2(0, (BRACKET - 10.0) * dir.y), Color(col, 0.6), 1.0, true)
-	var d := at + Vector2(9.0 * dir.x, 9.0 * dir.y)
-	_trim.draw_colored_polygon(PackedVector2Array([d + Vector2(0, -3.2), d + Vector2(3.2, 0), d + Vector2(0, 3.2), d + Vector2(-3.2, 0)]), col)
+func _gilt(r: Rect2) -> void:
+	_trim.draw_rect(r, Book.GILT)
+	_trim.draw_rect(Rect2(r.position, Vector2(r.size.x, RIVET * 0.5)), Book.GILT.lightened(0.3))
+	_trim.draw_rect(Rect2(r.position + Vector2(0, r.size.y - RIVET * 0.5), Vector2(r.size.x, RIVET * 0.5)), Color(Book.INK, 0.4))
+
+
+func _rivet(at: Vector2) -> void:
+	_trim.draw_circle(at, RIVET, Book.INK)
+	_trim.draw_circle(at, RIVET * 0.6, Book.GILT.lightened(0.35))

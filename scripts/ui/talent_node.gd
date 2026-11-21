@@ -22,15 +22,18 @@ const EQUIPPED_DARKEN := 0.2
 const EQUIPPED_LINE := Color("6fe0a8")
 const GLOW_RINGS := 4
 const GLOW_REACH := 7.0
-const GLOW_ALPHA := 0.5
+const GLOW_ALPHA := 0.3
 ## A Gift only open: dark felt with this much of its branch's colour (darkened), so the frame and glyph carry it.
 const OPEN_FILL := 0.28
 const OPEN_DARKEN := 0.55
-const LOCK_LINE := Color("4a4239")
-const LOCK_INK := Color(0.035, 0.03, 0.04, 0.96)
-const BLOCKED_LINE := Color("6b5a3f")
-const FOCUS := Color(1.0, 0.95, 0.84, 0.95)
-const PATH := Color(1.0, 0.95, 0.84, 0.55)
+## AP-4 1.5: the tree is drawn on the page's paper. The node's felt is a toasted paper (the page times PAPER_TOAST),
+## the frame old gold, the focus and the path in rubric; a locked Gift is only a faded motif and a small padlock.
+const PAPER_TOAST := 0.85
+const LOCK_LINE := Color(Book.FADED, 0.5)
+const BLOCKED_LINE := Color(Book.GILT, 0.6)
+const FOCUS := Book.RUBRIC
+const PATH := Color(Book.RUBRIC, 0.55)
+const EQUIPPED_WASH := 0.35
 const SIDE := 46.0
 ## The flares at the tips of the frame: how far out and how wide.
 const FLARE := 5.0
@@ -123,7 +126,7 @@ func _draw() -> void:
 		# the glow of a Gift worn: soft emerald rings outside the frame
 		for i in GLOW_RINGS:
 			var k := float(i + 1) / GLOW_RINGS
-			draw_polyline(_closed(_diamond(c, h + 1.5 + k * GLOW_REACH)), Color(EQUIPPED_LINE, GLOW_ALPHA * (1.0 - k)), 2.0, true)
+			draw_polyline(_closed(_diamond(c, h + 1.5 + k * GLOW_REACH)), Color(Book.OK, GLOW_ALPHA * (1.0 - k)), 2.0, true)
 	if on_path and not has_focus():
 		draw_polyline(_closed(_diamond(c, h + 4.0 + (GLOW_REACH * 0.5 if on else 0.0))), PATH, 1.2, true)
 	# the frame: a band of the line's colour, the felt inside, a thin inner line
@@ -132,7 +135,7 @@ func _draw() -> void:
 		draw_colored_polygon(_diamond(c, h - UiKit.FRAME), ink_color())
 		_dashed(_closed(_diamond(c, h)), line, 1.6)
 	else:
-		draw_colored_polygon(_diamond(c, h), line.darkened(0.35))
+		draw_colored_polygon(_diamond(c, h), line.darkened(0.2))
 		draw_colored_polygon(_diamond(c, h - UiKit.FRAME - (1.0 if on else 0.0)), ink_color())
 		draw_polyline(_closed(_diamond(c, h)), line, 1.4, true)
 	draw_polyline(_closed(_diamond(c, h - 5.0)), Color(line, 0.25 if locked or blocked else 0.45), 1.0, true)
@@ -144,15 +147,14 @@ func _draw() -> void:
 			draw_line(c + d * (h - 6.0) + d.orthogonal() * 3.0, c + d * (h - 6.0) - d.orthogonal() * 3.0, ink_color(), 2.4)
 	if has_focus():
 		draw_polyline(_closed(_diamond(c, h + 4.0 + (GLOW_REACH * 0.5 if on else 0.0))), FOCUS, 1.6, true)
+	var r := h * 0.5
+	var col := glyph_color()
+	# AP-4: the Gift's painted motif (technical-artist's TalentMotif), else its glyph, else its branch's
+	if def == null or not TalentMotif.draw(self, def.id, c, r, state):
+		if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
+			branch_glyph(self, glyph, c, r, col)
 	if locked:
 		_draw_lock(c, def.unlock_level if def else 1)
-	else:
-		var r := h * 0.5
-		var col := glyph_color()
-		# AP-4: the Gift's painted motif (technical-artist's TalentMotif), else its glyph, else its branch's
-		if def == null or not TalentMotif.draw(self, def.id, c, r, state):
-			if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
-				branch_glyph(self, glyph, c, r, col)
 	if on and def != null:
 		_badge_tick(c + Vector2(h * 0.62, -h * 0.62), h * BADGE)
 	elif sealed:
@@ -161,7 +163,7 @@ func _draw() -> void:
 		# revealed, not opened (Rejogabilidade, Fatia 1): its price in Memória under it, not its Devotion
 		_draw_memory(c, def.memory_cost)
 	elif def != null and def.cost > 0:
-		var pip := (EQUIPPED_LINE if on else UiKit.OLD_GOLD.lightened(0.3)) if not locked else LOCK_LINE.lightened(0.2)
+		var pip := Book.INK if not locked else LOCK_LINE
 		if blocked:
 			pip = BLOCKED_LINE
 		var x0 := c.x - (def.cost - 1) * PIP_STEP * 0.5
@@ -181,7 +183,7 @@ func _dashed(pts: PackedVector2Array, col: Color, width: float) -> void:
 
 ## Worn: a round emerald badge with a tick of ivory.
 func _badge_tick(at: Vector2, r: float) -> void:
-	draw_circle(at, r + 1.5, UiKit.INK)
+	draw_circle(at, r + 1.5, Book.INK)
 	draw_circle(at, r, EQUIPPED_LINE.darkened(0.25))
 	draw_polyline(PackedVector2Array([at + Vector2(-r * 0.5, 0.0), at + Vector2(-r * 0.1, r * 0.4), at + Vector2(r * 0.55, -r * 0.4)]),
 		Color(1.0, 0.97, 0.9), maxf(1.6, r * 0.28), true)
@@ -189,7 +191,7 @@ func _badge_tick(at: Vector2, r: float) -> void:
 
 ## Sealed: a small round wax seal with a notched rim and a diamond pressed in it.
 func _badge_seal(at: Vector2, r: float) -> void:
-	draw_circle(at, r + 1.5, UiKit.INK)
+	draw_circle(at, r + 1.5, Book.INK)
 	var rim := PackedVector2Array()
 	for i in 16:
 		rim.append(at + Vector2.from_angle(i * TAU / 16.0) * (r if i % 2 == 0 else r * 0.84))
@@ -214,35 +216,31 @@ func equipped() -> bool:
 ## The diamond's felt: the branch's colour when worn, dark felt with a hint of it when open, greyed when blocked,
 ## slate when locked.
 func ink_color() -> Color:
+	var paper := Color(Book.PAPER.r * PAPER_TOAST, Book.PAPER.g * PAPER_TOAST, Book.PAPER.b * PAPER_TOAST)
 	if equipped():
-		return UiKit.INK.lerp(color().darkened(EQUIPPED_DARKEN), EQUIPPED_FILL)
-	match state:
-		HeroLoadout.State.LOCKED:
-			return LOCK_INK
-		HeroLoadout.State.BLOCKED:
-			return UiKit.INK.lerp(Color(0.3, 0.29, 0.3), 0.25)
-	return UiKit.INK.lerp(color().darkened(OPEN_DARKEN), OPEN_FILL)
+		return paper.lerp(Book.ink(color()), EQUIPPED_WASH)
+	if state == HeroLoadout.State.BLOCKED:
+		return paper.lerp(Book.FADED, 0.15)
+	return paper
 
 
-## The outer line: emerald when worn, old gold when open, a duller gold when blocked, a dull line when locked.
+## The outer line: gilt on the paper (full when worn, a little lighter when only open), duller when blocked, faint when locked.
 func line_color() -> Color:
-	if equipped():
-		return EQUIPPED_LINE
 	match state:
 		HeroLoadout.State.LOCKED:
 			return LOCK_LINE
 		HeroLoadout.State.BLOCKED:
 			return BLOCKED_LINE
-	return UiKit.OLD_GOLD
+	return Book.GILT if equipped() else Color(Book.GILT, 0.75)
 
 
 ## The glyph: lit ivory over the branch's fill when worn, the branch's colour on dark felt when open, dim otherwise.
 func glyph_color() -> Color:
 	if equipped():
-		return color().lerp(Color.WHITE, 0.7)
+		return Book.ink(color())
 	if state == HeroLoadout.State.SEALED:
-		return Color(color().lightened(0.15), SEALED_GLYPH)
-	return color().lightened(0.15) if state == HeroLoadout.State.OPEN else UiKit.DIM.darkened(0.15)
+		return Color(Book.ink(color()), SEALED_GLYPH)
+	return Book.ink(color()) if state == HeroLoadout.State.OPEN else Book.FADED
 
 
 ## The price of opening a sealed Gift under its diamond: the Memória's leaf and the number (MaterialCount's language).
@@ -258,15 +256,15 @@ func _draw_memory(c: Vector2, n: int) -> void:
 
 
 func _draw_lock(c: Vector2, level: int) -> void:
-	var col := UiKit.DIM.darkened(0.1)
-	# a padlock over the number
-	var body := Rect2(c + Vector2(-5.0, -10.0), Vector2(10.0, 7.0))
-	draw_arc(c + Vector2(0.0, -10.0), 3.4, PI, TAU, 10, col, 1.6, true)
+	# AP-4 1.5: the Gift's motif stays (faded), the padlock and the level sit low in the corner, never in the middle
+	var col := Book.FADED
+	var at := c + Vector2(size.x * 0.02, size.y * 0.3)
+	var body := Rect2(at + Vector2(-9.0, -3.0), Vector2(6.0, 5.0))
+	draw_arc(at + Vector2(-6.0, -3.0), 2.0, PI, TAU, 8, col, 1.2, true)
 	draw_rect(body, col)
 	var n := str(level)
 	var font := UiKit.number_font()
-	var w := font.get_string_size(n, HORIZONTAL_ALIGNMENT_LEFT, -1, LEVEL_SIZE).x
-	draw_string(font, c + Vector2(-w * 0.5, 11.0), n, HORIZONTAL_ALIGNMENT_LEFT, -1, LEVEL_SIZE, col)
+	draw_string(font, at + Vector2(-1.0, 3.5), n, HORIZONTAL_ALIGNMENT_LEFT, -1, LEVEL_SIZE - 3, col)
 
 
 ## A branch's glyph inside a radius r around c (the centre, and any Gift without a glyph of its own): Combo two crossed

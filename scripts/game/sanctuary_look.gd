@@ -754,7 +754,8 @@ func _dress_styled_steps() -> Array[Callable]:
 		func() -> void:
 			_moss(v[&"sm"], v[&"face"])
 			if not _hole.is_empty():
-				_torn_vault(v[&"sm"]),
+				_torn_vault(v[&"sm"])
+				_hole_depth(),
 		_edge_pieces,
 		func() -> void:
 			_finials(v[&"sm"]),
@@ -916,6 +917,29 @@ func _torn_vault(sm: Masonry) -> void:
 			var p := end.position + Vector3(r.randf_range(-0.3, 0.3), -VAULT_DROP * (1.0 + floorf(k * 0.5)), r.randf_range(-0.2, 0.2))
 			var piece_ := sm.box(p, Vector3(VAULT_RING, 0.55, VAULT_DEEP), r.randf_range(-0.3, 0.3), mat)
 			piece_.rotate_object_local(Vector3.BACK, r.randf_range(-0.9, 0.9))
+
+
+## AT-SE1 (B, stylized only): depth in the hole, broken rock ledges well under the floor with fallen masonry heaped on
+## them (HOLE_DEPTH_LEDGES: share along the hole's long side, share across, depth, width), in the deep stone, dark in the mist.
+const HOLE_DEPTH_LEDGES: Array[Vector4] = [Vector4(0.25, 0.4, -5.5, 3.2), Vector4(0.7, 0.6, -8.0, 4.0)]
+const HOLE_DEPTH_SLAB := 0.7
+
+
+func _hole_depth() -> void:
+	var lo := Vector2(INF, INF)
+	var hi := -lo
+	for p in _hole:
+		lo = lo.min(p)
+		hi = hi.max(p)
+	var sm := kit.styled()
+	var mat := deep()
+	var edge := edge_kit()
+	var k := 0
+	for l in HOLE_DEPTH_LEDGES:
+		var at := Vector2(lerpf(lo.x, hi.x, l.x), lerpf(lo.y, hi.y, l.y))
+		sm.box(Vector3(at.x, l.z - HOLE_DEPTH_SLAB * 0.5, at.y), Vector3(l.w, HOLE_DEPTH_SLAB, l.w * 0.7), k * 0.6, mat, false)
+		edge.rubble(Vector3(at.x, l.z, at.y), l.w * 0.5, 40 + k)
+		k += 1
 
 
 # ---------- reading the layout ----------

@@ -246,7 +246,15 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   com um balanço leve; o `TalentNode` desenha `TalentMotif.draw(..., state)` antes do glifo do Dom (e do ramo), e o
   detalhe dos Dons no Compêndio mostra o motivo (`CodexScreen._motif`; sem motivo, `TalentGlyph.mark`). Na lousa
   escura da árvore os motivos dos nós abertos e não equipados quase somem: resolve quando a 1.5 da `ap4_spec.md` põe a
-  árvore no papel. Falta do AP-4: as seções 1.1 a 1.10.
+  árvore no papel.
+- **AP-4 seção 1 (ui-ux-designer, 2026-11-21, capturas em `docs/gallery/ap4/book_*_1080.png`, `map_icons_1080.png`)**: feitos
+  1.1 capa de couro (`book_cover.gdshader`: grão, gasto, vinco cego, costura; cantoneiras e rebites de ouro na capa, não
+  mais na página; `BookSpread` ganhou os nós `cover` e `under`), 1.2 abas como fitas (`Book.mark`: fita com rabo de
+  andorinha saindo de baixo da capa, largura pelo texto, a coluna das abas usa separação `-Book.MARK_HIDDEN`), 1.3
+  parcial (`Book.index_entry`: aguada com faixa rubrica à esquerda, foco só o losango; marca das Arenas é planta de
+  sala), 1.5 árvore de Dons no papel (filete duplo de tinta, nós em papel tostado com aro de ouro, trancado com motivo
+  apagado e cadeado no canto, ramos em rubrica) e P2-3 do QA (`DoorGlyph`: Ouro é pilha de moedas cheias, Loja é bolsa
+  amarrada). Fica para depois: 1.4 vinheta e capitular, 1.6 Compêndio ilustrado, 1.7 MAP-06, 1.8 a 1.10.
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),

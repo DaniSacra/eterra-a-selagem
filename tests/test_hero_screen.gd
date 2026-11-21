@@ -178,10 +178,10 @@ func test_worn_and_open_gifts_look_apart() -> void:
 	var open := s.tree.node(&"impeto")
 	assert_eq(worn.state, HeroLoadout.State.EQUIPPED)
 	assert_eq(open.state, HeroLoadout.State.OPEN)
-	assert_eq(worn.line_color(), TalentNode.EQUIPPED_LINE)
-	assert_eq(open.line_color(), UiKit.OLD_GOLD)
-	assert_lt(open.ink_color().get_luminance(), 0.12, "open is dark felt: the frame and the glyph carry the branch")
-	assert_gt(absf(worn.ink_color().get_luminance() - open.ink_color().get_luminance()) + absf(worn.ink_color().s - open.ink_color().s), 0.1)
+	assert_eq(worn.line_color(), Book.GILT)
+	assert_ne(open.line_color(), worn.line_color())
+	assert_gt(open.ink_color().get_luminance(), 0.4, "AP-4 1.5: the open Gift is a toasted paper, no slate")
+	assert_gt(absf(worn.ink_color().get_luminance() - open.ink_color().get_luminance()) + absf(worn.ink_color().s - open.ink_color().s), 0.05)
 	var combo := TalentNode.BRANCH_COLOR[TalentDef.Branch.COMBO]
 	assert_gt(combo.s, 0.4, "Combo is a colour, not a grey")
 	for b in [TalentDef.Branch.FURIA, TalentDef.Branch.EMETH, TalentDef.Branch.MAGIA]:
