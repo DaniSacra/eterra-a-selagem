@@ -1,6 +1,98 @@
 # Backlog de A Selagem
 
-## Ordem de execução de 2026-11-19 noite (game-director, commit lido `d2ff05d`)
+## Estado e ordem de 2026-11-20 (sessão principal com o Daniel, commit lido `22d9025`)
+
+Substitui a "Ordem de execução de 2026-11-19 noite" (mantida abaixo como histórico). Regra que vale: dentro de um lote
+as frentes rodam em paralelo só com arquivos distintos; integração, commit e push só pela sessão principal; Meshy zero.
+
+### Respostas do Daniel (2026-11-20)
+
+| # | Pergunta | Resposta |
+|---|---|---|
+| 1 | Último exe | Jogou, "está indo bem". Gerar exe novo com tudo de hoje ao fechar o lote abaixo |
+| 2 | Próxima entrega | **Fechar o que está aberto** antes de abrir coisa nova (Lote A abaixo) |
+| 3 | Equilíbrio | **Rodar o balance agora** (Lote B). Direção: o jogo precisa ficar **mais difícil, principalmente sem os upgrades** (Maestria baixa, sem Forja, sem Dons) |
+| 4 | Câmera | Perto fica o padrão (LR-01 confirmado) |
+| 5 | Estilo | O estilizado de hoje fica o padrão (RS-F2 confirmado); DT-RS2 (opção no menu) segue no Lote A |
+| 6 | Dano dos perigos no herói | "Tem que ser mais difícil": **sobe de 7 para 10** (o número do Hades) em Runas, Lajes, Corrente, Raiz e Seteira; o balance-designer confere junto do item 3 |
+| 7 | Nomes provisórios dos perigos | Ficam (Laje Rachada, Corrente da Ponte, Raiz Morta, Seteira) |
+| 8 | H-5 cristal que descarrega (RP-14) | **Fazer** |
+| 9 | H-6 chão que cede | Não fazer; revisitar depois |
+| 10 | H-7 água rasa | Não por agora |
+| 11 | Fonte e Loja | Seguem no Salão vestido (P-10 fechada por ora; RP-15 sai da fila) |
+| 12 | OF-05 farming das portas | Recomendado: Prata desde a profundidade 4, Memória depois da camada do guardião (Q-OF3 a) |
+| 13 | Ofícios, Roteiro A | Recomendado: Roteiro A depois do Lote A, o B só depois de A jogado (Q-OF1 a) |
+| 14 | Coleta | Recomendado: híbrida mínima, só a Pedra Funda num veio físico, no máximo 2 por descida (Q-OF2 a) |
+
+Não respondidas (15 a 35 da lista de 2026-11-20): **15 a 21** (resto dos Ofícios: só a Pedra Funda, Vendedor abre pela
+encomenda e faz Obras, nenhum NPC novo, Forjador e Vendedor só função, sem manuscritos, voz neutra no Livro, Q-OF5 e
+Q-OF11 a Q-OF15) seguem a recomendação, como combinado. **22 a 33** (nomes dos paladinos, título de Morvath, nome do
+hub, romã e loja, anjos e Encantos, Abertura do Livro e Ahk, "Ultimate", licença do Meshy, créditos, lote do Meshy,
+arte do Daniel, pontas do medalhão) ficam **abertas** e nada muda até ele responder; Meshy continua zero. **34** (pacote
+D-52, D-53, D-55, D-62, D-63, D-11, D-23) e **35** (ENV-HB6: hub fica com luz por estação, bordas não vão a um terço)
+seguem a recomendação.
+
+### Feito desde a ordem de 2026-11-19 noite (marcar, não repetir)
+
+| Item | Commit |
+|---|---|
+| Fatia 1 da rejogabilidade (materiais, Forja Temperar I e II, Dons com Memória, quatro anjos, save 6/7, registro 5) e as telas | `490188c` |
+| HUB-D (NPCs, `frame_yaw`, Emeth por posto, selos dos anjos, P0 da planta), LR-01 (Câmera Perto padrão), LR-02 | `490188c`, `4fa27ff`, `7ff9565` |
+| Lote 1 (1A a 1E), revisões de `d2ff05d` (arte, salas, interface, QA) e correções | `c3011c0` a `4efa876`, `490188c`, `7ff9565`, `df4afe5` |
+| Lote 2A, C19 inteiro (elites de dois golpes, Ceifa Dupla, Ômega no número do Hades, botão de usar, fios de mira), cadência aprovada | `485045d`, `8dc0fea`, `a61349c` |
+| Lote 2B em parte: GF-15, VX-17, B-b, T5-17 a T5-19, T5b P2-2, corredor elite com assado próprio, Q-T5-6, Q-T5-7, golpe sofrido sem silhueta | `7f1f203`, `485045d` |
+| Lote 2C (QW-116, DT-104, DT-107, assados em dia) | `4fa27ff`, `490188c` |
+| Escolha de save (três espaços), benchmark de interface com o Hades II (lotes 1 a 3 da UI, fileira do HUD padrão) | `b903eee`, `485045d`, `9d89a34`, `8144a79` |
+| Fatia 2 (Encantos, grupos de portas, anjo na porta, porta de Salmo, Temperar III, Refinar, Esmeralda, Bênçãos novas) e a interface dela; DV-2 MAP-09 (loja de rota) | `485045d`, `8144a79`, `7f1f203` |
+| Ciclo visual 2026-11-20 (Salão petróleo, oito biomas pela matriz de matiz, luz por estação no hub, ENV-HB4, HB5, HB7, EdgeKit, linha de tinta) | `485045d`, `2662d2c`, `52fcbb1`, `7f1f203`, `99f9f63`, `9271e95` |
+| Passe de VFX, lotes 1 e 2 (luz da recompensa ligada, paleta das famílias, marcas das famílias, onda, círculo, inimigos, almas, ultimates) | `a649036`, `7f1f203`, `8144a79` |
+| Lote 4 (perigos): RP-06, RP-07, RP-08, RP-09, RP-10, RP-11, RP-13 (só Santuário B), RP-16, RP-17; LR-03; RP-21 e LR-04/LR-06 provados e devolvidos | `490188c`, `7f1f203`, `8144a79`, `b57067d` a `22d9025` |
+| BUG-108, BUG-109 | `485045d`, `7f1f203` |
+| Estudo dos Ofícios (só planejamento) | `0a182f0`, `9b22888` |
+
+### Lote A, fechar o que está aberto (agora)
+
+| Frente | Dono | Itens | Aceite |
+|---|---|---|---|
+| A1 Perigos que faltam | `room-designer` (números e lugares) e `gameplay-engineer` (código), `combat-feel-director` aprova o aviso | **dano no herói 7 para 10** em todo perigo (resposta 6); **RP-14 (H-5) cristal que descarrega** nas Runas B (resposta 8); RP-12 urna de óleo; RP-18 colunata; RP-19 saídas no fundo; RP-20 pedras que caem da abóbada (Santuário B, Fendas B) | regra comum (aviso 1,0 s ou mais, fere inimigos, nunca a 6 m da entrada nem nos 3 s do começo, saída livre testada), "Derrotado por" próprio, 8 sementes do robô sem `stuck`. Fora: H-6 (resposta 9), H-7 (10), RP-15 e SW-N1 a SW-N4 (11) |
+| A2 Peças dos perigos | `art-director` (spec SW-G7), `environment-artist` | gramática do perigo (SW-G7) e as peças de verdade no lugar dos placeholders: laje rachada, corrente, raiz que racha, coluna que tomba (fissura, tambores, toco), seteira com a divisa, cristal; `chain_weight` refeito se ainda pendente | AC-RS (clássico igual, F7 exato, colisão e faixa iguais, `fit_probe` sem subir, iGPU 720 Baixa até 0,5 ms) |
+| A3 Cenário Sworn P2 | `environment-artist` (depois do A2) | SW-G4, SW-G5, SW-G6, SW-H1 a SW-H3, SW-C2 (só fêmures), SW-C3, SW-F2, SW-F3, SW-J2, SW-J3, SW-S2, SW-S3, SW-P1 a SW-P3, SW-R1, SW-T1, SW-A-1, RS-C7, F-6, J-5 | ordem 5.2 do `sworn_reference_ideas.md`; AC-RS |
+| A4 Lote 3 técnico | `gameplay-engineer` | DT-106 (`RunReport`, `RunAward` fora do `game.gd`); DT-RS1 (`Environment` com um dono só, com o `technical-artist`); chave `look` no save para o DT-RS2 | mesma semente, mesmo `RESULT` (`smoke 600` e `--start=boss --boons=25`); ida e volta de todas as salas nos dois perfis |
+| A5 Interface pendente | `ui-ux-designer` | DT-RS2 "Estilo visual" em Vídeo; MAP-07 (luz da porta no mapa) e MAP-08 (transições); entrada de Morvath no HUD (AP-2); resto do DT-103; QW-115, QW-117, ART-02.6; P2 da revisão d2ff05d que sobraram (P2-3 a P2-5, P2-8, P2-10, P2-12) | capturas a 720 e 1080; `title_flow_check` e `map_flow_check` verdes |
+| A6 AP-2 "Combate que se lê" | `technical-artist`, `environment-artist` | ART-05.2 a 05.5, 05.8, 09.1; V-08 (silhuetas da esquiva, fio do Retorno); capturas das famílias de Bênção e do surgir da elite na sala; P2-C19a (2º anel do corredor elite) | vermelho saturado abaixo de 1,5% na fase 3; herói achado atrás de Morvath; sonda 41/41 |
+| A7 Sensação que sobrou do 2B | `gameplay-engineer`, `technical-artist` | CF-09 (golpe 1 e corte da esquiva a 1,5x), CF-10 (segunda camada de som no golpe), tira de lado do besteiro | sonda sem regressão |
+| A8 QA do lote | `qa-performance` | HUB-E, BUG-110 (exe 10 min com `--watchdog`), RS-F1, DT-RS3, MAP-05 vídeo; exe novo do lote (Windows e Linux, copiado para as duas pastas do Daniel) | relatório em `docs/qa/latest_report.md`, sem P0 |
+
+### Lote B, equilíbrio "mais difícil sem upgrades" (em paralelo com o Lote A: só medida e números)
+
+`balance-designer` remede com tudo que existe hoje (Fatia 1 e 2, perigos, Encantos, loja de rota): 48 a 72 sementes,
+Maestria 1, 5, 10, 15, 20, réguas 0,25 e 0,45, com e sem Forja. **Meta nova do Daniel**: a primeira descida, sem
+Maestria, Forja nem Dons, bem mais difícil que hoje (o robô 0,25 vence cerca de 47 de 72 com tudo; a Maestria 1 sem
+Forja precisa cair bastante), e a curva com os upgrades continua a crescer. Revisa B-1 a B-5 (dano dos inimigos,
+Maestria da ultimate, sustento, primeiras salas, Ancião e Cavaleiro), o dano 10 dos perigos (resposta 6) e a OF-05
+(resposta 12, que tira Prata e Memória das primeiras salas). Proibido vida inflada. O `gameplay-engineer` aplica os
+números depois do A1 (mesmos arquivos). Aceite: metas do `balance.md` reescritas com o pedido do Daniel e medidas.
+
+### Lote C, Ofícios Roteiro A (depois do Lote A e do B)
+
+OF-05 primeiro (pode ir com o Lote B, é número de porta). Depois o Roteiro A de `docs/design/oficios/18_roadmap.md`
+com as respostas 12 a 21: a Primeira Picareta revista, Pedra Funda como o único contável novo, veio físico depois da
+luta (no máximo 2 por descida), Vendedor abre pela encomenda e a 1ª Obra, sem NPC novo, sem manuscrito, voz neutra no
+capítulo Ofícios. Histórias OF-01 a OF-30 em `17_backlog.md` (só as do Roteiro A). O Roteiro B só depois do Daniel jogar o A.
+
+### Depois (sem mudança): Fatia 3 (Lote 5A), AP-4 (5B), C20 técnico (5C), DT-111 (5D)
+
+### Abertas, só o Daniel (nada muda até ele responder)
+
+Nomes dos paladinos (D-02, D-04), título de Morvath (D-01), nome do hub (D-H4), romã e loja (D-41), nomes finais dos
+anjos e Encantos, Abertura do Livro e Ahk (Q-03, Q-05, Q-23), "Ultimate" (Q-16), licença do Meshy (Q-01, trava a
+Steam), créditos (Q-17), lote do Meshy (Q-18, recomendação: nada até o exe novo), arte dele (Q-04, Q-07, Q-24, figuras
+dos anjos, P-1), pontas do medalhão do Salão (S-Q6). **Só jogando**: se os perigos ficaram justos com 10 de dano, se a
+porta de Prata compete com a Bênção, se escolher o anjo é decisão.
+
+---
+
+## Ordem de execução de 2026-11-19 noite (histórico; substituída pela de 2026-11-20 acima; game-director, commit lido `d2ff05d`)
 
 Pedido do Daniel: seguir com **todo** o backlog aberto sem parar para perguntar; ele volta à noite para testar um exe.
 Regra dos lotes: dentro de um lote as frentes rodam em paralelo porque não dividem arquivo; um lote começa por agente,
