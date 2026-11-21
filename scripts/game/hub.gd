@@ -95,6 +95,7 @@ func _ready() -> void:
 	# a screen closed (the menu's Configurações may have changed the quality)
 	host.closed.connect(func(_s: Control) -> void:
 		apply_options()
+		evolve()  # (the Livro may have opened a Gift, the Vendedor made an Obra)
 		# the Configurações may have remapped interact
 		if is_instance_valid(station_sign):
 			station_sign.refresh())
@@ -292,6 +293,7 @@ func _use_vendor() -> void:
 ## The station signs and the purse read the save again (after an Ofício changed it).
 func labels_changed() -> void:
 	_show_focus()
+	evolve()
 
 
 ## The Forja da Emeth at the Forjador (ForgeScreen, a spread of the Livro): each purchase is written and said
@@ -312,10 +314,29 @@ func _open_forge() -> void:
 
 ## G-2: the Forja's rank on the forge (HubLook.set_forge_rank) and on the Emeth in his hand.
 func _show_forge() -> void:
-	var rank := Forge.temper(Save.data)
-	player.set_temper(rank)
-	if arena.look is HubLook:
-		(arena.look as HubLook).set_forge_rank(rank)
+	player.set_temper(Forge.temper(Save.data))
+	evolve()
+
+
+## HV-E: the hub as the save has grown it (HubEvolution: the forge, the stall, the Gift plates, the Livro's spines and
+## shelf, the Alquimista's bench), painted by HubLook.
+func evolve() -> void:
+	if arena != null and arena.look != null:
+		HubEvolution.apply(arena.look, HubEvolution.of(Save.data, codex_chapters(Save.data)))
+
+
+## The Compêndio's chapters for the Livro's spines (HubEvolution.of): a Vector2i(found, total) each, read the way the
+## Compêndio counts them (CodexScreen.progress); Morvath found only once sealed.
+static func codex_chapters(data: Dictionary) -> Array[Vector2i]:
+	var c := CodexScreen.new()
+	c._data = data
+	var out: Array[Vector2i] = []
+	for tab in [CodexScreen.Tab.BOONS, CodexScreen.Tab.ELOS, CodexScreen.Tab.PSALMS, CodexScreen.Tab.ENEMIES,
+			CodexScreen.Tab.ARENAS, CodexScreen.Tab.ANGELS]:
+		out.append(c.progress(tab))
+	out.append(Vector2i(1 if c.count("enemies", CodexScreen.BOSS, "defeated") > 0 else 0, 1))
+	c.free()
+	return out
 
 
 ## The Livro de Ahk on a chapter, in its hub form: no way down from the book, the Portal is the way down (UI review

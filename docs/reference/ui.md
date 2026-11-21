@@ -242,6 +242,11 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   def, Book.INK, altura da vista)` depois do `register` nos inimigos já derrotados (passar de conhecido para não conhecido refaz a
   figura); os nunca derrotados seguem em silhueta. Com nove abas, as entradas do índice ficam com `TAB_HEIGHT` 34 e
   margem vertical de 1 px, para a figura caber embaixo a 720.
+- **Ângulo e motivos (AP-4, peças do technical-artist)**: o `FigureView` gira a figura por `FigureSketch.yaw(modelo)`
+  com um balanço leve; o `TalentNode` desenha `TalentMotif.draw(..., state)` antes do glifo do Dom (e do ramo), e o
+  detalhe dos Dons no Compêndio mostra o motivo (`CodexScreen._motif`; sem motivo, `TalentGlyph.mark`). Na lousa
+  escura da árvore os motivos dos nós abertos e não equipados quase somem: resolve quando a 1.5 da `ap4_spec.md` põe a
+  árvore no papel. Falta do AP-4: as seções 1.1 a 1.10.
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
