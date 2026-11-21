@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_olpbx"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_1c87y"]
+
+[resource]
+script = ExtResource("2_1c87y")
+slot = &"corte_sismico"
+tool = &"tool_inscribe"
+id = &"corte_sismico"
+track = &"inscribe"
+name_key = &"enchant_corte_sismico"
+desc_key = &"enchant_corte_sismico_desc"
+cost = 20

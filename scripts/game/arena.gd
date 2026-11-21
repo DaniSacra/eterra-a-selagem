@@ -88,6 +88,28 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 	_finish(layout)
 
 
+## The same build spread over frames (QA P1-1: a new room is built on the black screen of Rooms, never one long
+## frame): the look's steps (ArenaRoom.build_steps) one a frame, `wait` awaited between them, then the walking grid.
+## The same rooms, pieces and dice as build(); the hall and the Seal Chamber still build at once.
+var _deferring := false
+var _steps: Array[Callable] = []
+
+
+func build_async(layout: RoomLayout, exit_count: int, seed_: int, wait: Callable) -> void:
+	_deferring = true
+	_build(layout, exit_count, seed_)
+	_deferring = false
+	var steps := _steps
+	_steps = []
+	for step in steps:
+		await wait.call()
+		if not is_inside_tree():
+			return
+		step.call()
+	await wait.call()
+	_finish(layout)
+
+
 func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	_rng.seed = seed_
 	# an arena's air (ArenaRoom.air) goes back before the next room is built (the old room leaves after it)
@@ -669,7 +691,10 @@ func _build_arena(l: RoomLayout, exit_count: int, seed_: int) -> void:
 	showcase = Vector3(mid.x, 0.0, mid.y)
 	look = look_for(l.look)
 	add_child(look)
-	look.build(self, l, exit_count, seed_)
+	if _deferring:
+		_steps = look.build_steps(self, l, exit_count, seed_)
+	else:
+		look.build(self, l, exit_count, seed_)
 
 
 ## After the look changed (F7, VisualProfile.toggle): the room dressed with its own air puts it back for the look in

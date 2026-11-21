@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ObraDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/obra_def.gd" id="1_mc2u3"]
+
+[resource]
+script = ExtResource("1_mc2u3")
+id = &"obra_banca"
+name_key = &"obra_banca"
+desc_key = &"obra_banca_desc"
+cost = {
+&"emerald": 1,
+&"silver": 50
+}
+stage = {
+"route_shop_items": 4
+}

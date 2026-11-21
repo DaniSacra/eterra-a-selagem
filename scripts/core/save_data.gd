@@ -20,9 +20,9 @@ const MAX_BEST_TIMES := 5
 const FIRST_HERO := "warrior"
 ## Codex sections: each maps an id to a dictionary of counts (seen, formed, defeated...). E4-05: enemies (defeated,
 ## elite; Morvath: met, phase the highest reached, defeated) and arenas (entered).
-const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies", "arenas"]
+const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies", "arenas", "angels"]
 ## The lists of ids in a hero's block (only strings are kept).
-const HERO_LISTS: Array[String] = ["unlocked", "equipped", "opened", "tools", "refined", "inscribed", "finds", "recipes", "seen"]
+const HERO_LISTS: Array[String] = ["unlocked", "equipped", "opened", "tools", "refined", "inscribed", "awakened", "finds", "recipes", "seen"]
 
 
 static func defaults() -> Dictionary:
@@ -63,17 +63,18 @@ static func juramentos_defaults() -> Dictionary:
 ## One hero's block: the Mastery XP (the level comes out of it), the Gifts unlocked (ids, what the screens have shown),
 ## the Gifts equipped for the next descent (ids), the ultimate chosen (id or "") and first times (guardian, victory:
 ## counts) for the Mastery's first-time XP.
-## Since version 6: opened (the Gifts opened with Memória, ids), forge (forge_defaults) and tools (ids, Fatia 2).
+## Since version 6: opened (the Gifts opened with Memória, ids), forge (forge_defaults) and tools (ids, Fatia 2);
+## discern (the Discernimento bought in the Book, 0 to Discern.COSTS.size(), Fatia 3).
 static func hero_defaults() -> Dictionary:
 	return {"mastery_xp": 0, "unlocked": [], "equipped": [], "ultimate": "", "firsts": {}, "opened": [],
-		"forge": forge_defaults(), "tools": []}
+		"forge": forge_defaults(), "tools": [], "discern": 0}
 
 
 ## The Forja's block of a hero (Forge): the highest Temperar bought (0: none); refine (action: the Refinar on it, Fatia
 ## 2) and refined (the Refinar bought, ids); awaken (the one awakened) and inscribed (Encantos learned) wait for the
 ## Fatia 3.
 static func forge_defaults() -> Dictionary:
-	return {"temper": 0, "refine": {}, "refined": [], "awaken": "", "inscribed": []}
+	return {"temper": 0, "refine": {}, "refined": [], "awaken": "", "awakened": [], "inscribed": []}
 
 
 ## Fills anything missing from an older or damaged file, never dropping what is valid. Dictionaries with free keys

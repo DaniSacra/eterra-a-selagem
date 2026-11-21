@@ -353,6 +353,17 @@ a GPU ficou ocupada pelas outras frentes. Os quadros sem sufixo são da RTX a 19
 - Elite surgindo na sala (`surge_guardian_room_sty_cpu.jpg`): o Cavaleiro se ergue no Santuário com o anel de fumaça
   fechando e a borda de ouro.
 
+## P1-1, aquecimento dos shaders (technical-artist, 2026-11-21)
+- Evidência: `tools/frame_spikes.gd` na iGPU, 1280 x 720 Baixa, robô, semente 5, `--smoke=420 --fast=2`.
+- Antes (QA A8): entrada de sala até 17,6 s com o cache vazio e 0,5 a 1,9 s com ele quente; golpes de 0,5 a 3,3 s.
+- Depois, cache vazio: aquecimento de 33,8 s (exe: 133 s); quadros de jogo acima de 50 ms só 4 (132, 106, 56, 55 ms).
+- Depois, cache quente: aquecimento de 1,9 s; um quadro de 117 ms na Câmara.
+- P1 que fica: o 1º quadro de cada sala, já na tela preta, é a montagem dela (0,16 a 0,77 s quente, 0,28 a 1,4 s frio,
+  também ao voltar a uma sala já vista), do gameplay-engineer e do environment-artist.
+- P1 que fica: no exe com o cache vazio o aquecimento leva 2 min 13 s na iGPU (só na primeira vez; o Shader Baker não
+  muda isso, a compilação é do driver).
+- Conjunto: `assets/warmup/warmup_set.res`, 31 KB.
+
 ## Melhorias propostas (maior ganho por esforço primeiro)
 
 ### Técnicas (posso fazer sem pedir; medir antes e depois, captura na GPU)

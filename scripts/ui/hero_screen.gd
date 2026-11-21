@@ -98,6 +98,9 @@ var _shown: Variant = null
 const CONFIRM_TIME := 3.0
 var arming: StringName = &""
 var _arm_t := 0.0
+## The Discernimento's buttons, one per grade (Fatia 3).
+var discern_buttons: Array[Button] = []
+const DISCERN_BUTTON := 200.0
 ## The materials held, in the head of the right page (MaterialCount.purse).
 var _purse: HBoxContainer
 
@@ -369,7 +372,84 @@ func _oficios_right() -> Control:
 	var made := Oficios.has_recipe(_data, d.order_gives)
 	v.add_child(_oficio_row("preview", null, T.t(&"oficios_preview") if made else T.t(&"oficios_unknown"), "",
 		T.t(&"oficios_preview_desc") if made else T.t(&"oficios_work_sealed")))
+	_discern_part(v)
 	return v
+
+
+# ---- Discernimento (Fatia 3; Discern): bought with Memória on the Ofícios' page, in order, two presses ----
+
+## The Discernimento's grades: each its name and what it does, and a paper button that opens the next one.
+func _discern_part(v: VBoxContainer) -> void:
+	v.add_child(Book.section(T.t(&"discern_title")))
+	v.add_child(Book.text(T.t(&"discern_lead"), Book.FADED, 15))
+	for n in range(1, Discern.COSTS.size() + 1):
+		var row := HBoxContainer.new()
+		row.name = "discern_row_%d" % n
+		row.add_theme_constant_override(&"separation", 10)
+		var words := VBoxContainer.new()
+		words.add_theme_constant_override(&"separation", 0)
+		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		words.add_child(Book.label(T.t("discern_%d" % n), Book.INK, 18, UiKit.BOLD_FONT))
+		words.add_child(Book.text(T.t("discern_%d_desc" % n), Book.FADED, 15))
+		row.add_child(words)
+		var b := Book.button("", _press_discern.bind(n), DISCERN_BUTTON)
+		b.name = "discern_%d" % n
+		b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		row.add_child(b)
+		discern_buttons.append(b)
+		v.add_child(row)
+	_refresh_discern()
+
+
+## Each grade's button as the save stands: Aberto, "Abrir · N" (and asking again while armed), or why not.
+func _refresh_discern() -> void:
+	for i in discern_buttons.size():
+		var n := i + 1
+		var b := discern_buttons[i]
+		var problem := Discern.problem(_data, n)
+		var can := problem == Discern.Problem.OK
+		match problem:
+			Discern.Problem.OWNED:
+				b.text = T.t(&"discern_owned")
+			Discern.Problem.NEEDS:
+				b.text = T.t(&"discern_needs", {"name": T.t("discern_%d" % (n - 1))})
+			Discern.Problem.SHORT:
+				b.text = T.t(&"discern_short", {"n": Discern.cost(n) - MaterialPurse.amount(_data, MaterialPurse.MEMORY)})
+			_:
+				b.text = T.t(&"discern_confirm" if arming == StringName("discern_%d" % n) else &"discern_open_cost",
+					{"n": Discern.cost(n)})
+		b.disabled = not can
+		b.focus_mode = Control.FOCUS_ALL if can else Control.FOCUS_NONE
+		if can:
+			Book.primary(b)
+
+
+## The first press asks (the button says what it costs), the second within CONFIRM_TIME opens it and writes the save.
+func _press_discern(n: int) -> void:
+	var id := StringName("discern_%d" % n)
+	if Discern.problem(_data, n) != Discern.Problem.OK:
+		return
+	if arming != id:
+		arming = id
+		_arm_t = CONFIRM_TIME
+		Audio.play(&"ui_move")
+		_refresh_discern()
+		return
+	arming = &""
+	if Discern.buy(_data):
+		Audio.play(&"ui_ok")
+		_save()
+	_refresh()
+	_refresh_discern()
+	var next := _discern_focus()
+	(next if next != null else chapters[Chapter.OFICIOS]).grab_focus()
+
+
+func _discern_focus() -> Control:
+	for b in discern_buttons:
+		if not b.disabled:
+			return b
+	return null
 
 
 ## A line of the Ofícios: an optional mark, the name in bold ink with a count at the right in lining figures, and a
@@ -672,8 +752,9 @@ func _chapter_focus(c: Chapter) -> Control:
 		Chapter.HERO:
 			return _to_gifts
 		Chapter.OFICIOS:
-			# only words: its bookmark holds the focus
-			return chapters[Chapter.OFICIOS]
+			# the Discernimento's next grade, else its bookmark holds the focus
+			var d := _discern_focus()
+			return d if d != null else chapters[Chapter.OFICIOS]
 	# the Gifts: the first that can go on, else the first one on, else the centre
 	for want: HeroLoadout.State in [HeroLoadout.State.OPEN, HeroLoadout.State.EQUIPPED]:
 		for n in tree.nodes:
@@ -722,6 +803,7 @@ func _process(delta: float) -> void:
 	if _arm_t <= 0.0:
 		arming = &""
 		_tell(_shown)
+		_refresh_discern()
 
 
 func _choose(u: UltDef) -> void:

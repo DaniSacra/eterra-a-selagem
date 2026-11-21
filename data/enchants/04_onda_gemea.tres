@@ -1,0 +1,54 @@
+[gd_resource type="Resource" script_class="EnchantDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_327ux"]
+[ext_resource type="Script" path="res://scripts/core/enchant_def.gd" id="2_ofpi4"]
+
+[sub_resource type="Resource" id="Resource_blyca"]
+script = ExtResource("1_327ux")
+stat = &"blow_wave"
+tag = &"heavy"
+base = 15.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_rmeqf"]
+script = ExtResource("1_327ux")
+stat = &"blow_wave_m"
+tag = &"heavy"
+base = 9.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_0xaaj"]
+script = ExtResource("1_327ux")
+stat = &"blow_wave_w"
+tag = &"heavy"
+base = 2.4
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_0qofm"]
+script = ExtResource("1_327ux")
+stat = &"blow_wave_fan"
+tag = &"heavy"
+base = 2.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_hpe4s"]
+script = ExtResource("1_327ux")
+stat = &"blow_wave_side"
+tag = &"heavy"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_ofpi4")
+id = &"onda_gemea"
+name_key = &"enchant_onda_gemea"
+desc_key = &"enchant_onda_gemea_desc"
+slot = 2
+mods = Array[ExtResource("1_327ux")]([SubResource("Resource_blyca"), SubResource("Resource_rmeqf"), SubResource("Resource_0xaaj"), SubResource("Resource_0qofm"), SubResource("Resource_hpe4s")])
+learned = false
+excludes = Array[StringName]([&"onda_carregada"])

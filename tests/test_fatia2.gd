@@ -182,13 +182,13 @@ func test_temper_three_and_the_refine_behind_the_tool() -> void:
 
 func test_three_encantos_learned_and_their_rules() -> void:
 	var all := Enchants.load_catalog()
-	assert_eq(all.size(), 3)
+	assert_eq(all.size(), 6, "three learned and three to inscribe (Fatia 3)")
 	for e in all:
 		assert_ne(T.t(e.name_key), String(e.name_key), "%s has a name" % e.id)
 		assert_ne(T.t(e.desc_key), String(e.desc_key))
 		assert_false(T.t(e.desc_key).contains("—"))
 	var pool := Enchants.learned(all)
-	assert_eq(pool.size(), 3, "all three learned from the start")
+	assert_eq(pool.size(), 3, "the first three learned from the start")
 	var triple := all.filter(func(e: EnchantDef) -> bool: return e.id == &"lamina_triplice")[0] as EnchantDef
 	var none: Array[EnchantDef] = []
 	assert_false(Enchants.allowed(triple, none, [&"corte_crescente"] as Array[StringName]), "never with its Gift")

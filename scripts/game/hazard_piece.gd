@@ -559,6 +559,8 @@ const PLANT_LEAVES := 6
 const PLANT_HIGH := Vector2(0.9, 1.3)
 const PLANT_OPEN := 0.6
 const PLANT_BLADE := 0.24
+## How far round its root the plant's leaves spread (m): it stands that far off the walkable floor.
+const PLANT_FOOT := 0.75
 const PLANT_SHUT := 0.08
 const PLANT_CLOSE := 0.3
 const PLANT_BACK := 0.4
@@ -569,7 +571,7 @@ const PLANT_RUST := Color(0.38, 0.22, 0.12)
 ## its joint before it, and the bone hand on the sill (bone at BONE value); the windup brings the arm out to the elbow
 ## (NICHE_OUT m), the grab runs it NICHE_GRAB m low along the floor and closes it, back over NICHE_BACK s.
 const NICHE := Vector3(1.2, 2.2, 0.5)
-const NICHE_SILL := 0.35
+const NICHE_SILL := 0.28
 const NICHE_OUT := 0.45
 const NICHE_GRAB := 1.5
 const NICHE_BACK := 0.8
@@ -842,19 +844,23 @@ static func breath(parent: Node3D, r: Rect2, push: Vector2, windup: float, seed_
 
 
 ## The hostile plant (3.5) at strip a to b.
-static func plant(parent: Node3D, a: Vector2, b: Vector2, windup: float, seed_: int) -> HazardPiece:
+## `back`: how far behind the strip's start the plant itself stands (off the walkable floor: ArenaRoom slides it there),
+## its slab staying at the start.
+static func plant(parent: Node3D, a: Vector2, b: Vector2, windup: float, seed_: int, back := 0.0) -> HazardPiece:
 	var hp := HazardPiece.new()
 	hp.name = "HazardPlant"
 	hp.kind = Kind.PLANT
 	hp.warn = windup
 	parent.add_child(hp)
-	hp.position = Vector3(a.x, 0.0, a.y)
 	var d := (b - a).normalized()
+	var root_at := a - d * back
+	hp.position = Vector3(root_at.x, 0.0, root_at.y)
 	hp._way = d
-	hp._span = Vector2(a.distance_to(b), 0)
+	hp._span = Vector2(root_at.distance_to(b), 0)
+	var slab := d * (back + PLANT_SLAB * 0.5)
 	hp._marks.append(hp._flat_mark(Vector2.ONE * PLANT_SLAB, {&"joint": JOINT, &"chev_count": 1, &"chev_dir": d,
-		&"chev_at": d * PLANT_SLAB * 0.3, &"chev_open": 0.32}))
-	hp._cracks.append(hp._crack(Vector2(-0.45, -0.4), Vector2(0.15, 0.48), 4.4))
+		&"chev_at": d * PLANT_SLAB * 0.3, &"chev_open": 0.32}, slab))
+	hp._cracks.append(hp._crack(slab + Vector2(-0.45, -0.4), slab + Vector2(0.15, 0.48), 4.4))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_
 	var leaf := StandardMaterial3D.new()
@@ -923,9 +929,9 @@ static func niche(parent: Node3D, a: Vector2, b: Vector2, windup: float, stone: 
 	back.material_override = dark
 	back.position = Vector3(0, NICHE.y * 0.5 + NICHE_SILL, 0.02)
 	hp.add_child(back)
-	for f: Array in [[Vector3(-(NICHE.x + 0.24) * 0.5, (NICHE.y + NICHE_SILL) * 0.5, -0.05), Vector3(0.24, NICHE.y + NICHE_SILL, 0.2)],
-			[Vector3((NICHE.x + 0.24) * 0.5, (NICHE.y + NICHE_SILL) * 0.5, -0.05), Vector3(0.24, NICHE.y + NICHE_SILL, 0.2)],
-			[Vector3(0, NICHE.y + NICHE_SILL + 0.12, -0.05), Vector3(NICHE.x + 0.48, 0.24, 0.2)],
+	for f: Array in [[Vector3(-(NICHE.x + 0.24) * 0.5, (NICHE.y + NICHE_SILL) * 0.5, 0.1), Vector3(0.24, NICHE.y + NICHE_SILL, 0.2)],
+			[Vector3((NICHE.x + 0.24) * 0.5, (NICHE.y + NICHE_SILL) * 0.5, 0.1), Vector3(0.24, NICHE.y + NICHE_SILL, 0.2)],
+			[Vector3(0, NICHE.y + NICHE_SILL + 0.12, 0.1), Vector3(NICHE.x + 0.48, 0.24, 0.2)],
 			[Vector3(0, NICHE_SILL * 0.5, -0.12), Vector3(NICHE.x + 0.1, NICHE_SILL, 0.34)]]:
 		var mi := MeshInstance3D.new()
 		var fb := BoxMesh.new()

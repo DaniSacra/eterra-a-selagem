@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="EnchantDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_otr7c"]
+[ext_resource type="Script" path="res://scripts/core/enchant_def.gd" id="2_racg5"]
+
+[sub_resource type="Resource" id="Resource_ymj4m"]
+script = ExtResource("1_otr7c")
+stat = &"ground_pulse"
+tag = &"spin"
+base = 25.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_f1u5v"]
+script = ExtResource("1_otr7c")
+stat = &"ground_pulse_m"
+tag = &"spin"
+base = 4.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_racg5")
+id = &"corte_sismico"
+name_key = &"enchant_corte_sismico"
+desc_key = &"enchant_corte_sismico_desc"
+mods = Array[ExtResource("1_otr7c")]([SubResource("Resource_ymj4m"), SubResource("Resource_f1u5v")])
+learned = false

@@ -8,6 +8,8 @@ var has_pick := false
 var wants_head := false
 var pity_due := false
 var preview := false
+## Fatia 3: the Obras made (Vendor.works), laid over the stage by Rooms.setup (Vendor.stage_for).
+var works: Array[StringName] = []
 ## The head's room marked on this descent's map (RunMap.mark_finds).
 var marked := false
 ## What happened.
@@ -28,16 +30,20 @@ static func from_save(data: Dictionary, def: OficiosDef) -> OficiosRun:
 	r.wants_head = Oficios.head_wanted(data, def)
 	r.pity_due = Oficios.pity_due(data, def)
 	r.preview = Oficios.has_recipe(data, def.order_gives)
+	r.works = Vendor.works(data, Vendor.load_catalog())
 	return r
 
 
-## --oficios=noted,pick,pity,preview: noted (the head is wanted), pity (and due), pick, preview.
+## --oficios=noted,pick,pity,preview,obra_x: noted (the head is wanted), pity (and due), pick, preview, Obras made.
 static func from_words(words: PackedStringArray) -> OficiosRun:
 	var r := OficiosRun.new()
 	r.has_pick = words.has("pick")
 	r.wants_head = (words.has("noted") or words.has("pity")) and not r.has_pick
 	r.pity_due = words.has("pity") and r.wants_head
 	r.preview = words.has("preview")
+	for w in words:
+		if w.begins_with("obra_"):
+			r.works.append(StringName(w))
 	return r
 
 

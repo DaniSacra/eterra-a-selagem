@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_hippl"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_wxnwn"]
+
+[sub_resource type="Resource" id="Resource_af116"]
+script = ExtResource("1_hippl")
+stat = &"heal_on_kill"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_wxnwn")
+slot = &"blade"
+tool = &"tool_awaken"
+id = &"awaken_sede"
+track = &"awaken"
+name_key = &"forge_awaken_sede"
+desc_key = &"forge_awaken_sede_desc"
+material = &"emerald"
+cost = 2
+mods = Array[ExtResource("1_hippl")]([SubResource("Resource_af116")])

@@ -200,6 +200,11 @@ num pool de até 8 malhas no `Fx`, 4 por esquiva, 0,12 s cada; nada sem tela). M
 `smoke_ring` (`thin_reach`), `emeth` (`return_thread`, o fio do Retorno do Corte). Estado: provisório até a revisão do
 art-director e o aceite do combat-feel-director.
 
+## 8a. Conjunto de aquecimento dos shaders (P1-1, `Warmup`, gerado, licença do projeto)
+- `assets/warmup/warmup_set.res` (31 KB, no pacote): 135 cópias leves de material (sem textura), colhidas por
+  `tools/make_warmup.sh`; desenhado pelo `scripts/render/warmup.gd` no começo. Definitivo enquanto for regerado depois
+  de cada shader novo (`tests/test_warmup.gd` falha sem isso).
+
 ## 8b. Kit de borda e primeiro plano (TA-HB2, `EdgeKit`, procedural, licença do projeto)
 
 `scripts/game/edge_kit.gd`, shaders `edge_piece.gdshader` (+ `.gdshaderinc`) e `edge_piece_paint.gdshader`. Nenhuma

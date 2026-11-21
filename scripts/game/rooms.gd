@@ -151,6 +151,8 @@ func setup(g: Game, rng: RandomNumberGenerator) -> void:
 		stage = short_stage(stage, 4)
 	elif Dev.has("medium"):
 		stage = short_stage(stage, 6)
+	if g.oficios != null and not g.oficios.works.is_empty():
+		stage = Vendor.stage_for(stage, Vendor.load_catalog(), g.oficios.works)  # Fatia 3: the Obras made
 	if g.juramentos:
 		stage = g.juramentos.stage_for(stage)  # E6: more elites, dearer shop
 	trials = Trials.new(Trials.load_catalog())
@@ -347,6 +349,11 @@ func _exit_tree() -> void:
 
 
 func _enter(next: RunMap.Room) -> void:
+	_enter_with(next)
+
+
+## wait: on a screen, the room's build is spread over the black frames (Game.rebuild_room with it, QA P1-1).
+func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	room = next
 	map.enter(room)
 	if room.kind != RunMap.Kind.TRIAL:
@@ -369,7 +376,9 @@ func _enter(next: RunMap.Room) -> void:
 			variant = int(Dev.num("variant", 0))
 		layout = layout.variant(variant)
 	var exits := 0 if room.kind == RunMap.Kind.BOSS else next_rooms.size()
-	game.rebuild_room(layout, exits, 1406 + room.depth * 31 + room.layout)
+	await game.rebuild_room(layout, exits, 1406 + room.depth * 31 + room.layout, wait)
+	if not is_inside_tree():
+		return
 	_layout = layout
 	_clear_props()
 	game.player.place(game.arena.start)
@@ -706,6 +715,7 @@ func boss_phase(n: int) -> void:
 		found(MaterialPurse.SILVER, &"boss", stage.silver_phase)
 		if _phases_paid == stage.emerald_phase_at:
 			found(MaterialPurse.EMERALD, &"boss", stage.emerald_phase)  # (Fatia 2: the phase 3 reached)
+			game.find_tool(Forge.TOOL_AWAKEN)  # (Fatia 3: the Forjador's second tool, at the first phase 3 reached)
 
 
 ## Morvath is sealed: the victory's Prata and Memória.
@@ -787,15 +797,26 @@ func _step_vein(dt: float) -> void:
 
 
 ## Obra 1, "Prévia dos anjos": as the doors open, the angel of each Blessing's room one layer further (behind the
-## doors) is drawn now and shown on the map; its door keeps it when it opens.
+## doors) is drawn now and shown on the map; its door keeps it when it opens. Discernimento II (Fatia 3) sees one
+## layer further still (alone, the layer behind the doors).
 func _preview_angels() -> void:
-	if game.oficios == null or not game.oficios.preview or game.encounters == null:
+	if game.encounters == null:
 		return
-	for r in next_rooms:
-		for id in r.next:
-			var n := map.nodes[id]
-			if n.reward == RunMap.Reward.BOON and not n.meeting and n.kind == RunMap.Kind.COMBAT and n.angel == &"":
-				n.angel = game.encounters.door_angel(n)
+	var layers := (1 if game.oficios != null and game.oficios.preview else 0) + (1 if game.discern >= 2 else 0)
+	if layers <= 0:
+		return
+	var ring: Array[RunMap.Room] = next_rooms.duplicate()
+	for k in layers:
+		var further: Array[RunMap.Room] = []
+		for r in ring:
+			for id in r.next:
+				var n := map.nodes[id]
+				if further.has(n):
+					continue
+				further.append(n)
+				if n.reward == RunMap.Reward.BOON and not n.meeting and n.kind == RunMap.Kind.COMBAT and n.angel == &"":
+					n.angel = game.encounters.door_angel(n)
+		ring = further
 	map.changed.emit()
 
 
@@ -911,11 +932,14 @@ var _hold_turn := 0
 
 
 func _go(next: RunMap.Room) -> void:
-	if _hold_frames() > 0:
-		await _frame_drawn()
+	if _hold_frames() <= 0:
+		_enter(next)
+		return
+	_hold = 1 << 20  # (the world waits from here: holding())
+	await _frame_drawn()
 	if not is_inside_tree():
 		return
-	_enter(next)
+	await _enter_with(next, _frame_drawn)
 
 
 ## The world waits while the new room is held black.
@@ -1076,6 +1100,7 @@ func _fight_won() -> void:
 	game.hud.show_trial_won(done)
 	game.room_tally.event("trial_turned", game.time, {"blessing": String(done.blessing.id), "rarity": done.rarity})
 	found(MaterialPurse.MEMORY, &"trial", stage.memory_trial)  # a Provação won brings Memória home (Fatia 1)
+	game.find_tool(Forge.TOOL_INSCRIBE)  # (Fatia 3: the third tool, at the first Provação won)
 	trial_turned.emit(done)
 
 

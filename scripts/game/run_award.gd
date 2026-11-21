@@ -18,6 +18,10 @@ static func keep(g: Game, outcome: String, gain: Dictionary) -> void:
 	# the Mastery is kept by a death too (D-57); never for the test robot (unless --mastery) nor without a save,
 	# and the end screen only shows XP that is really kept (QA T5, Q-T5-2)
 	var kept := Save.enabled and (g.bot == null or Dev.has("mastery"))
+	if outcome == "victory" and g.juramentos and banks_materials(Save.enabled, g.bot != null, Dev.has("materials-keep")):
+		# Fatia 3: a new best Peso brings Esmeralda home (before award keeps the new best)
+		var best := int(Juramentos.block(Save.data).get("best", 0))
+		g.materials.add(MaterialPurse.EMERALD, &"juramentos", Juramentos.record_emeralds(best, g.juramentos.weight()))
 	g.mastery_report = {"gain": gain, "xp_before": int(SaveData.hero(Save.data, String(g.hero.id)).mastery_xp)} if kept else {}
 	if kept:
 		award(g, gain, outcome, Save.data)
@@ -90,6 +94,8 @@ static func award(g: Game, gained: Dictionary, outcome: String, data: Dictionary
 ## E4-05: the enemies defeated (an elite counts for its common kind, and as an elite), Morvath met (the highest phase
 ## reached, defeated on a victory) and the arenas entered, into save data's Codex.
 static func codex(g: Game, outcome: String, data: Dictionary) -> void:
+	if g.encounters != null:
+		AngelCodex.keep(data, g.encounters.meetings, g.boons.owned())  # (Fatia 3: the Anjos tab)
 	for id: StringName in g.defeated:
 		var kind := String(id).trim_suffix("_elite")
 		SaveData.codex_add(data, "enemies", kind, "defeated", int(g.defeated[id]))

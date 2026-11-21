@@ -31,7 +31,10 @@ const PAD_REMAPPABLE: Array[StringName] = [&"light_attack", &"heavy_attack", &"d
 const MENU_BUTTONS := {&"ui_accept": JOY_BUTTON_A, &"ui_cancel": JOY_BUTTON_B}
 ## Where a gamepad binding is kept in the saved bindings (beside the key bindings, which use the action's own name).
 const PAD_PREFIX := "pad:"
-const MENU_KEYS := {&"tab_prev": [JOY_BUTTON_LEFT_SHOULDER, KEY_PAGEUP], &"tab_next": [JOY_BUTTON_RIGHT_SHOULDER, KEY_PAGEDOWN]}
+## menu_reroll: Y (R on the keyboard) draws the Blessings' cards again (Discernimento I, BoonChoice), only on a menu
+## (the run stands still under it: R never fires the ultimate there).
+const MENU_KEYS := {&"tab_prev": [JOY_BUTTON_LEFT_SHOULDER, KEY_PAGEUP], &"tab_next": [JOY_BUTTON_RIGHT_SHOULDER, KEY_PAGEDOWN],
+	&"menu_reroll": [JOY_BUTTON_Y, KEY_R]}
 
 ## The last device touched was a gamepad (device_changed when it flips, for hints that name the keys live).
 var using_pad := false:

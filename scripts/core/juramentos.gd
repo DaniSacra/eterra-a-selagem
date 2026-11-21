@@ -220,6 +220,17 @@ static func block(data: Dictionary) -> Dictionary:
 	return data.juramentos
 
 
+## Fatia 3 (sistemas.md 1.7, the Heat rewards of the Hades I): a victory with Peso above the best won gives one
+## Esmeralda for each step of RECORD_STEP Peso it crosses (Peso 5, 10, ... 30: six in all), once each.
+const RECORD_STEP := 5
+
+
+static func record_emeralds(best_before: int, weight_won: int) -> int:
+	if weight_won <= best_before:
+		return 0
+	return maxi(0, weight_won / RECORD_STEP - best_before / RECORD_STEP)
+
+
 ## Keeps the highest Peso won (on a victory). Returns true when it is a new best.
 static func record_win(data: Dictionary, weight_won: int) -> bool:
 	var b := block(data)

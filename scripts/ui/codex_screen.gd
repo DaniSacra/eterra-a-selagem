@@ -16,12 +16,12 @@ extends Control
 signal closed
 
 ## In the order of the buttons (the index of each tab is its button's).
-enum Tab { GIFTS, BOONS, ELOS, PSALMS, ENEMIES, MORVATH, ARENAS, MOVES }
+enum Tab { GIFTS, BOONS, ELOS, PSALMS, ENEMIES, MORVATH, ARENAS, ANGELS, MOVES }
 
 const TAB_KEY: Array[StringName] = [&"codex_tab_gifts", &"codex_tab_boons", &"codex_tab_elos", &"codex_tab_psalms",
-	&"codex_tab_enemies", &"codex_tab_morvath", &"codex_tab_arenas", &"codex_tab_moves"]
+	&"codex_tab_enemies", &"codex_tab_morvath", &"codex_tab_arenas", &"codex_tab_angels", &"codex_tab_moves"]
 const TAB_NAME: Array[String] = ["tab_gifts", "tab_boons", "tab_elos", "tab_psalms", "tab_enemies", "tab_morvath",
-	"tab_arenas", "tab_moves"]
+	"tab_arenas", "tab_angels", "tab_moves"]
 ## The spine: the index page narrower than the list's.
 const SPINE := 0.3
 const OUTER := Vector2(22, 10)
@@ -58,6 +58,9 @@ const CELL_GAP := 28
 const ELO_BIG := 30.0
 const ELO_SMALL := 20.0
 const ELO_GAP := 8.0
+## Angels: the seal beside the words, and the row's height.
+const ANGEL_SEAL := 44.0
+const ANGEL_ROW := 58.0
 const ELO_NAME_WIDTH := 170.0
 const UNKNOWN := "???"
 ## The detail's figure on the index page, and the Gift's mark there.
@@ -267,6 +270,9 @@ func _show(t: Tab) -> void:
 		Tab.ARENAS:
 			_arenas()
 			_legend.text = T.t(&"codex_arenas_legend", counts)
+		Tab.ANGELS:
+			_angels()
+			_legend.text = T.t(&"codex_angels_legend")
 		_:
 			_moves()
 			_legend.text = T.t(&"moves_legend")
@@ -401,6 +407,9 @@ func progress(t: Tab) -> Vector2i:
 		Tab.ARENAS:
 			var ids := arena_ids()
 			return Vector2i(ids.filter(func(id: StringName) -> bool: return count("arenas", id, "entered") > 0).size(), ids.size())
+		Tab.ANGELS:
+			var c := AngelCodex.count(_data)
+			return Vector2i(c[0], c[1])
 	var tree: ComboTree = load(HeroDef.warrior().combos)
 	var known: Array = _data.get("moves", [])
 	var named := tree.named_moves()
@@ -664,6 +673,38 @@ func _arenas() -> void:
 		_list.add_child(row)
 
 
+## Fatia 3, the angels (AngelCodex): each its seal (lit once met, its outline before), its name and line, and the
+## times it came, was chosen and blessed the end of a descent; never met: "???" and "Ainda não encontrado.".
+func _angels() -> void:
+	for e in AngelCodex.entries(_data):
+		var a: AngelDef = e.def
+		var known := bool(e.known)
+		var row := HBoxContainer.new()
+		row.name = String(a.id)
+		row.add_theme_constant_override(&"separation", 12)
+		row.custom_minimum_size.y = ANGEL_ROW
+		var seal := AngelSeal.new().setup(a.family, ANGEL_SEAL, known)
+		seal.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		if not known:
+			seal.modulate = Color(1, 1, 1, 0.35)
+		row.add_child(seal)
+		var words := VBoxContainer.new()
+		words.add_theme_constant_override(&"separation", 0)
+		words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var name := UiKit.label(T.t(a.name_key) if known else UNKNOWN, Book.ink(AngelSeal.tint(a.family)) if known else Book.FADED,
+			ROW_SIZE + 1, UiKit.BOLD_FONT)
+		name.name = &"Name"
+		words.add_child(name)
+		words.add_child(UiKit.label(T.t(a.line_key) if known else T.t(&"codex_angel_unknown"), Book.FADED, ROW_SIZE - 1))
+		if known:
+			var nums := UiKit.label("  ·  ".join([T.t(&"codex_angel_met", {"n": e.met}), T.t(&"codex_angel_chosen", {"n": e.chosen}),
+				T.t(&"codex_angel_blessed", {"n": e.blessed})]), Book.FADED, ROW_SIZE - 2, UiKit.number_font())
+			nums.name = &"Counts"
+			words.add_child(nums)
+		row.add_child(words)
+		_list.add_child(row)
+
+
 ## The rooms of the region in the Compendium: the stage's arenas and the Seal Chamber (ids).
 func arena_ids() -> Array[StringName]:
 	var stage: StageDef = load(STAGE)
@@ -811,6 +852,11 @@ class CodexMark:
 				draw_polyline(PackedVector2Array([c + Vector2(-r * 0.85, r * 0.6), c + Vector2(-r * 0.85, -r * 0.5), c + Vector2(-r * 0.42, r * 0.05),
 					c + Vector2(0, -r * 0.75), c + Vector2(r * 0.42, r * 0.05), c + Vector2(r * 0.85, -r * 0.5), c + Vector2(r * 0.85, r * 0.6)]), color, w, true)
 				draw_line(c + Vector2(-r * 0.95, r * 0.6), c + Vector2(r * 0.95, r * 0.6), color, w * 1.4, true)
+			Tab.ANGELS:
+				# a seal: a double ring and a small diamond (never rays)
+				draw_arc(c, r * 0.9, 0.0, TAU, 28, color, w, true)
+				draw_arc(c, r * 0.6, 0.0, TAU, 24, color, w * 0.7, true)
+				draw_colored_polygon(TalentNode._diamond(c, r * 0.3), color)
 			Tab.ARENAS:
 				draw_line(c + Vector2(-r * 0.55, r * 0.9), c + Vector2(-r * 0.55, -r * 0.15), color, w, true)
 				draw_line(c + Vector2(r * 0.55, r * 0.9), c + Vector2(r * 0.55, -r * 0.15), color, w, true)

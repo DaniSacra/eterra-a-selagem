@@ -81,6 +81,13 @@ var oficios_banked := {}
 ## Fatia 2 (sistemas.md 3.6): the Encantos that may come in this descent (learned at the Forja: Enchants.learned), the
 ## choice open now, the Forjador's tools found in it (tools_banked: those log_run kept) and the Refinar carried (ids).
 var enchant_pool: Array[EnchantDef] = []
+## Fatia 3: the Despertar awake ("" none), the Discernimento bought (Discern) and the rerolls left in this descent.
+var forge_awaken := ""
+var discern := 0
+var rerolls_left := 0
+## The angel whose cards are on the choice screen (Encounters.choose; null: none), for a reroll of the same family.
+var choice_angel: AngelDef = null
+signal rerolled
 var enchant_options: Array[EnchantDef] = []
 var tools_found: Array[StringName] = []
 var tools_banked: Array[StringName] = []
@@ -174,6 +181,7 @@ var _found: Array[Enemy] = []
 func _ready() -> void:
 	# the click or key that started the run (the title's Iniciar, "Descer de novo") is no swing (E1c, bug 1)
 	Controls.clear_presses()
+	Input.joy_connection_changed.connect(_on_pad_connection)  # C20: an unplugged controller pauses (auto_pause)
 	Dev.seed_rng(_rng, 1)
 	fast = Dev.num("fast", 1.0)
 	_build_world()
@@ -257,6 +265,11 @@ func _ready() -> void:
 	_equip_talents()
 	encounters = Encounters.new(self)
 	enchant_pool = Enchants.learned(Enchants.load_catalog(), Save.data if bot == null else {}, String(hero.id))
+	if Dev.has("inscribed"):
+		# (tests and the robot: these Encantos learned too, Fatia 3)
+		for e in Enchants.load_catalog():
+			if not enchant_pool.has(e) and Dev.arg("inscribed").split(",", false).has(String(e.id)):
+				enchant_pool.append(e)
 	ults.equip(hero.ultimate(StringName(ultimate)))
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
@@ -595,7 +608,9 @@ func _trace_cam_cut(last := false) -> void:
 		print("CAM_TRACE run: max jump %.3f m at %s" % [_cam_worst.worst, _cam_worst.get("at", {})])
 
 
-func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
+## wait: when valid (Rooms on a screen, QA P1-1), the room is built over several frames, awaiting it between the
+## steps (Arena.build_async); without, at once (the same room either way).
+func rebuild_room(layout: RoomLayout, exits: int, seed_: int, wait := Callable()) -> void:
 	_trace_cam_cut()
 	ground.clear()
 	ults.clear()
@@ -608,7 +623,10 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 	arena.queue_free()
 	arena = Arena.new()
 	add_child(arena)
-	arena.build(layout, exits, seed_)
+	if wait.is_valid():
+		await arena.build_async(layout, exits, seed_, wait)
+	else:
+		arena.build(layout, exits, seed_)
 	breaks = BreakFloor.make(self, layout)  # AT-Q1: the room's vases and crates (under the arena, gone with it)
 	horde.arena = arena
 	player.arena = arena
@@ -622,6 +640,10 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int) -> void:
 ## for a room, StageDef.psalm_chance; the guardian passes its own). meeting: a room's Blessing, which comes by two
 ## angels (Rejogabilidade, Fatia 1: Encounters; --no-angels draws as before).
 func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0, meeting := false) -> void:
+	choice_angel = null
+	_no_reroll = false
+	_last_chances = chances
+	_last_psalm = psalm_chance
 	if meeting and encounters != null and encounters.on():
 		encounters.open(chances, psalm_chance)
 		return
@@ -631,6 +653,8 @@ func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance :
 ## A Psalm's door (Fatia 2, sistemas.md 1.7): three Blessings of every family as the shop's, the first card a Psalm
 ## that may come now (the door turned into a Blessing when none could: RunMap.settle).
 func open_psalm_choice(chances: Array[float] = Boon.RARITY_CHANCE) -> void:
+	choice_angel = null
+	_no_reroll = true
 	var cards := _draw_cards(chances, 0.0)
 	if psalm_cards and rooms != null:
 		var dice := RandomNumberGenerator.new()
@@ -703,6 +727,36 @@ func _draw_cards(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.
 	var cards := boons.draw(_rng, 3, chances, elo, trade)
 	fill_psalm(cards, psalm_chance, _rng)
 	return cards
+
+
+var _last_chances: Array[float] = Boon.RARITY_CHANCE
+var _last_psalm := -1.0
+## The Blessings' screen open now may be drawn again (_open_choice; never a Psalm's door's, _no_reroll).
+var _rerollable := false
+var _no_reroll := false
+
+
+## Discernimento I (Fatia 3): the choice of Blessings on screen may be drawn again once a descent (a fresh draw of the
+## same kind: the chosen angel's family, else every family). For the UI: can_reroll(), reroll_choice(), rerolls_left,
+## signal rerolled. Never a Psalm's door's guaranteed Psalm, a growth (romã) or an Encanto's choice.
+func can_reroll() -> bool:
+	return rerolls_left > 0 and mode == Mode.CHOICE and _rerollable and _screen != null \
+		and not offer_cards.any(func(c: BoonState.Card) -> bool: return c.grow)
+
+
+func reroll_choice() -> bool:
+	if not can_reroll():
+		return false
+	rerolls_left -= 1
+	var cards: Array[BoonState.Card] = []
+	if choice_angel != null and encounters != null:
+		cards = encounters.reroll_cards(choice_angel)
+	else:
+		cards = _draw_cards(_last_chances, _last_psalm)
+	_close_screen()
+	_open_choice(cards)
+	rerolled.emit()
+	return true
 
 
 ## A Psalm may take a card (Psalms.fill; psalm_chance < 0: the stage's). Psalms only in the descent by rooms (the old
@@ -884,6 +938,8 @@ func _open_choice(cards: Array = []) -> void:
 		return
 	var choice := BoonChoice.new()
 	_screen = choice
+	_rerollable = not _no_reroll
+	_no_reroll = false
 	ui.add_child(choice)
 	if psalm_card != null and choice.has_method(&"open_cards"):
 		choice.call(&"open_cards", offer_cards, boons, self)
@@ -1252,6 +1308,25 @@ func close_screen() -> void:
 	_back_to_play()
 
 
+## C20 (GP P2-3): the window lost its focus, or the controller in use was unplugged: the run pauses by itself
+## (AutoPause: never the robot, --smoke nor a capture, and only in play). True when it opened the pause.
+func auto_pause(why: AutoPause.Why, pad_in_use := true) -> bool:
+	if not AutoPause.wanted(why, mode == Mode.PLAY and _screen == null, AutoPause.robot_run(bot != null), pad_in_use):
+		return false
+	_open_pause()
+	return true
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		auto_pause(AutoPause.Why.FOCUS)
+
+
+func _on_pad_connection(_device: int, connected: bool) -> void:
+	if not connected:
+		auto_pause(AutoPause.Why.PAD, Controls.using_pad)
+
+
 func _open_pause() -> void:
 	mode = Mode.PAUSE
 	var pause := PauseMenu.new()
@@ -1289,6 +1364,7 @@ func apply_options() -> void:
 
 
 func _close_screen() -> void:
+	_rerollable = false
 	if _screen:
 		_screen.queue_free()
 		_screen = null
@@ -1631,6 +1707,21 @@ func _equip_forge() -> void:
 	for r in refine:
 		ranks.append(r)
 		forge_refine.append(String(r.id))
+	# the Despertar awake (Fatia 3): --awaken=id (also the robot's), else a person's save
+	var awake: ForgeRank = null
+	if Dev.has("awaken"):
+		awake = forge.find(StringName(Dev.arg("awaken")))
+	elif bot == null and not Dev.has("forge"):
+		awake = forge.awake(Save.data, String(hero.id))
+	if awake != null and awake.track == Forge.AWAKEN:
+		ranks.append(awake)
+		forge_awaken = String(awake.id)
+	# Discernimento (Fatia 3): --discern=N (also the robot's), else a person's save
+	if Dev.has("discern"):
+		discern = int(Dev.num("discern", 0))
+	elif bot == null and Save.enabled:
+		discern = Discern.level(Save.data, String(hero.id))
+	rerolls_left = Discern.rerolls(discern)
 	boons.equip_forge(ranks)
 	player.set_temper(forge_temper)  # (G-2: the blade shows its rank)
 

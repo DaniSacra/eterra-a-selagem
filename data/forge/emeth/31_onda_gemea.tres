@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="ForgeRank" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_lwx65"]
+[ext_resource type="Script" path="res://scripts/core/forge_rank.gd" id="2_j8mas"]
+
+[resource]
+script = ExtResource("2_j8mas")
+slot = &"onda_gemea"
+tool = &"tool_inscribe"
+id = &"onda_gemea"
+track = &"inscribe"
+name_key = &"enchant_onda_gemea"
+desc_key = &"enchant_onda_gemea_desc"
+cost = 20

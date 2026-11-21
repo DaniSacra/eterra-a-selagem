@@ -1,13 +1,20 @@
 ; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
 config_version=5
 
 [application]
 
 config/name="Crônicas de Eterra: A Selagem"
 run/main_scene="res://scenes/boot.tscn"
-config/features=PackedStringArray("4.7", "GL Compatibility")
 config/use_custom_user_dir=true
 config/custom_user_dir_name="EterraASelagem"
+config/features=PackedStringArray("4.7", "GL Compatibility")
 
 [autoload]
 
@@ -17,13 +24,17 @@ Controls="*res://scripts/controls.gd"
 Audio="*res://scripts/audio.gd"
 Music="*res://scripts/music.gd"
 
+[debug]
+
+file_logging/enable_file_logging=true
+file_logging/max_log_files=30
+
 [display]
 
 window/size/viewport_width=1280
 window/size/viewport_height=720
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
-window/handheld/orientation=0
 
 [editor]
 
@@ -48,9 +59,7 @@ look_toggle={
 
 [rendering]
 
-renderer/rendering_method="forward_plus"
 renderer/rendering_method.mobile="gl_compatibility"
-renderer/rendering_method.web="gl_compatibility"
 anti_aliasing/quality/msaa_3d=2
 environment/defaults/default_clear_color=Color(0.024, 0.016, 0.031, 1)
 
@@ -80,8 +89,3 @@ frame_yaw={
 "type": "float",
 "value": 0.0
 }
-
-[debug]
-
-file_logging/enable_file_logging=true
-file_logging/max_log_files=30

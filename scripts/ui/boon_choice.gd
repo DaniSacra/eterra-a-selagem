@@ -37,6 +37,8 @@ var _hint: Label
 ## The words of rule of the card in focus (P1-2; null on the events' screens) and the row of actions at the foot (P0-2).
 var glossary: Glossary
 var bar: ActionBar
+## The bar's "Sortear de novo" (Discernimento I; null: the run does not let these cards be drawn again).
+var reroll_item: ActionBar.Item
 
 
 ## rarities: each card's offer by gift id (offer_of): a Boon.Rarity, or a Dictionary {rarity, upgrade} for an
@@ -136,7 +138,34 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 		page.add_child(row)
 	page.add_child(hint)
 	bar = ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus)])
+	if hint_text == "":
+		_offer_reroll.call_deferred()
 	return row
+
+
+## Discernimento I (Fatia 3): while the run lets these cards be drawn again (Game.can_reroll), the bar's left holds
+## "Sortear de novo (N)" (Y, R on the keyboard, or a click); Game.reroll_choice closes this screen and opens the new draw.
+func _offer_reroll() -> void:
+	var game := _game()
+	if game == null or not game.can_reroll() or bar == null:
+		return
+	reroll_item = bar.add(ActionBar.entry(&"menu_reroll", T.t(&"bar_reroll", {"n": game.rerolls_left}), reroll, true))
+
+
+## Draws the cards again (Game.reroll_choice). False when the run does not let it.
+func reroll() -> bool:
+	var game := _game()
+	if game == null or not game.can_reroll():
+		return false
+	Audio.play(&"ui_ok")
+	return game.reroll_choice()
+
+
+func _game() -> Game:
+	var n := get_parent()
+	while n != null and not n is Game:
+		n = n.get_parent()
+	return n as Game
 
 
 ## The cards came by an angel (EncounterScreen): its seal small over the title with its name, and a line in the hint
@@ -201,6 +230,10 @@ func _go_back() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if reroll_item != null and event.is_action_pressed(&"menu_reroll") and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		reroll()
+		return
 	if back.is_valid() and event.is_action_pressed(&"ui_cancel"):
 		get_viewport().set_input_as_handled()
 		_go_back()

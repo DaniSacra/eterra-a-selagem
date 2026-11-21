@@ -233,36 +233,58 @@ static func make(look: StringName) -> ArenaRoom:
 
 
 func build(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> void:
-	arena = a
-	layout = l
-	exits_used = mini(exit_count, l.exits.size())
-	_rng.seed = seed_
-	kit = ArenaKit.new(self, seed_)
-	m = kit.masonry
-	tomb = TombKit.new(m)
-	_see = stone().duplicate() as ShaderMaterial
-	_see.set_shader_parameter(&"see_through", 1.0)
-	_floor()
-	_edges()
-	_abyss()
-	for o in layout.obstacles:
-		var from := m.built_count()
-		piece(o)
-		if o.hits_to_fall > 0:
-			toppling[o] = m.take_since(from)  # (RP-09: it may topple, so it stays out of the merge)
-			# SW-G7 3.6: the crack up its side leans with it
-			var hp := HazardPiece.column(self, o)
-			_hazard[&"column"][o] = hp
-			for mi in hp.get_children():
-				toppling[o].append(mi)
-	_doors()
-	_light()
-	dress()
-	_hazard_pieces()
-	m.merge()
-	_dress_air()
-	_stylize()
-	shadowed = _count_shadows()
+	for step in build_steps(a, l, exit_count, seed_):
+		step.call()
+
+
+## The build in steps, in order (QA P1-1: Rooms spreads them over the black frames of a new room, one or a few a
+## frame; build() runs them all at once). build_ms keeps what each took (the last build), for the measures.
+var build_ms: Dictionary = {}
+
+
+func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[Callable]:
+	var steps: Array[Callable] = []
+	steps.append(_timed.bind(&"start", func() -> void:
+		arena = a
+		layout = l
+		exits_used = mini(exit_count, l.exits.size())
+		_rng.seed = seed_
+		kit = ArenaKit.new(self, seed_)
+		m = kit.masonry
+		tomb = TombKit.new(m)
+		_see = stone().duplicate() as ShaderMaterial
+		_see.set_shader_parameter(&"see_through", 1.0)
+		_floor()))
+	steps.append(_timed.bind(&"edges", _edges))
+	steps.append(_timed.bind(&"abyss", _abyss))
+	steps.append(_timed.bind(&"pieces", func() -> void:
+		for o in layout.obstacles:
+			var from := m.built_count()
+			piece(o)
+			if o.hits_to_fall > 0:
+				toppling[o] = m.take_since(from)  # (RP-09: it may topple, so it stays out of the merge)
+				# SW-G7 3.6: the crack up its side leans with it
+				var hp := HazardPiece.column(self, o)
+				_hazard[&"column"][o] = hp
+				for mi in hp.get_children():
+					toppling[o].append(mi)
+		_doors()
+		_light()))
+	steps.append(_timed.bind(&"dress", dress))
+	steps.append(_timed.bind(&"hazards", _hazard_pieces))
+	steps.append(_timed.bind(&"merge", func() -> void: m.merge()))
+	steps.append(_timed.bind(&"air", func() -> void:
+		_dress_air()))
+	steps.append(_timed.bind(&"stylize", func() -> void:
+		_stylize()
+		shadowed = _count_shadows()))
+	return steps
+
+
+func _timed(what: StringName, step: Callable) -> void:
+	var t := Time.get_ticks_usec()
+	step.call()
+	build_ms[what] = (Time.get_ticks_usec() - t) / 1000.0
 
 
 ## Each arena's own pieces and light (the environment artist's: CryptLook, RiftLook, GardenLook). Nothing here may
@@ -2601,7 +2623,12 @@ func _hazard_pieces() -> void:
 					&"niche":
 						list.append(HazardPiece.niche(self, a, b, hz.warn, stone()))
 					&"plant":
-						list.append(HazardPiece.plant(self, a, b, hz.warn, seed_))
+						# the plant stands off the walkable floor behind its strip's start (only its slab and lash on it)
+						var d := (b - a).normalized()
+						var back := 0.0
+						while arena.shape().edge_distance(a - d * back) > -HazardPiece.PLANT_FOOT and back < 3.0:
+							back += 0.1
+						list.append(HazardPiece.plant(self, a, b, hz.warn, seed_, back))
 					_:
 						list.append(HazardPiece.root(self, a, b, hz.warn, seed_))
 			_hazard[hz.plate_source] = list

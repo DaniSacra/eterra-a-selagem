@@ -36,7 +36,7 @@ func test_a_purse_counts_by_source_and_reports_every_source() -> void:
 	var r := p.report()
 	assert_eq(r.silver, {"elite": 2, "door": 10, "guardian": 0, "boss": 0})
 	assert_eq(r.memory, {"door": 0, "guardian": 0, "trial": 2, "boss": 0})
-	assert_eq(r.emerald, {"boss": 0}, "Esmeralda only from Morvath (Fatia 2)")
+	assert_eq(r.emerald, {"boss": 0, "juramentos": 0}, "Esmeralda from Morvath (Fatia 2) and a new best Peso (Fatia 3)")
 	assert_eq(r.total, {"silver": 12, "memory": 2, "emerald": 0})
 
 

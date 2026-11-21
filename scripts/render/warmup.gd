@@ -13,12 +13,19 @@ extends Node3D
 signal done
 
 const SET := "res://assets/warmup/warmup_set.res"
-## Materials drawn per frame: compiling is the cost, not drawing; a few frames keep the title breathing.
+## Materials drawn per frame behind the black screen: compiling is the cost, not drawing.
 const PER_FRAME := 40
+## Behind the title, a few at a time: on a cold cache each can stall the frame up to a second on an iGPU, and the
+## title should keep answering between them.
+const PER_FRAME_TITLE := 3
 ## The quads: this small, this far, in a grid filling the camera.
 const SIZE := 0.05
 const DEPTH := 2.0
 const GRID := 12
+
+## How far this run's warm-ups got (one interrupted behind the title is taken up by the next start: the Game can call
+## Warmup.start(self, true) on its first black frames and only what is left is drawn).
+static var reached := 0
 
 var _items: Array = []
 var _at := 0
@@ -34,7 +41,8 @@ var started_ms := 0
 
 ## Whether there is anything to warm: a screen, the set, and not switched off (--no-warmup).
 static func wanted() -> bool:
-	return DisplayServer.get_name() != "headless" and not Dev.has("no-warmup") and ResourceLoader.exists(SET)
+	return DisplayServer.get_name() != "headless" and not Dev.has("no-warmup") and ResourceLoader.exists(SET) \
+		and reached < (load(SET) as Resource).get_meta(&"items", []).size()
 
 
 ## Adds a warm-up under `parent` (a scene's root). `cover`: a black screen over the 3D (when no title art hides it).
@@ -54,6 +62,7 @@ var _cover_screen := false
 func _ready() -> void:
 	started_ms = Time.get_ticks_msec()
 	_items = (load(SET) as Resource).get_meta(&"items", [])
+	_at = reached
 	_quad = QuadMesh.new()
 	_quad.size = Vector2.ONE * SIZE
 	_multi_mesh = _quad
@@ -114,13 +123,14 @@ func _process(_delta: float) -> void:
 			done.emit()
 			queue_free()
 		return
-	var end := mini(_at + PER_FRAME, _items.size())
+	var end := mini(_at + (PER_FRAME if _cover_screen else PER_FRAME_TITLE), _items.size())
 	for i in range(_at, end):
 		var node := _make(_items[i], i - _at)
 		if node != null:
 			add_child(node)
 			_shown.append(node)
 	_at = end
+	reached = end
 
 
 ## Where the k-th quad of a batch sits: a grid filling the middle of the camera, in front of the lights.

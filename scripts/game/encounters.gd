@@ -94,6 +94,7 @@ func choose(angel: AngelDef) -> void:
 	_entry["cards"] = cards.map(func(c: BoonState.Card) -> String:
 		return String(c.psalm.id) if c.psalm != null else String(c.boon.id))
 	angels_now = []
+	game.choice_angel = angel
 	game.open_cards(cards)
 
 
@@ -101,6 +102,16 @@ func choose(angel: AngelDef) -> void:
 func cards_of(angel: AngelDef) -> Array[BoonState.Card]:
 	var room := game.rooms.room
 	var rng := Encounter.cards_dice(game.run_seed(), room.id if room else -1, room.depth if room else 0, angel.id)
+	var stage := game.rooms.stage
+	var cards := Encounter.cards(game.boons, angel, rng, 3, _chances, stage.elo_chance, stage.trade_chance)
+	game.fill_psalm(cards, _psalm, rng)
+	return cards
+
+
+## Discernimento I: the angel's cards drawn again (another dice of the same room, so a reroll is its own draw).
+func reroll_cards(angel: AngelDef) -> Array[BoonState.Card]:
+	var room := game.rooms.room
+	var rng := Encounter.cards_dice(game.run_seed(), (room.id if room else -1) + 7919, room.depth if room else 0, angel.id)
 	var stage := game.rooms.stage
 	var cards := Encounter.cards(game.boons, angel, rng, 3, _chances, stage.elo_chance, stage.trade_chance)
 	game.fill_psalm(cards, _psalm, rng)

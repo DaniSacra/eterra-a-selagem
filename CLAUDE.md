@@ -1031,7 +1031,8 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `ArenaHazard.state` = preparo, golpe e brasa de 0,4 s, `ArenaHazard.EMBER`; divisas da varredura por `ArenaHazard.chevron`
   só no preparo; um `apply`, nada quando em repouso) e os avisos do `Ground` ficam invisíveis (`add_hazard(..., drawn)`,
   nada desenhado duas vezes; continuam ferindo). Grade conferida contra o look (`RuneFloor.fits`, 10 x 8 de 3 m desde
-  (-15; -12)); em outro look o âmbar volta. `rooms[].hazard` no `RESULT`. Som: `rune_arm` ao armar e `rune_crack` no
+  (-15; -12)); em outro look o âmbar volta. `rooms[].hazard` no `RESULT`, com `patterns` (até 16
+  `[segundo da sala, padrão, ladrilhos acesos]`, `RuneFloor.patterns`, AT-RB2). Som: `rune_arm` ao armar e `rune_crack` no
   golpe, um por padrão (ver o som do combate).
 - **Laje Rachada (RP-06, H-2; RP-13; plano e medidas em `docs/design/rooms_progression.md`)**: segundo tipo de
   `HazardDef` (`kind` `GRID` as Runas, `PLATES` as lajes; campos `plates`, `rearm`, `from_progress`, e por laje
@@ -1185,6 +1186,9 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `rune_arm`, `niche_fire` = `bone`, `plant_fire` = `enemy_swing`. Desenho provisório: a moldura de laje ao longo da faixa
   (`GroundLook.plate_band`) e faísca; a mão do esqueleto e a planta são do environment-artist (SW-G7 3.5). Testes em
   `tests/test_niche_plant.gd`.
+- **AT-SA2, o 1º aviso na tela**: `tools/first_warning.gd -- --bot --autopick --nosave --seed=N [--cam=far]` joga a
+  primeira sala e imprime `FIRST_WARNING` com onde o contorno do primeiro aviso de inimigo cai na tela (0 a 1) no
+  quadro em que aparece; no Salão, inteiro em 8 de 8 sementes na Perto e na Longe (`rooms_progression.md`).
 - **Hipóteses de planta do atlas (AT-CA2, AT-SE2, AT-PB2, AT-FO2; `rooms_progression.md`)**: contador novo
   `rooms[].dodge_blocked_by` (esquiva cortada pela pedra ou pela borda, uma vez por esquiva: sinal `Player.dodge_blocked`,
   `Arena.blocker_at` dá `peça@x,z` da planta ou `edge`, `RoomTally.dodge_blocked`). Cripta A, Santuário B e Ponte B
@@ -2384,6 +2388,35 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   escolhe a Bênção. Para o `balance-designer` (`balance.md`). Loja de rota: o robô passa com 50 de ouro ou mais
   em 29% (sala 6), 62% (7) e 86% (8) das descidas, entra só com 100 (ou 50 ferido): 5 visitas em 72.
 
+## Rejogabilidade, Fatia 3 "o fim de jogo" (gameplay; spec `sistemas.md` 1.5, 1.7 e 3.6; nomes de trabalho; testes em `tests/test_fatia3.gd`)
+- **Ferramentas 2 e 3**: `Forge.TOOL_AWAKEN` na primeira fase 3 de Morvath alcançada (`Rooms.boss_phase`) e
+  `TOOL_INSCRIBE` na primeira Provação vencida (`Rooms._fight_won`), guardadas como a primeira (`Game.find_tool`).
+- **Despertar** (trilha `Forge.AWAKEN`, Esmeralda, um desperto por vez: `forge.awake`, `put_on`, `take_off(data,
+  Forge.AWAKEN)`, lista `forge.awakened`): Sede (0,5 de vida por abate, 2), Ímpeto (3 de Magia a mais por finalizador,
+  3), Eco Longo (o finalizador golpeia de novo 0,25 s depois com um terço, 4). Levado na descida pelo `ranks_for`;
+  `--awaken=id`. **Inscrever** (trilha `Forge.INSCRIBE`, 20 Prata, o id do posto é o do Encanto, guardado em
+  `forge.inscribed`, lido pelo `Enchants.learned`): os Encantos 4 a 6 (`EnchantDef.learned` falso; `INSCRIBED` no
+  `make_data.gd`): Corte Sísmico (o giro solta um pulso de 4,5 m de 25, `ground_pulse`, `Combat._ground_pulse`, tag
+  `pulse`), Onda Gêmea (o especial solta duas ondas de 15 em leque, `blow_wave_side` tira a do meio; nunca com a Onda
+  Carregada), Eco do Passo (o Corte Veloz ecoa a metade em 0,3 s; nunca com o Retorno do Corte). `--inscribed=a,b`.
+- **Discernimento** (`Discern`, `core/discern.gd`; `heroes.<id>.discern`, Memória 8 e 12, em ordem): I, uma vez por
+  descida a escolha de Bênçãos na tela é sorteada de novo (`Game.can_reroll`, `reroll_choice`, `rerolls_left`, sinal
+  `rerolled`; com anjo escolhido, as cartas da família dele por outro dado, `Encounters.reroll_cards`; nunca na porta de
+  Salmo nem na romã); II, o anjo das salas de Bênção uma camada mais adiante no mapa (`Rooms._preview_angels`, somado à
+  Obra da prévia). `--discern=N`. O botão na tela e a compra no Livro são do ui-ux-designer.
+- **Obras e troca no Vendedor** (`Vendor`, `core/vendor.gd`; `ObraDef` em `data/obras/`, parte `obras`): abertas com a
+  primeira encomenda entregue; Altar Restaurado (`altar_chance` 0,35, 40 Prata e 4 Memória), Fonte Viva
+  (`fountain_heal` 0,55, 30 e 3), Banca da Rota (`route_shop_items` 4, 50 Prata e 1 Esmeralda), números do `StageDef`
+  postos por cima no `Rooms.setup` (`Vendor.stage_for`); guardadas nas `oficios.recipes`; `--oficios=obra_x`. Troca com
+  perda (`OficiosDef.trades`: 10 Prata por 1 Memória, 2 Memória por 5 Prata, 40 Prata por 1 Esmeralda; `Vendor.trade`).
+  A folha do Vendedor é do ui-ux-designer.
+- **Esmeralda por recorde de Peso**: vitória acima do melhor Peso dá 1 por degrau de 5 cruzado
+  (`Juramentos.record_emeralds`, até 6), fonte `juramentos` do `MaterialPurse` (`RunAward.keep`).
+- **Aba Anjos** (`AngelCodex`, `core/angel_codex.gd`; seção `codex.angels`: `met`, `chosen`, `blessed`, guardada pelo
+  `RunAward.codex`; `entries`, `count`); a página é do ui-ux-designer (textos `codex_tab_angels`, `codex_angel_*`).
+- RJ-11 (a Memória como as Cinzas) já está coberta pela Fatia 1 (a Memória abre os Dons).
+- `RESULT`: `forge` com `awaken`, `discern`, `rerolls_used`; `materials.emerald.juramentos`; `tools` com as três.
+
 ## Ofícios, Roteiro A, "A Primeira Picareta" (gameplay; `docs/design/oficios/15_prototipo.md`, decisões Q-OF1 a Q-OF4 e Q-OF6 a; testes em `tests/test_oficios.gd` e `tests/test_oficios_game.gd`)
 - **OF-05**: porta de Prata só da profundidade 4 (`StageDef.silver_from_depth`) e de Memória só depois da camada do
   guardião (`memory_after_guardian`), filtradas no `RunMap._may` como a romã; dado em `_oficios_stage` do `make_data.gd`.
@@ -2438,6 +2471,37 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   um segundo anel violeta, tremor, `roar` e o clipe do rugido até `ENTER_TIME` 2,4 s, quando a luta começa como antes
   (momento e `cue` `risen`). Mesmo `RESULT` do `--start=boss --boons=25 --seed=5`. Falta a aprovação do
   combat-feel-director. Teste `tests/test_boss_entrance.gd`.
+
+## C20 técnico e DT-111 (gameplay)
+- **Pausa sozinha (GP P2-3)**: a janela perde o foco (`NOTIFICATION_APPLICATION_FOCUS_OUT` no `Game._notification`) ou
+  o controle em uso é desligado (`Input.joy_connection_changed`, só com `Controls.using_pad`): `Game.auto_pause` abre a
+  pausa, só em PLAY sem tela aberta e nunca para o robô, `--smoke`, `--shot`, `--frames` nem `--no-auto-pause`
+  (`AutoPause`, `core/auto_pause.gd`). No hub não (nada a perder). Teste `tests/test_auto_pause.gd`; o
+  `tools/title_flow_check.gd` já faz o fluxo só de controle.
+- **DT-111, passo da simulação**: o `Game._process` anda o mundo num passo só por quadro, com teto de 0,05 s
+  (`_timed_step(minf(world_dt, 0.05))`): abaixo de 20 qps o mundo corre em câmera lenta em vez de dar saltos (nada
+  atravessa parede, avisos não pulam quadros), e o relógio da partida segue o mundo. Não subdividido: a iGPU mais fraca
+  medida (Intel RaptorLake, Baixa a 1280 x 720) fica de 56 a 81 qps nas salas, e o pior caso de CPU é o
+  `--stress=300` (13 ms por passo no Windows), que a partida por salas nunca alcança (teto de 20 de pé). Subdividir
+  (dois passos de até 0,05 s) só se uma máquina alvo ficar abaixo de 20 qps na partida real; os engasgos de entrada de
+  sala caem na tela preta (`Rooms.holding`).
+
+## Rejogabilidade, Fatia 3, interface (ui-ux-designer; testes em `tests/test_fatia3_ui.gd`, capturas em `docs/gallery/fatia3_ui/`, `tools/fatia3_lab.gd`)
+- **Forja**: terceiro marcador "Despertar" (`ForgeScreen.Tab.ARTS`, `arts_open()`: aparece com qualquer ferramenta do
+  Forjador achada; ordem dos marcadores em `_tab_order`, LB e RB andam nela) com duas colunas, Despertar (Esmeralda) e
+  Inscrever (Prata), cada uma com o estado da ferramenta; a marca do preço é a do material do posto (`Mark.paid_in`,
+  `MaterialCount.set_id`). Despertar: forjado e dormindo diz "Despertar" (`put_on`, grátis), desperto "Adormecer"
+  (`take_off`); Inscrever: "Inscrever" e depois "Inscrito"; sem a ferramenta, o `forge_no_<ferramenta>`.
+- **Sortear de novo** na escolha de Bênçãos (Discernimento I): com `Game.can_reroll()` a `BoonChoice` põe
+  "Sortear de novo (N)" na `ActionBar` (`reroll_item`, `reroll()` chama `Game.reroll_choice`); ação de menu
+  `menu_reroll` em `Controls.MENU_KEYS` (Y no controle, R no teclado, só nos menus).
+- **Discernimento** no capítulo Ofícios do Livro: um botão por grau (`HeroScreen.discern_buttons`), dois apertos como
+  abrir um Dom ("Confirmar: N de Memória"), `Discern.buy` e grava; o II diz que pede o I.
+- **Banca do Vendedor** (`VendorScreen`, `scripts/ui/vendor_screen.gd`): aberta pelo Vendedor depois da encomenda
+  entregue (`Hub._use_vendor`); à esquerda as Obras (custo com marcas, o que falta em rubrica, Erguer, "Erguida"), à
+  direita as trocas (Dá, seta, Recebe, Trocar) e o Saldo; sinais `built`, `traded`.
+- **Compêndio**: aba Anjos (`CodexScreen.Tab.ANGELS`, nona, antes de Golpes; `AngelCodex`): selo aceso, nome na cor
+  do anjo, frase e vezes encontrado, escolhido e Bênçãos levadas; nunca encontrado, selo apagado e "???".
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
@@ -2643,7 +2707,14 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   oferendas, Runas caixas baixas e tigelas, Provação e Altar cerâmica), conferidos em `test_arenas.gd`
   (`test_breakables_stand_where_they_may`: 4 a 10 em 2 a 4 grupos de 2 a 5, cada grupo encostado, 1,5 m ou mais de
   porta, marca da porta, entrada, recompensa, nascimento, ponto de uso, guardião e toda laje ou faixa de perigo, também do
-  `also`). Nenhum no hub. Regras puras em `Breakables` (`core/breakables.gd`): material por forma (`Stuff` CERAMIC, WATER, WOOD,
+  `also`). Regras de cada sala (Atlas, coluna 3) em `tests/test_breakable_rules.gd`: nunca no tabuleiro das Fendas
+  (`RiftLook.BRIDGES`) nem da Ponte (os tabuleiros do `BridgeLook`, 2,5 m ou mais da linha das pontes, no patamar da B só
+  na borda), vasos de água do Jardim B a até 2 m da borda oeste úmida, nas Runas nunca tocando ladrilho que arma
+  (`ArenaHazard.live`; só cabem no chão quieto da entrada, `RUNES_ENTRY`) e na B a 3 m da pedra quieta, no Santuário 4 m
+  ou mais da linha entre o `boss_spawn` e a entrada e só na periferia, na loja 3 m ou mais de todo relicário com 1 a 5
+  itens. **Câmara do Selo (AT-CS3)**: 8 de cerâmica no patamar da escada sul e na borda noroeste e nordeste, de 11 a
+  12 m do selo, longe da câmera e além do anel do ritual; o `test_boss_exits` refeito com elas inteiras (como pedra
+  sólida, mais duro que o jogo) e quebradas, e na câmara de verdade elas não param nada. Nenhum no hub. Regras puras em `Breakables` (`core/breakables.gd`): material por forma (`Stuff` CERAMIC, WATER, WOOD,
   BRANCH), um golpe e o caixote dois (o 1º racha), quebra uma vez só, por golpe do herói (`swing`, pelo `Combat.reached`,
   que só sai do golpe que saiu: golpe cortado pela esquiva não quebra), pela onda dele (`circle`, tiros não hostis), por
   golpe de inimigo e perigo de sala quando o aviso aterrissa (`reached_by`, pelo sinal novo `Ground.zone_landed`), nunca
@@ -2892,6 +2963,31 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   `RuneFloor` chama `set_charge` e `set_state` na peça `hazard_piece(Ground.CRYSTAL_SOURCE, i)` e `UrnFloor` `set_state` e
   `set_oil` na `hazard_piece(Ground.URN_SOURCE, i)` quando a sala as tiver registrado (hoje o `ArenaRoom._hazard_pieces`
   registra só lajes e corrente: raiz, planta e nicho entram pelo `plate_source` no índice da faixa, depois das lajes).
+- **Resto das peças (2026-11-21; `docs/gallery/sw_g7/`)**: `HazardPiece.root`, `crystal`, `urn`, `drop`, `breath`, `plant`,
+  `niche`, registradas pelo `ArenaRoom._hazard_pieces`: raiz, planta e nicho pelo `plate_source` no índice da faixa
+  (`plates.size() + i`), cristal por `Ground.CRYSTAL_SOURCE` (encostado na face da parede, a base para o chão), urna por
+  `Ground.URN_SOURCE` (com o canal do óleo), fôlego pelo `breath` (folhas de bruma cinza-índigo, `hazard_haze.gdshader`);
+  pedras da abóbada por `look.drop_piece(ponto, lado, preparo, semente)` (entulho enquanto `spent`). Extras:
+  `set_charge(n, cheio)` no cristal, `set_oil(alcance, carbonizado)` na urna. A planta fica fora do chão andável, atrás
+  do começo da faixa (`PLANT_FOOT` 0,75; só a laje e o chicote no chão). Santuário B: borda limpa (`lip_wall`) nos trechos
+  do buraco a menos de `PLATE_EDGE_GAP` 0,6 m das lajes que desmoronam e quatro manchas pálidas nas bocas do buraco
+  (`SanctuaryLook._mouths`, AT-SE1/SE2, só no estilizado).
+
+## Quebráveis, peças (AT-Q2; `docs/art/at_q0_breakables.md`, prancha em `docs/gallery/at_q2/`)
+- `BreakableKit` (`scripts/game/breakable_kit.gd`, estático): `build(peça, cor, sala)` monta as nove formas (vaso, urna,
+  oferenda, vaso de água com faixa molhada, caixote de tábuas com pregos, tábuas, banco, galhos, muda) com sombra de
+  contato (`soft_shadow.gdshader`), `crack(peça)` inclina e racha a tábua da frente do caixote, `shatter(pai, peça, cor,
+  rumo)` solta cacos que pulam, deitam 4 s e afundam (a muda solta as folhas, o vaso de água deixa a mancha que seca,
+  `water_stain.gdshader`). O `BreakFloor` só chama essas três; regras e colisão iguais. Prancha: `tools/break_lab.gd`.
+
+## HV-C, pintura do Santuário da Vigília (`docs/art/hv_santuario_vigilia_art.md`; capturas em `docs/gallery/hub/hv_c/`)
+- No `HubLook`: toldo do Vendedor em duas águas, a de trás mais longa (`AWNING_RIDGE`), listras terra e vinho apagado
+  (`AWNING_STRIPE`); Pátio do Retorno com anel de lajes gastas em volta do selo, falhas escuras no leão
+  (`SEAL_PAVING`, `SEAL_FAULTS`), caminho de lajes até o medalhão, braseiros menores (`RETURN_FIRE` 0,65) e um lampião
+  âmbar baixo sem sombra na mureta leste da escada (`RETURN_LAMP`); placas baixas dos Dons em volta do estrado da Árvore,
+  apagadas (`_gift_plaques`, `PLAQUE_*`, para o HV-E acender); Alquimista com estante e frascos, bancada com pano,
+  pilão e balança de ferro, telheiro de tábuas sobre dois postes (sempre acima de 2,6 m sobre o chão, `ALCH_ROOF`),
+  ervas penduradas e um lampião âmbar baixo sem sombra (`ALCH_LAMP`). Colisão e `HubPlan` iguais.
 
 ## Ciclo visual 2026-11-20, cenário (ENV-HB1 a HB3 no Salão, BH-07 no hub; só no estilizado; `docs/design/ciclo_visual_2026-11-20.md` itens 1 e 2, metas em `docs/art/benchmark_hades2_style.md` 4.1; capturas `docs/gallery/ciclo_visual_1120/env_*`)
 - **Salão, ENV-HB1 (petróleo)**: pedra, chão e sombra do `CatacombHall.STYLE` num azul-petróleo (`STY_STONE`,
@@ -3223,3 +3319,25 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   0,455; a 720 lia como rede branca). Capturas das quatro famílias e do Cavaleiro se erguendo na sala em `docs/gallery/ap2/`.
 - **ART-05.5** (entrada de Morvath mais lida) depende do tempo da entrada no `boss.gd`: fica para o gameplay-engineer e
   o combat-feel-director. `chain_weight` do `EdgeKit` já refeito (2026-11-20), espera a nova revisão do art-director.
+
+## Aquecimento dos shaders (P1-1 do QA A8, DT-RS3; technical-artist, 2026-11-21; teste em `tests/test_warmup.gd`)
+- `Warmup` (`scripts/render/warmup.gd`): no começo desenha 1 quadro de cada material do conjunto
+  `assets/warmup/warmup_set.res` (135 itens: todo `.gdshader` de `assets/shaders`, os materiais montados em código e as
+  variantes do `StandardMaterial3D` que as partidas usam), cada um num quadrado pequeno diante da própria câmera, com sol,
+  lâmpada e foco que fazem sombra e um ambiente como o da partida (glow, névoa, SSAO/SSR pela qualidade), MultiMesh para
+  os da multidão, `CanvasLayer` para os de tela, `FogVolume`, `Label3D` e `Sprite3D` pelas flags. Posto pelo `boot.gd`:
+  atrás da arte do título, 3 por quadro (`PER_FRAME_TITLE`, o título segue respondendo); quando a linha de comando pula o
+  título (`--bot`, `--start`...), sob uma tela preta, 40 por quadro, e a partida espera (`await warm.done`). `Warmup.reached`
+  guarda até onde foi: um `Warmup.start(self, true)` depois (no `Game`, nos quadros pretos) faz só o que faltou; `null`
+  quando não há nada (sem tela, `--no-warmup`, tudo feito). Depois de um shader ou look novo: `tools/make_warmup.sh` (cerca
+  de 10 min; joga título, hub, todas as arenas e variantes, eventos, fases de Morvath, elites, famílias, ultimates e
+  Salmos nos dois looks e nos dois renderizadores, sem tela, e guarda uma cópia leve de cada material novo,
+  `tools/make_warmup.gd`); o teste falha se um `.gdshader` não está no conjunto.
+- Medido na iGPU (1280 x 720 Baixa, Vulkan, robô, semente 5, `tools/frame_spikes.gd`, 420 s): cache vazio, o aquecimento
+  leva 33,8 s no editor (no exe 133 s: o exe não traz os shaders do motor já compilados) e depois nenhum quadro de jogo
+  acima de 50 ms nas salas além de 4 (132, 106, 56 e 55 ms; antes 0,5 a 3,3 s nos primeiros golpes); com o cache quente o
+  aquecimento leva 1,9 a 2,0 s e só a Câmara tem um quadro de 117 ms. Fica o 1º quadro de cada sala, já na tela preta do
+  `Rooms` (montagem da sala): frio 0,28 a 1,4 s, quente 0,16 a 0,77 s (Salão na 1ª entrada 2,6 s, com a carga da cena).
+- Shader Baker ligado nos presets Windows e Linux (`shader_baker/enabled`): só assa quando a exportação roda com tela e
+  Vulkan (`xvfb-run ~/tools/godot/godot --path . --rendering-driver vulkan --export-release ...`, sem `--headless`); com
+  `--headless` ele é pulado em silêncio. Assado, o exe do Windows fica com 206,8 MB (+9,6).

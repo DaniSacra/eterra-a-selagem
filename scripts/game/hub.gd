@@ -271,6 +271,13 @@ func _use_vendor() -> void:
 		host.open(HubPanel.new(), [T.t("hub_vendor"), T.t(&"hub_vendor_soon"), [[&"back", T.t(&"back")]],
 			SealedMark.new().setup(MARK), T.t(&"hub_soon")])
 		return
+	if state == Oficios.Order.DONE:
+		# Fatia 3: the order delivered opens the stall (ui-ux-designer, VendorScreen: the Obras and the trades)
+		var v := VendorScreen.new()
+		if host.open(v, [Save.data]):
+			v.built.connect(func(_id: StringName) -> void: labels_changed())
+			v.traded.connect(func(_i: int) -> void: labels_changed())
+		return
 	# the order's sheet (ui-ux-designer, OficioSheets: what it asks for with marks and numbers, Entregar only when all
 	# is there), the same leaf once delivered
 	var p := HubPanel.new()

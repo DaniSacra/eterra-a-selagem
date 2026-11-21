@@ -26,7 +26,7 @@ const IDS: Array[StringName] = [SILVER, MEMORY, EMERALD]
 const CAP := {SILVER: 999, MEMORY: 999, EMERALD: 99}
 ## Where a descent's materials come from, per material (the RESULT lists each with 0 when none came from it).
 const SOURCES := {SILVER: [&"elite", &"door", &"guardian", &"boss"], MEMORY: [&"door", &"guardian", &"trial", &"boss"],
-	EMERALD: [&"boss"]}
+	EMERALD: [&"boss", &"juramentos"]}
 ## The text keys of each material's name (long and short).
 const NAME_KEY := {SILVER: &"material_silver", MEMORY: &"material_memory", EMERALD: &"material_emerald"}
 const SHORT_KEY := {SILVER: &"material_silver_short", MEMORY: &"material_memory_short", EMERALD: &"material_emerald_short"}

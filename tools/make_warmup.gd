@@ -152,7 +152,32 @@ func _add_node(kind: String, n: GeometryInstance3D) -> void:
 	_items.append([kind, key, holder])
 
 
+## Every shader file the runs did not show (a reward's light, the dodge's ghosts, a trial's veins...): a material with
+## the file and its defaults compiles the same shader.
+func _every_file() -> void:
+	for f in DirAccess.get_files_at("res://assets/shaders"):
+		if not f.ends_with(".gdshader"):
+			continue
+		var path := "res://assets/shaders/" + f
+		var sh := load(path) as Shader
+		var kind := ""
+		match sh.get_mode():
+			Shader.MODE_SPATIAL:
+				kind = "mesh"
+			Shader.MODE_CANVAS_ITEM:
+				kind = "canvas"
+			Shader.MODE_FOG:
+				kind = "fog"
+		if kind == "" or _keys.has(kind + ":S:" + path) or (kind == "mesh" and _keys.has("multi:S:" + path)):
+			continue
+		var m := ShaderMaterial.new()
+		m.shader = sh
+		_keys[kind + ":S:" + path] = true
+		_items.append([kind, kind + ":S:" + path, m])
+
+
 func _save() -> void:
+	_every_file()
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT.get_base_dir()))
 	var set := Resource.new()
 	set.set_meta(&"items", _items)

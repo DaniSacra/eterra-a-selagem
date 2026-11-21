@@ -222,9 +222,9 @@ func _codex(t: CodexScreen.Tab) -> CodexScreen:
 	return c
 
 
-func test_codex_has_eight_tabs() -> void:
+func test_codex_has_nine_tabs() -> void:
 	var c := _codex(CodexScreen.Tab.PSALMS)
-	assert_eq(c.tabs.size(), 8)
+	assert_eq(c.tabs.size(), 9, "Fatia 3: Anjos")
 	for t: int in CodexScreen.Tab.values():
 		assert_eq(c.tabs[t].text, T.t(CodexScreen.TAB_KEY[t]))
 

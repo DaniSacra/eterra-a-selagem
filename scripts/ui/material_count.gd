@@ -45,6 +45,18 @@ func set_amount(n: int) -> void:
 	number.text = digits if not _named else "%s %s" % [digits, short_of(id)]
 
 
+## Another material in the same place (the Forja's cost: Prata for the Temperar, Esmeralda for the Despertar).
+func set_id(p_id: StringName) -> void:
+	if p_id == id:
+		return
+	id = p_id
+	name = String(p_id)
+	mark.kind = DoorGlyph.of_material(p_id)
+	mark.queue_redraw()
+	tooltip_text = name_of(p_id)
+	set_amount(amount)
+
+
 func set_color(c: Color) -> void:
 	number.add_theme_color_override(&"font_color", c)
 

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ObraDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/obra_def.gd" id="1_trgqa"]
+
+[resource]
+script = ExtResource("1_trgqa")
+id = &"obra_altar"
+name_key = &"obra_altar"
+desc_key = &"obra_altar_desc"
+cost = {
+&"memory": 4,
+&"silver": 40
+}
+stage = {
+"altar_chance": 0.35
+}

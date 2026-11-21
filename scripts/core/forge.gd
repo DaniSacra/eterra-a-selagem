@@ -20,6 +20,9 @@ extends RefCounted
 ##     OWNED once bought (state OWNED; then forge.is_on(data, r) says whether it is the one on its action).
 ##   forge.buy(data, id) spends and, when its action has none on, puts it on; forge.put_on(data, id) changes the one on
 ##     an action (free, only one bought); forge.take_off(data, slot). forge.ranks_for(data) is what a descent carries.
+##   Fatia 3: forge.track(Forge.AWAKEN) (Despertar, Esmeralda, one awake: forge.awake(data), put_on, take_off(data,
+##     Forge.AWAKEN)) and forge.track(Forge.INSCRIBE) (an Encanto learned: the rank's id is the Encanto's, kept in
+##     forge.inscribed); problem() NO_TOOL until Forge.TOOL_AWAKEN / TOOL_INSCRIBE were found.
 ##   Tools (achados): Forge.has_tool(data, id), Forge.TOOLS (ids in the order they are found), text keys tool_<id>.
 
 enum State { OWNED, NEXT, LOCKED }
@@ -31,7 +34,17 @@ const REFINE := &"refine"
 ## The Forjador's lost tools (Q-RJ9 a: found at a first time): the first, at the first guardian won, opens the Refinar
 ## (Fatia 2); the others (the first phase 3 of Morvath, the first Provação won) open Despertar and Inscrever (Fatia 3).
 const TOOL_REFINE := &"tool_refine"
-const TOOLS: Array[StringName] = [TOOL_REFINE]
+## Fatia 3 (sistemas.md 1.5): Despertar, one new property of the blade at a time, bought with Esmeralda and opened by
+## the second tool (the first phase 3 of Morvath reached); Inscrever, an Encanto learned (it may come in the descents
+## from then on, Enchants.learned), 20 Prata each, opened by the third (the first Provação won). Working names.
+const AWAKEN := &"awaken"
+const INSCRIBE := &"inscribe"
+const TOOL_AWAKEN := &"tool_awaken"
+const TOOL_INSCRIBE := &"tool_inscribe"
+const TOOLS: Array[StringName] = [TOOL_REFINE, TOOL_AWAKEN, TOOL_INSCRIBE]
+## The tracks of choices (bought one by one, each kept in its list of the forge block), and the list of each.
+const CHOICE_TRACKS: Array[StringName] = [REFINE, AWAKEN, INSCRIBE]
+const LIST_KEY := {&"refine": "refined", &"awaken": "awakened", &"inscribe": "inscribed"}
 
 var catalog: Array[ForgeRank] = []
 
@@ -78,8 +91,8 @@ static func block(data: Dictionary, hero_id := SaveData.FIRST_HERO) -> Dictionar
 
 ## The highest rank of a track the save holds (0: none). (The refine track holds choices: its rank is the count bought.)
 static func rank_of(data: Dictionary, name: StringName, hero_id := SaveData.FIRST_HERO) -> int:
-	if name == REFINE:
-		return (block(data, hero_id).get("refined", []) as Array).size()
+	if CHOICE_TRACKS.has(name):
+		return (block(data, hero_id).get(LIST_KEY[name], []) as Array).size()
 	return int(block(data, hero_id).get(String(name), 0))
 
 
@@ -113,7 +126,7 @@ func up_to(n: int) -> Array[ForgeRank]:
 func owned(data: Dictionary, hero_id := SaveData.FIRST_HERO) -> Array[ForgeRank]:
 	var out: Array[ForgeRank] = []
 	out.assign(catalog.filter(func(r: ForgeRank) -> bool:
-		return _bought(data, r, hero_id) if r.track == REFINE else r.rank <= rank_of(data, r.track, hero_id)))
+		return _bought(data, r, hero_id) if CHOICE_TRACKS.has(r.track) else r.rank <= rank_of(data, r.track, hero_id)))
 	return out
 
 
@@ -134,29 +147,48 @@ func refine_slots() -> Array[StringName]:
 
 
 func _bought(data: Dictionary, r: ForgeRank, hero_id := SaveData.FIRST_HERO) -> bool:
-	return (block(data, hero_id).get("refined", []) as Array).has(String(r.id))
+	return CHOICE_TRACKS.has(r.track) and (block(data, hero_id).get(LIST_KEY[r.track], []) as Array).has(String(r.id))
 
 
-## True when this Refinar is the one on its action.
+## True when this Refinar is the one on its action (a Despertar: the one awake; an inscribed Encanto: always).
 func is_on(data: Dictionary, r: ForgeRank, hero_id := SaveData.FIRST_HERO) -> bool:
-	return r != null and String((block(data, hero_id).get("refine", {}) as Dictionary).get(String(r.slot), "")) == String(r.id)
+	if r == null:
+		return false
+	if r.track == AWAKEN:
+		return String(block(data, hero_id).get("awaken", "")) == String(r.id)
+	if r.track == INSCRIBE:
+		return _bought(data, r, hero_id)
+	return String((block(data, hero_id).get("refine", {}) as Dictionary).get(String(r.slot), "")) == String(r.id)
 
 
-## Puts a Refinar bought on its action (free; the one there before comes off). False when not bought.
+## The Despertar awake (null: none).
+func awake(data: Dictionary, hero_id := SaveData.FIRST_HERO) -> ForgeRank:
+	var id := String(block(data, hero_id).get("awaken", ""))
+	return find(StringName(id)) if id != "" else null
+
+
+## Puts a Refinar bought on its action, or a Despertar bought awake (free; the one there before comes off). False when
+## not bought.
 func put_on(data: Dictionary, id: StringName, hero_id := SaveData.FIRST_HERO) -> bool:
 	var r := find(id)
-	if r == null or r.track != REFINE or not _bought(data, r, hero_id):
+	if r == null or (r.track != REFINE and r.track != AWAKEN) or not _bought(data, r, hero_id):
 		return false
 	var b := block(data, hero_id)
+	if r.track == AWAKEN:
+		b["awaken"] = String(r.id)
+		return true
 	if not b.get("refine") is Dictionary:
 		b["refine"] = {}
 	(b.refine as Dictionary)[String(r.slot)] = String(r.id)
 	return true
 
 
-## Takes the Refinar off an action.
+## Takes the Refinar off an action (Forge.AWAKEN: puts the Despertar to sleep).
 func take_off(data: Dictionary, slot: StringName, hero_id := SaveData.FIRST_HERO) -> void:
 	var b := block(data, hero_id)
+	if slot == AWAKEN:
+		b["awaken"] = ""
+		return
 	if b.get("refine") is Dictionary:
 		(b.refine as Dictionary).erase(String(slot))
 
@@ -170,15 +202,18 @@ func refines_on(data: Dictionary, hero_id := SaveData.FIRST_HERO) -> Array[Forge
 	return out
 
 
-## What a descent carries: the Temperar up to the one bought and the Refinar on.
+## What a descent carries: the Temperar up to the one bought, the Refinar on and the Despertar awake.
 func ranks_for(data: Dictionary, hero_id := SaveData.FIRST_HERO) -> Array[ForgeRank]:
 	var out := up_to(temper(data, hero_id))
 	out.append_array(refines_on(data, hero_id))
+	var a := awake(data, hero_id)
+	if a != null:
+		out.append(a)
 	return out
 
 
 func state(data: Dictionary, r: ForgeRank, hero_id := SaveData.FIRST_HERO) -> State:
-	if r.track == REFINE:
+	if CHOICE_TRACKS.has(r.track):
 		return State.OWNED if _bought(data, r, hero_id) else State.NEXT if has_tool(data, r.tool, hero_id) else State.LOCKED
 	var have := rank_of(data, r.track, hero_id)
 	if r.rank <= have:
@@ -189,7 +224,7 @@ func state(data: Dictionary, r: ForgeRank, hero_id := SaveData.FIRST_HERO) -> St
 func problem(data: Dictionary, r: ForgeRank, hero_id := SaveData.FIRST_HERO) -> Problem:
 	if r == null:
 		return Problem.UNKNOWN
-	if r.track == REFINE:
+	if CHOICE_TRACKS.has(r.track):
 		if _bought(data, r, hero_id):
 			return Problem.OWNED
 		if r.tool != &"" and not has_tool(data, r.tool, hero_id):
@@ -209,11 +244,14 @@ func buy(data: Dictionary, id: StringName, hero_id := SaveData.FIRST_HERO) -> bo
 	if problem(data, r, hero_id) != Problem.OK or not MaterialPurse.spend(data, r.material, r.cost):
 		return false
 	var b := block(data, hero_id)
-	if r.track == REFINE:
-		if not b.get("refined") is Array:
-			b["refined"] = []
-		(b.refined as Array).append(String(r.id))
-		if not b.get("refine") is Dictionary or not (b.refine as Dictionary).has(String(r.slot)):
+	if CHOICE_TRACKS.has(r.track):
+		var key: String = LIST_KEY[r.track]
+		if not b.get(key) is Array:
+			b[key] = []
+		(b[key] as Array).append(String(r.id))
+		if r.track == REFINE and (not b.get("refine") is Dictionary or not (b.refine as Dictionary).has(String(r.slot))):
+			put_on(data, r.id, hero_id)
+		elif r.track == AWAKEN and String(b.get("awaken", "")) == "":
 			put_on(data, r.id, hero_id)
 		return true
 	b[String(r.track)] = r.rank

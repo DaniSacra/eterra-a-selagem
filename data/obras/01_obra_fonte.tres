@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ObraDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/obra_def.gd" id="1_x1frr"]
+
+[resource]
+script = ExtResource("1_x1frr")
+id = &"obra_fonte"
+name_key = &"obra_fonte"
+desc_key = &"obra_fonte_desc"
+cost = {
+&"memory": 3,
+&"silver": 30
+}
+stage = {
+"fountain_heal": 0.55
+}

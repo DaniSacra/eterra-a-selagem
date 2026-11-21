@@ -53,7 +53,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -2247,10 +2247,10 @@ func _enchants() -> void:
 	_enchant(2, &"retorno_do_corte", S.DASH, [_fixed(&"return_time", 1.0, [], &"dash"), _fixed(&"return_reach", 0.3, [], &"dash")] as Array[BoonMod],
 		[&"passo_encadeado", &"fio_do_passo"] as Array[StringName])
 	# Fatia 3 (RJ-8; auditoria.md 3.1, working names), learned at the Forja (Inscrever): Corte Sísmico, the spin
-	# strikes the floor: a pulse of 3 m for 25 round him; Onda Gêmea, the special throws two smaller waves in a fan,
+	# strikes the floor: a pulse of 4.5 m for 25 round him (past the spin's 3 m); Onda Gêmea, the special throws two smaller waves in a fan,
 	# 15 each, 9 m (never with the Onda Carregada); Eco do Passo, the Corte Veloz strikes again 0.3 s later for half
 	# (never with the Retorno do Corte, the same dash)
-	_enchant(3, &"corte_sismico", S.ATTACK, [_fixed(&"ground_pulse", 25.0, [], &"spin"), _fixed(&"ground_pulse_m", 3.0, [], &"spin")] as Array[BoonMod])
+	_enchant(3, &"corte_sismico", S.ATTACK, [_fixed(&"ground_pulse", 25.0, [], &"spin"), _fixed(&"ground_pulse_m", 4.5, [], &"spin")] as Array[BoonMod])
 	var twin := _wave(&"heavy", 15.0, 9.0, 2.4)
 	twin.append(_fixed(&"blow_wave_fan", 2, [], &"heavy"))
 	twin.append(_fixed(&"blow_wave_side", 1, [], &"heavy"))

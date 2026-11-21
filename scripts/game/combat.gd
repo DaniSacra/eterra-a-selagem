@@ -186,6 +186,19 @@ func _step_echoes(dt: float) -> void:
 		i -= 1
 
 
+## Corte Sísmico (Fatia 3, Encanto): the blow strikes the floor, a pulse of `radius` round where it was for `damage`
+## to everyone in it (tag pulse: no blow of the combo, nothing echoes it), drawn as a ring on the floor.
+const PULSE_TAG := &"pulse"
+func _ground_pulse(origin: Vector2, damage: float, radius: float, color: Color) -> void:
+	var tags: Array[StringName] = [PULSE_TAG]
+	var near: Array[Enemy] = []
+	horde.in_circle(origin, radius, near)
+	fx.ring(origin, radius, color, 0.3, 0.1, true)
+	fx.shake(1.5)
+	for e: Enemy in near:
+		hit_enemy(e, damage, tags, (e.pos - origin).normalized(), 1.0, false)
+
+
 func _echo(node: ComboNode, origin: Vector2, dir: Vector2, share: float) -> void:
 	var tags: Array[StringName] = [ECHO_TAG]
 	for t in node.tags:
@@ -303,6 +316,9 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			fx.hero_burst(&"light", Vector3(origin.x, 0.4, origin.y))
 	if gifts:
 		_gift_wave(node, origin, dir, color)
+	var pulse := boons.stat(&"ground_pulse", tags)
+	if pulse > 0.0:
+		_ground_pulse(origin, pulse, boons.stat(&"ground_pulse_m", tags), color)
 	var window := boons.stat(&"return_time", tags)
 	if window > 0.0:
 		_return_t = window
@@ -347,7 +363,9 @@ func _gift_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color) ->
 	var width := float(w.width) * size
 	var look := Projectiles.Kind.SPARK if width <= Projectiles.WAVE_SPAN + 0.01 else Projectiles.Kind.WAVE
 	# Lâmina Tríplice (Fatia 2): blow_wave_fan more of them in a fan (the Pastor's spread)
-	var ways: Array[Vector2] = [dir]
+	var ways: Array[Vector2] = []
+	if boons.stat(&"blow_wave_side", tags) <= 0.0:
+		ways.append(dir)  # (Onda Gêmea: only the two at the sides, the special's own wave goes straight)
 	ways.append_array(Psalms.fan(dir, int(boons.stat(&"blow_wave_fan", tags)), WAVE_FAN))
 	for way in ways:
 		var shot := projectiles.fire_wave(look, origin + way * 0.8, way, float(w.damage), float(w.reach) * size, width, color, tags)

@@ -18,6 +18,9 @@ extends Control
 ## of the above) and Oficina: the left page the Picareta drawn as it stands (lost, its head found, restored), the
 ## right page the tools' index (the Picareta) and the same heads, Restaurar spending its Prata (Oficios.restore) and
 ## saying so (restored). LB and RB turn the bookmarks.
+## Fatia 3 (sistemas.md 1.5): once the Forjador's first tool was found, a third bookmark, Despertar: the Despertar's
+## choices (Esmeralda, one awake at a time: Despertar puts it on, free, Adormecer takes it off) and the Inscrever's
+## (an Encanto learned for the descents, Prata), each closed until its tool (Forge.TOOL_AWAKEN, TOOL_INSCRIBE).
 ##   host.open(ForgeScreen.new(), [Save.data])          # forged(rank) after each purchase and each change
 ##   host.open(ForgeScreen.new(), [Save.data, ForgeScreen.Tab.WORKSHOP])
 
@@ -26,7 +29,7 @@ signal forged(rank: StringName)
 ## The Picareta restored at the Oficina.
 signal restored
 
-enum Tab { EMETH, WORKSHOP }
+enum Tab { EMETH, WORKSHOP, ARTS }
 
 const SPINE := 0.46
 const OUTER := Vector2(22, 10)
@@ -45,6 +48,8 @@ const DEAL_SIZE := 22
 ## The bookmarks' width and the Picareta's drawing on the Oficina's left page.
 const TAB_WIDTH := 170.0
 const PICK := 220.0
+const TAB_KEY: Array[StringName] = [&"forge_tab_emeth", &"forge_tab_workshop", &"forge_tab_arts"]
+const TAB_NAME: Array[String] = ["emeth", "workshop", "arts"]
 
 var forge: Forge
 ## Every entry's rank, as entries: the Temperar first (rank order), then the Refinar's (attack, then special).
@@ -82,11 +87,16 @@ var _emeth_index: Control
 var _work_index: Control
 var _pick_now: Label
 var _head_line: Label
+var _arts_index: Control
+## The bookmarks in the order they stand (a Tab each; tabs[i] is _tab_order[i]).
+var _tab_order: Array[Tab] = []
 
 
 ## An entry's mark, by its state.
 class Mark extends Control:
 	enum Look { BUY, OWNED, ON, LOCKED }
+	## The material its price is in (the ingot of Prata, the Esmeralda's stone).
+	var paid_in := MaterialPurse.SILVER
 	var look := Look.BUY:
 		set(v):
 			look = v
@@ -98,7 +108,7 @@ class Mark extends Control:
 		var d := PackedVector2Array([c + Vector2(0, -r), c + Vector2(r, 0), c + Vector2(0, r), c + Vector2(-r, 0)])
 		match look:
 			Look.BUY:
-				DoorGlyph.material(self, DoorGlyph.Kind.SILVER, c, size.y)
+				DoorGlyph.material(self, DoorGlyph.of_material(paid_in), c, size.y)
 			Look.OWNED:
 				draw_colored_polygon(d, Color(Book.INK, 0.12))
 				d.append(d[0])
@@ -136,7 +146,12 @@ func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override(&"separation", 0)
 	frame.add_child(col)
+	_tab_order = [Tab.EMETH]
+	if arts_open():
+		_tab_order.append(Tab.ARTS)
 	if workshop_open():
+		_tab_order.append(Tab.WORKSHOP)
+	if _tab_order.size() > 1:
 		# the bookmarks out of the top of the cover, as the Livro's chapters (Book.mark)
 		var marks := HBoxContainer.new()
 		marks.name = "tabs"
@@ -144,9 +159,9 @@ func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 		marks.add_theme_constant_override(&"separation", 6)
 		marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
 		col.add_child(marks)
-		for t: int in Tab.values():
-			var b := Book.mark(T.t(&"forge_tab_emeth" if t == Tab.EMETH else &"forge_tab_workshop"), TAB_WIDTH)
-			b.name = "tab_emeth" if t == Tab.EMETH else "tab_workshop"
+		for t: Tab in _tab_order:
+			var b := Book.mark(T.t(TAB_KEY[t]), TAB_WIDTH)
+			b.name = "tab_" + TAB_NAME[t]
 			b.pressed.connect(_show_tab.bind(t, true))
 			tabs.append(b)
 			marks.add_child(b)
@@ -164,7 +179,7 @@ func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 		keys.push_front(ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true))
 	ActionBar.attach(self, keys)
 	emeth.show_rank(Forge.temper(_data))
-	_show_tab(start if workshop_open() else Tab.EMETH, false)
+	_show_tab(start if _tab_order.has(start) else Tab.EMETH, false)
 	_first_focus().grab_focus.call_deferred()
 
 
@@ -173,14 +188,22 @@ func workshop_open() -> bool:
 	return Oficios.noted(_data) or Oficios.has_tool(_data, _oficios)
 
 
+## Whether the Despertar's bookmark shows: the Forjador's first tool was found (the next ones then say what they ask).
+func arts_open() -> bool:
+	return Forge.has_tool(_data, Forge.TOOL_REFINE) or Forge.has_tool(_data, Forge.TOOL_AWAKEN) \
+		or Forge.has_tool(_data, Forge.TOOL_INSCRIBE)
+
+
 ## Shows a bookmark's pages; by_hand moves the focus to its first entry.
 func _show_tab(t: Tab, by_hand: bool = false) -> void:
 	tab = t
 	for i in tabs.size():
-		Book.mark_open(tabs[i], i == t)
+		Book.mark_open(tabs[i], _tab_order[i] == t)
 	var work := t == Tab.WORKSHOP
 	_emeth_left.visible = not work
-	_emeth_index.visible = not work
+	_emeth_index.visible = t == Tab.EMETH
+	if _arts_index != null:
+		_arts_index.visible = t == Tab.ARTS
 	if _work_left != null:
 		_work_left.visible = work
 		_work_index.visible = work
@@ -188,8 +211,9 @@ func _show_tab(t: Tab, by_hand: bool = false) -> void:
 		_show_pick()
 		buy_button.focus_neighbor_left = buy_button.get_path_to(pick_entry)
 	else:
-		_show(_first())
-		buy_button.focus_neighbor_left = buy_button.get_path_to(entries[0] if not entries.is_empty() else buy_button)
+		var first := _first_of(t)
+		_show(first)
+		buy_button.focus_neighbor_left = buy_button.get_path_to(_entry_of(first) if first != null else buy_button)
 	if by_hand:
 		Audio.play(&"ui_ok")
 		_first_focus().grab_focus()
@@ -205,9 +229,9 @@ func _first_focus() -> Control:
 func _turn(step: int) -> void:
 	if tabs.is_empty():
 		return
-	var t := clampi(tab + step, 0, tabs.size() - 1)
-	if t != tab:
-		_show_tab(t as Tab, true)
+	var i := clampi(_tab_order.find(tab) + step, 0, _tab_order.size() - 1)
+	if _tab_order[i] != tab:
+		_show_tab(_tab_order[i], true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -285,6 +309,8 @@ func _right_page(page: MarginContainer) -> void:
 	_emeth_index = index
 	if workshop_open():
 		v.add_child(_workshop_index())
+	if arts_open():
+		v.add_child(_arts())
 	var heads := HBoxContainer.new()
 	heads.add_theme_constant_override(&"separation", COLUMN_GAP)
 	index.add_child(heads)
@@ -396,6 +422,44 @@ func _workshop_index() -> Control:
 	return v
 
 
+## The Despertar's index (Fatia 3): two columns, Despertar and Inscrever, each its tool's state over its choices.
+func _arts() -> Control:
+	var v := VBoxContainer.new()
+	v.name = "arts_index"
+	v.visible = false
+	v.add_theme_constant_override(&"separation", 4)
+	_arts_index = v
+	var heads := HBoxContainer.new()
+	heads.add_theme_constant_override(&"separation", COLUMN_GAP)
+	v.add_child(heads)
+	var grid := HBoxContainer.new()
+	grid.name = "arts_grid"
+	grid.add_theme_constant_override(&"separation", COLUMN_GAP)
+	v.add_child(grid)
+	for pair: Array in [[Forge.AWAKEN, &"forge_awaken", Forge.TOOL_AWAKEN], [Forge.INSCRIBE, &"forge_inscribe", Forge.TOOL_INSCRIBE]]:
+		var head := Book.section(T.t(pair[1] as StringName))
+		head.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		heads.add_child(head)
+		var found := Forge.has_tool(_data, pair[2] as StringName)
+		var tool := Book.label(T.t(&"forge_tool_found" if found else &"forge_tool_missing"), Book.OK if found else Book.FADED, 13, UiKit.BOLD_FONT)
+		tool.name = "tool_" + String(pair[0])
+		head.add_child(tool)
+		grid.add_child(_column("", forge.track(pair[0] as StringName)))
+	return v
+
+
+## The first rank to show on a bookmark: the Emeth's as before, on the Despertar's the first that may be forged or used
+## (else the first).
+func _first_of(t: Tab) -> ForgeRank:
+	if t != Tab.ARTS:
+		return _first()
+	var arts := forge.track(Forge.AWAKEN) + forge.track(Forge.INSCRIBE)
+	for r in arts:
+		if forge.problem(_data, r) in [Forge.Problem.OK, Forge.Problem.SHORT]:
+			return r
+	return arts[0] if not arts.is_empty() else _first()
+
+
 ## A column of the index: its action's name over its entries ("" keeps the line, for the Temperar's).
 func _column(head: String, of: Array[ForgeRank]) -> VBoxContainer:
 	var col := VBoxContainer.new()
@@ -461,7 +525,6 @@ func _show_pick() -> void:
 ## Everything on both pages from the save as it is now.
 func _refresh() -> void:
 	MaterialCount.refresh(_purse, _data)
-	var silver := MaterialPurse.amount(_data, MaterialPurse.SILVER)
 	var tool := Forge.has_tool(_data, Forge.TOOL_REFINE)
 	_tool.text = "%s: %s" % [T.t(&"forge_tool"), T.t(&"forge_tool_found" if tool else &"forge_tool_missing")]
 	_tool.add_theme_color_override(&"font_color", Book.OK if tool else Book.FADED)
@@ -471,9 +534,10 @@ func _refresh() -> void:
 		var count := entries[i].find_child("count", false, false) as Label
 		count.text = "" if owned else str(r.cost)
 		var mark := entries[i].find_child("mark", false, false) as Mark
+		mark.paid_in = r.material
 		if forge.problem(_data, r) == Forge.Problem.NO_TOOL:
 			mark.look = Mark.Look.LOCKED
-		elif r.track == Forge.REFINE and forge.is_on(_data, r):
+		elif (r.track == Forge.REFINE or r.track == Forge.AWAKEN) and forge.is_on(_data, r):
 			mark.look = Mark.Look.ON
 		else:
 			mark.look = Mark.Look.OWNED if owned else Mark.Look.BUY
@@ -496,18 +560,32 @@ func _refresh() -> void:
 	var owned_now := forge.state(_data, shown) == Forge.State.OWNED
 	if shown.track == Forge.REFINE:
 		_kind.text = ("%s · %s" % [T.t(&"forge_track_refine"), T.t(StringName("forge_refine_slot_" + String(shown.slot)))]).to_upper()
+	elif shown.track == Forge.AWAKEN or shown.track == Forge.INSCRIBE:
+		_kind.text = T.t(&"forge_awaken" if shown.track == Forge.AWAKEN else &"forge_inscribe").to_upper()
 	else:
 		_kind.text = T.t(&"forge_owned" if owned_now else &"forge_next").to_upper()
 	_effect.text = T.t(shown.desc_key)
+	_cost.set_id(shown.material)
 	_cost.set_amount(shown.cost)
 	_deal.visible = not owned_now
 	var problem := forge.problem(_data, shown)
 	var before := _before(shown)
-	var verb := T.t(&"forge_do")
+	var verb := T.t(&"forge_inscribe_do" if shown.track == Forge.INSCRIBE else &"forge_do")
+	var have := MaterialPurse.amount(_data, shown.material)
 	var can := problem == Forge.Problem.OK
 	match problem:
 		Forge.Problem.OWNED:
-			if shown.track == Forge.REFINE and forge.is_on(_data, shown):
+			if shown.track == Forge.AWAKEN:
+				var on := forge.is_on(_data, shown)
+				_set_state(T.t(&"forge_state_awake" if on else &"forge_state_asleep"), Book.OK if on else Book.INK)
+				_step.text = T.t(&"forge_step_awake" if on else &"forge_step_asleep")
+				verb = T.t(&"forge_awaken_off" if on else &"forge_awaken_use")
+				can = true
+			elif shown.track == Forge.INSCRIBE:
+				_set_state(T.t(&"forge_state_inscribed"), Book.OK)
+				_step.text = T.t(&"forge_step_inscribed")
+				verb = T.t(&"forge_state_inscribed")
+			elif shown.track == Forge.REFINE and forge.is_on(_data, shown):
 				_set_state(T.t(&"forge_state_on"), Book.OK)
 				_step.text = T.t(&"forge_step_on")
 				verb = T.t(&"forge_refine_in_use")
@@ -522,16 +600,18 @@ func _refresh() -> void:
 				_step.text = T.t(&"forge_step_owned")
 		Forge.Problem.NO_TOOL:
 			_set_state(T.t(&"forge_state_no_tool"), Book.FADED)
-			_step.text = T.t(&"forge_no_tool")
+			_step.text = T.t(StringName("forge_no_" + String(shown.tool))) if shown.tool != Forge.TOOL_REFINE else T.t(&"forge_no_tool")
 		Forge.Problem.NEEDS:
 			_set_state(T.t(&"forge_state_needs", {"name": T.t(before.name_key) if before else ""}), Book.FADED)
 			_step.text = T.t(&"forge_step_needs", {"name": T.t(before.name_key) if before else ""})
 		Forge.Problem.SHORT:
-			_set_state(T.t(&"forge_short", {"n": shown.cost - silver, "name": T.t(shown.name_key)}), Book.WARN)
-			_step.text = T.t(&"forge_step_short")
+			var gem := shown.material == MaterialPurse.EMERALD
+			_set_state(T.t(&"forge_short_emerald" if gem else &"forge_short", {"n": shown.cost - have, "name": T.t(shown.name_key)}), Book.WARN)
+			_step.text = T.t(&"forge_step_short_emerald" if gem else &"forge_step_short")
 		_:
 			_set_state(T.t(&"forge_state_ready"), Book.INK)
-			_step.text = T.t(&"forge_step_buy", {"cost": shown.cost, "have": silver})
+			_step.text = T.t(&"forge_step_buy_emerald" if shown.material == MaterialPurse.EMERALD else &"forge_step_buy",
+				{"cost": shown.cost, "have": have})
 	buy_button.text = verb
 	buy_button.disabled = not can
 	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
@@ -637,7 +717,12 @@ func _buy() -> void:
 	if shown == null:
 		return
 	var r := shown
-	if r.track == Forge.REFINE and forge.state(_data, r) == Forge.State.OWNED:
+	if r.track == Forge.AWAKEN and forge.state(_data, r) == Forge.State.OWNED:
+		if forge.is_on(_data, r):
+			forge.take_off(_data, Forge.AWAKEN)
+		elif not forge.put_on(_data, r.id):
+			return
+	elif r.track == Forge.REFINE and forge.state(_data, r) == Forge.State.OWNED:
 		if forge.is_on(_data, r) or not forge.put_on(_data, r.id):
 			return
 	elif not forge.buy(_data, r.id):
@@ -646,7 +731,7 @@ func _buy() -> void:
 		Save.write()
 	Audio.play(&"ui_ok")
 	forged.emit(r.id)
-	if r.track == Forge.REFINE:
+	if r.track != Forge.TEMPER:
 		_refresh()
 		_entry_of(r).grab_focus()
 		return
