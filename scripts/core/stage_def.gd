@@ -42,6 +42,10 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var map_doors := PackedFloat32Array([1.0, 5.0, 2.0])
 @export var guardian_pair_chance := 0.5
 @export var pom_from_depth := 3
+## OF-05 (Ofícios, Q-OF3 a; anti-farming): a door of Prata only from this depth, a door of Memória only past the
+## guardian's layer (0 and false: anywhere, the maps of before).
+@export var silver_from_depth := 0
+@export var memory_after_guardian := false
 
 @export_group("Encounters")
 ## Enemies of the region, elite versions included (each listed once; an elite blocks its plain version).

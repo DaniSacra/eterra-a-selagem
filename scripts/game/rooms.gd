@@ -46,6 +46,8 @@ func _used() -> bool:
 ## Whether the paladin stands at something to use now (the reward, a shop's item, a door): the robot presses then,
 ## and the HUD may show the key.
 func usable() -> bool:
+	if _at_vein():
+		return true
 	match phase:
 		Phase.REWARD:
 			return _reward_node != null and game.player.pos.distance_to(_reward_at) < TOUCH
@@ -125,6 +127,9 @@ var columns: ColumnFloor
 ## A1: RP-20 the stones from the vault, RP-12 the oil urns (null: none in this fight).
 var drops: DropFloor
 var urns: UrnFloor
+## AT-H2, AT-H3: a second PLATES hazard beside the room's first (the niche's skeleton beside the Cripta B's slabs, the
+## hostile plant beside the Jardim B's root), or null.
+var plates_also: PlateFloor
 var _slab_node: Node3D
 var _slab_sign: DoorSign
 ## The spot before the trial's block and before the altar's step where its choice screen opens: {at, node, away (he
@@ -192,7 +197,13 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 
 ## The descent's graph of a run (DV-1), on its own dice: the run's seed and MAP_SALT.
 func new_map(st: StageDef, forced := -1) -> RunMap:
-	return RunMap.new(st, hash([_rng.seed, MAP_SALT]), forced, trials.shortest_curse())
+	var m := RunMap.new(st, hash([_rng.seed, MAP_SALT]), forced, trials.shortest_curse())
+	var of := game.oficios if game != null else null
+	if of != null and game.oficios_def != null:
+		# Ofícios, Roteiro A: the veins and the head's room, on dice of their own (the map stays as it was)
+		var d := game.oficios_def
+		of.marked = m.mark_finds(d.head if of.wants_head else &"", d.find_depth_min, d.find_depth_max, d.vein_arenas)
+	return m
 
 
 func start() -> void:
@@ -230,6 +241,7 @@ func depth() -> int:
 
 func step(dt: float) -> void:
 	_step_prompt()
+	_step_vein(dt)
 	match phase:
 		Phase.FIGHT:
 			_step_fight(dt)
@@ -259,6 +271,8 @@ var _prompt_kind := &""
 
 ## What the paladin stands at to use now: &"reward", &"shop", &"door" or &"" (usable()'s places, by kind).
 func use_kind() -> StringName:
+	if _at_vein():
+		return &"vein" if _vein.state == VeinFloor.State.OPEN else &"vein_note"
 	match phase:
 		Phase.REWARD:
 			if _reward_node != null and game.player.pos.distance_to(_reward_at) < TOUCH:
@@ -304,6 +318,8 @@ func _step_prompt() -> void:
 ## The foot of what the paladin stands at to use (use_kind): the reward, the shop item, the door's medallion; his own
 ## feet when nothing.
 func use_spot() -> Vector2:
+	if _at_vein():
+		return _vein.at
 	match use_kind():
 		&"reward":
 			return _reward_at
@@ -412,7 +428,7 @@ func _enter(next: RunMap.Room) -> void:
 			if layout != null and (layout.hazard == null or layout.hazard.kind == HazardDef.Kind.PLATES):
 				_start_hazard(layout)  # the slabs of the guardian's house (RP-06), its columns (RP-09); never the runes
 		RunMap.Kind.FOUNTAIN:
-			game.spawn_fountain(Vector2(0, -2.0))
+			game.spawn_fountain(FOUNTAIN_SPOT)
 			_open_doors()
 		RunMap.Kind.SHOP:
 			_build_shop()
@@ -470,6 +486,8 @@ func _step_fight(dt: float) -> void:
 		bands.step(dt)
 	if columns != null:
 		columns.step(dt)
+	if plates_also != null:
+		plates_also.step(dt)
 	if drops != null:
 		drops.step(dt)
 	if urns != null:
@@ -587,6 +605,7 @@ func _room_cleared() -> void:
 		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
 		found(MaterialPurse.MEMORY, &"guardian", stage.memory_guardian)
 		game.find_tool(Forge.TOOL_REFINE)  # (Fatia 2: the Forjador's first tool, at the first guardian won)
+	_oficios_cleared()
 	if room.reward == RunMap.Reward.NONE:
 		_open_doors()
 		return
@@ -696,6 +715,90 @@ func victory() -> void:
 	found(MaterialPurse.EMERALD, &"boss", stage.emerald_victory)
 
 
+# ---------- Ofícios, Roteiro A: the head's room, the pity and the veins ----------
+
+## The vein of this room (VeinFloor; null: none).
+var _vein: VeinFloor
+
+
+## The room was won: the head waiting in it (or the guardian's, by pity) is found, and its vein shows.
+func _oficios_cleared() -> void:
+	var of := game.oficios
+	if of == null:
+		return
+	var d := game.oficios_def
+	if room.kind == RunMap.Kind.MINIBOSS:
+		of.passed_guardian = true
+		if of.pity_due and not of.head_found:
+			_find_head(&"pity")
+	if room.find != &"" and of.wants_head and not of.head_found:
+		_find_head(&"room")
+	if room.vein and _vein == null and _layout != null and not _layout.gather_spots.is_empty():
+		var open := of.has_pick and of.veins < d.veins_max
+		if open or (not of.has_pick and game.bot == null):  # (the closed vein only for a person: the robot's runs stay)
+			_vein = VeinFloor.make(self, game.arena.resolve(_layout.gather_spots[0], 0.6), open)
+
+
+func _find_head(by: StringName) -> void:
+	var of := game.oficios
+	of.head_found = true
+	of.head_by = String(by)
+	of.head_id = String(game.oficios_def.head)
+	game.hud.show_notice(T.t(&"oficio_found", {"name": T.t(&"oficio_pick_head")}), 2.5)
+	game.room_tally.event("find", game.time, {"node": room.id, "find": of.head_id, "by": of.head_by})
+
+
+## Whether the paladin stands at a vein to use (closed: to note it; open: to extract).
+func _at_vein() -> bool:
+	return _vein != null and _vein.state != VeinFloor.State.SPENT and (phase == Phase.REWARD or phase == Phase.OPEN) \
+			and game.player.pos.distance_to(_vein.at) < TOUCH
+
+
+## The vein: a press notes it (no pick: "Anotado no Livro de Ahk") or starts the extraction, held vein_hold seconds
+## standing at it (walking off stops it); then vein_stones Pedra Funda.
+func _step_vein(dt: float) -> void:
+	if _vein == null:
+		return
+	var of := game.oficios
+	var d := game.oficios_def
+	if _at_vein() and _vein.progress < 0.0 and _used():
+		if _vein.state == VeinFloor.State.CLOSED:
+			if not of.noted:
+				of.noted = true
+				game.hud.show_notice(T.t(&"oficio_noted"), 2.5)
+				game.room_tally.event("vein_noted", game.time, {"node": room.id})
+		elif of.may_extract(d):
+			_vein.progress = 0.0
+		return
+	if _vein.progress < 0.0:
+		return
+	if game.player.pos.distance_to(_vein.at) >= TOUCH:
+		_vein.progress = -1.0
+		return
+	_vein.progress += dt
+	of.gather_s += dt
+	if _vein.progress >= d.vein_hold:
+		_vein.progress = -1.0
+		_vein.set_state(VeinFloor.State.SPENT)
+		of.veins += 1
+		of.stones += d.vein_stones
+		game.fx.word(Vector3(_vein.at.x, 3.0, _vein.at.y), "+%d %s" % [d.vein_stones, T.t(&"oficio_stone")], SILVER_COLOR)
+		game.room_tally.event("vein", game.time, {"node": room.id, "stones": d.vein_stones})
+
+
+## Obra 1, "Prévia dos anjos": as the doors open, the angel of each Blessing's room one layer further (behind the
+## doors) is drawn now and shown on the map; its door keeps it when it opens.
+func _preview_angels() -> void:
+	if game.oficios == null or not game.oficios.preview or game.encounters == null:
+		return
+	for r in next_rooms:
+		for id in r.next:
+			var n := map.nodes[id]
+			if n.reward == RunMap.Reward.BOON and not n.meeting and n.kind == RunMap.Kind.COMBAT and n.angel == &"":
+				n.angel = game.encounters.door_angel(n)
+	map.changed.emit()
+
+
 # ---------- doors ----------
 
 ## Whether a Psalm may come now (a Psalm's door shows only then: RunMap.settle, Room.psalm).
@@ -713,8 +816,10 @@ func _open_doors() -> void:
 		psalm_can_come(), not game.enchant_offers().is_empty())
 	# Fatia 2: a Blessing's door that is no meeting shows the angel who waits there (Encounters.door_angel)
 	for r in next_rooms:
-		if r.reward == RunMap.Reward.BOON and not r.meeting and r.kind == RunMap.Kind.COMBAT and game.encounters != null:
-			r.angel = game.encounters.door_angel(r)
+		if r.reward == RunMap.Reward.BOON and not r.meeting and r.kind == RunMap.Kind.COMBAT and game.encounters != null \
+				and r.angel == &"":
+			r.angel = game.encounters.door_angel(r)  # (one shown before by the angels' preview stays: the map promised it)
+	_preview_angels()
 	for i in next_rooms.size():
 		var r := next_rooms[i]
 		game.arena.light_exit(i, true, _reward_color(r.reward) if r.reward != RunMap.Reward.NONE else _kind_color(r.kind))
@@ -792,11 +897,55 @@ func _leave(next: RunMap.Room) -> void:
 	phase = Phase.LEAVING
 	var t := create_tween()
 	t.tween_property(_fade, "color:a", 1.0, FADE)
-	t.tween_callback(func() -> void: _enter(next))
+	t.tween_callback(func() -> void: _go(next))
+
+
+## QA P1-1 (DT-RS3): a room is built and first drawn on a black screen, never on a frame of play. The fade reaches
+## black, one black frame is shown (the frame before it was still a little lit), the room is built, and the screen
+## stays black for HOLD_FRAMES drawn frames (the first draw of a new room compiles its shaders: up to seconds on an
+## iGPU) with the world not stepping (holding(); Game._process), then fades in on real time. Without a screen (smoke,
+## tests) nothing waits: the same RESULT as before. --hold-frames=N forces it (tests).
+const HOLD_FRAMES := 2
+var _hold := 0
+var _hold_turn := 0
+
+
+func _go(next: RunMap.Room) -> void:
+	if _hold_frames() > 0:
+		await _frame_drawn()
+	if not is_inside_tree():
+		return
+	_enter(next)
+
+
+## The world waits while the new room is held black.
+func holding() -> bool:
+	return _hold > 0
+
+
+static func _hold_frames() -> int:
+	if Dev.has("hold-frames"):
+		return int(Dev.num("hold-frames", HOLD_FRAMES))
+	return 0 if DisplayServer.get_name() == "headless" else HOLD_FRAMES
+
+
+func _frame_drawn() -> void:
+	if DisplayServer.get_name() == "headless":
+		await get_tree().process_frame
+	else:
+		await RenderingServer.frame_post_draw
 
 
 func _fade_in() -> void:
 	_fade.color.a = 1.0
+	_hold = _hold_frames()
+	_hold_turn += 1
+	var turn := _hold_turn
+	while _hold > 0:
+		await _frame_drawn()
+		if not is_inside_tree() or turn != _hold_turn:
+			return  # (a newer room took the screen: its own hold counts)
+		_hold -= 1
 	create_tween().tween_property(_fade, "color:a", 0.0, FADE)
 
 
@@ -1014,7 +1163,7 @@ func _step_slab(dt: float) -> void:
 	phase = Phase.LEAVING
 	var t := create_tween()
 	t.tween_property(_fade, "color:a", 1.0, FADE)
-	t.tween_callback(func() -> void: _enter(map.trial(map.depth)))
+	t.tween_callback(func() -> void: _go(map.trial(map.depth)))
 
 
 ## The slab on the floor: the cracked slab of the Provação's look (TrialLook.entry_slab, spec 5.1), the ivory thread
@@ -1037,6 +1186,11 @@ func _slab_marker(at: Vector2, cost: int) -> Node3D:
 	_slab_sign = sign
 	return root
 
+
+## AT-FO2: where the Fonte springs in the Salão: in the frame of both cameras on the paladin's arrival from the south-west
+## landing (Perto at 0.72 / 0.49 of the screen, Longe 0.55 / 0.51), 8.9 m from him and on his way to the doors; the old
+## spot (0; -2), north of the medallion, was off the screen of both on arrival (Perto x 1.49, Longe 1.11) with its light.
+const FOUNTAIN_SPOT := Vector2(-8.0, 10.0)
 
 ## The Provação's chamber: stepping before the block (TRIAL_SPOT, on his way from the stairs of the south west) opens
 ## its cards (EventChoice.open_trial, spec 5.2), its doors shut until one is taken.
@@ -1204,7 +1358,11 @@ func _start_one(def: HazardDef) -> void:
 		HazardDef.Kind.LINE:
 			bands = BandFloor.new(game, def)
 		HazardDef.Kind.PLATES:
-			plates = PlateFloor.new(game, def, progress >= def.from_progress)
+			var pf := PlateFloor.new(game, def, progress >= def.from_progress)
+			if plates == null:
+				plates = pf
+			else:
+				plates_also = pf
 		HazardDef.Kind.DROPS:
 			# the room's own dice (the same fight drops the same way by any path, never the run's)
 			drops = DropFloor.new(game, def, hash([room.fight_seed, room.depth, 2071]), progress >= def.from_progress)
@@ -1229,6 +1387,11 @@ func _stop_runes() -> void:
 		game.room_tally.hazard(bands.enemy_damage, bands.kills, bands.hazard.fired, String(bands.hazard.def.band_source),
 			bands.tally())
 		bands = null
+	if plates_also != null:
+		plates_also.stop()
+		game.room_tally.hazard(plates_also.enemy_damage, plates_also.kills, plates_also.hazard.fired,
+			String(plates_also.hazard.def.plate_source), plates_also.tally())
+		plates_also = null
 	if drops != null:
 		drops.stop()
 		game.room_tally.hazard(drops.enemy_damage, drops.kills, drops.hazard.fired, String(Ground.ROCKS_SOURCE),
@@ -1244,7 +1407,7 @@ func _stop_runes() -> void:
 		return
 	runes.stop()
 	var rt := runes.tally()
-	if not rt.is_empty():
+	if rt.has("crystal_charges"):
 		rt["crystal_hero_damage"] = game.room_tally.hurt_in_room(String(Ground.CRYSTAL_SOURCE))
 	game.room_tally.hazard(runes.enemy_damage, runes.kills, runes.hazard.fired, "runes", rt)
 	runes = null
@@ -1442,6 +1605,9 @@ func _bot_altar_pick() -> int:
 
 ## Where the bot should walk when the room has no fight left (null: stay).
 func bot_goal() -> Variant:
+	if _vein != null and _vein.state == VeinFloor.State.OPEN and game.oficios.may_extract(game.oficios_def) \
+			and (phase == Phase.REWARD or phase == Phase.OPEN):
+		return _vein.at  # (Ofícios: the robot with the pick extracts before the reward and the doors)
 	if phase == Phase.REWARD and _reward_node != null:
 		return _reward_at
 	if phase == Phase.EVENT and not _spots.is_empty():
@@ -1509,6 +1675,7 @@ func _clear_props() -> void:
 		c.queue_free()
 	_reward_node = null
 	_reward_shaft = null
+	_vein = null
 	_gems.clear()
 	_pedestals.clear()
 	_door_labels.clear()

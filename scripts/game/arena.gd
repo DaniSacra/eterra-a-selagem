@@ -244,6 +244,29 @@ func sweep(from: Vector2, to: Vector2, radius: float) -> Vector2:
 	return p
 
 
+## AT-CA2: what stops a body of this radius at p: "piece@x,z" of the deepest obstacle of the room's plan that
+## blocks it (else the drawn pieces' kind), else "edge".
+func blocker_at(p: Vector2, radius: float) -> String:
+	var best := 0.0
+	var out := "edge"
+	var named: Array = layout.obstacles if layout != null else []
+	for o: ArenaObstacle in named:
+		if not o.blocks_move:
+			continue
+		var d := o.depth(p, radius + 0.05)
+		if d > best:
+			best = d
+			out = "%s@%d,%d" % [String(o.piece) if o.piece != &"" else "stone", roundi(o.center.x), roundi(o.center.y)]
+	if best > 0.0:
+		return out
+	for o in blockers():
+		var d := o.depth(p, radius + 0.05)
+		if d > best:
+			best = d
+			out = String(o.piece)
+	return out
+
+
 ## True when a body of this radius fits at p: on the floor and clear of everything that blocks.
 func free_at(p: Vector2, radius: float) -> bool:
 	return resolve(p, radius).distance_squared_to(p) < 0.0001

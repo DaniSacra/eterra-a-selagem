@@ -27,6 +27,10 @@ var rubble: Array = []
 var enemy_damage := 0.0
 var kills := 0
 var hero_in := 0.0
+## SW-G7: the room's stone of the vault for each square (HazardPiece.drop: stones falling, dust, rubble), keyed by the
+## square, and the seconds of rubble each has left after its strike; without a room look the placeholder stone falls.
+var pieces := {}
+var _rubble_left := {}
 var _mesh: BoxMesh
 var _mat: StandardMaterial3D
 
@@ -64,6 +68,9 @@ func step(dt: float) -> void:
 		zones[r] = z
 		Audio.play(CombatSounds.EVENTS[&"rocks_arm"])
 		var c := r.get_center()
+		var look := game.arena.look
+		if look != null:
+			pieces[r] = HazardPiece.drop(look, c, r.size.x, def.warn, look.stone(), int(c.x * 31.0 + c.y * 17.0))
 		for h: float in [6.0, 3.5]:
 			game.fx.burst(&"dust", Vector3(c.x, h, c.y))
 	for r: Rect2 in did.fired:
@@ -71,9 +78,12 @@ func step(dt: float) -> void:
 		var c := r.get_center()
 		game.fx.burst(&"dust", Vector3(c.x, 0.3, c.y))
 		game.fx.shake(0.08)
+	_show_pieces(dt, did.fired)
 	# the stone in the air over the last STONE_FALL seconds of each warning, on the floor at the strike as rubble
 	for s in hazard.stones:
 		var r: Rect2 = s.rect
+		if pieces.has(r):
+			continue
 		if s.phase == DropHazard.Phase.ARM and s.left <= STONE_FALL:
 			if not falling.has(r):
 				falling[r] = _stone(r)
@@ -97,8 +107,40 @@ func step(dt: float) -> void:
 		i -= 1
 
 
+## SW-G7: each stone's piece told its state: the windup as it falls, the strike as it lands, then the rubble's seconds
+## left (0 frees it).
+func _show_pieces(dt: float, fired: Array) -> void:
+	for r: Rect2 in fired:
+		_rubble_left[r] = RUBBLE
+	var live := {}
+	for st in hazard.stones:
+		live[st.rect] = st
+	for r: Rect2 in pieces.keys():
+		var piece: HazardPiece = pieces[r]
+		if not is_instance_valid(piece):
+			pieces.erase(r)
+			_rubble_left.erase(r)
+			continue
+		if live.has(r) and live[r].phase == DropHazard.Phase.ARM:
+			piece.set_state(Vector3(clampf(1.0 - float(live[r].left) / maxf(hazard.def.warn, 0.001), 0.0, 1.0), 0.0, 0.0))
+		elif live.has(r):
+			piece.set_state(Vector3(0.0, clampf(float(live[r].left) / maxf(hazard.def.fire, 0.001), 0.0, 1.0), 0.0))
+		else:
+			var left: float = maxf(0.0, float(_rubble_left.get(r, 0.0)) - dt)
+			_rubble_left[r] = left
+			piece.set_state(Vector3.ZERO, false, left)
+			if left <= 0.0:
+				pieces.erase(r)
+				_rubble_left.erase(r)
+
+
 ## The fight is over (or the room left): the stones warming up go away unstruck, the rubble with them.
 func stop() -> void:
+	for piece in pieces.values():
+		if is_instance_valid(piece):
+			piece.queue_free()
+	pieces.clear()
+	_rubble_left.clear()
 	for z in zones.values():
 		if z != null:
 			Ground.end_zone(z)

@@ -55,7 +55,7 @@ uniform float eruption_cap = 0.62;
 // ART-05.2 (AP-2): the red fill in the regime of the plain warnings (ground.gdshaderinc's warning_fill): fill_early of
 // danger_alpha while the blow is far off, coming up to all of it only over the last fill_late of the warning; the rim
 // and the glyphs carry the shape the whole time. Radius, timing and damage unchanged.
-uniform float fill_early = 0.25;
+uniform float fill_early = 0.12;
 uniform float fill_late = 0.3;
 // Once it has landed the red is spent: it leaves in red_after of the dissolve (the glyphs keep crumbling slowly).
 uniform float red_after = 0.2;

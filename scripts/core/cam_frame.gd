@@ -57,10 +57,11 @@ static func keep(target: Vector2, hero: Vector2, distance: float, pitch_deg: flo
 ## paladin's safe frame needs (keep), but never more than `reach` meters from `target`. follow false: only `want`
 ## (a scene of its own, the paladin may leave the frame).
 ## slack (the near camera, see slack()): beyond `reach`, how far more it may go across and up the screen.
-static func hold(target: Vector2, want: Vector2, reach: float, hero: Vector2, distance: float, pitch_deg: float, yaw_deg: float, fov_deg: float, aspect: float, follow := true, slack := Vector2.ZERO) -> Vector2:
+## safe: the paladin's safe frame (the hub's arrival look keeps him nearer the edge, HubPlan.ARRIVAL_SAFE).
+static func hold(target: Vector2, want: Vector2, reach: float, hero: Vector2, distance: float, pitch_deg: float, yaw_deg: float, fov_deg: float, aspect: float, follow := true, slack := Vector2.ZERO, safe := SAFE) -> Vector2:
 	var at := widen(target + (want - target).limit_length(reach), want, slack, yaw_deg)
 	if follow:
-		at = keep(at, hero, distance, pitch_deg, yaw_deg, fov_deg, aspect)
+		at = keep(at, hero, distance, pitch_deg, yaw_deg, fov_deg, aspect, safe)
 	return widen(target + (at - target).limit_length(reach), at, slack, yaw_deg)
 
 

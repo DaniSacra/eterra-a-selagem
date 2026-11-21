@@ -57,6 +57,12 @@ const EVENTS := {
 	&"urn_fire": &"enemy_burst",
 	&"oil_arm": &"rune_arm",
 	&"oil_fire": &"rune_crack",
+	# AT-H2 the niche's skeleton (stone scraping as the hand comes out, the bone of the grab), AT-H3 the plant (the
+	# leaves closing, the lash)
+	&"niche_arm": &"rune_arm",
+	&"niche_fire": &"bone",
+	&"plant_arm": &"rune_arm",
+	&"plant_fire": &"enemy_swing",
 	&"column_fall": &"boss_down",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).

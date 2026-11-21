@@ -20,7 +20,7 @@ var _named := false
 var plus := false
 
 
-## p_id: MaterialPurse.SILVER, MEMORY or EMERALD. named: the short name after the number.
+## p_id: MaterialPurse.SILVER, MEMORY, EMERALD or the Pedra Funda (DoorGlyph.STONE_ID). named: the short name after the number.
 func setup(p_id: StringName, n: int, color: Color = UiKit.PALE, size: int = SIZE, mark_px: float = MARK,
 		named: bool = false) -> MaterialCount:
 	self.id = p_id
@@ -34,7 +34,7 @@ func setup(p_id: StringName, n: int, color: Color = UiKit.PALE, size: int = SIZE
 	number.name = "n"
 	number.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	add_child(number)
-	tooltip_text = T.t(MaterialPurse.NAME_KEY[p_id])
+	tooltip_text = name_of(p_id)
 	set_amount(n)
 	return self
 
@@ -42,7 +42,7 @@ func setup(p_id: StringName, n: int, color: Color = UiKit.PALE, size: int = SIZE
 func set_amount(n: int) -> void:
 	amount = n
 	var digits := ("+%d" if plus else "%d") % n
-	number.text = digits if not _named else "%s %s" % [digits, T.t(MaterialPurse.SHORT_KEY[id])]
+	number.text = digits if not _named else "%s %s" % [digits, short_of(id)]
 
 
 func set_color(c: Color) -> void:
@@ -57,8 +57,22 @@ static func purse(data: Dictionary, color: Color = UiKit.PALE, size: int = SIZE,
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_theme_constant_override(&"separation", 14)
 	for m: StringName in shown(data):
-		row.add_child(MaterialCount.new().setup(m, MaterialPurse.amount(data, m), color, size, mark_px))
+		row.add_child(MaterialCount.new().setup(m, amount_of(data, m), color, size, mark_px))
 	return row
+
+
+## A material's or a craft item's whole name (the Pedra Funda of the Ofícios, DoorGlyph.STONE_ID, by its own key).
+static func name_of(p_id: StringName) -> String:
+	return T.t(MaterialPurse.NAME_KEY[p_id]) if MaterialPurse.NAME_KEY.has(p_id) else T.t(&"oficio_stone")
+
+
+static func short_of(p_id: StringName) -> String:
+	return T.t(MaterialPurse.SHORT_KEY[p_id]) if MaterialPurse.SHORT_KEY.has(p_id) else T.t(&"oficio_stone")
+
+
+## What the save holds: a material (MaterialPurse) or a craft item (Oficios.count: the Pedra Funda).
+static func amount_of(data: Dictionary, p_id: StringName) -> int:
+	return MaterialPurse.amount(data, p_id) if p_id in MaterialPurse.IDS else Oficios.count(data, p_id)
 
 
 ## The materials a purse shows: Prata and Memória always, the Esmeralda once the save has held one.
@@ -67,6 +81,11 @@ static func shown(data: Dictionary) -> Array[StringName]:
 	var total: Dictionary = data.get("materials_total", {}) if data.get("materials_total") is Dictionary else {}
 	if MaterialPurse.amount(data, MaterialPurse.EMERALD) > 0 or int(total.get(String(MaterialPurse.EMERALD), 0)) > 0:
 		out.append(MaterialPurse.EMERALD)
+	# Ofícios: the Pedra Funda once one was ever held (10_ux.md 10.3: four at most in the purse)
+	var b: Variant = data.get("oficios")
+	if b is Dictionary and (b as Dictionary).get("items_total") is Dictionary \
+			and int(((b as Dictionary).items_total as Dictionary).get(String(DoorGlyph.STONE_ID), 0)) > 0:
+		out.append(DoorGlyph.STONE_ID)
 	return out
 
 
@@ -74,4 +93,4 @@ static func shown(data: Dictionary) -> Array[StringName]:
 static func refresh(row: Control, data: Dictionary) -> void:
 	for c in row.get_children():
 		if c is MaterialCount:
-			(c as MaterialCount).set_amount(MaterialPurse.amount(data, (c as MaterialCount).id))
+			(c as MaterialCount).set_amount(amount_of(data, (c as MaterialCount).id))

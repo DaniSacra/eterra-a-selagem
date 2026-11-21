@@ -16,8 +16,8 @@ func before_each() -> void:
 
 
 func test_difficulty_grows_with_depth() -> void:
-	assert_eq(EncounterGen.difficulty(stage, 1), 70.0)
-	assert_eq(EncounterGen.difficulty(stage, 5), 130.0)
+	assert_eq(EncounterGen.difficulty(stage, 1), 87.0, "B-4: 70 + 17 a room")
+	assert_eq(EncounterGen.difficulty(stage, 5), 155.0)
 
 
 func test_waves_carry_about_the_difficulty() -> void:

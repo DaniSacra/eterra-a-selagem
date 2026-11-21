@@ -52,7 +52,8 @@ func test_at_the_portal_its_head_is_in_the_screen() -> void:
 
 
 ## Art review H-P0-1: with the far camera, from the arrival and from every station, the portal's sill a fifth to
-## three tenths down the screen and its whole arch in it.
+## three tenths down the screen and its whole arch in it. HV-B: from the Retorno's seal that is the arrival look's
+## frame (HubPlan.ARRIVAL_DISTANCE, ARRIVAL_SAFE), the one both cameras show as he comes up.
 func test_far_the_portal_shows_whole_from_everywhere() -> void:
 	var f := Feel.live()
 	var sill := HubPlan.to_world(Vector2(0.0, HubLook.SHEET_V))
@@ -63,9 +64,14 @@ func test_far_the_portal_shows_whole_from_everywhere() -> void:
 	for aspect in ASPECTS:
 		for key: StringName in spots:
 			var id: StringName = key if key != &"arrival" else &""
-			var at := _settled(id, spots[key], f.cam_distance, aspect)
-			var y := CamFrame.screen_of(sill, HubLook.TERRACE_Y, at, f.cam_distance, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
-			var top := CamFrame.screen_of(HubPlan.to_world(Vector2(head.x, head.y)), head.z, at, f.cam_distance, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
+			var d := f.cam_distance
+			var at := _settled(id, spots[key], d, aspect)
+			if key == &"arrival":
+				d = HubPlan.ARRIVAL_DISTANCE
+				var l := HubPlan.layout()
+				at = CamFrame.hold(l.cam_target, l.cam_target, l.cam_reach, spots[key], d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect, true, Vector2.ZERO, HubPlan.ARRIVAL_SAFE)
+			var y := CamFrame.screen_of(sill, HubLook.TERRACE_Y, at, d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
+			var top := CamFrame.screen_of(HubPlan.to_world(Vector2(head.x, head.y)), head.z, at, d, f.cam_pitch, f.cam_yaw, f.cam_fov, aspect).y
 			var tag := "%s, aspect %.2f" % [key, aspect]
 			assert_between(y, 0.15, 0.30, tag + ": the sill %.3f" % y)
 			assert_gt(top, 0.0, tag + ": the arch's top %.3f" % top)
@@ -90,10 +96,11 @@ func test_near_the_south_edge_stays_low() -> void:
 			assert_gt(y, 0.85, "at %s, aspect %.2f: the south edge %.3f" % [spot, aspect, y])
 
 
-## LR-07 (room-designer): no two places of the hub more than 4 s apart walking (straight).
+## LR-07 (room-designer): no two stations of the hub more than 4 s apart walking (straight; HV-B: the arrival is no
+## station, the walk measured round the pieces is in test_hub_rev02).
 func test_no_two_stations_more_than_four_seconds_apart() -> void:
 	var speed := Feel.live().speed
-	var spots: Array[Vector2] = [HubPlan.ARRIVAL]
+	var spots: Array[Vector2] = []
 	for id in HubPlan.STATIONS:
 		spots.append(HubPlan.USE[id])
 	for a in spots:

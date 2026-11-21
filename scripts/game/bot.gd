@@ -22,7 +22,7 @@ const COLUMN_STAND := 0.7
 ## RP-14: the bot charges a crystal within CRYSTAL_NEAR m whose column holds CRYSTAL_PACK enemies or more
 ## (crystal_plan), from CRYSTAL_SIDE m to its side (out of the column it will strike) and CRYSTAL_BACK m south of it.
 const CRYSTAL_PACK := 2
-const CRYSTAL_NEAR := 12.0
+const CRYSTAL_NEAR := 18.0
 const CRYSTAL_SIDE := 2.1
 const CRYSTAL_BACK := 1.4
 ## RP-12: the bot lights an oil urn within URN_NEAR m with URN_PACK enemies or more in its ring (urn_plan), from
@@ -431,7 +431,7 @@ static func crystal_plan(game: Game, p: Vector2) -> Variant:
 		var x0 := def.origin.x + rf.crystals.col(i) * def.tile
 		var n := 0
 		for e in game.horde.list:
-			if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS and e.pos.x >= x0 and e.pos.x <= x0 + def.tile:
+			if e.alive and e.def.behavior != EnemyDef.Behavior.BOSS and e.pos.x >= x0 - e.def.radius and e.pos.x <= x0 + def.tile + e.def.radius:
 				n += 1
 		if n > best_n:
 			best_n = n

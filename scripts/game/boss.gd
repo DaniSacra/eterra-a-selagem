@@ -63,6 +63,13 @@ const SPECTRAL := Color(0.38, 1.55, 1.1)
 ## His entrance (GP-01): a ring of this radius on the floor and souls rising from this height (no column).
 const ENTRANCE_RING := 4.5
 const ENTRANCE_SOULS := 0.3
+## ART-05.5, his entrance in his chamber: he rises out of the seal in RISE_TIME (sunk RISE_SINK of his size below the
+## floor at first, easing out), souls leaving the seal every RISE_SOULS_EVERY s, then a second ring and his roar until
+## ENTER_TIME, when the fight begins (the same 2.4 s as before: the first attack comes when it did).
+const ENTER_TIME := 2.4
+const RISE_TIME := 1.5
+const RISE_SINK := 2.4
+const RISE_SOULS_EVERY := 0.3
 const VIOLET := Color(0.62, 0.22, 1.2)
 ## His crescents (the Blades of the Souls, the Storm) and the souls he gathers for them: a cold violet, their core pale
 ## (soul_crescent.gdshader; art pack 2026-11-17, section 4: they were the spectral green).
@@ -334,11 +341,13 @@ func _advance(dt: float) -> void:
 		e.dir = e.dir.slerp(toward, minf(1.0, dt * FOLLOW_RATE))
 	match state:
 		State.ENTER:
-			# in a hall he walks down from the door; in his chamber he already stands on the seal
+			# in a hall he walks down from the door; in his chamber he rises out of the seal (ART-05.5)
 			if not game.arena.round_floor():
 				e.pos += Vector2.DOWN * 3.2 * dt
-			_anim(&"idle" if game.arena.round_floor() else &"walk")
-			if _t > 2.4:
+				_anim(&"walk")
+			else:
+				_step_rise(_t - dt, _t)
+			if _t > ENTER_TIME:
 				game.hud.show_notice(T.t("boss_phase_%d" % phase), 2.5)
 				if phase == def.ritual_phase and not _ritual_done:
 					# begun in the ritual's phase (--boss-hp): its name promises the ritual, so it runs (BUG-010)
@@ -1533,6 +1542,31 @@ func _anim(anim: StringName) -> void:
 	if e.anim != anim:
 		e.anim = anim
 		e.anim_t = 0.0
+
+
+## His rise out of the seal between `from` and `to` seconds of his entrance (ART-05.5): only his drawn height (Enemy.y,
+## read by Horde.render after the crowd's step), never where he is, his reach or his collision.
+func _step_rise(from: float, to: float) -> void:
+	e.y = -rise_depth(to, e.def.size)
+	if to < RISE_TIME:
+		_anim(&"idle")
+		if floorf(maxf(from, 0.0) / RISE_SOULS_EVERY) != floorf(to / RISE_SOULS_EVERY):
+			game.fx.burst(&"soul", Vector3(e.pos.x, ENTRANCE_SOULS, e.pos.y))
+		return
+	if from < RISE_TIME:
+		# up: the seal answers with a second ring and he roars until the fight
+		game.fx.ring(e.pos, ENTRANCE_RING * 1.6, VIOLET, 0.6, 0.12, true)
+		game.fx.shake(2.0)
+		Audio.play(&"roar")
+		cue.emit(&"risen", e.pos, Vector2.ZERO, 0.0, ENTER_TIME - RISE_TIME)
+		moment.emit(&"risen")
+	_anim(&"roar")
+
+
+## How far below the floor his body is drawn `t` seconds into his entrance (0 once he is up).
+static func rise_depth(t: float, size: float) -> float:
+	var k := clampf(t / RISE_TIME, 0.0, 1.0)
+	return RISE_SINK * size * (1.0 - k) * (1.0 - k)
 
 
 ## Holds a clip at a share of its length (the crowd plays a boss's clips at its walking pace: Horde.clip_rate).

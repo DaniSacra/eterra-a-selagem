@@ -20,8 +20,8 @@ static func layers() -> Array:
 		[_n(8, RunMap.Kind.MINIBOSS, B, ["sanctuary", "knight"], [10, 11]),
 			_n(9, RunMap.Kind.MINIBOSS, B, ["garden", "priest_elder"], [11, 12])],
 		[_n(10, C, B, ["rift"], [13]), _n(11, RunMap.Kind.FOUNTAIN, RunMap.Reward.NONE, ["hall"], [13, 14]),
-			_n(12, C, RunMap.Reward.GOLD, ["runes", "hard"], [14])],
-		[_n(13, C, RunMap.Reward.POM, ["bridge", "hidden"], [15, 16]), _n(14, C, B, ["sanctuary"], [16])],
+			_n(12, C, RunMap.Reward.GOLD, ["runes", "hard", "vein"], [14])],
+		[_n(13, C, RunMap.Reward.POM, ["bridge", "hidden"], [15, 16]), _n(14, C, B, ["sanctuary", "find"], [16])],
 		[_n(15, C, RunMap.Reward.HEART, ["crypt", "hard"], [17]), _n(16, C, B, ["garden", "hidden"], [17, 18])],
 		[_n(17, C, RunMap.Reward.MAGICK, ["rift"], [19]), _n(18, C, RunMap.Reward.POM, ["bridge"], [19])],
 		[_n(19, RunMap.Kind.SHOP, RunMap.Reward.NONE, ["hall"], [20])],
@@ -41,11 +41,13 @@ static func at(moment: String = "doors") -> Dictionary:
 	return {"layers": layers(), "path": path, "current": path[-1]}
 
 
-## A node: tags are the arena's id first, then "hard", "hidden" or a guardian's id.
+## A node: tags are the arena's id first, then "hard", "hidden", a guardian's id, "find" (the pick's head waits in it)
+## or "vein".
 static func _n(id: int, kind: RunMap.Kind, reward: RunMap.Reward, tags: Array, next: Array) -> Dictionary:
 	var guardian := ""
 	for t: String in tags:
 		if t == "knight" or t == "priest_elder":
 			guardian = t
 	return {"id": id, "kind": kind, "reward": reward, "arena": tags[0], "hard": tags.has("hard"),
-		"hidden": tags.has("hidden"), "guardian": guardian, "next": next}
+		"hidden": tags.has("hidden"), "guardian": guardian, "next": next,
+		"find": "pick_head" if tags.has("find") else "", "vein": tags.has("vein")}

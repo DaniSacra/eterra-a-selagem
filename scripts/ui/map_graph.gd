@@ -30,6 +30,8 @@ const DOOR_WIDTH := 2.6
 const LINK_WIDTH := 1.4
 ## The pointer focuses a room within this far of its centre.
 const PICK := RADIUS + 8.0
+## The find's diamond, half its height (px at 720 lines).
+const FIND := 6.0
 
 ## MAP-08: the newest stretch of the way walked (into the room stood in) drawn so far, 0..1 (draw_in animates it).
 var ink := 1.0:
@@ -226,6 +228,9 @@ func _room(id: int) -> void:
 		DescentMap.State.AHEAD:
 			ring = Book.FADED
 	draw_arc(c, rad - width * 0.5, 0.0, TAU, 40, Color(ring, a), width, true)
+	var r_ := map.room(id)
+	if r_ != null and r_.find != &"":
+		find_diamond(self, c + Vector2(rad, -rad) * 0.72, a)
 	if id == focus_id:
 		var r := rad + (9.0 if st == DescentMap.State.CURRENT else 6.0)
 		var col := Book.RUBRIC if has_focus() else Color(Book.RUBRIC, 0.6)
@@ -234,6 +239,16 @@ func _room(id: int) -> void:
 		var p := c - Vector2(r + 6.0, 0)
 		draw_colored_polygon(PackedVector2Array([p + Vector2(0, -4.5), p + Vector2(4.5, 0), p + Vector2(0, 4.5),
 			p + Vector2(-4.5, 0)]), col)
+
+
+## The diamond of a room that keeps a find (Ofícios, 10_ux.md 10.7): old gold with a dark edge on the medallion's
+## upper right, the only mark of it on the map.
+static func find_diamond(ci: CanvasItem, at: Vector2, alpha: float = 1.0) -> void:
+	var r := FIND
+	var d := PackedVector2Array([at + Vector2(0, -r), at + Vector2(r * 0.8, 0), at + Vector2(0, r), at + Vector2(-r * 0.8, 0)])
+	ci.draw_colored_polygon(d, Color(UiKit.OLD_GOLD.lightened(0.15), alpha))
+	d.append(d[0])
+	ci.draw_polyline(d, Color(Book.INK, alpha), 1.5, true)
 
 
 func _gui_input(event: InputEvent) -> void:

@@ -74,7 +74,7 @@ func test_the_paladins_light_stays_under_the_glow_and_behind_him() -> void:
 
 ## B-2: the bot walks to a fountain that still has light when under 60% of its life, never otherwise.
 func test_the_bot_drinks_from_the_fountain_when_hurt() -> void:
-	var spring := Vector2(0, -2)
+	var spring := Rooms.FOUNTAIN_SPOT
 	assert_eq(Bot.drink_at(spring, 10.0, 30.0), spring, "hurt: to the fountain")
 	assert_eq(Bot.drink_at(spring, 18.0, 30.0), spring, "at 60% too (QW-112: the door's share)")
 	assert_null(Bot.drink_at(spring, 24.0, 30.0), "at 80% it goes on")

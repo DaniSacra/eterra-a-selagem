@@ -23,6 +23,8 @@ signal used(id: StringName)
 ## A rank of the Forja was bought at the Forjador (Rejogabilidade, Fatia 1; ForgeRank.id): the forge and the Emeth may
 ## show it (environment-artist, technical-artist), the save is already written.
 signal forged(rank: StringName)
+## Ofícios: the pick restored (&"restore") or the Vendedor's order delivered (&"deliver").
+signal oficio_done(what: StringName)
 
 ## Seconds to black before the run starts.
 const FADE := 0.45
@@ -77,6 +79,7 @@ func _ready() -> void:
 	camera.make_current()
 	cam = CamRig.new(camera, arena, player)
 	cam.snap()
+	_arrival_look()
 	if not cam.holds() and arrived >= 0.0:
 		# the near camera starts on the far one's point: the portal in the frame as he comes up (P1-A2)
 		var p := HubPlan.near_want_at(player.pos, 0.0)
@@ -133,6 +136,7 @@ func _process(delta: float) -> void:
 	var dt := minf(delta, 0.05)
 	if arrived >= 0.0:
 		arrived += dt
+	_arrival_look()
 	var free := not host.is_open() and not leaving
 	player.step(dt, move() if free else Vector2.ZERO, Vector2.ZERO)
 	if focus.step(player.pos):
@@ -159,6 +163,16 @@ func _exit_tree() -> void:
 	Controls.virtual = null
 
 
+## HV-B: for HubPlan.ARRIVAL_LOOK seconds after he comes up the Retorno both cameras look from
+## HubPlan.ARRIVAL_DISTANCE and keep him HubPlan.ARRIVAL_SAFE inside the screen (the portal's arch whole from the
+## south-east seal), then ease back in HubPlan.ARRIVAL_EASE to their own distance and the 18% (CamRig.wide, safe).
+func _arrival_look() -> void:
+	var k := HubPlan.arrival_share(arrived)
+	cam.wide = k
+	cam.wide_distance = HubPlan.ARRIVAL_DISTANCE
+	cam.safe = lerpf(CamFrame.SAFE, HubPlan.ARRIVAL_SAFE, k)
+
+
 ## The floor point the camera leans to while a station is in focus (HubPlan.frame_for; INF: none, the far camera's
 ## own point): from where it would look without one, as little as it takes to bring the station's SHOW point inside
 ## the screen. The near camera always leans: on him, never south of HubPlan.NEAR_SOUTH (art review H-P0-2), and for
@@ -167,7 +181,7 @@ func lean() -> Vector2:
 	if focus.current == &"" and cam.holds():
 		return Vector2.INF
 	var view := get_viewport().get_visible_rect().size
-	var d := CamRig.distance()
+	var d := cam.dist()
 	# the near camera follows him, but never looks south of the hub's NEAR_SOUTH (art review H-P0-2)
 	var from := cam.look_at(arena.cam_target if cam.holds() else HubPlan.near_want_at(player.pos, arrived), d, camera.fov)
 	if focus.current == &"":
@@ -195,7 +209,10 @@ func _show_focus() -> void:
 	if id == &"":
 		return
 	station_sign = StationSign.make(id, T.t("hub_" + id), T.t(station_line(id)))
-	station_sign.position = HubPlan.anchor(id)
+	# HV-D (hv_santuario_vigilia_art.md 6.3): no sign floating over the station; it hangs at the foot of the thing used
+	# (the anchor brought down to the floor), as the rewards' and the doors' in a run (StationSign.under)
+	station_sign.position = HubPlan.anchor(id) * Vector3(1.0, 0.0, 1.0)
+	station_sign.under = true
 	station_sign.hero_at = Vector3(player.pos.x, 0.0, player.pos.y)
 	station_sign.pressed.connect(func() -> void:
 		if focus.current == id:
@@ -205,6 +222,11 @@ func _show_focus() -> void:
 
 ## The text key of a station's short line (the Vendedor and the Forjador: still to be defined).
 static func station_line(id: StringName) -> StringName:
+	# Ofícios: the Vendedor's order open, or the Forjador's pick asked for, say so on the sign
+	if id == HubPlan.VENDOR and Oficios.order_state(Save.data, OficiosDef.live()) == Oficios.Order.OPEN:
+		return &"oficio_has_order"
+	if id == HubPlan.SMITH and Oficios.noted(Save.data) and not Oficios.has_tool(Save.data, OficiosDef.live()):
+		return &"oficio_has_order"
 	match id:
 		HubPlan.VENDOR:
 			return &"hub_soon"
@@ -229,20 +251,56 @@ func use(id: StringName) -> void:
 		HubPlan.BOOK:
 			_open_book(HeroScreen.Chapter.HERO)
 		HubPlan.SMITH:
-			_open_forge()
+			_use_smith()
 		HubPlan.VENDOR:
-			host.open(HubPanel.new(), [T.t("hub_" + id), T.t("hub_%s_soon" % id), [[&"back", T.t(&"back")]],
-				SealedMark.new().setup(MARK), T.t(&"hub_soon")])
+			_use_vendor()
+
+
+## Ofícios, Roteiro A: the Forjador opens the Forja; once a vein was noted it has the Oficina's bookmark (the
+## ui-ux-designer's ForgeScreen), open first while the Picareta waits to be restored.
+func _use_smith() -> void:
+	_open_forge()
+
+
+## The Vendedor: closed until the first Pedra Funda; then its order (2 Pedra Funda and 30 Prata); delivered, the first
+## Obra (the angels' preview).
+func _use_vendor() -> void:
+	var d := OficiosDef.live()
+	var state := Oficios.order_state(Save.data, d)
+	if state == Oficios.Order.LOCKED:
+		host.open(HubPanel.new(), [T.t("hub_vendor"), T.t(&"hub_vendor_soon"), [[&"back", T.t(&"back")]],
+			SealedMark.new().setup(MARK), T.t(&"hub_soon")])
+		return
+	# the order's sheet (ui-ux-designer, OficioSheets: what it asks for with marks and numbers, Entregar only when all
+	# is there), the same leaf once delivered
+	var p := HubPanel.new()
+	host.open(p, OficioSheets.order(Save.data, d))
+	p.chosen.connect(func(choice: StringName) -> void:
+		if choice == &"deliver" and Oficios.deliver(Save.data, d):
+			Save.write()
+			oficio_done.emit(&"deliver")
+			labels_changed())
+
+
+## The station signs and the purse read the save again (after an Ofício changed it).
+func labels_changed() -> void:
+	_show_focus()
 
 
 ## The Forja da Emeth at the Forjador (ForgeScreen, a spread of the Livro): each purchase is written and said
 ## (forged).
 func _open_forge() -> void:
 	var f := ForgeScreen.new()
-	if host.open(f, [Save.data]):
+	var d := OficiosDef.live()
+	var start := ForgeScreen.Tab.WORKSHOP if Oficios.noted(Save.data) and not Oficios.has_tool(Save.data, d) \
+			else ForgeScreen.Tab.EMETH
+	if host.open(f, [Save.data, start]):
 		f.forged.connect(func(rank: StringName) -> void:
 			_show_forge()
 			forged.emit(rank))
+		f.restored.connect(func() -> void:
+			oficio_done.emit(&"restore")
+			labels_changed())
 
 
 ## G-2: the Forja's rank on the forge (HubLook.set_forge_rank) and on the Emeth in his hand.

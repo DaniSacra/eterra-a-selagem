@@ -65,9 +65,10 @@ func test_a_version_5_save_opens_whole_and_keeps_everything_through_four_runs() 
 	var w: Dictionary = out.heroes.warrior
 	assert_eq(int(w.mastery_xp), 330)
 	assert_eq(w.equipped, ["quarto_corte", "impeto", "corte_crescente"], "the loadout stays")
-	for id in ["quarto_corte", "impeto", "corte_crescente", "lamina_faminta"]:
+	# Mastery 6 (330 XP) with the B-3 ladder (balance.md B.5): up to Passo Encadeado (5); Avanço Feroz at 7
+	for id in ["quarto_corte", "impeto", "corte_crescente", "lamina_faminta", "passo_encadeado"]:
 		assert_true((w.opened as Array).has(id), "%s unlocked before: opened for free" % id)
-	assert_false((w.opened as Array).has("passo_encadeado"), "nothing past its Mastery")
+	assert_false((w.opened as Array).has("avanco_feroz"), "nothing past its Mastery")
 	assert_eq(int(w.forge.temper), 0)
 	assert_eq(w.tools, [])
 	assert_eq(MaterialPurse.amount(out, MaterialPurse.SILVER), 20, "5 a descent played (4)")
@@ -130,7 +131,7 @@ func test_a_gift_revealed_must_be_opened_before_it_is_equipped() -> void:
 	var w: Dictionary = d.heroes.warrior
 	assert_eq(book.check(["quarto_corte", "impeto"], 3, 99, Talents.opened_of(w)).problem, Talents.Problem.SEALED)
 	assert_eq(book.check(["quarto_corte", "impeto"], 3, 99).problem, Talents.Problem.OK, "null: every Gift open (--talents)")
-	assert_eq(book.open_problem(&"impeto", 2, [], 9), Talents.Problem.LOCKED, "not revealed yet")
+	assert_eq(book.open_problem(&"impeto", 1, [], 9), Talents.Problem.LOCKED, "not revealed yet")
 	assert_eq(book.open_problem(&"impeto", 3, [], 1), Talents.Problem.SHORT)
 	assert_eq(book.open_problem(&"quarto_corte", 3, [], 0), Talents.Problem.OPENED, "free")
 	assert_false(book.open_in(d, "warrior", &"impeto", 3), "no Memória")
@@ -379,4 +380,4 @@ func test_an_older_log_line_reads_with_no_materials_nor_angels() -> void:
 	assert_eq(old.angels, [])
 	assert_eq(old.forge, {})
 	assert_eq(old.talents_opened, 0)
-	assert_eq(RunLog.VERSION, 5)
+	assert_eq(RunLog.VERSION, 6)  # (6: the Ofícios; test_oficios.gd)

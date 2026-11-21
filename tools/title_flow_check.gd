@@ -249,7 +249,7 @@ func _hero(screen: Node) -> void:
 	_check(moved != null and moved != owner_, "down walks the tree")
 	var at := int(screen.get(&"chapter"))
 	await _pad(JOY_BUTTON_RIGHT_SHOULDER)
-	_check(int(screen.get(&"chapter")) == (at + 1) % 3, "RB turns to the next chapter")
+	_check(int(screen.get(&"chapter")) == (at + 1) % (screen.get(&"chapters") as Array).size(), "RB turns to the next chapter")
 	await _pad(JOY_BUTTON_LEFT_SHOULDER)
 	_check(int(screen.get(&"chapter")) == at, "LB turns back")
 

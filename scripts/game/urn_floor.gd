@@ -34,6 +34,7 @@ func _init(g: Game, def: HazardDef, awake := true) -> void:
 func step(dt: float) -> void:
 	var def := hazard.def
 	var did := hazard.step(dt)
+	_show_pieces(did.blasted)
 	for i: int in did.blasted:
 		Audio.play(CombatSounds.EVENTS[&"urn_fire"])
 		var at := def.urns[i]
@@ -101,6 +102,34 @@ func _burn() -> void:
 		if game.player.alive() and _on(s, p) and not seen.get("hero", false):
 			seen["hero"] = true
 			game.ground.strike(def.flow_hero, p, Ground.OIL_SOURCE, def.flow_lead)
+
+
+## SW-G7: each urn's piece (look.hazard_piece(URN_SOURCE, i), when the room has it): lit, its fuse as the windup; on the
+## blast the strike; then the oil run down its channel as the flame goes, charring after.
+func _show_pieces(blasted: PackedInt32Array) -> void:
+	var look := game.arena.look
+	if look == null:
+		return
+	var def := hazard.def
+	for i in hazard.count():
+		var piece := look.hazard_piece(Ground.URN_SOURCE, i)
+		if piece == null or not is_instance_valid(piece):
+			continue
+		var t: float = hazard.since[i]
+		if hazard.stage[i] == UrnHazard.Stage.IDLE:
+			piece.set_state(Vector3.ZERO, not hazard.awake)
+			continue
+		if t < def.warn:
+			piece.set_state(Vector3(clampf(t / maxf(def.warn, 0.001), 0.0, 1.0), 0.0, 0.0))
+		else:
+			piece.set_state(Vector3(0.0, 1.0 if blasted.has(i) else 0.0, 0.0))
+		var f := def.flow_of(i)
+		var length := Vector2(f.x, f.y).distance_to(Vector2(f.z, f.w))
+		var reach := clampf((t - def.warn) * def.flow_speed, 0.0, length) if length > 0.0 else 0.0
+		var last := 0.0
+		for st: Dictionary in hazard.stretches[i]:
+			last = maxf(last, float(st.reach))
+		piece.set_oil(reach, clampf((t - last) / maxf(def.burn, 0.001), 0.0, 1.0))
 
 
 static func _on(s: Dictionary, p: Vector2) -> bool:

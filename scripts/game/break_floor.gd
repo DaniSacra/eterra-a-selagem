@@ -8,16 +8,14 @@ extends Node3D
 ## It changes nothing of the fight: no hit stop, no number, no combo, no Magia, no ultimate charge, no slow motion, not
 ## a target of the aim assist (only the Horde is), stops neither bodies nor shots (not an ArenaObstacle).
 ##
-## The look is a placeholder for the environment-artist and the technical-artist (AT-Q2): a plain lit shape per piece
-## in the clay, wood or branch of the room's biome (the spec's section 3), a squash of SQUASH_TIME before it goes,
-## shards by Fx.chips and dust by Fx.wisps (both in Fx's own dice: breaking never moves the run's).
+## The look (AT-Q2) is BreakableKit's: each piece in the clay, wood or branch of the room's biome (the spec's section
+## 3), a squash of SQUASH_TIME before it goes, its shards flying low, lying 4 s and sinking (BreakableKit.shatter, a
+## water jar's stain drying), splinters of a crack by Fx.chips and dust by Fx.wisps (Fx's own dice: breaking never
+## moves the run's).
 
 ## Seconds a struck piece squashes before it goes (the "gives and yields" of a struck enemy, P2), and how flat.
 const SQUASH_TIME := 0.04
 const SQUASH := 0.75
-## Degrees a cracked crate's board leans, and how much darker it reads.
-const CRACK_LEAN := 2.0
-const CRACK_DARK := 0.8
 ## The body of each material per room (hue degrees, saturation, value; at_q0_breakables.md section 3); "" the rest.
 const CLAY := {
 	&"hall": Vector3(26, 0.3, 0.43), &"crypt": Vector3(34, 0.14, 0.5), &"garden": Vector3(22, 0.35, 0.4),
@@ -27,9 +25,7 @@ const CLAY := {
 const WOOD := Vector3(30, 0.22, 0.4)
 const BRANCH := Vector3(30, 0.22, 0.4)
 const SAPLING := Vector3(48, 0.22, 0.62)
-## Shards and dust of a break: how many, how fast, how long they last (placeholder; AT-Q2 makes them settle 4 s).
-const SHARDS := {Breakables.Stuff.CERAMIC: 8, Breakables.Stuff.WATER: 8, Breakables.Stuff.WOOD: 7,
-	Breakables.Stuff.BRANCH: 6}
+## Splinters of a crack (the break's shards are BreakableKit's) and the dust of a break: how fast, how long, how much.
 const SHARD_SPEED := 2.6
 const SHARD_LIFE := 0.6
 const DUST := 3
@@ -89,9 +85,10 @@ func step(dt: float) -> void:
 func restore() -> void:
 	rules = Breakables.new(rules.pieces)
 	for i in meshes.size():
-		meshes[i].visible = true
-		meshes[i].scale = Vector3.ONE
-		meshes[i].rotation = Vector3.ZERO
+		var whole := _piece(rules.pieces[i])
+		meshes[i].replace_by(whole)
+		meshes[i].queue_free()
+		meshes[i] = whole
 		_squash[i] = 0.0
 
 
@@ -109,15 +106,14 @@ func _on_landed(z: Ground.Zone) -> void:
 func _show(did: Dictionary) -> void:
 	var heard := {}
 	for i: int in did.cracked:
-		var m := meshes[i]
-		m.rotation_degrees.z += CRACK_LEAN
-		_tint(m, CRACK_DARK)
+		BreakableKit.crack(meshes[i])
 		_shards(i, 3)
 	for i: int in did.broken:
 		var p := rules.pieces[i]
 		meshes[i].scale.y = SQUASH
 		_squash[i] = SQUASH_TIME
-		_shards(i, SHARDS[Breakables.material_of(p.form)])
+		var away := Vector3(p.at.x - game.player.pos.x, 0.0, p.at.y - game.player.pos.y)
+		BreakableKit.shatter(self, p, _color(p.form), away)
 		var dust := _color(p.form).lightened(0.25)
 		game.fx.wisps(Vector3(p.at.x, p.height * 0.4, p.at.y), Vector3.UP, dust, DUST, 0.8, 0.35, 0.5, 0.8, 0.6)
 		heard[Breakables.SOUND[Breakables.material_of(p.form)]] = true
@@ -149,63 +145,9 @@ func _color(form: BreakablePiece.Form) -> Color:
 			hsv = SAPLING if form == BreakablePiece.Form.SAPLING else BRANCH
 		_:
 			hsv = CLAY.get(_room, CLAY[&""])
-	var c := Color.from_hsv(hsv.x / 360.0, hsv.y, hsv.z)
-	if form == BreakablePiece.Form.WATER:
-		c = c.darkened(0.3)  # (the wet band reads "it holds water")
-	return c
+	return Color.from_hsv(hsv.x / 360.0, hsv.y, hsv.z)  # (a water jar's wet band is BreakableKit's)
 
 
-func _tint(m: Node3D, k: float) -> void:
-	for mi in m.find_children("*", "MeshInstance3D", true, false):
-		var mat := (mi as MeshInstance3D).material_override as StandardMaterial3D
-		if mat:
-			mat.albedo_color = mat.albedo_color * Color(k, k, k)
-
-
-## A plain shape for a piece (placeholder): round and full for clay, square for wood, thin sticks for branches.
+## A piece whole (AT-Q2, BreakableKit: its body in the room's clay, wood or branch, its lip and contact shadow).
 func _piece(p: BreakablePiece) -> Node3D:
-	var root := Node3D.new()
-	root.position = Vector3(p.at.x, 0.0, p.at.y)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = _color(p.form)
-	mat.roughness = 1.0
-	var mi := MeshInstance3D.new()
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var h := p.height
-	match p.form:
-		BreakablePiece.Form.CRATE:
-			var b := BoxMesh.new()
-			b.size = Vector3(p.radius * 1.5, h, p.radius * 1.5)
-			mi.mesh = b
-		BreakablePiece.Form.PLANK, BreakablePiece.Form.BENCH:
-			var b := BoxMesh.new()
-			b.size = Vector3(p.radius * 2.2, h, p.radius * 0.8)
-			mi.mesh = b
-		BreakablePiece.Form.BRANCH:
-			var c := CylinderMesh.new()
-			c.top_radius = 0.03
-			c.bottom_radius = 0.06
-			c.height = h
-			mi.mesh = c
-			mi.rotation_degrees.z = 12.0
-		BreakablePiece.Form.SAPLING:
-			var s := SphereMesh.new()
-			s.radius = p.radius
-			s.height = h
-			mi.mesh = s
-		BreakablePiece.Form.OFFERING:
-			var c := CylinderMesh.new()
-			c.top_radius = p.radius
-			c.bottom_radius = p.radius * 0.6
-			c.height = h
-			mi.mesh = c
-		_:
-			var c := CylinderMesh.new()
-			c.top_radius = p.radius * (0.75 if p.form == BreakablePiece.Form.WATER else 0.45)
-			c.bottom_radius = p.radius * 0.7
-			c.height = h
-			mi.mesh = c
-	mi.position.y = h * 0.5
-	root.add_child(mi)
-	return root
+	return BreakableKit.build(p, _color(p.form), _room)

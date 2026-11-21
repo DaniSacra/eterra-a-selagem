@@ -96,6 +96,15 @@ enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 ## two warnings at once (combat_cadence.md 9.2 R9).
 @export var also: HazardDef
 
+## PLATES, AT-H2 (the niche's skeleton): whoever a strip struck is pulled this far toward the strip's start (the
+## niche), never held (Q-AT3 a): the paladin over PlateFloor.PULL_TIME, the pull cut short at the edge of any other
+## warning on the floor or of stone (combat_cadence.md 9.2 R10), and cut off by his dodge. 0: no pull.
+@export var pull := 0.0
+## PLATES, AT-H2 and AT-H3: what a blow of the paladin only sparks on (the skeleton in its niche, the hostile plant):
+## never hurt, never a target of the aim assist (no enemy), no number, no combo, no hit stop.
+@export var sparks: PackedVector2Array = PackedVector2Array()
+@export var spark_radius := 0.6
+
 ## GRID, RP-14 (H-5, the crystal that discharges): where each crystal stands (off the floor, by the north wall), the
 ## column of tiles (0 west) it discharges along, and how far round it a blow of the paladin reaches it (m). Each blow of
 ## his that touches a crystal charges it; at crystal_hits it discharges at once: its column's tiles (only those that

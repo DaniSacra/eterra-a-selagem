@@ -27,6 +27,9 @@ var iframes := 0.267
 ## How many pairs needed the dodge (the rest walk out), by pattern: printed for the design document.
 var dodged := {}
 var walked := {}
+## AT-CS3: the chamber's breakables taken as solid stone ([middle, radius] each) while their run counts them whole;
+## empty for the rest (they stop nothing in the game: whole as solid is the harder case, broken is the floor alone).
+var solid: Array = []
 
 
 func before_all() -> void:
@@ -88,20 +91,42 @@ func _pairs() -> Array[Array]:
 	var out: Array[Array] = []
 	for b in _boss_spots():
 		for p in _hero_spots():
-			if p.distance_to(b) >= body + 0.5 + 0.1:
+			if p.distance_to(b) >= body + 0.5 + 0.1 and not _on_piece(p, 0.5) and not _on_piece(b, body):
 				out.append([b, p])
 	return out
 
 
+## AT-CS3: a body of radius r standing in a breakable taken as solid (nobody starts in stone).
+func _on_piece(p: Vector2, r: float) -> bool:
+	for s in solid:
+		if p.distance_to(s[0]) < float(s[1]) + r:
+			return true
+	return false
+
+
 func _stand(q: Vector2, boss: Vector2) -> bool:
-	return floor.contains(q, 0.5 - 0.001) and q.distance_to(boss) >= body + 0.5
+	if not floor.contains(q, 0.5 - 0.001) or q.distance_to(boss) < body + 0.5:
+		return false
+	for s in solid:
+		if q.distance_to(s[0]) < float(s[1]) + 0.5:
+			return false
+	return true
+
+
+## AT-CS3: the way from p to q runs into a breakable taken as solid (the dodge too: it crosses bodies, not stone).
+func _into_piece(p: Vector2, q: Vector2) -> bool:
+	for s in solid:
+		var c: Vector2 = s[0]
+		if c.distance_to(Geometry2D.get_closest_point_to_segment(c, p, q)) < float(s[1]) + 0.5 - 0.01:
+			return true
+	return false
 
 
 ## The walk from p to q passes through Morvath's body (the floor is round and convex: the rest of the way is floor).
 func _through_body(p: Vector2, q: Vector2, boss: Vector2) -> bool:
 	var d := q - p
 	var t := clampf((boss - p).dot(d) / maxf(d.length_squared(), 0.0001), 0.0, 1.0)
-	return (p + d * t).distance_to(boss) < body + 0.5 - 0.01
+	return (p + d * t).distance_to(boss) < body + 0.5 - 0.01 or _into_piece(p, q)
 
 
 ## Where the paladin can stand, out of `hazard`, `time` seconds after the warning shows: walking straight there, or
@@ -124,7 +149,7 @@ func _way_out(p: Vector2, boss: Vector2, time: float, hazard: Callable) -> Array
 		for ring in range(1, RINGS + 1):
 			for k in WAYS:
 				var q := p + Vector2.from_angle(TAU * k / WAYS) * far * ring / RINGS
-				if _stand(q, boss) and not hazard.call(q):
+				if _stand(q, boss) and not _into_piece(p, q) and not hazard.call(q):
 					return [q, true]
 	return []
 
@@ -337,7 +362,8 @@ func _wave_out(at: Vector2, boss: Vector2, windup: float, start: float, hazard: 
 		for ring in range(1, RINGS + 1):
 			for k in WAYS:
 				var q := at + Vector2.from_angle(TAU * k / WAYS) * reach * ring / RINGS
-				if not _stand(q, boss) or (not dodge and _through_body(at, q, boss)) or hazard.call(q):
+				if not _stand(q, boss) or (not dodge and _through_body(at, q, boss)) or _into_piece(at, q) \
+						or hazard.call(q):
 					continue
 				if _clear_of_first(at, q, start, flying, leaves, dodge):
 					return [q, dodge]
@@ -627,3 +653,64 @@ func _slide(q: Vector2, boss: Vector2, through := false) -> Vector2:
 	if not through and q.distance_to(boss) < body + 0.5:
 		q = boss + (q - boss).normalized() * (body + 0.5)
 	return floor.clamp(q, 0.5)
+
+
+# ---------- AT-CS3: the chamber's breakables ----------
+
+## Where they stand: 4 to 10, only on the landing of the south stairs or on the rim 11 to 12 m from the seal, past the
+## ritual's ring of runes and his dead's, 1.5 m and more from the way in and from his spawn.
+func test_the_chamber_breakables_stand_on_the_landing_and_the_rim() -> void:
+	var l := (load(STAGE) as StageDef).boss_layout
+	assert_between(l.breakables.size(), 4, 10, "4 to 10 pieces in the chamber")
+	for p in l.breakables:
+		var r := p.at.distance_to(floor.center)
+		var landing := p.at.y > 8.0 and absf(p.at.x) < 7.0
+		assert_true(landing or (r >= 11.0 and r <= 12.0), "%s: on the landing or the rim" % p.at)
+		assert_gte(r - p.radius, def.ritual_ring + 2.5, "%s: past the ritual's ring and its runes" % p.at)
+		assert_true(floor.contains(p.at, p.radius), "%s: on the floor" % p.at)
+		assert_gte(p.at.distance_to(l.hero_spawn), 1.5, "%s: off the way in" % p.at)
+		assert_gte(p.at.distance_to(l.boss_spawn), def.summon_ring + 2.0, "%s: off his spawn's dead" % p.at)
+
+
+## Every pattern (and the layers over them) has a way out with the breakables whole, taken as solid stone (the harder
+## case: in the game they stop nothing), the paladin and Morvath never starting in one. Broken they leave the floor
+## alone: the tests above.
+func test_every_pattern_has_a_way_out_with_the_breakables_whole() -> void:
+	var l := (load(STAGE) as StageDef).boss_layout
+	assert_false(l.breakables.is_empty())
+	var kept := [dodged.duplicate(), walked.duplicate()]
+	solid = []
+	for p in l.breakables:
+		solid.append([p.at, p.radius])
+	test_the_scythe_has_a_way_out_everywhere()
+	test_the_blades_have_a_way_out_everywhere()
+	test_the_dash_is_cut_at_the_edge_and_has_a_way_out()
+	test_the_eruptions_have_a_way_out_both_times()
+	test_the_storm_has_a_way_out_of_every_wave()
+	test_the_curse_can_be_walked_or_dodged_away_from()
+	test_the_storm_with_eruptions_and_his_dead_has_a_way_out_of_every_wave()
+	test_the_scythe_with_eruptions_has_a_way_out()
+	test_the_curse_with_eruptions_can_be_escaped()
+	solid = []
+	dodged = kept[0]
+	walked = kept[1]
+
+
+## In the real chamber they stop nothing, whole or broken: the paladin's sweep through each one ends where it was
+## aimed, every spot of theirs is free floor, and breaking them all (one blow over the room) leaves it the same.
+func test_the_chamber_breakables_stop_nothing_whole_or_broken() -> void:
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	var l := (load(STAGE) as StageDef).boss_layout
+	game.rebuild_room(l, 0, 1406)
+	assert_not_null(game.breaks, "the chamber has its breakables")
+	for state in ["whole", "broken"]:
+		if state == "broken":
+			game.breaks.rules.circle(floor.center, 20.0, Breakables.Source.HERO)
+			assert_eq(game.breaks.rules.broken_count(), game.breaks.rules.count(), "all broken")
+		for p in l.breakables:
+			assert_true(game.arena.free_at(p.at, 0.5), "%s %s: free floor" % [state, p.at])
+			var from := p.at + (floor.center - p.at).normalized() * 2.0
+			var to := p.at - (floor.center - p.at).normalized() * 0.3
+			assert_almost_eq(game.arena.sweep(from, to, 0.5).distance_to(game.arena.resolve(to, 0.5)), 0.0, 0.05,
+				"%s %s: the sweep runs through it" % [state, p.at])

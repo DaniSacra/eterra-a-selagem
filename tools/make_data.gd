@@ -53,7 +53,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -234,8 +234,8 @@ func _enemies() -> void:
 	var B := EnemyDef.Behavior
 	var T := EnemyDef.Tell
 	# the foot soldier: walks up, raises its blade 0.9 s and lunges (Hades: the common melee shade)
-	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 3.0, "radius": 0.5,
-		"attack_damage": 3.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
+	_pair({"id": &"skeleton", "model": &"skeleton", "behavior": B.RUNNER, "size": 1.15, "hp": 60.0, "speed": 300.0 / U, "damage": 5.0, "radius": 0.5,
+		"attack_damage": 5.0, "attack_range": 290.0 / U, "attack_cooldown": 1.4, "attack_windup": 0.9, "lunge_speed": 700.0 / U, "lunge_time": 0.3,
 		"rating": 5.0, "role": &"pressure", "tell": T.GLINT, "tell_at": Vector3(0.1, 1.9, -1.0), "vivid": -0.1,
 		# at most 2 soldiers wind up at once (AUDIT.md P9: their red lines piled into one block)
 		"max_attackers": 2, "recover_time": ENEMY_RECOVER.skeleton[0],
@@ -248,8 +248,8 @@ func _enemies() -> void:
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest); C17,
 	# QW-102: 1.0 s of wind-up, its last 0.3 s held trembling (0.7 was the shortest warning of the game: the PO took 9
 	# blows with 0.70 to 0.82 s; Hades' Radiator winds up 1.5 s)
-	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 5.0, "radius": 0.45,
-		"attack_damage": 5.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 1.0,
+	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 45.0, "speed": 390.0 / U, "damage": 8.0, "radius": 0.45,
+		"attack_damage": 8.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 1.0,
 		"magic_color": DEAD_CRIMSON, "rating": 7.0, "role": &"react", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
 		"strike_at": 0.1,
@@ -269,8 +269,8 @@ func _enemies() -> void:
 	# took 46% of its blows in the rooms from them, 35% with both), 4 damage; then
 	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 6 at once.
 	# Cold violet (Daniel, 2026-11-14) until the VFX pass: magenta, DEAD_MAGENTA.
-	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 280.0 / U, "damage": 4.0, "radius": 0.5,
-		"attack_damage": 4.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA,
+	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 280.0 / U, "damage": 6.0, "radius": 0.5,
+		"attack_damage": 6.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 20.0, "shot_homing": 0.8, "shot_ticks": 3, "shot_interval": 0.17,
 		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
@@ -279,17 +279,17 @@ func _enemies() -> void:
 	# the crossbowman (Hades: the Screamer's life and rating; it has no shot there, a cone held on itself): a fast
 	# orange bolt along a line marked on the floor (the aim locks there) from 12 m, Daniel's request of 2026-11-16;
 	# from Hades, after each attack it runs 8.75 m from him for 1.5 to 1.75 s, and at most 2 wind up at once; 3.6 m/s
-	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 290.0 / U, "damage": 3.0, "radius": 0.55,
-		"attack_damage": 3.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": DEAD_CRIMSON,
+	_pair({"id": &"archer", "model": &"archer", "behavior": B.ARCHER, "size": 1.27, "hp": 130.0, "speed": 290.0 / U, "damage": 5.0, "radius": 0.55,
+		"attack_damage": 5.0, "attack_range": 12.0, "attack_cooldown": 1.8, "attack_windup": 0.8, "magic_color": DEAD_CRIMSON,
 		"shot_speed": 16.0, "shot_line": true, "keep_away": 0.65, "retreat_far": 700.0 / U, "retreat_time": Vector2(1.5, 1.75), "max_attackers": 2,
 		# T5-05: the crossbow rises to the shoulder over its settle (it rose in 0.1 s)
 		"windup_settle": 0.25,
 		"rating": 13.0, "role": &"flank", "tell": T.BOLT, "tell_at": Vector3(-0.05, 1.62, 1.42), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.archer[0]}, {"armor": 190.0, "rating": 34.0})
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
-	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 9.0, "radius": 0.75,
-		"heavy": true, "attack_damage": 9.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
-		"lunge_time": 0.4, "close_damage": 7.0, "close_range": 2.6, "close_windup": 0.65,
+	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 14.0, "radius": 0.75,
+		"heavy": true, "attack_damage": 14.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
+		"lunge_time": 0.4, "close_damage": 11.0, "close_range": 2.6, "close_windup": 0.65,
 		# T5-06: braced in three beats, 0.15 s to settle and the last 0.35 s held with a tremble
 		"windup_settle": 0.15, "windup_hold": 0.3, "windup_shake": 0.03,
 		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield",
@@ -299,31 +299,31 @@ func _enemies() -> void:
 	# one shadow vine creeping along the floor after the paladin at 1.9 m/s, turning 90 degrees a second at first and
 	# 15 less each second, for 12 s, 6 damage; then 3.25 s (elite: 3 vines 0.7 s apart, then 2.25 s). Before
 	# 2026-11-16 it dropped circles under him: those are Morvath's alone now.
-	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 6.0, "radius": 0.7,
-		"heavy": true, "attack_damage": 6.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": DEAD_MAGENTA,
+	_pair({"id": &"priest", "model": &"priest", "behavior": B.ARCHER, "size": 1.3, "hp": 290.0, "speed": 0.0, "damage": 10.0, "radius": 0.7,
+		"heavy": true, "attack_damage": 10.0, "attack_range": 1800.0 / U, "attack_cooldown": 3.25, "attack_windup": 0.8, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 150.0 / U, "shot_turn": 90.0, "shot_turn_decay": 15.0, "shot_range": 150.0 / U * 12.0, "shot_low": true,
 		"rating": 22.0, "role": &"area", "tell": T.RITUAL, "tell_at": Vector3(0.0, 1.3, 0.45), "vivid": 0.25,
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY},
 		{"armor": 390.0, "shot_ticks": 3, "shot_interval": 0.7, "attack_cooldown": 2.25, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
-	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 12.0, "radius": 1.1,
-		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 14.0, "attack_cooldown": 3.2,
-		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 12.0, "close_range": 3.2, "close_windup": 0.8,
+	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 16.0, "radius": 1.1,
+		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 16.0, "attack_range": 14.0, "attack_cooldown": 3.2,
+		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 16.0, "close_range": 3.2, "close_windup": 0.8,
 		# T5-07: braced behind its shield in three beats (it stood idle), the last 0.3 s held with a tremble
 		"windup_settle": 0.12, "windup_hold": 0.3, "windup_shake": 0.03,
 		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
 		"recover_time": 0.8,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
-		"damage": 9.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 9.0, "attack_range": 9.0,
+		"damage": 12.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 9.0,
 		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 7.0,
 		"shot_count": 5, "shot_spread": 70.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
 	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
 	# fight's numbers are data/bosses/morvath.tres (_bosses)
-	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 8.0, "radius": 1.4,
-		"heavy": true, "armor": 0.0, "attack_damage": 10.0, "magic_color": SPECTRAL, "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
+	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * 0.5, "damage": 13.0, "radius": 1.4,
+		"heavy": true, "armor": 0.0, "attack_damage": 16.0, "magic_color": SPECTRAL, "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
 		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5, "material": &"spectral"})
 
 
@@ -563,6 +563,9 @@ func _stage() -> void:
 	st.map_doors = PackedFloat32Array([1.0, 5.0, 2.0])
 	st.guardian_pair_chance = 0.5
 	st.pom_from_depth = 3
+	# B-4 (balance.md B.5): every room harder from the start
+	st.base_difficulty = 70.0
+	st.depth_ramp = 17.0
 	st.enemies = [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite",
 		&"guard", &"guard_elite", &"priest", &"priest_elite"]
 	# Few enemies at once, each with its part, a fight won by skill as in Hades II (Daniel, 2026-11-15: not a horde
@@ -669,8 +672,8 @@ func _stage() -> void:
 	st.layouts = [hall, _crypt(), _rift(), _garden(), _sanctuary(), _bridge(), _runes()]
 	st.shop_layout = hall
 	st.trial_layout = _trial_room()
-	_place_breakables(st)
 	st.altar_layout = _altar_room()
+	_oficios_stage(st)
 	# The Provação (Hades II's Chaos, hades2_sistemas.md 7): 20% a room won, from the 2nd room to the 7th (a curse of 3
 	# to 5 fights must have fights to be carried in before the shop), once in 10 rooms (once in a descent), at
 	# ceil(10 + 0.5 x depth) life; three cards, the blessing's rarity as the Chaos's (rare 40%, epic 10%).
@@ -701,6 +704,7 @@ func _stage() -> void:
 	# middle walks up to 12 m from the seal; he comes in at the mouth of the south stairs facing north, Morvath stands
 	# on the seal; the camera keeps to a point 0.7 m from the seal toward it and moves off it at most 3 m
 	st.boss_layout = _chamber()
+	_place_breakables(st)
 	_save(st, "res://data/stages/catacombs.tres")
 
 
@@ -849,6 +853,48 @@ func _roots(tips: Array) -> HazardDef:
 	return h
 
 
+## AT-H2 (the atlas's prototype 2, Q-AT3 a, Q-AT4 a): the skeleton in a niche of the Cripta B's west wall (z -6.5,
+## off the slits' bands, 1.5 m and more from the slabs, 6 m from the way in). A short strip of 2.2 x 2.2 m
+## before the niche wakes with someone in it (him 0.3 s, an enemy 0.2 s): 1.2 s of warning (combat_cadence.md 9.4, P0
+## with the 10), a grab of 0.25 s, 10 to him and 60 to an enemy, a pull of 1 m toward the niche without holding (his
+## dodge stays his), 6 s before it wakes again. It never dies: a blow of the Emeth only sparks on it. From the 4th room.
+const NICHE_AT := Vector2(-12.0, -6.5)
+const NICHE_REACH := 2.2
+func _niche() -> HazardDef:
+	var h := _plates([], PLATES_FROM)
+	h.plates = []
+	h.strips = PackedVector4Array([Vector4(NICHE_AT.x, NICHE_AT.y, NICHE_AT.x + NICHE_REACH, NICHE_AT.y)])
+	h.strip_width = NICHE_REACH
+	h.dwell = 0.3
+	h.enemy_dwell = 0.2
+	h.warn = 1.2
+	h.rearm = 6.0
+	h.pull = 1.0
+	h.sparks = PackedVector2Array([NICHE_AT + Vector2(0.15, 0.0)])
+	h.plate_source = &"niche"
+	return h
+
+
+## AT-H3 (the atlas's prototype 3): the hostile plant, a new skin of RP-10 in the place of the Jardim B's stub root by
+## the west wall, on the damp edge: a strip of 2.5 x 1.5 m from the plant out east; it wakes as the root does (him
+## 0.5 s, an enemy 0.2 s), 1.2 s of warning (the leaves closing), a lash of 0.25 s, 10 to him and 60 to an enemy, a
+## push of 1 m out of the strip, 6 s before it wakes again. The Emeth does not hurt it: a blow only sparks.
+const PLANT_AT := Vector2(-16.6, -1.5)
+func _plant() -> HazardDef:
+	var h := _plates([], PLATES_FROM)
+	h.plates = []
+	h.strips = PackedVector4Array([Vector4(PLANT_AT.x, PLANT_AT.y, PLANT_AT.x + 2.5, PLANT_AT.y)])
+	h.strip_width = 1.5
+	h.dwell = 0.5
+	h.enemy_dwell = 0.2
+	h.warn = 1.2
+	h.rearm = 6.0
+	h.push_out = 1.0
+	h.sparks = PackedVector2Array([PLANT_AT + Vector2(0.3, 0.0)])
+	h.plate_source = &"plant"
+	return h
+
+
 ## Cripta dos Esquecidos (spec section 2): small, closed, sarcophagi and columns as cover; 4 to 6 enemies, at most 2
 ## shooters, no priest.
 ## RP-16 (docs/design/rooms_progression.md): the Ossuary's arrow slits, on the north wall either side of the dividing
@@ -978,6 +1024,8 @@ func _crypt() -> RoomLayout:
 	# the south sarcophagi; the slab on one side arms the slit of the other (the pack lured beyond the wall)
 	l.variants[0].hazard.aims = PackedVector4Array([Vector4(SLIT_EAST, -10.4, SLIT_EAST, 2.4),
 		Vector4(SLIT_WEST, -10.4, SLIT_WEST, 2.4)])
+	# AT-H2: the niche's skeleton on the west wall, beside the slabs and the slits (from the 4th room)
+	l.variants[0].hazard.also = _niche()
 	return l
 
 
@@ -986,13 +1034,29 @@ func _crypt() -> RoomLayout:
 ## slab that strikes and a hazard's band (tests/test_breakables.gd); never in the hub. First the Salão (vases, small
 ## urns, a cracked bench at the edges and at the foot of the balustrades, never on the axis nor the medallion) and the
 ## Crypt A and B (funeral ceramics, small vases, what is left of benches).
+## Ofícios, Roteiro A (docs/design/oficios/): OF-05, the doors of material deeper (Q-OF3 a, the balance-designer's
+## numbers: Prata from the 4th room, Memória past the guardian's layer), and OF-08, where the veins of Pedra Funda stand
+## in the Fendas and the Runas (the floor point he extracts from, near an edge, 6.5 m or more from the way in, off the
+## doors and the pieces, beside the way from the reward to a door; placeholder spots for the room-designer).
+func _oficios_stage(st: StageDef) -> void:
+	st.silver_from_depth = 4
+	st.memory_after_guardian = true
+	for l in st.layouts:
+		match l.id:
+			&"rift":
+				l.gather_spots = PackedVector2Array([Vector2(3.5, 7.0)])
+			&"runes":
+				l.gather_spots = PackedVector2Array([Vector2(0.5, -10.0)])
+
+
 func _place_breakables(st: StageDef) -> void:
 	const F := BreakablePiece.Form
 	for l: RoomLayout in st.layouts:
 		match l.id:
 			&"hall":
 				l.breakables = _breakable_groups([
-					[[F.VASE, -13.0, -6.6, 0.7], [F.URN, -13.0, -5.6, 0.85], [F.OFFERING, -12.3, -6.1, 0.4]],
+					# AT-Q4: against the west balustrade (it stood 1.8 m off it)
+					[[F.VASE, -13.8, -6.6, 0.7], [F.URN, -13.8, -5.6, 0.85], [F.OFFERING, -13.1, -6.1, 0.4]],
 					[[F.URN, -12.8, -12.4, 0.8], [F.VASE, -11.9, -12.6, 0.6]],
 					[[F.VASE, 14.2, 10.6, 0.6], [F.BENCH, 13.4, 12.2, 0.5]],
 					[[F.VASE, 13.6, -10.8, 0.55], [F.OFFERING, 14.3, -11.5, 0.4], [F.URN, 13.4, -12.1, 0.75]],
@@ -1003,9 +1067,74 @@ func _place_breakables(st: StageDef) -> void:
 				l.breakables = _breakable_groups([
 					[[F.VASE, -11.2, -3.3, 0.6], [F.URN, -11.2, -2.4, 0.8], [F.OFFERING, -10.5, -2.9, 0.4]],
 					south_west, north_east])
+				# AT-Q4: B's west group moved off the niche's strip (AT-H2) to the foot of the north-west sarcophagus
 				l.variants[0].breakables = _breakable_groups([
-					[[F.VASE, -11.2, -5.0, 0.6], [F.URN, -11.2, -5.9, 0.8], [F.OFFERING, -10.5, -5.4, 0.4]],
+					[[F.URN, -5.75, -7.5, 0.8], [F.VASE, -4.95, -7.5, 0.6]],
 					south_west, north_east])
+			# AT-Q4 (room-designer): every other room, groups of 2 or 3 in its corners and against its walls (the far
+			# ends from the way in first), 1.5 m and more from a door and its mark, the way in, the reward, a spawn, the
+			# guardian's spawn (4 m), a use spot and every band or slab of its hazards (tests/test_breakable_places.gd);
+			# materials by biome (docs/art/at_q0_breakables.md 3), one or two per group
+			&"rift":
+				var rift := [
+					[[F.CRATE, 20.5, -14.5, 0.7], [F.PLANK, 19.7, -14.5, 0.35], [F.CRATE, 20.5, -13.7, 0.6]],
+					[[F.PLANK, -20.5, 9.75, 0.35], [F.CRATE, -19.7, 9.75, 0.7], [F.PLANK, -20.5, 8.95, 0.35]],
+					[[F.CRATE, 10.0, 14.5, 0.7], [F.PLANK, 10.8, 14.5, 0.35]],
+				]
+				l.breakables = _breakable_groups(rift + [[[F.CRATE, -7.5, -14.5, 0.6], [F.PLANK, -8.3, -14.5, 0.35]]])
+			&"garden":
+				l.breakables = _breakable_groups([
+					[[F.BRANCH, 16.5, -13.5, 0.8], [F.SAPLING, 15.7, -13.5, 0.4], [F.BRANCH, 16.5, -12.7, 0.6]],
+					[[F.WATER, -16.5, 8.75, 0.7], [F.WATER, -15.7, 8.75, 0.6], [F.SAPLING, -16.5, 7.95, 0.4]],
+					[[F.BRANCH, 10.75, 13.5, 0.8], [F.SAPLING, 9.95, 13.5, 0.4], [F.BRANCH, 10.75, 12.7, 0.35]],
+				])
+			&"sanctuary":
+				l.breakables = _breakable_groups([
+					[[F.URN, -21.5, -13.5, 0.85], [F.OFFERING, -20.7, -13.5, 0.4], [F.VASE, -21.5, -12.7, 0.6]],
+					[[F.VASE, 21.5, 13.5, 0.6], [F.OFFERING, 20.7, 13.5, 0.4], [F.URN, 21.5, 12.7, 0.8]],
+					[[F.OFFERING, -8.5, 13.5, 0.4], [F.VASE, -9.3, 13.5, 0.55]],
+					[[F.URN, 8.75, -13.5, 0.8], [F.OFFERING, 9.55, -13.5, 0.4]],
+				])
+			&"bridge":
+				var bridge := [
+					[[F.CRATE, 27.5, 6.75, 0.7], [F.PLANK, 26.7, 6.75, 0.35], [F.CRATE, 27.5, 5.95, 0.6]],
+					[[F.PLANK, -27.5, 3.0, 0.35], [F.CRATE, -27.5, 3.8, 0.7]],  # AT-PA3: off the bridges' line and the late spawn
+				]
+				l.breakables = _breakable_groups(bridge + [
+					[[F.CRATE, 2.0, -7.5, 0.6], [F.PLANK, 2.8, -7.5, 0.35], [F.PLANK, 2.0, -6.7, 0.35]],
+					[[F.PLANK, -4.75, 7.5, 0.35], [F.CRATE, -3.95, 7.5, 0.7]]])
+				l.variants[0].breakables = _breakable_groups(bridge + [
+					[[F.CRATE, 1.0, -4.0, 0.6], [F.PLANK, 1.8, -4.0, 0.35], [F.PLANK, 0.2, -4.0, 0.35]],
+					[[F.PLANK, -13.0, 7.25, 0.35], [F.CRATE, -13.8, 7.25, 0.7]]])
+			&"runes":
+				# low boxes and bowls only (the runes are straight, D-29); AT-RA3, AT-RB3: never on a tile that arms, so
+				# only on the quiet floor of the way in (RUNES_ENTRY: the west walls and the south wall west of the door)
+				l.breakables = _breakable_groups([
+					[[F.CRATE, -14.5, -2.4, 0.6], [F.OFFERING, -13.7, -2.4, 0.35], [F.CRATE, -14.5, -1.6, 0.5]],
+					[[F.OFFERING, -14.5, 8.75, 0.4], [F.CRATE, -13.7, 8.75, 0.6], [F.OFFERING, -14.5, 7.95, 0.35]],
+					[[F.CRATE, -10.5, 11.5, 0.5], [F.OFFERING, -11.3, 11.5, 0.35]],
+				])
+	# AT-Q4: the Provação (common ceramic, never on the stele) and the Altar (offerings away from the step and candles)
+	st.trial_layout.breakables = _breakable_groups([
+		[[F.VASE, 7.5, -5.25, 0.6], [F.OFFERING, 6.7, -5.25, 0.4], [F.VASE, 7.5, -4.45, 0.5]],
+		[[F.OFFERING, -7.5, 3.0, 0.4], [F.VASE, -7.5, 2.2, 0.6]],
+		[[F.VASE, 4.25, 6.5, 0.55], [F.OFFERING, 5.05, 6.5, 0.4], [F.OFFERING, 3.45, 6.5, 0.35]],
+	])
+	st.altar_layout.breakables = _breakable_groups([
+		[[F.OFFERING, 8.5, -6.5, 0.4], [F.VASE, 7.7, -6.5, 0.6], [F.OFFERING, 8.5, -5.7, 0.35]],
+		[[F.VASE, -8.5, 2.25, 0.55], [F.OFFERING, -7.9, 1.65, 0.4]],
+		[[F.OFFERING, 6.75, 6.5, 0.4], [F.VASE, 7.55, 6.5, 0.6]],
+	])
+	# AT-CS3: the Câmara do Selo, only on the landing of the south stairs (bearing 203 to 211, beside the way in) and on
+	# the far rim, 11 to 12 m from the seal, in the half away from the camera (north-west and north-east, out of the
+	# front arc whose stone opens round him), past the ritual's ring of runes (6.5 m) and never in the door's gap;
+	# they stop nothing, so every way out of his patterns stays (tests/test_boss_exits.gd, whole and broken)
+	if st.boss_layout != null:
+		st.boss_layout.breakables = _breakable_groups([
+			[[F.URN, -4.53, 10.68, 0.75], [F.VASE, -4.99, 9.8, 0.55], [F.OFFERING, -6.03, 10.03, 0.4]],
+			[[F.VASE, -9.38, -6.82, 0.6], [F.OFFERING, -8.43, -7.07, 0.4], [F.URN, -8.34, -8.06, 0.8]],
+			[[F.URN, 8.34, -8.06, 0.75], [F.VASE, 8.63, -6.99, 0.55]],
+		])
 
 
 ## Pieces from groups of [form, x, z, height].
@@ -1118,7 +1247,9 @@ func _garden() -> RoomLayout:
 	b.append_array(bowls)
 	l.variants = [_variant(b)]
 	# RP-10: B's west root (cut short of the way in) and the stub by the west wall; the north one comes near the middle
-	l.variants[0].hazard = _roots([[Vector2(-6.6, -1.2), Vector2(-6.2, 3.6)], [Vector2(-11.5, -3.0), Vector2(-12.2, -2.5)]])
+	# AT-H3: the stub by the west wall became the hostile plant (its own hazard beside the root)
+	l.variants[0].hazard = _roots([[Vector2(-6.6, -1.2), Vector2(-6.2, 3.6)]])
+	l.variants[0].hazard.also = _plant()
 	l.hero_spawn = Vector2(-12.0, 9.0)
 	l.hero_facing = Vector2(1, -1).normalized()
 	l.exits = [ArenaExit.at_edge(Vector2(13, -14), Vector2(0, 1)), ArenaExit.at_edge(Vector2(17, 0), Vector2(-1, 0)),
@@ -1208,22 +1339,22 @@ func _bosses() -> void:
 		# a combination waits for nothing of the first to be left, then rests only this long
 		"chain_rest": 0.35,
 		# the Sepulchral Scythe: half a circle 5 m from his middle (3.6 m past his body), 0.8 s to read it, 1 s to punish
-		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 12.0, "scythe_approach": 1.2,
+		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 1.0, "scythe_damage": 19.0, "scythe_approach": 1.2,
 		# C19-3, the Double Reap (Q-09 a; Hades II's Hecate: right 0.85 / 0.4 / 0.35, at once left 0.5 / 0.5 / 2.2): two
 		# sweeps of 150 degrees and 4.5 m close in, the second born where the paladin is as the first ends, then 2.2 s
 		"reap_reach": 4.5, "reap_degrees": 150.0, "reap_windup": 0.85, "reap_active": 0.4, "reap_pause": 0.35, "reap2_windup": 0.5,
-		"reap2_active": 0.5, "reap_recovery": 2.2, "reap_damage": 10.0,
+		"reap2_active": 0.5, "reap_recovery": 2.2, "reap_damage": 16.0,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
-		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 10.0,
+		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.8, "blade_damage": 16.0,
 		# C17, Q-09 (b): phase 1 was the scythe in a loop with him close (91% scythe over 3 seeds): the Blades come at
 		# any distance, a step back first when he is within 4 m
 		"blade_step": 2.0, "blade_step_within": 4.0, "blade_step_time": 0.25,
 		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
 		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 3, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
-		"storm_recovery": 1.2, "storm_damage": 10.0, "storm_stagger": 0.08,
+		"storm_recovery": 1.2, "storm_damage": 15.0, "storm_stagger": 0.08,
 		# the Sepulchral Eruptions: 2 or 3 circles of 4 m (2 m until Daniel's test of 2026-11-16: too easy to step out of; the warning 0.9 to 1.2 s so they can still be walked out of), one on the paladin, the lane to the middle of the hall kept free
 		"eruption_radius": 4.0, "eruption_delay": 1.2, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
-		"eruption_gap": 1.0, "eruption_damage": 10.0, "eruption_recovery": 0.8,
+		"eruption_gap": 1.0, "eruption_damage": 16.0, "eruption_recovery": 0.8,
 		# the ritual: at most 20 s behind the shield, 2 soldiers and 2 casters, never more than 6 of his standing
 		"ritual_time": 20.0, "ritual_raise": [&"skeleton", &"skeleton", &"mage", &"mage"] as Array[StringName], "ritual_cap": 6,
 		"ritual_reinforce_every": 6.0, "ritual_reinforce": [&"skeleton", &"mage"] as Array[StringName], "ritual_eruption_every": 2.8,
@@ -1231,8 +1362,8 @@ func _bosses() -> void:
 		# the curse: a slow bolt that follows a little (75 degrees a second for 1.4 s), 3 s of 30% slower walking and
 		# no special, then 2 s immune
 		"curse_windup": 0.8, "curse_speed": 7.0, "curse_turn": 75.0, "curse_homing": 1.4, "curse_life": 4.0, "curse_radius": 0.55,
-		"curse_damage": 6.0, "curse_time": 3.0, "curse_slow": 0.3, "curse_immunity": 2.0, "curse_recovery": 0.6,
-		"dash_length": 16.0, "dash_time": 0.42, "dash_windup": 0.8, "dash_width": 2.8, "dash_damage": 12.0, "dash_recovery": 1.1,
+		"curse_damage": 10.0, "curse_time": 3.0, "curse_slow": 0.3, "curse_immunity": 2.0, "curse_recovery": 0.6,
+		"dash_length": 16.0, "dash_time": 0.42, "dash_windup": 0.8, "dash_width": 2.8, "dash_damage": 19.0, "dash_recovery": 1.1,
 		"stagger_from_phase": 3, "stagger_hits": 3, "stagger_forget": 4.0, "stagger_time": 2.6,
 	}
 	for k: String in numbers:
@@ -1376,10 +1507,10 @@ func _ultimates() -> void:
 		DirAccess.remove_absolute(ULT_DIR + f)
 	# T5 (docs/design/t5_ultimate.md): it also fills with the damage dealt (ULT_DAMAGE_CHARGE a point, 3000 for the
 	# cleave) and the life lost (ULT_HURT_CHARGE a point): a player who never holds an Omega still gets it
-	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 2, "gesture": 0.3,
+	_ult(0, &"cleave", UltDef.Kind.CLEAVE, {"charge": 60.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
 		"tags": [&"ultimate", &"light"] as Array[StringName], "anim": &"Slash_C", "anim_peak": PEAK[&"Slash_C"], "knockback": 6.0,
 		"length": 12.0, "width": 4.0, "core_width": 1.5, "core_damage": 300.0, "damage": 200.0, "stun": 1.0, "armor_mult": 2.0})
-	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
+	_ult(1, &"vortex", UltDef.Kind.VORTEX, {"charge": 70.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 10, "gesture": 0.3,
 		"tags": [&"ultimate", &"cast"] as Array[StringName], "anim": &"Sword_Attack", "anim_peak": PEAK[&"Sword_Attack"], "knockback": 2.0,
 		"ahead": 4.0, "aim_max": 8.0, "radius": 6.0, "radius_cap": 7.5, "duration": 4.0, "tick": 0.25, "tick_damage": 8.0,
 		"implode_damage": 120.0, "implode_radius": 3.0, "implode_stun": 0.8, "pull": 3.5, "swirl": 2.0, "core": 1.2,
@@ -1418,36 +1549,36 @@ func _talents() -> void:
 	# Combo: a 4th blow (a thrust of 30 before the spin, FOURTH); the Corte Veloz counts as the 1st blow (the next press
 	# is cut2); the spin that lands on 3 or more starts the combo over at cut2
 	_talent(0, &"quarto_corte", B.COMBO, T.ENTRY, 3, 1, {"slot": S.ATTACK, "combos": FOURTH_TREE})
-	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 7, {"slot": S.DASH, "mods": [_fixed(&"dash_chain", 1, [], &"dash")] as Array[BoonMod]})
-	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 15, {"partner": B.FURIA, "mods": [_fixed(&"spin_loop_hits", 3, [], &"spin")] as Array[BoonMod]})
+	_talent(1, &"passo_encadeado", B.COMBO, T.MIDDLE, 2, 5, {"slot": S.DASH, "mods": [_fixed(&"dash_chain", 1, [], &"dash")] as Array[BoonMod]})
+	_talent(2, &"golpe_sem_fim", B.COMBO, T.APEX, 4, 16, {"partner": B.FURIA, "mods": [_fixed(&"spin_loop_hits", 3, [], &"spin")] as Array[BoonMod]})
 	# Furia (charges that fade in 3 s, no new bar: D-70): a charge a kill, up to 3, all gone 3 s after the last kill, 6%
 	# more speed of every blow a charge; a kill by a finisher gives the dodge's charge back; with 3 charges a finisher
 	# stuns 0.5 s longer, those with armor too
-	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 3, {"mods": [_fixed(&"fury_per_kill", 1), _fixed(&"fury_max", 3),
+	_talent(3, &"impeto", B.FURIA, T.ENTRY, 2, 2, {"mods": [_fixed(&"fury_per_kill", 1), _fixed(&"fury_max", 3),
 		_fixed(&"fury_time", 3.0), _fixed(&"fury_speed", 0.06)] as Array[BoonMod]})
-	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 8, {"mods": [_fixed(&"dash_back_on_kill", 1, [], &"finisher")] as Array[BoonMod]})
+	_talent(4, &"avanco_feroz", B.FURIA, T.MIDDLE, 3, 7, {"mods": [_fixed(&"dash_back_on_kill", 1, [], &"finisher")] as Array[BoonMod]})
 	_talent(5, &"furia_plena", B.FURIA, T.APEX, 4, 18, {"partner": B.COMBO, "mods": [_fixed(&"fury_stun", 0.5, [], &"finisher")] as Array[BoonMod]})
 	# Emeth: the spin throws an emerald wave 6 m ahead for 16 (3 m across); the special's wave goes through stone
-	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 4, {"mods": _wave(&"spin", 16.0, 6.0, 3.0)})
-	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 9, {"mods": [_fixed(&"reach_pct", 0.15, [], &"light")] as Array[BoonMod]})
+	_talent(6, &"corte_crescente", B.EMETH, T.ENTRY, 3, 3, {"mods": _wave(&"spin", 16.0, 6.0, 3.0)})
+	_talent(7, &"fio_longo", B.EMETH, T.MIDDLE, 1, 8, {"mods": [_fixed(&"reach_pct", 0.15, [], &"light")] as Array[BoonMod]})
 	_talent(8, &"onda_atravessante", B.EMETH, T.APEX, 4, 20, {"partner": B.MAGIA, "mods": [_fixed(&"wave_through", 1, [], &"wave")] as Array[BoonMod]})
 	# Magia: an Omega begun within 1 s of a finisher that landed costs half (the glint stays on the tip that long); the
 	# ultimate charges 25% faster (ult_charge_pct, read by the ultimate) and the passive gives 1 more
-	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 5, {"mods": [_fixed(&"hungry_time", 1.0, [], &"finisher"), _fixed(&"omega_discount", 0.5)] as Array[BoonMod]})
+	_talent(9, &"lamina_faminta", B.MAGIA, T.ENTRY, 2, 4, {"mods": [_fixed(&"hungry_time", 1.0, [], &"finisher"), _fixed(&"omega_discount", 0.5)] as Array[BoonMod]})
 	_talent(10, &"reserva", B.MAGIA, T.MIDDLE, 3, 10, {"mods": [_fixed(&"magick_max", 20)] as Array[BoonMod]})
 	_talent(11, &"coracao_da_emeth", B.MAGIA, T.APEX, 4, 20, {"partner": B.EMETH, "mods": [_fixed(&"ult_charge_pct", 0.25), _fixed(&"finisher_magick", 1)] as Array[BoonMod]})
 	# bridges between neighbouring branches: the Corte Veloz that kills gives the dodge back; a kill by an Omega gives 2
 	# charges; the special's Omega throws the spin's wave; the Corte Veloz throws a short wave (the special's look, 12,
 	# 9.6 m: just past the cut's 8 m)
 	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"dash_back_on_kill", 1, [], &"dash")] as Array[BoonMod]})
-	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", 1, [], &"omega")] as Array[BoonMod]})
-	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"charge", 16.0, 6.0, 3.0)})
-	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
+	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", 1, [], &"omega")] as Array[BoonMod]})
+	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"charge", 16.0, 6.0, 3.0)})
+	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 15, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
 	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life, but never in Morvath's
 	# room (E6: no rise_boss_share; with the rise there the Mastery 20 robot won 72 of 72, docs/design/e6_balance.md)
-	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 16, {"mods": [_fixed(&"max_hp", 10), _fixed(&"magick_max", 10)] as Array[BoonMod]})
-	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 17, {"mods": [_fixed(&"room_heal", 2)] as Array[BoonMod]})
-	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 19, {"mods": [_fixed(&"rise_share", 0.5)] as Array[BoonMod]})
+	_talent(16, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 9, {"mods": [_fixed(&"max_hp", 10), _fixed(&"magick_max", 10)] as Array[BoonMod]})
+	_talent(17, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 12, {"mods": [_fixed(&"room_heal", 2)] as Array[BoonMod]})
+	_talent(18, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 17, {"mods": [_fixed(&"rise_share", 0.5)] as Array[BoonMod]})
 
 
 ## A wave a blow throws (Combat._gift_wave) on the moves with this tag: damage, meters it runs, meters across.
@@ -2000,6 +2131,26 @@ func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonM
 ## damage (tag light: the three cuts, the Corte Veloz and the attack's Omega), 15 Prata; Temperar II, the special and
 ## its Omega 10% more (tag heavy), 35 Prata. A blow sums each matching mod once, so no move gets both but the
 ## lance (light) never counts II: "the Omegas" are the attack's by I and the special's by II.
+## Ofícios, Roteiro A (docs/design/oficios/15_prototipo.md, Q-OF1 to Q-OF4, Q-OF6 a, Q-OF11 a): the pick's journey in
+## one resource (OficiosDef): restored for 20 Prata, the Pedra Funda capped at 10, two veins a descent in the Fendas and
+## the Runas past the guardian, the head's room between depths 4 and 8, the guardian gives it after 2 misses, the
+## Vendedor's order of 2 Pedra Funda and 30 Prata makes the angels' preview.
+func _oficios() -> void:
+	DirAccess.make_dir_recursive_absolute("res://data/oficios/")
+	var d := OficiosDef.new()
+	d.restore_cost = {OficiosDef.SILVER: 20}
+	d.stone_cap = 10
+	d.vein_arenas = [&"rift", &"runes"] as Array[StringName]
+	d.veins_max = 2
+	d.vein_hold = 1.0
+	d.vein_stones = 1
+	d.find_depth_min = 4
+	d.find_depth_max = 8
+	d.pity_runs = 2
+	d.order_wants = {&"pedra_funda": 2, OficiosDef.SILVER: 30}
+	ResourceSaver.save(d, "res://data/oficios/oficios.tres")
+
+
 func _forge() -> void:
 	DirAccess.make_dir_recursive_absolute(FORGE_DIR)
 	for f in DirAccess.get_files_at(FORGE_DIR):

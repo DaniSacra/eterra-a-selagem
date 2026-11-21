@@ -162,6 +162,24 @@ func new_elos(seen: Dictionary) -> Array[Boon]:
 	return out
 
 
+## The family of the Blessing behind a blow with these tags: the owned Blessing whose modifier names one of them (the
+## one riding on an action first, then those that act alone); -1 when none does (the Emeth's own colour). An untagged
+## modifier speaks for no blow. Elos are left out (their colour is no family's).
+func family_on(tags: Array[StringName]) -> int:
+	var alone := -1
+	for b in owned():
+		if b.is_duo():
+			continue
+		for m in b.mods:
+			if m.tag != &"" and tags.has(m.tag):
+				if b.slot != Boon.Slot.NONE:
+					return b.family
+				if alone < 0:
+					alone = b.family
+				break
+	return alone
+
+
 func owned() -> Array[Boon]:
 	var out: Array[Boon] = []
 	for b in catalog:

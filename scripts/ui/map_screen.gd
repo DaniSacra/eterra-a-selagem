@@ -164,6 +164,14 @@ func _left_page(page: MarginContainer) -> void:
 		if not present.has(entry[0]):
 			continue
 		grid.add_child(_legend_row(_legend_mark(entry[0] as DoorGlyph.Kind), T.t(entry[1] as StringName)))
+	if map.has_find():
+		var box := Control.new()
+		box.name = "find_mark"
+		box.custom_minimum_size = Vector2(LEGEND_MARK + 14.0, LEGEND_MARK + 2.0)
+		box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		box.draw.connect(func() -> void: MapGraph.find_diamond(box, box.size * 0.5))
+		grid.add_child(_legend_row(box, T.t(&"map_legend_find")))
 	for entry: Array in STATES:
 		grid.add_child(_legend_row(_state_mark(entry[0] as DescentMap.State), T.t(entry[1] as StringName)))
 	var foot := HBoxContainer.new()

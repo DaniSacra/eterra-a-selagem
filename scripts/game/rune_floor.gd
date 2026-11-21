@@ -23,6 +23,11 @@ var zones: Array[Ground.Zone] = []
 var enemy_damage := 0.0
 var kills := 0
 var _found: Array[Enemy] = []
+## AT-RB2: the room's patterns as they armed, [second of the room, name, tiles lit] (at most PATTERNS_KEPT), for the
+## RESULT (rooms[].hazard.patterns) and to name what a capture shows.
+var patterns: Array = []
+const PATTERNS_KEPT := 16
+var _t := 0.0
 ## The arena's own rune floor (null: another look; the warnings draw then) and whether it shows any tile now.
 var look: RunesLook
 var _shown := false
@@ -65,9 +70,15 @@ func _init(g: Game, def: HazardDef, rng: RandomNumberGenerator, crystal_awake :=
 
 
 func step(dt: float) -> void:
+	_t += dt
 	match hazard.step(dt, game.player.pos, game.horde.count()):
 		ArenaHazard.Event.ARMED:
 			zones.clear()
+			if patterns.size() < PATTERNS_KEPT:
+				var lit := 0
+				for i in hazard.lit.size():
+					lit += hazard.lit[i]
+				patterns.append([snappedf(_t, 0.01), String(hazard.pattern), lit])
 			for r in hazard.rects():
 				zones.append(game.ground.add_hazard(r, hazard.def.warn, hazard.def.hero_damage, hazard.def.enemy_damage,
 					look == null))
@@ -84,6 +95,12 @@ func step(dt: float) -> void:
 			if is_instance_valid(crystal_marks[i]):
 				var on := hazard.discharging() and _col == crystals.col(i)
 				GroundLook.set_plate(crystal_marks[i], Vector3(crystals.fill(i) * 0.5, 1.0 if on else 0.0, 0.0))
+			# SW-G7: the room's crystal (its notches, the edge going amber when full), when the room has the piece
+			var piece := look.hazard_piece(Ground.CRYSTAL_SOURCE, i) if look != null else null
+			if piece != null and is_instance_valid(piece):
+				var on2 := hazard.discharging() and _col == crystals.col(i)
+				piece.set_charge(crystals.charge[i], on2 or crystals.charge[i] >= crystals.def.crystal_hits)
+				piece.set_state(Vector3(0.0, 1.0 if on2 else 0.0, 0.0), not crystals.awake)
 
 
 ## RP-14: a blow of the paladin; a crystal it fills discharges along its column now (the runes' pattern warming up, if
@@ -129,8 +146,8 @@ func busy() -> int:
 ## The room's numbers (RoomTally.hazard): the crystals', when there are any.
 func tally() -> Dictionary:
 	if crystals == null:
-		return {}
-	return {"crystal_charges": crystals.charged, "discharges": crystals.discharged,
+		return {"patterns": patterns}
+	return {"patterns": patterns, "crystal_charges": crystals.charged, "discharges": crystals.discharged,
 		"crystal_damage": snappedf(crystal_damage, 0.1), "crystal_kills": crystal_kills}
 
 

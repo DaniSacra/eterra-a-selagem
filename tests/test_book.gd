@@ -48,7 +48,7 @@ func test_only_the_playable_hero_is_in_the_book() -> void:
 		if (l as Label).text == T.t(HeroDef.warrior().name_key):
 			names += 1
 	assert_eq(names, 1)
-	assert_eq(s.chapters.size(), 3)
+	assert_eq(s.chapters.size(), 4)
 
 
 func test_dons_opens_the_tree_with_the_focus_on_a_gift() -> void:
@@ -112,7 +112,7 @@ func test_every_new_text_is_in_the_table_without_a_dash() -> void:
 
 func test_the_panel_tells_cost_prerequisite_state_and_next_step() -> void:
 	var s := _book(_data(XP_3), HeroScreen.Chapter.GIFTS)
-	s.tree.node(&"corte_crescente").focus_entered.emit()
+	s.tree.node(&"lamina_faminta").focus_entered.emit()
 	var step := s.find_child("step", true, false) as Label
 	var status := s.find_child("status", true, false) as Label
 	var lo := s.loadout
@@ -136,7 +136,7 @@ func test_needs_text_by_place_in_the_tree() -> void:
 
 func test_next_step_and_xp_missing() -> void:
 	var lo := _loadout(XP_3)
-	var later := lo.book.find(&"corte_crescente")
+	var later := lo.book.find(&"lamina_faminta")
 	var step := lo.next_step(later)
 	assert_eq(step.key, &"hero_step_mastery")
 	assert_eq(step.args.xp, HeroDef.warrior().mastery.total_to(later.unlock_level) - XP_3)

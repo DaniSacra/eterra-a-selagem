@@ -87,6 +87,10 @@ func _on_reached(shape: int, origin: Vector2, dir: Vector2, reach: float, width:
 	for i: int in did.cracked:
 		cracked += 1
 		shake_t[i] = CRACK_SHAKE
+		# SW-G7: the room's fissure piece opens and climbs, lit, and stays so
+		var piece := game.arena.look.hazard_piece(&"column", fall.columns[i]) if game.arena.look != null else null
+		if piece != null and is_instance_valid(piece):
+			piece.crack()
 		_dust(fall.columns[i].center, 1.6)
 		Audio.play(CombatSounds.EVENTS[&"column_crack"])
 	for i: int in did.toppled:
@@ -124,7 +128,9 @@ func _down(i: int) -> void:
 		p.visible = false
 		var look := game.arena.look
 		if look != null:
-			look.tomb.column(o.center, o.radius, maxf(0.6, TombKit.COLUMN_BASE + 0.4), look.stone(), true)
+			# SW-G7: the drums lying along its fall and the stump with its teeth (the piece's, in place of TombKit.column)
+			var b := fall.band(i)
+			look.toppled(o, b.dir, b.length)
 
 
 ## A Node3D at the column's foot with its meshes moved under it (keeping where they are), to lean it.

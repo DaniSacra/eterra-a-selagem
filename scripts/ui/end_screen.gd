@@ -367,6 +367,28 @@ func _brought(parent: Control, stats: Dictionary) -> void:
 		var n := int(got.get(String(m), 0))
 		if n > 0:
 			row.add_child(MaterialCount.new().setup(m, n, UiKit.STRONG, BROUGHT_SIZE, BROUGHT_MARK, true))
+	# Ofícios: the Pedra Funda extracted and the find of this descent (the run's part: stats "oficios", else the Game's)
+	var stones := 0
+	var finds: Array = []
+	var of_stats: Variant = stats.get("oficios")
+	if of_stats is Dictionary:
+		stones = int(((of_stats as Dictionary).get("gather", {}) as Dictionary).get("stones", 0))
+		finds = (of_stats as Dictionary).get("finds", [])
+	elif game != null and game.get(&"oficios") is OficiosRun:
+		var run: OficiosRun = game.oficios
+		stones = run.stones
+		finds = [run.head_id] if run.head_found else []
+	if stones > 0:
+		row.add_child(MaterialCount.new().setup(DoorGlyph.STONE_ID, stones, UiKit.STRONG, BROUGHT_SIZE, BROUGHT_MARK, true))
+	for f in finds:
+		var find := HBoxContainer.new()
+		find.name = "find"
+		find.add_theme_constant_override(&"separation", 6)
+		find.add_child(PickMark.new().setup(PickMark.Look.HEAD, BROUGHT_MARK + 6.0, false))
+		var fl := UiKit.shadow(UiKit.label(DescentMap.find_name(StringName(str(f))), UiKit.STRONG, BROUGHT_SIZE - 4, UiKit.BOLD_FONT))
+		fl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		find.add_child(fl)
+		row.add_child(find)
 	# a tool of the Forjador found in this descent (Fatia 2), by the materials
 	var tools: Array = stats.get("tools", game.tools_found if game != null else [])
 	for t in tools:

@@ -408,3 +408,99 @@ func test_the_event_rooms_walk_to_every_door() -> void:
 	var a := _arena(stage.altar_layout, 3)
 	assert_true(a.nav.reachable(a.start, Rooms.ALTAR_SPOT), "the slab before the altar's step is reached")
 	assert_true(a.free_at(Rooms.ALTAR_SPOT, Player.RADIUS))
+
+
+static func _seg_gap(p: Vector2, a: Vector2, b: Vector2) -> float:
+	return p.distance_to(Geometry2D.get_closest_point_to_segment(p, a, b))
+
+
+static func _rect_gap(r: Rect2, p: Vector2) -> float:
+	return Vector2(clampf(p.x, r.position.x, r.end.x), clampf(p.y, r.position.y, r.end.y)).distance_to(p)
+
+
+## How far p keeps from every slab, band, urn, flow and crystal of a hazard and of its second (the edge of each).
+static func _hazard_gap(h: HazardDef, p: Vector2) -> float:
+	if h == null:
+		return INF
+	var d := INF
+	for r in h.plates:
+		d = minf(d, _rect_gap(r, p))
+	for s in h.strips:
+		d = minf(d, _seg_gap(p, Vector2(s.x, s.y), Vector2(s.z, s.w)) - h.strip_width * 0.5)
+	for s in h.aims:
+		d = minf(d, _seg_gap(p, Vector2(s.x, s.y), Vector2(s.z, s.w)) - h.aim_width * 0.5)
+	for r in h.bands:
+		d = minf(d, _rect_gap(r, p))
+	for u in h.urns:
+		d = minf(d, p.distance_to(u))
+	for k in h.urn_flows:
+		d = minf(d, _seg_gap(p, Vector2(k.x, k.y), Vector2(k.z, k.w)) - h.flow_width * 0.5)
+	for c in h.crystals:
+		d = minf(d, p.distance_to(c))
+	return minf(d, _hazard_gap(h.also, p))
+
+
+## AT-Q4: the breakables of every room, view and variant (and the Provação and the Altar): 4 to 10 in 2 to 4 groups of
+## 2 to 5, each group against a wall, a balustrade or a piece (a piece within 1.6 m of the edge or 1.2 m of a piece), on the floor and
+## off every piece, low, and 1.5 m and more from a door and its mark, the way in, the reward, a spawn, a use spot, the
+## guardian's spawn and every slab and band of the room's hazards.
+func test_breakables_stand_where_they_may() -> void:
+	var views: Array = []
+	for l: RoomLayout in stage.layouts:
+		for v in l.variant_count():
+			views.append(["%s %d" % [l.id, v], l.variant(v)])
+	views.append(["trial", stage.trial_layout])
+	views.append(["altar", stage.altar_layout])
+	for view: Array in views:
+		var name: String = view[0]
+		var l: RoomLayout = view[1]
+		var a := _arena(l, 3)
+		assert_between(l.breakables.size(), 4, 10, "%s: 4 to 10 pieces" % name)
+		var groups := {}
+		var leaning := {}
+		for p in l.breakables:
+			groups[p.group] = int(groups.get(p.group, 0)) + 1
+			var at := p.at
+			assert_true(a.inside(at, p.radius), "%s: %s on the floor" % [name, at])
+			assert_false(a.overlaps(at, p.radius), "%s: %s off every piece" % [name, at])
+			if not a.inside(at, 1.6) or a.overlaps(at, 1.2):
+				leaning[p.group] = true
+			assert_between(p.height, 0.35, 1.0, "%s: low" % name)
+			for z in a.exit_zones:
+				assert_gte(_rect_gap(z, at), 1.5, "%s: %s off a door" % [name, at])
+			for d in a.exit_zones.size():
+				assert_gte(at.distance_to(a.door_label(d)), 1.5, "%s: %s off a door's mark" % [name, at])
+			assert_gte(at.distance_to(a.start), 1.5, "%s: %s off the way in" % [name, at])
+			assert_gte(at.distance_to(a.resolve(a.middle, 1.0)), 1.5, "%s: %s off the reward" % [name, at])
+			for r in l.spawns + l.late_spawns:
+				assert_gte(_rect_gap(r, at), 1.5, "%s: %s off a spawn" % [name, at])
+			if l.guardian_home:
+				assert_gte(at.distance_to(l.boss_spawn), 1.5, "%s: %s off the guardian" % [name, at])
+			if name == "trial":
+				assert_gte(at.distance_to(Rooms.TRIAL_SPOT), 1.5, "%s: off the use spot" % name)
+			if name == "altar":
+				assert_gte(at.distance_to(Rooms.ALTAR_SPOT), 1.5, "%s: off the use spot" % name)
+			assert_gte(_hazard_gap(l.hazard, at), 1.5, "%s: %s off the hazard" % [name, at])
+		assert_between(groups.size(), 2, 4, "%s: 2 to 4 groups" % name)
+		for g in groups:
+			assert_between(int(groups[g]), 2, 5, "%s: groups of 2 to 5" % name)
+			assert_true(leaning.has(g), "%s: group %d against a wall, a balustrade or a piece" % [name, g])
+
+
+## AT-FO2: the Fonte shows in the frame of both cameras as the paladin arrives in the Salão (with its light, the
+## RewardShaft), on his way to the doors, and the room's breakables keep 5 m from its basin (AT-FO3).
+func test_the_fountain_is_seen_on_arrival() -> void:
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	game.rooms._enter(RunMap.Room.new(RunMap.Kind.FOUNTAIN, RunMap.Reward.GOLD, 6, 0, 0))
+	var at := Rooms.FOUNTAIN_SPOT
+	assert_eq(game._fountain_at, at)
+	for d: float in [Feel.live().cam_distance_near, Feel.live().cam_distance]:
+		var s := game._screen_of(at, d, false)
+		assert_between(s.x, 0.15, 0.85, "camera at %s m: across the screen" % d)
+		assert_between(s.y, 0.15, 0.85, "camera at %s m: up the screen" % d)
+	assert_true(game.arena.free_at(at, 2.5), "the basin on free floor")
+	for p in game.arena.layout.breakables:
+		assert_gte(p.at.distance_to(at), 5.0, "a vase 5 m off the basin")
+	for k in game.arena.exit_zones.size():
+		assert_gte(at.distance_to(game.arena.door_label(k)), 8.0, "off the doors")

@@ -11,6 +11,8 @@ signal move_shown(node: ComboNode)
 signal was_hurt(amount: float)
 signal died
 signal dodged(dir: Vector2)
+## AT-CA2: a dodge cut short by stone or the floor's edge, once per dodge (piece: the obstacle's piece, "edge" the floor).
+signal dodge_blocked(piece: String)
 signal shield_broke
 ## Ainda de Pé stood him up from a fall (once a descent).
 signal rose
@@ -539,7 +541,11 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	_step_move_sound(dt)
 	_lunge *= maxf(0.0, 1.0 - LUNGE_DECAY * dt)
 	# swept from where he stood: a dash or a push never comes out across a hole of the floor (cycle C12)
+	var wanted := pos
 	pos = arena.sweep(start, pos, RADIUS)
+	if dashing and not _dodge_cut and wanted.distance_to(pos) > 0.05:
+		_dodge_cut = true
+		dodge_blocked.emit(arena.blocker_at(wanted, RADIUS))
 	if horde and not dashing:
 		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
 		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)
@@ -753,6 +759,8 @@ func _read_cast(dt: float) -> void:
 
 
 var _aim := Vector2.ZERO
+## AT-CA2: whether this dodge was already counted as cut short.
+var _dodge_cut := false
 
 
 func _start_dodge(move: Vector2) -> void:
@@ -762,6 +770,7 @@ func _start_dodge(move: Vector2) -> void:
 	_state_t = 0.0
 	_dodge_want = 0.0
 	dodge_charges -= 1
+	_dodge_cut = false
 	_dodge_dir = move.normalized() if move.length() > 0.2 else facing
 	facing = _dodge_dir
 	runner.on_dodge()

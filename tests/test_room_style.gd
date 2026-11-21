@@ -950,3 +950,45 @@ func test_sw_g7_hazard_pieces() -> void:
 			chain.set_state(Vector3(0.5, 0, 0))
 			chain.set_state(Vector3(0, 0.5, 0))
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+
+
+## SW-G7, the rest of the grammar: a piece for each root, niche, plant, crystal, oil urn and breath of the rift, a stone
+## of the vault on call; every state drawn in both looks without touching collision.
+func test_sw_g7_rest_of_the_pieces() -> void:
+	for look: VisualProfile.Look in [VisualProfile.Look.CLASSIC, VisualProfile.Look.STYLIZED]:
+		VisualProfile.set_look(look)
+		var cases := [[&"garden", 0, &"roots"], [&"garden", 1, &"plant"], [&"crypt", 1, &"niche"],
+			[&"crypt", 0, &"urn"], [&"rift", 0, &"breath"], [&"runes", 1, &"crystal"]]
+		for c: Array in cases:
+			var a := _arena(c[0], c[1])
+			var p := a.look.hazard_piece(c[2], _first_index(a.look.layout.hazard, c[2]))
+			assert_not_null(p, "%s %d: the %s piece" % c)
+			if p == null:
+				continue
+			var cover := a.cover.size()
+			for s: Vector3 in [Vector3(0.2, 0, 0), Vector3(0.95, 0, 0), Vector3(0, 0.6, 0), Vector3(0, 0, 0.5), Vector3.ZERO]:
+				p.set_state(s, false, 1.0)
+				p._process(0.1)
+			p.set_state(Vector3.ZERO, true)
+			if c[2] == &"crystal":
+				p.set_charge(2)
+				p.set_charge(3, true)
+			if c[2] == &"urn":
+				p.set_oil(3.0)
+				p.set_oil(3.0, 1.0)
+			assert_eq(a.cover.size(), cover, "drawing a hazard changes no collision")
+		var sanct := _arena(&"sanctuary", 1)
+		var d := sanct.look.drop_piece(Vector2(5, -10), 2.0, 1.2, 7)
+		for s: Vector3 in [Vector3(0.5, 0, 0), Vector3(0.95, 0, 0), Vector3(0, 0.5, 0)]:
+			d.set_state(s)
+		d.set_state(Vector3.ZERO, false, 2.0)
+		assert_true(is_instance_valid(d), "the rubble lies while spent")
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+
+
+func _first_index(hz: HazardDef, source: StringName) -> int:
+	while hz != null:
+		if hz.plate_source == source and hz.kind == HazardDef.Kind.PLATES:
+			return hz.plates.size()
+		hz = hz.also
+	return 0

@@ -21,7 +21,7 @@ extends Control
 ## by it (a blow enchanted; never a hammer, that is the Forja's); the Salmo the Psalm cards' pointed
 ## arch in ivory with the lilac light under it (PsalmIcon's arch); the Esmeralda a step-cut stone, taller than wide, in
 ## the Emeth's emerald (the Magia's gem is a round blue cut: they differ by shape and hue).
-enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN, SILVER, MEMORY, ENCHANT, PSALM, EMERALD }
+enum Kind { NONE, HARD, GUARDIAN, BOSS, FOUNTAIN, SHOP, ALTAR, TRIAL, BLESSING, POMEGRANATE, HEART, MAGICK, GOLD, HEAL, UNKNOWN, SILVER, MEMORY, ENCHANT, PSALM, EMERALD, STONE }
 
 ## Height of the glyph on the sign's canvas (the name's capitals are about 13; a little taller reads better).
 const HEIGHT := 17.0
@@ -40,6 +40,10 @@ const MAGICK_BLUE := Color(0.42, 0.62, 0.95)
 const COIN_GOLD := Color(0.86, 0.68, 0.36)
 const HEAL_GREEN := Color(0.5, 0.86, 0.6)
 ## The materials' fills: old silver (cool, greyed, never white) and parchment, with ink lines on the leaf.
+## Pedra Funda (Ofícios, Roteiro A): its id (OficiosDef.stone), its slate and the pale strata across it.
+const STONE_ID := &"pedra_funda"
+const STONE_FILL := Color(0.34, 0.35, 0.4)
+const STONE_STRATA := Color(0.66, 0.63, 0.56)
 const SILVER_FILL := Color(0.62, 0.65, 0.7)
 const PARCHMENT_FILL := Color(0.84, 0.74, 0.55)
 const LEAF_INK := Color(0.2, 0.14, 0.09)
@@ -107,6 +111,8 @@ static func of_material(id: StringName) -> Kind:
 			return Kind.MEMORY
 		MaterialPurse.EMERALD:
 			return Kind.EMERALD
+		STONE_ID:
+			return Kind.STONE
 	return Kind.NONE
 
 
@@ -188,7 +194,7 @@ func _draw() -> void:
 		Kind.MAGICK:
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.52, OUTLINE_COLOR, OUTLINE_COLOR)
 			BoonIcon.glyph(self, BoonIcon.MAGICK_GLYPH, c, h * 0.44, MAGICK_BLUE, MAGICK_BLUE.darkened(0.45))
-		Kind.SILVER, Kind.MEMORY, Kind.EMERALD:
+		Kind.SILVER, Kind.MEMORY, Kind.EMERALD, Kind.STONE:
 			material(self, kind, c, h)
 		Kind.ENCHANT:
 			enchant(self, c, h)
@@ -265,6 +271,20 @@ static func material(ci: CanvasItem, k: Kind, c: Vector2, h: float) -> void:
 			table.append(c + (p - c) * t)
 		ci.draw_colored_polygon(table, EMERALD_FILL.lightened(0.18))
 		ci.draw_line(gem[7].lerp(gem[0], 0.5), table[7].lerp(table[0], 0.5), EMERALD_LIT, maxf(1.0, h * 0.06), true)
+		return
+	if k == Kind.STONE:
+		# Pedra Funda (Ofícios): a broken block of dark slate, wider than tall, two pale strata across it and a chip
+		# off its upper right; never round (a coin, a gem) nor bright (the Emeth's green, the silver's pale)
+		var block := PackedVector2Array()
+		for p: Vector2 in [Vector2(-0.42, -0.12), Vector2(-0.2, -0.36), Vector2(0.18, -0.38), Vector2(0.28, -0.22),
+				Vector2(0.44, -0.18), Vector2(0.4, 0.3), Vector2(-0.36, 0.34)]:
+			block.append(c + p * h)
+		ci.draw_colored_polygon(_grown(block, c, o), OUTLINE_COLOR)
+		ci.draw_colored_polygon(block, STONE_FILL)
+		ci.draw_colored_polygon(PackedVector2Array([block[0], block[1], block[2], c + Vector2(0.0, -0.18) * h]),
+				STONE_FILL.lightened(0.16))
+		for y: float in [0.02, 0.17]:
+			ci.draw_line(c + Vector2(-0.34, y) * h, c + Vector2(0.38, y - 0.05) * h, STONE_STRATA, maxf(1.0, h * 0.05), true)
 		return
 	if k == Kind.SILVER:
 		# an ingot seen from the front and a little above: the top narrower, a groove across it

@@ -26,6 +26,7 @@ static func result(g: Game) -> Dictionary:
 		"materials": g.materials.report(), "forge": {"temper": g.forge_temper, "refine": g.forge_refine.duplicate()},
 		"talents_opened": g.talents_opened, "enchants": g.boons.enchants.map(func(e: EnchantDef) -> String: return String(e.id)),
 		"tools": g.tools_found.map(func(t: StringName) -> String: return String(t)),
+		"oficios": g.oficios.report() if g.oficios != null else {},
 		"angels": g.encounters.meetings.duplicate(true) if g.encounters else []}
 
 

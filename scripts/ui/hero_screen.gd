@@ -21,10 +21,10 @@ signal closed
 ## The way down from the book (the title starts the descent as Iniciar does, Juramentos first after a victory).
 signal descend
 
-enum Chapter { OPENING, HERO, GIFTS }
+enum Chapter { OPENING, HERO, GIFTS, OFICIOS }
 
-const CHAPTER_KEY: Array[StringName] = [&"book_chapter_opening", &"title_hero", &"hero_gifts"]
-const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter_gifts"]
+const CHAPTER_KEY: Array[StringName] = [&"book_chapter_opening", &"title_hero", &"hero_gifts", &"chapter_oficios"]
+const CHAPTER_NAME: Array[String] = ["chapter_opening", "chapter_hero", "chapter_gifts", "chapter_oficios"]
 ## Screen margins round the book and the bookmarks' width, px at 720 lines.
 ## (12 px over the bookmarks at the top: UI review d2ff05d, P1-5.)
 const OUTER := Vector2(22, 12)
@@ -143,8 +143,8 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	col.add_child(_book)
 	var left := _page_column(_book.left, _head_left())
 	var right := _page_column(_book.right, _head_right())
-	_left = [_opening_left(), _hero_left(), _gifts_left()]
-	_right = [_opening_right(), _hero_right(), _gifts_right()]
+	_left = [_opening_left(), _hero_left(), _gifts_left(), _oficios_left()]
+	_right = [_opening_right(), _hero_right(), _gifts_right(), _oficios_right()]
 	# every chapter's content in the page's column, one shown (a column skips what is hidden)
 	for i in _left.size():
 		_left[i].size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -307,6 +307,109 @@ func _opening_right() -> Control:
 		_down = _descend_button("descend")
 		v.add_child(_down)
 	return v
+
+
+# ---- the Ofícios (Roteiro A; 10_ux.md 11): what was noted and what can be made, in Ahk's plain hand ----
+
+## The left page: the resources (the Pedra Funda) and the tools (the Picareta), each "???" with a hint until noted.
+func _oficios_left() -> Control:
+	var d := OficiosDef.live()
+	var v := VBoxContainer.new()
+	v.name = "oficios_left"
+	v.add_theme_constant_override(&"separation", 8)
+	v.add_child(Book.heading(T.t(&"chapter_oficios"), 28, 260))
+	var noted := Oficios.noted(_data)
+	var ever := int((Oficios.block(_data).items_total as Dictionary).get(String(d.stone), 0)) > 0
+	if not noted and not ever and not Oficios.has_tool(_data, d):
+		v.add_child(Book.text(T.t(&"oficios_nothing"), Book.FADED, 17))
+	v.add_child(Book.section(T.t(&"oficios_resources")))
+	if noted or ever:
+		v.add_child(_oficio_row("stone", DoorGlyph.new().setup(DoorGlyph.Kind.STONE, MARK), T.t(&"oficio_stone"),
+			T.t(&"oficios_stone_count", {"n": Oficios.count(_data, d.stone), "cap": d.stone_cap}), T.t(&"oficios_stone_where")))
+	else:
+		v.add_child(_oficio_row("stone", _unknown_mark(), T.t(&"oficios_unknown"), "", T.t(&"oficios_stone_hint")))
+	v.add_child(Book.section(T.t(&"oficios_tools")))
+	var look := PickMark.Look.LOST
+	var line := T.t(&"oficios_pick_lost")
+	if Oficios.has_tool(_data, d):
+		look = PickMark.Look.WHOLE
+		line = T.t(&"oficios_pick_done")
+	elif Oficios.has_find(_data, d.head):
+		look = PickMark.Look.HEAD
+		line = T.t(&"oficios_pick_head", {"n": int(d.restore_cost.get(OficiosDef.SILVER, 0))})
+	elif noted:
+		line = T.t(&"oficios_pick_wanted")
+	var name_ := T.t(&"oficio_pick") if noted or Oficios.has_tool(_data, d) else T.t(&"oficios_unknown")
+	v.add_child(_oficio_row("pick", PickMark.new().setup(look, MARK + 6.0), name_, "", line))
+	return v
+
+
+## The right page: the orders (the Forjador's, the Vendedor's) and the Obras made.
+func _oficios_right() -> Control:
+	var d := OficiosDef.live()
+	var v := VBoxContainer.new()
+	v.name = "oficios_right"
+	v.add_theme_constant_override(&"separation", 8)
+	v.add_child(Book.section(T.t(&"oficios_orders")))
+	var smith := T.t(&"oficios_smith_none")
+	if Oficios.has_tool(_data, d):
+		smith = T.t(&"oficios_order_done")
+	elif Oficios.noted(_data):
+		smith = T.t(&"oficios_smith_open", {"n": int(d.restore_cost.get(OficiosDef.SILVER, 0))})
+	v.add_child(_oficio_row("smith_order", null, T.t(&"oficios_smith_order"), "", smith))
+	var vendor := T.t(&"oficios_order_locked")
+	match Oficios.order_state(_data, d):
+		Oficios.Order.OPEN:
+			vendor = T.t(&"oficios_order_open", {"stone": int(d.order_wants.get(d.stone, 0)),
+				"silver": int(d.order_wants.get(OficiosDef.SILVER, 0))})
+		Oficios.Order.DONE:
+			vendor = T.t(&"oficios_order_done")
+	v.add_child(_oficio_row("vendor_order", null, T.t(&"oficios_vendor_order"), "", vendor))
+	v.add_child(Book.section(T.t(&"oficios_works")))
+	var made := Oficios.has_recipe(_data, d.order_gives)
+	v.add_child(_oficio_row("preview", null, T.t(&"oficios_preview") if made else T.t(&"oficios_unknown"), "",
+		T.t(&"oficios_preview_desc") if made else T.t(&"oficios_work_sealed")))
+	return v
+
+
+## A line of the Ofícios: an optional mark, the name in bold ink with a count at the right in lining figures, and a
+## line of faded ink under it.
+func _oficio_row(id: String, mark: Control, name_: String, count: String, line: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.name = id
+	row.add_theme_constant_override(&"separation", 12)
+	if mark != null:
+		mark.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		row.add_child(mark)
+	var words := VBoxContainer.new()
+	words.add_theme_constant_override(&"separation", 0)
+	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var top := HBoxContainer.new()
+	top.add_child(Book.label(name_, Book.INK, 19, UiKit.BOLD_FONT))
+	if count != "":
+		var c := Book.label(count, Book.INK, 17, UiKit.number_font())
+		c.name = "count"
+		c.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		c.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		top.add_child(c)
+	words.add_child(top)
+	if line != "":
+		words.add_child(Book.text(line, Book.FADED, 16))
+	row.add_child(words)
+	return row
+
+
+## A mark not yet known: a hollow diamond in faded ink.
+func _unknown_mark() -> Control:
+	var c := Control.new()
+	c.custom_minimum_size = Vector2(MARK, MARK)
+	c.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	c.draw.connect(func() -> void:
+		var m := c.size * 0.5
+		var r := minf(c.size.x, c.size.y) * 0.4
+		c.draw_polyline(PackedVector2Array([m + Vector2(0, -r), m + Vector2(r, 0), m + Vector2(0, r), m + Vector2(-r, 0),
+			m + Vector2(0, -r)]), Color(Book.FADED, 0.6), 1.5, true))
+	return c
 
 
 func _descend_button(id: String) -> Button:
@@ -568,6 +671,9 @@ func _chapter_focus(c: Chapter) -> Control:
 			return _down if _down != null else chapters[Chapter.OPENING]
 		Chapter.HERO:
 			return _to_gifts
+		Chapter.OFICIOS:
+			# only words: its bookmark holds the focus
+			return chapters[Chapter.OFICIOS]
 	# the Gifts: the first that can go on, else the first one on, else the centre
 	for want: HeroLoadout.State in [HeroLoadout.State.OPEN, HeroLoadout.State.EQUIPPED]:
 		for n in tree.nodes:

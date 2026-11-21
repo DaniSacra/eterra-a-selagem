@@ -93,6 +93,10 @@ class Room:
 	## The deck's Psalm card fell here: a Blessing's room, never a meeting, that settle shows as a Psalm's door when
 	## one can come as its door opens.
 	var psalm := false
+	## Ofícios (Roteiro A, RunMap.mark_finds): the find waiting in this room once won (&"": none) and whether a vein of
+	## Pedra Funda stands in it.
+	var find: StringName = &""
+	var vein := false
 
 	## What the door's sign may tell (E5-D8; docs/art/e5_spec.md 7.1): kind and reward (their enums), hard (a fight
 	## with an elite), guardian, tier (StageDef.Tier of its fight, -1: no fight), elites (ids), depth; since DV-1 the
@@ -113,7 +117,7 @@ class Room:
 	func view() -> Dictionary:
 		return {"id": id, "depth": depth, "slot": slot, "kind": kind, "reward": reward, "guardian": String(guardian),
 			"hidden": hidden, "arena": String(arena), "next": next.duplicate(), "meeting": meeting and reward == Reward.BOON,
-			"angel": String(angel)}
+			"angel": String(angel), "find": String(find), "vein": vein}
 
 	func _init(k: Kind, r: Reward, d: int, l: int = 0, v: int = 0) -> void:
 		kind = k
@@ -248,6 +252,8 @@ func summary() -> Dictionary:
 			w.append(String(r.guardian))
 		if r.trial:
 			w.append("trial")
+		if r.find != &"":
+			w.append("find")
 		ns.append(w)
 		for n in r.next:
 			edges.append([r.id, n])
@@ -311,6 +317,28 @@ func settle(doors_: Array[Room], can_pom: bool, can_psalm := false, can_enchant 
 	if n > 0:
 		changed.emit()
 	return n
+
+
+## Ofícios, Roteiro A: the veins (every fight room past the guardian's layer held in one of vein_arenas) and, when
+## `head` is not &"", the room the find waits in (a fight room, no Provação's, between depth_min and depth_max), on dice
+## of their own (the map's seed and FIND_SALT) after the graph is drawn: the map and the run stay as they were.
+## Returns whether the find's room was marked.
+const FIND_SALT := 5303
+
+
+func mark_finds(head: StringName, depth_min: int, depth_max: int, vein_arenas: Array[StringName]) -> bool:
+	for r in nodes:
+		r.vein = r.kind == Kind.COMBAT and r.depth > miniboss_depth and vein_arenas.has(r.arena)
+	if head == &"":
+		return false
+	var can := nodes.filter(func(r: Room) -> bool:
+		return r.kind == Kind.COMBAT and not r.trial and r.depth >= depth_min and r.depth <= depth_max)
+	if can.is_empty():
+		return false
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash([map_seed, FIND_SALT])
+	(can[rng.randi() % can.size()] as Room).find = head
+	return true
 
 
 ## The Provação's slab appeared in r: its "?" turns into the room it is.
@@ -573,7 +601,8 @@ func _place_arenas(d: int) -> void:
 ## The rewards of a layer's fights, off the deck: no two rooms of a layer with the same (so no two doors of a room),
 ## a pomegranate only from StageDef.pom_from_depth (the hall gives a Blessing, the next room may still not have one
 ## to grow), a Psalm only from psalm_from_depth, an Encanto never past enchant_max on a way and its second only from
-## enchant_second_from; a Blessing when the deck has nothing that fits even full. RJ-2: a card of a group the other
+## enchant_second_from, Prata only from silver_from_depth and Memória only past the guardian's layer (OF-05); a
+## Blessing when the deck has nothing that fits even full. RJ-2: a card of a group the other
 ## doors of its rooms do not show yet is taken first when the deck has one. A Blessing's room is a meeting of two
 ## angels when its card off the angels' deck says so (StageDef.angel_deck, dice of their own: the map of before stays).
 func _draw_rewards(d: int) -> void:
@@ -617,6 +646,10 @@ func _may(c: int, d: int, most: int) -> bool:
 			return d >= stage.pom_from_depth
 		Reward.PSALM:
 			return d >= stage.psalm_from_depth
+		Reward.SILVER:
+			return d >= stage.silver_from_depth
+		Reward.MEMORY:
+			return not stage.memory_after_guardian or d > miniboss_depth
 		Reward.ENCHANT:
 			return most < stage.enchant_max and (most == 0 or d >= stage.enchant_second_from)
 	return true

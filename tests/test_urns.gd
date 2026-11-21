@@ -67,7 +67,8 @@ func test_where_the_urns_stand() -> void:
 				assert_false(d.grow(h.flow_width * 0.5 - 0.3).has_point(p), "oil %d off the doors at %s" % [i, p])
 			assert_true(l.floor.contains(p + side * 1.5) or l.floor.contains(p - side * 1.5), "a step out of the oil")
 		assert_eq(ring.size.x, h.urn_radius * 2.0)
-	assert_null(l.variant(1).hazard.also, "Cripta B has none")
+	# AT-H2: Cripta B has no urns, its second hazard is the niche's skeleton
+	assert_eq(l.variant(1).hazard.also.plate_source, Ground.NICHE_SOURCE, "Cripta B: no urns, the niche")
 
 
 static func _rect_circle_gap(r: Rect2, c: Vector2) -> float:

@@ -7,6 +7,9 @@ extends GutTest
 const XP_2 := 40
 const XP_3 := 90
 const XP_8 := 490
+## B-2 and B-3 (balance.md B.5): the first ultimate at Mastery 6, Ímpeto at 2.
+const XP_5 := 220
+const XP_6 := 300
 
 
 func _data(xp: int, equipped: Array = [], ult: String = "") -> Dictionary:
@@ -73,7 +76,7 @@ func test_a_gift_goes_on_and_off_and_a_locked_one_never() -> void:
 	assert_eq(l.equipped(), ["quarto_corte"])
 	assert_eq(l.used(), 3)
 	assert_eq(l.state(l.book.find(&"impeto")), HeroLoadout.State.LOCKED)
-	assert_false(l.toggle(&"impeto"), "Ímpeto opens at level 3")
+	assert_false(l.toggle(&"impeto"), "Ímpeto opens at level 2")
 	assert_eq(l.why(l.book.find(&"impeto")).key, &"hero_why_locked")
 	assert_true(l.toggle(&"quarto_corte"))
 	assert_eq(l.equipped(), [])
@@ -129,15 +132,15 @@ func test_ultimates_open_by_level_and_one_is_chosen() -> void:
 	var cleave := l.hero.ultimate(&"cleave")
 	assert_false(l.ult_open(cleave))
 	assert_false(l.choose_ult(&"cleave"))
-	l = _loadout(XP_2)
+	l = _loadout(XP_6)
 	assert_true(l.choose_ult(&"cleave"))
 	assert_eq(l.block.ultimate, "cleave")
-	assert_false(l.choose_ult(&"vortex"), "the Voragem opens at level 6")
+	assert_false(l.choose_ult(&"vortex"), "the Voragem opens at level 10")
 
 
 func test_next_level_tells_what_it_brings() -> void:
-	assert_eq(_loadout(0).next_unlocks(), [T.t(&"ult_cleave")] as Array[String])
-	assert_eq(_loadout(XP_2).next_unlocks(), [T.t(&"talent_impeto")] as Array[String])
+	assert_eq(_loadout(0).next_unlocks(), [T.t(&"talent_impeto")] as Array[String])
+	assert_eq(_loadout(XP_5).next_unlocks(), [T.t(&"ult_cleave")] as Array[String])
 	assert_eq(_loadout(2470).next_unlocks(), [] as Array[String])
 
 
@@ -213,7 +216,7 @@ func test_the_panel_says_why_a_gift_cannot_go_on() -> void:
 
 
 func test_choosing_an_ultimate_on_the_screen() -> void:
-	var d := _data(XP_2)
+	var d := _data(XP_6)
 	var s := _screen(d)
 	assert_true(s.ults[0].open)
 	assert_false(s.ults[1].open)
@@ -252,13 +255,13 @@ func test_report_tells_the_sources_and_what_the_new_levels_unlocked() -> void:
 	assert_eq(gain.total, 90)
 	assert_eq(MasteryReport.sources_text(gain), "%s 40, %s 25, %s 25" % [T.t(&"mastery_src_rooms"),
 		T.t(&"mastery_src_guardians"), T.t(&"mastery_src_first_guardian")])
-	var lines := MasteryReport.unlocks(HeroDef.warrior(), 1, 3)
-	assert_eq(lines, [T.t(&"end_unlocked", {"name": T.t(&"talent_impeto")}),
-		T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 2), [T.t(&"end_unlocked", {"name": T.t(&"talent_impeto")})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 5, 6), [T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
 	# several levels at once: one line each, the names joined
-	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 6), [
-		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_impeto"), T.t(&"talent_corte_crescente"), T.t(&"talent_lamina_faminta")])}),
-		T.t(&"end_unlocked_ults", {"name": ", ".join([T.t(&"ult_cleave"), T.t(&"ult_vortex")])})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 4), [
+		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_impeto"), T.t(&"talent_corte_crescente"), T.t(&"talent_lamina_faminta")])})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 9, 10), [T.t(&"end_unlocked", {"name": T.t(&"talent_reserva")}),
+		T.t(&"end_unlocked_ult", {"name": T.t(&"ult_vortex")})] as Array[String])
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 3, 3), [] as Array[String])
 
 
@@ -301,7 +304,7 @@ func test_codex_shows_reached_gifts_and_hides_the_rest() -> void:
 	c.open(CodexScreen.Tab.GIFTS, _data(XP_3))
 	var open_row := c.find_child("impeto", true, false)
 	assert_eq((open_row.find_child("Name", false, false) as Label).text, T.t(&"talent_impeto"))
-	var closed_row := c.find_child("corte_crescente", true, false)
+	var closed_row := c.find_child("lamina_faminta", true, false)
 	assert_eq((closed_row.find_child("Name", false, false) as Label).text, "???")
 	assert_eq((closed_row.find_child("Desc", false, false) as Label).text, T.t(&"codex_locked", {"n": 4}))
 

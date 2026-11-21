@@ -19,6 +19,8 @@ var hero_in := 0.0
 var pushed := 0
 var cut := 0
 var _bodies := PackedVector2Array()
+var pieces: Array[HazardPiece] = []
+var _shown: Array[Vector2] = []
 
 
 func _init(g: Game, def: HazardDef) -> void:
@@ -31,6 +33,11 @@ func _init(g: Game, def: HazardDef) -> void:
 			doors.append(e.mouth)
 	hazard = BandHazard.new(def, doors)
 	g.ground.hazard_landed.connect(_on_landed)
+	# SW-G7: the room's piece of each band (the Ponte's chain: post, arm, weight), told its state as it changes
+	for i in def.bands.size():
+		pieces.append(g.arena.look.hazard_piece(def.band_source, i) if g.arena.look != null else null)
+		_shown.append(Vector2(-1, -1))
+	_show_pieces()
 
 
 func step(dt: float) -> void:
@@ -54,6 +61,17 @@ func step(dt: float) -> void:
 		Audio.play(CombatSounds.EVENTS[StringName(String(def.band_source) + "_arm")])
 	if int(did.fired) >= 0:
 		Audio.play(CombatSounds.EVENTS[StringName(String(def.band_source) + "_fire")])
+	_show_pieces()
+
+
+func _show_pieces() -> void:
+	for i in pieces.size():
+		var st := hazard.state(i)
+		if st == _shown[i]:
+			continue
+		_shown[i] = st
+		if pieces[i] != null and is_instance_valid(pieces[i]):
+			pieces[i].set_state(Vector3(st.x, st.y, 0.0))
 
 
 ## The fight is over (or the room left): what is warming up goes away without striking.
@@ -62,6 +80,7 @@ func stop() -> void:
 		Ground.end_zone(zone)
 		zone = null
 	hazard.stop()
+	_show_pieces()
 	if game.ground.hazard_landed.is_connected(_on_landed):
 		game.ground.hazard_landed.disconnect(_on_landed)
 

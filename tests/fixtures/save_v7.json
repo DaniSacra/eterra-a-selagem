@@ -1,0 +1,110 @@
+{
+ "version": 7,
+ "options": {
+  "master": 0.8,
+  "music": 0.6,
+  "sfx": 0.9,
+  "fullscreen": false,
+  "scale": 1,
+  "shake": true,
+  "impact_frames": true,
+  "slow_motion": true,
+  "color_split": true,
+  "rumble": true,
+  "quality": 1.0,
+  "camera": "near",
+  "bindings": {},
+  "music_title": "blade_march",
+  "music_hub": "blade_march",
+  "music_dungeon": "deep_drums",
+  "music_morvath": "morvath_battle",
+  "camera_chosen": true
+ },
+ "best_times": [
+  612.5
+ ],
+ "moves": [
+  "cut1",
+  "cut2",
+  "dash_cut"
+ ],
+ "wins": 1.0,
+ "runs": 4.0,
+ "heroes": {
+  "warrior": {
+   "mastery_xp": 330.0,
+   "unlocked": [
+    "quarto_corte",
+    "impeto",
+    "corte_crescente",
+    "lamina_faminta"
+   ],
+   "equipped": [
+    "quarto_corte",
+    "impeto",
+    "corte_crescente"
+   ],
+   "ultimate": "cleave",
+   "firsts": {
+    "guardian": 1.0,
+    "victory": 1.0
+   },
+   "opened": [
+    "quarto_corte"
+   ],
+   "forge": {
+    "temper": 1,
+    "refine": {},
+    "refined": [],
+    "awaken": "",
+    "inscribed": []
+   },
+   "tools": [
+    "tool_refine"
+   ]
+  }
+ },
+ "codex": {
+  "boons": {
+   "brasas": {
+    "seen": 3.0
+   },
+   "consolo": {
+    "seen": 1.0
+   }
+  },
+  "elos": {},
+  "psalms": {
+   "sentinel": {
+    "seen": 1.0
+   }
+  },
+  "talents": {},
+  "enemies": {
+   "skeleton": {
+    "defeated": 40.0
+   }
+  },
+  "arenas": {
+   "crypt": {
+    "entered": 2.0
+   }
+  }
+ },
+ "juramentos": {
+  "ranks": {
+   "pain": 1.0
+  },
+  "best": 0.0
+ },
+ "materials": {
+  "silver": 42,
+  "memory": 7,
+  "emerald": 0
+ },
+ "materials_total": {
+  "silver": 80,
+  "memory": 9,
+  "emerald": 0
+ }
+}

@@ -9,7 +9,7 @@ extends Node3D
 ##   column: crack() on the first blow, ArenaRoom.toppled(o, way) when it lands.
 ## Same piece in both looks (a hazard is play): the stone it is cut in is the room's (painted by paint_look).
 
-enum Kind { PLATE, PUSH, ARMS, SLIT, CHAIN, COLUMN }
+enum Kind { PLATE, PUSH, ARMS, SLIT, CHAIN, COLUMN, ROOT, CRYSTAL, URN, DROP, BREATH, PLANT, NICHE }
 
 const MARK := preload("res://assets/shaders/hazard_mark.gdshader")
 const FISSURE := preload("res://assets/shaders/hazard_fissure.gdshader")
@@ -312,10 +312,13 @@ func set_state(s: Vector3, asleep := false, spent := 0.0) -> void:
 			sink = 1.0
 		elif spent > 0.0:
 			sink = SPENT_SINK * clampf(spent / SPENT_BACK, 0.0, 1.0)
+	elif kind in [Kind.PLANT, Kind.NICHE] and s.x > 0.0:
+		sink = minf(1.0, s.x * warn / SINK_TIME) * 0.5
 	for m in _marks:
 		m.set_shader_parameter(&"sink", sink)
 		m.set_shader_parameter(&"dust", 1.0 if asleep else 0.0)
 	_show()
+	_on_state(s, spent)
 
 
 func _process(dt: float) -> void:
@@ -324,6 +327,7 @@ func _process(dt: float) -> void:
 		var breath := EMBER_BREATH * sin(_time * TAU / EMBER_PERIOD) if _ember <= EMBER_REST + 0.001 else 0.0
 		for m in _cracks:
 			m.set_shader_parameter(&"ember", _ember + breath)
+	_animate(dt)
 	if _pivot == null:
 		return
 	var deg := REST_SWAY * sin(_time * TAU / EMBER_PERIOD)
@@ -346,12 +350,12 @@ func _show() -> void:
 
 
 ## A mark quad flat on the floor over `size`, its material (one per piece).
-func _flat_mark(size: Vector2, params: Dictionary) -> ShaderMaterial:
+func _flat_mark(size: Vector2, params: Dictionary, at := Vector2.ZERO, yaw := 0.0) -> ShaderMaterial:
 	var mi := MeshInstance3D.new()
 	var q := QuadMesh.new()
 	q.size = size
 	mi.mesh = q
-	mi.transform = Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(0, MARK_Y, 0))
+	mi.transform = Transform3D(Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -PI * 0.5), Vector3(at.x, MARK_Y, at.y))
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var m := ShaderMaterial.new()
 	m.shader = MARK
@@ -496,3 +500,668 @@ static func stump(parent: Node3D, o: ArenaObstacle, height: float, mat: Material
 			Vector3(cos(a), 0, sin(a)) * (o.radius + rng.randf_range(0.15, 1.0)) + Vector3(0, 0.05, 0))
 		root.add_child(chip)
 	return root
+
+
+# --- the rest of the grammar (3.4, 3.5, 3.7 to 3.11) ------------------------------------------------------------------
+
+## The dead root (3.4) along strip a to b (from the trunk's face to the tip): the root itself is the StoneTree's (one
+## mesh with the tree), so its living mark lies on the floor along it: ROOT_CRACKS fissures in the earth beside its two
+## flanks, ROOT_SIDE m out of its line, holding the ember, and a chevron either side near the tip pointing out of the
+## line (the push_out). Its windup: the cracks open and light, dust from the flanks; the lash: dust along the strip.
+const ROOT_CRACKS := 4
+const ROOT_SIDE := 0.62
+const ROOT_CRACK_LEN := Vector2(0.8, 1.5)
+const ROOT_CHEV_AT := 0.82
+## The crystal that discharges (3.9): a prism CRYSTAL_SIZE (bottom radius, height) of dark slate with a dull ivory edge
+## on an iron base CRYSTAL_BASE (side, height); three chevrons on the base toward its column of tiles, three notches
+## counting the paladin's blows (amber at NOTCH_LIGHT); full, its edge goes amber from the foot up in FULL_RISE s.
+const CRYSTAL_SIZE := Vector2(0.34, 2.4)
+const CRYSTAL_BASE := Vector2(0.95, 0.34)
+## How far the base reaches out of its middle toward the floor (the piece stands with its middle on the wall's face).
+const CRYSTAL_DEEP := 0.3
+const CRYSTAL_SLATE := Color(0.18, 0.2, 0.24)
+const CRYSTAL_EDGE := Color(0.5, 0.48, 0.42)
+const CRYSTAL_HOT := Color(1.0, 0.55, 0.2)
+const NOTCH_LIGHT := 0.5
+const FULL_RISE := 0.3
+## The oil urn (3.10): URN_HEIGHT m of darkened bronze with an iron band and one chevron toward its channel, the wick
+## twisted on its lid; the windup lights the wick (a small amber flame WICK_FLAME m, under the glow) running down; the
+## blast opens it in URN_SHARDS curved pieces that fly out and settle; the oil (set_oil) a dark glossy strip.
+const URN_HEIGHT := 0.8
+const URN_BRONZE := Color(0.3, 0.22, 0.14)
+const WICK_FLAME := 0.15
+const URN_SHARDS := 7
+const OIL_COLOR := Color(0.15, 0.1, 0.05)
+const OIL_WIDTH := 1.1
+## The stones of the vault (3.8): a rough block DROP_STONE of the square's side falling from DROP_HEIGHT over the
+## warning's last DROP_FALL s (it touches the floor on the strike's frame), the dust column falling from the rent the
+## whole warning; after, rubble at most DROP_RUBBLE m high, gone in its last DROP_FADE s.
+const DROP_STONE := 0.65
+const DROP_HEIGHT := 9.0
+const DROP_FALL := 0.15
+const DROP_RUBBLE := 0.6
+const DROP_FADE := 0.6
+const DUST := Color(0.62, 0.6, 0.57)
+const DUST_SIZE := 0.14
+const DUST_ALPHA := 0.45
+## The rift that breathes (3.7): three chevrons cut in the floor BREATH_IN m in from the brink side of each stretch,
+## pointing away from it; BREATH_SHEETS sheets of grey-indigo haze along the brink rising to BREATH_HIGH m in the windup
+## and torn up to BREATH_GUST m in the gust; no fill, no amber here (it pushes, never hurts).
+const BREATH_IN := 0.6
+const BREATH_SHEETS := 3
+const BREATH_HIGH := 2.0
+const BREATH_GUST := 3.0
+## The hostile plant (3.5): a cracked slab PLANT_SLAB m with its joint and one chevron toward the strip, a stiff dark
+## fan of PLANT_LEAVES blades PLANT_HIGH m on a root bulb; bronze-olive with rust edges; the windup closes the fan in
+## PLANT_CLOSE s and holds it shaking; the lash a root running the strip low and back in PLANT_BACK s.
+const PLANT_SLAB := 1.3
+const PLANT_LEAVES := 6
+const PLANT_HIGH := Vector2(0.9, 1.3)
+const PLANT_OPEN := 0.6
+const PLANT_BLADE := 0.24
+const PLANT_SHUT := 0.08
+const PLANT_CLOSE := 0.3
+const PLANT_BACK := 0.4
+const PLANT_LEAF := Color(0.26, 0.26, 0.17)
+const PLANT_RUST := Color(0.38, 0.22, 0.12)
+## The niche's skeleton (3.11; the figure in it is the technical artist's): the niche NICHE (width, height, depth) in
+## the wall at the strip's start, its stone surround, a sill with three chevrons pointing in, the slab of the reach with
+## its joint before it, and the bone hand on the sill (bone at BONE value); the windup brings the arm out to the elbow
+## (NICHE_OUT m), the grab runs it NICHE_GRAB m low along the floor and closes it, back over NICHE_BACK s.
+const NICHE := Vector3(1.2, 2.2, 0.5)
+const NICHE_SILL := 0.35
+const NICHE_OUT := 0.45
+const NICHE_GRAB := 1.5
+const NICHE_BACK := 0.8
+const BONE := Color(0.43, 0.41, 0.38)
+
+var _parts: Array[Node3D] = []
+var _rest: Array[Transform3D] = []
+var _flame: MeshInstance3D
+var _glow: ShaderMaterial
+var _notches: Array[StandardMaterial3D] = []
+var _haze: Array[ShaderMaterial] = []
+var _oil: MeshInstance3D
+var _dust: CPUParticles3D
+var _span := Vector2.ZERO
+var _way := Vector2.RIGHT
+var _blown := false
+var _shut := 0.0
+
+
+## Roots (3.4) along strip a to b.
+static func root(parent: Node3D, a: Vector2, b: Vector2, windup: float, seed_: int) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardRoot"
+	hp.kind = Kind.ROOT
+	hp.warn = windup
+	parent.add_child(hp)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_
+	var d := (b - a).normalized()
+	var n := Vector2(-d.y, d.x)
+	var length := a.distance_to(b)
+	for k in ROOT_CRACKS:
+		var side := 1.0 if k % 2 == 0 else -1.0
+		var l := rng.randf_range(ROOT_CRACK_LEN.x, ROOT_CRACK_LEN.y)
+		var t := length * (0.2 + 0.6 * float(k) / ROOT_CRACKS)
+		var p := a + d * t + n * side * ROOT_SIDE
+		var q := p + d.rotated(rng.randf_range(-0.2, 0.2)) * l
+		hp._cracks.append(hp._crack(p, q, rng.randf() * 9.0))
+	var tip := a + d * length * ROOT_CHEV_AT
+	for side: float in [1.0, -1.0]:
+		hp._marks.append(hp._flat_mark(Vector2(1.0, 1.0), {&"chev_count": 1, &"chev_dir": n * side,
+			&"chev_at": Vector2.ZERO}, tip + n * side * ROOT_SIDE * 1.4))
+	hp._span = Vector2(length, 3.0)
+	hp._way = d
+	hp._dust = hp._dusting(Vector3(tip.x, 0.1, tip.y), Vector3(length * 0.5, 0.05, 0.6), false)
+	hp._show()
+	return hp
+
+
+## The crystal (3.9) with its middle at p on the wall's face, CRYSTAL_DEEP m off the floor's edge, its chevrons toward
+## `toward` (the floor, its column of tiles).
+static func crystal(parent: Node3D, p: Vector2, toward: Vector2) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardCrystal"
+	hp.kind = Kind.CRYSTAL
+	parent.add_child(hp)
+	hp.position = Vector3(p.x, 0.0, p.y)
+	var iron := _iron()
+	var t := Vector3(toward.x, 0, toward.y).normalized()
+	hp.basis = Basis(Vector3.UP.cross(t).normalized(), Vector3.UP, t)
+	# (local: +z toward the floor, the base's front on the floor's edge, its back into the wall)
+	var base := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(CRYSTAL_BASE.x, CRYSTAL_BASE.y, CRYSTAL_DEEP * 2.0)
+	base.mesh = bm
+	base.material_override = iron
+	base.position = Vector3(0, CRYSTAL_BASE.y * 0.5, 0)
+	hp.add_child(base)
+	var prism := MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = 0.04
+	c.bottom_radius = CRYSTAL_SIZE.x
+	c.height = CRYSTAL_SIZE.y
+	c.radial_segments = 6
+	c.rings = 1
+	prism.mesh = c
+	var m := ShaderMaterial.new()
+	m.shader = preload("res://assets/shaders/crystal_edge.gdshader")
+	m.set_shader_parameter(&"albedo", CRYSTAL_SLATE)
+	m.set_shader_parameter(&"glow", CRYSTAL_EDGE)
+	m.set_shader_parameter(&"peak", 0.25)
+	prism.material_override = m
+	prism.position = Vector3(0, CRYSTAL_BASE.y + CRYSTAL_SIZE.y * 0.5, CRYSTAL_DEEP - CRYSTAL_SIZE.x - 0.02)
+	prism.rotation.y = 0.3
+	hp.add_child(prism)
+	hp._glow = m
+	t = Vector3(0, 0, 1)
+	var face := t * (CRYSTAL_DEEP + 0.004)
+	hp._marks.append(hp._face_mark(Vector2(CRYSTAL_BASE.x * 0.6, CRYSTAL_BASE.y * 0.9), face + Vector3(0, CRYSTAL_BASE.y * 0.5, 0), t,
+		{&"chev_count": 3, &"chev_dir": Vector2(0, 1), &"chev_open": 0.16, &"chev_stroke": 0.04, &"chev_gap": 0.07}))
+	var side := Vector3.UP.cross(t).normalized()
+	for k in 3:
+		var notch := MeshInstance3D.new()
+		var nb := BoxMesh.new()
+		nb.size = Vector3(0.05, 0.03, 0.12)
+		notch.mesh = nb
+		var nm := StandardMaterial3D.new()
+		nm.albedo_color = Color(0.05, 0.045, 0.04)
+		nm.emission_enabled = true
+		nm.emission = CRYSTAL_HOT
+		nm.emission_energy_multiplier = 0.0
+		notch.material_override = nm
+		notch.position = side * (float(k) - 1.0) * 0.28 + t * (CRYSTAL_DEEP - 0.08) + Vector3(0, CRYSTAL_BASE.y + 0.005, 0)
+		hp.add_child(notch)
+		hp._notches.append(nm)
+	hp._cracks.append(hp._strip(Vector3(0, 0.08, 0) + face - side * 0.35, Vector3(0, 0.1, 0) + face + side * 0.35, t, 0.06, 3.3, {}))
+	hp._show()
+	return hp
+
+
+## The crystal's charges (CrystalHazard.charge[i]): one notch lit a blow; full, the edge goes amber from the foot.
+func set_charge(n: int, full := false) -> void:
+	for k in _notches.size():
+		_notches[k].emission_energy_multiplier = NOTCH_LIGHT if k < n else 0.0
+	_shut = 1.0 if full else 0.0
+	_glow.set_shader_parameter(&"glow", CRYSTAL_HOT if full else CRYSTAL_EDGE)
+
+
+## The oil urn (3.10) at p, its channel's way `flow` (zero: none).
+static func urn(parent: Node3D, p: Vector2, flow: Vector2, windup: float) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardUrn"
+	hp.kind = Kind.URN
+	hp.warn = windup
+	parent.add_child(hp)
+	hp.position = Vector3(p.x, 0.0, p.y)
+	var bronze := StandardMaterial3D.new()
+	bronze.albedo_color = URN_BRONZE
+	bronze.metallic = 0.55
+	bronze.roughness = 0.5
+	var body := MeshInstance3D.new()
+	body.mesh = _lathe([Vector2(0.18, 0.0), Vector2(0.3, 0.12), Vector2(0.4, 0.4), Vector2(0.36, 0.6), Vector2(0.2, 0.72),
+		Vector2(0.22, 0.78), Vector2(0.0, 0.8)], URN_HEIGHT / 0.8)
+	body.material_override = bronze
+	hp.add_child(body)
+	hp._parts.append(body)
+	var band := MeshInstance3D.new()
+	var bc := CylinderMesh.new()
+	bc.top_radius = 0.385
+	bc.bottom_radius = 0.405
+	bc.height = 0.07
+	bc.radial_segments = 16
+	band.mesh = bc
+	band.material_override = _iron()
+	band.position = Vector3(0, 0.46 * URN_HEIGHT / 0.8, 0)
+	hp.add_child(band)
+	hp._parts.append(band)
+	var w := flow.normalized() if flow != Vector2.ZERO else ArenaRoom.toward_camera()
+	var w3 := Vector3(w.x, 0, w.y)
+	hp._marks.append(hp._face_mark(Vector2(0.22, 0.2), band.position + w3 * 0.41, w3,
+		{&"chev_count": 1, &"chev_dir": Vector2(0, 1), &"chev_open": 0.14, &"chev_stroke": 0.04}))
+	hp._parts.append(hp.get_child(hp.get_child_count() - 1))
+	var wick := MeshInstance3D.new()
+	var wc := CylinderMesh.new()
+	wc.top_radius = 0.015
+	wc.bottom_radius = 0.025
+	wc.height = 0.12
+	wick.mesh = wc
+	var wm := StandardMaterial3D.new()
+	wm.albedo_color = Color(0.08, 0.07, 0.06)
+	wick.material_override = wm
+	wick.position = Vector3(0, URN_HEIGHT + 0.06, 0)
+	hp.add_child(wick)
+	hp._parts.append(wick)
+	hp._flame = MeshInstance3D.new()
+	var fc := CylinderMesh.new()
+	fc.top_radius = 0.0
+	fc.bottom_radius = 0.04
+	fc.height = WICK_FLAME
+	hp._flame.mesh = fc
+	var fm := StandardMaterial3D.new()
+	fm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	fm.albedo_color = Color(0.95, 0.58, 0.22)
+	hp._flame.material_override = fm
+	hp._flame.visible = false
+	hp.add_child(hp._flame)
+	hp._way = w
+	hp._oil = MeshInstance3D.new()
+	var oq := QuadMesh.new()
+	oq.size = Vector2(1.0, OIL_WIDTH)
+	hp._oil.mesh = oq
+	var om := StandardMaterial3D.new()
+	om.albedo_color = OIL_COLOR
+	om.roughness = 0.15
+	om.metallic_specular = 0.8
+	hp._oil.material_override = om
+	hp._oil.visible = false
+	hp._oil.top_level = true
+	hp.add_child(hp._oil)
+	hp._show()
+	return hp
+
+
+## The oil run `reach` m down its channel (0: none) and how charred it lies (0 fresh, 1 the scorch fading).
+func set_oil(reach: float, charred := 0.0) -> void:
+	_oil.visible = reach > 0.05
+	if not _oil.visible:
+		return
+	var at := Vector2(position.x, position.z) + _way * reach * 0.5
+	_oil.global_transform = Transform3D(Basis(Vector3.UP, -_way.angle()) * Basis(Vector3.RIGHT, -PI * 0.5).scaled(Vector3(reach, 1, 1)),
+		Vector3(at.x, CRACK_Y + 0.004, at.y))
+	(_oil.material_override as StandardMaterial3D).roughness = lerpf(0.15, 0.95, charred)
+	(_oil.material_override as StandardMaterial3D).albedo_color = OIL_COLOR.darkened(0.5 * charred)
+
+
+## A stone of the vault (3.8) over the square at p (side m), for DropFloor: set_state as a slab (the windup falling, the
+## strike landing) and spent the rubble's seconds left (0 frees it).
+static func drop(parent: Node3D, p: Vector2, side: float, windup: float, stone: Material, seed_: int) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardDrop"
+	hp.kind = Kind.DROP
+	hp.warn = windup
+	parent.add_child(hp)
+	hp.position = Vector3(p.x, 0.0, p.y)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_
+	var holder := Node3D.new()
+	hp.add_child(holder)
+	for k in 3:
+		var mi := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		var s := side * DROP_STONE * rng.randf_range(0.55, 0.85)
+		b.size = Vector3(s, s * rng.randf_range(0.5, 0.8), s * rng.randf_range(0.7, 1.0))
+		mi.mesh = b
+		mi.material_override = stone
+		mi.transform = Transform3D(Basis(Vector3(rng.randf(), rng.randf(), rng.randf()).normalized(), rng.randf_range(-0.4, 0.4)),
+			Vector3(rng.randf_range(-0.2, 0.2), b.size.y * 0.45, rng.randf_range(-0.2, 0.2)) * side * 0.5)
+		holder.add_child(mi)
+	hp._parts.append(holder)
+	holder.position.y = DROP_HEIGHT
+	holder.visible = false
+	hp._dust = hp._dusting(Vector3(0, DROP_HEIGHT * 0.5, 0), Vector3(side * 0.25, DROP_HEIGHT * 0.5, side * 0.25), true)
+	hp._show()
+	return hp
+
+
+## The rift's breath (3.7) for band r pushing `push`, the brink on the side opposite the push.
+static func breath(parent: Node3D, r: Rect2, push: Vector2, windup: float, seed_: int) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardBreath"
+	hp.kind = Kind.BREATH
+	hp.warn = windup
+	parent.add_child(hp)
+	var c := r.get_center()
+	var d := push.normalized() if push != Vector2.ZERO else Vector2.UP
+	var along := Vector2(-d.y, d.x)
+	var depth := absf(d.x) * r.size.x + absf(d.y) * r.size.y
+	var length := absf(along.x) * r.size.x + absf(along.y) * r.size.y
+	var near := c - d * (depth * 0.5 - BREATH_IN)
+	hp._marks.append(hp._flat_mark(Vector2(1.4, 1.4), {&"chev_count": 3, &"chev_dir": d, &"chev_at": Vector2.ZERO,
+		&"chev_open": 0.4, &"chev_gap": 0.18}, near))
+	var brink := c - d * (depth * 0.5 + 0.3)
+	for k in BREATH_SHEETS:
+		var mi := MeshInstance3D.new()
+		var q := QuadMesh.new()
+		q.size = Vector2(length / BREATH_SHEETS * 1.3, BREATH_GUST)
+		mi.mesh = q
+		var m := ShaderMaterial.new()
+		m.shader = preload("res://assets/shaders/hazard_haze.gdshader")
+		m.set_shader_parameter(&"seed", float(seed_ + k) * 3.7)
+		mi.material_override = m
+		var at := brink + along * length * ((float(k) + 0.5) / BREATH_SHEETS - 0.5) - d * 0.2 * k
+		var x := Vector3(along.x, 0, along.y)
+		mi.transform = Transform3D(Basis(x, Vector3.UP, x.cross(Vector3.UP)), Vector3(at.x, BREATH_GUST * 0.5 - 0.6, at.y))
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		hp.add_child(mi)
+		hp._haze.append(m)
+	hp._show()
+	return hp
+
+
+## The hostile plant (3.5) at strip a to b.
+static func plant(parent: Node3D, a: Vector2, b: Vector2, windup: float, seed_: int) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardPlant"
+	hp.kind = Kind.PLANT
+	hp.warn = windup
+	parent.add_child(hp)
+	hp.position = Vector3(a.x, 0.0, a.y)
+	var d := (b - a).normalized()
+	hp._way = d
+	hp._span = Vector2(a.distance_to(b), 0)
+	hp._marks.append(hp._flat_mark(Vector2.ONE * PLANT_SLAB, {&"joint": JOINT, &"chev_count": 1, &"chev_dir": d,
+		&"chev_at": d * PLANT_SLAB * 0.3, &"chev_open": 0.32}))
+	hp._cracks.append(hp._crack(Vector2(-0.45, -0.4), Vector2(0.15, 0.48), 4.4))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_
+	var leaf := StandardMaterial3D.new()
+	leaf.albedo_color = PLANT_LEAF
+	leaf.roughness = 0.8
+	var rust := StandardMaterial3D.new()
+	rust.albedo_color = PLANT_RUST
+	rust.roughness = 0.85
+	var bulb := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.2
+	sm.height = 0.3
+	bulb.mesh = sm
+	bulb.material_override = rust
+	bulb.position = Vector3(0, 0.1, 0)
+	hp.add_child(bulb)
+	for k in PLANT_LEAVES:
+		var pivot := Node3D.new()
+		hp.add_child(pivot)
+		pivot.position = Vector3(0, 0.12, 0)
+		var blade := MeshInstance3D.new()
+		var pm := PrismMesh.new()
+		var h := rng.randf_range(PLANT_HIGH.x, PLANT_HIGH.y)
+		pm.size = Vector3(PLANT_BLADE, h, 0.04)
+		blade.mesh = pm
+		blade.material_override = leaf if k % 2 == 0 else rust
+		blade.position = Vector3(0, h * 0.5, 0)
+		pivot.add_child(blade)
+		pivot.rotation.y = TAU * k / PLANT_LEAVES + rng.randf_range(-0.2, 0.2)
+		hp._parts.append(pivot)
+	var lash := MeshInstance3D.new()
+	var lc := CylinderMesh.new()
+	lc.top_radius = 0.05
+	lc.bottom_radius = 0.09
+	lc.height = 1.0
+	lash.mesh = lc
+	lash.material_override = rust
+	lash.visible = false
+	hp.add_child(lash)
+	hp._flame = lash
+	hp._show()
+	return hp
+
+
+## The niche's skeleton (3.11) at strip a to b (a the niche in the wall, b the reach's end).
+static func niche(parent: Node3D, a: Vector2, b: Vector2, windup: float, stone: Material) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardNiche"
+	hp.kind = Kind.NICHE
+	hp.warn = windup
+	parent.add_child(hp)
+	hp.position = Vector3(a.x, 0.0, a.y)
+	var d := (b - a).normalized()
+	hp._way = d
+	var d3 := Vector3(d.x, 0, d.y)
+	var side := Vector3.UP.cross(d3).normalized()
+	hp.basis = Basis(side, Vector3.UP, -d3).orthonormalized()
+	# (local: -z toward the reach, x along the wall)
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.02, 0.02, 0.025)
+	dark.roughness = 1.0
+	var back := MeshInstance3D.new()
+	var bb := BoxMesh.new()
+	bb.size = Vector3(NICHE.x, NICHE.y, 0.04)
+	back.mesh = bb
+	back.material_override = dark
+	back.position = Vector3(0, NICHE.y * 0.5 + NICHE_SILL, 0.02)
+	hp.add_child(back)
+	for f: Array in [[Vector3(-(NICHE.x + 0.24) * 0.5, (NICHE.y + NICHE_SILL) * 0.5, -0.05), Vector3(0.24, NICHE.y + NICHE_SILL, 0.2)],
+			[Vector3((NICHE.x + 0.24) * 0.5, (NICHE.y + NICHE_SILL) * 0.5, -0.05), Vector3(0.24, NICHE.y + NICHE_SILL, 0.2)],
+			[Vector3(0, NICHE.y + NICHE_SILL + 0.12, -0.05), Vector3(NICHE.x + 0.48, 0.24, 0.2)],
+			[Vector3(0, NICHE_SILL * 0.5, -0.12), Vector3(NICHE.x + 0.1, NICHE_SILL, 0.34)]]:
+		var mi := MeshInstance3D.new()
+		var fb := BoxMesh.new()
+		fb.size = f[1]
+		mi.mesh = fb
+		mi.material_override = stone
+		mi.position = f[0]
+		hp.add_child(mi)
+	hp._marks.append(hp._face_mark(Vector2(NICHE.x * 0.8, NICHE_SILL * 0.8), Vector3(0, NICHE_SILL * 0.5, -0.29),
+		Vector3(0, 0, -1), {&"chev_count": 3, &"chev_dir": Vector2(0, -1), &"chev_open": 0.22, &"chev_stroke": 0.05,
+		&"chev_gap": 0.09}))
+	var reach := a.distance_to(b)
+	var slab := MeshInstance3D.new()
+	hp._marks.append(hp._flat_mark(Vector2(reach, reach), {&"joint": JOINT, &"chev_count": 3, &"chev_dir": Vector2(0, 1),
+		&"chev_at": Vector2(0, 0.3)}, Vector2(0, -reach * 0.5 - 0.3)))
+	slab.free()
+	# the bone hand on the sill, its forearm in the dark
+	var bone := StandardMaterial3D.new()
+	bone.albedo_color = BONE
+	bone.roughness = 0.9
+	var arm := Node3D.new()
+	hp.add_child(arm)
+	arm.position = Vector3(0.12, NICHE_SILL + 0.04, -0.05)
+	hp._cyl_into(arm, Vector3(0, 0, 0.25), 0.035, 0.5, Basis(Vector3.RIGHT, PI * 0.5), bone)
+	var palm := MeshInstance3D.new()
+	var pb := BoxMesh.new()
+	pb.size = Vector3(0.12, 0.03, 0.1)
+	palm.mesh = pb
+	palm.material_override = bone
+	palm.position = Vector3(0, 0, -0.04)
+	arm.add_child(palm)
+	for k in 4:
+		hp._cyl_into(arm, Vector3(-0.045 + 0.03 * k, -0.03, -0.14), 0.012, 0.12, Basis(Vector3.RIGHT, PI * 0.5 + 0.5), bone)
+	hp._parts.append(arm)
+	hp._rest.append(arm.transform)
+	hp._show()
+	return hp
+
+
+func _cyl_into(under: Node3D, at: Vector3, r: float, h: float, b: Basis, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = r
+	c.bottom_radius = r
+	c.height = h
+	c.radial_segments = 6
+	mi.mesh = c
+	mi.material_override = mat
+	mi.transform = Transform3D(b, at)
+	under.add_child(mi)
+
+
+## Each kind's own movement on its state (set_state).
+func _on_state(s: Vector3, spent: float) -> void:
+	match kind:
+		Kind.ROOT:
+			_dust.emitting = s.x > 0.0 or s.y > 0.0
+		Kind.CRYSTAL:
+			if s.x > 0.0 or s.y > 0.0:
+				_glow.set_shader_parameter(&"glow", CRYSTAL_HOT)
+			elif _shut <= 0.0:
+				_glow.set_shader_parameter(&"glow", CRYSTAL_EDGE.lerp(CRYSTAL_HOT, s.z))
+		Kind.URN:
+			_flame.visible = s.x > 0.0 and not _blown
+			if _flame.visible:
+				_flame.position = Vector3(0, URN_HEIGHT + 0.12 - 0.1 * s.x, 0)
+			if s.y > 0.0 and not _blown:
+				_blow()
+		Kind.DROP:
+			var holder := _parts[0]
+			_dust.emitting = s.x > 0.0
+			if s.x > 0.0:
+				var left := (1.0 - s.x) * warn
+				holder.visible = left < DROP_FALL
+				holder.position.y = DROP_HEIGHT * clampf(left / DROP_FALL, 0.0, 1.0)
+			elif s.y > 0.0 or spent > 0.0:
+				holder.visible = true
+				holder.position.y = -0.1 if spent > 0.0 else 0.0
+				var fade := clampf(spent / DROP_FADE, 0.0, 1.0) if spent > 0.0 else 1.0
+				holder.scale = Vector3(1.0, DROP_RUBBLE / maxf(DROP_STONE, 0.01) * 0.9, 1.0) * maxf(fade, 0.05) \
+					if spent > 0.0 else Vector3.ONE
+			elif _struck_at > -100.0:
+				queue_free()
+		Kind.BREATH:
+			var rise := 0.0
+			var tear := 0.0
+			if s.x > 0.0:
+				rise = s.x * BREATH_HIGH / BREATH_GUST
+			elif s.y > 0.0:
+				rise = 1.0
+				tear = 1.0 - s.y
+			elif s.z > 0.0:
+				rise = s.z * BREATH_HIGH / BREATH_GUST
+			for m in _haze:
+				m.set_shader_parameter(&"rise", rise)
+				m.set_shader_parameter(&"tear", tear)
+			for m in _marks:
+				m.set_shader_parameter(&"sink", 0.0)
+
+
+## The movement between states (_process).
+func _animate(_dt: float) -> void:
+	match kind:
+		Kind.PLANT:
+			var shut := 0.0
+			if _arm > 0.0:
+				shut = minf(1.0, _arm * warn / PLANT_CLOSE)
+			elif _strike > 0.0:
+				shut = 1.0
+			elif _time - _struck_at < PLANT_BACK * 2.0:
+				shut = 1.0 - clampf((_time - _struck_at) / (PLANT_BACK * 2.0), 0.0, 1.0)
+			var tilt := lerpf(PLANT_OPEN, PLANT_SHUT, shut) + 0.05 * sin(_time * TAU / EMBER_PERIOD)
+			if shut >= 1.0 and _arm > 0.0:
+				tilt += 0.03 * sin(_time * 60.0)
+			for p in _parts:
+				p.rotation.x = tilt
+			var lash := _flame
+			var out := 0.0
+			if _strike > 0.0:
+				out = 1.0 - _strike
+			elif _time - _struck_at < PLANT_BACK:
+				out = 1.0 - (_time - _struck_at) / PLANT_BACK
+			lash.visible = out > 0.01
+			if lash.visible:
+				var l := _span.x * out
+				var w3 := Vector3(_way.x, 0, _way.y)
+				lash.transform = Transform3D(Basis(w3.cross(Vector3.UP).normalized(), PI * 0.5).scaled(Vector3(1, l, 1)),
+					w3 * l * 0.5 + Vector3(0, 0.08, 0))
+		Kind.NICHE:
+			var arm := _parts[0]
+			var o := 0.0
+			if _arm > 0.0:
+				o = NICHE_OUT * minf(1.0, _arm * 2.0)
+			elif _strike > 0.0:
+				o = NICHE_OUT + (NICHE_GRAB - NICHE_OUT) * (1.0 - _strike)
+			elif _time - _struck_at < NICHE_BACK:
+				o = NICHE_GRAB * (1.0 - (_time - _struck_at) / NICHE_BACK)
+			elif not _asleep:
+				o = 0.0
+			var low := 0.0 if o < NICHE_OUT + 0.01 else -(NICHE_SILL - 0.06) * clampf((o - NICHE_OUT) / 0.3, 0.0, 1.0)
+			arm.transform = _rest[0].translated(Vector3(0, low, -o))
+			arm.visible = not _asleep or o > 0.0
+		Kind.CRYSTAL:
+			pass
+
+
+func _blow() -> void:
+	_blown = true
+	var shards := MeshInstance3D.new()
+	shards.free()
+	for p in _parts:
+		p.visible = false
+	var bronze := StandardMaterial3D.new()
+	bronze.albedo_color = URN_BRONZE.darkened(0.3)
+	bronze.metallic = 0.5
+	bronze.roughness = 0.6
+	for k in URN_SHARDS:
+		var mi := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		b.size = Vector3(0.22, 0.03, 0.16)
+		mi.mesh = b
+		mi.material_override = bronze
+		var a := TAU * k / URN_SHARDS
+		mi.position = Vector3(0, 0.4, 0)
+		add_child(mi)
+		var to := Vector3(cos(a), 0, sin(a)) * (0.8 + 0.25 * (k % 3)) + Vector3(0, 0.02, 0)
+		var tw := mi.create_tween()
+		tw.tween_property(mi, "position", to, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		mi.rotation = Vector3(0.3 * k, a, 0.2)
+
+
+## Dust (no light, grey): falling from above (a column) or rising off the floor.
+func _dusting(at: Vector3, box: Vector3, falling: bool) -> CPUParticles3D:
+	var p := CPUParticles3D.new()
+	p.amount = 12
+	p.lifetime = 0.9
+	p.emitting = false
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents = box
+	p.gravity = Vector3(0, -6.0 if falling else -0.5, 0)
+	p.initial_velocity_min = 0.2
+	p.initial_velocity_max = 0.6
+	p.direction = Vector3.DOWN if falling else Vector3.UP
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.0
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE * DUST_SIZE
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.albedo_color = Color(DUST.r, DUST.g, DUST.b, DUST_ALPHA)
+	var g := GradientTexture2D.new()
+	g.fill = GradientTexture2D.FILL_RADIAL
+	g.fill_from = Vector2(0.5, 0.5)
+	g.fill_to = Vector2(1.0, 0.5)
+	var gr := Gradient.new()
+	gr.colors = PackedColorArray([Color.WHITE, Color(1, 1, 1, 0)])
+	g.gradient = gr
+	m.albedo_texture = g
+	q.material = m
+	p.mesh = q
+	p.position = at
+	p.top_level = false
+	add_child(p)
+	return p
+
+
+static func _iron() -> StandardMaterial3D:
+	var iron := StandardMaterial3D.new()
+	iron.albedo_color = IRON
+	iron.roughness = 0.55
+	iron.metallic = 0.5
+	return iron
+
+
+## A turned body from `outline` (radius, height) scaled by `s`.
+static func _lathe(outline: Array, s: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var seg := 16
+	for i in outline.size() - 1:
+		var a: Vector2 = outline[i] * s
+		var b: Vector2 = outline[i + 1] * s
+		for k in seg:
+			var t0 := TAU * k / seg
+			var t1 := TAU * (k + 1) / seg
+			var p0 := Vector3(cos(t0) * a.x, a.y, sin(t0) * a.x)
+			var p1 := Vector3(cos(t1) * a.x, a.y, sin(t1) * a.x)
+			var p2 := Vector3(cos(t1) * b.x, b.y, sin(t1) * b.x)
+			var p3 := Vector3(cos(t0) * b.x, b.y, sin(t0) * b.x)
+			st.add_vertex(p0)
+			st.add_vertex(p1)
+			st.add_vertex(p2)
+			st.add_vertex(p0)
+			st.add_vertex(p2)
+			st.add_vertex(p3)
+	st.generate_normals()
+	return st.commit()

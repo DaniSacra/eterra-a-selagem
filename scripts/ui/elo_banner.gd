@@ -42,7 +42,7 @@ var _material_n := 0
 var _material_row: MaterialCount
 var _material_waiting := {}
 var _time := TIME
-## What shows now: &"elo", &"boon", &"psalm", &"trial" or &"" (the tests read it).
+## What shows now: &"elo", &"boon", &"psalm", &"trial", &"material", &"find", &"noted" or &"" (the tests read it).
 var showing := &""
 ## A screen is over the run: nothing shows and the greeting waits (Hud sets it every frame).
 var held := false:
@@ -119,6 +119,21 @@ func show_material(id: StringName, n: int) -> void:
 		return
 	_material_waiting[id] = n
 	_enqueue(_open_material.bind(id))
+
+
+## Ofícios (10_ux.md 10.2): a find, once, in the "Bênção nova" mould: "Achado" over the find's drawing and its name,
+## then where it goes ("Leve ao Forjador no {HUB}"). Never dropped by QUEUE_MAX.
+func show_find(id: StringName) -> void:
+	if _busy():
+		_queue.push_front(_open_find.bind(id))
+		return
+	_open_find(id)
+
+
+## Ofícios: a vein seen without the pick: "Veio de Pedra Funda" over its mark, "Anotado no Livro de Ahk" and the
+## tool it asks for.
+func show_noted() -> void:
+	_enqueue(_open_noted)
 
 
 ## How many greetings wait behind the one showing.
@@ -228,6 +243,46 @@ func _open_material(id: StringName) -> void:
 	UiKit.shadow(_material_row.number)
 	add_child(_material_row)
 	_start(&"material")
+
+
+func _open_find(id: StringName) -> void:
+	_clear()
+	var title := UiKit.shadow(UiKit.title(T.t(&"oficio_find_title"), TITLE_SIZE, UiKit.GOLD))
+	title.name = &"Title"
+	add_child(title)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 8)
+	_icon = PickMark.new().setup(PickMark.Look.HEAD, MEDALLION, false)
+	row.add_child(_icon)
+	row.add_child(_named(DescentMap.find_name(id), UiKit.PALE))
+	add_child(row)
+	var note := UiKit.shadow(UiKit.label(T.t(&"oficio_find_note"), UiKit.DIM, NOTE_SIZE))
+	note.name = &"Note"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(note)
+	_start(&"find")
+
+
+func _open_noted() -> void:
+	_clear()
+	var title := UiKit.shadow(UiKit.title(T.t(&"oficio_vein_title"), TITLE_SIZE, UiKit.PALE))
+	title.name = &"Title"
+	add_child(title)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row.add_theme_constant_override(&"separation", 8)
+	_icon = DoorGlyph.new().setup(DoorGlyph.Kind.STONE, MEDALLION * 0.8)
+	row.add_child(_icon)
+	row.add_child(_named(T.t(&"oficio_noted"), UiKit.PALE))
+	add_child(row)
+	var note := UiKit.shadow(UiKit.label(T.t(&"oficio_needs", {"name": T.t(&"oficio_pick")}), DoorSign.SHORT_COLOR, NOTE_SIZE))
+	note.name = &"Note"
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	add_child(note)
+	_start(&"noted")
 
 
 func _name(b: Boon) -> Label:

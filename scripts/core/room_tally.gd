@@ -41,7 +41,7 @@ func enter(depth: int, layout: String, hp: float, time: float, boss := false, va
 	close(time)
 	_started = time
 	_rooms.append({"depth": depth, "node": node, "layout": layout, "variant": variant, "hp_in": snappedf(hp, 0.1), "gold_in": gold,
-		"boons_in": boons, "hurt_by": {}, "hits": 0, "hits_by": {}, "dodges": 0, "shots": {}, "blocked_by": {},
+		"boons_in": boons, "hurt_by": {}, "hits": 0, "hits_by": {}, "dodges": 0, "dodge_blocked_by": {}, "shots": {}, "blocked_by": {},
 		"time": 0.0, "contact": -1.0, "zones": {}})
 	if boss:
 		hp_at_boss = snappedf(hp, 0.1)
@@ -74,6 +74,12 @@ func hurt_context(by: String, time: float, amount: float, warn_s: float, dash_re
 func dodge() -> void:
 	if not _rooms.is_empty():
 		_rooms[-1].dodges = int(_rooms[-1].dodges) + 1
+
+
+## AT-CA2: one of his dodges in the current room was cut short by this piece (Arena.blocker_at; "edge" the floor).
+func dodge_blocked(piece: String) -> void:
+	if not _rooms.is_empty():
+		_count(_rooms[-1].dodge_blocked_by, piece)
 
 
 ## An enemy's shot (by: its kind, or the boss) was fired, hit him or was stopped (SHOT_*); a stopped one names the

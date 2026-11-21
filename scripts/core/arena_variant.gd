@@ -19,5 +19,7 @@ extends Resource
 @export var hazard: HazardDef
 ## AT-Q1: stand in for the arena's breakables when not empty.
 @export var breakables: Array[BreakablePiece] = []
+## OF-08: stand in for the arena's vein spots when not empty.
+@export var gather_spots := PackedVector2Array()
 @export var areas: Array[Rect2] = []
 @export var area_names: PackedStringArray = PackedStringArray()

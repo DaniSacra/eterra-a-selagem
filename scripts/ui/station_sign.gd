@@ -45,6 +45,8 @@ var title: Label
 var detail: Label
 var key: KeyCap
 var prompt: Label
+## The line of the tool a gathering spot asks for ("Pede: Picareta"; null: none).
+var need: Label
 var plate: PanelContainer
 ## The hero's feet in the world (the sign never covers him); Vector3.INF: nobody to keep clear of.
 var hero_at := Vector3.INF
@@ -94,6 +96,14 @@ static func make(id: StringName, name_text: String, detail_text: String, p_actio
 	s.prompt.name = "prompt"
 	row.add_child(s.prompt)
 	v.add_child(row)
+	# Ofícios (10_ux.md 10.1): the vein's plate says the tool it asks for, under the key (Rooms.prompt: vein_note
+	# without the pick, in the rose of what is missing; vein with it, quiet)
+	var need := tool_line(id)
+	if need != "":
+		s.need = DoorSign._label(need, DoorSign.SHORT_COLOR if id == &"vein_note" else DoorSign.DETAIL_COLOR,
+			DoorSign.NOTE_SIZE)
+		s.need.name = "need"
+		v.add_child(s.need)
 	s.refresh()
 	s.plate.gui_input.connect(s._on_input)
 	s.plate.mouse_entered.connect(s._hover.bind(true))
@@ -106,6 +116,22 @@ static func make(id: StringName, name_text: String, detail_text: String, p_actio
 static func verb(id: StringName) -> String:
 	var key := "hub_use_%s" % id
 	return T.t(key) if T.table.entries.has(key) else T.t(&"hub_use")
+
+
+## The tool line of a use (the vein's: "Pede: Picareta" without the pick, "Com a Picareta" with it), "" for others.
+static func tool_line(id: StringName) -> String:
+	match id:
+		&"vein_note":
+			return T.t(&"oficio_needs", {"name": T.t(&"oficio_pick")})
+		&"vein":
+			return T.t(&"oficio_uses", {"name": T.t(&"oficio_pick")})
+	return ""
+
+
+## The verb greyed out (a spot that does nothing now: the vein already noted, still without the pick).
+func dim_verb(on: bool = true) -> void:
+	prompt.add_theme_color_override(&"font_color", Color(DoorSign.HINT_COLOR, 0.45) if on else DoorSign.HINT_COLOR)
+	key.modulate.a = 0.5 if on else 1.0
 
 
 func _ready() -> void:
@@ -178,7 +204,7 @@ static func place_under(anchor: Vector2, s: Vector2, screen: Vector2, head: Vect
 		return at.round()
 	var box := hero_box(head, feet)
 	if Rect2(at, s).intersects(box):
-		at = _inside(Vector2(at.x, box.end.y), s, screen)
+		at = _inside(Vector2(at.x, ceilf(box.end.y)), s, screen)  # ceil: rounding never brings it back onto him
 		if Rect2(at, s).intersects(box):
 			# the bottom of the screen: over his head instead
 			at.y = box.position.y - s.y

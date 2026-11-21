@@ -687,6 +687,16 @@ func color_of(tags: Array[StringName]) -> Color:
 	for t in GIFT_TAGS:
 		if tags.has(t):
 			return LIGHT
+	# a blow a Blessing only makes stronger takes its family's colour (Golpe Radiante, Golpe Firme...)
+	match boons.family_on(tags):
+		Boon.Family.LUZ:
+			return LIGHT
+		Boon.Family.VIGILIA:
+			return VIGIL
+		Boon.Family.CHAMA:
+			return FIRE
+		Boon.Family.GEADA:
+			return FROST
 	return EMETH
 
 

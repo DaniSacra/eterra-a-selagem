@@ -1161,7 +1161,7 @@ func _creep(sm: Masonry, from: Vector2, dir: Vector2, r: RandomNumberGenerator) 
 				return
 		var rad := ROOT_RADIUS * lerpf(1.0, 0.2, float(i) / ROOT_SEGMENTS)
 		var mid := (p + q) * 0.5
-		var mi := sm.shaft(Vector3.ZERO, rad, seg * 1.15, tree.stone_material)
+		var mi := sm.shaft(Vector3.ZERO, rad, seg * 1.15, edge_kit().material(&"bark"))
 		(mi.mesh as CylinderMesh).bottom_radius = rad * 1.25
 		(mi.mesh as CylinderMesh).radial_segments = 6
 		var d3 := Vector3(dir.x, 0, dir.y)

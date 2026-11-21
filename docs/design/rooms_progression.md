@@ -1434,3 +1434,69 @@ média 26,7 s contra 21,4 s da B. `fit_probe` do Santuário C: fantasma 1,20 m²
 - Urna: bronze, pavio que se vê, silhueta que nunca lembre um quebrável; o pavio aceso com a chama no aro; o canal de
   óleo no chão (sulco escuro) e a chama correndo; hoje a urna é um cilindro genérico e o óleo a faixa âmbar.
 - Colunata: nove colunas baixas de 2,5 m, dois tocos e a rachada de 2,5 m que tomba 3 m.
+
+## Lote D, protótipos do atlas e quebráveis (2026-11-21)
+
+Pedido: AT-H1 a AT-H3 (backlog, "Pacotes do PO de 2026-11-20", P.4) com Q-AT3 (a), dano e puxão de 1 m sem prender, e
+Q-AT4 (a), só os três, com o nicho a partir da sala 4; depois AT-Q4, os quebráveis de toda sala. Critérios da 9.3 do
+`combat_cadence.md` e forma do `sw_g7_hazard_grammar.md`. Visual em placeholder.
+
+### 1. O que mudou
+- **AT-H1, laje de pressão do Santuário**: é o RP-06 sem mudança de número. A isca já existe (todo inimigo que pisa arma,
+  `armed_by_enemy`); conferido que cada laje das naves tem uma faixa de 1 m livre ao lado em toda a extensão (teste
+  `test_the_santuario_slabs_have_a_way_round`). O robô não atrai ninguém de propósito: um `Bot.lure_plan` (levar o bando
+  por cima da laje e sair pelo lado) é do gameplay-engineer.
+- **AT-H2, Esqueleto do Nicho (Cripta B)**: faixa de 2,2 x 2,2 m diante de um nicho da parede oeste em (-12; -6,5), fora das
+  faixas das seteiras, 1,5 m ou mais das lajes e 6 m da entrada, no `hazard.also` da B, desde a sala 4. Acorda com o herói
+  0,3 s em cima (inimigo 0,2), 1,2 s de aviso, agarra 0,25 s, 10 no herói e 60 no inimigo, puxa 1 m para o nicho em 0,12 s
+  quadro a quadro (nunca um salto, nunca para dentro de outro aviso nem da pedra, R10; a esquiva corta e o herói nunca fica
+  preso), recarga 6 s. Golpe da Emeth nele só faísca (não é inimigo: a mira assistida nunca o escolhe). O grupo de
+  quebráveis que ficava ali foi para o pé do sarcófago noroeste.
+- **AT-H3, Planta Hostil (Jardim B)**: no lugar da raiz do toco junto da parede oeste (as raízes da B ficam com uma), faixa
+  de 2,5 x 1,5 m de (-16,6; -1,5) para o leste, a raiz com pele nova: 0,5 s (inimigo 0,2), 1,2 s, 10 / 60, empurrão de 1 m
+  para fora da faixa, 6 s. Lado de fuga de 0,75 m no máximo. A Emeth só faísca.
+- **AT-Q4, quebráveis**: todas as salas e variantes além do Salão e das Criptas, a Provação e o Altar, de 7 a 10 peças em
+  3 ou 4 grupos de 2 ou 3, nos cantos e encostados em parede ou peça, com os materiais do bioma da spec AT-Q0; Salão com o
+  grupo oeste encostado na balaustrada (ficava 1,8 m dela). Teste em `test_arenas.gd` para toda vista, variante e câmara
+  de evento: 1,5 m ou mais de porta, marca da porta, entrada, recompensa, nascimento, ponto de uso, guardião e toda laje
+  ou faixa de perigo (também do `also`). `fit_probe` igual (os quebráveis não são `ArenaObstacle`).
+
+### 2. Medidas do robô (12 descidas, `smoke 900 --bot-reaction=0.25 --ultimate=cleave`, sementes 1 a 12)
+- 11 de 12 chegam em Morvath, 8 vitórias, `stuck` 0.
+- Santuário (24 salas nas três variantes): lajes golpearam 35 vezes, armadas 20 pelo herói e 15 por inimigos, 457 de
+  dano em inimigos; herói 0 de dano (ele sai de todas).
+- Cripta B (7 salas): o nicho nunca acordou (o robô e os inimigos não param no canto oeste); 7 faíscas de golpes nele.
+  Jardim B (8 salas): a planta e a raiz nunca acordaram.
+- Quebráveis quebrados por sala de 0 (Altar, Jardim A) a 73% (Runas, sala pequena e cheia); Salão 3%, Santuário 4 a 12%.
+
+### 3. Riscos
+- O nicho e a planta ficam em cantos: com o robô não acordam. É escolha (Q-AT4: protótipo, o jogador decide se usa), mas
+  se gente também não passa por ali eles não contam como perigo; medir no teste com gente antes de mover para a luta.
+- O puxão do nicho em inimigos é um empurrão instantâneo de 1 m (o do herói é gradual).
+
+### 4. O que precisa de arte
+- Esqueleto do Nicho: a mão e o braço saindo do nicho, preparo de 1,2 s, o agarrão e a volta (SW-G7 3.5); hoje a moldura
+  de laje ao longo da faixa e a faísca.
+- Planta Hostil: escura, alta e pontuda sobre laje com divisa, folhas fechando no aviso e o chicote (SW-G7 3.5 e AT-Q0 2.4,
+  contra a muda frágil).
+- Quebráveis: as peças por material (AT-Q2) e os sons (AT-Q3).
+
+## Lote D, hipóteses de planta do atlas (AT-CA2, AT-SE2, AT-PB2, AT-FO2) e decisões de movimento (2026-11-21)
+
+Medidas com o robô (`smoke 900 --bot-reaction=0.25 --ultimate=cleave`): 12 descidas inteiras (sementes 1 a 12) e 8
+começando em cada sala tocada (`--arena=crypt --variant=0`, `--arena=bridge --variant=1`, `--arena=sanctuary
+--variant=1`, sementes 1 a 8). Contador novo por sala: `rooms[].dodge_blocked_by` (esquiva cortada pela pedra ou pela
+borda, uma vez por esquiva; `Player.dodge_blocked`, `Arena.blocker_at` dá `peça@x,z` da planta ou `edge`,
+`RoomTally.dodge_blocked`).
+
+| Hipótese | Medida | Decisão |
+|---|---|---|
+| **AT-CA2**, Cripta A: esquivas barradas pelo sarcófago e pela mureta | 12 salas, 48 esquivas: túmulo grande (1; 0) 3 e mureta (-3,5..2; 3,8) 4, juntos 7 de 48 (15%, abaixo de 1 em 6); cobertura secundária: sarcófago sul (4; 5,6) 5 e cápsula leste (8..12; 0,5) 4 (19%); borda 8. Esquivas cortadas na sala 54%, a mais alta das salas de luta fora da Ponte B (Salão 12%, Santuário 17 a 29%, Jardim 18 a 33%) | Nada muda: a regra pede mexer só acima de 1 em 6 perto do túmulo. Se o teste com gente subir, o primeiro passo é levar o sarcófago sul e a cápsula leste 1 m para a borda, não aumentar a sala |
+| **AT-SE2**, Santuário B: respiro nas bocas do desvio do buraco | 11 salas: tempo na borda do buraco 7%, nave 47%, naves laterais 46%; esquivas cortadas 28% (borda 9 de 64, colunas 7, bancos 2); `fit_probe` sem peça sem desenho (`bare` 0) | Sem colisão nova (nem a medida nem o `fit_probe` mostram aperto). O respiro visual nas bocas e a borda decorativa separada das lajes ficam para o environment-artist (AT-SE1) |
+| **AT-PB2**, Ponte B: patamar como recuperação sob fogo | 11 salas: herói 21% do tempo no patamar (o 2º lugar depois da plataforma leste), 2 golpes levados na sala inteira; esquivas cortadas 53%, quase todas pela borda (33 de 37) | O alargamento que existe basta; nada novo. As esquivas cortadas na borda são o preço das pontes sem queda (D-28) |
+| **AT-FO2**, Fonte (e Loja) no Salão: descoberta na chegada | No ponto de antes (0; -2) a Fonte ficava fora da tela das duas câmeras na chegada pelo patamar sudoeste (Perto x 1,49, Longe 1,11 da tela), com a luz dela junto: luz e placa não podiam bastar | A Fonte nasce em `Rooms.FOUNTAIN_SPOT` (-8; 10): Perto 0,72 / 0,49 e Longe 0,55 / 0,51 da tela na chegada, 8,9 m dele e no caminho das portas, 5 m ou mais de todo quebrável (AT-FO3). Mapa igual. A Loja já mostra a fileira na chegada (`docs/gallery/e3/ui/shop_real_*`); nada muda nela |
+
+Decisões de movimento da P.2 que são dado de sala: além das quatro acima, todas dizem "nada muda" (AT-SA2, CB2, FA2,
+FB2, JA2, JB2, SD2, PA2, RA2, RB2, GU2, PR2, AL2, CS2) e as medidas confirmam: Cripta B passagem sul 50% do tempo do
+herói, Fendas A e B leste 61 a 66% com a volta pelo sul 6%, Jardim A leste 69%, Runas A borda 51%. O aceite do AT-SA2
+(1º aviso inteiro na tela da Perto em 8 de 8 sementes) pede captura, não dado.

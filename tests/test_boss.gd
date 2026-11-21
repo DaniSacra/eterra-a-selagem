@@ -65,7 +65,8 @@ func test_morvath_keeps_hades_life_and_his_numbers_are_data() -> void:
 	assert_eq(def.ritual_cap, 6)
 	assert_eq(def.storm_count, 6)
 	for n in [def.scythe_damage, def.blade_damage, def.storm_damage, def.eruption_damage, def.curse_damage, def.dash_damage]:
-		assert_between(n, 4.0, 14.0, "every blow on the scale of Hades II's first guardian (4 to 14)")
+		# B-1 (balance.md B.5): Hades II's first guardian's scale (4 to 14) times about 1.6
+		assert_between(n, 6.0, 23.0, "every blow on Hades II's first guardian's scale times 1.6 (6 to 23)")
 
 
 func test_morvath_is_an_undead_heavy_boss_with_art_for_every_attack() -> void:

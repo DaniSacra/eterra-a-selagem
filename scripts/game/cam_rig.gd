@@ -61,6 +61,18 @@ static func distance() -> float:
 	return Feel.live().cam_distance_near if near() else Feel.live().cam_distance
 
 
+## The hub's arrival look (HubPlan.ARRIVAL_LOOK): how much of wide_distance mixes into the camera's own (0: its own,
+## 1: wide_distance) and the paladin's safe frame meanwhile (CamFrame.SAFE outside it).
+var wide := 0.0
+var wide_distance := 0.0
+var safe := CamFrame.SAFE
+
+
+## The distance this camera stands at now: its own (distance()), toward wide_distance by `wide`.
+func dist() -> float:
+	return lerpf(distance(), wide_distance, clampf(wide, 0.0, 1.0)) if wide > 0.0 else distance()
+
+
 ## The near camera's room past a fixed frame made for the far one (CamFrame.slack; zero with the far camera).
 func slack(distance: float, _fov: float, as_far := false) -> Vector2:
 	if as_far or not near():
@@ -125,7 +137,7 @@ func place(shake: Vector3, delta: float, zoom := 1.0) -> void:
 		camera.look_at_from_position(c + off, c, Vector3.UP)
 		return
 	var off := offset(zoom)
-	var p := look_at(Vector2(target.x, target.z), distance(), camera.fov)
+	var p := look_at(Vector2(target.x, target.z), dist(), camera.fov)
 	# never faster than CamFrame.MAX_SPEED (GP-06): the safe frame follows a dash or a push without a jump
 	if at.is_finite():
 		p = CamFrame.follow(at, p, delta)
@@ -164,7 +176,7 @@ func look_at(want: Vector2, distance: float, fov: float, as_far := false) -> Vec
 func hold_at(want: Vector2, distance: float, fov: float, as_far := false) -> Vector2:
 	var view := camera.get_viewport().get_visible_rect().size
 	return CamFrame.hold(arena.cam_target, want, arena.cam_reach, player.pos, distance, Dev.num("cam-pitch", Feel.live().cam_pitch), yaw(),
-		fov, view.x / maxf(view.y, 1.0), focus == null, slack(distance, fov, as_far))
+		fov, view.x / maxf(view.y, 1.0), focus == null, slack(distance, fov, as_far), safe)
 
 
 ## Camera offset from feel.tres; --cam-dist, --cam-pitch (degrees above the floor) and --cam-fov override it for tuning.
@@ -174,4 +186,4 @@ func offset(zoom := 1.0) -> Vector3:
 	var charge := player.charge_progress() * OMEGA_ZOOM
 	_charge_zoom = charge if charge > _charge_zoom else lerpf(_charge_zoom, charge, 1.0 - exp(-camera.get_process_delta_time() / maxf(Engine.time_scale, 0.001) * 6.0))
 	camera.fov = Dev.num("cam-fov", feel.cam_fov) / (zoom * (1.0 + _charge_zoom))
-	return Feel.cam_offset_of(distance(), Dev.num("cam-pitch", feel.cam_pitch), yaw())
+	return Feel.cam_offset_of(dist(), Dev.num("cam-pitch", feel.cam_pitch), yaw())

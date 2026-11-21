@@ -14,7 +14,7 @@ func _default(path: String, name: String) -> Variant:
 
 func test_eruption_red_is_faint_until_the_last_of_the_warning() -> void:
 	var rune := "res://assets/shaders/ritual_rune.gdshader"
-	assert_almost_eq(float(_default(rune, "fill_early")), 0.25, 0.001, "a quarter of the red while the blow is far off")
+	assert_almost_eq(float(_default(rune, "fill_early")), 0.12, 0.001, "an eighth of the red while the blow is far off")
 	assert_almost_eq(float(_default(rune, "fill_late")), 0.3, 0.001, "all of it only over the last 30%, as the plain warnings")
 	assert_lt(float(_default(rune, "red_after")), 0.5, "the red leaves soon after it lands")
 	assert_almost_eq(float(_default(rune, "danger_alpha")), 0.24, 0.001, "its ceiling did not change")

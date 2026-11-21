@@ -164,3 +164,52 @@ func test_common_bars_are_quieter() -> void:
 	var code := (load("res://assets/shaders/life_bar.gdshader") as Shader).code
 	assert_true(code.contains("common_dim = 0.85"), "15% darker")
 	assert_true(code.contains("common_cut"), "and thinner")
+
+
+# ---------- HV-D: the Santuário da Vigília ----------
+
+func _hub() -> Hub:
+	var hub := (load("res://scenes/hub.tscn") as PackedScene).instantiate() as Hub
+	add_child_autofree(hub)
+	return hub
+
+
+## Every station's sign hangs at the foot of the thing used (no sign floating over it), and never over the hero; the
+## Alquimista's space has none.
+func test_the_hub_signs_hang_at_the_foot_off_the_hero() -> void:
+	var hub := _hub()
+	await wait_process_frames(3)
+	var cam := hub.get_viewport().get_camera_3d()
+	for id in HubPlan.STATIONS:
+		hub.player.pos = HubPlan.use_point(id)
+		hub.cam.snap()
+		await wait_process_frames(3)
+		await wait_seconds(StationSign.APPEAR + 0.05)  # the plate settles where it hangs
+		var sign := hub.station_sign
+		assert_not_null(sign, "%s has its sign" % id)
+		if sign == null:
+			continue
+		assert_true(sign.under, "%s: under the thing" % id)
+		assert_eq(sign.position.y, 0.0, "%s: at its foot" % id)
+		var feet := Vector3(hub.player.pos.x, 0.0, hub.player.pos.y)
+		var hero := StationSign.hero_box(cam.unproject_position(feet + Vector3(0, StationSign.HERO_HEIGHT, 0)), cam.unproject_position(feet))
+		assert_false(Rect2(sign.plate.position, sign.plate.size).intersects(hero), "%s: never over the hero" % id)
+	assert_false(HubPlan.STATIONS.has(&"alchemist"), "the Alquimista is a place, not a station")
+
+
+func test_the_faint_names_keep_off_the_hero() -> void:
+	var hub := _hub()
+	await wait_process_frames(3)
+	var labels := hub.find_child("HubLabels", true, false) as HubLabels
+	var cam := hub.get_viewport().get_camera_3d()
+	var feet := Vector3(hub.player.pos.x, 0.0, hub.player.pos.y)
+	var hero := StationSign.hero_box(cam.unproject_position(feet + Vector3(0, StationSign.HERO_HEIGHT, 0)), cam.unproject_position(feet))
+	for id in labels.shown():
+		var l := labels.names[id] as Label
+		assert_false(Rect2(l.position, l.size).intersects(hero), "%s's name off the hero" % id)
+		assert_false(Rect2(l.position, l.size).intersects(labels.purse.get_global_rect()), "%s's name off the purse" % id)
+
+
+func test_the_deep_stone_has_its_own_mark() -> void:
+	assert_eq(DoorGlyph.of_material(DoorGlyph.STONE_ID), DoorGlyph.Kind.STONE)
+	assert_eq(DoorGlyph.STONE_ID, OficiosDef.new().stone, "the id the Ofícios use")

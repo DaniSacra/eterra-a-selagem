@@ -194,6 +194,8 @@ const SHRUB_EVERY := 1.4
 ## The yards' low walls (coping), the braziers on stands at the arrival (their light), the goods' crates.
 const YARD_COPING := 0.1
 const STAND_FIRE := Vector2(2.4, 5.5)
+## HV-C (5): the Retorno's braziers at 0.9 m, a share of the kit's (about 1.4 m).
+const RETURN_FIRE := 0.65
 ## P2-B2: the arrival braziers' flames in the stylized look, a share of their height and size (their light unchanged).
 const STY_STAND_FLAME := 0.67
 
@@ -202,14 +204,18 @@ const STY_STAND_FLAME := 0.67
 ## counter's middle, its half width along u; the valance under its front edge (height, scallops a metre); its cloth;
 ## the lion on it (side); the posts at its corners; two lanterns hanging from its front (u off the middle) and their
 ## light (energy, reach); the racks' boards behind the counter (heights).
-const AWNING_BACK := 5.0
+const AWNING_BACK := 4.0
 const AWNING_FRONT := 3.5
+## HV-C (6.2): the awning has two slopes, the back one the longer: its ridge at AWNING_RIDGE (share of the depth from the
+## back, height), so from the square it reads as a gable over the counter, not a sign board.
+const AWNING_RIDGE := Vector2(0.62, 5.0)
 const AWNING_DEPTH := Vector2(1.5, 2.4)
 const AWNING_HALF := 2.9
 const VALANCE := Vector2(0.28, 1.6)
 const AWNING_CLOTH := Color(0.26, 0.14, 0.1)
-## Every other run of the cloth along v a muted ochre (an awning, not a sign); runs a metre.
-const AWNING_STRIPE := Color(0.36, 0.29, 0.2)
+## Every other run of the cloth along v a muted wine (HV-C 6.2: hue 355, saturation 0.35, never the danger's red; an
+## awning, not a sign); runs a metre.
+const AWNING_STRIPE := Color(0.22, 0.13, 0.14)
 const AWNING_RUNS := 2.0
 const AWNING_LION := 1.5
 const POST_R := 0.07
@@ -295,10 +301,15 @@ const RAIL_OUT := 0.3
 const RAIL_CURB := Vector2(0.24, 0.42)
 const RAIL_BALUSTER := Vector2(0.07, 0.36)
 const RAIL_TOP := Vector2(0.58, 0.7)
-const ARRIVAL_HALF := 3.0
-const ARRIVAL_STEPS := 20
+## HV-A: the Retorno's stairs, 7 x 2.5 m, down from the south edge at HubPlan.ARRIVAL_STAIRS, between low walls
+## (ARRIVAL_CHEEK: thickness, height over the floor); the seal on the floor at HubPlan.ARRIVAL, the worn lion at
+## SEAL_LION m in the inlay's gold dimmed to SEAL_GOLD (placeholder until HV-C).
+const ARRIVAL_STEPS := 7
 const ARRIVAL_RISE := 0.2
-const ARRIVAL_RUN := 0.4
+const ARRIVAL_RUN := 0.36
+const ARRIVAL_CHEEK := Vector2(0.35, 0.65)
+const SEAL_LION := 2.2
+const SEAL_GOLD := 0.8
 const LAMP_POST := Vector2(2.9, 0.55)
 const LAMP_LIGHT := Vector2(1.3, 3.0)
 
@@ -345,11 +356,12 @@ const STY_MOON := 0.45
 const STY_KEY_SHARE := 0.45
 const STY_FORGE_GAIN := 1.5
 const STY_POOLS: Array[Array] = [
-	[HubPlan.SMITH, Vector3(-14.6, 0.6, -2.9), Vector3(-12.0, 7.5, -7.2), 9.0, 30.0, 12.0, Color(1.0, 0.7, 0.42)],
-	[HubPlan.BOOK, Vector3(13.4, 1.2, -4.4), Vector3(12.4, 6.2, -6.4), 10.0, 18.0, 9.0, Color(1.0, 0.86, 0.62)],
-	[HubPlan.BOOK, Vector3(12.8, 0.0, -3.8), Vector3(11.6, 8.0, -7.6), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
-	[HubPlan.VENDOR, Vector3(-13.0, 0.8, 12.2), Vector3(-11.6, 8.0, 8.0), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
-	[HubPlan.TREE, Vector3(14.8, 1.0, 13.0), Vector3(13.0, 9.0, 8.6), 9.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
+	# HV-A: each pool moved with its station's pieces (the anvil, the lectern, the counter, the dais)
+	[HubPlan.SMITH, Vector3(-13.6, 0.6, -5.6), Vector3(-10.8, 7.5, -8.8), 9.0, 30.0, 12.0, Color(1.0, 0.7, 0.42)],
+	[HubPlan.BOOK, Vector3(12.0, 1.2, -5.9), Vector3(11.0, 6.2, -7.9), 10.0, 18.0, 9.0, Color(1.0, 0.86, 0.62)],
+	[HubPlan.BOOK, Vector3(11.4, 0.0, -5.3), Vector3(10.2, 8.0, -9.1), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
+	[HubPlan.VENDOR, Vector3(-10.6, 0.8, 6.8), Vector3(-9.2, 8.0, 2.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
+	[HubPlan.TREE, Vector3(11.9, 1.0, 8.5), Vector3(10.1, 9.0, 4.1), 9.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	[HubPlan.PORTAL, Vector3(0.0, 0.0, 10.4), Vector3(0.0, 8.0, 5.5), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
@@ -505,6 +517,8 @@ func dress() -> void:
 				_goods(c, o)
 			&"hub_fire":
 				_stand_fire(c)
+			&"hub_alchemist":
+				_alchemist(c, o)
 	_crowns(_cypress_spots, _cypress_tall, CYPRESS_A, CYPRESS_B, CYPRESS_WIDE.x, "Cypresses")
 	_crowns(_shrub_spots, _shrub_tall, SHRUB_A, SHRUB_B, SHRUB_WIDE, "Shrubs")
 	_forge()
@@ -912,6 +926,120 @@ func _yard_wall(c: Vector2, o: ArenaObstacle) -> void:
 		fm.candle(at(c.x + (k - 0.5) * w * 0.6, o.height, c.y), 0.16 + 0.06 * k, 0.05)
 
 
+## HV-C, the Alquimista's space (hv_santuario_vigilia_art.md 4; reserved, Q-OF7, no figure, no use): on the footprint
+## against the west wall (HubPlan.ALCHEMIST_BENCH) a shelf of dark wood with tall empty jars, the bench before it with a
+## cloth over half of it, a mortar and a pair of scales (dark iron, no bright gold), and over all a lean-to roof of dark
+## boards on two posts (ALCH_ROOF: its back and front heights; it reaches ALCH_ROOF_OUT m east of the footprint, always
+## above 2.6 m over the floor) with dry herbs hanging under it; a low amber lamp on the bench (ALCH_LAMP: energy, reach,
+## no shadow): a place waiting, not a shop closed. The glass muted green only in its colour, never lit.
+const ALCH_WOOD := 0.55
+const ALCH_GLASS := Color(0.36, 0.4, 0.31)
+const ALCH_GLASS_DARK := Color(0.2, 0.22, 0.17)
+const ALCH_CLOTH := Color(0.3, 0.22, 0.16)
+const ALCH_HERBS: Array[Color] = [Color(0.4, 0.33, 0.18), Color(0.3, 0.31, 0.2)]
+const ALCH_ROOF := Vector2(2.2, 2.85)
+const ALCH_ROOF_OUT := 1.25
+const ALCH_JARS := 8
+const ALCH_LAMP := Vector2(0.9, 2.5)
+const ALCH_LAMP_COLOR := Color(0.74, 0.63, 0.48)
+func _alchemist(c: Vector2, o: ArenaObstacle) -> void:
+	var wood := m._wood_mat(0.0, ALCH_WOOD)
+	var u0 := c.x - o.half.x
+	var u1 := c.x + o.half.x
+	var v0 := c.y - o.half.y
+	var v1 := c.y + o.half.y
+	var r := RandomNumberGenerator.new()
+	r.seed = 6091
+	# the shelf against the wall: sides, back, three boards
+	var back := u0 + 0.14
+	fm.block(at(back, 0.0, c.y), Vector3(0.08, ALCH_ROOF.x - 0.1, o.half.y * 2.0), 0.0, wood, false)
+	for sd: float in [-1.0, 1.0]:
+		fm.block(at(back + 0.12, 0.0, c.y + sd * (o.half.y - 0.04)), Vector3(0.3, 1.9, 0.06), 0.0, wood, false)
+	for h: float in [0.55, 1.15, 1.7]:
+		fm.block(at(back + 0.14, h, c.y), Vector3(0.3, 0.04, o.half.y * 2.0 - 0.1), 0.0, wood, false)
+	# the bench: top, legs, a cloth over its south half
+	var bu := u1 - 0.36
+	fm.block(at(bu, 0.84, c.y), Vector3(0.7, 0.06, o.half.y * 2.0 - 0.05), 0.0, wood)
+	for su: float in [-0.28, 0.28]:
+		for sv: float in [-1.0, 1.0]:
+			fm.block(at(bu + su, 0.0, c.y + sv * (o.half.y - 0.1)), Vector3(0.07, 0.84, 0.07), 0.0, wood, false)
+	_bar(at(bu + 0.02, 0.9, c.y - o.half.y * 0.5), Vector3(0.76, 0.03, o.half.y * 0.95), _plain(ALCH_CLOTH, 1.0))
+	_bar(at(bu + 0.38, 0.62, c.y - o.half.y * 0.5), Vector3(0.02, 0.54, o.half.y * 0.95), _plain(ALCH_CLOTH, 1.0))
+	# jars: tall and narrow on the shelves, empty or with a dark sediment
+	var glass := _plain(ALCH_GLASS, 0.25)
+	var dark := _plain(ALCH_GLASS_DARK, 0.3)
+	for k in ALCH_JARS:
+		var board: float = [0.59, 1.19, 1.74][k % 3]
+		var h := r.randf_range(0.25, 0.48) if board < 1.5 else r.randf_range(0.2, 0.3)
+		var v := lerpf(v0 + 0.2, v1 - 0.2, (float(k) + r.randf_range(0.1, 0.9)) / ALCH_JARS)
+		var rad := r.randf_range(0.05, 0.08)
+		fm.shaft(at(back + 0.16, board, v), rad, h * 0.75, glass)
+		fm.shaft(at(back + 0.16, board + h * 0.75, v), rad * 0.45, h * 0.25, glass)
+		if k % 3 == 1:
+			fm.shaft(at(back + 0.16, board, v), rad * 0.95, h * 0.18, dark)
+	# the mortar and the scales on the bench's north half
+	var iron := tomb.iron()
+	fm.shaft(at(bu, 0.87, c.y + 0.55), 0.11, 0.12, stone())
+	_bar(at(bu + 0.05, 1.0, c.y + 0.55), Vector3(0.025, 0.2, 0.025), wood, Basis(Vector3.FORWARD, 0.6))
+	fm.shaft(at(bu, 0.87, c.y + 0.15), 0.02, 0.42, iron)
+	_bar(at(bu, 1.28, c.y + 0.15), Vector3(0.02, 0.02, 0.5), iron)
+	for sv: float in [-0.23, 0.23]:
+		fm.shaft(at(bu, 1.02, c.y + 0.15 + sv), 0.08, 0.02, iron)
+	# the lean-to roof (back low, front high, over the floor only above 2.6 m) and its two posts in the footprint
+	var front := u1 + ALCH_ROOF_OUT
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var q: Array[Vector3] = [at(u0 - 0.1, ALCH_ROOF.x, v0 - 0.3), at(front, ALCH_ROOF.y, v0 - 0.3), at(front, ALCH_ROOF.y, v1 + 0.3),
+		at(u0 - 0.1, ALCH_ROOF.x, v1 + 0.3)]
+	for idx: int in [0, 2, 1, 0, 3, 2]:
+		st.add_vertex(q[idx])
+	st.generate_normals()
+	var roof := MeshInstance3D.new()
+	roof.name = "AlchemistRoof"
+	roof.mesh = st.commit()
+	var rm := wood.duplicate() as ShaderMaterial
+	roof.material_override = rm
+	roof.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_DOUBLE_SIDED
+	frame.add_child(roof)
+	for sv: float in [-1.0, 1.0]:
+		var pv := c.y + sv * (o.half.y - 0.06)
+		var top := lerpf(ALCH_ROOF.x, ALCH_ROOF.y, (u1 - 0.06 - u0 + 0.1) / (front - u0 + 0.1))
+		fm.shaft(at(u1 - 0.06, 0.0, pv), 0.06, top, wood)
+	# herbs hanging in bunches over the bench, inside the footprint
+	for k in 5:
+		var v := lerpf(v0 + 0.25, v1 - 0.25, float(k) / 4.0)
+		var hu := lerpf(u0 + 0.5, u1 - 0.1, 0.5 + 0.3 * sin(k * 1.7))
+		var top := lerpf(ALCH_ROOF.x, ALCH_ROOF.y, (hu - u0 + 0.1) / (front - u0 + 0.1)) - 0.02
+		var hang := r.randf_range(0.35, 0.55)
+		_bar(at(hu, top - hang * 0.5, v), Vector3(0.12, hang, 0.1), _plain(ALCH_HERBS[k % 2], 1.0),
+			Basis(Vector3.UP, r.randf() * PI))
+	# the low lamp on the bench: a small amber flame in a dark iron cage, its own light, no shadow
+	var lamp := at(bu - 0.1, 0.87, c.y - 0.05)
+	_bar(lamp + Vector3(0, 0.1, 0), Vector3(0.12, 0.2, 0.12), iron)
+	var flame := _bar(lamp + Vector3(0, 0.12, 0), Vector3(0.05, 0.09, 0.05), _glow_mat(ALCH_LAMP_COLOR))
+	flame.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var l := OmniLight3D.new()
+	l.position = world(bu + 0.4, 1.4, c.y - 0.05)
+	l.light_color = ALCH_LAMP_COLOR
+	l.light_energy = ALCH_LAMP.x
+	l.omni_range = ALCH_LAMP.y
+	l.shadow_enabled = false
+	l.light_cull_mask = ~Arena.CROWD_LAYER
+	l.set_meta(ArenaKit.NOT_FIRE, true)
+	add_child(l)
+
+
+## An unshaded flame-like material of colour c (a lamp's small flame; under the glow).
+func _glow_mat(c: Color) -> StandardMaterial3D:
+	var key := [c, -1.0]
+	if not _plain_mats.has(key):
+		var s := StandardMaterial3D.new()
+		s.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		s.albedo_color = c.lightened(0.25)
+		_plain_mats[key] = s
+	return _plain_mats[key]
+
+
 ## The Vendedor's goods on their footprint (HUB-D): crates stacked, sacks, jars in the wares' glazes.
 func _goods(c: Vector2, o: ArenaObstacle) -> void:
 	var r := RandomNumberGenerator.new()
@@ -937,6 +1065,13 @@ func _goods(c: Vector2, o: ArenaObstacle) -> void:
 func _stand_fire(c: Vector2) -> void:
 	var from := fk.root.get_child_count()
 	var l := fk.brazier(Vector2(c.x, -c.y), 0.0, false, STAND_FIRE.x)
+	# HV-C (5): the Retorno's two braziers are the smaller ones, RETURN_FIRE of the kit's height round their foot
+	var foot := Vector3(c.x, 0.0, -c.y)
+	for i in range(from, fk.root.get_child_count()):
+		var n := fk.root.get_child(i) as Node3D
+		if n != null and n != l:
+			n.transform = Transform3D(Basis.from_scale(Vector3.ONE * RETURN_FIRE), foot) * Transform3D(Basis(), -foot) * n.transform
+	l.position = foot + (l.position - foot) * RETURN_FIRE
 	l.omni_range = STAND_FIRE.y
 	l.shadow_enabled = false
 	# P2-B2 (ART_REVIEW.md 4.5): in the stylized look the flames a third lower (their tongues' life and size), the
@@ -1140,19 +1275,61 @@ func _front() -> void:
 		var b: Vector2 = pts[(i + 1) % pts.size()]
 		if minf(a.y, b.y) > HubPlan.SOUTH + HubPlan.CUT.y - 0.5:
 			continue
+		# the Retorno's stairs' head (HV-A): open
+		if is_equal_approx(a.y, HubPlan.SOUTH) and is_equal_approx(b.y, HubPlan.SOUTH) \
+				and minf(a.x, b.x) >= HubPlan.ARRIVAL_STAIRS.x - 0.01 and maxf(a.x, b.x) <= HubPlan.ARRIVAL_STAIRS.y + 0.01:
+			continue
 		var along := (b - a).normalized()
 		var out := Vector2(along.y, -along.x)
 		if Geometry2D.is_point_in_polygon((a + b) * 0.5 + out * 0.1, PackedVector2Array(pts)):
 			out = -out
 		_rail(a + out * RAIL_OUT, b + out * RAIL_OUT, mat)
-	# the arrival stairs (HUB-D): from the well's top (the open edge, no rail) down past the floor's foot into the mist,
-	# between cheeks of stone (H-P2-3: no closed grille at their foot)
-	var top := HubPlan.WELL.y
+	# the Retorno's stairs (HV-A, Q-HV2 a): from the open head on the south edge down into the mist, between low walls
+	# (H-P2-3: no grille); the seal he comes up onto
+	var top := HubPlan.SOUTH
+	var su := (HubPlan.ARRIVAL_STAIRS.x + HubPlan.ARRIVAL_STAIRS.y) * 0.5
+	var width := HubPlan.ARRIVAL_STAIRS.y - HubPlan.ARRIVAL_STAIRS.x
 	var depth := ARRIVAL_STEPS * ARRIVAL_RUN
 	var drop := ARRIVAL_STEPS * ARRIVAL_RISE
-	fm.stairs(at(0.0, -drop, top - depth), Vector2(0, -1), ARRIVAL_HALF * 2.0, ARRIVAL_STEPS, ARRIVAL_RISE, ARRIVAL_RUN, stone())
+	fm.stairs(at(su, -drop, top - depth), Vector2(0, -1), width, ARRIVAL_STEPS, ARRIVAL_RISE, ARRIVAL_RUN, stone())
 	for sd: float in [-1.0, 1.0]:
-		fm.block(at(sd * (HubPlan.WELL.x + ARRIVAL_HALF) * 0.5, -drop - 0.6, top - depth * 0.5), Vector3(HubPlan.WELL.x - ARRIVAL_HALF, drop + 0.6, depth), 0.0, mat, false)
+		var cu := su + sd * (width + ARRIVAL_CHEEK.x) * 0.5
+		fm.block(at(cu, -drop - 0.6, top - depth * 0.5), Vector3(ARRIVAL_CHEEK.x, drop + 0.6 + ARRIVAL_CHEEK.y, depth), 0.0, mat, false)
+	var gold := Color(INLAY_GOLD.r * SEAL_GOLD, INLAY_GOLD.g * SEAL_GOLD, INLAY_GOLD.b * SEAL_GOLD)
+	_lion(at(HubPlan.ARRIVAL.x, DECAL_Y + 0.002, HubPlan.ARRIVAL.y), Basis(Vector3.RIGHT, -PI * 0.5), SEAL_LION, gold)
+	_retorno(su + (width + ARRIVAL_CHEEK.x) * 0.5, top - depth * 0.15)
+
+
+## HV-C, the Pátio do Retorno (hv_santuario_vigilia_art.md 5): a ring of worn slabs round the seal (SEAL_PAVING),
+## faults running across the lion (SEAL_FAULTS: dark joints, no glow, no runes), the paved way from it to the medallion's
+## ring; on the east low wall of the stairs a low lamp (RETURN_LAMP: post height, energy, reach; amber, no shadow), so
+## the Retorno's pool stays under the stations'. The two braziers at the stairs' head are the arrival's (smaller).
+const SEAL_PAVING := Vector3(1.15, 1.75, 1.0)
+const SEAL_FAULTS: Array[Vector4] = [Vector4(-0.9, -0.3, 0.7, 0.5), Vector4(-0.2, 0.9, 0.3, -0.8), Vector4(0.4, -0.2, 1.0, -0.6)]
+const RETURN_LAMP := Vector3(0.75, 0.8, 3.5)
+const RETURN_LAMP_COLOR := Color(0.74, 0.63, 0.48)
+func _retorno(cheek_u: float, cheek_v: float) -> void:
+	var pave := m.stone(0.0, stone_tint() * PAVE_TINT)
+	var kerb := m.stone(0.0, stone_tint() * KERB_TINT)
+	var joint := _plain(Color(0.07, 0.065, 0.06), 1.0)
+	_pave_ring(HubPlan.ARRIVAL, SEAL_PAVING, pave, joint)
+	for f in SEAL_FAULTS:
+		var a := HubPlan.ARRIVAL + Vector2(f.x, f.y)
+		var b := HubPlan.ARRIVAL + Vector2(f.z, f.w)
+		var mid := (a + b) * 0.5
+		var d := b - a
+		_bar(at(mid.x, DECAL_Y + 0.004, mid.y), Vector3(d.length(), 0.004, 0.035), joint, Basis(Vector3.UP, d.angle()))
+	var dir := (MEDALLION - HubPlan.ARRIVAL).normalized()
+	_pave_way(HubPlan.ARRIVAL + dir * SEAL_PAVING.y, MEDALLION - dir * MEDALLION_PAVING.y, pave, kerb, joint, tomb.gold())
+	# the lamp on the low wall's head, a short iron post with the lantern hanging from its arm
+	var ir := tomb.iron()
+	var foot := at(cheek_u, ARRIVAL_CHEEK.y, cheek_v)
+	_bar(foot + Vector3(0, RETURN_LAMP.x * 0.5, 0), Vector3(0.05, RETURN_LAMP.x, 0.05), ir)
+	_bar(foot + Vector3(-0.15, RETURN_LAMP.x, 0), Vector3(0.3, 0.04, 0.04), ir)
+	var l := hanging_lantern(frame.transform * (foot + Vector3(-0.28, RETURN_LAMP.x, 0)), ARRIVAL_CHEEK.y + RETURN_LAMP.x - 0.25,
+		LANTERN_SIZE * 0.8, Vector2(RETURN_LAMP.y, RETURN_LAMP.z))
+	l.light_color = RETURN_LAMP_COLOR
+	l.shadow_enabled = false
 
 
 ## A low balustrade from a to b (frame u, v): curb, balusters, rail (spec 3.6: under 0.9 m).
@@ -1489,7 +1666,7 @@ func _awning(c: Vector2) -> void:
 				var t := float(i + d.x) / rows
 				var s := float(j + d.y) / cols
 				# a soft sag between the posts
-				var y := lerpf(AWNING_BACK, AWNING_FRONT, t) - sin(PI * t) * 0.14 - sin(PI * s) * 0.1 * t
+				var y := _awning_y(t) - sin(PI * s) * 0.1 * t
 				quad.append(at(lerpf(u0, u1, s), y, lerpf(v_back, v_front, t)))
 			st.set_color(AWNING_CLOTH if (j / 2) % 2 == 0 else AWNING_STRIPE)
 			for idx: int in [0, 1, 2, 0, 2, 3]:
@@ -1522,15 +1699,25 @@ func _awning(c: Vector2) -> void:
 	mi.material_override = mat
 	frame.add_child(mi)
 	# the lion on the cloth's slope, a little over it, upright on the screen
-	var t := 0.5
-	var mid := at(c.x, lerpf(AWNING_BACK, AWNING_FRONT, t) - sin(PI * t) * 0.14 + 0.03, lerpf(v_back, v_front, t))
-	var slope := (at(c.x, AWNING_FRONT, v_front) - at(c.x, AWNING_BACK, v_back)).normalized()
+	var t := (AWNING_RIDGE.x + 1.0) * 0.5
+	var mid := at(c.x, _awning_y(t) + 0.03, lerpf(v_back, v_front, t))
+	var slope := (at(c.x, AWNING_FRONT, v_front) - at(c.x, AWNING_RIDGE.y, lerpf(v_back, v_front, AWNING_RIDGE.x))).normalized()
 	var normal := Vector3.RIGHT.cross(slope)
 	if normal.y < 0.0:
 		normal = -normal
 	var up := -slope
 	var basis := Basis(up.cross(normal), up, normal)
 	_lion(mid + normal * 0.02, basis, AWNING_LION, MEDALLION_GOLD)
+
+
+## The awning's height at t (0 its back edge, 1 its front): up the long back slope to the ridge, down the short front
+## one, a soft sag in each.
+func _awning_y(t: float) -> float:
+	if t < AWNING_RIDGE.x:
+		var k := t / AWNING_RIDGE.x
+		return lerpf(AWNING_BACK, AWNING_RIDGE.y, k) - sin(PI * k) * 0.08
+	var f := (t - AWNING_RIDGE.x) / (1.0 - AWNING_RIDGE.x)
+	return lerpf(AWNING_RIDGE.y, AWNING_FRONT, f) - sin(PI * f) * 0.1
 
 
 ## The Forjador's forge (spec 3.3; HUB-D, H-P0-4): on the floor north-west of the anvil (HubPlan.FORGE, its footprint),
@@ -1720,6 +1907,7 @@ func _tree(c: Vector2, o: ArenaObstacle) -> void:
 	sm.set_shader_parameter(&"vein_color", MEDALLION_GOLD)
 	sm.set_shader_parameter(&"vein_light", 0.0)
 	_leaves(holder)
+	_gift_plaques(c)
 	var l := OmniLight3D.new()
 	l.position = world(c.x, top + TREE_LIGHT.z, c.y)
 	l.light_color = TREE_COLOR
@@ -1729,6 +1917,35 @@ func _tree(c: Vector2, o: ArenaObstacle) -> void:
 	l.set_meta(ArenaKit.NOT_FIRE, true)
 	add_child(l)
 	station_lights[HubPlan.TREE] = l
+
+
+## HV-C (6.3), the Dons' plaques round the dais (HV-E E3 lights them; dull at first): low stones on the lower step
+## (PLAQUE: width, height, thickness), one every PLAQUE_STEP degrees clear of the roots, a lozenge cut on the face
+## turned out, in dimmed old gold.
+const PLAQUE := Vector3(0.42, 0.24, 0.12)
+const PLAQUE_STEP := 30.0
+const PLAQUE_CLEAR := 22.0
+const PLAQUE_GOLD := 0.6
+func _gift_plaques(c: Vector2) -> void:
+	var mat := stone()
+	var g := MEDALLION_GOLD * PLAQUE_GOLD
+	var gold := _plain(Color(g.r, g.g, g.b), 0.8)
+	var r := (DAIS[0].x + DAIS[1].x) * 0.5
+	var a := PLAQUE_STEP * 0.5
+	while a < 360.0:
+		var clear := true
+		for b in TREE_ROOTS:
+			if absf(wrapf(a - b, -180.0, 180.0)) < PLAQUE_CLEAR:
+				clear = false
+		if clear:
+			var w := Vector2.from_angle(deg_to_rad(a))
+			var p := c + w * r
+			var yaw := atan2(-w.y, w.x) + PI * 0.5
+			var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, -0.12)
+			fm.box(at(p.x, DAIS[0].y + PLAQUE.y * 0.5, p.y), PLAQUE, yaw, mat, false)
+			var face := at(p.x, DAIS[0].y + PLAQUE.y * 0.55, p.y) + Vector3(w.x, 0, -w.y) * (PLAQUE.z * 0.5 + 0.004)
+			_bar(face, Vector3(0.08, 0.08, 0.006), gold, b * Basis(Vector3.BACK, PI * 0.25))
+		a += PLAQUE_STEP
 
 
 ## The crown's leaves: cards on the crown's high points facing the camera (the garden's canopy), pale gold.

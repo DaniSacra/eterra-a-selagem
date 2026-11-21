@@ -181,7 +181,9 @@ uniform float style_gamma = 1.0;
 varying vec4 state;
 // the ice shell of a frozen body (Geada): its cells (m) and the light of their seams
 uniform float frost_cell = 0.16;
-uniform vec3 frost_seam = vec3(0.32, 0.5, 0.62);
+// AP-2: thinner and fainter seams (at 720 the shell read as a white net over the body)
+uniform vec3 frost_seam = vec3(0.22, 0.36, 0.46);
+uniform float frost_seam_from = 0.455;
 varying vec3 world_pos;
 varying float height;
 
@@ -239,7 +241,7 @@ void fragment() {
 	vec3 fid = floor(fcell);
 	float facet = hash(fid.xy + fid.z * 13.1);
 	vec3 fin = abs(fract(fcell) - 0.5);
-	float seam = smoothstep(0.4, 0.5, max(fin.x, max(fin.y, fin.z)));
+	float seam = smoothstep(frost_seam_from, 0.5, max(fin.x, max(fin.y, fin.z)));
 	c = mix(c, vec3(0.6, 0.85, 1.0) * (0.6 + 0.45 * facet), frost * 0.7);
 	float has_magic = step(0.001, magic.r + magic.g + magic.b);
 	// the cells that glow (a staff's gem, its orb): with a magic of its own they are that light and nothing else

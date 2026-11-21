@@ -16,6 +16,7 @@ extends SceneTree
 ##   --top            seen from straight above, the whole arena in the frame (orthographic); else the game's camera
 ##   --cam-at=x,z     the game's camera looks at this floor point (default: the arena's camera point or box middle)
 ##   --bare           the arena alone, without the overlays
+##   --hazard=x,y,z   every SW-G7 hazard piece in that state (windup, strike, ember); --dist=m the camera's distance
 ##   --wait=seconds   before the capture (default 1.0)
 ##   --look=classic|stylized   the visual profile (VisualProfile; room redesign lot D): the room and the world's air in it
 
@@ -97,7 +98,7 @@ func _run() -> void:
 			var xz: PackedStringArray = str(opts["cam-at"]).split(",")
 			target = Vector2(float(xz[0]), float(xz[1]))
 		var look := Vector3(target.x, 0, target.y)
-		cam.look_at_from_position(look + Feel.cam_offset_of(feel.cam_distance, feel.cam_pitch, feel.cam_yaw), look, Vector3.UP)
+		cam.look_at_from_position(look + Feel.cam_offset_of(float(opts.get("dist", feel.cam_distance)), feel.cam_pitch, feel.cam_yaw), look, Vector3.UP)
 	var start := Time.get_ticks_msec()
 	while (Time.get_ticks_msec() - start) / 1000.0 < float(opts.get("wait", "1.0")):
 		await process_frame
@@ -109,12 +110,17 @@ func _run() -> void:
 
 
 ## E5's states on the look (lab only): the runes' tiles armed or firing, the altar lit, the trial chosen, a door's breath.
-func _state(look: ArenaRoom) -> void:
+func _state(look: Node) -> void:
 	var state := str(opts.get("state", ""))
 	if look.has_method("demo"):
 		look.call("demo", state)
 	if opts.has("breath"):
-		look.breath(0, StringName(str(opts["breath"])))
+		look.call("breath", 0, StringName(str(opts["breath"])))
+	if opts.has("hazard"):
+		var v: PackedStringArray = str(opts["hazard"]).split(",")
+		var s := Vector3(float(v[0]), float(v[1]), float(v[2]))
+		for n in look.find_children("*", "HazardPiece", true, false):
+			n.call("set_state", s, false, 1.0 if s == Vector3.ZERO else 0.0)
 
 
 ## Frames for `seconds`: the CPU's and the GPU's time of each (RenderingServer's measure), median and worst.

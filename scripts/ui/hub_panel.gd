@@ -29,8 +29,10 @@ var leaf: BookSpread
 
 
 ## title: the page's title; line: a line of ink under it (empty: none); choices: [[id, text], ...] in order;
-## mark: a small drawing over the title (null: none); state: a short state under the title (empty: none).
-func open(title: String, line: String, choices: Array, mark: Control = null, state: String = "") -> void:
+## mark: a small drawing over the title (null: none); state: a short state under the title (empty: none); body: more
+## of the page under the line (the order sheet's lists, OficioSheets; null: none). A choice [id, text, false] stands
+## greyed out and out of the focus (Entregar while something is missing); the focus starts on the first one that can.
+func open(title: String, line: String, choices: Array, mark: Control = null, state: String = "", body: Control = null) -> void:
 	theme = Book.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var shade := ColorRect.new()
@@ -76,6 +78,9 @@ func open(title: String, line: String, choices: Array, mark: Control = null, sta
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		l.custom_minimum_size.x = WIDTH
 		v.add_child(l)
+	if body != null:
+		body.name = "body"
+		v.add_child(body)
 	var gap := Control.new()
 	gap.custom_minimum_size.y = 4
 	gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -91,11 +96,16 @@ func open(title: String, line: String, choices: Array, mark: Control = null, sta
 		b.name = String(id)
 		if buttons.is_empty():
 			Book.primary(b)
+		if c.size() > 2 and not bool(c[2]):
+			b.disabled = true
+			b.focus_mode = Control.FOCUS_NONE
 		foot.add_child(b)
 		buttons.append(b)
 	_chain()
-	if not buttons.is_empty():
-		buttons[0].grab_focus.call_deferred()
+	for b in buttons:
+		if not b.disabled:
+			b.grab_focus.call_deferred()
+			break
 	# the keys at the foot (benchmark P0-2, UI-HB6): in the same place as on every other screen
 	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self)),
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
@@ -106,9 +116,13 @@ func open(title: String, line: String, choices: Array, mark: Control = null, sta
 
 ## Left and right walk the row and stop at its ends; up and down stay on the button.
 func _chain() -> void:
-	for i in buttons.size():
-		var b := buttons[i]
-		b.focus_neighbor_left = b.get_path_to(buttons[maxi(i - 1, 0)])
-		b.focus_neighbor_right = b.get_path_to(buttons[mini(i + 1, buttons.size() - 1)])
+	var on: Array[Button] = []
+	for b in buttons:
+		if not b.disabled:
+			on.append(b)
+	for i in on.size():
+		var b := on[i]
+		b.focus_neighbor_left = b.get_path_to(on[maxi(i - 1, 0)])
+		b.focus_neighbor_right = b.get_path_to(on[mini(i + 1, on.size() - 1)])
 		b.focus_neighbor_top = b.get_path_to(b)
 		b.focus_neighbor_bottom = b.get_path_to(b)

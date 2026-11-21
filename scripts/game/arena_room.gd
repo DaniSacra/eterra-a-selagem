@@ -938,6 +938,8 @@ func piece(o: ArenaObstacle) -> void:
 			drums(o)
 		&"quiet":
 			pass
+		&"oil_urn":
+			pass
 		&"bolt_slit":
 			_hazard_slit(o)
 		&"block":
@@ -2585,6 +2587,46 @@ func _hazard_pieces() -> void:
 					way = hz.plate_push[i]
 				list.append(HazardPiece.plate(self, r, hz.warn, k, way))
 			_hazard[hz.plate_source] = list
+		if hz.kind == HazardDef.Kind.PLATES and not hz.strips.is_empty():
+			# strips are numbered after the rectangles (PlateHazard): fill the list's head with nulls when none
+			var list: Array = _hazard.get(hz.plate_source, [])
+			while list.size() < hz.plates.size():
+				list.append(null)
+			for i in hz.strips.size():
+				var st := hz.strips[i]
+				var a := Vector2(st.x, st.y)
+				var b := Vector2(st.z, st.w)
+				var seed_ := int(a.x * 31.0 + a.y * 17.0)
+				match hz.plate_source:
+					&"niche":
+						list.append(HazardPiece.niche(self, a, b, hz.warn, stone()))
+					&"plant":
+						list.append(HazardPiece.plant(self, a, b, hz.warn, seed_))
+					_:
+						list.append(HazardPiece.root(self, a, b, hz.warn, seed_))
+			_hazard[hz.plate_source] = list
+		elif hz.kind == HazardDef.Kind.GRID and not hz.crystals.is_empty():
+			var list: Array = []
+			for c in hz.crystals:
+				var toward := Vector2(0, 1) if arena.shape().contains(c + Vector2(0, 1.5)) else Vector2(0, -1)
+				var at := c
+				while not arena.shape().contains(at + toward * (HazardPiece.CRYSTAL_DEEP + 0.05)) and at.distance_to(c) < 2.0:
+					at += toward * 0.05
+				list.append(HazardPiece.crystal(self, at, toward))
+			_hazard[hz.crystal_source] = list
+		elif hz.kind == HazardDef.Kind.URNS:
+			var list: Array = []
+			for i in hz.urns.size():
+				var f := hz.flow_of(i)
+				var way := Vector2(f.z - f.x, f.w - f.y) if f != Vector4.ZERO else Vector2.ZERO
+				list.append(HazardPiece.urn(self, hz.urns[i], way, hz.warn))
+			_hazard[hz.urn_source] = list
+		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == &"breath":
+			var list: Array = []
+			for i in hz.bands.size():
+				var push := hz.band_push[i] if i < hz.band_push.size() else Vector2.ZERO
+				list.append(HazardPiece.breath(self, hz.bands[i], push, hz.warn, i))
+			_hazard[hz.band_source] = list
 		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == &"chain":
 			var list: Array = []
 			for i in hz.bands.size():
@@ -2592,6 +2634,13 @@ func _hazard_pieces() -> void:
 				list.append(HazardPiece.chain(self, hz.bands[i], push, hz.warn, arena.shape()))
 			_hazard[hz.band_source] = list
 		hz = hz.also
+
+
+## A stone of the vault (RP-20, 3.8) over the square at p, side m, for DropFloor: one piece per stone as it comes
+## (HazardPiece.drop: set_state(DropHazard's windup, strike, 0) and spent = the rubble's seconds left; it frees itself
+## once neither).
+func drop_piece(p: Vector2, side: float, windup: float, seed_: int) -> HazardPiece:
+	return HazardPiece.drop(self, p, side, windup, stone(), seed_)
 
 
 ## The arrow slit (RP-16) on obstacle o: its face toward the floor.

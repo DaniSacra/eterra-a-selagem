@@ -9,4 +9,5 @@ name_key = &"ult_cleave"
 desc_key = &"ult_cleave_desc"
 damage_charge = 0.02
 hurt_charge = 1.0
+mastery_level = 6
 tags = Array[StringName]([&"ultimate", &"light"])

@@ -146,6 +146,8 @@ var _clock_veil: HudVeil
 var _clock_at_boss := false
 ## The materials greeted so far, by "material/source" (Rejogabilidade, Fatia 1: _greet_materials).
 var _found_seen := {}
+## The Ofícios greeted so far (_greet_oficios): "head", "noted", "stones".
+var _oficios_seen := {}
 var _purse: HBoxContainer
 var _coin: HudMark
 var _gold: Label
@@ -535,6 +537,7 @@ func _build_combo() -> void:
 ## A material found greets in the banner (EloBanner.show_material), but not an elite's drop: it is a word where the elite
 ## fell, as the gold is (Rooms.found), and a greeting for each would crowd the top of the fight.
 func _greet_materials() -> void:
+	_greet_oficios()
 	var found: Dictionary = game.materials.found
 	for m: StringName in found:
 		for source: StringName in found[m]:
@@ -545,6 +548,30 @@ func _greet_materials() -> void:
 				_found_seen[key] = n
 				if source != &"elite":
 					_elo_banner.show_material(m, n - was)
+
+
+## Ofícios (10_ux.md 10.2), read from the run's part every frame: the pick's head found ("Achado"), the vein noted
+## and each Pedra Funda extracted (the material's greeting with the stone's mark).
+func _greet_oficios() -> void:
+	var of: Variant = game.get(&"oficios")
+	if not of is OficiosRun:
+		return
+	var run := of as OficiosRun
+	if run.head_found and not _oficios_seen.get("head", false):
+		_oficios_seen["head"] = true
+		_elo_banner.show_find(StringName(run.head_id) if run.head_id != "" else &"pick_head")
+	if run.noted and not _oficios_seen.get("noted", false):
+		_oficios_seen["noted"] = true
+		_elo_banner.show_noted()
+	var was := int(_oficios_seen.get("stones", 0))
+	if run.stones > was:
+		_oficios_seen["stones"] = run.stones
+		_elo_banner.show_material(DoorGlyph.STONE_ID, run.stones - was)
+
+
+## The notices the Ofícios' greetings say instead (Rooms still asks for them: never twice on screen).
+static func oficio_notice(text: String) -> bool:
+	return text == T.t(&"oficio_noted") or text == T.t(&"oficio_found", {"name": T.t(&"oficio_pick_head")})
 
 
 ## A veil of ink under labels that stand over the scene (HudVeil), drawn under them.
@@ -1123,6 +1150,8 @@ func show_notice(text: String, time: float = 2.5) -> void:
 	if game and game.boss and text == T.t("boss_phase_%d" % game.boss.phase):
 		show_phase(text)
 		return
+	if oficio_notice(text):
+		return  # the greeting at the top says it (_greet_oficios)
 	_notice.text = text
 	_notice.add_theme_font_override(&"font", UiKit.number_font() if UiKit.has_digit(text) else UiKit.TITLE_FONT)
 	_notice.size = Vector2.ZERO

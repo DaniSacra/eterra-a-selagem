@@ -332,6 +332,27 @@ Evidência em `docs/gallery/vfx_pass/` (`fix_*`, `l2_*`), RTX 1920 x 1080, estil
 - Falta capturar: cada família com as Bênçãos (`--boon-ids=`), a elite surgindo na sala (a sala do guardião não tem elite
   nos primeiros 3 s), V-06 núcleo a 8 a 12 m.
 
+## AP-2 "Combate que se lê" (technical-artist, 2026-11-21)
+Evidência em `docs/gallery/ap2/`. Os quadros `*_cpu` saíram do Forward+ no lavapipe, a 1280 x 720, com a semente 5:
+a GPU ficou ocupada pelas outras frentes. Os quadros sem sufixo são da RTX a 1920 x 1080. Vermelho é a faixa "red" do
+`tools/frame_stats.py --hue --scene`.
+- ART-05.2, erupções da fase 3 (`--start=boss --boss-hp=0.3 --boss-only=eruptions`, a cada 0,1 s). Antes, o vermelho
+  da cena subia de 0,9 a 2,7% até 70% do aviso. Com `fill_early` 0,25 ficou entre 0,9 e 1,4% na primeira onda e até
+  1,9% na segunda, que tem mais discos. Com `fill_early` 0,12 (o valor final), fica entre 0,8 e 1,1% fora dos últimos 30% nas duas ondas
+  (`art05_2_eruption_before_after_cpu.jpg`; meta: abaixo de 1,5%). Nos últimos 30% do aviso o vermelho segue igual: 4,2 e 4,8% no pouso. Depois do pouso o vermelho some em
+  0,2 s: 0,8% contra 1,9% antes. A cena sem aviso fica em 0,7 a 0,9% (velas e lanternas).
+- ART-05.3: o herói atrás de Morvath aparece inteiro pelo raio-x, com o anel (`art05_3_*`, RTX).
+- ART-09.1: elites na luta (estilizado, RTX, `art09_1_*`). Esqueleto elite com luma p50 82 e 51,4% de quente, contra o
+  grupo comum com 45 a 51 e 16,6 a 31,5%.
+- V-08: silhuetas de tinta na esquiva (`v08_dodge_ghosts_sty_cpu.jpg`). Quatro silhuetas cinza-tinta atrás do herói,
+  sumindo em 0,12 s.
+- Famílias com as Bênçãos (`family_*`): Chama com línguas e estalo âmbar, Geada com a casca facetada. As juntas da casca
+  ficaram mais finas e mais fracas (`frost_seam` 0,22 / 0,36 / 0,46, `frost_seam_from` 0,455), porque a 720 a casca lia
+  como rede branca. Luz e Vigília só com Bênçãos de dano não tingem o corte: o `Combat.color_of` olha só tags e
+  estatísticas de fogo e gelo (gameplay-engineer).
+- Elite surgindo na sala (`surge_guardian_room_sty_cpu.jpg`): o Cavaleiro se ergue no Santuário com o anel de fumaça
+  fechando e a borda de ouro.
+
 ## Melhorias propostas (maior ganho por esforço primeiro)
 
 ### Técnicas (posso fazer sem pedir; medir antes e depois, captura na GPU)

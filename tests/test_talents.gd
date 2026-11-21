@@ -52,19 +52,21 @@ func test_the_diamond() -> void:
 
 
 func test_the_first_six_and_the_unlock_order() -> void:
-	# warrior_spec.md 4.2 (costs) and 4.4 (levels); 2 and 6 are the ultimates
-	var first := {&"quarto_corte": [1, 3], &"impeto": [3, 2], &"corte_crescente": [4, 3], &"lamina_faminta": [5, 2],
-		&"passo_encadeado": [7, 2], &"avanco_feroz": [8, 3]}
+	# warrior_spec.md 4.2 (costs); levels by B-3 of balance.md (the sustain mid-ladder): 6 is the first ultimate,
+	# 10 the second (beside Reserva), 19 gives only Devotion
+	var first := {&"quarto_corte": [1, 3], &"impeto": [2, 2], &"corte_crescente": [3, 3], &"lamina_faminta": [4, 2],
+		&"passo_encadeado": [5, 2], &"avanco_feroz": [7, 3], &"fio_longo": [8, 1], &"firmeza": [9, 2], &"respiro": [12, 3],
+		&"ainda_de_pe": [17, 5]}
 	for id: StringName in first:
 		var t := book.find(id)
 		assert_eq(t.unlock_level, first[id][0], "%s unlocks at %d" % [id, first[id][0]])
 		assert_eq(t.cost, first[id][1], "%s costs %d" % [id, first[id][1]])
-	assert_true(book.unlocked_at(2).is_empty())
 	assert_true(book.unlocked_at(6).is_empty())
-	assert_eq(hero.ultimate(&"cleave").mastery_level, 2)
-	assert_eq(hero.ultimate(&"vortex").mastery_level, 6)
+	assert_true(book.unlocked_at(19).is_empty())
+	assert_eq(hero.ultimate(&"cleave").mastery_level, 6)
+	assert_eq(hero.ultimate(&"vortex").mastery_level, 10)
 	for level in range(1, TOP + 1):
-		if level != 2 and level != 6:
+		if level != 6 and level != 19:
 			assert_false(book.unlocked_at(level).is_empty(), "level %d unlocks a Gift" % level)
 	assert_eq(book.unlocked(TOP).size(), book.catalog.size(), "everything by level 20")
 	assert_eq(book.unlocked(1).map(func(t: TalentDef) -> StringName: return t.id), [&"quarto_corte"])
@@ -85,8 +87,8 @@ func test_devotion_bounds_the_loadout() -> void:
 
 
 func test_locked_unknown_twice() -> void:
-	assert_eq(_check([&"impeto"], 2), Talents.Problem.LOCKED)
-	assert_eq(_check([&"impeto"], 3), Talents.Problem.OK)
+	assert_eq(_check([&"impeto"], 1), Talents.Problem.LOCKED)
+	assert_eq(_check([&"impeto"], 2), Talents.Problem.OK)
 	assert_eq(_check([&"nope"]), Talents.Problem.UNKNOWN)
 	assert_eq(_check([&"impeto", &"impeto"]), Talents.Problem.TWICE)
 	assert_eq(_check([]), Talents.Problem.OK, "nothing equipped is valid")

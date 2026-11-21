@@ -14,10 +14,19 @@ extends Control
 ## state ("Ferramenta: Encontrada" or still lost). The main button says what it does: Forjar (buy; the first Refinar
 ## bought on an action goes on it), Usar (a Refinar forged and kept goes on its action, free: Forge.put_on) or, the
 ## one on the blade, Em uso (off).
+## Ofícios, Roteiro A (10_ux.md 10.5): once a vein was noted the spread has two bookmarks over the cover, Emeth (all
+## of the above) and Oficina: the left page the Picareta drawn as it stands (lost, its head found, restored), the
+## right page the tools' index (the Picareta) and the same heads, Restaurar spending its Prata (Oficios.restore) and
+## saying so (restored). LB and RB turn the bookmarks.
 ##   host.open(ForgeScreen.new(), [Save.data])          # forged(rank) after each purchase and each change
+##   host.open(ForgeScreen.new(), [Save.data, ForgeScreen.Tab.WORKSHOP])
 
 signal closed
 signal forged(rank: StringName)
+## The Picareta restored at the Oficina.
+signal restored
+
+enum Tab { EMETH, WORKSHOP }
 
 const SPINE := 0.46
 const OUTER := Vector2(22, 10)
@@ -33,6 +42,9 @@ const BUTTON_WIDTH := 190.0
 ## The Emeth's place on the left page and the size of the cost and the purse by the button.
 const EMETH := Vector2(300, 330)
 const DEAL_SIZE := 22
+## The bookmarks' width and the Picareta's drawing on the Oficina's left page.
+const TAB_WIDTH := 170.0
+const PICK := 220.0
 
 var forge: Forge
 ## Every entry's rank, as entries: the Temperar first (rank order), then the Refinar's (attack, then special).
@@ -57,6 +69,19 @@ var _now: Label
 var _kind: Label
 var _tool: Label
 var _deal: Control
+## The bookmark open, the bookmarks (none until a vein was noted), and the Oficina's parts.
+var tab := Tab.EMETH
+var tabs: Array[Button] = []
+var pick_entry: Button
+var showing_pick := false
+var pick_view: PickMark
+var _oficios: OficiosDef
+var _emeth_left: Control
+var _work_left: Control
+var _emeth_index: Control
+var _work_index: Control
+var _pick_now: Label
+var _head_line: Label
 
 
 ## An entry's mark, by its state.
@@ -87,9 +112,11 @@ class Mark extends Control:
 				draw_polyline(d, Color(Book.FADED, 0.6), 1.5, true)
 
 
-## data: the save data (Save.data in the game; tests give their own).
-func open(data: Dictionary = {}) -> void:
+## data: the save data (Save.data in the game; tests give their own); start: the bookmark open first (the Oficina only
+## once a vein was noted).
+func open(data: Dictionary = {}, start: Tab = Tab.EMETH) -> void:
 	_data = data if not data.is_empty() else Save.data
+	_oficios = OficiosDef.live()
 	forge = Forge.new(Forge.load_catalog())
 	temper_ranks = forge.track(Forge.TEMPER)
 	name = "forge_screen"
@@ -106,21 +133,88 @@ func open(data: Dictionary = {}) -> void:
 	frame.add_theme_constant_override(&"margin_top", int(OUTER.y))
 	frame.add_theme_constant_override(&"margin_bottom", int(ActionBar.RESERVE))
 	add_child(frame)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", 0)
+	frame.add_child(col)
+	if workshop_open():
+		# the bookmarks out of the top of the cover, as the Livro's chapters (Book.mark)
+		var marks := HBoxContainer.new()
+		marks.name = "tabs"
+		marks.alignment = BoxContainer.ALIGNMENT_CENTER
+		marks.add_theme_constant_override(&"separation", 6)
+		marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
+		col.add_child(marks)
+		for t: int in Tab.values():
+			var b := Book.mark(T.t(&"forge_tab_emeth" if t == Tab.EMETH else &"forge_tab_workshop"), TAB_WIDTH)
+			b.name = "tab_emeth" if t == Tab.EMETH else "tab_workshop"
+			b.pressed.connect(_show_tab.bind(t, true))
+			tabs.append(b)
+			marks.add_child(b)
 	var book := BookSpread.new().setup(SPINE)
-	frame.add_child(book)
+	book.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(book)
 	_left_page(book.left)
 	_right_page(book.right)
 	buy_button.focus_neighbor_left = buy_button.get_path_to(entries[0] if not entries.is_empty() else buy_button)
 	back_button.focus_neighbor_left = back_button.get_path_to(buy_button)
-	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus),
-		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())])
+	var keys := [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus),
+		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())]
+	if not tabs.is_empty():
+		keys.push_front(ActionBar.entry(&"tab_next", T.t(&"bar_next"), func() -> void: _turn(1), true))
+		keys.push_front(ActionBar.entry(&"tab_prev", T.t(&"bar_prev"), func() -> void: _turn(-1), true))
+	ActionBar.attach(self, keys)
 	emeth.show_rank(Forge.temper(_data))
-	var start := _first()
-	_show(start)
-	if start != null:
-		_entry_of(start).grab_focus.call_deferred()
+	_show_tab(start if workshop_open() else Tab.EMETH, false)
+	_first_focus().grab_focus.call_deferred()
+
+
+## Whether the Oficina has its bookmark: a vein was noted (the Forjador's order) or the Picareta is restored.
+func workshop_open() -> bool:
+	return Oficios.noted(_data) or Oficios.has_tool(_data, _oficios)
+
+
+## Shows a bookmark's pages; by_hand moves the focus to its first entry.
+func _show_tab(t: Tab, by_hand: bool = false) -> void:
+	tab = t
+	for i in tabs.size():
+		Book.mark_open(tabs[i], i == t)
+	var work := t == Tab.WORKSHOP
+	_emeth_left.visible = not work
+	_emeth_index.visible = not work
+	if _work_left != null:
+		_work_left.visible = work
+		_work_index.visible = work
+	if work:
+		_show_pick()
+		buy_button.focus_neighbor_left = buy_button.get_path_to(pick_entry)
 	else:
-		back_button.grab_focus.call_deferred()
+		_show(_first())
+		buy_button.focus_neighbor_left = buy_button.get_path_to(entries[0] if not entries.is_empty() else buy_button)
+	if by_hand:
+		Audio.play(&"ui_ok")
+		_first_focus().grab_focus()
+
+
+func _first_focus() -> Control:
+	if tab == Tab.WORKSHOP and pick_entry != null:
+		return pick_entry
+	return _entry_of(shown) if shown != null else back_button
+
+
+## The bookmark before (-1) or after (1), as LB and RB.
+func _turn(step: int) -> void:
+	if tabs.is_empty():
+		return
+	var t := clampi(tab + step, 0, tabs.size() - 1)
+	if t != tab:
+		_show_tab(t as Tab, true)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not tabs.is_empty() and (event.is_action_pressed(&"tab_next") or event.is_action_pressed(&"tab_prev")) \
+			and not event.is_echo():
+		get_viewport().set_input_as_handled()
+		_turn(1 if event.is_action_pressed(&"tab_next") else -1)
 
 
 ## The left page: the Emeth itself, the forge's piece (ciclo visual 2026-11-20, item 3; UI-HB4), with its rank of
@@ -130,6 +224,9 @@ func _left_page(page: MarginContainer) -> void:
 	v.name = "index"
 	v.add_theme_constant_override(&"separation", 4)
 	page.add_child(v)
+	_emeth_left = v
+	if workshop_open():
+		page.add_child(_workshop_left())
 	v.add_child(Book.heading(T.t(&"forge_title"), 30, 260))
 	v.add_child(Book.text(T.t(&"forge_lead"), Book.FADED, 15))
 	emeth = EmethView.new().setup(EMETH)
@@ -147,6 +244,31 @@ func _left_page(page: MarginContainer) -> void:
 	now.add_child(_now)
 
 
+## The Oficina's left page: its title, a line, the Picareta drawn as it stands and its state under it.
+func _workshop_left() -> Control:
+	var v := VBoxContainer.new()
+	v.name = "workshop"
+	v.visible = false
+	v.add_theme_constant_override(&"separation", 4)
+	_work_left = v
+	v.add_child(Book.heading(T.t(&"forge_workshop_title"), 30, 260))
+	v.add_child(Book.text(T.t(&"forge_workshop_lead"), Book.FADED, 15))
+	pick_view = PickMark.new().setup(PickMark.Look.LOST, PICK)
+	pick_view.name = "pick"
+	pick_view.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	pick_view.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(pick_view)
+	var now := HBoxContainer.new()
+	now.alignment = BoxContainer.ALIGNMENT_CENTER
+	now.add_theme_constant_override(&"separation", 10)
+	v.add_child(now)
+	now.add_child(Book.label(T.t(&"oficio_pick").to_upper(), Book.RUBRIC, 14, UiKit.TITLE_FONT))
+	_pick_now = Book.label("", Book.INK, 20, UiKit.BOLD_FONT)
+	_pick_now.name = "pick_now"
+	now.add_child(_pick_now)
+	return v
+
+
 ## The right page: the track's ranks as an index, the rank in focus (the next improvement, or one forged) with its
 ## effect, state and next step, and, by the buttons, the cost and the purse side by side (ciclo visual 2026-11-20:
 ## "custo e saldo perto da ação de forjar").
@@ -156,9 +278,16 @@ func _right_page(page: MarginContainer) -> void:
 	v.add_theme_constant_override(&"separation", 4)
 	page.add_child(v)
 	# the heads: Temperar over its column, Refinar over the two of the actions with the tool's state at its end
+	var index := VBoxContainer.new()
+	index.name = "emeth_index"
+	index.add_theme_constant_override(&"separation", 4)
+	v.add_child(index)
+	_emeth_index = index
+	if workshop_open():
+		v.add_child(_workshop_index())
 	var heads := HBoxContainer.new()
 	heads.add_theme_constant_override(&"separation", COLUMN_GAP)
-	v.add_child(heads)
+	index.add_child(heads)
 	var temper_head := Book.section(T.t(&"forge_track_temper"))
 	temper_head.custom_minimum_size.x = ENTRY_WIDTH
 	heads.add_child(temper_head)
@@ -171,7 +300,7 @@ func _right_page(page: MarginContainer) -> void:
 	var grid := HBoxContainer.new()
 	grid.name = "grid"
 	grid.add_theme_constant_override(&"separation", COLUMN_GAP)
-	v.add_child(grid)
+	index.add_child(grid)
 	grid.add_child(_column("", temper_ranks))
 	for slot in forge.refine_slots():
 		grid.add_child(_column(T.t(StringName("forge_refine_slot_" + String(slot))), forge.refine_options(slot)))
@@ -214,6 +343,10 @@ func _right_page(page: MarginContainer) -> void:
 	_cost = MaterialCount.new().setup(MaterialPurse.SILVER, 0, Book.INK, DEAL_SIZE, 24.0, true)
 	_cost.name = "cost"
 	cost.add_child(_cost)
+	_head_line = Book.label("", Book.INK, 15, UiKit.BOLD_FONT)
+	_head_line.name = "head_line"
+	_head_line.visible = false
+	cost.add_child(_head_line)
 	deal.add_child(cost)
 	var have := VBoxContainer.new()
 	have.add_theme_constant_override(&"separation", 2)
@@ -233,6 +366,34 @@ func _right_page(page: MarginContainer) -> void:
 	back_button = Book.button(T.t(&"back"), func() -> void: closed.emit(), BUTTON_WIDTH)
 	back_button.name = "back"
 	foot.add_child(back_button)
+
+
+## The Oficina's index: the tools (the Picareta), in the Temperar's place.
+func _workshop_index() -> Control:
+	var v := VBoxContainer.new()
+	v.name = "workshop_index"
+	v.visible = false
+	v.add_theme_constant_override(&"separation", 2)
+	_work_index = v
+	var head := Book.section(T.t(&"forge_tools_head"))
+	head.custom_minimum_size.x = ENTRY_WIDTH
+	v.add_child(head)
+	var mark := Mark.new()
+	mark.name = "mark"
+	mark.custom_minimum_size = Vector2(MARK, MARK)
+	mark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	pick_entry = Book.index_entry(T.t(&"oficio_pick"), mark, "", ENTRY_WIDTH, ENTRY_HEIGHT, ENTRY_FONT, ENTRY_PAD, ENTRY_COUNT)
+	pick_entry.name = "pick_entry"
+	pick_entry.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	pick_entry.focus_entered.connect(_show_pick)
+	pick_entry.pressed.connect(func() -> void:
+		_show_pick()
+		if not buy_button.disabled:
+			buy_button.grab_focus())
+	v.add_child(pick_entry)
+	# the two lines of entries the Emeth's index takes, kept: the heads below stand where they stood
+	v.add_child(_gap(ENTRY_HEIGHT + 18.0))
+	return v
 
 
 ## A column of the index: its action's name over its entries ("" keeps the line, for the Temperar's).
@@ -288,6 +449,12 @@ func _first() -> ForgeRank:
 
 func _show(r: ForgeRank) -> void:
 	shown = r
+	showing_pick = false
+	_refresh()
+
+
+func _show_pick() -> void:
+	showing_pick = true
 	_refresh()
 
 
@@ -312,6 +479,13 @@ func _refresh() -> void:
 			mark.look = Mark.Look.OWNED if owned else Mark.Look.BUY
 		entries[i].set_pressed_no_signal(r == shown)
 		count.add_theme_color_override(&"font_color", UiKit.GOLD if r == shown else Book.GILT)
+	_head_line.visible = false
+	if pick_entry != null:
+		_refresh_pick_entry()
+	if showing_pick:
+		_done.visible = false
+		_refresh_pick()
+		return
 	_done.visible = forge.state(_data, temper_ranks.back()) == Forge.State.OWNED and (shown == null or shown.track == Forge.TEMPER)
 	var rank := Forge.temper(_data)
 	_now.text = T.t(temper_ranks[rank - 1].name_key) if rank > 0 and rank <= temper_ranks.size() else T.t(&"forge_current_none")
@@ -363,6 +537,71 @@ func _refresh() -> void:
 	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
 
 
+## The Picareta's entry: restored (a diamond of old gold), its head found (the Prata and the cost) or still lost.
+func _refresh_pick_entry() -> void:
+	var problem := Oficios.restore_problem(_data, _oficios)
+	var mark := pick_entry.find_child("mark", false, false) as Mark
+	var count := pick_entry.find_child("count", false, false) as Label
+	mark.look = Mark.Look.OWNED if problem == Oficios.DONE else (Mark.Look.LOCKED if problem == Oficios.NO_HEAD else Mark.Look.BUY)
+	count.text = str(_pick_cost()) if problem == &"" or problem == Oficios.SHORT else ""
+	pick_entry.set_pressed_no_signal(showing_pick)
+	count.add_theme_color_override(&"font_color", UiKit.GOLD if showing_pick else Book.GILT)
+
+
+func _pick_cost() -> int:
+	return int(_oficios.restore_cost.get(OficiosDef.SILVER, 0))
+
+
+## The right page on the Picareta (Oficios.restore_problem): Efeito, Estado, Próximo passo, the cost and the head by
+## the button, Restaurar only when both are there.
+func _refresh_pick() -> void:
+	var problem := Oficios.restore_problem(_data, _oficios)
+	var cost := _pick_cost()
+	var have_head := Oficios.has_find(_data, _oficios.head)
+	_kind.text = T.t(&"forge_pick_kind").to_upper()
+	(_title.get_node("text") as Label).text = T.t(&"oficio_pick")
+	_effect.text = T.t(&"forge_pick_desc")
+	_cost.set_amount(cost)
+	_deal.visible = problem != Oficios.DONE
+	_head_line.visible = problem != Oficios.DONE
+	_head_line.text = T.t(&"forge_pick_head_have" if have_head else &"forge_pick_head_missing")
+	_head_line.add_theme_color_override(&"font_color", Book.OK if have_head else Book.RUBRIC)
+	match problem:
+		Oficios.DONE:
+			_set_state(T.t(&"forge_pick_state_restored"), Book.OK)
+			_step.text = T.t(&"forge_pick_step_restored")
+		Oficios.NO_HEAD:
+			_set_state(T.t(&"forge_pick_state_no_head"), Book.FADED)
+			_step.text = T.t(&"oficio_smith_where")
+		Oficios.SHORT:
+			_set_state(T.t(&"oficio_smith_short", {"n": Oficios.restore_short(_data, _oficios)}), Book.WARN)
+			_step.text = T.t(&"forge_step_short")
+		_:
+			_set_state(T.t(&"forge_pick_state_ready"), Book.INK)
+			_step.text = T.t(&"forge_pick_step_ready", {"cost": cost, "have": MaterialPurse.amount(_data, MaterialPurse.SILVER)})
+	if pick_view != null:
+		pick_view.look = PickMark.Look.WHOLE if problem == Oficios.DONE else (PickMark.Look.HEAD if have_head else PickMark.Look.LOST)
+		_pick_now.text = T.t(&"forge_pick_state_restored" if problem == Oficios.DONE else
+			(&"forge_pick_state_ready" if have_head else &"forge_pick_state_none"))
+	buy_button.text = T.t(&"oficio_restore")
+	buy_button.disabled = problem != &""
+	buy_button.focus_mode = Control.FOCUS_ALL if not buy_button.disabled else Control.FOCUS_NONE
+
+
+## Restores the Picareta (Restaurar): spends its Prata, the head goes, the tool comes; writes the save and says so.
+func restore() -> bool:
+	if not Oficios.restore(_data, _oficios):
+		return false
+	if is_same(_data, Save.data):
+		Save.write()
+	Audio.play(&"ui_ok")
+	restored.emit()
+	_refresh()
+	if pick_entry != null:
+		pick_entry.grab_focus()
+	return true
+
+
 ## The Refinar on an action now (null: none).
 func _on_of(slot: StringName) -> ForgeRank:
 	for r in forge.refine_options(slot):
@@ -392,6 +631,9 @@ func _before(r: ForgeRank) -> ForgeRank:
 ## The main button: Forjar spends, writes the save (only the game's own data), tells the hub and the focus goes on to
 ## the next rank; on a Refinar forged and kept, Usar puts it on its action (free) and stays on it.
 func _buy() -> void:
+	if showing_pick:
+		restore()
+		return
 	if shown == null:
 		return
 	var r := shown

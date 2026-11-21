@@ -94,7 +94,7 @@ func test_where_they_stand() -> void:
 					if o.piece == &"oil_urn":
 						assert_gte(p.at.distance_to(o.center), 1.5, "%s: never by an oil urn" % name)
 				if id == &"hall":
-					assert_gte(p.at.distance_to(Vector2(0, -2)), 3.0, "%s: off the fountain" % name)
+					assert_gte(p.at.distance_to(Rooms.FOUNTAIN_SPOT), 5.0, "%s: 5 m off the fountain (AT-FO3)" % name)
 					for k in 5:
 						var item := right * ((k - 2) * Rooms.SHOP_STEP - Rooms.SHOP_SHIFT)
 						assert_gte(p.at.distance_to(item), 3.0, "%s: off the shop's items" % name)

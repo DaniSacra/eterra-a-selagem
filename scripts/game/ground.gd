@@ -39,10 +39,13 @@ const CRYSTAL_SOURCE := &"crystal"
 const ROCKS_SOURCE := &"rocks"
 const URN_SOURCE := &"urn"
 const OIL_SOURCE := &"oil"
+## AT-H2 the skeleton in the Cripta B's niche, AT-H3 the hostile plant of the Jardim B (PlateFloor strips).
+const NICHE_SOURCE := &"niche"
+const PLANT_SOURCE := &"plant"
 ## Sources of the room's own warnings that count against its two at once (combat_cadence.md 9.2 R9); a column toppling
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
 const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE,
-	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE]
+	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE]
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.

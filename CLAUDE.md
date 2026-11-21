@@ -1154,12 +1154,43 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   de Óleo" e "Óleo em Chamas" (`killer_urn`, `killer_oil`, provisórios), sons `urn_arm` = `tell_ember`, `urn_fire` =
   `enemy_burst`, `oil_arm`/`_fire` = os das Runas; `rooms[].hazard` `kind` `urn`, `lit`, `blasts`, `oil_damage`,
   `oil_hero_damage`. Testes em `tests/test_urns.gd`.
+- **Robô com o cristal e a urna (Lote A, no molde do `Bot.column_plan`; `tests/test_bot_hazards.gd`)**:
+  `Bot.crystal_plan` vai a um cristal a até `CRYSTAL_NEAR` 18 m (desperto, sem descarga nem calma no chão) quando a
+  coluna dele tem `CRYSTAL_PACK` 2 inimigos ou mais (pelo corpo), golpeia de `CRYSTAL_SIDE` 2,1 m ao lado (fora da
+  coluna) e `CRYSTAL_BACK` 1,4 m ao sul até descarregar; `Bot.urn_plan` vai a uma urna acordada e apagada a até
+  `URN_NEAR` 10 m com `URN_PACK` 2 inimigos no anel e golpeia de `URN_REACH` 1,5 m do lado longe do bando (depois foge
+  do anel pelo `_danger`). Ordem: coluna, cristal, urna. Medido em 12 sementes (`smoke 700`): o cristal só acorda na
+  sala 7 (`crystal_from` 0,5); na semente 1 o robô carregou 4 vezes e descarregou 1 (120 de dano); a urna foi acesa nas
+  2 salas acordadas, mas o bando sai do anel em 1,3 s (0 a 120 de dano). Nenhum `stuck`.
 - **Colunata (RP-18)**: Santuário C (`depth` 0,5 a 1): o leste da nave vira uma grade de nove colunas baixas de 2,5 m
   (`COLONNADE`, x 3, 7 e 11 por z -4, 0 e 4, raio 0,5: barram corpo e tiro mas nunca escondem um preparo, critério do
   combat-feel-director), duas reduzidas a tocos (`column_base`, corpo sim, tiro não) e uma rachada que tomba 3 m
   (RP-09); o oeste da nave fica aberto para a investida do guardião; lajes da A; zona `colonnade`. Só dado.
 - **Portas no fundo (RP-19)**: `tests/test_exits.gd` confere em toda sala de luta e variante cada porta a 8 m ou mais da
   entrada, fora de toda zona de nascimento e 5 m ou mais das outras; todas já passavam, nenhuma porta mudou.
+- **Protótipos do atlas (AT-H1 a AT-H3, Lote D; Q-AT3 a, Q-AT4 a; `rooms_progression.md` seção "Lote D")**: **AT-H1, laje de
+  pressão do Santuário** = o RP-06 que já existe; a isca (inimigo que pisa e arma) já vale (`armed_by_enemy`), cada laje
+  das naves tem uma faixa de 1 m livre ao lado (teste); o robô não atrai inimigos de propósito (o `Bot.lure_plan` é do
+  gameplay-engineer). **AT-H2, Esqueleto do Nicho (Cripta B)**: faixa de laje (`_niche`, `NICHE_AT` (-12; -6,5) na parede
+  oeste, 2,2 x 2,2 m) no `hazard.also` da B, desde a sala 4: acorda com ele 0,3 s (inimigo 0,2), 1,2 s de aviso, agarra
+  0,25 s, 10 / 60 e **puxa 1 m para o nicho sem prender** (`HazardDef.pull`; no herói em `PlateFloor.PULL_TIME` 0,12 s,
+  quadro a quadro por `Arena.sweep`, encurtado na borda de outro aviso do chão ou da pedra, R10, `PlateFloor.pull_reach`;
+  a esquiva corta), recarga 6 s; o grupo de quebráveis da parede oeste da B saiu dali. **AT-H3, Planta Hostil (Jardim
+  B)**: no lugar da raiz do toco junto da parede oeste (as raízes da B ficam com uma), `_plant`, `PLANT_AT` (-16,6; -1,5),
+  faixa de 2,5 x 1,5 m para o leste, como a raiz: 0,5 s (inimigo 0,2), 1,2 s, 10 / 60, empurrão de 1 m para fora, 6 s.
+  Nos dois a Emeth só faísca (`HazardDef.sparks`, `spark_radius` 0,6, pelo `Combat.reached` e `ColumnFall.touches`: nada
+  ferido, não é inimigo, então a mira assistida nunca o escolhe, sem número nem hit stop). Segundo PLATES da sala em
+  `Rooms.plates_also`; `rooms[].hazard.also` com `kind` `niche`/`plant`, `pulled`, `sparked`. "Derrotado por: Esqueleto do
+  Nicho" e "Planta Hostil" (`killer_niche`, `killer_plant`, provisórios para o Daniel); sons `niche_arm`/`plant_arm` =
+  `rune_arm`, `niche_fire` = `bone`, `plant_fire` = `enemy_swing`. Desenho provisório: a moldura de laje ao longo da faixa
+  (`GroundLook.plate_band`) e faísca; a mão do esqueleto e a planta são do environment-artist (SW-G7 3.5). Testes em
+  `tests/test_niche_plant.gd`.
+- **Hipóteses de planta do atlas (AT-CA2, AT-SE2, AT-PB2, AT-FO2; `rooms_progression.md`)**: contador novo
+  `rooms[].dodge_blocked_by` (esquiva cortada pela pedra ou pela borda, uma vez por esquiva: sinal `Player.dodge_blocked`,
+  `Arena.blocker_at` dá `peça@x,z` da planta ou `edge`, `RoomTally.dodge_blocked`). Cripta A, Santuário B e Ponte B
+  ficaram como estavam (medidas abaixo do limite). A Fonte do Salão nasce em `Rooms.FOUNTAIN_SPOT` (-8; 10), na tela das
+  duas câmeras quando ele chega pelo patamar (antes (0; -2), fora das duas); `test_the_fountain_is_seen_on_arrival` em
+  `test_arenas.gd`.
 - **Morte de elite** (V-14): elite de aço dourado (`EnemyDef.elite` com `gild`; guardiões não) cai com duas lascas de
   ouro velho a mais (`CrowdRenderer.GILD_COLOR`, `Horde.damage`); teste em `test_vfx_lote1.gd`.
 - **Provação** (o Caos; `Trials`, `TrialDef` em `data/trials/`, parte `trials`; números no grupo Events do `StageDef`): laje
@@ -2243,6 +2274,24 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   bigorna e ao Forjador) e dois canteiros baixos partem os quadrantes de baixo da praça (`BEDS`, u ±7,4, v -1,5; o
   maior quadrado livre de peça é o do medalhão da chegada, 8,5 m). `tools/gem_lab.gd` mostra os medalhões lado a lado (`docs/gallery/hub/d/medallions_silver_memory_720.png`). Capturas do hub
   com a câmera Longe pedem `--cam=far` (a Perto é o padrão desde o LR-01).
+- **Santuário da Vigília Rev. 02, HV-A e HV-B (gameplay; backlog P.5, Q-HV1 a, Q-HV2 a; `tests/test_hub_rev02.gd`)**,
+  valendo sobre a planta acima: o poço sul saiu; toda chegada (save novo, carregar, morte, vitória, pausa, todas por
+  `SceneGo.HUB`) é no selo do Retorno `HubPlan.ARRIVAL` (18; -11,4), sobre a escada de 7 m na borda sul
+  (`ARRIVAL_STAIRS` u 14,5 a 21,5; o canto sudeste deixou de ser cortado); "Descer de novo" segue direto. Usos:
+  Vendedor (-10,3; 5,2), Árvore (10,1; 5,0), Forja (-10,3; -5,2), Livro (10,1; -5,1), Portal (0; 11) igual; cada
+  estação leva as peças no mesmo lugar em volta do uso (`COUNTER`, `DAIS`, `ANVIL`, `SMITH_SPOT`, `FORGE` ao sul do
+  Alquimista, `LECTERN`, `SHELF`, `DESK`, `YARD`, âncoras e `SHOW`); Fonte com 3,1 m; Alquimista reservado
+  (`ALCHEMIST`, bancada `ALCHEMIST_BENCH` que barra, peça `hub_alchemist`, fora de `STATIONS`: sem foco, placa nem
+  uso); muro do pátio só a oeste; bancos nos lóbulos norte; ciprestes e urnas dos lados para as paredes; canteiros,
+  braseiros (os dois do Retorno), lampião e urna fora do caminho do Retorno. `HubLook` só o mínimo: escada nova com
+  muretas, leão gasto no selo (`SEAL_LION`, `SEAL_GOLD`), bancada provisória do Alquimista, poças do `STY_POOLS`
+  movidas com as estações; a forja continua com a boca para o sul (girar é do HV-C). Câmera (HV-B): do selo nenhuma
+  câmera mostra o arco inteiro do Portal com ele a 18% da borda, então por `ARRIVAL_LOOK` 1,5 s as duas olham de
+  `ARRIVAL_DISTANCE` 60 m com o herói a `ARRIVAL_SAFE` 0,14 (soleira a 0,23, topo do arco a 0,04, Fonte e duas
+  estações à vista) e voltam em `ARRIVAL_EASE` 1 s à própria distância e aos 18% (`HubPlan.arrival_share`,
+  `CamRig.wide`, `wide_distance`, `safe`, `dist()`; `CamFrame.hold(..., safe)`). Caminhadas medidas pelo campo de
+  fluxo: entre estações 1,47 a 3,40 s; do selo ao Portal 4,25, à Forja 4,25, ao Vendedor 4,88 (a chegada não é
+  estação). `fit_probe --arena=hub`: fantasma 6,11, sem desenho 7,20 (antes 6,09 / 7,18).
 - **Fatia 1, parte do technical-artist (`docs/design/rejogabilidade/sistemas.md` 3.4; provas em `docs/gallery/rj1/`,
   `tools/rj1_lab.gd`)**: a Emeth por posto de Temperar: `temper` no `emeth.gdshader` (0 a 2, padrão 0 = a lâmina de
   sempre; frações fazem crescer), `EmethSword.set_temper(blade, posto)` e `EmethSword.TEMPER_MAX`: cada posto põe um
@@ -2334,6 +2383,61 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   novas (13 de 24): vem de o robô levar 0,3 coração por descida (0,61 no Q-15), RJ-3 põe Bênção ao lado de corpo e ele
   escolhe a Bênção. Para o `balance-designer` (`balance.md`). Loja de rota: o robô passa com 50 de ouro ou mais
   em 29% (sala 6), 62% (7) e 86% (8) das descidas, entra só com 100 (ou 50 ferido): 5 visitas em 72.
+
+## Ofícios, Roteiro A, "A Primeira Picareta" (gameplay; `docs/design/oficios/15_prototipo.md`, decisões Q-OF1 a Q-OF4 e Q-OF6 a; testes em `tests/test_oficios.gd` e `tests/test_oficios_game.gd`)
+- **OF-05**: porta de Prata só da profundidade 4 (`StageDef.silver_from_depth`) e de Memória só depois da camada do
+  guardião (`memory_after_guardian`), filtradas no `RunMap._may` como a romã; dado em `_oficios_stage` do `make_data.gd`.
+- **Números** num recurso só (`OficiosDef`, `data/oficios/oficios.tres`, parte `oficios`): Picareta restaurada por 20 de
+  Prata, Pedra Funda com teto 10, veios nas Fendas e nas Runas depois do guardião (no máximo 2 por descida, um aperto e
+  `vein_hold` 1 s parado nele), sala da cabeça entre as profundidades 4 e 8, piedade depois de 2 descidas, encomenda do
+  Vendedor de 2 Pedra Funda e 30 de Prata que faz a Obra 1 (`angel_preview`). Nomes de trabalho (Q-OF5).
+- **Regras puras** em `Oficios` (`core/oficios.gd`) sobre o bloco `oficios` do save (versão 8: `items`, `items_total`,
+  `finds`, `tools`, `orders`, `recipes`, `pity`, `seen`; saves 1 a 7 abrem com o bloco vazio, fixtures `save_v6.json` e
+  `save_v7.json`): `noted`, `head_wanted`, `pity_due`, `add_item` (teto), `restore`/`restore_problem`, `order_state`
+  (LOCKED até a primeira Pedra Funda, OPEN, DONE), `order_missing`, `deliver` (uma vez), `bank` (no fim da descida, pelo
+  `RunAward.keep`, junto dos materiais e nas mesmas condições). A parte da descida é `OficiosRun` (`game.oficios`: do save,
+  ou `--oficios=noted,pity,pick,preview` também para o robô; nada para o robô sem a opção, então o `RESULT` dele é o de antes).
+- **Mapa**: `RunMap.mark_finds` (dado próprio, `FIND_SALT`, depois do grafo: o mapa e a partida não mudam) marca
+  `Room.vein` (luta depois do guardião numa arena de `vein_arenas`) e, quando a cabeça é pedida (veio anotado, sem a
+  cabeça nem a Picareta), `Room.find` numa sala de luta sem Provação; `view()` traz `find` e `vein`, o `summary()` traz
+  `"find"`. **Falta a marca no mapa (ui-ux-designer)**: um losango só no nó com `find`.
+- **Sala** (`Rooms`): vencida a sala marcada, a cabeça é achada ("Achado: Cabeça da Picareta", evento `find`); o
+  guardião vencido a entrega por piedade (`head_by` "pity"). O veio (`VeinFloor`, `game/vein_floor.gd`, **placeholder**:
+  bloco escuro com fio cinza, três estados, sem colisão; a peça é do environment-artist) aparece no
+  `RoomLayout.gather_spots[0]` (Fendas (3,5; 7), Runas (0,5; -10), lugares provisórios para o room-designer) quando a sala é
+  vencida: sem a Picareta, `use_kind` `vein_note` ("Anotar") e o aperto anota ("Anotado no Livro de Ahk"; só para gente);
+  com ela, `vein` ("Extrair"): um aperto e 1 s parado nele (sair dele esquece) dá 1 Pedra Funda, até 2 por descida
+  (`gather_s` conta o tempo). Robô com a Picareta vai ao veio antes da recompensa e das portas (`Rooms.bot_goal`).
+- **Obra 1, Prévia dos anjos**: ao abrir as portas, as salas de Bênção (um anjo) atrás delas já ganham o anjo
+  (`Rooms._preview_angels`, `Encounters.door_angel`) e a porta o guarda quando abrir (a promessa do mapa).
+- **Santuário** (folhas mínimas no `HubPanel`, `Hub._use_smith`, `_use_vendor`, sinal `Hub.oficio_done`): com o veio
+  anotado o Forjador pede a cabeça e 20 de Prata ("Onde achar: numa sala marcada no mapa") e restaura; o Vendedor fica
+  fechado até a primeira Pedra Funda, depois mostra a encomenda e entrega; a placa diz "Tem um pedido"
+  (`Hub.station_line`). **Para o ui-ux-designer**: aba Oficina na Forja, folha da encomenda com marcas e números, Bolsa e
+  Trazidos com a Pedra Funda, saudação "Achado", placa do veio com "Pede: Picareta", capítulo Ofícios no Livro.
+- `RESULT` e registro (`RunLog.VERSION` 6): `oficios` (`finds`, `find_by`, `marked`, `gather`: `veins`, `stones`,
+  `gather_s`, `noted`; `pity`: `due`, `passed_guardian`).
+
+## A8, depois do QA (gameplay)
+- **Sala nova na tela preta (QA P1-1, DT-RS3)**: o escurecimento chega ao preto, um quadro preto é mostrado
+  (`Rooms._go`, também na laje da Provação), a sala é montada (`_enter`) e fica preta por `Rooms.HOLD_FRAMES` 2 quadros
+  desenhados (`RenderingServer.frame_post_draw`) com o mundo parado (`Rooms.holding()`, lido no `Game._process`): o
+  primeiro desenho compila os shaders da sala (segundos na iGPU) atrás do preto; só então o clareamento de 0,35 s, em
+  tempo real. Sem tela (smoke, testes) nada espera: o mesmo `RESULT` (`smoke 600 --seed=5` `boss_at` 268,0).
+  `--hold-frames=N` força. O aquecimento dos shaders é do technical-artist (pode usar o `holding()`).
+  Teste `tests/test_room_hold.gd`.
+- **Controle nos menus e no hub (QA A8)**: `tests/test_pad_menus.gd` (A e B nas ações de menu), `tests/test_hub_f7.gd`
+  (o hub pelo F7 ida e volta, P2-4), `tools/title_pad_check.gd` (A em Iniciar chega ao hub) e `tools/hub_pad_check.gd`
+  (analógico, A em cada estação, B, Start, o Portal), os dois saem com o número de falhas; `tools/frame_spikes.gd`
+  (quadros acima de 50 ms por sala, pelo `tools/gpu.sh run`).
+- **Cor do golpe pela Bênção** (`BoonState.family_on(tags)`): a Bênção que só dá dano a um golpe (Golpe Radiante,
+  Golpe Firme, Final Radiante) pinta o corte, o número e o brilho na cor da família (`Combat.color_of`; a da ação antes
+  da que age sozinha; Elo fica de fora). Teste `tests/test_blow_family.gd`.
+- **Entrada de Morvath (ART-05.5)**: na Câmara do Selo ele sobe do selo em `Boss.RISE_TIME` 1,5 s (só o desenho:
+  `Enemy.y` de `RISE_SINK` 2,4 x tamanho abaixo do chão, saindo devagar, `Boss.rise_depth`; almas a cada 0,3 s), então
+  um segundo anel violeta, tremor, `roar` e o clipe do rugido até `ENTER_TIME` 2,4 s, quando a luta começa como antes
+  (momento e `cue` `risen`). Mesmo `RESULT` do `--start=boss --boons=25 --seed=5`. Falta a aprovação do
+  combat-feel-director. Teste `tests/test_boss_entrance.gd`.
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
@@ -2463,6 +2567,39 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - **Barras dos comuns (ART-02.6)**: no `life_bar.gdshader` a barra de quem não é elite nem tem armadura tem a vida
   `common_dim` 0,85 mais escura e é `common_cut` 25% mais fina, cortada de baixo (o topo não muda); elites iguais.
 - P2-12: número do selo da Provação em 14 px (`TrialSeal.NUMBER_SIZE`). P2-4, P2-5, P2-8 e P2-10 já estavam feitos.
+- **HV-D, interface do Santuário da Vigília** (`docs/art/hv_santuario_vigilia_art.md` 6.3): a placa da estação em foco
+  pendura no pé do que se usa, nunca flutuando sobre ele (`Hub._show_focus`: a âncora do `HubPlan` levada ao chão e
+  `StationSign.under`), e fora do herói (`place_under` com o y arredondado para cima). Os nomes fracos das estações
+  (`HubLabels`) nunca sobre o herói nem sobre a Bolsa. O Alquimista não é estação: sem placa, nome nem foco.
+- **Ofícios, marca da Pedra Funda**: `DoorGlyph.Kind.STONE` (bloco de ardósia quebrado com dois estratos pálidos),
+  `DoorGlyph.of_material(&"pedra_funda")` (`STONE_ID`, o `OficiosDef.stone`), pronta para a Bolsa, Trazidos e a saudação.
+
+## Ofícios, Roteiro A, interface (ui-ux-designer; `docs/design/oficios/10_ux.md`; testes em `tests/test_oficios_ui.gd`)
+- **Mapa**: `DescentMap.Room.find` e `vein` (lidos do `view()`); o nó com `find` ganha um losango de ouro velho de 6 px no
+  alto à direita do medalhão (`MapGraph.find_diamond`, `FIND`) e a legenda "Achado" só quando há; a página da sala diz
+  "Guarda um achado: Cabeça da Picareta" e "Um veio de Pedra Funda" (`DescentMap.find_name`); depois de achada, o
+  `from_game` tira o losango. `MapSample` tem o achado no nó 14 e o veio no 12.
+- **Placa do veio**: `StationSign.tool_line` põe sob a tecla "Pede: Picareta" no rosa do que falta (`vein_note`) ou "Com
+  a Picareta" (`vein`); `dim_verb()` apaga o verbo (para o `Rooms.prompt` quando o veio já foi anotado).
+- **Bolsa e Trazidos**: `MaterialCount` aceita a Pedra Funda (`name_of`, `short_of`, `amount_of` pelo `Oficios.count`); a
+  Bolsa a mostra depois da primeira (`shown`, `items_total`); a tela de fim traz as pedras e o achado da descida
+  (`stats.oficios`, senão `game.oficios`; `PickMark` com o nome).
+- **Saudação** (`EloBanner.show_find`: "Achado", a cabeça desenhada e "Leve ao Forjador no {HUB}"; `show_noted`: "Veio de
+  Pedra Funda", "Anotado no Livro de Ahk" e "Pede: Picareta"), pedidas pelo `Hud._greet_oficios` lendo o `game.oficios`
+  (também cada Pedra Funda extraída, saudação de material); os `show_notice` do `rooms.gd` com esses textos são
+  engolidos (`Hud.oficio_notice`).
+- **Picareta desenhada** (`PickMark`, `scripts/ui/pick_mark.gd`: perdida em contorno, só a cabeça com o cabo partido,
+  inteira; no papel ou sobre a partida).
+- **Forja com a Oficina** (`ForgeScreen.Tab`): depois de anotado um veio, dois marcadores de couro sobre a capa, Emeth e
+  Oficina (LB e RB); a Oficina mostra a Picareta grande na página esquerda e, à direita, o índice das ferramentas com os
+  mesmos Efeito, Estado, Próximo passo, custo, "Cabeça da Picareta: aqui/perdida" e Restaurar (`restore()`, sinal
+  `restored`). O Forjador abre a Forja direto na Oficina enquanto a Picareta espera (`Hub._open_forge`).
+- **Encomenda do Vendedor** (`OficioSheets.order`, na folha do `HubPanel`, que ganhou `body` e escolhas apagadas
+  `[id, texto, false]`): marca da Pedra Funda, uma fala, "◆ PEDE" com marca, nome e "1 de 2" (falta em rubrica, visto em
+  tinta), "◆ ONDE ACHAR", "◆ DÁ" e Entregar só aceso com tudo.
+- **Livro, capítulo Ofícios** (`HeroScreen.Chapter.OFICIOS`, quarto marcador): Recursos (Pedra Funda "N de 10" e onde
+  achar, ou "???" com a pista), Ferramentas (a Picareta no estado dela), Pedidos (Forjador, Vendedor) e Obras (Prévia dos
+  anjos), em voz neutra.
 
 ## Pendências conhecidas
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
@@ -2500,8 +2637,13 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 - Dado: `RoomLayout.breakables` e `ArenaVariant.breakables` (`BreakablePiece`, `core/breakable_piece.gd`: `form` vaso,
   urna, oferenda, vaso de água, caixote, tábua, banco, galho, muda; `at`, `radius` até `Breakables.MAX_RADIUS` 0,45,
   `height` 0,35 a 1,0, `group`), postos pelo `_place_breakables` do `make_data.gd` (parte `stage`): Salão 10 em 4 grupos
-  (bordas e pé das balaustradas, longe do eixo, do medalhão, da fonte e da fileira da loja), Cripta A e B 8 em 3 grupos.
-  Nenhum no hub. Regras puras em `Breakables` (`core/breakables.gd`): material por forma (`Stuff` CERAMIC, WATER, WOOD,
+  (bordas e pé das balaustradas, longe do eixo, do medalhão, da fonte e da fileira da loja), Cripta A e B 8 em 3 grupos;
+  AT-Q4 (room-designer): todas as outras salas e variantes, a Provação e o Altar, de 7 a 10 em 3 ou 4
+  grupos de 2 ou 3 nos cantos e encostados (Fendas e Ponte madeira, Jardim galhos, mudas e vasos de água, Santuário
+  oferendas, Runas caixas baixas e tigelas, Provação e Altar cerâmica), conferidos em `test_arenas.gd`
+  (`test_breakables_stand_where_they_may`: 4 a 10 em 2 a 4 grupos de 2 a 5, cada grupo encostado, 1,5 m ou mais de
+  porta, marca da porta, entrada, recompensa, nascimento, ponto de uso, guardião e toda laje ou faixa de perigo, também do
+  `also`). Nenhum no hub. Regras puras em `Breakables` (`core/breakables.gd`): material por forma (`Stuff` CERAMIC, WATER, WOOD,
   BRANCH), um golpe e o caixote dois (o 1º racha), quebra uma vez só, por golpe do herói (`swing`, pelo `Combat.reached`,
   que só sai do golpe que saiu: golpe cortado pela esquiva não quebra), pela onda dele (`circle`, tiros não hostis), por
   golpe de inimigo e perigo de sala quando o aviso aterrissa (`reached_by`, pelo sinal novo `Ground.zone_landed`), nunca
@@ -2707,12 +2849,15 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   gasta, `trail`, `trail_cell`, `trail_wear`). Cripta: pilhas de fêmures nos nichos norte e oeste (`CryptLook._ossuary`,
   `FEMUR_*`, SW-C2: crânios só com o Meshy, nunca sem o Daniel) e oferendas na saliência (C3); `_slab_free` tira as
   lajes tumulares sob peças. Fendas: sal pálido nas manchas do chão (`STY_SALT`). Jardim: poça rasa fora do corte noroeste
-  na A (`_cut_pool`) e raízes rasas, até 0,12 m, saindo dos pés das colunas (`_shallow_roots`, longe dos perigos).
+  na A (`_cut_pool`) e raízes rasas, até 0,12 m, na casca escura do `EdgeKit`, saindo dos pés das colunas (`_shallow_roots`, longe dos
+  perigos).
   Santuário: remates nas colunas quebradas (`_finials`, nunca na que tomba). Ponte: estandarte do leão balançando em cada
   pilone (`_pylon_banners`), losangos sulcados nas plataformas (`_lozenges`, decalque `kind` 4) e pegões antigos no
   abismo (`_old_piers`). Runas: grupos de três tabuletas encostadas nas paredes norte e oeste (`_tablets`). Altar: duas
   bacias de água escura com luz fria difusa (`AltarLook._basin`, `BASIN_*`). Provação (SW-T1) e SW-H1, S3, F-6, J-5 já
-  estavam feitos.
+  estavam feitos. Medido: `fit_probe` igual em todas as salas e looks, Ponte A e B fantasma 4,12 / 2,76 para 0; robô em
+  8 descidas (`smoke 900 --bot-reaction=0.25`) sem `stuck`; iGPU 720 Baixa não medida (o disco C: cheio quebrava o
+  espelho do `tools/gpu.sh`).
 
 ## SW-G7, os perigos como peças da sala (frente A2; spec `docs/art/sw_g7_hazard_grammar.md`; peça visual, a lógica é do room-designer)
 - `HazardPiece` (`scripts/game/hazard_piece.gd`): a divisa gravada em ouro velho escuro e a fenda com brasa âmbar, em
@@ -2737,6 +2882,16 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   Falta da spec: raiz (3.4), cristal (3.9), urna (3.10), pedras da abóbada (3.8), fenda que respira (3.7), planta e nicho
   (Lote D). Testes em `tests/test_room_style.gd` (`test_sw_g7_hazard_pieces`, `test_sworn_gates_open_with_the_doors`,
   `test_sworn_p2_pieces_stand`, `test_rs_c7_bridge_rails_off_the_decks`).
+- **Ligado pela lógica (room-designer)**: `PlateFloor` pega a peça de cada laje (`pieces`, e a seteira que ela arma,
+  `slits`, por `slit_at` na boca) e chama `set_state(estado, não acordada, segundos de recarga)` quando muda e durante a
+  recarga; com peça, a moldura do `GroundLook.plate_band` fica escondida em repouso e só aparece no âmbar do preparo e no
+  golpe (faixas sem peça, como raiz, planta e nicho enquanto não registradas, seguem com a moldura). `BandFloor` faz o
+  mesmo com a peça de cada faixa (`band_source`: corrente, e o fôlego quando registrado). `ColumnFloor` chama `crack()` no
+  1º golpe e `look.toppled(o, rumo, comprimento)` ao bater, no lugar do `tomb.column`. `DropFloor` monta um
+  `HazardPiece.drop` por pedra (a caixa provisória só sem look) e passa o preparo, o golpe e os segundos de entulho.
+  `RuneFloor` chama `set_charge` e `set_state` na peça `hazard_piece(Ground.CRYSTAL_SOURCE, i)` e `UrnFloor` `set_state` e
+  `set_oil` na `hazard_piece(Ground.URN_SOURCE, i)` quando a sala as tiver registrado (hoje o `ArenaRoom._hazard_pieces`
+  registra só lajes e corrente: raiz, planta e nicho entram pelo `plate_source` no índice da faixa, depois das lajes).
 
 ## Ciclo visual 2026-11-20, cenário (ENV-HB1 a HB3 no Salão, BH-07 no hub; só no estilizado; `docs/design/ciclo_visual_2026-11-20.md` itens 1 e 2, metas em `docs/art/benchmark_hades2_style.md` 4.1; capturas `docs/gallery/ciclo_visual_1120/env_*`)
 - **Salão, ENV-HB1 (petróleo)**: pedra, chão e sombra do `CatacombHall.STYLE` num azul-petróleo (`STY_STONE`,
@@ -3049,7 +3204,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
 
 ## AP-2 "Combate que se lê", parte do technical-artist (2026-11-21; backlog A6; capturas em `docs/gallery/ap2/`, testes em `tests/test_ap2_read.gd`)
 - **ART-05.2, menos vermelho na fase 3**: o vermelho das erupções segue o regime dos avisos comuns
-  (`ritual_rune.gdshader`: `fill_early` 0,25 da cor enquanto o golpe está longe, inteira só nos últimos `fill_late` 30%;
+  (`ritual_rune.gdshader`: `fill_early` 0,12 da cor enquanto o golpe está longe, inteira só nos últimos `fill_late` 30%;
   `red_after` 0,2 s depois do pouso some; teto `danger_alpha` 0,24 igual) e o preenchimento dos avisos assinados de
   Morvath também (`ground.gdshaderinc`: `sign_early` 0,3, `sign_level()`, no traço, no arco e no círculo; aro, fio
   violeta e runas inteiros desde o primeiro quadro). Raio, tempo e dano iguais.
@@ -3064,5 +3219,7 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   tela). Retorno do Corte: um fio esmeralda fino com um nó que corre a lâmina enquanto a janela de 1 s está aberta
   (`emeth.gdshader` `return_thread`, `EmethSword.set_return(lâmina, k)`, lido do `Combat._return_t` no
   `Fx._animate_return`; no estilizado sob o `style_cap`); `tools/rj1_lab.gd -- --return=1` mostra a lâmina com ele.
+- Casca da Geada com juntas mais finas e fracas (`crowd.gdshader` `frost_seam` (0,22; 0,36; 0,46), `frost_seam_from`
+  0,455; a 720 lia como rede branca). Capturas das quatro famílias e do Cavaleiro se erguendo na sala em `docs/gallery/ap2/`.
 - **ART-05.5** (entrada de Morvath mais lida) depende do tempo da entrada no `boss.gd`: fica para o gameplay-engineer e
   o combat-feel-director. `chain_weight` do `EdgeKit` já refeito (2026-11-20), espera a nova revisão do art-director.

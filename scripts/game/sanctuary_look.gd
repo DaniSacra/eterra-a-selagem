@@ -100,6 +100,16 @@ const ALTAR_CANDLES := 1.6
 ## The crypt under the nave's hole (B, spec 1.3): its floor this far down, the faint candle (energy, range) on the
 ## depths' layer only, the dust falling into it.
 const UNDER := 6.0
+## AT-SE1: how close to a slab that strikes an edge of the hole's middle lies for the slab to be its edge (m).
+const PLATE_EDGE_GAP := 0.6
+## AT-SE2: the breathing room at the four mouths of the ways round the hole (B): a worn, paler patch of the nave's floor
+## MOUTH_SIZE m (along the way, across), MOUTH_IN m before the hole's corner and in the middle of the way (between the
+## hole and the line of columns), the floor's own stone lifted MOUTH_LIFT at the middle at MOUTH_ALPHA, soft to nothing
+## at its edge (no ring, no rim: not a hazard); nothing drawn of the room's dress inside it. Stylized only.
+const MOUTH_SIZE := Vector2(4.2, 1.8)
+const MOUTH_IN := 0.5
+const MOUTH_LIFT := Color(0.66, 0.63, 0.56)
+const MOUTH_ALPHA := 0.085
 const UNDER_LIGHT := Vector2(1.2, 8.0)
 const UNDER_FLOOR := Color(0.55, 0.55, 0.55)
 
@@ -247,6 +257,11 @@ func edge(a: Vector2, b: Vector2, out: Vector2, kind: Edge, faces: SurfaceTool) 
 	if kind == Edge.MOUTH:
 		cliff(a, b, out, faces, EXIT_STEPS * EXIT_RISE + 0.6)
 	elif kind == Edge.HOLE:
+		# AT-SE1: where an edge that crumbles (RP-13) meets the hole, the slab itself is the edge: a clean sunk face, no
+		# broken lip, no gold thread (the decorative edge never inside a slab that strikes, SW-G7 3.1)
+		if on_hazard((a + b) * 0.5, PLATE_EDGE_GAP):
+			lip_wall(a, b, out, faces)
+			return
 		# C18 (ENV P1-3): the Rift's sunk lip (broken_lip, every chunk under the floor): the broken edge's slabs at the
 		# floor's height read as floor 0.4 m and more past where the paladin stops
 		broken_lip(a, b, out, faces)
@@ -309,6 +324,40 @@ func dress() -> void:
 		arena._dust(Vector3(c.x, 0.0, c.y))
 		_hole_dust = arena.get_child(arena.get_child_count() - 1) as CPUParticles3D
 	_dress_styled()
+
+
+## AT-SE2: the ways round the hole open at each end with a paler, worn patch (the "here you pass" of the floor).
+func _mouths() -> void:
+	if _hole.is_empty():
+		return
+	var lo := Vector2(INF, INF)
+	var hi := -lo
+	for p in _hole:
+		lo = lo.min(p)
+		hi = hi.max(p)
+	var near := INF
+	for o in layout.obstacles:
+		if o.shape == ArenaObstacle.Shape.CIRCLE and o.center.x > lo.x - 4.0 and o.center.x < hi.x + 4.0:
+			near = minf(near, absf(o.center.y) - o.radius)
+	var way := (hi.y + near) * 0.5 if near < INF else hi.y + 0.9
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://assets/shaders/soft_shadow.gdshader")
+	mat.set_shader_parameter(&"color", MOUTH_LIFT)
+	mat.set_shader_parameter(&"alpha", MOUTH_ALPHA)
+	var node := Node3D.new()
+	node.name = "Mouths"
+	add_child(node)
+	ArenaKit.style_only(node)
+	for x: float in [lo.x - MOUTH_IN, hi.x + MOUTH_IN]:
+		for z: float in [-way, way]:
+			var mi := MeshInstance3D.new()
+			var q := QuadMesh.new()
+			q.size = MOUTH_SIZE
+			mi.mesh = q
+			mi.material_override = mat
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			mi.transform = Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(x, 0.009, z))
+			node.add_child(mi)
 
 
 # ---------- the walls ----------
@@ -523,7 +572,8 @@ func _slabs() -> void:
 	var x := SLAB_SPAN.x
 	while x <= SLAB_SPAN.y + 0.01:
 		var at := Vector2(x, z)
-		if _clear(at, SLAB.length() * 0.6):
+		# AT-SE1: never beside a slab that strikes (the decorative slab would read as one more)
+		if _clear(at, SLAB.length() * 0.6) and clear_of_plates(at, Vector2(SLAB.y, SLAB.x)):
 			tomb.slab(at, Vector2(SLAB.y, SLAB.x), 0.0, st, fr)
 		x += SLAB_STEP
 
@@ -659,6 +709,7 @@ func _dress_styled() -> void:
 	guard.transform = _leaning(layout.boss_spawn, STY_GUARD_SHAFT.z)
 	guard.light_specular = 0.0
 	ArenaKit.style_only(guard)
+	_mouths()
 	_offerings(sm)
 	_shards(sm)
 	var face := _north - FACE_SET

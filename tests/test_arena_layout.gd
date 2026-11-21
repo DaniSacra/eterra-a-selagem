@@ -201,10 +201,10 @@ func test_enemies_rise_on_free_floor_the_hero_reaches() -> void:
 			assert_true(_free(a, p, 0.6), "%s: spawn %s settles" % [c.name, p])
 			assert_true(_free(a, a.resolve(p, biggest), biggest), "%s: the biggest enemy settles near %s" % [c.name, p])
 			assert_true(_reached(cells, p), "%s: the paladin can reach the spawn %s" % [c.name, p])
-		# the reward rises in the middle (Rooms._room_cleared) and the fountain a little north of it
+		# the reward rises in the middle (Rooms._room_cleared) and the fountain at Rooms.FOUNTAIN_SPOT (AT-FO2)
 		var spots: Array[Vector2] = [a.resolve(a.middle, 1.0)]
 		if c.layout.fountain:
-			spots.append(Vector2(0, -2.0))
+			spots.append(Rooms.FOUNTAIN_SPOT)
 		for spot: Vector2 in spots:
 			assert_true(_reached(cells, spot), "%s: %s is reachable" % [c.name, spot])
 

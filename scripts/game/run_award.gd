@@ -30,7 +30,9 @@ static func keep(g: Game, outcome: String, gain: Dictionary) -> void:
 		for t in g.tools_found:
 			if Forge.add_tool(Save.data, t, String(g.hero.id)):
 				g.tools_banked.append(t)
-	if kept or not g.materials_banked.is_empty() or not g.tools_banked.is_empty():
+		if g.oficios != null:
+			g.oficios_banked = Oficios.bank(Save.data, g.oficios_def, g.oficios)
+	if kept or not g.materials_banked.is_empty() or not g.tools_banked.is_empty() or _oficios_went(g.oficios_banked):
 		Save.write()
 
 
@@ -101,3 +103,9 @@ static func codex(g: Game, outcome: String, data: Dictionary) -> void:
 			SaveData.codex_add(data, "enemies", chief, "defeated")
 	for id: StringName in g.arenas_seen:
 		SaveData.codex_add(data, "arenas", String(id), "entered", int(g.arenas_seen[id]))
+
+
+## Whether the Ofícios' bank put anything in (Oficios.bank's answer).
+static func _oficios_went(banked: Dictionary) -> bool:
+	return not banked.is_empty() and (bool(banked.get("noted", false)) or not (banked.get("finds", []) as Array).is_empty() \
+			or not (banked.get("items", {}) as Dictionary).is_empty())

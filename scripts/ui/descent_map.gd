@@ -11,7 +11,8 @@ extends RefCounted
 ##     {"id": int (unique in the map), "kind": RunMap.Kind, "reward": RunMap.Reward, "guardian": enemy id
 ##      (&"knight", &"priest_elder"; "" when none), "hidden": bool (the Provação's room before its slab shows: only
 ##      "?" on the map), "arena": RoomLayout.id ("" when unknown), "next": Array of ids in the next layer,
-##      "hard": bool (a fight with an elite)}
+##      "hard": bool (a fight with an elite), "find": the find waiting in it once won ("" none; Ofícios, the pick's
+##      head), "vein": bool (a vein of Pedra Funda stands in it)}
 ##   "path":    Array of ids walked, in order, the current room last
 ##   "current": id of the room the paladin stands in (default: the last of "path", else the first node)
 ##   "doors":   Array of ids behind the doors open now (default: the current room's "next")
@@ -33,6 +34,9 @@ class Room:
 	var hidden := false
 	var arena: StringName = &""
 	var hard := false
+	## Ofícios (Roteiro A): the find waiting in it (&"" none) and whether a vein stands in it.
+	var find: StringName = &""
+	var vein := false
 	var next: Array[int] = []
 
 
@@ -61,6 +65,8 @@ static func from_dict(d: Dictionary) -> DescentMap:
 			r.hidden = bool(n.get("hidden", false))
 			r.arena = StringName(str(n.get("arena", "")))
 			r.hard = bool(n.get("hard", false))
+			r.find = StringName(str(n.get("find", "")))
+			r.vein = bool(n.get("vein", false))
 			for id: Variant in n.get("next", []):
 				r.next.append(int(id))
 			r.index = int(n.get("slot", row.size()))
@@ -98,6 +104,11 @@ static func from_game(game: Node) -> DescentMap:
 		var r := m.room(int(info.get("node", m.doors[i])))
 		if r != null:
 			r.hard = bool(info.get("hard", false))
+	# the find already taken on this descent: its room keeps no diamond
+	var of: Variant = game.get(&"oficios")
+	if of is OficiosRun and (of as OficiosRun).head_found:
+		for id: int in m.rooms:
+			(m.rooms[id] as Room).find = &""
 	return m
 
 
@@ -218,11 +229,29 @@ func lines(id: int) -> PackedStringArray:
 			out.append(T.t(&"map_reward", {"name": T.t(RunMap.REWARD_KEY[r.reward])}))
 		if r.hard and r.kind == RunMap.Kind.COMBAT:
 			out.append(T.t(&"map_hard"))
+		if r.find != &"":
+			out.append(T.t(&"map_find", {"name": find_name(r.find)}))
+		if r.vein:
+			out.append(T.t(&"map_vein"))
 	var arena_key := "arena_" + String(r.arena)
 	if r.arena != &"" and T.table.entries.has(arena_key):
 		out.append(T.t(&"map_arena", {"name": T.t(arena_key)}))
 	out.append(T.t(STATE_KEY[state(id)]))
 	return out
+
+
+## A find's name (oficio_<id>: "Cabeça da Picareta").
+static func find_name(id: StringName) -> String:
+	var key := "oficio_" + String(id)
+	return T.t(key) if T.table.entries.has(key) else String(id)
+
+
+## Whether any room of the map keeps a find (the legend's diamond).
+func has_find() -> bool:
+	for id: int in rooms:
+		if (rooms[id] as Room).find != &"":
+			return true
+	return false
 
 
 const STATE_KEY: Array[StringName] = [&"map_state_done", &"map_state_current", &"map_state_door", &"map_state_ahead",

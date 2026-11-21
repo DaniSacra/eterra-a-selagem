@@ -932,6 +932,8 @@ static var _tongue_tex: Array[ImageTexture] = [null, null, null]
 ## colour (HDR, so the core blooms a little). size: width and height in meters; shape: a Tongue; priority: drawn
 ## over the tongues of lower priority.
 static func tongue(size: Vector2, color: Color, shape := Tongue.POINT, priority := 0) -> QuadMesh:
+	while _tongue_tex.size() < 3:
+		_tongue_tex.append(null)
 	if _tongue_tex[shape] == null:
 		var w := 32
 		var h := 64

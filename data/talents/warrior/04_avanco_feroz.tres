@@ -19,6 +19,6 @@ desc_key = &"talent_avanco_feroz_desc"
 branch = 1
 tier = 1
 cost = 3
-unlock_level = 8
+unlock_level = 7
 memory_cost = 3
 mods = Array[ExtResource("1_05bpg")]([SubResource("Resource_xs6s6")])

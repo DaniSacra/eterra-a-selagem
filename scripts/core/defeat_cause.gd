@@ -10,9 +10,9 @@ extends RefCounted
 ## "plates" the slabs that strike when stepped on (Ground.PLATE_SOURCE); RP-11: "chain" the chain that sweeps the bridge
 ## (Ground.CHAIN_SOURCE); RP-10: "roots" the roots that strike in the Jardim (Ground.ROOT_SOURCE); RP-16: "slit" the arrow slit (Ground.SLIT_SOURCE);
 ## A1: "crystal" the crystal's discharge (RP-14), "rocks" the stones of the vault (RP-20), "urn" the oil urn's blast
-## and "oil" its running flame (RP-12).
+## and "oil" its running flame (RP-12); AT-H2 "niche" the skeleton of the niche, AT-H3 "plant" the hostile plant.
 const BOSS_ATTACKS: Array[StringName] = [&"scythe", &"reap", &"blades", &"storm", &"eruptions", &"ritual", &"curse", &"dash", &"runes",
-	&"plates", &"chain", &"roots", &"slit", &"crystal", &"rocks", &"urn", &"oil"]
+	&"plates", &"chain", &"roots", &"slit", &"crystal", &"rocks", &"urn", &"oil", &"niche", &"plant"]
 const UNKNOWN := &"killer_unknown"
 
 

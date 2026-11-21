@@ -85,6 +85,12 @@ func _process(delta: float) -> void:
 	place.modulate.a = 0.0 if quiet else clampf((PLACE_TIME - _t) / PLACE_FADE, 0.0, 1.0) * clampf(_t / 0.2, 0.0, 1.0)
 	var cam := hub.get_viewport().get_camera_3d() if hub else null
 	var view := hub.get_viewport().get_visible_rect().grow(-EDGE) if hub else Rect2()
+	# HV-D: a faint name never over the hero (the Santuário da Vigília puts stations round him as he walks the ring)
+	var hero := Rect2()
+	if cam != null and hub.player != null:
+		var feet := Vector3(hub.player.pos.x, 0.0, hub.player.pos.y)
+		hero = StationSign.hero_box(cam.unproject_position(feet + Vector3(0, StationSign.HERO_HEIGHT, 0)),
+				cam.unproject_position(feet))
 	for id: StringName in names:
 		var l := names[id] as Label
 		var at := HubPlan.anchor(id)
@@ -96,6 +102,7 @@ func _process(delta: float) -> void:
 				var s := l.get_combined_minimum_size()
 				l.size = s
 				l.position = (sp - Vector2(s.x * 0.5, s.y + NAME_LIFT)).round()
+				show = not Rect2(l.position, s).intersects(hero) and not Rect2(l.position, s).intersects(purse.get_global_rect())
 		l.visible = show
 
 

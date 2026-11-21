@@ -67,6 +67,9 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## AT-Q1: what a blow breaks in it (vases, crates, branches; BreakablePiece, played by BreakFloor). Never stops a body
 ## nor a shot. Empty: nothing.
 @export var breakables: Array[BreakablePiece] = []
+## OF-08 (Ofícios, the Primeira Picareta): where a vein of Pedra Funda may stand, the floor point he extracts it from
+## (VeinFloor; the first one; empty: none in this arena).
+@export var gather_spots := PackedVector2Array()
 ## Named parts of the floor (E5, the decision each arena asks; RoomTally.zone_time): seconds the paladin spends in
 ## each are counted in a fight (the first rectangle holding him; none: "other"). area_names[i] names areas[i].
 @export var areas: Array[Rect2] = []
@@ -106,6 +109,8 @@ func variant(n: int) -> RoomLayout:
 		out.hazard = v.hazard
 	if not v.breakables.is_empty():
 		out.breakables = v.breakables.duplicate()
+	if not v.gather_spots.is_empty():
+		out.gather_spots = v.gather_spots.duplicate()
 	if not v.areas.is_empty():
 		out.areas = v.areas.duplicate()
 		out.area_names = v.area_names.duplicate()
@@ -154,6 +159,8 @@ func _mirror() -> void:
 	for b in breakables:
 		brk.append(b.mirrored())
 	breakables = brk
+	for i in gather_spots.size():
+		gather_spots[i].x = -gather_spots[i].x
 	hero_spawn.x = -hero_spawn.x
 	hero_facing.x = -hero_facing.x
 	boss_spawn.x = -boss_spawn.x

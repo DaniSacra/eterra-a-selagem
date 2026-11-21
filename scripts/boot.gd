@@ -37,9 +37,15 @@ func _ready() -> void:
 	App.apply_options()
 	var skip := route()
 	if skip != "":
+		# P1-1: the shaders compiled once before the run (behind a black screen), not on each room's first frame
+		var warm := Warmup.start(self, true)
+		if warm != null:
+			await warm.done
 		(func() -> void: SceneGo.to(get_tree(), skip)).call_deferred()
 		return
 	_build()
+	# P1-1: the same, behind the title while it is read
+	Warmup.start(self)
 	if wants_slots():
 		_open_slots(false)
 	match Dev.arg("screen"):

@@ -14,7 +14,9 @@ const PATH := "user://runs.jsonl"
 ## 5 (Rejogabilidade, Fatia 1; sistemas.md 5.2): materials (by source and in total, MaterialPurse.report), forge (the
 ## Forja's ranks carried: temper), talents_opened (Gifts open at the start) and angels (one entry a meeting: room, node,
 ## offered, chose, cards, fallback; Encounters.log).
-const VERSION := 5
+## 6 (Ofícios, Roteiro A; OficiosRun.report): oficios (finds, find_by, marked, gather: veins, stones, gather_s,
+## noted; pity: due, passed_guardian).
+const VERSION := 6
 ## What an entry adds to the RESULT: outcome (victory, death, quit), when (local date and time), the gifts taken (in
 ## order: id, level and rarity), the device used (keyboard, gamepad, both, none; bot for the test robot), how many
 ## Omegas and dodges, the last thing that hurt the paladin (DefeatCause) and, on a death, its text key. Since
@@ -29,6 +31,8 @@ const HERO_FIELDS := {"hero": "warrior", "xp": 0, "xp_by": {}, "mastery_level": 
 const MAP_FIELDS := {"map": {}}
 ## The fields of version 5 and what an older line (no materials, no angels) reads as.
 const KEEP_FIELDS := {"materials": {}, "forge": {}, "talents_opened": 0, "angels": []}
+## The field of version 6 and what an older line (no Ofícios) reads as.
+const OFICIOS_FIELDS := {"oficios": {}}
 ## Who played a run (source).
 const HUMAN := "human"
 const BOT := "bot"
@@ -79,7 +83,7 @@ static func normalized(e: Dictionary) -> Dictionary:
 	if int(e.get("version", 1)) >= VERSION:
 		return e
 	var out := e.duplicate(true)
-	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS]:
+	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS]:
 		for k: String in fields:
 			if not out.has(k):
 				out[k] = fields[k].duplicate() if fields[k] is Array or fields[k] is Dictionary else fields[k]

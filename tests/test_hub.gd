@@ -77,11 +77,11 @@ func _frames(n: int) -> void:
 func test_the_plan_turns_into_the_world_and_back() -> void:
 	# the spec's own table (2.3, 2.4): local (u, v) and world (x, z)
 	assert_almost_eq(HubPlan.to_world(Vector2(0.0, 1.0), 35.0), Vector2(-0.574, -0.819), Vector2(0.01, 0.01), "the camera's point")
-	# HUB-D: the stations 11.5 m off the axis (LR-07), the portal's at the foot of its stairs, the arrival at the
-	# top of the stairs' well
+	# HV-A: the portal's at the foot of its stairs, the Livro's about 10 m off the axis, the arrival on the Retorno's
+	# seal at the south-east (the plan's (18; -11.4))
 	assert_almost_eq(HubPlan.use_point(HubPlan.PORTAL, 35.0), Vector2(-6.31, -9.01), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(11.49, -3.65), Vector2(0.06, 0.06))
-	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(4.47, 6.39), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.use_point(HubPlan.BOOK, 35.0), Vector2(11.20, -1.62), Vector2(0.06, 0.06))
+	assert_almost_eq(HubPlan.to_world(HubPlan.ARRIVAL, 35.0), Vector2(21.28, -0.99), Vector2(0.06, 0.06))
 	for p: Vector2 in [Vector2(3, -7), Vector2(-12, 4), Vector2(0.5, 0.25)]:
 		assert_almost_eq(HubPlan.to_local(HubPlan.to_world(p, 35.0), 35.0), p, Vector2(0.0001, 0.0001))
 
@@ -106,7 +106,7 @@ func test_the_layout_is_its_own_and_stands_on_the_plan() -> void:
 	var area := 0.0
 	for i in HubPlan.FLOOR.size():
 		area += HubPlan.FLOOR[i].cross(HubPlan.FLOOR[(i + 1) % HubPlan.FLOOR.size()]) * 0.5
-	# (HUB-D: less the arrival stairs' well, 7 x 6 m, plus the lobes beside the portal's terrace)
+	# (HUB-D: plus the lobes beside the portal's terrace; HV-A: the south-east corner whole, no well)
 	assert_between(absf(area), 1400.0, 1800.0, "about 48 to 52 by 30 to 34 m")
 
 

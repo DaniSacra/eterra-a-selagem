@@ -73,6 +73,11 @@ var boons: BoonState
 ## its ranks summed in boons.stat), the meetings with the angels (encounters) and the Gifts open at the start.
 var materials := MaterialPurse.new()
 var materials_banked := {}
+## Ofícios, Roteiro A: the descent's part (OficiosRun: the pick, the head wanted, what was found and extracted), its
+## numbers (OficiosDef) and what went into the save at the end (Oficios.bank).
+var oficios: OficiosRun
+var oficios_def: OficiosDef
+var oficios_banked := {}
 ## Fatia 2 (sistemas.md 3.6): the Encantos that may come in this descent (learned at the Forja: Enchants.learned), the
 ## choice open now, the Forjador's tools found in it (tools_banked: those log_run kept) and the Refinar carried (ids).
 var enchant_pool: Array[EnchantDef] = []
@@ -226,6 +231,7 @@ func _ready() -> void:
 	player.was_hurt.connect(_on_was_hurt)
 	player.died.connect(_on_player_died)
 	player.dodged.connect(_on_dodged)
+	player.dodge_blocked.connect(room_tally.dodge_blocked)  # AT-CA2
 	Controls.forget_devices()
 	player.shield_broke.connect(_on_shield_broke)
 	player.move_shown.connect(func(node: ComboNode) -> void:
@@ -247,6 +253,7 @@ func _ready() -> void:
 		Controls.virtual = bot.pad
 	# the Gifts and the Forja before the first room: it records the life he walks in with
 	_equip_forge()
+	_start_oficios()
 	_equip_talents()
 	encounters = Encounters.new(self)
 	enchant_pool = Enchants.learned(Enchants.load_catalog(), Save.data if bot == null else {}, String(hero.id))
@@ -405,7 +412,8 @@ func _process(delta: float) -> void:
 		bot.step(world_dt, self)
 	var stepped := false
 	if mode == Mode.PLAY or mode == Mode.OVER or mode == Mode.ENDING:
-		if world_dt > 0.0:
+		# (a new room held black while it is first drawn does not step: Rooms.holding, QA P1-1)
+		if world_dt > 0.0 and not (rooms != null and rooms.holding()):
 			_timed_step(minf(world_dt, 0.05))
 			stepped = true
 	horde.render(world_dt)
@@ -1588,6 +1596,18 @@ func _equip_talents() -> void:
 		talents_opened = ids.size()
 	if not ids.is_empty() or not boons.forge.is_empty():
 		_apply_talents(ids)
+
+
+## The Ofícios of this descent: --oficios=noted,pity,pick,preview (also the robot's), else a person's save; nothing
+## for the robot (its runs stay as they were).
+func _start_oficios() -> void:
+	oficios_def = OficiosDef.live()
+	if Dev.has("oficios"):
+		oficios = OficiosRun.from_words(Dev.arg("oficios").split(",", false))
+	elif bot == null and Save.enabled:
+		oficios = OficiosRun.from_save(Save.data, oficios_def)
+	else:
+		oficios = OficiosRun.new()
 
 
 ## The Forja's ranks for this descent (Rejogabilidade, Fatia 1): --forge=N (Temperar up to N, also the robot's), else a
