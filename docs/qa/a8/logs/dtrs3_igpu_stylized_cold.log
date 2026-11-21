@@ -1,0 +1,61 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.323 - Forward+ - Using Device #1: Intel - Intel(R) RaptorLake-S Mobile Graphics Controller
+
+SPIKE 5214.0 ms at 5.2 s real, frame 1, scene:? (frame 1 there)
+SPIKE 64.7 ms at 5.3 s real, frame 2, scene:? (frame 2 there)
+FIRST scene:? worst 5214.0 ms over 2 frames
+SPIKE 11699.3 ms at 17.0 s real, frame 3, room1:hall (frame 1 there)
+SPIKE 3289.4 ms at 21.2 s real, frame 56, room1:hall (frame 54 there)
+SPIKE 373.9 ms at 21.6 s real, frame 57, room1:hall (frame 55 there)
+SPIKE 1574.4 ms at 24.4 s real, frame 118, room1:hall (frame 116 there)
+SPIKE 198.2 ms at 24.6 s real, frame 119, room1:hall (frame 117 there)
+SPIKE 540.4 ms at 25.9 s real, frame 157, room1:hall (frame 155 there)
+SPIKE 243.3 ms at 26.2 s real, frame 159, room1:hall (frame 157 there)
+SPIKE 1140.7 ms at 27.5 s real, frame 168, room1:hall (frame 166 there)
+SPIKE 80.1 ms at 28.1 s real, frame 190, room1:hall (frame 188 there)
+SPIKE 290.4 ms at 28.9 s real, frame 217, room1:hall (frame 215 there)
+SPIKE 237.5 ms at 29.1 s real, frame 218, room1:hall (frame 216 there)
+SPIKE 53.7 ms at 29.3 s real, frame 226, room1:hall (frame 224 there)
+SPIKE 94.7 ms at 29.4 s real, frame 229, room1:hall (frame 227 there)
+SPIKE 2946.3 ms at 56.2 s real, frame 1339, room1:hall (frame 1337 there)
+SPIKE 558.3 ms at 56.8 s real, frame 1340, room1:hall (frame 1338 there)
+SPIKE 146.4 ms at 59.0 s real, frame 1447, room1:hall (frame 1445 there)
+SPIKE 256.2 ms at 59.2 s real, frame 1448, room1:hall (frame 1446 there)
+FIRST room1:hall worst 11699.3 ms over 90 frames
+SPIKE 4042.5 ms at 65.7 s real, frame 1567, room2:rift (frame 1 there)
+SPIKE 54.9 ms at 65.7 s real, frame 1568, room2:rift (frame 2 there)
+SPIKE 79.0 ms at 84.1 s real, frame 2506, room2:rift (frame 940 there)
+FIRST room2:rift worst 4042.5 ms over 90 frames
+SPIKE 1711.4 ms at 89.3 s real, frame 2699, room3:garden (frame 1 there)
+FIRST room3:garden worst 1711.4 ms over 90 frames
+SPIKE 500.4 ms at 111.1 s real, frame 3715, room4:crypt (frame 1 there)
+SPIKE 282.9 ms at 113.3 s real, frame 3830, room4:crypt (frame 116 there)
+SPIKE 104.7 ms at 131.4 s real, frame 4741, room4:crypt (frame 1027 there)
+FIRST room4:crypt worst 500.4 ms over 90 frames
+SPIKE 809.3 ms at 135.1 s real, frame 4914, room5:bridge (frame 1 there)
+SPIKE 52.0 ms at 149.8 s real, frame 5761, room5:bridge (frame 848 there)
+SPIKE 103.8 ms at 158.4 s real, frame 6246, room5:bridge (frame 1333 there)
+FIRST room5:bridge worst 809.3 ms over 90 frames
+SPIKE 663.2 ms at 163.4 s real, frame 6517, room6:sanctuary (frame 1 there)
+FIRST room6:sanctuary worst 663.2 ms over 90 frames
+SPIKE 1584.7 ms at 200.5 s real, frame 8395, room7:runes (frame 1 there)
+SPIKE 266.9 ms at 215.7 s real, frame 9235, room7:runes (frame 841 there)
+SPIKE 54.0 ms at 223.1 s real, frame 9678, room7:runes (frame 1284 there)
+FIRST room7:runes worst 1584.7 ms over 90 frames
+SPIKE 771.3 ms at 226.8 s real, frame 9866, room8:sanctuary (frame 1 there)
+FIRST room8:sanctuary worst 771.3 ms over 90 frames
+SPIKE 599.7 ms at 255.0 s real, frame 11398, room9:crypt (frame 1 there)
+FIRST room9:crypt worst 599.7 ms over 90 frames
+SPIKE 751.2 ms at 304.7 s real, frame 14155, room10:hall (frame 1 there)
+FIRST room10:hall worst 751.2 ms over 90 frames
+SPIKE 17625.0 ms at 327.6 s real, frame 14438, room11:seal_chamber (frame 1 there)
+SPIKE 1060.3 ms at 333.9 s real, frame 14726, room11:seal_chamber (frame 289 there)
+SPIKE 517.1 ms at 343.8 s real, frame 15248, room11:seal_chamber (frame 811 there)
+SPIKE 1056.7 ms at 357.7 s real, frame 15946, room11:seal_chamber (frame 1509 there)
+SPIKE 56.7 ms at 408.0 s real, frame 18685, room11:seal_chamber (frame 4248 there)
+SPIKE 92.6 ms at 425.2 s real, frame 19641, room11:seal_chamber (frame 5204 there)
+SPIKE 145.3 ms at 429.4 s real, frame 19866, room11:seal_chamber (frame 5429 there)
+SPIKE 130.5 ms at 429.5 s real, frame 19867, room11:seal_chamber (frame 5430 there)
+RESULT (cortado)
+FIRST room11:seal_chamber worst 17625.0 ms over 90 frames
+FRAMES 19867 max 17625.0 ms over 429.7 s

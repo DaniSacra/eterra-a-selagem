@@ -1,0 +1,27 @@
+extends SceneTree
+## QA (A8): the title by gamepad only: A on Iniciar (in focus) should reach the hub; then B on a title page.
+func _initialize() -> void:
+	(func() -> void: root.get_node("Save").set("enabled", false)).call_deferred()
+	change_scene_to_file.call_deferred("res://scenes/boot.tscn")
+	_run.call_deferred()
+func _pad(button: JoyButton) -> void:
+	for down: bool in [true, false]:
+		var e := InputEventJoypadButton.new()
+		e.button_index = button
+		e.pressed = down
+		Input.parse_input_event(e)
+		await process_frame
+		await process_frame
+func _run() -> void:
+	await create_timer(2.0).timeout
+	var f := root.gui_get_focus_owner()
+	print("TPAD scene ", current_scene.name, " focus ", f.name if f else "none")
+	await _pad(JOY_BUTTON_A)
+	await create_timer(2.0).timeout
+	f = root.gui_get_focus_owner()
+	print("TPAD after A: scene ", current_scene.name, " ", current_scene.scene_file_path, " focus ", f.name if f else "none")
+	await _pad(JOY_BUTTON_DPAD_DOWN)
+	await create_timer(0.3).timeout
+	f = root.gui_get_focus_owner()
+	print("TPAD after dpad down focus ", f.name if f else "none")
+	quit()

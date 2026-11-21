@@ -1,0 +1,19 @@
+extends GutTest
+## QA (A8, HUB-E): the gamepad's A presses the button in focus and B goes back, in every menu (CLAUDE.md: "Esc e B
+## fecham"; UiKit.MENU_PAD labels ui_accept as A and ui_cancel as B). In Godot 4.7.2 the engine's ui_accept is only
+## Enter/Kp Enter/Space and ui_cancel only Escape, and Controls.apply_bindings adds no pad button to them: a
+## controller cannot press Iniciar on the title, Descer at the Portal, nor close any page with B.
+
+
+func test_ui_accept_answers_the_pad_a() -> void:
+	var a := InputEventJoypadButton.new()
+	a.button_index = JOY_BUTTON_A
+	a.pressed = true
+	assert_true(InputMap.event_is_action(a, &"ui_accept"), "A is ui_accept")
+
+
+func test_ui_cancel_answers_the_pad_b() -> void:
+	var b := InputEventJoypadButton.new()
+	b.button_index = JOY_BUTTON_B
+	b.pressed = true
+	assert_true(InputMap.event_is_action(b, &"ui_cancel"), "B is ui_cancel")

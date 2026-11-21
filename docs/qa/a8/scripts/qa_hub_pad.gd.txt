@@ -1,0 +1,116 @@
+extends SceneTree
+## QA (A8, HUB-E): the hub by gamepad events only (real InputEventJoypad*): the left stick walks him, A at a station
+## opens its page, B closes it, Start opens the hub's menu and B closes it, A at the Portal asks to go down, B stays.
+## ~/tools/godot/godot --headless --path . -s tools/qa_hub_pad.gd -- --hub --nosave
+
+var _fail := 0
+
+
+func _initialize() -> void:
+	(func() -> void: root.get_node("Save").set("enabled", false)).call_deferred()
+	change_scene_to_file.call_deferred("res://scenes/boot.tscn")
+	_run.call_deferred()
+
+
+func _check(ok: bool, what: String) -> void:
+	print(("ok   " if ok else "FAIL ") + what)
+	if not ok:
+		_fail += 1
+
+
+func _pad(button: JoyButton) -> void:
+	for down: bool in [true, false]:
+		var e := InputEventJoypadButton.new()
+		e.button_index = button
+		e.pressed = down
+		e.pressure = 1.0 if down else 0.0
+		Input.parse_input_event(e)
+		await process_frame
+		await process_frame
+	await create_timer(0.2).timeout
+
+
+func _stick(x: float, y: float) -> void:
+	for axis_value in [[JOY_AXIS_LEFT_X, x], [JOY_AXIS_LEFT_Y, y]]:
+		var e := InputEventJoypadMotion.new()
+		e.axis = axis_value[0]
+		e.axis_value = axis_value[1]
+		Input.parse_input_event(e)
+
+
+func _esc(hub: Node) -> void:
+	if hub.get(&"host").call(&"is_open"):
+		var ev := InputEventAction.new()
+		ev.action = &"ui_cancel"
+		ev.pressed = true
+		Input.parse_input_event(ev)
+		await create_timer(0.3).timeout
+
+
+func _shown(hub: Node, file: String) -> bool:
+	var s = hub.get(&"host").get(&"screen")
+	return s != null and String(s.get_script().resource_path).ends_with(file)
+
+
+func _use_point(id: StringName) -> Vector2:
+	return load("res://scripts/core/hub_plan.gd").call(&"use_point", id)
+
+
+func _run() -> void:
+	await create_timer(2.0).timeout
+	var hub := current_scene
+	_check(hub != null and hub.scene_file_path == "res://scenes/hub.tscn", "--hub reaches the hub")
+	if hub == null or hub.scene_file_path != "res://scenes/hub.tscn":
+		quit(1)
+		return
+	var player = hub.get(&"player")
+	var host = hub.get(&"host")
+	var from: Vector2 = player.get(&"pos")
+	_stick(1.0, 0.0)
+	await create_timer(0.8).timeout
+	_stick(0.0, 0.0)
+	await create_timer(0.3).timeout
+	var moved: float = (player.get(&"pos") as Vector2).distance_to(from)
+	_check(moved > 1.0, "the left stick walks him (%.2f m in 0.8 s)" % moved)
+	for st in [[&"book", "hero_screen.gd"], [&"smith", "forge_screen.gd"], [&"vendor", "hub_panel.gd"], [&"tree", "hero_screen.gd"]]:
+		player.set(&"pos", _use_point(st[0]))
+		await create_timer(0.4).timeout
+		await _pad(JOY_BUTTON_A)
+		await create_timer(0.3).timeout
+		_check(_shown(hub, st[1]), "A at %s opens %s" % [st[0], st[1]])
+		await _pad(JOY_BUTTON_B)
+		await create_timer(0.3).timeout
+		_check(not host.call(&"is_open"), "B closes %s" % st[0])
+		await _esc(hub)
+	await _pad(JOY_BUTTON_START)
+	await create_timer(0.3).timeout
+	_check(_shown(hub, "pause_menu.gd"), "Start opens the hub's menu")
+	await _pad(JOY_BUTTON_B)
+	await create_timer(0.3).timeout
+	_check(not host.call(&"is_open"), "B closes the hub's menu")
+	await _esc(hub)
+	player.set(&"pos", _use_point(&"portal"))
+	await create_timer(0.4).timeout
+	await _pad(JOY_BUTTON_A)
+	await create_timer(0.3).timeout
+	_check(_shown(hub, "hub_panel.gd"), "A at the Portal asks to go down")
+	var focus := root.gui_get_focus_owner()
+	_check(focus != null and focus.name == "go", "focus on Descer (%s)" % (focus.name if focus else "none"))
+	await _pad(JOY_BUTTON_B)
+	await create_timer(0.3).timeout
+	_check(not host.call(&"is_open") and current_scene == hub, "B stays in the hub")
+	await _esc(hub)
+	await create_timer(0.4).timeout
+	await _pad(JOY_BUTTON_A)
+	await create_timer(0.3).timeout
+	focus = root.gui_get_focus_owner()
+	print("INFO focus after A on Portal again: ", focus.name if focus else "none")
+	await _pad(JOY_BUTTON_A)
+	await create_timer(1.5).timeout
+	_check(current_scene != hub, "A on Descer (in focus) starts the descent (scene %s)" % (current_scene.name if current_scene else "none"))
+	var evs := []
+	for e in InputMap.action_get_events(&"ui_cancel"):
+		evs.append(e.as_text())
+	print("INFO ui_cancel ", evs, " display ", DisplayServer.get_name())
+	print("PADHUB ok" if _fail == 0 else "PADHUB FAIL %d" % _fail)
+	quit(_fail)

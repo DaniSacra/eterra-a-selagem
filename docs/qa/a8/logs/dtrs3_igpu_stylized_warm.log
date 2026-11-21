@@ -1,0 +1,49 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.323 - Forward+ - Using Device #1: Intel - Intel(R) RaptorLake-S Mobile Graphics Controller
+
+SPIKE 4213.1 ms at 4.2 s real, frame 1, scene:? (frame 1 there)
+FIRST scene:? worst 4213.1 ms over 2 frames
+SPIKE 5579.6 ms at 9.8 s real, frame 3, room1:hall (frame 1 there)
+SPIKE 81.8 ms at 12.1 s real, frame 135, room1:hall (frame 133 there)
+SPIKE 140.9 ms at 12.3 s real, frame 137, room1:hall (frame 135 there)
+SPIKE 55.5 ms at 13.2 s real, frame 172, room1:hall (frame 170 there)
+SPIKE 104.6 ms at 13.7 s real, frame 193, room1:hall (frame 191 there)
+SPIKE 82.5 ms at 14.2 s real, frame 213, room1:hall (frame 211 there)
+SPIKE 68.2 ms at 14.8 s real, frame 241, room1:hall (frame 239 there)
+SPIKE 71.4 ms at 15.0 s real, frame 247, room1:hall (frame 245 there)
+SPIKE 78.0 ms at 42.7 s real, frame 1742, room1:hall (frame 1740 there)
+SPIKE 240.5 ms at 49.2 s real, frame 2090, room1:hall (frame 2088 there)
+SPIKE 216.4 ms at 51.8 s real, frame 2230, room1:hall (frame 2228 there)
+SPIKE 174.8 ms at 52.0 s real, frame 2231, room1:hall (frame 2229 there)
+FIRST room1:hall worst 5579.6 ms over 90 frames
+SPIKE 1221.9 ms at 55.7 s real, frame 2367, room2:rift (frame 1 there)
+FIRST room2:rift worst 1221.9 ms over 90 frames
+SPIKE 1896.3 ms at 85.8 s real, frame 3962, room3:garden (frame 1 there)
+FIRST room3:garden worst 1896.3 ms over 90 frames
+SPIKE 582.7 ms at 106.9 s real, frame 5025, room4:crypt (frame 1 there)
+SPIKE 59.5 ms at 111.5 s real, frame 5273, room4:crypt (frame 249 there)
+SPIKE 108.8 ms at 112.3 s real, frame 5319, room4:crypt (frame 295 there)
+FIRST room4:crypt worst 582.7 ms over 90 frames
+SPIKE 681.6 ms at 129.6 s real, frame 6376, room5:bridge (frame 1 there)
+SPIKE 69.9 ms at 150.2 s real, frame 7763, room5:bridge (frame 1388 there)
+FIRST room5:bridge worst 681.6 ms over 90 frames
+SPIKE 530.7 ms at 155.1 s real, frame 8071, room6:sanctuary (frame 1 there)
+SPIKE 54.0 ms at 184.1 s real, frame 9929, room6:sanctuary (frame 1859 there)
+FIRST room6:sanctuary worst 530.7 ms over 90 frames
+SPIKE 527.0 ms at 188.3 s real, frame 10151, room7:runes (frame 1 there)
+SPIKE 51.0 ms at 203.2 s real, frame 11113, room7:runes (frame 963 there)
+SPIKE 57.2 ms at 218.5 s real, frame 12131, room7:runes (frame 1981 there)
+FIRST room7:runes worst 527.0 ms over 90 frames
+SPIKE 461.2 ms at 222.3 s real, frame 12344, room8:sanctuary (frame 1 there)
+SPIKE 120.6 ms at 222.9 s real, frame 12377, room8:sanctuary (frame 34 there)
+FIRST room8:sanctuary worst 461.2 ms over 90 frames
+SPIKE 477.8 ms at 245.5 s real, frame 13692, room9:crypt (frame 1 there)
+SPIKE 71.4 ms at 261.8 s real, frame 14682, room9:crypt (frame 991 there)
+FIRST room9:crypt worst 477.8 ms over 90 frames
+SPIKE 732.9 ms at 290.7 s real, frame 16576, room10:hall (frame 1 there)
+FIRST room10:hall worst 732.9 ms over 90 frames
+SPIKE 992.0 ms at 297.0 s real, frame 16878, room11:seal_chamber (frame 1 there)
+SPIKE 72.2 ms at 405.5 s real, frame 23556, room11:seal_chamber (frame 6679 there)
+RESULT (cortado)
+FIRST room11:seal_chamber worst 992.0 ms over 90 frames
+FRAMES 23556 max 1896.3 ms over 405.5 s

@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.357 - Forward+ - Using Device #0: NVIDIA - NVIDIA GeForce RTX 5060 Laptop GPU
+
+ok   --hub reaches the hub
+ok   the left stick walks him (5.44 m in 0.8 s)
+ok   A at book opens hero_screen.gd
+FAIL B closes book
+ok   A at smith opens forge_screen.gd
+FAIL B closes smith
+ok   A at vendor opens hub_panel.gd
+FAIL B closes vendor
+ok   A at tree opens hero_screen.gd
+FAIL B closes tree
+ok   Start opens the hub's menu
+FAIL B closes the hub's menu
+ok   A at the Portal asks to go down
+ok   focus on Descer (go)
+FAIL B stays in the hub
+INFO focus after A on Portal again: go
+FAIL A on Descer (in focus) starts the descent (scene Hub)
+INFO ui_cancel ["Escape"] display Windows
+PADHUB FAIL 7

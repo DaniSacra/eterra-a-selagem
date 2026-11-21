@@ -1,0 +1,84 @@
+extends SceneTree
+## QA (MAP-05): a real descent with the robot; when the first room's doors open, the map opens over the run (the HUD's
+## own Hud.open_map, as M does), steps the focus across the doors and closes; the robot walks through one; in the next
+## room the map opens again and shows the way walked. For tools/movie.sh with PRE="-s res://tools/map05_driver.gd".
+## Untyped: a -s script compiles before the autoloads exist.
+
+const GAME := "res://scenes/game.tscn"
+var game: Node
+var t := 0.0
+var step := 0
+var mark := 0.0
+
+
+func _initialize() -> void:
+	_start.call_deferred()
+
+
+func _start() -> void:
+	game = (load(GAME) as PackedScene).instantiate()
+	root.add_child(game)
+
+
+func _tap(action: String) -> void:
+	var e := InputEventAction.new()
+	e.action = action
+	e.pressed = true
+	Input.parse_input_event(e)
+	var r := InputEventAction.new()
+	r.action = action
+	r.pressed = false
+	Input.parse_input_event(r)
+
+
+func _process(delta: float) -> bool:
+	t += delta
+	if game == null or not is_instance_valid(game):
+		return false
+	var rooms = game.get(&"rooms")
+	if rooms == null:
+		return false
+	var hud = game.get(&"hud")
+	var depth: int = rooms.depth()
+	var phase: int = rooms.get(&"phase")
+	match step:
+		0:
+			if depth == 1 and phase == 2:
+				step = 1
+				mark = t
+		1:
+			if t - mark > 1.2:
+				hud.call(&"open_map")
+				print("MAP05 opened at depth %d, %.1f s" % [depth, t])
+				step = 2
+				mark = t
+		2:
+			if t - mark > 2.0:
+				_tap("ui_right")
+				step = 3
+				mark = t
+		3:
+			if t - mark > 2.0:
+				_tap("ui_right")
+				step = 4
+				mark = t
+		4:
+			if t - mark > 2.0:
+				game.call(&"close_screen")
+				step = 5
+		5:
+			if depth == 2 and phase == 0:
+				step = 6
+				mark = t
+		6:
+			if t - mark > 1.5:
+				hud.call(&"open_map")
+				print("MAP05 opened at depth %d, %.1f s" % [depth, t])
+				step = 7
+				mark = t
+		7:
+			if t - mark > 3.5:
+				game.call(&"close_screen")
+				print("MAP05 done %.1f s" % t)
+				step = 8
+	return false
