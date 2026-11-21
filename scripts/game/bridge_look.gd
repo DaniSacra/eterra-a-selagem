@@ -303,6 +303,23 @@ func _abyss_build() -> void:
 
 
 func dress() -> void:
+	BuildSteps.run(dress_steps())
+
+
+## dress in steps (ArenaRoom.dress_steps; QA P1-1).
+func dress_steps() -> Array[Callable]:
+	return [
+		_bridges,
+		func() -> void:
+			for w in _landings:
+				_landing(w)
+			_entry(),
+		_far,
+		func() -> Array[Callable]: return _dress_styled_steps(),
+	]
+
+
+func _bridges() -> void:
 	var east_most := _decks.size() - 1
 	for i in _decks.size():
 		var r := _decks[i]
@@ -317,11 +334,6 @@ func dress() -> void:
 		else:
 			bridge(r, i == east_most, i == east_most, arches, open)
 		_head_statues(r)
-	for w in _landings:
-		_landing(w)
-	_entry()
-	_far()
-	_dress_styled()
 
 
 # ---------- the bridges' ends, the landing ----------
@@ -448,37 +460,52 @@ static func _muted(c: Color) -> Color:
 ## voussoirs under the arches (P2), falls far to the north (P4); in B far broken bridges (P5) and lanterns hung over
 ## the landing (P6).
 func _dress_styled() -> void:
-	var sm := kit.styled()
-	for r in _decks:
-		_low_arches(sm, r)
-		for end in 2:
-			var west := end == 0
-			# the corner without the statue (_head_statues: west end south, east end north)
-			var lip := r.position.x if west else r.end.x
-			var side := r.position.y if west else r.end.y
-			var away := -1.0 if west else 1.0
-			var into := 1.0 if west else -1.0
-			_head_bowl(sm, Vector2(lip + into * HEAD_OUT.y, side + away * HEAD_OUT.x), away)
-	_falls(sm)
-	# item 4 of the cycle of 2026-11-20 (depth past the edge): the far broken bridges in both variants, spurs of rock
-	_far_bridges(sm)
-	depth_spurs(sm, STY_SPURS, STY_SPUR_FOOT, deep(), STY_SPUR_SEED)
-	# TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Ponte): broken arches far out in the abyss to the north, rising out
-	# of the mist (EDGE_ARCHES: x, z, foot below the floor, span; their springing EDGE_ARCH_SPRING); the chain with its
-	# weight waits for the technical-artist's fix
-	for a: Vector4 in EDGE_ARCHES:
-		edge_kit().broken_arch(Vector3(a.x, a.z, a.y), Vector2(0, 1), a.w, EDGE_ARCH_SPRING)
-	# P2-B1 (ART_REVIEW.md 4.5): each platform lit a step more than its edge nearest the camera
-	for f: Vector3 in STY_KEY_POOLS:
-		key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
-	_pylon_banners()
-	_lozenges(sm)
-	_old_piers(sm)
-	if _long:
-		for w in _landings:
-			for c: Vector2 in [Vector2(w.position.x + LANDING_LANTERN_IN, w.position.y + LANDING_LANTERN_IN),
-					Vector2(w.end.x - LANDING_LANTERN_IN, w.end.y - LANDING_LANTERN_IN)]:
-				hanging_lantern(Vector3(c.x, LANDING_LANTERN_TOP, c.y), LANDING_LANTERN_Y, LANDING_LANTERN_SIZE, LANDING_LANTERN, true)
+	BuildSteps.run(_dress_styled_steps())
+
+
+## _dress_styled in steps (BuildSteps; QA P1-1: a frame each on a new room's black screen).
+func _dress_styled_steps() -> Array[Callable]:
+	var v := {}
+	return [
+		func() -> void:
+			var sm := kit.styled()
+			v[&"sm"] = sm
+			for r in _decks:
+				_low_arches(sm, r)
+				for end in 2:
+					var west := end == 0
+					# the corner without the statue (_head_statues: west end south, east end north)
+					var lip := r.position.x if west else r.end.x
+					var side := r.position.y if west else r.end.y
+					var away := -1.0 if west else 1.0
+					var into := 1.0 if west else -1.0
+					_head_bowl(sm, Vector2(lip + into * HEAD_OUT.y, side + away * HEAD_OUT.x), away),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			_falls(sm)
+			# item 4 of the cycle of 2026-11-20 (depth past the edge): the far broken bridges in both variants, spurs of rock
+			_far_bridges(sm)
+			depth_spurs(sm, STY_SPURS, STY_SPUR_FOOT, deep(), STY_SPUR_SEED),
+		func() -> void:
+			# TA-HB2 (docs/gallery/hb/ART_REVIEW.md item 2, Ponte): broken arches far out in the abyss to the north, rising out
+			# of the mist (EDGE_ARCHES: x, z, foot below the floor, span; their springing EDGE_ARCH_SPRING); the chain with its
+			# weight waits for the technical-artist's fix
+			for a: Vector4 in EDGE_ARCHES:
+				edge_kit().broken_arch(Vector3(a.x, a.z, a.y), Vector2(0, 1), a.w, EDGE_ARCH_SPRING)
+			# P2-B1 (ART_REVIEW.md 4.5): each platform lit a step more than its edge nearest the camera
+			for f: Vector3 in STY_KEY_POOLS:
+				key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			_pylon_banners()
+			_lozenges(sm)
+			_old_piers(sm)
+			if _long:
+				for w in _landings:
+					for c: Vector2 in [Vector2(w.position.x + LANDING_LANTERN_IN, w.position.y + LANDING_LANTERN_IN),
+							Vector2(w.end.x - LANDING_LANTERN_IN, w.end.y - LANDING_LANTERN_IN)]:
+						hanging_lantern(Vector3(c.x, LANDING_LANTERN_TOP, c.y), LANDING_LANTERN_Y, LANDING_LANTERN_SIZE, LANDING_LANTERN, true),
+	]
 
 
 ## P1, P3: a pillar of the room's stone (HEAD tall) on a pier of the depths' stone, the kit's brazier at half size on

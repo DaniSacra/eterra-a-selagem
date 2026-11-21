@@ -340,25 +340,39 @@ func door_arch(edge_mid: Vector2, inward: Vector2, width: float, back := 0.5, he
 
 
 func dress() -> void:
-	for o in layout.obstacles:
-		if o.piece == &"trunk":
-			_trunk_o = o
-	variant_b = _trunk_o != null and root_paths(layout, _trunk_o).size() < 4
-	_wall_mat = ashlar()
-	if _trunk_o != null:
-		_inscription()
-	_tree()
-	_walls()
-	_moss()
-	_entry()
-	_statues()
-	_grass()
-	_beam()
-	if _compat():
-		_key = key_light(COMPAT_KEY, KEY_ENERGY * COMPAT_LIGHT)
-	else:
-		_key = key_light(KEY, KEY_ENERGY)
-	_dress_styled()
+	BuildSteps.run(dress_steps())
+
+
+## dress in steps (ArenaRoom.dress_steps; QA P1-1).
+func dress_steps() -> Array[Callable]:
+	return [
+		func() -> void:
+			for o in layout.obstacles:
+				if o.piece == &"trunk":
+					_trunk_o = o
+			variant_b = _trunk_o != null and root_paths(layout, _trunk_o).size() < 4
+			_wall_mat = ashlar()
+			if _trunk_o != null:
+				_inscription(),
+		_tree,
+		_tree_dress,
+		_tree_grass,
+		_walls,
+		_walls_west,
+		_walls_west_wall,
+		_walls_corners,
+		_moss,
+		_entry,
+		_statues,
+		_grass,
+		func() -> void:
+			_beam()
+			if _compat():
+				_key = key_light(COMPAT_KEY, KEY_ENERGY * COMPAT_LIGHT)
+			else:
+				_key = key_light(KEY, KEY_ENERGY),
+		func() -> Array[Callable]: return _dress_styled_steps(),
+	]
 
 
 ## True in the browser's renderer (Compatibility).
@@ -577,12 +591,17 @@ func _canopy() -> void:
 	add_child(mi)
 
 
-func _tree() -> void:
+func _tree() -> Array[Callable]:
 	if _trunk_o == null:
-		return
+		return []
 	tree = StoneTree.new()
 	tree.bounds = CROWN_BOUNDS
-	tree.build(self, _trunk_o.center, root_paths(layout, _trunk_o), CRYSTAL_GLOW.y if variant_b else CRYSTAL_GLOW.x)
+	return tree.build_steps(self, _trunk_o.center, root_paths(layout, _trunk_o), CRYSTAL_GLOW.y if variant_b else CRYSTAL_GLOW.x)
+
+
+func _tree_dress() -> void:
+	if _trunk_o == null:
+		return
 	_canopy()
 	for i in mini(LANTERNS.y if variant_b else LANTERNS.x, tree.hangs.size()):
 		_hanging_lantern(tree.hangs[i])
@@ -606,6 +625,11 @@ func _tree() -> void:
 		l.light_cull_mask = ~Arena.CROWD_LAYER
 		add_child(l)
 		_crystal_lights.append(l)
+
+
+func _tree_grass() -> void:
+	if _trunk_o == null:
+		return
 	# dry grass round the trunk's foot and along the roots
 	var r := RandomNumberGenerator.new()
 	r.seed = 911
@@ -694,12 +718,28 @@ func _walls() -> void:
 	var north_from := b.position.x + 4.0
 	_wall(Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, NORTH_WINDOWS, 11)
 	_wall(Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x + 0.9, NORTH_Z), Vector2(0, 1), NORTH_HEIGHT, [], 12)
+	m.layers = 1
+
+
+func _walls_west() -> void:
+	m.layers = 1 | ArenaKit.FACADE_LAYER
 	_door_recess()
+	m.layers = 1
+
+
+func _walls_west_wall() -> void:
+	m.layers = 1 | ArenaKit.FACADE_LAYER
+	var b := arena.shape().bounds()
 	# west: from the north-west cut to the way in (in a node of its own: in B the stylized look puts a lake there)
 	_west_apart(func() -> void:
 		_wall(Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0), WEST_HEIGHT, WEST_WINDOWS, 13)
 		for z in WEST_BANNERS:
 			kit.banner(Vector3(WEST_X + 0.06, BANNER.x, z), PI * 0.5, Vector2(BANNER.y, BANNER.z), ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION))
+	m.layers = 1
+
+
+func _walls_corners() -> void:
+	m.layers = 1 | ArenaKit.FACADE_LAYER
 	_corners()
 	m.layers = 1
 
@@ -923,12 +963,15 @@ func _entry() -> void:
 
 # ---------- statues and grass ----------
 
-func _statues() -> void:
+## (a statue a step: BuildSteps, QA P1-1)
+func _statues() -> Array[Callable]:
+	var steps: Array[Callable] = []
 	for s in STATUES:
 		if s.x < WEST_X:
-			_west_apart(_statue.bind(s))
+			steps.append(_west_apart.bind(_statue.bind(s)))
 		else:
-			_statue(s)
+			steps.append(_statue.bind(s))
+	return steps
 
 
 ## A hooded statue in its niche (x, z, facing in degrees, height).
@@ -1081,30 +1124,48 @@ func style() -> Dictionary:
 ## on the lids, the column feet, the sills and the walls' plinth (J3), falls of dark water behind the windows and past
 ## the north-west cut (J4); in B the west wall's place a low broken parapet over a dark lake with a fall (J5).
 func _dress_styled() -> void:
-	var sm := kit.styled()
-	var b := layout.floor.bounds()
-	var north_from := b.position.x + 4.0
-	_leaves(sm, Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1))
-	_leaves(sm, Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x, NORTH_Z), Vector2(0, 1))
-	_leaves(sm, Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0))
-	if _trunk_o != null:
-		_leaves_round(sm, _trunk_o.center, _trunk_o.radius)
-	_fungi(sm)
-	for x in NORTH_WINDOWS:
-		_fall(sm, Vector3(x, 0.0, NORTH_Z - FALL_BACK), 0.0, FALL_WIDTH, FALL_TOP, true)
-	if not variant_b:
-		for z in WEST_WINDOWS:
-			_fall(sm, Vector3(WEST_X - FALL_BACK, 0.0, z), PI * 0.5, FALL_WIDTH, FALL_TOP, true)
-	# past the north-west cut, into the abyss
-	var nw := FALL_NW
-	_fall(sm, Vector3(nw.x, nw.y - FALL_NW_SIZE.y + FALL_TOP, nw.z), PI * 0.25, FALL_NW_SIZE.x, FALL_NW_SIZE.y, false)
-	if variant_b:
-		_lake(sm, b)
-	else:
-		_cut_pool(sm)
-	_edge_pieces()
-	_west_mist()
-	_shallow_roots(sm)
+	BuildSteps.run(_dress_styled_steps())
+
+
+## _dress_styled in steps (BuildSteps; QA P1-1: a frame each on a new room's black screen).
+func _dress_styled_steps() -> Array[Callable]:
+	var v := {}
+	return [
+		func() -> void:
+			var sm := kit.styled()
+			var b := layout.floor.bounds()
+			v[&"sm"] = sm
+			v[&"b"] = b
+			var north_from := b.position.x + 4.0
+			_leaves(sm, Vector2(north_from, NORTH_Z), Vector2(RECESS.x, NORTH_Z), Vector2(0, 1))
+			_leaves(sm, Vector2(RECESS.y, NORTH_Z), Vector2(b.end.x, NORTH_Z), Vector2(0, 1))
+			_leaves(sm, Vector2(WEST_X, b.position.y + 4.0), Vector2(WEST_X, 9.0), Vector2(1, 0))
+			if _trunk_o != null:
+				_leaves_round(sm, _trunk_o.center, _trunk_o.radius),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			_fungi(sm)
+			for x in NORTH_WINDOWS:
+				_fall(sm, Vector3(x, 0.0, NORTH_Z - FALL_BACK), 0.0, FALL_WIDTH, FALL_TOP, true)
+			if not variant_b:
+				for z in WEST_WINDOWS:
+					_fall(sm, Vector3(WEST_X - FALL_BACK, 0.0, z), PI * 0.5, FALL_WIDTH, FALL_TOP, true),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			var b: Rect2 = v[&"b"]
+			# past the north-west cut, into the abyss
+			var nw := FALL_NW
+			_fall(sm, Vector3(nw.x, nw.y - FALL_NW_SIZE.y + FALL_TOP, nw.z), PI * 0.25, FALL_NW_SIZE.x, FALL_NW_SIZE.y, false)
+			if variant_b:
+				_lake(sm, b)
+			else:
+				_cut_pool(sm),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			_edge_pieces()
+			_west_mist()
+			_shallow_roots(sm),
+	]
 
 
 ## Sworn P2 SW-G6: the low dark foreground rising out of the haze past the edges the camera looks across.

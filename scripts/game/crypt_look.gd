@@ -387,22 +387,39 @@ const WALL_FILL_ENERGY := 1.6
 
 
 func dress() -> void:
-	wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
-	var b := layout.floor.polys[0]
-	var box := Rect2(b[0], Vector2.ZERO)
-	for p in b:
-		box = box.expand(p)
-	_north = box.position.y
-	_west = box.position.x
-	_south = box.end.y
-	_east = box.end.x
-	_back_walls()
-	_front_walls()
-	_heap()
-	_entry()
-	_slabs()
-	_candles()
-	_cold_shaft()
+	BuildSteps.run(dress_steps())
+
+
+## dress in steps (ArenaRoom.dress_steps; QA P1-1).
+func dress_steps() -> Array[Callable]:
+	return [
+		func() -> void:
+			wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
+			var b := layout.floor.polys[0]
+			var box := Rect2(b[0], Vector2.ZERO)
+			for p in b:
+				box = box.expand(p)
+			_north = box.position.y
+			_west = box.position.x
+			_south = box.end.y
+			_east = box.end.x
+			_back_walls(),
+		_back_wall_west,
+		_back_niches,
+		_front_walls,
+		func() -> void:
+			_heap()
+			_entry(),
+		_slabs,
+		func() -> void:
+			_candles()
+			_cold_shaft()
+			_lights(),
+		func() -> Array[Callable]: return _dress_styled_steps(),
+	]
+
+
+func _lights() -> void:
 	var key := key_light(KEY, KEY_ENERGY * (COMPAT_KEY if _compat() else 1.0), KEY_HEIGHT)
 	_key = key
 	key.omni_attenuation = KEY_FALLOFF
@@ -422,7 +439,6 @@ func dress() -> void:
 	var dark := _stair_stone(-EXIT_RISE * EXIT_STEPS)
 	for k: StringName in [&"stone_a", &"stone_b"]:
 		plain.set_shader_parameter(k, dark.get_shader_parameter(k))
-	_dress_styled()
 
 
 ## The stone of the steps: Masonry's plain stone at their foot in the value of the walls (STAIR_TINT).
@@ -461,6 +477,7 @@ func piece(o: ArenaObstacle) -> void:
 # ---------- the walls ----------
 
 ## The north and the west walls, with their openings: niches, the fire bowls' recesses, the north door, the arcade.
+## The back walls in three steps (_back_wall_west, _back_niches; BuildSteps, QA P1-1): the north wall.
 func _back_walls() -> void:
 	var t := WALL_SET + WALL_THICK
 	var north_a := Vector2(_west - t, _north)
@@ -485,6 +502,11 @@ func _back_walls() -> void:
 			north.append(Vector4(s - RECESS.x * 0.5, s + RECESS.x * 0.5, 0.0, RECESS.y))
 			deep.append(RECESS.z)
 	_wall(north_a, Vector2(_east + 1.2, _north), Vector2(0, -1), north, deep)
+
+
+func _back_wall_west() -> void:
+	var niche_low := LEDGE
+	var niche_high := LEDGE + NICHE.y - NICHE.x * 0.4
 	var west_a := Vector2(_west, _south + FRONT.y)
 	var west: Array[Vector4] = []
 	var wdeep: Array[float] = []
@@ -494,6 +516,9 @@ func _back_walls() -> void:
 	west.append(Vector4(west_a.y - ENTRY.y - JAMB, west_a.y - ENTRY.x + JAMB, 0.0, WALL_DOOR.y + 0.4))
 	wdeep.append(0.0)
 	_wall(west_a, Vector2(_west, _north), Vector2(-1, 0), west, wdeep)
+
+
+func _back_niches() -> void:
 	# the niches themselves, their shelves or statues
 	var mat := ashlar()
 	var hollow := m.stone(0.0, HOLLOW)
@@ -1010,72 +1035,94 @@ func _bone() -> ShaderMaterial:
 ## the classic pieces stay where they were): the effigy, urns, candles, the slabs' inscriptions, the cold glow behind
 ## the north door, the mist beyond the cut walls; in B the veiled figure and the urns on the ossuary wall.
 func _dress_styled() -> void:
-	var sm := kit.styled()
-	var st := TombKit.new(sm)
-	var urn := sm.carved(LEDGE, STONE)
-	var divider := _divider()
-	# A1: the effigy on the great tomb
-	for o in layout.obstacles:
-		if o.piece == &"sarcophagus" and maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM:
-			var long_x := o.half.x >= o.half.y
-			st.effigy(Vector3(o.center.x + EFFIGY.y, o.height, o.center.y), EFFIGY.x, 0.0 if long_x else PI * 0.5,
-				sm.carved(o.height, STONE * EFFIGY_LIGHT))
-			_crown(sm, o)
-			_pall(sm, o)
-	# A2, A3: urns on the ledges
-	var ny := _north - WALL_SET * 0.5
-	for u in NORTH_URNS:
-		if _clear(Vector2(u.x, _north), URN_CLEAR):
-			sm.urn(Vector3(u.x, LEDGE, ny), u.y, urn)
-	sm.candle_out(Vector3(NORTH_STUB.x, LEDGE, ny), NORTH_STUB.y, 0.06)
-	var wx := _west - WALL_SET * 0.5
-	var placed := 0
-	for u in WEST_URNS:
-		if placed < 3 and _clear(Vector2(_west, u.x), URN_CLEAR) and absf(u.x - (ENTRY.x + ENTRY.y) * 0.5) > 2.6:
-			sm.urn(Vector3(wx, LEDGE, u.x), u.y, urn)
-			placed += 1
-	# A4, A5: the niches' sills
-	var k := 0
-	for x in NORTH_NICHES:
-		_sill(sm, Vector2(x, _north), Vector2(0, 1), STATUE_NICHES.has(k), urn, divider != null)
-		k += 1
-	for z in WEST_NICHES:
-		_sill(sm, Vector2(_west, z), Vector2(1, 0), STATUE_NICHES.has(k), urn)
-		k += 1
-	# A6: burnt-out candles at the other end of the lit small sarcophagi's lids
-	for o in layout.obstacles:
-		if o.piece != &"sarcophagus" or maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM or o.shape != ArenaObstacle.Shape.BOX:
-			continue
-		var long_x := o.half.x >= o.half.y
-		var half := o.half if long_x else Vector2(o.half.y, o.half.x)
-		if arena.shape().edge_distance(o.center) < half.y + 0.4 or o.height > 2.0:
-			continue
-		var axis := Vector3(1, 0, 0) if long_x else Vector3(0, 0, 1)
-		var across := Vector3(axis.z, 0, axis.x)
-		var end := Vector3(o.center.x, o.height, o.center.y) - axis * (half.x - 0.35) * (1.0 if o.center.x > 0.0 else -1.0)
-		for i in LID_STUBS:
-			sm.candle_out(end + across * (i - 1) * 0.2, 0.08 + 0.04 * (i % 2), 0.055)
-	# A7: the grave slabs' worn inscriptions
-	var ink := _own_paint(sm.stone(0.0, STONE * INSCRIPTION_TINT), STY_OLD_SLAB.w)
-	for sl in SLAB_ROWS:
-		var at := Vector2(sl.x, sl.y)
-		if _clear(at, SLAB.length() * 0.5):
-			_inscription(sm, at, ink)
-	# the cold glow behind the north door, the mist beyond the cut walls
-	for i in layout.exits.size():
-		if in_wall(i):
-			_door_glow(layout.exits[i], divider != null)
-	var mist := FRONT_MIST_COLOR * 2.0
-	var c := Vector2((_west + _east) * 0.5, (_north + _south) * 0.5)
-	var before := kit.root.get_child_count()
-	kit.mist_bank(Vector3(c.x, FRONT_MIST.y, _south + FRONT.y + FRONT_MIST.x), Vector2(_east - _west + 8.0, FRONT_MIST.z), mist, FRONT_MIST.w)
-	kit.mist_bank(Vector3(_east + FRONT.y + FRONT_MIST.x, FRONT_MIST.y, c.y), Vector2(_south - _north + 8.0, FRONT_MIST.z), mist, FRONT_MIST.w)
-	for i in range(before, kit.root.get_child_count()):
-		ArenaKit.style_only(kit.root.get_child(i) as Node3D)
-	if divider != null:
-		_ossuary_crown(sm, divider)
-	_edge_pieces()
-	_ossuary(sm)
+	BuildSteps.run(_dress_styled_steps())
+
+
+## _dress_styled in steps (BuildSteps; QA P1-1: a frame each on a new room's black screen).
+func _dress_styled_steps() -> Array[Callable]:
+	var v := {}
+	return [
+		func() -> void:
+			var sm := kit.styled()
+			var st := TombKit.new(sm)
+			var urn := sm.carved(LEDGE, STONE)
+			var divider := _divider()
+			v[&"sm"] = sm
+			v[&"st"] = st
+			v[&"urn"] = urn
+			v[&"divider"] = divider
+			# A1: the effigy on the great tomb
+			for o in layout.obstacles:
+				if o.piece == &"sarcophagus" and maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM:
+					var long_x := o.half.x >= o.half.y
+					st.effigy(Vector3(o.center.x + EFFIGY.y, o.height, o.center.y), EFFIGY.x, 0.0 if long_x else PI * 0.5,
+						sm.carved(o.height, STONE * EFFIGY_LIGHT))
+					_crown(sm, o)
+					_pall(sm, o)
+			# A2, A3: urns on the ledges
+			var ny := _north - WALL_SET * 0.5
+			for u in NORTH_URNS:
+				if _clear(Vector2(u.x, _north), URN_CLEAR):
+					sm.urn(Vector3(u.x, LEDGE, ny), u.y, urn)
+			sm.candle_out(Vector3(NORTH_STUB.x, LEDGE, ny), NORTH_STUB.y, 0.06)
+			var wx := _west - WALL_SET * 0.5
+			var placed := 0
+			for u in WEST_URNS:
+				if placed < 3 and _clear(Vector2(_west, u.x), URN_CLEAR) and absf(u.x - (ENTRY.x + ENTRY.y) * 0.5) > 2.6:
+					sm.urn(Vector3(wx, LEDGE, u.x), u.y, urn)
+					placed += 1,
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			var urn: Material = v[&"urn"]
+			var divider: Variant = v[&"divider"]
+			# A4, A5: the niches' sills
+			var k := 0
+			for x in NORTH_NICHES:
+				_sill(sm, Vector2(x, _north), Vector2(0, 1), STATUE_NICHES.has(k), urn, divider != null)
+				k += 1
+			for z in WEST_NICHES:
+				_sill(sm, Vector2(_west, z), Vector2(1, 0), STATUE_NICHES.has(k), urn)
+				k += 1
+			# A6: burnt-out candles at the other end of the lit small sarcophagi's lids
+			for o in layout.obstacles:
+				if o.piece != &"sarcophagus" or maxf(o.half.x, o.half.y) * 2.0 >= ArenaRoom.TOMB_FROM or o.shape != ArenaObstacle.Shape.BOX:
+					continue
+				var long_x := o.half.x >= o.half.y
+				var half := o.half if long_x else Vector2(o.half.y, o.half.x)
+				if arena.shape().edge_distance(o.center) < half.y + 0.4 or o.height > 2.0:
+					continue
+				var axis := Vector3(1, 0, 0) if long_x else Vector3(0, 0, 1)
+				var across := Vector3(axis.z, 0, axis.x)
+				var end := Vector3(o.center.x, o.height, o.center.y) - axis * (half.x - 0.35) * (1.0 if o.center.x > 0.0 else -1.0)
+				for i in LID_STUBS:
+					sm.candle_out(end + across * (i - 1) * 0.2, 0.08 + 0.04 * (i % 2), 0.055),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			var divider: Variant = v[&"divider"]
+			# A7: the grave slabs' worn inscriptions
+			var ink := _own_paint(sm.stone(0.0, STONE * INSCRIPTION_TINT), STY_OLD_SLAB.w)
+			for sl in SLAB_ROWS:
+				var at := Vector2(sl.x, sl.y)
+				if _clear(at, SLAB.length() * 0.5):
+					_inscription(sm, at, ink)
+			# the cold glow behind the north door, the mist beyond the cut walls
+			for i in layout.exits.size():
+				if in_wall(i):
+					_door_glow(layout.exits[i], divider != null)
+			var mist := FRONT_MIST_COLOR * 2.0
+			var c := Vector2((_west + _east) * 0.5, (_north + _south) * 0.5)
+			var before := kit.root.get_child_count()
+			kit.mist_bank(Vector3(c.x, FRONT_MIST.y, _south + FRONT.y + FRONT_MIST.x), Vector2(_east - _west + 8.0, FRONT_MIST.z), mist, FRONT_MIST.w)
+			kit.mist_bank(Vector3(_east + FRONT.y + FRONT_MIST.x, FRONT_MIST.y, c.y), Vector2(_south - _north + 8.0, FRONT_MIST.z), mist, FRONT_MIST.w)
+			for i in range(before, kit.root.get_child_count()):
+				ArenaKit.style_only(kit.root.get_child(i) as Node3D)
+			if divider != null:
+				_ossuary_crown(sm, divider),
+		func() -> void:
+			_edge_pieces(),
+		func() -> Array[Callable]:
+			return _ossuary(v[&"sm"]),
+	]
 
 
 ## Sworn P2 SW-C2: stacks of thigh bones on the ledge against the north and west walls (FEMUR_STACKS: x on the north
@@ -1094,22 +1141,25 @@ const C3_NORTH: Array[float] = [-7.1, -3.9]
 const C3_WEST: Array[float] = [-5.85, -9.15]
 
 
-func _ossuary(sm: Masonry) -> void:
+## (in steps, a stack or a ledge each: BuildSteps, QA P1-1)
+func _ossuary(sm: Masonry) -> Array[Callable]:
 	var bone := sm.stone(0.0, BONE)
 	bone.set_meta(ArenaKit.PAINT_OWN, {&"paint_ref": STY_PAINT_REF * STY_LIGHT_STONE, &"paint_pool_gain": STY_LID_POOL})
+	var steps: Array[Callable] = []
 	var k := 0
 	for x in FEMUR_STACKS:
-		_femurs(sm, Vector2(x, _north), Vector2(0, -1), bone, k)
+		steps.append(_femurs.bind(sm, Vector2(x, _north), Vector2(0, -1), bone, k))
 		k += 1
 	for z in FEMUR_STACKS_WEST:
-		_femurs(sm, Vector2(_west, z), Vector2(-1, 0), bone, k)
+		steps.append(_femurs.bind(sm, Vector2(_west, z), Vector2(-1, 0), bone, k))
 		k += 1
 	for x in C3_NORTH:
-		offerings(Vector2(x, _north - WALL_SET * 0.5), Vector2(1, 0), LEDGE, 3, 91 + k)
+		steps.append(offerings.bind(Vector2(x, _north - WALL_SET * 0.5), Vector2(1, 0), LEDGE, 3, 91 + k))
 		k += 1
 	for z in C3_WEST:
-		offerings(Vector2(_west - WALL_SET * 0.5, z), Vector2(0, 1), LEDGE, 3, 91 + k)
+		steps.append(offerings.bind(Vector2(_west - WALL_SET * 0.5, z), Vector2(0, 1), LEDGE, 3, 91 + k))
 		k += 1
+	return steps
 
 
 ## One stack of femurs on the ledge at the floor's edge point `at`, the wall `out` of it.

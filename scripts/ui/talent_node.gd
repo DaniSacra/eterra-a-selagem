@@ -149,8 +149,10 @@ func _draw() -> void:
 	else:
 		var r := h * 0.5
 		var col := glyph_color()
-		if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
-			branch_glyph(self, glyph, c, r, col)
+		# AP-4: the Gift's painted motif (technical-artist's TalentMotif), else its glyph, else its branch's
+		if def == null or not TalentMotif.draw(self, def.id, c, r, state):
+			if def == null or not TalentGlyph.draw(self, def.id, c, r, col, ink_color()):
+				branch_glyph(self, glyph, c, r, col)
 	if on and def != null:
 		_badge_tick(c + Vector2(h * 0.62, -h * 0.62), h * BADGE)
 	elif sealed:

@@ -35,6 +35,9 @@ func _draw() -> void:
 		draw_colored_polygon(arch(c + Vector2(0, r * 0.08), r * ARCH_W, r * ARCH_H), Color(col.darkened(ARCH_DARK), 0.75) if psalm else Color(UiKit.DIM, 0.25)))
 	if psalm != null:
 		glyph(self, psalm.effect, c + Vector2(0, r * 0.08), r * 0.5, IVORY, col)
+	# the rim of the painted medallions (AP-4 2.3), over the seal's own
+	var s := minf(size.x, size.y)
+	BoonIcon.ring(self, c, s * 0.495, BoonIcon.ring_width(s))
 
 
 ## A pointed arch of this half width and height centred on centre: straight sides, then two arcs meeting in a point

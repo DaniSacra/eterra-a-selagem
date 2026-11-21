@@ -34,6 +34,37 @@ func setup_glyph(glyph_id: int, color: Color, size_px: float) -> BoonIcon:
 	return setup(null, size_px)
 
 
+## The rim of a drawn medallion, the one the painted PNGs wear (assets/ui/boons/vapor.png, measured on its radius, AP-4
+## 2.3): from the outside in, a dark edge, bronze, a groove, a lit bead, bronze, a groove, a dull band and the shadow it
+## throws inside. RING_BANDS: (from, to) as shares of the width from the outer edge, and the colour (sRGB, luma about
+## 55 on average, as the PNG's).
+const RING_BANDS := [
+	[0.0, 0.08, Color8(40, 27, 14)], [0.08, 0.26, Color8(85, 59, 32)], [0.26, 0.33, Color8(58, 38, 19)],
+	[0.33, 0.43, Color8(102, 77, 48)], [0.43, 0.55, Color8(82, 55, 29)], [0.55, 0.68, Color8(49, 33, 21)],
+	[0.68, 0.95, Color8(73, 51, 37)], [0.95, 1.0, Color8(52, 33, 22)]]
+## The painted rim is this wide at the card's size (PAINTED 128 px at 720: 0.19 of its 64 px radius); smaller icons
+## (HUD, Elo sources) take RING_SHARE of their size.
+const RING_PX := 12.2
+const RING_SHARE := 0.12
+## The shadow the rim throws inside: this wide (share of the rim) and this dark.
+const RING_SHADOW := 0.35
+const RING_SHADOW_ALPHA := 0.45
+
+
+static func ring_width(s: float) -> float:
+	return minf(RING_PX, s * RING_SHARE)
+
+
+## Draws the rim with its outer edge at radius outer, w wide.
+static func ring(ci: CanvasItem, c: Vector2, outer: float, w: float) -> void:
+	var inner := outer - w
+	ci.draw_arc(c, inner - w * RING_SHADOW * 0.5, 0.0, TAU, 64, Color(0, 0, 0, RING_SHADOW_ALPHA), w * RING_SHADOW, true)
+	for band: Array in RING_BANDS:
+		var a: float = band[0]
+		var b: float = band[1]
+		ci.draw_arc(c, outer - w * (a + b) * 0.5, 0.0, TAU, 64, band[2], maxf(1.0, w * (b - a)) + 0.5, true)
+
+
 func _draw() -> void:
 	if boon == null and icon < 0:
 		return
@@ -41,7 +72,7 @@ func _draw() -> void:
 	var c := Vector2(size.x * 0.5, s * 0.5)
 	var r := s * 0.46
 	var col := boon.color() if boon != null else tint
-	draw_circle(c, r + s * 0.035, Color(0.85, 0.68, 0.36))
+	var w := ring_width(s)
 	draw_circle(c, r, col.darkened(0.72))
 	draw_circle(c + Vector2(-r * 0.15, -r * 0.18), r * 0.8, col.darkened(0.45))
 	draw_circle(c + Vector2(-r * 0.25, -r * 0.3), r * 0.45, col.darkened(0.15))
@@ -54,7 +85,7 @@ func _draw() -> void:
 			pts.append(c + Vector2(cos(a), sin(a)) * (r + 1.0))
 		if pts.size() >= 3:
 			draw_colored_polygon(pts, Color(0, 0, 0, 0.6))
-	draw_arc(c, r, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8), maxf(1.5, s * 0.02), true)
+	ring(self, c, r + s * 0.035, w)
 	if boon == null:
 		return
 	if boon.is_duo():

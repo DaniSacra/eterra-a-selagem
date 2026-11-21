@@ -233,8 +233,7 @@ static func make(look: StringName) -> ArenaRoom:
 
 
 func build(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> void:
-	for step in build_steps(a, l, exit_count, seed_):
-		step.call()
+	BuildSteps.run(build_steps(a, l, exit_count, seed_))
 
 
 ## The build in steps, in order (QA P1-1: Rooms spreads them over the black frames of a new room, one or a few a
@@ -255,36 +254,57 @@ func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[
 		_see = stone().duplicate() as ShaderMaterial
 		_see.set_shader_parameter(&"see_through", 1.0)
 		_floor()))
-	steps.append(_timed.bind(&"edges", _edges))
+	steps.append(_timed.bind(&"edges", func() -> Array[Callable]: return _edges_steps()))
 	steps.append(_timed.bind(&"abyss", _abyss))
-	steps.append(_timed.bind(&"pieces", func() -> void:
-		for o in layout.obstacles:
-			var from := m.built_count()
-			piece(o)
-			if o.hits_to_fall > 0:
-				toppling[o] = m.take_since(from)  # (RP-09: it may topple, so it stays out of the merge)
-				# SW-G7 3.6: the crack up its side leans with it
-				var hp := HazardPiece.column(self, o)
-				_hazard[&"column"][o] = hp
-				for mi in hp.get_children():
-					toppling[o].append(mi)
-		_doors()
-		_light()))
-	steps.append(_timed.bind(&"dress", dress))
+	steps.append(_timed.bind(&"pieces", func() -> Array[Callable]:
+		var more: Array[Callable] = []
+		for from in range(0, layout.obstacles.size(), PIECES_A_STEP):
+			more.append(func() -> void:
+				for o in layout.obstacles.slice(from, from + PIECES_A_STEP):
+					_piece_of(o))
+		more.append(_doors)
+		more.append(_light)
+		return more))
+	steps.append(_timed.bind(&"dress", func() -> Array[Callable]: return dress_steps()))
 	steps.append(_timed.bind(&"hazards", _hazard_pieces))
-	steps.append(_timed.bind(&"merge", func() -> void: m.merge()))
+	steps.append(_timed.bind(&"merge", func() -> Array[Callable]: return m.merge_steps()))
 	steps.append(_timed.bind(&"air", func() -> void:
 		_dress_air()))
-	steps.append(_timed.bind(&"stylize", func() -> void:
-		_stylize()
-		shadowed = _count_shadows()))
+	var k := 0
+	for step in _stylize_steps():
+		steps.append(_timed.bind(StringName("stylize%d" % k), step))
+		k += 1
+	steps.append(_timed.bind(&"shadows", func() -> void: shadowed = _count_shadows()))
 	return steps
 
 
-func _timed(what: StringName, step: Callable) -> void:
+## The layout's pieces drawn in one step of the build (build_steps).
+const PIECES_A_STEP := 4
+
+
+func _piece_of(o: ArenaObstacle) -> void:
+	var from := m.built_count()
+	piece(o)
+	if o.hits_to_fall > 0:
+		toppling[o] = m.take_since(from)  # (RP-09: it may topple, so it stays out of the merge)
+		# SW-G7 3.6: the crack up its side leans with it
+		var hp := HazardPiece.column(self, o)
+		_hazard[&"column"][o] = hp
+		for mi in hp.get_children():
+			toppling[o].append(mi)
+
+
+func _timed(what: StringName, step: Callable) -> Variant:
 	var t := Time.get_ticks_usec()
-	step.call()
+	var more: Variant = step.call()
 	build_ms[what] = (Time.get_ticks_usec() - t) / 1000.0
+	return more
+
+
+## dress() in steps, in order (BuildSteps; QA P1-1: a frame each on a new room's black screen). A look whose dress is
+## long gives its parts here; dress() is then their run at once.
+func dress_steps() -> Array[Callable]:
+	return [dress]
 
 
 ## Each arena's own pieces and light (the environment artist's: CryptLook, RiftLook, GardenLook). Nothing here may
@@ -373,28 +393,48 @@ var _style := {}
 ## The stylized look of the room (style()): its own pieces (dressed in dress() on kit.styled()), the backdrop, the
 ## painted stone, floor and kit, the fires, the metals; all through VisualProfile, so the classic look is as built.
 func _stylize() -> void:
-	var under := under_look()
-	if not under.is_empty():
-		_under_arcades(under)
-	_style = style()
-	if _style.is_empty():
-		return
-	if _style.has(&"backdrop"):
-		var b: Dictionary = _style[&"backdrop"]
-		var before := kit.root.get_child_count()
-		backdrop(b[&"mist"], b[&"stone"], b[&"edge"])
-		for i in range(before, kit.root.get_child_count()):
-			var n := kit.root.get_child(i) as Node3D
-			if n != null:
-				ArenaKit.style_only(n)
-	_break_rails()
-	_sworn_p2()
-	if _classic_m != null:
-		_classic_m.merge()
-	kit.stylize(_style, self, tomb)
-	_style_ruins()
-	if _style.has(&"air"):
-		_dress_air()
+	BuildSteps.run(_stylize_steps())
+
+
+## _stylize in steps, in order (the spread build gives each its own frame: QA P1-1).
+func _stylize_steps() -> Array[Callable]:
+	return [
+		func() -> void:
+			var under := under_look()
+			if not under.is_empty():
+				_under_arcades(under)
+			_style = style(),
+		func() -> void:
+			if _style.is_empty():
+				return
+			if _style.has(&"backdrop"):
+				var b: Dictionary = _style[&"backdrop"]
+				var before := kit.root.get_child_count()
+				backdrop(b[&"mist"], b[&"stone"], b[&"edge"])
+				for i in range(before, kit.root.get_child_count()):
+					var n := kit.root.get_child(i) as Node3D
+					if n != null:
+						ArenaKit.style_only(n)
+			_break_rails(),
+		func() -> Array[Callable]:
+			if _style.is_empty():
+				return []
+			return _sworn_p2_steps(),
+		func() -> Array[Callable]:
+			var more: Array[Callable] = []
+			if _style.is_empty():
+				return more
+			if _classic_m != null:
+				more.append_array(_classic_m.merge_steps())
+			more.append_array(kit.stylize_steps(_style, self, tomb))
+			return more,
+		func() -> void:
+			if _style.is_empty():
+				return
+			_style_ruins()
+			if _style.has(&"air"):
+				_dress_air(),
+	]
 
 
 ## ENV-HB4: the far ruins' cards (abyss_ruins.gdshader) in the stylized look without the tall pale bands between their
@@ -742,36 +782,50 @@ func _floor() -> void:
 
 ## Every edge of the floor, by its kind (edge).
 func _edges() -> void:
-	var f := arena.shape()
-	var e := f.edges()
-	var faces := SurfaceTool.new()
-	faces.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in range(0, e.size(), 2):
-		var a := e[i]
-		var b := e[i + 1]
-		var out := -f.edge_inward(i / 2)
-		var probe := (a + b) * 0.5 + out * 0.3
-		var kind := Edge.OUTER
-		for h in layout.floor.holes:
-			if Geometry2D.is_point_in_polygon(probe, h):
-				kind = Edge.HOLE
-		for k in exits_used:
-			if layout.exits[k].mouth.grow(0.05).has_point((a + b) * 0.5):
-				kind = Edge.MOUTH
-		edge(a, b, out, kind, faces)
-		_runs.append([a, b, out, kind])
-	faces.generate_normals()
-	var mi := MeshInstance3D.new()
-	mi.mesh = faces.commit()
-	var deep := m.depth_stone(mist())
-	var look := cliff_look()
-	if not look.is_empty():
-		deep = deep.duplicate() as ShaderMaterial
-		for k in look:
-			deep.set_shader_parameter(k, look[k])
-	mi.material_override = deep
-	mi.layers = 1 | ArenaKit.DEPTH_LAYER
-	add_child(mi)
+	BuildSteps.run(_edges_steps())
+
+
+## The edges a few at a time (BuildSteps; QA P1-1), then their cliffs' one mesh.
+const EDGES_A_STEP := 2
+
+
+func _edges_steps() -> Array[Callable]:
+	return [func() -> Array[Callable]:
+		var f := arena.shape()
+		var e := f.edges()
+		var faces := SurfaceTool.new()
+		faces.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var steps: Array[Callable] = []
+		for from in range(0, e.size(), 2 * EDGES_A_STEP):
+			steps.append(func() -> void:
+				for i in range(from, mini(from + 2 * EDGES_A_STEP, e.size()), 2):
+					var a := e[i]
+					var b := e[i + 1]
+					var out := -f.edge_inward(i / 2)
+					var probe := (a + b) * 0.5 + out * 0.3
+					var kind := Edge.OUTER
+					for h in layout.floor.holes:
+						if Geometry2D.is_point_in_polygon(probe, h):
+							kind = Edge.HOLE
+					for k in exits_used:
+						if layout.exits[k].mouth.grow(0.05).has_point((a + b) * 0.5):
+							kind = Edge.MOUTH
+					edge(a, b, out, kind, faces)
+					_runs.append([a, b, out, kind]))
+		steps.append(func() -> void:
+			faces.generate_normals()
+			var mi := MeshInstance3D.new()
+			mi.mesh = faces.commit()
+			var deep := m.depth_stone(mist())
+			var look := cliff_look()
+			if not look.is_empty():
+				deep = deep.duplicate() as ShaderMaterial
+				for k in look:
+					deep.set_shader_parameter(k, look[k])
+			mi.material_override = deep
+			mi.layers = 1 | ArenaKit.DEPTH_LAYER
+			add_child(mi))
+		return steps]
 
 
 ## One edge of the floor from a to b, the abyss (or the outside) toward `out`. By default the broken edge over the
@@ -2224,13 +2278,18 @@ func _exit_tree() -> void:
 ## Called by _stylize before the stylized pieces are joined and painted: the offerings at the walls' feet (SW-G4, a
 ## look turns them on with sworn_offerings()), the gates of the doors (SW-G5, every room with a style) and the low dark
 ## foreground rising out of the abyss beyond the edges the camera looks across (SW-G6, foreground_look()).
-func _sworn_p2() -> void:
+## SW-P2 in steps (BuildSteps; QA P1-1): the offerings a wall at a time, the gates, the foreground.
+func _sworn_p2_steps() -> Array[Callable]:
+	var steps: Array[Callable] = []
 	if sworn_offerings():
-		_wall_offerings()
-	_gates()
-	var fg := foreground_look()
-	if not fg.is_empty():
-		_foreground(fg)
+		for w: Array in _wall_runs:
+			steps.append(_wall_offerings_at.bind(w))
+	steps.append(_gates)
+	steps.append(func() -> void:
+		var fg := foreground_look()
+		if not fg.is_empty():
+			_foreground(fg))
+	return steps
 
 
 ## Pieces only the classic look shows (a stretch the stylized look draws otherwise): a Masonry under a node hidden in
@@ -2369,28 +2428,27 @@ const OFFER_SILL := 0.06
 const OFFER_CLEAR := 3.5
 
 
-func _wall_offerings() -> void:
-	for w: Array in _wall_runs:
-		var a: Vector2 = w[0]
-		var b: Vector2 = w[1]
-		var out: Vector2 = w[2]
-		var openings: Array = w[4]
-		if not _tall(out):
-			continue
-		var length := a.distance_to(b)
-		var along := (b - a) / maxf(length, 0.001)
-		var s := OFFER_FIRST
-		var g := 0
-		while s < length - 1.0:
-			var p := a + along * s + out * FACE_SET * 0.5
-			var free := not _near_door(p, out, 1.6) and p.distance_to(layout.hero_spawn) > OFFER_CLEAR and offer_free(p)
-			for o: Vector4 in openings:
-				if o.z <= 0.01 and s > o.x - 0.8 and s < o.y + 0.8:
-					free = false
-			if free:
-				offerings(p, along, OFFER_SILL, 3 + (g % 3), hash(Vector2i(p * 10.0)))
-				g += 1
-			s += OFFER_EVERY
+func _wall_offerings_at(w: Array) -> void:
+	var a: Vector2 = w[0]
+	var b: Vector2 = w[1]
+	var out: Vector2 = w[2]
+	var openings: Array = w[4]
+	if not _tall(out):
+		return
+	var length := a.distance_to(b)
+	var along := (b - a) / maxf(length, 0.001)
+	var s := OFFER_FIRST
+	var g := 0
+	while s < length - 1.0:
+		var p := a + along * s + out * FACE_SET * 0.5
+		var free := not _near_door(p, out, 1.6) and p.distance_to(layout.hero_spawn) > OFFER_CLEAR and offer_free(p)
+		for o: Vector4 in openings:
+			if o.z <= 0.01 and s > o.x - 0.8 and s < o.y + 0.8:
+				free = false
+		if free:
+			offerings(p, along, OFFER_SILL, 3 + (g % 3), hash(Vector2i(p * 10.0)))
+			g += 1
+		s += OFFER_EVERY
 
 
 ## SW-G5: an iron gate in the mouth of every door used, shut through the fight, that opens when the doors do (breath()
@@ -2409,45 +2467,52 @@ const GATE_IRON := Color(0.13, 0.125, 0.13)
 var _gates_of := {}
 
 
-func _gates() -> void:
+## The gates (SW-G5), a door each (BuildSteps; QA P1-1).
+func _gates() -> Array[Callable]:
 	var iron := StandardMaterial3D.new()
 	iron.albedo_color = GATE_IRON
 	iron.roughness = 0.55
 	iron.metallic = 0.6
+	var steps: Array[Callable] = []
 	for i in exits_used:
-		var e := layout.exits[i]
-		var u := e.inward
-		var side := Vector2(-u.y, u.x)
-		var depth := absf(e.mouth.size.dot(u))
-		var width := absf(e.mouth.size.dot(side))
-		var end := e.mouth.get_center() - u * depth * 0.5
-		# just past the mouth's far end (where its stairs start): the mouth is the way out, the gate stands across it
-		var at := end - u * GATE_PAST
-		var low := faces_camera(-u)
-		var node := Node3D.new()
-		node.name = "Gate%d" % i
-		kit.styled().root.add_child(node)
-		var leaves: Array[Node3D] = []
-		if low:
-			var grille := Node3D.new()
-			node.add_child(grille)
-			grille.position = Vector3(at.x, 0.0, at.y)
-			grille.rotation.y = atan2(side.x, side.y) - PI * 0.5
-			_gate_leaf(grille, width, GATE_LOW, -width * 0.5, iron)
-			leaves.append(grille)
-		else:
-			for sd: float in [-1.0, 1.0]:
-				var hinge := at + side * sd * width * 0.5
-				var leaf := Node3D.new()
-				node.add_child(leaf)
-				leaf.position = Vector3(hinge.x, 0.0, hinge.y)
-				# the leaf runs from its hinge toward the mouth's middle (local +x)
-				var toward := -side * sd
-				leaf.rotation.y = atan2(-toward.y, toward.x)
-				leaf.set_meta(&"swing", sd)
-				_gate_leaf(leaf, width * 0.5, GATE.x, 0.0, iron)
-				leaves.append(leaf)
-		_gates_of[i] = [leaves, low, u]
+		steps.append(_gate.bind(i, iron))
+	return steps
+
+
+func _gate(i: int, iron: Material) -> void:
+	var e := layout.exits[i]
+	var u := e.inward
+	var side := Vector2(-u.y, u.x)
+	var depth := absf(e.mouth.size.dot(u))
+	var width := absf(e.mouth.size.dot(side))
+	var end := e.mouth.get_center() - u * depth * 0.5
+	# just past the mouth's far end (where its stairs start): the mouth is the way out, the gate stands across it
+	var at := end - u * GATE_PAST
+	var low := faces_camera(-u)
+	var node := Node3D.new()
+	node.name = "Gate%d" % i
+	kit.styled().root.add_child(node)
+	var leaves: Array[Node3D] = []
+	if low:
+		var grille := Node3D.new()
+		node.add_child(grille)
+		grille.position = Vector3(at.x, 0.0, at.y)
+		grille.rotation.y = atan2(side.x, side.y) - PI * 0.5
+		_gate_leaf(grille, width, GATE_LOW, -width * 0.5, iron)
+		leaves.append(grille)
+	else:
+		for sd: float in [-1.0, 1.0]:
+			var hinge := at + side * sd * width * 0.5
+			var leaf := Node3D.new()
+			node.add_child(leaf)
+			leaf.position = Vector3(hinge.x, 0.0, hinge.y)
+			# the leaf runs from its hinge toward the mouth's middle (local +x)
+			var toward := -side * sd
+			leaf.rotation.y = atan2(-toward.y, toward.x)
+			leaf.set_meta(&"swing", sd)
+			_gate_leaf(leaf, width * 0.5, GATE.x, 0.0, iron)
+			leaves.append(leaf)
+	_gates_of[i] = [leaves, low, u]
 
 
 ## One leaf of a gate under `holder` (its hinge at the holder's origin, running `width` along its local +x from `from`,

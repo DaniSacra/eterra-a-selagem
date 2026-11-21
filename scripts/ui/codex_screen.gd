@@ -27,6 +27,8 @@ const SPINE := 0.3
 const OUTER := Vector2(22, 10)
 ## The index entries' width and their marks.
 const TAB_WIDTH := 270.0
+## Nine chapters (Fatia 3, Anjos): entries this tall, so the enemy's figure under the index fits a 720 screen.
+const TAB_HEIGHT := 34.0
 const MARK := 24.0
 ## The enemies of the region in the order a descent meets them, the guardians last (Morvath has his own tab).
 const ENEMIES: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder"]
@@ -126,9 +128,14 @@ func open(start: Tab = Tab.GIFTS, data: Dictionary = {}) -> void:
 		mark.kind = t
 		mark.custom_minimum_size = Vector2(MARK, MARK)
 		var p := progress(t)
-		var b := Book.index_entry(T.t(TAB_KEY[t]), mark, T.t(&"codex_count", {"n": p.x, "total": p.y}), TAB_WIDTH)
+		var b := Book.index_entry(T.t(TAB_KEY[t]), mark, T.t(&"codex_count", {"n": p.x, "total": p.y}), TAB_WIDTH, TAB_HEIGHT)
 		b.name = TAB_NAME[t]
 		b.text = T.t(TAB_KEY[t])
+		for st: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"focus"]:
+			var box := b.get_theme_stylebox(st).duplicate() as StyleBox
+			box.content_margin_top = 1
+			box.content_margin_bottom = 1
+			b.add_theme_stylebox_override(st, box)
 		b.focus_entered.connect(_show.bind(t))
 		b.pressed.connect(_show.bind(t))
 		tabs.append(b)
@@ -376,7 +383,7 @@ func _select(id: StringName) -> void:
 			return
 		var open := t.unlock_level <= level
 		figure.visible = false
-		_detail_mark = TalentGlyph.mark(t, DETAIL_MARK, open)
+		_detail_mark = _motif(t, open)
 		figure.get_parent().add_child(_detail_mark)
 		_detail_name.text = T.t(t.name_key) if open else UNKNOWN
 		_detail_line.text = T.t(t.desc_key) if open else T.t(&"codex_locked", {"n": t.unlock_level})
@@ -703,6 +710,20 @@ func _angels() -> void:
 			words.add_child(nums)
 		row.add_child(words)
 		_list.add_child(row)
+
+
+## AP-4: the Gift's painted motif on the page (TalentMotif), its glyph's mark when it has none.
+func _motif(t: TalentDef, open: bool) -> Control:
+	if not TalentMotif.has(t.id):
+		return TalentGlyph.mark(t, DETAIL_MARK, open)
+	var m := Control.new()
+	m.name = &"TalentMark"
+	m.custom_minimum_size = Vector2(DETAIL_MARK, DETAIL_MARK)
+	m.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	m.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var state := HeroLoadout.State.OPEN if open else HeroLoadout.State.LOCKED
+	m.draw.connect(func() -> void: TalentMotif.draw(m, t.id, m.size * 0.5, DETAIL_MARK * 0.46, state))
+	return m
 
 
 ## The rooms of the region in the Compendium: the stage's arenas and the Seal Chamber (ids).

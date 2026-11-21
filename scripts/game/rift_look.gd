@@ -488,19 +488,30 @@ func _haze(area: Rect2, north: float) -> void:
 
 
 func dress() -> void:
-	for i in BRIDGES.size():
-		if layout.floor.covers(BRIDGES[i].get_center()):
-			bridge(BRIDGES[i], i == 0, i != 0)
-		else:
-			_fallen_bridge(BRIDGES[i])
-	_hole_blocks()
-	_old_arches()
-	_facade()
-	_entry()
-	_far()
-	_inscriptions()
-	_commit_glow()
-	_dress_styled()
+	BuildSteps.run(dress_steps())
+
+
+## dress in steps (ArenaRoom.dress_steps; QA P1-1).
+func dress_steps() -> Array[Callable]:
+	return [
+		func() -> void:
+			for i in BRIDGES.size():
+				if layout.floor.covers(BRIDGES[i].get_center()):
+					bridge(BRIDGES[i], i == 0, i != 0)
+				else:
+					_fallen_bridge(BRIDGES[i]),
+		func() -> void:
+			_hole_blocks()
+			_old_arches(),
+		_facade,
+		func() -> void:
+			_entry()
+			_far(),
+		func() -> void:
+			_inscriptions()
+			_commit_glow(),
+		func() -> Array[Callable]: return _dress_styled_steps(),
+	]
 
 
 # ---------- the bridges ----------
@@ -687,25 +698,41 @@ func style() -> Dictionary:
 ## floor: fire bowls on the bridges' north heads, shards hanging in the rift, the broken arch and chains at its north
 ## mouth; in B the fallen bridge's great broken arch with a piece of deck on chains, and the far vortex.
 func _dress_styled() -> void:
-	var sm := kit.styled()
-	for r in BRIDGES:
-		if layout.floor.covers(r.get_center()):
-			for lip: float in [r.position.x, r.end.x]:
-				var into := 1.0 if lip < (RIFT_X.x + RIFT_X.y) * 0.5 else -1.0
-				var at := _into_rift(Vector2(lip + into * HEAD_BOWL.y, r.position.y - HEAD_BOWL.x), into)
-				if at != Vector2.INF:
-					_head_bowl(sm, at)
-	_hung_shards(sm)
-	_mouth_arch(sm)
-	_aqueduct(sm)
-	_fallen_column(sm)
-	# P2-B1 (ART_REVIEW.md 4.5): the fight fields lit a step more than the floor nearest the camera
-	for f: Vector3 in STY_KEY_POOLS:
-		key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
-	_edge_pieces()
-	if _fallen:
-		_fallen_arch(sm)
-		_vortex()
+	BuildSteps.run(_dress_styled_steps())
+
+
+## _dress_styled in steps (BuildSteps; QA P1-1: a frame each on a new room's black screen).
+func _dress_styled_steps() -> Array[Callable]:
+	var v := {}
+	return [
+		func() -> void:
+			var sm := kit.styled()
+			v[&"sm"] = sm
+			for r in BRIDGES:
+				if layout.floor.covers(r.get_center()):
+					for lip: float in [r.position.x, r.end.x]:
+						var into := 1.0 if lip < (RIFT_X.x + RIFT_X.y) * 0.5 else -1.0
+						var at := _into_rift(Vector2(lip + into * HEAD_BOWL.y, r.position.y - HEAD_BOWL.x), into)
+						if at != Vector2.INF:
+							_head_bowl(sm, at),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			_hung_shards(sm)
+			_mouth_arch(sm),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			_aqueduct(sm)
+			_fallen_column(sm),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			# P2-B1 (ART_REVIEW.md 4.5): the fight fields lit a step more than the floor nearest the camera
+			for f: Vector3 in STY_KEY_POOLS:
+				key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
+			_edge_pieces()
+			if _fallen:
+				_fallen_arch(sm)
+				_vortex(),
+	]
 
 
 ## Sworn P2 SW-G6: the low dark foreground rising out of the haze past the edges the camera looks across.

@@ -649,15 +649,24 @@ static func style_only(node: Node3D) -> void:
 ## The whole stylized look of a room (spec 1.1): the stylized pieces joined, the stone, floor and kit painted with the
 ## preset, the fires (their lights under `lights`), the metals.
 func stylize(style: Dictionary, lights: Node, tomb: TombKit = null) -> void:
+	BuildSteps.run(stylize_steps(style, lights, tomb))
+
+
+## stylize in steps (BuildSteps; QA P1-1, a frame each on a new room's black screen): the stylized-only stone's merge
+## in slices, the painted look, then the fires and metals.
+func stylize_steps(style: Dictionary, lights: Node, tomb: TombKit = null) -> Array[Callable]:
+	var steps: Array[Callable] = []
 	if _styled != null:
-		_styled.merge()
-	paint_look(style)
-	stylize_fires(lights, style.get(&"fire", {}), style.get(&"off", []))
-	if style.has(&"abyss_glow"):
-		for m: ShaderMaterial in _glow_mats.values():
-			VisualProfile.vary(m, {&"shader_parameter/color": style[&"abyss_glow"]})
-	if style.get(&"metal", false):
-		stylize_metal(tomb)
+		steps.append_array(_styled.merge_steps())
+	steps.append(func() -> void: paint_look(style))
+	steps.append(func() -> void:
+		stylize_fires(lights, style.get(&"fire", {}), style.get(&"off", []))
+		if style.has(&"abyss_glow"):
+			for m: ShaderMaterial in _glow_mats.values():
+				VisualProfile.vary(m, {&"shader_parameter/color": style[&"abyss_glow"]})
+		if style.get(&"metal", false):
+			stylize_metal(tomb))
+	return steps
 
 
 ## The lion's patch on a banner: a square grid of quads just in front of the folds (so it bends with them), UV 0..1

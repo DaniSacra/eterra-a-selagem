@@ -353,6 +353,13 @@ a GPU ficou ocupada pelas outras frentes. Os quadros sem sufixo são da RTX a 19
 - Elite surgindo na sala (`surge_guardian_room_sty_cpu.jpg`): o Cavaleiro se ergue no Santuário com o anel de fumaça
   fechando e a borda de ouro.
 
+- Depois (2026-11-21, RTX 1672 x 941, semente 5): clássico e Compatibility das erupções da fase 3 e da foice
+  (`classic_eruption_scythe_gpu.jpg`, `compat_eruption_scythe_gpu.jpg`): iguais ao estilizado, sem erro no log.
+- ART-05.8 (`art05_8_ritual_stylized_1672.jpg`, `art05_8_ritual_zoom.jpg`, ritual com o herói a 1,5 m do domo): na
+  tela a borda do domo mede matiz 178 a 219 (p50 200) e luma p50 110 com o violeta atrás; o anel do herói é um fio fino
+  e mais escuro preso aos pés. Separam pela forma e pelo valor; onde o anel cruza o círculo de runas do ritual ele some
+  um pouco. Sem mudança; se o art-director pedir, o anel ganha valor (nunca o domo saturação).
+
 ## P1-1, aquecimento dos shaders (technical-artist, 2026-11-21)
 - Evidência: `tools/frame_spikes.gd` na iGPU, 1280 x 720 Baixa, robô, semente 5, `--smoke=420 --fast=2`.
 - Antes (QA A8): entrada de sala até 17,6 s com o cache vazio e 0,5 a 1,9 s com ele quente; golpes de 0,5 a 3,3 s.
@@ -363,6 +370,38 @@ a GPU ficou ocupada pelas outras frentes. Os quadros sem sufixo são da RTX a 19
 - P1 que fica: no exe com o cache vazio o aquecimento leva 2 min 13 s na iGPU (só na primeira vez; o Shader Baker não
   muda isso, a compilação é do driver).
 - Conjunto: `assets/warmup/warmup_set.res`, 31 KB.
+- P1-2 (Compatibility), medido na iGPU pelo D3D12 do WSL, opengl3, 1280 x 720 Baixa: o aquecimento levava 56 a 62 s a
+  cada abertura (o Godot não guarda shader de material no Compatibility, só os do motor), o Salão ainda parava 16,8 s no
+  1º quadro, as Fendas 7 a 15 s e o Jardim 15 a 26 s, com 0,2 a 2,2 s nos primeiros golpes. Ou seja, as variantes do
+  Compatibility saem das luzes e da instância de cada objeto e o quadrado do aquecimento não as cobre: o aquecimento fica
+  desligado lá (`--warmup` força). Aberto: aquecer com as próprias salas (montar cada uma fora da tela) ou aceitar no
+  navegador; medir no OpenGL nativo do Windows antes de decidir (o caminho do WSL é bem mais lento).
+- **Pendência aceita (Game Director, 2026-11-21)**: o Compatibility (navegador e celular) é secundário; o aquecimento fica
+  desligado lá e o custo da primeira entrada de cada sala fica aceito por agora. Reabrir quando o celular ou o navegador
+  virarem alvo: medir no OpenGL nativo e aquecer com as próprias salas.
+
+## AP-4, esboço, motivos dos Dons e aro dos medalhões (technical-artist, 2026-11-21; spec `docs/art/ap4_spec.md` 2.1 a 2.3)
+- Evidência: `docs/gallery/ap4/sketch_enemies_after_720.png` e `_1080` (GPU, `tools/sketch_lab.gd`; o antes é a prancha de
+  lavapipe `sketch_enemies_before_lavapipe.jpg`), `talent_motifs_720/1080.png` e `talent_motifs_big_1080.png`
+  (`tools/motif_sheet.gd`), `boon_ring_after_720/1080.png` (`ui_lab -- --card-only --offer=vapor,lamina_ardente,chama_viva`).
+- 2.1, medido na prancha da GPU (pixels da figura = mais de 14 de diferença do papel): ouro (matiz 32 a 48, saturação 0,3
+  ou mais) nos comuns 0 a 0,6%, nas elites 11 a 27% a 720 e 8,5 a 20% a 1080 (esqueleto 27 / 20, Escudo 21 / 18, mago
+  11 / 8,5); nenhum pixel de tinta a menos de 4% da borda da vista a 720 em nenhuma das 12 figuras; traços do chão 4 de
+  1 px a 1080, alfa 0,5, 0,7 dos pés; sombra redonda fora. Cabeça: mínimo 94 a 103 (papel 192: até 60 abaixo, passa), mas
+  p50 da cabeça contra o do tronco difere 3 a 24 (esqueleto 134 contra 117, arqueiro 140 contra 119, Cavaleiro 116 contra
+  140). Fechado (decisão do coordenador): hachura leve no osso claro na sombra; esqueleto 134 para 124 contra o tronco
+  120. Os outros desvios são da caixa da medida (capuz, cajado e besta dentro dela), não da caveira. Arma: a vista gira
+  para o lado em que ela fica mais comprida na tela (`FigureSketch.yaw(modelo)`); esqueleto e Cavaleiro a -30 graus,
+  a lâmina deixa de apontar para a câmera. Custo no iGPU e o Compatibility não medidos.
+- 2.2, sem tela (`tools/motif_sheet.gd`): maior par de silhuetas 0,64 (meta abaixo de 0,8; Lâmina Faminta e Reserva eram
+  0,79, a gema da Faminta ficou mais estreita); cor de cada motivo no matiz do ramo (0 grau de diferença, as pontes e o
+  sustento têm cores de mais de uma coisa por desenho), saturação p50 0,58, canal até 0,9; contorno sobre o nó 4,2:1;
+  trancado 48 de luma abaixo do fundo. Ligar no `TalentNode` e no Compêndio (e as capturas de `--screen=gifts`) é do
+  ui-ux-designer; custo de CPU não medido (os polígonos ficam em cache por id; a luz e a sombra se recortam a cada
+  desenho, então o nó só deve redesenhar quando o estado muda).
+- 2.3: aro desenhado a 1080 com 18 px e luma média 52; o do `vapor.png` (Elo, com a corrente por cima) 17 px e 61:
+  largura a 1 px e cor a 9 de luma, dentro do aceite por pouco. Os PNG de grade (384 px) têm aro mais fino e claro que os
+  de 512 px: dois aros pintados no jogo, para a prancha nova (Q-24).
 
 ## Melhorias propostas (maior ganho por esforço primeiro)
 

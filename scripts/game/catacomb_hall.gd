@@ -547,48 +547,64 @@ func _init(a: Arena, seed_: int) -> void:
 
 ## Builds the hall with this many ways on (0 to 3) and tells the arena where its doors, floor and way in are.
 func build(exit_count: int) -> void:
-	var a := arena
-	a.half = HALF
-	a.pillars = []
-	a.shafts = []
-	# the landing's floor reaches well into the room, so their walkable parts overlap (a body is kept 1.2 m plus its
-	# radius from each rectangle's edge)
-	a.walk = [Rect2(LANDING.x, HALF.y - 6.0, LANDING.y - LANDING.x, LANDING_END - HALF.y + 6.0)]
-	a.start = Vector2((WAY_IN.x + WAY_IN.y) * 0.5, LANDING_END - 2.4)
-	a.start_facing = Vector2(1, -1).normalized()
-	a.door_pos = Vector2((FLIGHT.x + FLIGHT.y) * 0.5, -HALF.y - 1.5)
-	a.showcase = SHOWCASE
-	_floor()
-	_dais()
-	_north_west()
-	_west()
-	_landing()
-	_south(exit_count >= 3)
-	_east(exit_count >= 2)
-	_depths()
-	_doors(exit_count)
-	m.merge()
-	if _classic != null:
-		_classic.merge()
-	a.pillars.append_array(kit.circles)
-	a.boxes.append_array(kit.boxes)
-	_stylize()
+	BuildSteps.run(build_steps(exit_count))
+
+
+## The build in steps, in order (QA P1-1: Arena.build_async gives each its own black frame).
+func build_steps(exit_count: int) -> Array[Callable]:
+	return [
+		func() -> void:
+			var a := arena
+			a.half = HALF
+			a.pillars = []
+			a.shafts = []
+			# the landing's floor reaches well into the room, so their walkable parts overlap (a body is kept 1.2 m
+			# plus its radius from each rectangle's edge)
+			a.walk = [Rect2(LANDING.x, HALF.y - 6.0, LANDING.y - LANDING.x, LANDING_END - HALF.y + 6.0)]
+			a.start = Vector2((WAY_IN.x + WAY_IN.y) * 0.5, LANDING_END - 2.4)
+			a.start_facing = Vector2(1, -1).normalized()
+			a.door_pos = Vector2((FLIGHT.x + FLIGHT.y) * 0.5, -HALF.y - 1.5)
+			a.showcase = SHOWCASE
+			_floor(),
+		_dais,
+		_facade,
+		_dais_props,
+		_north_west,
+		_north_west_props,
+		_west,
+		_landing,
+		func() -> void: _south(exit_count >= 3),
+		func() -> void: _east(exit_count >= 2),
+		_depths,
+		func() -> void: _doors(exit_count),
+		func() -> Array[Callable]:
+			var more := m.merge_steps()
+			if _classic != null:
+				more.append_array(_classic.merge_steps())
+			more.append(func() -> void:
+				arena.pillars.append_array(kit.circles)
+				arena.boxes.append_array(kit.boxes))
+			return more,
+		_urns,
+		_frame,
+		_stylize_rest,
+	]
 
 
 ## The stylized look's numbers (VisualProfile): the painted stone, floor and kit (ArenaKit.stylize with STYLE), the
-## fires' pools, the key off, the stylized-only urns. Nothing here moves a piece or touches what blocks.
-func _stylize() -> void:
-	_urns()
-	_frame()
+## fires' pools, the key off (the stylized-only urns and frame are the step before). Nothing here moves a piece or touches what blocks.
+func _stylize_rest() -> Array[Callable]:
 	var style := STYLE.duplicate()
 	style[&"off"] = [_key]
 	var ground := ArenaKit.CALM_FLOOR.merged(ArenaKit.SOFT_PATCHES).merged(STY_FLOOR_BIOME).merged(STY_CALM)
 	if ArenaRoom.compat():
 		ground.merge(STY_COMPAT_FLOOR, true)
 	style[&"floor"] = ArenaKit.framed(ground, _frames())
-	kit.stylize(style, arena)
-	if _spill != null:
-		VisualProfile.vary(_spill, {&"spot_angle": STY_SPILL.x, &"spot_range": STY_SPILL.y})
+	var more := kit.stylize_steps(style, arena)
+	more.append(func() -> void:
+		if _spill != null:
+			VisualProfile.vary(_spill, {&"spot_angle": STY_SPILL.x, &"spot_range": STY_SPILL.y}))
+	return more
 
 
 ## ENV-HB3: the stone under the floor a deep petrol (its own painted numbers, ArenaKit.PAINT_OWN) and the broken
@@ -921,7 +937,11 @@ func _dais() -> void:
 	var cheek_z := -HALF.y - STEP_RUN * DAIS_STEPS * 0.5
 	m.block(Vector3((FACADE_X.x + FLIGHT.x) * 0.5, -0.4, cheek_z), Vector3(FLIGHT.x - FACADE_X.x, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
 	m.block(Vector3((FLIGHT.y + FACADE_X.y) * 0.5, -0.4, cheek_z), Vector3(FACADE_X.y - FLIGHT.y, DAIS_Y + 0.4, STEP_RUN * DAIS_STEPS))
-	_facade()
+
+
+## The dais' statues, candles and props (a step of their own after _facade: build_steps, QA P1-1).
+func _dais_props() -> void:
+	var steps_z := -HALF.y - STEP_RUN * DAIS_STEPS
 	# the hooded statues beside the portal, lit green by it; small plinths with candles at the top of the steps
 	m.layers = ArenaKit.FACADE_LAYER
 	kit.statue(Vector2(PORTAL_X - 4.6, FACADE_Z + 1.3), 0.25, PORTAL_STATUE, DAIS_Y, PORTAL_STATUE_VALUE, false)
@@ -1137,6 +1157,11 @@ func _north_west() -> void:
 	kit.statue(Vector2(NW_PIER.x, NW_PIER.y - 2.4), 0.5, NW_STATUE.x, 0.6, NW_STATUE.y, false)
 	m.layers = 1
 	kit.statue_glow(Vector3(NW_PIER.x, 1.8, NW_PIER.y), Vector3(NW_PIER.x, 0.6 + NW_STATUE.x * 0.5, NW_PIER.y - 2.4), NW_GLOW.x, NW_GLOW.y, NW_GLOW.z)
+
+
+## The north-west's candles, pots and crates (a step of their own: build_steps, QA P1-1).
+func _north_west_props() -> void:
+	var z := -HALF.y + 0.1
 	_candles(Vector3(-9.0, 0, z + 0.9), 5)
 	m.pot(Vector3(-11.6, 0, z + 0.8), 1.0)
 	m.pot(Vector3(-10.9, 0, z + 1.2), 0.8)

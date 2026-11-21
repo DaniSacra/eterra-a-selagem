@@ -2502,6 +2502,10 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   direita as trocas (Dá, seta, Recebe, Trocar) e o Saldo; sinais `built`, `traded`.
 - **Compêndio**: aba Anjos (`CodexScreen.Tab.ANGELS`, nona, antes de Golpes; `AngelCodex`): selo aceso, nome na cor
   do anjo, frase e vezes encontrado, escolhido e Bênçãos levadas; nunca encontrado, selo apagado e "???".
+- **Esboço a tinta no Compêndio** (AP-4, peça do technical-artist): o `FigureView` chama `FigureSketch.apply(renderer,
+  def, Book.INK, altura da vista)` depois do `register` nos inimigos já derrotados (passar de conhecido para não conhecido refaz a
+  figura); os nunca derrotados seguem em silhueta. Com nove abas, as entradas do índice ficam com `TAB_HEIGHT` 34 e
+  margem vertical de 1 px, para a figura caber embaixo a 720.
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
@@ -2973,6 +2977,14 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   do buraco a menos de `PLATE_EDGE_GAP` 0,6 m das lajes que desmoronam e quatro manchas pálidas nas bocas do buraco
   (`SanctuaryLook._mouths`, AT-SE1/SE2, só no estilizado).
 
+## AP-4 3.1, marca da porta presa (ART-01.5; `docs/art/ap4_spec.md` 3.1)
+- O disco que paira sobre a boca de uma porta (`RewardGem.Stand.FLOAT`) ganha o berço de ouro velho do relicário e uma
+  haste de ouro velho (`RewardGem.DOOR_ROD` 0,04 m) até o pé dele: do topo do arco onde a porta abre na parede
+  (`ArenaRoom.in_wall`, `DOOR_ARCH_TOP` 4,9 m, `DOOR_ARCH_BACK` 0,5 m fora da sala) ou, na escada sem arco, de um poste
+  baixo de ferro de 1,2 m (`DOOR_POST`) sobre a bochecha da escada, ao lado da boca do lado direito da câmera, com um
+  botão de ouro no topo (`DOOR_KNOB`). A haste encontra o disco no eixo do giro, então o balanço não a solta. Nada
+  colide; placa e ponto de usar iguais (`RewardGem._door_mount`).
+
 ## Quebráveis, peças (AT-Q2; `docs/art/at_q0_breakables.md`, prancha em `docs/gallery/at_q2/`)
 - `BreakableKit` (`scripts/game/breakable_kit.gd`, estático): `build(peça, cor, sala)` monta as nove formas (vaso, urna,
   oferenda, vaso de água com faixa molhada, caixote de tábuas com pregos, tábuas, banco, galhos, muda) com sombra de
@@ -3338,6 +3350,71 @@ worktree). Tarefa pequena o Game Director faz direto. Protocolo completo: `docs/
   acima de 50 ms nas salas além de 4 (132, 106, 56 e 55 ms; antes 0,5 a 3,3 s nos primeiros golpes); com o cache quente o
   aquecimento leva 1,9 a 2,0 s e só a Câmara tem um quadro de 117 ms. Fica o 1º quadro de cada sala, já na tela preta do
   `Rooms` (montagem da sala): frio 0,28 a 1,4 s, quente 0,16 a 0,77 s (Salão na 1ª entrada 2,6 s, com a carga da cena).
+- **Não no Compatibility** (`Warmup.wanted`; `--warmup` força): lá o Godot não guarda shader de material entre uma
+  abertura e outra (só os do motor) e compila cada um pelas luzes e pela instância de quem desenha. Medido na iGPU pelo
+  D3D12 do WSL (opengl3, 1280 x 720 Baixa): o aquecimento custava 56 a 62 s a cada abertura, igual com o cache "quente",
+  e o Salão ainda parava 16,8 a 17,8 s no 1º quadro e 0,2 a 2,2 s nos primeiros golpes. O P1-2 segue aberto.
 - Shader Baker ligado nos presets Windows e Linux (`shader_baker/enabled`): só assa quando a exportação roda com tela e
   Vulkan (`xvfb-run ~/tools/godot/godot --path . --rendering-driver vulkan --export-release ...`, sem `--headless`); com
   `--headless` ele é pulado em silêncio. Assado, o exe do Windows fica com 206,8 MB (+9,6).
+
+## AP-4, esboço em traço dos inimigos e motivos dos Dons (technical-artist, 2026-11-21; spec `docs/art/ap4_spec.md` 2.1 a 2.3; testes em `tests/test_figure_sketch.gd`, `tests/test_talent_motif.gd`)
+- `FigureSketch` (`scripts/render/figure_sketch.gd`): o inimigo do Compêndio desenhado a tinta no papel do Livro a partir
+  do próprio modelo assado (sem IA), em três passes sobre a página, vazados entre as linhas: só profundidade
+  (`figure_sketch.gdshader`, o corpo de perto esconde o de trás), contorno (`figure_sketch_edge.gdshader`, o corpo
+  inflado `EDGE_WIDTH` 0,025 m e desenhado por trás) e as linhas de dentro (`figure_sketch_ink.gdshader`: dobras onde a
+  superfície vira, hachura na sombra de uma luz fixa do alto à esquerda, uma camada abaixo de `shade_one` 0,5 e outra
+  cruzando abaixo de `shade_two` 0,26, a `HATCH_PX` 5 px a 1080, nunca abaixo de `HATCH_MIN` 3; o corpo é o papel tingido
+  `fill` 0,26 de um cinza da tinta (`wash_ink`, neutro: o papel escurece sem amarelar); aguada `wash` onde a pintura do modelo é escura; as células que brilham no jogo, olhos e gemas,
+  `BakedModel.glow_from`, viram aguada de tinta `glow_ink` 0,5, então a caveira tem órbitas). Elites (`EnemyDef.gild`): o aço
+  (a máscara do `crowd.gdshader`, o resto a `gilt_rest` 0,45) numa aguada do ouro do Livro (`Book.GILT`, `gilt_alpha` 0,55); as linhas com a tinta do Livro a no máximo `INK_SAT` 0,32 de saturação, para só o ouro ler como ouro com a hachura por cima.
+  Hachura leve no osso claro virado da luz (`bone_from`, `bone_shade`, `bone_alpha` 0,4: a caveira não fica papel em
+  branco sobre o corpo hachurado). Vista de 3/4 (`VIEW_YAW` 30 graus para o lado em que a arma fica mais comprida na
+  tela, `FigureSketch.yaw(modelo)`: o esqueleto e o Cavaleiro a -30; câmera ortográfica inclinada `PITCH` 12), a pose do `idle`
+  que mostra a arma mais comprida na tela (`pose_time`, partes `WEAPONS` do assado), enquadrada pela caixa de todas as
+  poses do clipe com `MARGIN` 4% (`fit`, `clip_box`). Sob os pés, sem sombra redonda (`CrowdRenderer.ground_shade`
+  falso), quatro traços de tinta de 1 px a 1080 e alfa 0,5 por `GROUND_SPAN` 0,7 da largura dos pés, o mais longo sob o
+  pé de apoio (`figure_sketch_ground.gdshader`, `ground`). Para o ui-ux-designer, no `FigureView`, depois do
+  `register(def)`: `FigureSketch.apply(renderer, def, Book.INK, altura da vista em px)`, `FigureSketch.fit(câmera, def,
+  modelo, &"idle", aspecto)` e o `add_kind` em `pose_time` com `FigureSketch.yaw(modelo)`. Prancha: `tools/sketch_lab.gd`
+  (comando no topo), `docs/gallery/ap4/sketch_enemies_*`.
+- `TalentMotif` (`scripts/ui/talent_motif.gd`): o motivo pintado de cada um dos 19 Dons, o glifo do `TalentGlyph` vestido
+  numa receita só: até três tons por forma de borda dura (base na cor do ramo levada ao papel, saturação até `SAT_MAX`
+  0,58; sombra `SHADE` 0,62 embaixo à direita; luz `LIGHT` 1,22 com canal até 0,9 em cima à esquerda), fio de ouro gravado
+  na borda iluminada da forma principal, contorno de tinta de 1,5 a 3 px pelo raio, detalhe de dentro só de `DETAIL_FROM`
+  22 px; esmeralda só no ramo da Emeth, no quarto corte e no Coração da Emeth. `TalentMotif.draw(ci, id, centro, raio,
+  HeroLoadout.State.X)` (trancado a 0,35 com o contorno, selado 0,6, bloqueado acinzentado); abaixo de `LOD_UNDER` 14 px
+  desenha o glifo em tinta; falso sem motivo. Formas em `shapes(id)` (polígonos no círculo unitário). Ligar no
+  `TalentNode` e no detalhe do Compêndio é do ui-ux-designer. Medidas: `tools/motif_sheet.gd` (sem tela: pares de
+  silhuetas por interseção sobre união a raio 16, a maior 0,64; cor, saturação e matiz contra o ramo, todos a 0 graus;
+  contorno sobre o nó 4,2:1; trancado 48 de luma abaixo do fundo; com `--png=` a prancha dos 5 estados a raio 16 e 32,
+  `--big` todos a raio 80).
+- Aro dos medalhões desenhados (2.3): `BoonIcon.ring(ci, centro, raio de fora, largura)` com o perfil do aro dos PNG
+  pintados (`RING_BANDS`, medido no `vapor.png`: borda escura, bronze, sulco, filete claro, bronze, sulco, faixa baça e a
+  sombra para dentro), `RING_PX` 12,2 px na carta (a largura do aro pintado a 128 px) e `RING_SHARE` 0,12 do tamanho nos
+  pequenos; usado pelo `BoonIcon` (Bênçãos sem PNG e Elos) e pelo `PsalmIcon` por cima do selo.
+
+## Montagem da sala em quadros e o resto do aquecimento (P1-1 do QA A8, gameplay; testes em `tests/test_room_hold.gd` e `tests/test_masonry_merge.gd`)
+- **O resto do aquecimento**: quem sai cedo do título leva o que faltou dos shaders para o `Game._ready`, antes da 1ª
+  sala (`Warmup.start(self, true)`, a partida espera o `done`), sob a tela preta do `Warmup` com "Preparando as
+  catacumbas" (`warmup_preparing`, provisório para o ui-ux-designer) e três losangos de ouro velho que acendem em vez
+  (`Game._preparing_note`, `PreparingMark`, camada 101); enquanto isso o `Game._process` não anda (`_warming`) e a pausa
+  automática não abre. Sem tela o `Warmup.start` dá `null` e nada espera.
+- **A sala montada em quadros**: com tela, a porta (`Rooms._go`) segura o mundo (`holding()`) e monta a sala nova
+  escondida, ao lado da velha, em passos (`Arena.build_async`, `Game.rebuild_room(..., wait)`): cada quadro preto faz
+  passos até gastar `Arena.BUILD_BUDGET_MS` 8 ms; um passo pode devolver mais passos, que vêm logo depois
+  (`BuildSteps`, `core/build_steps.gd`: `run` faz tudo de uma vez, igual a antes). Passos: `ArenaRoom.build_steps`
+  (bordas de 2 em 2, `EDGES_A_STEP`; peças de 4 em 4, `PIECES_A_STEP`; `dress_steps()` de cada look, que o look
+  reparte; a junção; `_stylize_steps`, com `ArenaKit.stylize_steps`, `_sworn_p2_steps`, um portão por porta), o salão
+  (`CatacombHall.build_steps`), a Câmara do Selo (`BossChamber.build_steps`, sem `_process` até pronta), a árvore do
+  Jardim (`StoneTree.build_steps`) e a grade de andar no fim (`_finish`). Pronta, a nova aparece e a velha some e é
+  liberada um quadro depois (`Game._free_later`); o resto do `Rooms._enter_with` (a luta, a loja, o evento) tem quadros
+  pretos próprios. Sem tela tudo de uma vez: o mesmo `RESULT` (`smoke 600 --seed=5` e `--start=boss --boons=25`). A
+  mesma sala nos dois caminhos (nós, cobertura, grade de andar, meio, saídas; todas as arenas, eventos e câmara no teste).
+- **Junção sem ler a placa de vídeo** (`Masonry.merge`): o `SurfaceTool.append_from` lia cada peça de volta da placa
+  (`surface_get_arrays` espera a placa: 0,15 a 0,57 s por sala na iGPU, 30 ms sem tela). Agora as malhas do `Masonry`
+  guardam os arrays (`Masonry.kept(st)`, meta `ARRAYS`, com a tangente que a placa devolveria), os primitivos os fazem
+  na CPU (`arrays_of`, uns de cada vez, `PRIMITIVES_A_STEP`) e a junção é feita nos arrays (`joined_arrays`: vértice
+  pela transformação, normal e tangente pela base, normalizadas, como o `append_from`; o `SurfaceTool` fica de reserva),
+  em fatias de `MERGE_SLICE` 6000 vértices (`merge_steps`). `Masonry.read_back` conta o que ainda vem da placa (0 nas
+  salas). `--trace-build` imprime cada passo (`BUILD sala step N ms`) e cada junção (`MERGE`).

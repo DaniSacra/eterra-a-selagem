@@ -699,6 +699,7 @@ entries = {
 "howto_step_events": "Provação e Altar",
 "howto_step_events_desc": "Na Provação você paga vida e carrega uma maldição por algumas lutas; vencidas, a Bênção forte fica. No Altar, uma troca só, ou nenhuma.",
 "hub_name": "Santuário",
+"warmup_preparing": "Preparando as catacumbas",
 "hub_to_title": "Voltar ao título",
 "action_interact": "Interagir",
 "howto_interact": "Interagir",

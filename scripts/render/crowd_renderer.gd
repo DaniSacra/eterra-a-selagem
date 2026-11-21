@@ -149,6 +149,8 @@ class Kind:
 
 ## Visual layers of everything drawn here (torches skip the crowd's layer).
 var layers := 1
+## The round shade under each figure's feet (false on a page, FigureSketch: the paper has no floor).
+var ground_shade := true
 var _models: Dictionary = {}  # model id -> BakedModel
 var _materials: Dictionary = {}  # enemy id -> ShaderMaterial
 var _kinds: Dictionary = {}  # enemy id -> Kind
@@ -354,7 +356,7 @@ func add_kind(k: Kind, d: EnemyDef, anim: StringName, t: float, pos: Vector3, ya
 		row = from_row if fade < 0.5 else row
 	else:
 		_put(b, basis.x, basis.y, basis.z, pos, state, Color(c.first + a, c.first + next, p - a, 1.0))
-	if state.a < 0.5:
+	if state.a < 0.5 and ground_shade:
 		var r := d.radius * 2.6 * (1.0 - state.a) / maxf(1.0 + pos.y * 0.3, 1.0)
 		_put(_shadow, Vector3(r, 0, 0), Vector3.UP, Vector3(0, 0, r), Vector3(pos.x, 0.03, pos.z), Color())
 	return row

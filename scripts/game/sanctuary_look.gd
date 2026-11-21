@@ -295,22 +295,38 @@ const WALL_FILL_ENERGY := 0.5
 
 
 func dress() -> void:
-	wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
-	var box := layout.floor.bounds()
-	_west = box.position.x
-	_east = box.end.x
-	_north = box.position.y
-	_south = box.end.y
-	_chancel = Vector2(_west, layout.boss_spawn.y)
-	_north_wall()
-	_west_wall()
-	_chancel_dress()
-	_heap()
-	_front()
-	_entry()
-	_slabs()
-	_rubble()
-	_candles()
+	BuildSteps.run(dress_steps())
+
+
+## dress in steps (ArenaRoom.dress_steps; QA P1-1).
+func dress_steps() -> Array[Callable]:
+	return [
+		func() -> void:
+			wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
+			var box := layout.floor.bounds()
+			_west = box.position.x
+			_east = box.end.x
+			_north = box.position.y
+			_south = box.end.y
+			_chancel = Vector2(_west, layout.boss_spawn.y)
+			_north_wall(),
+		_west_wall,
+		_chancel_dress,
+		func() -> void:
+			_heap()
+			_front(),
+		func() -> void:
+			_entry()
+			_slabs(),
+		func() -> void:
+			_rubble()
+			_candles()
+			_lights(),
+		func() -> Array[Callable]: return _dress_styled_steps(),
+	]
+
+
+func _lights() -> void:
 	var key := key_light(KEY, KEY_ENERGY, KEY_HEIGHT)
 	key.omni_range = KEY_REACH
 	key.omni_attenuation = KEY_FALLOFF
@@ -323,7 +339,6 @@ func dress() -> void:
 		var c := _middle(_hole)
 		arena._dust(Vector3(c.x, 0.0, c.y))
 		_hole_dust = arena.get_child(arena.get_child_count() - 1) as CPUParticles3D
-	_dress_styled()
 
 
 ## AT-SE2: the ways round the hole open at each end with a paler, worn patch (the "here you pass" of the floor).
@@ -702,30 +717,48 @@ func _leaning(to: Vector2, height: float) -> Transform3D:
 ## over the guardian, the chancel's offerings and runner, the shards at the broken columns, the statues in the blind
 ## windows and the banners on the pilasters, the moss on the walls; in B the torn vault.
 func _dress_styled() -> void:
-	var sm := kit.styled()
-	var share := STY_SHAFT_GAIN * (STY_COMPAT_SHAFT if compat() else 1.0)
-	var guard := moon_shaft(layout.boss_spawn, STY_SHAFT_WARM, STY_GUARD_SHAFT.x * share, STY_GUARD_SHAFT.y,
-		STY_GUARD_SHAFT.z, false, false)
-	guard.transform = _leaning(layout.boss_spawn, STY_GUARD_SHAFT.z)
-	guard.light_specular = 0.0
-	ArenaKit.style_only(guard)
-	_mouths()
-	_offerings(sm)
-	_shards(sm)
-	var face := _north - FACE_SET
-	for x in NICHE_STATUES:
-		var at := Vector2(x, face - 0.05)
-		sm.box(Vector3(x, WINDOW.z + 0.02 + NICHE_CORBEL.x * 0.5, face + NICHE_CORBEL.z * 0.5),
-			Vector3(NICHE_CORBEL.y, NICHE_CORBEL.x, NICHE_CORBEL.z), 0.0, ashlar())
-		kit.styled_build(func() -> void: kit.statue(at, 0.0, NICHE_STATUE, WINDOW.z + 0.02 + NICHE_CORBEL.x, ArenaKit.STATUE_VALUE, false))
-	for x in PILASTER_BANNERS:
-		var top := Vector3(x, PILASTER_BANNER_TOP, face + PILASTER.y + 0.06)
-		kit.styled_build(func() -> void: kit.banner(top, 0.0, PILASTER_BANNER, ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION))
-	_moss(sm, face)
-	if not _hole.is_empty():
-		_torn_vault(sm)
-	_edge_pieces()
-	_finials(sm)
+	BuildSteps.run(_dress_styled_steps())
+
+
+## _dress_styled in steps (BuildSteps; QA P1-1: a frame each on a new room's black screen).
+func _dress_styled_steps() -> Array[Callable]:
+	var v := {}
+	return [
+		func() -> void:
+			var sm := kit.styled()
+			var face := _north - FACE_SET
+			v[&"sm"] = sm
+			v[&"face"] = face
+			var share := STY_SHAFT_GAIN * (STY_COMPAT_SHAFT if compat() else 1.0)
+			var guard := moon_shaft(layout.boss_spawn, STY_SHAFT_WARM, STY_GUARD_SHAFT.x * share, STY_GUARD_SHAFT.y,
+				STY_GUARD_SHAFT.z, false, false)
+			guard.transform = _leaning(layout.boss_spawn, STY_GUARD_SHAFT.z)
+			guard.light_specular = 0.0
+			ArenaKit.style_only(guard)
+			_mouths(),
+		func() -> void:
+			_offerings(v[&"sm"]),
+		func() -> void:
+			_shards(v[&"sm"]),
+		func() -> void:
+			var sm: Masonry = v[&"sm"]
+			var face: float = v[&"face"]
+			for x in NICHE_STATUES:
+				var at := Vector2(x, face - 0.05)
+				sm.box(Vector3(x, WINDOW.z + 0.02 + NICHE_CORBEL.x * 0.5, face + NICHE_CORBEL.z * 0.5),
+					Vector3(NICHE_CORBEL.y, NICHE_CORBEL.x, NICHE_CORBEL.z), 0.0, ashlar())
+				kit.styled_build(func() -> void: kit.statue(at, 0.0, NICHE_STATUE, WINDOW.z + 0.02 + NICHE_CORBEL.x, ArenaKit.STATUE_VALUE, false))
+			for x in PILASTER_BANNERS:
+				var top := Vector3(x, PILASTER_BANNER_TOP, face + PILASTER.y + 0.06)
+				kit.styled_build(func() -> void: kit.banner(top, 0.0, PILASTER_BANNER, ArenaKit.FACADE_LAYER, ArenaKit.Emblem.LION)),
+		func() -> void:
+			_moss(v[&"sm"], v[&"face"])
+			if not _hole.is_empty():
+				_torn_vault(v[&"sm"]),
+		_edge_pieces,
+		func() -> void:
+			_finials(v[&"sm"]),
+	]
 
 
 ## Sworn P2 SW-G4: offerings at the foot of the nave's tall walls (ArenaRoom.offerings).

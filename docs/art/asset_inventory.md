@@ -201,9 +201,18 @@ num pool de até 8 malhas no `Fx`, 4 por esquiva, 0,12 s cada; nada sem tela). M
 art-director e o aceite do combat-feel-director.
 
 ## 8a. Conjunto de aquecimento dos shaders (P1-1, `Warmup`, gerado, licença do projeto)
-- `assets/warmup/warmup_set.res` (31 KB, no pacote): 135 cópias leves de material (sem textura), colhidas por
+- `assets/warmup/warmup_set.res` (31 KB, no pacote): 139 cópias leves de material (sem textura), colhidas por
   `tools/make_warmup.sh`; desenhado pelo `scripts/render/warmup.gd` no começo. Definitivo enquanto for regerado depois
   de cada shader novo (`tests/test_warmup.gd` falha sem isso).
+
+## 8c. Esboço dos inimigos e motivos dos Dons (AP-4, procedural, licença do projeto)
+- Esboço a tinta do Compêndio (`FigureSketch`): nenhum arquivo novo de imagem; quatro shaders
+  (`figure_sketch*.gdshader`) sobre os assados de sempre. Definitivo quando o ui-ux-designer ligar no `FigureView`.
+- Motivos dos 19 Dons (`TalentMotif`): vetor no código, sem textura. Provisório até a revisão do art-director da prancha
+  (`tools/motif_sheet.gd`) e a ligação no `TalentNode`.
+- Aro dos medalhões desenhados (`BoonIcon.ring`): o perfil do aro do `vapor.png`; os PNG de grade (`brasas`, `escudo`,
+  `toque_geada`, `onda_maior`, 384 px) têm um aro mais fino e mais claro que o do `vapor`/`aurora`/`redemoinho` (512 px):
+  dois aros pintados no jogo, para a prancha nova do Daniel (Q-24) igualar.
 
 ## 8b. Kit de borda e primeiro plano (TA-HB2, `EdgeKit`, procedural, licença do projeto)
 

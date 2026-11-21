@@ -9,7 +9,6 @@ extends SubViewportContainer
 ## Only drawing (Meshy zero): nothing of the game is read or changed.
 
 ## Degrees the figure stands turned from the camera, how far it turns to and fro and over how many seconds.
-const TURN := 30.0
 const SWAY := 18.0
 const SWAY_TIME := 8.0
 ## The view's height against the figure's height (air above the head and under the feet).
@@ -70,8 +69,8 @@ func setup(px: Vector2) -> FigureView:
 
 ## The figure of an enemy; known false draws it as a silhouette in ink.
 func show_enemy(d: EnemyDef, p_known: bool) -> void:
-	known = p_known
-	if d != def:
+	if d != def or p_known != known or _renderer == null:
+		known = p_known
 		def = d
 		if _renderer != null:
 			_renderer.queue_free()
@@ -79,6 +78,9 @@ func show_enemy(d: EnemyDef, p_known: bool) -> void:
 		_renderer.name = "Figure"
 		_holder.add_child(_renderer)
 		_renderer.register(def)
+		if known:
+			# AP-4: a defeated one is drawn in the Livro's ink (technical-artist's FigureSketch); the unknown keep the silhouette
+			FigureSketch.apply(_renderer, def, Book.INK, size.y if size.y > 0.0 else custom_minimum_size.y)
 		_kind = _renderer.kind(def)
 		var h := _kind.model.height * def.size
 		_cam.size = h * FRAME
@@ -97,7 +99,8 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if _renderer == null:
 		return
-	var yaw := deg_to_rad(TURN + sin(_t * TAU / SWAY_TIME) * SWAY)
+	# AP-4: the sketch's own three-quarter view of this figure (FigureSketch.yaw), swaying a little round it
+	var yaw := FigureSketch.yaw(_kind.model) + deg_to_rad(sin(_t * TAU / SWAY_TIME) * SWAY)
 	_renderer.begin()
 	var length := maxf(_kind.model.duration(&"idle"), 0.01)
 	_renderer.add_kind(_kind, def, &"idle", fmod(_t, length), Vector3.ZERO, yaw, Color(0, 0, 0, 0))

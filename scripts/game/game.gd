@@ -176,6 +176,52 @@ var _fountain_at := Vector2.ZERO
 var _fountain_used := false
 var _rng := RandomNumberGenerator.new()
 var _found: Array[Enemy] = []
+## While the shaders' warm-up ends before the first room (P1-1): the run waits.
+var _warming := false
+
+
+## "Preparando as catacumbas" and three diamonds that light in turn, over the warm-up's black screen (P1-1; the
+## words are the ui-ux-designer's to restyle).
+func _preparing_note() -> CanvasLayer:
+	var layer := CanvasLayer.new()
+	layer.layer = 101  # (over the Warmup's black, layer 100)
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_CENTER)
+	box.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	box.grow_vertical = Control.GROW_DIRECTION_BOTH
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override(&"separation", 14)
+	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var words := UiKit.label(T.t(&"warmup_preparing"), UiKit.PALE, 22)
+	words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(words)
+	box.add_child(PreparingMark.new())
+	layer.add_child(box)
+	add_child(layer)
+	return layer
+
+
+## The indicator under the words: three old-gold diamonds lighting one after the other, in real time.
+class PreparingMark extends Control:
+	const SIDE := 9.0
+	const GAP := 26.0
+	const PERIOD := 1.2
+
+	func _init() -> void:
+		custom_minimum_size = Vector2(GAP * 3.0, SIDE * 2.5)
+		size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _process(_delta: float) -> void:
+		queue_redraw()
+
+	func _draw() -> void:
+		var t := fmod(Time.get_ticks_msec() / 1000.0, PERIOD) / PERIOD
+		for i in 3:
+			var lit := 0.25 + 0.75 * maxf(0.0, 1.0 - absf(fposmod(t * 3.0 - i, 3.0) - 0.5) * 1.5)
+			var c := Vector2(GAP * (i + 0.5), size.y * 0.5)
+			var d := PackedVector2Array([c + Vector2(0, -SIDE), c + Vector2(SIDE, 0), c + Vector2(0, SIDE), c + Vector2(-SIDE, 0)])
+			draw_colored_polygon(d, Color(UiKit.OLD_GOLD, lit))
 
 
 func _ready() -> void:
@@ -278,14 +324,29 @@ func _ready() -> void:
 	psalms = Psalms.new(Psalms.load_catalog())
 	psalm_play = PsalmPlay.new(self, psalms)
 	psalm_cards = bot != null or Dev.has("autopick") or screen_shows_psalms()
+	# P1-1: what the title did not finish of the shaders' warm-up (the player left it early), under a black screen
+	# with a word, before the first room (Warmup.reached keeps where it got; null without a screen: the same RESULT)
+	var warm := Warmup.start(self, true)
+	if warm != null:
+		_warming = true
+		var note := _preparing_note()
+		await warm.done
+		note.queue_free()
+		_warming = false
+		Controls.clear_presses()
+		if not is_inside_tree():
+			return
 	if not Dev.has("horde"):
 		rooms = Rooms.new()
 		add_child(rooms)
 		rooms.setup(self, _rng)
+		# (with a screen the first room is built on black over frames: what follows waits for it, as before)
 		if Dev.has("start") and Dev.arg("start") in ROOM_STARTS:
-			rooms.start_at(ROOM_STARTS[Dev.arg("start")])
+			await rooms.start_at(ROOM_STARTS[Dev.arg("start")])
 		else:
-			rooms.start()
+			await rooms.start()
+		if not is_inside_tree():
+			return
 	elif Dev.has("start"):
 		_dev_start(Dev.arg("start"))
 	if Dev.has("boons"):
@@ -337,7 +398,10 @@ func _build_world() -> void:
 	air = WorldAir.build(self)
 	arena = Arena.new()
 	add_child(arena)
-	arena.build()
+	if Dev.has("horde") or Rooms.hold_frames() <= 0:
+		arena.build()
+	else:
+		arena.build_bare()  # (QA P1-1: the descent builds its first room on black at once; this one is never seen)
 	ground = Ground.new()
 	add_child(ground)
 	orbs = Orbs.new()
@@ -411,6 +475,8 @@ static func unhook(obj: Object) -> void:
 
 
 func _process(delta: float) -> void:
+	if _warming:
+		return  # (the shaders' warm-up before the first room: nothing to step yet)
 	var shake := fx.tick(delta)
 	if watchdog:
 		var sample := watchdog.tick(Time.get_ticks_msec() / 1000.0, Engine.get_frames_drawn(), Mode.keys()[mode], fx.rate,
@@ -620,19 +686,35 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int, wait := Callable()
 	if _fountain != null:
 		_fountain.queue_free()
 		_fountain = null
-	arena.queue_free()
-	arena = Arena.new()
-	add_child(arena)
+	var built := Arena.new()
 	if wait.is_valid():
-		await arena.build_async(layout, exits, seed_, wait)
+		# over the black frames the old room stays the one everybody reads (the camera follows it), the new one
+		# hidden until it is whole
+		built.visible = false
+		add_child(built)
+		await built.build_async(layout, exits, seed_, wait)
+		if not is_inside_tree():
+			return
+		built.visible = true
+		arena.visible = false
+		_free_later(arena, wait)  # (freeing a whole room takes its own black frame)
 	else:
-		arena.build(layout, exits, seed_)
+		add_child(built)
+		built.build(layout, exits, seed_)
+		arena.queue_free()
+	arena = built
 	breaks = BreakFloor.make(self, layout)  # AT-Q1: the room's vases and crates (under the arena, gone with it)
 	horde.arena = arena
 	player.arena = arena
 	cam.arena = arena
 	var place := arena.id if arena.id != &"" else &"hall"
 	arenas_seen[place] = int(arenas_seen.get(place, 0)) + 1
+
+
+func _free_later(old: Node, wait: Callable) -> void:
+	await wait.call()
+	if is_instance_valid(old):
+		old.queue_free()
 
 
 ## Gifts by a cleared room or the shop: three cards drawn with these rarity chances (Boon.RARITY_CHANCE; the stage's
@@ -1311,6 +1393,8 @@ func close_screen() -> void:
 ## C20 (GP P2-3): the window lost its focus, or the controller in use was unplugged: the run pauses by itself
 ## (AutoPause: never the robot, --smoke nor a capture, and only in play). True when it opened the pause.
 func auto_pause(why: AutoPause.Why, pad_in_use := true) -> bool:
+	if _warming:
+		return false
 	if not AutoPause.wanted(why, mode == Mode.PLAY and _screen == null, AutoPause.robot_run(bot != null), pad_in_use):
 		return false
 	_open_pause()

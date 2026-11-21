@@ -209,7 +209,18 @@ func new_map(st: StageDef, forced := -1) -> RunMap:
 
 
 func start() -> void:
-	_enter(map.first())
+	await _enter_first(map.first())
+
+
+## The descent's first room: with a screen built on black over frames like any other (QA P1-1: the opening frame
+## was 1,9 s on the iGPU), the caller awaiting it; without one at once, as before (the same RESULT).
+func _enter_first(next: RunMap.Room) -> void:
+	if hold_frames() <= 0:
+		_enter(next)
+		return
+	_fade.color.a = 1.0
+	_hold = 1 << 20
+	await _enter_with(next, _frame_drawn)
 
 
 ## Dev: jumps straight to a room kind (--start=boss|miniboss|shop|fountain|trial|altar): the first room of that kind
@@ -227,14 +238,14 @@ func start_at(kind: RunMap.Kind) -> void:
 		map.enter(at[0] if not at.is_empty() else map.layer(3)[0])
 		next_rooms = map.doors()
 		_prepare(next_rooms)
-		_enter(map.trial(map.depth))
+		await _enter_first(map.trial(map.depth))
 		return
 	for r in map.nodes:
 		# --start=shop is the last shop before Morvath, never a route shop (DV-2)
 		if r.kind == kind and not (kind == RunMap.Kind.SHOP and map.is_route_shop(r)):
-			_enter(r)
+			await _enter_first(r)
 			return
-	_enter(map.first())
+	await _enter_first(map.first())
 
 
 func depth() -> int:
@@ -413,6 +424,10 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 	trial_cards.clear()
 	altar_options.clear()
 	_apply_curse()
+	if wait.is_valid():
+		await wait.call()  # (the room's own pieces, a shop's or an event's, on a black frame of their own)
+		if not is_inside_tree():
+			return
 	match room.kind:
 		RunMap.Kind.COMBAT:
 			var fight := room.fight if room.fight != null else EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
@@ -452,6 +467,10 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			# dev, for captures of the empty chamber: --no-boss
 			if not Dev.has("no-boss"):
 				game.start_boss(stage.boss)
+	if wait.is_valid():
+		await wait.call()
+		if not is_inside_tree():
+			return
 	game.hud.show_notice(T.t(RunMap.KIND_KEY[room.kind]) if room.kind != RunMap.Kind.COMBAT else T.t(&"notice_room", {"n": room.depth}), 2.0)
 	if room.kind != RunMap.Kind.BOSS and game.arena.name_key != &"":
 		# the arena's name for 2 s (decision D-33)
@@ -932,7 +951,7 @@ var _hold_turn := 0
 
 
 func _go(next: RunMap.Room) -> void:
-	if _hold_frames() <= 0:
+	if hold_frames() <= 0:
 		_enter(next)
 		return
 	_hold = 1 << 20  # (the world waits from here: holding())
@@ -947,7 +966,7 @@ func holding() -> bool:
 	return _hold > 0
 
 
-static func _hold_frames() -> int:
+static func hold_frames() -> int:
 	if Dev.has("hold-frames"):
 		return int(Dev.num("hold-frames", HOLD_FRAMES))
 	return 0 if DisplayServer.get_name() == "headless" else HOLD_FRAMES
@@ -962,7 +981,7 @@ func _frame_drawn() -> void:
 
 func _fade_in() -> void:
 	_fade.color.a = 1.0
-	_hold = _hold_frames()
+	_hold = hold_frames()
 	_hold_turn += 1
 	var turn := _hold_turn
 	while _hold > 0:

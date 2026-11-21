@@ -40,7 +40,12 @@ var started_ms := 0
 
 
 ## Whether there is anything to warm: a screen, the set, and not switched off (--no-warmup).
+## Not on the Compatibility renderer: there Godot keeps no material shader between starts and compiles each one by the
+## lights and instancing of what draws it, so the warm-up cost about a minute at every start on the iGPU and the rooms
+## still compiled their own (measured 2026-11-21, docs/qa/asset_report.md P1-2); --warmup forces it.
 static func wanted() -> bool:
+	if RenderingServer.get_current_rendering_method() == "gl_compatibility" and not Dev.has("warmup"):
+		return false
 	return DisplayServer.get_name() != "headless" and not Dev.has("no-warmup") and ResourceLoader.exists(SET) \
 		and reached < (load(SET) as Resource).get_meta(&"items", []).size()
 
@@ -109,6 +114,16 @@ func _lights() -> void:
 	spot.spot_range = 4.0
 	spot.position = Vector3(-0.3, 0.2, -DEPTH + 1.0)
 	add_child(spot)
+	# the rooms' candles and lamps cast no shadow: the shader for those lights is another one (above all on the
+	# Compatibility renderer, a pass per light kind and shadow)
+	var candle := OmniLight3D.new()
+	candle.omni_range = 4.0
+	candle.position = Vector3(-0.2, -0.2, -DEPTH + 0.5)
+	add_child(candle)
+	var beam := SpotLight3D.new()
+	beam.spot_range = 4.0
+	beam.position = Vector3(0.2, -0.1, -DEPTH + 0.9)
+	add_child(beam)
 
 
 func _process(_delta: float) -> void:

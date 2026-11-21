@@ -228,24 +228,30 @@ var _crown_limb := PackedInt32Array()
 ## Grows the tree at `foot` (x, z) under `parent`. roots: each root's points (x, z) from where it leaves the trunk out
 ## to its tip (the layout's capsules); glow: the crystals' largest channel (0.8 in variant A, 0.9 in B).
 func build(parent: Node3D, foot: Vector2, roots: Array[PackedVector2Array], glow := 0.8, seed_ := 7) -> void:
+	BuildSteps.run(build_steps(parent, foot, roots, glow, seed_))
+
+
+## build in steps (BuildSteps; QA P1-1: a frame each on a new room's black screen), in the same order.
+func build_steps(parent: Node3D, foot: Vector2, roots: Array[PackedVector2Array], glow := 0.8, seed_ := 7) -> Array[Callable]:
 	root = parent
 	at = Vector3(foot.x, 0.0, foot.y)
 	rng.seed = seed_
 	var bearings: Array[float] = []
 	for r in roots:
 		bearings.append(bearing(r[0] - foot))
-	_trunk(bearings)
+	var steps: Array[Callable] = [_trunk.bind(bearings)]
 	for r in roots:
-		_root(r)
-	_fine_roots(bearings)
+		steps.append(_root.bind(r))
+	steps.append(_fine_roots.bind(bearings))
 	# the crown is the same whatever the roots (the tree is the place's landmark in every variant)
-	rng.seed = seed_ * 31 + 5
+	steps.append(func() -> void: rng.seed = seed_ * 31 + 5)
 	for i in LIMBS.size():
-		_limb(i)
-	_stubs()
-	_find_hangs()
-	_commit()
-	_crystals(bearings, glow)
+		steps.append(_limb.bind(i))
+	steps.append(_stubs)
+	steps.append(_find_hangs)
+	steps.append(_commit)
+	steps.append(_crystals.bind(bearings, glow))
+	return steps
 
 
 # ---------- bearings ----------

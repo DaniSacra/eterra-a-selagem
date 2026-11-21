@@ -88,6 +88,18 @@ func build(layout: RoomLayout = null, exit_count: int = 0, seed_: int = 1406) ->
 	_finish(layout)
 
 
+## A room with its measures and walking grid but nothing drawn (Game's placeholder before the descent's first room
+## is built over frames, QA P1-1).
+var _bare := false
+
+
+func build_bare() -> void:
+	_bare = true
+	_build(null, 0, 1406)
+	_bare = false
+	_finish(null)
+
+
 ## The same build spread over frames (QA P1-1: a new room is built on the black screen of Rooms, never one long
 ## frame): the look's steps (ArenaRoom.build_steps) one a frame, `wait` awaited between them, then the walking grid.
 ## The same rooms, pieces and dice as build(); the hall and the Seal Chamber still build at once.
@@ -95,19 +107,48 @@ var _deferring := false
 var _steps: Array[Callable] = []
 
 
+## The build's time in one frame (build_async): the next step waits for the next frame once this is spent.
+const BUILD_BUDGET_MS := 8
+
+
 func build_async(layout: RoomLayout, exit_count: int, seed_: int, wait: Callable) -> void:
 	_deferring = true
+	var t0 := Time.get_ticks_usec()
 	_build(layout, exit_count, seed_)
+	if Dev.has("trace-build"):
+		print("BUILD %s base %.1f ms frame %d" % [layout.id if layout else &"?", (Time.get_ticks_usec() - t0) / 1000.0, Engine.get_frames_drawn()])
 	_deferring = false
 	var steps := _steps
 	_steps = []
-	for step in steps:
-		await wait.call()
-		if not is_inside_tree():
-			return
-		step.call()
+	var trace := Dev.has("trace-build")
+	# a step may give back more steps (a merge in slices, Masonry.merge_steps): they come next
+	var k := 0
+	var frame_from := 0
+	while k < steps.size():
+		# a frame takes steps until BUILD_BUDGET_MS is spent (at least one): few black frames, none long
+		if k == 0 or Time.get_ticks_usec() - frame_from >= BUILD_BUDGET_MS * 1000:
+			await wait.call()
+			if not is_inside_tree():
+				return
+			frame_from = Time.get_ticks_usec()
+		var t := Time.get_ticks_usec()
+		var back := Masonry.read_back
+		var more: Variant = steps[k].call()
+		if BuildSteps.is_more(more):
+			var rest := steps.slice(k + 1)
+			steps.resize(k + 1)
+			for c: Callable in more:
+				steps.append(c)
+			steps.append_array(rest)
+		if trace:
+			print("BUILD %s step %d %.1f ms frame %d read back %d %s" % [id, k, (Time.get_ticks_usec() - t) / 1000.0,
+				Engine.get_frames_drawn(), Masonry.read_back - back, steps[k].get_method()])
+		k += 1
 	await wait.call()
+	var t2 := Time.get_ticks_usec()
 	_finish(layout)
+	if trace:
+		print("BUILD %s finish %.1f ms frame %d" % [id, (Time.get_ticks_usec() - t2) / 1000.0, Engine.get_frames_drawn()])
 
 
 func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
@@ -142,13 +183,18 @@ func _build(layout: RoomLayout, exit_count: int, seed_: int) -> void:
 	RenderingServer.global_shader_parameter_set(&"floor_round", Vector3.ZERO)
 	# nobody stands for the scenery to open around until a boss does (Boss.step sets it)
 	RenderingServer.global_shader_parameter_set(&"boss_pos", NO_BOSS)
+	if _bare:
+		return
 	if layout != null and layout.chamber:
 		_build_boss_room(layout, seed_)
 		return
 	if layout != null and layout.platform:
 		exits.clear()
 		var hall := CatacombHall.new(self, seed_)
-		hall.build(exit_count)
+		if _deferring:
+			_steps = hall.build_steps(exit_count)
+		else:
+			hall.build(exit_count)
 		_kit = hall.kit
 		hall_look = hall
 		return
@@ -727,7 +773,10 @@ func _chamber_look(layout: RoomLayout, seed_: int) -> void:
 	var c := BossChamber.new()
 	chamber = c
 	add_child(c)
-	c.build(self, layout, seed_)
+	if _deferring:
+		_steps = c.build_steps(layout, seed_)
+	else:
+		c.build(self, layout, seed_)
 
 
 ## Passes a call on to the chamber's scenery, if it has it (false when there is none to take it).

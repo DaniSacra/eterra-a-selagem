@@ -143,3 +143,15 @@ func test_the_codex_has_the_angels() -> void:
 	var nivael := list.find_child("nivael", true, false)
 	assert_eq((nivael.find_child("Name", true, false) as Label).text, "???")
 	assert_eq(c.progress(CodexScreen.Tab.ANGELS), Vector2i(1, 4))
+
+
+func test_a_defeated_enemy_is_drawn_in_ink() -> void:
+	var d: EnemyDef = load(CodexScreen.ENEMY_DIR + "skeleton.tres")
+	var v := FigureView.new().setup(Vector2(160, 200))
+	add_child_autofree(v)
+	v.show_enemy(d, true)
+	var k: CrowdRenderer.Kind = v._renderer.kind(d)
+	assert_eq((k.material as ShaderMaterial).shader, FigureSketch.material(k.model).shader, "the sketch's passes")
+	v.show_enemy(d, false)
+	var plain: CrowdRenderer.Kind = v._renderer.kind(d)
+	assert_ne((plain.material as ShaderMaterial).shader, FigureSketch.material(plain.model).shader, "the unknown: the silhouette")

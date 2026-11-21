@@ -295,7 +295,7 @@ func _build_bevel(h: Vector3, chamfer: float, chip_corner: int, chip: float) -> 
 				_quad(st, pts[k0 * 3 + b], pts[k1 * 3 + b], pts[k1 * 3 + d], pts[k0 * 3 + d])
 	for k in 8:
 		_tri(st, pts[k * 3], pts[k * 3 + 1], pts[k * 3 + 2])
-	return st.commit()
+	return Masonry.kept(st)
 
 
 ## The corner index with sign bit sa on axis a, sb on axis b and sd on axis d.
@@ -409,7 +409,7 @@ func prism(points: PackedVector2Array, y0: float, y1: float, mat: Material = nul
 			out = -out
 		_face(st, Vector3(a.x, y0, a.y), Vector3(b.x, y0, b.y), Vector3(b.x, y1, b.y), Vector3(a.x, y1, a.y), Vector3(out.x, 0.0, out.y))
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = Masonry.kept(st)
 	mi.material_override = mat if mat else stone(y0)
 	_add(mi)
 	return mi
@@ -517,7 +517,7 @@ func arch_ring(foot: Vector3, facing: Vector2, span: float, ring: float, deep: f
 		var along := (inner[k] - inner[1 if k == 0 else n - 1]).normalized()
 		_face(st, inner[k] - f, outer[k] - f, outer[k] + f, inner[k] + f, along)
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = Masonry.kept(st)
 	mi.transform = Transform3D(Basis(Vector3.UP, atan2(facing.x, facing.y)), foot)
 	mi.material_override = mat
 	_add(mi)
@@ -665,7 +665,7 @@ func fluted_mesh(radius: float, height: float, flutes: int, depth: float) -> Arr
 		_quad(st, a0, a1, b1, b0)
 		_tri(st, Vector3(0, h, 0), b0, b1)
 		_tri(st, Vector3(0, -h, 0), a1, a0)
-	return st.commit()
+	return Masonry.kept(st)
 
 
 ## SW-K1: an empty iron cage (a gibbet) hanging from its hook at the origin, one mesh: a dome of four straps from the
@@ -716,7 +716,7 @@ static func cage_mesh(size: Vector4, bars: int, door := 0.0, bent := -1) -> Arra
 			_bar(st, swing.call(ring.call(i, top - w)), swing.call(ring.call(i, low + w)), w)
 		for y: float in [top - w, band, low + w]:
 			_bar(st, swing.call(ring.call(0, y)), swing.call(ring.call(CAGE_DOOR_BARS, y)), w)
-	return st.commit()
+	return Masonry.kept(st)
 
 
 ## The cage's band (share of the bars' height down), its dome's steps, how much thinner its rings are than its bars,
@@ -835,7 +835,7 @@ func urn(at: Vector3, height: float, mat: Material, lid := true) -> void:
 	_lathe(st, outline, Transform3D(Basis.from_scale(Vector3.ONE * height), Vector3.ZERO), shade)
 	st.generate_normals()
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = Masonry.kept(st)
 	mi.material_override = mat
 	mi.position = at
 	_add(mi)
@@ -887,7 +887,7 @@ func fungus(at: Vector3, count: int, reach: float, seed_: int) -> MeshInstance3D
 			_fungus_tri(st, over + a0, over + a1, crown, [Color(1, 0, 0), Color(1, 0, 0), Color(0, 0, 0)])
 			_fungus_tri(st, under_y + a1, under_y + a0, top, [Color(0, 1, 0), Color(0, 1, 0), Color(0, 1, 0)])
 	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
+	mi.mesh = Masonry.kept(st)
 	if _fungus == null:
 		_fungus = ShaderMaterial.new()
 		_fungus.shader = FUNGUS_SHADER
@@ -964,7 +964,7 @@ func _build_statue() -> ArrayMesh:
 		_lathe(st, sleeve, Transform3D(basis, from), PackedFloat32Array([0.9, 0.9, 1.0, 1.15, 1.1, 0.4, 0.25]))
 	_lathe(st, _ellipse(), Transform3D(Basis.from_scale(Vector3(0.05, 0.04, 0.035)), Vector3(0, HANDS_AT, ROBE_CHEST + 0.04)), _flat(9, 0.7))
 	st.generate_normals()
-	return st.commit()
+	return Masonry.kept(st)
 
 
 ## The robe's value at a height (ROBE_SHADE).
@@ -1308,31 +1308,212 @@ func take_since(from: int) -> Array[MeshInstance3D]:
 	return out
 
 
+## QA P1-1: a mesh committed with its arrays kept on the CPU (meta ARRAYS), so merge() never reads them back from
+## the graphics card (surface_get_arrays on a real renderer copies the buffer back and waits for the card: a room's
+## merge took 0.5 s on the iGPU, 30 ms without a screen). The same mesh as st.commit().
+const ARRAYS := &"cpu_arrays"
+## How many pieces the last merge read back from the card (no kept arrays): for the measures.
+static var read_back := 0
+
+
+static func kept(st: SurfaceTool) -> ArrayMesh:
+	var arrays := st.commit_to_arrays()
+	var vertices: Variant = arrays[Mesh.ARRAY_VERTEX]
+	if vertices == null or (vertices as PackedVector3Array).is_empty():
+		return st.commit()
+	for slot in Mesh.ARRAY_MAX:
+		if arrays[slot] != null and arrays[slot].is_empty():
+			arrays[slot] = null  # (as the card gives them back: an empty array is no array)
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if arrays[Mesh.ARRAY_NORMAL] != null and arrays[Mesh.ARRAY_TANGENT] == null:
+		# what the card gives back for a mesh with normals and no tangents (and so what merge() always joined)
+		# (the renderer's dummy tangent: (n.z, -n.x, n.y) x n)
+		var t := PackedFloat32Array()
+		for exact: Vector3 in arrays[Mesh.ARRAY_NORMAL]:
+			# (from the normal as stored: 16-bit octahedral)
+			var n := Vector3.octahedron_decode((exact.normalized().octahedron_encode() * 65535.0).round() / 65535.0)
+			var d := Vector3(n.z, -n.x, n.y).cross(n.normalized()).normalized()
+			t.append_array([d.x, d.y, d.z, 1.0])
+		arrays[Mesh.ARRAY_TANGENT] = t
+	mesh.set_meta(ARRAYS, arrays)
+	return mesh
+
+
+## A one-surface mesh's arrays without asking the card when it can: kept ones, a primitive's own (made on the CPU),
+## else read back once and kept on the mesh for its next uses.
+static func arrays_of(mesh: Mesh) -> Array:
+	if mesh.has_meta(ARRAYS):
+		return mesh.get_meta(ARRAYS)
+	var arrays: Array
+	if mesh is PrimitiveMesh:
+		arrays = (mesh as PrimitiveMesh).get_mesh_arrays()
+	else:
+		arrays = mesh.surface_get_arrays(0)
+		read_back += 1
+	mesh.set_meta(ARRAYS, arrays)
+	return arrays
+
+
+## The pieces' arrays joined into one, each moved by its transform as SurfaceTool.append_from does (vertex by the
+## transform, normal and tangent by its basis); empty when they cannot be joined this way (different arrays, bones
+## or custom data), and merge() falls back on the SurfaceTool.
+static func joined_arrays(list: Array) -> Array:
+	var parts: Array = []
+	for mi: MeshInstance3D in list:
+		parts.append(arrays_of(mi.mesh))
+	var first: Array = parts[0]
+	for slot in Mesh.ARRAY_MAX:
+		var has := first[slot] != null
+		for a: Array in parts:
+			if (a[slot] != null) != has:
+				return []
+		if has and slot in [Mesh.ARRAY_BONES, Mesh.ARRAY_WEIGHTS, Mesh.ARRAY_CUSTOM0, Mesh.ARRAY_CUSTOM1,
+				Mesh.ARRAY_CUSTOM2, Mesh.ARRAY_CUSTOM3]:
+			return []
+	var out: Array = []
+	out.resize(Mesh.ARRAY_MAX)
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	var tangents := PackedFloat32Array()
+	var colors := PackedColorArray()
+	var uvs := PackedVector2Array()
+	var uv2s := PackedVector2Array()
+	var indices := PackedInt32Array()
+	for k in list.size():
+		var a: Array = parts[k]
+		var xf: Transform3D = (list[k] as MeshInstance3D).transform
+		var base := verts.size()
+		for v: Vector3 in a[Mesh.ARRAY_VERTEX]:
+			verts.append(xf * v)
+		if a[Mesh.ARRAY_NORMAL] != null:
+			for n: Vector3 in a[Mesh.ARRAY_NORMAL]:
+				normals.append((xf.basis * n).normalized())
+		if a[Mesh.ARRAY_TANGENT] != null:
+			var t: PackedFloat32Array = a[Mesh.ARRAY_TANGENT]
+			for i in range(0, t.size(), 4):
+				var d := (xf.basis * Vector3(t[i], t[i + 1], t[i + 2])).normalized()
+				tangents.append_array([d.x, d.y, d.z, t[i + 3]])
+		if a[Mesh.ARRAY_COLOR] != null:
+			colors.append_array(a[Mesh.ARRAY_COLOR])
+		if a[Mesh.ARRAY_TEX_UV] != null:
+			uvs.append_array(a[Mesh.ARRAY_TEX_UV])
+		if a[Mesh.ARRAY_TEX_UV2] != null:
+			uv2s.append_array(a[Mesh.ARRAY_TEX_UV2])
+		if a[Mesh.ARRAY_INDEX] != null:
+			for i: int in a[Mesh.ARRAY_INDEX]:
+				indices.append(base + i)
+	out[Mesh.ARRAY_VERTEX] = verts
+	if first[Mesh.ARRAY_NORMAL] != null:
+		out[Mesh.ARRAY_NORMAL] = normals
+	if first[Mesh.ARRAY_TANGENT] != null:
+		out[Mesh.ARRAY_TANGENT] = tangents
+	if first[Mesh.ARRAY_COLOR] != null:
+		out[Mesh.ARRAY_COLOR] = colors
+	if first[Mesh.ARRAY_TEX_UV] != null:
+		out[Mesh.ARRAY_TEX_UV] = uvs
+	if first[Mesh.ARRAY_TEX_UV2] != null:
+		out[Mesh.ARRAY_TEX_UV2] = uv2s
+	if first[Mesh.ARRAY_INDEX] != null:
+		out[Mesh.ARRAY_INDEX] = indices
+	return out
+
+
 func merge(from := 0, cells := true) -> Array[MeshInstance3D]:
-	var groups := {}
-	for i in range(from, _built.size()):
-		var mi := _built[i]
-		if not is_instance_valid(mi) or mi.material_override == null or mi.mesh == null or mi.mesh.get_surface_count() != 1:
-			continue
-		var cell := Vector2i(floori(mi.position.x / MERGE_CELL), floori(mi.position.z / MERGE_CELL)) if cells else Vector2i.ZERO
-		# meshes of one kind of vertex data per group (bevelled boxes, statues, primitives)
-		var fmt := (mi.mesh as ArrayMesh).surface_get_format(0) if mi.mesh is ArrayMesh else -1
-		var key := [mi.material_override, mi.layers, mi.cast_shadow, cell, fmt]
-		if not groups.has(key):
-			groups[key] = []
-		groups[key].append(mi)
 	var left: Array[MeshInstance3D] = []
-	for key: Array in groups:
+	BuildSteps.run(merge_steps(from, cells, left))
+	return left
+
+
+## The vertices one slice of a merge joins (merge_steps: a frame each on a new room's black screen).
+const MERGE_SLICE := 6000
+
+
+## merge() in steps (BuildSteps): the first sorts the pieces into groups and gives back one step per slice of about
+## MERGE_SLICE vertices; `left` gathers the meshes it leaves, as merge() returns them.
+func merge_steps(from := 0, cells := true, left: Array[MeshInstance3D] = []) -> Array[Callable]:
+	return [func() -> Array[Callable]:
+		var groups := {}
+		var t0 := Time.get_ticks_usec()
+		var prims := 0
+		for i in range(from, _built.size()):
+			var mi := _built[i]
+			if not is_instance_valid(mi) or mi.material_override == null or mi.mesh == null or mi.mesh.get_surface_count() != 1:
+				continue
+			if mi.mesh is PrimitiveMesh:
+				prims += 1
+			var cell := Vector2i(floori(mi.position.x / MERGE_CELL), floori(mi.position.z / MERGE_CELL)) if cells else Vector2i.ZERO
+			# meshes of one kind of vertex data per group (bevelled boxes, statues, primitives)
+			var fmt := (mi.mesh as ArrayMesh).surface_get_format(0) if mi.mesh is ArrayMesh else -1
+			var key := [mi.material_override, mi.layers, mi.cast_shadow, cell, fmt]
+			if not groups.has(key):
+				groups[key] = []
+			groups[key].append(mi)
+		var t1 := Time.get_ticks_usec()
+		_built.resize(from)
+		var slices: Array[Callable] = []
+		# the primitives' arrays made first, a few a step (a big group is joined in one step, from arrays at hand)
+		var making: Array[Mesh] = []
+		var seen := {}
+		for key: Array in groups:
+			if (groups[key] as Array).size() < 2:
+				continue
+			for mi: MeshInstance3D in groups[key]:
+				if not mi.mesh.has_meta(ARRAYS) and not seen.has(mi.mesh):
+					seen[mi.mesh] = true
+					making.append(mi.mesh)
+		for k in range(0, making.size(), PRIMITIVES_A_STEP):
+			slices.append(func() -> void:
+				for mesh in making.slice(k, k + PRIMITIVES_A_STEP):
+					arrays_of(mesh))
+		var batch: Array = []
+		var verts := 0
+		for key: Array in groups:
+			batch.append(key)
+			for mi: MeshInstance3D in groups[key]:
+				verts += _vertex_count(mi.mesh)
+			if verts >= MERGE_SLICE:
+				slices.append(_join.bind(groups, batch, left))
+				batch = []
+				verts = 0
+		if not batch.is_empty():
+			slices.append(_join.bind(groups, batch, left))
+		if Dev.has("trace-build"):
+			print("MERGE groups %.1f ms (%d primitives) counts %.1f ms" % [(t1 - t0) / 1000.0, prims, (Time.get_ticks_usec() - t1) / 1000.0])
+		return slices]
+
+
+## A piece's weight in a slice: its vertices when its arrays are at hand, else (a primitive whose arrays are still to
+## be made, about half a millisecond each on the iGPU's machine) PRIMITIVE_WEIGHT.
+const PRIMITIVE_WEIGHT := 400
+## The primitives whose arrays one step of a merge makes (merge_steps).
+const PRIMITIVES_A_STEP := 8
+
+
+static func _vertex_count(mesh: Mesh) -> int:
+	if mesh.has_meta(ARRAYS):
+		return ((mesh.get_meta(ARRAYS) as Array)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+	return PRIMITIVE_WEIGHT
+
+
+func _join(groups: Dictionary, keys: Array, left: Array[MeshInstance3D]) -> void:
+	for key: Array in keys:
 		var list: Array = groups[key]
 		if list.size() < 2:
 			left.append(list[0])
 			continue
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		for mi: MeshInstance3D in list:
-			st.append_from(mi.mesh, 0, mi.transform)
 		var joined := MeshInstance3D.new()
-		joined.mesh = st.commit()
+		var arrays := joined_arrays(list)
+		if arrays.is_empty():
+			var st := SurfaceTool.new()
+			st.begin(Mesh.PRIMITIVE_TRIANGLES)
+			for mi: MeshInstance3D in list:
+				st.append_from(mi.mesh, 0, mi.transform)
+			joined.mesh = st.commit()
+		else:
+			var mesh := ArrayMesh.new()
+			mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+			joined.mesh = mesh
 		joined.material_override = key[0]
 		joined.layers = key[1]
 		joined.cast_shadow = key[2]
@@ -1341,8 +1522,6 @@ func merge(from := 0, cells := true) -> Array[MeshInstance3D]:
 		for mi: MeshInstance3D in list:
 			root.remove_child(mi)
 			mi.free()
-	_built.resize(from)
-	return left
 
 
 ## How many pieces were built and not merged yet (merge's `from`).

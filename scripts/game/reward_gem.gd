@@ -156,12 +156,103 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 		face.position.z = (THICK * 0.5 + 0.002) * (1.0 if side == 0 else -1.0)
 		face.rotation.y = 0.0 if side == 0 else PI
 		spin.add_child(face)
-	if stand == Stand.RELIQUARY:
+	if stand == Stand.RELIQUARY or stand == Stand.FLOAT:
 		var cradle := MeshInstance3D.new()
 		cradle.mesh = _cradle_mesh
 		cradle.material_override = _rim_mat
 		spin.add_child(cradle)
+	if stand == Stand.FLOAT:
+		_door_mount(parent, frame, spin)
 	return spin
+
+
+## AP-4 3.1 (ART-01.5): the disc over a door's mouth is held, never loose in the air: a rod of old gold from the top of
+## the door's arch (DOOR_ARCH_BACK m out of the room, DOOR_ARCH_TOP high) to the cradle under the disc's foot; where the
+## door is stairs with no arch, from the top of a low iron post (DOOR_POST: radius, height) beside the mouth, on its
+## cheek off the floor. The rod meets the disc on its turning axis, so the swaying disc stays on it. Nothing collides.
+const DOOR_ROD := 0.04
+const DOOR_ARCH_TOP := 4.9
+const DOOR_ARCH_BACK := 0.5
+const DOOR_POST := Vector2(0.07, 1.2)
+const DOOR_KNOB := 0.09
+const DOOR_POST_SIDE := 0.5
+const DOOR_IRON := Color(0.13, 0.12, 0.11)
+static var _iron_mat: StandardMaterial3D
+
+
+static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
+	var rooms := parent.get_parent() as Rooms
+	if rooms == null or rooms.game == null or rooms.game.arena == null:
+		return
+	var a := rooms.game.arena
+	var p := Vector2(parent.position.x, parent.position.z)
+	var i := -1
+	for k in a.exits.size():
+		if a.door_label(k).distance_to(p) < 0.05:
+			i = k
+	if i < 0:
+		return
+	var inward := a.exit_inward[i] if i < a.exit_inward.size() else Vector2(0, 1)
+	var side := Vector2(-inward.y, inward.x)
+	var edge := a.exits[i]
+	var anchor: Vector3
+	if a.look != null and a.look.in_wall(i):
+		var c := edge - inward * DOOR_ARCH_BACK
+		anchor = Vector3(c.x, DOOR_ARCH_TOP, c.y)
+	else:
+		var half := Arena.STAIRS_HALF_WIDTH
+		var base := 0.0
+		if a.layout != null and i < a.layout.exits.size() and a.look != null:
+			half = absf(a.layout.exits[i].mouth.size.dot(side)) * 0.5
+			base = ArenaRoom.EXIT_CHEEK.y
+		# on the side nearer the camera's right, so the rod crosses no part of the disc's face
+		var right := Vector2(cos(deg_to_rad(Feel.live().cam_yaw)), -sin(deg_to_rad(Feel.live().cam_yaw)))
+		var sd := 1.0 if side.dot(right) >= 0.0 else -1.0
+		var c := edge - inward * ArenaRoom.DOOR_POST_OUT + side * sd * (half + ArenaRoom.DOOR_POST_OUT + DOOR_POST_SIDE)
+		# standing on the stairs' cheek (its top over the floor), a knob of old gold on top where the rod starts
+		var post := _rod(frame, _local(frame, parent, Vector3(c.x, base, c.y)), _local(frame, parent, Vector3(c.x, base + DOOR_POST.y, c.y)),
+			DOOR_POST.x, _iron())
+		post.name = "DoorPost"
+		anchor = Vector3(c.x, base + DOOR_POST.y, c.y)
+		_rod(frame, _local(frame, parent, anchor - Vector3(0, DOOR_KNOB, 0)), _local(frame, parent, anchor + Vector3(0, DOOR_KNOB, 0)),
+			DOOR_KNOB, _rim_mat)
+	# the disc's foot under the cradle, where the sway leaves it (the lean tilts it, the turn keeps it on the axis)
+	var foot := spin.position + Basis(Vector3.RIGHT, -deg_to_rad(Feel.live().cam_pitch) * LEAN) * Vector3(0, -RADIUS - CRADLE_TUBE * 2.0, 0)
+	var rod := _rod(frame, _local(frame, parent, anchor), foot, DOOR_ROD, _rim_mat)
+	rod.name = "DoorRod"
+
+
+## A world point (the room's) in the frame's coordinates (the frame turned under `parent`, which stands in the room).
+static func _local(frame: Node3D, parent: Node3D, w: Vector3) -> Vector3:
+	return frame.basis.inverse() * (w - parent.position)
+
+
+## A straight rod from a to b (the frame's coordinates) of the given radius, under `frame`, casting no shadow.
+static func _rod(frame: Node3D, a: Vector3, b: Vector3, radius: float, mat: Material) -> MeshInstance3D:
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = radius
+	cyl.bottom_radius = radius
+	cyl.height = a.distance_to(b)
+	cyl.radial_segments = 8
+	cyl.rings = 1
+	var mi := MeshInstance3D.new()
+	mi.mesh = cyl
+	mi.material_override = mat
+	var up := (b - a).normalized()
+	var x := up.cross(Vector3.FORWARD if absf(up.dot(Vector3.FORWARD)) < 0.9 else Vector3.RIGHT).normalized()
+	mi.transform = Transform3D(Basis(x, up, x.cross(up)), (a + b) * 0.5)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	frame.add_child(mi)
+	return mi
+
+
+static func _iron() -> StandardMaterial3D:
+	if _iron_mat == null:
+		_iron_mat = StandardMaterial3D.new()
+		_iron_mat.albedo_color = DOOR_IRON
+		_iron_mat.metallic = 0.6
+		_iron_mat.roughness = 0.6
+	return _iron_mat
 
 
 ## True when `parent` stands where a door's sign floats (Arena.door_label of one of the room's exits).

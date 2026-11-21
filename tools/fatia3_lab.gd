@@ -51,6 +51,18 @@ func _run() -> void:
 	boot.call(&"_open", codex, 1, [7, data])
 	await create_timer(0.5).timeout
 	await _shot("codex_angels")
+	boot.call(&"_close_sub")
+	await create_timer(0.3).timeout
+	# the Inimigos tab: a defeated one in the Livro's ink (FigureSketch), and one never defeated in silhouette
+	var enemies: Control = (load("res://scripts/ui/codex_screen.gd") as GDScript).new()
+	boot.call(&"_open", enemies, 1, [4, data])
+	await create_timer(0.4).timeout
+	(enemies.find_child("list", true, false).find_child("skeleton", true, false) as Control).grab_focus()
+	await create_timer(0.8).timeout
+	await _shot("codex_enemy_ink")
+	(enemies.find_child("list", true, false).find_child("mage", true, false) as Control).grab_focus()
+	await create_timer(0.8).timeout
+	await _shot("codex_enemy_unknown")
 	quit()
 
 
@@ -64,6 +76,8 @@ func _sample() -> Dictionary:
 	var f := Forge.new(Forge.load_catalog())
 	f.buy(d, &"awaken_sede")
 	f.buy(d, &"awaken_impeto")
+	for k in 12:
+		SaveData.codex_add(d, "enemies", "skeleton", "defeated")
 	var def := OficiosDef.live()
 	Oficios.block(d).orders[String(def.order)] = "done"
 	for pair: Array in [["sarael", 4, 3, 2], ["shomael", 2, 1, 0]]:

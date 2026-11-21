@@ -447,34 +447,47 @@ var _cage_clock := 0.0
 ## (RoomLayout: floor, hero_spawn, boss_spawn, cam_target; the plan is built for its 12.5 m circle and stands on its
 ## centre), dresses the world's air for it and draws the veil over the way in; alone (the lab, tests) the spec's own.
 func build(_arena: Node3D = null, layout: RoomLayout = null, seed_: int = 1406) -> void:
-	if layout != null:
-		if layout.floor != null:
-			center = layout.floor.center
-			floor_radius = layout.floor.radius
-			walk_radius = floor_radius - (FLOOR_RADIUS - WALK_RADIUS)
-			if not is_equal_approx(floor_radius, FLOOR_RADIUS):
-				push_warning("BossChamber: built for a %.1f m floor, the layout's is %.1f m" % [FLOOR_RADIUS, floor_radius])
-		hero_spawn = layout.hero_spawn
-		boss_spawn = layout.boss_spawn
-		cam_target = layout.cam_target
-		position = Vector3(center.x, 0.0, center.y)
-	_rng.seed = seed_
-	kit = ArenaKit.new(self, seed_)
-	m = kit.masonry
-	tomb = TombKit.new(m)
-	_floor()
-	_under()
-	_perimeter()
-	_facade()
-	_entry()
-	_far()
-	_light()
-	_stylize()
-	m.merge()
-	_apply_seal()
-	if layout != null:
-		set_veil(true)
-		_dress_world.call_deferred()
+	BuildSteps.run(build_steps(layout, seed_))
+
+
+## The build in steps, in order (QA P1-1: Arena.build_async gives each its own black frame).
+func build_steps(layout: RoomLayout = null, seed_: int = 1406) -> Array[Callable]:
+	set_process(false)  # (its materials are made by the steps)
+	return [
+		func() -> void:
+			if layout != null:
+				if layout.floor != null:
+					center = layout.floor.center
+					floor_radius = layout.floor.radius
+					walk_radius = floor_radius - (FLOOR_RADIUS - WALK_RADIUS)
+					if not is_equal_approx(floor_radius, FLOOR_RADIUS):
+						push_warning("BossChamber: built for a %.1f m floor, the layout's is %.1f m" % [FLOOR_RADIUS, floor_radius])
+				hero_spawn = layout.hero_spawn
+				boss_spawn = layout.boss_spawn
+				cam_target = layout.cam_target
+				position = Vector3(center.x, 0.0, center.y)
+			_rng.seed = seed_
+			kit = ArenaKit.new(self, seed_)
+			m = kit.masonry
+			tomb = TombKit.new(m)
+			_floor(),
+		_under,
+		_perimeter,
+		_facade,
+		_entry,
+		_far,
+		_light,
+		_stylize,
+		func() -> Array[Callable]:
+			var more := m.merge_steps()
+			more.append(func() -> void:
+				_apply_seal()
+				if layout != null:
+					set_veil(true)
+					_dress_world.call_deferred()
+				set_process(true))
+			return more,
+	]
 
 
 ## The world's air for the chamber (air_values), once the arena stands in the game's world: given to the owner of
