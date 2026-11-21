@@ -2112,7 +2112,7 @@ const FORGE_DIR := "res://data/forge/emeth/"
 
 
 func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonMod], track: StringName = &"temper",
-		slot: StringName = &"", tool: StringName = &"") -> void:
+		slot: StringName = &"", tool: StringName = &"", material: StringName = MaterialPurse.SILVER) -> void:
 	var r := ForgeRank.new()
 	r.id = id
 	r.track = track
@@ -2121,7 +2121,11 @@ func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonM
 	r.rank = rank
 	r.name_key = StringName("forge_" + id)
 	r.desc_key = StringName("forge_%s_desc" % id)
-	r.material = MaterialPurse.SILVER
+	if track == Forge.INSCRIBE:
+		# (an inscribed Encanto reads as the Encanto: its own name and text)
+		r.name_key = StringName("enchant_" + id)
+		r.desc_key = StringName("enchant_%s_desc" % id)
+	r.material = material
 	r.cost = cost
 	r.mods = mods
 	_save(r, FORGE_DIR + "%02d_%s.tres" % [n, id])
@@ -2135,6 +2139,29 @@ func _forge_rank(n: int, id: StringName, rank: int, cost: int, mods: Array[BoonM
 ## one resource (OficiosDef): restored for 20 Prata, the Pedra Funda capped at 10, two veins a descent in the Fendas and
 ## the Runas past the guardian, the head's room between depths 4 and 8, the guardian gives it after 2 misses, the
 ## Vendedor's order of 2 Pedra Funda and 30 Prata makes the angels' preview.
+## The Obras of the Santuário (Fatia 3, sistemas.md 1.7, working names), made at the Vendedor once his stall is open:
+## Altar Restaurado (the altar comes in 35% of its layers, was 20), Fonte Viva (it heals 55%, was 40) and Banca da Rota
+## (the shop on the way, 4 items, was 3).
+func _obras() -> void:
+	var dir := "res://data/obras/"
+	DirAccess.make_dir_recursive_absolute(dir)
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir + f)
+	var list := [
+		[&"obra_altar", {OficiosDef.SILVER: 40, OficiosDef.MEMORY: 4}, {"altar_chance": 0.35}],
+		[&"obra_fonte", {OficiosDef.SILVER: 30, OficiosDef.MEMORY: 3}, {"fountain_heal": 0.55}],
+		[&"obra_banca", {OficiosDef.SILVER: 50, OficiosDef.EMERALD: 1}, {"route_shop_items": 4}],
+	]
+	for i in list.size():
+		var o := ObraDef.new()
+		o.id = list[i][0]
+		o.name_key = o.id
+		o.desc_key = StringName(String(o.id) + "_desc")
+		o.cost = list[i][1]
+		o.stage = list[i][2]
+		ResourceSaver.save(o, dir + "%02d_%s.tres" % [i, o.id])
+
+
 func _oficios() -> void:
 	DirAccess.make_dir_recursive_absolute("res://data/oficios/")
 	var d := OficiosDef.new()
@@ -2169,10 +2196,27 @@ func _forge() -> void:
 	_forge_rank(13, &"refine_onda_larga", 1, 25, [_fixed(&"wave_size_pct", 0.2, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
 	_forge_rank(14, &"refine_onda_pesada", 1, 25, [_fixed(&"stun_pct", 0.5, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
 	_forge_rank(15, &"refine_onda_pronta", 1, 25, [_fixed(&"blow_speed", 0.08, [], &"heavy")] as Array[BoonMod], R, &"special", tool)
+	# Fatia 3 (sistemas.md 1.5, working names): Despertar, one property of the blade awake at a time, in Esmeralda,
+	# opened by the second tool: Sede (0.5 life a kill), Ímpeto (3 Magia more on each finisher), Eco Longo (each
+	# finisher strikes again 0.25 s later for a third, as the Eco da Verdade)
+	var A := Forge.AWAKEN
+	var wake := Forge.TOOL_AWAKEN
+	_forge_rank(20, &"awaken_sede", 1, 2, [_fixed(&"heal_on_kill", 0.5)] as Array[BoonMod], A, &"blade", wake, MaterialPurse.EMERALD)
+	_forge_rank(21, &"awaken_impeto", 1, 3, [_fixed(&"finisher_magick", 3)] as Array[BoonMod], A, &"blade", wake, MaterialPurse.EMERALD)
+	_forge_rank(22, &"awaken_eco", 1, 4, [_fixed(&"echo_pct", 0.33, [], &"finisher"), _fixed(&"echo_delay", 0.25, [], &"finisher")] as Array[BoonMod],
+		A, &"blade", wake, MaterialPurse.EMERALD)
+	# Inscrever: each Encanto past the first three learned for 20 Prata (the rank's id is the Encanto's), opened by the
+	# third tool; no numbers of its own (the Encanto's are summed when taken in a descent)
+	for i in INSCRIBED.size():
+		_forge_rank(30 + i, INSCRIBED[i], 1, 20, [] as Array[BoonMod], Forge.INSCRIBE, INSCRIBED[i], Forge.TOOL_INSCRIBE)
 
 
 const ANGEL_DIR := "res://data/angels/"
 const ENCHANT_DIR := "res://data/enchants/"
+
+
+## The Encantos learned at the Forja (Inscrever, Fatia 3); the first three come learned.
+const INSCRIBED: Array[StringName] = [&"corte_sismico", &"onda_gemea", &"eco_do_passo"]
 
 
 func _enchant(n: int, id: StringName, slot: Boon.Slot, mods: Array[BoonMod], excludes: Array[StringName] = []) -> void:
@@ -2183,7 +2227,7 @@ func _enchant(n: int, id: StringName, slot: Boon.Slot, mods: Array[BoonMod], exc
 	e.slot = slot
 	e.mods = mods
 	e.excludes = excludes
-	e.learned = true
+	e.learned = not INSCRIBED.has(id)
 	_save(e, ENCHANT_DIR + "%02d_%s.tres" % [n, id])
 
 
@@ -2202,6 +2246,17 @@ func _enchants() -> void:
 	_enchant(1, &"eco_da_verdade", S.ATTACK, [_fixed(&"echo_pct", 0.5, [], &"spin"), _fixed(&"echo_delay", 0.3, [], &"spin")] as Array[BoonMod])
 	_enchant(2, &"retorno_do_corte", S.DASH, [_fixed(&"return_time", 1.0, [], &"dash"), _fixed(&"return_reach", 0.3, [], &"dash")] as Array[BoonMod],
 		[&"passo_encadeado", &"fio_do_passo"] as Array[StringName])
+	# Fatia 3 (RJ-8; auditoria.md 3.1, working names), learned at the Forja (Inscrever): Corte Sísmico, the spin
+	# strikes the floor: a pulse of 3 m for 25 round him; Onda Gêmea, the special throws two smaller waves in a fan,
+	# 15 each, 9 m (never with the Onda Carregada); Eco do Passo, the Corte Veloz strikes again 0.3 s later for half
+	# (never with the Retorno do Corte, the same dash)
+	_enchant(3, &"corte_sismico", S.ATTACK, [_fixed(&"ground_pulse", 25.0, [], &"spin"), _fixed(&"ground_pulse_m", 3.0, [], &"spin")] as Array[BoonMod])
+	var twin := _wave(&"heavy", 15.0, 9.0, 2.4)
+	twin.append(_fixed(&"blow_wave_fan", 2, [], &"heavy"))
+	twin.append(_fixed(&"blow_wave_side", 1, [], &"heavy"))
+	_enchant(4, &"onda_gemea", S.SPECIAL, twin, [&"onda_carregada"] as Array[StringName])
+	_enchant(5, &"eco_do_passo", S.DASH, [_fixed(&"echo_pct", 0.5, [], &"dash"), _fixed(&"echo_delay", 0.3, [], &"dash")] as Array[BoonMod],
+		[&"retorno_do_corte"] as Array[StringName])
 
 
 func _angel(n: int, id: StringName, family: Boon.Family, symbol: int, color: Color) -> void:

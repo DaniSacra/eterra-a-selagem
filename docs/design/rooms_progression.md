@@ -1500,3 +1500,65 @@ Decisões de movimento da P.2 que são dado de sala: além das quatro acima, tod
 FB2, JA2, JB2, SD2, PA2, RA2, RB2, GU2, PR2, AL2, CS2) e as medidas confirmam: Cripta B passagem sul 50% do tempo do
 herói, Fendas A e B leste 61 a 66% com a volta pelo sul 6%, Jardim A leste 69%, Runas A borda 51%. O aceite do AT-SA2
 (1º aviso inteiro na tela da Perto em 8 de 8 sementes) pede captura, não dado.
+
+## Atlas, colunas 2 e 3: regras dos quebráveis por sala, Câmara do Selo, AT-SA2 e AT-RB2 (2026-11-21)
+
+Regras de cada sala que o teste geral não pegava, agora em `tests/test_breakable_rules.gd`:
+
+- **Fendas e Ponte (AT-FA3, FB3, PA3, PB3)**: nenhum quebrável no tabuleiro. Nas Fendas a regra é `RiftLook.BRIDGES`
+  com 0,5 m de folga além do raio; na Ponte, os tabuleiros que o `BridgeLook` lê (polígono de 4 cantos até
+  `DECK_WIDE`). Na Ponte também vale ficar a 2,5 m ou mais da linha das pontes, e no patamar da B só na borda. O
+  caixote do grupo oeste da Ponte estava a 2,2 m da linha: o grupo foi para (-27,5; 3 a 3,8), longe também do
+  nascimento tardio.
+- **Jardim B (AT-JB3)**: os vasos de água ficam a até 2 m da borda oeste, a borda úmida do lago J5. Pelo menos dois.
+- **Runas (AT-RA3, RB3)**: o círculo do quebrável nunca toca ladrilho que arma (`ArenaHazard.live`, com as portas que o
+  `RuneFloor` passa). Na B ficam a 3 m ou mais da pedra quieta. Achado: dois dos três grupos estavam sobre ladrilhos
+  vivos, no canto nordeste e junto da parede norte. Só o chão quieto da entrada (`RUNES_ENTRY`) e os cantos cortados não
+  armam, então os três grupos foram para a entrada: parede oeste em z -2,4, canto sudoeste e parede sul a oeste da porta.
+- **Guardião (AT-GU3)**: em toda variante do Santuário, 4 m ou mais da linha entre o `boss_spawn` e a entrada do herói,
+  e sempre na periferia (a mais de 2,5 m do chão para dentro não). Já passava.
+- **Loja (AT-LO3)**: 3 m ou mais de todo relicário, com 1 a 5 itens na fileira do `Rooms._build_shop`: a de rota tem
+  3, a última 5. Já passava.
+
+**Câmara do Selo (AT-CS3)**. Oito peças de cerâmica em três grupos, no `_place_breakables`, que agora roda depois do
+`boss_layout`:
+
+- no patamar da escada sul (rumo 203 a 211, ao lado da entrada);
+- na borda a noroeste e a nordeste, de 11 a 12 m do selo, na metade longe da câmera (fora do arco da frente, cuja pedra
+  abre em volta dele);
+- além do anel do ritual (6,5 m) e das runas dele, e longe do vão da porta.
+
+As faixas da Tempestade saem em qualquer direção, então nenhuma borda fica fora delas. Os golpes e avisos de Morvath
+quebram as peças (`Ground.zone_landed`).
+
+O `test_boss_exits` foi refeito. Com as peças inteiras, cada uma é tratada como pedra sólida: os padrões e as camadas
+precisam ter saída sem passar por elas, e ninguém começa dentro de uma. Isso é mais duro que o jogo, onde elas não
+param nada. Com as peças quebradas fica só o chão, que são os testes de antes. Numa câmara de verdade
+(`Game.rebuild_room`), inteiras e quebradas, cada ponto delas é chão livre e a varredura do herói atravessa. Em 15
+testes, todos com saída.
+
+**AT-SA2**. `tools/first_warning.gd` joga a primeira sala com o robô e mede onde o contorno do primeiro aviso de inimigo
+cai na tela, no quadro em que ele aparece:
+
+| Câmera | Sementes | Aviso inteiro | Faixa na tela |
+|---|---|---|---|
+| Perto | 1 a 8 | 8 de 8 | x 0,31 a 0,62, y 0,40 a 0,71 |
+| Longe | 1 a 8 | 8 de 8 | x 0,27 a 0,58, y 0,47 a 0,65 |
+
+O primeiro aviso é do esqueleto em 7 sementes e do Escudo em 1, aos 3,3 a 10,9 s. O mais baixo é o Escudo da semente 2
+na Perto, que vai a 0,71 da altura, acima da fileira do HUD.
+
+**AT-RB2**. O `RESULT` das Runas traz agora `rooms[].hazard.patterns`, com até 16 entradas
+`[segundo da sala, padrão, ladrilhos acesos]`. O ciclo medido é de 3,87 s: 1,2 s de aviso, 0,25 s de golpe e 2,4 s de
+descanso.
+
+| Semente | Padrões |
+|---|---|
+| 5 | 8 de 9 `islands` (7 a 14 ladrilhos), 1 `frame` |
+| 1 | `frame`, 3 `islands`, 2 `checker` |
+| 2 | 2 `frame`, 1 `checker` |
+
+Quando há mais de 3 inimigos de pé, o `checker` (o único denso da B) não sai e o sorteio fica entre `frame` e
+`islands`. Com a sala cheia a B pode ficar quase só em ilhas, como na semente 5. É número (`dense_standing`, `DENSE`),
+fica para o balance-designer se a medida com gente pedir. A captura do ciclo
+na GPU (semente 1, estilizado) está no relatório da entrega.
