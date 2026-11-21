@@ -1,5 +1,34 @@
 # Backlog de A Selagem
 
+## Estado de 2026-11-21 noite (sessão principal, commit `0269757`)
+
+Feito hoje (cinco exes): fluxo título → Iniciar → saves (save vazio direto à 1ª descida, Santuário depois da 1ª morte);
+AP-4 seção 1 (capa, fitas, árvore no papel, abertura com capitular, Compêndio ilustrado, MAP-06, título); QA P2-1 e P2-3;
+marcos do atlas em 8 salas (CB1, SE1, FB1, FA1, SD1, JB1, PA1, RB1; os outros validados); revisão de arte
+`docs/art/review_2026-11-21.md` (10 itens feitos); Meshy no jogo (cutelo, espada e escudo do cavaleiro, cajado, foice de
+Morvath com cabo em código, estátua do Salão, leões do hub; 135 créditos, plano Pro, Q-01 fechada); captura sempre
+estilizada e Perto; agente `hero-designer` e as specs dos 4 heróis em `docs/design/heroes/`.
+
+**Próximo (ordem sugerida)**
+1. Guerreiro nos 5 botões + Espaço (`docs/design/heroes/guerreiro.md`): o E novo (Brado de Guerra recomendado), ultimate
+   no Shift, interagir no F, HUD de 5 losangos. Espera as respostas do Daniel abaixo.
+2. Conferência técnica: suíte inteira depois do reassado de Morvath; custo das salas novas na iGPU 720 Baixa; capturas
+   do leão no patamar do hub.
+3. Restos da revisão de arte: névoa de Morvath ainda lilás e clara; árvore do Jardim (diminuir mexe na colisão).
+4. Fora dos 10 da revisão: ar da Fenda no violeta de Morvath (índigo sugerido); vermelho dos avisos dos atiradores.
+5. Heróis novos (Maga, Ladina, Paladino): só depois das decisões de lore e do Guerreiro fechado; pedem modelo e
+   animação (Meshy com estimativa antes).
+
+**Perguntas abertas ao Daniel**
+- Árvore do Jardim: diminuir (mexe na colisão) ou só escurecida?
+- Névoa de Morvath: escurecer mais?
+- Guerreiro: E = Brado de Guerra ou Investida do Leão? Ultimate no Shift e interagir no F?
+- Maga e Ladina: paladinas da Ordem, outra ordem ou companheiras? A Ladina é a Andilla do cânone?
+- Paladino: Guarda de verdade (bloqueio com custo)?
+- Título: a arte tem cruzes (regra do projeto); retocar ou deixar?
+- As de antes seguem: nomes dos paladinos, título de Morvath, nome do hub, créditos.
+
+
 ## Estado e ordem de 2026-11-20 (sessão principal com o Daniel, commit lido `22d9025`)
 
 Substitui a "Ordem de execução de 2026-11-19 noite" (mantida abaixo como histórico). Regra que vale: dentro de um lote
