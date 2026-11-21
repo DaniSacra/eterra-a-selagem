@@ -1,5 +1,20 @@
 # Backlog de A Selagem
 
+## Estado de 2026-11-21, fim do dia (commit `d808893`, exe dos Lotes 1 a 4 com o Daniel)
+
+Feito: itens 1, 6 (H1 a H6, G1, G3, G4, G5 experimento `--ink`, P1, P4), 7 (caminho B: kit novo e números mais
+fracos), AN-1 (anjos 1 a 4 no Encontro), AN-3. Medido: novato morre em 40% dos guardiões; evoluído só 7 pontos melhor
+(`docs/design/balance.md`, "Meta nova").
+
+**Falta (ordem sugerida)**
+1. Lote 5: árvore da conta, Forja por herói, desbloqueios (as evoluções do Santuário têm de pesar 25 a 40 pontos).
+2. AN-2: famílias dos anjos 5 a 7 (Véu, Maré, Marca) e Elos novos; retratos 5 a 7 no jogo.
+3. SWORN restante: SR-G2 sangue (pergunta), SR-P2 laje que cede, SR-P3 grade de fosso, SR-P5 relíquia, cachoeira da SR-G3.
+4. Quickwins visuais: cruzes do título, cabo da foice de Morvath, estações fechadas do hub, ar da Fenda (índigo),
+   vermelho dos atiradores, leão no patamar, barra com nome do guardião, texto do vendedor ("Pedra Funda").
+5. Armadilha: linha 1,6 m e ciclo 3,5 s no Santuário A (fácil demais para o robô).
+6. Guerreiro caminho A (identidade); heróis novos (Maga, Ladina, Paladino) depois.
+
 ## Estado de 2026-11-21 noite (sessão principal, commit `0269757`)
 
 Feito hoje (cinco exes): fluxo título → Iniciar → saves (save vazio direto à 1ª descida, Santuário depois da 1ª morte);
