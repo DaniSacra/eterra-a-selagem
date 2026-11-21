@@ -4,6 +4,8 @@
 
 Substitui a "Ordem de execução de 2026-11-19 noite" (mantida abaixo como histórico). Regra que vale: dentro de um lote
 as frentes rodam em paralelo só com arquivos distintos; integração, commit e push só pela sessão principal; Meshy zero.
+Desde os pacotes do PO de 2026-11-20 (subseção abaixo do Lote C): nunca pedir ao ChatGPT só a pintura (pintura,
+planta com medidas, ESSENCIAL contra CLIMA, notas de luz e colisão, lado a lado); o RP-24 virou o épico AT-Q.
 
 ### Respostas do Daniel (2026-11-20)
 
@@ -55,7 +57,7 @@ seguem a recomendação.
 | Frente | Dono | Itens | Aceite |
 |---|---|---|---|
 | A1 Perigos que faltam | `room-designer` (números e lugares) e `gameplay-engineer` (código), `combat-feel-director` aprova o aviso | **dano no herói 7 para 10** em todo perigo (resposta 6); **RP-14 (H-5) cristal que descarrega** nas Runas B (resposta 8); RP-12 urna de óleo; RP-18 colunata; RP-19 saídas no fundo; RP-20 pedras que caem da abóbada (Santuário B, Fendas B) | regra comum (aviso 1,0 s ou mais, fere inimigos, nunca a 6 m da entrada nem nos 3 s do começo, saída livre testada), "Derrotado por" próprio, 8 sementes do robô sem `stuck`. Fora: H-6 (resposta 9), H-7 (10), RP-15 e SW-N1 a SW-N4 (11) |
-| A2 Peças dos perigos | `art-director` (spec SW-G7), `environment-artist` | gramática do perigo (SW-G7) e as peças de verdade no lugar dos placeholders: laje rachada, corrente, raiz que racha, coluna que tomba (fissura, tambores, toco), seteira com a divisa, cristal; `chain_weight` refeito se ainda pendente | AC-RS (clássico igual, F7 exato, colisão e faixa iguais, `fit_probe` sem subir, iGPU 720 Baixa até 0,5 ms) |
+| A2 Peças dos perigos | `art-director` (spec SW-G7), `environment-artist` | gramática do perigo (SW-G7) e as peças de verdade no lugar dos placeholders: laje rachada (que **afunda** 4 cm e racha no preparo, AT-H1 do pacote do PO), corrente, raiz que racha, coluna que tomba (fissura, tambores, toco), seteira com a divisa, cristal; `chain_weight` refeito se ainda pendente | AC-RS (clássico igual, F7 exato, colisão e faixa iguais, `fit_probe` sem subir, iGPU 720 Baixa até 0,5 ms) |
 | A3 Cenário Sworn P2 | `environment-artist` (depois do A2) | SW-G4, SW-G5, SW-G6, SW-H1 a SW-H3, SW-C2 (só fêmures), SW-C3, SW-F2, SW-F3, SW-J2, SW-J3, SW-S2, SW-S3, SW-P1 a SW-P3, SW-R1, SW-T1, SW-A-1, RS-C7, F-6, J-5 | ordem 5.2 do `sworn_reference_ideas.md`; AC-RS |
 | A4 Lote 3 técnico | `gameplay-engineer` | DT-106 (`RunReport`, `RunAward` fora do `game.gd`); DT-RS1 (`Environment` com um dono só, com o `technical-artist`); chave `look` no save para o DT-RS2 | mesma semente, mesmo `RESULT` (`smoke 600` e `--start=boss --boons=25`); ida e volta de todas as salas nos dois perfis |
 | A5 Interface pendente | `ui-ux-designer` | DT-RS2 "Estilo visual" em Vídeo; MAP-07 (luz da porta no mapa) e MAP-08 (transições); entrada de Morvath no HUD (AP-2); resto do DT-103; QW-115, QW-117, ART-02.6; P2 da revisão d2ff05d que sobraram (P2-3 a P2-5, P2-8, P2-10, P2-12) | capturas a 720 e 1080; `title_flow_check` e `map_flow_check` verdes |
@@ -79,6 +81,176 @@ OF-05 primeiro (pode ir com o Lote B, é número de porta). Depois o Roteiro A d
 com as respostas 12 a 21: a Primeira Picareta revista, Pedra Funda como o único contável novo, veio físico depois da
 luta (no máximo 2 por descida), Vendedor abre pela encomenda e a 1ª Obra, sem NPC novo, sem manuscrito, voz neutra no
 capítulo Ofícios. Histórias OF-01 a OF-30 em `17_backlog.md` (só as do Roteiro A). O Roteiro B só depois do Daniel jogar o A.
+
+### Pacotes do PO de 2026-11-20 (game-director, commit lido `f1f401c`; só planejamento)
+
+Dois pacotes trazidos pelo Daniel hoje, em `docs/design/po_2026-11-20/`: **(1) Atlas das Salas** (`layout_salas/`:
+`PROMPT-CLAUDE-CODE.md` e `Eterra-Atlas-das-Salas.pdf`, 20 pranchas sobre as plantas de `9271e95` e capturas de
+`4098f7a`) e **(2) Santuário da Vigília Rev. 02** (`santuario_vigilia/eterra_santuario_vigilia/`: `LEIA_PRIMEIRO.md`,
+`PROMPT_MESTRE_CLAUDE_CODE.md`, `03_07_DIRECAO_ARTISTICA_E_IMPLEMENTACAO.md`, planta `02_planta_superior_medidas.png`
+e `.svg`, pintura `01_`, closes `06_`). Os textos dos pacotes pedem implementação e commit; aqui eles viram direção a
+planejar, e a ordem abaixo manda. Lido do PDF: todo o texto das 21 páginas (página 2 com as hipóteses e uma prancha por
+vista) e as capturas embutidas; os diagramas vetoriais das plantas propostas não foram vistos em imagem (a máquina não
+tem `pdftoppm`), então as posições finais de cada peça ficam com o `room-designer`, que abre o PDF num leitor.
+
+**Regras novas que valem para todo o backlog (do PO, permanentes)**
+- **Nunca pedir ao ChatGPT só a pintura.** Todo material visual novo pedido fora (cenário, sala, estação, peça) vem com:
+  (1) pintura na câmera real (35 / 30 / 24, Perto 37 m e Longe 54 m), (2) planta de cima com medidas aproximadas,
+  portas, herói, obstáculos, cobertura e interações, (3) lista ESSENCIAL contra CLIMA, (4) notas de luz, colisão e
+  leitura, (5) entrega lado a lado para a reconstrução na Godot. Pedido sem os cinco volta. Dono da regra: `art-director`.
+- **Nada de Meshy** nestes pacotes (reforça a regra de sempre: nenhum crédito sem o "pode" do Daniel). Tudo procedural,
+  KayKit, UAL ou assado que já existe.
+- A planta (`02_`) prevalece sobre a pintura (`01_`) em posição e medida; a pintura manda em cor, forma e clima; a câmera
+  do jogo é a validação final. Nenhuma proposta de Ofícios ou Alquimia é marcada como entregue sem existir no jogo.
+
+#### P.1 Onde os pacotes coincidem com o que já existe, onde conflitam e como juntar
+
+| Pedido do pacote | O que o jogo já tem | Como juntar |
+|---|---|---|
+| Laje de pressão no Santuário (protótipo 1) | **RP-06 já é isso**: lajes rachadas nas naves laterais do Santuário A e B, armadas por quem pisa, herói ou inimigo, aviso 1,0 s, `armed_by_enemy` no `RESULT`; RP-13 nas pontas do buraco da B | o protótipo vira **AT-H1**: validar posição "flanco útil com contorno", medir a isca (inimigo arma e se fere) e dar à peça o "afunda" pedido (entra no critério da A2, peça da laje). Nada de sistema novo |
+| Esqueleto no nicho da Cripta B (protótipo 2) | Cripta B tem lajes no pé do muro (RP-06) que armam as seteiras (RP-16); nichos só de cenário (RS-C1, figura velada) | comportamento **novo** mas montado no `PlateHazard` de faixas com espera (o do RP-10), com puxão no lugar do empurrão. Conflito: seria o 3º perigo da Cripta B. Proposta: só depois do progresso 0,34, longe das faixas das seteiras e das lajes; se o dano da sala passar da meta, ele substitui a seteira oeste (Q-AT4) |
+| Planta hostil no Jardim B (protótipo 3) | **RP-10**: duas raízes que golpeiam no Jardim B (a do oeste, cortada, e o toco junto da parede oeste), mesma gramática (espera, aviso, chicotada, empurrão para fora) | a planta é uma **pele nova do RP-10** com faixa curta, no lugar da raiz do toco, na borda úmida (J4/J5). Dado, não código, mais o retorno "a Emeth não fere" (faísca, como o escudo do ritual). O Jardim B segue com 2 perigos |
+| Sistema de quebráveis | **RP-24** (urnas em grupos que soltam ouro, separadas da urna de óleo do RP-12), só proposta | RP-24 vira o épico **AT-Q** abaixo; o RP-12 (Lote A1) usa a mesma peça de urna com outra cor e o pavio à mostra, nunca no mesmo grupo |
+| Marco visual por sala | quase todos já existem dos lotes RS A a E, RS-C1, Sworn P1, ENV-HB4/5/7 (coroa da Cripta A, velada do ossuário B, coluna tombada das Fendas, abóbada rasgada, mecanismo e prismas das Runas, estela da Provação, leão do Altar, gaiolas e arcos da Câmara) | os itens AT de marco são **validação na câmera Perto e ajuste**, não peça nova, salvo onde a tabela diz "novo" |
+| Ponte, Fendas, Runas sem perigo novo | Corrente (RP-11), fenda que respira (RP-08), Runas, RP-14 no Lote A1 | nenhum perigo novo nessas salas (o pacote: "em várias, a geometria já faz o trabalho") |
+| Quebráveis no hub ("longe dos pontos de uso", atlas prancha 22) | o herói do hub é `peaceful`: não golpeia; o pacote 2 pede vasos do hub "diferentes dos quebráveis das runs" | **nenhum quebrável no hub** (o pacote 2, mais novo e específico, vence; e não há golpe lá) |
+| Hub com 6 estações e chegada no sudeste | `HubPlan`: 5 estações a 11,5 m do eixo, chegada `ARRIVAL` (0; -7,8) pelo poço sul (`WELL`), Portal no meio do norte (uso (0; 11)), câmera `CAM_TARGET` (0; 5,6), `ARRIVAL_LOOK` 1,5 s | épico **HV** abaixo; o poço sai, a chegada vai ao sudeste; o Alquimista entra só como espaço e cenário |
+| Alquimista | **Q-OF7 respondida (a) hoje: nenhum NPC novo** | **muda em parte**: o espaço e o cenário do Alquimista entram agora (decisão do PO no pacote 2); NPC, nome, receitas, recursos e função continuam fora (Q-OF7 atualizada em `docs/design/oficios/22_decisoes_pendentes.md`) |
+| Quadrantes das estações | hoje: Vendedor em cima à esquerda, Árvore em cima à direita, Forja embaixo à esquerda, Livro embaixo à direita (a pintura `01_` e a prancha 22 do atlas mostram isso) | **conflito**: a planta `02_` troca norte e sul dos dois lados (Forja e Livro em cima, Vendedor e Árvore embaixo), mas o texto dela diz que o Livro fica "logo adiante" do retorno sudeste, o que só vale na disposição de hoje. Q-HV1 |
+| Alquimista a oeste | a forja de hoje (`FORGE` (-17; -0,6), pátio `YARD` (-22; -2,8)) ocupa o meio do lado oeste | o espaço do Alquimista (-18,4; 0), 4,3 x 5 m, cai em cima dela: a forja desce para o sul (com o Forjador, `SMITH_SPOT` e o teste dos NPCs). A pintura põe uma banca de frascos verdes a leste; a planta e o texto dizem oeste: vale o oeste |
+
+#### P.2 Backlog por sala (atlas, pranchas 3 a 21; o hub está no épico HV)
+
+Quatro pontos por vista: **marco visual** (dono `environment-artist`, revisão `art-director`), **movimento** (dono
+`room-designer`; `gameplay-engineer` quando a geometria muda), **quebráveis** (lugares pelo `room-designer` em dado no
+`_stage`, peça pelo `environment-artist` com o `technical-artist`, sistema do AT-Q) e **perigo** (ver P.4). Tudo só no
+estilizado, menos os quebráveis e os perigos, que são jogo e existem nos dois looks.
+
+**AC-AT, aceite comum de todo item AT** (soma ao AC-RS da seção 8.1, que continua valendo inteiro):
+1. Captura na **câmera Perto com o HUD normal**, mesma semente (5), mesma etapa do encontro, antes e depois, 1920 x 1080
+   na GPU (no máximo 2 capturas ao mesmo tempo); Criptas A e B lado a lado; Compatibility quando muda luz ou material.
+2. Clássico igual fora dos quebráveis e perigos (`test_visual_profile`, `test_room_style`); F7 exato.
+3. `tools/fit_probe.gd` da vista sem subir fantasma nem peça sem desenho mais de 0,1 m²; quebrável inteiro e quebrado
+   medidos (os cacos não contam como peça: não barram).
+4. Robô: `tools/smoke.sh 120 --arena=<id> --variant=<n> --seed=1..8 --look=stylized`, `stuck` 0, e o mesmo com
+   `--cam=near`.
+5. Geometria mudada (piso, obstáculo, nascimento, saída): `test_arenas`, `test_descent`, mapa e rota iguais, esquiva e
+   chegada conferidas nas variantes tocadas, antes e depois no mesmo encontro.
+6. Clipes em velocidade real (`tools/gpu.sh` com `--frames`): o aviso, uma reação boa e a consequência de ignorar (perigo);
+   golpe, quebra e circulação depois (quebrável).
+
+| Vista (prancha) | Marco visual | Movimento | Quebráveis | Perigo |
+|---|---|---|---|---|
+| **Salão** (3) | **AT-SA1** medalhão como eixo do acesso sudoeste ao portal; fogo âmbar no fundo, primeiro plano em sombra, relevo nas laterais da entrada e na alvenaria do portal. Existe quase tudo (ENV-HB1 a HB3, HB7, SW-H1): validar na Perto; ajuste só se o portal ou o vão de saída sumirem. Aceite: Guerreiro, aviso vermelho e vão de saída legíveis na Perto em luta | **AT-SA2** nada muda: centro amplo para provar a Emeth e ver o 1º aviso. Aceite: 1º aviso de ataque inteiro na tela da Perto em 8 de 8 sementes | **AT-SA3** referência do sistema (luta sem perigo novo): vasos, urnas menores e um banco rachado nas bordas e no pé das balaustradas, nunca no eixo nem no medalhão. Primeiro lugar do AT-Q | nenhum |
+| **Cripta A** (4) | **AT-CA1** sarcófago isolado manda: perfil de túmulo legível, foco quente lateral (coroa RS-C1 existe), funerário miúdo nas paredes, luz fria no fundo. Aceite: o sarcófago lê como cobertura; lajes rachadas (RP-06) distintas das tumulares (SW-C1, `PLATE_CLEAR`) | **AT-CA2** hipótese da página 2 (protótipo): medir esquivas barradas pelo sarcófago e pela mureta (RP-17); se passarem de 1 em 6 perto dele, mover cobertura secundária para a borda antes de aumentar a sala. Pede contador novo `dodge_blocked_by` no `RoomTally` (`gameplay-engineer`, P) | **AT-CA3** cerâmica funerária na chegada e no contorno, fora dos dois flancos | nenhum novo (lajes nos cantos e mureta seguem) |
+| **Cripta B** (5) | **AT-CB1** ossuário linear manda: parede de nichos e urnas contínua, luz rasante fria e uma interrupção quente no acesso; sul aberto como respiro. Base: velada RS-C1, SW-C2 (fêmures, Lote A3). Aceite: A e B se reconhecem de relance (sarcófago isolado contra conjunto linear) | **AT-CB2** preservar a passagem sul e a diferença entre os flancos; o flanco decide a aproximação aos atiradores. Sem mudança de piso | **AT-CB3** vasos menores e restos de bancos (madeira), longe das faixas das seteiras | **AT-H2** esqueleto do nicho (P.4) |
+| **Fendas A** (6) | **AT-FA1** cabeças das pontes com pilastras baixas e alvenaria clara; coluna caída (SW-F1) e correntes no fundo, fora do andável. Aceite: as passagens se contam pelo recorte das bordas com avisos ativos | **AT-FA2** duas travessias e a volta pelo sul sob mira: nada muda | **AT-FA3** madeira solta e caixotes junto dos acessos, silhueta distinta das pontes, nunca no tabuleiro | nenhum novo (fenda que respira, RP-08) |
+| **Fendas B** (7) | **AT-FB1** a ruptura norte é o marco: pontas quebradas e restos pendurados no fundo (`FALLEN_*` existe); ponte funcional com encontro de pedra contínuo. Aceite: a ruína lê como fundo; a rota sul visível na Perto | **AT-FB2** nada muda (a ponte restante concentra a luta, o sul é o desvio) | **AT-FB3** como AT-FA3 | nenhum novo (RP-20 pedras é do Santuário B no Lote A1; nas Fendas B só se a medida pedir) |
+| **Jardim A** (8) | **AT-JA1** tronco com contraluz frio, raízes em primeiro plano fora do campo, manchas grandes de musgo; esmeralda só na lâmina. Aceite: árvore reconhecida antes da luta, passagem entre raízes clara | **AT-JA2** duas aproximações em volta do tronco: nada muda (mureta em arco RP-17 já) | **AT-JA3** galhos secos, mudas frágeis (pálidas, baixas, nunca parecidas com a planta hostil) e vasos de água | nenhum novo (raízes RP-10) |
+| **Jardim B** (9) | **AT-JB1** água escura e reflexo frio de borda como assinatura (lago J5, cascatas J4 existem); luz no caminho em volta das raízes; folhagem cobre acima e atrás | **AT-JB2** contorno alternativo legível pelo piso andável: nada muda | **AT-JB3** como AT-JA3, vasos de água perto da borda úmida | **AT-H3** planta hostil (P.4) |
+| **Santuário A** (10) | **AT-SD1** faixa de luz difusa ao longo da nave, cobre apagado nos pontos laterais, foco no fundo com restos de arco e oferendas (Lote B do RS e SW-S2/S3 existem). Aceite: piso orienta sem esconder o volume das figuras, Forward+ e Compatibility | **AT-SD2** nave aberta organiza o confronto; laterais com colunas e lajes | **AT-SD3** recipientes de oferenda nas laterais e no presbitério, longe das lajes | **AT-H1** laje de pressão (P.4) |
+| **Santuário B** (11) | **AT-SE1** profundidade no buraco (rocha e alvenaria quebrada embaixo), abóbada quebrada como marco alto (`VAULT_*` existe); borda decorativa separada das lajes ativas das pontas (RP-13, peça da A2) | **AT-SE2** hipótese da página 2 (protótipo): respiro visual e de circulação na boca de cada desvio do buraco; colisão só se a captura e o `fit_probe` mostrarem aperto (a nave tem 1,85 m ao longo do buraco). Aceite: na chegada e na esquiva o limite do vazio, as duas rotas e a laje prestes a cair se reconhecem | **AT-SE3** como AT-SD3 | AT-H1 também aqui; RP-20 (pedras) no Lote A1 |
+| **Ponte A** (12) | **AT-PA1** luz âmbar baixa em cada cabeça (P1 existe), remanescente de arco em silhueta no patamar, visão longitudinal preservada | **AT-PA2** pausa no patamar e retomada: nada muda | **AT-PA3** tábuas soltas e caixotes longe da linha principal, nunca nas pontes | nenhum novo (corrente RP-11) |
+| **Ponte B** (13) | **AT-PB1** lanternas baixas nas cabeças, cabos e pontes partidas no fundo (P5, P6 existem), patamar por forma e luz, vazio em dois planos. Aceite: cabeças, patamar e saída na Perto, nada opaco sobre a linha dos ataques | **AT-PB2** hipótese da página 2 (protótipo): o patamar como área de recuperação sob fogo, medido sobre o alargamento que já existe antes de propor outro | **AT-PB3** como AT-PA3, no patamar só na borda | nenhum novo |
+| **Runas A** (14) | **AT-RA1** grade dormente sem contraste, âmbar só no preparo, forma longitudinal das faixas como assinatura. Aceite: em repouso o piso é calmo; antes do dano a faixa inteira se lê, também no Compatibility (existe, medir) | **AT-RA2** nada muda (zona quieta da entrada, RP-02) | **AT-RA3** suportes ou recipientes encostados nas paredes, nunca sobre ladrilho que arma | nenhum novo |
+| **Runas B** (15) | **AT-RB1** mecanismo do fundo e prismas frios (R2, R5 existem), ilhas em blocos na gramática âmbar da A | **AT-RB2** nada muda; capturar o ciclo real com o padrão nomeado | **AT-RB3** como AT-RA3, longe da pedra quieta | RP-14 cristal no Lote A1 |
+| **Guardião** (16) | **AT-GU1** fundo da nave e medalhões de ouro velho dão hierarquia ao guardião; validar atrás de colunas e nas duas variantes, ouro do corpo e avisos legíveis | **AT-GU2** nada muda | **AT-GU3** só no acesso e na periferia, nunca entre o `boss_spawn` e o herói | os do Santuário (AT-H1, RP-13, RP-20) |
+| **Fonte** (17) | **AT-FO1** bacia lida pela superfície e por um halo contido (poça fria e `RewardShaft` existem); ouro e chamas em segundo plano; a fonte do hub com papel distinto | **AT-FO2** hipótese da página 2 (protótipo, junto da Loja): descoberta na chegada; se luz e placa não bastarem, comparar a aproximação e o ponto de uso dentro do Salão, sem mudar o mapa | **AT-FO3** vasos longe da bacia (5 m ou mais), cacos e água sem nada que lembre cura (sem verde, sem brilho) | nenhum |
+| **Loja** (18) | **AT-LO1** fileira com suportes e poças baixas, corredor livre a cada preço; o símbolo da oferta acima do enfeite. Aceite: ofertas, preços e saída na Perto com 3 itens (rota) e 5 (última) | **AT-LO2** como AT-FO2 | **AT-LO3** caixotes e cerâmica periféricos, a 3 m ou mais de todo relicário | nenhum |
+| **Provação** (19) | **AT-PR1** foco curto na estela rachada, paredes em penumbra (existe, Lote D); custo e consequência na interação e na tela (T5 existe). Aceite: ação, custo, maldição e recompensa entendidos antes de confirmar | **AT-PR2** nada muda | **AT-PR3** oferendas quebráveis distintas da estela (cerâmica comum, nunca lilás) | nenhum |
+| **Altar** (20) | **AT-AL1** luz no altar, leão em relevo, bancos e pedra quente separam da Provação (existe, Lote D e P1 dos biomas) | **AT-AL2** nada muda | **AT-AL3** oferendas quebráveis longe do degrau e das velas acesas | nenhum |
+| **Câmara do Selo** (21) | **AT-CS1** anel externo com arcos, correntes pesadas e ruína em dois planos (E1 a E4, SW-K1 existem); combate mais calmo que o fundo; Tempestade em Forward+ e Compatibility | **AT-CS2** nada muda (esquivas entre faixas, `test_boss_exits`) | **AT-CS3** só no patamar de entrada e na periferia de 11 a 12 m, fora das faixas e das runas de Morvath; o `test_boss_exits` refeito com eles inteiros e quebrados | nenhum |
+
+#### P.3 Épico AT-Q, quebráveis (substitui o RP-24)
+
+| ID | Item | Dono | Aceite | Depende |
+|---|---|---|---|---|
+| AT-Q0 | Spec da peça e do quebrar por material: **cerâmica** (vaso, urna, oferenda), **vaso de água** (cacos e água que se espalha num decalque que seca em 3 s), **madeira** (caixote, tábua, banco rachado: farpas e lascas), **galho** (galho seco, muda frágil: fibras e folhas). Silhueta distinta de peça que fere (SW-G7) e da urna de óleo (RP-12); nada verde-Emeth, nada vermelho de perigo | `art-director` | spec com capturas de referência na Perto; tamanhos 0,35 a 1,0 m | nada |
+| AT-Q1 | Lógica pura `Breakables` (`core/breakables.gd`): peça com material, vida (1 golpe; caixote 2), estado; quebra por qualquer golpe que a alcança: do herói (`Combat.reached`, como o RP-09), onda, ultimate, golpe e aviso de inimigo, perigos de sala (`Ground`); nunca por andar. Dado: `ArenaObstacle.breakable`, `break_material` e grupos no `_stage` do `make_data.gd` (sala nova com quebráveis é dado). **MVP: nenhum barra corpo nem tiro** (raio até 0,45 m, fora da `NavGrid`); caixote que barra só no AT-Q5 | `gameplay-engineer` | GUT (`tests/test_breakables.gd`): quebra por cada fonte, uma vez só, nunca por toque; mesma semente, mesmo `RESULT` com a sala sem quebráveis; `RESULT` `rooms[].breakables` (`total`, `broken`, `by_hero`, `by_enemy`, `by_hazard`) | AT-Q0 |
+| AT-Q2 | No jogo `BreakFloor` (`game/break_floor.gd`) e desenho: peças em MultiMesh por material, cacos pela MultiMesh das lascas do `Fx` (formas `SHAPE_*` que existem) com gravidade e chão, água em `floor_decal`, poeira em fiapos (`Fx.wisps`); cacos ficam no chão 4 s e somem sem barrar nada; orçamento próprio no `FxBudget` (no máximo 3 quebras cheias por quadro, as outras só com cacos) | `technical-artist` (efeito), `environment-artist` (peças) | captura de 3 quebrando juntas na luta com o herói e o aviso lidos; iGPU 720 Baixa até 0,5 ms a mais com 12 peças na sala; clássico só com as peças | AT-Q1 |
+| AT-Q3 | Som por material: `break_ceramic`, `break_water`, `break_wood`, `break_branch` (CC0 do Kenney Impact Sounds e do RPG Audio pelo `tools/make_sfx.sh`), no `CombatSounds`, `VoiceGate` (no máximo 2 vozes por família, 70 ms), abaixo dos avisos de Morvath | `technical-artist` | `test_combat_sounds` com os quatro; `tools/mix_probe.gd` sem janela funda nova; `audio/LICENSES.md` | AT-Q1 |
+| AT-Q4 | Lugares por sala (coluna "Quebráveis" de P.2): 4 a 10 por sala em 2 a 4 grupos encostados em parede, balaustrada ou peça; nunca a menos de 1,5 m de ponto de uso, porta, nascimento, laje que fere ou faixa de perigo; nada no hub | `room-designer` | teste de lugar em `test_arenas` (distâncias acima em todas as vistas e variantes); `fit_probe` igual | AT-Q1 |
+| AT-Q5 | Circulação e "obrigado a quebrar tudo": medir com o robô (ignora quebráveis) e com gente pelo registro (`breakables` por sala e segundos entre a sala vencida e a porta, novo `clear_to_door_s`); depois, se pedir, caixotes que barram com a `NavGrid` refeita localmente | `qa-performance` (medida), `gameplay-engineer` | 8 sementes sem `stuck` com e sem quebráveis; nota para o Daniel no relatório: quebra por gosto ou por obrigação? Responde só jogando | AT-Q4 |
+| AT-Q6 | Recompensa: **nenhuma no primeiro lote** (Q-AT2); reagente ou item em objeto marcado só junto da Coleta e da Forja (Ofícios), nunca antes | Game Director | decisão registrada | Q-AT2 |
+
+#### P.4 Os três protótipos de perigo
+
+Regra comum (a mesma dos RP): aviso de 1,0 s ou mais no corpo da peça e no chão, na câmera Perto; fere inimigos também
+(60 no comum); **10 no herói** (resposta 6); nunca a menos de 6 m da entrada nem nos 3 s do começo; dormente antes da
+sala 4 (`PLATES_FROM`); saída sempre livre (teste no molde do `test_boss_exits`, 12 x 12 posições); "Derrotado por"
+próprio (nome provisório, como os outros); som `<nome>_arm` e `_fire`; nunca 3 avisos de sala ao mesmo tempo; conferir
+começo do preparo, alcance, impacto e cruzamento com avisos de inimigos (`combat-feel-director` aprova, P0/P1/P2);
+`rooms[].hazard` com `kind` próprio; 8 sementes do robô sem `stuck`; clipes do AC-AT 6.
+
+| ID | Perigo | Como (reuso) | Dono | Aceite próprio | Depende |
+|---|---|---|---|---|---|
+| **AT-H1** | Laje de pressão, Santuário A e B | **é o RP-06**: nada de código novo. (a) Peça: no preparo a laje **afunda** 4 cm com poeira e racha (critério somado à peça da laje na A2); (b) `room-designer` confere as duas lajes de cada nave: num flanco útil, com rota de contorno; (c) isca: robô com um plano de atrair (`Bot.lure_plan`, molde do `slit_plan`: pisa e sai com um inimigo atrás) só para medir | `room-designer`, `environment-artist` (peça, na A2), `gameplay-engineer` (plano do robô, P) | com o plano de isca, `armed_by_enemy` com inimigo ferido em 6 de 8 sementes; sem o plano, dano das lajes no herói 0,5 a 1,5 por sala; laje ativa distinta das emolduradas e tumulares na Perto | A2 |
+| **AT-H2** | Esqueleto do nicho, Cripta B | faixa curta do `PlateHazard` com espera (RP-10): leque de 2,2 m diante do nicho; acorda com alguém dentro (herói 0,3 s, inimigo 0,2 s); aviso 1,0 s (a mão sai, ossos mexem, `niche_arm` = pedra raspando); golpe 0,25 s; **agarrar = 10 e puxão de 1 m para o nicho, sem prender** (Q-AT3: prender rouba a esquiva); recarga 6 s; não morre (golpe dá faísca, como o escudo do ritual). Peça: a figura do esqueleto assado num nicho, desenhada por um `CrowdRenderer` de uma figura (molde do `HubNpc`), mão à mostra em repouso, clipes de preparo e agarrar da UAL; "Derrotado por: Esqueleto do Nicho" (`killer_niche`) | `room-designer` (nicho e números), `gameplay-engineer` (puxão: `push` negativo, faísca), `technical-artist` (figura e clipes), `environment-artist` (nicho) | dano dele no herói 0,5 a 1,5 por sala; nenhuma vez em que o herói é puxado para dentro de outro aviso ativo (GUT); fora das faixas das seteiras (RP-16) e a 1,5 m das lajes; dano total da Cripta B não sobe mais de 1,5 por sala (senão Q-AT4 b) | A1 (dano 10), Q-AT3 |
+| **AT-H3** | Planta hostil, Jardim B | **pele nova do RP-10**: entra no lugar da raiz do toco junto da parede oeste, na borda úmida; faixa de 2,5 m da planta para fora; folhas se fecham no aviso de 1,0 s; chicotada 0,25 s, 10 no herói, 60 no inimigo, empurrão de 1 m; a Emeth não fere: golpe dá faísca e as folhas se encolhem (`Combat.reached`, como o RP-09). Peça procedural, silhueta escura e rija, longe das mudas frágeis (pálidas, baixas) do AT-JB3; `plate_source` `plant`, "Derrotado por: Planta Hostil" (`killer_plant`) | `room-designer`, `gameplay-engineer` (faísca e encolher), `environment-artist` (planta), `art-director` (silhueta contra as mudas) | em 5 pessoas ou no Daniel jogando: esquivar ou contornar entendido sem golpear mais de 3 vezes (pergunta do teste); robô: dano 0,5 a 1,5 por sala; Jardim B segue com 2 perigos | A1, AT-Q0 |
+
+#### P.5 Épico HV, Santuário da Vigília Rev. 02 (hub)
+
+**Conversão da planta para o `HubPlan`.** A planta usa x para leste e z para norte, com a origem no meio da Fonte; o
+`HubPlan` usa u para a direita da tela e v para cima da tela, também com a origem na Fonte, e o `HubPlan.to_world` gira
+pelo `cam_yaw`. Como o norte da planta é o alto da tela (Portal no alto, na pintura e no jogo), **u = x e v = z**; nunca
+pôr o z da planta no z do mundo. Tabela (u; v), com a velocidade do herói 6,75 m/s (linha reta, limite de baixo):
+
+| Peça | Planta literal | Quadrantes de hoje com os raios da planta (recomendado, Q-HV1) | Hoje |
+|---|---|---|---|
+| Chegada (selo de 3 m, escada 7 x 2,5 m na borda sudeste) | (18; -11,4) | (18; -11,4) | (0; -7,8), poço sul |
+| Portal (uso) | (0; 10,1) | **(0; 11), manter**: o enquadramento da Longe foi medido nele (0,9 m de diferença) | (0; 11) |
+| Forja (uso) | (-10,3; 5,2) | (-10,3; -5,2) | (-11,5; -3,6) |
+| Vendedor (uso) | (-10,3; -5,2) | (-10,3; 5,2) | (-11,5; 10,6) |
+| Árvore (uso) | (10,1; -5,1) | (10,1; 5,0) | (11,5; 10,6) |
+| Livro (uso) | (10,1; 5,0) | (10,1; -5,1) | (11,5; -3,6) |
+| Alquimista (espaço 4,3 x 5 m, centro; sem uso) | (-18,4; 0) | (-18,4; 0) | nada (a forja está em (-17; -0,6)) |
+| Fonte (raio de bloqueio) | 3,1 m | 3,1 m | `FOUNTAIN` raio 2,6 m |
+
+Entre estações, em linha reta: 1,0 a 3,8 s nas duas disposições (Alquimista contra Árvore e Livro 3,8 s, mais o
+contorno da Fonte: no limite de 4 s, medir); chegada ao Portal 28 m, 4,15 s (a chegada não é estação); chegada à estação
+mais longe 4,3 a 5,2 s. O `test_no_two_stations_more_than_four_seconds_apart` existe e passa a usar a `NavGrid`.
+
+| ID | Fase | Itens | Dono | Aceite | Depende |
+|---|---|---|---|---|---|
+| HV-0 | Plano (P0, só documento) | `room-designer` desenha a planta no quadro do `HubPlan` com a resposta da Q-HV1: chão (contorno não retangular, sem o poço), escada sudeste, larguras (eixo 4 a 5 m, secundárias 3 m ou mais, volta da Fonte 3,5 m), obstáculos, linha de vista do Portal desde o selo; `art-director` liga a lista ESSENCIAL e CLIMA do pacote às peças do `HubLook` que já existem e diz o que é novo | `room-designer`, `art-director` | planta em `docs/design/hub_spec.md` (seção nova Rev. 02) com as coordenadas (u; v) | Q-HV1, Q-HV2 |
+| HV-A | Greybox funcional (P0) | `HubPlan`: `FLOOR` com a escada sudeste no lugar do `WELL`, `ARRIVAL` no selo, estações e pegadas pela HV-0, constante `ALCHEMIST` (pegada que barra, **fora de `STATIONS`**: sem foco, placa nem uso), forja e pátio para o sul; `HubLook` só o mínimo para desenhar no lugar novo (peças movidas, escada do poço fora). **Fluxos de chegada**: título (escolher ou carregar save, novo ou não), morte (Voltar ao Santuário), vitória, "Sair para o Santuário" da pausa, todos no selo sudeste; "Descer de novo" segue direto; `--hub` e `--hero-at` seguem | `gameplay-engineer` (`hub_plan.gd`, `hub.gd`, testes), `environment-artist` (`hub_look.gd`) | GUT: chegada no selo em todos os fluxos (`SceneGo.catch`); toda estação e o Portal alcançáveis da chegada pela `NavGrid`; nada barra a chegada, a escada, a aproximação do Portal, a placa nem o raio de uso; NPCs barram onde estão; F7 exato (`test_room_style` do hub); `fit_probe --arena=hub` sem subir | HV-0 |
+| HV-B | Circulação e enquadramento (P0) | câmera da chegada: na Perto o `ARRIVAL_LOOK` olha primeiro um ponto que põe o Portal e a Fonte no quadro desde o sudeste (o selo fica a 28 m do Portal: pode pedir a Longe por 1,5 s ou um ponto entre os dois; medir antes de escolher); tempos reais por `tools/hub_walk.gd` entre as 21 duplas (6 pontos e o Portal), Portal desde a chegada e as rotas do anel; onde passar de 4 s, mover bases ou acessos, nunca o passo do herói nem teleporte | `room-designer` (medida e ajuste), `gameplay-engineer` (câmera) | captura real 1920 x 1080 Perto e Longe na chegada com o Portal, a Fonte e duas estações à vista; na volta do anel; no Portal; 1280 x 720 Compatibility; tabela dos tempos medidos em `docs/gallery/hub/rev02/`; nenhuma dupla de estações acima de 4 s; um humano circula sem setas (Daniel no teste) | HV-A |
+| HV-C | Pintura 3D (P1) | Pátio do Retorno (selo de 3 m com o leão gasto em ouro velho apagado, escada de 7 x 2,5 m, dois braseiros menores, lampião baixo #BCA07B), espaço do Alquimista (bancada semicoberta, frascos altos, ervas secas, verde baixo #9BAE83, nunca um segundo portal esmeralda; **bancada vazia**), forja no lugar novo, bordas ricas e centro calmo, luzes da tabela 4 do pacote ligadas às poças por estação (`STY_POOLS`), Compatibility com o verde e as chamas sob controle; nada de cruz, sol, auréola ou estrela | `environment-artist`, `art-director` (revisão) | AC-RS (clássico igual fora do que mudou de lugar, F7, `fit_probe`, iGPU 720 Baixa até 0,5 ms); hierarquia em 3 s: Portal, Fonte, estações (captura na chegada); placas, Portal e NPCs sem oclusão | HV-B |
+| HV-D | Estações (P1) | leitura de cada estação pela silhueta e pela luz (tabela 6 do pacote: forno baixo com chaminé, toldo de duas águas, árvore de pedra e ouro, atril com páginas claras numa arcada, bancada de frascos); placa da tecla no pé do objeto (`StationSign.under`, como na descida), nunca seis placas ao mesmo tempo; Alquimista sem placa, sem nome e sem interação; o laço Forja, Vendedor, Livro, descidas só em props, nada marcado como entregue | `environment-artist`, `ui-ux-designer` (placa), `technical-artist` (NPCs no lugar novo) | close de cada estação e reconhecimento de longe na Perto; `test_hub_ui` verde | HV-C |
+| HV-E | Evolução visual (P2, até cinco) | `HubEvolution` (puro, lê o save): **E1 Forja** pelo `ForgeRank` e pelas ferramentas (`HubLook.set_forge_rank` existe); **E2 Vendedor** fechado, "Tem um pedido", aberto pelo estado das encomendas e Obras (bandeira desligada até o Lote C existir); **E3 Árvore** placas que acendem pelos Dons abertos e a Maestria; **E4 Livro** lombadas pelo Compêndio, prateleira de Ofícios só com a mecânica (bandeira); **E5 Alquimista** sempre a bancada vazia (bandeira desligada até o Roteiro C) | `gameplay-engineer` (`HubEvolution`, bandeiras), `environment-artist` (estados) | GUT: cada estado do save dá o visual certo, nenhum acende na primeira morte, peça sem feature fica escondida; capturas dos estados | HV-D, Lote C para E2 e E4 |
+
+O HUB-E (QA do hub, A8) roda no hub de hoje para o exe do Lote A e de novo depois do HV-B.
+
+#### P.6 Onde entra na ordem (arquivos distintos por frente)
+
+1. **Agora, dentro do Lote A, só o que é o mesmo item ou documento**: o "afunda" da laje vai para o critério da peça da
+   laje na A2 (AT-H1 a); o RP-24 sai da fila e vira o AT-Q; em paralelo, só documentos: AT-Q0 e a revisão da regra
+   "nunca só a pintura" (`art-director`), HV-0 e a planta por sala dos quebráveis e dos dois perigos novos
+   (`room-designer`, `docs/design/`), critérios dos três avisos (`combat-feel-director`). Nenhum arquivo do jogo.
+2. **Lote D "Atlas 1", logo depois do Lote A** (o lote jogável que o PO pediu): AT-Q1 a AT-Q4 (`gameplay-engineer` em
+   arquivos novos, `technical-artist` efeito e som), AT-SA, AT-CA, AT-CB, AT-JB, AT-SD e AT-SE (`environment-artist`,
+   depois da A2 e da A3, que mexem nos mesmos `*_look.gd`), AT-H1 a AT-H3, AT-CA2 e AT-SE2 (protótipos de piso), o
+   `balance-designer` olhando o dano das salas tocadas junto do Lote B. Exe para o Daniel jogar no fim.
+3. **Lote E "Santuário da Vigília", em paralelo com o D** onde os arquivos não se cruzam: HV-A e HV-B (`hub_plan.gd`,
+   `hub.gd`, `hub_look.gd`; o `environment-artist` faz o mínimo do HV-A entre duas salas do D, ou o D espera essa parte),
+   depois HV-C e HV-D. **Antes do Lote C** (Q-AT1): os Ofícios moram no Vendedor e na Forja, que mudam de lugar.
+4. **Lote C, Ofícios Roteiro A**, sobre o hub novo; HV-E (E2 e E4) entra no fim dele.
+5. **Atlas 2 e 3**: AT-FA, AT-FB, AT-JA, AT-PA, AT-PB, AT-RA, AT-RB, AT-GU, AT-FO, AT-LO, AT-PR, AT-AL, AT-CS, os quebráveis
+   em todas, AT-PB2 e AT-FO2 (protótipos), e onde os protótipos de perigo pedirem mais perigo (pelo resultado do D).
+
+#### P.7 Perguntas novas para o Daniel (só as que bloqueiam)
+
+| # | Pergunta | Opções | Recomendação |
+|---|---|---|---|
+| Q-AT1 | Ordem: o lote jogável do atlas e o hub novo vêm antes dos Ofícios? | (a) Lote A, depois Atlas 1 e Santuário da Vigília (A a D), depois Ofícios; (b) Ofícios logo depois do Lote A, como decidido, e o atlas depois; (c) atlas dentro do Lote A | **(a)**: o Lote A fecha como você pediu; os Ofícios entram no Vendedor e na Forja, que mudam de lugar no hub novo, então vale mudar o hub primeiro |
+| Q-AT2 | Quebráveis dão algo? | (a) nada no primeiro lote, decidir depois de jogar; (b) ouro raro e pouco (até 3% do ouro da descida); (c) materiais ou reagentes | **(a)**: mede se quebrar é gostoso por si e evita o "obrigado a quebrar tudo"; reagentes só com a Coleta dos Ofícios |
+| Q-AT3 | O "agarrar" do esqueleto do nicho | (a) dano e puxão de 1 m, sem prender; (b) prende 0,5 s e a esquiva solta; (c) prende sem saída | **(a)**: prender rouba a esquiva, o coração do combate; (c) fere a regra "nada inevitável" |
+| Q-AT4 | Perigos novos: quantos e onde | (a) só os três protótipos, a Cripta B com lajes, seteiras e o nicho (nicho só desde a sala 4), a planta no lugar da raiz do toco; (b) o nicho substitui a seteira oeste; (c) também perigo novo noutras salas já | **(a)**, e (b) se o dano da Cripta B subir mais de 1,5 por sala; as outras salas esperam o resultado do protótipo, como o pacote pede |
+| Q-HV1 | Quadrantes das estações (a planta troca norte e sul dos dois lados; a pintura, a prancha 22 e o jogo de hoje não) | (a) disposição de hoje (Vendedor e Árvore em cima, Forja e Livro embaixo) com os raios da planta; (b) a planta literal (Forja e Livro em cima, Vendedor e Árvore embaixo) | **(a)**: é o que a pintura mostra, o texto do pacote diz (o Livro "logo adiante" da chegada sudeste) e o HUB-D já construiu e mediu; a planta muda menos peças |
+| Q-HV2 | A chegada sudeste substitui o poço sul? | (a) sim: o poço sai, toda chegada (save novo, carregar, morte, vitória, pausa) é no selo sudeste; (b) o poço fica para o save novo e o sudeste para as voltas | **(a)**: um lugar só de chegada é o que o pacote pede ("sempre") e é mais simples de testar |
+
+Q-OF7 muda em parte (registrado em `docs/design/oficios/22_decisoes_pendentes.md`): o espaço e o cenário do Alquimista
+entram (decisão do PO no pacote 2); NPC, nome, receitas e função seguem fora até o Roteiro C.
 
 ### Depois (sem mudança): Fatia 3 (Lote 5A), AP-4 (5B), C20 técnico (5C), DT-111 (5D)
 
