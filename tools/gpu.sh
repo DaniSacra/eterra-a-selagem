@@ -27,7 +27,7 @@ if [ "$slot" = 0 ]; then MIRROR=${MIRROR:-/mnt/c/Users/danie/tools/eterra-gpu}; 
 mkdir -p "$MIRROR"
 
 sync() {
-	rsync -a --delete --exclude .git --exclude .godot --exclude build --exclude 'assets/models/meshy/*/*-v[0-9]*' "$ROOT/" "$MIRROR/"
+	rsync -a --delete --exclude .git --exclude .claude --exclude .godot --exclude build --exclude 'assets/models/meshy/*/*-v[0-9]*' "$ROOT/" "$MIRROR/"
 	"$GODOT_WIN" --headless --path "$(win "$MIRROR")" --import >/dev/null 2>&1 || true
 }
 

@@ -1,8 +1,203 @@
 # Equilíbrio de A Selagem
 
-Dono: `balance-designer`. Primeira versão: 2026-11-19, código `0293f79` (depois do RP-01 a RP-05). **Só medida e
-proposta**: nenhum número, código ou dado foi mudado. Os números vão para o `gameplay-engineer` pelo Game Director, e
-o que mexe no tempo de um ataque passa antes pelo `combat-feel-director`.
+Dono: `balance-designer`. **Só medida e proposta**: nenhum número, código ou dado do repositório foi mudado por este
+documento. Os números vão para o `gameplay-engineer` pelo Game Director; o que mexe no tempo de um ataque passa antes
+pelo `combat-feel-director`.
+
+## Lote B (2026-11-21): "mais difícil, principalmente sem os upgrades"
+
+### B.0 Pedido do Daniel (substitui as metas de 2026-11-19)
+
+O jogo fica mais difícil, **principalmente sem os upgrades**: a primeira descida, sem Maestria, Forja nem Dons, tem de
+ser bem mais difícil que hoje; com os upgrades (Maestria, Dons, Forja, o que o hub der) a curva continua a crescer.
+**Proibido inflar a vida dos inimigos**: a dificuldade vem do dano, da ordem em que a força chega e das salas. Os
+Juramentos seguem sendo a dificuldade depois da primeira vitória.
+
+### B.1 Como medi
+
+- Cópia isolada do código `07688f5` (fora do repositório) e uma segunda cópia "proposta" com o pacote abaixo aplicado
+  no `make_data.gd` (regerados `enemies bosses stage`) e a OF-05 provisória no `RunMap._may` (Prata desde a
+  profundidade 4, Memória depois da camada do guardião). O HEAD `343d251` (perigos 10) chegou durante a medida: a base
+  daqui ainda tem os perigos a 7; a proposta já tem 10.
+- `godot --headless --fixed-fps 60 -- --bot --nosave --smoke=900 --seed=N --bot-reaction=R` (o `tools/smoke.sh 900`),
+  no máximo 4 ao mesmo tempo (máquina dividida com outros agentes). **Medida incompleta**: as montagens principais
+  com as sementes 1 a 23 (22 a 23 descidas cada), as secundárias com 1 a 12; o plano era 48. Erro de uma taxa com 23
+  descidas: uns 10 pontos; com 12, uns 14. Diferenças menores que isso são ruído.
+- Montagens (o robô não lê o save; Dons por `--talents=`, ultimate por `--ultimate=cleave`, Forja por `--forge=3
+  --refine=refine_fio,refine_onda_larga` = Temperar I a III e um Refinar em cada ação):
+
+| | Hoje (escada atual) | Proposta (escada B-3, ultimate na Maestria 6) |
+|---|---|---|
+| M1 | nada | nada |
+| M5 | `quarto_corte, impeto, corte_crescente, lamina_faminta` + ultimate | as mesmas, **sem ultimate** |
+| M10 | ofensiva (`quarto_corte, impeto, avanco_feroz, corte_crescente, fio_longo, lamina_faminta`) + ultimate | `quarto_corte, impeto, firmeza, lamina_faminta, corte_crescente, passo_encadeado, fio_longo` + ultimate |
+| M15 | `quarto_corte, impeto, corte_crescente, lamina_faminta, passo_encadeado, avanco_feroz, fio_longo, reserva` + ultimate | `quarto_corte, impeto, firmeza, respiro, lamina_faminta, corte_crescente, passo_encadeado, fio_longo` + ultimate |
+| M20 | sustento do E6 (`ainda_de_pe, firmeza, respiro, quarto_corte, impeto, lamina_faminta, reserva, corte_crescente, fio_longo`) + ultimate | igual |
+
+- Pacote medido na cópia "proposta" (P-50): dano de todo inimigo comum e de Morvath vezes cerca de 1,5 (esqueleto 5,
+  corredor 8, feiticeiro 6, besteiro 5, Escudo 14 e 11 de perto, sacerdote 9; Morvath 12/15, Foice 18, Ceifa,
+  Lâminas, Tempestade e Erupções 15, Maldição 9, Investida 18), Cavaleiro 16 e Ancião 12 (B-5), perigos 10 (a
+  borda que desmorona 7), `base_difficulty` 70 e `depth_ramp` 17 (B-4), OF-05.
+
+### B.2 Estado medido (vitórias do robô)
+
+| Montagem | Hoje 0,25 | P-50 0,25 | Hoje 0,45 | P-50 0,45 |
+|---|---|---|---|---|
+| M1, sem Forja | **11/23 (48%)** | **8/23 (35%)** | 3/22 (14%) | 2/23 (9%) |
+| M1, Forja III + Refinar | 15/21 (71%) | 8/22 (36%) | 5/12 (42%) | 2/12 (17%) |
+| M5 | 13/22 (59%) | 7/22 (32%) | 4/12 (33%) | 0/12 (0%) |
+| M10 | 17/22 (77%) | 10/22 (45%) | 3/22 (14%) | 7/23 (30%) |
+| M10, Forja | 7/12 (58%) | 8/12 (67%) | | |
+| M15 | 15/21 (71%) | 12/21 (57%) | 4/12 (33%) | 4/12 (33%) |
+| M20 | 19/23 (83%) | 16/23 (70%) | 12/22 (55%) | 7/22 (32%) |
+| M20, Forja | 18/21 (86%) | 15/22 (68%) | 7/12 (58%) | 6/12 (50%) |
+
+Leitura:
+
+1. **Hoje a curva é plana e alta no começo**: M1 48%, M5 59%, M10 77%, M15 71%, M20 83% (0,25). A Forja sozinha leva a
+   M1 de 48% a 71% (+23, no limite do ruído): hoje um jogador sem Dons com a Forja vence quase como a Maestria 10.
+2. **Com o P-50 a curva sobe em toda a escada** (35, 32, 45, 57, 70), a diferença M1 para M20 é a mesma de hoje (35
+   pontos), mas tudo desceu 13 a 32 pontos. A M5 sem ultimate fica igual à M1 (os Dons ofensivos não mexem na taxa,
+   como em 2026-11-19); a ultimate e a Firmeza juntas (M10) valem +10 a +13, o Respiro (M15) +12, o Ainda de Pé (M20)
+   +13.
+3. **A Maestria 1 ainda vence demais**: 35% contra a meta de 20 a 30% (robô 0,25). +50% de dano tirou só 13 pontos da
+   M1 (em 2026-11-19, +60% tiravam 25): o limiar fica entre 50 e 60%. Daí B-1 a 1,6.
+4. **Régua 0,45**: a M1 já está em 9 a 14% hoje (a queda da Fatia 2, o robô leva menos corações); o que muda com o
+   pacote é o topo (M20 55% para 32%), que fica um pouco abaixo da meta: o Morvath a 1,5 pesa mais que as salas para
+   quem reage tarde (14 das 15 mortes da M20 0,45 nele, fases 3 e 4).
+5. **Onde se morre (P-50, 0,25, M1)**: 10 antes de Morvath (6 no Santuário, a casa do guardião; Runas 2; Ponte e
+   Cripta 1), 5 nele (fase 4 quatro vezes). O Santuário tem 40% das mortes (meta 25 a 35%). Fontes de dano nas salas:
+   Cavaleiro 25%, feiticeiro 18%, Ancião 17%, besteiro 13%, Runas 11% (com 10 de dano; eram 1% com 7).
+6. **Dano por sala (M1, 0,25), hoje e P-50**: salas 1 a 3 0,1 / 0,3 / 1,5 e 0 / 0,5 / 0,4 (B-4 sozinho não fez as
+   primeiras salas ferirem; a orçamento maior vira mais inimigos, não mais perigo para quem esquiva); guardião 7,3 e
+   5,9 (o Cavaleiro e o Ancião mais brandos do B-5); salas 7 a 9 4,3 / 0,8 / 3,8 e 6,1 / 3,8 / 4,9 (agora sobem depois do
+   guardião, a meta da seção 5); Morvath 25 e 29.
+7. **Forja**: no P-50 a Forja vale 0 a +22 conforme a faixa (M1 +1, M10 +22, M20 -2, todos dentro do ruído com 12 a
+   23 descidas). Ela é dano, e dano não salva quem apanha: pesa mais no meio da escada.
+8. **OF-05**: a Prata pela porta cai de 3,0 para 0,9 por descida e a Memória pela porta de 0,1 para 0,4 a 0,7 (o robô
+   pega mais Memória porque ela aparece mais perto do fim, quando ele já tem Bênçãos); Prata total mediana 31 para 26
+   (M1) e 36 para 34 (M20), Memória 5 para 2 (M1) e 5 igual (M20). Não muda a vitória (o robô quase nunca troca uma
+   Bênção por material).
+
+### B.3 Metas (para o Daniel; o robô não é gente: são réguas de comparação, a de gente é o `runs.jsonl`)
+
+| Faixa (descidas aprox.) | Robô 0,25 sem Forja | Robô 0,25 com Forja | Robô 0,45 sem Forja | Gente (expectativa) |
+|---|---|---|---|---|
+| Maestria 1 a 5 (1 a 4) | **20 a 30%** | 25 a 35% | **5 a 10%** | quase nunca vence |
+| Maestria 6 a 9 (4 a 8, ultimate) | 35 a 50% | 40 a 55% | 15 a 25% | 5 a 15% |
+| Maestria 10 a 14 (9 a 15, Firmeza, Respiro) | 50 a 65% | 55 a 70% | 25 a 35% | 20 a 35% (primeira vitória típica) |
+| Maestria 15 a 20 (16 em diante, Ainda de Pé) | 70 a 85% | 75 a 90% | 35 a 50% | 40 a 60%; depois, Juramentos |
+
+- A curva tem de subir a cada faixa (10 a 20 pontos por faixa no robô 0,25) e **a Maestria 1 sem Forja é a mais baixa
+  de todas**; diferença M1 para M20 de 45 a 60 pontos (0,25).
+- A Forja vale de 5 a 15 pontos numa faixa, nunca mais que um passo de Maestria.
+- Dentro da descida: salas 1 a 3 com 0,5 a 1,5 de dano por sala; guardião com 25 a 35% das mortes; salas 7 a 9 acima
+  das 4 a 6 sem o guardião; Morvath com 40 a 50% do dano da descida.
+- Nenhuma vida de inimigo muda; nenhum perigo de sala acima de 10.
+
+### B.4 Propostas (com o lugar no `tools/make_data.gd` do HEAD `343d251`)
+
+**B-1 (P0) Dano dos inimigos vezes 1,6** (medido a 1,5: insuficiente na M1). Dono: gameplay-engineer.
+
+| Quem | Linha | Campo | Hoje | Proposto |
+|---|---|---|---|---|
+| esqueleto (e elite, herdado pelo `_pair`) | 237 a 238, `_enemies` | `damage`, `attack_damage` | 3 | 5 |
+| corredor | 251 a 252 | `damage`, `attack_damage` | 5 | 8 |
+| feiticeiro | 272 a 273 | `damage`, `attack_damage` | 4 | 6 (fica: já é a maior fonte nas salas) |
+| besteiro | 282 a 283 | `damage`, `attack_damage` | 3 | 5 |
+| Escudo | 290 a 292 | `damage`, `attack_damage` / `close_damage` | 9 / 7 | 14 / 11 |
+| sacerdote | 302 a 303 | `damage`, `attack_damage` | 6 | 10 |
+| Morvath (corpo) | 325 a 326 | `damage` / `attack_damage` | 8 / 10 | 13 / 16 |
+| Morvath, `_bosses` | 1312 | `scythe_damage` | 12 | 19 |
+| | 1316 | `reap_damage` | 10 | 16 |
+| | 1318 | `blade_damage` | 10 | 16 |
+| | 1324 | `storm_damage` | 10 | 15 (a Tempestade já é 38% do dano dele; fica a 1,5) |
+| | 1327 | `eruption_damage` | 10 | 16 |
+| | 1335 | `curse_damage` | 6 | 10 |
+| | 1336 | `dash_damage` | 12 | 19 |
+
+- Efeito esperado (extrapolado entre o P-50 medido e o +60% de 2026-11-19): M1 0,25 de 35% para 25 a 30%, M20 de 70%
+  para 65 a 70%. Medir de novo.
+- Perigos: ficam em 10 (`HAZARD_HERO`, já no HEAD) e a borda que desmorona em `CRUMBLE_HERO`; as Runas viraram 11% do
+  dano das salas: não subir mais.
+
+**B-2 (P0) A ultimate abre na Maestria 6 e a Voragem na 10.** Linhas 1480 e 1483 (`_ult`): `"mastery_level": 2` para
+**6** e `6` para **10**. Medido no P-50: sem ela a M5 fica com a M1 (32 contra 35%); com ela e a Firmeza, +13.
+
+**B-3 (P1) O sustento no meio da escada** (`_talents`, só o 6º argumento, `unlock`; custos e efeitos iguais):
+
+| Dom | Linha | Hoje | Proposto |
+|---|---|---|---|
+| `impeto` | 1527 | 3 | 2 |
+| `corte_crescente` | 1532 | 4 | 3 |
+| `lamina_faminta` | 1537 | 5 | 4 |
+| `passo_encadeado` | 1522 | 7 | 5 |
+| `avanco_feroz` | 1529 | 8 | 7 |
+| `fio_longo` | 1533 | 9 | 8 |
+| `firmeza` | 1549 | 16 | **9** |
+| `respiro` | 1550 | 17 | **12** |
+| `sangue_quente` | 1544 | 12 | 13 |
+| `onda_carregada` | 1545 | 13 | 14 |
+| `fio_do_passo` | 1546 | 14 | 15 |
+| `golpe_sem_fim` | 1523 | 15 | 16 |
+| `ainda_de_pe` | 1551 | 19 | **17** |
+
+Os outros iguais (Quarto Corte 1, Reserva 10, Investida 11, Fúria Plena 18, ápices 20). O nível 19 fica sem Dom novo
+(Devoção). Medido (P-50): M10 45%, M15 57%, M20 70%, a curva sobe a cada peça. O texto "O nível N revela" e o
+`MasteryReport` leem do dado.
+
+**B-4 (P2) Primeiras salas e a subida depois do guardião.** `_stage`, logo depois de `st.pom_from_depth = 3` (linha
+565): `st.base_difficulty = 70.0` (padrão 55 no `StageDef`) e `st.depth_ramp = 17.0` (padrão 15). Medido junto do
+pacote: as salas 7 a 9 passaram a ferir mais que as 4 a 6 sem o guardião (bom), as salas 1 a 3 continuam em 0 a 0,5
+(não chega à meta de 0,5 a 1,5; o que falta é composição, não orçamento: proposta para o `room-designer`, um
+`_pool(Tier.COMMON, 0.0, 0.34, 2.0, [&"pressure", &"control"])` com o feiticeiro, que é quem mais fere, nas salas 2 e
+3; não medido).
+
+**B-5 (P1) Ancião e Cavaleiro fora do 1,6** (a parede do guardião já mata 40% das vezes no P-50):
+
+| Quem | Linha | Campo | Hoje | Proposto |
+|---|---|---|---|---|
+| Cavaleiro | 309 a 311 | `damage`, `attack_damage`, `close_damage` | 12 | 16 |
+| Ancião | 317 a 318 | `damage`, `attack_damage` | 9 | 12 |
+
+Medido no P-50: o Santuário com 6 das 15 mortes (40%, meta 25 a 35). Se depois do B-1 a 1,6 passar de 35%, o Ancião
+vai a 11 (é a maior fonte para o robô 0,45, 28%).
+
+**OF-05 (P1) Portas de material mais fundas.** Dois campos novos no `StageDef` lidos no `RunMap._may` (o filtro do
+baralho, como o `pom_from_depth`; o `settle` não precisa mudar): `st.silver_from_depth = 4` e
+`st.memory_after_guardian = true` (Memória só numa camada depois da do guardião, que varia de 4 a 6), no `_stage` ao lado
+do `st.pom_from_depth` (linha 565). Medido (P-50, protótipo): Prata pela porta 3,0 para 0,9 por descida, Memória pela
+porta 0,1 para 0,4 a 0,7; Memória total mediana 5 para 2 na M1 (o risco R15, "Memória lenta no começo": medir os Dons
+abertos nas 10 primeiras descidas da campanha r45; se faltar, Memória desde a profundidade 5). A vitória não muda.
+
+### B.5 Antes e depois previsto (robô 0,25, sem Forja; 0,45 entre parênteses)
+
+| Faixa | Hoje medido | P-50 medido | Pacote proposto (B-1 a 1,6, B-2, B-3, B-4, B-5, OF-05), previsto | Meta |
+|---|---|---|---|---|
+| M1 | 48% (14%) | 35% (9%) | 25 a 30% (5 a 9%) | 20 a 30% (5 a 10%) |
+| M5 | 59% (33%) | 32% (0%) | 25 a 30% (0 a 5%) | 20 a 30% (5 a 10%) |
+| M10 | 77% (14%) | 45% (30%) | 40 a 45% (25%) | 50 a 65% (25 a 35%) |
+| M15 | 71% (33%) | 57% (33%) | 50 a 55% (30%) | 50 a 65% / 70 a 85% |
+| M20 | 83% (55%) | 70% (32%) | 65 a 70% (30%) | 70 a 85% (35 a 50%) |
+
+O que fica fora da meta e o que fazer: a M10 e o topo da 0,45 ficam um pouco abaixo. Se o remedir confirmar, a
+Tempestade fica em 15 (já está na tabela) e a Firmeza ganha +5 de vida (`firmeza` `max_hp` 10 para 15, linha 1549)
+antes de mexer em outra coisa.
+
+### B.6 O que falta medir
+
+1. Completar 48 sementes nas montagens principais e 24 nas secundárias (a medida parou em 23 e 12).
+2. O pacote final (B-1 a 1,6) nas duas réguas, M1, M5, M10, M15 e M20, com e sem Forja, no HEAD com os perigos a 10 e
+   os quebráveis (AT-Q1) do `343d251`.
+3. Morte no Santuário (meta 25 a 35%) e dano das salas 1 a 3 depois do B-4.
+4. A Memória da OF-05 nas 10 primeiras descidas (campanha r45, R15).
+5. Gente: o `runs.jsonl` do exe novo; a régua 0,45 só se recalibra com ele.
+
+---
+
+## Medição de 2026-11-19 (histórico; metas substituídas pelo Lote B)
+
+Primeira versão: 2026-11-19, código `0293f79` (depois do RP-01 a RP-05).
 
 ## 1. Direção do PO (2026-11-19)
 
@@ -138,7 +333,7 @@ um degrau grande: a Firmeza sozinha (+10 de vida) leva a M1 de 33% a 67%, a ulti
 (dentro do ruído). Vida dos inimigos e um Morvath mais
 apressado não mudam a vitória do robô (só o tempo).
 
-## 4. Metas propostas (para o Daniel aprovar)
+## 4. Metas propostas em 2026-11-19 (substituídas pelo B.3)
 
 Faixas de Maestria pelas descidas: com a curva de XP de hoje (`40 + 10 (n - 1)`), uma derrota dá 70 a 110 de XP e uma
 vitória 200 a 300. A Maestria 5 chega na 3ª ou 4ª descida, a 10 na 8ª a 10ª, a 20 depois de 25 a 30.
