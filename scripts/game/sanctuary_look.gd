@@ -735,6 +735,7 @@ func _dress_styled_steps() -> Array[Callable]:
 			guard.transform = _leaning(layout.boss_spawn, STY_GUARD_SHAFT.z)
 			guard.light_specular = 0.0
 			ArenaKit.style_only(guard)
+			_nave_band()
 			_mouths(),
 		func() -> void:
 			_offerings(v[&"sm"]),
@@ -760,6 +761,21 @@ func _dress_styled_steps() -> Array[Callable]:
 		func() -> void:
 			_finials(v[&"sm"]),
 	]
+
+
+## AT-SD1 (A, stylized only): a diffuse band of light along the nave between the entry and the guardian's shaft (a soft
+## key pool at their middle: its reach as a share of the distance, colour, energy), so the floor leads to the chancel.
+const STY_NAVE_BAND := Vector3(0.4, 0.0, 2.6)
+const STY_NAVE_BAND_COLOR := Color(0.95, 0.88, 0.72)
+
+
+func _nave_band() -> void:
+	if not _hole.is_empty():
+		return
+	var a := layout.boss_spawn
+	var b := layout.hero_spawn
+	var mid := (a + b) * 0.5
+	key_pool(Vector3(mid.x, mid.y, a.distance_to(b) * STY_NAVE_BAND.x), STY_NAVE_BAND_COLOR, STY_NAVE_BAND.z)
 
 
 ## Sworn P2 SW-G4: offerings at the foot of the nave's tall walls (ArenaRoom.offerings).

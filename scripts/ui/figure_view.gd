@@ -86,7 +86,8 @@ func show_enemy(d: EnemyDef, p_known: bool) -> void:
 		_cam.size = h * FRAME
 		# the camera looks down a little: raised so the middle of its view is the middle of the figure
 		_cam.position = Vector3(0, h * 0.5 + 10.0 * tan(deg_to_rad(-_cam.rotation_degrees.x)), 10.0)
-	modulate = Color.WHITE if known else INK
+	# the unknown: a silhouette in the page's faded ink at 0.3 (AP-4 1.6)
+	modulate = Color.WHITE if known else Color(Book.FADED, 0.3)
 	_draw()
 
 

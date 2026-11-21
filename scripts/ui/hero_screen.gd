@@ -254,12 +254,18 @@ func _head_right() -> Control:
 
 # ---- Abertura ----
 
+const EPIGRAPH_WIDTH := 347.0
+
+
 ## Ahk's testimony (the canon's own words, as the Cronologia opens) and who wrote it.
 func _opening_left() -> Control:
 	var v := VBoxContainer.new()
 	v.name = "opening_left"
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_theme_constant_override(&"separation", 14)
+	var vignette := AhkVignette.new()
+	vignette.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	v.add_child(vignette)
 	var title := Book.label(T.t(&"book_title"), Book.RUBRIC, 40, UiKit.TITLE_FONT)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(title)
@@ -268,15 +274,16 @@ func _opening_left() -> Control:
 	rule.custom_minimum_size = Vector2(320, 14)
 	rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(rule)
-	var words := Book.text(T.t(&"book_epigraph"), Book.INK, 22)
+	# the epigraph on a left aligned column with the illuminated capital (AP-4 1.4); the signature to its right
+	var words := DropCap.paragraph(T.t(&"book_epigraph"), Book.INK, 22, EPIGRAPH_WIDTH)
 	words.name = "epigraph"
-	words.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	words.custom_minimum_size.x = 420.0
 	words.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(words)
 	var by := Book.label(T.t(&"book_epigraph_by"), Book.GILT, 18, UiKit.TITLE_FONT)
 	by.name = "epigraph_by"
-	by.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	by.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	by.custom_minimum_size.x = EPIGRAPH_WIDTH
+	by.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	v.add_child(by)
 	return v
 

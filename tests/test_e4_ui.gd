@@ -246,8 +246,8 @@ func test_codex_enemies_with_their_part() -> void:
 	assert_eq((sk.find_child("Name", true, false) as Label).text, T.t(&"enemy_skeleton"))
 	assert_eq((sk.find_child("Role", true, false) as Label).text, T.t(&"codex_role_pressure"))
 	assert_string_contains((sk.find_child("Times", true, false) as Label).text, T.t(&"codex_defeated_elite", {"n": 3}))
-	var knight := c._list.find_child("knight", true, false)
-	assert_eq((knight.find_child("Name", true, false) as Label).text, CodexScreen.UNKNOWN)
+	assert_not_null(c._list.find_child("skeleton_elite", true, false), "the elite has its own entry once one fell")
+	assert_null(c._list.find_child("knight", true, false), "the unknown are one line")
 	# every part has its text
 	for id in CodexScreen.ENEMIES:
 		var def: EnemyDef = load(CodexScreen.ENEMY_DIR + String(id) + ".tres")

@@ -184,19 +184,29 @@ func test_without_a_save_nothing_is_written() -> void:
 	assert_eq(DirAccess.get_files_at(DIR).size(), 0, "--nosave and the tests write nothing")
 
 
-func test_the_title_asks_for_a_save_only_once_and_never_in_captures() -> void:
+## The Daniel, 2026-11-21: the title first; Iniciar asks for the save; a used save goes to the hub, an empty one
+## straight into the first descent.
+func test_iniciar_asks_for_the_save_and_a_new_one_goes_straight_down() -> void:
 	var boot: GDScript = load("res://scripts/boot.gd")
-	Save.chosen = false
-	assert_true(boot.call(&"wants_slots"), "a session starts on the choice of save")
-	Save.chosen = true
-	assert_false(boot.call(&"wants_slots"), "once chosen, the title")
-	Save.chosen = false
+	assert_true(boot.call(&"wants_slots"), "with a save, Iniciar asks which")
 	Save.enabled = false
-	assert_false(boot.call(&"wants_slots"), "--nosave and the tests never see it")
+	assert_false(boot.call(&"wants_slots"), "--nosave and the tests go straight on")
 	Save.enabled = true
-	Dev.put("title")
-	assert_false(boot.call(&"wants_slots"), "--title captures skip it")
-	Dev.drop("title")
+	var d := SaveData.defaults()
+	assert_eq(boot.call(&"first_scene", d), SceneGo.GAME, "an empty save: the first descent, no hub")
+	d.runs = 1
+	assert_eq(boot.call(&"first_scene", d), SceneGo.HUB, "a save with a descent: the Santuário")
+
+
+func test_the_first_descent_ends_only_towards_the_santuario() -> void:
+	var end := EndScreen.new()
+	add_child_autofree(end)
+	end.open(false, {"time": 60.0, "level": 0, "kills": 3, "best_combo": 2, "boons": 1, "defeated_by": &"", "mastery": {}}, false)
+	assert_not_null(end.find_child("retry", true, false), "a later descent offers going down again")
+	end.home_only()
+	await wait_process_frames(2)
+	assert_null(end.find_child("retry", true, false), "the first one only the way to the Santuário")
+	assert_not_null(end.find_child("menu", true, false))
 
 
 func test_the_screen_shows_each_save() -> void:

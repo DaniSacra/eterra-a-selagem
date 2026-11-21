@@ -962,6 +962,8 @@ entries = {
 "forge_balance": "Saldo",
 "forge_cost": "Custo",
 "codex_unknown_enemy": "Derrote um para conhecer.",
+"codex_undiscovered": "{n} por descobrir",
+"codex_elite_name": "{name} de elite",
 "oficio_found": "Achado: {name}",
 "oficio_pick_head": "Cabeça da Picareta",
 "oficio_pick": "Picareta",

@@ -28,7 +28,7 @@ const OUTER := Vector2(22, 10)
 ## The index entries' width and their marks.
 const TAB_WIDTH := 270.0
 ## Nine chapters (Fatia 3, Anjos): entries this tall, so the enemy's figure under the index fits a 720 screen.
-const TAB_HEIGHT := 34.0
+const TAB_HEIGHT := 30.0
 const MARK := 24.0
 ## The enemies of the region in the order a descent meets them, the guardians last (Morvath has his own tab).
 const ENEMIES: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder"]
@@ -66,7 +66,10 @@ const ANGEL_ROW := 58.0
 const ELO_NAME_WIDTH := 170.0
 const UNKNOWN := "???"
 ## The detail's figure on the index page, and the Gift's mark there.
-const FIGURE := Vector2(130, 170)
+const FIGURE := Vector2(150, 200)
+## The plate round the figure: the double filet of ink (as the Gifts' tree) this far in, and the gap between the lines.
+const PLATE_PAD := 4.0
+const PLATE_GAP := 3.0
 const DETAIL_MARK := 96.0
 const DETAIL_TEXT := 15
 ## The selected row's ink wash.
@@ -93,6 +96,7 @@ var figure: FigureView
 var _detail_mark: Control
 var _detail_name: Label
 var _detail_line: Label
+var _detail_count: Label
 ## The entry selected now (its row's name: the enemy's or Gift's id).
 var selected := &""
 
@@ -303,7 +307,8 @@ func _detail_block() -> Control:
 	detail.add_child(row)
 	var art := CenterContainer.new()
 	art.name = "art"
-	art.custom_minimum_size = FIGURE
+	art.custom_minimum_size = FIGURE + Vector2(PLATE_PAD, PLATE_PAD) * 2.0
+	art.draw.connect(func() -> void: _plate(art))
 	row.add_child(art)
 	figure = FigureView.new().setup(FIGURE)
 	art.add_child(figure)
@@ -311,15 +316,25 @@ func _detail_block() -> Control:
 	words.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	words.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_child(words)
-	_detail_name = Book.label("", Book.INK, 20, UiKit.TITLE_FONT)
+	_detail_name = Book.label("", Book.RUBRIC, 20, UiKit.TITLE_FONT)
 	_detail_name.name = "detail_name"
 	_detail_name.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	words.add_child(_detail_name)
 	_detail_line = Book.text("", Book.FADED, DETAIL_TEXT)
 	_detail_line.name = "detail_line"
 	words.add_child(_detail_line)
+	_detail_count = UiKit.label("", Book.GILT, DETAIL_TEXT, UiKit.number_font())
+	_detail_count.name = "detail_count"
+	words.add_child(_detail_count)
 	detail.visible = false
 	return detail
+
+
+## The plate of a figure: a double filet of ink round it (AP-4 1.6), the outer one a little heavier.
+func _plate(art: Control) -> void:
+	var outer := Rect2(Vector2.ZERO, art.size).grow(-1.0)
+	art.draw_rect(outer, Book.INK, false, 1.6)
+	art.draw_rect(outer.grow(-PLATE_GAP - 1.0), Color(Book.INK, 0.7), false, 1.0)
 
 
 ## The rows of the chapter on show that can be picked (Inimigos, Dons): focus and the mouse select them, the first one
@@ -367,11 +382,16 @@ func _select(id: StringName) -> void:
 		_detail_mark = null
 	if tab == Tab.ENEMIES:
 		var def: EnemyDef = load(ENEMY_DIR + String(id) + ".tres")
-		var known := count("enemies", id, "defeated") > 0
+		var elite := String(id).ends_with("_elite")
+		var known := count("enemies", StringName(String(id).trim_suffix("_elite")), "elite" if elite else "defeated") > 0
 		figure.visible = true
 		figure.show_enemy(def, known)
-		_detail_name.text = enemy_name(def) if known else UNKNOWN
-		_detail_line.text = T.t(role_key(def)) if known else T.t(&"codex_unknown_enemy")
+		# an elite is named and described as its kind (the base definition)
+		var base: EnemyDef = load(ENEMY_DIR + String(id).trim_suffix("_elite") + ".tres") if elite else def
+		_detail_name.text = (T.t(&"codex_elite_name", {"name": enemy_name(base)}) if elite else enemy_name(base)) if known else UNKNOWN
+		_detail_line.text = T.t(role_key(base)) if known else T.t(&"codex_unknown_enemy")
+		var fell := count("enemies", StringName(base.id), "elite" if elite else "defeated")
+		_detail_count.text = T.t(&"codex_defeated" if fell != 1 else &"codex_defeated_one", {"n": fell}) if known else ""
 	elif tab == Tab.GIFTS:
 		var hero := HeroDef.warrior()
 		var level := hero.mastery.level_of(int(SaveData.hero(_data, String(hero.id)).mastery_xp))
@@ -387,6 +407,7 @@ func _select(id: StringName) -> void:
 		figure.get_parent().add_child(_detail_mark)
 		_detail_name.text = T.t(t.name_key) if open else UNKNOWN
 		_detail_line.text = T.t(t.desc_key) if open else T.t(&"codex_locked", {"n": t.unlock_level})
+		_detail_count.text = ""
 
 
 ## How much of a chapter was found: (found, total). Gifts: reached by the Mastery; Blessings: met; Elos: formed;
@@ -478,8 +499,10 @@ func _boons() -> void:
 	var cols := HBoxContainer.new()
 	cols.add_theme_constant_override(&"separation", CELL_GAP)
 	_list.add_child(cols)
-	var all := catalog(false)
-	var per := ceili(float(all.size()) / BOON_COLUMNS)
+	var all: Array[Boon] = []
+	all.assign(catalog(false).filter(func(b: Boon) -> bool: return count("boons", b.id, "seen") > 0))
+	var hidden := catalog(false).size() - all.size()
+	var per := maxi(ceili(float(all.size()) / BOON_COLUMNS), 1)
 	for i in all.size():
 		var b := all[i]
 		if i % per == 0:
@@ -504,15 +527,20 @@ func _boons() -> void:
 		row.add_child(fam)
 		row.add_child(_times(n))
 		cols.get_child(cols.get_child_count() - 1).add_child(row)
+	_undiscovered(hidden)
 
 
 ## Every Elo, one line each: the chain with its two Blessings and its name once formed; before, "???" and the recipe
 ## only when both Blessings were already met (a hint, never the Elo's name).
 func _elos() -> void:
-	var all := catalog(true)
-	for b in all:
+	var hidden := 0
+	for b in catalog(true):
 		var n := count("elos", b.id, "formed")
 		var from := _catalog.sources(b)
+		var hinted := from.size() == 2 and from.all(func(x: Boon) -> bool: return count("boons", x.id, "seen") > 0)
+		if n <= 0 and not hinted:
+			hidden += 1
+			continue
 		var row := HBoxContainer.new()
 		row.name = String(b.id)
 		row.add_theme_constant_override(&"separation", 12)
@@ -538,6 +566,7 @@ func _elos() -> void:
 		row.add_child(recipe)
 		row.add_child(_times(n))
 		_list.add_child(row)
+	_undiscovered(hidden)
 
 
 ## Every Psalm: found (seen on a card once) its medallion, name, what it does and how many times it was taken; not
@@ -571,9 +600,13 @@ func _psalms() -> void:
 ## The region's enemies (ENEMIES): name, part in a fight and how many fell (elites apart) once one was defeated;
 ## "???" before.
 func _enemies() -> void:
+	var hidden: Array[StringName] = []
 	for id in ENEMIES:
 		var def: EnemyDef = load(ENEMY_DIR + String(id) + ".tres")
 		var n := count("enemies", id, "defeated")
+		if n <= 0:
+			hidden.append(id)
+			continue
 		var row := HBoxContainer.new()
 		row.name = String(id)
 		row.custom_minimum_size.y = LIST_ROW
@@ -598,6 +631,57 @@ func _enemies() -> void:
 			tally.text += " · " + T.t(&"codex_defeated_elite", {"n": elite})
 		row.add_child(tally)
 		_list.add_child(row)
+		if elite > 0 and def.elite_version != &"":
+			_list.add_child(_elite_row(def, elite))
+	# the ones never defeated in one line, which shows the silhouette of the first of them
+	if not hidden.is_empty():
+		_undiscovered(hidden.size(), hidden[0])
+
+
+## An elite's own entry under its kind (once one fell): the gilt drawing of its figure, its name and how many fell.
+func _elite_row(def: EnemyDef, n: int) -> Control:
+	var row := HBoxContainer.new()
+	row.name = String(def.elite_version)
+	row.custom_minimum_size.y = LIST_ROW
+	row.add_theme_constant_override(&"separation", 12)
+	var mark := RoleMark.new().setup(def.role if def.role != &"" else &"guardian", ROLE_MARK, false)
+	mark.name = &"Mark"
+	row.add_child(mark)
+	var name := UiKit.label(T.t(&"codex_elite_name", {"name": enemy_name(def)}), Book.GILT.darkened(0.25), ROW_SIZE, UiKit.BOLD_FONT)
+	name.name = &"Name"
+	name.custom_minimum_size.x = ENEMY_NAME_WIDTH
+	row.add_child(name)
+	var tally := UiKit.label(T.t(&"codex_defeated", {"n": n}), Book.FADED, ROW_SIZE - 2, UiKit.number_font())
+	tally.name = &"Times"
+	tally.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tally.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	row.add_child(tally)
+	return row
+
+
+## The line that stands for every entry still unknown ("N por descobrir", faded, a hollow diamond): the lists show
+## what was found and this at the end instead of a column of "???" (AP-4 1.6). `id` makes it pickable (its row name).
+func _undiscovered(n: int, id: StringName = &"undiscovered") -> void:
+	if n <= 0:
+		return
+	var row := HBoxContainer.new()
+	row.name = String(id)
+	row.custom_minimum_size.y = LIST_ROW if id != &"undiscovered" else 28.0
+	row.add_theme_constant_override(&"separation", 12)
+	var d := Control.new()
+	d.custom_minimum_size = Vector2(ROLE_MARK, ROLE_MARK)
+	d.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	d.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	d.draw.connect(func() -> void:
+		var c := d.size * 0.5
+		var k := 5.0
+		d.draw_polyline(TalentNode._closed(TalentNode._diamond(c, k)), Book.FADED, 1.4, true))
+	row.add_child(d)
+	var l := UiKit.label(T.t(&"codex_undiscovered", {"n": n}), Book.FADED, ROW_SIZE, UiKit.BOLD_FONT)
+	l.name = &"Name"
+	l.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(l)
+	_list.add_child(row)
 
 
 ## An enemy's name in the Codex: its own key when the game shares one between two kinds (the elder priest).
@@ -683,9 +767,13 @@ func _arenas() -> void:
 ## Fatia 3, the angels (AngelCodex): each its seal (lit once met, its outline before), its name and line, and the
 ## times it came, was chosen and blessed the end of a descent; never met: "???" and "Ainda não encontrado.".
 func _angels() -> void:
+	var hidden := 0
 	for e in AngelCodex.entries(_data):
 		var a: AngelDef = e.def
 		var known := bool(e.known)
+		if not known:
+			hidden += 1
+			continue
 		var row := HBoxContainer.new()
 		row.name = String(a.id)
 		row.add_theme_constant_override(&"separation", 12)
@@ -710,6 +798,7 @@ func _angels() -> void:
 			words.add_child(nums)
 		row.add_child(words)
 		_list.add_child(row)
+	_undiscovered(hidden)
 
 
 ## AP-4: the Gift's painted motif on the page (TalentMotif), its glyph's mark when it has none.
@@ -874,10 +963,10 @@ class CodexMark:
 					c + Vector2(0, -r * 0.75), c + Vector2(r * 0.42, r * 0.05), c + Vector2(r * 0.85, -r * 0.5), c + Vector2(r * 0.85, r * 0.6)]), color, w, true)
 				draw_line(c + Vector2(-r * 0.95, r * 0.6), c + Vector2(r * 0.95, r * 0.6), color, w * 1.4, true)
 			Tab.ANGELS:
-				# a seal: a double ring and a small diamond (never rays)
+				# a seal: two plain rings and a dot, no diamond (the Blessings' mark is a ring with one; never rays)
 				draw_arc(c, r * 0.9, 0.0, TAU, 28, color, w, true)
-				draw_arc(c, r * 0.6, 0.0, TAU, 24, color, w * 0.7, true)
-				draw_colored_polygon(TalentNode._diamond(c, r * 0.3), color)
+				draw_arc(c, r * 0.58, 0.0, TAU, 24, color, w * 1.3, true)
+				draw_circle(c, r * 0.16, color)
 			Tab.ARENAS:
 				# a room's plan: a lozenge with a door's mouth at its foot
 				draw_polyline(TalentNode._closed(TalentNode._diamond(c + Vector2(0, -r * 0.1), r * 0.85)), color, w, true)

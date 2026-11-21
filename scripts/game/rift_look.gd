@@ -730,7 +730,8 @@ func _dress_styled_steps() -> Array[Callable]:
 						var into := 1.0 if lip < (RIFT_X.x + RIFT_X.y) * 0.5 else -1.0
 						var at := _into_rift(Vector2(lip + into * HEAD_BOWL.y, r.position.y - HEAD_BOWL.x), into)
 						if at != Vector2.INF:
-							_head_bowl(sm, at),
+							_head_bowl(sm, at)
+						_head_pilasters(sm, r, lip, into),
 		func() -> void:
 			var sm: Masonry = v[&"sm"]
 			_hung_shards(sm)
@@ -792,6 +793,22 @@ func _edge_pieces() -> void:
 
 ## F1: a small fire bowl on a pillar standing out of the rift's wall at `at` (off the floor): a corbel of the depths'
 ## stone under it, the pillar, the kit's brazier at half its size on top (its light a pool, no shadow).
+## AT-FA1 (stylized only): a low pale pilaster at each corner of each standing bridge's heads, just outside the deck over
+## the rift (HEAD_PILASTER: size across, height over the deck, cap overhang), so the crossings count by their ends.
+const HEAD_PILASTER := Vector3(0.42, 0.85, 0.1)
+const HEAD_PILASTER_OUT := 0.32
+
+
+func _head_pilasters(sm: Masonry, r: Rect2, lip: float, into: float) -> void:
+	var w := HEAD_PILASTER
+	for side: float in [r.position.y - HEAD_PILASTER_OUT, r.end.y + HEAD_PILASTER_OUT]:
+		var at := _into_rift(Vector2(lip + into * w.x, side), into)
+		if at == Vector2.INF or absf(at.y - side) > 0.01:
+			continue
+		sm.block(Vector3(at.x, -0.6, at.y), Vector3(w.x, w.y + 0.6, w.x), 0.0, ashlar())
+		sm.block(Vector3(at.x, w.y, at.y), Vector3(w.x + w.z * 2.0, 0.12, w.x + w.z * 2.0), 0.0, ashlar())
+
+
 func _head_bowl(sm: Masonry, at: Vector2) -> void:
 	sm.layers = 1 | ArenaKit.DEPTH_LAYER
 	sm.block(Vector3(at.x, ABUTMENT_FOOT * 0.5, at.y), Vector3(HEAD_BOWL_PILLAR + 0.2, -ABUTMENT_FOOT * 0.5 - 0.6, HEAD_BOWL_PILLAR + 0.2), 0.0, deep())

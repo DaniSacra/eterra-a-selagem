@@ -8,9 +8,10 @@ extends Node
 ## --title --screen=options|music|moves|howto|hero|gifts|book|codex|juramentos|map opens a panel at once (hero, gifts and
 ## book: the Livro de Ahk on the Warrior, the Gifts or the opening). --hero-xp=N and --hero-equip=a,b set the
 ## Warrior's Mastery and Gifts for captures, in Save.data (Save.gd).
-## Save slots (the Daniel, 2026-11-19): the first screen of a session is the choice of save (SaveSlotScreen) over the
-## dimmed title art; the title's menu comes after it. "Save N · Trocar de save" in the lower left corner (or Esc and B
-## on the title) opens it again. Never with --nosave, --slot=N or --title (captures), unless --screen=slots.
+## Save slots (the Daniel, 2026-11-21): the title comes first; Iniciar opens the choice of save (SaveSlotScreen) over
+## the dimmed title art. A save with a descent goes to the hub; an empty one goes straight into the first descent, and
+## the hub is first seen after that descent ends (the end screen then offers only the way to the Santuário).
+## Without a save (--nosave, the tests) Iniciar goes to the hub as before.
 
 const GAME := SceneGo.GAME
 const HUB := SceneGo.HUB
@@ -29,8 +30,6 @@ var _sub: Control:
 ## The button that opened the panel on screen, to give the focus back to it.
 var _opener: TitleButton
 var _leaving := false
-## "Save N · Trocar de save" in the lower left corner of the title.
-var _switch: Button
 
 
 func _ready() -> void:
@@ -46,11 +45,9 @@ func _ready() -> void:
 	_build()
 	# P1-1: the same, behind the title while it is read
 	Warmup.start(self)
-	if wants_slots():
-		_open_slots(false)
 	match Dev.arg("screen"):
 		"slots":
-			_open_slots(Save.chosen)
+			_open_slots()
 		"options":
 			_open(OptionsScreen.new(), TitleButton.Kind.SETTINGS)
 		"music":
@@ -89,10 +86,14 @@ static func route() -> String:
 	return GAME if Dev.has("shot") else ""
 
 
-## Whether the title opens on the choice of save: the first time in a session, with a save (not --nosave, --slot=N nor
-## the captures' --title).
+## Whether Iniciar asks for the save first (not with --nosave nor in the tests).
 static func wants_slots() -> bool:
-	return Save.enabled and not Save.chosen and not Dev.has("title")
+	return Save.enabled
+
+
+## Where a chosen save starts: the hub once it has a descent, the first descent itself when it is new.
+static func first_scene(data: Dictionary) -> String:
+	return HUB if int(data.get("runs", 0)) > 0 else GAME
 
 
 func _build() -> void:
@@ -116,27 +117,6 @@ func _build() -> void:
 	_menu.howto_pressed.connect(func() -> void: _open(HowToScreen.new(), TitleButton.Kind.HOWTO))
 	_menu.settings_pressed.connect(func() -> void: _open(OptionsScreen.new(), TitleButton.Kind.SETTINGS))
 	_menu.quit_pressed.connect(_quit)
-	_switch = UiKit.link("", func() -> void: _open_slots(true))
-	_switch.name = "switch_save"
-	_switch.focus_mode = Control.FOCUS_NONE
-	# over the painting: a dark edge round the letters, as every text over the art
-	_switch.add_theme_constant_override(&"outline_size", 5)
-	_switch.add_theme_color_override(&"font_outline_color", Color(UiKit.INK, 0.9))
-	_switch.add_theme_color_override(&"font_color", UiKit.PALE.darkened(0.1))
-	var corner := Control.new()
-	corner.name = "corner"
-	corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	corner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	corner.theme = UiKit.theme()
-	layer.add_child(corner)
-	corner.add_child(_switch)
-	_switch.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-	_switch.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_switch.offset_left = 16
-	_switch.offset_bottom = -12
-	_switch.offset_top = -12 - 38
-	Controls.device_changed.connect(func(_pad: bool) -> void: _name_switch())
-	_name_switch()
 	# the title's piece as chosen in Músicas (T5; our rooms' walk by default, which the first room goes on with)
 	Music.play(&"title")
 	if Dev.has("shot"):
@@ -152,32 +132,26 @@ func _build() -> void:
 			_menu.set_enabled(true))
 
 
-## The title's corner: which save is in use and how to change it (hidden without a save).
-func _name_switch() -> void:
-	if not is_instance_valid(_switch):
-		return
-	# (--save-dir: captures of saves made for them, read only with --nosave)
-	_switch.visible = (Save.enabled or Dev.has("save-dir")) and Save.slot > 0 and _menu.visible
-	_switch.text = T.t(&"slot_switch", {"n": Save.slot, "key": "B" if Controls.using_pad else "Esc"})
-
-
-## The choice of save (SaveSlotScreen) over the title art; choosing one puts it in use (Save.use) and gives the title
-## back. can_back: Esc and B close it (a save is already in use).
-func _open_slots(can_back: bool) -> void:
+## The choice of save (SaveSlotScreen) over the title art (Esc and B go back to the title); choosing one puts it in use
+## (Save.use) and leaves for where that save starts (first_scene).
+func _open_slots() -> void:
 	if _sub:
 		return
 	var screen := SaveSlotScreen.new()
-	_open(screen, TitleButton.Kind.START, [can_back])
-	_switch.visible = false
+	_open(screen, TitleButton.Kind.START, [true])
 	screen.chosen.connect(func(n: int) -> void:
 		Save.use(n)
 		App.apply_options()
-		_close_sub())
+		_close_sub()
+		_leave_to(first_scene(Save.data)))
 
 
-## Iniciar: to the hub (HUB-01, D-H5), where the Portal starts the descent.
+## Iniciar: the choice of save first; without a save, the hub (HUB-01, D-H5).
 func _start() -> void:
-	_leave_to(HUB)
+	if wants_slots():
+		_open_slots()
+	else:
+		_leave_to(HUB)
 
 
 func _leave_to(scene: String) -> void:
@@ -238,8 +212,7 @@ func _close_sub() -> void:
 
 func _closed_sub() -> void:
 	_backdrop.dim(false)
-	_menu.visible = true
-	_name_switch()
+	_menu.visible = not _leaving
 	if _opener:
 		_opener.grab_focus()
 	else:
@@ -249,11 +222,6 @@ func _closed_sub() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if _menu == null:
 		# a test switch is on its way to the run: there is no menu
-		return
-	if not _sub and not _leaving and event.is_action_pressed(&"ui_cancel") and _switch.visible:
-		# Esc or B on the title: the choice of save again
-		get_viewport().set_input_as_handled()
-		_open_slots(true)
 		return
 	if not _sub and not _leaving and event.is_pressed() and not event.is_echo():
 		# any key during the entrance finishes it

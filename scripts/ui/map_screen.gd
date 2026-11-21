@@ -219,8 +219,7 @@ func _legend_mark(kind: DoorGlyph.Kind) -> Control:
 		box.draw.connect(func() -> void:
 			var c := box.size * 0.5
 			var r := LEGEND_MARK * 0.62
-			box.draw_circle(c, r, MapGraph.DISC)
-			box.draw_arc(c, r - 0.7, 0.0, TAU, 28, MapGraph.DISC_EDGE, 1.4, true))
+			MapGraph.medallion(box, c, r, DescentMap.State.AHEAD))
 	box.add_child(g)
 	return box
 
@@ -241,19 +240,13 @@ static func _draw_state(box: Control, st: DescentMap.State) -> void:
 	match st:
 		DescentMap.State.DONE:
 			box.draw_line(c - Vector2(r + 6, 0), c + Vector2(r + 6, 0), Book.RUBRIC, MapGraph.PATH_WIDTH, true)
-			box.draw_circle(c, r * 0.7, MapGraph.DISC)
-			box.draw_arc(c, r * 0.7 - 1.0, 0.0, TAU, 24, Book.RUBRIC, 2.0, true)
+			MapGraph.medallion(box, c, r * 0.85, st)
 		DescentMap.State.CURRENT:
-			box.draw_circle(c, r * 0.7, MapGraph.DISC)
-			box.draw_arc(c, r * 0.7 - 1.2, 0.0, TAU, 24, MapGraph.HERE, 2.4, true)
-			box.draw_arc(c, r * 0.7 + 3.0, 0.0, TAU, 24, MapGraph.HERE, 1.4, true)
+			MapGraph.medallion(box, c, r * 0.85, st)
 		DescentMap.State.DOOR:
-			box.draw_circle(c, r + 2.0, Color(Book.GILT, 0.16))
-			box.draw_circle(c, r * 0.7, MapGraph.DISC)
-			box.draw_arc(c, r * 0.7 - 1.2, 0.0, TAU, 24, Book.GILT, 2.4, true)
+			MapGraph.medallion(box, c, r * 0.85, st)
 		_:
-			box.draw_circle(c, r * 0.7, Color(MapGraph.DISC, MapGraph.BEHIND_ALPHA))
-			box.draw_arc(c, r * 0.7 - 0.7, 0.0, TAU, 24, Color(MapGraph.DISC_EDGE, MapGraph.BEHIND_ALPHA), 1.4, true)
+			MapGraph.medallion(box, c, r * 0.85, DescentMap.State.BEHIND)
 
 
 ## The left page tells the room in focus (and the door to it lights in the room, MAP-07).

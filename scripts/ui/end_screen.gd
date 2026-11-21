@@ -15,6 +15,9 @@ extends Control
 signal retry
 signal menu
 
+## The way back to the Santuário (home_only).
+var _home: Button
+
 ## The sealing: the screen fades in, the ring closes after SEAL_DELAY in SEAL_CLOSE seconds, the summary rises at
 ## SUMMARY_AT in SUMMARY_RISE seconds.
 const VICTORY_RISE := 0.5
@@ -448,6 +451,17 @@ func _stat(row: HBoxContainer, key: String, value: String, color: Color = UiKit.
 	row.add_child(cell)
 
 
+## The save's first descent over (the Daniel, 2026-11-21): the Santuário is first seen now, so the only way on is to it.
+func home_only() -> void:
+	for n: StringName in [&"retry", &"again"]:
+		var b := find_child(n, true, false)
+		if b != null:
+			b.queue_free()
+	if _home != null:
+		UiKit.primary(_home)
+		_home.grab_focus.call_deferred()
+
+
 ## The ways on, in the same places in both endings (UI review d2ff05d, P1-10): back to the hub on the left, down again
 ## on the right; the main one (bronze, with the focus) is the hub after a victory and the descent after a defeat.
 ## Named "continue" and "again" in a victory, "menu" and "retry" in a defeat.
@@ -464,6 +478,7 @@ func _ways(parent: Control, victory: bool) -> void:
 	var main := to_menu if victory else again
 	UiKit.primary(main)
 	main.grab_focus.call_deferred()
+	_home = to_menu
 	# the keys at the foot (benchmark P0-2, UI-HB6)
 	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_confirm"), ActionBar.press_focus.bind(self))])
 

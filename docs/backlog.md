@@ -259,8 +259,7 @@ entram (decisão do PO no pacote 2); NPC, nome, receitas e função seguem fora 
 ### Abertas, só o Daniel (nada muda até ele responder)
 
 Nomes dos paladinos (D-02, D-04), título de Morvath (D-01), nome do hub (D-H4), romã e loja (D-41), nomes finais dos
-anjos e Encantos, Abertura do Livro e Ahk (Q-03, Q-05, Q-23), "Ultimate" (Q-16), licença do Meshy (Q-01, trava a
-Steam), créditos (Q-17), lote do Meshy (Q-18, recomendação: nada até o exe novo), arte dele (Q-04, Q-07, Q-24, figuras
+anjos e Encantos, Abertura do Livro e Ahk (Q-03, Q-05, Q-23), "Ultimate" (Q-16), créditos (Q-17), lote do Meshy (Q-18, recomendação: nada até o exe novo), arte dele (Q-04, Q-07, Q-24, figuras
 dos anjos, P-1), pontas do medalhão do Salão (S-Q6). **Só jogando**: se os perigos ficaram justos com 10 de dano, se a
 porta de Prata compete com a Bênção, se escolher o anjo é decisão.
 
@@ -373,7 +372,7 @@ B-5 Ancião e Cavaleiro). Proibido vida inflada. Aceite: metas do `balance.md` c
 
 - **Meshy** (nenhum crédito): LC-P2 (besta e cajado novos), Q-18 (estátua, armas, gancho, repintura das elites), SW-A1 a
   SW-A4 (crânios, portão, arco, bacia com o leão), crânios do SW-C2.
-- **Licença e créditos**: Q-01 (plano do Meshy; fecha o DT-101), Q-17 (nome nos créditos).
+- **Licença e créditos**: ~~Q-01~~ RESOLVIDA 2026-11-21 (plano Pro pago, modelos do Daniel; a parte do Meshy no DT-101 fecha), Q-17 (nome nos créditos).
 - **Nomes**: `PALADIN_1` a `PALADIN_4` (D-02, D-04), título de Morvath (D-01), romã e loja em Eterra (D-41), nome do hub
   (`hub_name` "Santuário", D-H4), Vendedor e Forjador e quem vende (L-11), as ferramentas do Forjador (RJ-9), nomes finais
   dos Encantos e dos anjos (Sarael, Nivael, Lumael, Shomael aprovados como proposta; ficam em chaves próprias).

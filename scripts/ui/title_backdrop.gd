@@ -24,7 +24,11 @@ const SEAM := 24.0
 ## A band thinner than this (rounding) is no band.
 const BAND_MIN := 0.5
 ## Submenus darken the backdrop to this.
-const DIM_LEVEL := 0.45
+const DIM_LEVEL := 0.3
+## Behind a submenu the painting is also out of focus (the mip level it is read at), so the cross of the art does not
+## show (AP-4 1.10); at rest the shader's own sharp bias.
+const DIM_LOD := 3.2
+const SHARP_LOD := -0.6
 const DIM_TIME := 0.2
 ## The air starts as if it had been drifting for a while (no empty first seconds, and the same frame every capture).
 const PREWARM := 20.0
@@ -211,6 +215,10 @@ func fade_out(time := 0.45) -> Signal:
 ## Darkens the backdrop behind a submenu, or brings it back.
 func dim(on: bool) -> void:
 	_fade_to(1.0 - DIM_LEVEL if on else 0.0, DIM_TIME)
+	var mat := _art.material as ShaderMaterial
+	var cur: Variant = mat.get_shader_parameter(&"lod_bias")
+	var from: float = SHARP_LOD if cur == null else float(cur)
+	create_tween().tween_method(func(v: float) -> void: mat.set_shader_parameter(&"lod_bias", v), from, DIM_LOD if on else SHARP_LOD, DIM_TIME)
 
 
 func _fade_to(alpha: float, time: float) -> PropertyTweener:

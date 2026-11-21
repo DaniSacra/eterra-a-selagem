@@ -69,7 +69,12 @@ func test_focus_on_a_bookmark_shows_its_chapter() -> void:
 func test_the_opening_quotes_ahk_and_the_descent() -> void:
 	var s := _book(_data(0), HeroScreen.Chapter.OPENING)
 	assert_eq((s.find_child("epigraph_by", true, false) as Label).text, "Ahk, o Escriba")
-	assert_string_contains((s.find_child("epigraph", true, false) as Label).text, "Elun, o Filho da Luz")
+	var ep := s.find_child("epigraph", true, false)
+	var said := (ep.find_child("head", true, false) as Label).text + " " + (ep.find_child("tail", true, false) as Label).text
+	assert_string_contains(said, "Elun, o Filho da Luz")
+	var cap := ep.get_child(0).get_child(0) as DropCap
+	assert_eq(cap.letter, "M", "the capital is the paragraph's first letter")
+	assert_eq(cap.custom_minimum_size.y, ceilf(UiKit.TEXT_FONT.get_height(22)) * 3.0, "three lines tall")
 	for id: String in HowToScreen.STEPS:
 		assert_not_null(s.find_child("step_" + id, true, false), id)
 	assert_eq((s.find_child("book_title", true, false) as Label).text, T.t(&"book_title").to_upper())
@@ -220,3 +225,14 @@ func test_the_codex_is_a_page_of_the_book() -> void:
 	assert_true(book.right.is_ancestor_of(c._list), "the list on the right page")
 	await wait_process_frames(2)
 	assert_eq(c.tabs[0].find_valid_focus_neighbor(SIDE_BOTTOM), c.tabs[1], "down walks the index")
+
+
+func test_drop_cap_split_keeps_every_word() -> void:
+	var text := T.t(&"book_epigraph").substr(1)
+	var parts := DropCap.split(text, UiKit.TEXT_FONT, 22, 220.0)
+	assert_eq(parts[0] + " " + parts[1], text, "head and tail are the paragraph")
+	var p := TextParagraph.new()
+	p.width = 220.0
+	p.add_string(parts[0], UiKit.TEXT_FONT, 22)
+	assert_lte(p.get_line_count(), DropCap.LINES, "the head is three lines at most")
+	assert_eq(DropCap.split("curto", UiKit.TEXT_FONT, 22, 220.0)[1], "", "a short text has no tail")

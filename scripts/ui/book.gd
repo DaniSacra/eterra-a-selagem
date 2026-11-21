@@ -25,13 +25,14 @@ const BUTTON_TOAST_LIT := Color(0.5, 0.27, 0.12, 0.44)
 const BUTTON_SIZE := 20
 ## The rubric band down the left of the selected entry of an index (4 px at 1080).
 const ENTRY_BAND := 3
+const ENTRY_DROP := 3.0
 const BUTTON_DIAMOND := 4.5
 ## A chapter's bookmark (mark), px at 720 lines: the part under the cover, the height (a shut one stands 20 above
 ## the cover, 30 less the hidden part), how much longer the open one stands, its letters, padding, least width and tail.
 const MARK_HIDDEN := 10.0
 const MARK_HEIGHT := 32.0
 const MARK_RISE := 8.0
-const MARK_FONT := 17
+const MARK_FONT := 19
 const MARK_PAD := 16.0
 const MARK_MIN := 80.0
 const MARK_TAIL := 5.3
@@ -123,20 +124,24 @@ static func index_entry(text_: String, mark: Control, count: String, width: floa
 	var none := Color(0, 0, 0, 0)
 	b.add_theme_stylebox_override(&"normal", _entry_box(none, none, 0, pad))
 	b.add_theme_stylebox_override(&"hover", _entry_box(Color(INK, 0.07), none, 0, pad))
-	b.add_theme_stylebox_override(&"pressed", _entry_box(BUTTON_LIT, RUBRIC, 0, pad, ENTRY_BAND))
-	b.add_theme_stylebox_override(&"hover_pressed", _entry_box(BUTTON_LIT, RUBRIC, 0, pad, ENTRY_BAND))
+	b.add_theme_stylebox_override(&"pressed", _entry_box(BUTTON_LIT, none, 0, pad))
+	b.add_theme_stylebox_override(&"hover_pressed", _entry_box(BUTTON_LIT, none, 0, pad))
 	b.add_theme_stylebox_override(&"focus", _entry_box(none, none, 0, pad))
 	b.add_theme_color_override(&"font_color", INK)
 	b.add_theme_color_override(&"font_hover_color", RUBRIC)
 	b.add_theme_color_override(&"font_focus_color", RUBRIC)
 	b.add_theme_color_override(&"font_pressed_color", RUBRIC)
 	b.add_theme_color_override(&"font_hover_pressed_color", RUBRIC)
-	# the focus without the selection is only the diamond of the rubric on the left
+	# the selected entry: a band of rubric down its left edge reaching ENTRY_DROP below it, as a marker; the focus
+	# without the selection is only the diamond of the rubric on the left
 	b.draw.connect(func() -> void:
+		if b.button_pressed:
+			b.draw_rect(Rect2(0, 0, ENTRY_BAND, b.size.y + ENTRY_DROP), RUBRIC)
 		if b.has_focus() and not b.button_pressed:
 			var d := Vector2(5.0, b.size.y * 0.5)
 			var k := BUTTON_DIAMOND - 0.5
 			b.draw_colored_polygon(PackedVector2Array([d + Vector2(0, -k), d + Vector2(k, 0), d + Vector2(0, k), d + Vector2(-k, 0)]), RUBRIC))
+	b.toggled.connect(func(_on: bool) -> void: b.queue_redraw())
 	b.focus_entered.connect(b.queue_redraw)
 	b.focus_exited.connect(b.queue_redraw)
 	mark.position = Vector2(10, (b.custom_minimum_size.y - mark.custom_minimum_size.y) * 0.5)
@@ -225,7 +230,7 @@ static func mark(text_: String, min_width: float = 0.0) -> Button:
 	b.add_theme_font_override(&"font", UiKit.TITLE_FONT)
 	b.add_theme_font_size_override(&"font_size", MARK_FONT)
 	var empty := StyleBoxEmpty.new()
-	empty.content_margin_bottom = MARK_HIDDEN - 3.0
+	empty.content_margin_bottom = MARK_HIDDEN - 5.0
 	empty.content_margin_top = 0
 	for st: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"focus"]:
 		b.add_theme_stylebox_override(st, empty)

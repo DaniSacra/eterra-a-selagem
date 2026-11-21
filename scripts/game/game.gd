@@ -1358,6 +1358,9 @@ func _open_end(victory: bool, new_best: bool) -> void:
 	ui.add_child(end)
 	end.open(victory, {"time": time, "level": level if rooms == null else 0, "kills": kills, "best_combo": combat.best_combo, "boons": boons.owned().size(),
 		"defeated_by": defeated_by() if not victory and not last_hurt.is_empty() else &"", "mastery": mastery_report}, new_best)
+	if Save.enabled and int(Save.data.runs) <= 1:
+		# a new save's first descent ends in the Santuário, seen for the first time (boot.gd first_scene)
+		end.home_only()
 	end.retry.connect(func() -> void: SceneGo.to(get_tree(), SceneGo.GAME))
 	# Voltar ao Santuário (HUB-01, D-H6): to the hub; everything lasting was saved before the end screen opened
 	end.menu.connect(func() -> void: SceneGo.to(get_tree(), SceneGo.HUB))

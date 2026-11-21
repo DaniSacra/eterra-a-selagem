@@ -245,9 +245,9 @@ func test_codex_blessings_met_and_unknown() -> void:
 	var met := c.find_child("brasas", true, false)
 	assert_eq((met.find_child("Name", true, false) as Label).text, T.t(&"boon_brasas"))
 	assert_eq((met.find_child("Times", true, false) as Label).text, T.t(&"codex_times", {"n": 3}))
-	var unknown := c.find_child("estilhaco", true, false)
-	assert_eq((unknown.find_child("Name", true, false) as Label).text, "???")
-	assert_eq((unknown.find_child("Times", true, false) as Label).text, "")
+	assert_null(c.find_child("estilhaco", true, false), "an unmet one has no line of its own")
+	var rest := c.find_child("undiscovered", true, false)
+	assert_eq((rest.find_child("Name", true, false) as Label).text, T.t(&"codex_undiscovered", {"n": c.catalog(false).size() - 3}))
 	assert_null(c.find_child("vapor", true, false), "no Elo among the Blessings")
 	var total := c.catalog(false).size()
 	assert_eq(c._legend.text, T.t(&"codex_boons_legend", {"n": 3, "total": total}))
@@ -269,7 +269,8 @@ func test_codex_elos_formed_hinted_and_unknown() -> void:
 		var srcs := state.sources(b)
 		var both := srcs.all(func(s: Boon) -> bool: return _codex_data().codex.boons.has(String(s.id)))
 		if not both:
-			assert_eq((row.find_child("Recipe", true, false) as Label).text, "???", String(b.id))
+			assert_null(row, "an Elo not even hinted is only counted: " + String(b.id))
+	assert_not_null(c.find_child("undiscovered", true, false))
 	assert_eq(c._legend.text, T.t(&"codex_elos_legend", {"n": 1, "total": c.catalog(true).size()}))
 
 

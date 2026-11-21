@@ -6,10 +6,10 @@ extends SceneTree
 ## the Compêndio, Como Jogar and Configurações open and close with Esc, focus moves with the arrows, the comfort switches flip with
 ## Enter and keep the focus, Configurações opens Músicas and Esc comes back from it. The gamepad's RB and LB (real
 ## joypad button events) turn the Livro's chapters, Como Jogar's tabs, the Compendium's index and the options' tabs
-## (DT-103). First of all the choice of save (save slots, 2026-11-19) on saves of its own (a folder of the check's,
-## never the player's): the screen opens first, right walks the cards, down reaches Apagar, the question opens on
-## Cancelar and Esc closes it, Apagar erases the save and its copy, Enter on a card puts it in use and gives the title,
-## Esc on the title opens the choice again and Esc closes it. At the end the way round the title by the gamepad alone
+## (DT-103). First of all the choice of save (save slots, 2026-11-21 flow) on saves of its own (a folder of the
+## check's, never the player's): the title opens first, Iniciar opens the choice and Esc closes it, right walks the
+## cards, down reaches Apagar, the question opens on Cancelar and Esc closes it, Apagar erases the save and its copy,
+## Enter on an empty save goes straight into the first descent, Enter on a used one goes to the hub. At the end the way round the title by the gamepad alone
 ## (with a button remapped in Controles) and by clicks (DT-103). Prints FLOW ok or FLOW FAIL.
 ## ~/tools/godot/godot --headless --path . -s tools/title_flow_check.gd
 
@@ -379,7 +379,16 @@ func _slots() -> void:
 	change_scene_to_file("res://scenes/boot.tscn")
 	await _wait(1.0)
 	var boot := current_scene
-	_check(_sub_is(boot, "save_slot_screen.gd"), "the first screen is the choice of save")
+	var menu = boot.get(&"_menu")
+	_check(boot.get(&"_sub") == null and menu.visible, "the title comes first")
+	await _key(&"ui_accept")
+	await _wait(0.2)
+	_check(_sub_is(boot, "save_slot_screen.gd"), "Iniciar opens the choice of save")
+	await _key(&"ui_cancel")
+	await _wait(0.2)
+	_check(boot.get(&"_sub") == null and menu.visible and menu.button(0).has_focus(), "Esc goes back to the title, Iniciar in focus")
+	await _key(&"ui_accept")
+	await _wait(0.2)
 	var screen = boot.get(&"_sub")
 	if screen == null:
 		return
@@ -388,8 +397,6 @@ func _slots() -> void:
 	_check(cards[0].find_child("empty", true, false) != null and cards[1].find_child("date", true, false) != null, "Save 1 empty, Save 2 with its day")
 	await _key(&"ui_right")
 	_check(cards[1].has_focus(), "right moves to Save 2")
-	await _key(&"ui_cancel")
-	_check(_sub_is(boot, "save_slot_screen.gd"), "Esc does not close the first screen")
 	await _key(&"ui_down")
 	var erasers: Array = screen.get(&"erasers")
 	_check(erasers[1].has_focus(), "down reaches Save 2's Apagar")
@@ -412,16 +419,22 @@ func _slots() -> void:
 	cards = screen.get(&"cards")
 	_check(cards[1].has_focus() and cards[1].find_child("empty", true, false) != null, "Save 2 is empty now, in focus")
 	await _key(&"ui_accept")
-	await _wait(0.3)
+	await _wait(1.5)
 	_check(int(save.get(&"slot")) == 2 and FileAccess.file_exists(SLOTS_DIR + "save_2.json"), "Enter on Save 2 starts a new save there")
-	var menu = boot.get(&"_menu")
-	_check(boot.get(&"_sub") == null and menu.visible and menu.button(0).has_focus(), "the title comes after, Iniciar in focus")
-	await _key(&"ui_cancel")
+	_check(current_scene != null and current_scene.scene_file_path == "res://scenes/game.tscn", "a new save goes straight into the first descent")
+	# a used save goes to the hub
+	var used := FileAccess.open(SLOTS_DIR + "save_3.json", FileAccess.WRITE)
+	used.store_string(text)
+	used.close()
+	change_scene_to_file("res://scenes/boot.tscn")
+	await _wait(1.0)
+	await _key(&"ui_accept")
 	await _wait(0.2)
-	_check(_sub_is(boot, "save_slot_screen.gd"), "Esc on the title opens the choice of save again")
-	await _key(&"ui_cancel")
-	await _wait(0.2)
-	_check(boot.get(&"_sub") == null and menu.visible, "Esc closes it (a save is in use)")
+	await _key(&"ui_right")
+	await _key(&"ui_right")
+	await _key(&"ui_accept")
+	await _wait(1.5)
+	_check(int(save.get(&"slot")) == 3 and current_scene != null and current_scene.scene_file_path == "res://scenes/hub.tscn", "a used save goes to the Santuário")
 	save.set(&"enabled", false)
 	save.set(&"base", "user://")
 	for f: String in DirAccess.get_files_at(SLOTS_DIR):

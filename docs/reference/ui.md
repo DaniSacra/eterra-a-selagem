@@ -3,10 +3,15 @@
 Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que a tarefa pede (grep pelo nome da classe ou do item).
 
 ## Tela de título (2026-11-15)
-- **Escolha de save (2026-11-19, pedido do Daniel; capturas em `docs/gallery/save_slots/`)**: a primeira tela de cada
-  sessão é a escolha entre Save 1, 2 e 3 (`SaveSlotScreen`, `scripts/ui/save_slot_screen.gd`, na página dos menus,
-  `UiKit.page`, sobre a arte do título escurecida); escolhido, vem o título com Iniciar etc. (fluxo: escolha, título,
-  hub; escolhido uma vez, "Voltar ao título" do hub cai direto no título). Cada cartão mostra o medalhão do Guerreiro,
+- **Fluxo de entrada (2026-11-21, pedido do Daniel)**: o título vem primeiro; **Iniciar abre a escolha de save** (Esc
+  volta ao título). Save com descida vai ao hub; **save vazio vai direto à primeira descida** (`boot.gd` `first_scene`:
+  `runs` 0), e o Santuário só aparece depois dela: a tela de fim da primeira descida de um save só tem "Voltar ao
+  Santuário" (`EndScreen.home_only`, `Game._open_end`). O canto "Save N · Trocar de save" saiu (a chave `slot_switch`
+  ficou sem uso). Sem save (`--nosave`, testes) Iniciar vai ao hub. Testes em `tests/test_save_slots.gd` e no
+  `tools/title_flow_check.gd`.
+- **Escolha de save (2026-11-19; capturas em `docs/gallery/save_slots/`)**: escolha entre Save 1, 2 e 3
+  (`SaveSlotScreen`, `scripts/ui/save_slot_screen.gd`, na página dos menus, `UiKit.page`, sobre a arte do título
+  escurecida). Cada cartão mostra o medalhão do Guerreiro,
   Maestria, descidas, vitórias, Bolsa (Prata e Memória, `MaterialCount`) e "Última partida" (data e hora do fim da última
   descida, `played_at` gravado no `Game.log_run`); vazio diz "Espaço vazio" e escolher cria um save novo na hora.
   "Apagar" fica embaixo de cada save que existe e pergunta numa página própria "Apagar o Save N? Não há volta.", com
@@ -254,7 +259,22 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   parcial (`Book.index_entry`: aguada com faixa rubrica à esquerda, foco só o losango; marca das Arenas é planta de
   sala), 1.5 árvore de Dons no papel (filete duplo de tinta, nós em papel tostado com aro de ouro, trancado com motivo
   apagado e cadeado no canto, ramos em rubrica) e P2-3 do QA (`DoorGlyph`: Ouro é pilha de moedas cheias, Loja é bolsa
-  amarrada). Fica para depois: 1.4 vinheta e capitular, 1.6 Compêndio ilustrado, 1.7 MAP-06, 1.8 a 1.10.
+  amarrada). Segunda leva (2026-11-21, `book_opening_1080.jpg`, `codex_enemies_1080.jpg`, `map_middle_1080.jpg`):
+  1.3 fechada (`Book.index_entry`: fita rubrica de 3 px que desce 3 px abaixo da entrada, desenhada no `draw`; marca dos Anjos
+  agora é anel duplo com ponto, sem losango, para não repetir a das Bênçãos), abas com `MARK_FONT` 19 (versal cerca de 13 px) e
+  `MARK_HEIGHT` 32 (fita fechada sobe 22 px, a spec pede 20: com 19 a linha do Cinzel pede 27 px e a 30 a aberta não ficava
+  8 px mais alta). 1.4 `AhkVignette` (rolo aberto, pena no tinteiro, rolo fechado com lacre e o leão de `SealEmblem.LION`,
+  mesmo shader) e `DropCap.paragraph` (capitular em quadrado de filete gravado com ramagem, 3 linhas, cabeça ao lado e resto
+  embaixo; `DropCap.split` testado). 1.6: quadro de prancha duplo em volta da figura (150 x 200), nome em Cinzel rubrica e
+  contagem; desconhecido em silhueta `FADED` a 0,3; linhas "???" viram uma só, "N por descobrir" (`CodexScreen._undiscovered`,
+  chaves `codex_undiscovered` e `codex_elite_name`) em Bênçãos, Elos sem pista, Inimigos e Anjos; em Inimigos a linha única
+  seleciona a silhueta do primeiro desconhecido; elites com entrada própria (`<id>_elite`, esboço dourado) depois que uma
+  caiu. 1.7 `MapGraph.medallion` e `wax_seal` (também na legenda): corpo `DISC` (luma cerca de 40), anel de papel, aro de ouro
+  gravado, apagado em `FADED` 0,3; ligações alcançáveis em tinta, deixadas tracejadas, caminho com pontas redondas; faixas de
+  estrato a cada duas profundidades (4% cada, esmaecidas nas bordas), boca das catacumbas em tinta acima do nó 1
+  (`TOP_PAD`), Morvath como lacre violeta 1,5 vez maior, números em `number_font`. 1.10 Iniciar em `PLATE` (OLD_GOLD) e luz só
+  com foco ou ponteiro; submenus escurecem mais (`DIM_LEVEL` 0,3) e desfocam a arte (`DIM_LOD`). Sem shader novo.
+  Não medido por captura: 1.8, 1.9 (sem alteração de código), 1.10 e o contraste de números.
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),

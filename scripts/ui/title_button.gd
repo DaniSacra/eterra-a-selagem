@@ -41,6 +41,9 @@ const ICON_X := 1070.5
 
 # Iniciar
 const GOLD := Color("ffca46")
+## Iniciar's plate at rest and lit: the old gold of the menus (saturation up to 0.55, hue 32 to 42); only its rim glows (AP-4 1.10).
+const PLATE := Color("8e7444")
+const PLATE_LIT := Color("a2874f")
 const GOLD_LIGHT := Color("fdf9c9")
 const GOLD_DEEP := Color("fcaf11")
 const GOLD_SHADE := Color("cf6e0b")
@@ -245,7 +248,8 @@ func _pulse() -> float:
 		return 0.0
 	var p := PULSE_REST.lerp(PULSE_HOT, _hot)
 	var k := lerpf(p.x, p.y, 0.5 + 0.5 * sin(_time * TAU / p.z))
-	return k * (0.6 if is_down() else 1.0)
+	# the light is for the focus and the pointer only (AP-4 1.10); at rest the rim is quiet
+	return k * _hot * (0.6 if is_down() else 1.0)
 
 
 func _update_glow() -> void:
@@ -271,14 +275,14 @@ func _draw() -> void:
 
 func _draw_start() -> void:
 	var off := disabled and greyed
-	var gold := START_OFF_FRAME if off else GOLD
-	var shade := START_OFF_FRAME.darkened(0.35) if off else GOLD_SHADE
+	var gold := START_OFF_FRAME if off else PLATE.lerp(PLATE_LIT, _hot)
+	var shade := START_OFF_FRAME.darkened(0.35) if off else GOLD_SHADE.lerp(PLATE.darkened(0.45), 0.6 * (1.0 - _hot))
 	var dark := 0.85 if is_down() else 1.0
 	_fill(_hex, shade)
 	_fill(inset(1.0), gold)
 	if not off:
 		draw_polyline(_closed(inset(2.2)), GOLD_LIGHT, 1.4, true)
-		draw_polyline(_closed(inset(5.4)), GOLD_DEEP, 2.2, true)
+		draw_polyline(_closed(inset(5.4)), PLATE_LIT.lerp(GOLD_DEEP, _hot), 2.2, true)
 	# dark heart: warmer under the top band, darkest in the middle
 	var top := Color(CORE_TOP.r * dark, CORE_TOP.g * dark, CORE_TOP.b * dark)
 	var core := Color(CORE.r * dark, CORE.g * dark, CORE.b * dark)

@@ -1164,7 +1164,8 @@ func _dress_styled_steps() -> Array[Callable]:
 			var sm: Masonry = v[&"sm"]
 			_edge_pieces()
 			_west_mist()
-			_shallow_roots(sm),
+			_shallow_roots(sm)
+			_root_path_light(),
 	]
 
 
@@ -1174,6 +1175,17 @@ func foreground_look() -> Dictionary:
 
 
 const STY_FOREGROUND := {&"out": Vector2(1.9, 3.2), &"top": Vector2(-0.9, -0.3), &"every": 7.0, &"tint": 0.55}
+
+
+## AT-JB1 (B, stylized only): a faint cold pool round the roots' ring so the path round the trunk reads against the dark
+## lake (its reach over the trunk's radius, energy), the colour of the tree's fill.
+const STY_ROOT_PATH := Vector2(2.6, 2.4)
+
+
+func _root_path_light() -> void:
+	if not variant_b or _trunk_o == null:
+		return
+	key_pool(Vector3(_trunk_o.center.x, _trunk_o.center.y, _trunk_o.radius + STY_ROOT_PATH.x), TREE_FILL, STY_ROOT_PATH.y)
 
 
 ## SW-J2: shallow roots creeping from the feet of the columns and the low walls over the floor, in the tree's bark (its

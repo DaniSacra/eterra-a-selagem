@@ -33,7 +33,8 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   papel por shader. O resto da prancha (Ahk e o anotador, o livro, o esqueleto do Compêndio) e as pranchas 05 e 09 não
   vão no jogo: guiaram o livro (`BookSpread`, `book_page.gdshader`), a árvore e os glifos dos Dons (`TalentGlyph`),
   feitos em código com os textos e números do jogo.
-- **Modelos 3D do Meshy** (lista completa e ids em `tools/meshy/tasks.json`):
+- **Modelos 3D do Meshy** (lista completa e ids em `tools/meshy/tasks.json`). Licença: gerados no plano Pro pago do
+  Daniel; os modelos são dele, uso comercial liberado, sem crédito obrigatório (Q-01, resposta de 2026-11-21):
   - no jogo: o herói Explorador (`assets/models/meshy/hero_explorer/`, 2026-11-15, gerado a partir da folha do Explorador,
     também feita por IA), com o esqueleto do Meshy; os nove inimigos da fase 1 (`assets/models/meshy/enemy_<id>/`, gerados das
     vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
