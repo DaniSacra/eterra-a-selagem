@@ -338,7 +338,7 @@ func _hub(hub: Node) -> void:
 	hub.get(&"player").set(&"pos", _use_point(&"smith"))
 	await _wait(0.2)
 	var sign = hub.get(&"station_sign")
-	_check(sign != null and sign.call(&"key_text") == load("res://scripts/ui/ui_kit.gd").call(&"action_label", &"interact"), "the Forjador's sign names the real key (%s)" % sign.call(&"key_text"))
+	_check(sign != null and sign.call(&"key_text") == load("res://scripts/ui/ui_kit.gd").call(&"action_label", &"interact"), "the Forjador's sign names the real key (%s)" % (sign.call(&"key_text") if sign != null else "none"))
 	await _key(&"interact")
 	_check(_shown_is(hub, "forge_screen.gd"), "interact on the Forjador opens the Forja")
 	var page = host.get(&"screen")
@@ -492,6 +492,8 @@ func _run() -> void:
 	await _key(&"ui_up")
 	await _key(&"ui_up")
 	_check(menu.button(0).has_focus(), "up returns to Iniciar")
+	# the Forja opens with the first guardian (HubGate): a fresh save has it closed, with no sign (the 2026-11-21 flow)
+	load("res://scripts/core/save_data.gd").call(&"hero", root.get_node("Save").data, "warrior").firsts["guardian"] = 1
 	await _key(&"ui_accept")
 	await _wait(1.5)
 	var hub := current_scene

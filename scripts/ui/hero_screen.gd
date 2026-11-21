@@ -42,7 +42,7 @@ const MARK := 26.0
 const SEALED := 3
 const SEAT := 40.0
 ## The Como Jogar row that names each action (howto_<id>).
-const SKILL_ROW := {Boon.Slot.ATTACK: "light_attack", Boon.Slot.SPECIAL: "heavy_attack", Boon.Slot.CAST: "cast",
+const SKILL_ROW := {Boon.Slot.ATTACK: "light_attack", Boon.Slot.SPECIAL: "heavy_attack", Boon.Slot.CAST: "shout",
 	Boon.Slot.DASH: "dodge"}
 ## The Warrior painted on the hero page (art pack board 04, made by AI, cut by hand; docs/steam-ia.md), its edges
 ## feathered into the paper.
@@ -546,6 +546,9 @@ func _hero_right() -> Control:
 	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
 		_skill(grid, ActionSlot.mark(slot, MARK), T.t("howto_" + String(SKILL_ROW[slot])),
 			T.t("hero_skill_" + String(Boon.Slot.keys()[slot]).to_lower()))
+		if slot == Boon.Slot.CAST:
+			# the Investida (E) has no Blessing slot: its row follows the Brado's
+			_skill(grid, ActionSlot.glyph_mark(BoonIcon.RUSH_GLYPH, MARK), T.t(&"howto_rush"), T.t(&"hero_skill_rush"))
 	var u := loadout.hero.ultimate(loadout.ultimate())
 	if u != null:
 		_skill(grid, ActionSlot.glyph_mark(BoonIcon.ULT_GLYPH + u.kind, MARK), T.t(u.name_key), T.t(&"hero_skill_ultimate"))

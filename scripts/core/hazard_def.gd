@@ -89,6 +89,12 @@ enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 ## LINE: the next band is the one with the most enemies standing in it (ties and none: in turn), instead of strictly
 ## in turn: the rift breathes where the fight is (RP-08).
 @export var band_busy := false
+## LINE, SR-P1 (the wall trap, band_source &"trap"): per band, the way its blades fly (a vector, unit or not; zero or
+## missing: none), from the block in the wall at the band's far end to where they stop. The block (a `trap_block`
+## obstacle of the layout) stands behind the band's start and the chevrons cut in it point this way. A trap is a LINE
+## whose bands are the lines of the blades: band_busy picks the line with most enemies standing in it (the paladin
+## draws the pack into it), from_progress keeps it asleep (the block stands, the blades do not fly) early in the descent.
+@export var band_dir: PackedVector2Array = PackedVector2Array()
 
 
 ## A second hazard of the same room, started beside this one (Santuário B: the slabs and the stones of the vault; the
@@ -154,6 +160,11 @@ enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 ## URNS: the channel of urn i (Vector4.ZERO: none).
 func flow_of(i: int) -> Vector4:
 	return urn_flows[i] if i < urn_flows.size() else Vector4.ZERO
+
+
+## LINE: the way the blades of band i fly (zero: none).
+func band_dir_of(i: int) -> Vector2:
+	return band_dir[i] if i < band_dir.size() else Vector2.ZERO
 
 
 ## LINE: the push of band i (zero: none).

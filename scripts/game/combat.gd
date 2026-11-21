@@ -239,8 +239,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var color := color_of(tags)
 	var heavy := node.has_tag(&"heavy")
 	var finisher := node.has_tag(&"finisher")
-	# the Brado de Guerra (Effect.STUN): a cry, not a cut (rings, no blade's ribbon), stuns only the common ones
-	var shout := node.effect == ComboNode.Effect.STUN
+	# the Brado de Guerra (Effect.SHOUT): a cry, not a cut (rings, no blade's ribbon); it pushes and stuns no one
+	var shout := node.effect == ComboNode.Effect.SHOUT
 	match node.shape:
 		ComboNode.Shape.ARC:
 			horde.in_arc(origin, dir, reach, shape.hit_width, _hits)
@@ -267,7 +267,6 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var struck: Array[Enemy] = _hits.duplicate()
 	var stars := 0
 	var kills := 0
-	var commons := 0
 	_mats.clear()
 	for e: Enemy in struck:
 		var away := (e.pos - origin).normalized() if node.shape == ComboNode.Shape.CIRCLE else dir if (e.pos - origin).dot(dir) >= 0.0 else -dir
@@ -277,13 +276,10 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if stars < MAX_STARS and not shout:
 			stars += 1
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
-		var common := is_common(e.def)
-		# (the cry only pushes an elite, a guardian or a boss: not even the stun of a plain blow reaches them from it)
-		_no_stun = shout and not common
+		# (the cry only pushes: not even the stun of a plain blow comes with it)
+		_no_stun = shout
 		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
 		_no_stun = false
-		if shout and common:
-			commons += 1
 		hits += 1
 		_mats.append(CombatSounds.material_of(e))
 		if heavy:
@@ -300,9 +296,6 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 				if not e.def.heavy:
 					e.air_t = node.effect_time
 					e.air_total = node.effect_time
-			ComboNode.Effect.STUN:
-				if common:
-					horde.flinch(e, node.effect_time)
 	# (the blade's own sound plays when the move starts, ComboNode.sound: GF-11)
 	if not struck.is_empty():
 		# Hades II holds the hit slow a little longer when the blow kills
@@ -326,10 +319,10 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			ground.add_zone(Ground.Kind.MARK, origin + dir * reach * 0.55, node.effect_radius, node.effect_time, node.effect_power, MARK_TAGS)
 		ComboNode.Effect.WAVE:
 			throw_wave(node, origin, dir, color, tags)
-		ComboNode.Effect.STUN:
+		ComboNode.Effect.SHOUT:
 			fx.hero_burst(&"light", Vector3(origin.x, 0.4, origin.y))
 			if gifts:
-				gifts.on_shout(commons, int(node.effect_power))
+				gifts.rally(node.effect_time, node.buff_speed, node.buff_guard, int(node.effect_power))
 	if gifts:
 		_gift_wave(node, origin, dir, color)
 	var pulse := boons.stat(&"ground_pulse", tags)
@@ -620,8 +613,7 @@ func _apply_status(e: Enemy, status: StringName, power: float) -> void:
 			e.slow_t = maxf(e.slow_t, power)
 
 
-## A common enemy: not an elite, not a guardian (heavy) and not a boss. The Brado de Guerra stuns only these and gives a
-## charge of Ímpeto for each one it reaches.
+## A common enemy: not an elite, not a guardian (heavy) and not a boss.
 static func is_common(def: EnemyDef) -> bool:
 	return not def.heavy and not def.elite and def.behavior != EnemyDef.Behavior.BOSS
 

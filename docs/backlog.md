@@ -25,6 +25,16 @@ estilizada e Perto; agente `hero-designer` e as specs dos 4 heróis em `docs/des
    SR-P3, aviso de área SR-P4, relíquia SR-P5). Ordem espera o Daniel.
 7. **Guerreiro forte demais** (`docs/design/heroes/guerreiro_revisao.md`): caminho B (números) agora, A (identidade) depois.
 
+8. **Os 7 anjos com arte** (ChatGPT do Daniel, 2026-11-21; originais 1024x1536 em `docs/art/angels_src/angel_1..7.png`,
+   na ordem 1 Sarael, 2 Nivael, 3 Lumael, 4 Shomael, 5 Velael, 6 Galael, 7 Qeshael; símbolos conferidos, sem cruz):
+   - AN-1 (ui-ux-designer + technical-artist): retratos no jogo: no Encontro (`EncounterScreen`) a arte grande do anjo
+     à esquerda das cartas, como no SWORN (sw_01, sw_12); recorte e tamanho para 720 e 1080; o símbolo de cada um nas
+     cartas, na coluna de Bênçãos do HUD (Lote 2) e no Compêndio. Os 4 anjos de hoje primeiro.
+   - AN-2 (gameplay-engineer + balance-designer): as famílias dos 3 anjos novos (Véu: Fraqueza; Maré: empurrar;
+     Marca: crítico; `docs/design/rejogabilidade/sistemas.md` 4.1), 6 a 9 Bênçãos cada como dado, e Elos novos
+     (alvo 10 a 12 no total); status novos (Fraqueza, Marca) são código, o resto dado.
+   - AN-3: `docs/steam-ia.md` (arte gerada por IA: ChatGPT) e o Compêndio dos anjos.
+
 **Perguntas abertas ao Daniel**
 - Árvore do Jardim: diminuir (mexe na colisão) ou só escurecida?
 - Névoa de Morvath: escurecer mais?

@@ -44,6 +44,8 @@ const EVENTS := {
 	&"roots_arm": &"rune_arm",
 	&"roots_fire": &"rune_crack",
 	&"slit_fire": &"bolt",
+	&"trap_arm": &"rune_arm",
+	&"trap_fire": &"bolt",
 	&"column_crack": &"rune_crack",
 	# A1 (rooms_progression.md): RP-14 the crystal (a chime per charge, the runes' stone as it discharges), RP-20 the
 	# stones of the vault (a scrape of stone as the dust falls, the fall of a heavy body), RP-12 the oil urn (the fuse's

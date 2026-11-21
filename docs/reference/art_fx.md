@@ -297,3 +297,14 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   sombra para dentro), `RING_PX` 12,2 px na carta (a largura do aro pintado a 128 px) e `RING_SHARE` 0,12 do tamanho nos
   pequenos; usado pelo `BoonIcon` (Bênçãos sem PNG e Elos) e pelo `PsalmIcon` por cima do selo.
 
+
+## Lote 4 (2026-11-21): golpe em meia-lua branca e dourada, contorno de tinta (SR-G4, SR-G5)
+- `Fx.crescent` (giro e finalizadores): faixa mais larga (`CRESCENT_INNER` 0,6, cabeça `CRESCENT_HEAD`, cauda `CRESCENT_TAIL`),
+  arco 140 a 200 graus, cresce a 1,5x (`CRESCENT_GROW`), cor 60% rumo ao dourado (`CRESCENT_GOLD`) e borda quase branca
+  (`CRESCENT_PALE`). Corte comum (`Fx.slash`): cauda 0,8 e 170 graus (`SLASH_TAIL*`), núcleo mais fundo e claro
+  (`SLASH_CORE`), 45% dourado (`SLASH_GOLD`); só no golpe sem família (as famílias de dom mantêm a cor delas).
+- Pisca do inimigo atingido: no estilizado `crowd.gdshader` usa `hit_warm` (vermelho-laranja), `hit_gold` (primeiro quadro
+  de golpe forte) e `hit_floor` 0,2, abaixo do `flash_cap`; o pisca do clássico, o aviso de golpe e o de Morvath não mudam.
+- Contorno de tinta: experimento desligado. `--ink` (ou `--ink=N`; `--outline` é a borda do raio-x) multiplica por `HeroBody.INK_THICK` (2,5) a
+  casca de contorno do herói e dos inimigos (`HeroBody.ink_scale`); sem custo de draw call novo (só a espessura da casca).
+  Não medido em fps (precisa de GPU).

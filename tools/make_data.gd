@@ -21,6 +21,7 @@ const H := ComboNode.In.HEAVY
 const C := ComboNode.In.CHARGE
 const CL := ComboNode.In.CHARGE_LIGHT
 const SH := ComboNode.In.SHOUT
+const RU := ComboNode.In.RUSH
 
 ## Swing peak (seconds into the clip) of the hero's attack clips, measured from the sword hand by tools/bake_hero.gd.
 const PEAK := {
@@ -126,20 +127,17 @@ func _tree(fourth: bool) -> ComboTree:
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0,
 		"chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.6, "move_scale": 0.0}, [cut2])
-	# special: a bolt of light thrown ahead (strikes only with its bolt). Hades II's Special1: the attack is free again
-	# 18 frames after the dart, the special itself 0.7 s after it; the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED).
-	# The legs stay held 0.71 s after the dart (D-44 (3); Daniel liked it in Hades II), only the dodge cuts it. E1c
-	# (Daniel: "trava para andar e eu fico patinando"): while held he plays the throw and holds its pose, never the run.
+	# special (Daniel, 2026-11-21): the sword's burst, a bolt of light thrown ahead (strikes only with its bolt): 60
+	# damage, 6 m, through the crowd, 8 Magia (magick_cost: a press without it throws nothing), 0.5 s between throws. A tap
+	# only: the Omega special (held) left the Warrior's tree. Hades II's Special1: the attack is free again 18 frames
+	# after the dart; the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED). The legs stay held 0.71 s after the dart
+	# (D-44 (3); Daniel liked it in Hades II), only the dodge cuts it. E1c (Daniel: "trava para andar e eu fico
+	# patinando"): while held he plays the throw and holds its pose, never the run.
 	var bolt := _move(&"bolt", H, &"Cast", [&"heavy", &"wave"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.1, "recovery": 18.0 / 60.0, "chain_window": 0.2,
-		"cooldown": 0.7, "move_hold": SPECIAL_HOLD, "sound": &"dart",
-		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 40.0, "effect_radius": 880.0 / U,
+		"cooldown": 0.5, "move_hold": SPECIAL_HOLD, "sound": &"dart", "magick_cost": 12.0,
+		"hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "effect": ComboNode.Effect.WAVE, "effect_power": 35.0, "effect_radius": 6.0,
 		"effect_size": 1.4, "wave_bolt": true}, [], &"move_wave")
-	# Omega special (special held 0.65 s, 10 Magia): a wide bolt that bursts through the crowd
-	var burst := _move(&"burst", C, &"Cast", [&"heavy", &"wave", &"charge", &"omega"],
-		{"magick_cost": 10.0, "charge_time": 0.65, "damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.08,
-		"recovery": 0.45, "move_hold": SPECIAL_HOLD, "hit_stop_ms": 0.0, "shake": 1.5, "move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.WAVE, "effect_power": 80.0,
-		"effect_radius": 880.0 / U, "effect_size": 330.0 / U * 2.0}, [], &"move_burst")
 	# Omega attack (attack held 0.8 s, 20 Magia): a long line of light to the front and to the back. Its windup and
 	# glint play inside the charge, so it lands when the charge fills (GF-08, Player._charge_lead). Hades II's Swing5:
 	# 0.78 s after it without walking or striking.
@@ -147,26 +145,30 @@ func _tree(fourth: bool) -> ComboTree:
 		{"magick_cost": 20.0, "charge_time": 0.8, "damage": 160.0, "shape": ComboNode.Shape.LINE, "reach": 1080.0 / U, "width": 1.8,
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
 		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK, "layers": LAYER_STEP}, [], &"move_lance")
-	# out of a dash: a thrust along the way
-	var dash_cut := _move(&"dash_cut", L, &"Slash_A", [&"light", &"dash"],
-		{"damage": 30.0, "shape": ComboNode.Shape.LINE, "reach": 640.0 / U, "width": 1.6, "knockback": 10.0, "lunge": 3.2, "windup": 0.06,
-		"recovery": 14.0 / 60.0, "chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.9, "move_scale": 0.0}, [], &"move_dash_cut")
-	# E, the Brado de Guerra (docs/design/heroes/guerreiro.md 3.4 A; Daniel, 2026-11-21): a cry all around, 4 m, 15
-	# damage, the common enemies stunned 0.5 s (an elite, a guardian or a boss is only pushed: Combat.is_common), one
-	# charge of Ímpeto for each common one it reaches, at most 2 a cry (effect_power), never from a boss. Recharge 10 s;
-	# windup 0.25 s, recovery 0.25 s (its legs held as long), planted as every blow; only the dodge cuts it. The 0.10 s of
-	# impact is the hit stop (hit_stop_ms 80, the tree's ceiling: test_combo). The sound is the special's Omega surge, the ring is the FX's own.
-	var shout := _move(&"shout", SH, &"Cast", [&"shout"],
-		{"damage": 15.0, "shape": ComboNode.Shape.CIRCLE, "reach": 4.0, "knockback": 10.0, "windup": 0.25, "recovery": 0.25,
-		"move_hold": 0.25, "chain_window": 0.4, "cooldown": 14.0, "hit_stop_ms": 80.0, "shake": 1.4,
-		"move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.STUN, "effect_power": 2.0, "effect_time": 0.5}, [], &"move_shout")
+	# E, the Investida (Daniel, 2026-11-21; it was the Corte Veloz out of the dodge): a thrust of 35 along 4 m that carries
+	# the body (lunge 4 m), its own button, recharge 5 s, 3 Magia for each enemy it reaches (magick_per_hit) and still a
+	# finisher of the passive (tag dash).
+	var dash_cut := _move(&"dash_cut", RU, &"Slash_A", [&"light", &"dash"],
+		{"damage": 35.0, "shape": ComboNode.Shape.LINE, "reach": 4.0, "width": 1.6, "knockback": 10.0, "lunge": 4.0, "windup": 0.06,
+		"recovery": 14.0 / 60.0, "chain_window": 0.4, "cooldown": 5.0, "magick_per_hit": 2.0, "hit_stop_ms": 25.0, "shake": 0.9, "move_scale": 0.0}, [], &"move_dash_cut")
+	# Q, the Brado de Guerra (docs/design/heroes/guerreiro.md 3.4 A; Daniel, 2026-11-21, moved from E to Q): a cry all around,
+	# 4 m, 15 damage, everyone pushed 1.5 m (knockback 10.5 at the horde's decay of 7: 1.5 m), stunned by no one. For 5 s
+	# (effect_time): blows 20% faster (buff_speed), 15% less damage taken (buff_guard) and one charge of Ímpeto
+	# (effect_power, only with the Dom). Recharge 12 s; windup 0.25 s, recovery 0.25 s (its legs held as long), planted as
+	# every blow; only the dodge cuts it. The 0.10 s of impact is the hit stop (hit_stop_ms 80, the tree's ceiling:
+	# test_combo). Tags: the Blessings of the Brado slot (cast) count on it. The sound is the special's Omega surge.
+	var shout := _move(&"shout", SH, &"Cast", [&"shout", &"cast"],
+		{"damage": 15.0, "shape": ComboNode.Shape.CIRCLE, "reach": 4.0, "knockback": 10.5, "windup": 0.25, "recovery": 0.25,
+		"move_hold": 0.25, "chain_window": 0.4, "cooldown": 12.0, "hit_stop_ms": 80.0, "shake": 1.4,
+		"move_scale": 0.0, "sound": &"wave_omega", "effect": ComboNode.Effect.SHOUT, "effect_power": 1.0, "effect_time": 5.0,
+		"buff_speed": 0.15, "buff_guard": 0.15}, [], &"move_shout")
 	# (the Cast clip peaks at 0.10 s: played slowly from its start so the arms are out when the cry lands at 0.25 s)
 	shout.anim_from = 0.0
 	shout.anim_speed = float(PEAK[&"Cast"]) / shout.windup
 	var tree := ComboTree.new()
-	tree.neutral = [cut1, bolt, burst, lance, shout]
-	tree.dodge = [dash_cut]
-	tree.dodge_window = 23.0 / 60.0
+	tree.neutral = [cut1, bolt, lance, shout, dash_cut]
+	# (no blow out of the dodge since 2026-11-21: the dodge is only a dodge)
+	tree.dodge_window = 0.0
 	return tree
 
 
@@ -333,9 +335,11 @@ func _enemies() -> void:
 		"stun_time": STUN, "stun_heavy_time": STUN_HEAVY},
 		{"armor": 390.0, "shot_ticks": 3, "shot_interval": 0.7, "attack_cooldown": 2.25, "rating": 48.0})
 	# guardians (Hades: the mid-region bosses): life plus a thick armor
+	# 2026-11-21 night (the guardian a wall for a new hero): it killed a new hero 1 time in 5, the Ancião 3 in 4; charges
+	# every 2.4 s (was 3.2) and hits 18 (was 16)
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 16.0, "radius": 1.1,
-		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 16.0, "attack_range": 14.0, "attack_cooldown": 3.2,
-		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 16.0, "close_range": 3.2, "close_windup": 0.8,
+		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 18.0, "attack_range": 14.0, "attack_cooldown": 2.4,
+		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 18.0, "close_range": 3.2, "close_windup": 0.8,
 		# T5-07: braced behind its shield in three beats (it stood idle), the last 0.3 s held with a tremble
 		"windup_settle": 0.12, "windup_hold": 0.3, "windup_shake": 0.03,
 		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
@@ -458,7 +462,7 @@ func _boons() -> void:
 	_elo(15, &"bastiao", 15, [_mod(&"shield_burst", 40)], [[&"escudo"], luz])
 	_elo(16, &"rastro", 16, [_mod(&"dodge_ember_dps", 8)], [vigilia, chama])
 	_elo(17, &"passo_frio", 17, [_mod(&"freeze_time", 1.0, [], &"dash")], [vigilia, geada])
-	# One gift per action (Boon.Slot): attack = light moves, special = heavy moves, cast = the circle of light, dash.
+	# One gift per action (Boon.Slot): attack = light moves, special = heavy moves, cast = the Brado de Guerra (Q), dash.
 	_boon(18, &"golpe_brasa", F.CHAMA, 2, [_mod(&"burn_dps", 4, [2, 2], &"light")], null, S.ATTACK)
 	_boon(19, &"golpe_geada", F.GEADA, 3, [_mod(&"freeze_time", 0.3, [0.15, 0.15], &"light")], null, S.ATTACK)
 	_boon(20, &"golpe_radiante", F.LUZ, 8, [_mod(&"damage_pct", 0.25, [0.15, 0.15], &"light")], null, S.ATTACK)
@@ -468,8 +472,8 @@ func _boons() -> void:
 	_boon(24, &"pesado_firme", F.VIGILIA, 15, [_fixed(&"reach_pct", 0.15, [0.07, 0.08], &"heavy"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"heavy")], null, S.SPECIAL)
 	_boon(25, &"circulo_brasa", F.CHAMA, 1, [_mod(&"burn_dps", 8, [4, 4], &"cast")], null, S.CAST)
 	_boon(26, &"circulo_geada", F.GEADA, 4, [_mod(&"freeze_time", 1.0, [0.4, 0.4], &"cast")], null, S.CAST)
-	_boon(27, &"circulo_radiante", F.LUZ, 6, [_mod(&"cast_dps", 16, [8, 8], &"cast"), _mod(&"damage_pct", 0.3, [0.15, 0.15], &"cast")], null, S.CAST)
-	_boon(28, &"circulo_firme", F.VIGILIA, 9, [_fixed(&"cast_size_pct", 0.25, [0.15, 0.15])], null, S.CAST)
+	_boon(27, &"circulo_radiante", F.LUZ, 6, [_mod(&"damage_pct", 0.3, [0.15, 0.15], &"cast")], null, S.CAST)
+	_boon(28, &"circulo_firme", F.VIGILIA, 9, [_fixed(&"cast_size_pct", 0.25, [0.15, 0.15]), _fixed(&"reach_pct", 0.25, [0.15, 0.15], &"cast")], null, S.CAST)
 	_boon(29, &"passo_brasa", F.CHAMA, 16, [_mod(&"dodge_ember_dps", 6, [3, 3])], null, S.DASH)
 	_boon(30, &"passo_geada", F.GEADA, 17, [_mod(&"freeze_time", 0.8, [0.4, 0.4], &"dash")], null, S.DASH)
 	_boon(31, &"passo_radiante", F.LUZ, 10, [_mod(&"damage_pct", 0.4, [0.2, 0.2], &"dash")], null, S.DASH)
@@ -1241,6 +1245,9 @@ const TRUNK := Vector2(-8.0, -5.0)
 const TRUNK_RADIUS := 3.5
 
 
+const GARDEN_TRAPS := [[Vector2(17.0, -7.0), Vector2(-1, 0), 12.0], [Vector2(-0.5, 14.0), Vector2(0, -1), 10.0]]
+
+
 func _garden() -> RoomLayout:
 	var l := RoomLayout.new()
 	_arena(l, &"garden", RoomLayout.Size.MEDIUM, 1, Vector2(0.1, 1.0))
@@ -1265,6 +1272,10 @@ func _garden() -> RoomLayout:
 	l.obstacles = a
 	# RP-10: the north root and the west one (cut short of the way in), the two that keep off the middle
 	l.hazard = _roots([[Vector2(-4.5, -7.0), Vector2(1.8, -8.1)], [Vector2(-10.0, -1.5), Vector2(-11.4, 1.9)]])
+	# SR-P1: two wall traps in the east and south fields where the fight goes (from 0.3 of the descent, every 6 s): the
+	# east wall's, firing west along y -7 between the north door and the east door; the south wall's, firing north at x -0.5
+	l.hazard.also = _trap(GARDEN_TRAPS, 0.3, 6.0)
+	l.obstacles.append_array(_trap_blocks(GARDEN_TRAPS))
 	var b: Array[ArenaObstacle] = [trunk]
 	for pts: Array in [[Vector2(-4.1, -5.7), Vector2(-2.4, -5.8), Vector2(-0.7, -5.7), Vector2(0.9, -5.4)],
 			[Vector2(-6.6, -1.2), Vector2(-6.2, 0.7), Vector2(-6.1, 2.7), Vector2(-6.3, 4.7)],
@@ -1603,7 +1614,7 @@ func _talents() -> void:
 	# 9.6 m: just past the cut's 8 m)
 	_talent(12, &"investida", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": [B.COMBO, B.FURIA] as Array[TalentDef.Branch], "mods": [_fixed(&"dash_back_on_kill", 1, [], &"dash")] as Array[BoonMod]})
 	_talent(13, &"sangue_quente", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": [B.FURIA, B.MAGIA] as Array[TalentDef.Branch], "mods": [_fixed(&"fury_per_kill", 1, [], &"omega")] as Array[BoonMod]})
-	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"charge", 16.0, 6.0, 3.0)})
+	_talent(14, &"onda_carregada", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": [B.MAGIA, B.EMETH] as Array[TalentDef.Branch], "slot": S.SPECIAL, "mods": _wave(&"heavy", 16.0, 6.0, 3.0)})
 	_talent(15, &"fio_do_passo", B.BRIDGE, T.BRIDGE, 3, 15, {"joins": [B.EMETH, B.COMBO] as Array[TalentDef.Branch], "slot": S.DASH, "mods": _wave(&"dash", 12.0, 9.6, 1.6)})
 	# sustain, off the branches: a room won heals 2; once a descent he gets up with half his life, but never in Morvath's
 	# room (E6: no rise_boss_share; with the rise there the Mastery 20 robot won 72 of 72, docs/design/e6_balance.md)
@@ -1623,6 +1634,9 @@ func _wave(tag: StringName, damage: float, reach: float, width: float) -> Array[
 ## Daniel 2026-11-21 ("aumentasse a recarga de todas as habilidades com exceção dos ataques"): the circle 6 s from its
 ## cast (was 0.2 s after one ended), the Brado 14 s (was 10), the dodge back in 1.1 s (was 0.74, Hades II), the
 ## ultimates 50% more Magia (cleave 90, was 60; Voragem 105, was 70). The attack and the special untouched.
+## Daniel 2026-11-21 night ("acho q nosso herói dá muito dano no começo"; "me sentir muito fraco no começo"): the
+## burst 35 for 12 Magia (was 60 for 8), the Investida gives 2 Magia a hit (was 3), the Brado's buff 15% faster blows
+## (was 20%). docs/design/balance.md "Meta nova".
 func _hero() -> void:
 	var h := HeroDef.new()
 	h.id = &"warrior"
@@ -1631,7 +1645,7 @@ func _hero() -> void:
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
 		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 1.1,
-		"magick_max": 50.0,
+		"magick_max": 50.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
 		"magick_on_finisher": 2.0,
@@ -1784,6 +1798,10 @@ const COLONNADE_CRACKED := Vector2(11, 0)
 const COLONNADE_TOP := 2.5
 
 
+const SANCTUARY_TRAPS := [[Vector2(-6.0, -14.0), Vector2(0, 1), 18.5], [Vector2(-1.5, 14.0), Vector2(0, -1), 19.0],
+	[Vector2(12.0, 14.0), Vector2(0, -1), 18.0]]
+
+
 func _sanctuary() -> RoomLayout:
 	var l := RoomLayout.new()
 	_arena(l, &"sanctuary", RoomLayout.Size.LARGE, 2, Vector2(0.4, 1.0))
@@ -1836,6 +1854,11 @@ func _sanctuary() -> RoomLayout:
 	var aisle_slabs: Array[Rect2] = [_rect(-13.5, -10.5, -11.0, -8.0), _rect(10.5, 13.5, -11.0, -8.0),
 		_rect(-7.5, -4.5, 8.0, 11.0), _rect(0.0, 3.0, 8.0, 11.0)]
 	l.hazard = _plates(aisle_slabs, PLATES_FROM)
+	# SR-P1: wall traps through the nave and the aisles (from the middle of the descent, every 4.5 s), blades along three
+	# lines between the columns: from the north wall at x -6 and from the south wall at x -1.5 and x 12 (the way in is the
+	# east end, 7 m from the last); A has all three, C (the colonnade, whose grid fills x 2 to 12) the first two
+	l.hazard.also = _trap(SANCTUARY_TRAPS, 0.5, 4.5)
+	l.obstacles.append_array(_trap_blocks(SANCTUARY_TRAPS))
 	# RP-13 (B): the edge that crumbles, the slabs at the two ends of the hole (the nave is 1.85 m wide along its long
 	# sides, no room for a slab there): 7 to him (not 10, A1) and everyone on them thrown 2.5 m away from the hole, to the
 	# firm floor (nobody falls, D-28); the same hazard as the aisles' (one hazard that hurts per room)
@@ -1870,9 +1893,11 @@ func _sanctuary() -> RoomLayout:
 			c.append(_column(p.x, p.y, COLONNADE_TOP, 0.5))
 	c.append_array(walls)
 	c.append_array(bowls)
+	c.append_array(_trap_blocks(SANCTUARY_TRAPS.slice(0, 2)))
 	var vc := _variant(c)
 	vc.depth = Vector2(0.5, 1.0)
 	vc.hazard = _plates(aisle_slabs, PLATES_FROM)
+	vc.hazard.also = _trap(SANCTUARY_TRAPS.slice(0, 2), 0.5, 4.5)
 	_areas(vc, ["colonnade", _rect(1.0, 13.0, -5.35, 5.35), "nave", _rect(-22, 22, -5.35, 5.35),
 		"aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
 	l.variants.append(vc)
@@ -1974,6 +1999,48 @@ func _breath(bands: Array, pushes: Array) -> HazardDef:
 	h.hero_damage = 0.0
 	h.enemy_damage = 0.0
 	return h
+
+
+## SR-P1 (the wall trap, docs/design/rooms_progression.md): a block in the wall (the `trap_block` obstacle, 1.2 x 0.6 m,
+## 1.2 m high, stopping bodies and shots) that throws blades along a line 1.2 m across: the HazardDef is a LINE named
+## &"trap" (the bands are the lines, band_dir the way they fly), one line at a time, the one with the most enemies in
+## it first (band_busy), 1.2 s of warning (as the slabs and the chain), 10 to the paladin (HAZARD_HERO), 60 to an enemy,
+## after 5 s of calm and from `from` of the descent. Each spec: [the wall's point, the way the blades fly (unit, axis),
+## the metres from the wall to where they stop].
+const TRAP_WIDTH := 1.2
+const TRAP_HALF := 0.3
+
+
+func _trap(specs: Array, from: float, cycle: float) -> HazardDef:
+	var rects: Array[Rect2] = []
+	var dirs := PackedVector2Array()
+	for sp: Array in specs:
+		var at: Vector2 = sp[0]
+		var d: Vector2 = sp[1]
+		var a := at + d * TRAP_HALF
+		var b := at + d * float(sp[2])
+		var side := Vector2(-d.y, d.x) * (TRAP_WIDTH * 0.5)
+		var r := Rect2(a + side, Vector2.ZERO).expand(a - side).expand(b + side).expand(b - side)
+		rects.append(r)
+		dirs.append(d)
+	var h := _chain(rects, [] as Array[Vector2])
+	h.band_source = &"trap"
+	h.band_busy = true
+	h.band_dir = dirs
+	h.cycle = cycle
+	h.start_delay = 5.0
+	h.from_progress = from
+	return h
+
+
+## The blocks of _trap's specs, to add to the layout's obstacles.
+func _trap_blocks(specs: Array) -> Array[ArenaObstacle]:
+	var out: Array[ArenaObstacle] = []
+	for sp: Array in specs:
+		var d: Vector2 = sp[1]
+		var half := Vector2(TRAP_WIDTH * 0.5, TRAP_HALF) if absf(d.y) > absf(d.x) else Vector2(TRAP_HALF, TRAP_WIDTH * 0.5)
+		out.append(ArenaObstacle.box(sp[0], half, 0.0, &"trap_block", 1.2, true))
+	return out
 
 
 ## RP-02: the tiles any part of which lies within 6 m of the way in (hero_spawn (-12.5, 3.5)) never light: columns 0

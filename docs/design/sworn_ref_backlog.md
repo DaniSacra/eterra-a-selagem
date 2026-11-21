@@ -53,32 +53,32 @@ golpes; barra do chefe; vinheta de vida baixa (conferir).
 ## 3. Backlog (ordem sugerida; dono entre parênteses)
 
 ### HUD (ui-ux-designer, com o art-director)
-- **SR-H1 Coluna da build** na borda direita: um ícone por botão (esquerdo, direito, Q, E, Shift, Espaço) com a
+- **SR-H1 Coluna da build** (FEITO, feito no Lote 2, `BuildColumn`) na borda direita: um ícone por botão (esquerdo, direito, Q, E, Shift, Espaço) com a
   Bênção do slot e o nível; vazio em cinza. Substitui a necessidade de abrir o Livro para lembrar a build. *Médio.*
-- **SR-H2 Canto do herói enxuto**: retrato + três barras finas (ultimate com ícone, Magia, Vida com números); a
+- **SR-H2 Canto do herói enxuto** (FEITO, feito no Lote 2: retrato, Magia em cima, Vida, carga da ultimate; fileira centrada): retrato + três barras finas (ultimate com ícone, Magia, Vida com números); a
   fileira de losangos vira só recargas pequenas ao lado do retrato ou some para a coluna da SR-H1 (decidir com o
   Daniel). *Médio.*
-- **SR-H3 Moedas no canto inferior direito** com o aviso de coleta ("+10 Prata"). *Pequeno.*
-- **SR-H4 Palavra-chave com definição** na carta de Bênção (atordoar, queimar, gelo, fraqueza...): cor + caixinha
+- **SR-H3 Moedas no canto inferior direito** (FEITO, feito no Lote 2, `CoinCorner`) com o aviso de coleta ("+10 Prata"). *Pequeno.*
+- **SR-H4 Palavra-chave com definição** (FEITO, feito no Lote 2: cor por termo e Fúria; a caixinha já existia (`Glossary`)) na carta de Bênção (atordoar, queimar, gelo, fraqueza...): cor + caixinha
   com o significado ao passar ou focar. *Pequeno a médio.*
-- **SR-H5 Placa central de interação** (título dourado + botão) para estação, evento e porta, a mesma em todo lugar. *Pequeno.*
-- **SR-H6 Vinheta de vida baixa** com bordas de tinta vermelha (conferir a nossa e ajustar). *Pequeno.*
+- **SR-H5 Placa central de interação** (FEITO, feito no Lote 2: auditada, já era uma só (`StationSign`)) (título dourado + botão) para estação, evento e porta, a mesma em todo lugar. *Pequeno.*
+- **SR-H6 Vinheta de vida baixa** (FEITO, feito no Lote 2, `LifeVignette`) com bordas de tinta vermelha (conferir a nossa e ajustar). *Pequeno.*
 
 ### Gráficos (art-director especifica, environment-artist e technical-artist fazem)
-- **SR-G1 Chão mais rico**: manchas de musgo e de umidade, tufos, raízes, potes em grupos, crânios espalhados, por
+- **SR-G1 Chão mais rico (feito no lote 4, `art_rooms.md`; sangue fica em G2)**: manchas de musgo e de umidade, tufos, raízes, potes em grupos, crânios espalhados, por
   bioma, sem mexer na colisão. *Médio.*
 - **SR-G2 Sangue e marcas que ficam** no chão depois do combate (decalques baratos, limite por sala; tom de aventura:
   escuro, pouco vermelho, nada de terror). Pergunta ao Daniel. *Pequeno a médio.*
-- **SR-G3 Moldura escura nas bordas** com peças grandes de ruína e cachoeira, centro mais claro. *Médio.*
-- **SR-G4 Golpe e impacto**: arco do giro maior e mais claro; pisca do inimigo em silhueta quente. *Pequeno.*
-- **SR-G5 Contorno de tinta** (outline) no herói e nos inimigos no look estilizado, medindo o custo. *Médio.*
+- **SR-G3 Moldura escura nas bordas (feito no lote 4: faixa escura e pedras caídas; falta cachoeira)** com peças grandes de ruína e cachoeira, centro mais claro. *Médio.*
+- **SR-G4 Golpe e impacto (feito no lote 4, `art_fx.md`)**: arco do giro maior e mais claro; pisca do inimigo em silhueta quente. *Pequeno.*
+- **SR-G5 Contorno de tinta (experimento `--ink` no lote 4, desligado)** (outline) no herói e nos inimigos no look estilizado, medindo o custo. *Médio.*
 
 ### Perigos de sala (room-designer, com o environment-artist)
-- **SR-P1 Bloco de armadilha na parede** que dispara lâminas em linha a intervalos, com direção talhada na pedra e
+- **SR-P1 Bloco de armadilha na parede (feito no lote 3, 2026-11-21; `rooms.md`)** que dispara lâminas em linha a intervalos, com direção talhada na pedra e
   aviso antes do disparo; acerta inimigos também (usar a favor). Comportamento novo, depois só dado. *Médio.*
 - **SR-P2 Laje que cede**: lajes rachadas que afundam um tempo depois de pisadas e voltam; dá forma à luta. *Médio.*
 - **SR-P3 Grade de fosso**: abre e fecha em ritmo, com espinhos. *Médio.*
-- **SR-P4 Aviso de área padronizado**: círculo de contorno limpo + preenchimento leve para todo golpe de área (chefe,
+- **SR-P4 Aviso de área padronizado (feito no lote 3, 2026-11-21; `rooms.md`)**: círculo de contorno limpo + preenchimento leve para todo golpe de área (chefe,
   atiradores, perigos), um só estilo no jogo. *Pequeno.*
 - **SR-P5 Evento "relíquia na pedra"** (nossa versão, sem copiar a espada na pedra; tema a definir com o Daniel e o
   cânone): interagir dá ouro ou Prata. *Pequeno.*
@@ -90,6 +90,8 @@ golpes; barra do chefe; vinheta de vida baixa (conferir).
 - **Canto inferior esquerdo**: o retrato à esquerda e, ao lado dele, as barras empilhadas com a **Magia em cima e a
   Vida embaixo** (a carga da ultimate junto, fina).
 - **Bênçãos na borda direita**, como no SWORN: a coluna da build (SR-H1) mostra as Bênçãos pegas.
+
+**Lote 2 (2026-11-21)**: H1 a H6 e AN-1 (retratos dos anjos 1 a 4 no Encontro) feitos; ver `docs/reference/ui.md`.
 
 ## 5. Perguntas ao Daniel
 1. A fileira de habilidades sai da tela (como no SWORN) e fica só a coluna da build, ou mantemos as recargas visíveis?

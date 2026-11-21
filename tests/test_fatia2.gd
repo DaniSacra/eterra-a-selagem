@@ -411,10 +411,10 @@ func test_the_psalm_door_stands_when_the_hand_opens_a_psalm() -> void:
 	assert_false(game.rooms.psalm_can_come(), "an empty hand opens no Psalm")
 	game.rooms.map.settle(doors, true, game.rooms.psalm_can_come())
 	assert_eq(hope.reward, R.BOON, "no Psalm can come: the door stays a Blessing")
-	# the Sentinela's three groups: a circle, a shield, an Elo of the two (Rastro)
-	for id in ["circulo_brasa", "escudo", "rastro"]:
+	# the Abrigo's three groups: a step, a shield, an Elo of the two (Rastro); the Sentinela needs the circle, which left the Warrior
+	for id in ["passo_brasa", "escudo", "rastro"]:
 		game.boons.take(load(_boon_path(id)))
-	assert_true(game.rooms.psalm_can_come(), "the hand opens the Sentinela (%s; %d in the catalog, %d taken)" % [
+	assert_true(game.rooms.psalm_can_come(), "the hand opens the Abrigo (%s; %d in the catalog, %d taken)" % [
 		str(Psalms.held_of(game.boons, game.talents).keys()), game.psalms.catalog.size(), game.psalms.taken.size()])
 	game.rooms.map.settle(doors, true, game.rooms.psalm_can_come())
 	assert_eq(hope.reward, R.PSALM, "now its door shows the Psalm")

@@ -1562,3 +1562,43 @@ Quando há mais de 3 inimigos de pé, o `checker` (o único denso da B) não sai
 `islands`. Com a sala cheia a B pode ficar quase só em ilhas, como na semente 5. É número (`dense_standing`, `DENSE`),
 fica para o balance-designer se a medida com gente pedir. A captura do ciclo
 na GPU (semente 1, estilizado) está no relatório da entrega.
+
+## Lote 3, SR-P4 e SR-P1 (2026-11-21, room-designer; princípios do SWORN, nada copiado)
+
+### 1. Armadilha de parede (SR-P1)
+| Sala | Linhas (parede, sentido, comprimento) | Dorme até | Ciclo | Por que ali |
+|---|---|---|---|---|
+| Jardim A | leste (17,-7) para oeste 12 m; sul (-0,5,14) para norte 10 m | 0,3 | 6 s | o campo leste, onde a luta vai (54%); entre as portas norte e leste |
+| Santuário A | norte (-6,-14) para sul 18,5 m; sul (-1,5,14) 19 m; sul (12,14) 18 m para norte | 0,5 | 4,5 s | corta a nave e as naves laterais entre as colunas; a entrada (leste, 19,5) fica a 7 m da última |
+| Santuário C | as duas primeiras | 0,5 | 4,5 s | a grade de colunas ocupa x 2 a 12: só o oeste |
+
+Regra: 1,2 s de aviso (o do inimigo comum), 10 no herói, 60 no inimigo, calma de 5 s, uma linha por vez, a com mais
+inimigos primeiro. Nunca a menos de 6 m da entrada nem sobre a boca de uma porta, sempre uma saída livre (linhas a 4,5 m
+ou mais uma da outra). Ficam de fora de propósito: Ponte e Fendas (já têm faixa em `bands`), Runas (já são o perigo da
+sala), Cripta (laje + urna/nicho/seteira). Aceite: 0 `stuck`; dano no herói de 0 a 2 por sala acordada; os inimigos pegam
+mais do que o herói.
+
+### 2. Medidas do robô (12 descidas, `smoke 900 --bot-reaction=0.25`, sementes 1 a 12, árvore com o kit do herói em obra)
+Sem as armadilhas: 1 vitória em 12, 0 `stuck`, nenhuma morte por perigo (a mesma árvore, `NO_TRAPS` temporário). Com: 0 vitórias
+em 12 (a semente 4 deixou de chegar a Morvath por outra rota sorteada; mortes por mago, cavaleiro e runas), 0 `stuck`,
+**0 morte e 0 dano de armadilha no herói** em 11 salas com armadilha vistas (4 acordadas em 2 sementes). Nas acordadas:
+Santuário A (sala 9) 11 disparos, 0 golpe no herói e 0 no inimigo, herói 4,6 s dentro das linhas; Jardim A (sala 4) 4
+disparos, 60 e 1 abate no inimigo. Leitura: legível demais para o robô (reação 0,25 s), pouco usada contra o bando; falta
+um segundo número para provar que joga diferente (zonas do Santuário com a linha: o robô cruza a nave pelas colunas).
+Próximo ajuste se o Daniel quiser mais bite: faixa de 1,6 m e ciclo de 3,5 s no Santuário.
+
+### 3. SR-P2 Laje que cede (especificação, não feita)
+Laje de 3 x 3 m marcada com rachaduras (o repouso da laje do RP-06). Quem fica nela (herói ou inimigo) por `dwell` 1,0 s
+a faz ceder: aviso de 1,2 s (padrão P4, a laje inteira), depois afunda 0,6 s e o buraco fere 10 no herói e 60 no inimigo
+**e devolve ao chão** (empurrão de 1 m para a beira firme, nada de queda que mata: D-28), volta a subir em 6 s. É um `PLATES`
+com `dwell` > 0 e `push_out` (o mecanismo da raiz, RP-10); só falta o desenho (laje que afunda, do environment-artist) e a
+chave `killer_sink`. Lugar: Cripta A no lugar de duas das quatro lajes (acordadas desde 0,34), Ponte B no patamar.
+Sem código novo de lógica.
+
+### 4. O que precisa de arte (`environment-artist`, com a spec do `art-director`)
+- **Bloco da armadilha**: hoje é a peça da seteira (bloco de pedra, boca escura acendendo, três chevrons) com 1,2 x 0,6 m.
+  Pedir: bloco de parede com a direção talhada (setas ou lâminas esculpidas), boca que mostra a lâmina saindo, e a lâmina
+  voando pela faixa nos 0,25 s do golpe (hoje a faixa acende inteira de uma vez).
+- **Aviso**: tudo no mesmo vermelho do jogo; as peças âmbar (moldura da laje armando, brasa das raízes) podem ser
+  reavaliadas para o vermelho e a luz âmbar da peça combinarem com o aviso no chão.
+- Texto "Armadilha de Lâminas" é provisório (nome para o Daniel).

@@ -106,7 +106,7 @@ func _run(r: ComboRunner, frames: int) -> void:
 		r.step(F)
 
 
-func test_a_press_in_the_roll_waits_unaged_and_comes_out_as_the_dash_attack() -> void:
+func test_a_press_in_the_roll_waits_unaged_and_comes_out_as_the_first_cut() -> void:
 	var r := _runner()
 	r.on_dodge()
 	r.press(L)
@@ -114,7 +114,7 @@ func test_a_press_in_the_roll_waits_unaged_and_comes_out_as_the_dash_attack() ->
 	assert_true(started.is_empty(), "nothing starts in the roll")
 	r.on_dodge_end()
 	r.step(F)
-	assert_eq(started, [&"dash_cut"] as Array[StringName], "12 frames later it is still there")
+	assert_eq(started, [&"cut1"] as Array[StringName], "12 frames later it is still there (no dash attack since 2026-11-21)")
 
 
 func test_a_dodge_drops_presses_made_before_it() -> void:
@@ -161,7 +161,9 @@ func test_the_special_has_its_own_cooldown_and_frees_the_attack_first() -> void:
 		r.step(F)
 		if started.size() > 1 and again < 0:
 			again = i
-	assert_between(again, 46, 50, "the second dart 0.7 s after the first")
+		if again >= 0 and i >= again + 8:
+			break
+	assert_between(again, 35, 39, "the second dart 0.5 s after the first (0.7 s before 2026-11-21)")
 	r.reset(false)
 	assert_gt(r.cooldown_left(&"bolt"), 0.0, "a blow taken keeps the cooldown")
 	r.reset()
@@ -222,7 +224,7 @@ func test_an_attack_in_the_roll_or_the_stagger_is_kept() -> void:
 		_frame(p)
 		if not started.is_empty() and at < 0:
 			at = i
-	assert_eq(started, [&"dash_cut"] as Array[StringName], "the dash attack when the roll ends")
+	assert_eq(started, [&"cut1"] as Array[StringName], "the plain first cut when the roll ends")
 	p = _room()
 	p.hurt(1.0, p.pos + Vector2.LEFT)
 	_frame(p)
@@ -231,21 +233,6 @@ func test_an_attack_in_the_roll_or_the_stagger_is_kept() -> void:
 	for i in 12:
 		_frame(p)
 	assert_eq(started, [&"bolt"] as Array[StringName], "the special comes out when the stagger ends")
-
-
-func test_the_circle_gives_no_safety_and_holds_the_attack() -> void:
-	var p := _room()
-	p.cast_cooldown = 0.0
-	var released := [false]
-	p.cast_released.connect(func(_a: Vector2, _o: bool) -> void: released[0] = true)
-	var frames := 0
-	while not released[0] and frames < 40:
-		_frame(p, [&"cast"] if frames == 0 else [])
-		frames += 1
-	assert_true(released[0])
-	assert_false(p.invulnerable(), "no 0.2 s of safety (D-44)")
-	_frame(p, [&"light_attack"])
-	assert_true(started.is_empty(), "no blow on the next frame (8 frames of Hades II)")
 
 
 func test_the_special_holds_the_legs_without_skating() -> void:

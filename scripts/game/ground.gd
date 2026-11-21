@@ -33,6 +33,8 @@ const FALL_SOURCE := &"column"
 const ROOT_SOURCE := &"roots"
 ## RP-16: the arrow slit a slab arms (PlateFloor with HazardDef.aims): "Derrotado por: Seteira".
 const SLIT_SOURCE := &"slit"
+## SR-P1: the blades of the wall trap (BandFloor with HazardDef.band_source &"trap").
+const TRAP_SOURCE := &"trap"
 ## A1 (rooms_progression.md): RP-14 the crystal's discharge (RuneFloor), RP-20 the stones of the vault (DropFloor),
 ## RP-12 the oil urn's blast and its running flame (UrnFloor).
 const CRYSTAL_SOURCE := &"crystal"
@@ -44,7 +46,7 @@ const NICHE_SOURCE := &"niche"
 const PLANT_SOURCE := &"plant"
 ## Sources of the room's own warnings that count against its two at once (combat_cadence.md 9.2 R9); a column toppling
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
-const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE,
+const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE, TRAP_SOURCE,
 	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE]
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's

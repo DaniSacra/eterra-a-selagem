@@ -1,9 +1,9 @@
 extends GutTest
-## 2026-11-21, the Warrior's buttons (docs/design/heroes/guerreiro.md 3.4, 3.5): E is the Brado de Guerra, Shift the
-## ultimate (it was R), F interacts (it was E), the circle is Q alone, R is only the menu's reroll. The Brado is a
-## move of data (ComboNode.In.SHOUT, Effect.STUN): 15 damage in 4 m, the common enemies stunned 0.5 s, an elite, a
-## guardian or a boss only pushed, one charge of Ímpeto for each common one it reaches (2 at most), 10 s to recharge.
-## The HUD shows five diamonds and the dodge: left button, right button, Q, E, Shift, then Space.
+## 2026-11-21, the Warrior's buttons (docs/design/heroes/guerreiro.md): Q is the Brado de Guerra (it was E, then the
+## circle's), E the Investida, Shift the ultimate, F interacts, the circle has no key (it left the kit), R is only the
+## menu's reroll. The Brado is a move of data (ComboNode.In.SHOUT, Effect.SHOUT): 15 damage in 4 m, everyone pushed 1.5 m
+## and stunned by none, a 5 s buff (blows 20% faster, 15% less damage taken, one charge of Ímpeto), 12 s to recharge.
+## The HUD shows the diamonds: left button, right button, Q, E, Shift, then Space.
 
 const F := 1.0 / 60.0
 
@@ -21,12 +21,14 @@ func after_each() -> void:
 # ---------- the buttons ----------
 
 func test_the_defaults() -> void:
-	assert_eq(Controls.DEFAULT_KEYS[&"cast"], [KEY_Q], "the circle is Q alone, Shift left it")
-	assert_eq(Controls.DEFAULT_KEYS[&"shout"], [KEY_E])
+	assert_false(Controls.DEFAULT_KEYS.has(&"cast"), "the circle has no key")
+	assert_false(Controls.REMAPPABLE.has(&"cast"))
+	assert_eq(Controls.DEFAULT_KEYS[&"shout"], [KEY_Q])
+	assert_eq(Controls.DEFAULT_KEYS[&"rush"], [KEY_E])
 	assert_eq(Controls.DEFAULT_KEYS[&"ultimate"], [KEY_SHIFT])
 	assert_eq(Controls.DEFAULT_KEYS[&"interact"], [KEY_F])
 	assert_eq(Controls.MENU_KEYS[&"menu_reroll"][1], KEY_R, "R is only the reroll now")
-	for action: StringName in [&"cast", &"shout", &"ultimate", &"interact", &"light_attack", &"heavy_attack", &"dodge", &"map"]:
+	for action: StringName in [&"shout", &"rush", &"ultimate", &"interact", &"light_attack", &"heavy_attack", &"dodge", &"map"]:
 		assert_true(Controls.REMAPPABLE.has(action), "%s is remappable" % action)
 	assert_true(Controls.PAD_REMAPPABLE.has(&"shout"))
 	# nothing shares a key by default (the mouse's buttons aside)
@@ -46,11 +48,11 @@ func test_the_defaults() -> void:
 
 func test_the_input_map_has_the_new_keys() -> void:
 	Controls.apply_bindings()
-	assert_eq(Controls.label(&"shout"), "E")
+	assert_eq(Controls.label(&"shout"), "Q")
+	assert_eq(Controls.label(&"rush"), "E")
 	assert_eq(Controls.label(&"ultimate"), "Shift")
 	assert_eq(Controls.label(&"interact"), "F")
-	assert_eq(Controls.label(&"cast"), "Q")
-	assert_eq(InputMap.action_get_events(&"cast").filter(func(ev: InputEvent) -> bool: return ev is InputEventKey).size(), 1, "no second key on the circle")
+	assert_eq(InputMap.action_get_events(&"cast").filter(func(ev: InputEvent) -> bool: return ev is InputEventKey).size(), 0, "no key on the circle")
 
 
 func test_an_old_save_with_nothing_remapped_reads_the_new_defaults() -> void:
@@ -76,7 +78,7 @@ func test_an_old_save_with_remapped_keys_keeps_them_and_no_key_is_shared() -> vo
 	assert_eq(Controls.label(&"dodge"), "F")
 	assert_eq(Controls.label(&"map"), "Shift")
 	# the new defaults that would clash go to a spare key, never to two actions at once
-	assert_eq(Controls.label(&"shout"), "Z", "E is taken: the Brado takes a spare")
+	assert_eq(Controls.label(&"rush"), "Z", "E is taken: the Investida takes a spare")
 	assert_eq(Controls.label(&"interact"), "G", "F is taken: interact takes a spare")
 	var keys := {}
 	for action in Controls.REMAPPABLE:
@@ -91,8 +93,8 @@ func test_an_old_save_with_remapped_keys_keeps_them_and_no_key_is_shared() -> vo
 func test_the_ultimate_default_goes_to_a_spare_when_shift_was_taken() -> void:
 	assert_eq(Controls.keys_for(&"ultimate", {}), [KEY_SHIFT])
 	assert_eq(Controls.keys_for(&"ultimate", {"dodge": {"type": "key", "code": KEY_SHIFT}}), [KEY_X])
-	assert_eq(Controls.keys_for(&"shout", {"dodge": {"type": "key", "code": KEY_E}}), [KEY_Z])
-	assert_eq(Controls.keys_for(&"cast", {}), [KEY_Q])
+	assert_eq(Controls.keys_for(&"rush", {"dodge": {"type": "key", "code": KEY_E}}), [KEY_Z])
+	assert_eq(Controls.keys_for(&"shout", {}), [KEY_Q])
 
 
 func test_a_stale_binding_of_an_action_that_is_gone_breaks_nothing() -> void:
@@ -107,7 +109,7 @@ func test_rebinding_the_brado_swaps_with_the_key_it_takes() -> void:
 	shift.physical_keycode = KEY_SHIFT
 	assert_true(Controls.rebind(&"shout", shift))
 	assert_eq(Controls.label(&"shout"), "Shift")
-	assert_eq(Controls.label(&"ultimate"), "E", "the ultimate takes the Brado's old key")
+	assert_eq(Controls.label(&"ultimate"), "Q", "the ultimate takes the Brado's old key")
 
 
 # ---------- the move (data) ----------
@@ -122,12 +124,16 @@ func test_the_brado_is_a_move_of_data_in_both_trees() -> void:
 		assert_not_null(n, path)
 		assert_eq(n.id, &"shout")
 		assert_eq(n.shape, ComboNode.Shape.CIRCLE)
-		assert_eq(n.effect, ComboNode.Effect.STUN)
+		assert_eq(n.effect, ComboNode.Effect.SHOUT)
 		assert_eq(n.damage, 15.0)
 		assert_eq(n.reach, 4.0)
-		assert_eq(n.effect_time, 0.5, "stuns 0.5 s")
-		assert_eq(n.effect_power, 2.0, "at most 2 charges a cry")
-		assert_eq(n.cooldown, 14.0, "14 s since 2026-11-21 (was 10)")
+		assert_eq(n.knockback, 10.5, "1.5 m at the horde's decay")
+		assert_eq(n.effect_time, 5.0, "a 5 s buff")
+		assert_eq(n.buff_speed, 0.15)
+		assert_eq(n.buff_guard, 0.15)
+		assert_eq(n.effect_power, 1.0, "one charge a cry")
+		assert_eq(n.cooldown, 12.0)
+		assert_true(n.has_tag(&"cast"), "the Brado slot's Blessings count on it")
 		assert_eq(n.windup, 0.25)
 		assert_eq(n.recovery, 0.25)
 		assert_eq(n.lunge, 0.0, "planted")
@@ -164,79 +170,76 @@ func _cry() -> void:
 	game.combat.strike(_brado(game.player.tree), game.player.pos, Vector2.RIGHT)
 
 
-func test_it_hurts_and_stuns_the_common_ones_and_gives_a_charge_each() -> void:
+func test_it_hurts_and_pushes_and_stuns_no_one() -> void:
 	_run()
 	var a := _enemy(&"skeleton", Vector2(1.5, 0))
-	var b := _enemy(&"skeleton", Vector2(0, 2.0))
+	var b := _enemy(&"skeleton_elite", Vector2(0, 2.0))
 	var far := _enemy(&"skeleton", Vector2(7.0, 0))
 	var hp_a := a.hp
 	var hp_far := far.hp
 	_cry()
 	assert_eq(a.hp, hp_a - 15.0, "15 damage")
 	assert_eq(far.hp, hp_far, "nothing beyond 4 m")
-	assert_gte(a.stun_t, 0.5, "stunned")
-	assert_gte(b.stun_t, 0.5)
-	assert_eq(far.stun_t, 0.0)
-	assert_eq(game.hero_gifts.state.fury, 2, "one charge for each of the two")
+	assert_eq(a.stun_t, 0.0, "no stun, not even a common one")
+	assert_eq(b.stun_t, 0.0)
+	assert_gt(a.push.length(), 0.0, "pushed")
+	assert_almost_eq(a.push.length(), 10.5, 0.01, "1.5 m of push at the horde's decay of 7")
 
 
-func test_the_charges_are_two_at_most_a_cry() -> void:
+func test_it_gives_the_buff_and_one_charge() -> void:
 	_run()
-	for i in 5:
-		_enemy(&"skeleton", Vector2(1.0 + i * 0.3, 0.8 * (i - 2)))
+	_enemy(&"skeleton", Vector2(1.5, 0))
+	var s := game.hero_gifts.state
+	assert_false(s.rallied())
 	_cry()
-	assert_eq(game.hero_gifts.state.fury, 2, "five reached, two given")
+	assert_true(s.rallied())
+	assert_eq(s.rally_left, 5.0)
+	assert_eq(s.fury, 1, "one charge of Ímpeto")
+	assert_almost_eq(s.attack_speed(), 1.0 + 0.15 + 0.06, 0.001, "15% and the charge's 6%")
+	assert_eq(s.guard(), 0.15)
 
 
-func test_a_common_one_it_fells_gives_no_more_than_the_cap() -> void:
+func test_it_works_on_an_empty_floor_too() -> void:
 	_run()
-	for i in 4:
-		var e := _enemy(&"skeleton", Vector2(1.0 + i * 0.3, 0.8 * (i - 2)))
-		e.hp = 1.0
 	_cry()
-	assert_eq(game.hero_gifts.state.fury, 2, "the kills of the cry give nothing beyond its 2")
+	assert_true(game.hero_gifts.state.rallied(), "the buff comes with the cry, whoever it reaches")
+	game.hero_gifts.state.step(5.1)
+	assert_false(game.hero_gifts.state.rallied())
+	assert_eq(game.hero_gifts.state.guard(), 0.0)
+	assert_eq(game.hero_gifts.state.attack_speed(), 1.0 + 0.06 * game.hero_gifts.state.fury)
 
 
-func test_a_guardian_and_an_elite_are_only_pushed() -> void:
-	_run()
-	var guard := _enemy(&"guard", Vector2(1.5, 0))
-	var elite := _enemy(&"skeleton_elite", Vector2(0, 2.0))
-	var hp := guard.hp
-	_cry()
-	assert_eq(guard.stun_t, 0.0, "a guardian is never stunned")
-	assert_eq(elite.stun_t, 0.0, "an elite is never stunned")
-	assert_gt(guard.push.length() + elite.push.length(), 0.0, "pushed")
-	assert_lt(guard.hp, hp, "it still hurts")
-	assert_eq(game.hero_gifts.state.fury, 0, "no charge from them")
-	assert_false(Combat.is_common(guard.def))
-	assert_false(Combat.is_common(elite.def))
-
-
-func test_morvath_is_never_stunned_and_gives_nothing() -> void:
-	_run()
-	var boss := _enemy(&"morvath", Vector2(1.5, 0))
-	_cry()
-	assert_eq(boss.stun_t, 0.0)
-	assert_eq(game.hero_gifts.state.fury, 0)
-	assert_false(Combat.is_common(boss.def))
-
-
-func test_without_impeto_it_still_stuns_and_there_is_no_charge() -> void:
+func test_without_impeto_the_buff_comes_and_no_charge() -> void:
 	_run([])
-	var a := _enemy(&"skeleton", Vector2(1.5, 0))
 	_cry()
-	assert_gte(a.stun_t, 0.5)
+	assert_true(game.hero_gifts.state.rallied())
 	assert_eq(game.hero_gifts.state.fury, 0)
+	assert_eq(game.hero_gifts.state.attack_speed(), 1.15)
+
+
+func test_the_buff_takes_15_percent_off_a_blow_taken() -> void:
+	_run([])
+	var p := game.player
+	p.hurt_scale = 1.0
+	p.hp = p.max_hp
+	p.hurt(20.0, Vector2(3, 0))
+	var plain := p.max_hp - p.hp
+	p.hp = p.max_hp
+	p.invuln = 0.0
+	p.state = Player.State.MOVE
+	game.hero_gifts.state.rally(5.0, 0.2, 0.15, 0)
+	p.hurt(20.0, Vector2(3, 0))
+	assert_eq(plain, 20.0)
+	assert_eq(p.max_hp - p.hp, 17.0, "15% off 20")
 
 
 func test_the_rule_of_the_charges_is_pure() -> void:
 	var boons := BoonState.new()
 	boons.equip_talents(HeroDef.warrior().talents().defs([&"impeto"] as Array[StringName]))
 	var s := GiftState.new(HeroDef.warrior(), boons)
-	assert_eq(s.on_shout(5, 2), 2)
-	assert_eq(s.on_shout(1, 2), 1, "up to the 3 of Ímpeto")
-	assert_eq(s.on_shout(2, 2), 0, "full")
-	assert_eq(s.on_shout(0, 2), 0)
+	assert_eq(s.rally(5.0, 0.2, 0.15, 2), 2)
+	assert_eq(s.rally(5.0, 0.2, 0.15, 2), 1, "up to the 3 of Ímpeto")
+	assert_eq(s.rally(5.0, 0.2, 0.15, 1), 0, "full")
 	assert_eq(s.fury, 3)
 	assert_eq(s.on_kill([&"shout"] as Array[StringName]), 0, "a fall under the cry's own tag gives none")
 
@@ -254,7 +257,7 @@ func _frame(p: Player, taps: Array = []) -> void:
 	pad.released.clear()
 
 
-func test_the_press_plays_it_planted_and_it_recharges_ten_seconds() -> void:
+func test_the_press_plays_it_planted_and_it_recharges_twelve_seconds() -> void:
 	_run()
 	var p := game.player
 	var played: Array[StringName] = []
@@ -272,9 +275,9 @@ func test_the_press_plays_it_planted_and_it_recharges_ten_seconds() -> void:
 	for i in 30:
 		_frame(p)
 	assert_eq(played, [] as Array[StringName], "a press while it recharges does nothing")
-	for i in 840:
+	for i in 720:
 		p.runner.step(F)
-	assert_eq(p.shout_wait(), 0.0, "ready again after 14 s")
+	assert_eq(p.shout_wait(), 0.0, "ready again after 12 s")
 
 
 func test_the_dodge_cuts_it_in_its_windup() -> void:
@@ -305,7 +308,7 @@ func test_the_hud_row_has_the_five_diamonds_then_the_dodge() -> void:
 	for c in row.get_children():
 		if c is ActionSlot:
 			order.append((c as ActionSlot).action)
-	assert_eq(order, [&"light_attack", &"heavy_attack", &"cast", &"shout", &"ultimate", &"dodge"] as Array[StringName])
+	assert_eq(order, [&"light_attack", &"heavy_attack", &"shout", &"rush", &"ultimate", &"dodge"] as Array[StringName])
 	for s: ActionSlot in hud._slots:
 		if s.action == &"shout":
 			assert_true(s.visible)
@@ -324,7 +327,7 @@ func test_the_hud_shows_the_brado_recharging() -> void:
 	_cry()
 	game.player.runner._cooldowns[&"shout"] = 7.0
 	hud._update_slots(game.player)
-	assert_almost_eq(slot.wait, 0.5, 0.011, "half of the 14 s to go")
+	assert_almost_eq(slot.wait, 7.0 / 12.0, 0.011, "7 of the 12 s to go")
 	assert_true(slot.busy())
 
 
@@ -333,10 +336,15 @@ func test_how_to_lists_the_brado_and_the_new_keys() -> void:
 	for row in HowToScreen.ROWS:
 		ids.append(row.id)
 	assert_true(ids.has("shout"))
-	assert_eq(HowToScreen.keys_label([&"shout"]), "E")
+	assert_true(ids.has("rush"))
+	assert_false(ids.has("cast"))
+	assert_eq(HowToScreen.keys_label([&"shout"]), "Q")
+	assert_eq(HowToScreen.keys_label([&"rush"]), "E")
 	assert_eq(HowToScreen.keys_label([&"ultimate"]), "Shift")
 	assert_eq(HowToScreen.keys_label([&"interact"]), "F")
-	assert_eq(HowToScreen.pad_label([&"shout"]), T.t(&"pad_8"))
+	assert_ne(HowToScreen.pad_label([&"shout"]), HowToScreen.pad_label([&"rush"]))
 	assert_ne(T.t(&"howto_shout"), "howto_shout")
 	assert_ne(T.t(&"action_shout"), "action_shout")
+	assert_ne(T.t(&"howto_rush"), "howto_rush")
+	assert_ne(T.t(&"action_rush"), "action_rush")
 

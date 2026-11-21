@@ -9,7 +9,11 @@ extends PanelContainer
 ##   g.show_for(card_text)          # empty: the panel stays, with nothing in it
 
 ## The terms the cards may call, in the order they are listed when several are.
-const TERMS: Array[StringName] = [&"freeze", &"burn", &"stun", &"omega", &"magick", &"armor", &"dash_cut"]
+const TERMS: Array[StringName] = [&"freeze", &"burn", &"stun", &"omega", &"magick", &"armor", &"dash_cut", &"fury"]
+## Each term's colour in the text and over its box (H4 of the SWORN reference, 2026-11-21): light enough to read on the
+## card's ink, none of the rarities' (Boon.RARITY_COLOR) and none of the families' as they are on the gems.
+const COLORS := {&"freeze": Color("9fdcf5"), &"burn": Color("ffa85c"), &"stun": Color("f2d98a"), &"omega": Color("c9b6f0"),
+	&"magick": Color("7cc4e6"), &"armor": Color("b9bcc4"), &"dash_cut": Color("f4ecd6"), &"fury": Color("ef8a7a")}
 ## The most terms shown at once.
 const MAX := 2
 const NAME_SIZE := 16
@@ -54,8 +58,15 @@ static func terms_of(text: String) -> Array[StringName]:
 	return out
 
 
-## The words of rule in a text marked as UiKit.strong (UI-HB2: "congela", "queimadura" in bold ivory). The text may
-## already carry marks: only bare words are touched.
+## A word of a term in its colour and bold (H4; the plain UiKit.strong ivory for a term without a colour).
+static func mark(word: String, id: StringName) -> String:
+	if not COLORS.has(id):
+		return UiKit.strong(word)
+	return "[color=#%s][b]%s[/b][/color]" % [(COLORS[id] as Color).to_html(false), word]
+
+
+## The words of rule in a text marked in their term's colour (UI-HB2, H4: "congela" in cold blue, "queimadura" in
+## amber...). The text may already carry marks: only bare words are touched.
 static func emphasize(bbcode: String) -> String:
 	var out := bbcode
 	for id in TERMS:
@@ -67,7 +78,7 @@ static func emphasize(bbcode: String) -> String:
 			var at := 0
 			for m in re.search_all(out):
 				parts.append(out.substr(at, m.get_start() - at))
-				parts.append(UiKit.strong(m.get_string()) if not _inside_mark(out, m.get_start()) else m.get_string())
+				parts.append(mark(m.get_string(), id) if not _inside_mark(out, m.get_start()) else m.get_string())
 				at = m.get_end()
 			parts.append(out.substr(at))
 			out = "".join(parts)
@@ -90,7 +101,7 @@ func show_for(text: String) -> void:
 		term.name = String(id)
 		term.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		term.add_theme_constant_override(&"separation", 1)
-		term.add_child(UiKit.label(T.t("gloss_%s" % id), BoonCard.IVORY, NAME_SIZE, UiKit.BOLD_FONT))
+		term.add_child(UiKit.label(T.t("gloss_%s" % id), COLORS.get(id, BoonCard.IVORY), NAME_SIZE, UiKit.BOLD_FONT))
 		var line := UiKit.label(T.t("gloss_%s_text" % id), UiKit.PALE, TEXT_SIZE)
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		line.custom_minimum_size.x = width - 28.0

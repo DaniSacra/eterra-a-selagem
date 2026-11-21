@@ -23,7 +23,8 @@ var pieces: Array[HazardPiece] = []
 var _shown: Array[Vector2] = []
 
 
-func _init(g: Game, def: HazardDef) -> void:
+## awake false: the hazard sleeps (a trap early in the descent: HazardDef.from_progress); it strikes nothing and warns nothing.
+func _init(g: Game, def: HazardDef, awake := true) -> void:
 	game = g
 	var doors: Array[Rect2] = []
 	for z in g.arena.exit_zones:
@@ -32,6 +33,8 @@ func _init(g: Game, def: HazardDef) -> void:
 		for e in g.arena.layout.exits:
 			doors.append(e.mouth)
 	hazard = BandHazard.new(def, doors)
+	if not awake:
+		hazard.stop()
 	g.ground.hazard_landed.connect(_on_landed)
 	# SW-G7: the room's piece of each band (the Ponte's chain: post, arm, weight), told its state as it changes
 	for i in def.bands.size():
@@ -87,8 +90,11 @@ func stop() -> void:
 
 ## The room's numbers (RoomTally.hazard).
 func tally() -> Dictionary:
-	return {"kind": String(hazard.def.band_source), "hero_in_s": snappedf(hero_in, 0.1), "pushed": pushed,
+	var out := {"kind": String(hazard.def.band_source), "hero_in_s": snappedf(hero_in, 0.1), "pushed": pushed,
 		"cut": cut}
+	if hazard.def.band_source == Ground.TRAP_SOURCE:
+		out["fired"] = hazard.fired  # SR-P1: how often the blades flew (damage and kills: RoomTally)
+	return out
 
 
 func _on_landed(z: Ground.Zone) -> void:

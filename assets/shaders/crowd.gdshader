@@ -95,6 +95,11 @@ uniform float white_from = 0.85;
 uniform float flash_white = 0.35;
 uniform vec3 flash_ivory : source_color = vec3(0.95, 0.9, 0.8);
 uniform float flash_cap = 1.0;
+// SR-G4 (stylized only): a struck figure flashes as a warm silhouette, red-orange in the body and gold in the strong
+// blow's first frame (hit_warm, hit_gold), its floor hit_floor so dark cloth is a shape and not a smudge; still under flash_cap.
+uniform vec3 hit_warm : source_color = vec3(1.0, 0.5, 0.22);
+uniform vec3 hit_gold : source_color = vec3(1.0, 0.78, 0.36);
+uniform float hit_floor = 0.2;
 // C17, QW-104 (CF-06; Hades II clears the body toward white in the last 0.5 s of a wind-up): in the hold of its wind-up
 // (the last tell_hold of it, EnemyDef.windup_hold) the body itself grows lighter and warmer, the flash's light at
 // tell_light of its strength at the end, under flash_cap like the flash: "it is about to strike", read on the body.
@@ -305,11 +310,11 @@ void fragment() {
 		// the warm floor take his hue (his body is dark there, so the floor was all of it), no ivory frame
 		bool own_flash = styled && style_vivid > 0.5;
 		vec3 hue = c / max(max(c.r, max(c.g, c.b)), 0.0001);
-		vec3 warm = own_flash ? mix(hue, vec3(1.0), 0.25) : flash_warm;
-		vec3 lighter = (c * shade * (0.45 + lit) * flash_light + vec3(flash_floor)) * warm * flash;
+		vec3 warm = own_flash ? mix(hue, vec3(1.0), 0.25) : (styled ? hit_warm : flash_warm);
+		vec3 lighter = (c * shade * (0.45 + lit) * flash_light + vec3(styled ? hit_floor : flash_floor)) * warm * flash;
 		EMISSION += min(lighter, max(vec3(own_flash ? style_boss_flash_cap : flash_cap) - EMISSION, vec3(0.0)));
 		float white = own_flash ? 0.0 : step(white_from, flash) * flash_white;
-		EMISSION = mix(EMISSION, min(flash_ivory * shade * (0.75 + 0.25 * facing), vec3(flash_cap)), white);
+		EMISSION = mix(EMISSION, min((styled ? hit_gold : flash_ivory) * shade * (0.75 + 0.25 * facing), vec3(flash_cap)), white);
 		ALBEDO *= 1.0 - white;
 	}
 	if (styled && style_gamma != 1.0) {

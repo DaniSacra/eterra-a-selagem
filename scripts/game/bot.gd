@@ -6,7 +6,7 @@ extends RefCounted
 ## L attack, H special, C special held (Omega special), O attack held (Omega attack), Q circle of light, d dash.
 ## How near a shot being readied keeps the robot from the attack's Omega (shot_coming).
 const SHOT_NEAR := 12.0
-const COMBOS: Array[String] = ["LLL", "Q", "H", "LLL", "O", "LL", "H", "C", "dL", "LLL"]
+const COMBOS: Array[String] = ["LLL", "H", "LLL", "O", "LL", "H", "dL", "LLL", "H"]
 const GAP := 0.25
 const REACH := 3.6
 ## RP-09: the bot goes for a cracked column within COLUMN_NEAR m that would fall on COLUMN_PACK enemies or more
@@ -145,12 +145,12 @@ func _track_pinned(dt: float, game: Game) -> void:
 		_pin_since += dt
 
 
-## Common enemies within the Brado's reach the robot waits for before it cries out.
+## Enemies within the Brado's reach the robot waits for before it cries out.
 const SHOUT_PACK := 3
 const SHOUT_REACH := 4.0
 
 
-## The Brado de Guerra is ready and SHOUT_PACK or more common enemies stand within its reach.
+## The Brado de Guerra is ready and SHOUT_PACK or more enemies stand within its reach.
 static func shout_worth(game: Game, at: Vector2) -> bool:
 	var p := game.player
 	if Dev.has("bot-no-shout") or p.state != Player.State.MOVE:  # (--bot-no-shout: the robot before the Brado, to compare)
@@ -159,7 +159,24 @@ static func shout_worth(game: Game, at: Vector2) -> bool:
 		return false
 	var near: Array[Enemy] = []
 	game.horde.in_circle(at, SHOUT_REACH, near)
-	return near.filter(func(e: Enemy) -> bool: return Combat.is_common(e.def)).size() >= SHOUT_PACK
+	return near.size() >= SHOUT_PACK
+
+
+## The Investida (E) is ready: the robot uses it to close in on an enemy that is a few steps off (RUSH_FAR) and, short of
+## Magia for the rajada, on one right in front of it (RUSH_NEAR), for the 3 Magia each enemy it reaches gives back.
+const RUSH_NEAR := 3.5
+const RUSH_FAR := 8.0
+
+
+static func rush_worth(game: Game, to: float) -> bool:
+	var p := game.player
+	if Dev.has("bot-no-rush") or p.state != Player.State.MOVE or ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) == null:
+		return false
+	if p.runner.cooldown_left(&"dash_cut") > 0.0 or p.runner.is_attacking():
+		return false
+	if to > RUSH_NEAR + 1.0:
+		return to < RUSH_FAR
+	return not p.magick.can_pay(Player.omega_cost(ComboTree.find(p.tree.neutral, ComboNode.In.HEAVY).magick_cost, 0.0))
 
 
 ## The paladin fell (Game._on_player_died): was it while pinned?
@@ -198,7 +215,7 @@ func step(dt: float, game: Game) -> void:
 	_kiting = fighting and kite_step(dt, p.distance_to(game.boss.e.pos) >= KITE_DISTANCE)
 	if not _kiting:
 		pad.release(&"dodge")
-	pad.release(&"cast")
+	pad.release(&"rush")
 	pad.release(&"ultimate")
 	pad.release(&"shout")
 	# C19, Q-13: the reward, a shop's item and a door are used with interact, as a player presses it there
@@ -274,12 +291,17 @@ func step(dt: float, game: Game) -> void:
 		pad.press(&"ultimate")
 		return
 	if shout_worth(game, p):
-		# the Brado de Guerra (E) with a pack close: 3 or more common ones within its 4 m (it recharges for 10 s)
+		# the Brado de Guerra (Q) with a pack close: 3 or more within its 4 m (it recharges for 12 s)
 		pad.press(&"shout")
 		_queue = ""
 		_hold = 0.0
 		pad.release(&"heavy_attack")
 		pad.release(&"light_attack")
+		return
+	if _wait <= 0.0 and _queue.is_empty() and column == null and rush_worth(game, to.length()):
+		# the Investida: in to an enemy a few steps off, or for the Magia when the rajada is out of it
+		pad.press(&"rush")
+		_wait = 0.7
 		return
 	if _hold > 0.0:
 		_hold -= dt
@@ -301,13 +323,13 @@ func step(dt: float, game: Game) -> void:
 		"L":
 			pad.press(&"light_attack")
 		"H":
-			pad.press(&"heavy_attack")
-			_held = &"heavy_attack"
-			_hold = 0.06
-		"C":
-			pad.press(&"heavy_attack")
-			_held = &"heavy_attack"
-			_hold = 0.75
+			if game.player.magick.can_pay(Player.omega_cost(ComboTree.find(game.player.tree.neutral, ComboNode.In.HEAVY).magick_cost, 0.0)):
+				# the rajada (8 Magia) only with Magia and an enemy in its line
+				pad.press(&"heavy_attack")
+				_held = &"heavy_attack"
+				_hold = 0.06
+			else:
+				pad.press(&"light_attack")
 		"O":
 			if shot_coming(game, p):
 				# (C19, combat_cadence.md 8.3: never planted in the attack's Omega with a shot being readied near)
@@ -316,8 +338,6 @@ func step(dt: float, game: Game) -> void:
 				pad.press(&"light_attack")
 				_held = &"light_attack"
 				_hold = 0.9
-		"Q":
-			pad.press(&"cast")
 		"d":
 			pad.move = to.normalized() if to.length() > 0.1 else Vector2.RIGHT
 			pad.press(&"dodge")

@@ -1400,7 +1400,7 @@ func _start_one(def: HazardDef) -> void:
 	var progress := EncounterGen.progress(stage, room.depth)
 	match def.kind:
 		HazardDef.Kind.LINE:
-			bands = BandFloor.new(game, def)
+			bands = BandFloor.new(game, def, progress >= def.from_progress)
 		HazardDef.Kind.PLATES:
 			var pf := PlateFloor.new(game, def, progress >= def.from_progress)
 			if plates == null:

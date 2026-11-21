@@ -91,19 +91,26 @@ const GLINT_SIZE := 13.0
 const GLINT_BURST := 0.16
 const CRESCENT_POOL := 6
 ## A finisher's crescent flies out to this many times the reach of the blow while it fades.
-const CRESCENT_GROW := 1.3
+const CRESCENT_GROW := 1.5
 ## Seconds it lasts (the light edge goes in the first half, the ink lingers).
 const CRESCENT_TIME := 0.3
 ## Where its band starts, as a share of the reach (lower is a broader sweep): a thin blade of a wave, under a
 ## meter across when it has flown out.
-const CRESCENT_INNER := 0.87
+const CRESCENT_INNER := 0.6
 ## The longest reach it is drawn with: the wave of a long thrust stays a crescent at the paladin, not across the room.
 const CRESCENT_MAX_REACH := 5.5
 ## Share of the ink opacity (Feel.ink_opacity) its dark body keeps: lighter than a blow, so the white edge leads.
 const CRESCENT_INK := 0.28
 ## V-02: the degrees the spin's ribbon sweeps, and a finisher's at least and at most.
 const CRESCENT_SPIN := 300.0
-const CRESCENT_ARC := Vector2(120.0, 180.0)
+const CRESCENT_ARC := Vector2(140.0, 200.0)
+## SR-G4: the half-moon is white and gold: its colour goes this far toward gold, its head and tail are this many times the
+## band wide, its edge goes this far toward white and the body is this light (crescent.gdshader's body_light).
+const CRESCENT_GOLD := 0.6
+const CRESCENT_HEAD := 0.75
+const CRESCENT_TAIL := 0.2
+const CRESCENT_PALE := 0.8
+const CRESCENT_BODY := 0.5
 const KICK_METERS := 0.35
 const GOLD := Color(1.0, 0.82, 0.38)
 const SLASH_POOL := 18
@@ -123,8 +130,11 @@ const BLADE_REACH := 2.6
 const SLASH_LEAD := 1.0 / 60.0
 ## The ribbon's tail behind the head of the swing: at most this share of the arc, and at most this many degrees
 ## (a spin all around keeps a blade of light, not a full disc).
-const SLASH_TAIL := 0.6
-const SLASH_TAIL_DEGREES := 120.0
+const SLASH_TAIL := 0.8
+const SLASH_TAIL_DEGREES := 170.0
+## SR-G4: how far the plain cut's colour goes toward gold, and its core's depth and light (slash.gdshader core_depth, core_light).
+const SLASH_GOLD := 0.45
+const SLASH_CORE := Vector2(0.7, 0.4)
 const RING_POOL := 16
 const BEAM_POOL := 24
 const NUMBER_POOL := 32
@@ -655,9 +665,14 @@ func slash(origin: Vector2, dir: Vector2, reach: float, width_deg: float, color:
 		mat.set_shader_parameter(&"blade_m", blade)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"band_from", SLASH_INNER)
 	(ink.mat as ShaderMaterial).set_shader_parameter(&"band_from", INK_INNER)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"color", color)
-	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.3)))
 	var family := family_of(color)
+	# SR-G4: the plain cut (the Emeth's, no family) is white and gold, its core deeper and brighter
+	var lit := color.lerp(GOLD, SLASH_GOLD) if family < 0 else color
+	(s.mat as ShaderMaterial).set_shader_parameter(&"color", lit)
+	(s.mat as ShaderMaterial).set_shader_parameter(&"style_peak", ScreenTone.linear_peak(lit.lerp(Color.WHITE, 0.3)))
+	if family < 0:
+		(s.mat as ShaderMaterial).set_shader_parameter(&"core_depth", SLASH_CORE.x)
+		(s.mat as ShaderMaterial).set_shader_parameter(&"core_light", SLASH_CORE.y)
 	(s.mat as ShaderMaterial).set_shader_parameter(&"family", family)
 	if family == Boon.Family.CHAMA:
 		# the tail's tongues rise off it (vfx_pass_spec.md 5.3): 3 to 5 tongue slivers along the back of the arc
@@ -855,12 +870,17 @@ func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, col
 	(e.node as Node3D).scale = Vector3.ONE
 	e.time = CRESCENT_TIME
 	var mat: ShaderMaterial = e.mat
-	mat.set_shader_parameter(&"color", color)
+	var gold := color.lerp(GOLD, CRESCENT_GOLD) if family_of(color) < 0 else color
+	mat.set_shader_parameter(&"color", gold)
 	mat.set_shader_parameter(&"t", 0.0)
 	mat.set_shader_parameter(&"ink_opacity", Feel.live().ink_opacity * CRESCENT_INK)
 	mat.set_shader_parameter(&"band_m", r * (1.0 - CRESCENT_INNER))
+	mat.set_shader_parameter(&"head_m", r * (1.0 - CRESCENT_INNER) * CRESCENT_HEAD)
+	mat.set_shader_parameter(&"tail_m", r * (1.0 - CRESCENT_INNER) * CRESCENT_TAIL)
+	mat.set_shader_parameter(&"edge_pale", CRESCENT_PALE)
+	mat.set_shader_parameter(&"body_light", CRESCENT_BODY)
 	mat.set_shader_parameter(&"sweep", clampf(Feel.live().slash_sweep_time / CRESCENT_TIME, 0.05, 0.5))
-	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(color.lerp(Color.WHITE, 0.45)))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(gold.lerp(Color.WHITE, 0.45)))
 
 
 ## Morvath's Sepulchral Scythe: the blade crosses the half circle from origin along dir (reach m, degrees wide) in

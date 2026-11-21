@@ -76,7 +76,7 @@ func test_with_a_boss_bar_the_clock_goes_to_the_corner() -> void:
 	var view := hud.get_viewport_rect().size
 	var clock := hud._clock.get_global_rect()
 	assert_gt(clock.get_center().x, view.x * 0.8, "the clock on the right")
-	assert_gt(clock.position.y, hud._purse.get_global_rect().end.y - 4.0, "under the gold")
+	assert_lt(clock.position.y, 20.0, "in the top corner (the gold lives at the bottom right now)")
 	assert_lt(hud._boss_box.get_global_rect().position.y, top_middle.y, "the boss's name alone at the top")
 	assert_false(hud._boss_box.get_global_rect().intersects(clock), "nothing stacked")
 	hud._place_clock(false)

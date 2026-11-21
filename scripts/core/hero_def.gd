@@ -38,6 +38,9 @@ static var _warrior: HeroDef
 @export var charge_move_heavy := 0.6
 
 @export_group("Circle of light")
+## The circle is part of this hero's kit (the Warrior's is not since 2026-11-21: the Paladin's later). Without it the
+## circle's button reads nothing and Psalms that need it are never offered.
+@export var circle := true
 ## Seconds to draw it (walking slowed to cast_slow), the cooldown, the seconds no blow may start after it is let go;
 ## held cast_omega_time with cast_omega_cost of Magia it bursts. Radius, seconds on the floor, the burst's damage.
 @export var cast_charge := 0.25

@@ -26,6 +26,11 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   outras pranchas do pacote (cartas, eventos e as demais) não vão no jogo: guiaram a composição das telas, feitas com
   componentes da Godot e com os textos e números do jogo. Os glifos pequenos do HUD com o mesmo motivo são desenhados em
   código (`BoonIcon.glyph`, `DoorGlyph`).
+- **Retratos dos 7 anjos (fonte, 2026-11-21; entram no jogo pelo item AN-1 do backlog)**: `docs/art/angels_src/angel_1..7.png`
+  (1024 x 1536), gerados por IA pelo Daniel no ChatGPT a partir da tabela dos anjos (`docs/design/rejogabilidade/sistemas.md`
+  4 e 4.1). **No jogo desde 2026-11-21 (AN-1)**: `assets/ui/angels/angel_1..4.jpg` (512 x 768, reduzidos com o ffmpeg dos
+  anjos 1 Sarael, 2 Nivael, 3 Lumael e 4 Shomael; recorte do busto no código, `AngelArt`), na tela do Encontro à esquerda das
+  cartas. Os anjos 5 a 7 ainda não têm Bênçãos e ficam só na fonte (fora do pacote).
 - **Retrato do Guerreiro no Livro de Ahk (vai no jogo, 2026-11-18, etapa 2)**: `assets/ui/hero/warrior_page.png`
   (330 x 400), o Guerreiro pintado em aguada sobre pergaminho, recortado com o ffmpeg da página esquerda da prancha
   "Livro de Akh" (`docs/art/ref/direcao_2026-11-17/pranchas/04-livro-akh.png`, só local), feita por IA pelo diretor de

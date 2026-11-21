@@ -253,10 +253,10 @@ func register(d: EnemyDef) -> void:
 	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
 	edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
 	edge.set_shader_parameter(&"intensity", OUTLINE_INTENSITY)
-	edge.set_shader_parameter(&"style_width", STYLE_OUTLINE_WIDTH)
+	edge.set_shader_parameter(&"style_width", STYLE_OUTLINE_WIDTH * HeroBody.ink_scale())
 	edge.set_shader_parameter(&"style_color", STYLE_OUTLINE_COLOR)
 	edge.set_shader_parameter(&"style_elite", gilded)
-	edge.set_shader_parameter(&"style_elite_width", STYLE_ELITE_WIDTH)
+	edge.set_shader_parameter(&"style_elite_width", STYLE_ELITE_WIDTH * HeroBody.ink_scale())
 	edge.set_shader_parameter(&"style_elite_color", STYLE_ELITE_OUTLINE)
 	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
 		mat.set_shader_parameter(&"style_gamma", COMPAT_GAMMA)

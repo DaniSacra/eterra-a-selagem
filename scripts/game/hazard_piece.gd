@@ -47,6 +47,16 @@ const SLIT_PROUD := 0.06
 const MOUTH := Vector3(0.18, 0.45, 0.42)
 const FRAME := 0.035
 const IRON := Color(0.16, 0.16, 0.17)
+## The wall trap's block (SR-G, lote 4): a cap slab (CAP: overhang, height) on top carved with three arrows pointing the way
+## the blades fly, two dark eye sockets (EYE: size, spacing, height) over the mouth; the blade (BLADE: across, long, thick;
+## BLADE_Y m up) flying the whole band over the strike, its trail (up to TRAIL m) lit with the warning red.
+const CAP := Vector2(0.1, 0.14)
+const EYE := Vector3(0.11, 0.22, 1.12)
+const BLADE := Vector3(0.62, 0.05, 0.2)
+const BLADE_Y := 0.42
+const TRAIL := 1.6
+const BLADE_STEEL := Color(0.78, 0.8, 0.84)
+const BLADE_GLOW := Color(1.0, 0.45, 0.3)
 ## The bridge's chain (3.3, the post's shape a proposal): the iron post off the deck on the side away from the camera
 ## POST_OUT m beyond the band, POST_HEIGHT m, its arm ARM m toward the deck; the pendulum PENDULUM m to the weight's
 ## middle. Rest: hanging off the deck, REST_SWAY degrees; windup: drawn back out BACK degrees in BACK_TIME s, held with
@@ -93,6 +103,11 @@ var _pivot: Node3D
 var _swing_axis := Vector3.RIGHT
 var _swing := 0.0
 var _struck_at := -100.0
+## The wall trap's blade (SR-G): its mesh, trail, flight length and where it leaves (the block's face).
+var _blade: MeshInstance3D
+var _trail: MeshInstance3D
+var _flight := 0.0
+var _blade_from := 0.0
 
 
 ## A slab of the floor (3.1) over rect r. kind PLATE: four chevrons pointing in; PUSH (the edge that crumbles, RP-13)
@@ -131,7 +146,7 @@ static func plate(parent: Node3D, r: Rect2, windup: float, k := Kind.PLATE, way 
 
 ## The arrow slit (3.2) over obstacle o (piece bolt_slit), its face toward `out` (the floor's side): the block in
 ## `stone`, the dark mouth lighting from the bottom up, the iron frame, three chevrons over the mouth.
-static func slit(parent: Node3D, o: ArenaObstacle, stone: Material, out: Vector2) -> HazardPiece:
+static func slit(parent: Node3D, o: ArenaObstacle, stone: Material, out: Vector2, flight := 0.0) -> HazardPiece:
 	var hp := HazardPiece.new()
 	hp.name = "HazardSlit"
 	hp.kind = Kind.SLIT
@@ -172,8 +187,68 @@ static func slit(parent: Node3D, o: ArenaObstacle, stone: Material, out: Vector2
 	var mark_h := SLIT_HEIGHT - top - 0.04
 	hp._marks.append(hp._face_mark(Vector2(w, mark_h), Vector3(0, top + mark_h * 0.5, face + 0.002), Vector3(0, 0, 1),
 		{&"chev_count": 3, &"chev_dir": Vector2(0, 1), &"chev_open": minf(0.4, w * 0.8), &"chev_gap": 0.13}))
+	if flight > 0.0:
+		hp._trap_dress(w, d, face, stone, flight)
 	hp._show()
 	return hp
+
+
+## The wall trap's extras on its slit (SR-G): see CAP, EYE, BLADE. `flight` m is how far the blade flies from the face.
+func _trap_dress(w: float, d: float, face: float, stone: Material, flight: float) -> void:
+	_flight = flight
+	var cap := MeshInstance3D.new()
+	var box := BoxMesh.new()
+	box.size = Vector3(w + CAP.x * 2.0, CAP.y, d + CAP.x * 2.0)
+	cap.mesh = box
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.1, 0.095, 0.1)
+	dark.roughness = 1.0
+	cap.material_override = stone
+	cap.position = Vector3(0, SLIT_HEIGHT + CAP.y * 0.5, 0)
+	cap.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(cap)
+	# the arrows cut in the cap's top, pointing the blades' way (+z of the piece)
+	var m := _flat_mark(Vector2(w, d), {&"joint": 0.0, &"chev_count": 3, &"chev_dir": Vector2(0, 1),
+		&"chev_open": minf(0.4, w * 0.7), &"chev_gap": 0.2})
+	(get_child(get_child_count() - 1) as Node3D).position = Vector3(0, SLIT_HEIGHT + CAP.y + 0.004, 0)
+	_marks.append(m)
+	# two eye sockets over the mouth (a skull: the mouth, the eyes)
+	for sx in [-1.0, 1.0]:
+		var eye := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		b.size = Vector3(EYE.x, EYE.y, 0.02)
+		eye.mesh = b
+		eye.material_override = dark
+		eye.position = Vector3(sx * EYE.x * 1.0, MOUTH.z + MOUTH.y + EYE.y * 0.9, face + 0.002)
+		add_child(eye)
+	var steel := StandardMaterial3D.new()
+	steel.albedo_color = BLADE_STEEL
+	steel.metallic = 0.9
+	steel.roughness = 0.25
+	steel.emission_enabled = true
+	steel.emission = BLADE_GLOW
+	steel.emission_energy_multiplier = 0.5
+	_blade = MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = BLADE
+	_blade.mesh = bm
+	_blade.material_override = steel
+	_blade.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_blade.visible = false
+	add_child(_blade)
+	var tr := StandardMaterial3D.new()
+	tr.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	tr.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	tr.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	tr.albedo_color = Color(BLADE_GLOW, 0.35)
+	_trail = MeshInstance3D.new()
+	var tm := BoxMesh.new()
+	tm.size = Vector3(BLADE.x * 0.9, 0.02, 1.0)
+	_trail.mesh = tm
+	_trail.material_override = tr
+	_trail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_blade.add_child(_trail)
+	_blade_from = face
 
 
 ## The bridge's chain (3.3) for band r pushing `push`: the post off the floor on the side away from the camera, the
@@ -1034,6 +1109,15 @@ func _on_state(s: Vector3, spent: float) -> void:
 
 ## The movement between states (_process).
 func _animate(_dt: float) -> void:
+	if _blade != null:
+		_blade.visible = _strike > 0.0
+		if _strike > 0.0:
+			var run := _flight * (1.0 - _strike)
+			var z := _blade_from + BLADE.z * 0.5 + run
+			_blade.position = Vector3(0, BLADE_Y, z)
+			var tail := minf(run, TRAIL)
+			(_trail.mesh as BoxMesh).size.z = maxf(tail, 0.01)
+			_trail.position = Vector3(0, 0, -(BLADE.z + tail) * 0.5)
 	match kind:
 		Kind.PLANT:
 			var shut := 0.0

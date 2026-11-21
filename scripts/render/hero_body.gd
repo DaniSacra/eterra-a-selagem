@@ -24,6 +24,18 @@ const PAINT_OUTLINE := preload("res://assets/shaders/hero_outline.gdshader")
 ## The outline: meters of the world, colour (T20: 0.045 m, cold dark ink).
 const OUTLINE_WIDTH := 0.045
 const OUTLINE_COLOR := Color(0.05, 0.07, 0.08)
+## SR-G5 (experiment, off): with `--ink` (or `--ink=N`, a multiplier; `--outline` is the x-ray edge of Player) the hero's and the enemies' stylized outline
+## is INK_THICK times wider, the comic ink line of the references; without it every width is as it was.
+const INK_THICK := 2.5
+
+
+static func ink_scale() -> float:
+	if not Dev.has("ink"):
+		return 1.0
+	var n := float(Dev.arg("ink"))  # a bare --ink is "" (0): the default thickness
+	return n if n > 0.0 else INK_THICK
+
+
 ## LC-4: in the Compatibility renderer (browser, phone) his stylized light is raised to this (hero_paint.gdshader `gamma`):
 ## there it reaches the screen without the desktop's linear-to-sRGB step and he went black inside the outline (the
 ## same number as CrowdRenderer.COMPAT_GAMMA; the outline keeps its ink).
@@ -90,7 +102,7 @@ static func painted(own: StandardMaterial3D) -> ShaderMaterial:
 	mat.set_shader_parameter(&"fill", FILL)
 	var edge := ShaderMaterial.new()
 	edge.shader = PAINT_OUTLINE
-	edge.set_shader_parameter(&"width", OUTLINE_WIDTH)
+	edge.set_shader_parameter(&"width", OUTLINE_WIDTH * ink_scale())
 	edge.set_shader_parameter(&"color", OUTLINE_COLOR)
 	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
 		mat.set_shader_parameter(&"gamma", COMPAT_GAMMA)

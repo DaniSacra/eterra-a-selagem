@@ -322,6 +322,7 @@ func _ready() -> void:
 	hero_gifts = HeroGifts.new(self)
 	_swear_juramentos()
 	psalms = Psalms.new(Psalms.load_catalog())
+	psalms.circle = hero.circle
 	psalm_play = PsalmPlay.new(self, psalms)
 	psalm_cards = bot != null or Dev.has("autopick") or screen_shows_psalms()
 	# P1-1: what the title did not finish of the shaders' warm-up (the player left it early), under a black screen

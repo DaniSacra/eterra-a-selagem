@@ -331,6 +331,23 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   seteira do outro. "Derrotado por: Seteira" (`killer_slit`, provisório), som `slit_fire` = `bolt`; `rooms[].hazard` com
   `slit_damage` e `slit_struck`. Robô: pisa na laje a até 8 m quando 2 inimigos ou mais estão na faixa e ele não
   (`Bot.slit_plan`, `in_band`, `SLIT_*`). Testes em `tests/test_slits.gd`.
+- **Aviso de área padronizado (SR-P4, lote 3, 2026-11-21)**: um só estilo de aviso de área no chão, o do inimigo comum:
+  vermelho de aviso (`GroundLook.WARNING_COLOR`), contorno limpo de `RIM_METERS`, chão fraco subindo até `FILL_MAX`
+  (0,35). Passaram a usá-lo os perigos que eram âmbar com moldura por ladrilho: corrente, respiro, seteira, raiz, nicho,
+  planta, laje armando, pedras, urna, óleo e a armadilha de parede (`GroundLook.HAZARD_COLOR/STRENGTH/RIM` agora são as do
+  inimigo; só a prioridade de desenho continua abaixo dos avisos dos inimigos). Seguem como estavam, de propósito: os
+  ladrilhos das Runas (`RunesLook`, peça própria), a assinatura violeta dos avisos de Morvath (contorno e preenchimento
+  já eram os padrões; só o fio e as runas são dele) e a mira fina do besteiro (`GroundLook.aim`, é uma mira, não uma
+  área). Já usavam o padrão: círculos de atiradores e mágicos, cone do soldado, golpes de chefe.
+- **Armadilha de parede (SR-P1, lote 3)**: bloco na parede que lança lâminas numa faixa de 1,2 m. É um `HazardDef`
+  LINE com `band_source` `trap` (a corrente sem empurrão): `bands` são as linhas, `band_dir` o sentido (`band_dir_of`),
+  `band_busy` faz a linha com mais inimigos ir primeiro (atrair o bando), `from_progress` a deixa dormindo (o bloco
+  fica, nada voa; `BandFloor(awake)`). 1,2 s de aviso na faixa (padrão P4), 10 no herói, 60 no inimigo, calma de 5 s,
+  uma linha por vez. O bloco é o obstáculo `trap_block` (corpo e tiro, 1,2 x 0,6 m) com a peça da seteira (`HazardPiece.slit`,
+  boca acendendo, três chevrons no sentido do tiro; placeholder). Fonte `Ground.TRAP_SOURCE`, "Derrotado por: Armadilha de
+  Lâminas" (`killer_trap`), sons `trap_arm`/`trap_fire`, `rooms[].hazard.fired`. Dado: `_trap`, `_trap_blocks`,
+  `GARDEN_TRAPS`, `SANCTUARY_TRAPS` no `make_data.gd`: Jardim A (2 linhas, desde 0,3, ciclo 6 s), Santuário A (3 linhas,
+  desde 0,5, ciclo 4,5 s) e C Colunata (2). Testes em `tests/test_traps.gd`. Plano e métricas em `rooms_progression.md`.
 - **Mureta (RP-17)**: só dado, caixas baixas de 0,9 m (`_capsule(..., 0.5, 0.9)`, peça `block` desenhada como mureta
   baixa; o corpo dá a volta, o tiro passa por cima): Cripta A uma de 5,5 m ao sul do túmulo grande ((-3,5..2; 3,8));
   Jardim A duas quebradas num arco a 6 m do tronco (`_low_arc`: leste de -6 a 21 graus, sul de 64 a 98), as raízes que

@@ -556,3 +556,20 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - 7: só o desenho (`STY_TREE_VALUE` 0,78 no albedo, fill da árvore 0,18); tamanho 0,8 e deslocar o tronco mudariam a colisão `_trunk_o`: ficam com o Game Director.
 - 8: Santuário piso -10% e lua -20% (`sanctuary_look.gd`); Runas `paint_quiet_value` 0,36; urnas da loja do Salão `STY_URN_TINT`.
 - 9: os riscos brancos eram o pó das fendas dormentes (`hazard_fissure.gdshader`): `dust_color` agora tinta escura (0,08; 0,07; 0,07).
+
+## Lote 4 (2026-11-21, a partir do SWORN do Daniel): armadilha de lâminas, chão rico, moldura escura
+- **Bloco da armadilha** (`HazardPiece.slit(..., flight)`, `_trap_dress`): o bloco da pedra da sala ganha tampa de pedra
+  (`CAP`) com três setas talhadas apontando o voo, duas órbitas escuras sobre a boca (a caveira: boca e olhos, `EYE`) e a
+  lâmina de aço (`BLADE`) que sai da boca e voa a faixa inteira durante o golpe (`_strike` cai de 1 a 0), com rastro
+  aditivo no vermelho do aviso (`TRAIL`, `BLADE_GLOW`); a faixa no chão continua o aviso do `Ground`. Só `arena_room.gd`
+  passa o comprimento da faixa.
+- **Peças âmbar**: o brilho das fendas (`hazard_fissure.gdshader` `ember_color`) vai de âmbar a laranja-vermelho
+  (1; 0,36; 0,14), perto de `GroundLook.WARNING_COLOR`; o dourado velho dos chevrons fica.
+- **`FloorScatter`** (SR-G1 e G3; `floor_scatter.gd`, shader `floor_patch.gdshader`): um passo `scatter` no fim do `dress`
+  de toda sala (menos o Santuário-hub), só no estilizado (`ArenaKit.style_only`). Manchas de musgo e umidade (um
+  MultiMesh), tufos (`dry_grass`), crânios e ossos (dois MultiMesh), potes pequenos em grupos (`POT_SIZE` abaixo de 0,3 m,
+  regra do `test_room_style`), uma faixa escura em cada borda do piso (`FRAME_REACH`, `FRAME_ALPHA`) e pedras caídas
+  grandes logo depois da borda sobre o vazio (`STONE_*`; 0 nas salas com parede e na Fenda, que já tem a coluna caída).
+  Cada bioma em `BIOMES` (contagens e força da moldura). Nunca onde nasce o herói, diante de portas, em piso que golpeia
+  (`on_hazard`), dentro de obstáculo nem no meio da luta (`CENTRE_FREE`); números aleatórios próprios (a partida não muda).
+  Cerca de 6 draw calls por sala. Ainda não há cachoeira (precisa de malha e shader de água).

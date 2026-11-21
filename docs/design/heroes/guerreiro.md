@@ -1,10 +1,27 @@
 # O Guerreiro nos 5 botões + Espaço
 
-> **Entrou em 2026-11-21 (aprovado pelo Daniel)**: Shift = ultimate, F = interagir, E = Brado de Guerra (3.4 A: raio 4 m, 15 de
-> dano, atordoa só comuns 0,5 s, 1 carga de Ímpeto por comum, no máximo 2, nunca por chefe, recarga 10 s, 0,25 / 0,25 s, pés
-> plantados), HUD com os losangos esquerdo, direito, Q, E, Shift e Espaço, robô com o Brado (3 ou mais comuns a 4 m). R3 no controle
-> para o Brado. **Ainda não**: slots `TECH`/`ULT` e as Bênçãos por família do E e do Shift (4), os 3 Dons do Brado (5), a linha do Brado
-> na página do herói. Detalhe em `docs/reference/meta.md` e `ui.md`; testes em `tests/test_shout.gd`.
+> **ESTADO ATUAL (kit novo, aprovado pelo Daniel em 2026-11-21, Lote 1; ver `guerreiro_revisao.md` seção 6)**. As seções 2 a 4
+> abaixo são o histórico da proposta; vale esta tabela:
+>
+> | Botão | Faz | Números | Dado / código |
+> |---|---|---|---|
+> | **Esquerdo** | combo de 3 (20, 25, giro 60); segurar é o Ômega do ataque (Lança de Luz 160, 20 de Magia) | igual | `cut1..3`, `lance` |
+> | **Direito (toque)** | rajada da espada: onda que atravessa os inimigos | 60 de dano, 6 m, **8 de Magia**, 0,5 s entre disparos; sem Magia não sai (aviso "Sem Magia"); **segurar saiu** (sem Ômega do especial) | `bolt` (`magick_cost`, `effect_power`, `effect_radius`); `Player._press_special`, sinal `magick_refused` |
+> | **Q** | **Brado de Guerra** (era do E) | 15 de dano em 4 m, empurra 1,5 m (`knockback` 10,5), **sem atordoar**; buff de 5 s: +20% de velocidade de golpe, +1 carga de Fúria (só com o Dom Ímpeto), -15% de dano recebido; recarga 12 s | `shout` (`Effect.SHOUT`, `buff_speed`, `buff_guard`, `effect_time`); `GiftState.rally`, `Player.hurt` |
+> | **E** | **Investida** (era o Corte Veloz da esquiva) | estocada de 35 em linha de 4 m que leva o corpo (`lunge` 4), recarga 5 s, **+3 de Magia por inimigo atingido** (`magick_per_hit`), finalizador da passiva como antes (tag `dash`) | `dash_cut` com `ComboNode.In.RUSH`, ação `rush` |
+> | **Shift** | ultimate | 90 / 105 de Magia, igual | |
+> | **Espaço** | só esquiva (5,6 m, 1,1 s); **atacar na esquiva não vira mais Corte Veloz** | `tree.dodge` vazio, `dodge_window` 0 | |
+>
+> **Círculo de Luz** saiu do Guerreiro (`HeroDef.circle = false`; código e dado ficam para o Paladino; sem tecla; `Psalms.circle` desliga o
+> Salmo da Sentinela). **Bênçãos do slot `CAST`** valem para o Brado (tag `cast` no `shout`): Brado em Brasa (queima), de Geada (congela),
+> Radiante (+dano; o dano por segundo do círculo saiu), Firme (+alcance; ainda aumenta a Voragem). **Dons**: Passo Encadeado, Estocada
+> Certeira (a antiga Investida, devolve a esquiva), Fio do Passo, Retorno do Corte e Eco do Passo agora seguem a Investida (tag `dash`);
+> Onda Carregada (ponte) solta a onda do giro **na rajada** (tag `heavy`, antes do Ômega do especial). Controles: **Q** Brado (RB), **E**
+> Investida (R3), Shift ultimate, F interagir. Robô: rajada com Magia, Brado com 3+ perto, Investida para entrar (3,5 a 8 m) e para Magia.
+> Testes: `tests/test_shout.gd`, `tests/test_warrior_kit.gd`.
+>
+> **Antes (2026-11-21, tarde)**: Shift = ultimate, F = interagir, E = Brado (atordoava comuns 0,5 s, recarga 14 s depois do ajuste de recargas).
+> Ainda não: slots `TECH`/`ULT`, as Bênçãos por família do E e do Shift, os Dons do Brado.
 
 - **Data**: 2026-11-21. **Autor**: `hero-designer`. **Base**: `docs/design/warrior_spec.md` (aprovada), `docs/reference/meta.md` e `gameplay.md`.
 - **Não muda** (aprovado pelo Daniel): guerreiro ofensivo de espada (a Emeth), sem bloqueio nem aparo, golpe parado, Fúria em cargas sem barra,

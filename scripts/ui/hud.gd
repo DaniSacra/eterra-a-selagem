@@ -1,7 +1,11 @@
 class_name Hud
 extends Control
-## What stays on screen during the run. Bottom left: the paladin's medallion with life and Magia. Bottom centre: the
-## four actions as diamonds (the gift on each, the key, the recharge, the dodges) and the gifts that act alone.
+## What stays on screen during the run (Lote 2 of the SWORN reference, 2026-11-21: layout approved by the Daniel).
+## Bottom left: the paladin's medallion and, beside it, the bars stacked: Magia above, life under it (numbers on both),
+## the ultimate's charge thin at the foot. Bottom centre: the actions as diamonds (the gift on each, the key, the
+## recharge, the dodges, the rajada's Magia cost and "Sem Magia"), the Brado's buff running over its diamond. Right edge:
+## the build column (BuildColumn, one Blessing per button). Bottom right: the coins and what was just picked up
+## (CoinCorner), the gifts that act alone above them. When life runs low the borders darken (LifeVignette).
 ## Top: the room (or the level), the clock, the gold (or the kills); the boss's life under the clock. Right: the
 ## hit count and the move's name. Everything sits on the edges so the middle of the screen stays for the fight: the
 ## actions turn translucent while someone stands behind them, and small chevrons on the edge point at the elites,
@@ -30,6 +34,8 @@ const MARGIN := 22.0
 const CREST := 76.0
 const LIFE := Vector2(244, 19)
 const MAGICK := Vector2(196, 15)
+## Magia's bar as wide as life's (the stack reads as one block, Magia on top).
+const MAGICK_WIDE := Vector2(244, 15)
 ## Lining figures (UiKit.number_font): at these sizes the numbers stand 9 px tall or more at 720 lines.
 const LIFE_FONT := 16
 const MAGICK_FONT := 15
@@ -39,48 +45,51 @@ const PASSIVE_GAP := 4
 ## The row of gifts that act alone ends at this share of the screen's width; past it the last place says "+N" (BUG-105).
 ## Those with a recharge go first: their timer is what is worth a glance in a fight.
 const PASSIVE_EDGE := 0.96
-const SLOT_GAP := 8
-## P1-4 of the Hades II UI benchmark, the default since the art-director's review (ART_REVIEW.md 3.1, A to C;
-## --hud=classic keeps the bottom-centre row to compare): the five diamonds smaller (ROW_DIAMOND, about 54 px at 1080)
-## in a row over the bars, from the medallion's shoulder, ROW_ABOVE px over the life bar's frame, on a band of ink
-## (HudVeil) so the crowd does not run between them, their bodies veiled only by the hero standing behind (never by the
-## crowd); nothing stands between 30% and 70% of the width at the bottom. The hit count stands on the row's line, right
-## of the last diamond, the move's name under it; the curse's badge and the Provação's seal (conditions, not always
-## there) climb over the row and the room of its captions (ROW_CAPTION); the gifts that act alone go to the bottom
-## right corner. The block (captions, row, bars, medallion) stays under 200 px tall at 1080.
+## The row (P1-4 of the Hades II UI benchmark, 2026-11-21 centred as in Ravenswatch): the six diamonds (ROW_DIAMOND,
+## about 54 px at 1080) centred at the foot of the screen on a band of ink (HudVeil) so the crowd does not run between
+## them, their bodies veiled only by the hero standing behind (never by the crowd). The hit count stands on the row's
+## line, right of the last diamond, the move's name under it; the curse's badge and the Provação's seal (conditions, not
+## always there) stand over the medallion and the bars.
 const ROW_DIAMOND := 36.0
 const ROW_GAP := 6
-const ROW_ABOVE := 4.0
 ## The keys hang under the diamonds' point (ActionSlot.key_drop): the little mouse is 22 px tall.
 const ROW_KEY_DROP := 7.0
 const ROW_CAPTION := 20.0
-## The hit count right of the last diamond, and the bottom of the edge chevrons' frame over the whole block.
+## The bars beside the medallion (Magia over life, the ultimate's charge thin under them): the gap from the medallion,
+## the thin bar's size and the gap between two frames (they share one line of ink).
+const BARS_GAP := 12.0
+const CHARGE := Vector2(196, 6)
+const BAR_GAP := 2.0 * UiKit.FRAME + 1.0
+## The build column on the right edge: where its middle stands (share of the height) and the room it keeps (the edge
+## chevrons stay out of it). The coins' corner and the gifts over it.
+const COLUMN_MID := 0.46
+const EDGE_RIGHT := BuildColumn.WIDTH + 22.0
+const PASSIVE_LIFT := 40.0
+## The Brado's buff over its diamond: how far above the row's top (the ultimate's caption stands over its own).
+const BUFF_RISE := 6.0
+## The vignette stands from this share of life down (the medallion's ring warns from the same).
+const DANGER_FROM := 0.3## The hit count right of the last diamond, and the bottom of the edge chevrons' frame over the whole block.
 const ROW_COUNT_GAP := 12.0
-const ROW_EDGE_BOTTOM := 168.0
+const ROW_EDGE_BOTTOM := 128.0
 const FONT_SMALL := 15
 const FONT_TEXT := 19
 const FONT_CLOCK := 22
-## The clock's box, where it stands (top middle) and, while a boss's bar is up, under the gold on the right; the
+## The clock's box, where it stands (top middle) and, while a boss's bar is up, in the top right corner; the
 ## boss's bar under the clock, or at the top alone while the clock is in the corner.
 const CLOCK_BOX := Vector2(120, 30)
 const CLOCK_Y := 7.0
-const CLOCK_BOSS_Y := 40.0
+const CLOCK_BOSS_Y := 7.0
 const BOSS_TOP := 42.0
 const BOSS_TOP_ALONE := 12.0
 ## The hit count (VX-12): its digits stay under 48 px tall at 1080 lines even at the top of the pop, and the move's
 ## name under it is dimmed, so neither competes with the fight.
 const FONT_COMBO := 24
 const COMBO_POP := 0.15
-## The word "Golpes" and the move's name beside the count, the row's height and where it stands: over the life bar,
-## COMBO_INSET px into it from the medallion's edge, COMBO_RISE px above the bar's top (benchmark P0-3).
+## The word "Golpes" and the move's name beside the count and the count's height.
 const COMBO_WORD := 14
 const COMBO_H := 28.0
 ## Room between the count's line and the move's name under it (row layout).
 const MOVE_GAP := 4.0
-## (14 and 9 since the horde capture of 2026-11-20: at 4 and 6 the move's name touched the medallion's ring and sat on
-## the bar's frame.)
-const COMBO_INSET := 14.0
-const COMBO_RISE := 9.0
 const MOVE_ALPHA := 0.9
 ## The move's name: how long it shows, and how fast it goes (a short cut, no long ghost).
 const MOVE_TIME := 1.2
@@ -124,11 +133,12 @@ const POINTERS := 3
 const POINTER_SIZE := 18.0
 const VIEW_INSET := 16.0
 ## (The bottom clears the caption over the ultimate's diamond, "Maestria 2", BUG-111.)
-const EDGE_INSET := Vector4(30.0, 96.0, 30.0, 128.0)
-## The actions in the order of the diamonds (left button, right button, Q, E, then the ultimate's diamond on Shift, then
-## the dodge on Space: docs/design/heroes/guerreiro.md 3), with the gift slot that changes each. The Brado (E) has no
-## Blessing slot yet (Boon.Slot.NONE); its diamond is hidden when the hero's tree has no such move.
-const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"cast", &"shout", &"dodge"]
+const EDGE_INSET := Vector4(30.0, 96.0, EDGE_RIGHT, 128.0)
+## The actions in the order of the diamonds (left button, right button, Q the Brado, E the Investida, then the ultimate's
+## diamond on Shift, then the dodge on Space: docs/design/heroes/guerreiro.md 3), with the gift slot that changes each.
+## The Brado takes the circle's Blessing slot (CAST); the Investida has none (Boon.Slot.NONE). A diamond of a move the
+## hero's tree lacks is hidden.
+const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"shout", &"rush", &"dodge"]
 const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.NONE, Boon.Slot.DASH]
 ## Where the ultimate's diamond stands among them: before the dodge.
 const ULT_AT := 4
@@ -143,6 +153,9 @@ var game: Game
 var _crest: HeroCrest
 var _life: HudBar
 var _magick: HudBar
+## The ultimate's charge, thin under the life bar.
+var _charge: HudBar
+var _charge_shown := false
 var _room: Label
 ## DV-1, MAP-03: "Mapa [M]" beside the room's number (the real key or button), clicked or the map key opens the
 ## descent's map (MapScreen) over the stopped run. Never takes the focus (Space and Enter stay the dodge).
@@ -154,9 +167,12 @@ var _clock_at_boss := false
 var _found_seen := {}
 ## The Ofícios greeted so far (_greet_oficios): "head", "noted", "stones".
 var _oficios_seen := {}
-var _purse: HBoxContainer
-var _coin: HudMark
-var _gold: Label
+## H3: the coins' corner, H1: the build column, H6: the low-life vignette, and the Brado's buff over its diamond.
+var _coins: CoinCorner
+var _column: BuildColumn
+var _vignette: LifeVignette
+var _buff: BuffMark
+var _build_key := ""
 var _xp_back: ColorRect
 var _xp_fill: ColorRect
 var _boss_box: VBoxContainer
@@ -179,7 +195,6 @@ var _ritual_hint := false
 var _combo: Label
 var _combo_word: Label
 var _combo_row: HBoxContainer
-var _combo_top := 0.0
 var _move: Label
 var _notice: Label
 var _slots: Array[ActionSlot] = []
@@ -211,11 +226,10 @@ var _action_row: HBoxContainer
 var _veil_t := 0.0
 var _veiled := false
 var _passives_veiled := false
+var _column_veiled := false
+var _column_alpha := 0.0
 ## The diamonds' body opacity (they fade only their bodies, ActionSlot.veil).
 var _slot_alpha := 1.0
-## The row layout (P1-4, the default; --hud=classic the bottom-centre one) and how much higher what stood over the bars stands in it.
-var _row_mode := false
-var _row_lift := 0.0
 ## The band of ink behind the row (B of the review).
 var _row_band: HudVeil
 ## Magia each action's held version costs (by slot).
@@ -244,12 +258,14 @@ func _ready() -> void:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_row_mode = Dev.arg("hud") != "classic"
-	_row_lift = ROW_ABOVE + ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP + ROW_CAPTION if _row_mode else 0.0
+	# under everything: the low-life vignette
+	_vignette = LifeVignette.new()
+	add_child(_vignette)
 	_build_top()
 	_build_life()
 	_build_actions()
 	_build_combo()
+	_build_column()
 	_notice = _label("", UiKit.PALE, FONT_TEXT + 3, UiKit.TITLE_FONT, Control.PRESET_CENTER_TOP, Vector2(0, 110))
 	_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
@@ -318,17 +334,11 @@ func _build_top() -> void:
 	_clock.name = "clock"
 	_clock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_clock_veil = _veil([_clock])
-	_purse = HBoxContainer.new()
-	_purse.add_theme_constant_override(&"separation", 6)
-	_purse.alignment = BoxContainer.ALIGNMENT_END
-	_purse.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_purse)
-	_place(_purse, Control.PRESET_TOP_RIGHT, Vector2(-MARGIN, 10), Vector2(260, 30))
-	_coin = HudMark.new().setup(HudMark.Kind.COIN, Vector2(17, 17))
-	_coin.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	_purse.add_child(_coin)
-	_gold = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.number_font()))
-	_purse.add_child(_gold)
+	_coins = CoinCorner.new().setup()
+	add_child(_coins)
+	_place(_coins, Control.PRESET_BOTTOM_RIGHT, Vector2(-MARGIN, -MARGIN), Vector2(220, 60))
+	_coins.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_coins.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_boss_box = VBoxContainer.new()
 	_boss_box.add_theme_constant_override(&"separation", 2)
 	_boss_box.visible = false
@@ -414,97 +424,101 @@ func _update_entrance(delta: float) -> void:
 	_entrance_veil.modulate.a *= _entrance.modulate.a
 
 
-## Bottom left: the medallion, with life and Magia coming out from behind it.
+## Bottom left: the medallion and, beside it, Magia over life over the ultimate's thin charge, centred on its height.
 func _build_life() -> void:
-	var mid := MARGIN + CREST * 0.5
+	var x := MARGIN + CREST + BARS_GAP
+	var stack := CHARGE.y + LIFE.y + MAGICK.y + 2.0 * BAR_GAP
+	var low := MARGIN + (CREST - stack) * 0.5
+	_charge = HudBar.new().setup(UiKit.OLD_GOLD.lightened(0.15), CHARGE, 1, false, UiKit.OLD_GOLD.darkened(0.45))
+	_charge.name = "charge"
+	add_child(_charge)
+	_place(_charge, Control.PRESET_BOTTOM_LEFT, Vector2(x, -low), CHARGE)
 	_life = HudBar.new().setup(LIFE_COLOR, LIFE, LIFE_FONT, false, LIFE_BOTTOM)
 	add_child(_life)
-	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 10, -mid - 1), LIFE)
-	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK, MAGICK_FONT, false, MAGICK_BOTTOM)
+	_place(_life, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + BAR_GAP)), LIFE)
+	_magick = HudBar.new().setup(MAGICK_COLOR, MAGICK_WIDE, MAGICK_FONT, false, MAGICK_BOTTOM)
 	add_child(_magick)
-	# the two frames (UiKit.FRAME each) share one line of ink between them
-	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 10, -mid + 2.0 * UiKit.FRAME + MAGICK.y), MAGICK)
+	_place(_magick, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + CHARGE.y + LIFE.y + 2.0 * BAR_GAP)), MAGICK_WIDE)
 	_crest = HeroCrest.new().setup(CREST)
 	add_child(_crest)
 	_place(_crest, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN), Vector2(CREST, CREST))
-	# a condition (the boss's curse): over the left end of the life bar, against the medallion's shoulder
+	# a condition (the boss's curse): over the bars, from their left end
 	_curse_badge = ConditionBadge.new().setup(CURSE_COLOR, T.t(&"hud_cursed"), T.t(&"hud_cursed_effects"))
 	add_child(_curse_badge)
-	_place(_curse_badge, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 4, -mid - LIFE.y - 2.0 * UiKit.FRAME - 6 - _row_lift), _curse_badge.size)
-	# the Provação's seal: above the medallion, clear of Morvath's curse badge (which sits on the life bar's end)
+	_place(_curse_badge, Control.PRESET_BOTTOM_LEFT, Vector2(x, -(low + stack + 2.0 * UiKit.FRAME + 6.0)), _curse_badge.size)
+	# the Provação's seal: above the medallion, clear of Morvath's curse badge (which sits over the bars)
 	_trial_seal = TrialSeal.new().setup(TRIAL_SEAL, true)
 	add_child(_trial_seal)
-	_place(_trial_seal, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + (CREST - TRIAL_SEAL) * 0.5, -MARGIN - CREST - TRIAL_SEAL_GAP - _row_lift), Vector2(TRIAL_SEAL, TRIAL_SEAL))
+	_place(_trial_seal, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + (CREST - TRIAL_SEAL) * 0.5, -MARGIN - CREST - TRIAL_SEAL_GAP), Vector2(TRIAL_SEAL, TRIAL_SEAL))
 
 
-## Bottom centre: the four action diamonds; the gifts that act alone sit in a row to their right.
+## The build column on the right edge (BuildColumn), its middle at COLUMN_MID of the height.
+func _build_column() -> void:
+	_column = BuildColumn.new().setup()
+	add_child(_column)
+	_column.set_anchors_preset(Control.PRESET_CENTER_RIGHT)
+	_column.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_column.grow_vertical = Control.GROW_DIRECTION_BOTH
+	# a fixed middle (the foot rows grow it both ways: the top moves a little, the Blessings never)
+	_column.anchor_top = COLUMN_MID
+	_column.anchor_bottom = COLUMN_MID
+	_column.offset_right = 0.0
+	_column.offset_left = -BuildColumn.WIDTH
+	_column.offset_top = -BuildColumn.height_for(0) * 0.5
+	_column.offset_bottom = BuildColumn.height_for(0) * 0.5
+
+
+## Bottom centre: the action diamonds, centred; the gifts that act alone sit in the bottom right corner over the coins.
 func _build_actions() -> void:
 	var row := HBoxContainer.new()
 	_action_row = row
-	row.add_theme_constant_override(&"separation", ROW_GAP if _row_mode else SLOT_GAP)
+	row.add_theme_constant_override(&"separation", ROW_GAP)
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(row)
-	var side := ROW_DIAMOND if _row_mode else ActionSlot.DIAMOND
-	var drop := ROW_KEY_DROP if _row_mode else 0.0
 	for i in ACTIONS.size():
 		if i == ULT_AT:
-			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, side, drop)
+			_ult_slot = ActionSlot.new().setup(&"ultimate", Boon.Slot.NONE, ROW_DIAMOND, ROW_KEY_DROP)
 			row.add_child(_ult_slot)
-		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], side, drop)
+		var s := ActionSlot.new().setup(ACTIONS[i], SLOTS[i], ROW_DIAMOND, ROW_KEY_DROP)
 		if ACTIONS[i] == &"shout":
 			s.glyph = BoonIcon.SHOUT_GLYPH
+		elif ACTIONS[i] == &"rush":
+			s.glyph = BoonIcon.RUSH_GLYPH
 		row.add_child(s)
 		_slots.append(s)
-	if _row_mode:
-		_build_row(row)
-		return
-	# (the row is laid out for five; without an ultimate the four stay in the middle)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	var width := row.get_combined_minimum_size().x
-	var height := ActionSlot.DIAMOND + ActionSlot.KEY_H * 0.5
-	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0, -MARGIN + 6), Vector2(width, height))
-	_passives = HBoxContainer.new()
-	_passives.name = &"Passives"
-	_passives.add_theme_constant_override(&"separation", PASSIVE_GAP)
-	_passives.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_passives)
-	var room := 300.0
-	_place(_passives, Control.PRESET_CENTER_BOTTOM, Vector2(width * 0.5 + 18 + room * 0.5, -MARGIN - 4), Vector2(room, PASSIVE_ICON + 6))
-
-
-## The row layout (P1-4, the default): the diamonds over the bars from the medallion's shoulder on a band of ink, the
-## gifts that act alone in the bottom right corner, right-aligned.
-func _build_row(row: HBoxContainer) -> void:
-	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	# centred on the screen's middle whatever the number of diamonds (the row's own box is as wide as the six)
 	var height := ROW_DIAMOND + ActionSlot.KEY_H * 0.5 + ROW_KEY_DROP
-	var life_top := MARGIN + CREST * 0.5 + 1.0 + LIFE.y
-	_place(row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST - 6, -life_top - ROW_ABOVE), Vector2(row.get_combined_minimum_size().x, height))
+	var width := row.get_combined_minimum_size().x
+	_place(row, Control.PRESET_CENTER_BOTTOM, Vector2(0.0, -MARGIN), Vector2(width, height))
+	row.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	var under: Array[Control] = []
 	under.assign(_slots + [_ult_slot])
 	_row_band = HudVeil.new()
 	_row_band.covers = under
 	add_child(_row_band)
 	move_child(_row_band, row.get_index())
+	_buff = BuffMark.new().setup(BoonIcon.SHOUT_GLYPH)
+	add_child(_buff)
 	_passives = HBoxContainer.new()
 	_passives.name = &"Passives"
 	_passives.add_theme_constant_override(&"separation", PASSIVE_GAP)
 	_passives.alignment = BoxContainer.ALIGNMENT_END
 	_passives.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_passives)
-	# its right end at PASSIVE_EDGE of the width, as the bottom-centre row's last medallion (BUG-105)
+	# its right end at PASSIVE_EDGE of the width (BUG-105), over the coins' corner
 	_passives.anchor_left = PASSIVE_EDGE
 	_passives.anchor_right = PASSIVE_EDGE
 	_passives.anchor_top = 1.0
 	_passives.anchor_bottom = 1.0
 	_passives.offset_left = -300.0
 	_passives.offset_right = 0.0
-	_passives.offset_bottom = -MARGIN
-	_passives.offset_top = -MARGIN - PASSIVE_ICON - 6.0
+	_passives.offset_bottom = -MARGIN - PASSIVE_LIFT
+	_passives.offset_top = -MARGIN - PASSIVE_LIFT - PASSIVE_ICON - 6.0
 
 
-## The hit count and the move's name, by the bars at the bottom left (benchmark_hades2_ui.md P0-3, UI-HB5): out of
-## the field, small, without a veil or a stroke, in Alegreya Sans (Cinzel only from 24 px), on one line over the life
-## bar's right part: "12 Golpes  Giro da Alvorada". Over the curse badge's line it climbs a line while the badge shows.
+## The hit count and the move's name, right of the row's last diamond (benchmark_hades2_ui.md P0-3, UI-HB5): small,
+## in Alegreya Sans (Cinzel only from 24 px): "12 Golpes", the move's name under it.
 func _build_combo() -> void:
 	_combo_row = HBoxContainer.new()
 	_combo_row.name = &"Combo"
@@ -523,31 +537,26 @@ func _build_combo() -> void:
 	_move.name = &"Move"
 	_move.size_flags_vertical = Control.SIZE_SHRINK_END
 	_combo_row.add_child(_move)
-	if _row_mode:
-		# on the row's line, right of the last diamond; the move's name under the count, smaller (C of the review)
-		_combo_row.remove_child(_move)
-		add_child(_move)
-		var x := _action_row.offset_left + _action_row.size.x + ROW_COUNT_GAP
-		for c: Control in [_combo_row, _move]:
-			c.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
-			c.offset_left = x
-			c.offset_right = x + LIFE.x
-		_combo_row.offset_top = _action_row.offset_top - 2.0
-		_combo_row.offset_bottom = _combo_row.offset_top + COMBO_H
-		# art review 2026-11-21 (10): the name on its own line under the count, never touching it, and both on the
-		# row's band of ink with the diamonds (no grey text loose over the floor)
-		_move.offset_top = _combo_row.offset_bottom + MOVE_GAP
-		_move.offset_bottom = _move.offset_top + COMBO_WORD + 6.0
-		if _row_band:
-			_row_band.covers.append_array([_combo, _combo_word, _move] as Array[Control])
-	else:
-		_place(_combo_row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN + CREST + COMBO_INSET, -MARGIN - CREST * 0.5 - LIFE.y - COMBO_RISE), Vector2(LIFE.x, COMBO_H))
-	_combo_top = _combo_row.offset_top
+	# on the row's line, right of the last diamond; the move's name under the count, smaller (C of the review)
+	_combo_row.remove_child(_move)
+	add_child(_move)
+	var x := 0.0  # (follow_row puts them right of the last diamond each frame)
+	for c: Control in [_combo_row, _move]:
+		c.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
+		c.offset_left = x
+		c.offset_right = x + LIFE.x
+	_combo_row.offset_top = _action_row.offset_top - 2.0
+	_combo_row.offset_bottom = _combo_row.offset_top + COMBO_H
+	# art review 2026-11-21 (10): the name on its own line under the count, never touching it, and both on the
+	# row's band of ink with the diamonds (no grey text loose over the floor)
+	_move.offset_top = _combo_row.offset_bottom + MOVE_GAP
+	_move.offset_bottom = _move.offset_top + COMBO_WORD + 6.0
+	_row_band.covers.append_array([_combo, _combo_word, _move] as Array[Control])
 	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = false
 
 
-## A material found greets in the banner (EloBanner.show_material), but not an elite's drop: it is a word where the elite
+## A material found greets in the coins' corner (CoinCorner.pickup, H3), but not an elite's drop: it is a word where the elite
 ## fell, as the gold is (Rooms.found), and a greeting for each would crowd the top of the fight.
 func _greet_materials() -> void:
 	_greet_oficios()
@@ -560,7 +569,7 @@ func _greet_materials() -> void:
 			if n > was:
 				_found_seen[key] = n
 				if source != &"elite":
-					_elo_banner.show_material(m, n - was)
+					_coins.pickup(m, n - was)
 
 
 ## Ofícios (10_ux.md 10.2), read from the run's part every frame: the pick's head found ("Achado"), the vein noted
@@ -579,7 +588,7 @@ func _greet_oficios() -> void:
 	var was := int(_oficios_seen.get("stones", 0))
 	if run.stones > was:
 		_oficios_seen["stones"] = run.stones
-		_elo_banner.show_material(DoorGlyph.STONE_ID, run.stones - was)
+		_coins.pickup(DoorGlyph.STONE_ID, run.stones - was)
 
 
 ## The notices the Ofícios' greetings say instead (Rooms still asks for them: never twice on screen).
@@ -596,7 +605,7 @@ func _veil(over: Array[Control]) -> HudVeil:
 	return v
 
 
-## The clock: at the top in the middle, or, while a boss's bar is up, under the gold in the top right corner, so the
+## The clock: at the top in the middle, or, while a boss's bar is up, in the top right corner, so the
 ## boss's name stands alone over his bar (UI review d2ff05d, P1-2). The boss's bar and the phase's name go up with it.
 func _place_clock(boss: bool) -> void:
 	_clock_at_boss = boss
@@ -662,12 +671,9 @@ func _process(delta: float) -> void:
 		c.visible = _combo_count >= 3 and not over
 	_move.visible = not over
 	# the curse's badge stands on the life bar's line: the count climbs over it meanwhile
-	var lift := ConditionBadge.SIZE + 4.0 if _curse_badge.shown() > 0.0 and not _row_mode else 0.0
-	_combo_row.offset_top = _combo_top - lift
-	_combo_row.offset_bottom = _combo_top - lift + COMBO_H
 	_elo_banner.held = over or entrance_shown()
 	_clock.text = SaveData.format_time(game.time)
-	_coin.visible = game.rooms != null
+	_coins.tick(delta)
 	if game.rooms:
 		# the descent: which room, and the gold for the shop (no experience here, so no bar over the scene)
 		_xp_back.visible = false
@@ -675,19 +681,21 @@ func _process(delta: float) -> void:
 		_room.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
 		map_button.visible = not over
 		map_button.text = T.t(&"hud_map", {"key": "[%s]" % UiKit.action_label(&"map")})
-		_gold.text = T.t(&"hud_gold_count", {"n": game.rooms.gold})
+		_coins.show_counts(T.t(&"hud_gold_count", {"n": game.rooms.gold}), game.materials.total(MaterialPurse.SILVER),
+				game.materials.total(MaterialPurse.MEMORY))
 		_crest.seal = ""
 	else:
 		_xp_fill.size.x = get_viewport_rect().size.x * game.xp_ratio()
 		_room.text = T.t(&"hud_level", {"n": game.level})
 		map_button.visible = false
-		_gold.text = "%s  %d" % [T.t(&"hud_kills"), game.kills]
+		_coins.show_counts("%s  %d" % [T.t(&"hud_kills"), game.kills], 0, 0, false)
 		_crest.seal = str(game.level)
 	_update_life(p)
 	if game.rooms and game.rooms.trials:
 		_trial_seal.carry(game.rooms.trials.active, game.rooms.trials.left)
 		_trial_seal.hide_name = _curse_badge.shown() > 0.0
 	_update_slots(p)
+	_update_column()
 	_update_passives()
 	_update_elos()
 	_update_psalms()
@@ -732,7 +740,8 @@ func _update_life(p: Player) -> void:
 	if _last_hp >= 0.0 and p.hp < _last_hp - 0.01:
 		_crest.flash = 1.0
 	_last_hp = p.hp
-	_crest.danger = 1.0 - clampf(p.hp / p.max_hp / 0.3, 0.0, 1.0)
+	_crest.danger = 1.0 - clampf(p.hp / p.max_hp / DANGER_FROM, 0.0, 1.0)
+	_vignette.danger = _crest.danger if game.mode == Game.Mode.PLAY and p.hp > 0.0 else 0.0
 	_curse_badge.ratio = p.curse.ratio()
 	_crest.tint = Color(CURSE_COLOR, CURSE_TINT * _curse_badge.shown())
 
@@ -743,20 +752,27 @@ func _update_slots(p: Player) -> void:
 		by_slot[b.slot] = b
 	for s in _slots:
 		if s.action == &"shout":
-			# the Brado (E): its recharge, hidden for a hero without it
+			# the Brado (Q): its recharge and the Blessing of its slot, hidden for a hero without it
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) != null
-			s.refresh(null, p.shout_wait())
+			s.refresh(by_slot.get(s.slot), p.shout_wait())
+			continue
+		if s.action == &"rush":
+			# the Investida (E): its recharge
+			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) != null
+			s.refresh(null, p.rush_wait())
 			continue
 		var b: Boon = by_slot.get(s.slot)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
 		match s.slot:
-			Boon.Slot.CAST:
-				s.refresh(b, 1.0 if p.cast_active else p.cast_cooldown / p.hero.cast_cooldown, 0, 0, starved)
 			Boon.Slot.DASH:
 				s.refresh(b, _dash_wait(p), p.dodge_charges, p.dodge_max)
 			Boon.Slot.SPECIAL:
 				# a boss's curse locks the special: the diamond shows the lock running out, then a ring when it lifts
 				s.refresh(b, 0.0, 0, 0, starved and not p.curse.active())
+				# the rajada's price on the diamond and, without the Magia, the words (H2)
+				s.cost = roundi(_omega(p, s.slot))
+				s.caption = T.t(&"hud_no_magick") if starved and not p.curse.active() else ""
+				s.caption_color = ActionSlot.STARVED.lightened(0.45)
 				s.locked = p.curse.ratio()
 				# the Pastor (E4): the lights gathered, over the special's diamond
 				var flock := game.psalms.holding(PsalmDef.Effect.FLOCK) if game.psalms else null
@@ -764,6 +780,30 @@ func _update_slots(p: Player) -> void:
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
 	_update_ult(p)
+	_update_buff(p)
+
+
+## The Brado's buff (its 5 s of faster blows and less damage taken) over the Q diamond while it runs.
+func _update_buff(p: Player) -> void:
+	var node := ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT)
+	var left := p.gifts.rally_left if p.gifts != null and node != null else 0.0
+	_buff.show_left(left, node.effect_time if node != null else 1.0)
+	if _buff.visible:
+		var q := _slots[ACTIONS.find(&"shout")].get_global_rect()
+		_buff.global_position = Vector2(q.get_center().x - BuffMark.SIDE * 0.5, _action_row.get_global_rect().position.y - ActionSlot.CAPTION_RISE - BuffMark.SIDE - BUFF_RISE)
+
+
+## The build column reads the Blessings, the Elos and the Psalm again when one of them changed.
+func _update_column() -> void:
+	var psalm: PsalmDef = game.psalms.taken.back() if game.psalms != null and not game.psalms.taken.is_empty() else null
+	var kind := game.ults.def.kind if game.ults != null and game.ults.def != null else -1
+	var key := "%s|%s|%d" % [",".join(game.boons.owned().map(func(b: Boon) -> String: return "%s:%d:%d" % [b.id, game.boons.level(b.id), game.boons.rarity(b.id)])),
+			psalm.id if psalm != null else "", kind]
+	if key == _build_key:
+		return
+	_build_key = key
+	_column.show_build(game.boons, BoonIcon.ULT_GLYPH + kind if kind >= 0 else -1, psalm)
+	_column.visible = true
 
 
 ## The ultimate's diamond (T5): sealed with the Mastery level it needs, or its charge; a refused press shows why for
@@ -772,10 +812,19 @@ func _update_ult(p: Player) -> void:
 	if not _ult_heard:
 		_ult_heard = true
 		p.ult_refused.connect(_on_ult_refused)
+		p.magick_refused.connect(_on_magick_refused)
 	_ult_hint_t = maxf(0.0, _ult_hint_t - get_process_delta_time())
 	var ult := game.ults.def if game.ults else null
 	var first := game.hero.first_ult_level() if game.hero else 0
 	_ult_slot.visible = ult != null or (first > 0 and game.bot == null)
+	_charge_shown = ult != null and game.bot == null
+	_charge.visible = _charge_shown and game.mode != Game.Mode.PAUSE
+	if ult != null:
+		_charge.show_value(game.ults.ratio())
+		var done := game.ults.charge.ready()
+		_charge.fill_top = ActionSlot.READY_COLOR if done else UiKit.OLD_GOLD.lightened(0.15)
+		_charge.fill_bottom = ActionSlot.READY_COLOR.darkened(0.4) if done else UiKit.OLD_GOLD.darkened(0.45)
+		_charge.queue_redraw()
 	if not _ult_slot.visible:
 		return
 	var full := ult != null and game.ults.charge.ready()
@@ -803,6 +852,11 @@ static func ult_caption(has_ult: bool, full: bool, ratio: float, first_level: in
 	return T.t(&"hud_ult_charging", {"n": floori(ratio * 100.0)})
 
 
+## The special pressed without its Magia (the rajada): a short word, no more.
+func _on_magick_refused() -> void:
+	show_notice(T.t(&"hud_no_magick"), 1.0)
+
+
 func _on_ult_refused() -> void:
 	_ult_hint_t = ULT_HINT_TIME
 	if _ult_told:
@@ -823,6 +877,10 @@ func _omega(p: Player, slot: Boon.Slot) -> float:
 			Boon.Slot.ATTACK, Boon.Slot.SPECIAL:
 				var node := ComboTree.find(p.tree.neutral, ComboNode.In.CHARGE_LIGHT if slot == Boon.Slot.ATTACK else ComboNode.In.CHARGE)
 				cost = node.magick_cost if node else 0.0
+				if slot == Boon.Slot.SPECIAL:
+					# the tap itself costs Magia (the rajada, 2026-11-21)
+					var tap := ComboTree.find(p.tree.neutral, ComboNode.In.HEAVY)
+					cost = maxf(cost, tap.magick_cost if tap else 0.0)
 			Boon.Slot.CAST:
 				cost = p.hero.cast_omega_cost
 		_omega_cost[slot] = cost
@@ -976,7 +1034,7 @@ func _follow_row() -> void:
 
 ## How far over the bottom of the screen the edge chevrons' frame stands (it clears the captions over the diamonds).
 func edge_bottom() -> float:
-	return ROW_EDGE_BOTTOM if _row_mode else EDGE_INSET.w
+	return ROW_EDGE_BOTTOM
 
 
 ## Chevrons on the edge of the screen: the light fountain (with its name) and the nearest elites, guardian or boss
@@ -1073,25 +1131,19 @@ func _update_veil(delta: float) -> void:
 	_veil_t -= delta
 	if _veil_t <= 0.0:
 		_veil_t = VEIL_EVERY
-		if _row_mode:
-			# apart in the row layout: the diamonds on the left, the gifts in the right corner
-			_veiled = _someone_behind(_action_row.get_global_rect(), true)
-			_passives_veiled = _someone_behind(_passives_rect())
-		else:
-			_veiled = _someone_behind(_actions_rect())
-			_passives_veiled = _veiled
+		# apart: the diamonds at the foot (the hero alone), the gifts in the right corner, the build column on the edge
+		_veiled = _someone_behind(_action_row.get_global_rect(), true)
+		_passives_veiled = _someone_behind(_passives_rect())
+		_column_veiled = _someone_behind(_column.get_global_rect())
 	_passives.modulate.a = move_toward(_passives.modulate.a, VEIL_ALPHA if _passives_veiled else 1.0, delta * VEIL_SPEED)
+	_column_alpha = move_toward(_column_alpha, 1.0 if _column_veiled else 0.0, delta * VEIL_SPEED)
+	_column.veil(_column_alpha)
 	var a := move_toward(_slot_alpha, VEIL_ALPHA if _veiled else 1.0, delta * VEIL_SPEED)
 	_slot_alpha = a
 	# the diamonds fade only their bodies: what they say (glyph, recharge, key) stays whole
 	for s in _slots:
 		s.veil = (1.0 - a) / (1.0 - VEIL_ALPHA)
 	_ult_slot.veil = (1.0 - a) / (1.0 - VEIL_ALPHA)
-
-
-## The diamonds and the gifts beside them, on screen.
-func _actions_rect() -> Rect2:
-	return _action_row.get_global_rect().merge(_passives_rect()) if _passives.get_child_count() > 0 else _action_row.get_global_rect()
 
 
 ## The gifts' medallions on screen (an empty rect without any).

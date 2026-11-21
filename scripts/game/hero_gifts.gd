@@ -48,6 +48,8 @@ func step(dt: float) -> void:
 func _on_landed(node: ComboNode, tags: Array[StringName], hits: int) -> void:
 	var p := game.player
 	var magick := state.passive_magick(tags, hits)
+	if node != null and node.magick_per_hit > 0.0:
+		magick += node.magick_per_hit * hits  # the Investida: Magia for each one it reaches
 	if magick > 0.0:
 		p.magick.gain(magick)
 	if state.on_landed(tags, hits) and node != null:

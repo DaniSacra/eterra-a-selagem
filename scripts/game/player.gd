@@ -25,6 +25,8 @@ signal ult_landed(dir: Vector2)
 ## The ultimate's button was pressed while it cannot go (none this descent, or its charge not full): the HUD says why
 ## (T5: "a ultimate não funciona" was a press that did nothing and told nothing).
 signal ult_refused
+## The special was pressed without the Magia it costs (the HUD flashes the Magia bar).
+signal magick_refused
 
 ## ULT: the ultimate's gesture (UltDef.gesture), protected, planted, the runner locked as in the roll.
 enum State { MOVE, DODGE, HURT, DEAD, REST, ULT }
@@ -580,14 +582,14 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 		ult_refused.emit()
 	_ult_want = maxf(0.0, _ult_want - dt)
 	_press_attack(&"light_attack", ComboNode.In.LIGHT, ComboNode.In.CHARGE_LIGHT)
-	if _press_shout():
+	if _press_move(&"shout", ComboNode.In.SHOUT) or _press_move(&"rush", ComboNode.In.RUSH):
 		_end_charge()
 	if curse.active():
 		# the curse locks the special: a press does nothing, a charge already under way is dropped
 		if charging and _charge_action == CURSE_ACTION:
 			_end_charge()
 	else:
-		_press_attack(CURSE_ACTION, ComboNode.In.HEAVY, ComboNode.In.CHARGE)
+		_press_special()
 	if charging:
 		charge_t += dt
 		if charge_t >= CHARGE_SOUND_AT and charge_t - dt < CHARGE_SOUND_AT:
@@ -616,26 +618,58 @@ func _queue_buttons() -> void:
 		_ult_want = DODGE_BUFFER
 	if Controls.pressed(&"light_attack"):
 		runner.press(ComboNode.In.LIGHT)
-	_press_shout()
-	if Controls.pressed(CURSE_ACTION) and not curse.active():
+	_press_move(&"shout", ComboNode.In.SHOUT)
+	_press_move(&"rush", ComboNode.In.RUSH)
+	if Controls.pressed(CURSE_ACTION) and not curse.active() and _special_paid():
 		runner.press(ComboNode.In.HEAVY)
 
 
-## E, the Brado de Guerra: a press while it recharges does nothing (it keeps the blow already waiting). True when it was
-## given to the runner.
-func _press_shout() -> bool:
-	if not Controls.pressed(&"shout") or ComboTree.find(tree.neutral, ComboNode.In.SHOUT) == null:
+## Q, the Brado de Guerra, and E, the Investida: moves of their own on a button each. A press while one recharges does
+## nothing (it keeps the blow already waiting). True when it was given to the runner.
+func _press_move(action: StringName, input: ComboNode.In) -> bool:
+	if not Controls.pressed(action) or ComboTree.find(tree.neutral, input) == null:
 		return false
-	if runner.cooldown_left(&"shout") > 0.0:
+	if runner.cooldown_left(_move_id(input)) > 0.0:
 		return false
-	runner.press(ComboNode.In.SHOUT)
+	runner.press(input)
 	return true
+
+
+func _move_id(input: ComboNode.In) -> StringName:
+	var node := ComboTree.find(tree.neutral, input)
+	return node.id if node != null else &""
 
 
 ## Share (0..1) of the Brado's recharge still to run (the HUD's diamond); 0 when it is ready or the hero has none.
 func shout_wait() -> float:
-	var node := ComboTree.find(tree.neutral, ComboNode.In.SHOUT)
-	return clampf(runner.cooldown_left(&"shout") / node.cooldown, 0.0, 1.0) if node != null and node.cooldown > 0.0 else 0.0
+	return move_wait(ComboNode.In.SHOUT)
+
+
+## The same for the Investida.
+func rush_wait() -> float:
+	return move_wait(ComboNode.In.RUSH)
+
+
+func move_wait(input: ComboNode.In) -> float:
+	var node := ComboTree.find(tree.neutral, input)
+	return clampf(runner.cooldown_left(node.id) / node.cooldown, 0.0, 1.0) if node != null and node.cooldown > 0.0 else 0.0
+
+
+## The right button (2026-11-21): a tap throws the sword's wave for its Magia (no hold: a hero whose tree still has an
+## Omega special charges it as before). Without the Magia nothing is thrown and the Magia bar says why (magick_refused).
+func _press_special() -> void:
+	if not Controls.pressed(CURSE_ACTION):
+		return
+	if not _special_paid():
+		magick_refused.emit()
+		return
+	_press_attack(CURSE_ACTION, ComboNode.In.HEAVY, ComboNode.In.CHARGE)
+
+
+## True when the special's tap is paid for (it costs nothing, or the Magia is there).
+func _special_paid() -> bool:
+	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
+	return node == null or node.magick_cost <= 0.0 or magick.can_pay(omega_cost(node.magick_cost, omega_discount))
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -757,6 +791,8 @@ func _charge_lead() -> float:
 ## The circle of light: a tap draws it around the paladin; holding on (with Magia) arms it to burst at the end.
 ## Only one circle stands at a time (cast_active is kept by Game while the zone lives).
 func _read_cast(dt: float) -> void:
+	if not hero.circle:
+		return
 	if Controls.pressed(&"cast") and cast_cooldown <= 0.0 and not _casting and not cast_active:
 		_casting = true
 		_cast_t = 0.0
@@ -873,7 +909,7 @@ func _step_move_sound(dt: float) -> void:
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0:
-		magick.spend(omega_cost(node.magick_cost, _charge_discount))
+		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
 	if node.sound_at > 0.0:
@@ -923,7 +959,8 @@ func hurt(amount: float, from: Vector2) -> void:
 		Audio.play(&"shield")
 		shield_broke.emit()
 		return
-	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction) * hurt_scale))
+	var guard := gifts.guard() if gifts != null else 0.0  # the Brado's buff
+	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction - guard) * hurt_scale))
 	hp -= amount
 	invuln = hero.hurt_invuln
 	_blink = hero.hurt_invuln

@@ -460,3 +460,29 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `CodexScreen.move_marks`) e se acende no primeiro uso.
 - **A conferir em captura** (não feitas): a página Controles do Como Jogar com a linha a mais (o quadro tem 420 px; a medida sem
   tela não é confiável) e a fileira do HUD com seis losangos em 720p e 1080p.
+
+## HUD do Lote 2 (2026-11-21, layout aprovado pelo Daniel; referência SWORN só em princípios)
+- **Canto inferior esquerdo**: retrato (`HeroCrest`) e ao lado, empilhadas e alinhadas à esquerda, **Magia em cima, Vida embaixo
+  (números nas duas) e a carga da ultimate fina no pé** (`Hud._charge`, ouro, esverdeia ao encher). Selo da Provação em cima do
+  retrato; a insígnia da maldição em cima das barras.
+- **Fileira de habilidades centrada na base** (`Hud._action_row`, seis losangos 36 px, faixa de tinta atrás): a rajada mostra o
+  custo (8) numa gema azul (`ActionSlot.cost`) e a legenda "Sem Magia" quando falta; o buff do Brado (5 s) fica sobre o losango
+  do Q (`BuffMark`, anel que esvazia e os segundos). Contagem de golpes à direita do último losango. O modo `--hud=classic` saiu.
+- **Coluna de Bênçãos na borda direita** (`BuildColumn`, 58 px de largura, centro em 46% da altura): estandarte escuro, um
+  medalhão por botão (esquerdo, direito, Q, E, Shift, Espaço) com o nível ("Nv. 2") na cor da raridade; vazio em cinza com o
+  símbolo do botão (E e Shift ainda não têm slot de Bênção); embaixo os Elos e o Salmo. Fica translúcida quando alguém está atrás
+  (mesma regra dos losangos). As setas de borda respeitam `Hud.EDGE_RIGHT`.
+- **Moedas no canto inferior direito** (`CoinCorner`): ouro (ou Abatidos no modo horda), Prata e Memória só depois de ter; o
+  aviso de coleta ("+10 Prata", soma enquanto aparece) saiu do banner do topo para cá (`Hud._greet_materials` chama `pickup`).
+  Os dons que agem sozinhos sobem 40 px, acima das moedas. O relógio com chefe vai para o canto superior direito (o ouro saiu de lá).
+- **Vinheta de vida baixa** (`LifeVignette`): bordas escuras de tinta de sangue com gotas, pulso lento, a partir de 30% da vida;
+  centro limpo, só no jogo (não sob telas). **Palavras-chave** (H4): `Glossary.COLORS` dá uma cor a cada termo (no texto da carta
+  e no título da caixinha de significado); termo novo `fury` (Fúria). **Placa de interação** (H5): já é uma só, `StationSign`
+  (hub, recompensa, loja, porta e veio): título dourado onde o objeto não tem outro (estações), a tecla real e o verbo; nas
+  portas e recompensas o título dourado é o da `DoorSign` logo acima.
+- **Retratos dos anjos (AN-1)**: `assets/ui/angels/angel_1..4.jpg` (512 x 768; recorte do busto em `AngelArt.CROP`) na coluna da
+  esquerda das cartas do Encontro (`BoonChoice.by_angel`), no lugar do selo; sem arquivo o selo continua. Anjos 5 a 7: ainda sem
+  Bênçãos, sem arquivo. Os originais ficam em `docs/art/angels_src/` (fora do pacote: `docs/*` no `export_presets.cfg`).
+- Bugs: B1 era `tools/title_flow_check.gd` lendo a placa da Forja numa conta nova, onde a estação está fechada (HubGate) e não
+  tem placa; o check abre a Forja antes. B2: `MAGICK_GLYPH` agora 107 (era 105, o do Brado); `tests/test_hud_lote2.gd` trava ids únicos.
+

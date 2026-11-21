@@ -8,7 +8,6 @@ const SPIN: Array[StringName] = [&"light", &"spin", &"finisher"]
 const CUT: Array[StringName] = [&"light"]
 const DASH: Array[StringName] = [&"light", &"dash"]
 const LANCE: Array[StringName] = [&"light", &"thrust", &"finisher", &"omega"]
-const BURST: Array[StringName] = [&"heavy", &"wave", &"charge", &"omega"]
 const BOLT: Array[StringName] = [&"heavy", &"wave"]
 
 var game: Game
@@ -55,7 +54,7 @@ func test_the_passive_gives_two_of_magia_for_each_finisher_that_lands() -> void:
 	assert_eq(s.passive_magick(SPIN, 1), 2.0, "the spin")
 	assert_eq(s.passive_magick(DASH, 1), 2.0, "the Corte Veloz that lands")
 	assert_eq(s.passive_magick(LANCE, 1), 2.0, "the attack's Omega")
-	assert_eq(s.passive_magick(BURST, 1), 2.0, "the special's Omega")
+	assert_eq(s.passive_magick(BOLT, 1), 0.0, "the rajada is no finisher (2026-11-21: the special's Omega left)")
 	assert_eq(s.passive_magick(SPIN, 0), 0.0, "a finisher in the air gives nothing")
 	assert_eq(s.passive_magick(CUT, 3), 0.0, "a plain cut is no finisher")
 	assert_eq(s.passive_magick(BOLT, 1), 0.0, "nor the plain special")
@@ -86,16 +85,16 @@ func test_the_passive_counts_once_a_blow_and_never_past_the_maximum() -> void:
 	assert_eq(p.magick.value, 10.0, "a plain cut gives nothing")
 
 
-func test_the_special_omega_counts_once_with_its_wave() -> void:
+func test_the_rajada_gives_no_magia_and_its_wave_counts_once() -> void:
 	_run()
 	var p := game.player
 	for k in 3:
 		_enemy(&"skeleton", Vector2(3.0 + k * 1.2, 0))
 	p.magick.value = 10.0
-	game.combat.strike(_node(p.tree, &"burst"), p.pos, Vector2.RIGHT)
+	game.combat.strike(_node(p.tree, &"bolt"), p.pos, Vector2.RIGHT)
 	for i in 30:
 		game.projectiles.step(1.0 / 60.0)
-	assert_eq(p.magick.value, 12.0, "the wave struck three, the passive gave once")
+	assert_eq(p.magick.value, 10.0, "the wave struck three and gave nothing: no finisher")
 
 
 func test_no_passive_turns_it_off_for_comparisons() -> void:
@@ -178,16 +177,14 @@ func test_quarto_corte_plays_four_blows_in_the_game() -> void:
 	assert_eq(started, [&"cut1", &"cut2", &"thrust4", &"cut3"] as Array[StringName])
 
 
-func test_passo_encadeado_makes_the_corte_veloz_the_first_blow() -> void:
+func test_passo_encadeado_makes_the_investida_the_first_blow() -> void:
 	assert_true(_state([&"quarto_corte", &"passo_encadeado"]).chains_on(DASH, 0), "landing or not")
 	assert_false(_state([&"quarto_corte"]).chains_on(DASH, 1))
-	# the runner: dodge, attack (the Corte Veloz), and the next press is cut2, pressed during its recovery (kept)
+	# the runner: the E button (the Investida), and the next press is cut2, pressed during its recovery (kept)
 	var runner := ComboRunner.new(load("res://data/combos/paladin.tres"))
 	var started: Array[StringName] = []
 	runner.move_started.connect(func(n: ComboNode) -> void: started.append(n.id))
-	runner.on_dodge()
-	runner.press(L)
-	runner.on_dodge_end()
+	runner.press(ComboNode.In.RUSH)
 	runner.step(0.0)
 	assert_eq(started, [&"dash_cut"] as Array[StringName])
 	for k in 12:
@@ -205,22 +202,18 @@ func test_passo_encadeado_in_the_game_even_in_the_air() -> void:
 	var p := game.player
 	game.combat.strike(_node(p.tree, &"dash_cut"), p.pos, Vector2.RIGHT)
 	assert_null(p.runner._chain_from, "only while a move is under way")
-	p.runner.on_dodge()
-	p.runner.press(L)
-	p.runner.on_dodge_end()
+	p.runner.press(ComboNode.In.RUSH)
 	p.runner.step(0.0)
 	assert_eq(p.runner.node.id, &"dash_cut")
 	game.combat.strike(p.runner.node, p.pos, Vector2.RIGHT)  # it lands on nobody
 	assert_eq(p.runner._chain_from, p.runner.opener(), "it counts as cut1")
 
 
-func test_without_passo_encadeado_the_corte_veloz_starts_over() -> void:
+func test_without_passo_encadeado_the_investida_starts_over() -> void:
 	var runner := ComboRunner.new(load("res://data/combos/paladin.tres"))
 	var started: Array[StringName] = []
 	runner.move_started.connect(func(n: ComboNode) -> void: started.append(n.id))
-	runner.on_dodge()
-	runner.press(L)
-	runner.on_dodge_end()
+	runner.press(ComboNode.In.RUSH)
 	runner.step(0.0)
 	for k in 60:
 		runner.step(1.0 / 120.0)
@@ -439,7 +432,7 @@ func test_coracao_da_emeth_feeds_the_ultimate_and_the_passive() -> void:
 
 # ---------- bridges ----------
 
-func test_investida_the_corte_veloz_that_kills_gives_the_dodge_back() -> void:
+func test_estocada_certeira_the_investida_that_kills_gives_the_dodge_back() -> void:
 	var s := _state([&"quarto_corte", &"impeto", &"investida"])
 	assert_true(s.dash_back(DASH))
 	assert_false(s.dash_back(SPIN), "only the Corte Veloz")
@@ -458,12 +451,12 @@ func test_sangue_quente_an_omega_kill_gives_two_charges() -> void:
 	assert_eq(_state([&"impeto"]).on_kill(LANCE), 1, "without the bridge one")
 
 
-func test_onda_carregada_the_special_omega_throws_the_spin_wave() -> void:
+func test_onda_carregada_the_rajada_throws_the_spin_wave() -> void:
 	var s := _state([&"lamina_faminta", &"corte_crescente", &"onda_carregada"])
-	assert_eq(float(s.wave(BURST).damage), 16.0)
-	assert_eq(float(s.wave(BOLT).damage), 0.0, "only its Omega")
+	assert_eq(float(s.wave(BOLT).damage), 16.0)
+	assert_eq(float(s.wave(CUT).damage), 0.0, "only the special")
 	_run([&"lamina_faminta", &"corte_crescente", &"onda_carregada"])
-	game.combat.strike(_node(game.player.tree, &"burst"), game.player.pos, Vector2.RIGHT)
+	game.combat.strike(_node(game.player.tree, &"bolt"), game.player.pos, Vector2.RIGHT)
 	var damages := _friendly_waves().map(func(w: Projectiles.Shot) -> float: return w.damage)
 	assert_true(damages.has(16.0), "its own wave and the spin's: %s" % [damages])
 	assert_eq(damages.size(), 2)

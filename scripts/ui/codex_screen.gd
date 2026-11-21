@@ -898,8 +898,8 @@ static func move_marks(path: Array, from_dodge: bool, lit: bool = true) -> HBoxC
 		h.add_child(_word("+", ink))
 	for input: ComboNode.In in path:
 		var light := input == ComboNode.In.LIGHT or input == ComboNode.In.CHARGE_LIGHT
-		if input == ComboNode.In.SHOUT:
-			h.add_child(ActionSlot.glyph_mark(BoonIcon.SHOUT_GLYPH, MOVE_MARK))
+		if input == ComboNode.In.SHOUT or input == ComboNode.In.RUSH:
+			h.add_child(ActionSlot.glyph_mark(BoonIcon.SHOUT_GLYPH if input == ComboNode.In.SHOUT else BoonIcon.RUSH_GLYPH, MOVE_MARK))
 			continue
 		h.add_child(ActionSlot.mark(Boon.Slot.ATTACK if light else Boon.Slot.SPECIAL, MOVE_MARK))
 		if input == ComboNode.In.CHARGE or input == ComboNode.In.CHARGE_LIGHT:

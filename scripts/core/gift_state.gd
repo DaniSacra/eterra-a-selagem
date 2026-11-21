@@ -29,6 +29,10 @@ var hero: HeroDef
 ## Ímpeto's charges and the seconds before they all fade.
 var fury := 0
 var fury_left := 0.0
+## The Brado's buff (2026-11-21): seconds left, the extra speed of every blow and the share of damage taken it takes off.
+var rally_left := 0.0
+var rally_speed := 0.0
+var rally_guard := 0.0
 ## Seconds left of Lâmina Faminta's window.
 var hungry_left := 0.0
 ## Falls Ainda de Pé still stands him up from this descent.
@@ -52,6 +56,7 @@ func value(name: StringName, tags: Array[StringName] = []) -> float:
 
 func step(dt: float) -> void:
 	hungry_left = maxf(0.0, hungry_left - dt)
+	rally_left = maxf(0.0, rally_left - dt)
 	if fury > 0:
 		fury_left -= dt
 		if fury_left <= 0.0:
@@ -88,7 +93,7 @@ func fury_max() -> int:
 ## A kill by a blow with these tags (none: a burn, a zone): the charges it gives. Returns how many it gained.
 func on_kill(tags: Array[StringName]) -> int:
 	var top := fury_max()
-	if top <= 0 or tags.has(&"shout"):  # (the Brado's charges are on_shout's, a most of 2 whatever it fells)
+	if top <= 0 or tags.has(&"shout"):  # (the Brado's charges are rally's, whatever it fells)
 		return 0
 	var before := fury
 	fury = mini(top, fury + int(value(&"fury_per_kill", tags)))
@@ -96,23 +101,37 @@ func on_kill(tags: Array[StringName]) -> int:
 	return fury - before
 
 
-## The Brado de Guerra reached `commons` common enemies (never a boss, an elite nor a guardian; Combat.is_common): one
-## charge of Ímpeto for each, at most `cap` a cry, up to fury_max; none without the Dom Ímpeto. Returns the charges gained.
-func on_shout(commons: int, cap: int) -> int:
+## The Brado de Guerra was cried (2026-11-21): for `seconds` every blow plays `speed` faster and `guard` of the damage
+## taken is taken off, and `charges` of Ímpeto come (none without the Dom Ímpeto), up to fury_max. Returns the charges
+## gained.
+func rally(seconds: float, speed: float, guard: float, charges: int) -> int:
+	rally_left = seconds
+	rally_speed = speed
+	rally_guard = guard
 	var top := fury_max()
-	if top <= 0 or commons <= 0:
+	if top <= 0 or charges <= 0:
 		return 0
 	var before := fury
-	fury = mini(top, fury + mini(commons, cap))
+	fury = mini(top, fury + charges)
 	fury_left = value(&"fury_time")
 	return fury - before
+
+
+## The Brado's buff is on.
+func rallied() -> bool:
+	return rally_left > 0.0
+
+
+## Share of the damage taken that the Brado's buff takes off (0 outside it).
+func guard() -> float:
+	return rally_guard if rally_left > 0.0 else 0.0
 
 
 ## How fast every blow plays (ComboRunner.speed): 1 with no charge. tags: the blow playing now (the Refinar Pressa,
 ## blow_speed with the attack's tag, Fatia 2, plays the attack's blows faster).
 func attack_speed(tags: Array[StringName] = []) -> float:
 	var fast := value(&"blow_speed", tags) if not tags.is_empty() else 0.0
-	return 1.0 + fast + (fury * value(&"fury_speed") if fury > 0 else 0.0)
+	return 1.0 + fast + (fury * value(&"fury_speed") if fury > 0 else 0.0) + (rally_speed if rally_left > 0.0 else 0.0)
 
 
 ## Seconds more a finisher with these tags stuns (Fúria Plena, only with every charge).

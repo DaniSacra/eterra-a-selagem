@@ -267,6 +267,7 @@ func build_steps(a: Arena, l: RoomLayout, exit_count: int, seed_: int) -> Array[
 		return more))
 	steps.append(_timed.bind(&"dress", func() -> Array[Callable]: return dress_steps()))
 	steps.append(_timed.bind(&"hazards", _hazard_pieces))
+	steps.append(_timed.bind(&"scatter", func() -> void: FloorScatter.dress(self)))
 	steps.append(_timed.bind(&"merge", func() -> Array[Callable]: return m.merge_steps()))
 	steps.append(_timed.bind(&"air", func() -> void:
 		_dress_air()))
@@ -1018,6 +1019,8 @@ func piece(o: ArenaObstacle) -> void:
 			pass
 		&"bolt_slit":
 			_hazard_slit(o)
+		&"trap_block":
+			pass  # SR-P1: its piece is built with the hazard (_hazard_pieces), one per band
 		&"block":
 			if o.height <= 1.0 and o.shape == ArenaObstacle.Shape.BOX:
 				var ax := Vector2(cos(o.yaw), sin(o.yaw)) * (o.half.x - o.half.y)
@@ -2724,6 +2727,19 @@ func _hazard_pieces() -> void:
 			for i in hz.bands.size():
 				var push := hz.band_push[i] if i < hz.band_push.size() else Vector2.ZERO
 				list.append(HazardPiece.breath(self, hz.bands[i], push, hz.warn, i))
+			_hazard[hz.band_source] = list
+		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == &"trap":
+			# SR-P1: each band's block in the wall behind its start, its face toward the way the blades fly
+			var list: Array = []
+			for i in hz.bands.size():
+				var way := hz.band_dir_of(i)
+				var start := hz.bands[i].get_center() - way.normalized() * (maxf(hz.bands[i].size.x, hz.bands[i].size.y) * 0.5)
+				var best: ArenaObstacle = null
+				for o in layout.obstacles:
+					if o.piece == &"trap_block" and (best == null or o.center.distance_to(start) < best.center.distance_to(start)):
+						best = o
+				var run := maxf(hz.bands[i].size.x, hz.bands[i].size.y)
+				list.append(HazardPiece.slit(self, best, stone(), way.normalized(), run) if best != null else null)
 			_hazard[hz.band_source] = list
 		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == &"chain":
 			var list: Array = []

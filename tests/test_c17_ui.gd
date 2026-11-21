@@ -49,7 +49,7 @@ func test_every_move_of_the_special_is_the_wave() -> void:
 # ---------- QW-110: one word for each action ----------
 
 func test_one_word_for_each_action() -> void:
-	var words := {&"light_attack": &"slot_attack", &"heavy_attack": &"slot_special", &"cast": &"slot_cast", &"dodge": &"slot_dash"}
+	var words := {&"light_attack": &"slot_attack", &"heavy_attack": &"slot_special", &"dodge": &"slot_dash"}
 	for action: StringName in words:
 		assert_eq(T.t("action_" + String(action)), T.t(words[action]), "Controles names %s as the HUD" % action)
 		assert_eq(T.t("howto_" + String(action)), T.t(words[action]), "Como Jogar names %s as the HUD" % action)

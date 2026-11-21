@@ -439,3 +439,15 @@ bifurcações contrastantes 93,2%. Detalhes e a queda de vitórias do robô (vid
 | Q-RJ9 | Ferramentas: achadas por marco (1º guardião, fase 3 de Morvath, 1ª Provação) ou num "?" escondido do mapa | (a) marco; (b) sala escondida | **(a)**: simples, sempre alcançável, e a página do Forjador diz o que falta ("vença um guardião") |
 | Q-RJ10 | Os Encantos do pacote | cortar Fio Penetrante (é o Dom Onda Atravessante), refazer Corte Sísmico (não há "pesado"), ligar Lâmina Tríplice ao Corte Crescente | **sim** às três |
 | Q-RJ11 | NPCs Forjador e Vendedor | quem são no mundo (nada no cânone) | nome de trabalho e só função até você decidir (como o hub, Q-H3) |
+
+### 4.1 Três anjos novos para o MVP (2026-11-21, pedido do Daniel: "uns 7 anjos", inventados; nomes de trabalho)
+
+Mesmas regras da seção 4 (Malahym, mensageiros da luz de Elun, alados como no cânone `canone.md` 476, final "-el",
+nenhum nome bíblico real, nada de cruz, sem violeta de Morvath). Cada um traz uma família de Bênçãos nova (a criar
+como dado depois que a arte existir; o `balance-designer` mede).
+
+| Família | Nome | Temperamento | Papel mecânico | Benchmark | Forma visual | Símbolo |
+|---|---|---|---|---|---|---|
+| Véu | **Velael** (do véu que cobre) | discreto, gentil, fala em voz baixa | **enfraquecer**: o inimigo marcado bate menos (Fraqueza), cega por instantes | Afrodite (Weak), Clíona do SWORN | manto cinza-cinza de fumaça com bordas âmbar de entardecer, véu leve sobre os ombros, rosto sereno meio na sombra | véu dobrado em gota |
+| Maré | **Galael** (de *gal*, onda) | forte, franco, ri alto | **empurrar**: golpes que arremessam, dano extra contra parede e entre inimigos | Poseidon (Slip, knockback) | azul-marinho profundo com espuma prateada, cabelo e manto em movimento como água | três ondas empilhadas |
+| Marca | **Qeshael** (de *qeshet*, arco) | preciso, frio, observa antes de falar | **marcar e criticar**: marca inimigos, crítico nos marcados, bônus no golpe que finaliza | Ártemis (Marked, crítico) | bronze e verde-oliva escuro, arco curto nas costas, olhar fixo | ponta de flecha dentro de um anel |

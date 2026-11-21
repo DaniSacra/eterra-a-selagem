@@ -288,15 +288,17 @@ func test_a_material_greets_and_more_of_it_adds_up() -> void:
 	assert_eq(b.waiting(), 1, "the Memória waits, summed")
 
 
+## (Lote 2, H3: the greeting stands in the bottom right corner, CoinCorner, no longer in the banner at the top.)
 func test_the_hud_greets_a_door_but_not_an_elites_drop() -> void:
 	await _run(RunMap.Kind.FOUNTAIN)
 	var banner: EloBanner = game.hud._elo_banner
 	game.rooms.found(MaterialPurse.SILVER, &"elite", 1)
 	await wait_process_frames(2)
-	assert_eq(banner.showing, &"")
+	assert_eq(game.hud._coins.note_text(), "")
 	game.rooms.found(MaterialPurse.SILVER, &"door", 10)
 	await wait_process_frames(2)
-	assert_eq(banner.showing, &"material")
+	assert_eq(game.hud._coins.note_text(), "+10 %s" % T.t(&"material_silver_short"))
+	assert_eq(banner.showing, &"", "nothing at the top")
 
 
 static func _texts(n: Node) -> Array[String]:

@@ -2,11 +2,12 @@ class_name ComboNode
 extends Resource
 ## One move of the combo tree. Combos are data: a new combo is a new node in data/combos, never new code.
 
-## CHARGE: heavy held (the Omega special). CHARGE_LIGHT: light held (the Omega attack). SHOUT: the Brado de Guerra's
-## button (E; docs/design/heroes/guerreiro.md 3.4), a move of its own that any state may start.
-enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT, SHOUT }
+## CHARGE: heavy held (an Omega special; the Warrior has none since 2026-11-21). CHARGE_LIGHT: light held (the Omega
+## attack). SHOUT: the Brado de Guerra's button (Q). RUSH: the Investida's button (E). Both are moves of their own that
+## any state may start (docs/design/heroes/guerreiro.md).
+enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT, SHOUT, RUSH }
 enum Shape { ARC, CIRCLE, LINE }
-enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
+enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT }
 
 @export var id: StringName
 ## The input that leads here from the previous node: E (light), D (heavy) or a released charge.
@@ -92,12 +93,16 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, STUN }
 @export_group("Effect")
 @export var effect: Effect = Effect.NONE
 ## LAUNCH: unused. GROUND_MARK: damage per second. WAVE: damage of the wave (a move with damage 0 strikes only
-## with its wave, like the special's bolt). STUN (the Brado de Guerra): the most charges of Ímpeto it gives, one for each
-## common enemy it reaches (GiftState.on_shout).
+## with its wave, like the special's bolt). SHOUT (the Brado de Guerra): the charges of Ímpeto it gives (GiftState.rally).
 @export var effect_power := 0.0
-## LAUNCH: air time. GROUND_MARK: how long the mark lasts. WAVE: unused. STUN: stun time of the common enemies it
-## reaches (never an elite, a guardian nor a boss: Combat.is_common); it draws a ring, not the blade's cut.
+## LAUNCH: air time. GROUND_MARK: how long the mark lasts. WAVE: unused. SHOUT: seconds the cry's buff lasts (it
+## stuns no one: it pushes); it draws a ring, not the blade's cut.
 @export var effect_time := 0.0
+## SHOUT: the buff's extra speed of every blow (0.2 = 20%) and the share of damage taken it takes off (0.15 = 15%).
+@export var buff_speed := 0.0
+@export var buff_guard := 0.0
+## Magia given back for each enemy this move reaches (the Investida's 3).
+@export var magick_per_hit := 0.0
 ## GROUND_MARK: radius. WAVE: distance travelled.
 @export var effect_radius := 0.0
 ## WAVE: width of the wave in meters (0 = the default 3.2).

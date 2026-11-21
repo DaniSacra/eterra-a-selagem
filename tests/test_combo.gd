@@ -51,10 +51,10 @@ func test_the_named_moves_exist() -> void:
 	assert_eq(names.get(&"lance"), "E segurado")
 	assert_eq(names.get(&"cut3"), "E E E")
 	assert_eq(names.get(&"bolt"), "D")
-	assert_eq(names.get(&"burst"), "D segurado")
-	assert_eq(names.get(&"dash_cut"), "Esquiva + E")
+	assert_false(names.has(&"burst"), "no held special since 2026-11-21")
+	assert_eq(names.get(&"dash_cut"), "Investida")
 	assert_eq(names.get(&"shout"), "Brado")
-	assert_eq(names.size(), 6)
+	assert_eq(names.size(), 5)
 
 
 ## The attack is three swings (as the first weapon of Hades II): 20, 25, then 60 all around.
@@ -88,7 +88,7 @@ func test_the_special_strikes_only_with_its_bolt() -> void:
 	assert_eq(started, [&"bolt"] as Array[StringName])
 	assert_eq(runner.node.damage, 0.0)
 	assert_eq(runner.node.effect, ComboNode.Effect.WAVE)
-	assert_eq(runner.node.effect_power, 40.0)
+	assert_eq(runner.node.effect_power, 35.0, "35 since the weak start of 2026-11-21")
 
 
 func test_the_special_can_follow_any_swing() -> void:
@@ -96,11 +96,9 @@ func test_the_special_can_follow_any_swing() -> void:
 	assert_eq(started, [&"cut1", &"bolt"] as Array[StringName])
 
 
-func test_charge_input_bursts() -> void:
-	assert_true(runner.charge_available(), "standing still, the special can be charged")
-	play(C)
-	assert_eq(started, [&"burst"] as Array[StringName])
-	assert_almost_eq(runner.node.charge_time, 0.65, 0.001)
+func test_the_special_has_no_held_version_any_more() -> void:
+	assert_false(runner.charge_available(), "the Omega special left the Warrior's tree (2026-11-21)")
+	assert_true(runner.charge_available(ComboNode.In.CHARGE_LIGHT), "the attack's Omega stays")
 
 
 func test_the_omega_attack_strikes_both_ways() -> void:
@@ -121,12 +119,12 @@ func test_a_buffered_omega_starts_after_the_swing() -> void:
 	assert_eq(started, [&"cut1", &"lance"] as Array[StringName])
 
 
-func test_dodge_opens_the_dodge_moves() -> void:
+func test_the_dodge_opens_no_move_of_its_own() -> void:
 	runner.on_dodge()
 	run(0.2)
 	runner.on_dodge_end()
 	play(L)
-	assert_eq(started, [&"dash_cut"] as Array[StringName])
+	assert_eq(started, [&"cut1"] as Array[StringName], "no Corte Veloz out of the dodge since 2026-11-21: the Investida is the E button")
 
 
 func test_input_during_the_roll_is_buffered_until_it_ends() -> void:
@@ -137,7 +135,7 @@ func test_input_during_the_roll_is_buffered_until_it_ends() -> void:
 	assert_eq(started.size(), 0, "nothing starts while rolling")
 	runner.on_dodge_end()
 	runner.step(0.0)
-	assert_eq(started, [&"dash_cut"] as Array[StringName])
+	assert_eq(started, [&"cut1"] as Array[StringName])
 
 
 func test_dodge_window_closes() -> void:
@@ -172,14 +170,15 @@ func test_buffer_keeps_a_press_from_the_start_of_the_swing() -> void:
 	assert_eq(started, [&"cut1", &"cut2"] as Array[StringName], "pressed in the windup: it waits for the swing to end")
 
 
-## A press that cannot start yet in the open (the special still on its cooldown) is dropped after buffer_time.
+## A press that cannot start yet in the open (the Investida still on its 5 s cooldown) is dropped after buffer_time.
 func test_buffer_drops_a_press_that_waits_in_the_open() -> void:
-	play(H)
-	run(tree.neutral[1].chain_window + 0.01)
-	assert_gt(runner.cooldown_left(&"bolt"), tree.buffer_time + 0.02, "still on its cooldown")
-	runner.press(H)
-	run(runner.cooldown_left(&"bolt") + 0.1)
-	assert_eq(started, [&"bolt"] as Array[StringName], "the press waited only buffer_time")
+	var rush := ComboNode.In.RUSH
+	play(rush)
+	run(ComboTree.find(tree.neutral, rush).chain_window + 0.01)
+	assert_gt(runner.cooldown_left(&"dash_cut"), tree.buffer_time + 0.02, "still on its cooldown")
+	runner.press(rush)
+	run(runner.cooldown_left(&"dash_cut") + 0.1)
+	assert_eq(started, [&"dash_cut"] as Array[StringName], "the press waited only buffer_time")
 
 
 func test_chain_window_is_per_node() -> void:
@@ -332,12 +331,14 @@ func test_impact_frame_only_for_omegas_and_phase_breaks() -> void:
 	assert_false(Combat.breaks_phase(knight, 5.0), "only a boss has phases")
 
 
-## The held (Omega) moves cost Magia; a plain chain never does.
+## The held (Omega) moves cost Magia, and so does the rajada; a plain chain never does.
 func test_only_omega_moves_cost_magick() -> void:
 	for n in tree.all_nodes():
 		if n.has_tag(&"omega"):
 			assert_gt(n.magick_cost, 0.0, String(n.id))
 			assert_true(n.input == ComboNode.In.CHARGE or n.input == ComboNode.In.CHARGE_LIGHT, String(n.id))
+		elif n.id == &"bolt":
+			assert_eq(n.magick_cost, 12.0, "the rajada pays 12 Magia on its tap (weak start, 2026-11-21)")
 		else:
 			assert_eq(n.magick_cost, 0.0, String(n.id))
 
@@ -395,7 +396,7 @@ func test_no_blow_of_the_combo_moves_the_paladin() -> void:
 	var tree: ComboTree = load("res://data/combos/paladin.tres")
 	for node: ComboNode in tree.all_nodes():
 		if node.has_tag(&"dash"):
-			continue  # the dash attack carries him along the dodge's line
+			continue  # the Investida carries him along its line
 		assert_eq(node.lunge, 0.0, "%s is struck standing still" % node.id)
 		assert_eq(node.move_scale, 0.0, "%s keeps no walking" % node.id)
 

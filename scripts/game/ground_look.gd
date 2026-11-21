@@ -52,12 +52,16 @@ const ORDER_LEVELS: Array[float] = [1.0, 0.7, 0.55, 0.45, 0.38, 0.32]
 ## Morvath's violet; a frame round every tile (HAZARD_TILE m) that warms with the wind-up, a faint fill (alpha 0.08)
 ## coming up to 0.3 over the last 30% (the warnings' own fill_late, the hand learns it once); its strongest channel
 ## stays under 1.0 (HAZARD_STRENGTH). Drawn before the enemies' warnings (render priority HAZARD_PRIORITY).
-const HAZARD_COLOR := Color(1.0, 0.62, 0.25)
-const HAZARD_STRENGTH := 0.75
-const HAZARD_RIM := 0.12
+## SR-P4 (one style for every area warning): since the lote 3 the floor's own bands and rings (chain, slit, trap, urn,
+## oil, stones, slabs) are drawn as any enemy's warning: the game's warning red (WARNING_COLOR), the clean rim
+## (RIM_METERS), the faint floor rising to FILL_MAX; only the render priority keeps them under the enemies' warnings.
+## The runes' own tiles (RunesLook) keep their amber.
+const HAZARD_COLOR := WARNING_COLOR
+const HAZARD_STRENGTH := WARNING_STRENGTH
+const HAZARD_RIM := RIM_METERS
 const HAZARD_TILE := 3.0
-const HAZARD_FILL_EARLY := 0.08
-const HAZARD_FILL_MAX := 0.3
+const HAZARD_FILL_EARLY := 0.1
+const HAZARD_FILL_MAX := 0.35
 const HAZARD_PRIORITY := -1
 ## Every other area's fill (ground.gdshaderinc's defaults).
 const FILL_EARLY := 0.1
@@ -163,7 +167,6 @@ static func put(m: ShaderMaterial, uniform: StringName, value: Variant) -> void:
 static func hazard(node: MeshInstance3D, at: Vector2, dir: Vector2, length: float, width: float, y: float) -> void:
 	dress(node, Style.HAZARD, Shape.LINE, HAZARD_COLOR, HAZARD_STRENGTH, HAZARD_RIM, at, dir, length, width, y)
 	var m := node.material_override as ShaderMaterial
-	put(m, &"tile_m", HAZARD_TILE)
 	put(m, &"fill_early", HAZARD_FILL_EARLY)
 	put(m, &"fill_max", HAZARD_FILL_MAX)
 

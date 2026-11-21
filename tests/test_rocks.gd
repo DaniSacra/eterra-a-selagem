@@ -48,7 +48,8 @@ func test_where_the_stones_fall() -> void:
 				for j in 11:
 					var p := z.position + z.size * Vector2(k / 10.0, j / 10.0)
 					assert_gte(p.distance_to(l.hero_spawn), 6.0, "%s: 6 m off the way in at %s" % [l.id, p])
-		assert_null(_base(l.id).variant(0).hazard.also, "%s A has none" % l.id)
+		var a_also := _base(l.id).variant(0).hazard.also
+		assert_true(a_also == null or a_also.kind != HazardDef.Kind.DROPS, "%s A has no stones (SR-P1: its wall traps)" % l.id)
 
 
 ## Simulated on each room: never two stones touching, never more than two warming, never in the first 3 s, every square

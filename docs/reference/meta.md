@@ -45,22 +45,22 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 
 - **Ultimates (E2-08, E2-10)**: ação `ultimate` (Shift desde 2026-11-21, era R; LB no controle), carga `UltCharge` (`core/ult_charge.gd`) pela Magia gasta (`Magick.spent`; U-1 60, U-2 70; `ult_charge_pct` do Coração da Emeth acelera) e, desde a T5 (`docs/design/t5_ultimate.md`), pelo dano causado (`UltDef.damage_charge` 0,02 por ponto, sem os acertos da própria ultimate) e pela vida perdida (`hurt_charge` 1,0; `RESULT` `ult.charged`); sem escolha no save, a descida joga a primeira que a Maestria abre (`HeroDef.ult_for`, gravada no save); o 5º losango aparece trancado com "Maestria 2" antes de abrir, pulsa e diz "Pronta" cheio, e R sem poder diz por quê (`Player.ult_refused`, `Hud.ult_caption`; testes em `tests/test_t5_ultimate.gd`), gesto `Player` estado `ULT` 0,3 s protegido que corta o golpe como a esquiva; efeitos em `scripts/game/ultimates.gd`: U-1 Corte do Juízo (faixa 12 x 4 m, 300 no miolo e 200, armadura em dobro, atordoa 1 s, `ult_rift.gdshader`), U-2 Voragem (6 m a 4 m à frente ou no cursor até 8, 4 s, tiques de 8, implosão 120, espiral por `Arena.sweep`; elites 50%, guardiões 25%, Morvath só lento; `ult_vortex.gdshader`: véu esmeralda até 0,3, três braços marfim, aro de ouro velho que se fecha na implosão, tetos em `Ultimates.vortex_peaks`). Golpes com tag `ultimate` nunca são finalizador nem Ômega. 5º losango no HUD. `--ultimate=cleave|vortex`, `--ult-full`, `--shot-on=ult`. Testes em `tests/test_ultimate.gd`; sonda 40 metas (E2-U1 a U3).
 
-- **Botões do Guerreiro e Brado de Guerra (2026-11-21, aprovado pelo Daniel; `docs/design/heroes/guerreiro.md` 3.4 e 3.5; testes em `tests/test_shout.gd`)**:
-  teclas novas em `Controls`: **E = Brado** (ação `shout`, R3 no controle), **Shift = ultimate** (era R; o LB continua), **F = interagir**
-  (era E; A continua), **Q = círculo sozinho** (o Shift deixou de ser atalho do `cast`), R só no `menu_reroll`. Save antigo não quebra:
-  o save guarda só o que o jogador remapeou, então quem não mexeu lê os padrões novos; o que remapeou fica, e um padrão novo que bata
-  com uma tecla já guardada vai para a reserva (`SPARE_KEYS`: interagir G, Brado Z, ultimate X; `Controls.keys_for`). O Brado é dado:
-  `ComboNode.In.SHOUT` (nó `shout` em `tools/make_data.gd` `_tree`, nas duas árvores), `Shape.CIRCLE` 4 m, dano 15, `Effect.STUN`
-  (`effect_time` 0,5 s, `effect_power` = máximo de cargas por grito, 2), recarga `cooldown` 10 s, preparo 0,25 s, recuperação 0,25 s,
-  pés plantados, a esquiva corta; o "impacto 0,10 s" ficou como parada do golpe (`hit_stop_ms` 80, o teto do `test_combo`) e o clipe
-  `Cast` toca a 0,4x para o braço estar aberto quando o grito cai. Código novo mínimo: `Combat.strike` (`shout` = `effect == STUN`:
-  dois anéis em vez do corte da lâmina, só comuns são atordoados por `Horde.flinch`; `Combat.is_common` = nem elite, nem guardião
-  `heavy`, nem chefe; os outros só levam dano e empurrão, sem o atordoamento nem de um golpe comum: `_no_stun`), `GiftState.on_shout`
-  (1 carga de Ímpeto por comum atingido, no máximo `effect_power`, nunca chefe; sem Dom Ímpeto não dá carga; `on_kill` ignora a tag
-  `shout`, então um abate do grito não passa de 2), `Player._press_shout` e `shout_wait()` (recarga no HUD). `DealtBy` conta `shout`.
-  Robô: `Bot.shout_worth` (pronto e 3 ou mais comuns a 4 m; `--bot-no-shout` volta ao robô de antes para comparar). Slot de Bênção
-  `TECH`/`ULT` **não entrou** (a spec só os pede para as Bênçãos mudarem o E e o Shift, o que não foi pedido); os 3 Dons do Brado
-  (Brado Longo, Arranque, Brado Aberto) e as Bênçãos por família do E também ficam para depois.
+- **Kit novo do Guerreiro (2026-11-21, Lote 1, aprovado pelo Daniel; estado em `docs/design/heroes/guerreiro.md`; testes em `tests/test_shout.gd` e
+  `tests/test_warrior_kit.gd`)**: **Q = Brado** (`shout`, RB), **E = Investida** (`rush`, R3), **Shift = ultimate**, **F = interagir**, Espaço só esquiva,
+  direito = rajada (8 de Magia, toque), esquerdo igual. O círculo (`cast`) não tem tecla nem é remapeável (`HeroDef.circle = false`; o
+  código `Player._read_cast`, `Combat.cast` e o dado ficam para o Paladino). Save antigo não quebra (o save guarda só o remapeado; padrão novo
+  que bata com tecla guardada vai para a reserva, `SPARE_KEYS`: interagir G, Brado e Investida Z, ultimate X). Tudo é dado em `_tree`:
+  **Brado** `ComboNode.In.SHOUT`, `Effect.SHOUT` (15 em 4 m, empurra 1,5 m com `knockback` 10,5, `_no_stun` para todos; `effect_time` 5 s, `buff_speed`
+  0,2, `buff_guard` 0,15, `effect_power` 1 carga de Ímpeto, recarga 12 s), `GiftState.rally` (buff e carga; `rallied()`, `guard()` lido por `Player.hurt`,
+  `attack_speed` soma a velocidade), tags `shout` e `cast` (as Bênçãos do slot `CAST` agem nele: Brado em Brasa, de Geada, Radiante, Firme);
+  **Investida** `In.RUSH`, nó `dash_cut` (tags `light`, `dash`: 35, linha de 4 m, `lunge` 4, recarga 5 s, `magick_per_hit` 3 lido por `HeroGifts._on_landed`, mais os 2
+  da passiva); **rajada** nó `bolt` (60, 6 m, `magick_cost` 8, recarga 0,5 s; `Player._press_special` não aceita o toque sem Magia e emite `magick_refused`, o HUD
+  diz "Sem Magia"; sem `burst` na árvore o segurar não carrega nada); `tree.dodge` vazio e `dodge_window` 0 (atacar depois da esquiva é o cut1). Dons: Onda
+  Carregada solta a onda do giro na rajada (tag `heavy`); Passo Encadeado, Estocada Certeira (era Investida), Fio do Passo, Retorno do Corte e Eco do Passo
+  seguem a Investida pela tag `dash`; Salmo da Sentinela não é oferecido sem círculo (`Psalms.circle`). HUD: losangos esquerdo, direito, Q (Brado, slot `CAST`,
+  glifo do grito), E (Investida, glifo `BoonIcon.RUSH_GLYPH`), Shift, Espaço; recargas por `Player.shout_wait` e `rush_wait`. Robô: `Bot.shout_worth` (3 ou mais
+  inimigos a 4 m; `--bot-no-shout`), `Bot.rush_worth` (entrar a 4,5 a 8 m, ou para Magia quando a rajada não tem; `--bot-no-rush`), rajada só com Magia. Faltam: slots
+  `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
 ## Salmos (E4-01 e E4-02; regras, números e escolhas em `docs/design/e4_psalms.md`)
 - `PsalmDef` (`core/psalm_def.gd`, `data/psalms/`, parte `psalms` do `make_data.gd`): nome só por tema, sem número nem

@@ -10,8 +10,10 @@ const ACTION_GLYPH := 100
 const ULT_GLYPH := 110
 ## The glyph of the Brado de Guerra (E): a mouth with the cry rippling out in arcs.
 const SHOUT_GLYPH := 105
+## The Investida (E): a thrust with its speed lines.
+const RUSH_GLYPH := 106
 ## Glyph of the most Magia (T5, the Provação's Reserva): a cut crystal with a light down its middle.
-const MAGICK_GLYPH := 105
+const MAGICK_GLYPH := 107
 
 var boon: Boon
 var cooldown := 0.0
@@ -198,6 +200,11 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 				var rad := r * (0.45 + k * 0.28)
 				ci.draw_arc(c, rad, -0.75, 0.75, 14, w, th, true)
 				ci.draw_arc(c, rad, PI - 0.75, PI + 0.75, 14, w, th, true)
+		106:  # the Investida: a pointed blade driving right, three speed lines behind it
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(r * 0.95, 0), c + Vector2(r * 0.1, -r * 0.34), c + Vector2(-r * 0.1, 0), c + Vector2(r * 0.1, r * 0.34)]), w)
+			for k in 3:
+				var y := (k - 1) * r * 0.5
+				ci.draw_line(c + Vector2(-r * 0.95, y), c + Vector2(-r * (0.3 - absf(k - 1) * 0.1), y), w, th * 0.8, true)
 		MAGICK_GLYPH:  # the most Magia: a cut gem (table, girdle, a point below), its facets in a V; never a cross
 			var gem := PackedVector2Array([c + Vector2(-r * 0.42, -r * 0.6), c + Vector2(r * 0.42, -r * 0.6), c + Vector2(r * 0.85, -r * 0.15),
 				c + Vector2(0, r * 0.9), c + Vector2(-r * 0.85, -r * 0.15)])

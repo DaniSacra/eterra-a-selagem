@@ -4,6 +4,25 @@ Dono: `balance-designer`. **Só medida e proposta**: nenhum número, código ou 
 documento. Os números vão para o `gameplay-engineer` pelo Game Director; o que mexe no tempo de um ataque passa antes
 pelo `combat-feel-director`.
 
+## Meta nova do Daniel (2026-11-21, noite): "me sentir muito fraco no começo"
+
+> "Eu queria me sentir muito fraco no começo do jogo onde eu mais perco do que venço no minichefe... pq só desta
+> maneira eu vou sentir as evoluções do santuário."
+
+- **Herói novo (Maestria 1, sem Forja, sem Dons): perde mais do que vence no guardião da sala 6.** Régua do robô 0,25:
+  das descidas que chegam ao guardião, menos de 50% passam dele; vitória sobre Morvath quase nunca (0 a 10%).
+- **Cada evolução do Santuário tem de se sentir**: o mesmo robô com a Forja, os Dons e a Maestria das primeiras ~5
+  descidas passa do guardião na maioria das vezes. A diferença sem e com evolução é o que importa (meta: 25 a 40
+  pontos no "passa do guardião").
+- O dano inicial do herói desce (a rajada, o Brado e a Fúria somados estavam limpando as primeiras salas); quem paga a
+  diferença é o Santuário, não as Bênçãos da partida.
+- Substitui a primeira linha da tabela B.3 (Maestria 1 a 5).
+- **Medido (12 sementes, robô 0,25, depois da rajada 35/12, Investida +2, Brado 15%)**: novato morre em 40% dos
+  guardiões (Ancião 3, Cavaleiro 1), 0 vitórias; evoluído (`--talents=quarto_corte,impeto,corte_crescente,lamina_faminta
+  --forge=2`) morre em 33%, 1 vitória. **A diferença é de só 7 pontos: as evoluções do Santuário estão fracas** (meta
+  25 a 40). Cavaleiro endurecido (investe a cada 2,4 s, golpe 18). Próximo: árvore da conta (Lote 5) e Dons/Forja mais
+  fortes, não guardião mais forte.
+
 ## Lote B (2026-11-21): "mais difícil, principalmente sem os upgrades"
 
 ### B.0 Pedido do Daniel (substitui as metas de 2026-11-19)

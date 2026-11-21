@@ -20,6 +20,8 @@ const CHANCE := 0.1
 const CHANCE_GUARDIAN := 0.05
 
 var catalog: Array[PsalmDef] = []
+## The hero has the circle of light (HeroDef.circle): the Sentinela, which walks with it, is never offered without it.
+var circle := true
 ## Taken in this run, in order.
 var taken: Array[PsalmDef] = []
 ## Offered on a card in this run (ids), for the Codex and the "Salmo descoberto" greeting.
@@ -115,6 +117,8 @@ func eligible(boons: BoonState, gifts: Array[StringName]) -> Array[PsalmDef]:
 		return out
 	var held := held_of(boons, gifts)
 	for p in catalog:
+		if p.effect == PsalmDef.Effect.SENTINEL and not circle:
+			continue
 		if taken.has(p) or taken.any(func(t: PsalmDef) -> bool: return t.theme == p.theme):
 			continue
 		if met(p, held):

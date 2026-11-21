@@ -131,9 +131,9 @@ func test_the_bar_follows_the_device() -> void:
 	Controls.using_pad = was
 
 
-# ---------- P0-3, UI-HB5: the hit count by the bars ----------
+# ---------- P0-3, UI-HB5: the hit count by the row ----------
 
-func test_the_hit_count_stands_by_the_bars_out_of_the_field() -> void:
+func test_the_hit_count_stands_right_of_the_row_out_of_the_field() -> void:
 	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
 	add_child_autofree(game)
 	await wait_process_frames(2)
@@ -145,18 +145,15 @@ func test_the_hit_count_stands_by_the_bars_out_of_the_field() -> void:
 	var row := hud.find_child("Combo", true, false) as Control
 	assert_not_null(row)
 	var r := row.get_global_rect()
-	assert_lte(r.position.x, screen.x * 0.35, "at the left, by the medallion (six diamonds before it since the Brado)")
-	assert_gte(r.position.y, screen.y * 0.75, "at the bottom, by the bars")
+	assert_gte(r.position.x, hud._action_row.get_global_rect().end.x, "right of the diamonds (the row is centred since Lote 2)")
+	assert_gte(r.position.y, screen.y * 0.75, "at the bottom")
 	for l: Label in [hud._combo_word, hud._move]:
 		assert_ne(l.get_theme_font(&"font"), UiKit.TITLE_FONT, "no Cinzel under 24 px")
 	assert_gte(Hud.FONT_COMBO, 24, "the count itself")
-	# the move's name clears the medallion's ring and the bar's frame (the horde capture of 2026-11-20)
-	var crest := hud._crest.get_global_rect()
-	assert_gte(r.position.x - crest.end.x, 12.0, "clear of the medallion")
-	assert_lte(r.end.y, hud._life.get_global_rect().position.y - 8.0, "over the bar's frame, not on it")
+	assert_lte(r.end.x, screen.x, "on screen")
 
 
-# ---------- P1-4 under test: --hud=row ----------
+# ---------- Lote 2: the row centred at the foot ----------
 
 func _hud_with(layout: String) -> Hud:
 	if layout != "":
@@ -168,39 +165,40 @@ func _hud_with(layout: String) -> Hud:
 	return game.hud
 
 
-func test_the_classic_keeps_the_diamonds_at_the_bottom_middle() -> void:
-	var hud := await _hud_with("classic")
-	var screen := hud.get_viewport_rect().size
-	var row := hud._action_row.get_global_rect()
-	assert_almost_eq(row.get_center().x, screen.x * 0.5, 1.0, "the layout before P1-4, to compare")
-	assert_eq(hud._slots[0].side, ActionSlot.DIAMOND)
-
-
-func test_the_row_layout_frees_the_bottom_middle() -> void:
+func test_the_row_is_centred_at_the_foot() -> void:
 	var hud := await _hud_with("")
 	var screen := hud.get_viewport_rect().size
 	var row := hud._action_row.get_global_rect()
-	assert_lte(row.end.x, screen.x * 0.35, "no diamond between 35% and 70% of the width (five diamonds and the dodge since the Brado)")
+	assert_almost_eq(row.get_center().x, screen.x * 0.5, 2.0, "centred (Daniel's decision, 2026-11-21)")
 	assert_eq(hud._slots[0].side, Hud.ROW_DIAMOND)
-	assert_lte(row.end.y, hud._life.get_global_rect().position.y, "over the bars")
-	assert_gte(row.position.x, hud._crest.get_global_rect().end.x - 10.0, "from the medallion's shoulder")
-	assert_gte(hud._passives.get_global_rect().position.x, screen.x * 0.7, "the gifts in the right corner")
+	assert_gte(row.position.y, screen.y * 0.85, "at the bottom")
+	assert_lte(row.end.y, screen.y, "inside the screen")
+	assert_lt(row.end.x, hud._passives.get_global_rect().position.x + screen.x, "clear of the right corner")
+	# the bars and the medallion stand left of the row, the gifts' corner right of it
+	var bars := hud._crest.get_global_rect().merge(hud._life.get_global_rect()).merge(hud._magick.get_global_rect())
+	assert_lt(bars.end.x, row.position.x, "the bars end before the row begins")
+	assert_gte(hud._passives.get_global_rect().position.x, row.end.x, "the gifts in the right corner")
 	for c: Control in [hud._curse_badge, hud._trial_seal]:
-		assert_lte(c.get_global_rect().end.y, row.position.y - Hud.ROW_CAPTION + 1.0, "%s over the row and its captions" % c.name)
-	# the count on the row's line, right of the last diamond, the move's name under it (review 3.1 C)
-	var count := hud._combo_row.get_global_rect()
-	assert_gte(count.position.x, row.end.x, "right of the row")
-	assert_almost_eq(count.position.y, row.position.y, 4.0, "on its line")
-	assert_gte(hud._move.get_global_rect().position.y, count.position.y + 20.0, "the move's name under the count")
-	# the block (captions over the row to the medallion's foot) under 200 px at 1080 (133 at 720 lines)
-	var top := row.position.y - ActionSlot.CAPTION_RISE - ActionSlot.CAPTION_FONT
-	assert_lte(hud._crest.get_global_rect().end.y - top, 200.0 * screen.y / 1080.0)
+		assert_lte(c.get_global_rect().end.y, hud._magick.get_global_rect().position.y + 1.0, "%s over the bars" % c.name)
 	assert_gte(Hud.ROW_DIAMOND * 1080.0 / 720.0, 52.0, "about 54 px at 1080")
-	# the permanent HUD of the fight under 5.5% of the screen (P1-4 acceptance): medallion, bars, diamonds
+	# the permanent HUD of the fight under 6% of the screen: medallion, bars, diamonds, build column
 	var area := 0.0
-	for c: Control in [hud._crest, hud._life, hud._magick, hud._action_row]:
+	for c: Control in [hud._crest, hud._life, hud._magick, hud._charge, hud._action_row, hud._column]:
 		area += c.get_global_rect().get_area()
-	assert_lt(area / (screen.x * screen.y), 0.055)
+	assert_lt(area / (screen.x * screen.y), 0.075)
+
+
+func test_the_bars_stack_magia_over_life_beside_the_medallion() -> void:
+	var hud := await _hud_with("")
+	var crest := hud._crest.get_global_rect()
+	var magick := hud._magick.get_global_rect()
+	var life := hud._life.get_global_rect()
+	assert_gte(magick.position.x, crest.end.x, "right of the medallion")
+	assert_lt(magick.end.y, life.position.y, "Magia over life")
+	assert_lt(life.end.y, hud._charge.get_global_rect().position.y + 1.0, "the ultimate's charge under life")
+	assert_almost_eq(magick.position.x, life.position.x, 0.5, "left edges together")
+	assert_lte(life.end.y, crest.end.y + 1.0, "no lower than the medallion")
+	assert_gte(magick.position.y, crest.position.y - 1.0, "no higher than it")
 
 
 # ---------- UI-HB1, UI-HB2: the cards ----------
@@ -266,7 +264,7 @@ func test_a_trade_shows_the_numbers_it_leaves() -> void:
 func test_the_glossary_names_the_words_of_the_card_in_focus() -> void:
 	assert_eq(Glossary.terms_of("O especial congela por 0,4 s."), [&"freeze"] as Array[StringName])
 	assert_eq(Glossary.terms_of("O ataque incendeia: 3 de dano por segundo."), [&"burn"] as Array[StringName])
-	assert_true(Glossary.emphasize("O especial congela.").contains(UiKit.strong("congela")))
+	assert_true(Glossary.emphasize("O especial congela.").contains(Glossary.mark("congela", &"freeze")))
 	var choice := BoonChoice.new()
 	add_child_autofree(choice)
 	choice.open([state.find(&"toque_geada"), state.find(&"golpe_brasa"), state.find(&"onda_maior")] as Array[Boon], state)

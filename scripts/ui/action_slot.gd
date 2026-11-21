@@ -66,6 +66,12 @@ const READY_PULSE := 0.55
 const PULSE_REACH := 12.0
 const SEAL_VEIL := Color(0.02, 0.016, 0.03, 0.7)
 const SEAL_GLYPH := 0.35
+## The Magia cost's gem: its half size against the diamond's, where its centre stands (share of the radius, up and
+## right of the middle) and its number's size.
+const COST_GEM := 0.46
+const COST_AT := 0.62
+const COST_FONT := 12
+const COST_COLOR := Color("2a8fb8")
 
 var action: StringName
 var slot: Boon.Slot
@@ -82,6 +88,12 @@ var charges := 0
 var charges_max := 0
 ## The held version of the action costs more Magia than there is.
 var starved := false
+## What the action costs in Magia, drawn as a small blue gem on the diamond's upper right (0: nothing; the rajada's 8).
+var cost := 0:
+	set(v):
+		if v != cost:
+			cost = v
+			queue_redraw()
 ## 0..1: someone stands behind the diamond (its body turns translucent).
 var veil := 0.0:
 	set(v):
@@ -263,9 +275,23 @@ func _draw() -> void:
 		var p := Vector2(c.x + (i - (lights_max - 1) * 0.5) * LIGHT_GAP, c.y - r - LIGHT_RISE)
 		draw_colored_polygon(_diamond(p, LIGHT + 1.5), UiKit.INK)
 		draw_colored_polygon(_diamond(p, LIGHT), light_color if i < lights else CHARGE_SPENT)
+	if cost > 0:
+		_draw_cost(c + Vector2(r * COST_AT, -r * COST_AT), r * COST_GEM)
 	_draw_key(Vector2(c.x, side + key_drop))
 	if caption != "":
 		_draw_caption(Vector2(c.x, c.y - r - CAPTION_RISE))
+
+
+## The Magia cost: a small gem of Magia's blue with the number in lining figures, ink round both.
+func _draw_cost(at: Vector2, half: float) -> void:
+	var dim := starved
+	draw_colored_polygon(_diamond(at, half + 1.5), UiKit.INK)
+	draw_colored_polygon(_diamond(at, half), COST_COLOR.darkened(0.55) if dim else COST_COLOR.darkened(0.2))
+	var font := UiKit.number_font()
+	var text := str(cost)
+	var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_FONT).x
+	var base := Vector2(at.x - w * 0.5, at.y + (font.get_ascent(COST_FONT) - font.get_descent(COST_FONT)) * 0.5).round()
+	draw_string(font, base, text, HORIZONTAL_ALIGNMENT_LEFT, -1, COST_FONT, UiKit.PALE if not dim else Color(UiKit.PALE, 0.6))
 
 
 ## The ready ultimate: the closed ring of light around the frame (over a dark line so it holds on a lit floor),
@@ -347,8 +373,9 @@ func _draw_mouse(at: Vector2) -> void:
 
 ## The action's mark outside the HUD (stage 1A: the cards say the action with the HUD's own symbol): a small diamond
 ## of ink with the old gold rim and the action's glyph, side pixels tall.
+## The Brado de Guerra (Q) is the CAST slot's action now: its mark is the cry, not the circle.
 static func mark(action_slot: Boon.Slot, side: float) -> Control:
-	return glyph_mark(BoonIcon.ACTION_GLYPH + action_slot, side)
+	return glyph_mark(BoonIcon.SHOUT_GLYPH if action_slot == Boon.Slot.CAST else BoonIcon.ACTION_GLYPH + action_slot, side)
 
 
 ## The same mark for any glyph of BoonIcon (the ultimates: BoonIcon.ULT_GLYPH + UltDef.Kind, on the hero page).

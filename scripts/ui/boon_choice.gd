@@ -18,6 +18,8 @@ const LEAD_SIZE := 20
 const ANGEL_SEAL := 64.0
 ## UI-HB4: the angel's seal in the left column, px at 720 lines (about 330 at 1080).
 const ANGEL_FIGURE := 220.0
+## The painted portrait's height in that column (AN-1).
+const ANGEL_ART_HEIGHT := 280.0
 ## The glossary beside the row (UI-HB1, P1-2) and the room between it and the cards.
 const GLOSSARY := 220.0
 const GLOSSARY_GAP := 22
@@ -181,8 +183,8 @@ func by_angel(a: AngelDef, on_back: Callable) -> void:
 		_head.move_child(n, 0)
 	var line := find_child("line", true, false) as HBoxContainer
 	if line != null:
-		# UI-HB4: the angel's seal large in a column to the left of the cards, as the god's portrait (the angels have no
-		# figure yet: only the seal), over a soft light of its colour; the glossary under it
+		# UI-HB4: the angel in a column to the left of the cards, as the god's portrait (AN-1: its painting; the seal when it has none
+		# yet), the glossary under it
 		var col := VBoxContainer.new()
 		col.name = "angel_column"
 		col.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -190,21 +192,26 @@ func by_angel(a: AngelDef, on_back: Callable) -> void:
 		col.custom_minimum_size.x = GLOSSARY
 		line.add_child(col)
 		line.move_child(col, 0)
-		var holder := Control.new()
-		holder.name = "angel_seal"
-		holder.custom_minimum_size = Vector2(ANGEL_FIGURE, ANGEL_FIGURE)
-		holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var tint := AngelSeal.tint(a.family)
-		holder.draw.connect(func() -> void:
-			var c := holder.size * 0.5
-			for k in 8:
-				var t := float(k) / 8.0
-				holder.draw_circle(c, ANGEL_FIGURE * 0.62 * (1.0 - t * 0.55), Color(tint, 0.05 * (0.4 + t))))
-		var seal := AngelSeal.new().setup(a.family, ANGEL_FIGURE * 0.82)
-		seal.position = Vector2(ANGEL_FIGURE, ANGEL_FIGURE) * 0.09
-		holder.add_child(seal)
-		col.add_child(holder)
+		# AN-1: the angel's painted portrait when it has one (AngelArt), else its seal over a soft light
+		var art := AngelArt.portrait(a, Vector2(ANGEL_FIGURE, ANGEL_ART_HEIGHT))
+		if art != null:
+			col.add_child(art)
+		else:
+			var holder := Control.new()
+			holder.name = "angel_seal"
+			holder.custom_minimum_size = Vector2(ANGEL_FIGURE, ANGEL_FIGURE)
+			holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			holder.draw.connect(func() -> void:
+				var c := holder.size * 0.5
+				for k in 8:
+					var t := float(k) / 8.0
+					holder.draw_circle(c, ANGEL_FIGURE * 0.62 * (1.0 - t * 0.55), Color(tint, 0.05 * (0.4 + t))))
+			var seal := AngelSeal.new().setup(a.family, ANGEL_FIGURE * 0.82)
+			seal.position = Vector2(ANGEL_FIGURE, ANGEL_FIGURE) * 0.09
+			holder.add_child(seal)
+			col.add_child(holder)
 		var name := UiKit.shadow(UiKit.title(T.t(a.name_key), 24, tint.lightened(0.35)))
 		name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		col.add_child(name)
