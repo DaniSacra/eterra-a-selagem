@@ -118,8 +118,50 @@ Altar e Encanto fica para depois, se ele gostar.
 - Referência de princípio: Hades II (cada deus muda os mesmos botões do seu jeito), sem copiar nome, texto nem arte.
 - Responsáveis: `hero-designer` escreve, `balance-designer` confere os números; o Daniel aprova anjo por anjo (nomes e textos).
 
-**Pendência de teste**: `test_room_hold` ("on a black screen") falhou uma vez na suíte inteira de 23h28 e passou
-sozinho duas vezes; rodar a suíte de novo na próxima integração e, se repetir, achar a corrida do escurecer.
+### Revisão de 2026-11-21 (agentes; evidência e detalhe nos relatórios)
+
+**Bugs** (`docs/qa/bug_hunt_2026-11-21.md`, 12 partidas sem travar; nenhum P0)
+- BH-1 a BH-3 (P1, P): Como Jogar e telas com números velhos: rajada 60/8 (certo 35/12), Investida devolve 3 (certo 2),
+  Brado 20% (certo 15%). Montar o número a partir do dado, para não envelhecer de novo.
+- BH-4 (P1, M): em `NONE`, Forja Peso, Onda Pesada, Vigia Firme e Fúria Plena não fazem nada e o texto promete atordoar
+  (duas custam 25 de Prata). Junto da decisão do F8; a Vigia Firme sai de qualquer jeito com o BO-2.
+- BH-6 (P2, P): o teste da tela preta: o escurecer das portas não guarda nem mata a animação anterior (`rooms.gd:987`, `:1040`,
+  `:1257`); na suíte ela continua por cima do preto. Falhou uma vez na suíte das 23h28 e passou sozinho duas vezes.
+- BH-5 (F7 e F8 com a pausa aberta), BH-7 (teclas sobressalentes repetidas), BH-8 (comentários), BH-9 (a suíte não testa `NONE`, que
+  é como o exe roda), BH-10 (`smoke.sh` esconde os avisos), BH-11 (pico de 33 ms com 300 inimigos): P2.
+
+**Jogabilidade** (`docs/design/gameplay_review_2026-11-21.md`; 12 novatos, robô 0,25, 30 de vida, `NONE`)
+- GP-1 (P0): o Ancião matou 4 de 4; o Cavaleiro 0 de 6. O leque de projéteis gira com o herói até o tiro, 82% acertam e cada um tira
+  40% da vida. Travar a mira nos últimos 0,35 s, abrir o leque e baixar de 12 para 10; meta: no máximo 35% acertando.
+- GP-2 (P1): o herói chega ao guardião com 18,5 de 30 e a primeira cura garantida vem depois dele. Fonte como uma das duas
+  portas antes do guardião (junto do DM-1).
+- GP-3, GP-4, GP-7 (P1): o Brado rende 3,3% do dano e protege pouco; ataque 60%, especial 12%, Investida 8%, Ômega 6%.
+  Proposta: o Brado também absorve um golpe.
+- GP-5 (P1): sem atordoar, o acerto em inimigo blindado só se lê pelo som e pelo número. Reação só desenhada, estalo da
+  blindagem e parada maior na quebra; vídeo para o Daniel aprovar.
+- GP-6, GP-12: o mago causa 33% do dano sofrido; o arqueiro acerta 2% dos tiros.
+- GP-8 (P1): até o guardião, 2 a 4 Bênçãos e 0 Elos. Guardião nunca antes da sala 5 e a terceira Bênção ajudando a fechar Elo.
+- GP-9 (P1): nenhuma dica na primeira partida (Ômega, blindagem, esquiva, Elo). Quatro dicas curtas, uma vez por save.
+- GP-10 (P1): a maldição de Morvath acerta 7 de 7; afrouxar a perseguição. Os golpes com rastreio novo estão justos. Pergunta ao
+  Daniel: Morvath ainda é atordoado por 3 golpes pesados na fase 3, fora da regra `NONE` (sugestão: manter).
+
+**Gráficos** (`docs/art/review_2026-11-21b.md`, capturas em `docs/gallery/review_2026-11-21b/`; nenhum P0, 15 P1 e 14 P2, zero créditos)
+- Os oito de maior efeito por esforço (todos P, menos o GR-6): GR-1 poças de luz mostarda (`catacomb_hall.gd:431`), GR-3 ossos e
+  caveiras claros demais (o pó de osso do lote visual), GR-2 blocos brancos da coluna caída, GR-4 musgo aceso demais, GR-9 violeta
+  sobrando na Fenda, GR-6 Ancião com contorno amarelo por dentro do manto (M), GR-10 orbes sempre laranja, GR-12 coluna da
+  direita apagada e com o Elo cortado.
+- Depois: GR-5 soldados de armadura da cor do chão, GR-7 corpo de Morvath escuro sem rosto, GR-8 raio-x de pontinhos, GR-11
+  medalhões iguais no Véu, Maré e Marca (família mais botão, junto do BO-2), GR-13 a GR-15 (faixa de dons, placa sobre o herói, loja
+  sob o HUD) e os P2 (GR-16 a GR-29).
+- Lotes: A cenário, B figuras e efeitos, C interface junto do BC-1 e do BO-2. Falta captura das portas (entra com o DM-1).
+
+### Ordem sugerida com tudo junto (2026-11-22)
+1. **Lote 6, rápido**: BH-1 a BH-3, BH-5, BH-6, BH-10, GP-1 (Ancião), GR-1 a GR-4, GR-9. Só consertos, um exe.
+2. **Lote 7, a descida**: DM-1 (sem mapa, 2 portas) com GP-2 (fonte antes do guardião) e GP-8 (ritmo); medir.
+3. **BO-3 no papel**: as fichas dos 7 anjos, com a aprovação do Daniel anjo por anjo (pode andar junto dos lotes 6 e 7).
+4. **Lote 8, Bênçãos**: BC-1, BC-2, BO-2 (com BO-1), GR-10 a GR-12.
+5. **Lote 9, anjos**: BC-3 e BC-4.
+6. **Lote 10, combate depois do teste do Daniel**: decisão do F8, BH-4, BH-9, GP-3 a GP-7, GP-9, GP-10, GR-5 a GR-8.
 
 ## Estado de 2026-11-21, fim do dia (commit `d808893`, exe dos Lotes 1 a 4 com o Daniel)
 
