@@ -7,7 +7,7 @@
 script = ExtResource("1_p77g3")
 stat = &"damage_pct"
 tag = &"light"
-base = 0.1
+base = 0.2
 per_level = PackedFloat32Array()
 by_rarity = false
 

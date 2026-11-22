@@ -55,7 +55,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras"]:
+	for part in ["combos", "enemies", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "account"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -489,6 +489,49 @@ func _boons() -> void:
 	_boon(39, &"chuva_brasas", F.CHAMA, 0, [], _skill(K.METEOR, {"damage": [40, 60, 85], "cooldown": [9, 8, 7], "radius": [3.5, 4.0, 4.5], "status": &"burn", "status_power": [6, 8, 10]}))
 	_boon(40, &"final_radiante", F.LUZ, 8, [_mod(&"damage_pct", 0.2, [0.1, 0.1], &"finisher")])
 	_boon(41, &"onda_clara", F.LUZ, 7, [_fixed(&"wave_size_pct", 0.2, [0.1, 0.1], &"heavy"), _mod(&"damage_pct", 0.1, [0.05, 0.05], &"heavy")])
+	# AN-2 (sistemas.md 4.1): the families of Velael, Galael and Qeshael, nine Blessings each (one a button: attack, special,
+	# Brado, Investida; then the passives and two that act on their own), at the strength of the four before (a golpe of
+	# 25% more damage is a Mark that lets the next blows hit 25% harder; Fraqueza cuts a quarter of what an enemy deals).
+	# Veu (Fraqueza: the enemy deals less, Combat.WEAK_CUT, weak_pct deepens it); the first icons are the seals' glyphs.
+	_boon(42, &"golpe_veu", F.VEU, 20, [_mod(&"weak_time", 2.0, [1.0, 1.0], &"light")], null, S.ATTACK)
+	_boon(43, &"pesado_veu", F.VEU, 20, [_mod(&"weak_time", 3.0, [1.0, 1.0], &"heavy")], null, S.SPECIAL)
+	_boon(44, &"circulo_veu", F.VEU, 20, [_mod(&"weak_time", 4.0, [1.5, 1.5], &"cast")], null, S.CAST)
+	_boon(45, &"passo_veu", F.VEU, 20, [_mod(&"weak_time", 3.0, [1.0, 1.0], &"dash")], null, S.DASH)
+	_boon(46, &"omega_veu", F.VEU, 20, [_mod(&"weak_time", 4.0, [1.5, 1.5], &"omega")])
+	_boon(47, &"final_veu", F.VEU, 20, [_mod(&"weak_time", 3.0, [1.0, 1.0], &"finisher")])
+	_boon(48, &"entardecer", F.VEU, 20, [_fixed(&"weak_pct", 0.1, [0.05, 0.05])])
+	_boon(49, &"nevoa", F.VEU, 20, [], _skill(K.NOVA, {"damage": [14, 20, 28], "cooldown": [6.0, 5.5, 5.0], "radius": [4.5, 5.5, 6.5], "status": &"weak", "status_power": [3.0, 4.0, 5.0]}))
+	_boon(50, &"fios_cinza", F.VEU, 20, [], _skill(K.ORBIT, {"damage": [7, 10, 14], "count": [2, 3, 4], "cooldown": [0.5], "radius": [3.0, 3.3, 3.6], "status": &"weak", "status_power": [1.5, 2.0, 2.5]}))
+	# Mare (empurrar: knockback and a harder blow on whoever is still sliding, Combat.SHOVE_TIME)
+	_boon(51, &"golpe_mare", F.MARE, 21, [_mod(&"push_pct", 0.5, [0.25, 0.25], &"light"), _mod(&"damage_pct", 0.08, [0.04, 0.04], &"light")], null, S.ATTACK)
+	_boon(52, &"pesado_mare", F.MARE, 21, [_mod(&"push_pct", 0.6, [0.3, 0.3], &"heavy"), _mod(&"damage_pct", 0.08, [0.04, 0.04], &"heavy")], null, S.SPECIAL)
+	_boon(53, &"circulo_mare", F.MARE, 21, [_mod(&"push_pct", 0.8, [0.4, 0.4], &"cast"), _fixed(&"reach_pct", 0.15, [0.1, 0.1], &"cast")], null, S.CAST)
+	_boon(54, &"passo_mare", F.MARE, 21, [_mod(&"push_pct", 0.8, [0.4, 0.4], &"dash"), _mod(&"damage_pct", 0.15, [0.1, 0.1], &"dash")], null, S.DASH)
+	_boon(55, &"omega_mare", F.MARE, 21, [_mod(&"push_pct", 1.0, [0.5, 0.5], &"omega")])
+	_boon(56, &"arrebentacao", F.MARE, 21, [_mod(&"shove_pct", 0.25, [0.15, 0.15])])
+	_boon(57, &"mare_cheia", F.MARE, 21, [_mod(&"push_pct", 0.3, [0.15, 0.15])])
+	_boon(58, &"vaga", F.MARE, 21, [], _skill(K.NOVA, {"damage": [18, 26, 36], "cooldown": [6.0, 5.0, 4.5], "radius": [5.0, 6.0, 7.0], "status": &"slow", "status_power": [2.5, 3.0, 3.5]}))
+	_boon(59, &"espuma", F.MARE, 21, [], _skill(K.ORBIT, {"damage": [9, 13, 18], "count": [2, 3, 4], "cooldown": [0.5], "radius": [3.0, 3.3, 3.6], "status": &"slow", "status_power": [1.0, 1.2, 1.4]}))
+	# Marca (marcar e criticar: a marked enemy takes Combat.MARK_CRIT more from every blow; crit_pct adds)
+	_boon(60, &"golpe_marca", F.MARCA, 22, [_mod(&"mark_time", 3.0, [1.0, 1.0], &"light")], null, S.ATTACK)
+	_boon(61, &"pesado_marca", F.MARCA, 22, [_mod(&"mark_time", 4.0, [1.5, 1.5], &"heavy"), _mod(&"crit_pct", 0.1, [0.05, 0.05], &"heavy")], null, S.SPECIAL)
+	_boon(62, &"circulo_marca", F.MARCA, 22, [_mod(&"mark_time", 4.0, [1.5, 1.5], &"cast")], null, S.CAST)
+	_boon(63, &"passo_marca", F.MARCA, 22, [_mod(&"mark_time", 3.0, [1.0, 1.0], &"dash"), _mod(&"crit_pct", 0.1, [0.05, 0.05], &"dash")], null, S.DASH)
+	_boon(64, &"omega_marca", F.MARCA, 22, [_mod(&"mark_time", 4.0, [1.5, 1.5], &"omega")])
+	_boon(65, &"golpe_certeiro", F.MARCA, 22, [_mod(&"damage_pct", 0.2, [0.1, 0.1], &"finisher")])
+	_boon(66, &"olho_atento", F.MARCA, 22, [_mod(&"crit_pct", 0.15, [0.1, 0.1])])
+	_boon(67, &"flechas", F.MARCA, 22, [], _skill(K.STRIKES, {"damage": [16, 24, 34], "count": [3, 4, 6], "cooldown": [3.8, 3.3, 2.8], "radius": [1.8, 2.0, 2.2], "status": &"mark", "status_power": [3.0, 4.0, 5.0]}))
+	_boon(68, &"chuva_flechas", F.MARCA, 22, [], _skill(K.FAN, {"damage": [14, 20, 28], "count": [4, 6, 9], "cooldown": [5.0, 4.5, 4.0], "radius": [12, 13, 14], "status": &"mark", "status_power": [3.0, 4.0, 5.0]}))
+	# The Elos of the three (6 more, 12 in all): each pairs a new family with one of the four, on a move of its own.
+	var veu := [&"golpe_veu", &"pesado_veu", &"circulo_veu", &"passo_veu", &"omega_veu", &"final_veu", &"entardecer", &"nevoa", &"fios_cinza"]
+	var mare := [&"golpe_mare", &"pesado_mare", &"circulo_mare", &"passo_mare", &"omega_mare", &"arrebentacao", &"mare_cheia", &"vaga", &"espuma"]
+	var marca := [&"golpe_marca", &"pesado_marca", &"circulo_marca", &"passo_marca", &"omega_marca", &"golpe_certeiro", &"olho_atento", &"flechas", &"chuva_flechas"]
+	_elo(69, &"nevoa_gelida", 12, [_mod(&"freeze_time", 0.8, [], &"heavy")], [veu, geada])
+	_elo(70, &"cinza_viva", 14, [_mod(&"burn_dps", 5, [], &"light")], [veu, chama])
+	_elo(71, &"mare_ardente", 14, [_mod(&"burn_dps", 6, [], &"cast")], [mare, chama])
+	_elo(72, &"correnteza", 16, [_mod(&"push_pct", 0.5, [], &"dash")], [mare, vigilia])
+	_elo(73, &"mira_clara", 13, [_mod(&"mark_time", 3.0, [], &"luz")], [luz_hits, marca])
+	_elo(74, &"olho_firme", 15, [_mod(&"crit_pct", 0.2, [], &"heavy")], [marca, vigilia])
 
 
 # ---------- waves ----------
@@ -705,6 +748,7 @@ func _stage() -> void:
 	st.trial_layout = _trial_room()
 	st.altar_layout = _altar_room()
 	_oficios_stage(st)
+	_relics(st)
 	# The Provação (Hades II's Chaos, hades2_sistemas.md 7): 20% a room won, from the 2nd room to the 7th (a curse of 3
 	# to 5 fights must have fights to be carried in before the shop), once in 10 rooms (once in a descent), at
 	# ceil(10 + 0.5 x depth) life; three cards, the blessing's rarity as the Chaos's (rare 40%, epic 10%).
@@ -1050,6 +1094,7 @@ func _crypt() -> RoomLayout:
 		_rect(8.0, 11.0, 1.3, 4.3)], PLATES_FROM)
 	# A1, RP-12: the oil urns beside the slabs (late)
 	l.hazard.also = _urns(PackedVector2Array(CRYPT_URNS), PackedVector4Array(CRYPT_OIL))
+	l.hazard.also.also = _spikes([Vector2(-4.0, -4.5), Vector2(3.0, -1.0)], 0.4)
 	l.variants[0].hazard = _plates([_rect(-3.4, -0.4, -6.3, -3.3), _rect(1.4, 4.4, -6.3, -3.3)], PLATES_FROM)
 	# RP-16: an arrow slit on the north wall each side of the dividing wall, firing south down its corridor to the row of
 	# the south sarcophagi; the slab on one side arms the slit of the other (the pack lured beyond the wall)
@@ -1057,6 +1102,7 @@ func _crypt() -> RoomLayout:
 		Vector4(SLIT_WEST, -10.4, SLIT_WEST, 2.4)])
 	# AT-H2: the niche's skeleton on the west wall, beside the slabs and the slits (from the 4th room)
 	l.variants[0].hazard.also = _niche()
+	l.variants[0].hazard.also.also = _spikes([Vector2(-4.5, -2.0), Vector2(2.0, -2.0)], 0.4)
 	return l
 
 
@@ -1069,6 +1115,18 @@ func _crypt() -> RoomLayout:
 ## numbers: Prata from the 4th room, Memória past the guardian's layer), and OF-08, where the veins of Pedra Funda stand
 ## in the Fendas and the Runas (the floor point he extracts from, near an edge, 6.5 m or more from the way in, off the
 ## doors and the pieces, beside the way from the reward to a door; placeholder spots for the room-designer).
+## SR-P5: where the relic may stand, in the corner far from the way in of the Cripta, the Fendas, the Jardim and the
+## Santuário (off every door, hazard and spawn; test_hazard_sr.gd). The theme is to confirm with the Daniel.
+const RELIC_SPOTS := {&"crypt": Vector2(-9.8, -9.0), &"rift": Vector2(-18.0, -11.0), &"garden": Vector2(-14.0, -11.0),
+	&"sanctuary": Vector2(-18.5, 10.5)}
+
+
+func _relics(st: StageDef) -> void:
+	for l in st.layouts:
+		if RELIC_SPOTS.has(l.id):
+			l.relic_spots = PackedVector2Array([RELIC_SPOTS[l.id]])
+
+
 func _oficios_stage(st: StageDef) -> void:
 	st.silver_from_depth = 4
 	st.memory_after_guardian = true
@@ -1218,6 +1276,7 @@ func _rift() -> RoomLayout:
 	l.hazard = _breath(RIFT_BREATH + [_rect(-10.8, -8.0, -7, -1)], RIFT_BREATH_PUSH + [Vector2(-BREATH_PUSH, 0)])
 	l.variants = [_variant(b, fallen, [_rect(-19.5, -15.5, -12, -7)])]
 	# B (the north bridge fallen): its west stretch along the fallen bridge's brink, away from the second hole
+	l.hazard.also = _sag([_rect(14, 17, -11, -8), _rect(14, 17, 9, 12)], 0.4)
 	l.variants[0].hazard = _breath(RIFT_BREATH + [_rect(-10.0, -7.2, -13, -7)], RIFT_BREATH_PUSH + [Vector2(-BREATH_PUSH, 0)])
 	# A1, RP-20: stones from the vault over the east platform's fight (north of the columns, off the north door, and the
 	# middle of the platform), beside the breath (which does not hurt)
@@ -1274,7 +1333,7 @@ func _garden() -> RoomLayout:
 	l.hazard = _roots([[Vector2(-4.5, -7.0), Vector2(1.8, -8.1)], [Vector2(-10.0, -1.5), Vector2(-11.4, 1.9)]])
 	# SR-P1: two wall traps in the east and south fields where the fight goes (from 0.3 of the descent, every 6 s): the
 	# east wall's, firing west along y -7 between the north door and the east door; the south wall's, firing north at x -0.5
-	l.hazard.also = _trap(GARDEN_TRAPS, 0.3, 6.0)
+	l.hazard.also = _trap(GARDEN_TRAPS, 0.3, 5.0, 4.0)
 	l.obstacles.append_array(_trap_blocks(GARDEN_TRAPS))
 	var b: Array[ArenaObstacle] = [trunk]
 	for pts: Array in [[Vector2(-4.1, -5.7), Vector2(-2.4, -5.8), Vector2(-0.7, -5.7), Vector2(0.9, -5.4)],
@@ -1629,7 +1688,7 @@ func _wave(tag: StringName, damage: float, reach: float, width: float) -> Array[
 
 
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
-## life 30 and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
+## life 18 (Lote 5, "me sentir muito fraco no começo": the Santuário pays the rest; was 30) and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
 ## (5.4 m, 3 s, Omega 20 of Magia held 0.6 s, bursts for 150). The passive gives 2 of Magia a finisher (D-56).
 ## Daniel 2026-11-21 ("aumentasse a recarga de todas as habilidades com exceção dos ataques"): the circle 6 s from its
 ## cast (was 0.2 s after one ended), the Brado 14 s (was 10), the dodge back in 1.1 s (was 0.74, Hades II), the
@@ -1644,7 +1703,7 @@ func _hero() -> void:
 	h.model = &"hero_explorer"
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
-		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 1.1,
+		"max_hp": 18.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 1.1,
 		"magick_max": 50.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
@@ -1857,7 +1916,8 @@ func _sanctuary() -> RoomLayout:
 	# SR-P1: wall traps through the nave and the aisles (from the middle of the descent, every 4.5 s), blades along three
 	# lines between the columns: from the north wall at x -6 and from the south wall at x -1.5 and x 12 (the way in is the
 	# east end, 7 m from the last); A has all three, C (the colonnade, whose grid fills x 2 to 12) the first two
-	l.hazard.also = _trap(SANCTUARY_TRAPS, 0.5, 4.5)
+	l.hazard.also = _trap(SANCTUARY_TRAPS, 0.5, 3.5, 2.8)
+	l.hazard.also.also = _sag([_rect(-13.5, -10.5, -6, -3), _rect(4, 7, 0.5, 3.5), _rect(-19.5, -16.5, 4, 7)], 0.5)
 	l.obstacles.append_array(_trap_blocks(SANCTUARY_TRAPS))
 	# RP-13 (B): the edge that crumbles, the slabs at the two ends of the hole (the nave is 1.85 m wide along its long
 	# sides, no room for a slab there): 7 to him (not 10, A1) and everyone on them thrown 2.5 m away from the hole, to the
@@ -1872,6 +1932,7 @@ func _sanctuary() -> RoomLayout:
 	# A1, RP-20: stones from the torn vault over the nave round the hole (the rent above it), 6.5 m and more from the
 	# way in; never on the hole (a square only whole on the floor)
 	crumble.also = _rocks([_rect(-8.0, 13.0, -5.2, 5.2)])
+	crumble.also.also = _spikes([Vector2(-16.0, -3.0), Vector2(-9.0, -0.5)], 0.55)
 	_areas(l.variants[0], ["hole_edge", _rect(-2.6, 0.4, -1.5, 1.5), "hole_edge", _rect(9.6, 12.6, -1.5, 1.5),
 		"nave", _rect(-22, 22, -5.35, 5.35), "aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
 	# A1, RP-18, C "Colunata": the east of the nave becomes a grid of nine low columns (2.5 m: they stop shots and bodies
@@ -1897,7 +1958,7 @@ func _sanctuary() -> RoomLayout:
 	var vc := _variant(c)
 	vc.depth = Vector2(0.5, 1.0)
 	vc.hazard = _plates(aisle_slabs, PLATES_FROM)
-	vc.hazard.also = _trap(SANCTUARY_TRAPS.slice(0, 2), 0.5, 4.5)
+	vc.hazard.also = _trap(SANCTUARY_TRAPS.slice(0, 2), 0.5, 3.5, 2.8)
 	_areas(vc, ["colonnade", _rect(1.0, 13.0, -5.35, 5.35), "nave", _rect(-22, 22, -5.35, 5.35),
 		"aisles", _rect(-22, 22, -14, -5.35), "aisles", _rect(-22, 22, 5.35, 14)])
 	l.variants.append(vc)
@@ -2007,11 +2068,11 @@ func _breath(bands: Array, pushes: Array) -> HazardDef:
 ## it first (band_busy), 1.2 s of warning (as the slabs and the chain), 10 to the paladin (HAZARD_HERO), 60 to an enemy,
 ## after 5 s of calm and from `from` of the descent. Each spec: [the wall's point, the way the blades fly (unit, axis),
 ## the metres from the wall to where they stop].
-const TRAP_WIDTH := 1.2
+const TRAP_WIDTH := 1.6
 const TRAP_HALF := 0.3
 
 
-func _trap(specs: Array, from: float, cycle: float) -> HazardDef:
+func _trap(specs: Array, from: float, cycle: float, cycle_late := 0.0) -> HazardDef:
 	var rects: Array[Rect2] = []
 	var dirs := PackedVector2Array()
 	for sp: Array in specs:
@@ -2028,6 +2089,43 @@ func _trap(specs: Array, from: float, cycle: float) -> HazardDef:
 	h.band_busy = true
 	h.band_dir = dirs
 	h.cycle = cycle
+	h.cycle_late = cycle_late
+	h.start_delay = 5.0
+	h.from_progress = from
+	return h
+
+
+## SR-P2 (docs/design/rooms_progression.md, "Lote SR-P"): the slab that gives. A PLATES hazard named &"sag": 3 x 3 m of
+## cracked floor; someone staying on it (him 0.7 s, an enemy 0.35 s) wakes it: 1.4 s of cracks and dust (the warning is
+## longer than the enemies' 1.2 s: he may leave), then it falls, 10 to him and 60 to an enemy standing on it, 8 s before
+## the floor is back (6 s from 0.7 of the descent). Asleep before `from` and 5 s of calm at the start.
+func _sag(rects: Array[Rect2], from: float) -> HazardDef:
+	var h := _plates(rects, from)
+	h.plate_source = &"sag"
+	h.dwell = 0.7
+	h.enemy_dwell = 0.35
+	h.warn = 1.4
+	h.fire = 0.4
+	h.rearm = 8.0
+	h.rearm_late = 6.0
+	h.start_delay = 5.0
+	return h
+
+
+## SR-P3: the pit grate. A LINE named &"spikes": 2.4 m squares, one at a time, the one with most enemies in it first
+## (band_busy: draw the pack to it), spikes peeking 1.2 s then up 1.0 s, 10 to him and 60 to an enemy, every 3.5 s (2.8 s
+## from 0.7 of the descent), 5 s of calm at the start, asleep before `from`.
+const GRATE := 2.4
+func _spikes(corners: Array[Vector2], from: float) -> HazardDef:
+	var rects: Array[Rect2] = []
+	for c in corners:
+		rects.append(Rect2(c, Vector2(GRATE, GRATE)))
+	var h := _chain(rects, [] as Array[Vector2])
+	h.band_source = &"spikes"
+	h.band_busy = true
+	h.fire = 1.0
+	h.cycle = 3.5
+	h.cycle_late = 2.8
 	h.start_delay = 5.0
 	h.from_progress = from
 	return h
@@ -2279,12 +2377,51 @@ func _oficios() -> void:
 	ResourceSaver.save(d, "res://data/oficios/oficios.tres")
 
 
+## The account's tree "A Fonte" (Lote 5, working names; docs/design/benchmark_sworn.md section 8): small permanent
+## improvements for every hero, in the order a robot buys them (--account=N: the first N). Prata Antiga for the body and the
+## purse, Fragmento de Memória for the Blessings and the second life. Numbers measured in docs/design/balance.md.
+func _account() -> void:
+	var dir := "res://data/account/"
+	DirAccess.make_dir_recursive_absolute(dir)
+	for f in DirAccess.get_files_at(dir):
+		DirAccess.remove_absolute(dir + f)
+	var S := MaterialPurse.SILVER
+	var M := MaterialPurse.MEMORY
+	var list := [
+		[&"vida_1", &"vida", &"", S, 12, [_fixed(&"max_hp", 8)]],
+		[&"cura_1", &"cura", &"", S, 15, [_fixed(&"room_heal_pct", 0.12)]],
+		[&"vida_2", &"vida", &"vida_1", S, 25, [_fixed(&"max_hp", 8)]],
+		[&"forca_1", &"forca", &"", S, 30, [_fixed(&"damage_pct", 0.06)]],
+		[&"bencao_1", &"bencao", &"", M, 6, [_fixed(&"rarity_bonus", 0.08)]],
+		[&"ouro_1", &"ouro", &"", S, 12, [_fixed(&"gold_pct", 0.15)]],
+		[&"renascer", &"vida", &"vida_2", M, 20, [_fixed(&"revive", 1)]],
+		[&"cura_2", &"cura", &"cura_1", S, 30, [_fixed(&"fountain_heal", 0.15)]],
+		[&"vida_3", &"vida", &"vida_2", S, 45, [_fixed(&"max_hp", 9)]],
+		[&"ouro_2", &"ouro", &"ouro_1", S, 30, [_fixed(&"gold_pct", 0.2)]],
+		[&"bencao_2", &"bencao", &"bencao_1", M, 12, [_fixed(&"rarity_bonus", 0.1)]],
+		[&"forca_2", &"forca", &"forca_1", S, 60, [_fixed(&"damage_pct", 0.06)]],
+	]
+	for i in list.size():
+		var n := AccountNode.new()
+		n.id = list[i][0]
+		n.branch = list[i][1]
+		n.requires = list[i][2]
+		n.material = list[i][3]
+		n.cost = list[i][4]
+		n.name_key = StringName("account_" + n.id)
+		n.desc_key = StringName("account_%s_desc" % n.id)
+		var mods: Array[BoonMod] = []
+		mods.assign(list[i][5])
+		n.mods = mods
+		_save(n, dir + "%02d_%s.tres" % [i, n.id])
+
+
 func _forge() -> void:
 	DirAccess.make_dir_recursive_absolute(FORGE_DIR)
 	for f in DirAccess.get_files_at(FORGE_DIR):
 		DirAccess.remove_absolute(FORGE_DIR + f)
-	_forge_rank(0, &"temper_1", 1, 15, [_fixed(&"damage_pct", 0.1, [], &"light")] as Array[BoonMod])
-	_forge_rank(1, &"temper_2", 2, 35, [_fixed(&"damage_pct", 0.1, [], &"heavy")] as Array[BoonMod])
+	_forge_rank(0, &"temper_1", 1, 15, [_fixed(&"damage_pct", 0.2, [], &"light")] as Array[BoonMod])
+	_forge_rank(1, &"temper_2", 2, 35, [_fixed(&"damage_pct", 0.2, [], &"heavy")] as Array[BoonMod])
 	# Fatia 2: Temperar III, every blow of the Emeth 5% more (the attack's and the special's tags; no blow has both), 60
 	_forge_rank(2, &"temper_3", 3, 60, [_fixed(&"damage_pct", 0.05, [], &"light"), _fixed(&"damage_pct", 0.05, [], &"heavy")] as Array[BoonMod])
 	# Refinar (sistemas.md 1.5): a choice on each action, 25 Prata each, opened by the Forjador's first tool; Fio
@@ -2383,3 +2520,7 @@ func _angels() -> void:
 	_angel(1, &"nivael", F.GEADA, 1, Color(0.58, 0.76, 0.88))
 	_angel(2, &"lumael", F.LUZ, 2, Color(0.92, 0.82, 0.56))
 	_angel(3, &"shomael", F.VIGILIA, 3, Color(0.58, 0.68, 0.43))
+	# AN-2 (sistemas.md 4.1): Velael (the veil folded into a drop), Galael (three waves), Qeshael (an arrowhead in a ring)
+	_angel(4, &"velael", F.VEU, 4, Color(0.7, 0.66, 0.6))
+	_angel(5, &"galael", F.MARE, 5, Color(0.3, 0.48, 0.78))
+	_angel(6, &"qeshael", F.MARCA, 6, Color(0.66, 0.58, 0.3))

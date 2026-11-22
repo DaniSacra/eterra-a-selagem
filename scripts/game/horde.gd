@@ -161,6 +161,8 @@ var vow_hp := 1.0
 ## 0: no ceiling, the endless hall --horde).
 var alive_cap := 0
 var damage_scale := 1.0
+## Fraqueza: the share of its damage a weakened enemy loses (Combat sets it from the Veu Blessings when it weakens one).
+var weak_cut := 0.25
 var target := Vector2.ZERO
 var target_alive := true
 ## The kind (EnemyDef.id) acting now, while the crowd steps (&"" outside it): the warnings and shots it lays carry it
@@ -203,6 +205,10 @@ var _frame := 0
 var _rng := RandomNumberGenerator.new()
 ## How many were ever spawned: each takes a number of its own for what is only drawn (Enemy.look).
 var _born := 0
+
+## What an enemy's blow is worth now: the director's scale, less the Fraqueza while it lasts.
+func _out(e: Enemy) -> float:
+	return DamageCalc.weakened(damage_scale, weak_cut, e.weak_t > 0.0)
 
 
 func _ready() -> void:
@@ -319,6 +325,9 @@ func _timers(e: Enemy, dt: float) -> void:
 	e.air_t = maxf(0.0, e.air_t - dt)
 	e.blind_t = maxf(0.0, e.blind_t - dt)
 	e.slow_t = maxf(0.0, e.slow_t - dt)
+	e.weak_t = maxf(0.0, e.weak_t - dt)
+	e.mark_t = maxf(0.0, e.mark_t - dt)
+	e.shove_t = maxf(0.0, e.shove_t - dt)
 	if e.frozen_t > 0.0:
 		e.frozen_t = maxf(0.0, e.frozen_t - dt)
 	else:
@@ -470,7 +479,7 @@ func _behave_melee(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					last_by = e.def.id
 					last_warn = e.state_t
 					last_offscreen = screen_flag(e.pos)
-					hit_player.emit(e.def.damage * damage_scale, e.pos)
+					hit_player.emit(e.def.damage * _out(e), e.pos)
 		Enemy.State.ATTACK:
 			if e.state_t >= 0.35:
 				e.cooldown = MELEE_COOLDOWN * _rng.randf_range(0.8, 1.2)
@@ -504,7 +513,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 			_point_fan(e)
 		if e.state_t >= d.attack_windup:
 			if caster:
-				e.warning = ground.add_warning(target, 2.3, 1.1, d.attack_damage * damage_scale, d.magic_color)
+				e.warning = ground.add_warning(target, 2.3, 1.1, d.attack_damage * _out(e), d.magic_color)
 			e.fan.clear()  # (its threads fill on the frame the first shot leaves, then go)
 			e.memo = 0
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
@@ -625,7 +634,7 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
 		var aim := dir.rotated(turn)
 		var s := projectiles.fire(Projectiles.Kind.ORB if d.shot_orb else Projectiles.Kind.BOLT, e.pos + aim * (d.radius + 0.2), aim,
-			d.shot_speed, d.attack_damage * damage_scale, 0.45 if d.shot_orb else 0.4, life, d.magic_color)
+			d.shot_speed, d.attack_damage * _out(e), 0.45 if d.shot_orb else 0.4, life, d.magic_color)
 		# its warning so far: the aim it held (a shot of a burst, the time since the burst began too)
 		s.warned = e.state_t + (d.attack_windup if e.state == Enemy.State.ATTACK else 0.0)
 		if d.shot_turn > 0.0:
@@ -769,7 +778,7 @@ func _blade_lands(e: Enemy) -> void:
 	last_by = e.def.id
 	last_warn = e.def.attack_windup + e.state_t
 	last_offscreen = screen_flag(e.pos)
-	hit_player.emit(e.def.attack_damage * damage_scale, e.pos)
+	hit_player.emit(e.def.attack_damage * _out(e), e.pos)
 
 
 ## T5-10: waiting near the paladin (its turn not come, or its cooldown): on a ring round him, never in and out.
@@ -819,7 +828,7 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				last_by = d.id
 				last_warn = d.attack_windup + e.state_t
 				last_offscreen = screen_flag(e.pos)
-				hit_player.emit(d.attack_damage * damage_scale, from)
+				hit_player.emit(d.attack_damage * _out(e), from)
 			if _frame % 3 == 0:
 				fx.burst(&"dust", Vector3(e.pos.x, 0.2, e.pos.y), Vector3(-e.aim.x, 0, -e.aim.y))
 			if e.state_t >= d.lunge_time:
@@ -849,7 +858,7 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.memo = 1
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"attack")
-				e.warning = ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * damage_scale)
+				e.warning = ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * _out(e))
 				e.state_t = d.attack_windup - d.close_windup
 				return
 			if e.cooldown <= 0.0 and dist < d.attack_range and (dist > d.close_range or e.memo == 2) and target_alive and e.straight:
@@ -988,7 +997,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					Audio.play(CombatSounds.strike(d))  # (the first one's sound came with the attack)
 				e.blows += 1
 				if e.blows < d.strikes:
-					e.warning2 = ground.add_warning(e.pos, d.attack_width, d.strike_gap + dt, d.attack_damage * damage_scale, d.magic_color)
+					e.warning2 = ground.add_warning(e.pos, d.attack_width, d.strike_gap + dt, d.attack_damage * _out(e), d.magic_color)
 					(e.warning2 as Ground.Zone).land_quick = e.blows < d.strikes - 1
 			if e.state_t >= blow_at(e, d.strikes - 1) + PULSE_AFTER:
 				e.warning2 = null
@@ -1006,7 +1015,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.strike_t = d.strike_at
 				e.blows = 0
 				# it bursts as its arms open, strike_at into its attack (T5-09): the warning fills until then
-				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * damage_scale, d.magic_color)
+				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * _out(e), d.magic_color)
 				# (P2-C19a: a burst with another after it leaves only a thin ring for LAND_QUICK s, never over the next)
 				(e.warning as Ground.Zone).land_quick = d.strikes > 1
 			else:
@@ -1034,7 +1043,7 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if dist < d.attack_range and e.cooldown <= 0.0 and target_alive:
 				e.aim = toward
 				_set_state(e, Enemy.State.WINDUP, &"aim")
-				e.warning = ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * damage_scale)
+				e.warning = ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * _out(e))
 
 
 ## The way to walk toward the paladin (cycle C12): straight while the floor between is clear (or he is near), else

@@ -204,7 +204,7 @@ func test_every_term_has_a_colour_that_is_not_a_rarity() -> void:
 
 func test_every_angel_with_a_picture_has_it_small_in_the_package() -> void:
 	var angels := Encounter.load_catalog()
-	assert_eq(angels.size(), 4)
+	assert_eq(angels.size(), 7)
 	for a in angels:
 		var tex := AngelArt.texture(a.id)
 		assert_not_null(tex, "%s has its portrait" % a.id)

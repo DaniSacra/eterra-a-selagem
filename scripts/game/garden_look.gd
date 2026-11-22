@@ -219,16 +219,17 @@ const STY_KEY := 1.0
 const STY_BEAM := 0.9
 ## The tree's bark in the moss grey (hue 70 to 90, the trunk at 0.9 of the stone's value): base, cords, lichen.
 ## P2-B6 (ART_REVIEW.md 4.5): bark, cords and the tree's fill a few degrees greener (the scene's hue to 80 or more).
-const STY_BARK := Color(0.20, 0.205, 0.165)
-const STY_CORD := Color(0.30, 0.31, 0.245)
-const STY_LICHEN := Color(0.30, 0.31, 0.24)
+const STY_BARK := Color(0.15, 0.155, 0.125)
+const STY_CORD := Color(0.22, 0.225, 0.18)
+const STY_LICHEN := Color(0.23, 0.24, 0.18)
 ## The fill on the tree a neutral warm (the cold one turned the moss grey bark mint).
 const STY_TREE_FILL := Color(0.84, 0.85, 0.78)
 ## Art review 2026-11-21 item 7 (drawing only: the trunk's collision and the walkable floor stay): the trunk darker than
 ## the floor round it (a share of its albedo) and its fill a little over half the energy. The size (0.8) and the move to
 ## the corner would change the trunk's circle, so they wait for the Game Director.
-const STY_TREE_VALUE := 0.78
-const STY_TREE_FILL_ENERGY := 0.18
+## Daniel 2026-11-21 ("só escurecer a árvore"): darker again, the size stays (bark, cords and lichen a quarter down).
+const STY_TREE_VALUE := 0.62
+const STY_TREE_FILL_ENERGY := 0.1
 ## J1: the crown in dead rust (hue 15 to 25, saturation up to 0.45, value up to 0.4; never the warnings' red).
 const STY_LEAF_A := Color(0.22, 0.17, 0.1)
 const STY_LEAF_B := Color(0.46, 0.32, 0.16)

@@ -2673,7 +2673,7 @@ func _hazard_pieces() -> void:
 			var list: Array = _hazard.get(hz.plate_source, [])
 			for i in hz.plates.size():
 				var r := hz.plates[i]
-				var k := HazardPiece.Kind.PLATE
+				var k := HazardPiece.Kind.SAG if hz.plate_source == Ground.SAG_SOURCE else HazardPiece.Kind.PLATE
 				var way := Vector2.ZERO
 				if i < hz.aims.size() and hz.aims[i] != Vector4.ZERO:
 					k = HazardPiece.Kind.ARMS
@@ -2740,6 +2740,12 @@ func _hazard_pieces() -> void:
 						best = o
 				var run := maxf(hz.bands[i].size.x, hz.bands[i].size.y)
 				list.append(HazardPiece.slit(self, best, stone(), way.normalized(), run) if best != null else null)
+			_hazard[hz.band_source] = list
+		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == Ground.SPIKES_SOURCE:
+			# SR-P3: a grate over each band
+			var list: Array = []
+			for r in hz.bands:
+				list.append(HazardPiece.grate(self, r, hz.warn))
 			_hazard[hz.band_source] = list
 		elif hz.kind == HazardDef.Kind.LINE and hz.band_source == &"chain":
 			var list: Array = []

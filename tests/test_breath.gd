@@ -98,6 +98,8 @@ func test_in_a_real_room_it_pushes_and_cuts() -> void:
 	assert_null(game.rooms.bands)
 	var room: Dictionary = game.room_tally.rooms(game.time)[-1]
 	var hz: Dictionary = room.get("hazard", {})
+	if hz.get("kind") != "breath":
+		hz = hz.get("also", {})  # (SR-P2: the Fendas A's slabs are the first tally, the breath the second)
 	assert_eq(hz.get("kind"), "breath")
 	assert_eq(float(hz.get("hero_damage", -1.0)), 0.0)
 	assert_eq(float(hz.get("enemy_damage", -1.0)), 0.0)

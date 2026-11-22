@@ -263,7 +263,26 @@ func use(id: StringName) -> void:
 ## Ofícios, Roteiro A: the Forjador opens the Forja; once a vein was noted it has the Oficina's bookmark (the
 ## ui-ux-designer's ForgeScreen), open first while the Picareta waits to be restored.
 func _use_smith() -> void:
-	_open_forge()
+	# Lote 5: once the Forja is behind him the Forjador also keeps the account's tree, "A Fonte" (the choice first)
+	if not Account.open(Save.data):
+		_open_forge()
+		return
+	var p := HubPanel.new()
+	host.open(p, [T.t(&"hub_smith"), T.t(&"hub_smith_desc"),
+		[[&"forge", T.t(&"account_smith_forge")], [&"fonte", T.t(&"account_smith_fonte")], [&"back", T.t(&"back")]]])
+	p.chosen.connect(_on_smith_choice)
+
+
+func _on_smith_choice(choice: StringName) -> void:
+	if choice == &"forge":
+		_open_forge.call_deferred()
+	elif choice == &"fonte":
+		_open_account.call_deferred()
+
+
+## The account's tree at the Forjador (AccountSheet); a purchase is written and the hub reads the save again.
+func _open_account() -> void:
+	AccountSheet.open(host, Save.data, func(_id: StringName) -> void: labels_changed())
 
 
 ## The Vendedor: closed until the first Pedra Funda; then its order (2 Pedra Funda and 30 Prata); delivered, the first

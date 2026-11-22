@@ -3,13 +3,13 @@ extends RefCounted
 ## The angels' painted portraits (AN-1, 2026-11-21): assets/ui/angels/angel_<n>.jpg, 512 x 768, scaled down from the
 ## 1024 x 1536 sources the Daniel made with the ChatGPT image tool (docs/art/angels_src/, not in the package). The angel
 ## stands at the left of the picture with the dark of the vaults to the right, so the bust is cut out of the top left
-## (CROP) and shown in a frame of the angel's colour. 1 Sarael, 2 Nivael, 3 Lumael, 4 Shomael; 5 to 7 have no angel in
-## the game yet (their Blessings are still to come), so no file here. An angel without a file keeps its seal.
+## (CROP) and shown in a frame of the angel's colour. 1 Sarael, 2 Nivael, 3 Lumael, 4 Shomael, 5 Velael, 6 Galael, 7 Qeshael
+## (5 to 7 wait for their AngelDef, AN-2). An angel without a file keeps its seal.
 ##   var p := AngelArt.portrait(angel, Vector2(220, 280))   # null: no portrait
 
 const DIR := "res://assets/ui/angels/"
 ## Which source each angel is (AngelDef.id).
-const NUMBER := {&"sarael": 1, &"nivael": 2, &"lumael": 3, &"shomael": 4}
+const NUMBER := {&"sarael": 1, &"nivael": 2, &"lumael": 3, &"shomael": 4, &"velael": 5, &"galael": 6, &"qeshael": 7}
 ## The part of the 512 x 768 picture shown (the face, the hand and the family's brooch).
 const CROP := Rect2(0, 0, 400, 510)
 

@@ -92,6 +92,14 @@ const WARD_SPARK := Color(0.3, 0.95, 0.75)
 ## option off (Fx.impact_frames).
 const OMEGA_TAG := &"omega"
 const BURN_TIME := 3.0
+## Fraqueza: the share of its damage a weakened enemy loses (a quarter; weak_pct deepens it, DamageCalc caps it).
+const WEAK_CUT := 0.25
+## Marca: what a marked enemy takes more from every blow (the crit; crit_pct adds), no dice.
+const MARK_CRIT := 0.25
+## Mare: seconds an enemy pushed by a Mare blow counts as sliding (stat shove_pct hits it harder), and the push a
+## Mare blow gives when the move has none.
+const SHOVE_TIME := 0.6
+const SHOVE_MIN := 3.0
 ## The families' colours (vfx_pass_spec.md 4, Lote 1): the Chama in amber 30 to 38 on the screen (it was 4 to 25, the
 ## danger's red), the Geada as it was, the Luz pale gold 42 to 48, the Vigília sage 80 to 95 (it was the Luz's gold;
 ## AngelSeal.TINT of Shomael), far from the Emeth's emerald 125 to 145.
@@ -100,12 +108,16 @@ const FROST := Color(0.5, 0.82, 1.0)
 ## Elun's gold: only blows that come from gifts.
 const LIGHT := Color(1.0, 0.92, 0.7)
 const VIGIL := Color(0.66, 0.78, 0.46)
+## AN-2: the new families' blows (Boon.FAMILY_COLOR): Veu a dusk grey, Mare a deep sea blue, Marca an olive bronze.
+const VEIL := Color(0.76, 0.7, 0.64)
+const TIDE := Color(0.3, 0.5, 0.86)
+const MARK := Color(0.7, 0.62, 0.3)
 ## The paladin's own sword, Emeth: the green of its blade.
 const EMETH := Color(0.3, 1.0, 0.45)
 ## Damage numbers of the sword's common blows: pale, so the emerald ones (finishers, held blows) stand out.
 const NUMBER_PALE := UiKit.PALE
 ## Tags that mark a blow as coming from a gift (skills carry "skill" and their family's tag).
-const GIFT_TAGS: Array[StringName] = [&"skill", &"luz", &"vigilia", &"duo"]
+const GIFT_TAGS: Array[StringName] = [&"skill", &"luz", &"vigilia", &"duo", &"veu", &"mare", &"marca"]
 
 ## Fatia 2, the Encantos: degrees between the waves of Lâmina Tríplice's fan; the tag of Eco da Verdade's echo (never
 ## echoed again).
@@ -611,6 +623,10 @@ func _apply_status(e: Enemy, status: StringName, power: float) -> void:
 				e.stun_t = maxf(e.stun_t, power * (0.5 if e.def.heavy else 1.0))
 		&"slow":
 			e.slow_t = maxf(e.slow_t, power)
+		&"weak":
+			_weaken(e, power)
+		&"mark":
+			_mark(e, power)
 
 
 ## A common enemy: not an elite, not a guardian (heavy) and not a boss.
@@ -630,6 +646,12 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var frozen := e.frozen_t > 0.0
 	var shatter := boons.stat(&"shatter_pct") if frozen and counts else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
+	dmg = DamageCalc.marked(dmg, MARK_CRIT + boons.stat(&"crit_pct", tags), e.mark_t > 0.0)
+	dmg = DamageCalc.shoved(dmg, boons.stat(&"shove_pct"), e.shove_t > 0.0)
+	var push_pct := boons.stat(&"push_pct", tags)
+	if push_pct > 0.0:
+		knockback = maxf(knockback, SHOVE_MIN) * (1.0 + push_pct)
+		e.shove_t = SHOVE_TIME
 	var hp_before := e.hp
 	kill_tags = tags
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
@@ -664,6 +686,8 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	var freeze := boons.stat(&"freeze_time", tags)
 	if freeze > 0.0 and shatter <= 0.0:
 		_freeze(e, freeze)
+	_weaken(e, boons.stat(&"weak_time", tags))
+	_mark(e, boons.stat(&"mark_time", tags))
 	return false
 
 
@@ -688,6 +712,24 @@ func _freeze(e: Enemy, time: float) -> void:
 		_steam(e)
 	e.frozen_t = maxf(e.frozen_t, time * (0.4 if e.def.heavy else 1.0))
 	fx.burst(&"frost", Vector3(e.pos.x, 1.0, e.pos.y))
+
+
+## Fraqueza (the Veu): for `time` seconds the enemy deals WEAK_CUT less, plus the Blessings' weak_pct (DamageCalc.weakened).
+## The guardians' and Morvath's own attacks are their scripts' (the boss keeps his damage); the common crowd and the
+## elites obey.
+func _weaken(e: Enemy, time: float) -> void:
+	if time <= 0.0 or not e.alive or e.invulnerable:
+		return
+	e.weak_t = maxf(e.weak_t, time)
+	horde.weak_cut = WEAK_CUT + boons.stat(&"weak_pct")
+	fx.burst(&"dust", Vector3(e.pos.x, 1.0, e.pos.y))
+
+
+## Marca (the Marca): for `time` seconds every blow on the enemy hits MARK_CRIT harder, plus the Blessings' crit_pct.
+func _mark(e: Enemy, time: float) -> void:
+	if time <= 0.0 or not e.alive or e.invulnerable:
+		return
+	e.mark_t = maxf(e.mark_t, time)
 
 
 func _burn(e: Enemy, dps: float) -> void:
@@ -716,6 +758,12 @@ func color_of(tags: Array[StringName]) -> Color:
 		return FROST
 	if tags.has(&"vigilia"):
 		return VIGIL
+	if tags.has(&"veu"):
+		return VEIL
+	if tags.has(&"mare"):
+		return TIDE
+	if tags.has(&"marca"):
+		return MARK
 	for t in GIFT_TAGS:
 		if tags.has(t):
 			return LIGHT
@@ -729,6 +777,12 @@ func color_of(tags: Array[StringName]) -> Color:
 			return FIRE
 		Boon.Family.GEADA:
 			return FROST
+		Boon.Family.VEU:
+			return VEIL
+		Boon.Family.MARE:
+			return TIDE
+		Boon.Family.MARCA:
+			return MARK
 	return EMETH
 
 

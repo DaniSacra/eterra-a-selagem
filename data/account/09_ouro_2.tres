@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AccountNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_a5b88"]
+[ext_resource type="Script" path="res://scripts/core/account_node.gd" id="2_x01t0"]
+
+[sub_resource type="Resource" id="Resource_cntpi"]
+script = ExtResource("1_a5b88")
+stat = &"gold_pct"
+base = 0.2
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_x01t0")
+id = &"ouro_2"
+branch = &"ouro"
+requires = &"ouro_1"
+name_key = &"account_ouro_2"
+desc_key = &"account_ouro_2_desc"
+cost = 30
+mods = Array[ExtResource("1_a5b88")]([SubResource("Resource_cntpi")])

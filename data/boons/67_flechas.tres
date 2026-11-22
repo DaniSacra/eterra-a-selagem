@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_rr181"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_6h67g"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_4cvan"]
+
+[sub_resource type="Resource" id="Resource_ii3du"]
+script = ExtResource("3_4cvan")
+cooldown = PackedFloat32Array(3.8, 3.3, 2.8)
+damage = PackedFloat32Array(16, 24, 34)
+count = PackedFloat32Array(3, 4, 6)
+radius = PackedFloat32Array(1.8, 2, 2.2)
+status = &"mark"
+status_power = PackedFloat32Array(3, 4, 5)
+
+[resource]
+script = ExtResource("2_6h67g")
+id = &"flechas"
+family = 7
+icon = 22
+skill = SubResource("Resource_ii3du")

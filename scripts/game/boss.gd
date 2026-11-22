@@ -122,6 +122,14 @@ const REAP_PEAK := {&"slash1": 0.53, &"slash2": 0.47}
 const WINDUP_SETTLE := 0.12
 const WINDUP_HOLD := 0.3
 const WINDUP_SHAKE := 0.04
+## Daniel 2026-11-21 ("os golpes do boss tem q ser igual ao do miniboss que na hora q está carregando vai perseguindo o
+## herói até soltar o golpe"): the scythe, the reap, the blades and the charge follow the paladin through their wind-up
+## (their warnings turn with him, as the Ancião's threads do), turning at most FOLLOW_TURN degrees a second, the scythe
+## and the reap creeping in at FOLLOW_CREEP of his pace, and hold still FOLLOW_LOCK s before they land: the dodge is
+## a matter of timing.
+const FOLLOW_TURN := 160.0
+const FOLLOW_LOCK := 0.3
+const FOLLOW_CREEP := 0.45
 ## T5-15: the Blades' throw starts from where its own wind-up (blades_windup: the first BLADES_ARMED seconds of
 ## Sword_Regular_B) leaves the blade, not from the start of the clip.
 const BLADES_ARMED := 0.2## E1c (P1-5 of docs/design/combat_cadence.md): the share of a throwing clip where his hand moves fastest, the moment
@@ -184,6 +192,8 @@ var _mark := 0.0
 var _cooldown := 1.0
 var _dir := Vector2.DOWN
 var _dirs := PackedVector2Array()
+## The warnings of the blow being wound up, turned with it while it follows the paladin (_follow).
+var _follow_zones: Array = []
 var _spots := PackedVector2Array()
 var _from := Vector2.ZERO
 ## Q-09 (b): where the Blades' step back ends (he goes from _from to it over def.blade_step_time).
@@ -541,12 +551,13 @@ func _step_scythe(dt: float, to: Vector2, toward: Vector2) -> void:
 			e.dir = _dir
 			var windup := _windup(def.scythe_windup)
 			# T5-14: it fills (and hurts) as the blade crosses his waist, SCYTHE_HIT into the sweep, not at its top
-			_warn(game.ground.add_arc_warning(e.pos, _dir, def.scythe_reach, def.scythe_degrees, windup + SCYTHE_HIT, def.scythe_damage))
+			_follow_zones = [_warn(game.ground.add_arc_warning(e.pos, _dir, def.scythe_reach, def.scythe_degrees, windup + SCYTHE_HIT, def.scythe_damage))]
 			moment.emit(&"scythe_warn")
 			cue.emit(&"scythe_raise", e.pos, _dir, def.scythe_reach, windup)
 			Audio.play(&"scythe_raise")
 		1:
 			var windup := _windup(def.scythe_windup)
+			_follow(dt, _t - _mark, windup, def.scythe_reach * 0.5)
 			var k := clampf((_t - _mark) / windup, 0.0, 1.0)
 			# the lift, slowed to the wind-up: the blade is highest when the warning fills
 			_pose(SCYTHE_CLIP, SCYTHE_LIFT * (1.0 - pow(1.0 - k, 2.0)))
@@ -618,7 +629,7 @@ func _step_reap(dt: float, to: Vector2, toward: Vector2) -> void:
 func _reap_warn(dir: Vector2, windup: float) -> void:
 	_dir = dir
 	e.dir = _dir
-	_warn(game.ground.add_arc_warning(e.pos, _dir, def.reap_reach, def.reap_degrees, windup, def.reap_damage))
+	_follow_zones = [_warn(game.ground.add_arc_warning(e.pos, _dir, def.reap_reach, def.reap_degrees, windup, def.reap_damage))]
 	moment.emit(&"reap_warn")
 	cue.emit(&"scythe_raise", e.pos, _dir, def.reap_reach, windup)
 	Audio.play(&"scythe_raise")
@@ -631,6 +642,7 @@ func _reap_swing(dt: float, clip: StringName, windup: float) -> bool:
 	var length := game.horde.renderer.model_of(e.def).duration(clip) if game.horde.renderer else 0.0
 	var lead := maxf(0.0, (float(REAP_PEAK[clip]) - REAP_ARMED) * length) / game.horde.clip_rate(e) if length > 0.0 else 0.0
 	var swing := maxf(windup - lead, 0.0)
+	_follow(dt, since, windup, def.reap_reach * 0.5)
 	if since < swing:
 		_pose(clip, REAP_ARMED * Horde.windup_arm(since, swing, WINDUP_SETTLE, WINDUP_HOLD))
 		e.shake = WINDUP_SHAKE * 0.5 if since >= swing * (1.0 - WINDUP_HOLD) else 0.0
@@ -680,8 +692,10 @@ func _step_blades(dt: float) -> void:
 		var aim := _aim(def.blade_speed)
 		_dirs = BossRules.soul_pair(aim, def.blade_spread, 1.0 if _rng.randf() < 0.5 else -1.0)
 		e.dir = (_dirs[0] + _dirs[1]).normalized()
+		_dir = _dirs[0]
+		_follow_zones.clear()
 		for d in _dirs:
-			_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0))
+			_follow_zones.append(_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0)))
 		e.pos = _from
 		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
 	if _step == 1:
@@ -689,6 +703,11 @@ func _step_blades(dt: float) -> void:
 		var k := clampf(_t / maxf(def.blade_step_time, 0.01), 0.0, 1.0)
 		e.pos = _from.lerp(_back_to, 1.0 - (1.0 - k) * (1.0 - k))
 		_gathering(dt, e.pos + e.dir * HAND.y, SOUL_VIOLET)
+		if _follow(dt, _t, windup):
+			# each lane still ends at the floor's edge along its new way
+			for z: Ground.Zone in _follow_zones:
+				z.radius = maxf(_floor.cut(z.pos, z.dir, def.blade_range), 0.5)
+				Ground.point_zone(z, z.pos, z.dir)
 		# T5-15: the blade drawn back over his shoulder in both hands (blades_windup), then thrown from there so
 		# the release falls on the shot's frame
 		var throw := windup - _throw_lead(&"slash2", BLADES_ARMED)
@@ -979,9 +998,15 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 		# T5-08: the lane is only drawn, filling until his body would reach the paladin where he stands; the body hurts
 		_dash_len = maxf(_dash_room(_dir), 0.5)
 		var reach := dash_contact(e.pos, _dir, _dash_len, game.player.pos, e.def.radius + Player.RADIUS) * def.dash_time
-		_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, _dash_len + e.def.radius), def.dash_width, windup + reach, 0.0))
+		_follow_zones = [_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, _dash_len + e.def.radius), def.dash_width, windup + reach, 0.0))]
 		cue.emit(&"dash_aim", e.pos, _dir, _dash_len, windup)
 		Audio.play(&"dash_aim")
+	elif _follow(dt, _t, windup):
+		# its lane runs to the floor's edge along the new way
+		_dash_len = maxf(_dash_room(_dir), 0.5)
+		var lane: Ground.Zone = _follow_zones[0]
+		lane.radius = _lane(_dir, _dash_len + e.def.radius)
+		Ground.point_zone(lane, lane.pos, _dir)
 	_gather -= dt
 	if _gather <= 0.0:
 		_gather = GATHER_EVERY * 1.5
@@ -1069,6 +1094,25 @@ func _warnings_live() -> int:
 		if z.kind == Ground.Kind.WARNING and z.power > 0.0 and z.source != &"" and z.source != &"adds":
 			n += 1
 	return n
+
+
+## Turns the blow being wound up (its aim _dir, the blades' _dirs, his body and its warnings) toward the paladin, and
+## creeps him in while he is farther than `creep_reach` (0: he stands); `since` of `windup` seconds. True if it turned.
+func _follow(dt: float, since: float, windup: float, creep_reach := 0.0) -> bool:
+	if _follow_zones.is_empty() or not game.player.alive() or since >= windup - FOLLOW_LOCK:
+		return false
+	var to := game.player.pos - e.pos
+	if creep_reach > 0.0 and to.length() > creep_reach:
+		e.pos = game.arena.sweep(e.pos, e.pos + to.normalized() * e.def.speed * FOLLOW_CREEP * dt, e.def.radius)
+	var turned := BossRules.follow_aim(_dir, to, deg_to_rad(FOLLOW_TURN) * dt, since, windup, FOLLOW_LOCK)
+	var turn := _dir.angle_to(turned)
+	_dir = turned
+	e.dir = e.dir.rotated(turn)
+	for i in _dirs.size():
+		_dirs[i] = _dirs[i].rotated(turn)
+	for z: Ground.Zone in _follow_zones:
+		Ground.point_zone(z, e.pos if creep_reach > 0.0 else z.pos, z.dir.rotated(turn))
+	return true
 
 
 func _warn(z: Ground.Zone) -> Ground.Zone:

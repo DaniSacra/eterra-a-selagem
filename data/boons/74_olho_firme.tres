@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_abog6"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_ah8gu"]
+
+[sub_resource type="Resource" id="Resource_h5871"]
+script = ExtResource("1_abog6")
+stat = &"crit_pct"
+tag = &"heavy"
+base = 0.2
+per_level = PackedFloat32Array()
+
+[resource]
+script = ExtResource("2_ah8gu")
+id = &"olho_firme"
+family = 4
+icon = 15
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("golpe_marca", "pesado_marca", "circulo_marca", "passo_marca", "omega_marca", "golpe_certeiro", "olho_atento", "flechas", "chuva_flechas"), PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme", "vigia_firme", "vigilia_longa", "guarda_atenta")])
+mods = Array[ExtResource("1_abog6")]([SubResource("Resource_h5871")])

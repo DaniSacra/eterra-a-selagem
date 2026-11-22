@@ -113,9 +113,16 @@ func hazard(enemy_damage: float, kills: int, strikes: int, source := "runes", ex
 		var d := {"enemy_damage": snappedf(enemy_damage, 0.1), "kills": kills, "strikes": strikes,
 			"hero_damage": snappedf(float((r.hurt_by as Dictionary).get(source, 0.0)), 0.1)}
 		d.merge(extra, true)
-		# A1: a room with two hazards (HazardDef.also) keeps the second one's numbers under "also"
+		# A1: a room with two hazards (HazardDef.also) keeps the second one's numbers under "also" and a third's in "more"
 		if r.get("hazard") is Dictionary and not (r.hazard as Dictionary).is_empty():
-			(r.hazard as Dictionary)["also"] = d
+			var first: Dictionary = r.hazard
+			if first.has("also"):
+				# SR-P2/P3: a third hazard (the Santuário A: slabs, trap, sag) goes in "more", a list
+				var more: Array = first.get("more", [])
+				more.append(d)
+				first["more"] = more
+			else:
+				first["also"] = d
 		else:
 			r.hazard = d
 
@@ -204,3 +211,16 @@ func run_fields() -> Dictionary:
 
 static func _count(d: Dictionary, key: String) -> void:
 	d[key] = int(d.get(key, 0)) + 1
+
+
+## A room's tally of one kind of hazard, wherever it sits (the first, "also" or one of "more"); {} if none.
+static func find_hazard(hz: Dictionary, kind: String) -> Dictionary:
+	if hz.get("kind") == kind:
+		return hz
+	var also: Dictionary = hz.get("also", {})
+	if also.get("kind") == kind:
+		return also
+	for m: Dictionary in hz.get("more", []):
+		if m.get("kind") == kind:
+			return m
+	return {}

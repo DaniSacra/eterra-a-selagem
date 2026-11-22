@@ -75,7 +75,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 ## Onde mexer
 - **Elo** (mecânica das Crônicas de Eterra) = dom duplo do Hades: família `DUO` em `scripts/core/boon.gd`, dom com
   `requires_sets` (E3-02: uma lista por família, uma Bênção de cada forma o Elo; `BoonState.forged`), 12% por carta,
-  sem raridade e sem nível (BUG-017; `Boon.has_rarity`, `max_level` 1) (6 hoje; nome "Elo" no texto desde 2026-11-15). A carta mostra os dois dons de origem
+  sem raridade e sem nível (BUG-017; `Boon.has_rarity`, `max_level` 1) (12 hoje, 6 deles dos anjos 5 a 7, AN-2: ver `meta.md` "Anjos 5 a 7"; nome "Elo" no texto desde 2026-11-15). A carta mostra os dois dons de origem
   numa corrente de ouro velho com o Elo no meio (`EloLink`, `BoonState.sources`), o medalhão do Elo tem aro de elos,
   a HUD saúda cada Elo novo com "Elo formado" sem pausar (`EloBanner`) e a pausa tem o painel "Suas bênçãos" (`BoonsScreen`).
   Capturas dessas telas numa partida real: `tools/ui_lab.gd` (comando no topo).
@@ -572,3 +572,11 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   feiticeiro, no sacerdote e no Ancião (o violeta frio do feiticeiro, do Daniel de 2026-11-14, saiu com a spec); violeta só
   de Morvath. Nenhum tempo, dano nem alcance mudou.
 
+
+## Golpes de Morvath que perseguem (Daniel, 2026-11-21)
+"Os golpes do boss tem q ser igual ao do miniboss que na hora q está carregando vai perseguindo o herói até soltar o
+golpe." A Foice, a Ceifa Dupla (os dois arcos), as Lâminas das Almas e a Investida giram para o herói durante a
+preparação (`Boss._follow`, `BossRules.follow_aim`): no máximo `Boss.FOLLOW_TURN` (160) graus por segundo, a Foice e a
+Ceifa ainda avançam a `FOLLOW_CREEP` (0,45) do passo dele, e tudo trava `FOLLOW_LOCK` (0,3 s) antes de cair: a
+esquiva é de tempo, não de distância. Os avisos giram juntos (`Ground.point_zone`, linhas e meias-luas); as lanes das
+Lâminas e da Investida são recortadas na borda a cada giro. Testes em `tests/test_boss_refine.gd` (fim).

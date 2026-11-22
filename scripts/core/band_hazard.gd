@@ -20,11 +20,14 @@ var next := 0
 var live := PackedByteArray()
 ## How many bands struck.
 var fired := 0
+## Seconds from one band's warning to the next's at this depth (HazardDef.cycle_at).
+var cycle := 6.0
 
 
 ## doors: the mouths (and zones) of the room's doors; a band touching one never strikes.
-func _init(hazard: HazardDef, doors: Array[Rect2]) -> void:
+func _init(hazard: HazardDef, doors: Array[Rect2], progress := 0.0) -> void:
 	def = hazard
+	cycle = def.cycle_at(progress)
 	wait = def.start_delay
 	live.resize(def.bands.size())
 	for i in def.bands.size():
@@ -60,7 +63,7 @@ func step(dt: float, bodies := PackedVector2Array()) -> Dictionary:
 				active = -1
 	wait -= dt
 	if wait <= 0.0 and phase == Phase.IDLE:
-		wait += def.cycle
+		wait += cycle
 		var i := _busiest(bodies) if def.band_busy else -1
 		if i < 0:
 			i = _next_live()

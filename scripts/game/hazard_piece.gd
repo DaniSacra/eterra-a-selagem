@@ -9,7 +9,7 @@ extends Node3D
 ##   column: crack() on the first blow, ArenaRoom.toppled(o, way) when it lands.
 ## Same piece in both looks (a hazard is play): the stone it is cut in is the room's (painted by paint_look).
 
-enum Kind { PLATE, PUSH, ARMS, SLIT, CHAIN, COLUMN, ROOT, CRYSTAL, URN, DROP, BREATH, PLANT, NICHE }
+enum Kind { PLATE, PUSH, ARMS, SLIT, CHAIN, COLUMN, ROOT, CRYSTAL, URN, DROP, BREATH, PLANT, NICHE, SAG, GRATE }
 
 const MARK := preload("res://assets/shaders/hazard_mark.gdshader")
 const FISSURE := preload("res://assets/shaders/hazard_fissure.gdshader")
@@ -122,6 +122,8 @@ static func plate(parent: Node3D, r: Rect2, windup: float, k := Kind.PLATE, way 
 	var params := {&"joint": JOINT}
 	if k == Kind.PLATE:
 		params[&"chev_four"] = 1.0
+	elif k == Kind.SAG:
+		pass  # SR-P2: the slab that gives has no arrows, only the cracks and the dust of its sinking
 	else:
 		params[&"chev_count"] = 3
 		params[&"chev_dir"] = way.normalized()
@@ -380,7 +382,7 @@ func set_state(s: Vector3, asleep := false, spent := 0.0) -> void:
 	for mi in _branches:
 		mi.visible = s.y > 0.0 or spent > SPENT_BACK * 0.5
 	var sink := 0.0
-	if kind in [Kind.PLATE, Kind.PUSH, Kind.ARMS]:
+	if kind in [Kind.PLATE, Kind.PUSH, Kind.ARMS, Kind.SAG]:
 		if s.x > 0.0:
 			sink = minf(1.0, s.x * warn / SINK_TIME)
 		elif s.y > 0.0:
@@ -918,6 +920,89 @@ static func breath(parent: Node3D, r: Rect2, push: Vector2, windup: float, seed_
 	return hp
 
 
+## SR-P3, the pit grate over rect r: a frame of iron round a dark pit crossed by bars, a grid of spikes standing in it
+## (hidden until the grate warns, GRATE_PEEK of their height as it does, full for the strike).
+const GRATE_SPIKES := 4
+const GRATE_HEIGHT := 0.7
+const GRATE_PEEK := 0.25
+const GRATE_HOT := Color(0.6, 0.18, 0.08)
+const GRATE_STEEL := Color(0.62, 0.64, 0.68)
+var _spikes: Array[Node3D] = []
+var _grate_mat: StandardMaterial3D
+
+
+static func grate(parent: Node3D, r: Rect2, windup: float) -> HazardPiece:
+	var hp := HazardPiece.new()
+	hp.name = "HazardGrate"
+	hp.kind = Kind.GRATE
+	hp.warn = windup
+	parent.add_child(hp)
+	hp.position = Vector3(r.get_center().x, 0.0, r.get_center().y)
+	var pit := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = r.size
+	pit.mesh = q
+	pit.transform = Transform3D(Basis(Vector3.RIGHT, -PI * 0.5), Vector3(0, MARK_Y, 0))
+	var dark := StandardMaterial3D.new()
+	dark.albedo_color = Color(0.03, 0.03, 0.035)
+	dark.roughness = 1.0
+	pit.material_override = dark
+	pit.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	hp.add_child(pit)
+	var iron := StandardMaterial3D.new()
+	iron.albedo_color = IRON
+	iron.roughness = 0.8
+	var bar := 0.12
+	for sx in [-1, 1]:
+		hp._grate_box(Vector3(bar, 0.06, r.size.y), Vector3(sx * (r.size.x * 0.5 - bar * 0.5), 0.03, 0), iron)
+	for sz in [-1, 1]:
+		hp._grate_box(Vector3(r.size.x, 0.06, bar), Vector3(0, 0.03, sz * (r.size.y * 0.5 - bar * 0.5)), iron)
+	for k in 3:
+		var t := (float(k) + 1.0) / 4.0 - 0.5
+		hp._grate_box(Vector3(bar * 0.6, 0.05, r.size.y), Vector3(t * r.size.x, 0.025, 0), iron)
+	hp._grate_mat = StandardMaterial3D.new()
+	hp._grate_mat.albedo_color = GRATE_STEEL
+	hp._grate_mat.roughness = 0.5
+	hp._grate_mat.metallic = 0.5
+	hp._grate_mat.emission_enabled = true
+	hp._grate_mat.emission = Color.BLACK
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.0
+	cone.bottom_radius = 0.11
+	cone.height = GRATE_HEIGHT
+	cone.radial_segments = 6
+	cone.rings = 1
+	for i in GRATE_SPIKES:
+		for j in GRATE_SPIKES:
+			var mi := MeshInstance3D.new()
+			mi.mesh = cone
+			mi.material_override = hp._grate_mat
+			var step := (r.size - Vector2(0.9, 0.9)) / float(GRATE_SPIKES - 1)
+			var at := Vector2(i, j) * step - (r.size - Vector2(0.9, 0.9)) * 0.5
+			mi.position = Vector3(at.x, 0.0, at.y)
+			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			# the cone grows from its foot: the mesh is centred, so it hangs on a pivot at the foot and the pivot scales
+			var pivot := Node3D.new()
+			pivot.position = mi.position
+			mi.position = Vector3(0, GRATE_HEIGHT * 0.5, 0)
+			pivot.add_child(mi)
+			pivot.visible = false
+			hp.add_child(pivot)
+			hp._spikes.append(pivot)
+	return hp
+
+
+func _grate_box(size: Vector3, at: Vector3, mat: Material) -> void:
+	var mi := MeshInstance3D.new()
+	var b := BoxMesh.new()
+	b.size = size
+	mi.mesh = b
+	mi.position = at
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(mi)
+
+
 ## The hostile plant (3.5) at strip a to b.
 ## `back`: how far behind the strip's start the plant itself stands (off the walkable floor: ArenaRoom slides it there),
 ## its slab staying at the start.
@@ -1062,6 +1147,14 @@ func _cyl_into(under: Node3D, at: Vector3, r: float, h: float, b: Basis, mat: Ma
 ## Each kind's own movement on its state (set_state).
 func _on_state(s: Vector3, spent: float) -> void:
 	match kind:
+		Kind.GRATE:
+			# SR-P3: tips peeking while it warns, the spikes full up for the strike, sliding back after
+			var up := GRATE_PEEK * s.x if s.x > 0.0 else minf(1.0, s.y * 3.0) if s.y > 0.0 else 0.0
+			for sp in _spikes:
+				sp.visible = up > 0.01
+				sp.scale = Vector3(1.0, maxf(up, 0.01), 1.0)
+			if _grate_mat != null:
+				_grate_mat.emission = GRATE_HOT * (s.x if s.x > 0.0 else 1.0 if s.y > 0.0 else 0.0)
 		Kind.ROOT:
 			_dust.emitting = s.x > 0.0 or s.y > 0.0
 		Kind.CRYSTAL:

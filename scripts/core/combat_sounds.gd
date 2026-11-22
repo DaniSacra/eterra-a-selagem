@@ -66,6 +66,12 @@ const EVENTS := {
 	&"plant_arm": &"rune_arm",
 	&"plant_fire": &"enemy_swing",
 	&"column_fall": &"boss_down",
+	# SR-P2 the slab that gives (stone cracking, the fall), SR-P3 the grate (the stone scrape, the spikes)
+	&"sag_arm": &"rune_arm",
+	&"sag_fire": &"boss_down",
+	&"spikes_arm": &"rune_arm",
+	&"spikes_fire": &"bone",
+	&"relic_use": &"ward",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
 const MATERIALS: Array[StringName] = [&"spectral", &"armor", &"shield", &"bone"]

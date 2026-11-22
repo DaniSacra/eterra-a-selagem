@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_tm20q"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_30ikl"]
+
+[sub_resource type="Resource" id="Resource_2h6ln"]
+script = ExtResource("1_tm20q")
+stat = &"freeze_time"
+tag = &"heavy"
+base = 0.8
+per_level = PackedFloat32Array()
+
+[resource]
+script = ExtResource("2_30ikl")
+id = &"nevoa_gelida"
+family = 4
+icon = 12
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("golpe_veu", "pesado_veu", "circulo_veu", "passo_veu", "omega_veu", "final_veu", "entardecer", "nevoa", "fios_cinza"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada", "geada_final", "floco_errante", "omega_geada")])
+mods = Array[ExtResource("1_tm20q")]([SubResource("Resource_2h6ln")])

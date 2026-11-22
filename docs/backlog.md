@@ -7,12 +7,13 @@ fracos), AN-1 (anjos 1 a 4 no Encontro), AN-3. Medido: novato morre em 40% dos g
 (`docs/design/balance.md`, "Meta nova").
 
 **Falta (ordem sugerida)**
-1. Lote 5: árvore da conta, Forja por herói, desbloqueios (as evoluções do Santuário têm de pesar 25 a 40 pontos).
-2. AN-2: famílias dos anjos 5 a 7 (Véu, Maré, Marca) e Elos novos; retratos 5 a 7 no jogo.
-3. SWORN restante: SR-G2 sangue (pergunta), SR-P2 laje que cede, SR-P3 grade de fosso, SR-P5 relíquia, cachoeira da SR-G3.
-4. Quickwins visuais: cruzes do título, cabo da foice de Morvath, estações fechadas do hub, ar da Fenda (índigo),
-   vermelho dos atiradores, leão no patamar, barra com nome do guardião, texto do vendedor ("Pedra Funda").
-5. Armadilha: linha 1,6 m e ciclo 3,5 s no Santuário A (fácil demais para o robô).
+1. Lote 5 (conta feita em 22/11: "A Fonte", 12 nós, `--account=N`, diferença medida de 36 pontos; **nomes dos nós e da estação a confirmar com o Daniel**, folha `AccountSheet` simples para o ui-ux-designer vestir). Falta: Forja por herói, desbloqueios.
+2. AN-2 (feito em 2026-11-21, falta o `balance-designer` medir): famílias dos anjos 5 a 7 (Véu, Maré, Marca), 27 Bênçãos e 6 Elos novos; retratos 5 a 7 no jogo.
+3. SWORN restante: SR-G2 sangue (pergunta) e cachoeira da SR-G3 (feitos em 21/11: SR-P2 laje que cede, SR-P3 grade, SR-P5 relíquia, com tema a decidir pelo Daniel).
+   Medido com tudo junto em 2026-11-21 (`balance.md`): a meta segue de pé, sem mudar número.
+4. Quickwins visuais: cruzes do título (espera o Daniel), estações fechadas do hub, leão no patamar, barra com nome do
+   guardião; musgo claro demais no Jardim e na Cripta (visto nas capturas de 21/11). Feitos: cabo da foice, ar da Fenda,
+   vermelho dos atiradores, texto do vendedor.
 6. Guerreiro caminho A (identidade); heróis novos (Maga, Ladina, Paladino) depois.
 
 ## Estado de 2026-11-21 noite (sessão principal, commit `0269757`)

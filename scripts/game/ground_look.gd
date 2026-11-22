@@ -70,8 +70,9 @@ const FILL_MAX := 0.35
 ## thread AIM_PX pixels wide at AIM_LIGHT, its far end up to 1, and the band filling to AIM_FILL only over the last
 ## AIM_FILL_LATE of the wind-up (nothing before; no faint floor). Strength 1: those are the light itself, so nothing
 ## but the tip passes 0.6.
-const AIM_PX := 6.0
-const AIM_LIGHT := 0.5
+## Art review 2026-11-21 (two red threads across the whole frame): thinner and dimmer, the bright tip kept.
+const AIM_PX := 4.5
+const AIM_LIGHT := 0.38
 const AIM_FILL := 0.22
 const AIM_FILL_LATE := 0.3
 ## LC-5: in the Compatibility renderer's stylized look (browser, phone) the painted floor is lighter and colder and a red

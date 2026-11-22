@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_xg5xy"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_l4glw"]
+
+[sub_resource type="Resource" id="Resource_h4tj6"]
+script = ExtResource("1_xg5xy")
+stat = &"push_pct"
+tag = &"dash"
+base = 0.5
+per_level = PackedFloat32Array()
+
+[resource]
+script = ExtResource("2_l4glw")
+id = &"correnteza"
+family = 4
+icon = 16
+max_level = 1
+requires_sets = Array[PackedStringArray]([PackedStringArray("golpe_mare", "pesado_mare", "circulo_mare", "passo_mare", "omega_mare", "arrebentacao", "mare_cheia", "vaga", "espuma"), PackedStringArray("passos", "escudo", "firmeza", "golpe_firme", "pesado_firme", "circulo_firme", "vigia_firme", "vigilia_longa", "guarda_atenta")])
+mods = Array[ExtResource("1_xg5xy")]([SubResource("Resource_h4tj6")])

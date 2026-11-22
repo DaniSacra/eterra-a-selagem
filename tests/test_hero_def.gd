@@ -19,8 +19,8 @@ func test_the_warrior_loads() -> void:
 
 
 func test_the_numbers_of_today() -> void:
-	# Hades II's: life 30, 1.3 s safe after a blow; one dodge charge back in 1.1 s (Daniel 2026-11-21, Hades II's 0.74)
-	assert_eq(hero.max_hp, 30.0)
+	# Lote 5: life 18 (the Santuário pays the rest; was Hades II's 30), 1.3 s safe after a blow; one dodge charge back in 1.1 s (Daniel 2026-11-21, Hades II's 0.74)
+	assert_eq(hero.max_hp, 18.0)
 	assert_eq(hero.hurt_time, 0.18)
 	assert_eq(hero.hurt_invuln, 1.3)
 	assert_eq(hero.dodge_charges, 1)

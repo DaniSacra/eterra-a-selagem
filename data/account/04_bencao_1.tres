@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AccountNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_ujpl4"]
+[ext_resource type="Script" path="res://scripts/core/account_node.gd" id="2_vgftp"]
+
+[sub_resource type="Resource" id="Resource_xnj6h"]
+script = ExtResource("1_ujpl4")
+stat = &"rarity_bonus"
+base = 0.08
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_vgftp")
+id = &"bencao_1"
+branch = &"bencao"
+name_key = &"account_bencao_1"
+desc_key = &"account_bencao_1_desc"
+material = &"memory"
+cost = 6
+mods = Array[ExtResource("1_ujpl4")]([SubResource("Resource_xnj6h")])

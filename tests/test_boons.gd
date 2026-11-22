@@ -26,7 +26,7 @@ func test_catalog_has_four_families_and_the_combinations() -> void:
 
 
 func test_every_gift_has_its_levels_text_and_an_icon() -> void:
-	var icons := 18  # glyphs drawn by scripts/ui/boon_icon.gd
+	var icons := 23  # glyphs drawn by scripts/ui/boon_icon.gd (20 to 22 the Veu, Mare and Marca of AN-2)
 	var seen := {}
 	for b in state.catalog:
 		assert_false(seen.has(b.id), "duplicate %s" % b.id)
@@ -319,4 +319,4 @@ func test_each_action_has_a_gift_of_every_family() -> void:
 				families[b.family] = true
 				for m in b.mods:
 					assert_true(m.tag == Boon.SLOT_TAG[slot] or m.tag == &"", "%s rides on %s but changes '%s'" % [b.id, Boon.SLOT_KEY[slot], m.tag])
-		assert_eq(families.size(), 4, "slot %s" % Boon.SLOT_KEY[slot])
+		assert_eq(families.size(), 7, "slot %s" % Boon.SLOT_KEY[slot])

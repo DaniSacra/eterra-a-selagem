@@ -134,7 +134,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   provados e voltaram (sem efeito com o robô; números em `rooms_progression.md`). `--trace-thirds` soma em
   `rooms[].zones` os segundos do herói por terço da sala (`hero_x0..2` oeste a leste, `hero_z0..2` norte a sul) e dos
   inimigos (`foe_x0..2`); sem ela o `RESULT` é o de antes.
-- Opções: `--arena=crypt|rift|garden|hall` (a primeira sala), `--variant=n`, `--short`, `--trace-steps` (imprime os
+- Opções: `--hazards` (captura: todos os perigos da sala armados como no fundo da descida), `--arena=crypt|rift|garden|hall` (a primeira sala), `--variant=n`, `--short`, `--trace-steps` (imprime os
   passos acima de 4 ms e onde o tempo foi), `--trace-cam` (maior salto do alvo da câmera por sala, GP-06). Laboratório sem personagens, com grade, bordas, peças, zonas e câmera:
   `tools/arena_lab.gd` (comando no topo; `--top` vista de cima). Testes: `test_arenas.gd`, `test_descent.gd`,
   `test_killing_blow.gd`.
@@ -348,6 +348,25 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   Lâminas" (`killer_trap`), sons `trap_arm`/`trap_fire`, `rooms[].hazard.fired`. Dado: `_trap`, `_trap_blocks`,
   `GARDEN_TRAPS`, `SANCTUARY_TRAPS` no `make_data.gd`: Jardim A (2 linhas, desde 0,3, ciclo 6 s), Santuário A (3 linhas,
   desde 0,5, ciclo 4,5 s) e C Colunata (2). Testes em `tests/test_traps.gd`. Plano e métricas em `rooms_progression.md`.
+- **SR-P2, P3, P5 e a armadilha mais dura (2026-11-21, room-designer)**. Dois campos novos no `HazardDef` valem para
+  qualquer perigo `LINE` ou `PLATES`: `late_from` (0,7 da descida), `cycle_late` e `rearm_late` (`cycle_at(p)`,
+  `rearm_at(p)`; `BandHazard` e `PlateHazard` recebem o progresso e guardam `cycle`/`rearm`). Só o descanso encurta; o
+  aviso e a duração do golpe nunca mudam. `Rooms._start_hazard` agora percorre toda a cadeia `also` (um slot por tipo:
+  até 2 `PLATES`, 1 `LINE`, 1 de cada o resto; `test_hazard_sr.gd` trava).
+  **Laje que cede** (`plate_source` `sag`, `_sag`): `PLATES` com `dwell` 0,7 s (inimigo 0,35 s), aviso 1,4 s (mais longo
+  que o dos inimigos: dá para sair), 10 e 60, descanso 8 s (6 s desde 0,7), calma 5 s, dormente antes de `from`. Peça
+  `HazardPiece.Kind.SAG` (a laje do RP-06 sem setas: rachaduras, poeira e o afundar). Fendas A (2 lajes a leste, desde
+  0,4) e Santuário A (3 lajes, desde 0,5; é a casa do guardião). **Grade de fosso** (`band_source` `spikes`, `_spikes`):
+  `LINE` em quadrados de 2,4 m, uma por vez, a com mais inimigos primeiro (`band_busy`), aviso 1,2 s, espinhos de pé 1,0
+  s, ciclo 3,5 s (2,8 s desde 0,7), 10 e 60. Peça `Kind.GRATE` (moldura de ferro, fosso escuro, 16 espinhos que
+  espiam a 25% no aviso, sobem cheios no golpe e recolhem; placeholder). Cripta A e B (desde 0,4) e Santuário B (desde
+  0,55). Fontes `Ground.SAG_SOURCE`/`SPIKES_SOURCE`, "Derrotado por: Laje que Cedeu" e "Grade de Espinhos", sons
+  `sag_*`/`spikes_*`. **Armadilha de parede mais dura**: linha de 1,6 m (era 1,2), Santuário A e C ciclo 3,5 s (era 4,5)
+  e 2,8 s desde 0,7; Jardim A 5 s e 4 s (era 6). **Relíquia na pedra (SR-P5)**: `RoomLayout.relic_spots` (Cripta,
+  Fendas, Jardim, Santuário), `StageDef.relic_*` (50% das lutas desde a sala 3, dados da própria sala: nunca os da
+  descida), `RelicFloor` (pedra com anel claro, placeholder), `Rooms._relic_cleared/_step_relic`: depois da luta, F
+  junto dela dá 30 de ouro ou 6 de Prata Antiga (sorteio da sala), uma vez; o robô vai até ela antes da recompensa.
+  Texto de trabalho (`hub_use_relic` "Tocar"); **tema a confirmar com o Daniel**. Testes: `tests/test_hazard_sr.gd`.
 - **Mureta (RP-17)**: só dado, caixas baixas de 0,9 m (`_capsule(..., 0.5, 0.9)`, peça `block` desenhada como mureta
   baixa; o corpo dá a volta, o tiro passa por cima): Cripta A uma de 5,5 m ao sul do túmulo grande ((-3,5..2; 3,8));
   Jardim A duas quebradas num arco a 6 m do tronco (`_low_arc`: leste de -6 a 21 graus, sul de 64 a 98), as raízes que

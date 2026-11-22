@@ -37,6 +37,11 @@ var air_t := 0.0
 var air_total := 1.0
 var blind_t := 0.0
 var slow_t := 0.0
+## Fraqueza (Veu): seconds it still deals less damage (Horde.weak_cut). Marca (Marca): seconds it still takes the crit.
+var weak_t := 0.0
+var mark_t := 0.0
+## Seconds it still slides from a Mare blow (Combat.SHOVE_TIME): a blow on it then hits harder (stat shove_pct).
+var shove_t := 0.0
 var burn_t := 0.0
 var burn_dps := 0.0
 var burn_tick := 0.0

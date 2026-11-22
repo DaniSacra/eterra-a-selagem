@@ -167,7 +167,7 @@ func test_in_a_real_room_it_strikes_and_is_counted() -> void:
 	assert_null(game.rooms.drops, "the stones stop with the fight")
 	var room: Dictionary = game.room_tally.rooms(game.time)[-1]
 	var hz: Dictionary = room.get("hazard", {})
-	var rocks: Dictionary = hz if hz.get("kind") == "rocks" else hz.get("also", {})
+	var rocks: Dictionary = RoomTally.find_hazard(hz, "rocks")
 	assert_eq(rocks.get("kind"), "rocks")
 	assert_almost_eq(float(rocks.get("hero_damage", 0.0)), 10.0, 0.01)
 	assert_gte(int(rocks.get("strikes", 0)), 1)

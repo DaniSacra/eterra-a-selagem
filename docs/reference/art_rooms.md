@@ -573,3 +573,9 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   Cada bioma em `BIOMES` (contagens e força da moldura). Nunca onde nasce o herói, diante de portas, em piso que golpeia
   (`on_hazard`), dentro de obstáculo nem no meio da luta (`CENTRE_FREE`); números aleatórios próprios (a partida não muda).
   Cerca de 6 draw calls por sala. Ainda não há cachoeira (precisa de malha e shader de água).
+
+## Ajustes de 2026-11-21 (fim do dia)
+- Árvore do Jardim só mais escura (Daniel: "só escurecer"): `GardenLook.STY_BARK`, `STY_CORD`, `STY_LICHEN` um quarto
+  abaixo, `STY_TREE_VALUE` 0,62 e `STY_TREE_FILL_ENERGY` 0,1; tamanho e colisão iguais.
+- Fenda: ar, névoa, brumas, luz funda e chão do violeta (matiz 255, cor de Morvath) para índigo frio (228 a 236)
+  (`RiftLook.AIR`, `STY_*`), item da revisão de arte de 2026-11-21.

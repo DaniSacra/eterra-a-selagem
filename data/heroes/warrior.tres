@@ -10,6 +10,7 @@
 script = ExtResource("2_oyckq")
 name_key = &"hero_warrior"
 combos = "res://data/combos/paladin.tres"
+max_hp = 18.0
 dodge_recharge = 1.1
 circle = false
 cast_cooldown = 6.0

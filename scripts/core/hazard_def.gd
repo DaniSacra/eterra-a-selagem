@@ -97,6 +97,28 @@ enum Kind { GRID, PLATES, LINE, DROPS, URNS }
 @export var band_dir: PackedVector2Array = PackedVector2Array()
 
 
+## SR-P2, SR-P3 and the traps: the hazard bites harder deep in the descent. From `late_from` of the descent
+## (EncounterGen.progress) a LINE's cycle is cycle_late and a PLATES' rest is rearm_late (0: unchanged). Warn and fire
+## never change (the warning is the same fair one at every depth); only how soon it comes again.
+@export var late_from := 0.7
+@export var cycle_late := 0.0
+@export var rearm_late := 0.0
+## LINE, SR-P3 (the pit grate, band_source &"spikes"): bands are the grates, 2.4 m squares; the spikes rise as it warns
+## and stay up for `fire`. The same as the trap in what it asks of the data (band_busy, from_progress).
+## PLATES, SR-P2 (the slab that gives, plate_source &"sag"): dwell/enemy_dwell as the roots; whoever stays on it when
+## it falls is hurt, then the floor is back after `rearm`. Nothing else is needed: a hazard named by its source.
+
+
+## The cycle of a LINE at this share of the descent.
+func cycle_at(progress: float) -> float:
+	return cycle_late if cycle_late > 0.0 and progress >= late_from else cycle
+
+
+## The rest of a PLATES slab at this share of the descent.
+func rearm_at(progress: float) -> float:
+	return rearm_late if rearm_late > 0.0 and progress >= late_from else rearm
+
+
 ## A second hazard of the same room, started beside this one (Santuário B: the slabs and the stones of the vault; the
 ## Fendas B: the breath and the stones; the Cripta A: the slabs and the oil urns). Rooms counts both against the room's
 ## two warnings at once (combat_cadence.md 9.2 R9).

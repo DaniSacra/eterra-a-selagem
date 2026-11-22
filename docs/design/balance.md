@@ -22,6 +22,23 @@ pelo `combat-feel-director`.
   --forge=2`) morre em 33%, 1 vitória. **A diferença é de só 7 pontos: as evoluções do Santuário estão fracas** (meta
   25 a 40). Cavaleiro endurecido (investe a cada 2,4 s, golpe 18). Próximo: árvore da conta (Lote 5) e Dons/Forja mais
   fortes, não guardião mais forte.
+- **Lote 5 (2026-11-22), medido e fechado**: o herói novo começa com 18 de vida (era 30: ele "sente fraco") e o Santuário
+  paga a diferença. A Forja sobe (Temperar I e II: 20% de dano no ataque e no especial, era 10%) e nasce a conta, "A Fonte"
+  (`docs/reference/meta.md`, 12 nós; Vigor +8, +8, +9 de vida, Fôlego da Sala 12% de cura por sala, Mão Firme +6% de dano).
+  Régua do robô 0,25, 48 sementes por montagem (12 dá erro de 14 pontos, por isso as duas), smoke 600, "morre no
+  guardião" = o guardião é o último nó do caminho e a partida não acabou em vitória (de quem chega nele):
+  | Montagem | Morre no guardião | Vitórias sobre Morvath |
+  |---|---|---|
+  | Novato (sem Dons, Forja nem conta) | 59% (24 de 41) | 4 de 48 |
+  | Evoluído: 4 Dons + Forja 2 + `--account=6` (Vigor I e II, Fôlego, Mão Firme I, Olhar Atento I, Bolsa I; custa 94 Prata e 6 Memória, as ~5 primeiras descidas) | 23% (11 de 48) | 15 de 48 |
+  | Evoluído + `--account=7` (com a Segunda Chance, 20 Memória) | 2% (1 de 48), 19 vitórias (medido com a Forja a 15%) | |
+  Primeiras 12 sementes só: 45% contra 17% (ruído). **Diferença: 36 pontos** (meta 25 a 40); novato dentro de 50 a 65%,
+  evoluído dentro de 15 a 30%. Sem a Forja nem os Dons, só a conta 6 ficou em 17% a 12 sementes (a conta sozinha pesa
+  uns 20 pontos), os Dons e a Forja do tempo antigo só 7. A Segunda Chance vale quase um guardião inteiro: se a conta
+  completa ficar fácil demais, é o nó a mexer (40% de vida, custo). Armadilha da medida: a Provação cobra vida do robô
+  antes do guardião (o robô evoluído entrava com 20 de 32), o que esconde parte do ganho. Ferramenta: `--account=N`.
+  **Conferido com tudo junto** (2026-11-21, Morvath que persegue, anjos 5 a 7 e perigos novos; 12 sementes, erro de uns 14
+  pontos): novato morre em 5 de 11 guardiões e vence 1 de 12; evoluído (conta 6) morre em 2 de 12 e vence 4 de 12.
 
 ## Lote B (2026-11-21): "mais difícil, principalmente sem os upgrades"
 

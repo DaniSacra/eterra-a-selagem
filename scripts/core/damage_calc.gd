@@ -27,3 +27,22 @@ static func hit(base: float, bonus_pct: float, launched: bool, frozen: bool, sha
 	if undead:
 		dmg *= maxf(1.0, undead_mult)
 	return maxf(1.0, roundf(dmg))
+
+
+## Fraqueza (the Veu family): a weakened enemy deals `cut` less (0.25 = a quarter less; never more than MAX_WEAK_CUT).
+const MAX_WEAK_CUT := 0.6
+
+
+static func weakened(damage: float, cut: float, weak: bool) -> float:
+	return damage * (1.0 - clampf(cut, 0.0, MAX_WEAK_CUT)) if weak else damage
+
+
+## Marca (the Marca family): a marked enemy takes `bonus` more from every blow (the base mark plus the Blessings'),
+## always, no dice, so a run keeps its seed.
+static func marked(damage: float, bonus: float, mark: bool) -> float:
+	return maxf(1.0, roundf(damage * (1.0 + bonus))) if mark else damage
+
+
+## Mare (the Mare family): a blow on an enemy still sliding from a push hits `bonus` harder.
+static func shoved(damage: float, bonus: float, sliding: bool) -> float:
+	return maxf(1.0, roundf(damage * (1.0 + bonus))) if sliding else damage

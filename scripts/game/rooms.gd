@@ -46,7 +46,7 @@ func _used() -> bool:
 ## Whether the paladin stands at something to use now (the reward, a shop's item, a door): the robot presses then,
 ## and the HUD may show the key.
 func usable() -> bool:
-	if _at_vein():
+	if _at_vein() or _at_relic():
 		return true
 	match phase:
 		Phase.REWARD:
@@ -255,6 +255,7 @@ func depth() -> int:
 func step(dt: float) -> void:
 	_step_prompt()
 	_step_vein(dt)
+	_step_relic()
 	match phase:
 		Phase.FIGHT:
 			_step_fight(dt)
@@ -284,6 +285,8 @@ var _prompt_kind := &""
 
 ## What the paladin stands at to use now: &"reward", &"shop", &"door" or &"" (usable()'s places, by kind).
 func use_kind() -> StringName:
+	if _at_relic():
+		return &"relic"
 	if _at_vein():
 		return &"vein" if _vein.state == VeinFloor.State.OPEN else &"vein_note"
 	match phase:
@@ -331,6 +334,8 @@ func _step_prompt() -> void:
 ## The foot of what the paladin stands at to use (use_kind): the reward, the shop item, the door's medallion; his own
 ## feet when nothing.
 func use_spot() -> Vector2:
+	if _at_relic():
+		return _relic.at
 	if _at_vein():
 		return _vein.at
 	match use_kind():
@@ -628,12 +633,14 @@ func _room_cleared() -> void:
 	Audio.play(&"elite_down")
 	purse = null
 	game.hud.show_notice(T.t(&"notice_room_clear"), 2.0)
+	game.player.heal(game.player.max_hp * game.boons.stat(&"room_heal_pct"))  # the account's Fôlego da Sala
 	if room.kind == RunMap.Kind.MINIBOSS:
 		# the guardian won: Prata and Memória for home (Rejogabilidade, Fatia 1)
 		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
 		found(MaterialPurse.MEMORY, &"guardian", stage.memory_guardian)
 		game.find_tool(Forge.TOOL_REFINE)  # (Fatia 2: the Forjador's first tool, at the first guardian won)
 	_oficios_cleared()
+	_relic_cleared()
 	if room.reward == RunMap.Reward.NONE:
 		_open_doors()
 		return
@@ -652,7 +659,7 @@ func _on_killed(e: Enemy) -> void:
 		found(MaterialPurse.SILVER, &"elite", stage.silver_elite, e.pos)
 	if purse == null or phase != Phase.FIGHT:
 		return
-	var found := floori(purse.drop(e.def.rating, _rng) * maxf(0.0, 1.0 + trials.curse(&"gold_pct")))
+	var found := floori(purse.drop(e.def.rating, _rng) * maxf(0.0, 1.0 + trials.curse(&"gold_pct") + game.boons.stat(&"gold_pct")))
 	if found <= 0:
 		return
 	gold += found
@@ -699,8 +706,9 @@ func _give(reward: RunMap.Reward, guardian: bool = false, meeting: bool = false)
 			p.magick.gain(stage.magick_more)
 			game.fx.word(Vector3(p.pos.x, 3.0, p.pos.y), "+%d %s" % [int(stage.magick_more), T.t(&"hud_magick")], Color(0.5, 0.75, 1.0))
 		RunMap.Reward.GOLD:
-			gold += stage.gold_reward
-			game.fx.gold(Vector3(p.pos.x, 3.0, p.pos.y), stage.gold_reward)
+			var more := roundi(stage.gold_reward * (1.0 + game.boons.stat(&"gold_pct")))
+			gold += more
+			game.fx.gold(Vector3(p.pos.x, 3.0, p.pos.y), more)
 		RunMap.Reward.HEAL:
 			p.heal(p.max_hp * stage.shop_heal)
 			game.fx.burst(&"heal", Vector3(p.pos.x, 1.2, p.pos.y))
@@ -748,6 +756,46 @@ func victory() -> void:
 
 ## The vein of this room (VeinFloor; null: none).
 var _vein: VeinFloor
+
+
+# ---------- SR-P5: the relic in the stone ----------
+
+## The room's relic (RelicFloor; null: none).
+var _relic: RelicFloor
+
+
+## The room was won: its relic, when the arena has a spot, the depth is reached and the room's own dice say so (the
+## same fight holds it by any path: never the run's dice). The dice also pick what it gives, half gold and half Prata.
+func _relic_cleared() -> void:
+	if _relic != null or _layout == null or _layout.relic_spots.is_empty() or room.kind != RunMap.Kind.COMBAT \
+			or room.depth < stage.relic_from_depth:
+		return
+	var dice := RandomNumberGenerator.new()
+	dice.seed = hash([room.fight_seed, room.depth, 3331])
+	if dice.randf() >= stage.relic_chance:
+		return
+	var what := &"gold" if dice.randf() < 0.5 else &"silver"
+	_relic = RelicFloor.make(self, game.arena.resolve(_layout.relic_spots[0], 0.6), what)
+
+
+func _at_relic() -> bool:
+	return _relic != null and not _relic.spent and (phase == Phase.REWARD or phase == Phase.OPEN) \
+			and game.player.pos.distance_to(_relic.at) < TOUCH
+
+
+## A press at the relic gives what it holds, once.
+func _step_relic() -> void:
+	if not _at_relic() or not _used():
+		return
+	_relic.spend()
+	var p := game.player
+	if _relic.gives == &"gold":
+		gold += stage.relic_gold
+		game.fx.gold(Vector3(p.pos.x, 3.0, p.pos.y), stage.relic_gold)
+	else:
+		found(MaterialPurse.SILVER, &"relic", stage.relic_silver, _relic.at)
+	Audio.play(CombatSounds.EVENTS[&"relic_use"])
+	game.room_tally.event("relic", game.time, {"node": room.id, "gives": String(_relic.gives)})
 
 
 ## The room was won: the head waiting in it (or the guardian's, by pity) is found, and its vein shows.
@@ -1391,18 +1439,21 @@ func _start_hazard(layout: RoomLayout) -> void:
 			c.stop()
 	if layout == null or layout.hazard == null:
 		return
-	_start_one(layout.hazard)
-	if layout.hazard.also != null:
-		_start_one(layout.hazard.also)  # A1: the room's second hazard (the stones of the vault, the oil urns)
+	# A1: the room's second hazard (the stones of the vault, the oil urns), SR-P2/P3 a third: one of each kind's slot
+	var hz := layout.hazard
+	while hz != null:
+		_start_one(hz)
+		hz = hz.also
 
 
 func _start_one(def: HazardDef) -> void:
-	var progress := EncounterGen.progress(stage, room.depth)
+	# captures: --hazards arms every hazard of the room as deep in the descent
+	var progress := 1.0 if Dev.has("hazards") else EncounterGen.progress(stage, room.depth)
 	match def.kind:
 		HazardDef.Kind.LINE:
-			bands = BandFloor.new(game, def, progress >= def.from_progress)
+			bands = BandFloor.new(game, def, progress >= def.from_progress, progress)
 		HazardDef.Kind.PLATES:
-			var pf := PlateFloor.new(game, def, progress >= def.from_progress)
+			var pf := PlateFloor.new(game, def, progress >= def.from_progress, progress)
 			if plates == null:
 				plates = pf
 			else:
@@ -1649,6 +1700,8 @@ func _bot_altar_pick() -> int:
 
 ## Where the bot should walk when the room has no fight left (null: stay).
 func bot_goal() -> Variant:
+	if _relic != null and not _relic.spent and (phase == Phase.REWARD or phase == Phase.OPEN):
+		return _relic.at  # (SR-P5: the robot takes the relic before the reward and the doors)
 	if _vein != null and _vein.state == VeinFloor.State.OPEN and game.oficios.may_extract(game.oficios_def) \
 			and (phase == Phase.REWARD or phase == Phase.OPEN):
 		return _vein.at  # (Ofícios: the robot with the pick extracts before the reward and the doors)
@@ -1720,6 +1773,7 @@ func _clear_props() -> void:
 	_reward_node = null
 	_reward_shaft = null
 	_vein = null
+	_relic = null
 	_gems.clear()
 	_pedestals.clear()
 	_door_labels.clear()

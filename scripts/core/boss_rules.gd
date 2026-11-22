@@ -41,6 +41,15 @@ static func fan(aim: Vector2, count: int, spread: float) -> PackedVector2Array:
 	return out
 
 
+## Daniel 2026-11-21 ("os golpes do boss tem q ser igual ao do miniboss que na hora q está carregando vai perseguindo o
+## herói até soltar o golpe"): a blow's aim turns toward the paladin through its wind-up, at most max_turn radians this
+## step, and holds still once `since` is within `lock` seconds of the release (the moment to dodge).
+static func follow_aim(dir: Vector2, to: Vector2, max_turn: float, since: float, windup: float, lock: float) -> Vector2:
+	if since >= windup - lock or to.length_squared() < 0.04 or dir.length_squared() < 0.0001:
+		return dir
+	return dir.rotated(clampf(dir.angle_to(to), -max_turn, max_turn))
+
+
 ## Where a moving paladin is aimed at: his way times the flight's time, but only `lead` of it (never a perfect lead).
 static func aim_at(from: Vector2, target: Vector2, velocity: Vector2, speed: float, lead: float) -> Vector2:
 	var flight := from.distance_to(target) / maxf(speed, 0.1)

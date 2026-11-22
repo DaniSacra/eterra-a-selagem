@@ -1,7 +1,7 @@
 extends GutTest
-## The wall trap (SR-P1, docs/design/rooms_progression.md): a block in the wall throws blades along a line 1.2 m across,
+## The wall trap (SR-P1, docs/design/rooms_progression.md): a block in the wall throws blades along a line 1.6 m across,
 ## one line at a time (the one with most enemies in it, band_busy), 1.2 s of warning, 10 to him, 60 to an enemy, after 5 s
-## of calm and from a share of the descent. In the data: the Jardim A's two traps, the Santuário A's three and C's two;
+## of calm and from a share of the descent; the cycle shortens deep in the descent (3.5 s then 2.8 s in the Santuário). In the data: the Jardim A's two traps, the Santuário A's three and C's two;
 ## every line whole on the floor, off every door's mouth, 6 m or more from the way in, with a block behind its start.
 ## In a real room: it hurts both, names "Armadilha de Lâminas", the room counts it, and it sleeps early in the descent.
 

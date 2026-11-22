@@ -14,7 +14,9 @@ extends RefCounted
 ## Forja's highest Temperar bought; refine, awaken, inscribed for the next slices) and tools (the Forjador's, Fatia 2).
 ## An older file opens every Gift its Mastery had already unlocked, for free (nobody loses a Gift), and gets 5 silver a
 ## descent it played, up to 30 (Q-RJ8 a, MaterialPurse.retro_silver), once.
-const VERSION := 9
+## 10 (Lote 5, the account's tree "A Fonte", Account): account (bought: the ids of the nodes bought, for every hero). An
+## older file opens with none bought; nothing else changes.
+const VERSION := 10
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -53,6 +55,8 @@ static func defaults() -> Dictionary:
 		"played_at": 0,
 		# since version 9: the Santuário opens by stages (HubGate): the stations whose opening was shown
 		"hub": hub_defaults(),
+		# since version 10: the account's improvements (Account)
+		"account": Account.defaults(),
 	}
 
 
@@ -143,6 +147,7 @@ static func merged(loaded: Variant) -> Dictionary:
 	# files before version 9 (the Santuário opens by stages): what is open already counts as shown (no announcement)
 	if version < 9:
 		HubGate.mark_presented(out, HubGate.open_ids(out).filter(func(id: StringName) -> bool: return HubGate.GATED.has(id)))
+	# version 10 (the account): nothing to move, an older file opens with none bought (defaults)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out

@@ -477,7 +477,7 @@ const MODELS := {
 			# pole is built here: dark wood 2.0 m (the body's height, from near the floor to over the head) with iron
 			# collars, a leather wrap at the grip, the right hand at its middle, the crescent on top, aimed up in the guard
 			{"hand": "Right", "meshy": "w_morvath_scythe", "triangles": 1550, "slot": 0, "grip": Vector3(0.05, -0.476, 0), "at": Vector3(0, 0.95, 0), "scale": 0.85, "rot": EDGE_OUT, "aim": SCYTHE_AIM, "name": "scythe"},
-			{"hand": "Right", "shape": "cylinder", "size": Vector3(0.04, 2.0, 0.045), "cell": 3, "aim": SCYTHE_AIM, "name": "scythe_pole"},
+			{"hand": "Right", "shape": "cylinder", "size": Vector3(0.03, 2.0, 0.034), "cell": 3, "aim": SCYTHE_AIM, "name": "scythe_pole"},
 			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, 0.0, 0), "size": Vector3(0.05, 0.3, 0.05), "cell": 6, "segments": 8, "aim": SCYTHE_AIM, "name": "scythe_wrap"},
 			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, -0.97, 0), "size": Vector3(0.065, 0.1, 0.065), "cell": 4, "segments": 8, "aim": SCYTHE_AIM, "name": "scythe_foot"},
 			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, 0.93, 0), "size": Vector3(0.07, 0.09, 0.07), "cell": 4, "segments": 8, "aim": SCYTHE_AIM, "name": "scythe_collar"},

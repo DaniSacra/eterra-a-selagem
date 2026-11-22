@@ -9,6 +9,9 @@ extends Control
 ##   Geada   a flake of six short arms, each with a pair of twigs
 ##   Luz     a narrow beam coming down onto a diamond (no rays round it)
 ##   Vigília the watchman's horn, its bell to the right, a sling hanging from its bands
+##   Véu     a veil folded into a drop (Velael)
+##   Maré    three stacked waves (Galael)
+##   Marca   an arrowhead inside a ring (Qeshael)
 ## Elo (DUO) has no angel of its own: the two seals side by side (the encounter's pair), so it draws nothing here.
 ##   var s := AngelSeal.new().setup(Boon.Family.GEADA, 96.0)
 ##   AngelSeal.mark(canvas_item, Boon.Family.LUZ, centre, radius, width)   # the mark alone, on any canvas
@@ -19,7 +22,8 @@ const IVORY := SealMedal.IVORY
 ## Kept off the colours the fight reserves (ui-ux-designer, the Encontro screen): the Chama an amber earth (hue 24,
 ## not the danger's red near 350 nor the life's), the Vigília a sage (hue 88: its family's green, but far from the
 ## Emeth's emerald near 150 and the hero's petrol near 180; it was petrol, hue 177).
-const TINT: Array[Color] = [Color(0.82, 0.5, 0.27), Color(0.58, 0.76, 0.88), Color(0.92, 0.82, 0.56), Color(0.58, 0.68, 0.43)]
+const TINT: Array[Color] = [Color(0.82, 0.5, 0.27), Color(0.58, 0.76, 0.88), Color(0.92, 0.82, 0.56), Color(0.58, 0.68, 0.43), UiKit.OLD_GOLD,
+	Color(0.7, 0.66, 0.6), Color(0.3, 0.48, 0.78), Color(0.66, 0.58, 0.3)]
 ## The mark's reach against the seal's radius (SealMedal.GLYPH).
 const MARK := 0.74
 
@@ -147,6 +151,36 @@ static func mark(ci: CanvasItem, f: Boon.Family, c: Vector2, r: float, w: float,
 				var t := float(i) / 8.0
 				sling.append(from.lerp(to, t) + Vector2(0, 0.2 * r * sin(t * PI)))
 			ci.draw_polyline(sling, Color(ink, 0.6 * ink.a), w * 0.6, true)
+		Boon.Family.VEU:
+			# a veil folded into a drop: the drop's outline, a fold line down its middle and a second, shorter one beside it
+			var top := c + Vector2(0, -r * 0.88)
+			var drop := PackedVector2Array([top])
+			for i in 15:
+				var a := lerpf(-0.75, PI + 0.75, float(i) / 14.0)
+				drop.append(c + Vector2(0, r * 0.2) + Vector2(cos(a), sin(a)) * r * 0.52)
+			ci.draw_colored_polygon(drop, Color(col, col.a * 0.85))
+			ci.draw_polyline(_closed(drop), ink, w, true)
+			ci.draw_line(c + Vector2(0, -r * 0.5), c + Vector2(0, r * 0.62), ink, w * 0.8, true)
+			ci.draw_line(c + Vector2(-r * 0.2, -r * 0.1), c + Vector2(-r * 0.2, r * 0.5), Color(ink, 0.6 * ink.a), w * 0.6, true)
+		Boon.Family.MARE:
+			# three waves stacked, each a ridge of one swell, the lower ones wider
+			for k in 3:
+				var y := c.y + (k - 1) * r * 0.42
+				var half := r * (0.5 + 0.12 * k)
+				var line := PackedVector2Array()
+				for i in 13:
+					var t := float(i) / 12.0
+					line.append(Vector2(c.x - half + t * half * 2.0, y - sin(t * TAU) * r * 0.13))
+				ci.draw_polyline(line, ink if k != 1 else col.lightened(0.25), w * (1.0 if k != 1 else 1.3), true)
+		Boon.Family.MARCA:
+			# an arrowhead pointing up inside a ring
+			ci.draw_arc(c, r * 0.8, 0.0, TAU, 40, ink, w * 0.9, true)
+			var head := PackedVector2Array([c + Vector2(0, -r * 0.55), c + Vector2(r * 0.26, r * 0.08), c + Vector2(0, -r * 0.04), c + Vector2(-r * 0.26, r * 0.08)])
+			ci.draw_colored_polygon(head, col)
+			ci.draw_polyline(_closed(head), ink, w, true)
+			ci.draw_line(c + Vector2(0, -r * 0.04), c + Vector2(0, r * 0.55), ink, w, true)
+			ci.draw_line(c + Vector2(0, r * 0.55), c + Vector2(-r * 0.12, r * 0.42), ink, w * 0.8, true)
+			ci.draw_line(c + Vector2(0, r * 0.55), c + Vector2(r * 0.12, r * 0.42), ink, w * 0.8, true)
 		_:
 			pass
 

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_7a5qt"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_r1yht"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_w1h0a"]
+
+[sub_resource type="Resource" id="Resource_ckmbg"]
+script = ExtResource("3_w1h0a")
+kind = 1
+cooldown = PackedFloat32Array(6, 5, 4.5)
+damage = PackedFloat32Array(18, 26, 36)
+count = PackedFloat32Array(1)
+radius = PackedFloat32Array(5, 6, 7)
+status = &"slow"
+status_power = PackedFloat32Array(2.5, 3, 3.5)
+
+[resource]
+script = ExtResource("2_r1yht")
+id = &"vaga"
+family = 6
+icon = 21
+skill = SubResource("Resource_ckmbg")

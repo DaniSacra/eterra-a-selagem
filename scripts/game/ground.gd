@@ -44,10 +44,13 @@ const OIL_SOURCE := &"oil"
 ## AT-H2 the skeleton in the Cripta B's niche, AT-H3 the hostile plant of the Jardim B (PlateFloor strips).
 const NICHE_SOURCE := &"niche"
 const PLANT_SOURCE := &"plant"
+## SR-P2 the slab that gives (PlateFloor, plate_source &"sag"), SR-P3 the spiked pit grate (BandFloor, band_source &"spikes").
+const SAG_SOURCE := &"sag"
+const SPIKES_SOURCE := &"spikes"
 ## Sources of the room's own warnings that count against its two at once (combat_cadence.md 9.2 R9); a column toppling
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
 const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE, TRAP_SOURCE,
-	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE]
+	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE, SAG_SOURCE, SPIKES_SOURCE]
 const POOL := 48
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
@@ -326,6 +329,23 @@ static func point_line(z: Zone, from: Vector2, dir: Vector2) -> void:
 		var mid := from + z.dir * z.radius * 0.5
 		z.node.rotation = Vector3(0, atan2(z.dir.x, z.dir.y), 0)
 		z.node.position = Vector3(mid.x, z.node.position.y, mid.y)
+
+
+## Turns a line or a half circle warning to start at `from` and face `dir` (Morvath's blows following the paladin
+## through their wind-up); its size and time stay.
+static func point_zone(z: Zone, from: Vector2, dir: Vector2) -> void:
+	if z == null or dir.length_squared() < 0.0001:
+		return
+	if z.shape == Shape.LINE:
+		point_line(z, from, dir)
+		return
+	if z.shape != Shape.ARC:
+		return
+	z.pos = from
+	z.dir = dir.normalized()
+	if z.node != null:
+		z.node.rotation = Vector3(0, atan2(-z.dir.x, -z.dir.y), 0)
+		z.node.position = Vector3(from.x, z.node.position.y, from.y)
 
 
 static func end_zone(z: Zone) -> void:

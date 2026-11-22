@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_bghwo"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_2kl57"]
+
+[sub_resource type="Resource" id="Resource_sgius"]
+script = ExtResource("1_bghwo")
+stat = &"weak_time"
+tag = &"cast"
+base = 4.0
+per_level = PackedFloat32Array(1.5, 1.5)
+
+[resource]
+script = ExtResource("2_2kl57")
+id = &"circulo_veu"
+family = 5
+icon = 20
+slot = 3
+mods = Array[ExtResource("1_bghwo")]([SubResource("Resource_sgius")])

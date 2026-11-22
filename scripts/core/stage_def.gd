@@ -106,6 +106,13 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var silver_phase := 2
 @export var phase_max := 4
 @export var silver_victory := 10
+## SR-P5 (the relic in the stone, an object of the room he uses with interact once the fight is won): the share of the
+## fights that hold one (in the arenas with RoomLayout.relic_spots, from relic_from_depth on, drawn from the room's own
+## dice, never the run's), what it gives (gold, or Prata Antiga: the room's dice again). Theme to confirm with the Daniel.
+@export var relic_chance := 0.5
+@export var relic_from_depth := 3
+@export var relic_gold := 30
+@export var relic_silver := 6
 @export var memory_door := 3
 @export var memory_guardian := 2
 @export var memory_trial := 2

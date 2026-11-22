@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_yum45"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_fp6ef"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_qgneu"]
+
+[sub_resource type="Resource" id="Resource_sc26q"]
+script = ExtResource("3_qgneu")
+kind = 3
+cooldown = PackedFloat32Array(5, 4.5, 4)
+damage = PackedFloat32Array(14, 20, 28)
+count = PackedFloat32Array(4, 6, 9)
+radius = PackedFloat32Array(12, 13, 14)
+status = &"mark"
+status_power = PackedFloat32Array(3, 4, 5)
+
+[resource]
+script = ExtResource("2_fp6ef")
+id = &"chuva_flechas"
+family = 7
+icon = 22
+skill = SubResource("Resource_sc26q")

@@ -8,7 +8,7 @@ extends Resource
 ## a Blessing and at the guardian; the cards of the one chosen are its family's (Encounter.belongs).
 
 @export var id: StringName
-## The family it brings (Boon.Family: CHAMA, GEADA, LUZ, VIGILIA; an Elo is two angels together).
+## The family it brings (Boon.Family: CHAMA, GEADA, LUZ, VIGILIA, and from AN-2 VEU, MARE, MARCA; an Elo is two angels together).
 @export var family: Boon.Family = Boon.Family.LUZ
 ## Text keys: its name and its line of temperament.
 @export var name_key: StringName

@@ -6,7 +6,7 @@
 #                                                    stylized look and near camera unless --look= / --cam= given
 #   tools/gpu.sh run [godot args...]                 anything else, e.g. tools/gpu.sh run -s tools/enemy_lab.gd -- C:/x
 #   tools/gpu.sh sync                                mirror and reimport only
-# At most GPU_SLOTS runs at a time (default 2, Daniel 2026-11-19; slot 1 uses its own mirror, eterra-gpu2), others wait. A game window shows on the desktop while it runs. Paths given to the game are Windows paths (C:/...): `shot` turns
+# At most GPU_SLOTS runs at a time (default 1, Daniel 2026-11-21: one capture at a time; slot 1 would use its own mirror, eterra-gpu2), others wait. A game window shows on the desktop while it runs. Paths given to the game are Windows paths (C:/...): `shot` turns
 # out.png into one and copies the result back. GODOT_WIN and MIRROR override the defaults below.
 set -e
 GODOT_WIN=${GODOT_WIN:-/mnt/c/Users/danie/tools/godot/Godot_v4.7.2-stable_win64_console.exe}
@@ -14,7 +14,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 win() { wslpath -w "$1"; }
 # GPU_SLOTS runs at a time, each slot with its own mirror (two runs on one mirror would sync under each other); the
 # PC rebooted with a display-driver crash (0x116) with more at once, so keep it small
-SLOTS=${GPU_SLOTS:-2}
+SLOTS=${GPU_SLOTS:-1}
 slot=""
 while [ -z "$slot" ]; do
 	for i in $(seq 0 $((SLOTS - 1))); do
@@ -28,7 +28,7 @@ if [ "$slot" = 0 ]; then MIRROR=${MIRROR:-/mnt/c/Users/danie/tools/eterra-gpu}; 
 mkdir -p "$MIRROR"
 
 sync() {
-	rsync -a --delete --exclude .git --exclude .claude --exclude .godot --exclude build --exclude 'assets/models/meshy/*/*-v[0-9]*' "$ROOT/" "$MIRROR/"
+	rsync -a --delete --exclude .git --exclude .claude --exclude .godot --exclude build --exclude docs/gallery --exclude 'assets/models/meshy/*/*-v[0-9]*' "$ROOT/" "$MIRROR/"
 	"$GODOT_WIN" --headless --path "$(win "$MIRROR")" --import >/dev/null 2>&1 || true
 }
 

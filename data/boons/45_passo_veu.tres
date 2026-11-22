@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_tniex"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_wunsy"]
+
+[sub_resource type="Resource" id="Resource_o0rhf"]
+script = ExtResource("1_tniex")
+stat = &"weak_time"
+tag = &"dash"
+base = 3.0
+per_level = PackedFloat32Array(1, 1)
+
+[resource]
+script = ExtResource("2_wunsy")
+id = &"passo_veu"
+family = 5
+icon = 20
+slot = 4
+mods = Array[ExtResource("1_tniex")]([SubResource("Resource_o0rhf")])

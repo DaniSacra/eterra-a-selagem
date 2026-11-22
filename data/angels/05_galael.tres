@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="AngelDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/angel_def.gd" id="1_ls0cn"]
+
+[resource]
+script = ExtResource("1_ls0cn")
+id = &"galael"
+family = 6
+name_key = &"angel_galael"
+line_key = &"angel_galael_line"
+color = Color(0.3, 0.48, 0.78, 1)
+symbol = 5

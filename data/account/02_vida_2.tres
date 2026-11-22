@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="AccountNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_grt6i"]
+[ext_resource type="Script" path="res://scripts/core/account_node.gd" id="2_kdy5h"]
+
+[sub_resource type="Resource" id="Resource_k4ogb"]
+script = ExtResource("1_grt6i")
+stat = &"max_hp"
+base = 8.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_kdy5h")
+id = &"vida_2"
+branch = &"vida"
+requires = &"vida_1"
+name_key = &"account_vida_2"
+desc_key = &"account_vida_2_desc"
+cost = 25
+mods = Array[ExtResource("1_grt6i")]([SubResource("Resource_k4ogb")])

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="AccountNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_3g742"]
+[ext_resource type="Script" path="res://scripts/core/account_node.gd" id="2_bj74r"]
+
+[sub_resource type="Resource" id="Resource_clkd2"]
+script = ExtResource("1_3g742")
+stat = &"room_heal_pct"
+base = 0.12
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_bj74r")
+id = &"cura_1"
+branch = &"cura"
+name_key = &"account_cura_1"
+desc_key = &"account_cura_1_desc"
+cost = 15
+mods = Array[ExtResource("1_3g742")]([SubResource("Resource_clkd2")])

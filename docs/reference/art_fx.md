@@ -308,3 +308,8 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - Contorno de tinta: experimento desligado. `--ink` (ou `--ink=N`; `--outline` é a borda do raio-x) multiplica por `HeroBody.INK_THICK` (2,5) a
   casca de contorno do herói e dos inimigos (`HeroBody.ink_scale`); sem custo de draw call novo (só a espessura da casca).
   Não medido em fps (precisa de GPU).
+
+## Mira dos atiradores mais discreta (2026-11-21, fim do dia)
+`GroundLook.AIM_PX` 4,5 (era 6) e `AIM_LIGHT` 0,38 (era 0,5): as duas linhas vermelhas que cruzavam a tela inteira
+ficam finas e escuras, a ponta brilhante continua. Cabo da foice de Morvath mais fino (`tools/bake.gd`, 0,03 por
+0,034; lia como barra branca), reassado.

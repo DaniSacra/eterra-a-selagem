@@ -173,6 +173,25 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 		12:  # steam: clouds
 			for k in 3:
 				ci.draw_circle(c + Vector2(-r * 0.4 + k * r * 0.4, -r * 0.05 * k), r * 0.36, w)
+		20:  # Veu (AN-2): a veil folded into a drop, a fold down its middle
+			var top := c + Vector2(0, -r * 0.8)
+			var drop := PackedVector2Array([top])
+			for k in 13:
+				var a := lerpf(-0.75, PI + 0.75, float(k) / 12.0)
+				drop.append(c + Vector2(0, r * 0.2) + Vector2(cos(a), sin(a)) * r * 0.55)
+			ci.draw_colored_polygon(drop, w)
+			ci.draw_line(c + Vector2(0, -r * 0.4), c + Vector2(0, r * 0.62), accent, th * 0.9, true)
+		21:  # Mare (AN-2): two stacked waves
+			for k in 2:
+				var line := PackedVector2Array()
+				for j in 11:
+					var t := float(j) / 10.0
+					line.append(c + Vector2(-r * 0.75 + t * r * 1.5, (k - 0.5) * r * 0.7 - sin(t * TAU) * r * 0.2))
+				ci.draw_polyline(line, w, th * 1.3, true)
+		22:  # Marca (AN-2): an arrowhead inside a ring
+			ci.draw_arc(c, r * 0.72, 0.0, TAU, 28, w, th * 0.8, true)
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(0, -r * 0.5), c + Vector2(r * 0.24, r * 0.18), c + Vector2(0, 0.0), c + Vector2(-r * 0.24, r * 0.18)]), w)
+			ci.draw_line(c, c + Vector2(0, r * 0.5), w, th, true)
 		101:  # the sword
 			sword(ci, c, r * 1.1, w, th)
 		102:  # the arrow of light

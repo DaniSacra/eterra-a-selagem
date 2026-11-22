@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_6hkrd"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_ri1qt"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_25avu"]
+
+[sub_resource type="Resource" id="Resource_gprjc"]
+script = ExtResource("3_25avu")
+kind = 2
+cooldown = PackedFloat32Array(0.5)
+damage = PackedFloat32Array(9, 13, 18)
+count = PackedFloat32Array(2, 3, 4)
+radius = PackedFloat32Array(3, 3.3, 3.6)
+status = &"slow"
+status_power = PackedFloat32Array(1, 1.2, 1.4)
+
+[resource]
+script = ExtResource("2_ri1qt")
+id = &"espuma"
+family = 6
+icon = 21
+skill = SubResource("Resource_gprjc")

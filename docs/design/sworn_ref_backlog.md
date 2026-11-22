@@ -76,11 +76,11 @@ golpes; barra do chefe; vinheta de vida baixa (conferir).
 ### Perigos de sala (room-designer, com o environment-artist)
 - **SR-P1 Bloco de armadilha na parede (feito no lote 3, 2026-11-21; `rooms.md`)** que dispara lâminas em linha a intervalos, com direção talhada na pedra e
   aviso antes do disparo; acerta inimigos também (usar a favor). Comportamento novo, depois só dado. *Médio.*
-- **SR-P2 Laje que cede**: lajes rachadas que afundam um tempo depois de pisadas e voltam; dá forma à luta. *Médio.*
-- **SR-P3 Grade de fosso**: abre e fecha em ritmo, com espinhos. *Médio.*
+- **SR-P2 Laje que cede (feito, 2026-11-21; `rooms.md`)**: lajes rachadas que afundam um tempo depois de pisadas e voltam; dá forma à luta. *Médio.*
+- **SR-P3 Grade de fosso (feito, 2026-11-21; `rooms.md`)**: abre e fecha em ritmo, com espinhos. *Médio.*
 - **SR-P4 Aviso de área padronizado (feito no lote 3, 2026-11-21; `rooms.md`)**: círculo de contorno limpo + preenchimento leve para todo golpe de área (chefe,
   atiradores, perigos), um só estilo no jogo. *Pequeno.*
-- **SR-P5 Evento "relíquia na pedra"** (nossa versão, sem copiar a espada na pedra; tema a definir com o Daniel e o
+- **SR-P5 Evento "relíquia na pedra" (feito, 2026-11-21; tema a confirmar com o Daniel: hoje só uma pedra gasta com um anel claro, sem nome nem história; `rooms.md`)** (nossa versão, sem copiar a espada na pedra; tema a definir com o Daniel e o
   cânone): interagir dá ouro ou Prata. *Pequeno.*
 
 ## 4. Decisões do Daniel (2026-11-21)

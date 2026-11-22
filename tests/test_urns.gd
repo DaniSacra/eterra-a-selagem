@@ -151,7 +151,7 @@ func test_in_a_real_room_it_blasts_and_burns() -> void:
 	assert_null(game.rooms.urns)
 	var room: Dictionary = game.room_tally.rooms(game.time)[-1]
 	var hz: Dictionary = room.get("hazard", {})
-	var urns: Dictionary = hz if hz.get("kind") == "urn" else hz.get("also", {})
+	var urns: Dictionary = RoomTally.find_hazard(hz, "urn")
 	assert_eq(urns.get("kind"), "urn")
 	assert_eq(int(urns.get("blasts", 0)), 1)
 	assert_almost_eq(float(urns.get("hero_damage", 0.0)), 10.0, 0.01)

@@ -451,3 +451,15 @@ como dado depois que a arte existir; o `balance-designer` mede).
 | Véu | **Velael** (do véu que cobre) | discreto, gentil, fala em voz baixa | **enfraquecer**: o inimigo marcado bate menos (Fraqueza), cega por instantes | Afrodite (Weak), Clíona do SWORN | manto cinza-cinza de fumaça com bordas âmbar de entardecer, véu leve sobre os ombros, rosto sereno meio na sombra | véu dobrado em gota |
 | Maré | **Galael** (de *gal*, onda) | forte, franco, ri alto | **empurrar**: golpes que arremessam, dano extra contra parede e entre inimigos | Poseidon (Slip, knockback) | azul-marinho profundo com espuma prateada, cabelo e manto em movimento como água | três ondas empilhadas |
 | Marca | **Qeshael** (de *qeshet*, arco) | preciso, frio, observa antes de falar | **marcar e criticar**: marca inimigos, crítico nos marcados, bônus no golpe que finaliza | Ártemis (Marked, crítico) | bronze e verde-oliva escuro, arco curto nas costas, olhar fixo | ponta de flecha dentro de um anel |
+
+**No jogo (AN-2, 2026-11-21)**: as três famílias viraram dado (`Boon.Family.VEU/MARE/MARCA`, `data/angels/04..06`), 9 Bênçãos cada.
+Véu: Golpe, Peso, Brado e Passo Velados (Fraqueza por 2 a 4 s por botão), Ômega e Final Velados, Entardecer (a Fraqueza corta
+10% a mais), Névoa de Entardecer e Fios de Cinza (habilidades que enfraquecem). Maré: Golpe, Peso, Brado e Passo de Maré
+(empurram 50 a 80% mais longe e um pouco de dano), Ômega de Maré, Maré Cheia (tudo empurra), Arrebentação (+25% em quem ainda
+desliza), Vaga e Espuma (habilidades que empurram e retardam). Marca: Golpe, Peso, Brado e Passo Marcados (marcam por 3 a 4 s),
+Ômega Marcado, Golpe Certeiro (+20% no último golpe), Olho Atento (+15% de crítico), Flechas Cravadas e Chuva de Flechas.
+Elos novos (12 no total): Névoa Gélida (Véu+Geada), Cinza Viva (Véu+Chama), Maré Ardente (Maré+Chama), Correnteza
+(Maré+Vigília), Mira Clara (Luz+Marca), Olho Firme (Marca+Vigília). Regras: Fraqueza tira 25% do dano do inimigo; Marca dá
+25% a mais de dano em todo golpe (crítico fixo, sem dado); empurrar multiplica o empurrão e bate mais em quem ainda desliza;
+os chefes não sofrem Fraqueza. O dano contra parede e entre inimigos do desenho original ficou de fora (não há colisão de
+corpo contra parede no motor): vira "quem ainda desliza". Números ao nível das Bênçãos atuais, a medir.

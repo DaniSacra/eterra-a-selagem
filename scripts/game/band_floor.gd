@@ -24,7 +24,7 @@ var _shown: Array[Vector2] = []
 
 
 ## awake false: the hazard sleeps (a trap early in the descent: HazardDef.from_progress); it strikes nothing and warns nothing.
-func _init(g: Game, def: HazardDef, awake := true) -> void:
+func _init(g: Game, def: HazardDef, awake := true, progress := 0.0) -> void:
 	game = g
 	var doors: Array[Rect2] = []
 	for z in g.arena.exit_zones:
@@ -32,7 +32,7 @@ func _init(g: Game, def: HazardDef, awake := true) -> void:
 	if g.arena.layout != null:
 		for e in g.arena.layout.exits:
 			doors.append(e.mouth)
-	hazard = BandHazard.new(def, doors)
+	hazard = BandHazard.new(def, doors, progress)
 	if not awake:
 		hazard.stop()
 	g.ground.hazard_landed.connect(_on_landed)

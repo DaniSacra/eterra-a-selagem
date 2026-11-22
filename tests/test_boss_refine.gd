@@ -568,3 +568,31 @@ func test_the_blades_step_back_when_he_is_close() -> void:
 	var before := game.projectiles.shots.size()
 	_run(def.blade_windup)
 	assert_gt(game.projectiles.shots.size(), before, "the crescents left")
+
+
+# ---------- his blows follow the paladin (Daniel, 2026-11-21) ----------
+
+func test_a_blow_turns_toward_the_paladin_through_its_windup_then_holds() -> void:
+	var step := deg_to_rad(Boss.FOLLOW_TURN) / 60.0
+	var dir := Vector2.RIGHT
+	var to := Vector2.UP * 5.0
+	var turned := BossRules.follow_aim(dir, to, step, 0.2, 1.0, Boss.FOLLOW_LOCK)
+	assert_almost_eq(absf(dir.angle_to(turned)), step, 0.0001, "at most its turn a frame")
+	assert_lt(absf(turned.angle_to(to)), absf(dir.angle_to(to)), "toward him")
+	assert_eq(BossRules.follow_aim(dir, to, step, 1.0 - Boss.FOLLOW_LOCK, 1.0, Boss.FOLLOW_LOCK), dir, "held before it lands")
+	var near := Vector2.from_angle(0.01)
+	assert_almost_eq(BossRules.follow_aim(Vector2.RIGHT, near * 4.0, step, 0.0, 1.0, Boss.FOLLOW_LOCK).angle(), 0.01, 0.0001, "no overshoot")
+
+
+func test_a_half_circle_warning_turns_with_him() -> void:
+	var game: Game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
+	add_child_autofree(game)
+	var z := game.ground.add_arc_warning(Vector2(1, 2), Vector2.RIGHT, def.scythe_reach, def.scythe_degrees, 1.0, 10.0)
+	Ground.point_zone(z, Vector2(3, 2), Vector2.UP)
+	assert_eq(z.pos, Vector2(3, 2))
+	assert_true(Ground.inside(z, Vector2(3, 2) + Vector2.UP * 2.0, 0.0), "it covers the new way")
+	assert_false(Ground.inside(z, Vector2(3, 2) + Vector2.DOWN * 2.0, 0.0), "and no longer the old one's back")
+	assert_almost_eq(z.node.position.x, 3.0, 0.001)
+	var line := game.ground.add_line_warning(Vector2.ZERO, Vector2.RIGHT, 6.0, 1.0, 1.0, 0.0)
+	Ground.point_zone(line, Vector2.ZERO, Vector2.UP)
+	assert_true(Ground.inside(line, Vector2.UP * 4.0, 0.0))

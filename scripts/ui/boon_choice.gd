@@ -356,7 +356,7 @@ static func describe(b: Boon, level: int, mult: float = 1.0, marked := false) ->
 
 
 ## The stats whose value is a time, a damage each second, or a count added: how a fact reads its value.
-const SECONDS: Array[StringName] = [&"freeze_time", &"steam_time", &"shield_cooldown"]
+const SECONDS: Array[StringName] = [&"freeze_time", &"steam_time", &"shield_cooldown", &"weak_time", &"mark_time"]
 const PER_SECOND: Array[StringName] = [&"burn_dps", &"dodge_ember_dps", &"cast_dps"]
 const ADDED: Array[StringName] = [&"max_hp", &"dodge_charges"]
 

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AccountNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_terq7"]
+[ext_resource type="Script" path="res://scripts/core/account_node.gd" id="2_g8bwa"]
+
+[sub_resource type="Resource" id="Resource_4whj1"]
+script = ExtResource("1_terq7")
+stat = &"revive"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_g8bwa")
+id = &"renascer"
+branch = &"vida"
+requires = &"vida_2"
+name_key = &"account_renascer"
+desc_key = &"account_renascer_desc"
+material = &"memory"
+cost = 20
+mods = Array[ExtResource("1_terq7")]([SubResource("Resource_4whj1")])

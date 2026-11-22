@@ -193,15 +193,15 @@ func test_temper_adds_to_the_blows_through_the_boons_stat() -> void:
 	var state := BoonState.new(BoonState.load_catalog())
 	assert_eq(state.stat(&"damage_pct", [&"light"]), 0.0)
 	state.equip_forge(forge.up_to(1))
-	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.1, 0.0001, "the attack")
-	assert_almost_eq(state.stat(&"damage_pct", [&"light", &"thrust", &"finisher", &"omega"]), 0.1, 0.0001, "the lance")
+	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.2, 0.0001, "the attack")
+	assert_almost_eq(state.stat(&"damage_pct", [&"light", &"thrust", &"finisher", &"omega"]), 0.2, 0.0001, "the lance")
 	assert_eq(state.stat(&"damage_pct", [&"heavy", &"wave"]), 0.0, "not the special yet")
 	state.equip_forge(forge.up_to(2))
-	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave"]), 0.1, 0.0001, "the special")
-	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave", &"charge", &"omega"]), 0.1, 0.0001,
+	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave"]), 0.2, 0.0001, "the special")
+	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave", &"charge", &"omega"]), 0.2, 0.0001,
 		"its Omega, counted once")
 	state.take(state.find(&"golpe_radiante"))
-	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.35, 0.0001, "summed with a Blessing")
+	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.45, 0.0001, "summed with a Blessing")
 
 
 # ---------- the deck and the map ----------
@@ -259,9 +259,9 @@ func test_material_doors_stand_beside_blessings() -> void:
 
 # ---------- the angels ----------
 
-func test_four_angels_one_a_family() -> void:
+func test_seven_angels_one_a_family() -> void:
 	var angels := Encounter.load_catalog()
-	assert_eq(angels.size(), 4)
+	assert_eq(angels.size(), 7)
 	var families := {}
 	for a in angels:
 		families[a.family] = a.id
@@ -269,7 +269,7 @@ func test_four_angels_one_a_family() -> void:
 		assert_ne(T.t(a.line_key), String(a.line_key))
 		assert_false(T.t(a.line_key).contains("—"), "no dash")
 	assert_eq(families, {Boon.Family.CHAMA: &"sarael", Boon.Family.GEADA: &"nivael", Boon.Family.LUZ: &"lumael",
-		Boon.Family.VIGILIA: &"shomael"})
+		Boon.Family.VIGILIA: &"shomael", Boon.Family.VEU: &"velael", Boon.Family.MARE: &"galael", Boon.Family.MARCA: &"qeshael"})
 
 
 ## A random hand: up to n Blessings taken off random draws.

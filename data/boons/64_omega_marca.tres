@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_s1rlh"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_leta4"]
+
+[sub_resource type="Resource" id="Resource_ow0ij"]
+script = ExtResource("1_s1rlh")
+stat = &"mark_time"
+tag = &"omega"
+base = 4.0
+per_level = PackedFloat32Array(1.5, 1.5)
+
+[resource]
+script = ExtResource("2_leta4")
+id = &"omega_marca"
+family = 7
+icon = 22
+mods = Array[ExtResource("1_s1rlh")]([SubResource("Resource_ow0ij")])

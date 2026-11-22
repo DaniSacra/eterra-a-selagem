@@ -299,6 +299,10 @@ func test_interact_opens_a_station_and_esc_closes_it_without_leaking() -> void:
 	await _frames(2)
 	await _tap(KEY_F)
 	assert_true(hub.host.is_open(), "F on the Forjador opens its page")
+	if hub.host.screen is HubPanel:
+		# Lote 5: once the Forja is behind him the Forjador asks first (A Forja or A Fonte)
+		(hub.host.screen as HubPanel).buttons[0].pressed.emit()
+		await _frames(3)
 	assert_true(hub.host.screen is ForgeScreen, "the Forja (Rejogabilidade, Fatia 1)")
 	await _tap(KEY_F)
 	assert_true(hub.host.is_open(), "F again does not open a second one")

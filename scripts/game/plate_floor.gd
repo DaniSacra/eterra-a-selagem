@@ -44,7 +44,7 @@ const PULL_STEP := 0.05
 
 
 ## awake: whether the descent reached HazardDef.from_progress (else the slabs lie drawn and never strike).
-func _init(g: Game, def: HazardDef, awake := true) -> void:
+func _init(g: Game, def: HazardDef, awake := true, progress := 0.0) -> void:
 	game = g
 	var doors: Array[Rect2] = []
 	for z in g.arena.exit_zones:
@@ -52,7 +52,7 @@ func _init(g: Game, def: HazardDef, awake := true) -> void:
 	if g.arena.layout != null:
 		for e in g.arena.layout.exits:
 			doors.append(e.mouth)
-	hazard = PlateHazard.new(def, doors, awake)
+	hazard = PlateHazard.new(def, doors, awake, progress)
 	zones.resize(hazard.count())
 	for i in hazard.count():
 		var n := GroundLook.new_node()

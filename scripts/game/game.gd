@@ -93,6 +93,8 @@ var tools_found: Array[StringName] = []
 var tools_banked: Array[StringName] = []
 var forge_refine: Array[String] = []
 var forge_temper := 0
+## How many nodes of the account this descent carries (the RESULT).
+var account_nodes := 0
 var talents_opened := 0
 var encounters: Encounters
 ## The hero played (DT-013) and, for this descent, the Gifts equipped (ids) and the ultimate chosen (id or "").
@@ -307,6 +309,7 @@ func _ready() -> void:
 		Controls.virtual = bot.pad
 	# the Gifts and the Forja before the first room: it records the life he walks in with
 	_equip_forge()
+	_equip_account()
 	_start_oficios()
 	_equip_talents()
 	encounters = Encounters.new(self)
@@ -723,6 +726,7 @@ func _free_later(old: Node, wait: Callable) -> void:
 ## for a room, StageDef.psalm_chance; the guardian passes its own). meeting: a room's Blessing, which comes by two
 ## angels (Rejogabilidade, Fatia 1: Encounters; --no-angels draws as before).
 func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0, meeting := false) -> void:
+	chances = Account.better(chances, boons.stat(&"rarity_bonus"))
 	choice_angel = null
 	_no_reroll = false
 	_last_chances = chances
@@ -1153,7 +1157,7 @@ func _step_fountain() -> void:
 	if player.pos.distance_to(_fountain_at) < 2.0 and player.hp < player.max_hp:
 		_fountain_used = true
 		room_tally.fountain()
-		player.heal(player.max_hp * FOUNTAIN_HEAL)
+		player.heal(player.max_hp * (FOUNTAIN_HEAL + boons.stat(&"fountain_heal")))
 		(_fountain.get_node("Light") as OmniLight3D).light_energy = 0.6
 		(_fountain.get_node("Spring") as CPUParticles3D).emitting = false
 		ArenaKit.fountain_spent(_fountain)
@@ -1758,7 +1762,7 @@ func _equip_talents() -> void:
 	talents = ids
 	if bot != null or Dev.has("talents"):
 		talents_opened = ids.size()
-	if not ids.is_empty() or not boons.forge.is_empty():
+	if not ids.is_empty() or not boons.forge.is_empty() or not boons.granted.is_empty():
 		_apply_talents(ids)
 
 
@@ -1812,6 +1816,21 @@ func _equip_forge() -> void:
 	rerolls_left = Discern.rerolls(discern)
 	boons.equip_forge(ranks)
 	player.set_temper(forge_temper)  # (G-2: the blade shows its rank)
+
+
+## The account's tree "A Fonte" for this descent (Lote 5): --account=N (the first N nodes, also the robot's), else a
+## person's save (account.bought); none for the robot. Summed in boons.stat as the Forja's (BoonState.grant); a node that
+## raises life reaches the paladin in _apply_talents, which reads the sum.
+func _equip_account() -> void:
+	var tree := Account.new(Account.load_catalog())
+	var ids: Array = []
+	if Dev.has("account"):
+		ids = tree.first(int(Dev.num("account", 0)))
+	elif bot == null and Save.enabled:
+		ids = Account.bought(Save.data)
+	account_nodes = ids.size()
+	boons.grant(tree.mods_of(ids))
+	player.revives = int(boons.stat(&"revive"))
 
 
 ## The Juramentos of this descent (E6): --juramentos=id:rank,... (any, for tests and the robot), else a person's

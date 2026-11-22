@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_wo7po"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_c0ic2"]
+
+[sub_resource type="Resource" id="Resource_y6lsm"]
+script = ExtResource("1_wo7po")
+stat = &"weak_time"
+tag = &"light"
+base = 2.0
+per_level = PackedFloat32Array(1, 1)
+
+[resource]
+script = ExtResource("2_c0ic2")
+id = &"golpe_veu"
+family = 5
+icon = 20
+slot = 1
+mods = Array[ExtResource("1_wo7po")]([SubResource("Resource_y6lsm")])

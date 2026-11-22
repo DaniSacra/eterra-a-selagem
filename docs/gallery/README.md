@@ -190,3 +190,8 @@ centro da tempestade sobreposto em rosa quase branco; topo do quadro quase preto
 azul; erupções sem o miolo vermelho; velas da frente por cima das pernas do herói; capturas `02` a `09` e vídeos a refazer
 no `00dd13b`; peças procedurais e do KayKit provisórias. Os símbolos (leão de pé só no selo, espada erguida no lugar da
 cruz) e o raio de 12 m são decisões da sessão a confirmar. A aprovação artística final é do Daniel.
+
+## `lote_5/`: A Fonte, anjos 5 a 7, perigos novos (2026-11-21)
+A conta (`f3_fonte`), o Encontro e as cartas de Velael e Galael (`ui_meeting`, `ui_meeting_cards`), a árvore do Jardim mais
+escura (`garden`), a Fenda em índigo e a laje que cede (`rift`, `rift_sag`), a grade de espinhos (`crypt_spikes`) e o cabo
+mais fino da foice de Morvath (`boss`). Salas com `--hazards` (perigos armados como no fundo da descida).

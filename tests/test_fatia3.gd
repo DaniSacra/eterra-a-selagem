@@ -236,7 +236,7 @@ func test_an_obra_reaches_the_descent() -> void:
 
 func test_the_angels_codex() -> void:
 	var d := SaveData.defaults()
-	assert_eq(AngelCodex.count(d), [0, 4] as Array[int])
+	assert_eq(AngelCodex.count(d), [0, 7] as Array[int])
 	var meetings: Array[Dictionary] = [{"offered": ["sarael", "nivael"], "chose": "nivael"}, {"offered": ["nivael"], "chose": "nivael"}]
 	var frost: Boon = BoonState.new(BoonState.load_catalog()).find(&"toque_geada")
 	AngelCodex.keep(d, meetings, [frost] as Array[Boon])
@@ -250,7 +250,7 @@ func test_the_angels_codex() -> void:
 	assert_eq(by[&"sarael"].met, 1)
 	assert_true(by[&"sarael"].known)
 	assert_false(by[&"lumael"].known)
-	assert_eq(AngelCodex.count(d), [2, 4] as Array[int])
+	assert_eq(AngelCodex.count(d), [2, 7] as Array[int])
 
 
 func test_the_second_and_third_tools_are_found() -> void:

@@ -44,9 +44,14 @@ var lengths := PackedFloat32Array()
 var widths := PackedFloat32Array()
 
 
+## Seconds of rest at this depth (HazardDef.rearm_at).
+var rearm := 5.0
+
+
 ## doors: the mouths (and zones) of the room's doors; a slab touching one never arms.
-func _init(hazard: HazardDef, doors: Array[Rect2], is_awake := true) -> void:
+func _init(hazard: HazardDef, doors: Array[Rect2], is_awake := true, progress := 0.0) -> void:
 	def = hazard
+	rearm = def.rearm_at(progress)
 	awake = is_awake
 	calm = def.start_delay
 	for r in def.plates:
@@ -156,7 +161,7 @@ func step(dt: float, hero: Vector2, bodies: PackedVector2Array, others := 0) -> 
 				left[i] -= dt
 				if left[i] <= 0.0:
 					phase[i] = Phase.REST
-					left[i] += def.rearm
+					left[i] += rearm
 					ember[i] = ArenaHazard.EMBER
 			Phase.REST:
 				left[i] -= dt

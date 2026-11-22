@@ -1602,3 +1602,21 @@ Sem código novo de lógica.
 - **Aviso**: tudo no mesmo vermelho do jogo; as peças âmbar (moldura da laje armando, brasa das raízes) podem ser
   reavaliadas para o vermelho e a luz âmbar da peça combinarem com o aviso no chão.
 - Texto "Armadilha de Lâminas" é provisório (nome para o Daniel).
+
+## Lote SR-P (2026-11-21, room-designer): laje que cede, grade de espinhos, relíquia, armadilha mais dura
+
+Ideia de jogo de cada um e onde entra na descida (progresso = `EncounterGen.progress`):
+
+| Perigo | O que pede | Salas | Desde |
+|---|---|---|---|
+| Laje que cede (`sag`) | não parar no chão rachado; atrair o bando para ele | Fendas A (2 lajes a leste), Santuário A (3, nave e oeste) | 0,4 e 0,5 |
+| Grade de espinhos (`spikes`) | puxar o bando para a grade que vai subir (a com mais inimigos primeiro) | Cripta A e B, Santuário B | 0,4, 0,4 e 0,55 |
+| Armadilha de parede (SR-P1, mais dura) | atravessar a linha de 1,6 m entre os golpes; ciclo cai com a descida | Jardim A (5 s, 4 s desde 0,7), Santuário A e C (3,5 s, 2,8 s desde 0,7) | 0,3 e 0,5 |
+| Relíquia na pedra (SR-P5) | uma volta extra até o canto depois da luta, por 30 de ouro ou 6 de Prata | Cripta, Fendas, Jardim, Santuário | sala 3, 50% das lutas |
+
+Todos: aviso de 1,2 s ou mais, 10 ao herói e 60 ao inimigo, calma de 5 s no começo, dormentes antes do "desde", fora da
+porta, a 6 m ou mais da entrada, sem tocar outro perigo da sala (`tests/test_hazard_sr.gd`). Só o descanso encurta com a
+profundidade (`cycle_late`, `rearm_late`, desde 0,7). Métricas do robô (12 sementes `smoke 600 --bot-reaction=0.25` e 6 com
+`--hero-hp=300`, 900 s): nenhum `stuck`; o robô quase não leva dano do perigo (reage ao aviso em 0,25 s; 0 a 10 de cada
+fonte por descida, mais as rochas e as lajes), mas a armadilha dá 51 golpes e 197 de dano nos inimigos em 7 salas e as
+lajes 53 golpes e 302. As grades e a laje que cede quase não apareceram (salas sorteadas cedo; só dormentes até 0,4/0,55).

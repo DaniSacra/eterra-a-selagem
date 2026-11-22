@@ -221,6 +221,7 @@ func test_the_buff_takes_15_percent_off_a_blow_taken() -> void:
 	_run([])
 	var p := game.player
 	p.hurt_scale = 1.0
+	p.max_hp = 60.0  # (the new Warrior has 18: the 20 would fell him)
 	p.hp = p.max_hp
 	p.hurt(20.0, Vector2(3, 0))
 	var plain := p.max_hp - p.hp

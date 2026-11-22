@@ -119,7 +119,7 @@ func test_the_niche_grabs_and_pulls_without_holding() -> void:
 	game.rooms._room_cleared()
 	var room: Dictionary = game.room_tally.rooms(game.time)[-1]
 	var hz: Dictionary = room.get("hazard", {})
-	var niche: Dictionary = hz.get("also", {})
+	var niche: Dictionary = RoomTally.find_hazard(hz, "niche")
 	assert_eq(niche.get("kind"), "niche")
 	assert_eq(int(niche.get("pulled", 0)), 1)
 	assert_almost_eq(float(niche.get("hero_damage", 0.0)), 10.0, 0.01)

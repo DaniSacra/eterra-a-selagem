@@ -62,6 +62,29 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   inimigos a 4 m; `--bot-no-shout`), `Bot.rush_worth` (entrar a 4,5 a 8 m, ou para Magia quando a rajada não tem; `--bot-no-rush`), rajada só com Magia. Faltam: slots
   `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
+## A Fonte, a árvore da conta (Lote 5, 2026-11-22; nomes de trabalho a confirmar com o Daniel; testes em `tests/test_account.gd`)
+- **O que é**: melhorias permanentes que valem para todos os heróis (recomendação 1 de `docs/design/benchmark_sworn.md` §8),
+  compradas com os materiais que já existem (Prata Antiga e Fragmento de Memória; nenhuma moeda nova). Dado:
+  `AccountNode` (`core/account_node.gd`), `data/account/*.tres` escrito por `_account` no `make_data.gd` (12 nós, custos
+  crescentes na ordem do ramo). Regras puras em `Account` (`core/account.gd`): `problem`, `buy`, `owned`, `mods_of`,
+  `first(n)`, `open(data)`, `better(chances, bonus)`.
+- **Nós** (ramo: custo): Vida: Vigor I, II, III (+8, +8, +9 de vida; 12, 25, 45 Prata) e Segunda Chance (renasce uma vez
+  por descida com 40% da vida, `Account.REVIVE_HP`; 20 Memória, pede Vigor II); Cura: Fôlego da Sala (12% da vida ao vencer a
+  sala, `room_heal_pct`; 15) e Água Clara (fontes +15%, `fountain_heal`; 30); Ouro: Bolsa Cheia I e II (+15% e +20% de
+  ouro, `gold_pct`; 12 e 30); Bênção: Olhar Atento I e II (chance de raridade +0,08 e +0,10 no 1º degrau e metade no 2º;
+  6 e 12 Memória); Força: Mão Firme I e II (+6% de dano cada, `damage_pct` sem tag; 30 e 60). O ramo pede o nó de antes.
+- **Como entra na partida**: `Game._equip_account` soma os `mods` no `BoonState.grant` (como a Forja soma em `stat`);
+  vida máxima sai do `_apply_talents`; `Rooms` cura na sala vencida e multiplica o ouro, `Game` soma a cura da fonte e
+  aplica `Account.better` nas chances de `open_boon_choice`, `Player.revives` levanta uma vez no `hurt`. `--account=N`
+  (também o robô) leva os N primeiros nós do catálogo (a ordem de compra do robô); o `RESULT` ganha `account` (N).
+- **Save versão 10**: bloco `account.bought` (ids). Arquivo antigo abre sem nada comprado; a migração só soma o bloco.
+- **Números do Lote 5**: o Guerreiro novo tem 18 de vida (era 30) e a Forja (Temperar I e II) 20% (era 10%); medidas em
+  `docs/design/balance.md` ("Lote 5").
+- **Santuário**: sem estação nova. Depois da Forja (primeiro guardião vencido ou um Temperar comprado, `Account.open`) o
+  Forjador pergunta "A Forja" ou "A Fonte" (`Hub._use_smith`, `HubPanel`); a Fonte é uma folha simples
+  (`AccountSheet`: bolsa, grade de botões, descrição do foco, Enter compra). **Pendente para o ui-ux-designer**: vestir a
+  folha no estilo do Livro (hoje é funcional) e a estação própria se o Daniel quiser.
+
 ## Salmos (E4-01 e E4-02; regras, números e escolhas em `docs/design/e4_psalms.md`)
 - `PsalmDef` (`core/psalm_def.gd`, `data/psalms/`, parte `psalms` do `make_data.gd`): nome só por tema, sem número nem
   texto bíblico (D-59 (a); teste nas chaves `psalm_*`), `theme`, `slot` (a ação que transforma), três grupos `requires`
@@ -121,13 +144,25 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `open_in`, `open_problem`, `is_open` (`opened` nulo = tudo aberto, o robô e `--talents`). `HeroLoadout.State.SEALED`;
   abrir é só pela confirmação na página do Livro (`HeroLoadout.open`; `toggle` nunca abre um selado).
 - **Anjos e o Encontro** (Q-RJ4 a Q-RJ6, nada canônico): Sarael (Chama), Nivael (Geada), Lumael (Luz), Shomael
-  (Vigília), `AngelDef` em `data/angels/` (parte `angels`). Toda Bênção de sala e do guardião vem de dois anjos
+  (Vigília) e, desde o AN-2 (2026-11-21), Velael (Véu), Galael (Maré) e Qeshael (Marca; ver "Anjos 5 a 7" abaixo), `AngelDef` em `data/angels/` (parte `angels`). Toda Bênção de sala e do guardião vem de dois anjos
   (`Encounter.pair` no dado da sala, `Encounter.dice`, sal 9241; a Bênção da loja segue o sorteio de antes); o anjo
   escolhido oferece até 3 Bênçãos da família (`BoonState.draw` com filtro, `Encounter.belongs`: o Elo pertence se uma
   das listas tem a família), raridade, troca, Elo e Salmo como antes, dado próprio por anjo (`cards_dice`). Só um anjo
   com carta: vem sozinho; nenhum: o Fôlego. `Encounters` (`game/encounters.gd`, `game.encounters`) conduz; gente vê a
   o Encontro (`EncounterScreen`, ver abaixo; a `AngelChoice` provisória só abre se ninguém ouvir `Encounters.opened`) e depois a `BoonChoice`; robô e `--autopick` escolhem por
   afinidade (`Encounter.affinity`). `--angels=a,b`, `--no-angels`.
+- **Anjos 5 a 7 (AN-2, 2026-11-21)**: `Boon.Family` ganhou `VEU`, `MARE`, `MARCA` depois de `DUO` (os índices velhos não
+  mudam; `FAMILY_COLOR/TAG/KEY`, `AngelSeal.TINT` e o selo desenhado em código acompanham; glifos 20 a 22 do `BoonIcon`),
+  cada um com 9 Bênçãos como dado (`tools/make_data.gd` `_boons`, 42 a 68: ataque, especial, Brado, Investida, Ômega,
+  passivas e 2 que agem sozinhas) e 6 Elos novos (69 a 74, 12 no total). Código novo, uma vez: **Fraqueza**
+  (`weak_time` por golpe tagueado ou status `weak` de habilidade; o inimigo causa `Combat.WEAK_CUT` 25% menos, mais
+  `weak_pct`, tampa em `DamageCalc.MAX_WEAK_CUT`; `Enemy.weak_t`, `Horde._out(e)` nos golpes corpo a corpo, avisos de chão
+  e tiros; Morvath e o `boss.gd` não leem, ficam como estavam), **Marca** (`mark_time`/status `mark`: o marcado sofre
+  `Combat.MARK_CRIT` 25% a mais de todo golpe, mais `crit_pct`; sem dado aleatório, a semente se mantém;
+  `DamageCalc.marked`) e **empurrar** (`push_pct` multiplica o empurrão do golpe e marca `Enemy.shove_t` 0,6 s;
+  `shove_pct` bate mais forte em quem ainda desliza; `DamageCalc.shoved`). Textos: `gloss_weak`/`gloss_mark` (Glossário,
+  SR-H4), `fact_*` dos stats novos. Teste: `tests/test_an2.gd`. Números ao nível das Bênçãos atuais, a medir pelo
+  `balance-designer`. Detalhe das 27 Bênçãos e dos Elos: `docs/design/rejogabilidade/sistemas.md` 4.1.
 - **Save versão 6** (`materials`, `materials_total`; no herói `opened`, `forge`, `tools`): a migração abre de graça
   todo Dom que a Maestria já destravava e dá 5 de Prata por descida jogada, até 30 (Q-RJ8). `_fixed_keys` entra nos
   blocos com chaves conhecidas (`forge`). Fixture `tests/fixtures/save_v5.json`. **Registro e `RESULT` versão 5**:

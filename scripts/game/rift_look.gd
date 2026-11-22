@@ -98,9 +98,11 @@ const FLOOR := {
 ## middle: its falloff left the far corners of the platforms at half the middle's value), a little more ambient.
 ## C18 (one tone for the scenery): sky, fog, far ruins, mist and haze kept violet but under 0.45 of saturation (the
 ## frame was a fifth saturated violet).
+## Art review 2026-11-21 (Fenda 06): the air, the fog, the mists and the floor moved from violet (hue near 255,
+## Morvath's own) to a cold indigo (hue 228 to 236).
 const AIR := {
-	&"sky": Color(0.06, 0.05, 0.09), &"fog": Color(0.11, 0.09, 0.15), &"fog_depth": Vector2(60.0, 140.0),
-	&"ambient": Color(0.34, 0.33, 0.42), &"ambient_gain": 2.25, &"moon": Color(0.72, 0.74, 0.86), &"moon_energy": 0.95,
+	&"sky": Color(0.045, 0.055, 0.09), &"fog": Color(0.08, 0.095, 0.15), &"fog_depth": Vector2(60.0, 140.0),
+	&"ambient": Color(0.3, 0.33, 0.43), &"ambient_gain": 2.25, &"moon": Color(0.72, 0.74, 0.86), &"moon_energy": 0.95,
 	&"moon_shadow": true,
 }
 ## G-1: the browser's renderer (Compatibility, no contact shadows, lighting in other space) turns this air bluer and
@@ -151,7 +153,7 @@ const STYLE := {
 ## Grey salt, paler than the slate, 1.4 times the slab's value (the floor between them at patch_rest).
 ## The cycle of 2026-11-20: the patches soft (ArenaKit.SOFT_PATCHES), the floor calm (ArenaKit.CALM_FLOOR) and darker
 ## toward the room's far edges (edge_value from edge_span times the calm radius; the fight's middle stays).
-const STY_FLOOR_BIOME := {&"patch_color": Color(0.42, 0.4, 0.51), &"edge_value": 0.5, &"edge_span": Vector2(1.1, 2.0)}
+const STY_FLOOR_BIOME := {&"patch_color": Color(0.39, 0.42, 0.52), &"edge_value": 0.5, &"edge_span": Vector2(1.1, 2.0)}
 ## Sworn P2 SW-F2: the salt gathered at the brink: the patches paler and greyer, faint in the middle of the floor (x of
 ## patch_share), most of the floor within patch_reach m of an edge (the rift's lips are edges) taken (patch_cut_edge).
 const STY_SALT := {&"patch_color": Color(0.47, 0.465, 0.53), &"patch_share": Vector2(0.25, 0.85), &"patch_reach": 1.0,
@@ -160,7 +162,7 @@ const STY_SALT := {&"patch_color": Color(0.47, 0.465, 0.53), &"patch_share": Vec
 const MERLON_SPAN := Vector2(-16.5, -9.0)
 ## The floor's slate and how dark it falls toward the room's edge (room redesign fixes: the east platform's front read
 ## at luma 42, meta 50 to 65; the floor's middle stays near).
-const STY_FLOOR := Color(0.285, 0.27, 0.37)
+const STY_FLOOR := Color(0.26, 0.28, 0.37)
 const STY_EDGE_VALUE := 1.0
 ## The stylized air in the browser's renderer (its ambient and moon lower, as the crypt's).
 const STY_COMPAT_AMBIENT := 0.5
@@ -176,14 +178,14 @@ const STY_KEY_POOL_COLOR := Color(0.86, 0.85, 0.96)
 const STY_KEY_POOL_ENERGY := 6.0
 const STY_LIP_GLOW_ALPHA := 0.14
 ## B: the violet mist bank where the bridge was, in the stylized look (it lit the gap's middle at saturation 0.67).
-const STY_FALLEN_MIST := Color(0.34, 0.26, 0.5)
+const STY_FALLEN_MIST := Color(0.24, 0.28, 0.5)
 const STY_FALLEN_MIST_ALPHA := 0.16
 ## The rift's height fog (Forward+) in the stylized look: albedo and emission nearer grey.
-const STY_RIFT_FOG: Array[Color] = [Color(0.34, 0.32, 0.4), Color(0.17, 0.16, 0.21)]
+const STY_RIFT_FOG: Array[Color] = [Color(0.3, 0.33, 0.41), Color(0.14, 0.16, 0.21)]
 ## The violet lights deep in the rift (spec 2.2: 4 if the violet passes 3% of the frame).
 const STY_DEEP_ENERGY := 4.0
 ## ... and paler (the piers and cliffs it lights read as columns of violet in the abyss of B at 0.8 saturation).
-const STY_DEEP := Color(0.6, 0.5, 0.85)
+const STY_DEEP := Color(0.48, 0.56, 0.88)
 ## F1: fire bowls on small pillars on the bridges' north heads, out of the deck, over the rift (along the lip from
 ## the deck's side; out into the rift); the pillar's top, the bowl's scale, its light.
 const HEAD_BOWL := Vector2(1.45, 0.42)

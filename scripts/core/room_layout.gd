@@ -70,6 +70,8 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## OF-08 (Ofícios, the Primeira Picareta): where a vein of Pedra Funda may stand, the floor point he extracts it from
 ## (VeinFloor; the first one; empty: none in this arena).
 @export var gather_spots := PackedVector2Array()
+## SR-P5: where the relic may stand (the first; RelicFloor; empty: none in this arena). Mirrored with the layout.
+@export var relic_spots := PackedVector2Array()
 ## Named parts of the floor (E5, the decision each arena asks; RoomTally.zone_time): seconds the paladin spends in
 ## each are counted in a fight (the first rectangle holding him; none: "other"). area_names[i] names areas[i].
 @export var areas: Array[Rect2] = []
@@ -161,6 +163,8 @@ func _mirror() -> void:
 	breakables = brk
 	for i in gather_spots.size():
 		gather_spots[i].x = -gather_spots[i].x
+	for i in relic_spots.size():
+		relic_spots[i].x = -relic_spots[i].x
 	hero_spawn.x = -hero_spawn.x
 	hero_facing.x = -hero_facing.x
 	boss_spawn.x = -boss_spawn.x
