@@ -56,6 +56,22 @@ Altar e Encanto fica para depois, se ele gostar.
 - Aceite: nenhuma porta de 1 fora da loja e Morvath em 1000 descidas, nenhum texto com "mapa", fluxos verdes.
 - Tamanho: média a grande, uma sessão. Ordem sugerida: **depois** do exe do BC-1 a BC-4, ou antes se ele preferir.
 
+**BO-1 Bênçãos que giram passam a nascer de um botão** (Daniel: "acho mais legais assim, ficar fazendo sozinho é muito forte")
+- Hoje quatro giram em volta do herói o tempo todo, sem apertar nada: Redemoinho de Fogo (Chama), Floco Errante (Geada),
+  Fios de Cinza (Véu) e Espuma (Maré), todas `SkillDef.Kind.ORBIT`, dano a cada 0,5 s, sem encaixe.
+- Alvo: a mesma imagem, mas o jogador decide quando. Proposta para partir (números com o `balance-designer`):
+  Redemoinho no Brado (Q), chamas girando 5 s; Floco Errante no Brado (Q), 5 s, gelando; Fios de Cinza na Investida (E),
+  4 s; Espuma na Investida (E), 4 s, empurrando. O dano de cada volta sobe, porque deixa de ser permanente.
+- Uma por encaixe: passam a ocupar o Brado ou a Investida, competindo com as Bênçãos que já existem nesse botão. Decidir
+  se ocupam o encaixe ou só se prendem ao botão (sugestão: só se prendem, senão a família perde uma carta).
+- Dado: um gatilho no `SkillDef` (ao soltar o Brado, ao Investir) e a duração; serve para qualquer Bênção (sem código por
+  carta). A carta diz a tecla e acende na lista do BC-1.
+- **Segunda etapa (pergunta ao Daniel)**: outras 11 também agem sozinhas a cada poucos segundos (Brasas, Estilhaço, Peso do
+  Inverno, Onda Maior, Flagelo, Firmeza, Chuva de Brasas, Névoa, Vaga, Flechas, Chuva de Flechas). Mesma ideia: prender
+  cada uma a um gatilho (golpe final, Ômega, Brado, Investida, esquiva) ou deixar só algumas por família.
+- Elos que dependem delas (`_elo` em `make_data.gd`) e Salmos: conferir. Muda o RESULT; medir novato e evoluído antes e depois.
+- Tamanho: média (as 4); grande (as 15).
+
 **Pendência de teste**: `test_room_hold` ("on a black screen") falhou uma vez na suíte inteira de 23h28 e passou
 sozinho duas vezes; rodar a suíte de novo na próxima integração e, se repetir, achar a corrida do escurecer.
 
