@@ -11,7 +11,7 @@ extends RefCounted
 enum Problem { OK, OWNED, NEEDS, SHORT, UNKNOWN }
 
 const DIR := "res://data/account/"
-## The Forja's door opens the Fonte: the first guardian beaten, a Temperar bought or any node already owned.
+## The share of the life Segunda Chance gives back.
 const REVIVE_HP := 0.4
 const BRANCHES: Array[StringName] = [&"vida", &"cura", &"ouro", &"bencao", &"forca"]
 
@@ -111,7 +111,7 @@ func mods_of(ids: Array) -> Array[BoonMod]:
 	return out
 
 
-## The first n nodes a robot "has bought" (--account=N): the catalog's order (cheap first, requirements before).
+## The first n nodes a robot "has bought" (--account=N): the catalog's order (requirements before).
 func first(n: int) -> Array[StringName]:
 	var out: Array[StringName] = []
 	for node in catalog:

@@ -28,7 +28,7 @@ func test_the_defaults() -> void:
 	assert_eq(Controls.DEFAULT_KEYS[&"ultimate"], [KEY_SHIFT])
 	assert_eq(Controls.DEFAULT_KEYS[&"interact"], [KEY_F])
 	assert_eq(Controls.MENU_KEYS[&"menu_reroll"][1], KEY_R, "R is only the reroll now")
-	for action: StringName in [&"shout", &"rush", &"ultimate", &"interact", &"light_attack", &"heavy_attack", &"dodge", &"map"]:
+	for action: StringName in [&"shout", &"rush", &"ultimate", &"interact", &"light_attack", &"heavy_attack", &"dodge"]:
 		assert_true(Controls.REMAPPABLE.has(action), "%s is remappable" % action)
 	assert_true(Controls.PAD_REMAPPABLE.has(&"shout"))
 	# nothing shares a key by default (the mouse's buttons aside)
@@ -63,7 +63,7 @@ func test_an_old_save_with_nothing_remapped_reads_the_new_defaults() -> void:
 
 
 func test_an_old_save_with_remapped_keys_keeps_them_and_no_key_is_shared() -> void:
-	# the old game: the ultimate on R (rebound to T), E on a blow, F on the dodge, Shift on the map
+	# the old game: the ultimate on R (rebound to T), E on a blow, F on the dodge, Shift on the map (gone with DM-1: it holds no key)
 	var old := {
 		"ultimate": {"type": "key", "code": float(KEY_T)},
 		"light_attack": {"type": "key", "code": float(KEY_E)},
@@ -76,7 +76,6 @@ func test_an_old_save_with_remapped_keys_keeps_them_and_no_key_is_shared() -> vo
 	assert_eq(Controls.label(&"ultimate"), "T", "what the player chose stays")
 	assert_eq(Controls.label(&"light_attack"), "E")
 	assert_eq(Controls.label(&"dodge"), "F")
-	assert_eq(Controls.label(&"map"), "Shift")
 	# the new defaults that would clash go to a spare key, never to two actions at once
 	assert_eq(Controls.label(&"rush"), "Z", "E is taken: the Investida takes a spare")
 	assert_eq(Controls.label(&"interact"), "G", "F is taken: interact takes a spare")

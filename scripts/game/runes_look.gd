@@ -744,7 +744,7 @@ func _study(sm: Masonry, a: Vector2, b: Vector2) -> void:
 	var yaw := atan2(-along.y, along.x)
 	var r := RandomNumberGenerator.new()
 	r.seed = STY_SEED
-	var urn := sm.carved(0.0, STONE)
+	var urn := sm.carved(0.0, CatacombHall.STY_URN_TINT)
 	var cloth := StandardMaterial3D.new()
 	cloth.albedo_color = STUDY_CLOTH
 	cloth.roughness = 0.95

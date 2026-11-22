@@ -538,6 +538,9 @@ func style_depths(values: Dictionary) -> void:
 		if sm != null and sm.shader == Masonry.DEPTH_SHADER and not seen.has(sm):
 			seen[sm] = true
 			VisualProfile.vary(sm, set_)
+	# the shared stone of the arches and piers goes on mesh surfaces, which the scan above does not reach (GR-9)
+	if _deep_mat != null and not seen.has(_deep_mat):
+		VisualProfile.vary(_deep_mat, set_)
 
 
 ## An iron lantern hanging by a chain from `from`, its ring at `ring_y` (the garden's tree; room redesign lot C: the
@@ -2773,10 +2776,25 @@ func _hazard_slit(o: ArenaObstacle) -> void:
 	(_hazard[&"slit"] as Array).append(HazardPiece.slit(self, o, stone(), out))
 
 
+## The candles round a column's foot go out when it falls (GR-21: their flames showed through the stump): every flame
+## card (a QuadMesh the masonry did not merge) within SNUFF_REACH m of the column's middle and under SNUFF_HEIGHT m.
+const SNUFF_REACH := 1.3
+const SNUFF_HEIGHT := 1.2
+
+
+func _snuff_candles_at(o: ArenaObstacle) -> void:
+	for n in m.root.get_children():
+		var mi := n as MeshInstance3D
+		if mi != null and mi.mesh is QuadMesh and mi.position.y < SNUFF_HEIGHT \
+				and Vector2(mi.position.x, mi.position.z).distance_to(o.center) < o.radius + SNUFF_REACH:
+			mi.visible = false
+
+
 ## The toppled column (RP-09, 3.6) for ColumnFloor: hides nothing (ColumnFloor hides its pivot), lays the drums along
 ## `way` for `length` m and the stump with its teeth on the obstacle's footprint; returns [drums, stump].
 func toppled(o: ArenaObstacle, way: Vector2, length: float) -> Array[Node3D]:
-	var drum_mat := m.carved(0.0, Color.WHITE * HazardPiece.DRUM_VALUE)
+	var drum_mat := stone()
 	var seed_ := int(o.center.x * 31.0 + o.center.y * 17.0)
+	_snuff_candles_at(o)
 	return [HazardPiece.drums(self, o, way, length, drum_mat, seed_),
 		HazardPiece.stump(self, o, maxf(0.6, TombKit.COLUMN_BASE + 0.4), stone(), seed_)]

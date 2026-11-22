@@ -294,6 +294,9 @@ func mist() -> Color:
 
 ## ENV-HB4 (ArenaRoom.under_look, only in the stylized look): the camera's side of the floor's edge on arches going
 ## down into the mist instead of a plain coursed wall.
+## GR-9: the depths' glow of the stylized look in the slate's blue, not the shader's saturated violet (a colour kept for Morvath),
+## which stood as five flat blades down the west of the frame.
+const STY_CLIFF := {&"glow_color": Color(0.16, 0.19, 0.3), &"glow_energy": 0.03}
 const STY_UNDER := {&"set": ArenaRoom.LIP.y, &"top": -0.7}
 
 
@@ -707,6 +710,7 @@ func style() -> Dictionary:
 	if _fallen_mist != null:
 		# where the bridge was (B): the violet under the brink, as faint and grey as the haze
 		VisualProfile.vary(_fallen_mist, {&"shader_parameter/color": STY_FALLEN_MIST, &"shader_parameter/alpha": STY_FALLEN_MIST_ALPHA})
+	style_depths(STY_CLIFF)
 	for l in _deep_lights:
 		VisualProfile.vary(l, {&"light_energy": l.light_energy * STY_DEEP_ENERGY / DEEP_ENERGY, &"light_color": STY_DEEP})
 	return st

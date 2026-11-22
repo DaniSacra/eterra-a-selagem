@@ -51,16 +51,6 @@ func test_silver_and_memory_have_their_marks_everywhere() -> void:
 		assert_ne(c.mark.kind, DoorGlyph.Kind.NONE)
 
 
-func test_the_maps_legend_shows_only_what_the_descent_has() -> void:
-	var m := DescentMap.from_dict(MapSample.at("start"))
-	var kinds := MapScreen.legend_kinds(m)
-	assert_true(kinds.has(DoorGlyph.Kind.BOSS))
-	var has_silver := false
-	for id: int in m.rooms:
-		has_silver = has_silver or m.room(id).reward == RunMap.Reward.SILVER
-	assert_eq(kinds.has(DoorGlyph.Kind.SILVER), has_silver)
-
-
 # ---------- the Forja ----------
 
 func _forge(d: Dictionary) -> ForgeScreen:

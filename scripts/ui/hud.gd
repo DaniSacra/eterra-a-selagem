@@ -107,9 +107,6 @@ const ENTRANCE_OUT := 0.45
 const ENTRANCE_BOTTOM := 120.0
 const ENTRANCE_NAME_SIZE := 34
 const ENTRANCE_LINE_SIZE := 17
-## MAP-07: seconds the chevron points at the door the map looked at, and the last ones it fades over.
-const DOOR_POINT_TIME := 4.0
-const DOOR_FADE := 0.6
 const PHASE_FADE := 0.4
 const PHASE_NAME_SIZE := 18
 const PHASE_TIP_SIZE := 15
@@ -142,10 +139,8 @@ const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"shout", 
 const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.NONE, Boon.Slot.DASH]
 ## Where the ultimate's diamond stands among them: before the dodge.
 const ULT_AT := 4
-## The map's button beside the room's number: its gap, height and how bright its words are (quiet until hovered).
-const MAP_GAP := 10
-const MAP_BUTTON_HEIGHT := 26.0
-const MAP_ALPHA := 0.78
+## Between the room's number and what lies beyond the doors.
+const AHEAD_GAP := 14
 ## Seconds the ultimate's caption shows after a refused press or when it fills (T5).
 const ULT_HINT_TIME := 1.8
 
@@ -157,9 +152,8 @@ var _magick: HudBar
 var _charge: HudBar
 var _charge_shown := false
 var _room: Label
-## DV-1, MAP-03: "Mapa [M]" beside the room's number (the real key or button), clicked or the map key opens the
-## descent's map (MapScreen) over the stopped run. Never takes the focus (Space and Enter stay the dodge).
-var map_button: Button
+## What lies beyond the open doors, beside the room's number (Rooms.ahead_text: Discernimento II, the Prévia dos anjos).
+var ahead: Label
 var _clock: Label
 var _clock_veil: HudVeil
 var _clock_at_boss := false
@@ -217,11 +211,6 @@ var _entrance: VBoxContainer
 var _entrance_veil: HudVeil
 var _entrance_t := 0.0
 var _boss_met := false
-## MAP-07: a door of the room shown from the map (point_door): where, its name and the seconds left.
-var _door_mark: HudMark
-var _door_label: Label
-var _door_at := Vector2.ZERO
-var _door_t := 0.0
 var _action_row: HBoxContainer
 var _veil_t := 0.0
 var _veiled := false
@@ -272,12 +261,6 @@ func _ready() -> void:
 	_arrow = _label(T.t(&"hud_fountain"), UiKit.PALE, FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
 	_arrow.visible = false
 	_arrow_mark = _pointer()
-	# MAP-07: the door the map last looked at, for a moment after it closes (its name inside, as the fountain's)
-	_door_label = _label("", UiKit.PALE, FONT_SMALL + 1, UiKit.BOLD_FONT, Control.PRESET_TOP_LEFT, Vector2.ZERO)
-	_door_label.name = "door_pointer_label"
-	_door_label.visible = false
-	_door_mark = _pointer()
-	_door_mark.name = "door_pointer"
 	for i in POINTERS:
 		_pointers.append(_pointer())
 	# the moment an Elo forms: in the notices' place under the clock, well above the paladin
@@ -300,7 +283,7 @@ func _build_top() -> void:
 	_xp_fill.size = Vector2(0, 4)
 	var top_left := HBoxContainer.new()
 	top_left.name = "top_left"
-	top_left.add_theme_constant_override(&"separation", MAP_GAP)
+	top_left.add_theme_constant_override(&"separation", AHEAD_GAP)
 	top_left.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(top_left)
 	_place(top_left, Control.PRESET_TOP_LEFT, Vector2(MARGIN, 8), Vector2(300, 32))
@@ -309,27 +292,10 @@ func _build_top() -> void:
 	_room = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_TEXT, UiKit.number_font()))
 	_room.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top_left.add_child(_room)
-	# the look of the menus' quiet links (UiKit.link), but never focused: hovering it takes nothing from the fight
-	map_button = Button.new()
-	map_button.name = "map_button"
-	map_button.focus_mode = Control.FOCUS_NONE
-	map_button.pressed.connect(func() -> void:
-		Audio.play(&"ui_ok")
-		open_map())
-	map_button.add_theme_stylebox_override(&"normal", UiKit.box(Color(0, 0, 0, 0), Color(UiKit.OLD_GOLD, 0.45), 1, 8))
-	map_button.add_theme_stylebox_override(&"hover", UiKit.box(Color(0.12, 0.09, 0.06, 0.6), UiKit.OLD_GOLD, 1, 8))
-	map_button.add_theme_stylebox_override(&"pressed", UiKit.box(Color(0.16, 0.11, 0.07, 0.8), UiKit.GOLD, 1, 8))
-	map_button.add_theme_color_override(&"font_hover_color", UiKit.GOLD)
-	map_button.add_theme_constant_override(&"outline_size", 4)
-	map_button.add_theme_color_override(&"font_outline_color", UiKit.SHADOW)
-	# opens on the press, before the run steps: the click (also the attack) never swings
-	map_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
-	map_button.custom_minimum_size = Vector2(0, MAP_BUTTON_HEIGHT)
-	map_button.add_theme_font_size_override(&"font_size", FONT_SMALL)
-	map_button.add_theme_color_override(&"font_color", Color(UiKit.PALE, MAP_ALPHA))
-	map_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	map_button.visible = false
-	top_left.add_child(map_button)
+	ahead = UiKit.shadow(UiKit.label("", UiKit.PALE, FONT_SMALL, UiKit.number_font()))
+	ahead.name = "ahead"
+	ahead.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top_left.add_child(ahead)
 	_clock = _label("0:00", UiKit.PALE, FONT_CLOCK, UiKit.number_font(), Control.PRESET_CENTER_TOP, Vector2.ZERO)
 	_clock.name = "clock"
 	_clock.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -679,15 +645,15 @@ func _process(delta: float) -> void:
 		_xp_back.visible = false
 		_xp_fill.size.x = 0.0
 		_room.text = T.t(&"hud_room", {"n": game.rooms.depth(), "of": game.rooms.stage.rooms + 1})
-		map_button.visible = not over
-		map_button.text = T.t(&"hud_map", {"key": "[%s]" % UiKit.action_label(&"map")})
+		ahead.text = game.rooms.ahead_text()
+		ahead.visible = not over and ahead.text != ""
 		_coins.show_counts(T.t(&"hud_gold_count", {"n": game.rooms.gold}), game.materials.total(MaterialPurse.SILVER),
 				game.materials.total(MaterialPurse.MEMORY))
 		_crest.seal = ""
 	else:
 		_xp_fill.size.x = get_viewport_rect().size.x * game.xp_ratio()
 		_room.text = T.t(&"hud_level", {"n": game.level})
-		map_button.visible = false
+		ahead.visible = false
 		_coins.show_counts("%s  %d" % [T.t(&"hud_kills"), game.kills], 0, 0, false)
 		_crest.seal = str(game.level)
 	_update_life(p)
@@ -1046,13 +1012,6 @@ func _update_pointers(chief: Enemy) -> void:
 	var at: Variant = game.fountain_target()
 	var edge: Variant = _edge(at as Vector2, view, frame) if at != null else null
 	_named_pointer(_arrow, _arrow_mark, edge, frame)
-	_door_t = maxf(0.0, _door_t - get_process_delta_time() / maxf(Engine.time_scale, 0.01))
-	var door: Variant = _edge(_door_at, view, frame) if _door_t > 0.0 else null
-	_named_pointer(_door_label, _door_mark, door, frame)
-	if door != null:
-		var a := clampf(_door_t / DOOR_FADE, 0.0, 1.0)
-		_door_mark.modulate.a = a
-		_door_label.modulate.a = a
 	var foes: Array[Enemy] = []
 	if chief:  # Morvath is not an elite by his data
 		foes.append(chief)
@@ -1091,20 +1050,6 @@ func _named_pointer(label: Label, mark: HudMark, edge: Variant, frame: Rect2) ->
 		var dir := (frame.get_center() - (edge as Vector2)).normalized()
 		var half := label.size * 0.5
 		label.position = (edge as Vector2) + dir * (POINTER_SIZE * 0.5 + 6.0 + absf(dir.x) * half.x + absf(dir.y) * half.y) - half
-
-
-## MAP-07: points at a door of the room for `seconds` (fading the last DOOR_FADE), when it is out of view: the map
-## looked at the room behind it and closed. A name of the room behind ("" for none).
-func point_door(floor_at: Vector2, room_name: String, seconds: float = DOOR_POINT_TIME) -> void:
-	_door_at = floor_at
-	_door_t = seconds
-	_door_label.text = room_name
-	_door_label.reset_size()
-
-
-## Stops pointing at a door.
-func clear_door() -> void:
-	_door_t = 0.0
 
 
 func _point(mark: HudMark, edge: Variant, frame: Rect2) -> void:
@@ -1189,26 +1134,6 @@ func on_combo(count: int) -> void:
 func show_move(node: ComboNode, _color: Color) -> void:
 	_move.text = T.t(node.title)
 	_move_t = MOVE_TIME
-
-
-## The map key (M, Back on the gamepad) opens the map during play; the map itself takes the key that closes it.
-## Read from the event (as the pause reads its key): Game flushes the presses it stepped before the HUD's _process.
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed(&"map") and open_map() != null:
-		get_viewport().set_input_as_handled()
-
-
-## Opens the descent's map over the run (DV-1, MAP-03): the run stops under it (Game.open_screen) and goes on when it
-## closes, with the press that closed it swallowed (Game.close_screen, Controls.clear_presses). Only during play in a
-## descent by rooms. Returns the screen (null when it could not open).
-func open_map() -> MapScreen:
-	if game == null or game.rooms == null or game.mode != Game.Mode.PLAY:
-		return null
-	var screen := MapScreen.new()
-	game.open_screen(screen, false)
-	screen.open()
-	screen.closed.connect(game.close_screen)
-	return screen
 
 
 func show_notice(text: String, time: float = 2.5) -> void:

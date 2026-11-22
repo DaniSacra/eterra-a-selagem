@@ -7,7 +7,7 @@ class_name BreakableKit
 
 ## The lip on top of every body (1.25 to 1.45 of the body), the inside of a mouth and a broken shard (one step lighter,
 ## unpainted clay), the wet band of a water jar, the foot (darker).
-const LIP := 1.35
+const LIP := 1.2
 const INSIDE := 1.15
 const MOUTH := 0.35
 const WET := 0.7
@@ -57,11 +57,15 @@ const STAIN_COLOR := Color(0.12, 0.13, 0.14)
 ## The sapling's leaves fall slowly and lie as the garden's fallen leaves.
 const LEAF_FALL := 0.9
 
+## GR-22: every body a share darker than the room's data colour (jars read luma 150 to 170 against a floor of 30 to 80).
+const BODY_VALUE := 0.72
+
 static var _mats := {}
 
 
 ## A piece whole at its place (the root's children: its body, its shadow).
-static func build(p: BreakablePiece, color: Color, room: StringName) -> Node3D:
+static func build(p: BreakablePiece, color_: Color, room: StringName) -> Node3D:
+	var color := color_ * BODY_VALUE
 	var root := Node3D.new()
 	root.name = "Breakable"
 	root.position = Vector3(p.at.x, 0.0, p.at.y)
@@ -128,7 +132,8 @@ static func crack(piece: Node3D) -> void:
 
 ## The break: the whole piece goes (BreakFloor hides it after its squash) and its shards fly low away from `away`,
 ## hop once, lie LIE s, sink and go; a water jar's stain opens and dries; a sapling's leaves fall slowly.
-static func shatter(parent: Node3D, p: BreakablePiece, color: Color, away: Vector3) -> void:
+static func shatter(parent: Node3D, p: BreakablePiece, color_: Color, away: Vector3) -> void:
+	var color := color_ * BODY_VALUE
 	var stuff := Breakables.material_of(p.form)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = int(p.at.x * 91.0 + p.at.y * 29.0)

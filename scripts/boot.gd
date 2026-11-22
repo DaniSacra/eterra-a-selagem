@@ -66,9 +66,6 @@ func _ready() -> void:
 			_open(HowToScreen.new(), TitleButton.Kind.HOWTO)
 		"juramentos":
 			_open_juramentos(Juramentos.unlocked(Save.data))
-		"map":
-			# the descent's map over a fixed sample descent (MapSample; --map-at=start|middle|doors)
-			_open(MapScreen.new(), TitleButton.Kind.HOWTO, [DescentMap.from_dict(MapSample.at(Dev.arg("map-at", "doors")))])
 	if Dev.has("shot"):
 		_shot.call_deferred()
 

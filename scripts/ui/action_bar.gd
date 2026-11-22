@@ -9,7 +9,7 @@ extends HBoxContainer
 ##   var bar := ActionBar.attach(self, [
 ##       ActionBar.entry(&"ui_accept", T.t(&"bar_choose")),
 ##       ActionBar.entry(&"ui_cancel", T.t(&"back"), close)])
-##   bar.add(ActionBar.entry(&"map", T.t(&"action_map"), open_map, true))   # an extra, on the left
+##   bar.add(ActionBar.entry(&"menu_reroll", T.t(&"bar_reroll"), reroll, true))   # an extra, on the left
 
 ## Height of the row and its gap over the bottom edge and from the sides (px at 720 lines).
 const HEIGHT := 30.0

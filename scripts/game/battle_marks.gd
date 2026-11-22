@@ -7,7 +7,7 @@ extends Node3D
 ## each (the oldest gives its place), three draw calls, all under the floor's warnings.
 
 const MAX_DUST := 32
-const MAX_SLIVERS := 72
+const MAX_SLIVERS := 40
 const MAX_CRACKS := 12
 ## The dust: colour as seen (sRGB), strength, the patch's width (m; an elite's is half as wide again).
 const DUST := Color(0.36, 0.34, 0.3)

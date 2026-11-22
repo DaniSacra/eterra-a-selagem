@@ -3,16 +3,15 @@
 Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que a tarefa pede (grep pelo nome da classe ou do item).
 
 ## Descida de Valmor (DV-1, frente de gameplay: MAP-01, MAP-02, MAP-04; backlog seção "Descida de Valmor")
-- **Grafo da descida** (`RunMap`, `core/run_map.gd`, puro; a API que o mapa e o HUD leem está descrita no topo do
+- **Grafo da descida** (`RunMap`, `core/run_map.gd`, puro; a API que as salas, as placas e o HUD leem está descrita no topo do
   arquivo): gerado no começo da descida num dado próprio (`Rooms.new_map`: `hash([semente da partida, Rooms.MAP_SALT])`;
-  a mesma `--seed` dá o mesmo mapa, seja o que for que a partida sorteie antes). Camadas: 1 o salão (Bênção), 2 a 9 com 2
-  a 4 salas (`StageDef.map_widths` 35/45/20%), a camada do guardião inteira (4 a 6; 1 ou 2 salas, `guardian_pair_chance`
-  0,5: com duas, Cavaleiro e Ancião, Q-27 a, `Room.guardian`), a loja na 10 (Q-26 a), Morvath na 11: toda rota tem 11
-  salas. Ligações sem cruzar (`_link`: cada sala liga a uma faixa de 1 a 3 salas lado a lado embaixo, a faixa seguinte
-  começa onde a anterior acabou ou logo depois; todas as formas listadas e uma sorteada com o peso `map_doors` 1/5/2 pelo
-  número de portas). Fonte numa camada de 5 a 8 (35% por camada, senão a 8) e uma segunda na 8 em outro ramo quando
-  nenhuma rota passa pelas duas (`fountain_more_chance` 1,0, `_one_fountain`; cerca de metade das rotas tem fonte), altar em no máximo
-  um nó (2 a 8, 20% por camada), Provação num nó de luta marcado `trial` e `hidden` ("?" no mapa até a laje aparecer,
+  a mesma `--seed` dá o mesmo mapa, seja o que for que a partida sorteie antes). Desde o DM-1
+  (2026-11-22, pedido do Daniel) ninguém vê o grafo e **toda sala tem 2 portas** (`RunMap.DOORS`): camadas 2 a 9 com 2
+  salas, cada sala leva às duas da frente; só a loja (10) e Morvath (11) ficam atrás de uma. A camada do guardião (5 ou 6,
+  GP-8) tem sempre o Cavaleiro e o Ancião lado a lado (`Room.guardian`). Fonte: sempre uma das duas portas antes do
+  guardião (GP-2; `fountain_more_chance`, hoje 0, põe outra depois dele até a 8); altar em no máximo
+altar em no máximo
+  um nó (2 a 8, 20% por camada), Provação num nó de luta marcado `trial` e `hidden` (até a laje aparecer,
   Q-25 a; `trial_chance` por nó, só onde a maldição mais curta cabe no pior caminho, nunca dois na mesma rota). Recompensas
   do baralho no gerador, camada por camada, nenhuma repetida na camada (então nunca em duas portas da mesma sala), romã só
   desde a sala 3 (`pom_from_depth`); ao abrir as portas, a romã que não puder subir vira Bênção antes da placa
@@ -34,9 +33,11 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `interact` (E, A no controle), parado neles (`Rooms.usable`, `use_kind`). Enquanto há algo para usar, a plaqueta
   da `StationSign` sem nome (só a tecla real e o verbo: "Pegar", "Comprar", "Entrar", `hub_use_reward`/`shop`/`door`)
   fica sobre a cabeça do herói (`Rooms.prompt`, `_step_prompt`; escondida fora do modo PLAY e para o robô); clique nela usa.
-- **Robô** (MAP-04): `Rooms.bot_door(doors, altar_useful, life, map)` lê o mapa: o gosto de antes pela porta da frente
-  mais `BOT_AHEAD` 1,0 do melhor caminho depois dela (`bot_way`: cada sala vale pela mesma ordem, Bênção 5 a Magia 1, a
-  fonte `BOT_FOUNTAIN_AHEAD` 12, o altar útil 3,5). Régua refeita em `docs/qa/dv1_metrics.md`.
+- **Robô**: `Rooms.bot_door(doors, altar_useful, life, gold)` escolhe só pelo gosto da porta da frente (com as duas portas
+  levando às mesmas salas, olhar adiante não muda nada).
+- **O que vem depois** (`Rooms.ahead_text`, `Hud.ahead`, ao lado de "Sala N de 11"): com as portas abertas, "Depois: Romã ou
+  Fonte" para quem tem Discernimento II ou a Prévia dos anjos (uma camada cada). O achado procurado tem o nome na placa
+  da porta (`door_text`, `door_find`).
 - Testes: `tests/test_descent.gd` reescrito (BUG-109: só sementes fixas, contagem de asserções igual em toda rodada):
   1000 grafos com todas as regras, 100 sementes com pelo menos 95 grafos diferentes, pior caminho conferido por todas
   as rotas, 200 descidas do robô em que a sala é a que a placa disse, a recompensa dada numa sala real; mais

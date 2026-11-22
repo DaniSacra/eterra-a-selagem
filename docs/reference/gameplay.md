@@ -517,6 +517,8 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   gastar Magia; toda carga que acaba passa por `Player._end_charge`, que apaga o `charge_up` em `CHARGE_SOUND_FADE` 0,2 s
   (`Audio.fade_out(som, segundos)`, novo). Sonda: meta `C19-4` (0,066 m do aperto ao golpe, sem virar, corte em f20 sem
   Magia); 41 metas.
+- **Ancião e feiticeiros mais justos (GP-1, GP-6, 2026-11-22)**: o leque do Ancião trava a mira nos últimos `Horde.FAN_LOCK` 0,35 s,
+  abre 84 graus e tira 10; no máximo 3 feiticeiros preparando juntos; golpe de perto do guarda com 0,85 s de aviso.
 - **Fio da mira do feiticeiro e do Ancião (Q-14 a, C19-5)**: na gramática do besteiro (`Ground.add_aim_warning`): o
   feiticeiro mostra um fio do começo da preparação ao primeiro orbe (um fio para a rajada), virando com a mira; o leque
   do Ancião um fio por orbe (5, `Horde.FAN_THREADS`; com só as bordas e o meio, sair de um fio punha o herói num orbe sem

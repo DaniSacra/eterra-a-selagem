@@ -110,20 +110,6 @@ func test_how_to_plays_puts_keys_and_buttons_on_plates() -> void:
 	assert_true(cap.rounded, "a face button of the gamepad is round")
 
 
-# ---------- MAP-08 ----------
-
-func test_the_newest_stretch_draws_in() -> void:
-	var m := DescentMap.from_dict(MapSample.at("middle"))
-	var g := MapGraph.new().setup(m)
-	g.size = Vector2(400, 500)
-	add_child_autofree(g)
-	assert_eq(g.ink, 1.0)
-	g.draw_in(0.2)
-	assert_eq(g.ink, 0.0, "the stretch into the room starts undrawn")
-	await wait_seconds(0.35)
-	assert_eq(g.ink, 1.0, "and is drawn after")
-
-
 # ---------- AP-2 ----------
 
 func test_morvaths_entrance_takes_the_chambers_notice() -> void:

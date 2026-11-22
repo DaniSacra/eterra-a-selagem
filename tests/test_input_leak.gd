@@ -22,7 +22,6 @@ func after_each() -> void:
 	Input.action_release(&"dodge")
 	Input.action_release(&"heavy_attack")
 	Input.action_release(&"pause")
-	Input.action_release(&"map")
 	Controls.virtual = null
 	Controls.clear_presses()
 	Engine.time_scale = 1.0
@@ -170,41 +169,3 @@ func test_leaving_the_pause_with_its_key_or_a_click_plays_nothing() -> void:
 	await _send(_mouse(false), 6)
 	assert_eq(game.mode, Game.Mode.PLAY)
 	_assert_still("the pause left")
-
-
-## DV-1, MAP-03: the map opens and closes on its key (M, Back on the gamepad), closes on Esc too, and none of those
-## presses (nor the click on the HUD's button, which is also the attack) reaches the run.
-func test_the_map_opens_and_closes_without_a_swing() -> void:
-	await _start_run()
-	await _idle(5)
-	for pair: Array in [[_key(KEY_M, true), _key(KEY_M, false)], [_pad(JOY_BUTTON_BACK, true), _pad(JOY_BUTTON_BACK, false)]]:
-		await _send(pair[0], 2)
-		await _send(pair[1], 3)
-		assert_eq(game.mode, Game.Mode.CHOICE, "the map key opens the map")
-		assert_true(game.get(&"_screen") is MapScreen)
-		await _send(pair[0], 2)
-		await _send(pair[1], 3)
-		assert_eq(game.mode, Game.Mode.PLAY, "the map key closes it and it stays closed")
-	# Esc closes it and does not open the pause
-	await _send(_key(KEY_M, true), 2)
-	await _send(_key(KEY_M, false), 3)
-	await _send(_key(KEY_ESCAPE, true), 2)
-	await _send(_key(KEY_ESCAPE, false), 3)
-	assert_eq(game.mode, Game.Mode.PLAY, "Esc closes the map, no pause")
-	# the HUD's button clicked with the mouse (the left button is the attack): opens on the press
-	await get_tree().process_frame
-	var click := _mouse(true) as InputEventMouseButton
-	# the window's own pixels (the canvas is stretched to the window: tests run with a tiny one)
-	var b := game.hud.map_button
-	click.position = get_viewport().get_final_transform() * (b.get_global_transform_with_canvas() * (b.size * 0.5))
-	Input.parse_input_event(click)
-	Input.flush_buffered_events()
-	await _idle(3)
-	assert_eq(game.mode, Game.Mode.CHOICE, "the button opens the map")
-	var up := click.duplicate() as InputEventMouseButton
-	up.pressed = false
-	await _send(up, 3)
-	(game.get(&"_screen") as MapScreen).close()
-	await _idle(6)
-	assert_eq(game.mode, Game.Mode.PLAY)
-	_assert_still("the map opened and closed")

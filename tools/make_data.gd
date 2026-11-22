@@ -127,8 +127,8 @@ func _tree(fourth: bool) -> ComboTree:
 		{"damage": 20.0, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.08, "recovery": 8.0 / 60.0,
 		"move_hold": 11.0 / 60.0,
 		"chain_window": 0.4, "hit_stop_ms": 25.0, "shake": 0.6, "move_scale": 0.0}, [cut2])
-	# special (Daniel, 2026-11-21): the sword's burst, a bolt of light thrown ahead (strikes only with its bolt): 60
-	# damage, 6 m, through the crowd, 8 Magia (magick_cost: a press without it throws nothing), 0.5 s between throws. A tap
+	# special (Daniel, 2026-11-21): the sword's burst, a bolt of light thrown ahead (strikes only with its bolt): 35
+	# damage, 6 m, through the crowd, 12 Magia (magick_cost: a press without it throws nothing), 0.5 s between throws. A tap
 	# only: the Omega special (held) left the Warrior's tree. Hades II's Special1: the attack is free again 18 frames
 	# after the dart; the dart flies at 62.5 m/s (Projectiles.SPARK_SPEED). The legs stay held 0.71 s after the dart
 	# (D-44 (3); Daniel liked it in Hades II), only the dodge cuts it. E1c (Daniel: "trava para andar e eu fico
@@ -146,14 +146,14 @@ func _tree(fourth: bool) -> ComboTree:
 		"both_ways": true, "knockback": 18.0, "windup": 0.06, "recovery": 0.78, "move_hold": 0.78, "chain_window": 0.4, "hit_stop_ms": 50.0, "shake": 2.0,
 		"move_scale": 0.0, "sound": &"thrust", "sound_at": 0.06 - THRUST_PEAK, "layers": LAYER_STEP}, [], &"move_lance")
 	# E, the Investida (Daniel, 2026-11-21; it was the Corte Veloz out of the dodge): a thrust of 35 along 4 m that carries
-	# the body (lunge 4 m), its own button, recharge 5 s, 3 Magia for each enemy it reaches (magick_per_hit) and still a
+	# the body (lunge 4 m), its own button, recharge 5 s, 2 Magia for each enemy it reaches (magick_per_hit) and still a
 	# finisher of the passive (tag dash).
 	var dash_cut := _move(&"dash_cut", RU, &"Slash_A", [&"light", &"dash"],
 		{"damage": 35.0, "shape": ComboNode.Shape.LINE, "reach": 4.0, "width": 1.6, "knockback": 10.0, "lunge": 4.0, "windup": 0.06,
 		"recovery": 14.0 / 60.0, "chain_window": 0.4, "cooldown": 5.0, "magick_per_hit": 2.0, "hit_stop_ms": 25.0, "shake": 0.9, "move_scale": 0.0}, [], &"move_dash_cut")
 	# Q, the Brado de Guerra (docs/design/heroes/guerreiro.md 3.4 A; Daniel, 2026-11-21, moved from E to Q): a cry all around,
 	# 4 m, 15 damage, everyone pushed 1.5 m (knockback 10.5 at the horde's decay of 7: 1.5 m), stunned by no one. For 5 s
-	# (effect_time): blows 20% faster (buff_speed), 15% less damage taken (buff_guard) and one charge of Ímpeto
+	# (effect_time): blows 15% faster (buff_speed), 15% less damage taken (buff_guard) and one charge of Ímpeto
 	# (effect_power, only with the Dom). Recharge 12 s; windup 0.25 s, recovery 0.25 s (its legs held as long), planted as
 	# every blow; only the dodge cuts it. The 0.10 s of impact is the hit stop (hit_stop_ms 80, the tree's ceiling:
 	# test_combo). Tags: the Blessings of the Brado slot (cast) count on it. The sound is the special's Omega surge.
@@ -296,12 +296,12 @@ func _enemies() -> void:
 	# 7 m/s for 20 m that turn after him (how fast the files do not say: 20 degrees a second is ours, was 40) only in their
 	# first 0.8 s, then straight (C17, QW-101: they caught him late in their flight, the PO's most unfair blow; the robot
 	# took 46% of its blows in the rooms from them, 35% with both), 4 damage; then
-	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 6 at once.
+	# 0.7 to 0.9 s and 1.5 to 2.2 s behind a pillar (elite 0.8 to 1.2), 3.1 m past it; at most 3 at once (GP-6, 2026-11-22: 6 before, a third of all the damage he took).
 	# Cold violet (Daniel, 2026-11-14) until the VFX pass: magenta, DEAD_MAGENTA.
 	_pair({"id": &"mage", "model": &"mage", "behavior": B.ARCHER, "size": 1.27, "hp": 80.0, "speed": 280.0 / U, "damage": 6.0, "radius": 0.5,
 		"attack_damage": 6.0, "attack_range": 1050.0 / U, "attack_cooldown": 0.8 + 1.85, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA,
 		"shot_orb": true, "shot_speed": 560.0 / U, "shot_range": 1600.0 / U, "shot_turn": 20.0, "shot_homing": 0.8, "shot_ticks": 3, "shot_interval": 0.17,
-		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 6, "keep_away": 0.7,
+		"recoil": 400.0 / U, "cover_hug": 250.0 / U, "max_attackers": 3, "keep_away": 0.7,
 		"rating": 12.0, "role": &"control", "tell": T.ORB, "tell_at": Vector3(-0.96, 2.0, 0.58), "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
 		"recover_time": ENEMY_RECOVER.mage[0]},
 		{"armor": 155.0, "attack_range": 1300.0 / U, "shot_ticks": 7, "attack_cooldown": 0.8 + 1.0, "rating": 24.0})
@@ -318,7 +318,7 @@ func _enemies() -> void:
 	# the brute: a long charge (1.15 s warning) and a slam on whoever comes close
 	_pair({"id": &"guard", "model": &"guard", "behavior": B.KNIGHT, "size": 1.5, "hp": 255.0, "speed": 260.0 / U, "damage": 14.0, "radius": 0.75,
 		"heavy": true, "attack_damage": 14.0, "attack_range": 500.0 / U + 3.0, "attack_cooldown": 1.9, "attack_windup": 1.15, "lunge_speed": 15.0,
-		"lunge_time": 0.4, "close_damage": 11.0, "close_range": 2.6, "close_windup": 0.65,
+		"lunge_time": 0.4, "close_damage": 11.0, "close_range": 2.6, "close_windup": 0.85,
 		# T5-06: braced in three beats, 0.15 s to settle and the last 0.35 s held with a tremble
 		"windup_settle": 0.15, "windup_hold": 0.3, "windup_shake": 0.03,
 		"rating": 18.0, "role": &"block", "tell": T.SHIELD, "tell_at": Vector3(0.45, 1.1, 0.4), "material": &"shield",
@@ -346,9 +346,9 @@ func _enemies() -> void:
 		"recover_time": 0.8,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
-		"damage": 12.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 9.0,
+		"damage": 12.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 10.0, "attack_range": 9.0,
 		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 7.0,
-		"shot_count": 5, "shot_spread": 70.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
+		"shot_count": 5, "shot_spread": 84.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
 	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
@@ -612,30 +612,22 @@ func _stage() -> void:
 	var st := StageDef.new()
 	# The whole region of Hades II (C13-01, decision D-61): ten rooms and Morvath in the 11th. The opening in the
 	# catacomb hall, fights drawn among the crypt, the rift hall and the garden (never the same twice in a row, none
-	# more than arena_max_uses times), the guardian in room 4 to 6, the fountain once in room 5 to 8, the shop in room
+	# more than arena_max_uses times), the guardian in room 5 or 6 (GP-8: never in 4, a Blessing more before him), a
+	# fountain as one of the two doors before him (GP-2; with fountain_more_chance another in 7 or 8), the shop in room
 	# 10 (Hades II's antechamber shop). --medium plays the test one of 7 of cycle C12, --short the old one of 5
 	# (Rooms.short_stage).
 	st.rooms = 10
 	st.arena_max_uses = 3
 	# elites from depth 3, as in Hades II (the shorter descents keep them from the 2nd room)
 	st.elite_from_depth = 3
-	st.miniboss_depth_min = 4
+	st.miniboss_depth_min = 5
 	st.miniboss_depth_max = 6
 	st.minibosses = [&"knight", &"priest_elder"]
 	st.fountain_depth_min = 5
 	st.fountain_depth_max = 8
-	st.fountain_chance = 0.35
-	# DV-1: a second fountain at the last of its depths on another branch whenever no way passes two (the line of rooms
-	# before the map offered the fountain again until its last depth; the robot drank there in 10 of 19 descents)
-	st.fountain_more_chance = 1.0
+	st.fountain_more_chance = 0.0
 	st.boss = &"morvath"
-	# The descent's graph (DV-1, the Descida de Valmor; RunMap): 2 to 4 rooms a layer between the hall and the shop
-	# (35%, 45%, 20%), a room linked to 2 of the next five times as likely as to 1 and to 3 twice (most rooms show two
-	# doors, as the doors of the line before the map), the Knight and the Elder side by
-	# side in the guardian's layer half the time (Q-27 a), a pomegranate behind a door from room 3 (Q-25 a)
-	st.map_widths = PackedFloat32Array([0.35, 0.45, 0.2])
-	st.map_doors = PackedFloat32Array([1.0, 5.0, 2.0])
-	st.guardian_pair_chance = 0.5
+	# The descent's graph (DM-1; RunMap): always two doors a room, a pomegranate behind a door from room 3 (Q-25 a)
 	st.pom_from_depth = 3
 	# B-4 (balance.md B.5): every room harder from the start
 	st.base_difficulty = 70.0

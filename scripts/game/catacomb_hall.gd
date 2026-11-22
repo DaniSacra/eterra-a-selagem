@@ -124,6 +124,8 @@ const STY_ABYSS_GLOW := Color(0.5, 0.6, 0.76)
 const ABYSS_LIGHT_Y := -12.0
 ## Width of the two standing stones (thick and blunt, as in the picture).
 const OBELISK_SOUTH := 2.2
+## GR-24: the entrance stele 45% lower (it stood behind the HUD's buttons, a tenth of the frame; the collision circle is the same).
+const OBELISK_SOUTH_HEIGHT := 2.9
 const OBELISK_EAST := 2.3
 ## The floor in front of the portal's steps, always wet (x, z rect).
 const WET := Rect2(-1.0, -15.0, 13.0, 6.0)
@@ -427,8 +429,8 @@ const STY_CALM := {&"stone_a": Color(0.35, 0.29, 0.32), &"stone_b": Color(0.42, 
 ## saturation p50 of 0.45 or more in the pool, was 0.26 to 0.37 at 1.35).
 const STY_EDGE_VALUE := 0.38
 const STY_EDGE_SPAN := Vector2(0.5, 1.25)
-const STY_POOL_GAIN := 1.8
-const STY_FLOOR_POOL_SATURATION := 1.9
+const STY_POOL_GAIN := 1.5
+const STY_FLOOR_POOL_SATURATION := 1.0
 ## S-1: the hall's mouldings lower and its slabs less worn pale than the defaults (1.22, 0.16): noble floor, no buttons.
 const STY_FRAMED_LIP := 1.08
 const STY_FRAMED_WORN := 0.05
@@ -496,7 +498,9 @@ const SHOP_ARM := 2.3
 const SHOP_LANTERN_FOOT := 1.0
 const SHOP_LANTERN_POST := Vector3(0.05, 0.02, 0.05)
 const SHOP_LAMP_RANGE := 4.5
-const SHOP_LAMP_ENERGY := 7.0
+const SHOP_LAMP_ENERGY := 4.0
+## GR-25: the link from a shop lantern's roof to the arm (its width, m): the lantern hung from nothing.
+const SHOP_LINK := 0.06
 ## ... amber, deeper than a candle's (its pool is painted at a share of a fire's saturation). ENV-HB1: nearer the
 ## bowls' amber (the floor's pools at STY_FLOOR_POOL_SATURATION turned the old 1.0 / 0.7 / 0.25 a vivid yellow, hue 48).
 const SHOP_LAMP_LIGHT := Color(1.0, 0.66, 0.36)
@@ -507,7 +511,7 @@ static var SHOP_LAMP := TombKit.Lamp.new(ScreenTone.fit(Color(1.0, 0.62, 0.3)), 
 const SHOP_CLOTH := Color(0.55, 0.38, 0.28)
 const SHOP_CLOTHS: Array[Vector4] = [Vector4(7.3, -14.0, 0.75, 1.46), Vector4(-5.35, -14.2, 0.85, 0.56)]
 ## Art review 2026-11-21 item 8 (stylized look): the urns' stone tinted to about (0.62, 0.57, 0.5), not white.
-const STY_URN_TINT := Color(0.78, 0.65, 0.53)
+const STY_URN_TINT := Color(0.45, 0.40, 0.34)
 const SHOP_URNS: Array[Vector4] = [Vector4(8.3, -13.8, 0.3, 0.8), Vector4(-6.25, -13.75, 0.26, 0.45)]
 ## The fountain's moss (inner, mean outer radius from the basin's middle; how far its edge breaks either way, how far
 ## it swings out to the north and in to the south: lot A review item 9, 2.6 to 3.4 m), its candles on the rim
@@ -698,6 +702,8 @@ func dress_shop(points: Array[Vector2]) -> void:
 		var mid := (side + hang) * 0.5
 		tomb.bar(Vector3(mid.x, SHOP_ARM, mid.y), Vector3(SHOP_LANTERN.z + 0.04, 0.04, 0.04), atan2(-right.y, right.x), ir)
 		var l := tomb.lantern(Vector3(hang.x, SHOP_LANTERN_FOOT, hang.y), yaw, ir, SHOP_LAMP, ~Arena.CROWD_LAYER, SHOP_LANTERN_POST)
+		var roof := SHOP_LANTERN_FOOT + SHOP_LANTERN_POST.y + TombKit.LANTERN_CAGE.y + TombKit.LANTERN_ROOF * 0.5
+		tomb.bar(Vector3(hang.x, (roof + SHOP_ARM) * 0.5, hang.y), Vector3(SHOP_LINK, SHOP_ARM - roof, SHOP_LINK), 0.0, ir)
 		l.shadow_enabled = false
 	# the provisions under their cloth
 	for c: Vector4 in SHOP_CLOTHS:
@@ -1229,7 +1235,7 @@ func _landing() -> void:
 	m.balustrade(Vector3(LANDING.y - 0.1, 0, HALF.y + 0.8), Vector3(LANDING.y - 0.1, 0, z), false, _near())
 	_stairs_down(Vector3((WAY_IN.x + WAY_IN.y) * 0.5, 0, LANDING_END), Vector2(0, 1), WAY_IN.y - WAY_IN.x)
 	# the standing stone in the middle of the south edge, where the landing meets the hall
-	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), 5.2, OBELISK_SOUTH, Vector2(1, 1).normalized())
+	m.obelisk(Vector3(SOUTH_STONE.x, 0, SOUTH_STONE.y), OBELISK_SOUTH_HEIGHT, OBELISK_SOUTH, Vector2(1, 1).normalized())
 	kit.circles.append(Vector3(SOUTH_STONE.x, SOUTH_STONE.y, OBELISK_SOUTH * 0.68))
 	_candles(Vector3(SOUTH_STONE.x + 2.4, 0, HALF.y - 2.0), 7, false, true, true)
 	m.pot(Vector3(SOUTH_STONE.x + 3.6, 0, HALF.y - 0.8), 0.9)

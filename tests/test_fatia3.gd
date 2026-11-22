@@ -184,6 +184,12 @@ func test_discernimento_two_shows_one_more_layer_of_angels() -> void:
 				assert_ne(n.angel, &"", "the angel behind the doors is shown")
 				shown += 1
 	gut.p("rooms behind the doors with an angel shown: %d" % shown)
+	# DM-1: with no map, the HUD says what the rooms behind the doors give
+	var said := game.rooms.ahead_text()
+	for id in game.rooms.next_rooms[0].next:
+		assert_string_contains(said, Rooms.door_text(game.rooms.map.at(id), false).replace("\n", ", "))
+	await wait_process_frames(2)
+	assert_eq(game.hud.ahead.text, said)
 
 
 func test_esmeralda_by_a_new_best_peso() -> void:

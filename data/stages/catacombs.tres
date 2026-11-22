@@ -3233,15 +3233,14 @@ exits = Array[ExtResource("2_kin83")]([SubResource("Resource_cfmym"), SubResourc
 
 [resource]
 script = ExtResource("9_6lsx0")
+miniboss_depth_min = 5
 minibosses = Array[StringName]([&"knight", &"priest_elder"])
-fountain_more_chance = 1.0
+fountain_more_chance = 0.0
 layouts = Array[ExtResource("5_51rpt")]([SubResource("Resource_nsxxi"), SubResource("Resource_bavs6"), SubResource("Resource_7pks0"), SubResource("Resource_8dywt"), SubResource("Resource_dpswd"), SubResource("Resource_sm5jk"), SubResource("Resource_53wau")])
 boss_layout = SubResource("Resource_p8egx")
 shop_layout = SubResource("Resource_nsxxi")
 trial_layout = SubResource("Resource_2chck")
 altar_layout = SubResource("Resource_060tc")
-map_widths = PackedFloat32Array(0.35, 0.45, 0.2)
-map_doors = PackedFloat32Array(1, 5, 2)
 silver_from_depth = 4
 memory_after_guardian = true
 enemies = Array[StringName]([&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"mage", &"mage_elite", &"archer", &"archer_elite", &"guard", &"guard_elite", &"priest", &"priest_elite"])

@@ -5,16 +5,16 @@ extends Node
 ## The player went from keys and mouse to a gamepad (pad true) or back.
 signal device_changed(pad: bool)
 
-const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"shout", &"rush", &"ultimate", &"map", &"interact", &"pause", &"feel_panel"]
-## Actions the player may rebind in Options. map (DV-1, MAP-03): the descent's map in the Livro de Ahk (MapScreen).
+const ACTIONS: Array[StringName] = [&"move_left", &"move_right", &"move_up", &"move_down", &"light_attack", &"heavy_attack", &"dodge", &"cast", &"shout", &"rush", &"ultimate", &"interact", &"pause", &"feel_panel"]
+## Actions the player may rebind in Options.
 ## interact (HUB-B1): use the station in focus in the hub (F since 2026-11-21, A on the gamepad); in a descent (C19, Q-13)
 ## take the reward, buy a shop's item, walk through a door. shout (2026-11-21): the Warrior's Brado de Guerra on Q (RB on
 ## the gamepad); rush: his Investida on E (R3); the ultimate on Shift. The circle (cast) has no key now: it left the
 ## Warrior's kit (the Paladin's later), so it is not remappable.
-const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"map", &"interact"]
+const REMAPPABLE: Array[StringName] = [&"move_up", &"move_down", &"move_left", &"move_right", &"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact"]
 const DEFAULT_KEYS := {
 	&"move_left": [KEY_A, KEY_LEFT], &"move_right": [KEY_D, KEY_RIGHT], &"move_up": [KEY_W, KEY_UP], &"move_down": [KEY_S, KEY_DOWN],
-	&"dodge": [KEY_SPACE], &"shout": [KEY_Q], &"rush": [KEY_E], &"ultimate": [KEY_SHIFT], &"map": [KEY_M], &"interact": [KEY_F], &"pause": [KEY_ESCAPE, KEY_P],
+	&"dodge": [KEY_SPACE], &"shout": [KEY_Q], &"rush": [KEY_E], &"ultimate": [KEY_SHIFT], &"interact": [KEY_F], &"pause": [KEY_ESCAPE, KEY_P],
 	# debug builds only: the live tuning panel (scripts/ui/feel_panel.gd)
 	&"feel_panel": [KEY_F1],
 }
@@ -25,13 +25,13 @@ const DEFAULT_MOUSE := {&"light_attack": MOUSE_BUTTON_LEFT, &"heavy_attack": MOU
 ## remapped simply reads the new defaults, and one that remapped something keeps it (a key two actions would share goes
 ## to the spare, never to both).
 const SPARE_KEYS := {&"interact": [KEY_G, KEY_T, KEY_B, KEY_N], &"shout": [KEY_Z, KEY_C, KEY_V, KEY_B], &"rush": [KEY_Z, KEY_C, KEY_V, KEY_B], &"ultimate": [KEY_X, KEY_C, KEY_V, KEY_B]}
-const DEFAULT_PAD := {&"interact": JOY_BUTTON_A, &"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"shout": JOY_BUTTON_RIGHT_SHOULDER, &"rush": JOY_BUTTON_RIGHT_STICK, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"map": JOY_BUTTON_BACK, &"pause": JOY_BUTTON_START}
+const DEFAULT_PAD := {&"interact": JOY_BUTTON_A, &"light_attack": JOY_BUTTON_X, &"heavy_attack": JOY_BUTTON_Y, &"dodge": JOY_BUTTON_B, &"shout": JOY_BUTTON_RIGHT_SHOULDER, &"rush": JOY_BUTTON_RIGHT_STICK, &"ultimate": JOY_BUTTON_LEFT_SHOULDER, &"pause": JOY_BUTTON_START}
 const PAD_AXES := {&"move_left": [JOY_AXIS_LEFT_X, -1.0], &"move_right": [JOY_AXIS_LEFT_X, 1.0], &"move_up": [JOY_AXIS_LEFT_Y, -1.0], &"move_down": [JOY_AXIS_LEFT_Y, 1.0]}
 const STICK_DEADZONE := 0.3
 ## Menu actions, never rebound: LB and RB (PageUp and PageDown on the keyboard) step through a screen's tabs
 ## (Configurações, Como Jogar, the Livro's chapters, the Compendium's index; DT-103, UiKit.step_tabs).
 ## The actions whose gamepad button the player may change (DT-103): those with a button, not the stick's walking.
-const PAD_REMAPPABLE: Array[StringName] = [&"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"map", &"interact"]
+const PAD_REMAPPABLE: Array[StringName] = [&"light_attack", &"heavy_attack", &"dodge", &"shout", &"rush", &"ultimate", &"interact"]
 ## The gamepad's buttons of Godot's menu actions (confirm, back).
 const MENU_BUTTONS := {&"ui_accept": JOY_BUTTON_A, &"ui_cancel": JOY_BUTTON_B}
 ## Where a gamepad binding is kept in the saved bindings (beside the key bindings, which use the action's own name).
@@ -150,9 +150,19 @@ static func keys_for(action: StringName, saved: Dictionary) -> Array:
 		return own
 	var taken := {}
 	for other: String in saved:
+		# (an action the game no longer has, as the map's of an old save, holds no key)
+		if not saved[other] is Dictionary or not ACTIONS.has(StringName(other)):
+			continue
 		var entry: Dictionary = saved[other]
 		if other != String(action) and entry.get("type", "key") == "key":
 			taken[int(entry.get("code", 0))] = true
+	# (BH-7) the actions listed before it that fall back on a spare hold theirs
+	for before: StringName in SPARE_KEYS:
+		if before == action:
+			break
+		if not saved.has(String(before)):
+			for k in keys_for(before, saved):
+				taken[int(k)] = true
 	var free := own.filter(func(k: Key) -> bool: return not taken.has(int(k)))
 	if not free.is_empty():
 		return free

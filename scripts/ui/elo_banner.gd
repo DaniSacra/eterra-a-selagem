@@ -256,7 +256,7 @@ func _open_find(id: StringName) -> void:
 	row.add_theme_constant_override(&"separation", 8)
 	_icon = PickMark.new().setup(PickMark.Look.HEAD, MEDALLION, false)
 	row.add_child(_icon)
-	row.add_child(_named(DescentMap.find_name(id), UiKit.PALE))
+	row.add_child(_named(UiKit.find_name(id), UiKit.PALE))
 	add_child(row)
 	var note := UiKit.shadow(UiKit.label(T.t(&"oficio_find_note"), UiKit.DIM, NOTE_SIZE))
 	note.name = &"Note"

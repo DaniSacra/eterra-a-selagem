@@ -388,7 +388,7 @@ func _brought(parent: Control, stats: Dictionary) -> void:
 		find.name = "find"
 		find.add_theme_constant_override(&"separation", 6)
 		find.add_child(PickMark.new().setup(PickMark.Look.HEAD, BROUGHT_MARK + 6.0, false))
-		var fl := UiKit.shadow(UiKit.label(DescentMap.find_name(StringName(str(f))), UiKit.STRONG, BROUGHT_SIZE - 4, UiKit.BOLD_FONT))
+		var fl := UiKit.shadow(UiKit.label(UiKit.find_name(StringName(str(f))), UiKit.STRONG, BROUGHT_SIZE - 4, UiKit.BOLD_FONT))
 		fl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		find.add_child(fl)
 		row.add_child(find)

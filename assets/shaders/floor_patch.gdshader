@@ -36,7 +36,7 @@ void fragment() {
 	float a;
 	if (radial > 0.5) {
 		float edge = length(q) + (n - 0.5) * breakup * 1.6;
-		a = 1.0 - smoothstep(0.35, 1.0, edge);
+		a = 1.0 - smoothstep(0.55, 0.8, edge);
 	} else {
 		a = COLOR.a * mix(1.0, 0.55 + 0.9 * n, breakup);
 	}

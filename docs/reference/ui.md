@@ -101,7 +101,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   (`StationSign.KeyCap`, `UiKit.action_label`; A e B do controle para `ui_accept`/`ui_cancel` por `UiKit.MENU_PAD`) e
   o verbo, que troca ao vivo entre teclado e controle e é clicável; `ActionBar.RESERVE` é a margem de baixo dos livros.
   Nas Bênçãos, nos anjos, no Livro (o verbo segue o capítulo: Confirmar, Equipar ou tirar, Abrir com Memória;
-  `HeroScreen.bar`), no mapa, no Compêndio, na Forja, na escolha de save e na pausa; as frases de teclas saíram
+  `HeroScreen.bar`), no Compêndio, na Forja, na escolha de save e na pausa; as frases de teclas saíram
   (`hero_hint*`, `slot_hint*`, `map_close_hint` ficaram sem uso). **Contador de golpes** fora da luta (UI-HB5): uma linha
   só sobre a barra de vida, à direita do medalhão (`Hud._combo_row`: número `FONT_COMBO` 24 com contorno, sem véu, a
   palavra e o nome do golpe em Alegreya Sans Bold 14), que sobe quando o selo da maldição aparece. **Cartas de
@@ -162,7 +162,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   lâmina inclinada com uma centelha de ouro velho de quatro pontas (`DoorGlyph.enchant`; nunca de pé com a guarda, que
   lê como cruz, nem com um aro, que lia como o sinal de Vênus), `PSALM` o arco ogival das cartas de Salmo com a luz
   lilás e um losango, `EMERALD` a pedra lapidada mais alta que larga no esmeralda da Emeth (a gema da Magia é redonda e
-  azul); `of_reward` (ENCHANT, PSALM), `of_material` (EMERALD), na legenda do mapa e nas placas da loja. **Anjo na
+  azul); `of_reward` (ENCHANT, PSALM), `of_material` (EMERALD) e nas placas da loja. **Anjo na
   porta**: a linha do anjo sob a recompensa ganha o selo da casa e o nome na cor dele, ou dois selos e "Dois anjos"
   (`DoorSign.show_angel`, `angel_row`, chamada pelo `Rooms._sign_angel`; o texto do `door_text` não mudou e sai do
   detalhe, que fica com "Difícil"). **Forja** (`ForgeScreen`): o índice é uma grade de três colunas que cabe em 720
@@ -179,25 +179,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `ENAMEL_ENCHANT` matiz 148) e Salmo (`Mark.PSALM`, o arco ogival com o losango, lilás `ENAMEL_PSALM` matiz 255, longe
   da Provação), desenhados no `reward_gem.gdshader`; `tools/gem_lab.gd --rewards=10,11,1`. Cores das famílias: toda tela
   lê `Boon.color()` (`FAMILY_COLOR`, Vigília em sálvia) e o selo do anjo o `AngelSeal.TINT`, nada copiado.
-- **Mapa da descida** (DV-1, MAP-03, lê o grafo do MAP-01): ação `map` em `Controls` (M, Back
-  no controle; remapeável no teclado nas Configurações, linha "Mapa" no Como Jogar), botão discreto "Mapa [M]" ao lado do
-  "Sala N de 11" no HUD (`Hud.map_button`: nunca toma o foco, abre no aperto para o clique, que também é o ataque, não
-  golpear; tecla real) e "Mapa" na pausa logo abaixo de Continuar (M também abre de lá). `Hud.open_map` abre por
-  `Game.open_screen` (a partida para) e fecha por `Game.close_screen` (`Controls.clear_presses`); a tecla é lida no
-  `Hud._unhandled_input`, como a pausa lê a dela. Página do Livro (`MapScreen`, `scripts/ui/map_screen.gd`, `BookSpread`
-  com `SPINE` 0,37): à direita o desenho (`MapGraph`: entrada no topo, Morvath embaixo, número da sala na margem,
-  medalhão de tinta com a marca do `DoorGlyph` de cada nó, divisas de difícil e guardião ao lado, nome curto do guardião
-  "Cavaleiro"/"Ancião" (`map_guardian_<id>`), caminho feito em rubrica, sala atual com aro duplo petróleo, portas abertas
-  com aro e ligação de ouro, o que ainda alcança em tinta, ramos deixados apagados a 0,3); à esquerda a sala em foco
-  (nome, "Sala N de 11", recompensa, difícil, arena, estado) e a legenda. Foco começa na primeira porta; setas, direcional
-  e o ponteiro andam pelos nós (`DescentMap.step`); M, Back, Esc, Start ou Voltar fecham. `DoorGlyph.Kind.UNKNOWN` é o
-  "?" do nó escondido (Q-25 a). Dados por `DescentMap` (`scripts/ui/descent_map.gd`, puro): `from_dict` lê
-  o `RunMap.view()` (`{layers: [[{id, depth, slot, kind, reward, guardian, hidden, arena, next}]], path, here, doors}`;
-  aceita também `current` e `hard`); `from_game` lê o `Rooms.map` da partida e marca "difícil" nas portas abertas pelo
-  `Rooms.door_info`. Grafo fixo de teste `MapSample`
-  (`--title --screen=map --map-at=start|middle|doors`, `tools/ui_lab.gd -- --map [--map-at=...]`). Testes em
-  `tests/test_map_screen.gd` e `tests/test_input_leak.gd`; fluxo por teclado, controle e mouse em
-  `tools/map_flow_check.gd`; capturas em `docs/gallery/dv1/ui/` (mapa no começo, no meio e diante das portas a 720 e 1080, sobre a partida, a linha de hoje numa partida real, HUD com o botão, horda de 300, Controles).
+- **Mapa da descida**: removido no DM-1 (2026-11-22): tela, botão, ação `map`, textos e testes. Ver `rooms.md`.
 - **Tela de fim com Maestria** (E2-04, `MasteryReport`): "+N XP" ao lado da barra que enche do XP de antes ao de depois,
   de onde veio (só as fontes que deram algo), "Nível N alcançado" e "Dons revelados: ..." (o nível revela, a Memória abre) e "Nova ultimate: ..."; dados do
   `Game.mastery_report` (o `mastery_gain` e o XP antes, guardados no `log_run`, passados no `stats.mastery`).
@@ -287,11 +269,10 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 
 ## Rejogabilidade, Fatia 1, interface (ui-ux-designer; capturas em `docs/gallery/rj1/ui/`, testes em `tests/test_rj1_ui.gd`)
 - **Marcas dos materiais**: `DoorGlyph.Kind.SILVER` (lingote de prata) e `MEMORY` (folha rasgada com três linhas de tinta),
-  `DoorGlyph.of_reward` para `RunMap.Reward.SILVER`/`MEMORY` (placas das portas e mapa) e `DoorGlyph.of_material(id)`;
+  `DoorGlyph.of_reward` para `RunMap.Reward.SILVER`/`MEMORY` (placas das portas) e `DoorGlyph.of_material(id)`;
   `DoorGlyph.material(ci, kind, centro, altura)` desenha a marca em qualquer canvas. `MaterialCount`
   (`scripts/ui/material_count.gd`): marca e número no `UiKit.number_font` (nunca Cinzel), `named` acrescenta "Prata",
-  `plus` escreve "+3"; `MaterialCount.purse(data)` é a Bolsa (Prata e Memória lado a lado) e `refresh(row, data)`. A
-  legenda do mapa (`MapScreen.legend_kinds`) só mostra os tipos que a descida tem (Prata e Memória entram quando há).
+  `plus` escreve "+3"; `MaterialCount.purse(data)` é a Bolsa (Prata e Memória lado a lado) e `refresh(row, data)`.
 - **Forja da Emeth** (`ForgeScreen`, `scripts/ui/forge_screen.gd`, aberta pelo Forjador em `Hub._open_forge` pelo `ScreenHost`):
   `BookSpread` de duas páginas. Esquerda: título, uma linha do que a Forja faz, "Temperar" com uma entrada por posto
   (`Book.index_entry`, marca de Prata e o custo, "Forjado" quando já tem) e a Bolsa no pé. Direita: o posto em foco com
@@ -387,19 +368,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   Capturas: `--title --screen=options --options-tab=video|comfort|controls [--options-focus=opt_look]`.
 - **Controle (resto do DT-103)**: `ui_accept`/`ui_cancel` ganham A e B do controle (`Controls.MENU_BUTTONS`; antes os
   menus não aceitavam o A). Remapear no controle: nos Controles, escolhida uma ação, um botão do controle a liga
-  (`Controls.rebind_pad`, `PAD_REMAPPABLE`: ataque, especial, esquiva, círculo, ultimate, mapa, usar; troca com quem tinha
+  (`Controls.rebind_pad`, `PAD_REMAPPABLE`: ataque, especial, esquiva, círculo, ultimate, usar; troca com quem tinha
   o botão; o andar fica no analógico), gravado em `bindings` como `pad:<ação>` (`pad_button_for`), Start cancela, Teclas
   padrão volta tudo. O botão aparece numa plaqueta (`StationSign.KeyCap`, redonda nos botões de face) e uma linha embaixo
   diz que botão também liga (`options_pad_note`). Como Jogar com as teclas e botões em plaquetas (`HowToScreen.Plates`,
   `key_parts`, `pad_parts`; P2-3). `tools/title_flow_check.gd` faz uma volta só de controle (Como Jogar, Configurações,
   remapear o Ataque para Y, Teclas padrão) e uma só de clique (Como Jogar, Configurações, Estilo visual ida e volta).
-- **Mapa (MAP-07, MAP-08)**: com o foco numa sala atrás de uma porta aberta, a porta acende na sala com o facho das
-  recompensas na cor da recompensa (`MapScreen._light_door`, `RewardShaft` "MapDoorLight" sobre o `arena.door_label(i)`;
-  outra sala apaga, `lit_door()`); ao fechar ela fica acesa `DOOR_LINGER` 4 s e o HUD aponta a porta na borda da tela
-  quando ela está fora (`Hud.point_door(onde, nome, s)`, divisa com o nome, some nos últimos `DOOR_FADE` 0,6 s,
-  `clear_door`). A página vira ao abrir (0,22 s em volta da lombada) e ao fechar (0,16 s, numa camada que não toma entrada;
-  o `closed` sai na hora) e, a primeira vez que o mapa abre numa sala, o trecho novo do caminho se desenha a tinta
-  (`MapGraph.ink`, `draw_in`); sem animação sem tela (`MapScreen.turns`). `tools/map_flow_check.gd` confere a luz.
 - **Entrada de Morvath (AP-2, ART-05.5)**: quando ele surge, embaixo da barra dele, num véu, "A Câmara do Selo", "Morvath"
   em Cinzel e "O rei que traiu a luz" (o `enemy_morvath` cortado na vírgula) por `Hud.ENTRANCE_TIME` 2,3 s, entrando em
   0,3 e saindo em 0,45 (`Hud.show_entrance`, `entrance_shown`); um `show_notice` do nome da câmara vai para lá.
@@ -421,10 +395,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `DoorGlyph.of_material(&"pedra_funda")` (`STONE_ID`, o `OficiosDef.stone`), pronta para a Bolsa, Trazidos e a saudação.
 
 ## Ofícios, Roteiro A, interface (ui-ux-designer; `docs/design/oficios/10_ux.md`; testes em `tests/test_oficios_ui.gd`)
-- **Mapa**: `DescentMap.Room.find` e `vein` (lidos do `view()`); o nó com `find` ganha um losango de ouro velho de 6 px no
-  alto à direita do medalhão (`MapGraph.find_diamond`, `FIND`) e a legenda "Achado" só quando há; a página da sala diz
-  "Guarda um achado: Cabeça da Picareta" e "Um veio de Pedra Funda" (`DescentMap.find_name`); depois de achada, o
-  `from_game` tira o losango. `MapSample` tem o achado no nó 14 e o veio no 12.
+- **Achado**: o nome na placa da porta (`Rooms.door_text`, `UiKit.find_name`); o mapa saiu no DM-1.
 - **Placa do veio**: `StationSign.tool_line` põe sob a tecla "Pede: Picareta" no rosa do que falta (`vein_note`) ou "Com
   a Picareta" (`vein`); `dim_verb()` apaga o verbo (para o `Rooms.prompt` quando o veio já foi anotado).
 - **Bolsa e Trazidos**: `MaterialCount` aceita a Pedra Funda (`name_of`, `short_of`, `amount_of` pelo `Oficios.count`); a

@@ -139,6 +139,8 @@ var _spots: Array[Dictionary] = []
 var _bot_trial := false
 var _rng: RandomNumberGenerator
 var _fade: ColorRect
+## The fade running now (_fade_tween).
+var _fading: Tween
 ## The floating signs turn slowly.
 var _gems: Array[Node3D] = []
 
@@ -864,12 +866,13 @@ func _step_vein(dt: float) -> void:
 
 
 ## Obra 1, "Prévia dos anjos": as the doors open, the angel of each Blessing's room one layer further (behind the
-## doors) is drawn now and shown on the map; its door keeps it when it opens. Discernimento II (Fatia 3) sees one
-## layer further still (alone, the layer behind the doors).
+## doors) is drawn now; its door keeps it when it opens. Discernimento II (Fatia 3) sees one layer further still (alone,
+## the layer behind the doors). DM-1: with no map, the HUD says what those rooms give (ahead_text).
 func _preview_angels() -> void:
 	if game.encounters == null:
 		return
 	var layers := (1 if game.oficios != null and game.oficios.preview else 0) + (1 if game.discern >= 2 else 0)
+	_ahead.clear()
 	if layers <= 0:
 		return
 	var ring: Array[RunMap.Room] = next_rooms.duplicate()
@@ -884,7 +887,27 @@ func _preview_angels() -> void:
 				if n.reward == RunMap.Reward.BOON and not n.meeting and n.kind == RunMap.Kind.COMBAT and n.angel == &"":
 					n.angel = game.encounters.door_angel(n)
 		ring = further
-	map.changed.emit()
+		if not further.is_empty():
+			_ahead.append(further)
+
+
+## The rooms beyond the open doors, layer by layer, as far as he sees (_preview_angels).
+var _ahead: Array = []
+
+
+## "Depois: Romã ou Fonte", a layer after the other; "" with no door open or nothing to see with.
+func ahead_text() -> String:
+	if phase != Phase.OPEN or _ahead.is_empty():
+		return ""
+	var words := PackedStringArray()
+	for layer: Array in _ahead:
+		var names := PackedStringArray()
+		for r: RunMap.Room in layer:
+			var word := door_text(r, false).replace("\n", ", ")
+			if not names.has(word):
+				names.append(word)
+		words.append(T.t(&"hud_ahead_or").join(names))
+	return T.t(&"hud_ahead", {"rooms": T.t(&"hud_ahead_then").join(words)})
 
 
 # ---------- doors ----------
@@ -906,7 +929,7 @@ func _open_doors() -> void:
 	for r in next_rooms:
 		if r.reward == RunMap.Reward.BOON and not r.meeting and r.kind == RunMap.Kind.COMBAT and game.encounters != null \
 				and r.angel == &"":
-			r.angel = game.encounters.door_angel(r)  # (one shown before by the angels' preview stays: the map promised it)
+			r.angel = game.encounters.door_angel(r)  # (one shown before by the angels' preview stays)
 	_preview_angels()
 	for i in next_rooms.size():
 		var r := next_rooms[i]
@@ -924,11 +947,14 @@ func _open_doors() -> void:
 ## A door's sign (E5-D8, docs/art/e5_spec.md 7.1): the reward of a fight, under it "Difícil" for one with an elite
 ## and "Guardião" for the guardian's; the room's kind for the others (the pictogram beside it: DoorGlyph.of(door_info)).
 ## The altar's says what it is in a line (T5): a trade with no fight.
-static func door_text(r: RunMap.Room) -> String:
+## The room of a find he looks for names it (find false: the line is left out, for the HUD).
+static func door_text(r: RunMap.Room, find := true) -> String:
 	match r.kind:
 		RunMap.Kind.COMBAT:
 			var sign := r.sign()
 			var text := T.t(RunMap.REWARD_KEY[r.reward]) + _angel_line(r)
+			if find and r.find != &"":
+				text += "\n" + T.t(&"door_find", {"name": UiKit.find_name(r.find)})
 			if bool(sign.hard):
 				# Fatia 2: the Prata its elites leave, on the sign (1 an elite, StageDef.silver_elite)
 				var silver := elite_heads(r) * sign_silver
@@ -983,7 +1009,7 @@ static func _angel_line(r: RunMap.Room) -> String:
 func _leave(next: RunMap.Room) -> void:
 	_log_leaving(next)
 	phase = Phase.LEAVING
-	var t := create_tween()
+	var t := _fade_tween()
 	t.tween_property(_fade, "color:a", 1.0, FADE)
 	t.tween_callback(func() -> void: _go(next))
 
@@ -1028,6 +1054,8 @@ func _frame_drawn() -> void:
 
 
 func _fade_in() -> void:
+	if _fading != null:
+		_fading.kill()
 	_fade.color.a = 1.0
 	_hold = hold_frames()
 	_hold_turn += 1
@@ -1037,7 +1065,16 @@ func _fade_in() -> void:
 		if not is_inside_tree() or turn != _hold_turn:
 			return  # (a newer room took the screen: its own hold counts)
 		_hold -= 1
-	create_tween().tween_property(_fade, "color:a", 0.0, FADE)
+	_fade_tween().tween_property(_fade, "color:a", 0.0, FADE)
+
+
+## A new fade of the screen; the one still running stops (BH-6: a fade-in left running lightened the black of the next
+## room).
+func _fade_tween() -> Tween:
+	if _fading != null:
+		_fading.kill()
+	_fading = create_tween()
+	return _fading
 
 
 # ---------- E5: the doors that show the way ----------
@@ -1253,7 +1290,7 @@ func _step_slab(dt: float) -> void:
 	slab = null
 	trial_entered.emit(cost)
 	phase = Phase.LEAVING
-	var t := create_tween()
+	var t := _fade_tween()
 	t.tween_property(_fade, "color:a", 1.0, FADE)
 	t.tween_callback(func() -> void: _go(map.trial(map.depth)))
 
@@ -1627,24 +1664,14 @@ const BOT_ALTAR_RANK := 1.5
 const BOT_FOUNTAIN_BELOW := 0.8
 
 
-## DV-1 (MAP-04), the robot reads the map as a player would: the same taste for the door in front of it (its rank),
-## plus BOT_AHEAD of the best way on after that door (what the rooms on it give, in the same order; a fountain ahead
-## worth two Blessings, BOT_FOUNTAIN_AHEAD: it keeps one in reach for when it is hurt). The one-step rule first tried (a fountain kept in reach below 80% of life)
-## left the robot without a fountain in 12 of 24 descents (it drank in 19 of 24 before the map) and won 20 of 24.
-## map: the descent's graph; null: the doors alone, as before the map.
-const BOT_AHEAD := 1.0
-const BOT_FOUNTAIN_AHEAD := 12.0
-
-
 ## DV-2 (MAP-09): a route shop's door ranks after a Blessing when the robot carries BOT_ROUTE_SHOP_GOLD (something
 ## besides the healing to buy), otherwise last.
 const BOT_ROUTE_SHOP_GOLD := 100
 
 
-static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0, map: RunMap = null, gold_now := 0) -> int:
+static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life: float = 0.0, gold_now := 0) -> int:
 	var best := 0
 	var top := -INF
-	var memo := {}
 	for i in doors.size():
 		var rank := _bot_rank(doors[i].reward)
 		if doors[i].kind == RunMap.Kind.FOUNTAIN:
@@ -1657,40 +1684,10 @@ static func bot_door(doors: Array[RunMap.Room], altar_useful: bool = true, life:
 			rank = 1.0 if worth else BOT_PREFERENCE.size() + 0.5
 		elif rank < 0.0:
 			rank = BOT_PREFERENCE.size()
-		var score := -rank
-		if map != null:
-			score += BOT_AHEAD * bot_way(map, doors[i], altar_useful, memo)
-		if score > top:
-			top = score
+		if -rank > top:
+			top = -rank
 			best = i
 	return best
-
-
-## The most the robot sees to gain on any way after room r (r left out): each room's worth by its taste (a Blessing
-## BOT_PREFERENCE.size(), down to 1 for Magia; a fountain BOT_FOUNTAIN_AHEAD; a useful altar between the pomegranate
-## and the heart; the shop and Morvath nothing).
-static func bot_way(map: RunMap, r: RunMap.Room, altar_useful: bool = true, memo: Dictionary = {}) -> float:
-	if memo.has(r.id) and r.id >= 0:
-		return memo[r.id]
-	var most := 0.0
-	for id in r.next:
-		var n := map.at(id)
-		most = maxf(most, _bot_worth(n, altar_useful) + bot_way(map, n, altar_useful, memo))
-	if r.id >= 0:
-		memo[r.id] = most
-	return most
-
-
-static func _bot_worth(r: RunMap.Room, altar_useful: bool) -> float:
-	match r.kind:
-		RunMap.Kind.FOUNTAIN:
-			return BOT_FOUNTAIN_AHEAD
-		RunMap.Kind.ALTAR:
-			return BOT_PREFERENCE.size() - BOT_ALTAR_RANK if altar_useful else 0.0
-		RunMap.Kind.SHOP, RunMap.Kind.BOSS:
-			return 0.0
-	var rank := _bot_rank(r.reward)
-	return float(BOT_PREFERENCE.size()) - rank if rank >= 0.0 else 0.0
 
 
 ## The altar's trade the robot would make now (Altar.bot_choice; -1: none).
@@ -1722,7 +1719,7 @@ func bot_goal() -> Variant:
 				return _spots[0].at
 		if not game.arena.exits.is_empty():
 			# the foot of its stairs (stepping on them leaves the room)
-			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0), map, gold),
+			return game.arena.door_goal(clampi(bot_door(next_rooms, _bot_altar_pick() >= 0, game.player.hp / maxf(game.player.max_hp, 1.0), gold),
 				0, game.arena.exits.size() - 1))
 	return null
 

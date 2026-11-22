@@ -138,7 +138,7 @@ const STYLE := {
 ## Salão; the frame is the walls themselves: the floor darker at their foot (edge_value from edge_span times the calm
 ## radius out), the candles' pools on it a little warmer.
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.28, 0.355, 0.375), &"edge_value": 0.55, &"edge_span": Vector2(1.0, 1.6),
-	&"paint_pool_saturation": 1.5}
+	&"paint_pool_saturation": 1.0}
 ## SW-C1 (docs/art/sworn_reference_ideas.md 3.2; ArenaKit.framed, GRAVE): grave slabs in the painted floor, the size
 ## of the old ones (SLAB), filling their rows (SLAB_ROWS: z -8.3 and 8.3) between the sarcophagi; x of each, its lion
 ## (z: 1, one in five counting the old ones). B leaves out the north-west one by its sarcophagus.

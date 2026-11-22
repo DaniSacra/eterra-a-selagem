@@ -2,8 +2,8 @@ extends GutTest
 ## The descent (C13-01, D-61; DV-1, the Descida de Valmor, MAP-01): a graph of rooms in layers drawn from the run's
 ## seed. Every way through has 11 rooms: the opening in the catacomb hall, fights among the arenas (never the same twice
 ## in a row, none more than three times, on every way), one guardian on every way (the Knight and the Elder side by
-## side when his layer has two rooms), the fountain at most once on a way, the altar at most once in the graph, the
-## shop in room 10, Morvath in the 11th. The test one of 7 (--medium) and the old one of 5 (--short) stay. Each arena
+## side), a fountain as one of the two doors before him (GP-2), the altar at most once in the graph, always two doors a
+## room (DM-1) but before the shop and Morvath, the shop in room 10, Morvath in the 11th. The test one of 7 (--medium) and the old one of 5 (--short) stay. Each arena
 ## brings its own ceiling of enemies, shooters and banned roles to the fights in it.
 ## BUG-109: nothing here reads the wall clock or a seed drawn at random; every count of assertions is the same on every
 ## run (the graphs come from fixed seeds, the real game's map is drawn again from one).
@@ -45,16 +45,11 @@ func _before(way: Array, i: int) -> int:
 	return (way[k] as RunMap.Room).layout
 
 
-## True when links (i, j) and (i2, j2) between two layers cross.
-func _cross(a: int, b: int, a2: int, b2: int) -> bool:
-	return (a < a2 and b > b2) or (a > a2 and b < b2)
-
-
 ## MAP-01's acceptance on 1000 seeds: every way has 11 rooms, opens in the hall, passes one guardian, the shop in the
-## 10th and ends at Morvath; every room reached and leading on, at most 3 doors and never more than its arena's; no two
-## links crossing; the arenas' rules on every way; one fountain at most on a way, one altar at most in the graph; no
-## two doors of a room promising the same reward, no pomegranate before room 3; some room with two doors that lead on
-## to different rooms; the Knight and the Elder side by side in at least 30% of the seeds.
+## 10th and ends at Morvath; every room has two doors, only the one before the shop's and the shop's own have one (DM-1);
+## the arenas' rules on every way; a fountain right before the guardian, two at most on a way, one altar at most in the
+## graph; no two doors of a room promising the same reward, no pomegranate before room 3; the Knight and the Elder side
+## by side in every one.
 func test_a_thousand_graphs_keep_every_rule() -> void:
 	var pairs := 0
 	var failures := 0
@@ -71,7 +66,7 @@ func test_a_thousand_graphs_keep_every_rule() -> void:
 			if g[0].guardian == g[1].guardian:
 				bad.append("seed %d: the same guardian twice" % s)
 	assert_eq(bad, [], "every graph keeps every rule")
-	assert_gte(pairs, 300, "the Knight and the Elder side by side in %d of 1000" % pairs)
+	assert_eq(pairs, 1000, "the Knight and the Elder side by side in %d of 1000" % pairs)
 	gut.p("graphs drawn again for a broken rule: %d in 1000 seeds" % failures)
 
 
@@ -91,7 +86,7 @@ func _broken(map: RunMap, opening: StringName) -> String:
 			if r.depth != d:
 				return "room %d out of its layer" % r.id
 			if d < map.last_depth():
-				if r.next.is_empty() or r.next.size() > 3:
+				if r.next.size() != (1 if d >= stage.rooms - 1 else 2):
 					return "room %d has %d doors" % [r.id, r.next.size()]
 				var arena: RoomLayout = stage.altar_layout if r.kind == RunMap.Kind.ALTAR else stage.layouts[r.layout]
 				if arena.exits.size() > 0 and r.next.size() > arena.exits.size():
@@ -100,10 +95,6 @@ func _broken(map: RunMap, opening: StringName) -> String:
 				reached[n] = true
 				if map.at(n).depth != d + 1:
 					return "a link skips a layer"
-				for r2 in layer:
-					for n2 in r2.next:
-						if _cross(r.slot, map.at(n).slot, r2.slot, map.at(n2).slot):
-							return "two links cross"
 			if r.kind == RunMap.Kind.COMBAT and d > 1:
 				if rewards.has(r.reward):
 					return "two rooms of a layer promise the same"
@@ -118,7 +109,9 @@ func _broken(map: RunMap, opening: StringName) -> String:
 					return "the altar out of its depths"
 			if r.kind == RunMap.Kind.FOUNTAIN:
 				fountains += 1
-				if stage.layouts[r.layout].id != &"hall" or d < stage.fountain_depth_min or d > stage.fountain_depth_max:
+				var before_guardian := d == map.miniboss_depth - 1
+				if stage.layouts[r.layout].id != &"hall" or not (before_guardian or (d > map.miniboss_depth \
+						and d >= stage.fountain_depth_min and d <= stage.fountain_depth_max)):
 					return "the fountain out of the hall or of its depths"
 			if r.kind == RunMap.Kind.MINIBOSS and (r.reward != RunMap.Reward.BOON or not stage.minibosses.has(r.guardian)):
 				return "a guardian with no Blessing or no guardian"
@@ -126,17 +119,16 @@ func _broken(map: RunMap, opening: StringName) -> String:
 				return "a \"?\" out of its rule"
 	if altars > 1:
 		return "two altars"
-	if fountains < 1:
-		return "no fountain"
-	var differ := false
+	if fountains < 1 or not map.layer(map.miniboss_depth - 1).any(func(r: RunMap.Room) -> bool: return r.kind == RunMap.Kind.FOUNTAIN):
+		return "no fountain before the guardian"
 	for way: Array in _ways(map):
 		if way.size() != 11:
 			return "a way of %d rooms" % way.size()
 		var kinds := way.map(func(r: RunMap.Room) -> int: return r.kind)
 		if kinds.count(RunMap.Kind.MINIBOSS) != 1 or kinds[9] != RunMap.Kind.SHOP or kinds[10] != RunMap.Kind.BOSS:
 			return "a way without its guardian, shop or Morvath"
-		if kinds.count(RunMap.Kind.FOUNTAIN) > 1:
-			return "two fountains on a way"
+		if kinds.count(RunMap.Kind.FOUNTAIN) > 2:
+			return "three fountains on a way"
 		if way.filter(func(r: RunMap.Room) -> bool: return r.trial).size() > 1:
 			return "two \"?\" on a way"
 		var uses := {}
@@ -158,28 +150,7 @@ func _broken(map: RunMap, opening: StringName) -> String:
 		for l: int in uses:
 			if uses[l] > stage.arena_max_uses:
 				return "%s more than %d times" % [stage.layouts[l].id, stage.arena_max_uses]
-	for r in map.nodes:
-		for x in r.next.size():
-			for y in range(x + 1, r.next.size()):
-				if _after(map, map.at(r.next[x])) != _after(map, map.at(r.next[y])):
-					differ = true
-	if not differ:
-		return "no room whose two doors lead on to different rooms"
 	return ""
-
-
-## The ids of the rooms after r (r left out), sorted.
-func _after(map: RunMap, r: RunMap.Room) -> Array:
-	var seen := {}
-	var todo: Array = r.next.duplicate()
-	while not todo.is_empty():
-		var id: int = todo.pop_back()
-		if not seen.has(id):
-			seen[id] = true
-			todo.append_array(map.at(id).next)
-	var out := seen.keys()
-	out.sort()
-	return out
 
 
 ## The same seed, the same graph; 100 seeds give at least 95 different graphs (rooms, links, rewards, arenas).
@@ -554,7 +525,7 @@ func test_two_hundred_descents_keep_the_promise() -> void:
 				told.append([info.kind, info.reward, info.guardian_id, String(info.arena), info.hidden, doors[i].fight])
 				if not can_grow and int(info.reward) == RunMap.Reward.POM:
 					broken.append("seed %d: a pomegranate promised with nothing to grow" % s)
-			var pick := Rooms.bot_door(doors, dice.randf() < 0.5, dice.randf(), map)
+			var pick := Rooms.bot_door(doors, dice.randf() < 0.5, dice.randf())
 			var r := doors[pick]
 			map.enter(r)
 			walked += 1
@@ -565,50 +536,6 @@ func test_two_hundred_descents_keep_the_promise() -> void:
 			broken.append("seed %d: %d rooms" % [s, walked])
 	assert_eq(broken, [], "the room is the one its door told")
 	assert_gt(turned, 0, "a pomegranate turned when nothing could grow")
-
-
-## The robot reads the map (MAP-04): its taste for the door in front of it plus half of the best way on after it,
-## checked against every way of the graph; without the map, the doors' rewards as before.
-func test_the_robot_reads_the_map() -> void:
-	var off := 0
-	var detours := 0
-	for s in 100:
-		var map := RunMap.new(stage, 700 + s)
-		for r in map.nodes:
-			var doors := map.doors_of(r)
-			if doors.size() < 2:
-				continue
-			var pick := Rooms.bot_door(doors, true, 0.5, map)
-			var plain := Rooms.bot_door(doors, true, 0.5)
-			if pick != plain:
-				detours += 1
-			var scores: Array[float] = []
-			for d in doors:
-				var best := 0.0
-				for way: Array in _ways_from(map, d):
-					var worth := 0.0
-					for n: RunMap.Room in way:
-						worth += Rooms._bot_worth(n, true)
-					best = maxf(best, worth)
-				scores.append(best)
-			for i in doors.size():
-				# the door taken is never worse than another by more than its own taste can pay back
-				if Rooms.BOT_AHEAD * (scores[i] - scores[pick]) > Rooms.BOT_PREFERENCE.size() + 2.0:
-					off += 1
-	assert_eq(off, 0, "the robot never leaves a much better way")
-	assert_gt(detours, 0, "the map changes some of its choices")
-
-
-## Every way from r on (r left out).
-func _ways_from(map: RunMap, r: RunMap.Room) -> Array:
-	if r.next.is_empty():
-		return [[]]
-	var out: Array = []
-	for id in r.next:
-		var n := map.at(id)
-		for rest: Array in _ways_from(map, n):
-			out.append([n] + rest)
-	return out
 
 
 ## In a real room: the reward the room gives is the one its door promised, and the log says both (RESULT events).
@@ -645,8 +572,7 @@ func test_the_reward_given_is_the_one_promised() -> void:
 		assert_eq(rooms.gold - gold, rooms.stage.gold_reward)
 
 
-## MAP-05, the PO's acceptance as far as a test goes: in a real descent a room shows two doors that lead on to
-## different rooms; walking into one door's mouth in the arena takes him to that room, and the map's path says so;
+## MAP-05 and DM-1, the PO's acceptance as far as a test goes: in a real descent a room shows two doors; walking into one door's mouth in the arena takes him to that room, and the map's path says so;
 ## another seed draws another graph, every way of both reaching Morvath.
 func test_map05_the_door_walked_through_is_the_way_on_the_map() -> void:
 	var game := _game()
@@ -655,12 +581,8 @@ func test_map05_the_door_walked_through_is_the_way_on_the_map() -> void:
 	var map := rooms.map
 	rooms._enter(map.first())
 	var doors := map.doors()
-	var pick := -1
-	for i in doors.size():
-		for k in doors.size():
-			if k != i and _after(map, doors[i]) != _after(map, doors[k]):
-				pick = i
-	assert_gt(pick, -1, "two doors of the hall lead on to different rooms")
+	assert_eq(doors.size(), 2, "two doors")
+	var pick := 1
 	game.horde.clear_crowd()
 	rooms._wave = rooms._waves.size()
 	rooms.phase = Rooms.Phase.REWARD

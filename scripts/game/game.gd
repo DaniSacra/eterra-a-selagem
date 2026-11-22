@@ -507,11 +507,11 @@ func _process(delta: float) -> void:
 		_open_pause()
 	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
 		_toggle_feel_panel()
-	if Controls.pressed(&"stun_toggle"):
+	if mode == Mode.PLAY and Controls.pressed(&"stun_toggle"):
 		# F8: the experiment of the stuns (StunRule), said on the screen
 		StunRule.step()
 		hud.show_notice(T.t(StunRule.TEXT[StunRule.live]))
-	if Controls.pressed(&"look_toggle"):
+	if mode == Mode.PLAY and Controls.pressed(&"look_toggle"):
 		# F7 flips the visual style and keeps it in the options, as the options screen does (DT-RS2)
 		Save.choose_look(VisualProfile.Look.CLASSIC if VisualProfile.stylized() else VisualProfile.Look.STYLIZED)
 		arena.restyle()

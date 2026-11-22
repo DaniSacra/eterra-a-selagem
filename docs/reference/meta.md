@@ -232,7 +232,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - **Discernimento** (`Discern`, `core/discern.gd`; `heroes.<id>.discern`, Memória 8 e 12, em ordem): I, uma vez por
   descida a escolha de Bênçãos na tela é sorteada de novo (`Game.can_reroll`, `reroll_choice`, `rerolls_left`, sinal
   `rerolled`; com anjo escolhido, as cartas da família dele por outro dado, `Encounters.reroll_cards`; nunca na porta de
-  Salmo nem na romã); II, o anjo das salas de Bênção uma camada mais adiante no mapa (`Rooms._preview_angels`, somado à
+  Salmo nem na romã); II, o que dão as salas uma camada depois das portas, com o anjo, numa linha do HUD (`Rooms._preview_angels`, `ahead_text`, somado à
   Obra da prévia). `--discern=N`. O botão na tela e a compra no Livro são do ui-ux-designer.
 - **Obras e troca no Vendedor** (`Vendor`, `core/vendor.gd`; `ObraDef` em `data/obras/`, parte `obras`): abertas com a
   primeira encomenda entregue; Altar Restaurado (`altar_chance` 0,35, 40 Prata e 4 Memória), Fonte Viva
@@ -263,7 +263,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - **Mapa**: `RunMap.mark_finds` (dado próprio, `FIND_SALT`, depois do grafo: o mapa e a partida não mudam) marca
   `Room.vein` (luta depois do guardião numa arena de `vein_arenas`) e, quando a cabeça é pedida (veio anotado, sem a
   cabeça nem a Picareta), `Room.find` numa sala de luta sem Provação; `view()` traz `find` e `vein`, o `summary()` traz
-  `"find"`. **Falta a marca no mapa (ui-ux-designer)**: um losango só no nó com `find`.
+  `"find"`. Desde o DM-1 a placa da porta diz o achado.
 - **Sala** (`Rooms`): vencida a sala marcada, a cabeça é achada ("Achado: Cabeça da Picareta", evento `find`); o
   guardião vencido a entrega por piedade (`head_by` "pity"). O veio (`VeinFloor`, `game/vein_floor.gd`, **placeholder**:
   bloco escuro com fio cinza, três estados, sem colisão; a peça é do environment-artist) aparece no
@@ -272,9 +272,9 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   com ela, `vein` ("Extrair"): um aperto e 1 s parado nele (sair dele esquece) dá 1 Pedra Funda, até 2 por descida
   (`gather_s` conta o tempo). Robô com a Picareta vai ao veio antes da recompensa e das portas (`Rooms.bot_goal`).
 - **Obra 1, Prévia dos anjos**: ao abrir as portas, as salas de Bênção (um anjo) atrás delas já ganham o anjo
-  (`Rooms._preview_angels`, `Encounters.door_angel`) e a porta o guarda quando abrir (a promessa do mapa).
+  (`Rooms._preview_angels`, `Encounters.door_angel`) e a porta o guarda quando abrir e o HUD diz (`Rooms.ahead_text`).
 - **Santuário** (folhas mínimas no `HubPanel`, `Hub._use_smith`, `_use_vendor`, sinal `Hub.oficio_done`): com o veio
-  anotado o Forjador pede a cabeça e 20 de Prata ("Onde achar: numa sala marcada no mapa") e restaura; o Vendedor fica
+  anotado o Forjador pede a cabeça e 20 de Prata ("Onde achar: atrás de uma porta da descida, com o nome na placa") e restaura; o Vendedor fica
   fechado até a primeira Pedra Funda, depois mostra a encomenda e entrega; a placa diz "Tem um pedido"
   (`Hub.station_line`). **Para o ui-ux-designer**: aba Oficina na Forja, folha da encomenda com marcas e números, Bolsa e
   Trazidos com a Pedra Funda, saudação "Achado", placa do veio com "Pede: Picareta", capítulo Ofícios no Livro.

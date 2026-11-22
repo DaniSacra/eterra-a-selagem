@@ -21,7 +21,6 @@ const ROWS: Array[Dictionary] = [
 	{"id": "rush", "actions": [&"rush"]},
 	{"id": "ultimate", "actions": [&"ultimate"]},
 	{"id": "dodge", "actions": [&"dodge"]},
-	{"id": "map", "actions": [&"map"]},
 	{"id": "interact", "actions": [&"interact"]},
 	{"id": "pause", "actions": [&"pause"]},
 ]

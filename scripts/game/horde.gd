@@ -895,8 +895,10 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	if e.state == Enemy.State.WINDUP:
 		if not e.fan.is_empty():
 			# C19-5: its fan's threads follow him until it shoots (they and the orbs leave along the same aim)
-			e.aim = toward
-			_point_fan(e)
+			# GP-1 (2026-11-22): held for the last FAN_LOCK, as Morvath's (Boss.FOLLOW_LOCK), so it can be stepped out of
+			if e.state_t < d.attack_windup - FAN_LOCK:
+				e.aim = toward
+				_point_fan(e)
 		if e.state_t >= d.attack_windup:
 			e.memo += 1
 			# every other cast raises skeletons, as many as the fight has room for (none: it conjures circles)
@@ -941,6 +943,8 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 ## stepping off a thread put him on an orb with none, and the robot's hits by the elder went 45 to 99 in 24 seeds),
 ## born together with the wind-up and full on the frame it shoots, each as long as its shot flies before stone.
 const FAN_THREADS := 5
+## Seconds before the fan leaves in which its aim no longer follows him.
+const FAN_LOCK := 0.35
 const AIM_THREAD_WIDTH := 0.7
 ## The tag on those threads (Ground.Zone.tags): the robot dodges their shots, not the threads (Bot._danger).
 const FAN_TAG := &"aim_fan"

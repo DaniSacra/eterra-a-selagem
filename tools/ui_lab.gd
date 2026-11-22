@@ -26,9 +26,6 @@ extends SceneTree
 ##   two) and opens them with the hero standing before them (_doors.png); --shop --route rebuilds the shelf as a route
 ##   shop of three items, --want-enchant until an Encanto is on it (both put the hero before the shelf's middle);
 ##   --cursed lays Morvath's curse on the hero (_cursed.png, the HUD's condition seal).
-## DV-1: --map writes the HUD with its "Mapa [M]" button (_hud.png), then opens the descent's map over the stopped
-##   run (_map.png): the run's own map, or a fixed sample descent with --map-at=start|middle|doors (MapSample); with the
-##   run's own map it then closes it and writes _map_door.png (the door in focus lit, MAP-07).
 
 const GAME := "res://scenes/game.tscn"
 ## Gifts held before the Elo is offered: both sources of Vapor and of Aurora Gelada, and a few more for the panel.
@@ -58,10 +55,6 @@ func _run() -> void:
 	await create_timer(START).timeout
 	if Dev.has("shop"):
 		await _shop(game)
-		quit()
-		return
-	if Dev.has("map"):
-		await _map(game)
 		quit()
 		return
 	if Dev.has("found"):
@@ -398,26 +391,3 @@ func _shot(tag: String) -> void:
 	var path := "%s_%s.png" % [_out, tag]
 	root.get_texture().get_image().save_png(path)
 	print("LAB saved ", path)
-
-
-## The HUD with the map's button, then the map over the run (the HUD's own way in, Game.open_screen).
-func _map(game: Node) -> void:
-	await _shot("hud")
-	var hud: Node = game.get(&"hud")
-	if Dev.has("map-at"):
-		var screen: Control = (load("res://scripts/ui/map_screen.gd") as GDScript).new()
-		game.call(&"open_screen", screen)
-		var sample: Dictionary = (load("res://scripts/ui/map_sample.gd") as GDScript).call(&"at", Dev.arg("map-at"))
-		screen.call(&"open", (load("res://scripts/ui/descent_map.gd") as GDScript).call(&"from_dict", sample))
-	else:
-		hud.call(&"open_map")
-	await create_timer(1.0).timeout
-	await _shot("map")
-	if Dev.has("map-at"):
-		return
-	# MAP-07: the map closed on a room behind a door: the door stays lit in the room, the HUD points at it if out of view
-	var screen: Variant = game.get(&"_screen")
-	if screen != null and (screen as Object).has_method(&"close"):
-		(screen as Object).call(&"close")
-	await create_timer(0.6).timeout
-	await _shot("map_door")

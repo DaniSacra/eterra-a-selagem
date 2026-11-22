@@ -506,3 +506,9 @@ class ScrollFade:
 		var h := size.y
 		draw_polygon(PackedVector2Array([Vector2(0, 0), Vector2(w, 0), Vector2(w, h), Vector2(0, h)]),
 			PackedColorArray([Color(paper, 0.0), Color(paper, 0.0), paper, paper]))
+
+
+## A find's name (oficio_<id>: "Cabeça da Picareta").
+static func find_name(id: StringName) -> String:
+	var key := "oficio_" + String(id)
+	return T.t(key) if T.table.entries.has(key) else String(id)

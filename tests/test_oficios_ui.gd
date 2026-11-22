@@ -1,5 +1,5 @@
 extends GutTest
-## Ofícios, Roteiro A, on the interface: the find's diamond on the map, the vein's plate, the Pedra Funda in the purse
+## Ofícios, Roteiro A, on the interface: the find's name on its door, the vein's plate, the Pedra Funda in the purse
 ## and in Trazidos, the "Achado" greeting, the Vendedor's order sheet, the Oficina in the Forja and the Livro's chapter.
 
 
@@ -16,18 +16,13 @@ func _data(noted: bool, head: bool, silver: int, stones: int = 0) -> Dictionary:
 	return d
 
 
-func test_the_map_marks_the_room_with_a_find() -> void:
-	var m := DescentMap.from_dict(MapSample.at("middle"))
-	assert_true(m.has_find())
-	assert_eq(m.room(14).find, &"pick_head")
-	assert_true(m.room(12).vein)
-	assert_true(T.t(&"map_find", {"name": T.t(&"oficio_pick_head")}) in m.lines(14))
-	assert_true(T.t(&"map_vein") in m.lines(12))
-	assert_false(T.t(&"map_vein") in m.lines(14))
-	var screen := MapScreen.new()
-	add_child_autofree(screen)
-	screen.open(m)
-	assert_not_null(screen.find_child("find_mark", true, false), "the legend names the diamond")
+func test_the_door_names_the_find_behind_it() -> void:
+	var r := RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 3)
+	var line := T.t(&"door_find", {"name": T.t(&"oficio_pick_head")})
+	assert_false(Rooms.door_text(r).contains(line))
+	r.find = &"pick_head"
+	assert_true(Rooms.door_text(r).contains(line))
+	assert_false(Rooms.door_text(r, false).contains(line), "not in the HUD's line")
 
 
 func test_the_vein_plate_says_the_pick() -> void:

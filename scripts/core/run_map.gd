@@ -2,16 +2,17 @@ class_name RunMap
 extends RefCounted
 ## The way down through one region (DV-1, the Descida de Valmor, MAP-01): a graph of rooms in layers drawn from the
 ## run's seed when the descent begins, on dice of its own. Layer 1 is the catacomb hall (the opening fight, always a
-## Blessing); layers 2 to StageDef.rooms - 1 hold 2 to 4 rooms each; one whole layer is the guardian's (the Knight and
-## the Elder side by side when it has two rooms); layer StageDef.rooms is the shop and the next one Morvath. Every way
-## through has the same length. Each room links to 1 to 3 rooms of the next layer (never more than its arena's doors,
-## no two links crossing), every room is reached and leads on. Fountain, altar and the Provação's "?" are rooms of the
-## graph; the rewards are drawn off the deck here, so what a door's sign and the map promise is what the room gives.
+## Blessing); layers 2 to StageDef.rooms - 1 hold DOORS rooms each; one whole layer is the guardian's (the Knight and
+## the Elder side by side); layer StageDef.rooms is the shop and the next one Morvath. Every way through has the same
+## length. DM-1 (Daniel, 2026-11-22): always two doors a room, each room leading to both of the next layer; only the
+## shop and Morvath stand behind one. Nobody sees this graph (the map's screen is gone): the doors' signs are all there
+## is. Fountain (one always the layer before the guardian's, GP-2), altar and the Provação's "?" are rooms of the
+## graph; the rewards are drawn off the deck here, so what a door's sign promises is what the room gives.
 ## The rules of the arenas hold on every way (never the same arena twice in a row, none more than arena_max_uses
 ## times, the guardian at home): the graph is drawn, checked and drawn again when it breaks one (failures counts).
-## Hades II has no map (its doors show the reward): this is ours, over its rooms and numbers. Pure logic.
+## Pure logic.
 ##
-## API (what the map screen and the HUD read; nothing else is needed):
+## API (what the rooms, the signs and the HUD read):
 ##   nodes: Array[Room], index = Room.id. Room: id, depth (its layer, 1 = the hall, last_depth() = Morvath), slot (its
 ##     place in the layer, left to right), kind (Kind), reward (Reward), guardian (the enemy id of a guardian's room,
 ##     &"" otherwise), hidden (shows "?" now: the Provação's slab is there and has not appeared), trial (the slab is
@@ -54,8 +55,9 @@ const GROUP_OF := {Reward.BOON: Group.POWER, Reward.POM: Group.POWER, Reward.ENC
 	Reward.GOLD: Group.BODY, Reward.HEAL: Group.BODY, Reward.SILVER: Group.HOME, Reward.MEMORY: Group.HOME}
 const KIND_KEY: Array[StringName] = [&"room_combat", &"room_miniboss", &"room_fountain", &"room_shop", &"room_boss", &"room_trial", &"room_altar"]
 
-## The most doors a room has (every arena has 3, the hall too: CatacombHall._doors).
-const MAX_DOORS := 3
+## The doors of every room (DM-1; every arena has 3, the hall too: CatacombHall._doors), but the one before the shop's
+## and the shop's own.
+const DOORS := 2
 ## A high-difficulty arena (RoomLayout.difficulty 2) is never drawn before this share of the descent.
 const HARD_FROM := 0.4
 ## Tries to draw a graph that keeps every rule before the last one is kept as it is (never seen in 1000 seeds).
@@ -378,12 +380,12 @@ func _build() -> bool:
 	_enchants.clear()
 	var last := stage.rooms + 1
 	miniboss_depth = _rng.randi_range(stage.miniboss_depth_min, stage.miniboss_depth_max)
-	var fountains := _event_depths(stage.fountain_depth_min, stage.fountain_depth_max, stage.fountain_chance, true, [])
-	if not fountains.is_empty() and _rng.randf() < stage.fountain_more_chance:
-		# a second fountain at the last of its depths (another branch of the same layer when the first is there too),
-		# kept only where no way passes both (_one_fountain): a late fountain for who passed the first one healthy, as
-		# the line of rooms before the map offered it again until its last depth
-		fountains.append_array(_event_depths(stage.fountain_depth_min, stage.fountain_depth_max, 0.0, true, []))
+	# GP-2: a fountain is always one of the two doors before the guardian's; now and then another past him
+	var fountains: Array[int] = []
+	if miniboss_depth > 2:
+		fountains.append(miniboss_depth - 1)
+	if _rng.randf() < stage.fountain_more_chance:
+		fountains.append_array(_event_depths(maxi(stage.fountain_depth_min, miniboss_depth + 1), stage.fountain_depth_max, 1.0, true, fountains))
 	var altar: Array[int] = []
 	if stage.altar_layout != null:
 		altar = _event_depths(stage.altar_depth_min, stage.altar_depth_max, stage.altar_chance, false, fountains)
@@ -395,7 +397,7 @@ func _build() -> bool:
 		route = _event_depths(stage.route_shop_depth_min, stage.route_shop_depth_max, stage.route_shop_chance, false, busy)
 	for d in range(1, last + 1):
 		var ids := PackedInt32Array()
-		var width := _width(d, layers[d - 1].size() if d > 1 else 1)
+		var width := 1 if d == 1 or d >= stage.rooms else DOORS
 		var guardians: Array[StringName] = stage.minibosses.duplicate()
 		_shuffle(guardians)
 		for s in width:
@@ -434,8 +436,9 @@ func _build() -> bool:
 			if plain.size() > 1:
 				nodes[plain[_rng.randi() % plain.size()]].kind = Kind.SHOP
 	for d in range(1, last):
-		_link(layers[d], layers[d + 1])
-	_one_fountain()
+		for from in layers[d]:
+			for to in layers[d + 1]:
+				_join(from, to)
 	for d in range(1, last + 1):
 		_place_arenas(d)
 		_draw_rewards(d)
@@ -466,68 +469,12 @@ func _event_depths(from: int, to: int, chance: float, forced: bool, not_in: Arra
 	return out
 
 
-## How many rooms a layer holds: 1 for the hall, the shop and Morvath; 1 or 2 for the guardian's; 2 to 4 for the
-## others (StageDef.map_widths), never more than the layer before can link to.
-func _width(d: int, before: int) -> int:
-	if d == 1 or d >= stage.rooms:
-		return 1
-	if d == miniboss_depth:
-		return 2 if stage.minibosses.size() >= 2 and _rng.randf() < stage.guardian_pair_chance else 1
-	var w := 2 + (_rng.rand_weighted(stage.map_widths) if not stage.map_widths.is_empty() else 0)
-	return clampi(w, 1, before * MAX_DOORS)
-
-
 func _shuffle(a: Array) -> void:
 	for i in range(a.size() - 1, 0, -1):
 		var j := _rng.randi() % (i + 1)
 		var t: Variant = a[i]
 		a[i] = a[j]
 		a[j] = t
-
-
-## Links two layers with no crossing (DV-1): each room of the upper layer leads to a run of 1 to MAX_DOORS rooms side by
-## side below, each run starting where the one before ended (sharing that room) or right after it, the runs covering
-## the whole layer below. Every such way of linking is listed and one is drawn, weighted by the doors of each room
-## (StageDef.map_doors: 1, 2 or 3 doors), so most rooms show two doors.
-func _link(a: PackedInt32Array, b: PackedInt32Array) -> void:
-	var ways: Array = []
-	var weights := PackedFloat32Array()
-	_ways(a.size(), b.size(), [], ways, weights)
-	if ways.is_empty():
-		return
-	var way: Array = ways[_rng.rand_weighted(weights)]
-	var lo := 0
-	for i in a.size():
-		var size: int = way[i][0]
-		for k in size:
-			_join(a[i], b[lo + k])
-		lo += size - 1 + (0 if way[i][1] else 1)
-
-
-## Every linking of na rooms over nb (each [doors, shares the last one with the next]), with its weight.
-func _ways(na: int, nb: int, so_far: Array, ways: Array, weights: PackedFloat32Array) -> void:
-	var lo := 0
-	for w: Array in so_far:
-		lo += int(w[0]) - 1 + (0 if w[1] else 1)
-	if so_far.size() == na:
-		return
-	var last := so_far.size() == na - 1
-	for size in range(1, MAX_DOORS + 1):
-		var hi := lo + size - 1
-		if hi > nb - 1:
-			break
-		for shares: bool in ([true] if last else [true, false]):
-			var w := so_far.duplicate()
-			w.append([size, shares])
-			if last:
-				if hi == nb - 1:
-					var weight := 1.0
-					for x: Array in w:
-						weight *= stage.map_doors[clampi(int(x[0]) - 1, 0, stage.map_doors.size() - 1)] if not stage.map_doors.is_empty() else 1.0
-					ways.append(w)
-					weights.append(weight)
-			else:
-				_ways(na, nb, w, ways, weights)
 
 
 func _join(from: int, to: int) -> void:
@@ -537,20 +484,6 @@ func _join(from: int, to: int) -> void:
 	r.next.append(to)
 	r.next.sort_custom(func(x: int, y: int) -> bool: return nodes[x].slot < nodes[y].slot)
 	_parents[to].append(from)
-
-
-## The second fountain goes back to a fight when some way would pass both.
-func _one_fountain() -> void:
-	var most := PackedInt32Array()
-	most.resize(nodes.size())
-	for d in range(1, layers.size()):
-		for id in layers[d]:
-			var m := 0
-			for p in _parents[id]:
-				m = maxi(m, most[p])
-			if nodes[id].kind == Kind.FOUNTAIN and m >= 1:
-				nodes[id].kind = Kind.COMBAT
-			most[id] = m + (1 if nodes[id].kind == Kind.FOUNTAIN else 0)
 
 
 ## The arenas of a layer, room by room in a random order: what came before it on every way (the arena of the fight
@@ -686,31 +619,14 @@ func _place_trials() -> void:
 					todo.append_array(nodes[n].next)
 
 
-## Every rule of the graph: each room but Morvath leads on (to at most its doors), each but the hall is reached; a
-## fight never in the arena of the fight before it, never in an arena its depth may not have, no arena past its uses
-## on any way; at most one fountain on a way; some room with two doors that lead on to different rooms. (The rooms
-## reached are bits of an int: a region holds fewer than 63 rooms.)
+## Every rule of the graph that the dice may break: a fight never in the arena of the fight before it, never in an arena
+## its depth may not have, no arena past its uses on any way.
 func _keeps_rules() -> bool:
-	var reach: Array[int] = []
-	reach.resize(nodes.size())
-	reach.fill(0)
-	var differ := false
 	for d in range(layers.size() - 1, 0, -1):
 		for id in layers[d]:
 			var r := nodes[id]
-			if d < layers.size() - 1 and (r.next.is_empty() or r.next.size() > _doors_of(r)):
+			if r.next.size() > _doors_of(r):
 				return false
-			if d > 1 and _parents[id].is_empty():
-				return false
-			var mask := 1 << id
-			for n in r.next:
-				mask |= reach[n]
-			reach[id] = mask
-			for x in r.next.size():
-				for y in range(x + 1, r.next.size()):
-					# the rooms beyond each door (the door's own room left out: two doors always differ by it)
-					if reach[r.next[x]] & ~(1 << r.next[x]) != reach[r.next[y]] & ~(1 << r.next[y]):
-						differ = true
 			for l: int in _uses[id]:
 				if int(_uses[id][l]) > stage.arena_max_uses:
 					return false
@@ -721,16 +637,16 @@ func _keeps_rules() -> bool:
 					var prev: PackedInt32Array = _before[p] if nodes[p].kind == Kind.ALTAR else PackedInt32Array([nodes[p].layout])
 					if prev.has(r.layout):
 						return false
-	return differ
+	return true
 
 
-## The doors a room may have: its arena's (the hall's are its own stairs), never past MAX_DOORS.
+## The doors a room may have: its arena's (the hall's are its own stairs), never past DOORS.
 func _doors_of(r: Room) -> int:
 	if r.kind == Kind.ALTAR and stage.altar_layout != null and stage.altar_layout.exits.size() > 0:
-		return mini(MAX_DOORS, stage.altar_layout.exits.size())
+		return mini(DOORS, stage.altar_layout.exits.size())
 	if r.layout >= 0 and r.layout < stage.layouts.size() and stage.layouts[r.layout].exits.size() > 0:
-		return mini(MAX_DOORS, stage.layouts[r.layout].exits.size())
-	return MAX_DOORS
+		return mini(DOORS, stage.layouts[r.layout].exits.size())
+	return DOORS
 
 
 ## True when an arena may hold a room of this kind at this depth (its place in the descent, a high one only from

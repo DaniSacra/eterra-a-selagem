@@ -31,8 +31,6 @@ func test_the_new_rewards_and_the_emerald_have_marks() -> void:
 		var g: DoorGlyph = autofree(DoorGlyph.new().setup(k, 24.0))
 		add_child(g)
 	await wait_process_frames(2)
-	assert_true(MapScreen.LEGEND.any(func(row: Array) -> bool: return row[0] == DoorGlyph.Kind.ENCHANT), "in the map's legend")
-	assert_true(MapScreen.LEGEND.any(func(row: Array) -> bool: return row[0] == DoorGlyph.Kind.PSALM))
 
 
 # ---------- the Encanto's choice ----------

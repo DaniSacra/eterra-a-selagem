@@ -23,15 +23,19 @@ const SEED := 4417
 ## Colours (the palette of the room's stone: cold green moss, blue-grey damp, bone, never a bright lawn). sRGB, as seen:
 ## a MultiMesh's colours reach the shader as they are, so _patch makes them linear (2026-11-21: they were not, and the
 ## moss came out a bright lawn).
-const MOSS := Color(0.2, 0.27, 0.15)
-const MOSS_DRY := Color(0.27, 0.26, 0.16)
+const MOSS := Color(0.13, 0.155, 0.11)
+const MOSS_DRY := Color(0.17, 0.16, 0.11)
+## Moss patch strength (was 0.8: the patch read brighter than the floor it lay on, GR-4).
+const MOSS_ALPHA := 0.55
 const DAMP := Color(0.11, 0.135, 0.16)
-const BONE := Color(0.62, 0.58, 0.48)
+const BONE := Color(0.30, 0.28, 0.24)
 const FRAME_COLOR := Color(0.012, 0.012, 0.016)
 ## Sizes (m): a patch's width, a skull's radius, a bone's length, a pot's height, a fallen stone's side.  A pot stays under 0.3 m (the rule of every stylized piece over the floor).
 const MOSS_SIZE := Vector2(0.8, 2.3)
 const DAMP_SIZE := Vector2(1.6, 4.0)
 const SKULL_RADIUS := 0.085
+## A skull lies half buried: its centre this share of the radius up (was 0.8, a marble on the floor, GR-3).
+const SKULL_SINK := 0.35
 const BONE_LONG := 0.32
 const POT_SIZE := Vector2(0.2, 0.28)
 const STONE_SIDE := Vector2(0.9, 1.8)
@@ -45,9 +49,9 @@ const STONE_STEP := 6.0
 ## Per look: moss, damp (patches), tufts, skulls, bones, pots (groups of two or three), stones (fallen past the edge,
 ## per 6 m of edge, 0 where a wall stands behind it), frame (the dark band's share), tuft colour.
 const BIOMES := {
-	&"crypt": {&"moss": 8, &"damp": 8, &"tufts": 0, &"skulls": 9, &"bones": 14, &"pots": 2, &"stones": 0.0, &"frame": 0.9},
+	&"crypt": {&"moss": 4, &"damp": 8, &"tufts": 0, &"skulls": 9, &"bones": 14, &"pots": 2, &"stones": 0.0, &"frame": 0.9},
 	&"garden": {&"moss": 22, &"damp": 6, &"tufts": 70, &"skulls": 3, &"bones": 4, &"pots": 1, &"stones": 0.5, &"frame": 1.0,
-		&"tuft": Color(0.3, 0.38, 0.2)},
+		&"tuft": Color(0.22, 0.25, 0.15)},
 	&"sanctuary": {&"moss": 5, &"damp": 10, &"tufts": 0, &"skulls": 4, &"bones": 6, &"pots": 2, &"stones": 0.0, &"frame": 0.8},
 	&"runes": {&"moss": 4, &"damp": 6, &"tufts": 0, &"skulls": 6, &"bones": 8, &"pots": 1, &"stones": 0.4, &"frame": 1.0},
 	&"bridge": {&"moss": 4, &"damp": 4, &"tufts": 0, &"skulls": 0, &"bones": 0, &"pots": 0, &"stones": 0.5, &"frame": 1.0},
@@ -84,7 +88,7 @@ func _build(room: ArenaRoom, cfg: Dictionary) -> void:
 	var patches: Array[Transform3D] = []
 	var colours: Array[Color] = []
 	for k in int(cfg[&"moss"]):
-		_patch(patches, colours, MOSS_SIZE, MOSS if _rng.randf() < 0.7 else MOSS_DRY, 0.8)
+		_patch(patches, colours, MOSS_SIZE, MOSS if _rng.randf() < 0.7 else MOSS_DRY, MOSS_ALPHA)
 	for k in int(cfg[&"damp"]):
 		_patch(patches, colours, DAMP_SIZE, DAMP, 0.6)
 	_multi(PlaneMesh.new(), _patch_material(1.0, PATCH_PRIORITY), patches, colours)
@@ -209,7 +213,7 @@ func _skulls(skulls: int, bones: int) -> void:
 				break
 			var q := p + Vector2(_rng.randf_range(-0.5, 0.5), _rng.randf_range(-0.5, 0.5))
 			var tilt := Basis(Vector3.RIGHT, _rng.randf_range(-0.5, 0.5)) * Basis(Vector3.FORWARD, _rng.randf_range(-0.4, 0.4))
-			sk.append(Transform3D(Basis(Vector3.UP, _rng.randf() * TAU) * tilt, Vector3(q.x, SKULL_RADIUS * 0.8, q.y)))
+			sk.append(Transform3D(Basis(Vector3.UP, _rng.randf() * TAU) * tilt, Vector3(q.x, SKULL_RADIUS * SKULL_SINK, q.y)))
 			made += 1
 	var cranium := SphereMesh.new()
 	cranium.radius = SKULL_RADIUS

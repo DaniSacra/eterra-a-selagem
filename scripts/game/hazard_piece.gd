@@ -77,12 +77,11 @@ const WEIGHT := Vector2(0.3, 0.7)
 const LINK := 0.13
 const LINK_PITCH := 0.27
 ## The toppling column (3.6, the hero's tool: a fissure and no chevron): the crack COLUMN_CRACK (from, rest top, cracked
-## top) m up the side facing the camera; the drums on the floor at most DRUM_TOP m high, DRUM_VALUE of the stone,
+## top) m up the side facing the camera; the drums on the floor at most DRUM_TOP m high, the room's stone,
 ## sinking DRUM_SINK m over DRUM_SINK_TIME s; the stump's teeth.
 const COLUMN_CRACK := Vector3(0.15, 1.35, 2.6)
 const COLUMN_CRACK_LIGHT := 0.4
 const DRUM_TOP := 0.45
-const DRUM_VALUE := 0.8
 const DRUM_SINK := 0.2
 const DRUM_SINK_TIME := 4.0
 const STUMP_TEETH := Vector2i(3, 5)

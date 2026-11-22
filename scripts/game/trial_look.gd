@@ -468,7 +468,7 @@ func _dress_styled(block: Vector2) -> void:
 		kit.styled_build(func() -> void: kit.brazier(Vector2(at.x, at.z), at.y, false, 0.0, false), at, COLD_BOWL_SCALE)
 	var r := RandomNumberGenerator.new()
 	r.seed = STY_SEED
-	var urn := sm.carved(0.0, STONE)
+	var urn := sm.carved(0.0, CatacombHall.STY_URN_TINT)
 	var shelves: Array = [
 		wall_ledge(sm, Vector2(SHELF_NORTH.x, north), Vector2(SHELF_NORTH.y, north), Vector2(0, -1), SHELF_HEIGHT, ashlar()),
 		wall_ledge(sm, Vector2(west, SHELF_WEST.x), Vector2(west, SHELF_WEST.y), Vector2(-1, 0), SHELF_HEIGHT, ashlar())]

@@ -74,7 +74,7 @@ Subagentes em `.claude/agents/` (protocolo em `docs/development/agent_workflow.m
 - `meta.md`: Guerreiro (`HeroDef`, Maestria, Dons, ultimates), Salmos, Juramentos, equilíbrio da região, rejogabilidade
   (materiais, Forja, anjos, Encantos, Fatias 1 a 3), Ofícios.
 - `hub.md`: Santuário (planta `HubPlan`, `HubLook`, placas, NPCs, Rev. 02, HV-C a HV-E).
-- `ui.md`: título, escolha de save, Livro de Ahk, Compêndio, mapa, cartas, HUD, menus, telas da Fatia 1 a 3 e Ofícios.
+- `ui.md`: título, escolha de save, Livro de Ahk, Compêndio, cartas, HUD, menus, telas da Fatia 1 a 3 e Ofícios.
 - `art_core.md`: direção de arte, modelos (Meshy, KayKit), câmera, raio-x do herói, impacto dos golpes, look estilizado.
 - `art_fx.md`: efeitos (VFX, cores das famílias, `RewardShaft`), preparação dos atiradores, Compatibility, esboço do AP-4.
 - `art_rooms.md`: cenário das salas (redesenho A a E, Sworn, biomas, vazio, peças dos perigos SW-G7, quebráveis AT-Q2).

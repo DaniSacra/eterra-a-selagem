@@ -156,6 +156,11 @@ Altar e Encanto fica para depois, se ele gostar.
 - Lotes: A cenário, B figuras e efeitos, C interface junto do BC-1 e do BO-2. Falta captura das portas (entra com o DM-1).
 
 ### Ordem sugerida com tudo junto (2026-11-22)
+**Feitos em 2026-11-22: Lotes 6 e 7 e o BO-3 no papel** (`docs/design/bencaos_por_anjo.md`, espera a aprovação do Daniel), mais GP-6,
+BH-7, BH-8 e GR-21, 22, 24, 25 (o elo; o vidro maior ficou chapado e saiu), 28. Ficaram do plano: GP-8 (b) (a Bênção que completa o Elo: junto do BO-2, que refaz os Elos),
+GR-23, as lascas sumindo em 12 s (GR-3) e a parte de Morvath da GP-6 (medida fácil demais, desfeita).
+Medido (12 sementes, robô 0,25): novato 10 chegam ao guardião, 5 morrem nele, 0 vencem (o Ancião ainda mata 5 de 7, o
+Cavaleiro 0 de 3); evoluído 12 chegam ao guardião, 7 a Morvath e 4 vencem. Igual a antes dos lotes (10/5/0 e 5 vitórias). O Daniel parou aqui por gasto; Lotes 8 a 10 só com novo pedido dele.
 1. **Lote 6, rápido**: BH-1 a BH-3, BH-5, BH-6, BH-10, GP-1 (Ancião), GR-1 a GR-4, GR-9. Só consertos, um exe.
 2. **Lote 7, a descida**: DM-1 (sem mapa, 2 portas) com GP-2 (fonte antes do guardião) e GP-8 (ritmo); medir.
 3. **BO-3 no papel**: as fichas dos 7 anjos, com a aprovação do Daniel anjo por anjo (pode andar junto dos lotes 6 e 7).

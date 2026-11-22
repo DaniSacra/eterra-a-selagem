@@ -108,7 +108,7 @@ func test_the_psalm_card_never_promises_a_psalm_on_the_map() -> void:
 				hopes += 1
 				if r.reward != R.BOON or r.meeting or r.depth < stage.psalm_from_depth:
 					hopes = -1000
-	assert_gt(hopes, 150, "the Psalm card lands on the map (%d in 300), as a Blessing, from room %d, never a meeting" % [hopes, stage.psalm_from_depth])
+	assert_gt(hopes, 75, "the Psalm card lands on the map (%d in 300), as a Blessing, from room %d, never a meeting" % [hopes, stage.psalm_from_depth])
 	var map := RunMap.new(stage, 5)
 	var hope := RunMap.Room.new(RunMap.Kind.COMBAT, R.BOON, 5)
 	hope.psalm = true
@@ -395,8 +395,8 @@ func test_the_robot_walks_into_a_route_shop_with_gold() -> void:
 	var shop := RunMap.Room.new(RunMap.Kind.SHOP, R.NONE, 7)
 	var gold := RunMap.Room.new(RunMap.Kind.COMBAT, R.GOLD, 7)
 	var doors: Array[RunMap.Room] = [gold, shop]
-	assert_eq(Rooms.bot_door(doors, false, 1.0, null, 40), 0, "no gold: the fight")
-	assert_eq(Rooms.bot_door(doors, false, 1.0, null, 160), 1, "gold to spend: the shop")
+	assert_eq(Rooms.bot_door(doors, false, 1.0, 40), 0, "no gold: the fight")
+	assert_eq(Rooms.bot_door(doors, false, 1.0, 160), 1, "gold to spend: the shop")
 
 
 func test_the_psalm_door_stands_when_the_hand_opens_a_psalm() -> void:

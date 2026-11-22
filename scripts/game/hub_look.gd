@@ -270,18 +270,18 @@ const ANVIL_STUMP := Vector2(0.45, 0.6)
 ## pale gold), its light (energy, reach, height over the dais).
 const DAIS: Array[Vector2] = [Vector2(3.2, 0.25), Vector2(2.6, 0.5)]
 const TREE_SCALE := 0.56
-const BARK := Color(0.34, 0.3, 0.23)
-const BARK_CORD := Color(0.4, 0.35, 0.27)
-const BARK_LICHEN := Color(0.34, 0.31, 0.24)
-const BARK_FRACTURE := Color(0.52, 0.45, 0.32)
+const BARK := Color(0.25, 0.2, 0.15)
+const BARK_CORD := Color(0.3, 0.25, 0.19)
+const BARK_LICHEN := Color(0.26, 0.25, 0.18)
+const BARK_FRACTURE := Color(0.4, 0.33, 0.23)
 const TREE_ROOTS: Array[float] = [215.0, 290.0, 25.0]
 ## How far short of the dais's rim the roots end (the tree's metres; they dive past their last point).
 const ROOT_SHORT := 2.3
 const LEAVES_FROM := 4.6
 const LEAVES_EVERY := 3
 const LEAF_SIZE := Vector2(1.9, 2.9)
-const LEAF_A := Color(0.33, 0.3, 0.22)
-const LEAF_B := Color(0.5, 0.46, 0.36)
+const LEAF_A := Color(0.29, 0.31, 0.2)
+const LEAF_B := Color(0.42, 0.44, 0.3)
 ## Leaves across a card and how much of it the clump fills (the tree is half the garden's: fewer, larger leaves).
 const LEAF_COUNT := 5.0
 const LEAF_FILL := 0.7
@@ -368,7 +368,7 @@ const STY_POOLS: Array[Array] = [
 	[HubPlan.BOOK, Vector3(12.0, 1.2, -5.9), Vector3(11.0, 6.2, -7.9), 10.0, 18.0, 9.0, Color(1.0, 0.86, 0.62)],
 	[HubPlan.BOOK, Vector3(11.4, 0.0, -5.3), Vector3(10.2, 8.0, -9.1), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
 	[HubPlan.VENDOR, Vector3(-10.6, 0.8, 6.8), Vector3(-9.2, 8.0, 2.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
-	[HubPlan.TREE, Vector3(11.9, 1.0, 8.5), Vector3(10.1, 9.0, 4.1), 9.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
+	[HubPlan.TREE, Vector3(11.9, 1.0, 8.5), Vector3(10.1, 9.0, 4.1), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	[HubPlan.PORTAL, Vector3(0.0, 0.0, 10.4), Vector3(0.0, 8.0, 5.5), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the

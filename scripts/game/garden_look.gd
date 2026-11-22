@@ -1117,6 +1117,8 @@ func style() -> Dictionary:
 		VisualProfile.vary(mat, {&"shader_parameter/color": STY_WINDOW_MIST, &"shader_parameter/alpha": STY_WINDOW_MIST_ALPHA})
 	style_abyss(_abyss_nodes, MIST, STY_MIST, STY_ABYSS_LIGHT)
 	style_depths(STY_CLIFF)
+	if _deep != null:
+		VisualProfile.vary(_deep, {&"shader_parameter/glow_color": STY_CLIFF[&"glow_color"]})
 	if tree != null and tree.stone_material != null:
 		VisualProfile.vary(tree.stone_material, {&"shader_parameter/base_color": STY_BARK, &"shader_parameter/cord_color": STY_CORD,
 			&"shader_parameter/lichen_color": STY_LICHEN, &"shader_parameter/value": STY_TREE_VALUE})
