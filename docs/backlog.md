@@ -155,6 +155,41 @@ Altar e Encanto fica para depois, se ele gostar.
   sob o HUD) e os P2 (GR-16 a GR-29).
 - Lotes: A cenário, B figuras e efeitos, C interface junto do BC-1 e do BO-2. Falta captura das portas (entra com o DM-1).
 
+### Lotes 8 a 10 revisados: APROVADOS pelo Daniel em 2026-11-22 ("sim para tudo, mas só guarda no backlog, só vamos desenvolver amanhã")
+Nada foi implementado. Começa em 2026-11-23, quando o Daniel mandar, pelo passo 1. Um exe por passo e parar para ele testar.
+Histórias com aceite, riscos e arquivos: `docs/design/director_review_2026-11-22.md` seção 10. **Esta ordem substitui a dos Lotes 8, 9 e 10 abaixo.**
+
+| Passo | Entrega | Estado |
+|---|---|---|
+| 1 | **8A + 9**: tela em lista com a habilidade acesa (BC-1, BC-2), os dois anjos, a fala e depois as opções (BC-3, BC-4). Nenhum número de combate muda | a fazer |
+| 2 | **10A**: 10A-1 blindagem e reação do blindado, 10A-2 Brado, 10A-3 gelo na regra do F8 e efeito que vira dano em Morvath; ultimate na Maestria 3 | a fazer |
+| 3 | **8B-1**: base das 42 e só Sarael e Nivael. **Portão**: se não parecerem diferentes jogando, parar e rever | a fazer |
+| 4 | **8B-2**: os outros cinco anjos (nomes e textos a aprovar depois do passo 3) | espera o passo 3 |
+| 5 | **8C**: refazer os Elos repetidos e a garantia na segunda oferta | a fazer |
+| 6 | **10B**: maldição, dicas, leitura (Ancião e Cavaleiro feitos em 2026-11-22, com os dois minichefes) | a fazer |
+
+**Decisões aprovadas (2026-11-22)**
+1. O mouse direito continua a onda de luz; ela tira **+50% da blindagem** (barra amarela). Sem barra nova. Medir o Ancião.
+2. O Brado **absorve um golpe**, por até 5 s; recarga 12 s (se virar obrigatório, 15 s).
+3. Em Morvath, o efeito que ele ignora (gelo, empurrão) vira **dano extra pela metade**, e a Fraqueza vale nele pela metade. Em blindados, só o empurrão vira dano.
+4. **Corte do Juízo na Maestria 3** (era 6); Voragem continua na 10.
+5. A ordem da tabela acima.
+6. Nomes e textos: aprovados **só os de Sarael e Nivael**; os outros cinco anjos depois que ele jogar os dois.
+7. As quatro que giram nascem de um botão (BO-1); os Flocos de Nivael **atrasam** em vez de congelar.
+8. Shomael com **dois escudos** (Investida e ultimate); na onda, desfaz os tiros no caminho.
+9. Entre as Bênçãos **só Lumael cura**: abates da Investida, teto de **3 de vida por sala**. A cura do Consolo sai do sorteio.
+10. Lendária: **1% no sorteio comum e 3% no guardião**.
+
+Números de partida, sem medição: +50% da onda e teto de 3 da cura. **Recomendado, mas não perguntado um a um; confirmar ao chegar no passo**: a troca
+dos itens que prometem atordoar (Forja Peso e Onda Pesada, Fúria Plena; passo 2), os números do Ancião e do Cavaleiro e a maldição a 55 graus e 0,9 s (passo 6).
+
+### Feito em 2026-11-22: os dois minichefes em toda descida, e depois Morvath (pedido do Daniel, "equilibre")
+- Sala 5 ou 6: Cavaleiro ou Ancião, ele escolhe pela porta (a placa diz o nome). Sala 8 ou 9: o outro, uma porta só, noutra
+  variante do Santuário, com escolta (Cavaleiro: 2 feiticeiros; Ancião: 1 Escudo). Fonte como opção antes de cada um.
+- Equilíbrio medido em `docs/design/balance.md`. Muda o RESULT de propósito. Cada descida dá uma recompensa de guardião a mais
+  (6 de Prata, 2 de Memória, 25 de XP): rever a economia depois que ele jogar.
+- Aberto: o segundo minichefe ainda é brando para o evoluído (2 mortes em 20).
+
 ### Ordem sugerida com tudo junto (2026-11-22)
 **Feitos em 2026-11-22: Lotes 6 e 7 e o BO-3 no papel** (`docs/design/bencaos_por_anjo.md`, espera a aprovação do Daniel), mais GP-6,
 BH-7, BH-8 e GR-21, 22, 24, 25 (o elo; o vidro maior ficou chapado e saiu), 28. Ficaram do plano: GP-8 (b) (a Bênção que completa o Elo: junto do BO-2, que refaz os Elos),

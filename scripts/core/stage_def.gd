@@ -15,8 +15,13 @@ enum Tier { COMMON, HARD, SPECIAL }
 ## The guardian room comes at one depth between these two.
 @export var miniboss_depth_min := 4
 @export var miniboss_depth_max := 6
-## Guardians that can stand in that room (one is drawn).
+## Guardians that can stand in that room (side by side behind its two doors).
 @export var minibosses: Array[StringName] = []
+## Daniel, 2026-11-22 ("enfrentar os 2 minibosses e só depois o boss"): the other guardian, the one he did not choose,
+## comes at one depth between these two, behind one door, at least miniboss_gap rooms after the first (0: none).
+@export var miniboss2_depth_min := 0
+@export var miniboss2_depth_max := 0
+@export var miniboss_gap := 3
 ## One of the two doors before the guardian's is always a fountain (GP-2); with fountain_more_chance another one, past
 ## him and between these depths (RunMap).
 @export var fountain_depth_min := 5

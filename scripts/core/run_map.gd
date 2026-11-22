@@ -2,11 +2,12 @@ class_name RunMap
 extends RefCounted
 ## The way down through one region (DV-1, the Descida de Valmor, MAP-01): a graph of rooms in layers drawn from the
 ## run's seed when the descent begins, on dice of its own. Layer 1 is the catacomb hall (the opening fight, always a
-## Blessing); layers 2 to StageDef.rooms - 1 hold DOORS rooms each; one whole layer is the guardian's (the Knight and
-## the Elder side by side); layer StageDef.rooms is the shop and the next one Morvath. Every way through has the same
-## length. DM-1 (Daniel, 2026-11-22): always two doors a room, each room leading to both of the next layer; only the
-## shop and Morvath stand behind one. Nobody sees this graph (the map's screen is gone): the doors' signs are all there
-## is. Fountain (one always the layer before the guardian's, GP-2), altar and the Provação's "?" are rooms of the
+## Blessing); layers 2 to StageDef.rooms - 1 hold DOORS rooms each; one whole layer is the first guardian's (the Knight
+## and the Elder side by side) and a later one, of a single room, the second guardian's: the one he did not choose
+## (Daniel, 2026-11-22: both, and only then Morvath); layer StageDef.rooms is the shop and the next one Morvath. Every
+## way through has the same length. DM-1 (Daniel, 2026-11-22): always two doors a room, each room leading to both of the
+## next layer; only the second guardian, the shop and Morvath stand behind one. Nobody sees this graph (the map's screen
+## is gone): the doors' signs are all there is. Fountain (one always the layer before each guardian's, GP-2), altar and the Provação's "?" are rooms of the
 ## graph; the rewards are drawn off the deck here, so what a door's sign promises is what the room gives.
 ## The rules of the arenas hold on every way (never the same arena twice in a row, none more than arena_max_uses
 ## times, the guardian at home): the graph is drawn, checked and drawn again when it breaks one (failures counts).
@@ -140,8 +141,9 @@ var path: Array[int] = []
 var here: Room
 ## The depth he stands at (the Provação's chamber keeps the depth of its slab's room).
 var depth := 0
-## The guardian's layer.
+## The first guardian's layer and the second's (0: there is no second, the shorter descents).
 var miniboss_depth := 0
+var miniboss2_depth := 0
 ## Graphs drawn and thrown away because one broke a rule (the tests count them).
 var failures := 0
 ## Pomegranates turned into Blessings because nothing could grow when their door opened (expected never; measured).
@@ -277,7 +279,23 @@ func enter(room: Room) -> void:
 	here = room
 	if room.id >= 0:
 		path.append(room.id)
+	if room.kind == Kind.MINIBOSS and room.depth == miniboss_depth and miniboss2_depth > 0:
+		_leave_other(room.guardian)
 	changed.emit()
+
+
+## The first guardian was chosen: the second one's room holds the other.
+func _leave_other(met: StringName) -> void:
+	for r in layer(miniboss2_depth):
+		for id in stage.minibosses:
+			if id != met:
+				r.guardian = id
+				break
+
+
+## True for the layer of a guardian, the first or the second.
+func guardian_at(d: int) -> bool:
+	return d > 0 and (d == miniboss_depth or d == miniboss2_depth)
 
 
 ## The fights still sure to come before the boss after room r (C17, BUG-101; DV-1: on the worst way): the fewest
@@ -380,10 +398,15 @@ func _build() -> bool:
 	_enchants.clear()
 	var last := stage.rooms + 1
 	miniboss_depth = _rng.randi_range(stage.miniboss_depth_min, stage.miniboss_depth_max)
-	# GP-2: a fountain is always one of the two doors before the guardian's; now and then another past him
+	miniboss2_depth = 0
+	if stage.miniboss2_depth_min > 0:
+		var low := maxi(stage.miniboss2_depth_min, miniboss_depth + stage.miniboss_gap)
+		miniboss2_depth = _rng.randi_range(low, maxi(low, stage.miniboss2_depth_max))
+	# GP-2: a fountain is always one of the two doors before a guardian's; now and then another past the first
 	var fountains: Array[int] = []
-	if miniboss_depth > 2:
-		fountains.append(miniboss_depth - 1)
+	for g: int in [miniboss_depth, miniboss2_depth]:
+		if g > 2:
+			fountains.append(g - 1)
 	if _rng.randf() < stage.fountain_more_chance:
 		fountains.append_array(_event_depths(maxi(stage.fountain_depth_min, miniboss_depth + 1), stage.fountain_depth_max, 1.0, true, fountains))
 	var altar: Array[int] = []
@@ -397,7 +420,7 @@ func _build() -> bool:
 		route = _event_depths(stage.route_shop_depth_min, stage.route_shop_depth_max, stage.route_shop_chance, false, busy)
 	for d in range(1, last + 1):
 		var ids := PackedInt32Array()
-		var width := 1 if d == 1 or d >= stage.rooms else DOORS
+		var width := 1 if d == 1 or d >= stage.rooms or d == miniboss2_depth else DOORS
 		var guardians: Array[StringName] = stage.minibosses.duplicate()
 		_shuffle(guardians)
 		for s in width:
@@ -406,7 +429,7 @@ func _build() -> bool:
 				r.kind = Kind.BOSS
 			elif d == stage.rooms:
 				r.kind = Kind.SHOP
-			elif d == miniboss_depth:
+			elif guardian_at(d):
 				r.kind = Kind.MINIBOSS
 				r.reward = Reward.BOON
 				r.guardian = guardians[s % guardians.size()] if not guardians.is_empty() else &""
@@ -453,7 +476,7 @@ func _event_depths(from: int, to: int, chance: float, forced: bool, not_in: Arra
 	var can: Array[int] = []
 	var out: Array[int] = []
 	for d in range(maxi(2, from), mini(to, stage.rooms - 1) + 1):
-		if d != miniboss_depth and not not_in.has(d):
+		if not guardian_at(d) and not not_in.has(d):
 			can.append(d)
 	if can.is_empty():
 		return out
@@ -522,6 +545,12 @@ func _place_arenas(d: int) -> void:
 			# RP-07: only among the variants whose band holds this depth (one draw either way: no band, the map of before)
 			var fit := l.variants_at(EncounterGen.progress(stage, d))
 			var roll := _rng.randi()
+			if d == miniboss2_depth:
+				# the same house dressed another way than behind the doors of the first
+				var met := layer(miniboss_depth).map(func(x: Room) -> int: return x.variant if x.layout == r.layout else -1)
+				var fresh := Array(fit).filter(func(v: int) -> bool: return not met.has(v))
+				if not fresh.is_empty():
+					fit = fresh
 			r.variant = fit[roll % fit.size()] if r.kind != Kind.SHOP else 0
 			if r.kind != Kind.SHOP:
 				# (a shop is no fight's arena: the route shop of DV-2 never uses up the hall's)
@@ -667,7 +696,7 @@ func _fits(kind: Kind, at_depth: int, l: int) -> bool:
 ## this depth, that may hold this kind of room (guardian, fountain), never a high one before HARD_FROM, never one of
 ## the fights right before it (`before`; a fountain may follow its own), never one already used StageDef.arena_max_uses
 ## times on a way to it (`uses`), the least used first, one no other room of its layer has (`taken`) when it can; the
-## layer before the guardian's leaves his house free.
+## layer before a guardian's, and every one up to the second's, leaves his house free.
 func _layout(kind: Kind, at_depth: int, before: PackedInt32Array, uses: Dictionary, taken: Array[int]) -> int:
 	if stage.layouts.is_empty():
 		return 0
@@ -688,7 +717,7 @@ func _layout(kind: Kind, at_depth: int, before: PackedInt32Array, uses: Dictiona
 			found.append(i)
 	for keep: Callable in [
 			func(i: int) -> bool: return int(uses.get(i, 0)) < stage.arena_max_uses,
-			func(i: int) -> bool: return at_depth != miniboss_depth - 1 or not stage.layouts[i].guardian_home,
+			func(i: int) -> bool: return not (guardian_at(at_depth + 1) or at_depth < miniboss2_depth) or not stage.layouts[i].guardian_home,
 			func(i: int) -> bool: return not taken.has(i)]:
 		var fits := found.filter(keep)
 		if not fits.is_empty():

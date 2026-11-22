@@ -40,6 +40,22 @@ pelo `combat-feel-director`.
   **Conferido com tudo junto** (2026-11-21, Morvath que persegue, anjos 5 a 7 e perigos novos; 12 sementes, erro de uns 14
   pontos): novato morre em 5 de 11 guardiões e vence 1 de 12; evoluído (conta 6) morre em 2 de 12 e vence 4 de 12.
 
+## Dois minichefes por descida (2026-11-22)
+
+Cavaleiro e Ancião em toda descida, depois Morvath (`docs/reference/rooms.md`). Régua do robô 0,25, 24 sementes por montagem
+(1 a 12 e 101 a 112), 30 de vida, `NONE`; evoluído = 4 Dons, Forja 2, conta 6. Erro de uns 10 pontos; nas linhas do segundo, mais.
+
+| | Novato | Evoluído |
+|---|---|---|
+| Morre no primeiro (de quem chega) | 9 de 23 (39%): Cavaleiro 5 de 13, Ancião 4 de 10 | 1 de 24: Cavaleiro 0 de 14, Ancião 1 de 10 |
+| Morre no segundo | 2 de 8 | 2 de 20 |
+| Chega a Morvath | 6 de 24 | 17 de 24 |
+| Vence | 0 de 24 | 7 de 24 (29%) |
+
+Só a estrutura, sem mexer nos dois (12 sementes), ficou mais fácil que antes (duas fontes e mais uma Bênção rara): o novato vencia 1 e o
+segundo minichefe matava 1 de 15. Por isso: Cavaleiro com segunda investida, Ancião com orbes a 6 m/s e leque a cada 3,5 s
+(era 7 e 3,06), escolta no segundo. Nenhuma vida mudou. Antes: Ancião 5 de 7, Cavaleiro 0 de 3, evoluído 4 vitórias de 12.
+
 ## Lote B (2026-11-21): "mais difícil, principalmente sem os upgrades"
 
 ### B.0 Pedido do Daniel (substitui as metas de 2026-11-19)

@@ -367,6 +367,30 @@ func test_no_metronome() -> void:
 	assert_gt(gaps.size(), 2, "its blows fall on different beats: %s" % [starts])
 
 
+## GP-12 (Daniel, 2026-11-22): the guardian charges twice in a row, the second braced for recharge_windup and aimed at
+## where he stands then; the shield-bearer once.
+func test_the_knight_charges_twice() -> void:
+	for id: StringName in [&"knight", &"guard"]:
+		_room()
+		var k := game.horde.spawn(game.horde.def(id), Vector2(8.0, 0.0), false)
+		var row := 0
+		var braced := 0
+		var was := Enemy.State.WALK
+		for f in 60 * 20:
+			_frame()
+			if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP and k.anim == &"brace":
+				row += 1
+			if row == 2 and k.state == Enemy.State.WINDUP:
+				braced += 1
+			if row > 0 and k.state == Enemy.State.RECOVER:
+				break
+			was = k.state
+		assert_eq(row, k.def.charges, "%s charges %d in a row" % [id, k.def.charges])
+		if k.def.charges > 1:
+			assert_almost_eq(braced / 60.0, k.def.recharge_windup, 0.1, "the second warning is fair")
+		game.horde.clear_crowd()
+
+
 ## C17, QW-107 (ART P1-6): the crossbow's aim and the soldier's pounce are drawn as an aim (a thread, a bright tip, the
 ## band filling only over the end of the wind-up), never the opaque band: nothing but the tip above 0.6 of light.
 func test_the_aims_are_threads() -> void:

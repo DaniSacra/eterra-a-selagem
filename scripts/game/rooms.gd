@@ -183,6 +183,7 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 	var st: StageDef = full.duplicate()
 	st.rooms = rooms_
 	st.elite_from_depth = 2
+	st.miniboss2_depth_min = 0  # (one guardian: there is no room for two)
 	if rooms_ <= 4:
 		st.fountain_depth_min = 2
 		st.fountain_depth_max = 2
@@ -452,6 +453,8 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 			var guardian: Array[StringName] = [room.fight.kinds[0] if room.fight != null and not room.fight.kinds.is_empty()
 				else room.guardian if room.guardian != &"" else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 			_waves = [guardian]
+			if room.depth == map.miniboss2_depth and not game.horde.def(guardian[0]).escort.is_empty():
+				_waves.append(game.horde.def(guardian[0]).escort.duplicate())  # (right behind it: wave_remaining)
 			var alive := EncounterGen.in_room(EncounterGen.alive_range(stage, stage.miniboss_tier), layout)
 			_cap = mini(EncounterGen.cap(stage, stage.miniboss_tier, room.depth), alive.y)
 			game.horde.alive_cap = alive.y
@@ -945,7 +948,7 @@ func _open_doors() -> void:
 
 
 ## A door's sign (E5-D8, docs/art/e5_spec.md 7.1): the reward of a fight, under it "Difícil" for one with an elite
-## and "Guardião" for the guardian's; the room's kind for the others (the pictogram beside it: DoorGlyph.of(door_info)).
+## and the guardian's name for a guardian's; the room's kind for the others (the pictogram beside it: DoorGlyph.of(door_info)).
 ## The altar's says what it is in a line (T5): a trade with no fight.
 ## The room of a find he looks for names it (find false: the line is left out, for the HUD).
 static func door_text(r: RunMap.Room, find := true) -> String:
@@ -961,7 +964,8 @@ static func door_text(r: RunMap.Room, find := true) -> String:
 				text += "\n" + (T.t(&"door_hard_silver").format({"n": silver}) if silver > 0 else T.t(&"door_hard"))
 			return text
 		RunMap.Kind.MINIBOSS:
-			return T.t(RunMap.REWARD_KEY[r.reward]) + "\n" + T.t(RunMap.KIND_KEY[r.kind])
+			# who waits there: the order of the two guardians is his choice (Daniel, 2026-11-22)
+			return T.t(RunMap.REWARD_KEY[r.reward]) + "\n" + T.t(&"enemy_" + r.guardian if r.guardian != &"" else RunMap.KIND_KEY[r.kind])
 		RunMap.Kind.ALTAR:
 			return T.t(RunMap.KIND_KEY[r.kind]) + "\n" + T.t(&"door_altar")
 	return T.t(RunMap.KIND_KEY[r.kind])

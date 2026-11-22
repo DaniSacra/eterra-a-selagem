@@ -115,6 +115,12 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## RUNNER and KNIGHT: speed of the lunge or charge (m/s) and how long it lasts.
 @export var lunge_speed := 14.0
 @export var lunge_time := 0.45
+## KNIGHT: charges in a row (the guardian's second, braced again for recharge_windup where the first one ended).
+@export var charges := 1
+@export var recharge_windup := 0.8
+## A guardian: who rises with it when it is the second of a descent (Daniel, 2026-11-22: harder by its company, never
+## by more life).
+@export var escort: Array[StringName] = []
 ## ARCHER and PRIEST: the shots. A bolt (fast, thin) or an orb (slow, round); shot_count of them in a fan of
 ## shot_spread degrees; shot_line marks the aim on the floor during the wind-up (it locks there).
 @export var shot_speed := 13.0

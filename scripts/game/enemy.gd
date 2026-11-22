@@ -90,6 +90,8 @@ var memo := 0
 ## C17, QW-105: close slams the knight (and the brute) struck in a row since its last charge; and whether it is closing
 ## in on the paladin (it stops at his edge and walks again only past MELEE_WALK_BAND more: no flicker).
 var slams := 0
+## Charges struck in this row (EnemyDef.charges).
+var charges := 0
 var closing := true
 ## Set by the behaviour each step it faces the paladin whatever way it moves (a soldier waiting on its ring, the knight
 ## backing off): its body never turns to where it walks then (Horde._drawn_motion).

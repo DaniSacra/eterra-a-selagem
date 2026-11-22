@@ -7,8 +7,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   arquivo): gerado no começo da descida num dado próprio (`Rooms.new_map`: `hash([semente da partida, Rooms.MAP_SALT])`;
   a mesma `--seed` dá o mesmo mapa, seja o que for que a partida sorteie antes). Desde o DM-1
   (2026-11-22, pedido do Daniel) ninguém vê o grafo e **toda sala tem 2 portas** (`RunMap.DOORS`): camadas 2 a 9 com 2
-  salas, cada sala leva às duas da frente; só a loja (10) e Morvath (11) ficam atrás de uma. A camada do guardião (5 ou 6,
-  GP-8) tem sempre o Cavaleiro e o Ancião lado a lado (`Room.guardian`). Fonte: sempre uma das duas portas antes do
+  salas, cada sala leva às duas da frente; só o segundo guardião, a loja (10) e Morvath (11) ficam atrás de uma. A camada do
+  guardião (5 ou 6, GP-8) tem sempre o Cavaleiro e o Ancião lado a lado (`Room.guardian`). **Dois guardiões** (Daniel,
+  2026-11-22, "enfrentar os 2 minibosses e só depois o boss"): o que ele não escolheu espera na 8 ou 9 (`miniboss2_depth`, pelo
+  menos `miniboss_gap` 3 salas depois; `RunMap._leave_other` troca quando ele entra no primeiro), noutra variante do Santuário (que
+  fica livre de lutas comuns até lá) e com escolta (`EnemyDef.escort`: Cavaleiro com 2 feiticeiros, Ancião com 1 Escudo, na segunda
+  onda). A placa diz o nome do guardião. `--short` e `--medium` têm um só. Fonte: sempre uma das duas portas antes de cada
   guardião (GP-2; `fountain_more_chance`, hoje 0, põe outra depois dele até a 8); altar em no máximo
 altar em no máximo
   um nó (2 a 8, 20% por camada), Provação num nó de luta marcado `trial` e `hidden` (até a laje aparecer,

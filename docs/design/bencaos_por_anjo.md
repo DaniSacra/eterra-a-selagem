@@ -114,7 +114,7 @@ Nenhum Elo sai: todos têm base possível (Bastião fica com 3 fontes de escudo;
 - Esquiva com skill (Sarael não, Nivael, Lumael, Velael, Galael, Qeshael) usa `gap` de 1,5 a 4 s para não virar spam: o Espaço continua sem dano base.
 - `heal_on_kill` e `max_hp` são globais (sem etiqueta): só a carta do botão os traz. Medir cura de Lumael no novato (30 de vida).
 
-## Perguntas ao Daniel
+## Perguntas ao Daniel (respondidas em 2026-11-22: ver `docs/backlog.md`, decisões 6 a 10; os ajustes das 42 em `director_review_2026-11-22.md` seção 3)
 1. Os nomes e textos acima servem? Em especial os nomes dos 7 ultimates.
 2. `redemoinho`, `floco_errante`, `fios_cinza`, `espuma` mudam de botão e perdem o giro permanente: aceito (BO-1)?
 3. Shomael escudo no Esp, na Investida e no ultimate (três cartas de escudo): ou deixo só a Investida e o ultimate?

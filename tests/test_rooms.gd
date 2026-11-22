@@ -72,10 +72,10 @@ func test_map_runs_opening_guardian_shop_boss() -> void:
 			fountains += 1
 		if next.kind == RunMap.Kind.BOSS:
 			break
-	assert_eq(kinds.count(RunMap.Kind.MINIBOSS), 1)
+	assert_eq(kinds.count(RunMap.Kind.MINIBOSS), 2, "both guardians, then Morvath (Daniel, 2026-11-22)")
 	assert_eq(kinds[kinds.size() - 2], RunMap.Kind.SHOP)
 	assert_eq(map.depth, stage.rooms + 1)
-	assert_lte(fountains, 1, "the fountain taken whenever its door shows (one on a way at most)")
+	assert_lte(fountains, 2, "the fountain taken whenever its door shows (one before each guardian)")
 	var guardian := kinds.find(RunMap.Kind.MINIBOSS) + 2
 	assert_between(guardian, stage.miniboss_depth_min, stage.miniboss_depth_max)
 

@@ -834,11 +834,17 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if _frame % 3 == 0:
 				fx.burst(&"dust", Vector3(e.pos.x, 0.2, e.pos.y), Vector3(-e.aim.x, 0, -e.aim.y))
 			if e.state_t >= d.lunge_time:
-				# it stands at the end of its charge, spent (T5-12: its shield lowered, recover_anim)
-				e.cooldown = d.attack_cooldown
 				if e.warning != null:
 					Ground.end_zone(e.warning as Ground.Zone)
 					e.warning = null
+				e.charges += 1
+				if e.charges < d.charges and target_alive:
+					# GP-12 (Daniel, 2026-11-22): the guardian turns and charges again
+					_brace(e, toward, dist, d.recharge_windup)
+					return
+				# it stands at the end of its charge, spent (T5-12: its shield lowered, recover_anim)
+				e.charges = 0
+				e.cooldown = d.attack_cooldown
 				_end_attack(e, &"recover")
 		_:
 			if e.retreat_t > 0.0:
@@ -864,15 +870,23 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.state_t = d.attack_windup - d.close_windup
 				return
 			if e.cooldown <= 0.0 and dist < d.attack_range and (dist > d.close_range or e.memo == 2) and target_alive and e.straight:
-				e.slams = 0
-				e.memo = 0
-				e.aim = toward
-				e.dir = toward
-				e.landed = false
-				_set_state(e, Enemy.State.WINDUP, &"brace")
-				# filled when its body would reach his where he stands now (or at the end of the charge)
-				var reach := clampf((dist - d.radius - Player.RADIUS) / maxf(d.lunge_speed, 0.1), 0.0, d.lunge_time)
-				e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, d.attack_windup + reach, 0.0)
+				e.charges = 0
+				_brace(e, toward, dist, d.attack_windup)
+
+
+## It braces behind its shield to charge along a line, `windup` seconds from now.
+func _brace(e: Enemy, toward: Vector2, dist: float, windup: float) -> void:
+	var d := e.def
+	e.slams = 0
+	e.memo = 0
+	e.aim = toward
+	e.dir = toward
+	e.landed = false
+	_set_state(e, Enemy.State.WINDUP, &"brace")
+	e.state_t = d.attack_windup - windup
+	# filled when its body would reach his where he stands now (or at the end of the charge)
+	var reach := clampf((dist - d.radius - Player.RADIUS) / maxf(d.lunge_speed, 0.1), 0.0, d.lunge_time)
+	e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, windup + reach, 0.0)
 
 
 ## Between charges the knight still swings at whoever is close.

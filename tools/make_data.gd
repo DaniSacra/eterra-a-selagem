@@ -340,6 +340,8 @@ func _enemies() -> void:
 	_enemy({"id": &"knight", "model": &"knight", "size": 2.07, "behavior": B.KNIGHT, "hp": 450.0, "speed": 200.0 / U, "damage": 16.0, "radius": 1.1,
 		"heavy": true, "elite": true, "armor": 1220.0, "armor_stagger": 2.5, "attack_damage": 18.0, "attack_range": 14.0, "attack_cooldown": 2.4,
 		"attack_windup": 1.0, "lunge_speed": 18.0, "lunge_time": 0.7, "close_damage": 18.0, "close_range": 3.2, "close_windup": 0.8,
+		# GP-12 (2026-11-22): it killed 0 new heroes of 9, the Ancião 9 of 11; it turns and charges once more
+		"charges": 2, "recharge_windup": 0.8, "escort": [&"mage", &"mage"] as Array[StringName],
 		# T5-07: braced behind its shield in three beats (it stood idle), the last 0.3 s held with a tremble
 		"windup_settle": 0.12, "windup_hold": 0.3, "windup_shake": 0.03,
 		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
@@ -347,7 +349,8 @@ func _enemies() -> void:
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
 	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 12.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 10.0, "attack_range": 9.0,
-		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 7.0,
+		"attack_cooldown": 3.9, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 6.0,
+		"escort": [&"guard"] as Array[StringName],
 		"shot_count": 5, "shot_spread": 84.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
 		"tell": T.ORB, "tell_at": Vector3(-1.02, 2.15, 0.6)})
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
@@ -623,6 +626,10 @@ func _stage() -> void:
 	st.miniboss_depth_min = 5
 	st.miniboss_depth_max = 6
 	st.minibosses = [&"knight", &"priest_elder"]
+	# Daniel, 2026-11-22: both guardians in a descent, then Morvath (the second is the one he did not choose)
+	st.miniboss2_depth_min = 8
+	st.miniboss2_depth_max = 9
+	st.miniboss_gap = 3
 	st.fountain_depth_min = 5
 	st.fountain_depth_max = 8
 	st.fountain_more_chance = 0.0
