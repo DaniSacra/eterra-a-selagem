@@ -1,5 +1,44 @@
 # Backlog de A Selagem
 
+## Pedidos do Daniel de 2026-11-21, 23h30 (a fazer; referências dele em `docs/art/ref/sworn_daniel/`, só local)
+
+Só a organização da tela vem da referência; arte, molduras, cores e textos são os nossos. Nada começado no projeto.
+
+**BC-1 Escolha da Bênção em lista** (`choice_list.png`; `BoonChoice`, `BoonCard`)
+- Anjo grande à esquerda (a arte inteira dele, sumindo no escuro), nome do anjo no título.
+- As três Bênçãos uma debaixo da outra, em linhas largas: medalhão à esquerda; nome, raridade e nível; texto; números.
+- Cada linha diz a habilidade que muda com a tecla de verdade na plaquinha (Mouse esq., Mouse dir., Q, E, Shift, Espaço;
+  muda com o controle e com tecla remapeada). "Corrida" na fala do Daniel é o Espaço (esquiva, segurar para correr).
+- À direita, a lista das seis habilidades: a que a Bênção em foco altera acende na cor da família. Bênção que age
+  sozinha não acende nenhuma e diz "Age sozinha".
+- O termo em destaque (Congelar, Queimadura) explicado na caixinha entre as Bênçãos e a lista.
+- Vale também para Elo, Salmo, troca de raridade, sorteio de novo, loja e sala sem anjo (sem a figura).
+- Aceite: 1280x720 e 1920x1080 sem nada por cima de nada; mouse, teclado e controle; captura das 7 famílias, um Elo,
+  um Salmo e uma troca. Responsável: sessão principal.
+
+**BC-2 A tecla certa de cada Bênção** (junto com BC-1; `BuildColumn`)
+- Achado: as Bênçãos da Investida (E) aparecem hoje no Espaço, na coluna do HUD, porque as duas usam o mesmo encaixe.
+  Ler o botão pelos próprios modificadores da Bênção (Investida no E; rastro de brasas e esquiva a mais no Espaço).
+
+**BC-3 Encontro com dois anjos** (`angel_pair.png`; `EncounterScreen`)
+- Um anjo de cada lado da tela, grandes, com a arena no meio; o da direita espelhado, olhando para dentro.
+- O anjo em foco aceso e o outro apagado; embaixo, "Ouvir {nome}" com a tecla.
+- Esc volta da lista para o par, como hoje. Aceite: captura com pelo menos dois pares; controle e teclado.
+
+**BC-4 O anjo fala antes das opções** (junto com BC-3)
+- Escolhido o anjo, primeiro só ele e o texto dele (nome, família, a linha de temperamento que já existe e quantas
+  Bênçãos dele o herói leva); só depois as três opções. Vale também para a porta de um anjo só, que hoje abre direto
+  e **sem o retrato**.
+- Não repete ao voltar para o mesmo anjo na mesma sala nem no sorteio de novo; robô e `--autopick` não esperam.
+- Pergunta ao Daniel: aperta para passar ou passa sozinho? Sugestão: os dois (aperta, ou 2,5 s).
+- Pergunta ao Daniel: falas de verdade na voz de cada anjo? Só com texto dele ou aprovado por ele (lore).
+
+Ordem sugerida: BC-1 com BC-2 (uma entrega), depois BC-3 com BC-4; um exe só no fim. A mesma lista para Provação,
+Altar e Encanto fica para depois, se ele gostar.
+
+**Pendência de teste**: `test_room_hold` ("on a black screen") falhou uma vez na suíte inteira de 23h28 e passou
+sozinho duas vezes; rodar a suíte de novo na próxima integração e, se repetir, achar a corrida do escurecer.
+
 ## Estado de 2026-11-21, fim do dia (commit `d808893`, exe dos Lotes 1 a 4 com o Daniel)
 
 Feito: itens 1, 6 (H1 a H6, G1, G3, G4, G5 experimento `--ink`, P1, P4), 7 (caminho B: kit novo e números mais

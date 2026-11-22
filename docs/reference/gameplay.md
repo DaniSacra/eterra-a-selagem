@@ -590,3 +590,5 @@ linha de comando; os testes rodam em `ALL` (gancho `pre_run`), a regra em `test_
 armadura, ultimate, gelo e atordoamento de Bênção. Em `NONE`, Fúria Plena e o Refinar Peso perdem o efeito (pendente se ficar).
 Medido (12 sementes, novato, robô 0,25): `all` 11 chegam ao guardião, 5 morrem nele, 1 vence; `none` 7 chegam, 4 morrem, 0 vence
 (8 morrem até a sala 4). Golpes que saem: 55% (`all`) e 80% (`none`) dos preparados.
+Essa medida é com 18 de vida. Com **30 de vida** e `none` (2026-11-21, 12 sementes): novato 10 de 12 chegam ao guardião, 5 morrem
+nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 vencem. Erro de uns 14 pontos.
