@@ -56,7 +56,7 @@ Altar e Encanto fica para depois, se ele gostar.
 - Aceite: nenhuma porta de 1 fora da loja e Morvath em 1000 descidas, nenhum texto com "mapa", fluxos verdes.
 - Tamanho: média a grande, uma sessão. Ordem sugerida: **depois** do exe do BC-1 a BC-4, ou antes se ele preferir.
 
-**BO-1 Bênçãos que giram passam a nascer de um botão** (Daniel: "acho mais legais assim, ficar fazendo sozinho é muito forte")
+**BO-1 (dentro do BO-2) Bênçãos que giram passam a nascer de um botão** (Daniel: "acho mais legais assim, ficar fazendo sozinho é muito forte")
 - Hoje quatro giram em volta do herói o tempo todo, sem apertar nada: Redemoinho de Fogo (Chama), Floco Errante (Geada),
   Fios de Cinza (Véu) e Espuma (Maré), todas `SkillDef.Kind.ORBIT`, dano a cada 0,5 s, sem encaixe.
 - Alvo: a mesma imagem, mas o jogador decide quando. Proposta para partir (números com o `balance-designer`):
@@ -71,6 +71,38 @@ Altar e Encanto fica para depois, se ele gostar.
   cada uma a um gatilho (golpe final, Ômega, Brado, Investida, esquiva) ou deixar só algumas por família.
 - Elos que dependem delas (`_elo` em `make_data.gd`) e Salmos: conferir. Muda o RESULT; medir novato e evoluído antes e depois.
 - Tamanho: média (as 4); grande (as 15).
+
+**BO-2 Seis Bênçãos por anjo, uma por botão** (Daniel: "com menos opção é mais fácil de entender o que ficou forte ou não")
+- Alvo: 7 anjos x 6 = **42 Bênçãos**, uma para cada botão (Mouse esq., Mouse dir., Q, E, Shift, Espaço), cada uma nas
+  quatro raridades. Hoje são 9 por anjo, 63 (mais 12 Elos). **28 já existem e ficam; faltam 14; 35 saem do sorteio** e vão para uma
+  reserva (o `.tres` fica, não se apaga), para voltarem aos poucos.
+- As 14 que faltam: Shift nos 7 anjos; Espaço na Geada, Luz, Véu, Maré e Marca; E na Chama e na Vigília.
+
+  | Anjo | Mouse esq. | Mouse dir. | Q Brado | E Investida | Shift ultimate | Espaço |
+  |---|---|---|---|---|---|---|
+  | Sarael (Chama) | golpe_brasa | pesado_brasa | circulo_brasa | NOVA: chamas giram 4 s (Redemoinho) | NOVA: incendeia quem atinge | passo_brasa |
+  | Nivael (Geada) | golpe_geada | toque_geada | circulo_geada | passo_geada | NOVA: congela quem atinge | NOVA: flocos giram 3 s (Floco Errante) |
+  | Lumael (Luz) | golpe_radiante | pesado_radiante | circulo_radiante | passo_radiante | NOVA: mais dano | NOVA: clarão onde a esquiva começa |
+  | Shomael (Vigília) | golpe_firme | pesado_firme | circulo_firme | NOVA: escudo curto ao acertar | NOVA: escudo enquanto dura | passos |
+  | Velael (Véu) | golpe_veu | pesado_veu | circulo_veu | passo_veu | NOVA: enfraquece quem atinge | NOVA: fios de cinza giram 3 s |
+  | Galael (Maré) | golpe_mare | pesado_mare | circulo_mare | passo_mare | NOVA: empurra longe | NOVA: espuma gira 3 s |
+  | Qeshael (Marca) | golpe_marca | pesado_marca | circulo_marca | passo_marca | NOVA: marca quem atinge | NOVA: marca quem está perto |
+
+- Nomes e textos das 14: sem lore, aprovação do Daniel; os das que giram continuam os de hoje.
+- **Isto resolve o BO-1**: as quatro que giram viram as da E ou do Espaço acima, e as outras 11 que agem sozinhas vão para a reserva.
+- Encaixes: passam de 4 para 6 (`Boon.Slot` ganha E e Shift; hoje E e Espaço dividem o mesmo, é o BC-2). Uma Bênção por
+  botão; pegar outra do mesmo botão troca. Build cheia = 6.
+- Shift: o ultimate abre com a Maestria; antes disso a Bênção do Shift não entra no sorteio (o novato vê 5 por anjo).
+- Raridades: comum, rara, épica e lendária já existem (x1, x1,5, x2, x2,5), mas a lendária só vem em troca de carta.
+  Pergunta ao Daniel: lendária também no sorteio comum, rara (sugestão 1%) ou só do guardião e de Morvath?
+- Elos e Salmos: muitos pedem Bênçãos que vão para a reserva (ex.: Escudo, Brasas, Onda Maior, Estilhaço). Refazer as
+  listas com as 42; um Elo sem base possível (Bastião, Aurora, Chama Viva, Mira Clara) vai para a reserva junto.
+- Com 6 por anjo, o segundo encontro com o mesmo anjo mostra as que faltam ou níveis e raridades maiores: conferir que
+  sempre há 3 cartas (`Encounter.eligible`).
+- Saves e Compêndio: a Bênção em reserva já descoberta continua no Compêndio, sem quebrar o save.
+- Aceite: 42 no sorteio, nenhuma age sozinha, cada uma acende um botão só na lista do BC-1; tabela de dano por Bênção e
+  raridade medida pelo robô (uma Bênção por vez contra nenhuma), que é o que mostra o que está forte.
+- Tamanho: grande. Responsáveis: `hero-designer` e `balance-designer` (números), sessão principal (código).
 
 **Pendência de teste**: `test_room_hold` ("on a black screen") falhou uma vez na suíte inteira de 23h28 e passou
 sozinho duas vezes; rodar a suíte de novo na próxima integração e, se repetir, achar a corrida do escurecer.
