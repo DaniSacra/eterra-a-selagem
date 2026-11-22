@@ -104,6 +104,20 @@ Altar e Encanto fica para depois, se ele gostar.
   raridade medida pelo robô (uma Bênção por vez contra nenhuma), que é o que mostra o que está forte.
 - Tamanho: grande. Responsáveis: `hero-designer` e `balance-designer` (números), sessão principal (código).
 
+**BO-3 Pensar as 6 opções de cada um dos 7 anjos** (pedido do Daniel; vem ANTES de programar o BO-2)
+- Uma ficha por anjo (Sarael, Nivael, Lumael, Shomael, Velael, Galael, Qeshael) em `docs/design/bencaos_por_anjo.md`: em
+  uma frase, o que o anjo faz com o herói (a promessa da família), e as seis Bênçãos, uma por botão.
+- Para cada Bênção: nome, texto para o jogador (pt-BR, sem travessão), botão, o que muda **de verdade** naquele botão, número
+  nas quatro raridades e nos três níveis, se já existe (28) ou é nova (14), e como se vê na tela.
+- Regras: nenhuma age sozinha; as seis do mesmo anjo são diferentes entre si (não seis vezes "congela por X s" com outro
+  botão: hoje é quase isso em várias famílias); dá para montar uma partida só com um anjo e ela tem cara própria; o
+  mesmo botão dá vontade de escolher entre anjos diferentes; rara, épica e lendária mudam o bastante para se notar.
+- A tabela do BO-2 é só o ponto de partida; o trabalho aqui é melhorá-la.
+- Também por anjo: com quais outros forma Elo (12 ao todo, refeitos sobre as 42) e o medalhão de cada Bênção (hoje as
+  de uma família dividem o mesmo símbolo).
+- Referência de princípio: Hades II (cada deus muda os mesmos botões do seu jeito), sem copiar nome, texto nem arte.
+- Responsáveis: `hero-designer` escreve, `balance-designer` confere os números; o Daniel aprova anjo por anjo (nomes e textos).
+
 **Pendência de teste**: `test_room_hold` ("on a black screen") falhou uma vez na suíte inteira de 23h28 e passou
 sozinho duas vezes; rodar a suíte de novo na próxima integração e, se repetir, achar a corrida do escurecer.
 
