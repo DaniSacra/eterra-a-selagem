@@ -144,6 +144,8 @@ var dealt := DealtBy.new()
 var dealing: StringName = &""
 ## Fatia 2, the Refinar Peso: a blow's flinch lasts this many times its own (Combat sets it while it deals a blow).
 var stun_scale := 1.0
+## The blow being dealt is an Omega (Combat sets it while it deals one): strong for the StunRule though not `big`.
+var strong := false
 ## How fast the enemies walk, times their own (E5: a Provação's curse, set by Rooms on entering a fight; 1: as is).
 var speed_scale := 1.0
 var dying: Array[Enemy] = []
@@ -1297,7 +1299,7 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			e.recoil_dir = from_dir.normalized()
 	if (e.state == Enemy.State.WALK or e.state == Enemy.State.RECOVER) and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
-	if flash and from_dir != Vector2.ZERO and e.hp > 0.0:
+	if flash and from_dir != Vector2.ZERO and e.hp > 0.0 and StunRule.stuns(big or strong):
 		# a blow, not a burn's tick or a zone's: a common body flinches (GF-12), longer by the blow's stun_scale (the
 		# Refinar Peso, Fatia 2: Combat sets it around its damage)
 		flinch(e, (e.def.stun_heavy_time if big else e.def.stun_time) * stun_scale)

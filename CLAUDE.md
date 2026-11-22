@@ -55,7 +55,7 @@ Subagentes em `.claude/agents/` (protocolo em `docs/development/agent_workflow.m
 - Regerar os dados (combos, inimigos, dons, ondas, salas, chefes, sensação): `~/tools/godot/godot --headless --path . -s tools/make_data.gd -- [combos] [enemies] [boons] [waves] [stage] [bosses] [feel]`.
   Editar os números em `tools/make_data.gd` (fonte da verdade) e regerar; não editar os `.tres` à mão.
 - Achar erros de script sem rodar: `~/tools/godot/godot --headless --path . -s tools/check.gd`.
-- Partida sem tela com o robô (rápida, para ritmo e regressão): `tools/smoke.sh 600` (partida inteira; o herói novo de 18 de vida não chega a Morvath em 300) ou `tools/smoke.sh 180 --start=boss --boons=25`.
+- Partida sem tela com o robô (rápida, para ritmo e regressão): `tools/smoke.sh 600` (partida inteira) ou `tools/smoke.sh 180 --start=boss --boons=25`.
   Outras opções: `--boons=N` (N dons sorteados), `--boss-hp=0.2`, `--hero-hp=N` (vida do paladino), `--stress=300`, `--title --screen=options|moves|howto`, `--hold`,
   `--autopick` (pega o primeiro dom sem abrir a tela, bom para capturas).
 - **Exportação sem converter recursos para binário** (`editor/export/convert_text_resources_to_binary=false` no `project.godot`, 2026-11-19): com a conversão o exe lia o `reward_deck` do estágio vazio (todas as portas com Bênção, loja vazia); `tests/test_export_settings.gd` trava. Conferir o exe com `build/linux/ASelagem.x86_64 --headless -- --smoke=30 --seed=5 --nosave` contra o editor.

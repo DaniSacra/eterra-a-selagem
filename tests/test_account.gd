@@ -1,5 +1,5 @@
 extends GutTest
-## The account's tree "A Fonte" (Lote 5): the data, buying, the order the robot takes, the save's version 10 and the
+## The account's tree "O Preparo" (Lote 5): the data, buying, the order the robot takes, the save's version 10 and the
 ## effects (rarity, life, second life).
 
 var tree := Account.new(Account.load_catalog())

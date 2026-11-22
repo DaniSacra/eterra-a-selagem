@@ -263,7 +263,7 @@ func use(id: StringName) -> void:
 ## Ofícios, Roteiro A: the Forjador opens the Forja; once a vein was noted it has the Oficina's bookmark (the
 ## ui-ux-designer's ForgeScreen), open first while the Picareta waits to be restored.
 func _use_smith() -> void:
-	# Lote 5: once the Forja is behind him the Forjador also keeps the account's tree, "A Fonte" (the choice first)
+	# Lote 5: once the Forja is behind him the Forjador also keeps the account's tree, "O Preparo" (the choice first)
 	if not Account.open(Save.data):
 		_open_forge()
 		return

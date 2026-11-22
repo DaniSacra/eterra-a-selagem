@@ -7,6 +7,8 @@ extends GutHookScript
 
 func run() -> void:
 	Save.enabled = false
+	# the fights the tests count on are the ones where every blow stuns (the experiment has its own test, test_stun_rule)
+	StunRule.live = StunRule.Mode.ALL
 	if not Dev.has("seed"):
 		Dev.put("seed", "1")
 	# the Santuário's stations open by stages (HubGate); the hub tests built before that use them all (test_hub_gate drops it)

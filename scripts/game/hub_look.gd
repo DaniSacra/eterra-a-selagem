@@ -87,7 +87,7 @@ const LION_PLINTH := Vector3(1.9, 0.6, 2.8)
 const LION_MODEL := "res://assets/models/meshy/lion_seated/lion_seated.glb"
 const LION_HEIGHT := 2.5
 const LION_TURN := 0.3
-const LION_TINT := Color(0.9, 0.8, 0.7)
+const LION_TINT := Color(1.0, 0.9, 0.78)
 ## The braziers at the stairs' foot on the terrace (u, v) and their light.
 const BRAZIERS: Array[Vector2] = [Vector2(-7.0, 15.9), Vector2(7.0, 15.9)]
 const BRAZIER_LIGHT := 2.6
@@ -426,6 +426,11 @@ var _forge_light: OmniLight3D
 var _forge_twin: OmniLight3D
 var _forge_glow: StandardMaterial3D
 var _forge_fires: Array[Array] = []
+## What goes out or away while a station is closed (set_closed): the forge's coals, flame and smoke, the tree's leaves, the
+## book's open pages; and where the closed book lies.
+var _closed_hides: Dictionary[StringName, Array] = {}
+var _book_at := Transform3D.IDENTITY
+var _book_shut: MeshInstance3D
 
 
 ## A point of the hub's frame (u, height, v) in the frame node's coordinates.
@@ -598,8 +603,16 @@ func station_light(id: StringName) -> Light3D:
 
 
 ## A station not open yet (HubGate; Hub calls it with the save): its light and fire are out (the Vendedor keeps his cloth,
-## HubEvolution). Nothing new is drawn: the environment-artist could give the forge a cold mouth and the tree bare roots.
+## HubEvolution). Closed, the forge is cold (no coals, flame nor smoke), the tree bare of leaves and the book shut (2026-11-21).
 func set_closed(id: StringName, closed: bool) -> void:
+	if closed:
+		# (opened, they are as built: some only show in one look, F7, so nothing is ever shown by hand here)
+		for nd: Node3D in _closed_hides.get(id, []):
+			nd.visible = false
+	if id == HubPlan.BOOK and closed and _book_shut == null:
+		_book_shut = _bar(_book_at.origin, Vector3(PAGE.y, 0.09, PAGE.x), _plain(RIBBON * 0.55, 0.85), _book_at.basis)
+	if _book_shut != null and id == HubPlan.BOOK:
+		_book_shut.visible = closed
 	var l: Light3D = station_lights.get(id)
 	if l != null:
 		l.visible = not closed
@@ -1776,7 +1789,12 @@ func _forge() -> void:
 	coals.position = at(f.x, sill + 0.03, front + FORGE_HEARTH * 0.5)
 	coals.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	frame.add_child(coals)
+	var hearth: Array = [coals]
+	var lit_from := frame.get_child_count()
 	fk.fire(at(f.x, sill + 0.02, front + 0.9), 0.5, 16, 0.5, 0.6)
+	for k in range(lit_from, frame.get_child_count()):
+		hearth.append(frame.get_child(k))
+	_closed_hides[HubPlan.SMITH] = hearth
 	# the licks a rank more lights (hidden until then)
 	for sd: float in [-1.0, 1.0]:
 		var from := frame.get_child_count()
@@ -1806,7 +1824,10 @@ func _forge() -> void:
 	var cv := f.y + body.z * 0.2
 	fm.block(at(f.x, body.y + 0.18, cv), Vector3(CHIMNEY.x, CHIMNEY.y - body.y - 0.18, CHIMNEY.x), 0.0, mat, false)
 	fm.block(at(f.x, CHIMNEY.y, cv), Vector3(CHIMNEY.x + 0.3, 0.2, CHIMNEY.x + 0.3), 0.0, mat, false)
+	lit_from = frame.get_child_count()
 	fk.mist_bank(at(f.x, CHIMNEY.y + SMOKE.y * 0.45, cv), SMOKE, SMOKE_COLOR, SMOKE_ALPHA, 0.0, 0.0, 0.25)
+	for k in range(lit_from, frame.get_child_count()):
+		hearth.append(frame.get_child(k))
 	var l := OmniLight3D.new()
 	l.position = at(f.x + FORGE_LIGHT_EAST, sill + 0.8, front - 0.9)
 	l.light_color = FORGE_COLOR
@@ -2010,6 +2031,7 @@ func _leaves(holder: Node3D) -> void:
 	mi.material_override = mat
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	holder.add_child(mi)
+	_closed_hides[HubPlan.TREE] = [mi]
 
 
 ## The Livro de Ahk (spec 3.5; HUB-D, H-P0-4: a pulpit, not a side table): the lectern on its footprint (a stone foot on
@@ -2041,6 +2063,8 @@ func _book(c: Vector2, o: ArenaObstacle) -> void:
 		page.transform = Transform3D(lay, at(c.x, top_y, c.y) + tilt * Vector3(0, 0.06, 0) + Vector3(0, 0, -sd * PAGE.x * 0.5))
 		page.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		frame.add_child(page)
+		_closed_hides.get_or_add(HubPlan.BOOK, []).append(page)
+	_book_at = Transform3D(tilt, at(c.x, top_y, c.y) + tilt * Vector3(0, 0.08, 0))
 	_bar(at(c.x, top_y - 0.3, c.y) + tilt * Vector3(-o.half.x + 0.02, 0, 0), Vector3(0.01, 0.6, 0.05), _plain(RIBBON, 0.9))
 	# a candle stand each side of it (iron, three candles)
 	var ir := tomb.iron()

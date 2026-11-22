@@ -1,6 +1,6 @@
 class_name AccountSheet
 extends RefCounted
-## The account's tree "A Fonte" at the Forjador (Lote 5; a plain first version for the ui-ux-designer to dress): one leaf of
+## The account's tree "O Preparo" at the Forjador (Lote 5; a plain first version for the ui-ux-designer to dress): one leaf of
 ## the hub (HubPanel) with the purse, a grid of the nodes as buttons (name and price; the owned ones marked) and, under
 ## it, what the one in focus does. Enter on a node buys it (Account.buy), writes the save and says so. Esc closes.
 ##   AccountSheet.open(host, Save.data, on_bought: Callable)   # on_bought(id) after each purchase

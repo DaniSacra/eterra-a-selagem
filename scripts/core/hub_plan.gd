@@ -152,7 +152,7 @@ const URN_HEIGHT := 1.5
 ## and quarters), off every straight way from the arrival and the fountain to the stations (local u, v; the planter's
 ## half side, the tree's height).
 ## HV-A: the two of the square's sides out to the side walls, behind the stations (they stood on the ring's way).
-const CYPRESSES: Array[Vector2] = [Vector2(-6.4, 10.4), Vector2(6.4, 10.4), Vector2(-21.5, 6.5), Vector2(21.5, 6.5)]
+const CYPRESSES: Array[Vector2] = [Vector2(-9.6, 10.4), Vector2(9.6, 10.4), Vector2(-21.5, 6.5), Vector2(21.5, 6.5)]
 const CYPRESS := Vector2(0.8, 4.2)
 ## Focus (spec 2.4): a station comes into focus 2.2 m from its use point and leaves it at 2.8; the one in focus only
 ## gives way to another this much nearer.

@@ -116,6 +116,8 @@ var director: WaveDirector
 var rooms: Rooms
 ## AT-Q1: the things that break in this room (BreakFloor, under the arena), or null.
 var breaks: BreakFloor
+## What the fight leaves on this room's floor (bone dust, cracks), under the arena.
+var marks: BattleMarks
 ## Life gained from hearts (kept when gifts change the life bar).
 var life_bonus := 0.0
 var boss: Boss
@@ -505,6 +507,10 @@ func _process(delta: float) -> void:
 		_open_pause()
 	if OS.is_debug_build() and Controls.pressed(&"feel_panel"):
 		_toggle_feel_panel()
+	if Controls.pressed(&"stun_toggle"):
+		# F8: the experiment of the stuns (StunRule), said on the screen
+		StunRule.step()
+		hud.show_notice(T.t(StunRule.TEXT[StunRule.live]))
 	if Controls.pressed(&"look_toggle"):
 		# F7 flips the visual style and keeps it in the options, as the options screen does (DT-RS2)
 		Save.choose_look(VisualProfile.Look.CLASSIC if VisualProfile.stylized() else VisualProfile.Look.STYLIZED)
@@ -708,6 +714,7 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int, wait := Callable()
 		arena.queue_free()
 	arena = built
 	breaks = BreakFloor.make(self, layout)  # AT-Q1: the room's vases and crates (under the arena, gone with it)
+	marks = BattleMarks.make(self)
 	horde.arena = arena
 	player.arena = arena
 	cam.arena = arena
@@ -1818,7 +1825,7 @@ func _equip_forge() -> void:
 	player.set_temper(forge_temper)  # (G-2: the blade shows its rank)
 
 
-## The account's tree "A Fonte" for this descent (Lote 5): --account=N (the first N nodes, also the robot's), else a
+## The account's tree "O Preparo" for this descent (Lote 5): --account=N (the first N nodes, also the robot's), else a
 ## person's save (account.bought); none for the robot. Summed in boons.stat as the Forja's (BoonState.grant); a node that
 ## raises life reaches the paladin in _apply_talents, which reads the sum.
 func _equip_account() -> void:

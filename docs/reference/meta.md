@@ -62,7 +62,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   inimigos a 4 m; `--bot-no-shout`), `Bot.rush_worth` (entrar a 4,5 a 8 m, ou para Magia quando a rajada não tem; `--bot-no-rush`), rajada só com Magia. Faltam: slots
   `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
-## A Fonte, a árvore da conta (Lote 5, 2026-11-22; nomes de trabalho a confirmar com o Daniel; testes em `tests/test_account.gd`)
+## O Preparo, a árvore da conta (Lote 5, 2026-11-22; nomes aceitos pelo Daniel em 2026-11-21, era "A Fonte"; testes em `tests/test_account.gd`)
 - **O que é**: melhorias permanentes que valem para todos os heróis (recomendação 1 de `docs/design/benchmark_sworn.md` §8),
   compradas com os materiais que já existem (Prata Antiga e Fragmento de Memória; nenhuma moeda nova). Dado:
   `AccountNode` (`core/account_node.gd`), `data/account/*.tres` escrito por `_account` no `make_data.gd` (12 nós, custos
@@ -71,17 +71,17 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - **Nós** (ramo: custo): Vida: Vigor I, II, III (+8, +8, +9 de vida; 12, 25, 45 Prata) e Segunda Chance (renasce uma vez
   por descida com 40% da vida, `Account.REVIVE_HP`; 20 Memória, pede Vigor II); Cura: Fôlego da Sala (12% da vida ao vencer a
   sala, `room_heal_pct`; 15) e Água Clara (fontes +15%, `fountain_heal`; 30); Ouro: Bolsa Cheia I e II (+15% e +20% de
-  ouro, `gold_pct`; 12 e 30); Bênção: Olhar Atento I e II (chance de raridade +0,08 e +0,10 no 1º degrau e metade no 2º;
+  ouro, `gold_pct`; 12 e 30); Bênção: Coração Atento I e II (chance de raridade +0,08 e +0,10 no 1º degrau e metade no 2º;
   6 e 12 Memória); Força: Mão Firme I e II (+6% de dano cada, `damage_pct` sem tag; 30 e 60). O ramo pede o nó de antes.
 - **Como entra na partida**: `Game._equip_account` soma os `mods` no `BoonState.grant` (como a Forja soma em `stat`);
   vida máxima sai do `_apply_talents`; `Rooms` cura na sala vencida e multiplica o ouro, `Game` soma a cura da fonte e
   aplica `Account.better` nas chances de `open_boon_choice`, `Player.revives` levanta uma vez no `hurt`. `--account=N`
   (também o robô) leva os N primeiros nós do catálogo (a ordem de compra do robô); o `RESULT` ganha `account` (N).
 - **Save versão 10**: bloco `account.bought` (ids). Arquivo antigo abre sem nada comprado; a migração só soma o bloco.
-- **Números do Lote 5**: o Guerreiro novo tem 18 de vida (era 30) e a Forja (Temperar I e II) 20% (era 10%); medidas em
+- **Números do Lote 5**: o Guerreiro novo teve 18 de vida no Lote 5 e voltou a 30 em 2026-11-21 (com a regra sem atordoamento, `StunRule`) e a Forja (Temperar I e II) 20% (era 10%); medidas em
   `docs/design/balance.md` ("Lote 5").
 - **Santuário**: sem estação nova. Depois da Forja (primeiro guardião vencido ou um Temperar comprado, `Account.open`) o
-  Forjador pergunta "A Forja" ou "A Fonte" (`Hub._use_smith`, `HubPanel`); a Fonte é uma folha simples
+  Forjador pergunta "A Forja" ou "O Preparo" (`Hub._use_smith`, `HubPanel`); o Preparo é uma folha simples
   (`AccountSheet`: bolsa, grade de botões, descrição do foco, Enter compra). **Pendente para o ui-ux-designer**: vestir a
   folha no estilo do Livro (hoje é funcional) e a estação própria se o Daniel quiser.
 

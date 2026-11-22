@@ -340,7 +340,7 @@ func _hub(hub: Node) -> void:
 	var sign = hub.get(&"station_sign")
 	_check(sign != null and sign.call(&"key_text") == load("res://scripts/ui/ui_kit.gd").call(&"action_label", &"interact"), "the Forjador's sign names the real key (%s)" % (sign.call(&"key_text") if sign != null else "none"))
 	await _key(&"interact")
-	# Lote 5: once the account is open the Forjador asks first (A Forja, A Fonte, Voltar)
+	# Lote 5: once the account is open the Forjador asks first (A Forja, O Preparo, Voltar)
 	_check(_shown_is(hub, "hub_panel.gd"), "interact on the Forjador asks between the Forja and the Fonte")
 	var ask := root.gui_get_focus_owner()
 	_check(ask != null and ask.name == "forge", "the focus on A Forja")

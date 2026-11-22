@@ -580,3 +580,13 @@ preparação (`Boss._follow`, `BossRules.follow_aim`): no máximo `Boss.FOLLOW_T
 Ceifa ainda avançam a `FOLLOW_CREEP` (0,45) do passo dele, e tudo trava `FOLLOW_LOCK` (0,3 s) antes de cair: a
 esquiva é de tempo, não de distância. Os avisos giram juntos (`Ground.point_zone`, linhas e meias-luas); as lanes das
 Lâminas e da Investida são recortadas na borda a cada giro. Testes em `tests/test_boss_refine.gd` (fim).
+
+
+## Regra do atordoamento pelo golpe (experimento, Daniel, 2026-11-21)
+"Bater e meio que dar stun nos inimigos" deixava o jogo fácil; "não pode interromper ninguém". `StunRule`
+(`core/stun_rule.gd`): `NONE` (padrão: nenhum golpe do herói atordoa nem corta ataque), `STRONG` (só `finisher` e Ômega) e
+`ALL` (como era, GF-12). **F8** troca na luta (ação `stun_toggle`, aviso na tela), `--stun=all|strong|none` escolhe na
+linha de comando; os testes rodam em `ALL` (gancho `pre_run`), a regra em `test_stun_rule`. Seguem valendo: quebra de
+armadura, ultimate, gelo e atordoamento de Bênção. Em `NONE`, Fúria Plena e o Refinar Peso perdem o efeito (pendente se ficar).
+Medido (12 sementes, novato, robô 0,25): `all` 11 chegam ao guardião, 5 morrem nele, 1 vence; `none` 7 chegam, 4 morrem, 0 vence
+(8 morrem até a sala 4). Golpes que saem: 55% (`all`) e 80% (`none`) dos preparados.

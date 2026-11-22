@@ -1,6 +1,6 @@
 class_name Account
 extends RefCounted
-## The account's tree "A Fonte" (working name), pure: small permanent improvements for every hero, bought with the
+## The account's tree "O Preparo" (Daniel 2026-11-21), pure: small permanent improvements for every hero, bought with the
 ## materials already in the game (Prata Antiga, Fragmento de Memória), kept in the save (data.account.bought: ids).
 ## A descent sums the owned nodes into BoonState.stat (Game._equip_account); nothing else reads the save.
 ##   var tree := Account.new(Account.load_catalog())
@@ -121,7 +121,7 @@ func first(n: int) -> Array[StringName]:
 	return out
 
 
-## The rarity chances with the account's bonus (Olhar Atento): the first step of the draw gains all of it and the second half.
+## The rarity chances with the account's bonus (Coração Atento): the first step of the draw gains all of it and the second half.
 static func better(chances: Array[float], bonus: float) -> Array[float]:
 	if bonus <= 0.0:
 		return chances

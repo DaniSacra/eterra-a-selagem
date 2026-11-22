@@ -195,3 +195,6 @@ cruz) e o raio de 12 m são decisões da sessão a confirmar. A aprovação art�
 A conta (`f3_fonte`), o Encontro e as cartas de Velael e Galael (`ui_meeting`, `ui_meeting_cards`), a árvore do Jardim mais
 escura (`garden`), a Fenda em índigo e a laje que cede (`rift`, `rift_sag`), a grade de espinhos (`crypt_spikes`) e o cabo
 mais fino da foice de Morvath (`boss`). Salas com `--hazards` (perigos armados como no fundo da descida).
+
+## `lote_visual/`: musgo, pó de osso, estações fechadas, leões (2026-11-21)
+Capturas do lote visual com o Santuário de um save novo (estações fechadas).

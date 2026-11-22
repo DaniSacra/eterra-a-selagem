@@ -1,6 +1,6 @@
 class_name AccountNode
 extends Resource
-## One improvement of the account's tree, "A Fonte" (working name, to confirm with Daniel; docs/design/benchmark_sworn.md
+## One improvement of the account's tree, "O Preparo" (Daniel 2026-11-21; docs/design/benchmark_sworn.md
 ## section 8, recommendation 1): bought once in the Santuário with a material, kept for every hero and every descent after.
 ## Its numbers sum into BoonState.stat as the Forja's do (stats: max_hp, damage_pct, room_heal_pct, fountain_heal, gold_pct,
 ## rarity_bonus, revive), so most need no fight code. Data in data/account/, written by _account in tools/make_data.gd.

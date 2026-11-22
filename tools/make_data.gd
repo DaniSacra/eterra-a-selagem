@@ -345,7 +345,7 @@ func _enemies() -> void:
 		# it stood stunned 0.8 s after its charge (a stun drawn idle); E1c: the same 0.8 s as its recovery, the end of the blow held
 		"recover_time": 0.8,
 		"rating": 65.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER, "tell": T.SHIELD, "tell_at": Vector3(0.5, 1.1, 0.35), "material": &"armor"})
-	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
+	_enemy({"id": &"priest_elder", "name_key": &"enemy_priest_elder", "model": &"priest_elder", "size": 2.19, "behavior": B.PRIEST, "hp": 510.0, "speed": 2.0,
 		"damage": 12.0, "radius": 1.0, "heavy": true, "elite": true, "armor": 1450.0, "armor_stagger": 2.5, "attack_damage": 12.0, "attack_range": 9.0,
 		"attack_cooldown": 3.4, "attack_windup": 1.0, "magic_color": DEAD_MAGENTA, "shot_orb": true, "shot_speed": 7.0,
 		"shot_count": 5, "shot_spread": 70.0, "rating": 50.0, "rim_color": ELITE_RIM, "rim": ELITE_RIM_POWER,
@@ -1688,7 +1688,7 @@ func _wave(tag: StringName, damage: float, reach: float, width: float) -> Array[
 
 
 ## The Warrior (DT-013; warrior_spec.md): the numbers the paladin had in constants (Player, Combat, Feel), unchanged:
-## life 18 (Lote 5, "me sentir muito fraco no começo": the Santuário pays the rest; was 30) and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
+## life 30 (Hades II; Lote 5 tried 18, Daniel put 30 back on 2026-11-21 when blows stopped stunning: StunRule) and 1.3 s safe after a blow (Hades II), 1 dodge charge back in 0.74 s, 50 of Magia, the circle of light
 ## (5.4 m, 3 s, Omega 20 of Magia held 0.6 s, bursts for 150). The passive gives 2 of Magia a finisher (D-56).
 ## Daniel 2026-11-21 ("aumentasse a recarga de todas as habilidades com exceção dos ataques"): the circle 6 s from its
 ## cast (was 0.2 s after one ended), the Brado 14 s (was 10), the dodge back in 1.1 s (was 0.74, Hades II), the
@@ -1703,7 +1703,7 @@ func _hero() -> void:
 	h.model = &"hero_explorer"
 	h.combos = "res://data/combos/paladin.tres"
 	var numbers := {
-		"max_hp": 18.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 1.1,
+		"max_hp": 30.0, "hurt_time": 0.18, "hurt_invuln": 1.3, "dodge_charges": 1, "dodge_recharge": 1.1,
 		"magick_max": 50.0, "circle": false,
 		"cast_charge": 0.25, "cast_slow": 0.6, "cast_cooldown": 6.0, "cast_attack_lock": 8.0 / 60.0, "cast_omega_time": 0.6,
 		"cast_omega_cost": 20.0, "cast_radius": 5.4, "cast_time": 3.0, "cast_burst": 150.0,
@@ -2377,7 +2377,7 @@ func _oficios() -> void:
 	ResourceSaver.save(d, "res://data/oficios/oficios.tres")
 
 
-## The account's tree "A Fonte" (Lote 5, working names; docs/design/benchmark_sworn.md section 8): small permanent
+## The account's tree "O Preparo" (Lote 5, working names; docs/design/benchmark_sworn.md section 8): small permanent
 ## improvements for every hero, in the order a robot buys them (--account=N: the first N). Prata Antiga for the body and the
 ## purse, Fragmento de Memória for the Blessings and the second life. Numbers measured in docs/design/balance.md.
 func _account() -> void:

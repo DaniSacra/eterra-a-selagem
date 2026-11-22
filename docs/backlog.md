@@ -11,9 +11,10 @@ fracos), AN-1 (anjos 1 a 4 no Encontro), AN-3. Medido: novato morre em 40% dos g
 2. AN-2 (feito em 2026-11-21, falta o `balance-designer` medir): famílias dos anjos 5 a 7 (Véu, Maré, Marca), 27 Bênçãos e 6 Elos novos; retratos 5 a 7 no jogo.
 3. SWORN restante: SR-G2 sangue (pergunta) e cachoeira da SR-G3 (feitos em 21/11: SR-P2 laje que cede, SR-P3 grade, SR-P5 relíquia, com tema a decidir pelo Daniel).
    Medido com tudo junto em 2026-11-21 (`balance.md`): a meta segue de pé, sem mudar número.
-4. Quickwins visuais: cruzes do título (espera o Daniel), estações fechadas do hub, leão no patamar, barra com nome do
-   guardião; musgo claro demais no Jardim e na Cripta (visto nas capturas de 21/11). Feitos: cabo da foice, ar da Fenda,
-   vermelho dos atiradores, texto do vendedor.
+4. Quickwins visuais: cruzes do título (o Daniel gera outra arte). O resto feito em 21/11 (musgo, pó de osso, estações fechadas,
+   leões, nome do Ancião na barra).
+5. Experimento do atordoamento (`StunRule`, F8): Daniel decide; se ficar `NONE`, dar outro efeito à Fúria Plena e ao Refinar Peso e medir
+   o que sobrar (a vida inicial voltou a 30 a pedido do Daniel).
 6. Guerreiro caminho A (identidade); heróis novos (Maga, Ladina, Paladino) depois.
 
 ## Estado de 2026-11-21 noite (sessão principal, commit `0269757`)

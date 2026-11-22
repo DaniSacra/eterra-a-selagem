@@ -579,3 +579,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   abaixo, `STY_TREE_VALUE` 0,62 e `STY_TREE_FILL_ENERGY` 0,1; tamanho e colisão iguais.
 - Fenda: ar, névoa, brumas, luz funda e chão do violeta (matiz 255, cor de Morvath) para índigo frio (228 a 236)
   (`RiftLook.AIR`, `STY_*`), item da revisão de arte de 2026-11-21.
+
+
+## Marcas da luta e musgo (2026-11-21)
+- `BattleMarks` (`game/battle_marks.gd`, sob a arena): pó de osso e lascas onde um morto-vivo cai, rachadura onde um círculo
+  pesado (1,8 m ou mais) acerta o chão e onde elite ou guardião cai. Sem sangue (decisão do Daniel). 3 MultiMesh, teto
+  32, 72 e 12, dados próprios: a semente 5 não muda. Teste `test_battle_marks`.
+- `FloorScatter`: as cores das manchas eram sRGB lidas como lineares (musgo virava grama clara); agora `srgb_to_linear`, manchas menores.
+- Santuário: estação fechada sem brasa, chama nem fumaça (Forja), sem folhas (Árvore), livro fechado (`HubLook.set_closed`); os
+  ciprestes da escada foram para ±9,6 e os leões do patamar aparecem inteiros.

@@ -20,14 +20,16 @@ const DOOR_CLEAR := 2.5
 const HAZARD_CLEAR := 0.9
 const TRIES := 24
 const SEED := 4417
-## Colours (the palette of the room's stone: cold green moss, blue-grey damp, bone, never a bright lawn).
-const MOSS := Color(0.12, 0.2, 0.09)
-const MOSS_DRY := Color(0.2, 0.2, 0.1)
-const DAMP := Color(0.03, 0.05, 0.07)
+## Colours (the palette of the room's stone: cold green moss, blue-grey damp, bone, never a bright lawn). sRGB, as seen:
+## a MultiMesh's colours reach the shader as they are, so _patch makes them linear (2026-11-21: they were not, and the
+## moss came out a bright lawn).
+const MOSS := Color(0.2, 0.27, 0.15)
+const MOSS_DRY := Color(0.27, 0.26, 0.16)
+const DAMP := Color(0.11, 0.135, 0.16)
 const BONE := Color(0.62, 0.58, 0.48)
 const FRAME_COLOR := Color(0.012, 0.012, 0.016)
 ## Sizes (m): a patch's width, a skull's radius, a bone's length, a pot's height, a fallen stone's side.  A pot stays under 0.3 m (the rule of every stylized piece over the floor).
-const MOSS_SIZE := Vector2(1.2, 3.4)
+const MOSS_SIZE := Vector2(0.8, 2.3)
 const DAMP_SIZE := Vector2(1.6, 4.0)
 const SKULL_RADIUS := 0.085
 const BONE_LONG := 0.32
@@ -130,7 +132,7 @@ func _patch(out: Array[Transform3D], colours: Array[Color], size: Vector2, c: Co
 	var near := clampf(1.0 - p.distance_to(_centre) / (_free * 3.0), 0.0, 1.0)
 	var basis := Basis(Vector3.UP, _rng.randf() * TAU).scaled(Vector3(w, 1.0, h))
 	out.append(Transform3D(basis, Vector3(p.x, PATCH_Y, p.y)))
-	colours.append(Color(c, alpha * (1.0 - 0.6 * near)))
+	colours.append(Color(c.srgb_to_linear(), alpha * (1.0 - 0.6 * near)))
 
 
 func _patch_material(radial: float, priority: int) -> ShaderMaterial:

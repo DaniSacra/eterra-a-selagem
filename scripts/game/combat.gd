@@ -299,7 +299,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if died:
 			kills += 1
 			continue
-		if fury_stun > 0.0 and e.def.stun_heavy_time > 0.0:
+		if fury_stun > 0.0 and e.def.stun_heavy_time > 0.0 and StunRule.stuns(true):
 			# Fúria Plena: with every charge of Ímpeto a finisher stuns longer, those with armor too (never a guardian
 			# nor Morvath: their stun time is 0)
 			horde.flinch(e, e.def.stun_heavy_time + fury_stun)
@@ -656,8 +656,10 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	kill_tags = tags
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
 	horde.stun_scale = 0.0 if _no_stun else 1.0 + boons.stat(&"stun_pct", tags)
+	horde.strong = tags.has(OMEGA_TAG)
 	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
 	horde.stun_scale = 1.0
+	horde.strong = false
 	kill_tags = []
 	horde.dealing = &""
 	_impact_frame(tags.has(OMEGA_TAG), breaks_phase(e, hp_before))

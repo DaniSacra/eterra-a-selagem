@@ -14,7 +14,7 @@ extends RefCounted
 ## Forja's highest Temperar bought; refine, awaken, inscribed for the next slices) and tools (the Forjador's, Fatia 2).
 ## An older file opens every Gift its Mastery had already unlocked, for free (nobody loses a Gift), and gets 5 silver a
 ## descent it played, up to 30 (Q-RJ8 a, MaterialPurse.retro_silver), once.
-## 10 (Lote 5, the account's tree "A Fonte", Account): account (bought: the ids of the nodes bought, for every hero). An
+## 10 (Lote 5, the account's tree "O Preparo", Account): account (bought: the ids of the nodes bought, for every hero). An
 ## older file opens with none bought; nothing else changes.
 const VERSION := 10
 const MAX_BEST_TIMES := 5
