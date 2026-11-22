@@ -36,6 +36,26 @@ Só a organização da tela vem da referência; arte, molduras, cores e textos s
 Ordem sugerida: BC-1 com BC-2 (uma entrega), depois BC-3 com BC-4; um exe só no fim. A mesma lista para Provação,
 Altar e Encanto fica para depois, se ele gostar.
 
+**DM-1 Tirar o mapa e deixar 2 portas por sala** (pedido do Daniel: complexidade que os jogadores dos testes dele não usam)
+- Hoje, medido em 300 descidas: 47% das salas têm 1 porta, 46% têm 2 e 7% têm 3 (contando as salas do grafo até a
+  antes da última camada). O alvo é **sempre 2**; só a loja antes de Morvath e Morvath continuam com uma porta.
+- **O que sai da tela**: a tela do mapa (`MapScreen`, `MapGraph`, `MapSample`), o botão "Mapa [M]" do HUD, o "Mapa" da
+  pausa e do Como Jogar, a tecla M (Back no controle), a porta que acende pelo mapa, os textos e os testes dela e o
+  `map_flow_check`. O registro da partida (RESULT, log) fica.
+- **O que fica por dentro**: o `RunMap` continua sorteando a descida (recompensas, arenas, guardião, fonte, altar,
+  Provação, loja), mais simples: camadas de 2 salas e cada sala leva às duas da frente. A regra de caminhos que não se
+  cruzam só existia para o desenho do mapa e sai. A placa da porta segue sendo a única informação: o que se vê é o que se ganha.
+- **Cuidados**: fonte, altar, loja do caminho e Provação passam a ser uma das duas portas, então toda descida as vê na
+  mesma chance, sem esconder num ramo: remedir quantas aparecem. Sempre duas recompensas de grupos diferentes (hoje 95%).
+  Cavaleiro ou Ancião continua uma escolha de porta.
+- **O que perde o sentido e precisa de troca**: Discernimento II e a obra do Vendedor (Prévia dos anjos) mostram o anjo no
+  mapa; o achado da cabeça da Picareta diz "numa sala marcada no mapa" (passa para a placa da porta). Sugestão para os
+  dois primeiros: **a placa da porta mostra também a recompensa das portas de depois**, ou um segundo sorteio de
+  Bênçãos. Decisão do Daniel; quem já comprou não pode perder a Memória.
+- **Muda o RESULT de propósito**; medir equilíbrio de novo (12 sementes) e reler `docs/reference/rooms.md`, `ui.md`, `meta.md`.
+- Aceite: nenhuma porta de 1 fora da loja e Morvath em 1000 descidas, nenhum texto com "mapa", fluxos verdes.
+- Tamanho: média a grande, uma sessão. Ordem sugerida: **depois** do exe do BC-1 a BC-4, ou antes se ele preferir.
+
 **Pendência de teste**: `test_room_hold` ("on a black screen") falhou uma vez na suíte inteira de 23h28 e passou
 sozinho duas vezes; rodar a suíte de novo na próxima integração e, se repetir, achar a corrida do escurecer.
 
