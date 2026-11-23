@@ -375,6 +375,18 @@ func _show_forge() -> void:
 
 ## HV-E: the hub as the save has grown it (HubEvolution: the forge, the stall, the Gift plates, the Livro's spines and
 ## shelf, the Alquimista's bench), painted by HubLook.
+## The save the Videira grows from: --vine=N (captures, as in a run) shows the first N roots bought.
+func _vine_view() -> Dictionary:
+	if not Dev.has("vine"):
+		return Save.data
+	var view := Save.data.duplicate(true)
+	var ids: Array = []
+	for id in Vine.new(Vine.load_catalog()).first(int(Dev.num("vine", 0))):
+		ids.append(String(id))
+	view["vine"] = {"bought": ids}
+	return view
+
+
 func evolve() -> void:
 	if focus != null:
 		for id in HubPlan.STATIONS:
@@ -383,7 +395,7 @@ func evolve() -> void:
 	if arena != null and arena.look != null:
 		HubEvolution.apply(arena.look, HubEvolution.of(Save.data, codex_chapters(Save.data)))
 		if arena.look.has_method(&"grow_vine"):
-			arena.look.call(&"grow_vine", Vine.growth(Save.data))
+			arena.look.call(&"grow_vine", Vine.growth(_vine_view()))
 		if arena.look.has_method(&"show_heroes"):
 			arena.look.call(&"show_heroes", Save.data)
 		if arena.look.has_method(&"set_closed"):

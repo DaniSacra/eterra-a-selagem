@@ -16,7 +16,7 @@ const SEG_STEPS := 4
 const VASE := Vector3(0.62, 0.42, 0.62)
 const TRUNK_TOP := 1.0
 const TRUNK_R := Vector2(0.17, 0.07)
-const VINE_R := Vector2(0.06, 0.018)
+const VINE_R := Vector2(0.1, 0.04)
 const STONE := Color(0.5, 0.47, 0.42)
 const SOIL := Color(0.1, 0.07, 0.05)
 const WOOD := Color(0.26, 0.18, 0.11)
@@ -26,8 +26,8 @@ const FRUIT := Color(0.95, 0.6, 0.12)
 const FLOWER := Color(0.98, 0.82, 0.4)
 const FRUIT_GLOW := 0.7
 ## Per stage (1 to 3): leaves, amber clusters and flowers on each branch.
-const LEAVES := [4, 8, 10]
-const FRUITS := [0, 0, 5]
+const LEAVES := [9, 18, 24]
+const FRUITS := [0, 0, 7]
 const FLOWERS := [0, 2, 4]
 ## Each branch's path (x, y in the arch's plane) in 10 points: stage k runs the segments 3k to 3k+2.
 const PATHS := [
@@ -127,13 +127,13 @@ func _stage_parts(path: Array[Vector3], k: int, rng: RandomNumberGenerator) -> D
 		var side := 1.0 if l % 2 == 0 else -1.0
 		var size := lerpf(0.9, 1.25, k / 2.0) * rng.randf_range(0.85, 1.15)
 		var basis := Basis.from_euler(Vector3(rng.randf_range(-0.5, 0.5), rng.randf_range(0.0, TAU), side * rng.randf_range(0.3, 0.9)))
-		basis = basis * Basis.from_scale(Vector3(0.13, 0.024, 0.075) * size)
+		basis = basis * Basis.from_scale(Vector3(0.26, 0.045, 0.16) * size)
 		var target: SurfaceTool = parts["b"] if l % 3 == 0 else parts["a"]
 		target.append_from(_leaf_mesh(), 0, Transform3D(basis, p + Vector3(side * 0.09 * size, rng.randf_range(0.0, 0.05), rng.randf_range(0.0, 0.08))))
 	for f in FRUITS[k]:
 		var p := pts[rng.randi_range(pts.size() / 3, pts.size() - 1)]
 		for g in 3:
-			var xf := Transform3D(Basis.from_scale(Vector3(0.045, 0.05, 0.045)), p + Vector3(rng.randf_range(-0.03, 0.03), -0.09 - g * 0.05, 0.06))
+			var xf := Transform3D(Basis.from_scale(Vector3(0.075, 0.08, 0.075)), p + Vector3(rng.randf_range(-0.03, 0.03), -0.09 - g * 0.05, 0.06))
 			(parts["fruit"] as SurfaceTool).append_from(_leaf_mesh(), 0, xf)
 	for f in FLOWERS[k]:
 		var p := pts[rng.randi_range(0, pts.size() - 1)]
