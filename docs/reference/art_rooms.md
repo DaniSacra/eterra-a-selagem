@@ -588,3 +588,86 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - `FloorScatter`: as cores das manchas eram sRGB lidas como lineares (musgo virava grama clara); agora `srgb_to_linear`, manchas menores.
 - Santuário: estação fechada sem brasa, chama nem fumaça (Forja), sem folhas (Árvore), livro fechado (`HubLook.set_closed`); os
   ciprestes da escada foram para ±9,6 e os leões do patamar aparecem inteiros.
+
+## Salão, C1V item 2.1 (Lote N1, 2026-11-22; `docs/art/identidade_c1v.md`)
+Só no perfil estilizado (F7 mostra o clássico como antes; `--smoke` com a mesma semente dá o mesmo `RESULT`). Números em constantes `STY_*`/`ELUN_*` de `catacomb_hall.gd`, ainda sem medida em captura (ajustar pela imagem):
+- **Sombra colorida**: uniforme `paint_shadow_glow` (padrão preto) em `paint.gdshaderinc`, somado só pela luz direcional na faixa de sombra; chave de estilo `shadow_glow` (`STY_SHADOW_GLOW` = (0.30, 0.29, 0.66)), passada por `ArenaKit.paint_look` (`STONE_KEYS`, `FLOOR_KEYS`, `KIT_KEYS`).
+- **Vinheta de cena**: uniforme `paint_vignette_set` (força, início, fim; força 0 = hoje) aplicado no albedo da pedra, do chão e do kit pela posição na tela (`paint_vignette`), nunca em figuras, efeitos nem interface; `STY_VIGNETTE` = (0.5, 0.5, 1.3). O abismo e a neblina têm shader próprio e não entram.
+- **Chave morna**: spot difuso sem sombra (`_elun`), #F2C890, energia `STY_WARM_ENERGY` 2.4, poça de 7 m em (-4.5, -1.0), vindo de cima à esquerda.
+- **Facho de Elun** (revisão 2: inclinado 25 graus, corpo 0,08, uniforme `from_above`, sem base cortada; chave morna 7.0 em (-6.5, 1.5); sombra e vinheta mais fortes): cilindro com `beam.gdshader` (novos uniformes `brush_break`, `brush_size`, `dust`, `dust_*`, todos 0 nos outros feixes) em (-8, -7), 26 m, marfim-ouro `ELUN_LIGHT`, borda desfiada por pincel em mundo, poeira dourada que sobe, abre em volta do herói pelo `hero_hole`. O feixe da Fonte (`RewardShaft.fountain_tint`) passa a matiz 40 só no estilizado.
+- **Neblina com forma**: `abyss_mist.gdshader` ganhou `brush`/`brush_scale` (0 = hoje); os bancos do Salão ficam em faixas pinceladas (`STY_MIST_BRUSH`) e o plano mais perto escurece (`STY_MIST_NEAR`).
+Fora desta rodada: `RoomMood` (o Salão não tem ar próprio; mexer ali muda as outras salas) e `abyss_fog.gdshader`. Teste: `tests/test_visual_profile.gd`.
+
+## Cripta e Fenda, C1V Lote N2 (2026-11-23; `docs/art/identidade_c1v.md`)
+A receita do Salão (item 2.1), só no estilizado, pelos mesmos uniformes (`shadow_glow`, `vignette` no `STYLE` de cada sala; a vinheta é a do Salão, `CatacombHall.STY_VIGNETTE`) e a chave morna do Salão (`STY_WARM_KEY`, energia 7, 7 m):
+- **Cripta** (`crypt_look.gd`): sombra `STY_SHADOW_GLOW` (0,20; 0,50; 0,55), matiz alvo 184 a 194; chave morna por `key_pool` no meio da sala deslocado `STY_WARM_SHIFT`. Uma luz a mais (teste `test_rs_c1_lights`: 17 e 19).
+- **Fenda** (`rift_look.gd`): sombra `STY_SHADOW_GLOW` (0,55; 0,40; 1,0), matiz alvo 246 a 260; chave morna sobre o campo `STY_KEY_POOLS[STY_WARM_FIELD]` (o do meio, entre as pontes).
+- Fora desta rodada: facho de Elun e neblina com pincel (não coube na composição sem medida em captura); a Ponte (`bridge_look.gd`) não entrou. Números sem medida: ajustar pela captura.
+- Abrir cada sala: `--arena=crypt` e `--arena=rift` (`--variant=0|1`); `--showcase` só enquadra o Salão.
+
+## C1V Lote N3: a receita nas outras salas (2026-11-23; `docs/art/identidade_c1v.md`, paletas em `plano_pintado_a_mao.md` 5)
+Só estilizado, sem medida em captura (ajustar pela imagem). Cada `STYLE` ganha `shadow_glow` e `vignette` (a do Salão, `CatacombHall.STY_VIGNETTE`; a do hub mais suave, (0,5; 0,45; 1,3)) e, nas salas de luta, a chave `c1v`: `ArenaRoom._c1v_light` (no fim de `_stylize_steps`) põe a chave morna do Salão (`key_pool`, deslocada do meio por `warm`, energia vezes `energy`) e, com `shaft`, o facho de Elun (`CatacombHall.elun_shaft`, agora estático) a no mínimo `C1V_INSET` m da borda do piso.
+| Sala | `shadow_glow` | chave morna (energia) | facho |
+|---|---|---|---|
+| Ponte | (0,45; 0,40; 1,0) | meio, x-3 (0,8) | não (plataformas estreitas, já têm poças) |
+| Jardim | (0,20; 0,42; 0,30) | meio, x-3 (1,0) | sim |
+| Santuário | (0,15; 0,40; 0,62) | meio, x-3 (0,7) | não (já tem os seus fachos) |
+| Runas | (0,45; 0,40; 0,85) | meio, x-3 (0,7) | não (não cobrir lajes acesas) |
+| Altar | (0,50; 0,25; 0,35) | meio, x-4 (0,6) | sim |
+| Provação | (0,55; 0,30; 0,75) | meio, x-3 (0,7) | não (lilás da maldição) |
+| Hub | (0,15; 0,40; 0,55) | não (cada estação tem a sua poça) | não |
+- **Câmara de Morvath: não entrou.** Ela não passa por `ArenaKit.paint_look` (chão `chamber_floor` e pedra clássicos sem `paint_vignette`); paleta e vinheta pedem levar o chão e a pedra dela ao pipeline pintado (outro lote, com o dono do `boss_chamber.gd`).
+- `--smoke=90 --seed=5`: `RESULT` igual antes e depois (sem fps/step_ms). Cada sala ganha 1 luz (spot sem sombra): conferir o `step_ms`/fps na GPU.
+- Capturas (uma por vez, Perto, estilizado): `tools/gpu.sh shot <out> --bot --autopick --seed=5 --arena=<bridge|garden|sanctuary|runes|altar|trial> --variant=0 --shot-at=9`; hub: `tools/gpu.sh shot <out> --start=hub` (conferir a opção do hub no `docs/reference/hub.md`); Câmara: `--start=boss`.
+
+## Salão, laboratório do pacote 2026-11-23
+
+Pacote do Daniel em `docs/art/ref/salas_2026-11-23/` (imagem 01 = o Salão). O Salão já seguia a composição da imagem de
+referência anterior (fachada com portal, leões, balaustrada, abismo), então o laboratório mexeu só no que o pacote e as
+regras do projeto pedem de diferente. Geometria de jogo intacta (mesmo `RESULT` do `--smoke=30 --seed=5 --nosave`).
+- **Veio da pintura:** o emblema do leão no meio do chão, como moldura de pedra com o leão em relevo.
+- **Adaptado (regras sobrepõem a imagem):** o medalhão redondo (anel de 16 pedras + rosa de 8 pontas + rosácea) virou uma
+  faixa QUADRADA de 16 pedras alinhada aos eixos da sala (`SQUARE_FIT` em `catacomb_floor.gdshaderinc`; sem pontas nem
+  rosácea), com o leão dentro numa laje de túmulo quadrada (`CatacombHall.EMBLEM_SIDE`, 1ª laje de `_frames`, reaproveita
+  `ArenaKit.framed_slab` GRAVE com marca; `framed_lion_span` = `EMBLEM_LION_SPAN`). Círculo no chão é só do Morvath. A laje
+  de túmulo do caminho do portal perdeu o leão (um só leão no chão). Sem folhagem vermelha (nada no Salão tem; o carmim
+  fica nos estandartes) e portal só no esmeralda que já existia.
+- **Quebráveis:** o Salão já tem 10 peças (`tests/test_breakables.gd`).
+- **Fica para depois (precisa de olho na GPU):** conferir massas de luz e a leitura do quadrado na captura; fogo/bordas
+  como na pintura (heras âmbar/musgo nas colunas da frente) só se a captura pedir.
+- Shader mudado (`catacomb_floor.gdshaderinc`): nenhum material novo; `tools/make_warmup.sh` na GPU por segurança, pois o
+  código do shader do chão mudou (a lista de aquecimento é a mesma).
+- Teste: `tests/test_hall_artpack.gd`.
+
+## Cripta B, Jardim B e Fendas, laboratório 2 do pacote 2026-11-23
+Detalhe, plantas e listas em `docs/art/salas_pacote_2026-11-23_cripta_jardim_fendas.md`. Só estilizado, geometria de jogo intacta.
+- **Cripta B:** a primeira moldura elevada do ossário é uma laje quadrada com o leão (`CryptLook.STY_LION_FRAME_B`); guarda: só quando há muro divisório.
+- **Jardim:** patches de flores claras (`Masonry.blossoms`, `GardenLook.BLOSSOM_*`) no pé do muro norte e em volta do tronco; sem vermelho nem violeta.
+- **Fendas:** estandarte do leão em haste sobre o pilar norte da cabeça oeste de cada ponte (`RiftLook.HEAD_POLE`, `HEAD_BANNER`).
+- Capturas por fazer na GPU (sem medida em imagem). Teste: `tests/test_rooms_artpack.gd`. Aquecimento: nenhum shader nem material novo de shader; `make_warmup.sh` não precisa.
+
+
+
+## Casas dos guardiões, look próprio (2026-11-23)
+
+`GuardianLook` (`scripts/game/guardian_look.gd`, classe única, uma variante por casa) desacoplado de `CryptLook`:
+`&"armory"` (Salão do Cavaleiro) e `&"chapel"` (Câmara do Ancião), ids em `RoomLayout.look` (`tools/make_data.gd`
+`_guardian_house(..., look)`, regerar com `-- stage`), registrados em `ArenaRoom.LOOKS`/`make()`, `BREATH` e
+`FloorScatter.BIOMES`. Planos com vista de cima, essencial e clima em `docs/art/guardian_knight_hall.md` e
+`guardian_elder_chamber.md`. Casca compartilhada: paredes altas norte/oeste (`ArenaRoom.wall`), sul/leste baixas
+(`cut_wall`), corte NE em parede alta, arco e degraus da entrada oeste; tudo atrás da borda ou acima de 2,6 m
+(`tests/test_guardian_look.gd`). Sem peças novas de shader: sem necessidade de `tools/make_warmup.sh`. Provisório:
+adereços (racks, armaduras, altar, atril) são caixas e cilindros do `Masonry`; luz da janela usa `moon_shaft`
+(inclinação fixa `SHAFT_LEAN`).
+
+## Casas dos guardiões, look próprio (2026-11-23)
+
+`GuardianLook` (`scripts/game/guardian_look.gd`, classe única, uma variante por casa) desacoplado de `CryptLook`:
+`&"armory"` (Salão do Cavaleiro) e `&"chapel"` (Câmara do Ancião), ids em `RoomLayout.look` (`tools/make_data.gd`
+`_guardian_house(..., look)`, regerar com `-- stage`), registrados em `ArenaRoom.LOOKS`/`make()`, `BREATH` e
+`FloorScatter.BIOMES`. Planos com vista de cima, essencial e clima em `docs/art/guardian_knight_hall.md` e
+`guardian_elder_chamber.md`. Casca compartilhada: paredes altas norte/oeste (`ArenaRoom.wall`), sul/leste baixas
+(`cut_wall`), corte NE em parede alta, arco e degraus da entrada oeste; tudo atrás da borda ou acima de 2,6 m
+(`tests/test_guardian_look.gd`). Sem peças novas de shader: sem necessidade de `tools/make_warmup.sh`. Provisório:
+adereços (racks, armaduras, altar, atril) são caixas e cilindros do `Masonry`; luz da janela usa `moon_shaft`
+(inclinação fixa `SHAFT_LEAN`).

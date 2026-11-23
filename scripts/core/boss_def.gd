@@ -16,6 +16,12 @@ extends Resource
 @export var ritual_phase := 2
 ## Seconds he rests between attacks, by phase (the last value holds after).
 @export var rest := PackedFloat32Array([1.1, 1.0, 0.9, 0.75])
+## Daniel, 2026-11-23: the rest after an attack's recovery is random (AttackGap): uniform in [gap_min, gap_max] at full
+## life, sliding to [gap_min0, gap_max0] at none. gap_max 0: the phase's `rest`. Rests after a roar, a stun or the ritual keep `rest`.
+@export var gap_min := 0.0
+@export var gap_max := 0.0
+@export var gap_min0 := 0.0
+@export var gap_max0 := 0.0
 ## Wind-ups of every attack times this, by phase.
 @export var windup_scale := PackedFloat32Array([1.0, 1.0, 0.95, 0.9])
 ## The roar that opens a phase (he does not attack, the paladin is thrown back push meters).
@@ -140,6 +146,9 @@ extends Resource
 @export var ritual_eruption_every := 2.8
 ## He kneels this long when the shield breaks.
 @export var ritual_stun := 2.0
+## C1d, the Condutores: each of these (the ritual's first dead of these ids) that falls cuts ritual_shorten seconds off the ritual.
+@export var ritual_conductors: Array[StringName] = [&"mage"]
+@export var ritual_shorten := 0.0
 @export var shield_radius := 2.9
 
 @export_group("Curse")
@@ -155,6 +164,9 @@ extends Resource
 @export var curse_slow := 0.3
 @export var curse_immunity := 2.0
 @export var curse_recovery := 0.6
+## C1d, the Corte do rastro: the paladin's wave (the special, an Omega) that touches the bolt undoes it (no damage, no curse); the Brado that
+## takes it undoes its curse too (the blow is the Brado's, the status never lands).
+@export var curse_cut := false
 
 @export_group("Dash")
 @export var dash_length := 16.0
@@ -172,6 +184,29 @@ extends Resource
 @export var stagger_hits := 3
 @export var stagger_forget := 4.0
 @export var stagger_time := 2.6
+
+@export_group("Rupture")
+## C1d, phase rupture_phase on: the first Ruptura rupture_first seconds into it, then every rupture_every seconds: a warning of
+## rupture_windup s over the whole floor (no free lane), rupture_damage on whoever it finds, and he stands exposed rupture_window
+## seconds after (x posture_vuln, no Postura). Only the Brado takes it whole; a dodge in time passes through it (0: none).
+@export var rupture_every := 0.0
+@export var rupture_first := 12.0
+@export var rupture_phase := 4
+@export var rupture_windup := 1.5
+@export var rupture_damage := 16.0
+@export var rupture_window := 3.0
+
+@export_group("Posture")
+## C1d, phase 1 on: a bar over his life, worn by the button of each blow (Feel.poise_weights, as the common's Quebra); at 0 he
+## kneels posture_stun seconds and takes posture_vuln more damage, then stands with it full (0: none). The blows of a
+## recovery he was punished in no longer count for it: the buttons do.
+@export var posture := 0.0
+@export var posture_stun := 2.6
+@export var posture_vuln := 0.4
+## Seconds without a blow that wears it for it to fill again.
+@export var posture_idle := 5.0
+## The weights of Feel.poise_weights are shares of a common's 100 poise; for him they count this much.
+@export var posture_mult := 0.5
 
 
 ## The value of a per-phase list for this phase (the last value holds after; fallback when empty).

@@ -188,6 +188,11 @@ const THUMB_UP := Vector3(0, 0, 180)
 ## out to its side (the shield is on the other); the scythe's pole almost upright, leaning forward.
 const KNIGHT_SWORD_AIM := Vector3(-0.2, 0.8, 0.55)
 const SCYTHE_AIM := Vector3(-0.1, 1.0, 0.3)
+## The Varredor's pole, aimed in its guard: up, forward and a little to the side (never a cross of arms).
+const SWEEP_AIM := Vector3(0.3, 0.9, 0.4)
+## The Gritador's banner (upright, a little forward) and the Coveiro's spade (leaning forward, the blade low).
+const BANNER_AIM := Vector3(0.05, 1.0, 0.12)
+const SPADE_AIM := Vector3(0.1, 1.0, 0.55)
 ## The Meshy staff (w_staff, 0.95 units long, the ring on top, scale 2 = 1.9 m): the point of it in the fist, and where
 ## the middle of its ring lies in the fist's space once it is turned over (the orb of the sorcerer and the elder).
 const STAFF_GRIP := Vector3(0.02, -0.15, -0.03)
@@ -257,6 +262,14 @@ const DRAW_BACK := {"Spine01": Vector3(-12, 20, 0)}
 ## toward the middle of the body, standing and walking, and braced for the charge.
 const SHIELD_FRONT := -14.0
 const SHIELD_BRACE := -26.0
+## Combate C1 (docs/art/combate_c1_leitura.md 2): the brute's guard shut (the shield across the chest, the sword out at
+## its side) and open (the shield out to the side, the chest in view: Horde.guard_up false).
+const SHIELD_CLOSED := -24.0
+const SHIELD_OPEN := 38.0
+const GUARD_WALK_CLOSED := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.92, "hold": SHIELD_CLOSED}
+const GUARD_WALK_OPEN := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "lock": true, "stride": 0.92, "hold": SHIELD_OPEN}
+const GUARD_IDLE_CLOSED := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "hold": SHIELD_CLOSED}
+const GUARD_IDLE_OPEN := {"guard": [&"ual", "Sword_Idle", RIGHT_ARM], "hold": SHIELD_OPEN, "from": 0.71, "to": 1.0667, "there_and_back": true, "time": 1.4}
 ## The trunk, hips up to the head (a "guard" of these keeps the body's lean of another clip over the legs of this one).
 const TRUNK: Array[StringName] = [&"Spine02", &"Spine01", &"Spine", &"neck", &"Head"]
 ## A-T5-1 (docs/gallery/t5/ART_REVIEW.md 1.6): the charge is run, not walked up out of the brace. The legs sprint
@@ -339,6 +352,89 @@ const MODELS := {
 			"back": [&"kaykit", "Walking_Backwards", 12, true, SWORD_GUARD],
 		},
 	},
+	# C5, the Trinca (CB-7): the soldier's bone with nothing in its hands, low and bent, arms hanging (the figure is drawn
+	# at size 0.85 by three at a time); its pounce is the soldier's blow without the blade
+	"trio": {
+		"meshy": "skeleton", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"bend": {"Spine02": Vector3(24, 0, 0), "Head": Vector3(18, 0, 0)},
+		"anims": {
+			"walk": [&"ual", "Jog_Fwd", 20, true, RUNNER_JOG], "idle": [&"ual2", "Zombie_Idle", 12, true],
+			"windup": [&"ual", "Sword_Attack", 10, false, {"from": 0.0, "to": 0.35, "bend": SOLDIER_COIL, "bend_in": true}],
+			"attack": [&"ual", "Sword_Attack", 14, false, {"from": 0.35, "to": 1.2, "bend": SOLDIER_COIL, "bend_out": 0.15}],
+		},
+	},
+	# C5, the Varredor (CB-7): the crossbowman's hood and bone without the crossbow, a long pole on the diagonal with the
+	# cleaver's blade on its tip (the bar of the floor and the pole are one line), leaning; the sweep is the library's
+	# spinning blow stretched over 1.6 s (the crowd draws an attack clip 1.4 times as fast as it runs: 2.24 s of clip)
+	"sweeper": {
+		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "archer.png",
+		"bend": {"Spine01": Vector3(14, 0, 0)},
+		"held": [
+			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, 0.45, 0), "size": Vector3(0.03, 1.7, 0.034), "cell": 3, "aim": SWEEP_AIM, "name": "pole"},
+			{"hand": "Right", "meshy": "w_cleaver", "triangles": 800, "slot": 0, "grip": Vector3(0.26, 0, 0), "at": Vector3(0, 1.3, 0), "scale": 1.0, "lift": 2.2, "turn": CLEAVER_TURN, "axis": Vector3.LEFT, "aim": SWEEP_AIM, "name": "blade"},
+		],
+		"anims": {
+			"walk": [&"ual", "Jog_Fwd", 20, true, SOLDIER_JOG], "idle": [&"ual", "Sword_Idle", 12, true],
+			"windup": [&"kaykit", "2H_Melee_Attack_Spinning", 6, false, {"from": 0.0, "to": 0.25, "time": 0.9}],
+			"attack": [&"kaykit", "2H_Melee_Attack_Spinning", 20, false, {"from": 0.25, "time": 2.24}],
+		},
+	},
+	# C1e lote A, the Gritador: the sorcerer's body drawn upright (chest out, head up) with no staff, a tall banner in the left
+	# hand (a 2.1 m pole, a hanging amber cloth, a bone finial) so that it reads as a standard-bearer at 720p
+	"herald": {
+		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "mage.png",
+		"bend": {"Spine01": Vector3(-7, 0, 0), "Head": Vector3(-8, 0, 0)},
+		"held": [
+			{"hand": "Left", "shape": "cylinder", "at": Vector3(0, 0.55, 0), "size": Vector3(0.03, 2.1, 0.034), "cell": C_WOOD, "aim": BANNER_AIM, "name": "banner_pole"},
+			{"hand": "Left", "shape": "box", "at": Vector3(0.0, 1.32, 0.0), "size": Vector3(0.62, 0.7, 0.03), "cell": C_EMBER, "aim": BANNER_AIM, "name": "banner_cloth"},
+			{"hand": "Left", "shape": "sphere", "at": Vector3(0, 1.62, 0), "size": Vector3(0.07, 0.07, 0), "cell": C_BONE, "aim": BANNER_AIM, "name": "banner_top"},
+		],
+		"anims": {
+			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG], "idle": STAFF_CLIPS.idle,
+			"rise": STAFF_RISE,
+			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
+			"shot": STAFF_CLIPS.shot, "exit": STAFF_CLIPS.exit,
+		},
+	},
+	# C1e lote A, the Coveiro: the priest's body stooped, a spade leaning in the right hand (the blade low) and a lantern
+	# hanging from the left (an ember in a dark cage), the two things a gravedigger carries
+	"gravedigger": {
+		"meshy": "priest", "height": 1.93, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "priest.png",
+		"bend": {"Spine02": Vector3(18, 0, 0), "Head": Vector3(14, 0, 0)},
+		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
+		"held": [
+			{"hand": "Right", "shape": "cylinder", "at": Vector3(0, 0.35, 0), "size": Vector3(0.03, 1.3, 0.034), "cell": C_WOOD, "aim": SPADE_AIM, "name": "spade_shaft"},
+			{"hand": "Right", "shape": "box", "at": Vector3(0, -0.46, 0), "size": Vector3(0.24, 0.3, 0.035), "cell": C_DARK_METAL, "aim": SPADE_AIM, "name": "spade_blade"},
+			{"hand": "Right", "shape": "box", "at": Vector3(0, 0.99, 0), "size": Vector3(0.22, 0.04, 0.04), "cell": C_WOOD, "aim": SPADE_AIM, "name": "spade_grip"},
+			{"hand": "Left", "shape": "cylinder", "at": Vector3(0, -0.2, 0), "size": Vector3(0.1, 0.2, 0.1), "cell": C_DARK_METAL, "segments": 8, "name": "lantern_cage"},
+			{"hand": "Left", "shape": "sphere", "at": Vector3(0, -0.2, 0), "size": Vector3(0.075, 0.075, 0), "cell": C_EMBER, "name": "lantern_glow"},
+		],
+		"anims": {
+			"walk": [&"ual", "Walk", 20, true, OFFERING_GUARD], "idle": [&"ual", "Idle", 12, true, OFFERING_GUARD],
+			"attack": CASTER_CLIPS.attack, "cast": [&"kaykit", "Cheer", 12, false, {"from": 0.0, "to": 0.84, "lift": 0.2, "time": 0.8, "bend": RITE_BEND, "bend_in": true}],
+			"shot": [&"kaykit", "Spellcast_Shoot", 8, false, {"time": 0.3}],
+		},
+	},
+	# C1e lote C, the Armadilheiro: the crossbowman's hood and bone bent low over the floor, a flat spiked plate carried in the left hand
+	# instead of the crossbow (the thing it lays); it never shoots, so no crossbow clips
+	"trapper": {
+		"meshy": "archer", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "archer.png",
+		"bend": {"Spine01": Vector3(12, 0, 0), "Spine02": Vector3(16, 0, 0), "Head": Vector3(18, 0, 0)},
+		"marks": {"hands": ["LeftHand", "RightHand"], "hand_l": ["LeftHand"], "hand_r": ["RightHand"]},
+		"held": [
+			{"hand": "Left", "shape": "box", "at": Vector3(0, 0.1, 0), "size": Vector3(0.36, 0.04, 0.36), "cell": C_DARK_METAL, "name": "plate"},
+			{"hand": "Left", "shape": "box", "at": Vector3(0, 0.15, 0), "size": Vector3(0.05, 0.1, 0.05), "cell": C_BONE, "name": "spike"},
+		],
+		"anims": {
+			"walk": [&"ual", "Jog_Fwd", 20, true, SOLDIER_JOG], "idle": [&"ual", "Idle", 12, true],
+			"attack": CASTER_CLIPS.attack,
+			"cast": [&"kaykit", "Cheer", 12, false, {"from": 0.0, "to": 0.84, "lift": 0.2, "time": 0.8, "bend": RITE_BEND, "bend_in": true}],
+		},
+	},
 	# 2. the runner: burnt bone and red rags, no weapon, stooped, an ember in the chest
 	"runner": {
 		"meshy": "runner", "height": 1.65, "triangles": BODY_TRIANGLES,
@@ -409,7 +505,12 @@ const MODELS := {
 		"hold": {"bones": LEFT_ARM, "swing": SHIELD_FRONT},
 		"even_legs": true,
 		"anims": {
-			"walk": [&"kaykit", "Walking_A", 20, true, BRUTE_STRIDE], "idle": [&"ual2", "Idle_Shield", 12, true, SWORD_GUARD],
+			"walk": [&"kaykit", "Walking_A", 20, true, GUARD_WALK_CLOSED],
+			"idle": [&"ual2", "Idle_Shield", 12, true, GUARD_IDLE_CLOSED],
+			# the guard open (Horde.render swaps them in): the walk with the shield out, and the last third of the shield
+			# lowered clip, back and forth
+			"walk_open": [&"kaykit", "Walking_A", 20, true, GUARD_WALK_OPEN],
+			"idle_open": [&"ual2", "Idle_Shield_Break", 12, true, GUARD_IDLE_OPEN],
 			"attack": SWORD_BLOW,
 			# the charge is announced braced behind the shield, brought further across the body
 			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "time": 1.15, "hold": SHIELD_BRACE, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
@@ -448,6 +549,8 @@ const MODELS := {
 			# A-T5-1: run low behind it (KNIGHT_RUSH)
 			"brace": [&"ual2", "Shield_Dash_RM", 8, false, {"from": 0.0, "to": 0.3, "guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 			"charge": [&"ual", "Sprint", 12, true, KNIGHT_RUSH],
+			# CV-2 (2026-11-22): calling its dead, sword and shield raised
+			"summon": [&"kaykit", "Cheer", 12, false, {"from": 0.0, "to": 0.84, "lift": 0.2, "time": 1.0}],
 			"recover": [&"ual2", "Idle_Shield_Break", 10, false, {"guard": [&"ual", "Sword_Idle", RIGHT_ARM]}],
 		},
 	},
@@ -472,6 +575,8 @@ const MODELS := {
 	"morvath": {
 		"meshy": "morvath", "height": 2.02, "triangles": BODY_TRIANGLES,
 		"palette": PALETTE + "morvath.png",
+		# GR-7 (combate_c1_leitura 8): where his head is in every pose, for the two points of his eyes (EnemyFx)
+		"marks": {"head": ["Head"]},
 		"held": [
 			# the war scythe: the model is only the crescent on a short stub (0.95 units, the stub at -Y); the long
 			# pole is built here: dark wood 2.0 m (the body's height, from near the floor to over the head) with iron

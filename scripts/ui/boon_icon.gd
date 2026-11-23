@@ -4,14 +4,18 @@ extends Control
 ## An Elo (a gift forged from two others) has a rim of chain links.
 ## cooldown (0..1) darkens the part of the medallion that is still recharging.
 
-## Glyph ids of the bare actions: ACTION_GLYPH + Boon.Slot (attack, special, circle of light, dodge).
+## Glyph ids of the bare actions: ACTION_GLYPH + Boon.Slot (attack, special, circle of light, dodge, Investida, ultimate: 100 to 106).
 const ACTION_GLYPH := 100
 ## Glyph ids of the ultimates: ULT_GLYPH + UltDef.Kind (the cleave, the Voragem).
 const ULT_GLYPH := 110
 ## The glyph of the Brado de Guerra (E): a mouth with the cry rippling out in arcs.
-const SHOUT_GLYPH := 105
+const SHOUT_GLYPH := 120
 ## The Investida (E): a thrust with its speed lines.
-const RUSH_GLYPH := 106
+const RUSH_GLYPH := 121
+## The Maga's marks (M1b): the shot, the Explosão Rúnica, the Suspensão Arcana, the Tempestade dos Selos (ULT_GLYPH + Kind.STORM).
+const BOLT_GLYPH := 130
+const BLAST_GLYPH := 131
+const DOME_GLYPH := 132
 ## Glyph of the most Magia (T5, the Provação's Reserva): a cut crystal with a light down its middle.
 const MAGICK_GLYPH := 107
 
@@ -213,13 +217,13 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 			for k in 3:
 				var y := (k - 1) * r * 0.4
 				ci.draw_line(c + Vector2(-r * (0.95 - absf(k - 1) * 0.2), y), c + Vector2(-r * 0.45, y), w, th * 0.8, true)
-		105:  # the Brado: the cry as three arcs spreading out of a point, to both sides
+		120:  # the Brado: the cry as three arcs spreading out of a point, to both sides
 			ci.draw_circle(c, r * 0.2, w)
 			for k in 3:
 				var rad := r * (0.45 + k * 0.28)
 				ci.draw_arc(c, rad, -0.75, 0.75, 14, w, th, true)
 				ci.draw_arc(c, rad, PI - 0.75, PI + 0.75, 14, w, th, true)
-		106:  # the Investida: a pointed blade driving right, three speed lines behind it
+		121:  # the Investida: a pointed blade driving right, three speed lines behind it
 			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(r * 0.95, 0), c + Vector2(r * 0.1, -r * 0.34), c + Vector2(-r * 0.1, 0), c + Vector2(r * 0.1, r * 0.34)]), w)
 			for k in 3:
 				var y := (k - 1) * r * 0.5
@@ -249,6 +253,28 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 					pts.append(c + Vector2.from_angle(TAU * k / 3.0 + t * 2.4) * r * (0.95 - 0.8 * t))
 				ci.draw_polyline(pts, w, th, true)
 			ci.draw_circle(c, r * 0.14, w)
+		130:  # the Maga's shot: a bolt flying right with a bright head and two trailing sparks
+			ci.draw_circle(c + Vector2(r * 0.45, 0), r * 0.32, w)
+			ci.draw_colored_polygon(PackedVector2Array([c + Vector2(r * 0.45, -r * 0.28), c + Vector2(-r * 0.9, 0), c + Vector2(r * 0.45, r * 0.28)]), w)
+			for y in [-0.5, 0.5]:
+				ci.draw_line(c + Vector2(-r * 0.2, r * y), c + Vector2(-r * 0.85, r * y), w, th * 0.8, true)
+		131:  # the Explosão Rúnica: a hexagon of the seal with a burst of rays out of its middle
+			var hex := PackedVector2Array()
+			for k in 7:
+				hex.append(c + Vector2.from_angle(TAU * k / 6.0 + PI / 6.0) * r * 0.9)
+			ci.draw_polyline(hex, w, th, true)
+			for k in 6:
+				var d := Vector2.from_angle(TAU * k / 6.0)
+				ci.draw_line(c + d * r * 0.2, c + d * r * 0.65, w, th * 0.9, true)
+		132:  # the Suspensão Arcana: a dome over a line of ground, a small seal under it
+			ci.draw_arc(c + Vector2(0, r * 0.45), r * 0.9, PI, TAU, 24, w, th, true)
+			ci.draw_line(c + Vector2(-r * 0.95, r * 0.45), c + Vector2(r * 0.95, r * 0.45), w, th, true)
+			ci.draw_circle(c + Vector2(0, r * 0.05), r * 0.2, w)
+		112:  # the Tempestade dos Selos: three seals (rings) falling in a staggered column
+			for k in 3:
+				var p := c + Vector2((k - 1) * r * 0.55, (1 - k % 2) * r * 0.1 + (k - 1) * r * 0.1)
+				ci.draw_arc(p, r * 0.34, 0.0, TAU, 16, w, th, true)
+				ci.draw_circle(p, r * 0.08, w)
 		_:
 			ci.draw_circle(c, r * 0.5, w)
 

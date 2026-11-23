@@ -124,7 +124,7 @@ func test_the_brado_is_a_move_of_data_in_both_trees() -> void:
 		assert_eq(n.id, &"shout")
 		assert_eq(n.shape, ComboNode.Shape.CIRCLE)
 		assert_eq(n.effect, ComboNode.Effect.SHOUT)
-		assert_eq(n.damage, 15.0)
+		assert_eq(n.damage, 35.0)
 		assert_eq(n.reach, 4.0)
 		assert_eq(n.knockback, 10.5, "1.5 m at the horde's decay")
 		assert_eq(n.effect_time, 5.0, "a 5 s buff")
@@ -177,7 +177,7 @@ func test_it_hurts_and_pushes_and_stuns_no_one() -> void:
 	var hp_a := a.hp
 	var hp_far := far.hp
 	_cry()
-	assert_eq(a.hp, hp_a - 15.0, "15 damage")
+	assert_eq(a.hp, hp_a - 35.0, "35 damage")
 	assert_eq(far.hp, hp_far, "nothing beyond 4 m")
 	assert_eq(a.stun_t, 0.0, "no stun, not even a common one")
 	assert_eq(b.stun_t, 0.0)

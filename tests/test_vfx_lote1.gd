@@ -47,9 +47,12 @@ func test_the_vigilia_strikes_in_its_own_colour() -> void:
 
 
 func test_the_dead_shoot_crimson_and_magenta_and_violet_is_morvath_s() -> void:
-	for id: StringName in [&"runner", &"runner_elite", &"archer", &"archer_elite"]:
+	for id: StringName in [&"runner", &"runner_elite"]:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
 		assert_between(_hue(d.magic_color), 345.0, 356.0, "%s crimson" % id)
+	# C1 (combate_c1_leitura 1): the bolts are the orange of the sheet; red is only a warning on the floor
+	for id: StringName in [&"archer", &"archer_elite"]:
+		assert_between(_hue((load("res://data/enemies/%s.tres" % id) as EnemyDef).magic_color), 12.0, 28.0, "%s orange" % id)
 	for id: StringName in [&"mage", &"mage_elite", &"priest", &"priest_elite", &"priest_elder"]:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
 		assert_between(_hue(d.magic_color), 328.0, 338.0, "%s magenta (333 in the material: 320 to 330 on the screen)" % id)

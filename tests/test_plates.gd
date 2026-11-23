@@ -244,9 +244,9 @@ func test_asleep_early_in_the_descent() -> void:
 	game.rooms._enter(r)
 	assert_not_null(game.rooms.plates)
 	assert_false(game.rooms.plates.hazard.awake, "room 2: asleep")
-	r = RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 4, stage.layouts.find(l), 0)
+	r = RunMap.Room.new(RunMap.Kind.COMBAT, RunMap.Reward.GOLD, 6, stage.layouts.find(l), 0)
 	game.rooms._enter(r)
-	assert_true(game.rooms.plates.hazard.awake, "room 4: awake")
+	assert_true(game.rooms.plates.hazard.awake, "room 6: awake")
 
 
 ## RP-13's push: whoever a slab with a push strikes is thrown toward the firm floor, swept (never through stone).

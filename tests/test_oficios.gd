@@ -71,7 +71,7 @@ func test_mark_finds_rules() -> void:
 		if finds.size() != 1:
 			bad.append("seed %d: %d finds" % [seed, finds.size()])
 		for r: RunMap.Room in finds:
-			if r.kind != RunMap.Kind.COMBAT or r.trial or r.depth < 4 or r.depth > 8:
+			if r.kind != RunMap.Kind.COMBAT or r.trial or r.depth < def.find_depth_min or r.depth > def.find_depth_max:
 				bad.append("seed %d: find at %d" % [seed, r.depth])
 		for r in m.nodes:
 			if r.vein:

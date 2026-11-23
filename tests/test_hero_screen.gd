@@ -140,7 +140,7 @@ func test_ultimates_open_by_level_and_one_is_chosen() -> void:
 
 func test_next_level_tells_what_it_brings() -> void:
 	assert_eq(_loadout(0).next_unlocks(), [T.t(&"talent_impeto")] as Array[String])
-	assert_eq(_loadout(XP_5).next_unlocks(), [T.t(&"ult_cleave")] as Array[String])
+	assert_eq(_loadout(HeroDef.warrior().mastery.total_to(2)).next_unlocks(), [T.t(&"talent_corte_crescente"), T.t(&"ult_cleave")] as Array[String])
 	assert_eq(_loadout(2470).next_unlocks(), [] as Array[String])
 
 
@@ -256,10 +256,10 @@ func test_report_tells_the_sources_and_what_the_new_levels_unlocked() -> void:
 	assert_eq(MasteryReport.sources_text(gain), "%s 40, %s 25, %s 25" % [T.t(&"mastery_src_rooms"),
 		T.t(&"mastery_src_guardians"), T.t(&"mastery_src_first_guardian")])
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 2), [T.t(&"end_unlocked", {"name": T.t(&"talent_impeto")})] as Array[String])
-	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 5, 6), [T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
+	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 2, 3), [T.t(&"end_unlocked", {"name": T.t(&"talent_corte_crescente")}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
 	# several levels at once: one line each, the names joined
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 1, 4), [
-		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_impeto"), T.t(&"talent_corte_crescente"), T.t(&"talent_lamina_faminta")])})] as Array[String])
+		T.t(&"end_unlocked_many", {"name": ", ".join([T.t(&"talent_impeto"), T.t(&"talent_corte_crescente"), T.t(&"talent_lamina_faminta")])}), T.t(&"end_unlocked_ult", {"name": T.t(&"ult_cleave")})] as Array[String])
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 9, 10), [T.t(&"end_unlocked", {"name": T.t(&"talent_reserva")}),
 		T.t(&"end_unlocked_ult", {"name": T.t(&"ult_vortex")})] as Array[String])
 	assert_eq(MasteryReport.unlocks(HeroDef.warrior(), 3, 3), [] as Array[String])
@@ -319,3 +319,43 @@ func test_codex_tabs_switch_by_focus() -> void:
 	assert_eq(c.tab, CodexScreen.Tab.GIFTS)
 	assert_true(c.tabs[0].button_pressed)
 	assert_false(c.tabs[1].button_pressed)
+
+
+# ---------- the Warrior's page fits the sheet ----------
+
+func _hero_page(size: Vector2) -> HeroScreen:
+	var host := Control.new()
+	host.custom_minimum_size = size
+	host.size = size
+	add_child_autofree(host)
+	var s := HeroScreen.new()
+	host.add_child(s)
+	s.open(_data(0), HeroScreen.Chapter.HERO)
+	return s
+
+
+func _check_hero_page_fits(size: Vector2) -> void:
+	var s := _hero_page(size)
+	await wait_process_frames(4)
+	var paper: Rect2 = s._book.paper_rect()
+	paper.position += s._book.global_position
+	var foot_top: float = size.y - ActionBar.RESERVE
+	for id: String in ["descend_hero", "to_gifts", "codex", "back"]:
+		var b: Control = s.find_child(id, true, false)
+		assert_not_null(b, id)
+		if b == null:
+			continue
+		var r := b.get_global_rect()
+		assert_true(paper.encloses(r), "%s inside the sheet at %s: %s in %s" % [id, size, r, paper])
+		assert_lt(r.end.y, foot_top, "%s above the key bar at %s" % [id, size])
+	var down: Control = s.find_child("descend_hero", true, false)
+	var to_gifts: Control = s.find_child("to_gifts", true, false)
+	assert_lte(down.get_global_rect().end.y, to_gifts.get_global_rect().position.y + 1.0, "the way down above the foot row")
+
+
+func test_the_warriors_page_fits_at_1280() -> void:
+	await _check_hero_page_fits(Vector2(1280, 720))
+
+
+func test_the_warriors_page_fits_at_1672() -> void:
+	await _check_hero_page_fits(Vector2(1672, 941))

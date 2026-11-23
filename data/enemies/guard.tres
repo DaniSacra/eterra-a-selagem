@@ -1,9 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_g3kwo"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_ix671"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_islk5"]
 
 [resource]
-script = ExtResource("1_g3kwo")
+script = ExtResource("2_islk5")
 id = &"guard"
 name_key = &"enemy_guard"
 model = &"guard"
@@ -24,14 +25,19 @@ material = &"shield"
 attack_damage = 14.0
 attack_range = 9.25
 attack_cooldown = 1.71
-attack_windup = 1.15
+attack_windup = 0.9199999999999999
 recover_time = 1.1
 windup_settle = 0.15
 lunge_speed = 15.0
 lunge_time = 0.4
+recharge_windup = 0.6400000000000001
+front_block = 0.7
+front_open = 4.0
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
 close_damage = 11.0
 close_range = 2.6
-close_windup = 0.85
+close_windup = 0.68
 rating = 18.0
 role = &"block"
 elite_version = &"guard_elite"

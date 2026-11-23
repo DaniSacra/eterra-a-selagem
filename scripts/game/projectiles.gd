@@ -10,6 +10,10 @@ signal shot_logged(by: String, what: String, piece: String)
 signal shot_hit(e: Enemy, shot: Shot)
 ## A hostile shot with a status (Shot.status, the boss's curse) struck the paladin while he could be hurt.
 signal status_player(status: StringName)
+## A wave of the paladin undid a curse of the boss at `at` (BossDef.curse_cut).
+signal curse_cut_at(at: Vector2)
+## Set by the boss fight: the paladin's waves undo his curse.
+var curse_cut := false
 
 ## SPARK: the paladin's Seta de Luz (the special), drawn as the Guerreiro's blade wave (W-1, D-69): a short thin
 ## crescent of the Emeth's emerald flying flat. WAVE: its held version, the same wave as wide as it hits. SOUL: a boss's
@@ -112,8 +116,17 @@ class Shot:
 	var counted := false
 	## The paladin's wave goes through stone (Onda Atravessante, the stat wave_through).
 	var through := false
+	## The paladin's shot ends at the first enemy it touches (the Maga's: the others pass through).
+	var stops := false
+	## Held in the air (the Suspensão Arcana): it neither flies nor hurts until Arcane lets it go.
+	var frozen := false
 	## A Gift's wave drawn bolder (bolden): its own fade at the end.
 	var bold := false
+	## C1e, lote B (the Lançador's axe, ThrowRules): seconds into its flight when it turns and flies back along the same line (0: it does
+	## not), where it left from, whether the line of its way back is shown yet.
+	var back_at := 0.0
+	var origin := Vector2.ZERO
+	var back_warned := false
 
 ## How far a shot is from the stone when it dies on it (meters; its ball is about this round).
 const SHOT_EDGE := 0.15
@@ -257,11 +270,16 @@ func step(dt: float) -> void:
 			i = shots.size() - 1
 			continue
 		var s := shots[i]
+		if s.frozen:
+			i -= 1
+			continue
 		if s.homing > 0.0 and player.alive():
 			s.homing -= dt
 			var want := s.vel.angle_to(player.pos - s.pos)
 			s.vel = s.vel.rotated(clampf(want, -s.turn * dt, s.turn * dt))
 			s.turn = maxf(0.0, s.turn - s.turn_decay * dt)
+		if s.back_at > 0.0:
+			_returning(s)
 		var to := s.pos + s.vel * dt
 		var arena := horde.arena if horde else null
 		# the room's cover stops every shot but a boss's crescents (cycle C12, BUG-015): it dies on the stone with a spark
@@ -295,7 +313,7 @@ func step(dt: float) -> void:
 					hit_player.emit(s.damage, s.pos - s.vel.normalized())
 					fx.burst(&"soul", Vector3(player.pos.x, HEIGHT, player.pos.y))
 			elif hostile(s):
-				if player.alive() and s.pos.distance_to(player.pos) < s.radius + Player.RADIUS:
+				if player.alive() and s.pos.distance_to(player.pos) < s.radius + Player.RADIUS and not (s.back_at > 0.0 and s.seen.has(player)):
 					var safe := player.invulnerable()
 					last_source = s.source
 					last_by = s.by
@@ -306,13 +324,29 @@ func step(dt: float) -> void:
 					if s.status != &"" and not safe:
 						status_player.emit(s.status)
 					fx.burst(&"curse" if s.kind == Kind.CURSE else &"spark", Vector3(s.pos.x, HEIGHT, s.pos.y))
-					gone = true
+					if s.back_at > 0.0:
+						s.seen[player] = true  # (the axe goes on: it hurts again on the way back)
+					else:
+						gone = true
 			else:
+				if curse_cut and (s.kind == Kind.WAVE or s.kind == Kind.SPARK):
+					_cut_curses(s)
 				horde.in_circle(s.pos, s.radius, _found)
-				for e in _found:
-					if not s.seen.has(e):
-						s.seen[e] = true
-						shot_hit.emit(e, s)
+				if s.stops:
+					# it ends on the nearest enemy it touches, once
+					var first: Enemy = null
+					for e in _found:
+						if not s.seen.has(e) and (first == null or e.pos.distance_squared_to(s.pos) < first.pos.distance_squared_to(s.pos)):
+							first = e
+					if first != null:
+						s.seen[first] = true
+						gone = true
+						shot_hit.emit(first, s)
+				else:
+					for e in _found:
+						if not s.seen.has(e):
+							s.seen[e] = true
+							shot_hit.emit(e, s)
 		if gone:
 			if shots.has(s):
 				_release(s)
@@ -320,6 +354,40 @@ func step(dt: float) -> void:
 		else:
 			_place(s)
 		i -= 1
+
+
+## The axe of a Lançador: its line of the way back shows ThrowRules.RETURN_WARN s before it turns, and at the turn it flies back along
+## the same line (the paladin can be hurt again).
+func _returning(s: Shot) -> void:
+	if not s.back_warned and s.age >= ThrowRules.warn_age(s.back_at) and horde != null and horde.ground != null:
+		s.back_warned = true
+		var way := s.vel.normalized()
+		var length := s.pos.distance_to(s.origin) + s.vel.length() * maxf(0.0, s.back_at - s.age)
+		horde.ground.add_aim_warning(s.origin, way, length, RETURN_LINE, maxf(0.05, s.back_at - s.age), 0.0)
+	if s.age >= s.back_at:
+		s.back_at = 0.0
+		s.vel = -s.vel
+		s.seen.erase(player)
+		s.back_warned = true
+		Audio.play(&"ward")
+
+
+## Width of the thin line that shows the axe's way back.
+const RETURN_LINE := 0.3
+
+
+## C1d: a wave of the paladin undoes every curse it touches (its life ends here: it is gone on its own step).
+func _cut_curses(w: Shot) -> void:
+	for o in shots:
+		if o.kind == Kind.CURSE and o.life > 0.0 and o.pos.distance_to(w.pos) < w.radius + o.radius + CUT_SLACK:
+			o.life = 0.0
+			fx.burst(&"spark", Vector3(o.pos.x, HEIGHT, o.pos.y))
+			Audio.play(&"ward")
+			curse_cut_at.emit(o.pos)
+
+
+## Meters more than the two radii within which a wave still touches a curse (it flies 22 m/s: a frame is 0.37 m).
+const CUT_SLACK := 0.5
 
 
 ## Who fired a shot, for the run's log: its kind (EnemyDef.id), or "morvath" for the boss's own.

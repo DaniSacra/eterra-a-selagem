@@ -457,3 +457,11 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - Bugs: B1 era `tools/title_flow_check.gd` lendo a placa da Forja numa conta nova, onde a estação está fechada (HubGate) e não
   tem placa; o check abre a Forja antes. B2: `MAGICK_GLYPH` agora 107 (era 105, o do Brado); `tests/test_hud_lote2.gd` trava ids únicos.
 
+
+## Cartela do título da sala (Lote N1, 2.4, 2026-11-22; testes em `tests/test_hud_place_card.gd`)
+- Defeito: na Fonte a barra do Sacerdote Ancião caía em cima do nome da sala (o nome ficava a 42 px fixos sob a caixa da
+  barra, que tem mais que isso). Agora `Hud._place_phase_box` põe o bloco sob a barra pela altura real (`get_combined_minimum_size`
+  + `PHASE_GAP`), todo quadro; sem barra do chefe, fica sob o relógio (`PLACE_TOP`).
+- O nome da sala vira cartela (`Hud._style_phase(true)`): marfim, 24 px, entre dois filetes de ouro (`GoldRule`, 300 px), sem caixa;
+  dura `PLACE_TIME` 2,5 s. A fase do chefe continua em ouro 18 px sem filetes. O nome do chefe já é Cinzel (versalete natural).
+- Só interface: mesma semente dá o mesmo `RESULT`. Capturar: Fonte com o Ancião e uma sala de luta, 720 e 1080.

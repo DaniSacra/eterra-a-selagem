@@ -15,6 +15,21 @@ static func against_armor(armor: float, amount: float) -> Array[float]:
 	return [maxf(0.0, armor - amount), 0.0]
 
 
+## Blows that take a real chunk of a tough armor (EnemyDef.armor_soft): the finisher, the special's wave, the dash cut, the
+## Omegas, the Brado's shout and the ultimates. The common light blows (cut1, cut2, the fourth thrust) and the zones' ticks are not.
+const STRONG_TAGS: Array[StringName] = [&"finisher", &"heavy", &"wave", &"dash", &"omega", &"ultimate", &"shout"]
+
+
+## The share of a blow that reaches armor with `soft` (1: all of it): only a strong blow takes it all.
+static func armor_scale(soft: float, tags: Array[StringName]) -> float:
+	if soft >= 1.0:
+		return 1.0
+	for t in STRONG_TAGS:
+		if tags.has(t):
+			return 1.0
+	return soft
+
+
 ## base: the move's damage. bonus_pct: sum of percentage bonuses from gifts (0.2 = +20%).
 ## launched: target is in the air. frozen + shatter_pct: breaking a frozen target adds that share.
 ## undead + undead_mult: the Luz gift against the risen dead.

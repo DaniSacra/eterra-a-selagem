@@ -89,7 +89,11 @@ const GLINT_POOL := 4
 const GLINT_SIZE := 13.0
 ## Seconds the glint takes to burst and fade after its hold.
 const GLINT_BURST := 0.16
-const CRESCENT_POOL := 6
+const CRESCENT_POOL := 8
+## N2 (identidade_c1v 2.3): a finisher's second crescent, a thin line of old gold only, this much bigger and late (a
+## slower head: the sweep share it takes) so the third blow reads apart from the first in a still frame.
+const CRESCENT_ECHO_SIZE := 1.2
+const CRESCENT_ECHO_SWEEP := 1.35
 ## A finisher's crescent flies out to this many times the reach of the blow while it fades.
 const CRESCENT_GROW := 1.5
 ## Seconds it lasts (the light edge goes in the first half, the ink lingers).
@@ -136,6 +140,10 @@ const SLASH_TAIL_DEGREES := 170.0
 const SLASH_GOLD := 0.45
 const SLASH_CORE := Vector2(0.7, 0.4)
 const RING_POOL := 16
+## How a ring of the pool ages: it opens and fades on its own (a burst), the caller moves it (a wave), or it fades where it is.
+const RING_OPEN := 0
+const RING_HELD := 1
+const RING_FADE := 2
 const BEAM_POOL := 24
 const NUMBER_POOL := 32
 ## Damage numbers and floating words: font sizes in pixels at 720 lines (small and white, as in the references)
@@ -558,6 +566,8 @@ func burst(kind: StringName, pos: Vector3, dir: Vector3 = Vector3.ZERO) -> void:
 	elif kind == &"bone":
 		# V-14: a dead one goes up as ash: one dark grey wisp rising about 1 m in 0.6 s
 		wisps(pos, Vector3.UP, DEATH_ASH, 1, 1.4, 0.55, 0.6, 0.2, 0.6)
+		# N2: the bone dust curls up short and settles (a pale wisp, wide, slow, never above the floor's light + 25)
+		wisps(pos - Vector3.UP * 0.3, Vector3.UP, BONE_DUST, 2, 0.9, 0.4, 1.4, 1.6, 0.15)
 
 
 ## Smoke wisps (vfx_pass_spec.md 5.6, wisp.gdshader): soft torn cards that rise (rise m/s2 up), widen and come apart,
@@ -609,6 +619,9 @@ const NUMBER_POP := 1.3
 const NUMBER_POP_TIME := 0.08
 ## V-14: the grey of the wisp a dead one leaves (value 0.25).
 const DEATH_ASH := Color(0.25, 0.24, 0.23)
+const BONE_DUST := Color(0.34, 0.32, 0.28)
+## N2: the Quebra's word is smaller than its ring (identidade_c1v 2.3).
+const POISE_WORD_SIZE := 15
 ## P1-4: the most his light slivers rise over where they start (m; the burst starts at 0.4 m, his shoulder is near 2.1)
 ## and how fast they fall (m/s2).
 const HERO_LIGHT_TOP := 0.9
@@ -881,6 +894,27 @@ func crescent(origin: Vector2, dir: Vector2, reach: float, width_deg: float, col
 	mat.set_shader_parameter(&"body_light", CRESCENT_BODY)
 	mat.set_shader_parameter(&"sweep", clampf(Feel.live().slash_sweep_time / CRESCENT_TIME, 0.05, 0.5))
 	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(gold.lerp(Color.WHITE, 0.45)))
+	if deg < CRESCENT_SPIN:
+		_crescent_echo(origin, dir, r * CRESCENT_ECHO_SIZE, deg, height, mat)
+
+
+## The finisher's second crescent: only the gold edge (no body, no ink), bigger and a few frames behind the first.
+func _crescent_echo(origin: Vector2, dir: Vector2, reach: float, deg: float, height: float, first: ShaderMaterial) -> void:
+	var e: Dictionary = _take(_crescents)
+	_place_arc(e, _arc(reach, deg, CRESCENT_INNER), origin, dir, height, 0.0)
+	(e.node as Node3D).scale = Vector3.ONE
+	e.time = CRESCENT_TIME
+	var mat: ShaderMaterial = e.mat
+	mat.set_shader_parameter(&"color", GOLD)
+	mat.set_shader_parameter(&"t", 0.0)
+	mat.set_shader_parameter(&"ink_opacity", 0.0)
+	mat.set_shader_parameter(&"body_light", 0.0)
+	mat.set_shader_parameter(&"band_m", reach * (1.0 - CRESCENT_INNER))
+	mat.set_shader_parameter(&"head_m", reach * (1.0 - CRESCENT_INNER) * CRESCENT_TAIL)
+	mat.set_shader_parameter(&"tail_m", reach * (1.0 - CRESCENT_INNER) * CRESCENT_TAIL * 0.5)
+	mat.set_shader_parameter(&"edge_pale", 0.35)
+	mat.set_shader_parameter(&"sweep", clampf(float(first.get_shader_parameter(&"sweep")) * CRESCENT_ECHO_SWEEP, 0.05, 0.6))
+	mat.set_shader_parameter(&"peak", ScreenTone.linear_peak(GOLD.lerp(Color.WHITE, 0.3)))
 
 
 ## Morvath's Sepulchral Scythe: the blade crosses the half circle from origin along dir (reach m, degrees wide) in
@@ -968,10 +1002,40 @@ func ring(center: Vector2, radius: float, color: Color, time: float = 0.35, heig
 	mi.position = Vector3(center.x, height, center.y)
 	r.size = radius
 	r.grow = 1.0
+	r.mode = RING_OPEN
 	mi.scale = Vector3.ONE * radius * 0.3
 	(r.mat as ShaderMaterial).set_shader_parameter(&"color", color)
 	(r.mat as ShaderMaterial).set_shader_parameter(&"band", 0.035 if thin else 0.08)
 	(r.mat as ShaderMaterial).set_shader_parameter(&"fill", 0.0 if thin else 0.18)
+	r.time = time
+
+
+## A wave ring the caller moves (the knight's shield wave): a thin band at `radius` that stays until `wave_end`. The
+## round ring is allowed here because it is a moving wave, never a mark on the floor (Daniel, 2026-11-23).
+func wave_ring(center: Vector2, color: Color, height: float = 0.16) -> Dictionary:
+	var r: Dictionary = _take(_rings)
+	var mi: MeshInstance3D = r.node
+	mi.position = Vector3(center.x, height, center.y)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"color", color)
+	(r.mat as ShaderMaterial).set_shader_parameter(&"fill", 0.0)
+	r.mode = RING_HELD
+	r.size = 1.0
+	r.time = 0.3
+	wave_ring_set(r, 1.0, 0.8)
+	return r
+
+
+## Sets the held ring's radius and the band's width in meters (the shader's band is a share of the radius).
+func wave_ring_set(r: Dictionary, radius: float, thick: float) -> void:
+	r.size = radius
+	(r.node as Node3D).scale = Vector3.ONE * radius
+	(r.mat as ShaderMaterial).set_shader_parameter(&"band", clampf(thick / maxf(radius, 0.1), 0.02, 0.6))
+	(r.mat as ShaderMaterial).set_shader_parameter(&"life", 0.0)
+
+
+## The held ring fades where it is, in `time` seconds.
+func wave_end(r: Dictionary, time: float = 0.25) -> void:
+	r.mode = RING_FADE
 	r.time = time
 
 
@@ -1190,7 +1254,7 @@ func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: i
 
 func word(pos: Vector3, text: String, color: Color) -> void:
 	var i := _tally.add_word(pos + _jitter(), color)
-	_show_label(i, text, color, WORD_SIZE)
+	_show_label(i, text, color, POISE_WORD_SIZE if text == T.t(&"word_poise") else WORD_SIZE)
 
 
 ## Gold picked up (UI review d2ff05d, P1-3): "+N ouro" in a pale old gold, smaller than a damage number; gold that
@@ -1378,7 +1442,13 @@ func animate(delta: float) -> void:
 			(c.mat as ShaderMaterial).set_shader_parameter(&"t", c.life)
 	for r in _rings:
 		if (r.node as Node3D).visible:
+			if r.get("mode", RING_OPEN) == RING_HELD:
+				continue  # (a wave the caller moves: it keeps its own radius)
 			_age(r, delta)
+			if r.get("mode", RING_OPEN) == RING_FADE:
+				(r.node as Node3D).scale = Vector3.ONE * r.size
+				(r.mat as ShaderMaterial).set_shader_parameter(&"life", r.life)
+				continue
 			var k: float = 1.0 - pow(1.0 - r.life, 3.0)
 			(r.node as Node3D).scale = Vector3.ONE * r.size * lerpf(0.3, 1.0, k)
 			(r.mat as ShaderMaterial).set_shader_parameter(&"life", r.life)

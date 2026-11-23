@@ -48,6 +48,11 @@ var _legs := 0.0
 var _struck := false
 ## Seconds left before a move may start again, by id (ComboNode.cooldown).
 var _cooldowns: Dictionary[StringName, float] = {}
+## The share of a move's cooldown taken off when it is armed (0 to 0.5; GiftState.cooldown_cut, set by HeroGifts).
+var cooldown_cut := 0.0
+## C1c: how long each running cooldown has run and how long it was armed for (cooldown_refund keeps a floor).
+var _cd_age: Dictionary[StringName, float] = {}
+var _cd_total: Dictionary[StringName, float] = {}
 
 
 func _init(combo_tree: ComboTree) -> void:
@@ -121,6 +126,18 @@ func hold_for(seconds: float) -> void:
 	_held = maxf(_held, seconds)
 
 
+## C1c: takes `seconds` off a running cooldown, but never so that the move waits less than `floor_total` seconds in all
+## (or less than the cooldown it was armed with, when that is shorter). Nothing when the move is ready. Returns the seconds taken.
+func cooldown_refund(id: StringName, seconds: float, floor_total: float) -> float:
+	if not _cooldowns.has(id) or seconds <= 0.0:
+		return 0.0
+	var min_left := maxf(0.0, minf(floor_total, _cd_total.get(id, 0.0)) - _cd_age.get(id, 0.0))
+	var left: float = _cooldowns[id]
+	var taken := clampf(left - min_left, 0.0, seconds)
+	_cooldowns[id] = left - taken
+	return taken
+
+
 ## Seconds left before this move may start again.
 func cooldown_left(id: StringName) -> float:
 	return _cooldowns.get(id, 0.0)
@@ -175,6 +192,7 @@ func reset(clear_cooldowns: bool = true) -> void:
 func step(dt: float) -> void:
 	for id: StringName in _cooldowns.keys():
 		_cooldowns[id] -= dt
+		_cd_age[id] = _cd_age.get(id, 0.0) + dt
 		if _cooldowns[id] <= 0.0:
 			_cooldowns.erase(id)
 	_struck = false
@@ -198,7 +216,9 @@ func step(dt: float) -> void:
 				phase = Phase.RECOVERY
 				_t += node.recovery
 				if node.cooldown > 0.0:
-					_cooldowns[node.id] = node.cooldown
+					_cooldowns[node.id] = node.cooldown * (1.0 - clampf(cooldown_cut, 0.0, 0.5))
+					_cd_total[node.id] = _cooldowns[node.id]
+					_cd_age[node.id] = 0.0
 				_legs = node.legs_held()
 				_struck = true
 				move_hit.emit(node)

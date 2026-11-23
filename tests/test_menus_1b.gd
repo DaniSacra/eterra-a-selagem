@@ -125,9 +125,9 @@ func test_blessings_are_grouped_and_a_full_hand_scrolls() -> void:
 	_holder().add_child(panel)
 	panel.open()
 	await wait_process_frames(3)
-	assert_eq((panel.rows[BoonsScreen.Group.ACTIONS] as Array).size(), 4, "one on each action")
+	assert_eq((panel.rows[BoonsScreen.Group.ACTIONS] as Array).size(), 5, "one on each action (BO-2: the Redemoinho rides on the Investida now)")
 	assert_eq((panel.rows[BoonsScreen.Group.ELOS] as Array).size(), 6)
-	assert_eq((panel.rows[BoonsScreen.Group.AUTO] as Array).size(), state.owned().size() - 10)
+	assert_eq((panel.rows[BoonsScreen.Group.AUTO] as Array).size(), state.owned().size() - 11)
 	for b in state.owned():
 		var g := BoonsScreen.group_of(b)
 		assert_true((panel.rows[g] as Array).any(func(r: Control) -> bool: return r.name == b.id), "%s in its group" % b.id)

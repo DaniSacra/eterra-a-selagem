@@ -94,7 +94,7 @@ func test_corte_sismico_strikes_the_floor_round_him() -> void:
 	var reach := Combat.swing_shape(spin, 0.0).hit_reach as float
 	assert_lt(reach, 4.0, "out of the spin's own reach")
 	game.combat.strike(spin, Vector2.ZERO, Vector2.RIGHT)
-	assert_almost_eq(far.hp, 9999.0 - 25.0, 2.0, "the pulse reached it")
+	assert_almost_eq(far.hp, 9999.0 - 15.0, 2.0, "the pulse reached it")
 
 
 func test_onda_gemea_throws_two_at_the_sides() -> void:

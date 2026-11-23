@@ -21,6 +21,10 @@ uniform float bands = 0.0;
 uniform float band_count = 5.0;
 // Share of the card at each of its four edges where the alpha fades out (art review 2026-11-21 item 1: no straight edge; 0: off, the classic look).
 uniform float edge_fade = 0.0;
+// C1V (N1, 2.1), the hall's banks in the stylized look (0: off, every other bank): how much the bank is cut into brush strokes
+// (long and level, a ragged edge, not a smooth one) and how many across the card.
+uniform float brush = 0.0;
+uniform vec2 brush_scale = vec2(3.0, 13.0);
 
 float hash1(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
@@ -69,6 +73,11 @@ void fragment() {
 		// long level streaks, each drifting its own way, thinner toward the top of the bank
 		float streak = noise(vec2(UV.x * 2.3 + TIME * drift * 2.0, UV.y * band_count)) * 0.65 + noise(vec2(UV.x * 6.1 - TIME * drift, UV.y * band_count * 2.3 + 4.0)) * 0.35;
 		a *= mix(1.0, smoothstep(0.38, 0.62, streak) * 1.6, bands);
+	}
+	if (brush > 0.0) {
+		float stroke = noise(vec2(UV.x * brush_scale.x + TIME * drift, UV.y * brush_scale.y)) * 0.7
+			+ noise(vec2(UV.x * brush_scale.x * 2.7 - TIME * drift * 1.3 + 8.0, UV.y * brush_scale.y * 0.6)) * 0.3;
+		a *= mix(1.0, smoothstep(0.34, 0.56, stroke + (n - 0.5) * 0.3) * 1.35, brush);
 	}
 	ALPHA = a;
 }

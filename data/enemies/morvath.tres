@@ -1,9 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_w4bhg"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_iqcvf"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_nradf"]
 
 [resource]
-script = ExtResource("1_w4bhg")
+script = ExtResource("2_nradf")
 id = &"morvath"
 name_key = &"enemy_morvath"
 model = &"morvath"

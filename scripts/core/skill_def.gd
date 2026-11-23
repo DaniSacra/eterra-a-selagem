@@ -19,7 +19,17 @@ enum Kind {
 	CONSECRATE,
 }
 
+## What sets the skill off. AUTO: on its own every `cooldown` seconds (the Blessings of the five angels not yet done and the
+## reserve). The others (BO-1, BO-2): a button of the hero; the skill fires when that move lands, never alone, and again
+## only after `gap` seconds (a Blessing of a button changes that button).
+enum Trigger { AUTO, FINISHER, OMEGA, SPECIAL, SHOUT, RUSH, DODGE, ULT }
+
 @export var kind: Kind = Kind.STRIKES
+@export var trigger: Trigger = Trigger.AUTO
+## Seconds the skill lasts once fired (an orbit that turns, the ground that burns). Per level, as the rest.
+@export var duration: PackedFloat32Array = PackedFloat32Array([0.0])
+## Seconds before a button may set the skill off again.
+@export var gap: PackedFloat32Array = PackedFloat32Array([0.0])
 @export var cooldown: PackedFloat32Array = PackedFloat32Array([4.0])
 @export var damage: PackedFloat32Array = PackedFloat32Array([20.0])
 @export var count: PackedFloat32Array = PackedFloat32Array([1.0])
@@ -49,6 +59,19 @@ func damage_at(level: int, mult: float = 1.0) -> float:
 	if level <= 0 or damage.is_empty():
 		return 0.0
 	return damage[0] * mult + get_damage(level) - damage[0]
+
+
+func get_duration(level: int) -> float:
+	return at(duration, level)
+
+
+func get_gap(level: int) -> float:
+	return at(gap, level)
+
+
+## True when no button sets the skill off: it acts on its own.
+func alone() -> bool:
+	return trigger == Trigger.AUTO
 
 
 func get_count(level: int) -> int:

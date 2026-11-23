@@ -43,7 +43,7 @@ signal cue(name: StringName, at: Vector2, dir: Vector2, size: float, seconds: fl
 ## each of those dead falling and when it ends (left 0). Also readable at any time: ritual_left(), ritual_total().
 signal ritual_changed(left: int, total: int)
 
-enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER }
+enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER, RUPTURE }
 
 ## T5b P1-4 (docs/qa/t5b_boss_fight.md): his body turns at most BODY_TURN degrees a second toward where he faces (e.dir,
 ## which his attacks still set at once: the warnings and the blows do not move); it snapped 100 to 137 degrees in one
@@ -190,6 +190,11 @@ var _t := 0.0
 var _step := 0
 var _mark := 0.0
 var _cooldown := 1.0
+## Cadence (RESULT boss.idle): the walk between a recovery and the next attack, IdleStats. _chase_gap counts it (-1: this
+## walk follows a roar, a stun or the ritual, an earned opening, and is not counted).
+var idle := IdleStats.new()
+var _chase_gap := -1.0
+var _dead := -1.0
 var _dir := Vector2.DOWN
 var _dirs := PackedVector2Array()
 ## The warnings of the blow being wound up, turned with it while it follows the paladin (_follow).
@@ -199,6 +204,11 @@ var _from := Vector2.ZERO
 ## Q-09 (b): where the Blades' step back ends (he goes from _from to it over def.blade_step_time).
 var _back_to := Vector2.ZERO
 var _stagger := 0
+## C1d, the Postura: what is left of it, seconds since a blow wore it, and the seconds he is exposed (x posture_vuln).
+var _posture := 0.0
+var _posture_idle := 0.0
+## C1d, the Ruptura: seconds to the next one (counts down in its phase).
+var _rupture_left := 0.0
 var _stagger_t := 0.0
 var _stun_time := 0.0
 var _ritual_done := false
@@ -282,6 +292,12 @@ func setup(g: Game, enemy_def: EnemyDef) -> void:
 		room.call(&"set_phase", phase)
 	g.combat.enemy_struck.connect(_on_struck)
 	g.horde.killed.connect(_on_killed)
+	g.horde.boss_blow.connect(_on_blow)
+	g.projectiles.curse_cut = def.curse_cut
+	g.projectiles.curse_cut_at.connect(func(_at: Vector2) -> void: stats.curses_cut = int(stats.get("curses_cut", 0)) + 1)
+	_posture = def.posture
+	_rupture_left = def.rupture_first
+	g.horde.boss_vuln = def.posture_vuln
 	# his entrance stays on the floor (GP-01 of cycle C12c): the cyan column over him left him a black shape for a
 	# second; a ring of his spectral light and souls at his feet, nothing at the height of his body
 	g.fx.burst(&"soul", Vector3(e.pos.x, ENTRANCE_SOULS, e.pos.y))
@@ -333,6 +349,10 @@ func _advance(dt: float) -> void:
 	_stagger_t -= dt
 	if _stagger_t <= 0.0:
 		_stagger = 0
+	_step_posture(dt)
+	_tally_idle(dt)
+	if phase >= def.rupture_phase and state != State.ENTER and state != State.ROAR:
+		_rupture_left -= dt
 	director.step(dt)
 	_track_player(dt)
 	_step_rising(dt)
@@ -347,7 +367,7 @@ func _advance(dt: float) -> void:
 			return
 	if phase >= def.final_light_phase:
 		_step_final(dt)
-	if state == State.ERUPTIONS or state == State.SUMMON or state == State.STORM or state == State.RECOVER:
+	if state == State.ERUPTIONS or state == State.SUMMON or state == State.STORM or state == State.RECOVER or state == State.RUPTURE:
 		e.dir = e.dir.slerp(toward, minf(1.0, dt * FOLLOW_RATE))
 	match state:
 		State.ENTER:
@@ -372,7 +392,10 @@ func _advance(dt: float) -> void:
 			else:
 				_anim(&"idle")
 			if _cooldown <= 0.0 and game.player.alive() and not _shots_flying():
-				_choose(to.length())
+				if BossRules.rupture_due(phase, def.rupture_phase, def.rupture_every, _rupture_left):
+					_start_rupture()
+				else:
+					_choose(to.length())
 		State.SCYTHE:
 			_step_scythe(dt, to, toward)
 		State.REAP:
@@ -393,6 +416,8 @@ func _advance(dt: float) -> void:
 			_step_dash()
 		State.RECOVER:
 			_step_recover()
+		State.RUPTURE:
+			_step_rupture(dt)
 		State.ROAR:
 			_anim(&"roar")
 			if _t >= def.roar_time:
@@ -421,6 +446,8 @@ func _advance(dt: float) -> void:
 			if _t >= _stun_time:
 				_stagger = 0
 				e.armor = e.max_armor
+				_posture = def.posture
+				e.broken_t = 0.0
 				_rest(0.5)
 	_step_layers(dt)
 	# he stops at the paladin's body like everyone (his charge goes through: it is the blow)
@@ -693,7 +720,6 @@ func _step_blades(dt: float) -> void:
 		_dirs = BossRules.soul_pair(aim, def.blade_spread, 1.0 if _rng.randf() < 0.5 else -1.0)
 		e.dir = (_dirs[0] + _dirs[1]).normalized()
 		_dir = _dirs[0]
-		_follow_zones.clear()
 		for d in _dirs:
 			_follow_zones.append(_warn(game.ground.add_line_warning(e.pos, d, _lane(d, def.blade_range), def.blade_width, windup, 0.0)))
 		e.pos = _from
@@ -905,6 +931,41 @@ func _step_eruptions() -> void:
 		_recover(def.eruption_recovery, &"idle")
 
 
+## C1d, the Ruptura: the whole floor warns rupture_windup s (a circle of the floor's reach round his middle: no free lane, and the
+## only one with no way out but the Brado, or a dodge's frames in the last of it); then he stands exposed rupture_window s.
+func _start_rupture() -> void:
+	_rupture_left = def.rupture_every
+	var counts: Dictionary = stats.attacks
+	counts[&"rupture"] = int(counts.get(&"rupture", 0)) + 1
+	stats.ruptures = int(stats.get("ruptures", 0)) + 1
+	_attack = &"rupture"
+	_go(State.RUPTURE)
+	moment.emit(&"attack:rupture")
+
+
+func _step_rupture(dt: float) -> void:
+	_gathering(dt, e.pos + Vector2(0, 0), VIOLET)
+	if _step == 0:
+		_step = 1
+		var b := _floor.bounds()
+		var reach := maxf(b.size.x, b.size.y) * 0.5
+		var z := game.ground.add_warning(_middle, reach, def.rupture_windup, def.rupture_damage, VIOLET)
+		z.eruption = true
+		z.source = &"rupture"
+		game.fx.ring(e.pos, 3.0, VIOLET, def.rupture_windup, 0.15, true)
+		game.fx.shake(1.5)
+		Audio.play(&"eruption")
+		cue.emit(&"rupture_gather", e.pos, Vector2.ZERO, reach, def.rupture_windup)
+	_pose(&"rain_wave", clampf(_t / def.rupture_windup, 0.0, 1.0))
+	if _t >= def.rupture_windup:
+		# it landed: he stays exposed, his Postura gone and refilled when the window closes
+		e.broken_t = def.rupture_window
+		_posture = def.posture
+		game.fx.shake(3.0)
+		game.fx.ring(e.pos, 9.0, VIOLET, 0.5, 0.15, true)
+		_recover(def.rupture_window, &"idle")
+
+
 ## One volley of eruptions; its free lane points at `toward` (the middle of the floor, or a layer's way out).
 func _erupt(toward := Vector2.INF, count := Vector2i.ZERO) -> void:
 	if toward == Vector2.INF:
@@ -1084,7 +1145,7 @@ func _step_recover() -> void:
 		# wait for the first blow to be gone (its shots, its warnings): then the second keeps its whole warning
 		return
 	else:
-		_rest()
+		_rest(0.0, true)
 
 
 ## His warnings still on the floor.
@@ -1257,7 +1318,7 @@ func _step_ritual(dt: float, toward: Vector2) -> void:
 		_ritual_more = def.ritual_reinforce_every
 		if _call(def.ritual_reinforce, e.pos, def.ritual_ring, def.ritual_cap, def.summon_windup, true, false) > 0:
 			Audio.play(&"summon")
-	if BossRules.ritual_over(_ritual_t, def.ritual_time, _raised.size(), _standing(_raised), _rising_ritual()):
+	if BossRules.ritual_over(_ritual_t, BossRules.ritual_limit(def.ritual_time, def.ritual_shorten, conductors_dead()), _raised.size(), _standing(_raised), _rising_ritual()):
 		_end_ritual()
 
 
@@ -1287,6 +1348,20 @@ func _end_ritual() -> void:
 func _record_ritual() -> void:
 	stats.ritual = snappedf(_ritual_t, 0.1)
 	stats.ritual_raised = _raised.size()
+
+
+## C1d: how many of the ritual's conductors (BossDef.ritual_conductors among its first dead) have fallen.
+func conductors_dead() -> int:
+	var n := 0
+	for r in _raised:
+		if not r.alive and def.ritual_conductors.has(r.def.id):
+			n += 1
+	return n
+
+
+## C1d: seconds the ritual has left now (its limit less what the conductors' fall cut).
+func ritual_time_left() -> float:
+	return maxf(0.0, BossRules.ritual_limit(def.ritual_time, def.ritual_shorten, conductors_dead()) - _ritual_t)
 
 
 ## True while the ritual's shield stands (the HUD draws his bar shielded).
@@ -1406,7 +1481,7 @@ func _on_struck(target: Enemy, tags: Array[StringName], _damage: float) -> void:
 	if state == State.RECOVER and not _punished:
 		_punished = true
 		stats.punished = int(stats.punished) + 1
-	if phase < def.stagger_from_phase or state in [State.STUNNED, State.ROAR, State.RITUAL, State.TO_CENTER, State.DYING]:
+	if def.posture > 0.0 or phase < def.stagger_from_phase or state in [State.STUNNED, State.ROAR, State.RITUAL, State.TO_CENTER, State.DYING]:
 		return
 	if not tags.has(&"heavy") or tags.has(&"mark"):
 		return
@@ -1414,6 +1489,45 @@ func _on_struck(target: Enemy, tags: Array[StringName], _damage: float) -> void:
 	_stagger_t = def.stagger_forget
 	if _stagger >= def.stagger_hits:
 		_stun(def.stagger_time)
+
+
+## C1d: the buttons of the paladin wear his Postura as they wear a common's Quebra (Feel.poise_weights, a share of the
+## full bar, here times posture_mult); at 0 he kneels posture_stun seconds, his attack cut, taking posture_vuln more.
+func _on_blow(target: Enemy, source: StringName) -> void:
+	if target != e or def.posture <= 0.0 or not _posture_open():
+		return
+	var shr := Poise.share(source, Feel.live().poise_weights) * def.posture_mult
+	if shr <= 0.0:
+		return
+	_posture = Poise.wear(_posture, def.posture, shr)
+	_posture_idle = 0.0
+	if _posture > 0.0:
+		return
+	var key := "boss_" + String(source)
+	var breaks: Dictionary = game.horde.breaks
+	breaks[key] = int(breaks.get(key, 0)) + 1
+	stats.posture_breaks = int(stats.get("posture_breaks", 0)) + 1
+	_cancel()
+	e.broken_t = def.posture_stun
+	_stun(def.posture_stun)
+
+
+## His Postura takes blows: not while he kneels, roars, walks to the middle, is under the shield or falls.
+func _posture_open() -> bool:
+	return not (state in [State.STUNNED, State.RUPTURE, State.ENTER, State.ROAR, State.RITUAL, State.TO_CENTER, State.DYING]) and e.broken_t <= 0.0
+
+
+func _step_posture(dt: float) -> void:
+	if def.posture <= 0.0:
+		return
+	e.broken_t = maxf(0.0, e.broken_t - dt)
+	_posture_idle += dt
+	_posture = Poise.settle(_posture, def.posture, _posture_idle, def.posture_idle)
+
+
+## What is left of his Postura, 0 to 1 (the HUD's yellow bar over his life; 0 when he has none).
+func posture_ratio() -> float:
+	return clampf(_posture / def.posture, 0.0, 1.0) if def.posture > 0.0 else 0.0
 
 
 func _stun(seconds: float) -> void:
@@ -1451,6 +1565,8 @@ func _on_killed(dead: Enemy) -> void:
 	if dead != e:
 		if state == State.RITUAL and _raised.has(dead):
 			ritual_changed.emit(ritual_left(), _ritual_total)
+			if def.ritual_shorten > 0.0 and def.ritual_conductors.has(dead.def.id):
+				game.fx.word(Vector3(dead.pos.x, 3.0, dead.pos.y), T.t(&"word_conductor"), SPECTRAL)
 		return
 	state = State.DYING
 	_t = 0.0
@@ -1554,6 +1670,22 @@ func _step_dying(dt: float) -> void:
 # ---------- small helpers ----------
 
 func _go(next: State) -> void:
+	if next == State.DYING:
+		stats.idle = idle.report()
+	if next == State.CHASE and state == State.RECOVER:
+		_chase_gap = 0.0
+	elif state == State.CHASE and _chase_gap >= 0.0 and next != State.CHASE:
+		idle.add_gap(_chase_gap)
+		if _dead >= 0.0:
+			idle.add_dead(_dead)
+		stats.idle = idle.report()
+		_chase_gap = -1.0
+	elif next != State.CHASE:
+		_chase_gap = -1.0
+	if next == State.RECOVER:
+		_dead = 0.0
+	elif next != State.CHASE:
+		_dead = -1.0
 	state = next
 	_held = false
 	_t = 0.0
@@ -1569,10 +1701,28 @@ func _go(next: State) -> void:
 	e.shake = 0.0
 
 
+## One step of the cadence count: walking after a recovery is idle; roar, stun, ritual and the walk after them are
+## earned openings and are left out; a recovery or an attack is no idle.
+func _tally_idle(dt: float) -> void:
+	var walking := state == State.CHASE and _chase_gap >= 0.0
+	var earned := state in [State.ENTER, State.ROAR, State.TO_CENTER, State.RITUAL, State.STUNNED, State.DYING] \
+		or (state == State.CHASE and _chase_gap < 0.0)
+	idle.tick(dt, walking, earned, state == State.RECOVER)
+	if walking:
+		_chase_gap += dt
+	if (walking or state == State.RECOVER) and _dead >= 0.0:
+		_dead += dt
+	if Engine.get_physics_frames() % 60 == 0:
+		stats.idle = idle.report()
+
+
 ## Back to walking; the next attack comes after the phase's rest (plus `extra`).
-func _rest(extra: float = 0.0) -> void:
+func _rest(extra: float = 0.0, after_attack := false) -> void:
 	_layers.clear()
 	_cooldown = BossDef.by_phase(def.rest, phase, 1.0) + extra
+	if after_attack and def.gap_max > 0.0:
+		# after an attack's recovery the rest is random and shrinks with his life (AttackGap)
+		_cooldown = AttackGap.pick(def.gap_min, def.gap_max, def.gap_min0, def.gap_max0, e.hp / maxf(e.max_hp, 1.0), _rng)
 	_attack = &""
 	_go(State.CHASE)
 

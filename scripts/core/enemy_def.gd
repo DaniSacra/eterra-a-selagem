@@ -9,7 +9,15 @@ extends Resource
 ## Daniel, 2026-11-16). KNIGHT: charges along a long line, and slams the ground (close_*) when the paladin is near.
 ## PRIEST: raises skeletons and shoots a fan of orbs.
 ## PULSE: runs in and bursts all around itself. CONE: stops and blasts a wide cone ahead.
-enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE }
+## SWEEP (C5, the Varredor): rooted, it lays a bar of floor along a line (the wind-up shows where it starts and the way it
+## turns) and swings it round itself (sweep_*); within sweep_clear m of it the bar does not hurt.
+## SUPPORT (C1e, the Gritador and the Coveiro): never strikes; keeps attack_range m from the paladin, runs from him closer than
+## retreat_far (flee_speed), and every attack_cooldown s stands attack_windup s and calls: a shout (shout_*), the dead (raise_*) or a
+## spiked plate on the floor (plate_*, the Armadilheiro).
+## BEAM (C1e, lote C, the Canalizador): rooted, it holds a thin beam on the paladin: a line that shows attack_windup s (it follows him, locked the
+## last aim_lock s), then shot_ticks pulses shot_interval s apart of attack_damage on whoever stands in it (attack_width across, attack_range long,
+## none within sweep_clear m of it), the line turning after him at shot_turn degrees a second. A cut (the Quebra) ends it.
+enum Behavior { CHASE, ARCHER, RUNNER, CASTER, KNIGHT, PRIEST, BOSS, PULSE, CONE, SWEEP, SUPPORT, LEAP, BEAM }
 ## What its wind-up shows besides the pose and the warning on the floor (EnemyFx; never red, gone when the attack
 ## is loosed). GLINT: a pale gleam on the raised blade. TREMBLE: dust at its feet (with windup_shake).
 ## ORB: its staff's orb swells and sparks spiral up from it. BOLT: a pale spark at the tip of the bolt as it looses.
@@ -68,6 +76,13 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## When it breaks the enemy staggers for armor_stagger seconds. 0 = no armor.
 @export var armor := 0.0
 @export var armor_stagger := 1.5
+## C1b, the Quebra (Poise): poise a common enemy has, worn by each button's blows (Feel.poise_weights); 0 = none (elites,
+## guardians, bosses and the Trinca keep their own rules). On breaking: stunned poise_stun seconds, its wind-up cut, it takes
+## poise_vuln more damage meanwhile, then the poise is full again; poise_idle seconds with no blow that wore it also refill it.
+@export var poise := 0.0
+@export var poise_stun := 1.2
+@export var poise_vuln := 0.4
+@export var poise_idle := 4.0
 ## GF-12 (D-42, Hades II per enemy): seconds a blow that wounds it stuns it (it stops, a wind-up or an attack under
 ## way is cut and never lands, its warning on the floor goes; Horde.flinch). Hades plays its StunAnimations; their
 ## length is in the animations, not the scripts: ours is the hit pose's (Horde.HURT_TIME). 0: never (Hades
@@ -92,6 +107,13 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## end of its blow (Enemy.State.RECOVER) before it walks again. A blow there stuns it but cuts nothing (the window is
 ## already open). 0: it walks at once.
 @export var recover_time := 0.0
+## Daniel, 2026-11-23: the rest between the end of its recovery and its next wind-up is random, uniform in
+## [gap_min, gap_max] at full life and sliding to [gap_min0, gap_max0] at none (AttackGap; a knight's life is its toughness).
+## gap_max 0: the old rest (Horde.AFTER_RECOVER).
+@export var gap_min := 0.0
+@export var gap_max := 0.0
+@export var gap_min0 := 0.0
+@export var gap_max0 := 0.0
 ## T5-01 (docs/design/combat_cadence.md 6.3): its wind-up is drawn in three beats. Settle: windup_settle seconds, the
 ## body stops and fades from its walk to its guard. Arm: its wind-up clip, eased in and out, until the last
 ## windup_hold share of the wind-up. Hold: that share, the armed pose (or its own *_hold loop) with windup_shake.
@@ -118,6 +140,74 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## KNIGHT: charges in a row (the guardian's second, braced again for recharge_windup where the first one ended).
 @export var charges := 1
 @export var recharge_windup := 0.8
+## KNIGHT and RUNNER (CV-1, CB-4; Daniel, 2026-11-22): the blow's line follows the paladin through its wind-up and
+## holds still for the last aim_lock seconds (0: it is locked from the start, as the shield-bearer's).
+@export var aim_lock := 0.0
+## KNIGHT (CV-2): as the fight opens and every raise_every rows of charges it stops and raises raise_count skeletons, never more than raise_max
+## of its own standing (raise_count 0: it raises none).
+@export var raise_count := 0
+@export var raise_every := 1
+@export var raise_max := 4
+## C1e: whom it raises (an EnemyDef id; the knight and the elder raise the soldier) and, for a SUPPORT, the fewest meters from the paladin a body rises.
+@export var raise_kind: StringName = &"skeleton"
+@export var raise_far := 3.0
+## PRIEST (the Elder, Daniel 2026-11-23): when raise_cd_max > 0 it calls raise_count of its raise_kind (never more than
+## raise_max of its own standing) to the floor's edge, away from the paladin, every raise_cd_min to raise_cd_max seconds
+## (the first after raise_first), instead of raising skeletons round itself every other cast.
+@export var raise_cd_min := 0.0
+@export var raise_cd_max := 0.0
+@export var raise_first := 3.0
+## CB-4 (Daniel, 2026-11-22: each enemy asks for another answer). The share of the paladin's attack its shield stops
+## from the front (the attack's tag &"light"; the Investida, the Omegas and the special go past it), and the seconds the
+## special (&"heavy") leaves its guard open.
+@export var front_block := 0.0
+@export var front_open := 3.0
+## C1d (docs/design/chefes_c1d.md), the guardians' own answers. KNIGHT, guarded by time (K3): every guard_up_every seconds, with
+## its armor over guard_up_armor of the full bar, it raises its shield guard_up_windup s ahead (a signal), then holds it guard_up_time
+## seconds (front_block holds only then), walking at guard_up_walk of its speed and swinging every guard_up_hit_every s at
+## guard_up_hit_range m; the special opens it (front_open); a blow from behind does guard_back_mult times (0: no guard by time).
+@export var guard_up_time := 0.0
+@export var guard_up_every := 14.0
+@export var guard_up_windup := 0.6
+@export var guard_up_armor := 0.5
+@export var guard_up_walk := 0.6
+@export var guard_up_hit_every := 1.6
+@export var guard_up_hit_range := 1.6
+@export var guard_back_mult := 1.5
+@export var guard_up_hit_damage := 12.0
+@export var guard_up_hit_windup := 0.85
+## KNIGHT (K2): when the Brado takes its close slam, it stands open (stunned) this many seconds (0: it does not open).
+@export var ward_open := 0.0
+## KNIGHT (K1): a charge that ends against the arena's wall leaves it stunned and turned away this many seconds (its own
+## collision, never a blow of the paladin's: the F8 rule does not touch it; 0: none).
+@export var wall_stun := 0.0
+## PRIEST, the elder's second answer (A2, C1d): after a fan, every volley_every seconds it backs volley_back meters away over
+## volley_back_time s (it stops at a wall), then raises its staff volley_windup s (a thread to each orb) and looses volley_count
+## slow orbs (volley_speed m/s) in volley_spread degrees; they turn after the paladin volley_turn degrees a second for volley_life
+## seconds; then volley_recover s of rest (volley_count 0: none).
+@export var volley_count := 0
+@export var volley_every := 12.0
+@export var volley_back := 8.0
+@export var volley_back_time := 1.5
+@export var volley_windup := 1.0
+@export var volley_speed := 4.0
+@export var volley_spread := 50.0
+@export var volley_turn := 60.0
+@export var volley_life := 5.0
+@export var volley_recover := 1.5
+## Felled, it bursts this many seconds later where it fell (its attack's width and damage; 0: it does not).
+@export var death_burst := 0.0
+## Seconds between the starts of two wind-ups of this kind (they never lock their aim together; 0: no wait).
+@export var windup_gap := 0.0
+## ARCHER with shot_line: the shots after the first are aimed again, locked this many seconds before they leave (0: along
+## the first's line).
+@export var shot_relock := 0.0
+## While it stands, every ward_every seconds it gives ward_armor of armor to up to ward_count of the plain enemies within
+## ward_radius m (they lose it when it falls; ward_count 0: none).
+@export var ward_count := 0
+@export var ward_every := 5.0
+@export var ward_armor := 40.0
+@export var ward_radius := 10.0
 ## A guardian: who rises with it when it is the second of a descent (Daniel, 2026-11-22: harder by its company, never
 ## by more life).
 @export var escort: Array[StringName] = []
@@ -154,12 +244,69 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var retreat_far := 0.0
 @export var retreat_time := Vector2.ZERO
 @export var max_attackers := 0
-## PULSE: radius of the burst. CONE: opening in degrees.
+## PULSE: radius of the burst. CONE: opening in degrees. SWEEP: width of the bar (attack_range is its reach).
 @export var attack_width := 0.0
+## SWEEP (C5): degrees the bar turns, the seconds that takes, and the meters round its root where it does not hurt.
+@export var sweep_degrees := 200.0
+@export var sweep_time := 1.6
+@export var sweep_clear := 1.6
+## C1e, lote B, LEAP (the Saltador): its wind-up marks four corners round the spot it will land on (a square of 2 x leap_half m, closing
+## in; the spot follows the paladin and locks the last aim_lock s); then it leaves the floor and lands there leap_time s later, hurting
+## whoever stands in the square (attack_damage). attack_range is how far it jumps from; it rests recover_time s after.
+@export var leap_time := 0.5
+@export var leap_half := 1.5
+## ARCHER, the Lançador (lote B): the shot flies out shot_range m (shorter where stone is), turns there and flies back the same way to
+## where it left, hurting the paladin once each way; its line shows again ThrowRules.RETURN_WARN s before it turns.
+@export var shot_return := false
+## C1e, SUPPORT: a shout reaches the others within shout_radius m: they walk and recover from their blows (1 + shout_pace) times
+## as fast for shout_time s (the wind-up is never shortened) and take shout_heal of their life back, once a shout. flee_speed:
+## its speed when it runs from the paladin (0: its speed).
+@export var shout_radius := 0.0
+@export var shout_time := 8.0
+@export var shout_pace := 0.3
+@export var shout_heal := 0.1
+@export var flee_speed := 0.0
+## C1e, lote C, SUPPORT with plate_damage > 0 (the Armadilheiro): each call lays a plate of 2 x plate_half m where the paladin stands, or where
+## his last dodge ended if that was under plate_window s ago; it shows an X for plate_time s and then hurts plate_damage whoever stands on
+## it (the dodge's own protection passes over it); at most plate_max of them lie at once.
+@export var plate_damage := 0.0
+@export var plate_time := 1.0
+@export var plate_half := 0.8
+@export var plate_max := 4
+@export var plate_window := 3.0
+## Roles it is never drawn into a fight with (EncounterGen.pick_kinds; the Coveiro and the swarm).
+@export var never_with: Array[StringName] = []
+## C5, the Trinca: figures that come together (a head count of the room's wave stands for this many bodies) and fall
+## together; a fallen one lies rise_time seconds and rises if another of them stands (0: it dies when it falls).
+@export var group := 1
+@export var rise_time := 0.0
+## At most this many of the kind (with its elite) in a fight, all its waves together (0: no limit; the Varredor: one).
+@export var per_room := 0
 ## KNIGHT: a slam on whoever stands close (0 damage = none).
 @export var close_damage := 0.0
 @export var close_range := 3.0
 @export var close_windup := 0.65
+## KNIGHT, the priority list (AttackList; empty: the old order, charge when far and slam when near): the special moves it
+## draws from, top first, each with its life gate, distance and cooldown.
+@export var moves: Array[KnightMove] = []
+## KNIGHT (Daniel, 2026-11-23): how much of a blow reaches its armor when the blow is not a strong one (the finisher, the
+## special's wave, the dash cut, the Omegas, the Brado's shout: DamageCalc.STRONG_TAGS). 1: every blow the same.
+@export var armor_soft := 1.0
+## KNIGHT, the shield throw (throw_flight > 0): it winds up throw_windup s, hurls the shield up and it comes down on the
+## paladin's spot (a square of 2 x throw_half m marked on the floor; the mark follows him until throw_lock s before the
+## landing), hurting throw_damage; throw_open s after it lands it has the shield back. Where it lands a wave spreads at
+## ring_speed m/s, ring_thick m thin, ring_reach m far, born ring_delay s after the landing, hurting ring_damage.
+@export var throw_windup := 0.5
+@export var throw_flight := 0.0
+@export var throw_lock := 0.35
+@export var throw_half := 1.5
+@export var throw_damage := 16.0
+@export var throw_open := 1.6
+@export var ring_speed := 12.0
+@export var ring_thick := 0.8
+@export var ring_reach := 32.0
+@export var ring_delay := 0.25
+@export var ring_damage := 14.0
 
 @export_group("Encounters")
 ## Weight of this enemy in the room generator (Hades II "DifficultyRating"): a room of difficulty 100 holds
@@ -171,3 +318,7 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var role: StringName
 ## The armored version that can stand in for it in a room (empty: none).
 @export var elite_version: StringName
+## C1b (combate_c1b.md, Frente 2): the bigger version of this kind that may take a head's place in a fight (empty: none).
+@export var big_version: StringName
+## C1b: true for that bigger version (not an elite, no armor): never drawn as a part of a fight, only put in by EncounterGen.add_big.
+@export var big := false

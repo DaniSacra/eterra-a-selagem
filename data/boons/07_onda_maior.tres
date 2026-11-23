@@ -7,8 +7,10 @@
 [sub_resource type="Resource" id="Resource_vqehr"]
 script = ExtResource("3_tkjt8")
 kind = 3
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
 cooldown = PackedFloat32Array(5, 4.5, 4)
-damage = PackedFloat32Array(16, 22, 30)
+damage = PackedFloat32Array(10, 13, 18)
 count = PackedFloat32Array(5, 8, 11)
 radius = PackedFloat32Array(12, 13, 14)
 status_power = PackedFloat32Array(0)

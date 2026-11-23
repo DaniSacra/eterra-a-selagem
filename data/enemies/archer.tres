@@ -1,35 +1,44 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_jggar"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_s0slf"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_8gvap"]
 
 [resource]
-script = ExtResource("1_jggar")
+script = ExtResource("2_8gvap")
 id = &"archer"
 name_key = &"enemy_archer"
 model = &"archer"
 size = 1.27
-magic_color = Color(1.4, 0.16, 0.3, 1)
+magic_color = Color(1.2, 0.5, 0.16, 1)
 tell = 4
 tell_at = Vector3(-0.05, 1.62, 1.42)
 behavior = 1
-hp = 130.0
+hp = 180.0
 speed = 4.168749999999999
 damage = 5.0
 radius = 0.55
+poise = 100.0
 stun_time = 0.5
 stun_heavy_time = 1.1
 attack_damage = 5.0
 attack_range = 12.0
-attack_cooldown = 1.62
-attack_windup = 0.8
+attack_cooldown = 2.3400000000000003
+attack_windup = 0.6400000000000001
 recover_time = 0.6
 windup_settle = 0.25
+recharge_windup = 0.6400000000000001
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+shot_relock = 0.4
 shot_speed = 16.0
 shot_line = true
 keep_away = 0.65
+shot_ticks = 2
+shot_interval = 0.75
 retreat_far = 8.75
 retreat_time = Vector2(1.5, 1.75)
 max_attackers = 2
+close_windup = 0.52
 rating = 13.0
 role = &"flank"
 elite_version = &"archer_elite"

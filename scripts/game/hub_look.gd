@@ -340,6 +340,10 @@ const CLASSIC_FLOOR := {
 	&"joint_color": Color(0.10, 0.09, 0.09), &"moss_color": Color(0.30, 0.29, 0.27), &"petal_color": Color(0.30, 0.29, 0.27),
 	&"missing": 0.0, &"cracked": 0.2, &"split2": 0.45, &"tinted": 0.1,
 }
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
+## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's, the hub's softer.
+const STY_SHADOW_GLOW := Color(0.15, 0.40, 0.55)
+const STY_VIGNETTE := Vector3(0.5, 0.45, 1.3)
 const STYLE := {
 	&"stone": Color(0.4, 0.375, 0.345), &"floor_stone": Color(0.375, 0.355, 0.325), &"shadow": Color(0.8, 0.9, 0.96),
 	&"joint_cold": Color(0.86, 0.93, 0.98), &"slab_paint": Vector2(0.82, 1.18), &"slab_hue": 6.0, &"olive_share": 0.03,
@@ -347,6 +351,7 @@ const STYLE := {
 	&"fire": {&"candle_range": 3.5, &"candle_gain": 1.2, &"bowl_range": 4.2, &"bowl_gain": 0.95},
 	&"air": {&"sky": Color(0.06, 0.08, 0.13), &"fog": Color(0.14, 0.13, 0.13), &"ambient": Color(0.76, 0.76, 0.75),
 		&"ambient_gain": STY_AMBIENT_GAIN, &"moon": Color(1.0, 0.96, 0.9), &"moon_energy": STY_MOON, &"moon_shadow": true},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": STY_VIGNETTE,
 }
 ## ENV-HB6 and BH-07 (docs/design/ciclo_visual_2026-11-20.md item 2; benchmark_hades2_style.md 4.1; rooms_progression.md
 ## BH-07), only in the stylized look: the square a step darker (the air's ambient and the moon, the soft fill over it at

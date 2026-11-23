@@ -8,6 +8,8 @@ extends RefCounted
 const SHOT_NEAR := 12.0
 const COMBOS: Array[String] = ["LLL", "H", "LLL", "O", "LL", "H", "dL", "LLL", "H"]
 const GAP := 0.25
+## C1b: the share of its poise left from which the bot breaks a common with the special.
+const WORN := 0.55
 const REACH := 3.6
 ## RP-09: the bot goes for a cracked column within COLUMN_NEAR m that would fall on COLUMN_PACK enemies or more
 ## (column_plan), round to its other side and swings at it from COLUMN_REACH m along the way it should fall.
@@ -30,6 +32,17 @@ const CRYSTAL_BACK := 1.4
 const URN_PACK := 2
 const URN_NEAR := 10.0
 const URN_REACH := 1.5
+## Cover (CoverPlan): when a shooter readies a shot (or a shot flies at him) and a column that stops shots is within
+## COVER_NEAR m, the bot steps behind it (as a person would), for at most COVER_MAX s a spell, then COVER_REST s off.
+## It decides per spell with chance --bot-cover (default COVER_CHANCE = 0: off, measured no better, see docs/reference/engine.md), and only after `reaction`.
+const COVER_NEAR := 4.5
+## Enemies this close (m) that do not shoot keep him fighting: no cover then.
+const COVER_CROWD := 4.0
+const COVER_MAX := 1.5
+const COVER_REST := 2.0
+const COVER_LINGER := 0.5
+const COVER_CHANCE := 0.0
+const COVER_SIGHT := 18.0
 
 var pad := Controls.VirtualPad.new()
 var _t := 0.0
@@ -84,12 +97,23 @@ const KITE_THROW := 0.8
 
 ## Its own way to where it walks (cycle C12): the arena's NavGrid, a FlowField toward its goal of the moment.
 var _field: FlowField
+## Cover: the chance a spell is taken, seconds the threat has been seen / the spell has lasted / until the next may start,
+## whether this spell was chosen, and the seconds spent hidden from a shooter (RESULT bot.cover_time).
+var cover_chance := COVER_CHANCE
+var cover_time := 0.0
+var cover_spells := 0
+var _cover_seen := 0.0
+var _cover_on := 0.0
+var _cover_off := 0.0
+var _cover_lost := 0.0
+var _cover_pick := false
 
 
 func _init() -> void:
 	_rng.seed = 7
 	reaction = maxf(0.0, Dev.num("bot-reaction", 0.0))
 	kite = clampf(Dev.num("bot-kite", 0.0), 0.0, 1.0)
+	cover_chance = clampf(Dev.num("bot-cover", COVER_CHANCE), 0.0, 1.0)
 
 
 ## One step of keeping away: true while it should keep away from the boss. Each KITE_PERIOD (the first after one
@@ -153,13 +177,14 @@ const SHOUT_REACH := 4.0
 ## The Brado de Guerra is ready and SHOUT_PACK or more enemies stand within its reach.
 static func shout_worth(game: Game, at: Vector2) -> bool:
 	var p := game.player
-	if Dev.has("bot-no-shout") or p.state != Player.State.MOVE:  # (--bot-no-shout: the robot before the Brado, to compare)
+	if Dev.has("bot-no-shout") or Dev.has("bot-mouse") or p.state != Player.State.MOVE:  # (--bot-no-shout: the robot before the Brado, to compare)
 		return false
 	if p.runner.cooldown_left(&"shout") > 0.0 or ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) == null:
 		return false
 	var near: Array[Enemy] = []
 	game.horde.in_circle(at, SHOUT_REACH, near)
-	return near.size() >= SHOUT_PACK
+	# CB-0: it takes one blow whole too: cried with a blow about to fall on him, near
+	return near.size() >= SHOUT_PACK or near.any(func(e: Enemy) -> bool: return e.state == Enemy.State.WINDUP)
 
 
 ## The Investida (E) is ready: the robot uses it to close in on an enemy that is a few steps off (RUSH_FAR) and, short of
@@ -170,7 +195,7 @@ const RUSH_FAR := 8.0
 
 static func rush_worth(game: Game, to: float) -> bool:
 	var p := game.player
-	if Dev.has("bot-no-rush") or p.state != Player.State.MOVE or ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) == null:
+	if Dev.has("bot-no-rush") or Dev.has("bot-mouse") or p.state != Player.State.MOVE or ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) == null:
 		return false
 	if p.runner.cooldown_left(&"dash_cut") > 0.0 or p.runner.is_attacking():
 		return false
@@ -199,7 +224,7 @@ static func drink_at(spring: Variant, hp: float, max_hp: float) -> Variant:
 
 ## The bot's numbers for RESULT.
 func stats() -> Dictionary:
-	return {"stuck": pinned, "died_stuck": died_pinned}
+	return {"stuck": pinned, "died_stuck": died_pinned, "cover_time": snappedf(cover_time, 0.1), "cover_spells": cover_spells}
 
 
 func step(dt: float, game: Game) -> void:
@@ -245,11 +270,16 @@ func step(dt: float, game: Game) -> void:
 		column = crystal_plan(game, p)
 	if column == null:
 		column = urn_plan(game, p)
+	if game.arcane != null:
+		column = null  # (her shots do not topple columns: the Maga's robot fights the enemies)
 	if column != null:
 		target = column.center
 	var to := target - p
+	# C5: to the Varredor he goes to its feet (the bar does not hurt within sweep_clear) and does not step back from there
+	var sweeper := _sweeper_at(game, target)
+	var reach := SWEEPER_STAND if sweeper != null else REACH
 	pad.aim = to.normalized() if to.length() > 0.01 else Vector2.DOWN
-	pad.move = _steer(game, p, _way(game, p, target, dt)) if to.length() > REACH else Vector2.ZERO
+	pad.move = _steer(game, p, _way(game, p, target, dt)) if to.length() > reach else Vector2.ZERO
 	if column != null:
 		# RP-09: round to the column's far side from the pack, then swing along the way it should fall
 		var stand: Vector2 = column.stand
@@ -259,13 +289,33 @@ func step(dt: float, game: Game) -> void:
 		var slab: Variant = slit_plan(game, p)
 		if slab != null:
 			pad.move = _steer(game, p, _way(game, p, slab as Vector2, dt))
-	if _queue.is_empty() and _wait > 0.25:
+	if _queue.is_empty() and _wait > 0.25 and sweeper == null:
 		# hit and run: after a combo, step out of the crowd (around the bodies in the way)
 		pad.move = _steer(game, p, -to.normalized().rotated(0.6))
 	if _stuck > STUCK_TIME and pad.move != Vector2.ZERO and game.player.dodge_charges > 0:
 		# the bodies of the crowd hold it: the dash goes through them
 		pad.press(&"dodge")
 		_stuck = 0.0
+	# C1d, the Corte do rastro: the boss's curse in the air is cut by the wave (the special), thrown at it
+	var cut: Variant = curse_aim(game, p)
+	if cut != null and _wait <= 0.0 and game.player.state == Player.State.MOVE and game.player.magick.can_pay(Player.omega_cost(
+			ComboTree.find(game.player.tree.neutral, ComboNode.In.HEAVY).magick_cost, 0.0)):
+		pad.aim = (cut as Vector2 - p).normalized()
+		pad.move = Vector2.ZERO
+		pad.press(&"heavy_attack")
+		_held = &"heavy_attack"
+		_hold = 0.06
+		_wait = 0.5
+		_queue = ""
+		return
+	var through: Variant = ring_dash(game, p)
+	if through != null:
+		pad.move = through as Vector2
+		pad.release(&"dodge")
+		pad.press(&"dodge")
+		_hold = 0.0
+		_queue = ""
+		return
 	var danger := _react(_danger(game))
 	if danger != Vector2.ZERO:
 		pad.move = _escape(game, p, danger)
@@ -277,6 +327,10 @@ func step(dt: float, game: Game) -> void:
 		_hold = 0.0
 		_queue = ""
 		return
+	var cover: Variant = _cover(game, p, dt)
+	if cover != null:
+		var at := cover as Vector2
+		pad.move = _steer(game, p, _way(game, p, at, dt)) if p.distance_to(at) > 0.3 else Vector2.ZERO
 	if _kiting:
 		_keep_away(game, p, game.boss.e.pos, not was_kiting, dt)
 		return
@@ -286,7 +340,10 @@ func step(dt: float, game: Game) -> void:
 	var spring: Variant = drink_at(game.fountain_target(), game.player.hp, game.player.max_hp)
 	if spring != null:
 		pad.move = ((spring as Vector2) - p).normalized()
-	if game.player.ult_ready and game.ults.worth(p, pad.aim):
+	if game.arcane != null:
+		_arcane_step(game, p, target)
+		return
+	if game.player.ult_ready and not Dev.has("bot-mouse") and game.ults.worth(p, pad.aim):
 		# the ultimate as soon as it is full and worth it (the pack in the band or the Voragem, or a big one)
 		pad.press(&"ultimate")
 		return
@@ -316,6 +373,10 @@ func step(dt: float, game: Game) -> void:
 			return
 		_queue = COMBOS[_pick % COMBOS.size()]
 		_pick += 1
+		if column == null and _guarded(game, target):
+			_queue = "H" + _queue  # CB-0: the special opens a shield's guard
+		elif column == null and _worn(game, target):
+			_queue = "H" + _queue  # C1b: a common worn halfway is broken by the special, not by one more blow
 	var key := _queue[0]
 	_queue = _queue.substr(1)
 	_wait = GAP if not _queue.is_empty() else 0.7
@@ -342,6 +403,78 @@ func step(dt: float, game: Game) -> void:
 			pad.move = to.normalized() if to.length() > 0.1 else Vector2.RIGHT
 			pad.press(&"dodge")
 			_wait = 0.2
+
+
+## The Maga's robot (maga.md 2.1): it keeps ARC_NEAR to ARC_FAR m from the nearest enemy and plays the loop: three shots
+## mark, the Círculo gathers a pack, the Explosão detonates when ARC_SEALS Selos stand (or the last enemies are marked), the
+## Suspensão answers shots and a crowd at its feet, the Tempestade when it is worth it. The Passo is the danger code's.
+const ARC_NEAR := 5.5
+const ARC_FAR := 9.0
+const ARC_SEALS := 3
+const ARC_CIRCLE_PACK := 3
+const ARC_DOME_SHOT := 6.0
+const ARC_DOME_CROWD := 2.5
+
+
+func _arcane_step(game: Game, p: Vector2, target: Vector2) -> void:
+	var a := game.arcane
+	var player := game.player
+	var to := target - p
+	var dist := to.length()
+	var dir := to.normalized() if dist > 0.01 else Vector2.DOWN
+	pad.aim = dir
+	pad.release(&"heavy_attack")
+	if dist > ARC_FAR:
+		pad.move = _steer(game, p, _way(game, p, target, 0.0))
+	elif dist < ARC_NEAR:
+		pad.move = _steer(game, p, -dir)
+	else:
+		pad.move = Vector2.ZERO
+	if player.state != Player.State.MOVE:
+		return
+	if player.ult_ready and game.ults.worth(p, dir):
+		pad.press(&"ultimate")
+		return
+	if _wait > 0.0:
+		return
+	var runner := player.runner
+	# the Suspensão: a shot flying at it, or the crowd on top of it
+	if runner.cooldown_left(&"dome") <= 0.0 and not runner.is_attacking() and a.dome == null:
+		var near: Array[Enemy] = []
+		game.horde.in_circle(p, ARC_DOME_CROWD, near)
+		var shot := false
+		for s in game.projectiles.shots:
+			if Projectiles.hostile(s) and not s.frozen and s.pos.distance_to(p) < ARC_DOME_SHOT and s.vel.dot(p - s.pos) > 0.0:
+				shot = true
+				break
+		if shot or near.size() >= 2:
+			pad.press(&"rush")
+			_wait = 0.3
+			return
+	# the Círculo on a pack
+	if runner.cooldown_left(&"circle") <= 0.0 and not runner.is_attacking() and dist <= a.kit.circle_range:
+		var pack: Array[Enemy] = []
+		game.horde.in_circle(target, a.kit.circle_radius, pack)
+		if pack.size() >= ARC_CIRCLE_PACK:
+			pad.press(&"shout")
+			_wait = 0.3
+			return
+	# the Explosão on the Selos
+	var marked := a.seals.total()
+	if marked > 0 and runner.cooldown_left(&"blast") <= 0.0 and not runner.is_attacking() \
+			and (marked >= mini(ARC_SEALS, game.horde.count()) or a.resonance.full()) and (player.free_special or player.magick.can_pay(10.0)):
+		var best: Enemy = null
+		for e: Enemy in a.seals.keys():
+			if e.alive and (best == null or e.pos.distance_squared_to(p) < best.pos.distance_squared_to(p)):
+				best = e
+		if best != null and best.pos.distance_to(p) <= a.kit.blast_range:
+			pad.aim = (best.pos - p).normalized()
+			pad.press(&"heavy_attack")
+			_wait = 0.5
+			return
+	if dist <= a.kit.blast_range + 0.5:
+		pad.press(&"light_attack")
+		_wait = 0.2
 
 
 ## Runs away from the boss (around walls and bodies, the dodge held to sprint) until KITE_DISTANCE, then throws the
@@ -373,6 +506,20 @@ func _keep_away(game: Game, p: Vector2, boss: Vector2, first: bool, dt: float) -
 	pad.press(&"dodge")  # held: the dodge, then the run
 
 
+## C1d: where the boss's curse in flight is when it comes at the paladin from CURSE_CUT_FROM m or less (null: none to cut).
+static func curse_aim(game: Game, p: Vector2) -> Variant:
+	if game.boss == null or not game.boss.def.curse_cut:
+		return null
+	for s in game.projectiles.shots:
+		if s.kind == Projectiles.Kind.CURSE and s.life > 0.0 and s.pos.distance_to(p) < CURSE_CUT_FROM and s.pos.distance_to(p) > 1.5 \
+				and s.vel.dot(p - s.pos) > 0.0:
+			return s.pos
+	return null
+
+
+const CURSE_CUT_FROM := 9.0
+
+
 ## True when an enemy that shoots (ARCHER, PRIEST: the mage, the archer, the priests, the Elder) readies a shot within
 ## SHOT_NEAR m: the robot does not plant itself in the attack's Omega then (C19, combat_cadence.md 8.3 (a): the Elder's
 ## fan hit it while it charged).
@@ -382,6 +529,71 @@ static func shot_coming(game: Game, p: Vector2) -> bool:
 				and (e.def.behavior == EnemyDef.Behavior.ARCHER or e.def.behavior == EnemyDef.Behavior.PRIEST):
 			return true
 	return false
+
+
+## Where the ranged threats are: enemies that shoot (ARCHER, CASTER, PRIEST) readying a shot beyond melee reach, and
+## hostile shots flying at p. Generic: any shooter counts.
+static func shooters(game: Game, p: Vector2) -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	for e in game.horde.list:
+		if e.alive and e.state == Enemy.State.WINDUP and e.def.behavior in [EnemyDef.Behavior.ARCHER, EnemyDef.Behavior.PRIEST, EnemyDef.Behavior.CASTER] \
+				and p.distance_to(e.pos) > REACH and p.distance_to(e.pos) < COVER_SIGHT:
+			out.append(e.pos)
+	for s in game.projectiles.shots:
+		if (s.kind == Projectiles.Kind.ORB or s.kind == Projectiles.Kind.BOLT) and s.life > 0.0 and not s.seen.has(game.player) \
+				and s.pos.distance_to(p) < 12.0 and s.vel.dot(p - s.pos) > 0.0:
+			out.append(s.pos)
+	return out
+
+
+## The spot to stand at to keep a stone between him and the shooters (null: not hiding). Keeps the spell's clock.
+func _cover(game: Game, p: Vector2, dt: float) -> Variant:
+	if game.arena == null or game.arena.cover.is_empty() or cover_chance <= 0.0:
+		return null
+	var list := shooters(game, p)
+	for e in game.horde.list:
+		if e.alive and e.def.behavior not in [EnemyDef.Behavior.ARCHER, EnemyDef.Behavior.PRIEST, EnemyDef.Behavior.CASTER] and p.distance_to(e.pos) < COVER_CROWD:
+			list.clear()
+			_cover_on = 0.0
+			break
+	var seen_shooters: Array[Vector2] = []
+	for e in game.horde.list:
+		if e.alive and e.def.behavior in [EnemyDef.Behavior.ARCHER, EnemyDef.Behavior.PRIEST, EnemyDef.Behavior.CASTER] \
+				and p.distance_to(e.pos) < COVER_SIGHT:
+			seen_shooters.append(e.pos)
+	for q in seen_shooters:
+		if CoverPlan.hidden(q, p, game.arena.cover):
+			cover_time += dt
+			break
+	_cover_off -= dt
+	if _stuck > STUCK_TIME:
+		_cover_lost = 2.0
+	_cover_lost -= dt
+	if list.is_empty():
+		_cover_seen = 0.0
+		if _cover_on > 0.0:
+			_cover_on = maxf(0.0, _cover_on - dt) if _cover_on <= COVER_LINGER else COVER_LINGER
+		_cover_pick = false
+		if _cover_on <= 0.0:
+			return null
+	else:
+		if _cover_seen <= 0.0:
+			_cover_pick = _cover_off <= 0.0 and game.player.dodge_charges == 0 and _rng.randf() < cover_chance
+		_cover_seen += dt
+		if not _cover_pick or _cover_seen < reaction or _cover_lost > 0.0:
+			return null
+		if _cover_on <= 0.0:
+			cover_spells += 1
+		_cover_on = maxf(_cover_on, COVER_LINGER) + dt
+		_cover_on = minf(_cover_on, COVER_MAX + COVER_LINGER)
+		if _cover_seen > COVER_MAX * (2.0 if game.player.dodge_charges == 0 else 1.0):
+			_cover_off = COVER_REST
+			_cover_pick = false
+			_cover_on = 0.0
+			return null
+	var from := list if not list.is_empty() else seen_shooters
+	return CoverPlan.pick(p, from, game.arena.cover, COVER_NEAR, Player.RADIUS,
+			func(q: Vector2) -> bool: return game.arena.resolve(q, Player.RADIUS).distance_to(q) < 0.05)
 
 
 ## The nearest enemy that can be hurt (behind his ritual's shield the boss waits: his dead come first).
@@ -522,20 +734,125 @@ func _nearest(game: Game) -> Vector2:
 	var best_d := INF
 	for e in game.horde.list:
 		var d := p.distance_squared_to(e.pos)
+		if e.def.ward_count > 0 and d < WARDER_NEAR * WARDER_NEAR:
+			d *= 0.25  # CB-0: the priest that armors the others first
 		if e.alive and not e.invulnerable and d < best_d:
 			best_d = d
 			best = e.pos
 	return best
 
 
+## C5: how near the robot stands to a Varredor (inside its sweep_clear of 1.6 m), and the one standing at `at`, if any.
+const SWEEPER_STAND := 1.1
+
+
+func _sweeper_at(game: Game, at: Vector2) -> Enemy:
+	for e in game.horde.list:
+		if e.alive and e.def.behavior == EnemyDef.Behavior.SWEEP and e.pos.distance_to(at) < 0.1:
+			return e
+	return null
+
+
+## How far the robot goes for a priest before whoever is nearer.
+const WARDER_NEAR := 10.0
+
+
+## The enemy standing at `at` blocks him from the front now.
+## C1b: the enemy at `at` is a common whose poise the blows have worn to half or less (and is not broken yet).
+static func _worn(game: Game, at: Vector2) -> bool:
+	for e in game.horde.list:
+		if e.alive and e.def.poise > 0.0 and e.pos.distance_to(at) < 0.1:
+			return e.broken_t <= 0.0 and e.poise <= e.def.poise * WORN
+	return false
+
+
+static func _guarded(game: Game, at: Vector2) -> bool:
+	for e in game.horde.list:
+		if e.alive and e.def.front_block > 0.0 and e.pos.distance_to(at) < 0.1 and game.horde.blocks_front(e, game.player.pos):
+			return true
+	return false
+
+
+## C1e, lote B: the way out of the square a Saltador is about to land on (it marks it through its wind-up and its flight): straight away
+## from the spot's middle, zero when `p` is clear of every square or the jump is not yet in its last LEAP_SEEN seconds.
+const LEAP_SEEN := 0.55
+
+
+static func leap_escape(list: Array[Enemy], p: Vector2) -> Vector2:
+	for e in list:
+		if not e.alive or e.def.behavior != EnemyDef.Behavior.LEAP:
+			continue
+		var left := e.def.attack_windup - e.state_t if e.state == Enemy.State.WINDUP else e.def.leap_time - e.state_t if e.state == Enemy.State.ATTACK else INF
+		if left > LEAP_SEEN + (e.def.leap_time if e.state == Enemy.State.WINDUP else 0.0):
+			continue
+		if LeapRules.in_area(e.lands_at, p, e.def.leap_half, 0.9):
+			var off := p - e.lands_at
+			return off.normalized() if off.length() > 0.1 else Vector2.RIGHT
+	return Vector2.ZERO
+
+
+## The knight's shield in the air (Daniel, 2026-11-23): the way out of the square it lands on, in its last SHIELD_SEEN seconds.
+const SHIELD_SEEN := 0.6
+
+
+static func shield_escape(shields: Array[Horde.Shield], p: Vector2) -> Vector2:
+	for sh in shields:
+		if sh.total - sh.t <= SHIELD_SEEN and LeapRules.in_area(sh.land, p, sh.owner.def.throw_half, 0.9):
+			var off := p - sh.land
+			return off.normalized() if off.length() > 0.1 else Vector2.RIGHT
+	return Vector2.ZERO
+
+
+## The shield wave: the dodge is the only way through. It dashes when the band is RING_LEAD seconds from touching it, once a wave,
+## with a RING_SKILL chance (a person misses the moment now and then), toward the wave's middle so it crosses the band.
+const RING_LEAD := 0.09
+const RING_SKILL := 0.75
+var _ring_seen := {}
+
+
+func ring_dash(game: Game, p: Vector2) -> Variant:
+	if game.horde.waves.is_empty():
+		_ring_seen.clear()
+	for w in game.horde.waves:
+		var id := w.get_instance_id()
+		if _ring_seen.has(id):
+			continue
+		var d := w.owner.def
+		var gap := p.distance_to(w.center) - ShockRing.radius_at(w.t, Horde.WAVE_START, d.ring_speed, d.ring_delay) - d.ring_thick * 0.5 - Player.RADIUS * 0.6
+		if gap < -d.ring_thick:
+			continue  # already past it
+		var eta := maxf(0.0, d.ring_delay - w.t) + maxf(gap, 0.0) / d.ring_speed
+		if eta <= RING_LEAD:
+			_ring_seen[id] = true
+			if _rng.randf() < RING_SKILL and game.player.dodge_charges > 0 and game.player.state != Player.State.DODGE:
+				return (w.center - p).normalized() if p.distance_to(w.center) > 0.1 else Vector2.RIGHT
+	return null
+
+
 ## Direction out of the enemy warning the paladin is standing on (zero when safe). Bolts nearby count too.
 func _danger(game: Game) -> Vector2:
 	var p := game.player.pos
+	var leap := leap_escape(game.horde.list, p)
+	if leap != Vector2.ZERO:
+		return leap
+	var shield := shield_escape(game.horde.shields, p)
+	if shield != Vector2.ZERO:
+		return shield
 	for z in game.ground.zones:
 		if z.kind != Ground.Kind.WARNING or z.life > 0.55 or z.tags.has(Horde.FAN_TAG):
 			continue  # (C19-5: a fan's threads only show where its orbs leave; it dodges the orbs below)
 		if not Ground.inside(z, p, 0.9):
 			continue
+		if z.tags.has(Horde.SWEEP_TAG):
+			# C5, the Varredor's bar: at its feet nothing hurts; elsewhere he leaves it by its length, in to the pocket or out
+			# past its tip, never across it (it comes round faster than he walks)
+			var d: EnemyDef = game.horde.def(z.by)
+			var off := p - z.pos
+			if off.length() <= d.sweep_clear - 0.3:
+				continue
+			return -off.normalized() if off.length() < d.attack_range * 0.55 else off.normalized()
+		if z.tags.has(Horde.BEAM_TAG) and z.by != &"" and (p - z.pos).length() <= game.horde.def(z.by).sweep_clear + 0.3:
+			continue  # C1e lote C: at the Canalizador's feet its beam does not hurt (the robot goes in to strike it)
 		if z.shape == Ground.Shape.LINE:
 			var side := z.dir.orthogonal()
 			return side if (p - z.pos).dot(side) >= 0.0 else -side

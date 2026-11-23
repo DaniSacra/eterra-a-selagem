@@ -90,12 +90,20 @@ const SOUNDS := {
 	# an enemy's wind-up starting, one per EnemyDef.Tell, short and soft (it helps a dodge): a blade drawn, embers
 	# hissing, an orb swelling, a crossbow cocked, a shield set with a grunt, a ritual's hum
 	&"tell_blade": [[W.NOISE, 3000, 6000, 0.18, 0.1, 2.0, 0.0], [W.TRIANGLE, 1200, 1500, 0.15, 0.05, 3.0, 0.0]],
+	&"lock_click": [[W.NOISE, 4200, 1800, 0.02, 0.28, 9.0, 0.0], [W.SQUARE, 1400, 900, 0.02, 0.06, 9.0, 0.0]],
 	&"tell_ember": [[W.NOISE, 1500, 4500, 0.25, 0.12, 1.6, 0.0]],
 	&"tell_orb": [[W.SINE, 660, 990, 0.3, 0.1, 1.8, 0.0], [W.TRIANGLE, 1320, 1980, 0.25, 0.05, 2.2, 0.03]],
 	&"tell_bolt": [[W.SQUARE, 160, 240, 0.12, 0.09, 3.0, 0.0], [W.NOISE, 2000, 800, 0.05, 0.12, 7.0, 0.1]],
 	&"tell_shield": [[W.SAW, 90, 70, 0.3, 0.14, 2.5, 0.0], [W.NOISE, 400, 200, 0.2, 0.12, 3.0, 0.0]],
 	&"tell_ritual": [[W.SINE, 147, 220, 0.5, 0.12, 1.6, 0.0], [W.TRIANGLE, 294, 440, 0.45, 0.06, 2.0, 0.0]],
 	# its blow loosed, its shots leaving (the bolt is the recipe above)
+	&"tell_sweep": [[W.NOISE, 300, 1200, 0.5, 0.12, 1.6, 0.0], [W.SAW, 70, 110, 0.5, 0.06, 2.0, 0.0]],
+	&"tell_call": [[W.SAW, 220, 330, 0.5, 0.12, 1.6, 0.0]],
+	&"tell_dig": [[W.NOISE, 200, 500, 0.5, 0.12, 1.8, 0.0]],
+	&"tell_leap": [[W.NOISE, 600, 1800, 0.5, 0.12, 1.6, 0.0], [W.SINE, 90, 140, 0.5, 0.06, 2.0, 0.0]],
+	&"tell_throw": [[W.NOISE, 1200, 3000, 0.4, 0.12, 1.8, 0.0]],
+	&"tell_beam": [[W.SINE, 440, 880, 0.9, 0.12, 1.4, 0.0], [W.TRIANGLE, 880, 1320, 0.8, 0.06, 1.6, 0.0]],
+	&"tell_trap": [[W.SQUARE, 120, 180, 0.12, 0.1, 4.0, 0.0], [W.NOISE, 1800, 600, 0.1, 0.1, 6.0, 0.15]],
 	&"enemy_swing": [[W.NOISE, 900, 2600, 0.12, 0.16, 3.5, 0.0]],
 	&"enemy_charge": [[W.NOISE, 300, 900, 0.35, 0.2, 2.0, 0.0], [W.SAW, 80, 60, 0.3, 0.12, 2.5, 0.0]],
 	&"enemy_burst": [[W.NOISE, 2000, 300, 0.25, 0.26, 3.0, 0.0], [W.SINE, 160, 60, 0.25, 0.22, 3.0, 0.0]],

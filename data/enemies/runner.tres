@@ -1,9 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_yyxed"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_6ad54"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_oej73"]
 
 [resource]
-script = ExtResource("1_yyxed")
+script = ExtResource("2_oej73")
 id = &"runner"
 name_key = &"enemy_runner"
 model = &"runner"
@@ -15,18 +16,25 @@ sway = 7.0
 windup_shake = 0.04
 tell = 2
 behavior = 7
-hp = 45.0
+hp = 70.0
 speed = 5.606249999999999
 damage = 8.0
+poise = 100.0
 stun_time = 0.5
 stun_heavy_time = 1.1
 attack_damage = 8.0
 attack_range = 1.6
 attack_cooldown = 1.26
-attack_windup = 1.0
+attack_windup = 0.68
 recover_time = 1.35
 strike_at = 0.1
+recharge_windup = 0.6400000000000001
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+death_burst = 0.7
 attack_width = 2.6
+close_windup = 0.52
 rating = 7.0
 role = &"react"
 elite_version = &"runner_elite"
+big_version = &"runner_big"

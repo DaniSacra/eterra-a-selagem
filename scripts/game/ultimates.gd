@@ -72,6 +72,8 @@ class Vortex:
 	## Who it already cut out of a wind-up (once on entering).
 	var held: Dictionary = {}
 	var node: MeshInstance3D
+	## The Tempestade: it is one (its tick lays Selos and its end detonates them).
+	var storm := false
 
 var game: Game
 var def: UltDef
@@ -130,7 +132,10 @@ func step(dt: float) -> void:
 			_warn.visible = false
 	_step_rift(dt)
 	if vortex != null:
-		_step_vortex(dt)
+		if vortex.storm:
+			_step_storm(dt)
+		else:
+			_step_vortex(dt)
 
 
 ## Everything on the floor goes (a new room, the end of the run). The charge is kept.
@@ -350,13 +355,14 @@ func _open_vortex(at: Vector2) -> void:
 	if vortex != null:
 		vortex.node.queue_free()
 	var v := Vortex.new()
+	v.storm = def.kind == UltDef.Kind.STORM
 	v.at = at
 	v.radius = def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
 	v.life = def.duration
 	v.tick = def.tick
-	v.node = _vortex_node(at, v.radius)
+	v.node = _vortex_node(at, v.radius, _color())
 	vortex = v
-	game.fx.ring(at, v.radius, Combat.EMETH, 0.3, 0.15, true)
+	game.fx.ring(at, v.radius, _color(), 0.3, 0.15, true)
 	Audio.play(CombatSounds.EVENTS[&"ult_vortex"])
 
 
@@ -403,7 +409,7 @@ func _step_vortex(dt: float) -> void:
 
 
 ## The Voragem's floor (ult_vortex.gdshader): its own quad and material, made when it lands (one at a time).
-func _vortex_node(at: Vector2, radius: float) -> MeshInstance3D:
+func _vortex_node(at: Vector2, radius: float, color: Color) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2.ONE
@@ -413,8 +419,8 @@ func _vortex_node(at: Vector2, radius: float) -> MeshInstance3D:
 	var m := ShaderMaterial.new()
 	m.shader = VORTEX_SHADER
 	m.render_priority = FLOOR_PRIORITY
-	var peaks := vortex_peaks()
-	m.set_shader_parameter(&"color", Combat.EMETH)
+	var peaks := vortex_peaks(color)
+	m.set_shader_parameter(&"color", color)
 	m.set_shader_parameter(&"ivory", VORTEX_IVORY)
 	m.set_shader_parameter(&"gold", VORTEX_GOLD)
 	m.set_shader_parameter(&"veil_peak", peaks.veil)
@@ -447,8 +453,8 @@ func _draw_vortex(v: Vortex, dt: float) -> void:
 
 ## The brightest channel of each part of the Voragem's floor (veil, arm, rim): 1 at most (under the glow), less where
 ## its colour would pass ScreenTone.SAFE on the screen.
-static func vortex_peaks() -> Dictionary:
-	return {"veil": minf(1.0, ScreenTone.linear_peak(Combat.EMETH)), "arm": minf(1.0, ScreenTone.linear_peak(VORTEX_IVORY)),
+static func vortex_peaks(color: Color = Combat.EMETH) -> Dictionary:
+	return {"veil": minf(1.0, ScreenTone.linear_peak(color)), "arm": minf(1.0, ScreenTone.linear_peak(VORTEX_IVORY)),
 		"rim": minf(1.0, ScreenTone.linear_peak(VORTEX_GOLD))}
 
 
@@ -477,9 +483,62 @@ func _implode(v: Vortex) -> void:
 	Audio.play(CombatSounds.EVENTS[&"ult_implode"])
 
 
+# ---------- the Maga's Tempestade dos Selos ----------
+
+## The ultimate's colour: the Emeth's emerald for the Warrior's, amber for the Maga's Tempestade.
+func _color() -> Color:
+	return Arcane.AMBER if def.kind == UltDef.Kind.STORM else Combat.EMETH
+
+
+## Every `tick` seconds each enemy inside takes the tick and a Selo (its clock restarts); at the end every Selo inside
+## detonates (UltDef.storm_share: elites half, guardians a quarter, Morvath the ticks only and keeps his Selo).
+func _step_storm(dt: float) -> void:
+	var v := vortex
+	v.life -= dt
+	_draw_vortex(v, dt)
+	v.tick -= dt
+	var ticking := false
+	if v.tick <= 0.0:
+		v.tick += def.tick
+		ticking = true
+	if ticking:
+		game.horde.in_circle(v.at, v.radius, _found)
+		for e: Enemy in _found.duplicate():
+			if not e.alive or e.invulnerable:
+				continue
+			var boss := e.def.behavior == EnemyDef.Behavior.BOSS
+			if game.arcane.lay(e):
+				game.arcane.tally.storm_seals += 1
+			_hit(e, def.tick_damage * def.storm_share(boss, not boss and e.def.stun_time <= 0.0, e.def.elite, false), Vector2.ZERO, 0.0, 0.0)
+	if v.life <= 0.0:
+		_detonate_storm(v)
+
+
+func _detonate_storm(v: Vortex) -> void:
+	vortex = null
+	v.node.visible = false
+	v.node.queue_free()
+	game.horde.in_circle(v.at, v.radius, _found)
+	var n := 0
+	for e: Enemy in _found.duplicate():
+		var boss := e.def.behavior == EnemyDef.Behavior.BOSS
+		if boss or not e.alive or not game.arcane.detonate(e):
+			continue
+		n += 1
+		var away := (e.pos - v.at).normalized() if e.pos.distance_to(v.at) > 0.01 else Vector2.RIGHT
+		_hit(e, def.detonate_damage * def.storm_share(false, e.def.stun_time <= 0.0, e.def.elite, true), away, def.knockback, 0.0)
+	game.arcane.resonance.add(mini(n, game.hero.arcane.storm_resonance))
+	var fx := game.fx
+	fx.ring(v.at, v.radius, Arcane.AMBER, 0.3, 0.15, true)
+	fx.ring(v.at, v.radius * 0.6, Arcane.IVORY, 0.25)
+	fx.burst(&"fire", Vector3(v.at.x, 0.6, v.at.y))
+	fx.shake(2.5)
+	Audio.play(CombatSounds.EVENTS[&"ult_implode"])
+
+
 func _floor_mark(style: GroundLook.Style, shape: GroundLook.Shape, at: Vector2, dir: Vector2, size: float, width: float) -> void:
 	if _warn == null:
 		_warn = GroundLook.new_node()
 		add_child(_warn)
-	GroundLook.dress(_warn, style, shape, Combat.EMETH, WARN_STRENGTH, Ground.RIM_METERS, at, dir, size, width, 0.066)
+	GroundLook.dress(_warn, style, shape, _color(), WARN_STRENGTH, Ground.RIM_METERS, at, dir, size, width, 0.066)
 	_warn.visible = true

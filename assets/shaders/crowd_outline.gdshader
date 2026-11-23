@@ -43,7 +43,7 @@ void vertex() {
 	NORMAL = facing;
 	state = INSTANCE_CUSTOM;
 	float w = art_style > 0.5 ? mix(style_width, style_elite_width, style_elite) : width;
-	VERTEX = at + facing * w / max(length(MODEL_MATRIX[0].xyz), 0.001);
+	VERTEX = crowd_away(VERTEX_ID, INSTANCE_CUSTOM.a, at + facing * w / max(length(MODEL_MATRIX[0].xyz), 0.001));
 	if (art_style > 0.5) {
 		// away from the camera, in the model's own space (uniform scale: the transpose undoes the turn)
 		float scale = max(length(MODEL_MATRIX[0].xyz), 0.001);

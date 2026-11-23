@@ -4,3 +4,4 @@
 
 [resource]
 script = ExtResource("1_0sali")
+find_depth_max = 11

@@ -7,7 +7,10 @@ extends Resource
 
 const WARRIOR := "res://data/heroes/warrior.tres"
 
+const MAGA := "res://data/heroes/maga.tres"
+
 static var _warrior: HeroDef
+static var _maga: HeroDef
 
 @export var id: StringName = &"warrior"
 @export var name_key: StringName
@@ -16,14 +19,14 @@ static var _warrior: HeroDef
 @export_file("*.tres") var combos := ""
 
 @export_group("Body")
-## Life, the stagger of a blow taken and the safety after it (Hades II: 30 life, 1.3 s; the body's radius is
+## Life, the stagger of a blow taken and the safety after it (Hades II: 30 life, 1.3 s; C1b: 0.7 s; the body's radius is
 ## Player.RADIUS).
 @export var max_hp := 30.0
 @export var hurt_time := 0.18
-@export var hurt_invuln := 1.3
+@export var hurt_invuln := 0.7
 ## Dodge charges and the seconds one takes to come back (the roll's speed, length and safety are Feel's).
 @export var dodge_charges := 1
-@export var dodge_recharge := 0.74
+@export var dodge_recharge := 0.8
 
 @export_group("Magia")
 ## Full at the start of every room; spent by the held Omegas (the attack's and the special's costs are in the combo).
@@ -59,8 +62,23 @@ static var _warrior: HeroDef
 ## is a move with one of passive_tags (the spin, the Corte Veloz, the Omegas) and none of passive_never (the
 ## ultimate's blows never count).
 @export var magick_on_finisher := 2.0
+## C1c (docs/design/kit_c1c.md 1): the buttons feed each other. Magia for each Quebra the paladin causes (not the Brado's, not
+## the ultimate's); the Brado's recharge loses cd_refund_hit s for each attack hit and cd_refund_break s for each Quebra, never
+## below cd_floor s in all; gains of Magia by hit or Quebra are capped at gain_cap per gain_window s, and one wave refunds
+## at most wave_refund_cap. See KitFeed.
+@export var magick_on_break := 0.0
+@export var cd_refund_hit := 0.0
+@export var cd_refund_break := 0.0
+@export var cd_floor := 0.0
+@export var gain_cap := 3.0
+@export var gain_window := 1.0
+@export var wave_refund_cap := 8.0
 @export var passive_tags: Array[StringName] = [&"finisher", &"dash", &"omega"]
 @export var passive_never: Array[StringName] = [&"ultimate"]
+
+@export_group("Arcane kit")
+## The Maga's kit (null: not this hero's): see ArcaneKit and Arcane.
+@export var arcane: ArcaneKit
 
 @export_group("Progression")
 @export var ultimates: Array[UltDef] = []
@@ -73,6 +91,13 @@ static func warrior() -> HeroDef:
 	if _warrior == null:
 		_warrior = load(WARRIOR)
 	return _warrior
+
+
+## The Maga (docs/design/heroes/maga.md), loaded once; played with --hero=maga until the selector of M1b.
+static func maga() -> HeroDef:
+	if _maga == null:
+		_maga = load(MAGA)
+	return _maga
 
 
 func ultimate(ult_id: StringName) -> UltDef:

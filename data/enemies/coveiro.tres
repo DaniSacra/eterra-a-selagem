@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_x32d2"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_o0w0k"]
+
+[resource]
+script = ExtResource("2_o0w0k")
+id = &"coveiro"
+name_key = &"enemy_coveiro"
+model = &"gravedigger"
+tint = Color(0.86, 0.66, 0.46, 1)
+magic_color = Color(0.62, 0.78, 0.4, 1)
+vivid = -0.05
+tell = 6
+tell_at = Vector3(0, 1.3, 0.45)
+behavior = 10
+hp = 90.0
+speed = 3.6799999999999997
+damage = 4.0
+poise = 100.0
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_range = 10.0
+attack_cooldown = 6.3
+attack_windup = 0.7200000000000001
+recharge_windup = 0.6400000000000001
+raise_count = 2
+raise_kind = &"skeleton_raised"
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+retreat_far = 7.0
+flee_speed = 5.2
+never_with = Array[StringName]([&"swarm"])
+per_room = 1
+close_windup = 0.52
+rating = 12.0
+role = &"grave"

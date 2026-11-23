@@ -16,8 +16,8 @@ func before_each() -> void:
 
 
 func test_difficulty_grows_with_depth() -> void:
-	assert_eq(EncounterGen.difficulty(stage, 1), 87.0, "B-4: 70 + 17 a room")
-	assert_eq(EncounterGen.difficulty(stage, 5), 155.0)
+	assert_eq(EncounterGen.difficulty(stage, 1), 81.0, "70 + 11 a room (14 rooms)")
+	assert_eq(EncounterGen.difficulty(stage, 5), 125.0)
 
 
 func test_waves_carry_about_the_difficulty() -> void:
@@ -30,7 +30,7 @@ func test_waves_carry_about_the_difficulty() -> void:
 				assert_false(w.is_empty(), "no empty wave")
 				for id: StringName in w:
 					total += (defs[id] as EnemyDef).rating
-			var want := EncounterGen.difficulty(stage, depth)
+			var want := EncounterGen.difficulty(stage, depth) * EncounterGen.budget(stage, depth)  # (C1b: a room's own share)
 			assert_gte(total, want * 0.5, "depth %d" % depth)
 
 
@@ -42,7 +42,7 @@ func test_the_first_kind_is_in_every_wave() -> void:
 
 
 func test_elites_wear_hades_armor() -> void:
-	assert_eq((defs[&"skeleton"] as EnemyDef).hp, 60.0)
+	assert_eq((defs[&"skeleton"] as EnemyDef).hp, 95.0, "C1b: the common one 1.6 times tougher, the elite keeps 60 under its armor")
 	assert_eq((defs[&"skeleton_elite"] as EnemyDef).armor, 80.0)
 	assert_eq((defs[&"skeleton_elite"] as EnemyDef).hp, 60.0, "the elite keeps the same life, armor on top")
 

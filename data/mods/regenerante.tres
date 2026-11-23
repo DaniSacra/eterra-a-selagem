@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ModDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/mod_def.gd" id="1_8emfu"]
+
+[resource]
+script = ExtResource("1_8emfu")
+id = &"regenerante"
+name_key = &"mod_regenerante"
+ring = Color(0.6, 0.85, 1, 1)
+regen_hp = 12.0

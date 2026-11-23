@@ -66,7 +66,7 @@ func test_nothing_stands_on_the_walkable_floor_but_the_layouts_pieces() -> void:
 			var where := {}
 			for n in a.look.find_children("*", "MeshInstance3D", true, false):
 				var mi := n as MeshInstance3D
-				if mi.mesh == null:
+				if mi.mesh == null or mi.has_meta(&"air"):
 					continue
 				var xf := mi.global_transform
 				for s in mi.mesh.get_surface_count():

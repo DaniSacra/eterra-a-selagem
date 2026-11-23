@@ -69,7 +69,7 @@ func test_attack_damage_and_timing_follow_hades() -> void:
 	var cut1 := ComboTree.find(tree.neutral, L)
 	var cut2 := cut1.following()[0]
 	var cut3 := cut2.following()[0]
-	assert_eq([cut1.damage, cut2.damage, cut3.damage], [20.0, 25.0, 60.0])
+	assert_eq([cut1.damage, cut2.damage, cut3.damage], [15.0, 15.0, 20.0])
 	# E1c: Hades II's staff (docs/design/hades2_feel_study.md): windup + glint, attack lock, legs held
 	assert_almost_eq(cut1.lead(), 0.08, 0.001)
 	assert_almost_eq(cut2.lead(), 0.13, 0.001)
@@ -88,7 +88,7 @@ func test_the_special_strikes_only_with_its_bolt() -> void:
 	assert_eq(started, [&"bolt"] as Array[StringName])
 	assert_eq(runner.node.damage, 0.0)
 	assert_eq(runner.node.effect, ComboNode.Effect.WAVE)
-	assert_eq(runner.node.effect_power, 35.0, "35 since the weak start of 2026-11-21")
+	assert_eq(runner.node.effect_power, 55.0, "55 (C1b rebalance 2026-11-23)")
 
 
 func test_the_special_can_follow_any_swing() -> void:
@@ -104,7 +104,7 @@ func test_the_special_has_no_held_version_any_more() -> void:
 func test_the_omega_attack_strikes_both_ways() -> void:
 	var lance := ComboTree.find(tree.neutral, ComboNode.In.CHARGE_LIGHT)
 	assert_true(lance.both_ways)
-	assert_eq(lance.damage, 160.0)
+	assert_eq(lance.damage, 150.0)
 	assert_almost_eq(lance.charge_time, 0.8, 0.001)
 	assert_eq(lance.magick_cost, 20.0)
 

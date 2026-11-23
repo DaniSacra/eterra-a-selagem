@@ -54,7 +54,9 @@ triângulos (5 600; ver a nota da tabela).
 | besteiro | `archer.res` | 3,95 MB | 6 078 | 4 435 | 90 (7) | 2048 x 268 | 1,92 | -0,015 | Lote 2C (besta 0,62, peça `crossbow`) |
 | Escudo | `guard.res` | 3,91 MB | 4 459 | 3 877 | 114 (9) | 2048 x 249 | 2,03 | -0,013 | Lote 2C |
 | sacerdote | `priest.res` | 3,52 MB | 4 513 | 3 846 | 102 (8) | 2048 x 225 | 1,93 | -0,021 | Lote 2C (`cast` = Cheer do KayKit, marcas `hands`, `hand_l`, `hand_r`) |
-| Cavaleiro (guardião) | `knight.res` | 4,80 MB | 6 109 | 4 956 | 114 (9) | 2048 x 341 | 2,03 | -0,025 | Lote 2C |
+| Cavaleiro (guardião) | `knight.res` | 4,80 MB | 6 109 | 4 956 | 114 (9) | 2048 x 341 | 2,03 | -0,025 | Lote 2C; o escudo (vértices 5481 a 6435) some da mão enquanto voa e é recortado para o arremesso (2026-11-23, `ThrownShield`) |
+| Gritador (apoio, C1e A) | `herald.res` | 3,98 MB | ? | 4 095 | 119 (10) | 2048 x 284 | 1,92 | n/d | Corpo do feiticeiro ereto, estandarte (mastro, pano âmbar, ponta de osso) na esquerda; sem Meshy, `tools/bake.gd` `herald`; tinta azul-aço no `make_data`; provisório (conferir em captura a 720p) |
+| Coveiro (apoio, C1e A) | `gravedigger.res` | 3,46 MB | ? | 4 158 | 102 (8) | 2048 x 239 | 1,93 | n/d | Corpo do sacerdote curvado, pá e lanterna; `tools/bake.gd` `gravedigger`; tinta terra; escorrega 0,10 m por passo na marcha (igual ao sacerdote); provisório |
 | sacerdote ancião (guardião) | `priest_elder.res` | 5,30 MB | 6 617 | 5 557 | 116 (9) | 2048 x 375 | 2,07 | **-0,081** | Lote 2C (marca `orb`) |
 | Morvath | `morvath.res` | 7,96 MB | 5 325 | 4 281 | 230 (17) | 2048 x 599 | 2,02 | -0,012 | Lote 2C (estava em `6338417`); `pose_drift` até 0,44 m fora da queda (0,52) e do levantar (0,41) |
 

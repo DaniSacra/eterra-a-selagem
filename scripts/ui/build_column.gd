@@ -3,7 +3,7 @@ extends Control
 ## H1 of the SWORN reference (2026-11-21): the run's build on the right edge, read at a glance. A dark banner standing
 ## down the edge (a swallow tail at its foot) with one medallion per button, in the order of the row at the bottom:
 ## left button, right button, Q, E, Shift, Space. The Blessing of that button's slot with its level in the colour of its
-## rarity; a button without one (and E and Shift, which have no slot for a Blessing yet) shows its own mark in grey. Under
+## rarity; a button without one (Shift has none) shows its own mark in grey. Under
 ## them, if any: the Elos formed and the Psalm taken. Pure display: Hud calls show() each time the build changes and
 ## veil() while someone stands behind it. px at 720 lines; the window stretches the canvas.
 ##   var col := BuildColumn.new().setup()
@@ -20,8 +20,9 @@ const BACK := Color(0.035, 0.027, 0.04, 0.8)
 const EMPTY := Color(0.42, 0.42, 0.46)
 ## The buttons in the row's order: the Blessing slot each holds (Boon.Slot.NONE: none can yet) and the mark of the
 ## button itself (a BoonIcon glyph id; -1: the bare action's, BoonIcon.ACTION_GLYPH + slot).
-const BUTTONS: Array[Array] = [[Boon.Slot.ATTACK, -1], [Boon.Slot.SPECIAL, -1], [Boon.Slot.CAST, BoonIcon.SHOUT_GLYPH],
-	[Boon.Slot.NONE, BoonIcon.RUSH_GLYPH], [Boon.Slot.NONE, BoonIcon.ULT_GLYPH], [Boon.Slot.DASH, -1]]
+const BUTTONS: Array[Array] = [[Boon.Slot.ATTACK, -1, &"light_attack"], [Boon.Slot.SPECIAL, -1, &"heavy_attack"],
+	[Boon.Slot.CAST, BoonIcon.SHOUT_GLYPH, &"shout"], [Boon.Slot.RUSH, BoonIcon.RUSH_GLYPH, &"rush"],
+	[Boon.Slot.ULT, BoonIcon.ULT_GLYPH, &"ultimate"], [Boon.Slot.DASH, -1, &"dodge"]]
 ## The index of Shift's entry (its mark is the ultimate's, set by show_build).
 const ULT_AT := 4
 
@@ -105,16 +106,16 @@ func _fit(foot_rows: int) -> void:
 ## Reads the build: the Blessing in each slot, the Elos formed (at most two shown) and the Psalm taken (null: none).
 ## ult_glyph: the ultimate's mark for Shift's button (-1: the generic one).
 func show_build(boons: BoonState, ult_glyph: int = -1, psalm: PsalmDef = null) -> void:
-	var by_slot := {}
+	var by_button := {}
 	var elos: Array[Boon] = []
 	for b in boons.owned():
 		if b.is_duo():
 			elos.append(b)
 		elif b.slot != Boon.Slot.NONE:
-			by_slot[b.slot] = b
+			by_button[b.button()] = b  # BC-2: the Investida's Blessings share the dash slot but belong to E
 	for i in BUTTONS.size():
 		var slot: Boon.Slot = BUTTONS[i][0]
-		var b: Boon = by_slot.get(slot) if slot != Boon.Slot.NONE else null
+		var b: Boon = by_button.get(BUTTONS[i][2])
 		var glyph: int = BUTTONS[i][1] if BUTTONS[i][1] >= 0 else BoonIcon.ACTION_GLYPH + slot
 		if i == ULT_AT and ult_glyph >= 0:
 			glyph = ult_glyph

@@ -197,6 +197,11 @@ func _controls() -> Control:
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	page.add_child(tip)
+	var maga := UiKit.label(T.t(&"howto_maga"), UiKit.DIM, 15)
+	maga.name = "maga_note"
+	maga.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	maga.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	page.add_child(maga)
 	# the note keeps clear of the buttons under the page (UI review d2ff05d, P2-3)
 	var gap := Control.new()
 	gap.custom_minimum_size.y = 14

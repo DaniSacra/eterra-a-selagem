@@ -2,7 +2,7 @@ class_name RoleMark
 extends Control
 ## An enemy's part in a fight as a small mark in ink (the Compêndio's Inimigos, UI review d2ff05d P2-5), drawn in lines
 ## like the book's other marks (CodexMark): pressure a blade pointing in, react three chevrons, control an orb with a
-## ring, flank an arrow off to the side, block a round shield, area a diamond with a ring on the floor, a guardian the
+## ring, flank an arrow off to the side, block a round shield, swarm three dots, sweep a bar turning on its root, rally a horn, leap four corners in L, throw a line with a head at each end, grave a mound with a shovel, area a diamond with a ring on the floor, a guardian the
 ## two chevrons of the doors (DoorGlyph). Faded, the "???" of one never defeated.
 ##   RoleMark.new().setup(&"flank", 22.0)
 
@@ -55,6 +55,47 @@ func _draw() -> void:
 			draw_arc(c, r * 0.82, 0.0, TAU, 24, ink, w * 1.2, true)
 			draw_arc(c, r * 0.4, 0.0, TAU, 16, ink, w * 0.8, true)
 			draw_circle(c, r * 0.12, ink)
+		&"swarm":
+			# three small bodies at the corners of a triangle
+			for k in 3:
+				draw_circle(c + Vector2.from_angle(-PI * 0.5 + TAU * k / 3.0) * r * 0.52, r * 0.24, ink)
+		&"sweep":
+			# a bar turning round its root: a quarter of a ring and a line out of the middle
+			draw_arc(c, r * 0.8, -PI * 0.1, PI * 0.6, 14, ink, w, true)
+			draw_line(c, c + Vector2(r * 0.8, -r * 0.1), ink, w * 1.3, true)
+			draw_circle(c, r * 0.16, ink)
+		&"rally":
+			# a horn: a flared cone with two short lines of sound
+			draw_colored_polygon(PackedVector2Array([c + Vector2(-r * 0.7, -r * 0.12), c + Vector2(-r * 0.7, r * 0.12), c + Vector2(r * 0.15, r * 0.5),
+				c + Vector2(r * 0.15, -r * 0.5)]), ink)
+			draw_line(c + Vector2(r * 0.4, -r * 0.3), c + Vector2(r * 0.8, -r * 0.5), ink, w * 0.8, true)
+			draw_line(c + Vector2(r * 0.4, r * 0.3), c + Vector2(r * 0.8, r * 0.5), ink, w * 0.8, true)
+		&"leap":
+			# the four corners of a square, each an L
+			for sx in [-1.0, 1.0]:
+				for sy in [-1.0, 1.0]:
+					var corner := c + Vector2(sx, sy) * r * 0.7
+					draw_polyline(PackedVector2Array([corner + Vector2(-sx * r * 0.5, 0), corner, corner + Vector2(0, -sy * r * 0.5)]), ink, w, true)
+		&"throw":
+			# one line out and back: a head at each end
+			draw_line(c + Vector2(-r * 0.8, 0), c + Vector2(r * 0.8, 0), ink, w, true)
+			draw_polyline(PackedVector2Array([c + Vector2(r * 0.4, -r * 0.4), c + Vector2(r * 0.8, 0), c + Vector2(r * 0.4, r * 0.4)]), ink, w, true)
+			draw_polyline(PackedVector2Array([c + Vector2(-r * 0.4, -r * 0.4), c + Vector2(-r * 0.8, 0), c + Vector2(-r * 0.4, r * 0.4)]), ink, w, true)
+		&"beam":
+			# a long thin beam out of a small ring at its root
+			draw_arc(c + Vector2(-r * 0.6, 0), r * 0.26, 0.0, TAU, 12, ink, w, true)
+			draw_line(c + Vector2(-r * 0.34, 0), c + Vector2(r * 0.9, 0), ink, w * 1.2, true)
+			draw_line(c + Vector2(-r * 0.2, r * 0.22), c + Vector2(r * 0.9, r * 0.22), ink, w * 0.6, true)
+		&"trap":
+			# an X inside a square: the plate
+			draw_rect(Rect2(c - Vector2(r * 0.7, r * 0.7), Vector2(r * 1.4, r * 1.4)), ink, false, w)
+			draw_line(c + Vector2(-r * 0.45, -r * 0.45), c + Vector2(r * 0.45, r * 0.45), ink, w, true)
+			draw_line(c + Vector2(-r * 0.45, r * 0.45), c + Vector2(r * 0.45, -r * 0.45), ink, w, true)
+		&"grave":
+			# a mound of earth with a shovel standing in it
+			draw_arc(c + Vector2(0, r * 0.5), r * 0.75, PI, TAU, 14, ink, w, true)
+			draw_line(c + Vector2(r * 0.3, r * 0.5), c + Vector2(r * 0.3, -r * 0.8), ink, w, true)
+			draw_line(c + Vector2(r * 0.12, -r * 0.8), c + Vector2(r * 0.48, -r * 0.8), ink, w, true)
 		&"area":
 			var gem := PackedVector2Array([c + Vector2(0, -r * 0.55), c + Vector2(r * 0.4, 0), c + Vector2(0, r * 0.55), c + Vector2(-r * 0.4, 0)])
 			draw_colored_polygon(gem, ink)

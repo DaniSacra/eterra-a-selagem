@@ -22,5 +22,5 @@ script = ExtResource("2_g63yl")
 id = &"passo_marca"
 family = 7
 icon = 22
-slot = 4
+slot = 5
 mods = Array[ExtResource("1_yfsp1")]([SubResource("Resource_beqp7"), SubResource("Resource_lvfk7")])

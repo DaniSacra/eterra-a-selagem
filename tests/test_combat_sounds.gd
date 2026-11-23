@@ -49,7 +49,7 @@ func test_every_enemy_sounds_its_material_windup_blow_and_fall() -> void:
 		var shoots := d.behavior in [EnemyDef.Behavior.ARCHER, EnemyDef.Behavior.PRIEST, EnemyDef.Behavior.CASTER]
 		if shoots:
 			assert_true(_has(CombatSounds.shot(d)), "%s: its shot is heard" % d.id)
-		else:
+		elif d.behavior != EnemyDef.Behavior.SUPPORT:  # the Gritador and the Coveiro never strike
 			assert_true(_has(loosed), "%s: its blow is heard" % d.id)
 
 
@@ -61,7 +61,9 @@ func test_each_role_has_its_own_windup() -> void:
 		var d: EnemyDef = load("res://data/enemies/" + f)
 		if d.role != &"" and not d.elite:
 			by_role[d.role] = CombatSounds.windup(d)
-	assert_eq(by_role.size(), 6, "six roles")
+	assert_eq(by_role.size(), 14, "fourteen roles")
+	assert_eq(by_role[&"swarm"], by_role[&"pressure"], "the Trinca's lunge is the skeleton's, so it is heard as one")
+	by_role.erase(&"swarm")
 	var sounds := {}
 	for r in by_role:
 		sounds[by_role[r]] = true

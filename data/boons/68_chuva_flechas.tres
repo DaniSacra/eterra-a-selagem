@@ -7,8 +7,10 @@
 [sub_resource type="Resource" id="Resource_sc26q"]
 script = ExtResource("3_qgneu")
 kind = 3
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
 cooldown = PackedFloat32Array(5, 4.5, 4)
-damage = PackedFloat32Array(14, 20, 28)
+damage = PackedFloat32Array(8, 12, 17)
 count = PackedFloat32Array(4, 6, 9)
 radius = PackedFloat32Array(12, 13, 14)
 status = &"mark"

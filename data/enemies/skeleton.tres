@@ -1,9 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_k7ddm"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_0ypgr"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_wrqo5"]
 
 [resource]
-script = ExtResource("1_k7ddm")
+script = ExtResource("2_wrqo5")
 id = &"skeleton"
 name_key = &"enemy_skeleton"
 size = 1.15
@@ -12,21 +13,29 @@ windup_shake = 0.025
 tell = 1
 tell_at = Vector3(0.1, 1.9, -1)
 behavior = 2
-hp = 60.0
+hp = 95.0
 speed = 4.3125
 damage = 5.0
 radius = 0.5
+poise = 100.0
 stun_time = 0.5
 stun_heavy_time = 1.1
 attack_damage = 5.0
 attack_range = 3.625
 attack_cooldown = 1.26
-attack_windup = 0.9
-recover_time = 2.1
+attack_windup = 0.6000000000000001
+recover_time = 1.2
 strike_at = 0.1
 lunge_speed = 8.75
 lunge_time = 0.3
-max_attackers = 2
+recharge_windup = 0.6400000000000001
+aim_lock = 0.3
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+windup_gap = 0.35
+max_attackers = 3
+close_windup = 0.52
 rating = 5.0
 role = &"pressure"
 elite_version = &"skeleton_elite"
+big_version = &"skeleton_big"

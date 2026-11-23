@@ -1,10 +1,10 @@
 class_name Encounter
 extends RefCounted
 ## The meeting with two angels in a room of a Blessing (Rejogabilidade, Fatia 1; sistemas.md 1.6, the Sworn the PO
-## asked for), pure. Two angels are drawn among those with at least one card valid for the hand (eligible); the one
+## asked for), pure. Two angels are drawn among those with three cards valid for the hand (eligible); the one
 ## chosen offers up to three Blessings of its family by BoonState.draw with today's rules (rarity in sequence, trade,
 ## an Elo that involves its family, the Psalm filled by Game as before). Fallbacks: one angel eligible, only it comes
-## ("Só um anjo atende"); none, the rest card of today (Fôlego); fewer than three cards in the family, those there are.
+## ("Só um anjo atende"); none, the rest card of today (Fôlego). An angel is met only with three cards for the hand (CARDS).
 ## Never an invalid card.
 ##
 ## Dice: every room draws its pair on dice of its own (Encounters.dice: the run's seed, SALT and the room's node), and
@@ -75,13 +75,29 @@ static func belongs(state: BoonState, b: Boon, family: Boon.Family) -> bool:
 	return false
 
 
-## True when the angel has at least one card for the hand (a Blessing not held and offerable: fresh, a trade or an
-## Elo that can be formed now).
-static func eligible(state: BoonState, angel: AngelDef) -> bool:
+## BO-2: how many cards an angel must be able to put on the table to be met (six Blessings a family, one held for each
+## button: the second meeting still shows three).
+const CARDS := 3
+
+
+## How many cards the angel could offer the hand: a Blessing not held and offerable (fresh, a trade or an Elo that can be
+## formed now), and, to fill the hand, a Blessing of its family held that can still grow (one level more).
+static func supply(state: BoonState, angel: AngelDef) -> int:
+	var n := 0
 	for b in state.catalog:
-		if state.level(b.id) <= 0 and state.can_offer(b) and belongs(state, b, angel.family):
-			return true
-	return false
+		if not belongs(state, b, angel.family):
+			continue
+		if state.level(b.id) <= 0:
+			if state.offerable(b):
+				n += 1
+		elif state.can_offer(b) and not b.reserve:
+			n += 1
+	return n
+
+
+## True when the angel has CARDS cards for the hand (supply).
+static func eligible(state: BoonState, angel: AngelDef) -> bool:
+	return supply(state, angel) >= CARDS
 
 
 ## The angels met: SIZE different ones drawn among the eligible (all shuffled on rng, the first eligible kept), the
@@ -106,12 +122,24 @@ func pair(state: BoonState, rng: RandomNumberGenerator, forced: Array = []) -> A
 	return out
 
 
-## The angel's cards: BoonState.draw over its family only, with the stage's chances.
+## The angel's cards: BoonState.draw over its family only, with the stage's chances; short of n, the rest are one level
+## more of a Blessing of the family already held (BO-2: three cards always, as eligible promises).
 static func cards(state: BoonState, angel: AngelDef, rng: RandomNumberGenerator, n: int = 3,
 		chances: Array[float] = Boon.RARITY_CHANCE, elo_chance: float = Boon.ELO_CHANCE,
 		trade_chance: float = Boon.TRADE_CHANCE) -> Array[BoonState.Card]:
-	return state.draw(rng, n, chances, elo_chance, trade_chance,
+	var out := state.draw(rng, n, chances, elo_chance, trade_chance,
 		func(b: Boon) -> bool: return belongs(state, b, angel.family))
+	if out.size() < n:
+		var held: Array[Boon] = []
+		for b in state.owned():
+			if belongs(state, b, angel.family) and state.can_offer(b) and not b.reserve:
+				held.append(b)
+		while out.size() < n and not held.is_empty():
+			var b: Boon = held.pop_at(rng.randi() % held.size())
+			var c := BoonState.Card.new(b, state.rarity(b.id), state.level(b.id) + 1)
+			c.grow = true
+			out.append(c)
+	return out
 
 
 ## The angel whose family the hand holds most (Blessings held of it, an Elo counting for both of its families); the

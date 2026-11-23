@@ -41,7 +41,7 @@ func test_a_new_save_shows_the_bare_hub() -> void:
 	assert_eq(s.forge_tools.size(), 0)
 	assert_eq(s.vendor, HubEvolution.Stall.CLOSED, "the stall closed (cloth over the goods)")
 	assert_eq(s.tree_lit, 0)
-	assert_eq(s.tree_total, 18, "a plate for each Gift bought with Memória")
+	assert_eq(s.tree_total, 22, "a plate for each Gift bought with Memória")
 	assert_eq(s.book_spines, 0)
 	assert_true(s.shelf, "the Ofícios shelf stands (the mechanic exists)")
 	assert_eq(s.shelf_items, 0, "and is empty")

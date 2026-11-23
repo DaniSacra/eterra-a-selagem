@@ -6,8 +6,10 @@ extends Resource
 ## VEU, MARE and MARCA come after DUO so the old indexes keep their place (AN-2: the angels Velael, Galael and Qeshael).
 enum Family { CHAMA, GEADA, LUZ, VIGILIA, DUO, VEU, MARE, MARCA }
 ## The action a gift rides on. One gift per action: taking another for the same action replaces it.
-## NONE: a gift that acts on its own or helps always (any number of them).
-enum Slot { NONE, ATTACK, SPECIAL, CAST, DASH }
+## NONE: a gift that acts on its own or helps always (any number of them). BO-2: one Slot a button, six in all; DASH is
+## the dodge (Space), RUSH the Investida (E), ULT the ultimate (Shift: only in the draw once the ultimate is open).
+## RUSH and ULT come last so the indexes of the others keep their place (TalentDef, PsalmDef and EnchantDef share this).
+enum Slot { NONE, ATTACK, SPECIAL, CAST, DASH, RUSH, ULT }
 ## How strong the gift comes: rarer cards multiply its first level (BoonMod.base, a skill's first damage). The four
 ## rarities of decision D-52: common, rare, epic and legendary, the legendary only by a trade (E3-01; Hades II's heroic;
 ## Hades II's legendary is our Psalm). An Elo has no rarity (BUG-017).
@@ -16,11 +18,11 @@ enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
 ## Fixed multipliers (decision D-53 (a); Hades II draws them in a range, 1.3 to 1.5 and so on).
 const RARITY_MULT: Array[float] = [1.0, 1.5, 2.0, 2.5]
 ## Chances of a card, tried in turn from common (C13-03, Hades II's RarityChances): rare, epic, legendary; the last
-## that passes is the card's. So 85.5% common, 9.5% rare, 5% epic. The legendary never in the draw (only a trade).
+## that passes is the card's: the legendary 1% (decision 10 of 2026-11-22), the epic and rare as before.
 ## These are the defaults; a stage carries its own (StageDef.rarity_chance).
-const RARITY_CHANCE: Array[float] = [0.10, 0.05, 0.0]
-## The guardian's (Hades II's Erebus: rare 90, epic 7, legendary 5; that legendary is the Psalm, none yet): 9.3% common.
-const RARITY_CHANCE_GUARDIAN: Array[float] = [0.90, 0.07, 0.0]
+const RARITY_CHANCE: Array[float] = [0.10, 0.05, 0.01]
+## The guardian's (Hades II's Erebus: rare 90, epic 7; the legendary 3%, decision 10 of 2026-11-22).
+const RARITY_CHANCE_GUARDIAN: Array[float] = [0.90, 0.07, 0.03]
 ## Chance a card is an Elo when one can be formed (C13-06, Hades II's duo: 12%).
 const ELO_CHANCE := 0.12
 ## Chance a card offers to trade the Blessing on an action already held for another, one rarity higher and at the
@@ -32,8 +34,8 @@ const TRADE_CHANCE := 0.1
 const RARITY_COLOR: Array[Color] = [Color(0.92, 0.92, 0.92), Color("6f9be6"), Color("b07ae6"), Color("d4ad66")]
 const RARITY_KEY: Array[StringName] = [&"rarity_common", &"rarity_rare", &"rarity_epic", &"rarity_legendary"]
 ## The tag of the moves each action's gifts change (Slot order).
-const SLOT_TAG: Array[StringName] = [&"", &"light", &"heavy", &"cast", &"dash"]
-const SLOT_KEY: Array[StringName] = [&"", &"slot_attack", &"slot_special", &"slot_cast", &"slot_dash"]
+const SLOT_TAG: Array[StringName] = [&"", &"light", &"heavy", &"cast", &"dash", &"dash", &"ultimate"]
+const SLOT_KEY: Array[StringName] = [&"", &"slot_attack", &"slot_special", &"slot_cast", &"slot_dash", &"slot_rush", &"slot_ult"]
 
 ## AN-2: Veu a smoke grey warmed by the dusk (hue 30, low saturation), Mare a deep sea blue (hue 220, far from the
 ## Geada's ice at 200 by its depth), Marca an olive bronze (hue 47, darker than the Luz's pale gold).
@@ -52,6 +54,9 @@ const FAMILY_KEY: Array[StringName] = [&"family_chama", &"family_geada", &"famil
 ## The highest level (0: no ceiling, as in Hades II). An Elo stays at 1: it never grows (BUG-017).
 @export var max_level := 3
 @export var slot: Slot = Slot.NONE
+## BO-2: a Blessing kept out of the draw (never offered, never deleted: the file stays, an old save and the Compêndio
+## still know it, and it can come back). The ones that leave their family when it is cut to six a button.
+@export var reserve := false
 ## An Elo (E3-02, Hades II's OneFromEachSet): offered when one gift of each list is owned (a list per family). The
 ## first of each list is the one the card shows when none is owned.
 @export var requires_sets: Array[PackedStringArray] = []
@@ -61,6 +66,28 @@ const FAMILY_KEY: Array[StringName] = [&"family_chama", &"family_geada", &"famil
 
 func color() -> Color:
 	return FAMILY_COLOR[family]
+
+
+## The button a slot's Blessings belong to (BO-2: one slot a button, so this is the source of what a Blessing changes).
+const SLOT_BUTTON: Array[StringName] = [&"", &"light_attack", &"heavy_attack", &"shout", &"dodge", &"rush", &"ultimate"]
+## The button of a move tag, for a Blessing whose slot says nothing (an Elo): light, heavy, cast, dash (the Investida).
+const TAG_BUTTON := {&"light": &"light_attack", &"heavy": &"heavy_attack", &"cast": &"shout", &"dash": &"rush"}
+
+
+## BC-2, BO-2: the action (button) whose moves this Blessing changes: its slot's button; a Blessing with no slot (an Elo)
+## takes the button of its first tagged modifier; one with none acts alone (&"").
+func button() -> StringName:
+	if slot != Slot.NONE:
+		return SLOT_BUTTON[slot]
+	for m in mods:
+		if TAG_BUTTON.has(m.tag):
+			return TAG_BUTTON[m.tag]
+	return &""
+
+
+## True when nothing sets the Blessing off: no button, and a skill (if any) that fires on its own.
+func acts_alone() -> bool:
+	return slot == Slot.NONE and (skill == null or skill.alone())
 
 
 func family_tag() -> StringName:

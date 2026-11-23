@@ -10,7 +10,7 @@ extends Node3D
 ## Rules (docs/art/cycle7_spec.md, 1 and 4.2): born of a real event, gone when the attack is loosed, never red (red
 ## is danger on the floor), violet is the enemy's magic, old gold is armor, pale is steel.
 
-enum Shape { DOT, RING, STREAK, SHARD, BAR, INK }
+enum Shape { DOT, RING, STREAK, SHARD, BAR, INK, ARC }
 
 const SHADER := preload("res://assets/shaders/enemy_tell.gdshader")
 ## LC-1: the quads put with `over` are drawn by a second MultiMesh over what is in front of them (no depth test).
@@ -136,6 +136,7 @@ const SPARK_GRAVITY := 14.0
 const MAX_SPARKS := 96
 
 class Spark:
+	var color := OLD_GOLD
 	var pos := Vector3.ZERO
 	var vel := Vector3.ZERO
 	var life := 0.0
@@ -144,6 +145,60 @@ class Spark:
 	var shape := Shape.SHARD
 	var turn := 0.0
 
+## Combate C1 (docs/art/combate_c1_leitura.md 2): the Escudo's guard drawn on the floor. Neutral steel, only the front:
+## five streaks tangent to an arc round it (GUARD_ARC degrees each side, GUARD_REACH m past its body), faint far off and
+## clearer with the paladin close in front; a guard opened throws them out (guard_fling) and shows them back one by one
+## over the last GUARD_BACK s of it; a blow it shuts lights the middle one.
+const STEEL := Color(0.66, 0.69, 0.74)
+## C1b: the shards of a broken poise (pale ivory: gold is the elites', red the danger, green Emeth's).
+const POISE_BREAK := Color(0.92, 0.93, 0.88)
+const STEEL_TONE := 0.75
+## N2: the Quebra's ring parts in POISE_ARCS arcs that fly out in POISE_ARC_TIME s, from this share of the body's size to
+## POISE_ARC_GROW times it (the word is smaller than the ring).
+const POISE_ARCS := 6
+const POISE_ARC_TIME := 0.25
+const POISE_ARC_GROW := Vector2(0.5, 1.6)
+const POISE_ARC_THICK := 0.16
+const POISE_ARC_TONE := 0.8
+const GUARD_STREAKS := 5
+const GUARD_ARC := 60.0
+const GUARD_REACH := 0.7
+const GUARD_STREAK := Vector2(0.95, 0.3)
+const GUARD_FAR := 0.55
+const GUARD_NEAR := 0.95
+const GUARD_NEAR_M := 6.0
+const GUARD_BACK := 1.0
+const GUARD_BACK_STEP := 0.2
+const GUARD_FLING_TIME := 0.15
+const GUARD_FLING_REACH := 0.5
+const GUARD_BLOCK_ALPHA := 1.0
+const GUARD_Y := 0.07
+## The order the streaks come back in: the sides, then toward the middle.
+const GUARD_ORDER: Array[int] = [0, 4, 1, 3, 2]
+
+## A priest's thread cut by its fall: from where it ran, parting from the middle to both ends.
+class Cut:
+	var from := Vector3.ZERO
+	var to := Vector3.ZERO
+	var life := 0.18
+
+
+class Flung:
+	var at := Vector3.ZERO
+	var out := Vector3.ZERO
+	var dir := Vector2.RIGHT
+	var life := GUARD_FLING_TIME
+
+## The arcs of a poise broken: where, how big, seconds left.
+class Arcs:
+	var at := Vector3.ZERO
+	var size := 1.0
+	var life := POISE_ARC_TIME
+	var turn := 0.0
+
+var _arcs: Array[Arcs] = []
+var _flung: Array[Flung] = []
+var _cuts: Array[Cut] = []
 var layers := 1
 ## Quads put this frame (tests read it).
 var count := 0
@@ -199,6 +254,24 @@ func _batch(quad: QuadMesh, shader: Shader, priority: int) -> MultiMeshInstance3
 
 
 func _process(delta: float) -> void:
+	var c := _cuts.size() - 1
+	while c >= 0:
+		_cuts[c].life -= delta
+		if _cuts[c].life <= 0.0:
+			_cuts.remove_at(c)
+		c -= 1
+	var q := _arcs.size() - 1
+	while q >= 0:
+		_arcs[q].life -= delta
+		if _arcs[q].life <= 0.0:
+			_arcs.remove_at(q)
+		q -= 1
+	var f := _flung.size() - 1
+	while f >= 0:
+		_flung[f].life -= delta
+		if _flung[f].life <= 0.0:
+			_flung.remove_at(f)
+		f -= 1
 	var i := _sparks.size() - 1
 	while i >= 0:
 		var s := _sparks[i]
@@ -251,6 +324,13 @@ static func spot(e: Enemy, model: BakedModel, anim: StringName, t: float) -> Vec
 	return anchor(e.pos, e.y, e.yaw(), d.size, d.tell_at)
 
 
+## Where in its wind-up (0 to 1) the enemy's aim locks (1 - aim_lock / attack_windup), or `otherwise` without a lock.
+static func lock_at(d: EnemyDef, otherwise: float) -> float:
+	if d.aim_lock <= 0.0 or d.attack_windup <= 0.0:
+		return otherwise
+	return clampf(1.0 - d.aim_lock / d.attack_windup, GLINT_FROM + 0.1, 1.0)
+
+
 ## The wind-up of one enemy, k from 0 (it just started) to 1 (the attack is loosed). model, anim, t: the pose drawn
 ## (Horde.render), so the light sits on the crossbow, the orb or the hands where they are.
 func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -> void:
@@ -263,10 +343,12 @@ func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -
 		return
 	match d.tell:
 		EnemyDef.Tell.GLINT:
-			var g := ramp(k, GLINT_FROM, GLINT_PEAK)
+			# combate_c1_leitura 6: whoever follows him until its aim locks has its gleam end there (the tip lights = it left)
+			var peak := lock_at(d, GLINT_PEAK)
+			var g := ramp(k, GLINT_FROM, peak)
 			if g > 0.0:
 				# a gleam running once along the edge toward the blow, a hot point at the tip, gone when the blade comes down
-				var run := smoothstep(GLINT_FROM, GLINT_PEAK, k)
+				var run := smoothstep(GLINT_FROM, peak, k)
 				var way := (_right * 0.7 + _up * 0.7).normalized() * GLINT_LINE * d.size
 				var guard := at - way * 0.5
 				var head := guard + way * run
@@ -303,10 +385,10 @@ func tell(e: Enemy, k: float, model: BakedModel = null, anim := &"", t := 0.0) -
 		EnemyDef.Tell.BOLT:
 			_crossbow(e, k, at)
 		EnemyDef.Tell.SHIELD:
-			var s := ramp(k, SHIELD_FROM, 1.0)
+			var s := ramp(k, SHIELD_FROM, lock_at(d, 1.0))
 			if s > 0.0:
-				# the edge of the raised shield catches the light, stronger as the charge comes
-				_put(Shape.STREAK, at, Vector2(0.95 * d.size, 0.06 * d.size), PALE, 0.75 * s, PI * 0.5)
+				# the edge of the raised shield catches the light, stronger as the charge comes (full at the lock, if it has one)
+				_put(Shape.STREAK, at, Vector2(0.95 * d.size, 0.06 * d.size), PALE, (1.0 if d.aim_lock > 0.0 else 0.75) * s, PI * 0.5)
 			if k > SHIELD_DUST:
 				var dust := (k - SHIELD_DUST) / (1.0 - SHIELD_DUST)
 				for i in 2:
@@ -481,16 +563,59 @@ func _lunge(e: Enemy, t: float) -> void:
 
 
 ## Armor took the blow: a few sparks of old gold fly from where it landed (dir: the way the blow went).
-func armor_hit(at: Vector3, dir: Vector2) -> void:
-	_scatter(at, dir, ABSORB_SPARKS, ABSORB_TIME, 0.09, Shape.DOT)
+func armor_hit(at: Vector3, dir: Vector2, n := ABSORB_SPARKS) -> void:
+	_scatter(at, dir, n, ABSORB_TIME, 0.09, Shape.DOT)
+
+
+## Combate C1 (combate_c1_leitura 7): a heavy blow or an Omega on armor throws more sparks, its edge stays HEAVY_EDGE s.
+const HEAVY_SPARKS := 10
+const HEAVY_EDGE := 0.18
+## The armor's wear in steps (share of the armor left under 75, 50 and 25%, then gone) and what the crowd shader draws
+## for each (its armored rim light and its gold fade out in steps).
+const WEAR_STEPS: Array[float] = [0.75, 0.5, 0.25]
+const WEAR_DRAWN: Array[float] = [0.0, 0.25, 0.55, 0.8, 1.0]
+const CRACK_SHARDS := 6
+const CRACK_SHARDS_GUARDIAN := 10
+const CRACK_SPEED := 0.7
+
+
+## 0 to 3: how many of 75, 50 and 25% the armor is under; 4: gone. 0 for a body with no armor to begin with.
+static func wear_level(armor: float, max_armor: float) -> int:
+	if max_armor <= 0.0:
+		return 0
+	if armor <= 0.0:
+		return 4
+	var left := armor / max_armor
+	var n := 0
+	for s in WEAR_STEPS:
+		if left < s:
+			n += 1
+	return n
+
+
+## How worn the armor is drawn (0..1, CrowdRenderer.state): WEAR_DRAWN of its level.
+static func wear(armor: float, max_armor: float) -> float:
+	return WEAR_DRAWN[wear_level(armor, max_armor)]
+
+
+## The armor cracked at 75, 50 or 25%: half the shards of its break, flung slower from the chest toward the paladin.
+func armor_crack(at: Vector3, dir: Vector2, size: float, guardian := false) -> void:
+	_scatter(at, dir, CRACK_SHARDS_GUARDIAN if guardian else CRACK_SHARDS, BREAK_TIME, 0.11 * maxf(size, 1.0), Shape.SHARD,
+		OLD_GOLD, CRACK_SPEED)
 
 
 ## The armor broke: its shards, once.
-func armor_break(at: Vector3, size: float) -> void:
-	_scatter(at, Vector2.ZERO, BREAK_SHARDS, BREAK_TIME, 0.11 * maxf(size, 1.0), Shape.SHARD)
+func armor_break(at: Vector3, size: float, color := OLD_GOLD) -> void:
+	_scatter(at, Vector2.ZERO, BREAK_SHARDS, BREAK_TIME, 0.11 * maxf(size, 1.0), Shape.SHARD, color)
+	if color == POISE_BREAK and _arcs.size() < 4:
+		var a := Arcs.new()
+		a.at = at
+		a.size = maxf(size, 0.8)
+		a.turn = _rng.randf() * TAU
+		_arcs.append(a)
 
 
-func _scatter(at: Vector3, dir: Vector2, n: int, time: float, size: float, shape: Shape) -> void:
+func _scatter(at: Vector3, dir: Vector2, n: int, time: float, size: float, shape: Shape, color := OLD_GOLD, speed := 1.0) -> void:
 	for i in n:
 		if _sparks.size() >= MAX_SPARKS:
 			return
@@ -498,11 +623,12 @@ func _scatter(at: Vector3, dir: Vector2, n: int, time: float, size: float, shape
 		var a := _rng.randf() * TAU
 		var out := Vector3(cos(a), _rng.randf_range(0.2, 1.0), sin(a)) * _rng.randf_range(0.5, 1.0)
 		s.pos = at
-		s.vel = (out + Vector3(dir.x, 0, dir.y) * 0.8) * SPARK_SPEED
+		s.vel = (out + Vector3(dir.x, 0, dir.y) * 0.8) * SPARK_SPEED * speed
 		s.total = time * _rng.randf_range(0.7, 1.0)
 		s.life = s.total
 		s.size = size * _rng.randf_range(0.7, 1.3)
 		s.shape = shape
+		s.color = color
 		s.turn = _rng.randf() * TAU
 		_sparks.append(s)
 
@@ -510,7 +636,23 @@ func _scatter(at: Vector3, dir: Vector2, n: int, time: float, size: float, shape
 func commit() -> void:
 	for s in _sparks:
 		var k := s.life / s.total
-		_put(s.shape, s.pos, Vector2(s.size, s.size * (1.8 if s.shape == Shape.SHARD else 1.0)), OLD_GOLD, k, s.turn)
+		_put(s.shape, s.pos, Vector2(s.size, s.size * (1.8 if s.shape == Shape.SHARD else 1.0)), s.color, k, s.turn)
+	for a in _arcs:
+		# the ring cut in arcs, parting outward and fading: it reads as the guard breaking, with no text
+		var k := 1.0 - a.life / POISE_ARC_TIME
+		var r := a.size * lerpf(POISE_ARC_GROW.x, POISE_ARC_GROW.y, sqrt(k)) * 2.0
+		var tone := toned(lit(POISE_BREAK), POISE_ARC_TONE)
+		for i in POISE_ARCS:
+			_put(Shape.ARC, a.at, Vector2(r, r), tone, 1.0 - k, a.turn + k * 0.5 + TAU * i / POISE_ARCS, POISE_ARC_THICK)
+	for c in _cuts:
+		# the thread parts from the middle to both ends in WARD_CUT_TIME, thinning as it goes
+		var open := 1.0 - c.life / WARD_CUT_TIME
+		var color := toned(lit(OLD_GOLD), WARD_TONE)
+		_stroke(c.from, c.from.lerp(c.to, 0.5 - 0.5 * open), WARD_WIDTH, color, WARD_ALPHA * (1.0 - open), 2, false)
+		_stroke(c.from.lerp(c.to, 0.5 + 0.5 * open), c.to, WARD_WIDTH, color, WARD_ALPHA * (1.0 - open), 2, false)
+	for f in _flung:
+		var k := f.life / GUARD_FLING_TIME
+		_floor(Shape.STREAK, f.at + f.out * (GUARD_FLING_REACH * (1.0 - k)), f.dir, GUARD_STREAK, toned(lit(STEEL), STEEL_TONE), GUARD_FAR * k)
 	var over := _over.slice(0, count).count(1)
 	if over == 0:
 		_show(_mmi, _data, count)
@@ -571,3 +713,107 @@ func put() -> Array:
 		var o := i * FLOATS
 		out.append([int(_data[o + 16]), Vector3(_data[o + 3], _data[o + 7], _data[o + 11]), Color(_data[o + 12], _data[o + 13], _data[o + 14], _data[o + 15])])
 	return out
+
+
+## Where the guard's streak `i` lies round `e`: its place on the floor and the way it runs (along the arc).
+static func guard_streak(e: Enemy, i: int) -> Array:
+	var ahead := e.face if e.face != Vector2.ZERO else e.dir
+	ahead = ahead.normalized() if ahead != Vector2.ZERO else Vector2.DOWN
+	var a := deg_to_rad(lerpf(-GUARD_ARC, GUARD_ARC, float(i) / (GUARD_STREAKS - 1)))
+	var radial := ahead.rotated(a)
+	var at := e.pos + radial * (e.def.radius + GUARD_REACH)
+	return [Vector3(at.x, GUARD_Y, at.y), radial, Vector2(-radial.y, radial.x)]
+
+
+## The Escudo's guard on the floor for this frame. up: Horde.guard_up (the rule's own condition); near: the paladin is
+## in front of it, inside what it covers (Horde.blocks_front); open_t: the seconds its guard stays open (it comes back
+## one streak at a time over the last GUARD_BACK); block_t: share of a blow just shut (0 to 1).
+func guard_marks(e: Enemy, up: bool, near: bool, block_k: float) -> void:
+	var back := e.open_t if e.open_t > 0.0 else -1.0
+	if not up and not (back > 0.0 and back <= GUARD_BACK and not e.helpless() and e.state != Enemy.State.RECOVER):
+		return
+	var base := GUARD_NEAR if near else GUARD_FAR
+	var color := toned(lit(STEEL), STEEL_TONE)
+	for i in GUARD_STREAKS:
+		if not up:
+			# the guard closing: the streak of rank r is back when GUARD_BACK - r * GUARD_BACK_STEP is left to it
+			var rank := GUARD_ORDER.find(i)
+			var shown := clampf((GUARD_BACK - back) / GUARD_BACK_STEP - float(rank) + 1.0, 0.0, 1.0)
+			if shown <= 0.0:
+				continue
+			_place(e, i, color, base * shown)
+			continue
+		var alpha := base
+		if i == GUARD_STREAKS / 2:
+			alpha = lerpf(base, GUARD_BLOCK_ALPHA, block_k)
+		_place(e, i, color, alpha)
+
+
+func _place(e: Enemy, i: int, color: Color, alpha: float) -> void:
+	var s := guard_streak(e, i)
+	_floor(Shape.STREAK, s[0], s[2], GUARD_STREAK, color, alpha)
+
+
+## The guard opens: its streaks fly out and fade (only drawn).
+func guard_fling(e: Enemy) -> void:
+	for i in GUARD_STREAKS:
+		var s := guard_streak(e, i)
+		var f := Flung.new()
+		f.at = s[0]
+		f.out = Vector3(s[1].x, 0.0, s[1].y)
+		f.dir = s[2]
+		_flung.append(f)
+
+
+## Combate C1 (combate_c1_leitura 3): the priest's thread to what it armored, from its palm to the chest, as long as the
+## ward holds. Old gold, light only (no ink), drawn under whatever stands in front; a bead runs along it from the priest
+## in WARD_BEAD s, so the way says who gives. close: the paladin is near the priest (the thread reads more).
+const WARD_WIDTH := 0.045
+const WARD_ALPHA := 0.30
+const WARD_ALPHA_CLOSE := 0.55
+const WARD_CLOSE_M := 4.0
+const WARD_TONE := 0.55
+const WARD_BEAD := 0.9
+const WARD_BEAD_SIZE := 0.18
+const WARD_BEAD_ALPHA := 0.8
+const WARD_THREADS := 6
+const WARD_CUT_TIME := 0.18
+
+
+func ward_thread(from: Vector3, to: Vector3, close: bool, now: float, seed_phase: float) -> void:
+	var color := toned(lit(OLD_GOLD), WARD_TONE)
+	_stroke(from, to, WARD_WIDTH, color, WARD_ALPHA_CLOSE if close else WARD_ALPHA, 2, false)
+	var bead := fposmod(now / WARD_BEAD + seed_phase, 1.0)
+	_put(Shape.DOT, from.lerp(to, bead), Vector2.ONE * WARD_BEAD_SIZE, color, WARD_BEAD_ALPHA)
+
+
+## The priest fell: this thread (from its palm to the chest it armored) parts from the middle to both ends in WARD_CUT_TIME.
+func ward_cut(from: Vector3, to: Vector3) -> void:
+	if _cuts.size() >= WARD_THREADS:
+		return
+	var c := Cut.new()
+	c.from = from
+	c.to = to
+	c.life = WARD_CUT_TIME
+	_cuts.append(c)
+
+
+## GR-7 (combate_c1_leitura 8): Morvath's two eyes, two points of pale violet on his face (EnemyDef/bake mark "head"), 0.10 m
+## each, a little to each side and ahead of the head's middle (meters at size 1). Not drawn over: from behind they are
+## gone with the head. They go out while he is stunned and rise 20% in his wind-up. Never red, never past the glow's threshold.
+const EYE_COLOR := Color(0.74, 0.55, 1.0)
+const EYE_SIZE := 0.10
+const EYE_ALPHA := 0.9
+const EYE_SIDE := 0.05
+const EYE_AHEAD := 0.14
+const EYE_WINDUP := 1.2
+
+
+func eyes(head: Vector3, yaw: float, size: float, winding: bool, stunned: bool) -> void:
+	if stunned:
+		return
+	var turn := Basis(Vector3.UP, yaw)
+	var k := EYE_WINDUP if winding else 1.0
+	for side: float in [-1.0, 1.0]:
+		_put(Shape.DOT, head + turn * (Vector3(side * EYE_SIDE, 0.0, EYE_AHEAD) * size), Vector2.ONE * EYE_SIZE,
+			Color(EYE_COLOR.r * k, EYE_COLOR.g * k, EYE_COLOR.b * k), minf(EYE_ALPHA * k, 1.0))

@@ -244,12 +244,7 @@ func use(id: StringName) -> void:
 	used.emit(id)
 	match id:
 		HubPlan.PORTAL:
-			var p := HubPanel.new()
-			host.open(p, [T.t(&"hub_descend_title"), T.t(&"hub_descend_line"),
-				[[&"go", T.t(&"hub_descend_go")], [&"stay", T.t(&"hub_descend_stay")]], HowToScreen.step_glyph(0, MARK)])
-			p.chosen.connect(func(choice: StringName) -> void:
-				if choice == &"go":
-					descend.call_deferred())
+			_open_portal()
 		HubPlan.TREE:
 			_open_book(HeroScreen.Chapter.GIFTS)
 		HubPlan.BOOK:
@@ -258,6 +253,27 @@ func use(id: StringName) -> void:
 			_use_smith()
 		HubPlan.VENDOR:
 			_use_vendor()
+
+
+## The Portal's page: Descer, the hero to take down (M1b: one button that walks Guerreiro, Maga; the choice stays in the
+## save) and Ficar. The pick reopens the page with the new name.
+func _open_portal() -> void:
+	var picked := SaveData.picked_hero(Save.data)
+	var p := HubPanel.new()
+	host.open(p, [T.t(&"hub_descend_title"), T.t(&"hub_descend_line_" + picked),
+		[[&"go", T.t(&"hub_descend_go")], [&"hero", T.t(&"hub_hero_" + picked)], [&"stay", T.t(&"hub_descend_stay")]], HowToScreen.step_glyph(0, MARK)])
+	p.chosen.connect(func(choice: StringName) -> void:
+		if choice == &"go":
+			descend.call_deferred()
+		elif choice == &"hero":
+			pick_hero.call_deferred())
+
+
+## Walks to the next hero of the save and shows the Portal again.
+func pick_hero() -> void:
+	Save.data.hero = SaveData.next_hero(Save.data)
+	Save.write()
+	_open_portal()
 
 
 ## Ofícios, Roteiro A: the Forjador opens the Forja; once a vein was noted it has the Oficina's bookmark (the

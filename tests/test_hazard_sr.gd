@@ -166,7 +166,7 @@ func test_the_sag_hurts_both_and_is_named() -> void:
 
 
 func test_the_grate_hurts_both_and_is_named() -> void:
-	var game := _enter(&"crypt", 8)
+	var game := _enter(&"crypt", 11)
 	var bf := game.rooms.bands
 	assert_not_null(bf)
 	assert_eq(bf.hazard.def.band_source, Ground.SPIKES_SOURCE)

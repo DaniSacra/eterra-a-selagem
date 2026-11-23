@@ -36,6 +36,9 @@ const RECESS := Vector3(1.5, 3.2, 1.25)
 ## The arcade of the way in, in the west wall (z from, to), its stairs going up out of the room.
 const ENTRY := Vector2(2.5, 6.5)
 const ENTRY_STEPS := 6
+## The arcade of the way in as dressed (z from, to): ENTRY, or 4 m round the paladin's way in when the layout puts it
+## elsewhere (the guardians' houses, whose way in is the west wall's middle).
+var entry := ENTRY
 ## Banners with the lion over the fire bowls (their top, size).
 const BANNER_TOP := 6.0
 const BANNER_SIZE := Vector2(1.1, 2.4)
@@ -130,7 +133,14 @@ const STYLE := {
 		&"ambient": Color(0.75, 0.78, 0.79), &"ambient_gain": 2.7, &"moon": Color(0.94, 0.97, 1.0), &"moon_energy": 0.9,
 		&"moon_shadow": true},
 	&"backdrop": {&"mist": Color(0.09, 0.14, 0.15), &"stone": Color(0.045, 0.068, 0.073), &"edge": Color(0.15, 0.21, 0.225)},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
 }
+## C1V N2 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the key's shadow band takes this
+## green petrol on top (hue 184 to 194 like the room), the warm key's pool (the hall's colour and energy) over the middle
+## of the room, shifted by STY_WARM_SHIFT (x, z in m) and its radius.
+const STY_SHADOW_GLOW := Color(0.20, 0.50, 0.55)
+const STY_WARM_SHIFT := Vector2(-4.0, 0.0)
+const STY_WARM_RADIUS := 7.0
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Cold damp: a pale cold bloom of salts on the slate, 1.4 times its value (the floor between them at patch_rest).
@@ -161,6 +171,9 @@ const STY_FRAMES_A: Array[Vector2] = [Vector2(-3.4, 0.0), Vector2(4.4, 0.0)]
 const STY_FRAME_A := 2.2
 const STY_FRAMES_B: Array[Vector2] = [Vector2(-1.45, 3.0), Vector2(0.55, 3.0)]
 const STY_FRAME_B := 1.9
+## Art pack 2026-11-23 (the Cripta B painting's lion emblem, as a square frame like the Salao's, never a disc): in
+## variant B the first of the pair is a lion slab (GRAVE with its mark) and the second stays a plain raised frame.
+const STY_LION_FRAME_B := true
 ## The small sarcophagi in the stylized look: their lighter stone painted at the plain stone's value (paint_ref of the
 ## painted stone, paint.gdshaderinc, times their tint) and their candles' pools softer.
 const STY_PAINT_REF := 0.36
@@ -399,6 +412,8 @@ func dress_steps() -> Array[Callable]:
 	return [
 		func() -> void:
 			wall_fill(WALL_FILL_COLOR, WALL_FILL_ENERGY)
+			if layout.guardian_home:
+				entry = Vector2(layout.hero_spawn.y - 2.0, layout.hero_spawn.y + 2.0)
 			var b := layout.floor.polys[0]
 			var box := Rect2(b[0], Vector2.ZERO)
 			for p in b:
@@ -517,7 +532,7 @@ func _back_wall_west() -> void:
 	for z in WEST_NICHES:
 		west.append(Vector4(west_a.y - z - NICHE.x * 0.5, west_a.y - z + NICHE.x * 0.5, niche_low, niche_high))
 		wdeep.append(-1.0)
-	west.append(Vector4(west_a.y - ENTRY.y - JAMB, west_a.y - ENTRY.x + JAMB, 0.0, WALL_DOOR.y + 0.4))
+	west.append(Vector4(west_a.y - entry.y - JAMB, west_a.y - entry.x + JAMB, 0.0, WALL_DOOR.y + 0.4))
 	wdeep.append(0.0)
 	_wall(west_a, Vector2(_west, _north), Vector2(-1, 0), west, wdeep)
 
@@ -688,8 +703,8 @@ func _heap() -> void:
 
 ## The way in (spec 2.4): stairs going up out of the arcade in the west wall, its arch, the gold sill on the edge.
 func _entry() -> void:
-	var mid := Vector2(_west, (ENTRY.x + ENTRY.y) * 0.5)
-	var w := ENTRY.y - ENTRY.x
+	var mid := Vector2(_west, (entry.x + entry.y) * 0.5)
+	var w := entry.y - entry.x
 	door_arch(mid, Vector2(1, 0), w, WALL_SET + 0.45)
 	m.stairs(Vector3(_west - 0.05, 0.0, mid.y), Vector2(-1, 0), w, ENTRY_STEPS, 0.2, 0.45, _stair_stone(0.0))
 	tomb.bar(Vector3(_west + 0.04, 0.004, mid.y), Vector3(0.05, 0.008, w), 0.0, tomb.gold())
@@ -927,7 +942,9 @@ func _graves(ossuary: bool) -> Array:
 	for f in frames:
 		if not clear_of_plates(f, Vector2.ONE * side) or not _slab_free(f, Vector2.ONE * side):
 			continue
-		out.append(ArenaKit.framed_slab(f, Vector2.ONE * side, ArenaKit.Framed.RAISED, false, 1.0, k))
+		var lion := ossuary and STY_LION_FRAME_B and f == frames[0]
+		out.append(ArenaKit.framed_slab(f, Vector2.ONE * side, ArenaKit.Framed.GRAVE if lion else ArenaKit.Framed.RAISED,
+			lion, STY_GRAVE_VALUE if lion else 1.0, k))
 		k += 1
 	return out
 
@@ -999,7 +1016,7 @@ func _quiet_b(divider: ArenaObstacle) -> void:
 ## AT-CB1: the warm light at the way in (see STY_ENTRY_WARM).
 func _entry_warm() -> void:
 	var w := STY_ENTRY_WARM
-	var l := warm_light(Vector3(_west + w.x, w.y, (ENTRY.x + ENTRY.y) * 0.5), w.z, false, w.w)
+	var l := warm_light(Vector3(_west + w.x, w.y, (entry.x + entry.y) * 0.5), w.z, false, w.w)
 	l.light_specular = 0.0
 	l.set_meta(ArenaKit.NOT_FIRE, true)
 	ArenaKit.style_only(l)
@@ -1082,7 +1099,7 @@ func _dress_styled_steps() -> Array[Callable]:
 			var wx := _west - WALL_SET * 0.5
 			var placed := 0
 			for u in WEST_URNS:
-				if placed < 3 and _clear(Vector2(_west, u.x), URN_CLEAR) and absf(u.x - (ENTRY.x + ENTRY.y) * 0.5) > 2.6:
+				if placed < 3 and _clear(Vector2(_west, u.x), URN_CLEAR) and absf(u.x - (entry.x + entry.y) * 0.5) > 2.6:
 					sm.urn(Vector3(wx, LEDGE, u.x), u.y, urn)
 					placed += 1,
 		func() -> void:
@@ -1133,6 +1150,8 @@ func _dress_styled_steps() -> Array[Callable]:
 			if divider != null:
 				_ossuary_crown(sm, divider),
 		func() -> void:
+			var mid := arena.shape().bounds().get_center() + STY_WARM_SHIFT
+			key_pool(Vector3(mid.x, mid.y, STY_WARM_RADIUS), CatacombHall.STY_WARM_KEY, CatacombHall.STY_WARM_ENERGY)
 			_edge_pieces(),
 		func() -> Array[Callable]:
 			return _ossuary(v[&"sm"]),

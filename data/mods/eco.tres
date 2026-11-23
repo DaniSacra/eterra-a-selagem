@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ModDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/mod_def.gd" id="1_xqcni"]
+
+[resource]
+script = ExtResource("1_xqcni")
+id = &"eco"
+name_key = &"mod_eco"
+ring = Color(0.66, 0.68, 0.72, 1)
+echo_time = 3.5

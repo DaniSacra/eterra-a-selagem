@@ -272,6 +272,7 @@ void fragment() {
 	}
 	ALBEDO = c;
 #ifdef PAINT
+	ALBEDO *= paint_vignette(SCREEN_UV);
 	ROUGHNESS = mix(0.92, 0.98, hollow);
 	SPECULAR = 0.15;
 #else

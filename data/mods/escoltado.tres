@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ModDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/mod_def.gd" id="1_xwjt6"]
+
+[resource]
+script = ExtResource("1_xwjt6")
+id = &"escoltado"
+name_key = &"mod_escoltado"
+ring = Color(0.95, 0.97, 1, 1)
+escort_count = 2

@@ -63,13 +63,13 @@ func _tap_r() -> void:
 
 func test_the_ultimate_of_a_level() -> void:
 	var hero := HeroDef.warrior()
-	# B-2 (balance.md B.5): the cleave at Mastery 6, the vortex at 10
-	assert_null(hero.ult_for(&"", 5), "Mastery 5: none")
-	assert_eq(hero.ult_for(&"", 6).id, &"cleave", "Mastery 6, never chosen: the first unlocked")
+	# C1: the cleave at Mastery 3, the vortex at 10
+	assert_null(hero.ult_for(&"", 2), "Mastery 2: none")
+	assert_eq(hero.ult_for(&"", 3).id, &"cleave", "Mastery 3, never chosen: the first unlocked")
 	assert_eq(hero.ult_for(&"vortex", 7).id, &"cleave", "chosen but locked: the first unlocked")
 	assert_eq(hero.ult_for(&"vortex", 10).id, &"vortex", "chosen and unlocked: that one")
 	assert_eq(hero.ult_for(&"cleave", 13).id, &"cleave")
-	assert_eq(hero.first_ult_level(), 6)
+	assert_eq(hero.first_ult_level(), 3)
 
 
 func test_the_hero_screen_shows_the_one_the_descent_plays() -> void:
@@ -88,13 +88,13 @@ func test_a_new_save_has_none_and_the_hud_says_the_mastery_it_needs() -> void:
 	var slot: ActionSlot = game.hud._ult_slot
 	assert_true(slot.visible, "the diamond is there, sealed")
 	assert_true(slot.sealed)
-	assert_eq(slot.caption, "Maestria 6")
+	assert_eq(slot.caption, "Maestria 3")
 	var refused := [0]
 	game.player.ult_refused.connect(func() -> void: refused[0] += 1)
 	await _tap_r()
 	assert_eq(refused[0], 1, "the press is heard and refused")
 	assert_eq(game.player.state, Player.State.MOVE)
-	assert_eq(game.hud._notice.text, "A ultimate abre na Maestria 6")
+	assert_eq(game.hud._notice.text, "A ultimate abre na Maestria 3")
 
 
 func test_mastery_6_without_a_choice_plays_the_cleave_and_the_r_key_lets_it_go() -> void:

@@ -1,9 +1,10 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_njv5c"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_vik8k"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_njn07"]
 
 [resource]
-script = ExtResource("1_njv5c")
+script = ExtResource("2_njn07")
 id = &"skeleton_elite"
 name_key = &"enemy_skeleton"
 size = 1.15
@@ -26,12 +27,18 @@ stun_heavy_time = 1.1
 attack_damage = 5.0
 attack_range = 3.625
 attack_cooldown = 1.26
-attack_windup = 0.9
-recover_time = 1.5
+attack_windup = 0.7200000000000001
+recover_time = 1.0
 strike_at = 0.1
 strikes = 2
 lunge_speed = 8.75
 lunge_time = 0.3
-max_attackers = 2
+recharge_windup = 0.6400000000000001
+aim_lock = 0.3
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+windup_gap = 0.35
+max_attackers = 3
+close_windup = 0.52
 rating = 12.0
 role = &"pressure"

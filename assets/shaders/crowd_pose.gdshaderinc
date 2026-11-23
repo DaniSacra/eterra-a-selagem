@@ -48,3 +48,13 @@ void crowd_pose(int v, vec4 pick, out vec3 at, out vec3 facing) {
 	at = mix(pa, pb, pick.b);
 	facing = normalize(mix(na, nb, pick.b));
 }
+
+// A piece of the figure that is away (the knight's thrown shield, BakedModel.parts): its vertices are the run
+// [hide_from, hide_to) at the end of the mesh, and an instance whose state.a is negative (CrowdRenderer.state, `away`)
+// draws it nowhere (all its vertices collapse on one point: zero-area triangles). Nothing is hidden by default.
+uniform int hide_from = 0;
+uniform int hide_to = 0;
+
+vec3 crowd_away(int v, float flag, vec3 at) {
+	return (flag < 0.0 && v >= hide_from && v < hide_to) ? vec3(0.0) : at;
+}

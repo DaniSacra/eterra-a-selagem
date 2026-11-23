@@ -230,15 +230,15 @@ func test_armor_sparks_are_old_gold_and_short() -> void:
 func test_the_state_survives_its_packing() -> void:
 	for frozen: bool in [false, true]:
 		for burning: bool in [false, true]:
-			for broken: bool in [false, true]:
+			for wear: float in [0.0, 0.25, 0.55, 0.8, 1.0]:
 				for absorbed: bool in [false, true]:
 					for tell: float in [0.0, 0.4, 1.0]:
-						var s := CrowdRenderer.state(0.6, frozen, burning, 0.0, absorbed, tell, broken)
+						var s := CrowdRenderer.state(0.6, frozen, burning, 0.0, absorbed, tell, wear)
 						var back := CrowdRenderer.unpack(s)
 						assert_almost_eq(back[0], 0.0 if absorbed else 0.6, 0.001, "white flash")
 						assert_almost_eq(back[1], 0.6 if absorbed else 0.0, 0.001, "armor's gleam")
 						assert_eq(back[2], 1.0 if frozen else 0.0, "frost")
-						assert_almost_eq(back[3], 0.0 if broken else 1.0, 0.001, "armor standing")
+						assert_almost_eq(back[3], 1.0 - wear, 0.001, "armor standing, worn in steps")
 						assert_eq(back[4], 1.0 if burning else 0.0, "burning")
 						assert_almost_eq(back[5], tell, 0.001, "wind-up")
 	# nothing set: as the lab and the dying draw (the armored edge stays lit)
@@ -451,3 +451,188 @@ func test_the_tells_drawn_over_are_not_covered_by_the_life_bars() -> void:
 	var mat := fx._over_mmi.material_override as ShaderMaterial
 	assert_gt(mat.render_priority, CrowdRenderer.BAR_PRIORITY, "the over pass draws after the life bars")
 	assert_lte(mat.render_priority, RenderingServer.MATERIAL_RENDER_PRIORITY_MAX)
+
+
+# ---- Combate C1 (docs/art/combate_c1_leitura.md): the guard on the floor, the priest's thread ----
+
+func test_the_guard_is_drawn_by_the_rule_and_never_red() -> void:
+	var horde := _horde()
+	var g := _enemy(&"guard", Vector2(0, 8))
+	g.face = Vector2.DOWN
+	assert_true(horde.guard_up(g), "a guard standing is up")
+	g.open_t = 1.0
+	assert_false(horde.guard_up(g), "an open guard is not")
+	assert_false(horde.blocks_front(g, Vector2(0, 12)), "and the rule reads the same function")
+	g.open_t = 0.0
+	g.state = Enemy.State.RECOVER
+	assert_false(horde.guard_up(g), "spent: down")
+	g.state = Enemy.State.WALK
+	assert_true(horde.blocks_front(g, Vector2(0, 12)), "in front")
+	assert_false(horde.blocks_front(g, Vector2(0, 4)), "behind it nothing blocks")
+	assert_true(horde.guard_up(g), "yet the guard stays up (the drawing's question has no angle)")
+	assert_false(_is_red(EnemyFx.STEEL), "the guard's steel is no warning")
+	var fx := _fx()
+	fx.begin()
+	fx.guard_marks(g, true, false, 0.0)
+	assert_eq(fx.count, EnemyFx.GUARD_STREAKS, "five streaks")
+	var far: Array = fx.put()
+	var low: float = (far[0][2] as Color).a
+	assert_almost_eq(low, EnemyFx.GUARD_FAR, 0.001)
+	for q: Array in far:
+		var arc: Vector2 = Vector2(q[1].x, q[1].z) - g.pos
+		assert_almost_eq(arc.length(), g.def.radius + EnemyFx.GUARD_REACH, 0.5, "round the arc")
+		assert_gt(arc.dot(Vector2.DOWN), 0.0, "in front of it, never behind")
+	fx.begin()
+	fx.guard_marks(g, true, true, 0.0)
+	assert_almost_eq((fx.put()[0][2] as Color).a, EnemyFx.GUARD_NEAR, 0.001, "clearer with the paladin in front")
+	fx.begin()
+	fx.guard_marks(g, true, false, 1.0)
+	assert_almost_eq((fx.put()[2][2] as Color).a, EnemyFx.GUARD_BLOCK_ALPHA, 0.001, "a shut blow lights the middle one")
+
+
+func test_an_open_guard_shows_none_then_comes_back_one_by_one() -> void:
+	var horde := _horde()
+	var g := _enemy(&"guard", Vector2(0, 8))
+	var fx := _fx()
+	g.open_t = 2.0
+	fx.begin()
+	fx.guard_marks(g, horde.guard_up(g), false, 0.0)
+	assert_eq(fx.count, 0, "none while it is open")
+	g.open_t = 1.0
+	fx.begin()
+	fx.guard_marks(g, horde.guard_up(g), false, 0.0)
+	assert_eq(fx.count, 1, "the last second: the first (a side) is back")
+	g.open_t = 0.15
+	fx.begin()
+	fx.guard_marks(g, horde.guard_up(g), false, 0.0)
+	assert_eq(fx.count, 5, "and all of them by the end")
+
+
+func test_the_priests_thread_is_old_gold_and_never_red() -> void:
+	var fx := _fx()
+	fx.begin()
+	fx.ward_thread(Vector3(0, 1.3, 0), Vector3(3, 1.2, 0), false, 0.0, 0.0)
+	assert_eq(fx.count, 2, "a thread and a bead")
+	for q: Array in fx.put():
+		var c: Color = q[2]
+		assert_false(_is_red(Color(c.r, c.g, c.b).clamp()), "gold, not a warning")
+		assert_lt(c.a, 1.0)
+	assert_almost_eq((fx.put()[0][2] as Color).a, EnemyFx.WARD_ALPHA, 0.001)
+	fx.begin()
+	fx.ward_thread(Vector3(0, 1.3, 0), Vector3(3, 1.2, 0), true, 0.0, 0.0)
+	assert_almost_eq((fx.put()[0][2] as Color).a, EnemyFx.WARD_ALPHA_CLOSE, 0.001, "the paladin close: the thread reads more")
+
+
+func test_the_crossbowmans_colour_is_not_a_warning() -> void:
+	assert_false(_is_red(EnemyFx.magic_of(_def(&"archer"))), "its bolt's light is orange")
+
+
+func test_the_lock_ends_the_gleam_and_the_shield_light() -> void:
+	var sk := _def(&"skeleton")
+	assert_almost_eq(EnemyFx.lock_at(sk, 0.85), maxf(1.0 - sk.aim_lock / sk.attack_windup, EnemyFx.GLINT_FROM + 0.1), 0.001)
+	assert_eq(EnemyFx.lock_at(_def(&"guard"), 0.85), 0.85, "nothing to lock: as it was")
+
+
+func test_the_armor_wears_in_steps_at_75_50_and_25() -> void:
+	assert_eq(EnemyFx.wear_level(100.0, 100.0), 0)
+	assert_eq(EnemyFx.wear_level(75.0, 100.0), 0, "at 75 it still stands whole")
+	assert_eq(EnemyFx.wear_level(74.0, 100.0), 1)
+	assert_eq(EnemyFx.wear_level(49.0, 100.0), 2)
+	assert_eq(EnemyFx.wear_level(24.0, 100.0), 3)
+	assert_eq(EnemyFx.wear_level(0.0, 100.0), 4)
+	assert_eq(EnemyFx.wear_level(0.0, 0.0), 0, "no armor to begin with: nothing worn")
+	assert_eq(EnemyFx.wear(60.0, 100.0), 0.25)
+	assert_eq(EnemyFx.wear(10.0, 100.0), 0.8)
+	assert_eq(EnemyFx.wear(0.0, 100.0), 1.0)
+
+
+func test_a_crack_throws_half_the_shards_of_a_break_slower() -> void:
+	var fx := EnemyFx.new()
+	add_child_autofree(fx)
+	fx.armor_crack(Vector3(0, 1, 0), Vector2.RIGHT, 1.0)
+	assert_eq(fx._sparks.size(), EnemyFx.CRACK_SHARDS)
+	assert_eq(EnemyFx.CRACK_SHARDS * 2, EnemyFx.BREAK_SHARDS)
+	fx._sparks.clear()
+	fx.armor_crack(Vector3(0, 1, 0), Vector2.RIGHT, 1.0, true)
+	assert_eq(fx._sparks.size(), EnemyFx.CRACK_SHARDS_GUARDIAN, "a guardian throws more")
+	fx._sparks.clear()
+	fx.armor_hit(Vector3(0, 1, 0), Vector2.RIGHT, EnemyFx.HEAVY_SPARKS)
+	assert_eq(fx._sparks.size(), 10, "a heavy blow or an Omega: ten sparks")
+
+
+func test_a_heavy_blow_on_armor_gives_the_body_a_little_and_cracks_once_per_step() -> void:
+	var horde := _horde()
+	var e := horde.spawn(_def(&"guard_elite"), Vector2(4, 0), false)
+	horde.heavy_blow = true
+	var before := e.max_armor
+	horde.damage(e, e.max_armor * 0.3, Vector2.RIGHT, 0.0, Color.WHITE, false)
+	assert_gt(e.crack_t, 0.0, "75 crossed")
+	assert_almost_eq(e.recoil_peak, 0.04, 0.0001, "a guardian gives 4 cm")
+	assert_gt(e.edge_t, 0.0)
+	e.crack_t = 0.0
+	horde.damage(e, e.max_armor * 0.05, Vector2.RIGHT, 0.0, Color.WHITE, false)
+	assert_eq(e.crack_t, 0.0, "no new step: no crack")
+	horde.damage(e, e.max_armor * 0.5, Vector2.RIGHT, 0.0, Color.WHITE, false)
+	assert_gt(e.crack_t, 0.0, "two steps at once: one crack")
+	assert_eq(e.max_armor, before)
+
+
+func test_the_looks_of_the_guard_the_guardians_and_morvath_are_set() -> void:
+	var r := CrowdRenderer.new()
+	add_child_autofree(r)
+	for id: StringName in [&"guard", &"guard_elite", &"knight", &"priest_elder", &"morvath"]:
+		r.register(_def(id))
+	var guard: ShaderMaterial = r._materials[&"guard"]
+	assert_eq(guard.get_shader_parameter(&"paint_gamma"), 0.52, "GR-5: the curve lifts the black")
+	assert_eq(guard.get_shader_parameter(&"style_rim_top"), 1.0)
+	var elite: ShaderMaterial = r._materials[&"guard_elite"]
+	assert_ne(elite.get_shader_parameter(&"paint_gamma"), 0.52, "the gilded one keeps its own")
+	var edge := (r._materials[&"priest_elder"] as ShaderMaterial).next_pass as ShaderMaterial
+	assert_eq(edge.get_shader_parameter(&"style_elite_width"), 0.035, "GR-6: the thin dark shell")
+	assert_eq(edge.get_shader_parameter(&"style_push"), 0.60)
+	var m: ShaderMaterial = r._materials[&"morvath"]
+	assert_eq(m.get_shader_parameter(&"crest"), 0.8, "GR-7: the head, the light value")
+	assert_eq(m.get_shader_parameter(&"foot_shade"), 0.40, "the skirt, the dark one")
+	assert_almost_eq(float(m.get_shader_parameter(&"crest_from")), 2.02 * 0.86, 0.001)
+
+
+func test_morvaths_eyes_are_violet_go_out_when_stunned_and_rise_in_the_wind_up() -> void:
+	var m: BakedModel = load("res://assets/baked/morvath.res")
+	assert_true(m.has_point("head"), "the bake marks his head")
+	var fx := EnemyFx.new()
+	add_child_autofree(fx)
+	fx.begin()
+	fx.eyes(Vector3(0, 2, 0), 0.0, 2.5, false, false)
+	assert_eq(fx.put().size(), 2, "two points")
+	fx.begin()
+	fx.eyes(Vector3(0, 2, 0), 0.0, 2.5, false, true)
+	assert_eq(fx.put().size(), 0, "stunned: out")
+	assert_false(_is_red(EnemyFx.EYE_COLOR * EnemyFx.EYE_WINDUP), "never red")
+	assert_lt(maxf(EnemyFx.EYE_COLOR.b, EnemyFx.EYE_COLOR.r) * EnemyFx.EYE_WINDUP, 1.3, "under the glow's threshold")
+
+
+func test_the_priests_thread_parts_from_the_middle_when_it_falls() -> void:
+	var fx := EnemyFx.new()
+	add_child_autofree(fx)
+	fx.ward_cut(Vector3.ZERO, Vector3(2, 1, 0))
+	fx.begin()
+	fx.commit()
+	assert_eq(fx.count, 2, "two halves of light")
+	fx._process(EnemyFx.WARD_CUT_TIME + 0.01)
+	fx.begin()
+	fx.commit()
+	assert_eq(fx.count, 0, "gone in 0.18 s")
+
+
+## N2: a broken poise draws a ring parted in six arcs (no text needed); a broken armor does not.
+func test_poise_break_draws_six_arcs() -> void:
+	var fx := _fx()
+	fx.armor_break(Vector3(0, 1, 0), 1.0, EnemyFx.POISE_BREAK)
+	fx.begin()
+	fx.commit()
+	var with_arcs := fx.count
+	var plain := _fx()
+	plain.armor_break(Vector3(0, 1, 0), 1.0)
+	plain.begin()
+	plain.commit()
+	assert_eq(with_arcs - plain.count, EnemyFx.POISE_ARCS, "six arcs on top of the shards")

@@ -38,6 +38,7 @@ uniform float calm_radius = 9.0;
 uniform float calm_contrast = 0.55;
 // The medallion in the middle (0 = none): its radius in meters (the long points' tips); the slab joints under its
 // band and under its points (they fade there: the medallion is carved stone, not paint over the slabs).
+const float SQUARE_FIT = 0.72;
 uniform float ring_radius = 6.5;
 uniform vec2 ring_center = vec2(0.0);
 uniform float ring_glow = 0.0;
@@ -295,15 +296,20 @@ float rune_at(vec2 q, float inner, float outer, out float core, out float cell) 
 // the slab joints fade under it), w = the dark of its grooves, runes and cracks. Its outward normal tilt (floor space)
 // through tilt.
 vec4 medallion(vec2 p, float r, out vec2 tilt) {
-	float c = cos(rose_turn);
-	float sn = sin(rose_turn);
-	vec2 q = vec2(c * p.x - sn * p.y, sn * p.x + c * p.y);
-	float d = length(q);
+	// Art pack 2026-11-23: a square band laid along the room's own axes, no rotation and no disc (round floor marks are
+	// Morvath's alone): d is the square's distance (Chebyshev) over SQUARE_FIT, so the band's numbers stay the ring's.
+	// The emblem inside it is the framed grave slab with the lion (floor_biome.gdshaderinc), laid by the hall.
+	float c = 1.0;
+	float sn = 0.0;
+	vec2 q = p;
+	float d = max(abs(q.x), abs(q.y)) / SQUARE_FIT;
 	float ang = atan(q.y, q.x);
+	// the band's own polar space: the runes keep their sectors and their lengths round the square
+	vec2 qr = length(q) > 0.001 ? q / length(q) * d : vec2(0.0);
 	float outer = r * 0.627;
 	float inner = r * 0.507;
 	tilt = vec2(0.0);
-	vec2 radial = d > 0.001 ? q / d : vec2(0.0);
+	vec2 radial = abs(q.x) > abs(q.y) ? vec2(sign(q.x), 0.0) : vec2(0.0, sign(q.y));
 	vec2 lit = normalize(relief_light);
 	float shade = 1.0;
 	float groove = 0.0;
@@ -313,8 +319,9 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	float chip = 0.0;
 	for (int i = 0; i < 2; i++) {
 		float ca = 0.9 + float(i) * 3.4;
-		vec2 cp = vec2(cos(ca), sin(ca)) * (outer - 0.05);
-		chip = max(chip, 1.0 - smoothstep(0.16, 0.2, length(q - cp) + (noise(q * 9.0) - 0.5) * 0.1));
+		vec2 cd_ = vec2(cos(ca), sin(ca));
+		vec2 cp = cd_ / max(abs(cd_.x), abs(cd_.y)) * (outer - 0.05) * SQUARE_FIT;
+		chip = max(chip, 1.0 - smoothstep(0.16, 0.2, length(q - cp) / SQUARE_FIT + (noise(q * 9.0) - 0.5) * 0.1));
 	}
 	// the band of sixteen stones between the rings
 	float band = smoothstep(inner - 0.02, inner + 0.02, d) * (1.0 - smoothstep(outer - 0.02, outer + 0.02, d));
@@ -341,10 +348,10 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 		// the runes, the lit lip on the far wall of each cut (so it reads as carved) and the bronze left in some
 		float rune_core;
 		float rune_cell;
-		float rune = rune_at(q, inner, outer, rune_core, rune_cell);
+		float rune = rune_at(qr, inner, outer, rune_core, rune_cell);
 		float lip_core;
 		float lip_cell;
-		float lip = clamp(rune_at(q + lit * rune_lip, inner, outer, lip_core, lip_cell) - rune, 0.0, 1.0);
+		float lip = clamp(rune_at(qr + lit * rune_lip, inner, outer, lip_core, lip_cell) - rune, 0.0, 1.0);
 #ifndef PAINT
 		v *= mix(1.0, rune_light, lip);
 #endif
@@ -360,41 +367,7 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 	float wear = step(1.0 - metal_left, noise(vec2(ang * d * 1.6, d)));
 	metal = max(metal, line_at(d - outer - BAND_GROOVE * 0.5, metal_width * 0.5) * wear);
 	metal = max(metal, line_at(d - inner + BAND_GROOVE * 0.5, metal_width * 0.5) * wear);
-	// the eight points: each a long diamond's outer half, born on the outer ring: a light half and a dark half, a
-	// groove round them, some with their tip broken off
-	float step8 = 0.7853982;
-	float k = floor(ang / step8 + 0.5);
-	float a8 = k * step8;
-	vec2 axis = vec2(cos(a8), sin(a8));
-	float u = dot(q, axis);
-	float v = dot(q, vec2(-axis.y, axis.x));
-	bool long_point = mod(k, 2.0) < 0.5;
-	float tip = long_point ? r : r * 0.747;
-	float half_base = long_point ? 0.7 : 0.5;
-	float slope = half_base / (tip - outer);
-	float edge = (half_base * (tip - u) / (tip - outer) - abs(v)) / sqrt(1.0 + slope * slope);
-	float broken = hash1(vec2(k, 11.0)) < 0.5 ? tip - mix(0.2, 0.4, hash1(vec2(k, 13.0))) + (noise(q * 8.0) - 0.5) * 0.12 : tip + 1.0;
-	edge = min(edge, broken - u);
-	float past = step(outer + BAND_GROOVE, u);
-	float inside = step(0.0, edge) * past;
-	float pg = past * line_at(edge, point_groove * 0.5 + 0.02) * step(-point_groove, edge);
-	groove = max(groove, pg);
-	metal = max(metal, past * line_at(edge + point_groove * 0.5, metal_width * 0.4) * wear * step(u, broken - 0.05));
-	float half_v = v < 0.0 ? point_value.y : point_value.x;
-	if (long_point) {
-		// the ridge thins out toward the tip
-		half_v = mix(half_v, point_value.x * point_ridge.y, line_at(v, point_ridge.x * 0.5) * smoothstep(0.0, 0.25, edge));
-	}
-	shade = mix(shade, half_v, inside);
-	raised = max(raised, inside * 2.0);
-	vec2 perp = vec2(-axis.y, axis.x);
-	tilt += inside * perp * sign(v) * 0.35 * smoothstep(0.0, 0.08, edge);
-	// a shallow diamond sunk in each gap between the points, outside the ring
-	float a_gap = (floor(ang / step8) + 0.5) * step8;
-	vec2 g = q - vec2(cos(a_gap), sin(a_gap)) * (outer + 0.75);
-	vec2 gl = vec2(dot(g, vec2(cos(a_gap), sin(a_gap))), dot(g, vec2(-sin(a_gap), cos(a_gap))));
-	float dia = abs(gl.x) / 0.36 + abs(gl.y) / 0.15;
-	shade *= mix(1.0, gl.y * dot(vec2(-sin(a_gap), cos(a_gap)), lit) > 0.0 ? 0.92 : 0.7, 1.0 - smoothstep(0.92, 1.0, dia));
+	// (no compass points and no rosette: the middle is the framed lion slab)
 	// four cracks across the band, running on into the slabs
 	float crack = 0.0;
 	for (int i = 0; i < 4; i++) {
@@ -409,15 +382,6 @@ vec4 medallion(vec2 p, float r, out vec2 tilt) {
 		crack = max(crack, (1.0 - smoothstep(0.0, mix(0.02, 0.008, smoothstep(outer, to, d)), abs(off))) * along);
 	}
 	groove = max(groove, in_groove);
-	// the soft rosette of eight petals in the middle
-	float petal = d - 1.2 * (0.55 + 0.45 * abs(cos(ang * 4.0)));
-	float cut = line_hard(petal, ROSETTE_W * 0.5, 1.0 - RUNE_EDGE) * step(d, 1.3);
-	vec2 ql = q + lit * rune_lip;
-	float petal_l = length(ql) - 1.2 * (0.55 + 0.45 * abs(cos(atan(ql.y, ql.x) * 4.0)));
-#ifndef PAINT
-	shade *= mix(1.0, rosette_cut.z, clamp(line_at(petal_l, rosette_cut.x * 0.5) - cut, 0.0, 1.0) * step(d, 1.3));
-#endif
-	groove = max(groove, cut * rosette_cut.y);
 	groove = max(groove, crack * 1.2);
 	// back to floor space
 	tilt = vec2(c * tilt.x + sn * tilt.y, -sn * tilt.x + c * tilt.y);
@@ -662,6 +626,7 @@ void fragment() {
 	ALBEDO = c;
 	ROUGHNESS = rough;
 #ifdef PAINT
+	ALBEDO *= paint_vignette(SCREEN_UV);
 	SPECULAR = 0.15;
 #else
 	SPECULAR = 0.2;

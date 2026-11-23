@@ -119,12 +119,17 @@ const UNDER_FLOOR := Color(0.55, 0.55, 0.55)
 ## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 6; ART_REVIEW.md 4.5 P1-B2): a pale yellow
 ## limestone (hue 34 to 42, under 0.2 of saturation, so the stone in the shafts stays under 0.25 and the cracked slabs'
 ## amber reads on it), the shafts ivory gold, the shadow cold: the colour from that contrast.
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
+## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's.
+const STY_SHADOW_GLOW := Color(0.15, 0.40, 0.62)
 const STYLE := {
 	&"stone": Color(0.39, 0.365, 0.325), &"shadow": Color(0.78, 0.86, 1.0), &"floor_stone": STY_FLOOR,
 	&"slab_paint": STY_SLAB_PAINT, &"slab_hue": STY_SLAB_HUE, &"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.04, &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"],
 	&"air": {&"sky": Color(0.05, 0.05, 0.06), &"fog": Color(0.12, 0.11, 0.10), &"ambient": Color(0.76, 0.745, 0.70),
 		&"ambient_gain": 1.6, &"moon": Color(0.95, 0.93, 0.9), &"moon_energy": 0.68, &"moon_shadow": true},  # item 8: the cold key -20%
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
+	&"c1v": {&"warm": Vector2(-3.0, 0.0), &"energy": 0.7},
 }
 ## The floor's limestone in the stylized look (room redesign fixes: it read neutral grey, nave luma 71 to 83 flat): a
 ## warmer stone, the slabs further apart in value and a little more in hue, fewer olive slabs.

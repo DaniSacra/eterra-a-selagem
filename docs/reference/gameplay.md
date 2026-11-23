@@ -594,3 +594,177 @@ Medido (12 sementes, novato, robô 0,25): `all` 11 chegam ao guardião, 5 morrem
 (8 morrem até a sala 4). Golpes que saem: 55% (`all`) e 80% (`none`) dos preparados.
 Essa medida é com 18 de vida. Com **30 de vida** e `none` (2026-11-21, 12 sementes): novato 10 de 12 chegam ao guardião, 5 morrem
 nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 vencem. Erro de uns 14 pontos.
+
+
+## Lote C1: combate novo (Daniel, 2026-11-22: "não dá para ficar só apertando o botão de atacar"; testes em `tests/test_combat_c1.gd`)
+- **Herói fraco**: combo 15/15/20 (Quarto Corte 15), Ômega do ataque 100, ultimates a 60% (Corte do Juízo 180/120 na Maestria 3, Voragem
+  5 e 72), dano fixo das Bênçãos x 0,6 (`FLAT`). Onda 35, Investida 35 e Brado 15 ficam.
+- **Botões**: a onda (`heavy`) tira 50% a mais da blindagem (`Combat.ARMOR_SPECIAL`); o Brado absorve um golpe de 4 ou mais
+  (`ComboNode.buff_ward`, `GiftState.take_ward`, `Player.WARD_MIN`).
+- **Gelo** na regra do F8 `NONE`: só finalização, cast, Ômega e ultimate congelam (1 s no máximo, `FREEZE_MAX`); o resto atrasa. Em
+  Morvath, gelo e empurrão viram dano (`RESIST_FREEZE` 0,25, `RESIST_PUSH` 0,3; empurrão também em blindado) e a Fraqueza vale metade.
+- **Inimigos que pedem resposta** (tudo em `EnemyDef`): esqueleto com mira rastreada (`aim_lock` 0,3, até 3 preparando, nunca dois
+  no mesmo `windup_gap` 0,35), descanso 1,2; corredor explode ao morrer (`death_burst` 0,7); besteiro com segunda flecha que mira
+  de novo (`shot_relock` 0,4); Escudo barra 70% do ataque de frente em 75 graus (`front_block`), a onda abre por `front_open` 4 s e a
+  Investida, o Ômega e a ultimate passam; sacerdote blinda 3 vizinhos (40, a cada 5 s, `ward_*`), e a blindagem some com ele.
+- **Cavaleiro**: investida rastreada que trava 0,3 s antes (não rastreia a menos de `CHARGE_FOLLOW_FROM` 5 m) e invoca 3 esqueletos
+  (6 no máximo) na abertura e depois de cada par de investidas.
+- **Medido** (12 sementes por linha, robô 0,25, 14 salas; novato e evoluído): todas as teclas 0 e 5 chegam a Morvath, 0 e 2 vencem; só
+  mouse (`--bot-mouse`) 0 e 3 chegam, 0 vencem. Novato no primeiro minichefe: 2 de 12 morrem com todas as teclas, 7 de 11 só de
+  mouse. Ataque 50 a 52% do dano (a meta do CB era 45% ou menos; não bateu). Erro de uns 14 pontos.
+
+## As 42 Bênçãos, base (C4, 2026-11-22; Sarael e Nivael prontos, os outros cinco anjos no C6)
+- **Seis botões, uma Bênção por botão**: `Boon.Slot` = NONE, ATTACK, SPECIAL, CAST, DASH (a esquiva, Espaço), RUSH (a Investida, E),
+  ULT (a ultimate, Shift). `Boon.button()` lê o encaixe e é a fonte da lista de botões e do HUD; pegar outra do mesmo botão troca
+  (`BoonState.replaced_by`). `Boon.acts_alone()`: sem botão e com habilidade `AUTO` (só as dos cinco anjos ainda não feitos).
+- **Habilidade nasce do botão** (`SkillDef.trigger`, `duration`, `gap`): `Skills.trigger(...)` é chamado por `Game` quando o golpe do
+  botão acerta (`Skills.trigger_of(node)` pelas etiquetas: Investida `dash`, onda `heavy`, Brado `shout`, Ômega, giro `finisher`), na
+  esquiva e quando a ultimate cai. Órbita gira `duration` s; a habilidade só dispara de novo depois de `gap` s; sem alvo perto, não gasta o `gap`.
+- **Reserva** (`Boon.reserve`): fora do sorteio (`BoonState.offerable`), arquivo e Compêndio mantidos, `take()` ainda funciona (testes,
+  saves antigos). Chama e Geada: brasas, lamina_ardente, omega_brasa, chuva_brasas, estilhaco, peso_inverno, geada_final, omega_geada
+  (`RESERVE` em `make_data.gd`). Elo sem Bênção-base fora da reserva também não é oferecido.
+- **Shift** (`Slot.ULT`) só entra no sorteio com `BoonState.ult_open` (Game: ultimate equipada). O robô sem `--ultimate` não vê essas.
+- **Três cartas sempre**: `Encounter.eligible` pede `Encounter.CARDS` (3) de oferta (`supply`: não tidas, trocas, Elos e níveis a
+  mais de tidas); `Encounter.cards` completa com cartas `grow` (um nível a mais de uma tida da família).
+- **Lendária** 1% no sorteio comum e 3% no guardião (`Boon.RARITY_CHANCE*`, `catacombs.tres`).
+- **Novo no golpe**: `detonate_dmg` (Brado de Sarael: quem arde leva o dano de uma vez e apaga), `shatter_pct` por etiqueta (a onda
+  de Nivael estilhaça; a onda conta como golpe), `freeze_time` na etiqueta `spin` (só o giro congela). Habilidade com `trigger` ULT leva a
+  etiqueta `ultimate` (congela como o golpe da ultimate); `DealtBy` lê a Bênção antes de `ultimate`.
+
+
+## Lote C5: Trinca e Varredor, a maldição de Morvath (CB-7; testes em `tests/test_c5.gd`)
+- **Trinca** (`trinca`, elite com 4 figuras): `group` 3 corpos por cabeça de onda (`Horde.spawn_group`, `Enemy.group_id`), `rise_time` 3,5 s.
+  Quem cai vira monte (`Enemy.State.DOWN`, `invulnerable`, pose final de `death`) se outra do grupo está de pé (`_standing_of`); o monte se
+  ergue (`State.RISE`) com a vida cheia; o último de pé que cai leva os montes junto (`_end_group`), cada um emite `killed`. Conta como 3 dos
+  vivos (`EncounterGen.bodies`; `Rooms` só solta uma cabeça com `room_for(group)`). Anda nos cantos de um triângulo em volta do herói
+  (`TrioRules`, gira em 18 s) e bate **uma por vez** (`max_attackers` 1), com o bote do esqueleto (`_behave_runner`, `aim_lock`).
+- **Varredor** (`varredor`, comportamento `SWEEP`, `Horde._behave_sweep`; regras puras em `SweepRules`): fincado, 0,9 s de preparo (faixa
+  de 5,5 x 1,1 m onde começa, 70 graus atrás da linha do herói, e um fio 32 graus adiante mostrando o sentido), trava nos últimos 0,3 s
+  (`lock_line`), varre 200 graus em 1,6 s; fere uma vez por varredura (8) só na faixa e a mais de 1,6 m dele (`sweep_clear`); descansa 1,4 s
+  (`recover_time`, sem o atraso de `AFTER_RECOVER`). `per_room` 1 (`EncounterGen.limit_per_room`), papel `sweep` banido na sala da ponte
+  (corrente RP-11). Congelado ou morto, a faixa some com ele (`interrupt`, `Ground.end_zone`).
+- **Salas**: papéis `swarm` e `sweep` nos pools a partir de 0,46 do progresso (sala 7 em diante). `stand_in` só troca por corpo único.
+- **Robô** (`bot.gd`): vai até 1,1 m do Varredor (dentro do bolsão) e não recua dali; na faixa dele sai pelo comprimento (para dentro ou
+  para fora da ponta, nunca atravessando); ignora monte (`invulnerable`).
+- **Morvath**: maldição 55 graus/s por 0,9 s (era 75 e 1,4; passo 6 do plano revisado).
+- Modelos: `trio` (esqueleto sem cutelo, curvado) e `sweeper` (besteiro sem besta, haste e lâmina do cutelo), `tools/bake.gd`, zero créditos. Provisórios.
+- Sinais (só desenho, `scripts/game/c5_marks.gd`, `C5Marks`, lê `horde.list` por quadro; testes `tests/test_c5_signals.gd`): anel fino marfim que fecha de 1,5 a 0,35 m no monte em `rise_time` (some sem o grupo de pé); 4 chevrons vermelhos de aviso sobre a faixa do Varredor no preparo, apontando o sentido da varredura (`side`), dentro da faixa (sem área nova).
+- Pendente: silhueta lado a lado com os seis.
+
+## C1b, Frente 1: a Quebra e o preço do erro (2026-11-22; `docs/design/combate_c1b.md`; testes em `tests/test_c1b_break.gd`)
+- **Quebra (poise)**: `EnemyDef.poise` (100 nos quatro comuns: esqueleto, corredor, feiticeiro, besteiro; 0 em elites, guardiões, Trinca, Escudo, Sacerdote, Varredor e chefes), `poise_stun` 1,2 s, `poise_vuln` +40% de dano enquanto quebrado, `poise_idle` 4 s sem golpe que tire poise e ele enche. Lógica pura em `scripts/core/poise.gd` (`share`, `wear`, `settle`, `takes`); o estado e a quebra em `Horde._wear_poise` (chamada em `damage()` depois do dano em vida) e `_poise_timers`.
+- **Pesos por botão**: `Feel.poise_weights` (gerado por `POISE_WEIGHTS` em `tools/make_data.gd`), chave = fonte do `DealtBy` (`horde.dealing`): ataque 0,15, especial 0,6, Investida 0,5, Ômegas e `cast_omega` 0,7, Brado 0,6, ultimate 1,0. Fonte sem peso (queimadura, brasas, eco, Salmo, estilhaço, Dons que agem sozinhos, zona de Magia) não tira nada.
+- **Regras**: com blindagem (inclusive a do Sacerdote) o golpe vai na barra amarela e não tira poise; congelado, já atordoado, no chão ou em monte, morto ou invulnerável: não acumula. A regra F8 (`StunRule`) é sobre o golpe comum e não toca na Quebra, que é como quebrar blindagem (corta o ataque, `interrupt`).
+- **Leitura**: medidor claro de 60% do tamanho sob a barra de vida (`CrowdRenderer.add_poise_bar`, `life_bar.gdshader` com +8 em `b`), só depois do primeiro golpe que tira poise; na quebra, estilhaços marfim (`EnemyFx.POISE_BREAK`), o som `stagger` e a palavra "Quebrou!" (`word_poise`).
+- **Preço do erro**: invulnerabilidade do herói após dano 1,3 para 0,7 s; aviso do esqueleto 0,9 para 0,75 s e do corredor 1,0 para 0,85 s (elites mantêm os de antes); vida do comum x1,6 (esqueleto 95, corredor 70, feiticeiro 115, besteiro 180; elites mantêm).
+- **Ajuste de números (2026-11-23, `docs/design/balance.md`)**: Investida 60, Brado 35, onda 55, lance 150 (textos do Como Jogar atualizados). Ataque 44% do dano do evoluído (era 51%), só mouse chega a Morvath em 2 de 24 contra 7 de 24, evoluído vence 1 de 12 (meta 20 a 40%), salas comuns até 65 a 72 s. Falta código: kit_c1c item 1 (botões que carregam batendo) e, se quiser, peso 0,16.
+- **RESULT**: `breaks` (quebras por fonte, para medir o uso dos botões).
+- **Os botões se alimentam (C1c item 1, 2026-11-23, `docs/design/kit_c1c.md`)**: Magia +0,5 por golpe do ataque que acerta (uma vez por golpe, não por alvo: `ComboNode.magick_per_hit` no cut1, cut2, cut3 e no Quarto Corte; a Investida segue com 2 por alvo) e +3 por Quebra do ataque, onda, Investida e Ômegas (`HeroDef.magick_on_break`; `Horde.poise_broken(e, fonte)`; nunca a do Brado nem da ultimate). Recarga do Brado: -0,3 s por acerto de ataque e -1,5 s por Quebra (`cd_refund_hit`, `cd_refund_break`), nunca abaixo de `cd_floor` 8 s no total (`ComboRunner.cooldown_refund`, `Player.refund_shout`); o Brado não devolve Brado. Tetos contra laço: ganho de Magia por acerto e Quebra no máximo `gain_cap` 3 por `gain_window` 1 s, e uma onda devolve no máximo `wave_refund_cap` 8. Regra pura em `scripts/core/kit_feed.gd` (`KitFeed`, ligado em `HeroGifts`); `RESULT.kit` traz `magick_hit`, `magick_break`, `refund_s`, `waves`, `shouts`. Testes: `tests/test_kit_c1c.gd`. Ainda não feito do C1c: o ajuste de Lâmina Faminta e o Brado `buff_ward` a cada 12 s (item 5).
+
+## C1e: a esquiva como defesa principal (2026-11-22; `tests/test_dodge_c1e.gd`)
+- **Números** (só em `tools/make_data.gd`): esquiva de 0,2 s e 5,6 m como antes; proteção `Feel.dodge_iframes` = `dodge_time` (0,2 s, o trajeto inteiro, antes 0,3 s com 0,1 s de cauda); recarga `HeroDef.dodge_recharge` 0,8 s (era 1,1); 1 carga de base, a segunda vem da Bênção Passos (`dodge_charges` +1 em `Boons`, lido em `game.gd`) ou de Dons.
+- **Esquiva no último instante**: golpe ou projétil que chega ao herói até `Feel.close_window` (0,15 s) depois do começo da esquiva (`DodgeClose.counts`, `scripts/core/dodge_close.gd`) dá `Player.dodge_close`; `Game._on_dodge_close` toca câmera lenta curta (`close_fraction` 0,4 por `close_slow` 0,25 s, `Fx.slow_mo`, só com a opção de câmera lenta ligada), anel esmeralda e o som `ward`. No máximo uma a cada `close_cooldown` (2 s). Não atordoa ninguém (regra F8). `Game.dodge_closes` conta na partida.
+- **Cancelamento**: a esquiva corta qualquer golpe, janela de recuperação e `move_hold` (`ComboRunner.can_cancel` sempre verdadeiro; o Brado, Ômegas e cargas também). Aperto sem carga ou durante estágio, rolagem/gesto fica guardado `Player.DODGE_BUFFER` (0,15 s) e sai quando puder.
+- **Leitura**: o HUD já mostra as cargas e a recarga (`Hud._dash_wait`, lê `hero.dodge_recharge`); nada novo.
+
+
+## C1e, lote A: Gritador, Coveiro e modificadores (`docs/design/inimigos_c1e.md`; testes em `tests/test_c1e_a.gd`)
+- **Comportamento novo, um só: `EnemyDef.Behavior.SUPPORT`** (`Horde._behave_support`, `_call`; regras puras em `SupportRules`, `scripts/core/support_rules.gd`).
+  Nunca fere. Fica a `attack_range` do herói, foge dele a menos de `retreat_far` (`flee_speed`), e quando o `attack_cooldown` acaba para
+  `attack_windup` (0,9 s, anim `cast`) e chama; golpe cortado (Quebra, `interrupt`) nunca chama. Só chama se há o que fazer (um aliado no
+  alcance; ou vaga e ponto livre para o morto). Poise 100, `per_room` 1, sem versão elite.
+- **Gritador** (`gritador`, assado próprio `herald` (corpo do feiticeiro ereto, sem cajado, estandarte alto de pano âmbar na mão esquerda) em tinta azul-aço (0,52 0,76 1,0), 1,15; vida 120, anda 3 m/s, foge a menos de 2 m): grito a cada 9 s com
+  aviso de anel fino âmbar que fecha em 0,9 s (`C1eMarks`); os outros em 8 m (menos Morvath e quem ergue) andam e voltam de seus golpes
+  1,3 vez mais rápido por 8 s (`Enemy.haste_t`, `Horde._speed`, `_pace`: só andar e o `cooldown`; o aviso nunca encurta, fica 0,75 s ou mais)
+  e curam 10% da vida, uma vez por grito. Papel `rally`. Da sala 6 (a 5 é o guardião).
+- **Coveiro** (`coveiro`, assado próprio `gravedigger` (corpo do sacerdote curvado, pá inclinada na direita e lanterna com brasa na esquerda) em tinta terra (0,86 0,66 0,46), 1,0; vida 90, 3,2 m/s, 5,2 m/s ao fugir a menos de 7 m): a cada 7 s ergue 2
+  `skeleton_raised` (vida 40, golpe 4, sem papel: nunca é sorteado) em pontos a 3 m ou mais do herói (`SupportRules.spots`, marcados
+  com um X de duas barras finas durante o aviso), no máximo 4 dele de pé (`raise_max`, `Enemy.raised`), sempre sob o teto de 20
+  (`room_for`). Papel `grave`, `never_with` papel `swarm` (nunca com a Trinca). Da sala 8.
+- **Dado novo em `EnemyDef`**: `raise_kind`, `raise_far`, `shout_*`, `flee_speed`, `never_with`; o Cavaleiro e o Ancião seguem
+  levantando `skeleton` (padrão de `raise_kind`).
+- **Modificadores** (`ModDef`, `data/mods/*.tres` por `_mods` do `make_data`; `StageDef.mods`, `mod_from_depth` 8, `mod_chance` 0,10,
+  `mod_step` 0,05 por sala, `mod_per_room` 2): `EncounterGen.assign_mods` sorteia por cabeça comum e simples (nunca elite, maior, Trinca,
+  `per_room` nem SUPPORT; nunca em sala com perigo), no máximo 1 por inimigo e 2 por sala (`Fight.mods`: tipo -> modificadores dos primeiros
+  que nascem; `Rooms._take_mod`). Anel fino no pé da cor do modificador (`C1eMarks`; sem disco). **Furioso** (laranja): o `cooldown` corre
+  1,25 vez (aviso intacto). **Detonante** (âmbar): morto, 4 lanças curtas em cruz (3 m, 0,7 de largura, 8 de dano, aviso 0,7 s,
+  `Horde._cross_burst`, `Ground.add_line_warning`). **Escoltado** (branco): nasce com 2 `skeleton_raised` (`Horde.spawn`, sob o teto).
+  Regenerante e Eco: lote C, abaixo.
+- Livro: `CodexScreen.ENEMIES` ganhou os dois; `RoleMark` desenha `rally` (corneta) e `grave` (monte com pá). Textos: `enemy_gritador`, `enemy_coveiro`,
+  `enemy_skeleton_raised`, `mod_*`, `codex_role_rally`, `codex_role_grave`. O RESULT ganha `rooms[].seen` (cabeças por tipo) e `mods`.
+- Não feitos do doc, por serem desenho ou pouco valor agora: o empurrão de 4 de dano do Gritador cercado (ele só foge), os fios âmbar do
+  Gritador até cada aliado, o X pontilhado (são duas barras cheias finas) (os modelos ganharam assado próprio depois: ver acima; o anel e o X seguem em âmbar e musgo, `magic_color`).
+
+## C1e, lote B: Saltador e Lançador (`docs/design/inimigos_c1e.md`; testes em `tests/test_c1e_b.gd`)
+- **Saltador** (`saltador`, `EnemyDef.Behavior.LEAP`, `Horde._behave_leap`; regras puras em `LeapRules`, `scripts/core/leap_rules.gd`): modelo do
+  corredor em tinta ferrugem (1,1; sem bake novo), vida 140, anda 4,2, fica a 4 a 7 m (`LEAP_KEEP`) e, pronto, marca o pouso: **4 cantos em L** de
+  laranja fino (`C1eMarks`, quadrado de 3 m, abrem 1,9 vezes e fecham no quadrado em 0,8 s), o ponto segue o herói e trava nos últimos 0,3 s
+  (`aim_lock`, `LeapRules.follows`); sobe e voa 0,5 s (`leap_time`, `LeapRules.pos_at`/`height_at`, `Enemy.leap_y`/`leap_from`; no ar
+  `invulnerable`: nada o atinge) e cai no ponto marcado: 12 de dano a quem está no quadrado (`LeapRules.in_area`, com a margem do corpo do herói),
+  poeira, e repousa 1,0 s abaixado (`recover_time`). Aviso total 1,3 s (0,8 de cantos e 0,5 de voo); só o preparo é cortável: golpe de Quebra
+  nele cancela o salto. `max_attackers` 1, `windup_gap` 0,5, `per_room` 2, papel `leap`, poise 100.
+- **Lançador** (`lancador`, `ARCHER` com `shot_return`; regras puras em `ThrowRules`): esqueleto em tinta cinza-azulada (1,2), vida 150,
+  anda 3,6, mantém 6 a 8 m, após lançar recua. Linha pontilhada de 0,8 s da mão até 11 m (travada), depois o machado (bola de aço, provisório:
+  falta peça de arte) a 9 m/s, 9 de dano, vai até 11 m (ou até 0,5 m antes de pedra, `ThrowRules.out_range`), vira e volta pela mesma linha até a mão
+  (`Shot.back_at`, `Shot.origin`, `Projectiles._returning`); fere uma vez na ida e uma na volta (não some ao acertar na ida); 0,4 s antes de virar
+  o fio fino (0,3 m) da volta aparece (`ThrowRules.RETURN_WARN`). Ataque corpo a corpo não o corta. Papel `throw`, `per_room` 2, `max_attackers` 1.
+- **Robô**: `Bot.leap_escape` (sai do quadrado de pouso, margem 0,9 m, no último 0,55 s do preparo e no voo); o machado já é lido pelo laço de
+  projéteis e pelos fios de aviso do `_danger`.
+- Livro: `CodexScreen.ENEMIES` e `RoleMark` (`leap`: quatro cantos; `throw`: linha com ponta nas duas extremidades); textos `enemy_saltador`,
+  `enemy_lancador`, `codex_role_leap`, `codex_role_throw`.
+
+
+## C1e, lote C: Canalizador, Armadilheiro, Regenerante e Eco (`docs/design/inimigos_c1e.md`; testes em `tests/test_c1e_c.gd`)
+- **Canalizador** (`canalizador`, `EnemyDef.Behavior.BEAM`, `Horde._behave_beam`; regras puras em `BeamRules`, `scripts/core/beam_rules.gd`): modelo do
+  feiticeiro (`mage`, sem assado novo: o orçamento de 70 MB dos assados não comporta outro) em tinta azul-aço claro, 1,3; vida 130, fincado (velocidade 0). A até 12 m do herói: fio
+  no chão de 0,9 s (`add_aim_warning` + `track_line`; segue o herói e trava nos últimos 0,3 s, `aim_lock`), depois o raio (zona de linha de 0,5 m mantida
+  acesa com a `life` no `BEAM_FILL`, etiqueta `Horde.BEAM_TAG`, como a barra do Varredor) por 5 pulsos de 5 a cada 0,45 s (`shot_ticks`,
+  `shot_interval`, `attack_damage`; 2,25 s), a linha virando atrás do herói a 40 graus/s (`shot_turn`, `BeamRules.turned`). Um pulso fere quem está na
+  linha (`BeamRules.hits` = `SweepRules.in_bar`, alcance cortado por pedra com `Arena.shot_reach`) e nunca a menos de `sweep_clear` (1,0 m) do pé dele. Recarga 2,4 s
+  (x0,9 do `ENEMY_COOLDOWN`), descanso 0,4 s. A Quebra (`interrupt`) e o congelamento cortam o raio (`_holds_bar`, junto da barra do Varredor).
+  Papel `beam`, `per_room` 1, `never_with` `sweep` (nunca com o Varredor). Brado, esquiva e Investida absorvem ou atravessam um pulso pelo `hit_player` comum.
+- **Armadilheiro** (`armadilheiro`, `SUPPORT` com `plate_*`; `TrapRules`): assado próprio `trapper` (corpo do besteiro curvado, placa de espinho na mão
+  esquerda, 3,5 MB), tinta oliva, 1,2; vida 110, anda 3,8, mantém 5 a 7 m e foge a menos de 5 (`retreat_far`). A cada 2,6 s (x0,9) abaixa 0,5 s e planta uma placa de
+  1,6 m onde o herói pisa, ou onde terminou a última esquiva se foi há menos de 3 s (`Player.last_dodge_end`, `dodge_age`, `Horde.dodge_end`;
+  `TrapRules.spot`); no máximo 4 (`plate_max`, `TrapRules.may_lay`, afastadas 1,28 m). A placa é uma zona de linha quadrada de 1,0 s (`Ground.PLATE_TAG`, seu preenchimento vermelho escondido) cujo aviso é um X
+  fino marfim com as quatro bordas (`C1eMarks._put_plate`, que fica mais claro até o fim); ao fim fere 10 em quem está nela (a invulnerabilidade da esquiva passa por cima) e levanta poeira. Não tem os
+  espinhos de 0,5 s depois do X nem o "some em 6 s" do documento: o dano é um golpe só no fim do aviso. Papel `trap`, `per_room` 1; a sala da corrente (RP-11) proíbe o papel.
+- **Modificadores** (`ModDef`): **Regenerante** (anel azul-claro, `regen_hp` 12 a cada `regen_after` 3 s sem golpe: `Enemy.calm_t`, zerado em `Horde.damage`;
+  `SupportRules.mended`) e **Eco** (anel cinza, `echo_time` 3,5, `echo_share` 0,4: a primeira morte deixa um monte invulnerável que se ergue sozinho com 40% da vida, uma vez,
+  e perde o anel; `Enemy.echoed`, `_lie_down` e `_step_down` do monte da Trinca; `SupportRules.echo_hp`, `echo_rises`; não conta como morte até cair de vez). O sorteio
+  passa a ter 5 modificadores (`StageDef.mods`), 2 por sala no máximo, de 10% na sala 8 com mais 5 pontos a sala.
+- **Som de aviso**: `tell_beam` (carga do próprio jogo mais aguda) e `tell_trap` (osso e besta, graves), feitos no fim de `tools/make_sfx.sh`; 14 papéis, 14 sons.
+- **Robô**: no pé do Canalizador (até `sweep_clear` + 0,3 m) o raio não é perigo e ele entra para bater; na linha, sai de lado (o fio e o raio entram no `_danger`
+  como qualquer linha); a placa entra como linha de aviso. Livro: `CodexScreen.ENEMIES` e `RoleMark` (`beam`, `trap`); textos `enemy_canalizador`,
+  `enemy_armadilheiro`, `codex_role_beam`, `codex_role_trap`, `mod_regenerante`, `mod_eco`.
+
+
+## C1d, lutas de chefe (2026-11-22; `docs/design/chefes_c1d.md`; testes em `tests/test_c1d_*.gd`)
+- **Lote 1, dados**: `EnemyDef.guard_up_*` (guarda por tempo do Cavaleiro), `ward_open` (Brado abre o Cavaleiro), `wall_stun` (investida na parede); `BossDef.posture`, `posture_stun`, `posture_vuln`, `posture_idle`, `posture_mult` (Postura de Morvath, desligada até o lote 4). Nada muda no jogo. A regra F8 segue (teste).
+- **Lote 2, Cavaleiro** (`knight.tres`, números em `make_data`): K1 `wall_stun` 1,5 s se a investida acaba na parede (colisão dele, `Horde._wall_hit`/`_wall_stun`, sem Quebra nem F8); K2 `ward_open` 1,0 s: o Brado que absorve a pancada de perto (`Player.ward_taken` -> `Horde.ward_taken`, só com `memo == 1`) o deixa aberto; K3 guarda por tempo (`guard_up_*`: a cada 14 s com a armadura acima de 50%, aviso 0,6 s, 4 s de escudo com `front_block` 0,7, anda a 60%, bate a cada 1,6 s a 1,6 m com aviso 0,85 s e dano 12, fora do arco da frente x1,5 para o ataque; a onda abre por `front_open` 4 s). `Horde.guard_up` só vale com `guard_t > 0` nesse caso. K4 (chamado) e a investida rastreada já existiam.
+- **Lote 3, Ancião** (`priest_elder.tres`): A2 `volley_*`: depois do leque (fala par) e a cada 12 s ele recua 8 m em 1,5 s (para na parede), ergue o cajado 1,0 s com um fio por orbe e solta 3 orbes a 4 m/s que giram 60 graus/s por 4 s (medido: 5 s subia o dano do Ancião a 1,4x), depois descansa 1,5 s (`Horde._volley_back`, `_volley`; `_aim_fan` aceita contagem, abertura e aviso); A3 `ward_count` 3, 40 de blindagem nos servos a cada 5 s (o `_step_ward` do Sacerdote; some com ele).
+- **Lote 4, Postura de Morvath** (`BossDef.posture` 900, `posture_stun` 2,6, `posture_vuln` 0,4, `posture_idle` 5, `posture_mult` 0,5): a mesma ideia da Quebra, sem duplicar: `Horde.boss_blow(e, fonte)` (emitido em `damage` para o chefe) chega a `Boss._on_blow`, que gasta `Poise.share(fonte, Feel.poise_weights) * posture_mult` de 900 (ataque 14 golpes, onda e Brado 3 a 4, Investida 4, ultimate 2; queimadura, eco e Dons sem peso não tiram). Quebrada: `_cancel()` (corta o preparo) e `_stun(posture_stun)`, `e.broken_t` faz `Horde.damage` multiplicar por 1,4 (`Horde.boss_vuln`); cheia de novo ao levantar; 5 s sem golpe que tira também enche. A contagem antiga de golpes pesados (`stagger_hits`) fica desligada com `posture > 0`. A barra amarela do HUD do chefe mostra a Postura (`Boss.posture_ratio`). `RESULT.breaks` traz `boss_<botão>` e `boss.posture_breaks`.
+- **Lote 5, Condutores**: `BossDef.ritual_conductors` (`mage`) e `ritual_shorten` 5 s: cada feiticeiro do ritual que cai corta 5 s dele (`BossRules.ritual_limit`, `Boss.conductors_dead`, `ritual_time_left`); com os 2 o escudo abre aos 10 s e ele fica 2,0 s tonto (`ritual_stun`). Palavra "Condutor caiu!".
+- **Lote 6, Corte do rastro** (`BossDef.curse_cut`): a onda do herói (`Kind.WAVE` e `Kind.SPARK`, o especial e as Ômegas) que toca o projétil da maldição o desfaz sem dano nem lentidão (`Projectiles._cut_curses`, sinal `curse_cut_at`, `boss.stats.curses_cut`); o Brado (e o escudo) que absorve o golpe leva a maldição junto (`Player.absorbed_last`, `Game._on_status_player`). O robô lança a onda na maldição a menos de 9 m que vem para ele (`Bot.curse_aim`). Ataque comum, Investida e esquiva não cortam (a esquiva só foge).
+- **Lote 7, Ruptura** (`BossDef.rupture_*`, estado `Boss.State.RUPTURE`): na fase 4, 12 s depois de entrar e a cada 25 s, no lugar de um golpe do diretor (`BossRules.rupture_due`, só com ele em CHASE e descansado), um círculo do alcance do salão (sem faixa livre; `z.eruption` para o desenho dos círculos dele) avisa 1,5 s e dá 16; depois ele fica 3 s exposto (x1,4, sem Postura: `e.broken_t`, `_posture_open`), então a Postura volta cheia. O Brado e o escudo levam o golpe inteiro (`Player.hurt`); a esquiva de 18 quadros no fim também passa. Durante o aviso a Postura não corta o golpe. `boss.stats.ruptures`, `attacks.rupture`.
+- **Lote 8, ajuste**: `posture` 1300 e `posture_vuln` 0,3 (a luta de Morvath durava 2:00 a 2:20 para o evoluído; o plano pede 2:40 a 3:00 e ainda não chegou, ver `combat_cadence.md` 10). Teste de carga do Cavaleiro (`test_enemy_windup`) ignora o escudo erguido por tempo.
+- **Pendências conhecidas (não do C1d)**: `test_c1b_rooms` (vida do grande), `test_rooms` (armadura dos elites), `test_waves` (comum cai em uma cadeia) e `test_bench_ui` (Compêndio) falham desde antes, por números do C1b e do Compêndio; o `--smoke=300 --seed=5` do novato morre no Ancião (sala 7) como antes do C1d.
+
+## Cavaleiro, 2026-11-23 (Daniel: "ataca mais rápido", a investida difícil de desviar, o escudo; testes em `tests/test_knight_throw.gd`)
+Princípios do estudo `docs/design/sworn_gawain.md` (lista de prioridade, cooldown por habilidade, anel que só a esquiva atravessa), sem nada copiado.
+- **Mais rápido e mais assustador** (`knight` em `make_data`, marcado `exact_windup`): investida com aviso 0,6 s (era 1,0), `aim_lock` 0,15 s (a linha segue o herói até 0,15 s antes de sair), arranque 24 m/s por 0,6 s (14,4 m; era 18 por 0,7), segunda e terceira investidas com 0,45 s, golpe de perto 0,5 s (era 0,8), golpe atrás do escudo 0,6 s. Dano 14 na investida e no golpe de perto, 10 atrás do escudo.
+- **Lista de prioridade** (`EnemyDef.moves`, `KnightMove`, regra pura `AttackList`; relógios em `Enemy.move_cd`, um por golpe): de cima para baixo, o primeiro aberto é feito, um por vez. Escudo (`throw`, cooldown 18 s, primeiro uso 8 s, a 4 a 16 m), investida tripla (a partir de 40% da dureza, cooldown 10 s), dupla (75%, 5 s), simples. Fases pela **dureza** (`Horde.toughness`: vida mais armadura sobre o total, o que as duas barras mostram), então a luta muda enquanto ele ainda tem escudo. A guarda por tempo (K3) e o chamado dos mortos (CV-2) continuam na frente da lista; o golpe de perto e o recuo de 3 golpes ficam como enchimento.
+- **Arremesso do escudo** (`EnemyDef.throw_*`, `ring_*`; `Horde._loose_shield`, `_step_shields`, `_land_shield`, `_step_waves`): 0,5 s de aviso (a pose `summon`), o escudo sobe e cai em 1,0 s onde o herói está (o ponto o segue até 0,35 s antes de pousar); o chão mostra os quatro cantos fechando (`C1eMarks`, mesmo desenho do Saltador, laranja) e o aro do escudo cruza o ar. Pouso: quadrado de 3 m, dano 12. Sem escudo ele fica "aberto" 1,8 s depois do pouso (`Enemy.away_t`): sem guarda, sem investida, e a armadura leva todo golpe inteiro.
+- **Onda do escudo** (`ShockRing`, `Fx.wave_ring`): 0,25 s depois do pouso nasce um anel que se expande a 12 m/s (o herói corre a 11), 0,8 m de espessura, até 32 m (a sala toda), dano 9, uma vez por onda e nunca em quem já levou o pouso. **Só a esquiva atravessa**: a proteção dura os 0,2 s da rolada e o anel conta como esquiva no último instante em qualquer momento dela (`Horde.last_wide` e `Player.close_any` alargam a janela de 0,15 s para os 0,2 s inteiros). Exceção do Daniel: o anel é redondo porque é onda em movimento, não marca no chão.
+- **Armadura que sente só golpes fortes** (`EnemyDef.armor_soft` 0,3, `DamageCalc.armor_scale`, `STRONG_TAGS`): golpe leve comum (corte 1, corte 2, estocada) leva 30% à armadura; o final (corte 3), a onda do especial, o corte da Investida, as Ômegas, o Brado e as Supremas levam inteiro; com o escudo longe, tudo leva inteiro. Armadura 1700 (era 1220). A regra F8 não mudou (golpe comum não atordoa; quebrar a armadura abre 2,5 s).
+- **Um botão para os avisos** (`ENEMY_WINDUP` 0,8 em `_enemy`, pisos 0,5 s e 0,6 s para pesado): os comuns e o Ancião passam a 80% do aviso; antes e depois em `docs/design/combat_cadence.md` seção 11. Morvath: `windup_scale` por fase.
+- **Robô** (`Bot.ring_dash`, `shield_escape`): sai do quadrado do escudo nos últimos 0,6 s e dá a esquiva quando o anel está a 0,09 s de tocar, com 75% de acerto (uma vez por onda).
+- **Som**: aviso e arremesso usam os sons do Cavaleiro; pouso `enemy_burst`; nascimento do anel `wave_omega`. Nenhuma receita nova. Nenhum shader novo (o anel é o `ring.gdshader`): o conjunto de aquecimento não precisa ser regenerado.
+
+## Cadência dos chefes: a pausa aleatória e o Ancião que chama arqueiros (Daniel, 2026-11-23; `tests/test_cadence_gap.gd`)
+Daniel viu o robô lutar: o Cavaleiro e Morvath faziam um golpe e ficavam muito tempo sem fazer nada. Medidas e números antes e depois em `docs/design/combat_cadence.md` seção 12.
+- **Medida** (`IdleStats`, no `RESULT`): `idle` (por guardião, `Horde.idle_report`) e `boss.idle` (Morvath). `mean`, `p90`, `max` são a pausa entre o fim da recuperação e o próximo aviso; `dead_*` é do fim do golpe (recuperação incluída) ao próximo aviso; `share` é a parte da luta andando sem atacar, `share_rec` com a recuperação. Aberturas ganhas (atordoado, escudo longe, armadura quebrada, joelho de Postura, ritual, rugido) não entram.
+- **Pausa aleatória** (`AttackGap`, `EnemyDef.gap_*`, `BossDef.gap_*`): depois da recuperação, uniforme entre `gap_min` e `gap_max` (0,3 a 1,5 s com a vida cheia), as duas pontas deslizando até `gap_min0` e `gap_max0` (0,2 a 0,7 s sem vida) pela parte de vida que resta (a do Cavaleiro é a dureza: vida mais armadura). Usa o sorteio da própria luta, então a mesma semente dá o mesmo `RESULT`. O descanso do Cavaleiro era `AFTER_RECOVER` (0,25 a 0,75 s); o de Morvath `BossDef.rest` (0,4 a 1,1 s), que agora só vale depois de rugido, atordoamento e ritual. O Ancião não usa (a cadência dele ficou).
+- **Morvath um golpe de cada vez**: `BossAttack.layers` ficou vazio em todos os ataques (erupções e mortos por cima da foice, lâminas, maldição e tempestade saíram); o mecanismo continua no código e os testes de segurança dele (`BossLayersFixture`) usam uma cópia com as camadas.
+- **Cavaleiro**: dano da investida e do golpe de perto 14 para 8, arremesso 10 para 8, anel 7 para 6, golpe com a guarda 10 para 8, para o novato (30 de vida) continuar vencendo cerca de metade das lutas com a pausa curta.
+- **Ancião chama arqueiros** (`EnemyDef.raise_kind` `archer`, `raise_count` 2, `raise_max` 2, `raise_cd_min`/`max` 10 a 14 s, `raise_first` 4 s; `Horde.edge_spots`): no lugar dos esqueletos de perto, de 10 a 14 s ele para, ergue o cajado (a pose `summon`) e dois arqueiros nascem na borda do chão, o mais longe do herói e um do outro, no máximo 2 de pé. As colunas da sala barram as flechas deles como as do Ancião (`shots_blocked`). Os leques e a salva de orbes ficam.

@@ -188,6 +188,12 @@
       "polycount": 6000,
       "style": "Stylized hand-painted stone sculpture, soft painterly carved forms, weathered grey limestone with moss in the cracks, readable silhouette from above, no ground, no text, no cross symbols.",
       "prompt": "A noble seated stone lion guardian on a low rectangular plinth, upright chest, full flowing mane, calm watchful face looking forward, front paws together, heraldic temple guardian statue."
+    },
+    "hero_maga": {
+      "polycount": 20000,
+      "pose": "a-pose",
+      "style": "Stylized hand-painted dark fantasy game character, painterly textures, realistic adult proportions eight heads tall, not chibi, no base, no ground, empty hands, no weapons, no staff, no fire.",
+      "prompt": "Full body young East Asian woman scholar mage, slender, calm face, short straight black bob hair. Long layered robe of deep navy blue with fine pale gold embroidery, falling to the shins in tattered pointed panels. Ivory hooded mantle over the shoulders, hood down, short cape to mid-back. Brown leather belts crossed at the waist with small pouches and a scroll case, round gold seal medallion on the belt. Leather bracers on forearms, tall brown leather boots. A-pose facing forward."
     }
   }
 }

@@ -1,0 +1,161 @@
+[gd_resource type="Resource" script_class="ComboTree" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/combo_node.gd" id="1_yyyc0"]
+[ext_resource type="Script" path="res://scripts/core/combo_tree.gd" id="2_46i2j"]
+
+[sub_resource type="Resource" id="Resource_qkilo"]
+script = ExtResource("1_yyyc0")
+id = &"bolt3"
+title = &"move_bolt3"
+anim = &"Cast"
+tags = Array[StringName]([&"light", &"bolt", &"arcane", &"seal", &"finisher"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+knockback = 2.0
+move_scale = 0.0
+windup = 0.14
+recovery = 0.2
+move_hold = 0.3
+chain_window = 0.4
+hit_stop_ms = 0.0
+sound = &"dart"
+shake = 0.2
+effect = 3
+effect_power = 12.0
+effect_radius = 11.0
+effect_size = 0.9
+wave_bolt = true
+wave_speed = 30.0
+wave_stops = true
+wave_color = Color(1, 0.62, 0.18, 1)
+
+[sub_resource type="Resource" id="Resource_ho43x"]
+script = ExtResource("1_yyyc0")
+id = &"bolt2"
+anim = &"Cast"
+tags = Array[StringName]([&"light", &"bolt", &"arcane", &"seal2"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+knockback = 2.0
+move_scale = 0.0
+windup = 0.1
+recovery = 0.13
+move_hold = 0.2
+chain_window = 0.4
+hit_stop_ms = 0.0
+sound = &"dart"
+shake = 0.2
+effect = 3
+effect_power = 8.0
+effect_radius = 11.0
+effect_size = 0.7
+wave_bolt = true
+wave_speed = 30.0
+wave_stops = true
+wave_color = Color(1, 0.62, 0.18, 1)
+next = Array[Resource]([SubResource("Resource_qkilo")])
+
+[sub_resource type="Resource" id="Resource_3xrb7"]
+script = ExtResource("1_yyyc0")
+id = &"bolt1"
+anim = &"Cast"
+anim_speed = 1.25
+tags = Array[StringName]([&"light", &"bolt", &"arcane"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+knockback = 2.0
+move_scale = 0.0
+windup = 0.08
+recovery = 0.13
+move_hold = 0.18
+chain_window = 0.4
+hit_stop_ms = 0.0
+sound = &"dart"
+shake = 0.2
+effect = 3
+effect_power = 8.0
+effect_radius = 11.0
+effect_size = 0.7
+wave_bolt = true
+wave_speed = 30.0
+wave_stops = true
+wave_color = Color(1, 0.62, 0.18, 1)
+next = Array[Resource]([SubResource("Resource_ho43x")])
+
+[sub_resource type="Resource" id="Resource_m6oyt"]
+script = ExtResource("1_yyyc0")
+id = &"blast"
+input = 1
+title = &"move_blast"
+anim = &"Cast"
+tags = Array[StringName]([&"heavy", &"blast", &"arcane", &"finisher"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+move_scale = 0.0
+windup = 0.18
+recovery = 0.25
+move_hold = 0.35
+chain_window = 0.2
+hit_stop_ms = 0.0
+cooldown = 0.6
+sound = &"dart"
+magick_cost = 10.0
+shake = 0.3
+effect = 5
+
+[sub_resource type="Resource" id="Resource_rvj5y"]
+script = ExtResource("1_yyyc0")
+id = &"circle"
+input = 4
+title = &"move_circle"
+anim = &"Cast"
+tags = Array[StringName]([&"shout", &"cast", &"arcane"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+move_scale = 0.0
+windup = 0.2
+recovery = 0.15
+move_hold = 0.25
+chain_window = 0.4
+hit_stop_ms = 0.0
+cooldown = 10.0
+sound = &"wave_omega"
+shake = 0.3
+effect = 6
+
+[sub_resource type="Resource" id="Resource_cgonp"]
+script = ExtResource("1_yyyc0")
+id = &"dome"
+input = 5
+title = &"move_dome"
+anim = &"Cast"
+tags = Array[StringName]([&"cast", &"arcane", &"dome"])
+damage = 0.0
+shape = 2
+reach = 1.0
+width = 1.0
+move_scale = 0.0
+windup = 0.2
+recovery = 0.2
+move_hold = 0.2
+chain_window = 0.4
+hit_stop_ms = 0.0
+cooldown = 14.0
+sound = &"wave_omega"
+shake = 0.3
+effect = 7
+
+[resource]
+script = ExtResource("2_46i2j")
+neutral = Array[ExtResource("1_yyyc0")]([SubResource("Resource_3xrb7"), SubResource("Resource_m6oyt"), SubResource("Resource_rvj5y"), SubResource("Resource_cgonp")])
+dodge_window = 0.0

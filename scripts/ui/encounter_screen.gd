@@ -17,6 +17,13 @@ signal chosen(angel: AngelDef)
 ## selo"): large, over a soft glow of its colour (GLOW_*: under the glow threshold, a light of the card's own).
 const SEAL := 176.0
 const CARD := Vector2(300, 412)
+## BC-3: with a painting the angel stands at its side of the screen, the arena between: the figure, the line and the
+## "Ouvir" under it; the one in focus lit, the other dimmed.
+const FIGURE := Vector2(300.0, 270.0)
+const PAINTED_CARD := Vector2(320.0, 486.0)
+const PAGE_W := 1180.0
+const SEAL_SMALL := 48.0
+const DIM := 0.5
 const GLOW_REACH := 1.25
 const GLOW_ALPHA := 0.28
 const NAME_SIZE := 30
@@ -43,14 +50,15 @@ static func _meet(pair: Array, game: Game, focus := 0) -> void:
 	s.open(typed, game.boons, focus)
 	s.chosen.connect(func(a: AngelDef) -> void:
 		game.close_screen()
+		# Esc on the cards: back to the pair, the same two, the focus on the one just seen
+		game.choice_back = func() -> void:
+			game.close_screen()
+			game.encounters.angels_now.assign(typed)
+			_meet(typed, game, typed.find(a))
 		game.encounters.choose(a)
 		var choice := _choice_of(game)
 		if choice != null:
-			choice.by_angel(a, func() -> void:
-				# back to the pair: the same two, the focus on the one just seen
-				game.close_screen()
-				game.encounters.angels_now.assign(typed)
-				_meet(typed, game, typed.find(a))))
+			choice.by_angel(a, game.choice_back))
 
 
 ## The choice screen the run has open now (null: none, as for the rest card taken at once).
@@ -68,7 +76,7 @@ func open(p_angels: Array[AngelDef], state: BoonState = null, focus := 0) -> voi
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
-	var page := UiKit.column(self, 1100.0, 0.74)
+	var page := UiKit.column(self, PAGE_W, 0.5)
 	page.add_theme_constant_override(&"separation", 20)
 	var title := UiKit.shadow(UiKit.title(T.t(&"encounter_title" if angels.size() > 1 else &"encounter_alone"), 40))
 	title.name = "title"
@@ -77,16 +85,25 @@ func open(p_angels: Array[AngelDef], state: BoonState = null, focus := 0) -> voi
 	row.name = "angels"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override(&"separation", 40)
-	page.add_child(row)
-	for a in angels:
-		var card := AngelCard.new().setup(a, held_of(state, a))
-		card.pressed.connect(_pick.bind(a))
-		buttons.append(card)
-		row.add_child(card)
 	var hint := UiKit.shadow(UiKit.label(T.t(&"encounter_hint"), UiKit.DIM, 18))
 	hint.name = "hint"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	page.add_child(hint)
+	page.add_child(hint)  # under the title, clear of the HUD's foot
+	page.add_child(row)
+	for i in angels.size():
+		var a := angels[i]
+		var card := AngelCard.new().setup(a, held_of(state, a), i == 1)
+		card.pressed.connect(_pick.bind(a))
+		buttons.append(card)
+		row.add_child(card)
+		if i == 0 and angels.size() > 1:
+			# the arena shows between the two
+			var gap := Control.new()
+			gap.name = "arena"
+			gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			row.add_child(gap)
+	row.custom_minimum_size.x = PAGE_W if angels.size() > 1 else 0.0
 	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), _press_focus)])
 	Audio.play(&"level_up")
 	if not buttons.is_empty():
@@ -125,10 +142,14 @@ class AngelCard:
 
 	var angel: AngelDef
 
-	func setup(a: AngelDef, held: int) -> AngelCard:
+	var painted := false
+
+	func setup(a: AngelDef, held: int, mirror := false) -> AngelCard:
 		angel = a
 		name = String(a.id)
-		custom_minimum_size = EncounterScreen.CARD
+		var art := AngelArt.figure(a, EncounterScreen.FIGURE, mirror)
+		painted = art != null
+		custom_minimum_size = EncounterScreen.PAINTED_CARD if painted else EncounterScreen.CARD
 		focus_mode = Control.FOCUS_ALL
 		mouse_entered.connect(func() -> void:
 			if not has_focus():
@@ -137,8 +158,10 @@ class AngelCard:
 		var empty := StyleBoxEmpty.new()
 		for s: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"focus", &"disabled"]:
 			add_theme_stylebox_override(s, empty)
-		focus_entered.connect(queue_redraw)
-		focus_exited.connect(queue_redraw)
+		focus_entered.connect(_lit.bind(true))
+		focus_exited.connect(_lit.bind(false))
+		if painted:
+			modulate.a = EncounterScreen.DIM
 		var v := VBoxContainer.new()
 		v.name = "body"
 		v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -149,28 +172,45 @@ class AngelCard:
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		v.add_theme_constant_override(&"separation", 6)
 		add_child(v)
-		var seal := AngelSeal.new().setup(a.family, EncounterScreen.SEAL)
+		if painted:
+			v.add_child(art)
+		var seal := AngelSeal.new().setup(a.family, EncounterScreen.SEAL_SMALL if painted else EncounterScreen.SEAL)
 		seal.name = "seal"
 		seal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		v.add_child(seal)
 		seal.item_rect_changed.connect(queue_redraw)
 		var n := UiKit.shadow(UiKit.title(T.t(a.name_key), EncounterScreen.NAME_SIZE, tint.lightened(0.25)))
 		n.name = "name"
-		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		v.add_child(n)
+		n.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if painted else HORIZONTAL_ALIGNMENT_CENTER
 		var fam := UiKit.label(T.t(&"encounter_family", {"family": T.t(Boon.FAMILY_KEY[a.family])}), UiKit.OLD_GOLD.lightened(0.3), 16, UiKit.TITLE_FONT)
 		fam.name = "family"
-		fam.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		v.add_child(fam)
-		var rule := GoldRule.new()
-		rule.custom_minimum_size = Vector2(200, 10)
-		rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		v.add_child(rule)
+		fam.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if painted else HORIZONTAL_ALIGNMENT_CENTER
+		if painted:
+			# the small seal beside its name and family
+			var head := HBoxContainer.new()
+			head.name = "head"
+			head.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			head.add_theme_constant_override(&"separation", 12)
+			head.add_child(seal)
+			var words := VBoxContainer.new()
+			words.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			words.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			words.add_child(n)
+			words.add_child(fam)
+			head.add_child(words)
+			v.add_child(head)
+		else:
+			v.add_child(seal)
+			v.add_child(n)
+			v.add_child(fam)
+			var rule := GoldRule.new()
+			rule.custom_minimum_size = Vector2(200, 10)
+			rule.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			v.add_child(rule)
 		var line := UiKit.label(T.t(a.line_key), UiKit.PALE, EncounterScreen.LINE_SIZE)
 		line.name = "line"
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		line.custom_minimum_size.x = 200
+		line.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if painted else HORIZONTAL_ALIGNMENT_CENTER
+		line.custom_minimum_size.x = 260 if painted else 200
 		v.add_child(line)
 		var fill := Control.new()
 		fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -181,13 +221,46 @@ class AngelCard:
 			else T.t(&"encounter_held_none", {"family": family}), UiKit.DIM.lightened(0.2), 15, UiKit.number_font())
 		have.name = "held"
 		have.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		have.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		have.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if painted else HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(have)
+		# "Ouvir {name}" with the key, under the angel (the key only on the one in focus)
+		var hear := HBoxContainer.new()
+		hear.name = "hear"
+		hear.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		hear.alignment = BoxContainer.ALIGNMENT_BEGIN if painted else BoxContainer.ALIGNMENT_CENTER
+		hear.add_theme_constant_override(&"separation", 10)
+		_plaque = BoonCard.key_plaque(&"ui_accept")
+		_plaque.modulate.a = 0.0
+		var verb := UiKit.label(T.t(&"encounter_hear", {"name": T.t(a.name_key)}), ActionBar.VERB_COLOR, 18, UiKit.BOLD_FONT)
+		verb.name = "Hear"
+		hear.add_child(verb)
+		hear.add_child(_plaque)
+		v.add_child(hear)
 		return self
+
+	var _plaque: Control
+
+	## The angel in focus is lit and shows the key that hears it; the other waits dimmed.
+	func _lit(on: bool) -> void:
+		if painted:
+			modulate.a = 1.0 if on else EncounterScreen.DIM
+		_plaque.modulate.a = 1.0 if on else 0.0
+		queue_redraw()
 
 	func _draw() -> void:
 		var r := Rect2(Vector2.ZERO, size)
 		var tint := AngelSeal.tint(angel.family)
+		if painted:
+			# a soft ink behind the words so they read over the fight
+			var words := Rect2(0.0, EncounterScreen.FIGURE.y - 4.0, size.x, size.y - EncounterScreen.FIGURE.y + 4.0)
+			draw_style_box(UiKit.box(Color(0.02, 0.015, 0.03, 0.66), Color(0, 0, 0, 0), 0, 0, 10), words)
+			# a soft light of its colour behind the figure when in focus
+			if has_focus():
+				var c := Vector2(size.x * 0.5, EncounterScreen.FIGURE.y * 0.5)
+				for k in 8:
+					var t := float(k) / 8.0
+					draw_circle(c, EncounterScreen.FIGURE.y * 0.62 * (1.0 - t * 0.6), Color(tint, 0.05 * (0.4 + t)))
+			return
 		var bg := UiKit.box(BoonCard.INK_LIT if has_focus() else BoonCard.INK, Color(tint, 0.7), 2, 0, 8)
 		bg.shadow_color = Color(tint, 0.3 if has_focus() else 0.15)
 		bg.shadow_size = 14

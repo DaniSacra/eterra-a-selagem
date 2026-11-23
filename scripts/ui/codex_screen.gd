@@ -31,7 +31,7 @@ const TAB_WIDTH := 270.0
 const TAB_HEIGHT := 30.0
 const MARK := 24.0
 ## The enemies of the region in the order a descent meets them, the guardians last (Morvath has his own tab).
-const ENEMIES: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder"]
+const ENEMIES: Array[StringName] = [&"skeleton", &"skeleton_big", &"runner", &"runner_big", &"mage", &"archer", &"guard", &"priest", &"trinca", &"varredor", &"saltador", &"lancador", &"gritador", &"coveiro", &"canalizador", &"armadilheiro", &"knight", &"priest_elder"]
 const ENEMY_DIR := "res://data/enemies/"
 const STAGE := "res://data/stages/catacombs.tres"
 const BOSS := &"morvath"

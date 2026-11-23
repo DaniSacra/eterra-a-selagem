@@ -35,6 +35,8 @@ const TONE := {
 }
 ## The fountain's tone.
 const FOUNTAIN_TONE := Vector2(196, 0.25)
+## C1V (N1, 2.1): in the stylized look the fountain's shaft is the hall's shaft of Elun, ivory gold (hue 40).
+const FOUNTAIN_TONE_STYLIZED := Vector2(40, 0.45)
 ## Strengths: a reward 1.0, a fountain with water 0.8, a shop item the gold reaches 0.75 and one it does not 0.3.
 const FOUNTAIN := 0.8
 const SHOP_CAN := 0.75
@@ -118,7 +120,7 @@ static func tint_of(reward: int, angel_family: int = -1) -> Color:
 
 ## The fountain's light.
 static func fountain_tint() -> Color:
-	return _mix(FOUNTAIN_TONE)
+	return _mix(FOUNTAIN_TONE_STYLIZED if VisualProfile.stylized() else FOUNTAIN_TONE)
 
 
 static func _mix(tone: Vector2) -> Color:

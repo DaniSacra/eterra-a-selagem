@@ -408,8 +408,42 @@ const STYLE := {
 	&"joint_cold": Color(0.88, 0.91, 1.0), &"olive_share": 0.06, &"abyss_glow": STY_ABYSS_GLOW, &"pool_saturation": STY_POOL_SATURATION,
 	&"fire": {&"bowl_range": STY_BOWL_RANGE, &"candle_range": STY_CANDLE_RANGE, &"bowl_attenuation": STY_BOWL_ATTENUATION,
 		&"bowl_gain": STY_BOWL_GAIN, &"candle_gain": STY_CANDLE_GAIN, &"compat": STY_COMPAT_FIRE},
-	&"floor": STY_FLOOR_BIOME,
+	&"floor": STY_FLOOR_BIOME, &"shadow_glow": STY_SHADOW_GLOW, &"vignette": STY_VIGNETTE,
 }
+## C1V (docs/art/identidade_c1v.md 2.1, only in the stylized look). The coloured shadow: the key's shadow band takes this
+## cold violet on top (around #1E2236 lit by the ambient; hue 225 to 240, saturation 0.25 to 0.4 on the floor).
+const STY_SHADOW_GLOW := Color(0.50, 0.42, 1.0)
+## The scene's vignette on the stone, floor and kit (paint.gdshaderinc: how much darker, where it starts and where it is
+## full, 0 the middle of the screen, 1 the middle of an edge): the edge boxes at 0.55 to 0.70 of the middle.
+const STY_VIGNETTE := Vector3(0.75, 0.4, 1.2)
+## The warm key (a faint amber from high up to the left, diffuse, no shadow, never on the crowd): its colour (#F2C890),
+## energy, where it lands on the floor (x, z), the radius of the pool (m), and where it comes from over that spot
+## (x, height, z). The pool covers 10 to 18 % of the walkable floor, about 7 m round.
+const STY_WARM_KEY := Color(0.949, 0.784, 0.565)
+const STY_WARM_ENERGY := 7.0
+const STY_WARM_AT := Vector2(-6.5, 1.5)
+const STY_WARM_RADIUS := 7.0
+const STY_WARM_FROM := Vector3(-13.0, 16.0, 0.5)
+const STY_WARM_SOFT := 2.0
+## The shaft of Elun (beam.gdshader, the hall's): ivory gold (hue 40), where its foot stands in the upper half of the
+## frame (x, z; it opens round the paladin by itself), its radius at the foot, its height, the light it asks for and its cap
+## (linear), the share of what is behind that one face covers, how frayed its sides are (brush_break) and the brush's
+## size, the dust (brightness, cells round and up, rise, dot) and how pale its core goes.
+const ELUN_LIGHT := Color(1.0, 0.86, 0.58)
+const STY_SHAFT_AT := Vector2(-9.5, 2.0)
+const STY_SHAFT_RADIUS := 2.2
+const STY_SHAFT_HEIGHT := 15.0
+## ... and how far it leans (degrees from the vertical, the top toward the west: light from high up to the left).
+const STY_SHAFT_LEAN := 25.0
+const STY_SHAFT := Vector2(3.0, 2.5)
+const STY_SHAFT_BODY := 0.08
+const STY_SHAFT_CORE := Vector2(0.5, 0.35)
+const STY_SHAFT_BRUSH := Vector2(0.3, 0.9)
+const STY_SHAFT_DUST := Vector4(1.4, 9.0, 7.0, 0.14)
+## The mist banks in the stylized look: how brushed (abyss_mist.gdshader's brush) and the share of the nearest plane's
+## colour kept (the near is darker; the far keeps its own).
+const STY_MIST_BRUSH := 1.0
+const STY_MIST_NEAR := 0.7
 const STY_STONE := Color(0.27, 0.35, 0.44)
 const STY_FLOOR_STONE := Color(0.25, 0.325, 0.415)
 const STY_SHADOW := Color(0.78, 0.87, 1.0)
@@ -442,7 +476,8 @@ const STY_FRAMED_WORN := 0.05
 ## washes faint (ArenaKit.CALM_FLOOR). The large scale comes from the fires' pools, the edge, the framed slabs and the
 ## medallion.
 const STY_FLOOR_BIOME := {&"patch_color": Color(0.36, 0.45, 0.55),
-	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y), &"framed_lip": STY_FRAMED_LIP, &"framed_worn": STY_FRAMED_WORN}
+	&"floor_box": Vector4(0.0, 0.0, HALF.x, HALF.y), &"framed_lip": STY_FRAMED_LIP, &"framed_worn": STY_FRAMED_WORN,
+	&"framed_lion_span": EMBLEM_LION_SPAN}
 ## ENV-HB3 (benchmark 4.1): the frame dark and full. The hall's own stone below the floor (the lips, the buttresses and
 ## the cliffs) a deep petrol in the stylized look, so the bottom of the screen is no lighter than the fight; and out in
 ## the abyss toward the camera, south and east of the hall, broken columns of the depths' stone rising out of the mist
@@ -481,7 +516,7 @@ const STY_FRAME_SEED := 4417
 const STY_FRAMES: Array[Array] = [
 	[-2.3, -9.3, 2.0, 2.0, ArenaKit.Framed.RAISED, false, 0.95],
 	[2.4, -9.4, 2.6, 2.2, ArenaKit.Framed.RAISED, true, 1.0],
-	[-2.5, -12.0, 2.8, 2.2, ArenaKit.Framed.GRAVE, true, 0.97],
+	[-2.5, -12.0, 2.8, 2.2, ArenaKit.Framed.GRAVE, false, 0.97],
 	[2.2, -12.0, 2.2, 2.0, ArenaKit.Framed.RAISED, false, 0.92],
 ]
 ## The decals of the stylized look (floor_decal.gdshader: the shop's rugs, the fountain's moss), a centimetre over the
@@ -607,10 +642,77 @@ func _stylize_rest() -> Array[Callable]:
 		ground.merge(STY_COMPAT_FLOOR, true)
 	style[&"floor"] = ArenaKit.framed(ground, _frames())
 	var more := kit.stylize_steps(style, arena)
+	more.append(_elun)
 	more.append(func() -> void:
 		if _spill != null:
 			VisualProfile.vary(_spill, {&"spot_angle": STY_SPILL.x, &"spot_range": STY_SPILL.y}))
 	return more
+
+
+## C1V, only in the stylized look: the warm key's pool (a diffuse spot like ArenaRoom.key_pool, no shadow) and the shaft of
+## Elun with its dust (beam.gdshader). Nothing collides; neither touches the run.
+func _elun() -> void:
+	var spot := SpotLight3D.new()
+	arena.add_child(spot)
+	var to := Vector3(STY_WARM_AT.x, 0.0, STY_WARM_AT.y)
+	spot.look_at_from_position(STY_WARM_FROM, to)
+	spot.light_color = STY_WARM_KEY
+	spot.light_energy = STY_WARM_ENERGY
+	spot.light_specular = 0.0
+	spot.spot_angle = rad_to_deg(atan(STY_WARM_RADIUS / STY_WARM_FROM.y))
+	spot.spot_range = STY_WARM_FROM.length() * 1.6
+	spot.spot_attenuation = 0.0
+	spot.spot_angle_attenuation = ArenaRoom.KEY_POOL_SOFT
+	spot.shadow_enabled = false
+	spot.light_cull_mask = ~Arena.CROWD_LAYER
+	spot.set_meta(ArenaKit.NOT_FIRE, true)
+	ArenaKit.style_only(spot)
+	elun_shaft(arena, Vector2(STY_SHAFT_AT.x, STY_SHAFT_AT.y))
+	# the mist banks of the depths, brushed (their strokes and a darker near plane)
+	for bank in _banks:
+		var bm := bank.material_override as ShaderMaterial
+		var near: float = bank.get_meta(&"near", 0.0)
+		VisualProfile.vary(bm, {&"shader_parameter/brush": STY_MIST_BRUSH,
+			&"shader_parameter/color": (bm.get_shader_parameter(&"color") as Color) * lerpf(1.0, STY_MIST_NEAR, near)})
+
+
+## The shaft of Elun (the hall's numbers) standing at `at` (x, z) under `parent`, only in the stylized look; other rooms
+## put theirs through ArenaRoom's `c1v` style key.
+static func elun_shaft(parent: Node3D, at: Vector2) -> void:
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.7
+	cyl.bottom_radius = 1.0
+	cyl.height = 1.0
+	cyl.radial_segments = 16
+	cyl.cap_top = false
+	cyl.cap_bottom = false
+	var mat := ShaderMaterial.new()
+	mat.shader = preload("res://assets/shaders/beam.gdshader")
+	mat.set_shader_parameter(&"color", ELUN_LIGHT)
+	mat.set_shader_parameter(&"intensity", STY_SHAFT.x)
+	mat.set_shader_parameter(&"cap", STY_SHAFT.y)
+	mat.set_shader_parameter(&"body", STY_SHAFT_BODY)
+	mat.set_shader_parameter(&"from_above", 1.0)
+	mat.set_shader_parameter(&"side_soft", 3.0)
+	mat.set_shader_parameter(&"core_light", STY_SHAFT_CORE.x)
+	mat.set_shader_parameter(&"core_white", STY_SHAFT_CORE.y)
+	mat.set_shader_parameter(&"brush_break", STY_SHAFT_BRUSH.x)
+	mat.set_shader_parameter(&"brush_size", STY_SHAFT_BRUSH.y)
+	mat.set_shader_parameter(&"dust", STY_SHAFT_DUST.x)
+	mat.set_shader_parameter(&"dust_cells", Vector2(STY_SHAFT_DUST.y, STY_SHAFT_DUST.z))
+	mat.set_shader_parameter(&"dust_dot", STY_SHAFT_DUST.w)
+	var mi := MeshInstance3D.new()
+	mi.mesh = cyl
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	var lean := deg_to_rad(STY_SHAFT_LEAN)
+	mi.position = Vector3(at.x - sin(lean) * STY_SHAFT_HEIGHT * 0.5, cos(lean) * STY_SHAFT_HEIGHT * 0.5, at.y)
+	mi.rotation.z = lean
+	mi.scale = Vector3(STY_SHAFT_RADIUS, STY_SHAFT_HEIGHT, STY_SHAFT_RADIUS)
+	mi.extra_cull_margin = STY_SHAFT_HEIGHT
+	mi.set_meta(&"air", true)  # light, not stone: the floor checks skip it
+	parent.add_child(mi)
+	ArenaKit.style_only(mi)
 
 
 ## ENV-HB3: the stone under the floor a deep petrol (its own painted numbers, ArenaKit.PAINT_OWN) and the broken
@@ -643,10 +745,18 @@ func _frame() -> void:
 		STY_FRAME_CHAIN_SAG, STY_FRAME_CHAIN_SIZE))
 
 
-## SW-H1: the four slabs of the way to the portal (STY_FRAMES).
+## Art pack 2026-11-23 (the hall lab): the lion emblem of the middle, a square grave slab with the seal's lion inside the
+## medallion's square band (never a disc: round floor marks are Morvath's alone). Its side (m, inside the band's inner
+## edge, which is MEDALLION * 0.507 * SQUARE_FIT from the middle), its value and the lion's height on it (m).
+const EMBLEM_SIDE := 3.2
+const EMBLEM_VALUE := 1.0
+const EMBLEM_LION_SPAN := 1.7
+
+
+## SW-H1: the four slabs of the way to the portal (STY_FRAMES), and the emblem of the middle.
 func _frames() -> Array:
 	var axis := (FLIGHT.x + FLIGHT.y) * 0.5
-	var out := []
+	var out := [ArenaKit.framed_slab(MEDALLION_AT, Vector2(EMBLEM_SIDE, EMBLEM_SIDE), ArenaKit.Framed.GRAVE, true, EMBLEM_VALUE, 7)]
 	for k in STY_FRAMES.size():
 		var f: Array = STY_FRAMES[k]
 		out.append(ArenaKit.framed_slab(Vector2(axis + float(f[0]), float(f[1])), Vector2(float(f[2]), float(f[3])), f[4], f[5],
@@ -1347,6 +1457,7 @@ func _depths() -> void:
 		_ruins(Vector3(g.x, g.z, g.y), g.w, near)
 		var mid := Vector3(g.x - RUIN_MIST.x, g.z - RUIN_MIST.y, g.y - RUIN_MIST.x) + Basis(Vector3.UP, g.w) * Vector3(0, 0, RUIN_PILLAR.x * 0.5)
 		kit.mist_bank(mid, RUIN_MIST_SIZE, Game.FOG * VEIL_LIGHT, RUIN_MIST_ALPHA, 0.0, RUIN_MIST_BANDS)
+		_note_bank(1.0)
 	m.layers = 1
 	var wall: Vector3 = at.call(BRIDGE_DIST, LANTERN_LAT * BRIDGE_DIST, LANTERN_Y)
 	_lantern(wall - ahead * (BRIDGE_DECK.z * 0.4 + 0.05), yaw, near)
@@ -1394,8 +1505,20 @@ func _depths() -> void:
 	for i in MIST_BANKS.size():
 		var md: float = MIST_BANKS[i]
 		kit.mist_bank(at.call(md, -0.2 * md, MIST_YS[i]), MIST_SIZE, mist, MIST_ALPHAS[i])
+		_note_bank(1.0 - float(i) / float(MIST_BANKS.size() - 1))
 	kit.abyss_fog(Vector3(-HALF.x - 14.0, -12.0, 0.0), Vector3(24.0, 10.0, 50.0))
 	kit.abyss_fog(Vector3(HALF.x + 10.0, -12.0, 0.0), Vector3(16.0, 10.0, 40.0))
+
+
+## The mist banks the depths built (the last card of the kit), with how near they are (1 the nearest plane, 0 the farthest),
+## for the stylized look's brush (_elun).
+var _banks: Array[MeshInstance3D] = []
+
+
+func _note_bank(near: float) -> void:
+	var card := kit.root.get_child(kit.root.get_child_count() - 1) as MeshInstance3D
+	card.set_meta(&"near", near)
+	_banks.append(card)
 
 
 ## The west bridge (BRIDGE_*): a deck out of the picture's left edge, on it a tower of three blocks, a loose block and

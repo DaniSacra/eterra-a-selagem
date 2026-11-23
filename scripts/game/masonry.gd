@@ -900,6 +900,53 @@ func fungus(at: Vector3, count: int, reach: float, seed_: int) -> MeshInstance3D
 	return mi
 
 
+## Art pack 2026-11-23 (the garden): a patch of small wild flowers (never on the open floor's middle; the caller places
+## it at a wall's foot or a bank): `count` thin stems each with a flat six-petal head BLOSSOM_HEAD (smallest, largest) m
+## across, within `reach` m of `at`, the heads cream and soft yellow (never red or violet: those colours are warnings
+## and Morvath's). One mesh with vertex colours, no collision, no shadow.
+const BLOSSOM_HEAD := Vector2(0.09, 0.15)
+const BLOSSOM_STEM := Vector2(0.08, 0.18)
+const BLOSSOM_COLORS: Array[Color] = [Color(0.94, 0.92, 0.80), Color(0.94, 0.92, 0.80), Color(0.92, 0.80, 0.38)]
+const BLOSSOM_STEM_COLOR := Color(0.18, 0.26, 0.14)
+const BLOSSOM_PETALS := 6
+var _blossom: StandardMaterial3D
+
+
+func blossoms(at: Vector3, count: int, reach: float, seed_: int) -> MeshInstance3D:
+	var r := RandomNumberGenerator.new()
+	r.seed = seed_
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for k in count:
+		var a := r.randf() * TAU
+		var d := reach * sqrt(r.randf())
+		var foot := Vector3(cos(a) * d, 0.0, sin(a) * d)
+		var top := foot + Vector3(r.randf_range(-0.03, 0.03), r.randf_range(BLOSSOM_STEM.x, BLOSSOM_STEM.y), r.randf_range(-0.03, 0.03))
+		var w := 0.008
+		_fungus_quad(st, foot + Vector3(-w, 0, 0), foot + Vector3(w, 0, 0), top + Vector3(w, 0, 0), top + Vector3(-w, 0, 0), BLOSSOM_STEM_COLOR)
+		var rad := r.randf_range(BLOSSOM_HEAD.x, BLOSSOM_HEAD.y) * 0.5
+		var col := BLOSSOM_COLORS[r.randi() % BLOSSOM_COLORS.size()]
+		var spin := r.randf() * TAU
+		for i in BLOSSOM_PETALS:
+			var b0 := spin + TAU * i / BLOSSOM_PETALS
+			var b1 := spin + TAU * (i + 1) / BLOSSOM_PETALS
+			var bm := (b0 + b1) * 0.5
+			_fungus_quad(st, top, top + Vector3(cos(b0), 0.1, sin(b0)) * rad * 0.5, top + Vector3(cos(bm), 0.2, sin(bm)) * rad,
+				top + Vector3(cos(b1), 0.1, sin(b1)) * rad * 0.5, col)
+	var mi := MeshInstance3D.new()
+	mi.mesh = Masonry.kept(st)
+	if _blossom == null:
+		_blossom = StandardMaterial3D.new()
+		_blossom.vertex_color_use_as_albedo = true
+		_blossom.roughness = 0.9
+		_blossom.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mi.material_override = _blossom
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = at
+	_add(mi)
+	return mi
+
+
 func _fungus_quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, col: Color) -> void:
 	_fungus_tri(st, a, b, c, [col, col, col])
 	_fungus_tri(st, a, c, d, [col, col, col])

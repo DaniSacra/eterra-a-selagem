@@ -44,6 +44,9 @@ var enchants: Array[EnchantDef] = []
 var granted: Array[BoonMod] = []
 ## Blessings that left the descent (id: true; E6, the Juramento Escolhas Perdidas): never offered again.
 var banned: Dictionary = {}
+## BO-2: the hero's ultimate is open this descent (Game sets it from the Mastery): a Blessing of the Shift button only
+## enters the draw then, so a novice sees five a family (decision of 2026-11-22).
+var ult_open := false
 var _cache: Dictionary = {}
 
 
@@ -192,6 +195,24 @@ func can_offer(b: Boon) -> bool:
 	return b.can_grow(level(b.id)) and forged(b) and not banned.has(b.id)
 
 
+## True when the draw may show the Blessing: it can be taken (can_offer), is out of the reserve, and an Elo has a base
+## (a Blessing of each of its lists outside the reserve, so an Elo whose base left is in the reserve too); the one of
+## the Shift button waits for the ultimate (ult_open).
+func offerable(b: Boon) -> bool:
+	if not can_offer(b) or b.reserve or (b.slot == Boon.Slot.ULT and not ult_open):
+		return false
+	for list in b.requires_sets:
+		var base := false
+		for id in list:
+			var s := find(StringName(id))
+			if s != null and not s.reserve and not (s.slot == Boon.Slot.ULT and not ult_open):
+				base = true
+				break
+		if not base:
+			return false
+	return true
+
+
 ## Raises a gift by one level (or to at_level when it is higher: a trade keeps the replaced one's level), at least at
 ## the rarity given (an Elo is always common: it has none); a gift on an action replaces the one there.
 ## Returns the new level (0 when it could not be taken).
@@ -295,7 +316,7 @@ func draw(rng: RandomNumberGenerator, n: int = 3, chances: Array[float] = Boon.R
 	var trades: Array[Boon] = []
 	var elos: Array[Boon] = []
 	for b in catalog:
-		if level(b.id) > 0 or not can_offer(b) or (allow.is_valid() and not allow.call(b)):
+		if level(b.id) > 0 or not offerable(b) or (allow.is_valid() and not allow.call(b)):
 			continue
 		if b.is_duo():
 			elos.append(b)

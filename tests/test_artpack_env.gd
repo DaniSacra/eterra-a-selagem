@@ -45,7 +45,7 @@ func test_nothing_stands_on_the_walkable_floor_of_the_garden_and_the_rift() -> v
 			for n in a.look.find_children("*", "MeshInstance3D", true, false):
 				var mi := n as MeshInstance3D
 				# cards (mist banks, glows, halos) are air, not stone
-				if mi.mesh == null or mi.mesh is QuadMesh:
+				if mi.mesh == null or mi.mesh is QuadMesh or mi.has_meta(&"air"):
 					continue
 				var xf := mi.global_transform
 				for s in mi.mesh.get_surface_count():

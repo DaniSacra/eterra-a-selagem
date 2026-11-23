@@ -78,11 +78,11 @@ func test_levels_go_up_to_the_maximum_and_stop() -> void:
 
 
 func test_stat_follows_the_level() -> void:
-	assert_eq(state.stat(&"freeze_time", [&"heavy"] as Array[StringName]), 0.0)
-	_take(&"toque_geada")
-	assert_almost_eq(state.stat(&"freeze_time", [&"heavy"] as Array[StringName]), 1.0, 0.001)
-	_take(&"toque_geada", 2)
-	assert_almost_eq(state.stat(&"freeze_time", [&"heavy"] as Array[StringName]), 2.0, 0.001)
+	assert_eq(state.stat(&"freeze_time", [&"cast"] as Array[StringName]), 0.0)
+	_take(&"circulo_geada")
+	assert_almost_eq(state.stat(&"freeze_time", [&"cast"] as Array[StringName]), 1.0, 0.001)
+	_take(&"circulo_geada", 2)
+	assert_almost_eq(state.stat(&"freeze_time", [&"cast"] as Array[StringName]), 1.8, 0.001)
 
 
 ## C13-05 (Hades II's GetProcessedValue): level 1 is the base times the rarity, every level after adds a fixed gain the
@@ -150,11 +150,11 @@ func test_skill_gifts_cast_on_their_own() -> void:
 
 func test_bonuses_from_different_gifts_add_up() -> void:
 	_take(&"lamina_ardente", 2)
-	_take(&"toque_geada", 3)
+	_take(&"circulo_geada", 3)
 	_take(&"onda_maior")
 	_take(&"aurora", 1)
-	var tags: Array[StringName] = [&"heavy", &"luz"]
-	assert_almost_eq(state.stat(&"freeze_time", tags), 2.0 + 0.8, 0.001)
+	var tags: Array[StringName] = [&"cast", &"luz"]
+	assert_almost_eq(state.stat(&"freeze_time", tags), 1.8 + 0.8, 0.001)
 
 
 func test_offers_are_three_different_gifts() -> void:
@@ -279,23 +279,25 @@ func test_rarity_multiplies_marked_numbers_and_keeps_the_best() -> void:
 	assert_almost_eq(state.stat(&"damage_pct", light), 0.2 * 2.0 + 0.1, 0.001, "the level's gain is not scaled")
 
 
-func test_rarity_draw_is_mostly_common_never_legendary() -> void:
+func test_rarity_draw_is_mostly_common_and_the_legendary_rare() -> void:
 	var seen := [0, 0, 0, 0]
 	for i in 4000:
 		seen[BoonState.roll_rarity(rng)] += 1
 	assert_gt(seen[0], seen[1])
 	assert_gt(seen[1], seen[2])
 	assert_gt(seen[2], 0)
-	assert_eq(seen[3], 0, "a card's draw is never legendary: only a trade (D-52)")
+	assert_gt(seen[3], 0, "the legendary is in the common draw now (decision 10 of 2026-11-22: 1%)")
+	assert_lt(seen[3], seen[2])
 
 
-func test_a_guardian_gift_is_mostly_rare_never_legendary() -> void:
+func test_a_guardian_gift_is_mostly_rare_and_the_legendary_is_3_percent() -> void:
 	var seen := [0, 0, 0, 0]
 	for i in 2000:
 		seen[BoonState.roll_rarity(rng, Boon.RARITY_CHANCE_GUARDIAN)] += 1
 	assert_gt(seen[1], seen[0] * 5)
 	assert_gt(seen[1], seen[2])
-	assert_eq(seen[3], 0, "the guardian gives no legendary (C13-03)")
+	assert_gt(seen[3], 0, "the guardian gives the legendary now and then (3%)")
+	assert_lt(seen[3], seen[2])
 
 
 func test_grow_offers_only_owned_gifts_that_can_grow() -> void:
@@ -310,13 +312,17 @@ func test_grow_offers_only_owned_gifts_that_can_grow() -> void:
 	assert_false(state.can_grow())
 
 
-## Every action has a gift from each of the four families.
-func test_each_action_has_a_gift_of_every_family() -> void:
-	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
+## BO-2: the attack, the special and the Brado have a gift of every family; the Investida, the dodge and the ultimate the
+## families done so far (Sarael and Nivael are complete, the others come in C6).
+func test_each_action_has_a_gift_of_its_families() -> void:
+	var want := {Boon.Slot.ATTACK: 7, Boon.Slot.SPECIAL: 7, Boon.Slot.CAST: 7, Boon.Slot.DASH: 3, Boon.Slot.RUSH: 6, Boon.Slot.ULT: 2}
+	for slot: Boon.Slot in want:
 		var families := {}
 		for b in state.catalog:
 			if b.slot == slot:
 				families[b.family] = true
 				for m in b.mods:
-					assert_true(m.tag == Boon.SLOT_TAG[slot] or m.tag == &"", "%s rides on %s but changes '%s'" % [b.id, Boon.SLOT_KEY[slot], m.tag])
-		assert_eq(families.size(), 7, "slot %s" % Boon.SLOT_KEY[slot])
+					# (the attack's spin is its last blow: a tag of the same light attack)
+					var own: bool = m.tag == Boon.SLOT_TAG[slot] or m.tag == &"" or (slot == Boon.Slot.ATTACK and m.tag == &"spin")
+					assert_true(own, "%s rides on %s but changes '%s'" % [b.id, Boon.SLOT_KEY[slot], m.tag])
+		assert_eq(families.size(), want[slot], "slot %s" % Boon.SLOT_KEY[slot])

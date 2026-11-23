@@ -245,9 +245,9 @@ func test_rs_c1_lights() -> void:
 	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(17, 6), "crypt B classic: as before")
 	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
 	# R-1 (Sworn P1 review): every other candle group of A out, two of them with a light
-	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(16, 1), "crypt A stylized: the crown's light in, the west step's and two groups' out")
+	assert_eq(_lit(_arena(&"crypt", 0)), Vector2i(17, 1), "crypt A stylized: the C1V warm key, the crown's light in, the west step's and two groups' out")
 	# cycle 2026-11-20 item 4: B adds the cold wash on the ossuary's niches (no shadow)
-	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(18, 1), "crypt B stylized: the lantern, the ossuary's wash and the entry's warm light in, two bowls and the statue's candles out")
+	assert_eq(_lit(_arena(&"crypt", 1)), Vector2i(19, 1), "crypt B stylized: the C1V warm key, the lantern, the ossuary's wash and the entry's warm light in, two bowls and the statue's candles out")
 
 
 func test_rs_c1_pieces_only_in_the_stylized_look() -> void:
@@ -796,23 +796,26 @@ func test_sworn_framed_slabs_lie_on_free_floor() -> void:
 		match room[0]:
 			&"hall":
 				# S-1: four slabs either side of the flight's axis, never four equal frames (pressure plates)
-				assert_eq(rects.size(), 4, "SW-H1: two pairs either side of the flight's axis")
-				assert_eq(graves, 1, "S-1: one of them a grave slab with the lion")
+				# (plus the lion emblem of the middle, art pack 2026-11-23: first slab, a grave slab with the lion)
+				assert_eq(rects.size(), 5, "SW-H1: two pairs either side of the flight's axis and the emblem")
+				assert_eq(graves, 2, "S-1: one of the four a plain grave slab, and the emblem")
+				assert_eq(lions, 1, "the lion of the middle is the only one")
 				var sizes := {}
 				for i in rects.size():
 					sizes[Vector2((rects[i] as Vector4).z, (rects[i] as Vector4).w)] = true
 					assert_lte((infos[i] as Vector4).z, 1.0, "S-1: never lighter than the floor")
 				assert_gt(sizes.size(), 2, "S-1: of different sizes")
-				for r: Vector4 in rects:
+				for r: Vector4 in rects.slice(1):
 					var ring := Vector2(r.x, r.y).distance_to(CatacombHall.MEDALLION_AT)
 					assert_gt(ring - Vector2(r.z, r.w).length(), CatacombHall.MEDALLION, "clear of the medallion")
 			&"crypt":
-				assert_eq(raised, 2, "SW-G3: a pair in the crypt")
+				# (art pack 2026-11-23: in B the first of the pair is the lion frame, so one raised frame is left there)
+				assert_between(raised, 1, 2, "SW-G3: a pair in the crypt")
 				# off the striking slabs (RP-06) and the pieces standing on the rows (AT-Q's oil urn in A)
 				assert_gt(graves, 6, "SW-C1: rows of grave slabs (off the striking slabs and the pieces)")
 				# one in five with the lion, the old slabs (CryptLook.SLAB_ROWS, plain) counted
 				var all := graves + CryptLook.SLAB_ROWS.size()
-				assert_between(float(lions) / all, 0.15, 0.25, "about one grave in five with the lion")
+				assert_between(float(lions) / all, 0.15, 0.3, "about one grave in five with the lion (B has the pack's lion frame)")
 			&"sanctuary":
 				assert_eq(raised, 3, "SW-S3: a row in front of the grille")
 	VisualProfile.set_look(VisualProfile.Look.CLASSIC)

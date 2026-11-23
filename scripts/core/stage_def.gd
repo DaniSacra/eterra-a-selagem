@@ -52,6 +52,20 @@ enum Tier { COMMON, HARD, SPECIAL }
 @export var base_difficulty := 55.0
 @export var depth_ramp := 15.0
 @export var min_difficulty := 10.0
+## C1b (combate_c1b.md, Frente 2): the share of the difficulty each room is given, by depth (depth 1 is the first; a depth
+## past the list, or an empty list: 1.0). Lower after a hard room, so a fight is followed by breath (EncounterGen.budget).
+@export var room_budget := PackedFloat32Array()
+## C1b: from this depth a fight may have one bigger version of a kind (EnemyDef.big_version) with the chance below
+## (0: never), always beside another kind and never in an arena with a hazard.
+@export var big_from_depth := 4
+@export var big_chance := 0.0
+## C1e (inimigos_c1e.md): the modifiers (ModDef ids) a head of a fight may be born with, from this depth: the chance of each eligible
+## head, then mod_step more each room, at most mod_per_room in a fight, one on a head.
+@export var mods: Array[StringName] = []
+@export var mod_from_depth := 8
+@export var mod_chance := 0.0
+@export var mod_step := 0.05
+@export var mod_per_room := 2
 @export var min_waves := 1
 @export var max_waves := 3
 ## Elite kinds in one fight, at most.

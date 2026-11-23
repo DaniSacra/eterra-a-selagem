@@ -184,28 +184,28 @@ func test_the_cleave_hits_its_band_and_only_it() -> void:
 	_press(&"ultimate")
 	assert_eq(core.hp, 5000.0, "nothing lands before the gesture ends")
 	_step(_gesture_steps())
-	assert_eq(core.hp, 5000.0 - 300.0, "300 on the middle strip")
-	assert_eq(side.hp, 5000.0 - 200.0, "200 on the rest of the band")
+	assert_eq(core.hp, 5000.0 - 180.0, "180 on the middle strip")
+	assert_eq(side.hp, 5000.0 - 120.0, "120 on the rest of the band")
 	assert_eq(outside.hp, 5000.0, "nothing past its width")
 	assert_eq(behind.hp, 5000.0, "nothing behind him")
 	assert_eq(far.hp, 5000.0, "nothing past its 12 m")
 	assert_gte(core.stun_t, 0.9, "commons stunned 1 s")
 	assert_eq(game.combat.combo, 0, "never a blow of the combo")
-	assert_eq(game.ults.stats().damage, 500)
+	assert_eq(game.ults.stats().damage, 300)
 
 
 func test_the_band_in_numbers() -> void:
 	var u := HeroDef.warrior().ultimate(&"cleave")
 	var o := Vector2.ZERO
 	var d := Vector2.RIGHT
-	assert_eq(u.cleave_damage(o, d, Vector2(11.9, 0), 0.0), 300.0)
-	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 0.74), 0.0), 300.0)
-	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 0.9), 0.0), 200.0)
-	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 1.99), 0.0), 200.0)
+	assert_eq(u.cleave_damage(o, d, Vector2(11.9, 0), 0.0), 180.0)
+	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 0.74), 0.0), 180.0)
+	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 0.9), 0.0), 120.0)
+	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 1.99), 0.0), 120.0)
 	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 2.1), 0.0), 0.0)
-	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 2.4), 0.5), 200.0, "a body touching the band")
+	assert_eq(u.cleave_damage(o, d, Vector2(4.0, 2.4), 0.5), 120.0, "a body touching the band")
 	assert_eq(u.cleave_damage(o, d, Vector2(12.4, 0), 0.0), 0.0)
-	assert_eq(u.cleave_damage(o, d, Vector2(-0.4, 0), 0.5), 300.0, "a body at his feet")
+	assert_eq(u.cleave_damage(o, d, Vector2(-0.4, 0), 0.5), 180.0, "a body at his feet")
 
 
 func test_the_cleave_takes_twice_from_armor_and_hurts_morvaths_body() -> void:
@@ -216,7 +216,7 @@ func test_the_cleave_takes_twice_from_armor_and_hurts_morvaths_body() -> void:
 	elite.stun_t = 10.0
 	_press(&"ultimate")
 	_step(_gesture_steps())
-	assert_eq(elite.armor, 1000.0 - 400.0, "200 twice on the armor")
+	assert_eq(elite.armor, 1000.0 - 240.0, "120 twice on the armor")
 	assert_eq(elite.hp, 5000.0, "the armor took it")
 
 

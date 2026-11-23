@@ -13,7 +13,13 @@ signal died
 signal dodged(dir: Vector2)
 ## AT-CA2: a dodge cut short by stone or the floor's edge, once per dodge (piece: the obstacle's piece, "edge" the floor).
 signal dodge_blocked(piece: String)
+## C1e: a blow that would have landed in the first moments of the roll (DodgeClose); Game shows the reward.
+signal dodge_close
 signal shield_broke
+## The Brado took a blow that came from `from` (C1d: it opens whoever struck it, EnemyDef.ward_open).
+signal ward_taken(from: Vector2)
+## The blow that came last was taken whole by the Brado or the shield (a boss's curse that came with it does not land).
+var absorbed_last := false
 ## Ainda de Pé stood him up from a fall (once a descent).
 signal rose
 ## The circle of light (cast) is let go at a point; omega: it was held and paid for, so it bursts at the end.
@@ -127,6 +133,14 @@ const BLINK_PERIOD := 0.16
 const CHARGE_GLOW_FROM := 0.25
 const CHARGE_GLOW := 0.55
 const SHIELD_GLOW := Color(0.4, 1.0, 0.6, 0.12)
+## The Brado that absorbs (combate_c1_leitura 5): emerald at the feet and a little brighter on the body, the last second blinks.
+const WARD_GLOW := Color(0.40, 1.0, 0.60, 0.20)
+const WARD_RING_COLOR := Color(0.30, 0.78, 0.45)
+const WARD_RING_OPEN := 0.62
+const WARD_RING_BAND := 0.15
+const WARD_RING_FADE := 0.12
+const WARD_BLINK_HZ := 4.0
+const WARD_BLINK_LEFT := 1.0
 ## The point near the tip of the sword (in the sword's own space, HeroBody) where a finisher's glint sits.
 const BLADE_TIP := Vector3(0, 1.15, 0)
 ## A boss's curse on him (CurseState): a dark violet edge on his body, a few runes turning around him and a haze
@@ -187,6 +201,10 @@ var gifts: GiftState
 ## The share of an Omega's cost taken off if it is begun now (Lâmina Faminta; HeroGifts sets it every step), and the
 ## share kept for the charge or the circle under way (taken when it began).
 var omega_discount := 0.0
+## The Maga's amplified Explosão costs no Magia (Arcane sets it while the Ressonância is full).
+var free_special := false
+## The Passo Etéreo ended this step: bodies of the crowd do not hold her where she came out (the dash goes through them).
+var _blinked := false
 var _charge_discount := 0.0
 var _cast_discount := 0.0
 ## Ímpeto's embers on the blade (one per charge; made the first time a charge shows).
@@ -212,6 +230,8 @@ var _cast_t := 0.0
 var _state_t := 0.0
 var _dodge_dir := Vector2.DOWN
 var _dodge_recharge := 0.0
+## Seconds before another close dodge is rewarded (Feel.close_cooldown).
+var _close_cd := 0.0
 ## Seconds a dodge press still waits to be used (DODGE_BUFFER).
 var _dodge_want := 0.0
 ## The dash attack's lunge (ComboNode.lunge; no other blow moves him). Its speed fades this fast (1/s): its distance
@@ -233,6 +253,8 @@ var _xray_edge: ShaderMaterial
 var _fills: Array[Material] = []
 var _ring_look: ShaderMaterial
 var _ring_through: ShaderMaterial
+var _ward_k := 0.0  # 0 petrol ring, 1 the Brado's emerald one
+var _ward_clock := 0.0
 ## What the materials were last told (they are only told again when it changes).
 var _shown_fill := -1.0
 var _shown_edge := -1.0
@@ -462,10 +484,13 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 		_step_peace(dt, move)
 		return
 	var start := pos
+	_blinked = false
+	dodge_age += dt
 	# the dash goes through bodies (Hades II: the BLINK), even on the frame it ends
 	var dashing := state == State.DODGE
 	_state_t += dt
 	invuln = maxf(0.0, invuln - dt)
+	_close_cd = maxf(0.0, _close_cd - dt)
 	cast_cooldown = maxf(0.0, cast_cooldown - dt)
 	_flash = maxf(0.0, _flash - dt / HURT_FLASH)
 	_blink = maxf(0.0, _blink - dt)
@@ -501,6 +526,8 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 			if _state_t >= feel.dodge_time:
 				state = State.MOVE
 				runner.on_dodge_end()
+				last_dodge_end = pos
+				dodge_age = 0.0
 				invuln = maxf(invuln, feel.dodge_iframes - feel.dodge_time)
 				sprinting = Controls.held(&"dodge")
 		State.ULT:
@@ -548,7 +575,7 @@ func step(dt: float, move: Vector2, aim: Vector2) -> void:
 	if dashing and not _dodge_cut and wanted.distance_to(pos) > 0.05:
 		_dodge_cut = true
 		dodge_blocked.emit(arena.blocker_at(wanted, RADIUS))
-	if horde and not dashing:
+	if horde and not dashing and not _blinked:
 		# the enemies' bodies stop him: he slides along them and pushes no one (BodyBlock)
 		pos = horde.stop_walker(start, pos, RADIUS, arena.resolve)
 	_show(dt, move)
@@ -574,7 +601,10 @@ func _read_buttons(dt: float, move: Vector2, aim: Vector2) -> void:
 	if (Controls.pressed(&"dodge") or _dodge_want > 0.0) and dodge_charges > 0 and runner.can_cancel():
 		_start_dodge(move)
 		return
-	_dodge_want = maxf(0.0, _dodge_want - dt)
+	if Controls.pressed(&"dodge") and dodge_charges <= 0:
+		_dodge_want = DODGE_BUFFER  # (C1e: a press just before the charge is back still dodges)
+	else:
+		_dodge_want = maxf(0.0, _dodge_want - dt)
 	if (Controls.pressed(&"ultimate") or _ult_want > 0.0) and ult_ready and ult != null and runner.can_cancel():
 		_start_ult()
 		return
@@ -645,6 +675,11 @@ func shout_wait() -> float:
 	return move_wait(ComboNode.In.SHOUT)
 
 
+## C1c: takes seconds off the Brado's recharge, never under the hero's floor (HeroDef.cd_floor) in all.
+func refund_shout(seconds: float) -> float:
+	return runner.cooldown_refund(_move_id(ComboNode.In.SHOUT), seconds, hero.cd_floor) if seconds > 0.0 else 0.0
+
+
 ## The same for the Investida.
 func rush_wait() -> float:
 	return move_wait(ComboNode.In.RUSH)
@@ -669,7 +704,7 @@ func _press_special() -> void:
 ## True when the special's tap is paid for (it costs nothing, or the Magia is there).
 func _special_paid() -> bool:
 	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	return node == null or node.magick_cost <= 0.0 or magick.can_pay(omega_cost(node.magick_cost, omega_discount))
+	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(omega_cost(node.magick_cost, omega_discount))
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -815,6 +850,9 @@ func _read_cast(dt: float) -> void:
 
 
 var _aim := Vector2.ZERO
+## C1e (the Armadilheiro): where the last dodge ended and the seconds since (the plates it lays follow it: TrapRules.spot).
+var last_dodge_end := Vector2.ZERO
+var dodge_age := 99.0
 ## AT-CA2: whether this dodge was already counted as cut short.
 var _dodge_cut := false
 
@@ -822,6 +860,9 @@ var _dodge_cut := false
 func _start_dodge(move: Vector2) -> void:
 	_end_charge()  # (C19-4: the dodge cuts the charge on the frame of the press; no Magia is spent)
 	_casting = false
+	if hero.arcane != null:
+		_teleport(move)
+		return
 	state = State.DODGE
 	_state_t = 0.0
 	_dodge_want = 0.0
@@ -835,6 +876,27 @@ func _start_dodge(move: Vector2) -> void:
 	fx.burst(&"dust", Vector3(pos.x, 0.2, pos.y), Vector3(-_dodge_dir.x, 0, -_dodge_dir.y))
 	Audio.play(&"dodge")
 	dodged.emit(_dodge_dir)
+
+
+## The Maga's Passo Etéreo (maga.md 2): she vanishes and comes out blink_distance m on, through bodies (never walls or the
+## floor's edge: Arena.sweep), safe for blink_iframes; the roll's state is never entered. It cuts the blow in progress as the dodge does.
+func _teleport(move: Vector2) -> void:
+	_dodge_want = 0.0
+	dodge_charges -= 1
+	var dir := move.normalized() if move.length() > 0.2 else (_aim.normalized() if _aim.length() > 0.1 else facing)
+	facing = dir
+	runner.on_dodge()
+	runner.on_dodge_end()
+	var from := pos
+	pos = arena.sweep(pos, pos + dir * hero.arcane.blink_distance, RADIUS)
+	_blinked = true
+	invuln = maxf(invuln, hero.arcane.blink_iframes)
+	last_dodge_end = pos
+	dodge_age = 0.0
+	fx.burst(&"dust", Vector3(from.x, 0.2, from.y))
+	fx.burst(&"fire", Vector3(pos.x, 0.4, pos.y))
+	Audio.play(&"dodge")
+	dodged.emit(dir)
 
 
 ## The ultimate's gesture (UltDef.gesture): it cuts any blow as the dodge does (a blow cut in its windup never lands),
@@ -908,7 +970,7 @@ func _step_move_sound(dt: float) -> void:
 
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
-	if node.magick_cost > 0.0:
+	if node.magick_cost > 0.0 and not (free_special and node.has_tag(&"blast")):
 		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
@@ -952,16 +1014,43 @@ func heal(amount: float) -> void:
 
 
 ## A blow lands on the paladin. Rolls, the shield and the moments after a hit ignore it.
+## The Brado never spends its blow on less than this (a burn, a graze).
+const WARD_MIN := 4.0
+
+
+## A wave a dodge crosses is hurting him (Horde.last_wide): any moment of the roll is a close dodge, not only its first 0.15 s.
+var close_any := false
+
+
 func hurt(amount: float, from: Vector2) -> void:
+	absorbed_last = false
+	if amount > 0.0 and state == State.DODGE:
+		var feel := Feel.live()
+		if DodgeClose.counts(_state_t, feel.dodge_time if close_any else feel.close_window, _close_cd):
+			_close_cd = feel.close_cooldown
+			dodge_close.emit()
 	if invulnerable() or amount <= 0.0:
 		return
 	if shield_ready:
+		absorbed_last = true
 		shield_ready = false
 		_shield_t = 0.0
 		invuln = 0.5
 		fx.burst(&"heal", Vector3(pos.x, 1.2, pos.y))
 		Audio.play(&"shield")
 		shield_broke.emit()
+		return
+	if gifts != null and amount >= WARD_MIN and gifts.take_ward():
+		# 10A-2: the Brado takes one blow (his Omega goes on charging)
+		absorbed_last = true
+		invuln = 0.5
+		var toward := (from - pos).normalized() if pos.distance_to(from) > 0.01 else facing
+		fx.ring(pos, 1.8, Combat.EMETH, 0.25, 0.15, true)
+		fx.chips(Vector3(pos.x, 1.1, pos.y), Vector3(toward.x, 0.2, toward.y), Combat.EMETH, 10, 6.0, 0.1, 0.35, 0.9)
+		fx.blade_pulse()
+		fx.word(Vector3(pos.x, 3.0, pos.y), T.t(&"word_ward"), Combat.EMETH)
+		ward_taken.emit(from)
+		Audio.play(&"shield")
 		return
 	var guard := gifts.guard() if gifts != null else 0.0  # the Brado's buff
 	amount = maxf(1.0, roundf(amount * (1.0 - damage_reduction - guard) * hurt_scale))
@@ -1046,8 +1135,21 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 	else:
 		_model.rotation.y = rotate_toward(_model.rotation.y, want, TURN_BODY * dt)
 	var glow := Color(OUTLINE, inverse_lerp(CHARGE_GLOW_FROM, 1.0, maxf(charge_progress(), CHARGE_GLOW_FROM)) * CHARGE_GLOW)
-	if shield_ready and not charging:
-		glow = SHIELD_GLOW
+	var warded := gifts != null and gifts.rallied() and gifts.ward > 0
+	_ward_clock += dt
+	var blink := 1.0
+	if warded and gifts.rally_left < WARD_BLINK_LEFT:
+		blink = lerpf(0.7, 1.0, 0.5 + 0.5 * sin(_ward_clock * TAU * WARD_BLINK_HZ))
+	if not charging:
+		if warded:
+			glow = Color(WARD_GLOW, WARD_GLOW.a * blink)
+		elif shield_ready:
+			glow = SHIELD_GLOW
+	_ward_k = move_toward(_ward_k, 1.0 if warded else 0.0, dt / WARD_RING_FADE)
+	for ring in [_ring_look, _ring_through]:
+		(ring as ShaderMaterial).set_shader_parameter(&"color", RING_COLOR.lerp(WARD_RING_COLOR, _ward_k))
+		(ring as ShaderMaterial).set_shader_parameter(&"open", lerpf(RING_OPEN, WARD_RING_OPEN * blink, _ward_k))
+		(ring as ShaderMaterial).set_shader_parameter(&"band", lerpf(0.09, WARD_RING_BAND, _ward_k))
 	if curse.active():
 		glow = CURSE_GLOW
 	_show_curse()

@@ -296,19 +296,21 @@ func test_the_sorcerer_thrusts_each_bolt() -> void:
 
 ## C17, QW-102 (CF-02): the runner warns 1.0 s before it bursts (it was 0.7, the shortest warning of the game), its
 ## warning full on the blow's frame; no blow of a common enemy warns less than 0.9 s but the brute's short slam.
-func test_the_runner_warns_a_full_second() -> void:
+func test_the_runner_warns_enough() -> void:
 	var hit := _first_blow(&"runner", Vector2(1.2, 0.0))
 	assert_false(hit.is_empty(), "the runner burst")
 	if hit.is_empty():
 		return
 	assert_between(int(hit.frame) - int(hit.warn_end), -1, 1, "its warning full on the blow's frame")
 	var d: EnemyDef = hit.e.def
-	assert_almost_eq(d.attack_windup, 1.0, 0.001)
-	assert_almost_eq(d.attack_windup * d.windup_hold, 0.3, 0.001, "the last 0.3 s held trembling")
+	assert_almost_eq(d.attack_windup, 0.68, 0.001)  # 2026-11-23, ENEMY_WINDUP 0.8: 0.85 before it, 1.0 before C1b
+	assert_almost_eq(d.attack_windup * d.windup_hold, 0.204, 0.001, "the last share of it held trembling")
 	assert_gt(d.windup_shake, 0.0)
+	# 2026-11-23 ("ataca mais rapido"): the study's median for a common is 0.67 s; a heavy blow never under 0.6 s
 	for id in [&"skeleton", &"skeleton_elite", &"runner", &"runner_elite", &"guard", &"guard_elite", &"knight"]:
 		var def: EnemyDef = load("res://data/enemies/%s.tres" % id)
-		assert_gte(def.attack_windup, 0.9, "%s warns at least 0.9 s" % id)
+		var least := 0.6 if id in [&"skeleton", &"runner", &"knight"] else 0.7 if id in [&"skeleton_elite", &"runner_elite"] else 0.9
+		assert_gte(def.attack_windup, least - 0.001, "%s warns enough" % id)
 
 
 ## C17, QW-104 (CF-06), P2 of combat_cadence.md 8.1: the body clears over the last tell_time (0.5 s, Hades II) of its
@@ -345,7 +347,7 @@ func test_no_metronome() -> void:
 	var was := Enemy.State.WALK
 	for f in 60 * 40:
 		_frame()
-		if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP:
+		if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP and k.anim != &"summon":
 			blows.append(k.anim)
 		was = k.state
 	assert_gte(blows.size(), 6, "it kept striking: %s" % [blows])
@@ -378,8 +380,8 @@ func test_the_knight_charges_twice() -> void:
 		var was := Enemy.State.WALK
 		for f in 60 * 20:
 			_frame()
-			if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP and k.anim == &"brace":
-				row += 1
+			if k.state == Enemy.State.WINDUP and was != Enemy.State.WINDUP and k.anim == &"brace" and k.memo != Horde.KNIGHT_GUARD:
+				row += 1  # (C1d K3: raising the shield by time is a brace too, not a charge)
 			if row == 2 and k.state == Enemy.State.WINDUP:
 				braced += 1
 			if row > 0 and k.state == Enemy.State.RECOVER:
@@ -389,6 +391,64 @@ func test_the_knight_charges_twice() -> void:
 		if k.def.charges > 1:
 			assert_almost_eq(braced / 60.0, k.def.recharge_windup, 0.1, "the second warning is fair")
 		game.horde.clear_crowd()
+
+
+## CV-1 (Daniel, 2026-11-22): the knight's charge follows him through the wind-up and holds for the last aim_lock
+## seconds, its line with it; the shield-bearer's stays where it was marked.
+func test_the_knights_charge_follows_then_locks() -> void:
+	for id: StringName in [&"knight", &"guard"]:
+		_room()
+		var k := game.horde.spawn(game.horde.def(id), Vector2(8.0, 0.0), false)
+		var d := k.def
+		k.rows = 0
+		var first := Vector2.ZERO
+		var locked := Vector2.ZERO
+		for f in 60 * 10:
+			_frame()
+			if k.state == Enemy.State.WINDUP and k.anim == &"brace":
+				if first == Vector2.ZERO:
+					first = k.aim
+				game.player.pos = k.pos + Vector2.from_angle(PI + k.state_t) * 7.0
+				game.horde.target = game.player.pos
+				assert_almost_eq((k.warning as Ground.Zone).dir.angle_to(k.aim), 0.0, 0.01, "%s: the line goes with its aim" % id)
+				if k.state_t > d.attack_windup - (d.aim_lock if d.aim_lock > 0.0 else 0.3) + 0.02:
+					if locked == Vector2.ZERO:
+						locked = k.aim
+					assert_eq(k.aim, locked, "%s: locked at the end" % id)
+			elif first != Vector2.ZERO:
+				break
+		assert_ne(locked, Vector2.ZERO, "%s braced" % id)
+		if d.aim_lock > 0.0:
+			assert_gt(absf(first.angle_to(locked)), 0.3, "%s turned with him" % id)
+		else:
+			assert_eq(first, locked, "%s never turns" % id)
+		game.horde.clear_crowd()
+
+
+## CV-2 (Daniel, 2026-11-22): the knight raises raise_count skeletons every raise_every rows, never more than raise_max
+## of its own standing; a blow of its is never struck while it calls.
+func test_the_knight_raises_its_dead() -> void:
+	_room()
+	var k := game.horde.spawn(game.horde.def(&"knight"), Vector2(8.0, 0.0), false)
+	var d := k.def
+	var most := 0
+	var calls := 0
+	var was: StringName = &""
+	for f in 60 * 60:
+		game.player.hp = game.player.max_hp
+		_frame()
+		if k.anim == &"summon" and was != &"summon":
+			calls += 1
+			assert_gte(k.rows, d.raise_every)
+		was = k.anim
+		most = maxi(most, k.raised.filter(func(r: Enemy) -> bool: return r.alive).size())
+		if calls >= 3:
+			break
+	assert_gte(calls, 2, "it calls")
+	assert_gte(most, d.raise_count)
+	assert_lte(most, d.raise_max)
+	assert_eq(load("res://data/enemies/guard.tres").raise_count, 0, "the shield-bearer raises none")
+	assert_gt(_model(&"knight").frame_count(&"summon"), 0, "its own gesture")
 
 
 ## C17, QW-107 (ART P1-6): the crossbow's aim and the soldier's pounce are drawn as an aim (a thread, a bright tip, the
@@ -411,7 +471,8 @@ func test_the_aims_are_threads() -> void:
 		if z == null:
 			continue
 		var m := z.mat as ShaderMaterial
-		assert_eq(float(m.get_shader_parameter(&"aim_px")), GroundLook.AIM_PX, "%s: an aim" % id)
+		# (the soldier's follows him first: the thinner thread of the tracking, until it locks)
+		assert_eq(float(m.get_shader_parameter(&"aim_px")), GroundLook.TRACK_AIM_PX if id == &"skeleton" else GroundLook.AIM_PX, "%s: an aim" % id)
 		assert_eq(float(m.get_shader_parameter(&"strength")), 1.0)
 		assert_eq(float((m.next_pass as ShaderMaterial).get_shader_parameter(&"fill_early")), 0.0, "%s: no fill early" % id)
 		assert_eq(float((m.next_pass as ShaderMaterial).get_shader_parameter(&"base_fill")), 0.0)

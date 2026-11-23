@@ -60,12 +60,17 @@ const CLIFF := {&"stone_color": Color(0.08, 0.08, 0.09), &"edge_color": Color(0.
 ## keeps its shadow, the room's only one: ArenaKit.KEEP_SHADOW), a dark still air.
 ## The cycle of 2026-11-20 (docs/art/benchmark_hades2_style.md 7.2 row 7b; ART_REVIEW.md 4.5 P1-B1): an earthy reddish
 ## stone and air (hue 18 to 28, 14 degrees or more from the Santuário's yellow limestone, and more saturated than it).
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
+## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's.
+const STY_SHADOW_GLOW := Color(0.50, 0.25, 0.35)
 const STYLE := {
 	&"stone": Color(0.365, 0.308, 0.278), &"shadow": Color(0.84, 0.9, 1.0), &"floor_stone": Color(0.348, 0.293, 0.265),
 	&"olive_share": 0.06, &"edge_value": 1.0, &"metal": true,
 	&"fire": {&"candle_range": 3.0, &"candle_gain": 1.2, &"bowl_range": 7.5, &"bowl_gain": 2.2},
 	&"air": {&"sky": Color(0.03, 0.03, 0.035), &"fog": Color(0.1, 0.095, 0.085), &"ambient": Color(0.72, 0.635, 0.575),
 		&"ambient_gain": 3.2, &"moon": Color(0.9, 0.88, 0.84), &"moon_energy": 0.8, &"moon_shadow": false},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
+	&"c1v": {&"warm": Vector2(-4.0, 0.0), &"energy": 0.6, &"shaft": CatacombHall.STY_SHAFT_AT},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).

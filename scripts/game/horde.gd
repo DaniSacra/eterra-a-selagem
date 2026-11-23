@@ -4,9 +4,13 @@ extends Node3D
 ## poses. Every enemy attack is announced (a swing windup, a warning on the floor) before it can hurt.
 
 signal killed(e: Enemy)
+## A blow of the paladin landed on the boss (not a burn's tick): by which button (`dealing`), for his Postura (C1d).
+signal boss_blow(e: Enemy, source: StringName)
 signal hit_player(amount: float, from: Vector2)
 ## An enemy's armor (yellow bar) just broke.
 signal armor_broken(e: Enemy)
+## C1b: a Quebra (Poise) by the button `source` (DealtBy source). C1c: it feeds the Magia and the Brado (KitFeed).
+signal poise_broken(e: Enemy, source: StringName)
 
 const CELL := 1.5
 ## Share of the overlap of two bodies each pushes the other out by in a frame (both ways: half of it closed a frame).
@@ -42,11 +46,19 @@ const DEATH_SHOW := 1.5
 const DISSOLVE_FROM := 0.85
 const MAX_DYING := 90
 const DEFS_DIR := "res://data/enemies/"
+const MODS_DIR := "res://data/mods/"
 ## Share of an attack clip at which the blow lands (the windup is stretched to end there).
 const IMPACT_SHARE := 0.55
 const MELEE_COOLDOWN := 1.3
 ## Skeletons the elder priest raises around itself in one cast (fewer when the fight is full: room_for).
 const PRIEST_RAISES := 3
+## Enemy.memo of a knight raising its dead (1: its close slam, 2: it charges next).
+const KNIGHT_CALLS := 3
+const KNIGHT_GUARD := 4
+## The knight winds up to hurl its shield (EnemyDef.throw_*).
+const KNIGHT_THROW := 5
+## A charge follows him only from here on: closer, there would be no time to leave its line (docs/qa/c1_cadencia.md).
+const CHARGE_FOLLOW_FROM := 5.0
 ## Ranged enemies: the last seconds of a wind-up in which the aim no longer follows the paladin (his sidestep is
 ## the answer), how far past its reach a shot flies, how far ahead it looks for floor when it runs, and how close
 ## (a part of keep_away) the paladin must be for it to keep running instead of stopping to shoot.
@@ -146,6 +158,8 @@ var dealing: StringName = &""
 var stun_scale := 1.0
 ## The blow being dealt is an Omega (Combat sets it while it deals one): strong for the StunRule though not `big`.
 var strong := false
+## The blow being dealt is the special (tag heavy) or an Omega: only drawn (combate_c1_leitura 7), armor gives it more sparks.
+var heavy_blow := false
 ## How fast the enemies walk, times their own (E5: a Provação's curse, set by Rooms on entering a fight; 1: as is).
 var speed_scale := 1.0
 var dying: Array[Enemy] = []
@@ -166,7 +180,12 @@ var damage_scale := 1.0
 ## Fraqueza: the share of its damage a weakened enemy loses (Combat sets it from the Veu Blessings when it weakens one).
 var weak_cut := 0.25
 var target := Vector2.ZERO
+## C1d: how much more the boss takes while his Postura is broken or he is exposed (BossDef.posture_vuln; Boss sets it).
+var boss_vuln := 0.4
 var target_alive := true
+## C1e (the Armadilheiro): where the paladin's last dodge ended and the seconds since (Game sets them each step).
+var dodge_end := Vector2.ZERO
+var dodge_age := 99.0
 ## The kind (EnemyDef.id) acting now, while the crowd steps (&"" outside it): the warnings and shots it lays carry it
 ## (Ground.Zone.by, Projectiles.Shot.by), so the game knows what hurt the paladin ("Derrotado por").
 var acting: StringName = &""
@@ -188,10 +207,16 @@ var seen := Callable()
 var stuck_by := {}
 ## Blows that stunned someone, and attacks those blows cut, this run (GF-12; RESULT flinches, interrupts).
 var flinches := 0
+## C1b (Poise): breaks this run by the button that broke it (DealtBy source; RESULT breaks).
+var breaks: Dictionary = {}
 var interrupts := 0
 ## DT-102 (RESULT windups): by kind, the wind-ups started, those that reached their blow (or shot) and those cut (by a
 ## stun, the armour breaking or death): id -> [started, struck, cut].
 var windups := {}
+## Cadence (RESULT idle): for each guardian (knight, priest_elder) the gaps between a recovery's end and the next wind-up
+## and the share of the fight spent walking without attacking (IdleStats; stun, shield away and guard break not counted).
+var idle := {}
+const IDLE_TRACKED: Array[StringName] = [&"knight", &"priest_elder"]
 var _cutting := false
 ## The way the enemy behaving now walks toward the paladin (_way).
 var _walk := Vector2.ZERO
@@ -203,10 +228,14 @@ var _centers := PackedVector2Array()
 var _reaches := PackedFloat32Array()
 var _allowed := PackedFloat32Array()
 var _defs: Dictionary = {}
+var _mods: Dictionary = {}
 var _frame := 0
 var _rng := RandomNumberGenerator.new()
 ## How many were ever spawned: each takes a number of its own for what is only drawn (Enemy.look).
 var _born := 0
+## C5: trincas born so far (Enemy.group_id) and the clock their triangles turn by.
+var _groups := 0
+var _clock := 0.0
 
 ## What an enemy's blow is worth now: the director's scale, less the Fraqueza while it lasts.
 func _out(e: Enemy) -> float:
@@ -231,17 +260,32 @@ func def(id: StringName) -> EnemyDef:
 	return _defs[id]
 
 
-func spawn(d: EnemyDef, at: Vector2, rising: bool = true) -> Enemy:
+## C1e: a modifier of data/mods by id.
+func mod(id: StringName) -> ModDef:
+	if not _mods.has(id):
+		_mods[id] = load(MODS_DIR + id + ".tres")
+	return _mods[id]
+
+
+func spawn(d: EnemyDef, at: Vector2, rising: bool = true, with_mod: ModDef = null) -> Enemy:
 	def(d.id)
 	var e := Enemy.new()
 	e.def = d
+	e.mod = with_mod
 	e.pos = at
 	var scaled := not d.elite and d.behavior != EnemyDef.Behavior.BOSS
 	e.max_hp = d.hp * (hp_scale if scaled else 1.0) * vow_hp
 	e.hp = e.max_hp
 	e.max_armor = d.armor
 	e.armor = d.armor
+	e.poise = d.poise
 	e.cooldown = d.attack_cooldown * _rng.randf_range(0.4, 1.0)
+	e.call_cd = d.raise_first
+	e.rows = d.raise_every  # (CV-2: its first act is the call)
+	e.guard_cd = d.guard_up_every * 0.5
+	e.move_cd = AttackList.start_clocks(d.moves)
+	e.charge_n = d.charges
+	e.volley_cd = d.volley_every * 0.5
 	e.side = 1.0 if _rng.randf() < 0.5 else -1.0
 	e.dir = (target - at).normalized() if target.distance_to(at) > 0.1 else Vector2.DOWN
 	_born += 1
@@ -250,7 +294,22 @@ func spawn(d: EnemyDef, at: Vector2, rising: bool = true) -> Enemy:
 		e.state = Enemy.State.RISE
 		e.anim = &"rise"
 	list.append(e)
+	if with_mod != null and with_mod.escort_count > 0:
+		e.raised.append_array(_raise_dead(e, room_for(with_mod.escort_count), with_mod.escort_kind))
 	return e
+
+
+## C5, the Trinca: the figures of one head of a wave (EnemyDef.group of them) rise round `at`, kept together by a
+## group id; they are returned.
+func spawn_group(d: EnemyDef, at: Vector2, rising: bool = true) -> Array[Enemy]:
+	_groups += 1
+	var out: Array[Enemy] = []
+	for k in d.group:
+		var e := spawn(d, arena.resolve(TrioRules.birth_pos(at, k, d.group, GROUP_SPREAD), d.radius), rising)
+		e.group_id = _groups
+		e.group_k = k
+		out.append(e)
+	return out
 
 
 func count() -> int:
@@ -264,6 +323,7 @@ func room_for(want: int) -> int:
 
 func step(dt: float) -> void:
 	_frame += 1
+	_clock += dt
 	_dt = dt
 	rehash()
 	if arena != null and arena.flow != null and not list.is_empty():
@@ -276,6 +336,8 @@ func step(dt: float) -> void:
 	for e in list:
 		_timers(e, dt)
 		e.facing_him = false
+		if e.alive and e.def.id in IDLE_TRACKED and target_alive:
+			_tally_idle(e, dt)
 		if e.alive and not e.helpless():
 			acting = e.def.id
 			acting_pos = e.pos
@@ -302,6 +364,8 @@ func step(dt: float) -> void:
 		e.pos = arena.sweep(e.last_pos, e.pos, e.def.radius)
 		e.y = e.height()
 		_drawn_motion(e, dt)
+	_step_shields(dt)
+	_step_waves(dt)
 	_sweep()
 	for d in dying:
 		d.dead_t += dt
@@ -318,18 +382,45 @@ func step(dt: float) -> void:
 
 func _timers(e: Enemy, dt: float) -> void:
 	e.state_t += dt
-	e.cooldown -= dt
+	e.cooldown -= dt * _pace(e)
+	e.call_cd -= dt
+	e.haste_t = maxf(0.0, e.haste_t - dt)
+	if e.mod != null and e.mod.regen_hp > 0.0 and e.alive and e.state != Enemy.State.DOWN and e.state != Enemy.State.RISE:
+		e.calm_t += dt
+		if e.calm_t >= e.mod.regen_after:
+			e.calm_t = 0.0
+			if e.hp < e.max_hp:
+				e.hp = SupportRules.mended(e.hp, e.max_hp, e.mod.regen_hp)
+				fx.burst(&"dust", Vector3(e.pos.x, 0.9 + e.y, e.pos.y), Vector3.UP)
 	e.flash_t -= dt
 	e.hurt_t -= dt
 	if e.recoil_t >= 0.0:
 		e.recoil_t += dt
 	e.stun_t = maxf(0.0, e.stun_t - dt)
+	if e.def.poise > 0.0:
+		_poise_timers(e, dt)
 	e.air_t = maxf(0.0, e.air_t - dt)
 	e.blind_t = maxf(0.0, e.blind_t - dt)
 	e.slow_t = maxf(0.0, e.slow_t - dt)
 	e.weak_t = maxf(0.0, e.weak_t - dt)
 	e.mark_t = maxf(0.0, e.mark_t - dt)
 	e.shove_t = maxf(0.0, e.shove_t - dt)
+	e.open_t = maxf(0.0, e.open_t - dt)
+	e.guard_cd -= dt
+	e.volley_cd -= dt
+	e.away_t = maxf(0.0, e.away_t - dt)
+	for k in e.move_cd.size():
+		e.move_cd[k] -= dt
+	if e.guard_t > 0.0:
+		e.guard_t = maxf(0.0, e.guard_t - dt)
+		if e.guard_t <= 0.0:
+			e.guard_cd = e.def.guard_up_every  # (K3: the next guard counts from this one's fall)
+	e.block_t = maxf(0.0, e.block_t - dt)
+	e.edge_t = maxf(0.0, e.edge_t - dt)
+	e.crack_t = maxf(0.0, e.crack_t - dt)
+	e.thaw_t = maxf(0.0, e.thaw_t - dt)
+	if e.def.ward_count > 0 and e.alive and not e.helpless():
+		_step_ward(e, dt)
 	if e.frozen_t > 0.0:
 		e.frozen_t = maxf(0.0, e.frozen_t - dt)
 	else:
@@ -345,6 +436,10 @@ func _timers(e: Enemy, dt: float) -> void:
 			damage(e, e.burn_dps * BURN_TICK, Vector2.ZERO, 0.0, Color(1.0, 0.5, 0.2), true, false, false)
 			dealing = &""
 	e.risen_t = maxf(0.0, e.risen_t - dt)
+	if _holds_bar(e.def) and e.helpless() and e.alive:
+		interrupt(e)  # (C5: a frozen Varredor's bar goes with its sweep; the bar's own life is kept up by its steps; C1e: the Canalizador's beam too)
+	if e.state == Enemy.State.DOWN:
+		_step_down(e)
 	if e.state == Enemy.State.RISE and e.state_t > 0.9:
 		_set_state(e, Enemy.State.WALK, &"walk")
 		e.cooldown = maxf(e.cooldown, ARRIVE)
@@ -428,7 +523,14 @@ static func stride_lean(sway: float, t: float, loop: float) -> float:
 
 
 func _speed(e: Enemy) -> float:
-	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0)
+	return e.def.speed * speed_scale * (0.45 if e.slow_t > 0.0 else 1.0) * (1.0 + e.haste_pace if e.haste_t > 0.0 else 1.0)
+
+
+## C1e: how much faster than its own its attacks come back (a Gritador's shout, a Furioso): SupportRules.pace.
+func _pace(e: Enemy) -> float:
+	if e.haste_t <= 0.0 and e.mod == null:
+		return 1.0
+	return SupportRules.pace(e.haste_t > 0.0, e.haste_pace, e.mod.attack_pace if e.mod != null else 0.0)
 
 
 func _behave(e: Enemy, dt: float) -> void:
@@ -441,7 +543,12 @@ func _behave(e: Enemy, dt: float) -> void:
 		if e.state_t >= e.def.recover_time:
 			_set_state(e, Enemy.State.WALK, &"walk")
 			# T5-12: a moment in its guard or walking before the next wind-up, never the frame after its recovery
-			e.cooldown = maxf(e.cooldown, AFTER_RECOVER + _rng.randf_range(0.0, AFTER_RECOVER_JITTER))
+			if e.def.gap_max > 0.0:
+				# a guardian's random rest (AttackGap), the shorter the less toughness it has left
+				var d := e.def
+				e.cooldown = AttackGap.pick(d.gap_min, d.gap_max, d.gap_min0, d.gap_max0, toughness(e), _rng)
+			elif e.def.behavior != EnemyDef.Behavior.SWEEP:  # (the Varredor's rest is exactly recover_time)
+				e.cooldown = maxf(e.cooldown, AFTER_RECOVER + _rng.randf_range(0.0, AFTER_RECOVER_JITTER))
 		return
 	var to := target - e.pos
 	var dist := to.length()
@@ -468,6 +575,14 @@ func _behave(e: Enemy, dt: float) -> void:
 			_behave_pulse(e, dt, toward, dist)
 		EnemyDef.Behavior.CONE:
 			_behave_cone(e, dt, toward, dist)
+		EnemyDef.Behavior.SWEEP:
+			_behave_sweep(e, dt, toward, dist)
+		EnemyDef.Behavior.SUPPORT:
+			_behave_support(e, dt, toward, dist)
+		EnemyDef.Behavior.LEAP:
+			_behave_leap(e, dt, toward, dist)
+		EnemyDef.Behavior.BEAM:
+			_behave_beam(e, dt, toward, dist)
 
 
 ## Walks up, raises the blade (the warning) and swings. Only the swing hurts, and only if the paladin is still close.
@@ -522,10 +637,21 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		return
 	if e.state == Enemy.State.ATTACK:
 		var ticks := 0 if caster else maxi(1, d.shot_ticks)
+		if d.shot_relock > 0.0 and e.memo > 0 and e.memo < ticks and e.state_t < e.memo * d.shot_interval - d.shot_relock:
+			# CB-4: the next bolt's line follows him, then locks
+			e.aim = toward
+			e.dir = toward
+			Ground.point_line(e.warning2 as Ground.Zone, e.pos, toward)
+		elif d.shot_relock > 0.0 and e.memo > 0 and e.memo < ticks:
+			ground.lock_line(e.warning2 as Ground.Zone)
 		while e.memo < ticks and e.state_t >= e.memo * d.shot_interval:
 			if e.memo > 0 and not d.shot_line:
 				e.aim = toward
 			shoot(e, e.aim)
+			if d.shot_relock > 0.0 and e.memo + 1 < ticks:
+				e.warning2 = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE),
+					0.5, d.shot_interval, 0.0)
+				ground.track_line(e.warning2 as Ground.Zone)
 			if d.recoil > 0.0:
 				e.push = -e.aim * d.recoil * pow(RANGED_RECOIL_FADE, e.memo)
 			e.memo += 1
@@ -588,7 +714,7 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
 		if d.shot_line and not caster:
 			# the line on the floor ends where the bolt will die on cover
-			e.warning = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE), 0.5,
+			e.warning = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, _line_reach(d), Projectiles.SHOT_EDGE), 0.5,
 				d.attack_windup, 0.0)
 		elif d.shot_orb and not d.shot_low and not caster:
 			# C19-5 (Q-14 a): the mage's orbs leave along a thread too, from the start of its wind-up to the first orb,
@@ -603,6 +729,14 @@ func attackers(d: EnemyDef) -> int:
 		if o.alive and o.def.name_key == d.name_key and (o.state == Enemy.State.WINDUP or o.state == Enemy.State.ATTACK):
 			n += 1
 	return n
+
+
+## Another of this kind began its wind-up less than windup_gap ago.
+func _just_began(d: EnemyDef) -> bool:
+	for o in list:
+		if d.windup_gap > 0.0 and o.alive and o.def.name_key == d.name_key and o.state == Enemy.State.WINDUP and o.state_t < d.windup_gap:
+			return true
+	return false
 
 
 ## Where to wait behind the pillar nearest to `from` (within RANGED_COVER_FIND): `hug` meters past its middle on
@@ -630,7 +764,9 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 	var d := e.def
 	var n := maxi(1, d.shot_count)
 	var reach := d.shot_range if d.shot_range > 0.0 else d.attack_range * RANGED_REACH
-	var life := reach / maxf(0.1, d.shot_speed)
+	if d.shot_return:
+		reach = ThrowRules.out_range(reach, arena.shot_reach(e.pos, dir, reach, Projectiles.SHOT_EDGE))
+	var life := ThrowRules.life(reach, d.shot_speed) if d.shot_return else reach / maxf(0.1, d.shot_speed)
 	Audio.play(CombatSounds.shot(d))
 	for i in n:
 		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
@@ -639,6 +775,9 @@ func shoot(e: Enemy, dir: Vector2) -> void:
 			d.shot_speed, d.attack_damage * _out(e), 0.45 if d.shot_orb else 0.4, life, d.magic_color)
 		# its warning so far: the aim it held (a shot of a burst, the time since the burst began too)
 		s.warned = e.state_t + (d.attack_windup if e.state == Enemy.State.ATTACK else 0.0)
+		if d.shot_return:
+			s.back_at = ThrowRules.turn_age(reach, d.shot_speed)
+			s.origin = s.pos
 		if d.shot_turn > 0.0:
 			s.turn = deg_to_rad(d.shot_turn)
 			s.turn_decay = deg_to_rad(d.shot_turn_decay)
@@ -683,6 +822,15 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
 	match e.state:
 		Enemy.State.WINDUP:
+			if d.aim_lock > 0.0 and e.state_t < d.attack_windup - d.aim_lock:
+				# CB-4: it follows him until the last moment
+				e.aim = toward
+				e.dir = toward
+				Ground.point_line(e.warning as Ground.Zone, e.pos, toward)
+				if e.warning2 != null:
+					e.lands_at = e.pos + toward * e.travel
+			elif d.aim_lock > 0.0:
+				ground.lock_line(e.warning as Ground.Zone)  # (only a thread that tracked pulses: once)
 			if e.warning2 != null:
 				# C19-1: its second blade follows him through the wind-up and keeps where he stood at its end
 				var to2 := target - e.lands_at
@@ -711,8 +859,8 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		_:
 			e.dir = toward
 			if dist > d.attack_range or not e.straight:
-				e.pos += _walk * _speed(e) * dt
-			elif e.cooldown <= 0.0 and target_alive and (d.max_attackers <= 0 or attackers(d) < d.max_attackers):
+				e.pos += (_slot_way(e, dist) if d.group > 1 else _walk) * _speed(e) * dt
+			elif e.cooldown <= 0.0 and target_alive and (d.max_attackers <= 0 or attackers(d) < d.max_attackers) and not _just_began(d):
 				e.aim = toward
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"windup")
@@ -722,12 +870,16 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.landed = false
 				e.blows = 0
 				e.warning = ground.add_aim_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
+				if d.aim_lock > 0.0:
+					ground.track_line(e.warning as Ground.Zone)
 				if d.strikes > 1:
 					# C19-1 (Hades' Guard elite): the second blade's thread shows from the wind-up on (0.2 s after the
 					# first is too short to read a warning born then), from where the body lands
 					e.lands_at = e.pos + toward * e.travel
 					e.aim2 = toward
 					e.warning2 = ground.add_aim_warning(e.lands_at, toward, blade_reach(d), 1.3, d.attack_windup + blow_at(e, 1) + dt, 0.0)
+			elif d.group > 1:
+				_hold_slot(e, dt, toward)
 			else:
 				_wait_ring(e, dt, toward, dist)
 
@@ -812,19 +964,55 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
 	match e.state:
 		Enemy.State.WINDUP:
+			if e.memo == KNIGHT_GUARD:
+				# K3: the shield goes up (a ring, a glint, a sound), then it holds it guard_up_time s
+				if e.state_t >= d.guard_up_windup:
+					e.memo = 0
+					e.guard_t = d.guard_up_time
+					e.cooldown = maxf(e.cooldown, 0.4)
+					e.recover_anim = &""
+					_set_state(e, Enemy.State.WALK, &"walk")
+					fx.ring(e.pos, d.radius + 0.8, EnemyFx.STEEL, 0.3, 0.15, true)
+					Audio.play(CombatSounds.EVENTS[&"ward"])
+				return
+			if e.memo == KNIGHT_CALLS:
+				if e.state_t >= d.attack_windup:
+					e.rows = 0
+					e.raised.append_array(_raise_dead(e, _calls(e)))
+					_set_state(e, Enemy.State.ATTACK, &"summon", false)
+				return
+			if e.memo == KNIGHT_THROW:
+				e.dir = toward
+				if e.state_t >= d.throw_windup:
+					_loose_shield(e)
+				return
+			if e.memo != 1 and d.aim_lock > 0.0 and e.state_t < d.attack_windup - d.aim_lock:
+				_follow_charge(e, toward, dist)
+			elif e.memo != 1 and d.aim_lock > 0.0:
+				ground.lock_line(e.warning as Ground.Zone)
 			if e.state_t >= d.attack_windup:
 				_set_state(e, Enemy.State.ATTACK, &"attack" if e.memo == 1 else &"charge", false)
 				fx.shake(1.5)
 		Enemy.State.ATTACK:
-			if e.memo == 1:
+			if e.memo == KNIGHT_THROW:
+				# the shield is in the air: it stands empty-handed a moment (the throw's own flight and landing are _step_shields)
+				if e.state_t >= THROW_HOLD:
+					e.memo = 0
+					e.cooldown = maxf(e.cooldown, d.attack_cooldown * 0.6)
+					_end_attack(e)
+				return
+			if e.memo == 1 or e.memo == KNIGHT_CALLS:
 				# the close slam: stands still while it lands
 				if e.state_t >= 0.5:
 					e.memo = 0
-					e.cooldown = d.attack_cooldown * 0.6
+					e.cooldown = d.guard_up_hit_every if e.guard_t > 0.0 else d.attack_cooldown * 0.6
 					_end_attack(e)
 				return
 			var from := e.pos
 			e.pos += e.aim * d.lunge_speed * dt
+			if d.wall_stun > 0.0 and _wall_hit(e):
+				_wall_stun(e)
+				return
 			if not e.landed and target_alive and BodyBlock.swept_touch(from, e.pos, target, d.radius + Player.RADIUS):
 				e.landed = true
 				last_by = d.id
@@ -838,12 +1026,13 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					Ground.end_zone(e.warning as Ground.Zone)
 					e.warning = null
 				e.charges += 1
-				if e.charges < d.charges and target_alive:
+				if e.charges < e.charge_n and target_alive:
 					# GP-12 (Daniel, 2026-11-22): the guardian turns and charges again
 					_brace(e, toward, dist, d.recharge_windup)
 					return
 				# it stands at the end of its charge, spent (T5-12: its shield lowered, recover_anim)
 				e.charges = 0
+				e.rows += 1
 				e.cooldown = d.attack_cooldown
 				_end_attack(e, &"recover")
 		_:
@@ -854,7 +1043,32 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
 				e.pos -= toward * _speed(e) * dt
 				return
+			var guarded := e.guard_t > 0.0
 			_behave_melee_walk(e, dt, toward, dist)
+			if d.guard_up_time > 0.0 and not guarded and e.guard_cd <= 0.0 and target_alive and e.open_t <= 0.0 and e.away_t <= 0.0 \
+					and e.armor > d.armor * d.guard_up_armor:
+				e.memo = KNIGHT_GUARD
+				e.dir = toward
+				_set_state(e, Enemy.State.WINDUP, &"brace")
+				return
+			if guarded:
+				# K3: shield up, it walks slow and swings now and then, never charging nor calling
+				if e.cooldown <= 0.0 and dist < d.guard_up_hit_range and target_alive:
+					e.memo = 1
+					e.dir = toward
+					_set_state(e, Enemy.State.WINDUP, &"attack")
+					e.warning = ground.add_arc_warning(e.pos, toward, d.guard_up_hit_range + 0.8, 120.0, d.guard_up_hit_windup, d.guard_up_hit_damage * _out(e))
+					e.state_t = d.attack_windup - d.guard_up_hit_windup
+					e.cooldown = d.guard_up_hit_every
+				return
+			if d.raise_count > 0 and e.rows >= d.raise_every and e.cooldown <= 0.0 and target_alive and _calls(e) > 0:
+				# CV-2 (Daniel, 2026-11-22): it stands still, sword and shield up, and its dead rise
+				e.memo = KNIGHT_CALLS
+				e.dir = toward
+				_set_state(e, Enemy.State.WINDUP, &"summon")
+				return
+			if _knight_move(e, toward, dist):
+				return
 			var backed := e.slams >= KNIGHT_SLAMS
 			if backed and e.cooldown <= 0.0 and dist < d.close_range and target_alive and d.lunge_time > 0.0:
 				e.slams = 0
@@ -869,9 +1083,206 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.warning = ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * _out(e))
 				e.state_t = d.attack_windup - d.close_windup
 				return
-			if e.cooldown <= 0.0 and dist < d.attack_range and (dist > d.close_range or e.memo == 2) and target_alive and e.straight:
+			if e.cooldown <= 0.0 and dist < d.attack_range and (dist > d.close_range or e.memo == 2) and target_alive and e.straight \
+					and e.away_t <= 0.0:
 				e.charges = 0
+				e.charge_n = _charges_open(e)
 				_brace(e, toward, dist, d.attack_windup)
+
+
+## How much of its whole toughness (life and armor together, what its two bars show) it still has.
+static func toughness(e: Enemy) -> float:
+	return (e.hp + e.armor) / maxf(e.max_hp + e.max_armor, 0.001)
+
+
+## The knight's priority list (AttackList): the first move open now is begun. True when one was.
+func _knight_move(e: Enemy, toward: Vector2, dist: float) -> bool:
+	var d := e.def
+	if d.moves.is_empty() or e.cooldown > 0.0 or not target_alive or not e.straight or e.away_t > 0.0 or e.open_t > 0.0 or e.memo == 2:
+		return false
+	var i := AttackList.pick(d.moves, e.move_cd, toughness(e), dist)
+	if i < 0:
+		return false
+	var m := d.moves[i]
+	e.move_cd[i] = m.cooldown
+	e.move_i = i
+	match m.id:
+		&"throw":
+			e.memo = KNIGHT_THROW
+			e.dir = toward
+			e.guard_t = 0.0
+			_set_state(e, Enemy.State.WINDUP, &"attack")  # (not &"summon": that clip is the call of the dead)
+		&"charge":
+			e.charges = 0
+			e.charge_n = m.count
+			_brace(e, toward, dist, d.attack_windup)
+	return true
+
+
+## How many charges in a row the list gives it now, by how much toughness is left (the old `charges` when it has no list).
+func _charges_open(e: Enemy) -> int:
+	var share := toughness(e)
+	var best := e.def.charges
+	for m in e.def.moves:
+		if m.id == &"charge" and share <= m.from_life:
+			best = m.count
+			break
+	return best
+
+
+## True while the shield is away (thrown and not yet back): it stands without it, its armor takes every blow whole.
+func shield_away(e: Enemy) -> bool:
+	return e.away_t > 0.0
+
+
+## The shield leaves its hand: it flies up and comes down on the paladin's spot, which the floor marks (C1eMarks).
+func _loose_shield(e: Enemy) -> void:
+	var s := Shield.new()
+	s.owner = e
+	s.from = e.pos
+	s.land = arena.resolve(target, 0.6)
+	s.total = e.def.throw_flight
+	shields.append(s)
+	e.away_t = 99.0
+	_set_state(e, Enemy.State.ATTACK, &"attack", false)
+	fx.shake(1.0)
+
+
+## Seconds the knight stands after loosing the shield before it walks again.
+const THROW_HOLD := 0.45
+## Set while a wave a dodge crosses is hurting him (the shield wave): any moment of the roll counts as a close dodge (Game reads it).
+var last_wide := false
+## The shield wave's colour: hot, thin and bright, a moving wave and not a mark of the floor.
+const WAVE_COLOR := Color(1.0, 0.72, 0.42)
+## Where the wave starts from the landing (meters).
+const WAVE_START := 1.2
+
+
+## A shield in the air: the spot follows the paladin until throw_lock s before it lands, then holds; it lands there.
+class Shield extends RefCounted:
+	var owner: Enemy
+	var from := Vector2.ZERO
+	var land := Vector2.ZERO
+	var t := 0.0
+	var total := 1.0
+
+
+## A shield wave spreading from where it landed.
+class Wave extends RefCounted:
+	var owner: Enemy
+	var center := Vector2.ZERO
+	var t := 0.0
+	var hit := false
+	var ring: Dictionary
+
+
+var shields: Array[Shield] = []
+var waves: Array[Wave] = []
+
+
+func _step_shields(dt: float) -> void:
+	var i := shields.size() - 1
+	while i >= 0:
+		var s := shields[i]
+		s.t += dt
+		if not s.owner.alive:
+			shields.remove_at(i)
+		else:
+			if s.t < s.total - s.owner.def.throw_lock:
+				s.land = arena.resolve(target, 0.6)
+			if s.t >= s.total:
+				_land_shield(s)
+				shields.remove_at(i)
+		i -= 1
+
+
+func _land_shield(s: Shield) -> void:
+	var e := s.owner
+	var d := e.def
+	e.away_t = d.throw_open
+	e.shield_lies = s.land
+	fx.burst(&"dust", Vector3(s.land.x, 0.2, s.land.y), Vector3.UP)
+	fx.shake(2.2)
+	Audio.play(&"enemy_burst")
+	var w := Wave.new()
+	w.owner = e
+	w.center = s.land
+	if target_alive and LeapRules.in_area(s.land, target, d.throw_half, Player.RADIUS * 0.6):
+		last_by = d.id
+		last_warn = d.throw_flight
+		last_offscreen = screen_flag(s.land)
+		hit_player.emit(d.throw_damage * _out(e), s.land)
+		w.hit = true  # (it took the landing: the wave does not hurt him again)
+	w.ring = fx.wave_ring(s.land, WAVE_COLOR)
+	waves.append(w)
+
+
+func _step_waves(dt: float) -> void:
+	var i := waves.size() - 1
+	while i >= 0:
+		var w := waves[i]
+		var d := w.owner.def
+		w.t += dt
+		var r := ShockRing.radius_at(w.t, WAVE_START, d.ring_speed, d.ring_delay)
+		if not w.owner.alive or ShockRing.spent(r, d.ring_reach):
+			fx.wave_end(w.ring)
+			waves.remove_at(i)
+		else:
+			fx.wave_ring_set(w.ring, r, d.ring_thick)
+			if w.t - dt < d.ring_delay and w.t >= d.ring_delay:
+				Audio.play(&"wave_omega")
+				fx.shake(1.2)
+			if not w.hit and target_alive and ShockRing.touches(w.center, r, d.ring_thick, target, Player.RADIUS * 0.6):
+				w.hit = true
+				last_by = d.id
+				last_warn = d.ring_delay + d.throw_flight
+				last_offscreen = screen_flag(w.center)
+				last_wide = true
+				hit_player.emit(d.ring_damage * _out(w.owner), w.center + (target - w.center).normalized() * r)
+				last_wide = false
+		i -= 1
+
+
+## K1: the charge ended against the arena's wall (the floor pushed it back).
+func _wall_hit(e: Enemy) -> bool:
+	return arena.resolve(e.pos, e.def.radius).distance_to(e.pos) > 0.05
+
+
+## K1: it stands against the wall, stunned and turned away for wall_stun seconds (its own collision, not a blow: F8 does not
+## touch it), the rest of the row of charges cut and the line gone.
+func _wall_stun(e: Enemy) -> void:
+	var d := e.def
+	e.pos = arena.resolve(e.pos, d.radius)
+	if e.warning != null:
+		Ground.end_zone(e.warning as Ground.Zone)
+		e.warning = null
+	e.charges = 0
+	e.rows += 1
+	e.cooldown = d.attack_cooldown
+	e.guard_t = 0.0
+	e.stun_t = maxf(e.stun_t, d.wall_stun)
+	e.stun_len = d.wall_stun
+	e.broken_t = 0.0
+	_end_attack(e, &"recover")
+	fx.shake(2.5)
+	fx.burst(&"dust", Vector3(e.pos.x, 0.4, e.pos.y), Vector3(-e.aim.x, 0, -e.aim.y))
+	fx.word(Vector3(e.pos.x, 2.0 + 2.0 * d.size, e.pos.y), T.t(&"word_wall"), Combat.LIGHT)
+	Audio.play(CombatSounds.EVENTS[&"stagger"])
+
+
+## K2: the Brado took a blow from `from`; the guardian that slammed there stands open ward_open seconds (the slam is cut at its
+## end: it is a stun by the Brado, not by a common blow).
+func ward_taken(from: Vector2) -> void:
+	for e in list:
+		if e.alive and e.def.ward_open > 0.0 and e.memo == 1 and e.pos.distance_to(from) < 1.0:
+			e.stun_t = maxf(e.stun_t, e.def.ward_open)
+			e.stun_len = e.def.ward_open
+			e.guard_t = 0.0
+			e.hurt_t = HURT_TIME
+			fx.ring(e.pos, e.def.radius + 1.2, EnemyFx.STEEL, 0.3, 0.15, true)
+			fx.word(Vector3(e.pos.x, 2.0 + 2.0 * e.def.size, e.pos.y), T.t(&"word_open"), Combat.LIGHT)
+			Audio.play(CombatSounds.EVENTS[&"stagger"])
+			break
 
 
 ## It braces behind its shield to charge along a line, `windup` seconds from now.
@@ -885,8 +1296,53 @@ func _brace(e: Enemy, toward: Vector2, dist: float, windup: float) -> void:
 	_set_state(e, Enemy.State.WINDUP, &"brace")
 	e.state_t = d.attack_windup - windup
 	# filled when its body would reach his where he stands now (or at the end of the charge)
-	var reach := clampf((dist - d.radius - Player.RADIUS) / maxf(d.lunge_speed, 0.1), 0.0, d.lunge_time)
-	e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, windup + reach, 0.0)
+	e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, windup + _charge_reach(d, dist), 0.0)
+	if d.aim_lock > 0.0 and dist >= CHARGE_FOLLOW_FROM:
+		ground.track_line(e.warning as Ground.Zone)  # (closer than that it never follows: no thread, no pulse)
+
+
+## Seconds of its charge until its body reaches his, `dist` away (at most the whole charge).
+static func _charge_reach(d: EnemyDef, dist: float) -> float:
+	return clampf((dist - d.radius - Player.RADIUS) / maxf(d.lunge_speed, 0.1), 0.0, d.lunge_time)
+
+
+## CV-1: its body and its line turn with the paladin, and the line still fills on the frame it would reach him.
+func _follow_charge(e: Enemy, toward: Vector2, dist: float) -> void:
+	if dist < CHARGE_FOLLOW_FROM:
+		return
+	e.aim = toward
+	e.dir = toward
+	var z := e.warning as Ground.Zone
+	if z == null:
+		return
+	Ground.point_line(z, e.pos, toward)
+	var life := e.def.attack_windup - e.state_t + _charge_reach(e.def, dist)
+	z.total += life - z.life
+	z.life = life
+
+
+## How many skeletons the knight may raise now.
+func _calls(e: Enemy) -> int:
+	var standing := 0
+	for r in e.raised:
+		standing += int(r.alive)
+	return room_for(mini(e.def.raise_count, e.def.raise_max - standing)) if standing < e.def.raise_max else 0
+
+
+## Skeletons rise round `e`, n of them; they are returned.
+func _raise_dead(e: Enemy, n: int, kind: StringName = &"", at_edge := false) -> Array[Enemy]:
+	var out: Array[Enemy] = []
+	var skeleton := def(kind if kind != &"" else e.def.raise_kind)
+	var edge: Array[Vector2] = []
+	if at_edge:
+		edge = edge_spots(n)
+	for k in n:
+		var at: Vector2 = edge[k] if at_edge else raise_spot(e.pos, k)
+		out.append(spawn(skeleton, at, true))
+		fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
+	if n > 0:
+		Audio.play(&"summon")
+	return out
 
 
 ## Between charges the knight still swings at whoever is close.
@@ -895,7 +1351,31 @@ func _behave_melee_walk(e: Enemy, dt: float, _toward: Vector2, dist: float) -> v
 	var stop := e.def.radius + Player.RADIUS + 0.5
 	e.closing = dist > (stop if e.closing else stop + MELEE_WALK_BAND)
 	if e.closing:
-		e.pos += _walk * _speed(e) * dt
+		e.pos += _walk * _speed(e) * (e.def.guard_up_walk if e.guard_t > 0.0 else 1.0) * dt
+
+
+## n places on the floor's edge, the farthest from the paladin (and from each other): a ring just inside the walls is tried
+## every 22.5 degrees, stone and columns pushed out by the arena, then the best n by distance from him.
+func edge_spots(n: int) -> Array[Vector2]:
+	var box := arena.bounds()
+	var center := box.get_center()
+	var radius := maxf(minf(box.size.x, box.size.y) * 0.5 - 2.5, 3.0)
+	var cands: Array[Vector2] = []
+	for i in 16:
+		cands.append(arena.resolve(center + Vector2.from_angle(TAU * i / 16.0) * radius, 0.6))
+	var out: Array[Vector2] = []
+	for k in n:
+		var best := Vector2.INF
+		var score := -1.0
+		for c in cands:
+			var near := c.distance_to(target)
+			for o in out:
+				near = minf(near, c.distance_to(o) * 1.5)
+			if near > score:
+				score = near
+				best = c
+		out.append(best if best != Vector2.INF else center)
+	return out
 
 
 ## Where the k-th skeleton an elder raises from `from` stands: on a ring of 3.5 m, on the floor and out of stone.
@@ -903,9 +1383,369 @@ func raise_spot(from: Vector2, k: int) -> Vector2:
 	return arena.resolve(from + Vector2.from_angle(TAU * k / PRIEST_RAISES) * 3.5, 0.5)
 
 
+## C5, the Trinca: meters between the figures of a group as it rises, the ring of the triangle round the paladin (a
+## share of the blow's reach), and how fast a figure moves to its place while it waits its turn (a share of its speed).
+const GROUP_SPREAD := 1.1
+const SLOT_RING := 0.85
+const SLOT_STEP := 0.7
+## Seconds into its dying a figure lying in a mound is shown at when the last of its trinca falls (it fades at once).
+const DOWN_DEAD_AT := 0.9
+
+
+## How many of e's group (not e) stand: alive and not lying in a mound.
+func _standing_of(e: Enemy) -> int:
+	var n := 0
+	for o in list:
+		if o != e and o.group_id == e.group_id and o.alive and o.state != Enemy.State.DOWN:
+			n += 1
+	return n
+
+
+## Its place in the triangle round the paladin (TrioRules), ring meters out.
+func _slot_of(e: Enemy) -> Vector2:
+	var d := e.def
+	return TrioRules.slot_pos(target, _clock, e.group_k, d.group, fposmod(float(e.group_id) * 0.618034, 1.0), d.attack_range * SLOT_RING)
+
+
+## Toward the paladin from afar, toward its place in the triangle once near.
+func _slot_way(e: Enemy, dist: float) -> Vector2:
+	if dist > e.def.attack_range * 3.0 or not e.straight:
+		return _walk
+	var to := _slot_of(e) - e.pos
+	return to.normalized() if to.length() > 0.2 else Vector2.ZERO
+
+
+## Waiting its turn (one blow at a time for the whole trinca): it keeps its place in the triangle, facing him.
+func _hold_slot(e: Enemy, dt: float, toward: Vector2) -> void:
+	e.facing_him = true
+	var to := _slot_of(e) - e.pos
+	if to.length() > 0.25:
+		e.pos += to.normalized() * minf(_speed(e) * SLOT_STEP, to.length() / maxf(dt, 0.001)) * dt
+
+
+## A figure of a trinca falls: it lies in a mound, hurt by nothing, and cuts its blow short.
+func _lie_down(e: Enemy) -> void:
+	if e.warning != null:
+		Ground.end_zone(e.warning as Ground.Zone)
+		e.warning = null
+	e.hp = 0.0
+	e.invulnerable = true
+	e.push = Vector2.ZERO
+	e.vy = 0.0
+	e.stun_t = 0.0
+	e.frozen_t = 0.0
+	e.burn_t = 0.0
+	e.slow_t = 0.0
+	e.rearm = false
+	_cutting = true
+	_set_state(e, Enemy.State.DOWN, &"death")
+	_cutting = false
+	Audio.play(CombatSounds.kill(e.def))
+	fx.burst(&"bone", Vector3(e.pos.x, 0.6, e.pos.y))
+
+
+## A mound waits its time and rises if another figure still stands; none left standing (the clear of the crowd, a
+## kill that left it behind): it is done.
+func _step_down(e: Enemy) -> void:
+	if e.echoed and e.mod != null:
+		if SupportRules.echo_rises(e.state_t, e.mod.echo_time):
+			e.invulnerable = false
+			e.hp = SupportRules.echo_hp(e.max_hp, e.mod.echo_share)
+			e.mod = null  # (once: the ring goes with it)
+			_set_state(e, Enemy.State.RISE, &"rise")
+			fx.burst(&"dust", Vector3(e.pos.x, 0.3, e.pos.y))
+		return
+	var others := _standing_of(e)
+	if TrioRules.may_rise(e.state_t, e.def.rise_time, others):
+		e.invulnerable = false
+		e.hp = e.max_hp
+		_set_state(e, Enemy.State.RISE, &"rise")
+		fx.burst(&"dust", Vector3(e.pos.x, 0.3, e.pos.y))
+	elif others == 0 and e.state_t > 0.1:
+		_finish_mound(e)
+
+
+## The last of a trinca fell: the mounds that lie round it are done with it (all three on the floor: it is over).
+func _end_group(e: Enemy) -> void:
+	if e.group_id == 0:
+		return
+	for o in list.duplicate():
+		if o != e and o.group_id == e.group_id and o.alive and o.state == Enemy.State.DOWN:
+			_finish_mound(o)
+
+
+func _finish_mound(o: Enemy) -> void:
+	o.invulnerable = false
+	o.alive = false
+	o.state = Enemy.State.DEAD
+	o.anim = &"death"
+	o.dead_t = DOWN_DEAD_AT
+	killed.emit(o)
+
+
+## C1e, the Detonante: four short lances in a cross where it fell, warned (the arms' own warning is the mark), then they hurt.
+func _cross_burst(e: Enemy) -> void:
+	var by := acting
+	acting = e.def.id
+	for dir in SupportRules.cross(e.mod.burst_arms):
+		ground.add_line_warning(e.pos, dir, e.mod.burst_reach, e.mod.burst_width, e.mod.burst_time, e.mod.burst_damage * _out(e))
+	acting = by
+
+
+## C1e (inimigos_c1e.md 4 and 5): the Gritador and the Coveiro. It never strikes: it keeps attack_range m from the paladin, runs from
+## him when closer than retreat_far (flee_speed), and when its cooldown is up stands still attack_windup s (the wind-up) and calls.
+## The Gritador shouts (the others in reach go faster and heal once), the Coveiro raises raise_count dead where its wind-up marked them.
+## How far its aim line on the floor goes: the range of an axe that comes back, else 1.5 of its reach.
+func _line_reach(d: EnemyDef) -> float:
+	return d.shot_range if d.shot_return and d.shot_range > 0.0 else d.attack_range * RANGED_REACH
+
+
+## The Saltador (C1e, lote B): 4 to 7 m off it keeps to its ring; ready, it marks the square it will land on (corners in L closing over
+## its wind-up, C1eMarks; the spot follows the paladin and holds the last aim_lock s), leaves the floor (nothing touches it in the air)
+## and lands there leap_time s later, hurting whoever stands in the square; then it rests recover_time s, low. Never a disc.
+func _behave_leap(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
+	var d := e.def
+	match e.state:
+		Enemy.State.WINDUP:
+			e.dir = toward
+			if LeapRules.follows(e.state_t, d.attack_windup, d.aim_lock):
+				e.lands_at = target
+			if e.state_t >= d.attack_windup - TICK_SLACK:
+				e.leap_from = e.pos
+				e.invulnerable = true
+				e.dir = (e.lands_at - e.pos).normalized() if e.lands_at.distance_to(e.pos) > 0.1 else toward
+				_set_state(e, Enemy.State.ATTACK, &"attack", false)
+		Enemy.State.ATTACK:
+			e.pos = LeapRules.pos_at(e.leap_from, e.lands_at, e.state_t, d.leap_time)
+			e.leap_y = LeapRules.height_at(e.state_t, d.leap_time)
+			if e.state_t >= d.leap_time - TICK_SLACK:
+				e.pos = arena.resolve(e.lands_at, d.radius)
+				e.leap_y = 0.0
+				e.invulnerable = false
+				fx.burst(&"dust", Vector3(e.pos.x, 0.2, e.pos.y), Vector3.UP)
+				Audio.play(&"enemy_charge")
+				if target_alive and LeapRules.in_area(e.lands_at, target, d.leap_half, Player.RADIUS * 0.6):
+					last_by = d.id
+					last_warn = d.attack_windup + d.leap_time
+					last_offscreen = screen_flag(e.pos)
+					hit_player.emit(d.attack_damage * _out(e), e.pos)
+				e.cooldown = d.attack_cooldown * _rng.randf_range(0.9, 1.2)
+				_end_attack(e)
+		_:
+			e.dir = toward
+			var sp := _speed(e)
+			if dist > d.attack_range:
+				e.pos += _walk * sp * dt
+			elif dist < d.attack_range * LEAP_KEEP:
+				var away := _flee(e, -toward)
+				e.pos += away * sp * dt
+				if away != Vector2.ZERO:
+					e.dir = away
+			else:
+				e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
+			if e.cooldown <= 0.0 and target_alive and dist <= d.attack_range + 0.5 and arena.inside(e.pos, 1.0) \
+					and (d.max_attackers <= 0 or attackers(d) < d.max_attackers) and not _just_began(d):
+				e.lands_at = target
+				_set_state(e, Enemy.State.WINDUP, &"windup")
+
+
+## The tag on the Canalizador's beam on the floor (the robot steps out of it: Bot._danger) and how much of its fill the floor keeps.
+const BEAM_TAG := &"beam"
+const BEAM_FILL := 0.12
+
+
+## Whether its line on the floor is held lit by it alone (the Varredor's bar, the Canalizador's beam): it ends with it.
+func _holds_bar(d: EnemyDef) -> bool:
+	return d.behavior == EnemyDef.Behavior.SWEEP or d.behavior == EnemyDef.Behavior.BEAM
+
+
+## The Canalizador (C1e, lote C): planted, within attack_range of the paladin it shows a thread on him for attack_windup s (it follows him,
+## locked the last aim_lock s), then holds a beam of shot_ticks pulses shot_interval s apart that turns after him at shot_turn degrees a
+## second; each pulse hurts whoever stands in it (never within sweep_clear m of its root). A cut (the Quebra) ends it; it rests after.
+func _behave_beam(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
+	var d := e.def
+	match e.state:
+		Enemy.State.WINDUP:
+			if e.state_t < d.attack_windup - d.aim_lock:
+				e.aim = toward
+				Ground.point_line(e.warning as Ground.Zone, e.pos, e.aim)
+			else:
+				ground.lock_line(e.warning as Ground.Zone)
+			e.dir = e.aim
+			if e.state_t >= d.attack_windup - TICK_SLACK:
+				Ground.end_zone(e.warning as Ground.Zone)
+				_set_state(e, Enemy.State.ATTACK, &"attack", false)
+				e.blows = 0
+				var beam := ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0)
+				beam.life = BEAM_FILL
+				beam.tags.append(BEAM_TAG)
+				e.warning = beam
+		Enemy.State.ATTACK:
+			e.aim = BeamRules.turned(e.aim, toward, d.shot_turn, dt)
+			e.dir = e.aim
+			var beam := e.warning as Ground.Zone
+			if beam != null:
+				beam.life = BEAM_FILL
+				Ground.point_line(beam, e.pos, e.aim)
+			var reach := arena.shot_reach(e.pos, e.aim, d.attack_range, 0.1)
+			while BeamRules.pulse_due(e.state_t, d.shot_interval, e.blows, d.shot_ticks):
+				if e.blows > 0:
+					Audio.play(&"shot_orb")  # (the first one's sound came with the attack)
+				e.blows += 1
+				if target_alive and BeamRules.hits(e.pos, e.aim, target, reach, d.attack_width, d.sweep_clear, Player.RADIUS * 0.6):
+					last_by = d.id
+					last_warn = d.attack_windup
+					last_offscreen = screen_flag(e.pos)
+					hit_player.emit(d.attack_damage * _out(e), e.pos)
+			if e.state_t >= BeamRules.hold_time(d.shot_ticks, d.shot_interval) - TICK_SLACK:
+				Ground.end_zone(beam)
+				e.warning = null
+				e.cooldown = d.attack_cooldown * _rng.randf_range(0.9, 1.1)
+				_end_attack(e)
+		_:
+			e.dir = toward
+			if e.cooldown <= 0.0 and target_alive and dist <= d.attack_range and arena.inside(e.pos, 1.0) and not _just_began(d):
+				e.aim = toward
+				_set_state(e, Enemy.State.WINDUP, &"cast")
+				e.warning = ground.add_aim_warning(e.pos, e.aim, d.attack_range, d.attack_width, d.attack_windup + dt, 0.0)
+				ground.track_line(e.warning as Ground.Zone)
+
+
+## The share of its jumping range the Saltador keeps from the paladin (4 of 7 m).
+const LEAP_KEEP := 0.57
+
+
+func _behave_support(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
+	var d := e.def
+	if e.state == Enemy.State.WINDUP:
+		e.dir = toward
+		if e.state_t >= d.attack_windup:
+			_call(e)
+			e.cooldown = d.attack_cooldown * _rng.randf_range(0.9, 1.1)
+			_set_state(e, Enemy.State.ATTACK, &"attack", false)
+		return
+	if e.state == Enemy.State.ATTACK:
+		if e.state_t >= 0.4:
+			_end_attack(e)
+		return
+	e.dir = toward
+	var sp := _speed(e)
+	if dist < d.retreat_far:
+		var away := _flee(e, -toward)
+		if away != Vector2.ZERO:
+			e.pos += away * sp * (d.flee_speed / d.speed if d.flee_speed > 0.0 and d.speed > 0.0 else 1.0) * dt
+			e.dir = away
+	elif dist > d.attack_range:
+		e.pos += _walk * sp * dt
+	else:
+		e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
+	if e.cooldown <= 0.0 and target_alive and dist >= d.retreat_far and _calls_now(e):
+		_set_state(e, Enemy.State.WINDUP, &"cast")
+
+
+## Whether a call has anything to do now (the marks of the dead are set here; a shout needs someone within its reach).
+func _calls_now(e: Enemy) -> bool:
+	var d := e.def
+	if d.shout_radius > 0.0:
+		for o in list:
+			if _shouted_at(e, o):
+				return true
+		return false
+	if d.plate_damage > 0.0:
+		return _plates().size() < d.plate_max
+	if d.raise_count > 0:
+		var standing := 0
+		for r in e.raised:
+			standing += int(r.alive)
+		var n := room_for(mini(d.raise_count, d.raise_max - standing))
+		if n <= 0:
+			return false
+		e.spots.clear()
+		for at in SupportRules.spots(e.pos, target, n, RAISE_RING, RAISE_SPREAD, d.raise_far):
+			var spot := arena.resolve(at, 0.5)
+			if spot.distance_to(target) >= d.raise_far:
+				e.spots.append(spot)
+		return not e.spots.is_empty()
+	return false
+
+
+## Distance from the Coveiro at which its dead rise and the angle between them.
+const RAISE_RING := 2.6
+const RAISE_SPREAD := 80.0
+
+
+func _shouted_at(e: Enemy, o: Enemy) -> bool:
+	return o != e and o.alive and o.def.behavior != EnemyDef.Behavior.BOSS and o.state != Enemy.State.RISE and o.state != Enemy.State.DOWN \
+		and SupportRules.in_reach(e.pos, o.pos, e.def.shout_radius)
+
+
+## The call lands (its wind-up ran its course; a cut one never gets here).
+func _call(e: Enemy) -> void:
+	var d := e.def
+	if d.shout_radius > 0.0:
+		for o in list:
+			if _shouted_at(e, o):
+				o.haste_t = d.shout_time
+				o.haste_pace = d.shout_pace
+				o.hp = SupportRules.healed(o.hp, o.max_hp, d.shout_heal)
+		fx.ring(e.pos, d.shout_radius, d.magic_color, 0.45, 0.15, true)
+		Audio.play(&"summon")
+	if d.plate_damage > 0.0:
+		_lay_plate(e)
+	if d.raise_count > 0:
+		var standing := 0
+		for r in e.raised:
+			standing += int(r.alive)
+		var kind := def(d.raise_kind)
+		var n := room_for(mini(e.spots.size(), d.raise_max - standing))
+		for k in n:
+			e.raised.append(spawn(kind, e.spots[k], true))
+			fx.burst(&"shadow", Vector3(e.spots[k].x, 0.3, e.spots[k].y))
+		if n > 0:
+			Audio.play(&"summon")
+		e.spots.clear()
+
+
+## The centres of the plates lying now (the zones tagged Ground.PLATE_TAG still warming).
+func _plates() -> Array[Vector2]:
+	var out: Array[Vector2] = []
+	for z in ground.zones:
+		if z.tags.has(Ground.PLATE_TAG) and z.life > 0.0:
+			out.append(z.pos + Vector2(z.radius * 0.5, 0.0))
+	return out
+
+
+## C1e, the Armadilheiro: a plate where the paladin stands, or where his last dodge ended (under plate_window s ago). Its warning is the X
+## of C1eMarks for plate_time s (the zone's own red fill is hidden); then it hurts whoever stands on it, the dodge's protection excepted.
+func _lay_plate(e: Enemy) -> void:
+	var d := e.def
+	var at := arena.resolve(TrapRules.spot(target, dodge_end, dodge_age, d.plate_window), d.plate_half)
+	var laid := _plates()
+	if not TrapRules.may_lay(at, laid, d.plate_max, d.plate_half * 1.6):
+		return
+	var z := ground.add_line_warning(at - Vector2(d.plate_half, 0.0), Vector2.RIGHT, d.plate_half * 2.0, d.plate_half * 2.0, d.plate_time,
+		d.plate_damage * _out(e))
+	z.tags.append(Ground.PLATE_TAG)
+	z.node.visible = false
+	Audio.play(&"summon")
+
+
 ## Elite: stays back, raises skeletons around itself and shoots a fan of orbs.
 func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	var d := e.def
+	if e.state == Enemy.State.WINDUP and e.volley == 2:
+		# A2: its three orbs aimed on the floor, held for the last FAN_LOCK s
+		if e.state_t < d.volley_windup - FAN_LOCK:
+			e.aim = toward
+			_point_fan(e)
+		if e.state_t >= d.volley_windup:
+			_volley(e, e.aim)
+			_end_fan(e)
+			e.volley = 0
+			e.volley_cd = d.volley_every
+			e.cooldown = maxf(e.cooldown, d.volley_recover)
+			_set_state(e, Enemy.State.ATTACK, &"attack", false)
+		return
 	if e.state == Enemy.State.WINDUP:
 		if not e.fan.is_empty():
 			# C19-5: its fan's threads follow him until it shoots (they and the orbs leave along the same aim)
@@ -916,19 +1756,24 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 		if e.state_t >= d.attack_windup:
 			e.memo += 1
 			# every other cast raises skeletons, as many as the fight has room for (none: it conjures circles)
-			var raised := room_for(PRIEST_RAISES) if e.memo % 2 == 1 else 0
-			if raised > 0:
-				var skeleton := def(&"skeleton")
-				for k in raised:
-					var at := raise_spot(e.pos, k)
-					spawn(skeleton, at, true)
-					fx.burst(&"shadow", Vector3(at.x, 0.3, at.y))
-				Audio.play(&"summon")
-			else:
+			var raised := 0
+			if e.rows == 1:
+				# the Elder's call (raise_cd_max > 0): ranged dead at the floor's edge, away from the paladin
+				e.rows = 0
+				e.raised.append_array(_raise_dead(e, _calls(e), &"", true))
+				raised = 1
+			elif d.raise_cd_max <= 0.0:
+				raised = room_for(PRIEST_RAISES) if e.memo % 2 == 1 else 0
+				if raised > 0:
+					_raise_dead(e, raised)
+			if raised <= 0:
 				# the circles on the floor are Morvath's alone (Daniel, 2026-11-16): a fan of orbs
 				shoot(e, e.aim if not e.fan.is_empty() else toward)
 			if raised > 0:
 				_end_fan(e)
+			elif d.volley_count > 0 and e.volley_cd <= 0.0 and target_alive:
+				e.volley = 1  # A2: after the fan it backs away and looses its volley
+				e.volley_t = 0.0
 			e.fan.clear()
 			e.cooldown = d.attack_cooldown
 			_set_state(e, Enemy.State.ATTACK, &"attack", false)
@@ -938,6 +1783,9 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			_end_attack(e)
 		return
 	e.dir = toward
+	if e.volley == 1:
+		_volley_back(e, dt, toward)
+		return
 	if dist > d.attack_range or not _can_fire(e):
 		e.pos += _walk * _speed(e) * dt
 	elif dist < d.attack_range * 0.6:
@@ -947,6 +1795,11 @@ func _behave_priest(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	if e.cooldown <= 0.0 and target_alive and _can_fire(e):
 		# T5-03: raising the dead is its own gesture (the priest's ritual), the fan of orbs the staff's
 		var raises := (e.memo + 1) % 2 == 1 and room_for(PRIEST_RAISES) > 0
+		if d.raise_cd_max > 0.0:
+			raises = e.call_cd <= 0.0 and _calls(e) > 0
+			e.rows = 1 if raises else 0
+			if raises:
+				e.call_cd = _rng.randf_range(d.raise_cd_min, d.raise_cd_max)
 		_set_state(e, Enemy.State.WINDUP, &"summon" if raises else &"cast")
 		if not raises:
 			_aim_fan(e, toward)
@@ -964,16 +1817,48 @@ const AIM_THREAD_WIDTH := 0.7
 const FAN_TAG := &"aim_fan"
 
 
-func _aim_fan(e: Enemy, toward: Vector2) -> void:
+func _aim_fan(e: Enemy, toward: Vector2, count: int = -1, spread: float = -1.0, windup: float = -1.0) -> void:
 	_end_fan(e)
 	var d := e.def
-	var n := mini(FAN_THREADS, maxi(1, d.shot_count))
+	e.fan_spread = spread
+	var n := mini(FAN_THREADS, maxi(1, d.shot_count if count < 0 else count))
 	for i in n:
-		var z := ground.add_aim_warning(e.pos, toward, 1.0, AIM_THREAD_WIDTH, d.attack_windup + _dt, 0.0)
+		var z := ground.add_aim_warning(e.pos, toward, 1.0, AIM_THREAD_WIDTH, (d.attack_windup if windup < 0.0 else windup) + _dt, 0.0)
 		z.tags.append(FAN_TAG)
 		e.fan.append(z)
 	e.aim = toward
 	_point_fan(e)
+
+
+## A2: the elder backs volley_back meters from him over volley_back_time s (stopping at a wall, a stone or the end of the
+## time), then raises its staff: the threads of its three orbs are born with the wind-up.
+func _volley_back(e: Enemy, dt: float, toward: Vector2) -> void:
+	var d := e.def
+	e.volley_t += dt
+	var away := _flee(e, -toward)
+	var blocked := away == Vector2.ZERO
+	if not blocked:
+		e.pos += away * (d.volley_back / maxf(d.volley_back_time, 0.1)) * dt
+	if blocked or e.volley_t >= d.volley_back_time:
+		e.volley = 2
+		_set_state(e, Enemy.State.WINDUP, &"cast")
+		e.aim = toward
+		_aim_fan(e, toward, d.volley_count, d.volley_spread, d.volley_windup)
+
+
+## A2: the slow orbs that turn after him.
+func _volley(e: Enemy, dir: Vector2) -> void:
+	var d := e.def
+	var n := maxi(1, d.volley_count)
+	Audio.play(CombatSounds.shot(d))
+	for i in n:
+		var turn := 0.0 if n == 1 else deg_to_rad(d.volley_spread) * (float(i) / float(n - 1) - 0.5)
+		var aim := dir.rotated(turn)
+		var s := projectiles.fire(Projectiles.Kind.ORB, e.pos + aim * (d.radius + 0.2), aim, d.volley_speed,
+			d.attack_damage * _out(e), 0.45, d.volley_life, d.magic_color)
+		s.warned = d.volley_windup
+		s.turn = deg_to_rad(d.volley_turn)
+		s.homing = d.volley_life
 
 
 ## Turns the fan's threads with e.aim (each the length its shot flies before stone stops it).
@@ -982,7 +1867,7 @@ func _point_fan(e: Enemy) -> void:
 	var n := e.fan.size()
 	var reach := d.shot_range if d.shot_range > 0.0 else d.attack_range * RANGED_REACH
 	for i in n:
-		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread) * (float(i) / float(n - 1) - 0.5)
+		var turn := 0.0 if n == 1 else deg_to_rad(d.shot_spread if e.fan_spread < 0.0 else e.fan_spread) * (float(i) / float(n - 1) - 0.5)
 		var dir := e.aim.rotated(turn)
 		var z := e.fan[i] as Ground.Zone
 		if z == null or z.cancelled or z.node == null or not is_instance_valid(z.node):
@@ -1040,6 +1925,84 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				(e.warning as Ground.Zone).land_quick = d.strikes > 1
 			else:
 				e.pos += toward.rotated(e.side * PI * 0.5) * _speed(e) * 0.5 * dt
+
+
+## C5, the Varredor (CB-7): rooted, it lays a bar of floor along a line (SweepRules.start_dir: behind where the paladin
+## stands, with a thread ahead of it for the way it will turn), follows him with it until the last aim_lock seconds, then
+## swings it round itself, sweep_degrees in sweep_time; within sweep_clear m of it the bar does not hurt. Only the bar's
+## own place hurts, where the drawn bar is now (once a sweep), and it rests recover_time after it.
+const SWEEP_TRIGGER := 1.5
+## The tag on every zone of a sweep (Ground.Zone.tags): the robot keeps to its pocket and steps out of the bar's reach (Bot._danger).
+const SWEEP_TAG := &"sweep"
+## The drawn bar of a sweep keeps this much of its fill in the floor's step (Ground fills it by its life).
+const SWEEP_FILL := 0.12
+
+
+func _behave_sweep(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
+	var d := e.def
+	match e.state:
+		Enemy.State.WINDUP:
+			if e.state_t < d.attack_windup - d.aim_lock:
+				e.aim = SweepRules.start_dir(toward, e.side)
+				_point_sweep_marks(e)
+			else:
+				ground.lock_line(e.warning as Ground.Zone)
+			e.dir = e.aim
+			if e.state_t >= d.attack_windup - TICK_SLACK:
+				Ground.end_zone(e.warning as Ground.Zone)
+				Ground.end_zone(e.warning2 as Ground.Zone)
+				e.warning2 = null
+				_set_state(e, Enemy.State.ATTACK, &"attack", false)
+				e.landed = false
+				# the bar itself, held lit by keeping its life up (Ground fills a warning as its life runs out)
+				var bar := ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0)
+				bar.life = SWEEP_FILL
+				GroundLook.put(bar.mat, &"root_clear_m", d.sweep_clear)
+				bar.tags.append(SWEEP_TAG)
+				e.warning = bar
+		Enemy.State.ATTACK:
+			var dir := SweepRules.dir_at(e.aim, e.side, d.sweep_degrees, d.sweep_time, e.state_t)
+			e.dir = dir
+			var bar := e.warning as Ground.Zone
+			if bar != null:
+				bar.life = SWEEP_FILL
+				Ground.point_line(bar, e.pos, dir)
+			if not e.landed and target_alive and SweepRules.in_bar(e.pos, dir, target, d.attack_range, d.attack_width, d.sweep_clear, Player.RADIUS * 0.6):
+				e.landed = true
+				last_by = d.id
+				last_warn = d.attack_windup
+				last_offscreen = screen_flag(e.pos)
+				hit_player.emit(d.attack_damage * _out(e), e.pos)
+			if e.state_t >= d.sweep_time - TICK_SLACK:
+				Ground.end_zone(bar)
+				e.warning = null
+				e.cooldown = d.attack_cooldown
+				_end_attack(e)
+		_:
+			e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0)) if e.dir.length_squared() > 0.01 else toward
+			if e.cooldown <= 0.0 and target_alive and dist <= d.attack_range + SWEEP_TRIGGER and (d.max_attackers <= 0 or attackers(d) < d.max_attackers):
+				e.side = -e.side
+				e.aim = SweepRules.start_dir(toward, e.side)
+				_set_state(e, Enemy.State.WINDUP, &"windup")
+				var time := d.attack_windup + dt
+				e.warning = ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, time, 0.0)
+				GroundLook.put((e.warning as Ground.Zone).mat, &"root_clear_m", d.sweep_clear)
+				(e.warning as Ground.Zone).tags.append(SWEEP_TAG)
+				ground.track_line(e.warning as Ground.Zone)
+				e.warning2 = ground.add_aim_warning(e.pos, e.aim, d.attack_range * 0.8, SWEEP_WAY_WIDTH, time, 0.0)
+				(e.warning2 as Ground.Zone).tags.append(SWEEP_TAG)
+				_point_sweep_marks(e)
+
+
+## The bar's width of the thread that tells the way the bar will turn (the warning of the bar itself is the bar's width).
+const SWEEP_WAY_WIDTH := 0.45
+
+
+## The wind-up's bar on the line it starts along and the thread SweepRules.WAY_DEGREES ahead of it, the way it turns.
+func _point_sweep_marks(e: Enemy) -> void:
+	Ground.point_line(e.warning as Ground.Zone, e.pos, e.aim)
+	if e.warning2 != null:
+		Ground.point_line(e.warning2 as Ground.Zone, e.pos, e.aim.rotated(e.side * deg_to_rad(SweepRules.WAY_DEGREES)))
 
 
 ## Comes to mid range, plants itself and blasts a wide cone ahead.
@@ -1153,6 +2116,18 @@ func stuck_count() -> int:
 
 
 func _set_state(e: Enemy, state: Enemy.State, anim: StringName, restart: bool = true) -> void:
+	if e.def.id in IDLE_TRACKED:
+		if state == Enemy.State.WALK and e.state != Enemy.State.WALK:
+			e.idle_gap = 0.0
+		if state == Enemy.State.RECOVER or (state == Enemy.State.WALK and e.state == Enemy.State.ATTACK):
+			e.idle_dead = 0.0
+		elif state != Enemy.State.WALK and e.idle_gap >= 0.0:
+			var st := _idle_stats(e)
+			st.add_gap(e.idle_gap)
+			if e.idle_dead >= 0.0:
+				st.add_dead(e.idle_dead)
+			e.idle_gap = -1.0
+			e.idle_dead = -1.0
 	if state == Enemy.State.WINDUP and e.state != Enemy.State.WINDUP:
 		_tally_windup(e, 0)
 	elif e.state == Enemy.State.WINDUP and state != Enemy.State.WINDUP:
@@ -1281,31 +2256,144 @@ func body_at(pos: Vector2, radius: float, ignore: Enemy = null) -> bool:
 	return false
 
 
+## The half angle of the front a shield covers (EnemyDef.front_block), in degrees.
+const FRONT_DEGREES := 75.0
+
+
+## Its shield is up at all (the rule's conditions without the angle): it has one, the guard is not open, and it is not
+## spent nor helpless. blocks_front and the drawing (the streaks on the floor, the open walk) read this one.
+func guard_up(e: Enemy) -> bool:
+	if e.def.guard_up_time > 0.0 and e.guard_t <= 0.0:
+		return false  # (K3: a guardian's shield is up only by time)
+	return e.def.front_block > 0.0 and e.open_t <= 0.0 and e.state != Enemy.State.RECOVER and not e.helpless()
+
+
+## Its shield stands between it and `from` now: guard not open, not spent nor helpless, and `from` in front of it.
+func blocks_front(e: Enemy, from: Vector2) -> bool:
+	if not guard_up(e):
+		return false
+	var to := from - e.pos
+	var ahead := e.face if e.face != Vector2.ZERO else e.dir
+	return to.length_squared() > 0.0001 and absf(ahead.angle_to(to)) <= deg_to_rad(FRONT_DEGREES)
+
+
+## `from` is at its back (past 110 degrees of where it faces).
+func behind(e: Enemy, from: Vector2) -> bool:
+	var to := from - e.pos
+	var ahead := e.face if e.face != Vector2.ZERO else e.dir
+	return to.length_squared() > 0.0001 and absf(ahead.angle_to(to)) >= deg_to_rad(110.0)
+
+
+## The special opens its guard (EnemyDef.front_open).
+func open_guard(e: Enemy) -> void:
+	if e.def.front_block <= 0.0 or (e.def.guard_up_time > 0.0 and e.guard_t <= 0.0):
+		return
+	if e.open_t <= 0.0:
+		tells.armor_break(Vector3(e.pos.x, e.y + 1.2 * e.def.size, e.pos.y), e.def.size * 0.6, EnemyFx.STEEL)
+		tells.guard_fling(e)
+		fx.word(Vector3(e.pos.x, 2.0 + 1.6 * e.def.size, e.pos.y), T.t(&"word_guard_open"), Combat.LIGHT)
+	e.open_t = e.def.front_open
+
+
+## CB-4: the priest armors the plain enemies nearest to it, and the threads of it rise from them while it stands.
+func _step_ward(e: Enemy, dt: float) -> void:
+	e.ward_t -= dt
+	if e.ward_t > 0.0:
+		return
+	e.ward_t = e.def.ward_every
+	var near: Array[Enemy] = []
+	for o in list:
+		if o.alive and o != e and o.def.ward_count <= 0 and not o.def.elite and o.def.behavior != EnemyDef.Behavior.BOSS \
+				and o.armor <= 0.0 and o.state != Enemy.State.RISE and o.pos.distance_to(e.pos) <= e.def.ward_radius:
+			near.append(o)
+	near.sort_custom(func(a: Enemy, b: Enemy) -> bool: return a.pos.distance_squared_to(e.pos) < b.pos.distance_squared_to(e.pos))
+	for o in near.slice(0, e.def.ward_count):
+		o.warded_by = e
+		o.max_armor = e.def.ward_armor
+		o.armor = e.def.ward_armor
+		fx.ring(o.pos, o.def.radius + 0.5, EnemyFx.OLD_GOLD, 0.35, 0.15, true)
+		var back: Vector2 = e.pos - o.pos
+		fx.wisps(Vector3(o.pos.x, 1.0, o.pos.y), Vector3(back.x, 0.6, back.y), e.def.magic_color, 5, 3.0, 0.4, 0.7, 0.15, 0.3)
+
+
+## Peaks of the body's give when armor took a heavy blow (combate_c1_leitura 7): a common body, a guardian.
+const HEAVY_ARMOR_PEAK: Array[float] = [0.06, 0.04]
+const CRACK_TIME := 0.18
+const CRACK_PITCH: Array[float] = [1.0, 0.92, 0.84]
+const CRACK_KICK := 0.15
+
+
+## The armor crossed 75, 50 or 25% (once each; two at once: the lower): shards from the chest, a white breath, its
+## sound; a guardian more shards and a short kick. Only drawn and heard.
+func _crack(e: Enemy, chest: Vector3, from_dir: Vector2, level: int) -> void:
+	e.crack_t = CRACK_TIME
+	tells.armor_crack(chest, -from_dir, e.def.size, e.def.heavy)
+	Audio.play(&"mat_armor", CRACK_PITCH[clampi(level - 1, 0, 2)])
+	if fx != null and e.def.heavy and from_dir != Vector2.ZERO:
+		fx.kick(from_dir.normalized(), CRACK_KICK)
+
+
+func _unward(e: Enemy) -> void:
+	e.warded_by = null
+	e.armor = 0.0
+	e.max_armor = 0.0
+
+
+## It fell: the armor it gave goes with it.
+func _end_wards(e: Enemy) -> void:
+	for o in list:
+		if o.warded_by == e:
+			var chest := Vector3(o.pos.x, o.y + 1.2 * o.def.size, o.pos.y)
+			if o.alive and _palms.has(e):
+				# the thread parts from the middle to the ends (drawn: the palm it ran from, last frame's)
+				tells.ward_cut((_palms[e] as Array)[o.get_instance_id() % 2], chest)
+			tells.armor_break(chest, o.def.size * 0.6)
+			_unward(o)
+
+
 ## Damage to an enemy. Returns true when it died.
 ## `flash` false: no flash of a blow on the body (a burn's tick).
 func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color: Color = Fx.GOLD, show_number: bool = true, big: bool = false, flash: bool = true) -> bool:
 	if not e.alive or e.invulnerable:
 		return false
+	if e.broken_t > 0.0 and e.armor <= 0.0:
+		amount *= 1.0 + (boss_vuln if e.def.behavior == EnemyDef.Behavior.BOSS else e.def.poise_vuln)  # C1b: a broken poise leaves it open (C1d: so does Morvath's Postura)
 	# what it really takes off (armor, or life down to its floor), under where it came from (DT-016)
 	dealt.add(dealing, minf(amount, e.armor) if e.armor > 0.0 else clampf(e.hp - e.hp_floor, 0.0, amount))
 	if e.state == Enemy.State.RECOVER and flash and from_dir != Vector2.ZERO:
 		_tally_windup(e, 3)  # a blow in its window after the attack (on the armor too)
 	if e.armor > 0.0:
 		# armor takes the blow: no push, no flinch; breaking it staggers (Game listens to armor_broken)
+		var level_before := EnemyFx.wear_level(e.armor, e.max_armor)
 		e.armor = DamageCalc.against_armor(e.armor, amount)[0]
 		e.flash_t = FLASH_TIME
 		e.flash_power = WEAK_FLASH
 		e.absorbed = true
 		var chest := Vector3(e.pos.x, e.y + 1.2 * e.def.size, e.pos.y)
+		var heavy_hit := heavy_blow or strong
 		if show_number:
 			fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, ARMOR_COLOR, big, e.get_instance_id())
-			tells.armor_hit(chest, from_dir)
+			tells.armor_hit(chest, from_dir, EnemyFx.HEAVY_SPARKS if heavy_hit else EnemyFx.ABSORB_SPARKS)
+		if heavy_hit and flash and from_dir != Vector2.ZERO:
+			# only drawn: the gold edge a moment longer and the body gives a little (never the hit pose)
+			e.edge_t = EnemyFx.HEAVY_EDGE
+			e.recoil_t = 0.0
+			e.recoil_dir = from_dir.normalized()
+			e.recoil_peak = HEAVY_ARMOR_PEAK[1 if e.def.heavy else 0]
+		var level := EnemyFx.wear_level(e.armor, e.max_armor)
+		if e.armor > 0.0 and level > level_before and e.max_armor > 0.0:
+			_crack(e, chest, from_dir, level)
 		if e.armor <= 0.0:
 			tells.armor_break(chest, e.def.size)
-			armor_broken.emit(e)
+			if e.warded_by != null:
+				_unward(e)  # (a ward broken staggers no one: the plain enemy under it is no elite)
+			else:
+				armor_broken.emit(e)
 		return false
 	e.absorbed = false
 	e.hp = maxf(e.hp - amount, e.hp_floor)
+	if amount > 0.0:
+		e.calm_t = 0.0
 	if flash:
 		e.flash_t = FLASH_TIME
 		e.flash_power = 1.0 if big else WEAK_FLASH
@@ -1315,6 +2403,11 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			# only drawn: the body jolts back from the blow and returns (HitRecoil)
 			e.recoil_t = 0.0
 			e.recoil_dir = from_dir.normalized()
+			e.recoil_peak = 0.0
+	if e.hp > 0.0 and e.def.poise > 0.0 and flash and from_dir != Vector2.ZERO:
+		_wear_poise(e, from_dir)
+	if e.hp > 0.0 and e.def.behavior == EnemyDef.Behavior.BOSS and flash and from_dir != Vector2.ZERO:
+		boss_blow.emit(e, dealing)
 	if (e.state == Enemy.State.WALK or e.state == Enemy.State.RECOVER) and not e.def.elite and e.def.behavior != EnemyDef.Behavior.BOSS:
 		e.hurt_t = HURT_TIME
 	if flash and from_dir != Vector2.ZERO and e.hp > 0.0 and StunRule.stuns(big or strong):
@@ -1326,9 +2419,29 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if show_number:
 		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id())
 	if e.hp <= 0.0:
+		if e.def.rise_time > 0.0 and e.group_id != 0 and _standing_of(e) > 0:
+			_lie_down(e)  # C5: a Trinca's figure falls into a mound while another of them stands
+			return false
+		if e.mod != null and e.mod.echo_time > 0.0 and not e.echoed:
+			e.echoed = true
+			_lie_down(e)  # C1e, the Eco: a mound that rises once, alone, with a share of its life
+			return false
 		if e.state == Enemy.State.WINDUP:
 			_tally_windup(e, 2)
+		if e.def.death_burst > 0.0:
+			# CB-4: what burned in it bursts a moment later
+			var by := acting
+			acting = e.def.id
+			ground.add_ember_warning(e.pos, e.def.attack_width, e.def.death_burst, e.def.attack_damage * _out(e))
+			acting = by
+		if e.mod != null and e.mod.burst_arms > 0:
+			_cross_burst(e)  # C1e, the Detonante
+		if e.def.ward_count > 0:
+			_end_wards(e)
 		# its blows still to come (C19: a second blade or burst, a fan's threads) go with it
+		if _holds_bar(e.def) and e.warning != null:
+			Ground.end_zone(e.warning as Ground.Zone)  # (C5: the bar of a sweep is held lit by the Varredor alone)
+			e.warning = null
 		if e.warning2 != null:
 			Ground.end_zone(e.warning2 as Ground.Zone)
 			e.warning2 = null
@@ -1354,8 +2467,46 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 			fx.chips(Vector3(e.pos.x, 1.0 + e.y, e.pos.y), Vector3(from_dir.x, 0.6, from_dir.y), CrowdRenderer.GILD_COLOR, 2,
 				5.5, 0.12, 0.6, 1.2)
 		killed.emit(e)
+		_end_group(e)
 		return true
 	return false
+
+
+## C1b (Poise): a blow of the paladin wears the poise by its button (Feel.poise_weights, by `dealing`); at 0 it breaks.
+func _wear_poise(e: Enemy, from_dir: Vector2) -> void:
+	var d := e.def
+	if not Poise.takes(d.poise, e.frozen_t, e.stun_t, e.state == Enemy.State.DOWN or e.state == Enemy.State.RISE, e.invulnerable):
+		return
+	var shr := Poise.share(dealing, Feel.live().poise_weights)
+	if shr <= 0.0:
+		return
+	e.poise = Poise.wear(e.poise, d.poise, shr)
+	e.poise_idle = 0.0
+	if e.poise > 0.0:
+		return
+	var key := String(dealing)
+	breaks[key] = int(breaks.get(key, 0)) + 1
+	interrupt(e)
+	e.stun_t = maxf(e.stun_t, d.poise_stun)
+	e.stun_len = d.poise_stun
+	e.broken_t = d.poise_stun
+	e.hurt_t = HURT_TIME
+	var chest := Vector3(e.pos.x, e.y + 1.2 * d.size, e.pos.y)
+	tells.armor_break(chest, d.size * 0.8, EnemyFx.POISE_BREAK)
+	Audio.play(CombatSounds.EVENTS[&"stagger"])
+	fx.word(Vector3(e.pos.x, 2.0 + 2.0 * d.size, e.pos.y), T.t(&"word_poise"), Combat.LIGHT)
+	poise_broken.emit(e, dealing)
+
+
+func _poise_timers(e: Enemy, dt: float) -> void:
+	if e.broken_t > 0.0:
+		e.broken_t = maxf(0.0, e.broken_t - dt)
+		if e.broken_t <= 0.0:
+			e.poise = e.def.poise  # it recovers: full again
+			e.poise_idle = 0.0
+		return
+	e.poise_idle += dt
+	e.poise = Poise.settle(e.poise, e.def.poise, e.poise_idle, e.def.poise_idle)
 
 
 ## GF-12 (D-42, Hades II per enemy): a blow stuns it for `seconds` (EnemyDef.stun_time, stun_heavy_time): it stops
@@ -1393,6 +2544,7 @@ func interrupt(e: Enemy) -> bool:
 		Ground.end_zone(e.warning2 as Ground.Zone)
 		e.warning2 = null
 	_end_fan(e)
+	e.volley = 0
 	if e.def.behavior != EnemyDef.Behavior.PRIEST:
 		e.memo = 0  # (a knight's slam, a burst's ticks; the elder priest counts its casts there)
 	_cutting = true
@@ -1430,6 +2582,33 @@ func _tally_windup(e: Enemy, what: int) -> void:
 	windups[id][what] += 1
 
 
+func _idle_stats(e: Enemy) -> IdleStats:
+	if not idle.has(e.def.id):
+		idle[e.def.id] = IdleStats.new()
+	return idle[e.def.id]
+
+
+## One step of a guardian's cadence count: earned openings (stunned, shield away, armor broken) are left out.
+func _tally_idle(e: Enemy, dt: float) -> void:
+	var earned := e.stun_t > 0.0 or e.away_t > 0.0 or e.open_t > 0.0 or e.broken_t > 0.0 or e.helpless()
+	var walking := e.state == Enemy.State.WALK
+	_idle_stats(e).tick(dt, walking, earned, e.state == Enemy.State.RECOVER)
+	if earned:
+		return
+	if e.state == Enemy.State.RECOVER or walking:
+		e.idle_dead += dt if e.idle_dead >= 0.0 else 0.0
+	if walking and e.idle_gap >= 0.0:
+		e.idle_gap += dt
+
+
+## The guardians' idle gaps and shares for RESULT: {id: {n, mean, p90, max, share, fight}}.
+func idle_report() -> Dictionary:
+	var out := {}
+	for id: StringName in idle:
+		out[String(id)] = (idle[id] as IdleStats).report()
+	return out
+
+
 ## The wind-ups by kind for RESULT: {id: {started, struck, cut, punished}}.
 func windup_report() -> Dictionary:
 	var out := {}
@@ -1446,6 +2625,9 @@ func clear_crowd() -> void:
 			e.alive = false
 			e.state = Enemy.State.DEAD
 			e.anim = &"death"
+			if e.warning != null and _holds_bar(e.def):
+				Ground.end_zone(e.warning as Ground.Zone)
+				e.warning = null
 			fx.burst(&"shadow", Vector3(e.pos.x, 0.6, e.pos.y))
 	_sweep()
 
@@ -1466,6 +2648,17 @@ var bar_trails := BarTrails.new()
 ## the end of the scythe, the rain or his stun into the guard the body crossed 0.13 to 0.16 m a frame, more than the clips
 ## move on their own (0.03 to 0.04).
 const CLIP_FADE := 0.1
+## The guard's open and shut clips fade into each other over this (combate_c1_leitura 2); the lit streak of a blow it shut.
+const GUARD_FADE := 0.12
+## The fuse of a runner falling (its death_burst): swell to this much more, tremble this far (m, from, to).
+const FUSE_SWELL := 0.12
+const FUSE_SHAKE := Vector2(0.02, 0.06)
+## Who a priest armors glows between these flashes (as an absorbed blow's old gold) at WARDED_HZ.
+const WARDED_GLOW := Vector2(0.20, 0.34)
+const WARDED_HZ := 1.2
+## Where each priest's palms are this frame (Enemy -> [left, right]), for the threads.
+var _palms := {}
+const GUARD_BLOCK_TIME := 0.12
 const BOSS_CLIP_FADE := 0.18
 ## T5-12: a recovery fades into the guard over this long once its clip has played.
 const RECOVER_FADE := 0.3
@@ -1506,6 +2699,7 @@ func render(render_dt := 1.0 / 60.0) -> void:
 	if bar_trails.size() > list.size() + 32:
 		bar_trails.prune(func(who: Object) -> bool: return (who as Enemy).alive)
 	tells.begin()
+	_palms.clear()
 	for e in list:
 		var d := e.def
 		var kind := renderer.kind(d)
@@ -1643,32 +2837,80 @@ func render(render_dt := 1.0 / 60.0) -> void:
 			var tremble := Vector2(e.dir.y, -e.dir.x) * e.shake * sin(TAU * SHAKE_HZ * e.state_t)
 			at += Vector3(tremble.x, 0, tremble.y)
 		var k := clampf(e.flash_t / FLASH_TIME, 0.0, 1.0)
-		var state := CrowdRenderer.state(k * e.flash_power, e.frozen_t > 0.0, e.burn_t > 0.0, 0.0, e.absorbed, tell,
-			e.max_armor > 0.0 and e.armor <= 0.0)
+		var shown_flash := k * e.flash_power
+		var shown_absorbed := e.absorbed
+		if e.warded_by != null and e.armor > 0.0 and not (e.absorbed and shown_flash > 0.0):
+			# combate_c1_leitura 3: whoever the priest armors glows in old gold, slowly (a blow takes it to the full flash)
+			shown_flash = lerpf(WARDED_GLOW.x, WARDED_GLOW.y, 0.5 + 0.5 * sin(TAU * WARDED_HZ * now))
+			shown_absorbed = true
+		if e.edge_t > 0.0 and e.absorbed:
+			# combate_c1_leitura 7: a heavy blow on armor keeps its edge of gold a little longer
+			shown_flash = maxf(shown_flash, e.edge_t / EnemyFx.HEAVY_EDGE * e.flash_power)
+			shown_absorbed = true
+		if e.crack_t > 0.0 and e.armor > 0.0:
+			# the crack of the armor (75, 50, 25%): the gold at its full for CRACK_TIME
+			shown_flash = 1.0
+			shown_absorbed = true
+		var state := CrowdRenderer.state(shown_flash, e.frozen_t > 0.0, e.burn_t > 0.0, 0.0, shown_absorbed, tell,
+			EnemyFx.wear(e.armor, e.max_armor), d.throw_flight > 0.0 and shield_away(e))
 		# a blow flattens and widens the body for an instant, and lifts it a little; less on a heavy body, and not at
 		# all when its armor took it
-		var give := 0.0 if e.absorbed else k * (HEAVY_SQUASH if d.heavy else 1.0)
+		var give := 0.0 if e.absorbed or e.block_t > 0.0 else k * (HEAVY_SQUASH if d.heavy else 1.0)
 		var squash := Vector3(1.0 + 0.25 * give, 1.0 - 0.2 * give, 1.0 + 0.25 * give)
 		var back := HitRecoil.offset(e.recoil_t, d.heavy)
+		if e.recoil_peak > 0.0:
+			back *= e.recoil_peak / (HitRecoil.HEAVY_PEAK if d.heavy else HitRecoil.PEAK)
 		at += Vector3(e.recoil_dir.x, 0.0, e.recoil_dir.y) * back
 		if e.drawn_anim == &"rise" and anim != &"rise":
 			fade_len = RISE_FADE
+		if d.front_block > 0.0:
+			# combate_c1_leitura 2: the guard drawn as the rule has it (guard_up), open: the shield out and the chest in view
+			var open := StringName(String(anim) + "_open")
+			if (anim == &"walk" or anim == &"idle") and not guard_up(e) and kind.model.frame_count(open) > 0:
+				anim = open
+				fade_len = maxf(fade_len, GUARD_FADE)
+			if e.alive:
+				tells.guard_marks(e, guard_up(e), blocks_front(e, target), clampf(e.block_t / GUARD_BLOCK_TIME, 0.0, 1.0))
+		if d.ward_count > 0 and kind.model.has_point("hand_l") and kind.model.frame_count(anim) > 0:
+			_palms[e] = [EnemyFx.anchor(e.pos, e.y, e.yaw(), d.size, kind.model.point("hand_l", anim, t)),
+				EnemyFx.anchor(e.pos, e.y, e.yaw(), d.size, kind.model.point("hand_r", anim, t))]
+		if d.behavior == EnemyDef.Behavior.BOSS and e.alive and kind.model.has_point("head") and kind.model.frame_count(anim) > 0:
+			# GR-7: his two eyes where the pose drawn has his head
+			tells.eyes(EnemyFx.anchor(e.pos, e.y, e.yaw(), d.size, kind.model.point("head", anim, t)), e.yaw(), d.size,
+				e.state == Enemy.State.WINDUP, e.helpless())
 		var fade := _fade(e, anim, render_dt, fade_len)
 		e.drawn_row = renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean, e.fade_row, fade)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
-		if d.behavior != EnemyDef.Behavior.BOSS and (few or e.hp < e.max_hp or e.armor > 0.0):
+		if d.behavior != EnemyDef.Behavior.BOSS and e.state != Enemy.State.DOWN and (few or e.hp < e.max_hp or e.armor > 0.0):
 			var top := e.y + kind.model.height * d.size
 			var life := e.hp / maxf(e.max_hp, 0.001)
 			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), life,
 				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded, bar_trails.shown(e, life, now))
+			if d.poise > 0.0 and e.armor <= 0.0 and e.poise < d.poise:
+				renderer.add_poise_bar(d, Vector3(e.pos.x, top, e.pos.y), e.poise / d.poise, crowded)
+	_draw_ward_threads(now)
 	for e in dying:
-		var dissolve := clampf((e.dead_t - DISSOLVE_FROM) / (DEATH_SHOW - DISSOLVE_FROM), 0.0, 1.0)
-		var sink := maxf(0.0, e.dead_t - DISSOLVE_FROM) * 1.2
+		var burst := e.def.death_burst
+		# combate_c1_leitura 4: what bursts is its own fuse: embers and a fiery edge growing, a tremble, a swell, not sinking
+		# nor dissolving until it goes off (the dissolve then starts at the burst, not at DISSOLVE_FROM)
+		var fuse := burst > 0.0 and e.dead_t < burst
+		var from := burst if burst > 0.0 else DISSOLVE_FROM
+		var dissolve := clampf((e.dead_t - from) / (DEATH_SHOW - from), 0.0, 1.0)
+		var sink := maxf(0.0, e.dead_t - from) * 1.2
 		var tumble := -e.spin * sin(clampf(e.dead_t * 2.2, 0.0, 1.0) * PI) * 1.1
 		var fall := _fade(e, &"death", render_dt)
-		renderer.add_kind(renderer.kind(e.def), e.def, &"death", e.dead_t * 1.3, Vector3(e.pos.x, e.y - sink, e.pos.y), e.yaw(),
-			Color(death_flash(e), 0, 0, dissolve), Vector3.ONE, tumble, 0.0, e.fade_row, fall)
+		var swell := Vector3.ONE
+		var body := Vector3(e.pos.x, e.y - sink, e.pos.y)
+		var look := Color(death_flash(e), 0, 0, dissolve)
+		if fuse:
+			var share := e.dead_t / burst
+			swell = Vector3.ONE * (1.0 + FUSE_SWELL * share)
+			var shake := lerpf(FUSE_SHAKE.x, FUSE_SHAKE.y, share) * sin(TAU * SHAKE_HZ * e.dead_t)
+			body += Vector3(e.dir.y, 0.0, -e.dir.x) * shake
+			look = CrowdRenderer.state(look.r, false, true, 0.0, false, share)
+		renderer.add_kind(renderer.kind(e.def), e.def, &"death", e.dead_t * 1.3, body, e.yaw(),
+			look, swell, tumble, 0.0, e.fade_row, fall)
 	renderer.commit()
 	tells.commit()
 
@@ -1687,6 +2929,21 @@ func _fade(e: Enemy, anim: StringName, render_dt: float, seconds := 0.0) -> floa
 	e.fade_t += render_dt
 	var length := e.fade_len if e.fade_len > 0.0 else BOSS_CLIP_FADE if e.def.behavior == EnemyDef.Behavior.BOSS else CLIP_FADE
 	return clampf(e.fade_t / length, 0.0, 1.0)
+
+
+## The threads from each priest's palm to what it armors (EnemyFx.ward_thread), at most WARD_THREADS on the screen.
+func _draw_ward_threads(now: float) -> void:
+	var n := 0
+	for e in list:
+		if e.warded_by == null or e.armor <= 0.0 or not e.alive or not _palms.has(e.warded_by):
+			continue
+		if n >= EnemyFx.WARD_THREADS:
+			return
+		n += 1
+		var palms: Array = _palms[e.warded_by]
+		var from: Vector3 = palms[e.get_instance_id() % 2]
+		var close := target.distance_to(e.warded_by.pos) < EnemyFx.WARD_CLOSE_M
+		tells.ward_thread(from, Vector3(e.pos.x, e.y + 1.2 * e.def.size, e.pos.y), close, now, float(e.get_instance_id() % 7) * 0.13)
 
 
 ## How white one of the fallen is drawn (crowd.gdshader's flash): a flash for an instant as it falls; a boss never

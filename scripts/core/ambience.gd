@@ -13,6 +13,8 @@ const BY_ARENA := {
 	&"rift": &"amb_rift",
 	&"garden": &"amb_garden",
 	&"sanctuary": &"amb_sanctuary",
+	&"knight_hall": &"amb_sanctuary",  # the guardians' houses keep the Santuário's air (2026-11-23)
+	&"elder_hall": &"amb_sanctuary",
 	&"bridge": &"amb_bridge",
 	&"runes": &"amb_runes",
 	&"trial": &"amb_trial",

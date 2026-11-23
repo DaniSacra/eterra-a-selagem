@@ -7,7 +7,7 @@
 script = ExtResource("1_hoepa")
 stat = &"burn_dps"
 tag = &"luz"
-base = 5.0
+base = 3.0
 per_level = PackedFloat32Array()
 
 [resource]
@@ -16,5 +16,5 @@ id = &"chama_viva"
 family = 4
 icon = 14
 max_level = 1
-requires_sets = Array[PackedStringArray]([PackedStringArray("brasas", "redemoinho", "lamina_ardente", "golpe_brasa", "pesado_brasa", "circulo_brasa", "passo_brasa", "omega_brasa", "chuva_brasas"), PackedStringArray("flagelo", "onda_maior")])
+requires_sets = Array[PackedStringArray]([PackedStringArray("brasas", "redemoinho", "lamina_ardente", "golpe_brasa", "pesado_brasa", "circulo_brasa", "passo_brasa", "omega_brasa", "chuva_brasas", "ultimo_brasa"), PackedStringArray("flagelo", "onda_maior")])
 mods = Array[ExtResource("1_hoepa")]([SubResource("Resource_kiu7v")])

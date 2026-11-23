@@ -171,6 +171,17 @@ func test_the_buff_shows_while_the_brado_runs_over_its_diamond() -> void:
 	assert_false(b.intersects(hud._ult_slot.get_global_rect()))
 
 
+func test_the_buff_mark_has_an_emerald_dot_only_while_the_brado_absorbs() -> void:
+	var hud := await _run()
+	game.player.gifts.rally(5.0, 0.2, 0.15, 0)
+	game.player.gifts.ward = 0
+	await wait_process_frames(2)
+	assert_false(hud._buff.absorbing, "no absorption left: no dot")
+	game.player.gifts.ward = 2
+	await wait_process_frames(2)
+	assert_true(hud._buff.absorbing, "still absorbing: the emerald dot")
+
+
 # ---------- H6: the vignette ----------
 
 func test_the_vignette_stays_off_until_life_is_low() -> void:

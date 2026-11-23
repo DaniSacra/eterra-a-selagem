@@ -1,6 +1,7 @@
 class_name Skills
 extends Node3D
-## Runs the skills of the gifts the paladin holds: each one fires on its own every few seconds (orbits never stop).
+## Runs the skills of the gifts the paladin holds. An AUTO skill fires on its own every few seconds (orbits never stop);
+## any other (SkillDef.Trigger, BO-2) waits for its button: trigger() when the hero's move lands, at most once a `gap`.
 
 const STRIKE_RANGE := 13.0
 const STRIKE_DELAY := 0.28
@@ -44,6 +45,10 @@ class Pending:
 
 var game: Game
 var _timers: Dictionary = {}  # boon id -> seconds left
+var _gaps: Dictionary = {}  # boon id -> seconds before its button may set it off again
+## The orbit a button set off, and how long it turns yet (an AUTO orbit never stops and is _step_orbit's alone).
+var _orbit_boon: Boon
+var _orbit_left := 0.0
 var _pending: Array[Pending] = []
 var _orbs: Array[MeshInstance3D] = []
 var _orbit_angle := 0.0
@@ -57,16 +62,23 @@ func _ready() -> void:
 	Dev.seed_rng(_rng, 4)
 
 
-## Seconds until a gift's skill fires again, and its full cooldown (for the HUD).
+## Seconds until a gift's skill fires again, and its full cooldown (for the HUD): the wait for the timer of an AUTO
+## skill, the gap of a skill a button sets off.
 func timer(b: Boon) -> Vector2:
 	var lv := game.boons.level(b.id)
-	return Vector2(_timers.get(b.id, 0.0), b.skill.get_cooldown(lv) if b.skill else 0.0)
+	if b.skill == null:
+		return Vector2.ZERO
+	if not b.skill.alone():
+		return Vector2(_gaps.get(b.id, 0.0), b.skill.get_gap(lv))
+	return Vector2(_timers.get(b.id, 0.0), b.skill.get_cooldown(lv))
 
 
 func step(dt: float) -> void:
 	var orbit: Boon = null
+	for id: StringName in _gaps.keys():
+		_gaps[id] = maxf(0.0, float(_gaps[id]) - dt)
 	for b in game.boons.owned():
-		if b.skill == null:
+		if b.skill == null or not b.skill.alone():
 			continue
 		if b.skill.kind == SkillDef.Kind.ORBIT:
 			orbit = b
@@ -78,8 +90,46 @@ func step(dt: float) -> void:
 			else:
 				left = 0.25
 		_timers[b.id] = left
-	_step_orbit(orbit, dt)
+	# a button's orbit turns while its time lasts (and while it is still held), else the AUTO one
+	_orbit_left = maxf(0.0, _orbit_left - dt)
+	if _orbit_boon != null and (_orbit_left <= 0.0 or game.boons.level(_orbit_boon.id) <= 0):
+		_orbit_boon = null
+	_step_orbit(_orbit_boon if _orbit_boon != null else orbit, dt)
 	_step_pending(dt)
+
+
+## The trigger a move of the combo tree sets off, from its tags (the hero's buttons: the Investida is the dash blow, the
+## special the heavy one, the Brado the shout, the Omega its tag, the attack's last blow the finisher); -1 for a
+## blow that is no button's end (the first cuts of the combo).
+static func trigger_of(node: ComboNode) -> int:
+	if node.has_tag(&"omega"):
+		return SkillDef.Trigger.OMEGA
+	if node.has_tag(&"dash"):
+		return SkillDef.Trigger.RUSH
+	if node.has_tag(&"shout"):
+		return SkillDef.Trigger.SHOUT
+	if node.has_tag(&"heavy"):
+		return SkillDef.Trigger.SPECIAL
+	if node.has_tag(&"finisher"):
+		return SkillDef.Trigger.FINISHER
+	return -1
+
+
+## A button's move landed (or the dodge began, or the ultimate fell): every owned skill that button sets off goes, if its
+## gap is over. A skill with no target (nobody near for a strike) does not spend its gap.
+func trigger(which: SkillDef.Trigger) -> void:
+	if not game.player.alive():
+		return
+	for b in game.boons.owned():
+		if b.skill == null or b.skill.trigger != which or float(_gaps.get(b.id, 0.0)) > 0.0:
+			continue
+		var lv := game.boons.level(b.id)
+		if b.skill.kind == SkillDef.Kind.ORBIT:
+			_orbit_boon = b
+			_orbit_left = b.skill.get_duration(lv)
+		elif not _cast(b):
+			continue
+		_gaps[b.id] = b.skill.get_gap(lv)
 
 
 ## A skill's damage at a level, its first level's times the rarity the gift was taken at (C13-05).
@@ -91,6 +141,8 @@ func _cast(b: Boon) -> bool:
 	var lv := game.boons.level(b.id)
 	var s := b.skill
 	var tags: Array[StringName] = [&"skill", b.family_tag(), b.id]  # its id third: DealtBy.source
+	if s.trigger == SkillDef.Trigger.ULT:
+		tags.append(&"ultimate")  # the ultimate's frost freezes, as its blow does (Combat.FREEZERS)
 	var color := b.color()
 	var p := game.player.pos
 	match s.kind:
@@ -132,11 +184,19 @@ func _cast(b: Boon) -> bool:
 			game.fx.ring(at, s.get_radius(lv), color, METEOR_DELAY, 0.15, true)
 			Audio.play(&"rain")
 		SkillDef.Kind.CONSECRATE:
-			game.ground.add_zone(Ground.Kind.HOLY, p, s.get_radius(lv), s.get_status_power(lv), _damage(b, lv), tags)
-			if not _mark(b.family, p, s.get_radius(lv), color):
-				game.fx.ring(p, s.get_radius(lv), color, 0.5)
+			var r := s.get_radius(lv)
+			# the special's ground lies where its wave goes, in front of him; the others under him
+			var at := p + game.player.facing * (r + 1.0) if s.trigger == SkillDef.Trigger.SPECIAL else p
+			var time := s.get_duration(lv) if s.get_duration(lv) > 0.0 else s.get_status_power(lv)
+			if s.status == &"burn":
+				# embers on the floor: damage a second to whoever stands there, and burning (Combat.on_zone_hit)
+				game.ground.add_zone(Ground.Kind.EMBER, at, r, time, _damage(b, lv), Combat.EMBER_TAGS)
+			else:
+				game.ground.add_zone(Ground.Kind.HOLY, at, r, time, _damage(b, lv), tags)
+			if not _mark(b.family, at, r, color):
+				game.fx.ring(at, r, color, 0.5)
 			# slow gold dust rising over the hallowed floor
-			game.fx.chips(Vector3(p.x, 0.2, p.y), Vector3.UP, Fx.OLD_GOLD * 0.4, 6, 0.6, 0.12, 0.8, 1.2)
+			game.fx.chips(Vector3(at.x, 0.2, at.y), Vector3.UP, Fx.OLD_GOLD * 0.4, 6, 0.6, 0.12, 0.8, 1.2)
 			Audio.play(&"heal")
 	return true
 

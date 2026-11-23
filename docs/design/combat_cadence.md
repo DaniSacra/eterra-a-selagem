@@ -890,3 +890,57 @@ para R2, R3 e R5; GUT de R6, R9, R10 e R11; `frame_stats.py --hue` para R8 e R12
 quadro de dano no log de algum perigo novo, peço ao gameplay-engineer o mesmo registro do `Ground` que as Runas têm.
 Quebráveis: sonda de sensação com vasos em volta, os três casos de hit stop no `Fx.rate`, a captura dos cacos sobre os
 avisos e o teste da mira assistida.
+
+## 10. C1d: lutas de chefe (2026-11-22, `docs/design/chefes_c1d.md`; robô headless 60 fps, `--bot-reaction=0.25`, 12 sementes, novato e evoluído)
+Medidas por lote (hurt = dano médio no herói por encontro, tempo em s). Antes do C1d (partida com o C1b): Cavaleiro 72 (novato) e 52 (evoluído) s; Ancião 74 e 98 s, hurt 31,1 e 27,9.
+- **Lote 2 (Cavaleiro K1 a K4)**: g1 72 s novato (0 de 5 morrem) e 52 s evoluído (1 de 5), g2 63 e 61 s. Dentro de 50 a 70 s e no máximo 3 mortes de 12.
+- **Lote 3 (Ancião A2 e A3)**: hurt do Ancião evoluído 31,5 (g1, 1,13x) e 27,5 (g2, só 2 encontros); tempo 93 a 101 s (era 74 a 98, a blindagem dos servos alonga). Com `volley_life` 5 s o hurt subia a 38,1 (1,37x), por isso 4 s.
+- **Lote 4 (Postura)**, `--start=boss`, robô 0,25, 12 sementes: fase 1 mediana 51 s (novato) e 39 s (evoluído, 29 a 48), 12 de 12 passam da fase 1 nos dois; quebras de Postura por luta 2 a 19 (a maioria por ataque, 14 golpes, e Investida).
+- **Lote 5 (Condutores)**: ritual 15 a 20 s (antes 20 quase sempre; o robô derruba um condutor na maioria, dois em poucas), mínimo 10,4 s; nenhum estado trancou. Fase 2 mediana 53 a 58 s.
+- **Lote 6 (Corte do rastro)**: maldições que pegam o herói 9 para 2 nas 12 evoluídas (o Brado leva a maldição junto; o robô cortou 1 com a onda, joga a onda só com Magia e a maldição a menos de 9 m); nenhuma morte por maldição a mais.
+- **Lote 7 (Ruptura)**: 0 a 2 por luta (a primeira 12 s dentro da fase 4, depois a cada 25 s; nunca duas em menos de 25 s); a fase 4 dura 17 a 58 s.
+- **Lote 8 (ajuste)**: Postura 900 para 1300 e vulnerabilidade x1,4 para x1,3 (as lutas ganhas duravam 111 a 144 s); depois: ganhas de 132 e 183 s (só 2 de 12), fases medianas 39 / 55 (com o ritual) / 25 / 19 s: **a luta ainda não chega a 2:40 a 3:00 na maioria** (o dano do robô evoluído é de uns 50 de vida de Morvath por segundo, 6050 de vida pedem uns 120 s mais 15 s de ritual sem dano; chegar lá pede mais vida ou menos dano, decisão do Daniel/balance-designer). Teclas: partida inteira com todas as teclas, evoluído chega a Morvath 6 de 12 (novato 0, morre no Ancião como antes do C1d); só mouse (`--bot-mouse`) chega 1 de 12 (aceite: no máximo metade, ok). Ataque 51% do dano do evoluído, 69 a 75% só mouse.
+
+## 11. Avisos mais curtos e o Cavaleiro de 2026-11-23 (Daniel: "no outro jogo o ataque já assusta quando a animação começa; no nosso o aviso vermelho fica muito tempo")
+Referência (`sworn_numeros.md`, `sworn_gawain.md`): comum corpo a corpo avisa 0,33 a 0,83 s (mediana 0,67 s); o chefe cavaleiro tem dois ritmos, rápido (cerca de 0,8 s com recuperação aberta de 0,7 s) e lento e grande (1,6 s com consequência que se estende).
+Um botão só: `ENEMY_WINDUP` 0,8 em `_enemy` (`tools/make_data.gd`), vale para `attack_windup`, `close_windup`, `recharge_windup`, `guard_up_hit_windup` e `volley_windup` de todo inimigo que não é Morvath, com piso de 0,5 s (leve) e 0,6 s (pesado), nunca alonga. O Cavaleiro tem números próprios (`exact_windup`). Morvath: `windup_scale` por fase de 1, 1, 0,95, 0,9 para 0,85, 0,85, 0,82, 0,8 (`eruption_delay` 1,2 para 1,35, a leitura do círculo de 4 m fica igual: 1,08 s na fase 4).
+
+| Inimigo | Aviso antes | Aviso depois |
+|---|---|---|
+| Esqueleto, soldado levantado | 0,75 | 0,60 |
+| Esqueleto elite | 0,90 | 0,72 |
+| Esqueleto grande | 1,10 | 0,88 |
+| Corredor | 0,85 | 0,68 |
+| Corredor elite / grande | 1,00 / 1,25 | 0,80 / 1,00 |
+| Feiticeiro (comum e elite) | 1,00 | 0,80 |
+| Besteiro, Lançador, Saltador, padre (comum) | 0,80 | 0,64 |
+| Guarda (e elite), golpe de perto | 1,15 e 0,85 | 0,92 e 0,68 |
+| Gritador, Coveiro, Canalizador, Trinca, Varredor | 0,90 | 0,72 |
+| Armadilheiro | 0,50 | 0,50 (já no piso) |
+| Ancião (leque e salva) | 1,00 | 0,80 |
+| **Cavaleiro**, investida / segunda / golpe de perto / atrás do escudo | 1,00 / 0,80 / 0,80 / 0,85 | **0,60 / 0,45 / 0,50 / 0,60** |
+| Morvath, golpes de fase 4 (foice 0,8, ceifa 0,85, lâminas 0,7, tempestade 0,9) | 0,72 / 0,77 / 0,63 / 0,81 | 0,64 / 0,68 / 0,56 / 0,72 |
+
+Medido com o robô (headless 60 fps, 12 sementes, `--start=miniboss --guardian=knight`, hp do novato 30 e do evoluído 46; evoluído é `--boons=4 --forge=2 --account=6`):
+
+| | Antes | Depois |
+|---|---|---|
+| Novato: vitórias, tempo médio, dano do Cavaleiro por luta | 11 de 12 (12 de 12 na medição do Daniel), 55 s, 7 | 5 de 12 (42%), 71 s (vitórias de 74 a 134 s), 23 |
+| Evoluído: vitórias, tempo médio, dano do Cavaleiro | 12 de 12, 42 s, perto de 0 | 11 de 12 (92%), 59 s (46 a 67 s), 28 |
+
+O que fez a diferença: o aviso curto com a linha que segue o herói até 0,15 s antes, o escudo arremessado (quadrado no chão, depois o anel de 12 m/s que só a esquiva atravessa) e a armadura de 1700 que só os golpes fortes abrem de verdade (`armor_soft` 0,3). O dano baixou de 18 para 14 (investida e golpe de perto), 10 (aterrissagem do escudo) e 7 (anel) porque o herói do novato tem 30 de vida e dois golpes de 16 a 18 já o matavam. O robô erra o anel 25% das vezes de propósito (`Bot.RING_SKILL`).
+
+
+## 12. A pausa entre golpes dos chefes (Daniel, 2026-11-23: "o Cavaleiro fica parado muito tempo; Morvath igual; o Ancião tem boa cadência")
+Medido com o robô (headless 60 fps, 6 sementes, `--start=miniboss --guardian=knight` e `--start=boss`; evoluído `--boons=4 --forge=2 --account=6` (Morvath `--boons=10`), novato `--hero-hp=30`), pelo `RESULT.idle` e `RESULT.boss.idle` (`IdleStats`). **Pausa** é do fim da recuperação ao próximo aviso; **parado** é do fim do golpe (recuperação incluída) ao próximo aviso; aberturas ganhas (parede, escudo longe, armadura quebrada, Postura, ritual, rugido) ficam fora.
+
+| | Pausa média / p90 / máxima | Parado médio / p90 | Luta parada (andando / com a recuperação) |
+|---|---|---|---|
+| Cavaleiro antes (evoluído) | 0,60 / 1,10 / 1,5 s | 1,11 / 1,88 s | 30% / 55% |
+| Cavaleiro depois (evoluído) | 0,65 / 1,20 / 2,5 s | 0,93 / 1,53 s | 34% / 51% |
+| Morvath antes (evoluído) | 0,70 / 1,15 / 2,0 s | 1,83 / 2,83 s | 16% / 45% |
+| Morvath depois (evoluído) | 0,70 / 1,15 / 2,0 s | 1,58 / 2,79 s | 17% / 43% |
+
+O que se descobriu: a pausa depois da recuperação já era curta (0,25 a 0,75 s no Cavaleiro); o que o Daniel via parado era a recuperação (0,8 s) mais essa pausa, de 1,1 s a 1,8 s por golpe. A mudança pedida por ele: a pausa passa a ser sorteada, uniforme de 0,3 a 1,5 s com a vida cheia e encolhendo até 0,2 a 0,7 s sem vida (`AttackGap`), então a média no começo da luta é 0,9 s e cai com a vida; as recuperações do Cavaleiro (0,8 para 0,55) e de Morvath (foice 1,0 para 0,75, lâminas 0,8 para 0,6, tempestade 1,2 para 0,9, erupções 0,8 para 0,6, investida 1,1 para 0,8) encolheram; a Dupla Ceifa (2,2 s), a Ruptura, a Postura e o ritual ficaram, e o aviso de nenhum golpe mudou. Camadas simultâneas de Morvath saíram (um golpe de cada vez).
+Resultados: Cavaleiro evoluído 6 de 6 (era 5 de 6 na mesma amostra), novato 3 de 6 (50%; com o dano da investida e do golpe de perto em 8, arremesso 8, anel 6 e golpe da guarda 8, que com 14 e a pausa curta deixavam o novato em 0 de 6); Morvath evoluído 4 de 6 (antes 2 de 6), novato 0 de 6 (só relatório). Ancião: ver a seção de gameplay (arqueiros).
+Ancião: a pausa dele continua a de antes (média 2,3 s, `IdleStats` 64% da luta andando e atirando, que o Daniel gosta); agora chama dois arqueiros de 10 a 14 s na borda da sala: evoluído 6 de 6, novato 1 de 6, dano dos arqueiros de 0 a 15 por luta.

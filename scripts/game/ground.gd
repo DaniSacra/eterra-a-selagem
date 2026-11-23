@@ -47,11 +47,23 @@ const PLANT_SOURCE := &"plant"
 ## SR-P2 the slab that gives (PlateFloor, plate_source &"sag"), SR-P3 the spiked pit grate (BandFloor, band_source &"spikes").
 const SAG_SOURCE := &"sag"
 const SPIKES_SOURCE := &"spikes"
+## 2026-11-23 the spike plate of the Knight's hall (PlateFloor, plate_source &"spikeplate"; the grate's piece).
+const SPIKE_PLATE_SOURCE := &"spikeplate"
 ## Sources of the room's own warnings that count against its two at once (combat_cadence.md 9.2 R9); a column toppling
 ## (the paladin's, hurting only them) and the rift's breath (no harm) do not.
 const ROOM_SOURCES: Array[StringName] = [HAZARD_SOURCE, PLATE_SOURCE, CHAIN_SOURCE, ROOT_SOURCE, SLIT_SOURCE, TRAP_SOURCE,
-	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE, SAG_SOURCE, SPIKES_SOURCE]
+	CRYSTAL_SOURCE, ROCKS_SOURCE, URN_SOURCE, OIL_SOURCE, NICHE_SOURCE, PLANT_SOURCE, SAG_SOURCE, SPIKES_SOURCE,
+	SPIKE_PLATE_SOURCE]
 const POOL := 48
+## C1e, the Armadilheiro's plates (Zone.tags): the zone's own fill is hidden; C1eMarks draws the X and Ground the dust where one lands.
+const PLATE_TAG := &"trap_plate"
+## A runner's death burst (combate_c1_leitura 4): the ring of its landing in the grey of coals, 8 bone chips.
+const EMBER_COLOR := Color(0.62, 0.34, 0.16)
+const EMBER_BONE := Color(0.86, 0.82, 0.72)
+const EMBER_CHIPS := 8
+## Past this many of its circles at once the new ones fill to EMBER_FILL of their light (the rim stays whole).
+const EMBER_STACK := 3
+const EMBER_FILL := 0.6
 ## Strength of the drawing of each kind of area: warnings bright enough to read on the dark floor, the paladin's
 ## circle of light (big, 3 s) a fine rim around a veil so the fight inside still reads, the rest in between.
 const WARNING_STRENGTH := GroundLook.WARNING_STRENGTH
@@ -146,6 +158,15 @@ class Zone:
 	var floor_own := false
 	var node: MeshInstance3D
 	var mat: ShaderMaterial
+	## The runner's death burst (combate_c1_leitura 4): it lands in embers and bone, in its own grey of coals.
+	var ember := false
+	## Drawn as an aim (add_aim_warning), and the lock of a thread that follows the paladin (track_line, lock_line):
+	## seconds since it locked (-1: not yet) and whether it clicked.
+	var aim := false
+	var tracks := false
+	var lock_t := -1.0
+	var lock_left := 0.0
+	var clicked := false
 
 var zones: Array[Zone] = []
 var player: Player
@@ -205,6 +226,19 @@ func add_warning(at: Vector2, radius: float, time: float, damage: float, burst :
 	return z
 
 
+## A runner's death burst: add_warning that lands in embers (EMBER_COLOR, fire, bone chips); drawn lighter when more than
+## EMBER_STACK of them stand at once.
+func add_ember_warning(at: Vector2, radius: float, time: float, damage: float) -> Zone:
+	var z := add_warning(at, radius, time, damage, EMBER_COLOR)
+	z.ember = true
+	var live := 0
+	for o in zones:
+		live += int(o.ember and o.life > 0.0)
+	if live > EMBER_STACK:
+		GroundLook.put(z.mat, &"fill_max", GroundLook.FILL_MAX * EMBER_FILL)
+	return z
+
+
 ## A blow dealt by a body, not by a warning landing (T5-08: Morvath's charge): counted as his attack `source`, with the
 ## seconds its warning showed, for the log and "Derrotado por".
 func strike(amount: float, from: Vector2, source: StringName, warn_s: float, offscreen := -1) -> void:
@@ -224,7 +258,26 @@ func add_line_warning(from: Vector2, dir: Vector2, length: float, width: float, 
 func add_aim_warning(from: Vector2, dir: Vector2, length: float, width: float, time: float, damage: float) -> Zone:
 	var z := add_line_warning(from, dir, length, width, time, damage)
 	GroundLook.aim(z.node.material_override as ShaderMaterial)
+	z.aim = true
 	return z
+
+
+## A line (or aim) warning that follows the paladin until lock_line: drawn as a thread meanwhile (combate_c1_leitura 6).
+func track_line(z: Zone) -> void:
+	if z == null or z.shape != Shape.LINE:
+		return
+	z.tracks = true
+	GroundLook.tracking(z.mat, z.aim)
+
+
+## The thread locks: it pulses once ("travou"), and the aim's band starts to fill. Called each frame it is locked; it
+## only counts the first (a zone never tracked, or already locked, is left alone). Drawing and sound only.
+func lock_line(z: Zone) -> void:
+	if z == null or not z.tracks or z.lock_t >= 0.0:
+		return
+	z.lock_t = 0.0
+	z.lock_left = z.life / maxf(z.total, 0.01)
+	GroundLook.lock_pulse(z.mat, z.aim, 0.0, z.lock_left)
 
 
 ## A band of the floor that strikes on its own (E5, the runes; ArenaHazard): the rectangle `r` warms up for `time`
@@ -440,6 +493,13 @@ func step(dt: float) -> void:
 					zones.erase(z)
 			else:
 				GroundLook.put(z.mat, &"progress", 1.0 - z.life / z.total)
+				if z.lock_t >= 0.0:
+					z.lock_t += dt
+					if z.lock_t <= GroundLook.LOCK_RISE + GroundLook.LOCK_FALL + dt:
+						GroundLook.lock_pulse(z.mat, z.aim, z.lock_t, z.lock_left)
+					if not z.clicked and z.lock_t >= GroundLook.LOCK_CLICK_AT:
+						z.clicked = true
+						Audio.play(&"lock_click")
 		else:
 			z.tick -= dt
 			if z.tick <= 0.0:
@@ -471,8 +531,14 @@ func _land(z: Zone) -> void:
 			else:
 				fx.smoke_ring(z.pos, z.radius * 1.1, color, 0.5)
 		fx.burst(&"soul" if z.eruption else &"shadow", Vector3(z.pos.x, 0.3, z.pos.y))
+		if z.ember:
+			fx.burst(&"fire", Vector3(z.pos.x, 0.3, z.pos.y))
+			fx.chips(Vector3(z.pos.x, 0.6, z.pos.y), Vector3.UP, EMBER_BONE, EMBER_CHIPS, 5.0, 0.09, 0.45, 1.2)
 		if z.eruption and z.rune == Rune.NONE:
 			fx.beam(z.pos, color, z.radius * ERUPTION_WIDTH, ERUPTION_HEIGHT, ERUPTION_TIME)
+	if z.tags.has(PLATE_TAG) and fx != null:
+		fx.burst(&"dust", Vector3(center.x, 0.2, center.y), Vector3.UP)
+		Audio.play(&"enemy_charge")
 	if player and player.alive() and z.power > 0.0 and inside(z, player.pos, Player.RADIUS * 0.6):
 		last_source = z.source
 		last_by = z.by

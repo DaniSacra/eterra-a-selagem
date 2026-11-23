@@ -28,15 +28,20 @@ const IDS: Array[StringName] = [&"quarto_corte", &"passo_encadeado", &"golpe_sem
 	&"ainda_de_pe"]
 
 
+## The Gifts added after the 19 draw an existing Gift's symbol (no new art): each a different one.
+const ALIAS := {&"voz_larga": &"onda_atravessante", &"escudo_de_guerra": &"firmeza", &"folego_de_guerra": &"respiro",
+	&"ferro_na_investida": &"investida"}
+
+
 static func has(id: StringName) -> bool:
-	return IDS.has(id)
+	return IDS.has(id) or ALIAS.has(id)
 
 
 ## Draws the Gift's glyph inside radius r around c in col (ink: the colour behind it, for cut-outs). False when the
 ## id has no glyph of its own (the caller draws the branch's).
 static func draw(ci: CanvasItem, id: StringName, c: Vector2, r: float, col: Color, ink: Color) -> bool:
 	var th := maxf(1.6, r * 0.17)
-	match id:
+	match ALIAS.get(id, id):
 		&"quarto_corte":
 			var d := Vector2(0.6, -0.8)
 			var n := Vector2(0.8, 0.6)

@@ -43,7 +43,7 @@ func test_the_elites_two_blows_are_data() -> void:
 	var soldier: EnemyDef = load("res://data/enemies/skeleton_elite.tres")
 	assert_eq(soldier.strikes, 2)
 	assert_almost_eq(soldier.strike_gap, 0.2, 0.001, "Hades' Guard elite: 0.2 s apart")
-	assert_almost_eq(soldier.recover_time, 1.5, 0.001)
+	assert_almost_eq(soldier.recover_time, 1.0, 0.001)
 	var runner: EnemyDef = load("res://data/enemies/runner_elite.tres")
 	assert_eq(runner.strikes, 2)
 	assert_gte(runner.strike_gap, 0.5, "a new ring needs 0.5 s to be read")
@@ -69,6 +69,8 @@ func test_the_soldier_elite_strikes_twice_both_warned_from_its_windup() -> void:
 		_step()
 		if e.blows > b:
 			landed.append(e.state_t)
+		if landed.size() == 2 and e.state == Enemy.State.RECOVER:
+			break
 	assert_eq(landed.size(), 2, "two blades")
 	assert_almost_eq(landed[1] - landed[0], e.def.strike_gap, 1.5 / 60.0, "strike_gap apart")
 	assert_almost_eq(e.aim.angle_to(aim), 0.0, 0.001, "the second kept where he stood")
@@ -170,9 +172,10 @@ func test_morvath_reap_in_a_real_fight() -> void:
 	assert_eq(warns.size(), 2, "both sweeps warned on the floor")
 	assert_eq(strikes.size(), 2, "two sweeps")
 	var def := boss.def
-	assert_almost_eq(strikes[0] - warns[0], def.reap_windup, 2.0 / 60.0, "the first warned its whole wind-up")
+	var scale := BossDef.by_phase(def.windup_scale, boss.phase, 1.0)
+	assert_almost_eq(strikes[0] - warns[0], def.reap_windup * scale, 2.0 / 60.0, "the first warned its whole wind-up")
 	assert_almost_eq(warns[1] - strikes[0], def.reap_active, 2.0 / 60.0, "the second born as the first's active time ends")
-	assert_almost_eq(strikes[1] - warns[1], def.reap_pause + def.reap2_windup, 2.0 / 60.0, "0.85 s to read it")
+	assert_almost_eq(strikes[1] - warns[1], (def.reap_pause + def.reap2_windup) * scale, 2.0 / 60.0, "0.85 s to read it, tightened with the phase")
 	assert_eq(boss.state, Boss.State.RECOVER)
 	assert_almost_eq(boss._recover_time, def.reap_recovery, 0.001, "then the long window")
 

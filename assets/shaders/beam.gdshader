@@ -44,14 +44,28 @@ uniform float streaks = 0.2;
 uniform vec2 hero_hole = vec2(0.75, 1.5);
 uniform float hero_keep = 0.15;
 uniform float hero_soft = 0.5;
+// C1V (N1, 2.1), the hall's shaft of Elun (all off, 0, for every other pillar): the sides broken by a brush in world space (how
+// much, and its size in m), and slow gold dust in it (how bright, its colour, cells round and up, how fast the cells rise,
+// the dot's size in a cell).
+uniform float brush_break = 0.0;
+uniform float brush_size = 0.9;
+uniform float dust = 0.0;
+uniform vec3 dust_color : source_color = vec3(1.0, 0.82, 0.45);
+uniform vec2 dust_cells = vec2(9.0, 7.0);
+uniform float dust_speed = 0.12;
+uniform float dust_dot = 0.2;
+// 1: the light is brightest high up and gone before the floor (a shaft from the sky, no cut base); 0: today's pillar.
+uniform float from_above = 0.0;
 // Where the middle of his body is over his feet.
 const float HERO_MID = 1.3;
 
 // Height on the pillar: 0 at its foot on the floor, 1 at its top (Fx.beam's mesh is 1 tall round its middle).
 varying float height_of;
+varying vec3 world_of;
 
 void vertex() {
 	height_of = VERTEX.y + 0.5;
+	world_of = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 }
 
 float hash(vec2 p) {
@@ -68,11 +82,18 @@ float noise(vec2 p) {
 void fragment() {
 	float up = clamp(height_of, 0.0, 1.0);
 	float facing = abs(dot(NORMAL, VIEW));
+	if (brush_break > 0.0) {
+		// strokes standing upright (long in height), so the shaft's sides are frayed like a dry brush
+		float n = noise(vec2((world_of.x + world_of.z) / brush_size, world_of.y / (brush_size * 4.0))) * 0.65
+			+ noise(vec2((world_of.x - world_of.z) / (brush_size * 0.4) + 9.0, world_of.y / (brush_size * 1.6))) * 0.35;
+		facing = clamp(facing + (n - 0.5) * brush_break, 0.0, 1.0);
+	}
 	float side = pow(facing, side_soft);
 	float core = pow(facing, core_width);
 	float fade = 1.0 - smoothstep(0.3, 1.0, life);
 	// gone before the top, a soft foot at the base
 	float height = (1.0 - smoothstep(top_from, 1.0, up)) * mix(foot, 1.0, smoothstep(0.0, 0.06, up));
+	height = mix(height, smoothstep(0.08, 0.85, up) * (1.0 - smoothstep(0.92, 1.0, up)), from_above);
 	// light rising through it
 	float rise = noise(vec2(UV.x * streak_count, up * 3.0 - TIME * streak_speed * 3.0));
 	float move = 1.0 - streaks + streaks * 2.0 * rise;
@@ -82,6 +103,14 @@ void fragment() {
 	vec3 tint = mix(color.rgb, vec3(max(color.r, max(color.g, color.b))), core * core_white + side * whiten * 0.3);
 	float top = max(tint.r, max(tint.g, tint.b));
 	vec3 light = tint / max(top, 0.0001) * bright * share;
+	if (dust > 0.0) {
+		vec2 p = vec2(UV.x * dust_cells.x, up * dust_cells.y - TIME * dust_speed);
+		vec2 cell = floor(p);
+		vec2 at = vec2(hash(cell + 3.7), hash(cell + 11.3)) * 0.6 + 0.2;
+		float d = length(fract(p) - at);
+		float mote = smoothstep(dust_dot, 0.0, d) * step(0.5, hash(cell + 21.9));
+		light += dust_color * mote * dust * side * height * fade;
+	}
 	// the paladin seen through it: only where this face is nearer the camera than he is
 	vec3 hero = (VIEW_MATRIX * vec4(hero_pos + vec3(0.0, HERO_MID, 0.0), 1.0)).xyz;
 	if (hero.z < 0.0 && VERTEX.z > hero.z) {

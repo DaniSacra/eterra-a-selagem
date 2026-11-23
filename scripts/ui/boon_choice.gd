@@ -13,6 +13,11 @@ const REST_HEAL := 10.0
 const GUARD_MS := 350
 ## The lead line under the title (_page, the events' screens).
 const LEAD_SIZE := 20
+## BC-1: the angel's figure at the left, in px at 720 lines, and the list's width.
+const FIGURE := Vector2(250.0, 380.0)
+const LIST_W := 210.0
+## BC-4: seconds the angel's words stay before the options come by themselves.
+const INTRO_TIME := 2.5
 ## The angel's seal over its cards (by_angel): it stands for the angel while the angels have no figure (ciclo
 ## visual 2026-11-20, item 3).
 const ANGEL_SEAL := 64.0
@@ -35,6 +40,13 @@ var _drawn: Array[BoonState.Card] = []
 var angel: AngelDef
 var back := Callable()
 var _head: VBoxContainer
+## BC-1: the Blessing screen is a list (a line for each card, the six buttons beside it, the one the focus changes lit).
+var list: AbilityList
+## What the angel's intro hides until it is over (BC-4): the lines and the column of words beside them.
+var _body: Array[Control] = []
+var _intro: Control
+var _title: Label
+var _intro_done := Callable()
 var _hint: Label
 ## The words of rule of the card in focus (P1-2; null on the events' screens) and the row of actions at the foot (P0-2).
 var glossary: Glossary
@@ -71,7 +83,9 @@ func open_cards(drawn: Array[BoonState.Card], state: BoonState, game: Game) -> v
 	for c in drawn:
 		var card: BoonCard
 		if c.psalm != null:
-			card = BoonCard.new().setup_psalm(c.psalm, opened_by(c.psalm, held, game), not known.has(String(c.psalm.id)))
+			card = BoonCard.new()
+			card.listed = list != null
+			card.setup_psalm(c.psalm, opened_by(c.psalm, held, game), not known.has(String(c.psalm.id)))
 			_cards.append(card)
 		else:
 			card = _card(c.boon, state)
@@ -101,7 +115,7 @@ func drawn() -> Array[BoonState.Card]:
 
 ## The title, the row the cards go in, the hint under it (the gift screen's words unless given: EventChoice). lead: one
 ## line right under the title saying what the screen is about (T5, the events; empty: none).
-func _page(title_text: String = "", hint_text: String = "", lead_text: String = "") -> HBoxContainer:
+func _page(title_text: String = "", hint_text: String = "", lead_text: String = "") -> BoxContainer:
 	theme = UiKit.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_opened_at = Time.get_ticks_msec()
@@ -111,17 +125,18 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 	head.name = "head"
 	_head = head
 	head.add_theme_constant_override(&"separation", 2)
-	head.add_child(UiKit.shadow(UiKit.title(title_text if title_text != "" else T.t(&"choice_title"), 40)))
+	_title = UiKit.shadow(UiKit.title(title_text if title_text != "" else T.t(&"choice_title"), 40))
+	head.add_child(_title)
 	if lead_text != "":
 		var lead := UiKit.shadow(UiKit.label(lead_text, UiKit.PALE, LEAD_SIZE))
 		lead.name = &"Lead"
 		lead.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		head.add_child(lead)
 	page.add_child(head)
-	var row := HBoxContainer.new()
+	var row: BoxContainer = VBoxContainer.new() if hint_text == "" else HBoxContainer.new()
 	row.name = "cards"
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override(&"separation", 22)
+	row.add_theme_constant_override(&"separation", 14 if hint_text == "" else 22)
 	var hint := UiKit.shadow(UiKit.label(hint_text if hint_text != "" else T.t(&"choice_hint"), UiKit.DIM, 18))
 	hint.name = "hint"
 	_hint = hint
@@ -132,9 +147,18 @@ func _page(title_text: String = "", hint_text: String = "", lead_text: String = 
 		line.name = "line"
 		line.alignment = BoxContainer.ALIGNMENT_CENTER
 		line.add_theme_constant_override(&"separation", GLOSSARY_GAP)
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		line.add_child(row)
-		glossary = Glossary.new().setup(GLOSSARY)
-		line.add_child(glossary)
+		# the six buttons, the one in focus lit, and under them the words of rule (BC-1)
+		var side := VBoxContainer.new()
+		side.name = "side"
+		side.alignment = BoxContainer.ALIGNMENT_CENTER
+		side.add_theme_constant_override(&"separation", 12)
+		list = AbilityList.new().setup(LIST_W)
+		side.add_child(list)
+		glossary = Glossary.new().setup(LIST_W)
+		side.add_child(glossary)
+		line.add_child(side)
 		page.add_child(line)
 	else:
 		page.add_child(row)
@@ -172,7 +196,14 @@ func _game() -> Game:
 
 ## The cards came by an angel (EncounterScreen): its seal small over the title with its name, and a line in the hint
 ## for going back to the pair; B or Esc (ui_cancel) calls on_back.
-func by_angel(a: AngelDef, on_back: Callable) -> void:
+## held: BC-4, how many Blessings of its family the hero carries; 0 or more shows the angel's words first (name, family,
+## its line and that count) and the options only after a press or INTRO_TIME seconds; -1 (the default): straight to the
+## options. Asked again for the same angel (the pair's Esc, a new draw) it only takes the way back.
+func by_angel(a: AngelDef, on_back: Callable = Callable(), held := -1) -> void:
+	if angel == a:
+		back = on_back if on_back.is_valid() else back
+		_offer_back()
+		return
 	angel = a
 	back = on_back
 	if _head != null:
@@ -183,18 +214,18 @@ func by_angel(a: AngelDef, on_back: Callable) -> void:
 		_head.move_child(n, 0)
 	var line := find_child("line", true, false) as HBoxContainer
 	if line != null:
-		# UI-HB4: the angel in a column to the left of the cards, as the god's portrait (AN-1: its painting; the seal when it has none
-		# yet), the glossary under it
+		# BC-1: the angel in a column to the left of the lines, its whole painting fading into the dark (the seal when it
+		# has none yet)
 		var col := VBoxContainer.new()
 		col.name = "angel_column"
 		col.alignment = BoxContainer.ALIGNMENT_CENTER
-		col.add_theme_constant_override(&"separation", 14)
-		col.custom_minimum_size.x = GLOSSARY
+		col.add_theme_constant_override(&"separation", 8)
+		col.custom_minimum_size.x = FIGURE.x
 		line.add_child(col)
 		line.move_child(col, 0)
 		var tint := AngelSeal.tint(a.family)
 		# AN-1: the angel's painted portrait when it has one (AngelArt), else its seal over a soft light
-		var art := AngelArt.portrait(a, Vector2(ANGEL_FIGURE, ANGEL_ART_HEIGHT))
+		var art := AngelArt.figure(a, FIGURE) if list != null else AngelArt.portrait(a, Vector2(ANGEL_FIGURE, ANGEL_ART_HEIGHT))
 		if art != null:
 			col.add_child(art)
 		else:
@@ -212,18 +243,126 @@ func by_angel(a: AngelDef, on_back: Callable) -> void:
 			seal.position = Vector2(ANGEL_FIGURE, ANGEL_FIGURE) * 0.09
 			holder.add_child(seal)
 			col.add_child(holder)
-		var name := UiKit.shadow(UiKit.title(T.t(a.name_key), 24, tint.lightened(0.35)))
-		name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		col.add_child(name)
-		if glossary != null:
+		if held < 0:
+			# (with the angel's words first the name stands once, in the words)
+			var name := UiKit.shadow(UiKit.title(T.t(a.name_key), 24, tint.lightened(0.35)))
+			name.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			col.add_child(name)
+		if glossary != null and list == null:
 			glossary.get_parent().remove_child(glossary)
 			col.add_child(glossary)
-	if bar != null:
+	_offer_back()
+	if held >= 0 and line != null:
+		_show_intro(a, held, line)
+
+
+## The bar's "Voltar aos anjos" once there is a way back.
+func _offer_back() -> void:
+	if bar != null and back.is_valid() and bar.item(&"ui_cancel") == null:
 		bar.add(ActionBar.entry(&"ui_cancel", T.t(&"bar_back_angels"), func() -> void: _go_back()))
+
+
+## BC-4: the angel alone with its words, the lines and the list hidden until it is over.
+func _show_intro(a: AngelDef, held: int, line: HBoxContainer) -> void:
+	var tint := AngelSeal.tint(a.family)
+	var col := VBoxContainer.new()
+	col.name = "angel_intro"
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	col.add_theme_constant_override(&"separation", 10)
+	col.mouse_filter = Control.MOUSE_FILTER_STOP
+	col.draw.connect(func() -> void:
+		col.draw_style_box(UiKit.box(Color(0.02, 0.015, 0.03, 0.62), Color(0, 0, 0, 0), 0, 0, 10), Rect2(Vector2.ZERO, col.size).grow(18.0)))
+	col.gui_input.connect(func(ev: InputEvent) -> void:
+		if ev is InputEventMouseButton and ev.pressed:
+			end_intro())
+	var n := UiKit.shadow(UiKit.title(T.t(a.name_key), 40, tint.lightened(0.35)))
+	n.name = "IntroName"
+	n.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	col.add_child(n)
+	var family := T.t(Boon.FAMILY_KEY[a.family])
+	var fam := UiKit.label(T.t(&"encounter_family", {"family": family}), UiKit.OLD_GOLD.lightened(0.3), 20, UiKit.TITLE_FONT)
+	fam.name = "IntroFamily"
+	fam.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	col.add_child(fam)
+	var rule := GoldRule.new()
+	rule.custom_minimum_size = Vector2(260, 10)
+	rule.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	col.add_child(rule)
+	var words := UiKit.label(T.t(a.line_key), UiKit.PALE, 24)
+	words.name = "IntroLine"
+	words.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	words.custom_minimum_size.x = 380
+	col.add_child(words)
+	var have := UiKit.label(T.t(&"encounter_held", {"n": held, "family": family}) if held > 0
+			else T.t(&"encounter_held_none", {"family": family}), UiKit.DIM.lightened(0.2), 18, UiKit.number_font())
+	have.name = "IntroHeld"
+	have.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	have.custom_minimum_size.x = 380
+	col.add_child(have)
+	line.add_child(col)
+	_intro = col
+	# nothing to choose yet: neither the title nor the hint
+	_title.visible = false
+	_hint.visible = false
+	_set_brought_line(false)
+	_body.clear()
+	for c in [find_child("cards", true, false), find_child("side", true, false)]:
+		if c is Control:
+			c.visible = false
+			_body.append(c)
+	if bar != null:
+		var it := bar.item(&"ui_accept")
+		if it != null:
+			it.set_verb(T.t(&"bar_continue"))
+	var t := Timer.new()
+	t.one_shot = true
+	t.wait_time = INTRO_TIME
+	t.timeout.connect(end_intro)
+	add_child(t)
+	t.start()
+
+
+## The "Trazidas por X" line over the title: hidden while the angel speaks (its name is in the words).
+func _set_brought_line(on: bool) -> void:
+	var n := _head.get_node_or_null("angel") if _head != null else null
+	if n is CanvasItem:
+		n.visible = on
+
+
+## Whether the angel's words are on show (BC-4).
+func intro_open() -> bool:
+	return _intro != null and is_instance_valid(_intro)
+
+
+## BC-4: the words are over (a press, a click or the time): the options come and the first takes the focus.
+func end_intro() -> void:
+	if not intro_open() or not is_inside_tree():
+		return
+	_intro.queue_free()
+	_intro = null
+	_title.visible = true
+	_hint.visible = true
+	_set_brought_line(true)
+	for c in _body:
+		c.visible = true
+	_body.clear()
+	if bar != null:
+		var it := bar.item(&"ui_accept")
+		if it != null:
+			it.set_verb(T.t(&"bar_choose"))
+	for c in _cards:
+		if c.focus_mode != Control.FOCUS_NONE:
+			c.grab_focus.call_deferred()
+			return
 
 
 ## The card in focus taken, as its key would (the action bar's click).
 func _press_focus() -> void:
+	if intro_open():
+		if Time.get_ticks_msec() - _opened_at >= GUARD_MS:
+			end_intro()
+		return
 	var f := get_viewport().gui_get_focus_owner() as BaseButton
 	if f != null and is_ancestor_of(f) and not f.disabled:
 		f.pressed.emit()
@@ -237,6 +376,10 @@ func _go_back() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if intro_open() and event.is_action_pressed(&"ui_accept") and not event.is_echo() and Time.get_ticks_msec() - _opened_at >= GUARD_MS:
+		get_viewport().set_input_as_handled()
+		end_intro()
+		return
 	if reroll_item != null and event.is_action_pressed(&"menu_reroll") and not event.is_echo():
 		get_viewport().set_input_as_handled()
 		reroll()
@@ -250,12 +393,24 @@ func _ready_cards() -> void:
 	Audio.play(&"level_up")
 	if glossary != null:
 		for c in _cards:
-			c.focus_entered.connect(func() -> void: glossary.show_for(c.plain))
+			c.focus_entered.connect(func() -> void:
+				glossary.show_for(c.plain)
+				if list != null:
+					list.show_for(c.button(), card_tint(c)))
 	# the first card that can be taken (an altar's trade out of reach cannot be focused)
 	for c in _cards:
 		if c.focus_mode != Control.FOCUS_NONE:
 			c.grab_focus.call_deferred()
 			return
+
+
+## The colour a card lights its button with: its Blessing's family, the Psalm's own.
+static func card_tint(c: BoonCard) -> Color:
+	if c.boon != null:
+		return c.boon.color()
+	if c.psalm != null:
+		return PsalmIcon.tint(c.psalm)
+	return UiKit.OLD_GOLD
 
 
 ## The cards, in order (the tests read them).
@@ -301,6 +456,7 @@ func card_upgrade(b: Boon) -> bool:
 
 func _card(b: Boon, state: BoonState) -> BoonCard:
 	var card := BoonCard.new()
+	card.listed = list != null
 	var rarity := card_rarity(b, state)
 	if b:
 		var lv := state.level(b.id)
@@ -335,7 +491,8 @@ func _pick_card(c: BoonState.Card) -> void:
 	card_chosen.emit(c)
 
 
-## The gift's text with its numbers at a level: {a} {b} from its modifiers, {dmg} {count} {cd} {radius} from its skill.
+## The gift's text with its numbers at a level: {a} {b} from its modifiers, {dmg} {count} {cd} {radius} {duration} {gap}
+## {status} (the seconds of its freeze or slow) from its skill.
 ## mult: the rarity's multiplier (only on the numbers that scale with rarity). marked: each number as UiKit.strong
 ## (bbcode for the cards, UI-HB2).
 static func describe(b: Boon, level: int, mult: float = 1.0, marked := false) -> String:
@@ -349,6 +506,9 @@ static func describe(b: Boon, level: int, mult: float = 1.0, marked := false) ->
 		args["count"] = str(b.skill.get_count(level))
 		args["cd"] = UiKit.format_number(b.skill.get_cooldown(level))
 		args["radius"] = UiKit.format_number(b.skill.get_radius(level))
+		args["duration"] = UiKit.format_number(b.skill.get_duration(level))
+		args["gap"] = UiKit.format_number(b.skill.get_gap(level))
+		args["status"] = UiKit.format_number(b.skill.get_status_power(level))
 	if marked:
 		for k: String in args:
 			args[k] = UiKit.strong(str(args[k]))

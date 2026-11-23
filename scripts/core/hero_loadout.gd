@@ -212,6 +212,22 @@ func of(branch: TalentDef.Branch, tier: TalentDef.Tier) -> TalentDef:
 	return null
 
 
+## Every Gift of this branch and tier, in catalog order (a place may hold more than one).
+func all_of(branch: TalentDef.Branch, tier: TalentDef.Tier) -> Array[TalentDef]:
+	var out: Array[TalentDef] = []
+	for t in book.catalog:
+		if t.branch == branch and t.tier == tier:
+			out.append(t)
+	return out
+
+
+## True when two Gifts share a place in the tree: same branch and tier, and for a bridge the same two branches.
+static func same_place(a: TalentDef, b: TalentDef) -> bool:
+	if a.tier != b.tier or a.branch != b.branch:
+		return false
+	return a.tier != TalentDef.Tier.BRIDGE or (a.joins == b.joins)
+
+
 func _slot_holder(slot: Boon.Slot) -> TalentDef:
 	for t in book.defs(block.equipped):
 		if t.slot == slot:

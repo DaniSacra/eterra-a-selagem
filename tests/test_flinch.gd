@@ -149,7 +149,7 @@ func test_every_common_flinches_and_no_boss_or_guardian_does() -> void:
 		if not f.ends_with(".tres"):
 			continue
 		var d: EnemyDef = load("res://data/enemies/" + f)
-		var common := d.role != &""
+		var common := d.role != &"" or d.id == &"skeleton_raised"  # the Coveiro's dead flinch like the skeleton
 		if common:
 			assert_gt(d.stun_time, 0.0, "%s flinches" % d.id)
 			assert_gte(d.stun_heavy_time, d.stun_time, "%s: a strong blow at least as long" % d.id)

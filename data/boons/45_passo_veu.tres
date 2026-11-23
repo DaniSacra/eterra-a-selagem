@@ -15,5 +15,5 @@ script = ExtResource("2_wunsy")
 id = &"passo_veu"
 family = 5
 icon = 20
-slot = 4
+slot = 5
 mods = Array[ExtResource("1_tniex")]([SubResource("Resource_o0rhf")])

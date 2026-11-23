@@ -18,4 +18,14 @@ cam_yaw = 35.0
 cam_lead = 1.2
 cam_smooth = 9.0
 hit_stop_scale = 1.0
+poise_weights = {
+"attack": 0.15,
+"cast_omega": 0.7,
+"dash": 0.5,
+"omega_attack": 0.7,
+"omega_special": 0.7,
+"shout": 0.6,
+"special": 0.6,
+"ultimate": 1.0
+}
 outline = 0.5

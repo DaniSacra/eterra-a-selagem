@@ -298,5 +298,12 @@
     "refineId": "01a1fefb-8671-7425-9c93-146a69239b0e",
     "refineCredits": 10,
     "bytes": 4095352
+  },
+  "hero_maga": {
+    "prompt": "Full body young East Asian woman scholar mage, slender, calm face, short straight black bob hair. Long layered robe of deep navy blue with fine pale gold embroidery, falling to the shins in tattered pointed panels. Ivory hooded mantle over the shoulders, hood down, short cape to mid-back. Brown leather belts crossed at the waist with small pouches and a scroll case, round gold seal medallion on the belt. Leather bracers on forearms, tall brown leather boots. A-pose facing forward. Stylized hand-painted dark fantasy game character, painterly textures, realistic adult proportions eight heads tall, not chibi, no base, no ground, empty hands, no weapons, no staff, no fire.",
+    "polycount": 20000,
+    "previewId": "01a2095d-b261-7548-ba7f-d32e6af8af87",
+    "attempt": 1,
+    "previewCredits": 5
   }
 }

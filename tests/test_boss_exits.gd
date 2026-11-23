@@ -33,7 +33,7 @@ var solid: Array = []
 
 
 func before_all() -> void:
-	def = load(DEF)
+	def = BossLayersFixture.layered(DEF)
 	floor = (load(STAGE) as StageDef).boss_layout.floor
 	body = (load("res://data/enemies/morvath.tres") as EnemyDef).radius
 	var f := Feel.live()

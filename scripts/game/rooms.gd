@@ -95,6 +95,8 @@ var won: Array[RunMap.Kind] = []
 ## The gold this fight can still give, dropped by the enemies that fall (C13-04; null outside a fight).
 var purse: GoldPurse
 var _waves: Array[Array] = []
+## C1e: the modifiers still to give, by kind (EncounterGen.Fight.mods): the next spawn of the kind takes the first.
+var _mods: Dictionary = {}
 var _queue: Array[StringName] = []
 var _wave := -1
 var _spawn_t := 0.0
@@ -246,6 +248,11 @@ func start_at(kind: RunMap.Kind) -> void:
 	for r in map.nodes:
 		# --start=shop is the last shop before Morvath, never a route shop (DV-2)
 		if r.kind == kind and not (kind == RunMap.Kind.SHOP and map.is_route_shop(r)):
+			if kind == RunMap.Kind.MINIBOSS and Dev.has("guardian"):
+				# (--guardian=knight|priest_elder: which guardian, for the bot; the room of his own house)
+				var want := StringName(Dev.arg("guardian"))
+				if r.guardian != want:
+					continue
 			await _enter_first(r)
 			return
 	await _enter_first(map.first())
@@ -414,6 +421,7 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		game.room_tally.shop_entered(gold, map.is_route_shop(room))
 	_queue.clear()
 	_waves.clear()
+	_mods.clear()
 	_wave = -1
 	_wave_wait = START_DELAY
 	# nobody stands past the stage's ceiling, summons included; a fight lowers it to its tier's most
@@ -440,6 +448,7 @@ func _enter_with(next: RunMap.Room, wait := Callable()) -> void:
 		RunMap.Kind.COMBAT:
 			var fight := room.fight if room.fight != null else EncounterGen.generate(stage, room.depth, _defs, _rng, 1.0, layout)
 			_waves = _cursed_waves(game.juramentos.more_waves(fight.waves) if game.juramentos else fight.waves)
+			_mods = fight.mods.duplicate(true)
 			var rating := 0.0
 			for w: Array in fight.waves:
 				for id: StringName in w:
@@ -537,7 +546,7 @@ func _step_fight(dt: float) -> void:
 		return
 	if not _queue.is_empty():
 		_spawn_t -= dt
-		if _spawn_t <= 0.0 and game.horde.count() < _cap:
+		if _spawn_t <= 0.0 and game.horde.count() < _cap and game.horde.room_for(_group_of(_queue[0])) >= _group_of(_queue[0]):
 			_spawn(_next_in_queue())
 			_spawn_t = _rng.randf_range(stage.spawn_interval_min, stage.spawn_interval_max)
 		return
@@ -563,7 +572,13 @@ func _spawn(id: StringName) -> void:
 			and _wave == 0 and game.horde.count() == 0:
 		# the guardian rises in his own house, before the presbytery's grille (E5, spec 1.4)
 		at = game.arena.resolve(_layout.boss_spawn, d.radius)
-	game.horde.spawn(d, at, true)
+	if d.group > 1:
+		game.horde.spawn_group(d, at, true)  # (C5, the Trinca: one head of a wave is a whole triangle of figures)
+		game.room_tally.seen(String(id))
+	else:
+		var mod := _take_mod(id)
+		game.horde.spawn(d, at, true, mod)
+		game.room_tally.seen(String(id), String(mod.id) if mod != null else "")
 	game.fx.burst(&"shadow", Vector3(at.x, 0.6, at.y))
 	if d.elite:
 		# (vfx_pass_spec.md 5.4, V-15: no column of light; light from above is only for what is taken) a ring of dark
@@ -572,6 +587,20 @@ func _spawn(id: StringName) -> void:
 		if room.kind == RunMap.Kind.MINIBOSS:
 			game.hud.show_notice(T.t(&"notice_elite", {"name": T.t(d.name_key)}), 3.0)
 			Audio.play(&"elite")
+
+
+## C1e: the modifier the next head of this kind is born with (null: none).
+func _take_mod(id: StringName) -> ModDef:
+	var list: Array = _mods.get(id, [])
+	if list.is_empty():
+		return null
+	var mod_id: StringName = list.pop_front()
+	return game.horde.mod(mod_id)
+
+
+## How many bodies one head of the queue brings (EnemyDef.group).
+func _group_of(id: StringName) -> int:
+	return maxi(1, game.horde.def(id).group)
 
 
 ## The next of the wave to rise: the first in line, unless the arena already has its most shooters standing
@@ -1095,13 +1124,20 @@ func _prepare(doors: Array[RunMap.Room]) -> void:
 				var l: RoomLayout = stage.layouts[r.layout].variant(r.variant) if r.layout >= 0 and r.layout < stage.layouts.size() else null
 				var dice := RandomNumberGenerator.new()
 				dice.seed = r.fight_seed
-				r.fight = EncounterGen.generate(stage, r.depth, _defs, dice, 1.0, l)
+				r.fight = EncounterGen.generate(stage, r.depth, _defs, dice, 1.0, l, _parts_of(room.fight if room != null else null))
 			RunMap.Kind.MINIBOSS:
 				var f := EncounterGen.Fight.new()
 				f.kinds = [r.guardian if r.guardian != &"" else stage.minibosses[_rng.randi() % stage.minibosses.size()]]
 				f.tier = stage.miniboss_tier
 				f.waves = [f.kinds.duplicate()]
 				r.fight = f
+
+
+## C1e: the parts of a fight (the room just left), for the next one not to repeat them.
+func _parts_of(f: EncounterGen.Fight) -> Array[StringName]:
+	if f == null or f.kinds.is_empty():
+		return [] as Array[StringName]
+	return EncounterGen.roles_of(f.kinds, _defs)
 
 
 ## What door i tells (for the sign, the scenery of its doorway and the log): RunMap.Room.sign() and the arena it leads

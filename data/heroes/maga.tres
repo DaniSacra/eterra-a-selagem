@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="HeroDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/arcane_kit.gd" id="1_d6o6b"]
+[ext_resource type="Resource" path="res://data/heroes/warrior_mastery.tres" id="2_1is15"]
+[ext_resource type="Script" path="res://scripts/core/hero_def.gd" id="3_yanfv"]
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="4_6ewxc"]
+[ext_resource type="Resource" path="res://data/ultimates/maga/00_storm.tres" id="5_ittxu"]
+
+[sub_resource type="Resource" id="Resource_0l3wl"]
+script = ExtResource("1_d6o6b")
+
+[resource]
+script = ExtResource("3_yanfv")
+id = &"maga"
+name_key = &"hero_maga"
+combos = "res://data/combos/maga.tres"
+dodge_charges = 2
+dodge_recharge = 1.0
+circle = false
+magick_on_finisher = 1.0
+magick_on_break = 3.0
+cd_floor = 6.0
+passive_tags = Array[StringName]([&"finisher"])
+arcane = SubResource("Resource_0l3wl")
+ultimates = Array[ExtResource("4_6ewxc")]([ExtResource("5_ittxu")])
+talents_dir = "res://data/talents/maga/"
+mastery = ExtResource("2_1is15")

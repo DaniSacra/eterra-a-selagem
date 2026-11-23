@@ -49,9 +49,9 @@ func test_the_deck_has_hades_shape() -> void:
 	var cards := Array(stage.reward_deck)
 	assert_gte(cards.count(R.BOON), 4)
 	assert_eq(cards.count(R.POM), 2)
-	assert_eq(cards.count(R.HEART), 2)
+	assert_eq(cards.count(R.HEART), 3)
 	assert_eq(cards.count(R.MAGICK), 2)
-	assert_eq(cards.count(R.GOLD), 2)
+	assert_eq(cards.count(R.GOLD), 3)
 
 
 ## DV-1: every fight of the graph took its card off the deck when the map was drawn (the deck filled again as it ran
@@ -85,7 +85,7 @@ func test_the_gold_of_a_fight() -> void:
 	for depth in [1, 5, 10]:
 		for i in 50:
 			var cap := GoldPurse.ceiling_at(stage, depth, rng)
-			assert_between(cap, 10 + floori(0.5 * depth), 15 + floori(0.5 * depth), "depth %d" % depth)
+			assert_between(cap, 10 + floori(0.8 * depth), 15 + floori(0.8 * depth), "depth %d" % depth)
 	# ten enemies of rating 10: each leaves a tenth of the ceiling 70% of the time, never past it
 	var total := 0
 	var fights := 2000
@@ -97,7 +97,7 @@ func test_the_gold_of_a_fight() -> void:
 		assert_lte(got, purse.ceiling)
 		total += got
 	var mean := float(total) / fights
-	assert_almost_eq(mean, 0.7 * 14.5, 1.0, "about 70% of the ceiling on average")
+	assert_almost_eq(mean, 0.7 * (12.5 + floori(0.8 * 4)), 1.0, "about 70% of the ceiling on average")
 
 
 func test_the_shop_has_three_groups_with_hades_prices() -> void:

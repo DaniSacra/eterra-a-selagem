@@ -1,9 +1,42 @@
 [gd_resource type="Resource" script_class="EnemyDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="1_xtle2"]
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_vn24d"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_0qgau"]
+
+[sub_resource type="Resource" id="Resource_rd2bq"]
+script = ExtResource("1_vn24d")
+id = &"throw"
+cooldown = 18.0
+first = 8.0
+min_dist = 4.0
+max_dist = 16.0
+
+[sub_resource type="Resource" id="Resource_131yo"]
+script = ExtResource("1_vn24d")
+id = &"charge"
+count = 3
+from_life = 0.3
+cooldown = 10.0
+min_dist = 3.2
+max_dist = 14.0
+
+[sub_resource type="Resource" id="Resource_jpein"]
+script = ExtResource("1_vn24d")
+id = &"charge"
+count = 2
+from_life = 0.75
+cooldown = 5.0
+min_dist = 3.2
+max_dist = 14.0
+
+[sub_resource type="Resource" id="Resource_a0rja"]
+script = ExtResource("1_vn24d")
+id = &"charge"
+min_dist = 3.2
+max_dist = 14.0
 
 [resource]
-script = ExtResource("1_xtle2")
+script = ExtResource("2_0qgau")
 id = &"knight"
 name_key = &"enemy_knight"
 model = &"knight"
@@ -20,19 +53,40 @@ damage = 16.0
 radius = 1.1
 heavy = true
 elite = true
-armor = 1220.0
+armor = 1700.0
 armor_stagger = 2.5
 material = &"armor"
-attack_damage = 18.0
+attack_damage = 8.0
 attack_range = 14.0
 attack_cooldown = 2.16
-attack_windup = 1.0
-recover_time = 0.8
-lunge_speed = 18.0
-lunge_time = 0.7
-charges = 2
+recover_time = 0.55
+gap_min = 0.3
+gap_max = 1.5
+gap_min0 = 0.2
+gap_max0 = 0.7
+windup_settle = 0.1
+windup_hold = 0.25
+lunge_speed = 24.0
+lunge_time = 0.6
+recharge_windup = 0.45
+aim_lock = 0.15
+raise_count = 3
+raise_max = 6
+front_block = 0.7
+front_open = 4.0
+guard_up_time = 4.0
+guard_up_hit_damage = 8.0
+guard_up_hit_windup = 0.6
+ward_open = 1.0
+wall_stun = 1.5
 escort = Array[StringName]([&"mage", &"mage"])
-close_damage = 18.0
+close_damage = 8.0
 close_range = 3.2
-close_windup = 0.8
+close_windup = 0.5
+moves = Array[ExtResource("1_vn24d")]([SubResource("Resource_rd2bq"), SubResource("Resource_131yo"), SubResource("Resource_jpein"), SubResource("Resource_a0rja")])
+armor_soft = 0.3
+throw_flight = 1.0
+throw_damage = 8.0
+throw_open = 1.8
+ring_damage = 6.0
 rating = 65.0

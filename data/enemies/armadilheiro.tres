@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_nchqd"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_ygooi"]
+
+[resource]
+script = ExtResource("2_ygooi")
+id = &"armadilheiro"
+name_key = &"enemy_armadilheiro"
+model = &"trapper"
+size = 1.2
+tint = Color(0.7, 0.8, 0.5, 1)
+magic_color = Color(0.96, 0.92, 0.78, 1)
+vivid = -0.05
+tell = 6
+tell_at = Vector3(0, 1, 0.45)
+behavior = 10
+hp = 110.0
+speed = 4.369999999999999
+damage = 4.0
+radius = 0.5
+poise = 100.0
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_range = 7.0
+attack_cooldown = 2.3400000000000003
+attack_windup = 0.5
+recharge_windup = 0.6400000000000001
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+retreat_far = 5.0
+flee_speed = 4.8
+plate_damage = 10.0
+per_room = 1
+close_windup = 0.52
+rating = 16.0
+role = &"trap"

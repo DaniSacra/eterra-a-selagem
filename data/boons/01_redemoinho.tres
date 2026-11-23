@@ -7,16 +7,20 @@
 [sub_resource type="Resource" id="Resource_ncq1e"]
 script = ExtResource("3_hll3b")
 kind = 2
+trigger = 5
+duration = PackedFloat32Array(4)
+gap = PackedFloat32Array(5)
 cooldown = PackedFloat32Array(0.5)
-damage = PackedFloat32Array(10, 14, 19)
+damage = PackedFloat32Array(6, 8, 11)
 count = PackedFloat32Array(2, 3, 4)
 radius = PackedFloat32Array(3, 3.3, 3.6)
 status = &"burn"
-status_power = PackedFloat32Array(4, 6, 8)
+status_power = PackedFloat32Array(2, 4, 5)
 
 [resource]
 script = ExtResource("2_643l4")
 id = &"redemoinho"
 family = 0
 icon = 1
+slot = 5
 skill = SubResource("Resource_ncq1e")

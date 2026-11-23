@@ -17,7 +17,7 @@ uniform float saturation = 0.55;
 void fragment() {
 	vec3 c = texture(albedo_texture, UV).rgb;
 	float grey = dot(c, vec3(0.2126, 0.7152, 0.0722));
-	ALBEDO = mix(vec3(grey), c, saturation) * value;
+	ALBEDO = mix(vec3(grey), c, saturation) * value * paint_vignette(SCREEN_UV);
 	ROUGHNESS = 0.95;
 	SPECULAR = 0.1;
 }

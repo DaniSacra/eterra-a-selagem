@@ -6,15 +6,18 @@
 
 [sub_resource type="Resource" id="Resource_utjrv"]
 script = ExtResource("3_wrj0s")
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
 cooldown = PackedFloat32Array(3.5, 3, 2.5)
-damage = PackedFloat32Array(18, 26, 36)
+damage = PackedFloat32Array(11, 16, 22)
 count = PackedFloat32Array(3, 4, 6)
 radius = PackedFloat32Array(2.2, 2.4, 2.6)
 status = &"burn"
-status_power = PackedFloat32Array(5, 7, 9)
+status_power = PackedFloat32Array(3, 4, 5)
 
 [resource]
 script = ExtResource("2_odan1")
 id = &"brasas"
 family = 0
+reserve = true
 skill = SubResource("Resource_utjrv")

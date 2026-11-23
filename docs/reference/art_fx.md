@@ -313,3 +313,28 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 `GroundLook.AIM_PX` 4,5 (era 6) e `AIM_LIGHT` 0,38 (era 0,5): as duas linhas vermelhas que cruzavam a tela inteira
 ficam finas e escuras, a ponta brilhante continua. Cabo da foice de Morvath mais fino (`tools/bake.gd`, 0,03 por
 0,034; lia como barra branca), reassado.
+
+## Combate C1: leitura na tela (2026-11-22, código; sem captura ainda)
+Especificação em `docs/art/combate_c1_leitura.md`; só desenho e som, a simulação e o `RESULT` não mudam.
+- **Brado que absorve** (`Player._show`): anel dos pés e brilho do corpo em esmeralda enquanto `gifts.ward > 0`, pisca a 4 Hz no último 1,0 s; ao absorver, `fx.ring` fino, 10 `chips` e `blade_pulse` (o `burst(&"heal")` rosa saiu). O ponto do selo do Q no HUD ficou para o `ui-ux-designer`.
+- **Faixa que rastreia e "travou"** (`Ground.track_line`, `Ground.lock_line`, `GroundLook.tracking/lock_pulse`): enquanto segue, fio fino (linha 0,7; mira 0,30 e 3,5 px, sem enchimento); na trava um pulso de 0,07 s e o enchimento começa. Esqueleto, Cavaleiro (só se o rastreio ocorreu, a 5 m ou mais) e a 2ª flecha do besteiro. Som `lock_click` 0,02 s depois (+3 dB, passa pelo `VoiceGate`). O brilho da lâmina e o traço do escudo terminam na trava (`EnemyFx.lock_at`).
+- **Escudo** (`Horde.guard_up`, lida por `blocks_front` e pelo desenho): cinco traços de aço (`EnemyFx.STEEL`) em arco à frente (`guard_marks`), voam ao abrir (`guard_fling`) e voltam um a um no último 1,0 s; clipes `walk_open` e `idle_open` só no `guard.res` (`SHIELD_CLOSED` -24, `SHIELD_OPEN` 38 em `tools/bake.gd`; troca por `Horde.render` com fade de 0,12 s). Golpe barrado: faíscas de aço (5), número cinza, traço do meio a 0,8, sem squash.
+- **Sacerdote** (`Horde._draw_ward_threads`, `EnemyFx.ward_thread`): fio ouro velho da palma ao peito do blindado (até 6) com uma conta que corre; o blindado pulsa em ouro (`WARDED_GLOW`, 1,2 Hz) pelo `state.r`; anel ao blindar em ouro velho 0,35 s.
+- **Corredor como pavio** (`Horde.render`, `dying`): brasa e beirada crescendo (`state.b`), tremor e inchaço até `death_burst`, dissolve só depois; a explosão (`Ground.add_ember_warning`) pousa em cinza de brasa com `burst(&"fire")` e 8 `chips` de osso, e com mais de 3 círculos o preenchimento cai a 60%.
+- Besteiro: `magic_color` laranja (`CROSSBOW_ORANGE` em `tools/make_data.gd`), nunca o vermelho do aviso.
+
+## N2 (2026-11-23, `docs/art/identidade_c1v.md` 2.3): efeitos de combate memoráveis (só desenho, `RESULT` igual)
+- **Quebra**: `EnemyFx.armor_break` com `POISE_BREAK` solta, além das lascas, um anel marfim partido em 6 arcos (`Shape.ARC`, forma 6 do
+  `enemy_tell.gdshaderinc`: anel cortado em ±0,42 rad) que se abre de 0,5 a 1,6 vezes o corpo em 0,25 s e some. A palavra "Quebrou!" cai para 15 px
+  (`Fx.POISE_WORD_SIZE`, escolhida pelo texto de `word_poise`). Marfim sob o teto (`toned(lit(...), 0,8)`).
+- **Golpe final**: `Fx.crescent` (só arcos, não o giro) ganha uma segunda meia-lua (`_crescent_echo`): 20% maior, só fio de ouro (sem corpo nem tinta), cabeça
+  mais lenta (varredura x1,35, que faz o atraso). Pool de meias-luas 6 para 8.
+- **Pó de osso**: a morte de morto-vivo (`burst(&"bone")`) solta mais 2 fiapos pálidos (`BONE_DUST`, luma baixa), largos e lentos, depois da cinza.
+- **Esquiva**: `dodge_ghost.gdshader` em azul-petróleo pálido com pinceladas por altura (`brush`); `player.gd` e `fx.gd` da esquiva intocados.
+- Não feito: sulco escuro no chão do golpe final, marca de tinta do impacto pesado, mancha de pó no chão (pedem decalque) e todo o 2.2 (contraste das figuras,
+  pede medida em captura). Teste novo: `test_poise_break_draws_six_arcs`.
+
+## Escudo do Cavaleiro de verdade (2026-11-23, `scripts/render/thrown_shield.gd`, `tests/test_thrown_shield.gd`; sem captura ainda)
+- **Some da mão enquanto está longe**: o escudo do `knight.res` é uma peça presa (`parts["shield"]`) e fica numa faixa contígua no fim da malha (vértices 5481 a 6435), então não foi preciso reassar. `CrowdRenderer.register` grava `hide_from`/`hide_to` nos dois materiais (corpo e contorno); `CrowdRenderer.state(..., away)` põe alfa -1 no estado do instante (vivo não tem dissolver) e `crowd_pose.gdshaderinc` (`crowd_away`) colapsa a faixa num ponto (triângulos sem área). `Horde.render` liga o sinal com `d.throw_flight > 0 and shield_away(e)`, então o Guarda e os demais não mudam; ao voltar à mão (`away_t` zera) o escudo reaparece. Sem malha nova, sem textura, sem custo de pacote.
+- **Escudo no ar e no chão**: `ThrownShield.build` recorta do mesmo `BakedModel.mesh` os triângulos do escudo (cerca de 750, UV e normais do modelo, pintura do atlas dele), centra, deita com a face (o lado do botão) para cima; `C1eMarks` o gira no arco (`flight_basis`: giro de 15 rad/s no eixo vertical, inclinado até pousar chato) e o deixa deitado em `Enemy.shield_lies` até `away_t` acabar. Material `StandardMaterial3D` com o atlas e 0,35 de autoluz. Se o modelo não tiver o escudo, volta ao aro de aço antigo.
+- Aquecimento (`tools/make_warmup.sh`): o shader do bando mudou só em código de vértice (mesmas variantes), mas o primeiro arremesso cria um `StandardMaterial3D` novo (possível engasgo único); rodar `tools/make_warmup.sh` é opcional, para incluir esse material.

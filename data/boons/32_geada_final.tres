@@ -15,4 +15,5 @@ script = ExtResource("2_0bi64")
 id = &"geada_final"
 family = 1
 icon = 3
+reserve = true
 mods = Array[ExtResource("1_crru5")]([SubResource("Resource_8mrrg")])

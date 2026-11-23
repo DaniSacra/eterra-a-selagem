@@ -7,8 +7,8 @@
 script = ExtResource("1_hvfvs")
 stat = &"burn_dps"
 tag = &"light"
-base = 4.0
-per_level = PackedFloat32Array(2, 2)
+base = 2.0
+per_level = PackedFloat32Array(1, 1)
 
 [resource]
 script = ExtResource("2_df8on")

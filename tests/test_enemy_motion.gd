@@ -103,12 +103,12 @@ func test_the_priest_stands() -> void:
 				return
 
 
-## AUDIT.md P2: after its lunge the soldier stands still for its recover_time (Hades' Guard 2.1 s), then walks.
+## AUDIT.md P2: after its lunge the soldier stands still for its recover_time (1.2 s since C1; Hades' Guard 2.1), then walks.
 func test_the_soldier_recovers_standing_still() -> void:
 	_room()
 	var e := _spawn(&"skeleton", Vector2(2.6, 0.0))
 	e.cooldown = 0.0
-	assert_almost_eq(e.def.recover_time, 2.1, 0.001)
+	assert_almost_eq(e.def.recover_time, 1.2, 0.001)
 	var seen := false
 	for f in 240:
 		_frame()
@@ -128,7 +128,7 @@ func test_the_soldier_recovers_standing_still() -> void:
 
 ## Every kind that recovers has the number of its counterpart in Hades II.
 func test_recover_times() -> void:
-	var want := {&"skeleton": 2.1, &"skeleton_elite": 1.5, &"runner": 1.35, &"runner_elite": 0.5, &"guard": 1.1, &"archer": 0.6, &"mage": 0.8}
+	var want := {&"skeleton": 1.2, &"skeleton_elite": 1.0, &"runner": 1.35, &"runner_elite": 0.5, &"guard": 1.1, &"archer": 0.6, &"mage": 0.8}
 	for id: StringName in want:
 		var d: EnemyDef = load("res://data/enemies/%s.tres" % id)
 		assert_almost_eq(d.recover_time, float(want[id]), 0.001, String(id))
@@ -211,8 +211,8 @@ func test_the_lunge_stops_at_his_edge() -> void:
 	assert_true(lunged)
 
 
-## AUDIT.md P9: at most 2 soldiers (and their elites) wind up or lunge at once.
-func test_at_most_two_soldiers_attack_at_once() -> void:
+## AUDIT.md P9, C1: at most 3 soldiers (and their elites) wind up or lunge at once.
+func test_at_most_three_soldiers_attack_at_once_and_never_begin_together() -> void:
 	_room()
 	for i in 5:
 		var e := _spawn(&"skeleton" if i < 4 else &"skeleton_elite", Vector2.from_angle(TAU * i / 5.0) * 3.0)
@@ -221,7 +221,7 @@ func test_at_most_two_soldiers_attack_at_once() -> void:
 	for f in 300:
 		_frame()
 		most = maxi(most, game.horde.attackers(game.horde.def(&"skeleton")))
-	assert_eq(most, 2)
+	assert_eq(most, 3)
 
 
 ## T5-20 (docs/qa/t5_enemy_motion.md 7.2): a way from the paladin is kept FLEE_HOLD seconds while it stays open (the

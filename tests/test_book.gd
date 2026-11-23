@@ -165,7 +165,7 @@ func test_path_of_lights_what_a_gift_needs() -> void:
 	var book := s.loadout.book
 	assert_eq(s.tree.path_of(book.find(&"quarto_corte")), [] as Array[TalentDef])
 	var apex := s.tree.path_of(book.find(&"golpe_sem_fim"))
-	assert_eq(apex.size(), 2)
+	assert_eq(apex.size(), 3, "the entry and both middles (Ferro na Investida, C2): either opens it")
 	assert_true(apex.has(book.find(&"passo_encadeado")) and apex.has(book.find(&"quarto_corte")))
 	var bridge := book.catalog.filter(func(t: TalentDef) -> bool: return t.tier == TalentDef.Tier.BRIDGE)[0] as TalentDef
 	assert_eq(s.tree.path_of(bridge).size(), 2, "both entries")

@@ -32,6 +32,11 @@ void fragment() {
 		a = across * across * clamp((1.0 - abs(p.x)) * 2.5, 0.0, 1.0);
 	} else if (look.x < 3.5) {
 		a = step(abs(p.x) + abs(p.y), 1.0);
+	} else if (look.x > 5.5) {
+		// 6 ARC (N2, the Quebra): a ring cut to a part of the turn, its two ends cut square; look.z is the thickness
+		float th = max(look.z, 0.001);
+		float ang = abs(atan(p.y, p.x));
+		a = clamp(1.0 - abs(r - (1.0 - th)) / th, 0.0, 1.0) * step(ang, 0.42);
 	} else {
 		// 4 BAR, 5 INK (LC-1b): a stroke with hard edges, one pixel of smoothing
 		vec2 w = max(fwidth(p), vec2(1e-4));
@@ -40,11 +45,11 @@ void fragment() {
 	}
 #ifdef PREMUL
 	// premultiplied: the lights add (as blend_add), the ink darkens what is behind
-	bool ink = look.x > 4.5;
+	bool ink = look.x > 4.5 && look.x < 5.5;
 	ALBEDO = ink ? vec3(0.0) : tint.rgb * a * tint.a;
 	ALPHA = ink ? a * tint.a : 0.0;
 #else
 	ALBEDO = tint.rgb;
-	ALPHA = look.x > 4.5 ? 0.0 : a * tint.a;
+	ALPHA = (look.x > 4.5 && look.x < 5.5) ? 0.0 : a * tint.a;
 #endif
 }

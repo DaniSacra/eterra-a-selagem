@@ -154,8 +154,8 @@ func test_temper_three_and_the_refine_behind_the_tool() -> void:
 	assert_true(forge.buy(d, &"temper_3"))
 	var state := BoonState.new(BoonState.load_catalog())
 	state.equip_forge(forge.ranks_for(d))
-	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.25, 0.0001, "I and III on the attack")
-	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave"]), 0.25, 0.0001, "II and III on the special")
+	assert_almost_eq(state.stat(&"damage_pct", [&"light"]), 0.30, 0.0001, "I and III on the attack")
+	assert_almost_eq(state.stat(&"damage_pct", [&"heavy", &"wave"]), 0.30, 0.0001, "II and III on the special")
 	assert_eq(forge.refine_slots(), [&"attack", &"special"] as Array[StringName])
 	assert_eq(forge.refine_options(&"attack").size(), 3)
 	var fio := forge.find(&"refine_fio")
@@ -344,7 +344,7 @@ func test_two_to_three_new_blessings_a_family() -> void:
 		assert_gte(count[f], 9, "Geada and Vigília first (6 before)")
 	for f in [Boon.Family.CHAMA, Boon.Family.LUZ]:
 		assert_gte(count[f], 9)
-	for id in [&"geada_final", &"floco_errante", &"omega_geada", &"vigia_firme", &"vigilia_longa", &"guarda_atenta",
+	for id in [&"geada_final", &"omega_geada", &"vigia_firme", &"vigilia_longa", &"guarda_atenta",
 			&"omega_brasa", &"chuva_brasas", &"final_radiante", &"onda_clara"]:
 		var b := state.find(id)
 		assert_not_null(b, String(id))

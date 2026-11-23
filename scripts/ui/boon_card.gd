@@ -35,6 +35,12 @@ extends Button
 ## SIZE.y nor under MIN_H; the cards of a row stand as tall as the tallest (the row's container).
 const SIZE := Vector2(300, 450)
 const MIN_H := 300.0
+## BC-1: a row's height (from the least to the most), its medallion, the width its words ask, the numbers' column.
+const ROW_MIN_H := 112.0
+const ROW_MAX_H := 168.0
+const ROW_ART := 92.0
+const ROW_TEXT_W := 250.0
+const ROW_FACTS_W := 128.0
 const PAD := 18.0
 ## Height of the art band at the top.
 const ART_H := 140.0
@@ -132,6 +138,9 @@ const ALTAR_LOOK := {&"life": [Color(0.78, 0.26, 0.32), SealMedal.Glyph.POMEGRAN
 ## What an altar's trade gives and gets, as reward marks (DoorGlyph.Kind): give, get.
 const ALTAR_MARKS := {&"life": [DoorGlyph.Kind.HEART, DoorGlyph.Kind.POMEGRANATE], &"candles": [DoorGlyph.Kind.GOLD, DoorGlyph.Kind.MAGICK]}
 
+## BC-1: a line of the list instead of a tall card (BoonChoice's Blessing screen): the medallion at the left, the name,
+## rarity, level and the button's plaque, the text, and the numbers at the right. Set before setup.
+var listed := false
 var boon: Boon
 var rarity: Boon.Rarity = Boon.Rarity.COMMON
 ## An Elo: no rarity, no level, the chain's frame.
@@ -181,7 +190,8 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 			box.add_child(meta)
 		else:
 			meta.free()
-		box.add_child(_rule())
+		if not listed:
+			box.add_child(_rule())
 		box.add_child(_rich(text))
 		# the facts at the level shown: the next one (new or grown), or the one a trade keeps
 		var lv := maxi(level, 1) if upgrade else level + 1
@@ -190,7 +200,13 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 			before = BoonChoice.facts(replaces, replaced_level, Boon.RARITY_MULT[replaced_rarity])
 		var facts := _facts(BoonChoice.facts(b, lv, Boon.RARITY_MULT[rarity] if not elo else 1.0), before)
 		if facts != null:
-			box.add_child(facts)
+			if listed:
+				# the numbers stand in their own column at the right of the line
+				facts.custom_minimum_size.x = ROW_FACTS_W
+				facts.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+				box.get_parent().add_child(facts)
+			else:
+				box.add_child(facts)
 		# what is left of the height goes over the trade, so it always stands at the bottom
 		box.add_child(_fill())
 		if replaces != null:
@@ -205,21 +221,39 @@ func setup(b: Boon, rarity_: Boon.Rarity, level: int, from: Array[Boon], replace
 ## The start every card shares: its size, no theme boxes (the card draws itself), the glow of its colour behind the
 ## art and the column its parts go in.
 func _shell(glow: Color, size_px: Vector2 = SIZE, art_h: float = ART_H) -> VBoxContainer:
-	custom_minimum_size = size_px
+	custom_minimum_size = Vector2(0.0, ROW_MIN_H) if listed else size_px
+	if listed:
+		size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	focus_mode = Control.FOCUS_ALL
 	var empty := StyleBoxEmpty.new()
 	for st in [&"normal", &"hover", &"pressed", &"focus", &"disabled", &"hover_pressed"]:
 		add_theme_stylebox_override(st, empty)
 	_add_glow(glow, art_h)
 	var box := VBoxContainer.new()
-	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = PAD
-	box.offset_right = -PAD
-	box.offset_top = PAD * 0.5
-	box.offset_bottom = -PAD
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override(&"separation", 5)
-	add_child(box)
+	if listed:
+		# the line: [medallion | words | numbers]; the words' column is the one returned
+		var line := HBoxContainer.new()
+		line.name = &"Line"
+		line.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		line.offset_left = PAD
+		line.offset_right = -PAD
+		line.offset_top = PAD * 0.5
+		line.offset_bottom = -PAD * 0.5
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		line.add_theme_constant_override(&"separation", 16)
+		add_child(line)
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		line.add_child(box)
+	else:
+		box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		box.offset_left = PAD
+		box.offset_right = -PAD
+		box.offset_top = PAD * 0.5
+		box.offset_bottom = -PAD
+		add_child(box)
 	_box = box
 	return box
 
@@ -227,8 +261,14 @@ func _shell(glow: Color, size_px: Vector2 = SIZE, art_h: float = ART_H) -> VBoxC
 ## The band at the top of the column the crest stands in.
 func _art(box: VBoxContainer, art_h: float = ART_H) -> CenterContainer:
 	var art := CenterContainer.new()
-	art.custom_minimum_size.y = art_h
 	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if listed:
+		art.custom_minimum_size = Vector2(ROW_ART + 24.0, 0.0)
+		var line := box.get_parent()
+		line.add_child(art)
+		line.move_child(art, 0)
+		return art
+	art.custom_minimum_size.y = art_h
 	box.add_child(art)
 	return art
 
@@ -237,7 +277,7 @@ func _art(box: VBoxContainer, art_h: float = ART_H) -> CenterContainer:
 ## the height of what it says (fit_height, once laid out).
 func _finish(fit := false) -> void:
 	if fit:
-		custom_minimum_size.y = MIN_H
+		custom_minimum_size.y = ROW_MIN_H if listed else MIN_H
 		_fits = 2
 		_fit_later.call_deferred()
 	var frame := Control.new()
@@ -265,6 +305,11 @@ func _fit_later() -> void:
 ## The height of what the card says, from its top to its last line, between MIN_H and SIZE.y.
 func fit_height() -> void:
 	if _box == null:
+		return
+	if listed:
+		var line := _box.get_parent() as Control
+		var tall := maxf(line.get_combined_minimum_size().y, _box.get_combined_minimum_size().y)
+		custom_minimum_size.y = clampf(ceilf(tall + PAD), ROW_MIN_H, ROW_MAX_H)
 		return
 	var need := _box.get_combined_minimum_size().y + _box.offset_top - _box.offset_bottom
 	custom_minimum_size.y = clampf(ceilf(need), MIN_H, SIZE.y)
@@ -508,7 +553,7 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 	var col := PsalmIcon.tint(p)
 	var box := _shell(p.color)
 	var art := _art(box)
-	crest = PsalmIcon.new().setup(p, PSALM_ICON)
+	crest = PsalmIcon.new().setup(p, ROW_ART if listed else PSALM_ICON)
 	art.add_child(crest)
 	var title := _name(T.t(p.name_key))
 	title.name = &"Name"
@@ -516,13 +561,16 @@ func setup_psalm(p: PsalmDef, opened_by: PackedStringArray, first: bool = false)
 	var does := UiKit.label(T.t(&"psalm_transforms", {"action": T.t(Boon.SLOT_KEY[p.slot])}), col, 17, UiKit.BOLD_FONT)
 	does.name = &"Transforms"
 	var line := HBoxContainer.new()
-	line.alignment = BoxContainer.ALIGNMENT_CENTER
+	line.alignment = BoxContainer.ALIGNMENT_BEGIN if listed else BoxContainer.ALIGNMENT_CENTER
 	line.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	line.add_theme_constant_override(&"separation", 7)
 	line.add_child(ActionSlot.mark(p.slot, ACTION_MARK + 2.0))
 	line.add_child(does)
+	if listed and Boon.SLOT_BUTTON[p.slot] != &"":
+		line.add_child(key_plaque(Boon.SLOT_BUTTON[p.slot]))
 	box.add_child(line)
-	box.add_child(_rule())
+	if not listed:
+		box.add_child(_rule())
 	var args := p.text_args()
 	for k: String in args:
 		args[k] = UiKit.strong(str(args[k]))
@@ -779,6 +827,13 @@ func _add_glow(color: Color, art_h: float = ART_H) -> void:
 	t.offset_right = -METAL_INSET - 2.0
 	t.offset_top = -10.0
 	t.offset_bottom = art_h + 10.0
+	if listed:
+		# behind the medallion at the left
+		t.anchor_right = 0.0
+		t.anchor_bottom = 1.0
+		t.offset_right = ROW_ART + 60.0
+		t.offset_top = 0.0
+		t.offset_bottom = 0.0
 	add_child(t)
 
 
@@ -790,13 +845,14 @@ func _crest(b: Boon, from: Array[Boon]) -> Control:
 		rest.draw.connect(func() -> void: _draw_medallion(rest, Color(0.55, 0.85, 0.6), 6))
 		return rest
 	var art := BoonArt.medallion(b.id)
+	var k := ROW_ART / PAINTED if listed else 1.0
 	if not from.is_empty():
 		if art:
-			return EloLink.new().setup(b, from, PAINTED_ELO, SOURCE, SOURCE_GAP, art)
-		return EloLink.new().setup(b, from, DRAWN_ELO, DRAWN_SOURCE, DRAWN_GAP)
+			return EloLink.new().setup(b, from, PAINTED_ELO * k, SOURCE * k, SOURCE_GAP * k, art)
+		return EloLink.new().setup(b, from, DRAWN_ELO * k, DRAWN_SOURCE * k, DRAWN_GAP * k)
 	if art:
-		return BoonArt.rect(art, PAINTED)
-	return BoonIcon.new().setup(b, DRAWN)
+		return BoonArt.rect(art, PAINTED * k)
+	return BoonIcon.new().setup(b, DRAWN * k)
 
 
 ## A drawn medallion (the rest card's heart): the rim around a glyph of BoonIcon (-1: a small
@@ -818,6 +874,9 @@ func _name(text: String) -> Label:
 	var l := UiKit.title(text, 25, IVORY)
 	l.add_theme_constant_override(&"outline_size", 6)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if listed:
+		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		l.add_theme_font_size_override(&"font_size", 23)
 	return l
 
 
@@ -893,8 +952,8 @@ static func _from_to(o: Dictionary, which: String) -> Dictionary:
 func _text(text: String, color: Color, size_: int, font: Font = null) -> Label:
 	var l := UiKit.label(text, color, size_, font)
 	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	l.custom_minimum_size.x = SIZE.x - PAD * 2.0
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if listed else HORIZONTAL_ALIGNMENT_CENTER
+	l.custom_minimum_size.x = ROW_TEXT_W if listed else SIZE.x - PAD * 2.0
 	return l
 
 
@@ -904,7 +963,7 @@ func _rich(bbcode: String) -> RichTextLabel:
 	var marked := Glossary.emphasize(bbcode)
 	var r := UiKit.rich(marked, BODY, BODY_SIZE)
 	r.name = &"Desc"
-	r.custom_minimum_size.x = SIZE.x - PAD * 2.0
+	r.custom_minimum_size.x = ROW_TEXT_W if listed else SIZE.x - PAD * 2.0
 	plain = r.get_parsed_text()
 	return r
 
@@ -955,13 +1014,14 @@ func _fill() -> Control:
 ## Action (if any), level and rarity on one line, each in its own colour. An Elo shows only its action (it has
 ## neither level nor rarity); an exchange shows the level it keeps.
 func _meta(b: Boon, level: int) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	row.add_theme_constant_override(&"separation", 8)
+	var row_ := HBoxContainer.new()
+	row_.alignment = BoxContainer.ALIGNMENT_BEGIN if listed else BoxContainer.ALIGNMENT_CENTER
+	row_.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	row_.add_theme_constant_override(&"separation", 8)
 	var parts: Array[Label] = []
 	if b.slot != Boon.Slot.NONE:
-		parts.append(UiKit.label(T.t(Boon.SLOT_KEY[b.slot]), UiKit.DIM, 16, UiKit.BOLD_FONT))
+		# the word and the mark are the button's own (BC-2: the Investida's are not the dodge's)
+		parts.append(UiKit.label(T.t("action_" + String(b.button())) if b.button() != &"" else T.t(Boon.SLOT_KEY[b.slot]), UiKit.DIM, 16, UiKit.BOLD_FONT))
 	if not elo:
 		var lv_text: String
 		if upgrade:
@@ -976,13 +1036,51 @@ func _meta(b: Boon, level: int) -> HBoxContainer:
 		parts.append(rar)
 	for i in parts.size():
 		if i > 0:
-			row.add_child(UiKit.label("·", UiKit.DIM, 16))
-		row.add_child(parts[i])
+			row_.add_child(UiKit.label("·", UiKit.DIM, 16))
+		row_.add_child(parts[i])
 	if b.slot != Boon.Slot.NONE:
 		# the action said with the HUD's own symbol (stage 1A)
-		row.add_child(ActionSlot.mark(b.slot, ACTION_MARK))
-		row.move_child(row.get_child(-1), 0)
-	return row
+		row_.add_child(button_mark(b.button(), ACTION_MARK) if b.button() != &"" else ActionSlot.mark(b.slot, ACTION_MARK))
+		row_.move_child(row_.get_child(-1), 0)
+	if listed and b.button() != &"":
+		# BC-1: the real key of that button, on a plaque (changes with the pad and a remapped key)
+		row_.add_child(key_plaque(b.button()))
+		row_.move_child(row_.get_child(-1), 1 if b.slot != Boon.Slot.NONE else 0)
+	return row_
+
+
+## The HUD's mark of a button (AbilityList.BUTTONS), side px.
+static func button_mark(action: StringName, side: float) -> Control:
+	for e in AbilityList.BUTTONS:
+		if e[0] == action:
+			return ActionSlot.glyph_mark(e[1] if e[1] >= 0 else BoonIcon.ACTION_GLYPH + int(e[2]), side)
+	return Control.new()
+
+
+## The plaque of an action's key: ink under an old gold line, the key as the player has it now (UiKit.action_label).
+static func key_plaque(action: StringName) -> PanelContainer:
+	var p := PanelContainer.new()
+	p.name = &"KeyPlaque"
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var sb := UiKit.box(INK, Color(UiKit.OLD_GOLD, 0.85), 1, 0, 4)
+	sb.content_margin_left = 7
+	sb.content_margin_right = 7
+	sb.content_margin_top = 0
+	sb.content_margin_bottom = 1
+	p.add_theme_stylebox_override(&"panel", sb)
+	var l := UiKit.label(UiKit.action_label(action), IVORY, 15, UiKit.BOLD_FONT)
+	l.name = &"Key"
+	p.add_child(l)
+	return p
+
+
+## The button this card changes (the list on the right lights it; &"": it acts alone).
+func button() -> StringName:
+	if boon != null:
+		return boon.button()
+	if psalm != null:
+		return Boon.SLOT_BUTTON[psalm.slot]
+	return &""
 
 
 ## A thin rule of old gold with a small diamond in the middle, between the heading and the description.

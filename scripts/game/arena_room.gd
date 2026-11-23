@@ -10,7 +10,8 @@ extends Node3D
 ## docs/art/cycle12_arenas_spec.md. Collision never comes from here (Arena._build_arena reads the layout).
 
 ## The looks an arena may have (RoomLayout.look) and the script of each.
-const LOOKS: Array[StringName] = [&"crypt", &"rift", &"garden", &"sanctuary", &"bridge", &"runes", &"trial", &"altar", &"hub"]
+const LOOKS: Array[StringName] = [&"crypt", &"rift", &"garden", &"sanctuary", &"bridge", &"runes", &"trial", &"altar", &"hub",
+	&"armory", &"chapel"]
 ## How deep the cliffs under the floor's edges drop, and the abyss under them.
 const DEPTH := 22.0
 ## A render layer only an arena's floor is on (with 1), for a fill light of the floor alone (floor_layers; M-1, the
@@ -186,7 +187,7 @@ const BREATH: Dictionary = {
 	&"hall": Color(0.16, 0.5, 0.5), &"crypt": Color(0.6, 0.42, 0.28), &"rift": Color(0.4, 0.22, 0.6),
 	&"garden": Color(0.46, 0.5, 0.56), &"bridge": Color(0.34, 0.44, 0.6), &"sanctuary": Color(0.56, 0.57, 0.6),
 	&"runes": Color(0.1, 0.1, 0.14), &"trial": Color(0.52, 0.36, 0.78), &"altar": Color(0.6, 0.5, 0.38),
-	&"chamber": Color(0.22, 0.2, 0.55),
+	&"chamber": Color(0.22, 0.2, 0.55), &"armory": Color(0.4, 0.44, 0.52), &"chapel": Color(0.5, 0.52, 0.6),
 }
 const BREATH_THREAD: Dictionary = {&"runes": Color(1.0, 0.62, 0.25)}
 const BREATH_SHADER := preload("res://assets/shaders/door_breath.gdshader")
@@ -229,6 +230,8 @@ static func make(look: StringName) -> ArenaRoom:
 			return AltarLook.new()
 		&"hub":
 			return HubLook.new()
+		&"armory", &"chapel":
+			return GuardianLook.new()
 	return ArenaRoom.new()
 
 
@@ -434,8 +437,29 @@ func _stylize_steps() -> Array[Callable]:
 				return
 			_style_ruins()
 			if _style.has(&"air"):
-				_dress_air(),
+				_dress_air()
+			if _style.has(&"c1v"):
+				_c1v_light(_style[&"c1v"]),
 	]
+
+
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the style's `c1v` dictionary puts
+## the warm key's pool at the middle of the floor shifted by `warm` (x, z in m; scaled by `energy`, default 1) and, if it
+## has `shaft` (an offset the same way), the shaft of Elun there, kept `C1V_INSET` m inside the floor's bounds.
+const C1V_INSET := 3.0
+
+
+func _c1v_light(c: Dictionary) -> void:
+	var box := arena.shape().bounds()
+	var mid := box.get_center()
+	if c.has(&"warm"):
+		var w := mid + (c[&"warm"] as Vector2)
+		key_pool(Vector3(w.x, w.y, CatacombHall.STY_WARM_RADIUS), CatacombHall.STY_WARM_KEY,
+				CatacombHall.STY_WARM_ENERGY * float(c.get(&"energy", 1.0)))
+	if c.has(&"shaft"):
+		var inner := box.grow(-C1V_INSET)
+		var at := mid + (c[&"shaft"] as Vector2)
+		CatacombHall.elun_shaft(self, Vector2(clampf(at.x, inner.position.x, inner.end.x), clampf(at.y, inner.position.y, inner.end.y)))
 
 
 ## ENV-HB4: the far ruins' cards (abyss_ruins.gdshader) in the stylized look without the tall pale bands between their
@@ -2677,6 +2701,9 @@ func _hazard_pieces() -> void:
 			for i in hz.plates.size():
 				var r := hz.plates[i]
 				var k := HazardPiece.Kind.SAG if hz.plate_source == Ground.SAG_SOURCE else HazardPiece.Kind.PLATE
+				if hz.plate_source == Ground.SPIKE_PLATE_SOURCE:
+					list.append(HazardPiece.grate(self, r, hz.warn))  # the plate is the pit grate's piece (tips peek as it warns)
+					continue
 				var way := Vector2.ZERO
 				if i < hz.aims.size() and hz.aims[i] != Vector4.ZERO:
 					k = HazardPiece.Kind.ARMS

@@ -1,19 +1,26 @@
 [gd_resource type="Resource" script_class="Boon" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_nlwfi"]
-[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_twlni"]
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_twlni"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_nb7x3"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_dnyty"]
 
-[sub_resource type="Resource" id="Resource_nb7x3"]
-script = ExtResource("1_nlwfi")
-stat = &"freeze_time"
-tag = &"dash"
-base = 0.8
-per_level = PackedFloat32Array(0.4, 0.4)
+[sub_resource type="Resource" id="Resource_0gpt0"]
+script = ExtResource("3_dnyty")
+kind = 3
+trigger = 5
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(5)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(8, 12, 17)
+count = PackedFloat32Array(3, 5, 7)
+radius = PackedFloat32Array(10)
+status = &"freeze"
+status_power = PackedFloat32Array(0.6, 0.8, 1)
 
 [resource]
-script = ExtResource("2_twlni")
+script = ExtResource("2_nb7x3")
 id = &"passo_geada"
 family = 1
 icon = 17
-slot = 4
-mods = Array[ExtResource("1_nlwfi")]([SubResource("Resource_nb7x3")])
+slot = 5
+skill = SubResource("Resource_0gpt0")

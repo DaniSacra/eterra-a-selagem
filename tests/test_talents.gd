@@ -24,9 +24,13 @@ func test_the_tree_has_four_branches_bridges_and_sustain() -> void:
 	for branch in [B.COMBO, B.FURIA, B.EMETH, B.MAGIA]:
 		for tier in [TIER.ENTRY, TIER.MIDDLE, TIER.APEX]:
 			var found := book.catalog.filter(func(t: TalentDef) -> bool: return t.branch == branch and t.tier == tier)
-			assert_eq(found.size(), 1, "branch %d has one Gift of tier %d" % [branch, tier])
+			# C2: a branch may hold more than one middle (the Brado's and the Investida's Dons)
+			if tier == TIER.MIDDLE:
+				assert_gte(found.size(), 1, "branch %d has a middle" % branch)
+			else:
+				assert_eq(found.size(), 1, "branch %d has one Gift of tier %d" % [branch, tier])
 	var bridges := book.catalog.filter(func(t: TalentDef) -> bool: return t.tier == TIER.BRIDGE)
-	assert_eq(bridges.size(), 4)
+	assert_eq(bridges.size(), 5, "four, and Fôlego de Guerra beside the Investida")
 	var joined := {}
 	for t: TalentDef in bridges:
 		assert_eq(t.joins.size(), 2)
@@ -61,9 +65,9 @@ func test_the_first_six_and_the_unlock_order() -> void:
 		var t := book.find(id)
 		assert_eq(t.unlock_level, first[id][0], "%s unlocks at %d" % [id, first[id][0]])
 		assert_eq(t.cost, first[id][1], "%s costs %d" % [id, first[id][1]])
-	assert_true(book.unlocked_at(6).is_empty())
+	assert_eq(book.unlocked_at(6).map(func(t: TalentDef) -> StringName: return t.id), [&"ferro_na_investida"], "C2: the Investida's Dom comes with the first ultimate")
 	assert_true(book.unlocked_at(19).is_empty())
-	assert_eq(hero.ultimate(&"cleave").mastery_level, 6)
+	assert_eq(hero.ultimate(&"cleave").mastery_level, 3)
 	assert_eq(hero.ultimate(&"vortex").mastery_level, 10)
 	for level in range(1, TOP + 1):
 		if level != 6 and level != 19:

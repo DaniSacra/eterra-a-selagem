@@ -166,7 +166,7 @@ func test_the_portal_asks_on_a_leaf_of_the_book() -> void:
 	assert_eq((p.find_child("title", true, false) as Label).text, T.t(&"hub_descend_title"))
 	assert_eq((p.find_child("line", true, false) as Label).text, T.t(&"hub_descend_line"))
 	assert_not_null(p.find_child("mark", true, false), "the door's mark")
-	assert_eq(p.buttons.map(func(b: Button) -> String: return b.name), ["go", "stay"])
+	assert_eq(p.buttons.map(func(b: Button) -> String: return b.name), ["go", "hero", "stay"])
 	await _frames(2)
 	assert_true(p.buttons[0].has_focus(), "Descer in focus")
 	var view := hub.get_viewport().get_visible_rect().size
@@ -245,3 +245,22 @@ func test_the_hub_is_a_place_of_its_own_with_the_titles_piece() -> void:
 	assert_eq(Music.piece_for(MusicCatalog.HUB), &"tempting_secrets")
 	Save.data.options.music_hub = "morvath_battle"
 	assert_eq(Music.piece_for(MusicCatalog.HUB), MusicCatalog.DEFAULT[MusicCatalog.HUB], "Morvath's piece never plays there")
+
+
+func test_the_portal_picks_the_hero_and_keeps_it_in_the_save() -> void:
+	_hub()
+	var before: Dictionary = Save.data.duplicate(true)
+	hub.use(HubPlan.PORTAL)
+	var hero_button := hub.host.screen.find_child("hero", true, false) as Button
+	assert_eq(hero_button.text, T.t(&"hub_hero_warrior"))
+	hero_button.pressed.emit()
+	await _frames(3)
+	var p := hub.host.screen as HubPanel
+	assert_not_null(p, "the page is back")
+	assert_eq(SaveData.picked_hero(Save.data), "maga")
+	assert_eq((p.find_child("hero", true, false) as Button).text, T.t(&"hub_hero_maga"))
+	assert_eq((p.find_child("line", true, false) as Label).text, T.t(&"hub_descend_line_maga"))
+	(p.find_child("hero", true, false) as Button).pressed.emit()
+	await _frames(3)
+	assert_eq(SaveData.picked_hero(Save.data), "warrior", "the button walks back")
+	Save.data = before

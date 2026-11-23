@@ -72,12 +72,16 @@ const RUIN_EDGE := Color(0.12, 0.16, 0.24)
 
 # ---------- the stylized look (room redesign, lot C section 3: docs/art/room_redesign_lotC_spec.md) ----------
 ## The bridge's biome: worn blue-grey stone (hue 212), little olive, the hall's fires, its own air.
+## C1V N3 (docs/art/identidade_c1v.md 2.1, only in the stylized look): the shadow band's tint (hue 219 to 225) and the hall's vignette.
+const STY_SHADOW_GLOW := Color(0.45, 0.40, 1.0)
 const STYLE := {
 	&"stone": Color(0.30, 0.325, 0.378), &"shadow": Color(0.80, 0.865, 1.0), &"floor_stone": STY_FLOOR, &"edge_value": STY_EDGE_VALUE,
 	&"joint_cold": Color(0.9, 0.93, 1.0), &"olive_share": 0.05, &"slab_paint": Vector2(0.86, 1.12), &"metal": true,
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"pool_saturation": 1.0,
 	&"air": {&"sky": Color(0.045, 0.053, 0.08), &"fog": Color(0.10, 0.115, 0.155), &"ambient": Color(0.66, 0.695, 0.78),
 		&"ambient_gain": 1.3, &"moon": Color(0.80, 0.86, 0.98), &"moon_energy": 0.6, &"moon_shadow": true},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
+	&"c1v": {&"warm": Vector2(-3.0, 0.0), &"energy": 0.8},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).

@@ -4,7 +4,8 @@ shader_type spatial;
 // r = hit flash (0..1): the figure's own body, lighter and warmer for an instant (never a flat white: a strong blow
 //     reaches white_from only on its first frame, and even then it keeps its shading under the glow threshold);
 //     below 0, a blow its armor took: old gold gleams on its edges, no white (it was not wounded),
-// g = frost (1) plus 0.5 when its armor is broken (the armored edge light goes out),
+// g = frost (1) plus half of how much of its armor is spent (0..0.5, in steps at 75, 50, 25% and gone: the armored edge
+//     light and the gold rim go out step by step),
 // b = burning (1) plus half of how far its wind-up is (0..0.5: the orb of a staff swells),
 // a = dissolve on death. (CrowdRenderer.state packs them.)
 //
@@ -156,6 +157,9 @@ uniform float style_scene = 0.075;
 uniform vec3 style_rim_color : source_color = vec3(1.0, 0.82, 0.62);
 uniform float style_rim_power = 3.5;
 uniform float style_rim = 0.14;
+// GR-5: 1 puts the stylized rim only on what faces up (the top of a dark helm and shoulders against the dark floor):
+// its weight is smoothstep(0.2, 0.6, the world normal's y).
+uniform float style_rim_top = 0.0;
 uniform float style_flat = 0.35;
 uniform float style_flat_lod = 3.0;
 uniform float style_tell = 1.0;
@@ -199,7 +203,7 @@ void vertex() {
 	vec3 at;
 	vec3 facing;
 	crowd_pose(VERTEX_ID, COLOR, at, facing);
-	VERTEX = at;
+	VERTEX = crowd_away(VERTEX_ID, INSTANCE_CUSTOM.a, at);
 	NORMAL = facing;
 	state = INSTANCE_CUSTOM;
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
@@ -290,12 +294,13 @@ void fragment() {
 		// the torches' warm rim on every figure (the fire's own rim takes its place while it burns)
 		vec3 warm = mix(style_rim_color, rim_color / max(max(rim_color.r, max(rim_color.g, rim_color.b)), 0.001),
 			clamp(style_vivid, 0.0, 1.0));
-		EMISSION += warm * figure_rim(NORMAL, VIEW, style_rim_power) * style_rim * (1.0 - burn) * shade * (1.0 - style_elite);
+		EMISSION += warm * figure_rim(NORMAL, VIEW, style_rim_power) * style_rim
+			* mix(1.0, smoothstep(0.2, 0.6, (INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).y), style_rim_top) * (1.0 - burn) * shade * (1.0 - style_elite);
 		// elites: the gilded steel catches the key (old gold, more saturated than the painting), and the rim is old gold
 		vec3 old_gold = max(mix(vec3(dot(gild_color, vec3(0.3, 0.55, 0.15))), gild_color, style_gild_sat), vec3(0.0));
 		EMISSION += old_gold * top * gold * shade * key * figure_bands(dot(NORMAL, normalize(key_dir))) * style_gild_light * (1.0 - frost);
 		vec3 gold_rim = gild_color / max(gild_color.r, max(gild_color.g, gild_color.b));
-		EMISSION += gold_rim * figure_rim(NORMAL, VIEW, style_elite_rim_power) * style_rim * style_elite_rim * style_elite
+		EMISSION += gold_rim * figure_rim(NORMAL, VIEW, style_elite_rim_power) * style_rim * style_elite_rim * style_elite * armored
 			* (1.0 - burn * (1.0 - burn_keep_own)) * shade;
 	}
 	float ready = smoothstep(1.0 - tell_hold, 1.0, tell) * tell_light * (styled ? style_tell : 1.0);

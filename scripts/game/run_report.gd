@@ -9,14 +9,14 @@ extends RefCounted
 static func result(g: Game) -> Dictionary:
 	var rooms := g.rooms
 	var boss := g.boss
-	return {"time": snappedf(g.time, 0.1), "hp": int(g.player.hp), "level": g.level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": g.kills, "spawned": g.director.spawned, "best_combo": g.combat.best_combo,
+	var out := {"time": snappedf(g.time, 0.1), "hp": int(g.player.hp), "level": g.level, "room": rooms.depth() if rooms else 0, "gold": rooms.gold if rooms else 0, "kills": g.kills, "spawned": g.director.spawned, "best_combo": g.combat.best_combo,
 		"enemies": g.horde.count(), "max_alive": g.max_alive, "boss_at": snappedf(g.boss_at, 0.1), "mode": Game.Mode.keys()[g.mode], "boss_hp": int(boss.e.hp) if boss and boss.e else -1, "phase": boss.phase if boss else 0,
 		"boons": g.boons.owned().size(), "damage": int(g.combat.damage_dealt), "step_ms": snappedf(g.step_ms, 0.01),
 		"step_ms_avg": snappedf(g.step_timer.average(), 0.01), "step_ms_peak": snappedf(g.step_timer.peak, 0.01), "fps": Engine.get_frames_per_second(),
 		"boss": g.boss_stats, "bot": g.bot.stats() if g.bot else {}, "rooms": g.room_tally.rooms(g.time), "hp_at_boss": g.room_tally.hp_at_boss,
 		"arena": String(g.arena.id) if g.arena else "", "stuck": g.horde.stuck_count(), "stuck_by": g.horde.stuck_by,
-		"shots_blocked": g.projectiles.blocked, "flinches": g.horde.flinches, "interrupts": g.horde.interrupts,
-		"windups": g.horde.windup_report(), "shot_flight": g.projectiles.flight_report(),
+		"shots_blocked": g.projectiles.blocked, "flinches": g.horde.flinches, "interrupts": g.horde.interrupts, "breaks": g.horde.breaks, "kit": g.hero_gifts.feed.tally,
+		"windups": g.horde.windup_report(), "idle": g.horde.idle_report(), "shot_flight": g.projectiles.flight_report(), "hurt_by": g.hurt_by.keys().reduce(func(a: Dictionary, k: Variant) -> Dictionary: a[k] = int(g.hurt_by[k]); return a, {}),
 		"omega_charges_started": g.player.charges_started, "omega_charges_cancelled": g.player.charges_cancelled(), "boons_at_boss": g.room_tally.boons_at_boss, "shop": g.room_tally.shop, "route_shop": g.room_tally.route_shop,
 		"fountain_used": g.room_tally.fountain_used, "ult": g.ults.stats(), "dealt_by": g.horde.dealt.report(), "elos": g.elos_formed.size(),
 		"psalms": g.psalms.ids(), "events": g.room_tally.events.duplicate(true), "map": rooms.map.summary() if rooms else {},
@@ -29,6 +29,11 @@ static func result(g: Game) -> Dictionary:
 		"tools": g.tools_found.map(func(t: StringName) -> String: return String(t)),
 		"oficios": g.oficios.report() if g.oficios != null else {},
 		"angels": g.encounters.meetings.duplicate(true) if g.encounters else []}
+	if g.arcane != null:
+		# the Maga only: the Warrior's RESULT stays as it was
+		out["hero"] = String(g.hero.id)
+		out["arcane"] = g.arcane.stats().merged({"resonance": g.arcane.resonance.points, "dodges": g.dodges})
+	return out
 
 
 ## The RESULT line the smoke runs and captures print: "RESULT " and result() as JSON (E1a-5, B-c: printed as a

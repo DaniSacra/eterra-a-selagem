@@ -143,6 +143,7 @@ mk tell_ember 0.45 -14 "$R/spell_fire_03.ogg|0|1|0|lowpass=f=4000,afade=t=in:d=0
 mk tell_orb 0.45 -15 "$R/spell_01.ogg|0|0.75|0|lowpass=f=4500,afade=t=in:d=0.2"
 mk tell_bolt 0.35 -13 "$K/metalLatch.ogg|0|0.8|0|lowpass=f=4500" "$K/metalClick.ogg|0|0.9|0.12|lowpass=f=4500"
 mk tell_shield 0.45 -12 "$K/dropLeather.ogg|0|0.75|0|-" "$B/bfh1_wood_hit_03.ogg|-6|0.8|0.05|-"
+mk tell_sweep 0.7 -14 "$O/blade_spin_2.ogg|0|0.5|0|lowpass=f=2600,afade=t=in:d=0.25"
 mk tell_ritual 0.6 -15 "$L/Spell_03.wav|0|0.8|0|lowpass=f=3000,afade=t=in:d=0.2|0|0.7"
 mk enemy_swing_0 0.35 -11 "$O/blade_0.ogg|0|0.75|0|-"
 mk enemy_swing_1 0.35 -11 "$O/blade_2.ogg|0|0.75|0|-"
@@ -198,3 +199,18 @@ mk boon 0.6 -10 "$R/item_gem_04.ogg|0|0.7|0|lowpass=f=4500" "$L/Spell_01.wav|-8|
 mk level_up 0.9 -10 "$H/bell_02.ogg|0|0.5|0|lowpass=f=3000" "$L/Spell_01.wav|-6|0.85|0.05|lowpass=f=5000|0|0.8"
 mk ui_move 0.15 -20 "$R/item_wood_02.ogg|0|0.9|0|lowpass=f=4000|0|0.15"
 mk ui_ok 0.3 -15 "$K/metalLatch.ogg|0|0.85|0|lowpass=f=4500" "$B/bfh1_wood_hit_02.ogg|-6|1.1|0|-"
+
+# ------------------------------------------------------------------ C1e: the wind-ups of the new enemies
+# built from the game's own files above (A), so each role keeps a wind-up of its own (tests/test_combat_sounds.gd)
+A="$WORK/c1e"
+mkdir -p "$A"
+cp "$OUT/roar.ogg" "$OUT/rise.ogg" "$OUT/dash_aim.ogg" "$OUT/scythe_raise.ogg" "$A/"
+mk tell_call 0.6 -14 "$A/roar.ogg|0|1.35|0|lowpass=f=3000,afade=t=in:d=0.12|0|0.6"
+mk tell_dig 0.6 -14 "$A/rise.ogg|0|0.8|0|lowpass=f=2400,afade=t=in:d=0.1|0|0.6"
+mk tell_leap 0.6 -13 "$A/dash_aim.ogg|0|0.8|0|lowpass=f=3500,afade=t=in:d=0.08|0|0.6"
+mk tell_throw 0.5 -14 "$A/scythe_raise.ogg|0|1.2|0|lowpass=f=5000,afade=t=in:d=0.08|0|0.5"
+# lote C: the Canalizador's beam gathering (the charge-up, a little higher and slower to rise) and the Armadilheiro setting a plate (a
+# bone knock and the crossbow's click, low and dry)
+cp "$OUT/charge_up.ogg" "$OUT/bolt.ogg" "$OUT/bone_2.ogg" "$A/"
+mk tell_beam 0.9 -14 "$A/charge_up.ogg|0|1.1|0|lowpass=f=4500,afade=t=in:d=0.3|0|0.9"
+mk tell_trap 0.5 -13 "$A/bone_2.ogg|0|0.7|0|lowpass=f=3500" "$A/bolt.ogg|-4|0.6|0.14|lowpass=f=3000"

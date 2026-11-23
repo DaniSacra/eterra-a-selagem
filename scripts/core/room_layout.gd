@@ -62,6 +62,9 @@ enum Size { SMALL, MEDIUM, LARGE, LONG }
 ## The guardian's own room (E5, the Santuário Desmoronado): the guardian's fight is held here whenever it may be (any
 ## depth, the arena just left aside), and he rises at boss_spawn facing hero_spawn.
 @export var guardian_home := false
+## 2026-11-23: whose house it is (the enemy id of the guardian: &"knight", &"priest_elder"). RunMap sends a guardian's
+## room to the layout with his id; a house with no id (&"") is any guardian's. A house is never drawn for an ordinary fight.
+@export var guardian_id: StringName = &""
 ## A floor that strikes on its own (E5, the runes: HazardDef; null: none).
 @export var hazard: HazardDef
 ## AT-Q1: what a blow breaks in it (vases, crates, branches; BreakablePiece, played by BreakFloor). Never stops a body

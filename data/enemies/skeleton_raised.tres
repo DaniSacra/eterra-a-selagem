@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_54ugv"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_mlbuj"]
+
+[resource]
+script = ExtResource("2_mlbuj")
+id = &"skeleton_raised"
+name_key = &"enemy_skeleton_raised"
+tint = Color(0.82, 0.86, 0.8, 1)
+vivid = -0.1
+windup_shake = 0.025
+tell = 1
+tell_at = Vector3(0.1, 1.9, -1)
+behavior = 2
+hp = 40.0
+speed = 4.3125
+damage = 4.0
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_damage = 4.0
+attack_range = 3.625
+attack_cooldown = 1.26
+attack_windup = 0.6000000000000001
+recover_time = 1.2
+strike_at = 0.1
+lunge_speed = 8.75
+lunge_time = 0.3
+recharge_windup = 0.6400000000000001
+aim_lock = 0.3
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+windup_gap = 0.35
+max_attackers = 3
+close_windup = 0.52
+rating = 3.0

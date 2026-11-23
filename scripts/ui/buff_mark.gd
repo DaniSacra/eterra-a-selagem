@@ -10,9 +10,13 @@ const SIDE := 24.0
 const FONT := 15
 const GAP := 4.0
 const WARM := Color("e8b45a")
+## combate_c1_leitura 5: the emerald dot at the diamond corner while the Brado still absorbs blows (gifts.ward > 0).
+const ABSORB := Color(0.30, 0.78, 0.45)
 
 var glyph := BoonIcon.SHOUT_GLYPH
 var left := 0.0
+## It still absorbs a blow (the emerald dot).
+var absorbing := false
 var total := 1.0
 var _text := ""
 
@@ -28,8 +32,11 @@ func setup(p_glyph: int) -> BuffMark:
 
 
 ## seconds_left of total_s; 0 or less hides the mark.
-func show_left(seconds_left: float, total_s: float) -> void:
+func show_left(seconds_left: float, total_s: float, absorbs := false) -> void:
 	visible = seconds_left > 0.0
+	if absorbs != absorbing:
+		absorbing = absorbs
+		queue_redraw()
 	var t := ceili(seconds_left)
 	if not is_equal_approx(seconds_left, left) or total_s != total:
 		left = seconds_left
@@ -48,6 +55,10 @@ func _draw() -> void:
 	var part := ActionSlot._sweep(c, r - UiKit.FRAME * 0.5, clampf(left / total, 0.0, 1.0))
 	if part.size() > 1:
 		draw_polyline(part, WARM, UiKit.FRAME, true)
+	if absorbing:
+		var dot := Vector2(SIDE - 3.0, 3.0)
+		draw_circle(dot, 4.6, UiKit.INK)
+		draw_circle(dot, 3.2, ABSORB)
 	var font := UiKit.number_font()
 	var at := Vector2(SIDE + GAP, (SIDE + font.get_ascent(FONT) - font.get_descent(FONT)) * 0.5).round()
 	UiKit.draw_shadow(self, font, at, _text, FONT)

@@ -9,7 +9,7 @@ extends RefCounted
 ##   HeroDef.magick_on_finisher + finisher_magick of Magia, once a blow.
 ## - Ímpeto: fury_per_kill charges a kill (tagged: Sangue Quente adds one for an Omega), up to fury_max, all gone
 ##   fury_time seconds after the last kill; fury_speed more speed of every blow a charge.
-## - Fúria Plena: with fury_max charges a finisher stuns fury_stun seconds longer.
+## - Fúria Plena: with fury_max charges a finisher causes fury_full_pct more damage.
 ## - Avanço Feroz, Investida: a kill by a blow with dash_back_on_kill gives the dodge's charge back, once a blow.
 ## - Lâmina Faminta: a blow with hungry_time that lands opens a window that long; an Omega begun in it costs
 ##   omega_discount less.
@@ -20,8 +20,11 @@ extends RefCounted
 ##   room, E6: none today).
 ## - Fatia 2 (Encantos, Refinar): blow_wave_fan more waves in a fan (Lâmina Tríplice); echo_pct of a blow again after
 ##   echo_delay (Eco da Verdade, Combat); return_reach after a blow with return_time (Retorno do Corte, Combat);
-##   blow_speed (Pressa) and stun_pct (Peso, Combat).
+##   blow_speed (Pressa) and armor_pct (Peso, Onda Pesada, Combat).
 ## - Respiro: room_heal of life a room won. Coração da Emeth: ult_charge_pct (the ultimate reads it), finisher_magick.
+
+## The most of a move's cooldown the Dons and Blessings may take off (Fôlego de Guerra).
+const COOLDOWN_CUT_MAX := 0.5
 
 ## The Blessings and Gifts of the run (their stat sums every number; held here, a Callable would not keep it alive).
 var boons: BoonState
@@ -117,6 +120,18 @@ func rally(seconds: float, speed: float, guard: float, charges: int) -> int:
 	return fury - before
 
 
+## Blows the Brado's buff still takes whole (ComboNode.buff_ward).
+var ward := 0
+
+
+## A blow falls on the Brado's buff: true when it took it.
+func take_ward() -> bool:
+	if rally_left <= 0.0 or ward <= 0:
+		return false
+	ward -= 1
+	return true
+
+
 ## The Brado's buff is on.
 func rallied() -> bool:
 	return rally_left > 0.0
@@ -134,11 +149,17 @@ func attack_speed(tags: Array[StringName] = []) -> float:
 	return 1.0 + fast + (fury * value(&"fury_speed") if fury > 0 else 0.0) + (rally_speed if rally_left > 0.0 else 0.0)
 
 
-## Seconds more a finisher with these tags stuns (Fúria Plena, only with every charge).
-func fury_stun(tags: Array[StringName]) -> float:
+## The share more a finisher with these tags causes (Fúria Plena, only with every charge).
+func fury_full_pct(tags: Array[StringName]) -> float:
 	if fury <= 0 or fury < fury_max():
 		return 0.0
-	return value(&"fury_stun", tags)
+	return value(&"fury_full_pct", tags)
+
+
+## The share of its cooldown a move with these tags gets back (Fôlego de Guerra: cooldown_pct is negative, never past
+## COOLDOWN_CUT_MAX).
+func cooldown_cut(tags: Array[StringName]) -> float:
+	return clampf(-value(&"cooldown_pct", tags), 0.0, COOLDOWN_CUT_MAX)
 
 
 # ---------- Avanço Feroz, Investida ----------

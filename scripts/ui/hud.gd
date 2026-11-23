@@ -97,7 +97,7 @@ const MOVE_FADE := 0.25
 ## The phase's name under the boss's bar: seconds it shows, its fade, font sizes.
 const PHASE_TIME := 3.0
 ## An arena's name on walking in (cycle C12, decision D-33): in the place and look of a phase's name, this long.
-const PLACE_TIME := 2.0
+const PLACE_TIME := 2.5
 ## Morvath's entrance (AP-2, ART-05.5): the chamber's name, his name and his epithet low in the middle of the screen (a
 ## title over the balustrade, under the hero and Morvath on the seal; nothing of the HUD stands there) while he rises
 ## (the 2.4 s of his entrance, Boss State.ENTER), on a veil; the notice and the greetings wait meanwhile. px at 720.
@@ -109,6 +109,12 @@ const ENTRANCE_NAME_SIZE := 34
 const ENTRANCE_LINE_SIZE := 17
 const PHASE_FADE := 0.4
 const PHASE_NAME_SIZE := 18
+## The arena's name card (N1 2.4): ivory over two gold filets, no box; its size, the filets' size, the gap under a boss's bar
+## and where it stands with no bar (under the clock).
+const PLACE_NAME_SIZE := 24
+const PLACE_RULE := Vector2(300, 9)
+const PHASE_GAP := 8.0
+const PLACE_TOP := 46.0
 const PHASE_TIP_SIZE := 15
 ## The Provação's seal: its diamond (33 px at 1080 lines, spec 5.3 asks about 30) and how far above the medallion.
 const TRIAL_SEAL := 22.0
@@ -137,6 +143,11 @@ const EDGE_INSET := Vector4(30.0, 96.0, EDGE_RIGHT, 128.0)
 ## hero's tree lacks is hidden.
 const ACTIONS: Array[StringName] = [&"light_attack", &"heavy_attack", &"shout", &"rush", &"dodge"]
 const SLOTS: Array[Boon.Slot] = [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.NONE, Boon.Slot.DASH]
+## The Maga's marks over the diamonds that carry no Blessing (M1b); Q and E always wear theirs.
+const MAGA_GLYPHS := {&"light_attack": BoonIcon.BOLT_GLYPH, &"heavy_attack": BoonIcon.BLAST_GLYPH, &"shout": BoonIcon.ACTION_GLYPH + Boon.Slot.CAST,
+	&"rush": BoonIcon.DOME_GLYPH}
+## The Resonância's colour (the Maga's amber).
+const RESONANCE_COLOR := Color(1.0, 0.62, 0.18)
 ## Where the ultimate's diamond stands among them: before the dodge.
 const ULT_AT := 4
 ## Between the room's number and what lies beyond the doors.
@@ -172,6 +183,8 @@ var _xp_fill: ColorRect
 var _boss_box: VBoxContainer
 var _boss_name: Label
 var _boss_bar: HudBar
+var _phase_rule_top: GoldRule
+var _phase_rule_bottom: GoldRule
 var _phase_box: VBoxContainer
 var _phase_name: Label
 var _phase_tip: Label
@@ -326,12 +339,40 @@ func _build_top() -> void:
 	_place(_phase_box, Control.PRESET_CENTER_TOP, Vector2(0, BOSS_TOP + 40 + 2), Vector2(BOSS.x + 160, 44))
 	_phase_name = UiKit.shadow(UiKit.title("", PHASE_NAME_SIZE, UiKit.GOLD))
 	_phase_name.add_theme_constant_override(&"outline_size", 5)
+	_phase_rule_top = _place_rule()
+	_phase_box.add_child(_phase_rule_top)
 	_phase_box.add_child(_phase_name)
 	_phase_tip = UiKit.shadow(UiKit.label("", UiKit.PALE, PHASE_TIP_SIZE))
 	_phase_tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_phase_box.add_child(_phase_tip)
+	_phase_rule_bottom = _place_rule()
+	_phase_box.add_child(_phase_rule_bottom)
+	_style_phase(false)
 	_place_clock(false)
 	_build_entrance()
+
+
+func _place_rule() -> GoldRule:
+	var r := GoldRule.new()
+	r.custom_minimum_size = PLACE_RULE
+	r.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	return r
+
+
+## The name under the bar is a boss's phase (gold, small) or an arena's card (ivory, larger, between two filets).
+func _style_phase(card: bool) -> void:
+	_phase_name.add_theme_color_override(&"font_color", UiKit.PALE if card else UiKit.GOLD)
+	_phase_name.add_theme_font_size_override(&"font_size", PLACE_NAME_SIZE if card else PHASE_NAME_SIZE)
+	_phase_rule_top.visible = card
+	_phase_rule_bottom.visible = card
+
+
+## Under the boss's bar by its real height (name and bar), so the two never touch; with no bar, under the clock.
+func _place_phase_box() -> void:
+	var y := PLACE_TOP
+	if _boss_box.visible:
+		y = _boss_box.position.y + _boss_box.get_combined_minimum_size().y + PHASE_GAP
+	_phase_box.position.y = y
 
 
 ## Morvath's entrance: the chamber's name small in old gold, his name in Cinzel, his epithet under it, on a veil.
@@ -583,7 +624,7 @@ func _place_clock(boss: bool) -> void:
 		_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var top := BOSS_TOP_ALONE if boss else BOSS_TOP
 	_boss_box.position.y = top
-	_phase_box.position.y = top + 40 + 2
+	_place_phase_box()
 
 
 ## Puts a control of a given size at a corner or edge of the screen, moved by offset from there.
@@ -640,6 +681,8 @@ func _process(delta: float) -> void:
 	_elo_banner.held = over or entrance_shown()
 	_clock.text = SaveData.format_time(game.time)
 	_coins.tick(delta)
+	# the footer of the Blessing and angel screens stands where the gold does: it waits meanwhile
+	_coins.visible = game.mode != Game.Mode.CHOICE or game._screen is EventChoice  # (the altar asks for gold)
 	if game.rooms:
 		# the descent: which room, and the gold for the shop (no experience here, so no bar over the scene)
 		_xp_back.visible = false
@@ -685,8 +728,10 @@ func _process(delta: float) -> void:
 	_phase_t -= delta
 	_phase_box.modulate.a = minf(clampf(_phase_t / PHASE_FADE, 0.0, 1.0), clampf((_phase_len - _phase_t) / 0.15, 0.0, 1.0))
 	_phase_box.visible = _phase_t > 0.0 and (_boss_box.visible or _place_shown)
+	_place_phase_box()
 	if _phase_t <= 0.0 and _boss_box.visible and _shield_t > 0.0 and _ritual_hint:
 		_phase_name.visible = false
+		_style_phase(false)
 		_phase_tip.text = T.t(&"ritual_hint")
 		_phase_tip.visible = true
 		_phase_box.visible = true
@@ -713,21 +758,26 @@ func _update_life(p: Player) -> void:
 
 
 func _update_slots(p: Player) -> void:
-	var by_slot := {}
+	var by_action := {}  # BC-2: by the button a Blessing really changes (the Investida's share the dash slot)
 	for b in game.boons.owned():
-		by_slot[b.slot] = b
+		if b.slot != Boon.Slot.NONE and not b.is_duo():
+			by_action[b.button()] = b
+	var arcane := game.hero.arcane != null
 	for s in _slots:
+		if arcane:
+			var mine: int = MAGA_GLYPHS.get(s.action, -1)
+			s.glyph = mine if mine >= 0 and (by_action.get(s.action) == null or s.action == &"shout" or s.action == &"rush") else -1
 		if s.action == &"shout":
 			# the Brado (Q): its recharge and the Blessing of its slot, hidden for a hero without it
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT) != null
-			s.refresh(by_slot.get(s.slot), p.shout_wait())
+			s.refresh(by_action.get(&"shout"), p.shout_wait())
 			continue
 		if s.action == &"rush":
 			# the Investida (E): its recharge
 			s.visible = ComboTree.find(p.tree.neutral, ComboNode.In.RUSH) != null
-			s.refresh(null, p.rush_wait())
+			s.refresh(by_action.get(&"rush"), p.rush_wait())
 			continue
-		var b: Boon = by_slot.get(s.slot)
+		var b: Boon = by_action.get(s.action)
 		var starved := not p.magick.can_pay(_omega(p, s.slot))
 		match s.slot:
 			Boon.Slot.DASH:
@@ -742,6 +792,11 @@ func _update_slots(p: Player) -> void:
 				s.locked = p.curse.ratio()
 				# the Pastor (E4): the lights gathered, over the special's diamond
 				var flock := game.psalms.holding(PsalmDef.Effect.FLOCK) if game.psalms else null
+				if arcane and game.arcane != null:
+					# the Maga's Ressonância: three diamonds of two points (a diamond lights with its first point)
+					var r := game.arcane.resonance
+					s.show_lights((r.points + 1) / 2, r.max_points / 2, RESONANCE_COLOR)
+					continue
 				s.show_lights(game.psalms.lights if flock else 0, flock.count if flock else 0, PsalmIcon.tint(flock).lightened(0.2) if flock else UiKit.OLD_GOLD)
 			_:
 				s.refresh(b, 0.0, 0, 0, starved)
@@ -753,7 +808,7 @@ func _update_slots(p: Player) -> void:
 func _update_buff(p: Player) -> void:
 	var node := ComboTree.find(p.tree.neutral, ComboNode.In.SHOUT)
 	var left := p.gifts.rally_left if p.gifts != null and node != null else 0.0
-	_buff.show_left(left, node.effect_time if node != null else 1.0)
+	_buff.show_left(left, node.effect_time if node != null else 1.0, p.gifts != null and p.gifts.ward > 0)
 	if _buff.visible:
 		var q := _slots[ACTIONS.find(&"shout")].get_global_rect()
 		_buff.global_position = Vector2(q.get_center().x - BuffMark.SIDE * 0.5, _action_row.get_global_rect().position.y - ActionSlot.CAPTION_RISE - BuffMark.SIDE - BUFF_RISE)
@@ -980,6 +1035,8 @@ func _update_boss(b: Enemy) -> void:
 		_boss_name.text = T.t(b.def.name_key)
 		_boss_bar.show_value(b.hp / b.max_hp, "", b.armor / b.max_armor if b.max_armor > 0.0 else 0.0)
 		var boss := game.boss if game.boss and game.boss.e == b else null
+		if boss != null and boss.def.posture > 0.0:
+			_boss_bar.show_value(b.hp / b.max_hp, "", boss.posture_ratio())
 		# a boss's bar: notches where his next phases begin, veiled in his colour while the ritual's shield stands
 		_shield_t = move_toward(_shield_t, 1.0 if boss and boss.shielded() else 0.0, get_process_delta_time() * 4.0)
 		_boss_bar.show_boss(boss.def.thresholds if boss else PackedFloat32Array(), _shield_t)
@@ -1159,6 +1216,7 @@ func show_phase(text: String) -> void:
 	var parts := phase_parts(text)
 	_phase_name.text = parts[0]
 	_phase_name.visible = true
+	_style_phase(false)
 	_phase_tip.text = parts[1]
 	_phase_tip.visible = parts[1] != ""
 	_phase_t = PHASE_TIME
@@ -1171,6 +1229,7 @@ func show_phase(text: String) -> void:
 func show_place(text: String) -> void:
 	_phase_name.text = text
 	_phase_name.visible = true
+	_style_phase(true)
 	_phase_tip.visible = false
 	_phase_t = PLACE_TIME
 	_phase_len = PLACE_TIME

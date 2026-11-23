@@ -136,8 +136,7 @@ func test_magic_colours() -> void:
 	# burst, magenta for the orbs and the vines (the sorcerer's cold violet of 2026-11-14 went: violet is Morvath's)
 	assert_true(mage.magic_color.r > mage.magic_color.b and mage.magic_color.b > mage.magic_color.g, "the sorcerer's magenta")
 	assert_eq(mage.magic_color, priest.magic_color, "the orbs and the vines one magenta")
-	assert_true(archer.magic_color.r > archer.magic_color.b and archer.magic_color.b > archer.magic_color.g, "crimson bolts")
-	assert_gt(archer.magic_color.r / archer.magic_color.b, mage.magic_color.r / mage.magic_color.b, "the crimson redder than the magenta")
+	assert_true(archer.magic_color.r > archer.magic_color.g and archer.magic_color.g > archer.magic_color.b, "orange bolts (C1)")
 
 
 ## Cycle 5 (docs/art/cycle5_spec.md A1): the figure is costume, so its gold is old and calm; yellow on the screen

@@ -84,6 +84,9 @@ const HEAVY_SLASH_TIME := 0.16
 const FINISHER_SLASH_TIME := 0.3
 ## Blows on a ward (an invulnerable enemy): this many sparks, this far out from its centre (in its radii), this colour.
 const WARD_SPARK_COUNT := 3
+const GUARD_SPARK_COUNT := 5
+## The number of a blow the Escudo's guard shut: a grey (combate_c1_leitura 2).
+const GUARD_NUMBER := Color(0.62, 0.62, 0.66)
 const WARD_SPARK_REACH := 1.6
 const WARD_SPARK := Color(0.3, 0.95, 0.75)
 ## The impact frame (a flat black and white frame of the whole screen, Fx.impact_frame) is kept for the two biggest
@@ -137,6 +140,8 @@ var boons: BoonState
 var hero: HeroDef = HeroDef.warrior()
 ## The rules of the Gifts in this run (HeroGifts sets it; null in the bare tests: no Gift).
 var gifts: GiftState
+## The Maga's kit in play (null for the Warrior): her spells and shots go through it.
+var arcane: Arcane
 ## The tags of the blow being dealt and which blow it is (a swing, or a shot's instance id), while Horde.damage runs:
 ## a kill (Horde.killed) reads what felled it. Empty outside a blow (a burn's tick, a shield's burst).
 var kill_tags: Array[StringName] = []
@@ -239,7 +244,8 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	_swing += 1
 	kill_blow = _swing
 	var tags := node.tags
-	var fury_stun := gifts.fury_stun(tags) if gifts else 0.0
+	# Fúria Plena: with every charge the finisher causes more (GiftState.fury_full_pct)
+	var full := 1.0 + (gifts.fury_full_pct(tags) if gifts else 0.0)
 	var hits := 0
 	# Retorno do Corte (Fatia 2): the blow right after a Corte Veloz reaches farther and wider
 	var back := 0.0
@@ -290,7 +296,7 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			_draw_hit(e, cut_axis(node.shape, origin, e.pos, away, flip), away, color, heavy or node.has_tag(&"omega"), finisher)
 		# (the cry only pushes: not even the stun of a plain blow comes with it)
 		_no_stun = shout
-		var died := hit_enemy(e, node.damage, tags, away, node.knockback, true, finisher)
+		var died := hit_enemy(e, node.damage * full, tags, away, node.knockback, true, finisher)
 		_no_stun = false
 		hits += 1
 		_mats.append(CombatSounds.material_of(e))
@@ -299,10 +305,6 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		if died:
 			kills += 1
 			continue
-		if fury_stun > 0.0 and e.def.stun_heavy_time > 0.0 and StunRule.stuns(true):
-			# Fúria Plena: with every charge of Ímpeto a finisher stuns longer, those with armor too (never a guardian
-			# nor Morvath: their stun time is 0)
-			horde.flinch(e, e.def.stun_heavy_time + fury_stun)
 		match node.effect:
 			ComboNode.Effect.LAUNCH:
 				if not e.def.heavy:
@@ -331,10 +333,14 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 			ground.add_zone(Ground.Kind.MARK, origin + dir * reach * 0.55, node.effect_radius, node.effect_time, node.effect_power, MARK_TAGS)
 		ComboNode.Effect.WAVE:
 			throw_wave(node, origin, dir, color, tags)
+		ComboNode.Effect.BLAST, ComboNode.Effect.CONTAIN, ComboNode.Effect.DOME:
+			if arcane != null:
+				arcane.cast(node, origin, dir)
 		ComboNode.Effect.SHOUT:
 			fx.hero_burst(&"light", Vector3(origin.x, 0.4, origin.y))
 			if gifts:
 				gifts.rally(node.effect_time, node.buff_speed, node.buff_guard, int(node.effect_power))
+				gifts.ward = node.buff_ward + int(boons.stat(&"shout_ward", tags))  # Escudo de Guerra: more blows absorbed
 	if gifts:
 		_gift_wave(node, origin, dir, color)
 	var pulse := boons.stat(&"ground_pulse", tags)
@@ -361,8 +367,16 @@ func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, ta
 	var size := 1.0 + boons.stat(&"wave_size_pct", tags)
 	var width := node.effect_size if node.effect_size > 0.0 else 3.2
 	var look := Projectiles.Kind.SPARK if node.wave_bolt else Projectiles.Kind.WAVE
+	if node.wave_color.a > 0.0:
+		color = node.wave_color
 	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
 	shot.through = boons.stat(&"wave_through", tags) > 0.0
+	if node.wave_speed > 0.0:
+		shot.vel = dir * node.wave_speed
+		shot.life = node.effect_radius * size / node.wave_speed
+	shot.stops = node.wave_stops
+	if node.wave_stops:
+		shot.knockback = node.knockback
 	return shot
 
 
@@ -550,6 +564,8 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 	kill_blow = -shot.get_instance_id()
 	hit_enemy(e, shot.damage, shot.tags, along, shot.knockback, false)
 	kill_blow = 0
+	if arcane != null and shot.tags.has(&"arcane"):
+		arcane.shot_landed(e, shot)
 	if not e.invulnerable:
 		Audio.play(CombatSounds.EVENTS[&"dart_hit"])
 		_play_material(CombatSounds.material_of(e))
@@ -599,25 +615,25 @@ func on_zone_hit(e: Enemy, z: Ground.Zone) -> void:
 					_burn(e, burn)
 				var freeze := boons.stat(&"freeze_time", z.tags)
 				if freeze > 0.0 and e.frozen_t <= 0.0:
-					_freeze(e, freeze)
+					_freeze(e, freeze, z.tags)
 
 
 ## A gift's skill hits an enemy: damage plus the skill's own status (burn, freeze, stun, slow).
 func skill_hit(e: Enemy, damage: float, tags: Array[StringName], away: Vector2, knockback: float, status: StringName, power: float) -> bool:
 	var died := hit_enemy(e, damage, tags, away, knockback, false)
 	if not died:
-		_apply_status(e, status, power)
+		_apply_status(e, status, power, tags)
 	return died
 
 
-func _apply_status(e: Enemy, status: StringName, power: float) -> void:
+func _apply_status(e: Enemy, status: StringName, power: float, tags: Array[StringName] = []) -> void:
 	if power <= 0.0 or not e.alive or e.invulnerable:
 		return
 	match status:
 		&"burn":
 			_burn(e, power)
 		&"freeze":
-			_freeze(e, power)
+			_freeze(e, power, tags)
 		&"stun":
 			if e.def.behavior != EnemyDef.Behavior.BOSS:
 				e.stun_t = maxf(e.stun_t, power * (0.5 if e.def.heavy else 1.0))
@@ -644,11 +660,30 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 			_ward_spark(e, away)
 		return false
 	var frozen := e.frozen_t > 0.0
-	var shatter := boons.stat(&"shatter_pct") if frozen and counts else 0.0
+	# BO-2: the shatter belongs to a button's tags (the special's wave, a shot that is no combo count, shatters too)
+	var shatter := boons.stat(&"shatter_pct", tags) if frozen and (counts or tags.has(&"wave")) else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
 	dmg = DamageCalc.marked(dmg, MARK_CRIT + boons.stat(&"crit_pct", tags), e.mark_t > 0.0)
 	dmg = DamageCalc.shoved(dmg, boons.stat(&"shove_pct"), e.shove_t > 0.0)
 	var push_pct := boons.stat(&"push_pct", tags)
+	dmg *= 1.0 + _resisted(e, push_pct, boons.stat(&"freeze_time", tags))
+	if e.armor > 0.0:
+		# the armor bar goes faster: the special's base, and armor_pct of the blow's tags (Peso, Onda Pesada, Ferro na Investida)
+		dmg *= 1.0 + (ARMOR_SPECIAL if tags.has(&"heavy") else 0.0) + boons.stat(&"armor_pct", tags)
+		# a tough armor feels only the strong blows, unless its shield is away (the knight's opening)
+		dmg *= 1.0 if horde.shield_away(e) else DamageCalc.armor_scale(e.def.armor_soft, tags)
+	var shut := false  # the guard shut it (drawing: grey number, steel sparks)
+	if e.def.front_block > 0.0:
+		if tags.has(&"heavy"):
+			horde.open_guard(e)
+		elif tags.has(&"light") and not GUARD_PAST.any(func(t: StringName) -> bool: return tags.has(t)) and horde.blocks_front(e, horde.target):
+			dmg *= 1.0 - e.def.front_block
+			shut = true
+			e.block_t = Horde.GUARD_BLOCK_TIME
+			_ward_spark(e, away, true)
+		elif tags.has(&"light") and e.def.guard_back_mult > 1.0 and horde.guard_up(e) and horde.behind(e, horde.target):
+			dmg *= e.def.guard_back_mult  # K3: the guardian's back, with its shield raised, takes more
+	dmg = maxf(1.0, roundf(dmg))
 	if push_pct > 0.0:
 		knockback = maxf(knockback, SHOVE_MIN) * (1.0 + push_pct)
 		e.shove_t = SHOVE_TIME
@@ -657,9 +692,11 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	horde.dealing = source if source != &"" else DealtBy.source(tags)
 	horde.stun_scale = 0.0 if _no_stun else 1.0 + boons.stat(&"stun_pct", tags)
 	horde.strong = tags.has(OMEGA_TAG)
-	var died := horde.damage(e, dmg, away, knockback, number_color(tags, big), true, big)
+	horde.heavy_blow = tags.has(&"heavy")
+	var died := horde.damage(e, dmg, away, knockback, GUARD_NUMBER if shut else number_color(tags, big), true, big)
 	horde.stun_scale = 1.0
 	horde.strong = false
+	horde.heavy_blow = false
 	kill_tags = []
 	horde.dealing = &""
 	_impact_frame(tags.has(OMEGA_TAG), breaks_phase(e, hp_before))
@@ -680,6 +717,14 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 			if other != e:
 				horde.damage(other, maxf(1.0, roundf(dmg * SHATTER_SPLASH)), (other.pos - e.pos).normalized(), 5.0, FROST)
 		horde.dealing = &""
+	# BO-2, Sarael's Brado: whoever already burns takes the fire all at once and stops burning (it does not burn again)
+	var detonation := boons.stat(&"detonate_dmg", tags)
+	if detonation > 0.0 and not died and e.burn_t > 0.0:
+		e.burn_t = 0.0
+		fx.burst(&"fire", Vector3(e.pos.x, 1.0, e.pos.y))
+		horde.dealing = source if source != &"" else DealtBy.source(tags)
+		died = horde.damage(e, maxf(1.0, roundf(detonation)), away, 0.0, FIRE, true)
+		horde.dealing = &""
 	if died:
 		return true
 	var burn := boons.stat(&"burn_dps", tags)
@@ -687,7 +732,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		_burn(e, burn)
 	var freeze := boons.stat(&"freeze_time", tags)
 	if freeze > 0.0 and shatter <= 0.0:
-		_freeze(e, freeze)
+		_freeze(e, freeze, tags)
 	_weaken(e, boons.stat(&"weak_time", tags))
 	_mark(e, boons.stat(&"mark_time", tags))
 	return false
@@ -701,17 +746,48 @@ func _play_material(m: StringName) -> void:
 
 
 ## A blow on a ward: a few small spectral sparks on its face, toward the striker (FxBudget keeps a flurry cheap).
-func _ward_spark(e: Enemy, away: Vector2) -> void:
-	Audio.play(CombatSounds.EVENTS[&"ward"])
+## steel: the Escudo's guard shut it (steel sparks, 5, and its own sound is the material's: mat_shield).
+func _ward_spark(e: Enemy, away: Vector2, steel := false) -> void:
+	if not steel:
+		Audio.play(CombatSounds.EVENTS[&"ward"])
 	var at := e.pos - away * e.def.radius * WARD_SPARK_REACH
-	fx.chips(Vector3(at.x, 1.4 + e.y, at.y), Vector3(-away.x, 0.3, -away.y), WARD_SPARK, WARD_SPARK_COUNT, 4.0, 0.07, 0.25, 0.8)
+	fx.chips(Vector3(at.x, 1.4 + e.y, at.y), Vector3(-away.x, 0.3, -away.y), EnemyFx.STEEL if steel else WARD_SPARK,
+		GUARD_SPARK_COUNT if steel else WARD_SPARK_COUNT, 4.0, 0.07, 0.25, 0.8)
 
 
-func _freeze(e: Enemy, time: float) -> void:
+## 10A-1 (2026-11-22): the special's share more against armor (the yellow bar).
+const ARMOR_SPECIAL := 0.5
+## What goes past a shield's front (EnemyDef.front_block): the Investida, the Omegas and the ultimate.
+const GUARD_PAST: Array[StringName] = [&"dash", &"omega", &"ultimate"]
+## 10A-3: what Morvath ignores strikes him harder instead, by half of what it is worth: the share a blow that would freeze
+## adds, and the part of a push's push_pct (that one on armor too).
+const RESIST_FREEZE := 0.25
+const RESIST_PUSH := 0.3
+## 10A-3: under the F8's NONE only these freeze (the finishers, the Brado, the Omegas and the ultimate), at most
+## FREEZE_MAX s and not again for as long after; any other frost slows.
+const FREEZERS: Array[StringName] = [&"finisher", &"cast", &"omega", &"ultimate"]
+const FREEZE_MAX := 1.0
+
+
+## The share more a blow hits with for what its target ignores (RESIST_*).
+func _resisted(e: Enemy, push_pct: float, freeze: float) -> float:
+	var boss := e.def.behavior == EnemyDef.Behavior.BOSS
+	var more := push_pct * RESIST_PUSH if boss or e.armor > 0.0 else 0.0
+	return more + (RESIST_FREEZE if boss and freeze > 0.0 else 0.0)
+
+
+func _freeze(e: Enemy, time: float, tags: Array[StringName] = []) -> void:
 	if e.def.behavior == EnemyDef.Behavior.BOSS or e.invulnerable:
 		return
 	if e.burn_t > 0.0:
 		_steam(e)
+	if StunRule.live == StunRule.Mode.NONE:
+		if e.thaw_t > 0.0 or not FREEZERS.any(func(t: StringName) -> bool: return tags.has(t)):
+			if e.frozen_t <= 0.0:
+				e.slow_t = maxf(e.slow_t, time)
+			return
+		time = minf(time, FREEZE_MAX)
+		e.thaw_t = time + FREEZE_MAX
 	e.frozen_t = maxf(e.frozen_t, time * (0.4 if e.def.heavy else 1.0))
 	fx.burst(&"frost", Vector3(e.pos.x, 1.0, e.pos.y))
 

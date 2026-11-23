@@ -12,7 +12,7 @@ var def: BossDef
 
 
 func before_all() -> void:
-	def = load(DEF)
+	def = BossLayersFixture.layered(DEF)
 
 
 func _walk() -> float:
@@ -346,7 +346,7 @@ func test_layers_lay_only_eruptions_and_his_dead_over_an_attack() -> void:
 		var boss := _start_fight()
 		_to_phase(boss, phase)
 		var mine: Array[BossAttack] = []
-		for a in boss.director.attacks:
+		for a in def.attacks:  # (the copy with the layers put back: the shipped fight has none)
 			var c: BossAttack = a.duplicate()
 			c.then_chance = 0.0
 			if not c.layers.is_empty():
@@ -387,8 +387,8 @@ func test_the_storm_crescents_leave_one_at_a_time() -> void:
 	var most := [0]
 	var fired := [0]
 	var before := [0]
-	var wave := def.storm_windup + def.storm_stagger * (def.storm_count - 1) + def.storm_gap
-	_run(wave * def.storm_waves + 1.0, func() -> void:
+	var wave := def.storm_windup * BossDef.by_phase(def.windup_scale, 4) + def.storm_stagger * (def.storm_count - 1) + def.storm_gap
+	_run(wave * def.storm_waves + 0.6, func() -> void:
 		var now := game.projectiles.shots.filter(func(s: Projectiles.Shot) -> bool: return s.kind == Projectiles.Kind.SOUL).size()
 		if now > before[0]:
 			most[0] = maxi(most[0], now - before[0])

@@ -7,7 +7,8 @@ extends Resource
 ## any state may start (docs/design/heroes/guerreiro.md).
 enum In { LIGHT, HEAVY, CHARGE, CHARGE_LIGHT, SHOUT, RUSH }
 enum Shape { ARC, CIRCLE, LINE }
-enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT }
+## BLAST, CONTAIN, DOME: the Maga's Explosão Rúnica, Círculo de Contenção and Suspensão Arcana (Arcane, maga.md 2).
+enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT, BLAST, CONTAIN, DOME }
 
 @export var id: StringName
 ## The input that leads here from the previous node: E (light), D (heavy) or a released charge.
@@ -101,6 +102,8 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT }
 ## SHOUT: the buff's extra speed of every blow (0.2 = 20%) and the share of damage taken it takes off (0.15 = 15%).
 @export var buff_speed := 0.0
 @export var buff_guard := 0.0
+## Blows the buff takes whole while it lasts (10A-2: the Brado takes one).
+@export var buff_ward := 0
 ## Magia given back for each enemy this move reaches (the Investida's 3).
 @export var magick_per_hit := 0.0
 ## GROUND_MARK: radius. WAVE: distance travelled.
@@ -109,6 +112,10 @@ enum Effect { NONE, LAUNCH, GROUND_MARK, WAVE, SHOUT }
 @export var effect_size := 0.0
 ## WAVE: fly as a bolt of light (a bright streak with a trail) instead of a crescent.
 @export var wave_bolt := false
+## WAVE: metres a second (0: the look's own), stops at the first enemy it touches (the Maga's shots), its colour (alpha 0: the tags').
+@export var wave_speed := 0.0
+@export var wave_stops := false
+@export var wave_color := Color(0, 0, 0, 0)
 
 @export_group("Tree")
 ## The moves that may follow this one (ComboNode each; read them typed with following()). Kept as Resource: a typed

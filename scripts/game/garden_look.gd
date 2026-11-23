@@ -179,12 +179,17 @@ const WINDOW_MIST_ALPHA := 0.75
 
 # ---------- the stylized look (room redesign, lot C section 2: docs/art/room_redesign_lotC_spec.md) ----------
 ## The garden's biome: moss grey stone (hue 85), the oldest olive, the hall's fires, its own air.
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
+## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's.
+const STY_SHADOW_GLOW := Color(0.20, 0.42, 0.30)
 const STYLE := {
 	&"stone": Color(0.31, 0.325, 0.275), &"shadow": Color(0.9, 0.93, 0.96), &"floor_stone": STY_FLOOR,
 	&"joint_cold": Color(0.92, 0.95, 1.0), &"olive_share": 0.25, &"slab_paint": Vector2(0.86, 1.12), &"slab_hue": 5.0,
 	&"metal": true, &"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": STY_GLOW, &"moss": STY_MOSS,
 	&"air": {&"sky": Color(0.04, 0.05, 0.05), &"fog": Color(0.075, 0.09, 0.08), &"ambient": Color(0.69, 0.72, 0.635),
 		&"ambient_gain": 1.8, &"moon": Color(0.88, 0.88, 0.86), &"moon_energy": 0.75, &"moon_shadow": true},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
+	&"c1v": {&"warm": Vector2(-3.0, 0.0), &"shaft": CatacombHall.STY_SHAFT_AT},
 }
 const STY_FLOOR := Color(0.30, 0.31, 0.275)
 ## SW-G1 and SW-G2 (docs/art/sworn_reference_ideas.md 3.1; floor_biome.gdshaderinc, ArenaKit.paint_look's `floor`,
@@ -258,6 +263,16 @@ const LEAF_SIZE := Vector2(0.14, 0.24)
 const FUNGI := Vector2i(5, 9)
 const FUNGI_REACH := 0.18
 const FUNGI_WALL_EVERY := 5.5
+## Art pack 2026-11-23 (the Jardim painting: life that resists): patches of small cream and soft yellow flowers (no red,
+## no violet) at the north wall's foot (BLOSSOM_WALL_EVERY m apart, off the recess; BLOSSOM_COUNT each within
+## BLOSSOM_REACH m, BLOSSOM_WALL_OUT m from the wall) and round the trunk's roots (BLOSSOM_TRUNK patches out of its
+## radius by BLOSSOM_TRUNK_OUT m). Tiny, no collision; stylized only.
+const BLOSSOM_WALL_EVERY := 3.6
+const BLOSSOM_WALL_OUT := 0.3
+const BLOSSOM_COUNT := Vector2i(7, 12)
+const BLOSSOM_REACH := 0.55
+const BLOSSOM_TRUNK := 5
+const BLOSSOM_TRUNK_OUT := 1.1
 ## J4: falls behind the windows (this far behind the wall's inner face, width, top) and beyond the north-west cut (its
 ## foot, size); a dark pool at each foot.
 const FALL_BACK := 2.6
@@ -1158,6 +1173,7 @@ func _dress_styled_steps() -> Array[Callable]:
 		func() -> void:
 			var sm: Masonry = v[&"sm"]
 			_fungi(sm)
+			_blossoms(sm)
 			for x in NORTH_WINDOWS:
 				_fall(sm, Vector3(x, 0.0, NORTH_Z - FALL_BACK), 0.0, FALL_WIDTH, FALL_TOP, true)
 			if not variant_b:
@@ -1428,6 +1444,24 @@ func _fungi(sm: Masonry) -> void:
 		while z0 < 8.0:
 			sm.fungus(Vector3(WEST_X - 0.3, 0.4, z0 + r.randf_range(-1.0, 1.0)), r.randi_range(FUNGI.x, FUNGI.y), FUNGI_REACH, r.randi())
 			z0 += FUNGI_WALL_EVERY
+
+
+## Art pack: the flower patches (see BLOSSOM_*), kept off the recess of the door, the open floor and every piece.
+func _blossoms(sm: Masonry) -> void:
+	var r := RandomNumberGenerator.new()
+	r.seed = 7319
+	var b := arena.shape().bounds()
+	var x0 := b.position.x + 4.5
+	while x0 < b.end.x - 1.5:
+		if (x0 < RECESS.x - 0.8 or x0 > RECESS.y + 0.8) and _clear_of_others(Vector2(x0, NORTH_Z + BLOSSOM_WALL_OUT), 0.1):
+			sm.blossoms(Vector3(x0, 0.0, NORTH_Z + BLOSSOM_WALL_OUT), r.randi_range(BLOSSOM_COUNT.x, BLOSSOM_COUNT.y), BLOSSOM_REACH, r.randi())
+		x0 += BLOSSOM_WALL_EVERY + r.randf_range(0.0, 1.2)
+	if _trunk_o != null:
+		for k in BLOSSOM_TRUNK:
+			var a := TAU * (k + r.randf_range(0.0, 0.8)) / BLOSSOM_TRUNK
+			var p := _trunk_o.center + Vector2.from_angle(a) * (_trunk_o.radius + BLOSSOM_TRUNK_OUT)
+			if arena.shape().contains(p, 0.5) and _clear_of_others(p, BLOSSOM_REACH):
+				sm.blossoms(Vector3(p.x, 0.0, p.y), r.randi_range(BLOSSOM_COUNT.x, BLOSSOM_COUNT.y), BLOSSOM_REACH * 0.8, r.randi())
 
 
 ## J4: a fall of dark water (dark_water.gdshader, a vertical card) with its foot at `foot` (its middle), turned `yaw`

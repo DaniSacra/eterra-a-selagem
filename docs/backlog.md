@@ -1,5 +1,30 @@
 # Backlog de A Selagem
 
+## Teste com usuários reais, noite de 2026-11-23 (Daniel: "pode fazer tudo para finalizarmos o mais breve possível")
+Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas ligado. Ordem:
+1. Suíte verde com a Maga, commit (sessão principal).
+2. Em paralelo, cada um na sua cópia: **QA** do exe como jogador novo (travas, erros no log, telas, controle; 12 sementes, os dois heróis); **equilíbrio** do novato e do evoluído (meta: o novato chega ao primeiro guardião e às vezes vence; evoluído 20 a 40% contra Morvath); **Maga M1b mínima** (escolher o herói no Santuário ou no título, HUD das 5 habilidades e da Ressonância, save por herói).
+3. Juntar, corrigir os bugs do QA, suíte, exe nas duas pastas, commit e push. Folha curta para o Daniel: o que observar nos testadores e onde fica o registro (`user://runs.jsonl`).
+
+## Estado de 2026-11-23, 13h10 (sessão principal, nada commitado)
+- **Integrado**: pausa entre golpes dos guardiões e de Morvath (`AttackGap`, recuperações menores, `IdleStats` no RESULT; `combat_cadence.md` seção 12); Ancião chama 2 arqueiros (no máximo 2 de pé); seção das casas dos guardiões em `art_rooms.md`. Suíte 1903, 1 falha de teste desatualizado corrigida. Exe nas duas pastas.
+- **Pronto fora da árvore**: Maga M1a em `~/games/eterra-work-maga` (18 testes verdes, RESULT do Guerreiro igual; relatório em `maga.md` seção 14). Integrar com merge de 3 vias (cópia feita antes da integração acima) e rodar a suíte.
+- Observação: `--smoke --bot` de 30 s varia entre rodadas no próprio editor (sem o robô o RESULT é igual); investigar se pesar.
+
+
+## Maga M1 (pacote do Daniel de 2026-11-23; design em `docs/design/heroes/maga.md` v2)
+
+Decidido pelo Daniel: a Maga vem do norte (traços orientais, sem mais lore), rosto só pela arte 01, paleta âmbar e marfim, E = Suspensão Arcana, Shift = Tempestade dos Selos, Meshy só com prévia antes. Decidido à tarde: o jogo não diz se é paladina (sem leão no traje), vida 30, "Selo" é a marca dela ("Marca" fica com Qeshael).
+Ordem menos arriscada (uma entrega por etapa, testar a anterior antes):
+- **M1a, kit no corpo de hoje atrás de `--hero=maga`** (`gameplay-engineer`, depende só do design; risco M: projétil que não atravessa, estado do Selo, Explosão no cursor). Tarefas: `HeroDef.maga()` e `data/heroes/maga.tres` (`make_data.gd`); 3 tiros com Selo no 3º; Explosão Rúnica; Círculo (zona com puxar); Suspensão (domo que para e apaga projéteis); Tempestade (`UltDef`); Passo (teletransporte, 2 cargas); Ressonância (3 losangos). Testes GUT: Selo, laço, tetos da Magia, amplificada sem Ressonância, F8. Robô: marca, junta, detona.
+- **M1b, seleção, save, HUD, texto e Bênçãos** (`gameplay-engineer` + `ui-ux-designer`, depende da M1a e do seletor de herói compartilhado com Ladina e Paladino; risco M: save por herói, ação E no controle). Tarefas: seletor na descida e no Santuário, `heroes.maga` no save, HUD da Ressonância e das 5 habilidades, textos em `text_pt.tres`, Bênçãos dos 7 anjos por botão (mapa da seção 4), Como Jogar, registro `RESULT.hero`.
+- **M1c, modelo** (`art-director`, depende do aval do Daniel; **créditos Meshy: estimar, gerar só a PRÉVIA, mostrar, modelo final só com o ok**): corpo com esqueleto e bastão de duas pontas, animações do `Cast` e passo, VFX âmbar e marfim (`technical-artist`), Selo acima da cabeça, hexágono de sigilos do Círculo. Palpite de 80 a 120 créditos, incerto.
+- **M1c prévia feita em 2026-11-23** (5 créditos, saldo 406): `assets/models/meshy/hero_maga/hero_maga-preview.png`, lado a lado com a arte 01 em `docs/gallery/maga_previa_meshy_2026-11-23.jpg`. Silhueta certa (manto marfim com capuz baixo, túnica, cintos, botas); cabelo saiu comprido (a arte tem chanel curto) e a túnica reta, sem as pontas rasgadas. Espera o Daniel: texturizar (10), nova prévia (5) ou imagem para 3D da arte 01 (30).
+- **Balanceamento** (`balance-designer`, uma vez, 12 sementes) e **QA** (`qa-performance`) só depois da M1b.
+- **Riscos**: laço infinito da Ressonância, Selo ilegível ao lado do aviso vermelho, Explosão amplificada tirando Postura demais, complexidade da primeira versão.
+- **Critério de aceite** (pacote 04): distinta do Guerreiro, laço marcar, agrupar, detonar divertido, Ressonância perceptível, descida completa das Catacumbas.
+## Maga M2 (Maestria, Dons dos 3 ramos, 2 ultimates, Bênçãos afinadas) e M3 (armas, frio, Livro de Ahk): só depois da M1.
+
 ## Pedidos do Daniel de 2026-11-21, 23h30 (a fazer; referências dele em `docs/art/ref/sworn_daniel/`, só local)
 
 Só a organização da tela vem da referência; arte, molduras, cores e textos são os nossos. Nada começado no projeto.
@@ -156,7 +181,7 @@ Altar e Encanto fica para depois, se ele gostar.
 - Lotes: A cenário, B figuras e efeitos, C interface junto do BC-1 e do BO-2. Falta captura das portas (entra com o DM-1).
 
 ### Lotes 8 a 10 revisados: APROVADOS pelo Daniel em 2026-11-22 ("sim para tudo, mas só guarda no backlog, só vamos desenvolver amanhã")
-Nada foi implementado. Começa em 2026-11-23, quando o Daniel mandar, pelo passo 1. Um exe por passo e parar para ele testar.
+**Ordem em revisão: ver "Ordem nova dos lotes" abaixo (combate primeiro).** Nada foi implementado. Começa quando o Daniel mandar. Um exe por passo e parar para ele testar.
 Histórias com aceite, riscos e arquivos: `docs/design/director_review_2026-11-22.md` seção 10. **Esta ordem substitui a dos Lotes 8, 9 e 10 abaixo.**
 
 | Passo | Entrega | Estado |
@@ -189,6 +214,100 @@ dos itens que prometem atordoar (Forja Peso e Onda Pesada, Fúria Plena; passo 2
 - Equilíbrio medido em `docs/design/balance.md`. Muda o RESULT de propósito. Cada descida dá uma recompensa de guardião a mais
   (6 de Prata, 2 de Memória, 25 de XP): rever a economia depois que ele jogar.
 - Aberto: o segundo minichefe ainda é brando para o evoluído (2 mortes em 20).
+
+### CV: Cavaleiro com mira rastreada e esqueletos (pedido do Daniel, 2026-11-22; código pronto no disco, sem commit, números a fechar no lote C1)
+- **CV-1**: "começa a animação da investida, rastreia o herói e só solta onde o herói estiver". As duas investidas giram com ele e travam no
+  fim (`EnemyDef.charge_lock`; 0 = travada como hoje, o Escudo não muda). Com 0,3 s ficou mais fácil para o robô; está em **0,2 s**.
+- **CV-2**: invoca 2 esqueletos ao abrir a luta e depois de cada par de investidas (`raise_count`, `raise_every`, `raise_max` 4), gesto novo
+  (`summon`, só o `knight.res` reassado). **Não ficou mais difícil**: esqueleto não acertou nenhum golpe em 19 lutas e o chamado dá folga ao herói.
+  Novato morre em 1 de 6 no primeiro encontro (antes 5 de 13, outra base de sementes); evoluído 0 de 7.
+- **Falta**: apertar (3 esqueletos, máximo 6; chamado em 0,7 s; segunda investida em 0,65 s), remedir depois do herói fraco (CB-1), suíte inteira
+  (só `test_enemy_windup` rodou, antes dos últimos números), exe e commit.
+
+### COMBATE: "bem melhor" (pedido do Daniel, 2026-11-22; planejado, NADA deste bloco começado além do CV)
+Pedido dele: o combate de que mais gosta é o do SWORN (inimigos variados, não dá para só apertar atacar, tem de fugir muito e usar as outras
+habilidades); aqui "dá para ganhar só com os botões do mouse". E: "bem menos dano também, talvez 15, 15, 20; o herói tem que começar bem fraco
+para fazer sentido as evoluções dos Dons". Do SWORN só o princípio; não há lista confiável dos inimigos dele (pedir 2 ou 3 exemplos ao Daniel).
+
+**Medido (24 partidas, robô 0,25, 12 novato e 12 evoluído)**: com Q e E, 14 chegam a Morvath e 5 vencem; proibido de usá-los, **19 chegam e 5
+vencem**. Ataque 55% do dano (70% sem Q e E). Esqueleto e corredor somados acertam 2 ou 3 golpes em 24 partidas; ferem o feiticeiro, o besteiro
+e o Ancião. 42% dos preparos de esqueleto do novato nem saem. O robô usa Q e E sem esperteza e desvia melhor que gente (CB-0).
+
+**Como fica com 15, 15, 20** (combo 50; hoje 105; golpes do combo até cair, sem mais nada):
+| | Vida | Hoje (20, 25, 60) | Novo (15, 15, 20) |
+|---|---|---|---|
+| Corredor | 45 | 2 | 3 |
+| Esqueleto | 60 | 3 | 4 |
+| Feiticeiro | 80 | 3 | 5 |
+| Besteiro | 130 | 5 | 8 |
+| Escudo | 255 | 8 | 16 |
+| Cavaleiro (vida + blindagem) | 1670 | 16 combos | 34 combos |
+
+Riscos: (1) esponja: guardiões e Morvath (6050) dobrariam de duração, por isso a vida deles entra na conta; os comuns ficam como estão, o perigo
+deles é o que tem de subir. (2) Bênção que age sozinha e queimadura têm dano fixo (10 a 40): passam a valer o dobro perto do ataque e têm de cair
+junto, senão a partida vira "pegar Brasas". (3) O Ômega de 160 valeria 3 combos.
+
+**Itens**
+| ID | O quê | Aceite | Tam. |
+|---|---|---|---|
+| **CB-0** | Robô que usa Q antes do golpe e E para chegar ou fugir, e opção `--bot-mouse` (só mouse e esquiva): a régua da meta | mesma semente, mesmo RESULT sem a opção | P |
+| **CB-1** | Herói fraco: ataque **15, 15, 20** (dele). Proposta minha, a confirmar: onda 35, Investida 35 e Brado 15 **não caem** (ganham peso), Ômega 160 para 100, ultimate e efeitos de dano fixo a cerca de 60% | tabela de dano por carta; nenhuma Bênção sozinha acima de 20% do dano | M |
+| **CB-2** | Guardiões e Morvath: vida e blindagem menores para a luta durar perto de 60 s (guardião) e 2 a 3 min (Morvath), sem esponja | tempo medido, 24 sementes | P |
+| **CB-3** | O 10A aprovado: onda +50% na blindagem, Brado absorve um golpe, gelo na regra do F8, efeito que vira dano em Morvath, ultimate na Maestria 3 | o da seção 10 do director_review | M |
+| **CB-4** | Os 6 inimigos, cada um pedindo uma resposta (tabela abaixo) | robô só de mouse cai muito; cada inimigo com aviso legível | G |
+| **CB-5** | Salas: misturas que obrigam a escolher (Sacerdote com Escudo, Feiticeiro atrás do Escudo), mais elite da metade em diante; ondas que se sobrepõem | sem passar de 20 vivos; tempo por sala | M |
+| **CB-6** | **Evolução que se sente**: Dons, Forja e conta devolvem a força; tudo evoluído chega perto do combo de hoje (105) | curva abaixo | M |
+| **CB-7** | 2 inimigos novos (modelos que já temos, sem Meshy): ideias a desenhar depois que ele jogar C1 | cada um pede algo que nenhum dos 6 pede | G |
+
+**CB-4, os seis** (números de partida; nenhum golpe do herói atordoa, regra do F8 mantida)
+| Inimigo | Mudança | Pede |
+|---|---|---|
+| Esqueleto | descanso 2,1 para 1,2 s; mira rastreada com trava; 3 atacam juntos (hoje 2) | sair do lugar |
+| Corredor | explode também ao morrer, 0,6 s depois, com aviso | matar e sair |
+| Escudo | bloqueia de frente 70% do ataque; a onda abre a guarda por uns segundos; por trás, dano cheio | botão direito ou dar a volta |
+| Feiticeiro | orbe mais perigoso e distância maior | E para chegar, Q para aguentar |
+| Besteiro | 2 flechas, a segunda rastreada | esquivar na hora certa |
+| Sacerdote | dá blindagem aos vizinhos enquanto vive (fio de luz que mostra quem) | escolher quem matar primeiro |
+
+**CB-6, a curva** (dano do combo sem Bênção; proposta): começo 50 (100%); com a Forja I e 2 Dons, 65; Forja II, 4 Dons e conta 6, 80; tudo aberto,
+100 a 105. A Forja sobe o ataque mais do que hoje (20%) e o Quarto Corte, que acrescenta um golpe, passa a valer mais de 40%. Os Dons
+continuam mudando a ação, não só o número. Diferença sem e com evolução: 25 a 40 pontos, como na meta atual (`balance.md`).
+
+**Metas para dizer que deu certo** (24 sementes): só de mouse chega a Morvath no máximo metade das vezes do robô completo; ataque até 45% do dano;
+esqueleto e corredor passam a ferir (pelo menos 10% dos golpes levados); novato morre antes de Morvath na maioria; evoluído vence 20 a 35%. E o que
+vale mais: o Daniel sentir que precisou das cinco teclas.
+
+### Ordem nova dos lotes (APROVADA em 2026-11-22, "bora lá fazer tudo"; substitui a tabela dos passos 1 a 6 acima; decisões 1 a 10 continuam valendo)
+| Lote | Entrega (um exe e parar) | Contém |
+|---|---|---|
+| **C1** | **Combate novo**: herói fraco, botões que importam, inimigos que pedem resposta. Num exe só: só o herói fraco, sem os inimigos, seria esponja | CB-0, CB-1, CB-2, CB-3 (era 10A), CB-4, CV |
+| **C2** | **Evolução que se sente** e salas misturadas | CB-6, CB-5, troca dos itens que prometem atordoar |
+| **C3** | Telas das Bênçãos e os dois anjos (era 8A + 9) | BC-1 a BC-4 |
+| **C4** | As 42, base e só Sarael e Nivael, com dano já na escala nova. **Portão** (era 8B-1) | BO-1, BO-2 |
+| **C5** | 2 inimigos novos, e os novos padrões de Morvath que o C1 mostrar que faltam | CB-7, maldição (do 10B) |
+| **C6** | Os outros cinco anjos (era 8B-2) | nomes e textos a aprovar |
+| **C7** | Elos refeitos e a garantia (era 8C); dicas e leitura (resto do 10B) | 8C, 10B |
+
+**Estado em 2026-11-22 (fim do dia): C1 a C5 juntos e entregues em exe (sem commit), à espera do teste do Daniel.** QA do C1 a C3 em `docs/qa/c1_c3_qa.md`. C6 espera o Daniel jogar Sarael e Nivael; C7 depois. Em aberto do C5: anel que fecha no monte da Trinca e setas de sentido do Varredor. Arte pintada: plano em `docs/art/plano_pintado_a_mao.md`, espera decisão. Estudo do SWORN em `docs/design/sworn_estudo.md`.
+**2026-11-22: "faz o C4 também quando terminar"** (o C4 entra depois de juntar C1 a C3; o portão para testar as duas fica para o teste de 2026-11-23; C5 em diante espera).
+**Aprovado pelo Daniel em 2026-11-22:** capítulo 1 de 14 salas (4 salas, minichefe, 4 salas, minichefe, 2 salas, loja, Morvath; no C1); os 4 Dons novos do C2
+(Voz Larga, Escudo de Guerra, Fôlego de Guerra, Ferro na Investida; `docs/design/evolucao_c2.md`); os 2 inimigos novos do C5 com estes nomes, **Trinca** e
+**Varredor** (`docs/art/combate_c1_leitura.md` seção 9, zero créditos do Meshy).
+CB-1 como recomendado (ataque e Ômega caem; onda, Investida e Brado ficam). Aberta: 2 ou 3 inimigos do SWORN que ele achou difíceis e o que faziam (para o CB-7).
+
+**2026-11-22, noite, Daniel: "guarda isso tudo para o futuro, agora eu quero focar no combate para deixar tão interessante quanto no sworn".**
+- **Noite de 2026-11-22 para 23 (Daniel: "o foco é refinar o combate, que é o mais importante, e melhorar o layout para que os jovens se lembrem do jogo e que venda pela imagem")**: combate (C1e lotes A a C, esquiva, equilíbrio do C1b, chefes numa chave) e visual por código (`docs/art/identidade_c1v.md`: luz e paleta por sala, efeitos de combate, HUD); kit da pintura-alvo do Salão para ele gerar de manhã. Um exe de manhã, sem commit.
+- **C1e, inimigos novos** (`docs/design/inimigos_c1e.md`): nomes aprovados pelo Daniel em 2026-11-22 (Saltador, Lançador, Canalizador, Gritador, Coveiro, Armadilheiro; modificadores Furioso, Detonante, Regenerante, Escoltado, Eco); go para o lote A.
+- **Entregue na manhã de 2026-11-23** (exe novo nas duas pastas; o anterior ficou como `ASelagem-C1b.exe`; suíte 1847/1847; exe igual ao editor na semente 5; sem commit):
+  - C1e lotes A, B e C: os seis inimigos e os cinco modificadores; Gritador (`herald`) e Coveiro (`gravedigger`) com silhueta própria, Armadilheiro com `trapper`; um som de aviso por papel (14).
+  - Esquiva C1e; números do C1b (Investida 60, Brado 35, Onda 55, Lance 150).
+  - C1d lotes 1 a 8 sem chave: guarda do Cavaleiro, recuo e orbes do Ancião, Postura, Condutores, corte da maldição e Ruptura de Morvath.
+  - Visual C1v N1 a N3: luz e paleta do Salão, Cripta, Fenda e das outras salas (sem a Câmara de Morvath); Quebra em anel partido, meia-lua dupla, pó de osso, esquiva em petróleo; cartão de título fora da barra do chefe.
+  - Seis composições de divulgação (`docs/gallery/promo/`) e o kit de pintura do Salão.
+  - **Abertos**: o evoluído vence 1 de 12 (meta 20 a 40%; morre em Morvath); o ataque ainda faz 44% do dano (meta 40%; pede o item 1 do kit_c1c); a luta de Morvath dura 111 a 183 s; a Câmara de Morvath fora da luz nova; o Canalizador sem modelo próprio (teto de 70 MB dos assados); o contraste das figuras (2.2) fora; a placa do Armadilheiro simplificada.
+- **C1b entregue em exe em 2026-11-22 23:23 (sem commit; `ASelagem-C5.exe` ao lado para comparar)**; robô: só mouse ainda chega quase tanto quanto todas as teclas e ataque faz 51% do dano, esperar o teste do Daniel. Em seguida: etapa 2 `docs/design/kit_c1c.md`, etapa 3 `docs/design/chefes_c1d.md` (em implementação numa cópia, não entra no exe sem o ok dele).
+- **Agora: C1b** (`docs/design/combate_c1b.md`): invulnerável 0,7 s, aviso menor, comum com mais vida, Quebra (poise) em todo comum, versão maior de dois comuns, grupos com respiro.
+- **Guardado**: arte pintada (plano em `docs/art/plano_pintado_a_mao.md` e o prompt "Eterra como pintura viva" dele: pintura-alvo sobre a captura do Salão, comparativos A/B/C mais D com luz, piloto só no Salão, imagens geradas por ele); as outras propostas de `sworn_numeros.md` (ponto doce, golpe comprometido, parada de impacto maior, Brado e Magia que carregam batendo, dificuldade em degraus e corrupções, esquiva em dois tamanhos); C6 e C7.
 
 ### Ordem sugerida com tudo junto (2026-11-22)
 **Feitos em 2026-11-22: Lotes 6 e 7 e o BO-3 no papel** (`docs/design/bencaos_por_anjo.md`, espera a aprovação do Daniel), mais GP-6,

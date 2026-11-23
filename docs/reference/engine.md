@@ -308,6 +308,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - **Fase por salas** (padrão desde a E3): o robô com reação 0,25 desce as 10 salas em 4 a 4 min 40 s e chega em Morvath
   com 5 a 7 Bênçãos em 7 de 8 sementes, compra na loja em 7 de 8 e vence 5 de 8 (`docs/qa/e3_metrics.md`).
   `tools/smoke.sh 300` não chega mais em Morvath: usar 600 (ou `--medium`). Falta teste com gente. O modo de horda (`--horde`) ficou como estava, com os números novos.
+- Robô e abrigo (2026-11-23): `--bot-cover=P` (padrão 0, desligado) faz o robô, quando um atirador (ARCHER, CASTER, PRIEST, qualquer um) arma o tiro ou um
+  projétil hostil voa nele e ele está sem cargas de esquiva, ir para trás da coluna que barra tiros (`ArenaObstacle.blocks_shots`, `Arena.cover`) mais perto
+  (até 4,5 m; `CoverPlan.pick`, lógica pura em `scripts/core/cover_plan.gd`), com chance P por surto, espera de `--bot-reaction`, no máximo 1,5 s (3 s sem
+  cargas) e 2 s de descanso; não abriga com inimigo corpo a corpo a menos de 4 m, nem preso (`_stuck`). O RESULT ganhou `hurt_by` (vida perdida por
+  tipo de inimigo) e `bot.cover_time`/`cover_spells`. Medido no Ancião (12 sementes): abrigo não melhorou o robô (iniciante 9 para 6 vitórias, evoluído
+  igual), por isso fica desligado; o dano vem de ficar sem esquivas perto dele, não de tiro à distância.
 - Morvath (4 fases, 2026-11-15; ciclo 9): o robô sem tempo de reação vence sempre e quase não apanha; com reação humana
   (`--bot-reaction=0.25`) vence cerca de metade das lutas com 5 dons, perde mais na fase 4 (a tempestade e a maldição
   somam mais da metade do dano). A luta dura de 1 min 40 s a 2 min para o robô (abaixo da meta de 2 a 4 min; gente bate

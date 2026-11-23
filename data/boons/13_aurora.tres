@@ -16,5 +16,5 @@ id = &"aurora"
 family = 4
 icon = 13
 max_level = 1
-requires_sets = Array[PackedStringArray]([PackedStringArray("onda_maior", "flagelo"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada", "geada_final", "floco_errante", "omega_geada")])
+requires_sets = Array[PackedStringArray]([PackedStringArray("onda_maior", "flagelo"), PackedStringArray("toque_geada", "estilhaco", "peso_inverno", "golpe_geada", "circulo_geada", "passo_geada", "geada_final", "floco_errante", "omega_geada", "ultimo_geada")])
 mods = Array[ExtResource("1_xdx6q")]([SubResource("Resource_q7mlr")])

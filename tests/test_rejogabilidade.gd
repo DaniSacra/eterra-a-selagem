@@ -208,7 +208,7 @@ func test_temper_adds_to_the_blows_through_the_boons_stat() -> void:
 
 func test_the_deck_has_a_door_of_silver_and_one_of_memory_more() -> void:
 	var deck := Array(stage.reward_deck)
-	assert_eq(deck.size(), 21, "16 of the Fatia 1, two Encantos, a Psalm and two Blessings (Fatia 2)")
+	assert_eq(deck.size(), 23, "21 of the Fatia 2, plus a gold door and a heart (C2)")
 	assert_eq(deck.count(RunMap.Reward.ENCHANT), 2)
 	assert_eq(deck.count(RunMap.Reward.PSALM), 1)
 	assert_eq(deck.count(RunMap.Reward.SILVER), 1)
@@ -304,15 +304,19 @@ func test_two_thousand_meetings_offer_no_invalid_card() -> void:
 			meetings += 1
 			var cards := Encounter.cards(state, a, Encounter.cards_dice(i, 1, 3, a.id), 3, stage.rarity_chance,
 				stage.elo_chance, stage.trade_chance)
-			assert_gt(cards.size(), 0, "an eligible angel has a card")
+			assert_eq(cards.size(), 3, "an eligible angel has three cards (BO-2: Encounter.CARDS)")
 			var ids := {}
 			for c in cards:
 				assert_false(ids.has(c.boon.id), "no card twice")
 				ids[c.boon.id] = true
 				assert_true(Encounter.belongs(state, c.boon, a.family), "%s is %s's" % [c.boon.id, a.id])
 				assert_true(state.can_offer(c.boon), "%s can be offered" % c.boon.id)
-				assert_eq(state.level(c.boon.id), 0, "never one already held")
-				if not c.trade and not c.boon.is_duo() and c.replaces == null:
+				assert_false(c.boon.reserve, "%s is in the reserve" % c.boon.id)
+				if c.grow:
+					assert_eq(c.level, state.level(c.boon.id) + 1, "a filler card is a level more of one held")
+				else:
+					assert_eq(state.level(c.boon.id), 0, "never one already held")
+				if not c.grow and not c.trade and not c.boon.is_duo() and c.replaces == null:
 					rarities[c.rarity] += 1
 					fresh += 1
 	var odds := BoonState.rarity_odds(stage.rarity_chance)

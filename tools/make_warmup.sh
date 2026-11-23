@@ -14,6 +14,7 @@ RUNS=(
 	"--bot --start=boss" "--bot --start=boss --boss-hp=0.66" "--bot --start=boss --boss-hp=0.3" "--bot --start=boss --boss-hp=0.14"
 	"--bot --stress=10 --stress-ids=skeleton_elite,runner_elite,mage_elite,archer_elite,guard_elite,priest_elite,knight,priest_elder"
 	"--bot --stress=10 --stress-ids=skeleton,runner,mage,archer,guard,priest"
+	"--bot --stress=10 --stress-ids=trinca,varredor,gritador,coveiro,saltador,lancador,canalizador,armadilheiro,skeleton_big,runner_big,skeleton_raised"
 	"--bot --stress=6 --boon-ids=golpe_brasa,pesado_brasa,circulo_brasa,passo_brasa"
 	"--bot --stress=6 --boon-ids=golpe_geada,toque_geada,circulo_geada,passo_geada"
 	"--bot --stress=6 --boon-ids=golpe_radiante,pesado_radiante,circulo_radiante,passo_radiante"

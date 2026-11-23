@@ -20,6 +20,8 @@ const VERSION := 10
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
+## The heroes a player can pick (HeroDef.id), the first one the default.
+const HEROES: Array[String] = [FIRST_HERO, "maga"]
 ## Codex sections: each maps an id to a dictionary of counts (seen, formed, defeated...). E4-05: enemies (defeated,
 ## elite; Morvath: met, phase the highest reached, defeated) and arenas (entered).
 const CODEX: Array[String] = ["boons", "elos", "psalms", "talents", "enemies", "arenas", "angels"]
@@ -45,6 +47,8 @@ static func defaults() -> Dictionary:
 		"wins": 0,
 		"runs": 0,
 		"heroes": {FIRST_HERO: hero_defaults()},
+		# M1b: the hero picked at the Portal for the next descents (HEROES); a save from before has none: the Warrior
+		"hero": FIRST_HERO,
 		"codex": codex,
 		"juramentos": juramentos_defaults(),
 		"materials": MaterialPurse.defaults(),
@@ -113,6 +117,8 @@ static func merged(loaded: Variant) -> Dictionary:
 					out[key] = _fixed_keys(loaded[key], out[key])
 				else:
 					out[key] = _coerced(loaded[key], out[key])
+	if not HEROES.has(String(out.hero)):
+		out.hero = FIRST_HERO
 	var version := int(_coerced(loaded.get("version", 1), 1))
 	# files before version 2 kept the old windowed default: they open in full screen once, then the choice is theirs
 	if version < 2:
@@ -195,6 +201,17 @@ static func _entries(loaded: Dictionary) -> Dictionary:
 				entry[k] = v
 		out[id] = entry
 	return out
+
+
+## The hero picked in this save (always one of HEROES).
+static func picked_hero(data: Dictionary) -> String:
+	var id := String(data.get("hero", FIRST_HERO))
+	return id if HEROES.has(id) else FIRST_HERO
+
+
+## The other hero of HEROES after the picked one (the Portal's pick walks the list).
+static func next_hero(data: Dictionary) -> String:
+	return HEROES[(HEROES.find(picked_hero(data)) + 1) % HEROES.size()]
 
 
 ## A hero's block (made when missing).

@@ -147,7 +147,13 @@ const STYLE := {
 	&"fire": CatacombHall.STYLE[&"fire"], &"abyss_glow": Color(0.56, 0.52, 0.66),
 	&"air": {&"sky": Color(0.05, 0.045, 0.08), &"fog": Color(0.10, 0.09, 0.14), &"ambient": Color(0.69, 0.68, 0.76),
 		&"ambient_gain": 1.6, &"moon": Color(0.9, 0.9, 0.95), &"moon_energy": 0.8, &"moon_shadow": true},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
 }
+## C1V N2 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the key's shadow band takes this
+## indigo on top (hue 246 to 260 like the room), and the warm key (the hall's colour and energy) pools over the field
+## STY_KEY_POOLS[STY_WARM_FIELD], at its radius.
+const STY_SHADOW_GLOW := Color(0.55, 0.40, 1.0)
+const STY_WARM_FIELD := 1
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).
 ## Grey salt, paler than the slate, 1.4 times the slab's value (the floor between them at patch_rest).
@@ -751,6 +757,8 @@ func _dress_styled_steps() -> Array[Callable]:
 			# P2-B1 (ART_REVIEW.md 4.5): the fight fields lit a step more than the floor nearest the camera
 			for f: Vector3 in STY_KEY_POOLS:
 				key_pool(f, STY_KEY_POOL_COLOR, STY_KEY_POOL_ENERGY)
+			var w := STY_KEY_POOLS[STY_WARM_FIELD]
+			key_pool(Vector3(w.x, w.y, CatacombHall.STY_WARM_RADIUS), CatacombHall.STY_WARM_KEY, CatacombHall.STY_WARM_ENERGY)
 			_edge_pieces()
 			if _fallen:
 				_fallen_arch(sm)
@@ -803,6 +811,12 @@ func _edge_pieces() -> void:
 ## the rift (HEAD_PILASTER: size across, height over the deck, cap overhang), so the crossings count by their ends.
 const HEAD_PILASTER := Vector3(0.42, 0.85, 0.1)
 const HEAD_PILASTER_OUT := 0.32
+## Art pack 2026-11-23 (the Ponte da Vigília painting): a lion banner on a slim pole over the north pilaster of the
+## west head of each standing bridge (HEAD_POLE: thickness, height over the pilaster; HEAD_BANNER: cloth size; the
+## cloth hangs HEAD_BANNER_DROP under the pole's top, on its south face). Off the floor, stylized only.
+const HEAD_POLE := Vector2(0.1, 2.9)
+const HEAD_BANNER := Vector2(0.8, 1.8)
+const HEAD_BANNER_DROP := 0.2
 
 
 func _head_pilasters(sm: Masonry, r: Rect2, lip: float, into: float) -> void:
@@ -813,6 +827,15 @@ func _head_pilasters(sm: Masonry, r: Rect2, lip: float, into: float) -> void:
 			continue
 		sm.block(Vector3(at.x, -0.6, at.y), Vector3(w.x, w.y + 0.6, w.x), 0.0, ashlar())
 		sm.block(Vector3(at.x, w.y, at.y), Vector3(w.x + w.z * 2.0, 0.12, w.x + w.z * 2.0), 0.0, ashlar())
+		if into > 0.0 and side < r.get_center().y:
+			_head_banner(sm, at, w.y + 0.12)
+
+
+## The banner pole of a bridge head: a slim post from the pilaster's cap up, the lion banner hung on its south face.
+func _head_banner(sm: Masonry, at: Vector2, from_y: float) -> void:
+	sm.block(Vector3(at.x, from_y, at.y), Vector3(HEAD_POLE.x, HEAD_POLE.y, HEAD_POLE.x), 0.0, ashlar())
+	kit.banner(Vector3(at.x, from_y + HEAD_POLE.y - HEAD_BANNER_DROP, at.y + HEAD_POLE.x * 0.5 + 0.04), 0.0, HEAD_BANNER, 1,
+		ArenaKit.Emblem.LION)
 
 
 func _head_bowl(sm: Masonry, at: Vector2) -> void:

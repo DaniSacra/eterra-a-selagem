@@ -7,8 +7,8 @@
 script = ExtResource("1_note3")
 stat = &"burn_dps"
 tag = &"finisher"
-base = 6.0
-per_level = PackedFloat32Array(3, 3)
+base = 4.0
+per_level = PackedFloat32Array(2, 2)
 
 [sub_resource type="Resource" id="Resource_05mqd"]
 script = ExtResource("1_note3")
@@ -22,4 +22,5 @@ script = ExtResource("2_23ya0")
 id = &"lamina_ardente"
 family = 0
 icon = 2
+reserve = true
 mods = Array[ExtResource("1_note3")]([SubResource("Resource_we1oa"), SubResource("Resource_05mqd")])

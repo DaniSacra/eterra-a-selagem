@@ -90,11 +90,16 @@ const FLASH_INSET := 0.1
 ## The cycle of 2026-11-20 (ART_REVIEW.md, the Salão's method by biome): the pale stone colder (hue 232 to 242 on the
 ## screen) through the stone, the shadow and the air, the saturation at the low end; the floor is the danger, so only
 ## its rest grows quieter (STY_REST).
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
+## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's.
+const STY_SHADOW_GLOW := Color(0.45, 0.40, 0.85)
 const STYLE := {
 	&"stone": Color(0.335, 0.34, 0.395), &"shadow": Color(0.88, 0.9, 1.0), &"floor_stone": Color(0.33, 0.335, 0.385),
 	&"joint_cold": Color(1.0, 1.0, 1.02), &"olive_share": 0.0, &"slab_hue": 2.0, &"edge_value": 1.0, &"metal": true, &"fire": CatacombHall.STYLE[&"fire"],
 	&"air": {&"sky": Color(0.045, 0.05, 0.07), &"fog": Color(0.09, 0.10, 0.13), &"ambient": Color(0.69, 0.70, 0.79),
 		&"ambient_gain": 1.7, &"moon": Color(0.9, 0.9, 0.93), &"moon_energy": 0.8, &"moon_shadow": false},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
+	&"c1v": {&"warm": Vector2(-3.0, 0.0), &"energy": 0.7},
 }
 ## Item 4 of the cycle: the grid at rest discreet (the frames' and marks' ivory trace nearer the stone,
 ## rune_tiles.gdshaderinc), the strong amber only on a tile that arms.

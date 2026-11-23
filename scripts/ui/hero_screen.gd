@@ -541,7 +541,7 @@ func _hero_right() -> Control:
 	grid.name = "skills"
 	grid.columns = 2
 	grid.add_theme_constant_override(&"h_separation", 10)
-	grid.add_theme_constant_override(&"v_separation", 9)
+	grid.add_theme_constant_override(&"v_separation", 6)
 	v.add_child(grid)
 	for slot: Boon.Slot in [Boon.Slot.ATTACK, Boon.Slot.SPECIAL, Boon.Slot.CAST, Boon.Slot.DASH]:
 		_skill(grid, ActionSlot.mark(slot, MARK), T.t("howto_" + String(SKILL_ROW[slot])),

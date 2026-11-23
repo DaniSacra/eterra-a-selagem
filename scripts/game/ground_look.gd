@@ -75,6 +75,22 @@ const AIM_PX := 4.5
 const AIM_LIGHT := 0.38
 const AIM_FILL := 0.22
 const AIM_FILL_LATE := 0.3
+## Combate C1 (combate_c1_leitura 6): a line that still follows the paladin is only a thread ("it follows you": a line
+## at TRACK_STRENGTH; an aim at TRACK_AIM_LIGHT and TRACK_AIM_PX, with no fill) and the moment it locks pulses once
+## (Ground.lock_line): in LOCK_RISE s up to the PEAK values, then down over LOCK_FALL s to the SETTLED ones ("thread" to
+## "piece"); the aim's band fills from the lock on.
+const TRACK_STRENGTH := 0.7
+const TRACK_AIM_LIGHT := 0.30
+const TRACK_AIM_PX := 3.5
+const LOCK_RISE := 0.07
+const LOCK_FALL := 0.2
+const LOCK_STRENGTH_PEAK := 2.2
+const LOCK_AIM_PX_PEAK := 9.0
+const LOCK_AIM_PX_SETTLED := 5.0
+const LOCK_AIM_LIGHT_PEAK := 0.9
+const LOCK_AIM_LIGHT_SETTLED := 0.5
+## Seconds after the lock the dry click is heard (it follows the wind-up's own tell).
+const LOCK_CLICK_AT := 0.02
 ## LC-5: in the Compatibility renderer's stylized look (browser, phone) the painted floor is lighter and colder and a red
 ## added to it read pale pink (Morvath's storm lanes, 13% red against 77% on the desktop): a warning adds COMPAT_GAIN
 ## times its light there and lays the floor under its area at 1 - COMPAT_UNDER (ground.gdshaderinc style_compat_*).
@@ -127,6 +143,7 @@ static func dress(node: MeshInstance3D, style: Style, shape: int, color: Color, 
 	put(m, &"aim_px", 0.0)
 	put(m, &"fill_early", FILL_EARLY)
 	put(m, &"fill_max", FILL_MAX)
+	put(m, &"fill_late", AIM_FILL_LATE)  # (the shader's default; a pooled quad may come back from a locked aim)
 	_priority(m, HAZARD_PRIORITY if style == Style.HAZARD else 0)
 	put(m, &"progress", 0.0)
 	put(m, &"style", style)
@@ -290,3 +307,27 @@ static func storm_wedges(dirs: PackedVector2Array) -> PackedVector2Array:
 			lo = minf(lo, TAU - gap)
 		out.append(Vector2(lo, hi) * 0.5)
 	return out
+
+
+## A warning that follows the paladin until it locks: its quiet look (see TRACK_STRENGTH). aim: drawn with GroundLook.aim.
+static func tracking(m: ShaderMaterial, aim: bool) -> void:
+	if aim:
+		put(m, &"aim_px", TRACK_AIM_PX)
+		put(m, &"aim_light", TRACK_AIM_LIGHT)
+		put(m, &"fill_max", 0.0)
+	else:
+		put(m, &"strength", TRACK_STRENGTH)
+
+
+## The pulse `t` seconds after the lock (see LOCK_RISE); done at LOCK_RISE + LOCK_FALL. left: the share of the wind-up
+## still to run at the lock, where the aim's fill begins.
+static func lock_pulse(m: ShaderMaterial, aim: bool, t: float, left: float) -> void:
+	var up := clampf(t / LOCK_RISE, 0.0, 1.0)
+	var down := clampf((t - LOCK_RISE) / LOCK_FALL, 0.0, 1.0)
+	if aim:
+		put(m, &"fill_max", AIM_FILL)
+		put(m, &"fill_late", clampf(left, 0.05, 1.0))
+		put(m, &"aim_px", lerpf(TRACK_AIM_PX, LOCK_AIM_PX_PEAK, up) if down <= 0.0 else lerpf(LOCK_AIM_PX_PEAK, LOCK_AIM_PX_SETTLED, down))
+		put(m, &"aim_light", lerpf(TRACK_AIM_LIGHT, LOCK_AIM_LIGHT_PEAK, up) if down <= 0.0 else lerpf(LOCK_AIM_LIGHT_PEAK, LOCK_AIM_LIGHT_SETTLED, down))
+	else:
+		put(m, &"strength", lerpf(TRACK_STRENGTH, LOCK_STRENGTH_PEAK, up) if down <= 0.0 else lerpf(LOCK_STRENGTH_PEAK, WARNING_STRENGTH, down))

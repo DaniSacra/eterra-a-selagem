@@ -74,7 +74,25 @@ const GILD_REST := 0.0
 ## A staff's orb and gems, in the colour of the figure's magic: always lit under the glow's threshold, swelling
 ## past it while it winds up (crowd.gdshader `orb`, `orb_tell`).
 ## Morvath fights beside the hero, whose warm light turned his violet robes grey and brown: he takes this share of it.
-const BOSS_HERO_LIGHT := 0.25
+const BOSS_HERO_LIGHT := 0.32
+## combate_c1_leitura 8 (GR-5, GR-6, GR-7): what these figures take over the look above, by enemy id; each key is a
+## parameter of crowd.gdshader (`mat`) or crowd_outline.gdshader (`edge`), "vivid_plus" adds to EnemyDef.vivid and
+## "crest_at" is the share of the figure's height where his crest starts. Drawn only.
+##  guard (GR-5): its dark painting lifted by the curve (light does not lift a black texture), a stronger rim of the sky's
+##   cool colour on its top only; the wine cloth a little more vivid. guard_elite keeps its gold.
+##  knight and priest_elder (GR-6): the dark thin shell with the gold left to the rim light, so no flat gold.
+##  priest_elder: his robe (luma 36 to 55) lifted by the curve too.
+##  morvath (GR-7): head and crown the light value, arms and chest the middle one, the skirt the dark one.
+const LOOKS := {
+	&"guard": {"mat": {&"paint_gamma": 0.52, &"style_light": 0.28, &"style_rim": 0.5, &"style_rim_top": 1.0,
+		&"style_rim_color": Color(0.70, 0.78, 0.90)}, "vivid_plus": 0.12},
+	&"knight": {"edge": {&"style_elite_color": Color(0.07, 0.06, 0.06), &"style_elite_width": 0.035, &"style_push": 0.60},
+		"mat": {&"style_elite_rim": 0.3}},
+	&"priest_elder": {"edge": {&"style_elite_color": Color(0.07, 0.06, 0.06), &"style_elite_width": 0.035, &"style_push": 0.60},
+		"mat": {&"style_elite_rim": 0.3, &"paint_gamma": 0.52}},
+	&"morvath": {"mat": {&"crest": 0.8, &"crest_color": Color(0.80, 0.72, 0.56), &"style_light": 0.28, &"style_rim_power": 5.0,
+		&"foot_shade": 0.40}, "crest_at": 0.86},
+}
 const ORB_GLOW := 1.2
 const ORB_TELL := 1.8
 ## C17, QW-104: at the end of a wind-up's hold the body clears to this share of a blow's flash (crowd.gdshader
@@ -112,6 +130,9 @@ const BAR_MIN_WIDTH := 1.1
 const BAR_HEIGHT := 0.18
 const BAR_ARMOR_HEIGHT := 0.09
 const BAR_ABOVE := 0.35
+## C1b: the poise gauge is this share of the life bar's width and height (life_bar.gdshader, +8 in b).
+const POISE_WIDTH := 0.6
+const POISE_HEIGHT := 0.6
 ## Bars are drawn over everything, so where two overlap the one nearer the camera is drawn last, whole (sorted when
 ## there are at most this many: every room of the game; the stress tests skip it).
 const BAR_SORT_MAX := 48
@@ -258,6 +279,16 @@ func register(d: EnemyDef) -> void:
 	edge.set_shader_parameter(&"style_elite", gilded)
 	edge.set_shader_parameter(&"style_elite_width", STYLE_ELITE_WIDTH * HeroBody.ink_scale())
 	edge.set_shader_parameter(&"style_elite_color", STYLE_ELITE_OUTLINE)
+	if LOOKS.has(d.id):
+		var look: Dictionary = LOOKS[d.id]
+		for key: StringName in look.get("mat", {}):
+			mat.set_shader_parameter(key, look.mat[key])
+		for key: StringName in look.get("edge", {}):
+			edge.set_shader_parameter(key, look.edge[key])
+		if look.has("vivid_plus"):
+			mat.set_shader_parameter(&"desaturate", (CROWD_GREY if common else ELITE_GREY) - d.vivid - look.vivid_plus)
+		if look.has("crest_at"):
+			mat.set_shader_parameter(&"crest_from", baked.height * look.crest_at)
 	if RenderingServer.get_current_rendering_method() == "gl_compatibility":
 		mat.set_shader_parameter(&"style_gamma", COMPAT_GAMMA)
 	_set_poses(edge, baked)
@@ -285,6 +316,21 @@ static func _set_poses(mat: ShaderMaterial, baked: BakedModel) -> void:
 	mat.set_shader_parameter(&"pose_normals", tex[1])
 	mat.set_shader_parameter(&"pose_vertices", baked.vertices)
 	mat.set_shader_parameter(&"pose_width", BakedModel.WIDTH)
+	# a thrown piece (the knight's shield) is hidden by its vertex run while the instance says it is away
+	var run := throwable_run(baked)
+	mat.set_shader_parameter(&"hide_from", run.x)
+	mat.set_shader_parameter(&"hide_to", run.y)
+
+
+## The vertices [x, y) of the shield a knight throws (BakedModel.parts "shield": the run at the end of the mesh, as
+## tools/bake.gd lays held pieces after the body); (0, 0) when the model has none or the part is not one run.
+static func throwable_run(baked: BakedModel) -> Vector2i:
+	var ids: Array = baked.parts.get("shield", [])
+	if ids.is_empty():
+		return Vector2i.ZERO
+	var lo: int = ids.min()
+	var hi: int = ids.max() + 1
+	return Vector2i(lo, hi) if hi - lo == ids.size() else Vector2i.ZERO
 
 
 ## The cached look of a registered kind of enemy (register() first).
@@ -411,7 +457,17 @@ func add_bar(d: EnemyDef, top: Vector3, life: float, armor: float, crowded := fa
 		at.y -= extra * 0.5
 	life = clampf(life, 0.0, 1.0)
 	_put(_bars, Vector3(w, 0, 0), Vector3(0, h, 0), Vector3.BACK, at,
-		Color(life, clampf(armor, 0.0, 1.0), (BAR_CROWD_FADE if crowded else 1.0) + (2.0 if d.elite else 0.0), maxf(life, clampf(trail, 0.0, 1.0))))
+		Color(life, clampf(armor, 0.0, 1.0), (BAR_CROWD_FADE if crowded else 1.0) + (2.0 if d.elite else 0.0) + (4.0 if armor > 0.0 and (d.elite or d.heavy) else 0.0), maxf(life, clampf(trail, 0.0, 1.0))))
+
+
+## C1b: the poise's small gauge under a common enemy's life bar (pale, empties; only after a blow wore it). left: 0..1.
+func add_poise_bar(d: EnemyDef, top: Vector3, left: float, crowded := false) -> void:
+	var w := maxf(BAR_MIN_WIDTH, d.radius * BAR_WIDTH) * POISE_WIDTH
+	var h := BAR_HEIGHT * POISE_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0)
+	var life_h := BAR_HEIGHT * (BAR_CROWD_HEIGHT if crowded else 1.0)
+	var at := top + Vector3(0, BAR_ABOVE - life_h * 0.75 - h * 0.5, 0)
+	var l := clampf(left, 0.0, 1.0)
+	_put(_bars, Vector3(w, 0, 0), Vector3(0, h, 0), Vector3.BACK, at, Color(l, 0.0, (BAR_CROWD_FADE if crowded else 1.0) + 8.0, l))
 
 
 ## Orders this frame's bars from the farthest to the nearest along the camera's view (forward: where it looks).
@@ -433,10 +489,12 @@ func sort_bars(forward: Vector3) -> void:
 
 
 ## The state of one character for add(), as crowd.gdshader reads it. flash: 0..1 (how white the blow left it);
-## absorbed: the blow landed on armor (a gleam of old gold instead); tell: 0..1 of its wind-up; broken: its armor is gone.
-static func state(flash: float, frozen: bool, burning: bool, dissolve := 0.0, absorbed := false, tell := 0.0, broken := false) -> Color:
-	return Color(-flash if absorbed else flash, (1.0 if frozen else 0.0) + (0.5 if broken else 0.0),
-		(1.0 if burning else 0.0) + 0.5 * clampf(tell, 0.0, 1.0), dissolve)
+## absorbed: the blow landed on armor (a gleam of old gold instead); tell: 0..1 of its wind-up; wear: 0..1 of its armor spent, in steps (EnemyFx.wear; 1: gone).
+## away: the piece it carries that can be thrown (the knight's shield) is not in its hand, so the shaders draw it nowhere
+## (alpha -1: a living figure has no dissolve, crowd_pose.gdshaderinc crowd_away).
+static func state(flash: float, frozen: bool, burning: bool, dissolve := 0.0, absorbed := false, tell := 0.0, wear := 0.0, away := false) -> Color:
+	return Color(-flash if absorbed else flash, (1.0 if frozen else 0.0) + 0.5 * clampf(wear, 0.0, 1.0),
+		(1.0 if burning else 0.0) + 0.5 * clampf(tell, 0.0, 1.0), -1.0 if away else dissolve)
 
 
 ## What the shader reads back from a state: [flash, absorbed, frost, armored, burn, tell] (the same arithmetic as

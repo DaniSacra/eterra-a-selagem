@@ -291,6 +291,21 @@ func _leave_other(met: StringName) -> void:
 			if id != met:
 				r.guardian = id
 				break
+		# the second guardian's house is his own, not the one drawn before he was known
+		var home := home_of(r.guardian)
+		if home >= 0 and r.layout != home:
+			r.layout = home
+			r.arena = stage.layouts[home].id
+			r.variant = 0
+
+
+## The layout that is this guardian's house (-1: he has none, and fights in an arena of the descent).
+func home_of(guardian: StringName) -> int:
+	for i in stage.layouts.size():
+		var l := stage.layouts[i]
+		if l.guardian_home and (l.guardian_id == guardian or l.guardian_id == &""):
+			return i
+	return -1
 
 
 ## True for the layer of a guardian, the first or the second.
@@ -538,7 +553,7 @@ func _place_arenas(d: int) -> void:
 			Kind.SHOP:
 				r.layout = stage.layouts.find(stage.shop_layout)
 			_:
-				r.layout = _layout(r.kind, d, before, uses, taken)
+				r.layout = _layout(r.kind, d, before, uses, taken, r.guardian)
 		if r.layout >= 0 and r.layout < stage.layouts.size():
 			var l := stage.layouts[r.layout]
 			r.arena = l.id
@@ -684,8 +699,8 @@ func _fits(kind: Kind, at_depth: int, l: int) -> bool:
 	if forced_layout >= 0 and at_depth == 1:
 		return true
 	var lay := stage.layouts[l]
-	if kind == Kind.MINIBOSS and lay.guardian_home:
-		return true
+	if lay.guardian_home:
+		return kind == Kind.MINIBOSS  # a guardian's house holds his fight and nothing else
 	var at := EncounterGen.progress(stage, at_depth)
 	if at < lay.depth.x - 0.001 or at > lay.depth.y + 0.001 or (lay.difficulty >= 2 and at < HARD_FROM):
 		return false
@@ -697,16 +712,17 @@ func _fits(kind: Kind, at_depth: int, l: int) -> bool:
 ## the fights right before it (`before`; a fountain may follow its own), never one already used StageDef.arena_max_uses
 ## times on a way to it (`uses`), the least used first, one no other room of its layer has (`taken`) when it can; the
 ## layer before a guardian's, and every one up to the second's, leaves his house free.
-func _layout(kind: Kind, at_depth: int, before: PackedInt32Array, uses: Dictionary, taken: Array[int]) -> int:
+func _layout(kind: Kind, at_depth: int, before: PackedInt32Array, uses: Dictionary, taken: Array[int], guardian: StringName = &"") -> int:
 	if stage.layouts.is_empty():
 		return 0
 	if forced_layout >= 0 and at_depth == 1:
 		return forced_layout
 	if kind == Kind.MINIBOSS:
-		# the guardian's own room, whatever the depth (E5: the Santuário), unless it was just fought in or used up
-		for i in stage.layouts.size():
-			if stage.layouts[i].guardian_home and not before.has(i) and int(uses.get(i, 0)) < stage.arena_max_uses:
-				return i
+		# the guardian's own house, whatever the depth (2026-11-23: the Knight's hall, the Elder's chamber), unless it was
+		# just fought in or used up
+		var home := home_of(guardian)
+		if home >= 0 and not before.has(home) and int(uses.get(home, 0)) < stage.arena_max_uses:
+			return home
 	var found: Array[int] = []
 	for i in stage.layouts.size():
 		if kind == Kind.FOUNTAIN:

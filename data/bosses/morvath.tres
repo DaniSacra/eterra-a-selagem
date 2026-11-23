@@ -14,9 +14,6 @@ streak = 2
 then = &"storm"
 then_chance = 0.6
 then_from_phase = 4
-layers = Array[StringName]([&"eruptions"])
-layer_from_phase = 3
-layer_chance = 1.0
 
 [sub_resource type="Resource" id="Resource_o6cgo"]
 script = ExtResource("1_l3fcv")
@@ -32,9 +29,6 @@ until_phase = 3
 weight = 2.0
 cooldown = 2.55
 far_bias = 2.2
-layers = Array[StringName]([&"summon"])
-layer_from_phase = 3
-layer_chance = 1.0
 
 [sub_resource type="Resource" id="Resource_glh3x"]
 script = ExtResource("1_l3fcv")
@@ -68,10 +62,6 @@ from_phase = 3
 weight = 1.6
 cooldown = 5.1
 min_dist = 3.0
-layers = Array[StringName]([&"eruptions", &"summon"])
-layer_from_phase = 3
-layer_chance = 1.0
-layer_share = 1.0
 
 [sub_resource type="Resource" id="Resource_fxbd3"]
 script = ExtResource("1_l3fcv")
@@ -84,9 +74,6 @@ far_bias = 1.3
 then = &"dash"
 then_chance = 0.4
 then_from_phase = 4
-layers = Array[StringName]([&"eruptions", &"summon"])
-layer_from_phase = 4
-layer_chance = 1.0
 
 [resource]
 script = ExtResource("2_cnblm")
@@ -94,19 +81,35 @@ id = &"morvath"
 enemy = &"morvath"
 thresholds = PackedFloat32Array(0.66, 0.33, 0.15)
 rest = PackedFloat32Array(0.88, 0.8, 0.48000002, 0.32)
-windup_scale = PackedFloat32Array(1, 1, 0.95, 0.9)
+gap_min = 0.3
+gap_max = 1.5
+gap_min0 = 0.2
+gap_max0 = 0.7
+windup_scale = PackedFloat32Array(0.85, 0.85, 0.82, 0.8)
 center_phases = PackedInt32Array(3, 4)
 attacks = Array[ExtResource("1_l3fcv")]([SubResource("Resource_1hpx3"), SubResource("Resource_o6cgo"), SubResource("Resource_o6yho"), SubResource("Resource_glh3x"), SubResource("Resource_gjm27"), SubResource("Resource_56gpt"), SubResource("Resource_p6s5y"), SubResource("Resource_fxbd3")])
 adds_cap = PackedInt32Array(0, 4, 4, 4)
+scythe_recovery = 0.75
 scythe_damage = 19.0
 reap_damage = 16.0
+blade_recovery = 0.6
 blade_damage = 16.0
 blade_step = 2.0
 blade_step_within = 4.0
 storm_waves = 3
+storm_recovery = 0.9
 storm_damage = 15.0
 eruption_radius = 4.0
-eruption_delay = 1.2
+eruption_delay = 1.35
 eruption_damage = 16.0
+eruption_recovery = 0.6
+ritual_shorten = 5.0
+curse_turn = 55.0
+curse_homing = 0.9
 curse_damage = 10.0
+curse_cut = true
 dash_damage = 19.0
+dash_recovery = 0.8
+rupture_every = 25.0
+posture = 1300.0
+posture_vuln = 0.3

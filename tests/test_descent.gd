@@ -1,9 +1,9 @@
 extends GutTest
 ## The descent (C13-01, D-61; DV-1, the Descida de Valmor, MAP-01): a graph of rooms in layers drawn from the run's
-## seed. Every way through has 11 rooms: the opening in the catacomb hall, fights among the arenas (never the same twice
+## seed. Every way through has 14 rooms: the opening in the catacomb hall, fights among the arenas (never the same twice
 ## in a row, none more than three times, on every way), two guardians on every way (the Knight and the Elder side
 ## by side, then the other one alone), a fountain as one of the two doors before each (GP-2), the altar at most once in
-## the graph, always two doors a room (DM-1) but before the second guardian, the shop and Morvath, the shop in room 10, Morvath in the 11th. The test one of 7 (--medium) and the old one of 5 (--short) stay. Each arena
+## the graph, always two doors a room (DM-1) but before the second guardian, the shop and Morvath, the guardians in rooms 5 and 10, the shop in room 13, Morvath in the 14th. The test one of 7 (--medium) and the old one of 5 (--short) stay. Each arena
 ## brings its own ceiling of enemies, shooters and banned roles to the fights in it.
 ## BUG-109: nothing here reads the wall clock or a seed drawn at random; every count of assertions is the same on every
 ## run (the graphs come from fixed seeds, the real game's map is drawn again from one).
@@ -45,7 +45,7 @@ func _before(way: Array, i: int) -> int:
 	return (way[k] as RunMap.Room).layout
 
 
-## MAP-01's acceptance on 1000 seeds: every way has 11 rooms, opens in the hall, passes two guardians, the shop in
+## MAP-01's acceptance on 1000 seeds: every way has 14 rooms, opens in the hall, passes two guardians, the shop in
 ## the 10th and ends at Morvath; every room has two doors, only the ones before the second guardian's and the shop's and
 ## the shop's own have one (DM-1); the arenas' rules on every way; a fountain right before each guardian, two at most on a way, one altar at most in the
 ## graph; no two doors of a room promising the same reward, no pomegranate before room 3; the Knight and the Elder side
@@ -72,8 +72,8 @@ func test_a_thousand_graphs_keep_every_rule() -> void:
 
 ## The first rule a graph breaks ("" for none); opening: the arena of the first room.
 func _broken(map: RunMap, opening: StringName) -> String:
-	if map.last_depth() != 11 or stage.layouts[map.first().layout].id != opening:
-		return "11 layers, %s first" % opening
+	if map.last_depth() != 14 or stage.layouts[map.first().layout].id != opening:
+		return "14 layers, %s first" % opening
 	var reached := {map.first().id: true}
 	var altars := 0
 	var fountains := 0
@@ -125,10 +125,10 @@ func _broken(map: RunMap, opening: StringName) -> String:
 	if map.miniboss2_depth - map.miniboss_depth < stage.miniboss_gap or map.miniboss2_depth > stage.miniboss2_depth_max:
 		return "the second guardian in layer %d, the first in %d" % [map.miniboss2_depth, map.miniboss_depth]
 	for way: Array in _ways(map):
-		if way.size() != 11:
+		if way.size() != 14:
 			return "a way of %d rooms" % way.size()
 		var kinds := way.map(func(r: RunMap.Room) -> int: return r.kind)
-		if kinds.count(RunMap.Kind.MINIBOSS) != 2 or kinds[9] != RunMap.Kind.SHOP or kinds[10] != RunMap.Kind.BOSS:
+		if kinds.count(RunMap.Kind.MINIBOSS) != 2 or kinds[12] != RunMap.Kind.SHOP or kinds[13] != RunMap.Kind.BOSS or kinds[4] != RunMap.Kind.MINIBOSS or kinds[9] != RunMap.Kind.MINIBOSS:
 			return "a way without its guardian, shop or Morvath"
 		if kinds.count(RunMap.Kind.FOUNTAIN) > 2:
 			return "three fountains on a way"
@@ -206,7 +206,7 @@ func test_walking_and_the_view() -> void:
 	assert_true(map.walked(door))
 	assert_eq(heard[0], 2, "the map says when he moves")
 	var v := map.view()
-	assert_eq((v.layers as Array).size(), 11)
+	assert_eq((v.layers as Array).size(), 14)
 	assert_eq(int(v.here), door.id)
 	assert_eq(v.doors, door.next)
 	for k in ["id", "depth", "slot", "kind", "reward", "guardian", "hidden", "arena", "next"]:
@@ -256,7 +256,7 @@ func test_the_shorter_descents_stay() -> void:
 			assert_eq(way.size(), 5)
 			assert_eq((way[2] as RunMap.Room).kind, RunMap.Kind.MINIBOSS)
 			assert_eq((way[3] as RunMap.Room).kind, RunMap.Kind.SHOP)
-	assert_eq(stage.rooms, 10, "the long descent is the default")
+	assert_eq(stage.rooms, 13, "the long descent is the default")
 	assert_eq(stage.elite_from_depth, 3, "elites from depth 3, as in Hades II")
 	assert_eq(medium.elite_from_depth, 2)
 
@@ -308,18 +308,20 @@ func test_rp07_no_variant_out_of_its_band() -> void:
 		assert_ne(l.variants[0].depth, Vector2(0, 1), "%s B has a band" % id)
 
 
-## The guardian's fight is in the Santuário when it may be (it is a high arena drawn from 40% of the descent for
-## fights); and in the shorter descents too.
-func test_the_guardian_fights_in_the_sanctuary() -> void:
+## 2026-11-23: each guardian fights in his own house (the Knight's hall, the Elder's chamber), in the first layer and, once
+## the first is chosen, in the second; the shorter descents too (test_guardian_rooms.gd has the rest).
+func test_the_guardian_fights_at_home() -> void:
 	var at_home := 0
 	var all := 0
 	for s in 300:
 		var map := RunMap.new(Rooms.short_stage(stage, 6) if s % 3 == 0 else stage, 1000 + s)
-		for r in map.layer(map.miniboss_depth) + map.layer(map.miniboss2_depth):
+		var first := map.layer(map.miniboss_depth)
+		map.enter(first[s % first.size()])
+		for r in first + map.layer(map.miniboss2_depth):
 			all += 1
-			if stage.layouts[r.layout].id == &"sanctuary":
+			if stage.layouts[r.layout].guardian_id == r.guardian:
 				at_home += 1
-	assert_gt(float(at_home), all * 0.95, "the guardian is at home unless he fought there the room before (%d of %d)" % [at_home, all])
+	assert_eq(at_home, all, "every guardian is at home (%d of %d)" % [at_home, all])
 
 
 ## Daniel, 2026-11-22: both guardians, then Morvath. Whichever he chooses first, the other waits in the second room,
@@ -440,7 +442,7 @@ func test_the_three_arenas_of_e5() -> void:
 		assert_gte(l.variant_count(), 2, "%s has two variants or more (RP-18: the Santuário C)" % id)
 		assert_ne(T.t(l.name_key), String(l.name_key), "%s has its name" % id)
 	var s: RoomLayout = by[&"sanctuary"]
-	assert_true(s.guardian_home, "the Santuário is the guardian's house")
+	assert_false(s.guardian_home, "2026-11-23: the Santuário is an ordinary room, the guardians have houses of their own")
 	assert_eq(s.boss_spawn, Vector2(-17, 0), "he rises before the grille")
 	assert_eq(s.size_class, RoomLayout.Size.LARGE)
 	assert_eq(s.depth, Vector2(0.4, 1.0))
@@ -564,7 +566,7 @@ func test_two_hundred_descents_keep_the_promise() -> void:
 			var got := [r.kind, r.reward, String(r.guardian), String(r.arena), r.hidden, r.fight]
 			if got != told[pick]:
 				broken.append("seed %d room %d: told %s, got %s" % [s, walked, told[pick], got])
-		if walked != 11:
+		if walked != 14:
 			broken.append("seed %d: %d rooms" % [s, walked])
 	assert_eq(broken, [], "the room is the one its door told")
 	assert_gt(turned, 0, "a pomegranate turned when nothing could grow")

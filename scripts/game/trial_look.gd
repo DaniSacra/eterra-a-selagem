@@ -97,11 +97,16 @@ const CRACK_SHADER := preload("res://assets/shaders/x_crack.gdshader")
 
 ## The stylized look (room redesign lot D, docs/art/room_redesign_lotD_spec.md 2.2): greyed lilac stone, no fire, the
 ## only lilac light the stele's crack and the veins; every other light diffuse (no disc on the floor).
+## C1V N3 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the shadow band's tint, the room's own hue
+## (docs/art/plano_pintado_a_mao.md 5); the vignette is the hall's.
+const STY_SHADOW_GLOW := Color(0.55, 0.30, 0.75)
 const STYLE := {
 	&"stone": Color(0.338, 0.317, 0.352), &"shadow": Color(0.923, 0.843, 0.98), &"floor_stone": Color(0.31, 0.295, 0.325),
 	&"olive_share": 0.0, &"metal": true,
 	&"air": {&"sky": Color(0.17, 0.15, 0.21), &"fog": Color(0.23, 0.2, 0.27), &"ambient": Color(0.64, 0.58, 0.72),
 		&"ambient_gain": 2.3, &"moon": Color(0.74, 0.68, 0.86), &"moon_energy": 0.6, &"moon_shadow": false},
+	&"shadow_glow": STY_SHADOW_GLOW, &"vignette": CatacombHall.STY_VIGNETTE,
+	&"c1v": {&"warm": Vector2(-3.0, 0.0), &"energy": 0.7},
 }
 ## SW-G1 (docs/art/sworn_reference_ideas.md 3.1): the painted floor's second colour of the biome, in patches of 3 to 8 m,
 ## stronger near the edge (floor_biome.gdshaderinc; ArenaKit.paint_look's `floor`, put by style()).

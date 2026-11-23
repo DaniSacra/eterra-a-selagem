@@ -42,10 +42,19 @@ func enter(depth: int, layout: String, hp: float, time: float, boss := false, va
 	_started = time
 	_rooms.append({"depth": depth, "node": node, "layout": layout, "variant": variant, "hp_in": snappedf(hp, 0.1), "gold_in": gold,
 		"boons_in": boons, "hurt_by": {}, "hits": 0, "hits_by": {}, "dodges": 0, "dodge_blocked_by": {}, "shots": {}, "blocked_by": {},
-		"time": 0.0, "contact": -1.0, "zones": {}})
+		"time": 0.0, "contact": -1.0, "zones": {}, "seen": {}, "mods": {}})
 	if boss:
 		hp_at_boss = snappedf(hp, 0.1)
 		boons_at_boss = boons
+
+
+## C1e: a head of the fight rose in the current room (its kind, and its modifier if it had one), for the draw's report.
+func seen(kind: String, mod: String = "") -> void:
+	if _rooms.is_empty():
+		return
+	_count(_rooms[-1].seen, kind)
+	if mod != "":
+		_count(_rooms[-1].mods, mod)
 
 
 ## The paladin lost `amount` life to `by` in the current room (one blow).

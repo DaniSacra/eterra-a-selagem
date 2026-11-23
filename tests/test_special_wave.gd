@@ -42,7 +42,7 @@ func test_the_special_keeps_its_numbers() -> void:
 	assert_not_null(bolt, "the special")
 	assert_eq(bolt.effect, ComboNode.Effect.WAVE)
 	assert_true(bolt.wave_bolt, "flies as the special's shot (SPARK)")
-	assert_eq(bolt.effect_power, 35.0, "damage 35 (the rajada, weak start 2026-11-21)")
+	assert_eq(bolt.effect_power, 55.0, "damage 55 (the rajada, rebalanced 2026-11-23)")
 	assert_almost_eq(bolt.effect_radius, 6.0, 0.001, "reach 6 m")
 	assert_eq(bolt.magick_cost, 12.0, "12 Magia")
 	assert_almost_eq(bolt.effect_size, 1.4, 0.001, "1.4 m across")

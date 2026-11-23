@@ -3,6 +3,8 @@ shader_type spatial;
 // everything. INSTANCE_CUSTOM: r = life left (0..1), g = armor left (0..1), b = opacity (1; less when the floor is
 // crowded, CrowdRenderer.BAR_CROWD_FADE) plus 2 for an elite (its frame in old gold), a = where the pale trail of a
 // recent loss ends (>= r; CrowdRenderer.BarTrails).
+// b also carries +4 for an elite or a guardian's armored bar: three ink ticks of 1 px at 25, 50 and 75% of the yellow strip
+// (combate_c1_leitura 7: the armor cracks there, EnemyFx.WEAR_STEPS).
 // Cycle 8: armor no longer covers the top of the life. An armored bar is taller (CrowdRenderer.BAR_ARMOR_HEIGHT):
 // the armor's own strip on top, a line of ink, the life under it; both read whole.
 render_mode unshaded, cull_disabled, depth_test_disabled, shadows_disabled;
@@ -25,12 +27,19 @@ uniform float common_cut = 0.25;
 varying vec3 fill;
 varying float fade;
 varying float elite;
+varying float ticks;
+varying float poise_gauge;
 varying vec2 size_m;
 
 void vertex() {
 	fill = vec3(INSTANCE_CUSTOM.r, INSTANCE_CUSTOM.g, INSTANCE_CUSTOM.a);
-	elite = INSTANCE_CUSTOM.b > 1.5 ? 1.0 : 0.0;
-	fade = INSTANCE_CUSTOM.b - 2.0 * elite;
+	// +8: the poise gauge under a common's bar (C1b): pale, r = poise left
+	poise_gauge = INSTANCE_CUSTOM.b > 7.5 ? 1.0 : 0.0;
+	float b = INSTANCE_CUSTOM.b - 8.0 * poise_gauge;
+	ticks = b > 3.5 ? 1.0 : 0.0;
+	float rest = b - 4.0 * ticks;
+	elite = rest > 1.5 ? 1.0 : 0.0;
+	fade = rest - 2.0 * elite;
 	// billboard: keep the instance's size and place, turn the quad to the camera
 	vec3 scale = vec3(length(MODEL_MATRIX[0].xyz), length(MODEL_MATRIX[1].xyz), 1.0);
 	size_m = scale.xy;
@@ -41,7 +50,7 @@ void vertex() {
 void fragment() {
 	vec2 uv = UV;
 	bool armored = fill.g > 0.0;
-	bool common = elite < 0.5 && !armored;
+	bool common = elite < 0.5 && !armored && poise_gauge < 0.5;
 	float tall = size_m.y;
 	if (common) {
 		// thinner: the bottom of the quad is cut away, so the top (where the damage numbers start) does not move
@@ -59,12 +68,24 @@ void fragment() {
 		float x = (uv.x - fx) / (1.0 - 2.0 * fx);
 		float y = (uv.y - fy) / (1.0 - 2.0 * fy);
 		c = back_color * 2.5;
-		if (armored && y < armor_share) {
+		if (poise_gauge > 0.5) {
+			if (x < fill.r) {
+				c = trail_color;
+			}
+		} else if (armored && y < armor_share) {
 			// the armor's own strip; a line of ink under it
 			if (y > armor_share - 0.12) {
 				c = back_color;
 			} else if (x < fill.g) {
 				c = armor_color;
+			}
+			if (ticks > 0.5 && y <= armor_share - 0.12) {
+				float px = max(fwidth(x), 0.0001);
+				for (int i = 1; i <= 3; i++) {
+					if (abs(x - 0.25 * float(i)) < px * 0.5) {
+						c = back_color;
+					}
+				}
 			}
 		} else {
 			if (x < fill.r) {

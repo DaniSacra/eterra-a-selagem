@@ -176,6 +176,16 @@ static func ritual_over(elapsed: float, max_time: float, raised: int, standing: 
 	return elapsed >= max_time or (raised + pending > 0 and standing + pending <= 0)
 
 
+## C1d: how long the ritual may last with `dead` of its conductors fallen (never under 0).
+static func ritual_limit(max_time: float, shorten: float, dead: int) -> float:
+	return maxf(0.0, max_time - shorten * float(maxi(dead, 0)))
+
+
+## C1d: whether a Ruptura is due: the phase is its phase or later, the fight has a Ruptura, and its clock ran out.
+static func rupture_due(phase: int, from_phase: int, every: float, left: float) -> bool:
+	return every > 0.0 and phase >= from_phase and left <= 0.0
+
+
 ## Most summons standing at once in this phase (caps: one per phase, the last holds after; empty: none).
 static func adds_cap(caps: PackedInt32Array, phase: int) -> int:
 	if caps.is_empty():

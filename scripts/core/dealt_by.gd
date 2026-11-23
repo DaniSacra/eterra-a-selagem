@@ -13,10 +13,10 @@ static func source(tags: Array[StringName]) -> StringName:
 		return &"echo"  # Eco da Verdade's echo of a blow (Fatia 2)
 	if tags.has(&"psalm"):
 		return &"psalm"  # what a Psalm adds (E4): the Pastor's waves, the Rocha's stone, the Sentinela's blows
+	if tags.has(&"skill"):
+		return tags[2] if tags.size() > 2 else &"skill"  # (BO-2: before the ultimate, a Blessing's skill set off by Shift keeps its id)
 	if tags.has(&"ultimate"):
 		return &"ultimate"
-	if tags.has(&"skill"):
-		return tags[2] if tags.size() > 2 else &"skill"
 	if tags.has(&"omega"):
 		return &"omega_special" if tags.has(&"heavy") else &"omega_attack"
 	if tags.has(&"shout"):

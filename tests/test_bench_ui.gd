@@ -318,10 +318,11 @@ func test_the_codex_shows_the_selected_enemy_and_gift() -> void:
 	assert_true(c.figure.visible)
 	assert_eq(c.figure.def.id, &"skeleton", "its own figure")
 	assert_true(c.figure.known)
-	var runner := c.find_child("runner", true, false) as Control
+	# the never defeated share one line, named after the first of them in the list (C1b: the bigger soldier)
+	var runner := c.find_child(String(CodexScreen.ENEMIES[1]), true, false) as Control
 	runner.grab_focus()
 	await wait_process_frames(1)
-	assert_eq(c.selected, &"runner")
+	assert_eq(c.selected, CodexScreen.ENEMIES[1])
 	assert_false(c.figure.known, "never defeated: a silhouette")
 	assert_eq((c.find_child("detail_name", true, false) as Label).text, CodexScreen.UNKNOWN)
 	c._show(CodexScreen.Tab.GIFTS)
@@ -418,6 +419,6 @@ func test_the_angels_seal_stands_beside_the_cards() -> void:
 	var r := col.get_global_rect()
 	for c in choice.cards():
 		assert_false(r.intersects(c.get_global_rect()), "never over a card")
-	assert_true(col.is_ancestor_of(choice.glossary), "the glossary under it")
+	assert_true(choice.glossary.get_parent() == choice.list.get_parent(), "the glossary under the list of buttons (BC-1)")
 	assert_lte(choice.get_viewport_rect().size.x, 1280.0 + 1.0)
 	assert_gte(r.position.x, 0.0, "inside the screen")

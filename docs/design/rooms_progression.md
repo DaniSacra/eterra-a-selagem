@@ -1620,3 +1620,28 @@ profundidade (`cycle_late`, `rearm_late`, desde 0,7). Métricas do robô (12 sem
 `--hero-hp=300`, 900 s): nenhum `stuck`; o robô quase não leva dano do perigo (reage ao aviso em 0,25 s; 0 a 10 de cada
 fonte por descida, mais as rochas e as lajes), mas a armadilha dá 51 golpes e 197 de dano nos inimigos em 7 salas e as
 lajes 53 golpes e 302. As grades e a laje que cede quase não apareceram (salas sorteadas cedo; só dormentes até 0,4/0,55).
+
+
+## Salas dos guardiões (2026-11-23, room-designer; pedido do Daniel)
+Pedido: as salas dos minichefes menores, para dificultar a escapada; Cavaleiro em sala quadrada com perigo nos quatro cantos (coisas caindo
+e laje que sobe espinhos); Ancião em sala quadrada com só quatro colunas para o herói se esconder das bolinhas.
+
+| Sala | Ideia | Tamanho | Perigos | Aparece | Prova no robô |
+|---|---|---|---|---|---|
+| Salão do Cavaleiro (`knight_hall`) | fugir da investida sem cair nos cantos | 22 x 22 m (era 44 x 28) | pedras da abóboda (4 zonas) e 4 lajes de espinhos, uma por canto | casa do Cavaleiro, 1o ou 2o guardião | a luta passa dos cantos (`corner_*` em `zones`), as lajes ferem o Cavaleiro (`plates_enemy` no `hazard`) |
+| Câmara do Ancião (`elder_hall`) | esconder-se atrás de uma coluna das orbes | 24 x 24 m | nenhum; 4 colunas (barram corpo e tiro) | casa do Ancião, 1o ou 2o guardião | tempo em `columns` vs `walls`, dano do Ancião |
+
+- Aviso e dano como as outras salas: pedras 1,2 s, lajes 1,2 s, 10 no herói e 60 no inimigo; no máximo dois avisos de sala juntos (R9, a conta é
+  a de `Ground.room_live`), nada a menos de 6 m da entrada, uma saída livre de cada laje andando antes do golpe (teste).
+- Recebem o segundo guardião e a escolta (dois magos do Cavaleiro, um guarda do Ancião): `max_alive` (6, 8) cabe.
+
+### Medida (robô, `--start=miniboss --smoke=300`, 12 sementes, sem `--bot-reaction`; novato / evoluído `--boons=4 --forge=2 --account=6`)
+| Guardião | Vitórias | Tempo da luta (média, min a max) | Dano no herói por fonte (média por partida) | Perigos nos inimigos |
+|---|---|---|---|---|
+| Cavaleiro novato | 12 de 12 | 65,8 s (48 a 91) | cavaleiro 9,0; esqueleto 0,8 | lajes 27,9; pedras 15,4 |
+| Cavaleiro evoluído | 12 de 12 | 42,1 s (27 a 61) | esqueleto 0,4 | lajes 25,8 |
+| Ancião novato | 7 de 12 | 142,3 s (68 a 235) | ancião 22,5; esqueleto 1,2 | nenhum |
+| Ancião evoluído | 12 de 12 | 87,6 s (58 a 130) | ancião 9,8; esqueleto 1,8 | nenhum |
+Com `--bot-reaction=0.25` (8 sementes, novato): Cavaleiro 8 de 8, 58,7 s, dano dele 2,2; Ancião 2 de 8, 90,7 s, dano dele 25,0. Nenhum `stuck`.
+O robô quase não pisa em laje nem fica sob pedra (0 de dano de perigo no herói); quem sofre é o Cavaleiro, que investe por cima das lajes.
+Quem pagar o Cavaleiro mais caro deve mexer em `HOUSE_FROM`, no tempo entre pedras (`drop_every` 4 s) ou no tamanho das zonas, não no aviso.

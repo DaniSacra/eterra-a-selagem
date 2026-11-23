@@ -71,6 +71,8 @@ const EVENTS := {
 	&"sag_fire": &"boss_down",
 	&"spikes_arm": &"rune_arm",
 	&"spikes_fire": &"bone",
+	&"spikeplate_arm": &"rune_arm",
+	&"spikeplate_fire": &"bone",
 	&"relic_use": &"ward",
 }
 ## What a blow can land on, loudest first (a swing that strikes several plays the first one found here).
@@ -114,6 +116,18 @@ static func material(m: StringName) -> StringName:
 static func windup(d: EnemyDef) -> StringName:
 	if d.behavior == EnemyDef.Behavior.BOSS:
 		return &""  # Morvath's beats are his own (Boss)
+	if d.behavior == EnemyDef.Behavior.SWEEP:
+		return &"tell_sweep"  # the pole gathering its turn
+	if d.behavior == EnemyDef.Behavior.SUPPORT:
+		if d.plate_damage > 0.0:
+			return &"tell_trap"  # C1e lote C: the Armadilheiro setting a plate
+		return &"tell_dig" if d.role == &"grave" else &"tell_call"  # C1e: the Coveiro digs, the Gritador calls
+	if d.behavior == EnemyDef.Behavior.BEAM:
+		return &"tell_beam"  # the Canalizador gathering its beam
+	if d.behavior == EnemyDef.Behavior.LEAP:
+		return &"tell_leap"  # the Saltador crouching
+	if d.shot_return:
+		return &"tell_throw"  # the Lançador drawing the axe back
 	return WINDUP_SOUND.get(d.tell, &"tell_blade")
 
 
@@ -127,12 +141,14 @@ static func shot(d: EnemyDef) -> StringName:
 ## The sound of a blow loosed (the swing, the lunge, the charge, the burst); &"" for those that shoot (shot plays).
 static func strike(d: EnemyDef) -> StringName:
 	match d.behavior:
-		EnemyDef.Behavior.CHASE, EnemyDef.Behavior.RUNNER, EnemyDef.Behavior.CONE:
+		EnemyDef.Behavior.CHASE, EnemyDef.Behavior.RUNNER, EnemyDef.Behavior.CONE, EnemyDef.Behavior.SWEEP:
 			return &"enemy_swing"
 		EnemyDef.Behavior.KNIGHT:
 			return &"enemy_charge"
-		EnemyDef.Behavior.PULSE:
+		EnemyDef.Behavior.PULSE, EnemyDef.Behavior.LEAP:
 			return &"enemy_burst"
+		EnemyDef.Behavior.BEAM:
+			return &"shot_orb"
 	return &""
 
 

@@ -57,6 +57,8 @@ const BIOMES := {
 	&"bridge": {&"moss": 4, &"damp": 4, &"tufts": 0, &"skulls": 0, &"bones": 0, &"pots": 0, &"stones": 0.5, &"frame": 1.0},
 	&"rift": {&"moss": 3, &"damp": 10, &"tufts": 0, &"skulls": 7, &"bones": 10, &"pots": 0, &"stones": 0.0, &"frame": 1.0},
 	&"trial": {&"moss": 4, &"damp": 4, &"tufts": 0, &"skulls": 2, &"bones": 3, &"pots": 0, &"stones": 0.0, &"frame": 0.8},
+	&"armory": {&"moss": 0, &"damp": 4, &"tufts": 0, &"skulls": 0, &"bones": 0, &"pots": 0, &"stones": 0.0, &"frame": 0.8},
+	&"chapel": {&"moss": 0, &"damp": 3, &"tufts": 0, &"skulls": 0, &"bones": 0, &"pots": 0, &"stones": 0.0, &"frame": 0.7},
 	&"altar": {&"moss": 5, &"damp": 4, &"tufts": 0, &"skulls": 2, &"bones": 3, &"pots": 1, &"stones": 0.0, &"frame": 0.8},
 }
 

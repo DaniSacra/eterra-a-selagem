@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_1of2h"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_wwf5n"]
+
+[sub_resource type="Resource" id="Resource_mdoyl"]
+script = ExtResource("1_1of2h")
+stat = &"shout_ward"
+tag = &"shout"
+base = 1.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_wwf5n")
+id = &"escudo_de_guerra"
+name_key = &"talent_escudo_de_guerra"
+desc_key = &"talent_escudo_de_guerra_desc"
+branch = 1
+tier = 1
+cost = 3
+unlock_level = 12
+memory_cost = 3
+mods = Array[ExtResource("1_1of2h")]([SubResource("Resource_mdoyl")])

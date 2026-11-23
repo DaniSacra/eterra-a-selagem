@@ -571,3 +571,27 @@ como régua da economia de hoje. Recalibrar a régua 0,45 só com partidas do ex
 - **Loja de rota (DV-2, MAP-09)**: em 45% dos mapas, num ramo de 6 a 8. O robô chega à sala 6 com 50 de ouro ou mais
   em 29% das descidas, à 7 em 62%, à 8 em 86% (mediana 44, 52, 62,5): a meta "ouro para um item em 2 de 3 de quem
   passa" só fecha nas camadas 7 e 8. Depende da renda (Q-15): se a renda subir, a loja de rota ganha sentido.
+
+## C1b: ajuste de números do kit (2026-11-23, robô 0,25, 12 sementes por linha, só números em `tools/make_data.gd`)
+Herói 15/15/20 e 30 de vida intactos. Mudado: Investida 35 para 60, Brado 15 para 35, especial (onda) 35 para 55, Ômega de ataque (lance) 100 para 150. Peso de Quebra do ataque ficou 0,15 (0,17 deu 3 vitórias de 12, mas 1/0,17 = 5,9 golpes sai da faixa 6 a 8 do `test_c1b_break`).
+| Aceite | Antes | Depois |
+|---|---|---|
+| Ataque no dano do evoluído (meta até 40%) | 51% | 44% (novato 42%) |
+| Só mouse chega a Morvath / todas as teclas (meta até metade) | 4 de 12 / 6 de 12 | 2 de 24 / 7 de 24 |
+| Evoluído vence (meta 20 a 40%) | 0 de 12 | 1 de 12 (8%); com peso 0,17: 3 de 12 (25%); o ruído entre rodadas é de 1 a 3 |
+| Novato chega a Morvath | 1 de 12 | 1 de 12, nenhuma vitória |
+| Luta comum acima de 60 s | alguma | máxima 65 s (evoluído) e 72 s (novato), mediana 32 a 34 s |
+Só número não fecha: o ataque ainda leva 42 a 44% e o evoluído vence pouco. Código que ajudaria: kit_c1c item 1 (Magia por acerto de ataque e Brado devolvido por acerto e por Quebra) para o robô usar mais os botões, e um peso de Quebra do ataque de 0,16 com o teste em 5,5 a 8.
+
+## C1c item 1: os botões se alimentam (2026-11-23, robô 0,25, 12 sementes, `smoke.sh 700`; novato e evoluído `--boons=4 --forge=2 --account=6`)
+Magia +0,5 por golpe de ataque, +3 por Quebra, Brado -0,3 s por acerto e -1,5 s por Quebra (piso 8 s), tetos 3 por segundo e 8 por onda. Antes = os mesmos números zerados em `make_data` (mesmo código).
+| Medida | Novato antes | Novato depois | Evoluído antes | Evoluído depois |
+|---|---|---|---|---|
+| Ataque no dano total (meta perto de 40%) | 44,1% | 40,3% | 38,0% | 34,1% |
+| Chega a Morvath (de 12) | 7 | 10 | 11 | 12 |
+| Vence (modo ENDING, de 12) | 3 | 3 | 10 | 10 |
+| Ondas por partida | 49,7 | 69,6 | 52,0 | 59,9 |
+| Brados por partida (um a cada, na partida toda) | 26,2 (19,1 s) | 33,7 (16,1 s) | 23,6 (20,6 s) | 25,4 (18,3 s) |
+| Magia por acerto / por Quebra (por partida) | 0 / 0 | 180 / 27 | 0 / 0 | 139 / 2,6 |
+| Segundos de Brado devolvidos por partida | 0 | 85 | 0 | 53 |
+Leitura: o ataque cai para perto de 40% (novato), a onda sobe 40% (a Magia por acerto paga a onda), e o novato chega a Morvath mais vezes (7 para 10). O Brado a cada 16 a 18 s é a média da partida inteira (inclui andar, porta e fonte, e o robô só usa o Q quando está perto); fica acima dos 9 a 11 s da meta, e o piso de 8 s nunca é rompido (testado). A Magia por Quebra é pouca (27 por partida no novato; o evoluído quase não quebra porque mata antes): a maior parte do ganho vem do acerto. Evoluído vence igual (10 de 12 nos dois). Nada a rebalancear sem pedido; se o Daniel quiser o Brado mais frequente, subir `cd_refund_hit` para 0,5 em `make_data`.

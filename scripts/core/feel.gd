@@ -13,7 +13,13 @@ const OVERRIDE := "user://feel_override.tres"
 @export_range(2.0, 14.0, 0.1) var speed := 6.8
 @export_range(8.0, 40.0, 0.5) var dodge_speed := 24.0
 @export_range(0.05, 0.5, 0.01) var dodge_time := 0.2
-@export_range(0.0, 0.8, 0.01) var dodge_iframes := 0.3
+@export_range(0.0, 0.8, 0.01) var dodge_iframes := 0.2
+## C1e, the close dodge: a blow that would land this many seconds into the roll, at most one reward every close_cooldown s;
+## the reward is a slow motion at close_fraction of the speed for close_slow real seconds.
+@export_range(0.05, 0.3, 0.01) var close_window := 0.15
+@export_range(0.0, 3.0, 0.1) var close_cooldown := 2.0
+@export_range(0.1, 1.0, 0.05) var close_fraction := 0.4
+@export_range(0.05, 0.6, 0.01) var close_slow := 0.25
 ## Holding the dodge button after the roll runs this many times the walking speed.
 @export_range(1.0, 3.0, 0.05) var sprint_scale := 1.5
 ## How much of the walking speed a swing keeps, by kind of move (a ComboNode can set its own move_scale).
@@ -49,6 +55,11 @@ const OVERRIDE := "user://feel_override.tres"
 @export_range(0.0, 0.15, 0.005) var impact_frame := 0.05
 ## The fewest seconds between two impact frames (Combat).
 @export_range(0.0, 30.0, 0.5) var impact_frame_every := 10.0
+
+@export_group("Poise")
+## C1b (Poise): the share of a common enemy's full poise each button's blow takes, by DealtBy source (Dictionary: no
+## slider). A source missing here takes none.
+@export var poise_weights: Dictionary = {}
 
 @export_group("Hurt")
 ## The red at the edges of the screen when the paladin is hurt (screen.gdshader): its strongest alpha, how long it

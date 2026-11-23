@@ -411,9 +411,11 @@ func paint_look(style := {}) -> void:
 		RUNE_FLOOR: RUNE_FLOOR_PAINT}
 	var seen := {}
 	var kit_paint: Material = KAYKIT_PAINT
-	if style.has(&"shadow"):
+	if style.has(&"shadow") or style.has(&"shadow_glow") or style.has(&"vignette"):
 		kit_paint = KAYKIT_PAINT.duplicate()
-		(kit_paint as ShaderMaterial).set_shader_parameter(&"paint_shadow", style[&"shadow"])
+		for k: StringName in KIT_KEYS:
+			if style.has(k):
+				(kit_paint as ShaderMaterial).set_shader_parameter(KIT_KEYS[k], style[k])
 	for n in root.find_children("*", "GeometryInstance3D", true, false):
 		var g := n as GeometryInstance3D
 		_paint_material(g.material_override, swaps, seen, style)
@@ -432,12 +434,15 @@ func paint_look(style := {}) -> void:
 
 ## Which keys of a room's style go to which painted shader (paint_look).
 const STONE_KEYS := {&"stone": &"paint_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold", &"olive_share": &"olive_share",
-	&"pool_gain": &"paint_pool_gain", &"pool_saturation": &"paint_pool_saturation"}
+	&"pool_gain": &"paint_pool_gain", &"pool_saturation": &"paint_pool_saturation", &"shadow_glow": &"paint_shadow_glow",
+	&"vignette": &"paint_vignette_set"}
+## C1V (N1, 2.1): the kit's own (kaykit_paint).
+const KIT_KEYS := {&"shadow": &"paint_shadow", &"shadow_glow": &"paint_shadow_glow", &"vignette": &"paint_vignette_set"}
 ## The moss (lot C): the shadow's colour and its own grey green (style key moss).
 const MOSS_KEYS := {&"shadow": &"paint_shadow", &"moss": &"paint_moss"}
 const FLOOR_KEYS := {&"floor_stone": &"floor_stone", &"shadow": &"paint_shadow", &"joint_cold": &"joint_cold",
 	&"olive_share": &"olive_share", &"slab_hue": &"slab_hue", &"slab_paint": &"slab_paint", &"edge_value": &"edge_value",
-	&"pool_saturation": &"paint_pool_saturation"}
+	&"pool_saturation": &"paint_pool_saturation", &"shadow_glow": &"paint_shadow_glow", &"vignette": &"paint_vignette_set"}
 ## ENV-HB2, the Salão's finish test replicated as a method (docs/gallery/ciclo_visual_1120/ART_REVIEW.md): the painted
 ## floor calm at the scale of a few slabs (joints, cracks and missing corners near the slab's own value, a soft bevel,
 ## slabs of near values, little grain, barely tilted) and the big washes faint; a room merges it into its `floor`
@@ -1372,7 +1377,7 @@ func floor_material(ring_radius := 0.0, ring_center := Vector2.ZERO, calm_radius
 	m.set_shader_parameter(&"ring_glow", MEDALLION_GLOW)
 	m.set_shader_parameter(&"ring_center", ring_center)
 	m.set_shader_parameter(&"wet_zone", Vector4(wet_zone.position.x, wet_zone.position.y, wet_zone.end.x, wet_zone.end.y))
-	# the rose's long points run across the screen, as in the picture
+	# the medallion is a square band along the room axes now (rose_turn is unused by it)
 	m.set_shader_parameter(&"rose_turn", deg_to_rad(Feel.live().cam_yaw))
 	m.set_shader_parameter(&"calm_radius", calm_radius)
 	m.set_shader_parameter(&"rock_normal", Masonry.ROCK_NORMAL)

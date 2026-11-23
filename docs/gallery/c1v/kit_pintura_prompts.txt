@@ -1,0 +1,13 @@
+KIT DE PINTURA DO SALAO
+
+Anexe salao_captura_base.png no ChatGPT e use a Pintura-alvo. As folhas 1 a 3 sao pedidos separados, sem anexo.
+
+- Captura base da pintura-alvo: a número 3 (Salão, `--showcase --seed=5 --shot-at=2`, 1920x1080, estilizado). Se a vitrine não mostrar o herói, a número 4.
+- Pintura-alvo (no ChatGPT dele, com a captura anexada): *"Repinte esta captura de jogo como pintura digital feita à mão, pincel largo e opaco, mantendo exatamente a câmera, a planta,
+as posições das figuras e a interface. Pedra azul-petróleo fria com sombra violeta, uma luz morna dourada vinda do alto à esquerda formando uma poça no centro, bruma pintada no abismo,
+bordas mais escuras. O herói de cabelo vermelho e cachecol azul-petróleo é o ponto mais claro. Sem texto novo, sem símbolo, sem imitar jogo, estúdio ou artista."*
+- Folha 1, lajes: *"Doze pedras de piso soltas sobre fundo verde liso, vistas exatamente de cima, pintadas à mão com pincel largo, só cinza (médio 50%, claros até 65%, escuros até 35%),
+luz difusa, sem sombra projetada, borda gasta, cantos lascados, cada uma diferente, sem texto nem símbolo."*
+- Folha 2, blocos: o mesmo, trocando por *"doze blocos de muro, proporção 2 por 1, sujeira na base, quina de cima gasta"*.
+- Folha 3, faixas: o mesmo, trocando por *"peças soltas de degrau, tampa de túmulo, fuste de coluna, tábua com veio e ferragem, cada uma reta e de frente"*.
+- Perguntas que continuam (seção 5 do plano pintado): quem pinta as folhas; se aceita retoque nas texturas das figuras. A imagem gerada é referência e vai para `docs/steam-ia.md` se virar folha do jogo.

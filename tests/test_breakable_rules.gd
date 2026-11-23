@@ -136,18 +136,19 @@ func test_never_on_a_rune_that_arms() -> void:
 						assert_gte(_rect_gap(q, p.at), 3.0, "runes 1: %s off the quiet stone" % p.at)
 
 
-## AT-GU3: in the guardian's house (every variant of the Santuário) never between his spawn and the paladin's way in
-## (4 m and more from the line between them) and only by the edge (the way in and the rim).
+## AT-GU3: in the guardians' houses never between his spawn and the paladin's way in (4 m and more from the line between
+## them) and only by the edge (the way in and the rim). 2026-11-23: the Knight's hall and the Elder's chamber.
 func test_never_between_the_guardian_and_the_paladin() -> void:
-	var base := _layout(&"sanctuary")
-	assert_true(base.guardian_home)
-	for v in base.variant_count():
-		var l := base.variant(v)
-		var a := _arena(l)
-		for p in l.breakables:
-			var q := Geometry2D.get_closest_point_to_segment(p.at, l.boss_spawn, a.start)
-			assert_gte(p.at.distance_to(q), 4.0, "sanctuary %d: %s off the guardian's line" % [v, p.at])
-			assert_false(a.inside(p.at, 2.5), "sanctuary %d: %s by the rim" % [v, p.at])
+	for id: StringName in [&"knight_hall", &"elder_hall"]:
+		var base := _layout(id)
+		assert_true(base.guardian_home)
+		for v in base.variant_count():
+			var l := base.variant(v)
+			var a := _arena(l)
+			for p in l.breakables:
+				var q := Geometry2D.get_closest_point_to_segment(p.at, l.boss_spawn, a.start)
+				assert_gte(p.at.distance_to(q), 4.0, "%s %d: %s off the guardian's line" % [id, v, p.at])
+				assert_false(a.inside(p.at, 2.5), "%s %d: %s by the rim" % [id, v, p.at])
 
 
 ## AT-LO3: 3 m and more from every reliquary of the shop, as Rooms._build_shop lays its row (1 to 5 items: the route

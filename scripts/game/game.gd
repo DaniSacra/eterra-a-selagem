@@ -51,6 +51,8 @@ const VICTORY_CAPTION_BAND := Vector2(0.7, 0.86)
 
 var arena: Arena
 var ground: Ground
+var c5_marks: C5Marks
+var c1e_marks: C1eMarks
 var orbs: Orbs
 var player: Player
 var horde: Horde
@@ -87,6 +89,10 @@ var discern := 0
 var rerolls_left := 0
 ## The angel whose cards are on the choice screen (Encounters.choose; null: none), for a reroll of the same family.
 var choice_angel: AngelDef = null
+## BC-4: the way back to the pair the angel's cards came from (EncounterScreen sets it), and the angels whose words
+## were heard in each room (room id + angel), so going back or drawing again never repeats them.
+var choice_back := Callable()
+var intro_seen: Dictionary = {}
 signal rerolled
 var enchant_options: Array[EnchantDef] = []
 var tools_found: Array[StringName] = []
@@ -98,7 +104,9 @@ var account_nodes := 0
 var talents_opened := 0
 var encounters: Encounters
 ## The hero played (DT-013) and, for this descent, the Gifts equipped (ids) and the ultimate chosen (id or "").
-var hero: HeroDef = HeroDef.warrior()
+var hero: HeroDef = hero_option()
+## The Maga's kit in play (--hero=maga; null for the Warrior): Selos, Explosão, Círculo, Suspensão, Ressonância.
+var arcane: Arcane
 var talents: Array[StringName] = []
 var ultimate := ""
 ## The Juramentos sworn for this descent (E6, D-63): the save's once unlocked, or --juramentos=id:rank,... (the robot
@@ -126,6 +134,8 @@ var boss_stats := {}
 var fx: Fx
 var hud: Hud
 var ui: CanvasLayer
+## Close dodges rewarded this run (C1e).
+var dodge_closes := 0
 var _feel_panel: FeelPanel
 var camera: Camera3D
 ## The game camera and the world's air (shared with the hub, HUB-B1).
@@ -263,6 +273,13 @@ func _ready() -> void:
 	horde.arena = arena
 	horde.fx = fx
 	horde.ground = ground
+	c5_marks = C5Marks.new()
+	c5_marks.horde = horde
+	add_child(c5_marks)
+	c1e_marks = C1eMarks.new()
+	c1e_marks.horde = horde
+	c1e_marks.ground = ground
+	add_child(c1e_marks)
 	horde.projectiles = projectiles
 	# shooters only wind up on the screen (cycle C12): where a floor point shows, at chest height, in the frame the
 	# camera settles on for the paladin where he stands (the simulation's own, not the drawn camera's lag). The rule
@@ -277,6 +294,12 @@ func _ready() -> void:
 			room_tally.touch(time))
 
 	player.struck.connect(combat.strike)
+	# BO-2: a Blessing of a button sets its skill off when that button's move lands (after the blow, so it burns first)
+	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
+		var which := Skills.trigger_of(node)
+		if which >= 0:
+			skills.trigger(which as SkillDef.Trigger))
+	player.ult_landed.connect(func(_dir: Vector2) -> void: skills.trigger(SkillDef.Trigger.ULT))
 	player.struck.connect(func(node: ComboNode, _o: Vector2, _d: Vector2) -> void:
 		if node.has_tag(Combat.OMEGA_TAG):
 			omegas += 1)
@@ -289,9 +312,11 @@ func _ready() -> void:
 	player.was_hurt.connect(_on_was_hurt)
 	player.died.connect(_on_player_died)
 	player.dodged.connect(_on_dodged)
+	player.dodge_close.connect(_on_dodge_close)
 	player.dodge_blocked.connect(room_tally.dodge_blocked)  # AT-CA2
 	Controls.forget_devices()
 	player.shield_broke.connect(_on_shield_broke)
+	player.ward_taken.connect(horde.ward_taken)
 	player.move_shown.connect(func(node: ComboNode) -> void:
 		hud.show_move(node, combat.color_of(node.tags))
 		if SaveData.discover_move(Save.data, String(node.id)):
@@ -322,9 +347,15 @@ func _ready() -> void:
 			if not enchant_pool.has(e) and Dev.arg("inscribed").split(",", false).has(String(e.id)):
 				enchant_pool.append(e)
 	ults.equip(hero.ultimate(StringName(ultimate)))
+	boons.ult_open = ults.def != null  # BO-2: the Blessing of Shift is in the draw only with the ultimate open
 	if Dev.has("ult-full"):
 		ults.charge.fill()  # dev: the ultimate starts full (captures, --start=boss)
 	hero_gifts = HeroGifts.new(self)
+	if hero.arcane != null:
+		arcane = Arcane.new()
+		add_child(arcane)
+		arcane.setup(self)
+		combat.arcane = arcane
 	_swear_juramentos()
 	psalms = Psalms.new(Psalms.load_catalog())
 	psalms.circle = hero.circle
@@ -459,6 +490,7 @@ func _build_ui() -> void:
 	hud = Hud.new()
 	hud.game = self
 	ui.add_child(hud)
+	ui.visible = not Dev.has("no-hud")  # promotional captures (identidade_c1v.md section 5)
 
 
 func _exit_tree() -> void:
@@ -556,6 +588,8 @@ func _step(dt: float) -> void:
 	_lap(&"player")
 	horde.target = player.pos
 	horde.target_alive = player.alive() and mode == Mode.PLAY
+	horde.dodge_end = player.last_dodge_end
+	horde.dodge_age = player.dodge_age
 	horde.step(dt)
 	_lap(&"horde")
 	if boss:
@@ -567,9 +601,13 @@ func _step(dt: float) -> void:
 		breaks.step(dt)
 	_lap(&"shots")
 	ground.step(dt)
+	c5_marks.step()
+	c1e_marks.step()
 	_lap(&"ground")
 	combat.step(dt)
 	hero_gifts.step(dt)
+	if arcane != null:
+		arcane.step(dt)
 	psalm_play.step(dt)
 	_lap(&"combat")
 	if mode == Mode.PLAY:
@@ -690,6 +728,8 @@ func rebuild_room(layout: RoomLayout, exits: int, seed_: int, wait := Callable()
 	_trace_cam_cut()
 	ground.clear()
 	ults.clear()
+	if arcane != null:
+		arcane.clear()
 	psalm_play.clear()
 	projectiles.clear_hostile()
 	horde.clear_crowd()
@@ -735,6 +775,7 @@ func _free_later(old: Node, wait: Callable) -> void:
 func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance := -1.0, meeting := false) -> void:
 	chances = Account.better(chances, boons.stat(&"rarity_bonus"))
 	choice_angel = null
+	choice_back = Callable()
 	_no_reroll = false
 	_last_chances = chances
 	_last_psalm = psalm_chance
@@ -748,6 +789,7 @@ func open_boon_choice(chances: Array[float] = Boon.RARITY_CHANCE, psalm_chance :
 ## that may come now (the door turned into a Blessing when none could: RunMap.settle).
 func open_psalm_choice(chances: Array[float] = Boon.RARITY_CHANCE) -> void:
 	choice_angel = null
+	choice_back = Callable()
 	_no_reroll = true
 	var cards := _draw_cards(chances, 0.0)
 	if psalm_cards and rooms != null:
@@ -836,6 +878,17 @@ var _no_reroll := false
 func can_reroll() -> bool:
 	return rerolls_left > 0 and mode == Mode.CHOICE and _rerollable and _screen != null \
 		and not offer_cards.any(func(c: BoonState.Card) -> bool: return c.grow)
+
+
+## BC-1 and BC-4: the angel who brought the cards on the choice screen, with its words first the first time in a room
+## (never for the robot nor --autopick, which do not wait).
+func _present_angel(choice: BoonChoice) -> void:
+	if choice_angel == null:
+		return
+	var key := "%d:%s" % [rooms.room.id if rooms != null and rooms.room != null else -1, choice_angel.id]
+	var hear := not (bot != null or Dev.has("autopick") or intro_seen.has(key))
+	intro_seen[key] = true
+	choice.by_angel(choice_angel, choice_back, EncounterScreen.held_of(boons, choice_angel) if hear else -1)
 
 
 func reroll_choice() -> bool:
@@ -1041,6 +1094,7 @@ func _open_choice(cards: Array = []) -> void:
 	else:
 		choice.open(offers, boons, _offer_rarity)
 	choice.chosen.connect(_on_chosen)
+	_present_angel(choice)
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 	if bot and not Dev.has("hold"):
 		get_tree().create_timer(0.6).timeout.connect(func() -> void:
@@ -1103,7 +1157,17 @@ func _take(b: Boon) -> void:
 	fx.hero_burst(&"light", Vector3(player.pos.x, 1.2, player.pos.y))
 
 
+## C1e: the close dodge's reward, a short slow motion with a glint and a chime; nobody is stunned (rule F8).
+func _on_dodge_close() -> void:
+	var feel := Feel.live()
+	fx.slow_mo(feel.close_fraction, feel.close_slow, 0.15, 1.0, 0.0, 0.03)
+	fx.ring(player.pos, 1.6, Combat.EMETH, 0.3, 0.1, true)
+	Audio.play(&"ward")
+	dodge_closes += 1
+
+
 func _on_dodged(dir: Vector2) -> void:
+	skills.trigger(SkillDef.Trigger.DODGE)
 	dodges += 1
 	room_tally.dodge()
 	var dps := boons.stat(&"dodge_ember_dps")
@@ -1196,13 +1260,31 @@ func _on_hit_player(amount: float, from: Vector2, source: Object = null) -> void
 	var id: Variant = source.get(&"last_source") if source else null
 	_blow = {"cause": DefeatCause.of(id, source.get(&"last_by") if source else null), "id": id}
 	_blow.merge(_blow_context(source, id))
+	if source == ground or source == projectiles:
+		amount *= _boss_weak(source)
+	var wide: Variant = source.get(&"last_wide") if source else null
+	player.close_any = wide == true
+	var hp_before := player.hp
 	player.hurt(amount, from)
+	if player.hp < hp_before:
+		var by := String(source.get(&"last_by")) if source and source.get(&"last_by") != null and String(source.get(&"last_by")) != "" else "melee"
+		hurt_by[by] = float(hurt_by.get(by, 0.0)) + hp_before - player.hp
+	player.close_any = false
 	_blow = {}
+
+
+## 10A-3: the Fraqueza on Morvath, by half: his own blows (they are his scripts', not the crowd's: Horde._out).
+func _boss_weak(source: Object) -> float:
+	if boss == null or boss.e == null or boss.e.weak_t <= 0.0 or StringName(source.get(&"last_by")) != &"":
+		return 1.0
+	return 1.0 - horde.weak_cut * 0.5
 
 
 ## The blow being dealt (_on_hit_player), while Player.hurt runs: its cause and attack id, and its context for the
 ## run's log (_blow_context).
 var _blow := {}
+## Life the paladin lost, by the kind of enemy that dealt it (RESULT hurt_by; "melee": a plain blow of the crowd).
+var hurt_by := {}
 
 
 ## The context of a blow about to land, for the run's log (GP-02): warn_s (seconds its warning showed: the swing
@@ -1250,6 +1332,8 @@ func _on_was_hurt(amount: float) -> void:
 func _on_status_player(status: StringName) -> void:
 	if mode != Mode.PLAY or boss == null or status != &"curse":
 		return
+	if player.absorbed_last and boss.def.curse_cut:
+		return  # C1d: the Brado took the bolt and its curse with it
 	if player.apply_curse(boss.def.curse_time, boss.def.curse_slow, boss.def.curse_immunity):
 		boss.on_cursed()
 
@@ -1731,6 +1815,13 @@ static func banks_materials(save_enabled: bool, robot: bool, keep: bool) -> bool
 	return RunAward.banks_materials(save_enabled, robot, keep)
 
 
+## The hero of this run: --hero=warrior|maga when given, else the one picked at the Portal (save "hero", only a person's
+## save: the robot and --nosave runs play the Warrior), else the Warrior.
+static func hero_option() -> HeroDef:
+	var id := Dev.arg("hero") if Dev.has("hero") else SaveData.picked_hero(Save.data) if Save.enabled and not Dev.has("bot") else SaveData.FIRST_HERO
+	return HeroDef.maga() if id == "maga" else HeroDef.warrior()
+
+
 ## The hero's Gifts for this descent (E2a): the loadout saved in heroes.<id>.equipped, kept only where it is valid at
 ## the Mastery level (Talents.sanitized), with the ultimate chosen if unlocked; or --talents=a,b (any Gift, as at the
 ## top level, for tests). The test robot without --talents takes none. Their plain numbers (life, Magia, reach) count
@@ -1766,6 +1857,8 @@ func _equip_talents() -> void:
 		ultimate = String(chosen.id) if chosen != null else ""
 		if chosen == null:
 			push_warning("--ultimate: no ultimate %s" % Dev.arg("ultimate"))
+	if hero.arcane != null and ultimate == "" and not hero.ultimates.is_empty():
+		ultimate = String(hero.ultimates[0].id)  # (the Maga's Tempestade from the start while Mastery is the Warrior's)
 	talents = ids
 	if bot != null or Dev.has("talents"):
 		talents_opened = ids.size()

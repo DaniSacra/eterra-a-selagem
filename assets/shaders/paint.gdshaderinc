@@ -38,6 +38,14 @@ uniform float paint_pool_saturation = 0.65;
 uniform float paint_diffuse = 1.0;
 // The colour the shadow band takes (stylized_spec 1.3: hue 220, saturation up to 0.1).
 uniform vec3 paint_shadow : source_color = vec3(0.92, 0.93, 0.98);
+// C1V (N1, 2.1): a coloured shadow. The key's shadow band takes this much of a cold violet on top (lit stone is not touched):
+// a cast shadow reads as a colour (hue toward 230), not as the light turned down. Black: today's look, for every room
+// that does not ask (a room's style key shadow_glow).
+uniform vec3 paint_shadow_glow : source_color = vec3(0.0);
+// C1V (N1, 2.1): the scene's vignette, only on the painted scenery (stone, floor, kit; never a figure, an effect or the UI):
+// how much darker the edge of the screen is on the screen (a share, 0: none, today's look), where from the middle it starts
+// and where it is full (0 the middle, 1 the middle of an edge, 1.41 a corner).
+uniform vec3 paint_vignette_set = vec3(0.0, 0.5, 1.3);
 // The little shine left (matte stone): its share and the most it narrows on the wet floor.
 uniform float paint_shine = 0.25;
 // The painted stone's colour at the value of paint_ref (the classic stone's luma it stands for).
@@ -108,6 +116,14 @@ vec3 paint_brushed(vec3 c, vec2 p, vec2 along) {
 	return paint_hue(c * v, tone * brush_hue);
 }
 
+// The scene's vignette at a screen point: a multiplier of the albedo (the darkening is a share of the output, so the albedo
+// takes the 2.2 power of it).
+float paint_vignette(vec2 screen_uv) {
+	float d = length((screen_uv - 0.5) * 2.0);
+	float v = smoothstep(paint_vignette_set.y, paint_vignette_set.z, d);
+	return pow(1.0 - paint_vignette_set.x * v, 2.2);
+}
+
 // The three bands of x (N.L times the shadow and the falloff, 0..1).
 float paint_bands(float x) {
 	float w = paint_soft * 0.5;
@@ -135,6 +151,10 @@ void light() {
 	}
 	vec3 tint = mix(paint_shadow, vec3(1.0), smoothstep(paint_values.x, paint_values.z, lit));
 	DIFFUSE_LIGHT += light_c * lit * tint / PI;
+	if (LIGHT_IS_DIRECTIONAL) {
+		// the coloured shadow: only where the key's band is the shadow one
+		DIFFUSE_LIGHT += paint_shadow_glow * (1.0 - smoothstep(paint_values.x, paint_values.y, lit)) / PI;
+	}
 #ifdef PAINT_RIM
 	// a faint warm rim on the edges turned from the eye, on the side the light reaches
 	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), paint_rim_power) * paint_rim;

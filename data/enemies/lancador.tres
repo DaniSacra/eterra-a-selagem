@@ -1,0 +1,45 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_gmp7h"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_1vvfl"]
+
+[resource]
+script = ExtResource("2_1vvfl")
+id = &"lancador"
+name_key = &"enemy_lancador"
+size = 1.2
+tint = Color(0.72, 0.8, 0.95, 1)
+magic_color = Color(0.7, 1, 1.6, 1)
+vivid = -0.05
+tell = 1
+tell_at = Vector3(0.1, 1.9, -1)
+behavior = 1
+hp = 150.0
+speed = 4.14
+damage = 9.0
+radius = 0.55
+poise = 100.0
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_damage = 9.0
+attack_range = 8.0
+attack_cooldown = 3.06
+attack_windup = 0.6400000000000001
+recover_time = 0.6
+recharge_windup = 0.6400000000000001
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+windup_gap = 0.5
+shot_speed = 9.0
+shot_orb = true
+shot_line = true
+keep_away = 0.75
+shot_range = 11.0
+retreat_far = 6.0
+retreat_time = Vector2(1, 1.4)
+max_attackers = 1
+shot_return = true
+per_room = 2
+close_windup = 0.52
+rating = 14.0
+role = &"throw"

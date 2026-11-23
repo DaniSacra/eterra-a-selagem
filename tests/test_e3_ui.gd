@@ -153,8 +153,7 @@ func test_cards_with_tab_fit() -> void:
 	var cards := _open([&"golpe_geada", &"vapor", &"estilhaco"], {&"golpe_geada": {"rarity": Boon.Rarity.LEGENDARY, "upgrade": true}}).cards()
 	await wait_physics_frames(2)
 	for c in cards:
-		assert_lte(c.size.y, BoonCard.SIZE.y + 1.0, "%s grows past the card" % c.boon.id)
-		assert_lte(c.size.x, BoonCard.SIZE.x + 1.0)
+		assert_lte(c.size.y, BoonCard.ROW_MAX_H + 1.0, "%s grows past the line" % c.boon.id)
 
 
 ## The Blessings panel names each Blessing's rarity in the card's colour; an Elo shows neither rarity nor level.

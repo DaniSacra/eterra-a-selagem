@@ -49,7 +49,10 @@ altar em no máximo
   `test_run_log.gd`.
 
 ## Arenas (ciclo C12, Arenas I; plano em `docs/design/cycle12_arenas_plan.md`, plantas em `docs/art/cycle12_arenas_spec.md`)
-- A descida tem 10 salas e Morvath na 11 desde a E3 (era a de teste de 7, D-27, hoje `--medium`): abertura no Salão das
+- **Desde 2026-11-22 a descida tem 14 salas: quatro salas, minichefe na 5, quatro salas, minichefe na 10, duas salas, loja na 13 e
+  Morvath na 14** (`StageDef.rooms` 13; minichefes fixos em 5 e 10, o segundo é o que ele não escolheu). `arena_max_uses` 4, arenas
+  de meio de descida desde 0,4 do caminho (eram 0,5), `depth_ramp` 13, altar 2 a 11, Provação 2 a 11 (só onde cabem 3 lutas), fonte
+  antes de cada minichefe, loja de rota 7 a 11 (20% por camada). Antes: 10 salas e Morvath na 11 desde a E3 (era a de teste de 7, D-27, hoje `--medium`): abertura no Salão das
   Catacumbas, lutas sorteadas entre a Cripta dos Esquecidos, o Salão das Fendas e o Jardim das Raízes Mortas (nunca a
   mesma duas vezes seguidas, nenhuma mais de 3 vezes, a menos usada primeiro, `RunMap._layout`, `RunMap.uses`),
   guardião na 4 a 6, fonte uma vez na 5 a 8 (no salão), loja na 10 (no salão), Morvath na 11. `--short` volta à de 5.
@@ -541,3 +544,57 @@ altar em no máximo
   `PROBE_VASES=1` põe 6 vasos em volta do herói, inteiros de novo antes de cada caso (`BreakFloor.restore`): 41/41 com os
   mesmos quadros.
 
+
+## C1b, Frente 2: grupos com respiro e comuns maiores (`docs/design/combate_c1b.md`; testes em `tests/test_c1b_rooms.gd`)
+- **Orçamento por sala**: `StageDef.room_budget` (por profundidade, 1.0 fora da lista) multiplica a dificuldade só em `EncounterGen.generate`
+  (`EncounterGen.difficulty` não muda). Começa em 0.65, sobe e cai em vale depois de sala difícil (4, 8 e 12); calculado supondo o comum com
+  1,6 vez a vida (Frente 1). Os vivos de uma vez continuam `tier_alive` (3 a 6 no comum); as pools já dão dois papéis ou mais da sala 3 em diante.
+- **Versão maior**: `skeleton_big` e `runner_big` (`EnemyDef.big`, dado em `_bigger_ones` de `tools/make_data.gd`; `big_version` no comum, nunca
+  no elite). Mesma malha e comportamento, maior (`size`), vida 5 vezes a do comum de antes da C1b (300 e 225), sem blindagem, não é elite, aviso
+  próprio mais longo (1,1 e 1,25 s), `strikes` 2 (segundo golpe do esqueleto em arco largo, segunda explosão do corredor 0,6 s depois): nenhum código
+  de comportamento novo. `rating` 20 e 28: o ouro vem do `GoldPurse` por rating, então paga mais sem tocar em nada.
+- **Quando**: `StageDef.big_from_depth` 4 e `big_chance` 0.5; `EncounterGen.add_big` troca uma cabeça da última onda (que tem todos os papéis)
+  pela versão maior, pagando com cabeças do mesmo tipo pelo rating (sobra ao menos uma), só em luta com outro papel, no máximo uma por luta, nunca
+  em arena com perigo (`RoomLayout.hazard`) nem em evento. `pick_kinds` ignora `big`. Teto de 20 corpos intacto (`Fight.ceiling`).
+- **Livro**: as duas entram em `CodexScreen.ENEMIES` com nomes provisórios (`enemy_skeleton_big`, `enemy_runner_big`: "Esqueleto Maior", "Corredor Maior"; o Daniel aprova).
+
+## C1e, lote A: o sorteio por faixa de sala (`docs/design/inimigos_c1e.md`; testes em `tests/test_c1e_a.gd`)
+- **Faixas (progresso = (sala - 1) / 11)**: Gritador de 0,40 (sala 6; a 5 é o guardião) e Coveiro de 0,60 (sala 8), cada um em 2 ou 3 pools
+  novas de `_stage` (papéis `rally` e `grave`, sempre ao lado de papéis já vistos, uma peça nova por luta): Gritador com Esqueleto e Corredor, ou
+  Escudo e Esqueleto (comum), ou Corredor e Besteiro (difícil, elite 0,5); Coveiro com Feiticeiro e Esqueleto (comum) ou Escudo e Besteiro
+  (difícil). `per_room` 1 nos dois (`limit_per_room`).
+- **Regras de sorteio** (`EncounterGen`): `never_with` (`clashes`, no `pick_kinds`: Coveiro e Trinca nunca juntos); a luta não repete o
+  conjunto de papéis da sala de antes (`generate(..., avoid)`, até `REDRAWS` 4 novos sorteios; `Rooms._prepare` passa os papéis da sala em que o
+  herói está, e a primeira porta preparada fica, então a mesma sala segue com a mesma luta; guardião conta como papel `guardian`);
+  modificadores como em `gameplay.md` (C1e, lote A). Teto de 20 corpos intacto.
+- Ainda fora (lotes B e C): o par proibido Canalizador e Varredor, Armadilheiro e corrente, a sala de respiro depois de 2 novos (no lote A nenhuma
+  pool tem 2 peças novas).
+
+## C1e, lote B: onde entram o Saltador e o Lançador (`tests/test_c1e_b.gd`)
+- Saltador de 0,18 (sala 3) e Lançador de 0,27 (sala 4), seis pools novas em `_stage`: Saltador com Esqueleto (0,18 a 0,46), com Besteiro e Esqueleto
+  (0,30 a 0,80) ou com Escudo (0,30 a 0,60); Lançador com Esqueleto (0,27 a 0,60) ou com Trinca e Esqueleto (0,46 em diante); os dois juntos
+  com o Escudo só no fundo (difícil, 0,80 em diante, elite 0,5). `per_room` 2 em cada (`limit_per_room`); `EncounterGen` e o teto de 20 corpos intactos.
+- Ainda fora: a sala de respiro depois de 2 novos (lote C não fez).
+
+## C1e, lote C: onde entram o Canalizador e o Armadilheiro (`tests/test_c1e_c.gd`)
+- Canalizador de 0,40 (sala 6): `pressure`+`beam` (0,40 a 0,70), `block`+`beam`+`pressure` (0,46 em diante), difícil `pressure`+`beam`+`flank` (0,70 em diante, elite 0,5). Armadilheiro de 0,64 (sala 9):
+  `pressure`+`trap`+`flank`, `leap`+`trap`+`pressure` e, difícil, `block`+`trap`+`flank` (0,70 em diante). `per_room` 1 nos dois; o Canalizador nunca com o Varredor (`never_with` `sweep`);
+  a sala da corrente (RP-11) proíbe `trap` além de `area` e `sweep` (`banned_roles`). Modificadores: 5 no sorteio. Teto de 20 corpos intacto.
+
+## Salas dos guardiões, 2026-11-23 (`tests/test_guardian_rooms.gd`)
+- Pedido do Daniel: salas de guardião menores, para dificultar a fuga. O Cavaleiro e o Ancião deixaram o Santuário (agora uma sala de luta
+  comum, difícil, `guardian_home` e `guardian` falsos) e têm casa própria: `RoomLayout.guardian_id` (`knight`, `priest_elder`) com
+  `guardian_home`; `RunMap.home_of(id)` acha a casa, `_layout` manda o MINIBOSS para ela em qualquer profundidade (a menos que tenha sido a
+  sala anterior) e `_fits` nunca dá uma casa a luta comum. O segundo guardião só é conhecido depois que o primeiro é escolhido: `_leave_other`
+  refaz `layout`, `arena` e `variant` do nó dele. `--start=miniboss --guardian=x` pega o nó do guardião pedido.
+- **Salão do Cavaleiro** (`knight_hall`, `_knight_hall`): quadrado de 22 m (canto NE cortado em 2,5 m para o monte de blocos da `CryptLook`). Em
+  cada canto, pedras da abóboda (`_rocks`, 4 zonas de 3,8 m, a 6,2 m ou mais da entrada, metade mirada nele) e, ao lado, uma **laje de
+  espinhos** (`_spike_plates`, `plate_source` `spikeplate`: `PLATES` sem `dwell`, pisar arma na hora, aviso 1,2 s, espinhos 0,6 s, 10 nele e 60
+  no inimigo, descanso 6 s; peça `HazardPiece.grate`, "Derrotado por: Laje de Espinhos"). Acordam em 0,3 do trajeto (`HOUSE_FROM`: o primeiro
+  guardião, sala 5, tem 0,333), nada nos primeiros 3 s (pedras) e 5 s (lajes). O meio fica livre para a investida (que atordoa na parede).
+- **Câmara do Ancião** (`elder_hall`, `_elder_hall`): quadrado de 24 m, quatro colunas altas (5,2 m, raio 0,9) a (+-4,5, +-4,5) que barram corpo e
+  tiro; sem perigo. O teste prova que cada coluna para as cinco linhas do leque (84 graus) que acertariam quem está 1,4 m atrás dela. As
+  orbes do Ancião são barradas por `Arena.shot_hit`.
+- Visual provisório: as duas usam a `CryptLook` (`l.look = &"crypt"`; a entrada da arcada acompanha `hero_spawn.y` quando `guardian_home`) e o ar
+  do Santuário (`Ambience.BY_ARENA`). Falta arte própria (colunas e braseiros de guardião, laje de espinhos como peça) com o environment-artist.
+- Medida (robô, 12 sementes, `--start=miniboss`): ver `docs/design/rooms_progression.md`, "Salas dos guardiões".

@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="EnemyDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/knight_move.gd" id="1_6keqf"]
+[ext_resource type="Script" path="res://scripts/core/enemy_def.gd" id="2_olb47"]
+
+[resource]
+script = ExtResource("2_olb47")
+id = &"runner_big"
+name_key = &"enemy_runner_big"
+model = &"runner"
+size = 1.6
+tint = Color(1, 0.72, 0.5, 1)
+magic_color = Color(1.4, 0.16, 0.3, 1)
+vivid = 0.1
+sway = 5.0
+windup_shake = 0.05
+tell = 2
+behavior = 7
+hp = 225.0
+speed = 4.7437499999999995
+damage = 9.0
+radius = 0.7
+heavy = true
+stun_time = 0.5
+stun_heavy_time = 1.1
+attack_damage = 9.0
+attack_range = 2.2
+attack_cooldown = 1.62
+attack_windup = 1.0
+recover_time = 1.2
+strike_at = 0.1
+strikes = 2
+strike_gap = 0.6
+recharge_windup = 0.6400000000000001
+guard_up_hit_windup = 0.68
+volley_windup = 0.8
+death_burst = 1.0
+attack_width = 3.4
+per_room = 1
+close_windup = 0.6
+rating = 28.0
+role = &"react"
+big = true

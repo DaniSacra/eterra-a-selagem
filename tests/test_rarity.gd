@@ -18,15 +18,15 @@ func _shares(chances: Array[float], seed_: int) -> Array[float]:
 
 func test_the_odds_of_the_sequence() -> void:
 	var odds := BoonState.rarity_odds(Boon.RARITY_CHANCE)
-	assert_almost_eq(odds[0], 0.855, 0.0001)
-	assert_almost_eq(odds[1], 0.095, 0.0001)
-	assert_almost_eq(odds[2], 0.05, 0.0001)
-	assert_eq(odds[3], 0.0)
+	assert_almost_eq(odds[0], 0.84645, 0.0001)
+	assert_almost_eq(odds[1], 0.09405, 0.0001)
+	assert_almost_eq(odds[2], 0.0495, 0.0001)
+	assert_almost_eq(odds[3], 0.01, 0.0001, "the legendary 1% in the common draw (decision 10 of 2026-11-22)")
 	var guardian := BoonState.rarity_odds(Boon.RARITY_CHANCE_GUARDIAN)
-	assert_almost_eq(guardian[0], 0.093, 0.0001, "the guardian's card is common now and then (Hades II)")
-	assert_almost_eq(guardian[1], 0.837, 0.0001)
-	assert_almost_eq(guardian[2], 0.07, 0.0001)
-	assert_eq(guardian[3], 0.0, "no legendary from the guardian")
+	assert_almost_eq(guardian[0], 0.09021, 0.0001, "the guardian's card is common now and then (Hades II)")
+	assert_almost_eq(guardian[1], 0.81189, 0.0001)
+	assert_almost_eq(guardian[2], 0.0679, 0.0001)
+	assert_almost_eq(guardian[3], 0.03, 0.0001, "the legendary 3% at the guardian")
 
 
 func test_ten_thousand_draws_within_one_point() -> void:

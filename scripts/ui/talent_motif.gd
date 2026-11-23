@@ -192,7 +192,8 @@ static func _closed(poly: PackedVector2Array) -> PackedVector2Array:
 # ---------- the 19 motifs, in a unit circle (y down), as shapes: {p: polygon, k: colour key, main, hollow, detail} ----------
 
 ## The shapes of a Gift's motif (cached), [] when it has none.
-static func shapes(id: StringName) -> Array:
+static func shapes(id_: StringName) -> Array:
+	var id: StringName = TalentGlyph.ALIAS.get(id_, id_)
 	if _cache.has(id):
 		return _cache[id]
 	var out := _build(id)

@@ -62,3 +62,38 @@ static func portrait(a: AngelDef, size_px: Vector2) -> Control:
 		frame.draw_rect(rect.grow(-1.0), Color(UiKit.INK, 0.5), false, 2.0))
 	holder.add_child(frame)
 	return holder
+
+
+## BC-1 and BC-3: the whole painting as a figure that fades into the dark at its right and foot (no frame), as a
+## control of this size; flip: mirrored, to look to the other side (the angel on the right of the meeting). The shader
+## only multiplies the alpha. null without a picture.
+const FADE := "shader_type canvas_item;\nuniform bool flip = false;\nvoid fragment() {\n\tvec2 uv = vec2(flip ? 1.0 - UV.x : UV.x, UV.y);\n\tvec4 c = texture(TEXTURE, uv);\n\tfloat inner = flip ? UV.x : 1.0 - UV.x;\n\tfloat outer = flip ? 1.0 - UV.x : UV.x;\n\tfloat a = smoothstep(0.0, 0.45, inner) * smoothstep(0.0, 0.14, outer) * smoothstep(0.0, 0.1, UV.y) * smoothstep(0.0, 0.3, 1.0 - UV.y);\n\tCOLOR = vec4(c.rgb, c.a * a);\n}\n"
+static var _fade: Shader
+
+
+static func figure(a: AngelDef, size_px: Vector2, flip := false) -> Control:
+	var tex := texture(a.id)
+	if tex == null:
+		return null
+	if _fade == null:
+		_fade = Shader.new()
+		_fade.code = FADE
+	var holder := Control.new()
+	holder.name = "angel_art"
+	holder.custom_minimum_size = size_px
+	holder.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var r := TextureRect.new()
+	r.name = "Figure"
+	r.texture = tex
+	r.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	r.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	r.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	r.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var m := ShaderMaterial.new()
+	m.shader = _fade
+	m.set_shader_parameter(&"flip", flip)
+	r.material = m
+	holder.add_child(r)
+	return holder

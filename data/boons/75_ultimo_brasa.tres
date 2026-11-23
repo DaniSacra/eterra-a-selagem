@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Boon" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_g8fh3"]
+[ext_resource type="Script" path="res://scripts/core/boon.gd" id="2_3p8k7"]
+[ext_resource type="Script" path="res://scripts/core/skill_def.gd" id="3_ow6ig"]
+
+[sub_resource type="Resource" id="Resource_1m07c"]
+script = ExtResource("3_ow6ig")
+trigger = 7
+duration = PackedFloat32Array(0)
+gap = PackedFloat32Array(0)
+cooldown = PackedFloat32Array(4)
+damage = PackedFloat32Array(12, 18, 25)
+count = PackedFloat32Array(8, 10, 12)
+radius = PackedFloat32Array(2.2)
+status = &"burn"
+status_power = PackedFloat32Array(4, 5, 6)
+
+[resource]
+script = ExtResource("2_3p8k7")
+id = &"ultimo_brasa"
+family = 0
+slot = 6
+skill = SubResource("Resource_1m07c")

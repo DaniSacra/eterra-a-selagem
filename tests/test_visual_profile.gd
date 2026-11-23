@@ -158,3 +158,40 @@ func test_the_hall_built_while_stylized_comes_back_to_classic() -> void:
 			differ += 1
 	assert_eq(back.size(), classic.size())
 	assert_eq(differ, 0, "the same visibility either way")
+
+
+func _elun_nodes(a: Arena) -> Array[Node]:
+	var out: Array[Node] = []
+	for n in a.find_children("*", "MeshInstance3D", true, false):
+		var mi := n as MeshInstance3D
+		if mi.material_override is ShaderMaterial and (mi.material_override as ShaderMaterial).shader.resource_path.ends_with("beam.gdshader"):
+			out.append(mi)
+	return out
+
+
+func test_the_shaft_of_elun_and_the_coloured_shadow_are_stylized_only() -> void:
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var a := _hall()
+	var shafts := _elun_nodes(a)
+	assert_eq(shafts.size(), 1, "one shaft of Elun in the hall")
+	assert_true((shafts[0] as Node3D).visible, "shown in the stylized look")
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	assert_false((shafts[0] as Node3D).visible, "gone in the classic look (F7)")
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var floor_painted := 0
+	for n in a.find_children("*", "GeometryInstance3D", true, false):
+		var m := (n as GeometryInstance3D).material_override as ShaderMaterial
+		if m != null and m.shader != null and m.shader.resource_path.ends_with("catacomb_floor_paint.gdshader"):
+			assert_eq(m.get_shader_parameter(&"paint_vignette_set"), CatacombHall.STY_VIGNETTE)
+			assert_eq(m.get_shader_parameter(&"paint_shadow_glow"), CatacombHall.STY_SHADOW_GLOW)
+			floor_painted += 1
+	assert_gt(floor_painted, 0, "the painted floor takes the coloured shadow and the vignette")
+
+
+func test_the_fountain_shaft_is_ivory_gold_only_when_stylized() -> void:
+	VisualProfile.set_look(VisualProfile.Look.CLASSIC)
+	var cold := RewardShaft.fountain_tint()
+	VisualProfile.set_look(VisualProfile.Look.STYLIZED)
+	var warm := RewardShaft.fountain_tint()
+	assert_gt(cold.h, 0.45, "classic: the cold blue")
+	assert_almost_eq(warm.h * 360.0, 40.0, 3.0, "stylized: hue 40")

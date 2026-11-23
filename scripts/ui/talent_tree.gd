@@ -17,6 +17,11 @@ signal focused(def: TalentDef)
 const HALF := Vector2(290, 222)
 const TIER_AT := {TalentDef.Tier.ENTRY: 0.34, TalentDef.Tier.MIDDLE: 0.64, TalentDef.Tier.APEX: 0.92}
 const BRIDGE_AT := 0.5
+## Where a second or third Gift of the same branch and tier (or the same bridge) sits: a middle slides across its axis, a
+## bridge steps out of the diamond, by this many pixels at fit 1, the second to one side, the third to the other.
+const VARIANT_STEP := 56.0
+## How many steps further out along its ray a bridge's variant sits (the lines of two bridges of one pair never cross).
+const BRIDGE_VARIANT_PUSH := 1.5
 const AXIS := {
 	TalentDef.Branch.COMBO: Vector2(0, -1), TalentDef.Branch.FURIA: Vector2(1, 0),
 	TalentDef.Branch.MAGIA: Vector2(0, 1), TalentDef.Branch.EMETH: Vector2(-1, 0),
@@ -58,7 +63,7 @@ func setup(p_loadout: HeroLoadout) -> TalentTree:
 		var n := TalentNode.new().setup(t)
 		nodes.append(n)
 		add_child(n)
-		n.set_meta(&"at", spot(t, sustain))
+		n.set_meta(&"at", spot(t, sustain, variant_of(t)))
 		if t.tier == TalentDef.Tier.SUSTAIN:
 			sustain += 1
 		n.pressed.connect(func() -> void: picked.emit(t))
@@ -83,14 +88,35 @@ static func fit(room: Vector2) -> float:
 
 
 ## Where a Gift sits, from the diamond's centre at fit 1 (k: its place in the sustain row).
-static func spot(t: TalentDef, k_: int = 0) -> Vector2:
+static func spot(t: TalentDef, k_: int = 0, variant: int = 0) -> Vector2:
 	match t.tier:
 		TalentDef.Tier.BRIDGE:
 			var d: Vector2 = AXIS[t.joins[0]] + AXIS[t.joins[1]]
-			return d * HALF * BRIDGE_AT
+			var out := d * HALF * BRIDGE_AT
+			if variant > 0:
+				# further out along the same ray: a second bridge between the same two entries has its lines clear of
+				# the first one's (beside it, or on the other side of the edge, they would cross)
+				out += out.normalized() * VARIANT_STEP * BRIDGE_VARIANT_PUSH * float(variant)
+			return out
 		TalentDef.Tier.SUSTAIN:
 			return SUSTAIN_AT + Vector2(SUSTAIN_STEP * k_, 0)
-	return (AXIS[t.branch] as Vector2) * HALF * float(TIER_AT[t.tier])
+	var axis: Vector2 = AXIS[t.branch]
+	var at := axis * HALF * float(TIER_AT[t.tier])
+	if variant > 0:
+		var side := 1.0 if variant % 2 == 1 else -1.0
+		at += Vector2(axis.y, axis.x).abs() * side * VARIANT_STEP * float(ceili(variant * 0.5))
+	return at
+
+
+## Which of the Gifts that share its place (same branch and tier, or same two branches for a bridge) this one is, from 0.
+func variant_of(t: TalentDef) -> int:
+	var n := 0
+	for o in loadout.book.catalog:
+		if o == t:
+			return n
+		if HeroLoadout.same_place(o, t):
+			n += 1
+	return n
 
 
 ## What a Gift needs, as drawn links back to the centre: [] for an entry or a sustain Gift, the entry for a middle,
@@ -104,7 +130,7 @@ func path_of(t: TalentDef) -> Array[TalentDef]:
 		TalentDef.Tier.MIDDLE:
 			out.append(loadout.of(t.branch, TalentDef.Tier.ENTRY))
 		TalentDef.Tier.APEX:
-			out.append(loadout.of(t.branch, TalentDef.Tier.MIDDLE))
+			out.append_array(loadout.all_of(t.branch, TalentDef.Tier.MIDDLE))
 			out.append(loadout.of(t.branch, TalentDef.Tier.ENTRY))
 		TalentDef.Tier.BRIDGE:
 			for b: TalentDef.Branch in t.joins:
@@ -151,6 +177,24 @@ func _place() -> void:
 	queue_redraw()
 
 
+## Every line of the tree as [from, to] (from null: the centre).
+func links() -> Array[Array]:
+	var out: Array[Array] = []
+	for t in loadout.book.catalog:
+		match t.tier:
+			TalentDef.Tier.ENTRY:
+				out.append([null, t])
+			TalentDef.Tier.MIDDLE:
+				out.append([loadout.of(t.branch, TalentDef.Tier.ENTRY), t])
+			TalentDef.Tier.APEX:
+				for mid in loadout.all_of(t.branch, TalentDef.Tier.MIDDLE):
+					out.append([mid, t])
+			TalentDef.Tier.BRIDGE:
+				for b: TalentDef.Branch in t.joins:
+					out.append([loadout.of(b, TalentDef.Tier.ENTRY), t])
+	return out
+
+
 func _on(t: TalentDef) -> bool:
 	return t == null or loadout.is_equipped(t.id)
 
@@ -159,17 +203,8 @@ func _draw() -> void:
 	_draw_slate()
 	var m := _mid()
 	var path := path_of(_focus)
-	for t in loadout.book.catalog:
-		match t.tier:
-			TalentDef.Tier.ENTRY:
-				_link(null, t, path)
-			TalentDef.Tier.MIDDLE:
-				_link(loadout.of(t.branch, TalentDef.Tier.ENTRY), t, path)
-			TalentDef.Tier.APEX:
-				_link(loadout.of(t.branch, TalentDef.Tier.MIDDLE), t, path)
-			TalentDef.Tier.BRIDGE:
-				for b: TalentDef.Branch in t.joins:
-					_link(loadout.of(b, TalentDef.Tier.ENTRY), t, path)
+	for pair in links():
+		_link(pair[0], pair[1], path)
 	# the branch names past each apex, in the branch's colour
 	for b: TalentDef.Branch in AXIS:
 		var axis: Vector2 = AXIS[b]

@@ -76,13 +76,13 @@ func test_the_passive_counts_once_a_blow_and_never_past_the_maximum() -> void:
 		_enemy(&"skeleton", Vector2.from_angle(TAU * k / 3.0) * 1.6)
 	p.magick.value = 10.0
 	game.combat.strike(_spin(), p.pos, Vector2.RIGHT)
-	assert_eq(p.magick.value, 12.0, "three hit, two of Magia once")
+	assert_eq(p.magick.value, 12.5, "three hit: two of Magia once (the passive) and 0.5 once (C1c, a hit of the attack)")
 	p.magick.value = p.magick.max_value - 1.0
 	game.combat.landed.emit(_spin(), SPIN, 1)
 	assert_eq(p.magick.value, p.magick.max_value, "never past the maximum")
 	p.magick.value = 10.0
 	game.combat.strike(_node(p.tree, &"cut1"), p.pos, Vector2.RIGHT)
-	assert_eq(p.magick.value, 10.0, "a plain cut gives nothing")
+	assert_eq(p.magick.value, 10.5, "a plain cut gives only its 0.5 a hit (C1c), no passive")
 
 
 func test_the_rajada_gives_no_magia_and_its_wave_counts_once() -> void:
@@ -109,7 +109,7 @@ func test_with_no_gift_every_rule_answers_the_game_of_before() -> void:
 	var s := _state()
 	assert_eq(s.on_kill(LANCE), 0, "no fury")
 	assert_eq(s.attack_speed(), 1.0)
-	assert_eq(s.fury_stun(SPIN), 0.0)
+	assert_eq(s.fury_full_pct(SPIN), 0.0)
 	assert_false(s.dash_back(SPIN))
 	assert_false(s.on_landed(SPIN, 3))
 	assert_eq(s.omega_discount(), 0.0)
@@ -135,7 +135,7 @@ func test_quarto_corte_adds_a_thrust_before_the_spin_keeping_the_tags() -> void:
 	var thrust := cut2.following()[0]
 	assert_eq(thrust.id, &"thrust4")
 	assert_true(thrust.has_tag(&"light"), "a blow of the attack: the attack's Blessings count on it")
-	assert_eq(thrust.damage, 30.0)
+	assert_eq(thrust.damage, 15.0)
 	assert_eq(thrust.shape, ComboNode.Shape.LINE, "a thrust")
 	assert_eq(thrust.following()[0].id, &"cut3", "then the spin")
 	assert_eq(thrust.lunge, 0.0, "struck standing still")
@@ -323,27 +323,26 @@ func test_avanco_feroz_gives_the_dodge_back_on_a_finisher_kill_once_a_blow() -> 
 	assert_eq(p.dodge_charges, 1, "a plain cut gives nothing")
 
 
-func test_furia_plena_stuns_longer_with_every_charge_armor_too() -> void:
+func test_furia_plena_hits_harder_with_every_charge() -> void:
 	var s := _state([&"quarto_corte", &"impeto", &"furia_plena"])
 	s.on_kill(CUT)
 	s.on_kill(CUT)
-	assert_eq(s.fury_stun(SPIN), 0.0, "two charges are not enough")
+	assert_eq(s.fury_full_pct(SPIN), 0.0, "two charges are not enough")
 	s.on_kill(CUT)
-	assert_eq(s.fury_stun(SPIN), 0.5)
-	assert_eq(s.fury_stun(CUT), 0.0, "only finishers")
+	assert_eq(s.fury_full_pct(SPIN), 0.4)
+	assert_eq(s.fury_full_pct(CUT), 0.0, "only finishers")
 	_run([&"quarto_corte", &"impeto", &"furia_plena"])
 	var p := game.player
-	var elite := _enemy(&"skeleton_elite", Vector2(1.6, 0))
-	assert_gt(elite.armor, 0.0)
+	var a := _enemy(&"skeleton", Vector2(1.6, 0))
+	a.hp = 1000.0
 	game.combat.strike(_spin(), p.pos, Vector2.RIGHT)
-	assert_eq(elite.stun_t, 0.0, "without the charges the armor takes it")
+	var plain := 1000.0 - a.hp
+	assert_gt(plain, 0.0)
+	a.hp = 1000.0
 	for k in 3:
 		game.hero_gifts.state.on_kill(CUT)
 	game.combat.strike(_spin(), p.pos, Vector2.RIGHT)
-	assert_gte(elite.stun_t, elite.def.stun_heavy_time + 0.5 - 0.001, "with every charge it stuns through the armor")
-	var knight := _enemy(&"knight", Vector2(-1.6, 0))
-	game.combat.strike(_spin(), p.pos, Vector2.RIGHT)
-	assert_eq(knight.stun_t, 0.0, "never a guardian")
+	assert_almost_eq(1000.0 - a.hp, roundf(_spin().damage * 1.4), 1.0, "with every charge 40 percent more (was %s)" % plain)
 
 
 # ---------- Emeth: Corte Crescente, Onda Atravessante ----------
@@ -355,7 +354,7 @@ func _friendly_waves() -> Array:
 func test_corte_crescente_throws_an_emerald_wave_from_the_spin() -> void:
 	var s := _state([&"corte_crescente"])
 	var w := s.wave(SPIN)
-	assert_eq(float(w.damage), 16.0)
+	assert_eq(float(w.damage), 12.0)
 	assert_eq(float(w.reach), 6.0)
 	assert_eq(float(s.wave(CUT).damage), 0.0, "only the spin")
 	_run()
@@ -366,7 +365,7 @@ func test_corte_crescente_throws_an_emerald_wave_from_the_spin() -> void:
 	var waves := _friendly_waves()
 	assert_eq(waves.size(), 1, "the spin throws one, landing or not")
 	var shot: Projectiles.Shot = waves[0]
-	assert_eq(shot.damage, 16.0)
+	assert_eq(shot.damage, 12.0)
 	assert_eq(shot.color, Combat.EMETH, "emerald")
 	assert_true(shot.tags.has(&"finisher"), "the finisher's Blessings count on it")
 	assert_false(shot.tags.has(&"omega"))
@@ -453,12 +452,12 @@ func test_sangue_quente_an_omega_kill_gives_two_charges() -> void:
 
 func test_onda_carregada_the_rajada_throws_the_spin_wave() -> void:
 	var s := _state([&"lamina_faminta", &"corte_crescente", &"onda_carregada"])
-	assert_eq(float(s.wave(BOLT).damage), 16.0)
+	assert_eq(float(s.wave(BOLT).damage), 12.0)
 	assert_eq(float(s.wave(CUT).damage), 0.0, "only the special")
 	_run([&"lamina_faminta", &"corte_crescente", &"onda_carregada"])
 	game.combat.strike(_node(game.player.tree, &"bolt"), game.player.pos, Vector2.RIGHT)
 	var damages := _friendly_waves().map(func(w: Projectiles.Shot) -> float: return w.damage)
-	assert_true(damages.has(16.0), "its own wave and the spin's: %s" % [damages])
+	assert_true(damages.has(12.0), "its own wave and the spin's: %s" % [damages])
 	assert_eq(damages.size(), 2)
 
 
