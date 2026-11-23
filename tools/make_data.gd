@@ -408,7 +408,7 @@ func _enemies() -> void:
 		] as Array[KnightMove],
 		# the shield throw: 0.5 s of wind-up, a second in the air (the mark follows him until 0.35 s before it lands), 16 where it
 		# lands; the wave leaves 0.25 s later at 12 m/s (the hero sprints 11), a band 0.8 m wide, 14 damage; only the dodge crosses it
-		"throw_windup": 0.5, "throw_flight": 1.0, "throw_lock": 0.35, "throw_half": 1.5, "throw_damage": 8.0, "throw_open": 1.8,
+		"throw_windup": 0.5, "throw_flight": 1.0, "throw_lock": 0.35, "throw_half": 2.4, "throw_damage": 8.0, "throw_open": 1.8,
 		"ring_speed": 12.0, "ring_thick": 0.8, "ring_reach": 32.0, "ring_delay": 0.25, "ring_damage": 6.0,
 		# T5-07: braced behind its shield in three beats (it stood idle), the last 0.25 s held with a tremble
 		"windup_settle": 0.1, "windup_hold": 0.25, "windup_shake": 0.03,
@@ -487,7 +487,7 @@ func _leap_and_throw() -> void:
 	# spot follows him and holds the last 0.3 s), it leaps (0.5 s in the air) and lands there hurting 12 in a square of 3 m across; it
 	# rests 1.0 s, low. Warning 0.8 s of marks and 0.5 s of flight. From room 3.
 	_enemy({"id": &"saltador", "model": &"runner", "behavior": B.LEAP, "size": 1.1, "hp": 140.0, "speed": 4.2, "damage": 12.0, "radius": 0.5,
-		"attack_damage": 12.0, "attack_range": 7.0, "attack_cooldown": 3.2, "attack_windup": 0.8, "aim_lock": 0.3, "leap_time": 0.5, "leap_half": 1.5,
+		"attack_damage": 12.0, "attack_range": 7.0, "attack_cooldown": 3.2, "attack_windup": 0.8, "aim_lock": 0.3, "leap_time": 0.5, "leap_half": 1.8,
 		"recover_time": 1.0, "max_attackers": 1, "windup_gap": 0.5, "magic_color": Color(1.0, 0.55, 0.15), "rating": 15.0, "role": &"leap",
 		"per_room": 2, "tint": RUST, "vivid": 0.15, "tell": T.TREMBLE, "sway": 5.0, "windup_shake": 0.03, "stun_time": STUN,
 		"stun_heavy_time": STUN_HEAVY, "poise": POISE})

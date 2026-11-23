@@ -55,3 +55,22 @@ func test_a_door_angel_avoids_the_one_beside_it() -> void:
 	var other := game.encounters.door_angel(r, [first] as Array[StringName])
 	assert_ne(other, first)
 	assert_eq(game.encounters.door_angel(r), first, "the same dice, the same angel")
+
+
+func test_the_knights_shield_lands_where_he_stood_and_marks_a_red_circle() -> void:
+	# Daniel, 2026-11-23: no following; a large round mark where the hero was as it left the hand (the wave comes after)
+	_run()
+	await wait_process_frames(2)
+	var k := game.horde.spawn(game.horde.def(&"knight"), Vector2(8, 0), false)
+	game.player.pos = Vector2(0, 0)
+	game.horde.target = game.player.pos
+	game.horde._loose_shield(k)
+	var s: Horde.Shield = game.horde.shields[0]
+	var at := s.land
+	assert_not_null(s.mark, "a red circle on the floor")
+	assert_almost_eq(s.mark.radius, k.def.throw_half, 0.001)
+	assert_gte(k.def.throw_half, 2.0, "larger than the old 1.5 m square")
+	game.player.pos = Vector2(-5, 3)
+	game.horde.target = game.player.pos
+	game.horde._step_shields(0.3)
+	assert_eq(s.land, at, "it never follows him")

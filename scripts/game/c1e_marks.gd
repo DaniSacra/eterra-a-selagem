@@ -64,18 +64,14 @@ func step() -> void:
 					m.position = Vector3(at.x, 0.075, at.y)
 					m.rotation = Vector3(0.0, sign * PI * 0.25, 0.0)
 					m.scale = Vector3.ONE
-		if d.behavior == EnemyDef.Behavior.LEAP and e.state == Enemy.State.WINDUP and not e.helpless():
-			bar_n = _put_corners(bar_n, e.lands_at, LeapRules.corner_at(e.state_t, d.attack_windup, d.leap_half), LEAP_COLOR)
 		if e.mod != null:
 			_put_ring(ring_n, e.pos, 0.75 * d.size, e.mod.ring, FOOT_ALPHA)
 			ring_n += 1
 		if e.haste_t > 0.0:
 			_put_ring(ring_n, e.pos, 0.55 * d.size, HASTE_COLOR, 0.5)
 			ring_n += 1
-	# the knight's shield in the air: four corners closing on where it will land, and the shield itself (a steel rim) in its arc
+	# the knight's shield in the air in its arc (the floor's red circle marks where it lands: Ground)
 	for sh in horde.shields:
-		var half := sh.owner.def.throw_half
-		bar_n = _put_corners(bar_n, sh.land, LeapRules.corner_at(sh.t, sh.total, half), LEAP_COLOR)
 		var k := clampf(sh.t / maxf(sh.total, 0.001), 0.0, 1.0)
 		var at := sh.from.lerp(sh.land, k)
 		if _put_shield(shield_n, sh.owner, at, 1.0 + ThrownShield.arc(k, SHIELD_ARC), ThrownShield.flight_basis(sh.t, sh.total)):

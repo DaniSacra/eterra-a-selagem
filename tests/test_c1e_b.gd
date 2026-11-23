@@ -41,10 +41,11 @@ func _spawn(id: StringName, at: Vector2) -> Enemy:
 
 # ---------- the pure rules ----------
 
-func test_the_square_is_hit_by_its_edge_and_not_beyond() -> void:
+func test_the_circle_is_hit_by_its_edge_and_not_beyond() -> void:
 	var land := Vector2(3, 4)
 	assert_true(LeapRules.in_area(land, land, 1.5))
-	assert_true(LeapRules.in_area(land, land + Vector2(1.4, -1.4), 1.5), "a corner of the square")
+	assert_true(LeapRules.in_area(land, land + Vector2(1.0, -1.0), 1.5), "inside the circle")
+	assert_false(LeapRules.in_area(land, land + Vector2(1.4, -1.4), 1.5), "a circle now (Daniel, 2026-11-23), not a square")
 	assert_false(LeapRules.in_area(land, land + Vector2(1.7, 0), 1.5))
 	assert_true(LeapRules.in_area(land, land + Vector2(1.7, 0), 1.5, 0.3), "the body's margin")
 	assert_false(LeapRules.in_area(land, land + Vector2(0, 2.0), 1.5, 0.3))
@@ -97,7 +98,7 @@ func test_the_two_are_data_with_the_numbers_of_the_doc() -> void:
 	assert_eq(s.hp, 140.0)
 	assert_eq(s.attack_damage, 12.0)
 	assert_eq(s.role, &"leap")
-	assert_almost_eq(s.leap_half * 2.0, 3.0, 0.001, "a square 3 m across")
+	assert_almost_eq(s.leap_half, 1.8, 0.001, "a red circle of 1.8 m (Daniel, 2026-11-23)")
 	assert_eq(s.recover_time, 1.0)
 	assert_eq(l.behavior, EnemyDef.Behavior.ARCHER)
 	assert_true(l.shot_return)
@@ -144,16 +145,13 @@ func test_the_saltador_marks_follows_then_lands_where_he_was_and_hurts_there() -
 			windup = true
 			break
 	assert_true(windup, "it winds up at 4 to 7 m")
-	# the spot follows him while the wind-up runs, then holds
-	game.player.pos = Vector2(1, 1)
-	_step(5)
-	assert_lt(e.lands_at.distance_to(Vector2(1, 1)), 0.01, "the spot follows the paladin")
+	# the spot is taken as the wind-up begins and never follows him (Daniel, 2026-11-23), a red circle on the floor
 	var held := e.lands_at
-	while e.state == Enemy.State.WINDUP and e.state_t < 0.6:
-		_step()
+	assert_not_null(e.warning, "the red circle")
+	assert_almost_eq((e.warning as Ground.Zone).radius, e.def.leap_half, 0.001)
 	game.player.pos = Vector2(-4, -3)
-	_step(3)
-	assert_eq(e.lands_at, held, "locked for the last 0.3 s")
+	_step(5)
+	assert_eq(e.lands_at, held, "never follows")
 	var up := false
 	for i in 90:
 		_step()

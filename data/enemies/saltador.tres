@@ -34,6 +34,7 @@ guard_up_hit_windup = 0.68
 volley_windup = 0.8
 windup_gap = 0.5
 max_attackers = 1
+leap_half = 1.8
 per_room = 2
 close_windup = 0.52
 rating = 15.0

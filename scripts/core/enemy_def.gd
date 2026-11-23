@@ -254,9 +254,9 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 @export var sweep_degrees := 200.0
 @export var sweep_time := 1.6
 @export var sweep_clear := 1.6
-## C1e, lote B, LEAP (the Saltador): its wind-up marks four corners round the spot it will land on (a square of 2 x leap_half m, closing
-## in; the spot follows the paladin and locks the last aim_lock s); then it leaves the floor and lands there leap_time s later, hurting
-## whoever stands in the square (attack_damage). attack_range is how far it jumps from; it rests recover_time s after.
+## C1e, lote B, LEAP (the Saltador): as its wind-up begins it takes the paladin's spot (never following him, Daniel 2026-11-23) and
+## the floor shows a red circle of leap_half m there; then it leaves the floor and lands there leap_time s later, hurting
+## whoever stands in the circle (attack_damage). attack_range is how far it jumps from; it rests recover_time s after.
 @export var leap_time := 0.5
 @export var leap_half := 1.5
 ## ARCHER, the Lançador (lote B): the shot flies out shot_range m (shorter where stone is), turns there and flies back the same way to
@@ -297,8 +297,8 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## special's wave, the dash cut, the Omegas, the Brado's shout: DamageCalc.STRONG_TAGS). 1: every blow the same.
 @export var armor_soft := 1.0
 ## KNIGHT, the shield throw (throw_flight > 0): it winds up throw_windup s, hurls the shield up and it comes down on the
-## paladin's spot (a square of 2 x throw_half m marked on the floor; the mark follows him until throw_lock s before the
-## landing), hurting throw_damage; throw_open s after it lands it has the shield back. Where it lands a wave spreads at
+## spot the paladin stood on as it left the hand (a red circle of throw_half m on the floor; it never follows him since 2026-11-23,
+## throw_lock unused), hurting throw_damage; throw_open s after it lands it has the shield back. Where it lands a wave spreads at
 ## ring_speed m/s, ring_thick m thin, ring_reach m far, born ring_delay s after the landing, hurting ring_damage.
 @export var throw_windup := 0.5
 @export var throw_flight := 0.0

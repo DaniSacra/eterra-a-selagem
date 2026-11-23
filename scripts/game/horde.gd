@@ -1166,6 +1166,8 @@ func _loose_shield(e: Enemy) -> void:
 	s.from = e.pos
 	s.land = arena.resolve(target, 0.6)
 	s.total = e.def.throw_flight
+	# where he stands now, a red circle until it lands (Daniel, 2026-11-23: no following; the wave still comes after)
+	s.mark = ground.add_warning(s.land, e.def.throw_half, s.total, 0.0)
 	shields.append(s)
 	e.away_t = 99.0
 	_set_state(e, Enemy.State.ATTACK, &"attack", false)
@@ -1182,9 +1184,10 @@ const WAVE_COLOR := Color(1.0, 0.72, 0.42)
 const WAVE_START := 1.2
 
 
-## A shield in the air: the spot follows the paladin until throw_lock s before it lands, then holds; it lands there.
+## A shield in the air: it lands on the spot taken as it left the hand, marked by `mark` (a red circle on the floor).
 class Shield extends RefCounted:
 	var owner: Enemy
+	var mark: Ground.Zone
 	var from := Vector2.ZERO
 	var land := Vector2.ZERO
 	var t := 0.0
@@ -1210,11 +1213,11 @@ func _step_shields(dt: float) -> void:
 		var s := shields[i]
 		s.t += dt
 		if not s.owner.alive:
+			Ground.end_zone(s.mark)
 			shields.remove_at(i)
 		else:
-			if s.t < s.total - s.owner.def.throw_lock:
-				s.land = arena.resolve(target, 0.6)
 			if s.t >= s.total:
+				Ground.end_zone(s.mark)
 				_land_shield(s)
 				shields.remove_at(i)
 		i -= 1
@@ -1532,8 +1535,6 @@ func _behave_leap(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 	match e.state:
 		Enemy.State.WINDUP:
 			e.dir = toward
-			if LeapRules.follows(e.state_t, d.attack_windup, d.aim_lock):
-				e.lands_at = target
 			if e.state_t >= d.attack_windup - TICK_SLACK:
 				e.leap_from = e.pos
 				e.invulnerable = true
@@ -1546,6 +1547,8 @@ func _behave_leap(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.pos = arena.resolve(e.lands_at, d.radius)
 				e.leap_y = 0.0
 				e.invulnerable = false
+				Ground.end_zone(e.warning as Ground.Zone)
+				e.warning = null
 				fx.burst(&"dust", Vector3(e.pos.x, 0.2, e.pos.y), Vector3.UP)
 				Audio.play(&"enemy_charge")
 				if target_alive and LeapRules.in_area(e.lands_at, target, d.leap_half, Player.RADIUS * 0.6):
@@ -1569,8 +1572,10 @@ func _behave_leap(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.pos += toward.rotated(e.side * PI * 0.5) * sp * 0.35 * dt
 			if e.cooldown <= 0.0 and target_alive and dist <= d.attack_range + 0.5 and arena.inside(e.pos, 1.0) \
 					and (d.max_attackers <= 0 or attackers(d) < d.max_attackers) and not _just_began(d):
-				e.lands_at = target
+				# the spot is taken now and kept (Daniel, 2026-11-23): a red circle for the wind-up and the flight
+				e.lands_at = arena.resolve(target, d.radius)
 				_set_state(e, Enemy.State.WINDUP, &"windup")
+				e.warning = ground.add_warning(e.lands_at, d.leap_half, d.attack_windup + d.leap_time, 0.0)
 
 
 ## The tag on the Canalizador's beam on the floor (the robot steps out of it: Bot._danger) and how much of its fill the floor keeps.

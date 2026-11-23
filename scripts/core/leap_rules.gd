@@ -1,7 +1,7 @@
 class_name LeapRules
 extends RefCounted
-## The Saltador's jump (lote C1e B): four corners in L round the spot it will land on, a square, never a filled disc. Pure: Horde steps it
-## and C1eMarks draws it.
+## The Saltador's jump (lote C1e B) and the knight's shield: since 2026-11-23 (Daniel) the spot is where the paladin stood when it began,
+## never following him, marked by a red circle on the floor (Ground.add_warning, as Morvath's eruptions). Pure: Horde steps it.
 
 ## The corners start this many times the square's half-side from its middle and close to it over the wind-up.
 const OPEN := 1.9
@@ -11,10 +11,9 @@ const ARM := 0.7
 const PEAK := 2.6
 
 
-## True when `p` (the paladin's body, `margin` wide) is inside the square of half-side `half` round `land`.
-static func in_area(land: Vector2, p: Vector2, half: float, margin: float = 0.0) -> bool:
-	var d := (p - land).abs()
-	return d.x <= half + margin and d.y <= half + margin
+## True when `p` (the paladin's body, `margin` wide) is inside the circle of `radius` round `land`.
+static func in_area(land: Vector2, p: Vector2, radius: float, margin: float = 0.0) -> bool:
+	return p.distance_to(land) <= radius + margin
 
 
 ## Where the jump is `t` seconds in, of `total`: straight from `from` to `to`.

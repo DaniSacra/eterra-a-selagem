@@ -697,6 +697,7 @@ nele, 0 vence; evoluído (4 Dons, Forja 2, conta 6) 12 chegam, 1 morre nele, 5 v
   Gritador até cada aliado, o X pontilhado (são duas barras cheias finas) (os modelos ganharam assado próprio depois: ver acima; o anel e o X seguem em âmbar e musgo, `magic_color`).
 
 ## C1e, lote B: Saltador e Lançador (`docs/design/inimigos_c1e.md`; testes em `tests/test_c1e_b.gd`)
+- **2026-11-23 (Daniel)**: o Saltador e o escudo do Cavaleiro não rastreiam mais: o ponto é onde o herói estava quando o salto começou ou o escudo saiu da mão, marcado por um círculo vermelho no chão (`Ground.add_warning` sem dano, como as erupções de Morvath; `leap_half` 1,8 e `throw_half` 2,4 agora são raios; `LeapRules.in_area` é um círculo; os cantos em L do `C1eMarks` saíram). A onda do escudo continua.
 - **Saltador** (`saltador`, `EnemyDef.Behavior.LEAP`, `Horde._behave_leap`; regras puras em `LeapRules`, `scripts/core/leap_rules.gd`): modelo do
   corredor em tinta ferrugem (1,1; sem bake novo), vida 140, anda 4,2, fica a 4 a 7 m (`LEAP_KEEP`) e, pronto, marca o pouso: **4 cantos em L** de
   laranja fino (`C1eMarks`, quadrado de 3 m, abrem 1,9 vezes e fecham no quadrado em 0,8 s), o ponto segue o herói e trava nos últimos 0,3 s

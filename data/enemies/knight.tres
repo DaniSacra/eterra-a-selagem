@@ -86,6 +86,7 @@ close_windup = 0.5
 moves = Array[ExtResource("1_vn24d")]([SubResource("Resource_rd2bq"), SubResource("Resource_131yo"), SubResource("Resource_jpein"), SubResource("Resource_a0rja")])
 armor_soft = 0.3
 throw_flight = 1.0
+throw_half = 2.4
 throw_damage = 8.0
 throw_open = 1.8
 ring_damage = 6.0

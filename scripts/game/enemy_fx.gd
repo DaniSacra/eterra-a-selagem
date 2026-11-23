@@ -530,17 +530,17 @@ func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, p
 ## exclamation mark over the head, in the screen's plane, outlined in ink (_stroke), lit only in the last `lead` seconds
 ## before the blow; `age` is how long it has been lit (0 to lead). It pulses once as it lights; the elites and the heavy
 ## ones carry a larger one. Costs 2 strokes of the pool (4 quads), never a node.
-## Daniel, 2026-11-23 after seeing it: larger and yellow (it was ivory gold, 0.34 m tall).
+## Daniel, 2026-11-23: yellow; the size went 0.34 m (too small), 0.62 ("roubando a cena"), now 0.4.
 const BANG_COLOR := Color(1.0, 0.9, 0.1)
 ## Above the life and Quebra bars, so the dot reads (at 0.5 the bars covered it: a yellow bar, not a "!").
 const BANG_RISE := 1.05
 ## The light pushed past the strokes' usual tone (it read olive on the GPU at 1.0).
 const BANG_GLOW := 1.45
-const BANG_BAR := 0.62
-const BANG_DOT := 0.18
-const BANG_GAP := 0.14
-const BANG_WIDTH := 0.18
-const BANG_BIG := 1.45
+const BANG_BAR := 0.4
+const BANG_DOT := 0.11
+const BANG_GAP := 0.08
+const BANG_WIDTH := 0.11
+const BANG_BIG := 1.25
 const BANG_PULSE := 0.4
 const BANG_PULSE_TIME := 0.12
 
