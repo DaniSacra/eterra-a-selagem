@@ -70,6 +70,11 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   imagem; o Vendedor e o Forjador do hub são bonecos do KayKit (CC0) repintados e assados pelo `tools/bake.gd`, sem IA
   na arte.
 
+- **Medalhões pintados à mão, Rev. 02 (vão no jogo, 2026-11-23)**: os 25 de `assets/ui/rewards/` (portas e escadas:
+  recompensas, tipos de sala e os 7 anjos) e 70 dos 77 de `assets/ui/boons/` (os 7 de antes ficaram), gerados por IA
+  pelo diretor de arte do PO no ChatGPT (pacote `Eterra_Pintura_Medalhoes_PARTE_1..3`, relatório em
+  `docs/art/medallions_rev02.md`). Única edição nossa: o texto solto no alto de `trial.png` apagado.
+
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), fontes Cinzel e Alegreya Sans (OFL), textura
   Rock Surface (Amal Kumar, Poly Haven, CC0).

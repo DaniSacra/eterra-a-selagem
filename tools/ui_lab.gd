@@ -23,7 +23,8 @@ extends SceneTree
 ##   first (_meeting_cards.png); start without --bot. --found greets a door's Prata and Memória (_found.png).
 ## Rejogabilidade (Fatia 2): --enchant opens the Encanto's cards (_enchant.png; start without --bot);
 ##   --doors=boon,meeting,enchant,psalm puts those rewards behind the room's doors in order (boon: one angel, meeting:
-##   two) and opens them with the hero standing before them (_doors.png); --shop --route rebuilds the shelf as a route
+##   two; or any RewardIcon id, a reward's like gold or a room's like shop) and opens them with the hero standing
+##   before them (_doors.png); --shop --route rebuilds the shelf as a route
 ##   shop of three items, --want-enchant until an Encanto is on it (both put the hero before the shelf's middle);
 ##   --cursed lays Morvath's curse on the hero (_cursed.png, the HUD's condition seal).
 
@@ -278,15 +279,25 @@ func _doors(game: Node) -> void:
 	for i in next.size():
 		var r: Variant = next[i]
 		var w := want[i % want.size()]
-		r.set(&"kind", 0)  # RunMap.Kind.COMBAT
+		# any RewardIcon id works: a reward's (gold, pom, silver...) or a room kind's with no reward (shop, fountain...)
+		var reward: int = RunMap.Reward.BOON
+		var kind: int = RunMap.Kind.COMBAT
+		if RunMap.Reward.has(w.to_upper()):
+			reward = RunMap.Reward[w.to_upper()]
+		elif RunMap.Kind.has(w.to_upper()):
+			reward = RunMap.Reward.NONE
+			kind = RunMap.Kind[w.to_upper()]
+		elif w != "meeting":
+			push_warning("--doors: no reward or room %s" % w)
+		r.set(&"kind", kind)
 		r.set(&"meeting", w == "meeting")
-		r.set(&"reward", {"enchant": RunMap.Reward.ENCHANT, "psalm": RunMap.Reward.PSALM}.get(w, RunMap.Reward.BOON))
+		r.set(&"reward", reward)
 		r.set(&"angel", encounters.call(&"door_angel", r) if w == "boon" else &"")
 		(labels[i] as Node).free()
 		var at: Vector2 = arena.call(&"door_label", i)
 		mid += at / next.size()
 		var glyph: int = (load("res://scripts/ui/door_glyph.gd") as GDScript).call(&"of", rooms.call(&"door_info", i))
-		var marker: Node3D = rooms.call(&"_marker", at, r.get(&"reward"), rooms.call(&"door_text", r), 0, glyph)
+		var marker: Node3D = rooms.call(&"_marker", at, r.get(&"reward"), rooms.call(&"door_text", r), kind, glyph)
 		labels[i] = marker
 		rooms.call(&"_sign_angel", marker, r)
 	var player: Variant = game.get(&"player")
