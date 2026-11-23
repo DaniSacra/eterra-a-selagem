@@ -6,7 +6,7 @@ ids em `assets/ui/rewards/LEIAME.txt`), PT-3, PT-4, PT-5, PT-7 e PT-8 no reposit
 guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas pastas. PT-0 espera o Daniel; PT-6 depois.
 - **PT-0 (resposta, sem tarefa)**: a barrinha clara sob a vida dos inimigos comuns é a **Quebra** (poise, `CrowdRenderer.add_poise_bar`):
   cada golpe gasta um pouco; acabou, ele fica atordoado 1,2 s e leva +40% de dano ("Quebrou!"). Se ficar confusa: mudar a cor ou só
-  mostrá-la quando estiver na metade (decidir com o Daniel).
+  mostrá-la quando estiver na metade (decidir com o Daniel). **FEITO (2026-11-23, recomendação seguida)**: só aparece com metade gasta (`CrowdRenderer.POISE_SHOW`) e em azul-claro próprio (`life_bar.gdshader` `poise_color`).
 - **PT-1 Aviso de golpe sem mancha vermelha** (`combat-feel-director` + `gameplay-engineer`): tirar a mancha/traço vermelho no chão dos golpes
   corpo a corpo e dos tiros; a mancha fica só no que é de área (algo que cai, onda do escudo, círculos e Ruptura de Morvath, erupções,
   perigos de sala). Para compensar, no molde do SWORN: um **"!" acima da cabeça** que acende no instante de esquivar (cerca de 0,35 s antes

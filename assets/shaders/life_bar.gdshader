@@ -13,6 +13,8 @@ uniform vec3 life_color : source_color = vec3(0.86, 0.12, 0.14);
 uniform vec3 armor_color : source_color = vec3(1.0, 0.82, 0.25);
 uniform vec3 back_color : source_color = vec3(0.04, 0.03, 0.05);
 uniform vec3 trail_color : source_color = vec3(1.0, 0.9, 0.78);
+// PT-0 (2026-11-23): the Quebra's gauge in its own light blue (the life is red, the armor gold, the trail white)
+uniform vec3 poise_color : source_color = vec3(0.45, 0.78, 1.0);
 uniform vec3 elite_frame : source_color = vec3(0.56, 0.45, 0.27);
 // Meters of the frame on each side (as thick on the ends as on the long sides, and on a tall armored bar).
 uniform float frame_m = 0.03;
@@ -70,7 +72,7 @@ void fragment() {
 		c = back_color * 2.5;
 		if (poise_gauge > 0.5) {
 			if (x < fill.r) {
-				c = trail_color;
+				c = poise_color;
 			}
 		} else if (armored && y < armor_share) {
 			// the armor's own strip; a line of ink under it

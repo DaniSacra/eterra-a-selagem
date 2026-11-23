@@ -130,6 +130,8 @@ const BAR_MIN_WIDTH := 1.1
 const BAR_HEIGHT := 0.18
 const BAR_ARMOR_HEIGHT := 0.09
 const BAR_ABOVE := 0.35
+## PT-0 (Daniel 2026-11-23, the white bar read as noise): the Quebra's gauge shows only once half of it is worn.
+const POISE_SHOW := 0.5
 ## C1b: the poise gauge is this share of the life bar's width and height (life_bar.gdshader, +8 in b).
 const POISE_WIDTH := 0.6
 const POISE_HEIGHT := 0.6
