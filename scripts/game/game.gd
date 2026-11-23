@@ -515,6 +515,7 @@ static func unhook(obj: Object) -> void:
 func _process(delta: float) -> void:
 	if _warming:
 		return  # (the shaders' warm-up before the first room: nothing to step yet)
+	delta = _frame_delta(delta)
 	var shake := fx.tick(delta)
 	if watchdog:
 		var sample := watchdog.tick(Time.get_ticks_msec() / 1000.0, Engine.get_frames_drawn(), Mode.keys()[mode], fx.rate,
@@ -1999,6 +2000,8 @@ func _timed_step(dt: float) -> void:
 
 ## Dev (--trace-steps, DT-008): a step slower than this many ms prints where its time went.
 const TRACE_SLOW := 4.0
+## The frame length of a smoke run, in seconds.
+const SMOKE_DT := 1.0 / 60.0
 var _tracing := Dev.has("trace-steps")
 var _laps := {}
 var _lap_t := 0
@@ -2026,12 +2029,20 @@ func result_line() -> String:
 	return RunReport.line(self)
 
 
+## The frame's delta. A smoke run steps at a fixed 60 fps whatever the machine's load (as `--fixed-fps 60` does), so
+## the same seed and the same bot give the same RESULT; the bot's reactions depend on the frame length.
+func _frame_delta(delta: float) -> float:
+	if Dev.has("smoke") and not Dev.has("smoke-realtime"):
+		return SMOKE_DT * Engine.time_scale
+	return delta
+
+
 ## --smoke=seconds: plays without a screen for that long (or until the run ends), prints RESULT and quits.
 func _smoke() -> void:
 	var limit := Dev.num("smoke", 60.0)
 	var t := 0.0
 	while t < limit and mode != Mode.OVER and not (mode == Mode.ENDING and boss == null and _screen != null):
 		await get_tree().process_frame
-		t += get_process_delta_time()
+		t += _frame_delta(get_process_delta_time())
 	print(result_line())
 	get_tree().quit()

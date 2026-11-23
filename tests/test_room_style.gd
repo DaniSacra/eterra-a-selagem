@@ -626,7 +626,7 @@ func test_the_chamber_comes_back() -> void:
 	_flip(a)
 	var styled := _snapshot(a)
 	assert_ne(styled, before, "the stylized look changes the chamber")
-	assert_eq(_env.ambient_light_color, BossChamber.AMBIENT, "stylized: the chamber's own ambient, not the world's")
+	assert_eq(_env.ambient_light_color, BossChamber.STY_AMBIENT, "stylized: the chamber's own ambient, not the world's")
 	assert_almost_eq(_env.background_color.b, BossChamber.SKY.b * BossChamber.STY_SKY, 0.0001, "stylized: the sky deeper")
 	assert_almost_eq(_moon.light_energy, BossChamber.MOON_ENERGY, 0.0001, "the chamber's moon in either look")
 	_flip(a)

@@ -339,6 +339,16 @@ const AMBIENT_ENERGY := 0.5
 const MOON_COLOR := Color(0.52, 0.58, 0.8)
 const MOON_ENERGY := 0.35
 const MOON_ROTATION := Vector3(-50, 150, 0)
+## C1V N4 (docs/art/identidade_c1v.md 2.1, the hall's recipe, only in the stylized look): the warm key of the hall (#F2C890,
+## diffuse, no shadow, never on the crowd) over the paladin's side of the floor, off the seal so Morvath's violet and the
+## red warnings keep their ground: where it lands (x, z, floor frame), its radius (m), its energy (the hall's is 7 on a
+## painted floor; this floor is the classic shader, so a lower one), and the height it comes from (high up to the left).
+## The ambient a little deeper and more violet, so the shadow band reads cold (hue 225 to 240) beside the warm pool.
+const STY_WARM_AT := Vector2(-4.5, 6.0)
+const STY_WARM_RADIUS := 6.0
+const STY_WARM_ENERGY := 4.5
+const STY_WARM_HEIGHT := 14.0
+const STY_AMBIENT := Color(0.29, 0.30, 0.46)
 ## Violet glow cards rising from the abyss at the frame's sides (bearing, r, foot height, width, height, energy share).
 ## Art review 2026-11-21 (the abyss still read a light lilac beside the arena, over the fight): all of them dimmed.
 const GLOW_DIM := 0.6
@@ -1473,7 +1483,27 @@ func _stylize() -> void:
 	for cm in _spire_mats:
 		VisualProfile.vary(cm, {&"shader_parameter/edge_color": edge})
 	VisualProfile.vary(_deep(0.8), {&"shader_parameter/tint": STY_FAR_TINT, &"shader_parameter/mist_color": STY_FAR_MIST})
+	_warm_key()
 	sm.merge()
+
+
+## C1V N4: the hall's warm key as a soft spot over STY_WARM_AT (like ArenaRoom.key_pool), shown only in the stylized look.
+func _warm_key() -> void:
+	var spot := SpotLight3D.new()
+	add_child(spot)
+	var to := Vector3(STY_WARM_AT.x, 0.0, STY_WARM_AT.y)
+	spot.look_at_from_position(to + Vector3(-STY_WARM_HEIGHT * 0.45, STY_WARM_HEIGHT, 0.01), to)
+	spot.light_color = CatacombHall.STY_WARM_KEY
+	spot.light_energy = STY_WARM_ENERGY
+	spot.light_specular = 0.0
+	spot.spot_angle = rad_to_deg(atan(STY_WARM_RADIUS / STY_WARM_HEIGHT))
+	spot.spot_range = STY_WARM_HEIGHT * 2.0
+	spot.spot_attenuation = 0.0
+	spot.spot_angle_attenuation = ArenaRoom.KEY_POOL_SOFT
+	spot.shadow_enabled = false
+	spot.light_cull_mask = ~Arena.CROWD_LAYER & ~ArenaKit.DEPTH_LAYER
+	spot.set_meta(ArenaKit.NOT_FIRE, true)
+	ArenaKit.style_only(spot)
 
 
 ## E1: a broken arch at mid height in the far ring's bay at STY_ARCHES[i], in the ring's own stone; one stone of the
@@ -1669,7 +1699,7 @@ static func air_values(stylized: bool) -> Dictionary:
 		&"background_mode": Environment.BG_COLOR,
 		# lot E 3 (E4): in the stylized look the sky a step deeper, so the lighter spires' edges stand off it
 		&"background_color": Color(SKY.r * STY_SKY, SKY.g * STY_SKY, SKY.b * STY_SKY) if stylized else SKY,
-		&"ambient_light_source": Environment.AMBIENT_SOURCE_COLOR, &"ambient_light_color": AMBIENT,
+		&"ambient_light_source": Environment.AMBIENT_SOURCE_COLOR, &"ambient_light_color": STY_AMBIENT if stylized else AMBIENT,
 		&"ambient_light_energy": AMBIENT_ENERGY, &"fog_enabled": true, &"fog_mode": Environment.FOG_MODE_DEPTH,
 		&"fog_light_color": FOG, &"fog_depth_begin": FOG_DEPTH.x, &"fog_depth_end": FOG_DEPTH.y,
 		&"moon/rotation_degrees": MOON_ROTATION, &"moon/light_color": MOON_COLOR, &"moon/light_energy": MOON_ENERGY,
