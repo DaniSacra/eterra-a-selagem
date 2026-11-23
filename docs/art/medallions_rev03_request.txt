@@ -4,15 +4,23 @@ Crônicas de Eterra: A Selagem. A Rev. 02 já está no jogo (repositório, branc
 docs/art/medallions_rev02.md e capturas em docs/gallery/medallions_rev02/). Os 25 medalhões das portas e o estilo
 pintado (pedra fria, ouro velho, pincelada visível) foram APROVADOS. Mantenha exatamente esse acabamento.
 
+MUDANÇA PRINCIPAL DA REV. 03: SEM MOLDURA
+As molduras pintadas da Rev. 02 vieram cortadas, incompletas ou fora do centro em boa parte dos 102 arquivos, e cada uma
+de um tamanho. Por isso a moldura passa a ser do JOGO (um aro único de ouro velho e pedra, igual em todas as telas).
+Entregar cada ícone SEM moldura: só o miolo pintado, um disco cheio de 512 x 512 (fundo pintado escuro da cor da
+família ou da recompensa, de borda a borda do círculo, transparente fora do círculo), com o desenho central ocupando
+cerca de 60% do diâmetro e nada importante nos 8% de fora (o aro do jogo cobre essa faixa). Sem anel, sem losangos,
+sem correntes, sem selo no canto.
+
 O PROBLEMA
 Nas 70 Bênçãos novas, a 64 px (o tamanho real em várias telas) as Bênçãos de uma mesma família ficam IGUAIS: todas usam
 a mesma cena de fundo da família e só muda o selo pequeno no canto, que some a 64 px e é invisível a 32 px.
 Veja docs/gallery/medallions_rev02/bencaos_parecidas_64px_e_32px.jpg (cada linha é um grupo que parece igual).
-As 7 antigas (aurora, brasas, escudo, onda_maior, redemoinho, toque_geada, vapor) continuam e são a referência de
-leitura: UM motivo central grande e próprio, legível até a 32 px. Não refazer essas 7.
+As 7 antigas (aurora, brasas, escudo, onda_maior, redemoinho, toque_geada, vapor) são a referência de leitura:
+UM motivo central grande e próprio, legível até a 32 px. Refazer só essas 7 sem moldura, com o mesmo desenho (77 no total).
 
 O QUE FAZER (70 PNGs)
-1. Manter: moldura circular, cor e clima da família (fundo pintado mais simples e escuro, sem cena detalhada).
+1. Manter: cor e clima da família (fundo pintado mais simples e escuro, sem cena detalhada). SEM moldura (ver acima).
 2. Trocar o selo do canto por UM PICTOGRAMA CENTRAL GRANDE, ocupando cerca de 45 a 55% do diâmetro, em ouro velho/marfim
    com contorno escuro, que leia em tons de cinza a 64 px. Nada no canto.
 3. Usar um vocabulário fixo, para o jogador aprender:
@@ -111,12 +119,12 @@ Elos (fundo nas duas cores das famílias)
 - mira_clara: Bênçãos de Luz marcam. Alvo com feixe de luz no centro.
 - olho_firme: especial contra marcado. Olho sobre uma espada cravada.
 
-PORTAS (opcional, pequeno ajuste)
+PORTAS (25, refazer SEM moldura, mesmos desenhos centrais)
 Nos 25 de assets/ui/rewards/ a moldura pintada vem cortada ou fora do centro em vários (heal, silver, memory, enchant,
 psalm, miniboss, fountain, shop, boss, trial, altar, angel_vigilia, angel_veu, angel_mare, angel_marca) e o trial.png
-tinha um texto "DE ME" no alto (já apagamos). Se for refazer: anel completo e centrado, pictograma dentro de 80% do raio
-(o jogo põe um aro de ouro por fora). Os desenhos centrais estão aprovados; não mudar.
+tinha um texto "DE ME" no alto (já apagamos). Refazer os 25 sem moldura, como as Bênçãos: só o disco
+pintado com o desenho central (os desenhos estão aprovados; manter). O jogo põe o aro.
 
 ENTREGA
-ZIP com assets/ui/boons/*.png (70 arquivos, mesmos nomes) e, se fizer, assets/ui/rewards/*.png, mais a prancha de
+ZIP com assets/ui/boons/*.png (77 arquivos, mesmos nomes) e assets/ui/rewards/*.png (25), mais a prancha de
 prévia 64 px / 32 px / cinza. Eu integro e comparo antes e depois.
