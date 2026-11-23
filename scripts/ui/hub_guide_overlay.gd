@@ -28,6 +28,8 @@ var hint: Label
 var key: StationSign.KeyCap
 var _t := 0.0
 var _below := false
+## The plate's top never above this share of the screen's height.
+const LOW := 0.76
 
 
 func setup(defs: Array[HubGuideDef]) -> HubGuideOverlay:
@@ -114,9 +116,10 @@ func _process(delta: float) -> void:
 	plate.size = s
 	var view := get_viewport_rect().size
 	var x := clampf(anchor.x - s.x * 0.5, EDGE, maxf(EDGE, view.x - s.x - EDGE))
-	# above the arrow; where the anchor stands near the top of the screen, under it
-	_below = anchor.y - GAP - s.y < EDGE
-	var y := anchor.y + GAP if _below else anchor.y - GAP - s.y
+	# under the station, in the lower part of the screen, never over what it explains (GPU capture 2026-11-23: above
+	# the arrow it covered the station itself)
+	_below = true
+	var y := maxf(anchor.y + GAP, view.y * LOW)
 	y = clampf(y, EDGE, maxf(EDGE, view.y - s.y - EDGE))
 	var a := clampf(_t / APPEAR, 0.0, 1.0)
 	plate.position = Vector2(x, y + (1.0 - a) * 8.0)

@@ -27,6 +27,9 @@ var focus: Variant = null
 ## A floor point the camera eases toward instead of its own (INF: none): the hub's station in focus (HubPlan.frame_for,
 ## HUB-D). Unlike focus, the paladin's safe frame and the room's reach still hold.
 var lean := Vector2.INF
+## PT-5: while the hub explains a station the camera looks at the lean as it is, the paladin's safe frame and the
+## fixed point's reach let go (the hero may leave the screen for those seconds; he cannot move meanwhile).
+var lean_free := false
 ## The point the camera follows (eased) and the floor point it looked at last frame (INF: place it anew).
 var target := Vector3.ZERO
 var at := Vector2.INF
@@ -152,6 +155,8 @@ func place(shake: Vector3, delta: float, zoom := 1.0) -> void:
 ## would stand near an edge of the screen (the landing by the way in lies outside the room's rectangle).
 ## as_far: where the far camera would look whatever the options say (the shooters' fair frame, LR-02: no slack).
 func look_at(want: Vector2, distance: float, fov: float, as_far := false) -> Vector2:
+	if lean_free and lean.is_finite():
+		return want
 	if arena.cam_reach > 0.0:
 		return hold_at(want, distance, fov, as_far)
 	var h := arena.half

@@ -32,7 +32,7 @@ const FADE := 0.45
 const MARK := 56.0
 ## PT-5: how close the camera comes to a station that is being explained (share of its own distance), the seconds it
 ## waits after the arrival look, and how fast the close-up eases in and out.
-const GUIDE_ZOOM := 0.62
+const GUIDE_ZOOM := 0.9
 const GUIDE_DELAY := 0.4
 const GUIDE_EASE := 2.2
 
@@ -171,6 +171,7 @@ func _process(delta: float) -> void:
 		arena.restyle()
 	# at a station the camera leans to show it whole (the Portal's head, the forge), his safe frame first (HUB-D)
 	cam.lean = lean()
+	cam.lean_free = guide != null and guide.current != null
 	cam.follow(delta, Vector3.ZERO)
 	Controls.flush()
 
@@ -200,8 +201,12 @@ func _arrival_look() -> void:
 func lean() -> Vector2:
 	if guide != null and guide.current != null:
 		# PT-5: the camera looks at the station the guide explains (what SHOW says of it), not at the hero
+		# the middle of its height in the middle of the screen: a point h over the floor shows where the floor point
+		# h / tan(pitch) farther up the screen does (the floor point under the tree's crown left the crown at the top)
 		var s: Vector3 = HubPlan.SHOW[guide.current.station]
-		return HubPlan.to_world(Vector2(s.x, s.y))
+		var up := Feel.screen_to_floor(Vector2.UP, CamRig.yaw())
+		var pitch := deg_to_rad(Dev.num("cam-pitch", Feel.live().cam_pitch))
+		return HubPlan.to_world(Vector2(s.x, s.y)) + up * (s.z * 0.5) / maxf(tan(pitch), 0.2)
 	if focus.current == &"" and cam.holds():
 		return Vector2.INF
 	var view := get_viewport().get_visible_rect().size

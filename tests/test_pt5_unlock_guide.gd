@@ -133,7 +133,10 @@ func test_hub_shows_the_guide_writes_it_and_holds_the_hero() -> void:
 	assert_eq(hub.guide.current.id, &"tree")
 	assert_eq(HubGuide.shown(Save.data), ["portal", "tree", "book"], "written when it starts")
 	var at := hub.lean()
-	assert_eq(at, HubPlan.to_world(Vector2(HubPlan.SHOW[HubPlan.TREE].x, HubPlan.SHOW[HubPlan.TREE].y)), "leans on the station")
+	# on the station, moved up the screen so the middle of its height stands in the middle (GPU capture 2026-11-23)
+	var show: Vector3 = HubPlan.SHOW[HubPlan.TREE]
+	var shift := (show.z * 0.5) / tan(deg_to_rad(Feel.live().cam_pitch))
+	assert_almost_eq(at.distance_to(HubPlan.to_world(Vector2(show.x, show.y))), shift, 0.01, "leans on the station")
 	var g := hub.guide
 	g.advance()
 	assert_eq(g.current.id, &"book")
