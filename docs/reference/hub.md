@@ -240,6 +240,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   de 3 estágios) com **`grown(branches_bought)`**: dicionário ramo para nós comprados (0 a 3), `Vine.growth(save)` o monta;
   `HubLook.grow_vine` o repassa em `Hub.evolve` (a cada compra). A V3 troca os meshes sem mexer em quem chama. `HeroStation` (dois
   estandartes, o da Maga cinza travada) idem, `HubLook.show_heroes(save)`.
+- **V3 (2026-11-23, `tests/test_videira_v3.gd`)**: `VineStation` virou videira procedural: tronco retorcido do vaso (sempre, com um broto) e três ramos
+  (Vida a oeste, Provisão ao centro, Perseverança a leste) de 3 estágios cada (`PATHS`, Catmull-Rom; tubo e folhas esferoides achatadas fundidos em uma malha
+  por estágio; estágio 3 com cachos e flores âmbar emissivos); musgo escuro (`LEAF_A/B`). Mesma `grown()`. `HeroStation`: estandartes de pano em travessa de ferro
+  (`BAR_Y`), Guerreiro vermelho com leão dourado, Maga âmbar com estrela de 8 pontas; Maga travada = pano cinza enrolado (`rolls`, `ROLLED`) sem emblema, abre
+  com `hero_open`; pé com suporte de espada e de cajado. A estante do Livro (`SHELF`, `SHOW`) foi para (15,1; -3,1) para não cobrir a Videira na câmera Perto.
+  Ver: `tools/gpu.sh shot x.png --hub --look=stylized --cam=near --vine=9` (e `--vine=0`).
 - **O Portal só desce** (Descer, Ficar; a frase do herói escolhido continua). A troca de herói é `HeroPickScreen` (folha pequena do Livro, um
   cartão por herói). `SaveData.hero_open(data, id)`: **a Maga só com `wins > 0`**; `picked_hero` devolve o Guerreiro se a Maga escolhida
   estiver travada; `next_hero` anda só pelos abertos. Guia `maga` (condição `maga`) quando ela abre.

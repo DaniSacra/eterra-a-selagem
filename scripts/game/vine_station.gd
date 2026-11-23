@@ -1,26 +1,50 @@
 class_name VineStation
 extends Node3D
-## The Videira's station in the Santuário (V2; its planting grows in V3): a stone vase on a low plinth under the arch that
-## HubLook draws (hub_vine's footprint), and in the vase a young vine of three stems, one for each branch (Vida,
-## Provisão, Perseverança) and three stages on each, one for each node bought. PROVISIONAL pieces: plain meshes of
-## primitives, so the V3 can replace the stems for a real growing plant without touching who calls it.
+## The Videira's station in the Santuário (V2 planted it, V3 grows it): a stone vase on a low plinth under the arch that
+## HubLook draws (hub_vine's footprint), a twisted trunk out of the vase and three branches (Vida, Provisão,
+## Perseverança) climbing the arch, three stages on each, one for each node bought: sprout, leafy branch, branch with
+## amber clusters and flowers. With nothing bought it is a stump with one sprout; with everything it covers the arch.
+## Procedural meshes (tubes and flattened spheres merged per stage), in the palette of the Árvore de Dons (darker moss).
 ##   var v := VineStation.make(frame, HubLook.at(u, 0.0, v))   # in the hub's frame (x = u, z = -v)
 ##   v.grown({&"vida": 2, &"provisao": 0, &"perseveranca": 3})  # nodes bought in each branch, 0 to STEPS (Vine.growth)
-## `grown` is idempotent and only shows or hides; every stage exists from the start. Stems stand across the arch (along u),
-## the first branch to the west of it.
+## `grown` is idempotent and only shows or hides; every stage exists from the start. The first branch climbs the west
+## pillar, the last the east one, the middle one the centre of the arch.
 
 const STEPS := 3
-const SPREAD := 0.62
+const SIDES := 6
+const SEG_STEPS := 4
 const VASE := Vector3(0.62, 0.42, 0.62)
+const TRUNK_TOP := 1.0
+const TRUNK_R := Vector2(0.17, 0.07)
+const VINE_R := Vector2(0.06, 0.018)
 const STONE := Color(0.5, 0.47, 0.42)
 const SOIL := Color(0.1, 0.07, 0.05)
-const WOOD := Color(0.3, 0.2, 0.12)
-const LEAF_A := Color(0.2, 0.36, 0.14)
-const LEAF_B := Color(0.38, 0.5, 0.2)
+const WOOD := Color(0.26, 0.18, 0.11)
+const LEAF_A := Color(0.12, 0.25, 0.09)
+const LEAF_B := Color(0.2, 0.34, 0.12)
+const FRUIT := Color(0.95, 0.6, 0.12)
+const FLOWER := Color(0.98, 0.82, 0.4)
+const FRUIT_GLOW := 0.7
+## Per stage (1 to 3): leaves, amber clusters and flowers on each branch.
+const LEAVES := [4, 8, 10]
+const FRUITS := [0, 0, 5]
+const FLOWERS := [0, 2, 4]
+## Each branch's path (x, y in the arch's plane) in 10 points: stage k runs the segments 3k to 3k+2.
+const PATHS := [
+	[Vector2(0, 0.95), Vector2(-0.2, 1.2), Vector2(-0.45, 1.4), Vector2(-0.65, 1.65), Vector2(-0.85, 1.85),
+		Vector2(-0.88, 2.1), Vector2(-0.9, 2.35), Vector2(-0.75, 2.6), Vector2(-0.45, 2.72), Vector2(-0.15, 2.7)],
+	[Vector2(0, 0.95), Vector2(0.08, 1.2), Vector2(-0.05, 1.45), Vector2(-0.12, 1.7), Vector2(0.05, 1.95),
+		Vector2(0.12, 2.15), Vector2(0.0, 2.4), Vector2(-0.08, 2.58), Vector2(0.1, 2.7), Vector2(0.25, 2.66)],
+	[Vector2(0, 0.95), Vector2(0.2, 1.2), Vector2(0.45, 1.4), Vector2(0.65, 1.65), Vector2(0.85, 1.85),
+		Vector2(0.88, 2.1), Vector2(0.9, 2.35), Vector2(0.75, 2.6), Vector2(0.45, 2.72), Vector2(0.15, 2.7)],
+]
+const PART_KEYS: Array[String] = ["wood", "a", "b", "fruit", "flower"]
 
-## The stems' stages by branch (Node3D each, shown up to the bought count) and the last count given.
+## The branches' stages (Node3D each, shown up to the bought count) and the last count given.
 var stages: Dictionary = {}
 var bought: Dictionary = {}
+
+static var _round: SphereMesh
 
 
 static func make(parent: Node3D, at: Vector3) -> VineStation:
@@ -48,39 +72,172 @@ func _build() -> void:
 	soil.bottom_radius = VASE.x * 0.9
 	soil.height = 0.04
 	_mesh(soil, Vector3(0, VASE.y + 0.19, 0), _flat(SOIL, 1.0))
-	var wood := _flat(WOOD, 0.9)
+	var mats := _materials()
+	_trunk(mats)
 	var branches := Vine.BRANCHES
 	for i in branches.size():
-		var root := Node3D.new()
-		root.name = "Stem_%s" % branches[i]
-		root.position = Vector3((i - 1) * SPREAD * 0.5, VASE.y + 0.2, 0)
-		add_child(root)
+		var path := _path(PATHS[i], (i - 1) * 0.16)
 		var list: Array[Node3D] = []
 		for k in STEPS:
 			var st := Node3D.new()
-			st.name = "Stage%d" % (k + 1)
-			st.position = Vector3(0, k * 0.62, 0)
-			st.rotation.z = (i - 1) * 0.1
-			root.add_child(st)
-			var stem := CylinderMesh.new()
-			stem.top_radius = 0.04
-			stem.bottom_radius = 0.06
-			stem.height = 0.62
-			_mesh(stem, Vector3(0, 0.31, 0), wood, st).name = "stem"
-			for side in [-1.0, 1.0]:
-				var ball := SphereMesh.new()
-				ball.radius = 0.17
-				ball.height = 0.22
-				var leaf := _mesh(ball, Vector3(side * 0.2, 0.42, 0.02), _flat(LEAF_A if (k + i) % 2 == 0 else LEAF_B, 0.8), st)
-				leaf.rotation.z = side * 0.5
+			st.name = "%s_%d" % [branches[i], k + 1]
+			add_child(st)
+			var rng := RandomNumberGenerator.new()
+			rng.seed = 7919 * (i + 1) + k
+			var mi := MeshInstance3D.new()
+			mi.name = "growth"
+			mi.mesh = _commit(_stage_parts(path, k, rng), mats)
+			st.add_child(mi)
 			list.append(st)
 		stages[branches[i]] = list
-		# a sprout on the vase before anything is bought
-		var bud := SphereMesh.new()
-		bud.radius = 0.09
-		bud.height = 0.14
-		_mesh(bud, Vector3(0, 0.1, 0), _flat(LEAF_B, 0.8), root).name = "sprout"
 	grown({})
+
+
+## The twisted trunk out of the vase (always there) with the sprout on its top.
+func _trunk(mats: Dictionary) -> void:
+	var base := VASE.y + 0.2
+	var pts: Array[Vector3] = []
+	var n := 9
+	for j in n + 1:
+		var t := float(j) / n
+		var a := t * TAU * 0.9
+		pts.append(Vector3(sin(a) * 0.07 * (1.0 - t * 0.4), base + t * (TRUNK_TOP - base), 0.04 + cos(a) * 0.05 * (1.0 - t * 0.4)))
+	var parts := _new_parts()
+	_tube(parts["wood"], pts, TRUNK_R.x, TRUNK_R.y)
+	for side in [-1.0, 1.0]:
+		var basis := Basis.from_euler(Vector3(0.2, 0.0, side * 0.7)) * Basis.from_scale(Vector3(0.13, 0.025, 0.07))
+		(parts["b"] as SurfaceTool).append_from(_leaf_mesh(), 0, Transform3D(basis, pts[n] + Vector3(side * 0.1, 0.04, 0.03)))
+	var mi := MeshInstance3D.new()
+	mi.name = "trunk"
+	mi.mesh = _commit(parts, mats)
+	add_child(mi)
+
+
+## One stage of a branch: the tube along its segments, the leaves, and from the third the amber fruit and flowers.
+func _stage_parts(path: Array[Vector3], k: int, rng: RandomNumberGenerator) -> Dictionary:
+	var parts := _new_parts()
+	var pts: Array[Vector3] = []
+	for seg in range(3 * k, 3 * k + 3):
+		for j in SEG_STEPS:
+			pts.append(_spline(path, seg, float(j) / SEG_STEPS))
+	pts.append(_spline(path, 3 * k + 2, 1.0))
+	_tube(parts["wood"], pts, lerpf(VINE_R.x, VINE_R.y, k / 3.0), lerpf(VINE_R.x, VINE_R.y, (k + 1) / 3.0))
+	for l in LEAVES[k]:
+		var p := pts[rng.randi_range(0, pts.size() - 1)]
+		var side := 1.0 if l % 2 == 0 else -1.0
+		var size := lerpf(0.9, 1.25, k / 2.0) * rng.randf_range(0.85, 1.15)
+		var basis := Basis.from_euler(Vector3(rng.randf_range(-0.5, 0.5), rng.randf_range(0.0, TAU), side * rng.randf_range(0.3, 0.9)))
+		basis = basis * Basis.from_scale(Vector3(0.13, 0.024, 0.075) * size)
+		var target: SurfaceTool = parts["b"] if l % 3 == 0 else parts["a"]
+		target.append_from(_leaf_mesh(), 0, Transform3D(basis, p + Vector3(side * 0.09 * size, rng.randf_range(0.0, 0.05), rng.randf_range(0.0, 0.08))))
+	for f in FRUITS[k]:
+		var p := pts[rng.randi_range(pts.size() / 3, pts.size() - 1)]
+		for g in 3:
+			var xf := Transform3D(Basis.from_scale(Vector3(0.045, 0.05, 0.045)), p + Vector3(rng.randf_range(-0.03, 0.03), -0.09 - g * 0.05, 0.06))
+			(parts["fruit"] as SurfaceTool).append_from(_leaf_mesh(), 0, xf)
+	for f in FLOWERS[k]:
+		var p := pts[rng.randi_range(0, pts.size() - 1)]
+		var xf := Transform3D(Basis.from_scale(Vector3(0.05, 0.03, 0.05)), p + Vector3(rng.randf_range(-0.05, 0.05), 0.06, 0.07))
+		(parts["flower"] as SurfaceTool).append_from(_leaf_mesh(), 0, xf)
+	return parts
+
+
+## The path's control points in the arch's plane lifted into 3D (`lean` stacks the branches front to back).
+static func _path(pts2: Array, lean: float) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for j in pts2.size():
+		var p: Vector2 = pts2[j]
+		out.append(Vector3(p.x, p.y, 0.08 + lean + sin(j * 1.7) * 0.05))
+	return out
+
+
+## Catmull-Rom between the control points seg and seg+1 at t (0 to 1).
+static func _spline(path: Array[Vector3], seg: int, t: float) -> Vector3:
+	var n := path.size()
+	var p0 := path[maxi(seg - 1, 0)]
+	var p1 := path[seg]
+	var p2 := path[mini(seg + 1, n - 1)]
+	var p3 := path[mini(seg + 2, n - 1)]
+	return p1.cubic_interpolate(p2, p0, p3, t)
+
+
+## A low-poly unit sphere, flattened by each part's transform (leaf, fruit, flower).
+static func _leaf_mesh() -> SphereMesh:
+	if _round == null:
+		_round = SphereMesh.new()
+		_round.radius = 1.0
+		_round.height = 2.0
+		_round.radial_segments = 6
+		_round.rings = 3
+	return _round
+
+
+static func _new_parts() -> Dictionary:
+	var parts := {}
+	for key in PART_KEYS:
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		parts[key] = st
+	return parts
+
+
+## A tube of SIDES faces along `pts`, its radius going from r0 to r1.
+static func _tube(st: SurfaceTool, pts: Array[Vector3], r0: float, r1: float) -> void:
+	var rings: Array = []
+	for j in pts.size():
+		var d := (pts[mini(j + 1, pts.size() - 1)] - pts[maxi(j - 1, 0)]).normalized()
+		var side := d.cross(Vector3.BACK)
+		if side.length() < 0.1:
+			side = d.cross(Vector3.RIGHT)
+		side = side.normalized()
+		var up := side.cross(d).normalized()
+		var r := lerpf(r0, r1, float(j) / maxi(pts.size() - 1, 1))
+		var ring: Array[Vector3] = []
+		for s in SIDES:
+			var a := TAU * s / SIDES
+			ring.append(pts[j] + (side * cos(a) + up * sin(a)) * r)
+		rings.append(ring)
+	for j in rings.size() - 1:
+		for s in SIDES:
+			var s2 := (s + 1) % SIDES
+			var a: Vector3 = rings[j][s]
+			var b: Vector3 = rings[j][s2]
+			var c: Vector3 = rings[j + 1][s]
+			var e: Vector3 = rings[j + 1][s2]
+			for v in [a, c, b, b, c, e]:
+				st.add_vertex(v)
+
+
+## The surfaces of a stage into one mesh, a material each (only the parts that have geometry).
+static func _commit(parts: Dictionary, mats: Dictionary) -> ArrayMesh:
+	var mesh := ArrayMesh.new()
+	for key: String in PART_KEYS:
+		var st: SurfaceTool = parts[key]
+		st.generate_normals()
+		var arrays := st.commit_to_arrays()
+		var verts: Variant = arrays[Mesh.ARRAY_VERTEX]
+		if verts == null or (verts as PackedVector3Array).is_empty():
+			continue
+		mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+		mesh.surface_set_material(mesh.get_surface_count() - 1, mats[key])
+	return mesh
+
+
+static func _materials() -> Dictionary:
+	var fruit := _flat(FRUIT, 0.5)
+	fruit.emission_enabled = true
+	fruit.emission = FRUIT
+	fruit.emission_energy_multiplier = FRUIT_GLOW
+	var flower := _flat(FLOWER, 0.6)
+	flower.emission_enabled = true
+	flower.emission = FLOWER
+	flower.emission_energy_multiplier = FRUIT_GLOW * 0.5
+	var wood := _flat(WOOD, 0.9)
+	var a := _flat(LEAF_A, 0.8)
+	var b := _flat(LEAF_B, 0.8)
+	for m in [wood, a, b, fruit, flower]:
+		(m as StandardMaterial3D).cull_mode = BaseMaterial3D.CULL_DISABLED
+	return {"wood": wood, "a": a, "b": b, "fruit": fruit, "flower": flower}
 
 
 ## Shows the stages bought: `branches_bought` maps each branch (Vine.BRANCHES) to its nodes bought, 0 to STEPS (Vine.growth).

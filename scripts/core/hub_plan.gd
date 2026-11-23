@@ -88,7 +88,7 @@ const ANCHOR := {
 ## stood glued to the top of the screen with the portal cut off.
 const SHOW := {
 	PORTAL: Vector3(0.0, 17.6, 6.0), VENDOR: Vector3(-13.4, 10.2, 5.0), TREE: Vector3(11.9, 8.9, 8.0),
-	SMITH: Vector3(-15.8, -3.8, 7.6), BOOK: Vector3(16.6, -2.1, 4.8), VINE: Vector3(19.0, 10.0, 3.4),
+	SMITH: Vector3(-15.8, -3.8, 7.6), BOOK: Vector3(15.1, -3.1, 4.8), VINE: Vector3(19.0, 10.0, 3.4),
 	HEROES: Vector3(-17.5, 9.6, 3.2),
 }
 const SHOW_MARGIN := 0.06
@@ -114,7 +114,7 @@ const FORGE := Vector2(-15.8, -4.0)
 const FORGE_HALF := Vector2(1.9, 1.5)
 const DAIS := Vector3(11.9, 8.9, 3.2)
 const LECTERN := Vector2(12.0, -5.9)
-const SHELF := Vector2(16.6, -2.1)
+const SHELF := Vector2(15.1, -3.1)
 const SHELF_HALF := Vector2(2.0, 0.5)
 ## V2: the Videira's arch in the east lobe, off the Árvore's dais, the cypress, the urn and the arbour (centre u, v and
 ## half sizes; the planting grows in front of it, VineStation). PT-9: the hero's station west of the Vendedor's stall, off
