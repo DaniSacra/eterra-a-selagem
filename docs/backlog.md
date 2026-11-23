@@ -1,5 +1,30 @@
 # Backlog de A Selagem
 
+## Notas do Daniel jogando, 2026-11-23 à noite (PT-1 a PT-9; nada começado, esperando o "pode")
+- **PT-0 (resposta, sem tarefa)**: a barrinha clara sob a vida dos inimigos comuns é a **Quebra** (poise, `CrowdRenderer.add_poise_bar`):
+  cada golpe gasta um pouco; acabou, ele fica atordoado 1,2 s e leva +40% de dano ("Quebrou!"). Se ficar confusa: mudar a cor ou só
+  mostrá-la quando estiver na metade (decidir com o Daniel).
+- **PT-1 Aviso de golpe sem mancha vermelha** (`combat-feel-director` + `gameplay-engineer`): tirar a mancha/traço vermelho no chão dos golpes
+  corpo a corpo e dos tiros; a mancha fica só no que é de área (algo que cai, onda do escudo, círculos e Ruptura de Morvath, erupções,
+  perigos de sala). Para compensar, no molde do SWORN: um **"!" acima da cabeça** que acende no instante de esquivar (cerca de 0,35 s antes
+  do impacto, não no começo do preparo), com um brilho rápido no corpo e um som curto. Elites e guardiões usam o mesmo sinal, maior.
+  Testar em várias sementes que nada perdeu leitura (Armadilheiro, besteiro, Cavaleiro).
+- **PT-2 Bônus da próxima sala nas portas** (`room-designer` + `ui-ux-designer`): o que a sala dá (Bênção do anjo, romã, coração, Magia,
+  ouro, Prata, Memória, material) aparece **na própria porta ou escada** (medalhão sobre o arco), não solto longe. **Arte nova para cada
+  bônus**: pedir ao diretor de arte do ChatGPT um ícone por recompensa (lista, tamanho e fundo no pedido).
+- **PT-3 Tirar o contador de golpes** (`hud_hits`/`hud_combo` no HUD e "Maior sequência" no fim). Pequeno.
+- **PT-4 Caminhos do Santuário** (`environment-artist`): trocar os traços no chão por caminhos que fazem parte do lugar (lajes gastas,
+  trilha de pedra, musgo pisado, luz de braseiro guiando), sem notação de jogo.
+- **PT-5 Explicar cada coisa nova no Santuário** (`ui-ux-designer`): na primeira vez que algo destrava (árvore de Dons, Forja, Encantos,
+  anjos, escolha de herói, Videira), a câmera aproxima do lugar, uma seta/brilho aponta e uma frase curta diz o que fazer ("Clique aqui
+  e conheça os Dons"). Uma vez por save, pular com qualquer tecla.
+- **PT-6 Salas entrando por baixo e saindo por cima** (todas as salas; grande, mexe em layouts e câmera). **Daniel: só marcar, fazer depois.**
+- **PT-7 Anjos maiores na escolha** (`BoonChoice`/`EncounterScreen`): figura do anjo bem maior; junta com o BC-1 (anjo grande à esquerda).
+- **PT-8 Portas de guardião diferentes** (`room-designer`): hoje as duas portas de guardião dão a mesma coisa. Cada porta mostra **o anjo
+  que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.
+- **Ordem sugerida**: lote A pequeno (PT-3, PT-7, PT-8) + PT-1 (o maior ganho no combate); lote B (PT-2 com a arte, PT-4, PT-5);
+  PT-6 depois. Pedido de arte do PT-2 ao ChatGPT pode sair já.
+
 ## A Videira (pacote do Daniel de 2026-11-23, `docs/design/videira_pacote_2026-11-23/`)
 **DECIDIDO pelo Daniel em 2026-11-23: seguir as sugestões 1 a 6 abaixo; fazer V1 a V3 logo depois do teste com usuários** (custos fechados com o `runs.jsonl` dos testadores).
 Proposta do pacote: trocar **O Preparo** por **A Videira**, estação própria no Santuário (fora do Forjador), 3 ramos de 3 nós, tudo com
