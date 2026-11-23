@@ -436,7 +436,7 @@ func _enemies() -> void:
 	# the last of the region: Hades II's first guardian has 6050 life and hits for 4 to 14. His necromancy is the cold
 	# spectral green of Daniel's request of 2026-11-15 (SPECTRAL: bluer and paler than Emeth's crystal green); the
 	# fight's numbers are data/bosses/morvath.tres (_bosses)
-	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 6050.0, "speed": 600.0 / U * BOSS_WALK, "damage": 13.0, "radius": 1.4,
+	_enemy({"id": &"morvath", "model": &"morvath", "size": 2.53, "behavior": B.BOSS, "hp": 8500.0, "speed": 600.0 / U * BOSS_WALK, "damage": 13.0, "radius": 1.4,
 		"heavy": true, "armor": 0.0, "attack_damage": 16.0, "magic_color": SPECTRAL, "rim_color": Color(0.45, 0.3, 0.6), "rim": 0.3,
 		"vivid": 0.9, "tint": Color(0.94, 0.86, 1.14), "crest": 0.5, "shine": 1.5, "material": &"spectral"})
 
@@ -1723,7 +1723,7 @@ func _bosses() -> void:
 	# 1, 1, 0.95, 0.9); the quickest, the second reap (0.5 s), stays at 0.4 s
 	b.windup_scale = PackedFloat32Array([0.85, 0.85, 0.82, 0.8])
 	b.final_light_phase = 4
-	b.adds_cap = PackedInt32Array([0, 4, 4, 4])
+	b.adds_cap = PackedInt32Array([0, 3, 3, 3])
 	# E2: what rises when a summon is laid over another attack, and the circles of eruptions laid over one
 	b.layer_raise = [&"skeleton", &"mage"] as Array[StringName]
 	b.layer_eruption_count = Vector2i(2, 2)
@@ -1735,7 +1735,7 @@ func _bosses() -> void:
 		"roar_time": 1.6, "roar_push": 4.0, "near": 6.0, "far": 10.0, "still_after": 0.8, "lead": 0.45,
 		"summon_raise": [&"mage", &"mage"] as Array[StringName], "summon_windup": 1.1,
 		# reinforcements rise one by one (a rune, the energy, the body, 0.45 s apart), 20 at most in the whole fight
-		"adds_total_cap": 20, "rise_stagger": 0.45,
+		"adds_total_cap": 14, "rise_stagger": 0.45,
 		# where they rise (cycle C11, fitted to the chamber's 12.5 m: the ritual's ring of 6.5 around the seal leaves
 		# 5.5 m of floor outside it to fight in; summons 5 m around him, never within 4 m of the paladin)
 		"gap_min": 0.1, "gap_max": 0.7, "gap_min0": 0.05, "gap_max0": 0.3,
@@ -1749,9 +1749,9 @@ func _bosses() -> void:
 		# C19-3, the Double Reap (Q-09 a; Hades II's Hecate: right 0.85 / 0.4 / 0.35, at once left 0.5 / 0.5 / 2.2): two
 		# sweeps of 150 degrees and 4.5 m close in, the second born where the paladin is as the first ends, then 2.2 s
 		"reap_reach": 4.5, "reap_degrees": 150.0, "reap_windup": 0.85, "reap_active": 0.4, "reap_pause": 0.35, "reap2_windup": 0.5,
-		"reap2_active": 0.5, "reap_recovery": 1.4, "reap_damage": 16.0,
+		"reap2_active": 0.5, "reap_recovery": 1.4, "reap_damage": 14.0,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
-		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.6, "blade_damage": 16.0,
+		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.6, "blade_damage": 11.0,
 		# C17, Q-09 (b): phase 1 was the scythe in a loop with him close (91% scythe over 3 seeds): the Blades come at
 		# any distance, a step back first when he is within 4 m
 		"blade_step": 2.0, "blade_step_within": 4.0, "blade_step_time": 0.25,
@@ -1763,13 +1763,13 @@ func _bosses() -> void:
 		# that follows the paladin: crescents one after the other (by phase), each aimed at where he stands as it leaves
 		"shots_gate": 7.0,
 		"barrage_count": PackedFloat32Array([0.0, 0.0, 8.0, 12.0]), "barrage_gap": PackedFloat32Array([0.25, 0.25, 0.26, 0.2]),
-		"barrage_windup": 0.7, "barrage_speed": 12.0, "barrage_width": 1.3, "barrage_damage": 8.0, "barrage_recovery": 0.6, "barrage_turn": 220.0,
+		"barrage_windup": 0.7, "barrage_speed": 12.0, "barrage_width": 1.3, "barrage_damage": 6.0, "barrage_recovery": 0.6, "barrage_turn": 220.0,
 		# the Sepulchral Eruptions: 2 or 3 circles of 4 m (2 m until Daniel's test of 2026-11-16: too easy to step out of; the warning 0.9 to 1.2 s so they can still be walked out of), one on the paladin, the lane to the middle of the hall kept free
 		"eruption_radius": 4.0, "eruption_delay": 1.35, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
 		"eruption_gap": 1.0, "eruption_damage": 16.0, "eruption_recovery": 0.6,
 		# the ritual: at most 20 s behind the shield, 2 soldiers and 2 casters, never more than 6 of his standing
-		"ritual_time": 20.0, "ritual_raise": [&"skeleton", &"skeleton", &"mage", &"mage"] as Array[StringName], "ritual_cap": 6,
-		"ritual_reinforce_every": 6.0, "ritual_reinforce": [&"skeleton", &"mage"] as Array[StringName], "ritual_eruption_every": 2.8,
+		"ritual_time": 20.0, "ritual_raise": [&"skeleton", &"skeleton", &"mage", &"mage"] as Array[StringName], "ritual_cap": 5,
+		"ritual_reinforce_every": 9.0, "ritual_reinforce": [&"skeleton", &"mage"] as Array[StringName], "ritual_eruption_every": 3.5,
 		"ritual_stun": 2.0, "shield_radius": 2.9,
 		# C1d, the Condutores: each fallen caster of the ritual cuts 5 s off it (both fallen: the shield opens at 10 s)
 		"ritual_conductors": [&"mage"] as Array[StringName], "ritual_shorten": 5.0,

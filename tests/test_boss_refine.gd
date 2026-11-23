@@ -22,7 +22,7 @@ func _walk() -> float:
 # ---------- reinforcements ----------
 
 func test_reinforcements_count_those_still_rising_and_stop_at_twenty() -> void:
-	assert_eq(def.adds_total_cap, 20)
+	assert_eq(def.adds_total_cap, 14)
 	assert_gt(def.rise_stagger, 0.2, "never all at once")
 	assert_eq(BossRules.reinforce_room(4, 0, 0, 6, 0, 20), 4)
 	assert_eq(BossRules.reinforce_room(4, 2, 2, 6, 4, 20), 2, "the rising count as standing")

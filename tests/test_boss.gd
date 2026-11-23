@@ -58,11 +58,11 @@ func test_each_phase_begins_once_and_in_order() -> void:
 
 func test_morvath_keeps_hades_life_and_his_numbers_are_data() -> void:
 	var enemy: EnemyDef = load("res://data/enemies/morvath.tres")
-	assert_eq(enemy.hp, 6050.0)
+	assert_eq(enemy.hp, 8500.0)
 	assert_eq(def.enemy, &"morvath")
 	assert_eq(def.ritual_phase, 2)
 	assert_eq(def.ritual_time, 20.0)
-	assert_eq(def.ritual_cap, 6)
+	assert_eq(def.ritual_cap, 5)
 	assert_eq(def.storm_count, 6)
 	for n in [def.scythe_damage, def.blade_damage, def.storm_damage, def.eruption_damage, def.curse_damage, def.dash_damage]:
 		# B-1 (balance.md B.5): Hades II's first guardian's scale (4 to 14) times about 1.6
@@ -309,8 +309,8 @@ func test_the_ritual_ends_by_time_or_when_its_dead_fall() -> void:
 
 func test_summons_never_pass_their_ceiling() -> void:
 	assert_eq(BossRules.summon_count(4, 0, def.ritual_cap), 4)
-	assert_eq(BossRules.summon_count(4, 4, def.ritual_cap), 2, "near the ceiling, fewer")
-	assert_eq(BossRules.summon_count(2, 6, def.ritual_cap), 0, "at it, none")
+	assert_eq(BossRules.summon_count(4, 3, def.ritual_cap), 2, "near the ceiling, fewer")
+	assert_eq(BossRules.summon_count(2, 5, def.ritual_cap), 0, "at it, none")
 	assert_eq(BossRules.summon_count(2, 9, def.ritual_cap), 0)
 	assert_eq(BossRules.adds_cap(def.adds_cap, 1), 0, "the first phase brings nobody")
 	for phase in [2, 3, 4, 9]:
