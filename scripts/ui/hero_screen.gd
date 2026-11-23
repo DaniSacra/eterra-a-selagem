@@ -137,7 +137,9 @@ func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = fals
 	marks.custom_minimum_size.y = Book.MARK_HEIGHT + Book.MARK_RISE
 	col.add_child(marks)
 	for c: int in Chapter.values():
-		var b := Book.mark(T.t(CHAPTER_KEY[c]))
+		# the hero's chapter carries the picked hero's name ("A Maga" for her)
+		var key: StringName = &"hero_maga" if c == 1 and loadout.hero.id == &"maga" else CHAPTER_KEY[c]
+		var b := Book.mark(T.t(key))
 		b.name = CHAPTER_NAME[c]
 		b.focus_entered.connect(_show.bind(c))
 		b.pressed.connect(_show.bind(c))
@@ -181,7 +183,7 @@ func _page_column(page: MarginContainer, head: Control) -> VBoxContainer:
 func _head_left() -> Control:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 12)
-	var crest := HeroCrest.new().setup(CREST)
+	var crest := HeroCrest.new().setup(CREST).set_hero(loadout.hero.id)
 	crest.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(crest)
 	var names := VBoxContainer.new()
