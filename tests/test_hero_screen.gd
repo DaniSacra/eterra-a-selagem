@@ -38,7 +38,7 @@ func _screen(data: Dictionary) -> HeroScreen:
 func test_only_the_heros_gifts_say_dom_on_screen() -> void:
 	var word := RegEx.create_from_string("(?i)\\bdons?\\b")
 	# the hub's Árvore de Dons (HUB-01) and what a save keeps (save slots) are the hero's Gifts too
-	var own: Array[String] = ["talent_", "hero_", "codex_", "end_unlocked", "hub_tree", "hub_use_tree", "howto_interact", "hub_descend_line",
+	var own: Array[String] = ["talent_", "hero_", "codex_", "end_unlocked", "hub_tree", "hub_use_tree", "guide_tree", "howto_interact", "hub_descend_line",
 		"slots_lead", "slot_erase_line"]
 	var found: Array[String] = []
 	for key: String in T.table.entries:

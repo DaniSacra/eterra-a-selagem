@@ -80,10 +80,10 @@ func test_rarity_bonus_moves_the_first_steps_only() -> void:
 
 
 func test_save_version_10_migrates_older_files() -> void:
-	assert_eq(SaveData.VERSION, 10)
+	assert_gte(SaveData.VERSION, 10, "v11 (PT-5, hub.guided) keeps the account")
 	for v in [1, 6, 7, 9]:
 		var out := SaveData.merged({"version": v, "runs": 2})
-		assert_eq(out.version, 10)
+		assert_eq(out.version, SaveData.VERSION)
 		assert_eq(Account.bought(out), [])
 	var v7 := SaveData.merged(JSON.parse_string(FileAccess.get_file_as_string("res://tests/fixtures/save_v7.json")))
 	assert_eq(MaterialPurse.amount(v7, MaterialPurse.SILVER), 42, "what he had stays")
