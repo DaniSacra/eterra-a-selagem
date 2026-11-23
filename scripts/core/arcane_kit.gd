@@ -17,6 +17,8 @@ extends Resource
 @export var shot_magick := 0.3
 ## A boss takes the Selo's bonus once in this many seconds.
 @export var boss_seal_gap := 3.0
+## Selo Duplo: each Selo after the first on one enemy adds this share of the blast's Selo bonus (44 becomes 61 on two).
+@export var seal_more := 0.4
 
 @export_group("Explosão Rúnica")
 ## Where it may fall (meters from her) and how far it clings to a Selo near the cursor.
@@ -95,6 +97,29 @@ func circle_at(from: Vector2, cursor: Vector2) -> Vector2:
 ## The Selo a shot lays: the shot's own mark tag decides (the third of the chain always, the second inside the Círculo).
 func seals_on(tags: Array[StringName], in_circle: bool) -> bool:
 	return tags.has(&"seal") or (in_circle and tags.has(&"seal2"))
+
+
+## The chain's step of a shot (maga_m2.md 2.3): 3 the shot that always lays the Selo, 2 the one that lays it inside the Círculo, 1 the first.
+static func chain_step(tags: Array[StringName]) -> int:
+	return 3 if tags.has(&"seal") else 2 if tags.has(&"seal2") else 1
+
+
+## Whether a shot of this chain step lays a Selo. `shift` (Cadeia Curta: -1) brings the Selo a shot sooner; inside the Círculo it comes
+## at circle_seal_at plus the shift and `circle_shift` (Contenção Perfeita: -1), never later than outside it; `absolute`: inside the
+## Suspensão Absoluta every shot lays one. Never before the first shot.
+func lays_seal(step: int, in_circle: bool, shift: int = 0, circle_shift: int = 0, absolute: bool = false) -> bool:
+	if absolute:
+		return true
+	var at := maxi(1, 3 + shift)
+	if in_circle:
+		at = mini(at, maxi(1, circle_seal_at + shift + circle_shift))
+	return step >= at
+
+
+## The blast's damage on an enemy that held `seals` Selos (Selo Duplo: each one after the first adds a share of the bonus).
+func blast_hit_n(seals: int, amplified: bool) -> float:
+	var bonus := blast_seal_damage * (1.0 + seal_more * float(maxi(seals - 1, 0))) if seals > 0 else 0.0
+	return (blast_damage + bonus) * (amp_mult if amplified else 1.0)
 
 
 ## The pull of the Círculo on a body at p when it is cast: the metres this step (dt), at circle_pull in circle_pull_time,

@@ -25,6 +25,8 @@ const BRIDGE_VARIANT_PUSH := 1.5
 const AXIS := {
 	TalentDef.Branch.COMBO: Vector2(0, -1), TalentDef.Branch.FURIA: Vector2(1, 0),
 	TalentDef.Branch.MAGIA: Vector2(0, 1), TalentDef.Branch.EMETH: Vector2(-1, 0),
+	# the Maga's triangle (M2): Piromancia up, Arcanismo lower right, Selos lower left (a unit vector each, 120 degrees apart)
+	TalentDef.Branch.PIRO: Vector2(0, -1), TalentDef.Branch.ARCA: Vector2(0.87, 0.5), TalentDef.Branch.CTRL: Vector2(-0.87, 0.5),
 }
 ## The sustain row (centre of its first node and the step) and its label, from the diamond's centre.
 const SUSTAIN_AT := Vector2(-258, 204)
@@ -104,7 +106,8 @@ static func spot(t: TalentDef, k_: int = 0, variant: int = 0) -> Vector2:
 	var at := axis * HALF * float(TIER_AT[t.tier])
 	if variant > 0:
 		var side := 1.0 if variant % 2 == 1 else -1.0
-		at += Vector2(axis.y, axis.x).abs() * side * VARIANT_STEP * float(ceili(variant * 0.5))
+		var across := Vector2(axis.y, axis.x).abs() if absf(axis.x) < 0.01 or absf(axis.y) < 0.01 else Vector2(-axis.y, axis.x)
+		at += across * side * VARIANT_STEP * float(ceili(variant * 0.5))
 	return at
 
 

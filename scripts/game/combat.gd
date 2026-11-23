@@ -562,7 +562,7 @@ func on_shot_hit(e: Enemy, shot: Projectiles.Shot) -> void:
 			fx.gash(at, Vector3(along.x, 0.0, along.y), shot.color, STAB, true, GASH_TIME.y)
 			fx.chips(at, Vector3(along.x, 0.3, along.y), shot.color, GASH_CHIPS.x, 7.0, 0.1, 0.35, 0.6)
 	kill_blow = -shot.get_instance_id()
-	hit_enemy(e, shot.damage, shot.tags, along, shot.knockback, false)
+	hit_enemy(e, shot.damage * (arcane.shot_mult(shot) if arcane != null else 1.0), shot.tags, along, shot.knockback, false)
 	kill_blow = 0
 	if arcane != null and shot.tags.has(&"arcane"):
 		arcane.shot_landed(e, shot)
@@ -736,6 +736,26 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 	_weaken(e, boons.stat(&"weak_time", tags))
 	_mark(e, boons.stat(&"mark_time", tags))
 	return false
+
+
+## What the Blessings and Gifts of a move's tags put on an enemy besides damage (burn, frost, weakness, mark), for a spell that
+## strikes nothing itself (the Maga's Círculo when it closes).
+func touch(e: Enemy, tags: Array[StringName]) -> void:
+	if not e.alive or e.invulnerable:
+		return
+	var burn := boons.stat(&"burn_dps", tags)
+	if burn > 0.0:
+		_burn(e, burn)
+	var freeze := boons.stat(&"freeze_time", tags)
+	if freeze > 0.0:
+		_freeze(e, freeze, tags)
+	_weaken(e, boons.stat(&"weak_time", tags))
+	_mark(e, boons.stat(&"mark_time", tags))
+
+
+## Sets an enemy burning at this many a second (a Gift's own burn, not a blow's).
+func ignite(e: Enemy, dps: float) -> void:
+	_burn(e, dps)
 
 
 ## The layer of a material over a blow's hit (CombatSounds.MATERIAL_SOUND; none for &"").

@@ -899,7 +899,7 @@ func _tell_gift(t: TalentDef) -> void:
 	_desc.text = T.t(t.desc_key)
 	var cost := T.t(&"hero_cost_devotion", {"n": t.cost})
 	if t.slot != Boon.Slot.NONE:
-		cost += ". " + T.t(&"hero_action", {"action": T.t(HeroLoadout.ACTION_KEY[t.slot])})
+		cost += ". " + T.t(&"hero_action", {"action": T.t(HeroLoadout.action_key(loadout.hero, t.slot))})
 	if not loadout.is_open(t) and loadout.open_cost(t) > 0:
 		cost += ". " + T.t(&"hero_cost_memory", {"n": loadout.open_cost(t)})
 	_cost.text = cost

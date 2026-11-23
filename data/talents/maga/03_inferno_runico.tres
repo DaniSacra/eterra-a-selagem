@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_d70s0"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_pbtga"]
+
+[sub_resource type="Resource" id="Resource_bl8p8"]
+script = ExtResource("1_d70s0")
+stat = &"inferno_dps"
+base = 10.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_fi0ye"]
+script = ExtResource("1_d70s0")
+stat = &"inferno_time"
+base = 4.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_pbtga")
+id = &"inferno_runico"
+name_key = &"talent_inferno_runico"
+desc_key = &"talent_inferno_runico_desc"
+branch = 6
+tier = 2
+cost = 4
+unlock_level = 16
+memory_cost = 4
+partner = 7
+mods = Array[ExtResource("1_d70s0")]([SubResource("Resource_bl8p8"), SubResource("Resource_fi0ye")])

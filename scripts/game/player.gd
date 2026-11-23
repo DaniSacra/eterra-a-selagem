@@ -203,6 +203,8 @@ var gifts: GiftState
 var omega_discount := 0.0
 ## The Maga's amplified Explosão costs no Magia (Arcane sets it while the Ressonância is full).
 var free_special := false
+## The share off the Explosão's Magia (the Maga's Suspensão Absoluta: half; Arcane sets it each step).
+var blast_discount := 0.0
 ## The Passo Etéreo ended this step: bodies of the crowd do not hold her where she came out (the dash goes through them).
 var _blinked := false
 var _charge_discount := 0.0
@@ -704,7 +706,7 @@ func _press_special() -> void:
 ## True when the special's tap is paid for (it costs nothing, or the Magia is there).
 func _special_paid() -> bool:
 	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(omega_cost(node.magick_cost, omega_discount))
+	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(omega_cost(node.magick_cost, blast_discount if node.has_tag(&"blast") else omega_discount))
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -853,6 +855,8 @@ var _aim := Vector2.ZERO
 ## C1e (the Armadilheiro): where the last dodge ended and the seconds since (the plates it lays follow it: TrapRules.spot).
 var last_dodge_end := Vector2.ZERO
 var dodge_age := 99.0
+## The Maga's Passo: where she vanished from (Passo de Brasa's flash falls there).
+var last_blink_from := Vector2.ZERO
 ## AT-CA2: whether this dodge was already counted as cut short.
 var _dodge_cut := false
 
@@ -888,7 +892,8 @@ func _teleport(move: Vector2) -> void:
 	runner.on_dodge()
 	runner.on_dodge_end()
 	var from := pos
-	pos = arena.sweep(pos, pos + dir * hero.arcane.blink_distance, RADIUS)
+	last_blink_from = from
+	pos = arena.sweep(pos, pos + dir * hero.arcane.blink_distance * (1.0 + (gifts.value(&"blink_pct") if gifts != null else 0.0)), RADIUS)
 	_blinked = true
 	invuln = maxf(invuln, hero.arcane.blink_iframes)
 	last_dodge_end = pos
@@ -971,7 +976,7 @@ func _step_move_sound(dt: float) -> void:
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0 and not (free_special and node.has_tag(&"blast")):
-		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else 0.0))
+		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else blast_discount if node.has_tag(&"blast") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
 	if node.sound_at > 0.0:

@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="MasteryCurve" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/mastery.gd" id="1_cpery"]
+
+[resource]
+script = ExtResource("1_cpery")

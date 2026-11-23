@@ -1883,6 +1883,8 @@ const HERO_DIR := "res://data/heroes/"
 const TALENT_DIR := "res://data/talents/warrior/"
 const ULT_DIR := "res://data/ultimates/"
 const MASTERY_PATH := "res://data/heroes/warrior_mastery.tres"
+## The Maga's own copy of the numbers (maga_m2.md 1): the two may drift apart in the balance without touching each other.
+const MAGA_MASTERY_PATH := "res://data/heroes/maga_mastery.tres"
 
 
 ## The Warrior's Mastery (guardian_spec.md 7; warrior_spec.md 4.4): 20 levels, 40 + 10 (n - 1) XP from n to n + 1
@@ -1900,6 +1902,10 @@ func _mastery() -> void:
 		m.set(k, numbers[k])
 	DirAccess.make_dir_recursive_absolute(HERO_DIR)
 	_save(m, MASTERY_PATH)
+	var mm := MasteryCurve.new()  # (the Maga starts at level 0, with no retroactive XP: her runs are her own)
+	for k: String in numbers:
+		mm.set(k, numbers[k])
+	_save(mm, MAGA_MASTERY_PATH)
 
 
 ## The ultimate's charge besides Magia (T5): per point of damage dealt and of life lost.
@@ -1940,6 +1946,10 @@ func _ultimates() -> void:
 		"elite_pull": 0.5, "guardian_pull": 0.25, "stun": 0.0, "armor_mult": 2.0})
 
 
+## Where _talent writes: the Warrior's tree, or the Maga's while _maga_talents runs.
+var _talent_dir := TALENT_DIR
+
+
 func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.Tier, cost: int, unlock: int, props: Dictionary = {}) -> void:
 	var t := TalentDef.new()
 	t.id = id
@@ -1954,7 +1964,7 @@ func _talent(n: int, id: StringName, branch: TalentDef.Branch, tier: TalentDef.T
 	t.memory_cost = 0 if unlock <= 1 else cost
 	for k: String in props:
 		t.set(k, props[k])
-	_save(t, TALENT_DIR + "%02d_%s.tres" % [n, id])
+	_save(t, _talent_dir + "%02d_%s.tres" % [n, id])
 
 
 ## The Warrior's tree of Gifts (warrior_spec.md 4): four branches (Combo, Furia, Emeth, Magia), each an entry, a middle
@@ -2069,6 +2079,7 @@ func _hero() -> void:
 
 const MAGA_COMBOS := "res://data/combos/maga.tres"
 const MAGA_ULT := "res://data/ultimates/maga/00_storm.tres"
+const MAGA_ULT2 := "res://data/ultimates/maga/01_dome_abs.tres"
 const MAGA_TALENTS := "res://data/talents/maga/"
 const MAGA_AMBER := Color(1.0, 0.62, 0.18)
 
@@ -2109,9 +2120,75 @@ func _maga_tree() -> ComboTree:
 	tree.dodge_window = 0.0
 	return tree
 
+## A number of a Maga Gift as the design says it (maga_m2.md 2): _mod scales every burn_dps by FLAT (the Warrior's blows fell from 50 to
+## 15; the Maga's numbers were already set on that scale), so hers are written here untouched.
+func _raw(stat: StringName, base: float, per_level: Array = [], tag: StringName = &"") -> BoonMod:
+	var m := BoonMod.new()
+	m.stat = stat
+	m.tag = tag
+	m.base = base
+	m.by_rarity = false
+	return m
+
+
+## The Maga's tree of Gifts (docs/design/heroes/maga_m2.md 2): three branches in a triangle (Piromancia, Arcanismo, Selos:
+## each a neighbour of the other two), six bridges, five sustain Gifts, 23 in all. An entry needs the centre, a middle its
+## branch's entry, an apex a middle and a Gift of a neighbour (Inferno Rúnico with Arcanismo, Ruptura with Selos, Contenção
+## Perfeita with Piromancia); one Gift a button (ATTACK, SPECIAL, CAST, RUSH the Suspensão, DASH the Passo). Every number is a
+## stat of its mods (BoonState.stat, read by Arcane and Combat); a tag limits it to the moves that carry it. The attack's shots
+## carry light and bolt, the third also seal; the Explosão heavy and blast; the Círculo shout and cast; the Suspensão cast
+## and dome. Brasa Viva comes open at Mastery 1; the others open with Memória as the Warrior's. The burn lasts the game's
+## 3 s whatever a Gift asks (Combat.BURN_TIME): Pavio Longo's 2 s are 3.
+func _maga_talents() -> void:
+	_talent_dir = MAGA_TALENTS
+	DirAccess.make_dir_recursive_absolute(MAGA_TALENTS)
+	for f in DirAccess.get_files_at(MAGA_TALENTS):
+		DirAccess.remove_absolute(MAGA_TALENTS + f)
+	var B := TalentDef.Branch
+	var T := TalentDef.Tier
+	var S := Boon.Slot
+	var PA: Array[TalentDef.Branch] = [B.PIRO, B.ARCA]
+	var AC: Array[TalentDef.Branch] = [B.ARCA, B.CTRL]
+	var PC: Array[TalentDef.Branch] = [B.PIRO, B.CTRL]
+	# Piromancia: the detonated Selo leaves a burn (3 s of 4 a second on it and within 1.5 m); the shots burn (2 a second,
+	# the third 5); the Explosão burns what the Selo did not take and grows by a quarter; the amplified Explosão leaves 4 s of embers
+	_talent(0, &"brasa_viva", B.PIRO, T.ENTRY, 2, 1, {"mods": [_raw(&"seal_burn", 4.0)] as Array[BoonMod]})
+	_talent(1, &"pavio_longo", B.PIRO, T.MIDDLE, 2, 5, {"slot": S.ATTACK, "mods": [_raw(&"burn_dps", 2.0, [], &"light"), _raw(&"burn_dps", 3.0, [], &"seal")] as Array[BoonMod]})
+	_talent(2, &"combustao", B.PIRO, T.MIDDLE, 3, 7, {"slot": S.SPECIAL, "mods": [_raw(&"burn_dps", 4.0, [], &"blast"), _raw(&"cast_size_pct", 0.25, [], &"blast")] as Array[BoonMod]})
+	_talent(3, &"inferno_runico", B.PIRO, T.APEX, 4, 16, {"partner": B.ARCA, "mods": [_raw(&"inferno_dps", 10.0), _raw(&"inferno_time", 4.0)] as Array[BoonMod]})
+	# Arcanismo: a Selo gives 1 more Magia; the Selo comes a shot sooner (the third shot 5 weaker); a second Selo on one enemy
+	# (the blast's bonus x1.4); a detonated Selo leaps to the nearest enemy without one
+	_talent(4, &"eco_arcano", B.ARCA, T.ENTRY, 2, 2, {"mods": [_raw(&"seal_magick", 1.0)] as Array[BoonMod]})
+	_talent(5, &"cadeia_curta", B.ARCA, T.MIDDLE, 2, 4, {"slot": S.ATTACK, "mods": [_raw(&"seal_at", -1.0), _raw(&"damage_pct", -1.0 / 3.0, [], &"seal")] as Array[BoonMod]})
+	_talent(6, &"selo_duplo", B.ARCA, T.MIDDLE, 3, 8, {"mods": [_raw(&"seal_cap", 1.0)] as Array[BoonMod]})
+	_talent(7, &"ruptura", B.ARCA, T.APEX, 4, 18, {"partner": B.CTRL, "mods": [_raw(&"seal_leap", 1.0)] as Array[BoonMod]})
+	# Selos (control): the Círculo 0.8 m wider; it roots the commons 0.6 s when it closes; the Suspensão 0.8 m wider and 1 s
+	# longer; the Círculo 2 s longer and the Selo on the first shot inside it
+	_talent(8, &"circulo_expandido", B.CTRL, T.ENTRY, 2, 3, {"mods": [_raw(&"cast_size_pct", 0.25, [], &"shout")] as Array[BoonMod]})
+	_talent(9, &"prisao_sigilada", B.CTRL, T.MIDDLE, 3, 6, {"slot": S.CAST, "mods": [_raw(&"circle_root", 0.6)] as Array[BoonMod]})
+	_talent(10, &"suspensao_larga", B.CTRL, T.MIDDLE, 3, 9, {"slot": S.RUSH, "mods": [_raw(&"dome_size_pct", 0.31), _raw(&"dome_time", 1.0)] as Array[BoonMod]})
+	_talent(11, &"contencao_perfeita", B.CTRL, T.APEX, 4, 20, {"partner": B.PIRO, "mods": [_raw(&"circle_time", 2.0), _raw(&"circle_seal_at", -1.0)] as Array[BoonMod]})
+	# bridges: the third shot burns (5 a second); a blast on 3 Selos or more throws a second at half; the Círculo lays a Selo
+	# on all inside when it closes; the Círculo and the Suspensão recharge a quarter sooner; the Círculo burns when it closes
+	# (12 and 4 a second); the Passo leaves a flash where she was and embers where she lands
+	_talent(12, &"chama_que_marca", B.BRIDGE, T.BRIDGE, 3, 11, {"joins": PA, "mods": [_raw(&"burn_dps", 5.0, [], &"seal")] as Array[BoonMod]})
+	_talent(13, &"brasa_gemea", B.BRIDGE, T.BRIDGE, 3, 19, {"joins": PA, "mods": [_raw(&"twin_blast", 0.5)] as Array[BoonMod]})
+	_talent(14, &"selo_no_chao", B.BRIDGE, T.BRIDGE, 3, 12, {"joins": AC, "mods": [_raw(&"circle_seal", 1.0)] as Array[BoonMod]})
+	_talent(15, &"leitura_rapida", B.BRIDGE, T.BRIDGE, 3, 14, {"joins": AC, "mods": [_raw(&"cooldown_pct", -0.25, [], &"shout"), _raw(&"cooldown_pct", -0.25, [], &"dome")] as Array[BoonMod]})
+	_talent(16, &"brasa_que_prende", B.BRIDGE, T.BRIDGE, 3, 13, {"joins": PC, "mods": [_raw(&"circle_burst", 12.0), _raw(&"burn_dps", 4.0, [], &"shout")] as Array[BoonMod]})
+	_talent(17, &"passo_de_brasa", B.BRIDGE, T.BRIDGE, 3, 15, {"joins": PC, "slot": S.DASH, "mods": [_raw(&"step_flash", 12.0)] as Array[BoonMod]})
+	# sustain, off the branches
+	_talent(18, &"firmeza", B.SUSTAIN, T.SUSTAIN, 2, 10, {"mods": [_raw(&"max_hp", 10), _raw(&"magick_max", 10)] as Array[BoonMod]})
+	_talent(19, &"reserva", B.SUSTAIN, T.SUSTAIN, 3, 12, {"mods": [_raw(&"magick_max", 20)] as Array[BoonMod]})
+	_talent(20, &"respiro", B.SUSTAIN, T.SUSTAIN, 3, 13, {"mods": [_raw(&"room_heal", 2)] as Array[BoonMod]})
+	_talent(21, &"passo_longo", B.SUSTAIN, T.SUSTAIN, 2, 17, {"mods": [_raw(&"blink_pct", 0.18)] as Array[BoonMod]})
+	_talent(22, &"ainda_de_pe", B.SUSTAIN, T.SUSTAIN, 5, 17, {"mods": [_raw(&"rise_share", 0.5)] as Array[BoonMod]})
+	_talent_dir = TALENT_DIR
+
 
 func _maga() -> void:
 	_save(_maga_tree(), MAGA_COMBOS)
+	_maga_talents()
 	DirAccess.make_dir_recursive_absolute(MAGA_ULT.get_base_dir())
 	# the Tempestade dos Selos: 6 m at the cursor (up to 9) for 4 s, a Selo on all at the first tick, 8 every 0.5 s,
 	# 110 to each Selo at the end; 90 charge (the Voragem's way: Magia spent, damage dealt, life lost), Mastery 2
@@ -2127,6 +2204,19 @@ func _maga() -> void:
 		u.set(k, numbers[k])
 	u.tags = [&"ultimate", &"cast"] as Array[StringName]
 	_save(u, MAGA_ULT)
+	# the Suspensão Absoluta (maga_m2.md 3.2): a dome of 5.5 m that walks with her for 8 s; every shot that lands inside lays a
+	# Selo and hits 30% harder, the Explosão costs 5; enemy shots of commons and elites hang in the air; 100 charge, Mastery 6
+	var d := UltDef.new()
+	d.id = &"dome_abs"
+	d.kind = UltDef.Kind.DOME
+	d.name_key = &"ult_dome_abs"
+	d.desc_key = &"ult_dome_abs_desc"
+	var dome_numbers := {"charge": 100.0, "damage_charge": ULT_DAMAGE_CHARGE, "hurt_charge": ULT_HURT_CHARGE, "mastery_level": 6, "gesture": 0.3,
+		"anim": &"Cast", "anim_peak": PEAK[&"Cast"], "radius": 5.5, "duration": 8.0, "dome_shot_pct": 0.3, "dome_blast_cost": 5.0}
+	for k: String in dome_numbers:
+		d.set(k, dome_numbers[k])
+	d.tags = [&"ultimate", &"cast"] as Array[StringName]
+	_save(d, MAGA_ULT2)
 	var kit := ArcaneKit.new()  # (every number of ArcaneKit is its default: maga.md 2 and 3)
 	kit.blast_damage = 32.0  # 2026-11-23 balance: the Maga dealt 28/s against the Warrior 42/s (was 25 and 35 with the Selo)
 	kit.blast_seal_damage = 44.0
@@ -2143,9 +2233,10 @@ func _maga() -> void:
 	h.passive_tags = [&"finisher"] as Array[StringName]
 	h.passive_never = [&"ultimate"] as Array[StringName]
 	h.arcane = kit
-	h.ultimates = [ResourceLoader.load(MAGA_ULT, "", ResourceLoader.CACHE_MODE_REPLACE)] as Array[UltDef]
+	h.ultimates = [ResourceLoader.load(MAGA_ULT, "", ResourceLoader.CACHE_MODE_REPLACE),
+		ResourceLoader.load(MAGA_ULT2, "", ResourceLoader.CACHE_MODE_REPLACE)] as Array[UltDef]
 	h.talents_dir = MAGA_TALENTS
-	h.mastery = ResourceLoader.load(MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
+	h.mastery = ResourceLoader.load(MAGA_MASTERY_PATH, "", ResourceLoader.CACHE_MODE_REPLACE)
 	_save(h, HeroDef.MAGA)
 
 

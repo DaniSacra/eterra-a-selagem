@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_j7fud"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_sklc3"]
+
+[sub_resource type="Resource" id="Resource_kcqn4"]
+script = ExtResource("1_j7fud")
+stat = &"seal_burn"
+base = 4.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_sklc3")
+id = &"brasa_viva"
+name_key = &"talent_brasa_viva"
+desc_key = &"talent_brasa_viva_desc"
+branch = 6
+cost = 2
+mods = Array[ExtResource("1_j7fud")]([SubResource("Resource_kcqn4")])

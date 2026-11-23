@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_lboop"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_5r7b7"]
+
+[sub_resource type="Resource" id="Resource_amcyt"]
+script = ExtResource("1_lboop")
+stat = &"twin_blast"
+base = 0.5
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_5r7b7")
+id = &"brasa_gemea"
+name_key = &"talent_brasa_gemea"
+desc_key = &"talent_brasa_gemea_desc"
+branch = 4
+tier = 3
+cost = 3
+unlock_level = 19
+memory_cost = 3
+joins = Array[int]([6, 7])
+mods = Array[ExtResource("1_lboop")]([SubResource("Resource_amcyt")])
