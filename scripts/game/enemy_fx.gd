@@ -531,8 +531,11 @@ func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, p
 ## before the blow; `age` is how long it has been lit (0 to lead). It pulses once as it lights; the elites and the heavy
 ## ones carry a larger one. Costs 2 strokes of the pool (4 quads), never a node.
 ## Daniel, 2026-11-23 after seeing it: larger and yellow (it was ivory gold, 0.34 m tall).
-const BANG_COLOR := Color(1.0, 0.84, 0.05)
-const BANG_RISE := 0.5
+const BANG_COLOR := Color(1.0, 0.9, 0.1)
+## Above the life and Quebra bars, so the dot reads (at 0.5 the bars covered it: a yellow bar, not a "!").
+const BANG_RISE := 1.05
+## The light pushed past the strokes' usual tone (it read olive on the GPU at 1.0).
+const BANG_GLOW := 1.45
 const BANG_BAR := 0.62
 const BANG_DOT := 0.18
 const BANG_GAP := 0.14
@@ -553,10 +556,12 @@ func alert(e: Enemy, age: float) -> void:
 	var s := bang_pulse(age) * big
 	var base := Vector3(e.pos.x, e.y + d.size * 1.9 + BANG_RISE, e.pos.y)
 	var up := _up.normalized()
-	var color := toned(lit(BANG_COLOR), 1.0)
+	var color := toned(lit(BANG_COLOR), BANG_GLOW)
 	var width := BANG_WIDTH * s
-	var bottom := base + up * BANG_GAP * s
-	var top := base + up * (BANG_GAP + BANG_BAR) * s
+	# the dot at the base, then the gap, then the bar (the gap counted from the dot's top, ink included, or the two
+	# strokes join into one yellow block)
+	var bottom := base + up * (BANG_DOT + BANG_GAP + INK_EDGE * 2.0) * s
+	var top := bottom + up * BANG_BAR * s
 	var dot_base := base
 	# ink first for both strokes, then the light (strokes that meet put all their ink first)
 	_stroke(bottom, top, width, color, 1.0, 1)
