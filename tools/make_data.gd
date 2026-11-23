@@ -2792,7 +2792,8 @@ func _hub_guide() -> void:
 		[&"book", HubPlan.BOOK, &"guide_book", &"open"],
 		[&"forge", HubPlan.SMITH, &"guide_forge", &"open"],
 		[&"vendor", HubPlan.VENDOR, &"guide_vendor", &"open"],
-		[&"account", HubPlan.SMITH, &"guide_account", &"account"],
+		[&"account", HubPlan.VINE, &"guide_account", &"account"],
+		[&"maga", HubPlan.HEROES, &"guide_maga", &"maga"],
 		[&"sworn", HubPlan.PORTAL, &"guide_sworn", &"wins"],
 	]
 	for i in list.size():

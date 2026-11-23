@@ -5,11 +5,14 @@ extends GutTest
 func test_a_new_save_picks_the_warrior() -> void:
 	var d := SaveData.defaults()
 	assert_eq(SaveData.picked_hero(d), "warrior")
+	assert_eq(SaveData.next_hero(d), "warrior", "PT-9: the Maga is locked until Morvath is sealed once")
+	d.wins = 1
 	assert_eq(SaveData.next_hero(d), "maga")
 
 
 func test_the_pick_walks_the_list_and_back() -> void:
 	var d := SaveData.defaults()
+	d.wins = 1
 	d.hero = SaveData.next_hero(d)
 	assert_eq(SaveData.picked_hero(d), "maga")
 	assert_eq(SaveData.next_hero(d), "warrior")

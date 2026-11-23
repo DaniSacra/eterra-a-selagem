@@ -82,9 +82,9 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   moeda que pagou, exato (`SaveData.LEGACY_PREPARO`, `refund_preparo`, `MaterialPurse.refund`: sem teto e sem contar nos
   materiais trazidos). Saíram Mão Firme, Vigor, Fôlego da Sala, Água Clara, Bolsa Cheia, Coração Atento e Segunda Chance
   (`Player.revives`, `Account.better`, `room_heal_pct` foram removidos).
-- **Santuário (V1)**: ainda no Forjador (`Hub._use_smith` pergunta "A Forja" ou "A Videira"; `VineSheet`, folha simples em
-  3 colunas). **V2** faz a estação própria e a tela no estilo do Livro; **V3** a planta crescendo. A condição `account` do
-  guia do Santuário (`HubGuide`) mantém o id (está no save) e abre com `Vine.open`.
+- **Santuário (V2, 2026-11-23)**: estação própria (`HubPlan.VINE`, leste, junto à Árvore), tela `VineScreen` e o Forjador só da Forja
+  (detalhe em `hub.md` "A Videira e o Estandarte dos Heróis"). **V3** faz a planta crescer (`VineStation.grown`). A condição `account`
+  do guia do Santuário (`HubGuide`) mantém o id (está no save), agora aponta para a estação, e abre com `Vine.open`.
 
 ## Salmos (E4-01 e E4-02; regras, números e escolhas em `docs/design/e4_psalms.md`)
 - `PsalmDef` (`core/psalm_def.gd`, `data/psalms/`, parte `psalms` do `make_data.gd`): nome só por tema, sem número nem

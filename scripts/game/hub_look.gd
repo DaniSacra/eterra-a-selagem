@@ -375,6 +375,9 @@ const STY_POOLS: Array[Array] = [
 	[HubPlan.BOOK, Vector3(11.4, 0.0, -5.3), Vector3(10.2, 8.0, -9.1), 11.0, 28.0, 12.0, Color(1.0, 0.82, 0.58)],
 	[HubPlan.VENDOR, Vector3(-10.6, 0.8, 6.8), Vector3(-9.2, 8.0, 2.6), 9.0, 28.0, 12.0, Color(1.0, 0.8, 0.55)],
 	[HubPlan.TREE, Vector3(11.9, 1.0, 8.5), Vector3(10.1, 9.0, 4.1), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
+	# V2 and PT-9: the Videira's vase and the heroes' standards
+	[HubPlan.VINE, Vector3(19.0, 1.0, 9.9), Vector3(17.2, 9.0, 5.4), 5.0, 28.0, 13.0, Color(0.9, 1.0, 0.62)],
+	[HubPlan.HEROES, Vector3(-17.5, 1.4, 9.5), Vector3(-19.3, 9.0, 5.1), 5.0, 28.0, 13.0, Color(1.0, 0.84, 0.55)],
 	[HubPlan.PORTAL, Vector3(0.0, 0.0, 10.4), Vector3(0.0, 8.0, 5.5), 14.0, 38.0, 13.0, Color(0.36, 1.0, 0.58)],
 ]
 ## P1-A2 of the cycle's art review: the portal's pool (the last row) green and wide enough to read at the top of the
@@ -413,6 +416,9 @@ var fk: ArenaKit
 var fm: Masonry
 ## The tree that was grown, and each station's own light (HUB-B3 lifts the one in focus).
 var tree: StoneTree
+## V2 and PT-9: the Videira's planting and the heroes' standards (null before dress; Hub.evolve gives them the save).
+var vine_station: VineStation
+var hero_station: HeroStation
 var station_lights := {}
 var _lion_mats := {}
 var _plain_mats := {}
@@ -537,6 +543,10 @@ func dress() -> void:
 				_stand_fire(c)
 			&"hub_alchemist":
 				_alchemist(c, o)
+			&"hub_vine":
+				_vine_arch(c, o)
+			&"hub_heroes":
+				_hero_stand(c, o)
 	_crowns(_cypress_spots, _cypress_tall, CYPRESS_A, CYPRESS_B, CYPRESS_WIDE.x, "Cypresses")
 	_crowns(_shrub_spots, _shrub_tall, SHRUB_A, SHRUB_B, SHRUB_WIDE, "Shrubs")
 	_forge()
@@ -936,6 +946,38 @@ func _crowns(spots: Array[Vector3], talls: Array[float], leaf_a: Color, leaf_b: 
 func _bench(c: Vector2, o: ArenaObstacle) -> void:
 	var yaw := deg_to_rad(Feel.live().cam_yaw) + (PI * 0.5 if c.x < 0.0 else -PI * 0.5)
 	tomb.bench(o.center, Vector2(o.half.y, o.half.x), yaw, stone())
+
+
+## V2: the Videira's arch of stone on its footprint (two pillars, a lintel with its corner blocks, a low plinth between
+## them) and the vase with its young vine in the middle (VineStation; `grow_vine` shows what the save has bought).
+func _vine_arch(c: Vector2, o: ArenaObstacle) -> void:
+	var mat := stone()
+	var hx := o.half.x
+	var h := o.height
+	for side in [-1.0, 1.0]:
+		fm.block(at(c.x + side * (hx - 0.25), 0.0, c.y), Vector3(0.5, h - 0.4, o.half.y * 2.0), 0.0, mat)
+		fm.block(at(c.x + side * (hx - 0.85), h - 0.9, c.y), Vector3(0.7, 0.5, o.half.y * 2.0 - 0.1), 0.0, mat)
+	fm.block(at(c.x, h - 0.4, c.y), Vector3(hx * 2.0 + 0.2, 0.4, o.half.y * 2.0 + 0.08), 0.0, mat)
+	fm.block(at(c.x, 0.0, c.y), Vector3(hx * 2.0 - 0.5, 0.2, o.half.y * 2.0 - 0.1), 0.0, mat)
+	vine_station = VineStation.make(frame, at(c.x, 0.0, c.y))
+
+
+## The planting as the save has grown it (Vine.growth: nodes bought by branch; VineStation.grown).
+func grow_vine(growth: Dictionary) -> void:
+	if vine_station != null:
+		vine_station.grown(growth)
+
+
+## PT-9: the heroes' stand on its footprint (a low plinth of stone) with the two standards (HeroStation).
+func _hero_stand(c: Vector2, o: ArenaObstacle) -> void:
+	fm.block(at(c.x, 0.0, c.y), Vector3(o.half.x * 2.0, 0.3, o.half.y * 2.0), 0.0, stone())
+	hero_station = HeroStation.make(frame, at(c.x, 0.0, c.y))
+
+
+## The standards as the save has it (the picked hero's whole, the locked Maga grey).
+func show_heroes(data: Dictionary) -> void:
+	if hero_station != null:
+		hero_station.refresh(data)
 
 
 ## A raised bed (HUB-D): a box of stone with its coping, dark earth, copper shrubs along it (drawn in _crowns), a few

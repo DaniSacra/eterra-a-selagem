@@ -6,6 +6,6 @@
 script = ExtResource("1_pt7b2")
 id = &"account"
 order = 6
-station = &"smith"
+station = &"vine"
 text_key = &"guide_account"
 condition = &"account"

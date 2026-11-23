@@ -136,9 +136,11 @@ func test_the_walks_between_the_stations_are_measured_under_four_seconds() -> vo
 			var t := _walk(hub, spots[keys[i]], spots[keys[j]])
 			table.append("%s-%s %.2f s" % [keys[i], keys[j], t])
 			if keys[i] == &"arrival":
-				assert_lt(t, 5.5, "from the seal to %s: %.2f s" % [keys[j], t])
-			else:
+				assert_lt(t, 5.5 if HubPlan.CORE.has(keys[j]) else HubPlan.EXTRA_WALK, "from the seal to %s: %.2f s" % [keys[j], t])
+			elif HubPlan.CORE.has(keys[i]) and HubPlan.CORE.has(keys[j]):
 				assert_lt(t, 4.0, "%s to %s: %.2f s" % [keys[i], keys[j], t])
+			else:
+				assert_lt(t, HubPlan.EXTRA_WALK, "%s to %s (V2, PT-9): %.2f s" % [keys[i], keys[j], t])
 	gut.p("HUB WALKS " + ", ".join(table))
 
 

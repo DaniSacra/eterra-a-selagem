@@ -278,52 +278,44 @@ func use(id: StringName) -> void:
 			_use_smith()
 		HubPlan.VENDOR:
 			_use_vendor()
+		HubPlan.VINE:
+			_open_vine()
+		HubPlan.HEROES:
+			_open_heroes()
 
 
-## The Portal's page: Descer, the hero to take down (M1b: one button that walks Guerreiro, Maga; the choice stays in the
-## save) and Ficar. The pick reopens the page with the new name.
+## The Portal's page: Descer or Ficar, with the line of the hero picked (PT-9: the pick itself is at the Estandarte dos
+## Heróis, HeroPickScreen).
 func _open_portal() -> void:
 	var picked := SaveData.picked_hero(Save.data)
 	var p := HubPanel.new()
 	host.open(p, [T.t(&"hub_descend_title"), T.t(&"hub_descend_line_" + picked),
-		[[&"go", T.t(&"hub_descend_go")], [&"hero", T.t(&"hub_hero_" + picked)], [&"stay", T.t(&"hub_descend_stay")]], HowToScreen.step_glyph(0, MARK)])
+		[[&"go", T.t(&"hub_descend_go")], [&"stay", T.t(&"hub_descend_stay")]], HowToScreen.step_glyph(0, MARK)])
 	p.chosen.connect(func(choice: StringName) -> void:
 		if choice == &"go":
-			descend.call_deferred()
-		elif choice == &"hero":
-			pick_hero.call_deferred())
+			descend.call_deferred())
 
 
-## Walks to the next hero of the save and shows the Portal again.
-func pick_hero() -> void:
-	Save.data.hero = SaveData.next_hero(Save.data)
-	Save.write()
-	_open_portal()
+## PT-9: the hero's station beside the Vendedor: the pick of the next descent (HeroPickScreen; the Maga locked until
+## Morvath was sealed once).
+func _open_heroes() -> void:
+	var s := HeroPickScreen.new()
+	if host.open(s, [Save.data]):
+		s.picked.connect(func(_id: String) -> void: labels_changed())
 
 
-## Ofícios, Roteiro A: the Forjador opens the Forja; once a vein was noted it has the Oficina's bookmark (the
-## ui-ux-designer's ForgeScreen), open first while the Picareta waits to be restored.
+## Ofícios, Roteiro A: the Forjador opens the Forja only (A Videira has its own station since V2); once a vein was noted
+## it has the Oficina's bookmark (the ui-ux-designer's ForgeScreen), open first while the Picareta waits to be restored.
 func _use_smith() -> void:
-	# once the Forja is behind him the Forjador also keeps A Videira (the choice first; V2 moves it to its own station)
-	if not Vine.open(Save.data):
-		_open_forge()
-		return
-	var p := HubPanel.new()
-	host.open(p, [T.t(&"hub_smith"), T.t(&"hub_smith_desc"),
-		[[&"forge", T.t(&"vine_smith_forge")], [&"fonte", T.t(&"vine_smith_fonte")], [&"back", T.t(&"back")]]])
-	p.chosen.connect(_on_smith_choice)
+	_open_forge()
 
 
-func _on_smith_choice(choice: StringName) -> void:
-	if choice == &"forge":
-		_open_forge.call_deferred()
-	elif choice == &"fonte":
-		_open_vine.call_deferred()
-
-
-## A Videira at the Forjador (VineSheet, a stand-in until V2); a purchase is written and the hub reads the save again.
+## V2: A Videira at its own station (VineScreen); a purchase is written and the hub reads the save again (the planting
+## grows, VineStation.grown).
 func _open_vine() -> void:
-	VineSheet.open(host, Save.data, func(_id: StringName) -> void: labels_changed())
+	var v := VineScreen.new()
+	if host.open(v, [Save.data]):
+		v.bought.connect(func(_id: StringName) -> void: labels_changed())
 
 
 ## The Vendedor: closed until the first Pedra Funda; then its order (2 Pedra Funda and 30 Prata); delivered, the first
@@ -390,6 +382,10 @@ func evolve() -> void:
 				focus.points[id] = HubPlan.use_point(id)
 	if arena != null and arena.look != null:
 		HubEvolution.apply(arena.look, HubEvolution.of(Save.data, codex_chapters(Save.data)))
+		if arena.look.has_method(&"grow_vine"):
+			arena.look.call(&"grow_vine", Vine.growth(Save.data))
+		if arena.look.has_method(&"show_heroes"):
+			arena.look.call(&"show_heroes", Save.data)
 		if arena.look.has_method(&"set_closed"):
 			for id in HubGate.GATED:
 				arena.look.call(&"set_closed", id, not is_open(id))

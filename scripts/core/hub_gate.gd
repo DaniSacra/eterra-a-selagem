@@ -3,7 +3,8 @@ extends RefCounted
 ## The Santuário opens bit by bit (Daniel, 2026-11-21): the player learns one station at a time. Pure, read from the save:
 ##   Portal: always. Livro and Árvore de Dons: once a descent was played (runs >= TREE_BOOK_RUNS). Forja: the first guardian
 ##   beaten, or Prata enough for the Temperar I (what comes first). Vendedor: the third return (runs >= VENDOR_RUNS) or the
-##   first Pedra Funda. Alquimista: off (FLAGS). Juramentos (not a station) open on the first victory, as before.
+##   first Pedra Funda. Videira (V2, its own station): what opened the Forjador's choice, Vine.open. Heróis (PT-9, beside the
+##   Vendedor): when he opens (or Morvath was sealed), and the Maga inside stays locked until the first Morvath is sealed (SaveData.hero_open). Alquimista: off (FLAGS). Juramentos (not a station) open on the first victory, as before.
 ## A save that already used a station (forge bought, Gift opened, an order, an Obra) counts it open: nobody loses what
 ## they have. `data.hub.presented` keeps the stations whose opening was shown (once); version 9 of the save marks the
 ## open ones of an older file as shown. A closed station has no sign, focus, use or floating name (Hub); its look is the
@@ -12,7 +13,7 @@ extends RefCounted
 ##   HubGate.to_present(Save.data) -> the stations open and not yet shown, in order
 ##   HubGate.mark_presented(Save.data, ids)
 
-const GATED: Array[StringName] = [HubPlan.TREE, HubPlan.BOOK, HubPlan.SMITH, HubPlan.VENDOR]
+const GATED: Array[StringName] = [HubPlan.TREE, HubPlan.BOOK, HubPlan.SMITH, HubPlan.VENDOR, HubPlan.VINE, HubPlan.HEROES]
 const FLAGS := {&"alchemist": false}
 const TREE_BOOK_RUNS := 1
 const VENDOR_RUNS := 3
@@ -20,7 +21,7 @@ const VENDOR_RUNS := 3
 const TEMPER_I_SILVER := 15
 ## The sentence a station says when it opens (data/text_pt.tres).
 const TEXT := {HubPlan.TREE: &"hub_open_tree", HubPlan.BOOK: &"hub_open_book", HubPlan.SMITH: &"hub_open_smith",
-	HubPlan.VENDOR: &"hub_open_vendor"}
+	HubPlan.VENDOR: &"hub_open_vendor", HubPlan.VINE: &"hub_open_vine", HubPlan.HEROES: &"hub_open_heroes"}
 
 static var _temper_cost := -1
 
@@ -35,6 +36,10 @@ static func is_open(data: Dictionary, id: StringName, all := false) -> bool:
 			return _smith(data)
 		HubPlan.VENDOR:
 			return _vendor(data)
+		HubPlan.VINE:
+			return Vine.open(data)
+		HubPlan.HEROES:
+			return _vendor(data) or Juramentos.unlocked(data)
 	return true
 
 

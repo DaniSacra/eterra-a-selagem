@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HubGuideDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_10mg7"]
+
+[resource]
+script = ExtResource("1_10mg7")
+id = &"maga"
+order = 7
+station = &"heroes"
+text_key = &"guide_maga"
+condition = &"maga"

@@ -65,11 +65,21 @@ static func bought_ids(data: Dictionary) -> Array:
 	return block(data)["bought"]
 
 
-## Whether the station shows: after the Forja (first guardian or a Temperar) or once anything was bought.
+## Whether the station (V2: its own, east of the Santuário) shows: after the Forja (first guardian or a Temperar) or once anything was bought.
 static func open(data: Dictionary) -> bool:
 	if not bought_ids(data).is_empty() or Forge.temper(data) > 0:
 		return true
 	return int((SaveData.hero(data, SaveData.FIRST_HERO).get("firsts", {}) as Dictionary).get("guardian", 0)) > 0
+
+
+## V2: how many nodes of each branch are bought ({vida: 2, provisao: 0, perseveranca: 3}), what the station's planting
+## shows (VineStation.grown, V3). Static: the hub asks it with the save alone.
+static func growth(data: Dictionary) -> Dictionary:
+	var v := Vine.new(load_catalog())
+	var out := {}
+	for branch in BRANCHES:
+		out[branch] = v.nodes_of(branch).filter(func(n: VineNode) -> bool: return v.owns(data, n.id)).size()
+	return out
 
 
 func branches() -> Array[StringName]:

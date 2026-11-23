@@ -233,15 +233,30 @@ static func _entries(loaded: Dictionary) -> Dictionary:
 	return out
 
 
-## The hero picked in this save (always one of HEROES).
+## PT-9: whether a hero may be picked in this save: the Warrior always, the Maga after the first Morvath sealed (wins).
+static func hero_open(data: Dictionary, id: String) -> bool:
+	return id != "maga" or int(data.get("wins", 0)) > 0
+
+
+## The heroes of HEROES that may be picked now, in order.
+static func open_heroes(data: Dictionary) -> Array[String]:
+	var out: Array[String] = []
+	for id in HEROES:
+		if hero_open(data, id):
+			out.append(id)
+	return out
+
+
+## The hero picked in this save (always one of HEROES, and open: a Maga picked before PT-9 reads as the Warrior).
 static func picked_hero(data: Dictionary) -> String:
 	var id := String(data.get("hero", FIRST_HERO))
-	return id if HEROES.has(id) else FIRST_HERO
+	return id if HEROES.has(id) and hero_open(data, id) else FIRST_HERO
 
 
-## The other hero of HEROES after the picked one (the Portal's pick walks the list).
+## The other open hero of HEROES after the picked one (walks the list; the Warrior again while the Maga is locked).
 static func next_hero(data: Dictionary) -> String:
-	return HEROES[(HEROES.find(picked_hero(data)) + 1) % HEROES.size()]
+	var open := open_heroes(data)
+	return open[(open.find(picked_hero(data)) + 1) % open.size()]
 
 
 ## A hero's block (made when missing).

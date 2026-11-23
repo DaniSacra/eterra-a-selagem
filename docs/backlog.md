@@ -27,7 +27,7 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
   que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.
 - **PT-9 Maga só depois de vencer Morvath e estação de troca de herói** (Daniel, 2026-11-23): a Maga fica travada até a primeira
   vitória sobre Morvath (hoje aparece no Portal a partir da 2ª descida); a troca de herói sai do Portal e ganha uma área própria no
-  Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário).
+  Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário). **FEITO (2026-11-23)**: `HubPlan.HEROES`, `HeroPickScreen`, `SaveData.hero_open`, guia `maga` (`docs/reference/hub.md`).
 - **Ordem sugerida**: lote A pequeno (PT-3, PT-7, PT-8) + PT-1 (o maior ganho no combate); lote B (PT-2 com a arte, PT-4, PT-5);
   PT-6 depois. Pedido de arte do PT-2 ao ChatGPT pode sair já.
 
@@ -51,7 +51,7 @@ Coração Atento em Memória; save v10 `account.bought`; o robô evoluído usa `
 5. **Texto**: a imagem 01 cita "Eu sou a videira verdadeira (João 15:1)". O jogo não cita texto bíblico (D-59, Salmos só por tema; Elun é a
    alegoria). Sugestão: subtítulo "Raízes que fortalecem todas as jornadas", sem citação.
 6. **Arte da estação**: videira em arco de pedra com 9 estados; modelo Meshy (estimar, cerca de 15 a 30 créditos) ou peças da Godot.
-**V1 FEITA (2026-11-23, worktree do gameplay-engineer; `docs/reference/meta.md` "A Videira")**: `Vine`/`VineNode`/`VineSheet`, `data/vine/`, save v12 com reembolso, O Viajante (mercador de rota na outra porta antes de cada guardião), Estoque, Reserva, +10% de Prata, Memória e materiais, `--vine=N`. Faltam V2 e V3.
+**V1 FEITA (2026-11-23, worktree do gameplay-engineer; `docs/reference/meta.md` "A Videira")**: `Vine`/`VineNode`/`VineSheet`, `data/vine/`, save v12 com reembolso, O Viajante (mercador de rota na outra porta antes de cada guardião), Estoque, Reserva, +10% de Prata, Memória e materiais, `--vine=N`. **V2 FEITA (2026-11-23)**: estação `HubPlan.VINE`, `VineScreen`, guia `account` aponta para a estação, `VineStation.grown`. Falta a V3.
 **Etapas sugeridas** (uma entrega cada): **V1** dados e regras (renomear `Account` para a Videira por fora, 9 nós, migração do save com
 reembolso, efeitos de Provisão e Perseverança, testes); **V2** estação no Santuário e tela sobreposta no estilo do Livro (compra com
 confirmação, teclado, mouse e controle), Forjador sem "O Preparo"; **V3** a planta crescendo por ramo. Donos: `gameplay-engineer` (V1),

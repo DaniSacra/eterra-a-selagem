@@ -15,7 +15,14 @@ const VENDOR := &"vendor"
 const TREE := &"tree"
 const SMITH := &"smith"
 const BOOK := &"book"
-const STATIONS: Array[StringName] = [PORTAL, VENDOR, TREE, SMITH, BOOK]
+## V2 (A Videira, the account's roots) and PT-9 (the hero's pick): two stations of their own, after the original five.
+const VINE := &"vine"
+const HEROES := &"heroes"
+const STATIONS: Array[StringName] = [PORTAL, VENDOR, TREE, SMITH, BOOK, VINE, HEROES]
+## The first five: no two of them more than 4 s of walking apart (LR-07). The two of V2 and PT-9 stand out in the lobes
+## (beside the Vendedor, east of the Árvore) and keep within EXTRA_WALK of the rest.
+const CORE: Array[StringName] = [PORTAL, VENDOR, TREE, SMITH, BOOK]
+const EXTRA_WALK := 6.5
 ## The walkable floor (local u, v; flat, y 0): 50 m wide and 32.5 m deep (HUB-B2, the PO: the first plan, 25 x 16.5 m,
 ## was a fifth of Hades II's hub), its south corners cut. HUB-D (art review H-P0-1 to H-P0-3, docs/gallery/hub/
 ## ART_REVIEW.md, and the room-designer's LR-07): the far camera (54 m, 30 degrees, 24 of view) sees about 25 m of
@@ -67,11 +74,12 @@ const ARRIVAL_EASE := 1.0
 ## 10 m off the axis and 5 m off the fountain's line; the portal's stays (the far camera was measured on it).
 const USE := {
 	PORTAL: Vector2(0.0, 11.0), VENDOR: Vector2(-10.3, 5.2), TREE: Vector2(10.1, 5.0), SMITH: Vector2(-10.3, -5.2),
-	BOOK: Vector2(10.1, -5.1),
+	BOOK: Vector2(10.1, -5.1), VINE: Vector2(19.0, 8.2), HEROES: Vector2(-17.5, 7.4),
 }
 const ANCHOR := {
 	PORTAL: Vector3(4.2, 12.9, 1.7), VENDOR: Vector3(-10.6, 7.6, 3.1), TREE: Vector3(11.9, 8.9, 4.4),
-	SMITH: Vector3(-12.2, -6.0, 2.4), BOOK: Vector3(12.0, -5.9, 2.6),
+	SMITH: Vector3(-12.2, -6.0, 2.4), BOOK: Vector3(12.0, -5.9, 2.6), VINE: Vector3(19.0, 9.9, 2.6),
+	HEROES: Vector3(-17.5, 9.5, 2.6),
 }
 ## What the camera shows of each station while it is in focus (HUB-D; local u, v and height over the floor): the
 ## portal's head over its stairs, the awning, the tree's crown, the forge's mouth under its chimney, the shelf of
@@ -80,7 +88,8 @@ const ANCHOR := {
 ## stood glued to the top of the screen with the portal cut off.
 const SHOW := {
 	PORTAL: Vector3(0.0, 17.6, 6.0), VENDOR: Vector3(-13.4, 10.2, 5.0), TREE: Vector3(11.9, 8.9, 8.0),
-	SMITH: Vector3(-15.8, -3.8, 7.6), BOOK: Vector3(16.6, -2.1, 4.8),
+	SMITH: Vector3(-15.8, -3.8, 7.6), BOOK: Vector3(16.6, -2.1, 4.8), VINE: Vector3(19.0, 10.0, 3.4),
+	HEROES: Vector3(-17.5, 9.6, 3.2),
 }
 const SHOW_MARGIN := 0.06
 ## The apex of the portal's outer order (u, v, height): the far camera keeps it in the screen from everywhere (its SHOW
@@ -107,6 +116,13 @@ const DAIS := Vector3(11.9, 8.9, 3.2)
 const LECTERN := Vector2(12.0, -5.9)
 const SHELF := Vector2(16.6, -2.1)
 const SHELF_HALF := Vector2(2.0, 0.5)
+## V2: the Videira's arch in the east lobe, off the Árvore's dais, the cypress, the urn and the arbour (centre u, v and
+## half sizes; the planting grows in front of it, VineStation). PT-9: the hero's station west of the Vendedor's stall, off
+## his goods, the lamp and the cypress: a stand of two banners on a low plinth (HeroStation).
+const VINE_ARCH := Vector2(19.0, 10.0)
+const VINE_ARCH_HALF := Vector2(1.5, 0.5)
+const HERO_STAND := Vector2(-17.5, 9.5)
+const HERO_STAND_HALF := Vector2(1.5, 0.55)
 ## The forge's yard's low wall (from u, to u, v; height YARD_WALL_HEIGHT). HV-A: only the west one (the east one stood
 ## across the Retorno's way in).
 const YARD_WALL := Vector3(-22.5, -14.0, -11.2)
@@ -134,7 +150,7 @@ const BENCH := Vector2(0.35, 1.3)
 ## the square's sides between the stations.
 ## HV-A: the east wing's bed off the Retorno's way, the west side's out of the Alquimista's space.
 const BEDS: Array[Vector4] = [Vector4(-10.0, -12.6, 2.2, 0.8), Vector4(8.4, -13.6, 2.2, 0.8),
-	Vector4(20.8, 1.6, 1.0, 2.4),
+	Vector4(22.4, 1.6, 0.8, 2.0),
 	# the two lower quarters of the square, between the medallion's way and the fountain (art re-review E-1: 9.75 m free;
 	# HV-A: 0.8 m in, off the Retorno's way to the portal)
 	Vector4(-6.6, -1.8, 1.2, 0.5), Vector4(6.6, -1.8, 1.2, 0.5)]
@@ -272,6 +288,8 @@ static func layout(yaw_deg: float = Feel.live().cam_yaw) -> RoomLayout:
 		ArenaObstacle.circle(w.call(Vector2(DAIS.x, DAIS.y)), DAIS.z, &"hub_dais", 0.5),
 		ArenaObstacle.box(w.call(LECTERN), Vector2(0.55, 0.6), turn, &"hub_lectern", 1.5),
 		ArenaObstacle.box(w.call(SHELF), SHELF_HALF, turn, &"hub_shelf", 4.6),
+		ArenaObstacle.box(w.call(VINE_ARCH), VINE_ARCH_HALF, turn, &"hub_vine", 3.2),
+		ArenaObstacle.box(w.call(HERO_STAND), HERO_STAND_HALF, turn, &"hub_heroes", 2.6),
 	]
 	var ya := Vector2(YARD_WALL.x, YARD_WALL.z)
 	var yb := Vector2(YARD_WALL.y, YARD_WALL.z)

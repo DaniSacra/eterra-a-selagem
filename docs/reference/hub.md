@@ -214,12 +214,12 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   volta ao herói. O herói fica parado enquanto isso.
 - A lista é dado: `data/hub_guide/NN_id.tres` (`HubGuideDef`: id, ordem, estação, `text_key`, condição), gerada por `_hub_guide` em
   `tools/make_data.gd`. Guia novo = uma linha lá e um texto `guide_*`. Condições (`HubGuide.CONDITIONS`): `open` (porta da
-  `HubGate` aberta), `always`, `wins` (Morvath selado: Juramentos), `account` (A Videira no Forjador). Hoje: portal (também troca de
-  herói), tree (Dons), book (Livro e Compêndio), forge, vendor, account, sworn.
+  `HubGate` aberta), `always`, `wins` (Morvath selado: Juramentos), `account` (A Videira aberta, V2), `maga` (a Maga liberada, PT-9). Hoje: portal, tree (Dons), book (Livro e Compêndio), forge, vendor,
+  account (estação da Videira), maga (Estandarte dos Heróis), sworn.
 - Uma vez por save: `hub.guided` (versão 11 do save); save antigo conta o que já está devido como visto (`SaveData.merged`). Gravado
   ao começar o guia. A linha `hub_open_*` de uma estação que tem guia na visita não aparece duas vezes.
 - Nada com `--bot`, `--smoke`, `--nosave`, `--hero-at` ou `--hub-open=all` (a suíte). Para ver: `--hub --guide=<id>` (`portal`, `tree`,
-  `book`, `forge`, `vendor`, `account`, `sworn`; `--guide=all` encadeia todos); forçado não grava. Ex.:
+  `book`, `forge`, `vendor`, `account`, `maga`, `sworn`; `--guide=all` encadeia todos); forçado não grava. Ex.:
   `tools/gpu.sh shot saida.png --hub --guide=tree --shot-at=5`.
 - Pendente: Encantos, anjos, Videira e a escolha de herói como destrave próprio (hoje a escolha de herói está sempre aberta e vai na
   frase do Portal); entram como linhas novas no `_hub_guide` quando tiverem estação e condição.
@@ -228,3 +228,21 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   terço do meio mais claras (`WORN_TINT`, material `_worn_stone`) e 6 mm mais altas (`WORN_RISE`, `WORN_SHARE` é a largura
   do miolo gasto); o meio-fio escuro e a junta escura enquadram a trilha. Sem shader nem material novo além de uma pedra
   mais clara; colisão e `HubPlan` iguais. Os losangos riscados nas lajes de uso das estações também saíram (`USE_SLAB`); os anéis do medalhão ficam. Captura de CPU: `docs/gallery/hub/pt4/hub_way_cpu.png`; ver com `tools/gpu.sh shot x.png --hub --look=stylized --cam=near`.
+
+## A Videira e o Estandarte dos Heróis (V2 e PT-9, 2026-11-23; testes em `tests/test_videira_v2.gd` e `tests/test_hero_station.gd`)
+- **Duas estações novas** em `HubPlan.STATIONS` (`VINE`, `HEROES`; `CORE` são as cinco antigas, que mantêm a regra de no máximo 4 s a pé,
+  as novas ficam em `EXTRA_WALK` 6,5 s). **Videira**: arco de pedra no lobo leste (peça `hub_vine`, centro (19,0; 10,0), uso (19,0; 8,2)),
+  aberta pela mesma condição do antigo Preparo (`Vine.open`, `HubGate`). **Estandarte dos Heróis**: no lobo oeste ao lado do balcão do
+  Vendedor (peça `hub_heroes`, centro (-17,5; 9,5), uso (-17,5; 7,4)), abre junto do Vendedor (3ª volta ou Pedra Funda) ou com a 1ª vitória.
+  Placa, âncora, `SHOW`, anel de foco e luz de poça (`STY_POOLS`) como as outras; textos `hub_vine*`, `hub_heroes*`, `hub_open_*`. O canteiro leste
+  encolheu e foi para (22,4; 1,6) para o caminho da chegada à Videira não cortá-lo.
+- **Peça provisória, nó de `HubLook`**: `VineStation` (`scripts/game/vine_station.gd`, nó "VineStation" no quadro do hub, vaso e 3 hastes
+  de 3 estágios) com **`grown(branches_bought)`**: dicionário ramo para nós comprados (0 a 3), `Vine.growth(save)` o monta;
+  `HubLook.grow_vine` o repassa em `Hub.evolve` (a cada compra). A V3 troca os meshes sem mexer em quem chama. `HeroStation` (dois
+  estandartes, o da Maga cinza travada) idem, `HubLook.show_heroes(save)`.
+- **O Portal só desce** (Descer, Ficar; a frase do herói escolhido continua). A troca de herói é `HeroPickScreen` (folha pequena do Livro, um
+  cartão por herói). `SaveData.hero_open(data, id)`: **a Maga só com `wins > 0`**; `picked_hero` devolve o Guerreiro se a Maga escolhida
+  estiver travada; `next_hero` anda só pelos abertos. Guia `maga` (condição `maga`) quando ela abre.
+- O Forjador volta a abrir só a Forja (`Hub._use_smith`); `VineSheet` e as chaves `vine_smith_*` saíram.
+- Ver (só a sessão principal): `tools/gpu.sh shot x.png --hub --hub-open=all --hero-at=vine --look=stylized --cam=near` e `--hero-at=heroes`;
+  telas: `--hub --hub-open=all --hub-use=vine` e `--hub-use=heroes`; guias: `--hub --guide=account` e `--guide=maga`.

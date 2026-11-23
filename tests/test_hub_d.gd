@@ -100,12 +100,13 @@ func test_near_the_south_edge_stays_low() -> void:
 ## station, the walk measured round the pieces is in test_hub_rev02).
 func test_no_two_stations_more_than_four_seconds_apart() -> void:
 	var speed := Feel.live().speed
-	var spots: Array[Vector2] = []
-	for id in HubPlan.STATIONS:
-		spots.append(HubPlan.USE[id])
-	for a in spots:
-		for b in spots:
-			assert_lt(a.distance_to(b) / speed, 4.05, "%s to %s: %.1f s" % [a, b, a.distance_to(b) / speed])
+	for ia in HubPlan.STATIONS.size():
+		for ib in HubPlan.STATIONS.size():
+			var a: Vector2 = HubPlan.USE[HubPlan.STATIONS[ia]]
+			var b: Vector2 = HubPlan.USE[HubPlan.STATIONS[ib]]
+			var core := HubPlan.CORE.has(HubPlan.STATIONS[ia]) and HubPlan.CORE.has(HubPlan.STATIONS[ib])
+			# V2 and PT-9: the Videira and the heroes' stand are out in the lobes, a little farther (HubPlan.EXTRA_WALK)
+			assert_lt(a.distance_to(b) / speed, 4.05 if core else HubPlan.EXTRA_WALK, "%s to %s: %.1f s" % [a, b, a.distance_to(b) / speed])
 
 
 func test_frame_for_leaves_a_shown_station_alone() -> void:

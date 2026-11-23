@@ -465,3 +465,17 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
 - O nome da sala vira cartela (`Hud._style_phase(true)`): marfim, 24 px, entre dois filetes de ouro (`GoldRule`, 300 px), sem caixa;
   dura `PLACE_TIME` 2,5 s. A fase do chefe continua em ouro 18 px sem filetes. O nome do chefe já é Cinzel (versalete natural).
 - Só interface: mesma semente dá o mesmo `RESULT`. Capturar: Fonte com o Ancião e uma sala de luta, 720 e 1080.
+
+## A Videira e a escolha de herói, telas (V2 e PT-9, 2026-11-23; testes em `tests/test_videira_v2.gd`, `tests/test_hero_station.gd`)
+- **`VineScreen`** (`scripts/ui/vine_screen.gd`, `host.open(VineScreen.new(), [Save.data])`): uma folha larga do Livro (`BookSpread` single,
+  `ActionBar` Escolher e Voltar). Título "A Videira" com a linha "Raízes que fortalecem todas as jornadas" e, à direita, o Saldo
+  (`MaterialCount.purse`: Prata e Memória). Três colunas (Vida, Provisão, Perseverança), cada uma com os 3 nós como cartões de papel
+  (`Book.button` com nome em Cinzel, efeito, custo na moeda do nó e estado: Comprada em verde, Falta material em vermelho, "Precisa de: X"
+  apagado). Comprar **pergunta antes**: clicar ou confirmar num cartão comprável abre no pé "Comprar X por N Prata?" com Comprar e Cancelar
+  (nada gasto até Comprar; Esc e B cancelam a pergunta primeiro e fecham a tela depois). Foco: setas andam nas colunas, para baixo da última
+  linha vai a Voltar; o mouse toma o foco ao passar. Sinal `bought(id)`; grava o save sozinha. Sem citação bíblica.
+- **`HeroPickScreen`** (`scripts/ui/hero_pick_screen.gd`): folha pequena centralizada com um cartão por herói (`SaveData.HEROES`): nome, uma
+  frase, estado (Escolhido / Escolher / Travada). A Maga travada leva o cadeado (`SealedMark`) e a frase "Ela é liberada quando você selar
+  Morvath pela primeira vez."; clicar nela não faz nada. Escolher grava `data.hero` na hora (vale para a próxima descida) e sinal `picked(id)`.
+- Ambas escalam por âncoras e contêineres (margens do `BookSpread`, `ActionBar.RESERVE` no pé), medidas nos testes contra o retângulo visível.
+

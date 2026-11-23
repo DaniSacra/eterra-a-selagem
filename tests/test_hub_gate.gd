@@ -74,7 +74,7 @@ func test_presentation_is_said_once() -> void:
 	HubGate.mark_presented(d, HubGate.to_present(d))
 	assert_true(HubGate.to_present(d).is_empty())
 	d.runs = 3
-	assert_eq(HubGate.to_present(d), [HubPlan.VENDOR] as Array[StringName], "only the new one")
+	assert_eq(HubGate.to_present(d), [HubPlan.VENDOR, HubPlan.HEROES] as Array[StringName], "only the new ones (the heroes' stand beside him)")
 	for id: StringName in HubGate.TEXT:
 		assert_ne(T.t(HubGate.TEXT[id]), String(HubGate.TEXT[id]), "text of %s" % id)
 
