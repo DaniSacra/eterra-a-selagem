@@ -37,7 +37,7 @@ propostas para o Daniel aprovar.** Zero créditos do Meshy: modelos de `assets/b
 - **Aviso**: linha clara que acende por **0,9 s** antes do primeiro pulso, mira trava nos 0,3 s finais; depois a linha segue o herói a 40 graus/s (`shot_turn`).
 - **Números**: vida 130, velocidade 0 (planta os pés), dano 5 a cada 0,45 s (5 pulsos), alcance 12 m, descanso 2,4 s, `size` 1,3, `per_room` 1.
 - **Reaproveita**: `CASTER`/`ARCHER` (`shot_ticks`, `shot_interval`, `shot_turn`, `shot_turn_decay`, `shot_line`). **Código novo**: raio como linha contínua com dano por pulso na linha e interrupção pela Quebra.
-- **Modelo**: `mage.res` (Skeleton_Mage) parado, cajado erguido na horizontal, tint azul-aço. Distinto do Varredor: este ataca de longe e persegue, o Varredor gira perto e não persegue.
+- **Modelo**: `channeler.res` (corpo do Mago, sem cajado e sem andar: braços erguidos no `Spell_Simple_Idle`, um orbe frio em cada punho), tint azul-aço (2026-11-23, lote de peso dos assados). Distinto do Varredor: este ataca de longe e persegue, o Varredor gira perto e não persegue.
 - **Aparece**: sala 6. **Mistura**: com Escudo (obriga a rodear por trás sem entrar na linha) e com Esqueletos (o raio varre o bando, o herói usa os corpos como cobertura se `blocks_body`).
 
 ## 4. Gritador (buff de grupo e cura)

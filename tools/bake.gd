@@ -300,9 +300,9 @@ const ROAR_BEND := {"Spine01": Vector3(-10, 0, 0), "Head": Vector3(-18, 0, 0)}
 
 ## What every figure does the same way. The rise plays in the 0.9 s the horde gives it (Horde, State.RISE).
 const COMMON_ANIMS := {
-	"hit": [&"ual", "Hit_Chest", 8, false],
-	"death": [&"ual", "Death01", 16, false, {"to": 1.9}],
-	"rise": [&"ual2", "LayToIdle", 12, false, {"time": 0.9, "in_place": true, "centred": true}],
+	"hit": [&"ual", "Hit_Chest", 6, false],
+	"death": [&"ual", "Death01", 11, false, {"to": 1.9}],
+	"rise": [&"ual2", "LayToIdle", 9, false, {"time": 0.9, "in_place": true, "centred": true}],
 }
 ## T5b P1-2 (docs/qa/t5b_boss_fight.md): LayToIdle ends stooped; with a staff (the sorcerer, the elder) or the round
 ## shield (the knight) the figure ended 0.3 to 0.4 m from its guard, the sorcerer's staff lying (the top of the figure
@@ -475,6 +475,23 @@ const MODELS := {
 		],
 		"anims": {
 			"walk": [&"ual", "Jog_Fwd", 20, true, MAGE_JOG], "idle": STAFF_CLIPS.idle,
+			"rise": STAFF_RISE,
+			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
+			"shot": STAFF_CLIPS.shot, "exit": STAFF_CLIPS.exit,
+		},
+	},
+	# C1e, the Canalizador (budget: the sorcerer's body without the staff and without a walk, it plants its feet): the arms
+	# held up in the spell pose as the idle, a cold orb in each fist and a ring of cold light over the head, so that it
+	# reads as the one who holds a beam open (the Mago holds a staff and walks)
+	"channeler": {
+		"meshy": "mage", "height": 1.92, "triangles": BODY_TRIANGLES,
+		"palette": PALETTE + "mage.png",
+		"held": [
+			{"hand": "Left", "shape": "sphere", "at": Vector3(0, 0.12, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_COLD, "name": "orb", "mark": true},
+			{"hand": "Right", "shape": "sphere", "at": Vector3(0, 0.12, 0), "size": Vector3(0.12, 0.12, 0), "cell": C_GLOW_COLD},
+		],
+		"anims": {
+			"walk": [&"ual", "Idle_Torch", 4, true], "idle": STAFF_CLIPS.cast,
 			"rise": STAFF_RISE,
 			"attack": STAFF_CLIPS.attack, "cast": STAFF_CLIPS.cast_rise, "cast_hold": STAFF_CLIPS.cast_hold,
 			"shot": STAFF_CLIPS.shot, "exit": STAFF_CLIPS.exit,
@@ -827,7 +844,7 @@ var only_anims: Array = []
 ## DT-104: what a figure was baked from, kept in its .res (meta "bake_stamp"): its entry (every option, clip and
 ## piece, as text) and PIPELINE. tests/test_asset_budget.gd fails when a .res is stale. Raise PIPELINE when a change
 ## to the code below changes what every figure bakes to (the entries' own changes are seen by themselves).
-const PIPELINE := 1
+const PIPELINE := 2
 
 
 static func stamp(spec: Dictionary) -> int:

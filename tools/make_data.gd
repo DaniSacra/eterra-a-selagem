@@ -512,7 +512,7 @@ func _beam_and_trap() -> void:
 	var T := EnemyDef.Tell
 	# the Canalizador: 130 life, planted (speed 0); within 12 m of the paladin a thread on him for 0.9 s (it follows, locked the last 0.3 s), then
 	# a beam 0.5 m across held 2.25 s in 5 pulses of 5, turning after him at 40 degrees a second; nothing hurts within 1 m of it; 2.4 s of rest. Room 6.
-	_enemy({"id": &"canalizador", "model": &"mage", "behavior": B.BEAM, "size": 1.3, "hp": 130.0, "speed": 0.0, "damage": 5.0, "radius": 0.55,
+	_enemy({"id": &"canalizador", "model": &"channeler", "behavior": B.BEAM, "size": 1.3, "hp": 130.0, "speed": 0.0, "damage": 5.0, "radius": 0.55,
 		"attack_damage": 5.0, "attack_range": 12.0, "attack_cooldown": 2.4, "attack_windup": 0.9, "aim_lock": 0.3, "shot_ticks": 5, "shot_interval": 0.45,
 		"shot_turn": 40.0, "attack_width": 0.5, "sweep_clear": 1.0, "recover_time": 0.4, "magic_color": BEAM_PALE, "tint": Color(0.62, 0.9, 0.95),
 		"vivid": 0.1, "rating": 18.0, "role": &"beam", "per_room": 1, "never_with": [&"sweep"] as Array[StringName], "tell": T.ORB,

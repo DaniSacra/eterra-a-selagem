@@ -66,6 +66,15 @@ Lote 2B (2026-11-20): os nove reassados juntos (opção `"centred"` no erguer, `
 `curse_windup` e `rain_wave`, 8,20 MB, 17 + 2 clipes). Assados no disco: **47,3 MB** com o corredor elite e a gente do
 hub (teto 70).
 
+**Lote do Canalizador (2026-11-23): assados 69,61 MB (teto 70, sem espaço) para 68,55 MB com o novo `channeler.res` (3,35 MB).**
+Peso de um assado = vértices x poses (a textura de 1024 pesa só 0,25 a 0,4 MB: ATLAS 768 ou 512 não rende). Folga aberta
+nos clipes comuns (`COMMON_ANIMS` em `tools/bake.gd`, as poses se misturam, a duração não muda): `death` 16 para 11 poses,
+`hit` 8 para 6, `rise` 12 para 9; `PIPELINE` 2 e todos reassados (os dois do hub também). `tests/test_living_crowd.gd` aceita
+agora no mínimo 6 e 11. Maior peso: Morvath 10,5 MB (250 poses), Knight 5,1, Skeleton 4,9, Mage 4,6, Elder 4,4, Guard 4,3.
+Ainda sem uso a cortar: nenhum clipe achado sem uso; candidatos futuros: `rain_wave`/`curse_windup` do Morvath (repetem clipes),
+`walk` do Herald e do Mago (compartilham o corpo, três assados do mesmo corpo: mage, herald, channeler, 12,3 MB).
+| Canalizador (C1e) | `channeler.res` | 3,35 MB | 4 885 | 4 179 | 99 (10: sem andar de verdade, `walk` de 4 poses; `idle` = `Spell_Simple_Idle`) | 2048 x 246 | 1,92 | 0,000 | 2026-11-23; sem cajado, braços erguidos, um orbe frio em cada punho (`held` esferas, `mark` no esquerdo); definitivo da silhueta; `docs/gallery/channeler/lab_game.png` |
+
 | Vendedor do hub (HUB-D) | `npc_vendor.res` | 0,77 MB | 3 252 | 4 005 | 30 (2: `idle` 16, `gesture` 14 = `Interact`) | 2048 x 48 | 1,90 | 0,000 | HUB-D (2026-11-19), `tools/bake.gd -- npcs` |
 | Forjador do hub (HUB-D) | `npc_smith.res` | 0,85 MB | 3 807 | 4 232 | 28 (2: `idle` 16, `gesture` 12 = `1H_Melee_Attack_Chop` de 0,1 a 0,655 s, tronco 12 graus para trás) | 2048 x 56 | 1,95 | 0,000 | HUB-D, idem; peças `hammer` e `handle` |
 

@@ -7,7 +7,7 @@
 script = ExtResource("2_26e56")
 id = &"canalizador"
 name_key = &"enemy_canalizador"
-model = &"mage"
+model = &"channeler"
 size = 1.3
 tint = Color(0.62, 0.9, 0.95, 1)
 magic_color = Color(0.7, 0.95, 1, 1)

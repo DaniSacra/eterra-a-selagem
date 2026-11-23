@@ -5,8 +5,8 @@ extends GutTest
 
 const DIR := "res://data/enemies/"
 const FIGURES: Array[StringName] = [&"skeleton", &"runner", &"mage", &"archer", &"guard", &"priest", &"knight", &"priest_elder", &"morvath"]
-## Poses a clip at least (VX-04): walk 20, hit 8, idle 12, death 16, attacks 14 where the figure has one.
-const LEAST := {&"walk": 20, &"hit": 8, &"idle": 12, &"death": 16, &"attack": 14, &"slash1": 14, &"slash2": 14, &"slash3": 14}
+## Poses a clip at least (VX-04): walk 20, hit 6, idle 12, death 11, attacks 14 where the figure has one. Hit and death went from 8 and 16 to 6 and 11 to make room for the Canalizador under the 70 MB (the poses blend, a death still runs 1.9 s).
+const LEAST := {&"walk": 20, &"hit": 6, &"idle": 12, &"death": 11, &"attack": 14, &"slash1": 14, &"slash2": 14, &"slash3": 14}
 ## Seconds of every clip before E1a (read from the baked files of 10944b1): the tells of the attacks are timed on them,
 ## so more poses never change how long a clip plays (the walk is timed by its stride, E1a-2).
 const BEFORE := {
@@ -85,7 +85,7 @@ func test_the_blend_between_poses() -> void:
 	assert_almost_eq(BakedModel.blend(10, 10.0, true, 1.05).z, 0.5, 0.0001, "and goes round")
 	var m := _model(&"skeleton")
 	var end := m.blend_at(&"death", m.duration(&"death"))
-	assert_eq(end, Vector3(15, 15, 0), "a one-shot ends on its last pose")
+	assert_eq(end, Vector3(10, 10, 0), "a one-shot ends on its last pose")
 	assert_eq(m.blend_at(&"death", 99.0), end, "and stays there")
 	assert_eq(m.blend_at(&"death", -1.0), Vector3(0, 1, 0))
 
