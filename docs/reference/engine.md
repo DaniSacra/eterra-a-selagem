@@ -145,6 +145,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   (`gifts`: id, nível, raridade), o controle (`device`: keyboard, gamepad, both; `Controls.seen_keys`/`seen_pad`), `omegas`,
   `dodges`, o que feriu por último (`last_hurt`) e, na morte, `defeated_by` (chave de texto). Nada sai do computador; o robô e
   `--nosave` não gravam. Formato em `core/run_log.gd` (`RunLog`), sinal `Game.run_logged(outcome, entry)`.
+  Resumo em Markdown (por herói/save, mortes, Memória e Prata, teclas): `python3 -I tools/runs_report.py [runs.jsonl] --since=2026-11-23T18:00` (padrão: o arquivo do Windows; `--source=all|human`, `--min-time=30`, `--out=arq.md`; amostra em `tests/fixtures/runs_sample.jsonl`).
   Ciclo C12c (GP-02, `RunLog.VERSION` 2, para separar injusto de não reagiu): `source` (`human` ou `bot`), `boons_at_boss`,
   `shop` (`gold` ao entrar, `bought`, `spent`), `fountain_used` e `hurt_ctx` (até 60 golpes levados: `by`, `t`, `room`, `dmg`,
   `warn_s` = segundos de aviso antes do golpe, -1 sem aviso conhecido; `dash_ready`; `offscreen` = quem bateu fora dos 5 a
