@@ -15,6 +15,8 @@ signal focused(def: TalentDef)
 
 ## Half the diamond across and down, in pixels at 720 lines at fit 1, and how far out each tier sits (share of the half).
 const HALF := Vector2(290, 222)
+## The Maga's triangle is drawn on a true circle (the diamond's ellipse would squash its 120 degrees).
+const HALF_TRIANGLE := Vector2(230, 230)
 const TIER_AT := {TalentDef.Tier.ENTRY: 0.34, TalentDef.Tier.MIDDLE: 0.64, TalentDef.Tier.APEX: 0.92}
 const BRIDGE_AT := 0.5
 ## Where a second or third Gift of the same branch and tier (or the same bridge) sits: a middle slides across its axis, a
@@ -31,6 +33,12 @@ const AXIS := {
 ## The sustain row (centre of its first node and the step) and its label, from the diamond's centre.
 const SUSTAIN_AT := Vector2(-258, 204)
 const SUSTAIN_STEP := 58.0
+## The Maga's triangle keeps its sustain Gifts in a column down the left edge (the row's corner is where her last bridge sits).
+const SUSTAIN_AT_TRIANGLE := Vector2(-268, -175)
+const SUSTAIN_STEP_TRIANGLE := Vector2(0, 52)
+## The apex cycle's arcs (triangle): how far along the ring from each apex's node an arc starts and ends, and its head.
+const CYCLE_GAP := 36.0
+const CYCLE_HEAD := 9.0
 const LABEL_SIZE := 17
 const CENTRE_SIDE := 58.0
 ## The room around the diamond for the branch names.
@@ -48,12 +56,15 @@ var nodes: Array[TalentNode] = []
 var centre: TalentNode
 ## The diamond's scale now (fit()).
 var k := 1.0
+## The Maga's triangle (any Gift of her three branches) instead of the Warrior's diamond; the apexes then close a cycle.
+var triangle := false
 ## The Gift the focus is on (null: the centre or nothing): its prerequisites light.
 var _focus: TalentDef
 
 
 func setup(p_loadout: HeroLoadout) -> TalentTree:
 	loadout = p_loadout
+	triangle = loadout.book.catalog.any(func(t: TalentDef) -> bool: return t.branch == TalentDef.Branch.PIRO)
 	custom_minimum_size = base_size() * FIT_MIN
 	centre = TalentNode.new().setup(null, CENTRE_SIDE)
 	add_child(centre)
@@ -65,7 +76,7 @@ func setup(p_loadout: HeroLoadout) -> TalentTree:
 		var n := TalentNode.new().setup(t)
 		nodes.append(n)
 		add_child(n)
-		n.set_meta(&"at", spot(t, sustain, variant_of(t)))
+		n.set_meta(&"at", spot(t, sustain, variant_of(t), triangle))
 		if t.tier == TalentDef.Tier.SUSTAIN:
 			sustain += 1
 		n.pressed.connect(func() -> void: picked.emit(t))
@@ -90,20 +101,22 @@ static func fit(room: Vector2) -> float:
 
 
 ## Where a Gift sits, from the diamond's centre at fit 1 (k: its place in the sustain row).
-static func spot(t: TalentDef, k_: int = 0, variant: int = 0) -> Vector2:
+static func spot(t: TalentDef, k_: int = 0, variant: int = 0, tri: bool = false) -> Vector2:
 	match t.tier:
 		TalentDef.Tier.BRIDGE:
 			var d: Vector2 = AXIS[t.joins[0]] + AXIS[t.joins[1]]
-			var out := d * HALF * BRIDGE_AT
+			var out := d * (HALF_TRIANGLE if tri else HALF) * BRIDGE_AT
 			if variant > 0:
 				# further out along the same ray: a second bridge between the same two entries has its lines clear of
 				# the first one's (beside it, or on the other side of the edge, they would cross)
-				out += out.normalized() * VARIANT_STEP * BRIDGE_VARIANT_PUSH * float(variant)
+				out += out.normalized() * VARIANT_STEP * (1.0 if tri else BRIDGE_VARIANT_PUSH) * float(variant)
 			return out
 		TalentDef.Tier.SUSTAIN:
+			if tri:
+				return SUSTAIN_AT_TRIANGLE + SUSTAIN_STEP_TRIANGLE * float(k_)
 			return SUSTAIN_AT + Vector2(SUSTAIN_STEP * k_, 0)
 	var axis: Vector2 = AXIS[t.branch]
-	var at := axis * HALF * float(TIER_AT[t.tier])
+	var at := axis * (HALF_TRIANGLE if tri else HALF) * float(TIER_AT[t.tier])
 	if variant > 0:
 		var side := 1.0 if variant % 2 == 1 else -1.0
 		var across := Vector2(axis.y, axis.x).abs() if absf(axis.x) < 0.01 or absf(axis.y) < 0.01 else Vector2(-axis.y, axis.x)
@@ -163,6 +176,16 @@ func _light(t: TalentDef) -> void:
 	queue_redraw()
 
 
+## The branches this tree draws (the Maga's three, or the Warrior's four).
+func _branches() -> Array:
+	return [TalentDef.Branch.PIRO, TalentDef.Branch.ARCA, TalentDef.Branch.CTRL] if triangle \
+		else [TalentDef.Branch.COMBO, TalentDef.Branch.FURIA, TalentDef.Branch.MAGIA, TalentDef.Branch.EMETH]
+
+
+func spot_sustain(i: int) -> Vector2:
+	return SUSTAIN_AT_TRIANGLE + SUSTAIN_STEP_TRIANGLE * float(i) if triangle else SUSTAIN_AT + Vector2(SUSTAIN_STEP * i, 0)
+
+
 func _mid() -> Vector2:
 	return size * 0.5
 
@@ -208,18 +231,23 @@ func _draw() -> void:
 	var path := path_of(_focus)
 	for pair in links():
 		_link(pair[0], pair[1], path)
+	if triangle:
+		_draw_cycle()
 	# the branch names past each apex, in the branch's colour
-	for b: TalentDef.Branch in AXIS:
+	for b: TalentDef.Branch in _branches():
 		var axis: Vector2 = AXIS[b]
 		var text := T.t(HeroLoadout.BRANCH_KEY[b])
 		var font := UiKit.TITLE_FONT
 		var w := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE).x
-		var apex := m + axis * HALF * float(TIER_AT[TalentDef.Tier.APEX]) * k
+		var apex := m + axis * (HALF_TRIANGLE if triangle else HALF) * float(TIER_AT[TalentDef.Tier.APEX]) * k
 		var at := apex + Vector2(34.0, 6.0) if axis.x == 0.0 else apex + Vector2(-w * 0.5, 50.0)
+		if triangle:
+			# the cycle's ring runs beneath the apexes: Piromancia's name above it, the other two out to the side
+			at = apex + Vector2(34.0, -10.0) if axis.x == 0.0 else apex + Vector2(34.0 if axis.x > 0.0 else -34.0 - w, 6.0)
 		var col := Book.RUBRIC
 		draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE, col)
 	var label := T.t(HeroLoadout.BRANCH_KEY[TalentDef.Branch.SUSTAIN])
-	var lat := m + SUSTAIN_AT * k + Vector2(-22.0, -34.0)
+	var lat := m + spot_sustain(0) * k + Vector2(-22.0, -34.0)
 	draw_string(UiKit.TITLE_FONT, lat, label, HORIZONTAL_ALIGNMENT_LEFT, -1, LABEL_SIZE - 2, Book.RUBRIC)
 
 
@@ -254,3 +282,46 @@ func _link(from: TalentDef, to: TalentDef, path: Array[TalentDef]) -> void:
 		col = Book.RUBRIC
 		width = maxf(width, 2.4)
 	draw_line(a, b, col, width, true)
+
+
+## The cycle of the apexes (triangle): each apex asks for a Gift of its partner's branch, so an arc runs clockwise along
+## the ring through the three apexes, from each to its partner's (Piromancia to Arcanismo to Selos to Piromancia), outside
+## the bridges and the Gifts. Dashed and faded; old gold when the apex is on and its partner branch has a Gift on;
+## rubric on the focused apex's own arc, with an arrowhead where it arrives.
+func _draw_cycle() -> void:
+	var m := _mid()
+	var radius := HALF_TRIANGLE.x * float(TIER_AT[TalentDef.Tier.APEX]) * k
+	for t in loadout.book.catalog:
+		if t.tier != TalentDef.Tier.APEX:
+			continue
+		var from_a: float = (AXIS[t.branch] as Vector2).angle()
+		var to_a: float = (AXIS[t.partner] as Vector2).angle()
+		var span := wrapf(to_a - from_a, 0.0, TAU)
+		var gap := CYCLE_GAP * k / radius
+		var met := loadout.is_equipped(t.id) and loadout.equipped().any(func(id: Variant) -> bool:
+			var o := loadout.book.find(StringName(id))
+			return o != null and o.branch == t.partner)
+		var col := Color(Book.FADED, 0.6)
+		var width := 1.6
+		if met:
+			col = Book.GILT
+			width = 2.4
+		if _focus == t:
+			col = Book.RUBRIC
+			width = 2.6
+		var steps := 40
+		var on := true
+		var prev := m + Vector2.from_angle(from_a + gap) * radius
+		for i in range(1, steps + 1):
+			var at := m + Vector2.from_angle(from_a + gap + (span - gap * 2.0) * float(i) / steps) * radius
+			if on:
+				draw_line(prev, at, col, width, true)
+			if i % 2 == 0:
+				on = not on
+			prev = at
+		var end_a := to_a - gap
+		var tip := m + Vector2.from_angle(end_a) * radius
+		var dir := Vector2.from_angle(end_a + PI * 0.5)
+		var side := dir.orthogonal()
+		draw_colored_polygon(PackedVector2Array([tip + dir * 3.0 * k, tip - dir * CYCLE_HEAD * k + side * CYCLE_HEAD * 0.55 * k,
+			tip - dir * CYCLE_HEAD * k - side * CYCLE_HEAD * 0.55 * k]), col)

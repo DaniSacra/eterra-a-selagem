@@ -109,7 +109,10 @@ var _purse: HBoxContainer
 func open(data: Dictionary = {}, start: Chapter = Chapter.HERO, hub: bool = false) -> void:
 	in_hub = hub
 	_data = data if not data.is_empty() else Save.data
-	loadout = HeroLoadout.new(HeroDef.warrior(), _data)
+	# the hero picked at the Portal (the Maga once Morvath was sealed); the Gifts chapter draws her triangle
+	# (--hero=maga forces her, for captures)
+	var id := Dev.arg("hero") if Dev.has("hero") else SaveData.picked_hero(_data)
+	loadout = HeroLoadout.new(HeroDef.maga() if id == "maga" else HeroDef.warrior(), _data)
 	theme = Book.theme()
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var shade := ColorRect.new()
@@ -187,7 +190,7 @@ func _head_left() -> Control:
 	var line := HBoxContainer.new()
 	line.add_theme_constant_override(&"separation", 12)
 	names.add_child(line)
-	line.add_child(Book.label(T.t(HeroDef.warrior().name_key), Book.INK, 30, UiKit.TITLE_FONT))
+	line.add_child(Book.label(T.t(loadout.hero.name_key), Book.INK, 30, UiKit.TITLE_FONT))
 	var bar := ColorRect.new()
 	bar.color = Color(Book.GILT, 0.7)
 	bar.custom_minimum_size = Vector2(1, 24)
@@ -511,7 +514,7 @@ func _descend_button(id: String) -> Button:
 func _hero_left() -> Control:
 	var art := TextureRect.new()
 	art.name = "portrait"
-	art.texture = PORTRAIT
+	art.texture = PORTRAIT if loadout.hero == HeroDef.warrior() else null
 	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
