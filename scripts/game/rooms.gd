@@ -916,8 +916,8 @@ func _preview_angels() -> void:
 				if further.has(n):
 					continue
 				further.append(n)
-				if n.reward == RunMap.Reward.BOON and not n.meeting and n.kind == RunMap.Kind.COMBAT and n.angel == &"":
-					n.angel = game.encounters.door_angel(n)
+				if n.reward == RunMap.Reward.BOON and not n.meeting and shows_angel(n) and n.angel == &"":
+					n.angel = game.encounters.door_angel(n, _angels_of(further))
 		ring = further
 		if not further.is_empty():
 			_ahead.append(further)
@@ -959,9 +959,9 @@ func _open_doors() -> void:
 		psalm_can_come(), not game.enchant_offers().is_empty())
 	# Fatia 2: a Blessing's door that is no meeting shows the angel who waits there (Encounters.door_angel)
 	for r in next_rooms:
-		if r.reward == RunMap.Reward.BOON and not r.meeting and r.kind == RunMap.Kind.COMBAT and game.encounters != null \
+		if r.reward == RunMap.Reward.BOON and not r.meeting and shows_angel(r) and game.encounters != null \
 				and r.angel == &"":
-			r.angel = game.encounters.door_angel(r)  # (one shown before by the angels' preview stays)
+			r.angel = game.encounters.door_angel(r, _angels_of(next_rooms))  # (one shown before by the preview stays)
 	_preview_angels()
 	for i in next_rooms.size():
 		var r := next_rooms[i]
@@ -994,7 +994,9 @@ static func door_text(r: RunMap.Room, find := true) -> String:
 			return text
 		RunMap.Kind.MINIBOSS:
 			# who waits there: the order of the two guardians is his choice (Daniel, 2026-11-22)
-			return T.t(RunMap.REWARD_KEY[r.reward]) + "\n" + T.t(&"enemy_" + r.guardian if r.guardian != &"" else RunMap.KIND_KEY[r.kind])
+			# PT-8: and the angel that blesses there, the line the fight is chosen by
+			return T.t(RunMap.REWARD_KEY[r.reward]) + _angel_line(r) + "\n" \
+				+ T.t(&"enemy_" + r.guardian if r.guardian != &"" else RunMap.KIND_KEY[r.kind])
 		RunMap.Kind.ALTAR:
 			return T.t(RunMap.KIND_KEY[r.kind]) + "\n" + T.t(&"door_altar")
 	return T.t(RunMap.KIND_KEY[r.kind])
@@ -1013,6 +1015,20 @@ static func elite_heads(r: RunMap.Room) -> int:
 				if String(id).ends_with("_elite"):
 					n += 1
 	return n
+
+
+## The rooms whose Blessing door shows one angel: fights and, since PT-8, the guardians.
+static func shows_angel(r: RunMap.Room) -> bool:
+	return r.kind == RunMap.Kind.COMBAT or r.kind == RunMap.Kind.MINIBOSS
+
+
+## The angels the given doors already show (PT-8: two doors side by side never show the same one).
+static func _angels_of(rooms_: Array[RunMap.Room]) -> Array[StringName]:
+	var out: Array[StringName] = []
+	for r in rooms_:
+		if r.angel != &"":
+			out.append(r.angel)
+	return out
 
 
 ## The angel's line of a door's sign drawn with its seal and colour (DoorSign.show_angel; the text stays the same).
@@ -1849,7 +1865,7 @@ static func shop_light(affordable: bool) -> float:
 
 ## The family of the one angel a Blessing's door showed (-1: two angels meet him, the guardian, or none).
 func _angel_family(r: RunMap.Room) -> int:
-	if r == null or r.meeting or r.kind == RunMap.Kind.MINIBOSS or r.angel == &"" or game.encounters == null:
+	if r == null or r.meeting or r.angel == &"" or game.encounters == null:
 		return -1
 	for a: AngelDef in game.encounters.book.catalog:
 		if a.id == r.angel:

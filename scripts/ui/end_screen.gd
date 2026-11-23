@@ -126,7 +126,6 @@ func open(victory: bool, stats: Dictionary, new_best: bool) -> void:
 	if int(stats.get("level", 0)) > 0: # the old horde mode has levels; the room run does not
 		_stat(grid, T.t(&"end_level"), str(stats.level))
 	_stat(grid, T.t(&"end_kills"), str(stats.kills))
-	_stat(grid, T.t(&"end_combo"), str(stats.best_combo))
 	if not shows_gifts: # the medallions above already count them
 		_stat(grid, T.t(&"end_boons"), str(stats.boons))
 	var best: Array = Save.data.best_times
@@ -177,7 +176,6 @@ func _open_victory(stats: Dictionary, new_best: bool) -> void:
 	var grid := _grid(s)
 	_stat(grid, T.t(&"end_time"), SaveData.format_time(stats.time), UiKit.GOLD if new_best else UiKit.PALE)
 	_stat(grid, T.t(&"end_kills"), str(stats.kills))
-	_stat(grid, T.t(&"end_combo"), str(stats.best_combo))
 	var game := _game()
 	_hide_hud()
 	if game and game.rooms:

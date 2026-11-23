@@ -592,7 +592,9 @@ func _draw_rewards(d: int) -> void:
 		if r.kind != Kind.COMBAT or d == 1:
 			_enchants[id] = most
 			if r.reward == Reward.BOON:
-				r.meeting = true  # the hall's and the guardian's: no door shows them
+				# the hall's: no door shows it; PT-8 (Daniel, 2026-11-23): a guardian's door shows its own angel, so the
+				# two guardians side by side are two different Blessings and the fight is chosen by the angel
+				r.meeting = r.kind != Kind.MINIBOSS
 			continue
 		var beside := {}
 		for p in _parents[id]:

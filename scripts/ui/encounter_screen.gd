@@ -19,8 +19,11 @@ const SEAL := 176.0
 const CARD := Vector2(300, 412)
 ## BC-3: with a painting the angel stands at its side of the screen, the arena between: the figure, the line and the
 ## "Ouvir" under it; the one in focus lit, the other dimmed.
-const FIGURE := Vector2(300.0, 270.0)
-const PAINTED_CARD := Vector2(320.0, 486.0)
+## PT-7 (Daniel, 2026-11-23: "os anjos devem aparecer maiores"): the figure stands beside the words, on the screen's
+## outer side, as tall as the card (the painting is 2:3, so its height sets its size; it was 180 x 270 over the words).
+const FIGURE := Vector2(300.0, 450.0)
+const WORDS_W := 230.0
+const PAINTED_CARD := Vector2(FIGURE.x + WORDS_W, 470.0)
 const PAGE_W := 1180.0
 const SEAL_SMALL := 48.0
 const DIM := 0.5
@@ -164,16 +167,34 @@ class AngelCard:
 			modulate.a = EncounterScreen.DIM
 		var v := VBoxContainer.new()
 		v.name = "body"
-		v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		v.offset_left = 22
-		v.offset_right = -22
-		v.offset_top = 24
-		v.offset_bottom = -20
 		v.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		v.add_theme_constant_override(&"separation", 6)
-		add_child(v)
 		if painted:
-			v.add_child(art)
+			# PT-7: figure and words side by side, the figure on the outer side looking in (the right one mirrored)
+			var side := HBoxContainer.new()
+			side.name = "side"
+			side.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			side.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			side.add_theme_constant_override(&"separation", 0)
+			add_child(side)
+			art.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+			v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			v.alignment = BoxContainer.ALIGNMENT_CENTER
+			var pad := MarginContainer.new()
+			pad.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			pad.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			for k: String in ["left", "right", "top", "bottom"]:
+				pad.add_theme_constant_override("margin_" + k, 16)
+			pad.add_child(v)
+			side.add_child(pad if mirror else art)
+			side.add_child(art if mirror else pad)
+		else:
+			v.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+			v.offset_left = 22
+			v.offset_right = -22
+			v.offset_top = 24
+			v.offset_bottom = -20
+			add_child(v)
 		var seal := AngelSeal.new().setup(a.family, EncounterScreen.SEAL_SMALL if painted else EncounterScreen.SEAL)
 		seal.name = "seal"
 		seal.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -210,7 +231,7 @@ class AngelCard:
 		line.name = "line"
 		line.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		line.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if painted else HORIZONTAL_ALIGNMENT_CENTER
-		line.custom_minimum_size.x = 260 if painted else 200
+		line.custom_minimum_size.x = EncounterScreen.WORDS_W - 32.0 if painted else 200.0
 		v.add_child(line)
 		var fill := Control.new()
 		fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -252,11 +273,13 @@ class AngelCard:
 		var tint := AngelSeal.tint(angel.family)
 		if painted:
 			# a soft ink behind the words so they read over the fight
-			var words := Rect2(0.0, EncounterScreen.FIGURE.y - 4.0, size.x, size.y - EncounterScreen.FIGURE.y + 4.0)
+			var mirror := (find_child("side", false, false) as Control).get_child(0) is MarginContainer
+			var fig_x := size.x - EncounterScreen.FIGURE.x if mirror else 0.0
+			var words := Rect2(0.0 if mirror else EncounterScreen.FIGURE.x, 0.0, EncounterScreen.WORDS_W, size.y)
 			draw_style_box(UiKit.box(Color(0.02, 0.015, 0.03, 0.66), Color(0, 0, 0, 0), 0, 0, 10), words)
 			# a soft light of its colour behind the figure when in focus
 			if has_focus():
-				var c := Vector2(size.x * 0.5, EncounterScreen.FIGURE.y * 0.5)
+				var c := Vector2(fig_x + EncounterScreen.FIGURE.x * 0.5, size.y * 0.5)
 				for k in 8:
 					var t := float(k) / 8.0
 					draw_circle(c, EncounterScreen.FIGURE.y * 0.62 * (1.0 - t * 0.6), Color(tint, 0.05 * (0.4 + t)))

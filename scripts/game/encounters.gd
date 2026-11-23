@@ -79,10 +79,14 @@ func open(chances: Array[float], psalm_chance: float) -> void:
 
 ## Fatia 2 (sistemas.md 1.6): the one angel a Blessing's door shows (no meeting), drawn when the door opens on dice of
 ## that room among the angels with a card for the hand; &"" when none has (the room falls back to the pair).
-func door_angel(r: RunMap.Room) -> StringName:
+## PT-8: `taken` are the angels the doors beside it already show; it takes another when the pair has one.
+func door_angel(r: RunMap.Room, taken: Array[StringName] = []) -> StringName:
 	var rng := Encounter.dice(game.run_seed(), r.id, r.depth)
-	var one := book.pair(game.boons, rng)
-	return one[0].id if not one.is_empty() else &""
+	var two := book.pair(game.boons, rng)
+	for a in two:
+		if not taken.has(a.id):
+			return a.id
+	return two[0].id if not two.is_empty() else &""
 
 
 ## Takes an angel of the pair: its cards on the choice screen.

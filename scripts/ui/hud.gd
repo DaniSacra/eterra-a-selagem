@@ -88,6 +88,8 @@ const COMBO_POP := 0.15
 ## The word "Golpes" and the move's name beside the count and the count's height.
 const COMBO_WORD := 14
 const COMBO_H := 28.0
+## PT-3 (Daniel, 2026-11-23): the hit count is not shown; the move's name stays.
+const SHOW_HITS := false
 ## Room between the count's line and the move's name under it (row layout).
 const MOVE_GAP := 4.0
 const MOVE_ALPHA := 0.9
@@ -675,7 +677,7 @@ func _process(delta: float) -> void:
 	for c: CanvasItem in [_crest, _life, _magick]:
 		c.visible = not paused
 	for c: CanvasItem in [_combo, _combo_word]:
-		c.visible = _combo_count >= 3 and not over
+		c.visible = SHOW_HITS and _combo_count >= 3 and not over
 	_move.visible = not over
 	# the curse's badge stands on the life bar's line: the count climbs over it meanwhile
 	_elo_banner.held = over or entrance_shown()
@@ -1179,7 +1181,7 @@ static func body_rect(feet: Vector2, tall: float) -> Rect2:
 func on_combo(count: int) -> void:
 	_combo_count = count
 	for c: CanvasItem in [_combo, _combo_word]:
-		c.visible = count >= 3
+		c.visible = SHOW_HITS and count >= 3
 	if count == 0:
 		# the count ran out: the move's name goes with it (BUG-112), a short fade and never alone in the corner
 		_move_t = minf(_move_t, MOVE_FADE)

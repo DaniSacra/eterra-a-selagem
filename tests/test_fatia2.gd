@@ -90,8 +90,10 @@ func test_a_third_of_the_blessing_rooms_are_meetings() -> void:
 				boons += 1
 				if r.meeting:
 					meetings += 1
-			if r.kind == RunMap.Kind.MINIBOSS or r.depth == 1:
-				assert_true(r.meeting or r.reward != R.BOON, "the hall and the guardian are meetings")
+			if r.depth == 1 and r.kind == RunMap.Kind.COMBAT:
+				assert_true(r.meeting or r.reward != R.BOON, "the hall is a meeting")
+			if r.kind == RunMap.Kind.MINIBOSS:
+				assert_false(r.meeting, "PT-8: a guardian's door shows its own angel")
 	var share := float(meetings) / boons
 	assert_between(share, 0.25, 0.42, "two of six (%.2f)" % share)
 

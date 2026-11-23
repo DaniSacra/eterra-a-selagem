@@ -14,7 +14,8 @@ const GUARD_MS := 350
 ## The lead line under the title (_page, the events' screens).
 const LEAD_SIZE := 20
 ## BC-1: the angel's figure at the left, in px at 720 lines, and the list's width.
-const FIGURE := Vector2(250.0, 380.0)
+## PT-7 (2026-11-23): larger, the angel a presence beside its Blessings.
+const FIGURE := Vector2(300.0, 450.0)
 const LIST_W := 210.0
 ## BC-4: seconds the angel's words stay before the options come by themselves.
 const INTRO_TIME := 2.5

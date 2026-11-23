@@ -12,7 +12,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   2026-11-22, "enfrentar os 2 minibosses e só depois o boss"): o que ele não escolheu espera na 8 ou 9 (`miniboss2_depth`, pelo
   menos `miniboss_gap` 3 salas depois; `RunMap._leave_other` troca quando ele entra no primeiro), noutra variante do Santuário (que
   fica livre de lutas comuns até lá) e com escolta (`EnemyDef.escort`: Cavaleiro com 2 feiticeiros, Ancião com 1 Escudo, na segunda
-  onda). A placa diz o nome do guardião. `--short` e `--medium` têm um só. Fonte: sempre uma das duas portas antes de cada
+  onda). A placa diz o nome do guardião e, desde o PT-8 (2026-11-23), o anjo que abençoa lá (`meeting` falso no guardião; `Encounters.door_angel(r, taken)` nunca repete o anjo da porta ao lado, `Rooms.shows_angel`). `--short` e `--medium` têm um só. Fonte: sempre uma das duas portas antes de cada
   guardião (GP-2; `fountain_more_chance`, hoje 0, põe outra depois dele até a 8); altar em no máximo
 altar em no máximo
   um nó (2 a 8, 20% por camada), Provação num nó de luta marcado `trial` e `hidden` (até a laje aparecer,
