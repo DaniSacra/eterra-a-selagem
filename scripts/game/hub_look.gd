@@ -152,8 +152,6 @@ const SPOUT := 0.2
 const FOUNTAIN_MOSS := Vector2(3.1, 4.4)
 const FLOWER_OCHRE := Color(0.66, 0.58, 0.42)
 const FLOWER_EARTH := Color(0.45, 0.32, 0.28)
-## The use points' slabs (spec 2.4): grooved lozenges on a 2.4 m square, nothing round.
-const USE_SLAB := 2.4
 ## The great urns' plinth height.
 const URN_PLINTH := 0.45
 ## The square's paving (HUB-D; the hub is 50 m across and the bare floor read as one vast empty slab: the paving tells
@@ -1437,11 +1435,7 @@ func _square() -> void:
 	var portal: Vector2 = HubPlan.USE[HubPlan.PORTAL]
 	_pave_way(fountain + Vector2(0, FOUNTAIN_PAVING.y), portal - Vector2(0, WAY_SHORT), pave, kerb, joint, worn)
 	_pave_way(MEDALLION + Vector2(0, MEDALLION_PAVING.y), fountain - Vector2(0, FOUNTAIN_PAVING.y), pave, kerb, joint, worn)
-	for id in HubPlan.STATIONS:
-		var p: Vector2 = HubPlan.USE[id]
-		_decal(at(p.x, DECAL_Y, p.y), Vector2(USE_SLAB, USE_SLAB), {&"kind": 4, &"lozenges": Vector3(0.8, 1.55, 2.3),
-			&"groove_width": 0.07, &"groove_color": Color(0.16, 0.14, 0.12), &"groove_lip": Color(0.5, 0.46, 0.4),
-			&"groove_worn": 0.15})
+	# PT-4 (Daniel, 2026-11-23): no lozenges cut at the stations' use spots either; the worn way ends at the station
 
 
 ## A ring of cut slabs round c (frame u, v): ring.z rings from ring.x to ring.y, each slab about PAVE_SLAB along it,
