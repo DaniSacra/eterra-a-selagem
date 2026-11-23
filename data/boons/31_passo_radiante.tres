@@ -10,9 +10,17 @@ tag = &"dash"
 base = 0.4
 per_level = PackedFloat32Array(0.2, 0.2)
 
+[sub_resource type="Resource" id="Resource_bemyk"]
+script = ExtResource("1_w1dba")
+stat = &"dome_heal"
+tag = &"dash"
+base = 1.0
+per_level = PackedFloat32Array(0.5, 0.5)
+by_rarity = false
+
 [resource]
 script = ExtResource("2_w82fd")
 id = &"passo_radiante"
 icon = 10
 slot = 5
-mods = Array[ExtResource("1_w1dba")]([SubResource("Resource_kltuy")])
+mods = Array[ExtResource("1_w1dba")]([SubResource("Resource_kltuy"), SubResource("Resource_bemyk")])

@@ -697,3 +697,81 @@ func test_a_shatter_blessing_breaks_the_frozen_with_the_blast() -> void:
 	frozen.frozen_t = 5.0
 	_blast()
 	assert_lt(frozen.hp, 5000.0 - 32.0 - 5.0, "more than the plain 32")
+
+
+# ---------- the Blessings of the E and the Passo that were missing, the film and the first Selo ----------
+
+func test_a_shield_blessing_opens_the_dome_with_the_shield_ready() -> void:
+	_start([])
+	_grant(&"dome_shield", 1.0)
+	game.player.shield_ready = false
+	pad.press(&"rush")
+	_step(30)
+	assert_true(game.player.shield_ready)
+
+
+func test_a_heal_blessing_gives_life_back_for_each_enemy_the_dome_held_when_it_ends() -> void:
+	_start([])
+	_grant(&"dome_heal", 2.0, &"dash")
+	var a := _dummy(Vector2(1.5, 0))
+	var b := _dummy(Vector2(0, 1.5))
+	a.stun_t = 1000.0
+	b.stun_t = 1000.0
+	game.player.hp = 10.0
+	pad.press(&"rush")
+	_step(30)
+	game.arcane.dome.life = 0.01
+	_step(3)
+	assert_almost_eq(game.player.hp, 14.0, 0.01, "2 for each of the two")
+
+
+func test_a_push_blessing_shoves_what_stands_on_the_rim_of_the_dome_outward() -> void:
+	_start([])
+	_grant(&"push_pct", 0.8, &"dash")
+	var e := _dummy(Vector2(2.4, 0))  # the dome is 2.6 m: the rim
+	e.stun_t = 1000.0
+	var core := _dummy(Vector2(0, 1.0))
+	core.stun_t = 1000.0
+	pad.press(&"rush")
+	_step(30)
+	assert_gt(e.pos.x, 2.6, "pushed out")
+	assert_almost_eq(core.pos.y, 1.0, 0.3, "the middle is left alone")
+
+
+func test_the_passo_lays_embers_where_she_left_and_where_she_came_out() -> void:
+	_start([])
+	_grant(&"dodge_ember_dps", 6.0)
+	var from := game.player.pos
+	pad.press(&"dodge")
+	_step(3)
+	var near_from := 0
+	var near_to := 0
+	for z in game.ground.zones:
+		if z.kind != Ground.Kind.EMBER:
+			continue
+		if z.pos.distance_to(from) < 0.5:
+			near_from += 1
+		if z.pos.distance_to(game.player.pos) < 0.5:
+			near_to += 1
+	assert_gt(near_from, 0)
+	assert_gt(near_to, 0)
+
+
+func test_the_big_dome_wears_the_film_and_the_clock_and_takes_them_away() -> void:
+	_start([])
+	_absolute()
+	var d := game.arcane.ultra
+	assert_true(d.node.material_override is ShaderMaterial, "hexagon film")
+	assert_not_null(d.clock)
+	var clock := d.clock
+	_step(30)
+	assert_lt(float((clock.material_override as ShaderMaterial).get_shader_parameter(&"left")), 1.0, "the clock runs down")
+	game.arcane.clear()
+	await get_tree().process_frame
+	assert_false(is_instance_valid(clock))
+
+
+func test_the_first_selo_detonated_gives_10_xp_once() -> void:
+	var curve := HeroDef.maga().mastery
+	assert_eq(curve.run_xp({"first_seal": true}).first_seal, 10)
+	assert_eq(curve.run_xp({}).first_seal, 0)

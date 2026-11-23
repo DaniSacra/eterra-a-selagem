@@ -61,6 +61,7 @@ static func gain(g: Game, outcome: String, data: Dictionary) -> Dictionary:
 		"new_psalms": g.psalms.seen.keys().filter(func(id: StringName) -> bool: return not known.has(String(id))).size(),
 		"first_guardian": guardians > 0 and int(firsts.get("guardian", 0)) == 0,
 		"first_victory": victory and int(firsts.get("victory", 0)) == 0,
+		"first_seal": g.arcane != null and int(g.arcane.tally.detonated) > 0 and int(firsts.get("seal", 0)) == 0,
 		"weight": g.juramentos.weight() if g.juramentos else 0,
 	})
 
@@ -85,6 +86,8 @@ static func award(g: Game, gained: Dictionary, outcome: String, data: Dictionary
 	var guardians := g.rooms.won.count(RunMap.Kind.MINIBOSS) if g.rooms else 0
 	if guardians > 0:
 		block.firsts["guardian"] = int(block.firsts.get("guardian", 0)) + guardians
+	if g.arcane != null and int(g.arcane.tally.detonated) > 0:
+		block.firsts["seal"] = int(block.firsts.get("seal", 0)) + 1
 	if outcome == "victory":
 		block.firsts["victory"] = int(block.firsts.get("victory", 0)) + 1
 		if g.juramentos:

@@ -27,6 +27,8 @@ extends Resource
 @export var first_psalm_xp := 25
 @export var first_guardian_xp := 25
 @export var first_victory_xp := 100
+## The Maga's first Selo detonated (the Explosão that eats one): once a hero, 10 XP.
+@export var first_seal_xp := 10
 
 @export_group("Older saves")
 ## A save from before Mastery gets it once: retro_run_xp a run and retro_win_xp more a win, up to retro_max_level.
@@ -70,7 +72,7 @@ func devotion(level: int) -> int:
 
 ## The XP one run gives, by source, and its total. run: rooms (fight rooms won), guardians (guardian rooms won),
 ## phase (Morvath's highest phase reached, 0 when not met), victory (bool) and the first times of this run:
-## new_boons (Blessings seen for the first time), new_elos, new_psalms, first_guardian, first_victory (bools); weight
+## new_boons (Blessings seen for the first time), new_elos, new_psalms, first_guardian, first_victory, first_seal (bools); weight
 ## (the Peso of the Juramentos sworn, E6: weight_xp each, only on a victory).
 func run_xp(run: Dictionary) -> Dictionary:
 	var out := {
@@ -84,6 +86,7 @@ func run_xp(run: Dictionary) -> Dictionary:
 		"first_psalms": first_psalm_xp * int(run.get("new_psalms", 0)),
 		"first_guardian": first_guardian_xp if run.get("first_guardian", false) else 0,
 		"first_victory": first_victory_xp if run.get("first_victory", false) else 0,
+		"first_seal": first_seal_xp if run.get("first_seal", false) else 0,
 	}
 	var total := 0
 	for k: String in out:

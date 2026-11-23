@@ -172,7 +172,8 @@ func _cast(b: Boon) -> bool:
 			var aim := game.player.facing
 			var n := s.get_count(lv)
 			for d in BossRules.fan(aim, n, deg_to_rad(18.0 * minf(n, 7)) if n > 1 else 0.0):
-				var shot := game.projectiles.fire_wave(Projectiles.Kind.BLADE, p + d * 0.6, d, _damage(b, lv), s.get_radius(lv), 1.6, color, tags)
+				# (the blades leave her, as the Warrior's, even when the Explosão fell far away)
+				var shot := game.projectiles.fire_wave(Projectiles.Kind.BLADE, game.player.pos + d * 0.6, d, _damage(b, lv), s.get_radius(lv), 1.6, color, tags)
 				shot.status = s.status
 				shot.status_power = s.get_status_power(lv)
 			Audio.play(&"swing")

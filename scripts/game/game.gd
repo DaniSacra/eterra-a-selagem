@@ -1171,7 +1171,7 @@ func _on_dodged(dir: Vector2) -> void:
 	dodges += 1
 	room_tally.dodge()
 	var dps := boons.stat(&"dodge_ember_dps")
-	if dps > 0.0:
+	if dps > 0.0 and arcane == null:  # (the Maga's Passo lays its own at both ends: Arcane._on_dodged)
 		for k in 3:
 			ground.add_zone(Ground.Kind.EMBER, player.pos + dir * (k * 2.0), 1.4, 2.5, dps, Combat.EMBER_TAGS)
 
