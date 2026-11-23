@@ -193,7 +193,16 @@
       "polycount": 20000,
       "pose": "a-pose",
       "style": "Stylized hand-painted dark fantasy game character, painterly textures, realistic adult proportions eight heads tall, not chibi, no base, no ground, empty hands, no weapons, no staff, no fire.",
-      "prompt": "Full body young East Asian woman scholar mage, slender, calm face, short straight black bob hair. Long layered robe of deep navy blue with fine pale gold embroidery, falling to the shins in tattered pointed panels. Ivory hooded mantle over the shoulders, hood down, short cape to mid-back. Brown leather belts crossed at the waist with small pouches and a scroll case, round gold seal medallion on the belt. Leather bracers on forearms, tall brown leather boots. A-pose facing forward."
+      "prompt": "Full body young East Asian woman scholar mage, slender, calm face. Very short straight black bob haircut ending above the jaw, ears visible, nothing below the chin. Long navy blue robe with pale gold embroidery, the skirt split into layered tattered pointed panels to the shins. Light ivory mantle on the shoulders, short, open at the front, hood down. Crossed brown leather belts with small pouches and a scroll case, round gold seal medallion. Leather bracers, tall brown boots. A-pose facing forward."
+    },
+    "hero_maga_img": {
+      "ai_model": "latest",
+      "pose": "a-pose",
+      "polycount": 30000,
+      "images": [
+        "tools/meshy/ref/hero_maga/front.png"
+      ],
+      "texture_prompt": "Stylized hand-painted dark fantasy mage: short straight black bob hair, East Asian young woman, deep navy blue robe with pale gold embroidery, ivory mantle with gold patterns, brown leather belts, pouches and scroll case, gold seal medallion, leather bracers, brown boots. Painterly materials, no fire, no glow."
     }
   }
 }
