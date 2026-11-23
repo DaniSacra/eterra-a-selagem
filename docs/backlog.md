@@ -1,6 +1,9 @@
 # Backlog de A Selagem
 
-## Notas do Daniel jogando, 2026-11-23 à noite (PT-1 a PT-9; nada começado, esperando o "pode")
+## Notas do Daniel jogando, 2026-11-23 à noite (PT-1 a PT-8)
+**Estado (2026-11-23, noite):** PT-1, PT-2 (lugar; arte espera o ChatGPT, pedido em `Downloads\Pedido-ChatGPT-icones-das-portas.txt`,
+ids em `assets/ui/rewards/LEIAME.txt`), PT-3, PT-4, PT-5, PT-7 e PT-8 no repositório. Falta: capturas na GPU (o "!", anjos, porta,
+guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas pastas. PT-0 espera o Daniel; PT-6 depois.
 - **PT-0 (resposta, sem tarefa)**: a barrinha clara sob a vida dos inimigos comuns é a **Quebra** (poise, `CrowdRenderer.add_poise_bar`):
   cada golpe gasta um pouco; acabou, ele fica atordoado 1,2 s e leva +40% de dano ("Quebrou!"). Se ficar confusa: mudar a cor ou só
   mostrá-la quando estiver na metade (decidir com o Daniel).
