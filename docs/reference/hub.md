@@ -223,3 +223,9 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   `tools/gpu.sh shot saida.png --hub --guide=tree --shot-at=5`.
 - Pendente: Encantos, anjos, Videira e a escolha de herói como destrave próprio (hoje a escolha de herói está sempre aberta e vai na
   frase do Portal); entram como linhas novas no `_hub_guide` quando tiverem estação e condição.
+## PT-4, caminhos sem notação (2026-11-23)
+- O fio de ouro no meio de cada caminho (`WAY_FILET`) saiu: lia como linha de interface. Agora `_pave_way` põe as lajes do
+  terço do meio mais claras (`WORN_TINT`, material `_worn_stone`) e 6 mm mais altas (`WORN_RISE`, `WORN_SHARE` é a largura
+  do miolo gasto); o meio-fio escuro e a junta escura enquadram a trilha. Sem shader nem material novo além de uma pedra
+  mais clara; colisão e `HubPlan` iguais. Fica de fora: os anéis do medalhão e o losango da laje de uso (PT-5 cuida das
+  estações). Captura de CPU: `docs/gallery/hub/pt4/hub_way_cpu.png`; ver com `tools/gpu.sh shot x.png --hub --look=stylized --cam=near`.

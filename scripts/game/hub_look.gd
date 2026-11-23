@@ -161,7 +161,7 @@ const URN_PLINTH := 0.45
 ## nothing collides. A ring round the fountain (inner, outer radius, rings), one round the medallion (its slabs never
 ## inside the fountain's ring), and a way of larger slabs (across, along) from the fountain's ring toward each side
 ## station, WAY_WIDTH wide, stopping WAY_SHORT before its use point, with a kerb of darker stone (WAY_KERB wide, KERB_TINT)
-## each side and the thread of old gold down its middle; the axis to the portal paved the same.
+## each side and worn paler slabs down its middle; the axis to the portal paved the same.
 const FOUNTAIN_PAVING := Vector3(3.3, 5.6, 2.0)
 const MEDALLION_PAVING := Vector3(3.25, 4.25, 1.0)
 const PAVE_SLAB := 1.1
@@ -172,8 +172,11 @@ const WAY_KERB := 0.24
 const WAY_WIDTH := 2.6
 const WAY_SLAB := Vector2(1.3, 0.95)
 const WAY_SHORT := 1.15
-## The thread of old gold down a way (HUB-D, H-P1-2: 2 to 3 times the axis's; it ends on the use slab's lozenge).
-const WAY_FILET := 0.18
+## PT-4: a way has no painted line. The slabs in its middle third are worn paler (WORN_TINT) and sit a hair higher
+## (WORN_RISE), the way a walked path reads; the kerb and the dark joints frame it.
+const WORN_TINT := Color(1.2, 1.17, 1.1)
+const WORN_RISE := 0.006
+const WORN_SHARE := 0.2
 ## The cypresses (HubPlan.CYPRESSES): the planter's height and coping, the tree's foot over it and its width at its
 ## widest (a share of the way up), the leaves' cards (size, how many a metre of height), their dark olive.
 const PLANTER_HEIGHT := 0.7
@@ -1365,7 +1368,7 @@ func _retorno(cheek_u: float, cheek_v: float) -> void:
 		var d := b - a
 		_bar(at(mid.x, DECAL_Y + 0.004, mid.y), Vector3(d.length(), 0.004, 0.035), joint, Basis(Vector3.UP, d.angle()))
 	var dir := (MEDALLION - HubPlan.ARRIVAL).normalized()
-	_pave_way(HubPlan.ARRIVAL + dir * SEAL_PAVING.y, MEDALLION - dir * MEDALLION_PAVING.y, pave, kerb, joint, tomb.gold())
+	_pave_way(HubPlan.ARRIVAL + dir * SEAL_PAVING.y, MEDALLION - dir * MEDALLION_PAVING.y, pave, kerb, joint, _worn_stone())
 	# the lamp on the low wall's head, a short iron post with the lantern hanging from its arm
 	var ir := tomb.iron()
 	var foot := at(cheek_u, ARRIVAL_CHEEK.y, cheek_v)
@@ -1418,6 +1421,7 @@ func _square() -> void:
 	var pave := m.stone(0.0, stone_tint() * PAVE_TINT)
 	var kerb := m.stone(0.0, stone_tint() * KERB_TINT)
 	var joint := _plain(Color(0.07, 0.065, 0.06), 1.0)
+	var worn := _worn_stone()
 	var fountain := Vector2(HubPlan.FOUNTAIN.x, HubPlan.FOUNTAIN.y)
 	_pave_ring(fountain, FOUNTAIN_PAVING, pave, joint)
 	_pave_ring(MEDALLION, MEDALLION_PAVING, pave, joint, func(p: Vector2) -> bool:
@@ -1429,10 +1433,10 @@ func _square() -> void:
 		var from := fountain if to.y > fountain.y else MEDALLION
 		var ring := FOUNTAIN_PAVING.y if to.y > fountain.y else MEDALLION_PAVING.y
 		var dir := (to - from).normalized()
-		_pave_way(from + dir * ring, to - dir * WAY_SHORT, pave, kerb, joint, g)
+		_pave_way(from + dir * ring, to - dir * WAY_SHORT, pave, kerb, joint, worn)
 	var portal: Vector2 = HubPlan.USE[HubPlan.PORTAL]
-	_pave_way(fountain + Vector2(0, FOUNTAIN_PAVING.y), portal - Vector2(0, WAY_SHORT), pave, kerb, joint, g)
-	_pave_way(MEDALLION + Vector2(0, MEDALLION_PAVING.y), fountain - Vector2(0, FOUNTAIN_PAVING.y), pave, kerb, joint, g)
+	_pave_way(fountain + Vector2(0, FOUNTAIN_PAVING.y), portal - Vector2(0, WAY_SHORT), pave, kerb, joint, worn)
+	_pave_way(MEDALLION + Vector2(0, MEDALLION_PAVING.y), fountain - Vector2(0, FOUNTAIN_PAVING.y), pave, kerb, joint, worn)
 	for id in HubPlan.STATIONS:
 		var p: Vector2 = HubPlan.USE[id]
 		_decal(at(p.x, DECAL_Y, p.y), Vector2(USE_SLAB, USE_SLAB), {&"kind": 4, &"lozenges": Vector3(0.8, 1.55, 2.3),
@@ -1461,7 +1465,7 @@ func _pave_ring(c: Vector2, ring: Vector3, mat: Material, joint: Material, skip 
 
 ## A paved way from a to b (frame u, v): WAY_WIDTH wide, rows of WAY_SLAB slabs across it in a running bond, a kerb of
 ## darker stone each side, a dark bed in the joints, the thread of old gold down its middle.
-func _pave_way(a: Vector2, b: Vector2, mat: Material, kerb: Material, joint: Material, gold: Material) -> void:
+func _pave_way(a: Vector2, b: Vector2, mat: Material, kerb: Material, joint: Material, worn: Material) -> void:
 	var d := b - a
 	var length := d.length()
 	if length < WAY_SLAB.y:
@@ -1492,13 +1496,19 @@ func _pave_way(a: Vector2, b: Vector2, mat: Material, kerb: Material, joint: Mat
 			if cw < 0.1:
 				continue
 			var p := along + side * ((cuts[k] + cuts[k + 1]) * 0.5)
-			fm.box(at(p.x, PAVE_TOP - 0.06, p.y), Vector3(l - 0.07, 0.12, cw - 0.07), yaw, mat, false)
+			var centre := absf(cuts[k] + cuts[k + 1]) * 0.5 < inner * WORN_SHARE
+			var rise := WORN_RISE if centre else 0.0
+			fm.box(at(p.x, PAVE_TOP - 0.06 + rise, p.y), Vector3(l - 0.07, 0.12, cw - 0.07), yaw, worn if centre else mat, false)
 	var segs := maxi(1, roundi(length / 1.6))
 	for sd: float in [-1.0, 1.0]:
 		for k in segs:
 			var p := a + dir * (length * (k + 0.5) / segs) + side * sd * (WAY_WIDTH - WAY_KERB) * 0.5
 			fm.box(at(p.x, PAVE_TOP - 0.05, p.y), Vector3(length / segs - 0.05, 0.13, WAY_KERB - 0.04), yaw, kerb, false)
-	_bar(at(mid.x, PAVE_TOP + 0.004, mid.y), Vector3(length, 0.008, WAY_FILET), gold, Basis(Vector3.UP, yaw))
+
+
+## The paler stone of a way's walked middle.
+func _worn_stone() -> Material:
+	return m.stone(0.0, stone_tint() * PAVE_TINT * WORN_TINT)
 
 
 ## A flat ring of old gold on the floor round c (radii r0 to r1).
