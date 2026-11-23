@@ -66,8 +66,17 @@ func test_an_elo_hangs_between_its_two_sources() -> void:
 
 
 func test_a_gift_without_a_painting_keeps_its_drawn_icon() -> void:
+	# every Blessing is painted since Rev. 02 (2026-11-23): a missing file is faked in BoonArt's cache
+	var ids: Array[StringName] = [&"lamina_ardente", &"chama_viva", &"golpe_brasa"]
+	var saved := {}
+	for id in ids:
+		var path := BoonArt.DIR + String(id) + ".png"
+		saved[path] = BoonArt.medallion(id)
+		BoonArt._cache[path] = null
 	assert_null(BoonArt.medallion(&"lamina_ardente"))
-	var cards := _open([&"lamina_ardente", &"chama_viva", &"golpe_brasa"]).cards()
+	var cards := _open(ids).cards()
+	for path: String in saved:
+		BoonArt._cache[path] = saved[path]
 	assert_true(cards[0].crest is BoonIcon)
 	assert_eq((cards[0].crest as BoonIcon).boon.id, &"lamina_ardente")
 	assert_true(cards[1].crest is EloLink, "an Elo without a painting: the drawn Elo")
