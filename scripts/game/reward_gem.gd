@@ -157,6 +157,8 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	rim.mesh = _rim_mesh
 	rim.material_override = _silver_rim_mat if reward == RunMap.Reward.SILVER else _rim_mat
 	rim.rotation.x = PI * 0.5
+	# a painted medallion has its own frame: no gold rim of ours (Daniel 2026-11-23)
+	rim.visible = painting(reward, kind) == null
 	spin.add_child(rim)
 	var face_mat := _face(key, reward, kind)
 	for side in 2:

@@ -173,7 +173,7 @@ void fragment() {
 	float rough = 0.6;
 	float self_light = glow;
 	vec3 n = vec3(0.0, 0.0, 1.0);
-	if (r > face_r) {
+	if (r > face_r && !has_medallion) {
 		// the rim: gold, bevelled outward toward the edge, a dark groove where it meets the face
 		float t = clamp((r - face_r) / max(1.0 - face_r, 0.001), 0.0, 1.0);
 		vec2 out_dir = p / max(r, 0.001);
@@ -184,11 +184,16 @@ void fragment() {
 		rough = 0.32;
 		self_light = gold_glow;
 	} else {
-		vec2 q = p / face_r;
+		// a painting brings its own frame (Rev. 02, Daniel 2026-11-23): it fills the whole disc, cut by its own alpha,
+		// with no gold rim of ours around it
+		vec2 q = has_medallion ? p : p / face_r;
 		float k = mark_extent() / mark_size;
 		if (has_medallion) {
 			vec4 tex = texture(medallion, q * vec2(0.5, -0.5) + 0.5);
-			albedo = mix(gold * 0.35, tex.rgb, tex.a);
+			if (tex.a < 0.5) {
+				discard;
+			}
+			albedo = tex.rgb;
 		} else {
 			vec2 mq = q * k;
 			float d = mark_sd(mq) / k;
