@@ -969,8 +969,12 @@ func _open_doors() -> void:
 		if game.arena.look != null:
 			# the air of the room behind it breathes out of the doorway (ArenaRoom.breath)
 			game.arena.look.breath(i, door_look(i))
-		var marker := _marker(game.arena.door_label(i), r.reward, door_text(r), r.kind, DoorGlyph.of(door_info(i)))
+		var anchor := game.arena.door_anchor(i)
+		var marker := _marker(Vector2(anchor.x, anchor.z), r.reward, door_text(r), r.kind, DoorGlyph.of(door_info(i)))
 		_door_labels.append(marker)
+		var door_sign := marker.find_child("DoorSign", false, false) as Node3D
+		if door_sign != null:
+			door_sign.position.y = game.arena.door_sign_y(i)
 		_sign_angel(marker, r)
 	if not next_rooms.is_empty():
 		Audio.play(&"door")

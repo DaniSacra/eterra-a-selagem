@@ -121,6 +121,14 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	var key := "%d|%d" % [reward, kind if reward == RunMap.Reward.NONE else -1]
 	if stand == Stand.AUTO:
 		stand = Stand.FLOAT if at_door(parent) else Stand.RELIQUARY
+	# PT-2: on a door the medallion hangs from the arch at the door's own height, a little smaller
+	var lift := HEIGHT
+	var s := 1.0
+	if stand == Stand.FLOAT:
+		var di := door_of(parent)
+		if di >= 0:
+			lift = (parent.get_parent() as Rooms).game.arena.door_anchor(di).y
+			s = DOOR_SCALE
 	# the reliquary turned to the camera: its body behind the spot, the step on it
 	var frame := Node3D.new()
 	frame.rotation.y = deg_to_rad(Feel.live().cam_yaw)
@@ -134,13 +142,15 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 	halo.material_override = _halo(key, reward, kind, color)
 	# set back along the view past the swaying disc: through it, it veiled the half of the face behind its plane
 	var pitch := deg_to_rad(Feel.live().cam_pitch)
-	halo.position = held + Vector3(0, HEIGHT, 0) - Vector3(0, sin(pitch), cos(pitch)) * RADIUS * HALO_BACK
+	halo.position = held + Vector3(0, lift, 0) - Vector3(0, sin(pitch), cos(pitch)) * RADIUS * HALO_BACK * s
+	halo.scale = Vector3(s, s, s)
 	halo.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	halo.sorting_offset = -1.0
 	frame.add_child(halo)
 	# the disc: rim and two faces (and the cradle that holds it), swaying (each its own way, by where it stands)
 	var spin := Sway.new()
-	spin.position = held + Vector3(0, HEIGHT, 0)
+	spin.position = held + Vector3(0, lift, 0)
+	spin.scale = Vector3(s, s, s)
 	spin.phase = fposmod(parent.global_position.x * 0.37 + parent.global_position.z * 0.61, 1.0) * TURN if parent.is_inside_tree() else 0.0
 	frame.add_child(spin)
 	var rim := MeshInstance3D.new()
@@ -170,6 +180,8 @@ static func make(parent: Node3D, reward: RunMap.Reward, kind: RunMap.Kind, color
 ## the door's arch (DOOR_ARCH_BACK m out of the room, DOOR_ARCH_TOP high) to the cradle under the disc's foot; where the
 ## door is stairs with no arch, from the top of a low iron post (DOOR_POST: radius, height) beside the mouth, on its
 ## cheek off the floor. The rod meets the disc on its turning axis, so the swaying disc stays on it. Nothing collides.
+## PT-2: the disc on a door is DOOR_SCALE of its size (the arch's tympanum is 4 m wide).
+const DOOR_SCALE := 0.8
 const DOOR_ROD := 0.04
 const DOOR_ARCH_TOP := 4.9
 const DOOR_ARCH_BACK := 0.5
@@ -185,20 +197,19 @@ static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
 	if rooms == null or rooms.game == null or rooms.game.arena == null:
 		return
 	var a := rooms.game.arena
-	var p := Vector2(parent.position.x, parent.position.z)
-	var i := -1
-	for k in a.exits.size():
-		if a.door_label(k).distance_to(p) < 0.05:
-			i = k
+	var i := door_of(parent)
 	if i < 0:
 		return
 	var inward := a.exit_inward[i] if i < a.exit_inward.size() else Vector2(0, 1)
 	var side := Vector2(-inward.y, inward.x)
-	var edge := a.exits[i]
+	var edge := a.exits[i] + inward * ArenaExit.EDGE_FROM_SPOT
 	var anchor: Vector3
 	if a.look != null and a.look.in_wall(i):
 		var c := edge - inward * DOOR_ARCH_BACK
 		anchor = Vector3(c.x, DOOR_ARCH_TOP, c.y)
+		# the rod hangs straight from the arch's crown to the disc: the crown is over the medallion's own spot
+		var m := a.door_anchor(i)
+		anchor = Vector3(m.x, DOOR_ARCH_TOP, m.z)
 	else:
 		var half := Arena.STAIRS_HALF_WIDTH
 		var base := 0.0
@@ -217,7 +228,7 @@ static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
 		_rod(frame, _local(frame, parent, anchor - Vector3(0, DOOR_KNOB, 0)), _local(frame, parent, anchor + Vector3(0, DOOR_KNOB, 0)),
 			DOOR_KNOB, _rim_mat)
 	# the disc's foot under the cradle, where the sway leaves it (the lean tilts it, the turn keeps it on the axis)
-	var foot := spin.position + Basis(Vector3.RIGHT, -deg_to_rad(Feel.live().cam_pitch) * LEAN) * Vector3(0, -RADIUS - CRADLE_TUBE * 2.0, 0)
+	var foot := spin.position + Basis(Vector3.RIGHT, -deg_to_rad(Feel.live().cam_pitch) * LEAN) * Vector3(0, (-RADIUS - CRADLE_TUBE * 2.0) * spin.scale.y, 0)
 	var rod := _rod(frame, _local(frame, parent, anchor), foot, DOOR_ROD, _rim_mat)
 	rod.name = "DoorRod"
 
@@ -257,15 +268,15 @@ static func _iron() -> StandardMaterial3D:
 
 ## True when `parent` stands where a door's sign floats (Arena.door_label of one of the room's exits).
 static func at_door(parent: Node3D) -> bool:
+	return door_of(parent) >= 0
+
+
+## The door whose medallion hangs where `parent` stands (Arena.door_anchor), or -1.
+static func door_of(parent: Node3D) -> int:
 	var rooms := parent.get_parent() as Rooms
 	if rooms == null or rooms.game == null or rooms.game.arena == null:
-		return false
-	var a := rooms.game.arena
-	var p := Vector2(parent.position.x, parent.position.z)
-	for i in a.exits.size():
-		if a.door_label(i).distance_to(p) < 0.05:
-			return true
-	return false
+		return -1
+	return rooms.game.arena.door_at_anchor(Vector2(parent.position.x, parent.position.z))
 
 
 ## The face's material of one kind of reward (cached: one per kind, never one per instance).
@@ -276,6 +287,9 @@ static func face_material(reward: RunMap.Reward, kind: RunMap.Kind, _color := Co
 
 ## The painted medallion of a reward or a room (assets/ui/events), or null when it has none.
 static func painting(reward: RunMap.Reward, kind: RunMap.Kind) -> Texture2D:
+	var art := RewardIcon.of(reward, kind)  # PT-2: assets/ui/rewards/<id>.png wins when it exists
+	if art != null:
+		return art
 	match reward:
 		RunMap.Reward.POM, RunMap.Reward.POM_SLICE:
 			return BoonArt.event(&"pomegranate")

@@ -1,0 +1,1 @@
+Ids esperados (PNG 512x512 transparente), um por arquivo: boon pom pom_slice heart magick gold heal silver memory enchant psalm combat miniboss fountain shop boss trial altar angel_chama angel_geada angel_luz angel_vigilia angel_veu angel_mare angel_marca. Sem arquivo o medalhao usa o desenho de hoje (RewardIcon).

@@ -545,6 +545,31 @@ func door_label(i: int) -> Vector2:
 	return exits[i] + inward * 2.6
 
 
+## PT-2: where door i's medallion hangs (x, height, z): on its arch or over its stairs, from the layout's ArenaExit
+## (the Hall has none: the defaults of ArenaExit).
+func door_anchor(i: int) -> Vector3:
+	if layout != null and i < layout.exits.size():
+		return layout.exits[i].medal_anchor()
+	var e := ArenaExit.make(exits[i], exit_inward[i] if i < exit_inward.size() else Vector2(0, 1), Rect2())
+	return e.medal_anchor()
+
+
+## The height where the text of door i's sign starts (under its medallion).
+func door_sign_y(i: int) -> float:
+	if layout != null and i < layout.exits.size():
+		return layout.exits[i].sign_up
+	return ArenaExit.new().sign_up
+
+
+## The door whose medallion hangs at (x, z) of the room, or -1.
+func door_at_anchor(p: Vector2) -> int:
+	for i in exits.size():
+		var a := door_anchor(i)
+		if Vector2(a.x, a.z).distance_to(p) < 0.05:
+			return i
+	return -1
+
+
 ## Where to walk to leave by a door (the bot).
 func door_goal(i: int) -> Vector2:
 	if not exit_zones.is_empty():
