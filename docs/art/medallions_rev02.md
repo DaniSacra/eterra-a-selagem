@@ -29,3 +29,16 @@ A 64 px as Bênçãos de uma mesma família ficam iguais: muda só o selo do can
 
 Pedido sugerido ao ChatGPT: manter fundo e moldura da família, mas trocar o selo pequeno por um **pictograma central grande
 (cerca de 45% do disco) da ação** (ataque, especial, Brado, Investida, esquiva, Ômega, passivo), legível em cinza a 64 px.
+
+## Conserto técnico das molduras das portas (2026-11-23)
+O Daniel achou os 25 medalhões das portas ruins: o anel pintado vinha cortado, incompleto ou fora do centro (o jogo desde o
+commit 08b1db8 mostra o PNG inteiro, recortado pelo alfa). Agora os 25 têm a **mesma moldura**, completa, redonda e centrada
+(`docs/gallery/medallions_rev02/portas_consertadas.jpg`, antes e depois a 128 e 64 px). Como: a faixa de pedra limpa do anel de
+`boon.png` (entre o losango da esquerda e o de cima) é espelhada em volta do círculo inteiro, com contorno escuro próprio (some a
+franja vermelha e a sombra do adesivo), e o losango de cima é recortado e posto nos quatro pontos. Cada desenho central é cortado
+no vão do anel que ele trazia (centro e raio conferidos à mão por sobreposição, `tools/art/medallion_rings.json`), escalado para o
+vão da moldura nova, com o fundo escuro de cada um; `heart` e `heal` têm um corte inferior (`y_cut`) para esconder o resto do anel
+velho. Sem texto novo, desenhos intactos. Para refazer com arte nova: `tools/art/fix_medallions.gd` (originais em uma pasta,
+saída em outra; `medallion_overlay.gd` confere os círculos, `medallion_sheet.gd` faz pranchas, `medallion_fit.gd` é só a
+tentativa automática, que falhou nos anéis cortados). Os originais ficam no histórico do git (commit anterior).
+Mipmaps ligados nos 25 `.import`.
