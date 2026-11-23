@@ -45,8 +45,11 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
     vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
     `assets/baked/`, com animações CC0 da Quaternius e do KayKit) e a espada Emeth (`assets/models/meshy/emeth/`,
     gerada da imagem da Emeth enviada pelo Daniel, também feita por IA;
-  - ainda fora do jogo (2026-11-23): a Maga (`assets/models/meshy/hero_maga_img/`, imagem para 3D da arte 01 do pacote do
-    Daniel, feita por IA no ChatGPT; prévias só de malha por texto em `hero_maga/`).
+  - no jogo desde 2026-11-23 (M1c): a Maga (`assets/models/meshy/hero_maga_img/`, imagem para 3D da arte 01 do pacote do
+    Daniel, feita por IA no ChatGPT), com o esqueleto do Meshy (`hero_maga_img-rigged.glb`) e as mesmas animações CC0 da
+    Quaternius levadas ao corpo dela (`maga_anims.res`, `tools/bake_hero.gd -- maga`; nenhuma animação gerada por IA), e o
+    bastão de duas pontas (`assets/models/meshy/w_maga_staff/`, texto para 3D do Meshy descrevendo o bastão da arte 01;
+    no jogo, duas cópias da cabeça unidas na mão). Prévias só de malha por texto em `hero_maga/` (fora do jogo).
   - no jogo desde 2026-11-21 (peças aprovadas pelo Daniel, geradas no plano Pro, prompts em `tools/meshy/prompts.json`):
     armas que entram nas mãos dos inimigos assados (`assets/models/meshy/w_cleaver`, `w_knight_sword`, `w_knight_shield`,
     `w_staff`, `w_morvath_scythe`; o cabo longo da foice é um cilindro feito em código), a estátua encapuzada do Salão

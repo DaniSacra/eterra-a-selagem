@@ -92,9 +92,11 @@ async function preview(key) {
 
 async function refine(key) {
   const task = loadTasks()[key];
-  const id = (await call('POST', '/v2/text-to-3d', {
-    mode: 'refine', preview_task_id: task.previewId, texture_resolution: '2k', enable_pbr: false, target_formats: ['glb'],
-  })).result;
+  const spec = JSON.parse(readFileSync(join(here, 'prompts.json'), 'utf8')).models[key] ?? {};
+  const body = { mode: 'refine', preview_task_id: task.previewId, texture_resolution: '2k', enable_pbr: false, target_formats: ['glb'] };
+  // the painting may be told apart from the shape's prompt (models[key].texture_prompt)
+  if (spec.texture_prompt) body.texture_prompt = spec.texture_prompt;
+  const id = (await call('POST', '/v2/text-to-3d', body)).result;
   saveTask(key, { refineId: id });
   console.log(`${key}: refine ${id}`);
   const t = await wait(`/v2/text-to-3d/${id}`, `${key} refine`);

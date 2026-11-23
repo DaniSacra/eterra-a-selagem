@@ -64,6 +64,9 @@ const GLINT_ANIM_SPEED := 0.15
 const ASSIST_RANGE := 5.0
 const ASSIST_HALF_ARC := deg_to_rad(65.0)
 const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
+## The Maga's Passo Etéreo gesture (tools/bake_hero.gd MAGA_CLIPS, 0.53 s as made): played this many times faster.
+const BLINK_CLIP := &"Blink"
+const BLINK_CLIP_SPEED := 2.0
 ## VX-17: a finisher's clip ends and its last pose stays this long (the blow's weight is read on it), then eases into
 ## the guard over FINISHER_SETTLE (it snapped back in 0.08 s); walking or another blow cuts it as before.
 const FINISHER_HOLD := 0.3
@@ -290,7 +293,7 @@ func _ready() -> void:
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
 		_anim.speed_scale = GLINT_ANIM_SPEED
 		glinted.emit(node, pos, facing, time, blade_tip))
-	var body := HeroBody.make()
+	var body := HeroBody.make(hero.id)
 	_model = body[0]
 	_anim = body[1]
 	_sword = body[2]
@@ -900,6 +903,9 @@ func _teleport(move: Vector2) -> void:
 	dodge_age = 0.0
 	fx.burst(&"dust", Vector3(from.x, 0.2, from.y))
 	fx.burst(&"fire", Vector3(pos.x, 0.4, pos.y))
+	# M1c: her short gesture as she comes out (only the look; a body without the clip keeps what it played)
+	if _anim.has_animation(BLINK_CLIP):
+		_play(BLINK_CLIP, BLINK_CLIP_SPEED, 0.0, 0.0)
 	Audio.play(&"dodge")
 	dodged.emit(dir)
 
