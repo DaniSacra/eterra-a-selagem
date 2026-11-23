@@ -31,11 +31,26 @@ Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas
 2. Em paralelo, cada um na sua cópia: **QA** do exe como jogador novo (travas, erros no log, telas, controle; 12 sementes, os dois heróis); **equilíbrio** do novato e do evoluído (meta: o novato chega ao primeiro guardião e às vezes vence; evoluído 20 a 40% contra Morvath); **Maga M1b mínima** (escolher o herói no Santuário ou no título, HUD das 5 habilidades e da Ressonância, save por herói).
 3. Juntar, corrigir os bugs do QA, suíte, exe nas duas pastas, commit e push. Folha curta para o Daniel: o que observar nos testadores e onde fica o registro (`user://runs.jsonl`).
 
-## Estado de 2026-11-23, 13h10 (sessão principal, nada commitado)
-- **Integrado**: pausa entre golpes dos guardiões e de Morvath (`AttackGap`, recuperações menores, `IdleStats` no RESULT; `combat_cadence.md` seção 12); Ancião chama 2 arqueiros (no máximo 2 de pé); seção das casas dos guardiões em `art_rooms.md`. Suíte 1903, 1 falha de teste desatualizado corrigida. Exe nas duas pastas.
-- **Pronto fora da árvore**: Maga M1a em `~/games/eterra-work-maga` (18 testes verdes, RESULT do Guerreiro igual; relatório em `maga.md` seção 14). Integrar com merge de 3 vias (cópia feita antes da integração acima) e rodar a suíte.
-- Observação: `--smoke --bot` de 30 s varia entre rodadas no próprio editor (sem o robô o RESULT é igual); investigar se pesar.
-
+## Estado de 2026-11-23, 15h30 (LER PRIMEIRO na conversa nova; tudo commitado e enviado, `a1b5be6`)
+- **Exe do teste com usuários** (noite de 23/11): `Downloads\ASelagem-3D\ASelagem.exe` e `ASelagem-teste`, de 15:03, commit `461c414`
+  (C1 a C5, C1e, C1d, pausas dos chefes, Maga M1a e escolha no Portal do Santuário a partir da 2ª descida, dano da Maga maior).
+  Folha para o Daniel: `Downloads\ASelagem-teste-com-usuarios.txt`. QA sem P0/P1 (`docs/qa/playtest_2026-11-23.md`).
+- **Depois do exe, já no repositório (entra no próximo exe)**: resumo das partidas `tools/runs_report.py`; `--smoke` com passo fixo
+  (robô determinístico, `tools/determinism.sh`); luz morna na Câmara de Morvath (falta conferir na GPU, `docs/gallery/morvath_light/`);
+  Canalizador com assado próprio e clipes de morte/golpe/erguer com menos poses (68,55 MB; falta o art-director e ver a morte em jogo);
+  plano da Maga M2 (`docs/design/heroes/maga_m2.md`).
+- **Próximos passos, nesta ordem:**
+  1. Quando o Daniel trouxer o teste: `python3 -I tools/runs_report.py --since=2026-11-23T18:00` (lê o `runs.jsonl` do Windows) + as
+     anotações dele; resumo do que mudar.
+  2. Recalibrar Morvath com esses dados (tentar `BOSS_DAMAGE` 1,3, golpe máximo abaixo de 30 de vida; ver o fim de `docs/design/balance.md`).
+  3. **A Videira** V1 a V3 (decidido, seção abaixo), custos com o registro dos testadores.
+  4. **Maga M1c** (modelo no jogo; o Daniel quis depois do teste): esqueleto e animações no Meshy (~5 + 3 por ação) e o cajado (~30),
+     estimar e pedir o ok antes de gastar; saldo 371. Modelo pronto em `assets/models/meshy/hero_maga_img/`.
+  5. **Maga M2**: esperar as 5 respostas do Daniel (fim de `maga_m2.md`; recomendações: Suspensão Absoluta, árvore em triângulo, 1 Selo
+     na Tempestade, Bênçãos novas depois, ramo "Selos").
+  6. Abertos de combate e arte: luta de Morvath longa, ataque 44% do dano, placa do Armadilheiro, revisões na GPU; C6 (anjos) espera o Daniel.
+- Regras de hoje: imagens para o Daniel ver vão para `C:\Users\danie\Downloads`; cópias de segurança no disco (`~/games/eterra-backups`),
+  nunca em `/tmp` (tmpfs de 3,9 GB); robô na tela dele só com o exe e uma janela por vez.
 
 ## Maga M1 (pacote do Daniel de 2026-11-23; design em `docs/design/heroes/maga.md` v2)
 
