@@ -205,3 +205,21 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   (< 9) conta as abertas como já apresentadas (migração em `SaveData.merged`).
 - `--hub-open=all` abre tudo e não apresenta nada (capturas, robô); `tests/hooks/pre_run.gd` o liga para toda a suíte,
   `tests/test_hub_gate.gd` o desliga. `tools/first_tour.gd` pula estação fechada.
+
+## Guia de destrave (PT-5, 2026-11-23, `HubGuide`, `HubGuideOverlay`; testes em `tests/test_pt5_unlock_guide.gd`)
+- Pedido do Daniel: toda coisa nova que abre no Santuário é explicada na primeira vez. Ao entrar com algo recém-destravado, depois
+  do olhar de chegada, a câmera aproxima suave (`GUIDE_ZOOM` 0,62 da distância, `CamRig.wide`/`lean` sobre o ponto `SHOW` da
+  estação), um anel e uma seta apontam o lugar e uma placa diz a frase com a tecla real de `interact` (`{key}`: teclado, controle,
+  remapeada). Um guia por vez, em fila; qualquer tecla, botão ou clique avança (meio segundo de carência); depois do último a câmera
+  volta ao herói. O herói fica parado enquanto isso.
+- A lista é dado: `data/hub_guide/NN_id.tres` (`HubGuideDef`: id, ordem, estação, `text_key`, condição), gerada por `_hub_guide` em
+  `tools/make_data.gd`. Guia novo = uma linha lá e um texto `guide_*`. Condições (`HubGuide.CONDITIONS`): `open` (porta da
+  `HubGate` aberta), `always`, `wins` (Morvath selado: Juramentos), `account` (O Preparo no Forjador). Hoje: portal (também troca de
+  herói), tree (Dons), book (Livro e Compêndio), forge, vendor, account, sworn.
+- Uma vez por save: `hub.guided` (versão 11 do save); save antigo conta o que já está devido como visto (`SaveData.merged`). Gravado
+  ao começar o guia. A linha `hub_open_*` de uma estação que tem guia na visita não aparece duas vezes.
+- Nada com `--bot`, `--smoke`, `--nosave`, `--hero-at` ou `--hub-open=all` (a suíte). Para ver: `--hub --guide=<id>` (`portal`, `tree`,
+  `book`, `forge`, `vendor`, `account`, `sworn`; `--guide=all` encadeia todos); forçado não grava. Ex.:
+  `tools/gpu.sh shot saida.png --hub --guide=tree --shot-at=5`.
+- Pendente: Encantos, anjos, Videira e a escolha de herói como destrave próprio (hoje a escolha de herói está sempre aberta e vai na
+  frase do Portal); entram como linhas novas no `_hub_guide` quando tiverem estação e condição.

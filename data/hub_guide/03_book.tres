@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="HubGuideDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_hra3e"]
+
+[resource]
+script = ExtResource("1_hra3e")
+id = &"book"
+order = 3
+station = &"book"
+text_key = &"guide_book"

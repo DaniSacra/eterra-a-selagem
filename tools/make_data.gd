@@ -55,7 +55,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "account", "maga"]:
+	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "account", "hub_guide", "maga"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -2773,6 +2773,36 @@ func _altar_room() -> RoomLayout:
 	l.cam_target = Vector2.ZERO
 	l.cam_reach = 1.5
 	return l
+
+
+# ---------- PT-5: the Santuário's unlock guides (docs/reference/hub.md) ----------
+
+const HUB_GUIDE_DIR := "res://data/hub_guide/"
+
+
+## One guide per thing that unlocks in the Santuário: the station the camera comes close to, the sentence and when it is due
+## (HubGuide.CONDITIONS). A new one is a line here and a text, no code.
+func _hub_guide() -> void:
+	DirAccess.make_dir_recursive_absolute(HUB_GUIDE_DIR)
+	for f in DirAccess.get_files_at(HUB_GUIDE_DIR):
+		DirAccess.remove_absolute(HUB_GUIDE_DIR + f)
+	var list := [
+		[&"portal", HubPlan.PORTAL, &"guide_portal", &"always"],
+		[&"tree", HubPlan.TREE, &"guide_tree", &"open"],
+		[&"book", HubPlan.BOOK, &"guide_book", &"open"],
+		[&"forge", HubPlan.SMITH, &"guide_forge", &"open"],
+		[&"vendor", HubPlan.VENDOR, &"guide_vendor", &"open"],
+		[&"account", HubPlan.SMITH, &"guide_account", &"account"],
+		[&"sworn", HubPlan.PORTAL, &"guide_sworn", &"wins"],
+	]
+	for i in list.size():
+		var g := HubGuideDef.new()
+		g.id = list[i][0]
+		g.order = i + 1
+		g.station = list[i][1]
+		g.text_key = list[i][2]
+		g.condition = list[i][3]
+		_save(g, HUB_GUIDE_DIR + "%02d_%s.tres" % [g.order, g.id])
 
 
 # ---------- E6: the Juramentos (D-63; docs/design/e6_juramentos.md) ----------

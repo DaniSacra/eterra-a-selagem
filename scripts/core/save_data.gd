@@ -16,7 +16,7 @@ extends RefCounted
 ## descent it played, up to 30 (Q-RJ8 a, MaterialPurse.retro_silver), once.
 ## 10 (Lote 5, the account's tree "O Preparo", Account): account (bought: the ids of the nodes bought, for every hero). An
 ## older file opens with none bought; nothing else changes.
-const VERSION := 10
+const VERSION := 11
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -65,7 +65,7 @@ static func defaults() -> Dictionary:
 
 
 static func hub_defaults() -> Dictionary:
-	return {"presented": []}
+	return {"presented": [], "guided": []}
 
 
 ## The Juramentos block (E6): the ranks chosen for the next descent (id: rank; read through Juramentos.set_all) and the
@@ -153,6 +153,9 @@ static func merged(loaded: Variant) -> Dictionary:
 	# files before version 9 (the Santuário opens by stages): what is open already counts as shown (no announcement)
 	if version < 9:
 		HubGate.mark_presented(out, HubGate.open_ids(out).filter(func(id: StringName) -> bool: return HubGate.GATED.has(id)))
+	# files before version 11 (PT-5, the Santuário's guides): what is due already counts as shown (no guide for what he knows)
+	if version < 11:
+		HubGuide.mark_shown(out, HubGuide.pending(out).map(func(d: HubGuideDef) -> StringName: return d.id))
 	# version 10 (the account): nothing to move, an older file opens with none bought (defaults)
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION

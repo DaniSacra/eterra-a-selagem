@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="HubGuideDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_ox08t"]
+
+[resource]
+script = ExtResource("1_ox08t")
+id = &"sworn"
+order = 7
+station = &"portal"
+text_key = &"guide_sworn"
+condition = &"wins"

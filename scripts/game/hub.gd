@@ -30,6 +30,11 @@ signal oficio_done(what: StringName)
 const FADE := 0.45
 ## The mark over a station's page (px at 720 lines).
 const MARK := 56.0
+## PT-5: how close the camera comes to a station that is being explained (share of its own distance), the seconds it
+## waits after the arrival look, and how fast the close-up eases in and out.
+const GUIDE_ZOOM := 0.62
+const GUIDE_DELAY := 0.4
+const GUIDE_EASE := 2.2
 
 var air: WorldAir
 var arena: Arena
@@ -47,6 +52,11 @@ var _sworn := false
 ## Seconds since he came up the stairs (-1: placed by --hero-at; HubPlan.near_want_at).
 var arrived := 0.0
 var _fade: ColorRect
+## PT-5: the unlock guide on show (null: none), the share of its close-up on the camera (eased) and the guides of this
+## visit that wait for the arrival look to end.
+var guide: HubGuideOverlay
+var _guide_k := 0.0
+var _guide_wait: Array[HubGuideDef] = []
 
 
 func _ready() -> void:
@@ -115,6 +125,7 @@ func _ready() -> void:
 	evolve()  # (the closed stations out of the focus and dark)
 	# the place's name on arriving and a faint name over every station (UI review d2ff05d, P1-8)
 	add_child(HubLabels.new().setup(self))
+	_guide_wait = HubGuide.to_show(Save.data)
 	_announce()
 	apply_options()
 	# its own place in Músicas (the title's piece by default: from the title it goes on without a seam)
@@ -141,7 +152,8 @@ func _process(delta: float) -> void:
 	if arrived >= 0.0:
 		arrived += dt
 	_arrival_look()
-	var free := not host.is_open() and not leaving
+	_guide_tick(dt)
+	var free := not host.is_open() and not leaving and guide == null
 	player.step(dt, move() if free else Vector2.ZERO, Vector2.ZERO)
 	if focus.step(player.pos):
 		_show_focus()
@@ -175,6 +187,10 @@ func _arrival_look() -> void:
 	cam.wide = k
 	cam.wide_distance = HubPlan.ARRIVAL_DISTANCE
 	cam.safe = lerpf(CamFrame.SAFE, HubPlan.ARRIVAL_SAFE, k)
+	if k <= 0.0 and _guide_k > 0.0:
+		# PT-5: the close-up of a station being explained
+		cam.wide = _guide_k
+		cam.wide_distance = CamRig.distance() * GUIDE_ZOOM
 
 
 ## The floor point the camera leans to while a station is in focus (HubPlan.frame_for; INF: none, the far camera's
@@ -182,6 +198,10 @@ func _arrival_look() -> void:
 ## the screen. The near camera always leans: on him, never south of HubPlan.NEAR_SOUTH (art review H-P0-2), and for
 ## its first HubPlan.ARRIVAL_LOOK seconds on the far camera's point (the portal in the frame, P1-A2).
 func lean() -> Vector2:
+	if guide != null and guide.current != null:
+		# PT-5: the camera looks at the station the guide explains (what SHOW says of it), not at the hero
+		var s: Vector3 = HubPlan.SHOW[guide.current.station]
+		return HubPlan.to_world(Vector2(s.x, s.y))
 	if focus.current == &"" and cam.holds():
 		return Vector2.INF
 	var view := get_viewport().get_visible_rect().size
@@ -375,6 +395,29 @@ func is_open(id: StringName) -> bool:
 	return HubGate.is_open(Save.data, id, Dev.arg("hub-open") == "all")
 
 
+## PT-5: after the arrival look (and a screen closed) the guides of this visit come one by one: written in the save the
+## moment they start (forced ones with --guide are not), the camera eases in and, after the last, back to the hero.
+func _guide_tick(dt: float) -> void:
+	var on := guide != null and guide.current != null
+	_guide_k = move_toward(_guide_k, 1.0 if on else 0.0, dt * GUIDE_EASE)
+	if guide == null and not _guide_wait.is_empty() and not host.is_open() and not leaving \
+			and (arrived < 0.0 or arrived >= HubPlan.ARRIVAL_LOOK + HubPlan.ARRIVAL_EASE + GUIDE_DELAY):
+		if not Dev.has("guide"):
+			HubGuide.mark_shown(Save.data, _guide_wait.map(func(d: HubGuideDef) -> StringName: return d.id))
+			Save.write()
+		guide = HubGuideOverlay.new().setup(_guide_wait)
+		_guide_wait = []
+		ui.add_child(guide)
+		if is_instance_valid(station_sign):
+			station_sign.queue_free()
+			station_sign = null
+		guide.done.connect(func() -> void:
+			guide.queue_free()
+			guide = null
+			Controls.clear_presses()
+			_show_focus())
+
+
 ## The openings of this return said once: one line each over the place's name, written in the save (HubGate.presented).
 func _announce() -> void:
 	if Dev.arg("hub-open") == "all" or Dev.has("hero-at"):
@@ -384,9 +427,13 @@ func _announce() -> void:
 		return
 	var lines: Array[String] = []
 	for id in ids:
-		lines.append(T.t(HubGate.TEXT[id]))
+		# a station with a guide this visit is explained by it, not said twice
+		if not _guide_wait.any(func(d: HubGuideDef) -> bool: return d.station == id):
+			lines.append(T.t(HubGate.TEXT[id]))
 	HubGate.mark_presented(Save.data, ids)
 	Save.write()
+	if lines.is_empty():
+		return
 	for l in get_children():
 		if l is HubLabels:
 			(l as HubLabels).announce(lines)

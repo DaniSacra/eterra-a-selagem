@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="HubGuideDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/hub_guide_def.gd" id="1_jl5i6"]
+
+[resource]
+script = ExtResource("1_jl5i6")
+id = &"forge"
+order = 4
+station = &"smith"
+text_key = &"guide_forge"
