@@ -62,3 +62,10 @@ era a única diferença dentro da família. Agora, por processamento de imagem (
   Vigília (escudo igual nos 8), Véu (3 véus quase iguais), Maré e Marca. Para separar de verdade falta arte nova com um
   pictograma de ação por Bênção (ver o pedido acima). Resto da pintura sob o selo apagado é um borrão suave.
 Antes e depois: `docs/gallery/medallions_rev02/bencaos_consertadas.jpg`.
+
+## Rev. 03 no jogo (2026-11-23, noite)
+Os 102 ícones foram refeitos pelo ChatGPT sem moldura (quadrados de 1024 px, recortados de pranchas e ampliados). Entraram todos,
+inclusive os 7 antigos, para o conjunto ficar igual: `tools/art/frame_borderless.gd` recorta o disco e põe a moldura única
+(`tools/art/medallion_frame.png`). Pranchas e capturas em `docs/gallery/medallions_rev03/`. Cada Bênção agora se distingue pelo
+objeto (espada, leão, bota, escudo) dentro da família. Os originais quadrados ficam fora do repositório
+(`~/games/eterra-art-in/rev03-2026-11-23/`); para refazer: rodar a ferramenta sobre eles.

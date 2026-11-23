@@ -75,6 +75,10 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   pelo diretor de arte do PO no ChatGPT (pacote `Eterra_Pintura_Medalhoes_PARTE_1..3`, relatório em
   `docs/art/medallions_rev02.md`). Única edição nossa: o texto solto no alto de `trial.png` apagado.
 
+- **Ícones pintados, Rev. 03 (vão no jogo, 2026-11-23, substituem a Rev. 02)**: os 25 de `assets/ui/rewards/` e os 77 de
+  `assets/ui/boons/`, pintados por IA pelo diretor de arte do PO no ChatGPT, quadrados e sem moldura
+  (`Eterra_REV03_01..04`); o recorte redondo e a moldura única são nossos (`tools/art/frame_borderless.gd`).
+
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), fontes Cinzel e Alegreya Sans (OFL), textura
   Rock Surface (Amal Kumar, Poly Haven, CC0).
