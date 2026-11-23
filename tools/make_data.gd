@@ -1718,7 +1718,7 @@ func _bosses() -> void:
 	b.thresholds = PackedFloat32Array([0.66, 0.33, 0.15])
 	b.ritual_phase = 2
 	# E2 (Daniel's test of E1: "Morvath is too easy"; docs/qa/e2_morvath.md): shorter rests, the last phase most
-	b.rest = PackedFloat32Array([1.1, 1.0, 0.6, 0.4])
+	b.rest = PackedFloat32Array([0.9, 0.8, 0.5, 0.35])
 	# 2026-11-23 (Daniel: "ataca mais rapido"): his wind-ups 15% shorter in the first two phases, 18% and 20% in the last two (it was
 	# 1, 1, 0.95, 0.9); the quickest, the second reap (0.5 s), stays at 0.4 s
 	b.windup_scale = PackedFloat32Array([0.85, 0.85, 0.82, 0.8])
@@ -1728,28 +1728,28 @@ func _bosses() -> void:
 	b.layer_raise = [&"skeleton", &"mage"] as Array[StringName]
 	b.layer_eruption_count = Vector2i(2, 2)
 	# each phase opens on its own pattern, right after the roar: the ritual (by itself), the curse, the storm
-	b.phase_openers = [&"", &"", &"curse", &"storm"] as Array[StringName]
+	b.phase_openers = [&"", &"", &"curse", &"barrage"] as Array[StringName]
 	# the curse and the storm are opened from the middle of the floor, as the ritual is (cycle C11)
 	b.center_phases = PackedInt32Array([3, 4])
 	var numbers := {
 		"roar_time": 1.6, "roar_push": 4.0, "near": 6.0, "far": 10.0, "still_after": 0.8, "lead": 0.45,
-		"summon_raise": [&"skeleton", &"skeleton"] as Array[StringName], "summon_windup": 1.1,
+		"summon_raise": [&"mage", &"mage"] as Array[StringName], "summon_windup": 1.1,
 		# reinforcements rise one by one (a rune, the energy, the body, 0.45 s apart), 20 at most in the whole fight
 		"adds_total_cap": 20, "rise_stagger": 0.45,
 		# where they rise (cycle C11, fitted to the chamber's 12.5 m: the ritual's ring of 6.5 around the seal leaves
 		# 5.5 m of floor outside it to fight in; summons 5 m around him, never within 4 m of the paladin)
-		"gap_min": 0.3, "gap_max": 1.5, "gap_min0": 0.2, "gap_max0": 0.7,
+		"gap_min": 0.1, "gap_max": 0.7, "gap_min0": 0.05, "gap_max0": 0.3,
 		"summon_ring": 5.0, "summon_clear": 4.0, "ritual_ring": 6.5,
 		# the crescents come undone 0.3 m past the floor's edge; the charge stops at the edge and needs 8 m free
 		"soul_overrun": 0.3, "dash_min_free": 8.0,
 		# a combination waits for nothing of the first to be left, then rests only this long
 		"chain_rest": 0.35,
 		# the Sepulchral Scythe: half a circle 5 m from his middle (3.6 m past his body), 0.8 s to read it, 1 s to punish
-		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 0.75, "scythe_damage": 19.0, "scythe_approach": 1.2,
+		"scythe_reach": 5.0, "scythe_degrees": 180.0, "scythe_windup": 0.8, "scythe_recovery": 0.7, "scythe_damage": 19.0, "scythe_approach": 0.7,
 		# C19-3, the Double Reap (Q-09 a; Hades II's Hecate: right 0.85 / 0.4 / 0.35, at once left 0.5 / 0.5 / 2.2): two
 		# sweeps of 150 degrees and 4.5 m close in, the second born where the paladin is as the first ends, then 2.2 s
 		"reap_reach": 4.5, "reap_degrees": 150.0, "reap_windup": 0.85, "reap_active": 0.4, "reap_pause": 0.35, "reap2_windup": 0.5,
-		"reap2_active": 0.5, "reap_recovery": 2.2, "reap_damage": 16.0,
+		"reap2_active": 0.5, "reap_recovery": 1.4, "reap_damage": 16.0,
 		# the Blades of the Souls: two crescents 3 m wide, 38 degrees apart, across the hall at 11 m/s
 		"blade_spread": 38.0, "blade_speed": 11.0, "blade_width": 3.0, "blade_range": 26.0, "blade_windup": 0.7, "blade_recovery": 0.6, "blade_damage": 16.0,
 		# C17, Q-09 (b): phase 1 was the scythe in a loop with him close (91% scythe over 3 seeds): the Blades come at
@@ -1758,6 +1758,12 @@ func _bosses() -> void:
 		# the Storm of the Six Souls: six crescents all around (never two closer than 48 degrees), a second wave turned 30
 		"storm_count": 6, "storm_jitter": 7.0, "storm_min_gap": 48.0, "storm_waves": 3, "storm_turn": 30.0, "storm_gap": 1.0, "storm_windup": 0.9,
 		"storm_recovery": 0.9, "storm_damage": 15.0, "storm_stagger": 0.08,
+		# Daniel 2026-11-23 (docs/reference/gameplay.md, Morvath): no walking after the paladin, no marks on the floor but the eruptions
+		# (the "!" announces the rest); the last phases lean on the far attacks and the storm's fan becomes the barrage, a machine gun
+		# that follows the paladin: crescents one after the other (by phase), each aimed at where he stands as it leaves
+		"shots_gate": 7.0,
+		"barrage_count": PackedFloat32Array([0.0, 0.0, 8.0, 12.0]), "barrage_gap": PackedFloat32Array([0.25, 0.25, 0.26, 0.2]),
+		"barrage_windup": 0.7, "barrage_speed": 12.0, "barrage_width": 1.3, "barrage_damage": 8.0, "barrage_recovery": 0.6, "barrage_turn": 220.0,
 		# the Sepulchral Eruptions: 2 or 3 circles of 4 m (2 m until Daniel's test of 2026-11-16: too easy to step out of; the warning 0.9 to 1.2 s so they can still be walked out of), one on the paladin, the lane to the middle of the hall kept free
 		"eruption_radius": 4.0, "eruption_delay": 1.35, "eruption_count": Vector2i(2, 3), "eruption_lane": 120.0, "eruption_sequences": 2,
 		"eruption_gap": 1.0, "eruption_damage": 16.0, "eruption_recovery": 0.6,
@@ -1773,7 +1779,7 @@ func _bosses() -> void:
 		"curse_damage": 10.0, "curse_time": 3.0, "curse_slow": 0.3, "curse_immunity": 2.0, "curse_recovery": 0.6,
 		# C1d, the Corte do rastro: the paladin's wave undoes the bolt, the Brado takes it with its curse
 		"curse_cut": true,
-		"dash_length": 16.0, "dash_time": 0.42, "dash_windup": 0.8, "dash_width": 2.8, "dash_damage": 19.0, "dash_recovery": 0.8,
+		"dash_length": 16.0, "dash_time": 0.42, "dash_windup": 0.8, "dash_width": 2.8, "dash_damage": 19.0, "dash_recovery": 0.6,
 		"stagger_from_phase": 3, "stagger_hits": 3, "stagger_forget": 4.0, "stagger_time": 2.6,
 		# C1d, the Postura (chefes_c1d.md): from phase 1, a bar of 900 over his life worn by the BUTTON of each blow (Feel.poise_weights
 		# times posture_mult 0.5: attack 14 blows, special/Brado 3.3, Investida 4, ultimate 2); broken, he kneels 2.6 s taking +40%
@@ -1784,25 +1790,19 @@ func _bosses() -> void:
 	for k: String in numbers:
 		b.set(k, numbers[k])
 	b.attacks = [
-		# close: the scythe; it walks in first (scythe_approach)
-		# in the last phase the scythe may be followed by the storm from where he stands
-		# E2: from the curse's phase, eruptions with its warning, their free lane away from his half circle
-		_attack(&"scythe", {"weight": 3.0, "max_dist": 11.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2, "then": &"storm", "then_chance": 0.6, "then_from_phase": 4}),
-		# C19-3: close in, the Double Reap shares the near choices with the scythe (phase 1 with him within 4 m: no
-		# attack over half, never three alike)
-		_attack(&"reap", {"weight": 3.5, "max_dist": 6.0, "near_bias": 2.2, "streak": 1}),
-		# far: the blades (until the storm takes their place); E2: in the curse's phase his dead rise as they fly
-		_attack(&"blades", {"weight": 2.0, "until_phase": 3, "cooldown": 3.0, "min_dist": 0.0, "near_bias": 1.0, "far_bias": 2.2}),
-		# the paladin keeps away: the dash closes in
-		_attack(&"dash", {"weight": 1.0, "cooldown": 6.0, "min_dist": 9.0, "far_bias": 1.5}),
-		# the eruptions drive the paladin; in the last phase the scythe waits where he lands
+		# near (under `near`) he prefers the scythe and the reap; far (over `far`) the far attacks; he never chases (Daniel 2026-11-23).
+		# The scythe walks in a little (scythe_approach) so it only comes up to max_dist; the last phases (late_*) lean on the far ones
+		_attack(&"scythe", {"weight": 3.0, "late_from_phase": 4, "late_weight": 1.6, "max_dist": 8.0, "near_bias": 2.2, "far_bias": 0.35, "streak": 2}),
+		_attack(&"reap", {"weight": 3.5, "late_from_phase": 4, "late_weight": 2.0, "max_dist": 6.0, "near_bias": 2.2, "streak": 1}),
+		# far: the blades of the first two phases, in the others the barrage
+		_attack(&"blades", {"weight": 2.0, "until_phase": 2, "cooldown": 3.0, "min_dist": 0.0, "near_bias": 0.5, "far_bias": 2.2}),
+		_attack(&"barrage", {"from_phase": 3, "weight": 1.6, "late_from_phase": 4, "late_weight": 3.2, "cooldown": 3.0, "near_bias": 0.5, "far_bias": 1.6}),
+		# the paladin keeps away: the dash closes in (seldom, never a chase)
+		_attack(&"dash", {"weight": 0.7, "cooldown": 7.0, "min_dist": 9.0, "far_bias": 1.5}),
 		_attack(&"eruptions", {"from_phase": 2, "weight": 1.4, "cooldown": 5.0, "still_bias": 3.0, "then": &"scythe", "then_chance": 0.6, "then_from_phase": 4}),
-		_attack(&"summon", {"from_phase": 2, "weight": 0.8, "cooldown": 9.0}),
-		# E2: as the bolt leaves, eruptions whose free lane is off its way
-		_attack(&"curse", {"from_phase": 3, "weight": 1.6, "cooldown": 6.0, "min_dist": 3.0}),
-		# after the storm, a paladin far away is charged (only when he is far: the dash needs 9 m); E2: the storm with
-		# everything at once, eruptions (their free lane in the gap nearest the paladin) and his dead rising
-		_attack(&"storm", {"from_phase": 4, "weight": 2.2, "cooldown": 4.0, "near_bias": 1.3, "far_bias": 1.3, "then": &"dash", "then_chance": 0.4, "then_from_phase": 4}),
+		# his dead (the casters) rise when the paladin is away
+		_attack(&"summon", {"from_phase": 2, "weight": 0.8, "late_from_phase": 3, "late_weight": 1.3, "cooldown": 9.0, "near_bias": 0.4, "far_bias": 2.0}),
+		_attack(&"curse", {"from_phase": 3, "weight": 1.6, "late_from_phase": 4, "late_weight": 2.2, "cooldown": 6.0, "min_dist": 3.0, "near_bias": 0.6, "far_bias": 1.5}),
 	]
 	for i in b.rest.size():
 		b.rest[i] *= BOSS_REST

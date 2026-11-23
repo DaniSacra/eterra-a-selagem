@@ -8,6 +8,9 @@ extends Resource
 @export var from_phase := 1
 @export var until_phase := 0
 @export var weight := 1.0
+## Daniel 2026-11-23: from late_from_phase on (0: never) the weight is late_weight (the last phases lean on the far attacks).
+@export var late_from_phase := 0
+@export var late_weight := 0.0
 ## Seconds before it may be chosen again.
 @export var cooldown := 0.0
 ## Only chosen with the paladin between these distances (m).
@@ -33,6 +36,11 @@ extends Resource
 @export var layer_from_phase := 0
 @export var layer_chance := 0.0
 @export var layer_share := 0.0
+
+
+## The weight in this phase (late_weight from late_from_phase on).
+func weight_in(phase: int) -> float:
+	return late_weight if late_from_phase > 0 and phase >= late_from_phase else weight
 
 
 func allowed_in(phase: int) -> bool:

@@ -59,7 +59,7 @@ func test_data_gaps_for_knight_and_morvath() -> void:
 	var k := load("res://data/enemies/knight.tres") as EnemyDef
 	assert_eq([k.gap_min, k.gap_max, k.gap_min0, k.gap_max0], [0.3, 1.5, 0.2, 0.7])
 	var b := load("res://data/bosses/morvath.tres") as BossDef
-	assert_eq([b.gap_min, b.gap_max, b.gap_min0, b.gap_max0], [0.3, 1.5, 0.2, 0.7])
+	assert_eq([b.gap_min, b.gap_max, b.gap_min0, b.gap_max0], [0.1, 0.7, 0.05, 0.3])
 	for a in b.attacks:
 		assert_true(a.layers.is_empty(), "%s: attacks come one at a time (Daniel, 2026-11-23)" % a.id)
 

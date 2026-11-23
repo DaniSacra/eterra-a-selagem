@@ -192,6 +192,16 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   (poses, as 4 fases até a queda, passo simulado e desenhado, clipe desenhado, avisos onde ele está, soltura). Vídeos em
   `docs/gallery/e1c/bugs/`.
 - **Morvath mais difícil (E2)**: camadas `BossAttack.layers` (fase 3: maldição, foice e lâminas com erupções e/ou invocados; fase 4: tempestade com erupções e invocados) com a faixa livre das erupções onde o ataque de baixo não alcança (`BossRules.free_way`) e os invocados nos tetos de sempre; tempestade em 3 ondas (recarga 4 s), descansos 0,6 e 0,4 s nas fases 3 e 4, maldição 6 s, invocação 9 s; vida 6050 e dano iguais. Robô 0,25 com 5 Bênçãos: 8 de 16 vitórias (era 14). `RESULT` `boss.layers`; medição em `docs/qa/e2_morvath.md`, tempos em `combat_cadence.md` 1.4 (`tools/boss_cadence.gd`).
+- **Morvath mais difícil, como o Cavaleiro (2026-11-23, pedido do Daniel)**: nenhum ataque dele marca o chão, só as erupções (e a Ruptura e os círculos de invocação); cada
+  ataque é anunciado pelo "!" amarelo sobre ele (`Horde.strike_in` lê as zonas escondidas via `Enemy.fan`; `Boss._warn` esconde com `Ground.mute`, `_announce` cria a zona
+  só do aviso para investida, invocação, erupções e rajada). Ele não persegue: no `CHASE` fica parado e escolhe pela distância (`BossAttack.max_dist`, `near_bias`,
+  `far_bias`, `BossDef.near/far`): perto a foice e a ceifa (`max_dist` 8 e 6), longe lâminas (fases 1 e 2), rajada, maldição, invocação (agora os magos) e a investida
+  (rara). Menos ócio: descansos 0,9/0,8/0,5/0,35, `gap` 0,1 a 0,7 (0,05 a 0,3 sem vida), ceifa 1,4 s de recuperação, foice se aproxima 0,7 s no máximo; um ataque novo só
+  espera um tiro dele a menos de `shots_gate` (7 m) do herói. Fases finais: `BossAttack.late_from_phase/late_weight` (fase 4) pesam mais o que é de longe; a Tempestade
+  das Seis Almas saiu da lista e a **Rajada das Almas** (`barrage`, a partir da fase 3) é uma metralhadora: `barrage_count` (8 e 12) tiros um depois do outro, `barrage_gap`
+  (0,25 e 0,2 s) entre eles, cada um mirado na posição do herói no instante do tiro (sem antecipação), corpo girando atrás dele (`barrage_turn`). O código da
+  tempestade segue para os testes (`tests/boss_layers_fixture.gd` a põe de volta). Testes: `tests/test_morvath_hard.gd`. Robô, 12 sementes `--start=boss --boons=8`:
+  vitórias 5 para 4, luta mediana mais curta (o herói morre mais cedo), espera média entre ataques 0,70 para 0,37 s.
 - **Morvath, a luta em 4 fases** (pedido do Daniel de 2026-11-15; desenho em `docs/design/morvath_boss_fight.md`): todos os
   números em `data/bosses/morvath.tres` (`BossDef`, gerado por `_bosses` no `make_data.gd`, parte `bosses`); a escolha do
   ataque é do `BossDirector` (`core/boss_director.gd`: fase, distância, paladino parado, recargas, sem repetir, nunca vazio,

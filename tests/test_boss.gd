@@ -217,7 +217,7 @@ func _director() -> BossDirector:
 
 func test_the_director_always_has_something_to_choose() -> void:
 	var rng := RandomNumberGenerator.new()
-	var ids: Array[StringName] = [&"", &"scythe", &"blades", &"dash", &"eruptions", &"summon", &"curse", &"storm"]
+	var ids: Array[StringName] = [&"", &"scythe", &"blades", &"dash", &"eruptions", &"summon", &"curse", &"barrage"]
 	for phase in [1, 2, 3, 4]:
 		for dist in [0.0, 3.0, 8.0, 12.0, 40.0]:
 			for last in ids:
@@ -251,8 +251,10 @@ func test_the_director_only_uses_what_the_phase_allows() -> void:
 	assert_true((by_phase[2] as Dictionary).has(&"eruptions"))
 	assert_false((by_phase[2] as Dictionary).has(&"curse"))
 	assert_true((by_phase[3] as Dictionary).has(&"curse"))
-	assert_false((by_phase[4] as Dictionary).has(&"blades"), "in the last phase the blades become the storm")
-	assert_true((by_phase[4] as Dictionary).has(&"storm"))
+	assert_false((by_phase[3] as Dictionary).has(&"blades"), "from the curse's phase the blades become the barrage")
+	assert_true((by_phase[3] as Dictionary).has(&"barrage"))
+	assert_false((by_phase[4] as Dictionary).has(&"storm"), "no fan in the last phases (Daniel 2026-11-23)")
+	assert_true((by_phase[4] as Dictionary).has(&"barrage"))
 	assert_true((by_phase[4] as Dictionary).has(&"scythe"), "what came before stays")
 
 

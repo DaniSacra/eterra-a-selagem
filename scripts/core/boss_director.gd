@@ -75,8 +75,8 @@ func valid(phase: int, dist: float, blocked: Array[StringName] = [], strict: int
 
 
 ## How much an attack is wanted now.
-func weight(a: BossAttack, dist: float, still_t: float) -> float:
-	var w := maxf(a.weight, 0.001)
+func weight(a: BossAttack, dist: float, still_t: float, phase := 0) -> float:
+	var w := maxf(a.weight_in(phase), 0.001)
 	if dist <= near:
 		w *= a.near_bias
 	elif dist >= far:
@@ -94,7 +94,7 @@ func choose(phase: int, dist: float, still_t: float, blocked: Array[StringName],
 	for strict in [3, 2, 1, 0]:
 		var options := valid(phase, dist, blocked, strict)
 		if not options.is_empty():
-			return _draw(options, dist, still_t, rng).id
+			return _draw(options, dist, still_t, rng, phase).id
 	return &""
 
 
@@ -139,13 +139,13 @@ func layers_for(id: StringName, phase: int, rng: RandomNumberGenerator) -> Array
 	return out.duplicate()
 
 
-func _draw(options: Array[BossAttack], dist: float, still_t: float, rng: RandomNumberGenerator) -> BossAttack:
+func _draw(options: Array[BossAttack], dist: float, still_t: float, rng: RandomNumberGenerator, phase := 0) -> BossAttack:
 	var total := 0.0
 	for a in options:
-		total += weight(a, dist, still_t)
+		total += weight(a, dist, still_t, phase)
 	var roll := rng.randf() * total
 	for a in options:
-		roll -= weight(a, dist, still_t)
+		roll -= weight(a, dist, still_t, phase)
 		if roll <= 0.0:
 			return a
 	return options[options.size() - 1]

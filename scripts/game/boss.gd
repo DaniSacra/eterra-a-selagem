@@ -43,7 +43,7 @@ signal cue(name: StringName, at: Vector2, dir: Vector2, size: float, seconds: fl
 ## each of those dead falling and when it ends (left 0). Also readable at any time: ritual_left(), ritual_total().
 signal ritual_changed(left: int, total: int)
 
-enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER, RUPTURE }
+enum State { ENTER, CHASE, SCYTHE, REAP, BLADES, STORM, ERUPTIONS, CURSE, SUMMON, DASH_WARN, DASH, ROAR, TO_CENTER, RITUAL, STUNNED, DYING, RECOVER, RUPTURE, BARRAGE }
 
 ## T5b P1-4 (docs/qa/t5b_boss_fight.md): his body turns at most BODY_TURN degrees a second toward where he faces (e.dir,
 ## which his attacks still set at once: the warnings and the blows do not move); it snapped 100 to 137 degrees in one
@@ -54,7 +54,7 @@ const FOLLOW_RATE := 2.0
 ## The states the director's attack ids stand for.
 const ATTACKS := {
 	&"scythe": State.SCYTHE, &"reap": State.REAP, &"blades": State.BLADES, &"storm": State.STORM, &"eruptions": State.ERUPTIONS,
-	&"curse": State.CURSE, &"summon": State.SUMMON, &"dash": State.DASH_WARN,
+	&"curse": State.CURSE, &"summon": State.SUMMON, &"dash": State.DASH_WARN, &"barrage": State.BARRAGE,
 }
 const DEFS_DIR := "res://data/bosses/"
 ## His palette (Daniel, cycle 9): deep violet, spectral blue-green, a corrupted emerald (murkier and colder than
@@ -385,13 +385,10 @@ func _advance(dt: float) -> void:
 				else:
 					_rest(0.6)
 		State.CHASE:
+			# Daniel 2026-11-23: he does not go after the paladin; he turns to him and picks what suits the distance
 			e.dir = e.dir.slerp(toward, minf(1.0, dt * 6.0))
-			if to.length() > def.scythe_reach * 0.7 and not _held:
-				e.pos += toward * e.def.speed * (1.0 + 0.08 * (phase - 1)) * dt
-				_anim(&"walk")
-			else:
-				_anim(&"idle")
-			if _cooldown <= 0.0 and game.player.alive() and not _shots_flying():
+			_anim(&"idle")
+			if _cooldown <= 0.0 and game.player.alive() and not _shots_in_the_way():
 				if BossRules.rupture_due(phase, def.rupture_phase, def.rupture_every, _rupture_left):
 					_start_rupture()
 				else:
@@ -418,6 +415,8 @@ func _advance(dt: float) -> void:
 			_step_recover()
 		State.RUPTURE:
 			_step_rupture(dt)
+		State.BARRAGE:
+			_step_barrage(dt)
 		State.ROAR:
 			_anim(&"roar")
 			if _t >= def.roar_time:
@@ -817,6 +816,49 @@ func _step_storm() -> void:
 		game.fx.shake(2.0)
 
 
+## The barrage (Daniel, 2026-11-23): barrage_count crescents one after the other, barrage_gap apart, each aimed at the spot
+## where the paladin stands as it leaves (no lead, no fan), his body turning after him all the while; nothing on the floor.
+func _step_barrage(dt: float) -> void:
+	var windup := _windup(def.barrage_windup)
+	var count := int(BossDef.by_phase(def.barrage_count, phase, 0.0))
+	var gap := BossDef.by_phase(def.barrage_gap, phase, 0.25)
+	var to := game.player.pos - e.pos
+	if to.length() > 0.2:
+		e.dir = Horde.turned(e.dir, to.normalized(), deg_to_rad(def.barrage_turn) * dt)
+	if _step == 0:
+		_step = 1
+		_announce(windup)
+		cue.emit(&"blades_gather", e.pos, e.dir, def.blade_range, windup)
+	if _t < windup:
+		_pose(&"blades_windup", Horde.windup_arm(_t, windup, WINDUP_SETTLE, WINDUP_HOLD))
+		_gathering(dt, e.pos + e.dir * HAND.y, SOUL_VIOLET)
+		return
+	var fired := int((_t - windup) / maxf(gap, 0.05)) + 1
+	while _thrown + 1 < mini(fired, count):
+		_thrown += 1
+		_fire_barrage_shot()
+	if _thrown + 1 >= count:
+		_recover(def.barrage_recovery, &"slash2")
+
+
+## One crescent of the barrage, at the paladin's place now.
+func _fire_barrage_shot() -> void:
+	var to := game.player.pos - e.pos
+	var d := to.normalized() if to.length() > 0.2 else e.dir
+	e.dir = d
+	var from := e.pos + d * 0.8
+	var reach := maxf(_floor.cut(from, d, def.blade_range, -def.soul_overrun), 1.0)
+	var s := game.projectiles.fire_soul(from, d, def.barrage_speed, def.barrage_damage, def.barrage_width, reach, SOUL_VIOLET)
+	s.source = &"barrage"
+	_shots.append(s)
+	stats.barrage_shots = int(stats.get("barrage_shots", 0)) + 1
+	_pose(&"volley", 0.12)
+	var at := e.pos + d * 1.2
+	game.fx.chips(Vector3(at.x, Projectiles.SOUL_HEIGHT, at.y), Vector3(d.x, 0.2, d.y), VIOLET, 2, 4.0, 0.1, 0.25, 0.3)
+	Audio.play(&"souls")
+	moment.emit(&"barrage_shot")
+
+
 # ---------- layers (E2) ----------
 
 ## His attacks' wind-ups as the BossDef holds them (before the phase's scale).
@@ -829,6 +871,7 @@ func _base_windup(id: StringName) -> float:
 		&"eruptions": return def.eruption_delay
 		&"curse": return def.curse_windup
 		&"summon": return def.summon_windup
+		&"barrage": return def.barrage_windup
 		&"dash": return def.dash_windup
 	return 0.0
 
@@ -907,6 +950,17 @@ func _fire_soul(d: Vector2, damage: float) -> void:
 	Audio.play(&"souls")
 
 
+## A new attack may begin: none of his shots is flying, or (BossDef.shots_gate) none is closer than that to the paladin.
+func _shots_in_the_way() -> bool:
+	if def.shots_gate <= 0.0:
+		return _shots_flying()
+	_shots_flying()
+	for s in _shots:
+		if s.pos.distance_to(game.player.pos) < def.shots_gate:
+			return true
+	return false
+
+
 ## His shots still in the air (pruned as they go).
 func _shots_flying() -> bool:
 	var i := _shots.size() - 1
@@ -973,6 +1027,7 @@ func _erupt(toward := Vector2.INF, count := Vector2i.ZERO) -> void:
 	if count == Vector2i.ZERO:
 		count = def.eruption_count
 	var n := _rng.randi_range(count.x, maxi(count.x, count.y))
+	_announce(_windup(def.eruption_delay))
 	for at in BossRules.eruptions(game.player.pos, n, def.eruption_radius, toward, def.eruption_lane, _floor, _rng):
 		var z := game.ground.add_warning(at, def.eruption_radius, _windup(def.eruption_delay), def.eruption_damage, SPECTRAL)
 		z.eruption = true
@@ -1037,6 +1092,7 @@ func _step_summon() -> void:
 	_anim(&"summon")
 	if _step == 0:
 		_step = 1
+		_announce(def.summon_windup)
 		_call(def.summon_raise, e.pos, def.summon_ring, BossRules.adds_cap(def.adds_cap, phase), def.summon_windup, false)
 		Audio.play(&"summon")
 	elif _step == 1 and _t >= def.summon_windup + def.rise_stagger * maxi(0, def.summon_raise.size() - 1):
@@ -1058,6 +1114,7 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 		# the charge stops where his body meets the floor's edge; its lane goes on to the edge (his body's front).
 		# T5-08: the lane is only drawn, filling until his body would reach the paladin where he stands; the body hurts
 		_dash_len = maxf(_dash_room(_dir), 0.5)
+		_announce(windup)
 		var reach := dash_contact(e.pos, _dir, _dash_len, game.player.pos, e.def.radius + Player.RADIUS) * def.dash_time
 		_follow_zones = [_warn(game.ground.add_line_warning(e.pos, _dir, _lane(_dir, _dash_len + e.def.radius), def.dash_width, windup + reach, 0.0))]
 		cue.emit(&"dash_aim", e.pos, _dir, _dash_len, windup)
@@ -1068,11 +1125,6 @@ func _step_dash_warn(dt: float, toward: Vector2) -> void:
 		var lane: Ground.Zone = _follow_zones[0]
 		lane.radius = _lane(_dir, _dash_len + e.def.radius)
 		Ground.point_zone(lane, lane.pos, _dir)
-	_gather -= dt
-	if _gather <= 0.0:
-		_gather = GATHER_EVERY * 1.5
-		var at := e.pos + _dir * 1.0 + _dir.orthogonal() * _rng.randf_range(-0.6, 0.6) * def.dash_width * 0.5
-		game.fx.chips(Vector3(at.x, 0.25, at.y), Vector3(_dir.x, 0.0, _dir.y), VIOLET, 1, 7.0, 0.1, 0.35, 0.08)
 	if _t >= windup:
 		_from = e.pos
 		e.shake = 0.0
@@ -1176,10 +1228,24 @@ func _follow(dt: float, since: float, windup: float, creep_reach := 0.0) -> bool
 	return true
 
 
+## One of his attacks' zone (it hurts and the robot reads it) shows nothing on the floor (Daniel, 2026-11-23: only the eruptions
+## are marked); the "!" over him (Horde.strike_in) tells that it is coming.
 func _warn(z: Ground.Zone) -> Ground.Zone:
 	z.source = _attack
-	game.ground.sign_boss(z)
+	Ground.mute(z)
+	_tell(z)
 	return z
+
+
+## A "!" for a blow with nothing of its own on the floor (the barrage, the summon, the eruptions): a hidden zone that lasts `seconds`.
+func _announce(seconds: float) -> void:
+	_tell(Ground.mute(game.ground.add_warning(e.pos, 0.1, seconds, 0.0)))
+
+
+## Gives a hidden zone to Horde.strike_in through his fan (the zones it reads for the "!"), dropping the ones that are over.
+func _tell(z: Ground.Zone) -> void:
+	e.fan = e.fan.filter(func(o: Variant) -> bool: return o != null and (o as Ground.Zone).life > 0.0)
+	e.fan.append(z)
 
 
 # ---------- his dead ----------

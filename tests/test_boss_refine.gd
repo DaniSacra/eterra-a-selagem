@@ -313,11 +313,14 @@ func _live_attacks() -> Dictionary:
 
 func test_in_the_last_phase_combinations_never_stack_two_attacks() -> void:
 	var boss := _start_fight()
+	# the fixture's fight (with the storm, which the shipped one no longer uses): the combinations are its
+	boss.director.openers = def.phase_openers
+	boss.director.attacks = def.attacks
 	_to_phase(boss, 4)
 	# every combination always, for the test (the director's own copies of the attacks); no layers here: a layer is
 	# laid over its attack on purpose (E2), tested in test_layers_lay_only_eruptions_and_his_dead_over_an_attack
 	var mine: Array[BossAttack] = []
-	for a in boss.director.attacks:
+	for a in def.attacks:
 		var c: BossAttack = a.duplicate()
 		if c.then != &"":
 			c.then_chance = 1.0

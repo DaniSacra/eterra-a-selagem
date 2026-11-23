@@ -44,6 +44,9 @@ extends Resource
 @export var near := 6.0
 @export var far := 10.0
 @export var still_after := 0.8
+## Daniel 2026-11-23: he does not walk after the paladin (the scythe walks in only scythe_approach s). A new attack waits only
+## while one of his shots is closer than shots_gate meters to the paladin (0: while any is flying).
+@export var shots_gate := 0.0
 ## A moving paladin is aimed at this share of the way he goes during the flight (never a perfect lead).
 @export var lead := 0.45
 
@@ -150,6 +153,20 @@ extends Resource
 @export var ritual_conductors: Array[StringName] = [&"mage"]
 @export var ritual_shorten := 0.0
 @export var shield_radius := 2.9
+
+@export_group("Barrage")
+## Daniel 2026-11-23, the machine gun of the last phases: barrage_count soul crescents (by phase; 0: none) leave one after the other,
+## barrage_gap seconds apart (by phase), each aimed at where the paladin stands as it leaves (no lead, no fan), after
+## barrage_windup (shown only by the "!"). He stands and turns after the paladin; to dodge, the paladin runs.
+@export var barrage_count := PackedFloat32Array([0.0, 0.0, 8.0, 12.0])
+@export var barrage_gap := PackedFloat32Array([0.25, 0.25, 0.25, 0.2])
+@export var barrage_windup := 0.7
+@export var barrage_speed := 12.0
+@export var barrage_width := 1.3
+@export var barrage_damage := 8.0
+@export var barrage_recovery := 0.6
+## How fast his body turns after the paladin while he fires (degrees a second).
+@export var barrage_turn := 220.0
 
 @export_group("Curse")
 @export var curse_windup := 0.8

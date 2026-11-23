@@ -135,7 +135,7 @@ func test_morvath_reaps_twice_close_in() -> void:
 	assert_eq(reap.streak, 1, "never twice in a row")
 	assert_almost_eq(def.reap_windup, 0.85, 0.001, "Hecate's right: 0.85")
 	assert_almost_eq(def.reap2_windup, 0.5, 0.001)
-	assert_almost_eq(def.reap_recovery, 2.2, 0.001)
+	assert_almost_eq(def.reap_recovery, 1.4, 0.001)
 	assert_true(Boss.ATTACKS.has(&"reap"))
 	assert_true(DefeatCause.BOSS_ATTACKS.has(&"reap"))
 	assert_ne(T.t(&"killer_reap"), "killer_reap")

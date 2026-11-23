@@ -231,7 +231,7 @@ func test_his_lanes_end_at_the_edge_and_his_crescents_come_undone_past_it() -> v
 	var boss := _fight()
 	assert_almost_eq(boss.e.pos.distance_to(layout.boss_spawn), 0.0, 0.3, "he begins on the seal")
 	var r := layout.floor.radius
-	var seen := {"lanes": 0, "souls": 0, "signed": 0, "adds": 0}
+	var seen := {"lanes": 0, "souls": 0, "signed": 0, "adds": 0, "shown": 0}
 	var risen := {}
 	var check := func() -> void:
 		assert_lte(boss.e.pos.length(), r - boss.e.def.radius + EPS, "his body on the floor")
@@ -241,9 +241,12 @@ func test_his_lanes_end_at_the_edge_and_his_crescents_come_undone_past_it() -> v
 			if z.shape == Ground.Shape.LINE:
 				seen.lanes += 1
 				assert_lte((z.pos + z.dir * z.radius).length(), r + EPS, "%s: the lane ends at the edge" % z.source)
-			if z.rune == Ground.Rune.NONE and not z.eruption and z.node != null:
-				if float((z.node.material_override as ShaderMaterial).get_shader_parameter(&"signed")) > 0.5:
+			# Daniel 2026-11-23: only the eruptions (and his summoning circles) show on the floor; the rest is hidden
+			if z.rune == Ground.Rune.NONE and not z.eruption:
+				if z.silent and z.node != null and not z.node.visible:
 					seen.signed += 1
+				else:
+					seen.shown += 1
 		for s in game.projectiles.shots:
 			if s.kind == Projectiles.Kind.SOUL:
 				seen.souls += 1
@@ -261,7 +264,8 @@ func test_his_lanes_end_at_the_edge_and_his_crescents_come_undone_past_it() -> v
 	assert_gt(int(seen.lanes), 20, "his lanes were watched")
 	assert_gt(int(seen.souls), 20, "his crescents were watched")
 	assert_gt(int(seen.adds), 3, "his dead were watched")
-	assert_eq(int(seen.signed) > 0, true, "his warnings carry his signature")
+	assert_gt(int(seen.signed), 0, "his attacks' zones were watched hidden")
+	assert_eq(int(seen.shown), 0, "no mark of his on the floor but the eruptions")
 
 
 func test_he_opens_the_curse_and_the_storm_from_the_middle() -> void:
@@ -296,6 +300,10 @@ func test_the_dash_only_with_room_and_its_lane_cut() -> void:
 
 func test_the_storm_lanes_show_their_order_of_leaving() -> void:
 	var boss := _fight()
+	# the storm is no longer in his fight (the barrage took its place); the fixture's copy keeps its lanes' order checked
+	var legacy := BossLayersFixture.layered("res://data/bosses/morvath.tres")
+	boss.director.attacks = legacy.attacks
+	boss.director.openers = legacy.phase_openers
 	_to_phase(boss, 4)
 	var levels: Array = []
 	var marks := {}
