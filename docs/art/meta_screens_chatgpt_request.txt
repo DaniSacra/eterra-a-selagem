@@ -1,0 +1,50 @@
+PEDIDO DE ARTE PARA O CHATGPT: telas de progressão (A Selagem, 2026-11-23)
+
+Contexto: em Crônicas de Eterra: A Selagem (3D visto de cima, catacumbas sob a igreja velha de Valmor, tom de aventura,
+não de terror), as telas de progressão deixam de ser árvores de nós. O Livro de Ahk vira um códice de pergaminho
+iluminado: cada ramo de poderes do herói é um capítulo, aberto por uma miniatura pintada no alto da página. Outras telas
+mostram objetos do mundo (a espada na bancada da forja, o quadro de ferramentas, o altar).
+Estilo de TODAS as imagens: ilustração de manuscrito iluminado pintada à mão, traço de pena em tinta sépia ferro-gálica
+sobre pergaminho claro (cor d8c8a8), aguada com UMA cor de destaque por imagem, toques de ouro velho fosco (cor 8e7444,
+nunca amarelo vivo). Mesma mão e mesma luz em todas.
+
+FORMATO DE CADA IMAGEM: PNG quadrado 1024 x 1024, SEM moldura, SEM texto, SEM letras, SEM números, SEM assinatura.
+Fundo: o próprio pergaminho liso (para as miniaturas) ou fundo escuro liso (para os objetos), para recortarmos.
+Uma imagem por arquivo.
+
+1) MINIATURAS DO GUERREIRO (herói de cabelo vermelho, cachecol azul-petróleo, armadura de couro e placas, espada
+   EMETH de lâmina verde-esmeralda; usar a prancha do Guerreiro que já mandamos). Sépia + a cor indicada:
+   a) Combo (cor: vermelho de rubrica, 783222): o herói no meio de três cortes encadeados, três arcos no ar.
+   b) Fúria (cor: ocre, 9a5a2a): o herói avançando, determinado, três pequenas chamas no ar acima do ombro.
+   c) Emeth (cor: verdete, 2f7a58; o único verde vivo é a lâmina): a espada Emeth de perfil, erguida, lâmina brilhando.
+   d) Magia (cor: azul lápis, 3d6a8c): o herói soltando uma onda em meia-lua pela espada.
+2) MINIATURAS DA MAGA (mulher do norte, traços orientais, cajado de duas pontas, cabelo preto curto, túnica azul escura bordada e manto marfim; usar a arte 01 aprovada).
+   Nada de violeta nem roxo.
+   a) Piromancia (cor: âmbar, 9a4a1c): uma brasa viva pairando sobre a mão aberta.
+   b) Arcanismo (cor: ouro em folha): o cajado de duas pontas traçando um arco de luz no ar.
+   c) Selos (cor: ardósia, 4a5560): um sinal geométrico de oito pontas fechando-se sobre um inimigo esqueleto.
+3) ULTIMATES, uma miniatura grande cada (mesmo estilo, mais cheia de detalhe):
+   a) Corte do Juízo: o Guerreiro abrindo uma faixa de luz no chão com a espada.
+   b) Voragem: um redemoinho verde e marfim puxando inimigos para o centro.
+   c) Tempestade dos Selos (Maga): muitos sinais de luz âmbar caindo sobre uma multidão.
+   d) Suspensão Absoluta (Maga): uma cúpula de luz marfim em volta dela, flechas inimigas paradas no ar.
+4) OBJETOS (fundo escuro liso, luz quente de brasa vindo de baixo, vista de frente e um pouco de cima):
+   a) A espada Emeth deitada na horizontal sobre um pano grosso numa bancada de ferreiro: pomo com engaste vazio, guarda
+      larga com anéis, lâmina larga com um sulco central liso (sem gravação), fio limpo. A espada ocupa 80% da largura.
+      NUNCA em forma de cruz (guarda curta, nada de cruz).
+   b) O cajado de duas pontas da Maga deitado do mesmo jeito.
+   c) Uma parede de tábuas de oficina com ganchos: cada ferramenta tem a silhueta pintada em ocre na madeira (picareta,
+      lima, martelo de ourives, buril); duas das ferramentas penduradas por cima da sombra, as outras só a sombra.
+   d) A face de uma laje de altar de pedra antiga, gasta, com dois nichos de oferta vazios lado a lado e uma lamparina
+      de óleo apagada no alto. Sem nenhum símbolo religioso (sem cruz, sem sol).
+
+PARA CADA IMAGEM, MANDE TAMBÉM:
+(1) a imagem no formato acima;
+(2) uma vista simples da tela 1280 x 720 mostrando onde a imagem fica e o tamanho em pixels (as miniaturas entram numa
+    faixa de cerca de 560 x 110 px no alto da página esquerda do livro aberto, ou numa página inteira de 560 x 500 px nas
+    ultimates; os objetos ocupam a largura da tela, cerca de 900 x 300 px), para conferirmos o recorte;
+(3) uma lista ESSENCIAL x SÓ CLIMA: o que tem de existir para a leitura (silhueta, a cor de destaque, onde fica o
+    engaste e os anéis na espada, os nichos do altar) e o que é só enfeite (manchas do papel, respingos de tinta, brilho).
+
+Regras: sem texto nem letras dentro das imagens; sem cruz nem símbolo religioso real (a luz vem de Elun, alegoria);
+nada de violeta (é a cor do vilão); nada parecido com outro jogo (sem cartas de tarô, sem caldeirão, sem poço).
