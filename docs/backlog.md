@@ -25,6 +25,9 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
 - **PT-7 Anjos maiores na escolha** (`BoonChoice`/`EncounterScreen`): figura do anjo bem maior; junta com o BC-1 (anjo grande à esquerda).
 - **PT-8 Portas de guardião diferentes** (`room-designer`): hoje as duas portas de guardião dão a mesma coisa. Cada porta mostra **o anjo
   que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.
+- **PT-9 Maga só depois de vencer Morvath e estação de troca de herói** (Daniel, 2026-11-23): a Maga fica travada até a primeira
+  vitória sobre Morvath (hoje aparece no Portal a partir da 2ª descida); a troca de herói sai do Portal e ganha uma área própria no
+  Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário).
 - **Ordem sugerida**: lote A pequeno (PT-3, PT-7, PT-8) + PT-1 (o maior ganho no combate); lote B (PT-2 com a arte, PT-4, PT-5);
   PT-6 depois. Pedido de arte do PT-2 ao ChatGPT pode sair já.
 
