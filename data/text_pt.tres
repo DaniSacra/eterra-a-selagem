@@ -478,7 +478,7 @@ entries = {
 "howto_dodge_desc": "Um passo rápido que protege dos golpes. Segure para correr. Só esquiva: não ataca.",
 "howto_pause": "Pausa",
 "howto_pause_desc": "Para a partida. Na pausa estão as Bênçãos, o Compêndio e as Configurações.",
-"howto_tip": "A Magia enche em cada sala e volta um pouco a cada inimigo derrotado. Todo ataque inimigo avisa antes de acertar: no chão ou no corpo de quem ataca. O escudo barra o ataque de frente: dê a volta, use a onda ou atravesse com a Investida.",
+"howto_tip": "A Magia enche em cada sala e volta um pouco a cada inimigo derrotado. Todo ataque inimigo avisa antes de acertar: golpes de área marcam o chão, os outros acendem um sinal de exclamação sobre a cabeça de quem ataca na hora de esquivar. O escudo barra o ataque de frente: dê a volta, use a onda ou atravesse com a Investida.",
 "pad_stick_left": "Analógico esquerdo",
 "pad_stick_right": "Analógico direito",
 "mouse_aim": "Mouse",

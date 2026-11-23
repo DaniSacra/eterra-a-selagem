@@ -15,6 +15,7 @@ vivid = 0.1
 sway = 5.0
 windup_shake = 0.05
 tell = 2
+ground_warning = true
 behavior = 7
 hp = 225.0
 speed = 4.7437499999999995

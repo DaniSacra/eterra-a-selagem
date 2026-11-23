@@ -55,6 +55,10 @@ enum Tell { NONE, GLINT, TREMBLE, ORB, BOLT, SHIELD, RITUAL }
 ## The effect of its wind-up, and where it sits on the figure: meters at size 1, x to its right, y up, z ahead
 ## (the tip of the blade, the orb of the staff, the tip of the bolt, the shield's edge, between the hands).
 @export var tell: Tell = Tell.NONE
+## PT-1 (Daniel, 2026-11-23): whether its blows lay a mark on the floor. False: a melee blow or a shot is told only by the
+## "!" over its head (Horde.strike_in, EnemyFx.alert), its zone still exists but is not drawn (Ground.mute). True: it is an
+## area (a circle, a bar, a beam), drawn as before.
+@export var ground_warning := false
 @export var tell_at := Vector3.ZERO
 @export_group("Body")
 @export var behavior: Behavior = Behavior.CHASE

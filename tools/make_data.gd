@@ -308,7 +308,7 @@ func _enemies() -> void:
 	# the fast one that bursts all around itself (sheet: 0.9 of the soldier, stooped, embers in the chest); C17,
 	# QW-102: 1.0 s of wind-up, its last 0.3 s held trembling (0.7 was the shortest warning of the game: the PO took 9
 	# blows with 0.70 to 0.82 s; Hades' Radiator winds up 1.5 s)
-	_pair({"id": &"runner", "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 70.0, "speed": 390.0 / U, "damage": 8.0, "radius": 0.45,
+	_pair({"id": &"runner", "ground_warning": true, "model": &"runner", "behavior": B.PULSE, "size": 1.04, "hp": 70.0, "speed": 390.0 / U, "damage": 8.0, "radius": 0.45,
 		"attack_damage": 8.0, "attack_range": 1.6, "attack_width": 2.6, "attack_cooldown": 1.4, "attack_windup": 0.85,
 		"magic_color": DEAD_CRIMSON, "rating": 7.0, "role": &"react", "big_version": &"runner_big", "tell": T.TREMBLE, "sway": 7.0, "windup_shake": 0.04,
 		# T5-04, T5-09: it bursts as its arms open in its spin, 0.1 s into its attack
@@ -379,7 +379,7 @@ func _enemies() -> void:
 	# C5, CB-7: the Varredor, rooted, 5.5 m of reach: 0.9 s of wind-up that shows where its bar starts and the way it will
 	# turn, then the bar (1.1 m across) swings 200 degrees in 1.6 s; within 1.6 m of it nothing hurts; it rests 1.4 s (the
 	# window to strike). One a fight (per_room), never in the room with the chain (RP-11: banned role "sweep" there).
-	_pair({"id": &"varredor", "model": &"sweeper", "behavior": B.SWEEP, "size": 1.55, "hp": 160.0, "speed": 0.0, "damage": 8.0, "radius": 0.6,
+	_pair({"id": &"varredor", "ground_warning": true, "model": &"sweeper", "behavior": B.SWEEP, "size": 1.55, "hp": 160.0, "speed": 0.0, "damage": 8.0, "radius": 0.6,
 		"heavy": true, "attack_damage": 8.0, "attack_range": 5.5, "attack_width": 1.1, "attack_cooldown": 0.0, "attack_windup": 0.9,
 		"sweep_degrees": 200.0, "sweep_time": 1.6, "sweep_clear": 1.6, "aim_lock": 0.3, "recover_time": 1.4, "per_room": 1,
 		"rating": 22.0, "role": &"sweep", "tell": T.GLINT, "tell_at": Vector3(0.3, 2.3, 1.3), "tint": Color(0.70, 0.76, 0.82),
@@ -512,7 +512,7 @@ func _beam_and_trap() -> void:
 	var T := EnemyDef.Tell
 	# the Canalizador: 130 life, planted (speed 0); within 12 m of the paladin a thread on him for 0.9 s (it follows, locked the last 0.3 s), then
 	# a beam 0.5 m across held 2.25 s in 5 pulses of 5, turning after him at 40 degrees a second; nothing hurts within 1 m of it; 2.4 s of rest. Room 6.
-	_enemy({"id": &"canalizador", "model": &"channeler", "behavior": B.BEAM, "size": 1.3, "hp": 130.0, "speed": 0.0, "damage": 5.0, "radius": 0.55,
+	_enemy({"id": &"canalizador", "ground_warning": true, "model": &"channeler", "behavior": B.BEAM, "size": 1.3, "hp": 130.0, "speed": 0.0, "damage": 5.0, "radius": 0.55,
 		"attack_damage": 5.0, "attack_range": 12.0, "attack_cooldown": 2.4, "attack_windup": 0.9, "aim_lock": 0.3, "shot_ticks": 5, "shot_interval": 0.45,
 		"shot_turn": 40.0, "attack_width": 0.5, "sweep_clear": 1.0, "recover_time": 0.4, "magic_color": BEAM_PALE, "tint": Color(0.62, 0.9, 0.95),
 		"vivid": 0.1, "rating": 18.0, "role": &"beam", "per_room": 1, "never_with": [&"sweep"] as Array[StringName], "tell": T.ORB,
@@ -566,7 +566,7 @@ func _bigger_ones() -> void:
 		"max_attackers": 1, "recover_time": 1.4, "aim_lock": 0.3, "windup_gap": 0.35, "windup_shake": 0.03, "strike_at": 0.1, "strike_reach": 1.7,
 		"strike_degrees": 150.0, "strikes": 2, "strike_gap": 0.45, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY})
 	# the runner: 1.25 s of warning (the common 1.0 or 0.85), a wider burst, and a second one 0.6 s after the first
-	_enemy({"id": &"runner_big", "model": &"runner", "behavior": B.PULSE, "size": 1.6, "hp": 225.0, "speed": 330.0 / U, "damage": 9.0, "radius": 0.7,
+	_enemy({"id": &"runner_big", "ground_warning": true, "model": &"runner", "behavior": B.PULSE, "size": 1.6, "hp": 225.0, "speed": 330.0 / U, "damage": 9.0, "radius": 0.7,
 		"heavy": true, "big": true, "attack_damage": 9.0, "attack_range": 2.2, "attack_width": 3.4, "attack_cooldown": 1.8, "attack_windup": 1.25,
 		"magic_color": DEAD_CRIMSON, "rating": 28.0, "role": &"react", "per_room": 1, "tell": T.TREMBLE, "sway": 5.0, "windup_shake": 0.05, "strike_at": 0.1,
 		"strikes": 2, "strike_gap": 0.6, "death_burst": 1.0, "tint": Color(1.0, 0.72, 0.5), "vivid": 0.1, "stun_time": STUN, "stun_heavy_time": STUN_HEAVY,
@@ -1831,6 +1831,8 @@ func _feel() -> void:
 	f.close_cooldown = 2.0
 	f.close_fraction = 0.4
 	f.close_slow = 0.25
+	# PT-1: the "!" over a blow with no mark on the floor lights this long before it lands
+	f.bang_lead = 0.35
 	# (the dodge charges, 1, and their 0.8 s to come back are the hero's: _hero)
 	f.sprint_scale = 890.0 / 540.0
 	f.move_scale_light = 0.0

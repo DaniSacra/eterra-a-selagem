@@ -158,6 +158,8 @@ var strike_t := 0.0
 ## (where the paladin stood at the end of its wind-up), from where its body lands.
 var blows := 0
 var warning2: RefCounted
+## PT-1: its "!" is lit (Horde.render): the sound plays once per blow.
+var alerted := false
 var aim2 := Vector2.DOWN
 var lands_at := Vector2.ZERO
 ## C19-5: the aim threads of a fan of shots winding up (the elder priest's: its edges and its middle), turned with

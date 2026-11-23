@@ -167,6 +167,8 @@ class Zone:
 	var lock_t := -1.0
 	var lock_left := 0.0
 	var clicked := false
+	## PT-1: counts and lands as any warning but is not drawn (a melee blow or a shot: the "!" tells it, not the floor).
+	var silent := false
 
 var zones: Array[Zone] = []
 var player: Player
@@ -365,6 +367,15 @@ func add_fall(from: Vector2, dir: Vector2, length: float, width: float, time: fl
 	return z
 
 
+## PT-1: the zone keeps its place, its time and its damage but shows nothing (the bot and the "!" still read it).
+static func mute(z: Zone) -> Zone:
+	if z != null:
+		z.silent = true
+		if z.node != null:
+			z.node.visible = false
+	return z
+
+
 func add_arc_warning(at: Vector2, dir: Vector2, radius: float, degrees: float, time: float, damage: float) -> Zone:
 	return _add(Kind.WARNING, Shape.ARC, at, dir, radius, degrees, time, damage)
 
@@ -497,7 +508,7 @@ func step(dt: float) -> void:
 					z.lock_t += dt
 					if z.lock_t <= GroundLook.LOCK_RISE + GroundLook.LOCK_FALL + dt:
 						GroundLook.lock_pulse(z.mat, z.aim, z.lock_t, z.lock_left)
-					if not z.clicked and z.lock_t >= GroundLook.LOCK_CLICK_AT:
+					if not z.clicked and not z.silent and z.lock_t >= GroundLook.LOCK_CLICK_AT:
 						z.clicked = true
 						Audio.play(&"lock_click")
 		else:

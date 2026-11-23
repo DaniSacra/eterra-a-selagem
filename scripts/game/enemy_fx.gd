@@ -526,6 +526,44 @@ func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, p
 			(INK_ALPHA * minf(alpha / 0.9, 1.0)) if ink else alpha, 0.0, 0.0, 0.0, over)
 
 
+## PT-1 (Daniel, 2026-11-23; the principle of the "!" over the enemies of SWORN): the signal to dodge. An ivory and gold
+## exclamation mark over the head, in the screen's plane, outlined in ink (_stroke), lit only in the last `lead` seconds
+## before the blow; `age` is how long it has been lit (0 to lead). It pulses once as it lights; the elites and the heavy
+## ones carry a larger one. Costs 2 strokes of the pool (4 quads), never a node.
+const BANG_COLOR := Color(1.0, 0.86, 0.5)
+const BANG_RISE := 0.5
+const BANG_BAR := 0.34
+const BANG_DOT := 0.1
+const BANG_GAP := 0.09
+const BANG_WIDTH := 0.1
+const BANG_BIG := 1.45
+const BANG_PULSE := 0.4
+const BANG_PULSE_TIME := 0.12
+
+
+## The size of the "!" `age` seconds after it lit: a short swell that settles (1 at rest).
+static func bang_pulse(age: float) -> float:
+	return 1.0 + BANG_PULSE * (1.0 - smoothstep(0.0, BANG_PULSE_TIME, age))
+
+
+func alert(e: Enemy, age: float) -> void:
+	var d := e.def
+	var big := BANG_BIG if (d.elite or d.heavy) else 1.0
+	var s := bang_pulse(age) * big
+	var base := Vector3(e.pos.x, e.y + d.size * 1.9 + BANG_RISE, e.pos.y)
+	var up := _up.normalized()
+	var color := toned(lit(BANG_COLOR), 1.0)
+	var width := BANG_WIDTH * s
+	var bottom := base + up * BANG_GAP * s
+	var top := base + up * (BANG_GAP + BANG_BAR) * s
+	var dot_base := base
+	# ink first for both strokes, then the light (strokes that meet put all their ink first)
+	_stroke(bottom, top, width, color, 1.0, 1)
+	_stroke(dot_base, dot_base + up * BANG_DOT * s, width, color, 1.0, 1)
+	_stroke(bottom, top, width, color, 1.0, 2)
+	_stroke(dot_base, dot_base + up * BANG_DOT * s, width, color, 1.0, 2)
+
+
 ## One enemy whose attack was just loosed, t seconds ago (model, anim, clip_t: the pose drawn, as for tell()).
 func loosed(e: Enemy, t: float, model: BakedModel = null, anim := &"", clip_t := 0.0) -> void:
 	var d := e.def

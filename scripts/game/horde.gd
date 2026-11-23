@@ -649,8 +649,8 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 				e.aim = toward
 			shoot(e, e.aim)
 			if d.shot_relock > 0.0 and e.memo + 1 < ticks:
-				e.warning2 = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE),
-					0.5, d.shot_interval, 0.0)
+				e.warning2 = _mark(e, ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, d.attack_range * RANGED_REACH, Projectiles.SHOT_EDGE),
+					0.5, d.shot_interval, 0.0))
 				ground.track_line(e.warning2 as Ground.Zone)
 			if d.recoil > 0.0:
 				e.push = -e.aim * d.recoil * pow(RANGED_RECOIL_FADE, e.memo)
@@ -714,12 +714,36 @@ func _behave_ranged(e: Enemy, dt: float, toward: Vector2, dist: float, caster: b
 		_set_state(e, Enemy.State.WINDUP, &"cast" if caster or d.shot_orb else &"aim")
 		if d.shot_line and not caster:
 			# the line on the floor ends where the bolt will die on cover
-			e.warning = ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, _line_reach(d), Projectiles.SHOT_EDGE), 0.5,
-				d.attack_windup, 0.0)
+			e.warning = _mark(e, ground.add_aim_warning(e.pos, toward, arena.shot_reach(e.pos, toward, _line_reach(d), Projectiles.SHOT_EDGE), 0.5,
+				d.attack_windup, 0.0))
 		elif d.shot_orb and not d.shot_low and not caster:
 			# C19-5 (Q-14 a): the mage's orbs leave along a thread too, from the start of its wind-up to the first orb,
 			# turning with its aim until it locks (the burst keeps one thread; the orb turns a little in its first 0.8 s)
 			_aim_fan(e, toward)
+
+
+## PT-1: at most one sound of a "!" lighting every this many seconds of the picture (a horde lights many at once).
+const BANG_SOUND_GAP := 0.12
+var _bang_cd := 0.0
+
+
+## PT-1: a warning its maker lays on the floor, unless its blow is no area (EnemyDef.ground_warning): then the zone stays
+## (time, damage, what the bot reads) but is not drawn, and strike_in feeds the "!" over its head.
+func _mark(e: Enemy, z: Ground.Zone) -> Ground.Zone:
+	return z if e.def.ground_warning else Ground.mute(z)
+
+
+## PT-1: seconds until the blow of `e` lands, from its muted zones (the soonest still on; -1: none, or an area blow that
+## the floor tells itself). The "!" lights when it is under Feel.bang_lead.
+func strike_in(e: Enemy) -> float:
+	var best := -1.0
+	var zs: Array = [e.warning, e.warning2]
+	zs.append_array(e.fan)
+	for o in zs:
+		var z := o as Ground.Zone
+		if z != null and z.silent and not z.cancelled and z.life > 0.0 and (best < 0.0 or z.life < best):
+			best = z.life
+	return best
 
 
 ## How many of this kind (the common one and its elite count together) are winding up or shooting now.
@@ -869,7 +893,7 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.strike_t = maxf(d.strike_at, e.travel / maxf(d.lunge_speed, 0.1))
 				e.landed = false
 				e.blows = 0
-				e.warning = ground.add_aim_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0)
+				e.warning = _mark(e, ground.add_aim_warning(e.pos, toward, e.travel + blade_reach(d), 1.3, d.attack_windup + e.strike_t + dt, 0.0))
 				if d.aim_lock > 0.0:
 					ground.track_line(e.warning as Ground.Zone)
 				if d.strikes > 1:
@@ -877,7 +901,7 @@ func _behave_runner(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					# first is too short to read a warning born then), from where the body lands
 					e.lands_at = e.pos + toward * e.travel
 					e.aim2 = toward
-					e.warning2 = ground.add_aim_warning(e.lands_at, toward, blade_reach(d), 1.3, d.attack_windup + blow_at(e, 1) + dt, 0.0)
+					e.warning2 = _mark(e, ground.add_aim_warning(e.lands_at, toward, blade_reach(d), 1.3, d.attack_windup + blow_at(e, 1) + dt, 0.0))
 			elif d.group > 1:
 				_hold_slot(e, dt, toward)
 			else:
@@ -1057,7 +1081,7 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					e.memo = 1
 					e.dir = toward
 					_set_state(e, Enemy.State.WINDUP, &"attack")
-					e.warning = ground.add_arc_warning(e.pos, toward, d.guard_up_hit_range + 0.8, 120.0, d.guard_up_hit_windup, d.guard_up_hit_damage * _out(e))
+					e.warning = _mark(e, ground.add_arc_warning(e.pos, toward, d.guard_up_hit_range + 0.8, 120.0, d.guard_up_hit_windup, d.guard_up_hit_damage * _out(e)))
 					e.state_t = d.attack_windup - d.guard_up_hit_windup
 					e.cooldown = d.guard_up_hit_every
 				return
@@ -1080,7 +1104,7 @@ func _behave_knight(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.memo = 1
 				e.dir = toward
 				_set_state(e, Enemy.State.WINDUP, &"attack")
-				e.warning = ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * _out(e))
+				e.warning = _mark(e, ground.add_arc_warning(e.pos, toward, d.close_range + 0.8, 120.0, d.close_windup, d.close_damage * _out(e)))
 				e.state_t = d.attack_windup - d.close_windup
 				return
 			if e.cooldown <= 0.0 and dist < d.attack_range and (dist > d.close_range or e.memo == 2) and target_alive and e.straight \
@@ -1296,7 +1320,7 @@ func _brace(e: Enemy, toward: Vector2, dist: float, windup: float) -> void:
 	_set_state(e, Enemy.State.WINDUP, &"brace")
 	e.state_t = d.attack_windup - windup
 	# filled when its body would reach his where he stands now (or at the end of the charge)
-	e.warning = ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, windup + _charge_reach(d, dist), 0.0)
+	e.warning = _mark(e, ground.add_line_warning(e.pos, toward, d.lunge_speed * d.lunge_time + d.radius, 2.4, windup + _charge_reach(d, dist), 0.0))
 	if d.aim_lock > 0.0 and dist >= CHARGE_FOLLOW_FROM:
 		ground.track_line(e.warning as Ground.Zone)  # (closer than that it never follows: no thread, no pulse)
 
@@ -1576,7 +1600,7 @@ func _behave_beam(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				Ground.end_zone(e.warning as Ground.Zone)
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 				e.blows = 0
-				var beam := ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0)
+				var beam := _mark(e, ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0))
 				beam.life = BEAM_FILL
 				beam.tags.append(BEAM_TAG)
 				e.warning = beam
@@ -1607,7 +1631,7 @@ func _behave_beam(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if e.cooldown <= 0.0 and target_alive and dist <= d.attack_range and arena.inside(e.pos, 1.0) and not _just_began(d):
 				e.aim = toward
 				_set_state(e, Enemy.State.WINDUP, &"cast")
-				e.warning = ground.add_aim_warning(e.pos, e.aim, d.attack_range, d.attack_width, d.attack_windup + dt, 0.0)
+				e.warning = _mark(e, ground.add_aim_warning(e.pos, e.aim, d.attack_range, d.attack_width, d.attack_windup + dt, 0.0))
 				ground.track_line(e.warning as Ground.Zone)
 
 
@@ -1823,7 +1847,7 @@ func _aim_fan(e: Enemy, toward: Vector2, count: int = -1, spread: float = -1.0, 
 	e.fan_spread = spread
 	var n := mini(FAN_THREADS, maxi(1, d.shot_count if count < 0 else count))
 	for i in n:
-		var z := ground.add_aim_warning(e.pos, toward, 1.0, AIM_THREAD_WIDTH, (d.attack_windup if windup < 0.0 else windup) + _dt, 0.0)
+		var z := _mark(e, ground.add_aim_warning(e.pos, toward, 1.0, AIM_THREAD_WIDTH, (d.attack_windup if windup < 0.0 else windup) + _dt, 0.0))
 		z.tags.append(FAN_TAG)
 		e.fan.append(z)
 	e.aim = toward
@@ -1902,7 +1926,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 					Audio.play(CombatSounds.strike(d))  # (the first one's sound came with the attack)
 				e.blows += 1
 				if e.blows < d.strikes:
-					e.warning2 = ground.add_warning(e.pos, d.attack_width, d.strike_gap + dt, d.attack_damage * _out(e), d.magic_color)
+					e.warning2 = _mark(e, ground.add_warning(e.pos, d.attack_width, d.strike_gap + dt, d.attack_damage * _out(e), d.magic_color))
 					(e.warning2 as Ground.Zone).land_quick = e.blows < d.strikes - 1
 			if e.state_t >= blow_at(e, d.strikes - 1) + PULSE_AFTER:
 				e.warning2 = null
@@ -1920,7 +1944,7 @@ func _behave_pulse(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.strike_t = d.strike_at
 				e.blows = 0
 				# it bursts as its arms open, strike_at into its attack (T5-09): the warning fills until then
-				e.warning = ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * _out(e), d.magic_color)
+				e.warning = _mark(e, ground.add_warning(e.pos, d.attack_width, d.attack_windup + d.strike_at + dt, d.attack_damage * _out(e), d.magic_color))
 				# (P2-C19a: a burst with another after it leaves only a thin ring for LAND_QUICK s, never over the next)
 				(e.warning as Ground.Zone).land_quick = d.strikes > 1
 			else:
@@ -1955,7 +1979,7 @@ func _behave_sweep(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				_set_state(e, Enemy.State.ATTACK, &"attack", false)
 				e.landed = false
 				# the bar itself, held lit by keeping its life up (Ground fills a warning as its life runs out)
-				var bar := ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0)
+				var bar := _mark(e, ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, 1.0, 0.0))
 				bar.life = SWEEP_FILL
 				GroundLook.put(bar.mat, &"root_clear_m", d.sweep_clear)
 				bar.tags.append(SWEEP_TAG)
@@ -1985,11 +2009,11 @@ func _behave_sweep(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 				e.aim = SweepRules.start_dir(toward, e.side)
 				_set_state(e, Enemy.State.WINDUP, &"windup")
 				var time := d.attack_windup + dt
-				e.warning = ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, time, 0.0)
+				e.warning = _mark(e, ground.add_line_warning(e.pos, e.aim, d.attack_range, d.attack_width, time, 0.0))
 				GroundLook.put((e.warning as Ground.Zone).mat, &"root_clear_m", d.sweep_clear)
 				(e.warning as Ground.Zone).tags.append(SWEEP_TAG)
 				ground.track_line(e.warning as Ground.Zone)
-				e.warning2 = ground.add_aim_warning(e.pos, e.aim, d.attack_range * 0.8, SWEEP_WAY_WIDTH, time, 0.0)
+				e.warning2 = _mark(e, ground.add_aim_warning(e.pos, e.aim, d.attack_range * 0.8, SWEEP_WAY_WIDTH, time, 0.0))
 				(e.warning2 as Ground.Zone).tags.append(SWEEP_TAG)
 				_point_sweep_marks(e)
 
@@ -2026,7 +2050,7 @@ func _behave_cone(e: Enemy, dt: float, toward: Vector2, dist: float) -> void:
 			if dist < d.attack_range and e.cooldown <= 0.0 and target_alive:
 				e.aim = toward
 				_set_state(e, Enemy.State.WINDUP, &"aim")
-				e.warning = ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * _out(e))
+				e.warning = _mark(e, ground.add_arc_warning(e.pos, toward, d.attack_range + 0.5, d.attack_width, d.attack_windup, d.attack_damage * _out(e)))
 
 
 ## The way to walk toward the paladin (cycle C12): straight while the floor between is clear (or he is near), else
@@ -2700,8 +2724,20 @@ func render(render_dt := 1.0 / 60.0) -> void:
 		bar_trails.prune(func(who: Object) -> bool: return (who as Enemy).alive)
 	tells.begin()
 	_palms.clear()
+	var lead := Feel.live().bang_lead
+	_bang_cd = maxf(0.0, _bang_cd - render_dt)
 	for e in list:
 		var d := e.def
+		# PT-1: the "!" over a blow the floor does not show, for the last Feel.bang_lead seconds before it lands
+		var due := strike_in(e) if e.alive else -1.0
+		if due > 0.0 and due <= lead:
+			tells.alert(e, lead - due)
+			if not e.alerted and _bang_cd <= 0.0:
+				_bang_cd = BANG_SOUND_GAP
+				Audio.play(&"lock_click")
+			e.alerted = true
+		elif due < 0.0:
+			e.alerted = false
 		var kind := renderer.kind(d)
 		var anim := e.anim
 		var t := e.anim_t

@@ -20,6 +20,8 @@ const OVERRIDE := "user://feel_override.tres"
 @export_range(0.0, 3.0, 0.1) var close_cooldown := 2.0
 @export_range(0.1, 1.0, 0.05) var close_fraction := 0.4
 @export_range(0.05, 0.6, 0.01) var close_slow := 0.25
+## PT-1: seconds before a blow lands that the "!" over the enemy lights (the moment to dodge; the floor shows no line for it).
+@export_range(0.1, 0.8, 0.01) var bang_lead := 0.35
 ## Holding the dodge button after the roll runs this many times the walking speed.
 @export_range(1.0, 3.0, 0.05) var sprint_scale := 1.5
 ## How much of the walking speed a swing keeps, by kind of move (a ComboNode can set its own move_scale).

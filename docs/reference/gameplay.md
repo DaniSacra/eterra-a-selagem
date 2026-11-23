@@ -451,7 +451,8 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   máximo `Boss.BODY_TURN` 720 graus/s para o rumo do ataque (que continua instantâneo, avisos iguais); conjurando
   (erupções, invocação, tempestade) e na recuperação ele segue o herói (`FOLLOW_RATE` 2). Sonda do desenho:
   `tools/drawn_probe.gd` (lê o que o `CrowdRenderer` pôs nos MultiMesh), análise em `docs/gallery/t5b/boss/{data,after/data}/*.py`.
-- Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
+- **PT-1 (2026-11-23, Daniel jogando): só golpe de área tem mancha no chão.** `EnemyDef.ground_warning` (dado, `make_data.gd`; hoje o corredor `runner`/`runner_big`/elite, o Varredor e o Canalizador) deixa a zona desenhada; sem ele (bote e espadas do esqueleto e do guarda, investida e golpe de perto do Cavaleiro, besteiro, lanceiro, feiticeiro, Ancião) `Horde._mark` chama `Ground.mute`: a zona existe igual (tempo, dano, o que o robô lê, `Zone.silent`) mas não é desenhada nem faz o estalo de trava. No lugar, o "!" (`EnemyFx.alert`, 2 traços marfim e ouro com contorno de tinta, por cima de tudo, maior em elite e pesado, um pulso curto ao acender) aparece nos `Feel.bang_lead` 0,35 s antes do golpe (`Horde.strike_in`: a zona muda mais próxima de `warning`, `warning2` e `fan`) e some no golpe ou em `Horde.interrupt`; um som (`lock_click`) por golpe, no máximo um a cada 0,12 s (`Horde.BANG_SOUND_GAP`). Morvath, perigos de sala, círculos, erupções, runas e invocações não mudam. Testes em `tests/test_pt1_warning.gd`.
+- (Antes do PT-1) Todo ataque inimigo tem aviso no chão (`Ground.add_warning`, `add_line_warning`, `add_arc_warning`; o desenho fica em `GroundLook`, que os laboratórios usam sem o jogo). Ciclo 8, direção do golpe: na linha a ponta de longe é a clara, o preenchimento avança como uma divisa apontando para onde o golpe vai, com divisas fracas na parte ainda vazia; o arco ganhou borda nos lados retos. Laboratório: `tools/enemy_lab.gd ... --bars --warn=0.6`.
 
 ## C17 "Justiça e peso", frente de gameplay (backlog `docs/backlog.md` seção C17; evidências em `docs/gallery/c17/`)
 - **Provação tardia (BUG-101, Q-08 a)**: a laje só aparece onde a maldição mais curta cabe nas lutas que restam antes de
@@ -481,7 +482,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   (`Enemy.facing_him`, lido no `_drawn_motion`).
 - **Mira em fio (QW-107)**: a mira do besteiro e o bote do esqueleto são `Ground.add_aim_warning` (`GroundLook.aim`,
   `aim_px` no `ground.gdshaderinc`): fio de `AIM_PX` 6 px a `AIM_LIGHT` 0,5, ponta clara, a faixa enche até `AIM_FILL`
-  0,22 só nos últimos 30%. Os outros avisos não mudaram.
+  0,22 só nos últimos 30%. Os outros avisos não mudaram. (PT-1: a mira em fio, o fio do leque e o bote deixaram de ser desenhados; a zona fica, muda, e o "!" avisa.)
 - **Robô (QW-112)**: porta da fonte só abaixo de `Rooms.BOT_FOUNTAIN_BELOW` 0,8 da vida (`bot_door(..., life)`), e bebe
   abaixo do mesmo (`Bot.DRINK_BELOW`, era 0,6); régua das métricas sempre com `--ultimate=cleave`.
 - **Vigia (BUG-110)**: `--watchdog` imprime `WATCH {...}` a cada `Watchdog.EVERY` 5 s reais (`frames`, `fps`, `mode`,
