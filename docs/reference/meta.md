@@ -62,28 +62,29 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   inimigos a 4 m; `--bot-no-shout`), `Bot.rush_worth` (entrar a 4,5 a 8 m, ou para Magia quando a rajada não tem; `--bot-no-rush`), rajada só com Magia. Faltam: slots
   `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
-## O Preparo, a árvore da conta (Lote 5, 2026-11-22; nomes aceitos pelo Daniel em 2026-11-21, era "A Fonte"; testes em `tests/test_account.gd`)
-- **O que é**: melhorias permanentes que valem para todos os heróis (recomendação 1 de `docs/design/benchmark_sworn.md` §8),
-  compradas com os materiais que já existem (Prata Antiga e Fragmento de Memória; nenhuma moeda nova). Dado:
-  `AccountNode` (`core/account_node.gd`), `data/account/*.tres` escrito por `_account` no `make_data.gd` (12 nós, custos
-  crescentes na ordem do ramo). Regras puras em `Account` (`core/account.gd`): `problem`, `buy`, `owned`, `mods_of`,
-  `first(n)`, `open(data)`, `better(chances, bonus)`.
-- **Nós** (ramo: custo): Vida: Vigor I, II, III (+8, +8, +9 de vida; 12, 25, 45 Prata) e Segunda Chance (renasce uma vez
-  por descida com 40% da vida, `Account.REVIVE_HP`; 20 Memória, pede Vigor II); Cura: Fôlego da Sala (12% da vida ao vencer a
-  sala, `room_heal_pct`; 15) e Água Clara (fontes +15%, `fountain_heal`; 30); Ouro: Bolsa Cheia I e II (+15% e +20% de
-  ouro, `gold_pct`; 12 e 30); Bênção: Coração Atento I e II (chance de raridade +0,08 e +0,10 no 1º degrau e metade no 2º;
-  6 e 12 Memória); Força: Mão Firme I e II (+6% de dano cada, `damage_pct` sem tag; 30 e 60). O ramo pede o nó de antes.
-- **Como entra na partida**: `Game._equip_account` soma os `mods` no `BoonState.grant` (como a Forja soma em `stat`);
-  vida máxima sai do `_apply_talents`; `Rooms` cura na sala vencida e multiplica o ouro, `Game` soma a cura da fonte e
-  aplica `Account.better` nas chances de `open_boon_choice`, `Player.revives` levanta uma vez no `hurt`. `--account=N`
-  (também o robô) leva os N primeiros nós do catálogo (a ordem de compra do robô); o `RESULT` ganha `account` (N).
-- **Save versão 10**: bloco `account.bought` (ids). Arquivo antigo abre sem nada comprado; a migração só soma o bloco.
-- **Números do Lote 5**: o Guerreiro novo teve 18 de vida no Lote 5 e voltou a 30 em 2026-11-21 (com a regra sem atordoamento, `StunRule`) e a Forja (Temperar I e II) 20% (era 10%); medidas em
-  `docs/design/balance.md` ("Lote 5").
-- **Santuário**: sem estação nova. Depois da Forja (primeiro guardião vencido ou um Temperar comprado, `Account.open`) o
-  Forjador pergunta "A Forja" ou "O Preparo" (`Hub._use_smith`, `HubPanel`); o Preparo é uma folha simples
-  (`AccountSheet`: bolsa, grade de botões, descrição do foco, Enter compra). **Pendente para o ui-ux-designer**: vestir a
-  folha no estilo do Livro (hoje é funcional) e a estação própria se o Daniel quiser.
+## A Videira (V1, 2026-11-23; substituiu "O Preparo"; pacote em `docs/design/videira_pacote_2026-11-23/`; testes em `tests/test_videira_v1.gd`)
+- **O que é**: 3 ramos de 3 nós, sem dano, melhorias permanentes para todos os heróis. Subtítulo "Raízes que fortalecem todas as
+  jornadas" (sem citação bíblica, D-59). Dado: `VineNode` (`core/vine_node.gd`), `data/vine/*.tres` escrito por `_vine` no
+  `make_data.gd`. Regras puras em `Vine` (`core/vine.gd`, o antigo `Account`; a API para a tela está no topo do arquivo).
+- **Nós** (custos 5, 10, 20 por ramo; o nó pede o de antes no ramo): **Vida** (Prata): Seiva, Caule, Raiz Funda, +5 de vida
+  máxima cada (`max_hp`). **Provisão** (Memória): O Viajante (`traveler`), Estoque (`shop_extra`), Reserva (`shop_care`).
+  **Perseverança** (Prata): Colheita de Prata, de Memória e Farta (`silver_pct`, `memory_pct`, `material_pct`, +10% cada).
+- **Efeitos**: `Game._equip_vine` soma os `mods` no `BoonState.grant` e põe o bônus na `MaterialPurse` (`bonus`, com resto
+  guardado em `carry`: +10% de 1 Esmeralda chega na décima). O Viajante: `RunMap` ganha `traveler` (5º argumento); na camada
+  antes de cada guardião a fonte fica e **a outra porta vira um mercador de rota** (`Kind.SHOP`, `is_route_shop`, a loja de
+  fim de descida continua a de sempre). Escolha: reusa a loja de rota do DV-2, sem tocar nas 2 portas por sala nem nas
+  regras; essa camada deixa de ter luta (a regra "uma luta ao lado da fonte" não vale ali), e o grafo pode ser sorteado de
+  novo mais vezes (`failures`). Estoque e Reserva: `Rooms._vine_stock` em toda loja (a de rota também): a cura entra no lugar
+  do item do grupo de cuidado quando não há `HEAL`, e Estoque acrescenta um item diferente dos mostrados.
+- **Opção do robô**: `--vine=N` (também `--account=N`, o nome de antes) leva os N primeiros nós, um degrau de cada ramo por vez
+  (Vida 1, Viajante, Prata, Vida 2, Estoque, Memória, ...); o `RESULT` ganha `vine` (N).
+- **Save versão 12**: bloco `vine.bought` (ids) no lugar de `account`. A migração devolve o que o arquivo comprou do Preparo na
+  moeda que pagou, exato (`SaveData.LEGACY_PREPARO`, `refund_preparo`, `MaterialPurse.refund`: sem teto e sem contar nos
+  materiais trazidos). Saíram Mão Firme, Vigor, Fôlego da Sala, Água Clara, Bolsa Cheia, Coração Atento e Segunda Chance
+  (`Player.revives`, `Account.better`, `room_heal_pct` foram removidos).
+- **Santuário (V1)**: ainda no Forjador (`Hub._use_smith` pergunta "A Forja" ou "A Videira"; `VineSheet`, folha simples em
+  3 colunas). **V2** faz a estação própria e a tela no estilo do Livro; **V3** a planta crescendo. A condição `account` do
+  guia do Santuário (`HubGuide`) mantém o id (está no save) e abre com `Vine.open`.
 
 ## Salmos (E4-01 e E4-02; regras, números e escolhas em `docs/design/e4_psalms.md`)
 - `PsalmDef` (`core/psalm_def.gd`, `data/psalms/`, parte `psalms` do `make_data.gd`): nome só por tema, sem número nem

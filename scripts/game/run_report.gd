@@ -23,7 +23,7 @@ static func result(g: Game) -> Dictionary:
 		"trial": {"active": String(rooms.trials.active.curse.id) if rooms and rooms.trials.active else "",
 			"left": rooms.trials.left if rooms else 0, "won": rooms.trials.won.size() if rooms else 0},
 		"juramentos": g.juramentos.to_dict() if g.juramentos else {}, "weight": g.juramentos.weight() if g.juramentos else 0,
-		"materials": g.materials.report(), "account": g.account_nodes, "forge": {"temper": g.forge_temper, "refine": g.forge_refine.duplicate(), "awaken": g.forge_awaken,
+		"materials": g.materials.report(), "vine": g.vine_nodes, "forge": {"temper": g.forge_temper, "refine": g.forge_refine.duplicate(), "awaken": g.forge_awaken,
 			"discern": g.discern, "rerolls_used": Discern.rerolls(g.discern) - g.rerolls_left},
 		"talents_opened": g.talents_opened, "enchants": g.boons.enchants.map(func(e: EnchantDef) -> String: return String(e.id)),
 		"tools": g.tools_found.map(func(t: StringName) -> String: return String(t)),

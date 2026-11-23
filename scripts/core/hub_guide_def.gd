@@ -12,5 +12,5 @@ extends Resource
 ## The sentence in data/text_pt.tres; {key} is the real key of interact (keyboard, mouse, gamepad, remapped).
 @export var text_key: StringName
 ## When it is due (HubGuide.CONDITIONS): "open" (the station's gate is open), "always", "wins" (Morvath sealed once),
-## "account" (the Forjador's Preparo is open).
+## "account" (the Forjador's Videira is open).
 @export var condition: StringName = &"open"

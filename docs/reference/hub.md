@@ -214,7 +214,7 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   volta ao herói. O herói fica parado enquanto isso.
 - A lista é dado: `data/hub_guide/NN_id.tres` (`HubGuideDef`: id, ordem, estação, `text_key`, condição), gerada por `_hub_guide` em
   `tools/make_data.gd`. Guia novo = uma linha lá e um texto `guide_*`. Condições (`HubGuide.CONDITIONS`): `open` (porta da
-  `HubGate` aberta), `always`, `wins` (Morvath selado: Juramentos), `account` (O Preparo no Forjador). Hoje: portal (também troca de
+  `HubGate` aberta), `always`, `wins` (Morvath selado: Juramentos), `account` (A Videira no Forjador). Hoje: portal (também troca de
   herói), tree (Dons), book (Livro e Compêndio), forge, vendor, account, sworn.
 - Uma vez por save: `hub.guided` (versão 11 do save); save antigo conta o que já está devido como visto (`SaveData.merged`). Gravado
   ao começar o guia. A linha `hub_open_*` de uma estação que tem guia na visita não aparece duas vezes.

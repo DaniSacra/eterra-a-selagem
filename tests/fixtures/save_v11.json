@@ -1,0 +1,9 @@
+{
+	"version": 11,
+	"runs": 9,
+	"wins": 1,
+	"materials": {"silver": 10, "memory": 2, "emerald": 1},
+	"materials_total": {"silver": 200, "memory": 40, "emerald": 1},
+	"hub": {"presented": [], "guided": ["forge"]},
+	"account": {"bought": ["vida_1", "vida_2", "bencao_1", "forca_1", "renascer", "ouro_1"]}
+}

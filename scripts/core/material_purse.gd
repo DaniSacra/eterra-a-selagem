@@ -38,10 +38,28 @@ const RETRO_SILVER_MAX := 30
 var found := {}
 
 
+## A Videira's Perseverança: {material: share, &"all": share of every material}; what the bonus adds is carried as a
+## fraction (carry), so +10% of a single Esmeralda comes home on the tenth.
+var bonus := {}
+var carry := {}
+
+
+## n with the bonus of this material (and the one of all of them), the fraction left kept for the next pickup.
+func boosted(material: StringName, n: int) -> int:
+	var share := float(bonus.get(material, 0.0)) + float(bonus.get(&"all", 0.0))
+	if share <= 0.0 or n <= 0:
+		return n
+	var exact := float(n) * (1.0 + share) + float(carry.get(material, 0.0))
+	var whole := floori(exact + 0.0001)
+	carry[material] = maxf(0.0, exact - float(whole))
+	return whole
+
+
 ## Picks up n of a material from a source. Returns what was added (0 for nothing).
 func add(material: StringName, source: StringName, n: int) -> int:
 	if n <= 0 or not CAP.has(material):
 		return 0
+	n = boosted(material, n)
 	var by: Dictionary = found.get(material, {})
 	by[source] = int(by.get(source, 0)) + n
 	found[material] = by
@@ -125,6 +143,12 @@ static func give(data: Dictionary, material: StringName, n: int) -> int:
 	var life := _block(data, "materials_total")
 	life[String(material)] = int(life.get(String(material), 0)) + added
 	return added
+
+
+## Gives back what was paid (a refund: exact, no cap, and not counted as brought home in the lifetime total).
+static func refund(data: Dictionary, material: StringName, n: int) -> void:
+	if n > 0 and CAP.has(material):
+		_block(data)[String(material)] = amount(data, material) + n
 
 
 ## Banks a descent's purse into the save data (once, when the run ends): {id: what was really added}.

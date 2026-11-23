@@ -204,7 +204,7 @@ static func short_stage(full: StageDef, rooms_: int) -> StageDef:
 
 ## The descent's graph of a run (DV-1), on its own dice: the run's seed and MAP_SALT.
 func new_map(st: StageDef, forced := -1) -> RunMap:
-	var m := RunMap.new(st, hash([_rng.seed, MAP_SALT]), forced, trials.shortest_curse())
+	var m := RunMap.new(st, hash([_rng.seed, MAP_SALT]), forced, trials.shortest_curse(), game != null and game.boons.stat(&"traveler") > 0.0)
 	var of := game.oficios if game != null else null
 	if of != null and game.oficios_def != null:
 		# Ofícios, Roteiro A: the veins and the head's room, on dice of their own (the map stays as it was)
@@ -667,7 +667,6 @@ func _room_cleared() -> void:
 	Audio.play(&"elite_down")
 	purse = null
 	game.hud.show_notice(T.t(&"notice_room_clear"), 2.0)
-	game.player.heal(game.player.max_hp * game.boons.stat(&"room_heal_pct"))  # the account's Fôlego da Sala
 	if room.kind == RunMap.Kind.MINIBOSS:
 		# the guardian won: Prata and Memória for home (Rejogabilidade, Fatia 1)
 		found(MaterialPurse.SILVER, &"guardian", stage.silver_guardian)
@@ -1644,6 +1643,7 @@ func _build_shop() -> void:
 			chosen = group.pick_all(_rng, valid)
 		for i in chosen:
 			picks.append({"item": group.items[i] as RunMap.Reward, "price": group.prices[i], "group": g})
+	_vine_stock(picks, valid)
 	var n := picks.size()
 	var right := Feel.screen_to_floor(Vector2.RIGHT, Feel.live().cam_yaw)
 	for k in n:
@@ -1668,6 +1668,39 @@ func _build_shop() -> void:
 	for p in picks:
 		points.append(p.at)
 	game.arena.dress_shop(points)
+
+
+## A Videira's Provisão on a shop's shelf (every shop, the route ones too): Reserva (shop_care) a healing item always
+## there (the care group's own pick gives its place to it; when none is shown it is one more), then Estoque (shop_extra)
+## one more item, different from those shown, from the group the dice give.
+func _vine_stock(picks: Array[Dictionary], valid: Callable) -> void:
+	var groups := stage.shop_groups
+	if game.boons.stat(&"shop_care") > 0.0:
+		var care := -1
+		for g in groups.size():
+			if groups[g].items.has(RunMap.Reward.HEAL):
+				care = g
+		if care >= 0 and not picks.any(func(p: Dictionary) -> bool: return p.item == RunMap.Reward.HEAL):
+			var i: int = groups[care].items.find(RunMap.Reward.HEAL)
+			var heal := {"item": RunMap.Reward.HEAL, "price": groups[care].prices[i], "group": care}
+			var slot := -1
+			for k in picks.size():
+				if picks[k].group == care:
+					slot = k
+			if slot >= 0:
+				picks[slot] = heal
+			else:
+				picks.append(heal)
+	if game.boons.stat(&"shop_extra") > 0.0 and not groups.is_empty():
+		var shown := picks.map(func(p: Dictionary) -> int: return p.item)
+		var fresh := func(item: int) -> bool: return not shown.has(item) and valid.call(item)
+		var from := _rng.randi() % groups.size()
+		for k in groups.size():
+			var g := (from + k) % groups.size()
+			var i := groups[g].pick(_rng, fresh)
+			if i >= 0:
+				picks.append({"item": groups[g].items[i] as RunMap.Reward, "price": groups[g].prices[i], "group": g})
+				break
 
 
 ## What the shop shows now, for a screen (one entry per item left: item (RunMap.Reward), price, group (index in

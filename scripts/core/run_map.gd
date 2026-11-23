@@ -154,6 +154,8 @@ var deck: RewardDeck
 var forced_layout := -1
 ## The fewest fights a curse of the Provação lasts (Trials.shortest_curse): the "?" only goes where they fit.
 var min_curse := 3
+## A Videira's O Viajante: the layer before each guardian keeps its fountain and a merchant takes the other door.
+var traveler := false
 var _rng := RandomNumberGenerator.new()
 ## While drawing: the parents of each id, the most times each arena was fought along any way up to it (arena index:
 ## count), the arenas of the fight right before it (the altar passes them on), and the fewest fights after it.
@@ -167,7 +169,8 @@ var _angel_deck: RewardDeck
 var _angel_rng := RandomNumberGenerator.new()
 
 
-func _init(stage_def: StageDef, seed_value: int, forced := -1, shortest_curse := 3) -> void:
+func _init(stage_def: StageDef, seed_value: int, forced := -1, shortest_curse := 3, with_traveler := false) -> void:
+	traveler = with_traveler
 	stage = stage_def
 	map_seed = seed_value
 	forced_layout = forced
@@ -464,7 +467,14 @@ func _build() -> bool:
 			# a layer keeps a fight beside its fountains
 			var plain := Array(ids).filter(func(id: int) -> bool: return nodes[id].kind == Kind.COMBAT)
 			if plain.size() > 1 or (k == 0 and not plain.is_empty()):
-				nodes[plain[_rng.randi() % plain.size()]].kind = Kind.FOUNTAIN
+				var spring: int = plain[_rng.randi() % plain.size()]
+				nodes[spring].kind = Kind.FOUNTAIN
+				if traveler and k == 0 and guardian_at(d + 1):
+					# O Viajante: the other door before the guardian is a merchant (a route shop; the dice are not used)
+					for other: int in plain:
+						if other != spring:
+							nodes[other].kind = Kind.SHOP
+							break
 		if d in altar and ids.size() > 1:
 			var plain := Array(ids).filter(func(id: int) -> bool: return nodes[id].kind == Kind.COMBAT)
 			if not plain.is_empty():

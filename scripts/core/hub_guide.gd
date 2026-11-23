@@ -44,7 +44,7 @@ static func due(data: Dictionary, def: HubGuideDef) -> bool:
 		&"wins":
 			return Juramentos.unlocked(data)
 		&"account":
-			return Account.open(data)
+			return Vine.open(data)
 	return false
 
 

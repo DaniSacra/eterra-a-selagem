@@ -1003,10 +1003,6 @@ func _follow_through(node: ComboNode) -> void:
 	_anim.speed_scale = node.follow_speed(tail) * runner.speed / maxf(_anim.get_playing_speed(), 0.01)
 
 
-## Second lives the account gives (Game._equip_account); each stands him up once.
-var revives := 0
-
-
 func heal(amount: float) -> void:
 	if amount <= 0.0 or not alive():
 		return
@@ -1072,16 +1068,6 @@ func hurt(amount: float, from: Vector2) -> void:
 	# the colour split and the edge tint of a blow taken are Game's (HurtTint: never on the whole screen)
 	Audio.play(&"hurt")
 	was_hurt.emit(amount)
-	if hp <= 0.0 and revives > 0:
-		# the account's Segunda Chance: once a descent he falls and stands with part of his life
-		revives -= 1
-		hp = max_hp * Account.REVIVE_HP
-		invuln = 1.5
-		fx.hero_burst(&"light", Vector3(pos.x, 1.2, pos.y))
-		fx.ring(pos, 2.0, Combat.EMETH, 0.5, 0.06, true)
-		fx.word(Vector3(pos.x, 3.2, pos.y), T.t(&"word_revive"), Combat.EMETH)
-		Audio.play(&"heal")
-		rose.emit()
 	if hp <= 0.0 and gifts != null and gifts.rise():
 		# Ainda de Pé: once a descent he falls and gets up with part of his life (then the stagger of the blow)
 		hp = gifts.rise_life(max_hp)

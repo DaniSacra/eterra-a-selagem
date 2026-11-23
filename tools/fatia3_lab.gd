@@ -54,7 +54,7 @@ func _run() -> void:
 	boot.call(&"_close_sub")
 	await create_timer(0.3).timeout
 	# Lote 5: the account's tree
-	(load("res://scripts/ui/account_sheet.gd") as GDScript).call(&"open", boot.get(&"_host"), data)
+	(load("res://scripts/ui/vine_sheet.gd") as GDScript).call(&"open", boot.get(&"_host"), data)
 	await create_timer(0.5).timeout
 	await _shot("fonte")
 	boot.call(&"_close_sub")

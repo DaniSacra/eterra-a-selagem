@@ -51,6 +51,7 @@ Coração Atento em Memória; save v10 `account.bought`; o robô evoluído usa `
 5. **Texto**: a imagem 01 cita "Eu sou a videira verdadeira (João 15:1)". O jogo não cita texto bíblico (D-59, Salmos só por tema; Elun é a
    alegoria). Sugestão: subtítulo "Raízes que fortalecem todas as jornadas", sem citação.
 6. **Arte da estação**: videira em arco de pedra com 9 estados; modelo Meshy (estimar, cerca de 15 a 30 créditos) ou peças da Godot.
+**V1 FEITA (2026-11-23, worktree do gameplay-engineer; `docs/reference/meta.md` "A Videira")**: `Vine`/`VineNode`/`VineSheet`, `data/vine/`, save v12 com reembolso, O Viajante (mercador de rota na outra porta antes de cada guardião), Estoque, Reserva, +10% de Prata, Memória e materiais, `--vine=N`. Faltam V2 e V3.
 **Etapas sugeridas** (uma entrega cada): **V1** dados e regras (renomear `Account` para a Videira por fora, 9 nós, migração do save com
 reembolso, efeitos de Provisão e Perseverança, testes); **V2** estação no Santuário e tela sobreposta no estilo do Livro (compra com
 confirmação, teclado, mouse e controle), Forjador sem "O Preparo"; **V3** a planta crescendo por ramo. Donos: `gameplay-engineer` (V1),

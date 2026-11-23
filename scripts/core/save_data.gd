@@ -16,7 +16,9 @@ extends RefCounted
 ## descent it played, up to 30 (Q-RJ8 a, MaterialPurse.retro_silver), once.
 ## 10 (Lote 5, the account's tree "O Preparo", Account): account (bought: the ids of the nodes bought, for every hero). An
 ## older file opens with none bought; nothing else changes.
-const VERSION := 11
+## 12 (A Videira, V1, replaced "O Preparo"): vine (bought: ids of the nodes, Vine) in place of account. What a file had
+## bought of the old tree comes back as the material it paid (Prata or Memória, exact, LEGACY_PREPARO), the old block is left.
+const VERSION := 12
 const MAX_BEST_TIMES := 5
 ## The hero every older save belongs to (HeroDef.id).
 const FIRST_HERO := "warrior"
@@ -59,8 +61,8 @@ static func defaults() -> Dictionary:
 		"played_at": 0,
 		# since version 9: the Santuário opens by stages (HubGate): the stations whose opening was shown
 		"hub": hub_defaults(),
-		# since version 10: the account's improvements (Account)
-		"account": Account.defaults(),
+		# since version 12: A Videira's improvements (Vine; version 10 and 11 held the old "O Preparo" under "account")
+		"vine": Vine.defaults(),
 	}
 
 
@@ -156,10 +158,35 @@ static func merged(loaded: Variant) -> Dictionary:
 	# files before version 11 (PT-5, the Santuário's guides): what is due already counts as shown (no guide for what he knows)
 	if version < 11:
 		HubGuide.mark_shown(out, HubGuide.pending(out).map(func(d: HubGuideDef) -> StringName: return d.id))
-	# version 10 (the account): nothing to move, an older file opens with none bought (defaults)
+	# files before version 12 (A Videira): the old tree "O Preparo" is gone; what he bought comes back as what he paid
+	if version < 12:
+		refund_preparo(out, loaded.get("account"))
 	# version 8 (Ofícios): nothing to move, an older file opens with the empty block (defaults)
 	out.version = VERSION
 	return out
+
+
+## The old "O Preparo" (versions 10 and 11), node id: [material, cost], kept only to give back what was paid.
+const LEGACY_PREPARO := {"vida_1": ["silver", 12], "cura_1": ["silver", 15], "vida_2": ["silver", 25], "forca_1": ["silver", 30],
+	"bencao_1": ["memory", 6], "ouro_1": ["silver", 12], "renascer": ["memory", 20], "cura_2": ["silver", 30],
+	"vida_3": ["silver", 45], "ouro_2": ["silver", 30], "bencao_2": ["memory", 12], "forca_2": ["silver", 60]}
+
+
+## Gives back, in the material it was paid with, each node of the old tree the file had bought (once per id; no cap, not
+## counted as brought home). Returns what was given back, {material: amount}.
+static func refund_preparo(out: Dictionary, old: Variant) -> Dictionary:
+	var given := {}
+	if not (old is Dictionary and (old as Dictionary).get("bought") is Array):
+		return given
+	var seen := []
+	for id: Variant in (old as Dictionary).bought:
+		if not (id is String and LEGACY_PREPARO.has(id)) or seen.has(id):
+			continue
+		seen.append(id)
+		var row: Array = LEGACY_PREPARO[id]
+		MaterialPurse.refund(out, StringName(row[0]), int(row[1]))
+		given[row[0]] = int(given.get(row[0], 0)) + int(row[1])
+	return given
 
 
 ## Opens for free every Gift the Warrior's block has revealed by its Mastery (the version 6 migration; a test or a

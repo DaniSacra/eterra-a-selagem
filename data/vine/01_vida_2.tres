@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="VineNode" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_okhyy"]
+[ext_resource type="Script" path="res://scripts/core/vine_node.gd" id="2_ydfsr"]
+
+[sub_resource type="Resource" id="Resource_2ad36"]
+script = ExtResource("1_okhyy")
+stat = &"max_hp"
+base = 5.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_ydfsr")
+id = &"vida_2"
+branch = &"vida"
+step = 2
+requires = &"vida_1"
+name_key = &"vine_vida_2"
+desc_key = &"vine_vida_2_desc"
+cost = 10
+mods = Array[ExtResource("1_okhyy")]([SubResource("Resource_2ad36")])

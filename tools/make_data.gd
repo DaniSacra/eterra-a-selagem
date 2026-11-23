@@ -55,7 +55,7 @@ const COMBO_PUSH := [2.5, 3.0]
 func _initialize() -> void:
 	var only := OS.get_cmdline_user_args()
 	# the hero last: it points at the talents, ultimates and Mastery written before it
-	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "account", "hub_guide", "maga"]:
+	for part in ["combos", "enemies", "mods", "boons", "waves", "stage", "bosses", "feel", "talents", "ultimates", "mastery", "hero", "psalms", "trials", "juramentos", "forge", "angels", "enchants", "oficios", "obras", "vine", "hub_guide", "maga"]:
 		if only.is_empty() or only.has(part):
 			call("_" + part)
 			print("wrote ", part)
@@ -2914,43 +2914,41 @@ func _oficios() -> void:
 	ResourceSaver.save(d, "res://data/oficios/oficios.tres")
 
 
-## The account's tree "O Preparo" (Lote 5, working names; docs/design/benchmark_sworn.md section 8): small permanent
-## improvements for every hero, in the order a robot buys them (--account=N: the first N). Prata Antiga for the body and the
-## purse, Fragmento de Memória for the Blessings and the second life. Numbers measured in docs/design/balance.md.
-func _account() -> void:
-	var dir := "res://data/account/"
+## A Videira (Daniel 2026-11-23, docs/design/videira_pacote_2026-11-23/; it replaced "O Preparo"): 3 branches of 3 nodes, no
+## damage, small permanent improvements for every hero. Costs 5, 10 and 20 a branch (the package's): Vida and
+## Perseverança in Prata Antiga, Provisão in Fragmento de Memória. File order = purchase order within a branch; the robot
+## (--vine=N, also --account=N) takes step 1 of every branch, then step 2, then step 3 (Vine.first).
+func _vine() -> void:
+	var dir := "res://data/vine/"
 	DirAccess.make_dir_recursive_absolute(dir)
 	for f in DirAccess.get_files_at(dir):
 		DirAccess.remove_absolute(dir + f)
 	var S := MaterialPurse.SILVER
 	var M := MaterialPurse.MEMORY
+	var costs := [5, 10, 20]
 	var list := [
-		[&"vida_1", &"vida", &"", S, 12, [_fixed(&"max_hp", 8)]],
-		[&"cura_1", &"cura", &"", S, 15, [_fixed(&"room_heal_pct", 0.12)]],
-		[&"vida_2", &"vida", &"vida_1", S, 25, [_fixed(&"max_hp", 8)]],
-		[&"forca_1", &"forca", &"", S, 30, [_fixed(&"damage_pct", 0.06)]],
-		[&"bencao_1", &"bencao", &"", M, 6, [_fixed(&"rarity_bonus", 0.08)]],
-		[&"ouro_1", &"ouro", &"", S, 12, [_fixed(&"gold_pct", 0.15)]],
-		[&"renascer", &"vida", &"vida_2", M, 20, [_fixed(&"revive", 1)]],
-		[&"cura_2", &"cura", &"cura_1", S, 30, [_fixed(&"fountain_heal", 0.15)]],
-		[&"vida_3", &"vida", &"vida_2", S, 45, [_fixed(&"max_hp", 9)]],
-		[&"ouro_2", &"ouro", &"ouro_1", S, 30, [_fixed(&"gold_pct", 0.2)]],
-		[&"bencao_2", &"bencao", &"bencao_1", M, 12, [_fixed(&"rarity_bonus", 0.1)]],
-		[&"forca_2", &"forca", &"forca_1", S, 60, [_fixed(&"damage_pct", 0.06)]],
+		[&"vida", S, [[&"vida_1", &"max_hp", 5], [&"vida_2", &"max_hp", 5], [&"vida_3", &"max_hp", 5]]],
+		[&"provisao", M, [[&"viajante", &"traveler", 1], [&"estoque", &"shop_extra", 1], [&"reserva", &"shop_care", 1]]],
+		[&"perseveranca", S, [[&"prata", &"silver_pct", 0.1], [&"memoria", &"memory_pct", 0.1], [&"materiais", &"material_pct", 0.1]]],
 	]
-	for i in list.size():
-		var n := AccountNode.new()
-		n.id = list[i][0]
-		n.branch = list[i][1]
-		n.requires = list[i][2]
-		n.material = list[i][3]
-		n.cost = list[i][4]
-		n.name_key = StringName("account_" + n.id)
-		n.desc_key = StringName("account_%s_desc" % n.id)
-		var mods: Array[BoonMod] = []
-		mods.assign(list[i][5])
-		n.mods = mods
-		_save(n, dir + "%02d_%s.tres" % [i, n.id])
+	var i := 0
+	for branch: Array in list:
+		for step in 3:
+			var row: Array = branch[2][step]
+			var n := VineNode.new()
+			n.id = row[0]
+			n.branch = branch[0]
+			n.step = step + 1
+			n.requires = branch[2][step - 1][0] if step > 0 else &""
+			n.material = branch[1]
+			n.cost = costs[step]
+			n.name_key = StringName("vine_" + n.id)
+			n.desc_key = StringName("vine_%s_desc" % n.id)
+			var mods: Array[BoonMod] = []
+			mods.assign([_fixed(row[1], row[2])])
+			n.mods = mods
+			_save(n, dir + "%02d_%s.tres" % [i, n.id])
+			i += 1
 
 
 func _forge() -> void:
