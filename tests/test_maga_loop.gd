@@ -59,10 +59,10 @@ func _blast() -> void:
 
 func test_the_blast_numbers() -> void:
 	var kit := HeroDef.maga().arcane
-	assert_eq(kit.blast_hit(false, false), 25.0)
-	assert_eq(kit.blast_hit(true, false), 60.0, "25 and 35 on a Selo")
-	assert_eq(kit.blast_hit(true, true), 90.0, "amplified: times 1.5")
-	assert_eq(kit.blast_hit(false, true), 37.5)
+	assert_eq(kit.blast_hit(false, false), 32.0)
+	assert_eq(kit.blast_hit(true, false), 76.0, "32 and 44 on a Selo (2026-11-23 balance; it was 25 and 35)")
+	assert_eq(kit.blast_hit(true, true), 114.0, "amplified: times 1.5")
+	assert_eq(kit.blast_hit(false, true), 48.0)
 	assert_eq([kit.blast_size(false), kit.blast_size(true)], [3.2, 4.5])
 
 
@@ -119,8 +119,8 @@ func test_the_blast_hits_all_and_consumes_the_selos_for_the_extra() -> void:
 	game.arcane.lay(marked)
 	var magick := game.player.magick.value
 	_blast()
-	assert_eq(marked.hp, 5000.0 - 60.0)
-	assert_eq(bare.hp, 5000.0 - 25.0)
+	assert_eq(marked.hp, 5000.0 - 76.0)
+	assert_eq(bare.hp, 5000.0 - 32.0)
 	assert_eq(out.hp, 5000.0, "outside its 3.2 m")
 	assert_false(game.arcane.seals.has(marked), "the Selo is consumed")
 	assert_eq(game.arcane.resonance.points, 1, "a point for the Selo detonated")
@@ -137,8 +137,8 @@ func test_the_amplified_blast_costs_nothing_and_gives_no_points() -> void:
 	_step()  # (Arcane lets the special go free on the step after it fills)
 	var magick := game.player.magick.value
 	_blast()
-	assert_eq(marked.hp, 5000.0 - 90.0, "60 times 1.5")
-	assert_eq(wide.hp, 5000.0 - roundf(37.5), "reached by the wider ring")
+	assert_eq(marked.hp, 5000.0 - 114.0, "76 times 1.5")
+	assert_eq(wide.hp, 5000.0 - 48.0, "reached by the wider ring")
 	assert_eq(game.arcane.resonance.points, 0, "the Ressonância went into it and gave no point back")
 	assert_gte(game.player.magick.value, magick, "no Magia spent")
 

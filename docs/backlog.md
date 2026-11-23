@@ -1,5 +1,30 @@
 # Backlog de A Selagem
 
+## A Videira (pacote do Daniel de 2026-11-23, `docs/design/videira_pacote_2026-11-23/`)
+**DECIDIDO pelo Daniel em 2026-11-23: seguir as sugestões 1 a 6 abaixo; fazer V1 a V3 logo depois do teste com usuários** (custos fechados com o `runs.jsonl` dos testadores).
+Proposta do pacote: trocar **O Preparo** por **A Videira**, estação própria no Santuário (fora do Forjador), 3 ramos de 3 nós, tudo com
+Fragmentos de Memória, sem dano: **Vida** (+5, +5, +5 de vida), **Provisão** (mercador antes do chefe, +1 opção, 1 opção de cura garantida),
+**Perseverança** (+10% Prata, +10% Memória, +10% materiais). Custos 5/10/20 por ramo (105 no total). A planta cresce por ramo comprado.
+**Auditoria do que existe hoje** (`docs/reference/meta.md` "O Preparo"): 12 nós em `Account`/`AccountNode`/`AccountSheet`, quase todos em
+**Prata** (Vigor I a III +25 de vida, Fôlego da Sala, Água Clara, Bolsa Cheia I e II, Mão Firme I e II +6% de dano cada), Segunda Chance e
+Coração Atento em Memória; save v10 `account.bought`; o robô evoluído usa `--account=6`.
+**Conflitos para o Daniel decidir antes de programar:**
+1. **Loja antes do chefe já existe sempre** (sala 13, antes de Morvath). O nó "O Viajante" ficaria vazio; sugestão: o Viajante garante um
+   mercador antes de **cada guardião** (salas 4 e 9, hoje com fonte), Estoque +1 opção e Reserva 1 cura em **todas** as lojas.
+2. **Moeda**: tudo em Memória troca a economia. Hoje a Memória é rara (cerca de 0,4 a 0,7 por porta numa descida, `balance.md` OF-05) e
+   também paga os Dons; 105 Memória levaria dezenas de descidas, e a Prata perderia o uso fora da Forja. Sugestão: Vida e Perseverança em
+   Prata, Provisão em Memória (ou medir antes com o `runs.jsonl` dos testadores).
+3. **O que sai**: Mão Firme (dano) sai como o pacote pede; Segunda Chance, Fôlego da Sala, Água Clara e Coração Atento (aprovado em
+   2026-11-21) não têm lugar nos 9. Reembolsar no save (pacote) ou guardar algum como 4º nó.
+4. **Vida**: hoje o ramo dá +25 de vida; a Videira daria +15. Com o herói de 30 de vida, conferir com o robô.
+5. **Texto**: a imagem 01 cita "Eu sou a videira verdadeira (João 15:1)". O jogo não cita texto bíblico (D-59, Salmos só por tema; Elun é a
+   alegoria). Sugestão: subtítulo "Raízes que fortalecem todas as jornadas", sem citação.
+6. **Arte da estação**: videira em arco de pedra com 9 estados; modelo Meshy (estimar, cerca de 15 a 30 créditos) ou peças da Godot.
+**Etapas sugeridas** (uma entrega cada): **V1** dados e regras (renomear `Account` para a Videira por fora, 9 nós, migração do save com
+reembolso, efeitos de Provisão e Perseverança, testes); **V2** estação no Santuário e tela sobreposta no estilo do Livro (compra com
+confirmação, teclado, mouse e controle), Forjador sem "O Preparo"; **V3** a planta crescendo por ramo. Donos: `gameplay-engineer` (V1),
+`ui-ux-designer` e `environment-artist` (V2, V3), `balance-designer` (custos). Tamanho: média a grande.
+
 ## Teste com usuários reais, noite de 2026-11-23 (Daniel: "pode fazer tudo para finalizarmos o mais breve possível")
 Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas ligado. Ordem:
 1. Suíte verde com a Maga, commit (sessão principal).
@@ -19,7 +44,7 @@ Ordem menos arriscada (uma entrega por etapa, testar a anterior antes):
 - **M1a, kit no corpo de hoje atrás de `--hero=maga`** (`gameplay-engineer`, depende só do design; risco M: projétil que não atravessa, estado do Selo, Explosão no cursor). Tarefas: `HeroDef.maga()` e `data/heroes/maga.tres` (`make_data.gd`); 3 tiros com Selo no 3º; Explosão Rúnica; Círculo (zona com puxar); Suspensão (domo que para e apaga projéteis); Tempestade (`UltDef`); Passo (teletransporte, 2 cargas); Ressonância (3 losangos). Testes GUT: Selo, laço, tetos da Magia, amplificada sem Ressonância, F8. Robô: marca, junta, detona.
 - **M1b, seleção, save, HUD, texto e Bênçãos** (`gameplay-engineer` + `ui-ux-designer`, depende da M1a e do seletor de herói compartilhado com Ladina e Paladino; risco M: save por herói, ação E no controle). Tarefas: seletor na descida e no Santuário, `heroes.maga` no save, HUD da Ressonância e das 5 habilidades, textos em `text_pt.tres`, Bênçãos dos 7 anjos por botão (mapa da seção 4), Como Jogar, registro `RESULT.hero`.
 - **M1c, modelo** (`art-director`, depende do aval do Daniel; **créditos Meshy: estimar, gerar só a PRÉVIA, mostrar, modelo final só com o ok**): corpo com esqueleto e bastão de duas pontas, animações do `Cast` e passo, VFX âmbar e marfim (`technical-artist`), Selo acima da cabeça, hexágono de sigilos do Círculo. Palpite de 80 a 120 créditos, incerto.
-- **M1c prévia feita em 2026-11-23** (5 créditos, saldo 406): `assets/models/meshy/hero_maga/hero_maga-preview.png`, lado a lado com a arte 01 em `docs/gallery/maga_previa_meshy_2026-11-23.jpg`. Silhueta certa (manto marfim com capuz baixo, túnica, cintos, botas); cabelo saiu comprido (a arte tem chanel curto) e a túnica reta, sem as pontas rasgadas. Segunda prévia por texto (5) errou o cabelo (coque). **Imagem para 3D da arte 01 (30 créditos, saldo 371): acertou** (chanel curto, túnica azul com bordado, manto marfim, cintos, sem cajado), `assets/models/meshy/hero_maga_img/`, comparação em `docs/gallery/maga_modelo_meshy_2026-11-23.jpg`. Próximo, com o ok do Daniel: esqueleto e animações (5 + 3 por ação), cajado de duas pontas (imagem para 3D, 30), assado e troca do corpo no jogo.
+- **M1c prévia feita em 2026-11-23** (5 créditos, saldo 406): `assets/models/meshy/hero_maga/hero_maga-preview.png`, lado a lado com a arte 01 em `docs/gallery/maga_previa_meshy_2026-11-23.jpg`. Silhueta certa (manto marfim com capuz baixo, túnica, cintos, botas); cabelo saiu comprido (a arte tem chanel curto) e a túnica reta, sem as pontas rasgadas. Segunda prévia por texto (5) errou o cabelo (coque). **Imagem para 3D da arte 01 (30 créditos, saldo 371): acertou** (chanel curto, túnica azul com bordado, manto marfim, cintos, sem cajado), `assets/models/meshy/hero_maga_img/`, comparação em `docs/gallery/maga_modelo_meshy_2026-11-23.jpg`. Daniel: modelo no jogo só **depois do teste com usuários** (2026-11-23). Próximo: esqueleto e animações (5 + 3 por ação), cajado de duas pontas (imagem para 3D, 30), assado e troca do corpo no jogo.
 - **Balanceamento** (`balance-designer`, uma vez, 12 sementes) e **QA** (`qa-performance`) só depois da M1b.
 - **Riscos**: laço infinito da Ressonância, Selo ilegível ao lado do aviso vermelho, Explosão amplificada tirando Postura demais, complexidade da primeira versão.
 - **Critério de aceite** (pacote 04): distinta do Guerreiro, laço marcar, agrupar, detonar divertido, Ressonância perceptível, descida completa das Catacumbas.

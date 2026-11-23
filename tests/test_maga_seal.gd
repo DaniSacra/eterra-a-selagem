@@ -95,7 +95,7 @@ func test_the_third_shot_lays_it_and_the_second_only_inside_the_circle() -> void
 	assert_false(kit.seals_on(two.tags, false))
 	assert_true(kit.seals_on(two.tags, true), "the second one inside the Círculo")
 	assert_true(kit.seals_on(three.tags, false))
-	assert_eq([one.effect_power, two.effect_power, three.effect_power], [8.0, 8.0, 12.0])
+	assert_eq([one.effect_power, two.effect_power, three.effect_power], [10.0, 10.0, 15.0])
 	assert_true(three.following().is_empty(), "the chain is three shots")
 
 
@@ -107,14 +107,14 @@ func test_the_shots_end_on_the_first_enemy_and_the_third_marks_it() -> void:
 	var far := _dummy(Vector2(8, 0))
 	var arcane := game.arcane
 	_shoot()
-	assert_eq(near.hp, 4992.0, "8 on the first enemy")
+	assert_eq(near.hp, 4990.0, "10 on the first enemy")
 	assert_eq(far.hp, 5000.0, "the shot did not go through")
 	assert_false(arcane.seals.has(near), "one shot: no Selo")
 	_shoot()
-	assert_eq(near.hp, 4984.0)
+	assert_eq(near.hp, 4980.0)
 	assert_false(arcane.seals.has(near), "two shots: no Selo")
 	_shoot()
-	assert_eq(near.hp, 4972.0, "the third hits for 12")
+	assert_eq(near.hp, 4965.0, "the third hits for 15")
 	assert_true(arcane.seals.has(near), "the third lays the Selo")
 	assert_false(arcane.seals.has(far))
 	assert_eq(far.hp, 5000.0)

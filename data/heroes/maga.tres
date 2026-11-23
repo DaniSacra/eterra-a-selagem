@@ -8,6 +8,8 @@
 
 [sub_resource type="Resource" id="Resource_0l3wl"]
 script = ExtResource("1_d6o6b")
+blast_damage = 32.0
+blast_seal_damage = 44.0
 
 [resource]
 script = ExtResource("3_yanfv")

@@ -2080,11 +2080,11 @@ func _maga_tree() -> ComboTree:
 		"shake": 0.2, "move_scale": 0.0, "sound": &"dart", "effect": ComboNode.Effect.WAVE, "effect_radius": 11.0, "wave_bolt": true,
 		"wave_speed": 30.0, "wave_stops": true, "wave_color": MAGA_AMBER, "knockback": 2.0}
 	var shot3 := _move(&"bolt3", L, &"Cast", [&"light", &"bolt", &"arcane", &"seal", &"finisher"],
-		shot.merged({"effect_power": 12.0, "effect_size": 0.9, "windup": 0.14, "recovery": 0.20, "move_hold": 0.30, "shake": 0.4}), [], &"move_bolt3")
+		shot.merged({"effect_power": 15.0, "effect_size": 0.9, "windup": 0.14, "recovery": 0.20, "move_hold": 0.30, "shake": 0.4}), [], &"move_bolt3")
 	var shot2 := _move(&"bolt2", L, &"Cast", [&"light", &"bolt", &"arcane", &"seal2"],
-		shot.merged({"effect_power": 8.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.13, "move_hold": 0.20}), [shot3])
+		shot.merged({"effect_power": 10.0, "effect_size": 0.7, "windup": 0.10, "recovery": 0.13, "move_hold": 0.20}), [shot3])
 	var shot1 := _move(&"bolt1", L, &"Cast", [&"light", &"bolt", &"arcane"],
-		shot.merged({"effect_power": 8.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.13, "move_hold": 0.18}), [shot2])
+		shot.merged({"effect_power": 10.0, "effect_size": 0.7, "windup": 0.08, "recovery": 0.13, "move_hold": 0.18}), [shot2])
 	shot3.glint = 0.0  # (a finisher of the passive, but no glint: the shot leaves at once)
 	# right button: Explosão Rúnica, 10 Magia (0 when amplified), 0.6 s between, at the cursor up to 10 m
 	var blast := _move(&"blast", H, &"Cast", [&"heavy", &"blast", &"arcane", &"finisher"],
@@ -2126,6 +2126,8 @@ func _maga() -> void:
 	u.tags = [&"ultimate", &"cast"] as Array[StringName]
 	_save(u, MAGA_ULT)
 	var kit := ArcaneKit.new()  # (every number of ArcaneKit is its default: maga.md 2 and 3)
+	kit.blast_damage = 32.0  # 2026-11-23 balance: the Maga dealt 28/s against the Warrior 42/s (was 25 and 35 with the Selo)
+	kit.blast_seal_damage = 44.0
 	var h := HeroDef.new()
 	h.id = &"maga"
 	h.name_key = &"hero_maga"

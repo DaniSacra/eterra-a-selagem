@@ -595,3 +595,25 @@ Magia +0,5 por golpe de ataque, +3 por Quebra, Brado -0,3 s por acerto e -1,5 s 
 | Magia por acerto / por Quebra (por partida) | 0 / 0 | 180 / 27 | 0 / 0 | 139 / 2,6 |
 | Segundos de Brado devolvidos por partida | 0 | 85 | 0 | 53 |
 Leitura: o ataque cai para perto de 40% (novato), a onda sobe 40% (a Magia por acerto paga a onda), e o novato chega a Morvath mais vezes (7 para 10). O Brado a cada 16 a 18 s é a média da partida inteira (inclui andar, porta e fonte, e o robô só usa o Q quando está perto); fica acima dos 9 a 11 s da meta, e o piso de 8 s nunca é rompido (testado). A Magia por Quebra é pouca (27 por partida no novato; o evoluído quase não quebra porque mata antes): a maior parte do ganho vem do acerto. Evoluído vence igual (10 de 12 nos dois). Nada a rebalancear sem pedido; se o Daniel quiser o Brado mais frequente, subir `cd_refund_hit` para 0,5 em `make_data`.
+
+## Noite de teste com usuários reais (2026-11-23, robô 0,25, `smoke.sh 700 --ultimate=cleave`, sementes 1 a 12; só números em `make_data.gd`)
+Observado: o evoluído (`--boons=4 --forge=2 --account=6`) vencia 9 de 12 (75%, não 1 de 12 como no backlog: o robô quase não é acertado por Morvath, 1 a 3 golpes por luta, lutas de 57 a 106 s); o novato (`--hero-hp=30`) chegava ao guardião 12 de 12, passava dele 9 de 12, chegava a Morvath 3 de 12 e vencia 1; a Maga (`--hero=maga`) morria no primeiro guardião 6 de 12 e nunca chegava a Morvath (mediana da sala de morte 6,5 contra 7,5 do novato; dano 28 por segundo contra 42).
+| Número (`make_data.gd`) | Antes | Depois |
+|---|---|---|
+| Vida de Morvath (`_enemy morvath`) | 6050 | 10000 |
+| Dano de todos os golpes dele (`BOSS_DAMAGE`, menos a maldição de 10) | escora 19, ceifa 16, lâminas 16, tempestade 15, erupção 16, investida 19, ruptura 16 | x1,8: 34, 29, 29, 27, 29, 34, 29 |
+| Pausas entre golpes (`BOSS_REST`) e recargas (`BOSS_COOLDOWN`) | 0,8 e 0,85 | 0,55 e 0,7 (ele ataca mais, aviso igual) |
+| Maga: vida | 30 | 40 |
+| Maga: tiros 1, 2, 3 | 8, 8, 12 | 10, 10, 15 |
+| Maga: Explosão (sozinha, no Selo) | 25 (+35) | 32 (+44) |
+| Medida (12 sementes) | Antes | Depois |
+|---|---|---|
+| Evoluído vence / chega a Morvath | 9 / 9 | 5 / 9 (42%; ruído de 1 a 3) |
+| Luta de Morvath do evoluído | 57 a 106 s | 78 a 170 s |
+| Novato chega a Morvath / vence | 3 / 1 | 3 / 1 (não mudou: já morre antes) |
+| Maga chega a Morvath / vence / sala de morte (mediana) | 0 / 0 / 6,5 | 3 / 0 / 10 |
+Passos medidos do evoluído: vida 8000 e dano x1,3 e pausas 0,55: 7 de 12; vida 10000 e dano x1,5: 7 de 12; dano x1,8: 5 de 12. Só a vida de Morvath ou só o dano não mexeu na taxa porque o robô quase não é acertado: o que pesa é o dano por golpe e a frequência.
+Leitura e limites: o robô esquiva melhor que gente, então o evoluído humano vence menos que 42% (isso é desejado para a noite; recalibrar com o `runs.jsonl`). Se os testadores acharem Morvath injusto, voltar `BOSS_DAMAGE` para 1,5 (7 de 12 no robô). Novato e Maga ficam como estavam: o primeiro guardião já é passável (9 de 12 no novato) e um jogador de verdade vai morrer antes do robô. Maga com vida 40 contra 30 do Guerreiro: se parecer forte demais depois do teste, voltar a vida e deixar só o dano (~metade do ganho).
+Testes ajustados (mudança intencional): `test_boss` (vida 10000, faixa de dano 6 a 42), `test_boss_body` (a investida deixou de ser exigida nessa luta roteirizada), `test_c1d_rupture` (16 vira 29), `test_maga_seal`, `test_maga_loop` (tiros e Explosão).
+
+**Aplicado pela sessão principal para a noite (2026-11-23):** só o dano da Maga (tiros 10/10/15, Explosão 32 + 44). **Não aplicado**: Morvath (vida 10000, golpes x1,8, `BOSS_REST` 0,55, `BOSS_COOLDOWN` 0,7) porque o golpe mais forte passaria a 34 contra 30 de vida do novato (morte de um golpe com vida cheia, ruim para quem nunca jogou); e a vida 40 da Maga, porque o Daniel decidiu 30 (`maga.md` 13). Recalibrar Morvath com o `runs.jsonl` dos testadores, tentando antes `BOSS_DAMAGE` 1,3 (golpe máximo abaixo de 30).
