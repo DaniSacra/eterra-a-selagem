@@ -526,16 +526,17 @@ func _stroke(a: Vector3, b: Vector3, width: float, color: Color, alpha: float, p
 			(INK_ALPHA * minf(alpha / 0.9, 1.0)) if ink else alpha, 0.0, 0.0, 0.0, over)
 
 
-## PT-1 (Daniel, 2026-11-23; the principle of the "!" over the enemies of SWORN): the signal to dodge. An ivory and gold
+## PT-1 (Daniel, 2026-11-23; the principle of the "!" over the enemies of SWORN): the signal to dodge. A yellow
 ## exclamation mark over the head, in the screen's plane, outlined in ink (_stroke), lit only in the last `lead` seconds
 ## before the blow; `age` is how long it has been lit (0 to lead). It pulses once as it lights; the elites and the heavy
 ## ones carry a larger one. Costs 2 strokes of the pool (4 quads), never a node.
-const BANG_COLOR := Color(1.0, 0.86, 0.5)
+## Daniel, 2026-11-23 after seeing it: larger and yellow (it was ivory gold, 0.34 m tall).
+const BANG_COLOR := Color(1.0, 0.84, 0.05)
 const BANG_RISE := 0.5
-const BANG_BAR := 0.34
-const BANG_DOT := 0.1
-const BANG_GAP := 0.09
-const BANG_WIDTH := 0.1
+const BANG_BAR := 0.62
+const BANG_DOT := 0.18
+const BANG_GAP := 0.14
+const BANG_WIDTH := 0.18
 const BANG_BIG := 1.45
 const BANG_PULSE := 0.4
 const BANG_PULSE_TIME := 0.12
