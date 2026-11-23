@@ -45,3 +45,9 @@ func test_the_warrior_keeps_his_body() -> void:
 	add_child_autofree(body[0])
 	assert_true((body[0] as Node3D).scene_file_path.contains("hero_explorer"))
 	assert_true((body[2] as Node3D).has_node(^"Blade"), "Emeth in his hand")
+
+
+func test_the_hud_shows_the_magas_own_face() -> void:
+	assert_ne(HeroCrest.portrait_of(&"maga"), HeroCrest.PORTRAIT, "her face, cut from the approved art")
+	assert_eq(HeroCrest.portrait_of(&"warrior"), HeroCrest.PORTRAIT)
+	assert_eq(HeroCrest.portrait_of(&""), HeroCrest.PORTRAIT)

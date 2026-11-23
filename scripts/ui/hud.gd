@@ -159,6 +159,8 @@ const ULT_HINT_TIME := 1.8
 
 var game: Game
 var _crest: HeroCrest
+## The hero whose face the crest shows (the Maga has her own portrait).
+var _crest_hero: StringName = &""
 var _life: HudBar
 var _magick: HudBar
 ## The ultimate's charge, thin under the life bar.
@@ -669,6 +671,9 @@ func _process(delta: float) -> void:
 	# the HUD's own fades run in real time: slow motion and the hit stop scale delta (Engine.time_scale)
 	delta = game.fx.real_dt if game.fx and game.fx.real_dt > 0.0 else delta
 	var p := game.player
+	if game.hero != null and game.hero.id != _crest_hero:
+		_crest_hero = game.hero.id
+		_crest.set_hero(_crest_hero)
 	# a screen over the run (cards, pause, an event): the gifts' row and the greetings wait under it (BUG-107)
 	var over := game.mode != Game.Mode.PLAY
 	_passives.visible = not over
