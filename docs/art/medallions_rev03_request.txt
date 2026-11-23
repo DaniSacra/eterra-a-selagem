@@ -1,0 +1,122 @@
+PEDIDO AO DIRETOR DE ARTE (ChatGPT): Medalhões pintados à mão, Rev. 03 (refino para leitura a 64 px)
+
+Crônicas de Eterra: A Selagem. A Rev. 02 já está no jogo (repositório, branch arpg-3d, commit 3e57f7c; relatório em
+docs/art/medallions_rev02.md e capturas em docs/gallery/medallions_rev02/). Os 25 medalhões das portas e o estilo
+pintado (pedra fria, ouro velho, pincelada visível) foram APROVADOS. Mantenha exatamente esse acabamento.
+
+O PROBLEMA
+Nas 70 Bênçãos novas, a 64 px (o tamanho real em várias telas) as Bênçãos de uma mesma família ficam IGUAIS: todas usam
+a mesma cena de fundo da família e só muda o selo pequeno no canto, que some a 64 px e é invisível a 32 px.
+Veja docs/gallery/medallions_rev02/bencaos_parecidas_64px_e_32px.jpg (cada linha é um grupo que parece igual).
+As 7 antigas (aurora, brasas, escudo, onda_maior, redemoinho, toque_geada, vapor) continuam e são a referência de
+leitura: UM motivo central grande e próprio, legível até a 32 px. Não refazer essas 7.
+
+O QUE FAZER (70 PNGs)
+1. Manter: moldura circular, cor e clima da família (fundo pintado mais simples e escuro, sem cena detalhada).
+2. Trocar o selo do canto por UM PICTOGRAMA CENTRAL GRANDE, ocupando cerca de 45 a 55% do diâmetro, em ouro velho/marfim
+   com contorno escuro, que leia em tons de cinza a 64 px. Nada no canto.
+3. Usar um vocabulário fixo, para o jogador aprender:
+   - Ataque (Mouse esq.): espada num corte em arco horizontal.
+   - Especial (Mouse dir.): espada pesada cravada no chão, com onda curta saindo.
+   - Brado de Guerra (Q): cabeça de leão rugindo de perfil, com 2 arcos de som (o leão é o símbolo do herói).
+   - Esquiva (Espaço): pé/bota em passo largo com rastro de velocidade.
+   - Investida (E): ombreira/escudo avançando com seta dupla de velocidade.
+   - Ultimate (Shift): espada gigante descendo com estrela de impacto no chão (sem raios de sol).
+   - Golpe Ômega (golpe carregado): espada com três anéis concêntricos de carga.
+   - Golpe final do combo: espada com uma faísca forte na ponta.
+   O efeito da família entra NO pictograma (ex.: a espada do Ataque em chamas na Chama, coberta de gelo na Geada).
+4. Elos (Bênção de duas famílias): fundo dividido nas duas cores das famílias, pictograma central único.
+5. Regras de sempre: 512 x 512, PNG com transparência fora do círculo, sem texto, sem cruz, auréola, sol com raios ou
+   símbolo religioso real; violeta intenso só de Morvath; anjos não são deuses.
+6. Mesmos nomes de arquivo (assets/ui/boons/<id>.png). Entregar uma prancha de prévia a 64 px e a 32 px, em cinza
+   também, provando que cada uma se distingue das outras da mesma família.
+
+LISTA (id: família, ação, pictograma central sugerido)
+Chama (vermelho-terra e âmbar)
+- golpe_brasa: Ataque. Espada em arco, em chamas.
+- pesado_brasa: Especial. Espada pesada cravada, chamas saindo.
+- circulo_brasa: Brado. Leão rugindo chamas.
+- passo_brasa: Esquiva. Bota em passo com rastro de fogo.
+- ultimo_brasa: Ultimate. Espada gigante de fogo descendo.
+- lamina_ardente: golpes finais incendeiam. Espada com faísca de fogo na ponta.
+- omega_brasa: Ômega incendeia. Espada com anéis de carga em chamas.
+- chuva_brasas: bola de fogo cai onde há mais inimigos. Uma bola de fogo grande caindo em diagonal.
+Geada (azul frio)
+- golpe_geada: Ataque. Espada em arco coberta de gelo.
+- circulo_geada: Brado. Leão rugindo cristais de gelo.
+- floco_errante: Esquiva. Bota em passo deixando flocos.
+- passo_geada: Investida. Escudo avançando, rastro de lâminas de gelo.
+- ultimo_geada: Ultimate. Espada gigante de gelo descendo.
+- estilhaco: anel de gelo explode em volta. Anel de cristais estourando para fora.
+- peso_inverno: lâmina de gelo gigante cai. Uma estalactite/lâmina de gelo enorme caindo.
+- geada_final: golpes finais congelam. Espada com faísca de gelo na ponta.
+- omega_geada: Ômega congela. Espada com anéis de carga congelados.
+Luz (marfim dourado)
+- golpe_radiante: Ataque. Espada em arco brilhante.
+- pesado_radiante: Especial. Espada pesada cravada, onda de luz.
+- circulo_radiante: Brado. Leão rugindo um anel de luz.
+- passo_radiante: Investida. Escudo avançando com rastro luminoso.
+- consolo: cada inimigo derrotado cura. Coração pequeno brilhante.
+- flagelo: pilares de luz caem sobre os mortos. Dois ou três pilares verticais de luz.
+- final_radiante: golpes finais causam mais dano. Espada com faísca dourada na ponta.
+- onda_clara: a onda do especial maior. Uma onda em arco largo de luz.
+Vigília (verde-sálvia e ouro)
+- golpe_firme: Ataque. Espada em arco com estrelinhas de atordoamento.
+- pesado_firme: Especial. Espada pesada cravada, chão rachando.
+- circulo_firme: Brado. Leão rugindo, anel de runas.
+- passos: Esquiva. Bota em passo com rastro verde.
+- firmeza: vida máxima e chão consagrado. Anel de runas no chão com uma bota firme no centro.
+- vigia_firme: atordoamento dura mais. Três estrelinhas girando sobre um elmo inimigo genérico.
+- vigilia_longa: Magia máxima maior. Frasco/cristal de Magia cheio até a boca.
+- guarda_atenta: velocidade e alcance. Bota com asinha e espada longa atrás.
+Véu (cinza-fumaça e âmbar)
+- golpe_veu: Ataque. Espada em arco deixando fumaça.
+- pesado_veu: Especial. Espada cravada soltando véu de fumaça.
+- circulo_veu: Brado. Leão rugindo fumaça.
+- passo_veu: Investida. Escudo avançando por dentro de fumaça.
+- omega_veu: Ômega enfraquece. Espada com anéis de carga de fumaça.
+- final_veu: último golpe enfraquece. Espada com faísca cinza na ponta.
+- entardecer: a Fraqueza corta mais dano. Lâmina inimiga partida ao meio.
+- nevoa: névoa se abre em volta. Nuvem circular baixa.
+- fios_cinza: fios de cinza giram em volta. Três fios em espiral.
+Maré (azul profundo)
+- golpe_mare: Ataque. Espada em arco com crista de onda.
+- pesado_mare: Especial. Espada cravada com onda saindo.
+- circulo_mare: Brado. Leão rugindo uma onda.
+- passo_mare: Investida. Escudo avançando sobre uma onda.
+- omega_mare: Ômega empurra mais. Espada com anéis de carga d'água.
+- arrebentacao: quem desliza de um empurrão sofre mais. Onda arrebentando numa rocha.
+- mare_cheia: todos os golpes empurram mais. Seta larga de empurrão feita de água.
+- vaga: vaga se abre em volta. Anel de água estourando para fora.
+- espuma: espumas giram em volta. Três bolhas grandes em órbita.
+Marca (bronze e oliva)
+- golpe_marca: Ataque. Espada em arco atravessando um alvo.
+- pesado_marca: Especial. Espada cravada no centro de um alvo.
+- circulo_marca: Brado. Leão rugindo, alvo na frente.
+- passo_marca: Investida. Escudo avançando contra um alvo.
+- omega_marca: Ômega marca. Espada com anéis de carga em forma de alvo.
+- golpe_certeiro: último golpe com mais dano. Espada acertando o centro do alvo.
+- olho_atento: golpe contra marcado dá mais dano. Olho dentro de um alvo.
+- flechas: flechas caem sobre os próximos. Três flechas caindo de cima.
+- chuva_flechas: flechas voam à frente. Leque de três flechas para frente.
+Elos (fundo nas duas cores das famílias)
+- rastro: esquiva deixa brasas. Pegadas em brasa.
+- passo_frio: Investida congela. Seta dupla de velocidade com cristais.
+- chama_viva: Bênçãos de Luz incendeiam. Chama dentro de um feixe vertical de luz.
+- bastiao: escudo que absorve explode em luz. Escudo com estilhaços de luz saindo.
+- nevoa_gelida: especial também congela. Espada cravada com névoa gelada.
+- cinza_viva: ataque também incendeia. Espada em arco com brasas.
+- mare_ardente: Brado também incendeia. Leão rugindo chamas sobre uma onda.
+- correnteza: Investida empurra mais. Seta dupla de velocidade feita de água.
+- mira_clara: Bênçãos de Luz marcam. Alvo com feixe de luz no centro.
+- olho_firme: especial contra marcado. Olho sobre uma espada cravada.
+
+PORTAS (opcional, pequeno ajuste)
+Nos 25 de assets/ui/rewards/ a moldura pintada vem cortada ou fora do centro em vários (heal, silver, memory, enchant,
+psalm, miniboss, fountain, shop, boss, trial, altar, angel_vigilia, angel_veu, angel_mare, angel_marca) e o trial.png
+tinha um texto "DE ME" no alto (já apagamos). Se for refazer: anel completo e centrado, pictograma dentro de 80% do raio
+(o jogo põe um aro de ouro por fora). Os desenhos centrais estão aprovados; não mudar.
+
+ENTREGA
+ZIP com assets/ui/boons/*.png (70 arquivos, mesmos nomes) e, se fizer, assets/ui/rewards/*.png, mais a prancha de
+prévia 64 px / 32 px / cinza. Eu integro e comparo antes e depois.

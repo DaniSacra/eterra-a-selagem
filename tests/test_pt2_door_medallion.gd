@@ -80,6 +80,8 @@ func test_icons_fall_back_to_the_painting_of_today() -> void:
 	for id in RewardIcon.all_ids():
 		if not ResourceLoader.exists(RewardIcon.path(id)):
 			assert_null(RewardIcon.texture(id), "%s: no file, no texture" % id)
-	# no file for a reward: the painting is the one the medallion had (the pomegranate's, none for gold)
-	assert_null(RewardGem.painting(RunMap.Reward.GOLD, RunMap.Kind.COMBAT))
-	assert_eq(RewardGem.painting(RunMap.Reward.POM, RunMap.Kind.COMBAT), BoonArt.event(&"pomegranate"))
+	# Rev. 02 (2026-11-23): the painted icon wins over the medallion's old painting; no id, no texture (the fallback)
+	assert_eq(RewardGem.painting(RunMap.Reward.GOLD, RunMap.Kind.COMBAT), RewardIcon.texture(&"gold"))
+	assert_eq(RewardGem.painting(RunMap.Reward.POM, RunMap.Kind.COMBAT), RewardIcon.texture(&"pom"))
+	assert_null(RewardIcon.texture(&""))
+	assert_null(RewardIcon.texture(&"no_such_reward"))
