@@ -366,14 +366,16 @@ func strike(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 func throw_wave(node: ComboNode, origin: Vector2, dir: Vector2, color: Color, tags: Array[StringName]) -> Projectiles.Shot:
 	var size := 1.0 + boons.stat(&"wave_size_pct", tags)
 	var width := node.effect_size if node.effect_size > 0.0 else 3.2
+	# the Maga's shots fly as far as the Blessings of reach say (the Warrior's reach is his blade's)
+	var length := size + (boons.stat(&"reach_pct", tags) if arcane != null else 0.0)
 	var look := Projectiles.Kind.SPARK if node.wave_bolt else Projectiles.Kind.WAVE
 	if node.wave_color.a > 0.0:
 		color = node.wave_color
-	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * size, width * size, color, tags)
+	var shot := projectiles.fire_wave(look, origin + dir * 0.8, dir, node.effect_power, node.effect_radius * length, width * size, color, tags)
 	shot.through = boons.stat(&"wave_through", tags) > 0.0
 	if node.wave_speed > 0.0:
 		shot.vel = dir * node.wave_speed
-		shot.life = node.effect_radius * size / node.wave_speed
+		shot.life = node.effect_radius * length / node.wave_speed
 	shot.stops = node.wave_stops
 	if node.wave_stops:
 		shot.knockback = node.knockback
@@ -661,7 +663,7 @@ func hit_enemy(e: Enemy, base: float, tags: Array[StringName], away: Vector2, kn
 		return false
 	var frozen := e.frozen_t > 0.0
 	# BO-2: the shatter belongs to a button's tags (the special's wave, a shot that is no combo count, shatters too)
-	var shatter := boons.stat(&"shatter_pct", tags) if frozen and (counts or tags.has(&"wave")) else 0.0
+	var shatter := boons.stat(&"shatter_pct", tags) if frozen and (counts or tags.has(&"wave") or tags.has(&"blast")) else 0.0
 	var dmg := DamageCalc.hit(base, boons.stat(&"damage_pct", tags), e.air_t > 0.0, frozen and shatter > 0.0, shatter, e.def.undead, boons.stat(&"undead_mult"))
 	dmg = DamageCalc.marked(dmg, MARK_CRIT + boons.stat(&"crit_pct", tags), e.mark_t > 0.0)
 	dmg = DamageCalc.shoved(dmg, boons.stat(&"shove_pct"), e.shove_t > 0.0)

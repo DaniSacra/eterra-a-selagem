@@ -62,6 +62,28 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   inimigos a 4 m; `--bot-no-shout`), `Bot.rush_worth` (entrar a 4,5 a 8 m, ou para Magia quando a rajada não tem; `--bot-no-rush`), rajada só com Magia. Faltam: slots
   `TECH`/`ULT` e as Bênçãos por família do E e do Shift; os 3 Dons do Brado.
 
+## A Maga, M2 (2026-11-23; plano em `docs/design/heroes/maga_m2.md`, kit em `maga.md`; testes em `tests/test_maga_m2.gd`)
+- **Maestria própria**: `data/heroes/maga_mastery.tres` (cópia dos números do Guerreiro, `make_data.gd` `_mastery`; nível 0, sem retroativo). A Maga só tem
+  Tempestade e Suspensão Absoluta pelo nível (2 e 6); o robô e `--talents` jogam a Tempestade (`Game._equip_talents`).
+- **Árvore em triângulo**: `TalentDef.Branch.PIRO`, `ARCA`, `CTRL` (depois dos ramos do Guerreiro, os inteiros salvos não mudam; `NEIGHBOURS` ligam os três entre
+  si; títulos "Piromancia", "Arcanismo", "Selos"). `TalentTree.AXIS` os põe a 120 graus; `HeroLoadout.action_key` dá os nomes dos botões dela. Os 23 Dons são
+  `data/talents/maga/` (`make_data.gd` `_maga_talents`; números sem o `FLAT` do `burn_dps`: `_raw`). Ápices em ciclo: Inferno Rúnico com Arcanismo, Ruptura com
+  Selos, Contenção Perfeita com Piromancia. Escolha entre Pavio Longo e Cadeia Curta (mesmo slot).
+- **Estatísticas lidas por `Arcane`** (`_stat`): `seal_burn`, `seal_magick`, `seal_at` e `circle_seal_at` (`ArcaneKit.lays_seal`), `seal_cap` (Selo Duplo: `SealBook`
+  com teto 2, bônus `blast_hit_n`, +40% por Selo a mais), `seal_leap` (Ruptura, 4 m, 4 s), `twin_blast` (Brasa Gêmea, 0,5 s depois, `Twin`), `inferno_dps` e
+  `inferno_time` (zona `EMBER`), `circle_time`, `circle_root`, `circle_seal`, `circle_burst` (ao fechar o puxão, `_close_circle`), `dome_size_pct`, `dome_time`,
+  `step_flash` (Passo de Brasa: clarão onde estava, brasa onde chega, `Player.last_blink_from`), `blink_pct` (Passo Longo). A queimadura dura os 3 s do jogo
+  (`Combat.BURN_TIME`): os 2 s do Pavio Longo viram 3.
+- **Suspensão Absoluta** (`UltDef.Kind.DOME`, `data/ultimates/maga/01_dome_abs.tres`, Maestria 6, carga 100): cúpula de 5,5 m que anda com ela por 8 s
+  (`Arcane.open_absolute`, `_step_ultra`); tiros inimigos de comuns e elites param no ar (os do Morvath e de guardião não, `_spared`), lentidão em todos
+  (Morvath incluso), todo tiro dela põe Selo e bate +30% (`shot_mult`, `Combat.on_shot_hit`), a Explosão custa 5 (`Player.blast_discount`). Glifo `ULT_GLYPH + 3`.
+  A Tempestade põe 1 Selo mesmo com Selo Duplo (`SealBook.lay(e, 1)`). Faltam o relógio no aro e a película com hexágonos (só a esfera marfim, como a E).
+- **Bênçãos afinadas**: a Suspensão tem a tag `dash` (Bênçãos da E e gatilho `RUSH`); ao fechar o puxão o Círculo e ao entrar o domo põem os status das Bênçãos de suas
+  tags (`Combat.touch`: queimar, congelar, enfraquecer, marcar); `reach_pct` nos tiros, `wave_size_pct` e `shatter_pct` na Explosão, `push_pct` no puxão; a skill do
+  especial cai no ponto da Explosão e a do Q no Círculo (`Arcane.spot_of`). **Falta** (M): escudo e cura do domo (Shomael e Lumael na E), rastro e flocos do Passo na
+  saída e na chegada, empurrar a borda do domo (Galael na E).
+- **Robô**: `bot.gd` paga a Explosão com o desconto da Suspensão Absoluta; as Dons não entram no robô sem `--talents=a,b`.
+
 ## A Videira (V1, 2026-11-23; substituiu "O Preparo"; pacote em `docs/design/videira_pacote_2026-11-23/`; testes em `tests/test_videira_v1.gd`)
 - **O que é**: 3 ramos de 3 nós, sem dano, melhorias permanentes para todos os heróis. Subtítulo "Raízes que fortalecem todas as
   jornadas" (sem citação bíblica, D-59). Dado: `VineNode` (`core/vine_node.gd`), `data/vine/*.tres` escrito por `_vine` no

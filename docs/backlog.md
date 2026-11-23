@@ -78,8 +78,10 @@ Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas
   3. **A Videira** V1 a V3 (decidido, seção abaixo), custos com o registro dos testadores.
   4. **Maga M1c** (modelo no jogo; o Daniel quis depois do teste): esqueleto e animações no Meshy (~5 + 3 por ação) e o cajado (~30),
      estimar e pedir o ok antes de gastar; saldo 371. Modelo pronto em `assets/models/meshy/hero_maga_img/`.
-  5. **Maga M2**: esperar as 5 respostas do Daniel (fim de `maga_m2.md`; recomendações: Suspensão Absoluta, árvore em triângulo, 1 Selo
-     na Tempestade, Bênçãos novas depois, ramo "Selos").
+  5. **Maga M2**: **FEITO (2026-11-23, no worktree, sem o Daniel ter testado)** seguindo as recomendações do plano (Suspensão Absoluta, árvore em triângulo, 1 Selo
+     na Tempestade, ramo "Selos"): Maestria própria, 23 Dons, 2ª ultimate e Bênçãos afinadas (`docs/reference/meta.md`, "A Maga, M2"). Faltam: a tela da árvore em
+     triângulo desenhada pelo `art-director` (hoje só os eixos a 120 graus), escudo e cura do domo e rastro do Passo (Bênçãos), película e relógio da Suspensão Absoluta,
+     equilíbrio com 12 sementes (seção 5 do plano), Bênçãos novas.
   6. Abertos de combate e arte: luta de Morvath longa, ataque 44% do dano, placa do Armadilheiro, revisões na GPU; C6 (anjos) espera o Daniel.
 - Regras de hoje: imagens para o Daniel ver vão para `C:\Users\danie\Downloads`; cópias de segurança no disco (`~/games/eterra-backups`),
   nunca em `/tmp` (tmpfs de 3,9 GB); robô na tela dele só com o exe e uma janela por vez.
@@ -95,7 +97,7 @@ Ordem menos arriscada (uma entrega por etapa, testar a anterior antes):
 - **Balanceamento** (`balance-designer`, uma vez, 12 sementes) e **QA** (`qa-performance`) só depois da M1b.
 - **Riscos**: laço infinito da Ressonância, Selo ilegível ao lado do aviso vermelho, Explosão amplificada tirando Postura demais, complexidade da primeira versão.
 - **Critério de aceite** (pacote 04): distinta do Guerreiro, laço marcar, agrupar, detonar divertido, Ressonância perceptível, descida completa das Catacumbas.
-## Maga M2 (Maestria, Dons dos 3 ramos, 2 ultimates, Bênçãos afinadas) e M3 (armas, frio, Livro de Ahk): só depois da M1.
+## Maga M2 (Maestria, Dons dos 3 ramos, 2 ultimates, Bênçãos afinadas) e M3 (armas, frio, Livro de Ahk): a M2 está feita (2026-11-23, ver acima); a M3 vem depois.
 
 ## Pedidos do Daniel de 2026-11-21, 23h30 (a fazer; referências dele em `docs/art/ref/sworn_daniel/`, só local)
 

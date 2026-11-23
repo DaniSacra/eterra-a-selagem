@@ -23,7 +23,7 @@ const AHEAD_SHARE := 0.6
 const CONE := 65.0
 ## What the Círculo's tags are (the Blessings and Gifts that read the Q's size, burn and so on count on them), and the Passo's flash.
 const CIRCLE_TAGS: Array[StringName] = [&"shout", &"cast", &"arcane"]
-const STEP_TAGS: Array[StringName] = [&"cast", &"arcane", &"blink"]
+const STEP_TAGS: Array[StringName] = [&"dash", &"arcane", &"blink"]
 ## Brasa Viva's burn spreads this far from the Selo detonated; the Ruptura's leap and the Passo de Brasa's flash reach this far (m).
 const SEAL_BURN_SPREAD := 1.5
 const LEAP_RANGE := 4.0
@@ -51,6 +51,9 @@ class Circle:
 class Dome:
 	var life := 0.0
 	var radius := 2.6
+	## The move's tags (the Blessings of the E act on whoever comes in: touched is who they already did).
+	var tags: Array[StringName] = []
+	var touched: Dictionary = {}
 	var node: MeshInstance3D
 	var held: Array[Projectiles.Shot] = []
 
@@ -75,6 +78,8 @@ var dome: Dome
 var ultra: Dome
 var ultra_def: UltDef
 var _twins: Array[Twin] = []
+## Where the last Explosão fell (a Blessing's skill of the special falls there; INF: none this room) and where the Círculo stands.
+var last_blast := Vector2.INF
 ## What the kit did in this run (RESULT arcane).
 var tally := {"seals": 0, "blasts": 0, "amplified": 0, "detonated": 0, "circles": 0, "domes": 0, "held": 0, "storm_seals": 0, "ultras": 0, "twins": 0, "leaps": 0}
 var _glyphs: Dictionary = {}
@@ -102,6 +107,7 @@ func clear() -> void:
 	_end_dome()
 	_end_ultra()
 	_twins.clear()
+	last_blast = Vector2.INF
 
 
 ## A Gift's or a Blessing's number for this hero now (BoonState.stat; the tags limit it to the moves that carry them).
@@ -173,7 +179,17 @@ func cast(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 		ComboNode.Effect.CONTAIN:
 			_contain(origin, dir)
 		ComboNode.Effect.DOME:
-			_suspend()
+			_suspend(node)
+
+
+## Where a Blessing's skill of this button falls instead of at her feet: the Explosão's spot for the special, the Círculo's for
+## the Q (INF: at her feet, as the Warrior's).
+func spot_of(trigger: SkillDef.Trigger) -> Vector2:
+	if trigger == SkillDef.Trigger.SPECIAL:
+		return last_blast
+	if trigger == SkillDef.Trigger.SHOUT and circle != null:
+		return circle.at
+	return Vector2.INF
 
 
 ## Where a spell falls: the mouse on the floor; without it (stick, robot) the Selo within the cone (when `seals_first`), else
@@ -199,8 +215,9 @@ func cursor(origin: Vector2, dir: Vector2, seals_first: bool) -> Vector2:
 func _blast(node: ComboNode, origin: Vector2, dir: Vector2) -> void:
 	var amplified := resonance.take_amplified()
 	var at := kit.blast_at(origin, cursor(origin, dir, true), sealed_spots())
-	var radius := kit.blast_size(amplified) * (1.0 + _stat(&"cast_size_pct", node.tags))
+	var radius := kit.blast_size(amplified) * (1.0 + _stat(&"cast_size_pct", node.tags) + _stat(&"wave_size_pct", node.tags))
 	game.horde.in_circle(at, radius, _found)
+	last_blast = at
 	var hits := 0
 	var detonated := 0  # Selos (Selo Duplo: an enemy may hold two)
 	var struck := {}  # enemy -> the base damage it took (the Brasa Gêmea's second blast does a share of it)
@@ -366,7 +383,7 @@ func _step_circle(dt: float) -> void:
 		c.pull_left -= dt
 		for e in c.pulled:
 			if e.alive:
-				var to := e.pos + kit.pull_step(e.pos, c.at, step_dt)
+				var to := e.pos + kit.pull_step(e.pos, c.at, step_dt) * (1.0 + _stat(&"push_pct", CIRCLE_TAGS))  # (Galael: the pull draws further)
 				e.pos = game.arena.sweep(e.pos, to, e.def.radius) if game.arena else to
 	if c.pull_left <= 0.0 and not c.closed:
 		_close_circle(c)
@@ -405,9 +422,10 @@ func _end_circle() -> void:
 	circle = null
 
 
-func _suspend() -> void:
+func _suspend(node: ComboNode) -> void:
 	_end_dome()
 	var d := Dome.new()
+	d.tags = node.tags
 	d.life = kit.dome_time + _stat(&"dome_time")  # Suspensão Larga
 	d.radius = kit.dome_radius * (1.0 + _stat(&"dome_size_pct"))
 	d.node = _dome_node(d.radius, 0.1)
@@ -456,6 +474,9 @@ func _step_dome(dt: float) -> void:
 	for e: Enemy in _found:
 		if e.def.behavior != EnemyDef.Behavior.BOSS:
 			e.slow_t = maxf(e.slow_t, kit.dome_slow)
+		if not d.touched.has(e):
+			d.touched[e] = true
+			game.combat.touch(e, d.tags)  # (burn, frost, weakness, mark of the Blessings of the E, once to each that comes in)
 
 
 ## Enemy shots that reach the dome stop in the air (`sparing`: not a guardian's nor the boss's, the Suspensão Absoluta's rule).

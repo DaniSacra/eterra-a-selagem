@@ -478,7 +478,7 @@ func test_suspensao_larga_widens_and_lengthens_the_dome() -> void:
 func test_leitura_rapida_cuts_the_recharge_of_the_circle_and_the_dome() -> void:
 	_start([&"eco_arcano", &"circulo_expandido", &"selo_no_chao", &"leitura_rapida"])
 	var circle: Array[StringName] = [&"shout", &"cast", &"arcane"]
-	var dome: Array[StringName] = [&"cast", &"arcane", &"dome"]
+	var dome: Array[StringName] = [&"dash", &"arcane", &"dome"]
 	var blast: Array[StringName] = [&"heavy", &"blast", &"arcane", &"finisher"]
 	assert_eq(game.hero_gifts.state.cooldown_cut(circle), 0.25)
 	assert_eq(game.hero_gifts.state.cooldown_cut(dome), 0.25)
@@ -601,3 +601,99 @@ func test_a_new_room_takes_the_dome_away() -> void:
 	game.arcane.clear()
 	assert_null(game.arcane.ultra)
 	assert_eq(game.player.blast_discount, 0.0)
+
+
+# ---------- the Blessings on her buttons (maga_m2.md 4) ----------
+
+func _grant(stat: StringName, base: float, tag: StringName = &"") -> void:
+	var m := BoonMod.new()
+	m.stat = stat
+	m.base = base
+	m.tag = tag
+	m.by_rarity = false
+	game.boons.grant([m] as Array[BoonMod])
+
+
+func test_the_dome_is_the_rush_button_for_the_skills_and_the_blessings_of_the_e() -> void:
+	_start([])
+	var dome: ComboNode = null
+	for n in game.player.tree.all_nodes():
+		if n.id == &"dome":
+			dome = n
+	assert_not_null(dome)
+	assert_true(dome.has_tag(&"dash"), "the tag the E's Blessings read")
+	assert_eq(Skills.trigger_of(dome), SkillDef.Trigger.RUSH)
+
+
+func test_the_skill_of_the_special_falls_where_the_blast_fell_and_the_q_s_where_the_circle_stands() -> void:
+	_start([])
+	assert_eq(game.arcane.spot_of(SkillDef.Trigger.SPECIAL), Vector2.INF, "nothing thrown yet: at her feet")
+	var e := _dummy(Vector2(6, 0))
+	_blast()
+	assert_eq(game.arcane.spot_of(SkillDef.Trigger.SPECIAL), Vector2(6, 0), "where it fell (it clings to nothing: no Selo)")
+	assert_not_null(e)
+	_circle()
+	assert_eq(game.arcane.spot_of(SkillDef.Trigger.SHOUT), game.arcane.circle.at)
+	assert_eq(game.arcane.spot_of(SkillDef.Trigger.RUSH), Vector2.INF)
+
+
+func test_the_blessings_of_the_e_touch_each_enemy_that_comes_into_the_dome_once() -> void:
+	_start([])
+	_grant(&"burn_dps", 4.0, &"dash")
+	var inside := _dummy(Vector2(1.5, 0))
+	var outside := _dummy(Vector2(8, 0))
+	pad.press(&"rush")
+	_step(30)
+	assert_gt(inside.burn_t, 0.0, "burning")
+	assert_eq(outside.burn_t, 0.0)
+
+
+func test_the_blessings_of_the_q_put_their_status_on_all_in_the_circle_when_it_closes() -> void:
+	_start([])
+	_grant(&"weak_time", 3.0, &"cast")
+	var a := _dummy(Vector2(6, 0))
+	pad.press(&"shout")
+	_step(int((0.2 + 0.4) / DT) + 2)
+	assert_gt(a.weak_t, 0.0, "weakened")
+
+
+func test_a_push_blessing_makes_the_circle_draw_further() -> void:
+	_start([])
+	var centre := _dummy(Vector2(6, 0))
+	var common := game.horde.spawn(game.horde.def(&"skeleton"), Vector2(6, 3.0), false)
+	common.cooldown = 999.0
+	common.stun_t = 1000.0
+	_grant(&"push_pct", 0.5, &"shout")
+	pad.press(&"shout")
+	_step(60)
+	assert_almost_eq(common.pos.distance_to(centre.pos), 3.0 - 1.8, 0.25, "1.2 m and a half more (bodies keep their 1 m apart)")
+
+
+func test_a_reach_blessing_lengthens_her_shots() -> void:
+	_start([])
+	_grant(&"reach_pct", 0.5, &"light")
+	_dummy(Vector2(8, 0))
+	pad.press(&"light_attack")
+	_step(14)
+	var longest := 0.0
+	for s in game.projectiles.shots:
+		longest = maxf(longest, s.life + s.flown / 30.0)
+	assert_almost_eq(longest, 11.0 * 1.5 / 30.0, 0.04, "11 m of flight became 16.5")
+
+
+func test_a_wave_size_blessing_widens_the_blast_and_a_shatter_one_breaks_the_frozen() -> void:
+	_start([])
+	_grant(&"wave_size_pct", 0.25, &"blast")
+	var wide := _dummy(Vector2(6, 3.7))  # outside 3.2, inside 4.0
+	_dummy(Vector2(6, 0))
+	_blast()
+	assert_lt(wide.hp, 5000.0)
+
+
+func test_a_shatter_blessing_breaks_the_frozen_with_the_blast() -> void:
+	_start([])
+	_grant(&"shatter_pct", 0.5, &"blast")
+	var frozen := _dummy(Vector2(6, 0))
+	frozen.frozen_t = 5.0
+	_blast()
+	assert_lt(frozen.hp, 5000.0 - 32.0 - 5.0, "more than the plain 32")

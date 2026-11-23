@@ -144,7 +144,9 @@ func _cast(b: Boon) -> bool:
 	if s.trigger == SkillDef.Trigger.ULT:
 		tags.append(&"ultimate")  # the ultimate's frost freezes, as its blow does (Combat.FREEZERS)
 	var color := b.color()
-	var p := game.player.pos
+	# the Maga's special and Q fall where the spell fell (Arcane.spot_of), the rest at her feet
+	var spot := game.arcane.spot_of(s.trigger) if game.arcane != null else Vector2.INF
+	var p := game.player.pos if spot == Vector2.INF else spot
 	match s.kind:
 		SkillDef.Kind.STRIKES:
 			var targets := _targets_near(p, STRIKE_RANGE, s.get_count(lv))
@@ -186,7 +188,7 @@ func _cast(b: Boon) -> bool:
 		SkillDef.Kind.CONSECRATE:
 			var r := s.get_radius(lv)
 			# the special's ground lies where its wave goes, in front of him; the others under him
-			var at := p + game.player.facing * (r + 1.0) if s.trigger == SkillDef.Trigger.SPECIAL else p
+			var at := p + game.player.facing * (r + 1.0) if s.trigger == SkillDef.Trigger.SPECIAL and spot == Vector2.INF else p
 			var time := s.get_duration(lv) if s.get_duration(lv) > 0.0 else s.get_status_power(lv)
 			if s.status == &"burn":
 				# embers on the floor: damage a second to whoever stands there, and burning (Combat.on_zone_hit)

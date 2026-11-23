@@ -1,6 +1,6 @@
 # A Maga, M2: Maestria, Dons, segunda ultimate e Bênçãos por botão (proposta no papel)
 
-- **Data**: 2026-11-23. **Autor**: `hero-designer`. **Estado**: proposta para o Daniel aprovar; nada implementado. Continua `maga.md` (v2, seções 1 a 15)
+- **Data**: 2026-11-23. **Autor**: `hero-designer`. **Estado**: implementada em 2026-11-23 seguindo as recomendações do próprio plano (ver `docs/reference/meta.md`, "A Maga, M2"); o Daniel ainda não testou. Faltam as Bênçãos de escudo e cura do domo e a tela da árvore em triângulo. Continua `maga.md` (v2, seções 1 a 15)
   e segue o molde de `guerreiro.md` e de `docs/reference/meta.md` (HeroDef, Maestria, Dons, ultimates).
 - **Ponto de partida (números de hoje, depois do equilíbrio de 2026-11-23)**: tiros 10/10/15 (a cadeia dá 35 em ~0,95 s), Selo vive 8 s e cabe 1 por
   inimigo, Explosão Rúnica 32 + 44 por Selo (raio 3,2 m, 10 de Magia), amplificada x1,5 e raio 4,5 m sem custo, Círculo 3,2 m por 4 s (recarga 10 s),

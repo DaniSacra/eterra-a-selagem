@@ -2111,7 +2111,8 @@ func _maga_tree() -> ComboTree:
 		"chain_window": 0.4, "cooldown": 10.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
 		"effect": ComboNode.Effect.CONTAIN}, [], &"move_circle")
 	# E: Suspensão Arcana, recharge 14 s
-	var dome := _move(&"dome", RU, &"Cast", [&"cast", &"arcane", &"dome"],
+	# (the tag dash is what the Blessings of the E read, and sets off the skills of the RUSH button: Boon.SLOT_TAG, Skills.trigger_of)
+	var dome := _move(&"dome", RU, &"Cast", [&"dash", &"arcane", &"dome"],
 		{"damage": 0.0, "shape": ComboNode.Shape.LINE, "reach": 1.0, "width": 1.0, "windup": 0.20, "recovery": 0.20, "move_hold": 0.20,
 		"chain_window": 0.4, "cooldown": 14.0, "hit_stop_ms": 0.0, "shake": 0.3, "move_scale": 0.0, "sound": &"wave_omega",
 		"effect": ComboNode.Effect.DOME}, [], &"move_dome")
