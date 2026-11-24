@@ -1434,5 +1434,5 @@ entries = {
 "dons_legend_equipped": "Equipado",
 "dons_legend_open": "Aberto: pode equipar",
 "dons_legend_sealed": "Selado: abre com Memória",
-"dons_legend_dark": "Escuro: falta Maestria ou outro Dom"
+"dons_legend_dark": "Escuro: o número é a Maestria que falta"
 }

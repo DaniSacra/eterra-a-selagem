@@ -245,3 +245,12 @@ func _shown() -> Dictionary:
 		if l.visible:
 			out[l.text] = true
 	return out
+
+
+func test_tick_numbers_are_never_grey_nor_dim() -> void:
+	var grey := Fx.tick_color(Color(0.62, 0.62, 0.66))
+	assert_gte(grey.s, Fx.TICK_MIN_SAT, "grey takes a family colour")
+	for c: Color in [Color(0.62, 0.62, 0.66), Color(0.3, 0.1, 0.05), Color(1.0, 0.5, 0.2)]:
+		assert_gte(Fx.tick_color(c).v, Fx.TICK_VALUE, "value at least 0.75")
+	assert_eq(Fx.tick_color(Color(1.0, 0.5, 0.2)).h, Color(1.0, 0.5, 0.2).h, "a family colour keeps its hue")
+	assert_gte(ceili(Fx.NUMBER_BIG * Fx.TICK_SHARE), 17, "a tick is 70% of a big number at least")

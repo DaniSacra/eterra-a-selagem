@@ -60,7 +60,12 @@ static func awning(ci: CanvasItem, rect: Rect2, fringe: float) -> void:
 		ci.draw_rect(Rect2(x, rect.position.y, w, rect.size.y), col)
 		var pts := PackedVector2Array([Vector2(x, rect.end.y), Vector2(x + w, rect.end.y), Vector2(x + w * 0.5, rect.end.y + fringe)])
 		ci.draw_colored_polygon(pts, col)
+		# art review 2026-11-23 (11): cloth, not a flat print: a fold in each stripe (shade to one side, light to the other)
+		ci.draw_rect(Rect2(x, rect.position.y, w * 0.18, rect.size.y), Color(0, 0, 0, 0.14))
+		ci.draw_rect(Rect2(x + w * 0.62, rect.position.y, w * 0.1, rect.size.y), Color(1, 1, 1, 0.06))
+		ci.draw_polyline(PackedVector2Array([Vector2(x, rect.end.y), Vector2(x + w * 0.5, rect.end.y + fringe), Vector2(x + w, rect.end.y)]), Color(0, 0, 0, 0.3), 1.5)
 	ci.draw_rect(Rect2(rect.position.x, rect.end.y - 3.0, rect.size.x, 3.0), Color(0, 0, 0, 0.25))
+	ci.draw_rect(Rect2(rect.position.x, rect.position.y, rect.size.x, 5.0), Color(0, 0, 0, 0.22))
 
 
 ## The back wall and the counter top (a lighter board with grain) under y_top..y_top+height.
@@ -78,4 +83,13 @@ static func counter(ci: CanvasItem, wall: Rect2, top_y: float, top_h: float) -> 
 	for i in 5:
 		var y := top_y + 8.0 + i * (top_h - 14.0) / 4.0
 		ci.draw_line(Vector2(wall.position.x, y), Vector2(wall.end.x, y + (i % 2) * 2.0), WOOD_TOP.darkened(0.2), 1.0)
-	ci.draw_rect(Rect2(wall.position.x, top_y + top_h, wall.size.x, wall.end.y - top_y - top_h), WOOD.darkened(0.35))
+	var front := Rect2(wall.position.x, top_y + top_h, wall.size.x, wall.end.y - top_y - top_h)
+	ci.draw_rect(front, WOOD.darkened(0.35))
+	# the counter's front (the strip under the top): planks, a bronze rail and studs, so it is a piece of furniture, not a void
+	for i in 7:
+		var px := front.position.x + i * front.size.x / 7.0
+		ci.draw_rect(Rect2(px, front.position.y, front.size.x / 7.0 - 3.0, front.size.y), WOOD.darkened(0.28 + 0.04 * (i % 2)))
+		ci.draw_rect(Rect2(px + front.size.x / 7.0 - 3.0, front.position.y, 3.0, front.size.y), Color(0, 0, 0, 0.35))
+	ci.draw_rect(Rect2(front.position.x, front.position.y + 6.0, front.size.x, 4.0), Color(0.55, 0.42, 0.22, 0.8))
+	for i in 15:
+		ci.draw_circle(Vector2(front.position.x + (i + 0.5) * front.size.x / 15.0, front.position.y + 8.0), 2.2, Color(0.8, 0.65, 0.35))

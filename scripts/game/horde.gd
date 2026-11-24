@@ -171,6 +171,9 @@ var renderer: CrowdRenderer
 ## The lights of the wind-ups and of the armor (never red: the warnings on the floor are Ground's).
 var tells: EnemyFx
 var hp_scale := 1.0
+## GR-26: the enemy the HUD shows a bar for at the top of the screen (a guardian), which keeps no bar over its head.
+var top_bar_for: Enemy = null
+
 ## Every enemy's life times this, elites, guardians and Morvath too (E6: the Juramento Mortos Resistentes).
 var vow_hp := 1.0
 ## Summons never raise anyone past this many standing (EncounterGen.Fight.ceiling, set by Rooms for each fight;
@@ -2480,7 +2483,8 @@ func damage(e: Enemy, amount: float, from_dir: Vector2, knockback: float, color:
 	if knockback > 0.0:
 		e.push = from_dir * knockback * (0.35 if e.def.heavy else 1.0)
 	if show_number:
-		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id())
+		fx.number(Vector3(e.pos.x, e.y + 1.9 * e.def.size, e.pos.y), amount, color, big, e.get_instance_id(),
+			from_dir == Vector2.ZERO and knockback <= 0.0)
 	if e.hp <= 0.0:
 		if e.def.rise_time > 0.0 and e.group_id != 0 and _standing_of(e) > 0:
 			_lie_down(e)  # C5: a Trinca's figure falls into a mound while another of them stands
@@ -2958,7 +2962,7 @@ func render(render_dt := 1.0 / 60.0) -> void:
 		e.drawn_row = renderer.add_kind(kind, d, anim, t, at + Vector3(0, 0.18 * give, 0), e.yaw(), state, squash, -RECOIL_TILT * give, lean, e.fade_row, fade)
 		# the thin life bar over the head (the boss has its own at the top of the screen); with a big crowd only
 		# the hurt and the armored show one, thinner and fainter, so the screen stays clear
-		if d.behavior != EnemyDef.Behavior.BOSS and e.state != Enemy.State.DOWN and (few or e.hp < e.max_hp or e.armor > 0.0):
+		if d.behavior != EnemyDef.Behavior.BOSS and e != top_bar_for and e.state != Enemy.State.DOWN and (few or e.hp < e.max_hp or e.armor > 0.0):
 			var top := e.y + kind.model.height * d.size
 			var life := e.hp / maxf(e.max_hp, 0.001)
 			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), life,

@@ -197,6 +197,7 @@ const DOOR_KNOB := 0.09
 const DOOR_POST_SIDE := 0.5
 const DOOR_IRON := Color(0.13, 0.12, 0.11)
 static var _iron_mat: StandardMaterial3D
+static var _bronze_mat: StandardMaterial3D
 
 
 static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
@@ -233,10 +234,10 @@ static func _door_mount(parent: Node3D, frame: Node3D, spin: Node3D) -> void:
 		post.name = "DoorPost"
 		anchor = Vector3(c.x, base + DOOR_POST.y, c.y)
 		_rod(frame, _local(frame, parent, anchor - Vector3(0, DOOR_KNOB, 0)), _local(frame, parent, anchor + Vector3(0, DOOR_KNOB, 0)),
-			DOOR_KNOB, _rim_mat)
+			DOOR_KNOB, _bronze())
 	# the disc's foot under the cradle, where the sway leaves it (the lean tilts it, the turn keeps it on the axis)
 	var foot := spin.position + Basis(Vector3.RIGHT, -deg_to_rad(Feel.live().cam_pitch) * LEAN) * Vector3(0, (-RADIUS - CRADLE_TUBE * 2.0) * spin.scale.y, 0)
-	var rod := _rod(frame, _local(frame, parent, anchor), foot, DOOR_ROD, _rim_mat)
+	var rod := _rod(frame, _local(frame, parent, anchor), foot, DOOR_ROD, _bronze())
 	rod.name = "DoorRod"
 
 
@@ -262,6 +263,19 @@ static func _rod(frame: Node3D, a: Vector3, b: Vector3, radius: float, mat: Mate
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	frame.add_child(mi)
 	return mi
+
+
+## Art review 2026-11-23 (22): the door's rod and knob in lit bronze, not mirror gold (a metal with nothing to reflect read as
+## a black disc where the rod's end faces the camera: an empty setting is bronze, never black).
+static func _bronze() -> StandardMaterial3D:
+	if _bronze_mat == null:
+		_bronze_mat = StandardMaterial3D.new()
+		_bronze_mat.albedo_color = GOLD
+		_bronze_mat.metallic = 0.0
+		_bronze_mat.roughness = 0.55
+		_bronze_mat.emission_enabled = true
+		_bronze_mat.emission = GOLD * 0.45
+	return _bronze_mat
 
 
 static func _iron() -> StandardMaterial3D:

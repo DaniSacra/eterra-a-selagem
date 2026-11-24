@@ -150,6 +150,12 @@ const NUMBER_POOL := 32
 ## and the dark outline around them.
 const NUMBER_SIZE := 17
 const NUMBER_BIG := 24
+## GR-27: damage over time keeps this share of a direct number's height at least, a colour of this value and edge.
+const TICK_SHARE := 0.7
+const TICK_VALUE := 0.75
+const TICK_MIN_SAT := 0.3
+const TICK_OUTLINE := 3
+const TICK_FALLBACK := Color(0.3, 1.0, 0.45)
 const WORD_SIZE := 21
 ## Gold picked up (gold): its size, its pale old gold, and how far apart two drops still join one word.
 const GOLD_SIZE := 14
@@ -1242,14 +1248,29 @@ func beam(at: Vector2, color: Color, radius: float = 0.8, height: float = 9.0, t
 
 ## A damage number over pos (the top of whoever took it). key: who took it (an instance id; 0 for none): hits that
 ## follow each other on the same target join its number, which counts up and pops again (NumberTally).
-func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: int = 0) -> void:
+## tick: damage over time (a burn, a floor, a zone): never smaller than TICK_SHARE of a direct number, always in a family
+## colour of at least TICK_VALUE (grey becomes the Emeth's green) and with a TICK_OUTLINE px edge (GR-27).
+func number(pos: Vector3, amount: float, color: Color, big: bool = false, key: int = 0, tick: bool = false) -> void:
+	if tick:
+		color = tick_color(color)
 	var i := _tally.add(key, pos + Vector3(0, NUMBER_LIFT, 0), amount, color, big, Engine.get_process_frames())
 	if i < 0:
 		return
 	var e := _tally.entries[i]
 	if not _tally.merged:
 		e.pos += _jitter()
-	_show_label(i, str(roundi(e.amount)), e.color, NUMBER_BIG if e.big else (NumberTally.GROUP_SIZE if e.group else NUMBER_SIZE))
+	var size := NUMBER_BIG if e.big else (NumberTally.GROUP_SIZE if e.group else NUMBER_SIZE)
+	if tick:
+		size = maxi(size, ceili(NUMBER_BIG * TICK_SHARE))
+	_show_label(i, str(roundi(e.amount)), e.color, size, TICK_OUTLINE if tick else 0)
+
+
+## The colour of a damage-over-time number: grey (low saturation) is no family, so it takes the Emeth's green; the value
+## never falls under TICK_VALUE.
+static func tick_color(c: Color) -> Color:
+	if c.s < TICK_MIN_SAT:
+		c = TICK_FALLBACK
+	return Color.from_hsv(c.h, c.s, maxf(c.v, TICK_VALUE), c.a)
 
 
 func word(pos: Vector3, text: String, color: Color) -> void:
@@ -1720,7 +1741,7 @@ func _take(pool: Array[Dictionary]) -> Dictionary:
 
 
 ## The label of tally entry i shows text; the labels of entries the tally let go are hidden.
-func _show_label(i: int, text: String, color: Color, size: int) -> void:
+func _show_label(i: int, text: String, color: Color, size: int, outline: int = 0) -> void:
 	for k in _labels.size():
 		if not _tally.entries[k].shown:
 			_labels[k].visible = false
@@ -1728,6 +1749,10 @@ func _show_label(i: int, text: String, color: Color, size: int) -> void:
 	l.text = text
 	l.add_theme_font_size_override(&"font_size", size)
 	l.add_theme_color_override(&"font_color", color)
+	if outline > 0:
+		l.add_theme_constant_override(&"outline_size", outline)
+	else:
+		l.remove_theme_constant_override(&"outline_size")
 	l.visible = true
 	l.size = Vector2.ZERO
 	l.pivot_offset = l.get_combined_minimum_size() * 0.5

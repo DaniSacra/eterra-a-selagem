@@ -85,14 +85,18 @@ func _draw() -> void:
 	# the bar under its two labels
 	var x0 := DIAMOND + GAP
 	var bar := Rect2(x0, cy + 4.0, size.x - x0 - 2.0, BAR)
-	draw_rect(bar, BACK)
+	# on the parchment the track is an ink rail (no black block): paper 15% darker, a 1.5 px ink outline
+	draw_rect(bar, Book.PAPER.darkened(0.15) if paper else BACK)
 	var f := fill()
 	if f > 0.0:
 		var filled := Rect2(bar.position, Vector2(bar.size.x * f, bar.size.y))
 		draw_polygon(PackedVector2Array([filled.position, Vector2(filled.end.x, filled.position.y), filled.end,
 			Vector2(filled.position.x, filled.end.y)]), PackedColorArray([FILL_LOW, FILL_HIGH, FILL_HIGH, FILL_LOW]))
 		draw_line(Vector2(filled.end.x, bar.position.y), Vector2(filled.end.x, bar.end.y), UiKit.PALE, 1.5)
-	draw_rect(bar.grow(1.0), UiKit.OLD_GOLD, false, UiKit.FRAME * 0.75)
+	if paper:
+		draw_rect(bar.grow(1.0), Book.INK, false, 1.5)
+	else:
+		draw_rect(bar.grow(1.0), UiKit.OLD_GOLD, false, UiKit.FRAME * 0.75)
 	var text_font := UiKit.BOLD_FONT
 	var label := T.t(&"hero_mastery")
 	var base := cy - 4.0

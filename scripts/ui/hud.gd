@@ -93,6 +93,10 @@ const SHOW_HITS := false
 ## Room between the count's line and the move's name under it (row layout).
 const MOVE_GAP := 4.0
 const MOVE_ALPHA := 0.9
+const MOVE_W := 220.0
+## The diamond each kind of move comes from (the move's name stands over it).
+const MOVE_ACTION := {ComboNode.In.LIGHT: &"light_attack", ComboNode.In.CHARGE_LIGHT: &"light_attack", ComboNode.In.HEAVY: &"heavy_attack",
+	ComboNode.In.CHARGE: &"heavy_attack", ComboNode.In.SHOUT: &"shout", ComboNode.In.RUSH: &"rush"}
 ## The move's name: how long it shows, and how fast it goes (a short cut, no long ghost).
 const MOVE_TIME := 1.2
 const MOVE_FADE := 0.25
@@ -181,6 +185,7 @@ var _oficios_seen := {}
 ## H3: the coins' corner, H1: the build column, H6: the low-life vignette, and the Brado's buff over its diamond.
 var _coins: CoinCorner
 var _column: BuildColumn
+var _column_hidden := false
 var _vignette: LifeVignette
 var _buff: BuffMark
 var _build_key := ""
@@ -209,6 +214,7 @@ var _combo: Label
 var _combo_word: Label
 var _combo_row: HBoxContainer
 var _move: Label
+var _move_action: StringName = &"light_attack"
 var _notice: Label
 var _slots: Array[ActionSlot] = []
 ## The ultimate's diamond, between the Brado's and the dodge's: its gold level rises with the charge; sealed with "Maestria N" over it
@@ -570,8 +576,7 @@ func _build_combo() -> void:
 	_combo_row.offset_bottom = _combo_row.offset_top + COMBO_H
 	# art review 2026-11-21 (10): the name on its own line under the count, never touching it, and both on the
 	# row's band of ink with the diamonds (no grey text loose over the floor)
-	_move.offset_top = _combo_row.offset_bottom + MOVE_GAP
-	_move.offset_bottom = _move.offset_top + COMBO_WORD + 6.0
+	_move.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_row_band.covers.append_array([_combo, _combo_word, _move] as Array[Control])
 	for c: CanvasItem in [_combo, _combo_word]:
 		c.visible = false
@@ -722,6 +727,16 @@ func _process(delta: float) -> void:
 		_trial_seal.hide_name = _curse_badge.shown() > 0.0
 	_update_slots(p)
 	_update_column()
+	# art review 2026-11-23 (10): the angels' meeting is a stage of its own: no clock, room count or Blessing column over it
+	var meeting := game._screen is EncounterScreen
+	_clock.visible = not meeting
+	_room.visible = not meeting
+	if meeting:
+		_column.visible = false
+		_column_hidden = true
+	elif _column_hidden:
+		_column_hidden = false
+		_build_key = ""
 	_update_passives()
 	_update_elos()
 	_update_psalms()
@@ -1048,6 +1063,7 @@ func banner() -> EloBanner:
 
 func _update_boss(b: Enemy) -> void:
 	_boss_box.visible = b != null
+	game.horde.top_bar_for = b
 	if b:
 		_boss_name.text = T.t(b.def.name_key)
 		_boss_bar.show_value(b.hp / b.max_hp, "", b.armor / b.max_armor if b.max_armor > 0.0 else 0.0)
@@ -1066,10 +1082,17 @@ func _update_boss(b: Enemy) -> void:
 func _follow_row() -> void:
 	var last: Control = _slots.back()  # (the dodge, Space: always there, after the ultimate's)
 	var x := last.get_global_rect().end.x - get_global_rect().position.x + ROW_COUNT_GAP - ActionSlot.KEY_H * 0.5
-	for c: Control in [_combo_row, _move]:
-		if not is_equal_approx(c.offset_left, x):
-			c.offset_left = x
-			c.offset_right = x + LIFE.x
+	if not is_equal_approx(_combo_row.offset_left, x):
+		_combo_row.offset_left = x
+		_combo_row.offset_right = x + LIFE.x
+	# art review 2026-11-23 (9): the move's name stands over the diamond it came from (over the Brado's buff too)
+	var src: Control = _slots[maxi(ACTIONS.find(_move_action), 0)]
+	var cx := src.get_global_rect().get_center().x - get_global_rect().position.x
+	_move.offset_left = cx - MOVE_W * 0.5
+	_move.offset_right = cx + MOVE_W * 0.5
+	var lift := ActionSlot.CAPTION_RISE + 2.0 + (BuffMark.SIDE + BUFF_RISE if _move_action == &"shout" else 0.0)
+	_move.offset_bottom = _action_row.offset_top - lift
+	_move.offset_top = _move.offset_bottom - COMBO_WORD - 6.0
 
 
 ## How far over the bottom of the screen the edge chevrons' frame stands (it clears the captions over the diamonds).
@@ -1207,6 +1230,7 @@ func on_combo(count: int) -> void:
 ## The move's name, in ivory whatever the move's colour (the colour is on the blade; here it has to read on any floor).
 func show_move(node: ComboNode, _color: Color) -> void:
 	_move.text = T.t(node.title)
+	_move_action = MOVE_ACTION.get(node.input, &"light_attack")
 	_move_t = MOVE_TIME
 
 
