@@ -84,21 +84,12 @@ func setup(p_loadout: HeroLoadout) -> MedallionView:
 ## True when the hero's Supremo is fixed by the weapon (HeroDef.ult_for_weapon, redesign A.3): there is no ultimate to
 ## choose, so the medallion has no ULT nodes and the Livro shows the one the hero has. Tolerant of a HeroDef without it.
 static func has_fixed_ult(hero: HeroDef) -> bool:
-	return hero.has_method(&"ult_for_weapon")
+	return hero.weapon != &""
 
 
-## The Supremo of the hero's weapon, unlocked or not (null when the HeroDef has no ult_for_weapon yet): the one
-## HeroDef.ult_for_weapon plays, else the first non-reserve ultimate of the hero's weapon.
+## The Supremo of the hero's weapon, unlocked or not (null: the hero has none).
 static func weapon_ult(hero: HeroDef) -> UltDef:
-	if not has_fixed_ult(hero):
-		return null
-	var u: UltDef = hero.call(&"ult_for_weapon")
-	if u != null:
-		return u
-	for o in hero.ultimates:
-		if o.get(&"weapon") == hero.get(&"weapon") and not bool(o.get(&"reserve")):
-			return o
-	return null
+	return hero.ult_for_weapon(1 << 30)
 
 
 ## The medallion without its ULT nodes when the hero's Supremo is fixed (the same def otherwise).

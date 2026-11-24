@@ -230,8 +230,10 @@ func test_direction_input_moves_the_focus() -> void:
 	var ev := InputEventAction.new()
 	ev.action = &"ui_right"
 	ev.pressed = true
+	var before := s.focus_id
 	s._unhandled_input(ev)
-	assert_eq(s.focus_id, &"vortex")
+	assert_ne(s.focus_id, before, "the arrow moves the focus")
+	assert_ne(s.focus_id, &"vortex", "redesign A.3: no Supremo node to land on")
 
 
 func test_the_other_hero_has_her_own_medallion() -> void:

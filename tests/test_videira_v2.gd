@@ -115,8 +115,8 @@ func test_the_forjador_is_only_the_forja_again() -> void:
 
 func test_the_nine_buds_stand_on_the_table_of_the_spec_with_a_tag_beside_each() -> void:
 	var s := _screen(_data(100, 30))
-	assert_eq(s.buds.size(), 9)
-	assert_eq(s.tags.size(), 9)
+	assert_eq(s.buds.size(), 11, "Vida has 5 steps since the redesign (Respiro, Ainda de Pé)")
+	assert_eq(s.tags.size(), 11)
 	var want := {&"vida_1": Vector2(395, 452), &"vida_3": Vector2(262, 288), &"viajante": Vector2(490, 390),
 		&"reserva": Vector2(490, 160), &"prata": Vector2(590, 450), &"materiais": Vector2(760, 200)}
 	for id: StringName in want:
@@ -246,7 +246,8 @@ func test_it_fits_the_screen_and_reads_without_scrolling() -> void:
 func test_the_focus_walks_up_to_grow_and_across_to_the_next_branch() -> void:
 	var v := Vine.new(Vine.load_catalog())
 	assert_eq(VineLayout.neighbor(v, &"vida_1", Vector2.UP), &"vida_2")
-	assert_eq(VineLayout.neighbor(v, &"vida_3", Vector2.UP), &"vida_3", "the top stays")
+	assert_eq(VineLayout.neighbor(v, &"vida_3", Vector2.UP), &"respiro", "Vida goes on to its 4th step")
+	assert_eq(VineLayout.neighbor(v, &"ainda_de_pe", Vector2.UP), &"ainda_de_pe", "the top stays")
 	assert_eq(VineLayout.neighbor(v, &"vida_1", Vector2.DOWN), &"vida_1")
 	assert_eq(VineLayout.neighbor(v, &"vida_2", Vector2.RIGHT), &"estoque")
 	assert_eq(VineLayout.neighbor(v, &"memoria", Vector2.LEFT), &"estoque")

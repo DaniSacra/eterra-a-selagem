@@ -918,7 +918,7 @@ func _update_ult(p: Player) -> void:
 	if full and not _ult_was_ready:
 		_ult_hint_t = ULT_HINT_TIME
 	_ult_was_ready = full
-	var shown := ult if ult != null else game.hero.ult_for(&"", first)
+	var shown := ult if ult != null else game.hero.ult_for_weapon(first)
 	_ult_slot.glyph = BoonIcon.ULT_GLYPH + shown.kind
 	_ult_slot.refresh(null, 1.0 - game.ults.ratio() if ult != null else 0.0)
 	_ult_slot.sealed = ult == null
