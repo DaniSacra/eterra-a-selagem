@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="TalentDef" format=3]
+
+[ext_resource type="Script" path="res://scripts/core/boon_mod.gd" id="1_dcsnt"]
+[ext_resource type="Script" path="res://scripts/core/talent_def.gd" id="2_qx4vg"]
+
+[sub_resource type="Resource" id="Resource_5byro"]
+script = ExtResource("1_dcsnt")
+stat = &"burn_dps"
+tag = &"blast"
+base = 4.0
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[sub_resource type="Resource" id="Resource_f6v67"]
+script = ExtResource("1_dcsnt")
+stat = &"cast_size_pct"
+tag = &"blast"
+base = 0.25
+per_level = PackedFloat32Array()
+by_rarity = false
+
+[resource]
+script = ExtResource("2_qx4vg")
+id = &"combustao"
+name_key = &"talent_combustao"
+desc_key = &"talent_combustao_desc"
+branch = 6
+tier = 1
+cost = 3
+unlock_level = 7
+memory_cost = 3
+slot = 2
+mods = Array[ExtResource("1_dcsnt")]([SubResource("Resource_5byro"), SubResource("Resource_f6v67")])

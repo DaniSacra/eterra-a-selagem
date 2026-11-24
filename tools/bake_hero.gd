@@ -1,12 +1,13 @@
 extends SceneTree
 ## Turns animation clips made for other rigs into the hero's own clips (Retarget) and saves them as one
 ## AnimationLibrary next to the hero's model. Edit CLIPS and run:
-## ~/tools/godot/godot --headless --path . -s tools/bake_hero.gd
+## ~/tools/godot/godot --headless --path . -s tools/bake_hero.gd [-- maga]
 ## It also prints where the sword hand moves fastest in each clip (the swing peak, for PEAK in make_data.gd).
+## `-- maga` bakes the Maga's clips (MAGA_CLIPS) for her body (HeroBody.BODIES) and prints how low her staff's two
+## heads go in each clip (the floor is 0), so no clip drives a head through the floor.
 
 ## The bones of the sword arm (taken from the arm clip, see CLIPS).
 const SWORD_ARM: Array[StringName] = [&"RightShoulder", &"RightArm", &"RightForeArm", &"RightHand"]
-const OUT := HeroBody.ANIMS
 const FPS := 30.0
 ## How far (degrees) the blade leans from the line of the knuckles toward the fingers.
 const GRIP_TILT := 25.0
@@ -47,14 +48,41 @@ const CLIPS := {
 	&"Knockback": [&"ual2", &"Hit_Knockback", false, 0.0, 0.0],
 	&"Death": [&"ual", &"Death01", false, 0.0, 0.0],
 }
+## The Maga's clips (M1c): the library's spell clips, no sword guard. Her moves all play Cast (Spell_Simple_Shoot, the
+## Warrior's Cast too, so PEAK[&"Cast"] holds for both); Blink is the Passo Etéreo's short gesture. The sword names
+## the game may still ask for play her Cast, so no name of the Warrior's is ever missing (MAGA_ALIASES).
+const MAGA_CLIPS := {
+	&"Idle": [&"ual", &"Spell_Simple_Idle", true, 0.0, 0.0],
+	&"Run": [&"ual", &"Jog_Fwd", true, 0.0, 0.0, 0.28, 0.0],
+	&"Sprint": [&"ual", &"Sprint", true, 0.0, 0.0, 0.5, 0.0],
+	&"Roll": [&"ual", &"Roll", false, 0.0, 0.0],
+	&"Dash": [&"ual", &"Roll", false, 0.0, 0.0],
+	&"Blink": [&"ual", &"Spell_Simple_Enter", false, 0.0, 0.0],
+	&"Cast": [&"ual", &"Spell_Simple_Shoot", false, 0.0, 0.0],
+	&"Throw": [&"ual2", &"OverhandThrow", false, 0.0, 0.0],
+	&"Hit": [&"ual", &"Hit_Chest", false, 0.0, 0.0],
+	&"Knockback": [&"ual2", &"Hit_Knockback", false, 0.0, 0.0],
+	&"Death": [&"ual", &"Death01", false, 0.0, 0.0],
+}
+## Her staff arm in the runs: held as in her idle (the library's runs swing the arm, and the staff's heads with it
+## rose over her head and dipped to her knees).
+const MAGA_GUARD := [&"ual", &"Spell_Simple_Idle", 0.0]
+const MAGA_ALIASES: Array[StringName] = [&"Slash_A", &"Slash_A_Rec", &"Slash_B", &"Slash_B_Rec", &"Slash_C", &"Slash_Combo", &"Sword_Attack"]
+
+var _id := &"warrior"
 
 
 func _initialize() -> void:
+	if OS.get_cmdline_user_args().has("maga"):
+		_id = &"maga"
 	_bake.call_deferred()
 
 
 func _bake() -> void:
-	var hero := (load(HeroBody.MODEL) as PackedScene).instantiate() as Node3D
+	var body: Dictionary = HeroBody.BODIES[_id]
+	var maga := _id == &"maga"
+	var clips: Dictionary = MAGA_CLIPS if maga else CLIPS
+	var hero := (load(body.model) as PackedScene).instantiate() as Node3D
 	root.add_child(hero)
 	var hs := PoseBaker.find_skeleton(hero)
 	var hero_player := PoseBaker.find_player(hero)
@@ -69,14 +97,19 @@ func _bake() -> void:
 		var sk := PoseBaker.find_skeleton(src)
 		rigs[id] = [src, PoseBaker.find_player(src), Retarget.new(sk, src, hs, hero, Retarget.RIGS[id])]
 	# the sword stance, solved once (a still pose)
-	var g: Array = rigs[GUARD[0]]
-	(g[1] as AnimationPlayer).play(GUARD[1])
-	(g[1] as AnimationPlayer).seek(GUARD[2], true)
+	var stance: Array = MAGA_GUARD if maga else GUARD
+	var down := 0.0 if maga else GUARD_DOWN
+	var g: Array = rigs[stance[0]]
+	(g[1] as AnimationPlayer).play(stance[1])
+	(g[1] as AnimationPlayer).seek(stance[2], true)
 	var guard := (g[2] as Retarget).solve()
 	guard[&"arm"] = (g[2] as Retarget).turn(hs.find_bone(&"RightArm"), guard)
 	guard[&"hand"] = (g[2] as Retarget).turn(hs.find_bone(&"RightHand"), guard)
-	for name: StringName in CLIPS:
-		var c: Array = CLIPS[name]
+	# the grip (see below, where it is saved): her staff's heads are measured from it
+	var grip := _grip(rigs[&"ual"][2])
+	var staff_unit := HeroBody.MODEL_HEIGHT / HeroBody.GAME_HEIGHT / space.get_scale().x
+	for name: StringName in clips:
+		var c: Array = clips[name]
 		var rig: Array = rigs[c[0]]
 		var ap: AnimationPlayer = rig[1]
 		var rt: Retarget = rig[2]
@@ -104,13 +137,15 @@ func _bake() -> void:
 		var hips_low := INF
 		var hips_high := -INF
 		var hips_keys: Array = []
+		var heads_low := INF
+		var heads_high := -INF
 		for f in frames + 1:
 			var t := minf(f / FPS, anim.length)
 			ap.play(c[1])
 			ap.seek(from + t, true)
 			var pose := rt.solve()
 			if c.size() > 6:
-				_hold_guard(pose, guard, c[6], rt, hs, space)
+				_hold_guard(pose, guard, c[6], rt, hs, space, down)
 			for b: int in pose:
 				anim.rotation_track_insert_key(tracks[b], t, pose[b])
 			var hips := rt.hips_position(true)
@@ -129,12 +164,24 @@ func _bake() -> void:
 					peak_dir = p - last_hand
 			last_hand = p
 			feet.append(space * _bone_origin(hs, hs.find_bone(&"LeftToeBase"), pose, hips, rt.hips_bone()))
+			if maga:
+				# her staff's two heads (MagaStaff.HALF from the fist each way), model meters over the floor
+				var fist := _bone_xform(hs, hand, pose, hips, rt.hips_bone())
+				for way: float in [1.0, -1.0]:
+					var head: Vector3 = space * (fist * ((grip[1] as Vector3) + (grip[0] as Vector3) * way * MagaStaff.HALF * staff_unit))
+					heads_low = minf(heads_low, head.y)
+					heads_high = maxf(heads_high, head.y)
 		var bob: float = c[5] if c.size() > 5 else 1.0
 		for k: Array in hips_keys:
 			var at: Vector3 = space * (k[1] as Vector3)
 			at.y = hips_low + (at.y - hips_low) * bob
 			anim.position_track_insert_key(hips_tr, k[0], space.inverse() * at)
 		lib.add_animation(name, anim)
+		if maga:
+			var floor_y := INF
+			for ft in feet:
+				floor_y = minf(floor_y, ft.y)
+			print("%s: staff heads from %.2f to %.2f m over the toes (model 1.8 m)" % [name, heads_low - floor_y, heads_high - floor_y])
 		# which way the blade crosses at the peak: the hero faces +Z, his left is +X
 		var across := "right to left" if peak_dir.x > 0.0 else "left to right"
 		if absf(peak_dir.y) > absf(peak_dir.x) * 1.5:
@@ -145,27 +192,33 @@ func _bake() -> void:
 				(hips_high - hips_low) * bob * 100.0 * HeroBody.HEIGHT / HeroBody.MODEL_HEIGHT]
 			line += ", ground pace %.2f m/s at the game's size" % (_pace(feet) * HeroBody.HEIGHT / HeroBody.MODEL_HEIGHT)
 		print(line)
-	# the sword's grip: the handle runs across the knuckles of the mannequin's right fist, through the middle of the
-	# hand, with the blade out of the thumb and index side as a fist holds it, leaning GRIP_TILT toward the fingers
-	# (a handle crosses the palm on a slant). (Until 2026-11-15 the blade came out of the pinky side, the fist held
-	# upside down: from the old idle it trailed behind his back, and raised in a swing it hung down.)
-	var ual: Retarget = rigs[&"ual"][2]
-	var index := ual.source_rest(&"DEF-f_index.01.R")
-	var pinky := ual.source_rest(&"DEF-f_pinky.01.R")
-	var wrist := ual.source_rest(&"DEF-hand.R")
-	var grip := ual.carry(&"RightHand", grip_line(index, pinky, wrist), (index + pinky) * 0.5 - wrist)
+	if maga:
+		for alias in MAGA_ALIASES:
+			lib.add_animation(alias, lib.get_animation(&"Cast"))
 	lib.set_meta(&"grip_dir", grip[0])
 	lib.set_meta(&"grip_at", grip[1])
 	print("grip ", grip)
-	ResourceSaver.save(lib, OUT)
-	print("saved ", OUT)
+	ResourceSaver.save(lib, body.anims)
+	print("saved ", body.anims)
 	quit()
+
+
+## The sword's grip ([direction, point] in the hand's space): the handle runs across the knuckles of the mannequin's
+## right fist, through the middle of the hand, with the blade out of the thumb and index side as a fist holds it,
+## leaning GRIP_TILT toward the fingers (a handle crosses the palm on a slant). (Until 2026-11-15 the blade came out of
+## the pinky side, the fist held upside down: from the old idle it trailed behind his back, and raised in a swing it hung down.)
+func _grip(ual: Retarget) -> Array:
+	var index := ual.source_rest(&"DEF-f_index.01.R")
+	var pinky := ual.source_rest(&"DEF-f_pinky.01.R")
+	var wrist := ual.source_rest(&"DEF-hand.R")
+	return ual.carry(&"RightHand", grip_line(index, pinky, wrist), (index + pinky) * 0.5 - wrist)
 
 
 ## Holds the sword arm of a solved pose in the guard stance: the shoulder as the stance has it on the chest, the
 ## upper arm turned as in the stance on the body (skeleton space; guard[&"arm"]) and raise degrees forward, the
-## forearm as in the stance, the hand turned as in the stance on the body and GUARD_DOWN lower (guard[&"hand"]).
-func _hold_guard(pose: Dictionary, guard: Dictionary, raise: float, rt: Retarget, hs: Skeleton3D, space: Basis) -> void:
+## forearm as in the stance, the hand turned as in the stance on the body and `down` lower (guard[&"hand"]; GUARD_DOWN for
+## the sword, 0 for the Maga's staff).
+func _hold_guard(pose: Dictionary, guard: Dictionary, raise: float, rt: Retarget, hs: Skeleton3D, space: Basis, down: float) -> void:
 	for bone in SWORD_ARM:
 		var bi := hs.find_bone(bone)
 		if guard.has(bi):
@@ -177,7 +230,7 @@ func _hold_guard(pose: Dictionary, guard: Dictionary, raise: float, rt: Retarget
 	pose[arm] = (rt.turn(hs.get_bone_parent(arm), pose).inverse() * want).get_rotation_quaternion()
 	# the wrist keeps the blade where the stance points it, GUARD_DOWN lower, however far the arm is raised
 	var hand := hs.find_bone(&"RightHand")
-	want = Basis(side.normalized(), deg_to_rad(GUARD_DOWN)) * (guard[&"hand"] as Basis)
+	want = Basis(side.normalized(), deg_to_rad(down)) * (guard[&"hand"] as Basis)
 	pose[hand] = (rt.turn(hs.get_bone_parent(hand), pose).inverse() * want).get_rotation_quaternion()
 
 
@@ -192,6 +245,11 @@ static func grip_line(index: Vector3, pinky: Vector3, wrist: Vector3) -> Vector3
 
 ## Where a bone sits (skeleton space) in a solved pose.
 func _bone_origin(sk: Skeleton3D, bone: int, pose: Dictionary, hips: Vector3, hips_bone: int) -> Vector3:
+	return _bone_xform(sk, bone, pose, hips, hips_bone).origin
+
+
+## A bone's whole transform (skeleton space) in a solved pose.
+func _bone_xform(sk: Skeleton3D, bone: int, pose: Dictionary, hips: Vector3, hips_bone: int) -> Transform3D:
 	var chain: Array[int] = []
 	var b := bone
 	while b >= 0:
@@ -203,7 +261,7 @@ func _bone_origin(sk: Skeleton3D, bone: int, pose: Dictionary, hips: Vector3, hi
 		var rot: Quaternion = pose[i] if pose.has(i) else rest.basis.get_rotation_quaternion()
 		var origin := hips if i == hips_bone else rest.origin
 		t = t * Transform3D(Basis(rot), origin)
-	return t.origin
+	return t
 
 
 ## How fast a looping clip's planted foot slides back (meters a second, model size): the speed it walks at.

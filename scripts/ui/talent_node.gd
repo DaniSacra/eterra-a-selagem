@@ -13,7 +13,9 @@ extends BaseButton
 
 ## The branch's colour, muted (TalentDef.Branch; the centre is CENTRE).
 ## Combo is the crimson of the Emeth's hilt and the Warrior's hair (it was a grey that read as switched off).
-const BRANCH_COLOR: Array[Color] = [Color("c4404e"), Color("c8643c"), Color("3fae7c"), Color("4f9cc6"), Color("a88e5c"), Color("b8665a")]
+const BRANCH_COLOR: Array[Color] = [Color("c4404e"), Color("c8643c"), Color("3fae7c"), Color("4f9cc6"), Color("a88e5c"), Color("b8665a"),
+	# the Maga's triangle (M2), amber and ivory, no violet: Piromancia ember amber, Arcanismo pale ivory gold, Selos old brass
+	Color("d9772b"), Color("e6d6a0"), Color("b8923f")]
 const CENTRE := Color("3fae7c")
 ## A Gift worn: its felt takes this much of its branch's colour (darkened this much), the line is the Emeth's emerald
 ## and a glow of GLOW_RINGS rings reaches GLOW_REACH px out.
@@ -59,7 +61,18 @@ const FLAME := TalentGlyph.FLAME
 const TONGUE := TalentGlyph.TONGUE
 const DROP := TalentGlyph.DROP
 
-enum Glyph { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, CENTRE }
+enum Glyph { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, CENTRE, PIRO, ARCA, CTRL }
+
+## The glyph of a branch (the Maga's three come after the centre in the enum, so the branch index is not the glyph's).
+static func glyph_of(branch: TalentDef.Branch) -> Glyph:
+	match branch:
+		TalentDef.Branch.PIRO:
+			return Glyph.PIRO
+		TalentDef.Branch.ARCA:
+			return Glyph.ARCA
+		TalentDef.Branch.CTRL:
+			return Glyph.CTRL
+	return (branch as int) as Glyph
 
 var def: TalentDef
 var glyph := Glyph.CENTRE
@@ -77,7 +90,7 @@ var _flash := 0.0
 
 func setup(p_def: TalentDef, side: float = SIDE) -> TalentNode:
 	def = p_def
-	glyph = Glyph.CENTRE if def == null else (def.branch as int) as Glyph
+	glyph = Glyph.CENTRE if def == null else glyph_of(def.branch)
 	custom_minimum_size = Vector2(side, side)
 	size = custom_minimum_size
 	focus_mode = Control.FOCUS_ALL
@@ -284,6 +297,21 @@ static func branch_glyph(ci: CanvasItem, g: Glyph, c: Vector2, r: float, col: Co
 		Glyph.FURIA:
 			ci.draw_colored_polygon(_shape(c, r, FLAME), col)
 			ci.draw_colored_polygon(_shape(c, r, TONGUE), UiKit.INK)
+		Glyph.PIRO:
+			# a flame over a small ember line
+			ci.draw_colored_polygon(_shape(c + Vector2(0, -r * 0.1), r * 0.9, FLAME), col)
+			ci.draw_line(c + Vector2(-r * 0.6, r * 0.85), c + Vector2(r * 0.6, r * 0.85), col, 2.0, true)
+		Glyph.ARCA:
+			# an eight-rayed arcane star inside a ring
+			ci.draw_arc(c, r * 0.95, 0.0, TAU, 20, col, 1.6, true)
+			for i in 4:
+				var d := Vector2.from_angle(i * PI * 0.25)
+				ci.draw_line(c - d * r * 0.75, c + d * r * 0.75, col, 1.8, true)
+		Glyph.CTRL:
+			# a seal: a ring with a rune cross cut in it
+			ci.draw_arc(c, r * 0.95, 0.0, TAU, 20, col, 2.2, true)
+			ci.draw_arc(c, r * 0.5, 0.0, TAU, 14, col, 1.4, true)
+			ci.draw_line(c + Vector2(0, -r * 0.95), c + Vector2(0, r * 0.95), col, 1.6, true)
 		Glyph.EMETH, Glyph.CENTRE:
 			var crystal := PackedVector2Array([c + Vector2(0, -r * 1.1), c + Vector2(r * 0.5, 0), c + Vector2(0, r * 1.1), c + Vector2(-r * 0.5, 0)])
 			ci.draw_colored_polygon(crystal, col)

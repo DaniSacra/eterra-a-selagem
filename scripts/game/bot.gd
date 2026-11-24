@@ -462,7 +462,7 @@ func _arcane_step(game: Game, p: Vector2, target: Vector2) -> void:
 	# the Explosão on the Selos
 	var marked := a.seals.total()
 	if marked > 0 and runner.cooldown_left(&"blast") <= 0.0 and not runner.is_attacking() \
-			and (marked >= mini(ARC_SEALS, game.horde.count()) or a.resonance.full()) and (player.free_special or player.magick.can_pay(10.0)):
+			and (marked >= mini(ARC_SEALS, game.horde.count()) or a.resonance.full()) and (player.free_special or player.magick.can_pay(Player.omega_cost(10.0, player.blast_discount))):
 		var best: Enemy = null
 		for e: Enemy in a.seals.keys():
 			if e.alive and (best == null or e.pos.distance_squared_to(p) < best.pos.distance_squared_to(p)):

@@ -1,18 +1,19 @@
 [gd_resource type="Resource" script_class="HeroDef" format=3]
 
-[ext_resource type="Script" path="res://scripts/core/arcane_kit.gd" id="1_d6o6b"]
-[ext_resource type="Resource" path="res://data/heroes/warrior_mastery.tres" id="2_1is15"]
-[ext_resource type="Script" path="res://scripts/core/hero_def.gd" id="3_yanfv"]
-[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="4_6ewxc"]
-[ext_resource type="Resource" path="res://data/ultimates/maga/00_storm.tres" id="5_ittxu"]
+[ext_resource type="Script" path="res://scripts/core/arcane_kit.gd" id="1_1is15"]
+[ext_resource type="Resource" path="res://data/heroes/maga_mastery.tres" id="2_yanfv"]
+[ext_resource type="Script" path="res://scripts/core/hero_def.gd" id="3_6ewxc"]
+[ext_resource type="Script" path="res://scripts/core/ult_def.gd" id="4_ittxu"]
+[ext_resource type="Resource" path="res://data/ultimates/maga/00_storm.tres" id="5_0l3wl"]
+[ext_resource type="Resource" path="res://data/ultimates/maga/01_dome_abs.tres" id="6_r80al"]
 
-[sub_resource type="Resource" id="Resource_0l3wl"]
-script = ExtResource("1_d6o6b")
+[sub_resource type="Resource" id="Resource_qenuo"]
+script = ExtResource("1_1is15")
 blast_damage = 32.0
 blast_seal_damage = 44.0
 
 [resource]
-script = ExtResource("3_yanfv")
+script = ExtResource("3_6ewxc")
 id = &"maga"
 name_key = &"hero_maga"
 combos = "res://data/combos/maga.tres"
@@ -23,7 +24,7 @@ magick_on_finisher = 1.0
 magick_on_break = 3.0
 cd_floor = 6.0
 passive_tags = Array[StringName]([&"finisher"])
-arcane = SubResource("Resource_0l3wl")
-ultimates = Array[ExtResource("4_6ewxc")]([ExtResource("5_ittxu")])
+arcane = SubResource("Resource_qenuo")
+ultimates = Array[ExtResource("4_ittxu")]([ExtResource("5_0l3wl"), ExtResource("6_r80al")])
 talents_dir = "res://data/talents/maga/"
-mastery = ExtResource("2_1is15")
+mastery = ExtResource("2_yanfv")

@@ -128,7 +128,7 @@ func test_a_sealed_gift_opens_on_a_second_press_only() -> void:
 	var s := _book(d)
 	var impeto := s.loadout.book.find(&"impeto")
 	assert_eq(s.loadout.state(impeto), HeroLoadout.State.SEALED)
-	assert_eq(s.tree.node(&"impeto").state, HeroLoadout.State.SEALED)
+	assert_eq(s.codex.entry(&"impeto").state, HeroLoadout.State.SEALED)
 	s._tell(impeto)
 	assert_eq(s.bar.item(&"ui_accept").verb.text, T.t(&"bar_open").to_upper(), "the bar says it opens with Memória")
 	s._pick(impeto)

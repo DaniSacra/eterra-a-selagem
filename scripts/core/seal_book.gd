@@ -38,14 +38,17 @@ func left(key: Object) -> float:
 	return float(_seals[key][1]) if _seals.has(key) else 0.0
 
 
-## Lays one Selo (its clock starts over). True when it was a new Selo, false at the cap (only the clock restarts).
-func lay(key: Object) -> bool:
+## Lays one Selo (its clock starts over: `seconds`, or the book's life). True when it was a new Selo, false at the cap (only the
+## clock restarts); `most` holds the cap down for this Selo (the Tempestade lays one on whoever is in it, whatever the Gifts).
+func lay(key: Object, most: int = -1, seconds: float = -1.0) -> bool:
+	var time := seconds if seconds > 0.0 else life
+	var limit := cap if most < 0 else mini(cap, most)
 	if not _seals.has(key):
-		_seals[key] = [1, life]
+		_seals[key] = [1, time]
 		return true
 	var s: Array = _seals[key]
-	s[1] = life
-	if int(s[0]) < cap:
+	s[1] = time
+	if int(s[0]) < limit:
 		s[0] = int(s[0]) + 1
 		return true
 	return false

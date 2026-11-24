@@ -1,0 +1,21 @@
+Miniaturas do Livro de Ahk (capitulo Dons). Se existir <id>.png nesta pasta, o jogo usa; se nao, desenha o
+substituto (a capitular grande do ramo, ou o desenho de base a lapis da ultimate).
+
+Ramos (faixa larga, cerca de 560 x 110 px, sepia com uma cor do ramo):
+  branch_combo     Guerreiro: os tres arcos do combo
+  branch_furia     Guerreiro: o heroi em furia (cargas como tres chamas pequenas)
+  branch_emeth     Guerreiro: a lamina verde de perfil
+  branch_magia     Guerreiro: a onda do especial
+  branch_piro      Maga: a brasa sobre a mao
+  branch_arca      Maga: o cajado de duas pontas tracando o arco
+  branch_ctrl      Maga: o Selo posto no inimigo
+  branch_bridge    Pontes (os dois herois)
+  branch_sustain   Sustento (os dois herois)
+
+Ultimates (iluminura, cerca de 260 x 220 px; a travada usa so o traco a lapis, sem cor):
+  ult_cleave       Guerreiro: Corte Amplo
+  ult_vortex       Guerreiro: Voragem
+  ult_storm        Maga: Tempestade
+  ult_dome_abs     Maga: Redoma
+
+Antes de ir para o jogo, registrar em docs/steam-ia.md.

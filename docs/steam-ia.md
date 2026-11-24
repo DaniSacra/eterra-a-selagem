@@ -45,8 +45,11 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
     vistas da prancha "Inimigos da Fase 1" e repintados no Meshy por texto; no jogo entram reduzidos e assados em
     `assets/baked/`, com animações CC0 da Quaternius e do KayKit) e a espada Emeth (`assets/models/meshy/emeth/`,
     gerada da imagem da Emeth enviada pelo Daniel, também feita por IA;
-  - ainda fora do jogo (2026-11-23): a Maga (`assets/models/meshy/hero_maga_img/`, imagem para 3D da arte 01 do pacote do
-    Daniel, feita por IA no ChatGPT; prévias só de malha por texto em `hero_maga/`).
+  - no jogo desde 2026-11-23 (M1c): a Maga (`assets/models/meshy/hero_maga_img/`, imagem para 3D da arte 01 do pacote do
+    Daniel, feita por IA no ChatGPT), com o esqueleto do Meshy (`hero_maga_img-rigged.glb`) e as mesmas animações CC0 da
+    Quaternius levadas ao corpo dela (`maga_anims.res`, `tools/bake_hero.gd -- maga`; nenhuma animação gerada por IA), e o
+    bastão de duas pontas (`assets/models/meshy/w_maga_staff/`, texto para 3D do Meshy descrevendo o bastão da arte 01;
+    no jogo, duas cópias da cabeça unidas na mão). Prévias só de malha por texto em `hero_maga/` (fora do jogo).
   - no jogo desde 2026-11-21 (peças aprovadas pelo Daniel, geradas no plano Pro, prompts em `tools/meshy/prompts.json`):
     armas que entram nas mãos dos inimigos assados (`assets/models/meshy/w_cleaver`, `w_knight_sword`, `w_knight_shield`,
     `w_staff`, `w_morvath_scythe`; o cabo longo da foice é um cilindro feito em código), a estátua encapuzada do Salão
@@ -74,6 +77,10 @@ que for gerado durante o jogo (este jogo não gera nada ao vivo). Manter esta li
   recompensas, tipos de sala e os 7 anjos) e 70 dos 77 de `assets/ui/boons/` (os 7 de antes ficaram), gerados por IA
   pelo diretor de arte do PO no ChatGPT (pacote `Eterra_Pintura_Medalhoes_PARTE_1..3`, relatório em
   `docs/art/medallions_rev02.md`). Única edição nossa: o texto solto no alto de `trial.png` apagado.
+
+- **Ícones pintados, Rev. 03 (vão no jogo, 2026-11-23, substituem a Rev. 02)**: os 25 de `assets/ui/rewards/` e os 77 de
+  `assets/ui/boons/`, pintados por IA pelo diretor de arte do PO no ChatGPT, quadrados e sem moldura
+  (`Eterra_REV03_01..04`); o recorte redondo e a moldura única são nossos (`tools/art/frame_borderless.gd`).
 
 ## Sem IA
 - Modelos KayKit (Kay Lousberg, CC0), animações da Quaternius (CC0), fontes Cinzel e Alegreya Sans (OFL), textura

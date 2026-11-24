@@ -155,7 +155,7 @@ nova de dado: usam `mark_time`, `burn_dps`, `freeze_time`, `shield_on`, `cooldow
 | Espaço (Passo) | esquiva como dado (`DashDef`, `dodge_charges` 2, `dodge_ghost`), `Player.DODGE_BUFFER` | teletransporte (pos final, não corrida) com 14 quadros e atravessar inimigos | **P a M** |
 | Ressonância | `GiftState`/`HeroGifts` (cargas da Fúria), losangos do HUD, `HeroDef.passive_tags` | contador 0 a 6 em 3 losangos âmbar, regra "amplificada", `RESULT` e teste | **P a M** |
 | Herói (seleção, save, HUD por herói) | `HeroDef` (`HeroDef.buttons`), `heroes.<id>` do save (já), Maestria por herói, `Controls` | seletor de herói na descida e no Santuário, `HeroDef.maga()`, ação E no pad (RT é eixo), slots `TECH/DEF/ULT` | **M** (compartilhado com Ladina e Paladino) |
-| Corpo e bastão | **modelo hoje**: bastão simples `w_staff` já assado (cajado de 1000 triângulos, `HeroBody`); o corpo é o do Explorador | corpo da Maga e bastão de duas pontas: Meshy (créditos só com seu aval) | **G** (arte) |
+| Corpo e bastão | **modelo hoje (M1c, 2026-11-23)**: corpo da Maga do Meshy (`hero_maga_img`) e bastão de duas pontas `MagaStaff` (`HeroBody.BODIES`) | corpo da Maga e bastão de duas pontas: Meshy (créditos só com seu aval) | **G** (arte) |
 | Texto, Livro | `data/text_pt.tres` | textos novos de habilidades, Dons e Compêndio | **P** |
 
 **Estimativa total de código: G** (mais que 4 dias de `gameplay-engineer`, sem arte), com M1a em cerca de 3 a 4 dias.

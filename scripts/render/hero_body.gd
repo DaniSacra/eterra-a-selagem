@@ -7,6 +7,14 @@ extends RefCounted
 
 const MODEL := "res://assets/models/meshy/hero_explorer/hero_explorer-rigged.glb"
 const ANIMS := "res://assets/models/meshy/hero_explorer/hero_anims.res"
+## Each playable hero's body (HeroDef.id): the rigged Meshy model, its clips (tools/bake_hero.gd -- <id>) and what its
+## right hand holds. The Maga (M1c, 2026-11-23): the image-to-3D model of the pack's art 01, the same 24 bones as his,
+## and her two-ended staff (MagaStaff). An id not here gets the Warrior's.
+const BODIES := {
+	&"warrior": {"model": MODEL, "anims": ANIMS, "held": &"sword"},
+	&"maga": {"model": "res://assets/models/meshy/hero_maga_img/hero_maga_img-rigged.glb",
+		"anims": "res://assets/models/meshy/hero_maga_img/maga_anims.res", "held": &"staff"},
+}
 ## How much of his own colours he shows away from any light (emission from the albedo): the game's lights are warm
 ## and few, and from the back (where the camera sees him most) the leathers went black and the gold edge took over.
 const FILL := 0.28
@@ -42,21 +50,23 @@ static func ink_scale() -> float:
 const COMPAT_GAMMA := 0.55
 
 
-## The model at the game's size, playing his own clips. Returns [model, AnimationPlayer, sword].
-static func make() -> Array:
-	var model := (load(MODEL) as PackedScene).instantiate() as Node3D
+## A hero's body (BODIES) at the game's size, playing its own clips. Returns [model, AnimationPlayer, held piece]
+## (Emeth or the Maga's staff, both along +Y from the fist: Player.BLADE_TIP sits near the top of either).
+static func make(id: StringName = &"warrior") -> Array:
+	var body: Dictionary = BODIES.get(id, BODIES[&"warrior"])
+	var model := (load(body.model) as PackedScene).instantiate() as Node3D
 	model.scale = Vector3.ONE * (HEIGHT / MODEL_HEIGHT)
 	var anim := PoseBaker.find_player(model)
 	anim.stop()
 	for lib in anim.get_animation_library_list():
 		anim.remove_animation_library(lib)
-	anim.add_animation_library(&"", load(ANIMS))
+	anim.add_animation_library(&"", load(body.anims))
 	_fill(model)
-	return [model, anim, _arm(model, anim.get_animation_library(&""))]
+	return [model, anim, _arm(model, anim.get_animation_library(&""), body.held)]
 
 
-## The sword in the right hand, held where tools/bake_hero.gd found the grip (stored on the clips' library).
-static func _arm(model: Node3D, clips: AnimationLibrary) -> MeshInstance3D:
+## The sword (or the staff) in the right hand, held where tools/bake_hero.gd found the grip (stored on the clips' library).
+static func _arm(model: Node3D, clips: AnimationLibrary, held: StringName = &"sword") -> MeshInstance3D:
 	var skeleton := PoseBaker.find_skeleton(model)
 	var hand := skeleton.find_bone(&"RightHand")
 	if hand < 0:
@@ -65,7 +75,7 @@ static func _arm(model: Node3D, clips: AnimationLibrary) -> MeshInstance3D:
 	grip.bone_name = &"RightHand"
 	skeleton.add_child(grip)
 	# Emeth, the sword of truth (Daniel's concept of 2026-11-14), the size of the KayKit sword it replaced
-	var sword := EmethSword.make()
+	var sword := MagaStaff.make() if held == &"staff" else EmethSword.make()
 	grip.add_child(sword)
 	var space := Retarget._space(skeleton, model)
 	var unit := space.get_scale().x

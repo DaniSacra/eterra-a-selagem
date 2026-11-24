@@ -617,3 +617,29 @@ Leitura e limites: o robô esquiva melhor que gente, então o evoluído humano v
 Testes ajustados (mudança intencional): `test_boss` (vida 10000, faixa de dano 6 a 42), `test_boss_body` (a investida deixou de ser exigida nessa luta roteirizada), `test_c1d_rupture` (16 vira 29), `test_maga_seal`, `test_maga_loop` (tiros e Explosão).
 
 **Aplicado pela sessão principal para a noite (2026-11-23):** só o dano da Maga (tiros 10/10/15, Explosão 32 + 44). **Não aplicado**: Morvath (vida 10000, golpes x1,8, `BOSS_REST` 0,55, `BOSS_COOLDOWN` 0,7) porque o golpe mais forte passaria a 34 contra 30 de vida do novato (morte de um golpe com vida cheia, ruim para quem nunca jogou); e a vida 40 da Maga, porque o Daniel decidiu 30 (`maga.md` 13). Recalibrar Morvath com o `runs.jsonl` dos testadores, tentando antes `BOSS_DAMAGE` 1,3 (golpe máximo abaixo de 30).
+
+## Passada de 2026-11-23 (tarde): Morvath depois do commit 159f206, Videira e herói de 30 de vida
+Robô 0,25 (`--ultimate=cleave`), 12 sementes (1 a 12) por perfil, só números em `tools/make_data.gd` (`morvath`, `_bosses`). O robô não é gente: compara versões, não é a taxa real.
+Perfis: novato = descida inteira sem opções; evoluído = descida inteira `--vine=9 --forge=2`; Morvath = `--start=boss --boons=8` (com e sem `--vine=9`). "Vence" = modo ENDING.
+| Número (`make_data.gd`) | Antes | Depois |
+|---|---|---|
+| Vida de Morvath | 6050 | 8500 |
+| `blade_damage` (lâminas) | 16 | 11 |
+| `reap_damage` (ceifa dupla) | 16 | 14 |
+| `barrage_damage` (Rajada das Almas) | 8 | 6 |
+| `adds_total_cap` / `adds_cap` fases 2 a 4 | 20 / 4 | 14 / 3 |
+| `ritual_cap` / `ritual_reinforce_every` / `ritual_eruption_every` | 6 / 6 s / 2,8 s | 5 / 9 s / 3,5 s |
+Golpe único mais forte continua 19 (foice e investida), abaixo dos 30 da meta.
+| Medida | Antes | Depois |
+|---|---|---|
+| Evoluído vence (meta 20 a 40%) | 2 de 12 (17%) | 3 de 12 (25%) |
+| Evoluído chega a Morvath | 7 de 12 | 7 de 12 |
+| Luta de Morvath do evoluído (meta 120 a 180 s) | mediana 96 s (71 a 117) | mediana 141 s (90 a 154) |
+| Evoluído morre em Morvath, fase 3 / 4 | 1 / 4 | 1 / 3 |
+| Novato chega a Morvath / vence | 2 de 12 / 0 | 2 de 12 / 0 (mortes na sala 5 a 11; não mexi) |
+| Morvath com 8 Bênçãos, vida 30: vence / morre na fase 2 | 0 / 10 de 12 | 0 / 8 de 12 (luta mediana 113 s) |
+| Morvath com 8 Bênçãos e `--vine=9`: vence / morre na fase 2 | 0 / 9 de 12 | 0 / 5 de 12 (mediana 135 s) |
+Passos medidos: vida 9000 com dano de antes e lâminas 13: 0 de 12 (fase 4 em 4 de 7); mais Rajada 6, invocados 14: 1 de 12; mais ritual: 2 de 12; lâminas 11 e ceifa 14: 3 de 12. O ruído entre rodadas é de 1 a 3 vitórias.
+Leitura: o que mais mata Morvath-cedo são os invocados do ritual e as lâminas (fase 2: `adds` 240 e `blades` 197 de vida perdida em 12 lutas); o evoluído morre mais na Rajada (fase 4). A vida maior deu o tempo de luta pedido; o dano menor devolveu a vitória. Com 8 Bênçãos e sem a descida (perfil artificial: sem as Bênçãos extras, Dons e vida de coração) ninguém vence: isso é desejado como "exceção".
+Pendente (depende do Daniel): o novato quase não chega (2 de 12; meta "chega ao guardião e às vezes vence" só vale para quem joga bem); recalibrar com o `runs.jsonl`. O Daniel acha Morvath fácil, mas o robô evoluído só vence 25%: se a mão dele ainda o achar fácil, subir a vida para 10000 antes de subir o dano. `ritual_cap` 5 não mudou nada medido contra 4 (reforço só entra quando alguém morre).
+Testes ajustados: `test_boss` (vida, `ritual_cap`, contas de `summon_count`), `test_boss_refine` (teto 14). `tools/check.gd` limpo.

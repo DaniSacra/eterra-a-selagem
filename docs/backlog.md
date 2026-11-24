@@ -6,7 +6,7 @@ ids em `assets/ui/rewards/LEIAME.txt`), PT-3, PT-4, PT-5, PT-7 e PT-8 no reposit
 guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas pastas. PT-0 espera o Daniel; PT-6 depois.
 - **PT-0 (resposta, sem tarefa)**: a barrinha clara sob a vida dos inimigos comuns é a **Quebra** (poise, `CrowdRenderer.add_poise_bar`):
   cada golpe gasta um pouco; acabou, ele fica atordoado 1,2 s e leva +40% de dano ("Quebrou!"). Se ficar confusa: mudar a cor ou só
-  mostrá-la quando estiver na metade (decidir com o Daniel).
+  mostrá-la quando estiver na metade (decidir com o Daniel). **FEITO (2026-11-23, recomendação seguida)**: só aparece com metade gasta (`CrowdRenderer.POISE_SHOW`) e em azul-claro próprio (`life_bar.gdshader` `poise_color`).
 - **PT-1 Aviso de golpe sem mancha vermelha** (`combat-feel-director` + `gameplay-engineer`): tirar a mancha/traço vermelho no chão dos golpes
   corpo a corpo e dos tiros; a mancha fica só no que é de área (algo que cai, onda do escudo, círculos e Ruptura de Morvath, erupções,
   perigos de sala). Para compensar, no molde do SWORN: um **"!" acima da cabeça** que acende no instante de esquivar (cerca de 0,35 s antes
@@ -25,6 +25,18 @@ guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas 
 - **PT-7 Anjos maiores na escolha** (`BoonChoice`/`EncounterScreen`): figura do anjo bem maior; junta com o BC-1 (anjo grande à esquerda).
 - **PT-8 Portas de guardião diferentes** (`room-designer`): hoje as duas portas de guardião dão a mesma coisa. Cada porta mostra **o anjo
   que vai abençoar** (dois anjos diferentes), e o jogador escolhe a luta pelo anjo.
+- **PT-10 Telas e HUD pelas referências do Daniel (2026-11-23 noite;** imagens só locais em `docs/art/ref/sworn_daniel/`, só o princípio):
+  encontro com os anjos em altura toda com o efeito de cada família e a caixa de fala do anjo em foco (`angel_pair_fullheight.png`);
+  escolha da Bênção com o anjo grande, raridade visível e a tecla dentro da frase ("Seu Ataque [Mouse esq.] incendeia...", uma
+  linha por número; `boon_choice_rows.png`); escolha do Encanto com a arma cravada e acesa à esquerda e o **ichthys** (a runa de
+  duas curvas deitada, o peixe) como símbolo do Encanto (`enchant_choice_stone.png`); portas com anel de energia, selo de
+  modificador e caixa ao chegar perto (`door_sigils.png`, `door_tip.png`); coluna da direita com a pintura de cada Bênção e o
+  nível (`build_column.png`). Em andamento (dois `ui-ux-designer`).
+- **PT-11 Loja da descida junto da parede** (`room-designer` + `environment-artist`, depois do PT-6; `shop_along_wall.png`): hoje as
+  três ofertas ficam em fila no meio do chão. Pedido: os itens em colunas de pedra finas **ao longo da parede do fundo e das
+  laterais**, cada um flutuando numa bolha de luz pequena com a **plaquinha de preço** em cima (pergaminho, número + moeda), o
+  meio da sala livre; uma oferta de destaque (a Bênção) pode ficar sozinha mais à frente. Aceite: captura na GPU, o robô compra
+  igual (`RESULT` com as mesmas compras).
 - **PT-9 Maga só depois de vencer Morvath e estação de troca de herói** (Daniel, 2026-11-23): a Maga fica travada até a primeira
   vitória sobre Morvath (hoje aparece no Portal a partir da 2ª descida); a troca de herói sai do Portal e ganha uma área própria no
   Santuário, ao lado do Vendedor (loja), com o seu guia de destrave (PT-5). Junto da Videira V2 (mesmo agente, mesmo Santuário). **FEITO (2026-11-23)**: `HubPlan.HEROES`, `HeroPickScreen`, `SaveData.hero_open`, guia `maga` (`docs/reference/hub.md`).
@@ -78,6 +90,11 @@ Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas
   3. **A Videira** V1 a V3 (decidido, seção abaixo), custos com o registro dos testadores.
   4. **Maga M1c** (modelo no jogo; o Daniel quis depois do teste): esqueleto e animações no Meshy (~5 + 3 por ação) e o cajado (~30),
      estimar e pedir o ok antes de gastar; saldo 371. Modelo pronto em `assets/models/meshy/hero_maga_img/`.
+  5. **Maga M2**: **FEITO (2026-11-23, no worktree, sem o Daniel ter testado)** seguindo as recomendações do plano (Suspensão Absoluta, árvore em triângulo, 1 Selo
+     na Tempestade, ramo "Selos"): Maestria própria, 23 Dons, 2ª ultimate e Bênçãos afinadas (`docs/reference/meta.md`, "A Maga, M2"). Faltam: a tela da árvore em
+     triângulo desenhada pelo `art-director` (hoje só os eixos a 120 graus), escudo e cura do domo e rastro do Passo (Bênçãos), película e relógio da Suspensão Absoluta,
+     equilíbrio com 12 sementes (seção 5 do plano), Bênçãos novas.
+  4. ~~**Maga M1c**~~ feita em 2026-11-23 (corpo e bastão no jogo, 25 créditos, saldo 346; ver a seção Maga M1). Falta: captura na GPU e VFX âmbar das pontas.
   5. **Maga M2**: esperar as 5 respostas do Daniel (fim de `maga_m2.md`; recomendações: Suspensão Absoluta, árvore em triângulo, 1 Selo
      na Tempestade, Bênçãos novas depois, ramo "Selos").
   6. Abertos de combate e arte: luta de Morvath longa, ataque 44% do dano, placa do Armadilheiro, revisões na GPU; C6 (anjos) espera o Daniel.
@@ -92,10 +109,11 @@ Ordem menos arriscada (uma entrega por etapa, testar a anterior antes):
 - **M1b, seleção, save, HUD, texto e Bênçãos** (`gameplay-engineer` + `ui-ux-designer`, depende da M1a e do seletor de herói compartilhado com Ladina e Paladino; risco M: save por herói, ação E no controle). Tarefas: seletor na descida e no Santuário, `heroes.maga` no save, HUD da Ressonância e das 5 habilidades, textos em `text_pt.tres`, Bênçãos dos 7 anjos por botão (mapa da seção 4), Como Jogar, registro `RESULT.hero`.
 - **M1c, modelo** (`art-director`, depende do aval do Daniel; **créditos Meshy: estimar, gerar só a PRÉVIA, mostrar, modelo final só com o ok**): corpo com esqueleto e bastão de duas pontas, animações do `Cast` e passo, VFX âmbar e marfim (`technical-artist`), Selo acima da cabeça, hexágono de sigilos do Círculo. Palpite de 80 a 120 créditos, incerto.
 - **M1c prévia feita em 2026-11-23** (5 créditos, saldo 406): `assets/models/meshy/hero_maga/hero_maga-preview.png`, lado a lado com a arte 01 em `docs/gallery/maga_previa_meshy_2026-11-23.jpg`. Silhueta certa (manto marfim com capuz baixo, túnica, cintos, botas); cabelo saiu comprido (a arte tem chanel curto) e a túnica reta, sem as pontas rasgadas. Segunda prévia por texto (5) errou o cabelo (coque). **Imagem para 3D da arte 01 (30 créditos, saldo 371): acertou** (chanel curto, túnica azul com bordado, manto marfim, cintos, sem cajado), `assets/models/meshy/hero_maga_img/`, comparação em `docs/gallery/maga_modelo_meshy_2026-11-23.jpg`. Daniel: modelo no jogo só **depois do teste com usuários** (2026-11-23). Próximo: esqueleto e animações (5 + 3 por ação), cajado de duas pontas (imagem para 3D, 30), assado e troca do corpo no jogo.
+- **M1c feita em 2026-11-23** (ok do Daniel no mesmo dia; **25 créditos, saldo 346**, teto era 90): esqueleto do Meshy sobre `hero_maga_img` (5); animações **sem crédito**, as mesmas da Quaternius (CC0) do Guerreiro levadas ao corpo dela (`tools/bake_hero.gd -- maga`, `maga_anims.res`: parada `Spell_Simple_Idle`, correr, conjurar `Spell_Simple_Shoot` em todos os golpes, `Blink` no Passo, ser atingida, morrer; braço do bastão parado como na parada ao correr). Bastão `w_maga_staff` por texto para 3D (prévia 5 errou, sem aros; 2ª prévia 5 acertou uma cabeça; textura 10): a cabeça (aro de ouro com espinhos, orbe âmbar, ponta) é uma só, então o jogo une duas cópias na mão (`MagaStaff`, 2,6 m de ponta a ponta no desenho). `HeroBody.BODIES` escolhe o corpo por `HeroDef.id`; `RESULT` do `--smoke --hero=maga --seed=5` igual ao de antes. Orçamento igual ao do Guerreiro (30,8 mil triângulos, textura 2K em BPTC); bastão 4,9 mil por cópia, textura 1K. Pacote: cerca de 9 MB a mais (o `hero_maga_img.glb` sem esqueleto, cerca de 7 MB, também vai ao pacote e não é usado: excluir na exportação ou apagar). Falta: captura na GPU (`tools/gpu.sh shot x.png --hero=maga --bot --shot-at=9`), fogo âmbar nas pontas (`technical-artist`), Selo e hexágono.
 - **Balanceamento** (`balance-designer`, uma vez, 12 sementes) e **QA** (`qa-performance`) só depois da M1b.
 - **Riscos**: laço infinito da Ressonância, Selo ilegível ao lado do aviso vermelho, Explosão amplificada tirando Postura demais, complexidade da primeira versão.
 - **Critério de aceite** (pacote 04): distinta do Guerreiro, laço marcar, agrupar, detonar divertido, Ressonância perceptível, descida completa das Catacumbas.
-## Maga M2 (Maestria, Dons dos 3 ramos, 2 ultimates, Bênçãos afinadas) e M3 (armas, frio, Livro de Ahk): só depois da M1.
+## Maga M2 (Maestria, Dons dos 3 ramos, 2 ultimates, Bênçãos afinadas) e M3 (armas, frio, Livro de Ahk): a M2 está feita (2026-11-23, ver acima); a M3 vem depois.
 
 ## Pedidos do Daniel de 2026-11-21, 23h30 (a fazer; referências dele em `docs/art/ref/sworn_daniel/`, só local)
 

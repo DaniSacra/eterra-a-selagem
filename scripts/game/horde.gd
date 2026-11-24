@@ -2928,7 +2928,7 @@ func render(render_dt := 1.0 / 60.0) -> void:
 			var life := e.hp / maxf(e.max_hp, 0.001)
 			renderer.add_bar(d, Vector3(e.pos.x, top, e.pos.y), life,
 				e.armor / maxf(e.max_armor, 0.001) if e.max_armor > 0.0 else 0.0, crowded, bar_trails.shown(e, life, now))
-			if d.poise > 0.0 and e.armor <= 0.0 and e.poise < d.poise:
+			if d.poise > 0.0 and e.armor <= 0.0 and e.poise < d.poise * CrowdRenderer.POISE_SHOW:
 				renderer.add_poise_bar(d, Vector3(e.pos.x, top, e.pos.y), e.poise / d.poise, crowded)
 	_draw_ward_threads(now)
 	for e in dying:

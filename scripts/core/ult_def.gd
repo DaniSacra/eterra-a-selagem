@@ -9,7 +9,9 @@ extends Resource
 ## implodes (U-2, the Voragem). STORM: the Maga's Tempestade dos Selos (maga.md 2): an area at the cursor that lays a Selo
 ## on everyone in it, ticks, and at the end detonates every Selo (read from the Vortex fields: ahead, aim_max, radius,
 ## duration, tick, tick_damage; plus the Storm group).
-enum Kind { CLEAVE, VORTEX, STORM }
+## DOME: the Maga's Suspensão Absoluta (maga_m2.md 3.2): a dome around her that walks with her (radius, duration), where her shots
+## lay a Selo and hit harder and the Explosão costs less.
+enum Kind { CLEAVE, VORTEX, STORM, DOME }
 
 @export var id: StringName
 @export var name_key: StringName
@@ -72,6 +74,11 @@ enum Kind { CLEAVE, VORTEX, STORM }
 @export var detonate_damage := 110.0
 @export var elite_share := 0.5
 @export var guardian_share := 0.25
+
+@export_group("Dome")
+## The Suspensão Absoluta: the share more her shots hit with inside it, and what the Explosão costs there (Magia).
+@export var dome_shot_pct := 0.3
+@export var dome_blast_cost := 5.0
 
 
 ## The share of the Storm's damage a body takes: Morvath the ticks only (none of the detonation), a guardian guardian_share,

@@ -7,7 +7,8 @@ extends Resource
 ## written by _talents in tools/make_data.gd.
 
 ## The four families (game design, not canon) and the two places off them.
-enum Branch { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN }
+## The Maga's three branches (M2, docs/design/heroes/maga_m2.md 2.1) come after the Warrior's, so the saved numbers stay.
+enum Branch { COMBO, FURIA, EMETH, MAGIA, BRIDGE, SUSTAIN, PIRO, ARCA, CTRL }
 enum Tier { ENTRY, MIDDLE, APEX, BRIDGE, SUSTAIN }
 
 ## Neighbours in the diamond (the order of the art bible): Combo and Furia, Furia and Magia, Magia and Emeth, Emeth and
@@ -17,6 +18,10 @@ const NEIGHBOURS := {
 	Branch.FURIA: [Branch.COMBO, Branch.MAGIA],
 	Branch.MAGIA: [Branch.FURIA, Branch.EMETH],
 	Branch.EMETH: [Branch.MAGIA, Branch.COMBO],
+	# the Maga's triangle: every branch is a neighbour of the other two (Piromancia, Arcanismo, Selos)
+	Branch.PIRO: [Branch.ARCA, Branch.CTRL],
+	Branch.ARCA: [Branch.PIRO, Branch.CTRL],
+	Branch.CTRL: [Branch.PIRO, Branch.ARCA],
 }
 
 @export var id: StringName

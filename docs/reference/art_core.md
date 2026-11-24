@@ -36,6 +36,11 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   lâmina em meia-lua: o cabo é um cilindro de madeira (1,1 m, 2,0 m com a lâmina) na mão direita. O arqueiro mantém a besta do KayKit.
   A estátua do Salão (`Masonry.meshy_stone`, a lathe antiga fica de reserva) e o leão do Santuário (`HubLook.LION_*`, plinto,
   leão a 2,5 m, o do oeste espelhado, virados 0,3 rad para a escada) usam só a malha, com a pedra `Masonry.carved`.
+- **Corpo por herói (M1c, 2026-11-23)**: `HeroBody.BODIES` (por `HeroDef.id`: modelo com esqueleto do Meshy, clipes, peça na
+  mão); `HeroBody.make(id)`. A Maga é `hero_maga_img-rigged.glb` (mesmos 24 ossos e orçamento do Guerreiro) com os clipes
+  da Quaternius levados a ela por `tools/bake_hero.gd -- maga` (`MAGA_CLIPS`; todos os golpes tocam `Cast`, o Passo `Blink`;
+  os nomes de espada do Guerreiro apontam para `Cast`; o script imprime a altura das pontas do bastão em cada clipe) e o
+  bastão `MagaStaff` (duas cópias da cabeça de `w_maga_staff` unidas no punho, `HALF` 1,2 do espaço da espada para cada lado).
 - Proporção: o KayKit é cabeçudo; `scripts/render/slender.gd` (`Slender`) afina o boneco depois da animação (cabeça
   menor, pernas e tronco mais longos), só no assado dos bonecos do KayKit guardados (os modelos do Meshy já têm a proporção certa).
 - Câmera da imagem de referência, medida nela: girada 35° (`Feel.cam_yaw`; a sala vira o losango da pintura),

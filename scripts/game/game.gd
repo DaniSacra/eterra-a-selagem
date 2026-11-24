@@ -1857,8 +1857,8 @@ func _equip_talents() -> void:
 		ultimate = String(chosen.id) if chosen != null else ""
 		if chosen == null:
 			push_warning("--ultimate: no ultimate %s" % Dev.arg("ultimate"))
-	if hero.arcane != null and ultimate == "" and not hero.ultimates.is_empty():
-		ultimate = String(hero.ultimates[0].id)  # (the Maga's Tempestade from the start while Mastery is the Warrior's)
+	if hero.arcane != null and ultimate == "" and not hero.ultimates.is_empty() and (bot != null or Dev.has("talents")):
+		ultimate = String(hero.ultimates[0].id)  # (the robot and --talents play the Tempestade; a person gets it at Mastery 2, as her own curve says)
 	talents = ids
 	if bot != null or Dev.has("talents"):
 		talents_opened = ids.size()

@@ -42,3 +42,30 @@ velho. Sem texto novo, desenhos intactos. Para refazer com arte nova: `tools/art
 saída em outra; `medallion_overlay.gd` confere os círculos, `medallion_sheet.gd` faz pranchas, `medallion_fit.gd` é só a
 tentativa automática, que falhou nos anéis cortados). Os originais ficam no histórico do git (commit anterior).
 Mipmaps ligados nos 25 `.import`.
+
+## Conserto técnico dos 70 medalhões (2026-11-23, `tools/art/fix_boon_medallions.gd`)
+Antes: o anel pintado vinha cortado pelo disco do canvas (à esquerda e embaixo) e fora do centro, e o selo pequeno do canto
+era a única diferença dentro da família. Agora, por processamento de imagem (sem repintar):
+- **Moldura única**: o miolo pintado (círculo medido no quadro mais limpo, `RING_FIXED`: centro 281,270, raio útil 208 px)
+  é recentrado e escalado dentro de um anel de ouro novo, completo e centrado (31 px, contas e luz de cima à esquerda),
+  alfa circular limpo (raio 248). Um ajuste livre do círculo por arquivo travava no ouro da própria cena em metade dos
+  arquivos (centros de 244 a 304 nos 70), e os quadros do ChatGPT têm a mesma geometria, por isso a constante.
+- **Selo no centro**: o selo do canto (achado por busca do anel de bronze, centro perto de 369,366) é apagado (mistura por
+  distância inversa das cores em volta, suavizada), recortado, ampliado a cerca de 45% do diâmetro (raio 114 px) e posto no
+  centro sobre um halo escuro, com níveis mais fortes para o pictograma ler a 64 px. Ampliação de 1,4x, sem borrar; os
+  glifos do jogo (`BoonIcon.glyph`) não foram usados: são um por família (e menos legíveis que o pictograma pintado) e
+  trariam a mesma repetição.
+- Os 7 antigos ficam como estavam. Reaplicar com arte nova do ChatGPT: `-s tools/art/fix_boon_medallions.gd -- SRC OUT`
+  (SRC com as pinturas originais, nunca rodar sobre o resultado). Prancha: `tools/art/make_medallion_sheet.gd`.
+- **Ainda parecidos**: dentro de cada família o pictograma central é o mesmo (onda, véu, floco, mira, escudo, sol); só a
+  marca pequena no seu canto (espada, seta, círculo) distingue a ação, visível a 64 px e fraca a 32 px. Mais parecidos:
+  Vigília (escudo igual nos 8), Véu (3 véus quase iguais), Maré e Marca. Para separar de verdade falta arte nova com um
+  pictograma de ação por Bênção (ver o pedido acima). Resto da pintura sob o selo apagado é um borrão suave.
+Antes e depois: `docs/gallery/medallions_rev02/bencaos_consertadas.jpg`.
+
+## Rev. 03 no jogo (2026-11-23, noite)
+Os 102 ícones foram refeitos pelo ChatGPT sem moldura (quadrados de 1024 px, recortados de pranchas e ampliados). Entraram todos,
+inclusive os 7 antigos, para o conjunto ficar igual: `tools/art/frame_borderless.gd` recorta o disco e põe a moldura única
+(`tools/art/medallion_frame.png`). Pranchas e capturas em `docs/gallery/medallions_rev03/`. Cada Bênção agora se distingue pelo
+objeto (espada, leão, bota, escudo) dentro da família. Os originais quadrados ficam fora do repositório
+(`~/games/eterra-art-in/rev03-2026-11-23/`); para refazer: rodar a ferramenta sobre eles.

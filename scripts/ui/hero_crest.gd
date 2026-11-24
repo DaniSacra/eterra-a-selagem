@@ -6,6 +6,8 @@ extends Control
 
 ## The face from the approved title art (assets/ui/title/title_bg.png, 176 px square at 434, 316), 256 px.
 const PORTRAIT: Texture2D = preload("res://assets/ui/hud/hero_portrait.png")
+## Another hero's face: assets/ui/hud/hero_portrait_<id>.png (the Maga's cut from her approved art 01); none: the Warrior's.
+const PORTRAIT_DIR := "res://assets/ui/hud/hero_portrait_"
 ## Ink between the ring and the painting, and how dark the painting gets towards the ring (it sits in the frame).
 const INK_WIDTH := 1.5
 const VIGNETTE := 0.5
@@ -31,6 +33,20 @@ var seal := "":
 			seal = v
 			queue_redraw()
 var _beat := 0.0
+## The face drawn in the ring (set_hero picks it by the hero's id).
+var portrait: Texture2D = PORTRAIT
+
+
+## The face of a hero by its HeroDef id (the Warrior's when it has none of its own).
+static func portrait_of(hero_id: StringName) -> Texture2D:
+	var path := PORTRAIT_DIR + String(hero_id) + ".png"
+	return load(path) if hero_id != &"" and ResourceLoader.exists(path) else PORTRAIT
+
+
+func set_hero(hero_id: StringName) -> HeroCrest:
+	portrait = portrait_of(hero_id)
+	queue_redraw()
+	return self
 
 
 func setup(diameter: float) -> HeroCrest:
@@ -57,7 +73,7 @@ func _draw() -> void:
 	var uvs := PackedVector2Array()
 	for p in disc:
 		uvs.append((p - c) / (inner * 2.0) + Vector2(0.5, 0.5))
-	draw_colored_polygon(disc, Color.WHITE, uvs, PORTRAIT)
+	draw_colored_polygon(disc, Color.WHITE, uvs, portrait)
 	# a soft shadow towards the ring
 	for i in 4:
 		draw_arc(c, inner - 1.5 - i * 2.0, 0.0, TAU, 48, Color(UiKit.INK, VIGNETTE * (1.0 - i * 0.25)), 3.0, true)

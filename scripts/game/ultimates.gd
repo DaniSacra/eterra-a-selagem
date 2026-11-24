@@ -182,8 +182,9 @@ func worth(from: Vector2, dir: Vector2) -> bool:
 	if def == null or dir.length_squared() < 0.0001:
 		return false
 	var n := 0
-	var at := def.vortex_at(from, dir)
-	var size := def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
+	var dome := def.kind == UltDef.Kind.DOME
+	var at := from if dome else def.vortex_at(from, dir)
+	var size := def.radius if dome else def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
 	for e: Enemy in game.horde.list:
 		if not e.alive or e.invulnerable:
 			continue
@@ -207,6 +208,8 @@ func _on_started(dir: Vector2) -> void:
 	if def.kind == UltDef.Kind.CLEAVE:
 		_floor_mark(GroundLook.Style.WARNING, GroundLook.Shape.LINE, p, dir, def.length, def.width)
 		GroundLook.put(_warn.material_override as ShaderMaterial, &"progress", 0.0)
+	elif def.kind == UltDef.Kind.DOME:
+		return  # (the Suspensão Absoluta is round her: nothing to mark on the floor)
 	else:
 		_target = _land_spot(def.vortex_at(p, dir, game.aim_floor() if Controls.aims_with_mouse() else Vector2.INF))
 		var size := def.vortex_radius(game.boons.stat(&"cast_size_pct", def.tags))
@@ -219,6 +222,8 @@ func _on_landed(dir: Vector2) -> void:
 		_warn.visible = false
 	if def.kind == UltDef.Kind.CLEAVE:
 		_cleave(game.player.pos, dir)
+	elif def.kind == UltDef.Kind.DOME:
+		game.arcane.open_absolute(def)
 	else:
 		_open_vortex(_target)
 
@@ -487,7 +492,7 @@ func _implode(v: Vortex) -> void:
 
 ## The ultimate's colour: the Emeth's emerald for the Warrior's, amber for the Maga's Tempestade.
 func _color() -> Color:
-	return Arcane.AMBER if def.kind == UltDef.Kind.STORM else Combat.EMETH
+	return Arcane.AMBER if def.kind == UltDef.Kind.STORM or def.kind == UltDef.Kind.DOME else Combat.EMETH
 
 
 ## Every `tick` seconds each enemy inside takes the tick and a Selo (its clock restarts); at the end every Selo inside
@@ -507,7 +512,7 @@ func _step_storm(dt: float) -> void:
 			if not e.alive or e.invulnerable:
 				continue
 			var boss := e.def.behavior == EnemyDef.Behavior.BOSS
-			if game.arcane.lay(e):
+			if game.arcane.lay(e, 1):  # (one Selo, whatever the Gifts: the Selo Duplo does not double the storm's detonation)
 				game.arcane.tally.storm_seals += 1
 			_hit(e, def.tick_damage * def.storm_share(boss, not boss and e.def.stun_time <= 0.0, e.def.elite, false), Vector2.ZERO, 0.0, 0.0)
 	if v.life <= 0.0:

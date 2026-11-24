@@ -17,13 +17,20 @@ enum State { LOCKED, OPEN, EQUIPPED, BLOCKED, SEALED }
 ## Text keys of the actions a Gift may take (Boon.Slot).
 const ACTION_KEY := {
 	Boon.Slot.ATTACK: &"hero_action_attack", Boon.Slot.SPECIAL: &"hero_action_special",
-	Boon.Slot.CAST: &"hero_action_cast", Boon.Slot.DASH: &"hero_action_dash",
+	Boon.Slot.CAST: &"hero_action_cast", Boon.Slot.DASH: &"hero_action_dash", Boon.Slot.RUSH: &"hero_action_rush",
 }
+
+
+## The text key of the action a Gift of this slot takes, in this hero's words (the Maga's buttons have other names).
+static func action_key(hero: HeroDef, slot: Boon.Slot) -> StringName:
+	var key: StringName = ACTION_KEY[slot]
+	return StringName("%s_maga" % key) if hero != null and hero.arcane != null else key
 ## Text keys of the branches (TalentDef.Branch).
 const BRANCH_KEY := {
 	TalentDef.Branch.COMBO: &"hero_branch_combo", TalentDef.Branch.FURIA: &"hero_branch_furia",
 	TalentDef.Branch.EMETH: &"hero_branch_emeth", TalentDef.Branch.MAGIA: &"hero_branch_magia",
 	TalentDef.Branch.BRIDGE: &"hero_branch_bridge", TalentDef.Branch.SUSTAIN: &"hero_branch_sustain",
+	TalentDef.Branch.PIRO: &"hero_branch_piro", TalentDef.Branch.ARCA: &"hero_branch_arca", TalentDef.Branch.CTRL: &"hero_branch_ctrl",
 }
 const TIER_KEY := {
 	TalentDef.Tier.ENTRY: &"hero_tier_entry", TalentDef.Tier.MIDDLE: &"hero_tier_middle",
@@ -162,6 +169,27 @@ func why(t: TalentDef) -> Dictionary:
 			return needs(t)
 		Talents.Problem.SEALED:
 			return {"key": &"hero_why_sealed", "args": {"cost": t.memory_cost}}
+	return {}
+
+
+## The short reason of a BLOCKED Gift, for the codex entry's second line ("Pede: X", "Já há um Dom no botão Y: X",
+## "Faltam 2 velas"), as {key, args} for T.t ({} when it is not refused for these reasons).
+func short_why(t: TalentDef) -> Dictionary:
+	match problem(t):
+		Talents.Problem.DEVOTION:
+			var n := t.cost - (devotion() - used())
+			return {"key": &"codex_block_candle" if n == 1 else &"codex_block_candles", "args": {"n": n}}
+		Talents.Problem.SLOT_TAKEN:
+			return {"key": &"codex_block_slot", "args": {"action": T.t(action_key(hero, t.slot)), "name": _name(_slot_holder(t.slot))}}
+		Talents.Problem.NEEDS:
+			match t.tier:
+				TalentDef.Tier.APEX:
+					return {"key": &"codex_block_apex", "args": {"middle": _name(of(t.branch, TalentDef.Tier.MIDDLE)),
+						"branch": T.t(BRANCH_KEY[t.partner])}}
+				TalentDef.Tier.BRIDGE:
+					return {"key": &"codex_block_bridge", "args": {"a": _name(of(t.joins[0], TalentDef.Tier.ENTRY)),
+						"b": _name(of(t.joins[1], TalentDef.Tier.ENTRY))}}
+			return {"key": &"codex_block_needs", "args": {"what": _name(of(t.branch, TalentDef.Tier.ENTRY))}}
 	return {}
 
 

@@ -64,6 +64,9 @@ const GLINT_ANIM_SPEED := 0.15
 const ASSIST_RANGE := 5.0
 const ASSIST_HALF_ARC := deg_to_rad(65.0)
 const LOOPS: Array[StringName] = [&"Idle", &"Run", &"Sprint"]
+## The Maga's Passo Etéreo gesture (tools/bake_hero.gd MAGA_CLIPS, 0.53 s as made): played this many times faster.
+const BLINK_CLIP := &"Blink"
+const BLINK_CLIP_SPEED := 2.0
 ## VX-17: a finisher's clip ends and its last pose stays this long (the blow's weight is read on it), then eases into
 ## the guard over FINISHER_SETTLE (it snapped back in 0.08 s); walking or another blow cuts it as before.
 const FINISHER_HOLD := 0.3
@@ -203,6 +206,8 @@ var gifts: GiftState
 var omega_discount := 0.0
 ## The Maga's amplified Explosão costs no Magia (Arcane sets it while the Ressonância is full).
 var free_special := false
+## The share off the Explosão's Magia (the Maga's Suspensão Absoluta: half; Arcane sets it each step).
+var blast_discount := 0.0
 ## The Passo Etéreo ended this step: bodies of the crowd do not hold her where she came out (the dash goes through them).
 var _blinked := false
 var _charge_discount := 0.0
@@ -288,7 +293,7 @@ func _ready() -> void:
 	runner.move_glint.connect(func(node: ComboNode, time: float) -> void:
 		_anim.speed_scale = GLINT_ANIM_SPEED
 		glinted.emit(node, pos, facing, time, blade_tip))
-	var body := HeroBody.make()
+	var body := HeroBody.make(hero.id)
 	_model = body[0]
 	_anim = body[1]
 	_sword = body[2]
@@ -704,7 +709,7 @@ func _press_special() -> void:
 ## True when the special's tap is paid for (it costs nothing, or the Magia is there).
 func _special_paid() -> bool:
 	var node := ComboTree.find(tree.neutral, ComboNode.In.HEAVY)
-	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(omega_cost(node.magick_cost, omega_discount))
+	return node == null or node.magick_cost <= 0.0 or (free_special and node.has_tag(&"blast")) or magick.can_pay(omega_cost(node.magick_cost, blast_discount if node.has_tag(&"blast") else omega_discount))
 
 
 ## A press of an attack button plays the move at once (as in Hades II). Holding the button on charges its Omega
@@ -853,6 +858,8 @@ var _aim := Vector2.ZERO
 ## C1e (the Armadilheiro): where the last dodge ended and the seconds since (the plates it lays follow it: TrapRules.spot).
 var last_dodge_end := Vector2.ZERO
 var dodge_age := 99.0
+## The Maga's Passo: where she vanished from (Passo de Brasa's flash falls there).
+var last_blink_from := Vector2.ZERO
 ## AT-CA2: whether this dodge was already counted as cut short.
 var _dodge_cut := false
 
@@ -888,13 +895,17 @@ func _teleport(move: Vector2) -> void:
 	runner.on_dodge()
 	runner.on_dodge_end()
 	var from := pos
-	pos = arena.sweep(pos, pos + dir * hero.arcane.blink_distance, RADIUS)
+	last_blink_from = from
+	pos = arena.sweep(pos, pos + dir * hero.arcane.blink_distance * (1.0 + (gifts.value(&"blink_pct") if gifts != null else 0.0)), RADIUS)
 	_blinked = true
 	invuln = maxf(invuln, hero.arcane.blink_iframes)
 	last_dodge_end = pos
 	dodge_age = 0.0
 	fx.burst(&"dust", Vector3(from.x, 0.2, from.y))
 	fx.burst(&"fire", Vector3(pos.x, 0.4, pos.y))
+	# M1c: her short gesture as she comes out (only the look; a body without the clip keeps what it played)
+	if _anim.has_animation(BLINK_CLIP):
+		_play(BLINK_CLIP, BLINK_CLIP_SPEED, 0.0, 0.0)
 	Audio.play(&"dodge")
 	dodged.emit(dir)
 
@@ -971,7 +982,7 @@ func _step_move_sound(dt: float) -> void:
 func _on_move_started(node: ComboNode) -> void:
 	facing = _strike_dir()
 	if node.magick_cost > 0.0 and not (free_special and node.has_tag(&"blast")):
-		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else 0.0))
+		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else blast_discount if node.has_tag(&"blast") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
 	if node.sound_at > 0.0:

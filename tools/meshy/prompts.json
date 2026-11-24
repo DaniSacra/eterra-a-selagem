@@ -203,6 +203,12 @@
         "tools/meshy/ref/hero_maga/front.png"
       ],
       "texture_prompt": "Stylized hand-painted dark fantasy mage: short straight black bob hair, East Asian young woman, deep navy blue robe with pale gold embroidery, ivory mantle with gold patterns, brown leather belts, pouches and scroll case, gold seal medallion, leather bracers, brown boots. Painterly materials, no fire, no glow."
+    },
+    "w_maga_staff": {
+      "polycount": 5000,
+      "style": "Stylized hand-painted game prop, chunky readable silhouette, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols, no fire.",
+      "prompt": "A fantasy mage quarterstaff with two big ornate heads, one at each end. Each head is a large flat open circular gold ring, as wide as a hand span, standing in the plane of the staff, with short spikes around the outside of the ring and a big round amber crystal ball floating in the centre of the ring, held by thin gold spokes, and a short gold blade point past the ring. Between the two heads a straight dark wooden shaft with ivory cloth wraps and gold bands. The two big rings must be clearly visible.",
+      "texture_prompt": "Stylized hand-painted mage staff: polished antique gold ring, spikes and blade point with warm amber highlights, a glowing amber crystal orb, dark brown wooden shaft with ivory cloth wraps and thin gold bands. Painterly, warm amber and ivory palette."
     }
   }
 }

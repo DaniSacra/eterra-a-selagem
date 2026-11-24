@@ -315,6 +315,18 @@
     "imageId": "01a20967-2309-71e1-8871-a26d82021ffb",
     "attempt": 1,
     "imageCredits": 30,
-    "bytes": 4864132
+    "bytes": 4864132,
+    "rigId": "01a20ab0-10f0-74a2-afe5-3f038239a8e7",
+    "rigCredits": 5
+  },
+  "w_maga_staff": {
+    "prompt": "A fantasy mage quarterstaff with two big ornate heads, one at each end. Each head is a large flat open circular gold ring, as wide as a hand span, standing in the plane of the staff, with short spikes around the outside of the ring and a big round amber crystal ball floating in the centre of the ring, held by thin gold spokes, and a short gold blade point past the ring. Between the two heads a straight dark wooden shaft with ivory cloth wraps and gold bands. The two big rings must be clearly visible. Stylized hand-painted game prop, chunky readable silhouette, painterly forms like a top-down action RPG, single object floating, no base, no ground, no hands, no text, no cross symbols, no fire.",
+    "polycount": 5000,
+    "previewId": "01a20ab2-06ce-75d5-acdd-5f1662b8a7dd",
+    "attempt": 2,
+    "previewCredits": 5,
+    "refineId": "01a20ab2-9102-7687-b652-2b7e43c19d8e",
+    "refineCredits": 10,
+    "bytes": 3377852
   }
 }

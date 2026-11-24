@@ -138,7 +138,7 @@ static func mark(t: TalentDef, side: float, open: bool = true) -> Control:
 		var fill := UiKit.INK.lerp(tint.darkened(0.45), 0.8)
 		m.draw_colored_polygon(TalentNode._diamond(c, h - 1.6), fill)
 		if t == null or not draw(m, t.id, c, h * 0.48, IVORY, fill):
-			TalentNode.branch_glyph(m, TalentNode.Glyph.CENTRE if t == null else (t.branch as int) as TalentNode.Glyph, c, h * 0.48, IVORY))
+			TalentNode.branch_glyph(m, TalentNode.Glyph.CENTRE if t == null else TalentNode.glyph_of(t.branch), c, h * 0.48, IVORY))
 	return m
 
 

@@ -12,7 +12,7 @@ const ULT_GLYPH := 110
 const SHOUT_GLYPH := 120
 ## The Investida (E): a thrust with its speed lines.
 const RUSH_GLYPH := 121
-## The Maga's marks (M1b): the shot, the Explosão Rúnica, the Suspensão Arcana, the Tempestade dos Selos (ULT_GLYPH + Kind.STORM).
+## The Maga's marks (M1b): the shot, the Explosão Rúnica, the Suspensão Arcana, the Tempestade dos Selos (ULT_GLYPH + Kind.STORM), the Suspensão Absoluta (ULT_GLYPH + Kind.DOME).
 const BOLT_GLYPH := 130
 const BLAST_GLYPH := 131
 const DOME_GLYPH := 132
@@ -275,6 +275,11 @@ static func glyph(ci: CanvasItem, i: int, c: Vector2, r: float, w: Color, accent
 				var p := c + Vector2((k - 1) * r * 0.55, (1 - k % 2) * r * 0.1 + (k - 1) * r * 0.1)
 				ci.draw_arc(p, r * 0.34, 0.0, TAU, 16, w, th, true)
 				ci.draw_circle(p, r * 0.08, w)
+		113:  # the Suspensão Absoluta: a large dome over the ground with a smaller one inside it and a seal at the foot
+			ci.draw_arc(c + Vector2(0, r * 0.5), r * 0.95, PI, TAU, 24, w, th, true)
+			ci.draw_arc(c + Vector2(0, r * 0.5), r * 0.55, PI, TAU, 16, w, th * 0.8, true)
+			ci.draw_line(c + Vector2(-r * 0.95, r * 0.5), c + Vector2(r * 0.95, r * 0.5), w, th, true)
+			ci.draw_circle(c + Vector2(0, r * 0.15), r * 0.14, w)
 		_:
 			ci.draw_circle(c, r * 0.5, w)
 
