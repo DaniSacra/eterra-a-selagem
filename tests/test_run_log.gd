@@ -230,3 +230,36 @@ func test_a_quit_with_no_room_won_and_under_ten_seconds_is_not_kept() -> void:
 	assert_true(RunLog.worth_keeping("quit", 0, 10.0), "ten seconds in")
 	assert_true(RunLog.worth_keeping("death", 0, 2.0), "a death always counts")
 	assert_true(RunLog.worth_keeping("victory", 0, 2.0))
+
+
+# ---------- version 8 (BL-11, CF-08, RD-04): cause, oaths, hazard blows by room ----------
+
+func test_version_7_lines_read_with_the_version_8_fields() -> void:
+	var old := RunLog.normalized({"version": 7, "outcome": "death", "rooms": [{"depth": 1, "hp_in": 40.0}]})
+	assert_eq(old.cause, "")
+	assert_eq(old.oaths, {})
+	assert_eq(int(old.courage), 0)
+	assert_eq(int(old.version), 7, "keeps its own version")
+	assert_eq(RunLog.hp_enter(old.rooms[0]), 40.0, "hp_enter reads hp_in")
+
+
+func test_entries_count_the_hazards_blows_on_him_and_on_the_enemies() -> void:
+	var room := {"depth": 4, "hp_in": 30.0, "hits_by": {"runes": 2, "skeleton": 3, "plates": 1},
+		"hazard": {"kind": "runes", "strikes": 5, "also": {"strikes": 2}, "more": [{"strikes": 1}]}}
+	var result := {"rooms": [room]}
+	var e := RunLog.entry(result, {"cause": "runes"})
+	var r: Dictionary = e.rooms[0]
+	assert_eq(int(r.hazard_hits_hero), 3, "runes and plates, not the skeleton")
+	assert_eq(int(r.hazard_hits_enemy), 8)
+	assert_eq(float(r.hp_enter), 30.0)
+	assert_false(result.rooms[0].has("hazard_hits_hero"), "the RESULT is not touched")
+	assert_eq(e.cause, "runes")
+
+
+func test_a_run_that_ends_in_death_logs_its_cause_and_oaths() -> void:
+	_start(RunMap.Kind.FOUNTAIN)
+	game.last_hurt = DefeatCause.of(&"scythe", &"")
+	var e := game.run_entry("death", {"total": 0})
+	assert_eq(e.cause, "scythe")
+	assert_true(e.has("oaths"))
+	assert_eq(game.run_entry("victory", {"total": 0}).cause, "", "only a death has a cause")

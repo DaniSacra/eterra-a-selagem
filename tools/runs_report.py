@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Resume o registro de partidas (runs.jsonl) em Markdown pt-BR.
-Uso: python3 -I tools/runs_report.py [runs.jsonl] [--since=2026-11-23T18:00] [--until=...] [--source=human|bot|all] [--min-time=30] [--out=arquivo.md]
+Uso: python3 -I tools/runs_report.py [runs.jsonl] [--since=2026-11-23T18:00] [--until=...] [--source=human|bot|all] [--min-time=30] [--by=room] [--out=arquivo.md]
 Sem arquivo: usa o runs.jsonl do Windows (AppData/Roaming/EterraASelagem). Só biblioteca padrão."""
 import json, sys, os, collections
 
@@ -45,6 +45,53 @@ def used(x):
         "Ômega": x.get("omegas", 0),
         "Especial (golpe forte)": dealt(x, "special", "omega_special"),
     }
+
+
+HAZARDS = {"runes", "plates", "chain", "roots", "slit", "trap", "crystal", "rocks", "urn", "oil", "niche", "plant", "sag", "spikes", "spikeplate"}
+
+
+def strikes(hz):
+    if not hz:
+        return 0
+    return hz.get("strikes", 0) + strikes(hz.get("also")) + sum(strikes(m) for m in hz.get("more", []))
+
+
+def by_room(real):
+    """Por sala (BL-11, CF-08, RD-04): entradas, mortes e causa, vida ao entrar, dano por fonte, golpes de perigo e golpes sem carga de esquiva
+    (hurt_ctx com dash_ready falso; só os 60 primeiros golpes de cada partida). Lê linhas antigas: o que falta vira 0."""
+    rooms = collections.defaultdict(lambda: {"in": 0, "deaths": 0, "cause": collections.Counter(), "hp": [], "dmg": collections.Counter(),
+                                              "hits": 0, "hz_hero": 0, "hz_enemy": 0, "ctx": 0, "dry": 0})
+    for x in real:
+        for r in x.get("rooms") or []:
+            a = rooms[r.get("depth", 0)]
+            a["in"] += 1
+            hp = r.get("hp_enter", r.get("hp_in"))
+            if hp is not None:
+                a["hp"].append(hp)
+            for k, v in (r.get("hurt_by") or {}).items():
+                a["dmg"][k] += v
+            hb = r.get("hits_by") or {}
+            a["hits"] += sum(hb.values())
+            a["hz_hero"] += r["hazard_hits_hero"] if "hazard_hits_hero" in r else sum(v for k, v in hb.items() if k in HAZARDS)
+            a["hz_enemy"] += r["hazard_hits_enemy"] if "hazard_hits_enemy" in r else strikes(r.get("hazard"))
+        for h in x.get("hurt_ctx") or []:
+            a = rooms[h.get("room", 0)]
+            a["ctx"] += 1
+            a["dry"] += 0 if h.get("dash_ready") else 1
+        if x.get("outcome") == "death":
+            a = rooms[x.get("room", 0)]
+            a["deaths"] += 1
+            a["cause"][x.get("cause") or (x.get("last_hurt") or {}).get("attack") or (x.get("last_hurt") or {}).get("enemy") or "?"] += 1
+    rows = []
+    for d, a in sorted(rooms.items()):
+        total = sum(a["dmg"].values()) or 1
+        top = a["dmg"].most_common(1)
+        rows.append([d, a["in"], a["deaths"], ", ".join("%s %d" % kv for kv in a["cause"].most_common(3)) or "-",
+                     "%.0f" % avg(a["hp"]) if a["hp"] else "-", "%s %d%%" % (top[0][0], 100 * top[0][1] / total) if top else "-",
+                     "%d / %d" % (a["hz_hero"], a["hz_enemy"]),
+                     "%d de %d (%d%%)" % (a["dry"], a["ctx"], 100 * a["dry"] / a["ctx"]) if a["ctx"] else "-"])
+    return table(["Sala", "Entradas", "Mortes", "Causa (top 3)", "Vida ao entrar", "Fonte de mais dano", "Perigo: no herói / nos inimigos",
+                  "Golpes sem carga de esquiva"], rows)
 
 
 def main(argv):
@@ -93,6 +140,9 @@ def main(argv):
         rows.append([s, h, len(g), sum(1 for x in g if x["outcome"] == "victory"), sum(1 for x in g if x["outcome"] == "death"),
                      fmt_t(avg([x.get("time", 0) for x in g])), "%.1f" % avg([x.get("room", 0) for x in g]), "%.0f" % avg([x.get("mastery_level", 0) for x in g])])
     o.append(table(["Save", "Herói", "Partidas", "Vitórias", "Mortes", "Tempo médio", "Sala média", "Maestria média"], rows))
+    if opts.get("by") == "room":
+        o += ["## Por sala", "", by_room(real),
+              "Golpes sem carga de esquiva: golpes levados com 0 cargas, do `hurt_ctx` (até 60 por partida). Perigo: golpes do cenário no herói e golpes do cenário que atingem inimigos (`strikes`). Linhas antigas sem `cause` usam o último golpe.", ""]
     o += ["## Mortes (sala e tempo)", ""]
     deaths = [x for x in real if x.get("outcome") == "death"]
     byroom = collections.Counter(x.get("room", 0) for x in deaths)

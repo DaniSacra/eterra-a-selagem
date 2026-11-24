@@ -17,7 +17,10 @@ const PATH := "user://runs.jsonl"
 ## 6 (Ofícios, Roteiro A; OficiosRun.report): oficios (finds, find_by, marked, gather: veins, stones, gather_s,
 ## noted; pity: due, passed_guardian).
 ## 7 (KT 9, CB 5): uses, the times each button was used (RunLog.USE_KEYS) and the blows taken with no dodge charge.
-const VERSION := 7
+## 8 (BL-11, CF-08, RD-04): cause (what dealt the killing blow, "" off a death), oaths (the Juramentos sworn, id: rank),
+## courage (Coragem's stacks) and, in each room, the hazard's blows on him and on the enemies (RunLog.annotate_rooms).
+## A room's life walking in is hp_in (hp_enter reads it).
+const VERSION := 8
 ## The counts of `uses`: Q, E, Shift (the ultimate), Space (dodges) and the blows taken with 0 dodge charges.
 const USE_KEYS: Array[String] = ["q", "e", "shift", "space", "dry_hits"]
 ## The field of version 7 and what an older line reads as (nothing counted).
@@ -38,6 +41,11 @@ const MAP_FIELDS := {"map": {}}
 const KEEP_FIELDS := {"materials": {}, "forge": {}, "talents_opened": 0, "angels": []}
 ## The field of version 6 and what an older line (no Ofícios) reads as.
 const OFICIOS_FIELDS := {"oficios": {}}
+## The field of version 8 and what an older line reads as (nobody died of it, no oaths, no Coragem).
+const CAUSE_FIELDS := {"cause": "", "oaths": {}, "courage": 0}
+## What strikes from the floor or the walls (DefeatCause keys): a blow from one of these is a hazard's.
+const HAZARD_SOURCES: Array[String] = ["runes", "plates", "chain", "roots", "slit", "trap", "crystal", "rocks", "urn", "oil", "niche",
+	"plant", "sag", "spikes", "spikeplate"]
 ## Who played a run (source).
 ## A "quit" before any room was won and within this many seconds is someone passing through the Portal: not logged.
 const EMPTY_QUIT_S := 10.0
@@ -51,6 +59,8 @@ const OUTCOMES: Array[String] = ["victory", "death", "quit"]
 static func entry(result: Dictionary, extra: Dictionary) -> Dictionary:
 	var out := result.duplicate(true)
 	out["version"] = VERSION
+	if out.get("rooms") is Array:
+		out["rooms"] = annotate_rooms(out.rooms)
 	for k: String in extra:
 		out[k] = extra[k]
 	return out
@@ -91,7 +101,7 @@ static func normalized(e: Dictionary) -> Dictionary:
 	if int(e.get("version", 1)) >= VERSION:
 		return e
 	var out := e.duplicate(true)
-	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS, USES_FIELDS]:
+	for fields: Dictionary in [HERO_FIELDS, MAP_FIELDS, KEEP_FIELDS, OFICIOS_FIELDS, USES_FIELDS, CAUSE_FIELDS]:
 		for k: String in fields:
 			if not out.has(k):
 				out[k] = fields[k].duplicate() if fields[k] is Array or fields[k] is Dictionary else fields[k]
@@ -126,3 +136,36 @@ static func source(bot: bool) -> String:
 ## Whether a run is worth a line in the log: not a "quit" with no room won and under EMPTY_QUIT_S seconds.
 static func worth_keeping(outcome: String, rooms_won: int, time: float) -> bool:
 	return outcome != "quit" or rooms_won > 0 or time >= EMPTY_QUIT_S
+
+
+## The rooms of an entry with, in each, hazard_hits_hero (blows of the floor on the paladin, from hits_by) and
+## hazard_hits_enemy (strikes of the floor, which hurt the enemies in it; RoomTally.hazard), and hp_enter. Only for the
+## log: the RESULT's rooms are not touched (a copy is returned).
+static func annotate_rooms(rooms: Array) -> Array:
+	var out := rooms.duplicate(true)
+	for r: Variant in out:
+		if not r is Dictionary:
+			continue
+		var hits := 0
+		for k: String in (r.get("hits_by", {}) as Dictionary):
+			if HAZARD_SOURCES.has(k):
+				hits += int(r.hits_by[k])
+		r["hazard_hits_hero"] = hits
+		r["hazard_hits_enemy"] = hazard_strikes(r.get("hazard", {}))
+		r["hp_enter"] = hp_enter(r)
+	return out
+
+
+## The strikes of a room's hazards (the first, "also" and "more").
+static func hazard_strikes(hz: Dictionary) -> int:
+	if hz.is_empty():
+		return 0
+	var n := int(hz.get("strikes", 0)) + hazard_strikes(hz.get("also", {}))
+	for m: Dictionary in hz.get("more", []):
+		n += hazard_strikes(m)
+	return n
+
+
+## The life a room was entered with (hp_in, whatever the line's version; -1 if not kept).
+static func hp_enter(room: Dictionary) -> float:
+	return float(room.get("hp_enter", room.get("hp_in", -1.0)))
