@@ -189,7 +189,7 @@ const EXTRA := {"damage": 15.0, "windup": 0.14, "recovery": 12.0 / 60.0, "move_h
 
 func _extra_blows(spin: ComboNode) -> ComboNode:
 	var back := _move(&"cut4", L, &"Slash_A", [&"light"],
-		{"damage": EXTRA.damage, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.1, "recovery": 9.0 / 60.0,
+		{"damage": EXTRA.damage, "reach": 430.0 / U, "width": 150.0, "knockback": COMBO_PUSH[0], "windup": 0.12, "recovery": 9.0 / 60.0,
 		"move_hold": 12.0 / 60.0, "magick_per_hit": 0.5, "chain_window": 0.4, "hit_stop_ms": 30.0, "shake": 0.6, "move_scale": 0.0}, [spin])
 	return _move(&"thrust4", L, &"Sword_Attack", [&"light", &"thrust"],
 		{"damage": EXTRA.damage, "shape": ComboNode.Shape.LINE, "reach": 430.0 / U, "width": 1.6, "knockback": COMBO_PUSH[1],

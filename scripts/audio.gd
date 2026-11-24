@@ -115,6 +115,12 @@ const SOUNDS := {
 	&"circle": [[W.SINE, 523, 784, 0.35, 0.18, 2.5, 0.0], [W.TRIANGLE, 1046, 1568, 0.3, 0.08, 3.0, 0.05]],
 	&"circle_omega": [[W.SINE, 392, 784, 0.5, 0.22, 2.0, 0.0], [W.TRIANGLE, 784, 1568, 0.45, 0.1, 2.5, 0.06], [W.NOISE, 2000, 5000, 0.3, 0.06, 3.0, 0.0]],
 	&"circle_burst": [[W.NOISE, 1400, 300, 0.3, 0.32, 3.0, 0.0], [W.SINE, 196, 98, 0.35, 0.32, 3.0, 0.0], [W.TRIANGLE, 784, 392, 0.3, 0.12, 3.0, 0.0]],
+	# Apogeu (CF-04): the sequence's sum landing in the last blow, a low drop and a bright ring over the spin's hit
+	&"apogee": [[W.SINE, 130, 55, 0.4, 0.34, 2.5, 0.0], [W.NOISE, 2400, 400, 0.25, 0.2, 3.0, 0.0], [W.TRIANGLE, 988, 1480, 0.35, 0.12, 2.0, 0.04]],
+	# the Maga's reactions (CF-07), three timbres: Choque Térmico a crack with a low thump, Sobrecarga a bright zap, Cristalização a glass chime
+	&"react_thermal": [[W.NOISE, 3000, 600, 0.18, 0.2, 3.0, 0.0], [W.SINE, 220, 110, 0.2, 0.22, 2.5, 0.0]],
+	&"react_overload": [[W.SAW, 1800, 500, 0.16, 0.14, 3.0, 0.0], [W.NOISE, 5000, 2000, 0.12, 0.12, 3.0, 0.0]],
+	&"react_crystal": [[W.TRIANGLE, 1568, 2349, 0.22, 0.16, 2.0, 0.0], [W.SINE, 2093, 1568, 0.2, 0.1, 2.0, 0.03]],
 	# the ultimate: the Emeth gathering in the gesture, the cleave splitting the floor, the Voragem's turning breath
 	# and its implosion (Ultimates; CombatSounds ult_*)
 	&"ult_gesture": [[W.TRIANGLE, 330, 990, 0.3, 0.14, 1.5, 0.0], [W.NOISE, 800, 3200, 0.3, 0.08, 1.8, 0.0]],

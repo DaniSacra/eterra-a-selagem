@@ -8,6 +8,12 @@ const FIRE := Color(1.0, 0.42, 0.0)
 const COLD := Color(0.35, 0.88, 1.0)
 const VOLT := Color(1.0, 0.97, 0.78)
 
+## The burst of each reaction (CF-07: one ring of this color, 0.25 s at most): Choque Térmico between the fire and the cold
+## (they are told apart from both), Sobrecarga the volt, Cristalização the cold.
+const REACT_THERMAL := Color(1.0, 0.82, 0.62)
+const REACT_OVERLOAD := VOLT
+const REACT_CRYSTAL := COLD
+
 ## Smallest RGB distance each element keeps from every reserved color.
 const MIN_DISTANCE := 0.25
 

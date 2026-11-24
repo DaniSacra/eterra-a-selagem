@@ -504,3 +504,123 @@ func test_the_armored_take_more_from_the_investida_and_are_not_stunned() -> void
 	e.def.elite = true
 	game.combat._dash_through(e, [&"light", &"dash"] as Array[StringName])
 	assert_eq(e.stun_t, 0.0)
+
+
+# ---------- Lote R1 (backlog 2026-11-24 noite) ----------
+## Stats some code reads while StunRule is NONE (an inert stat would make a Gift that does nothing).
+const LIVE_STATS: Array[StringName] = [&"dodge_window_add", &"cadence_pct", &"apogee_pct", &"damage_pct", &"attack_magick_pct",
+	&"charge_time_pct", &"omega_cost_pct", &"final_pct", &"armor_pct", &"reach_pct", &"push_pct", &"stun_pct", &"dash_pierce", &"dash_stun"]
+
+
+func test_every_gift_changes_some_number_with_the_stun_rule_none() -> void:
+	StunRule.live = StunRule.Mode.NONE
+	var cat := HeroDef.warrior().talents().catalog
+	for t: TalentDef in cat:
+		if t.combos != "":
+			continue  # Maestria Marcial: a tree of five blows, tested above
+		var changed := false
+		for m in t.mods:
+			var tags: Array[StringName] = []
+			if m.tag != &"":
+				tags.append(m.tag)
+			var ids: Array[StringName] = [t.id]
+			var s := _state(ids)
+			if LIVE_STATS.has(m.stat) and not is_zero_approx(s.value(m.stat, tags)):
+				changed = true
+		assert_true(changed, "%s changes a number" % t.id)
+	# the two that were tied to the stun: Voz do Leão interrupts the common (an exception), Imposição is the Quebra of every blow
+	assert_true(StunRule.shout_stuns(true, 0.5))
+	assert_false(StunRule.shout_stuns(false, 0.5))
+	assert_false(StunRule.shout_stuns(true, 0.0))
+
+
+func test_voz_do_leao_interrupts_the_common_for_one_second_with_the_stun_rule_none() -> void:
+	StunRule.live = StunRule.Mode.NONE
+	var stuns := []
+	for ids: Array in [[], [&"voz_do_leao"]]:
+		var typed: Array[StringName] = []
+		typed.assign(ids)
+		_run(typed)
+		var e := _enemy(&"skeleton", Vector2(1.5, 0))
+		e.hp = 5000.0
+		var elite := _enemy(&"skeleton", Vector2(-1.5, 0))
+		elite.hp = 5000.0
+		elite.def = elite.def.duplicate()
+		elite.def.elite = true
+		game.combat.strike(_node(game.player.tree, &"shout"), game.player.pos, Vector2.RIGHT)
+		stuns.append([e.stun_t, elite.stun_t])
+	assert_eq(stuns[0][0], 0.0, "no Gift, no stun")
+	assert_almost_eq(stuns[1][0], 1.0, 0.001)
+	assert_eq(stuns[1][1], 0.0, "an elite is never stunned by it")
+
+
+func test_the_twelve_gifts_cost_28_to_32_memory() -> void:
+	var total := 0
+	for t: TalentDef in HeroDef.warrior().talents().catalog:
+		total += t.memory_cost
+		if t.unlock_level >= 2 and t.unlock_level <= 5:
+			assert_eq(t.memory_cost, 1, "%s: Mastery 2 to 5 costs 1" % t.id)
+	assert_between(total, 28, 32)
+
+
+## The timing of a blow of the tree as it plays (seconds): [windup, recovery] over the speed the Gifts give it.
+func _timing(id: StringName, speed: float) -> Array[float]:
+	var n := _node(game.player.tree, id)
+	return [n.windup / speed, n.recovery / speed]
+
+
+func test_with_no_gift_the_blows_play_as_before_the_redesign() -> void:
+	# CF-02: the feel probe (42 scenarios) printed the same lines at d841c81 and here; these are the frames of the blows 1 to 3
+	_run()
+	assert_eq(game.hero_gifts.state.attack_speed(CUT), 1.0)
+	assert_eq(game.hero_gifts.state.attack_speed(SPIN), 1.0)
+	var f := func(id: StringName) -> Array:
+		var n := _node(game.player.tree, id)
+		return [roundi(n.windup * 60.0), roundi(n.recovery * 60.0)]
+	assert_eq(f.call(&"cut1"), [5, 8])
+	assert_eq(f.call(&"cut2"), [8, 13])
+	assert_eq(f.call(&"cut3"), [17, 18], "the glint is added on top, as before")
+
+
+func test_cadence_and_maestria_keep_the_blows_in_order() -> void:
+	# CF-03: the 8% a blow stops at 24% (3 blows), so the fifth blow is never played as fast as the first one
+	var s := _state([&"cadencia"])
+	for i in 5:
+		s.chain_hit(CUT)
+	assert_almost_eq(s.attack_speed(CUT), 1.0 + GiftState.CADENCE_CAP, 0.0001)
+	_run([&"cadencia", &"maestria_marcial"])
+	var speed := 1.0 + GiftState.CADENCE_CAP
+	var spin := _timing(&"cut3", speed)
+	var first := _timing(&"cut1", 1.0)
+	assert_gt(spin[0] * 60.0, first[0] * 60.0 + 4.0, "the finisher's preparation is 4 frames or more over the opener's")
+	for id: StringName in [&"cut3", &"cut4", &"thrust4"]:
+		assert_gte(_timing(id, speed)[1] * 60.0, 6.0, "%s recovers for 6 frames or more" % id)
+	assert_gt(_timing(&"cut4", speed)[0], first[0] * 1.1, "the fourth blow does not wind up like the first")
+
+
+func test_apogeu_lands_with_a_long_hit_stop_a_shake_and_a_sound() -> void:
+	_run([&"maestria_marcial", &"apogeu"])
+	var e := _enemy(&"skeleton", Vector2(1.5, 0))
+	e.hp = 5000.0
+	game.fx.hits.clear()
+	_strike_loss(e, &"cut1")
+	var plain := game.fx.hits.left()
+	for id: StringName in [&"cut2", &"thrust4", &"cut4"]:
+		_strike_loss(e, id)
+	game.fx.hits.clear()
+	_strike_loss(e, &"cut3")
+	assert_gte(game.fx.hits.left() * 1000.0, 65.0, "Apogeu: 65 ms or more")
+	assert_gt(game.fx.hits.left(), plain)
+	assert_false(game.combat._apogee_landed, "spent")
+
+
+func test_the_investida_gives_one_frame_of_hit_stop_a_body_three_at_most() -> void:
+	_run([&"investida_implacavel"])
+	game.hero_gifts.step(0.0)
+	for k in 5:
+		var e := _enemy(&"skeleton", Vector2(1.5 + k * 0.7, 0))
+		e.hp = 5000.0
+	game.fx.hits.clear()
+	game.combat._dash_stops = 0
+	game.combat.strike(_node(game.player.tree, &"dash_cut"), game.player.pos, Vector2.RIGHT)
+	assert_eq(game.combat._dash_stops, Combat.DASH_STOPS_MAX, "three frames at most")

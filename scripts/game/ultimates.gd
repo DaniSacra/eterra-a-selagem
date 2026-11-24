@@ -521,7 +521,8 @@ func _converge_tick(v: Vortex) -> void:
 			continue
 		var boss := e.def.behavior == EnemyDef.Behavior.BOSS
 		var share := def.converge_share(boss, not boss and e.def.stun_time <= 0.0, e.def.elite, kit.converge_boss_share)
-		if not _hit(e, v.plan.damage_per_tick() * share, Vector2.ZERO, 0.0, 0.0):
+		# the Convergência does not cover the boss (CF-07): his damage share, no element, no reaction burst on him
+		if not _hit(e, v.plan.damage_per_tick() * share, Vector2.ZERO, 0.0, 0.0) and not boss:
 			for el in v.plan.elements_at(v.step_i):
 				game.arcane.apply_element(e, el)
 	game.fx.ring(v.at, v.radius * 0.8, color, 0.25, 0.1, true)
