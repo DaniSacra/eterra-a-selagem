@@ -296,6 +296,14 @@ Referência detalhada movida do `CLAUDE.md` em 2026-11-21. Ler só a seção que
   cartas são as mesmas (`Encounters.cards_of`). Cores dos selos (`AngelSeal.TINT`) longe do vermelho do perigo, do
   esmeralda da Emeth e do petróleo do herói: Chama âmbar terroso (matiz 24), Vigília sálvia (matiz 88; era petróleo, 177);
   testado com 20 graus de folga.
+- **PT-10 (2026-11-23, referências do Daniel)**: o Encontro virou palco (`EncounterScreen` + `AngelStage` + `AngelFx`): um anjo em
+  cada lado, altura toda, o efeito da família sobre ele, o em foco aceso e um pouco mais perto, caixa de fala embaixo ao centro
+  com o nome, a família, a linha e "Ouvir {nome}"; um anjo só ocupa o lado esquerdo e a mesma caixa (BC-4). `--encounter=a,b`
+  abre um encontro na hora (captura). A Bênção: a tecla vai **dentro da frase** (`{key}` nos textos `boon_<id>_desc` dos 31
+  golpes de botão; `BoonChoice.key_in_text`, "O ataque [Mouse esq.] incendeia..."; segue controle e tecla remapeada; Bênção
+  que age sozinha não tem `{key}`). O Encanto (`EnchantChoice`): a Emeth cravada na pedra e acesa à esquerda
+  (`EnchantAltar`, desenhada, sem modelo) e o **ichthys** (`Ichthys`, duas curvas deitadas, desenhado) no medalhão de cada
+  carta e na face da pedra; a página desloca para a direita pela largura do altar. `--enchant-choice` abre a tela na hora.
 - **Trazidos e Bolsa**: a tela de fim mostra "Trazidos" sob as Bênçãos levadas (`EndScreen._brought`: `stats.materials`,
   senão `game.materials_banked`, e sem save o que a descida achou; nada quando nada veio). O hub tem a Bolsa no canto
   de cima à direita sobre um véu de tinta (`HubLabels.purse`, `PURSE_MARGIN`), escondida com tela aberta.

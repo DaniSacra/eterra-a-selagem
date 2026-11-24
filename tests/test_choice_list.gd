@@ -9,7 +9,7 @@ func _state() -> BoonState:
 	return BoonState.new(BoonState.load_catalog())
 
 
-func _meeting() -> void:
+func _meeting(ids := "sarael,nivael") -> void:
 	Dev._args["seed"] = "5"
 	Dev._args["boons"] = "0"
 	game = (load("res://scenes/game.tscn") as PackedScene).instantiate()
@@ -19,7 +19,7 @@ func _meeting() -> void:
 	game.player.pos = Vector2.ZERO
 	await wait_process_frames(2)
 	game.rooms.room.reward = RunMap.Reward.BOON
-	Dev.put("angels", "sarael,nivael")
+	Dev.put("angels", ids)
 	game.rooms._room_cleared()
 	game.rooms._collect()
 	Dev.drop("angels")
@@ -162,24 +162,65 @@ func test_without_the_held_count_the_options_open_at_once() -> void:
 	assert_true(choice.cards()[0].visible)
 
 
-func test_the_meeting_has_two_figures_one_lit_and_the_hear_line() -> void:
+func test_the_meeting_has_two_stages_one_lit_and_the_hear_line() -> void:
 	await _meeting()
 	var meet := game._screen as EncounterScreen
 	assert_eq(meet.buttons.size(), 2)
+	assert_eq(meet.stages.size(), 2)
 	await wait_process_frames(2)
-	var left := meet.buttons[0] as EncounterScreen.AngelCard
-	var right := meet.buttons[1] as EncounterScreen.AngelCard
-	assert_true(left.painted and right.painted)
-	assert_lt(left.get_global_rect().end.x, right.get_global_rect().position.x, "the arena between them")
-	assert_gt(left.modulate.a, right.modulate.a, "the one in focus lit, the other dimmed")
-	right.grab_focus()
-	assert_gt(right.modulate.a, left.modulate.a)
-	assert_eq((right.find_child("Hear", true, false) as Label).text, T.t(&"encounter_hear", {"name": T.t(right.angel.name_key)}))
-	assert_true(right.find_child("Figure", true, false).material.get_shader_parameter(&"flip"), "the right one looks inwards")
-	assert_false(left.find_child("Figure", true, false).material.get_shader_parameter(&"flip"))
-	var view := meet.get_viewport_rect()
-	for b in meet.buttons:
-		assert_true(view.encloses(b.get_global_rect()))
+	var left := meet.stages[0]
+	var right := meet.stages[1]
+	assert_lt(left.get_global_rect().end.x, right.get_global_rect().position.x + 1.0, "one at each side")
+	assert_eq(left.size.y, meet.size.y, "the whole height")
+	assert_gt(left.lit, right.lit, "the one in focus lit, the other dimmed")
+	assert_gt(left.fx.strength, right.fx.strength)
+	meet.buttons[1].grab_focus()
+	await wait_process_frames(2)
+	assert_eq(meet.focus, 1)
+	assert_eq((meet.find_child("name", true, false) as Label).text, T.t(meet.angels[1].name_key), "the speech names the one in focus")
+	assert_eq((meet.find_child("line", true, false) as Label).text, T.t(meet.angels[1].line_key))
+	assert_eq((meet.find_child("Hear", true, false) as Label).text, T.t(&"encounter_hear", {"name": T.t(meet.angels[1].name_key)}))
+	await wait_seconds(0.4)
+	assert_gt(right.lit, left.lit, "the light followed in 0.2 s")
+	assert_true(right.figure.get_child(0).material.get_shader_parameter(&"flip"), "the right one looks inwards")
+	assert_false(left.figure.get_child(0).material.get_shader_parameter(&"flip"))
+
+
+func test_left_and_right_change_the_angel_in_focus() -> void:
+	await _meeting()
+	var meet := game._screen as EncounterScreen
+	await wait_process_frames(2)
+	assert_eq(meet.focus, 0)
+	var ev := InputEventAction.new()
+	ev.action = &"ui_right"
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	await wait_process_frames(3)
+	assert_eq(meet.focus, 1)
+
+
+func test_a_lone_angel_speaks_first_for_a_person_and_a_press_goes_on() -> void:
+	await _meeting()
+	game.encounters.angels_now.clear()
+	game.close_screen()
+	EncounterScreen.attach(game)
+	game.encounters.dev_open("sarael")
+	await wait_process_frames(2)
+	var meet := game._screen as EncounterScreen
+	assert_not_null(meet, "BC-4: the stage before the options, as with a pair")
+	assert_eq(meet.buttons.size(), 1)
+	assert_eq(meet.stages.size(), 1)
+	assert_not_null(meet.stages[0].figure, "with its figure")
+	meet._opened_at -= BoonChoice.GUARD_MS * 2
+	meet.buttons[0].pressed.emit()
+	assert_true(game._screen is BoonChoice, "one press and the options")
+
+
+func test_autopick_never_waits_at_the_stage() -> void:
+	Dev.put("autopick", "1")
+	await _meeting()
+	Dev.drop("autopick")
+	assert_false(game._screen is EncounterScreen)
 
 
 func test_the_words_come_once_in_a_room_not_again_on_going_back() -> void:

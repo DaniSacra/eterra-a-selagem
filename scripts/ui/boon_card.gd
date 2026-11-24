@@ -609,7 +609,7 @@ func setup_enchant(e: EnchantDef) -> BoonCard:
 		medal.draw_circle(c, r + 4.0, UiKit.OLD_GOLD)
 		medal.draw_circle(c, r, Color(0.05, 0.09, 0.07))
 		medal.draw_circle(c + Vector2(-r * 0.15, -r * 0.18), r * 0.8, ENCHANT_GLOW.darkened(0.78))
-		DoorGlyph.enchant(medal, c, r * 1.5)
+		Ichthys.draw(medal, c, r * 1.25, Color(1.0, 0.95, 0.75), 3.0)
 		medal.draw_arc(c, r, 0.0, TAU, 48, Color(1.0, 0.9, 0.6, 0.8), 2.0, true))
 	crest = medal
 	_art(box).add_child(medal)

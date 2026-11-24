@@ -64,7 +64,8 @@ func open(chances: Array[float], psalm_chance: float) -> void:
 	if angels_now.is_empty():
 		game.open_cards([])  # nobody has a card for this hand: the rest card of today
 		return
-	if angels_now.size() == 1 or game.bot != null or Dev.has("autopick"):
+	# BC-4: a lone angel speaks first too, for a person (the robot and --autopick never wait)
+	if game.bot != null or Dev.has("autopick"):
 		choose(Encounter.affinity(game.boons, angels_now))
 		return
 	opened.emit(angels_now)
@@ -75,6 +76,21 @@ func open(chances: Array[float], psalm_chance: float) -> void:
 		screen.chosen.connect(func(a: AngelDef) -> void:
 			game.close_screen()
 			choose(a))
+
+
+## Dev (--encounter=a,b): opens a meeting with these angels (ids) at once, for captures.
+func dev_open(ids: String) -> void:
+	_chances = game.rooms.stage.rarity_chance
+	_psalm = 0.0
+	angels_now.clear()
+	for id in ids.split(",", false):
+		var a := book.find(StringName(id))
+		if a != null:
+			angels_now.append(a)
+	_entry = {"room": 0, "node": -1, "offered": [], "chose": "", "cards": [], "fallback": ""}
+	meetings.append(_entry)
+	if not angels_now.is_empty():
+		opened.emit(angels_now)
 
 
 ## Fatia 2 (sistemas.md 1.6): the one angel a Blessing's door shows (no meeting), drawn when the door opens on dice of

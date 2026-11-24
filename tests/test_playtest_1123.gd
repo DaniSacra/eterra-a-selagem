@@ -24,9 +24,7 @@ func test_the_hit_count_is_never_shown() -> void:
 
 func test_the_angels_are_larger_than_before() -> void:
 	# the painting is 2:3: its height sets its size (it was 270 in the meeting, 380 in the list)
-	assert_gte(EncounterScreen.FIGURE.y, 420.0)
 	assert_gte(BoonChoice.FIGURE.y, 420.0)
-	assert_lte(EncounterScreen.PAINTED_CARD.x * 2.0, EncounterScreen.PAGE_W, "the two cards fit the page")
 
 
 func test_a_guardians_door_is_no_meeting_and_the_two_show_different_angels() -> void:
