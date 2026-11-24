@@ -16,6 +16,8 @@ const BODY := 15
 const BUTTON := Vector2(270, 46)
 const MARK := 18.0
 const PHRASE_SKEW := 0.2
+## Red of the reasons that close a Gift (the Forja's missing-material red).
+const RUBRIC := Color("d9644f")
 
 var _disc: Disc
 var _name: Label
@@ -260,6 +262,11 @@ class Verb:
 
 	func _draw() -> void:
 		var rect := Rect2(Vector2.ZERO, size)
+		if not enabled and reason != "":
+			# cannot be paid: plain words in rubrica, no frame, no key, no hold bar (UI 7)
+			var rf := UiKit.BOLD_FONT
+			draw_string(rf, Vector2(0.0, size.y * 0.5 + (rf.get_ascent(17) - rf.get_descent(17)) * 0.5 - 2.0), reason, HORIZONTAL_ALIGNMENT_CENTER, size.x, 17, DonsPanel.RUBRIC)
+			return
 		var edge := UiKit.GOLD if enabled else UiKit.OLD_GOLD.darkened(0.3)
 		draw_style_box(UiKit.box(Color(0.1, 0.07, 0.05, 0.96) if enabled else Color(0.07, 0.06, 0.06, 0.9), edge, 2, 0, 8), rect)
 		var f := UiKit.BOLD_FONT
@@ -271,7 +278,7 @@ class Verb:
 		var w := size.x - x - 10.0
 		var base := Vector2(x, size.y * 0.5 + (f.get_ascent(fs) - f.get_descent(fs)) * 0.5 - 2.0)
 		draw_string(f, base, label.to_upper() if enabled else label, HORIZONTAL_ALIGNMENT_LEFT, w, fs, col)
-		if hold:
+		if hold and enabled:
 			var bar := Rect2(Vector2(10.0, size.y - 11.0), Vector2(size.x - 20.0, 6.0))
 			draw_rect(bar, Color(0.02, 0.015, 0.02, 0.9))
 			draw_rect(Rect2(bar.position, Vector2(bar.size.x * progress, bar.size.y)), UiKit.GOLD)

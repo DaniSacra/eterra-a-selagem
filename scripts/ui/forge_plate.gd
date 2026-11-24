@@ -206,4 +206,4 @@ func _button_draw() -> void:
 				draw_circle(c, 6.0, Color("f5a050"))
 			else:
 				draw_arc(c, 6.0, 0.0, TAU, 16, Color("8a5a30"), 1.5, true)
-		draw_string(UiKit.TEXT_FONT, Vector2(dx + 66, r.position.y + 27), T.t(&"forge_hold_hint"), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, UiKit.DIM)
+		draw_string(UiKit.TEXT_FONT, Vector2(r.end.x + 14.0, r.position.y + 27), T.t(&"forge_hold_hint"), HORIZONTAL_ALIGNMENT_LEFT, -1, 14, UiKit.DIM)

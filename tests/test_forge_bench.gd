@@ -229,7 +229,7 @@ func test_the_marks_keep_their_distance() -> void:
 			assert_gte(a.distance_to(b), 120.0, "%s and %s" % [seen[i], seen[j]])
 
 
-func test_the_bag_shows_only_what_the_bench_uses() -> void:
+func test_the_bag_shows_the_same_three_coins_with_names() -> void:
 	var d := _data(5, true)
 	MaterialPurse.give(d, MaterialPurse.EMERALD, 2)
 	MaterialPurse.give(d, MaterialPurse.MEMORY, 9)
@@ -238,7 +238,7 @@ func test_the_bag_shows_only_what_the_bench_uses() -> void:
 	for c in f.find_child("purse", true, false).get_children():
 		if c is MaterialCount:
 			ids.append((c as MaterialCount).id)
-	assert_eq(ids, [MaterialPurse.SILVER, MaterialPurse.EMERALD] as Array[StringName], "no Memória at the forge")
+	assert_eq(ids, CoinCorner.WALLET_ORDER, "the same corner as the other screens")
 
 
 func test_the_text_of_the_bench_is_portuguese_without_dash() -> void:

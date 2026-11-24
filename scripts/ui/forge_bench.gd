@@ -24,8 +24,12 @@ static func edge_y(x: float) -> float:
 ## the guard's two prongs, the plane of the blade and the edge's middle notch.)
 const AT := {&"awaken": Vector2(208, 262), &"attack": Vector2(490, 206), &"special": Vector2(490, 320),
 	&"inscribe": Vector2(740, 262), &"temper": Vector2(880, 228), &"pick": Vector2(640, 262)}
-const LABEL_AT := {&"awaken": Vector2(208, 168), &"attack": Vector2(490, 168), &"special": Vector2(490, 168),
-	&"inscribe": Vector2(740, 168), &"temper": Vector2(880, 168), &"pick": Vector2(640, 168)}
+const LABEL_AT := {&"awaken": Vector2(208, 138), &"attack": Vector2(490, 138), &"special": Vector2(490, 138),
+	&"inscribe": Vector2(740, 138), &"temper": Vector2(880, 138), &"pick": Vector2(640, 168)}
+## The one line under a point's name: what it gives, in plain words (UI 9).
+const SUB_KEY := {&"awaken": &"forge_sub_awaken", &"attack": &"forge_sub_refine", &"special": &"forge_sub_refine",
+	&"inscribe": &"forge_sub_inscribe", &"temper": &"forge_sub_temper"}
+const RUBRIC := Color("d9644f")
 const LABEL_KEY := {&"awaken": &"forge_awaken", &"attack": &"forge_track_refine", &"special": &"forge_track_refine",
 	&"inscribe": &"forge_inscribe", &"temper": &"forge_track_temper", &"pick": &"oficio_pick"}
 const NOTCH_X: Array[float] = [800.0, 880.0, 960.0]
@@ -57,6 +61,8 @@ var pick_look := PickMark.Look.LOST
 ## The marks that exist (a point without its tool is covered by a cloth with a lock).
 var marks: Array[StringName] = []
 var sealed := {}
+## mark -> why it is closed now ("Falta a ferramenta", "Faltam 2 de Esmeralda"); the line under its name shows it with a lock.
+var causes := {}
 ## The marks with something to do now (an ember rim).
 var doing := {}
 var focus: StringName = &"temper"
@@ -289,12 +295,20 @@ func _socket(ci: Control, c: Vector2, r: float, letter: String) -> void:
 		ci.draw_string(UiKit.BOLD_FONT, c + Vector2(-20, 5), letter, HORIZONTAL_ALIGNMENT_CENTER, 40, 14, ghost)
 
 
+## A padlock (body and shackle) centred on c.
+func _lock(ci: Control, c: Vector2, half: float, col: Color) -> void:
+	ci.draw_rect(Rect2(c + Vector2(-half, -half * 0.25), Vector2(half * 2.0, half * 1.4)), col)
+	ci.draw_arc(c + Vector2(0, -half * 0.25), half * 0.55, PI, TAU, 10, col, 2.0)
+
+
 func _gem(ci: Control, dy: float) -> void:
 	if not marks.has(&"awaken"):
 		return
 	var c: Vector2 = AT[&"awaken"] + Vector2(0, dy)
 	if gem == &"":
 		_socket(ci, c, 19.0, "")
+		if causes.has(&"awaken"):
+			_lock(ci, c, 7.0, UiKit.DIM)
 		return
 	ci.draw_circle(c, 19.0, SOCKET_BG)
 	var col: Color = Color("f0a040")
@@ -341,7 +355,15 @@ func _labels(ci: Control, list: Array) -> void:
 		var col := UiKit.GOLD if focused_here else (UiKit.DIM if dim else UiKit.PALE)
 		var size_px := 20 if focused_here else 18
 		var at: Vector2 = LABEL_AT[m]
-		ci.draw_string(UiKit.TITLE_FONT, Vector2(at.x - 100, at.y), T.t(LABEL_KEY[m]), HORIZONTAL_ALIGNMENT_CENTER, 200, size_px, Color(col, _alpha_of(m)))
+		var alpha := _alpha_of(m)
+		ci.draw_string(UiKit.TITLE_FONT, Vector2(at.x - 100, at.y), T.t(LABEL_KEY[m]), HORIZONTAL_ALIGNMENT_CENTER, 200, size_px, Color(col, alpha))
+		var cause: String = causes.get(m, "")
+		if cause != "":
+			var w := UiKit.BOLD_FONT.get_string_size(cause, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+			_lock(ci, Vector2(at.x - w * 0.5 - 10.0, at.y + 16.0), 5.0, Color(RUBRIC, alpha))
+			ci.draw_string(UiKit.BOLD_FONT, Vector2(at.x - w * 0.5, at.y + 22.0), cause, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(RUBRIC, alpha))
+		elif SUB_KEY.has(m):
+			ci.draw_string(UiKit.TEXT_FONT, Vector2(at.x - 130, at.y + 22.0), T.t(SUB_KEY[m]), HORIZONTAL_ALIGNMENT_CENTER, 260, 14, Color(UiKit.DIM, alpha))
 
 
 func _effects(ci: Control) -> void:

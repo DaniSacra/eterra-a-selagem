@@ -2,7 +2,7 @@ class_name DonsScreen
 extends Control
 ## "Dons do Guerreiro" (docs/art/dons_medallion_spec.md, PT-12): the hero's Gifts on a medallion. The ground and the
 ## figure of the hero (DonsArt), the ring of nodes with their lit lines (MedallionView), the banner with the hero's name,
-## the counters of Devoção and Memória, the detail panel (DonsPanel) and the trace from the focused node to it. Opened by
+## the counters of Vagas and the wallet, the detail panel (DonsPanel) and the trace from the focused node to it. Opened by
 ## the Santuário's Árvore de Dons station (and --title --screen=dons [--hero=warrior|maga]).
 ## The rules are the Gifts chapter's of the Livro de Ahk, through HeroLoadout: a press puts a Gift on or takes it off, a
 ## sealed Gift is opened by HOLDING the press HOLD_TIME seconds (HoldGauge) with Memória, an ultimate is chosen; every
@@ -52,6 +52,7 @@ func open(data: Dictionary = {}, hero: String = "") -> void:
 	resized.connect(_place_stage)
 	Controls.device_changed.connect(func(_pad: bool) -> void: _tell(focus_id))
 	_build()
+	_attach_bar()
 
 
 func _build() -> void:
@@ -90,7 +91,7 @@ func _build() -> void:
 	_stage.add_child(Banner.new().setup(hero_id))
 	_stage.add_child(_logo())
 	_counters = Counters.new()
-	_counters.setup()
+	_counters.setup(_data)
 	_stage.add_child(_counters)
 	_counters.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
 	_counters.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -104,7 +105,6 @@ func _build() -> void:
 	_stage.add_child(_notes())
 	_stage.add_child(_howto())
 	_stage.add_child(Legend.new())
-	_stage.add_child(_hint())
 	_mem_shown = loadout.memory()
 	# --dons-focus=id puts the focus on a node at once (captures)
 	if Dev.has("dons-focus") and view.nav.pos.has(StringName(Dev.arg("dons-focus"))):
@@ -169,14 +169,14 @@ func _logo() -> Control:
 	return box
 
 
-func _hint() -> Control:
-	var l := UiKit.label("", UiKit.DIM, 14)
-	l.name = "hint"
-	l.position = Vector2(36, 686)
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	l.text = T.t(&"dons_hint" if SaveData.open_heroes(_data).size() > 1 else &"dons_hint_one", {"prev": UiKit.action_label(&"tab_prev"),
-		"next": UiKit.action_label(&"tab_next"), "swap": UiKit.action_label(&"menu_reroll"), "back": UiKit.action_label(&"ui_cancel")})
-	return l
+## The keys at the foot, the same bar as the other screens: the sectors and the hero on the left, the way back on the right.
+func _attach_bar() -> void:
+	var keys: Array = [ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), func() -> void: closed.emit())]
+	if SaveData.open_heroes(_data).size() > 1:
+		keys.push_front(ActionBar.entry(&"menu_reroll", T.t(&"bar_swap_hero"), swap_hero, true))
+	keys.push_front(ActionBar.entry(&"tab_next", T.t(&"bar_sector_next"), func() -> void: _focus(view.nav.sector_step(focus_id, 1)), true))
+	keys.push_front(ActionBar.entry(&"tab_prev", T.t(&"bar_sector_prev"), func() -> void: _focus(view.nav.sector_step(focus_id, -1)), true))
+	ActionBar.attach(self, keys)
 
 
 ## One plain sentence of what each counter is (the children's test: the two currencies were mixed up).
@@ -188,7 +188,7 @@ func _notes() -> Control:
 	box.add_theme_constant_override(&"separation", 4)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	for key: StringName in [&"dons_devotion_note", &"dons_memory_note"]:
-		var l := UiKit.label(T.t(key), UiKit.PALE, 14)
+		var l := UiKit.label(T.t(key), UiKit.STRONG, 18)
 		l.custom_minimum_size.x = PANEL_SIZE_X
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.add_theme_constant_override(&"outline_size", 3)
@@ -527,42 +527,55 @@ class Banner:
 			draw_line(c + Vector2(0, 6), c + Vector2(0, 16), col, 3.0, true)
 
 
-## The two plates at the top right: Devoção (free of the whole) and Memória.
+## The plates at the top right: the free Vagas of the whole, and the wallet (Prata, Memória, Esmeralda, the same corner
+## as the other screens; the Memória counts down while a Dom opens).
 class Counters:
 	extends HBoxContainer
 
-	var _devotion: Label
-	var _memory: Label
+	var _vagas: Label
+	var _wallet: HBoxContainer
+	var _data: Dictionary
 
-	func setup() -> void:
+	func setup(data: Dictionary) -> void:
 		name = "counters"
+		_data = data
 		add_theme_constant_override(&"separation", 12)
 		mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_devotion = _plate(false)
-		_memory = _plate(true)
+		_vagas = _plate(null)
+		_wallet = CoinCorner.wallet(data, 17, 20.0)
+		_wallet.alignment = BoxContainer.ALIGNMENT_BEGIN
+		_wallet.add_theme_constant_override(&"separation", 12)
+		_plate(_wallet)
 
-	func _plate(memory: bool) -> Label:
+	func _plate(content: Control) -> Label:
 		var p := PanelContainer.new()
 		p.add_theme_stylebox_override(&"panel", UiKit.box(Color(0.045, 0.032, 0.04, 0.94), UiKit.OLD_GOLD, 2, 8, 16))
 		p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(p)
+		if content != null:
+			p.add_child(content)
+			return null
 		var row := HBoxContainer.new()
 		row.add_theme_constant_override(&"separation", 7)
 		p.add_child(row)
 		var icon := DonsPanel.CostIcon.new()
-		icon.memory = memory
 		row.add_child(icon)
 		var l := UiKit.label("", UiKit.STRONG, 18, UiKit.BOLD_FONT)
 		l.add_theme_constant_override(&"outline_size", 0)
 		row.add_child(l)
-		add_child(p)
 		return l
 
 	func update(loadout: HeroLoadout, memory_shown: float) -> void:
-		_devotion.text = T.t(&"dons_devotion", {"free": loadout.devotion() - loadout.used(), "max": loadout.devotion()})
-		_memory.text = T.t(&"dons_memory", {"n": roundi(memory_shown)})
+		_vagas.text = T.t(&"dons_devotion", {"free": loadout.devotion() - loadout.used(), "max": loadout.devotion()})
+		for c in _wallet.get_children():
+			var mc := c as MaterialCount
+			mc.set_amount(roundi(memory_shown) if mc.id == MaterialPurse.MEMORY else MaterialCount.amount_of(_data, mc.id))
 
 	func texts() -> Array[String]:
-		return [_devotion.text, _memory.text]
+		var out: Array[String] = [_vagas.text]
+		for c in _wallet.get_children():
+			out.append((c as MaterialCount).number.text)
+		return out
 
 
 ## The 2 px gold line from the focused node to the panel (only from the right half: from the left it would cross the

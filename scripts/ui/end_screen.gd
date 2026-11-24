@@ -398,9 +398,19 @@ func _brought(parent: Control, stats: Dictionary) -> void:
 		row.add_child(l)
 	if row.get_child_count() == 0:
 		row.free()
+		parent.add_child(_nothing_brought())
 		return
 	parent.add_child(_head(T.t(&"end_brought")))
 	parent.add_child(row)
+
+
+## The way to bring something home when the descent brought nothing (EC 10): one line in the pale ink, centred.
+func _nothing_brought() -> Label:
+	var l := UiKit.shadow(UiKit.label(T.t(&"end_brought_none"), UiKit.PALE, BROUGHT_SIZE - 2))
+	l.name = "brought_none"
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return l
 
 
 ## A part's name, small, in old gold, centred.

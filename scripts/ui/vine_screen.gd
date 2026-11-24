@@ -79,7 +79,7 @@ func open(data: Dictionary = {}) -> void:
 		_stage.add_child(_bud(n))
 	_build_panel()
 	_foot()
-	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_choose"), ActionBar.press_focus.bind(self)),
+	ActionBar.attach(self, [ActionBar.entry(&"ui_accept", T.t(&"bar_water"), ActionBar.press_focus.bind(self)),
 		ActionBar.entry(&"ui_cancel", T.t(&"bar_back"), _back)])
 	_refresh()
 	var first := VineLayout.first_focus(vine, _data)
@@ -124,10 +124,8 @@ func _head() -> void:
 	_line.name = "line"
 	_line.position = Vector2(42, 60)
 	_stage.add_child(_line)
-	_purse = MaterialCount.purse(_data, UiKit.PALE, 20, 24.0)
-	_purse.position = Vector2(1000, 24)
-	_purse.size = Vector2(256, 36)
-	_purse.alignment = BoxContainer.ALIGNMENT_END
+	_purse = CoinCorner.wallet(_data)
+	CoinCorner.place(_purse, 1256.0, 24.0)
 	_stage.add_child(_purse)
 
 
