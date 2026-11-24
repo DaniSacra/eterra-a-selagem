@@ -1,0 +1,108 @@
+PEDIDO DE ARTE PARA O CHATGPT: a tela dos Dons como medalhão (Crônicas de Eterra: A Selagem, 2026-11-23)
+
+Anexe estas imagens (estão em Downloads\Pedido-medalhao-refs):
+  1-guerreiro-prancha.png  = o Guerreiro canônico (use a aparência; IGNORE todos os textos da prancha e o sol no peito)
+  2-maga-arte-01.png       = a Maga canônica (a da esquerda, de pé)
+  3-maquete-dons.png       = a maquete que você fez: é o ALVO da composição e do estilo
+  4-icone-memoria.png      = o nosso ícone de Memória (só para combinar o estilo; não refazer)
+
+O que vamos fazer: montar na Godot exatamente a maquete 3, peça por peça. Por isso preciso das peças SEPARADAS,
+cada uma num arquivo, sem nada desenhado em volta.
+
+REGRAS PARA TODAS AS IMAGENS
+- Estilo: o mesmo da maquete 3 (pintura digital à mão, contornos firmes, luz quente de entardecer, metal em ouro velho
+  com filigrana). Mesma mão e mesma luz em todas.
+- SEM texto, SEM letras, SEM números, SEM assinatura, SEM marca d'água em nenhuma imagem.
+- Nada de violeta nem roxo em lugar nenhum (é a cor do vilão). Verde-esmeralda vivo só na lâmina da espada Emeth.
+- Nada de sol, cruz ou símbolo religioso. O único emblema do Guerreiro é um LEÃO; o da Maga é uma ESTRELA DE 8 PONTAS.
+- "Transparente" = PNG com canal alfa, fundo realmente vazio (não um xadrez pintado, não branco).
+- Uma imagem por pedido se ficar melhor assim. Tamanhos exatos abaixo.
+
+1) FUNDO DA TELA, 1920 x 1080, PNG opaco
+   Como o fundo da maquete 3: ruínas de pedra de uma igreja velha e arcos quebrados, colinas e árvores de folhas
+   vermelhas e ocre, ao entardecer. Céu em âmbar, rosa ocre e azul ardósia (NÃO violeta). À esquerda um estandarte
+   vermelho liso, sem emblema. O meio da imagem (um círculo de uns 1000 px de diâmetro, centro em x 930, y 567) mais
+   calmo e escuro, porque o medalhão e o herói ficam por cima. Sem personagem, sem moldura.
+
+2) O GUERREIRO DE PÉ, 1400 x 2000, PNG transparente
+   O Guerreiro da prancha 1: HOMEM jovem, rosto anguloso e determinado, cabelo vermelho repicado, cachecol e manto
+   azul-petróleo, armadura de aço escuro com filetes de ouro velho, couro. Pose da maquete 3: de frente, levemente de
+   baixo para cima, olhando para o alto à direita, as duas mãos cruzadas sobre o pomo da espada Emeth cravada no chão
+   à frente dele (lâmina verde-esmeralda que brilha, guarda de ouro velho com uma pedra verde). Manto e cachecol
+   soprados para a esquerda. Enquadrado da cabeça até o meio da coxa; o topo da cabeça a 60 px da borda de cima, a
+   figura centrada. Sem fundo, sem halo, sem chão.
+
+3) A MAGA DE PÉ, 1400 x 2000, PNG transparente
+   A Maga da arte 2 (a figura da esquerda): mulher jovem do norte, traços orientais, cabelo preto curto, capa marfim
+   com bordado dourado fino, roupa azul profundo, cinto de couro. Mesma pose e enquadramento do item 2: de frente, as
+   duas mãos sobre o bastão rúnico de duas pontas apoiado em pé no chão à frente dela (cada ponta com um aro de ouro e
+   uma chama âmbar pequena). O forro da capa sem roxo. Topo da cabeça a 60 px da borda, figura centrada. Sem fundo.
+
+4) MOLDURA DO MEDALHÃO, 2048 x 2048, PNG transparente
+   Só o anel de fora da maquete 3: um círculo fino de ouro velho com centro no meio da imagem e raio de 960 px, traço de
+   uns 12 px com filigrana leve. Estrelas pequenas de 4 pontas (uns 90 px) em cima do anel a 45, 135, 225 e 315 graus;
+   losangos pequenos a 90 e 270 graus; um enfeite maior em forma de ponta de lança na base (180 graus). Nada no topo (a
+   faixa cobre). O meio totalmente vazio. Sem nós, sem linhas internas, sem herói.
+
+5) FAIXA DO NOME, 1200 x 180, PNG transparente
+   A placa da maquete 3 onde está "Dons do Guerreiro", VAZIA: madeira escura laqueada, moldura de ouro velho com as
+   pontas em filigrana. O centro liso e escuro para o texto que a Godot escreve.
+
+6) ENFEITES SOBRE A FAIXA, 256 x 256 cada, PNG transparente
+   a) uma espada pequena de ouro velho na vertical, ponta para baixo, com dois ramos de filigrana (como na maquete 3);
+   b) o bastão de duas pontas pequeno, na horizontal, com as duas chamas âmbar, mesma filigrana.
+
+7) MOLDURAS DOS NÓS, PNG transparente, o miolo VAZIO (só o aro)
+   a) nó pequeno, 256 x 256: aro redondo de ouro velho, diâmetro externo 240, aro de 22 px;
+   b) nó grande, 256 x 256: aro mais ornado, com quatro pontinhas de filigrana para fora (como o nó grande vermelho da
+      maquete 3);
+   c) nó da coroa, 320 x 320: o mais ornado, com pontas para os lados (como o do leão no topo da maquete 3);
+   d) nó de poder maior, 256 x 256: aro DUPLO de ouro.
+
+8) DISCO DE ESMALTE, 256 x 256, PNG transparente
+   Um disco redondo de diâmetro 200, esmalte CINZA médio liso com leve textura e reflexo no alto. Vai ser tingido na
+   cor de cada ramo pela Godot. Sem ícone.
+
+9) ÍCONES PEQUENOS, 256 x 256 cada, PNG transparente
+   a) cadeado de ferro cinza (o dos nós travados da maquete 3);
+   b) LEÃO de perfil, cabeça e juba, em marfim e ouro velho (o símbolo do Guerreiro; para o nó da coroa);
+   c) ESTRELA DE 8 PONTAS em âmbar e ouro velho (o símbolo da Maga);
+   d) Devoção: um pequeno disco de ouro velho polido, como uma medalha lisa com um aro, sem desenho no meio.
+
+10) ÍCONES DOS DONS, em pranchas de 5 x 5 casas, cada casa 256 x 256 (prancha 1280 x 1280), PNG transparente
+   Cada ícone: silhueta clara em marfim com sombreado de ouro velho, centrada na casa, com 24 px de margem, sem aro,
+   sem fundo (vai em cima do disco colorido). Leitura simples, de longe. Na ordem, linha por linha, da esquerda:
+   PRANCHA DO GUERREIRO (23; as 2 últimas casas vazias):
+    1 quatro cortes paralelos | 2 um avanço correndo para um corte | 3 um corte dentro de uma seta que gira |
+    4 três divisas apontando para cima | 5 uma seta com linhas de velocidade | 6 uma chama sob três marcas |
+    7 uma onda em meia-lua | 8 uma lâmina com o alcance passando da ponta | 9 uma meia-lua atravessando um muro |
+    10 uma gema pela metade | 11 uma gema dentro de outra maior | 12 uma gema dentro de um anel (sem raios) |
+    13 uma seta atravessando um inimigo | 14 duas chamas | 15 uma meia-lua com três luzes atrás |
+    16 um avanço que termina numa onda pequena | 17 uma gota ao lado de uma gema | 18 uma gota com uma divisa subindo |
+    19 uma seta subindo do chão | 20 ondas de som saindo de uma boca de leão estilizada |
+    21 um escudo pequeno com ondas de som | 22 duas setas em círculo (recarga) | 23 a ponta de uma espada partindo uma placa
+   PRANCHA DA MAGA (23; as 2 últimas casas vazias):
+    1 uma marca de 8 pontas pegando fogo | 2 um pavio longo aceso | 3 uma explosão redonda em chamas |
+    4 um círculo de sinais com brasas no chão | 5 uma marca que devolve uma gota de luz | 6 três tiros em fila, o último menor |
+    7 duas marcas de 8 pontas sobrepostas | 8 uma marca que salta para o lado em arco | 9 um círculo que se alarga |
+    10 um círculo com uma corrente fechada | 11 uma cúpula que se alarga | 12 um círculo com um cadeado de luz |
+    13 um tiro em chama com uma marca | 14 duas explosões, uma maior e outra menor | 15 um círculo com marcas no chão |
+    16 uma ampulheta pequena com um círculo | 17 um círculo que se fecha em chamas | 18 um passo com clarão atrás e brasa à frente |
+    19 uma gota ao lado de uma gema | 20 uma gema dentro de outra maior | 21 uma gota com uma divisa subindo |
+    22 um passo com uma seta longa | 23 uma seta subindo do chão
+   Cores dos ícones: só marfim e ouro velho (a cor vem do disco embaixo).
+
+11) PAINEL DE DETALHE, 700 x 740, PNG transparente nas bordas
+   A caixa da direita da maquete 3, VAZIA: fundo escuro quase preto (um pouco translúcido), moldura de ouro velho com
+   cantos em filigrana. Os enfeites só nos cantos (dentro de 80 px de cada canto) e os lados retos e lisos, para a
+   Godot esticar sem deformar. Sem ícone, sem texto, sem botão.
+
+12) BOTÃO "SEGURE PARA", 640 x 110, PNG transparente
+   O botão da maquete 3 vazio: placa escura com borda de ouro velho e cantos arredondados, sem a barra, sem o glifo do
+   controle, sem texto.
+
+13) PLACA DO CONTADOR, 300 x 90, PNG transparente
+   A placa do alto à direita da maquete 3 vazia (moldura de ouro velho com pontas), sem cristal e sem número.
+
+Não precisa: logo do jogo, textos, o cristal verde da maquete (a moeda certa é a Memória, ícone 4, e a Devoção,
+item 9d), linhas entre os nós, brilhos e faíscas (a Godot desenha), o machado e o braço musculoso da maquete.
