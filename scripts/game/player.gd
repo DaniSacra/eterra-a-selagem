@@ -162,6 +162,16 @@ const EMBER_PALE := 0.5
 const EMBER_SHADER := preload("res://assets/shaders/fury_ember.gdshader")
 ## The ring at his feet when a kill gives the dodge back (Avanço Feroz, Investida): meters.
 const DODGE_BACK_RING := 1.1
+## Lote E (KT 3a): when the ultimate's charge fills, an amber and gold ring on the floor under him (never white, nothing
+## over his body): it pulses for ULT_RING_PULSE seconds, then breathes lightly until the ultimate is used.
+const ULT_RING_SIZE := 3.1
+const ULT_RING_COLOR := Color(1.0, 0.72, 0.22)
+const ULT_RING_PULSE := 1.5
+const ULT_RING_BAND := 0.07
+## The Maga's third shot kicks her staff back this many frames (CB 3), this many meters, and its dart sounds lower.
+const KICK_FRAMES := 4
+const KICK_DEPTH := 0.1
+const KICK_PITCH := 0.62
 
 var arena: Arena
 var horde: Horde
@@ -259,6 +269,11 @@ var _xray_edge: ShaderMaterial
 ## His body's own materials (HeroBody), lightened while he blinks after a hit.
 var _fills: Array[Material] = []
 var _ring_look: ShaderMaterial
+var _ult_ring: MeshInstance3D
+var _ult_ring_mats: Array[ShaderMaterial] = []
+var _ult_ring_t := -1.0  # seconds since the charge filled (-1: not full)
+var _kick_t := 0.0
+var _sword_home := Vector3.ZERO
 var _ring_through: ShaderMaterial
 var _ward_k := 0.0  # 0 petrol ring, 1 the Brado's emerald one
 var _ward_clock := 0.0
@@ -299,6 +314,8 @@ func _ready() -> void:
 	_model = body[0]
 	_anim = body[1]
 	_sword = body[2]
+	if _sword != null:
+		_sword_home = _sword.position
 	add_child(_model)
 	_overlay = ShaderMaterial.new()
 	_overlay.shader = FLASH
@@ -332,6 +349,8 @@ func _ready() -> void:
 	add_child(_light)
 	_model.add_child(_contact_shadow())
 	add_child(_ring())
+	_ult_ring = _make_ult_ring()
+	add_child(_ult_ring)
 	_curse_aura = CurseAura.new()
 	add_child(_curse_aura)
 	if _sword and _sword.has_node(^"Blade"):
@@ -392,6 +411,74 @@ func _ring() -> MeshInstance3D:
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	mi.position.y = 0.05
 	return mi
+
+
+## The ready ring of the ultimate (same shader as his ring, wider, amber, no wedge); hidden until the charge fills.
+func _make_ult_ring() -> MeshInstance3D:
+	var plane := PlaneMesh.new()
+	plane.size = Vector2.ONE * ULT_RING_SIZE
+	var m := ShaderMaterial.new()
+	m.shader = RING
+	m.render_priority = XRAY_PRIORITY
+	m.set_shader_parameter(&"color", ULT_RING_COLOR)
+	m.set_shader_parameter(&"open", 0.0)
+	m.set_shader_parameter(&"through", 0.0)
+	m.set_shader_parameter(&"band", ULT_RING_BAND)
+	m.set_shader_parameter(&"wedge_gain", 1.0)
+	var t := m.duplicate() as ShaderMaterial
+	t.shader = RING_THROUGH_SHADER
+	m.next_pass = t
+	_ult_ring_mats = [m, t]
+	var mi := MeshInstance3D.new()
+	mi.mesh = plane
+	mi.material_override = m
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position.y = 0.04
+	mi.visible = false
+	return mi
+
+
+## How strong the ready ring is (0..1) and how big (1 = rest) `t` seconds after the charge filled: a pulse that opens
+## wide and settles in ULT_RING_PULSE, then a slow breath. Pure, for the tests.
+static func ult_ring_look(t: float) -> Vector2:
+	if t < 0.0:
+		return Vector2.ZERO
+	if t < ULT_RING_PULSE:
+		var k := t / ULT_RING_PULSE
+		return Vector2(lerpf(1.0, 0.55, k), 1.0 + 0.3 * (1.0 - k) * (1.0 - k))
+	return Vector2(0.55 + 0.12 * sin((t - ULT_RING_PULSE) * 2.4), 1.0)
+
+
+## Steps the ready ring and the sound of "ready" on the frame the charge fills.
+func _step_ult_ring(dt: float) -> void:
+	if ult_ready and ult != null:
+		if _ult_ring_t < 0.0:
+			_ult_ring_t = 0.0
+			Audio.play(&"ult_ready")
+		else:
+			_ult_ring_t += dt
+	else:
+		_ult_ring_t = -1.0
+	var look := ult_ring_look(_ult_ring_t)
+	_ult_ring.visible = look.x > 0.0
+	if not _ult_ring.visible:
+		return
+	_ult_ring.scale = Vector3(look.y, 1.0, look.y)
+	_ult_ring_mats[0].set_shader_parameter(&"open", look.x)
+	_ult_ring_mats[1].set_shader_parameter(&"through", look.x)
+
+
+## The staff kicks back for KICK_FRAMES frames after the Maga's third shot (a local offset against where she aims).
+func _step_kick(dt: float) -> void:
+	if _sword == null or hero.id != &"maga":
+		return
+	var home := _sword_home
+	if _kick_t > 0.0:
+		_kick_t = maxf(0.0, _kick_t - dt)
+		var back := Vector3(-facing.x, 0.0, -facing.y) * KICK_DEPTH
+		var parent := _sword.get_parent() as Node3D
+		home += parent.global_basis.inverse() * back if parent != null else back
+	_sword.position = home
 
 
 ## Every mesh of his gets the x-ray in its own colours, then the passes all of them share (the flash and glow of
@@ -987,7 +1074,10 @@ func _on_move_started(node: ComboNode) -> void:
 		magick.spend(omega_cost(node.magick_cost, _charge_discount if node.has_tag(&"omega") else blast_discount if node.has_tag(&"blast") else 0.0))
 	_anim.speed_scale = 1.0
 	_sound_node = null
-	if node.sound_at > 0.0:
+	if hero.id == &"maga" and node.has_tag(&"finisher") and node.has_tag(&"bolt"):
+		_kick_t = KICK_FRAMES / 60.0
+		Audio.play(node.sound, KICK_PITCH)
+	elif node.sound_at > 0.0:
 		# QW-103: the swish waits for the blade (_step_move_sound); the press only gathers
 		_sound_node = node
 		_sound_t = node.sound_at / maxf(0.01, runner.speed)
@@ -1144,6 +1234,8 @@ func _show(dt: float, move: Vector2 = Vector2.ZERO) -> void:
 			glow = Color(WARD_GLOW, WARD_GLOW.a * blink)
 		elif shield_ready:
 			glow = SHIELD_GLOW
+	_step_ult_ring(dt)
+	_step_kick(dt)
 	_ward_k = move_toward(_ward_k, 1.0 if warded else 0.0, dt / WARD_RING_FADE)
 	for ring in [_ring_look, _ring_through]:
 		(ring as ShaderMaterial).set_shader_parameter(&"color", RING_COLOR.lerp(WARD_RING_COLOR, _ward_k))

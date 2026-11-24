@@ -28,6 +28,8 @@ const SOUNDS := {
 	&"spin_gather": [[W.NOISE, 400, 1300, 0.1, 0.08, 3.0, 0.0]],
 	&"thrust": [[W.NOISE, 2500, 6000, 0.1, 0.22, 4.0, 0.0], [W.TRIANGLE, 880, 1320, 0.12, 0.1, 3.0, 0.0]],
 	&"dart": [[W.NOISE, 4000, 7000, 0.07, 0.16, 5.0, 0.0], [W.TRIANGLE, 1320, 1760, 0.08, 0.1, 4.0, 0.0]],
+	# Lote E: the ultimate's charge filled ("ready": a warm two-note bell, nothing like the level-up or the boon)
+	&"ult_ready": [[W.SINE, 392, 392, 0.5, 0.3, 2.5, 0.0], [W.SINE, 587, 587, 0.6, 0.26, 2.5, 0.09], [W.TRIANGLE, 1174, 1174, 0.4, 0.07, 3.0, 0.09]],
 	&"charge_up": [[W.TRIANGLE, 220, 660, 0.6, 0.12, 1.2, 0.0], [W.NOISE, 600, 2400, 0.6, 0.06, 1.5, 0.0]],
 	&"hit": [[W.NOISE, 2400, 500, 0.08, 0.4, 6.0, 0.0], [W.SQUARE, 220, 110, 0.07, 0.25, 6.0, 0.0]],
 	&"bone": [[W.NOISE, 3200, 1200, 0.05, 0.3, 8.0, 0.0]],

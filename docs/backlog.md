@@ -90,7 +90,7 @@ sala e o PT-6/PT-11, porque toca os mesmos arquivos)
     Nota: com a cura base de 3 por sala, o Dom Respiro (`room_heal` 2) e a Provação da Ferida ("cura menor") precisam de uma linha de conferência no `balance.md`.
 
 **Lote E, sensação em arte e som** (`technical-artist`; arquivos: `scripts/render/` do herói, `assets/shaders/` novo se precisar, `assets/audio/`, a tabela de sons)
-20. **Supremo cheio no corpo e tiro 3 da Maga com voz** (KT 3a e 4, CB 3, P). Anel âmbar e ouro no paladino por 1,5 s quando a carga enche, com som próprio
+20. **FEITO (2026-11-24, falta só a captura GPU do Lote F; `Player._make_ult_ring`, som `ult_ready`, `_step_kick`)** **Supremo cheio no corpo e tiro 3 da Maga com voz** (KT 3a e 4, CB 3, P). Anel âmbar e ouro no paladino por 1,5 s quando a carga enche, com som próprio
     (nada de clarão branco nem partícula sobre o herói); o tiro 3 da Maga com o `dart` mais grave e 4 quadros de recuo da mão. Aceite: captura GPU (Lote F)
     com o anel; a cadência 8, 8, 12 se ouve; Compatibility sem erro; mesmo `RESULT`.
 
