@@ -8,7 +8,7 @@ Meshy; Steam, inclusive o congelamento de shader na iGPU, DT-RS3). As seções a
 está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
 
 **Bugs e quickwins**
-1. **Bastão da Maga fora do exe** (bug alto; `gameplay-engineer`, P). `export_presets.cfg` exclui `assets/models/meshy/w_*/*` nos três
+1. **FEITO (2026-11-23)** **Bastão da Maga fora do exe** (bug alto; `gameplay-engineer`, P). `export_presets.cfg` exclui `assets/models/meshy/w_*/*` nos três
    presets, e `MagaStaff.make()` (`scripts/render/maga_staff.gd:9`) carrega `w_maga_staff/w_maga_staff.glb` em tempo de execução: no exe o
    `load` volta nulo e o `.instantiate()` quebra ao montar o corpo dela (o último exe, `461c414`, é de antes do bastão e não mostrou). Junto:
    tirar do pacote o `hero_maga_img/hero_maga_img.glb` e o `.png` sem esqueleto (cerca de 5 MB, não usados). Arquivos: `export_presets.cfg`,
