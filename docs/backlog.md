@@ -1,9 +1,71 @@
 # Backlog de A Selagem
 
+## Aberto de verdade (2026-11-23 noite)
+Conferido no código e no `git log` até `7058ed0` (game-director). Fora desta lista de propósito: o que já está em andamento (PT-10 telas e
+portas, PT-6 salas, PT-11 loja, Maga M2 a integrar, Videira V3); o que espera o Daniel (C6, os outros cinco anjos, e o 8C dos Elos que
+depende dele; recalibrar Morvath, o segundo minichefe brando e o ataque em 44% do dano, que pedem o registro dos testadores; heróis novos;
+Meshy; Steam, inclusive o congelamento de shader na iGPU, DT-RS3). As seções abaixo desta são histórico: o que estava aberto nelas e não
+está aqui foi feito (marcado FEITO com o commit) ou espera o Daniel.
+
+**Bugs e quickwins**
+1. **Bastão da Maga fora do exe** (bug alto; `gameplay-engineer`, P). `export_presets.cfg` exclui `assets/models/meshy/w_*/*` nos três
+   presets, e `MagaStaff.make()` (`scripts/render/maga_staff.gd:9`) carrega `w_maga_staff/w_maga_staff.glb` em tempo de execução: no exe o
+   `load` volta nulo e o `.instantiate()` quebra ao montar o corpo dela (o último exe, `461c414`, é de antes do bastão e não mostrou). Junto:
+   tirar do pacote o `hero_maga_img/hero_maga_img.glb` e o `.png` sem esqueleto (cerca de 5 MB, não usados). Arquivos: `export_presets.cfg`,
+   `tests/test_export_settings.gd`. Aceite: um teste que falha se algum caminho `res://` carregado por `scripts/` cair num `exclude_filter`;
+   exe Linux exportado com `--smoke=60 --hero=maga --seed=5 --nosave` sem `SCRIPT ERROR` e com o mesmo `RESULT` do editor.
+2. **Vigia Firme não faz nada** (resto do BH-4; `gameplay-engineer`, P). Com o padrão `StunRule.NONE`, `Combat` zera `horde.stun_scale`
+   (`scripts/game/combat.gd:695`), então `stun_pct` não tem efeito, e a carta (`make_data.gd:728`, "Seus golpes atordoam por mais tempo")
+   segue no sorteio de Shomael. Mandar para a `RESERVE` (dado) até o C6 refazer Shomael. Arquivos: `tools/make_data.gd`, `data/boons/`.
+   Aceite: `BoonState.offerable` sem ela, teste GUT; `RESULT` muda só pelo sorteio (anotar a semente 5 antes e depois).
+3. **Registro de partida com "quit" vazio** (baixo; `gameplay-engineer`, P). Entrar no Portal e sair grava uma linha "quit" em
+   `runs.jsonl` (`Game._exit_tree` chama `log_run("quit")`, `scripts/game/game.gd:498`; achado em `docs/qa/playtest_2026-11-23.md`), o que
+   suja o `tools/runs_report.py` justo na leitura do teste com usuários. Aceite: sem sala vencida e com menos de 10 s, não grava; teste em
+   `tests/test_run_log.gd`.
+4. **Suíte libera um RefCounted à mão** (dívida de teste; `gameplay-engineer`, P). `tests/test_blow_family.gd:15` chama `_combat.free()`
+   e `Combat` é `RefCounted` (3 `SCRIPT ERROR` por suíte, `docs/qa/c1_c3_qa.md`). Aceite: `-gselect=test_blow_family` sem `SCRIPT ERROR`.
+5. **Quatro dicas na primeira descida** (GP-9 e 10B-2, aprovado em 2026-11-22; `ui-ux-designer`, P). Não existe nada além do guia do
+   Santuário (PT-5) e da linha do Como Jogar. Uma vez por save, curtas, sem pausar: bater e esquivar; segurar o especial; a barra amarela
+   (blindagem) e a barrinha clara (Quebra); par de Bênçãos que forma Elo. Arquivos: `scripts/ui/hud.gd` (ou um `FirstTips` próprio),
+   `scripts/core/save_data.gd`, `data/text_pt.tres`. **Depois** do PT-10 entrar (a coluna da direita é do HUD). Aceite: teste GUT de "uma vez
+   por save"; o robô e `--autopick` não esperam; mesmo `RESULT` da semente 5.
+
+**Combate**
+6. **Placa do Armadilheiro como desenhada** (`gameplay-engineer`, M). Hoje o dano é um golpe só no fim do X (`docs/reference/gameplay.md`,
+   Armadilheiro); o desenho (`docs/design/inimigos_c1e.md:64`) pede espinhos levantados por 0,5 s depois do X e a placa sumindo em 6 s, que é
+   o que faz dela memória da esquiva. Arquivos: `scripts/core/trap_rules.gd`, `scripts/game/horde.gd` (parte do Armadilheiro),
+   `scripts/game/c1e_marks.gd`. Aceite: teste GUT do tempo dos espinhos e do sumiço; 12 sementes sem travar e o Armadilheiro ferindo menos de
+   15% dos golpes levados nas salas 9 em diante (`RESULT.hurt_by`).
+
+**Arte e leitura**
+7. **Fogo âmbar nas duas pontas do bastão** (`technical-artist`, P). Pendente desde a M1c (`maga_staff.gd` só tem a malha). Um brilho
+   âmbar contido no orbe de cada cabeça, mais forte ao conjurar; nada de partícula sobre o herói nem clarão branco. Arquivos:
+   `scripts/render/maga_staff.gd` e um shader novo em `assets/shaders/`. Aceite: captura na GPU pela sessão principal
+   (`tools/gpu.sh shot x.png --hero=maga --bot --shot-at=9`), Compatibility sem erro, mesmo `RESULT`.
+8. **Trinca e Varredor com silhueta própria** (`technical-artist`, M). Os dois usam corpos provisórios (`gameplay.md`, "Pendente: silhueta
+   lado a lado com os seis"). Reassar em `tools/bake.gd` sem créditos. **Risco**: os assados estão em 68,55 de 70 MB (`a1b5be6`); cortar poses
+   antes. Aceite: os oito comuns lado a lado numa captura (sessão principal) e aprovação do `art-director`; teto de 70 MB mantido pelo teste.
+9. **Revisão de arte do que entrou sem olhar** (`art-director`, P; só lê capturas, a sessão principal captura uma por vez). Canalizador
+   (assado próprio e morte em jogo, `a1b5be6`), luz morna da Câmara de Morvath (`docs/gallery/morvath_light/`), película e relógio da
+   Suspensão Absoluta, e os itens da revisão de 2026-11-21b sem marca no código: GR-8 (raio-x de pontinhos; `see_through.gdshaderinc` ainda
+   usa o pontilhado 4 x 4), GR-17 a GR-20 (letras do golpe de Morvath, besta, fio da mira, arco do giro), GR-26 (duas barras no guardião),
+   GR-27 (números). Saída: cada um FEITO, ABERTO com dono ou SAI. Aceite: lista curta em `docs/art/`, sem itens sem captura.
+10. **Maga M3 no papel** (`hero-designer`, M; só documento). As três armas do pacote (Grimório das Cinzas, Orbe do Inverno, Anéis de
+   Ressonância) e o ramo do frio (`docs/design/heroes/maga.md:22` e `:113`). Não existe sistema de armas nem para o Guerreiro: a proposta
+   precisa dizer se é um sistema dos dois heróis e virar pergunta ao Daniel antes de qualquer código. Aceite: `docs/design/heroes/maga_m3.md`
+   com as opções e a recomendação.
+
+**Lotes que rodam em paralelo** (arquivos separados): **A** `gameplay-engineer` itens 1 a 4 (exportação, `make_data`, `game.gd`, testes);
+**B** `gameplay-engineer` item 6 (Armadilheiro; não toca `make_data` se os números já existem, senão vai depois do A); **C** `technical-artist`
+itens 7 e depois 8 (render e bake); **D** `art-director` item 9 e `hero-designer` item 10 (só documentos). O item 5 espera o PT-10.
+Com o limite de 2 agentes: A com C, depois B com D, e o 5 por último.
+
 ## Notas do Daniel jogando, 2026-11-23 à noite (PT-1 a PT-8)
 **Estado (2026-11-23, noite):** PT-1, PT-2 (lugar; arte espera o ChatGPT, pedido em `Downloads\Pedido-ChatGPT-icones-das-portas.txt`,
 ids em `assets/ui/rewards/LEIAME.txt`), PT-3, PT-4, PT-5, PT-7 e PT-8 no repositório. Falta: capturas na GPU (o "!", anjos, porta,
 guia `--guide=tree`, Santuário), ajustar alturas pelo que se vê, exe nas duas pastas. PT-0 espera o Daniel; PT-6 depois.
+  **FEITO (conferido em 2026-11-23 noite)**: PT-1 (`dde104e`, `e9956e9`, `1ae1082`), PT-2 (`9c5af74`, arte Rev. 03 em `0e9aec3`), PT-3, PT-7 e
+  PT-8 (`0700d24`), PT-4 (`b700f80`, `3121fea`), PT-5 (`ab3aed1`, `f8ee46c`), capturas na GPU do "!", da porta e do guia (`1ae1082`, `f8ee46c`).
 - **PT-0 (resposta, sem tarefa)**: a barrinha clara sob a vida dos inimigos comuns é a **Quebra** (poise, `CrowdRenderer.add_poise_bar`):
   cada golpe gasta um pouco; acabou, ele fica atordoado 1,2 s e leva +40% de dano ("Quebrou!"). Se ficar confusa: mudar a cor ou só
   mostrá-la quando estiver na metade (decidir com o Daniel). **FEITO (2026-11-23, recomendação seguida)**: só aparece com metade gasta (`CrowdRenderer.POISE_SHOW`) e em azul-claro próprio (`life_bar.gdshader` `poise_color`).
@@ -63,7 +125,7 @@ Coração Atento em Memória; save v10 `account.bought`; o robô evoluído usa `
 5. **Texto**: a imagem 01 cita "Eu sou a videira verdadeira (João 15:1)". O jogo não cita texto bíblico (D-59, Salmos só por tema; Elun é a
    alegoria). Sugestão: subtítulo "Raízes que fortalecem todas as jornadas", sem citação.
 6. **Arte da estação**: videira em arco de pedra com 9 estados; modelo Meshy (estimar, cerca de 15 a 30 créditos) ou peças da Godot.
-**V1 FEITA (2026-11-23, worktree do gameplay-engineer; `docs/reference/meta.md` "A Videira")**: `Vine`/`VineNode`/`VineSheet`, `data/vine/`, save v12 com reembolso, O Viajante (mercador de rota na outra porta antes de cada guardião), Estoque, Reserva, +10% de Prata, Memória e materiais, `--vine=N`. **V2 FEITA (2026-11-23)**: estação `HubPlan.VINE`, `VineScreen`, guia `account` aponta para a estação, `VineStation.grown`. Falta a V3.
+**V1 FEITA (2026-11-23, worktree do gameplay-engineer; `docs/reference/meta.md` "A Videira")**: `Vine`/`VineNode`/`VineSheet`, `data/vine/`, save v12 com reembolso, O Viajante (mercador de rota na outra porta antes de cada guardião), Estoque, Reserva, +10% de Prata, Memória e materiais, `--vine=N`. **V2 FEITA (2026-11-23)**: estação `HubPlan.VINE`, `VineScreen`, guia `account` aponta para a estação, `VineStation.grown`. **V3 FEITA (2026-11-23)**: `c1f7cae`, `b244f98` (videira de 3 ramos x 3 estágios, `--vine=N`).
 **Etapas sugeridas** (uma entrega cada): **V1** dados e regras (renomear `Account` para a Videira por fora, 9 nós, migração do save com
 reembolso, efeitos de Provisão e Perseverança, testes); **V2** estação no Santuário e tela sobreposta no estilo do Livro (compra com
 confirmação, teclado, mouse e controle), Forjador sem "O Preparo"; **V3** a planta crescendo por ramo. Donos: `gameplay-engineer` (V1),
@@ -87,11 +149,11 @@ Meta: um exe estável e justo para quem nunca jogou, com o registro das partidas
   1. Quando o Daniel trouxer o teste: `python3 -I tools/runs_report.py --since=2026-11-23T18:00` (lê o `runs.jsonl` do Windows) + as
      anotações dele; resumo do que mudar.
   2. Recalibrar Morvath com esses dados (tentar `BOSS_DAMAGE` 1,3, golpe máximo abaixo de 30 de vida; ver o fim de `docs/design/balance.md`).
-  3. **A Videira** V1 a V3 (decidido, seção abaixo), custos com o registro dos testadores.
-  4. ~~**Maga M1c**~~ feita em 2026-11-23 (corpo e bastão no jogo, 25 créditos, saldo 346; ver a seção Maga M1). Falta: captura na GPU e VFX âmbar das pontas.
+  3. **A Videira** V1 a V3 (decidido, seção abaixo), custos com o registro dos testadores. **FEITO** (`583032c`, `4736678`, `c1f7cae`, `b244f98`).
+  4. ~~**Maga M1c**~~ feita em 2026-11-23 (corpo e bastão no jogo, 25 créditos, saldo 346; ver a seção Maga M1). Falta: captura na GPU (**FEITA**, `1e2d4b8`) e VFX âmbar das pontas (aberto, item 7 do topo).
   5. **Maga M2**: **FEITO (2026-11-23, no worktree, sem o Daniel ter testado)** seguindo as recomendações do plano (Suspensão Absoluta, árvore em triângulo, 1 Selo
      na Tempestade, ramo "Selos"): Maestria própria, 23 Dons, 2ª ultimate e Bênçãos afinadas (`docs/reference/meta.md`, "A Maga, M2"). Depois (mesmo dia): escudo e cura do domo, empurrão da borda, rastro do Passo nos dois pontos, película com hexágonos e relógio da Suspensão Absoluta, XP do primeiro Selo detonado e equilíbrio com 12 sementes (`docs/design/balance.md`, "Equilíbrio da Maga"). Faltam: a tela da árvore em
-     triângulo desenhada pelo `art-director` (hoje só os eixos a 120 graus), uma captura GPU da película e do relógio (sessão principal), Bênçãos novas de Shomael na E (precisa de uma Bênção própria sem mudar o baralho do Guerreiro).
+     triângulo desenhada pelo `art-director` (hoje só os eixos a 120 graus), uma captura GPU da película e do relógio (sessão principal), Bênçãos novas de Shomael na E (precisa de uma Bênção própria sem mudar o baralho do Guerreiro). **Conferido em 2026-11-23 noite**: árvore em triângulo FEITA (`e837fc0`) e depois trocada pelo códice (`d3b8dd6`, Daniel não quer árvores); Bênçãos da E FEITAS (`6ae22e9`); a captura da película vai no item 9 do topo.
   6. Abertos de combate e arte: luta de Morvath longa, ataque 44% do dano, placa do Armadilheiro, revisões na GPU; C6 (anjos) espera o Daniel.
 - Regras de hoje: imagens para o Daniel ver vão para `C:\Users\danie\Downloads`; cópias de segurança no disco (`~/games/eterra-backups`),
   nunca em `/tmp` (tmpfs de 3,9 GB); robô na tela dele só com o exe e uma janela por vez.
@@ -104,7 +166,7 @@ Ordem menos arriscada (uma entrega por etapa, testar a anterior antes):
 - **M1b, seleção, save, HUD, texto e Bênçãos** (`gameplay-engineer` + `ui-ux-designer`, depende da M1a e do seletor de herói compartilhado com Ladina e Paladino; risco M: save por herói, ação E no controle). Tarefas: seletor na descida e no Santuário, `heroes.maga` no save, HUD da Ressonância e das 5 habilidades, textos em `text_pt.tres`, Bênçãos dos 7 anjos por botão (mapa da seção 4), Como Jogar, registro `RESULT.hero`.
 - **M1c, modelo** (`art-director`, depende do aval do Daniel; **créditos Meshy: estimar, gerar só a PRÉVIA, mostrar, modelo final só com o ok**): corpo com esqueleto e bastão de duas pontas, animações do `Cast` e passo, VFX âmbar e marfim (`technical-artist`), Selo acima da cabeça, hexágono de sigilos do Círculo. Palpite de 80 a 120 créditos, incerto.
 - **M1c prévia feita em 2026-11-23** (5 créditos, saldo 406): `assets/models/meshy/hero_maga/hero_maga-preview.png`, lado a lado com a arte 01 em `docs/gallery/maga_previa_meshy_2026-11-23.jpg`. Silhueta certa (manto marfim com capuz baixo, túnica, cintos, botas); cabelo saiu comprido (a arte tem chanel curto) e a túnica reta, sem as pontas rasgadas. Segunda prévia por texto (5) errou o cabelo (coque). **Imagem para 3D da arte 01 (30 créditos, saldo 371): acertou** (chanel curto, túnica azul com bordado, manto marfim, cintos, sem cajado), `assets/models/meshy/hero_maga_img/`, comparação em `docs/gallery/maga_modelo_meshy_2026-11-23.jpg`. Daniel: modelo no jogo só **depois do teste com usuários** (2026-11-23). Próximo: esqueleto e animações (5 + 3 por ação), cajado de duas pontas (imagem para 3D, 30), assado e troca do corpo no jogo.
-- **M1c feita em 2026-11-23** (ok do Daniel no mesmo dia; **25 créditos, saldo 346**, teto era 90): esqueleto do Meshy sobre `hero_maga_img` (5); animações **sem crédito**, as mesmas da Quaternius (CC0) do Guerreiro levadas ao corpo dela (`tools/bake_hero.gd -- maga`, `maga_anims.res`: parada `Spell_Simple_Idle`, correr, conjurar `Spell_Simple_Shoot` em todos os golpes, `Blink` no Passo, ser atingida, morrer; braço do bastão parado como na parada ao correr). Bastão `w_maga_staff` por texto para 3D (prévia 5 errou, sem aros; 2ª prévia 5 acertou uma cabeça; textura 10): a cabeça (aro de ouro com espinhos, orbe âmbar, ponta) é uma só, então o jogo une duas cópias na mão (`MagaStaff`, 2,6 m de ponta a ponta no desenho). `HeroBody.BODIES` escolhe o corpo por `HeroDef.id`; `RESULT` do `--smoke --hero=maga --seed=5` igual ao de antes. Orçamento igual ao do Guerreiro (30,8 mil triângulos, textura 2K em BPTC); bastão 4,9 mil por cópia, textura 1K. Pacote: cerca de 9 MB a mais (o `hero_maga_img.glb` sem esqueleto, cerca de 7 MB, também vai ao pacote e não é usado: excluir na exportação ou apagar). Falta: captura na GPU (`tools/gpu.sh shot x.png --hero=maga --bot --shot-at=9`), fogo âmbar nas pontas (`technical-artist`), Selo e hexágono.
+- **M1c feita em 2026-11-23** (ok do Daniel no mesmo dia; **25 créditos, saldo 346**, teto era 90): esqueleto do Meshy sobre `hero_maga_img` (5); animações **sem crédito**, as mesmas da Quaternius (CC0) do Guerreiro levadas ao corpo dela (`tools/bake_hero.gd -- maga`, `maga_anims.res`: parada `Spell_Simple_Idle`, correr, conjurar `Spell_Simple_Shoot` em todos os golpes, `Blink` no Passo, ser atingida, morrer; braço do bastão parado como na parada ao correr). Bastão `w_maga_staff` por texto para 3D (prévia 5 errou, sem aros; 2ª prévia 5 acertou uma cabeça; textura 10): a cabeça (aro de ouro com espinhos, orbe âmbar, ponta) é uma só, então o jogo une duas cópias na mão (`MagaStaff`, 2,6 m de ponta a ponta no desenho). `HeroBody.BODIES` escolhe o corpo por `HeroDef.id`; `RESULT` do `--smoke --hero=maga --seed=5` igual ao de antes. Orçamento igual ao do Guerreiro (30,8 mil triângulos, textura 2K em BPTC); bastão 4,9 mil por cópia, textura 1K. Pacote: cerca de 9 MB a mais (o `hero_maga_img.glb` sem esqueleto, cerca de 7 MB, também vai ao pacote e não é usado: excluir na exportação ou apagar). Falta: captura na GPU (`tools/gpu.sh shot x.png --hero=maga --bot --shot-at=9`), fogo âmbar nas pontas (`technical-artist`), Selo e hexágono. **Conferido em 2026-11-23 noite**: captura FEITA (`1e2d4b8`); Selo (hexágono sobre a cabeça) e sigilos do Círculo FEITOS (`scripts/game/arcane.gd`); fogo âmbar aberto (item 7 do topo); o `.glb` sem esqueleto vai no item 1 do topo.
 - **Balanceamento** (`balance-designer`, uma vez, 12 sementes) e **QA** (`qa-performance`) só depois da M1b.
 - **Riscos**: laço infinito da Ressonância, Selo ilegível ao lado do aviso vermelho, Explosão amplificada tirando Postura demais, complexidade da primeira versão.
 - **Critério de aceite** (pacote 04): distinta do Guerreiro, laço marcar, agrupar, detonar divertido, Ressonância perceptível, descida completa das Catacumbas.
@@ -112,7 +174,7 @@ Ordem menos arriscada (uma entrega por etapa, testar a anterior antes):
 
 ## Pedidos do Daniel de 2026-11-21, 23h30 (a fazer; referências dele em `docs/art/ref/sworn_daniel/`, só local)
 
-Só a organização da tela vem da referência; arte, molduras, cores e textos são os nossos. Nada começado no projeto.
+Só a organização da tela vem da referência; arte, molduras, cores e textos são os nossos. **Conferido em 2026-11-23 noite**: BC-1 a BC-4 FEITOS no lote C3 (`224c2f0`; o PT-10 refina as telas); DM-1 FEITO (`ca34533`); BO-1 e BO-2 FEITOS na base do C4 com Sarael e Nivael (`224c2f0`; os outros cinco anjos são o C6, com o Daniel); BO-3 FEITO no papel (`docs/design/bencaos_por_anjo.md`, `ca34533`).
 
 **BC-1 Escolha da Bênção em lista** (`choice_list.png`; `BoonChoice`, `BoonCard`)
 - Anjo grande à esquerda (a arte inteira dele, sumindo no escuro), nome do anjo no título.
@@ -230,6 +292,8 @@ Altar e Encanto fica para depois, se ele gostar.
 
 ### Revisão de 2026-11-21 (agentes; evidência e detalhe nos relatórios)
 
+**Conferido em 2026-11-23 noite**: FEITOS BH-1 a BH-3, BH-5, BH-6 (`Rooms._fade_tween`), BH-7, BH-8, BH-10, GP-1, GP-2, GP-6, GR-1 a GR-4, GR-9 (Lotes 6 e 7, `ca34533`); BH-9 (testes com `NONE`, `tests/test_c1d_data.gd`); GP-3 (Brado absorve, C1), GP-10 (maldição, C5), GR-5 a GR-7 (`CrowdRenderer`, C1), todos em `224c2f0`; Forja Peso, Onda Pesada e Fúria Plena trocadas. Abertos: resto do BH-4 (Vigia Firme, item 2 do topo), GP-9 (item 5), GR-8 e GR-17 a GR-27 (item 9).
+
 **Bugs** (`docs/qa/bug_hunt_2026-11-21.md`, 12 partidas sem travar; nenhum P0)
 - BH-1 a BH-3 (P1, P): Como Jogar e telas com números velhos: rajada 60/8 (certo 35/12), Investida devolve 3 (certo 2),
   Brado 20% (certo 15%). Montar o número a partir do dado, para não envelhecer de novo.
@@ -266,7 +330,7 @@ Altar e Encanto fica para depois, se ele gostar.
 - Lotes: A cenário, B figuras e efeitos, C interface junto do BC-1 e do BO-2. Falta captura das portas (entra com o DM-1).
 
 ### Lotes 8 a 10 revisados: APROVADOS pelo Daniel em 2026-11-22 ("sim para tudo, mas só guarda no backlog, só vamos desenvolver amanhã")
-**Ordem em revisão: ver "Ordem nova dos lotes" abaixo (combate primeiro).** Nada foi implementado. Começa quando o Daniel mandar. Um exe por passo e parar para ele testar.
+**Ordem em revisão: ver "Ordem nova dos lotes" abaixo (combate primeiro).** **Conferido em 2026-11-23 noite**: passos 1, 2, 3 e 6 FEITOS como lotes C3, C1, C4 e C5 (`224c2f0`); passos 4 (C6) e 5 (8C) esperam o Daniel; as dicas do 10B são o item 5 do topo. Começa quando o Daniel mandar. Um exe por passo e parar para ele testar.
 Histórias com aceite, riscos e arquivos: `docs/design/director_review_2026-11-22.md` seção 10. **Esta ordem substitui a dos Lotes 8, 9 e 10 abaixo.**
 
 | Passo | Entrega | Estado |
@@ -301,6 +365,7 @@ dos itens que prometem atordoar (Forja Peso e Onda Pesada, Fúria Plena; passo 2
 - Aberto: o segundo minichefe ainda é brando para o evoluído (2 mortes em 20).
 
 ### CV: Cavaleiro com mira rastreada e esqueletos (pedido do Daniel, 2026-11-22; código pronto no disco, sem commit, números a fechar no lote C1)
+**FEITO** no lote C1 (`224c2f0`).
 - **CV-1**: "começa a animação da investida, rastreia o herói e só solta onde o herói estiver". As duas investidas giram com ele e travam no
   fim (`EnemyDef.charge_lock`; 0 = travada como hoje, o Escudo não muda). Com 0,3 s ficou mais fácil para o robô; está em **0,2 s**.
 - **CV-2**: invoca 2 esqueletos ao abrir a luta e depois de cada par de investidas (`raise_count`, `raise_every`, `raise_max` 4), gesto novo
@@ -310,6 +375,7 @@ dos itens que prometem atordoar (Forja Peso e Onda Pesada, Fúria Plena; passo 2
   (só `test_enemy_windup` rodou, antes dos últimos números), exe e commit.
 
 ### COMBATE: "bem melhor" (pedido do Daniel, 2026-11-22; planejado, NADA deste bloco começado além do CV)
+**FEITO** CB-0 a CB-7 nos lotes C1 a C5 (`224c2f0`); o que sobrou das metas (ataque 44%, evoluído contra Morvath) espera o registro dos testadores.
 Pedido dele: o combate de que mais gosta é o do SWORN (inimigos variados, não dá para só apertar atacar, tem de fugir muito e usar as outras
 habilidades); aqui "dá para ganhar só com os botões do mouse". E: "bem menos dano também, talvez 15, 15, 20; o herói tem que começar bem fraco
 para fazer sentido as evoluções dos Dons". Do SWORN só o princípio; não há lista confiável dos inimigos dele (pedir 2 ou 3 exemplos ao Daniel).
