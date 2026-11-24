@@ -1,0 +1,75 @@
+PEDIDO DE ARTE PARA O CHATGPT: a tela da Forja (Crônicas de Eterra: A Selagem, 2026-11-23)
+
+Anexe estas imagens (estão em Downloads\Pedido-Forja-refs):
+  1-guerreiro-prancha.png  = o Guerreiro e a espada Emeth canônicos (use a ESPADA; ignore os textos e o sol no peito)
+  2-emeth-no-jogo.jpg      = a Emeth como ela está no jogo (lâmina verde de cristal, guarda de ouro velho, punho
+                             enrolado em couro vermelho-escuro). São 4 estágios: siga a PRIMEIRA, sem as veias de ouro
+  3-forja-conceito.jpg     = o clima da oficina (brasa, bigorna, ferro). IGNORE a bandeira com cruz e as moedas
+  4-maquete-dons.png       = a mão e o estilo que todas as peças devem seguir
+  5-icone-prata.png        = o nosso ícone de Prata Antiga (só para combinar o estilo; não refazer)
+
+O que vamos fazer: uma tela em que a espada Emeth fica DEITADA na horizontal sobre um pano grosso, numa bancada de
+ferreiro, ocupando quase toda a largura da tela. O jogador martela pontos da própria espada (o pomo, a guarda, o plano da
+lâmina e o gume) para melhorá-la. A Godot monta a tela; preciso das peças SEPARADAS, cada uma num arquivo.
+
+REGRAS PARA TODAS AS IMAGENS
+- Estilo: o mesmo da maquete dos Dons (imagem 4): pintura digital à mão, contornos firmes, luz quente, metal em ouro
+  velho. Mesma mão e mesma luz em todas as imagens deste pedido.
+- SEM texto, SEM letras, SEM números, SEM assinatura, SEM marca d'água em nenhuma imagem. A Godot escreve os textos.
+- Nada de violeta nem roxo em lugar nenhum (é a cor do vilão). Verde-esmeralda vivo só na lâmina da espada Emeth.
+- Nada de sol, cruz ou símbolo religioso. O único emblema do Guerreiro é um LEÃO.
+- Nada de runas ou letras mágicas na lâmina (runas são do vilão).
+- "Transparente" = PNG com canal alfa, fundo realmente vazio (não um xadrez pintado, não branco).
+- Uma imagem por pedido se ficar melhor assim. Tamanhos exatos abaixo.
+
+1) FUNDO DA OFICINA, 1920 x 1080, PNG opaco
+   O interior escuro de uma forja de pedra, visto de frente e um pouco de cima: parede de pedra escura ao fundo, a boca
+   da fornalha acesa FORA DE FOCO no canto de baixo à esquerda, ferramentas penduradas em ganchos na sombra, fuligem.
+   Brilho laranja de brasa subindo da borda de baixo. O MEIO da imagem (uma faixa de x 80 a 1840, y 260 a 520) calmo e
+   escuro, porque a espada e o pano ficam por cima. Sem espada, sem bigorna no meio, sem pessoa, sem bandeira.
+
+2) O PANO DA BANCADA, 1800 x 360, PNG transparente
+   Um pano grosso de lona marrom-escura (cor 3a2a1e), estendido na horizontal, com dobras e as duas pontas caindo nas
+   laterais, visto de frente e um pouco de cima. Fuligem e uma queimadura pequena. Vazio em cima (a espada vai por cima).
+
+3) A EMETH DEITADA, 3000 x 480, PNG transparente
+   A espada da imagem 1 e 2, DEITADA na horizontal, vista de cima e de frente, SEM inclinação: pomo à ESQUERDA, ponta à
+   DIREITA, gume de cima reto. Lâmina de cristal verde-esmeralda que brilha por dentro, guarda e pomo de ouro velho,
+   punho enrolado em couro vermelho-escuro (como na imagem 2), SEM veias de ouro na lâmina (a Godot põe). A guarda é uma barra na VERTICAL (dois braços, um para cima e um para baixo). O ENGASTE DO POMO
+   VAZIO (um oco escuro redondo, sem pedra). O plano da lâmina liso, sem gravação. Sem sombra no chão. A espada ocupa a
+   imagem de ponta a ponta com 40 px de margem.
+
+4) TRÊS PEDRAS DO POMO, 256 x 256 cada, PNG transparente
+   Pedras lapidadas redondas que cabem no engaste do pomo, vistas de frente, com brilho interno:
+   a) âmbar quente (f0a040); b) azul de cobalto suave (6a9ad8); c) marfim leitoso com reflexo claro.
+   NENHUMA verde e nenhuma roxa.
+
+5) ANEL DA GUARDA, 256 x 256, PNG transparente
+   Um anel de ferro grosso e forjado, visto de frente, liso por fora (vai preso no braço da guarda). Ferro escuro com
+   marcas de martelo. Outra versão do mesmo anel em ouro velho, também 256 x 256.
+
+6) A PICARETA DEITADA, 1600 x 600, PNG transparente
+   Uma picareta de mineiro na horizontal (cabeça à direita), vista de cima e de frente, cabo de madeira gasta, cabeça de
+   ferro. Duas versões: a) inteira e restaurada; b) só a cabeça, com o cabo partido no meio e as lascas.
+
+7) FICHA DE FERRO, 352 x 112, PNG transparente
+   Uma placa de ferro escuro (cor 2a2620) com bordas batidas, quatro rebites pequenos nos cantos, VAZIA no meio. Os
+   enfeites só nos cantos (dentro de 24 px de cada canto) e os lados retos, para a Godot esticar sem deformar.
+
+8) PLACA DA BANCADA, 2000 x 440, PNG transparente
+   Uma placa larga de ferro escuro quase preto (1a1612), um pouco translúcida, filete de ouro velho, rebites nos cantos,
+   VAZIA. Enfeites só nos cantos (dentro de 60 px), lados retos.
+
+9) MARCA DE TOQUE, 128 x 128, PNG transparente
+   Um losango pequeno de ferro com aro de brasa laranja (e07a2a) brilhando. E a mesma marca apagada (aro cinza), 128 x 128.
+
+10) ÍCONES DOS PONTOS, prancha 1024 x 256 (quatro casas de 256), PNG transparente
+   Silhueta clara em marfim com sombreado de ouro velho, centrada, 24 px de margem, sem fundo, leitura de longe:
+   1 um lingote com três marcas de martelo (Temperar) | 2 um anel de ferro (Refinar) | 3 uma pedra lapidada redonda
+   (Despertar) | 4 uma pena de escrever sobre uma faixa lisa, sem letras (Inscrever)
+
+11) FAÍSCAS E VAPOR, 512 x 512 cada, PNG transparente
+   a) um estouro de faíscas laranja e amarelas saindo de um ponto central para cima (como uma martelada na bigorna);
+   b) uma nuvem de vapor branco subindo (têmpera na água).
+
+Não precisa: o Forjador, a bigorna, moedas, textos, o martelo, a Maga. A Godot desenha os brilhos, os números e as letras.

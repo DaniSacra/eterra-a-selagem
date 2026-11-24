@@ -1,0 +1,60 @@
+PEDIDO DE ARTE PARA O CHATGPT: a tela da Videira (Crônicas de Eterra: A Selagem, 2026-11-23)
+
+Anexe estas imagens (estão em Downloads\Pedido-Videira-refs):
+  1-santuario-conceito.png = o Santuário onde a videira cresce (pedra, arcos, lanternas). IGNORE as placas com texto,
+                             a árvore dourada, o portal verde e o resto; serve só para a pedra e a luz
+  2-maquete-dons.png       = a mão e o estilo que todas as peças devem seguir
+  3-icone-prata.png, 4-icone-memoria.png = os nossos ícones de material (só para combinar; não refazer)
+
+O que vamos fazer: uma tela em que uma VIDEIRA cresce de baixo para cima: um vaso de barro embaixo, um tronco retorcido
+e três ramos curvos subindo por uma treliça de ferro dentro de um arco de pedra. Cada ramo tem três brotos; cada broto tem
+uma etiqueta de barro pendurada. O jogador rega um broto e ele abre em folhas e flores. A Godot desenha os ramos e monta
+a tela; preciso das peças SEPARADAS, cada uma num arquivo.
+
+REGRAS PARA TODAS AS IMAGENS
+- Estilo: o mesmo da maquete dos Dons (imagem 2): pintura digital à mão, contornos firmes, luz quente de lanterna à
+  noite. Mesma mão e mesma luz em todas as imagens deste pedido.
+- SEM texto, SEM letras, SEM números, SEM assinatura, SEM marca d'água em nenhuma imagem. A Godot escreve os textos.
+- Nada de violeta nem roxo em lugar nenhum (é a cor do vilão). Nada de verde-esmeralda vivo: o verde aqui é OLIVA e
+  MUSGO (5f6b2e), e as flores são ÂMBAR (f0a040).
+- Nada de sol, cruz ou símbolo religioso. Nada de metal polido nem ouro brilhante.
+- "Transparente" = PNG com canal alfa, fundo realmente vazio (não um xadrez pintado, não branco).
+- Uma imagem por pedido se ficar melhor assim. Tamanhos exatos abaixo.
+
+1) FUNDO, 1920 x 1080, PNG opaco
+   Um arco de pedra velha visto DE FRENTE, à noite, iluminado por duas lanternas nas laterais. Dentro do arco, uma
+   treliça de ferro fino em losangos, VAZIA (sem planta). O arco ocupa de x 180 a 1350 e de y 80 até a base; à direita
+   do arco (x 1400 a 1920) só parede de pedra escura e calma, porque ali vai um painel. Chão de lajes embaixo. Sem
+   vaso, sem planta, sem pessoa.
+
+2) VASO, 400 x 300, PNG transparente
+   Um vaso largo de barro cozido (8a5a3a) com uma faixa mais escura, terra escura na boca, visto de frente, sem planta.
+
+3) CASCA EM TIRA, 1024 x 64, PNG transparente
+   Uma tira de casca de videira vista de lado, na horizontal, para a Godot enrolar ao longo de uma curva: madeira
+   marrom (42301c) com fibras e nós pequenos, bordas suaves em cima e embaixo. A ponta direita igual à esquerda (repete).
+
+4) BROTOS, 192 x 192 cada, PNG transparente, vistos de frente:
+   a) broto fechado e seco, marrom (5a4a3a), murcho;
+   b) broto fechado verde, pequeno;
+   c) broto inchado verde claro (8a9a4a), prestes a abrir, com um brilho suave;
+   d) cacho aberto: três folhas de videira oliva (5f6b2e) e duas flores pequenas âmbar (f0a040), 256 x 256.
+
+5) FOLHA SOLTA, 192 x 192, PNG transparente
+   Uma folha de videira oliva sozinha, vista de frente, com o talo curto (a Godot espalha várias pelos ramos).
+
+6) ETIQUETA DE BARRO, 320 x 140, PNG transparente
+   Uma plaquinha de terracota (9a6a48) com a borda escurecida de fogo, um furo no alto com um fio de ráfia, VAZIA no
+   meio. E o VERSO dela, 320 x 140, liso, sem nada escrito.
+
+7) REGADOR, 256 x 256, PNG transparente
+   Um regador pequeno de barro, de lado, bico para a direita.
+
+8) GOTAS, 256 x 256, PNG transparente
+   Um punhado de gotas de água caindo, claras com reflexo âmbar da lanterna.
+
+9) PAINEL, 700 x 1040, PNG transparente nas bordas
+   Uma tábua de madeira escura (241a12) um pouco translúcida com moldura de barro e ramos finos entalhados nos cantos,
+   VAZIA. Enfeites só nos cantos (dentro de 80 px), lados retos, para a Godot esticar sem deformar.
+
+Não precisa: a videira inteira montada, textos, números, a estátua, pessoas. A Godot desenha os ramos com a casca (3).

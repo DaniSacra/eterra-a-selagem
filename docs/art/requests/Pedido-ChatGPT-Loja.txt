@@ -1,0 +1,68 @@
+PEDIDO DE ARTE PARA O CHATGPT: a Banca do Vendedor e a loja das catacumbas (Crônicas de Eterra: A Selagem, 2026-11-23)
+
+Anexe estas imagens (estão em Downloads\Pedido-Loja-refs):
+  1-santuario-conceito.png = o Santuário; use o TOLDO E O BALCÃO DO VENDEDOR (alto à esquerda) como base de cor e de
+                             material. IGNORE as placas com texto, os frascos e garrafas (são de outro sistema) e o resto
+  2-maquete-dons.png       = a mão e o estilo que todas as peças devem seguir
+  3-icone-ouro.png, 4-icone-prata.png, 5-icone-memoria.png = os nossos ícones de moeda (só para combinar; não refazer)
+  6-loja-no-jogo.jpg       = a loja das catacumbas como está hoje no jogo (as colunas e o tapete vão mudar)
+
+O que vamos fazer: (a) uma tela do Vendedor no Santuário, vista de frente para o balcão, com uma BALANÇA DE DOIS PRATOS
+no meio (o jogador põe no prato o que dá e o que recebe, a balança pende); trocas numa coluna à esquerda e obras numa
+coluna à direita, cada uma numa ETIQUETA DE COURO; (b) as mesmas etiquetas de couro em cima dos itens da loja nas
+catacumbas. A Godot monta tudo; preciso das peças SEPARADAS, cada uma num arquivo.
+
+REGRAS PARA TODAS AS IMAGENS
+- Estilo: o mesmo da maquete dos Dons (imagem 2): pintura digital à mão, contornos firmes, luz quente de lanterna.
+  Mesma mão e mesma luz em todas as imagens deste pedido.
+- SEM texto, SEM letras, SEM números, SEM assinatura, SEM marca d'água em nenhuma imagem. A Godot escreve os textos.
+- Nada de violeta nem roxo em lugar nenhum (é a cor do vilão). Nada de verde-esmeralda vivo.
+- Nada de sol, cruz ou símbolo religioso. Se precisar de um emblema, só um LEÃO.
+- Cores da família: listras vinho apagado (6e2a2a) e terra (8a6a48), couro marrom avermelhado (5a3424), madeira escura,
+  latão envelhecido (a08050). Ouro brilhante NÃO pode ser a cor principal (só nas moedas).
+- "Transparente" = PNG com canal alfa, fundo realmente vazio (não um xadrez pintado, não branco).
+- Uma imagem por pedido se ficar melhor assim. Tamanhos exatos abaixo.
+
+1) FUNDO DO BALCÃO, 1920 x 1080, PNG opaco
+   O balcão de madeira do Vendedor visto DE FRENTE, de perto: parede de tábuas escuras atrás com prateleiras na sombra
+   (caixotes, sacos, rolos de tecido; NADA de frascos), o tampo do balcão em madeira mais clara atravessando a imagem
+   inteira na altura y 840 a 900. Luz quente de duas lanternas nas laterais. O meio (x 600 a 1320, y 160 a 820) mais
+   calmo e escuro, porque a balança fica ali. Sem pessoa, sem toldo (vem separado), sem balança.
+
+2) TOLDO, 1920 x 160, PNG transparente
+   A borda de baixo de um toldo de lona listrado na vertical, listras de uns 96 px alternando vinho apagado e terra,
+   terminando em franja recortada em dentes arredondados. Visto de frente, um pouco de baixo. Vazio abaixo da franja.
+
+3) BALANÇA, peças separadas, PNG transparente, latão envelhecido com marcas de uso:
+   a) poste com base, 300 x 760 (base apoiada embaixo, ponto de giro no topo, centrado);
+   b) travessão, 640 x 80 (barra horizontal com o furo do giro no meio e um gancho em cada ponta);
+   c) prato com as três correntes, 260 x 300 (o gancho no topo centrado, o prato raso embaixo, visto um pouco de cima,
+      vazio).
+
+4) ETIQUETA DE COURO, 640 x 160, PNG transparente
+   Uma etiqueta de couro curtido marrom avermelhado (5a3424) deitada, borda mais escura, PESPONTO marfim a uns 8 px da
+   borda, o lado esquerdo com os cantos cortados em diagonal e um ilhó de latão. VAZIA no meio. Enfeites e o ilhó só na
+   ponta esquerda (dentro de 96 px), o resto liso e reto, para a Godot esticar sem deformar.
+
+5) ETIQUETA DE COURO PENDURADA, 320 x 220, PNG transparente
+   A mesma etiqueta, menor e mais alta que larga, pendurada por um cordão curto que sai do ilhó no alto. VAZIA. É a que
+   fica em cima dos itens da loja nas catacumbas. E o VERSO dela, 320 x 220: couro liso, sem pesponto.
+
+6) CARIMBO, 360 x 140, PNG transparente
+   Uma marca de carimbo retangular de cantos arredondados em ouro velho apagado, borda dupla, VAZIA no meio (a Godot
+   escreve "Erguida"), com falhas de tinta como carimbo de verdade.
+
+7) TRÊS OBRAS, 256 x 256 cada, PNG transparente
+   Desenhos pequenos em marfim com sombreado de ouro velho (como ícone, sem fundo), leitura de longe:
+   a) um altar de pedra simples com uma lamparina acesa em cima;
+   b) uma fonte de pedra com água caindo numa bacia;
+   c) uma banca de mercador com toldo listrado pequena.
+
+8) PANO LISTRADO PARA O CHÃO, 1024 x 1024, PNG opaco e SEM EMENDA (repete nos quatro lados)
+   Tecido grosso de lã visto de cima, listras retas de 128 px alternando vinho apagado (6e2a2a) e terra (8a6a48), trama
+   visível, gasto. Sem franja, sem desenho no meio.
+
+9) CORDA AMARRADA, 400 x 160, PNG transparente
+   Um pedaço de corda grossa de cânhamo com um nó, na horizontal (vai amarrando a balança quando o balcão está fechado).
+
+Não precisa: o Vendedor, os itens da loja (já temos ícones), moedas, textos, frascos.

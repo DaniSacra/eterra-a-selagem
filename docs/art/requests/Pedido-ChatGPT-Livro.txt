@@ -1,0 +1,64 @@
+PEDIDO DE ARTE PARA O CHATGPT: o Livro de Ahk (Crônicas de Eterra: A Selagem, 2026-11-23)
+
+Anexe estas imagens (estão em Downloads\Pedido-Livro-refs):
+  1-prancha-livro.png      = a prancha do Livro: use o LIVRO ABERTO de baixo à esquerda como base
+                             (pergaminho, couro, cantoneiras). IGNORE a faixa de cima (pessoas, logo) e o Compêndio
+  2-retrato-guerreiro.png  = o Guerreiro em aguada, como está hoje no livro (pequeno e borrado; é para refazer maior)
+  3-guerreiro-prancha.png  = o Guerreiro canônico (use a aparência; ignore os textos e o sol no peito)
+  4-maga-arte-01.png       = a Maga canônica (a da esquerda, de pé)
+  5-maquete-dons.png       = a mão das outras telas (só a luz e a qualidade; o livro é sépia e tinta, não ouro)
+
+O que vamos fazer: o Livro de Ahk, o escriba, aberto sobre uma mesa. Ele só se lê: três capítulos (Abertura, o herói e
+Ofícios), marcados por fitas de seda que saem do alto do livro. O jogador vira as páginas. A Godot escreve todos os textos
+e monta a tela; preciso das peças SEPARADAS, cada uma num arquivo.
+
+REGRAS PARA TODAS AS IMAGENS
+- Estilo: tinta ferro-gálica e aguada sépia sobre pergaminho (como a prancha 1), luz quente de vela. Mesma mão em todas.
+- SEM texto, SEM letras, SEM números, SEM assinatura, SEM marca d'água em nenhuma imagem. Páginas VAZIAS.
+- Nada de violeta nem roxo em lugar nenhum (é a cor do vilão). Verde-esmeralda vivo só na lâmina da espada Emeth.
+- Nada de sol, cruz ou símbolo religioso. O emblema do Guerreiro é um LEÃO; o da Maga é uma ESTRELA DE 8 PONTAS.
+- NÃO desenhe Ahk nem nenhuma pessoa além dos dois heróis pedidos (não temos a aparência dele).
+- Nada de metal brilhante, círculos de nós ou plantas no livro.
+- "Transparente" = PNG com canal alfa, fundo realmente vazio (não um xadrez pintado, não branco).
+- Uma imagem por pedido se ficar melhor assim. Tamanhos exatos abaixo.
+
+1) MESA, 1920 x 1080, PNG opaco
+   Tampo de uma mesa de madeira escura vista de cima, com veio, manchas de tinta e cera. Luz quente vindo do alto à
+   esquerda, cantos escuros. O meio vazio (o livro vai por cima). Sem livro, sem objetos no meio.
+
+2) LIVRO ABERTO VAZIO, 1800 x 960, PNG transparente
+   Um livro grande aberto visto de cima, DE FRENTE e reto (sem perspectiva): capa de couro marrom-escuro com cantoneiras
+   de latão gasto aparecendo em volta, duas páginas de pergaminho IGUAIS e VAZIAS (sem linhas, sem desenho), a lombada
+   exatamente no meio, as bordas das folhas empilhadas visíveis nos lados. Os dois cantos de baixo de fora com uma ponta
+   levemente levantada (orelha).
+
+3) FITA DE MARCADOR, 96 x 520, PNG transparente
+   Uma fita de seda caindo na vertical, ponta de baixo cortada em V, dobra suave. CINZA médio (a Godot pinta em sépia,
+   petróleo, âmbar e ocre).
+
+4) MARCAS DAS FITAS, prancha 1024 x 256 (quatro casas de 256), PNG transparente
+   Em ouro velho gravado, sem fundo, leitura de longe: 1 uma pena de escrever | 2 um LEÃO de perfil (cabeça e juba) |
+   3 uma ESTRELA DE 8 PONTAS | 4 um martelo de ferreiro.
+
+5) VINHETA DA ABERTURA, 840 x 480, PNG transparente
+   Em aguada sépia, como ilustração dentro da página: a mesa de um escriba vista de lado, com papiros enrolados e abertos,
+   uma pena num tinteiro e uma lamparina de barro acesa. SEM PESSOA. Bordas que somem no papel.
+
+6) O GUERREIRO EM AGUADA, 880 x 1080, PNG transparente
+   O mesmo retrato da imagem 2, maior e nítido, com a aparência da imagem 3: homem jovem, rosto anguloso, cabelo vermelho
+   repicado, cachecol azul-petróleo, armadura de aço escuro com filetes de ouro velho, a espada Emeth de lâmina verde.
+   Tinta e aguada sobre pergaminho, só o petróleo, o vermelho do cabelo e o verde da lâmina com cor; o resto sépia.
+   Meio corpo, bordas que somem no papel.
+
+7) A MAGA EM AGUADA, 880 x 1080, PNG transparente
+   No mesmo estilo e enquadramento do 6, a Maga da imagem 4: mulher jovem do norte, traços orientais, cabelo preto curto,
+   capa marfim, roupa azul profundo, o bastão de duas pontas com chamas âmbar pequenas. Só o azul e o âmbar com cor.
+
+8) VELA, 120 x 480, PNG transparente
+   Uma vela grossa de cera marfim num castiçal de latão gasto, com cera escorrida, SEM chama (a Godot faz a chama).
+
+9) PICARETA EM TINTA, 512 x 512, PNG transparente
+   Uma picareta de mineiro desenhada a pena e aguada sépia, como ilustração de página. E a mesma só com a cabeça e o cabo
+   partido, 512 x 512.
+
+Não precisa: textos, páginas escritas, o Compêndio, Ahk, o logo do jogo.
